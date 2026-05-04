@@ -1,0 +1,931 @@
+"""
+AlphaHunt — Intelligence Layer (v1)
+====================================
+
+A self-contained "second brain" for the Pop Score engine. Adds four classes of
+intelligence on top of the existing scoring pipeline:
+
+    1. MarketRegime          — top-down macro overlay (SPY, QQQ, VIX, ^TNX)
+                               produces a 0–100 regime_score, regime_label,
+                               and a 0.85–1.15 multiplier applied to Pop Score.
+
+    2. ScoreHistory          — rolling per-ticker Pop Score history persisted
+                               via the existing SmartCache. Surfaces a
+                               *score_velocity* (delta over last N hours) and
+                               *score_acceleration* signal — early movers light
+                               up before the underlying components flip.
+
+    3. New component scorers — trend_strength, breakout_proximity,
+                               news_sentiment, earnings_acceleration.
+                               Importable from ai_scorer.py.
+
+    4. ThesisGenerator       — turns a fully-enriched ticker dict + the
+                               component breakdown into a structured
+                               investment thesis: bull case, bear case,
+                               plain-English explanation, trade plan, and
+                               recommendation. Pure-Python / deterministic so
+                               it works with zero extra API keys; falls back to
+                               an LLM when ANTHROPIC_API_KEY is configured.
+
+The module is designed to be additive — nothing here mutates existing
+state unless an explicit `apply_*` helper is called. Importing this file alone
+has no side effects.
+"""
+from __future__ import annotations
+
+import asyncio
+import logging
+import math
+import os
+import time
+from datetime import datetime, timezone
+from typing import Any, Optional
+
+logger = logging.getLogger(__name__)
+
+# ── Optional LLM dependency — never required ──────────────────────────────
+try:
+    import httpx                 # already a project dep via data_coordinator
+    _HTTPX_AVAILABLE = True
+except ImportError:              # pragma: no cover
+    _HTTPX_AVAILABLE = False
+
+try:
+    import yfinance as yf
+    _YF_AVAILABLE = True
+except ImportError:              # pragma: no cover
+    _YF_AVAILABLE = False
+
+
+# ╔════════════════════════════════════════════════════════════════════════╗
+# ║  1. New Component Scorers                                              ║
+# ╚════════════════════════════════════════════════════════════════════════╝
+
+def _safe(d: dict, key: str, default=None):
+    v = d.get(key)
+    return default if v is None else v
+
+
+def _clamp(val: float, lo: float = 0.0, hi: float = 1.0) -> float:
+    return max(lo, min(hi, val))
+
+
+def score_trend_strength(t: dict) -> float:
+    """
+    Multi-timeframe trend alignment.
+        price > sma50 > sma200   ⇒ strong uptrend (1.00)
+        price > sma50 < sma200   ⇒ recovery       (0.65)
+        price < sma50 > sma200   ⇒ pullback       (0.45)
+        price < sma50 < sma200   ⇒ downtrend      (0.15)
+    Falls back to neutral when SMAs are missing.
+    """
+    p   = _safe(t, "price")
+    s50 = _safe(t, "sma_50")
+    s200= _safe(t, "sma_200")
+    if not p or not s50 or not s200:
+        return 0.60
+    above_50  = p   > s50
+    above_200 = p   > s200
+    fifty_gt_200 = s50 > s200
+
+    if above_50 and above_200 and fifty_gt_200:    return 1.00   # textbook uptrend
+    if above_50 and above_200:                      return 0.85
+    if above_50 and not above_200:                  return 0.65   # base building
+    if not above_50 and above_200 and fifty_gt_200: return 0.45   # in pullback
+    if not above_50 and above_200:                  return 0.35
+    if not above_50 and not above_200:              return 0.15   # bear trend
+    return 0.50
+
+
+def score_breakout_proximity(t: dict) -> float:
+    """
+    Composite of distance-to-52w-high + recent volume confirmation.
+    A stock 0–3% from new highs on >1.5× volume = breakout candidate.
+    """
+    dist = _safe(t, "dist_52w_high")     # negative pct, e.g. -2.0 = 2% below
+    vr   = _safe(t, "volume_ratio")
+    if dist is None and vr is None:
+        return 0.55
+
+    near_high = 0.55
+    if dist is not None:
+        if   dist >= -1:   near_high = 1.00
+        elif dist >= -3:   near_high = 0.92
+        elif dist >= -7:   near_high = 0.78
+        elif dist >= -15:  near_high = 0.55
+        elif dist >= -30:  near_high = 0.35
+        else:              near_high = 0.18
+
+    vol_boost = 0.55
+    if vr is not None:
+        if   vr >= 3.0:  vol_boost = 1.00
+        elif vr >= 2.0:  vol_boost = 0.85
+        elif vr >= 1.5:  vol_boost = 0.72
+        elif vr >= 1.2:  vol_boost = 0.58
+        else:            vol_boost = 0.40
+
+    # Breakout = need both: near-high AND volume. Weight 60/40 toward proximity.
+    return _clamp(0.6 * near_high + 0.4 * vol_boost)
+
+
+# Lightweight news-sentiment lexicon. Tuned for financial news headlines
+# rather than general-purpose sentiment — picks up the verbs that move stocks.
+_BULL_WORDS = {
+    "beats", "beat", "surges", "soars", "rallies", "jumps", "gains",
+    "upgrade", "upgraded", "raises", "raised", "strong", "record",
+    "tops", "outperform", "buy", "bullish", "expands", "wins",
+    "approval", "approved", "launches", "breakthrough", "milestone",
+    "guidance raised", "raises guidance", "exceeds", "boost", "boosts",
+    "deal", "partnership", "contract", "acquires", "ai", "growth",
+    "all-time high", "52-week high",
+}
+_BEAR_WORDS = {
+    "miss", "misses", "plunges", "tumbles", "falls", "drops", "slides",
+    "downgrade", "downgraded", "cuts", "weak", "warns", "warning",
+    "concern", "concerns", "lawsuit", "investigation", "probe",
+    "delay", "delays", "halts", "recall", "loss", "losses",
+    "underperform", "sell", "bearish", "fraud", "guidance cut",
+    "cuts guidance", "missing", "shortfall",
+}
+
+
+def score_news_sentiment(t: dict) -> float:
+    """
+    Tally bullish vs bearish keywords across recent news headlines.
+    Score 0–1 with 0.55 = neutral. Returns neutral when no news cached.
+    """
+    news = _safe(t, "news") or []
+    if not news:
+        return 0.55
+
+    bull = bear = 0
+    for n in news[:15]:
+        h = (n.get("headline") or "").lower()
+        if not h:
+            continue
+        for w in _BULL_WORDS:
+            if w in h:
+                bull += 1
+                break  # one headline = one vote
+        for w in _BEAR_WORDS:
+            if w in h:
+                bear += 1
+                break
+
+    total = bull + bear
+    if total == 0:
+        return 0.55
+    ratio = bull / total
+    # Map ratio → score with mild compression so a few headlines don't dominate
+    if   ratio >= 0.85: return 0.95
+    elif ratio >= 0.65: return 0.82
+    elif ratio >= 0.50: return 0.65
+    elif ratio >= 0.30: return 0.45
+    elif ratio >= 0.15: return 0.30
+    else:               return 0.18
+
+
+def score_earnings_acceleration(t: dict) -> float:
+    """
+    Revenue *acceleration* across the last 4 quarters. A company growing 20%
+    YoY is good. A company whose growth rate is *itself* accelerating is
+    much better — that is what hyper-growth winners look like before they
+    get re-rated by the market.
+    """
+    qi = _safe(t, "quarterly_income") or []
+    if len(qi) < 4:
+        return 0.55   # not enough data — neutral
+
+    # quarterly_income is ordered most-recent-first
+    revs = [q.get("revenue") for q in qi[:4] if q.get("revenue")]
+    if len(revs) < 4:
+        return 0.55
+
+    # QoQ growth rates: most recent quarter vs the one 3 quarters back
+    # Use sequential pairs to detect acceleration vs. deceleration
+    growth_rates: list[float] = []
+    for i in range(len(revs) - 1):
+        cur, prev = revs[i], revs[i + 1]
+        if prev and prev > 0:
+            growth_rates.append((cur - prev) / prev)
+
+    if len(growth_rates) < 2:
+        return 0.55
+
+    recent_avg = sum(growth_rates[:1]) / 1                  # most recent QoQ
+    prior_avg  = sum(growth_rates[1:]) / max(len(growth_rates) - 1, 1)
+    delta = recent_avg - prior_avg
+
+    if   delta >=  0.10: return 1.00     # explosive acceleration
+    elif delta >=  0.05: return 0.88
+    elif delta >=  0.02: return 0.75
+    elif delta >= -0.02: return 0.55     # stable
+    elif delta >= -0.05: return 0.40
+    elif delta >= -0.10: return 0.25
+    else:                return 0.10     # decelerating fast
+
+
+# ╔════════════════════════════════════════════════════════════════════════╗
+# ║  2. ScoreHistory — rolling per-ticker Pop Score memory                 ║
+# ╚════════════════════════════════════════════════════════════════════════╝
+
+class ScoreHistory:
+    """
+    Persists a rolling window of Pop Scores per ticker via the existing
+    SmartCache (so it survives Railway restarts). Exposes:
+
+        record(ticker, pop_score)
+        velocity(ticker)        — pop-score change per 24h (float)
+        acceleration(ticker)    — change-of-change (float)
+        momentum_score(ticker)  — 0..1 normalised "score is rising fast"
+    """
+
+    CACHE_KEY  = "intel:score_history"
+    MAX_POINTS = 48           # ~2 days at 30-min cadence
+    TTL        = 86400 * 14   # 14 days
+
+    def __init__(self, cache):
+        self.cache = cache
+        self._mem: dict[str, list[tuple[float, float]]] = (
+            cache.get(self.CACHE_KEY) or {}
+        )
+
+    # ── Mutation ─────────────────────────────────────────────────────
+    def record_batch(self, items: list[dict]) -> None:
+        now = time.time()
+        changed = False
+        for t in items:
+            tk    = t.get("ticker")
+            score = t.get("pop_score")
+            if not tk or score is None:
+                continue
+            series = self._mem.setdefault(tk, [])
+            # Only record if at least 5 minutes since last point — avoid bloat
+            if not series or (now - series[-1][0]) >= 300:
+                series.append((now, float(score)))
+                if len(series) > self.MAX_POINTS:
+                    del series[0:len(series) - self.MAX_POINTS]
+                changed = True
+        if changed:
+            self.cache.set(self.CACHE_KEY, self._mem, self.TTL)
+
+    # ── Query ────────────────────────────────────────────────────────
+    def velocity(self, ticker: str, hours: float = 24.0) -> Optional[float]:
+        """Return pop_score change over the last `hours` hours, or None."""
+        series = self._mem.get(ticker, [])
+        if len(series) < 2:
+            return None
+        now    = time.time()
+        cutoff = now - hours * 3600
+        # find the oldest point still inside the window
+        old = next((pt for pt in series if pt[0] >= cutoff), series[0])
+        return round(series[-1][1] - old[1], 2)
+
+    def acceleration(self, ticker: str) -> Optional[float]:
+        """Velocity-of-velocity: compares last-24h delta to prior-24h delta."""
+        v_now  = self.velocity(ticker, hours=24)
+        v_prev = self._velocity_in_window(ticker, hours_from=48, hours_to=24)
+        if v_now is None or v_prev is None:
+            return None
+        return round(v_now - v_prev, 2)
+
+    def _velocity_in_window(
+        self, ticker: str, hours_from: float, hours_to: float
+    ) -> Optional[float]:
+        series = self._mem.get(ticker, [])
+        if len(series) < 2:
+            return None
+        now  = time.time()
+        a    = now - hours_from * 3600
+        b    = now - hours_to   * 3600
+        in_win = [pt for pt in series if a <= pt[0] <= b]
+        if len(in_win) < 2:
+            return None
+        return round(in_win[-1][1] - in_win[0][1], 2)
+
+    def momentum_score(self, ticker: str) -> float:
+        """
+        Map velocity → 0..1 score for use in the weighted scorer.
+        +5 pts/24h ≈ 0.85, –5 pts/24h ≈ 0.20, no data ≈ 0.55.
+        """
+        v = self.velocity(ticker, hours=24)
+        if v is None:
+            return 0.55
+        if   v >=  6:  return 1.00
+        elif v >=  3:  return 0.85
+        elif v >=  1:  return 0.70
+        elif v >= -1:  return 0.55
+        elif v >= -3:  return 0.38
+        elif v >= -6:  return 0.22
+        else:          return 0.10
+
+    def to_payload(self, ticker: str) -> dict:
+        """Snapshot suitable for embedding in /api/ticker payloads."""
+        return {
+            "score_velocity":     self.velocity(ticker),
+            "score_acceleration": self.acceleration(ticker),
+            "score_momentum":     round(self.momentum_score(ticker), 3),
+            "history_points":     len(self._mem.get(ticker, [])),
+        }
+
+
+# ╔════════════════════════════════════════════════════════════════════════╗
+# ║  3. MarketRegime — macro overlay                                       ║
+# ╚════════════════════════════════════════════════════════════════════════╝
+
+class MarketRegime:
+    """
+    Detects the prevailing market regime from a small basket of macro tickers.
+
+        SPY  — broad market
+        QQQ  — growth/tech proxy (high-beta confirmation)
+        ^VIX — volatility
+        ^TNX — 10-year yield (rising rates pressure long-duration assets)
+
+    Produces:
+        regime_score      0..100  (higher = friendlier to long high-beta names)
+        regime_label      "Bullish" | "Mixed" | "Bearish"
+        regime_multiplier 0.85..1.15 — applied to per-ticker Pop Score
+        components        dict of input readings for transparency
+
+    Cache TTL is 30 minutes — regime doesn't whip around minute-to-minute.
+    """
+
+    CACHE_KEY = "intel:market_regime"
+    TTL       = 1800   # 30 minutes
+    INDICES   = ("SPY", "QQQ", "^VIX", "^TNX")
+
+    def __init__(self, cache):
+        self.cache = cache
+
+    def get(self) -> dict:
+        cached = self.cache.get(self.CACHE_KEY)
+        if cached is not None:
+            return cached
+        # Cold start — return a sensible neutral until first refresh
+        return {
+            "regime_score":      55.0,
+            "regime_label":      "Mixed",
+            "regime_multiplier": 1.00,
+            "components":        {},
+            "stale":             True,
+            "ts":                None,
+        }
+
+    async def refresh(self) -> dict:
+        """Fetch macro indices and recompute regime. Safe to call frequently."""
+        if not _YF_AVAILABLE:
+            logger.warning("yfinance not available — regime stays neutral")
+            return self.get()
+
+        try:
+            comps = await asyncio.to_thread(self._fetch_components)
+            if not comps:
+                return self.get()
+
+            score = self._score_components(comps)
+            label = (
+                "Bullish" if score >= 65 else
+                "Bearish" if score <= 40 else
+                "Mixed"
+            )
+            # Multiplier: linear map 0..100 → 0.85..1.15, clipped
+            mult = round(_clamp(0.85 + (score / 100) * 0.30, 0.85, 1.15), 3)
+
+            payload = {
+                "regime_score":      round(score, 1),
+                "regime_label":      label,
+                "regime_multiplier": mult,
+                "components":        comps,
+                "stale":             False,
+                "ts":                datetime.now(tz=timezone.utc).isoformat(),
+            }
+            self.cache.set(self.CACHE_KEY, payload, self.TTL)
+            return payload
+        except Exception as exc:
+            logger.warning(f"MarketRegime.refresh failed: {exc}")
+            return self.get()
+
+    # ── internals ────────────────────────────────────────────────────
+    def _fetch_components(self) -> dict:
+        """Synchronous yfinance calls — runs in a thread via asyncio.to_thread."""
+        out: dict = {}
+        for sym in self.INDICES:
+            try:
+                tk = yf.Ticker(sym)
+                hist = tk.history(period="3mo", interval="1d", auto_adjust=True)
+                if hist is None or hist.empty or len(hist) < 22:
+                    continue
+                closes = hist["Close"].tolist()
+                last   = closes[-1]
+                ref_5  = closes[-5]   if len(closes) >= 5  else last
+                ref_22 = closes[-22]  if len(closes) >= 22 else last
+                hi_3m  = max(closes)
+                lo_3m  = min(closes)
+                out[sym] = {
+                    "last":         round(last,   2),
+                    "pct_5d":       round((last/ref_5  - 1) * 100, 2),
+                    "pct_1m":       round((last/ref_22 - 1) * 100, 2),
+                    "dist_3m_high": round((last/hi_3m  - 1) * 100, 2),
+                    "dist_3m_low":  round((last/lo_3m  - 1) * 100, 2),
+                }
+            except Exception as exc:
+                logger.debug(f"regime fetch {sym} failed: {exc}")
+        return out
+
+    def _score_components(self, c: dict) -> float:
+        """Combine SPY/QQQ trend + VIX level + TNX direction → 0..100."""
+        score = 50.0   # start neutral
+
+        spy = c.get("SPY") or {}
+        qqq = c.get("QQQ") or {}
+        vix = c.get("^VIX") or {}
+        tnx = c.get("^TNX") or {}
+
+        # SPY trend (broad market): each +1% over 1m = +1.5 pts (cap ±15)
+        if spy.get("pct_1m") is not None:
+            score += _clamp_signed(spy["pct_1m"] * 1.5, 15)
+        # QQQ trend (growth confirmation): each +1% over 1m = +1.0 pts (cap ±12)
+        if qqq.get("pct_1m") is not None:
+            score += _clamp_signed(qqq["pct_1m"] * 1.0, 12)
+        # 5d momentum confirmation
+        if spy.get("pct_5d") is not None:
+            score += _clamp_signed(spy["pct_5d"] * 1.5, 8)
+
+        # VIX: level matters — <14 calm, 14-20 normal, 20-30 nervous, >30 fear
+        v = vix.get("last")
+        if v is not None:
+            if   v < 13:   score += 8
+            elif v < 17:   score += 4
+            elif v < 22:   score += 0
+            elif v < 28:   score -= 6
+            elif v < 35:   score -= 12
+            else:          score -= 18
+
+        # 10Y yield direction — rising yields hurt growth multiples
+        ty = tnx.get("pct_1m")
+        if ty is not None:
+            if   ty >  10: score -= 6     # yields up >10% in a month is hot
+            elif ty >   3: score -= 3
+            elif ty < -10: score += 5
+            elif ty <  -3: score += 2
+
+        # Distance from 3m high — broad market near highs = risk-on
+        if spy.get("dist_3m_high") is not None:
+            d = spy["dist_3m_high"]   # negative pct
+            if   d >= -1:  score += 5
+            elif d >= -3:  score += 2
+            elif d <= -8:  score -= 4
+
+        return _clamp(score, 0, 100)
+
+
+def _clamp_signed(val: float, cap: float) -> float:
+    return max(-cap, min(cap, val))
+
+
+# ╔════════════════════════════════════════════════════════════════════════╗
+# ║  4. ThesisGenerator — structured per-stock investment thesis           ║
+# ╚════════════════════════════════════════════════════════════════════════╝
+
+# Optional LLM. If ANTHROPIC_API_KEY is set, the rule-based output is sent to
+# Claude with a tight prompt to upgrade the prose. Otherwise we ship the
+# rule-based output directly — both are structurally identical.
+_ANTHROPIC_KEY     = os.environ.get("ANTHROPIC_API_KEY", "").strip()
+_ANTHROPIC_MODEL   = os.environ.get(
+    "ANTHROPIC_MODEL", "claude-haiku-4-5-20251001"
+)
+_ANTHROPIC_TIMEOUT = 12.0
+
+
+class ThesisGenerator:
+    """
+    Build a structured investment thesis from a fully-enriched ticker dict.
+
+    Output schema:
+        {
+            "ticker":            str,
+            "recommendation":    "Strong Buy" | "Buy" | "Hold" | "Reduce" | "Avoid",
+            "conviction":        "High" | "Medium" | "Low",
+            "headline":          short one-liner,
+            "explanation":       2-3 sentences in plain English,
+            "bull_case":         [3 bullet strings],
+            "bear_case":         [3 bullet strings],
+            "trade_plan":        {entry, stop, target, r_multiple, position_pct},
+            "regime_context":    one sentence about how regime affects this name,
+            "source":            "rule-based" | "llm"
+        }
+    """
+
+    def __init__(self, regime: MarketRegime, history: ScoreHistory):
+        self.regime  = regime
+        self.history = history
+
+    # ── Public entry point ───────────────────────────────────────────
+    async def build(self, ticker_data: dict) -> dict:
+        rule_based = self._build_rule_based(ticker_data)
+        if not _ANTHROPIC_KEY or not _HTTPX_AVAILABLE:
+            return rule_based
+        try:
+            upgraded = await self._llm_upgrade(rule_based, ticker_data)
+            return upgraded or rule_based
+        except Exception as exc:
+            logger.warning(f"LLM thesis upgrade failed for "
+                           f"{ticker_data.get('ticker','?')}: {exc}")
+            return rule_based
+
+    # ── Rule-based engine ────────────────────────────────────────────
+    def _build_rule_based(self, t: dict) -> dict:
+        tk     = t.get("ticker", "?")
+        name   = t.get("name") or tk
+        sector = t.get("sector") or t.get("sub_sector") or "this sector"
+        pop    = float(t.get("pop_score") or 0)
+        conf   = float(t.get("confidence") or 0)
+        grade  = t.get("grade", "C")
+
+        regime = self.regime.get()
+        velocity = self.history.velocity(tk)
+
+        bull = self._bull_points(t, regime)
+        bear = self._bear_points(t, regime)
+
+        # Recommendation: blend grade, regime, velocity
+        rec = self._recommendation(grade, pop, regime, velocity)
+        conv = (
+            "High"   if conf >= 0.80 and pop >= 70 else
+            "Medium" if conf >= 0.60 else
+            "Low"
+        )
+
+        headline = self._headline(t, rec, regime)
+        explain  = self._explanation(t, rec, regime, velocity, conv)
+        plan     = self._trade_plan(t)
+        regime_ctx = self._regime_context(t, regime)
+        why = self._why_bullets(t, rec, regime, velocity, bull, bear)
+
+        return {
+            "ticker":         tk,
+            "name":           name,
+            "sector":         sector,
+            "recommendation": rec,
+            "conviction":     conv,
+            "headline":       headline,
+            "explanation":    explain,
+            "why_bullets":    why,             # NEW: 3 plain-English "why this stock?" bullets
+            "bull_case":      bull,            # legacy detail (kept for power users)
+            "bear_case":      bear,            # legacy detail (kept for power users)
+            "trade_plan":     plan,            # legacy detail (kept for power users)
+            "regime_context": regime_ctx,
+            "source":         "rule-based",
+            "generated_at":   datetime.now(tz=timezone.utc).isoformat(),
+        }
+
+    # ── helpers: simple 3-bullet "Why this stock?" answer ────────────
+    def _why_bullets(
+        self,
+        t: dict,
+        rec: str,
+        regime: dict,
+        vel: Optional[float],
+        bull: list[str],
+        bear: list[str],
+    ) -> list[str]:
+        """
+        Pick the 3 most useful plain-English bullets that answer
+        "why is this a Buy/Hold/Avoid right now?". Blends:
+          - the strongest bull or bear point (depending on the recommendation)
+          - the regime context in one sentence
+          - score velocity if it's saying something interesting
+        Always returns at most 3 lines.
+        """
+        out: list[str] = []
+        rec_pos = rec in ("Strong Buy", "Buy")
+        rec_neg = rec in ("Reduce", "Avoid")
+
+        # 1. Top pick from bull or bear, depending on recommendation direction
+        if rec_pos and bull:
+            out.append(bull[0])
+        elif rec_neg and bear:
+            out.append(bear[0])
+        elif bull:
+            out.append(bull[0])
+        elif bear:
+            out.append(bear[0])
+
+        # 2. One-line market-context sentence
+        rl = regime.get("regime_label", "Mixed")
+        if rl == "Bullish":
+            out.append("Broader market is Bullish — favourable backdrop for new entries.")
+        elif rl == "Bearish":
+            out.append("Broader market is Bearish — expect bigger swings on entries.")
+        else:
+            out.append("Broader market is Mixed — no major macro tailwind or headwind.")
+
+        # 3. Velocity / second-best bull or bear, whichever is more useful
+        if vel is not None and abs(vel) >= 2:
+            arrow = "climbing" if vel > 0 else "falling"
+            out.append(f"Pop Score is {arrow} ({vel:+.1f} pts in the last 24h).")
+        elif rec_pos and len(bull) > 1:
+            out.append(bull[1])
+        elif rec_neg and len(bear) > 1:
+            out.append(bear[1])
+        elif bear:
+            out.append(f"Risk to watch: {bear[0]}")
+
+        return _dedupe(out)[:3]
+
+    # ── helpers: thesis inputs ───────────────────────────────────────
+    def _bull_points(self, t: dict, regime: dict) -> list[str]:
+        out: list[str] = []
+        rev_g = _safe(t, "revenue_growth_yoy")
+        if rev_g is not None and rev_g >= 0.20:
+            out.append(f"Revenue is growing {rev_g*100:.0f}% YoY — top-quintile pace for the universe.")
+        streak = _safe(t, "eps_beat_streak")
+        if streak is not None and streak >= 3:
+            out.append(f"EPS has beaten estimates {streak}/4 last quarters — management is consistently under-promising.")
+        mom = _safe(t, "momentum_1m")
+        if mom is not None and mom >= 10:
+            out.append(f"+{mom:.1f}% in the last month — institutional demand is showing up in the tape.")
+        sb = _safe(t, "strong_buy_pct")
+        if sb is not None and sb >= 50:
+            out.append(f"{sb:.0f}% of analysts rate it Strong Buy — Wall Street already on board.")
+        upside = _safe(t, "target_upside_pct")
+        if upside is not None and upside >= 20:
+            out.append(f"Mean analyst target implies +{upside:.0f}% upside.")
+        ins_b = _safe(t, "insider_buys_90d", 0)
+        ins_s = _safe(t, "insider_sells_90d", 0)
+        if ins_b > ins_s and ins_b >= 2:
+            out.append(f"Insiders bought {ins_b}× and sold {ins_s}× over 90 days — skin in the game.")
+        gmt = _safe(t, "gross_margin_trend", "")
+        if gmt == "expanding":
+            out.append("Gross margin is *expanding* — operating leverage building under the surface.")
+        rsi = _safe(t, "rsi_14")
+        if rsi is not None and 50 <= rsi <= 65:
+            out.append(f"RSI {rsi:.0f} sits in the textbook momentum zone — not yet overheated.")
+
+        if not out:
+            out.append("Pop Score components above neutral baseline — quantitative model leans constructive.")
+        # Always cap at 4 points and de-dup
+        return _dedupe(out)[:4]
+
+    def _bear_points(self, t: dict, regime: dict) -> list[str]:
+        out: list[str] = []
+        rsi = _safe(t, "rsi_14")
+        if rsi is not None and rsi > 75:
+            out.append(f"RSI {rsi:.0f} is overbought — entries here often see a 5–10% reset.")
+        short = _safe(t, "short_percent_float")
+        if short is not None and short > 0.15:
+            out.append(f"Short interest {short*100:.1f}% of float — high conviction short bets exist.")
+        pe = _safe(t, "pe_ratio")
+        if pe is not None and pe > 50:
+            out.append(f"Trades at {pe:.0f}× earnings — multiple compression is a real risk if growth slips.")
+        days = _safe(t, "days_to_earnings")
+        if days is not None and 0 <= days <= 7:
+            out.append(f"Reports earnings in {days}d — binary risk window.")
+        margin = _safe(t, "profit_margin")
+        if margin is not None and margin < 0:
+            out.append(f"Net margin {margin*100:.1f}% — still unprofitable, sensitive to capital cycles.")
+        if regime.get("regime_label") == "Bearish":
+            out.append("Macro is Bearish — high-beta names face headwinds even with strong fundamentals.")
+        elif regime.get("regime_label") == "Mixed":
+            out.append("Macro is Mixed — broader market unlikely to provide a tailwind.")
+        gmt = _safe(t, "gross_margin_trend", "")
+        if gmt == "contracting":
+            out.append("Gross margin is *contracting* — pricing power may be eroding.")
+        last_beat = _safe(t, "eps_last_beat")
+        if last_beat is False:
+            out.append("Most recent quarter missed EPS — track record interrupted.")
+
+        if not out:
+            out.append("No major red flags detected — primary risk is broader market-driven.")
+        return _dedupe(out)[:4]
+
+    def _recommendation(self, grade: str, pop: float, regime: dict, vel: Optional[float]) -> str:
+        rl = regime.get("regime_label", "Mixed")
+        # Base tier from grade
+        base = {
+            "A": "Strong Buy",
+            "B": "Buy",
+            "C": "Hold",
+            "D": "Reduce",
+            "F": "Avoid",
+        }.get(grade, "Hold")
+
+        # Regime + velocity nudges
+        if rl == "Bearish" and base == "Strong Buy":
+            return "Buy"            # downgrade one notch in tough macro
+        if rl == "Bullish" and base == "Buy" and (vel or 0) >= 2:
+            return "Strong Buy"     # upgrade if score is also climbing
+        if rl == "Bearish" and (vel or 0) <= -3 and base in ("Buy", "Hold"):
+            return "Reduce"
+        return base
+
+    def _headline(self, t: dict, rec: str, regime: dict) -> str:
+        tk   = t.get("ticker", "?")
+        name = t.get("name") or tk
+        rg   = regime.get("regime_label", "Mixed")
+        # Pick the dominant edge to feature in the headline
+        edges = []
+        if (t.get("momentum_1m") or 0) >= 15:
+            edges.append("strong price momentum")
+        if (t.get("eps_beat_streak") or 0) >= 3:
+            edges.append("consistent earnings beats")
+        if (t.get("revenue_growth_yoy") or 0) >= 0.25:
+            edges.append("hyper-growth top line")
+        if (t.get("strong_buy_pct") or 0) >= 60:
+            edges.append("analyst conviction")
+        if (t.get("mention_velocity") or 0) >= 50:
+            edges.append("rising social attention")
+        edge_phrase = ", ".join(edges[:2]) if edges else "balanced score across multiple factors"
+        return f"{rec} — {name} ({tk}) on {edge_phrase}. Macro: {rg}."
+
+    def _explanation(self, t: dict, rec: str, regime: dict,
+                     vel: Optional[float], conv: str) -> str:
+        tk   = t.get("ticker", "?")
+        pop  = float(t.get("pop_score") or 0)
+        grade= t.get("grade", "C")
+        rg   = regime.get("regime_label", "Mixed")
+        rmult= regime.get("regime_multiplier", 1.0)
+        smart = round(pop * rmult, 1)
+
+        sentence_a = (
+            f"{tk} earns a Pop Score of {smart:.0f} (Grade {grade}, {conv} conviction) "
+            f"in the current {rg} market."
+        )
+        if vel is not None:
+            arrow = "rising" if vel > 0.5 else "falling" if vel < -0.5 else "steady"
+            sentence_b = (
+                f"The score is {arrow} ({vel:+.1f} pts in the last 24 h), which "
+                f"{'reinforces' if (vel > 0 and rec in ('Strong Buy','Buy')) or (vel < 0 and rec in ('Reduce','Avoid')) else 'modestly conflicts with'} "
+                f"the {rec} rating."
+            )
+        else:
+            sentence_b = "Score history is still being collected — momentum-of-score will be tracked from the next refresh."
+
+        sentence_c = self._closer(t, rec)
+        return " ".join([sentence_a, sentence_b, sentence_c]).strip()
+
+    def _closer(self, t: dict, rec: str) -> str:
+        if rec in ("Strong Buy", "Buy"):
+            return ("Position sizing should respect the suggested ATR-based stop — "
+                    "the model finds the setup; risk control protects the account.")
+        if rec == "Hold":
+            return "Wait for either a fundamental catalyst or a clear technical setup before adding."
+        return ("Capital is better deployed elsewhere until the score profile improves — "
+                "the model is flagging more risk than reward here.")
+
+    def _trade_plan(self, t: dict) -> dict:
+        price = float(t.get("price") or 0)
+        atr   = float(t.get("atr_14") or 0)
+        if price <= 0 or atr <= 0:
+            return {
+                "entry":         None,
+                "stop":          None,
+                "target":        None,
+                "r_multiple":    None,
+                "position_pct":  None,
+                "notes":         "Price or ATR unavailable — chart-based stop required."
+            }
+        stop   = round(price - 1.5 * atr, 2)
+        target = round(price + 3.0 * atr, 2)
+        # 1% of account at risk per trade → position size as a % of price
+        risk_per_share = max(price - stop, 0.01)
+        position_pct   = round(min((1.0 / (risk_per_share / price)) , 25.0), 1)
+        return {
+            "entry":         round(price, 2),
+            "stop":          stop,
+            "target":        target,
+            "r_multiple":    2.0,    # 1.5 ATR risk → 3.0 ATR reward
+            "position_pct":  position_pct,
+            "notes":         "Stop = 1.5×ATR below entry. Target = 3.0×ATR above entry. Position sized for 1% account risk.",
+        }
+
+    def _regime_context(self, t: dict, regime: dict) -> str:
+        rl  = regime.get("regime_label", "Mixed")
+        comps = regime.get("components", {})
+        vix = ((comps.get("^VIX") or {}).get("last"))
+        spy_m = ((comps.get("SPY") or {}).get("pct_1m"))
+
+        if rl == "Bullish":
+            return (
+                f"Market is Bullish (VIX ~{vix or '?'}, SPY {spy_m:+.1f}% over 1 month). "
+                f"High-beta growth names are getting the benefit of the doubt."
+            ) if vix and spy_m is not None else (
+                "Market is Bullish — broad tailwind for growth names."
+            )
+        if rl == "Bearish":
+            return (
+                f"Market is Bearish (VIX ~{vix or '?'}, SPY {spy_m:+.1f}% over 1 month). "
+                f"High-beta names face headwinds — expect more chop on entries."
+            ) if vix and spy_m is not None else (
+                "Market is Bearish — expect more chop on entries."
+            )
+        return "Market is Mixed — no broad tailwind or headwind to lean on."
+
+    # ── Optional LLM refinement ──────────────────────────────────────
+    async def _llm_upgrade(self, rule_based: dict, t: dict) -> Optional[dict]:
+        """
+        If ANTHROPIC_API_KEY is set, ask Claude to rewrite the rule-based output
+        with tighter, more specific prose. Falls back silently on any error.
+        """
+        if not _ANTHROPIC_KEY or not _HTTPX_AVAILABLE:
+            return None
+
+        prompt = self._build_llm_prompt(rule_based, t)
+        async with httpx.AsyncClient(timeout=_ANTHROPIC_TIMEOUT) as c:
+            r = await c.post(
+                "https://api.anthropic.com/v1/messages",
+                headers={
+                    "x-api-key":          _ANTHROPIC_KEY,
+                    "anthropic-version":  "2023-06-01",
+                    "content-type":       "application/json",
+                },
+                json={
+                    "model":      _ANTHROPIC_MODEL,
+                    "max_tokens": 600,
+                    "messages":   [{"role": "user", "content": prompt}],
+                },
+            )
+            r.raise_for_status()
+            data = r.json()
+        text = ""
+        for block in data.get("content", []):
+            if block.get("type") == "text":
+                text += block.get("text", "")
+        text = text.strip()
+        if not text:
+            return None
+
+        # Drop the LLM text into the explanation slot; keep all structured fields
+        upgraded = dict(rule_based)
+        upgraded["explanation"] = text
+        upgraded["source"]      = "llm"
+        return upgraded
+
+    def _build_llm_prompt(self, rule_based: dict, t: dict) -> str:
+        return (
+            "You are an equity research analyst. Rewrite the following stock "
+            "thesis explanation in 3 tight sentences. Be specific. No fluff. "
+            "Use the structured facts as ground truth — do NOT invent new numbers.\n\n"
+            f"Ticker: {rule_based['ticker']}\n"
+            f"Recommendation: {rule_based['recommendation']}\n"
+            f"Conviction: {rule_based['conviction']}\n"
+            f"Bull case: {' | '.join(rule_based['bull_case'])}\n"
+            f"Bear case: {' | '.join(rule_based['bear_case'])}\n"
+            f"Regime context: {rule_based['regime_context']}\n"
+            f"Current rule-based explanation: {rule_based['explanation']}\n\n"
+            "Rewritten explanation (3 sentences, plain English, no markdown):"
+        )
+
+
+# ╔════════════════════════════════════════════════════════════════════════╗
+# ║  Utilities                                                             ║
+# ╚════════════════════════════════════════════════════════════════════════╝
+
+def _dedupe(seq: list[str]) -> list[str]:
+    seen, out = set(), []
+    for s in seq:
+        k = s.strip().lower()
+        if k and k not in seen:
+            seen.add(k)
+            out.append(s)
+    return out
+
+
+def apply_regime_to_universe(universe: list[dict], regime: dict) -> None:
+    """
+    Mutates each ticker dict in place: adds smart_score (regime-adjusted Pop Score)
+    plus the regime fields so the dashboard can display them inline.
+    """
+    mult  = float(regime.get("regime_multiplier") or 1.0)
+    label = regime.get("regime_label", "Mixed")
+    rscore= regime.get("regime_score")
+    for t in universe:
+        pop = float(t.get("pop_score") or 0)
+        t["smart_score"]       = round(pop * mult, 1)
+        t["regime_multiplier"] = mult
+        t["regime_label"]      = label
+        if rscore is not None:
+            t["regime_score"]  = rscore
+
+
+def attach_score_history(universe: list[dict], history: ScoreHistory) -> None:
+    """Adds score_velocity / score_acceleration / score_momentum to each ticker."""
+    for t in universe:
+        tk = t.get("ticker")
+        if not tk:
+            continue
+        t.update(history.to_payload(tk))
+
+
+__all__ = [
+    "MarketRegime",
+    "ScoreHistory",
+    "ThesisGenerator",
+    "score_trend_strength",
+    "score_breakout_proximity",
+    "score_news_sentiment",
+    "score_earnings_acceleration",
+    "apply_regime_to_universe",
+    "attach_score_history",
+]

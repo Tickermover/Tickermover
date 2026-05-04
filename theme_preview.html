@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AlphaHunt — Theme Preview</title>
+<style>
+/* ═══════════════════════════════════════════════════════════
+   ALPHAHUNT — "PLASMA DARK" THEME
+   Deep Space Black + Electric Cyan + Violet + Neon Green
+   ═══════════════════════════════════════════════════════════ */
+
+  :root {
+    /* Backgrounds */
+    --bg-void:    #03040a;   /* page background — near-black deep space */
+    --bg-base:    #080b14;   /* main content area */
+    --bg-card:    #0d1120;   /* cards */
+    --bg-surface: #111827;   /* elevated surfaces, modals */
+    --bg-hover:   #162035;   /* hover state */
+
+    /* Borders */
+    --border:     #1a2744;
+    --border-glow:#1e3a5f;
+
+    /* Brand Gradient — Cyan → Violet */
+    --cyan:   #00d4ff;
+    --violet: #7c3aed;
+    --gold:   #fbbf24;
+    --grad:   linear-gradient(135deg, #00d4ff 0%, #7c3aed 100%);
+    --grad-r: linear-gradient(135deg, #7c3aed 0%, #00d4ff 100%);
+
+    /* Semantic */
+    --green:  #00ff88;   /* positive / buy */
+    --red:    #ff3366;   /* negative / sell */
+    --amber:  #f59e0b;   /* warning */
+
+    /* Text */
+    --text-1: #f1f5f9;   /* primary */
+    --text-2: #94a3b8;   /* secondary */
+    --text-3: #4e6280;   /* muted */
+
+    /* Glow effects */
+    --glow-cyan:   0 0 20px rgba(0,212,255,0.25);
+    --glow-violet: 0 0 20px rgba(124,58,237,0.3);
+    --glow-green:  0 0 15px rgba(0,255,136,0.3);
+    --glow-red:    0 0 15px rgba(255,51,102,0.3);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', -apple-system, system-ui, sans-serif;
+    background: var(--bg-void);
+    color: var(--text-1);
+    min-height: 100vh;
+  }
+
+  /* ── HEADER ─────────────────────────────────────────────── */
+  .header {
+    background: rgba(8, 11, 20, 0.95);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    height: 60px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .logo {
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    background: var(--grad);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .badge {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 20px;
+    border: 1px solid;
+  }
+  .badge-ai   { color: var(--cyan);   border-color: var(--cyan);   background: rgba(0,212,255,0.08); }
+  .badge-live { color: var(--green);  border-color: var(--green);  background: rgba(0,255,136,0.08);
+                animation: pulse-green 2s infinite; }
+  .badge-stk  { color: var(--text-2); border-color: var(--border); background: transparent; }
+
+  @keyframes pulse-green {
+    0%,100% { box-shadow: 0 0 0 rgba(0,255,136,0); }
+    50%      { box-shadow: 0 0 10px rgba(0,255,136,0.4); }
+  }
+
+  .header-spacer { flex: 1; }
+
+  .stat-pill {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-2);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 4px 10px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .stat-pill span { color: var(--cyan); }
+
+  .btn-signin {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    padding: 7px 18px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    background: var(--grad);
+    color: #fff;
+    box-shadow: 0 0 20px rgba(0,212,255,0.3);
+    transition: box-shadow 0.2s, transform 0.1s;
+  }
+  .btn-signin:hover {
+    box-shadow: 0 0 30px rgba(0,212,255,0.5), 0 0 60px rgba(124,58,237,0.3);
+    transform: translateY(-1px);
+  }
+
+  /* ── TAB BAR ────────────────────────────────────────────── */
+  .tabs {
+    display: flex;
+    gap: 2px;
+    padding: 0 24px;
+    background: var(--bg-base);
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+  }
+  .tab {
+    font-size: 12px;
+    font-weight: 600;
+    padding: 12px 16px;
+    cursor: pointer;
+    color: var(--text-3);
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+    transition: color 0.2s, border-color 0.2s;
+    letter-spacing: 0.3px;
+  }
+  .tab:hover { color: var(--text-2); }
+  .tab.active {
+    color: var(--cyan);
+    border-bottom-color: var(--cyan);
+    text-shadow: 0 0 10px rgba(0,212,255,0.5);
+  }
+
+  /* ── MAIN LAYOUT ─────────────────────────────────────────── */
+  .main { padding: 24px; max-width: 1400px; margin: 0 auto; }
+
+  .section-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-3);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(to right, var(--border), transparent);
+  }
+
+  .heading-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+  .heading-row h2 {
+    font-size: 20px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    background: var(--grad);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .filter-pill {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    background: rgba(0,212,255,0.08);
+    border: 1px solid rgba(0,212,255,0.25);
+    color: var(--cyan);
+  }
+
+  /* ── HOT CARDS ───────────────────────────────────────────── */
+  .hot-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 14px;
+    margin-bottom: 32px;
+  }
+
+  .hot-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px 20px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
+  }
+  .hot-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--grad);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .hot-card:hover {
+    border-color: var(--border-glow);
+    box-shadow: 0 0 30px rgba(0,212,255,0.12), 0 8px 32px rgba(0,0,0,0.4);
+    transform: translateY(-2px);
+  }
+  .hot-card:hover::before { opacity: 1; }
+
+  /* Rank badge */
+  .card-rank {
+    position: absolute;
+    top: 12px; right: 14px;
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--text-3);
+  }
+
+  .card-top {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .card-icon {
+    width: 40px; height: 40px;
+    border-radius: 10px;
+    background: var(--grad);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 900; color: #fff;
+    flex-shrink: 0;
+    box-shadow: 0 0 20px rgba(0,212,255,0.25);
+  }
+  .card-icon.vi { background: var(--grad-r); box-shadow: 0 0 20px rgba(124,58,237,0.3); }
+  .card-icon.go { background: linear-gradient(135deg, #fbbf24, #f59e0b); box-shadow: 0 0 20px rgba(251,191,36,0.3); }
+  .card-icon.gn { background: linear-gradient(135deg, #00ff88, #00b860); box-shadow: var(--glow-green); }
+
+  .card-info { flex: 1; }
+  .card-ticker {
+    font-size: 16px;
+    font-weight: 900;
+    letter-spacing: 0.5px;
+    color: var(--text-1);
+    line-height: 1;
+    margin-bottom: 2px;
+  }
+  .card-name {
+    font-size: 10px;
+    font-weight: 500;
+    color: var(--text-3);
+    letter-spacing: 0.2px;
+  }
+
+  .card-price {
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    color: var(--text-1);
+    margin-bottom: 2px;
+  }
+  .card-change {
+    font-size: 12px;
+    font-weight: 700;
+  }
+  .pos { color: var(--green); }
+  .neg { color: var(--red); }
+
+  .card-metrics {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+  }
+  .metric { }
+  .metric-label {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text-3);
+    margin-bottom: 2px;
+  }
+  .metric-val {
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--text-1);
+  }
+
+  /* POP score pill */
+  .pop-bar {
+    margin-top: 14px;
+    height: 4px;
+    background: var(--bg-surface);
+    border-radius: 2px;
+    overflow: hidden;
+    position: relative;
+  }
+  .pop-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+    background: var(--grad);
+    box-shadow: 0 0 8px rgba(0,212,255,0.6);
+  }
+  .pop-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 8px;
+  }
+  .pop-label {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text-3);
+  }
+  .pop-score {
+    font-size: 12px;
+    font-weight: 900;
+    color: var(--cyan);
+    text-shadow: 0 0 10px rgba(0,212,255,0.5);
+  }
+  .grade-A {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 900;
+    padding: 2px 7px;
+    border-radius: 5px;
+    background: rgba(0,255,136,0.12);
+    border: 1px solid rgba(0,255,136,0.3);
+    color: var(--green);
+    text-shadow: var(--glow-green);
+  }
+
+  /* ── STATS ROW ───────────────────────────────────────────── */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 28px;
+  }
+  .stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  .stat-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 60px;
+    background: radial-gradient(ellipse at bottom, rgba(0,212,255,0.05) 0%, transparent 70%);
+  }
+  .stat-card.vi::after { background: radial-gradient(ellipse at bottom, rgba(124,58,237,0.08) 0%, transparent 70%); }
+  .stat-card.go::after { background: radial-gradient(ellipse at bottom, rgba(251,191,36,0.06) 0%, transparent 70%); }
+  .stat-card.gn::after { background: radial-gradient(ellipse at bottom, rgba(0,255,136,0.06) 0%, transparent 70%); }
+
+  .stat-icon {
+    font-size: 20px;
+    margin-bottom: 10px;
+    display: block;
+  }
+  .stat-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text-3);
+    margin-bottom: 6px;
+  }
+  .stat-value {
+    font-size: 28px;
+    font-weight: 900;
+    letter-spacing: -1px;
+    background: var(--grad);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .stat-card.vi .stat-value { background: var(--grad-r); -webkit-background-clip: text; background-clip: text; }
+  .stat-card.go .stat-value { background: linear-gradient(135deg, #fbbf24, #f59e0b); -webkit-background-clip: text; background-clip: text; }
+  .stat-card.gn .stat-value { background: linear-gradient(135deg, #00ff88, #00b860); -webkit-background-clip: text; background-clip: text; }
+
+  .stat-sub { font-size: 11px; color: var(--text-3); }
+  .stat-sub .pos { font-weight: 700; }
+
+  /* ── TABLE ───────────────────────────────────────────────── */
+  .table-wrap {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  .table-head {
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+  }
+  .table-head h3 {
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--text-1);
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+  thead th {
+    padding: 10px 16px;
+    text-align: left;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text-3);
+    background: rgba(255,255,255,0.02);
+    border-bottom: 1px solid var(--border);
+  }
+  tbody tr {
+    border-bottom: 1px solid rgba(26,39,68,0.5);
+    transition: background 0.15s;
+    cursor: pointer;
+  }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--bg-hover); }
+  tbody td { padding: 12px 16px; color: var(--text-1); font-weight: 600; }
+
+  .pop-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    font-weight: 800;
+    padding: 3px 8px;
+    border-radius: 6px;
+    background: rgba(0,212,255,0.08);
+    border: 1px solid rgba(0,212,255,0.2);
+    color: var(--cyan);
+  }
+  .pop-chip.hi {
+    background: rgba(0,255,136,0.08);
+    border-color: rgba(0,255,136,0.25);
+    color: var(--green);
+    box-shadow: var(--glow-green);
+  }
+
+  /* ── SPARKLINE PLACEHOLDER ───────────────────────────────── */
+  .sparkline {
+    width: 70px;
+    height: 28px;
+    display: inline-block;
+    vertical-align: middle;
+  }
+
+  /* ── THEME SWITCHER (for preview) ────────────────────────── */
+  .preview-bar {
+    background: linear-gradient(135deg, #7c3aed22, #00d4ff11);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px 20px;
+    margin-bottom: 28px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .preview-bar-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--text-2);
+    flex: 1;
+  }
+  .swatch {
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: border-color 0.15s, transform 0.15s;
+  }
+  .swatch:hover { transform: scale(1.15); }
+  .swatch.active { border-color: #fff; }
+
+  /* ── GLOW DIVIDER ────────────────────────────────────────── */
+  .glow-divider {
+    height: 1px;
+    background: linear-gradient(to right, transparent, var(--cyan), var(--violet), transparent);
+    margin: 24px 0;
+    opacity: 0.4;
+  }
+
+  /* Ticker col */
+  .tick-cell { display: flex; align-items: center; gap: 10px; }
+  .tick-icon {
+    width: 30px; height: 30px;
+    border-radius: 8px;
+    background: var(--grad);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 900; color: #fff;
+    flex-shrink: 0;
+  }
+  .tick-icon.vi { background: var(--grad-r); }
+  .tick-icon.go { background: linear-gradient(135deg, #fbbf24, #f59e0b); }
+  .tick-sym { font-size: 13px; font-weight: 900; letter-spacing: 0.5px; }
+  .tick-name { font-size: 10px; color: var(--text-3); }
+
+  .conf-bar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .conf-track {
+    width: 60px;
+    height: 4px;
+    background: var(--bg-surface);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .conf-fill {
+    height: 100%;
+    border-radius: 2px;
+    background: var(--grad);
+  }
+  .conf-val { font-size: 11px; font-weight: 700; color: var(--cyan); }
+</style>
+</head>
+<body>
+
+<!-- ══ HEADER ══════════════════════════════════════════════ -->
+<div class="header">
+  <div class="logo">AlphaHunt</div>
+  <div class="badge badge-ai">AI Driven</div>
+  <div class="badge badge-live">● LIVE · 09:41 AM</div>
+  <div class="badge badge-stk">— Stocks</div>
+  <div class="header-spacer"></div>
+  <div class="stat-pill">Universe <span>148</span></div>
+  <div class="stat-pill">Hot Picks <span>7</span></div>
+  <div class="stat-pill">Strong Buy <span>7</span></div>
+  <div class="stat-pill">Avg Confidence <span>84%</span></div>
+  <button class="btn-signin">Sign In</button>
+</div>
+
+<!-- ══ TABS ════════════════════════════════════════════════ -->
+<div class="tabs">
+  <div class="tab active">🔥 Hot List</div>
+  <div class="tab">⚠️ Risk Radar</div>
+  <div class="tab">🧠 AI Catalysts</div>
+  <div class="tab">📊 Fundamentals</div>
+  <div class="tab">🗺️ Sector Map</div>
+  <div class="tab">📡 Data Sources</div>
+  <div class="tab">⭐ Watchlist</div>
+  <div class="tab">📘 Guide</div>
+</div>
+
+<!-- ══ MAIN ════════════════════════════════════════════════ -->
+<div class="main">
+
+  <!-- Preview note -->
+  <div class="preview-bar">
+    <span class="preview-bar-label">🎨 &nbsp;PLASMA DARK — Theme Preview &nbsp;·&nbsp; alphahunt.in</span>
+    <span style="font-size:12px;color:var(--text-2)">Accent colors:</span>
+    <div class="swatch active" style="background:linear-gradient(135deg,#00d4ff,#7c3aed)" title="Cyan + Violet (Plasma Dark)"></div>
+    <div class="swatch" style="background:linear-gradient(135deg,#00ff88,#0ea5e9)" title="Neon Green + Blue (Matrix)"></div>
+    <div class="swatch" style="background:linear-gradient(135deg,#f59e0b,#ef4444)" title="Gold + Red (Blaze)"></div>
+    <div class="swatch" style="background:linear-gradient(135deg,#ec4899,#8b5cf6)" title="Pink + Purple (Sakura)"></div>
+  </div>
+
+  <!-- Stats row -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <span class="stat-icon">🔥</span>
+      <div class="stat-label">Hot Picks Today</div>
+      <div class="stat-value">7</div>
+      <div class="stat-sub"><span class="pos">+3</span> vs yesterday</div>
+    </div>
+    <div class="stat-card vi">
+      <span class="stat-icon">📈</span>
+      <div class="stat-label">Avg POP Score</div>
+      <div class="stat-value">76</div>
+      <div class="stat-sub">Grade A universe</div>
+    </div>
+    <div class="stat-card go">
+      <span class="stat-icon">⚡</span>
+      <div class="stat-label">Avg Confidence</div>
+      <div class="stat-value">84%</div>
+      <div class="stat-sub">High-data signals</div>
+    </div>
+    <div class="stat-card gn">
+      <span class="stat-icon">🎯</span>
+      <div class="stat-label">Strong Buys</div>
+      <div class="stat-value">7</div>
+      <div class="stat-sub">All POP ≥ 70</div>
+    </div>
+  </div>
+
+  <!-- Heading row -->
+  <div class="heading-row">
+    <h2>🔥 Hot List</h2>
+    <div class="filter-pill">Grade A</div>
+    <div class="filter-pill">POP ≥ 70</div>
+    <div class="filter-pill">Confidence ≥ 70%</div>
+    <div style="flex:1"></div>
+    <div style="font-size:11px;color:var(--text-3)">Refreshes every 5 min</div>
+  </div>
+
+  <!-- Hot Cards -->
+  <div class="hot-grid">
+
+    <div class="hot-card">
+      <div class="card-rank">#1</div>
+      <div class="card-top">
+        <div class="card-icon">NV</div>
+        <div class="card-info">
+          <div class="card-ticker">NVDA</div>
+          <div class="card-name">NVIDIA Corporation</div>
+        </div>
+      </div>
+      <div class="card-price">$875.40</div>
+      <div class="card-change pos">+3.28% · Today</div>
+      <div class="card-metrics">
+        <div class="metric"><div class="metric-label">Market Cap</div><div class="metric-val">$2.1T</div></div>
+        <div class="metric"><div class="metric-label">FCF Margin</div><div class="metric-val">34.2%</div></div>
+        <div class="metric"><div class="metric-label">Rev Growth</div><div class="metric-val pos">+122%</div></div>
+        <div class="metric"><div class="metric-label">Short Float</div><div class="metric-val">1.1%</div></div>
+      </div>
+      <div class="pop-bar"><div class="pop-bar-fill" style="width:88%"></div></div>
+      <div class="pop-row">
+        <div class="pop-label">POP Score</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <span class="grade-A">A</span>
+          <span class="pop-score">88</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="hot-card">
+      <div class="card-rank">#2</div>
+      <div class="card-top">
+        <div class="card-icon vi">MR</div>
+        <div class="card-info">
+          <div class="card-ticker">MRVL</div>
+          <div class="card-name">Marvell Technology</div>
+        </div>
+      </div>
+      <div class="card-price">$68.91</div>
+      <div class="card-change pos">+5.14% · Today</div>
+      <div class="card-metrics">
+        <div class="metric"><div class="metric-label">Market Cap</div><div class="metric-val">$59B</div></div>
+        <div class="metric"><div class="metric-label">FCF Margin</div><div class="metric-val">18.7%</div></div>
+        <div class="metric"><div class="metric-label">Rev Growth</div><div class="metric-val pos">+41%</div></div>
+        <div class="metric"><div class="metric-label">RSI-14</div><div class="metric-val">62.3</div></div>
+      </div>
+      <div class="pop-bar"><div class="pop-bar-fill" style="width:79%"></div></div>
+      <div class="pop-row">
+        <div class="pop-label">POP Score</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <span class="grade-A">A</span>
+          <span class="pop-score">79</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="hot-card">
+      <div class="card-rank">#3</div>
+      <div class="card-top">
+        <div class="card-icon go">CL</div>
+        <div class="card-info">
+          <div class="card-ticker">CELH</div>
+          <div class="card-name">Celsius Holdings</div>
+        </div>
+      </div>
+      <div class="card-price">$54.20</div>
+      <div class="card-change neg">-1.05% · Today</div>
+      <div class="card-metrics">
+        <div class="metric"><div class="metric-label">Market Cap</div><div class="metric-val">$12B</div></div>
+        <div class="metric"><div class="metric-label">FCF Margin</div><div class="metric-val">22.1%</div></div>
+        <div class="metric"><div class="metric-label">Rev Growth</div><div class="metric-val pos">+63%</div></div>
+        <div class="metric"><div class="metric-label">Momentum 3M</div><div class="metric-val pos">+18%</div></div>
+      </div>
+      <div class="pop-bar"><div class="pop-bar-fill" style="width:74%"></div></div>
+      <div class="pop-row">
+        <div class="pop-label">POP Score</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <span class="grade-A">A</span>
+          <span class="pop-score">74</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="hot-card">
+      <div class="card-rank">#4</div>
+      <div class="card-top">
+        <div class="card-icon gn">AR</div>
+        <div class="card-info">
+          <div class="card-ticker">AEHR</div>
+          <div class="card-name">Aehr Test Systems</div>
+        </div>
+      </div>
+      <div class="card-price">$14.88</div>
+      <div class="card-change pos">+7.92% · Today</div>
+      <div class="card-metrics">
+        <div class="metric"><div class="metric-label">Market Cap</div><div class="metric-val">$530M</div></div>
+        <div class="metric"><div class="metric-label">FCF Margin</div><div class="metric-val">12.4%</div></div>
+        <div class="metric"><div class="metric-label">Rev Growth</div><div class="metric-val pos">+88%</div></div>
+        <div class="metric"><div class="metric-label">Short Float</div><div class="metric-val">8.4%</div></div>
+      </div>
+      <div class="pop-bar"><div class="pop-bar-fill" style="width:72%"></div></div>
+      <div class="pop-row">
+        <div class="pop-label">POP Score</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <span class="grade-A">A</span>
+          <span class="pop-score">72</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="glow-divider"></div>
+
+  <!-- Table section -->
+  <div class="section-label">📊 Fundamentals Universe</div>
+
+  <div class="table-wrap">
+    <div class="table-head">
+      <h3>All Tracked Stocks</h3>
+      <div style="font-size:11px;color:var(--text-3)">148 stocks · sorted by POP score</div>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Ticker</th>
+          <th>Price</th>
+          <th>Change</th>
+          <th>POP Score</th>
+          <th>Confidence</th>
+          <th>FCF Margin</th>
+          <th>Rev Growth</th>
+          <th>Market Cap</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><div class="tick-cell"><div class="tick-icon">NV</div><div><div class="tick-sym">NVDA</div><div class="tick-name">NVIDIA</div></div></div></td>
+          <td>$875.40</td>
+          <td class="pos">+3.28%</td>
+          <td><span class="pop-chip hi">88 <span class="grade-A">A</span></span></td>
+          <td><div class="conf-bar"><div class="conf-track"><div class="conf-fill" style="width:92%"></div></div><span class="conf-val">92%</span></div></td>
+          <td class="pos">34.2%</td>
+          <td class="pos">+122%</td>
+          <td>$2.1T</td>
+        </tr>
+        <tr>
+          <td><div class="tick-cell"><div class="tick-icon vi">MR</div><div><div class="tick-sym">MRVL</div><div class="tick-name">Marvell</div></div></div></td>
+          <td>$68.91</td>
+          <td class="pos">+5.14%</td>
+          <td><span class="pop-chip hi">79 <span class="grade-A">A</span></span></td>
+          <td><div class="conf-bar"><div class="conf-track"><div class="conf-fill" style="width:81%"></div></div><span class="conf-val">81%</span></div></td>
+          <td class="pos">18.7%</td>
+          <td class="pos">+41%</td>
+          <td>$59B</td>
+        </tr>
+        <tr>
+          <td><div class="tick-cell"><div class="tick-icon go">CE</div><div><div class="tick-sym">CELH</div><div class="tick-name">Celsius</div></div></div></td>
+          <td>$54.20</td>
+          <td class="neg">-1.05%</td>
+          <td><span class="pop-chip hi">74 <span class="grade-A">A</span></span></td>
+          <td><div class="conf-bar"><div class="conf-track"><div class="conf-fill" style="width:77%"></div></div><span class="conf-val">77%</span></div></td>
+          <td class="pos">22.1%</td>
+          <td class="pos">+63%</td>
+          <td>$12B</td>
+        </tr>
+        <tr>
+          <td><div class="tick-cell"><div class="tick-icon">AP</div><div><div class="tick-sym">AAPL</div><div class="tick-name">Apple</div></div></div></td>
+          <td>$172.30</td>
+          <td class="pos">+0.42%</td>
+          <td><span class="pop-chip">61 <span style="font-size:9px;color:var(--text-3)">B</span></span></td>
+          <td><div class="conf-bar"><div class="conf-track"><div class="conf-fill" style="width:95%"></div></div><span class="conf-val">95%</span></div></td>
+          <td class="pos">26.8%</td>
+          <td class="neg">-2.1%</td>
+          <td>$2.7T</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<script>
+  // Swatch switcher for demo
+  const themes = [
+    { cyan: '#00d4ff', violet: '#7c3aed', name: 'Plasma Dark' },
+    { cyan: '#00ff88', violet: '#0ea5e9', name: 'Matrix' },
+    { cyan: '#f59e0b', violet: '#ef4444', name: 'Blaze' },
+    { cyan: '#ec4899', violet: '#8b5cf6', name: 'Sakura' },
+  ];
+
+  document.querySelectorAll('.swatch').forEach((sw, i) => {
+    sw.addEventListener('click', () => {
+      document.querySelectorAll('.swatch').forEach(s => s.classList.remove('active'));
+      sw.classList.add('active');
+      const t = themes[i];
+      document.documentElement.style.setProperty('--cyan',   t.cyan);
+      document.documentElement.style.setProperty('--violet', t.violet);
+      document.documentElement.style.setProperty('--grad',   `linear-gradient(135deg, ${t.cyan} 0%, ${t.violet} 100%)`);
+      document.documentElement.style.setProperty('--grad-r', `linear-gradient(135deg, ${t.violet} 0%, ${t.cyan} 100%)`);
+      document.querySelector('.preview-bar-label').textContent = `🎨  ${t.name.toUpperCase()} — Theme Preview  ·  alphahunt.in`;
+    });
+  });
+</script>
+</body>
+</html>

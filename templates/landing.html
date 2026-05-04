@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AlphaHunt — We do the homework. You make the call.</title>
+<meta name="description" content="200+ US stocks scored every 5 minutes, plain-English verdicts that name the conflicts, the why behind every pick. Free during beta.">
+<meta property="og:title" content="AlphaHunt — We do the homework. You make the call.">
+<meta property="og:description" content="200+ US stocks scored every 5 minutes. Plain-English verdicts. The why, not just the numbers.">
+<meta property="og:image" content="/static/icons/icon-512.png">
+<link rel="icon" href="/static/icons/icon-192.png">
+<link rel="manifest" href="/static/manifest.json">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --bg:#ffffff;
+    --bg-soft:#fafbfc;
+    --bg-dark:#0a0e1a;
+    --bg-darker:#070a14;
+    --txt:#0a0a0a;
+    --txt-soft:#475569;
+    --txt-muted:#94a3b8;
+    --bdr:#eef0f3;
+    --bdr-strong:#e2e8f0;
+    --acc:#15803d;
+    --acc-vivid:#16a34a;
+    --acc-bright:#22c55e;
+    --acc-soft:#dcfce7;
+    --neg:#dc2626;
+    --max-w:1180px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    background:var(--bg);color:var(--txt);
+    font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    font-feature-settings:'cv02','cv03','cv04','cv11';
+    -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
+    line-height:1.55;font-size:15.5px;letter-spacing:-0.005em;overflow-x:hidden;
+  }
+  a{color:inherit;text-decoration:none}
+  .mono{font-family:'JetBrains Mono','Inter',monospace;font-feature-settings:'tnum' 1;letter-spacing:-0.01em}
+  .container{max-width:var(--max-w);margin:0 auto;padding:0 24px}
+
+  /* ─── Live ticker strip (matches dashboard) ─── */
+  .ticker-tape{
+    background:linear-gradient(180deg,#0a0e1a 0%,#0f172a 100%);
+    height:36px;overflow:hidden;position:relative;user-select:none;
+    border-bottom:1px solid #1e293b;
+  }
+  .ticker-tape::before,.ticker-tape::after{content:'';position:absolute;top:0;bottom:0;width:60px;z-index:2;pointer-events:none}
+  .ticker-tape::before{left:0;background:linear-gradient(90deg,#0a0e1a,transparent)}
+  .ticker-tape::after{right:0;background:linear-gradient(-90deg,#0a0e1a,transparent)}
+  .ticker-track{display:inline-flex;align-items:center;height:100%;white-space:nowrap;animation:ticker-scroll 80s linear infinite}
+  .ticker-tape:hover .ticker-track{animation-play-state:paused}
+  @keyframes ticker-scroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+  .ticker-loading{color:#94a3b8;font-size:11.5px;padding:0 24px;letter-spacing:.04em}
+  .ticker-chip{display:inline-flex;align-items:center;gap:8px;padding:0 18px;height:36px;border-right:1px solid rgba(255,255,255,.06)}
+  .ticker-sym{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:800;color:#e2e8f0;letter-spacing:.02em}
+  .ticker-px{font-family:'JetBrains Mono',monospace;font-size:11.5px;font-weight:600;color:#cbd5e1}
+  .ticker-chg{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;padding:2px 6px;border-radius:4px}
+  .ticker-chg.up{color:#86efac;background:rgba(22,163,74,.18)}
+  .ticker-chg.down{color:#fca5a5;background:rgba(220,38,38,.18)}
+  .ticker-chg.flat{color:#cbd5e1;background:rgba(148,163,184,.12)}
+
+  /* ─── Nav ─── */
+  nav{
+    position:sticky;top:0;z-index:50;
+    background:rgba(255,255,255,.85);
+    backdrop-filter:saturate(180%) blur(14px);-webkit-backdrop-filter:saturate(180%) blur(14px);
+    border-bottom:1px solid var(--bdr);
+  }
+  .nav-row{display:flex;align-items:center;justify-content:space-between;height:64px}
+  .logo{display:inline-flex;align-items:center;gap:8px;font-size:17px;font-weight:800;letter-spacing:-.02em}
+  .logo svg{width:22px;height:22px;flex-shrink:0}
+  .logo-text em{font-style:normal;color:var(--acc)}
+  .nav-links{display:flex;align-items:center;gap:28px}
+  .nav-links a:not(.nav-cta){font-size:14px;color:var(--txt-soft);font-weight:500;transition:color .15s}
+  .nav-links a:not(.nav-cta):hover{color:var(--txt)}
+  .nav-cta{background:var(--txt);color:#fff;padding:8px 16px;border-radius:8px;font-size:13.5px;font-weight:600;transition:all .15s}
+  .nav-cta:hover{background:#1e293b;transform:translateY(-1px)}
+
+  /* ─── Hero ─── */
+  .hero{padding:96px 0 80px;text-align:center;position:relative;overflow:hidden}
+  .hero::before,.hero::after{content:'';position:absolute;border-radius:50%;pointer-events:none;z-index:-1;filter:blur(80px);opacity:.5}
+  .hero::before{width:520px;height:520px;top:-120px;left:-100px;background:radial-gradient(circle,#bbf7d0 0%,transparent 70%);animation:drift-a 18s ease-in-out infinite alternate}
+  .hero::after{width:600px;height:600px;top:80px;right:-150px;background:radial-gradient(circle,#a5b4fc 0%,transparent 70%);animation:drift-b 22s ease-in-out infinite alternate}
+  .hero-mesh{position:absolute;left:50%;bottom:-60px;width:480px;height:480px;border-radius:50%;transform:translateX(-50%);background:radial-gradient(circle,#fde68a 0%,transparent 70%);filter:blur(90px);opacity:.35;pointer-events:none;z-index:-1;animation:drift-c 26s ease-in-out infinite alternate}
+  @keyframes drift-a{from{transform:translate(0,0) scale(1)}to{transform:translate(80px,40px) scale(1.15)}}
+  @keyframes drift-b{from{transform:translate(0,0) scale(1)}to{transform:translate(-60px,30px) scale(1.1)}}
+  @keyframes drift-c{from{transform:translateX(-50%) scale(1)}to{transform:translateX(-40%) scale(1.2)}}
+
+  .pill{
+    display:inline-flex;align-items:center;gap:6px;
+    background:#fff;border:1px solid var(--bdr-strong);color:var(--txt-soft);
+    font-size:12.5px;font-weight:600;padding:6px 14px;border-radius:999px;margin-bottom:28px;
+    box-shadow:0 1px 2px rgba(15,23,42,.04);
+  }
+  .pill .dot{width:6px;height:6px;border-radius:50%;background:var(--acc-vivid);box-shadow:0 0 0 3px rgba(22,163,74,.18);animation:pulse 2s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+
+  h1{
+    font-size:clamp(40px,7vw,76px);font-weight:900;line-height:1.02;letter-spacing:-.04em;
+    max-width:920px;margin:0 auto 24px;color:var(--txt);
+  }
+  h1 em{font-style:normal;display:inline-block;
+    background:linear-gradient(135deg,var(--acc) 0%,#22c55e 50%,#a3e635 100%);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  }
+  .hero-sub{font-size:clamp(17px,2.2vw,21px);color:var(--txt-soft);max-width:680px;margin:0 auto 44px;line-height:1.5}
+  .hero-cta{display:flex;gap:12px;justify-content:center;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+  .btn-primary{
+    display:inline-flex;align-items:center;gap:8px;
+    background:var(--txt);color:#fff;padding:15px 28px;border-radius:11px;border:none;cursor:pointer;
+    font-size:15.5px;font-weight:700;letter-spacing:-.005em;transition:transform .15s,box-shadow .15s;
+    box-shadow:0 1px 3px rgba(15,23,42,.12),0 4px 14px rgba(15,23,42,.08);
+  }
+  .btn-primary:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(15,23,42,.18),0 12px 32px rgba(15,23,42,.10)}
+  .btn-secondary{
+    display:inline-flex;align-items:center;gap:6px;color:var(--txt);
+    font-size:15px;font-weight:600;padding:15px 22px;border-radius:11px;
+    border:1px solid var(--bdr-strong);background:#fff;transition:all .15s;
+  }
+  .btn-secondary:hover{border-color:var(--txt)}
+  .hero-meta{font-size:13px;color:var(--txt-muted);margin-top:14px;display:flex;justify-content:center;gap:18px;flex-wrap:wrap}
+  .hero-meta strong{color:var(--txt-soft);font-weight:600}
+  .hero-meta .check{color:var(--acc-vivid);margin-right:5px;font-weight:700}
+
+  /* ─── Live preview card under hero ─── */
+  .preview-wrap{margin:64px auto 0;max-width:1040px}
+  .preview{
+    border:1px solid var(--bdr-strong);border-radius:18px;background:#fff;overflow:hidden;
+    box-shadow:0 10px 32px rgba(15,23,42,.08),0 32px 64px rgba(15,23,42,.06);
+    transform:perspective(1600px) rotateX(2deg);transform-origin:center top;
+  }
+  .preview-bar{display:flex;align-items:center;gap:8px;padding:13px 18px;border-bottom:1px solid var(--bdr);background:#fafbfc}
+  .preview-bar .live-dot{width:10px;height:10px;border-radius:50%;background:#16a34a;box-shadow:0 0 0 3px rgba(22,163,74,.18)}
+  .preview-bar .lbl{font-size:11.5px;font-weight:700;color:var(--txt-soft);letter-spacing:.04em;text-transform:uppercase}
+  .preview-bar .meta{font-size:11.5px;color:var(--txt-muted);margin-left:auto;font-weight:500}
+  .preview-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(232px,1fr))}
+  .preview-card{padding:16px 18px;border-right:1px solid var(--bdr);border-bottom:1px solid var(--bdr);background:#fff}
+  .pc-row{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
+  .pc-tic{font-size:15px;font-weight:800;color:var(--txt);letter-spacing:-.01em}
+  .pc-name{font-size:11px;color:var(--txt-muted);margin-top:1px;max-width:130px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pc-grade{font-size:10.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;padding:3px 8px;border-radius:6px;background:var(--acc-soft);color:var(--acc);border:1px solid rgba(22,163,74,.3)}
+  .pc-score{display:flex;align-items:baseline;gap:4px;margin:6px 0}
+  .pc-num{font-size:26px;font-weight:800;color:var(--txt);letter-spacing:-.02em;font-family:'JetBrains Mono',monospace}
+  .pc-num-lbl{font-size:11px;color:var(--txt-muted);font-weight:600}
+  .pc-foot{display:flex;align-items:center;gap:8px;margin-top:6px;font-size:11.5px}
+  .pc-price{font-weight:700;color:var(--txt);font-family:'JetBrains Mono',monospace}
+  .pc-chg{font-weight:600;font-family:'JetBrains Mono',monospace}
+  .pc-chg.pos{color:var(--acc)}
+  .pc-chg.neg{color:var(--neg)}
+  .pc-pill{font-size:10px;color:var(--txt-soft);background:var(--bg-soft);padding:2px 7px;border-radius:5px;border:1px solid var(--bdr);font-weight:500;font-family:'JetBrains Mono',monospace}
+
+  /* ─── Section ─── */
+  section{padding:104px 0;position:relative;overflow:hidden}
+  section.alt{background:var(--bg-soft);border-top:1px solid var(--bdr);border-bottom:1px solid var(--bdr)}
+
+  /* Accent blobs carry the hero's green/indigo/amber palette through the
+     page so the colour theme stays unified. Opacities bumped so the tone
+     is actually visible — not so faint that you have to squint. */
+  section.alt::before{
+    content:'';position:absolute;top:-120px;right:-180px;
+    width:560px;height:560px;border-radius:50%;
+    background:radial-gradient(circle,#a5b4fc 0%,#dbeafe 50%,transparent 75%);
+    filter:blur(60px);opacity:1;pointer-events:none;z-index:0;
+  }
+  section.alt::after{
+    content:'';position:absolute;bottom:-160px;left:-200px;
+    width:520px;height:520px;border-radius:50%;
+    background:radial-gradient(circle,#86efac 0%,#dcfce7 50%,transparent 75%);
+    filter:blur(60px);opacity:1;pointer-events:none;z-index:0;
+  }
+  section.alt > .container{position:relative;z-index:1}
+
+  /* The non-.alt mid sections also get a much softer ambient tint so the
+     transitions between white sections aren't completely flat. */
+  section.mid-tint{position:relative}
+  section.mid-tint::before{
+    content:'';position:absolute;top:0;right:-200px;
+    width:480px;height:480px;border-radius:50%;
+    background:radial-gradient(circle,#fde68a 0%,#fef3c7 50%,transparent 75%);
+    filter:blur(80px);opacity:.85;pointer-events:none;z-index:0;
+  }
+  section.mid-tint::after{
+    content:'';position:absolute;bottom:-100px;left:-180px;
+    width:440px;height:440px;border-radius:50%;
+    background:radial-gradient(circle,#bbf7d0 0%,#dcfce7 50%,transparent 75%);
+    filter:blur(80px);opacity:.85;pointer-events:none;z-index:0;
+  }
+  section.mid-tint > .container{position:relative;z-index:1}
+
+  /* FAQ section gets the soft soft-bg treatment */
+  #faq{background:var(--bg-soft);border-top:1px solid var(--bdr);position:relative;overflow:hidden}
+  #faq::before{
+    content:'';position:absolute;top:-100px;left:50%;transform:translateX(-50%);
+    width:600px;height:400px;
+    background:radial-gradient(ellipse,#dbeafe 0%,transparent 65%);
+    filter:blur(70px);opacity:.8;pointer-events:none;z-index:0;
+  }
+  #faq > .container{position:relative;z-index:1}
+  section.dark{background:var(--bg-dark);color:#e2e8f0}
+  section.dark .sec-eyebrow{color:#86efac}
+  section.dark .sec-h2{color:#fff}
+  section.dark .sec-sub{color:#94a3b8}
+
+  .sec-head{text-align:center;max-width:720px;margin:0 auto 64px}
+  .sec-eyebrow{display:inline-block;font-size:11.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--acc);margin-bottom:16px}
+  .sec-h2{font-size:clamp(32px,4.5vw,48px);font-weight:800;letter-spacing:-.03em;line-height:1.1;margin-bottom:16px;color:var(--txt)}
+  .sec-sub{font-size:17px;color:var(--txt-soft);line-height:1.55;max-width:600px;margin:0 auto}
+
+  /* ─── 3-step "How it works" ─── */
+  .steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:22px}
+  .step{
+    background:#fff;border:1px solid var(--bdr);border-radius:18px;padding:32px;
+    transition:transform .2s,box-shadow .2s;position:relative;
+  }
+  section.dark .step{background:#0f172a;border-color:#1e293b;color:#e2e8f0}
+  .step:hover{transform:translateY(-3px);box-shadow:0 12px 32px rgba(15,23,42,.08)}
+  section.dark .step:hover{box-shadow:0 12px 32px rgba(0,0,0,.3)}
+  .step-num{
+    display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:11px;
+    background:var(--acc);color:#fff;font-size:16px;font-weight:800;margin-bottom:18px;
+    font-family:'JetBrains Mono',monospace;
+  }
+  section.dark .step-num{background:#16a34a;color:#fff}
+  .step h3{font-size:19px;font-weight:700;letter-spacing:-.015em;margin-bottom:10px;color:inherit}
+  .step p{font-size:14.5px;color:var(--txt-soft);line-height:1.6}
+  section.dark .step p{color:#94a3b8}
+
+  /* ─── Bottom Line + Gauge demo (signature feature showcase) ─── */
+  .verdict-row{display:grid;grid-template-columns:1.4fr 1fr;gap:32px;max-width:980px;margin:0 auto;align-items:center}
+  @media(max-width:760px){.verdict-row{grid-template-columns:1fr}}
+  .verdict-card{
+    background:#fffbeb;border:1px solid #fcd34d;border-left:5px solid #f59e0b;
+    border-radius:14px;padding:22px 26px;
+  }
+  .v-head{font-size:13px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:#92400e;margin-bottom:8px}
+  .v-body{font-size:15px;color:var(--txt);line-height:1.6}
+  .gauge-demo{display:flex;justify-content:center;align-items:center}
+  .gauge-demo svg{width:100%;max-width:240px;height:auto}
+
+  /* ─── Three "Why us" principles (replaces comparison table) ─── */
+  .principles{
+    display:grid;grid-template-columns:repeat(3,1fr);gap:24px;
+    max-width:1080px;margin:0 auto;
+  }
+  @media(max-width:880px){.principles{grid-template-columns:1fr;max-width:600px}}
+  .principle{
+    background:rgba(255,255,255,.04);
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:18px;padding:36px 30px;
+    transition:transform .2s,border-color .2s,background .2s;
+    position:relative;overflow:hidden;
+  }
+  .principle::before{
+    content:'';position:absolute;top:-40px;right:-40px;
+    width:160px;height:160px;border-radius:50%;
+    background:radial-gradient(circle,rgba(34,197,94,.18) 0%,transparent 70%);
+    pointer-events:none;
+  }
+  .principle:hover{
+    transform:translateY(-4px);
+    border-color:rgba(132,204,22,.25);
+    background:rgba(255,255,255,.06);
+  }
+  .principle-num{
+    display:inline-block;font-size:13px;font-weight:800;letter-spacing:.06em;
+    color:#86efac;font-family:'JetBrains Mono',monospace;margin-bottom:18px;
+    padding:4px 10px;background:rgba(22,163,74,.15);border-radius:6px;
+    border:1px solid rgba(22,163,74,.3);
+  }
+  .principle h3{
+    font-size:22px;font-weight:800;letter-spacing:-.02em;line-height:1.2;
+    margin-bottom:12px;color:#fff;
+  }
+  .principle p{
+    font-size:14.5px;color:#cbd5e1;line-height:1.65;
+  }
+  .principle p em{color:#fde68a;font-style:italic;font-weight:500}
+  .principle p strong{color:#fff;font-weight:700}
+
+  /* ─── Stats strip ─── */
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:0;background:#fff;border:1px solid var(--bdr);border-radius:14px;overflow:hidden}
+  .stat{padding:32px 24px;text-align:center;border-right:1px solid var(--bdr)}
+  .stat:last-child{border-right:none}
+  .stat-num{font-size:36px;font-weight:800;color:var(--txt);letter-spacing:-.025em;line-height:1;font-family:'JetBrains Mono',monospace}
+  .stat-num.acc{color:var(--acc)}
+  .stat-lbl{font-size:13px;color:var(--txt-soft);margin-top:10px;font-weight:500}
+
+  /* ─── Trust strip ─── */
+  .trust{display:flex;align-items:center;justify-content:center;gap:36px;flex-wrap:wrap;opacity:.8}
+  .trust-name{font-size:14.5px;font-weight:700;color:var(--txt-soft);letter-spacing:-.01em}
+
+  /* ─── FAQ ─── */
+  .faq{max-width:760px;margin:0 auto}
+  .faq-item{border-bottom:1px solid var(--bdr);padding:22px 0}
+  .faq-q{display:flex;justify-content:space-between;align-items:center;gap:18px;font-size:16px;font-weight:600;color:var(--txt);cursor:pointer;letter-spacing:-.005em}
+  .faq-q::after{content:'+';font-size:22px;color:var(--txt-muted);font-weight:300;transition:transform .2s}
+  .faq-item.open .faq-q::after{transform:rotate(45deg)}
+  .faq-a{font-size:14.5px;color:var(--txt-soft);line-height:1.65;max-height:0;overflow:hidden;transition:max-height .25s ease,padding .25s}
+  .faq-item.open .faq-a{max-height:320px;padding-top:14px}
+
+  /* ─── Final CTA ─── */
+  .final-cta{text-align:center;padding:120px 0;background:linear-gradient(135deg,#0a0e1a 0%,#1a2e1a 60%,#0a0e1a 100%);color:#fff;position:relative;overflow:hidden}
+  .final-cta::before{content:'';position:absolute;top:50%;left:50%;width:800px;height:800px;border-radius:50%;background:radial-gradient(circle,rgba(34,197,94,.15) 0%,transparent 65%);transform:translate(-50%,-50%);pointer-events:none}
+  .final-cta h2{font-size:clamp(36px,5vw,56px);font-weight:800;letter-spacing:-.03em;line-height:1.1;margin-bottom:18px;color:#fff;position:relative}
+  .final-cta p{font-size:18px;color:rgba(255,255,255,.7);margin-bottom:36px;position:relative}
+  .final-cta .btn-primary{background:#fff;color:var(--txt);position:relative}
+  .final-cta .btn-primary:hover{background:#f1f5f9}
+
+  /* ─── Footer ─── */
+  footer{padding:48px 0;border-top:1px solid var(--bdr);background:#fff}
+  .footer-row{display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap}
+  .footer-links{display:flex;gap:26px}
+  .footer-links a{font-size:13.5px;color:var(--txt-soft);font-weight:500;transition:color .15s}
+  .footer-links a:hover{color:var(--txt)}
+  .footer-copy{font-size:12.5px;color:var(--txt-muted)}
+
+  /* ─── Reveal-on-scroll ─── */
+  .reveal{opacity:0;transform:translateY(28px);transition:opacity .8s cubic-bezier(.22,.61,.36,1),transform .8s cubic-bezier(.22,.61,.36,1)}
+  .reveal.in{opacity:1;transform:none}
+  .reveal-stagger > *{opacity:0;transform:translateY(18px);transition:opacity .65s cubic-bezier(.22,.61,.36,1),transform .65s cubic-bezier(.22,.61,.36,1)}
+  .reveal-stagger.in > *{opacity:1;transform:none}
+  .reveal-stagger.in > *:nth-child(1){transition-delay:.05s}
+  .reveal-stagger.in > *:nth-child(2){transition-delay:.15s}
+  .reveal-stagger.in > *:nth-child(3){transition-delay:.25s}
+  .reveal-stagger.in > *:nth-child(4){transition-delay:.35s}
+  .reveal-stagger.in > *:nth-child(5){transition-delay:.45s}
+  .reveal-stagger.in > *:nth-child(6){transition-delay:.55s}
+  .reveal-stagger.in > *:nth-child(7){transition-delay:.65s}
+  @media (prefers-reduced-motion:reduce){
+    .reveal,.reveal-stagger > *{opacity:1;transform:none;transition:none}
+    .hero::before,.hero::after,.hero-mesh,.pill .dot,.ticker-track{animation:none}
+  }
+
+  @media(max-width:768px){
+    .nav-links a:not(.nav-cta){display:none}
+    .hero{padding:64px 0 56px}
+    section{padding:72px 0}
+    .preview{transform:none}
+    .preview-card{border-right:none}
+    .stat{border-right:none;border-bottom:1px solid var(--bdr)}
+    .stat:last-child{border-bottom:none}
+    .footer-row{flex-direction:column;text-align:center}
+    .compare th,.compare td{padding:12px 14px;font-size:13px}
+  }
+</style>
+</head>
+<body>
+
+<!-- ─── LIVE TICKER STRIP (matches dashboard) ─── -->
+<div class="ticker-tape" id="ticker-tape">
+  <div class="ticker-track" id="ticker-track">
+    <span class="ticker-loading">Loading market data…</span>
+  </div>
+</div>
+
+<!-- ─── NAV ─── -->
+<nav>
+  <div class="container nav-row">
+    <a href="/" class="logo">
+      <svg viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg">
+        <defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#16a34a"/>
+          <stop offset=".55" stop-color="#84cc16"/>
+          <stop offset="1" stop-color="#a3e635"/>
+        </linearGradient></defs>
+        <rect width="28" height="28" rx="7" fill="#0f172a"/>
+        <polyline points="4,21 9,13 15,17 20,7 24,12" stroke="url(#lg)" stroke-width="2.3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="20" cy="7" r="2.5" fill="#a3e635"/>
+      </svg>
+      <span class="logo-text">Alpha<em>Hunt</em></span>
+    </a>
+    <div class="nav-links">
+      <a href="#how">How it works</a>
+      <a href="#what-you-get">What you get</a>
+      <a href="#compare">Why us</a>
+      <a href="#faq">FAQ</a>
+      <a href="/app?signup=1" class="nav-cta">Sign up free</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ─── HERO ─── -->
+<section class="hero">
+  <div class="hero-mesh"></div>
+  <div class="container">
+    <div class="pill"><span class="dot"></span> Free during beta · No credit card required</div>
+    <h1>We do the homework.<br><em>You make the call.</em></h1>
+    <p class="hero-sub">
+      200+ US stocks scored every 5 minutes — with plain-English verdicts, the conflicts named,
+      and concrete price levels. Stop drowning in spreadsheets.
+    </p>
+    <div class="hero-cta">
+      <a href="/app?signup=1" class="btn-primary">Sign up free →</a>
+      <a href="#live" class="btn-secondary">See it live</a>
+    </div>
+    <div class="hero-meta">
+      <span><span class="check">✓</span> 200+ US stocks</span>
+      <span><span class="check">✓</span> Refreshed every 5 min</span>
+      <span><span class="check">✓</span> 100% free during beta</span>
+    </div>
+
+    <!-- Live preview card -->
+    <div class="preview-wrap" id="live">
+      <div class="preview">
+        <div class="preview-bar">
+          <div class="live-dot"></div>
+          <div class="lbl">Live Hot List · top picks right now</div>
+          <div class="meta" id="live-meta">refreshing…</div>
+        </div>
+        <div class="preview-grid" id="landing-hot"><!-- filled by JS --></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── HOW IT WORKS (DARK) ─── -->
+<section id="how" class="dark">
+  <div class="container">
+    <div class="sec-head reveal">
+      <span class="sec-eyebrow">How it works</span>
+      <h2 class="sec-h2">Three steps. No spreadsheets.</h2>
+      <p class="sec-sub">A Bloomberg terminal costs $24,000 a year. You don't need one. You just need someone to read the data so you don't have to.</p>
+    </div>
+    <div class="steps reveal-stagger">
+      <div class="step">
+        <div class="step-num">01</div>
+        <h3>We score every stock</h3>
+        <p>200+ hand-picked US stocks scored on 19 signals — momentum, earnings beats, analyst sentiment, insider activity, news flow, macro regime. Refreshed every 5 minutes during market hours.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">02</div>
+        <h3>You see the top 20</h3>
+        <p>The Hot List shows the 20 highest-conviction setups right now. Each ranked, color-coded, and tagged with the macro environment and the conflicts (if any).</p>
+      </div>
+      <div class="step">
+        <div class="step-num">03</div>
+        <h3>Click any pick — get the why</h3>
+        <p>One-sentence verdict, the reasoning, the risks, concrete entry levels, peer comparison, and a Reverse DCF telling you what growth the price already implies. No homework needed.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── BOTTOM LINE DEMO ─── -->
+<section class="mid-tint">
+  <div class="container">
+    <div class="sec-head reveal">
+      <span class="sec-eyebrow">The bottom line</span>
+      <h2 class="sec-h2">A verdict, not a wall of numbers.</h2>
+      <p class="sec-sub">Every pick comes with a one-sentence verdict that names the conflicts and tells you what to do — not just what the numbers are.</p>
+    </div>
+    <div class="verdict-row reveal">
+      <div class="verdict-card">
+        <div class="v-head">⚠️ Strong Buy · with caution</div>
+        <div class="v-body">
+          Top-tier setup — 23% revenue growth, +24% 30-day momentum, 4/4 EPS beats.
+          <strong>Caveat:</strong> trades 10% above analyst mean target.
+          <strong>Best move:</strong> wait for a pullback toward $128, or only enter
+          if you expect upward estimate revisions.
+        </div>
+      </div>
+      <div class="gauge-demo">
+        <!-- Wedge boundaries (score → angle, where score 0 = π rad, 100 = 0 rad):
+             0→180°, 40→108°, 50→90°, 60→72°, 68→57.6°, 100→0°
+             Outer R=80, inner r=60, center (100,100). All endpoints
+             share exact decimal-aligned coordinates so adjacent wedges
+             share boundaries with no visible gaps. -->
+        <svg viewBox="0 0 200 138" xmlns="http://www.w3.org/2000/svg">
+          <!-- 0-40 (red) -->
+          <path d="M 20.00 100.00 A 80 80 0 0 1 75.28 23.92 L 81.46 42.94 A 60 60 0 0 0 40.00 100.00 Z" fill="#dc2626"/>
+          <!-- 40-50 (orange) -->
+          <path d="M 75.28 23.92 A 80 80 0 0 1 100.00 20.00 L 100.00 40.00 A 60 60 0 0 0 81.46 42.94 Z" fill="#f97316"/>
+          <!-- 50-60 (yellow) -->
+          <path d="M 100.00 20.00 A 80 80 0 0 1 124.72 23.92 L 118.54 42.94 A 60 60 0 0 0 100.00 40.00 Z" fill="#facc15"/>
+          <!-- 60-68 (light green) -->
+          <path d="M 124.72 23.92 A 80 80 0 0 1 142.79 32.50 L 132.10 49.37 A 60 60 0 0 0 118.54 42.94 Z" fill="#84cc16"/>
+          <!-- 68-100 (deep green) -->
+          <path d="M 142.79 32.50 A 80 80 0 0 1 180.00 100.00 L 160.00 100.00 A 60 60 0 0 0 132.10 49.37 Z" fill="#15803d"/>
+          <!-- Needle pointing to 85 (angle = π × 0.15 = 27°) -->
+          <line x1="91.09" y1="104.54" x2="164.16" y2="67.31" stroke="#0f172a" stroke-width="3.2" stroke-linecap="round"/>
+          <circle cx="100" cy="100" r="7" fill="#0f172a" stroke="#fff" stroke-width="2"/>
+          <text x="100" y="78" text-anchor="middle" font-family="JetBrains Mono,Inter,monospace" font-size="32" font-weight="800" fill="#0f172a">85</text>
+          <text x="100" y="128" text-anchor="middle" font-family="Inter,sans-serif" font-size="13" font-weight="900" letter-spacing="0.8" fill="#15803d">STRONG BUY</text>
+        </svg>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── WHAT YOU GET ─── -->
+<section id="what-you-get" class="alt">
+  <div class="container">
+    <div class="sec-head reveal">
+      <span class="sec-eyebrow">What you get</span>
+      <h2 class="sec-h2">Pro-level signal. Retail-friendly UX.</h2>
+      <p class="sec-sub">Everything an analyst would write up about a stock. None of the spreadsheet work.</p>
+    </div>
+    <div class="steps reveal-stagger" style="grid-template-columns:repeat(auto-fit,minmax(260px,1fr))">
+      <div class="step">
+        <div class="step-num" style="background:#dcfce7;color:#15803d">★</div>
+        <h3>One Pop Score</h3>
+        <p>A single 0–100 number that blends 19 signals — growth, momentum, technicals, analyst views, macro and more.</p>
+      </div>
+      <div class="step">
+        <div class="step-num" style="background:#dbeafe;color:#1e40af">≈</div>
+        <h3>Reverse DCF</h3>
+        <p>What revenue growth is the market already pricing in? See the bar before you take the bet.</p>
+      </div>
+      <div class="step">
+        <div class="step-num" style="background:#fef3c7;color:#b45309">⚠</div>
+        <h3>Conflict detection</h3>
+        <p>When momentum says go but Wall Street targets say stop, we flag it and tell you what to do.</p>
+      </div>
+      <div class="step">
+        <div class="step-num" style="background:#dcfce7;color:#15803d">↗</div>
+        <h3>Estimate revisions</h3>
+        <p>How many analysts raised vs cut their forecast in the last 30 days. The most predictive forward signal.</p>
+      </div>
+      <div class="step">
+        <div class="step-num" style="background:#dbeafe;color:#1e40af">⌘</div>
+        <h3>Peer comparison</h3>
+        <p>How does this stock rank vs its sub-sector peers on score, growth, and valuation? Instantly.</p>
+      </div>
+      <div class="step">
+        <div class="step-num" style="background:#fef3c7;color:#b45309">📰</div>
+        <h3>Latest news inline</h3>
+        <p>The 5 most recent headlines per stock, surfaced in the modal. No more bouncing between tabs.</p>
+      </div>
+      <div class="step">
+        <div class="step-num" style="background:#dcfce7;color:#15803d">🌡</div>
+        <h3>Macro-aware scoring</h3>
+        <p>Bullish, mixed, bearish — we read the broader market and adjust scores accordingly.</p>
+      </div>
+      <div class="step">
+        <div class="step-num" style="background:#dbeafe;color:#1e40af">⭐</div>
+        <h3>Personal watchlist</h3>
+        <p>Save stocks you care about. Track them in one place. Yours forever.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── COMPARISON TABLE ─── -->
+<!-- ─── WHY ALPHAHUNT — three principles, no comparison table ─── -->
+<section id="compare" class="dark">
+  <div class="container">
+    <div class="sec-head reveal">
+      <span class="sec-eyebrow">Why AlphaHunt</span>
+      <h2 class="sec-h2">Three principles. No spreadsheet PhD required.</h2>
+      <p class="sec-sub">Most stock tools force a choice: easy-to-use OR comprehensive. We refuse the trade-off.</p>
+    </div>
+    <div class="principles reveal-stagger">
+      <div class="principle">
+        <div class="principle-num">01</div>
+        <h3>We name the conflict.</h3>
+        <p>Other tools show you a Strong Buy and let you discover the catch yourself. We surface it on the same screen — <em>"trades 10% above analyst mean — wait for a pullback toward $128."</em> The verdict <strong>and</strong> the caveat <strong>and</strong> the action, in one sentence.</p>
+      </div>
+      <div class="principle">
+        <div class="principle-num">02</div>
+        <h3>We do the work you don't have time for.</h3>
+        <p>19 signals scored every 5 minutes across 200+ stocks — momentum, fundamentals, analyst revisions, macro regime, peer ranking, reverse DCF. You don't need to compute any of it. You just read the result and decide.</p>
+      </div>
+      <div class="principle">
+        <div class="principle-num">03</div>
+        <h3>We respect your money.</h3>
+        <p>Free during beta. No ads. No upsells in the modal. No "premium tier paywall" hiding the good signals. When we eventually charge, beta users keep their access to the core forever.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ─── STATS + DATA SOURCES ─── -->
+<section class="alt">
+  <div class="container">
+    <div class="stats reveal-stagger">
+      <div class="stat"><div class="stat-num">200+</div><div class="stat-lbl">US stocks scored</div></div>
+      <div class="stat"><div class="stat-num">19</div><div class="stat-lbl">Signals per stock</div></div>
+      <div class="stat"><div class="stat-num">5min</div><div class="stat-lbl">Refresh cycle</div></div>
+      <div class="stat"><div class="stat-num acc">Free</div><div class="stat-lbl">During beta</div></div>
+    </div>
+  </div>
+</section>
+
+<section id="faq">
+  <div class="container">
+    <div class="sec-head reveal">
+      <span class="sec-eyebrow">FAQ</span>
+      <h2 class="sec-h2">Common questions</h2>
+    </div>
+    <div class="faq reveal">
+      <div class="faq-item"><div class="faq-q">Is this financial advice?</div><div class="faq-a">No. AlphaHunt is a research tool. We surface high-quality setups and explain the reasoning. Every buy/sell decision is yours. We're not licensed advisors.</div></div>
+      <div class="faq-item"><div class="faq-q">What's the Pop Score?</div><div class="faq-a">A single 0-100 number that blends 19 signals. Anything 68+ is Grade A (Strong Buy), 60-68 is Grade B (Buy).</div></div>
+      <div class="faq-item"><div class="faq-q">Why is it free?</div><div class="faq-a">We're in beta. We want real users and feedback before we charge. Beta users get permanent access to the core features when paid tiers launch.</div></div>
+      <div class="faq-item"><div class="faq-q">What stocks does it cover?</div><div class="faq-a">~200 hand-curated US stocks with $500M+ market cap. Universe expands as we go.</div></div>
+      <div class="faq-item"><div class="faq-q">How does the Reverse DCF work?</div><div class="faq-a">It tells you what 10-year revenue growth the market is pricing in. Compare to actual recent growth — if actual is higher, the stock has room.</div></div>
+      <div class="faq-item"><div class="faq-q">How often does it refresh?</div><div class="faq-a">Live prices every 30s. Hot List rescores every 5 minutes. Fundamentals hourly. Macro every 30 minutes.</div></div>
+      <div class="faq-item"><div class="faq-q">Does it work outside the US?</div><div class="faq-a">Yes. AlphaHunt covers US-listed stocks but is usable from anywhere.</div></div>
+    </div>
+  </div>
+</section>
+
+<section class="final-cta">
+  <div class="container">
+    <h2>Stop guessing. Start finding.</h2>
+    <p>Free during beta. No credit card. Sign up in 30 seconds.</p>
+    <a href="/app?signup=1" class="btn-primary">Sign up free →</a>
+  </div>
+</section>
+
+<footer>
+  <div class="container footer-row">
+    <a href="/" class="logo" style="font-size:14px">
+      <svg viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg" style="width:18px;height:18px">
+        <defs><linearGradient id="lgf" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#16a34a"/><stop offset=".55" stop-color="#84cc16"/><stop offset="1" stop-color="#a3e635"/></linearGradient></defs>
+        <rect width="28" height="28" rx="7" fill="#0f172a"/>
+        <polyline points="4,21 9,13 15,17 20,7 24,12" stroke="url(#lgf)" stroke-width="2.3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="20" cy="7" r="2.5" fill="#a3e635"/>
+      </svg>
+      <span class="logo-text">Alpha<em>Hunt</em></span>
+    </a>
+    <div class="footer-links">
+      <a href="/app">Open dashboard</a>
+      <a href="#faq">FAQ</a>
+      <a href="mailto:support@alphahunt.in">Contact</a>
+      <a href="/privacy" target="_blank">Privacy</a>
+    </div>
+    <div class="footer-copy">© 2026 AlphaHunt · Not financial advice</div>
+  </div>
+</footer>
+
+<script>
+async function loadLandingData() {
+  const grid = document.getElementById('landing-hot');
+  const meta = document.getElementById('live-meta');
+  const tape = document.getElementById('ticker-track');
+  try {
+    const r = await fetch('/api/universe');
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const d = await r.json();
+    const tickers = (d.tickers || []).filter(t => parseFloat(t.price) > 0);
+
+    const sortKey = t => parseFloat(t.smart_score != null ? t.smart_score : (t.pop_score || 0));
+    const picks = [...tickers].sort((a,b) => sortKey(b) - sortKey(a)).slice(0, 4);
+    if (picks.length && grid) {
+      grid.innerHTML = picks.map(t => {
+        const score = sortKey(t);
+        const chg = parseFloat(t.change_pct || 0);
+        const chgStr = isFinite(chg) ? (chg >= 0 ? '+' : '') + chg.toFixed(2) + '%' : '-';
+        const rsi = t.rsi_14 != null ? Math.round(t.rsi_14) : '-';
+        return `<div class="preview-card">
+          <div class="pc-row">
+            <div><div class="pc-tic">${t.ticker || '-'}</div><div class="pc-name">${(t.name || '').slice(0,24)}</div></div>
+            <span class="pc-grade">${t.grade || '-'}</span>
+          </div>
+          <div class="pc-score"><span class="pc-num">${Math.round(score)}</span><span class="pc-num-lbl">Pop Score</span></div>
+          <div class="pc-foot">
+            <span class="pc-price">$${t.price != null ? Number(t.price).toFixed(2) : '-'}</span>
+            <span class="pc-chg ${chg >= 0 ? 'pos' : 'neg'}">${chgStr}</span>
+            <span class="pc-pill">RSI ${rsi}</span>
+          </div>
+        </div>`;
+      }).join('');
+      if (meta) meta.textContent = 'updated just now';
+    }
+
+    const valid = tickers.filter(t => isFinite(parseFloat(t.change_pct)));
+    const byChg = [...valid].sort((a,b) => parseFloat(b.change_pct) - parseFloat(a.change_pct));
+    const tickerPicks = [...byChg.slice(0, 12), ...byChg.slice(-8).reverse()].slice(0, 22);
+    if (tickerPicks.length && tape) {
+      const chipHTML = t => {
+        const chg = parseFloat(t.change_pct || 0);
+        const cls = chg > 0.05 ? 'up' : chg < -0.05 ? 'down' : 'flat';
+        const sign = chg > 0 ? '+' : '';
+        const arrow = chg > 0.05 ? '▲' : chg < -0.05 ? '▼' : '·';
+        const px = parseFloat(t.price);
+        const pxStr = px >= 1000 ? px.toFixed(0) : px >= 100 ? px.toFixed(1) : px.toFixed(2);
+        return `<span class="ticker-chip"><span class="ticker-sym">${t.ticker}</span><span class="ticker-px">$${pxStr}</span><span class="ticker-chg ${cls}">${arrow} ${sign}${chg.toFixed(2)}%</span></span>`;
+      };
+      const chips = tickerPicks.map(chipHTML).join('');
+      tape.innerHTML = chips + chips;
+    }
+  } catch (e) {
+    if (meta) meta.textContent = 'connecting…';
+  }
+}
+
+document.querySelectorAll('.faq-q').forEach(q => {
+  q.addEventListener('click', () => {
+    const item = q.closest('.faq-item');
+    const wasOpen = item.classList.contains('open');
+    document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+    if (!wasOpen) item.classList.add('open');
+  });
+});
+
+(function setupReveal(){
+  if (!('IntersectionObserver' in window)) {
+    document.querySelectorAll('.reveal,.reveal-stagger').forEach(el => el.classList.add('in'));
+    return;
+  }
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
+  }, {rootMargin:'0px 0px -10% 0px', threshold:0.05});
+  document.querySelectorAll('.reveal,.reveal-stagger').forEach(el => io.observe(el));
+})();
+
+loadLandingData();
+setInterval(loadLandingData, 30 * 1000);
+</script>
+</body>
+</html>

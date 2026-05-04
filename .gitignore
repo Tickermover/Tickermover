@@ -1,0 +1,28 @@
+# Secrets — NEVER commit
+.env
+config_local.py
+
+# Cache & output
+output/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Virtual env
+venv/
+env/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
