@@ -38,6 +38,77 @@ def _decode_jwt(token: str, secret: str) -> Optional[dict]:
         return None
 
 
+# ── JWKS verification — handles new asymmetric Supabase signing keys ───────────
+# Supabase rolled out a new asymmetric JWT signing system (ECC P-256 / RSA)
+# in 2024-25. Newly created projects sign tokens with the asymmetric private
+# key; verification needs the public key from the project's JWKS endpoint.
+# Older projects still use HS256 with a shared secret. We support both —
+# try JWKS first, fall back to the shared secret.
+#
+# Cached at module level so repeated verifications don't re-fetch the JWKS.
+_jwks_cache: dict = {}
+_jwks_cache_ts: float = 0.0
+_JWKS_TTL_SECONDS = 3600  # refresh once per hour
+
+
+def _fetch_jwks(supabase_url: str) -> dict:
+    """Fetch and cache the JWKS document from Supabase. Returns {} on failure."""
+    global _jwks_cache, _jwks_cache_ts
+    import time
+    now = time.time()
+    if _jwks_cache and (now - _jwks_cache_ts) < _JWKS_TTL_SECONDS:
+        return _jwks_cache
+    try:
+        r = httpx.get(f"{supabase_url}/auth/v1/.well-known/jwks.json", timeout=5.0)
+        r.raise_for_status()
+        _jwks_cache = r.json()
+        _jwks_cache_ts = now
+        logger.debug(f"JWKS refreshed — {len(_jwks_cache.get('keys', []))} key(s)")
+        return _jwks_cache
+    except Exception as e:
+        logger.warning(f"JWKS fetch failed (will fall back to HS256): {e}")
+        # Return stale cache if available, else empty
+        return _jwks_cache or {}
+
+
+def _decode_jwt_via_jwks(token: str, supabase_url: str) -> Optional[dict]:
+    """
+    Verify a JWT using the public key from Supabase's JWKS endpoint.
+    Handles ECC (P-256), RSA, and asymmetric HS256 keys uniformly.
+    Returns the decoded payload, or None if verification fails.
+    """
+    if not supabase_url:
+        return None
+    try:
+        import jwt as pyjwt
+        # Find the right signing key by matching the JWT's `kid` header
+        unverified_header = pyjwt.get_unverified_header(token)
+        kid = unverified_header.get("kid")
+        if not kid:
+            # Tokens without a kid header are old HS256 tokens — let HS256 path handle them
+            return None
+        jwks = _fetch_jwks(supabase_url)
+        signing_key = None
+        for key in jwks.get("keys", []):
+            if key.get("kid") == kid:
+                # PyJWT's PyJWK helper turns a JWK dict into a usable key object
+                signing_key = pyjwt.PyJWK(key).key
+                break
+        if signing_key is None:
+            logger.debug(f"No JWKS key matches kid={kid!r} — try refreshing")
+            return None
+        # Algorithms list covers all the formats Supabase uses
+        return pyjwt.decode(
+            token,
+            signing_key,
+            algorithms=["ES256", "RS256", "HS256"],
+            options={"verify_aud": False},
+        )
+    except Exception as e:
+        logger.debug(f"JWKS verify failed: {e}")
+        return None
+
+
 # ── SupabaseClient ─────────────────────────────────────────────────────────────
 
 class SupabaseClient:
@@ -207,18 +278,38 @@ class SupabaseClient:
             "role":  resp.get("role", "authenticated"),
         }
 
-    # ── JWT verification (local — no network call) ─────────────────────────────
+    # ── JWT verification (local — no network call after JWKS cached) ──────────
 
     def verify_token(self, access_token: str) -> Optional[dict]:
         """
-        Verify JWT locally using SUPABASE_JWT_SECRET.
-        Returns payload dict {sub: user_id, email, role} or None if invalid/expired.
+        Verify a Supabase access token. Tries TWO mechanisms in order:
+
+          1. **Asymmetric JWKS** (preferred): the new Supabase signing system
+             uses ECC P-256 / RSA keys. We fetch the public key from the
+             project's JWKS endpoint and verify the signature locally.
+             Cached for 1 hour, so this is effectively zero-network after
+             the first verify.
+
+          2. **Legacy HS256** (fallback): older Supabase projects sign with
+             a shared secret. If we have one configured, we try it after
+             JWKS fails. This keeps prod working if it hasn't been migrated
+             yet AND keeps old tokens valid during a rotation window.
+
+        Returns {user_id, email, role} on success, None on invalid/expired.
         """
-        if not self.jwt_secret:
+        if not access_token:
             return None
-        payload = _decode_jwt(access_token, self.jwt_secret)
+
+        # 1. Asymmetric verification via JWKS
+        payload = _decode_jwt_via_jwks(access_token, self.url) if self.url else None
+
+        # 2. Fall back to HS256 with shared secret (legacy)
+        if payload is None and self.jwt_secret:
+            payload = _decode_jwt(access_token, self.jwt_secret)
+
         if not payload:
             return None
+
         return {
             "user_id": payload.get("sub"),
             "email":   payload.get("email"),

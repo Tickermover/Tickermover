@@ -1,0 +1,76 @@
+# ════════════════════════════════════════════════════════════════
+# AlphaHunt Dev — Railway environment variables
+# ════════════════════════════════════════════════════════════════
+# HOW TO USE:
+#   1. Open dev Railway project → Variables tab
+#   2. Click "Raw Editor"
+#   3. Paste this entire file
+#   4. Replace every <PLACEHOLDER> with the real value
+#   5. Save → Railway redeploys automatically
+#
+# NOTE: this is a TEMPLATE. Lines starting with # are comments
+# and will be ignored if you paste the whole file. Railway's Raw
+# Editor accepts KEY=value format, one per line.
+# ════════════════════════════════════════════════════════════════
+
+
+# ─── Supabase (DEV project — DIFFERENT from prod) ───────────────
+# Get from: dev Supabase → Project Settings → API
+
+SUPABASE_URL=<PASTE_DEV_SUPABASE_URL>
+SUPABASE_ANON_KEY=<PASTE_DEV_SUPABASE_ANON_KEY>
+SUPABASE_JWT_SECRET=<PASTE_DEV_JWT_SECRET_FROM_API_SETTINGS>
+
+
+# ─── Razorpay (TEST mode keys — NOT live) ───────────────────────
+# Get from: Razorpay dashboard → toggle to TEST MODE → Settings → API Keys
+# Webhook secret: Razorpay → Settings → Webhooks → Add webhook for test mode
+#   URL: https://dev.alphahunt.in/api/payment/webhook
+#   Events: payment.captured, subscription.charged, subscription.activated,
+#           subscription.cancelled, subscription.completed
+# Plan ID: Razorpay (test mode) → Subscriptions → Plans → Create plan
+
+RAZORPAY_KEY_ID=<PASTE_TEST_KEY_ID>
+RAZORPAY_KEY_SECRET=<PASTE_TEST_KEY_SECRET>
+RAZORPAY_PLAN_ID=<PASTE_TEST_PLAN_ID>
+RAZORPAY_WEBHOOK_SECRET=<PASTE_TEST_WEBHOOK_SECRET>
+
+
+# ─── Data providers (SAME as prod — read-only APIs, share keys) ──
+# Copy these values exactly as they are in prod Railway.
+# These are read-only data feeds; using same keys for dev costs nothing.
+
+ALPACA_KEY_ID=<COPY_FROM_PROD>
+ALPACA_SECRET_KEY=<COPY_FROM_PROD>
+FINNHUB_KEY=<COPY_FROM_PROD>
+FMP_API_KEY=<COPY_FROM_PROD>
+
+
+# ─── App configuration (mostly copy-from-prod) ──────────────────
+
+ACCOUNT_SIZE_USD=<COPY_FROM_PROD>
+HOT_LIST_N=<COPY_FROM_PROD>
+POLYGON_PLAN=<COPY_FROM_PROD>
+UNIVERSE_MODE=<COPY_FROM_PROD>
+
+# Use a different cache file path for dev so it can't accidentally
+# read prod's cached snapshot
+CACHE_DISK_FILE=output/cache_dev.json
+
+
+# ─── Site URL (NEW for dev — points at dev subdomain) ───────────
+# Used by SEO routes + reset-password redirect. MUST be different
+# from prod, otherwise dev's reset-password emails would redirect
+# users to the prod site.
+
+SITE_ORIGIN=https://dev.alphahunt.in
+
+
+# ════════════════════════════════════════════════════════════════
+# OPTIONAL — only add if you have these set in prod
+# ════════════════════════════════════════════════════════════════
+# SEC_API_KEY=<COPY_FROM_PROD>
+# ALPHAVANTAGE_API_KEY=<COPY_FROM_PROD>
+# RESEND_API_KEY=<COPY_FROM_PROD_OR_NEW_DEV_KEY>
+# (RESEND only needed if you wire newsletter signups; SMTP for
+#  password reset is configured in Supabase Auth, not via env var)
