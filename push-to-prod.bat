@@ -1,19 +1,20 @@
 @echo off
 REM ════════════════════════════════════════════════════════════════
-REM  push-to-prod.bat
-REM  Promotes the dev branch to main. Railway prod auto-deploys to:
-REM     https://alphahunt.in
+REM  push-to-prod.bat  (v2 — safe, never switches branches)
 REM
-REM  ⚠ This deploys to production. Only run after you've tested
-REM    your changes on https://web-production-17a78.up.railway.app
+REM  Pushes the current dev branch directly to origin/main on GitHub.
+REM  Railway prod auto-deploys to https://alphahunt.in within ~90s.
 REM
-REM  What it does:
-REM    1. Verifies you've already pushed to dev
-REM    2. Pulls latest origin/dev and origin/main
-REM    3. Shows the commits about to ship
-REM    4. Asks you to type YES
-REM    5. Fast-forward merges dev into main
-REM    6. Pushes main, then switches you back to dev
+REM  Why this is safe:
+REM    - You stay on the 'dev' branch the whole time
+REM    - Your working tree never changes
+REM    - If the push fails, NO files are deleted or moved
+REM
+REM  Usage:
+REM    1. Make sure you've run push-to-dev.bat first and tested on
+REM       https://web-production-17a78.up.railway.app
+REM    2. Double-click this file (or run from cmd)
+REM    3. Type YES when prompted
 REM ════════════════════════════════════════════════════════════════
 
 setlocal EnableDelayedExpansion
@@ -41,27 +42,28 @@ if exist ".git\index.lock" (
     )
 )
 
-REM ── 3. Set remote with token ──────────────────────────────────────
+REM ── 3. Set remote with token (kept only for this run) ─────────────
 git remote set-url origin https://digitalqueryai:%GH_TOKEN%@github.com/digitalqueryai/USAstockdashboard-.git
 set "CLEAN_URL=https://github.com/digitalqueryai/USAstockdashboard-.git"
 
-REM ── 4. Must be on dev with a clean working tree ───────────────────
+REM ── 4. Must be on dev ─────────────────────────────────────────────
 for /f "delims=" %%B in ('git rev-parse --abbrev-ref HEAD') do set "BRANCH=%%B"
 if /i not "!BRANCH!"=="dev" (
-    echo [ERROR] You must be on 'dev' to promote. Currently on '!BRANCH!'.
-    echo         Run push-to-dev.bat first, then come back to this script.
+    echo [ERROR] You must be on the 'dev' branch. Currently on: !BRANCH!
+    echo         Run:  git checkout dev
     git remote set-url origin %CLEAN_URL%
     pause & exit /b 1
 )
 
+REM ── 5. Working tree must be clean ─────────────────────────────────
 git diff --quiet
-set "DIRTY1=!ERRORLEVEL!"
+set "D1=!ERRORLEVEL!"
 git diff --cached --quiet
-set "DIRTY2=!ERRORLEVEL!"
-if !DIRTY1! NEQ 0 (set "DIRTY=1") else (set "DIRTY=0")
-if !DIRTY2! NEQ 0 (set "DIRTY=1")
+set "D2=!ERRORLEVEL!"
+if "!D1!" NEQ "0" set "DIRTY=1"
+if "!D2!" NEQ "0" set "DIRTY=1"
 if "!DIRTY!"=="1" (
-    echo [ERROR] Working tree has uncommitted changes:
+    echo [ERROR] You have uncommitted changes:
     git status -s
     echo.
     echo Run push-to-dev.bat first to commit and push them.
@@ -69,76 +71,67 @@ if "!DIRTY!"=="1" (
     pause & exit /b 1
 )
 
-REM ── 5. Pull latest dev and main ───────────────────────────────────
+REM ── 6. Fetch latest origin so we know what's on main right now ────
 echo === Fetching origin ===
 git fetch origin
-echo.
-echo === Pulling latest dev ===
-git pull --ff-only origin dev
 if !ERRORLEVEL! NEQ 0 (
-    echo [ERROR] Could not fast-forward dev. Resolve manually.
+    echo [ERROR] Fetch failed. Check your token and network.
     git remote set-url origin %CLEAN_URL%
     pause & exit /b 1
 )
 
-REM ── 6. Show what's shipping ───────────────────────────────────────
+REM ── 7. Show what's about to ship ──────────────────────────────────
 echo.
-echo === Commits about to ship to PROD (alphahunt.in) ===
-git log --oneline origin/main..dev
+echo === Commits on dev that will ship to PROD ===
+git log --oneline origin/main..HEAD
+echo.
+echo === Currently on PROD (origin/main) ===
+git log --oneline origin/main -3
 echo.
 
-REM ── 7. Confirm ────────────────────────────────────────────────────
-echo This will deploy the above commits to https://alphahunt.in
+REM ── 8. Confirm ────────────────────────────────────────────────────
+echo This will REPLACE origin/main with dev's current commit.
+echo Railway prod will then auto-deploy to https://alphahunt.in
+echo.
 set /p "CONFIRM=Type YES to proceed: "
 if /i not "!CONFIRM!"=="YES" (
-    echo Cancelled. No changes made.
+    echo Cancelled. Nothing changed.
     git remote set-url origin %CLEAN_URL%
     pause & exit /b 0
 )
 
-REM ── 8. Switch to main and merge dev ───────────────────────────────
+REM ── 9. Push dev DIRECTLY to origin/main ───────────────────────────
+REM  No checkout, no merge, no local branch movement.
+REM  --force-with-lease = "only push if origin/main is what we just fetched"
+REM  This blocks accidentally clobbering changes someone else pushed.
 echo.
-echo === Switching to main ===
-git checkout main
-git pull --ff-only origin main
-if !ERRORLEVEL! NEQ 0 (
-    echo [ERROR] Could not fast-forward main. Resolve manually.
-    git checkout dev
-    git remote set-url origin %CLEAN_URL%
-    pause & exit /b 1
-)
-
-echo === Merging dev into main ===
-git merge --no-ff dev -m "Promote dev -> main"
-if !ERRORLEVEL! NEQ 0 (
-    echo [ERROR] Merge conflict. Resolve manually, run 'git commit', then re-run.
-    git remote set-url origin %CLEAN_URL%
-    pause & exit /b 1
-)
-
-REM ── 9. Push main ──────────────────────────────────────────────────
-echo === Pushing main ===
-git push origin main
+echo === Pushing dev -^> origin/main ===
+git push origin dev:main --force-with-lease
 set "PUSH_RC=!ERRORLEVEL!"
 
-REM ── 10. Switch back to dev ────────────────────────────────────────
-git checkout dev
+REM ── 10. Strip token from .git/config ──────────────────────────────
 git remote set-url origin %CLEAN_URL%
 
 echo.
 if !PUSH_RC! EQU 0 (
     echo ============================================
-    echo   SUCCESS — main updated on GitHub.
+    echo   SUCCESS
+    echo   origin/main now matches dev.
     echo   Railway prod will redeploy in ~90 seconds.
     echo   Verify: https://alphahunt.in
-    echo   You're back on the 'dev' branch.
+    echo   You're still on the 'dev' branch (working tree unchanged).
     echo ============================================
 ) else (
-    echo [ERROR] Push of main failed.
-    echo The merge happened locally but didn't reach GitHub.
-    echo Fix your token, then run:
-    echo     git checkout main
-    echo     git push origin main
+    echo [ERROR] Push failed.
+    echo.
+    echo Common reasons:
+    echo   - Stale lease ^(someone^^/something pushed to main since your
+    echo     last fetch^):  run 'git fetch origin' and try again.
+    echo   - Token expired:  generate new at github.com/settings/tokens
+    echo     then 'setx GH_TOKEN "..."' and open a NEW cmd.
+    echo.
+    echo IMPORTANT: this failure did NOT change anything locally.
+    echo Your working tree is intact, you're still on dev, files are safe.
 )
 
 echo.
