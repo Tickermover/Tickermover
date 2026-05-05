@@ -510,10 +510,22 @@ SITE_ORIGIN = _os.environ.get("SITE_ORIGIN", "https://alphahunt.in").rstrip("/")
 @app.get("/favicon.ico")
 async def favicon():
     """
-    Serve a tiny SVG favicon. Browsers + crawlers conventionally request
-    /favicon.ico — without this they get a 404 (Bing flags it as HTTP 4xx).
-    SVG works for all modern browsers and is a single tiny string.
+    Serve the real 32px brand PNG at /favicon.ico. Google's search-result
+    icon prefers raster (PNG/ICO) over SVG — SVG support there is unreliable.
+    Browsers + crawlers conventionally request /favicon.ico, so we serve the
+    PNG bytes with image/png content-type (the .ico extension in the URL is
+    cosmetic; the body's content-type header is what matters).
     """
+    from fastapi.responses import FileResponse
+    icon_path = _STATIC / "icons" / "favicon-32.png"
+    if icon_path.exists():
+        return FileResponse(
+            icon_path,
+            media_type="image/png",
+            headers={"Cache-Control": "public, max-age=86400"},
+        )
+    # Fallback to inline SVG if the static file is missing (defensive — should
+    # never happen because static/icons/favicon-32.png ships with the repo).
     from fastapi.responses import Response
     svg = (
         '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">'
@@ -889,7 +901,11 @@ def _render_stock_page(t: dict) -> str:
 <meta name="twitter:title" content="{title}">
 <meta name="twitter:description" content="{desc}">
 
-<link rel="icon" href="/static/icons/icon-192.png">
+<link rel="icon" type="image/png" sizes="32x32" href="/static/icons/favicon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="/static/icons/icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="/static/icons/icon-512.png">
+<link rel="apple-touch-icon" sizes="192x192" href="/static/icons/icon-192.png">
+<link rel="manifest" href="/static/manifest.json">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 
