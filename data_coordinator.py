@@ -107,23 +107,34 @@ _YF_ALIAS: dict[str, str] = {
 def _parse_yf_earnings(info: dict) -> dict:
     """
     Extract earnings date + days_to_earnings from yfinance info dict.
-    Tries multiple field names yfinance uses across versions.
+
+    Strategy: collect EVERY candidate date from yfinance, then prefer the
+    SOONEST FUTURE date. Only fall back to a recent past date if no future
+    one is found. This fixes the long-standing bug where the function would
+    keep showing "earnings in 0 days" for days/weeks after a release because
+    `earningsDate` was sticky and shadowed `nextEarningsDate`.
+
+    Also returns:
+      - earnings_just_reported: True if the most recent past earnings is
+        within the last 2 days (lets the UI show a post-earnings summary
+        card and stop saying "in 0 days" indefinitely).
     """
     from datetime import datetime as _dt, date as _date
     today = _date.today()
 
-    # Collect all possible raw values in priority order
-    candidates = []
+    raw_values = []
     for key in ("earningsDate", "earningsTimestamp", "earningsTimestampStart",
-                "nextEarningsDate", "mostRecentQuarter"):
+                "earningsTimestampEnd", "nextEarningsDate", "mostRecentQuarter"):
         v = info.get(key)
-        if v is not None:
-            candidates.append(v)
+        if v is None:
+            continue
+        if isinstance(v, (list, tuple)):
+            raw_values.extend(v)
+        else:
+            raw_values.append(v)
 
-    for raw in candidates:
-        # Unwrap list
-        if isinstance(raw, (list, tuple)):
-            raw = raw[0] if raw else None
+    parsed = []
+    for raw in raw_values:
         if raw is None:
             continue
         try:
@@ -133,14 +144,47 @@ def _parse_yf_earnings(info: dict) -> dict:
                 edate = raw
             else:
                 edate = _date.fromisoformat(str(raw)[:10])
-            days = (edate - today).days
-            # Only return future dates (or very recent past ≤ 7 days)
-            if days >= -7:
-                return {"earnings_date": edate.isoformat(), "days_to_earnings": days}
+            parsed.append(edate)
         except Exception:
             continue
 
-    # Fallback: try yfinance calendar attribute via ticker object (if info has no date)
+    if not parsed:
+        return {}
+
+    parsed = list(dict.fromkeys(parsed))
+
+    future_dates = sorted(d for d in parsed if (d - today).days >= 0)
+    past_dates   = sorted(
+        (d for d in parsed if 0 > (d - today).days >= -90),
+        reverse=True,
+    )
+
+    if future_dates:
+        edate = future_dates[0]
+        days  = (edate - today).days
+        just_reported = bool(
+            past_dates and (today - past_dates[0]).days <= 2
+        )
+        out = {
+            "earnings_date":     edate.isoformat(),
+            "days_to_earnings":  days,
+        }
+        if just_reported:
+            out["earnings_just_reported"] = True
+            out["last_earnings_date"]     = past_dates[0].isoformat()
+        return out
+
+    if past_dates:
+        last = past_dates[0]
+        days_since = (today - last).days
+        return {
+            "earnings_date":           last.isoformat(),
+            "days_to_earnings":        None,
+            "earnings_just_reported":  days_since <= 14,
+            "last_earnings_date":      last.isoformat(),
+            "days_since_earnings":     days_since,
+        }
+
     return {}
 
 

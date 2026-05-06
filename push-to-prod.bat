@@ -113,26 +113,35 @@ REM ── 10. Strip token from .git/config ────────────
 git remote set-url origin %CLEAN_URL%
 
 echo.
-if !PUSH_RC! EQU 0 (
-    echo ============================================
-    echo   SUCCESS
-    echo   origin/main now matches dev.
-    echo   Railway prod will redeploy in ~90 seconds.
-    echo   Verify: https://alphahunt.in
-    echo   You're still on the 'dev' branch (working tree unchanged).
-    echo ============================================
-) else (
-    echo [ERROR] Push failed.
-    echo.
-    echo Common reasons:
-    echo   - Stale lease ^(someone^^/something pushed to main since your
-    echo     last fetch^):  run 'git fetch origin' and try again.
-    echo   - Token expired:  generate new at github.com/settings/tokens
-    echo     then 'setx GH_TOKEN "..."' and open a NEW cmd.
-    echo.
-    echo IMPORTANT: this failure did NOT change anything locally.
-    echo Your working tree is intact, you're still on dev, files are safe.
-)
+if "!PUSH_RC!"=="0" goto :ok
+goto :failed
+
+:ok
+echo ============================================
+echo   SUCCESS
+echo   origin/main now matches dev.
+echo   Railway prod will redeploy in about 90 seconds.
+echo   Verify: https://alphahunt.in
+echo   You are still on the dev branch. Working tree unchanged.
+echo ============================================
+goto :end
+
+:failed
+echo [ERROR] Push failed.
+echo.
+echo Common reasons:
+echo   - Stale lease: someone or something pushed to main since
+echo     your last fetch. Run 'git fetch origin' and try again.
+echo   - Token expired: generate a new one at
+echo     github.com/settings/tokens, then run
+echo     setx GH_TOKEN "ghp_yourNewToken"
+echo     and open a NEW cmd window.
+echo.
+echo IMPORTANT: this failure did NOT change anything locally.
+echo Your working tree is intact, you are still on dev, files are safe.
+goto :end
+
+:end
 
 echo.
 pause
