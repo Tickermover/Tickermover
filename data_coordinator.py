@@ -550,6 +550,80 @@ class DataCoordinator:
         self.cache.set(key, days_until, config.CACHE_TECH_TTL)
         return days_until
 
+    # ── EARNINGS INTELLIGENCE (FMP press release + transcript + LLM) ──
+    async def get_post_earnings_intel(self, ticker: str, earnings_date: str) -> dict:
+        """
+        Lazy-loaded. When called for a ticker that just reported earnings,
+        fetches the FMP press release + earnings-call transcript and runs
+        them through Anthropic Haiku to extract:
+            - forward guidance (raised / maintained / lowered + numbers)
+            - call sentiment (bullish/cautious + key quotes)
+        Cached by (ticker, earnings_date) for 90 days, so we only pay the
+        LLM cost once per quarter per stock.
+
+        Returns: {"guidance": {...}, "sentiment": {...}}
+        Either sub-dict can be empty if data is missing or LLM is offline.
+        """
+        ticker = ticker.upper()
+        cache_key = f"earnings_intel:{ticker}:{earnings_date or 'unknown'}"
+        cached = self.cache.get(cache_key)
+        if cached is not None:
+            return cached
+
+        # Lazy-import so the existing app still loads if the new module
+        # is missing in some build (defensive).
+        try:
+            import earnings_intel as ei
+        except ImportError:
+            logger.warning("earnings_intel module not available")
+            return {"guidance": {}, "sentiment": {}}
+
+        result = {"guidance": {}, "sentiment": {}}
+
+        # ── 1. Press release → forward guidance ────────────────────────
+        try:
+            releases = await self._fmp_get(
+                f"/v3/press-releases/{ticker}", {"limit": 5}
+            )
+            if releases and isinstance(releases, list):
+                # Pick the press release closest to the earnings date.
+                # FMP returns releases in reverse-chronological order; the
+                # earnings press release is almost always the first one
+                # whose title contains "results", "earnings", or "Q[1-4]".
+                target = None
+                for rel in releases[:5]:
+                    title = (rel.get("title") or "").lower()
+                    if any(k in title for k in ("results", "earnings", "reports", "announces")):
+                        target = rel
+                        break
+                if target is None and releases:
+                    target = releases[0]  # fallback — newest
+                if target:
+                    text = target.get("text") or target.get("description") or ""
+                    if text:
+                        result["guidance"] = await ei.extract_guidance_from_press_release(text)
+        except Exception as exc:
+            logger.warning(f"Guidance fetch failed for {ticker}: {exc}")
+
+        # ── 2. Earnings call transcript → sentiment ────────────────────
+        try:
+            # FMP transcript endpoint returns the most recent quarter by default
+            transcripts = await self._fmp_get(
+                f"/v3/earning_call_transcript/{ticker}", {"limit": 1}
+            )
+            if transcripts and isinstance(transcripts, list) and transcripts:
+                content = transcripts[0].get("content") or ""
+                if content:
+                    result["sentiment"] = await ei.analyze_call_transcript(content)
+        except Exception as exc:
+            logger.warning(f"Transcript fetch failed for {ticker}: {exc}")
+
+        # Cache for 90 days (next earnings is ~90 days out anyway).
+        # We cache even partial / empty results so we don't retry the LLM
+        # on every refresh for a stock whose data is genuinely unavailable.
+        self.cache.set(cache_key, result, 90 * 86400)
+        return result
+
     # ── ALPHA VANTAGE ─────────────────────────────────────────────────
 
     async def get_fundamentals(self, ticker: str) -> dict:

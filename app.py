@@ -885,7 +885,8 @@ def _render_post_earnings_card(t: dict, name: str, sym: str) -> str:
   <div style="background:linear-gradient(135deg,#f0fdf4 0%,#fefce8 100%);
               border:1px solid #bbf7d0;border-radius:12px;
               padding:18px 22px;margin-bottom:24px;
-              box-shadow:0 1px 3px rgba(15,23,42,.04)">
+              box-shadow:0 1px 3px rgba(15,23,42,.04)"
+       data-earnings-card="{sym}">
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
       <span style="background:#15803d;color:#fff;font-weight:800;font-size:10px;
                    letter-spacing:.06em;padding:4px 10px;border-radius:999px">
@@ -900,7 +901,63 @@ def _render_post_earnings_card(t: dict, name: str, sym: str) -> str:
     {rev_row}
     {rx_row}
     {streak_row}
+    <div data-guidance-slot=""></div>
+    <div data-sentiment-slot=""></div>
   </div>
+  <script>
+    (function() {{
+      var card = document.querySelector('[data-earnings-card="{sym}"]');
+      if (!card) return;
+      fetch('/api/earnings-intel/{sym}')
+        .then(function(r) {{ return r.ok ? r.json() : null; }})
+        .then(function(data) {{
+          if (!data) return;
+          var gSlot = card.querySelector('[data-guidance-slot]');
+          var sSlot = card.querySelector('[data-sentiment-slot]');
+          var g = data.guidance || {{}};
+          if (gSlot && g.tone && g.tone !== 'none') {{
+            var toneColor = g.tone === 'raised'   ? '#15803d' :
+                            g.tone === 'lowered'  ? '#b91c1c' : '#64748b';
+            var toneArrow = g.tone === 'raised'   ? '↗' :
+                            g.tone === 'lowered'  ? '↘' : '→';
+            var rev = g.revenue_guidance ? '<div style="font-size:13px;color:#0f172a;margin-top:2px">Revenue: <span class=\"mono\" style=\"font-weight:700\">' + g.revenue_guidance + '</span></div>' : '';
+            var eps = g.eps_guidance     ? '<div style="font-size:13px;color:#0f172a;margin-top:2px">EPS: <span class=\"mono\" style=\"font-weight:700\">' + g.eps_guidance + '</span></div>' : '';
+            var sum = g.summary          ? '<div style="font-size:12.5px;color:#475569;font-style:italic;margin-top:6px">"' + g.summary + '"</div>' : '';
+            gSlot.innerHTML =
+              '<div style="margin-top:14px;padding-top:14px;border-top:1px dashed #cbd5e1">' +
+                '<div style="display:flex;justify-content:space-between;align-items:center">' +
+                  '<div style="font-size:11px;color:#64748b;font-weight:700;letter-spacing:.06em;text-transform:uppercase">GUIDANCE</div>' +
+                  '<div style="font-size:11px;color:' + toneColor + ';font-weight:800">' + toneArrow + ' ' + g.tone.toUpperCase() + '</div>' +
+                '</div>' + rev + eps + sum +
+              '</div>';
+          }}
+          var s = data.sentiment || {{}};
+          if (sSlot && s.sentiment_label && s.positives) {{
+            var lblColor = s.sentiment_score >  0.3 ? '#15803d' :
+                           s.sentiment_score < -0.3 ? '#b91c1c' : '#64748b';
+            function bullets(arr, color) {{
+              if (!arr || !arr.length) return '';
+              return arr.map(function(q) {{
+                return '<li style="margin:3px 0;font-size:12.5px;color:#0f172a;line-height:1.45">' +
+                       '<span style="color:' + color + ';font-weight:700">&middot;</span> ' + q.replace(/^"|"$/g, '') +
+                       '</li>';
+              }}).join('');
+            }}
+            var pos = s.positives.length ? '<div style="margin-top:6px"><div style="font-size:11px;color:#15803d;font-weight:700">Positives</div><ul style="list-style:none;padding:0;margin:2px 0 0">' + bullets(s.positives, '#15803d') + '</ul></div>' : '';
+            var con = (s.concerns && s.concerns.length) ? '<div style="margin-top:6px"><div style="font-size:11px;color:#b91c1c;font-weight:700">Concerns</div><ul style="list-style:none;padding:0;margin:2px 0 0">' + bullets(s.concerns, '#b91c1c') + '</ul></div>' : '';
+            var qa  = s.qa_summary ? '<div style="font-size:12px;color:#475569;font-style:italic;margin-top:8px">Q&amp;A: ' + s.qa_summary + '</div>' : '';
+            sSlot.innerHTML =
+              '<div style="margin-top:14px;padding-top:14px;border-top:1px dashed #cbd5e1">' +
+                '<div style="display:flex;justify-content:space-between;align-items:center">' +
+                  '<div style="font-size:11px;color:#64748b;font-weight:700;letter-spacing:.06em;text-transform:uppercase">CALL SENTIMENT</div>' +
+                  '<div style="font-size:11px;color:' + lblColor + ';font-weight:800">' + s.sentiment_label.toUpperCase() + ' (' + (s.sentiment_score >= 0 ? '+' : '') + s.sentiment_score + ')</div>' +
+                '</div>' + pos + con + qa +
+              '</div>';
+          }}
+        }})
+        .catch(function(){{}}); /* fail silently — card still shows EPS/revenue */
+    }})();
+  </script>
 """
 
 
@@ -3440,3 +3497,23 @@ async def api_payment_webhook(request: Request):
         logger.debug(f"Webhook: unhandled event {evt}")
 
     return JSONResponse({"received": True})
+
+
+# ── /api/earnings-intel/{ticker} — lazy LLM-backed forward guidance + call sentiment ─
+# Browser fetches this on stock detail pages when earnings_just_reported is true.
+# The response is cached server-side for 90 days, so 99% of requests are sub-50ms.
+# Output schema (either sub-dict can be empty if data isn't available):
+#   {
+#     "guidance":  {"tone": "raised|maintained|lowered|none", ...},
+#     "sentiment": {"sentiment_score": float, "sentiment_label": str, ...}
+#   }
+@app.get("/api/earnings-intel/{ticker}")
+async def api_earnings_intel(ticker: str):
+    sym = ticker.upper()
+    t   = cache.get(f"ticker:{sym}") or {}
+    # Only do the work for stocks that just reported (saves LLM cost).
+    if not t.get("earnings_just_reported"):
+        return JSONResponse({"guidance": {}, "sentiment": {}})
+    edate = t.get("last_earnings_date") or t.get("earnings_date") or ""
+    intel = await coordinator.get_post_earnings_intel(sym, edate)
+    return JSONResponse(intel)
