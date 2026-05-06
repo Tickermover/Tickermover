@@ -713,7 +713,7 @@ def _build_landing_schema() -> str:
         "url": SITE_ORIGIN,
         "applicationCategory": "FinanceApplication",
         "operatingSystem": "Web",
-        "description": "Real-time US stock research with AlphaHunt Score, plain-English verdicts, conflict detection, Reverse DCF, and macro-aware scoring. Free during beta.",
+        "description": "Real-time US stock research with Alpha Score, plain-English verdicts, conflict detection, Reverse DCF, and macro-aware scoring. Free during beta.",
         "offers": {
             "@type": "Offer",
             "price": "0",
@@ -734,12 +734,12 @@ def _build_landing_schema() -> str:
 async def stock_page(ticker: str):
     """
     Server-rendered, SEO-optimized HTML page for a single ticker.
-    Each page targets long-tail searches like "NVDA AlphaHunt score",
+    Each page targets long-tail searches like "NVDA Alpha score",
     "NVDA stock analysis", "should I buy NVDA". Includes:
       - Unique <title> + meta description with current data
       - Schema.org FinancialProduct + Article markup (rich snippets)
       - Open Graph tags for social shares
-      - AlphaHunt Score, verdict, valuation, news inline (visible to crawlers)
+      - Alpha Score, verdict, valuation, news inline (visible to crawlers)
       - Internal links to peers (sub-sector graph for crawlers)
       - Big CTA to open the live dashboard for that ticker
     """
@@ -925,7 +925,7 @@ def _render_stock_page(t: dict) -> str:
     grade  = t.get("grade") or "—"
     rating = {"A":"Strong Buy","B":"Buy","C":"Hold","D":"Reduce","F":"Avoid"}.get(grade, "Under Review")
     verdict_color = {"A":"#15803d","B":"#1e40af","C":"#b45309","D":"#dc2626","F":"#991b1b"}.get(grade, "#475569")
-    bottom_line = t.get("bottom_line") or f"{name} is currently scored {round(pop)}/100 on AlphaHunt Score."
+    bottom_line = t.get("bottom_line") or f"{name} is currently scored {round(pop)}/100 on Alpha Score."
     chg = _f(t.get("change_pct"))
     chg_sign = "+" if chg >= 0 else ""
     rev_g = t.get("revenue_growth_yoy")
@@ -945,9 +945,9 @@ def _render_stock_page(t: dict) -> str:
     post_earnings_html = _render_post_earnings_card(t, name, sym)
 
     # ── SEO meta tags — these are the part Google ranks on ──
-    title = f"{sym} Stock Analysis · AlphaHunt Score {round(pop)} · {rating} | AlphaHunt"
+    title = f"{sym} Stock Analysis · Alpha Score {round(pop)} · {rating} | AlphaHunt"
     desc  = (
-        f"{name} ({sym}) — current AlphaHunt Score {round(pop)}/100 ({rating}). "
+        f"{name} ({sym}) — current Alpha Score {round(pop)}/100 ({rating}). "
         f"{bottom_line[:140]}"
     )
 
@@ -1112,7 +1112,7 @@ h2{{font-size:21px;font-weight:800;letter-spacing:-.015em;margin:32px 0 12px;col
   <div class="verdict-box">
     <div class="verdict-head">
       <span class="verdict-tag">{rating}</span>
-      <span class="verdict-score">{round(pop)}<span class="lbl">/ AlphaHunt Score</span></span>
+      <span class="verdict-score">{round(pop)}<span class="lbl">/ Alpha Score</span></span>
     </div>
     <div class="verdict-text">{bottom_line}</div>
   </div>
@@ -1121,7 +1121,7 @@ h2{{font-size:21px;font-weight:800;letter-spacing:-.015em;margin:32px 0 12px;col
 
   <h2>Key metrics</h2>
   <div class="metrics">
-    <div class="metric"><div class="lbl">AlphaHunt Score</div><div class="val">{round(pop)}/100</div></div>
+    <div class="metric"><div class="lbl">Alpha Score</div><div class="val">{round(pop)}/100</div></div>
     <div class="metric"><div class="lbl">Grade</div><div class="val">{grade}</div></div>
     {f'<div class="metric"><div class="lbl">Rev Growth YoY</div><div class="val {"pos" if rev_g and rev_g > 0 else "neg" if rev_g and rev_g < 0 else ""}">{rev_g*100:+.1f}%</div></div>' if rev_g is not None else ''}
     {f'<div class="metric"><div class="lbl">30-day Momentum</div><div class="val {"pos" if mom and mom > 0 else "neg" if mom and mom < 0 else ""}">{mom:+.1f}%</div></div>' if mom is not None else ''}
@@ -1140,7 +1140,7 @@ h2{{font-size:21px;font-weight:800;letter-spacing:-.015em;margin:32px 0 12px;col
   </div>
 
   <div class="legal">
-    AlphaHunt is a research tool, not financial advice. AlphaHunt Score is a composite signal — always do your own research before investing.
+    AlphaHunt is a research tool, not financial advice. Alpha Score is a composite signal — always do your own research before investing.
     <br>Last updated automatically every 5 minutes during US market hours.
     <br>Questions? <a href="mailto:support@alphahunt.in" style="color:#15803d">support@alphahunt.in</a>
   </div>
@@ -1167,7 +1167,7 @@ async def learn_index():
 
 @app.get("/learn/{slug}", response_class=HTMLResponse)
 async def learn_pillar(slug: str):
-    """Evergreen explainer pages — AlphaHunt Score, Reverse DCF, fundamentals."""
+    """Evergreen explainer pages — Alpha Score, Reverse DCF, fundamentals."""
     html = _seo.render_pillar(slug.lower().strip(), SITE_ORIGIN)
     if html is None:
         raise HTTPException(status_code=404, detail="Unknown learn page")
@@ -1181,7 +1181,7 @@ async def sectors_index():
 
 @app.get("/sectors/{slug}", response_class=HTMLResponse)
 async def sector_page(slug: str):
-    """One landing page per sub-sector with live AlphaHunt Scores."""
+    """One landing page per sub-sector with live Alpha Scores."""
     html = _seo.render_sector(slug.lower().strip(), _universe_data or [], SITE_ORIGIN)
     if html is None:
         raise HTTPException(status_code=404, detail="Unknown sector")
@@ -1267,7 +1267,7 @@ def _render_og_png(t: dict) -> bytes:
     except (TypeError, ValueError): pop_n = 0
     grade  = t.get("grade") or "—"
     rating = {"A":"STRONG BUY","B":"BUY","C":"HOLD","D":"REDUCE","F":"AVOID"}.get(grade, "UNDER REVIEW")
-    bl = (t.get("bottom_line") or f"{name} scored {pop_n}/100 on AlphaHunt Score.")[:120]
+    bl = (t.get("bottom_line") or f"{name} scored {pop_n}/100 on Alpha Score.")[:120]
 
     W, H = 1200, 630
     score_color = (
@@ -1326,7 +1326,7 @@ def _render_og_png(t: dict) -> bytes:
     sw = bbox[2] - bbox[0]
     sh = bbox[3] - bbox[1]
     draw.text((cx - sw // 2, cy - sh // 2 - 30), s, font=f_score, fill=(255, 255, 255))
-    draw.text((cx - 60, cy + 70), "ALPHAHUNT", font=f_lbl, fill=(148, 163, 184))
+    draw.text((cx - 60, cy + 70), "ALPHA SCORE", font=f_lbl, fill=(148, 163, 184))
 
     chip_w, chip_h = 240, 64
     chip_x = W - chip_w - 60
@@ -1705,7 +1705,7 @@ _BLOG_ARTICLES = [
 <p>Revenue grew <strong>+139% year-over-year</strong> in the most recent quarter, driven by the rapid lease-up of completed data center capacity. The company carries a heavy capital expenditure load (free cash flow is deeply negative at -$720M TTM) as it builds out its next generation of campuses, but this is deliberate: APLD is in the land-grab phase of what it believes is a decade-long infrastructure cycle. Gross margins are expanding as more capacity comes online at scale.</p>
 
 <h3>Technical Setup</h3>
-<p>APLD's AlphaHunt Score of <strong>77</strong> reflects strong price momentum (+11% day, +87% over the past month for the model portfolio entry) alongside Grade A fundamentals. RSI sits in the ideal 58–65 zone, suggesting the stock has digested its recent gains without becoming overbought. Social mention velocity is <strong>+136% vs 24 hours ago</strong>, indicating growing retail and institutional awareness.</p>
+<p>APLD's Alpha Score of <strong>77</strong> reflects strong price momentum (+11% day, +87% over the past month for the model portfolio entry) alongside Grade A fundamentals. RSI sits in the ideal 58–65 zone, suggesting the stock has digested its recent gains without becoming overbought. Social mention velocity is <strong>+136% vs 24 hours ago</strong>, indicating growing retail and institutional awareness.</p>
 
 <h3>Risks</h3>
 <p>Capital intensity is the primary risk — APLD must continuously access debt and equity markets to fund construction. Any softening in AI capex spend by the hyperscalers, or a rise in data center financing costs, could materially slow the company's growth trajectory. Short interest stands at <strong>29.4%</strong>, making this a squeeze candidate in both directions.</p>
@@ -1777,7 +1777,7 @@ _BLOG_ARTICLES = [
 <p>Revenue grew <strong>+41.8% year-over-year</strong>, with management guiding for continued double-digit organic growth through 2027. Gross margins are expanding as the product mix shifts toward higher-value liquid cooling and software. The company's order backlog — a leading indicator — has grown every quarter for eight consecutive quarters. Analyst consensus price target is <strong>$296 (mean)</strong>, with high-end estimates reaching $390.</p>
 
 <h3>Technical Setup</h3>
-<p>VRT carries a AlphaHunt Score of <strong>76</strong> with an RS Rating of 67 — showing solid but not extreme momentum. The stock is within <strong>1.3% of its 52-week high</strong>, suggesting institutional accumulation rather than speculative froth. EPS beat 4 of the last 4 quarters, with gross margins expanding confirming operating leverage is building.</p>
+<p>VRT carries a Alpha Score of <strong>76</strong> with an RS Rating of 67 — showing solid but not extreme momentum. The stock is within <strong>1.3% of its 52-week high</strong>, suggesting institutional accumulation rather than speculative froth. EPS beat 4 of the last 4 quarters, with gross margins expanding confirming operating leverage is building.</p>
 
 <h3>Risks</h3>
 <p>Vertiv is not immune to supply chain constraints — long lead times on custom cooling components can delay revenue recognition. Competition from Schneider Electric and Eaton is intensifying as the market grows. Any slowdown in hyperscaler capex would disproportionately affect Vertiv's order book.</p>
@@ -1848,13 +1848,13 @@ _BLOG_ARTICLES = [
 <p>Beyond pluggable transceivers, AAOI is positioning for the next generation: co-packaged optics (CPO), which integrates optical components directly onto switch silicon. CPO reduces power consumption by up to 70% versus discrete transceivers — a critical advantage as AI clusters push power density limits. The CPO market is expected to exceed <strong>$5 billion by 2028</strong>.</p>
 
 <h3>Technical Setup</h3>
-<p>AAOI is one of the strongest momentum names in our universe, with a AlphaHunt Score of <strong>75</strong> and RS Rating of 75. The stock has gained +18.4% in today's session on volume 2.7x the 20-day average — institutional accumulation signal confirmed. EPS has beaten estimates 4 consecutive quarters with expanding gross margins, confirming the revenue growth is translating to the bottom line.</p>
+<p>AAOI is one of the strongest momentum names in our universe, with a Alpha Score of <strong>75</strong> and RS Rating of 75. The stock has gained +18.4% in today's session on volume 2.7x the 20-day average — institutional accumulation signal confirmed. EPS has beaten estimates 4 consecutive quarters with expanding gross margins, confirming the revenue growth is translating to the bottom line.</p>
 
 <h3>Risks</h3>
 <p>AAOI is a small-cap ($3.5B market cap) with concentrated customer exposure — a single hyperscaler delaying orders can materially impact quarterly results. Gross margins, while improving, remain below peer levels. Competition from Coherent, Lumentum, and II-VI is intensifying.</p>
 
 <h3>AlphaHunt View</h3>
-<p>AAOI earns a <strong>STRONG BUY</strong> with 75 AlphaHunt Score. The 800G/1.6T upgrade cycle is a multi-year tailwind with AAOI positioned as a beneficiary. Analyst mean target implies <strong>+41.7% upside</strong> from current levels.</p>"""
+<p>AAOI earns a <strong>STRONG BUY</strong> with 75 Alpha Score. The 800G/1.6T upgrade cycle is a multi-year tailwind with AAOI positioned as a beneficiary. Analyst mean target implies <strong>+41.7% upside</strong> from current levels.</p>"""
   },
   {
     "id": "mu-hbm-ai-2026",
@@ -1920,7 +1920,7 @@ _BLOG_ARTICLES = [
 <p>Revenue is recovering strongly from the memory downturn, with data center revenue now representing over 50% of total sales. The Street estimates Micron's HBM revenue will grow from near-zero in 2023 to over <strong>$8B annually by fiscal 2027</strong>. EPS beat expectations for 4 consecutive quarters, with gross margin expansion as the product mix shifts toward premium HBM. Analyst mean target: <strong>$533 (+11.9% upside)</strong>.</p>
 
 <h3>Technical Setup</h3>
-<p>MU carries a AlphaHunt Score of <strong>76</strong> and RS Rating of 73. Today's -2.18% session is noise against a backdrop of +30.6% gains over the past month. RSI at 64 remains healthy — not overbought. Social mention velocity +231% vs 24h confirms the stock is on investors' radar.</p>
+<p>MU carries a Alpha Score of <strong>76</strong> and RS Rating of 73. Today's -2.18% session is noise against a backdrop of +30.6% gains over the past month. RSI at 64 remains healthy — not overbought. Social mention velocity +231% vs 24h confirms the stock is on investors' radar.</p>
 
 <h3>Risks</h3>
 <p>Memory is a commodity industry with cyclical pricing dynamics. A slowdown in AI infrastructure investment or a resolution of HBM supply tightness could compress margins. Samsung's HBM qualification by NVIDIA would create additional competitive pressure. The stock trades at 76.9× forward earnings — expectations are high.</p>
@@ -1989,7 +1989,7 @@ _BLOG_ARTICLES = [
 <p>The US Defense Advanced Research Projects Agency's US2QC program is accelerating error correction research, with multiple teams claiming fault-tolerant qubit demonstrations in controlled environments. DARPA has funded programs targeting practical quantum advantage by 2033 — but early commercial applications are emerging much sooner. QUBT's optimization products are already deployed at several enterprise customers.</p>
 
 <h3>Technical Setup</h3>
-<p>QUBT carries a AlphaHunt Score of <strong>72</strong> with an RS Rating of 76 — indicating it is outperforming 76% of all stocks in the AlphaHunt universe over the past 12 months. The stock is within 22.4% of its 52-week high after consolidating a major prior breakout. EPS beat 4 of the last 4 quarters, and gross margin is expanding as the software mix grows. Short interest at <strong>28.6%</strong> makes this a high-volatility, high-conviction setup.</p>
+<p>QUBT carries a Alpha Score of <strong>72</strong> with an RS Rating of 76 — indicating it is outperforming 76% of all stocks in the AlphaHunt universe over the past 12 months. The stock is within 22.4% of its 52-week high after consolidating a major prior breakout. EPS beat 4 of the last 4 quarters, and gross margin is expanding as the software mix grows. Short interest at <strong>28.6%</strong> makes this a high-volatility, high-conviction setup.</p>
 
 <h3>The Risks</h3>
 <p>QUBT is a small-cap ($3.5B market cap) company in a nascent technology sector where timelines have historically slipped. Revenue is growing but from a small base, and profitability is still in the future. Any negative news about quantum hardware milestones could create significant stock volatility.</p>
@@ -2061,7 +2061,7 @@ _BLOG_ARTICLES = [
 <p>Globalstar is investing in a new generation of satellites branded "BlueBird" designed for higher-capacity, lower-latency 5G service delivery. The BlueBird constellation, combined with regulatory spectrum approvals in 48 countries, positions GSAT to become the backbone of satellite-cellular integration for partner carriers including AT&T and Verizon.</p>
 
 <h3>Technical Setup</h3>
-<p>GSAT carries a AlphaHunt Score of <strong>72</strong> with RS Rating 81 — the highest RS in this analysis. Breaking to a new 52-week high confirms institutional accumulation. The stock has gained +35.2% over the past month. EPS beat 4 consecutive quarters. Analyst mean target of <strong>$85 (+5.6% upside)</strong> is conservative given the optionality of the Apple partnership.</p>
+<p>GSAT carries a Alpha Score of <strong>72</strong> with RS Rating 81 — the highest RS in this analysis. Breaking to a new 52-week high confirms institutional accumulation. The stock has gained +35.2% over the past month. EPS beat 4 consecutive quarters. Analyst mean target of <strong>$85 (+5.6% upside)</strong> is conservative given the optionality of the Apple partnership.</p>
 
 <h3>AlphaHunt View</h3>
 <p>GSAT earns a <strong>STRONG BUY</strong>. The Apple partnership provides a floor, while direct-to-device 5G represents a potential ceiling that most analysts have yet to fully model.</p>"""
@@ -2130,7 +2130,7 @@ _BLOG_ARTICLES = [
 <p>Revenue grew <strong>+87.7% over the past month</strong> from the Model Portfolio's entry price perspective, with the stock up dramatically on positive earnings revisions and hyperscaler design win announcements. Analyst mean target of <strong>$200 (high: $390)</strong> implies 101.5% upside — one of the most bullish analyst setups in our universe. EPS has beaten estimates 3 of 4 last quarters with gross margins expanding.</p>
 
 <h3>Technical Setup</h3>
-<p>CRDO is the top performer in our Model Portfolio, with AlphaHunt Score of <strong>71</strong> and one of the strongest momentum profiles in the AlphaHunt universe. RSI at 64 — ideal momentum zone — suggests room to run without overextension. High-speed SerDes is a winner-take-most market, and Credo has won.</p>
+<p>CRDO is the top performer in our Model Portfolio, with Alpha Score of <strong>71</strong> and one of the strongest momentum profiles in the AlphaHunt universe. RSI at 64 — ideal momentum zone — suggests room to run without overextension. High-speed SerDes is a winner-take-most market, and Credo has won.</p>
 
 <h3>AlphaHunt View</h3>
 <p>CRDO earns a <strong>STRONG BUY</strong>. The SerDes and optical DSP market is growing at 40%+ annually driven purely by AI infrastructure demand. Credo's focused product line and hyperscaler relationships make it one of the highest-conviction plays in our universe.</p>"""
@@ -2200,7 +2200,7 @@ _BLOG_ARTICLES = [
 <p>SoundHound's Dynamic Drive-Thru platform handles voice ordering at quick-service restaurant chains, reducing labor costs and increasing order accuracy. The company has expanded to thousands of restaurant locations and is targeting the multi-billion dollar drive-through market. Enterprise customers use SoundHound's conversational AI for customer service automation.</p>
 
 <h3>Technical Setup</h3>
-<p>SOUN carries a AlphaHunt Score of <strong>75</strong> with RS Rating 72 and an analyst mean price target of <strong>$14.63 (+78.4% upside)</strong>. Revenue growing at +59.4% YoY. Short interest at 36.1% creates significant squeeze potential. EPS beat 4 consecutive quarters.</p>
+<p>SOUN carries a Alpha Score of <strong>75</strong> with RS Rating 72 and an analyst mean price target of <strong>$14.63 (+78.4% upside)</strong>. Revenue growing at +59.4% YoY. Short interest at 36.1% creates significant squeeze potential. EPS beat 4 consecutive quarters.</p>
 
 <h3>AlphaHunt View</h3>
 <p>SOUN earns a <strong>STRONG BUY</strong>. The combination of automotive moat, restaurant expansion, and agentic AI tailwind makes SoundHound one of the most differentiated AI plays in the market. The stock's high short interest creates asymmetric upside on continued strong results.</p>"""
@@ -2268,7 +2268,7 @@ _BLOG_ARTICLES = [
 <p>Revenue growth of +41.8% demonstrates the AI tailwind is flowing through to the financials. EPS has beaten estimates 4 consecutive quarters. Gross margins are expanding as the premium data center product mix grows. Analyst mean target: <strong>$144.54 (+0.7% conservative estimate)</strong> — the stock has outrun near-term analyst targets, suggesting upward revisions ahead.</p>
 
 <h3>Technical Setup</h3>
-<p>NVT has a AlphaHunt Score of <strong>75</strong> and RS Rating 67, within 1.3% of its 52-week high — a classic institutional accumulation pattern. EPS beat 4 of 4 last quarters. Gross margin expanding confirms operating leverage. No overbought RSI concern.</p>
+<p>NVT has a Alpha Score of <strong>75</strong> and RS Rating 67, within 1.3% of its 52-week high — a classic institutional accumulation pattern. EPS beat 4 of 4 last quarters. Gross margin expanding confirms operating leverage. No overbought RSI concern.</p>
 
 <h3>AlphaHunt View</h3>
 <p>NVT earns a <strong>STRONG BUY</strong>. nVent's combination of industrial-grade reliability, data center focus, and diverse customer base makes it one of the lower-risk ways to play the AI infrastructure buildout.</p>"""
@@ -2336,7 +2336,7 @@ _BLOG_ARTICLES = [
 <p>IonQ participates in the DARPA US2QC program, which is accelerating practical quantum computing timelines. Government funding provides both revenue and technology validation — critical for an early-stage quantum company.</p>
 
 <h3>Technical Setup</h3>
-<p>IONQ carries a AlphaHunt Score of <strong>72</strong> with analyst mean target of <strong>$17.83 (+96.9% upside)</strong>. Within 22.4% of 52-week high after consolidation. EPS beat 4 consecutive quarters with expanding margins. Social momentum building as quantum milestones approach.</p>
+<p>IONQ carries a Alpha Score of <strong>72</strong> with analyst mean target of <strong>$17.83 (+96.9% upside)</strong>. Within 22.4% of 52-week high after consolidation. EPS beat 4 consecutive quarters with expanding margins. Social momentum building as quantum milestones approach.</p>
 
 <h3>AlphaHunt View</h3>
 <p>IONQ earns a <strong>STRONG BUY</strong>. The combination of technology superiority, government contracts, and cloud accessibility makes IonQ the most investable pure-play quantum computing company available to public market investors.</p>"""
@@ -2404,7 +2404,7 @@ _BLOG_ARTICLES = [
 <p>Revenue grew <strong>+67.1%</strong> from the Model Portfolio entry price perspective, reflecting both the storage cycle recovery and AI demand acceleration. The company's HDD revenue is growing at high double digits, with ASPs rising as higher-capacity drives command premium pricing. Analyst mean target of <strong>$354.96 (-12.3% from peak)</strong> — suggesting the stock has gotten ahead of near-term consensus, though long-term targets are materially higher.</p>
 
 <h3>Technical Setup</h3>
-<p>WDC has a AlphaHunt Score of <strong>74</strong> with momentum confirming from the HDD cycle bottom. EPS beat 4 of 4 last quarters with gross margin expansion. High-density PDUs and thermal management for AI DCs driving incremental demand.</p>
+<p>WDC has a Alpha Score of <strong>74</strong> with momentum confirming from the HDD cycle bottom. EPS beat 4 of 4 last quarters with gross margin expansion. High-density PDUs and thermal management for AI DCs driving incremental demand.</p>
 
 <h3>AlphaHunt View</h3>
 <p>WDC earns a <strong>STRONG BUY</strong>. The intersection of AI storage demand and HDD capacity constraints creates a favorable pricing environment. Western Digital's scale and diversification make it the most accessible way to play the storage supercycle.</p>"""
@@ -2472,7 +2472,7 @@ _BLOG_ARTICLES = [
 <p>Revenue grew modestly but predictably — fiber infrastructure is a long-duration asset with stable, contracted cash flows. The stock has gained +52.2% from Model Portfolio entry, one of our best performers. Analyst mean target of <strong>$17.83 (+49.1% upside from current)</strong> reflects the market beginning to understand the AI fiber demand story. EPS beat 4 consecutive quarters.</p>
 
 <h3>Technical Setup</h3>
-<p>UNIT carries a AlphaHunt Score of <strong>71</strong> with RS Rating 71. The stock's consistent momentum and fiber demand tailwind make it one of the more stable high-Pop names in our universe. RSI at 52 — ample room to run.</p>
+<p>UNIT carries a Alpha Score of <strong>71</strong> with RS Rating 71. The stock's consistent momentum and fiber demand tailwind make it one of the more stable high-Pop names in our universe. RSI at 52 — ample room to run.</p>
 
 <h3>AlphaHunt View</h3>
 <p>UNIT earns a <strong>STRONG BUY</strong>. Fiber infrastructure REITs are under-owned and under-appreciated in the AI investment narrative. Uniti's 140,000 route-mile network is a hard asset with growing strategic value.</p>"""
@@ -2541,7 +2541,7 @@ _BLOG_ARTICLES = [
 <p>Every Level 2+ autonomous vehicle requires multiple domain control units processing camera, radar, and LIDAR data simultaneously. Lattice's FPGAs serve as bridge chips and co-processors in ADAS architectures from Tesla, GM, and major Tier-1 suppliers. As ADAS adoption grows from 30% of new vehicles today to near-universal by 2030, Lattice's automotive revenue should compound at 25%+ annually.</p>
 
 <h3>Technical Setup</h3>
-<p>LSCC carries a AlphaHunt Score of <strong>74</strong> with RS Rating 71 and revenue growing +24.2% YoY. EPS beat 4 consecutive quarters with gross margins expanding. P/E at 5779× is extreme — but reflects near-zero current earnings during an investment phase, not permanent multiple expansion. Analyst mean target: <strong>$143 (+22% upside)</strong>.</p>
+<p>LSCC carries a Alpha Score of <strong>74</strong> with RS Rating 71 and revenue growing +24.2% YoY. EPS beat 4 consecutive quarters with gross margins expanding. P/E at 5779× is extreme — but reflects near-zero current earnings during an investment phase, not permanent multiple expansion. Analyst mean target: <strong>$143 (+22% upside)</strong>.</p>
 
 <h3>AlphaHunt View</h3>
 <p>LSCC earns a <strong>STRONG BUY</strong>. Lattice is the dominant player in low-power FPGAs — a niche with massive secular tailwinds and limited competition. Edge AI is the next trillion-dollar opportunity after cloud AI.</p>"""
@@ -2596,7 +2596,7 @@ _BLOG_ARTICLES = [
 </ul>
 
 <h3>Portfolio Management Notes</h3>
-<p>With CRDO up 87.7% and UNIT up 52.2%, consider partial profit-taking to manage position sizing. The Model Portfolio's 30-day inception window suggests rebalancing in two weeks. Names with AlphaHunt Scores that have declined since entry (check All Stocks tab for current scores) may be candidates for rotation.</p>
+<p>With CRDO up 87.7% and UNIT up 52.2%, consider partial profit-taking to manage position sizing. The Model Portfolio's 30-day inception window suggests rebalancing in two weeks. Names with Alpha Scores that have declined since entry (check All Stocks tab for current scores) may be candidates for rotation.</p>
 
 <h3>AlphaHunt Macro View</h3>
 <p>The AI infrastructure supercycle remains in its early innings. Hyperscaler capex guidance for 2026 has been raised repeatedly — Microsoft, Google, Meta, and Amazon have collectively committed over <strong>$400B in AI infrastructure spending</strong> for 2025-2026. This capital flows directly to our portfolio companies. Stay the course, manage position sizes, and use pullbacks as opportunities.</p>"""
@@ -2657,7 +2657,7 @@ MEGA_CAP_CUTOFF  = 200e9   # exclude Mega Caps (NVDA, AVGO, MSFT etc.) from Hot 
 def _is_hot_eligible(t: dict) -> bool:
     """
     Hot-list eligibility — HIGH CONVICTION only:
-    1. AlphaHunt Score  ≥ 70  (Grade A territory — top-tier momentum + fundamentals)
+    1. Alpha Score  ≥ 70  (Grade A territory — top-tier momentum + fundamentals)
     2. Confidence ≥ 70% (enough real data to trust the score)
     3. Grade A   ("STRONG BUY" — pop_score ≥ 68 maps to A)
     4. Market cap ≥ $500M (excludes micro-caps); Small Cap tier floor $250M
@@ -2693,7 +2693,7 @@ def _is_hot_eligible(t: dict) -> bool:
 
 def _build_model_portfolio() -> dict:
     """
-    Select top 20 Grade-A stocks by AlphaHunt Score.
+    Select top 20 Grade-A stocks by Alpha Score.
     Inception = 1 month ago. Entry prices back-calculated from momentum_1m:
         entry_price = current_price / (1 + momentum_1m / 100)
     This lets the portfolio show real 30-day performance immediately.

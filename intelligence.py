@@ -2,14 +2,14 @@
 AlphaHunt — Intelligence Layer (v1)
 ====================================
 
-A self-contained "second brain" for the AlphaHunt Score engine. Adds four classes of
+A self-contained "second brain" for the Alpha Score engine. Adds four classes of
 intelligence on top of the existing scoring pipeline:
 
     1. MarketRegime          — top-down macro overlay (SPY, QQQ, VIX, ^TNX)
                                produces a 0–100 regime_score, regime_label,
-                               and a 0.85–1.15 multiplier applied to AlphaHunt Score.
+                               and a 0.85–1.15 multiplier applied to Alpha Score.
 
-    2. ScoreHistory          — rolling per-ticker AlphaHunt Score history persisted
+    2. ScoreHistory          — rolling per-ticker Alpha Score history persisted
                                via the existing SmartCache. Surfaces a
                                *score_velocity* (delta over last N hours) and
                                *score_acceleration* signal — early movers light
@@ -226,12 +226,12 @@ def score_earnings_acceleration(t: dict) -> float:
 
 
 # ╔════════════════════════════════════════════════════════════════════════╗
-# ║  2. ScoreHistory — rolling per-ticker AlphaHunt Score memory                 ║
+# ║  2. ScoreHistory — rolling per-ticker Alpha Score memory                 ║
 # ╚════════════════════════════════════════════════════════════════════════╝
 
 class ScoreHistory:
     """
-    Persists a rolling window of AlphaHunt Scores per ticker via the existing
+    Persists a rolling window of Alpha Scores per ticker via the existing
     SmartCache (so it survives Railway restarts). Exposes:
 
         record(ticker, pop_score)
@@ -345,7 +345,7 @@ class MarketRegime:
     Produces:
         regime_score      0..100  (higher = friendlier to long high-beta names)
         regime_label      "Bullish" | "Mixed" | "Bearish"
-        regime_multiplier 0.85..1.15 — applied to per-ticker AlphaHunt Score
+        regime_multiplier 0.85..1.15 — applied to per-ticker Alpha Score
         components        dict of input readings for transparency
 
     Cache TTL is 30 minutes — regime doesn't whip around minute-to-minute.
@@ -624,7 +624,7 @@ class ThesisGenerator:
         # 3. Velocity / second-best bull or bear, whichever is more useful
         if vel is not None and abs(vel) >= 2:
             arrow = "climbing" if vel > 0 else "falling"
-            out.append(f"AlphaHunt Score is {arrow} ({vel:+.1f} pts in the last 24h).")
+            out.append(f"Alpha Score is {arrow} ({vel:+.1f} pts in the last 24h).")
         elif rec_pos and len(bull) > 1:
             out.append(bull[1])
         elif rec_neg and len(bear) > 1:
@@ -664,7 +664,7 @@ class ThesisGenerator:
             out.append(f"RSI {rsi:.0f} sits in the textbook momentum zone — not yet overheated.")
 
         if not out:
-            out.append("AlphaHunt Score components above neutral baseline — quantitative model leans constructive.")
+            out.append("Alpha Score components above neutral baseline — quantitative model leans constructive.")
         # Always cap at 4 points and de-dup
         return _dedupe(out)[:4]
 
@@ -749,7 +749,7 @@ class ThesisGenerator:
         smart = round(pop * rmult, 1)
 
         sentence_a = (
-            f"{tk} earns a AlphaHunt Score of {smart:.0f} (Grade {grade}, {conv} conviction) "
+            f"{tk} earns a Alpha Score of {smart:.0f} (Grade {grade}, {conv} conviction) "
             f"in the current {rg} market."
         )
         if vel is not None:
@@ -894,7 +894,7 @@ def _dedupe(seq: list[str]) -> list[str]:
 
 def apply_regime_to_universe(universe: list[dict], regime: dict) -> None:
     """
-    Mutates each ticker dict in place: adds smart_score (regime-adjusted AlphaHunt Score)
+    Mutates each ticker dict in place: adds smart_score (regime-adjusted Alpha Score)
     plus the regime fields so the dashboard can display them inline.
     """
     mult  = float(regime.get("regime_multiplier") or 1.0)

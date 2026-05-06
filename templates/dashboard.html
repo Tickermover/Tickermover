@@ -8,7 +8,7 @@
      in Bing/Google) but explicitly tell them not to index this page. -->
 <meta name="robots" content="noindex,follow">
 <title>AlphaHunt — Stock Intelligence Dashboard</title>
-<meta name="description" content="AlphaHunt — hunt for alpha with AlphaHunt Score, IBD-style RS Rating, Blue Dot signals, Hot List picks and position sizing">
+<meta name="description" content="AlphaHunt — hunt for alpha with Alpha Score, IBD-style RS Rating, Blue Dot signals, Hot List picks and position sizing">
 <meta name="theme-color" content="#84cc16">
 <link rel="manifest" href="/static/manifest.json">
 <link rel="icon" type="image/png" sizes="32x32" href="/static/icons/favicon-32.png">
@@ -198,12 +198,12 @@ table,th,td{
 .hot-change{font-size:11px;font-weight:700;margin-top:1px}
 .pos{color:var(--grn)}.neg{color:var(--red)}.neu{color:var(--muted)}
 
-.score-xl{display:flex;align-items:baseline;gap:14px;margin:6px 0}
-.score-block{display:flex;align-items:baseline;gap:10px}
-.score-big{font-size:56px;font-weight:900;line-height:1;letter-spacing:-.02em;
+.score-xl{margin:6px 0}
+.score-block{display:inline-block}
+.score-big{display:block;font-size:56px;font-weight:900;line-height:1;letter-spacing:-.02em;
            background:linear-gradient(135deg,#1d4ed8 0%,#2563eb 50%,#0ea5e9 100%);
            -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-.score-label{font-size:11px;color:#374151;text-transform:uppercase;letter-spacing:.6px;font-weight:700}
+.score-label{display:block;margin-top:4px;font-size:11px;color:#374151;text-transform:uppercase;letter-spacing:.6px;font-weight:700}
 
 .rating{display:inline-block;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:800;letter-spacing:.5px}
 .rating-strong{background:#15803d;color:#ffffff;border:none;
@@ -806,7 +806,7 @@ tr:hover td{background:rgba(132,204,22,.06)}
     <div class="stat"><div class="stat-n" id="stat-flagged">—</div><div class="stat-l">Strong Buy</div></div>
     <!-- Market chip — Bullish / Mixed / Bearish based on SPY/QQQ/VIX/^TNX -->
     <div id="regime-pill"
-         title="Overall market mood based on SPY, QQQ, VIX and the 10-year yield. Already factored into every AlphaHunt Score."
+         title="Overall market mood based on SPY, QQQ, VIX and the 10-year yield. Already factored into every Alpha Score."
          style="display:inline-flex;align-items:center;gap:6px;
                 padding:6px 12px;border-radius:999px;font-weight:700;cursor:default;
                 background:#e0f2fe;border:1.5px solid rgba(59,130,246,.35);color:#1e40af;
@@ -881,7 +881,7 @@ tr:hover td{background:rgba(132,204,22,.06)}
       <option value="F">⚠️ Avoid</option>
     </select>
     <select id="fd-sort" onchange="sortFund()">
-      <option value="pop">Sort: AlphaHunt Score</option>
+      <option value="pop">Sort: Alpha Score</option>
       <option value="upside">Sort: Upside %</option>
       <option value="rev">Sort: Rev Growth</option>
       <option value="margin">Sort: Margin</option>
@@ -929,7 +929,7 @@ tr:hover td{background:rgba(132,204,22,.06)}
         <div><div class="src-name">ApeWisdom</div><div class="src-cat">Social Sentiment · Reddit / WSB</div></div>
         <span class="src-pill on">● AUTO-ON</span>
       </div>
-      <div class="src-cov">Reddit (WSB, stocks, investing) + Twitter mention counts, rank velocity, 24h change. Single API call covers entire universe (~250 tickers). Refreshed every 5 minutes. Contributes 20% weight to AlphaHunt Score.</div>
+      <div class="src-cov">Reddit (WSB, stocks, investing) + Twitter mention counts, rank velocity, 24h change. Single API call covers entire universe (~250 tickers). Refreshed every 5 minutes. Contributes 20% weight to Alpha Score.</div>
       <a class="src-link" href="https://apewisdom.io" target="_blank">apewisdom.io ↗</a>
     </div>
     <div class="src-card auto-on">
@@ -1067,7 +1067,7 @@ tr:hover td{background:rgba(132,204,22,.06)}
 <div id="panel-guide" class="panel">
   <div class="sec-heading">📖 How to Use AlphaHunt</div>
   <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px">
-    <div class="card"><h3 style="color:var(--acc2);margin-bottom:8px">📐 AlphaHunt Score</h3>
+    <div class="card"><h3 style="color:var(--acc2);margin-bottom:8px">📐 Alpha Score</h3>
       <p style="font-size:13px;line-height:1.6;color:var(--muted)">Composite 0–100 score combining momentum (40%), social velocity (20%), technical signals (20%), fundamentals (10%), and market cap fit (10%). Scores above 70 indicate strong setups. Only $1B+ market cap stocks qualify.</p></div>
     <div class="card"><h3 style="color:var(--acc2);margin-bottom:8px">🎯 Grades &amp; Ratings</h3>
       <p style="font-size:13px;line-height:1.6;color:var(--muted)">A → STRONG BUY · B → BUY · C → ACCUMULATE · D → HOLD · F → AVOID. The Hot List shows only STRONG BUY (grade A) with confidence ≥ 75%. Use All Stocks tab to browse all ratings.</p></div>
@@ -1614,7 +1614,7 @@ function compositePercentile(t) {
   return {score: Math.round(score), percentile: pct, total: scores.length};
 }
 
-/* AlphaHunt Score gauge — semicircular dial with 5 colored zones and a needle.
+/* Alpha Score gauge — semicircular dial with 5 colored zones and a needle.
    Used in the modal as the primary score visualisation: more readable than a
    bare number, instantly tells the user "where on the spectrum this stock is".
    Zones tied to the same thresholds the grading system uses:
@@ -2274,7 +2274,7 @@ function renderHotList(data) {
   //   - Sort the entire universe by smart_score desc
   //   - Apply only the basic safety filter (market cap above the floor)
   //   - Prefer A-grade, then B, then anything that scores at all
-  //   - The AlphaHunt Score badge + ★ data-confidence stars + Bottom Line banner
+  //   - The Alpha Score badge + ★ data-confidence stars + Bottom Line banner
   //     tell the user how trustworthy each pick is — no need to gate them out
   const TARGET = data.hot_list_n || 20;
   const sortKey = t => parseFloat(t.smart_score != null ? t.smart_score : (t.pop_score || 0));
@@ -2334,7 +2334,7 @@ function renderHotList(data) {
     const conf    = parseFloat(t.confidence || 0);
     const confPct = Math.round(conf * 100);
     const cc      = confClass(conf);
-    // AlphaHunt Score = regime-adjusted score when available (one number, macro baked in)
+    // Alpha Score = regime-adjusted score when available (one number, macro baked in)
     const pop     = parseFloat(t.smart_score != null ? t.smart_score : (t.pop_score || 0));
     const price   = parseFloat(t.price || 0);
     const chg     = parseFloat(t.change_pct || 0);
@@ -2397,7 +2397,7 @@ function renderHotList(data) {
       ${ktBanner}
       ${earningsAlert}
       <div class="score-xl">
-        <div class="score-block"><div class="score-big">${Math.round(pop)}</div><div class="score-label">AlphaHunt Score</div></div>
+        <div class="score-block"><div class="score-big">${Math.round(pop)}</div><div class="score-label">Alpha Score</div></div>
       </div>
       <div style="margin:6px 0;display:flex;align-items:center;gap:6px;flex-wrap:wrap">
         ${ratingChip(t, rating)}
@@ -2433,7 +2433,7 @@ function renderHotList(data) {
    ---------------------------------------------------------- */
 function renderRisk(tickers) {
   // Use smart_score (regime-adjusted) consistently across the app — same number
-  // the Hot List + modal show, so users don't see different "AlphaHunt Scores" per tab
+  // the Hot List + modal show, so users don't see different "Alpha Scores" per tab
   const _ss = t => parseFloat(t.smart_score != null ? t.smart_score : (t.pop_score || 0));
   const cards = tickers
     .filter(t => (t.market_cap == null || t.market_cap >= MIN_MCAP) && riskFlags(t).length > 0)
@@ -2667,7 +2667,7 @@ function openStockModal(ticker) {
   const sector  = t.sector || (t.meta && t.meta.sector) || '';
   const sub     = t.sub_sector || t.subsector || (t.meta && t.meta.subsector) || '';
   const exch    = t.exchange || (t.meta && t.meta.exchange) || 'NASDAQ';
-  // AlphaHunt Score = regime-adjusted score (one number, macro baked in)
+  // Alpha Score = regime-adjusted score (one number, macro baked in)
   const pop     = parseFloat(t.smart_score != null ? t.smart_score : (t.pop_score || 0));
   const conf    = parseFloat(t.confidence || 0);
   const rating  = gradeToRating(t.grade);
@@ -3247,7 +3247,7 @@ function renderSectors(tickers) {
     subGroups[sub].push(t);
   });
 
-  // Sort sub-sectors by avg AlphaHunt Score (smart_score, regime-adjusted) descending
+  // Sort sub-sectors by avg Alpha Score (smart_score, regime-adjusted) descending
   const _ss = t => parseFloat(t.smart_score != null ? t.smart_score : (t.pop_score || 0));
   const sortedSubs = Object.entries(subGroups)
     .map(([sub, stocks]) => {
@@ -4197,7 +4197,7 @@ function renderTickerTape(tickers) {
   const track = document.getElementById('ticker-track');
   if (!track || !tickers || !tickers.length) return;
 
-  // Mix top 12 gainers + top 8 losers + top 5 by AlphaHunt Score for a balanced tape
+  // Mix top 12 gainers + top 8 losers + top 5 by Alpha Score for a balanced tape
   const valid = tickers.filter(t => isFinite(parseFloat(t.change_pct)) && parseFloat(t.price) > 0);
   const byChg = [...valid].sort((a,b) => parseFloat(b.change_pct) - parseFloat(a.change_pct));
   const topGain  = byChg.slice(0, 12);
@@ -5049,7 +5049,7 @@ function showUpgradeSuccess() {
     </div>
 
     <div class="ah-headline" style="color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.2)">Find the next<br>big <em style="font-style:normal;color:#dcfce7">breakout</em><br>before it moves.</div>
-    <p class="ah-sub" style="color:rgba(255,255,255,.85)">AI-powered signals on 187 US stocks, updated every 5 minutes. AlphaHunt Score, RS Rating, Hot List — all in one dashboard.</p>
+    <p class="ah-sub" style="color:rgba(255,255,255,.85)">AI-powered signals on 187 US stocks, updated every 5 minutes. Alpha Score, RS Rating, Hot List — all in one dashboard.</p>
 
     <!-- Live ticker cards — 3 per row -->
     <div class="ah-ticker-strip" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">

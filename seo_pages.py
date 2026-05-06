@@ -4,7 +4,7 @@ seo_pages.py — SEO Phase 3 page renderers for AlphaHunt.
 Houses the long-form HTML renderers for:
   • /learn/{slug}              — evergreen educational pillar pages
   • /learn                     — pillar index (hub-and-spoke for crawlers)
-  • /sectors/{slug}            — one page per sub-sector with live AlphaHunt Scores
+  • /sectors/{slug}            — one page per sub-sector with live Alpha Scores
   • /sectors                   — sector index
   • /compare/{a}-vs-{b}        — side-by-side ticker comparison
 
@@ -151,7 +151,7 @@ def newsletter_block(source: str) -> str:
     safe = (source or "unknown").replace('"', "")
     return f"""
 <div class="nl">
-  <h3>Get the weekly AlphaHunt Score digest</h3>
+  <h3>Get the weekly Alpha Score digest</h3>
   <p>Top-rated US stocks, conflict alerts, and Reverse-DCF reads — straight to your inbox every Sunday. Free.</p>
   <form id="nl-{safe}" autocomplete="off">
     <input type="email" name="email" placeholder="you@email.com" required>
@@ -193,7 +193,7 @@ def cta_block(label: str = "Open the live dashboard", href: str = "/app?signup=1
     return f"""
 <div class="cta">
   <h3>Real research, free during beta</h3>
-  <p>200+ US stocks. AlphaHunt Score, conflict detection, Reverse DCF, peer comparison. We do the homework.</p>
+  <p>200+ US stocks. Alpha Score, conflict detection, Reverse DCF, peer comparison. We do the homework.</p>
   <a href="{href}" class="cta-btn">{label} →</a>
 </div>
 """
@@ -238,9 +238,9 @@ def page_shell(title: str, desc: str, canonical: str, body_html: str,
 
 PILLARS: dict[str, dict] = {
     "pop-score": {
-        "title": "What is AlphaHunt Score? AlphaHunt's 0-100 stock rating explained",
-        "desc": "AlphaHunt Score is AlphaHunt's 0-100 composite rating that blends fundamentals, momentum, valuation, analyst signal, and macro regime into a single plain-English verdict.",
-        "h1": "What is the AlphaHunt Score?",
+        "title": "What is Alpha Score? AlphaHunt's 0-100 stock rating explained",
+        "desc": "Alpha Score is AlphaHunt's 0-100 composite rating that blends fundamentals, momentum, valuation, analyst signal, and macro regime into a single plain-English verdict.",
+        "h1": "What is the Alpha Score?",
         "lede": "A 0-100 composite that turns five different stock signals into one number — so you can stop juggling P/E, EPS revisions, momentum charts, and analyst ratings in your head.",
     },
     "reverse-dcf": {
@@ -265,11 +265,11 @@ def _pillar_body(slug: str, site_origin: str) -> str:
         body = f"""
 {crumbs}
 <span class="tag">Methodology</span>
-<h1>What is the AlphaHunt Score?</h1>
+<h1>What is the Alpha Score?</h1>
 <p class="lede">A 0-100 composite that turns five different stock signals into one number — so you can stop juggling P/E, EPS revisions, momentum charts, and analyst ratings in your head.</p>
 
 <h2>The five inputs</h2>
-<p>Every AlphaHunt Score is built from five weighted components. Each one is normalized to 0-100 inside its own peer group, so a small-cap quantum stock and a mega-cap chipmaker are graded against their own kind.</p>
+<p>Every Alpha Score is built from five weighted components. Each one is normalized to 0-100 inside its own peer group, so a small-cap quantum stock and a mega-cap chipmaker are graded against their own kind.</p>
 <ul>
   <li><strong>Fundamentals (30%)</strong> — revenue growth, gross margins, free cash flow trajectory, return on capital. The bones of the business.</li>
   <li><strong>Valuation (20%)</strong> — forward P/E, PEG, EV/Sales, all benchmarked to the stock's own sub-sector median. Cheap-vs-fair-vs-premium.</li>
@@ -279,7 +279,7 @@ def _pillar_body(slug: str, site_origin: str) -> str:
 </ul>
 
 <h2>How to read the number</h2>
-<blockquote>The AlphaHunt Score isn't a buy signal. It's a "homework checklist completed" signal. It tells you the stock's quantitative story is good. The qualitative judgment — does the thesis make sense to <em>you</em>? — is still yours.</blockquote>
+<blockquote>The Alpha Score isn't a buy signal. It's a "homework checklist completed" signal. It tells you the stock's quantitative story is good. The qualitative judgment — does the thesis make sense to <em>you</em>? — is still yours.</blockquote>
 <ul>
   <li><strong>80-100 — Strong Buy zone.</strong> All five inputs are firing. These are the names AlphaHunt features in the Hot List.</li>
   <li><strong>65-79 — Buy.</strong> Solid composite with at least one minor concern (usually valuation or momentum).</li>
@@ -288,18 +288,18 @@ def _pillar_body(slug: str, site_origin: str) -> str:
   <li><strong>0-34 — Avoid.</strong> Broad-based weakness. The numbers are telling you something.</li>
 </ul>
 
-<h2>Smart Score vs raw AlphaHunt Score</h2>
-<p>You'll sometimes see two numbers — a raw AlphaHunt Score and a Smart Score. The Smart Score is the same composite, but adjusted for the current market regime. In a bullish regime, the Smart Score tilts toward growth and momentum. In a bearish regime, it tilts toward quality, balance-sheet strength, and valuation discipline. The raw AlphaHunt Score is regime-blind; the Smart Score adapts.</p>
+<h2>Smart Score vs raw Alpha Score</h2>
+<p>You'll sometimes see two numbers — a raw Alpha Score and a Smart Score. The Smart Score is the same composite, but adjusted for the current market regime. In a bullish regime, the Smart Score tilts toward growth and momentum. In a bearish regime, it tilts toward quality, balance-sheet strength, and valuation discipline. The raw Alpha Score is regime-blind; the Smart Score adapts.</p>
 
 <h2>The conflict flag</h2>
-<p>Numbers can lie when they're averaged. A stock can earn a 78 AlphaHunt Score because four components are strong — but if the fifth is screaming "danger" (insider selling spike, EPS estimate crash, margin collapse), AlphaHunt flags it with a <code>caution</code> badge and rewrites the bottom-line verdict accordingly. <a href="/learn/how-to-read-fundamentals">More on how we read each signal here.</a></p>
+<p>Numbers can lie when they're averaged. A stock can earn a 78 Alpha Score because four components are strong — but if the fifth is screaming "danger" (insider selling spike, EPS estimate crash, margin collapse), AlphaHunt flags it with a <code>caution</code> badge and rewrites the bottom-line verdict accordingly. <a href="/learn/how-to-read-fundamentals">More on how we read each signal here.</a></p>
 
 <h2>What it doesn't capture</h2>
-<p>AlphaHunt Score is a quantitative framework. It cannot price in: regulatory risk, executive turnover, accounting irregularities, fraud, geopolitical exposure, or anything that isn't in the public filings yet. Treat it as the starting point of your research, not the conclusion.</p>
+<p>Alpha Score is a quantitative framework. It cannot price in: regulatory risk, executive turnover, accounting irregularities, fraud, geopolitical exposure, or anything that isn't in the public filings yet. Treat it as the starting point of your research, not the conclusion.</p>
 
-{cta_block("See live AlphaHunt Scores")}
+{cta_block("See live Alpha Scores")}
 {newsletter_block("learn-pop-score")}
-<div class="legal">AlphaHunt is a research tool, not financial advice. AlphaHunt Score is a composite signal — always do your own research before investing.</div>
+<div class="legal">AlphaHunt is a research tool, not financial advice. Alpha Score is a composite signal — always do your own research before investing.</div>
 """
     elif slug == "reverse-dcf":
         body = f"""
@@ -327,7 +327,7 @@ def _pillar_body(slug: str, site_origin: str) -> str:
 <p>A P/E of 60× is meaningless without context. 60× could be cheap for a company growing 50% per year and expensive for one growing 10%. The Reverse DCF removes the ambiguity by translating the multiple into a growth assumption you can argue with. You stop asking "is 60× expensive?" and start asking "do I believe this company can grow 30% per year for a decade?". That's a much more useful question.</p>
 
 <h2>What it doesn't capture</h2>
-<p>Reverse DCF assumes margins, tax rates, and capital intensity stay roughly constant. For companies undergoing big margin shifts (early-stage SaaS scaling to profitability, hardware companies losing pricing power), the implied growth read can be misleading. Use it together with the AlphaHunt Score's <a href="/learn/pop-score">Fundamentals component</a>, not in isolation.</p>
+<p>Reverse DCF assumes margins, tax rates, and capital intensity stay roughly constant. For companies undergoing big margin shifts (early-stage SaaS scaling to profitability, hardware companies losing pricing power), the implied growth read can be misleading. Use it together with the Alpha Score's <a href="/learn/pop-score">Fundamentals component</a>, not in isolation.</p>
 
 {cta_block("See Reverse DCF on every stock")}
 {newsletter_block("learn-reverse-dcf")}
@@ -362,7 +362,7 @@ def _pillar_body(slug: str, site_origin: str) -> str:
 <p>Numbers tell you what's true. The thesis tells you whether it'll keep being true. Before you buy, write down in one sentence why this company will be bigger and more profitable in five years than it is today. If you can't, you're trading the chart, not the business.</p>
 
 <h2>How AlphaHunt does this for you</h2>
-<p>Every stock in our universe is run through this checklist every five minutes during market hours. The output is the <a href="/learn/pop-score">AlphaHunt Score</a> — a single 0-100 composite that bakes in all seven signals plus a regime adjustment. You can drill into the underlying components on any stock's detail page.</p>
+<p>Every stock in our universe is run through this checklist every five minutes during market hours. The output is the <a href="/learn/pop-score">Alpha Score</a> — a single 0-100 composite that bakes in all seven signals plus a regime adjustment. You can drill into the underlying components on any stock's detail page.</p>
 
 {cta_block("Open the dashboard and try it")}
 {newsletter_block("learn-fundamentals")}
@@ -426,15 +426,15 @@ def render_pillar_index(site_origin: str) -> str:
   {brand_header()}
   <div class="crumbs"><a href="/">Home</a> · Learn</div>
   <h1>Learn</h1>
-  <p class="lede">Plain-English guides to the methodology behind AlphaHunt — the AlphaHunt Score, the Reverse DCF, and how to read US stock fundamentals.</p>
+  <p class="lede">Plain-English guides to the methodology behind AlphaHunt — the Alpha Score, the Reverse DCF, and how to read US stock fundamentals.</p>
   <div class="cards">{cards}</div>
   {newsletter_block("learn-index")}
   <div class="legal">AlphaHunt — research, not advice.</div>
 </div>"""
     canonical = f"{site_origin}/learn"
     return page_shell(
-        title="Learn — AlphaHunt methodology, AlphaHunt Score, Reverse DCF",
-        desc="Plain-English guides to AlphaHunt's stock-research methodology — AlphaHunt Score, Reverse DCF, and the seven-step fundamentals checklist.",
+        title="Learn — AlphaHunt methodology, Alpha Score, Reverse DCF",
+        desc="Plain-English guides to AlphaHunt's stock-research methodology — Alpha Score, Reverse DCF, and the seven-step fundamentals checklist.",
         canonical=canonical, body_html=body,
         og_image=f"{site_origin}/static/icons/icon-512.png",
     )
@@ -472,7 +472,7 @@ def render_sector(slug: str, universe: list[dict], site_origin: str) -> Optional
         t for t in (universe or [])
         if slugify(t.get("sub_sector") or t.get("subsector") or t.get("sector") or "") == slug
     ]
-    # Sort by AlphaHunt Score descending
+    # Sort by Alpha Score descending
     def _score(t: dict) -> float:
         s = t.get("smart_score") if t.get("smart_score") is not None else t.get("pop_score")
         try:
@@ -483,9 +483,9 @@ def render_sector(slug: str, universe: list[dict], site_origin: str) -> Optional
     table_html = "".join(_stock_row(t) for t in rows[:50])
     n = len(rows)
     canonical = f"{site_origin}/sectors/{slug}"
-    title = f"Best {label} stocks — live AlphaHunt Scores | AlphaHunt"
+    title = f"Best {label} stocks — live Alpha Scores | AlphaHunt"
     desc = (
-        f"AlphaHunt's live ranking of {n} {label} stocks by AlphaHunt Score. "
+        f"AlphaHunt's live ranking of {n} {label} stocks by Alpha Score. "
         f"Plain-English verdict, grade, and bottom line for each. Updated every 5 minutes."
     )[:160]
     schema = {
@@ -522,12 +522,12 @@ def render_sector(slug: str, universe: list[dict], site_origin: str) -> Optional
   {brand_header()}
   <div class="crumbs"><a href="/">Home</a> · <a href="/sectors">Sectors</a> · {label}</div>
   <h1>Best {label} stocks</h1>
-  <p class="lede">Live ranking of {n} {label} stocks by AlphaHunt AlphaHunt Score — a 0-100 composite of fundamentals, valuation, momentum, analyst signal, and macro regime. Click any ticker for the full breakdown.</p>
+  <p class="lede">Live ranking of {n} {label} stocks by AlphaHunt Alpha Score — a 0-100 composite of fundamentals, valuation, momentum, analyst signal, and macro regime. Click any ticker for the full breakdown.</p>
   <table class="tbl">
     <thead><tr><th>Ticker</th><th>Grade</th><th>Score</th><th>Bottom line</th></tr></thead>
     <tbody>{table_html or '<tr><td colspan="4">No stocks scored in this sector yet — the universe is warming up.</td></tr>'}</tbody>
   </table>
-  <p style="font-size:13px;color:#64748b">AlphaHunt Scores update every 5 minutes during US market hours. Grades: <strong>A</strong> Strong Buy · <strong>B</strong> Buy · <strong>C</strong> Hold · <strong>D</strong> Reduce · <strong>F</strong> Avoid.</p>
+  <p style="font-size:13px;color:#64748b">Alpha Scores update every 5 minutes during US market hours. Grades: <strong>A</strong> Strong Buy · <strong>B</strong> Buy · <strong>C</strong> Hold · <strong>D</strong> Reduce · <strong>F</strong> Avoid.</p>
   {cta_block("See the full live dashboard")}
   {newsletter_block("sector-" + slug)}
   <div class="legal">AlphaHunt is a research tool, not financial advice. Always do your own research before investing.</div>
@@ -544,7 +544,7 @@ def render_sector_index(universe: list[dict], site_origin: str) -> str:
     items = sorted(smap.items(), key=lambda kv: kv[1].lower())
     cards = "".join(
         f'<div class="card"><a href="/sectors/{slug}"><div class="ttl">{label}</div>'
-        f'<div class="sub">View live AlphaHunt Scores for stocks in this sector.</div></a></div>'
+        f'<div class="sub">View live Alpha Scores for stocks in this sector.</div></a></div>'
         for slug, label in items
     )
     body = f"""
@@ -552,15 +552,15 @@ def render_sector_index(universe: list[dict], site_origin: str) -> str:
   {brand_header()}
   <div class="crumbs"><a href="/">Home</a> · Sectors</div>
   <h1>Sectors</h1>
-  <p class="lede">{len(smap)} sub-sectors covered, all scored on the same 0-100 AlphaHunt Score. Pick one to see a live ranking.</p>
+  <p class="lede">{len(smap)} sub-sectors covered, all scored on the same 0-100 Alpha Score. Pick one to see a live ranking.</p>
   <div class="cards">{cards}</div>
   {newsletter_block("sectors-index")}
   <div class="legal">AlphaHunt — research, not advice.</div>
 </div>"""
     canonical = f"{site_origin}/sectors"
     return page_shell(
-        title="Stock sectors — live AlphaHunt Scores by sub-sector | AlphaHunt",
-        desc="Browse AlphaHunt's stock universe by sub-sector — AI semiconductors, cybersecurity, quantum computing, photonics, and more. Live AlphaHunt Scores updated every 5 minutes.",
+        title="Stock sectors — live Alpha Scores by sub-sector | AlphaHunt",
+        desc="Browse AlphaHunt's stock universe by sub-sector — AI semiconductors, cybersecurity, quantum computing, photonics, and more. Live Alpha Scores updated every 5 minutes.",
         canonical=canonical, body_html=body,
         og_image=f"{site_origin}/static/icons/icon-512.png",
     )
@@ -610,7 +610,7 @@ def _cmp_card(t: dict) -> str:
     <div class="tk">{sym}</div>
     <div class="nm">{name}</div>
   </a>
-  <div class="cmp-row"><span class="k">AlphaHunt Score</span><span class="v">{pop_n}/100</span></div>
+  <div class="cmp-row"><span class="k">Alpha Score</span><span class="v">{pop_n}/100</span></div>
   <div class="cmp-row"><span class="k">Grade</span><span class="v">{grade} · {rating}</span></div>
   <div class="cmp-row"><span class="k">Price</span><span class="v">{price_str}</span></div>
   <div class="cmp-row"><span class="k">Rev growth (YoY)</span><span class="v">{rev_g_str}</span></div>
@@ -633,7 +633,7 @@ def render_comparison(a: str, b: str, universe: list[dict], site_origin: str) ->
     name_a = (ta.get("name") or a)
     name_b = (tb.get("name") or b)
     canonical = f"{site_origin}/compare/{a}-vs-{b}"
-    # Compute the verdict — which one wins on AlphaHunt Score
+    # Compute the verdict — which one wins on Alpha Score
     pa = ta.get("smart_score") if ta.get("smart_score") is not None else ta.get("pop_score") or 0
     pb = tb.get("smart_score") if tb.get("smart_score") is not None else tb.get("pop_score") or 0
     try:
@@ -641,15 +641,15 @@ def render_comparison(a: str, b: str, universe: list[dict], site_origin: str) ->
     except (TypeError, ValueError):
         pa_f, pb_f = 0.0, 0.0
     if abs(pa_f - pb_f) < 3:
-        verdict = f"{a} and {b} score within 3 points of each other on AlphaHunt Score — effectively tied. The right pick depends on which thesis you find more compelling."
+        verdict = f"{a} and {b} score within 3 points of each other on Alpha Score — effectively tied. The right pick depends on which thesis you find more compelling."
     elif pa_f > pb_f:
-        verdict = f"{a} edges out {b} on AlphaHunt's composite AlphaHunt Score ({round(pa_f)} vs {round(pb_f)}). The breakdown below shows where each stock leads."
+        verdict = f"{a} edges out {b} on AlphaHunt's composite Alpha Score ({round(pa_f)} vs {round(pb_f)}). The breakdown below shows where each stock leads."
     else:
-        verdict = f"{b} edges out {a} on AlphaHunt's composite AlphaHunt Score ({round(pb_f)} vs {round(pa_f)}). The breakdown below shows where each stock leads."
-    title = f"{a} vs {b} — AlphaHunt Score, valuation, growth compared | AlphaHunt"
+        verdict = f"{b} edges out {a} on AlphaHunt's composite Alpha Score ({round(pb_f)} vs {round(pa_f)}). The breakdown below shows where each stock leads."
+    title = f"{a} vs {b} — Alpha Score, valuation, growth compared | AlphaHunt"
     desc = (
         f"Side-by-side comparison of {a} ({name_a[:24]}) and {b} ({name_b[:24]}) — "
-        f"AlphaHunt Score, growth, valuation, momentum and analyst upside. Updated every 5 minutes."
+        f"Alpha Score, growth, valuation, momentum and analyst upside. Updated every 5 minutes."
     )[:160]
     body = f"""
 <div class="wrap-wide">
@@ -661,8 +661,8 @@ def render_comparison(a: str, b: str, universe: list[dict], site_origin: str) ->
     {_cmp_card(ta)}
     {_cmp_card(tb)}
   </div>
-  <h2>How AlphaHunt scores both</h2>
-  <p>The AlphaHunt Score blends fundamentals, valuation, momentum, analyst signal and macro regime into one 0-100 number. <a href="/learn/pop-score">Read the methodology →</a></p>
+  <h2>How Alpha scores both</h2>
+  <p>The Alpha Score blends fundamentals, valuation, momentum, analyst signal and macro regime into one 0-100 number. <a href="/learn/pop-score">Read the methodology →</a></p>
   <p>For deeper analysis on each name, open the live dashboard: <a href="/stocks/{a}">{a} full breakdown</a> · <a href="/stocks/{b}">{b} full breakdown</a>.</p>
   {cta_block("Open the live dashboard")}
   {newsletter_block(f"compare-{a}-{b}")}
@@ -699,7 +699,7 @@ def render_compare_index(universe: list[dict], site_origin: str) -> str:
     valid = [(a, b) for a, b in FEATURED_COMPARISONS if a in lookup and b in lookup]
     cards = "".join(
         f'<div class="card"><a href="/compare/{a}-vs-{b}"><div class="ttl">{a} vs {b}</div>'
-        f'<div class="sub">Side-by-side AlphaHunt Score, growth, valuation and momentum.</div></a></div>'
+        f'<div class="sub">Side-by-side Alpha Score, growth, valuation and momentum.</div></a></div>'
         for a, b in valid
     )
     body = f"""
@@ -707,7 +707,7 @@ def render_compare_index(universe: list[dict], site_origin: str) -> str:
   {brand_header()}
   <div class="crumbs"><a href="/">Home</a> · Compare</div>
   <h1>Stock comparisons</h1>
-  <p class="lede">Curated head-to-head pages for the most-asked-about US stocks. AlphaHunt Score, growth, valuation and analyst signal — all on one page. You can also build any comparison by visiting <code>/compare/&lt;TICKER1&gt;-vs-&lt;TICKER2&gt;</code>.</p>
+  <p class="lede">Curated head-to-head pages for the most-asked-about US stocks. Alpha Score, growth, valuation and analyst signal — all on one page. You can also build any comparison by visiting <code>/compare/&lt;TICKER1&gt;-vs-&lt;TICKER2&gt;</code>.</p>
   <div class="cards">{cards}</div>
   {newsletter_block("compare-index")}
   <div class="legal">AlphaHunt — research, not advice.</div>
@@ -715,7 +715,7 @@ def render_compare_index(universe: list[dict], site_origin: str) -> str:
     canonical = f"{site_origin}/compare"
     return page_shell(
         title="Stock comparisons — NVDA vs AMD, AAPL vs MSFT, and more | AlphaHunt",
-        desc="Side-by-side US stock comparisons — AlphaHunt Score, growth, valuation, analyst upside. Curated head-to-head pages updated every 5 minutes.",
+        desc="Side-by-side US stock comparisons — Alpha Score, growth, valuation, analyst upside. Curated head-to-head pages updated every 5 minutes.",
         canonical=canonical, body_html=body,
         og_image=f"{site_origin}/static/icons/icon-512.png",
     )
