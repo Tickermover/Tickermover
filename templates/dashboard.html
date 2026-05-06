@@ -198,12 +198,13 @@ table,th,td{
 .hot-change{font-size:11px;font-weight:700;margin-top:1px}
 .pos{color:var(--grn)}.neg{color:var(--red)}.neu{color:var(--muted)}
 
-.score-xl{margin:6px 0}
+.score-xl{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;margin:6px 0}
 .score-block{display:inline-block}
 .score-big{display:block;font-size:56px;font-weight:900;line-height:1;letter-spacing:-.02em;
            background:linear-gradient(135deg,#1d4ed8 0%,#2563eb 50%,#0ea5e9 100%);
            -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 .score-label{display:block;margin-top:4px;font-size:11px;color:#374151;text-transform:uppercase;letter-spacing:.6px;font-weight:700}
+.rating-stack{display:flex;flex-direction:column;align-items:flex-end;gap:6px;padding-bottom:2px}
 
 .rating{display:inline-block;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:800;letter-spacing:.5px}
 .rating-strong{background:#15803d;color:#ffffff;border:none;
@@ -339,6 +340,10 @@ tr:hover td{background:rgba(132,204,22,.06)}
 
 /* ====== SIGNAL CHIPS — each type has its own distinct colour ====== */
 .sig-chip{display:inline-block;font-size:10px;font-weight:700;padding:2px 7px;border-radius:7px;margin:1px 2px 1px 0;white-space:nowrap}
+.signals-row .sig-extra{display:none}
+.signals-row.expanded .sig-extra{display:inline}
+.signals-toggle{display:inline-block;font-size:10.5px;color:#475569;font-weight:700;margin-left:6px;padding:2px 0;cursor:pointer;user-select:none;border-bottom:1px dashed transparent;transition:color .12s,border-color .12s}
+.signals-toggle:hover{color:#0f172a;border-bottom-color:#94a3b8}
 /* EPS beat / guide → dark green */
 .sig-beat{background:rgba(22,163,74,.12);color:#15803d;border:1px solid rgba(22,163,74,.3)}
 .sig-guide{background:rgba(5,150,105,.1);color:#047857;border:1px solid rgba(5,150,105,.25)}
@@ -2201,6 +2206,20 @@ function ratingChip(t, rating) {
   return `<span class="rating ${baseCls}">${rating}</span>`;
 }
 
+/* Toggle the hidden signal chips on the stock modal. The chips themselves
+   live in <span class="sig-extra"> and are display:none by default; clicking
+   the toggle adds .expanded to the row so they appear inline. */
+function toggleSignals(el) {
+  const row = el.closest('.signals-row');
+  if (!row) return;
+  const expanding = !row.classList.contains('expanded');
+  if (expanding && !el.dataset.collapsed) {
+    el.dataset.collapsed = el.textContent; // remember "View all N signals →"
+  }
+  row.classList.toggle('expanded');
+  el.textContent = expanding ? 'Show less ↑' : (el.dataset.collapsed || 'View all signals →');
+}
+
 function sigChips(signals) {
   if (!signals || !signals.length) return '';
   return signals.slice(0, 6).map(s => {
@@ -2398,21 +2417,27 @@ function renderHotList(data) {
       ${earningsAlert}
       <div class="score-xl">
         <div class="score-block"><div class="score-big">${Math.round(pop)}</div><div class="score-label">Alpha Score</div></div>
+        <div class="rating-stack">
+          ${ratingChip(t, rating)}
+          ${(_rsMap[t.ticker]||0)>0 ? `<span class="rs-badge ${(_rsMap[t.ticker]||0)>=90?'rs-gold':(_rsMap[t.ticker]||0)>=70?'rs-green':(_rsMap[t.ticker]||0)>=50?'rs-yellow':'rs-muted'}" style="font-size:11px;padding:3px 8px">RS <span class="rs-num">${_rsMap[t.ticker]}</span></span>` : ''}
+        </div>
       </div>
-      <div style="margin:6px 0;display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-        ${ratingChip(t, rating)}
-        ${t.caution ? `<span title="${(t.caution_reasons||[]).join(' • ')}"
-            style="display:inline-flex;align-items:center;gap:4px;
-                   background:#fffbeb;color:#92400e;
-                   border:1px solid #fcd34d;border-radius:6px;
-                   padding:3px 8px;font-size:10.5px;font-weight:800;letter-spacing:.03em">
-            ⚠ Caveats
-          </span>` : ''}
-        ${(_rsMap[t.ticker]||0)>0 ? `<span class="rs-badge ${(_rsMap[t.ticker]||0)>=90?'rs-gold':(_rsMap[t.ticker]||0)>=70?'rs-green':(_rsMap[t.ticker]||0)>=50?'rs-yellow':'rs-muted'}" style="font-size:11px;padding:3px 8px">RS <span class="rs-num">${_rsMap[t.ticker]}</span></span>` : ''}
-      </div>
+      ${t.caution ? `<div style="margin:6px 0"><span title="${(t.caution_reasons||[]).join(' • ')}"
+          style="display:inline-flex;align-items:center;gap:4px;
+                 background:#fffbeb;color:#92400e;
+                 border:1px solid #fcd34d;border-radius:6px;
+                 padding:3px 8px;font-size:10.5px;font-weight:800;letter-spacing:.03em">
+          ⚠ Caveats
+        </span></div>` : ''}
       ${analystBlock}
       ${wk52Block}
-      <div style="margin-top:8px">${sigChips((t.signals||[]).filter(s => !/earnings|eps.in|days.to.earn/i.test(s)))}</div>
+      <div style="margin-top:8px" class="signals-row">${(() => {
+        const _filtered = (t.signals||[]).filter(s => !/earnings|eps.in|days.to.earn/i.test(s));
+        const _top      = _filtered.slice(0, 1);
+        const _rest     = _filtered.slice(1);
+        const _restHTML = _rest.length ? `<span class="sig-extra">${sigChips(_rest)}</span><span class="signals-toggle" onclick="toggleSignals(this); return false;">View all ${_filtered.length} signals →</span>` : '';
+        return sigChips(_top) + _restHTML;
+      })()}</div>
       <div class="badge-row" style="margin:4px 0">
         ${buildBlueDot(t)}
       </div>
