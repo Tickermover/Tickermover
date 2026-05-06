@@ -2209,15 +2209,23 @@ function ratingChip(t, rating) {
 /* Toggle the hidden signal chips on the stock modal. The chips themselves
    live in <span class="sig-extra"> and are display:none by default; clicking
    the toggle adds .expanded to the row so they appear inline. */
-function toggleSignals(el) {
+function toggleSignals(el, ev) {
+  // Defensive: stop the click from bubbling up to the parent card,
+  // which has its own onclick that re-opens the stock modal.
+  ev = ev || window.event;
+  if (ev) {
+    if (ev.stopPropagation) ev.stopPropagation();
+    if (ev.preventDefault)  ev.preventDefault();
+  }
   const row = el.closest('.signals-row');
-  if (!row) return;
+  if (!row) return false;
   const expanding = !row.classList.contains('expanded');
   if (expanding && !el.dataset.collapsed) {
     el.dataset.collapsed = el.textContent; // remember "View all N signals →"
   }
   row.classList.toggle('expanded');
   el.textContent = expanding ? 'Show less ↑' : (el.dataset.collapsed || 'View all signals →');
+  return false;
 }
 
 function sigChips(signals) {
@@ -2435,7 +2443,7 @@ function renderHotList(data) {
         const _filtered = (t.signals||[]).filter(s => !/earnings|eps.in|days.to.earn/i.test(s));
         const _top      = _filtered.slice(0, 1);
         const _rest     = _filtered.slice(1);
-        const _restHTML = _rest.length ? `<span class="sig-extra">${sigChips(_rest)}</span><span class="signals-toggle" onclick="toggleSignals(this); return false;">View all ${_filtered.length} signals →</span>` : '';
+        const _restHTML = _rest.length ? `<span class="sig-extra">${sigChips(_rest)}</span><span class="signals-toggle" onclick="toggleSignals(this, event); return false;">View all ${_filtered.length} signals →</span>` : '';
         return sigChips(_top) + _restHTML;
       })()}</div>
       <div class="badge-row" style="margin:4px 0">
