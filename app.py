@@ -770,6 +770,140 @@ a{{color:#15803d;font-weight:600;text-decoration:none}}</style>
 </body></html>"""
 
 
+def _render_post_earnings_card(t: dict, name: str, sym: str) -> str:
+    """
+    Build the "Just Reported" earnings card. Returns an HTML string, or empty
+    string when no recent earnings event is detected.
+
+    Data sources (already in the API response):
+      - t["earnings_just_reported"] — set by data_coordinator._parse_yf_earnings
+      - t["eps_quarters"][0]        — most recent EPS actual + estimate + beat
+      - t["quarterly_income"][0]    — most recent revenue
+      - t["last_earnings_date"]     — when the report was released
+      - t["change_1m"] / momentum   — proxy for stock reaction
+    """
+    if not t.get("earnings_just_reported"):
+        return ""
+
+    eps_q = (t.get("eps_quarters") or [{}])[0] or {}
+    q_inc = (t.get("quarterly_income") or [{}])[0] or {}
+    last_date = t.get("last_earnings_date") or t.get("earnings_date") or ""
+
+    eps_actual   = eps_q.get("actual")
+    eps_estimate = eps_q.get("estimate")
+    surprise_pct = eps_q.get("surprise_pct")
+    beat         = eps_q.get("beat")
+    revenue      = q_inc.get("revenue")
+    beat_streak  = t.get("eps_beat_streak")
+    reaction_pct = t.get("momentum_1m")  # proxy: 1-month return covers post-earnings drift
+
+    # ── EPS row ──
+    if eps_actual is not None and eps_estimate is not None:
+        beat_tag = (
+            '<span style="background:#dcfce7;color:#15803d;font-weight:700;'
+            'padding:3px 10px;border-radius:999px;font-size:11px;letter-spacing:.04em">BEAT</span>'
+            if beat else
+            '<span style="background:#fee2e2;color:#b91c1c;font-weight:700;'
+            'padding:3px 10px;border-radius:999px;font-size:11px;letter-spacing:.04em">MISS</span>'
+        ) if beat is not None else ""
+        surp_str = (
+            f' &middot; <span style="color:{"#15803d" if (surprise_pct or 0) > 0 else "#b91c1c"};'
+            f'font-weight:600">{surprise_pct:+.1f}%</span> vs estimate'
+        ) if surprise_pct is not None else ""
+        eps_row = (
+            f'<div style="display:flex;justify-content:space-between;align-items:center;'
+            f'padding:10px 0;border-bottom:1px solid #f1f5f9">'
+            f'<div style="font-size:13px;color:#64748b;font-weight:600">EPS</div>'
+            f'<div style="font-size:14px;color:#0f172a">'
+            f'<span class="mono" style="font-weight:700">${eps_actual:.2f}</span> '
+            f'<span style="color:#94a3b8">vs <span class="mono">${eps_estimate:.2f}</span> est</span>'
+            f'{surp_str} {beat_tag}'
+            f'</div></div>'
+        )
+    else:
+        eps_row = ""
+
+    # ── Revenue row (estimates not available from FMP income endpoint) ──
+    if revenue:
+        # Format as $X.YZB / $X.YZM
+        if revenue >= 1e9:
+            rev_str = f"${revenue / 1e9:.2f}B"
+        elif revenue >= 1e6:
+            rev_str = f"${revenue / 1e6:.1f}M"
+        else:
+            rev_str = f"${revenue:,.0f}"
+        rev_growth_str = ""
+        rg = t.get("rev_growth_qyoy")
+        if rg is not None:
+            rev_growth_str = (
+                f' &middot; <span style="color:{"#15803d" if rg > 0 else "#b91c1c"};'
+                f'font-weight:600">{rg*100:+.1f}%</span> YoY'
+            )
+        rev_row = (
+            f'<div style="display:flex;justify-content:space-between;align-items:center;'
+            f'padding:10px 0;border-bottom:1px solid #f1f5f9">'
+            f'<div style="font-size:13px;color:#64748b;font-weight:600">Revenue</div>'
+            f'<div style="font-size:14px;color:#0f172a">'
+            f'<span class="mono" style="font-weight:700">{rev_str}</span>{rev_growth_str}'
+            f'</div></div>'
+        )
+    else:
+        rev_row = ""
+
+    # ── Stock reaction (1-month momentum proxy) ──
+    if reaction_pct is not None:
+        rx_color = "#15803d" if reaction_pct > 0 else "#b91c1c"
+        rx_row = (
+            f'<div style="display:flex;justify-content:space-between;align-items:center;'
+            f'padding:10px 0;border-bottom:1px solid #f1f5f9">'
+            f'<div style="font-size:13px;color:#64748b;font-weight:600">Stock reaction (1M)</div>'
+            f'<div style="font-size:14px;color:{rx_color};font-weight:700" class="mono">'
+            f'{reaction_pct:+.1f}%</div></div>'
+        )
+    else:
+        rx_row = ""
+
+    # ── Beat streak ──
+    if beat_streak:
+        streak_row = (
+            f'<div style="display:flex;justify-content:space-between;align-items:center;'
+            f'padding:10px 0">'
+            f'<div style="font-size:13px;color:#64748b;font-weight:600">Beat streak</div>'
+            f'<div style="font-size:14px;color:#0f172a;font-weight:700">'
+            f'{beat_streak} of last 4 quarters</div></div>'
+        )
+    else:
+        streak_row = ""
+
+    # If we have nothing to show, skip the card entirely
+    if not (eps_row or rev_row or rx_row or streak_row):
+        return ""
+
+    date_str = f' &middot; reported {last_date}' if last_date else ""
+
+    return f"""
+  <div style="background:linear-gradient(135deg,#f0fdf4 0%,#fefce8 100%);
+              border:1px solid #bbf7d0;border-radius:12px;
+              padding:18px 22px;margin-bottom:24px;
+              box-shadow:0 1px 3px rgba(15,23,42,.04)">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+      <span style="background:#15803d;color:#fff;font-weight:800;font-size:10px;
+                   letter-spacing:.06em;padding:4px 10px;border-radius:999px">
+        JUST REPORTED
+      </span>
+      <span style="font-size:12px;color:#475569">{name} ({sym}){date_str}</span>
+    </div>
+    <h3 style="font-size:16px;font-weight:800;color:#0f172a;margin:0 0 8px 0">
+      Latest earnings
+    </h3>
+    {eps_row}
+    {rev_row}
+    {rx_row}
+    {streak_row}
+  </div>
+"""
+
+
 def _render_stock_page(t: dict) -> str:
     """
     Render the SEO-optimized HTML page for a single ticker.
@@ -803,6 +937,12 @@ def _render_stock_page(t: dict) -> str:
     # Pre-formatted price string (avoids f-string format-spec restrictions)
     price_str = f"${price:.2f}" if price > 0 else "—"
     chg_str   = f"{chg_sign}{chg:.2f}%"
+
+    # ── Post-earnings summary block ──────────────────────────────────
+    # When earnings_just_reported is True, render a "Just Reported" card
+    # above Key Metrics with EPS actual vs estimate, revenue, and beat
+    # streak. Empty string when no recent earnings — keeps the layout clean.
+    post_earnings_html = _render_post_earnings_card(t, name, sym)
 
     # ── SEO meta tags — these are the part Google ranks on ──
     title = f"{sym} Stock Analysis · AlphaHunt Score {round(pop)} · {rating} | AlphaHunt"
@@ -976,6 +1116,8 @@ h2{{font-size:21px;font-weight:800;letter-spacing:-.015em;margin:32px 0 12px;col
     </div>
     <div class="verdict-text">{bottom_line}</div>
   </div>
+
+  {post_earnings_html}
 
   <h2>Key metrics</h2>
   <div class="metrics">

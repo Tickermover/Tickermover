@@ -117,7 +117,7 @@ body{
 /* Tabular numerals everywhere finance numbers live, so columns line up cleanly */
 .score-big,.score-label,.hot-price,.hot-change,.fd-price,.fd-tgt,
 .t-val,.t-lbl,.fd-metric .v,.fd-metric .k,.stat-n,.stat-l,
-.rating,.conf,.rs-badge,.sig-chip,.badge,.score-fill,
+.rating,.conf,.rs-badge,.sig-chip,.badge,
 table,th,td{
   font-feature-settings:'tnum' 1,'cv02','cv03','cv11';
   font-variant-numeric:tabular-nums;
@@ -198,15 +198,12 @@ table,th,td{
 .hot-change{font-size:11px;font-weight:700;margin-top:1px}
 .pos{color:var(--grn)}.neg{color:var(--red)}.neu{color:var(--muted)}
 
-.score-xl{display:flex;align-items:center;gap:10px;margin:6px 0}
-.score-big{font-size:40px;font-weight:900;line-height:1;
+.score-xl{display:flex;align-items:baseline;gap:14px;margin:6px 0}
+.score-block{display:flex;align-items:baseline;gap:10px}
+.score-big{font-size:56px;font-weight:900;line-height:1;letter-spacing:-.02em;
            background:linear-gradient(135deg,#1d4ed8 0%,#2563eb 50%,#0ea5e9 100%);
            -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-.score-label{font-size:10px;color:#374151;text-transform:uppercase;letter-spacing:.5px;font-weight:700}
-.score-bar{flex:1;height:7px;border-radius:4px;background:rgba(0,0,0,.07);overflow:hidden;margin-left:auto}
-.score-fill{height:100%;border-radius:4px;
-            background:linear-gradient(90deg,#16a34a 0%,#22c55e 55%,#4ade80 100%);
-            box-shadow:0 0 8px rgba(34,197,94,.45)}
+.score-label{font-size:11px;color:#374151;text-transform:uppercase;letter-spacing:.6px;font-weight:700}
 
 .rating{display:inline-block;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:800;letter-spacing:.5px}
 .rating-strong{background:#15803d;color:#ffffff;border:none;
@@ -2400,8 +2397,7 @@ function renderHotList(data) {
       ${ktBanner}
       ${earningsAlert}
       <div class="score-xl">
-        <div><div class="score-big">${Math.round(pop)}</div><div class="score-label">AlphaHunt Score</div></div>
-        <div class="score-bar"><div class="score-fill" style="width:${pop}%"></div></div>
+        <div class="score-block"><div class="score-big">${Math.round(pop)}</div><div class="score-label">AlphaHunt Score</div></div>
       </div>
       <div style="margin:6px 0;display:flex;align-items:center;gap:6px;flex-wrap:wrap">
         ${ratingChip(t, rating)}

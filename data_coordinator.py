@@ -1524,6 +1524,9 @@ class DataCoordinator:
             # Earnings
             "days_to_earnings":   candles.get("days_to_earnings") or self.cache.get(f"earnings:{ticker}"),
             "earnings_date":      candles.get("earnings_date"),
+            "earnings_just_reported": candles.get("earnings_just_reported", False),
+            "last_earnings_date":     candles.get("last_earnings_date"),
+            "days_since_earnings":    candles.get("days_since_earnings"),
 
             # Insider (SEC + yfinance fallback)
             "insider_buys_90d":   insider.get("insider_buys_90d", 0),
