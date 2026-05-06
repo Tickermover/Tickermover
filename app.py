@@ -3508,12 +3508,18 @@ async def api_payment_webhook(request: Request):
 #     "sentiment": {"sentiment_score": float, "sentiment_label": str, ...}
 #   }
 @app.get("/api/earnings-intel/{ticker}")
-async def api_earnings_intel(ticker: str):
+async def api_earnings_intel(ticker: str, force: int = 0):
+    """
+    Returns {guidance, sentiment} for a ticker that just reported earnings.
+    Gated on earnings_just_reported by default to avoid wasted LLM calls.
+    Pass ?force=1 to bypass the gate (useful for testing in dev).
+    """
     sym = ticker.upper()
     t   = cache.get(f"ticker:{sym}") or {}
-    # Only do the work for stocks that just reported (saves LLM cost).
-    if not t.get("earnings_just_reported"):
+    if not force and not t.get("earnings_just_reported"):
         return JSONResponse({"guidance": {}, "sentiment": {}})
-    edate = t.get("last_earnings_date") or t.get("earnings_date") or ""
+    edate = (t.get("last_earnings_date")
+             or t.get("earnings_date")
+             or "force-test")
     intel = await coordinator.get_post_earnings_intel(sym, edate)
     return JSONResponse(intel)

@@ -162,8 +162,10 @@ def _parse_yf_earnings(info: dict) -> dict:
     if future_dates:
         edate = future_dates[0]
         days  = (edate - today).days
+        # Show the post-earnings card for ~2 weeks after a reported event,
+        # so users who don't check daily still see the EPS / revenue summary.
         just_reported = bool(
-            past_dates and (today - past_dates[0]).days <= 2
+            past_dates and (today - past_dates[0]).days <= 14
         )
         out = {
             "earnings_date":     edate.isoformat(),
