@@ -2679,6 +2679,136 @@ function buildEpsDateBadge(t) {
             📅 ${label}</span>`;
 }
 
+/* Render the post-earnings card inside the stock modal. Builds the basic
+   EPS/revenue/reaction sections from the local ticker dict (no network needed
+   for those — data is already in `t`), then fetches /api/earnings-intel for
+   the LLM-derived forward guidance (Groq + SEC EDGAR press release) and
+   appends it when ready. Falls back gracefully if eps_quarters is missing. */
+function renderModalEarningsCard(ticker, t) {
+  const slot = document.getElementById('modal-earnings-card-' + ticker);
+  if (!slot) return;
+
+  const epsQ = (t.eps_quarters || [])[0] || {};
+  const incQ = (t.quarterly_income || [])[0] || {};
+  if (!epsQ.actual && epsQ.surprise_pct == null) return;
+
+  const justReported = !!t.earnings_just_reported;
+  const badge = justReported
+    ? '<span style="background:#15803d;color:#fff;font-weight:800;font-size:10px;letter-spacing:.06em;padding:4px 10px;border-radius:999px">JUST REPORTED</span>'
+    : '<span style="background:#e2e8f0;color:#475569;font-weight:700;font-size:10px;letter-spacing:.06em;padding:4px 10px;border-radius:999px">LAST EARNINGS</span>';
+  const bg = justReported
+    ? 'linear-gradient(135deg,#f0fdf4 0%,#fefce8 100%)'
+    : 'linear-gradient(135deg,#f8fafc 0%,#f1f5f9 100%)';
+  const bdr = justReported ? '#bbf7d0' : '#e2e8f0';
+
+  // EPS row
+  const epsActual   = epsQ.actual;
+  const epsEstimate = epsQ.estimate;
+  const surpPct     = epsQ.surprise_pct;
+  const beat        = epsQ.beat;
+  let epsRow = '';
+  if (epsActual != null && epsEstimate != null) {
+    const beatTag = beat == null ? '' :
+      (beat
+        ? '<span style="background:#dcfce7;color:#15803d;font-weight:700;padding:3px 10px;border-radius:999px;font-size:10px;letter-spacing:.04em;margin-left:6px">BEAT</span>'
+        : '<span style="background:#fee2e2;color:#b91c1c;font-weight:700;padding:3px 10px;border-radius:999px;font-size:10px;letter-spacing:.04em;margin-left:6px">MISS</span>');
+    const surpStr = surpPct == null ? '' :
+      ` &middot; <span style="color:${surpPct > 0 ? '#15803d' : '#b91c1c'};font-weight:600">${surpPct >= 0 ? '+' : ''}${surpPct.toFixed(1)}%</span> vs estimate`;
+    epsRow = `<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:13px">
+      <span style="color:#64748b;font-weight:600">EPS</span>
+      <span><span class="mono" style="font-weight:700">$${epsActual.toFixed(2)}</span> <span style="color:#94a3b8">vs <span class="mono">$${epsEstimate.toFixed(2)}</span> est</span>${surpStr}${beatTag}</span>
+    </div>`;
+  }
+
+  // Revenue row
+  const rev = incQ.revenue;
+  const revG = t.rev_growth_qyoy;
+  let revRow = '';
+  if (rev) {
+    const revStr = rev >= 1e9 ? `$${(rev/1e9).toFixed(2)}B` :
+                   rev >= 1e6 ? `$${(rev/1e6).toFixed(1)}M` :
+                                `$${Math.round(rev).toLocaleString()}`;
+    const revGrowthStr = revG == null ? '' :
+      ` &middot; <span style="color:${revG > 0 ? '#15803d' : '#b91c1c'};font-weight:600">${revG >= 0 ? '+' : ''}${(revG*100).toFixed(1)}%</span> YoY`;
+    revRow = `<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:13px">
+      <span style="color:#64748b;font-weight:600">Revenue</span>
+      <span><span class="mono" style="font-weight:700">${revStr}</span>${revGrowthStr}</span>
+    </div>`;
+  }
+
+  // Render base card immediately
+  slot.innerHTML = `
+    <div style="background:${bg};border:1px solid ${bdr};border-radius:10px;padding:14px 16px;margin-bottom:14px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+        ${badge}
+        <span style="font-size:11.5px;color:#475569">${t.name || ticker}</span>
+      </div>
+      <h4 style="font-size:14px;font-weight:800;color:#0f172a;margin:0 0 4px 0">Latest earnings</h4>
+      ${epsRow}
+      ${revRow}
+      <div data-modal-reaction-slot></div>
+      <div data-modal-guidance-slot></div>
+    </div>
+  `;
+
+  // Async: fetch guidance + reaction (server already computed reaction; guidance via Groq+SEC)
+  fetch('/api/earnings-intel/' + ticker)
+    .then(function(r) { return r.ok ? r.json() : null; })
+    .then(function(data) {
+      if (!data) return;
+      const root = document.getElementById('modal-earnings-card-' + ticker);
+      if (!root) return;
+
+      // Reaction breakdown
+      const rxSlot = root.querySelector('[data-modal-reaction-slot]');
+      const rx = data.reaction || {};
+      if (rxSlot && rx.label && rx.components && rx.components.length) {
+        const lblColor = rx.score >=  0.30 ? '#15803d' :
+                        rx.score >=  0.10 ? '#16a34a' :
+                        rx.score >  -0.10 ? '#64748b' :
+                        rx.score >  -0.30 ? '#d97706' : '#b91c1c';
+        const compHTML = rx.components.map(function(c) {
+          const ptColor = c.points > 0  ? '#15803d' :
+                          c.points < 0  ? '#b91c1c' : '#94a3b8';
+          const ptStr = (c.points >= 0 ? '+' : '') + Number(c.points).toFixed(2);
+          return '<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:12px">' +
+                   '<span style="color:#475569">' + c.name + '</span>' +
+                   '<span><span style="color:#0f172a;margin-right:10px">' + c.value + '</span>' +
+                   '<span class="mono" style="color:' + ptColor + ';font-weight:700">' + ptStr + '</span></span>' +
+                 '</div>';
+        }).join('');
+        rxSlot.innerHTML =
+          '<div style="margin-top:12px;padding-top:10px;border-top:1px dashed #cbd5e1">' +
+            '<div style="display:flex;justify-content:space-between;margin-bottom:4px">' +
+              '<div style="font-size:10.5px;color:#64748b;font-weight:700;letter-spacing:.06em;text-transform:uppercase">Earnings Reaction</div>' +
+              '<div style="font-size:11.5px;color:' + lblColor + ';font-weight:800">' + rx.label.toUpperCase() + ' (' + (rx.score >= 0 ? '+' : '') + rx.score + ')</div>' +
+            '</div>' + compHTML +
+          '</div>';
+      }
+
+      // Forward guidance (LLM-derived)
+      const gSlot = root.querySelector('[data-modal-guidance-slot]');
+      const g = data.guidance || {};
+      if (gSlot && g.tone && g.tone !== 'none') {
+        const toneColor = g.tone === 'raised'  ? '#15803d' :
+                          g.tone === 'lowered' ? '#b91c1c' : '#64748b';
+        const toneArrow = g.tone === 'raised'  ? '↗' :
+                          g.tone === 'lowered' ? '↘' : '→';
+        const rev2 = g.revenue_guidance ? '<div style="font-size:12.5px;color:#0f172a;margin-top:2px">Revenue: <span class="mono" style="font-weight:700">' + g.revenue_guidance + '</span></div>' : '';
+        const eps2 = g.eps_guidance     ? '<div style="font-size:12.5px;color:#0f172a;margin-top:2px">EPS: <span class="mono" style="font-weight:700">' + g.eps_guidance + '</span></div>' : '';
+        const sum = g.summary           ? '<div style="font-size:12px;color:#475569;font-style:italic;margin-top:6px">"' + g.summary + '"</div>' : '';
+        gSlot.innerHTML =
+          '<div style="margin-top:12px;padding-top:10px;border-top:1px dashed #cbd5e1">' +
+            '<div style="display:flex;justify-content:space-between;align-items:center">' +
+              '<div style="font-size:10.5px;color:#64748b;font-weight:700;letter-spacing:.06em;text-transform:uppercase">Guidance</div>' +
+              '<div style="font-size:11.5px;color:' + toneColor + ';font-weight:800">' + toneArrow + ' ' + g.tone.toUpperCase() + '</div>' +
+            '</div>' + rev2 + eps2 + sum +
+          '</div>';
+      }
+    })
+    .catch(function() {});
+}
+
 function openStockModal(ticker) {
   const t = _allTickerData[ticker];
   if (!t) return;
@@ -2753,6 +2883,8 @@ function openStockModal(ticker) {
         <div style="font-size:13px;color:#0f172a;line-height:1.55;font-weight:500">${bottomLine}</div>
       </div>
     </div>` : ''}
+
+    <div id="modal-earnings-card-${ticker}" data-modal-earnings="${ticker}"></div>
 
     <div class="fd-head" style="margin-bottom:12px">
       <div>
@@ -3029,6 +3161,9 @@ function closeStockModal(e) {
   const overlay = document.getElementById('stock-modal-overlay');
   if (!overlay.classList.contains('open')) return;
   overlay.classList.remove('open');
+  // Populate the post-earnings card asynchronously so the modal doesn't block
+  renderModalEarningsCard(ticker, t);
+
   // If the modal was opened via openStockModal it pushed a history state.
   // Pop it here so the URL stays clean and the browser back button doesn't
   // do "double work" (we close manually, then back closes nothing).
