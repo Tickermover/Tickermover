@@ -553,7 +553,8 @@ class DataCoordinator:
         return days_until
 
     # ── EARNINGS INTELLIGENCE (FMP press release + transcript + LLM) ──
-    async def get_post_earnings_intel(self, ticker: str, earnings_date: str) -> dict:
+    async def get_post_earnings_intel(self, ticker: str, earnings_date: str,
+                                       ticker_dict: dict = None) -> dict:
         """
         Lazy-loaded. When called for a ticker that just reported earnings,
         fetches the FMP press release + earnings-call transcript and runs
@@ -597,9 +598,9 @@ class DataCoordinator:
         # Computed from data already in our ticker dict — works for every
         # stock in the universe with eps_quarters, takes ~0.1ms, free forever.
         try:
-            ticker_dict = self.cache.get(f"ticker:{ticker}") or {}
-            tone = (result.get("guidance") or {}).get("tone", "") or ""
-            result["reaction"] = ei.compute_earnings_reaction(ticker_dict, guidance_tone=tone)
+            t_data = ticker_dict if ticker_dict else (self.cache.get(f"ticker:{ticker}") or {})
+            tone   = (result.get("guidance") or {}).get("tone", "") or ""
+            result["reaction"] = ei.compute_earnings_reaction(t_data, guidance_tone=tone)
         except Exception as exc:
             logger.warning(f"Reaction score failed for {ticker}: {exc}")
 

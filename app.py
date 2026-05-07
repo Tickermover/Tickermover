@@ -782,10 +782,11 @@ def _render_post_earnings_card(t: dict, name: str, sym: str) -> str:
       - t["last_earnings_date"]     — when the report was released
       - t["change_1m"] / momentum   — proxy for stock reaction
     """
-    if not t.get("earnings_just_reported"):
+    eps_q_list = t.get("eps_quarters") or []
+    if not eps_q_list or not isinstance(eps_q_list[0], dict):
         return ""
 
-    eps_q = (t.get("eps_quarters") or [{}])[0] or {}
+    eps_q = eps_q_list[0] or {}
     q_inc = (t.get("quarterly_income") or [{}])[0] or {}
     last_date = t.get("last_earnings_date") or t.get("earnings_date") or ""
 
@@ -881,17 +882,27 @@ def _render_post_earnings_card(t: dict, name: str, sym: str) -> str:
 
     date_str = f' &middot; reported {last_date}' if last_date else ""
 
+    just_reported = bool(t.get("earnings_just_reported"))
+    badge_html = (
+        '<span style="background:#15803d;color:#fff;font-weight:800;font-size:10px;'
+        'letter-spacing:.06em;padding:4px 10px;border-radius:999px">JUST REPORTED</span>'
+        if just_reported else
+        '<span style="background:#e2e8f0;color:#475569;font-weight:700;font-size:10px;'
+        'letter-spacing:.06em;padding:4px 10px;border-radius:999px">LAST EARNINGS</span>'
+    )
+    bg_grad = (
+        "linear-gradient(135deg,#f0fdf4 0%,#fefce8 100%)" if just_reported
+        else "linear-gradient(135deg,#f8fafc 0%,#f1f5f9 100%)"
+    )
+    border_color = "#bbf7d0" if just_reported else "#e2e8f0"
     return f"""
-  <div style="background:linear-gradient(135deg,#f0fdf4 0%,#fefce8 100%);
-              border:1px solid #bbf7d0;border-radius:12px;
+  <div style="background:{bg_grad};
+              border:1px solid {border_color};border-radius:12px;
               padding:18px 22px;margin-bottom:24px;
               box-shadow:0 1px 3px rgba(15,23,42,.04)"
        data-earnings-card="{sym}">
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
-      <span style="background:#15803d;color:#fff;font-weight:800;font-size:10px;
-                   letter-spacing:.06em;padding:4px 10px;border-radius:999px">
-        JUST REPORTED
-      </span>
+      {badge_html}
       <span style="font-size:12px;color:#475569">{name} ({sym}){date_str}</span>
     </div>
     <h3 style="font-size:16px;font-weight:800;color:#0f172a;margin:0 0 8px 0">
@@ -3513,16 +3524,36 @@ async def api_payment_webhook(request: Request):
 @app.get("/api/earnings-intel/{ticker}")
 async def api_earnings_intel(ticker: str, force: int = 0):
     """
-    Returns {guidance, sentiment} for a ticker that just reported earnings.
-    Gated on earnings_just_reported by default to avoid wasted LLM calls.
-    Pass ?force=1 to bypass the gate (useful for testing in dev).
+    Returns {guidance, reaction} for a ticker.
+    - guidance: forward guidance extracted from the latest 8-K press release
+                via Groq Llama 3.3 70B (only when there's a recent 8-K).
+    - reaction: deterministic 0-1 score from existing earnings data
+                (works for any stock with eps_quarters in our universe).
+    Pass ?force=1 to skip the just-reported gate (test mode).
     """
     sym = ticker.upper()
-    t   = cache.get(f"ticker:{sym}") or {}
+    # Pull the latest enriched ticker dict from _universe_data (the live
+    # in-memory list), falling back to the saved 24-hour snapshot.
+    t = next(
+        (x for x in _universe_data if (x.get("ticker") or "").upper() == sym),
+        None,
+    )
+    if t is None:
+        snap = cache.get("universe:snapshot") or []
+        t = next((x for x in snap if (x.get("ticker") or "").upper() == sym), None)
+    t = t or {}
+
     if not force and not t.get("earnings_just_reported"):
-        return JSONResponse({"guidance": {}, "reaction": {}})
+        # Still compute the reaction score (it's free, instant, useful even
+        # outside the just-reported window). Only skip the LLM guidance call.
+        from earnings_intel import compute_earnings_reaction
+        return JSONResponse({
+            "guidance": {},
+            "reaction": compute_earnings_reaction(t),
+        })
+
     edate = (t.get("last_earnings_date")
              or t.get("earnings_date")
              or "force-test")
-    intel = await coordinator.get_post_earnings_intel(sym, edate)
+    intel = await coordinator.get_post_earnings_intel(sym, edate, ticker_dict=t)
     return JSONResponse(intel)
