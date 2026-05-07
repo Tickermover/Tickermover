@@ -1,36 +1,20 @@
 """
-AlphaHunt — Earnings Intelligence Layer
+AlphaHunt - Earnings Intelligence Layer (Groq edition)
 
-Two async functions that call Anthropic's Haiku model to convert raw
+Two async functions that call Groq's hosted Llama 3.3 70B to convert raw
 earnings-event text into structured signals the UI can render:
 
     extract_guidance_from_press_release(text)
-        Reads an earnings press release. Returns:
-            {
-              "tone":              "raised" | "maintained" | "lowered" | "none",
-              "revenue_guidance":  short string ("$1.2B–$1.3B (+15-20% YoY)"),
-              "eps_guidance":      short string ("$0.42–$0.48"),
-              "key_metrics":       [3 short bullet strings, optional],
-              "summary":           one-sentence plain-English takeaway,
-            }
+        Returns: {tone, revenue_guidance, eps_guidance, key_metrics, summary}
 
     analyze_call_transcript(text)
-        Reads an earnings-call transcript. Returns:
-            {
-              "sentiment_score":     float in [-1.0, +1.0],
-              "sentiment_label":     "Very bullish" | "Bullish" | "Neutral" |
-                                     "Cautious" | "Bearish",
-              "positives":           [up to 3 verbatim-ish quotes],
-              "concerns":            [up to 3 verbatim-ish quotes],
-              "qa_summary":          one-sentence summary of analyst Q&A tone,
-            }
+        Returns: {sentiment_score, sentiment_label, positives, concerns, qa_summary}
 
-Both fall back to {} when:
-    - ANTHROPIC_API_KEY isn't configured (free / local dev)
-    - The HTTP call fails or times out
-    - The model returns malformed JSON
+Provider: Groq (https://console.groq.com)
+- OpenAI-compatible chat completions API
+- Free tier: ~30 req/min, ~14,400 req/day on llama-3.3-70b-versatile
 
-That way the UI just hides the relevant section instead of crashing.
+Both functions fall back to {} when GROQ_API_KEY is missing or the call fails.
 """
 from __future__ import annotations
 
@@ -42,10 +26,10 @@ from typing import Optional
 
 logger = logging.getLogger(__name__)
 
-# Re-use the same env vars as intelligence.py so all LLM calls share config.
-_ANTHROPIC_KEY     = os.environ.get("ANTHROPIC_API_KEY", "").strip()
-_ANTHROPIC_MODEL   = os.environ.get("ANTHROPIC_MODEL", "claude-haiku-4-5-20251001")
-_ANTHROPIC_TIMEOUT = 25.0  # transcripts are larger than thesis prompts
+_GROQ_KEY      = os.environ.get("GROQ_API_KEY", "").strip()
+_GROQ_MODEL    = os.environ.get("GROQ_MODEL", "llama-3.3-70b-versatile")
+_GROQ_ENDPOINT = "https://api.groq.com/openai/v1/chat/completions"
+_GROQ_TIMEOUT  = 25.0
 
 try:
     import httpx
@@ -53,117 +37,114 @@ try:
 except ImportError:
     _HTTPX_AVAILABLE = False
 
-
-# ── Token-budget guards ──────────────────────────────────────────────
-# Press releases are usually 2–8 KB. Transcripts are 30–80 KB.
-# We trim aggressively before sending to the LLM to keep costs predictable.
 _MAX_PRESS_RELEASE_CHARS = 12_000
 _MAX_TRANSCRIPT_CHARS    = 30_000
 
 
 def _truncate(text: str, limit: int) -> str:
-    """Truncate text to approximately `limit` characters, breaking on a word."""
     if not text or len(text) <= limit:
         return text or ""
     cut = text[:limit]
-    # Break at the last whitespace so we don't bisect a word.
     last_space = cut.rfind(" ")
     if last_space > limit * 0.9:
         cut = cut[:last_space]
-    return cut + " […truncated]"
+    return cut + " [...truncated]"
 
 
-# ── Anthropic call helper (shared between guidance + sentiment) ──────
-async def _claude_json(prompt: str, max_tokens: int = 700) -> Optional[dict]:
-    """
-    Send `prompt` to Claude and parse the response as JSON.
-    Returns a dict on success, None on any failure (caller falls back to {}).
-    """
-    if not _ANTHROPIC_KEY or not _HTTPX_AVAILABLE:
+async def _groq_json(system_prompt: str, user_prompt: str,
+                     max_tokens: int = 700) -> Optional[dict]:
+    """Send a chat completion request to Groq, parse JSON. Returns dict or None."""
+    if not _GROQ_KEY or not _HTTPX_AVAILABLE:
         return None
 
+    payload = {
+        "model": _GROQ_MODEL,
+        "messages": [
+            {"role": "system", "content": system_prompt},
+            {"role": "user",   "content": user_prompt},
+        ],
+        "max_tokens":      max_tokens,
+        "temperature":     0.2,
+        "response_format": {"type": "json_object"},
+    }
+
     try:
-        async with httpx.AsyncClient(timeout=_ANTHROPIC_TIMEOUT) as c:
+        async with httpx.AsyncClient(timeout=_GROQ_TIMEOUT) as c:
             r = await c.post(
-                "https://api.anthropic.com/v1/messages",
+                _GROQ_ENDPOINT,
                 headers={
-                    "x-api-key":         _ANTHROPIC_KEY,
-                    "anthropic-version": "2023-06-01",
-                    "content-type":      "application/json",
+                    "Authorization": f"Bearer {_GROQ_KEY}",
+                    "Content-Type":  "application/json",
                 },
-                json={
-                    "model":      _ANTHROPIC_MODEL,
-                    "max_tokens": max_tokens,
-                    "messages":   [{"role": "user", "content": prompt}],
-                },
+                json=payload,
             )
             r.raise_for_status()
             data = r.json()
     except Exception as exc:
-        logger.warning(f"Anthropic call failed: {exc}")
+        logger.warning(f"Groq call failed: {exc}")
         return None
 
-    # Concatenate text blocks
-    text = ""
-    for block in data.get("content", []):
-        if block.get("type") == "text":
-            text += block.get("text", "")
-    text = text.strip()
+    try:
+        text = data["choices"][0]["message"]["content"].strip()
+    except (KeyError, IndexError, AttributeError):
+        logger.warning(f"Unexpected Groq response shape: {str(data)[:200]}")
+        return None
+
     if not text:
         return None
 
-    # The model usually returns clean JSON, but sometimes wraps it in
-    # markdown code fences or precedes it with prose. Extract the first
-    # {...} block defensively.
-    match = re.search(r"\{[\s\S]*\}", text)
-    if not match:
-        logger.warning(f"No JSON block found in LLM response: {text[:200]}")
-        return None
     try:
-        return json.loads(match.group(0))
-    except json.JSONDecodeError as exc:
-        logger.warning(f"JSON parse failed: {exc} — raw: {text[:200]}")
-        return None
+        return json.loads(text)
+    except json.JSONDecodeError:
+        match = re.search(r"\{[\s\S]*\}", text)
+        if not match:
+            logger.warning(f"No JSON in Groq response: {text[:200]}")
+            return None
+        try:
+            return json.loads(match.group(0))
+        except json.JSONDecodeError as exc:
+            logger.warning(f"JSON parse failed: {exc} - raw: {text[:200]}")
+            return None
 
 
-# ── Public: forward guidance extraction ──────────────────────────────
 async def extract_guidance_from_press_release(text: str) -> dict:
-    """
-    Extract forward guidance from an earnings press release.
-    Returns {} on any failure or when no guidance is present.
-    """
+    """Extract forward guidance from an earnings press release."""
     if not text or len(text) < 200:
         return {}
 
     trimmed = _truncate(text, _MAX_PRESS_RELEASE_CHARS)
 
-    prompt = (
-        "You are an equity research analyst reading a public earnings "
-        "press release. Extract ONLY the forward-looking guidance (i.e., "
-        "what the company says about NEXT quarter or NEXT fiscal year). "
-        "Ignore the trailing-quarter results — those are reported elsewhere.\n\n"
-        "Return EXACTLY this JSON shape (no prose, no markdown):\n"
-        "{\n"
-        '  "tone":              "raised" | "maintained" | "lowered" | "none",\n'
-        '  "revenue_guidance":  "<short string e.g. $1.2B–$1.3B (+15-20% YoY)>" or "",\n'
-        '  "eps_guidance":      "<short string e.g. $0.42–$0.48>" or "",\n'
-        '  "key_metrics":       ["<bullet>", "<bullet>"],\n'
-        '  "summary":           "<one plain-English sentence about the guidance>"\n'
-        "}\n\n"
-        'Use "tone": "none" and empty strings/lists if no forward guidance is given.\n'
-        '"raised" means guidance is HIGHER than the prior outlook; '
-        '"lowered" means LOWER; "maintained" means roughly the same.\n'
-        "Be conservative — if you cannot tell, use \"maintained\".\n\n"
-        "─── Press release ───\n"
-        f"{trimmed}\n"
-        "─── End ───"
+    system = (
+        "You are an equity research analyst. You read public earnings press "
+        "releases and extract forward-looking guidance as structured JSON. "
+        "You return ONLY valid JSON - no prose, no markdown."
     )
 
-    result = await _claude_json(prompt, max_tokens=600)
+    user = (
+        "Extract ONLY the forward-looking guidance from the press release "
+        "below - what the company says about NEXT quarter or NEXT fiscal "
+        "year. Ignore the trailing-quarter results.\n\n"
+        "Return JSON in EXACTLY this shape:\n"
+        "{\n"
+        '  "tone":              "raised" | "maintained" | "lowered" | "none",\n'
+        '  "revenue_guidance":  "<short string e.g. $1.2B-$1.3B (+15-20% YoY)>" or "",\n'
+        '  "eps_guidance":      "<short string e.g. $0.42-$0.48>" or "",\n'
+        '  "key_metrics":       ["<bullet>", "<bullet>"],\n'
+        '  "summary":           "<one plain-English sentence>"\n'
+        "}\n\n"
+        'Use "tone": "none" and empty strings/lists if no forward guidance is given.\n'
+        '"raised" = guidance HIGHER than the prior outlook;\n'
+        '"lowered" = LOWER; "maintained" = roughly the same.\n'
+        'If you cannot tell, use "maintained".\n\n'
+        "--- Press release ---\n"
+        f"{trimmed}\n"
+        "--- End ---"
+    )
+
+    result = await _groq_json(system, user, max_tokens=600)
     if not result:
         return {}
 
-    # Schema-validate / coerce
     tone = str(result.get("tone", "none")).lower().strip()
     if tone not in ("raised", "maintained", "lowered", "none"):
         tone = "none"
@@ -176,46 +157,45 @@ async def extract_guidance_from_press_release(text: str) -> dict:
     }
 
 
-# ── Public: conference-call sentiment ────────────────────────────────
 async def analyze_call_transcript(text: str) -> dict:
-    """
-    Score and summarize an earnings call transcript.
-    Returns {} on any failure.
-    """
+    """Score and summarize an earnings call transcript."""
     if not text or len(text) < 1000:
         return {}
 
     trimmed = _truncate(text, _MAX_TRANSCRIPT_CHARS)
 
-    prompt = (
-        "You are an equity research analyst reading a quarterly earnings "
-        "call transcript. Produce a tight, structured summary.\n\n"
-        "Return EXACTLY this JSON shape (no prose, no markdown):\n"
+    system = (
+        "You are an equity research analyst. You read quarterly earnings call "
+        "transcripts and produce structured summaries as JSON. You return "
+        "ONLY valid JSON - no prose, no markdown."
+    )
+
+    user = (
+        "Summarize this earnings call transcript as structured JSON.\n\n"
+        "Return JSON in EXACTLY this shape:\n"
         "{\n"
         '  "sentiment_score":  <float between -1.0 and +1.0>,\n'
         '  "sentiment_label":  "Very bullish" | "Bullish" | "Neutral" | "Cautious" | "Bearish",\n'
         '  "positives":        ["<verbatim or near-verbatim quote>", ...],\n'
         '  "concerns":         ["<verbatim or near-verbatim quote>", ...],\n'
-        '  "qa_summary":       "<one sentence on overall analyst Q&A tone>"\n'
+        '  "qa_summary":       "<one sentence>"\n'
         "}\n\n"
         "Rules:\n"
         '- "sentiment_score": +1.0 = strongly bullish, 0 = neutral, -1.0 = strongly bearish.\n'
-        '- "positives" + "concerns": up to 3 each. Pull short, specific quotes (≤25 words).\n'
-        '  Skip generic boilerplate ("we had a strong quarter").\n'
-        '- "qa_summary": describe whether analysts pushed back, were satisfied, or asked\n'
-        '  pointed questions about specific risks. One sentence.\n'
-        "- If transcript is too short or unparseable, return all empty values "
-        'and sentiment_label "Neutral".\n\n'
-        "─── Transcript ───\n"
+        '- "positives" + "concerns": up to 3 each. Pull short, specific quotes (<=25 words each).\n'
+        "  Skip generic boilerplate.\n"
+        '- "qa_summary": describe the analyst Q&A tone in one sentence.\n'
+        "- If transcript is unparseable or too short, return all empty values\n"
+        '  and sentiment_label "Neutral".\n\n'
+        "--- Transcript ---\n"
         f"{trimmed}\n"
-        "─── End ───"
+        "--- End ---"
     )
 
-    result = await _claude_json(prompt, max_tokens=900)
+    result = await _groq_json(system, user, max_tokens=900)
     if not result:
         return {}
 
-    # Coerce sentiment_score to float in valid range
     try:
         score = float(result.get("sentiment_score", 0.0))
         score = max(-1.0, min(1.0, score))
