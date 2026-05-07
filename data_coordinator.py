@@ -572,51 +572,34 @@ class DataCoordinator:
         if cached is not None:
             return cached
 
-        # Lazy-import so the existing app still loads if the new module
-        # is missing in some build (defensive).
+        # Lazy-import the LLM and source modules so the rest of the app
+        # loads cleanly even if one of them is missing in some build.
         try:
-            import earnings_intel as ei
-        except ImportError:
-            logger.warning("earnings_intel module not available")
+            import earnings_intel  as ei
+            import earnings_sources as es
+        except ImportError as exc:
+            logger.warning(f"earnings modules not available: {exc}")
             return {"guidance": {}, "sentiment": {}}
 
         result = {"guidance": {}, "sentiment": {}}
 
-        # ── 1. Press release → forward guidance ────────────────────────
+        # ── 1. Press release → forward guidance (SEC EDGAR, free) ─────
+        # SEC EDGAR is the source of truth for US earnings press releases.
+        # 8-K Item 2.02 is mandatory and Exhibit 99.1 has the actual text.
         try:
-            releases = await self._fmp_get(
-                f"/v3/press-releases/{ticker}", {"limit": 5}
-            )
-            if releases and isinstance(releases, list):
-                # Pick the press release closest to the earnings date.
-                # FMP returns releases in reverse-chronological order; the
-                # earnings press release is almost always the first one
-                # whose title contains "results", "earnings", or "Q[1-4]".
-                target = None
-                for rel in releases[:5]:
-                    title = (rel.get("title") or "").lower()
-                    if any(k in title for k in ("results", "earnings", "reports", "announces")):
-                        target = rel
-                        break
-                if target is None and releases:
-                    target = releases[0]  # fallback — newest
-                if target:
-                    text = target.get("text") or target.get("description") or ""
-                    if text:
-                        result["guidance"] = await ei.extract_guidance_from_press_release(text)
+            press_text = await es.fetch_earnings_press_release(ticker)
+            if press_text:
+                result["guidance"] = await ei.extract_guidance_from_press_release(press_text)
         except Exception as exc:
             logger.warning(f"Guidance fetch failed for {ticker}: {exc}")
 
-        # ── 2. Earnings call transcript → sentiment ────────────────────
+        # ── 2. Earnings call transcript → sentiment (API Ninjas, free) ─
+        # API Ninjas has a free 50K/month tier — way more than we need.
+        # Requires API_NINJAS_KEY env var; returns "" gracefully if missing.
         try:
-            # FMP transcript endpoint returns the most recent quarter by default
-            transcripts = await self._fmp_get(
-                f"/v3/earning_call_transcript/{ticker}", {"limit": 1}
-            )
-            if transcripts and isinstance(transcripts, list) and transcripts:
-                content = transcripts[0].get("content") or ""
-                if content:
-                    result["sentiment"] = await ei.analyze_call_transcript(content)
+            transcript_text = await es.fetch_call_transcript(ticker)
+            if transcript_text:
+                result["sentiment"] = await ei.analyze_call_transcript(transcript_text)
         except Exception as exc:
             logger.warning(f"Transcript fetch failed for {ticker}: {exc}")
 
