@@ -2685,12 +2685,16 @@ function buildEpsDateBadge(t) {
    the LLM-derived forward guidance (Groq + SEC EDGAR press release) and
    appends it when ready. Falls back gracefully if eps_quarters is missing. */
 function renderModalEarningsCard(ticker, t) {
+  // Render the post-earnings card inside the open stock modal. ALWAYS shows
+  // the card when /api/earnings-intel returns reaction data — doesn't
+  // depend on _allTickerData having eps_quarters populated. EPS and Revenue
+  // rows still render fast when local t has them.
   const slot = document.getElementById('modal-earnings-card-' + ticker);
   if (!slot) return;
 
+  // Render the card shell + base rows immediately, fetch reaction+guidance after.
   const epsQ = (t.eps_quarters || [])[0] || {};
   const incQ = (t.quarterly_income || [])[0] || {};
-  if (!epsQ.actual && epsQ.surprise_pct == null) return;
 
   const justReported = !!t.earnings_just_reported;
   const badge = justReported
@@ -2701,7 +2705,7 @@ function renderModalEarningsCard(ticker, t) {
     : 'linear-gradient(135deg,#f8fafc 0%,#f1f5f9 100%)';
   const bdr = justReported ? '#bbf7d0' : '#e2e8f0';
 
-  // EPS row
+  // EPS row (only if local t happens to have eps_quarters)
   const epsActual   = epsQ.actual;
   const epsEstimate = epsQ.estimate;
   const surpPct     = epsQ.surprise_pct;
@@ -2736,7 +2740,9 @@ function renderModalEarningsCard(ticker, t) {
     </div>`;
   }
 
-  // Render base card immediately
+  // Render base card immediately. The reaction + guidance slots fill in
+  // asynchronously from /api/earnings-intel below.
+  const haveLocalRows = !!(epsRow || revRow);
   slot.innerHTML = `
     <div style="background:${bg};border:1px solid ${bdr};border-radius:10px;padding:14px 16px;margin-bottom:14px">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
@@ -2746,6 +2752,7 @@ function renderModalEarningsCard(ticker, t) {
       <h4 style="font-size:14px;font-weight:800;color:#0f172a;margin:0 0 4px 0">Latest earnings</h4>
       ${epsRow}
       ${revRow}
+      ${haveLocalRows ? '' : '<div data-modal-eps-loading style="font-size:12px;color:#94a3b8;padding:6px 0">Loading earnings details...</div>'}
       <div data-modal-reaction-slot></div>
       <div data-modal-guidance-slot></div>
     </div>
@@ -2758,6 +2765,8 @@ function renderModalEarningsCard(ticker, t) {
       if (!data) return;
       const root = document.getElementById('modal-earnings-card-' + ticker);
       if (!root) return;
+      const loading = root.querySelector('[data-modal-eps-loading]');
+      if (loading) loading.remove();
 
       // Reaction breakdown
       const rxSlot = root.querySelector('[data-modal-reaction-slot]');
@@ -2806,7 +2815,13 @@ function renderModalEarningsCard(ticker, t) {
           '</div>';
       }
     })
-    .catch(function() {});
+    .catch(function() {
+      var root = document.getElementById('modal-earnings-card-' + ticker);
+      if (root) {
+        var loading = root.querySelector('[data-modal-eps-loading]');
+        if (loading) loading.textContent = 'Earnings details unavailable.';
+      }
+    });
 }
 
 function openStockModal(ticker) {
