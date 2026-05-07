@@ -3102,6 +3102,8 @@ function openStockModal(ticker) {
     </div>
   `;
   document.getElementById('stock-modal-overlay').classList.add('open');
+  // Populate the post-earnings card asynchronously
+  renderModalEarningsCard(ticker, t);
 
   // Load TradingView Mini Widget
   (function() {
@@ -3176,8 +3178,6 @@ function closeStockModal(e) {
   const overlay = document.getElementById('stock-modal-overlay');
   if (!overlay.classList.contains('open')) return;
   overlay.classList.remove('open');
-  // Populate the post-earnings card asynchronously so the modal doesn't block
-  renderModalEarningsCard(ticker, t);
 
   // If the modal was opened via openStockModal it pushed a history state.
   // Pop it here so the URL stays clean and the browser back button doesn't
