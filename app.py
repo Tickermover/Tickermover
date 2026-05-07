@@ -3543,16 +3543,10 @@ async def api_earnings_intel(ticker: str, force: int = 0):
         t = next((x for x in snap if (x.get("ticker") or "").upper() == sym), None)
     t = t or {}
 
-    if not force and not t.get("earnings_just_reported"):
-        # Still compute the reaction score (it's free, instant, useful even
-        # outside the just-reported window). Only skip the LLM guidance call.
-        from earnings_intel import compute_earnings_reaction
-        return JSONResponse({
-            "guidance":  {},
-            "reaction":  compute_earnings_reaction(t),
-            "sentiment": {},
-        })
-
+    # Always fetch the full earnings intel — guidance, reaction, and earnings
+    # highlights. The Groq output is cached for 90 days per (ticker, edate) so
+    # we don't pay the LLM cost on every page load. Showing this on every stock
+    # detail view (not just "just reported") is a meaningful UX upgrade.
     edate = (t.get("last_earnings_date")
              or t.get("earnings_date")
              or "force-test")
