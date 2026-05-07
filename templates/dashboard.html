@@ -2700,10 +2700,12 @@ function renderModalEarningsCard(ticker, t) {
   const badge = justReported
     ? '<span style="background:#15803d;color:#fff;font-weight:800;font-size:10px;letter-spacing:.06em;padding:4px 10px;border-radius:999px">JUST REPORTED</span>'
     : '<span style="background:#e2e8f0;color:#475569;font-weight:700;font-size:10px;letter-spacing:.06em;padding:4px 10px;border-radius:999px">LAST EARNINGS</span>';
-  const bg = justReported
-    ? 'linear-gradient(135deg,#f0fdf4 0%,#fefce8 100%)'
-    : 'linear-gradient(135deg,#f8fafc 0%,#f1f5f9 100%)';
-  const bdr = justReported ? '#bbf7d0' : '#e2e8f0';
+  // Match the Investment Thesis / Tailwinds box styling — light green tint
+  // with a green left accent so the user can scan the page with one visual
+  // language for narrative blocks.
+  const bg  = justReported ? '#f0fdf4' : '#f0fdf4';
+  const bdr = '#bbf7d0';
+  const accentColor = '#15803d';
 
   // EPS row (only if local t happens to have eps_quarters)
   const epsActual   = epsQ.actual;
@@ -2744,7 +2746,7 @@ function renderModalEarningsCard(ticker, t) {
   // asynchronously from /api/earnings-intel below.
   const haveLocalRows = !!(epsRow || revRow);
   slot.innerHTML = `
-    <div style="background:${bg};border:1px solid ${bdr};border-radius:10px;padding:14px 16px;margin-bottom:14px">
+    <div style="background:${bg};border:1px solid ${bdr};border-left:4px solid ${accentColor};border-radius:10px;padding:14px 16px;margin-bottom:14px">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
         ${badge}
         <span style="font-size:11.5px;color:#475569">${t.name || ticker}</span>
@@ -3086,24 +3088,7 @@ function openStockModal(ticker) {
       </div>`;
     })()}
 
-    <!-- News stream + Peer comparison: filled async after modal renders -->
-    <div id="news-peers-row" style="display:grid;grid-template-columns:1.4fr 1fr;gap:12px;margin-top:14px">
-      <div id="modal-news-${t.ticker}" style="border:1px solid #e2e8f0;border-radius:10px;padding:10px 12px;background:#fff">
-        <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
-          <span style="font-size:13px;font-weight:800;color:#0f172a">📰 Latest News</span>
-          <span style="font-size:10.5px;color:#64748b">— last 7 days</span>
-        </div>
-        <div id="news-body-${t.ticker}" style="font-size:11.5px;color:#475569">Loading…</div>
-      </div>
-      <div id="modal-peers-${t.ticker}" style="border:1px solid #e2e8f0;border-radius:10px;padding:10px 12px;background:#fff">
-        <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
-          <span style="font-size:13px;font-weight:800;color:#0f172a">👥 Peers</span>
-          <span style="font-size:10.5px;color:#64748b">— same sub-sector</span>
-        </div>
-        <div id="peers-body-${t.ticker}">${renderPeers(t)}</div>
-      </div>
-    </div>
-
+    <!-- Quarterly highlights + Pipeline + Investment Thesis (moved ABOVE news) -->
     ${buildQuarterlyBlock(t)}
 
     ${buildPipelineBlock(t)}
@@ -3111,6 +3096,15 @@ function openStockModal(ticker) {
     <div class="fd-summary" style="margin-top:14px">
       <strong style="color:var(--acc2)">Investment Thesis:</strong> ${thesis}
       <div style="margin-top:6px"><strong style="color:var(--acc3)">Tailwinds:</strong><br>• ${tw.split(' · ').join('<br>• ')}</div>
+    </div>
+
+    <!-- Latest News (peers block removed — same data shown elsewhere) -->
+    <div id="modal-news-${t.ticker}" style="margin-top:14px;border:1px solid #e2e8f0;border-radius:10px;padding:10px 12px;background:#fff">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
+        <span style="font-size:13px;font-weight:800;color:#0f172a">📰 Latest News</span>
+        <span style="font-size:10.5px;color:#64748b">— last 7 days</span>
+      </div>
+      <div id="news-body-${t.ticker}" style="font-size:11.5px;color:#475569">Loading…</div>
     </div>
 
     <div class="fd-links" style="margin-top:12px">
