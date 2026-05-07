@@ -572,20 +572,20 @@ class DataCoordinator:
         if cached is not None:
             return cached
 
-        # Lazy-import the LLM and source modules so the rest of the app
-        # loads cleanly even if one of them is missing in some build.
+        # Lazy-import so the rest of the app loads cleanly even if a
+        # supplementary module is missing in some build.
         try:
             import earnings_intel  as ei
             import earnings_sources as es
         except ImportError as exc:
             logger.warning(f"earnings modules not available: {exc}")
-            return {"guidance": {}, "sentiment": {}}
+            return {"guidance": {}, "reaction": {}}
 
-        result = {"guidance": {}, "sentiment": {}}
+        result = {"guidance": {}, "reaction": {}}
 
-        # ── 1. Press release → forward guidance (SEC EDGAR, free) ─────
-        # SEC EDGAR is the source of truth for US earnings press releases.
-        # 8-K Item 2.02 is mandatory and Exhibit 99.1 has the actual text.
+        # ── 1. Forward guidance (SEC EDGAR press release + Groq LLM) ──
+        # SEC 8-K Item 2.02 + Exhibit 99.1 = the official press release.
+        # Free, no API key. Groq Llama 3.3 70B does the structured extraction.
         try:
             press_text = await es.fetch_earnings_press_release(ticker)
             if press_text:
@@ -593,15 +593,15 @@ class DataCoordinator:
         except Exception as exc:
             logger.warning(f"Guidance fetch failed for {ticker}: {exc}")
 
-        # ── 2. Earnings call transcript → sentiment (API Ninjas, free) ─
-        # API Ninjas has a free 50K/month tier — way more than we need.
-        # Requires API_NINJAS_KEY env var; returns "" gracefully if missing.
+        # ── 2. Earnings Reaction Score (deterministic, no API) ────────
+        # Computed from data already in our ticker dict — works for every
+        # stock in the universe with eps_quarters, takes ~0.1ms, free forever.
         try:
-            transcript_text = await es.fetch_call_transcript(ticker)
-            if transcript_text:
-                result["sentiment"] = await ei.analyze_call_transcript(transcript_text)
+            ticker_dict = self.cache.get(f"ticker:{ticker}") or {}
+            tone = (result.get("guidance") or {}).get("tone", "") or ""
+            result["reaction"] = ei.compute_earnings_reaction(ticker_dict, guidance_tone=tone)
         except Exception as exc:
-            logger.warning(f"Transcript fetch failed for {ticker}: {exc}")
+            logger.warning(f"Reaction score failed for {ticker}: {exc}")
 
         # Cache for 90 days (next earnings is ~90 days out anyway).
         # We cache even partial / empty results so we don't retry the LLM

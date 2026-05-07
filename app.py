@@ -931,27 +931,30 @@ def _render_post_earnings_card(t: dict, name: str, sym: str) -> str:
                 '</div>' + rev + eps + sum +
               '</div>';
           }}
-          var s = data.sentiment || {{}};
-          if (sSlot && s.sentiment_label && s.positives) {{
-            var lblColor = s.sentiment_score >  0.3 ? '#15803d' :
-                           s.sentiment_score < -0.3 ? '#b91c1c' : '#64748b';
-            function bullets(arr, color) {{
-              if (!arr || !arr.length) return '';
-              return arr.map(function(q) {{
-                return '<li style="margin:3px 0;font-size:12.5px;color:#0f172a;line-height:1.45">' +
-                       '<span style="color:' + color + ';font-weight:700">&middot;</span> ' + q.replace(/^"|"$/g, '') +
-                       '</li>';
-              }}).join('');
-            }}
-            var pos = s.positives.length ? '<div style="margin-top:6px"><div style="font-size:11px;color:#15803d;font-weight:700">Positives</div><ul style="list-style:none;padding:0;margin:2px 0 0">' + bullets(s.positives, '#15803d') + '</ul></div>' : '';
-            var con = (s.concerns && s.concerns.length) ? '<div style="margin-top:6px"><div style="font-size:11px;color:#b91c1c;font-weight:700">Concerns</div><ul style="list-style:none;padding:0;margin:2px 0 0">' + bullets(s.concerns, '#b91c1c') + '</ul></div>' : '';
-            var qa  = s.qa_summary ? '<div style="font-size:12px;color:#475569;font-style:italic;margin-top:8px">Q&amp;A: ' + s.qa_summary + '</div>' : '';
+          var rx = data.reaction || {{}};
+          if (sSlot && rx.label && rx.components && rx.components.length) {{
+            var lblColor = rx.score >=  0.30 ? '#15803d' :
+                           rx.score >=  0.10 ? '#16a34a' :
+                           rx.score >  -0.10 ? '#64748b' :
+                           rx.score >  -0.30 ? '#d97706' : '#b91c1c';
+            var compHTML = rx.components.map(function(c) {{
+              var ptColor = c.points > 0  ? '#15803d' :
+                            c.points < 0  ? '#b91c1c' : '#94a3b8';
+              var ptStr   = (c.points >= 0 ? '+' : '') + Number(c.points).toFixed(2);
+              return '<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:12.5px">' +
+                       '<span style="color:#475569">' + c.name + '</span>' +
+                       '<span style="display:flex;gap:10px;align-items:baseline">' +
+                         '<span style="color:#0f172a">' + c.value + '</span>' +
+                         '<span class="mono" style="color:' + ptColor + ';font-weight:700;min-width:46px;text-align:right">' + ptStr + '</span>' +
+                       '</span>' +
+                     '</div>';
+            }}).join('');
             sSlot.innerHTML =
               '<div style="margin-top:14px;padding-top:14px;border-top:1px dashed #cbd5e1">' +
-                '<div style="display:flex;justify-content:space-between;align-items:center">' +
-                  '<div style="font-size:11px;color:#64748b;font-weight:700;letter-spacing:.06em;text-transform:uppercase">CALL SENTIMENT</div>' +
-                  '<div style="font-size:11px;color:' + lblColor + ';font-weight:800">' + s.sentiment_label.toUpperCase() + ' (' + (s.sentiment_score >= 0 ? '+' : '') + s.sentiment_score + ')</div>' +
-                '</div>' + pos + con + qa +
+                '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">' +
+                  '<div style="font-size:11px;color:#64748b;font-weight:700;letter-spacing:.06em;text-transform:uppercase">EARNINGS REACTION</div>' +
+                  '<div style="font-size:12px;color:' + lblColor + ';font-weight:800">' + rx.label.toUpperCase() + ' (' + (rx.score >= 0 ? '+' : '') + rx.score + ')</div>' +
+                '</div>' + compHTML +
               '</div>';
           }}
         }})
@@ -3517,7 +3520,7 @@ async def api_earnings_intel(ticker: str, force: int = 0):
     sym = ticker.upper()
     t   = cache.get(f"ticker:{sym}") or {}
     if not force and not t.get("earnings_just_reported"):
-        return JSONResponse({"guidance": {}, "sentiment": {}})
+        return JSONResponse({"guidance": {}, "reaction": {}})
     edate = (t.get("last_earnings_date")
              or t.get("earnings_date")
              or "force-test")
