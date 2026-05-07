@@ -427,11 +427,13 @@ tr:hover td{background:rgba(132,204,22,.06)}
 .fd-link-fv  {color:#b45309;border-color:rgba(180,83,9,.30)}    .fd-link-fv:hover  {background:#fef3c7;border-color:#b45309}
 .fd-link-sk  {color:#b91c1c;border-color:rgba(185,28,28,.30)}   .fd-link-sk:hover  {background:#fef2f2;border-color:#b91c1c}
 .fd-link-sec {color:#334155;border-color:rgba(51,65,85,.30)}    .fd-link-sec:hover {background:#f1f5f9;border-color:#334155}
-.price-target-row{display:flex;gap:10px;font-size:11px;margin-top:6px;padding:6px 8px;
-  background:var(--surf2);border-radius:6px}
+.price-target-row{display:flex;gap:10px;font-size:13px;margin-top:6px;padding:12px 14px;
+  background:linear-gradient(135deg,#eff6ff 0%,#dbeafe 100%);
+  border:1px solid #bfdbfe;border-radius:10px;
+  box-shadow:0 1px 2px rgba(15,23,42,.04)}
 .price-target-row div{flex:1;text-align:center}
-.price-target-row .t-lbl{color:var(--muted);font-size:9px;text-transform:uppercase;letter-spacing:.5px}
-.price-target-row .t-val{font-weight:800;font-size:12px;margin-top:1px}
+.price-target-row .t-lbl{color:#1e3a8a;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;font-weight:700}
+.price-target-row .t-val{font-weight:900;font-size:16px;margin-top:3px;color:#0f172a;letter-spacing:-.01em}
 
 /* ====== EARNINGS DATE BADGE ====== */
 .ers-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:800;padding:3px 9px;border-radius:8px;letter-spacing:.3px;white-space:nowrap;cursor:default}
@@ -2996,16 +2998,19 @@ function openStockModal(ticker) {
 
     ${(() => {
       const v = valuationVerdict(t);
-      return `<div style="margin-top:12px;padding:10px 14px;border-radius:8px;
-                background:${v.bg};border-left:4px solid ${v.border};
-                display:flex;align-items:center;gap:12px">
-          <div style="font-size:11px;font-weight:800;color:${v.color};
-                     text-transform:uppercase;letter-spacing:.05em;
-                     padding:3px 10px;background:#fff;border-radius:6px;
-                     border:1px solid ${v.border};white-space:nowrap">
+      return `<div style="margin-top:12px;padding:14px 16px;border-radius:10px;
+                background:linear-gradient(135deg,#fef3c7 0%,#fef9c3 100%);
+                border:1px solid #fcd34d;border-left:5px solid ${v.border};
+                box-shadow:0 1px 2px rgba(15,23,42,.04);
+                display:flex;align-items:center;gap:14px">
+          <div style="font-size:12px;font-weight:900;color:${v.color};
+                     text-transform:uppercase;letter-spacing:.06em;
+                     padding:5px 12px;background:#fff;border-radius:7px;
+                     border:1.5px solid ${v.border};white-space:nowrap;
+                     box-shadow:0 1px 1px rgba(15,23,42,.04)">
             Valuation: ${v.verdict}
           </div>
-          <div style="font-size:12.5px;color:#0f172a;line-height:1.5">${v.summary}</div>
+          <div style="font-size:14px;color:#0f172a;line-height:1.55;font-weight:500">${v.summary}</div>
         </div>`;
     })()}
 
