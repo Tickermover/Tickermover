@@ -42,6 +42,13 @@ _SEC_TIMEOUT = 12.0
 _SEC_BASE    = "https://www.sec.gov"
 _SEC_DATA    = "https://data.sec.gov"
 
+# API Ninjas Premium endpoint for earnings call transcripts.
+# Free tier does NOT include this endpoint — Premium plan ($9.99/mo) does.
+# Module short-circuits to "" when API_NINJAS_KEY is empty (no calls made).
+_NINJAS_KEY      = os.environ.get("API_NINJAS_KEY", "").strip()
+_NINJAS_ENDPOINT = "https://api.api-ninjas.com/v1/earningstranscript"
+_NINJAS_TIMEOUT  = 15.0
+
 # In-process cache for ticker->CIK lookups (loaded once per app start).
 # SEC ships the full mapping at https://www.sec.gov/files/company_tickers.json
 _TICKER_TO_CIK: dict[str, str] = {}
@@ -236,3 +243,64 @@ async def fetch_earnings_press_release(ticker: str) -> str:
     return await _fetch_8k_exhibit_text(filing)
 
 
+async def fetch_call_transcript(ticker: str) -> str:
+    """
+    Fetch the most recent earnings-call transcript text from API Ninjas.
+    Returns "" if API_NINJAS_KEY isn't set or the call fails.
+
+    Tries the last 4 quarters in reverse-chronological order to find one
+    with a transcript. Logs HTTP errors so the cause is visible in dashboard
+    logs (401 unauthorized, 403 premium-required, 429 rate-limited, etc.).
+    """
+    if not _HTTPX_AVAILABLE:
+        return ""
+    if not _NINJAS_KEY:
+        logger.info("[ninjas] API_NINJAS_KEY not set — sentiment disabled")
+        return ""
+
+    today = date.today()
+    cur_q = (today.month - 1) // 3 + 1
+    candidates = []
+    y, q = today.year, cur_q
+    for _ in range(4):
+        candidates.append((y, q))
+        q -= 1
+        if q == 0:
+            q = 4
+            y -= 1
+
+    last_error = None
+    for y, q in candidates:
+        try:
+            async with httpx.AsyncClient(timeout=_NINJAS_TIMEOUT) as c:
+                r = await c.get(
+                    _NINJAS_ENDPOINT,
+                    params={"ticker": ticker.upper(), "year": y, "quarter": q},
+                    headers={"X-Api-Key": _NINJAS_KEY},
+                )
+                if r.status_code == 401:
+                    logger.warning("[ninjas] 401 unauthorized — check API_NINJAS_KEY value")
+                    return ""
+                if r.status_code == 403:
+                    logger.warning("[ninjas] 403 forbidden — endpoint requires Premium plan")
+                    return ""
+                if r.status_code == 429:
+                    logger.warning("[ninjas] 429 rate-limited")
+                    return ""
+                r.raise_for_status()
+                data = r.json()
+        except Exception as exc:
+            last_error = exc
+            continue
+
+        if isinstance(data, list) and data:
+            data = data[0]
+        if isinstance(data, dict):
+            transcript = str(data.get("transcript") or "").strip()
+            if transcript:
+                logger.info(f"[ninjas] {ticker} Q{q} {y} transcript fetched ({len(transcript)} chars)")
+                return transcript
+
+    if last_error:
+        logger.warning(f"[ninjas] {ticker}: all quarters failed: {last_error}")
+    return ""

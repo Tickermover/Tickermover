@@ -151,6 +151,165 @@ async def extract_guidance_from_press_release(text: str) -> dict:
 
 
 # ────────────────────────────────────────────────────────────────────
+# Public: Combined Press-Release Analysis (guidance + earnings highlights)
+# ────────────────────────────────────────────────────────────────────
+async def analyze_press_release_full(text: str) -> dict:
+    """
+    Extract BOTH forward guidance AND earnings-highlights sentiment from a
+    single press release in one Groq call. Free (no paid transcript needed).
+
+    Returns:
+        {
+          "guidance":  {tone, revenue_guidance, eps_guidance, key_metrics, summary},
+          "sentiment": {sentiment_score, sentiment_label, positives, concerns, qa_summary},
+        }
+
+    Either sub-dict is empty when the press release doesn't contain that info.
+    """
+    if not text or len(text) < 200:
+        return {"guidance": {}, "sentiment": {}}
+
+    trimmed = _truncate(text, _MAX_PRESS_RELEASE_CHARS)
+
+    system = (
+        "You are an equity research analyst. You read public earnings press "
+        "releases and extract both forward guidance and qualitative highlights "
+        "as structured JSON. You return ONLY valid JSON - no prose, no markdown."
+    )
+    user = (
+        "Analyse this earnings press release. Extract TWO things:\n"
+        "1. Forward-looking guidance (next quarter / next year numbers).\n"
+        "2. Earnings highlights — positive themes, concerns, and the analyst-Q&A-equivalent summary.\n\n"
+        "Return JSON in EXACTLY this shape:\n"
+        "{\n"
+        '  "guidance": {\n'
+        '    "tone":              "raised" | "maintained" | "lowered" | "none",\n'
+        '    "revenue_guidance":  "<short string e.g. $1.2B-$1.3B (+15-20% YoY)>" or "",\n'
+        '    "eps_guidance":      "<short string e.g. $0.42-$0.48>" or "",\n'
+        '    "key_metrics":       ["<bullet>", "<bullet>"],\n'
+        '    "summary":           "<one sentence>"\n'
+        '  },\n'
+        '  "sentiment": {\n'
+        '    "sentiment_score":  <float -1.0..+1.0>,\n'
+        '    "sentiment_label":  "Very bullish" | "Bullish" | "Neutral" | "Cautious" | "Bearish",\n'
+        '    "positives":  ["<verbatim or near-verbatim quote, <=25 words>", ...],\n'
+        '    "concerns":   ["<verbatim or near-verbatim quote, <=25 words>", ...],\n'
+        '    "qa_summary": "<one-sentence read-through, e.g. \\"Management framing is forward-looking and constructive on AI capex\\"">"\n'
+        '  }\n'
+        "}\n\n"
+        "Rules:\n"
+        '- Up to 3 positives + 3 concerns. Pull SHORT, SPECIFIC quotes from CEO/CFO commentary.\n'
+        '  Skip generic boilerplate ("we had a strong quarter") and forward-looking-statement boilerplate.\n'
+        '- For "concerns", look at risk factors, headwind language, FX/macro mentions, segment weakness.\n'
+        '- "qa_summary": describe management\'s overall framing and the kind of questions analysts would likely focus on.\n'
+        '- "tone" rules: "raised"=guidance higher than prior; "lowered"=lower; "maintained"=roughly same; "none"=no guidance given.\n'
+        '- If a section has no extractable info, return its values empty (sentiment_label "Neutral", lists [], strings "").\n\n'
+        "--- Press release ---\n"
+        f"{trimmed}\n"
+        "--- End ---"
+    )
+
+    result = await _groq_json(system, user, max_tokens=1100)
+    if not result:
+        return {"guidance": {}, "sentiment": {}}
+
+    g_raw = result.get("guidance") or {}
+    s_raw = result.get("sentiment") or {}
+
+    g_tone = str(g_raw.get("tone", "none")).lower().strip()
+    if g_tone not in ("raised", "maintained", "lowered", "none"):
+        g_tone = "none"
+    guidance = {
+        "tone":             g_tone,
+        "revenue_guidance": str(g_raw.get("revenue_guidance", "") or "").strip(),
+        "eps_guidance":     str(g_raw.get("eps_guidance", "") or "").strip(),
+        "key_metrics":      [str(b).strip() for b in (g_raw.get("key_metrics") or []) if b][:3],
+        "summary":          str(g_raw.get("summary", "") or "").strip(),
+    }
+
+    try:
+        score = float(s_raw.get("sentiment_score", 0.0))
+        score = max(-1.0, min(1.0, score))
+    except (TypeError, ValueError):
+        score = 0.0
+    label = str(s_raw.get("sentiment_label", "Neutral"))
+    if label not in ("Very bullish", "Bullish", "Neutral", "Cautious", "Bearish"):
+        label = "Neutral"
+    sentiment = {
+        "sentiment_score": round(score, 2),
+        "sentiment_label": label,
+        "positives":       [str(q).strip() for q in (s_raw.get("positives") or []) if q][:3],
+        "concerns":        [str(q).strip() for q in (s_raw.get("concerns") or []) if q][:3],
+        "qa_summary":      str(s_raw.get("qa_summary", "") or "").strip(),
+    }
+
+    return {"guidance": guidance, "sentiment": sentiment}
+
+
+# ────────────────────────────────────────────────────────────────────
+# Public: Call Sentiment (Groq + transcript text from API Ninjas Premium)
+# ────────────────────────────────────────────────────────────────────
+_MAX_TRANSCRIPT_CHARS = 30_000
+
+
+async def analyze_call_transcript(text: str) -> dict:
+    """Score and summarize an earnings call transcript via Groq."""
+    if not text or len(text) < 1000:
+        return {}
+
+    trimmed = _truncate(text, _MAX_TRANSCRIPT_CHARS)
+
+    system = (
+        "You are an equity research analyst. You read quarterly earnings call "
+        "transcripts and produce structured summaries as JSON. You return "
+        "ONLY valid JSON - no prose, no markdown."
+    )
+    user = (
+        "Summarize this earnings call transcript as structured JSON.\n\n"
+        "Return JSON in EXACTLY this shape:\n"
+        "{\n"
+        '  "sentiment_score":  <float between -1.0 and +1.0>,\n'
+        '  "sentiment_label":  "Very bullish" | "Bullish" | "Neutral" | "Cautious" | "Bearish",\n'
+        '  "positives":        ["<verbatim or near-verbatim quote>", ...],\n'
+        '  "concerns":         ["<verbatim or near-verbatim quote>", ...],\n'
+        '  "qa_summary":       "<one sentence summarizing analyst Q&A tone>"\n'
+        "}\n\n"
+        "Rules:\n"
+        '- "sentiment_score": +1.0 = strongly bullish, 0 = neutral, -1.0 = strongly bearish.\n'
+        '- "positives" + "concerns": up to 3 each, short specific quotes (<=25 words each).\n'
+        "  Skip generic boilerplate.\n"
+        '- "qa_summary": describe Q&A tone in one sentence (e.g. "8 analyst questions, mostly forward-looking on AI capex").\n'
+        "- If transcript is unparseable or too short, return all empty values\n"
+        '  and sentiment_label "Neutral".\n\n'
+        "--- Transcript ---\n"
+        f"{trimmed}\n"
+        "--- End ---"
+    )
+
+    result = await _groq_json(system, user, max_tokens=900)
+    if not result:
+        return {}
+
+    try:
+        score = float(result.get("sentiment_score", 0.0))
+        score = max(-1.0, min(1.0, score))
+    except (TypeError, ValueError):
+        score = 0.0
+
+    label = str(result.get("sentiment_label", "Neutral"))
+    if label not in ("Very bullish", "Bullish", "Neutral", "Cautious", "Bearish"):
+        label = "Neutral"
+
+    return {
+        "sentiment_score": round(score, 2),
+        "sentiment_label": label,
+        "positives":       [str(q).strip() for q in (result.get("positives") or []) if q][:3],
+        "concerns":        [str(q).strip() for q in (result.get("concerns") or []) if q][:3],
+        "qa_summary":      str(result.get("qa_summary", "") or "").strip(),
+    }
+
+
+# ────────────────────────────────────────────────────────────────────
 # Public: Earnings Reaction Score (deterministic, no API)
 # ────────────────────────────────────────────────────────────────────
 def _clamp(x: float, lo: float, hi: float) -> float:

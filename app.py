@@ -3548,8 +3548,9 @@ async def api_earnings_intel(ticker: str, force: int = 0):
         # outside the just-reported window). Only skip the LLM guidance call.
         from earnings_intel import compute_earnings_reaction
         return JSONResponse({
-            "guidance": {},
-            "reaction": compute_earnings_reaction(t),
+            "guidance":  {},
+            "reaction":  compute_earnings_reaction(t),
+            "sentiment": {},
         })
 
     edate = (t.get("last_earnings_date")

@@ -2754,6 +2754,7 @@ function renderModalEarningsCard(ticker, t) {
       ${revRow}
       ${haveLocalRows ? '' : '<div data-modal-eps-loading style="font-size:12px;color:#94a3b8;padding:6px 0">Loading earnings details...</div>'}
       <div data-modal-reaction-slot></div>
+      <div data-modal-sentiment-slot></div>
       <div data-modal-guidance-slot></div>
     </div>
   `;
@@ -2792,6 +2793,32 @@ function renderModalEarningsCard(ticker, t) {
               '<div style="font-size:10.5px;color:#64748b;font-weight:700;letter-spacing:.06em;text-transform:uppercase">Earnings Reaction</div>' +
               '<div style="font-size:11.5px;color:' + lblColor + ';font-weight:800">' + rx.label.toUpperCase() + ' (' + (rx.score >= 0 ? '+' : '') + rx.score + ')</div>' +
             '</div>' + compHTML +
+          '</div>';
+      }
+
+      // Call sentiment (LLM-derived from transcript) - only renders when API_NINJAS_KEY is set server-side
+      const sSlot = root.querySelector('[data-modal-sentiment-slot]');
+      const s = data.sentiment || {};
+      if (sSlot && s.sentiment_label && (s.positives || s.concerns)) {
+        const lblColor = s.sentiment_score >  0.3 ? '#15803d' :
+                        s.sentiment_score < -0.3 ? '#b91c1c' : '#64748b';
+        function bullets(arr, color) {
+          if (!arr || !arr.length) return '';
+          return arr.map(function(q) {
+            return '<li style="margin:3px 0;font-size:12px;color:#0f172a;line-height:1.45;list-style:none">' +
+                   '<span style="color:' + color + ';font-weight:700">&middot;</span> "' + q.replace(/^["\u201c\u201d]+|["\u201c\u201d]+$/g, '') + '"' +
+                   '</li>';
+          }).join('');
+        }
+        const pos = (s.positives && s.positives.length) ? '<div style="margin-top:5px"><div style="font-size:10.5px;color:#15803d;font-weight:700">Positives</div><ul style="padding:0;margin:2px 0 0">' + bullets(s.positives, '#15803d') + '</ul></div>' : '';
+        const con = (s.concerns && s.concerns.length) ? '<div style="margin-top:5px"><div style="font-size:10.5px;color:#b91c1c;font-weight:700">Concerns</div><ul style="padding:0;margin:2px 0 0">' + bullets(s.concerns, '#b91c1c') + '</ul></div>' : '';
+        const qa  = s.qa_summary ? '<div style="font-size:11.5px;color:#475569;font-style:italic;margin-top:6px">Q&amp;A: ' + s.qa_summary + '</div>' : '';
+        sSlot.innerHTML =
+          '<div style="margin-top:12px;padding-top:10px;border-top:1px dashed #cbd5e1">' +
+            '<div style="display:flex;justify-content:space-between;align-items:center">' +
+              '<div style="font-size:10.5px;color:#64748b;font-weight:700;letter-spacing:.06em;text-transform:uppercase">Earnings Highlights</div>' +
+              '<div style="font-size:11.5px;color:' + lblColor + ';font-weight:800">' + s.sentiment_label.toUpperCase() + ' (' + (s.sentiment_score >= 0 ? '+' : '') + s.sentiment_score + ')</div>' +
+            '</div>' + pos + con + qa +
           '</div>';
       }
 
@@ -2899,8 +2926,6 @@ function openStockModal(ticker) {
       </div>
     </div>` : ''}
 
-    <div id="modal-earnings-card-${ticker}" data-modal-earnings="${ticker}"></div>
-
     <div class="fd-head" style="margin-bottom:12px">
       <div>
         <div class="fd-tic">${t.ticker}</div>
@@ -2967,6 +2992,8 @@ function openStockModal(ticker) {
       </div>`;
     })()}
 
+    <div id="modal-earnings-card-${ticker}" data-modal-earnings="${ticker}" style="margin-top:12px"></div>
+
     ${(() => {
       const v = valuationVerdict(t);
       return `<div style="margin-top:12px;padding:10px 14px;border-radius:8px;
@@ -2994,7 +3021,7 @@ function openStockModal(ticker) {
                        text-transform:uppercase;letter-spacing:.05em;
                        padding:3px 10px;background:#fff;border-radius:6px;
                        border:1px solid ${dcf.border};white-space:nowrap">
-              Expectations: ${dcf.verdict}
+              Reverse DCF · Expectations: ${dcf.verdict}
             </div>
             <div title="The 10-year revenue CAGR the market is currently pricing into the share price. Calculated using a Gordon-growth terminal value with 10% discount rate, 3% perpetual growth, and a ${dcf.termFcfM.toFixed(0)}% terminal FCF margin assumption."
                  style="font-size:13px;font-weight:800;color:${dcf.color};font-family:'JetBrains Mono','Inter',monospace">
