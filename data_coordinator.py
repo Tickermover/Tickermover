@@ -1603,6 +1603,32 @@ class DataCoordinator:
         else:
             merged["dist_52w_high"] = None
 
+        # ── Fallback: detect "just reported" from FMP eps_quarters[0] date ──
+        # yfinance often returns ONLY the next earnings date, not the most recent.
+        # When that happens, our _parse_yf_earnings can't flag earnings_just_reported.
+        # FMP's earnings-surprises endpoint returns the latest-quarter date though
+        # (in YYYY-MM format), so we use that as a fallback signal.
+        if not merged.get("earnings_just_reported"):
+            eps_q = merged.get("eps_quarters") or []
+            if eps_q and isinstance(eps_q[0], dict) and eps_q[0].get("date"):
+                try:
+                    from datetime import date as _date2
+                    edate_str = str(eps_q[0]["date"]).strip()
+                    # FMP returns either YYYY-MM (e.g. "2026-04") or YYYY-MM-DD.
+                    # Treat YYYY-MM as mid-month for the purpose of "days since".
+                    if len(edate_str) == 7:
+                        edate_str = edate_str + "-15"
+                    edate = _date2.fromisoformat(edate_str[:10])
+                    days_since = (_date2.today() - edate).days
+                    # Window: 0 to 21 days post-earnings shows the card.
+                    # 21 (not 14) accounts for FMP's mid-month approximation.
+                    if 0 <= days_since <= 21:
+                        merged["earnings_just_reported"] = True
+                        merged["last_earnings_date"]     = edate.isoformat()
+                        merged["days_since_earnings"]    = days_since
+                except Exception:
+                    pass
+
         t_mean = merged.get("target_mean") or merged.get("target_price")
         if price and t_mean and price > 0:
             merged["target_upside_pct"] = round((t_mean - price) / price * 100, 1)

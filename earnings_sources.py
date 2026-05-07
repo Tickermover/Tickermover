@@ -250,26 +250,65 @@ async def fetch_call_transcript(ticker: str) -> str:
     """
     Fetch the most recent earnings-call transcript text from API Ninjas.
     Returns "" if API_NINJAS_KEY isn't set or the call fails.
+
+    The endpoint requires year and quarter parameters. We try the latest
+    quarters in reverse-chronological order until we find a transcript.
     """
-    if not _HTTPX_AVAILABLE or not _NINJAS_KEY:
+    if not _HTTPX_AVAILABLE:
+        logger.info(f"[ninjas] httpx unavailable — skipping {ticker}")
         return ""
-    try:
-        async with httpx.AsyncClient(timeout=_NINJAS_TIMEOUT) as c:
-            r = await c.get(
-                _NINJAS_ENDPOINT,
-                params={"ticker": ticker.upper(), "year": date.today().year},
-                headers={"X-Api-Key": _NINJAS_KEY},
-            )
-            r.raise_for_status()
-            data = r.json()
-    except Exception as exc:
-        logger.warning(f"API Ninjas transcript fetch failed for {ticker}: {exc}")
+    if not _NINJAS_KEY:
+        logger.info(f"[ninjas] API_NINJAS_KEY not set — skipping {ticker}")
         return ""
 
-    # API Ninjas returns either {} or {"transcript": "..."} (latest quarter).
-    # Some plans return a list — handle both shapes.
-    if isinstance(data, list) and data:
-        data = data[0]
-    if isinstance(data, dict):
-        return str(data.get("transcript") or "").strip()
+    today = date.today()
+    # Determine current quarter, then walk backwards trying recent quarters
+    cur_q = (today.month - 1) // 3 + 1
+    candidates = []
+    y, q = today.year, cur_q
+    for _ in range(4):  # try last 4 quarters
+        candidates.append((y, q))
+        q -= 1
+        if q == 0:
+            q = 4
+            y -= 1
+
+    last_error = None
+    for y, q in candidates:
+        try:
+            async with httpx.AsyncClient(timeout=_NINJAS_TIMEOUT) as c:
+                r = await c.get(
+                    _NINJAS_ENDPOINT,
+                    params={"ticker": ticker.upper(), "year": y, "quarter": q},
+                    headers={"X-Api-Key": _NINJAS_KEY},
+                )
+                if r.status_code == 401:
+                    logger.warning(f"[ninjas] 401 unauthorized — check API_NINJAS_KEY value")
+                    return ""
+                if r.status_code == 403:
+                    logger.warning(f"[ninjas] 403 forbidden — endpoint may require Premium plan")
+                    return ""
+                if r.status_code == 429:
+                    logger.warning(f"[ninjas] 429 rate-limited")
+                    return ""
+                r.raise_for_status()
+                data = r.json()
+        except Exception as exc:
+            last_error = exc
+            continue
+
+        # API Ninjas returns either {} or {"transcript": "..."} (one quarter).
+        if isinstance(data, list) and data:
+            data = data[0]
+        if isinstance(data, dict):
+            transcript = str(data.get("transcript") or "").strip()
+            if transcript:
+                logger.info(f"[ninjas] {ticker} Q{q} {y} transcript fetched ({len(transcript)} chars)")
+                return transcript
+            # else: empty for this quarter — try the next one back
+
+    if last_error:
+        logger.warning(f"[ninjas] all quarter attempts failed for {ticker}: {last_error}")
+    else:
+        logger.info(f"[ninjas] no transcript found for {ticker} in last 4 quarters")
     return ""
