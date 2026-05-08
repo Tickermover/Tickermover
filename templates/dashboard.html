@@ -769,6 +769,27 @@ tr:hover td{background:rgba(132,204,22,.06)}
 </style>
 </head>
 <body>
+<!-- First-visit disclaimer banner — shows once, then sets a cookie to hide -->
+<div id="ah-first-visit-banner" style="display:none;position:fixed;bottom:14px;left:14px;right:14px;max-width:540px;margin:0 auto;background:#fffbeb;border:1px solid #f59e0b;border-radius:10px;padding:12px 14px 12px 14px;box-shadow:0 4px 14px rgba(15,23,42,.12);z-index:9999;font-family:'Inter',-apple-system,sans-serif;font-size:13px;color:#0f172a;line-height:1.5">
+  <div style="display:flex;align-items:flex-start;gap:10px">
+    <div style="font-size:16px;flex-shrink:0">⚠️</div>
+    <div style="flex:1">
+      <strong style="color:#92400e">Research tool — not financial advice.</strong>
+      AlphaHunt scores public US stocks for research and educational purposes. We are not a SEBI-registered adviser. Always do your own research.
+      <a href="/disclaimer" style="color:#15803d;font-weight:700">Read the full disclaimer</a>.
+    </div>
+    <button onclick="document.getElementById('ah-first-visit-banner').style.display='none';document.cookie='ah_disclaimer_seen=1;max-age='+(60*60*24*365)+';path=/';" style="background:#fff;border:1px solid #fcd34d;border-radius:6px;padding:4px 10px;font-size:12px;font-weight:700;color:#92400e;cursor:pointer;flex-shrink:0">Got it</button>
+  </div>
+</div>
+<script>
+(function() {
+  if (document.cookie.indexOf('ah_disclaimer_seen=1') === -1) {
+    var b = document.getElementById('ah-first-visit-banner');
+    if (b) b.style.display = 'block';
+  }
+})();
+</script>
+
 
 <!-- ─── LIVE TICKER TAPE ─── continuous scrolling marquee of top movers,
      sits above the main header. Click any symbol to open its modal.  -->
@@ -4719,6 +4740,13 @@ function _switchAuthMode(mode) {
 }
 
 function _switchAuthView(view) {
+  // Show ToS row only on signup steps; hide on signin / forgot / success
+  const _tosRow = document.getElementById('ah-tos-row');
+  if (_tosRow) {
+    const showTos = view && view.indexOf('signup-s') === 0;
+    _tosRow.style.display = showTos ? '' : 'none';
+  }
+
   document.getElementById('auth-modal-mode').value = view === 'signin' ? 'signin' : 'signup';
   // Hide all views (new modal uses .ah-view + class 'on')
   document.querySelectorAll('.ah-view').forEach(s => s.classList.remove('on'));
@@ -4770,6 +4798,24 @@ async function signupFinish() {
   const goal = document.querySelector('input[name="goal"]:checked');
   const err  = document.getElementById('su-error-s3');
   if (!goal) { err.textContent = 'Please select your primary goal'; return; }
+
+  // ToS / Privacy / Disclaimer agreement — required before account creation
+  const tosBox = document.getElementById('ah-tos-checkbox');
+  if (tosBox && !tosBox.checked) {
+    err.textContent = 'Please agree to the Terms, Privacy Policy, and Disclaimer to create your account.';
+    // Visually highlight the checkbox row to draw attention
+    if (tosBox.parentElement && tosBox.parentElement.parentElement) {
+      const row = tosBox.parentElement.parentElement;
+      row.style.background = '#fef2f2';
+      row.style.border = '1px solid #f87171';
+      setTimeout(function() {
+        row.style.background = '#f8fafc';
+        row.style.border = '';
+      }, 3000);
+    }
+    tosBox.focus();
+    return;
+  }
 
   const email = document.getElementById('su-email').value.trim();
   const pass  = document.getElementById('su-password').value;
@@ -4868,6 +4914,16 @@ async function authSubmit() {
   const errEl = document.getElementById('auth-error');
   const btn   = document.getElementById('auth-submit');
   if (!email || !pass) { errEl.textContent = 'Email and password required'; return; }
+
+  // ToS agreement required for new signups (not for sign-in)
+  if (mode === 'signup') {
+    const tosBox = document.getElementById('ah-tos-checkbox');
+    if (tosBox && !tosBox.checked) {
+      errEl.textContent = 'Please agree to the Terms, Privacy Policy, and Disclaimer to create your account.';
+      tosBox.focus();
+      return;
+    }
+  }
   btn.disabled = true;
   btn.textContent = '…';
   try {
@@ -5471,9 +5527,19 @@ function showUpgradeSuccess() {
       <button class="ah-submit" onclick="closeAuthModal()">Open Dashboard →</button>
     </div>
 
-    <!-- Terms -->
-    <div style="margin-top:28px;font-size:11px;color:#94a3b8;text-align:center;line-height:1.6">
-      By continuing you agree to our <a href="#" style="color:#64748b">Terms</a> & <a href="#" style="color:#64748b">Privacy Policy</a>
+    <!-- Terms (real links + first-time disclosure)
+         The id="ah-tos-row" wrapper is hidden on signin/forgot/success views
+         via _switchAuthView so the checkbox only appears on signup steps. -->
+    <div id="ah-tos-row" style="margin-top:24px;font-size:11.5px;color:#475569;line-height:1.55;text-align:left;background:#f8fafc;border-radius:8px;padding:10px 12px">
+      <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer">
+        <input type="checkbox" id="ah-tos-checkbox" style="margin-top:3px;cursor:pointer">
+        <span>
+          I have read and agree to the <a href="/terms" target="_blank" style="color:#15803d;font-weight:700">Terms</a>,
+          <a href="/privacy" target="_blank" style="color:#15803d;font-weight:700">Privacy Policy</a>, and
+          <a href="/disclaimer" target="_blank" style="color:#15803d;font-weight:700">Disclaimer</a>.
+          I understand AlphaHunt is a research tool, not personalised financial advice, and I am responsible for my own investment decisions.
+        </span>
+      </label>
     </div>
 
   </div>

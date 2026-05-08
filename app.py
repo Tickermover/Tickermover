@@ -3552,3 +3552,22 @@ async def api_earnings_intel(ticker: str, force: int = 0):
              or "force-test")
     intel = await coordinator.get_post_earnings_intel(sym, edate, ticker_dict=t)
     return JSONResponse(intel)
+
+
+# ── /terms /privacy /disclaimer — legal pages ─────────────────────────
+import legal_pages as _legal
+
+
+@app.get("/terms", response_class=HTMLResponse)
+async def terms_page():
+    return HTMLResponse(_legal.render_terms())
+
+
+@app.get("/privacy", response_class=HTMLResponse)
+async def privacy_page():
+    return HTMLResponse(_legal.render_privacy())
+
+
+@app.get("/disclaimer", response_class=HTMLResponse)
+async def disclaimer_page():
+    return HTMLResponse(_legal.render_disclaimer())
