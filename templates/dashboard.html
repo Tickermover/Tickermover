@@ -2687,57 +2687,29 @@ function buildEpsDateBadge(t) {
    the LLM-derived forward guidance (Groq + SEC EDGAR press release) and
    appends it when ready. Falls back gracefully if eps_quarters is missing. */
 function renderModalEarningsCard(ticker, t) {
-  // Render the post-earnings card inside the open stock modal. ALWAYS shows
-  // the card when /api/earnings-intel returns reaction data — doesn't
-  // depend on _allTickerData having eps_quarters populated. EPS and Revenue
-  // rows still render fast when local t has them.
+  // Render the post-earnings card with FRESH SEC EDGAR data only — never
+  // shows stale FMP-derived dates that could mislead the user.
+  //
+  // Flow:
+  //   1. Show a tiny "Loading earnings details..." placeholder.
+  //   2. Fetch /api/earnings-intel/{ticker} which returns:
+  //        - filing_date  (SEC 8-K Item 2.02 publication date — authoritative)
+  //        - reaction     (deterministic score from local data)
+  //        - guidance     (Groq-extracted from press release)
+  //        - sentiment    (Groq-extracted earnings highlights)
+  //   3. Once the response arrives, render the full card.
+  //   4. If anything fails, show an inline "Earnings details unavailable" line.
   const slot = document.getElementById('modal-earnings-card-' + ticker);
   if (!slot) return;
 
-  // Render the card shell + base rows immediately, fetch reaction+guidance after.
-  const epsQ = (t.eps_quarters || [])[0] || {};
-  const incQ = (t.quarterly_income || [])[0] || {};
+  // Initial placeholder — no data, no risk of showing stale info.
+  slot.innerHTML = `
+    <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:14px 16px;margin-bottom:14px">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:11px;color:#94a3b8;font-weight:700">Loading latest earnings...</span>
+      </div>
+    </div>`;
 
-  const justReported = !!t.earnings_just_reported;
-
-  // Resolve the actual earnings date and how stale it is.
-  // Sources tried in order: t.last_earnings_date (set by our fallback), or
-  // eps_quarters[0].date from FMP. FMP returns YYYY-MM only for some rows,
-  // so we treat that as mid-month for the days-since calculation.
-  // Date resolution: prefer the SEC 8-K filing_date when the API has fetched
-  // and cached it (filled in below by the async fetch). Until then fall back
-  // to local t.last_earnings_date / eps_quarters dates which can be stale.
-  // The async update below replaces displayDate when SEC date arrives.
-  let reportDateRaw = t.last_earnings_date || (((t.eps_quarters||[])[0]||{}).date) || '';
-  let daysAgo = null;
-  let displayDate = '';
-  function _resolveDate(raw) {
-    if (!raw) return null;
-    let dStr = String(raw).slice(0, 10);
-    if (dStr.length === 7) dStr = dStr + '-15';
-    const d = new Date(dStr);
-    if (isNaN(d.getTime())) return null;
-    return d;
-  }
-  const _initialDate = _resolveDate(reportDateRaw);
-  if (_initialDate) {
-    daysAgo = Math.floor((new Date() - _initialDate) / (1000 * 60 * 60 * 24));
-    displayDate = _initialDate.toLocaleDateString('en-US', { year:'numeric', month:'short', day:'numeric' });
-  }
-
-  // Stale categorization:
-  //   ≤14d  → JUST REPORTED (green)
-  //   15-30d → LAST EARNINGS (gray)
-  //   31-90d → DATED (amber)
-  //   >90d   → STALE (orange/red)
-  let staleClass;
-  if (daysAgo === null)        staleClass = 'unknown';
-  else if (daysAgo <= 14 && justReported) staleClass = 'fresh';
-  else if (daysAgo <= 30)      staleClass = 'recent';
-  else if (daysAgo <= 90)      staleClass = 'dated';
-  else                          staleClass = 'stale';
-
-  // Friendly age string: "4 days ago", "3 weeks ago", "2 months ago"
   function _agoText(n) {
     if (n == null) return '';
     if (n <= 1)  return 'today';
@@ -2746,110 +2718,120 @@ function renderModalEarningsCard(ticker, t) {
     if (n <= 365) return Math.round(n/30) + ' months ago';
     return Math.round(n/365) + ' years ago';
   }
-  const ageStr = _agoText(daysAgo);
 
-  let badge;
-  if (staleClass === 'fresh') {
-    badge = '<span style="background:#15803d;color:#fff;font-weight:800;font-size:10px;letter-spacing:.06em;padding:4px 10px;border-radius:999px">JUST REPORTED</span>';
-  } else if (staleClass === 'recent') {
-    badge = '<span style="background:#e2e8f0;color:#475569;font-weight:700;font-size:10px;letter-spacing:.06em;padding:4px 10px;border-radius:999px">LAST EARNINGS</span>';
-  } else if (staleClass === 'dated') {
-    badge = '<span style="background:#fef3c7;color:#92400e;font-weight:800;font-size:10px;letter-spacing:.06em;padding:4px 10px;border-radius:999px;border:1px solid #fcd34d">DATED · ' + ageStr.toUpperCase() + '</span>';
-  } else if (staleClass === 'stale') {
-    badge = '<span style="background:#fee2e2;color:#b91c1c;font-weight:800;font-size:10px;letter-spacing:.06em;padding:4px 10px;border-radius:999px;border:1px solid #fca5a5">STALE · ' + ageStr.toUpperCase() + '</span>';
-  } else {
-    badge = '<span style="background:#e2e8f0;color:#475569;font-weight:700;font-size:10px;letter-spacing:.06em;padding:4px 10px;border-radius:999px">LAST EARNINGS</span>';
+  function _fmtMoney(n) {
+    if (!n) return '';
+    if (n >= 1e9) return '$' + (n/1e9).toFixed(2) + 'B';
+    if (n >= 1e6) return '$' + (n/1e6).toFixed(1) + 'M';
+    return '$' + Math.round(n).toLocaleString();
   }
 
-  // Background tints by staleness
-  const bg = (staleClass === 'dated' || staleClass === 'stale')
-    ? '#fffbeb'      // soft amber to flag staleness at a glance
-    : '#f0fdf4';
-  const bdr = (staleClass === 'dated' || staleClass === 'stale') ? '#fde68a' : '#bbf7d0';
-  const accentColor = (staleClass === 'dated' || staleClass === 'stale') ? '#d97706' : '#15803d';
-
-  // EPS row (only if local t happens to have eps_quarters)
-  const epsActual   = epsQ.actual;
-  const epsEstimate = epsQ.estimate;
-  const surpPct     = epsQ.surprise_pct;
-  const beat        = epsQ.beat;
-  let epsRow = '';
-  if (epsActual != null && epsEstimate != null) {
-    const beatTag = beat == null ? '' :
-      (beat
-        ? '<span style="background:#dcfce7;color:#15803d;font-weight:700;padding:3px 10px;border-radius:999px;font-size:10px;letter-spacing:.04em;margin-left:6px">BEAT</span>'
-        : '<span style="background:#fee2e2;color:#b91c1c;font-weight:700;padding:3px 10px;border-radius:999px;font-size:10px;letter-spacing:.04em;margin-left:6px">MISS</span>');
-    const surpStr = surpPct == null ? '' :
-      ` &middot; <span style="color:${surpPct > 0 ? '#15803d' : '#b91c1c'};font-weight:600">${surpPct >= 0 ? '+' : ''}${surpPct.toFixed(1)}%</span> vs estimate`;
-    epsRow = `<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:13px">
-      <span style="color:#64748b;font-weight:600">EPS</span>
-      <span><span class="mono" style="font-weight:700">$${epsActual.toFixed(2)}</span> <span style="color:#94a3b8">vs <span class="mono">$${epsEstimate.toFixed(2)}</span> est</span>${surpStr}${beatTag}</span>
-    </div>`;
-  }
-
-  // Revenue row
-  const rev = incQ.revenue;
-  const revG = t.rev_growth_qyoy;
-  let revRow = '';
-  if (rev) {
-    const revStr = rev >= 1e9 ? `$${(rev/1e9).toFixed(2)}B` :
-                   rev >= 1e6 ? `$${(rev/1e6).toFixed(1)}M` :
-                                `$${Math.round(rev).toLocaleString()}`;
-    const revGrowthStr = revG == null ? '' :
-      ` &middot; <span style="color:${revG > 0 ? '#15803d' : '#b91c1c'};font-weight:600">${revG >= 0 ? '+' : ''}${(revG*100).toFixed(1)}%</span> YoY`;
-    revRow = `<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:13px">
-      <span style="color:#64748b;font-weight:600">Revenue</span>
-      <span><span class="mono" style="font-weight:700">${revStr}</span>${revGrowthStr}</span>
-    </div>`;
-  }
-
-  // Render base card immediately. The reaction + guidance slots fill in
-  // asynchronously from /api/earnings-intel below.
-  const haveLocalRows = !!(epsRow || revRow);
-  slot.innerHTML = `
-    <div style="background:${bg};border:1px solid ${bdr};border-left:4px solid ${accentColor};border-radius:10px;padding:14px 16px;margin-bottom:14px">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap">
-        ${badge}
-        <span style="font-size:11.5px;color:#475569">${t.name || ticker}</span>
-        <span data-report-date style="font-size:11px;color:#64748b;margin-left:auto">${displayDate ? 'Reported ' + displayDate + (ageStr ? ' · ' + ageStr : '') : ''}</span>
-      </div>
-      ${(staleClass === 'dated' || staleClass === 'stale') ? '<div style="font-size:11px;color:#92400e;font-style:italic;margin-bottom:8px">⚠ This report is over a month old — figures may not reflect the latest quarter.</div>' : ''}
-      ${epsRow}
-      ${revRow}
-      ${haveLocalRows ? '' : '<div data-modal-eps-loading style="font-size:12px;color:#94a3b8;padding:6px 0">Loading earnings details...</div>'}
-      <div data-modal-reaction-slot></div>
-      <div data-modal-sentiment-slot></div>
-      <div data-modal-guidance-slot></div>
-    </div>
-  `;
-
-  // Async: fetch guidance + reaction (server already computed reaction; guidance via Groq+SEC)
   fetch('/api/earnings-intel/' + ticker)
     .then(function(r) { return r.ok ? r.json() : null; })
     .then(function(data) {
-      if (!data) return;
       const root = document.getElementById('modal-earnings-card-' + ticker);
       if (!root) return;
-      const loading = root.querySelector('[data-modal-eps-loading]');
-      if (loading) loading.remove();
-
-      // If the API returned a fresher SEC filing_date, override the displayed
-      // date so the user always sees the actual publication date, not lagging
-      // FMP eps_quarters dates.
-      if (data.filing_date) {
-        const secDate = _resolveDate(data.filing_date);
-        if (secDate) {
-          const newDays = Math.floor((new Date() - secDate) / (1000*60*60*24));
-          const newDisp = secDate.toLocaleDateString('en-US', { year:'numeric', month:'short', day:'numeric' });
-          // Update the inline "Reported [date] · X ago" line
-          const headerLine = root.querySelector('[data-report-date]');
-          if (headerLine) {
-            headerLine.textContent = 'Reported ' + newDisp + ' · ' + _agoText(newDays);
-          }
-        }
+      if (!data) {
+        root.innerHTML = '<div style="font-size:12px;color:#94a3b8;padding:6px 0">Earnings details unavailable.</div>';
+        return;
       }
 
-      // Reaction breakdown
+      // Resolve the authoritative date — SEC filing_date wins. Fall back to
+      // any local date only if SEC didn't return one.
+      const filingDate = data.filing_date || t.last_earnings_date ||
+                         (((t.eps_quarters||[])[0]||{}).date) || '';
+      let dStr = String(filingDate).slice(0, 10);
+      if (dStr.length === 7) dStr = dStr + '-15';
+      const d = filingDate ? new Date(dStr) : null;
+      const validDate = d && !isNaN(d.getTime());
+
+      let daysAgo = null, displayDate = '';
+      if (validDate) {
+        daysAgo = Math.floor((new Date() - d) / (1000*60*60*24));
+        displayDate = d.toLocaleDateString('en-US', { year:'numeric', month:'short', day:'numeric' });
+      }
+
+      // Stale categorization — based on SEC filing_date which is fresh.
+      let staleClass;
+      if (daysAgo === null)         staleClass = 'unknown';
+      else if (daysAgo <= 14)       staleClass = 'fresh';
+      else if (daysAgo <= 30)       staleClass = 'recent';
+      else if (daysAgo <= 90)       staleClass = 'dated';
+      else                           staleClass = 'stale';
+
+      let badge;
+      if (staleClass === 'fresh') {
+        badge = '<span style="background:#15803d;color:#fff;font-weight:800;font-size:10px;letter-spacing:.06em;padding:4px 10px;border-radius:999px">JUST REPORTED</span>';
+      } else if (staleClass === 'recent') {
+        badge = '<span style="background:#e2e8f0;color:#475569;font-weight:700;font-size:10px;letter-spacing:.06em;padding:4px 10px;border-radius:999px">LAST EARNINGS</span>';
+      } else if (staleClass === 'dated') {
+        badge = '<span style="background:#fef3c7;color:#92400e;font-weight:800;font-size:10px;letter-spacing:.06em;padding:4px 10px;border-radius:999px;border:1px solid #fcd34d">DATED &middot; ' + (_agoText(daysAgo)||'').toUpperCase() + '</span>';
+      } else if (staleClass === 'stale') {
+        badge = '<span style="background:#fee2e2;color:#b91c1c;font-weight:800;font-size:10px;letter-spacing:.06em;padding:4px 10px;border-radius:999px;border:1px solid #fca5a5">STALE &middot; ' + (_agoText(daysAgo)||'').toUpperCase() + '</span>';
+      } else {
+        badge = '<span style="background:#e2e8f0;color:#475569;font-weight:700;font-size:10px;letter-spacing:.06em;padding:4px 10px;border-radius:999px">EARNINGS</span>';
+      }
+
+      const bg  = (staleClass === 'dated' || staleClass === 'stale') ? '#fffbeb' : '#f0fdf4';
+      const bdr = (staleClass === 'dated' || staleClass === 'stale') ? '#fde68a' : '#bbf7d0';
+      const accentColor = (staleClass === 'dated' || staleClass === 'stale') ? '#d97706' : '#15803d';
+
+      // EPS row from local t (only if data is from a recent quarter — i.e.,
+      // the SEC filing date is fresh). If SEC says it's old, don't show
+      // potentially-stale EPS/Revenue since they may be from a different quarter.
+      const showLocalRows = staleClass === 'fresh' || staleClass === 'recent';
+      const epsQ = (t.eps_quarters || [])[0] || {};
+      const incQ = (t.quarterly_income || [])[0] || {};
+      let epsRow = '', revRow = '';
+      if (showLocalRows && epsQ.actual != null && epsQ.estimate != null) {
+        const beat = epsQ.beat;
+        const surp = epsQ.surprise_pct;
+        const beatTag = (beat == null) ? '' :
+          (beat
+            ? '<span style="background:#dcfce7;color:#15803d;font-weight:700;padding:3px 10px;border-radius:999px;font-size:10px;letter-spacing:.04em;margin-left:6px">BEAT</span>'
+            : '<span style="background:#fee2e2;color:#b91c1c;font-weight:700;padding:3px 10px;border-radius:999px;font-size:10px;letter-spacing:.04em;margin-left:6px">MISS</span>');
+        const surpStr = (surp == null) ? '' :
+          ' &middot; <span style="color:' + (surp > 0 ? '#15803d' : '#b91c1c') + ';font-weight:600">' + (surp >= 0 ? '+' : '') + surp.toFixed(1) + '%</span> vs estimate';
+        epsRow = '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:13px">' +
+                   '<span style="color:#64748b;font-weight:600">EPS</span>' +
+                   '<span><span class="mono" style="font-weight:700">$' + epsQ.actual.toFixed(2) + '</span> ' +
+                     '<span style="color:#94a3b8">vs <span class="mono">$' + epsQ.estimate.toFixed(2) + '</span> est</span>' +
+                     surpStr + beatTag +
+                   '</span></div>';
+      }
+      if (showLocalRows && incQ.revenue) {
+        const revStr = _fmtMoney(incQ.revenue);
+        const rg = t.rev_growth_qyoy;
+        const rgStr = (rg == null) ? '' :
+          ' &middot; <span style="color:' + (rg > 0 ? '#15803d' : '#b91c1c') + ';font-weight:600">' + (rg >= 0 ? '+' : '') + (rg*100).toFixed(1) + '%</span> YoY';
+        revRow = '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:13px">' +
+                   '<span style="color:#64748b;font-weight:600">Revenue</span>' +
+                   '<span><span class="mono" style="font-weight:700">' + revStr + '</span>' + rgStr + '</span></div>';
+      }
+
+      const dateLine = displayDate ?
+        ('<span style="font-size:11px;color:#64748b;margin-left:auto">Reported ' + displayDate + (daysAgo!=null?' &middot; '+_agoText(daysAgo):'') + '</span>') : '';
+
+      const staleNote = (staleClass === 'dated' || staleClass === 'stale') ?
+        '<div style="font-size:11px;color:#92400e;font-style:italic;margin-bottom:8px">⚠ This is the latest publicly-filed earnings (8-K). The next quarter has not yet been published by this company.</div>' : '';
+
+      // ── Render the full card with authoritative data ──
+      root.innerHTML =
+        '<div style="background:' + bg + ';border:1px solid ' + bdr + ';border-left:4px solid ' + accentColor + ';border-radius:10px;padding:14px 16px;margin-bottom:14px">' +
+          '<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap">' +
+            badge +
+            '<span style="font-size:11.5px;color:#475569">' + (t.name || ticker) + '</span>' +
+            dateLine +
+          '</div>' +
+          staleNote +
+          epsRow +
+          revRow +
+          '<div data-modal-reaction-slot></div>' +
+          '<div data-modal-sentiment-slot></div>' +
+          '<div data-modal-guidance-slot></div>' +
+        '</div>';
+
+      // ── Reaction breakdown ──
       const rxSlot = root.querySelector('[data-modal-reaction-slot]');
       const rx = data.reaction || {};
       if (rxSlot && rx.label && rx.components && rx.components.length) {
@@ -2870,13 +2852,13 @@ function renderModalEarningsCard(ticker, t) {
         rxSlot.innerHTML =
           '<div style="margin-top:12px;padding-top:10px;border-top:1px dashed #cbd5e1">' +
             '<div style="display:flex;justify-content:space-between;margin-bottom:4px">' +
-              '<div style="font-size:10.5px;color:#64748b;font-weight:700;letter-spacing:.06em;text-transform:uppercase">Earnings Reaction</div>' +
+              '<div style="font-size:11px;color:#64748b;font-weight:800;letter-spacing:.07em;text-transform:uppercase">Earnings Reaction</div>' +
               '<div style="font-size:11.5px;color:' + lblColor + ';font-weight:800">' + rx.label.toUpperCase() + ' (' + (rx.score >= 0 ? '+' : '') + rx.score + ')</div>' +
             '</div>' + compHTML +
           '</div>';
       }
 
-      // Call sentiment (LLM-derived from transcript) - only renders when API_NINJAS_KEY is set server-side
+      // ── Earnings highlights (sentiment) ──
       const sSlot = root.querySelector('[data-modal-sentiment-slot]');
       const s = data.sentiment || {};
       if (sSlot && s.sentiment_label && (s.positives || s.concerns)) {
@@ -2902,7 +2884,7 @@ function renderModalEarningsCard(ticker, t) {
           '</div>';
       }
 
-      // Forward guidance (LLM-derived)
+      // ── Forward guidance ──
       const gSlot = root.querySelector('[data-modal-guidance-slot]');
       const g = data.guidance || {};
       if (gSlot && g.tone && g.tone !== 'none') {
@@ -2912,7 +2894,7 @@ function renderModalEarningsCard(ticker, t) {
                           g.tone === 'lowered' ? '↘' : '→';
         const rev2 = g.revenue_guidance ? '<div style="font-size:12.5px;color:#0f172a;margin-top:2px">Revenue: <span class="mono" style="font-weight:700">' + g.revenue_guidance + '</span></div>' : '';
         const eps2 = g.eps_guidance     ? '<div style="font-size:12.5px;color:#0f172a;margin-top:2px">EPS: <span class="mono" style="font-weight:700">' + g.eps_guidance + '</span></div>' : '';
-        const sum = g.summary           ? '<div style="font-size:12px;color:#475569;font-style:italic;margin-top:6px">"' + g.summary + '"</div>' : '';
+        const sum  = g.summary          ? '<div style="font-size:12px;color:#475569;font-style:italic;margin-top:6px">"' + g.summary + '"</div>' : '';
         gSlot.innerHTML =
           '<div style="margin-top:12px;padding-top:10px;border-top:1px dashed #cbd5e1">' +
             '<div style="display:flex;justify-content:space-between;align-items:center">' +
@@ -2923,10 +2905,9 @@ function renderModalEarningsCard(ticker, t) {
       }
     })
     .catch(function() {
-      var root = document.getElementById('modal-earnings-card-' + ticker);
+      const root = document.getElementById('modal-earnings-card-' + ticker);
       if (root) {
-        var loading = root.querySelector('[data-modal-eps-loading]');
-        if (loading) loading.textContent = 'Earnings details unavailable.';
+        root.innerHTML = '<div style="font-size:12px;color:#94a3b8;padding:6px 0">Earnings details unavailable.</div>';
       }
     });
 }
