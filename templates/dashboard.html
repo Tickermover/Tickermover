@@ -2704,18 +2704,25 @@ function renderModalEarningsCard(ticker, t) {
   // Sources tried in order: t.last_earnings_date (set by our fallback), or
   // eps_quarters[0].date from FMP. FMP returns YYYY-MM only for some rows,
   // so we treat that as mid-month for the days-since calculation.
+  // Date resolution: prefer the SEC 8-K filing_date when the API has fetched
+  // and cached it (filled in below by the async fetch). Until then fall back
+  // to local t.last_earnings_date / eps_quarters dates which can be stale.
+  // The async update below replaces displayDate when SEC date arrives.
   let reportDateRaw = t.last_earnings_date || (((t.eps_quarters||[])[0]||{}).date) || '';
   let daysAgo = null;
   let displayDate = '';
-  if (reportDateRaw) {
-    let dStr = String(reportDateRaw).slice(0, 10);
-    if (dStr.length === 7) dStr = dStr + '-15';   // YYYY-MM → YYYY-MM-15
+  function _resolveDate(raw) {
+    if (!raw) return null;
+    let dStr = String(raw).slice(0, 10);
+    if (dStr.length === 7) dStr = dStr + '-15';
     const d = new Date(dStr);
-    if (!isNaN(d.getTime())) {
-      const today = new Date();
-      daysAgo = Math.floor((today - d) / (1000 * 60 * 60 * 24));
-      displayDate = d.toLocaleDateString('en-US', { year:'numeric', month:'short', day:'numeric' });
-    }
+    if (isNaN(d.getTime())) return null;
+    return d;
+  }
+  const _initialDate = _resolveDate(reportDateRaw);
+  if (_initialDate) {
+    daysAgo = Math.floor((new Date() - _initialDate) / (1000 * 60 * 60 * 24));
+    displayDate = _initialDate.toLocaleDateString('en-US', { year:'numeric', month:'short', day:'numeric' });
   }
 
   // Stale categorization:
@@ -2804,7 +2811,7 @@ function renderModalEarningsCard(ticker, t) {
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap">
         ${badge}
         <span style="font-size:11.5px;color:#475569">${t.name || ticker}</span>
-        ${displayDate ? `<span style="font-size:11px;color:#64748b;margin-left:auto">Reported ${displayDate}${ageStr ? ' · ' + ageStr : ''}</span>` : ''}
+        <span data-report-date style="font-size:11px;color:#64748b;margin-left:auto">${displayDate ? 'Reported ' + displayDate + (ageStr ? ' · ' + ageStr : '') : ''}</span>
       </div>
       ${(staleClass === 'dated' || staleClass === 'stale') ? '<div style="font-size:11px;color:#92400e;font-style:italic;margin-bottom:8px">⚠ This report is over a month old — figures may not reflect the latest quarter.</div>' : ''}
       ${epsRow}
@@ -2825,6 +2832,22 @@ function renderModalEarningsCard(ticker, t) {
       if (!root) return;
       const loading = root.querySelector('[data-modal-eps-loading]');
       if (loading) loading.remove();
+
+      // If the API returned a fresher SEC filing_date, override the displayed
+      // date so the user always sees the actual publication date, not lagging
+      // FMP eps_quarters dates.
+      if (data.filing_date) {
+        const secDate = _resolveDate(data.filing_date);
+        if (secDate) {
+          const newDays = Math.floor((new Date() - secDate) / (1000*60*60*24));
+          const newDisp = secDate.toLocaleDateString('en-US', { year:'numeric', month:'short', day:'numeric' });
+          // Update the inline "Reported [date] · X ago" line
+          const headerLine = root.querySelector('[data-report-date]');
+          if (headerLine) {
+            headerLine.textContent = 'Reported ' + newDisp + ' · ' + _agoText(newDays);
+          }
+        }
+      }
 
       // Reaction breakdown
       const rxSlot = root.querySelector('[data-modal-reaction-slot]');

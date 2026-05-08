@@ -588,10 +588,16 @@ class DataCoordinator:
         # SEC EDGAR 8-K Item 2.02 + Exhibit 99.1 gives us the press release
         # for free. We extract BOTH forward guidance AND sentiment-style
         # highlights (positives/concerns/Q&A summary) in a single LLM call.
-        # Source label in the UI is "Earnings Highlights" — accurate since
-        # data comes from the press release, not the live transcript.
+        # The SEC filing_date is the AUTHORITATIVE publication date — always
+        # fresh, unlike FMP's earnings-surprises endpoint which lags by months.
         try:
-            press_text = await es.fetch_earnings_press_release(ticker)
+            press = await es.fetch_earnings_press_release(ticker) or {}
+            press_text  = press.get("text", "")
+            filing_date = press.get("filing_date", "")
+            if filing_date:
+                # Surface the SEC filing date so the UI can show "Reported [date]"
+                # without depending on stale FMP eps_quarters dates.
+                result["filing_date"] = filing_date
             if press_text:
                 full = await ei.analyze_press_release_full(press_text)
                 result["guidance"]  = full.get("guidance", {}) or {}

@@ -230,17 +230,28 @@ def _strip_html(html: str) -> str:
 
 
 # ── Public ───────────────────────────────────────────────────────────
-async def fetch_earnings_press_release(ticker: str) -> str:
+async def fetch_earnings_press_release(ticker: str) -> dict:
     """
-    Fetch the most recent earnings press release text for a ticker.
-    Returns "" on any failure or when no qualifying 8-K is found.
+    Fetch the most recent earnings press release for a ticker, returning
+    BOTH the text and the SEC 8-K filing date (the actual publication date).
+
+    Returns:
+        {"text": "<press release body>", "filing_date": "YYYY-MM-DD"}
+    or {"text": "", "filing_date": ""} on any failure.
+
+    Using the filing date here lets the UI show users a date that's always
+    fresh (vs FMP's earnings-surprises endpoint which can lag by months).
     """
     if not _HTTPX_AVAILABLE:
-        return ""
+        return {"text": "", "filing_date": ""}
     filing = await _fetch_recent_8k_filing_index(ticker)
     if not filing:
-        return ""
-    return await _fetch_8k_exhibit_text(filing)
+        return {"text": "", "filing_date": ""}
+    text = await _fetch_8k_exhibit_text(filing)
+    return {
+        "text":         text,
+        "filing_date":  filing.get("filing_date", ""),
+    }
 
 
 async def fetch_call_transcript(ticker: str) -> str:
