@@ -580,7 +580,176 @@ tr:hover td{background:rgba(132,204,22,.06)}
 
 /* Body background — radiant lime gradient (overridden by full rule above) */
 
-@media(max-width:600px){.hdr,.main,.tabs{padding-left:16px;padding-right:16px}.hdr-stats{display:none}.setup-row{grid-template-columns:1fr}}
+/* ═══════════════════════════════════════════════════════════════════
+   MOBILE-FIRST OVERHAUL — phone-friendly across all 7 tabs + modal
+   ─────────────────────────────────────────────────────────────────── */
+
+/* iOS safe-area insets — only on phones */
+@media(max-width:768px){
+  body{
+    padding-left:env(safe-area-inset-left);
+    padding-right:env(safe-area-inset-right);
+  }
+
+  /* ── HEADER ── compact, single-line ── */
+  .hdr{padding:10px 14px;gap:10px;flex-wrap:nowrap;overflow:hidden}
+  .logo{font-size:18px;flex-shrink:0}
+  .subtitle{display:none}
+  .badge{font-size:10px;padding:2px 7px;flex-shrink:0}
+  .hdr-stats{gap:10px;margin-left:auto;flex-wrap:nowrap}
+  .hdr-stats .stat-n{font-size:15px}
+  .hdr-stats .stat-l{font-size:9px;letter-spacing:.02em}
+  .hdr-stats .stat:nth-child(n+3){display:none}  /* keep 2 stats max */
+
+  /* ── TABS ── horizontal scroll with snap, hidden scrollbar ── */
+  .tabs{padding:0 12px;gap:0;-webkit-overflow-scrolling:touch;
+        scroll-snap-type:x proximity;scrollbar-width:none;
+        position:sticky;top:54px;z-index:49}
+  .tabs::-webkit-scrollbar{display:none}
+  .tab{padding:10px 12px;font-size:12px;scroll-snap-align:start}
+
+  /* ── MAIN ── tighter padding ── */
+  .main{padding:14px 12px}
+  .sec-heading{font-size:15px;margin-bottom:10px}
+
+  /* ── FILTERS ── full-width inputs, stacked ── */
+  .filters{padding:10px;gap:8px;border-radius:10px;margin-bottom:12px}
+  .filters input,.filters select{min-width:0;flex:1 1 100%;font-size:16px;padding:9px 11px}
+  .filters label{font-size:12px;white-space:nowrap}
+  .tally{margin-left:0;width:100%;text-align:right;font-size:11px}
+
+  /* ── ALL CARD GRIDS → single column on phone ── */
+  .hot-grid,.alloc-grid,.risk-grid,.news-grid,.sec-grid-map,
+  .src-grid,.fd-grid{grid-template-columns:1fr;gap:10px}
+
+  /* Card padding tighter on phone */
+  .card,.hot-card,.alloc-card,.risk-card,.news-card,.sm-card{padding:14px;border-radius:12px}
+  .hot-tic{font-size:18px}
+  .hot-name{max-width:none;font-size:11px;white-space:normal;overflow:visible}
+  .hot-price{font-size:16px}
+  .score-big{font-size:44px}
+  .score-label{font-size:10px}
+  .score-xl{gap:10px}
+  .setup-row{grid-template-columns:repeat(3,1fr);gap:6px}
+  .setup-cell{padding:5px 6px}
+  .setup-cell .lbl{font-size:9px}
+  .setup-cell .val{font-size:12px}
+  .rationale{font-size:11px;padding:7px}
+
+  /* Tables → slim columns, smaller font ── */
+  .tbl-wrap{font-size:11.5px;border-radius:10px}
+  th,td{padding:7px 8px;font-size:11.5px}
+  th{font-size:10px}
+  .co{max-width:90px;font-size:11px}
+  .tic{font-size:12px}
+
+  /* All Stocks — fund-list table: tighter cells, slim name, scroll hint ── */
+  .fund-list-wrap{
+    -webkit-overflow-scrolling:touch;
+    background:rgba(255,255,255,.85);
+    box-shadow:inset -10px 0 8px -8px rgba(15,23,42,.08)
+  }
+  .fund-list{font-size:12px}
+  .fund-list th{padding:8px 8px;font-size:10px}
+  .fund-list td{padding:8px 8px}
+  .fl-tic{font-size:13px}
+  .fl-name{max-width:100px;font-size:11px}
+  .fl-pop{font-size:13px}
+  .fl-grade{font-size:9px;padding:2px 6px}
+
+  /* Sizer 2-up on phone (was 3-up cramped) */
+  .sizer{grid-template-columns:repeat(2,1fr);gap:10px;padding:12px}
+  .sizer-val{font-size:17px}
+
+  /* News card head */
+  .news-h{font-size:12.5px;line-height:1.4}
+  .news-meta{font-size:10px;flex-wrap:wrap}
+
+  /* Sector cards */
+  .sm-title{font-size:14px}
+  .sm-desc{font-size:11.5px}
+
+  /* ── STOCK MODAL → bottom sheet on phone ── */
+  .stock-modal-overlay{padding:0;align-items:flex-end}
+  .stock-modal-panel{
+    width:100%;max-width:100%;max-height:92vh;
+    border-radius:18px 18px 0 0;
+    padding:14px 14px calc(24px + env(safe-area-inset-bottom));
+    animation:slideUp .25s cubic-bezier(.22,.61,.36,1)
+  }
+  /* Drag handle at the top of the bottom sheet */
+  .stock-modal-panel::before{
+    content:'';display:block;width:42px;height:4px;border-radius:2px;
+    background:#cbd5e1;margin:0 auto 12px}
+  /* Bigger close button on mobile (44pt touch target) */
+  .modal-close-btn button{padding:8px 16px;font-size:13px;min-height:36px}
+  /* TradingView chart shorter on phone */
+  [id^="tv-chart-"]{height:220px!important}
+
+  /* Modal internal grids — collapse via attribute selector ── */
+  .stock-modal-panel [style*="repeat(4,1fr)"],
+  #stock-modal-body [style*="repeat(4,1fr)"]{grid-template-columns:repeat(2,1fr)!important}
+  .stock-modal-panel [style*="repeat(3,1fr)"],
+  #stock-modal-body [style*="repeat(3,1fr)"]{grid-template-columns:repeat(2,1fr)!important}
+
+  /* ── MODEL PORTFOLIO ── force 1-up cards, 2-up stats grid ── */
+  #model-portfolio-root [style*="repeat(4,1fr)"]{grid-template-columns:1fr!important}
+  #model-portfolio-root [style*="repeat(auto-fit,minmax(120px,1fr))"]{
+    grid-template-columns:repeat(2,1fr)!important;gap:8px!important}
+  #model-portfolio-root [style*="repeat(auto-fill,minmax(280px,1fr))"],
+  #model-portfolio-root [style*="repeat(auto-fill,minmax(260px,1fr))"]{
+    grid-template-columns:1fr!important}
+
+  /* ── PRICE-TARGET-ROW ── wrap to 2-up on phone (was 4-up cramped) ── */
+  .price-target-row{flex-wrap:wrap;padding:10px 12px;gap:8px}
+  .price-target-row > div{flex:1 1 calc(50% - 4px);min-width:0}
+  .price-target-row .t-val{font-size:14px}
+  .price-target-row .t-lbl{font-size:9.5px}
+
+  /* ── INSTALL BUTTON ── thumb-reach (bottom-right) ── */
+  #ah-install-btn{top:auto!important;bottom:calc(20px + env(safe-area-inset-bottom))!important;
+                   right:14px!important;font-size:12px;padding:8px 14px}
+
+  /* Watchlist + sector grids reset */
+  #watchlist-grid{grid-template-columns:1fr!important}
+}
+
+/* Slide-up animation for bottom sheet (top-level, not nested in @media) */
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+
+/* ── Small phones (≤480px) — extra-tight ── */
+@media(max-width:480px){
+  .hdr{padding:8px 12px}
+  .logo{font-size:16px}
+  .badge.live,.badge.ai{display:none}  /* keep header lean */
+  .hdr-stats{gap:8px}
+  .hdr-stats .stat-n{font-size:14px}
+  .hdr-stats .stat-l{font-size:8.5px}
+
+  .tab{padding:9px 10px;font-size:11.5px}
+  .main{padding:12px 10px}
+
+  .score-big{font-size:38px}
+  .score-xl{gap:8px}
+
+  .hot-card,.alloc-card,.risk-card,.news-card,.sm-card,.card{padding:12px;border-radius:10px}
+
+  /* Modal even fuller-bleed */
+  .stock-modal-panel{max-height:96vh;padding:12px 12px calc(20px + env(safe-area-inset-bottom))}
+
+  /* Tighter table cells */
+  th,td{padding:6px 6px;font-size:11px}
+  .co{max-width:70px}
+
+  /* Hot tickers can wrap on very small screens */
+  .hot-head{flex-wrap:wrap}
+}
+
+/* ── Prevent iOS Safari from zooming when focusing inputs (must be ≥16px) ── */
+@media(hover:none) and (pointer:coarse){
+  input,select,textarea{font-size:16px}
+}
+
 
 /* ─── LIVE TICKER TAPE ─── Bloomberg-style scrolling top-mover strip.
    Sits above the main header. Continuously animates ticker chips right→left.
@@ -3386,6 +3555,49 @@ document.addEventListener('keydown', e => {
 });
 
 /* ----------------------------------------------------------
+   MOBILE: swipe-down-to-close for the stock modal bottom sheet.
+   Listens on the panel; if the user drags from the top down >120px
+   (and the panel is at scroll-top), closes the modal.
+   ---------------------------------------------------------- */
+(function attachStockModalSwipe(){
+  const panel = document.getElementById('stock-modal-panel');
+  if (!panel) return;
+  let startY = null, startScroll = 0, dragging = false, currentDelta = 0;
+  panel.addEventListener('touchstart', e => {
+    if (window.innerWidth > 768) return;        // mobile only
+    if (panel.scrollTop > 4) return;             // only when at top
+    startY = e.touches[0].clientY;
+    startScroll = panel.scrollTop;
+    dragging = true;
+    currentDelta = 0;
+    panel.style.transition = 'none';
+  }, {passive:true});
+  panel.addEventListener('touchmove', e => {
+    if (!dragging) return;
+    currentDelta = e.touches[0].clientY - startY;
+    if (currentDelta > 0) {
+      panel.style.transform = 'translateY(' + currentDelta + 'px)';
+    }
+  }, {passive:true});
+  panel.addEventListener('touchend', () => {
+    if (!dragging) return;
+    dragging = false;
+    panel.style.transition = 'transform .22s cubic-bezier(.22,.61,.36,1)';
+    if (currentDelta > 120) {
+      panel.style.transform = 'translateY(100%)';
+      setTimeout(() => {
+        panel.style.transform = '';
+        panel.style.transition = '';
+        closeStockModal();
+      }, 220);
+    } else {
+      panel.style.transform = '';
+      setTimeout(() => panel.style.transition = '', 220);
+    }
+  }, {passive:true});
+})();
+
+/* ----------------------------------------------------------
    ROUTING — keep browser back inside the app.
    Opening a stock modal pushes a `#stock-TICKER` history entry
    so the browser back button closes the modal instead of
@@ -4057,8 +4269,9 @@ function renderModelPortfolio(data) {
   const barHTML = '';
 
   // ── STOCK CARDS ────────────────────────────────────────────────────
+  // auto-fill: 4-up on desktop, 3-up on laptop, 2-up on tablet, 1-up on phone (forced via mobile CSS)
   const cardsHTML = `
-  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px">
+  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px">
     ${picks.map(p => {
       // ── Always pull LIVE data for consistency with all other modules ──
       const live      = _allTickerData[p.ticker] || {};
@@ -4085,12 +4298,12 @@ function renderModelPortfolio(data) {
                   box-shadow:0 2px 10px rgba(0,0,0,.06);cursor:pointer;transition:transform .15s"
            onclick="openStockModal('${p.ticker}')"
            onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
-          <div>
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;gap:10px">
+          <div style="min-width:0;flex:1">
             <div style="font-size:18px;font-weight:900;color:${accentCol}">${p.ticker}</div>
-            <div style="font-size:11px;color:#64748b;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.name}</div>
+            <div style="font-size:11px;color:#64748b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.name}</div>
           </div>
-          <div style="text-align:right">
+          <div style="text-align:right;flex-shrink:0">
             <div style="font-size:18px;font-weight:800;color:var(--txt)">${fmtP(curPrice)}</div>
             <div style="font-size:11px;font-weight:700;color:${todayChg>=0?'#15803d':'#dc2626'}">${todayChg>=0?'+':''}${todayChg.toFixed(2)}% today</div>
           </div>
@@ -5439,11 +5652,27 @@ function showUpgradeSuccess() {
 /* View states */
 .ah-view{display:none}.ah-view.on{display:block}
 
-/* Mobile */
+/* Mobile — auth modal goes full-bleed */
 @media(max-width:700px){
+  #auth-modal{padding:0}
+  .ah-wrap{max-height:100vh;height:100vh;border-radius:0;width:100%}
   .ah-left{display:none}
-  .ah-right{padding:32px 24px}
+  .ah-right{padding:24px 18px;overflow-y:auto;max-height:100vh;-webkit-overflow-scrolling:touch}
   .ah-form-wrap{max-width:100%}
+  .ah-form-title{font-size:22px}
+  .ah-form-sub{font-size:13px;margin-bottom:22px}
+  .ah-field{margin-bottom:14px}
+  .ah-field input{font-size:16px;padding:12px 14px}  /* 16px = no iOS zoom */
+  .ah-submit{padding:13px;font-size:15px;margin-bottom:14px}
+  .ah-opt{padding:11px 12px;margin-bottom:8px}
+  .ah-opt-title{font-size:13px}
+  .ah-opt-desc{font-size:11px}
+  .ah-steps-prog{margin-bottom:18px}
+  .ah-close-btn{top:10px;right:10px}
+}
+@media(max-width:480px){
+  .ah-right{padding:20px 14px}
+  .ah-form-title{font-size:20px}
 }
 </style>
 
