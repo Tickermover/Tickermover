@@ -4277,7 +4277,7 @@ function renderModelPortfolio(data) {
       const live      = _allTickerData[p.ticker] || {};
       const curPrice  = parseFloat(live.price || p.current_price || 0);
       const curPop    = parseFloat(live.smart_score != null ? live.smart_score : (live.pop_score || p.current_pop || p.pop_at_entry || 0));
-      const curGrade  = live.grade || p.grade_at_entry || 'A';
+      const curGrade  = live.grade || p.current_grade || p.grade_at_entry || 'A';
       const curRating = gradeToRating(curGrade);
       // Use LIVE target_mean for upside (same source as modal and all stocks)
       const curTarget = parseFloat(live.target_mean || live.street_target || p.target_mean || 0);
@@ -4288,16 +4288,104 @@ function renderModelPortfolio(data) {
       const todayChg = parseFloat(live.change_pct || p.change_today || 0);
       const accentCol = pos ? '#15803d' : '#dc2626';
       const accBg     = pos ? 'rgba(21,128,61,.08)' : 'rgba(220,38,38,.06)';
-      const daysStr   = '~30d';
+      const daysHeld  = p.days_held != null ? p.days_held : null;
+      const daysStr   = daysHeld != null ? (daysHeld + 'd') : '~30d';
       // Upside from CURRENT price (matches modal + all stocks + hot list)
       const targetUpside = curPrice > 0 && curTarget > 0
         ? ((curTarget - curPrice) / curPrice * 100).toFixed(1)
         : null;
+
+      // ── Exit Plan calculations (use backend values, fall back to live calc) ──
+      const stopPrice  = p.stop_price || (entryPrc > 0 ? +(entryPrc * 0.92).toFixed(2) : 0);
+      const timeStop   = p.time_stop_date || null;
+      const daysToStop = p.days_to_time_stop != null ? p.days_to_time_stop : null;
+      const signalTrig = !!p.exit_signal_triggered;
+      const signalReason = p.exit_signal_reason || '';
+      const alert      = p.exit_alert || null;
+
+      // "Recommended since" — format added_date as e.g. "Apr 8, 2026"
+      let addedFmt = '—';
+      if (p.added_date) {
+        try {
+          const d = new Date(p.added_date + 'T00:00:00');
+          addedFmt = d.toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'});
+        } catch(e) {}
+      }
+      const heldStr = daysHeld != null
+        ? (daysHeld === 0 ? 'today' : daysHeld + ' day' + (daysHeld === 1 ? '' : 's') + ' ago')
+        : '';
+
+      // ── Build the four exit rows: target / stop / time / signal ──
+      const exitRow = (label, valHTML, sub, status) => {
+        const dotCol = status === 'hit'    ? '#dc2626'
+                     : status === 'soon'   ? '#d97706'
+                     : status === 'fired'  ? '#dc2626'
+                     : '#15803d';
+        return `<div style="display:flex;align-items:center;gap:8px;padding:5px 0;font-size:11px;color:#374151">
+          <span style="width:6px;height:6px;border-radius:50%;background:${dotCol};flex-shrink:0"></span>
+          <span style="font-weight:700;color:#475569;width:78px;flex-shrink:0">${label}</span>
+          <span style="flex:1;color:#0f172a;font-weight:700">${valHTML}</span>
+          ${sub ? `<span style="color:#94a3b8;font-size:10px">${sub}</span>` : ''}
+        </div>`;
+      };
+
+      // Target row
+      const targetHit = curTarget > 0 && curPrice >= curTarget;
+      const targetRow = curTarget > 0
+        ? exitRow('Take profit', `${fmtP(curTarget)}`,
+                  targetHit ? '🎯 hit' : (targetUpside != null ? `+${targetUpside}% away` : ''),
+                  targetHit ? 'hit' : (targetUpside != null && +targetUpside <= 5 ? 'soon' : 'ok'))
+        : exitRow('Take profit', '<span style="color:#94a3b8">Analyst target unavailable</span>', '', 'ok');
+
+      // Stop loss row
+      const stopHit = stopPrice > 0 && curPrice > 0 && curPrice <= stopPrice;
+      const stopGapPct = stopPrice > 0 && curPrice > 0
+        ? ((curPrice - stopPrice) / curPrice * 100).toFixed(1)
+        : null;
+      const stopRow = exitRow('Stop loss', `${fmtP(stopPrice)}`,
+                              stopHit ? '⚠ hit' : (stopGapPct != null ? `-${stopGapPct}% buffer` : ''),
+                              stopHit ? 'hit' : (stopGapPct != null && +stopGapPct <= 3 ? 'soon' : 'ok'));
+
+      // Time stop row
+      let timeFmt = '—';
+      if (timeStop) {
+        try {
+          const td = new Date(timeStop + 'T00:00:00');
+          timeFmt = td.toLocaleDateString('en-US', {month:'short', day:'numeric'});
+        } catch(e) {}
+      }
+      const timeHit = daysToStop != null && daysToStop <= 0;
+      const timeStr = daysToStop == null ? ''
+                    : timeHit ? '⏰ re-evaluate'
+                    : daysToStop + 'd left';
+      const timeRow = exitRow('Time stop', timeFmt, timeStr,
+                              timeHit ? 'fired' : (daysToStop != null && daysToStop <= 14 ? 'soon' : 'ok'));
+
+      // Signal stop row (grade fall / score fall)
+      const signalRow = exitRow('Signal stop',
+                                signalTrig ? signalReason : `Hold while ≥B & score ≥60`,
+                                signalTrig ? '🚨 fired' : `now ${curGrade} · ${curPop.toFixed(0)}`,
+                                signalTrig ? 'fired' : 'ok');
+
+      // Alert banner — sits at the very top of the card if any exit triggered
+      const alertBanner = alert ? `
+        <div style="background:linear-gradient(135deg,#fee2e2 0%,#fecaca 100%);border:1px solid #f87171;border-radius:8px;
+                    padding:6px 10px;margin-bottom:10px;display:flex;align-items:center;gap:8px">
+          <span style="font-size:13px">🚨</span>
+          <span style="font-size:11px;font-weight:900;color:#991b1b;letter-spacing:.04em">${alert.label}</span>
+          <span style="font-size:10.5px;color:#7f1d1d;flex:1;text-align:right">${alert.reason || ''}</span>
+        </div>` : '';
+
+      // Card border + shadow turn red if any exit fired
+      const cardBdr = alert ? '#fca5a5' : 'rgba(0,0,0,.08)';
+      const cardSh  = alert ? '0 2px 14px rgba(220,38,38,.18)' : '0 2px 10px rgba(0,0,0,.06)';
+
       return `
-      <div style="background:#ffffff;border:1px solid rgba(0,0,0,.08);border-radius:14px;padding:16px;
-                  box-shadow:0 2px 10px rgba(0,0,0,.06);cursor:pointer;transition:transform .15s"
+      <div style="background:#ffffff;border:1px solid ${cardBdr};border-radius:14px;padding:16px;
+                  box-shadow:${cardSh};cursor:pointer;transition:transform .15s"
            onclick="openStockModal('${p.ticker}')"
            onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+        ${alertBanner}
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;gap:10px">
           <div style="min-width:0;flex:1">
             <div style="font-size:18px;font-weight:900;color:${accentCol}">${p.ticker}</div>
@@ -4308,6 +4396,13 @@ function renderModelPortfolio(data) {
             <div style="font-size:11px;font-weight:700;color:${todayChg>=0?'#15803d':'#dc2626'}">${todayChg>=0?'+':''}${todayChg.toFixed(2)}% today</div>
           </div>
         </div>
+
+        <!-- Recommended since — small dated tag -->
+        <div style="display:flex;align-items:center;gap:6px;font-size:10.5px;color:#64748b;margin-bottom:8px">
+          <span style="font-size:11px">📅</span>
+          <span><strong style="color:#0f172a">Recommended ${addedFmt}</strong>${heldStr ? ` · ${heldStr}` : ''}</span>
+        </div>
+
         <!-- Big performance number -->
         <div style="background:${accBg};border-radius:10px;padding:10px 14px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between">
           <div>
@@ -4319,6 +4414,7 @@ function renderModelPortfolio(data) {
             <div>Now:   <strong style="color:${accentCol}">${fmtP(curPrice)}</strong></div>
           </div>
         </div>
+
         <!-- Meta row -->
         <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">
           <span class="rating ${ratingClass(curRating)}" style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:6px">${curRating}</span>
@@ -4326,6 +4422,18 @@ function renderModelPortfolio(data) {
           ${p.sub_sector ? `<span style="font-size:10px;padding:2px 7px;border-radius:6px;background:rgba(132,204,22,.1);color:#4d7c0f;font-weight:600">${p.sub_sector}</span>` : ''}
           ${targetUpside ? `<span style="font-size:10px;padding:2px 7px;border-radius:6px;background:rgba(22,163,74,.1);color:#15803d;font-weight:600">Target +${targetUpside}%</span>` : ''}
         </div>
+
+        <!-- Exit Plan: 4 triggers, any of which closes the position -->
+        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:8px 12px;margin-bottom:8px">
+          <div style="font-size:10px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">
+            🎯 Exit Plan — sell when any one fires
+          </div>
+          ${targetRow}
+          ${stopRow}
+          ${timeRow}
+          ${signalRow}
+        </div>
+
         ${p.rationale ? `<div style="font-size:11px;color:#374151;line-height:1.45;border-left:2px solid ${accentCol};padding-left:8px">💡 ${p.rationale.replace(/^💡\s*/,'')}</div>` : ''}
       </div>`;
     }).join('')}

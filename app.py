@@ -2762,15 +2762,21 @@ def _is_hot_eligible(t: dict) -> bool:
 
 # ── MODEL PORTFOLIO helpers ───────────────────────────────────────────────────
 
-def _build_model_portfolio() -> dict:
+def _build_model_portfolio(existing: dict | None = None) -> dict:
     """
     Select top 20 Grade-A stocks by Alpha Score.
-    Inception = 1 month ago. Entry prices back-calculated from momentum_1m:
-        entry_price = current_price / (1 + momentum_1m / 100)
-    This lets the portfolio show real 30-day performance immediately.
+
+    First-run behaviour: inception = 1 month ago, entry prices back-calculated
+    from momentum_1m so the portfolio shows real 30-day performance immediately.
+
+    Refresh behaviour (when `existing` is provided): retained picks keep their
+    original added_date and entry_price (so their performance history stays
+    intact). New picks that replace dropped tickers get today's date.
+    Dropped tickers are removed entirely.
     """
     from datetime import date as _date, timedelta
     today        = _date.today()
+    today_str    = str(today)
     inception    = today - timedelta(days=30)
     inception_str = str(inception)
 
@@ -2780,47 +2786,145 @@ def _build_model_portfolio() -> dict:
     ]
     candidates.sort(key=lambda t: float(t.get("pop_score") or 0), reverse=True)
     top20 = candidates[:20]
+    new_tickers = {t.get("ticker") for t in top20}
+
+    # Index existing picks by ticker so we can preserve metadata for retained ones
+    existing_picks = {p["ticker"]: p for p in (existing or {}).get("picks", []) if p.get("ticker")}
+
     picks = []
     for t in top20:
+        ticker   = t.get("ticker", "")
         price    = float(t.get("price") or 0)
         mom_1m   = float(t.get("momentum_1m") or 0)   # already in % e.g. 19.0 means +19%
-        # Back-calculate what the price was ~30 days ago
-        if price > 0 and mom_1m != 0:
-            entry = round(price / (1 + mom_1m / 100), 2)
+
+        prev = existing_picks.get(ticker)
+        if prev:
+            # Retained pick → keep its original added_date and entry_price.
+            added = prev.get("added_date") or inception_str
+            entry = float(prev.get("entry_price") or price)
+            pop_at_entry   = prev.get("pop_at_entry", round(float(t.get("pop_score") or 0), 1))
+            grade_at_entry = prev.get("grade_at_entry", t.get("grade", "A"))
         else:
-            entry = price   # fallback: same as today (0% shown)
+            # New pick. If this is the very first build (no `existing`), back-date
+            # to inception so the user sees real ~30-day performance immediately.
+            # If we're refreshing and adding a brand-new pick, mark it with today.
+            is_first_build = existing is None or not existing.get("picks")
+            added = inception_str if is_first_build else today_str
+            if is_first_build and price > 0 and mom_1m != 0:
+                entry = round(price / (1 + mom_1m / 100), 2)
+            else:
+                entry = price   # new mid-cycle pick → entry = today's price
+            pop_at_entry   = round(float(t.get("pop_score") or 0), 1)
+            grade_at_entry = t.get("grade", "A")
+
         picks.append({
-            "ticker":         t.get("ticker", ""),
+            "ticker":         ticker,
             "name":           t.get("name", ""),
-            "added_date":     inception_str,
+            "added_date":     added,
             "entry_price":    entry,
-            "pop_at_entry":   round(float(t.get("pop_score") or 0), 1),
-            "grade_at_entry": t.get("grade", "A"),
+            "pop_at_entry":   pop_at_entry,
+            "grade_at_entry": grade_at_entry,
             "sector":         t.get("sector", ""),
             "sub_sector":     t.get("sub_sector") or t.get("subsector", ""),
             "rationale":      (t.get("rationale") or "")[:120],
             "signals":        (t.get("signals") or [])[:3],
             "target_mean":    float(t.get("target_mean") or 0),
         })
-    return {"created_at": inception_str, "version": 2, "picks": picks}
+
+    # Preserve the original `created_at` on refresh so the inception date
+    # in the header stays meaningful (it's the date the portfolio was first built).
+    created_at = (existing or {}).get("created_at", inception_str)
+    return {"created_at": created_at, "version": 2, "picks": picks}
 
 
 def _enrich_model_portfolio(portfolio: dict) -> dict:
-    """Add live prices and performance to each pick."""
-    from datetime import date as _date
+    """Add live prices, performance, and the 4 exit-rule fields to each pick.
+
+    Exit rules attached per pick:
+      - target_price        — analyst consensus (take-profit trigger)
+      - stop_price          — entry × 0.92 (-8%, classic IBD stop)
+      - time_stop_date      — added_date + 90 days (re-evaluate by then)
+      - exit_signal_status  — "active" | "triggered_grade" | "triggered_score"
+                              triggers when grade falls below B OR pop_score < 60
+    Plus a derived `exit_alert` summarising whether ANY of the four rules has
+    fired so the UI can flash an EXIT NOW badge without re-running the logic.
+    """
+    from datetime import date as _date, timedelta
     picks_raw = portfolio.get("picks", [])
     lookup = {t["ticker"]: t for t in _universe_data}
     enriched, perfs = [], []
+    GRADE_RANK = {"A": 4, "B": 3, "C": 2, "D": 1, "F": 0}
+
     for p in picks_raw:
-        live = lookup.get(p["ticker"], {})
-        entry = p.get("entry_price", 0)
+        live  = lookup.get(p["ticker"], {})
+        entry = float(p.get("entry_price") or 0)
         now   = float(live.get("price") or entry or 0)
         perf  = round((now - entry) / entry * 100, 2) if entry > 0 else 0
-        days  = (_date.today() - _date.fromisoformat(p["added_date"])).days if p.get("added_date") else 0
+
+        added = p.get("added_date")
+        days_held = 0
+        time_stop_str = None
+        days_to_time_stop = None
+        if added:
+            try:
+                added_d = _date.fromisoformat(added)
+                days_held = (_date.today() - added_d).days
+                time_stop_d = added_d + timedelta(days=90)
+                time_stop_str = str(time_stop_d)
+                days_to_time_stop = (time_stop_d - _date.today()).days
+            except ValueError:
+                pass
+
+        # ── Exit-rule values ─────────────────────────────────────────────
+        target_price = float(p.get("target_mean") or live.get("target_mean") or 0)
+        stop_price   = round(entry * 0.92, 2) if entry > 0 else 0    # -8% rule
+
+        # Signal-stop: grade dropped to C or below, OR pop_score below 60
+        cur_grade  = live.get("grade") or p.get("grade_at_entry") or "A"
+        cur_score  = float(live.get("pop_score") or 0)
+        signal_triggered = (
+            GRADE_RANK.get(cur_grade, 0) < GRADE_RANK["B"]
+            or (cur_score and cur_score < 60)
+        )
+        signal_reason = None
+        if signal_triggered:
+            if GRADE_RANK.get(cur_grade, 0) < GRADE_RANK["B"]:
+                signal_reason = f"Grade dropped to {cur_grade}"
+            else:
+                signal_reason = f"Score dropped to {cur_score:.0f}"
+
+        # ── Has any of the 4 exits triggered? ────────────────────────────
+        target_hit = target_price > 0 and now >= target_price
+        stop_hit   = stop_price > 0 and now <= stop_price
+        time_hit   = days_to_time_stop is not None and days_to_time_stop <= 0
+        exit_alert = None
+        if stop_hit:
+            exit_alert = {"type": "stop", "label": "STOP HIT", "reason": f"Price ${now:.2f} ≤ stop ${stop_price:.2f}"}
+        elif target_hit:
+            exit_alert = {"type": "target", "label": "TARGET HIT", "reason": f"Price ${now:.2f} ≥ target ${target_price:.2f}"}
+        elif signal_triggered:
+            exit_alert = {"type": "signal", "label": "SIGNAL EXIT", "reason": signal_reason}
+        elif time_hit:
+            exit_alert = {"type": "time", "label": "RE-EVALUATE", "reason": f"Held {days_held}d (90d limit reached)"}
+
         perfs.append(perf)
-        enriched.append({**p, "current_price": now, "performance_pct": perf,
-                         "days_held": days, "current_pop": live.get("pop_score"),
-                         "change_today": live.get("change_pct")})
+        enriched.append({
+            **p,
+            "current_price":     now,
+            "performance_pct":   perf,
+            "days_held":         days_held,
+            "current_pop":       live.get("pop_score"),
+            "current_grade":     cur_grade,
+            "change_today":      live.get("change_pct"),
+            # Exit plan fields:
+            "target_price":      target_price,
+            "stop_price":        stop_price,
+            "time_stop_date":    time_stop_str,
+            "days_to_time_stop": days_to_time_stop,
+            "exit_signal_triggered": signal_triggered,
+            "exit_signal_reason":    signal_reason,
+            "exit_alert":            exit_alert,
+        })
     # Sort: gainers first
     enriched.sort(key=lambda x: x["performance_pct"], reverse=True)
     pos = sum(1 for p in perfs if p > 0)
