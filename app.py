@@ -994,7 +994,7 @@ def _render_stock_page(t: dict) -> str:
     price  = _f(t.get("price"))
     pop    = _f(t.get("smart_score") if t.get("smart_score") is not None else t.get("pop_score"))
     grade  = t.get("grade") or "—"
-    rating = {"A":"Strong Buy","B":"Buy","C":"Hold","D":"Reduce","F":"Avoid"}.get(grade, "Under Review")
+    rating = {"A":"★★★★★ Top Tier","B":"★★★★ Quality","C":"★★★ Average","D":"★★ Below Avg","F":"★ Weak"}.get(grade, "Under Review")
     verdict_color = {"A":"#15803d","B":"#1e40af","C":"#b45309","D":"#dc2626","F":"#991b1b"}.get(grade, "#475569")
     bottom_line = t.get("bottom_line") or f"{name} is currently scored {round(pop)}/100 on Alpha Score."
     chg = _f(t.get("change_pct"))
@@ -1337,7 +1337,7 @@ def _render_og_png(t: dict) -> bytes:
     try: pop_n = int(round(float(pop))) if pop is not None else 0
     except (TypeError, ValueError): pop_n = 0
     grade  = t.get("grade") or "—"
-    rating = {"A":"STRONG BUY","B":"BUY","C":"HOLD","D":"REDUCE","F":"AVOID"}.get(grade, "UNDER REVIEW")
+    rating = {"A":"★★★★★ TOP TIER","B":"★★★★ QUALITY","C":"★★★ AVERAGE","D":"★★ BELOW AVG","F":"★ WEAK"}.get(grade, "UNDER REVIEW")
     bl = (t.get("bottom_line") or f"{name} scored {pop_n}/100 on Alpha Score.")[:120]
 
     W, H = 1200, 630
@@ -1698,7 +1698,7 @@ _BLOG_ARTICLES = [
     # section research-report layout. The legacy `content` HTML field is kept
     # below as a fallback / appendix.
     "report": {
-      "rating":        "Strong Buy",
+      "rating":        "Top Tier",
       "conviction":    "High",
       "price_target":  18.50,
       "current_price": 14.20,
@@ -1757,7 +1757,7 @@ _BLOG_ARTICLES = [
       },
       # Final recommendation
       "recommendation": {
-        "verdict": "Strong Buy",
+        "verdict": "Top Tier",
         "summary": "Best-positioned pure-play in the AI infrastructure buildout. Use any 10-15% pullback as an accumulation opportunity — but size for the elevated volatility (29% short interest). Aggressive growth investors only; avoid if you can't tolerate a 30%+ drawdown in a bad quarter.",
       },
     },
@@ -1782,7 +1782,7 @@ _BLOG_ARTICLES = [
 <p>Capital intensity is the primary risk — APLD must continuously access debt and equity markets to fund construction. Any softening in AI capex spend by the hyperscalers, or a rise in data center financing costs, could materially slow the company's growth trajectory. Short interest stands at <strong>29.4%</strong>, making this a squeeze candidate in both directions.</p>
 
 <h3>AlphaHunt View</h3>
-<p>APLD earns a <strong>STRONG BUY</strong> with 71% confidence. The combination of contracted hyperscaler revenue, explosive top-line growth, and infrastructure scarcity in the AI buildout makes this one of the highest-conviction names in our universe. Entry discipline matters here — the stock is volatile and position sizing should account for the elevated short interest.</p>"""
+<p>APLD earns a <strong>TOP TIER</strong> grade with 71% confidence. The combination of contracted hyperscaler revenue, explosive top-line growth, and infrastructure scarcity in the AI buildout makes this one of the highest-conviction names in our universe. Entry discipline matters here — the stock is volatile and position sizing should account for the elevated short interest.</p>"""
   },
   {
     "id": "vrt-ai-cooling-2026",
@@ -1792,7 +1792,7 @@ _BLOG_ARTICLES = [
     "summary": "Vertiv is the picks-and-shovels play on AI data center density — as GPU racks hit 100kW+ per cabinet, liquid cooling becomes non-negotiable.",
     "featured": False,
     "report": {
-      "rating": "Strong Buy", "conviction": "High",
+      "rating": "Top Tier", "conviction": "High",
       "price_target": 296, "current_price": 268, "horizon": "12-18 months",
       "thesis": [
         "AI rack power densities are pushing past 100 kW per cabinet — air cooling is physically inadequate, making liquid cooling a forced upgrade across every new build.",
@@ -1832,7 +1832,7 @@ _BLOG_ARTICLES = [
         "key_catalysts":      "Next earnings; Blackwell GB200 cooling design wins; new liquid-cooling product launches.",
       },
       "recommendation": {
-        "verdict": "Strong Buy",
+        "verdict": "Top Tier",
         "summary": "The structural growth story remains intact. Add on any 8-10% pullback. Lower-volatility way to play AI infrastructure than data-center REITs.",
       },
     },
@@ -1854,7 +1854,7 @@ _BLOG_ARTICLES = [
 <p>Vertiv is not immune to supply chain constraints — long lead times on custom cooling components can delay revenue recognition. Competition from Schneider Electric and Eaton is intensifying as the market grows. Any slowdown in hyperscaler capex would disproportionately affect Vertiv's order book.</p>
 
 <h3>AlphaHunt View</h3>
-<p>Vertiv earns a <strong>STRONG BUY</strong>. As data center power density continues its upward march, Vertiv's liquid cooling business becomes increasingly mission-critical. This is a structural growth story, not a cyclical trade.</p>"""
+<p>Vertiv earns a <strong>TOP TIER</strong> grade. As data center power density continues its upward march, Vertiv's liquid cooling business becomes increasingly mission-critical. This is a structural growth story, not a cyclical trade.</p>"""
   },
   {
     "id": "aaoi-optical-ai-2026",
@@ -1864,7 +1864,7 @@ _BLOG_ARTICLES = [
     "summary": "AAOI makes the fiber optic transceivers that connect AI GPUs at 800G/1.6T speeds — a market growing 10x as hyperscalers build AI clusters.",
     "featured": False,
     "report": {
-      "rating": "Strong Buy", "conviction": "High",
+      "rating": "Top Tier", "conviction": "High",
       "price_target": 145, "current_price": 102, "horizon": "12-18 months",
       "thesis": [
         "AI training clusters need ultra-low-latency optical interconnects — industry rapidly migrating from 400G to 800G with 1.6T deployments starting 2026.",
@@ -1903,7 +1903,7 @@ _BLOG_ARTICLES = [
         "key_catalysts":      "1.6T transceiver design wins; CPO commercial milestones; Q2 earnings.",
       },
       "recommendation": {
-        "verdict": "Strong Buy",
+        "verdict": "Top Tier",
         "summary": "High-conviction small cap with structural tailwinds. Size for volatility — 5-7% of an aggressive growth book, not 15%.",
       },
     },
@@ -1925,7 +1925,7 @@ _BLOG_ARTICLES = [
 <p>AAOI is a small-cap ($3.5B market cap) with concentrated customer exposure — a single hyperscaler delaying orders can materially impact quarterly results. Gross margins, while improving, remain below peer levels. Competition from Coherent, Lumentum, and II-VI is intensifying.</p>
 
 <h3>AlphaHunt View</h3>
-<p>AAOI earns a <strong>STRONG BUY</strong> with 75 Alpha Score. The 800G/1.6T upgrade cycle is a multi-year tailwind with AAOI positioned as a beneficiary. Analyst mean target implies <strong>+41.7% upside</strong> from current levels.</p>"""
+<p>AAOI earns a <strong>TOP TIER</strong> grade with 75 Alpha Score. The 800G/1.6T upgrade cycle is a multi-year tailwind with AAOI positioned as a beneficiary. Analyst mean target implies <strong>+41.7% upside</strong> from current levels.</p>"""
   },
   {
     "id": "mu-hbm-ai-2026",
@@ -1935,7 +1935,7 @@ _BLOG_ARTICLES = [
     "summary": "Every NVIDIA H100/H200 AI GPU contains Micron's High Bandwidth Memory. As AI cluster deployments accelerate, HBM supply remains severely constrained.",
     "featured": False,
     "report": {
-      "rating": "Strong Buy", "conviction": "High",
+      "rating": "Top Tier", "conviction": "High",
       "price_target": 533, "current_price": 476, "horizon": "12 months",
       "thesis": [
         "HBM3E is the memory bottleneck for AI accelerators — Micron is one of only 3 companies on earth that can manufacture it at scale.",
@@ -1975,7 +1975,7 @@ _BLOG_ARTICLES = [
         "key_catalysts":      "Next earnings; NVIDIA Blackwell ramp; HBM4 capacity announcements.",
       },
       "recommendation": {
-        "verdict": "Strong Buy",
+        "verdict": "Top Tier",
         "summary": "Most defensible structural growth story in semiconductors right now. Use 8-10% pullbacks to add. Reduce on any sign HBM tightness is easing.",
       },
     },
@@ -1997,7 +1997,7 @@ _BLOG_ARTICLES = [
 <p>Memory is a commodity industry with cyclical pricing dynamics. A slowdown in AI infrastructure investment or a resolution of HBM supply tightness could compress margins. Samsung's HBM qualification by NVIDIA would create additional competitive pressure. The stock trades at 76.9× forward earnings — expectations are high.</p>
 
 <h3>AlphaHunt View</h3>
-<p>MU earns a <strong>STRONG BUY</strong>. The HBM supercycle is the most defensible structural growth story in semiconductors. Micron's position as the U.S. champion in a market dominated by Samsung and SK Hynix gives it strategic importance beyond pure financials.</p>"""
+<p>MU earns a <strong>TOP TIER</strong> grade. The HBM supercycle is the most defensible structural growth story in semiconductors. Micron's position as the U.S. champion in a market dominated by Samsung and SK Hynix gives it strategic importance beyond pure financials.</p>"""
   },
   {
     "id": "qubt-quantum-2026",
@@ -2007,7 +2007,7 @@ _BLOG_ARTICLES = [
     "summary": "QUBT builds quantum hardware and software for real-world optimization problems. IBM's 2026 practical quantum milestone is catalyzing the entire sector.",
     "featured": False,
     "report": {
-      "rating": "Strong Buy", "conviction": "Medium",
+      "rating": "Top Tier", "conviction": "Medium",
       "price_target": 17.40, "current_price": 8.85, "horizon": "18-24 months",
       "thesis": [
         "Quantum sector is transitioning from research curiosity to real infrastructure investment — IBM's 2026 practical-advantage milestone validated the timeline.",
@@ -2047,7 +2047,7 @@ _BLOG_ARTICLES = [
         "key_catalysts":      "DARPA US2QC milestones; new enterprise customer wins; sector reratings on hardware breakthroughs.",
       },
       "recommendation": {
-        "verdict": "Strong Buy (speculative)",
+        "verdict": "Top Tier (speculative)",
         "summary": "High-conviction speculative position. Size 1-3% of book max. Use stops — sector volatility is extreme. This is an option, not a core holding.",
       },
     },
@@ -2066,7 +2066,7 @@ _BLOG_ARTICLES = [
 <p>QUBT is a small-cap ($3.5B market cap) company in a nascent technology sector where timelines have historically slipped. Revenue is growing but from a small base, and profitability is still in the future. Any negative news about quantum hardware milestones could create significant stock volatility.</p>
 
 <h3>AlphaHunt View</h3>
-<p>QUBT earns a <strong>STRONG BUY</strong>. The quantum computing sector is transitioning from research curiosity to real infrastructure investment. QUBT's software-first approach to monetization gives it a near-term revenue path that pure hardware plays lack. Analyst target of <strong>$17.40 (mean)</strong> implies +96.9% upside from current levels.</p>"""
+<p>QUBT earns a <strong>TOP TIER</strong> grade. The quantum computing sector is transitioning from research curiosity to real infrastructure investment. QUBT's software-first approach to monetization gives it a near-term revenue path that pure hardware plays lack. Analyst target of <strong>$17.40 (mean)</strong> implies +96.9% upside from current levels.</p>"""
   },
   {
     "id": "gsat-satellite-5g-2026",
@@ -2076,7 +2076,7 @@ _BLOG_ARTICLES = [
     "summary": "Globalstar's satellite network is being upgraded to deliver 5G connectivity directly to mobile devices — Apple's partnership could be transformational.",
     "featured": False,
     "report": {
-      "rating": "Strong Buy", "conviction": "Medium",
+      "rating": "Top Tier", "conviction": "Medium",
       "price_target": 85, "current_price": 80, "horizon": "12-18 months",
       "thesis": [
         "Apple partnership is multi-year revenue floor — Emergency SOS via Satellite anchors a recurring capacity contract.",
@@ -2116,7 +2116,7 @@ _BLOG_ARTICLES = [
         "key_catalysts":      "BlueBird launches; Apple direct-to-device 5G announcements; new carrier partnerships.",
       },
       "recommendation": {
-        "verdict": "Strong Buy",
+        "verdict": "Top Tier",
         "summary": "Best risk/reward in the satellite space. Apple anchor caps the downside; direct-to-device 5G is the upside lottery ticket.",
       },
     },
@@ -2135,7 +2135,7 @@ _BLOG_ARTICLES = [
 <p>GSAT carries a Alpha Score of <strong>72</strong> with RS Rating 81 — the highest RS in this analysis. Breaking to a new 52-week high confirms institutional accumulation. The stock has gained +35.2% over the past month. EPS beat 4 consecutive quarters. Analyst mean target of <strong>$85 (+5.6% upside)</strong> is conservative given the optionality of the Apple partnership.</p>
 
 <h3>AlphaHunt View</h3>
-<p>GSAT earns a <strong>STRONG BUY</strong>. The Apple partnership provides a floor, while direct-to-device 5G represents a potential ceiling that most analysts have yet to fully model.</p>"""
+<p>GSAT earns a <strong>TOP TIER</strong> grade. The Apple partnership provides a floor, while direct-to-device 5G represents a potential ceiling that most analysts have yet to fully model.</p>"""
   },
   {
     "id": "crdo-serdes-ai-2026",
@@ -2145,7 +2145,7 @@ _BLOG_ARTICLES = [
     "summary": "Inside every AI supercluster, Credo's SerDes chiplets and optical DSPs move data at 800G+ between GPUs — a market growing 10x in the next three years.",
     "featured": False,
     "report": {
-      "rating": "Strong Buy", "conviction": "High",
+      "rating": "Top Tier", "conviction": "High",
       "price_target": 200, "current_price": 99, "horizon": "12-18 months",
       "thesis": [
         "Inter-GPU bandwidth requirements grow quadratically with cluster size — Credo's SerDes IP and AECs are the physical layer enabling the AI cluster scale-up.",
@@ -2185,7 +2185,7 @@ _BLOG_ARTICLES = [
         "key_catalysts":      "1.6T design wins; new hyperscaler customer announcements; quarterly earnings.",
       },
       "recommendation": {
-        "verdict": "Strong Buy",
+        "verdict": "Top Tier",
         "summary": "Highest-conviction interconnect play in AI infrastructure. Use 12-15% pullbacks to add — trim 20% on any 50%+ rally to lock in gains.",
       },
     },
@@ -2204,7 +2204,7 @@ _BLOG_ARTICLES = [
 <p>CRDO is the top performer in our Model Portfolio, with Alpha Score of <strong>71</strong> and one of the strongest momentum profiles in the AlphaHunt universe. RSI at 64 — ideal momentum zone — suggests room to run without overextension. High-speed SerDes is a winner-take-most market, and Credo has won.</p>
 
 <h3>AlphaHunt View</h3>
-<p>CRDO earns a <strong>STRONG BUY</strong>. The SerDes and optical DSP market is growing at 40%+ annually driven purely by AI infrastructure demand. Credo's focused product line and hyperscaler relationships make it one of the highest-conviction plays in our universe.</p>"""
+<p>CRDO earns a <strong>TOP TIER</strong> grade. The SerDes and optical DSP market is growing at 40%+ annually driven purely by AI infrastructure demand. Credo's focused product line and hyperscaler relationships make it one of the highest-conviction plays in our universe.</p>"""
   },
   {
     "id": "soun-voice-ai-2026",
@@ -2214,7 +2214,7 @@ _BLOG_ARTICLES = [
     "summary": "SoundHound's voice AI platform is deployed in 10,000+ cars, restaurant chains, and enterprise applications — and the agentic AI wave is creating new demand.",
     "featured": False,
     "report": {
-      "rating": "Strong Buy", "conviction": "Medium",
+      "rating": "Top Tier", "conviction": "Medium",
       "price_target": 14.63, "current_price": 8.20, "horizon": "12-18 months",
       "thesis": [
         "Agentic AI requires a conversational interface — SoundHound has been building voice AI for a decade, finally has the market.",
@@ -2255,7 +2255,7 @@ _BLOG_ARTICLES = [
         "key_catalysts":      "New auto OEM design wins; restaurant chain rollouts; agentic AI partnership announcements.",
       },
       "recommendation": {
-        "verdict": "Strong Buy (speculative)",
+        "verdict": "Top Tier (speculative)",
         "summary": "Differentiated voice-AI play with real revenue growth. Size for volatility — 2-4% of book. Asymmetric upside on continued earnings beats given the short interest.",
       },
     },
@@ -2274,7 +2274,7 @@ _BLOG_ARTICLES = [
 <p>SOUN carries a Alpha Score of <strong>75</strong> with RS Rating 72 and an analyst mean price target of <strong>$14.63 (+78.4% upside)</strong>. Revenue growing at +59.4% YoY. Short interest at 36.1% creates significant squeeze potential. EPS beat 4 consecutive quarters.</p>
 
 <h3>AlphaHunt View</h3>
-<p>SOUN earns a <strong>STRONG BUY</strong>. The combination of automotive moat, restaurant expansion, and agentic AI tailwind makes SoundHound one of the most differentiated AI plays in the market. The stock's high short interest creates asymmetric upside on continued strong results.</p>"""
+<p>SOUN earns a <strong>TOP TIER</strong> grade. The combination of automotive moat, restaurant expansion, and agentic AI tailwind makes SoundHound one of the most differentiated AI plays in the market. The stock's high short interest creates asymmetric upside on continued strong results.</p>"""
   },
   {
     "id": "nvt-data-center-power-2026",
@@ -2284,7 +2284,7 @@ _BLOG_ARTICLES = [
     "summary": "nVent makes the enclosures, power distribution, and thermal management systems that every data center rack requires — invisible but indispensable.",
     "featured": False,
     "report": {
-      "rating": "Strong Buy", "conviction": "High",
+      "rating": "Top Tier", "conviction": "High",
       "price_target": 144.54, "current_price": 142, "horizon": "12 months",
       "thesis": [
         "Every server rack in every data center needs nVent enclosures, PDUs and cable management — quietly one of the broadest exposures to AI capex.",
@@ -2323,7 +2323,7 @@ _BLOG_ARTICLES = [
         "key_catalysts":      "Liquid-cooling product launches; data center segment growth in next earnings.",
       },
       "recommendation": {
-        "verdict": "Strong Buy",
+        "verdict": "Top Tier",
         "summary": "Lower-volatility AI-infrastructure play — better fit for conservative growth investors than pure-play DC stocks. Wait for any 5-8% pullback to add.",
       },
     },
@@ -2342,7 +2342,7 @@ _BLOG_ARTICLES = [
 <p>NVT has a Alpha Score of <strong>75</strong> and RS Rating 67, within 1.3% of its 52-week high — a classic institutional accumulation pattern. EPS beat 4 of 4 last quarters. Gross margin expanding confirms operating leverage. No overbought RSI concern.</p>
 
 <h3>AlphaHunt View</h3>
-<p>NVT earns a <strong>STRONG BUY</strong>. nVent's combination of industrial-grade reliability, data center focus, and diverse customer base makes it one of the lower-risk ways to play the AI infrastructure buildout.</p>"""
+<p>NVT earns a <strong>TOP TIER</strong> grade. nVent's combination of industrial-grade reliability, data center focus, and diverse customer base makes it one of the lower-risk ways to play the AI infrastructure buildout.</p>"""
   },
   {
     "id": "ionq-quantum-computing-2026",
@@ -2352,7 +2352,7 @@ _BLOG_ARTICLES = [
     "summary": "IonQ uses trapped ion technology to build the world's most accurate quantum computers. DARPA contracts and cloud partnerships are accelerating its commercial trajectory.",
     "featured": False,
     "report": {
-      "rating": "Strong Buy", "conviction": "Medium",
+      "rating": "Top Tier", "conviction": "Medium",
       "price_target": 17.83, "current_price": 9.05, "horizon": "18-24 months",
       "thesis": [
         "Trapped-ion qubits achieve 99.9%+ gate fidelities vs ~99.5% for superconducting — material advantage that compounds with algorithm depth.",
@@ -2391,7 +2391,7 @@ _BLOG_ARTICLES = [
         "key_catalysts":      "Fault-tolerance milestones; new enterprise pilots; sector re-ratings.",
       },
       "recommendation": {
-        "verdict": "Strong Buy (speculative)",
+        "verdict": "Top Tier (speculative)",
         "summary": "Most investable pure-play quantum name. Size 1-3% of book — high conviction but high volatility. Use as a sector option, not a core position.",
       },
     },
@@ -2410,7 +2410,7 @@ _BLOG_ARTICLES = [
 <p>IONQ carries a Alpha Score of <strong>72</strong> with analyst mean target of <strong>$17.83 (+96.9% upside)</strong>. Within 22.4% of 52-week high after consolidation. EPS beat 4 consecutive quarters with expanding margins. Social momentum building as quantum milestones approach.</p>
 
 <h3>AlphaHunt View</h3>
-<p>IONQ earns a <strong>STRONG BUY</strong>. The combination of technology superiority, government contracts, and cloud accessibility makes IonQ the most investable pure-play quantum computing company available to public market investors.</p>"""
+<p>IONQ earns a <strong>TOP TIER</strong> grade. The combination of technology superiority, government contracts, and cloud accessibility makes IonQ the most investable pure-play quantum computing company available to public market investors.</p>"""
   },
   {
     "id": "wdc-hdd-ai-storage-2026",
@@ -2420,7 +2420,7 @@ _BLOG_ARTICLES = [
     "summary": "Training datasets for frontier AI models are growing 10x per generation. Western Digital's high-capacity HDDs and enterprise SSDs are the primary storage medium.",
     "featured": False,
     "report": {
-      "rating": "Strong Buy", "conviction": "High",
+      "rating": "Top Tier", "conviction": "High",
       "price_target": 354.96, "current_price": 405, "horizon": "12 months",
       "thesis": [
         "Frontier AI training datasets are growing 10× per generation — petabyte-scale multimodal corpora live on HDD; commodity cycle is now demand-driven.",
@@ -2459,7 +2459,7 @@ _BLOG_ARTICLES = [
         "key_catalysts":      "Next earnings; new high-capacity HDD launches; hyperscaler capex updates.",
       },
       "recommendation": {
-        "verdict": "Strong Buy (wait for pullback)",
+        "verdict": "Top Tier (wait for pullback)",
         "summary": "Quality structural story but stock has gotten ahead of consensus. Wait for a 10-15% pullback before adding.",
       },
     },
@@ -2478,7 +2478,7 @@ _BLOG_ARTICLES = [
 <p>WDC has a Alpha Score of <strong>74</strong> with momentum confirming from the HDD cycle bottom. EPS beat 4 of 4 last quarters with gross margin expansion. High-density PDUs and thermal management for AI DCs driving incremental demand.</p>
 
 <h3>AlphaHunt View</h3>
-<p>WDC earns a <strong>STRONG BUY</strong>. The intersection of AI storage demand and HDD capacity constraints creates a favorable pricing environment. Western Digital's scale and diversification make it the most accessible way to play the storage supercycle.</p>"""
+<p>WDC earns a <strong>TOP TIER</strong> grade. The intersection of AI storage demand and HDD capacity constraints creates a favorable pricing environment. Western Digital's scale and diversification make it the most accessible way to play the storage supercycle.</p>"""
   },
   {
     "id": "unit-fiber-5g-2026",
@@ -2488,7 +2488,7 @@ _BLOG_ARTICLES = [
     "summary": "Uniti owns 140,000 route miles of fiber across 32 states — the physical backbone connecting AI data centers to the internet and enterprise customers.",
     "featured": False,
     "report": {
-      "rating": "Strong Buy", "conviction": "Medium",
+      "rating": "Top Tier", "conviction": "Medium",
       "price_target": 17.83, "current_price": 12, "horizon": "12-18 months",
       "thesis": [
         "140,000 route miles of fiber across 32 states — essential physical infrastructure for AI data centers connecting to internet exchanges.",
@@ -2527,7 +2527,7 @@ _BLOG_ARTICLES = [
         "key_catalysts":      "Merger integration completion; new AI data center connectivity contracts.",
       },
       "recommendation": {
-        "verdict": "Strong Buy",
+        "verdict": "Top Tier",
         "summary": "Under-appreciated AI fiber play with REIT yield. Lower volatility than pure-tech names. Good portfolio diversifier.",
       },
     },
@@ -2546,7 +2546,7 @@ _BLOG_ARTICLES = [
 <p>UNIT carries a Alpha Score of <strong>71</strong> with RS Rating 71. The stock's consistent momentum and fiber demand tailwind make it one of the more stable high-Pop names in our universe. RSI at 52 — ample room to run.</p>
 
 <h3>AlphaHunt View</h3>
-<p>UNIT earns a <strong>STRONG BUY</strong>. Fiber infrastructure REITs are under-owned and under-appreciated in the AI investment narrative. Uniti's 140,000 route-mile network is a hard asset with growing strategic value.</p>"""
+<p>UNIT earns a <strong>TOP TIER</strong> grade. Fiber infrastructure REITs are under-owned and under-appreciated in the AI investment narrative. Uniti's 140,000 route-mile network is a hard asset with growing strategic value.</p>"""
   },
   {
     "id": "lscc-fpga-edge-ai-2026",
@@ -2556,7 +2556,7 @@ _BLOG_ARTICLES = [
     "summary": "Lattice makes small, low-power FPGAs used in edge AI inference, automotive ADAS, and industrial automation — markets growing at 20-30% annually.",
     "featured": False,
     "report": {
-      "rating": "Strong Buy", "conviction": "Medium",
+      "rating": "Top Tier", "conviction": "Medium",
       "price_target": 143, "current_price": 117, "horizon": "12-18 months",
       "thesis": [
         "Edge AI inference chips growing 3B → 15B units 2024-2028 — Lattice owns the low-power FPGA niche this requires.",
@@ -2596,7 +2596,7 @@ _BLOG_ARTICLES = [
         "key_catalysts":      "Next earnings; new auto OEM design wins; communications segment recovery.",
       },
       "recommendation": {
-        "verdict": "Strong Buy",
+        "verdict": "Top Tier",
         "summary": "Best play on edge AI inflection. Use 8-12% pullbacks to build position. Long-duration story — patience pays.",
       },
     },
@@ -2615,7 +2615,7 @@ _BLOG_ARTICLES = [
 <p>LSCC carries a Alpha Score of <strong>74</strong> with RS Rating 71 and revenue growing +24.2% YoY. EPS beat 4 consecutive quarters with gross margins expanding. P/E at 5779× is extreme — but reflects near-zero current earnings during an investment phase, not permanent multiple expansion. Analyst mean target: <strong>$143 (+22% upside)</strong>.</p>
 
 <h3>AlphaHunt View</h3>
-<p>LSCC earns a <strong>STRONG BUY</strong>. Lattice is the dominant player in low-power FPGAs — a niche with massive secular tailwinds and limited competition. Edge AI is the next trillion-dollar opportunity after cloud AI.</p>"""
+<p>LSCC earns a <strong>TOP TIER</strong> grade. Lattice is the dominant player in low-power FPGAs — a niche with massive secular tailwinds and limited competition. Edge AI is the next trillion-dollar opportunity after cloud AI.</p>"""
   },
   {
     "id": "nvt-model-portfolio-update",
@@ -2983,34 +2983,44 @@ def _enrich_model_portfolio(portfolio: dict) -> dict:
                           "label": "SIGNAL EXIT",
                           "reason": signal_reason}
 
-        # ── Build the user-facing decision point (single phrase) ─────────
-        peak_perf_pct = peak_perf_frac * 100
+        # ── Build user-facing decision point — plain action language ─────
+        # The card shows ONE chip: an action verb (HOLD / WATCH / SELL NOW),
+        # the current return, and a single concrete sell instruction with
+        # plain-English meaning. No "buffer above stop", no "trail floor",
+        # no jargon — what would I tell my parents in one sentence.
         if exit_alert:
             decision = {
                 "tone":   "exit",
-                "label":  exit_alert["label"],
+                "label":  "🚨 SELL NOW",
                 "detail": exit_alert["reason"],
             }
         elif trail_active:
-            # Show which tier the trail is in + how far above the floor we are
-            buf = round((now - trail_floor) / now * 100, 1) if now > 0 else 0
-            tier_label = ("Break-even"  if trail_mult == 1.00 else
-                          "+10% locked" if trail_mult == 1.10 else
-                          "+25% locked" if trail_mult == 1.25 else
-                          "+50% locked")
+            # Profit-locked zone: stock has been to +10% peak at some point
+            lock_phrase = (
+                "break-even — you can't lose now"      if trail_mult == 1.00 else
+                "locks in +10% profit"                  if trail_mult == 1.10 else
+                "locks in +25% profit"                  if trail_mult == 1.25 else
+                "locks in +50% profit"                  # trail_mult == 1.50
+            )
+            sign = "+" if perf >= 0 else ""
             decision = {
                 "tone":   "trailing",
-                "label":  f"🛡 Trailing stop · ${trail_floor:.2f} · {tier_label}",
-                "detail": f"Peak +{peak_perf_pct:.1f}% · now +{perf:.1f}% · {buf}% buffer above stop",
+                "label":  f"✅ HOLD · {sign}{perf:.1f}% on this pick",
+                "detail": f"Sell if it drops to ${trail_floor:.2f} ({lock_phrase})",
             }
-        else:
-            # Pre-trail: still in the -8% hard-stop-only zone (peak < +10%)
-            buf = round((now - hard_stop_price) / now * 100, 1) if now > 0 else 0
-            tier_to_unlock = "+10% peak unlocks break-even trail"
+        elif perf >= 0:
+            # Pre-trail, in the green: -8% hard stop only
             decision = {
                 "tone":   "holding",
-                "label":  f"✓ Holding · stop ${hard_stop_price:.2f}",
-                "detail": f"-8% hard stop · {buf}% buffer · next: {tier_to_unlock}",
+                "label":  f"✅ HOLD · +{perf:.1f}% on this pick",
+                "detail": f"Sell if it drops to ${hard_stop_price:.2f} (caps loss at -8% from entry)",
+            }
+        else:
+            # Pre-trail, in the red: warn but not yet at exit
+            decision = {
+                "tone":   "watching",
+                "label":  f"🟡 WATCH · {perf:.1f}% on this pick",
+                "detail": f"Sell if it drops to ${hard_stop_price:.2f} (caps loss at -8% from entry)",
             }
 
         perfs.append(perf)

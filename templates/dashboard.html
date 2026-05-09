@@ -1015,7 +1015,7 @@ tr:hover td{background:rgba(132,204,22,.06)}
   <div class="hdr-stats">
     <div class="stat"><div class="stat-n" id="stat-universe">—</div><div class="stat-l">Universe</div></div>
     <div class="stat"><div class="stat-n" id="stat-hot">—</div><div class="stat-l">Hot Picks</div></div>
-    <div class="stat"><div class="stat-n" id="stat-flagged">—</div><div class="stat-l">Strong Buy</div></div>
+    <div class="stat"><div class="stat-n" id="stat-flagged">—</div><div class="stat-l">Top Tier</div></div>
     <!-- Market chip — Bullish / Mixed / Bearish based on SPY/QQQ/VIX/^TNX -->
     <div id="regime-pill"
          title="Overall market mood based on SPY, QQQ, VIX and the 10-year yield. Already factored into every Alpha Score."
@@ -1064,7 +1064,7 @@ tr:hover td{background:rgba(132,204,22,.06)}
   <div style="background:#ffffff;border:1px solid rgba(15,23,42,.12);border-radius:10px;padding:10px 14px;margin-bottom:14px;display:flex;align-items:flex-start;gap:10px;box-shadow:0 1px 3px rgba(15,23,42,.04)">
     <div style="font-size:18px;flex-shrink:0;line-height:1">🔥</div>
     <div style="font-size:12.5px;color:#000000;line-height:1.5">
-      <strong>Live scanner — top scorers right now.</strong> Refreshes every 5 minutes from live data. All 20 can rotate in/out daily as scores shift. Use this to spot what's heating up <em>today</em>. For a tracked, rule-based paper portfolio, see <a href="javascript:void(0)" onclick="document.getElementById('tab-model').click()" style="color:#15803d;font-weight:700;text-decoration:underline">📈 Model Portfolio</a>.
+      <strong>Live scanner — top scorers right now.</strong> Refreshes every 5 minutes from live data. All 20 can rotate in/out daily as scores shift. Use this to spot what's heating up <em>today</em>.
       <div style="margin-top:6px;padding-top:6px;border-top:1px dashed rgba(15,23,42,.12);font-size:11px;color:#000000;font-style:italic">
         📊 Price targets shown are Wall Street analyst consensus (FMP) — <strong>not AlphaHunt's forecast</strong>. AlphaHunt does not provide price predictions or financial advice.
       </div>
@@ -1096,11 +1096,11 @@ tr:hover td{background:rgba(132,204,22,.06)}
 <!-- Earnings filter removed — dates not reliably available -->
     <select id="fd-grade" onchange="filterFund()">
       <option value="">All ratings</option>
-      <option value="A">⭐ Strong Buy</option>
-      <option value="B">📈 Buy</option>
-      <option value="C">➕ Accumulate</option>
-      <option value="D">⏸ Hold</option>
-      <option value="F">⚠️ Avoid</option>
+      <option value="A">★★★★★ Top Tier</option>
+      <option value="B">★★★★ Quality</option>
+      <option value="C">★★★ Average</option>
+      <option value="D">★★ Below Avg</option>
+      <option value="F">★ Weak</option>
     </select>
     <select id="fd-sort" onchange="sortFund()">
       <option value="pop">Sort: Alpha Score</option>
@@ -1292,7 +1292,7 @@ tr:hover td{background:rgba(132,204,22,.06)}
     <div class="card"><h3 style="color:var(--acc2);margin-bottom:8px">📐 Alpha Score</h3>
       <p style="font-size:13px;line-height:1.6;color:var(--muted)">Composite 0–100 score combining momentum (40%), social velocity (20%), technical signals (20%), fundamentals (10%), and market cap fit (10%). Scores above 70 indicate strong setups. Only $1B+ market cap stocks qualify.</p></div>
     <div class="card"><h3 style="color:var(--acc2);margin-bottom:8px">🎯 Grades &amp; Ratings</h3>
-      <p style="font-size:13px;line-height:1.6;color:var(--muted)">A → STRONG BUY · B → BUY · C → ACCUMULATE · D → HOLD · F → AVOID. The Hot List shows only STRONG BUY (grade A) with confidence ≥ 75%. Use All Stocks tab to browse all ratings.</p></div>
+      <p style="font-size:13px;line-height:1.6;color:var(--muted)">A → ★★★★★ Top Tier · B → ★★★★ Quality · C → ★★★ Average · D → ★★ Below Avg · F → ★ Weak. The Hot List shows only ★★★★★ Top Tier (grade A) with confidence ≥ 75%. Use All Stocks tab to browse all grades. <strong>Note:</strong> these are quality descriptors, not buy/sell recommendations — AlphaHunt is a research tool, not a SEBI-registered advisor.</p></div>
     <div class="card"><h3 style="color:var(--acc2);margin-bottom:8px">⚡ Trade Setups</h3>
       <p style="font-size:13px;line-height:1.6;color:var(--muted)">ATR-based position sizing: Entry at current price, Stop = Entry − 1.5×ATR, Target = Entry + 3.0×ATR. Shares = (Account × Risk%) ÷ ATR. Default 1% risk per trade. Adjust using the sizer widget.</p></div>
     <div class="card"><h3 style="color:var(--acc2);margin-bottom:8px">🔄 Data Refresh</h3>
@@ -1719,18 +1719,30 @@ const fmtPct2= v => (v == null || isNaN(v)) ? '—' : `${(parseFloat(v)*100).toF
 const fmtM   = v => { if (!v || isNaN(v)) return '—'; const b = v/1e9; return b >= 1 ? `$${b.toFixed(1)}B` : `$${(v/1e6).toFixed(0)}M`; };
 const pCls   = v => (!v || isNaN(parseFloat(v))) ? '' : parseFloat(v) >= 0 ? 'pos' : 'neg';
 
+// Grade-to-label mapping uses QUALITY DESCRIPTORS + visual star ratings,
+// not buy/sell verbs. "STRONG BUY" / "BUY" are SEBI/FINRA-restricted
+// recommendation language for registered analysts only. AlphaHunt is a
+// research tool, not an advisor — these labels describe stock quality and
+// do NOT instruct an action.
+function gradeStars(g) {
+  return {A:'★★★★★', B:'★★★★', C:'★★★', D:'★★', F:'★'}[g] || '';
+}
 function gradeToRating(g) {
-  return {A:'STRONG BUY', B:'BUY', C:'ACCUMULATE', D:'HOLD', F:'AVOID'}[g] || (g || 'NO DATA');
+  const stars = gradeStars(g);
+  const word  = {A:'Top Tier', B:'Quality', C:'Average', D:'Below Avg', F:'Weak'}[g] || (g || 'No data');
+  return stars ? stars + ' ' + word : word;
 }
 function gradeClass(g) {
   return {A:'strong', B:'buy', C:'accum', D:'hold', F:'avoid'}[g] || 'hold';
 }
 function ratingClass(r) {
-  if (r==='STRONG BUY')  return 'rating-strong';
-  if (r==='BUY')         return 'rating-buy';
-  if (r==='ACCUMULATE')  return 'rating-accum';
-  if (r==='HOLD')        return 'rating-hold';
-  if (r==='AVOID')       return 'rating-avoid';
+  // Match against the word component so the star prefix doesn't break this.
+  const upper = (r || '').toUpperCase();
+  if (upper.includes('TOP TIER'))   return 'rating-strong';
+  if (upper.includes('QUALITY'))    return 'rating-buy';
+  if (upper.includes('AVERAGE'))    return 'rating-accum';
+  if (upper.includes('BELOW AVG'))  return 'rating-hold';
+  if (upper.includes('WEAK'))       return 'rating-avoid';
   return 'rating-nodata';
 }
 function confClass(c) {
@@ -3171,15 +3183,16 @@ function openStockModal(ticker) {
 
   const metric = (k, v, cls='') => `<div class="fd-metric"><span class="k">${k}</span><span class="v ${cls}">${v}</span></div>`;
 
-  // Verdict banner — heading IS the verdict (so the user gets the answer
-  // before reading prose). Colour scheme + icon adapt to grade and caution.
+  // Quality verdict — describes the stock's ranking, not an action.
+  // Avoids SEBI/FINRA-restricted "BUY/SELL" recommendation language.
+  // Stars provide instant visual hierarchy (5★ = best, 1★ = weakest).
   const _verdictHead = (() => {
     const g = t.grade;
-    if (g === 'A')      return t.caution ? 'STRONG BUY · WITH CAUTION' : 'STRONG BUY';
-    if (g === 'B')      return t.caution ? 'BUY · ON DIP'              : 'BUY';
-    if (g === 'C')      return 'HOLD · WAIT FOR A CLEARER SIGNAL';
-    if (g === 'D')      return 'REDUCE EXPOSURE';
-    if (g === 'F')      return 'AVOID';
+    if (g === 'A')      return t.caution ? '★★★★★ TOP TIER · WITH CAUTION' : '★★★★★ TOP TIER QUALITY';
+    if (g === 'B')      return t.caution ? '★★★★ QUALITY · ELEVATED RISK'   : '★★★★ QUALITY';
+    if (g === 'C')      return '★★★ AVERAGE · MIXED SIGNALS';
+    if (g === 'D')      return '★★ BELOW AVERAGE';
+    if (g === 'F')      return '★ WEAK · UNDERPERFORMING';
     return 'NO DATA';
   })();
   const _isPositive = (t.grade === 'A' || t.grade === 'B');
@@ -3924,11 +3937,15 @@ function renderBlog(articles) {
    ---------------------------------------------------------- */
 function renderRichReport(a) {
   const r = a.report || {};
-  const ratingColor = (r.rating || '').includes('Strong Buy') ? '#15803d'
-                    : (r.rating || '').includes('Buy')       ? '#16a34a'
-                    : (r.rating || '') === 'Hold'            ? '#b45309'
-                    : (r.rating || '') === 'Reduce'          ? '#dc2626'
-                    : (r.rating || '') === 'Avoid'           ? '#991b1b'
+  // Colour scheme for blog/research-report ratings (these come from the LLM-
+  // generated blog text, not our grade system). Includes legacy buy/sell terms
+  // because the report content may still use them in narrative form — that's
+  // OK because it's clearly attributed to an external analyst summary.
+  const ratingColor = (r.rating || '').includes('Strong Buy') || (r.rating || '').includes('Top Tier') ? '#15803d'
+                    : (r.rating || '').includes('Buy') || (r.rating || '').includes('Quality')        ? '#16a34a'
+                    : (r.rating || '') === 'Hold' || (r.rating || '').includes('Average')             ? '#b45309'
+                    : (r.rating || '') === 'Reduce' || (r.rating || '').includes('Below')             ? '#dc2626'
+                    : (r.rating || '') === 'Avoid' || (r.rating || '').includes('Weak')               ? '#991b1b'
                     : '#475569';
 
   const upsidePct = (r.price_target && r.current_price)
@@ -4474,14 +4491,15 @@ function renderModelPortfolio(data) {
         ? `<span title="Tier 3 Eligible: top Grade A pick to fill out the 20-stock portfolio" style="font-size:9px;font-weight:800;letter-spacing:.06em;padding:2px 6px;border-radius:5px;background:rgba(100,116,139,.1);color:#475569;border:1px solid rgba(100,116,139,.2)">ELIGIBLE</span>`
         : '';
 
-      // Tone-based colour map for the single decision chip
+      // Tone-based colour map. The label already includes the icon (✅, 🚨, 🟡)
+      // so we set icon to '' to avoid double-icons in the chip rendering.
       const tone = (decision && decision.tone) || 'holding';
       const toneStyle = {
-        exit:        {bg:'#fee2e2', bdr:'#f87171', fg:'#991b1b', icon:'🚨'},
-        trailing:    {bg:'#dcfce7', bdr:'#86efac', fg:'#166534', icon:'🛡'},
-        approaching: {bg:'#dbeafe', bdr:'#93c5fd', fg:'#1d4ed8', icon:'📈'},
-        holding:     {bg:'#f1f5f9', bdr:'#cbd5e1', fg:'#0f172a', icon:'✓'},
-      }[tone] || {bg:'#f1f5f9', bdr:'#cbd5e1', fg:'#0f172a', icon:'•'};
+        exit:     {bg:'#fee2e2', bdr:'#f87171', fg:'#991b1b', icon:''},
+        trailing: {bg:'#dcfce7', bdr:'#86efac', fg:'#166534', icon:''},
+        holding:  {bg:'#dcfce7', bdr:'#86efac', fg:'#166534', icon:''},
+        watching: {bg:'#fef3c7', bdr:'#fcd34d', fg:'#92400e', icon:''},
+      }[tone] || {bg:'#f1f5f9', bdr:'#cbd5e1', fg:'#0f172a', icon:''};
 
       // Alert banner only when backend says EXIT NOW (drives the UI; no client-side recalc)
       const alertBanner = alert ? `
@@ -4554,16 +4572,15 @@ function renderModelPortfolio(data) {
           })()}
         </div>
 
-        <!-- Single decision-point chip: shows the active exit rule for THIS pick.
-             Tested O'Neil/CAN SLIM ruleset: -8% hard stop, +20% take profit,
-             +25%-activated trailing stop locking +10%, signal stop on grade<B / score<60. -->
+        <!-- Action-oriented decision chip: action verb + current return + plain
+             sell instruction. Replaces technical jargon ("trail floor", "buffer
+             above stop") with one sentence a user can act on. -->
         ${decision ? `
-        <div style="background:${toneStyle.bg};border:1px solid ${toneStyle.bdr};border-radius:10px;padding:9px 12px;margin-bottom:8px">
-          <div style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:800;color:${toneStyle.fg};margin-bottom:2px">
-            <span>${toneStyle.icon}</span>
-            <span>${decision.label}</span>
+        <div style="background:${toneStyle.bg};border:1px solid ${toneStyle.bdr};border-radius:10px;padding:10px 12px;margin-bottom:8px">
+          <div style="font-size:13px;font-weight:800;color:${toneStyle.fg};margin-bottom:3px;line-height:1.3">
+            ${decision.label}
           </div>
-          ${decision.detail ? `<div style="font-size:10.5px;color:${toneStyle.fg};opacity:.85;line-height:1.4">${decision.detail}</div>` : ''}
+          ${decision.detail ? `<div style="font-size:11.5px;color:${toneStyle.fg};opacity:.85;line-height:1.45">${decision.detail}</div>` : ''}
         </div>` : ''}
 
         ${p.rationale ? `<div style="font-size:11px;color:#374151;line-height:1.45;border-left:2px solid ${accentCol};padding-left:8px">💡 ${p.rationale.replace(/^💡\s*/,'')}</div>` : ''}
