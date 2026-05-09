@@ -322,9 +322,18 @@ def run_backtest(prices: pd.DataFrame, volumes: pd.DataFrame,
     print(f"\n🔬 Backtest: {len(universe)} stocks, top {top_n}, ${stake_per_pick:,.0f}/pick")
     print(f"   Window: {prices.index[0].date()} → {prices.index[-1].date()}")
 
-    # Generate month-end checkpoints (first trading day of each month)
-    monthly = prices.resample("M").last()
-    checkpoint_dates = monthly.index[monthly.index >= prices.index[0] + timedelta(days=380)]
+    # Generate month-end checkpoints — align to ACTUAL last trading day of
+    # each calendar month (not calendar month-end, which can fall on a
+    # weekend and isn't in the price index).
+    grouped = prices.groupby(prices.index.to_period("M"))
+    last_trading_days = pd.DatetimeIndex(
+        [g.index[-1] for _, g in grouped]
+    ).sort_values()
+    checkpoint_dates = last_trading_days[last_trading_days >= prices.index[0] + timedelta(days=380)]
+    # `monthly` keeps the calendar-month-end index for the .loc[nxt] lookups
+    # in the forward-return / IC computation below.
+    monthly = prices.resample("ME").last()
+    monthly.index = last_trading_days[: len(monthly)]   # rekey to trading days too
 
     open_positions: dict[str, Position] = {}
     closed_trades: list[ClosedTrade] = []
@@ -533,7 +542,7 @@ def write_report(result: dict, out_dir: Path) -> None:
 
     # CSVs
     if trades:
-        with open(out_dir / "trades.csv", "w", newline="") as f:
+        with open(out_dir / "trades.csv", "w", newline="", encoding="utf-8") as f:
             w = csv.writer(f)
             w.writerow(["ticker","entry_date","exit_date","entry_price","exit_price",
                         "entry_score","final_pct","days_held","exit_reason","won"])
@@ -542,13 +551,13 @@ def write_report(result: dict, out_dir: Path) -> None:
                             t.entry_price, t.exit_price, t.entry_score,
                             t.final_pct, t.days_held, t.exit_reason, t.won])
     if navs:
-        with open(out_dir / "monthly_pnl.csv", "w", newline="") as f:
+        with open(out_dir / "monthly_pnl.csv", "w", newline="", encoding="utf-8") as f:
             w = csv.writer(f)
             w.writerow(["date","nav","spy","open_n","closed_n"])
             for n in navs:
                 w.writerow([n["date"].date(), n["nav"], n["spy"], n["open_n"], n["closed_n"]])
     if ics:
-        with open(out_dir / "ic_history.csv", "w", newline="") as f:
+        with open(out_dir / "ic_history.csv", "w", newline="", encoding="utf-8") as f:
             w = csv.writer(f)
             w.writerow(["date","n_stocks","ic"])
             for i in ics:
@@ -616,7 +625,7 @@ def write_report(result: dict, out_dir: Path) -> None:
     md.append("If IC is weak, don't despair — the exit rules alone (cut at -8%, ride winners) on a "
               "random selection of Grade A stocks would still beat undisciplined trading.\n")
 
-    (out_dir / "summary.md").write_text("".join(md))
+    (out_dir / "summary.md").write_text("".join(md), encoding="utf-8")
     print(f"\n✓ Report written → {out_dir.resolve()}")
     print(f"   Avg IC: {avg_ic:+.4f}  ({ic_consistency*100:.0f}% positive)")
     print(f"   Total return: {total_ret:+.1f}% vs SPY {spy_ret:+.1f}%  (excess {total_ret-spy_ret:+.1f}%)")

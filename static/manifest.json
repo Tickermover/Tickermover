@@ -69,7 +69,7 @@
     {
       "name": "Model Portfolio",
       "short_name": "Portfolio",
-      "description": "Curated 20-stock picks",
+      "description": "Curated 10-stock picks",
       "url": "/app?tab=portfolio&source=pwa-shortcut",
       "icons": [{ "src": "/static/icons/icon-192.png", "sizes": "192x192" }]
     },
