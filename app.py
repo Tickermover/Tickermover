@@ -2780,15 +2780,16 @@ def _build_model_portfolio(existing: dict | None = None) -> dict:
     inception    = today - timedelta(days=30)
     inception_str = str(inception)
 
-    # ── Strict-only top-10 selection ─────────────────────────────────────
-    # 5-year backtest showed top-10 strict beats top-20 cascade by +22 ppts
-    # of excess return vs SPY. Tier 2/3 fallbacks were diluting performance
-    # by pulling in lower-conviction names just to fill slots. Discipline
-    # over completeness: take only stocks meeting the gold standard, hold
-    # cash if fewer than 10 qualify.
-    PORTFOLIO_SIZE = 10
-    MIN_ALPHA_SCORE = 80
-    MIN_UPSIDE      = 0.20
+    # ── Top-10 selection: score discipline only ──────────────────────────
+    # The 20% upside-to-target filter we tried earlier was actively hurting
+    # the portfolio in bull markets. The strongest stocks (highest Alpha
+    # Score) are precisely the ones that rallied past their analyst targets
+    # — filtering on upside KICKS OUT THE LEADERS. So: keep the score floor
+    # (the predictive part), drop the upside floor (the discipline that
+    # backfires in rallies). Upside is still used as a tiebreaker — given
+    # equal score, we prefer the name with more headroom.
+    PORTFOLIO_SIZE  = 10
+    MIN_ALPHA_SCORE = 80   # only the strongest names by composite score
 
     def _alpha(t: dict) -> float:
         """The displayed Alpha Score — smart_score with pop_score fallback."""
@@ -2798,6 +2799,7 @@ def _build_model_portfolio(existing: dict | None = None) -> dict:
         return float(ss or 0)
 
     def _upside(t: dict) -> float:
+        """Analyst-implied upside; used as a tiebreaker, not a filter."""
         price = float(t.get("price") or 0)
         tgt   = float(t.get("target_mean") or 0)
         if price <= 0 or tgt <= 0:
@@ -2805,8 +2807,7 @@ def _build_model_portfolio(existing: dict | None = None) -> dict:
         return (tgt - price) / price
 
     grade_a_pool = [t for t in _universe_data if t.get("grade") == "A"]
-    qualified = [t for t in grade_a_pool
-                 if _alpha(t) >= MIN_ALPHA_SCORE and _upside(t) >= MIN_UPSIDE]
+    qualified = [t for t in grade_a_pool if _alpha(t) >= MIN_ALPHA_SCORE]
     # Sort by alpha desc, upside desc as tiebreaker
     qualified.sort(key=lambda t: (_alpha(t), _upside(t)), reverse=True)
     top20 = qualified[:PORTFOLIO_SIZE]   # variable name kept for downstream code
@@ -2818,7 +2819,7 @@ def _build_model_portfolio(existing: dict | None = None) -> dict:
     logger.info(
         f"📊 Model Portfolio: universe={len(_universe_data)} → "
         f"grade A={len(grade_a_pool)} → "
-        f"qualified(score≥{MIN_ALPHA_SCORE},up≥{int(MIN_UPSIDE*100)}%)={len(qualified)} → "
+        f"qualified(score≥{MIN_ALPHA_SCORE})={len(qualified)} → "
         f"selected={len(top20)}/{PORTFOLIO_SIZE}"
         + (" (holding cash on remaining slots)" if len(top20) < PORTFOLIO_SIZE else "")
     )
@@ -3193,11 +3194,12 @@ def _replenish_portfolio(portfolio: dict) -> dict:
             return -1.0
         return (tgt - price) / price
 
+    # Same filter as _build_model_portfolio: score discipline only, no
+    # upside floor. Upside is the tiebreaker for equal-score stocks.
     qualified = sorted(
         [t for t in _universe_data
          if t.get("grade") == "A"
          and _alpha(t) >= 80
-         and _upside(t) >= 0.20
          and t.get("ticker") not in blocked],
         key=lambda t: (_alpha(t), _upside(t)),
         reverse=True,
@@ -4024,14 +4026,4 @@ import legal_pages as _legal
 
 @app.get("/terms", response_class=HTMLResponse)
 async def terms_page():
-    return HTMLResponse(_legal.render_terms())
-
-
-@app.get("/privacy", response_class=HTMLResponse)
-async def privacy_page():
-    return HTMLResponse(_legal.render_privacy())
-
-
-@app.get("/disclaimer", response_class=HTMLResponse)
-async def disclaimer_page():
     return HTMLResponse(_legal.render_disclaimer())
