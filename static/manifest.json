@@ -67,9 +67,9 @@
       "icons": [{ "src": "/static/icons/icon-192.png", "sizes": "192x192" }]
     },
     {
-      "name": "Model Portfolio",
-      "short_name": "Portfolio",
-      "description": "Curated 10-stock picks",
+      "name": "Score Tracker",
+      "short_name": "Tracker",
+      "description": "Top 10 stocks our score is tracking",
       "url": "/app?tab=portfolio&source=pwa-shortcut",
       "icons": [{ "src": "/static/icons/icon-192.png", "sizes": "192x192" }]
     },

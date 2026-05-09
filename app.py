@@ -2983,44 +2983,45 @@ def _enrich_model_portfolio(portfolio: dict) -> dict:
                           "label": "SIGNAL EXIT",
                           "reason": signal_reason}
 
-        # ── Build user-facing decision point — plain action language ─────
-        # The card shows ONE chip: an action verb (HOLD / WATCH / SELL NOW),
-        # the current return, and a single concrete sell instruction with
-        # plain-English meaning. No "buffer above stop", no "trail floor",
-        # no jargon — what would I tell my parents in one sentence.
+        # ── Build user-facing decision point — OBSERVATIONAL language ────
+        # AlphaHunt is a research/tracking tool, not a SEBI-registered advisor.
+        # Labels describe what's happening to OUR SCORE, not what the user
+        # should do with their money. "Removed from tracker" is a fact about
+        # our methodology; "SELL NOW" is a recommendation we're not licensed
+        # to make. Same data, neutral framing.
         if exit_alert:
             decision = {
                 "tone":   "exit",
-                "label":  "🚨 SELL NOW",
+                "label":  "📤 Removed from tracker",
                 "detail": exit_alert["reason"],
             }
         elif trail_active:
             # Profit-locked zone: stock has been to +10% peak at some point
             lock_phrase = (
-                "break-even — you can't lose now"      if trail_mult == 1.00 else
-                "locks in +10% profit"                  if trail_mult == 1.10 else
-                "locks in +25% profit"                  if trail_mult == 1.25 else
-                "locks in +50% profit"                  # trail_mult == 1.50
+                "break-even tier reached"          if trail_mult == 1.00 else
+                "+10% locked-in tier"               if trail_mult == 1.10 else
+                "+25% locked-in tier"               if trail_mult == 1.25 else
+                "+50% locked-in tier"               # trail_mult == 1.50
             )
             sign = "+" if perf >= 0 else ""
             decision = {
                 "tone":   "trailing",
-                "label":  f"✅ HOLD · {sign}{perf:.1f}% on this pick",
-                "detail": f"Sell if it drops to ${trail_floor:.2f} ({lock_phrase})",
+                "label":  f"📊 Still tracked · {sign}{perf:.1f}%",
+                "detail": f"Tracker stop: ${trail_floor:.2f} · {lock_phrase}",
             }
         elif perf >= 0:
             # Pre-trail, in the green: -8% hard stop only
             decision = {
                 "tone":   "holding",
-                "label":  f"✅ HOLD · +{perf:.1f}% on this pick",
-                "detail": f"Sell if it drops to ${hard_stop_price:.2f} (caps loss at -8% from entry)",
+                "label":  f"📊 Still tracked · +{perf:.1f}%",
+                "detail": f"Tracker stop: ${hard_stop_price:.2f} · -8% from entry",
             }
         else:
-            # Pre-trail, in the red: warn but not yet at exit
+            # Pre-trail, in the red: under-performing but not yet exited
             decision = {
                 "tone":   "watching",
-                "label":  f"🟡 WATCH · {perf:.1f}% on this pick",
-                "detail": f"Sell if it drops to ${hard_stop_price:.2f} (caps loss at -8% from entry)",
+                "label":  f"📊 Score weakening · {perf:.1f}%",
+                "detail": f"Tracker stop: ${hard_stop_price:.2f} · -8% from entry",
             }
 
         perfs.append(perf)

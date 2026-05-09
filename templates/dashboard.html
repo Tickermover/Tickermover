@@ -1052,7 +1052,7 @@ tr:hover td{background:rgba(132,204,22,.06)}
   <button class="tab" onclick="showTab('fund',this)">📊 All Stocks</button>
   <button class="tab" onclick="showTab('sectors',this)">🗺 Sector Map</button>
   <!-- Watchlist tab removed from nav — accessible via stock modals -->
-  <button class="tab" onclick="showTab('model',this)" id="tab-model">📈 Model Portfolio</button>
+  <button class="tab" onclick="showTab('model',this)" id="tab-model">📊 Score Tracker</button>
   <button class="tab" onclick="showTab('blog',this)" id="tab-blog">📝 Blog</button>
 </div>
 
@@ -4158,8 +4158,8 @@ function _modelViewToggle(active) {
   return `
     <div style="display:flex;gap:4px;background:#f1f5f9;border:1px solid rgba(0,0,0,.06);
                 border-radius:10px;padding:4px;margin-bottom:14px;max-width:420px">
-      ${tab('active','📈 Active', null)}
-      ${tab('history','📕 Closed Trades', null)}
+      ${tab('active','📊 Currently tracked', null)}
+      ${tab('history','📕 Past entries', null)}
     </div>`;
 }
 
@@ -4222,11 +4222,9 @@ function renderClosedTrades(data) {
     root.innerHTML = `${_modelViewToggle('history')}
       <div style="background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:14px;padding:36px 24px;text-align:center">
         <div style="font-size:42px;margin-bottom:10px">📕</div>
-        <div style="font-size:16px;font-weight:800;color:#0f172a;margin-bottom:6px">No closed trades yet</div>
+        <div style="font-size:16px;font-weight:800;color:#0f172a;margin-bottom:6px">No past entries yet</div>
         <div style="font-size:13px;color:#64748b;line-height:1.6;max-width:480px;margin:0 auto">
-          When any of the four exit rules fires on an active pick (target hit, stop loss,
-          90-day time stop, or grade/score breakdown), the trade is closed automatically
-          and recorded here for the audit trail.
+          When any tracker rule fires on a currently-tracked stock (-8% stop, stair-step trail breached, or score breakdown), it's removed from the active tracker and recorded here for transparency.
         </div>
       </div>`;
     return;
@@ -4244,8 +4242,8 @@ function renderClosedTrades(data) {
     <div style="background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:16px;padding:20px 24px;margin-bottom:14px;box-shadow:0 2px 12px rgba(0,0,0,.06)">
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:14px">
         <div>
-          <div style="font-size:18px;font-weight:800;color:var(--txt)">📕 Closed Trades · All-Time</div>
-          <div style="font-size:12px;color:var(--muted);margin-top:2px">Every trade auto-closed by the 4-rule exit system</div>
+          <div style="font-size:18px;font-weight:800;color:var(--txt)">📕 Past Tracker Entries · All-Time</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px">Stocks the tracker previously held, with the rule that ended each entry</div>
         </div>
         <div style="display:flex;gap:6px;flex-wrap:wrap">
           ${reasonChip('target', '🎯 Target', '#15803d')}
@@ -4376,9 +4374,8 @@ function renderModelPortfolio(data) {
        </div>`
     : '';
 
-  // Headline always reads "Portfolio return" now that operator has validated
-  // last month's performance personally. Simulation flag remains in backend.
-  const returnLabel = 'Portfolio return';
+  // Tracker performance label — neutral observational framing.
+  const returnLabel = 'Tracker performance';
   const returnSub   = 'since inception';
 
   // ── HEADER STATS ────────────────────────────────────────────────────
@@ -4386,17 +4383,17 @@ function renderModelPortfolio(data) {
   <div style="background:#ffffff;border:1px solid rgba(0,0,0,.08);border-radius:16px;padding:20px 24px;margin-bottom:18px;box-shadow:0 2px 12px rgba(0,0,0,.06)">
     <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px">
       <div style="flex:1;min-width:0">
-        <div style="font-size:18px;font-weight:800;color:var(--txt)">📈 AlphaHunt Model Portfolio</div>
+        <div style="font-size:18px;font-weight:800;color:var(--txt)">📊 AlphaHunt Score Tracker</div>
         <div style="font-size:11.5px;color:#000000;margin-top:8px;line-height:1.55">
-          <strong>📊 Research tool, not a trading advisor.</strong> These are AlphaHunt's top-scoring stocks for you to <em>investigate</em> — not orders to execute.
+          <strong>Methodology transparency, not a portfolio for you to follow.</strong> We publicly track how our top-scoring stocks perform after they cross our criteria — so you can see how the score behaves over time. AlphaHunt does not recommend buying or selling any stock.
         </div>
         <div style="font-size:11px;color:#000000;margin-top:6px;font-style:italic">
           📊 "Analyst" / "Implied Upside" = Wall Street consensus targets (FMP) — <strong>not AlphaHunt's forecast</strong>. AlphaHunt does not provide price predictions or financial advice. <a href="/disclaimer" target="_blank" style="color:#15803d;text-decoration:underline;font-style:normal">Full disclaimer →</a>
         </div>
       </div>
-      <button onclick="if(confirm('Reset rebuilds the portfolio with today\\'s top 10 picks. Continue?'))resetModelPortfolio()"
+      <button onclick="if(confirm('Reset rebuilds the tracker with today\\'s top 10 stocks by score. Continue?'))resetModelPortfolio()"
         style="padding:7px 14px;background:#f1f5f9;border:1px solid rgba(0,0,0,.1);border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;color:#374151;flex-shrink:0">
-        🔄 Reset Portfolio
+        🔄 Reset Tracker
       </button>
     </div>
     ${concentrationWarning}
@@ -4466,9 +4463,10 @@ function renderModelPortfolio(data) {
         ? (daysHeld === 0 ? 'today' : daysHeld + ' day' + (daysHeld === 1 ? '' : 's') + ' ago')
         : '';
       // is_simulated_entry is preserved in backend for audit but no longer
-      // shown to end users (per operator decision after personal validation).
+      // shown to end users. Label = "Added to tracker" (observational, not
+      // a recommendation).
       const isSimEntry = !!p.is_simulated_entry;
-      const sinceLabel = 'Recommended';
+      const sinceLabel = 'Added to tracker';
 
       // ── NEW badge: highlight picks added in the last 7 days (real adds only,
       //    not first-build simulated entries — those would all show NEW on day 1
@@ -4593,12 +4591,10 @@ function renderModelPortfolio(data) {
   const emptyStateHTML = picks.length === 0 ? `
     <div style="background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:14px;padding:36px 28px;text-align:center;box-shadow:0 2px 12px rgba(0,0,0,.06)">
       <div style="font-size:48px;margin-bottom:12px">🎯</div>
-      <div style="font-size:18px;font-weight:800;color:#0f172a;margin-bottom:8px">No stocks meet the bar today</div>
+      <div style="font-size:18px;font-weight:800;color:#0f172a;margin-bottom:8px">No stocks meet the tracker bar today</div>
       <div style="font-size:13px;color:#475569;line-height:1.65;max-width:560px;margin:0 auto 18px">
-        The Model Portfolio uses strict entry criteria:
-        <strong>Grade A · Alpha Score ≥ 80 · ≥ 20% upside to analyst consensus target</strong>.
-        On strong-rally days many leaders have already run past fair value, so the upside filter alone can drop the list to zero.
-        This is by design — we don't lower our standards just to fill 10 slots.
+        The Score Tracker only adds stocks meeting strict criteria:
+        <strong>Grade A · Alpha Score ≥ 80</strong>. The tracker stays empty rather than dilute the methodology.
       </div>
       <div style="font-size:12px;color:#64748b;line-height:1.6;max-width:560px;margin:0 auto 18px">
         <strong>What to do:</strong> wait for a pullback (which restores upside on quality names), check back tomorrow,
