@@ -3002,9 +3002,9 @@ def _enrich_model_portfolio(portfolio: dict) -> dict:
             "peak_perf_pct":     round(peak_perf_frac * 100, 2),
             # Exit-rule values (kept for transparency / power users):
             "hard_stop_price":   hard_stop_price,
-            "take_profit_price": take_profit_price,
             "trail_floor":       trail_floor,
             "trail_active":      trail_active,
+            "trail_label":       trail_label,
             "exit_signal_triggered": signal_triggered,
             "exit_signal_reason":    signal_reason,
             # The two fields the UI actually consumes:
