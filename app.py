@@ -2816,21 +2816,26 @@ def _build_model_portfolio(existing: dict | None = None) -> dict:
 
         prev = existing_picks.get(ticker)
         if prev:
-            # Retained pick → keep its original added_date and entry_price.
+            # Retained pick → keep its original added_date, entry_price, and
+            # the original is_simulated_entry flag.
             added = prev.get("added_date") or inception_str
             entry = float(prev.get("entry_price") or price)
-            pop_at_entry   = prev.get("pop_at_entry", round(float(t.get("pop_score") or 0), 1))
-            grade_at_entry = prev.get("grade_at_entry", t.get("grade", "A"))
+            pop_at_entry      = prev.get("pop_at_entry", round(float(t.get("pop_score") or 0), 1))
+            grade_at_entry    = prev.get("grade_at_entry", t.get("grade", "A"))
+            is_simulated_entry = bool(prev.get("is_simulated_entry", False))
         else:
             # New pick. If this is the very first build (no `existing`), back-date
-            # to inception so the user sees real ~30-day performance immediately.
-            # If we're refreshing and adding a brand-new pick, mark it with today.
+            # to inception so the user sees a 30-day lookback. Mark it as
+            # simulated so the UI can label it honestly. If we're refreshing
+            # and adding a brand-new pick (e.g. on Reset), mark with today.
             is_first_build = existing is None or not existing.get("picks")
             added = inception_str if is_first_build else today_str
             if is_first_build and price > 0 and mom_1m != 0:
                 entry = round(price / (1 + mom_1m / 100), 2)
+                is_simulated_entry = True   # back-dated demo entry, not a real recommendation
             else:
-                entry = price   # new mid-cycle pick → entry = today's price
+                entry = price               # new mid-cycle pick → entry = today's price
+                is_simulated_entry = False
             pop_at_entry   = round(float(t.get("pop_score") or 0), 1)
             grade_at_entry = t.get("grade", "A")
 
@@ -2841,6 +2846,7 @@ def _build_model_portfolio(existing: dict | None = None) -> dict:
             "entry_price":    entry,
             "pop_at_entry":   pop_at_entry,
             "grade_at_entry": grade_at_entry,
+            "is_simulated_entry": is_simulated_entry,
             "sector":         t.get("sector", ""),
             "sub_sector":     t.get("sub_sector") or t.get("subsector", ""),
             "rationale":      (t.get("rationale") or "")[:120],
@@ -3127,54 +3133,9 @@ def _close_triggered_picks(portfolio: dict, enriched_picks: list) -> tuple[dict,
     return portfolio, closed
 
 
-def _replenish_portfolio(portfolio: dict) -> dict:
-    """If the portfolio fell below 20 picks (because trades were closed), pull
-    in the next-best Grade-A stocks not already held, stamping each with
-    today's date as `added_date`. Entry price = today's live price."""
-    from datetime import date as _date
-    target_size = 20
-    cur_picks = portfolio.get("picks", [])
-    if len(cur_picks) >= target_size:
-        return portfolio
-
-    held = {p["ticker"] for p in cur_picks}
-    # Avoid immediately re-adding tickers we just closed today (prevents flapping)
-    today_str = str(_date.today())
-    history = _load_trade_history()
-    just_closed = {tr["ticker"] for tr in history.get("trades", []) if tr.get("exit_date") == today_str}
-    blocked = held | just_closed
-
-    candidates = sorted(
-        [t for t in _universe_data
-         if t.get("grade") == "A"
-         and float(t.get("pop_score") or 0) >= 68
-         and t.get("ticker") not in blocked],
-        key=lambda t: float(t.get("pop_score") or 0),
-        reverse=True,
-    )
-
-    needed = target_size - len(cur_picks)
-    added = 0
-    for t in candidates[:needed]:
-        price = float(t.get("price") or 0)
-        cur_picks.append({
-            "ticker":         t.get("ticker", ""),
-            "name":           t.get("name", ""),
-            "added_date":     today_str,
-            "entry_price":    round(price, 2),
-            "pop_at_entry":   round(float(t.get("pop_score") or 0), 1),
-            "grade_at_entry": t.get("grade", "A"),
-            "sector":         t.get("sector", ""),
-            "sub_sector":     t.get("sub_sector") or t.get("subsector", ""),
-            "rationale":      (t.get("rationale") or "")[:120],
-            "signals":        (t.get("signals") or [])[:3],
-            "target_mean":    float(t.get("target_mean") or 0),
-        })
-        added += 1
-    if added:
-        logger.info(f"📗 Added {added} replacement pick(s)")
-    portfolio["picks"] = cur_picks
-    return portfolio
+# NOTE: _replenish_portfolio was removed. The user chose "no auto-replenish" —
+# once a stock exits, no new pick takes its slot. The active list shrinks until
+# the user clicks Reset Portfolio to rebuild from scratch.
 
 
 @app.get("/api/model-portfolio")

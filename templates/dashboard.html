@@ -4401,7 +4401,9 @@ function renderModelPortfolio(data) {
       const alert    = p.exit_alert     || null;
       const decision = p.decision_point || null;
 
-      // "Recommended since" — format added_date as e.g. "Apr 8, 2026"
+      // "Recommended since" — format added_date as e.g. "Apr 8, 2026".
+      // For first-build picks (back-dated 30-day lookback), label as a
+      // simulation so we never imply we recommended on that exact date.
       let addedFmt = '—';
       if (p.added_date) {
         try {
@@ -4411,6 +4413,11 @@ function renderModelPortfolio(data) {
       }
       const heldStr = daysHeld != null
         ? (daysHeld === 0 ? 'today' : daysHeld + ' day' + (daysHeld === 1 ? '' : 's') + ' ago')
+        : '';
+      const isSimEntry = !!p.is_simulated_entry;
+      const sinceLabel = isSimEntry ? 'Lookback start' : 'Recommended';
+      const simSuffix  = isSimEntry
+        ? ` <span title="This card uses a 30-day backward simulation: entry price is back-calculated from this stock's actual 30-day momentum, so the % return reflects what someone holding the stock for the past month would have seen. After a stock exits and a new one is added later, that new pick will show its true recommendation date." style="font-size:9.5px;color:#94a3b8;font-style:italic;text-decoration:underline dotted;cursor:help">(30-day simulation)</span>`
         : '';
 
       // Tone-based colour map for the single decision chip
@@ -4452,10 +4459,10 @@ function renderModelPortfolio(data) {
           </div>
         </div>
 
-        <!-- Recommended since — small dated tag -->
-        <div style="display:flex;align-items:center;gap:6px;font-size:10.5px;color:#64748b;margin-bottom:8px">
+        <!-- Recommended since — small dated tag (label changes if simulated) -->
+        <div style="display:flex;align-items:center;gap:6px;font-size:10.5px;color:#64748b;margin-bottom:8px;flex-wrap:wrap">
           <span style="font-size:11px">📅</span>
-          <span><strong style="color:#0f172a">Recommended ${addedFmt}</strong>${heldStr ? ` · ${heldStr}` : ''}</span>
+          <span><strong style="color:#0f172a">${sinceLabel} ${addedFmt}</strong>${heldStr ? ` · ${heldStr}` : ''}${simSuffix}</span>
         </div>
 
         <!-- Big performance number -->
