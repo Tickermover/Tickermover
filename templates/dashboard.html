@@ -706,10 +706,6 @@ tr:hover td{background:rgba(132,204,22,.06)}
   .price-target-row .t-val{font-size:14px}
   .price-target-row .t-lbl{font-size:9.5px}
 
-  /* ── INSTALL BUTTON ── thumb-reach (bottom-right) ── */
-  #ah-install-btn{top:auto!important;bottom:calc(20px + env(safe-area-inset-bottom))!important;
-                   right:14px!important;font-size:12px;padding:8px 14px}
-
   /* Watchlist + sector grids reset */
   #watchlist-grid{grid-template-columns:1fr!important}
 }
@@ -947,91 +943,9 @@ tr:hover td{background:rgba(132,204,22,.06)}
 </style>
 </head>
 <body>
-<!-- ── PWA Install Button (smart: hidden unless browser supports install) ── -->
-<div id="ah-install-btn" style="display:none;position:fixed;top:14px;right:14px;z-index:9999;background:#fff;border:1px solid #15803d;border-radius:999px;padding:7px 14px 7px 12px;box-shadow:0 4px 14px rgba(15,23,42,.12);font-size:13px;font-weight:700;color:#15803d;cursor:pointer;display:none;align-items:center;gap:6px;font-family:'Inter',-apple-system,sans-serif" onclick="ahInstall()">
-  <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="#15803d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M8 2 v9 m-3 -3 l3 3 l3 -3 M3 13 h10"/>
-  </svg>
-  Install app
-</div>
-
-<!-- iOS install instructions modal — iOS doesn't fire beforeinstallprompt -->
-<div id="ah-ios-install" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.5);z-index:10000;align-items:center;justify-content:center;padding:20px" onclick="if(event.target===this)this.style.display='none'">
-  <div style="background:#fff;border-radius:14px;padding:24px;max-width:340px;width:100%;text-align:center;font-family:'Inter',-apple-system,sans-serif">
-    <div style="font-size:38px;margin-bottom:8px">📱</div>
-    <h3 style="font-size:18px;font-weight:800;color:#0a0a0a;margin-bottom:6px">Add to Home Screen</h3>
-    <p style="font-size:13.5px;color:#475569;line-height:1.55;margin-bottom:16px">Install AlphaHunt as an app on your iPhone — works offline, fast launch, native feel.</p>
-    <ol style="text-align:left;font-size:13.5px;color:#0f172a;line-height:1.7;padding-left:20px;margin-bottom:16px">
-      <li>Tap the <strong>Share</strong> icon <span style="display:inline-block;color:#0ea5e9;font-weight:800">⎙</span> at the bottom of Safari</li>
-      <li>Scroll down and tap <strong>Add to Home Screen</strong></li>
-      <li>Tap <strong>Add</strong> in the top right</li>
-    </ol>
-    <button onclick="document.getElementById('ah-ios-install').style.display='none'" style="background:#15803d;color:#fff;border:none;padding:10px 22px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer">Got it</button>
-  </div>
-</div>
-
-<script>
-(function() {
-  var deferredPrompt = null;
-  var btn = document.getElementById('ah-install-btn');
-  var iosModal = document.getElementById('ah-ios-install');
-
-  // Check if already running as installed PWA — hide install button if so
-  function isStandalone() {
-    return window.matchMedia('(display-mode: standalone)').matches ||
-           window.navigator.standalone === true ||
-           document.referrer.startsWith('android-app://');
-  }
-
-  // iOS detection (Safari only, since Chrome iOS doesn't support PWA install)
-  function isIOSSafari() {
-    var ua = navigator.userAgent;
-    var iOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
-    var safari = /Safari/i.test(ua) && !/CriOS|FxiOS|EdgiOS/i.test(ua);
-    return iOS && safari;
-  }
-
-  // If running as installed app, never show install prompts
-  if (isStandalone()) {
-    document.documentElement.classList.add('ah-pwa-installed');
-    return;
-  }
-
-  // For iOS Safari, show our custom button (which opens instructions modal)
-  if (isIOSSafari() && !localStorage.getItem('ah_install_dismissed')) {
-    if (btn) {
-      btn.style.display = 'inline-flex';
-      window.ahInstall = function() {
-        iosModal.style.display = 'flex';
-      };
-    }
-  }
-
-  // For Chrome / Edge / Samsung / etc — capture beforeinstallprompt
-  window.addEventListener('beforeinstallprompt', function(e) {
-    e.preventDefault();
-    deferredPrompt = e;
-    if (btn && !localStorage.getItem('ah_install_dismissed')) {
-      btn.style.display = 'inline-flex';
-    }
-    window.ahInstall = async function() {
-      if (!deferredPrompt) return;
-      deferredPrompt.prompt();
-      var choice = await deferredPrompt.userChoice;
-      if (choice.outcome === 'accepted') {
-        if (btn) btn.style.display = 'none';
-      }
-      deferredPrompt = null;
-    };
-  });
-
-  // After install completes, hide the button and remember
-  window.addEventListener('appinstalled', function() {
-    if (btn) btn.style.display = 'none';
-    localStorage.setItem('ah_install_done', '1');
-  });
-})();
-</script>
+<!-- PWA install button removed per user request. Manifest still present so users
+     who want to install can use the browser's native menu (Chrome ⋮ → Install app,
+     Safari Share → Add to Home Screen, etc.). -->
 
 <!-- First-visit disclaimer banner — shows once, then sets a cookie to hide -->
 <div id="ah-first-visit-banner" style="display:none;position:fixed;bottom:14px;left:14px;right:14px;max-width:540px;margin:0 auto;background:#fffbeb;border:1px solid #f59e0b;border-radius:10px;padding:12px 14px 12px 14px;box-shadow:0 4px 14px rgba(15,23,42,.12);z-index:9999;font-family:'Inter',-apple-system,sans-serif;font-size:13px;color:#0f172a;line-height:1.5">
@@ -1140,6 +1054,16 @@ tr:hover td{background:rgba(132,204,22,.06)}
 
 <!-- HOT LIST -->
 <div id="panel-hot" class="panel active">
+  <!-- Subtitle: explains Hot List vs Model Portfolio + analyst-target attribution -->
+  <div style="background:linear-gradient(135deg,#fef3c7 0%,#fef9c3 100%);border:1px solid #fcd34d;border-radius:10px;padding:10px 14px;margin-bottom:14px;display:flex;align-items:flex-start;gap:10px">
+    <div style="font-size:18px;flex-shrink:0;line-height:1">🔥</div>
+    <div style="font-size:12.5px;color:#78350f;line-height:1.5">
+      <strong>Live scanner — top scorers right now.</strong> Refreshes every 5 minutes from live data. All 20 can rotate in/out daily as scores shift. Use this to spot what's heating up <em>today</em>. For a tracked, rule-based paper portfolio, see <a href="javascript:void(0)" onclick="document.getElementById('tab-model').click()" style="color:#15803d;font-weight:700;text-decoration:underline">📈 Model Portfolio</a>.
+      <div style="margin-top:6px;padding-top:6px;border-top:1px dashed rgba(120,53,15,.25);font-size:11px;color:#92400e;font-style:italic">
+        📊 Price targets shown are Wall Street analyst consensus (FMP) — <strong>not AlphaHunt's forecast</strong>. AlphaHunt does not provide price predictions or financial advice.
+      </div>
+    </div>
+  </div>
   <div class="hot-grid" id="hot-grid"><div class="loading">⏳ Loading from API…</div></div>
 </div>
 
@@ -2672,10 +2596,12 @@ function renderHotList(data) {
 
     // Block 1: Analyst Target + % upside (single, clean row)
     const analystBlock = (tgtMean > 0 && upside != null) ? `
-      <div class="price-target-row" style="grid-template-columns:1fr 1fr">
-        <div><div class="t-lbl">Analyst Target</div><div class="t-val">${fmtP(tgtMean)}</div></div>
-        <div><div class="t-lbl">Upside</div><div class="t-val ${pCls(upside)}">${fmtPct(upside)}</div></div>
-      </div>` : '';
+      <div class="price-target-row" style="grid-template-columns:1fr 1fr"
+           title="Wall Street analyst 12-month consensus target — sourced from FMP. NOT AlphaHunt's forecast.">
+        <div><div class="t-lbl">📊 Analyst Target</div><div class="t-val">${fmtP(tgtMean)}</div></div>
+        <div><div class="t-lbl">Implied Upside</div><div class="t-val ${pCls(upside)}">${fmtPct(upside)}</div></div>
+      </div>
+      <div style="font-size:9.5px;color:#94a3b8;margin-top:3px;text-align:center;font-style:italic">Wall Street analyst consensus · not AlphaHunt's forecast</div>` : '';
 
     // Block 2: 52-week trading range
     const wk52Block = (wkLo > 0 && wkHi > 0) ? `
@@ -3327,14 +3253,17 @@ function openStockModal(ticker) {
       const wLo = parseFloat(t.week_52_low  || t.low_52w  || 0);
       const wHi = parseFloat(t.week_52_high || t.high_52w || 0);
       const cells = [];
-      if (tgtMean > 0)             cells.push(`<div><div class="t-lbl">Analyst Target</div><div class="t-val">${fmtP(tgtMean)}</div></div>`);
-      if (upside != null)          cells.push(`<div><div class="t-lbl">Upside</div><div class="t-val ${pCls(upside)}">${fmtPct(upside)}</div></div>`);
+      if (tgtMean > 0)             cells.push(`<div><div class="t-lbl">📊 Analyst Target</div><div class="t-val">${fmtP(tgtMean)}</div></div>`);
+      if (upside != null)          cells.push(`<div><div class="t-lbl">Implied Upside</div><div class="t-val ${pCls(upside)}">${fmtPct(upside)}</div></div>`);
       if (wLo > 0)                 cells.push(`<div><div class="t-lbl">52W Low</div><div class="t-val" style="color:#475569">${fmtP(wLo)}</div></div>`);
       if (wHi > 0)                 cells.push(`<div><div class="t-lbl">52W High</div><div class="t-val" style="color:#475569">${fmtP(wHi)}</div></div>`);
       if (!cells.length) return '';
-      return `<div class="price-target-row" style="margin-top:8px;grid-template-columns:repeat(${cells.length},1fr)">
+      const hasTarget = tgtMean > 0;
+      const _attr = 'Analyst target = Wall Street 12-month consensus (FMP). NOT a prediction by AlphaHunt.';
+      return `<div class="price-target-row" style="margin-top:8px;grid-template-columns:repeat(${cells.length},1fr)"
+                   title="${hasTarget ? _attr : ''}">
         ${cells.join('')}
-      </div>`;
+      </div>${hasTarget ? '<div style="font-size:10px;color:#94a3b8;margin-top:4px;text-align:center;font-style:italic">📊 Analyst target = Wall Street 12-month consensus (FMP) · AlphaHunt does not provide price predictions or financial advice</div>' : ''}`;
     })()}
 
     <div id="modal-earnings-card-${ticker}" data-modal-earnings="${ticker}" style="margin-top:12px"></div>
@@ -4409,9 +4338,13 @@ function renderModelPortfolio(data) {
   const headerHTML = `
   <div style="background:#ffffff;border:1px solid rgba(0,0,0,.08);border-radius:16px;padding:20px 24px;margin-bottom:18px;box-shadow:0 2px 12px rgba(0,0,0,.06)">
     <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px">
-      <div>
+      <div style="flex:1;min-width:0">
         <div style="font-size:18px;font-weight:800;color:var(--txt)">📈 AlphaHunt Model Portfolio</div>
-        <div style="font-size:12px;color:var(--muted);margin-top:2px">Grade A · Score ≥68 · ≥30% upside to analyst target · O'Neil exit rules · Inception ${createdDate} · ${daysRunning === 0 ? 'Day 1' : daysRunning + 'd tracked'}</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px">Disciplined paper portfolio with strict entry + exit rules · Picks only change via Closed Trades</div>
+        <div style="font-size:11px;color:#94a3b8;margin-top:2px">Grade A · Score ≥68 · ≥30% upside · stair-step trailing stop · Inception ${createdDate} · ${daysRunning === 0 ? 'Day 1' : daysRunning + 'd tracked'}</div>
+        <div style="font-size:10.5px;color:#94a3b8;margin-top:6px;padding-top:6px;border-top:1px dashed rgba(0,0,0,.06);font-style:italic">
+          📊 "Analyst" / "Implied Upside" figures are Wall Street consensus targets (FMP) — <strong style="color:#475569">not AlphaHunt's forecast</strong>. AlphaHunt does not provide price predictions or financial advice. <a href="/disclaimer" target="_blank" style="color:#15803d;text-decoration:underline">Full disclaimer →</a>
+        </div>
       </div>
       <button onclick="if(confirm('Reset rebuilds the portfolio with today\\'s top 20 picks. Continue?'))resetModelPortfolio()"
         style="padding:7px 14px;background:#f1f5f9;border:1px solid rgba(0,0,0,.1);border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;color:#374151">
@@ -4544,7 +4477,7 @@ function renderModelPortfolio(data) {
           <span class="rating ${ratingClass(curRating)}" style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:6px">${curRating}</span>
           <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:6px;background:rgba(29,78,216,.1);color:#1d4ed8">Score ${curPop.toFixed(0)}</span>
           ${p.sub_sector ? `<span style="font-size:10px;padding:2px 7px;border-radius:6px;background:rgba(132,204,22,.1);color:#4d7c0f;font-weight:600">${p.sub_sector}</span>` : ''}
-          ${targetUpside ? `<span style="font-size:10px;padding:2px 7px;border-radius:6px;background:rgba(22,163,74,.1);color:#15803d;font-weight:600">Target +${targetUpside}%</span>` : ''}
+          ${targetUpside ? `<span title="Wall Street analyst 12-month consensus target — sourced from FMP. NOT AlphaHunt's forecast." style="font-size:10px;padding:2px 7px;border-radius:6px;background:rgba(71,85,105,.08);color:#475569;font-weight:600;border:1px solid rgba(71,85,105,.2);font-family:inherit">📊 Analyst +${targetUpside}%</span>` : ''}
         </div>
 
         <!-- Single decision-point chip: shows the active exit rule for THIS pick.

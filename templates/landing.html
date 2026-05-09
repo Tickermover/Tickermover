@@ -742,10 +742,10 @@ setInterval(loadLandingData, 30 * 1000);
       navigator.serviceWorker.register('/static/sw.js').catch(function() {});
     });
   }
-  // Capture beforeinstallprompt so a future "Install" CTA can use it
+  // PWA install button removed per user request — let the browser handle the
+  // "Install" CTA via its native menu. We just prevent the spammy mini-infobar.
   window.addEventListener('beforeinstallprompt', function(e) {
     e.preventDefault();
-    window._ahInstallPrompt = e;
   });
 })();
 </script>
