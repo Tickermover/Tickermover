@@ -2782,28 +2782,48 @@ def _build_model_portfolio(existing: dict | None = None) -> dict:
 
     # ── Entry criteria (ALL must be met) ─────────────────────────────────
     #   1. Grade A
-    #   2. Alpha Score >= 80  (tightened from 68 — only the very best)
+    #   2. Alpha Score >= 80  (uses smart_score — the regime-adjusted score
+    #      shown to users, NOT the raw pop_score; in a "Mixed" regime a stock
+    #      with raw 84 displays as 80 and so qualifies, in "Bullish" a raw 80
+    #      qualifies. This matches user expectation: when they see "Alpha 80",
+    #      that's the bar.)
     #   3. Market cap >= $500M (already enforced upstream by the scorer)
-    #   4. ≥20% upside to analyst consensus target (relaxed from 30% — 30%
-    #      was cutting too many quality names that had already partially
-    #      run; 20% still requires meaningful headroom to fair value).
+    #   4. ≥20% upside to analyst consensus target (relaxed from 30%).
     MIN_ALPHA_SCORE = 80
     MIN_UPSIDE      = 0.20
+
+    def _alpha(t: dict) -> float:
+        """The displayed Alpha Score — smart_score with pop_score fallback."""
+        ss = t.get("smart_score")
+        if ss is None:
+            ss = t.get("pop_score") or 0
+        return float(ss or 0)
 
     def _has_min_upside(t: dict) -> bool:
         price = float(t.get("price") or 0)
         tgt   = float(t.get("target_mean") or 0)
         return price > 0 and tgt > 0 and ((tgt - price) / price) >= MIN_UPSIDE
 
-    candidates = [
+    # Diagnostic counters so the operator can see WHY the list is short
+    universe_n  = len(_universe_data)
+    grade_a_n   = sum(1 for t in _universe_data if t.get("grade") == "A")
+    score_n     = sum(1 for t in _universe_data if t.get("grade") == "A" and _alpha(t) >= MIN_ALPHA_SCORE)
+    candidates  = [
         t for t in _universe_data
         if t.get("grade") == "A"
-        and float(t.get("pop_score") or 0) >= MIN_ALPHA_SCORE
+        and _alpha(t) >= MIN_ALPHA_SCORE
         and _has_min_upside(t)
     ]
-    candidates.sort(key=lambda t: float(t.get("pop_score") or 0), reverse=True)
+    final_n = len(candidates)
+    candidates.sort(key=_alpha, reverse=True)
     top20 = candidates[:20]
     new_tickers = {t.get("ticker") for t in top20}
+
+    logger.info(
+        f"📊 Model Portfolio filter: universe={universe_n} → "
+        f"grade A={grade_a_n} → score≥{MIN_ALPHA_SCORE}={score_n} → "
+        f"+upside≥{int(MIN_UPSIDE*100)}%={final_n} → top20={len(top20)}"
+    )
 
     # Index existing picks by ticker so we can preserve metadata for retained ones
     existing_picks = {p["ticker"]: p for p in (existing or {}).get("picks", []) if p.get("ticker")}
@@ -3133,9 +3153,76 @@ def _close_triggered_picks(portfolio: dict, enriched_picks: list) -> tuple[dict,
     return portfolio, closed
 
 
-# NOTE: _replenish_portfolio was removed. The user chose "no auto-replenish" —
-# once a stock exits, no new pick takes its slot. The active list shrinks until
-# the user clicks Reset Portfolio to rebuild from scratch.
+def _replenish_portfolio(portfolio: dict) -> dict:
+    """Refill the portfolio back to 20 picks AFTER exits have fired.
+
+    Rule: existing healthy picks NEVER move. We only fill slots opened by
+    exit triggers. New picks pulled from the universe must meet the same
+    strict criteria as the initial build (Grade A + smart_score >= 80 +
+    >= 20% upside to analyst target). Each new pick gets today's date so
+    the UI can flag it as NEW for a week.
+
+    If fewer than 20 stocks meet the criteria today, the portfolio stays
+    below 20 — we never lower the bar to fill slots.
+    """
+    from datetime import date as _date
+    target_size = 20
+    cur_picks = portfolio.get("picks", [])
+    if len(cur_picks) >= target_size:
+        return portfolio
+
+    held = {p["ticker"] for p in cur_picks}
+    today_str = str(_date.today())
+
+    # Block re-adding tickers we just closed today (no immediate flapping)
+    history = _load_trade_history()
+    just_closed = {tr["ticker"] for tr in history.get("trades", []) if tr.get("exit_date") == today_str}
+    blocked = held | just_closed
+
+    # Same helper as in _build_model_portfolio so criteria stay in sync
+    def _alpha(t: dict) -> float:
+        ss = t.get("smart_score")
+        if ss is None:
+            ss = t.get("pop_score") or 0
+        return float(ss or 0)
+    def _has_min_upside(t: dict) -> bool:
+        price = float(t.get("price") or 0)
+        tgt   = float(t.get("target_mean") or 0)
+        return price > 0 and tgt > 0 and ((tgt - price) / price) >= 0.20
+
+    candidates = sorted(
+        [t for t in _universe_data
+         if t.get("grade") == "A"
+         and _alpha(t) >= 80
+         and _has_min_upside(t)
+         and t.get("ticker") not in blocked],
+        key=_alpha,
+        reverse=True,
+    )
+
+    needed = target_size - len(cur_picks)
+    added = 0
+    for t in candidates[:needed]:
+        price = float(t.get("price") or 0)
+        cur_picks.append({
+            "ticker":         t.get("ticker", ""),
+            "name":           t.get("name", ""),
+            "added_date":     today_str,
+            "entry_price":    round(price, 2),
+            "pop_at_entry":   round(_alpha(t), 1),
+            "grade_at_entry": t.get("grade", "A"),
+            "is_simulated_entry": False,   # real-time addition, not back-dated
+            "sector":         t.get("sector", ""),
+            "sub_sector":     t.get("sub_sector") or t.get("subsector", ""),
+            "rationale":      (t.get("rationale") or "")[:120],
+            "signals":        (t.get("signals") or [])[:3],
+            "target_mean":    float(t.get("target_mean") or 0),
+        })
+        added += 1
+    if added:
+        logger.info(f"📗 Replenished portfolio: +{added} pick(s), now {len(cur_picks)}/{target_size}")
+    portfolio["picks"] = cur_picks
+    return portfolio
 
 
 @app.get("/api/model-portfolio")
@@ -3151,11 +3238,11 @@ async def api_model_portfolio():
         cache.save_disk()
         logger.info(f"📊 Model portfolio initialised: {len(_model_portfolio['picks'])} picks on {_model_portfolio['created_at']}")
 
-    # ── Triggered close: any pick whose exit fires moves to history NOW.
-    #    No replenishment — the active list only shrinks. To rebuild the
-    #    portfolio, the user must hit the "Reset Portfolio" button.
-    # Snapshot peak_price + trail_active state BEFORE enrichment so we can
-    # detect whether enrichment mutated them and persist if so.
+    # ── Per-call lifecycle: enrich → close fired exits → replenish to 20 ──
+    # Healthy picks NEVER move on their own. The only way a stock leaves the
+    # active list is its own exit trigger firing. Slots opened by exits get
+    # filled with the next-best Grade-A name (today's date → flagged NEW for a
+    # week in the UI).
     pre_state = [(p.get("peak_price"), p.get("trail_active")) for p in _model_portfolio.get("picks", [])]
 
     enriched = _enrich_model_portfolio(_model_portfolio)
@@ -3167,16 +3254,31 @@ async def api_model_portfolio():
 
     if has_fired:
         _model_portfolio, _ = _close_triggered_picks(_model_portfolio, enriched_picks)
+        # Refill slots opened by exits with next-best names
+        _model_portfolio = _replenish_portfolio(_model_portfolio)
         cache.set("model_portfolio", _model_portfolio, 86400 * 3650)
         cache.save_disk()
-        # Re-enrich AFTER closing so the response NEVER shows stocks that
-        # have been moved to history. This is the bug fix the user reported:
-        # "I found once target hit stocks also appeared".
+        # Re-enrich AFTER close+replenish so the response reflects the new picks
         enriched = _enrich_model_portfolio(_model_portfolio)
-    elif state_changed:
-        # No exits fired but trail/peak values bumped — persist quietly.
-        cache.set("model_portfolio", _model_portfolio, 86400 * 3650)
-        cache.save_disk()
+    else:
+        # No exits fired this call. Still try to replenish in case the
+        # portfolio is below 20 (e.g. previous build couldn't hit 20 due to
+        # tight criteria, and the universe has since improved). This is the
+        # weekly "Add new addition" cadence — naturally rate-limited because
+        # only the FIRST call after market opens or score changes will find
+        # newly-qualifying stocks.
+        before_n = len(_model_portfolio.get("picks", []))
+        if before_n < 20:
+            _model_portfolio = _replenish_portfolio(_model_portfolio)
+            after_n = len(_model_portfolio.get("picks", []))
+            if after_n != before_n or state_changed:
+                cache.set("model_portfolio", _model_portfolio, 86400 * 3650)
+                cache.save_disk()
+                enriched = _enrich_model_portfolio(_model_portfolio)
+        elif state_changed:
+            # peak/trail values bumped — persist quietly.
+            cache.set("model_portfolio", _model_portfolio, 86400 * 3650)
+            cache.save_disk()
 
     return JSONResponse(_clean(enriched))
 
