@@ -2943,6 +2943,150 @@ def _enrich_model_portfolio(portfolio: dict) -> dict:
     }
 
 
+# ── Trade history persistence ─────────────────────────────────────────────────
+# Path is stable across Railway redeploys because the `data/` folder is checked
+# in. The file is append-only (newest trade pushed onto `trades`).
+_TRADE_HISTORY_PATH = "data/model_portfolio_history.json"
+
+
+def _load_trade_history() -> dict:
+    """Read closed-trades log from disk. Returns {version, trades:[...]}.
+    Missing or corrupt files yield an empty log so we never crash."""
+    import os, json
+    if not os.path.exists(_TRADE_HISTORY_PATH):
+        return {"version": 1, "trades": []}
+    try:
+        with open(_TRADE_HISTORY_PATH, encoding="utf-8") as f:
+            d = json.load(f)
+            if isinstance(d, dict) and isinstance(d.get("trades"), list):
+                return d
+    except Exception:
+        pass
+    return {"version": 1, "trades": []}
+
+
+def _save_trade_history(history: dict) -> None:
+    """Atomic write so we never end up with a half-written file on crash."""
+    import os, json, tempfile
+    os.makedirs(os.path.dirname(_TRADE_HISTORY_PATH), exist_ok=True)
+    fd, tmp = tempfile.mkstemp(prefix=".history-", dir=os.path.dirname(_TRADE_HISTORY_PATH))
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            json.dump(history, f, indent=2, ensure_ascii=False)
+        os.replace(tmp, _TRADE_HISTORY_PATH)
+    except Exception:
+        try: os.unlink(tmp)
+        except OSError: pass
+        raise
+
+
+def _close_triggered_picks(portfolio: dict, enriched_picks: list) -> tuple[dict, list]:
+    """For every pick whose `exit_alert` fired in this enrichment, close the
+    position: append a trade record to history and remove it from the active
+    portfolio. Returns the (mutated_portfolio, list_of_closed_trade_records).
+    The caller is responsible for calling `_replenish_portfolio` afterwards.
+    """
+    from datetime import date as _date
+    closed = []
+    today_str = str(_date.today())
+    keep = []
+    closed_tickers: set = set()
+
+    # Index enriched picks by ticker so we can read their exit_alert
+    enriched_by_ticker = {p["ticker"]: p for p in enriched_picks}
+
+    for raw in portfolio.get("picks", []):
+        ticker = raw.get("ticker", "")
+        ep = enriched_by_ticker.get(ticker, {})
+        alert = ep.get("exit_alert")
+        if not alert:
+            keep.append(raw)
+            continue
+        # ── Build the historical trade record ────────────────────────────
+        entry = float(raw.get("entry_price") or 0)
+        exit_price = float(ep.get("current_price") or 0)
+        final_pct = round((exit_price - entry) / entry * 100, 2) if entry > 0 else 0
+        days_held = ep.get("days_held", 0)
+        closed.append({
+            "ticker":          ticker,
+            "name":            raw.get("name", ""),
+            "entry_date":      raw.get("added_date"),
+            "entry_price":     entry,
+            "pop_at_entry":    raw.get("pop_at_entry"),
+            "grade_at_entry":  raw.get("grade_at_entry"),
+            "rationale":       raw.get("rationale", ""),
+            "sub_sector":      raw.get("sub_sector", ""),
+            "exit_date":       today_str,
+            "exit_price":      exit_price,
+            "exit_reason":     alert.get("type"),     # "target" | "stop" | "time" | "signal"
+            "exit_label":      alert.get("label"),
+            "exit_detail":     alert.get("reason"),
+            "final_pct":       final_pct,
+            "days_held":       days_held,
+            "won":             final_pct > 0,
+        })
+        closed_tickers.add(ticker)
+
+    if closed:
+        history = _load_trade_history()
+        # Newest at the top of the list (matches how UIs read it)
+        history["trades"] = closed + history.get("trades", [])
+        _save_trade_history(history)
+        portfolio["picks"] = keep
+        logger.info(f"📕 Closed {len(closed)} trade(s): {sorted(closed_tickers)}")
+    return portfolio, closed
+
+
+def _replenish_portfolio(portfolio: dict) -> dict:
+    """If the portfolio fell below 20 picks (because trades were closed), pull
+    in the next-best Grade-A stocks not already held, stamping each with
+    today's date as `added_date`. Entry price = today's live price."""
+    from datetime import date as _date
+    target_size = 20
+    cur_picks = portfolio.get("picks", [])
+    if len(cur_picks) >= target_size:
+        return portfolio
+
+    held = {p["ticker"] for p in cur_picks}
+    # Avoid immediately re-adding tickers we just closed today (prevents flapping)
+    today_str = str(_date.today())
+    history = _load_trade_history()
+    just_closed = {tr["ticker"] for tr in history.get("trades", []) if tr.get("exit_date") == today_str}
+    blocked = held | just_closed
+
+    candidates = sorted(
+        [t for t in _universe_data
+         if t.get("grade") == "A"
+         and float(t.get("pop_score") or 0) >= 68
+         and t.get("ticker") not in blocked],
+        key=lambda t: float(t.get("pop_score") or 0),
+        reverse=True,
+    )
+
+    needed = target_size - len(cur_picks)
+    added = 0
+    for t in candidates[:needed]:
+        price = float(t.get("price") or 0)
+        cur_picks.append({
+            "ticker":         t.get("ticker", ""),
+            "name":           t.get("name", ""),
+            "added_date":     today_str,
+            "entry_price":    round(price, 2),
+            "pop_at_entry":   round(float(t.get("pop_score") or 0), 1),
+            "grade_at_entry": t.get("grade", "A"),
+            "sector":         t.get("sector", ""),
+            "sub_sector":     t.get("sub_sector") or t.get("subsector", ""),
+            "rationale":      (t.get("rationale") or "")[:120],
+            "signals":        (t.get("signals") or [])[:3],
+            "target_mean":    float(t.get("target_mean") or 0),
+        })
+        added += 1
+    if added:
+        logger.info(f"📗 Added {added} replacement pick(s)")
+    portfolio["picks"] = cur_picks
+    return portfolio
+
+
 @app.get("/api/model-portfolio")
 async def api_model_portfolio():
     global _model_portfolio
@@ -2955,7 +3099,51 @@ async def api_model_portfolio():
         cache.set("model_portfolio", _model_portfolio, 86400 * 3650)  # 10 years
         cache.save_disk()
         logger.info(f"📊 Model portfolio initialised: {len(_model_portfolio['picks'])} picks on {_model_portfolio['created_at']}")
-    return JSONResponse(_clean(_enrich_model_portfolio(_model_portfolio)))
+
+    # ── Triggered refresh: enrich, close any fired exits, replenish ──
+    enriched = _enrich_model_portfolio(_model_portfolio)
+    enriched_picks = enriched.get("picks", [])
+    has_fired = any(p.get("exit_alert") for p in enriched_picks)
+    if has_fired:
+        _model_portfolio, _ = _close_triggered_picks(_model_portfolio, enriched_picks)
+        _model_portfolio = _replenish_portfolio(_model_portfolio)
+        cache.set("model_portfolio", _model_portfolio, 86400 * 3650)
+        cache.save_disk()
+        # Re-enrich post-replenish so the response reflects the new picks
+        enriched = _enrich_model_portfolio(_model_portfolio)
+
+    return JSONResponse(_clean(enriched))
+
+
+@app.get("/api/model-portfolio/history")
+async def api_model_portfolio_history():
+    """Return the closed-trades log. Adds derived stats so the UI can render
+    a leaderboard-style summary (hit rate, avg gain/loss, exit-reason mix)."""
+    history = _load_trade_history()
+    trades = history.get("trades", [])
+    if not trades:
+        return JSONResponse({"trades": [], "stats": {"total": 0}})
+
+    wins = [t for t in trades if t.get("won")]
+    losses = [t for t in trades if not t.get("won")]
+    pcts = [float(t.get("final_pct") or 0) for t in trades]
+    by_reason = {}
+    for t in trades:
+        r = t.get("exit_reason") or "unknown"
+        by_reason[r] = by_reason.get(r, 0) + 1
+    stats = {
+        "total":      len(trades),
+        "wins":       len(wins),
+        "losses":     len(losses),
+        "hit_rate":   round(len(wins) / len(trades) * 100, 1) if trades else 0,
+        "avg_pct":    round(sum(pcts) / len(pcts), 2) if pcts else 0,
+        "avg_win":    round(sum(float(t["final_pct"]) for t in wins) / len(wins), 2) if wins else 0,
+        "avg_loss":   round(sum(float(t["final_pct"]) for t in losses) / len(losses), 2) if losses else 0,
+        "best":       round(max(pcts), 2) if pcts else 0,
+        "worst":      round(min(pcts), 2) if pcts else 0,
+        "by_reason":  by_reason,
+    }
+    return JSONResponse({"trades": trades, "stats": stats})
 
 
 @app.post("/api/model-portfolio/reset")
