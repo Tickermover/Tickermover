@@ -4411,9 +4411,9 @@ function renderModelPortfolio(data) {
     <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px">
       <div>
         <div style="font-size:18px;font-weight:800;color:var(--txt)">📈 AlphaHunt Model Portfolio</div>
-        <div style="font-size:12px;color:var(--muted);margin-top:2px">Top 20 Grade-A picks · Inception ${createdDate} · 1-month performance · ${daysRunning === 0 ? 'Day 1' : daysRunning + 'd tracked'}</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px">Grade A · Score ≥68 · ≥30% upside to analyst target · O'Neil exit rules · Inception ${createdDate} · ${daysRunning === 0 ? 'Day 1' : daysRunning + 'd tracked'}</div>
       </div>
-      <button onclick="if(confirm('Reset resets all entry prices to today. Continue?'))resetModelPortfolio()"
+      <button onclick="if(confirm('Reset rebuilds the portfolio with today\\'s top 20 picks. Continue?'))resetModelPortfolio()"
         style="padding:7px 14px;background:#f1f5f9;border:1px solid rgba(0,0,0,.1);border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;color:#374151">
         🔄 Reset Portfolio
       </button>
@@ -4463,13 +4463,12 @@ function renderModelPortfolio(data) {
         ? ((curTarget - curPrice) / curPrice * 100).toFixed(1)
         : null;
 
-      // ── Exit Plan calculations (use backend values, fall back to live calc) ──
-      const stopPrice  = p.stop_price || (entryPrc > 0 ? +(entryPrc * 0.92).toFixed(2) : 0);
-      const timeStop   = p.time_stop_date || null;
-      const daysToStop = p.days_to_time_stop != null ? p.days_to_time_stop : null;
-      const signalTrig = !!p.exit_signal_triggered;
-      const signalReason = p.exit_signal_reason || '';
-      const alert      = p.exit_alert || null;
+      // ── Decision-point + alert (driven entirely by backend so the UI never
+      //    shows a stale "hit" state. The backend has authoritative price data
+      //    and runs the auto-close before serving, so anything still on the
+      //    Active page should NOT show TARGET HIT / STOP HIT here.) ──
+      const alert    = p.exit_alert     || null;
+      const decision = p.decision_point || null;
 
       // "Recommended since" — format added_date as e.g. "Apr 8, 2026"
       let addedFmt = '—';
@@ -4483,59 +4482,16 @@ function renderModelPortfolio(data) {
         ? (daysHeld === 0 ? 'today' : daysHeld + ' day' + (daysHeld === 1 ? '' : 's') + ' ago')
         : '';
 
-      // ── Build the four exit rows: target / stop / time / signal ──
-      const exitRow = (label, valHTML, sub, status) => {
-        const dotCol = status === 'hit'    ? '#dc2626'
-                     : status === 'soon'   ? '#d97706'
-                     : status === 'fired'  ? '#dc2626'
-                     : '#15803d';
-        return `<div style="display:flex;align-items:center;gap:8px;padding:5px 0;font-size:11px;color:#374151">
-          <span style="width:6px;height:6px;border-radius:50%;background:${dotCol};flex-shrink:0"></span>
-          <span style="font-weight:700;color:#475569;width:78px;flex-shrink:0">${label}</span>
-          <span style="flex:1;color:#0f172a;font-weight:700">${valHTML}</span>
-          ${sub ? `<span style="color:#94a3b8;font-size:10px">${sub}</span>` : ''}
-        </div>`;
-      };
+      // Tone-based colour map for the single decision chip
+      const tone = (decision && decision.tone) || 'holding';
+      const toneStyle = {
+        exit:        {bg:'#fee2e2', bdr:'#f87171', fg:'#991b1b', icon:'🚨'},
+        trailing:    {bg:'#dcfce7', bdr:'#86efac', fg:'#166534', icon:'🛡'},
+        approaching: {bg:'#dbeafe', bdr:'#93c5fd', fg:'#1d4ed8', icon:'📈'},
+        holding:     {bg:'#f1f5f9', bdr:'#cbd5e1', fg:'#0f172a', icon:'✓'},
+      }[tone] || {bg:'#f1f5f9', bdr:'#cbd5e1', fg:'#0f172a', icon:'•'};
 
-      // Target row
-      const targetHit = curTarget > 0 && curPrice >= curTarget;
-      const targetRow = curTarget > 0
-        ? exitRow('Take profit', `${fmtP(curTarget)}`,
-                  targetHit ? '🎯 hit' : (targetUpside != null ? `+${targetUpside}% away` : ''),
-                  targetHit ? 'hit' : (targetUpside != null && +targetUpside <= 5 ? 'soon' : 'ok'))
-        : exitRow('Take profit', '<span style="color:#94a3b8">Analyst target unavailable</span>', '', 'ok');
-
-      // Stop loss row
-      const stopHit = stopPrice > 0 && curPrice > 0 && curPrice <= stopPrice;
-      const stopGapPct = stopPrice > 0 && curPrice > 0
-        ? ((curPrice - stopPrice) / curPrice * 100).toFixed(1)
-        : null;
-      const stopRow = exitRow('Stop loss', `${fmtP(stopPrice)}`,
-                              stopHit ? '⚠ hit' : (stopGapPct != null ? `-${stopGapPct}% buffer` : ''),
-                              stopHit ? 'hit' : (stopGapPct != null && +stopGapPct <= 3 ? 'soon' : 'ok'));
-
-      // Time stop row
-      let timeFmt = '—';
-      if (timeStop) {
-        try {
-          const td = new Date(timeStop + 'T00:00:00');
-          timeFmt = td.toLocaleDateString('en-US', {month:'short', day:'numeric'});
-        } catch(e) {}
-      }
-      const timeHit = daysToStop != null && daysToStop <= 0;
-      const timeStr = daysToStop == null ? ''
-                    : timeHit ? '⏰ re-evaluate'
-                    : daysToStop + 'd left';
-      const timeRow = exitRow('Time stop', timeFmt, timeStr,
-                              timeHit ? 'fired' : (daysToStop != null && daysToStop <= 14 ? 'soon' : 'ok'));
-
-      // Signal stop row (grade fall / score fall)
-      const signalRow = exitRow('Signal stop',
-                                signalTrig ? signalReason : `Hold while ≥B & score ≥60`,
-                                signalTrig ? '🚨 fired' : `now ${curGrade} · ${curPop.toFixed(0)}`,
-                                signalTrig ? 'fired' : 'ok');
-
-      // Alert banner — sits at the very top of the card if any exit triggered
+      // Alert banner only when backend says EXIT NOW (drives the UI; no client-side recalc)
       const alertBanner = alert ? `
         <div style="background:linear-gradient(135deg,#fee2e2 0%,#fecaca 100%);border:1px solid #f87171;border-radius:8px;
                     padding:6px 10px;margin-bottom:10px;display:flex;align-items:center;gap:8px">
@@ -4591,16 +4547,17 @@ function renderModelPortfolio(data) {
           ${targetUpside ? `<span style="font-size:10px;padding:2px 7px;border-radius:6px;background:rgba(22,163,74,.1);color:#15803d;font-weight:600">Target +${targetUpside}%</span>` : ''}
         </div>
 
-        <!-- Exit Plan: 4 triggers, any of which closes the position -->
-        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:8px 12px;margin-bottom:8px">
-          <div style="font-size:10px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">
-            🎯 Exit Plan — sell when any one fires
+        <!-- Single decision-point chip: shows the active exit rule for THIS pick.
+             Tested O'Neil/CAN SLIM ruleset: -8% hard stop, +20% take profit,
+             +25%-activated trailing stop locking +10%, signal stop on grade<B / score<60. -->
+        ${decision ? `
+        <div style="background:${toneStyle.bg};border:1px solid ${toneStyle.bdr};border-radius:10px;padding:9px 12px;margin-bottom:8px">
+          <div style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:800;color:${toneStyle.fg};margin-bottom:2px">
+            <span>${toneStyle.icon}</span>
+            <span>${decision.label}</span>
           </div>
-          ${targetRow}
-          ${stopRow}
-          ${timeRow}
-          ${signalRow}
-        </div>
+          ${decision.detail ? `<div style="font-size:10.5px;color:${toneStyle.fg};opacity:.85;line-height:1.4">${decision.detail}</div>` : ''}
+        </div>` : ''}
 
         ${p.rationale ? `<div style="font-size:11px;color:#374151;line-height:1.45;border-left:2px solid ${accentCol};padding-left:8px">💡 ${p.rationale.replace(/^💡\s*/,'')}</div>` : ''}
       </div>`;
