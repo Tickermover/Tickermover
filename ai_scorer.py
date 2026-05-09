@@ -399,22 +399,26 @@ def compute_pop_score(
     }
 
 
-def _action_for_caution(kind: str, t: dict) -> str:
-    """Tactical instruction tailored to the conflict — uses real prices when
-    available so the user knows exactly where to act, not just 'wait for a
-    pullback' (which begs the question — pullback to what?)."""
+def _caution_observation(kind: str, t: dict) -> str:
+    """Observational note about a caution flag.  Describes the data condition,
+    NOT what the user should do.  AlphaHunt is not a SEBI-registered advisor;
+    it surfaces signals, the user decides what (if anything) to do."""
     if kind == "analyst":
         mean = _safe(t, "target_mean") or _safe(t, "target_price")
         if mean and mean > 0:
-            return f"Best move: wait for a pullback toward ${mean:.0f} (analyst mean), or only enter if you expect upward estimate revisions."
-        return "Best move: wait for a pullback toward the analyst mean, or only enter if you expect upward estimate revisions."
+            return f"Stock is trading above the analyst mean target (${mean:.0f}) — limited consensus headroom."
+        return "Stock is trading above the analyst mean target — limited consensus headroom."
     if kind == "data":
-        return "Verify the missing fundamentals on the company's filings before sizing up."
+        return "Some fundamental fields are missing — score has lower data confidence."
     if kind == "regime":
-        return "Size at half your normal position and tighten stops until the macro regime turns."
+        return "Macro regime is not currently supportive of growth equities."
     if kind == "rsi":
-        return "Wait for RSI to cool back into the 50-65 zone before entering, or scale in on red days."
-    return "Confirm the thesis before entering."
+        return "RSI is in stretched territory — momentum is extended."
+    return "One or more thesis components are unconfirmed."
+
+# Backward-compat shim: existing call-sites use the old name. Keep the old
+# function pointing to the new neutral implementation.
+_action_for_caution = _caution_observation
 
 
 def _build_bottom_line(t, grade, score, regime_label, caution_reasons):
@@ -455,20 +459,20 @@ def _build_bottom_line(t, grade, score, regime_label, caution_reasons):
     elif grade == "D":
         lead = "Risk is rising; momentum is fading or fundamentals are weakening."
     elif grade == "F":
-        lead = "The setup is broken — multiple signals say avoid."
+        lead = "The setup is unfavourable — multiple signals are negative."
     else:
         lead = ""
 
-    # No conflicts → confident close
+    # No conflicts → neutral observation by grade
     if not caution_reasons:
         if grade in ("A", "B"):
-            return lead + " Momentum, fundamentals and macro all line up — size for normal risk."
+            return lead + " Momentum, fundamentals and macro indicators are aligned."
         if grade == "C":
-            return lead + " Wait for a clearer signal before committing capital."
+            return lead + " The thesis lacks a clear edge from current data."
         if grade == "D":
-            return lead + " Trim existing positions; avoid new entries."
+            return lead + " Multiple risk indicators are firing."
         if grade == "F":
-            return lead + " Stay out."
+            return lead + " Setup looks unfavourable across the score components."
         return lead
 
     # With conflicts → caveat + tactical instruction

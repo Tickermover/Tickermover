@@ -2125,7 +2125,7 @@ function catalystVerdict(t) {
   }
   if (!isNaN(days) && days < 0) {
     return {label:'Just Reported', color:'#475569', bg:'#f1f5f9', border:'#cbd5e1',
-            summary:'EPS released within last week — wait for the dust to settle'};
+            summary:'EPS released within last week — score stabilises after volatility settles'};
   }
   return {label:'No Catalyst', color:'#475569', bg:'#f1f5f9', border:'#cbd5e1',
           summary:'No upcoming events on the calendar'};
@@ -2479,10 +2479,10 @@ function riskFlags(t) {
   const days  = parseInt(t.days_to_earnings);
   const short = parseFloat(t.short_percent_float || t.short_interest);
   const vol   = parseFloat(t.volume_ratio);
-  if (!isNaN(days)  && days >= 0  && days <= 5)   flags.push({level:'HIGH', label:'Earnings Imminent',   desc:`Reports in ${days}d — avoid new entries`});
-  if (!isNaN(rsi)   && rsi > 75)                  flags.push({level:'HIGH', label:'Overbought',          desc:`RSI ${rsi.toFixed(0)} — wait for pullback`});
-  if (!isNaN(rsi)   && rsi < 30)                  flags.push({level:'MED',  label:'Oversold',            desc:`RSI ${rsi.toFixed(0)} — catching-falling-knife risk`});
-  if (!isNaN(short) && short > 0.15)              flags.push({level:'HIGH', label:'High Short Interest', desc:`${(short*100).toFixed(1)}% float short — squeeze or crash`});
+  if (!isNaN(days)  && days >= 0  && days <= 5)   flags.push({level:'HIGH', label:'Earnings Imminent',   desc:`Reports in ${days}d — elevated event risk`});
+  if (!isNaN(rsi)   && rsi > 75)                  flags.push({level:'HIGH', label:'Overbought',          desc:`RSI ${rsi.toFixed(0)} — extended momentum`});
+  if (!isNaN(rsi)   && rsi < 30)                  flags.push({level:'MED',  label:'Oversold',            desc:`RSI ${rsi.toFixed(0)} — sharp drawdown`});
+  if (!isNaN(short) && short > 0.15)              flags.push({level:'HIGH', label:'High Short Interest', desc:`${(short*100).toFixed(1)}% float short — high volatility risk`});
   if (!isNaN(vol)   && vol < 0.5)                 flags.push({level:'MED',  label:'Low Volume',          desc:`Only ${vol.toFixed(1)}× avg volume`});
   return flags;
 }
@@ -2633,10 +2633,10 @@ function renderHotList(data) {
       ? `<div style="display:flex;align-items:center;gap:6px;padding:5px 10px;border-radius:8px;margin:6px 0;font-size:11px;font-weight:800;
               ${days2e <= 3 ? 'background:rgba(220,38,38,.12);color:#b91c1c;border:1px solid rgba(220,38,38,.3);animation:ers-pulse 1.5s infinite'
                            : 'background:rgba(180,83,9,.1);color:#b45309;border:1px solid rgba(180,83,9,.25)'}">
-          ${days2e <= 3 ? '🔴' : '🟡'} Earnings in <strong>${days2e}d</strong> — ${days2e <= 3 ? 'Size down or wait!' : 'Monitor closely'}
+          ${days2e <= 3 ? '🔴' : '🟡'} Earnings in <strong>${days2e}d</strong> — ${days2e <= 3 ? 'High event risk' : 'Event approaching'}
         </div>` : '';
     const biasWarn = rsi > 75
-      ? `<div class="bias-warn">⚠️ RSI ${rsi.toFixed(0)} — very overbought, wait for reset.</div>`
+      ? `<div class="bias-warn">⚠️ RSI ${rsi.toFixed(0)} — very overbought; momentum stretched.</div>`
       : '';
 
     const kt = keyTrigger(t);
@@ -2830,7 +2830,7 @@ function buildEarningsBadge(t) {
     cls='ers-past'; icon='\u2713'; label='Reported'; tip='Earnings already reported';
   } else if (days <= 7) {
     cls='ers-urgent'; icon='\u26A1'; label='EPS in ' + days + 'd';
-    tip='URGENT: ' + days + ' days to earnings \u2014 size smaller or wait for post-earnings reaction';
+    tip='URGENT: ' + days + ' days to earnings \u2014 elevated event risk over short window';
   } else if (days <= 21) {
     cls='ers-soon'; icon='\uD83D\uDCC5'; label='EPS in ' + days + 'd';
     tip='Earnings in ' + days + ' days \u2014 consider reducing position size before report';
@@ -4370,7 +4370,7 @@ function renderModelPortfolio(data) {
   const concentrationWarning = topSectorShare >= 0.5
     ? `<div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#0f172a;display:flex;align-items:flex-start;gap:9px">
         <span style="font-size:14px;flex-shrink:0">⚠️</span>
-        <span><strong>Sector concentration:</strong> ${(topSectorShare*100).toFixed(0)}% of picks are in <strong>${topSector[0]}</strong>. If that theme corrects, most of the portfolio drops together. Diversify your real allocation across themes.</span>
+        <span><strong>Sector concentration:</strong> ${(topSectorShare*100).toFixed(0)}% of tracked stocks are in <strong>${topSector[0]}</strong>. The tracker is heavily exposed to a single theme — the score is currently flagging that area as strongest, but a single-sector correction would affect most entries together.</span>
        </div>`
     : '';
 
@@ -4597,8 +4597,7 @@ function renderModelPortfolio(data) {
         <strong>Grade A · Alpha Score ≥ 80</strong>. The tracker stays empty rather than dilute the methodology.
       </div>
       <div style="font-size:12px;color:#64748b;line-height:1.6;max-width:560px;margin:0 auto 18px">
-        <strong>What to do:</strong> wait for a pullback (which restores upside on quality names), check back tomorrow,
-        or hit Reset after the next refresh cycle if the universe data is still warming up.
+        Tracker entries appear automatically when stocks cross the criteria. Check back after the next refresh cycle, or hit Reset to rebuild from the current universe.
       </div>
       <button onclick="loadModelPortfolio()" style="padding:9px 20px;background:#15803d;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;margin-right:8px">↻ Reload</button>
       <button onclick="if(confirm('Reset rebuilds the portfolio with today\\'s top picks. Continue?'))resetModelPortfolio()" style="padding:9px 20px;background:#f1f5f9;color:#374151;border:1px solid rgba(0,0,0,.1);border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">🔄 Force Reset</button>

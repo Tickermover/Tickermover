@@ -2324,7 +2324,7 @@ _BLOG_ARTICLES = [
       },
       "recommendation": {
         "verdict": "Top Tier",
-        "summary": "Lower-volatility AI-infrastructure play — better fit for conservative growth investors than pure-play DC stocks. Wait for any 5-8% pullback to add.",
+        "summary": "Lower-volatility AI-infrastructure play with broader exposure than pure-play DC stocks.",
       },
     },
     "content": """<p>Every server rack in every data center sits inside an enclosure. Every cable in that rack is managed and protected. Every power distribution unit feeding that rack must be sized correctly. These unglamorous but essential components are the domain of <strong>nVent Electric (NVT)</strong> — a $22.7B industrial technology company that has quietly become one of the best AI infrastructure picks-and-shovels plays available.</p>
@@ -2434,7 +2434,7 @@ _BLOG_ARTICLES = [
         "guidance": "HDD ASPs rising on premium-capacity mix; FY guidance raised.",
       },
       "valuation": {
-        "verdict": "Has run past consensus — wait for pullback",
+        "verdict": "Has run past analyst consensus",
         "metrics": [
           {"label": "Analyst mean tgt", "value": "$354.96"},
           {"label": "Implied upside",   "value": "-12%"},
@@ -2459,7 +2459,7 @@ _BLOG_ARTICLES = [
         "key_catalysts":      "Next earnings; new high-capacity HDD launches; hyperscaler capex updates.",
       },
       "recommendation": {
-        "verdict": "Top Tier (wait for pullback)",
+        "verdict": "Top Tier (above analyst consensus)",
         "summary": "Quality structural story but stock has gotten ahead of consensus. Wait for a 10-15% pullback before adding.",
       },
     },

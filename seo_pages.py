@@ -281,11 +281,11 @@ def _pillar_body(slug: str, site_origin: str) -> str:
 <h2>How to read the number</h2>
 <blockquote>The Alpha Score isn't a buy signal. It's a "homework checklist completed" signal. It tells you the stock's quantitative story is good. The qualitative judgment — does the thesis make sense to <em>you</em>? — is still yours.</blockquote>
 <ul>
-  <li><strong>80-100 — Strong Buy zone.</strong> All five inputs are firing. These are the names AlphaHunt features in the Hot List.</li>
-  <li><strong>65-79 — Buy.</strong> Solid composite with at least one minor concern (usually valuation or momentum).</li>
-  <li><strong>50-64 — Hold.</strong> Mixed signals. Often a transition stock — improving fundamentals but lagging momentum, or vice versa.</li>
-  <li><strong>35-49 — Reduce.</strong> Two or more components in trouble. Watch for further deterioration.</li>
-  <li><strong>0-34 — Avoid.</strong> Broad-based weakness. The numbers are telling you something.</li>
+  <li><strong>80-100 — ★★★★★ Top Tier zone.</strong> All five inputs are firing. These are the names AlphaHunt features in the Hot List.</li>
+  <li><strong>65-79 — ★★★★ Quality.</strong> Solid composite with at least one minor concern (usually valuation or momentum).</li>
+  <li><strong>50-64 — ★★★ Average.</strong> Mixed signals. Often a transition stock — improving fundamentals but lagging momentum, or vice versa.</li>
+  <li><strong>35-49 — ★★ Below Average.</strong> Two or more components are weakening.</li>
+  <li><strong>0-34 — ★ Weak.</strong> Broad-based weakness across the score components.</li>
 </ul>
 
 <h2>Smart Score vs raw Alpha Score</h2>
@@ -527,7 +527,7 @@ def render_sector(slug: str, universe: list[dict], site_origin: str) -> Optional
     <thead><tr><th>Ticker</th><th>Grade</th><th>Score</th><th>Bottom line</th></tr></thead>
     <tbody>{table_html or '<tr><td colspan="4">No stocks scored in this sector yet — the universe is warming up.</td></tr>'}</tbody>
   </table>
-  <p style="font-size:13px;color:#64748b">Alpha Scores update every 5 minutes during US market hours. Grades: <strong>A</strong> Strong Buy · <strong>B</strong> Buy · <strong>C</strong> Hold · <strong>D</strong> Reduce · <strong>F</strong> Avoid.</p>
+  <p style="font-size:13px;color:#64748b">Alpha Scores update every 5 minutes during US market hours. Grades: <strong>A</strong> Top Tier · <strong>B</strong> Quality · <strong>C</strong> Average · <strong>D</strong> Below Avg · <strong>F</strong> Weak. (Quality descriptors, not buy/sell recommendations.)</p>
   {cta_block("See the full live dashboard")}
   {newsletter_block("sector-" + slug)}
   <div class="legal">AlphaHunt is a research tool, not financial advice. Always do your own research before investing.</div>
@@ -589,7 +589,7 @@ def _cmp_card(t: dict) -> str:
         pop_n = round(float(pop)) if pop is not None else "—"
     except (TypeError, ValueError):
         pop_n = "—"
-    rating = {"A": "Strong Buy", "B": "Buy", "C": "Hold", "D": "Reduce", "F": "Avoid"}.get(grade, "Under Review")
+    rating = {"A": "★★★★★ Top Tier", "B": "★★★★ Quality", "C": "★★★ Average", "D": "★★ Below Avg", "F": "★ Weak"}.get(grade, "Under Review")
     price = t.get("price")
     try:
         price_str = f"${float(price):.2f}" if price else "—"
