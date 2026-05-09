@@ -2780,18 +2780,12 @@ def _build_model_portfolio(existing: dict | None = None) -> dict:
     inception    = today - timedelta(days=30)
     inception_str = str(inception)
 
-    # ── Entry criteria (ALL must be met) ─────────────────────────────────
-    #   1. Grade A
-    #   2. Alpha Score >= 80  (uses smart_score — the regime-adjusted score
-    #      shown to users, NOT the raw pop_score; in a "Mixed" regime a stock
-    #      with raw 84 displays as 80 and so qualifies, in "Bullish" a raw 80
-    #      qualifies. This matches user expectation: when they see "Alpha 80",
-    #      that's the bar.)
-    #   3. Market cap >= $500M (already enforced upstream by the scorer)
-    #   4. ≥20% upside to analyst consensus target (relaxed from 30%).
-    MIN_ALPHA_SCORE = 80
-    MIN_UPSIDE      = 0.20
-
+    # ── Tiered entry cascade — ALWAYS fill 20 slots ──────────────────────
+    # Three tiers in descending strictness. We pull from Tier 1 first (the
+    # gold standard), then top up from Tier 2, then from Tier 3 if still
+    # short. Each pick is tagged with `entry_tier` so the UI can colour the
+    # badge.  This solves the "Always pick the best 20 stocks" requirement
+    # even when a hot market leaves few names with high score AND upside.
     def _alpha(t: dict) -> float:
         """The displayed Alpha Score — smart_score with pop_score fallback."""
         ss = t.get("smart_score")
@@ -2799,30 +2793,55 @@ def _build_model_portfolio(existing: dict | None = None) -> dict:
             ss = t.get("pop_score") or 0
         return float(ss or 0)
 
-    def _has_min_upside(t: dict) -> bool:
+    def _upside(t: dict) -> float:
         price = float(t.get("price") or 0)
         tgt   = float(t.get("target_mean") or 0)
-        return price > 0 and tgt > 0 and ((tgt - price) / price) >= MIN_UPSIDE
+        if price <= 0 or tgt <= 0:
+            return -1.0   # disqualifies via comparison if upside floors are >=0
+        return (tgt - price) / price
 
-    # Diagnostic counters so the operator can see WHY the list is short
-    universe_n  = len(_universe_data)
-    grade_a_n   = sum(1 for t in _universe_data if t.get("grade") == "A")
-    score_n     = sum(1 for t in _universe_data if t.get("grade") == "A" and _alpha(t) >= MIN_ALPHA_SCORE)
-    candidates  = [
-        t for t in _universe_data
-        if t.get("grade") == "A"
-        and _alpha(t) >= MIN_ALPHA_SCORE
-        and _has_min_upside(t)
-    ]
-    final_n = len(candidates)
-    candidates.sort(key=_alpha, reverse=True)
-    top20 = candidates[:20]
+    grade_a_pool = [t for t in _universe_data if t.get("grade") == "A"]
+
+    # Tier 1: Premium — score ≥ 80 AND upside ≥ 20%
+    tier1 = [t for t in grade_a_pool if _alpha(t) >= 80 and _upside(t) >= 0.20]
+    # Tier 2: Strong  — score ≥ 75 AND upside ≥ 15%   (excluding Tier 1)
+    tier1_set = {t.get("ticker") for t in tier1}
+    tier2 = [t for t in grade_a_pool
+             if t.get("ticker") not in tier1_set
+             and _alpha(t) >= 75
+             and _upside(t) >= 0.15]
+    # Tier 3: Eligible — top Grade A by score (no hard upside floor)
+    seen = tier1_set | {t.get("ticker") for t in tier2}
+    tier3 = [t for t in grade_a_pool if t.get("ticker") not in seen]
+
+    # Sort each tier by alpha desc, then upside desc as tiebreaker
+    keysort = lambda t: (_alpha(t), _upside(t))
+    tier1.sort(key=keysort, reverse=True)
+    tier2.sort(key=keysort, reverse=True)
+    tier3.sort(key=keysort, reverse=True)
+
+    # Cascade-fill to 20
+    top20: list = []
+    for tier_n, pool in [(1, tier1), (2, tier2), (3, tier3)]:
+        for t in pool:
+            if len(top20) >= 20:
+                break
+            t["_entry_tier"] = tier_n
+            top20.append(t)
+        if len(top20) >= 20:
+            break
+
     new_tickers = {t.get("ticker") for t in top20}
 
     logger.info(
-        f"📊 Model Portfolio filter: universe={universe_n} → "
-        f"grade A={grade_a_n} → score≥{MIN_ALPHA_SCORE}={score_n} → "
-        f"+upside≥{int(MIN_UPSIDE*100)}%={final_n} → top20={len(top20)}"
+        f"📊 Model Portfolio cascade: universe={len(_universe_data)} → "
+        f"grade A={len(grade_a_pool)} → "
+        f"T1(score≥80,up≥20%)={len(tier1)} · "
+        f"T2(score≥75,up≥15%)={len(tier2)} · "
+        f"T3(rest)={len(tier3)} → "
+        f"selected={len(top20)} (T1={sum(1 for t in top20 if t.get('_entry_tier')==1)}, "
+        f"T2={sum(1 for t in top20 if t.get('_entry_tier')==2)}, "
+        f"T3={sum(1 for t in top20 if t.get('_entry_tier')==3)})"
     )
 
     # Index existing picks by ticker so we can preserve metadata for retained ones
@@ -2866,6 +2885,7 @@ def _build_model_portfolio(existing: dict | None = None) -> dict:
             "entry_price":    entry,
             "pop_at_entry":   pop_at_entry,
             "grade_at_entry": grade_at_entry,
+            "entry_tier":     prev.get("entry_tier") if prev else t.get("_entry_tier", 3),
             "is_simulated_entry": is_simulated_entry,
             "sector":         t.get("sector", ""),
             "sub_sector":     t.get("sub_sector") or t.get("subsector", ""),
@@ -3179,46 +3199,57 @@ def _replenish_portfolio(portfolio: dict) -> dict:
     just_closed = {tr["ticker"] for tr in history.get("trades", []) if tr.get("exit_date") == today_str}
     blocked = held | just_closed
 
-    # Same helper as in _build_model_portfolio so criteria stay in sync
+    # Same tiered cascade as _build_model_portfolio so replenish picks
+    # match the bar of fresh builds.
     def _alpha(t: dict) -> float:
         ss = t.get("smart_score")
         if ss is None:
             ss = t.get("pop_score") or 0
         return float(ss or 0)
-    def _has_min_upside(t: dict) -> bool:
+    def _upside(t: dict) -> float:
         price = float(t.get("price") or 0)
         tgt   = float(t.get("target_mean") or 0)
-        return price > 0 and tgt > 0 and ((tgt - price) / price) >= 0.20
+        if price <= 0 or tgt <= 0:
+            return -1.0
+        return (tgt - price) / price
 
-    candidates = sorted(
-        [t for t in _universe_data
-         if t.get("grade") == "A"
-         and _alpha(t) >= 80
-         and _has_min_upside(t)
-         and t.get("ticker") not in blocked],
-        key=_alpha,
-        reverse=True,
-    )
+    pool = [t for t in _universe_data
+            if t.get("grade") == "A" and t.get("ticker") not in blocked]
+    tier1 = [t for t in pool if _alpha(t) >= 80 and _upside(t) >= 0.20]
+    t1_set = {t.get("ticker") for t in tier1}
+    tier2 = [t for t in pool if t.get("ticker") not in t1_set
+                              and _alpha(t) >= 75 and _upside(t) >= 0.15]
+    seen2 = t1_set | {t.get("ticker") for t in tier2}
+    tier3 = [t for t in pool if t.get("ticker") not in seen2]
+    keysort = lambda t: (_alpha(t), _upside(t))
+    for tier in (tier1, tier2, tier3):
+        tier.sort(key=keysort, reverse=True)
 
     needed = target_size - len(cur_picks)
     added = 0
-    for t in candidates[:needed]:
-        price = float(t.get("price") or 0)
-        cur_picks.append({
-            "ticker":         t.get("ticker", ""),
-            "name":           t.get("name", ""),
-            "added_date":     today_str,
-            "entry_price":    round(price, 2),
-            "pop_at_entry":   round(_alpha(t), 1),
-            "grade_at_entry": t.get("grade", "A"),
-            "is_simulated_entry": False,   # real-time addition, not back-dated
-            "sector":         t.get("sector", ""),
-            "sub_sector":     t.get("sub_sector") or t.get("subsector", ""),
-            "rationale":      (t.get("rationale") or "")[:120],
-            "signals":        (t.get("signals") or [])[:3],
-            "target_mean":    float(t.get("target_mean") or 0),
-        })
-        added += 1
+    for tier_n, pool_t in [(1, tier1), (2, tier2), (3, tier3)]:
+        if added >= needed:
+            break
+        for t in pool_t:
+            if added >= needed:
+                break
+            price = float(t.get("price") or 0)
+            cur_picks.append({
+                "ticker":         t.get("ticker", ""),
+                "name":           t.get("name", ""),
+                "added_date":     today_str,
+                "entry_price":    round(price, 2),
+                "pop_at_entry":   round(_alpha(t), 1),
+                "grade_at_entry": t.get("grade", "A"),
+                "entry_tier":     tier_n,
+                "is_simulated_entry": False,   # real-time addition, not back-dated
+                "sector":         t.get("sector", ""),
+                "sub_sector":     t.get("sub_sector") or t.get("subsector", ""),
+                "rationale":      (t.get("rationale") or "")[:120],
+                "signals":        (t.get("signals") or [])[:3],
+                "target_mean":    float(t.get("target_mean") or 0),
+            })
+            added += 1
     if added:
         logger.info(f"📗 Replenished portfolio: +{added} pick(s), now {len(cur_picks)}/{target_size}")
     portfolio["picks"] = cur_picks

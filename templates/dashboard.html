@@ -4422,9 +4422,6 @@ function renderModelPortfolio(data) {
         : '';
       const isSimEntry = !!p.is_simulated_entry;
       const sinceLabel = isSimEntry ? 'Lookback start' : 'Recommended';
-      const simSuffix  = isSimEntry
-        ? ` <span title="This card uses a 30-day backward simulation: entry price is back-calculated from this stock's actual 30-day momentum, so the % return reflects what someone holding the stock for the past month would have seen. After a stock exits and a new one is added later, that new pick will show its true recommendation date." style="font-size:9.5px;color:#94a3b8;font-style:italic;text-decoration:underline dotted;cursor:help">(30-day simulation)</span>`
-        : '';
 
       // ── NEW badge: highlight picks added in the last 7 days (real adds only,
       //    not first-build simulated entries — those would all show NEW on day 1
@@ -4432,6 +4429,19 @@ function renderModelPortfolio(data) {
       const isRecentAdd = !isSimEntry && daysHeld != null && daysHeld <= 7;
       const newBadge = isRecentAdd
         ? `<span style="display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:6px;background:linear-gradient(135deg,#15803d,#84cc16);color:#fff;font-size:9.5px;font-weight:900;letter-spacing:.08em;box-shadow:0 1px 3px rgba(21,128,61,.3);animation:pulse-new 2s ease-in-out infinite">✨ NEW</span>`
+        : '';
+
+      // ── Tier badge: shows which strictness tier this pick passed ─────────
+      // Tier 1 = Premium (score≥80, upside≥20%), Tier 2 = Strong (score≥75,
+      // upside≥15%), Tier 3 = Eligible (top Grade A by score, no upside floor).
+      // Helps users see at a glance which picks meet the gold standard.
+      const tier = p.entry_tier;
+      const tierBadge = (tier === 1)
+        ? `<span title="Tier 1 Premium: Alpha Score ≥80 AND ≥20% analyst upside" style="font-size:9px;font-weight:800;letter-spacing:.06em;padding:2px 6px;border-radius:5px;background:rgba(21,128,61,.12);color:#15803d;border:1px solid rgba(21,128,61,.25)">PREMIUM</span>`
+        : (tier === 2)
+        ? `<span title="Tier 2 Strong: Alpha Score ≥75 AND ≥15% analyst upside" style="font-size:9px;font-weight:800;letter-spacing:.06em;padding:2px 6px;border-radius:5px;background:rgba(29,78,216,.1);color:#1d4ed8;border:1px solid rgba(29,78,216,.2)">STRONG</span>`
+        : (tier === 3)
+        ? `<span title="Tier 3 Eligible: top Grade A pick to fill out the 20-stock portfolio" style="font-size:9px;font-weight:800;letter-spacing:.06em;padding:2px 6px;border-radius:5px;background:rgba(100,116,139,.1);color:#475569;border:1px solid rgba(100,116,139,.2)">ELIGIBLE</span>`
         : '';
 
       // Tone-based colour map for the single decision chip
@@ -4476,10 +4486,11 @@ function renderModelPortfolio(data) {
           </div>
         </div>
 
-        <!-- Recommended since — small dated tag (label changes if simulated) -->
+        <!-- Recommended since — small dated tag + tier badge -->
         <div style="display:flex;align-items:center;gap:6px;font-size:10.5px;color:#64748b;margin-bottom:8px;flex-wrap:wrap">
           <span style="font-size:11px">📅</span>
-          <span><strong style="color:#0f172a">${sinceLabel} ${addedFmt}</strong>${heldStr ? ` · ${heldStr}` : ''}${simSuffix}</span>
+          <span><strong style="color:#0f172a">${sinceLabel} ${addedFmt}</strong>${heldStr ? ` · ${heldStr}` : ''}</span>
+          ${tierBadge}
         </div>
 
         <!-- Big performance number -->
