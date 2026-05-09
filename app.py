@@ -4030,4 +4030,33 @@ import legal_pages as _legal
 
 @app.get("/terms", response_class=HTMLResponse)
 async def terms_page():
+    return HTMLResponse(_legal.render_terms())
+
+
+@app.get("/privacy", response_class=HTMLResponse)
+async def privacy_page():
+    return HTMLResponse(_legal.render_privacy())
+
+
+@app.get("/disclaimer", response_class=HTMLResponse)
+async def disclaimer_page():
     return HTMLResponse(_legal.render_disclaimer())
+
+
+@app.get("/infographics", response_class=HTMLResponse)
+async def infographics_page():
+    """Daily Top 5 infographic page — pulls from /api/hot, renders 1200x675
+    Twitter-card-sized PNG via html2canvas. For sharing on Twitter/Reddit."""
+    from pathlib import Path
+    return HTMLResponse((Path(__file__).parent / "templates" / "infographics.html").read_text(encoding="utf-8"))
+
+@app.get("/infographics/earnings", response_class=HTMLResponse)
+@app.get("/infographics/earnings/{ticker}", response_class=HTMLResponse)
+async def earnings_infographic_page(ticker: str = "LITE"):
+    """Earnings-by-the-Numbers infographic for any ticker that recently
+    reported. Pulls /api/earnings-intel/{ticker} + universe data, renders
+    1200x900 PNG via html2canvas. Same template serves any ticker — JS
+    inspects the URL path and fills in the data."""
+    from pathlib import Path
+    return HTMLResponse((Path(__file__).parent / "templates" / "earnings_infographic.html").read_text(encoding="utf-8"))
+

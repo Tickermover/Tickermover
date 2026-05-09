@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AlphaHunt — Earnings Infographic</title>
+<meta name="description" content="Earnings-by-the-numbers infographic — share to Twitter / Reddit / LinkedIn.">
+<link rel="icon" href="/static/icons/favicon-32.png" type="image/png">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif}
+  body{background:#f1f5f9;color:#0f172a;min-height:100vh;padding:24px}
+  .page{max-width:1280px;margin:0 auto}
+
+  /* ── PAGE HEADER ── */
+  .page-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px}
+  .page-head .title{font-size:22px;font-weight:900;letter-spacing:-.02em}
+  .page-head .title em{font-style:normal;color:#15803d}
+  .page-head .sub{font-size:13px;color:#64748b;margin-top:2px}
+  .nav-links a{color:#15803d;font-weight:700;text-decoration:none;font-size:13px;margin-left:14px}
+  .nav-links a:hover{text-decoration:underline}
+
+  /* Ticker selector */
+  .ticker-bar{display:flex;gap:10px;align-items:center;background:#fff;border:1px solid rgba(15,23,42,.1);border-radius:10px;padding:10px 14px;margin-bottom:18px;flex-wrap:wrap}
+  .ticker-bar label{font-size:12.5px;color:#64748b;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
+  .ticker-bar input{padding:7px 10px;border:1px solid rgba(15,23,42,.12);border-radius:7px;font-size:14px;font-weight:700;width:120px;text-transform:uppercase;font-family:'JetBrains Mono','Inter',monospace}
+  .ticker-bar input:focus{outline:none;border-color:#15803d;box-shadow:0 0 0 3px rgba(132,204,22,.15)}
+
+  /* ── ACTIONS ── */
+  .actions{display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap;align-items:center}
+  .btn{padding:10px 18px;border-radius:9px;font-size:13.5px;font-weight:700;cursor:pointer;border:none;font-family:inherit;letter-spacing:.02em;transition:transform .12s}
+  .btn:hover{transform:translateY(-1px)}
+  .btn-primary{background:linear-gradient(135deg,#15803d 0%,#84cc16 100%);color:#fff;box-shadow:0 4px 14px rgba(132,204,22,.35)}
+  .btn-secondary{background:#fff;color:#0f172a;border:1px solid rgba(15,23,42,.12)}
+  .btn-icon{display:inline-flex;align-items:center;gap:6px}
+  .feedback{font-size:12.5px;color:#15803d;font-weight:700;margin-left:8px;opacity:0;transition:opacity .25s}
+  .feedback.on{opacity:1}
+
+  /* ── INFOGRAPHIC CANVAS — 1200x900, "Earnings by the Numbers" style ── */
+  .canvas-frame{
+    width:1200px;height:900px;
+    background:#ffffff;
+    border-radius:0;overflow:hidden;position:relative;
+    box-shadow:0 24px 60px rgba(15,23,42,.18);
+    color:#0f172a;
+    transform-origin:top left;
+    border:1px solid rgba(15,23,42,.06);
+  }
+  .canvas-wrap{overflow:hidden;border-radius:14px}
+
+  /* Top hero banner */
+  .ig-top{
+    background:#0d2440;
+    padding:38px 56px 30px;
+    color:#fff;
+    border-bottom:6px solid #84cc16;
+  }
+  .ig-eyebrow{
+    color:#84cc16;font-size:24px;font-weight:900;letter-spacing:.04em;
+    text-transform:uppercase;line-height:1;
+  }
+  .ig-headline{
+    display:flex;align-items:flex-end;gap:18px;margin-top:6px;flex-wrap:wrap;
+  }
+  .ig-bigtitle{
+    font-size:80px;font-weight:900;letter-spacing:-.03em;line-height:.95;color:#fff;
+    text-transform:uppercase;
+  }
+  .ig-divider{
+    width:3px;height:54px;background:#84cc16;align-self:flex-end;
+    margin-bottom:8px;
+  }
+  .ig-quarter{
+    font-size:38px;font-weight:800;letter-spacing:-.01em;color:#fff;line-height:1;
+    align-self:flex-end;margin-bottom:6px;
+  }
+  .ig-tickerline{
+    margin-top:12px;font-size:18px;color:rgba(255,255,255,.78);font-weight:600;letter-spacing:.02em;
+  }
+  .ig-tickerline strong{color:#84cc16;font-weight:800}
+
+  /* Stat sections */
+  .ig-section{
+    padding:30px 56px;
+    border-bottom:1px solid rgba(15,23,42,.08);
+  }
+  .ig-section:last-of-type{border-bottom:0}
+  .stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:32px;align-items:start}
+  .stat-cell{position:relative}
+  .stat-cell + .stat-cell::before{
+    content:'';position:absolute;left:-16px;top:6px;bottom:6px;width:1px;background:rgba(15,23,42,.08);
+  }
+
+  .stat-num{
+    font-size:62px;font-weight:900;letter-spacing:-.03em;line-height:1;
+    color:#84cc16;
+  }
+  .stat-num.navy{color:#0d2440}
+  .stat-num.muted{color:#475569;font-size:48px}
+  .stat-num .unit{font-size:38px;font-weight:800;color:#84cc16;margin-left:2px}
+  .stat-cap{
+    font-size:11.5px;color:#64748b;font-weight:800;letter-spacing:.12em;
+    text-transform:uppercase;margin-top:14px;
+  }
+  .stat-h{
+    font-size:30px;font-weight:900;color:#0d2440;letter-spacing:-.01em;margin-top:4px;line-height:1.1;
+  }
+  .stat-h.green{color:#15803d}
+  .stat-body{
+    font-size:13.5px;color:#475569;line-height:1.55;margin-top:8px;
+  }
+
+  /* Bottom takeaway */
+  .ig-takeaway{
+    background:#f0fdf4;
+    border-top:6px solid #15803d;
+    padding:28px 56px 0;
+    display:flex;align-items:flex-start;gap:24px;flex:1;
+  }
+  .ig-takeaway-icon{
+    width:80px;height:80px;border-radius:50%;flex-shrink:0;
+    background:linear-gradient(135deg,#15803d 0%,#84cc16 100%);
+    display:flex;align-items:center;justify-content:center;
+    font-size:38px;line-height:1;color:#fff;font-weight:900;
+    box-shadow:0 6px 16px rgba(21,128,61,.25);
+  }
+  .ig-takeaway-body{flex:1}
+  .ig-takeaway-h{font-size:14px;color:#15803d;font-weight:900;letter-spacing:.12em;text-transform:uppercase}
+  .ig-takeaway-text{font-size:22px;font-weight:800;color:#0d2440;line-height:1.32;margin-top:6px;letter-spacing:-.01em}
+  .ig-takeaway-stars{margin-top:12px;font-size:18px;font-weight:800}
+  .ig-takeaway-stars .stars{color:#fbbf24;letter-spacing:.06em}
+  .ig-takeaway-stars .label{color:#15803d;margin-left:6px}
+  .ig-takeaway-stars .score{color:#475569;margin-left:8px;font-size:14px;font-weight:700}
+
+  /* Footer band */
+  .ig-foot{
+    margin-top:auto;
+    background:#0d2440;
+    color:#fff;
+    padding:14px 56px;
+    display:flex;align-items:center;justify-content:space-between;
+    font-size:12px;
+  }
+  .ig-foot-disclaimer{color:rgba(255,255,255,.55);font-style:italic}
+  .ig-foot-url{font-weight:800;color:#84cc16}
+
+  /* Loading state */
+  .loading-state{
+    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    background:#ffffff;font-size:15px;color:#64748b;font-weight:600;letter-spacing:.04em;z-index:5;
+  }
+
+  /* Caption */
+  .caption{margin-top:18px;background:#fff;border:1px solid rgba(15,23,42,.1);border-radius:10px;padding:14px 16px}
+  .caption-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+  .caption-h{font-size:11.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#64748b}
+  .caption-body{font-family:'JetBrains Mono','Inter',monospace;font-size:12.5px;color:#0f172a;white-space:pre-wrap;line-height:1.55}
+
+  @media(max-width:768px){
+    body{padding:14px}
+    .actions,.ticker-bar{flex-direction:column;align-items:stretch}
+    .btn{width:100%;justify-content:center}
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="page-head">
+    <div>
+      <div class="title">📊 Earnings <em>by the Numbers</em></div>
+      <div class="sub">Auto-built from SEC 8-K filings + AlphaHunt scoring. Pick any ticker that's reported recently.</div>
+    </div>
+    <div class="nav-links">
+      <a href="/infographics">← Daily Top 5</a>
+      <a href="/app">Dashboard</a>
+    </div>
+  </div>
+
+  <!-- Ticker input -->
+  <div class="ticker-bar">
+    <label for="t-input">Ticker:</label>
+    <input id="t-input" type="text" value="LITE" maxlength="6" oninput="this.value=this.value.toUpperCase()" onkeydown="if(event.key==='Enter')loadTicker()">
+    <button class="btn btn-primary btn-icon" onclick="loadTicker()"><span>↻</span><span>Load</span></button>
+    <span style="color:#64748b;font-size:12px;margin-left:8px">Try: <a href="javascript:setT('LITE')" style="color:#15803d;font-weight:700">LITE</a> · <a href="javascript:setT('AAOI')" style="color:#15803d;font-weight:700">AAOI</a> · <a href="javascript:setT('NVDA')" style="color:#15803d;font-weight:700">NVDA</a></span>
+  </div>
+
+  <!-- Actions -->
+  <div class="actions">
+    <button class="btn btn-primary btn-icon" onclick="downloadPng()"><span>📥</span><span>Download PNG (1200×900)</span></button>
+    <button class="btn btn-secondary btn-icon" onclick="copyCaption()"><span>📋</span><span>Copy caption</span></button>
+    <button class="btn btn-secondary btn-icon" onclick="shareTwitter()"><span>𝕏</span><span>Share on X</span></button>
+    <span id="feedback" class="feedback"></span>
+  </div>
+
+  <!-- The 1200x900 canvas -->
+  <div id="canvas-wrap" class="canvas-wrap">
+    <div id="canvas" class="canvas-frame">
+      <div id="loading" class="loading-state">Loading earnings data…</div>
+
+      <!-- Filled in by JS -->
+      <div id="ig-content" style="display:none;height:100%;display:flex;flex-direction:column">
+
+        <div class="ig-top">
+          <div class="ig-eyebrow">Earnings by the</div>
+          <div class="ig-headline">
+            <div class="ig-bigtitle">Numbers</div>
+            <div class="ig-divider"></div>
+            <div class="ig-quarter" id="ig-quarter">—</div>
+          </div>
+          <div class="ig-tickerline" id="ig-tickerline">—</div>
+        </div>
+
+        <div class="ig-section">
+          <div class="stat-grid">
+            <div class="stat-cell">
+              <div class="stat-num" id="ig-rev">—</div>
+              <div class="stat-cap">Revenue</div>
+              <div class="stat-h green" id="ig-rev-growth">—</div>
+              <div class="stat-body" id="ig-rev-body">—</div>
+            </div>
+            <div class="stat-cell">
+              <div class="stat-num navy" id="ig-eps">—</div>
+              <div class="stat-cap">EPS Actual</div>
+              <div class="stat-h" id="ig-eps-h">—</div>
+              <div class="stat-body" id="ig-eps-body">—</div>
+            </div>
+            <div class="stat-cell">
+              <div class="stat-num" id="ig-margin">—</div>
+              <div class="stat-cap">Gross Margin</div>
+              <div class="stat-h navy" id="ig-margin-h">—</div>
+              <div class="stat-body" id="ig-margin-body">—</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="ig-section">
+          <div class="stat-grid">
+            <div class="stat-cell">
+              <div class="stat-num" id="ig-guidance">—</div>
+              <div class="stat-cap">Forward Guidance</div>
+              <div class="stat-h navy" id="ig-guidance-h">—</div>
+              <div class="stat-body" id="ig-guidance-body">—</div>
+            </div>
+            <div class="stat-cell">
+              <div class="stat-num navy" id="ig-streak">—</div>
+              <div class="stat-cap">EPS Beat Streak</div>
+              <div class="stat-h" id="ig-streak-h">—</div>
+              <div class="stat-body" id="ig-streak-body">—</div>
+            </div>
+            <div class="stat-cell">
+              <div class="stat-num" id="ig-reaction">—</div>
+              <div class="stat-cap">Reaction Score</div>
+              <div class="stat-h navy" id="ig-reaction-h">—</div>
+              <div class="stat-body" id="ig-reaction-body">—</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="ig-takeaway">
+          <div class="ig-takeaway-icon">📈</div>
+          <div class="ig-takeaway-body">
+            <div class="ig-takeaway-h">Key Takeaway</div>
+            <div class="ig-takeaway-text" id="ig-takeaway-text">—</div>
+            <div class="ig-takeaway-stars" id="ig-takeaway-stars">—</div>
+          </div>
+        </div>
+
+        <div class="ig-foot">
+          <div class="ig-foot-disclaimer">📊 Data: SEC EDGAR 8-K + analyst estimates. Quality descriptors. Not buy/sell advice.</div>
+          <div class="ig-foot-url">alphahunt.in</div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Caption -->
+  <div class="caption">
+    <div class="caption-head">
+      <span class="caption-h">Pre-filled caption</span>
+      <span style="font-size:11px;color:#94a3b8">Click "Copy caption" above</span>
+    </div>
+    <div id="caption-body" class="caption-body">Loading…</div>
+  </div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+const STAR_BY_GRADE = {A:'★★★★★',B:'★★★★',C:'★★★',D:'★★',F:'★'};
+const TIER_BY_GRADE = {A:'Top Tier',B:'Quality',C:'Average',D:'Below Avg',F:'Weak'};
+let _data = null;
+
+function setT(t) { document.getElementById('t-input').value = t; loadTicker(); }
+
+function fmtMoney(n) {
+  if (n == null || isNaN(n)) return '—';
+  if (Math.abs(n) >= 1e9) return '$' + (n/1e9).toFixed(2) + 'B';
+  if (Math.abs(n) >= 1e6) return '$' + (n/1e6).toFixed(0) + 'M';
+  return '$' + n.toFixed(0);
+}
+function fmtPct(n, dp=1) {
+  if (n == null || isNaN(n)) return '—';
+  return (n >= 0 ? '+' : '') + n.toFixed(dp) + '%';
+}
+
+async function loadTicker() {
+  const t = document.getElementById('t-input').value.trim().toUpperCase();
+  if (!t) return;
+  flash('Loading ' + t + '…');
+  document.getElementById('loading').style.display = 'flex';
+  document.getElementById('loading').textContent = 'Loading earnings data for ' + t + '…';
+  document.getElementById('ig-content').style.display = 'none';
+
+  try {
+    const [eiR, uniR] = await Promise.all([
+      fetch('/api/earnings-intel/' + t).then(r => r.ok ? r.json() : null),
+      fetch('/api/universe').then(r => r.json())
+    ]);
+    const stock = (uniR.tickers || []).find(x => x.ticker === t);
+    if (!stock) {
+      document.getElementById('loading').textContent = 'Ticker "' + t + '" not in our universe.';
+      return;
+    }
+    if (!eiR || !eiR.filing_date) {
+      document.getElementById('loading').textContent = t + ' has no recent SEC 8-K filing in our cache. Try a stock that reported in the last 60 days.';
+      return;
+    }
+    _data = { ei: eiR, stock };
+    render();
+  } catch(e) {
+    document.getElementById('loading').textContent = 'Error: ' + e.message;
+  }
+}
+
+function render() {
+  const { ei, stock } = _data;
+  const eps = (stock.eps_quarters || [])[0] || {};
+  const inc = (stock.quarterly_income || [])[0] || {};
+  const incPrev = (stock.quarterly_income || [])[1] || {};
+
+  // Quarter label — derive from filing date
+  const filingDate = new Date(ei.filing_date + 'T00:00:00');
+  const fyMonth = filingDate.getUTCMonth();
+  const fyQ = Math.floor(fyMonth / 3) + 1;
+  const fyYr = (filingDate.getUTCFullYear() % 100).toString().padStart(2, '0');
+  const quarterLbl = 'Q' + fyQ + "'" + fyYr;
+
+  // Headline
+  document.getElementById('ig-quarter').textContent = quarterLbl;
+  document.getElementById('ig-tickerline').innerHTML =
+    '<strong>' + stock.ticker + '</strong> · ' + (stock.name || '') + ' · Reported ' + filingDate.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+
+  // Stat 1: Revenue
+  const rev = inc.revenue;
+  const revPrev = incPrev.revenue;
+  const revGrowth = (rev && revPrev) ? ((rev - revPrev) / revPrev) * 100 : null;
+  // Use stock.rev_growth_qyoy if present (more accurate YoY)
+  const revYoY = stock.rev_growth_qyoy != null ? stock.rev_growth_qyoy * 100 : revGrowth;
+  document.getElementById('ig-rev').textContent = fmtMoney(rev);
+  document.getElementById('ig-rev-growth').textContent = revYoY != null ? fmtPct(revYoY, 1) + ' YoY' : '—';
+  document.getElementById('ig-rev-body').textContent = revPrev ? 'Prior quarter: ' + fmtMoney(revPrev) : '';
+
+  // Stat 2: EPS
+  const epsActual = eps.actual;
+  const epsEst = eps.estimate;
+  const beat = eps.beat;
+  const surp = eps.surprise_pct;
+  document.getElementById('ig-eps').textContent = epsActual != null ? '$' + epsActual.toFixed(2) : '—';
+  document.getElementById('ig-eps-h').textContent = beat ? 'Beat' : (beat === false ? 'Missed' : '—');
+  document.getElementById('ig-eps-h').style.color = beat ? '#15803d' : '#dc2626';
+  document.getElementById('ig-eps-body').textContent = (epsEst != null ? 'Estimate: $' + epsEst.toFixed(2) : '') + (surp != null ? ' · Surprise: ' + (surp >= 0 ? '+' : '') + (surp * 100).toFixed(1) + '%' : '');
+
+  // Stat 3: Gross margin
+  const gm = inc.gross_margin;
+  const gmPrev = incPrev.gross_margin;
+  const gmDelta = (gm != null && gmPrev != null) ? (gm - gmPrev) * 100 : null;
+  document.getElementById('ig-margin').textContent = gm != null ? (gm * 100).toFixed(1) + '%' : '—';
+  document.getElementById('ig-margin-h').textContent = gmDelta != null ? fmtPct(gmDelta, 1) + ' pts QoQ' : '—';
+  document.getElementById('ig-margin-h').style.color = gmDelta > 0 ? '#15803d' : (gmDelta < 0 ? '#dc2626' : '#475569');
+  document.getElementById('ig-margin-body').textContent = gmPrev != null ? 'Prior quarter: ' + (gmPrev * 100).toFixed(1) + '%' : '';
+
+  // Stat 4: Guidance
+  const guidance = ei.guidance || {};
+  const tone = (guidance.tone || 'none').toLowerCase();
+  const toneColor = {raised:'#15803d', maintained:'#0d2440', lowered:'#dc2626', none:'#94a3b8'}[tone] || '#475569';
+  document.getElementById('ig-guidance').textContent = tone === 'none' ? '—' : tone.charAt(0).toUpperCase() + tone.slice(1);
+  document.getElementById('ig-guidance').style.color = toneColor;
+  document.getElementById('ig-guidance-h').textContent = guidance.revenue_guidance || guidance.eps_guidance || 'No specific range';
+  document.getElementById('ig-guidance-h').style.fontSize = '20px';
+  document.getElementById('ig-guidance-body').textContent = (guidance.summary || '').slice(0, 110);
+
+  // Stat 5: EPS beat streak
+  const epsHist = stock.eps_quarters || [];
+  const beats = epsHist.filter(q => q.beat).length;
+  const total = epsHist.length;
+  const streakNum = total > 0 ? beats + '/' + total : '—';
+  document.getElementById('ig-streak').textContent = streakNum;
+  document.getElementById('ig-streak-h').textContent = beats === total && total > 0 ? 'Perfect record' : (beats >= total - 1 ? 'Strong record' : 'Mixed record');
+  document.getElementById('ig-streak-h').style.color = beats === total && total > 0 ? '#15803d' : '#0d2440';
+  const avgSurprise = epsHist.length ? (epsHist.reduce((s,q) => s + (q.surprise_pct || 0), 0) / epsHist.length) * 100 : 0;
+  document.getElementById('ig-streak-body').textContent = avgSurprise > 0 ? 'Avg surprise: +' + avgSurprise.toFixed(1) + '%' : '';
+
+  // Stat 6: Reaction score
+  const reaction = ei.reaction || {};
+  const rxScore = reaction.score;
+  const rxLabel = reaction.label || '—';
+  document.getElementById('ig-reaction').textContent = rxScore != null ? (rxScore >= 0 ? '+' : '') + rxScore.toFixed(2) : '—';
+  document.getElementById('ig-reaction').style.color = rxScore >= 0.30 ? '#15803d' : (rxScore >= 0.10 ? '#84cc16' : (rxScore >= -0.10 ? '#475569' : '#dc2626'));
+  document.getElementById('ig-reaction-h').textContent = rxLabel;
+  const sentiment = ei.sentiment || {};
+  document.getElementById('ig-reaction-body').textContent = 'Sentiment: ' + (sentiment.label || '—') + (sentiment.score != null ? ' (' + sentiment.score.toFixed(2) + ')' : '');
+
+  // Takeaway
+  const positives = (sentiment.positives || []).slice(0, 1);
+  const headline = positives[0] || (guidance.summary || 'Earnings reported. See full data above.');
+  document.getElementById('ig-takeaway-text').textContent = headline.length > 180 ? headline.slice(0, 180) + '…' : headline;
+  const grade = stock.grade || 'C';
+  const score = stock.smart_score ?? stock.pop_score ?? 0;
+  document.getElementById('ig-takeaway-stars').innerHTML =
+    '<span class="stars">' + (STAR_BY_GRADE[grade] || '') + '</span>' +
+    '<span class="label">' + (TIER_BY_GRADE[grade] || '') + '</span>' +
+    '<span class="score">· Alpha Score ' + score.toFixed(0) + '</span>';
+
+  // Caption
+  const captionParts = [
+    `${stock.ticker} ${quarterLbl} earnings · ${stock.name}`,
+    '',
+    `Revenue: ${fmtMoney(rev)}${revYoY != null ? ' (' + fmtPct(revYoY, 0) + ' YoY)' : ''}`,
+    `EPS: $${epsActual ? epsActual.toFixed(2) : '—'}${beat ? ' · Beat' : (beat === false ? ' · Miss' : '')}`,
+    `Gross Margin: ${gm != null ? (gm*100).toFixed(1) + '%' : '—'}${gmDelta ? ' (' + fmtPct(gmDelta,0) + ' pts QoQ)' : ''}`,
+    tone !== 'none' ? `Guidance: ${tone.charAt(0).toUpperCase() + tone.slice(1)}` : '',
+    `Reaction: ${rxLabel}${rxScore != null ? ' (' + (rxScore >= 0 ? '+' : '') + rxScore.toFixed(2) + ')' : ''}`,
+    '',
+    `${STAR_BY_GRADE[grade] || ''} ${TIER_BY_GRADE[grade] || ''} · Alpha Score ${score.toFixed(0)}`,
+    '',
+    '📊 alphahunt.in · Quality descriptors only — not buy/sell advice',
+    '',
+    `#${stock.ticker} #Earnings #USStocks #AlphaHunt`
+  ].filter(Boolean).join('\n');
+  document.getElementById('caption-body').textContent = captionParts;
+
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('ig-content').style.display = 'flex';
+  flash('✓ Loaded');
+}
+
+async function downloadPng() {
+  if (!_data) { flash('Load a ticker first'); return; }
+  flash('Rendering image…');
+  const node = document.getElementById('canvas');
+  const c = await html2canvas(node, {
+    backgroundColor:'#ffffff', scale:1, width:1200, height:900,
+    windowWidth:1200, windowHeight:900, useCORS:true,
+  });
+  const a = document.createElement('a');
+  a.href = c.toDataURL('image/png');
+  a.download = `alphahunt-earnings-${_data.stock.ticker}-${_data.ei.filing_date}.png`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  flash('✓ Downloaded');
+}
+
+function copyCaption() {
+  const text = document.getElementById('caption-body').textContent;
+  navigator.clipboard.writeText(text).then(() => flash('✓ Caption copied'), () => flash('Copy failed'));
+}
+
+function shareTwitter() {
+  const text = document.getElementById('caption-body').textContent;
+  window.open('https://twitter.com/intent/tweet?text=' + encodeURIComponent(text), '_blank', 'noopener');
+}
+
+function flash(msg) {
+  const fb = document.getElementById('feedback');
+  fb.textContent = msg; fb.classList.add('on');
+  clearTimeout(window._fbT);
+  window._fbT = setTimeout(() => fb.classList.remove('on'), 1800);
+}
+
+// Responsive scaling: shrink the 1200x900 canvas to fit screen
+function fitCanvas() {
+  const wrap = document.getElementById('canvas-wrap');
+  const card = document.getElementById('canvas');
+  const max = Math.min(wrap.parentElement.clientWidth, 1200);
+  const scale = Math.min(1, max / 1200);
+  card.style.transform = `scale(${scale})`;
+  wrap.style.height = (900 * scale) + 'px';
+  wrap.style.width  = (1200 * scale) + 'px';
+}
+
+window.addEventListener('load', () => {
+  fitCanvas();
+  // Pre-fill ticker from URL path: /infographics/earnings/LITE
+  const m = window.location.pathname.match(/\/infographics\/earnings\/([A-Z\.]+)/i);
+  if (m) document.getElementById('t-input').value = m[1].toUpperCase();
+  loadTicker();
+});
+window.addEventListener('resize', fitCanvas);
+</script>
+</body>
+</html>

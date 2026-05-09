@@ -1058,7 +1058,7 @@ tr:hover td{background:rgba(132,204,22,.06)}
   <button class="tab" onclick="showTab('sectors',this)">🗺 Sector Map</button>
   <!-- Watchlist tab removed from nav — accessible via stock modals -->
   <button class="tab" onclick="showTab('model',this)" id="tab-model">📊 Score Tracker</button>
-  <button class="tab" onclick="showTab('blog',this)" id="tab-blog">📝 Blog</button>
+  <button class="tab" onclick="showTab('blog',this)" id="tab-blog">📊 Reports</button>
 </div>
 
 <div class="main">
@@ -3408,6 +3408,18 @@ function openStockModal(ticker) {
       <div id="news-body-${t.ticker}" style="font-size:11.5px;color:#475569">Loading…</div>
     </div>
 
+    <!-- Share button — opens earnings infographic for this ticker -->
+    <div style="margin-top:14px;padding:14px 16px;background:linear-gradient(135deg,#f0fdf4 0%,#ecfdf5 100%);border:1px solid #bbf7d0;border-radius:10px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+      <div>
+        <div style="font-size:13px;font-weight:800;color:#0f172a">📊 Share this stock as an infographic</div>
+        <div style="font-size:11.5px;color:#475569;margin-top:2px">1200×900 PNG, ready for Twitter / Reddit / LinkedIn — auto-fills with the latest earnings data</div>
+      </div>
+      <a href="/infographics/earnings/${t.ticker}" target="_blank" rel="noopener"
+         style="padding:9px 16px;background:linear-gradient(135deg,#15803d,#84cc16);color:#fff;text-decoration:none;border-radius:8px;font-size:12.5px;font-weight:800;letter-spacing:.02em;flex-shrink:0">
+        Open infographic →
+      </a>
+    </div>
+
     <div class="fd-links" style="margin-top:12px">
       <a class="fd-link fd-link-tv"  href="https://www.tradingview.com/symbols/${t.ticker}/"                  target="_blank">📈 TradingView</a>
       <a class="fd-link fd-link-sa"  href="https://stockanalysis.com/stocks/${t.ticker.toLowerCase()}/"       target="_blank">📊 StockAnalysis</a>
@@ -3870,19 +3882,166 @@ function renderSectors(tickers) {
    ---------------------------------------------------------- */
 let _blogLoaded = false;
 
+// Renamed: Blog tab now hosts the Reports view (shareable infographics).
+// Function name `loadBlog` kept for backward-compat with showTab('blog') call.
 async function loadBlog() {
   if (_blogLoaded) return;
+  return loadReports();
+}
+
+async function loadReports() {
   const root = document.getElementById('blog-root');
+  if (!root) return;
+  root.innerHTML = `<div class="loading" style="padding:40px 20px">📊 Loading reports…</div>`;
   try {
-    const r = await fetch('/api/blog');
-    if (!r.ok) throw new Error('HTTP ' + r.status);
-    const data = await r.json();
-    renderBlog(data.articles || []);
+    const uniR = await fetch('/api/universe').then(r => r.json());
+    const tickers = uniR.tickers || [];
+    renderReports(tickers);
     _blogLoaded = true;
   } catch(e) {
-    root.innerHTML = `<div class="empty"><div class="emoji">⚠️</div><div>Could not load articles — ${e.message}</div>
-      <button onclick="_blogLoaded=false;loadBlog()" style="margin-top:12px;padding:8px 18px;background:var(--acc);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">↻ Retry</button></div>`;
+    root.innerHTML = `<div class="empty"><div class="emoji">⚠️</div><div>Could not load — ${e.message}</div></div>`;
   }
+}
+
+function renderReports(tickers) {
+  const root = document.getElementById('blog-root');
+
+  // Find stocks that reported in last 60 days (have last_earnings_date or
+  // a recent eps_quarters[0].date)
+  const today = new Date();
+  const sixtyD = 60 * 86400 * 1000;
+  const reportedRecently = tickers.filter(t => {
+    const eps0 = (t.eps_quarters || [])[0];
+    if (!eps0 || !eps0.date) return false;
+    try {
+      const d = new Date(eps0.date + 'T00:00:00');
+      return (today - d) <= sixtyD * 2;   // last ~120 days
+    } catch(e) { return false; }
+  }).sort((a, b) => {
+    const da = (a.eps_quarters || [])[0]?.date || '';
+    const db = (b.eps_quarters || [])[0]?.date || '';
+    return db.localeCompare(da);
+  }).slice(0, 24);
+
+  // Top 5 by score for the Daily Top 5 preview
+  const top5 = [...tickers].sort((a, b) =>
+    (b.smart_score ?? b.pop_score ?? 0) - (a.smart_score ?? a.pop_score ?? 0)
+  ).slice(0, 5);
+
+  const STAR = {A:'★★★★★',B:'★★★★',C:'★★★',D:'★★',F:'★'};
+  const TIER = {A:'Top Tier',B:'Quality',C:'Average',D:'Below Avg',F:'Weak'};
+
+  // ── Section 1: Daily Top 5 ────────────────────────────────────────────
+  const top5Cards = top5.map((t, i) => `
+    <div style="background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:10px;padding:14px;text-align:center;min-width:0">
+      <div style="font-size:9.5px;color:#94a3b8;font-weight:800;letter-spacing:.1em">#${i+1}</div>
+      <div style="font-size:18px;font-weight:900;color:#0f172a;margin-top:2px">${t.ticker}</div>
+      <div style="font-size:10px;color:#64748b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px">${(t.name || '').slice(0,16)}</div>
+      <div style="font-size:13px;color:#fbbf24;margin-top:8px">${STAR[t.grade] || ''}</div>
+      <div style="font-size:24px;font-weight:900;background:linear-gradient(135deg,#15803d,#84cc16);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-top:4px">${(t.smart_score ?? t.pop_score ?? 0).toFixed(0)}</div>
+    </div>`).join('');
+
+  const dailyHTML = `
+    <div style="background:linear-gradient(135deg,#0d2440 0%,#15803d 100%);border-radius:14px;padding:24px;margin-bottom:18px;color:#fff;box-shadow:0 6px 20px rgba(13,36,64,.2)">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:14px">
+        <div>
+          <div style="font-size:11px;color:#84cc16;font-weight:800;letter-spacing:.1em;text-transform:uppercase">Today's Daily Report</div>
+          <div style="font-size:22px;font-weight:900;margin-top:2px">📊 Top 5 Highest-Scoring Stocks</div>
+          <div style="font-size:12px;color:rgba(255,255,255,.7);margin-top:2px">1200×675 PNG · Twitter / Reddit ready</div>
+        </div>
+        <a href="/infographics" target="_blank"
+          style="padding:9px 16px;background:#fff;color:#15803d;border-radius:8px;font-size:12.5px;font-weight:800;text-decoration:none;letter-spacing:.02em">
+          📥 Open & download →
+        </a>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px">
+        ${top5Cards}
+      </div>
+    </div>`;
+
+  // ── Section 2: Earnings Gallery ───────────────────────────────────────
+  const earningsCards = reportedRecently.length === 0
+    ? `<div style="grid-column:1/-1;text-align:center;color:#64748b;padding:24px;font-size:13px">No earnings reports in our cache yet — check back during reporting season.</div>`
+    : reportedRecently.map(t => {
+      const eps = (t.eps_quarters || [])[0] || {};
+      const inc = (t.quarterly_income || [])[0] || {};
+      const rev = inc.revenue;
+      const revStr = rev > 1e9 ? '$' + (rev/1e9).toFixed(2) + 'B' : rev > 1e6 ? '$' + (rev/1e6).toFixed(0) + 'M' : '—';
+      const epsActual = eps.actual;
+      const beat = eps.beat;
+      const date = eps.date || '';
+      const dateStr = date ? new Date(date + 'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—';
+      return `
+      <a href="/infographics/earnings/${t.ticker}" target="_blank"
+         style="background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:12px;padding:14px;text-decoration:none;color:inherit;transition:transform .15s,box-shadow .15s;display:block;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.04)"
+         onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 18px rgba(15,23,42,.12)'"
+         onmouseout="this.style.transform='';this.style.boxShadow='0 1px 3px rgba(0,0,0,.04)'">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+          <div style="min-width:0;flex:1">
+            <div style="font-size:16px;font-weight:900;color:#0f172a">${t.ticker}</div>
+            <div style="font-size:11px;color:#64748b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${(t.name || '').slice(0,28)}</div>
+          </div>
+          <div style="font-size:10px;font-weight:800;letter-spacing:.04em;padding:3px 7px;border-radius:5px;background:${beat ? 'rgba(21,128,61,.1)' : 'rgba(220,38,38,.1)'};color:${beat ? '#15803d' : '#b91c1c'};white-space:nowrap;flex-shrink:0">${beat ? 'BEAT' : (beat === false ? 'MISS' : '—')}</div>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:#475569;margin-top:10px">
+          <span>Rev: <strong style="color:#0f172a">${revStr}</strong></span>
+          <span>EPS: <strong style="color:#0f172a">$${epsActual ? epsActual.toFixed(2) : '—'}</strong></span>
+        </div>
+        <div style="font-size:10.5px;color:#94a3b8;margin-top:6px">📅 Reported ${dateStr}</div>
+        <div style="font-size:11px;color:#15803d;margin-top:8px;font-weight:700">📊 Open infographic →</div>
+      </a>`;
+    }).join('');
+
+  const earningsHTML = `
+    <div style="margin-bottom:18px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+        <div>
+          <div style="font-size:18px;font-weight:800;color:#0f172a">📈 Earnings Reports · Last 120 days</div>
+          <div style="font-size:12px;color:#64748b;margin-top:2px">Click any card to open the 1200×900 earnings infographic for that stock</div>
+        </div>
+        <div style="font-size:11.5px;color:#94a3b8;font-weight:700">${reportedRecently.length} reports available</div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px">
+        ${earningsCards}
+      </div>
+    </div>`;
+
+  // ── Section 3: Per-Stock Spotlight ────────────────────────────────────
+  const spotlightHTML = `
+    <div style="background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:14px;padding:20px;margin-bottom:18px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <span style="font-size:20px">🔍</span>
+        <div>
+          <div style="font-size:16px;font-weight:800;color:#0f172a">Per-Stock Spotlight</div>
+          <div style="font-size:12px;color:#64748b">Open an earnings infographic for any ticker — even if it's not in the gallery above.</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;align-items:center">
+        <input id="spotlight-input" type="text" placeholder="e.g., NVDA, MU, LITE" maxlength="6"
+               oninput="this.value=this.value.toUpperCase()"
+               onkeydown="if(event.key==='Enter')spotlightOpen()"
+               style="padding:9px 12px;border:1px solid rgba(0,0,0,.12);border-radius:7px;font-size:14px;font-weight:700;width:160px;text-transform:uppercase;font-family:'JetBrains Mono','Inter',monospace">
+        <button onclick="spotlightOpen()"
+                style="padding:9px 16px;background:linear-gradient(135deg,#15803d,#84cc16);color:#fff;border:none;border-radius:7px;font-size:13px;font-weight:800;cursor:pointer">
+          Open Earnings Infographic →
+        </button>
+      </div>
+    </div>`;
+
+  // Final assembly
+  root.innerHTML = `
+    <div class="sec-heading" style="margin-bottom:14px">📊 Reports — Shareable cards for Twitter / Reddit / LinkedIn</div>
+    ${dailyHTML}
+    ${earningsHTML}
+    ${spotlightHTML}
+    <div style="font-size:11.5px;color:#94a3b8;text-align:center;font-style:italic;margin-top:10px">All cards are auto-generated from live data. Quality descriptors only — not buy/sell recommendations.</div>
+  `;
+}
+
+function spotlightOpen() {
+  const t = document.getElementById('spotlight-input').value.trim().toUpperCase();
+  if (!t) return;
+  window.open('/infographics/earnings/' + t, '_blank', 'noopener');
 }
 
 function renderBlog(articles) {
