@@ -2392,7 +2392,7 @@ _BLOG_ARTICLES = [
       },
       "recommendation": {
         "verdict": "Top Tier (speculative)",
-        "summary": "Most investable pure-play quantum name. Size 1-3% of book — high conviction but high volatility. Use as a sector option, not a core position.",
+        "summary": "Most investable pure-play quantum name. Highly volatile — score reflects this. Use as a sector option, not a core position.",
       },
     },
     "content": """<p>Not all quantum computers are built the same. Superconducting qubits (IBM, Google) operate near absolute zero and are susceptible to noise. Photonic systems (PsiQuantum) remain largely unproven at scale. Trapped ion systems — the approach championed by <strong>IonQ (IONQ)</strong> — offer the highest qubit fidelity of any current technology and a clearer path to fault-tolerant quantum computing.</p>
