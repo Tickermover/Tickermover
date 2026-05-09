@@ -32,9 +32,14 @@
      so the dashboard never flashes behind the auth modal on the way in from
      the landing page. The class is removed by the auth code once resolved. -->
 <script>
-  if (new URLSearchParams(window.location.search).get('signup') === '1') {
-    document.documentElement.classList.add('auth-gating');
-  }
+  // Hide the dashboard until the auth modal pops, on either ?signup=1 or
+  // ?signin=1 deep links from the landing page.
+  (function(){
+    var _q = new URLSearchParams(window.location.search);
+    if (_q.get('signup') === '1' || _q.get('signin') === '1') {
+      document.documentElement.classList.add('auth-gating');
+    }
+  })();
 </script>
 <style>
   /* Hide everything except the auth modal during the signup gate */
@@ -5160,14 +5165,29 @@ document.addEventListener('DOMContentLoaded', async () => {
   await authInit();
   const _urlParams = new URLSearchParams(window.location.search);
   const _signupFlow = _urlParams.get('signup') === '1';
+  const _signinFlow = _urlParams.get('signin') === '1';
+
+  // Returning-visitor heuristic: if this device has signed in before we
+  // default the auth modal to SIGN IN, not sign up. This fixes the awkward
+  // "open signup → click 'already have an account?' → switch" flow for
+  // anyone who's previously logged in on this browser.
+  let _hasReturningHint = false;
+  try {
+    _hasReturningHint = localStorage.getItem('ah_seen_signin') === '1';
+  } catch(e) {}
+
   if (_signupFlow) {
     history.replaceState({}, '', '/app');
     openAuthModal('signup');
     document.documentElement.classList.remove('auth-gating');
+  } else if (_signinFlow) {
+    history.replaceState({}, '', '/app');
+    openAuthModal('signin');
+    document.documentElement.classList.remove('auth-gating');
   } else if (!_AUTH.token) {
-    // No session and no explicit signup intent — give the user a brief
-    // preview of the dashboard, then nudge them to sign up
-    setTimeout(() => openAuthModal('signup'), 600);
+    // No session, no explicit intent — open the auth modal directly to
+    // SIGN IN if this device has logged in before, otherwise SIGN UP.
+    setTimeout(() => openAuthModal(_hasReturningHint ? 'signin' : 'signup'), 600);
   } else {
     // Authed user — make sure the gate class isn't hanging around
     document.documentElement.classList.remove('auth-gating');
@@ -5182,7 +5202,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 // Persistent session stored in localStorage — survives refreshes and reopened tabs
 const _AUTH = {
   get token()   { return localStorage.getItem('ah_token'); },
-  set token(v)  { v ? localStorage.setItem('ah_token', v) : localStorage.removeItem('ah_token'); },
+  set token(v)  {
+    if (v) {
+      localStorage.setItem('ah_token', v);
+      // Stamp a returning-visitor flag so future visits default the auth
+      // modal to SIGN IN instead of sign up. Persists even after logout.
+      try { localStorage.setItem('ah_seen_signin', '1'); } catch(e) {}
+    } else {
+      localStorage.removeItem('ah_token');
+    }
+  },
   get refresh() { return localStorage.getItem('ah_refresh'); },
   set refresh(v){ v ? localStorage.setItem('ah_refresh', v) : localStorage.removeItem('ah_refresh'); },
   get user()    { try { return JSON.parse(localStorage.getItem('ah_user') || 'null'); } catch { return null; } },
