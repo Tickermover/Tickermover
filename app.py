@@ -2782,20 +2782,24 @@ def _build_model_portfolio(existing: dict | None = None) -> dict:
 
     # ── Entry criteria (ALL must be met) ─────────────────────────────────
     #   1. Grade A
-    #   2. Alpha Score >= 68
+    #   2. Alpha Score >= 80  (tightened from 68 — only the very best)
     #   3. Market cap >= $500M (already enforced upstream by the scorer)
-    #   4. ≥30% upside to analyst consensus target — added per user request:
-    #      no point recommending a stock that's already near fair value.
-    def _has_30pct_upside(t: dict) -> bool:
+    #   4. ≥20% upside to analyst consensus target (relaxed from 30% — 30%
+    #      was cutting too many quality names that had already partially
+    #      run; 20% still requires meaningful headroom to fair value).
+    MIN_ALPHA_SCORE = 80
+    MIN_UPSIDE      = 0.20
+
+    def _has_min_upside(t: dict) -> bool:
         price = float(t.get("price") or 0)
         tgt   = float(t.get("target_mean") or 0)
-        return price > 0 and tgt > 0 and ((tgt - price) / price) >= 0.30
+        return price > 0 and tgt > 0 and ((tgt - price) / price) >= MIN_UPSIDE
 
     candidates = [
         t for t in _universe_data
         if t.get("grade") == "A"
-        and float(t.get("pop_score") or 0) >= 68
-        and _has_30pct_upside(t)
+        and float(t.get("pop_score") or 0) >= MIN_ALPHA_SCORE
+        and _has_min_upside(t)
     ]
     candidates.sort(key=lambda t: float(t.get("pop_score") or 0), reverse=True)
     top20 = candidates[:20]
