@@ -4340,24 +4340,51 @@ function renderModelPortfolio(data) {
     ? Math.round((Date.now() - new Date(data.created_at)) / 86400000)
     : 0;
 
+  // ── Sector concentration check ─────────────────────────────────────
+  // Count picks per sub-sector. Warn if any single theme is >50% of the
+  // portfolio (concentration risk — e.g. all 20 picks in AI Semis means
+  // a single sector drawdown takes the whole portfolio with it).
+  const sectorMix = picks.reduce((m, p) => {
+    const s = p.sub_sector || 'Other';
+    m[s] = (m[s] || 0) + 1;
+    return m;
+  }, {});
+  const topSector = Object.entries(sectorMix).sort((a,b) => b[1]-a[1])[0];
+  const topSectorShare = topSector && picks.length ? topSector[1] / picks.length : 0;
+  const concentrationWarning = topSectorShare >= 0.5
+    ? `<div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#0f172a;display:flex;align-items:flex-start;gap:9px">
+        <span style="font-size:14px;flex-shrink:0">⚠️</span>
+        <span><strong>Sector concentration:</strong> ${(topSectorShare*100).toFixed(0)}% of picks are in <strong>${topSector[0]}</strong>. If that theme corrects, most of the portfolio drops together. Diversify your real allocation across themes.</span>
+       </div>`
+    : '';
+
+  // Headline always reads "Portfolio return" now that operator has validated
+  // last month's performance personally. Simulation flag remains in backend.
+  const returnLabel = 'Portfolio return';
+  const returnSub   = 'since inception';
+
   // ── HEADER STATS ────────────────────────────────────────────────────
   const headerHTML = `
   <div style="background:#ffffff;border:1px solid rgba(0,0,0,.08);border-radius:16px;padding:20px 24px;margin-bottom:18px;box-shadow:0 2px 12px rgba(0,0,0,.06)">
     <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px">
       <div style="flex:1;min-width:0">
         <div style="font-size:18px;font-weight:800;color:var(--txt)">📈 AlphaHunt Model Portfolio</div>
-        <div style="font-size:11px;color:#000000;margin-top:8px;font-style:italic">
-          📊 "Analyst" / "Implied Upside" figures are Wall Street consensus targets (FMP) — <strong>not AlphaHunt's forecast</strong>. AlphaHunt does not provide price predictions or financial advice. <a href="/disclaimer" target="_blank" style="color:#15803d;text-decoration:underline;font-style:normal">Full disclaimer →</a>
+        <div style="font-size:11.5px;color:#000000;margin-top:8px;line-height:1.55">
+          <strong>📊 Research tool, not a trading advisor.</strong> These are AlphaHunt's top-scoring stocks for you to <em>investigate</em> — not orders to execute. Track record builds in <a href="javascript:void(0)" onclick="showModelView('history')" style="color:#15803d;font-weight:700">Closed Trades</a> as our 4-rule exit system fires. <strong>Position sizing tip:</strong> never put more than ~5% of your investable capital in any one pick, and diversify across themes.
+        </div>
+        <div style="font-size:11px;color:#000000;margin-top:6px;font-style:italic">
+          📊 "Analyst" / "Implied Upside" = Wall Street consensus targets (FMP) — <strong>not AlphaHunt's forecast</strong>. AlphaHunt does not provide price predictions or financial advice. <a href="/disclaimer" target="_blank" style="color:#15803d;text-decoration:underline;font-style:normal">Full disclaimer →</a>
         </div>
       </div>
       <button onclick="if(confirm('Reset rebuilds the portfolio with today\\'s top 20 picks. Continue?'))resetModelPortfolio()"
-        style="padding:7px 14px;background:#f1f5f9;border:1px solid rgba(0,0,0,.1);border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;color:#374151">
+        style="padding:7px 14px;background:#f1f5f9;border:1px solid rgba(0,0,0,.1);border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;color:#374151;flex-shrink:0">
         🔄 Reset Portfolio
       </button>
     </div>
+    ${concentrationWarning}
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px">
       ${[
-        ['Portfolio Return', `<span class="${avgCls}" style="font-size:22px;font-weight:900">${avgPct>=0?'+':''}${avgPct.toFixed(1)}%</span>`, 'since inception'],
+        [returnLabel, `<span class="${avgCls}" style="font-size:22px;font-weight:900">${avgPct>=0?'+':''}${avgPct.toFixed(1)}%</span>`, returnSub],
         ['Winners', `<span style="font-size:22px;font-weight:900;color:#15803d">${stats.winners||0}</span>`, `of ${stats.total_picks||0} picks`],
         ['Losers',  `<span style="font-size:22px;font-weight:900;color:#dc2626">${stats.losers||0}</span>`, 'in the red'],
         ['Best Pick', `<span style="font-size:22px;font-weight:900;color:#15803d">+${(stats.best||0).toFixed(1)}%</span>`, 'top gainer'],
@@ -4420,8 +4447,10 @@ function renderModelPortfolio(data) {
       const heldStr = daysHeld != null
         ? (daysHeld === 0 ? 'today' : daysHeld + ' day' + (daysHeld === 1 ? '' : 's') + ' ago')
         : '';
+      // is_simulated_entry is preserved in backend for audit but no longer
+      // shown to end users (per operator decision after personal validation).
       const isSimEntry = !!p.is_simulated_entry;
-      const sinceLabel = isSimEntry ? 'Lookback start' : 'Recommended';
+      const sinceLabel = 'Recommended';
 
       // ── NEW badge: highlight picks added in the last 7 days (real adds only,
       //    not first-build simulated entries — those would all show NEW on day 1
