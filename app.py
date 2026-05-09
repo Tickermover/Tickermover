@@ -2986,42 +2986,35 @@ def _enrich_model_portfolio(portfolio: dict) -> dict:
         # ── Build user-facing decision point — OBSERVATIONAL language ────
         # AlphaHunt is a research/tracking tool, not a SEBI-registered advisor.
         # Labels describe what's happening to OUR SCORE, not what the user
-        # should do with their money. "Removed from tracker" is a fact about
-        # our methodology; "SELL NOW" is a recommendation we're not licensed
-        # to make. Same data, neutral framing.
+        # should do. We deliberately do NOT publish a "tracker stop level" —
+        # that reads as a sell-here instruction. The score's exit logic still
+        # runs in the backend and removes the entry when triggered, but the
+        # card just says whether the score is still holding or weakening.
         if exit_alert:
             decision = {
                 "tone":   "exit",
                 "label":  "📤 Removed from tracker",
-                "detail": exit_alert["reason"],
+                "detail": exit_alert.get("reason", ""),
             }
         elif trail_active:
             # Profit-locked zone: stock has been to +10% peak at some point
-            lock_phrase = (
-                "break-even tier reached"          if trail_mult == 1.00 else
-                "+10% locked-in tier"               if trail_mult == 1.10 else
-                "+25% locked-in tier"               if trail_mult == 1.25 else
-                "+50% locked-in tier"               # trail_mult == 1.50
-            )
             sign = "+" if perf >= 0 else ""
             decision = {
                 "tone":   "trailing",
                 "label":  f"📊 Still tracked · {sign}{perf:.1f}%",
-                "detail": f"Tracker stop: ${trail_floor:.2f} · {lock_phrase}",
+                "detail": "",
             }
         elif perf >= 0:
-            # Pre-trail, in the green: -8% hard stop only
             decision = {
                 "tone":   "holding",
                 "label":  f"📊 Still tracked · +{perf:.1f}%",
-                "detail": f"Tracker stop: ${hard_stop_price:.2f} · -8% from entry",
+                "detail": "",
             }
         else:
-            # Pre-trail, in the red: under-performing but not yet exited
             decision = {
                 "tone":   "watching",
                 "label":  f"📊 Score weakening · {perf:.1f}%",
-                "detail": f"Tracker stop: ${hard_stop_price:.2f} · -8% from entry",
+                "detail": "",
             }
 
         perfs.append(perf)

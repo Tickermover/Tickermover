@@ -2633,7 +2633,7 @@ function renderHotList(data) {
       ? `<div style="display:flex;align-items:center;gap:6px;padding:5px 10px;border-radius:8px;margin:6px 0;font-size:11px;font-weight:800;
               ${days2e <= 3 ? 'background:rgba(220,38,38,.12);color:#b91c1c;border:1px solid rgba(220,38,38,.3);animation:ers-pulse 1.5s infinite'
                            : 'background:rgba(180,83,9,.1);color:#b45309;border:1px solid rgba(180,83,9,.25)'}">
-          ${days2e <= 3 ? '🔴' : '🟡'} Earnings in <strong>${days2e}d</strong> — ${days2e <= 3 ? 'High event risk' : 'Event approaching'}
+          ${days2e <= 3 ? '🔴' : '🟡'} Earnings in <strong>${days2e}d</strong>
         </div>` : '';
     const biasWarn = rsi > 75
       ? `<div class="bias-warn">⚠️ RSI ${rsi.toFixed(0)} — very overbought; momentum stretched.</div>`
