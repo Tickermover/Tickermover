@@ -1052,12 +1052,10 @@ tr:hover td{background:rgba(132,204,22,.06)}
 <!-- TABS -->
 <div class="tabs">
   <button class="tab active" onclick="showTab('hot',this)">🔥 Hot List</button>
-  <button class="tab" onclick="showTab('risk',this)">🚨 Risk Radar</button>
-  <button class="tab" onclick="showTab('news',this)">📰 AI Catalysts</button>
-  <button class="tab" onclick="showTab('fund',this)">📊 All Stocks</button>
+  <button class="tab" onclick="showTab('model',this)" id="tab-model">🎯 Top Hunts</button>
+  <button class="tab" onclick="showTab('watch',this)" id="tab-watch">⭐ Watchlist</button>
+  <button class="tab" onclick="showTab('fund',this)">🌐 Universe</button>
   <button class="tab" onclick="showTab('sectors',this)">🗺 Sector Map</button>
-  <!-- Watchlist tab removed from nav — accessible via stock modals -->
-  <button class="tab" onclick="showTab('model',this)" id="tab-model">📊 Score Tracker</button>
   <button class="tab" onclick="showTab('blog',this)" id="tab-blog">📊 Reports</button>
 </div>
 
@@ -1065,27 +1063,27 @@ tr:hover td{background:rgba(132,204,22,.06)}
 
 <!-- HOT LIST -->
 <div id="panel-hot" class="panel active">
-  <!-- Subtitle: white background, fully-black text (per user request) -->
-  <div style="background:#ffffff;border:1px solid rgba(15,23,42,.12);border-radius:10px;padding:10px 14px;margin-bottom:14px;display:flex;align-items:flex-start;gap:10px;box-shadow:0 1px 3px rgba(15,23,42,.04)">
-    <div style="font-size:18px;flex-shrink:0;line-height:1">🔥</div>
-    <div style="font-size:12.5px;color:#000000;line-height:1.5">
-      <strong>Live scanner — top scorers right now.</strong> Refreshes every 5 minutes from live data. All 20 can rotate in/out daily as scores shift. Use this to spot what's heating up <em>today</em>.
-      <div style="margin-top:6px;padding-top:6px;border-top:1px dashed rgba(15,23,42,.12);font-size:11px;color:#000000;font-style:italic">
-        📊 Price targets shown are Wall Street analyst consensus (FMP) — <strong>not AlphaHunt's forecast</strong>. AlphaHunt does not provide price predictions or financial advice.
-      </div>
-    </div>
-  </div>
   <div class="hot-grid" id="hot-grid"><div class="loading">⏳ Loading from API…</div></div>
 </div>
 
-<!-- RISK RADAR -->
-<div id="panel-risk" class="panel">
-  <div class="risk-grid" id="risk-grid"><div class="loading">Loading…</div></div>
-</div>
-
-<!-- AI CATALYSTS -->
-<div id="panel-news" class="panel">
-  <div class="news-grid" id="news-grid"><div class="loading">Loading news…</div></div>
+<!-- WATCHLIST — user's saved tickers (localStorage backed) -->
+<div id="panel-watch" class="panel">
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:14px">
+    <div>
+      <div style="font-size:18px;font-weight:800;color:#0a0a0a">⭐ Your Watchlist</div>
+      <div style="font-size:12.5px;color:#475569;margin-top:2px">Star any stock to save it here. Persists on this browser.</div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <input id="watch-add-input" type="text" placeholder="Add ticker (e.g., NVDA)" maxlength="6" oninput="this.value=this.value.toUpperCase()" onkeydown="if(event.key==='Enter')addToWatchFromInput()" style="padding:8px 12px;border:1px solid rgba(15,23,42,.12);border-radius:7px;font-size:13px;font-weight:700;width:170px;text-transform:uppercase;font-family:'JetBrains Mono','Inter',monospace">
+      <button onclick="addToWatchFromInput()" style="padding:8px 14px;background:linear-gradient(135deg,#15803d,#84cc16);color:#fff;border:none;border-radius:7px;font-size:12.5px;font-weight:800;cursor:pointer">+ Add</button>
+    </div>
+  </div>
+  <div id="watch-grid" class="hot-grid"></div>
+  <div id="watch-empty" style="display:none;padding:48px 24px;text-align:center;color:#64748b;background:#f8fafc;border:1px dashed rgba(15,23,42,.12);border-radius:12px">
+    <div style="font-size:32px;margin-bottom:8px">⭐</div>
+    <div style="font-size:15px;font-weight:600;color:#0a0a0a;margin-bottom:4px">No watchlist yet</div>
+    <div style="font-size:12.5px">Type a ticker above and hit Add, or tap the ★ icon on any stock card.</div>
+  </div>
 </div>
 
 <!-- FUNDAMENTALS -->
@@ -1302,8 +1300,8 @@ tr:hover td{background:rgba(132,204,22,.06)}
       <p style="font-size:13px;line-height:1.6;color:var(--muted)">ATR-based position sizing: Entry at current price, Stop = Entry − 1.5×ATR, Target = Entry + 3.0×ATR. Shares = (Account × Risk%) ÷ ATR. Default 1% risk per trade. Adjust using the sizer widget.</p></div>
     <div class="card"><h3 style="color:var(--acc2);margin-bottom:8px">🔄 Data Refresh</h3>
       <p style="font-size:13px;line-height:1.6;color:var(--muted)">Live prices update every 30s from /api/quotes/batch. Fast refresh (quotes + social) every 5 min. Slow refresh (candles, fundamentals, insider) every 60 min starting 90s after boot.</p></div>
-    <div class="card"><h3 style="color:var(--acc2);margin-bottom:8px">⚠️ Risk Radar</h3>
-      <p style="font-size:13px;line-height:1.6;color:var(--muted)">Flags: Earnings Imminent (≤5d), Overbought (RSI &gt;75), Oversold (RSI &lt;30), High Short Interest (&gt;15%), Low Volume. Red = HIGH risk, Yellow = MEDIUM risk. Always check before entering.</p></div>
+    <div class="card"><h3 style="color:var(--acc2);margin-bottom:8px">⭐ Watchlist</h3>
+      <p style="font-size:13px;line-height:1.6;color:var(--muted)">Save any ticker you want to keep an eye on. Saved on your browser via localStorage. Tap the ★ icon on any stock card to add or remove, or type a ticker directly in the Watchlist tab.</p></div>
     <div class="card"><h3 style="color:var(--acc2);margin-bottom:8px">💼 Allocator</h3>
       <p style="font-size:13px;line-height:1.6;color:var(--muted)">Shows share count as primary metric, position value, % of account, entry/stop/target levels, and max risk per position. Based on ATR sizing. Max 8 open positions, 6% total portfolio risk.</p></div>
   </div>
@@ -1325,7 +1323,7 @@ tr:hover td{background:rgba(132,204,22,.06)}
    API-driven: fetches from FastAPI backend at same origin
    ========================================================== */
 
-const MIN_MCAP = 500e6;   // $500M floor — allows quality small-caps
+const MIN_MCAP = 0;       // No market-cap floor — all stocks can appear (per user request)
 let _account = 50000; // used by renderHotList for account_size fallback
 
 /* ----------------------------------------------------------
@@ -4292,10 +4290,85 @@ function showTab(id, btn) {
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   btn.classList.add('active');
   document.getElementById('panel-' + id).classList.add('active');
-  if (id === 'watchlist') renderWatchlistPanel();
-  if (id === 'news')  loadLiveNews();
+  if (id === 'watch') renderWatchlist();
   if (id === 'model') loadModelPortfolio();
   if (id === 'blog')  loadBlog();
+}
+
+/* ----------------------------------------------------------
+   WATCHLIST — localStorage-backed list of user's favourite tickers.
+   Survives reload on the same browser. No backend persistence yet
+   (could be added later via /api/watchlist tied to user_id).
+   ---------------------------------------------------------- */
+const WATCH_KEY = 'ah-watchlist-v1';
+
+function getWatchlist() {
+  try { return JSON.parse(localStorage.getItem(WATCH_KEY) || '[]'); }
+  catch(e) { return []; }
+}
+function saveWatchlist(list) {
+  try { localStorage.setItem(WATCH_KEY, JSON.stringify(list)); } catch(e) {}
+}
+function isWatched(ticker) {
+  return getWatchlist().includes((ticker || '').toUpperCase());
+}
+function toggleWatch(ticker) {
+  const sym = (ticker || '').toUpperCase().trim();
+  if (!sym) return false;
+  const list = getWatchlist();
+  const i = list.indexOf(sym);
+  if (i >= 0) { list.splice(i, 1); } else { list.push(sym); }
+  saveWatchlist(list);
+  // Refresh the watch panel if currently visible
+  const panel = document.getElementById('panel-watch');
+  if (panel && panel.classList.contains('active')) renderWatchlist();
+  return !i >= 0;
+}
+function addToWatchFromInput() {
+  const input = document.getElementById('watch-add-input');
+  if (!input) return;
+  const sym = (input.value || '').toUpperCase().trim();
+  if (!sym) return;
+  const list = getWatchlist();
+  if (!list.includes(sym)) { list.push(sym); saveWatchlist(list); }
+  input.value = '';
+  renderWatchlist();
+}
+function renderWatchlist() {
+  const grid  = document.getElementById('watch-grid');
+  const empty = document.getElementById('watch-empty');
+  if (!grid) return;
+  const list = getWatchlist();
+  if (!list.length) {
+    grid.innerHTML = '';
+    if (empty) empty.style.display = 'block';
+    return;
+  }
+  if (empty) empty.style.display = 'none';
+  // Look up each ticker in the live universe
+  const universe = (window._lastUniverse && window._lastUniverse.tickers) || [];
+  const found = list.map(sym => {
+    const t = universe.find(x => (x.ticker || '').toUpperCase() === sym);
+    return t || { ticker: sym, name: '(loading…)', __unknown: true };
+  });
+  // Reuse the Hot List card renderer if available — otherwise lightweight render
+  if (typeof renderHotCard === 'function') {
+    grid.innerHTML = found.map(t => renderHotCard(t)).join('');
+  } else {
+    grid.innerHTML = found.map(t => `
+      <div class="hot-card" onclick="openStockModal('${t.ticker}')" style="cursor:pointer">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div style="font-size:18px;font-weight:900;color:#0f172a">${t.ticker}</div>
+          <button onclick="event.stopPropagation();toggleWatch('${t.ticker}')" title="Remove from watchlist" style="background:none;border:none;cursor:pointer;font-size:18px;color:#fbbf24">★</button>
+        </div>
+        <div style="font-size:11px;color:#64748b;margin-top:2px">${(t.name || '').slice(0,40)}</div>
+        ${t.__unknown ? '' : `
+          <div style="font-size:22px;font-weight:900;color:#15803d;margin-top:8px">${(t.smart_score ?? t.pop_score ?? 0).toFixed(0)}</div>
+          <div style="font-size:10.5px;color:#94a3b8;letter-spacing:.06em">ALPHA SCORE</div>
+        `}
+      </div>
+    `).join('');
+  }
 }
 
 /* ----------------------------------------------------------
@@ -4530,12 +4603,8 @@ function renderModelPortfolio(data) {
   }, {});
   const topSector = Object.entries(sectorMix).sort((a,b) => b[1]-a[1])[0];
   const topSectorShare = topSector && picks.length ? topSector[1] / picks.length : 0;
-  const concentrationWarning = topSectorShare >= 0.5
-    ? `<div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#0f172a;display:flex;align-items:flex-start;gap:9px">
-        <span style="font-size:14px;flex-shrink:0">⚠️</span>
-        <span><strong>Sector concentration:</strong> ${(topSectorShare*100).toFixed(0)}% of tracked stocks are in <strong>${topSector[0]}</strong>. The tracker is heavily exposed to a single theme — the score is currently flagging that area as strongest, but a single-sector correction would affect most entries together.</span>
-       </div>`
-    : '';
+  // Concentration warning + methodology banner removed per user request.
+  const concentrationWarning = '';
 
   // Tracker performance label — neutral observational framing.
   const returnLabel = 'Tracker performance';
@@ -4546,13 +4615,7 @@ function renderModelPortfolio(data) {
   <div style="background:#ffffff;border:1px solid rgba(0,0,0,.08);border-radius:16px;padding:20px 24px;margin-bottom:18px;box-shadow:0 2px 12px rgba(0,0,0,.06)">
     <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px">
       <div style="flex:1;min-width:0">
-        <div style="font-size:18px;font-weight:800;color:var(--txt)">📊 AlphaHunt Score Tracker</div>
-        <div style="font-size:11.5px;color:#000000;margin-top:8px;line-height:1.55">
-          <strong>Methodology transparency, not a portfolio for you to follow.</strong> We publicly track how our top-scoring stocks perform after they cross our criteria — so you can see how the score behaves over time. AlphaHunt does not recommend buying or selling any stock.
-        </div>
-        <div style="font-size:11px;color:#000000;margin-top:6px;font-style:italic">
-          📊 "Analyst" / "Implied Upside" = Wall Street consensus targets (FMP) — <strong>not AlphaHunt's forecast</strong>. AlphaHunt does not provide price predictions or financial advice. <a href="/disclaimer" target="_blank" style="color:#15803d;text-decoration:underline;font-style:normal">Full disclaimer →</a>
-        </div>
+        <div style="font-size:18px;font-weight:800;color:var(--txt)">🎯 Top Hunts</div>
       </div>
       <button onclick="if(confirm('Reset rebuilds the tracker with today\\'s top 10 stocks by score. Continue?'))resetModelPortfolio()"
         style="padding:7px 14px;background:#f1f5f9;border:1px solid rgba(0,0,0,.1);border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;color:#374151;flex-shrink:0">
@@ -5085,19 +5148,15 @@ function renderAll(data) {
    MARKET CHIP  —  Bullish / Mixed / Bearish (regime overlay)
    ---------------------------------------------------------- */
 /* ─── COMMAND PALETTE (Cmd+K / Ctrl+K) ────────────────────────────
-   Vercel/Linear-style fast navigation. Indexes:
-     - Tabs (Hot List, All Stocks, Watchlist, Sectors, Articles, Risk Radar)
-     - Quick actions (Refresh data, Open watchlist, Sign out, etc.)
-     - Tickers (everything in _allTickerData) — filter as user types
-   Keyboard: Cmd/Ctrl+K to open, ↑↓ to navigate, Enter to select, Esc to close. */
+   Vercel/Linear-style fast navigation. Indexes tabs, quick actions, tickers. */
 let _cmdkActive = 0;
 const _CMDK_TABS = [
-  {kind:'tab', icon:'🔥', label:'Hot List',         sub:'Top picks right now',      run:()=>document.querySelector('[onclick*="showTab(\'hot\'"]')?.click()},
-  {kind:'tab', icon:'📊', label:'All Stocks',       sub:'Full universe & filters',  run:()=>document.querySelector('[onclick*="showTab(\'fund\'"]')?.click()},
-  {kind:'tab', icon:'⭐', label:'Watchlist',        sub:'Your saved stocks',        run:()=>document.querySelector('[onclick*="showTab(\'watchlist\'"]')?.click()},
-  {kind:'tab', icon:'🗺',  label:'Sectors',          sub:'Sub-sector heat map',      run:()=>document.querySelector('[onclick*="showTab(\'sectors\'"]')?.click()},
-  {kind:'tab', icon:'📰', label:'Articles',         sub:'Research reports',         run:()=>document.querySelector('[onclick*="showTab(\'blog\'"]')?.click()},
-  {kind:'tab', icon:'🚨', label:'Risk Radar',       sub:'Flagged setups',           run:()=>document.querySelector('[onclick*="showTab(\'risk\'"]')?.click()},
+  {kind:'tab', icon:'🔥', label:'Hot List',     sub:'Top picks right now',      run:()=>document.querySelector('[onclick*="showTab(\'hot\'"]')?.click()},
+  {kind:'tab', icon:'🎯', label:'Top Hunts',    sub:'Tracked top-10 picks',     run:()=>document.querySelector('[onclick*="showTab(\'model\'"]')?.click()},
+  {kind:'tab', icon:'⭐', label:'Watchlist',    sub:'Your saved stocks',        run:()=>document.querySelector('[onclick*="showTab(\'watch\'"]')?.click()},
+  {kind:'tab', icon:'🌐', label:'Universe',     sub:'All 200 stocks + filters', run:()=>document.querySelector('[onclick*="showTab(\'fund\'"]')?.click()},
+  {kind:'tab', icon:'🗺',  label:'Sectors',     sub:'Sub-sector heat map',      run:()=>document.querySelector('[onclick*="showTab(\'sectors\'"]')?.click()},
+  {kind:'tab', icon:'📊', label:'Reports',      sub:'Tear sheets & infographics', run:()=>document.querySelector('[onclick*="showTab(\'blog\'"]')?.click()},
 ];
 const _CMDK_ACTIONS = [
   {kind:'action', icon:'↻', label:'Refresh data',   sub:'Force fresh universe pull', run:()=>{ if(typeof fullRender==='function') fullRender(); }},
