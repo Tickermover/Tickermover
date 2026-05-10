@@ -21,7 +21,7 @@ const CORE_ASSETS = [
 const OFFLINE_HTML = '<!DOCTYPE html><html lang="en"><head>' +
 '<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">' +
 '<title>Offline - AlphaHunt</title>' +
-'<meta name="theme-color" content="#7C3AED">' +
+'<meta name="theme-color" content="#15803d">' +
 '<style>' +
 '*{margin:0;padding:0;box-sizing:border-box}' +
 'body{font-family:-apple-system,BlinkMacSystemFont,Inter,sans-serif;' +
@@ -31,11 +31,11 @@ const OFFLINE_HTML = '<!DOCTYPE html><html lang="en"><head>' +
 '.dot{width:14px;height:14px;background:#dc2626;border-radius:50%;display:inline-block;margin-right:8px;vertical-align:middle}' +
 'h1{font-size:32px;font-weight:900;letter-spacing:-.02em;margin-bottom:12px;color:#0a0a0a}' +
 'p{font-size:15.5px;color:#475569;margin-bottom:18px}' +
-'button{background:#7C3AED;color:#fff;border:none;padding:12px 24px;border-radius:10px;' +
+'button{background:#15803d;color:#fff;border:none;padding:12px 24px;border-radius:10px;' +
 'font-size:14.5px;font-weight:700;cursor:pointer}' +
 'button:hover{background:#0e6b32}' +
 '.brand{display:inline-flex;align-items:center;gap:8px;margin-bottom:32px;font-size:16px;font-weight:800;color:#0a0a0a}' +
-'.brand em{font-style:normal;color:#7C3AED}' +
+'.brand em{font-style:normal;color:#15803d}' +
 '</style></head><body><div class="box">' +
 '<div class="brand">AlphaHunt</div>' +
 '<h1><span class="dot"></span>You are offline</h1>' +

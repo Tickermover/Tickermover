@@ -10,7 +10,7 @@
   "display": "standalone",
   "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
   "orientation": "portrait-primary",
-  "theme_color": "#7C3AED",
+  "theme_color": "#15803d",
   "background_color": "#ffffff",
   "categories": ["finance", "business", "productivity"],
   "icons": [
@@ -88,6 +88,4 @@
       "sizes": "512x512",
       "type": "image/png",
       "label": "AlphaHunt dashboard"
-       }
-  ]
-}
+   

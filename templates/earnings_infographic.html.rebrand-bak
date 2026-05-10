@@ -14,25 +14,25 @@
   /* ── PAGE HEADER ── */
   .page-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px}
   .page-head .title{font-size:22px;font-weight:900;letter-spacing:-.02em}
-  .page-head .title em{font-style:normal;color:#7C3AED}
+  .page-head .title em{font-style:normal;color:#15803d}
   .page-head .sub{font-size:13px;color:#64748b;margin-top:2px}
-  .nav-links a{color:#7C3AED;font-weight:700;text-decoration:none;font-size:13px;margin-left:14px}
+  .nav-links a{color:#15803d;font-weight:700;text-decoration:none;font-size:13px;margin-left:14px}
   .nav-links a:hover{text-decoration:underline}
 
   /* Ticker selector */
   .ticker-bar{display:flex;gap:10px;align-items:center;background:#fff;border:1px solid rgba(15,23,42,.1);border-radius:10px;padding:10px 14px;margin-bottom:18px;flex-wrap:wrap}
   .ticker-bar label{font-size:12.5px;color:#64748b;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
   .ticker-bar input{padding:7px 10px;border:1px solid rgba(15,23,42,.12);border-radius:7px;font-size:14px;font-weight:700;width:120px;text-transform:uppercase;font-family:'JetBrains Mono','Inter',monospace}
-  .ticker-bar input:focus{outline:none;border-color:#7C3AED;box-shadow:0 0 0 3px rgba(168,85,247,.15)}
+  .ticker-bar input:focus{outline:none;border-color:#15803d;box-shadow:0 0 0 3px rgba(132,204,22,.15)}
 
   /* ── ACTIONS ── */
   .actions{display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap;align-items:center}
   .btn{padding:10px 18px;border-radius:9px;font-size:13.5px;font-weight:700;cursor:pointer;border:none;font-family:inherit;letter-spacing:.02em;transition:transform .12s}
   .btn:hover{transform:translateY(-1px)}
-  .btn-primary{background:linear-gradient(135deg,#7C3AED 0%,#A855F7 100%);color:#fff;box-shadow:0 4px 14px rgba(168,85,247,.35)}
+  .btn-primary{background:linear-gradient(135deg,#15803d 0%,#84cc16 100%);color:#fff;box-shadow:0 4px 14px rgba(132,204,22,.35)}
   .btn-secondary{background:#fff;color:#0f172a;border:1px solid rgba(15,23,42,.12)}
   .btn-icon{display:inline-flex;align-items:center;gap:6px}
-  .feedback{font-size:12.5px;color:#7C3AED;font-weight:700;margin-left:8px;opacity:0;transition:opacity .25s}
+  .feedback{font-size:12.5px;color:#15803d;font-weight:700;margin-left:8px;opacity:0;transition:opacity .25s}
   .feedback.on{opacity:1}
 
   /* ── INFOGRAPHIC CANVAS — 1200x900, "Earnings by the Numbers" style ── */
@@ -52,10 +52,10 @@
     background:#0d2440;
     padding:38px 56px 30px;
     color:#fff;
-    border-bottom:6px solid #A855F7;
+    border-bottom:6px solid #84cc16;
   }
   .ig-eyebrow{
-    color:#A855F7;font-size:24px;font-weight:900;letter-spacing:.04em;
+    color:#84cc16;font-size:24px;font-weight:900;letter-spacing:.04em;
     text-transform:uppercase;line-height:1;
   }
   .ig-headline{
@@ -66,7 +66,7 @@
     text-transform:uppercase;
   }
   .ig-divider{
-    width:3px;height:54px;background:#A855F7;align-self:flex-end;
+    width:3px;height:54px;background:#84cc16;align-self:flex-end;
     margin-bottom:8px;
   }
   .ig-quarter{
@@ -76,7 +76,7 @@
   .ig-tickerline{
     margin-top:12px;font-size:18px;color:rgba(255,255,255,.78);font-weight:600;letter-spacing:.02em;
   }
-  .ig-tickerline strong{color:#A855F7;font-weight:800}
+  .ig-tickerline strong{color:#84cc16;font-weight:800}
 
   /* Stat sections */
   .ig-section{
@@ -92,11 +92,11 @@
 
   .stat-num{
     font-size:62px;font-weight:900;letter-spacing:-.03em;line-height:1;
-    color:#A855F7;
+    color:#84cc16;
   }
   .stat-num.navy{color:#0d2440}
   .stat-num.muted{color:#475569;font-size:48px}
-  .stat-num .unit{font-size:38px;font-weight:800;color:#A855F7;margin-left:2px}
+  .stat-num .unit{font-size:38px;font-weight:800;color:#84cc16;margin-left:2px}
   .stat-cap{
     font-size:11.5px;color:#64748b;font-weight:800;letter-spacing:.12em;
     text-transform:uppercase;margin-top:14px;
@@ -104,31 +104,31 @@
   .stat-h{
     font-size:30px;font-weight:900;color:#0d2440;letter-spacing:-.01em;margin-top:4px;line-height:1.1;
   }
-  .stat-h.green{color:#7C3AED}
+  .stat-h.green{color:#15803d}
   .stat-body{
     font-size:13.5px;color:#475569;line-height:1.55;margin-top:8px;
   }
 
   /* Bottom takeaway */
   .ig-takeaway{
-    background:#faf5ff;
-    border-top:6px solid #7C3AED;
+    background:#f0fdf4;
+    border-top:6px solid #15803d;
     padding:28px 56px 0;
     display:flex;align-items:flex-start;gap:24px;flex:1;
   }
   .ig-takeaway-icon{
     width:80px;height:80px;border-radius:50%;flex-shrink:0;
-    background:linear-gradient(135deg,#7C3AED 0%,#A855F7 100%);
+    background:linear-gradient(135deg,#15803d 0%,#84cc16 100%);
     display:flex;align-items:center;justify-content:center;
     font-size:38px;line-height:1;color:#fff;font-weight:900;
-    box-shadow:0 6px 16px rgba(124,58,237,.25);
+    box-shadow:0 6px 16px rgba(21,128,61,.25);
   }
   .ig-takeaway-body{flex:1}
-  .ig-takeaway-h{font-size:14px;color:#7C3AED;font-weight:900;letter-spacing:.12em;text-transform:uppercase}
+  .ig-takeaway-h{font-size:14px;color:#15803d;font-weight:900;letter-spacing:.12em;text-transform:uppercase}
   .ig-takeaway-text{font-size:22px;font-weight:800;color:#0d2440;line-height:1.32;margin-top:6px;letter-spacing:-.01em}
   .ig-takeaway-stars{margin-top:12px;font-size:18px;font-weight:800}
   .ig-takeaway-stars .stars{color:#fbbf24;letter-spacing:.06em}
-  .ig-takeaway-stars .label{color:#7C3AED;margin-left:6px}
+  .ig-takeaway-stars .label{color:#15803d;margin-left:6px}
   .ig-takeaway-stars .score{color:#475569;margin-left:8px;font-size:14px;font-weight:700}
 
   /* Footer band */
@@ -141,7 +141,7 @@
     font-size:12px;
   }
   .ig-foot-disclaimer{color:rgba(255,255,255,.55);font-style:italic}
-  .ig-foot-url{font-weight:800;color:#A855F7}
+  .ig-foot-url{font-weight:800;color:#84cc16}
 
   /* Loading state */
   .loading-state{
@@ -180,7 +180,7 @@
     <label for="t-input">Ticker:</label>
     <input id="t-input" type="text" value="LITE" maxlength="6" oninput="this.value=this.value.toUpperCase()" onkeydown="if(event.key==='Enter')loadTicker()">
     <button class="btn btn-primary btn-icon" onclick="loadTicker()"><span>↻</span><span>Load</span></button>
-    <span style="color:#64748b;font-size:12px;margin-left:8px">Try: <a href="javascript:setT('LITE')" style="color:#7C3AED;font-weight:700">LITE</a> · <a href="javascript:setT('AAOI')" style="color:#7C3AED;font-weight:700">AAOI</a> · <a href="javascript:setT('NVDA')" style="color:#7C3AED;font-weight:700">NVDA</a></span>
+    <span style="color:#64748b;font-size:12px;margin-left:8px">Try: <a href="javascript:setT('LITE')" style="color:#15803d;font-weight:700">LITE</a> · <a href="javascript:setT('AAOI')" style="color:#15803d;font-weight:700">AAOI</a> · <a href="javascript:setT('NVDA')" style="color:#15803d;font-weight:700">NVDA</a></span>
   </div>
 
   <!-- Actions -->
@@ -360,7 +360,7 @@ function render() {
   const surp = eps.surprise_pct;
   document.getElementById('ig-eps').textContent = epsActual != null ? '$' + epsActual.toFixed(2) : '—';
   document.getElementById('ig-eps-h').textContent = beat ? 'Beat' : (beat === false ? 'Missed' : '—');
-  document.getElementById('ig-eps-h').style.color = beat ? '#7C3AED' : '#dc2626';
+  document.getElementById('ig-eps-h').style.color = beat ? '#15803d' : '#dc2626';
   document.getElementById('ig-eps-body').textContent = (epsEst != null ? 'Estimate: $' + epsEst.toFixed(2) : '') + (surp != null ? ' · Surprise: ' + (surp >= 0 ? '+' : '') + (surp * 100).toFixed(1) + '%' : '');
 
   // Stat 3: Gross margin
@@ -369,13 +369,13 @@ function render() {
   const gmDelta = (gm != null && gmPrev != null) ? (gm - gmPrev) * 100 : null;
   document.getElementById('ig-margin').textContent = gm != null ? (gm * 100).toFixed(1) + '%' : '—';
   document.getElementById('ig-margin-h').textContent = gmDelta != null ? fmtPct(gmDelta, 1) + ' pts QoQ' : '—';
-  document.getElementById('ig-margin-h').style.color = gmDelta > 0 ? '#7C3AED' : (gmDelta < 0 ? '#dc2626' : '#475569');
+  document.getElementById('ig-margin-h').style.color = gmDelta > 0 ? '#15803d' : (gmDelta < 0 ? '#dc2626' : '#475569');
   document.getElementById('ig-margin-body').textContent = gmPrev != null ? 'Prior quarter: ' + (gmPrev * 100).toFixed(1) + '%' : '';
 
   // Stat 4: Guidance
   const guidance = ei.guidance || {};
   const tone = (guidance.tone || 'none').toLowerCase();
-  const toneColor = {raised:'#7C3AED', maintained:'#0d2440', lowered:'#dc2626', none:'#94a3b8'}[tone] || '#475569';
+  const toneColor = {raised:'#15803d', maintained:'#0d2440', lowered:'#dc2626', none:'#94a3b8'}[tone] || '#475569';
   document.getElementById('ig-guidance').textContent = tone === 'none' ? '—' : tone.charAt(0).toUpperCase() + tone.slice(1);
   document.getElementById('ig-guidance').style.color = toneColor;
   document.getElementById('ig-guidance-h').textContent = guidance.revenue_guidance || guidance.eps_guidance || 'No specific range';
@@ -389,7 +389,7 @@ function render() {
   const streakNum = total > 0 ? beats + '/' + total : '—';
   document.getElementById('ig-streak').textContent = streakNum;
   document.getElementById('ig-streak-h').textContent = beats === total && total > 0 ? 'Perfect record' : (beats >= total - 1 ? 'Strong record' : 'Mixed record');
-  document.getElementById('ig-streak-h').style.color = beats === total && total > 0 ? '#7C3AED' : '#0d2440';
+  document.getElementById('ig-streak-h').style.color = beats === total && total > 0 ? '#15803d' : '#0d2440';
   const avgSurprise = epsHist.length ? (epsHist.reduce((s,q) => s + (q.surprise_pct || 0), 0) / epsHist.length) * 100 : 0;
   document.getElementById('ig-streak-body').textContent = avgSurprise > 0 ? 'Avg surprise: +' + avgSurprise.toFixed(1) + '%' : '';
 
@@ -398,7 +398,7 @@ function render() {
   const rxScore = reaction.score;
   const rxLabel = reaction.label || '—';
   document.getElementById('ig-reaction').textContent = rxScore != null ? (rxScore >= 0 ? '+' : '') + rxScore.toFixed(2) : '—';
-  document.getElementById('ig-reaction').style.color = rxScore >= 0.30 ? '#7C3AED' : (rxScore >= 0.10 ? '#A855F7' : (rxScore >= -0.10 ? '#475569' : '#dc2626'));
+  document.getElementById('ig-reaction').style.color = rxScore >= 0.30 ? '#15803d' : (rxScore >= 0.10 ? '#84cc16' : (rxScore >= -0.10 ? '#475569' : '#dc2626'));
   document.getElementById('ig-reaction-h').textContent = rxLabel;
   const sentiment = ei.sentiment || {};
   document.getElementById('ig-reaction-body').textContent = 'Sentiment: ' + (sentiment.label || '—') + (sentiment.score != null ? ' (' + sentiment.score.toFixed(2) + ')' : '');
