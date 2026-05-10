@@ -536,8 +536,8 @@ async def favicon():
     svg = (
         '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">'
         '<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">'
-        '<stop offset="0" stop-color="#18C729"/>'
-        '<stop offset="0.5" stop-color="#FEF500"/>'
+        '<stop offset="0" stop-color="#7C3AED"/>'
+        '<stop offset="0.5" stop-color="#A855F7"/>'
         '<stop offset="1" stop-color="#a3e635"/></linearGradient></defs>'
         '<rect width="32" height="32" rx="7" fill="#0f172a"/>'
         '<polyline points="4,22 10,13 16,17 21,7 28,14" stroke="url(#g)" '
@@ -561,8 +561,8 @@ async def static_icon_fallback(filename: str):
     svg = (
         '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">'
         '<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">'
-        '<stop offset="0" stop-color="#18C729"/>'
-        '<stop offset="0.55" stop-color="#FEF500"/>'
+        '<stop offset="0" stop-color="#7C3AED"/>'
+        '<stop offset="0.55" stop-color="#A855F7"/>'
         '<stop offset="1" stop-color="#a3e635"/></linearGradient></defs>'
         '<rect width="512" height="512" rx="112" fill="#0f172a"/>'
         '<polyline points="72,360 160,232 256,290 352,128 432,210" stroke="url(#g)" '
@@ -768,7 +768,7 @@ def _render_unknown_stock(sym: str) -> str:
 <meta name="robots" content="noindex,follow">
 <link rel="canonical" href="{SITE_ORIGIN}/stocks/{sym}">
 <style>body{{font-family:system-ui,-apple-system,sans-serif;max-width:600px;margin:80px auto;padding:0 24px;color:#0a0a0a;text-align:center}}
-a{{color:#18C729;font-weight:600;text-decoration:none}}</style>
+a{{color:#7C3AED;font-weight:600;text-decoration:none}}</style>
 </head><body>
 <h1>{sym}</h1>
 <p>This ticker isn't in AlphaHunt's universe yet. We focus on ~200 hand-curated US stocks with $500M+ market cap.</p>
@@ -807,14 +807,14 @@ def _render_post_earnings_card(t: dict, name: str, sym: str) -> str:
     # ── EPS row ──
     if eps_actual is not None and eps_estimate is not None:
         beat_tag = (
-            '<span style="background:#dcfce7;color:#18C729;font-weight:700;'
+            '<span style="background:#dcfce7;color:#7C3AED;font-weight:700;'
             'padding:3px 10px;border-radius:999px;font-size:11px;letter-spacing:.04em">BEAT</span>'
             if beat else
             '<span style="background:#fee2e2;color:#b91c1c;font-weight:700;'
             'padding:3px 10px;border-radius:999px;font-size:11px;letter-spacing:.04em">MISS</span>'
         ) if beat is not None else ""
         surp_str = (
-            f' &middot; <span style="color:{"#18C729" if (surprise_pct or 0) > 0 else "#b91c1c"};'
+            f' &middot; <span style="color:{"#7C3AED" if (surprise_pct or 0) > 0 else "#b91c1c"};'
             f'font-weight:600">{surprise_pct:+.1f}%</span> vs estimate'
         ) if surprise_pct is not None else ""
         eps_row = (
@@ -843,7 +843,7 @@ def _render_post_earnings_card(t: dict, name: str, sym: str) -> str:
         rg = t.get("rev_growth_qyoy")
         if rg is not None:
             rev_growth_str = (
-                f' &middot; <span style="color:{"#18C729" if rg > 0 else "#b91c1c"};'
+                f' &middot; <span style="color:{"#7C3AED" if rg > 0 else "#b91c1c"};'
                 f'font-weight:600">{rg*100:+.1f}%</span> YoY'
             )
         rev_row = (
@@ -859,7 +859,7 @@ def _render_post_earnings_card(t: dict, name: str, sym: str) -> str:
 
     # ── Stock reaction (1-month momentum proxy) ──
     if reaction_pct is not None:
-        rx_color = "#18C729" if reaction_pct > 0 else "#b91c1c"
+        rx_color = "#7C3AED" if reaction_pct > 0 else "#b91c1c"
         rx_row = (
             f'<div style="display:flex;justify-content:space-between;align-items:center;'
             f'padding:10px 0;border-bottom:1px solid #f1f5f9">'
@@ -890,17 +890,17 @@ def _render_post_earnings_card(t: dict, name: str, sym: str) -> str:
 
     just_reported = bool(t.get("earnings_just_reported"))
     badge_html = (
-        '<span style="background:#18C729;color:#fff;font-weight:800;font-size:10px;'
+        '<span style="background:#7C3AED;color:#fff;font-weight:800;font-size:10px;'
         'letter-spacing:.06em;padding:4px 10px;border-radius:999px">JUST REPORTED</span>'
         if just_reported else
         '<span style="background:#e2e8f0;color:#475569;font-weight:700;font-size:10px;'
         'letter-spacing:.06em;padding:4px 10px;border-radius:999px">LAST EARNINGS</span>'
     )
     bg_grad = (
-        "linear-gradient(135deg,#f7fee7 0%,#fefce8 100%)" if just_reported
+        "linear-gradient(135deg,#faf5ff 0%,#fefce8 100%)" if just_reported
         else "linear-gradient(135deg,#f8fafc 0%,#f1f5f9 100%)"
     )
-    border_color = "#ecfccb" if just_reported else "#e2e8f0"
+    border_color = "#e9d5ff" if just_reported else "#e2e8f0"
     return f"""
   <div style="background:{bg_grad};
               border:1px solid {border_color};border-radius:12px;
@@ -933,7 +933,7 @@ def _render_post_earnings_card(t: dict, name: str, sym: str) -> str:
           var sSlot = card.querySelector('[data-sentiment-slot]');
           var g = data.guidance || {{}};
           if (gSlot && g.tone && g.tone !== 'none') {{
-            var toneColor = g.tone === 'raised'   ? '#18C729' :
+            var toneColor = g.tone === 'raised'   ? '#7C3AED' :
                             g.tone === 'lowered'  ? '#b91c1c' : '#64748b';
             var toneArrow = g.tone === 'raised'   ? '↗' :
                             g.tone === 'lowered'  ? '↘' : '→';
@@ -950,12 +950,12 @@ def _render_post_earnings_card(t: dict, name: str, sym: str) -> str:
           }}
           var rx = data.reaction || {{}};
           if (sSlot && rx.label && rx.components && rx.components.length) {{
-            var lblColor = rx.score >=  0.30 ? '#18C729' :
-                           rx.score >=  0.10 ? '#18C729' :
+            var lblColor = rx.score >=  0.30 ? '#7C3AED' :
+                           rx.score >=  0.10 ? '#7C3AED' :
                            rx.score >  -0.10 ? '#64748b' :
                            rx.score >  -0.30 ? '#d97706' : '#b91c1c';
             var compHTML = rx.components.map(function(c) {{
-              var ptColor = c.points > 0  ? '#18C729' :
+              var ptColor = c.points > 0  ? '#7C3AED' :
                             c.points < 0  ? '#b91c1c' : '#94a3b8';
               var ptStr   = (c.points >= 0 ? '+' : '') + Number(c.points).toFixed(2);
               return '<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:12.5px">' +
@@ -1001,7 +1001,7 @@ def _render_stock_page(t: dict) -> str:
     pop    = _f(t.get("smart_score") if t.get("smart_score") is not None else t.get("pop_score"))
     grade  = t.get("grade") or "—"
     rating = {"A":"★★★★★ Top Tier","B":"★★★★ Quality","C":"★★★ Average","D":"★★ Below Avg","F":"★ Weak"}.get(grade, "Under Review")
-    verdict_color = {"A":"#18C729","B":"#1e40af","C":"#b45309","D":"#dc2626","F":"#991b1b"}.get(grade, "#475569")
+    verdict_color = {"A":"#7C3AED","B":"#1e40af","C":"#b45309","D":"#dc2626","F":"#991b1b"}.get(grade, "#475569")
     bottom_line = t.get("bottom_line") or f"{name} is currently scored {round(pop)}/100 on Alpha Score."
     chg = _f(t.get("change_pct"))
     chg_sign = "+" if chg >= 0 else ""
@@ -1135,15 +1135,15 @@ def _render_stock_page(t: dict) -> str:
 <style>
 *{{margin:0;padding:0;box-sizing:border-box}}
 body{{font-family:'Inter',-apple-system,sans-serif;color:#0a0a0a;background:#fafbfc;line-height:1.6;font-size:15.5px;-webkit-font-smoothing:antialiased}}
-a{{color:#18C729;text-decoration:none;font-weight:600}}
+a{{color:#7C3AED;text-decoration:none;font-weight:600}}
 a:hover{{text-decoration:underline}}
 .mono{{font-family:'JetBrains Mono',monospace;font-feature-settings:'tnum' 1}}
 .wrap{{max-width:780px;margin:0 auto;padding:32px 24px 64px}}
 .brand{{display:inline-flex;align-items:center;gap:8px;font-size:16px;font-weight:800;color:#0a0a0a;margin-bottom:32px}}
-.brand em{{font-style:normal;color:#18C729}}
+.brand em{{font-style:normal;color:#7C3AED}}
 .crumbs{{font-size:12.5px;color:#94a3b8;margin-bottom:8px;letter-spacing:.04em;text-transform:uppercase;font-weight:600}}
 h1{{font-size:38px;font-weight:900;letter-spacing:-.03em;margin-bottom:6px;color:#0a0a0a}}
-h1 .sym{{font-family:'JetBrains Mono',monospace;color:#18C729}}
+h1 .sym{{font-family:'JetBrains Mono',monospace;color:#7C3AED}}
 .subhead{{font-size:15px;color:#475569;margin-bottom:24px}}
 .verdict-box{{background:#fff;border:1px solid #e2e8f0;border-left:4px solid {verdict_color};border-radius:12px;padding:20px 24px;margin-bottom:28px;box-shadow:0 1px 3px rgba(15,23,42,.04)}}
 .verdict-head{{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px}}
@@ -1155,7 +1155,7 @@ h1 .sym{{font-family:'JetBrains Mono',monospace;color:#18C729}}
 .metric{{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:12px 14px}}
 .metric .lbl{{font-size:10.5px;color:#64748b;font-weight:700;letter-spacing:.05em;text-transform:uppercase;margin-bottom:3px}}
 .metric .val{{font-family:'JetBrains Mono',monospace;font-size:17px;font-weight:800;color:#0a0a0a}}
-.metric .val.pos{{color:#18C729}}
+.metric .val.pos{{color:#7C3AED}}
 .metric .val.neg{{color:#b91c1c}}
 h2{{font-size:21px;font-weight:800;letter-spacing:-.015em;margin:32px 0 12px;color:#0a0a0a}}
 .news{{list-style:none;padding:0}}
@@ -1164,7 +1164,7 @@ h2{{font-size:21px;font-weight:800;letter-spacing:-.015em;margin:32px 0 12px;col
 .news .src{{color:#94a3b8;font-size:12px;font-weight:500}}
 .peers{{display:flex;flex-wrap:wrap;gap:8px}}
 .peer{{display:inline-block;padding:7px 12px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:13px;color:#0a0a0a;font-weight:700;transition:all .15s}}
-.peer:hover{{border-color:#18C729;color:#18C729;text-decoration:none}}
+.peer:hover{{border-color:#7C3AED;color:#7C3AED;text-decoration:none}}
 .cta{{margin-top:40px;padding:28px 32px;background:linear-gradient(135deg,#0a0e1a 0%,#1a2e1a 100%);border-radius:16px;text-align:center;color:#fff}}
 .cta h3{{font-size:22px;font-weight:800;letter-spacing:-.02em;margin-bottom:8px;color:#fff}}
 .cta p{{color:rgba(255,255,255,.7);margin-bottom:18px}}
@@ -1178,7 +1178,7 @@ h2{{font-size:21px;font-weight:800;letter-spacing:-.015em;margin:32px 0 12px;col
 <div class="wrap">
 
   <a href="/" class="brand">
-    <svg width="22" height="22" viewBox="0 0 28 28"><defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#18C729"/><stop offset=".55" stop-color="#FEF500"/><stop offset="1" stop-color="#a3e635"/></linearGradient></defs><rect width="28" height="28" rx="7" fill="#0f172a"/><polyline points="4,21 9,13 15,17 20,7 24,12" stroke="url(#lg)" stroke-width="2.3" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="20" cy="7" r="2.5" fill="#a3e635"/></svg>
+    <svg width="22" height="22" viewBox="0 0 28 28"><defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7C3AED"/><stop offset=".55" stop-color="#A855F7"/><stop offset="1" stop-color="#a3e635"/></linearGradient></defs><rect width="28" height="28" rx="7" fill="#0f172a"/><polyline points="4,21 9,13 15,17 20,7 24,12" stroke="url(#lg)" stroke-width="2.3" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="20" cy="7" r="2.5" fill="#a3e635"/></svg>
     Alpha<em>Hunt</em>
   </a>
 
@@ -1219,7 +1219,7 @@ h2{{font-size:21px;font-weight:800;letter-spacing:-.015em;margin:32px 0 12px;col
   <div class="legal">
     AlphaHunt is a research tool, not financial advice. Alpha Score is a composite signal — always do your own research before investing.
     <br>Last updated automatically every 5 minutes during US market hours.
-    <br>Questions? <a href="mailto:support@alphahunt.in" style="color:#18C729">support@alphahunt.in</a>
+    <br>Questions? <a href="mailto:support@alphahunt.in" style="color:#7C3AED">support@alphahunt.in</a>
   </div>
 
 </div>
@@ -3646,36 +3646,36 @@ body{font-family:'Inter',-apple-system,sans-serif;color:#0a0a0a;background:#0a0e
   background-image:radial-gradient(ellipse at top,#1a2e1a 0%,#0a0e1a 60%);}
 .card{background:#fff;border-radius:18px;padding:40px 36px;max-width:440px;width:100%;box-shadow:0 24px 60px rgba(0,0,0,.35),0 8px 20px rgba(0,0,0,.2)}
 .brand{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:800;color:#0a0a0a;margin-bottom:28px;justify-content:center}
-.brand em{font-style:normal;color:#18C729}
+.brand em{font-style:normal;color:#7C3AED}
 h1{font-size:24px;font-weight:800;letter-spacing:-.02em;margin-bottom:6px;text-align:center}
 .sub{color:#64748b;font-size:14.5px;text-align:center;margin-bottom:28px;line-height:1.5}
 label{display:block;font-size:12.5px;font-weight:700;color:#475569;letter-spacing:.04em;text-transform:uppercase;margin-bottom:6px;margin-top:14px}
 .input-wrap{position:relative}
 input[type=password],input[type=text]{width:100%;padding:13px 44px 13px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:15px;font-family:inherit;background:#fff;transition:border-color .15s,box-shadow .15s}
-input[type=password]:focus,input[type=text]:focus{outline:none;border-color:#18C729;box-shadow:0 0 0 3px rgba(24,199,41,.12)}
+input[type=password]:focus,input[type=text]:focus{outline:none;border-color:#7C3AED;box-shadow:0 0 0 3px rgba(124,58,237,.12)}
 .toggle{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:#94a3b8;font-size:12px;font-weight:600;cursor:pointer;padding:6px 8px;border-radius:6px}
 .toggle:hover{color:#0a0a0a;background:#f1f5f9}
 .strength{display:flex;gap:4px;margin-top:8px;height:4px}
 .strength span{flex:1;background:#e2e8f0;border-radius:2px;transition:background .2s}
 .strength.s1 span:nth-child(1){background:#dc2626}
 .strength.s2 span:nth-child(-n+2){background:#f59e0b}
-.strength.s3 span:nth-child(-n+3){background:#FEF500}
-.strength.s4 span{background:#18C729}
+.strength.s3 span:nth-child(-n+3){background:#A855F7}
+.strength.s4 span{background:#7C3AED}
 .strength-label{font-size:11.5px;color:#64748b;font-weight:600;margin-top:6px;letter-spacing:.02em;height:14px}
-.strength-label.s1{color:#dc2626}.strength-label.s2{color:#b45309}.strength-label.s3{color:#4d7c0f}.strength-label.s4{color:#18C729}
+.strength-label.s1{color:#dc2626}.strength-label.s2{color:#b45309}.strength-label.s3{color:#4d7c0f}.strength-label.s4{color:#7C3AED}
 button.submit{width:100%;margin-top:24px;padding:14px;background:#0a0a0a;color:#fff;border:none;border-radius:10px;font-weight:700;font-size:15px;cursor:pointer;font-family:inherit;transition:background .15s}
-button.submit:hover{background:#18C729}
+button.submit:hover{background:#7C3AED}
 button.submit:disabled{opacity:.6;cursor:not-allowed}
 .msg{margin-top:18px;padding:11px 14px;border-radius:9px;font-size:13.5px;font-weight:600;line-height:1.45;display:none}
 .msg.show{display:block}
 .msg.err{background:#fef2f2;color:#991b1b;border:1px solid #fecaca}
-.msg.ok{background:#f7fee7;color:#14532d;border:1px solid #ecfccb}
+.msg.ok{background:#faf5ff;color:#14532d;border:1px solid #e9d5ff}
 .tips{margin-top:18px;font-size:12px;color:#64748b;line-height:1.6;background:#f8fafc;border-radius:9px;padding:12px 14px}
 .tips strong{color:#0a0a0a;font-weight:700}
 .foot{margin-top:24px;font-size:13px;color:#64748b;text-align:center}
-.foot a{color:#18C729;font-weight:600;text-decoration:none}
+.foot a{color:#7C3AED;font-weight:600;text-decoration:none}
 .foot a:hover{text-decoration:underline}
-.success-icon{width:64px;height:64px;background:#18C729;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:32px;margin:0 auto 16px;font-weight:700}
+.success-icon{width:64px;height:64px;background:#7C3AED;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:32px;margin:0 auto 16px;font-weight:700}
 .no-token{display:none}
 .no-token.show{display:block}
 .no-token h1{color:#dc2626}
@@ -3685,7 +3685,7 @@ button.submit:disabled{opacity:.6;cursor:not-allowed}
 <div class="card">
 
   <div class="brand">
-    <svg width="22" height="22" viewBox="0 0 28 28"><defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#18C729"/><stop offset=".55" stop-color="#FEF500"/><stop offset="1" stop-color="#a3e635"/></linearGradient></defs><rect width="28" height="28" rx="7" fill="#0f172a"/><polyline points="4,21 9,13 15,17 20,7 24,12" stroke="url(#lg)" stroke-width="2.3" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="20" cy="7" r="2.5" fill="#a3e635"/></svg>
+    <svg width="22" height="22" viewBox="0 0 28 28"><defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7C3AED"/><stop offset=".55" stop-color="#A855F7"/><stop offset="1" stop-color="#a3e635"/></linearGradient></defs><rect width="28" height="28" rx="7" fill="#0f172a"/><polyline points="4,21 9,13 15,17 20,7 24,12" stroke="url(#lg)" stroke-width="2.3" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="20" cy="7" r="2.5" fill="#a3e635"/></svg>
     Alpha<em>Hunt</em>
   </div>
 
@@ -3730,7 +3730,7 @@ button.submit:disabled{opacity:.6;cursor:not-allowed}
   <!-- Shown after successful reset -->
   <div class="no-token" id="success-view" style="text-align:center">
     <div class="success-icon">✓</div>
-    <h1 style="color:#18C729">Password updated</h1>
+    <h1 style="color:#7C3AED">Password updated</h1>
     <p class="sub">Your new password is set. Redirecting you to the dashboard…</p>
   </div>
 </div>
