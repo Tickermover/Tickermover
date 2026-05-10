@@ -442,11 +442,17 @@ async def lifespan(app: FastAPI):
     else:
         logger.info("No disk cache found — cold start, fetching fresh data…")
 
-    # Restore model portfolio from disk (persists across deploys)
-    # version=2 uses 1-month back-calculated entry prices; rebuild if older
+    # Restore Score Tracker from disk (persists across Railway redeploys
+    # because data/ is committed to the repo). Falls back to legacy cache
+    # if no JSON file yet (one-time migration after the first save).
     global _model_portfolio
-    saved = cache.get("model_portfolio") or {}
-    _model_portfolio = saved if saved.get("version", 0) >= 2 else {}
+    _model_portfolio = _load_portfolio_from_disk()
+    if not _model_portfolio:
+        legacy = cache.get("model_portfolio") or {}
+        if legacy.get("version", 0) >= 2:
+            _model_portfolio = legacy
+            _save_portfolio_to_disk(_model_portfolio)   # migrate to disk
+            logger.info("📦 Migrated portfolio from cache → data/model_portfolio.json")
 
     # Clear stale earnings cache so fresh dates are fetched this cycle
     cleared = 0
@@ -3067,6 +3073,39 @@ def _enrich_model_portfolio(portfolio: dict) -> dict:
 # Path is stable across Railway redeploys because the `data/` folder is checked
 # in. The file is append-only (newest trade pushed onto `trades`).
 _TRADE_HISTORY_PATH = "data/model_portfolio_history.json"
+_PORTFOLIO_PATH     = "data/model_portfolio.json"
+
+
+def _load_portfolio_from_disk() -> dict:
+    """Read the active portfolio from disk. Survives Railway redeploys
+    because data/ is checked into the repo. Replaces the ephemeral cache
+    that was wiping every restart and shifting added_date by 1 day."""
+    import os, json
+    if not os.path.exists(_PORTFOLIO_PATH):
+        return {}
+    try:
+        with open(_PORTFOLIO_PATH, encoding="utf-8") as f:
+            d = json.load(f)
+            if isinstance(d, dict) and isinstance(d.get("picks"), list):
+                return d
+    except Exception:
+        pass
+    return {}
+
+
+def _save_portfolio_to_disk(portfolio: dict) -> None:
+    """Atomic write — never half-written on crash."""
+    import os, json, tempfile
+    os.makedirs(os.path.dirname(_PORTFOLIO_PATH), exist_ok=True)
+    fd, tmp = tempfile.mkstemp(prefix=".portfolio-", dir=os.path.dirname(_PORTFOLIO_PATH))
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            json.dump(portfolio, f, indent=2, ensure_ascii=False)
+        os.replace(tmp, _PORTFOLIO_PATH)
+    except Exception:
+        try: os.unlink(tmp)
+        except OSError: pass
+        raise
 
 
 def _load_trade_history() -> dict:
@@ -3244,8 +3283,7 @@ async def api_model_portfolio():
         _model_portfolio = _build_model_portfolio()
         # Save with a very long TTL AND immediately flush to disk
         # so it survives Railway restarts / redeploys
-        cache.set("model_portfolio", _model_portfolio, 86400 * 3650)  # 10 years
-        cache.save_disk()
+        _save_portfolio_to_disk(_model_portfolio)
         logger.info(f"📊 Model portfolio initialised: {len(_model_portfolio['picks'])} picks on {_model_portfolio['created_at']}")
 
     # ── Per-call lifecycle: enrich → close fired exits → replenish to 20 ──
@@ -3266,8 +3304,7 @@ async def api_model_portfolio():
         _model_portfolio, _ = _close_triggered_picks(_model_portfolio, enriched_picks)
         # Refill slots opened by exits with next-best names
         _model_portfolio = _replenish_portfolio(_model_portfolio)
-        cache.set("model_portfolio", _model_portfolio, 86400 * 3650)
-        cache.save_disk()
+        _save_portfolio_to_disk(_model_portfolio)
         # Re-enrich AFTER close+replenish so the response reflects the new picks
         enriched = _enrich_model_portfolio(_model_portfolio)
     else:
@@ -3282,12 +3319,12 @@ async def api_model_portfolio():
             _model_portfolio = _replenish_portfolio(_model_portfolio)
             after_n = len(_model_portfolio.get("picks", []))
             if after_n != before_n or state_changed:
-                cache.set("model_portfolio", _model_portfolio, 86400 * 3650)
+                _save_portfolio_to_disk(_model_portfolio)
                 cache.save_disk()
                 enriched = _enrich_model_portfolio(_model_portfolio)
         elif state_changed:
             # peak/trail values bumped — persist quietly.
-            cache.set("model_portfolio", _model_portfolio, 86400 * 3650)
+            _save_portfolio_to_disk(_model_portfolio)
             cache.save_disk()
 
     return JSONResponse(_clean(enriched))
@@ -3331,7 +3368,7 @@ async def api_model_portfolio_reset():
     if not _universe_data:
         raise HTTPException(status_code=503, detail="Universe not loaded yet")
     _model_portfolio = _build_model_portfolio()
-    cache.set("model_portfolio", _model_portfolio, 86400 * 3650)  # 10 years
+    _save_portfolio_to_disk(_model_portfolio)
     cache.save_disk()
     logger.info(f"📊 Model portfolio RESET: {len(_model_portfolio['picks'])} picks on {_model_portfolio['created_at']}")
     return JSONResponse({"ok": True, "picks": len(_model_portfolio["picks"]), "date": _model_portfolio["created_at"]})
@@ -4050,13 +4087,12 @@ async def infographics_page():
     from pathlib import Path
     return HTMLResponse((Path(__file__).parent / "templates" / "infographics.html").read_text(encoding="utf-8"))
 
+
 @app.get("/infographics/earnings", response_class=HTMLResponse)
 @app.get("/infographics/earnings/{ticker}", response_class=HTMLResponse)
 async def earnings_infographic_page(ticker: str = "LITE"):
     """Earnings-by-the-Numbers infographic for any ticker that recently
     reported. Pulls /api/earnings-intel/{ticker} + universe data, renders
-    1200x900 PNG via html2canvas. Same template serves any ticker — JS
-    inspects the URL path and fills in the data."""
+    1200x900 PNG via html2canvas."""
     from pathlib import Path
     return HTMLResponse((Path(__file__).parent / "templates" / "earnings_infographic.html").read_text(encoding="utf-8"))
-
