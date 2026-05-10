@@ -812,7 +812,7 @@ tr:hover td{background:rgba(168,85,247,.06)}
   padding:2px 7px;border-radius:5px;
   font-feature-settings:'tnum' 1;
 }
-.ticker-chg.up  {color:#d8b4fe;background:rgba(124,58,237,.18)}
+.ticker-chg.up  {color:#86efac;background:rgba(22,163,74,.18)}
 .ticker-chg.down{color:#fca5a5;background:rgba(220,38,38,.18)}
 .ticker-chg.flat{color:#cbd5e1;background:rgba(148,163,184,.12)}
 @media(max-width:600px){.ticker-tape{height:34px} .ticker-chip{padding:0 14px;height:34px}}
@@ -1892,7 +1892,7 @@ function popGauge(score, grade, label, options) {
   const tailY = cy + Math.sin(a) * 10;
 
   const lbl = (label || '').trim();
-  const labelColor = grade === 'A' ? '#7C3AED'
+  const labelColor = grade === 'A' ? '#15803d'
                   : grade === 'B' ? '#1e40af'
                   : grade === 'C' ? '#b45309'
                   : grade === 'D' ? '#dc2626'
@@ -2040,7 +2040,7 @@ function qualityVerdict(t) {
     bg    = '#dbeafe';
     border= '#93c5fd';
   }
-  else if (pts >= 6)      { grade='A'; label='Excellent';  color='#7C3AED'; bg='#dcfce7'; border='#d8b4fe'; }
+  else if (pts >= 6)      { grade='A'; label='Excellent';  color='#15803d'; bg='#dcfce7'; border='#86efac'; }
   else if (pts >= 4)      { grade='B'; label='Strong';     color='#1e40af'; bg='#dbeafe'; border='#93c5fd'; }
   else if (pts >= 2)      { grade='C'; label='Average';    color='#b45309'; bg='#fef3c7'; border='#fcd34d'; }
   else if (pts >= 0)      { grade='D'; label='Weak';       color='#dc2626'; bg='#fee2e2'; border='#fca5a5'; }
@@ -2084,7 +2084,7 @@ function riskVerdict(t) {
   else if (pts >= 6)   { grade='!'; label='Very High'; color='#991b1b'; bg='#fee2e2'; border='#fca5a5'; }
   else if (pts >= 4)   { grade='H'; label='High';      color='#b91c1c'; bg='#fee2e2'; border='#fca5a5'; }
   else if (pts >= 2)   { grade='M'; label='Moderate';  color='#b45309'; bg='#fef3c7'; border='#fcd34d'; }
-  else                 { grade='L'; label='Low';       color='#7C3AED'; bg='#dcfce7'; border='#d8b4fe'; }
+  else                 { grade='L'; label='Low';       color='#15803d'; bg='#dcfce7'; border='#86efac'; }
 
   return {grade, label, color, bg, border, summary: bits.join(' · ') || 'No risk data'};
 }
@@ -3022,10 +3022,10 @@ function renderModalEarningsCard(ticker, t) {
         const surp = epsQ.surprise_pct;
         const beatTag = (beat == null) ? '' :
           (beat
-            ? '<span style="background:#dcfce7;color:#7C3AED;font-weight:700;padding:3px 10px;border-radius:999px;font-size:10px;letter-spacing:.04em;margin-left:6px">BEAT</span>'
+            ? '<span style="background:#dcfce7;color:#15803d;font-weight:700;padding:3px 10px;border-radius:999px;font-size:10px;letter-spacing:.04em;margin-left:6px">BEAT</span>'
             : '<span style="background:#fee2e2;color:#b91c1c;font-weight:700;padding:3px 10px;border-radius:999px;font-size:10px;letter-spacing:.04em;margin-left:6px">MISS</span>');
         const surpStr = (surp == null) ? '' :
-          ' &middot; <span style="color:' + (surp > 0 ? '#7C3AED' : '#b91c1c') + ';font-weight:600">' + (surp >= 0 ? '+' : '') + surp.toFixed(1) + '%</span> vs estimate';
+          ' &middot; <span style="color:' + (surp > 0 ? '#15803d' : '#b91c1c') + ';font-weight:600">' + (surp >= 0 ? '+' : '') + surp.toFixed(1) + '%</span> vs estimate';
         epsRow = '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:13px">' +
                    '<span style="color:#64748b;font-weight:600">EPS</span>' +
                    '<span><span class="mono" style="font-weight:700">$' + epsQ.actual.toFixed(2) + '</span> ' +
@@ -3106,7 +3106,7 @@ function renderModalEarningsCard(ticker, t) {
                    '</li>';
           }).join('');
         }
-        const pos = (s.positives && s.positives.length) ? '<div style="margin-top:5px"><div style="font-size:11px;color:#7C3AED;font-weight:800;margin-bottom:2px">Positives:</div><ul style="padding:0;margin:2px 0 0">' + bullets(s.positives, '#7C3AED') + '</ul></div>' : '';
+        const pos = (s.positives && s.positives.length) ? '<div style="margin-top:5px"><div style="font-size:11px;color:#15803d;font-weight:800;margin-bottom:2px">Positives:</div><ul style="padding:0;margin:2px 0 0">' + bullets(s.positives, '#15803d') + '</ul></div>' : '';
         const con = (s.concerns && s.concerns.length) ? '<div style="margin-top:5px"><div style="font-size:11px;color:#b91c1c;font-weight:800;margin-bottom:2px">Concerns:</div><ul style="padding:0;margin:2px 0 0">' + bullets(s.concerns, '#b91c1c') + '</ul></div>' : '';
         const qa  = s.qa_summary ? '<div style="font-size:11.5px;color:#475569;font-style:italic;margin-top:6px">Q&amp;A: ' + s.qa_summary + '</div>' : '';
         sSlot.innerHTML =
@@ -3122,7 +3122,7 @@ function renderModalEarningsCard(ticker, t) {
       const gSlot = root.querySelector('[data-modal-guidance-slot]');
       const g = data.guidance || {};
       if (gSlot && g.tone && g.tone !== 'none') {
-        const toneColor = g.tone === 'raised'  ? '#7C3AED' :
+        const toneColor = g.tone === 'raised'  ? '#15803d' :
                           g.tone === 'lowered' ? '#b91c1c' : '#64748b';
         const toneArrow = g.tone === 'raised'  ? '↗' :
                           g.tone === 'lowered' ? '↘' : '→';
@@ -3979,7 +3979,7 @@ function renderReports(tickers) {
             <div style="font-size:16px;font-weight:900;color:#0f172a">${t.ticker}</div>
             <div style="font-size:11px;color:#64748b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${(t.name || '').slice(0,28)}</div>
           </div>
-          <div style="font-size:10px;font-weight:800;letter-spacing:.04em;padding:3px 7px;border-radius:5px;background:${beat ? 'rgba(124,58,237,.1)' : 'rgba(220,38,38,.1)'};color:${beat ? '#7C3AED' : '#b91c1c'};white-space:nowrap;flex-shrink:0">${beat ? 'BEAT' : (beat === false ? 'MISS' : '—')}</div>
+          <div style="font-size:10px;font-weight:800;letter-spacing:.04em;padding:3px 7px;border-radius:5px;background:${beat ? 'rgba(21,128,61,.1)' : 'rgba(220,38,38,.1)'};color:${beat ? '#15803d' : '#b91c1c'};white-space:nowrap;flex-shrink:0">${beat ? 'BEAT' : (beat === false ? 'MISS' : '—')}</div>
         </div>
         <div style="display:flex;justify-content:space-between;font-size:11px;color:#475569;margin-top:10px">
           <span>Rev: <strong style="color:#0f172a">${revStr}</strong></span>
@@ -4104,8 +4104,8 @@ function renderRichReport(a) {
   // generated blog text, not our grade system). Includes legacy buy/sell terms
   // because the report content may still use them in narrative form — that's
   // OK because it's clearly attributed to an external analyst summary.
-  const ratingColor = (r.rating || '').includes('Strong Buy') || (r.rating || '').includes('Top Tier') ? '#7C3AED'
-                    : (r.rating || '').includes('Buy') || (r.rating || '').includes('Quality')        ? '#7C3AED'
+  const ratingColor = (r.rating || '').includes('Strong Buy') || (r.rating || '').includes('Top Tier') ? '#15803d'
+                    : (r.rating || '').includes('Buy') || (r.rating || '').includes('Quality')        ? '#15803d'
                     : (r.rating || '') === 'Hold' || (r.rating || '').includes('Average')             ? '#b45309'
                     : (r.rating || '') === 'Reduce' || (r.rating || '').includes('Below')             ? '#dc2626'
                     : (r.rating || '') === 'Avoid' || (r.rating || '').includes('Weak')               ? '#991b1b'
@@ -4565,7 +4565,7 @@ function renderModelPortfolio(data) {
         [returnLabel, `<span class="${avgCls}" style="font-size:22px;font-weight:900">${avgPct>=0?'+':''}${avgPct.toFixed(1)}%</span>`, returnSub],
         ['Winners', `<span style="font-size:22px;font-weight:900;color:#7C3AED">${stats.winners||0}</span>`, `of ${stats.total_picks||0} picks`],
         ['Losers',  `<span style="font-size:22px;font-weight:900;color:#dc2626">${stats.losers||0}</span>`, 'in the red'],
-        ['Best Pick', `<span style="font-size:22px;font-weight:900;color:#7C3AED">+${(stats.best||0).toFixed(1)}%</span>`, 'top gainer'],
+        ['Best Pick', `<span style="font-size:22px;font-weight:900;color:#15803d">+${(stats.best||0).toFixed(1)}%</span>`, 'top gainer'],
         ['Worst Pick',`<span style="font-size:22px;font-weight:900;color:#dc2626">${(stats.worst||0).toFixed(1)}%</span>`, 'biggest drop'],
       ].map(([label, val, sub]) => `
         <div style="background:#f8fafc;border-radius:10px;padding:12px;text-align:center;border:1px solid rgba(0,0,0,.05)">

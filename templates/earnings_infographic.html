@@ -104,7 +104,7 @@
   .stat-h{
     font-size:30px;font-weight:900;color:#0d2440;letter-spacing:-.01em;margin-top:4px;line-height:1.1;
   }
-  .stat-h.green{color:#7C3AED}
+  .stat-h.green{color:#15803d}
   .stat-body{
     font-size:13.5px;color:#475569;line-height:1.55;margin-top:8px;
   }
@@ -360,7 +360,7 @@ function render() {
   const surp = eps.surprise_pct;
   document.getElementById('ig-eps').textContent = epsActual != null ? '$' + epsActual.toFixed(2) : '—';
   document.getElementById('ig-eps-h').textContent = beat ? 'Beat' : (beat === false ? 'Missed' : '—');
-  document.getElementById('ig-eps-h').style.color = beat ? '#7C3AED' : '#dc2626';
+  document.getElementById('ig-eps-h').style.color = beat ? '#15803d' : '#dc2626';
   document.getElementById('ig-eps-body').textContent = (epsEst != null ? 'Estimate: $' + epsEst.toFixed(2) : '') + (surp != null ? ' · Surprise: ' + (surp >= 0 ? '+' : '') + (surp * 100).toFixed(1) + '%' : '');
 
   // Stat 3: Gross margin
@@ -369,13 +369,13 @@ function render() {
   const gmDelta = (gm != null && gmPrev != null) ? (gm - gmPrev) * 100 : null;
   document.getElementById('ig-margin').textContent = gm != null ? (gm * 100).toFixed(1) + '%' : '—';
   document.getElementById('ig-margin-h').textContent = gmDelta != null ? fmtPct(gmDelta, 1) + ' pts QoQ' : '—';
-  document.getElementById('ig-margin-h').style.color = gmDelta > 0 ? '#7C3AED' : (gmDelta < 0 ? '#dc2626' : '#475569');
+  document.getElementById('ig-margin-h').style.color = gmDelta > 0 ? '#15803d' : (gmDelta < 0 ? '#dc2626' : '#475569');
   document.getElementById('ig-margin-body').textContent = gmPrev != null ? 'Prior quarter: ' + (gmPrev * 100).toFixed(1) + '%' : '';
 
   // Stat 4: Guidance
   const guidance = ei.guidance || {};
   const tone = (guidance.tone || 'none').toLowerCase();
-  const toneColor = {raised:'#7C3AED', maintained:'#0d2440', lowered:'#dc2626', none:'#94a3b8'}[tone] || '#475569';
+  const toneColor = {raised:'#15803d', maintained:'#0d2440', lowered:'#dc2626', none:'#94a3b8'}[tone] || '#475569';
   document.getElementById('ig-guidance').textContent = tone === 'none' ? '—' : tone.charAt(0).toUpperCase() + tone.slice(1);
   document.getElementById('ig-guidance').style.color = toneColor;
   document.getElementById('ig-guidance-h').textContent = guidance.revenue_guidance || guidance.eps_guidance || 'No specific range';
