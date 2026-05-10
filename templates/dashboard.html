@@ -3906,17 +3906,14 @@ async function loadReports() {
 function renderReports(tickers) {
   const root = document.getElementById('blog-root');
 
-  // Find stocks that reported in last 60 days (have last_earnings_date or
-  // a recent eps_quarters[0].date)
-  const today = new Date();
-  const sixtyD = 60 * 86400 * 1000;
+  // Earnings gallery: include any stock with at least one eps_quarter on
+  // record. Sort by report date (newest first), no date filter — so the
+  // gallery is never empty just because we're between earnings seasons.
+  // Tickers that have never reported (no eps_quarters at all) still get
+  // filtered out so we don't show meaningless cards.
   const reportedRecently = tickers.filter(t => {
-    const eps0 = (t.eps_quarters || [])[0];
-    if (!eps0 || !eps0.date) return false;
-    try {
-      const d = new Date(eps0.date + 'T00:00:00');
-      return (today - d) <= sixtyD * 2;   // last ~120 days
-    } catch(e) { return false; }
+    const epsArr = t.eps_quarters || [];
+    return epsArr.length > 0 && (epsArr[0]?.actual != null || epsArr[0]?.date);
   }).sort((a, b) => {
     const da = (a.eps_quarters || [])[0]?.date || '';
     const db = (b.eps_quarters || [])[0]?.date || '';
@@ -3962,7 +3959,7 @@ function renderReports(tickers) {
 
   // ── Section 2: Earnings Gallery ───────────────────────────────────────
   const earningsCards = reportedRecently.length === 0
-    ? `<div style="grid-column:1/-1;text-align:center;color:#64748b;padding:24px;font-size:13px">No earnings reports in our cache yet — check back during reporting season.</div>`
+    ? `<div style="grid-column:1/-1;text-align:center;color:#64748b;padding:24px;font-size:13px">No earnings data has been fetched yet — give the universe scanner a few minutes to populate the cache, then refresh.</div>`
     : reportedRecently.map(t => {
       const eps = (t.eps_quarters || [])[0] || {};
       const inc = (t.quarterly_income || [])[0] || {};
@@ -3973,7 +3970,7 @@ function renderReports(tickers) {
       const date = eps.date || '';
       const dateStr = date ? new Date(date + 'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—';
       return `
-      <a href="/infographics/earnings/${t.ticker}" target="_blank"
+      <a href="/tearsheet/${t.ticker}" target="_blank" rel="noopener"
          style="background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:12px;padding:14px;text-decoration:none;color:inherit;transition:transform .15s,box-shadow .15s;display:block;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.04)"
          onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 18px rgba(15,23,42,.12)'"
          onmouseout="this.style.transform='';this.style.boxShadow='0 1px 3px rgba(0,0,0,.04)'">
@@ -3988,8 +3985,8 @@ function renderReports(tickers) {
           <span>Rev: <strong style="color:#0f172a">${revStr}</strong></span>
           <span>EPS: <strong style="color:#0f172a">$${epsActual ? epsActual.toFixed(2) : '—'}</strong></span>
         </div>
-        <div style="font-size:10.5px;color:#94a3b8;margin-top:6px">📅 Reported ${dateStr}</div>
-        <div style="font-size:11px;color:#15803d;margin-top:8px;font-weight:700">📊 Open infographic →</div>
+        <div style="font-size:10.5px;color:#94a3b8;margin-top:6px">📅 Reported ${dateStr || '—'}</div>
+        <div style="font-size:11px;color:#15803d;margin-top:8px;font-weight:700">📊 Open tear sheet →</div>
       </a>`;
     }).join('');
 
@@ -3997,8 +3994,8 @@ function renderReports(tickers) {
     <div style="margin-bottom:18px">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px">
         <div>
-          <div style="font-size:18px;font-weight:800;color:#0f172a">📈 Earnings Reports · Last 120 days</div>
-          <div style="font-size:12px;color:#64748b;margin-top:2px">Click any card to open the 1200×900 earnings infographic for that stock</div>
+          <div style="font-size:18px;font-weight:800;color:#0f172a">📈 Recent Earnings — Tear Sheets</div>
+          <div style="font-size:12px;color:#64748b;margin-top:2px">Tap any card to open the full A4 tear sheet for that stock — sorted newest first.</div>
         </div>
         <div style="font-size:11.5px;color:#94a3b8;font-weight:700">${reportedRecently.length} reports available</div>
       </div>
@@ -6136,6 +6133,12 @@ function showUpgradeSuccess() {
   .ah-right{padding:20px 14px}
   .ah-form-title{font-size:20px}
 }
+/* TOS row — class-based so a OneDrive mid-line truncation can't break the
+   inline style attribute (was breaking and leaking text onto the page). */
+.tos-row{margin-top:24px;font-size:11.5px;color:#475569;line-height:1.55;text-align:left;background:#f8fafc;border-radius:8px;padding:10px 12px}
+.tos-row label{display:flex;align-items:flex-start;gap:8px;cursor:pointer}
+.tos-row input[type=checkbox]{margin-top:3px;cursor:pointer}
+.tos-row a{color:#15803d;font-weight:700}
 </style>
 
 <div id="auth-modal" onclick="if(event.target===this)closeAuthModal()">
@@ -6315,14 +6318,16 @@ function showUpgradeSuccess() {
 
     <!-- Terms (real links + first-time disclosure)
          The id="ah-tos-row" wrapper is hidden on signin/forgot/success views
-         via _switchAuthView so the checkbox only appears on signup steps. -->
-    <div id="ah-tos-row" style="margin-top:24px;font-size:11.5px;color:#475569;line-height:1.55;text-align:left;background:#f8fafc;border-radius:8px;padding:10px 12px">
-      <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer">
-        <input type="checkbox" id="ah-tos-checkbox" style="margin-top:3px;cursor:pointer">
+         via _switchAuthView so the checkbox only appears on signup steps.
+         Styles live in the .tos-row CSS class above to avoid OneDrive truncation
+         leaking inline-style text onto the page. -->
+    <div id="ah-tos-row" class="tos-row">
+      <label>
+        <input type="checkbox" id="ah-tos-checkbox">
         <span>
-          I have read and agree to the <a href="/terms" target="_blank" style="color:#15803d;font-weight:700">Terms</a>,
-          <a href="/privacy" target="_blank" style="color:#15803d;font-weight:700">Privacy Policy</a>, and
-          <a href="/disclaimer" target="_blank" style="color:#15803d;font-weight:700">Disclaimer</a>.
+          I have read and agree to the <a href="/terms" target="_blank">Terms</a>,
+          <a href="/privacy" target="_blank">Privacy Policy</a>, and
+          <a href="/disclaimer" target="_blank">Disclaimer</a>.
           I understand AlphaHunt is a research tool, not personalised financial advice, and I am responsible for my own investment decisions.
         </span>
       </label>

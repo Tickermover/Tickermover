@@ -57,11 +57,12 @@
   .ts-brand{display:flex;align-items:center;gap:14px}
   .ts-logo{
     width:64px;height:64px;border-radius:16px;
-    background:linear-gradient(135deg,#0d2440 0%,#15803d 100%);
+    background:#fff;
     display:flex;align-items:center;justify-content:center;
-    color:#84cc16;font-size:34px;font-weight:900;line-height:1;
-    box-shadow:0 6px 16px rgba(13,36,64,.25);
+    box-shadow:0 6px 16px rgba(13,36,64,.18);
+    overflow:hidden;
   }
+  .ts-logo img{width:56px;height:56px;object-fit:contain;display:block}
   .ts-brand-text .ts-brand-name{
     font-size:22px;font-weight:900;letter-spacing:-.02em;color:#0d2440;
   }
@@ -248,8 +249,7 @@
       <div class="sub">One-page A4 portrait — Alpha Score breakdown, 90-day price chart, quarterly earnings. Print or share.</div>
     </div>
     <div class="nav-links">
-      <a href="/infographics">← Daily Top 5</a>
-      <a href="/app">Dashboard</a>
+      <a href="/app">← Dashboard</a>
     </div>
   </div>
 
@@ -280,7 +280,7 @@
         <!-- HEADER -->
         <div class="ts-head">
           <div class="ts-brand">
-            <div class="ts-logo">α</div>
+            <div class="ts-logo"><img src="/static/icons/icon-192.png" alt="AlphaHunt"></div>
             <div class="ts-brand-text">
               <div class="ts-brand-name">Alpha<span>Hunt</span></div>
               <div class="ts-brand-tag">US Stock Tear Sheet</div>
