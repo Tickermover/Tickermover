@@ -8,27 +8,25 @@
 <link rel="icon" href="/static/icons/favicon-32.png" type="image/png">
 <style>
   *{box-sizing:border-box;margin:0;padding:0;font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif}
-  body{background:linear-gradient(180deg,#161514 0%,#161514 100%);color:#e2e8f0;min-height:100vh;padding:24px}
-  .page-head .title{color:#fff}
-  .page-head .sub{color:rgba(255,255,255,.65)}
+  body{background:#f1f5f9;color:#0f172a;min-height:100vh;padding:24px}
   .page{max-width:1280px;margin:0 auto}
 
   /* ── PAGE HEADER ── */
   .page-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px}
   .page-head .title{font-size:22px;font-weight:900;letter-spacing:-.02em}
-  .page-head .title em{font-style:normal;color:#CEF431}
+  .page-head .title em{font-style:normal;color:#15803d}
   .page-head .sub{font-size:13px;color:#64748b;margin-top:2px}
-  .nav-links a{color:#CEF431;font-weight:700;text-decoration:none;font-size:13px;margin-left:14px}
+  .nav-links a{color:#15803d;font-weight:700;text-decoration:none;font-size:13px;margin-left:14px}
   .nav-links a:hover{text-decoration:underline}
 
   /* ── ACTIONS BAR ── */
   .actions{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;align-items:center}
   .btn{padding:10px 18px;border-radius:9px;font-size:13.5px;font-weight:700;cursor:pointer;border:none;font-family:inherit;letter-spacing:.02em;transition:transform .12s,box-shadow .12s}
   .btn:hover{transform:translateY(-1px)}
-  .btn-primary{background:#CEF431;color:#161514;box-shadow:0 4px 14px rgba(206,244,49,.35)}
+  .btn-primary{background:linear-gradient(135deg,#15803d 0%,#84cc16 100%);color:#fff;box-shadow:0 4px 14px rgba(132,204,22,.35)}
   .btn-secondary{background:#fff;color:#0f172a;border:1px solid rgba(15,23,42,.12)}
   .btn-icon{display:inline-flex;align-items:center;gap:6px}
-  .feedback{font-size:12.5px;color:#CEF431;font-weight:700;margin-left:8px;opacity:0;transition:opacity .25s}
+  .feedback{font-size:12.5px;color:#15803d;font-weight:700;margin-left:8px;opacity:0;transition:opacity .25s}
   .feedback.on{opacity:1}
 
   /* ── INFOGRAPHIC CANVAS ── */
@@ -46,9 +44,9 @@
   .canvas-frame::before{
     content:'';position:absolute;inset:0;pointer-events:none;
     background:
-      radial-gradient(ellipse 60% 50% at 12% 18%, rgba(206,244,49,.18) 0%, transparent 60%),
-      radial-gradient(ellipse 50% 50% at 88% 82%, rgba(206,244,49,.12) 0%, transparent 50%),
-      radial-gradient(ellipse 30% 30% at 80% 12%, rgba(206,244,49,.08) 0%, transparent 50%);
+      radial-gradient(ellipse 60% 50% at 12% 18%, rgba(132,204,22,.18) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 50% at 88% 82%, rgba(74,222,128,.12) 0%, transparent 50%),
+      radial-gradient(ellipse 30% 30% at 80% 12%, rgba(34,197,94,.08) 0%, transparent 50%);
   }
   .canvas-wrap{
     overflow:hidden;border-radius:16px;
@@ -69,7 +67,9 @@
   }
   .ig-brand-mark svg{width:30px;height:30px}
   .ig-brand-text{display:flex;flex-direction:column}
-  .ig-brand-name{font-size:24px;font-weight:900;letter-spacing:-.02em;line-height:1;color:#CEF431}
+  .ig-brand-name{font-size:24px;font-weight:900;letter-spacing:-.02em;
+    background:linear-gradient(135deg,#84cc16 0%,#4ade80 100%);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
   .ig-brand-tag{font-size:11.5px;color:rgba(255,255,255,.6);letter-spacing:.06em;font-weight:600;text-transform:uppercase;margin-top:1px}
 
   .ig-meta{text-align:right}
@@ -86,7 +86,7 @@
     color:#fff;line-height:1.15;
   }
   .ig-title em{font-style:normal;
-    background:#CEF431;
+    background:linear-gradient(135deg,#84cc16 0%,#4ade80 100%);
     -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
   }
   .ig-subtitle{
@@ -135,7 +135,7 @@
   }
   .ig-score-num{
     font-size:42px;font-weight:900;line-height:1;
-    background:#CEF431;
+    background:linear-gradient(135deg,#84cc16 0%,#4ade80 100%);
     -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
   }
   .ig-score-lbl{font-size:9.5px;color:rgba(255,255,255,.5);letter-spacing:.1em;font-weight:700;text-transform:uppercase;margin-top:2px}
@@ -166,7 +166,7 @@
     font-style:italic;
   }
   .ig-foot-url{font-size:13px;font-weight:800;color:#fff;letter-spacing:.02em}
-  .ig-foot-url em{color:#CEF431;font-style:normal}
+  .ig-foot-url em{color:#84cc16;font-style:normal}
 
   /* ── LOADING / ERROR STATES ── */
   .loading{
@@ -230,10 +230,10 @@
           <div class="ig-brand-mark">
             <svg viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg">
               <defs><linearGradient id="lg-mark" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0" stop-color="#CEF431"/><stop offset="1" stop-color="#CEF431"/>
+                <stop offset="0" stop-color="#4ade80"/><stop offset="1" stop-color="#a3e635"/>
               </linearGradient></defs>
               <polyline points="4,21 9,13 15,17 20,7 24,12" stroke="url(#lg-mark)" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-              <circle cx="20" cy="7" r="2.8" fill="#CEF431"/>
+              <circle cx="20" cy="7" r="2.8" fill="#a3e635"/>
             </svg>
           </div>
           <div class="ig-brand-text">
@@ -398,4 +398,13 @@ function fitCanvas() {
   const max = Math.min(wrap.parentElement.clientWidth, 1200);
   const scale = Math.min(1, max / 1200);
   card.style.transform = `scale(${scale})`;
-  wrap.styl                                                                                                                 
+  wrap.style.height = (675 * scale) + 'px';
+  wrap.style.width  = (1200 * scale) + 'px';
+}
+
+window.addEventListener('load', () => { fitCanvas(); loadPicks(); });
+window.addEventListener('resize', fitCanvas);
+</script>
+</body>
+</html>
+                                                                                                                                                                                                                                                                                                       

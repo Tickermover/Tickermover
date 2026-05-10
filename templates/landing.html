@@ -15,13 +15,13 @@
 <link rel="manifest" href="/static/manifest.json">
 
 <!-- ── PWA / iOS Add to Home Screen ────────────────────────────── -->
-<meta name="theme-color" content="#CEF431">
+<meta name="theme-color" content="#15803d">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="AlphaHunt">
 <meta name="application-name" content="AlphaHunt">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="msapplication-TileColor" content="#CEF431">
+<meta name="msapplication-TileColor" content="#15803d">
 <meta name="msapplication-TileImage" content="/static/icons/icon-192.png">
 <meta name="format-detection" content="telephone=no">
 
@@ -31,21 +31,19 @@
 
 <style>
   :root{
-    /* Dark-navy primary palette */
-    --bg:#161514;
-    --bg-soft:#161514;
-    --bg-card:#161514;
+    --bg:#ffffff;
+    --bg-soft:#fafbfc;
     --bg-dark:#0a0e1a;
     --bg-darker:#070a14;
-    --txt:#e2e8f0;
-    --txt-soft:rgba(255,255,255,.7);
-    --txt-muted:rgba(255,255,255,.45);
-    --bdr:rgba(255,255,255,.08);
-    --bdr-strong:rgba(255,255,255,.14);
-    --acc:#CEF431;
-    --acc-vivid:#CEF431;
-    --acc-bright:#CEF431;
-    --acc-soft:rgba(206,244,49,.16);
+    --txt:#0a0a0a;
+    --txt-soft:#475569;
+    --txt-muted:#94a3b8;
+    --bdr:#eef0f3;
+    --bdr-strong:#e2e8f0;
+    --acc:#15803d;
+    --acc-vivid:#16a34a;
+    --acc-bright:#22c55e;
+    --acc-soft:#dcfce7;
     --neg:#dc2626;
     --max-w:1180px;
   }
@@ -83,31 +81,27 @@
   .ticker-chg.down{color:#fca5a5;background:rgba(220,38,38,.18)}
   .ticker-chg.flat{color:#cbd5e1;background:rgba(148,163,184,.12)}
 
-  /* ─── Nav (dark navy with yellow CTA) ─── */
+  /* ─── Nav ─── */
   nav{
     position:sticky;top:0;z-index:50;
-    background:rgba(10,22,40,.85);
+    background:rgba(255,255,255,.85);
     backdrop-filter:saturate(180%) blur(14px);-webkit-backdrop-filter:saturate(180%) blur(14px);
     border-bottom:1px solid var(--bdr);
   }
   .nav-row{display:flex;align-items:center;justify-content:space-between;height:64px}
-  .logo{display:inline-flex;align-items:center;gap:8px;font-size:17px;font-weight:800;letter-spacing:-.02em;color:#fff}
-  /* "alphahunt" two-tone — Aqua Haze "alpha" + Starship "hunt" on Cod Gray */
-  .ah-mark{font-family:'Inter',sans-serif;font-weight:900;letter-spacing:-.025em;line-height:1;display:inline-block}
-  .ah-mark .a1,.ah-mark .l1,.ah-mark .p1,.ah-mark .h1,.ah-mark .a2{color:#EAF4F4}
-  .ah-mark .h2,.ah-mark .u1,.ah-mark .n1,.ah-mark .t1{color:#CEF431}
+  .logo{display:inline-flex;align-items:center;gap:8px;font-size:17px;font-weight:800;letter-spacing:-.02em}
   .logo svg{width:22px;height:22px;flex-shrink:0}
-  .logo-text em{font-style:normal;color:var(--acc-bright)}
+  .logo-text em{font-style:normal;color:var(--acc)}
   .nav-links{display:flex;align-items:center;gap:28px}
   .nav-links a:not(.nav-cta){font-size:14px;color:var(--txt-soft);font-weight:500;transition:color .15s}
-  .nav-links a:not(.nav-cta):hover{color:#fff}
-  .nav-cta{background:#CEF431;color:#161514;padding:8px 18px;border-radius:8px;font-size:13.5px;font-weight:700;transition:all .15s;box-shadow:0 4px 12px rgba(206,244,49,.25)}
-  .nav-cta:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(206,244,49,.35)}
+  .nav-links a:not(.nav-cta):hover{color:var(--txt)}
+  .nav-cta{background:var(--txt);color:#fff;padding:8px 16px;border-radius:8px;font-size:13.5px;font-weight:600;transition:all .15s}
+  .nav-cta:hover{background:#1e293b;transform:translateY(-1px)}
 
   /* ─── Hero ─── */
   .hero{padding:96px 0 80px;text-align:center;position:relative;overflow:hidden}
   .hero::before,.hero::after{content:'';position:absolute;border-radius:50%;pointer-events:none;z-index:-1;filter:blur(80px);opacity:.5}
-  .hero::before{width:520px;height:520px;top:-120px;left:-100px;background:radial-gradient(circle,#EAF4F4 0%,transparent 70%);animation:drift-a 18s ease-in-out infinite alternate}
+  .hero::before{width:520px;height:520px;top:-120px;left:-100px;background:radial-gradient(circle,#bbf7d0 0%,transparent 70%);animation:drift-a 18s ease-in-out infinite alternate}
   .hero::after{width:600px;height:600px;top:80px;right:-150px;background:radial-gradient(circle,#a5b4fc 0%,transparent 70%);animation:drift-b 22s ease-in-out infinite alternate}
   .hero-mesh{position:absolute;left:50%;bottom:-60px;width:480px;height:480px;border-radius:50%;transform:translateX(-50%);background:radial-gradient(circle,#fde68a 0%,transparent 70%);filter:blur(90px);opacity:.35;pointer-events:none;z-index:-1;animation:drift-c 26s ease-in-out infinite alternate}
   @keyframes drift-a{from{transform:translate(0,0) scale(1)}to{transform:translate(80px,40px) scale(1.15)}}
@@ -120,7 +114,7 @@
     font-size:12.5px;font-weight:600;padding:6px 14px;border-radius:999px;margin-bottom:28px;
     box-shadow:0 1px 2px rgba(15,23,42,.04);
   }
-  .pill .dot{width:6px;height:6px;border-radius:50%;background:var(--acc-vivid);box-shadow:0 0 0 3px rgba(206,244,49,.18);animation:pulse 2s ease-in-out infinite}
+  .pill .dot{width:6px;height:6px;border-radius:50%;background:var(--acc-vivid);box-shadow:0 0 0 3px rgba(22,163,74,.18);animation:pulse 2s ease-in-out infinite}
   @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
 
   h1{
@@ -128,7 +122,7 @@
     max-width:920px;margin:0 auto 24px;color:var(--txt);
   }
   h1 em{font-style:normal;display:inline-block;
-    background:linear-gradient(135deg,var(--acc) 0%,#CEF431 50%,#CEF431 100%);
+    background:linear-gradient(135deg,var(--acc) 0%,#22c55e 50%,#a3e635 100%);
     -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
   }
   .hero-sub{font-size:clamp(17px,2.2vw,21px);color:var(--txt-soft);max-width:680px;margin:0 auto 44px;line-height:1.5}
@@ -158,7 +152,7 @@
     transform:perspective(1600px) rotateX(2deg);transform-origin:center top;
   }
   .preview-bar{display:flex;align-items:center;gap:8px;padding:13px 18px;border-bottom:1px solid var(--bdr);background:#fafbfc}
-  .preview-bar .live-dot{width:10px;height:10px;border-radius:50%;background:#CEF431;box-shadow:0 0 0 3px rgba(206,244,49,.18)}
+  .preview-bar .live-dot{width:10px;height:10px;border-radius:50%;background:#16a34a;box-shadow:0 0 0 3px rgba(22,163,74,.18)}
   .preview-bar .lbl{font-size:11.5px;font-weight:700;color:var(--txt-soft);letter-spacing:.04em;text-transform:uppercase}
   .preview-bar .meta{font-size:11.5px;color:var(--txt-muted);margin-left:auto;font-weight:500}
   .preview-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(232px,1fr))}
@@ -166,7 +160,7 @@
   .pc-row{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
   .pc-tic{font-size:15px;font-weight:800;color:var(--txt);letter-spacing:-.01em}
   .pc-name{font-size:11px;color:var(--txt-muted);margin-top:1px;max-width:130px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .pc-grade{font-size:10.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;padding:3px 8px;border-radius:6px;background:var(--acc-soft);color:var(--acc);border:1px solid rgba(206,244,49,.3)}
+  .pc-grade{font-size:10.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;padding:3px 8px;border-radius:6px;background:var(--acc-soft);color:var(--acc);border:1px solid rgba(22,163,74,.3)}
   .pc-score{display:flex;align-items:baseline;gap:4px;margin:6px 0}
   .pc-num{font-size:26px;font-weight:800;color:var(--txt);letter-spacing:-.02em;font-family:'JetBrains Mono',monospace}
   .pc-num-lbl{font-size:11px;color:var(--txt-muted);font-weight:600}
@@ -193,7 +187,7 @@
   section.alt::after{
     content:'';position:absolute;bottom:-160px;left:-200px;
     width:520px;height:520px;border-radius:50%;
-    background:radial-gradient(circle,#CEF431 0%,#dcfce7 50%,transparent 75%);
+    background:radial-gradient(circle,#86efac 0%,#dcfce7 50%,transparent 75%);
     filter:blur(60px);opacity:1;pointer-events:none;z-index:0;
   }
   section.alt > .container{position:relative;z-index:1}
@@ -210,7 +204,7 @@
   section.mid-tint::after{
     content:'';position:absolute;bottom:-100px;left:-180px;
     width:440px;height:440px;border-radius:50%;
-    background:radial-gradient(circle,#EAF4F4 0%,#dcfce7 50%,transparent 75%);
+    background:radial-gradient(circle,#bbf7d0 0%,#dcfce7 50%,transparent 75%);
     filter:blur(80px);opacity:.85;pointer-events:none;z-index:0;
   }
   section.mid-tint > .container{position:relative;z-index:1}
@@ -225,7 +219,7 @@
   }
   #faq > .container{position:relative;z-index:1}
   section.dark{background:var(--bg-dark);color:#e2e8f0}
-  section.dark .sec-eyebrow{color:#CEF431}
+  section.dark .sec-eyebrow{color:#86efac}
   section.dark .sec-h2{color:#fff}
   section.dark .sec-sub{color:#94a3b8}
 
@@ -248,7 +242,7 @@
     background:var(--acc);color:#fff;font-size:16px;font-weight:800;margin-bottom:18px;
     font-family:'JetBrains Mono',monospace;
   }
-  section.dark .step-num{background:#CEF431;color:#fff}
+  section.dark .step-num{background:#16a34a;color:#fff}
   .step h3{font-size:19px;font-weight:700;letter-spacing:-.015em;margin-bottom:10px;color:inherit}
   .step p{font-size:14.5px;color:var(--txt-soft);line-height:1.6}
   section.dark .step p{color:#94a3b8}
@@ -281,19 +275,19 @@
   .principle::before{
     content:'';position:absolute;top:-40px;right:-40px;
     width:160px;height:160px;border-radius:50%;
-    background:radial-gradient(circle,rgba(206,244,49,.18) 0%,transparent 70%);
+    background:radial-gradient(circle,rgba(34,197,94,.18) 0%,transparent 70%);
     pointer-events:none;
   }
   .principle:hover{
     transform:translateY(-4px);
-    border-color:rgba(206,244,49,.25);
+    border-color:rgba(132,204,22,.25);
     background:rgba(255,255,255,.06);
   }
   .principle-num{
     display:inline-block;font-size:13px;font-weight:800;letter-spacing:.06em;
-    color:#CEF431;font-family:'JetBrains Mono',monospace;margin-bottom:18px;
-    padding:4px 10px;background:rgba(206,244,49,.15);border-radius:6px;
-    border:1px solid rgba(206,244,49,.3);
+    color:#86efac;font-family:'JetBrains Mono',monospace;margin-bottom:18px;
+    padding:4px 10px;background:rgba(22,163,74,.15);border-radius:6px;
+    border:1px solid rgba(22,163,74,.3);
   }
   .principle h3{
     font-size:22px;font-weight:800;letter-spacing:-.02em;line-height:1.2;
@@ -328,7 +322,7 @@
 
   /* ─── Final CTA ─── */
   .final-cta{text-align:center;padding:120px 0;background:linear-gradient(135deg,#0a0e1a 0%,#1a2e1a 60%,#0a0e1a 100%);color:#fff;position:relative;overflow:hidden}
-  .final-cta::before{content:'';position:absolute;top:50%;left:50%;width:800px;height:800px;border-radius:50%;background:radial-gradient(circle,rgba(206,244,49,.15) 0%,transparent 65%);transform:translate(-50%,-50%);pointer-events:none}
+  .final-cta::before{content:'';position:absolute;top:50%;left:50%;width:800px;height:800px;border-radius:50%;background:radial-gradient(circle,rgba(34,197,94,.15) 0%,transparent 65%);transform:translate(-50%,-50%);pointer-events:none}
   .final-cta h2{font-size:clamp(36px,5vw,56px);font-weight:800;letter-spacing:-.03em;line-height:1.1;margin-bottom:18px;color:#fff;position:relative}
   .final-cta p{font-size:18px;color:rgba(255,255,255,.7);margin-bottom:36px;position:relative}
   .final-cta .btn-primary{background:#fff;color:var(--txt);position:relative}
@@ -385,7 +379,17 @@
 <nav>
   <div class="container nav-row">
     <a href="/" class="logo">
-      <span style="font-size:22px;font-weight:900;letter-spacing:-.02em;color:#CEF431">AlphaHunt</span>
+      <svg viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg">
+        <defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stop-color="#16a34a"/>
+          <stop offset=".55" stop-color="#84cc16"/>
+          <stop offset="1" stop-color="#a3e635"/>
+        </linearGradient></defs>
+        <rect width="28" height="28" rx="7" fill="#0f172a"/>
+        <polyline points="4,21 9,13 15,17 20,7 24,12" stroke="url(#lg)" stroke-width="2.3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="20" cy="7" r="2.5" fill="#a3e635"/>
+      </svg>
+      <span class="logo-text">Alpha<em>Hunt</em></span>
     </a>
     <div class="nav-links">
       <a href="#how">How it works</a>
@@ -414,7 +418,7 @@
     </div>
     <div style="margin-top:14px;font-size:13.5px;color:#475569">
       Already have an account?
-      <a href="/app?signin=1" style="color:#CEF431;font-weight:700;text-decoration:underline">Sign in →</a>
+      <a href="/app?signin=1" style="color:#15803d;font-weight:700;text-decoration:underline">Sign in →</a>
     </div>
     <div class="hero-meta">
       <span><span class="check">✓</span> 200+ US stocks</span>
@@ -494,14 +498,14 @@
           <!-- 50-60 (yellow) -->
           <path d="M 100.00 20.00 A 80 80 0 0 1 124.72 23.92 L 118.54 42.94 A 60 60 0 0 0 100.00 40.00 Z" fill="#facc15"/>
           <!-- 60-68 (light green) -->
-          <path d="M 124.72 23.92 A 80 80 0 0 1 142.79 32.50 L 132.10 49.37 A 60 60 0 0 0 118.54 42.94 Z" fill="#CEF431"/>
+          <path d="M 124.72 23.92 A 80 80 0 0 1 142.79 32.50 L 132.10 49.37 A 60 60 0 0 0 118.54 42.94 Z" fill="#84cc16"/>
           <!-- 68-100 (deep green) -->
-          <path d="M 142.79 32.50 A 80 80 0 0 1 180.00 100.00 L 160.00 100.00 A 60 60 0 0 0 132.10 49.37 Z" fill="#CEF431"/>
+          <path d="M 142.79 32.50 A 80 80 0 0 1 180.00 100.00 L 160.00 100.00 A 60 60 0 0 0 132.10 49.37 Z" fill="#15803d"/>
           <!-- Needle pointing to 85 (angle = π × 0.15 = 27°) -->
           <line x1="91.09" y1="104.54" x2="164.16" y2="67.31" stroke="#0f172a" stroke-width="3.2" stroke-linecap="round"/>
           <circle cx="100" cy="100" r="7" fill="#0f172a" stroke="#fff" stroke-width="2"/>
           <text x="100" y="78" text-anchor="middle" font-family="JetBrains Mono,Inter,monospace" font-size="32" font-weight="800" fill="#0f172a">85</text>
-          <text x="100" y="128" text-anchor="middle" font-family="Inter,sans-serif" font-size="13" font-weight="900" letter-spacing="0.8" fill="#CEF431">★ TOP TIER</text>
+          <text x="100" y="128" text-anchor="middle" font-family="Inter,sans-serif" font-size="13" font-weight="900" letter-spacing="0.8" fill="#15803d">★ TOP TIER</text>
         </svg>
       </div>
     </div>
@@ -518,7 +522,7 @@
     </div>
     <div class="steps reveal-stagger" style="grid-template-columns:repeat(auto-fit,minmax(260px,1fr))">
       <div class="step">
-        <div class="step-num" style="background:#dcfce7;color:#CEF431">★</div>
+        <div class="step-num" style="background:#dcfce7;color:#15803d">★</div>
         <h3>One Alpha Score</h3>
         <p>A single 0–100 number that blends 19 signals — growth, momentum, technicals, analyst views, macro and more.</p>
       </div>
@@ -533,7 +537,7 @@
         <p>When momentum says go but Wall Street targets say stop, we flag both signals so you can see the conflict.</p>
       </div>
       <div class="step">
-        <div class="step-num" style="background:#dcfce7;color:#CEF431">↗</div>
+        <div class="step-num" style="background:#dcfce7;color:#15803d">↗</div>
         <h3>Estimate revisions</h3>
         <p>How many analysts raised vs cut their forecast in the last 30 days. The most predictive forward signal.</p>
       </div>
@@ -548,7 +552,7 @@
         <p>The 5 most recent headlines per stock, surfaced in the modal. No more bouncing between tabs.</p>
       </div>
       <div class="step">
-        <div class="step-num" style="background:#dcfce7;color:#CEF431">🌡</div>
+        <div class="step-num" style="background:#dcfce7;color:#15803d">🌡</div>
         <h3>Macro-aware scoring</h3>
         <p>Bullish, mixed, bearish — we read the broader market and adjust scores accordingly.</p>
       </div>
@@ -635,7 +639,13 @@
 <footer>
   <div class="container footer-row">
     <a href="/" class="logo" style="font-size:14px">
-      <span style="font-size:18px;font-weight:900;letter-spacing:-.02em;color:#CEF431">AlphaHunt</span>
+      <svg viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg" style="width:18px;height:18px">
+        <defs><linearGradient id="lgf" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#16a34a"/><stop offset=".55" stop-color="#84cc16"/><stop offset="1" stop-color="#a3e635"/></linearGradient></defs>
+        <rect width="28" height="28" rx="7" fill="#0f172a"/>
+        <polyline points="4,21 9,13 15,17 20,7 24,12" stroke="url(#lgf)" stroke-width="2.3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="20" cy="7" r="2.5" fill="#a3e635"/>
+      </svg>
+      <span class="logo-text">Alpha<em>Hunt</em></span>
     </a>
     <div class="footer-links">
       <a href="/app">Open dashboard</a>
@@ -719,4 +729,7 @@ document.querySelectorAll('.faq-q').forEach(q => {
     document.querySelectorAll('.reveal,.reveal-stagger').forEach(el => el.classList.add('in'));
     return;
   }
-  const io = new Interse                                                                                                                                                                                                                                                                                                                                                                                                    
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
+  }, {rootMargin:'0px 0px -10% 0px', threshold:0.05});
+  document.querySelectorAll('.reveal,.reveal-stagger').forEach(el => io.ob
