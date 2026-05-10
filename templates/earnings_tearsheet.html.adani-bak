@@ -14,23 +14,23 @@
   /* ── Page chrome (controls + header — NOT printed/exported) ── */
   .page-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:12px}
   .page-head .title{font-size:22px;font-weight:900;letter-spacing:-.02em}
-  .page-head .title em{font-style:normal;color:#7C3AED}
+  .page-head .title em{font-style:normal;color:#18C729}
   .page-head .sub{font-size:13px;color:#475569;margin-top:2px}
-  .nav-links a{color:#7C3AED;font-weight:700;text-decoration:none;font-size:13px;margin-left:14px}
+  .nav-links a{color:#18C729;font-weight:700;text-decoration:none;font-size:13px;margin-left:14px}
   .nav-links a:hover{text-decoration:underline}
 
   .ticker-bar{display:flex;gap:10px;align-items:center;background:#fff;border:1px solid rgba(15,23,42,.1);border-radius:10px;padding:10px 14px;margin-bottom:14px;flex-wrap:wrap}
   .ticker-bar label{font-size:12.5px;color:#64748b;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
   .ticker-bar input{padding:7px 10px;border:1px solid rgba(15,23,42,.12);border-radius:7px;font-size:14px;font-weight:700;width:120px;text-transform:uppercase;font-family:'JetBrains Mono','Inter',monospace}
-  .ticker-bar input:focus{outline:none;border-color:#7C3AED;box-shadow:0 0 0 3px rgba(225,29,72,.15)}
+  .ticker-bar input:focus{outline:none;border-color:#18C729;box-shadow:0 0 0 3px rgba(254,245,0,.15)}
 
   .actions{display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap;align-items:center}
   .btn{padding:10px 18px;border-radius:9px;font-size:13.5px;font-weight:700;cursor:pointer;border:none;font-family:inherit;letter-spacing:.02em;transition:transform .12s}
   .btn:hover{transform:translateY(-1px)}
-  .btn-primary{background:linear-gradient(135deg,#7C3AED 0%,#E11D48 100%);color:#fff;box-shadow:0 4px 14px rgba(225,29,72,.35)}
+  .btn-primary{background:linear-gradient(135deg,#18C729 0%,#FEF500 100%);color:#fff;box-shadow:0 4px 14px rgba(254,245,0,.35)}
   .btn-secondary{background:#fff;color:#0f172a;border:1px solid rgba(15,23,42,.12)}
   .btn-icon{display:inline-flex;align-items:center;gap:6px}
-  .feedback{font-size:12.5px;color:#7C3AED;font-weight:700;margin-left:8px;opacity:0;transition:opacity .25s}
+  .feedback{font-size:12.5px;color:#18C729;font-weight:700;margin-left:8px;opacity:0;transition:opacity .25s}
   .feedback.on{opacity:1}
 
   /* ── A4 PORTRAIT TEAR SHEET — 1240×1754 px ── */
@@ -64,18 +64,9 @@
   }
   .ts-logo img{width:56px;height:56px;object-fit:contain;display:block}
   .ts-brand-text .ts-brand-name{
-    font-size:22px;font-weight:900;letter-spacing:-.025em;line-height:1;
+    font-size:22px;font-weight:900;letter-spacing:-.02em;color:#0d2440;
   }
-  /* Multi-color "alphahunt" letters */
-  .ts-brand-text .ts-brand-name .a1{color:#2563EB}
-  .ts-brand-text .ts-brand-name .l1{color:#7C3AED}
-  .ts-brand-text .ts-brand-name .p1{color:#C026D3}
-  .ts-brand-text .ts-brand-name .h1{color:#E11D48}
-  .ts-brand-text .ts-brand-name .a2{color:#F97316}
-  .ts-brand-text .ts-brand-name .h2{color:#E11D48}
-  .ts-brand-text .ts-brand-name .u1{color:#C026D3}
-  .ts-brand-text .ts-brand-name .n1{color:#7C3AED}
-  .ts-brand-text .ts-brand-name .t1{color:#2563EB}
+  .ts-brand-text .ts-brand-name span{color:#18C729}
   .ts-brand-text .ts-brand-tag{
     font-size:12px;color:#64748b;font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-top:3px;
   }
@@ -83,7 +74,7 @@
   .ts-meta{text-align:right}
   .ts-meta .ts-date{font-size:13px;color:#64748b;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
   .ts-meta .ts-quarter{font-size:18px;color:#0d2440;font-weight:800;margin-top:4px;letter-spacing:.02em}
-  .ts-meta .ts-quarter strong{color:#7C3AED}
+  .ts-meta .ts-quarter strong{color:#18C729}
 
   /* ── HERO: TICKER + PRICE + SCORE + STARS ── */
   .ts-hero{
@@ -100,7 +91,7 @@
   .ts-hero-l .ts-sector{
     font-size:13px;color:#64748b;font-weight:700;letter-spacing:.04em;text-transform:uppercase;margin-top:8px;
   }
-  .ts-hero-l .ts-sector span{color:#7C3AED}
+  .ts-hero-l .ts-sector span{color:#18C729}
 
   .ts-hero-c{text-align:right;border-right:1px solid rgba(15,23,42,.08);padding-right:32px}
   .ts-hero-c .ts-price{
@@ -116,13 +107,13 @@
 
   .ts-hero-r{text-align:right;min-width:200px}
   .ts-hero-r .ts-scorenum{
-    font-size:64px;font-weight:900;line-height:.95;color:#7C3AED;letter-spacing:-.04em;
+    font-size:64px;font-weight:900;line-height:.95;color:#18C729;letter-spacing:-.04em;
   }
   .ts-hero-r .ts-scorelbl{
     font-size:11.5px;color:#64748b;font-weight:800;letter-spacing:.12em;text-transform:uppercase;margin-top:6px;
   }
   .ts-hero-r .ts-stars{font-size:22px;color:#fbbf24;letter-spacing:.06em;margin-top:8px;line-height:1}
-  .ts-hero-r .ts-tier{font-size:14px;color:#7C3AED;font-weight:800;margin-top:4px}
+  .ts-hero-r .ts-tier{font-size:14px;color:#18C729;font-weight:800;margin-top:4px}
 
   /* ── CHARTS ROW: Price (left) + Score components (right) ── */
   .ts-charts{
@@ -139,7 +130,7 @@
     display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;
   }
   .ts-card-h .pill{
-    background:#0d2440;color:#E11D48;font-size:10.5px;font-weight:800;letter-spacing:.06em;
+    background:#0d2440;color:#FEF500;font-size:10.5px;font-weight:800;letter-spacing:.06em;
     padding:3px 8px;border-radius:5px;text-transform:uppercase;
   }
   .ts-card-sub{font-size:12px;color:#64748b;font-weight:600;margin-bottom:10px}
@@ -191,23 +182,23 @@
     display:flex;gap:10px;align-items:flex-start;padding:7px 0;font-size:12.5px;color:#0f172a;line-height:1.45;
   }
   .ts-bullets .b::before{
-    content:'';flex-shrink:0;width:6px;height:6px;border-radius:50%;background:#7C3AED;margin-top:6px;
+    content:'';flex-shrink:0;width:6px;height:6px;border-radius:50%;background:#18C729;margin-top:6px;
   }
 
   /* ── TAKEAWAY + DISCLAIMER FOOTER ── */
   .ts-takeaway{
-    background:#FDF2F8;border:1px solid #FCE7F3;border-radius:12px;
+    background:#f7fee7;border:1px solid #ecfccb;border-radius:12px;
     padding:18px 22px;margin:22px 0 0;
     display:flex;align-items:flex-start;gap:18px;
   }
   .ts-takeaway-icon{
     width:54px;height:54px;border-radius:50%;flex-shrink:0;
-    background:linear-gradient(135deg,#7C3AED 0%,#E11D48 100%);
+    background:linear-gradient(135deg,#18C729 0%,#FEF500 100%);
     display:flex;align-items:center;justify-content:center;
     font-size:24px;color:#fff;font-weight:900;
   }
   .ts-takeaway-body{flex:1}
-  .ts-takeaway-h{font-size:11.5px;color:#7C3AED;font-weight:900;letter-spacing:.12em;text-transform:uppercase}
+  .ts-takeaway-h{font-size:11.5px;color:#18C729;font-weight:900;letter-spacing:.12em;text-transform:uppercase}
   .ts-takeaway-text{font-size:15.5px;color:#0d2440;line-height:1.45;margin-top:4px;font-weight:600}
 
   .ts-foot{
@@ -219,7 +210,7 @@
     font-size:10.5px;color:#475569;font-style:italic;line-height:1.5;flex:1;
   }
   .ts-foot-disclaimer strong{color:#0d2440;font-style:normal;font-weight:800}
-  .ts-foot-url{font-size:14px;font-weight:900;color:#7C3AED;letter-spacing:.04em;text-align:right;flex-shrink:0}
+  .ts-foot-url{font-size:14px;font-weight:900;color:#18C729;letter-spacing:.04em;text-align:right;flex-shrink:0}
   .ts-foot-url .small{font-size:10.5px;color:#64748b;font-weight:700;letter-spacing:.04em;display:block;margin-top:2px}
 
   /* Loading */
@@ -267,7 +258,7 @@
     <label for="t-input">Ticker:</label>
     <input id="t-input" type="text" value="LITE" maxlength="6" oninput="this.value=this.value.toUpperCase()" onkeydown="if(event.key==='Enter')loadTicker()">
     <button class="btn btn-primary btn-icon" onclick="loadTicker()"><span>↻</span><span>Load</span></button>
-    <span style="color:#64748b;font-size:12px;margin-left:8px">Try: <a href="javascript:setT('LITE')" style="color:#7C3AED;font-weight:700">LITE</a> · <a href="javascript:setT('NVDA')" style="color:#7C3AED;font-weight:700">NVDA</a> · <a href="javascript:setT('AAOI')" style="color:#7C3AED;font-weight:700">AAOI</a></span>
+    <span style="color:#64748b;font-size:12px;margin-left:8px">Try: <a href="javascript:setT('LITE')" style="color:#18C729;font-weight:700">LITE</a> · <a href="javascript:setT('NVDA')" style="color:#18C729;font-weight:700">NVDA</a> · <a href="javascript:setT('AAOI')" style="color:#18C729;font-weight:700">AAOI</a></span>
   </div>
 
   <!-- Actions -->
@@ -291,7 +282,7 @@
           <div class="ts-brand">
             <div class="ts-logo"><img src="/static/icons/icon-192.png" alt="AlphaHunt"></div>
             <div class="ts-brand-text">
-              <div class="ts-brand-name"><span class="a1">a</span><span class="l1">l</span><span class="p1">p</span><span class="h1">h</span><span class="a2">a</span><span class="h2">h</span><span class="u1">u</span><span class="n1">n</span><span class="t1">t</span></div>
+              <div class="ts-brand-name">Alpha<span>Hunt</span></div>
               <div class="ts-brand-tag">US Stock Tear Sheet</div>
             </div>
           </div>
@@ -837,11 +828,11 @@ function drawEarningsChart(stock) {
           type: 'line',
           label: 'EPS ($)',
           data: epsVals,
-          borderColor: '#E11D48',
-          backgroundColor: '#E11D48',
+          borderColor: '#FEF500',
+          backgroundColor: '#FEF500',
           borderWidth: 3,
           pointRadius: 5,
-          pointBackgroundColor: '#7C3AED',
+          pointBackgroundColor: '#18C729',
           tension: 0.2,
           yAxisID: 'y1',
           order: 1,
@@ -864,7 +855,7 @@ function drawEarningsChart(stock) {
         },
         y1: {
           position: 'right',
-          ticks: { font: {size: 10}, color: '#7C3AED', callback: v => '$' + v.toFixed(2) },
+          ticks: { font: {size: 10}, color: '#18C729', callback: v => '$' + v.toFixed(2) },
           grid: { display: false },
         }
       }
