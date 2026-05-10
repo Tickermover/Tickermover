@@ -212,9 +212,6 @@
     <button class="btn btn-primary btn-icon" onclick="downloadPng()">
       <span>📥</span><span>Download PNG (1200×675)</span>
     </button>
-    <button class="btn btn-secondary btn-icon" onclick="copyCaption()">
-      <span>📋</span><span>Copy caption + hashtags</span>
-    </button>
     <button class="btn btn-secondary btn-icon" onclick="shareTwitter()">
       <span>𝕏</span><span>Share on X</span>
     </button>
@@ -267,14 +264,8 @@
     </div>
   </div>
 
-  <!-- ── CAPTION PREVIEW ── -->
-  <div class="caption">
-    <div class="caption-head">
-      <span class="caption-h">Pre-filled caption</span>
-      <span style="font-size:11px;color:#94a3b8">Click "Copy caption" above to copy</span>
-    </div>
-    <div id="caption-body" class="caption-body">Loading…</div>
-  </div>
+  <!-- Caption preview removed per UX cleanup — Share on X still builds the caption JIT. -->
+  <div id="caption-body" class="caption-body" style="display:none">Loading…</div>
 
 </div>
 

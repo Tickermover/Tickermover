@@ -3952,12 +3952,8 @@ function renderReports(tickers) {
         <div>
           <div style="font-size:11px;color:#84cc16;font-weight:800;letter-spacing:.1em;text-transform:uppercase">Today's Daily Report</div>
           <div style="font-size:22px;font-weight:900;margin-top:2px">📊 Top 5 Highest-Scoring Stocks</div>
-          <div style="font-size:12px;color:rgba(255,255,255,.75);margin-top:4px">Tap any stock to open its full tear sheet · or grab the combined Top-5 image to share</div>
+          <div style="font-size:12px;color:rgba(255,255,255,.75);margin-top:4px">Tap any stock to open its full tear sheet.</div>
         </div>
-        <a href="/infographics" target="_blank"
-          style="padding:9px 16px;background:#fff;color:#15803d;border-radius:8px;font-size:12.5px;font-weight:800;text-decoration:none;letter-spacing:.02em">
-          📥 Combined image →
-        </a>
       </div>
       <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px">
         ${top5Cards}
@@ -4036,8 +4032,7 @@ function renderReports(tickers) {
   // Final assembly — spotlight (primary action) FIRST, then daily report,
   // then the earnings gallery for stocks that recently reported.
   root.innerHTML = `
-    <div class="sec-heading" style="margin-bottom:6px">📊 Tear Sheets &amp; Daily Reports</div>
-    <div style="font-size:13px;color:#64748b;margin-bottom:14px">One-page snapshots of every stock — perfect for sharing on Twitter, Reddit, or LinkedIn, or saving as your own research record.</div>
+    <div class="sec-heading" style="margin-bottom:14px">📊 Tear Sheets &amp; Daily Reports</div>
     ${spotlightHTML}
     ${dailyHTML}
     ${earningsHTML}

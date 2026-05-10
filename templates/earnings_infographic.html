@@ -187,7 +187,6 @@
   <!-- Actions -->
   <div class="actions">
     <button class="btn btn-primary btn-icon" onclick="downloadPng()"><span>📥</span><span>Download PNG (1200×900)</span></button>
-    <button class="btn btn-secondary btn-icon" onclick="copyCaption()"><span>📋</span><span>Copy caption</span></button>
     <button class="btn btn-secondary btn-icon" onclick="shareTwitter()"><span>𝕏</span><span>Share on X</span></button>
     <span id="feedback" class="feedback"></span>
   </div>
@@ -274,14 +273,8 @@
     </div>
   </div>
 
-  <!-- Caption -->
-  <div class="caption">
-    <div class="caption-head">
-      <span class="caption-h">Pre-filled caption</span>
-      <span style="font-size:11px;color:#94a3b8">Click "Copy caption" above</span>
-    </div>
-    <div id="caption-body" class="caption-body">Loading…</div>
-  </div>
+  <!-- Caption preview removed per UX cleanup. Hidden node still feeds Share-on-X. -->
+  <div id="caption-body" class="caption-body" style="display:none">Loading…</div>
 
 </div>
 
