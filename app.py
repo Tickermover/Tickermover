@@ -4091,8 +4091,135 @@ async def infographics_page():
 @app.get("/infographics/earnings", response_class=HTMLResponse)
 @app.get("/infographics/earnings/{ticker}", response_class=HTMLResponse)
 async def earnings_infographic_page(ticker: str = "LITE"):
-    """Earnings-by-the-Numbers infographic for any ticker that recently
-    reported. Pulls /api/earnings-intel/{ticker} + universe data, renders
-    1200x900 PNG via html2canvas."""
+    """Per-stock A4 portrait tear sheet (1240x1754 px) — header with logo,
+    price, Alpha Score, star rating; mini 90-day price chart; Alpha Score
+    component breakdown; quarterly Revenue/EPS bars; key metrics grid;
+    sector/peer mini-table; full disclaimer footer. Downloadable as PNG
+    (html2canvas) or PDF (browser print). Uses /api/universe + /api/earnings-intel
+    + /api/price-history. Replaces the older 1200x900 infographic."""
     from pathlib import Path
-    return HTMLResponse((Path(__file__).parent / "templates" / "earnings_infographic.html").read_text(encoding="utf-8"))
+    return HTMLResponse(
+        (Path(__file__).parent / "templates" / "earnings_tearsheet.html").read_text(encoding="utf-8")
+    )
+
+
+# Alias route — also expose as /tearsheet/{ticker} for cleaner share URLs.
+@app.get("/tearsheet", response_class=HTMLResponse)
+@app.get("/tearsheet/{ticker}", response_class=HTMLResponse)
+async def tearsheet_page(ticker: str = "LITE"):
+    """Same A4 tear sheet served at the friendlier /tearsheet/{TICKER} URL."""
+    from pathlib import Path
+    return HTMLResponse(
+        (Path(__file__).parent / "templates" / "earnings_tearsheet.html").read_text(encoding="utf-8")
+    )
+
+
+# ── /api/price-history/{ticker} — 90-day daily closes for tear sheet chart ─
+@app.get("/api/price-history/{ticker}")
+async def api_price_history(ticker: str, period: str = "3mo"):
+    """Lightweight close-only price history for the tear sheet chart.
+    Returns: {ticker, period, points: [{date, close}, ...]}.
+    Cached 6h per (ticker, period). Falls back gracefully if yfinance is
+    unavailable (returns empty `points` array)."""
+    sym = ticker.upper().strip()
+    if not sym or len(sym) > 8:
+        raise HTTPException(status_code=400, detail="Bad ticker")
+    if period not in ("1mo", "3mo", "6mo", "1y"):
+        period = "3mo"
+
+    cache_key = f"price-history:{sym}:{period}"
+    cached = cache.get(cache_key)
+    if cached is not None:
+        return JSONResponse(cached)
+
+    try:
+        import yfinance as yf  # type: ignore
+    except Exception:
+        return JSONResponse({"ticker": sym, "period": period, "points": []})
+
+    def _fetch():
+        try:
+            tk = yf.Ticker(sym)
+            h = tk.history(period=period, interval="1d", auto_adjust=True)
+            if h is None or h.empty:
+                return []
+            out = []
+            for idx, row in h.iterrows():
+                d = idx.strftime("%Y-%m-%d") if hasattr(idx, "strftime") else str(idx)
+                close = float(row["Close"]) if row.get("Close") is not None else None
+                if close is not None and not (math.isnan(close) or math.isinf(close)):
+                    out.append({"date": d, "close": round(close, 2)})
+            return out
+        except Exception as exc:
+            logger.warning(f"price-history fetch {sym} failed: {exc}")
+            return []
+
+    pts = await asyncio.to_thread(_fetch)
+    payload = {"ticker": sym, "period": period, "points": pts}
+    cache.set(cache_key, payload, 60 * 60 * 6)  # 6h
+    return JSONResponse(payload)
+)
+    Uses /api/universe + /api/earnings-intel + /api/price-history."""
+    from pathlib import Path
+    return HTMLResponse(
+        (Path(__file__).parent / "templates" / "earnings_tearsheet.html").read_text(encoding="utf-8")
+    )
+
+
+# Alias route — also expose as /tearsheet/{ticker} for cleaner share URLs.
+@app.get("/tearsheet", response_class=HTMLResponse)
+@app.get("/tearsheet/{ticker}", response_class=HTMLResponse)
+async def tearsheet_page(ticker: str = "LITE"):
+    """Same A4 tear sheet served at the friendlier /tearsheet/{TICKER} URL."""
+    from pathlib import Path
+    return HTMLResponse(
+        (Path(__file__).parent / "templates" / "earnings_tearsheet.html").read_text(encoding="utf-8")
+    )
+
+
+# ── /api/price-history/{ticker} — 90-day daily closes for tear sheet chart ─
+@app.get("/api/price-history/{ticker}")
+async def api_price_history(ticker: str, period: str = "3mo"):
+    """Lightweight close-only price history for the tear sheet chart.
+    Returns: {ticker, period, points: [{date, close}, ...]}.
+    Cached 6h per (ticker, period). Falls back gracefully if yfinance is
+    unavailable (returns empty `points` array)."""
+    sym = ticker.upper().strip()
+    if not sym or len(sym) > 8:
+        raise HTTPException(status_code=400, detail="Bad ticker")
+    if period not in ("1mo", "3mo", "6mo", "1y"):
+        period = "3mo"
+
+    cache_key = f"price-history:{sym}:{period}"
+    cached = cache.get(cache_key)
+    if cached is not None:
+        return JSONResponse(cached)
+
+    try:
+        import yfinance as yf  # type: ignore
+    except Exception:
+        return JSONResponse({"ticker": sym, "period": period, "points": []})
+
+    def _fetch():
+        try:
+            tk = yf.Ticker(sym)
+            h = tk.history(period=period, interval="1d", auto_adjust=True)
+            if h is None or h.empty:
+                return []
+            out = []
+            for idx, row in h.iterrows():
+                d = idx.strftime("%Y-%m-%d") if hasattr(idx, "strftime") else str(idx)
+                close = float(row["Close"]) if row.get("Close") is not None else None
+                if close is not None and not (math.isnan(close) or math.isinf(close)):
+                    out.append({"date": d, "close": round(close, 2)})
+            return out
+        except Exception as exc:
+            logger.warning(f"price-history fetch {sym} failed: {exc}")
+            return []
+
+    pts = await asyncio.to_thread(_fetch)
+    payload = {"ticker": sym, "period": period, "points": pts}
+    cache.set(cache_key, payload, 60 * 60 * 6)  # 6h
+    return JSONResponse(payload)
+6)  # 6h
+    return JSONResponse(payload)
