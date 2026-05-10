@@ -14,23 +14,23 @@
   /* ── Page chrome (controls + header — NOT printed/exported) ── */
   .page-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:12px}
   .page-head .title{font-size:22px;font-weight:900;letter-spacing:-.02em}
-  .page-head .title em{font-style:normal;color:#CEF431}
+  .page-head .title em{font-style:normal;color:#7C3AED}
   .page-head .sub{font-size:13px;color:#475569;margin-top:2px}
-  .nav-links a{color:#CEF431;font-weight:700;text-decoration:none;font-size:13px;margin-left:14px}
+  .nav-links a{color:#7C3AED;font-weight:700;text-decoration:none;font-size:13px;margin-left:14px}
   .nav-links a:hover{text-decoration:underline}
 
   .ticker-bar{display:flex;gap:10px;align-items:center;background:#fff;border:1px solid rgba(15,23,42,.1);border-radius:10px;padding:10px 14px;margin-bottom:14px;flex-wrap:wrap}
   .ticker-bar label{font-size:12.5px;color:#64748b;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
   .ticker-bar input{padding:7px 10px;border:1px solid rgba(15,23,42,.12);border-radius:7px;font-size:14px;font-weight:700;width:120px;text-transform:uppercase;font-family:'JetBrains Mono','Inter',monospace}
-  .ticker-bar input:focus{outline:none;border-color:#CEF431;box-shadow:0 0 0 3px rgba(206,244,49,.15)}
+  .ticker-bar input:focus{outline:none;border-color:#7C3AED;box-shadow:0 0 0 3px rgba(225,29,72,.15)}
 
   .actions{display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap;align-items:center}
   .btn{padding:10px 18px;border-radius:9px;font-size:13.5px;font-weight:700;cursor:pointer;border:none;font-family:inherit;letter-spacing:.02em;transition:transform .12s}
   .btn:hover{transform:translateY(-1px)}
-  .btn-primary{background:#CEF431;color:#161514;box-shadow:0 4px 14px rgba(206,244,49,.35)}
+  .btn-primary{background:linear-gradient(135deg,#7C3AED 0%,#E11D48 100%);color:#fff;box-shadow:0 4px 14px rgba(225,29,72,.35)}
   .btn-secondary{background:#fff;color:#0f172a;border:1px solid rgba(15,23,42,.12)}
   .btn-icon{display:inline-flex;align-items:center;gap:6px}
-  .feedback{font-size:12.5px;color:#CEF431;font-weight:700;margin-left:8px;opacity:0;transition:opacity .25s}
+  .feedback{font-size:12.5px;color:#7C3AED;font-weight:700;margin-left:8px;opacity:0;transition:opacity .25s}
   .feedback.on{opacity:1}
 
   /* ── A4 PORTRAIT TEAR SHEET — 1240×1754 px ── */
@@ -52,7 +52,7 @@
     display:flex;align-items:flex-start;justify-content:space-between;
     gap:24px;
     padding-bottom:22px;
-    border-bottom:3px solid #161514;
+    border-bottom:3px solid #0d2440;
   }
   .ts-brand{display:flex;align-items:center;gap:14px}
   .ts-logo{
@@ -66,16 +66,24 @@
   .ts-brand-text .ts-brand-name{
     font-size:22px;font-weight:900;letter-spacing:-.025em;line-height:1;
   }
-  /* On Aqua Haze tear sheet (light bg): solid "AlphaHunt" in Cod Gray for clean print */
-  .ts-brand-text .ts-brand-name{color:#161514}
+  /* Multi-color "alphahunt" letters */
+  .ts-brand-text .ts-brand-name .a1{color:#2563EB}
+  .ts-brand-text .ts-brand-name .l1{color:#7C3AED}
+  .ts-brand-text .ts-brand-name .p1{color:#C026D3}
+  .ts-brand-text .ts-brand-name .h1{color:#E11D48}
+  .ts-brand-text .ts-brand-name .a2{color:#F97316}
+  .ts-brand-text .ts-brand-name .h2{color:#E11D48}
+  .ts-brand-text .ts-brand-name .u1{color:#C026D3}
+  .ts-brand-text .ts-brand-name .n1{color:#7C3AED}
+  .ts-brand-text .ts-brand-name .t1{color:#2563EB}
   .ts-brand-text .ts-brand-tag{
     font-size:12px;color:#64748b;font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-top:3px;
   }
 
   .ts-meta{text-align:right}
   .ts-meta .ts-date{font-size:13px;color:#64748b;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
-  .ts-meta .ts-quarter{font-size:18px;color:#161514;font-weight:800;margin-top:4px;letter-spacing:.02em}
-  .ts-meta .ts-quarter strong{color:#CEF431}
+  .ts-meta .ts-quarter{font-size:18px;color:#0d2440;font-weight:800;margin-top:4px;letter-spacing:.02em}
+  .ts-meta .ts-quarter strong{color:#7C3AED}
 
   /* ── HERO: TICKER + PRICE + SCORE + STARS ── */
   .ts-hero{
@@ -84,7 +92,7 @@
     border-bottom:1px solid rgba(15,23,42,.08);
   }
   .ts-hero-l .ts-ticker{
-    font-size:64px;font-weight:900;letter-spacing:-.04em;line-height:.95;color:#161514;
+    font-size:64px;font-weight:900;letter-spacing:-.04em;line-height:.95;color:#0d2440;
   }
   .ts-hero-l .ts-name{
     font-size:18px;color:#475569;font-weight:600;margin-top:4px;line-height:1.3;
@@ -92,11 +100,11 @@
   .ts-hero-l .ts-sector{
     font-size:13px;color:#64748b;font-weight:700;letter-spacing:.04em;text-transform:uppercase;margin-top:8px;
   }
-  .ts-hero-l .ts-sector span{color:#CEF431}
+  .ts-hero-l .ts-sector span{color:#7C3AED}
 
   .ts-hero-c{text-align:right;border-right:1px solid rgba(15,23,42,.08);padding-right:32px}
   .ts-hero-c .ts-price{
-    font-size:48px;font-weight:900;letter-spacing:-.03em;line-height:1;color:#161514;
+    font-size:48px;font-weight:900;letter-spacing:-.03em;line-height:1;color:#0d2440;
   }
   .ts-hero-c .ts-change{
     font-size:18px;font-weight:800;margin-top:6px;letter-spacing:-.01em;
@@ -108,13 +116,13 @@
 
   .ts-hero-r{text-align:right;min-width:200px}
   .ts-hero-r .ts-scorenum{
-    font-size:64px;font-weight:900;line-height:.95;color:#CEF431;letter-spacing:-.04em;
+    font-size:64px;font-weight:900;line-height:.95;color:#7C3AED;letter-spacing:-.04em;
   }
   .ts-hero-r .ts-scorelbl{
     font-size:11.5px;color:#64748b;font-weight:800;letter-spacing:.12em;text-transform:uppercase;margin-top:6px;
   }
   .ts-hero-r .ts-stars{font-size:22px;color:#fbbf24;letter-spacing:.06em;margin-top:8px;line-height:1}
-  .ts-hero-r .ts-tier{font-size:14px;color:#CEF431;font-weight:800;margin-top:4px}
+  .ts-hero-r .ts-tier{font-size:14px;color:#7C3AED;font-weight:800;margin-top:4px}
 
   /* ── CHARTS ROW: Price (left) + Score components (right) ── */
   .ts-charts{
@@ -127,11 +135,11 @@
     padding:18px 20px;display:flex;flex-direction:column;
   }
   .ts-card-h{
-    font-size:11.5px;color:#161514;font-weight:800;letter-spacing:.10em;text-transform:uppercase;
+    font-size:11.5px;color:#0d2440;font-weight:800;letter-spacing:.10em;text-transform:uppercase;
     display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;
   }
   .ts-card-h .pill{
-    background:#161514;color:#CEF431;font-size:10.5px;font-weight:800;letter-spacing:.06em;
+    background:#0d2440;color:#E11D48;font-size:10.5px;font-weight:800;letter-spacing:.06em;
     padding:3px 8px;border-radius:5px;text-transform:uppercase;
   }
   .ts-card-sub{font-size:12px;color:#64748b;font-weight:600;margin-bottom:10px}
@@ -152,7 +160,7 @@
     font-size:10.5px;color:#64748b;font-weight:800;letter-spacing:.10em;text-transform:uppercase;
   }
   .ts-metric .val{
-    font-size:24px;font-weight:900;color:#161514;letter-spacing:-.02em;margin-top:4px;line-height:1.05;
+    font-size:24px;font-weight:900;color:#0d2440;letter-spacing:-.02em;margin-top:4px;line-height:1.05;
   }
   .ts-metric .val.green{color:#15803d}
   .ts-metric .val.red{color:#dc2626}
@@ -173,7 +181,7 @@
     margin-top:12px;
   }
   .ts-eps-cell{padding:8px 0}
-  .ts-eps-cell .v{font-size:22px;font-weight:900;color:#161514;letter-spacing:-.02em;line-height:1}
+  .ts-eps-cell .v{font-size:22px;font-weight:900;color:#0d2440;letter-spacing:-.02em;line-height:1}
   .ts-eps-cell .v.green{color:#15803d}
   .ts-eps-cell .v.red{color:#dc2626}
   .ts-eps-cell .l{font-size:10.5px;color:#64748b;font-weight:800;letter-spacing:.10em;text-transform:uppercase;margin-top:4px}
@@ -183,35 +191,35 @@
     display:flex;gap:10px;align-items:flex-start;padding:7px 0;font-size:12.5px;color:#0f172a;line-height:1.45;
   }
   .ts-bullets .b::before{
-    content:'';flex-shrink:0;width:6px;height:6px;border-radius:50%;background:#CEF431;margin-top:6px;
+    content:'';flex-shrink:0;width:6px;height:6px;border-radius:50%;background:#7C3AED;margin-top:6px;
   }
 
   /* ── TAKEAWAY + DISCLAIMER FOOTER ── */
   .ts-takeaway{
-    background:#EAF4F4;border:1px solid #EAF4F4;border-radius:12px;
+    background:#FDF2F8;border:1px solid #FCE7F3;border-radius:12px;
     padding:18px 22px;margin:22px 0 0;
     display:flex;align-items:flex-start;gap:18px;
   }
   .ts-takeaway-icon{
     width:54px;height:54px;border-radius:50%;flex-shrink:0;
-    background:#CEF431;
+    background:linear-gradient(135deg,#7C3AED 0%,#E11D48 100%);
     display:flex;align-items:center;justify-content:center;
     font-size:24px;color:#fff;font-weight:900;
   }
   .ts-takeaway-body{flex:1}
-  .ts-takeaway-h{font-size:11.5px;color:#CEF431;font-weight:900;letter-spacing:.12em;text-transform:uppercase}
-  .ts-takeaway-text{font-size:15.5px;color:#161514;line-height:1.45;margin-top:4px;font-weight:600}
+  .ts-takeaway-h{font-size:11.5px;color:#7C3AED;font-weight:900;letter-spacing:.12em;text-transform:uppercase}
+  .ts-takeaway-text{font-size:15.5px;color:#0d2440;line-height:1.45;margin-top:4px;font-weight:600}
 
   .ts-foot{
     margin-top:auto;padding-top:18px;
-    border-top:2px solid #161514;
+    border-top:2px solid #0d2440;
     display:flex;justify-content:space-between;align-items:flex-end;gap:24px;
   }
   .ts-foot-disclaimer{
     font-size:10.5px;color:#475569;font-style:italic;line-height:1.5;flex:1;
   }
-  .ts-foot-disclaimer strong{color:#161514;font-style:normal;font-weight:800}
-  .ts-foot-url{font-size:14px;font-weight:900;color:#CEF431;letter-spacing:.04em;text-align:right;flex-shrink:0}
+  .ts-foot-disclaimer strong{color:#0d2440;font-style:normal;font-weight:800}
+  .ts-foot-url{font-size:14px;font-weight:900;color:#7C3AED;letter-spacing:.04em;text-align:right;flex-shrink:0}
   .ts-foot-url .small{font-size:10.5px;color:#64748b;font-weight:700;letter-spacing:.04em;display:block;margin-top:2px}
 
   /* Loading */
@@ -259,7 +267,7 @@
     <label for="t-input">Ticker:</label>
     <input id="t-input" type="text" value="LITE" maxlength="6" oninput="this.value=this.value.toUpperCase()" onkeydown="if(event.key==='Enter')loadTicker()">
     <button class="btn btn-primary btn-icon" onclick="loadTicker()"><span>↻</span><span>Load</span></button>
-    <span style="color:#64748b;font-size:12px;margin-left:8px">Try: <a href="javascript:setT('LITE')" style="color:#CEF431;font-weight:700">LITE</a> · <a href="javascript:setT('NVDA')" style="color:#CEF431;font-weight:700">NVDA</a> · <a href="javascript:setT('AAOI')" style="color:#CEF431;font-weight:700">AAOI</a></span>
+    <span style="color:#64748b;font-size:12px;margin-left:8px">Try: <a href="javascript:setT('LITE')" style="color:#7C3AED;font-weight:700">LITE</a> · <a href="javascript:setT('NVDA')" style="color:#7C3AED;font-weight:700">NVDA</a> · <a href="javascript:setT('AAOI')" style="color:#7C3AED;font-weight:700">AAOI</a></span>
   </div>
 
   <!-- Actions -->
@@ -283,7 +291,7 @@
           <div class="ts-brand">
             <div class="ts-logo"><img src="/static/icons/icon-192.png" alt="AlphaHunt"></div>
             <div class="ts-brand-text">
-              <div class="ts-brand-name">AlphaHunt</div>
+              <div class="ts-brand-name"><span class="a1">a</span><span class="l1">l</span><span class="p1">p</span><span class="h1">h</span><span class="a2">a</span><span class="h2">h</span><span class="u1">u</span><span class="n1">n</span><span class="t1">t</span></div>
               <div class="ts-brand-tag">US Stock Tear Sheet</div>
             </div>
           </div>
@@ -829,11 +837,11 @@ function drawEarningsChart(stock) {
           type: 'line',
           label: 'EPS ($)',
           data: epsVals,
-          borderColor: '#CEF431',
-          backgroundColor: '#CEF431',
+          borderColor: '#E11D48',
+          backgroundColor: '#E11D48',
           borderWidth: 3,
           pointRadius: 5,
-          pointBackgroundColor: '#CEF431',
+          pointBackgroundColor: '#7C3AED',
           tension: 0.2,
           yAxisID: 'y1',
           order: 1,
@@ -848,15 +856,15 @@ function drawEarningsChart(stock) {
         tooltip: { enabled: false },
       },
       scales: {
-        x: { ticks: { font: {size: 10.5, weight: '700'}, color: '#161514' }, grid: { display: false } },
+        x: { ticks: { font: {size: 10.5, weight: '700'}, color: '#0d2440' }, grid: { display: false } },
         y: {
           position: 'left',
-          ticks: { font: {size: 10}, color: '#161514', callback: v => '$' + v.toFixed(1) + 'B' },
+          ticks: { font: {size: 10}, color: '#0d2440', callback: v => '$' + v.toFixed(1) + 'B' },
           grid: { color: 'rgba(15,23,42,0.06)' },
         },
         y1: {
           position: 'right',
-          ticks: { font: {size: 10}, color: '#CEF431', callback: v => '$' + v.toFixed(2) },
+          ticks: { font: {size: 10}, color: '#7C3AED', callback: v => '$' + v.toFixed(2) },
           grid: { display: false },
         }
       }
@@ -931,4 +939,4 @@ function fitSheet() {
   wrap.style.width  = (1240 * scale) + 'px';
 }
 
-window.addEventLi                                       
+window.addEventLi
