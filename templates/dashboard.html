@@ -3408,15 +3408,15 @@ function openStockModal(ticker) {
       <div id="news-body-${t.ticker}" style="font-size:11.5px;color:#475569">Loading…</div>
     </div>
 
-    <!-- Share button — opens earnings infographic for this ticker -->
+    <!-- Share button — opens the per-stock A4 tear sheet for this ticker -->
     <div style="margin-top:14px;padding:14px 16px;background:linear-gradient(135deg,#f0fdf4 0%,#ecfdf5 100%);border:1px solid #bbf7d0;border-radius:10px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
       <div>
-        <div style="font-size:13px;font-weight:800;color:#0f172a">📊 Share this stock as an infographic</div>
-        <div style="font-size:11.5px;color:#475569;margin-top:2px">1200×900 PNG, ready for Twitter / Reddit / LinkedIn — auto-fills with the latest earnings data</div>
+        <div style="font-size:13px;font-weight:800;color:#0f172a">📊 Get the full ${t.ticker} tear sheet</div>
+        <div style="font-size:11.5px;color:#475569;margin-top:2px">One-page A4 with the score breakdown, 90-day price chart, last 4 quarters &amp; key metrics. Save as PDF, share as PNG, or print for your records.</div>
       </div>
-      <a href="/infographics/earnings/${t.ticker}" target="_blank" rel="noopener"
+      <a href="/tearsheet/${t.ticker}" target="_blank" rel="noopener"
          style="padding:9px 16px;background:linear-gradient(135deg,#15803d,#84cc16);color:#fff;text-decoration:none;border-radius:8px;font-size:12.5px;font-weight:800;letter-spacing:.02em;flex-shrink:0">
-        Open infographic →
+        Open tear sheet →
       </a>
     </div>
 
@@ -3932,14 +3932,19 @@ function renderReports(tickers) {
   const TIER = {A:'Top Tier',B:'Quality',C:'Average',D:'Below Avg',F:'Weak'};
 
   // ── Section 1: Daily Top 5 ────────────────────────────────────────────
+  // Each card is now a clickable link to the per-stock tear sheet.
   const top5Cards = top5.map((t, i) => `
-    <div style="background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:10px;padding:14px;text-align:center;min-width:0">
+    <a href="/tearsheet/${t.ticker}" target="_blank" rel="noopener" title="Open ${t.ticker} tear sheet"
+       style="background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:10px;padding:14px;text-align:center;min-width:0;text-decoration:none;color:inherit;display:block;cursor:pointer;transition:transform .15s,box-shadow .15s"
+       onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 18px rgba(15,23,42,.18)'"
+       onmouseout="this.style.transform='';this.style.boxShadow=''">
       <div style="font-size:9.5px;color:#94a3b8;font-weight:800;letter-spacing:.1em">#${i+1}</div>
       <div style="font-size:18px;font-weight:900;color:#0f172a;margin-top:2px">${t.ticker}</div>
       <div style="font-size:10px;color:#64748b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px">${(t.name || '').slice(0,16)}</div>
       <div style="font-size:13px;color:#fbbf24;margin-top:8px">${STAR[t.grade] || ''}</div>
       <div style="font-size:24px;font-weight:900;background:linear-gradient(135deg,#15803d,#84cc16);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-top:4px">${(t.smart_score ?? t.pop_score ?? 0).toFixed(0)}</div>
-    </div>`).join('');
+      <div style="font-size:9.5px;color:#15803d;font-weight:800;margin-top:6px;letter-spacing:.04em">Open tear sheet →</div>
+    </a>`).join('');
 
   const dailyHTML = `
     <div style="background:linear-gradient(135deg,#0d2440 0%,#15803d 100%);border-radius:14px;padding:24px;margin-bottom:18px;color:#fff;box-shadow:0 6px 20px rgba(13,36,64,.2)">
@@ -3947,11 +3952,11 @@ function renderReports(tickers) {
         <div>
           <div style="font-size:11px;color:#84cc16;font-weight:800;letter-spacing:.1em;text-transform:uppercase">Today's Daily Report</div>
           <div style="font-size:22px;font-weight:900;margin-top:2px">📊 Top 5 Highest-Scoring Stocks</div>
-          <div style="font-size:12px;color:rgba(255,255,255,.7);margin-top:2px">1200×675 PNG · Twitter / Reddit ready</div>
+          <div style="font-size:12px;color:rgba(255,255,255,.75);margin-top:4px">Tap any stock to open its full tear sheet · or grab the combined Top-5 image to share</div>
         </div>
         <a href="/infographics" target="_blank"
           style="padding:9px 16px;background:#fff;color:#15803d;border-radius:8px;font-size:12.5px;font-weight:800;text-decoration:none;letter-spacing:.02em">
-          📥 Open & download →
+          📥 Combined image →
         </a>
       </div>
       <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px">
@@ -4006,34 +4011,36 @@ function renderReports(tickers) {
       </div>
     </div>`;
 
-  // ── Section 3: Per-Stock Spotlight ────────────────────────────────────
+  // ── Per-Stock Spotlight (rendered at TOP — primary action) ────────────
   const spotlightHTML = `
-    <div style="background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:14px;padding:20px;margin-bottom:18px">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
-        <span style="font-size:20px">🔍</span>
+    <div style="background:linear-gradient(135deg,#fff 0%,#f0fdf4 100%);border:1px solid #bbf7d0;border-radius:14px;padding:20px;margin-bottom:18px;box-shadow:0 2px 8px rgba(15,23,42,.04)">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px">
+        <span style="font-size:22px">🔍</span>
         <div>
-          <div style="font-size:16px;font-weight:800;color:#0f172a">Per-Stock Spotlight</div>
-          <div style="font-size:12px;color:#64748b">Open an earnings infographic for any ticker — even if it's not in the gallery above.</div>
+          <div style="font-size:17px;font-weight:900;color:#0f172a">Pull a tear sheet for any stock</div>
+          <div style="font-size:12.5px;color:#475569;margin-top:2px">Type a ticker — get the full one-page report: Alpha Score breakdown, 90-day chart, last 4 quarters, key metrics. Download as PNG or PDF.</div>
         </div>
       </div>
       <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;align-items:center">
         <input id="spotlight-input" type="text" placeholder="e.g., NVDA, MU, LITE" maxlength="6"
                oninput="this.value=this.value.toUpperCase()"
                onkeydown="if(event.key==='Enter')spotlightOpen()"
-               style="padding:9px 12px;border:1px solid rgba(0,0,0,.12);border-radius:7px;font-size:14px;font-weight:700;width:160px;text-transform:uppercase;font-family:'JetBrains Mono','Inter',monospace">
+               style="padding:10px 14px;border:1px solid rgba(0,0,0,.12);border-radius:8px;font-size:14px;font-weight:700;width:180px;text-transform:uppercase;font-family:'JetBrains Mono','Inter',monospace">
         <button onclick="spotlightOpen()"
-                style="padding:9px 16px;background:linear-gradient(135deg,#15803d,#84cc16);color:#fff;border:none;border-radius:7px;font-size:13px;font-weight:800;cursor:pointer">
-          Open Earnings Infographic →
+                style="padding:10px 18px;background:linear-gradient(135deg,#15803d,#84cc16);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:800;cursor:pointer;box-shadow:0 4px 12px rgba(132,204,22,.3)">
+          Open tear sheet →
         </button>
       </div>
     </div>`;
 
-  // Final assembly
+  // Final assembly — spotlight (primary action) FIRST, then daily report,
+  // then the earnings gallery for stocks that recently reported.
   root.innerHTML = `
-    <div class="sec-heading" style="margin-bottom:14px">📊 Reports — Shareable cards for Twitter / Reddit / LinkedIn</div>
+    <div class="sec-heading" style="margin-bottom:6px">📊 Tear Sheets &amp; Daily Reports</div>
+    <div style="font-size:13px;color:#64748b;margin-bottom:14px">One-page snapshots of every stock — perfect for sharing on Twitter, Reddit, or LinkedIn, or saving as your own research record.</div>
+    ${spotlightHTML}
     ${dailyHTML}
     ${earningsHTML}
-    ${spotlightHTML}
     <div style="font-size:11.5px;color:#94a3b8;text-align:center;font-style:italic;margin-top:10px">All cards are auto-generated from live data. Quality descriptors only — not buy/sell recommendations.</div>
   `;
 }
@@ -6316,6 +6323,38 @@ function showUpgradeSuccess() {
          via _switchAuthView so the checkbox only appears on signup steps. -->
     <div id="ah-tos-row" style="margin-top:24px;font-size:11.5px;color:#475569;line-height:1.55;text-align:left;background:#f8fafc;border-radius:8px;padding:10px 12px">
       <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer">
+        <input type="checkbox" id="ah-tos-checkbox" style="margin-top:3px;cursor:pointer">
+        <span>
+          I have read and agree to the <a href="/terms" target="_blank" style="color:#15803d;font-weight:700">Terms</a>,
+          <a href="/privacy" target="_blank" style="color:#15803d;font-weight:700">Privacy Policy</a>, and
+          <a href="/disclaimer" target="_blank" style="color:#15803d;font-weight:700">Disclaimer</a>.
+          I understand AlphaHunt is a research tool, not personalised financial advice, and I am responsible for my own investment decisions.
+        </span>
+      </label>
+    </div>
+
+  </div>
+</div>
+
+</div>
+</div>
+
+<!-- Upgrade modal removed — all features free for now -->
+
+<!-- Go-to-top button -->
+<button id="go-top-btn" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="Back to top"></button>
+
+<script>
+(function(){
+  const btn = document.getElementById('go-top-btn');
+  window.addEventListener('scroll', () => {
+    btn.style.display = window.scrollY > 320 ? 'flex' : 'none';
+  }, {passive:true});
+})();
+</script>
+</body>
+</html>
+ap:8px;cursor:pointer">
         <input type="checkbox" id="ah-tos-checkbox" style="margin-top:3px;cursor:pointer">
         <span>
           I have read and agree to the <a href="/terms" target="_blank" style="color:#15803d;font-weight:700">Terms</a>,
