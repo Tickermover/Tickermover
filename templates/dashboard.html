@@ -1090,11 +1090,11 @@ tr:hover td{background:rgba(132,204,22,.06)}
 <div id="panel-fund" class="panel">
   <div class="fd-toolbar">
     <input type="text" id="fd-search" placeholder="Search ticker…" oninput="filterFund()">
-    <select id="fd-rs" onchange="filterFund()">
-      <option value="">All RS</option>
-      <option value="70">RS 70+</option>
-      <option value="80">RS 80+</option>
-      <option value="90">RS 90+ 🔥</option>
+    <select id="fd-rs" onchange="filterFund()" title="Relative Strength — how a stock is performing vs the market (0-100). Higher = stronger.">
+      <option value="">All Relative Strength</option>
+      <option value="70">Relative Strength 70+</option>
+      <option value="80">Relative Strength 80+</option>
+      <option value="90">Relative Strength 90+ 🔥</option>
     </select>
 <!-- Earnings filter removed — dates not reliably available -->
     <select id="fd-grade" onchange="filterFund()">
@@ -1113,7 +1113,7 @@ tr:hover td{background:rgba(132,204,22,.06)}
       <option value="mcap">Sort: Mkt Cap</option>
     </select>
     <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);cursor:pointer;white-space:nowrap">
-      <input type="checkbox" id="fd-hide-mega" checked onchange="filterFund()" style="width:16px;height:16px;accent-color:var(--acc)">
+      <input type="checkbox" id="fd-hide-mega" onchange="filterFund()" style="width:16px;height:16px;accent-color:var(--acc)">
       Hide Mega Caps
     </label>
     <span class="tally" id="tally-fund"></span>
@@ -3274,6 +3274,12 @@ function openStockModal(ticker) {
       ${(() => { const v = catalystVerdict(t); return glanceCell('Catalyst', v); })()}
     </div>
 
+    <!-- INVESTMENT THESIS — moved up here so it sits right after the 4 status boxes -->
+    <div class="fd-summary" style="margin-bottom:12px">
+      <strong style="color:var(--acc2)">Investment Thesis:</strong> ${thesis}
+      ${tw && tw !== '—' ? `<div style="margin-top:6px"><strong style="color:var(--acc3)">Tailwinds:</strong><br>• ${tw.split(' · ').join('<br>• ')}</div>` : ''}
+    </div>
+
     <div id="tv-chart-${t.ticker}" style="width:100%;height:300px;border-radius:10px;overflow:hidden;margin:12px 0;border:1px solid var(--bdr);background:#fff"></div>
 
     ${(() => {
@@ -3397,10 +3403,7 @@ function openStockModal(ticker) {
 
     ${buildPipelineBlock(t)}
 
-    <div class="fd-summary" style="margin-top:14px">
-      <strong style="color:var(--acc2)">Investment Thesis:</strong> ${thesis}
-      <div style="margin-top:6px"><strong style="color:var(--acc3)">Tailwinds:</strong><br>• ${tw.split(' · ').join('<br>• ')}</div>
-    </div>
+    <!-- Investment Thesis moved up to sit right after the 4 status boxes. -->
 
     <!-- Latest News (peers block removed — same data shown elsewhere) -->
     <div id="modal-news-${t.ticker}" style="margin-top:14px;border:1px solid #e2e8f0;border-radius:10px;padding:10px 12px;background:#fff">
@@ -3584,7 +3587,7 @@ window.addEventListener('popstate', () => {
    ---------------------------------------------------------- */
 function renderFundamentals(tickers) {
   computeRS(tickers);
-  const hideMega = document.getElementById('fd-hide-mega')?.checked ?? true;
+  const hideMega = document.getElementById('fd-hide-mega')?.checked ?? false;
   const MEGA_CAP = 200e9;
   const cards = tickers
     .filter(t => t.market_cap == null || t.market_cap >= MIN_MCAP)
@@ -3606,7 +3609,7 @@ function renderFundamentals(tickers) {
         <th onclick="sortFundList('price')">Price</th>
         <th onclick="sortFundList('chg')">Today %</th>
         <th onclick="sortFundList('mom3m')">3M Chg</th>
-        <th>Grade</th>
+        <th>Ratings</th>
         <th onclick="sortFundList('rev')">Rev Growth</th>
         <th onclick="sortFundList('mcap')">Mkt Cap</th>
         <th onclick="sortFundList('pe')">P/E</th>
