@@ -2624,12 +2624,28 @@ function renderHotList(data) {
       </div>
       <div style="font-size:9.5px;color:#94a3b8;margin-top:3px;text-align:center;font-style:italic">Wall Street analyst consensus · not AlphaHunt's forecast</div>` : '';
 
-    // Block 2: 52-week trading range
-    const wk52Block = (wkLo > 0 && wkHi > 0) ? `
+    // Block 2: Valuation verdict + Reverse-DCF implied growth — replaces the
+    // 52W range (which was low-info on a card; users can see it in the modal).
+    const vv = valuationVerdict(t);
+    const rd = reverseDCF(t);
+    const valCell = vv ? `
+      <div title="${(vv.summary || '').replace(/"/g,'&quot;')}">
+        <div class="t-lbl">💰 Valuation</div>
+        <div class="t-val" style="color:${vv.color};font-size:18px">${vv.verdict}</div>
+      </div>` : `
+      <div><div class="t-lbl">💰 Valuation</div><div class="t-val" style="color:#94a3b8;font-size:14px">—</div></div>`;
+    const rdCell = (rd && rd.impliedGrowth != null) ? `
+      <div title="${(rd.summary || '').replace(/"/g,'&quot;')}">
+        <div class="t-lbl">📐 Reverse DCF</div>
+        <div class="t-val" style="color:${rd.color};font-size:18px">${rd.verdict}</div>
+        <div style="font-size:10.5px;color:#64748b;margin-top:1px;font-weight:600">Implied ${rd.impliedGrowth.toFixed(0)}%/yr</div>
+      </div>` : `
+      <div><div class="t-lbl">📐 Reverse DCF</div><div class="t-val" style="color:#94a3b8;font-size:14px">—</div></div>`;
+    const wk52Block = `
       <div class="price-target-row" style="grid-template-columns:1fr 1fr;margin-top:6px">
-        <div><div class="t-lbl">52W Low</div><div class="t-val" style="color:#475569">${fmtP(wkLo)}</div></div>
-        <div><div class="t-lbl">52W High</div><div class="t-val" style="color:#475569">${fmtP(wkHi)}</div></div>
-      </div>` : '';
+        ${valCell}
+        ${rdCell}
+      </div>`;
 
     // Earnings proximity highlight — shown prominently on card
     const earningsAlert = (!isNaN(days2e) && days2e >= 0 && days2e <= 14)
@@ -2661,7 +2677,7 @@ function renderHotList(data) {
         <div class="score-block"><div class="score-big">${Math.round(pop)}</div><div class="score-label">Alpha Score</div></div>
         <div class="rating-stack">
           ${ratingChip(t, rating)}
-          ${(_rsMap[t.ticker]||0)>0 ? `<span class="rs-badge ${(_rsMap[t.ticker]||0)>=90?'rs-gold':(_rsMap[t.ticker]||0)>=70?'rs-green':(_rsMap[t.ticker]||0)>=50?'rs-yellow':'rs-muted'}" style="font-size:11px;padding:3px 8px">RS <span class="rs-num">${_rsMap[t.ticker]}</span></span>` : ''}
+          ${(_rsMap[t.ticker]||0)>0 ? `<span class="rs-badge ${(_rsMap[t.ticker]||0)>=90?'rs-gold':(_rsMap[t.ticker]||0)>=70?'rs-green':(_rsMap[t.ticker]||0)>=50?'rs-yellow':'rs-muted'}" style="font-size:10.5px;padding:3px 8px" title="Relative Strength — how this stock is performing vs the market (0-100)">Relative Strength <span class="rs-num">${_rsMap[t.ticker]}</span></span>` : ''}
         </div>
       </div>
       ${t.caution ? `<div style="margin:6px 0"><span title="${(t.caution_reasons||[]).join(' • ')}"
