@@ -2619,30 +2619,20 @@ function renderHotList(data) {
 
     // Compact valuation panel — 2x2:
     //   Top row: Analyst Target / Implied Upside
-    //   Bottom row: Valuation verdict / Expectations-vs-Real-growth comparison
-    // The bottom-right cell replaces the wordy "Market Expectations" verdict
-    // with the two raw numbers the user actually wants to compare:
-    //   Expects 46%/yr  vs  Real 22%/yr
-    // — instantly answers "is the market asking for more than the company
-    // can deliver?" without any jargon. Colour tracks the gap.
+    //   Bottom row: Valuation verdict / two plain lines:
+    //     "Expected growth: 46%/yr"
+    //     "Actual growth:   202%/yr"
+    // No verdict label, no color logic — just the two numbers the user reads.
     const vv = valuationVerdict(t);
     const rd = reverseDCF(t);
     const expectsPct = (rd && rd.impliedGrowth != null) ? rd.impliedGrowth : null;
     const realPct    = (rd && rd.actualGrowth   != null) ? rd.actualGrowth   : null;
-    // Colour: red if expectations are way above reality, green if below, neutral if close
-    let cmpCol = '#475569';
-    if (expectsPct != null && realPct != null) {
-      const gap = expectsPct - realPct;
-      if (gap > 15)      cmpCol = '#dc2626';   // expects far more than reality
-      else if (gap > 5)  cmpCol = '#b45309';   // expects somewhat more
-      else if (gap > -5) cmpCol = '#1e40af';   // roughly in line
-      else               cmpCol = '#15803d';   // reality exceeds expectations
-    }
-    const cmpCell = (expectsPct != null) ? `
-      <div style="font-size:11px;font-weight:700;color:${cmpCol};line-height:1.25;margin-top:1px">
-        Expects <strong>${expectsPct.toFixed(0)}%/yr</strong>${realPct != null ? `<br>Real <strong>${realPct.toFixed(0)}%/yr</strong>` : ''}
+    const growthCell = (expectsPct != null || realPct != null) ? `
+      <div style="font-size:11px;line-height:1.4;margin-top:1px;color:#0f172a">
+        ${expectsPct != null ? `<div>Expected growth: <strong>${expectsPct.toFixed(0)}%/yr</strong></div>` : ''}
+        ${realPct    != null ? `<div>Actual growth: <strong>${realPct.toFixed(0)}%/yr</strong></div>` : ''}
       </div>` : `<div style="font-size:11px;color:#94a3b8;margin-top:1px">—</div>`;
-    const valBlock = (tgtMean > 0 || vv || expectsPct != null) ? `
+    const valBlock = (tgtMean > 0 || vv || expectsPct != null || realPct != null) ? `
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 10px;background:#dbeafe;border:1px solid #93c5fd;border-radius:10px;padding:8px 12px;margin:8px 0">
         <div title="Wall Street analyst 12-month consensus target — sourced from FMP. NOT AlphaHunt's forecast.">
           <div style="font-size:9px;color:#475569;font-weight:700;letter-spacing:.04em;text-transform:uppercase;line-height:1.2">📊 Analyst Target</div>
@@ -2656,9 +2646,8 @@ function renderHotList(data) {
           <div style="font-size:9px;color:#475569;font-weight:700;letter-spacing:.04em;text-transform:uppercase;line-height:1.2">💰 Valuation</div>
           <div style="font-size:12px;font-weight:800;color:${vv ? vv.color : '#94a3b8'};margin-top:1px;line-height:1.15;white-space:nowrap">${vv ? vv.verdict : '—'}</div>
         </div>
-        <div style="border-top:1px dashed rgba(15,23,42,.18);padding-top:5px;text-align:right" title="${rd ? (rd.summary || '').replace(/"/g,'&quot;') : ''}">
-          <div style="font-size:9px;color:#475569;font-weight:700;letter-spacing:.04em;text-transform:uppercase;line-height:1.2">📐 Expectations vs Real</div>
-          ${cmpCell}
+        <div style="border-top:1px dashed rgba(15,23,42,.18);padding-top:5px" title="${rd ? (rd.summary || '').replace(/"/g,'&quot;') : ''}">
+          ${growthCell}
         </div>
       </div>` : '';
     const analystBlock = valBlock;
