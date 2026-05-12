@@ -461,10 +461,12 @@ tr:hover td{background:rgba(132,204,22,.06)}
 @keyframes ers-pulse{0%,100%{box-shadow:0 0 0 0 rgba(244,63,94,.45)}60%{box-shadow:0 0 0 5px rgba(244,63,94,0)}}
 /* ====== RS RATING BADGE ====== */
 .rs-badge{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:800;padding:3px 9px;border-radius:8px;letter-spacing:.3px;white-space:nowrap;cursor:default}
-.rs-gold{background:rgba(180,83,9,.1);color:#b45309;border:1px solid rgba(180,83,9,.3)}
-.rs-green{background:rgba(22,163,74,.12);color:#15803d;border:1px solid rgba(22,163,74,.3)}
-.rs-yellow{background:rgba(161,98,7,.1);color:#92400e;border:1px solid rgba(161,98,7,.25)}
-.rs-muted{background:rgba(100,116,139,.08);color:#64748b;border:1px solid rgba(100,116,139,.18)}
+/* Four visually distinct tiers — traffic-light system so users can tell
+   RS 97 (gold) from RS 67 (blue) at a glance, not just by the number. */
+.rs-gold  {background:#fef3c7;color:#92400e;border:1px solid #fbbf24}   /* 90+  bright gold */
+.rs-green {background:#dcfce7;color:#15803d;border:1px solid #4ade80}   /* 70-89 strong green */
+.rs-yellow{background:#dbeafe;color:#1e40af;border:1px solid #93c5fd}   /* 50-69 neutral blue */
+.rs-muted {background:#f1f5f9;color:#64748b;border:1px solid #cbd5e1}   /* <50   muted gray */
 .rs-num{font-size:13px;font-weight:900;line-height:1}
 /* ====== IBD-STYLE BLUE DOT ====== */
 .bd-wrap{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:8px;background:rgba(59,130,246,.12);border:1px solid rgba(59,130,246,.35);cursor:default;white-space:nowrap}
@@ -2644,9 +2646,9 @@ function renderHotList(data) {
     const valBlock = (tgtMean > 0 || vv || hasGrowth) ? `
       <div style="background:#dbeafe;border:1px solid #93c5fd;border-radius:10px;padding:8px 12px;margin:8px 0">
         ${(tgtMean > 0 || upside != null) ? `
-        <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-size:12px" title="Wall Street analyst 12-month consensus target — sourced from FMP. NOT AlphaHunt's forecast.">
-          <span><span style="color:#475569;font-weight:700">📊 Analyst Target:</span> <strong style="color:#0f172a">${tgtMean > 0 ? fmtP(tgtMean) : '—'}</strong></span>
-          <span><span style="color:#475569;font-weight:700">Upside:</span> <strong class="${pCls(upside)}">${upside != null ? fmtPct(upside) : '—'}</strong></span>
+        <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-size:12px;flex-wrap:nowrap" title="Wall Street analyst 12-month consensus target — sourced from FMP. NOT AlphaHunt's forecast.">
+          <span style="white-space:nowrap"><span style="color:#475569;font-weight:700">📊 Target:</span> <strong style="color:#0f172a">${tgtMean > 0 ? fmtP(tgtMean) : '—'}</strong></span>
+          <span style="white-space:nowrap"><span style="color:#475569;font-weight:700">Upside:</span> <strong class="${pCls(upside)}">${upside != null ? fmtPct(upside) : '—'}</strong></span>
         </div>` : ''}
         ${vv ? `
         <div style="font-size:12px;margin-top:6px;padding-top:6px;border-top:1px dashed rgba(15,23,42,.18)" title="${(vv.summary || '').replace(/"/g,'&quot;')}">
@@ -2713,13 +2715,6 @@ function renderHotList(data) {
           ${(_rsMap[t.ticker]||0)>0 ? `<span class="rs-badge ${(_rsMap[t.ticker]||0)>=90?'rs-gold':(_rsMap[t.ticker]||0)>=70?'rs-green':(_rsMap[t.ticker]||0)>=50?'rs-yellow':'rs-muted'}" style="font-size:10.5px;padding:3px 8px" title="Relative Strength — how this stock is performing vs the market (0-100)">Relative Strength <span class="rs-num">${_rsMap[t.ticker]}</span></span>` : ''}
         </div>
       </div>
-      ${t.caution ? `<div style="margin:6px 0"><span title="${(t.caution_reasons||[]).join(' • ')}"
-          style="display:inline-flex;align-items:center;gap:4px;
-                 background:#fffbeb;color:#92400e;
-                 border:1px solid #fcd34d;border-radius:6px;
-                 padding:3px 8px;font-size:10.5px;font-weight:800;letter-spacing:.03em">
-          ⚠ Caveats
-        </span></div>` : ''}
       ${analystBlock}
       ${wk52Block}
       <div style="margin-top:8px" class="signals-row">${(() => {
