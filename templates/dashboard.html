@@ -2530,9 +2530,8 @@ function keyTrigger(t) {
     return { icon:'⚡', text:'Strong Price Momentum', cls:'kt-momentum' };
   // Fallback: keep the slot occupied with a neutral context line so cards
   // line up. Pick the most informative passive signal we have available.
-  const chg3m = parseFloat(t.change_3m || t.momentum_3m || 0);
-  if (isFinite(chg3m) && chg3m >= 15)
-    return { icon:'🟢', text:`Up ${chg3m.toFixed(0)}% in last 3 months`, cls:'kt-neutral' };
+  // (3M change is intentionally NOT used here — it's already shown as
+  // "▲ X% · 3M" on the card header, no need to duplicate.)
   if (pop >= 80)
     return { icon:'⭐', text:'Top Tier — consistent high score', cls:'kt-neutral' };
   if (pop >= 65)
@@ -2667,11 +2666,11 @@ function renderHotList(data) {
             else                { exCol = '#0f172a'; reCol = '#dc2626'; }
           }
           return `
-        <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;font-size:12px;margin-top:4px${vv ? '' : ';padding-top:6px;border-top:1px dashed rgba(15,23,42,.18)'}" title="${rd ? (rd.summary || '').replace(/"/g,'&quot;') : ''}">
-          <span style="color:#475569;font-weight:700;white-space:nowrap">📈 Growth:</span>
-          ${expectsPct != null ? `<span style="white-space:nowrap"><strong style="color:${exCol}">${expectsPct.toFixed(0)}%</strong> <span style="color:#64748b">Expected</span></span>` : ''}
-          ${(expectsPct != null && realPct != null) ? `<span style="color:#cbd5e1">·</span>` : ''}
-          ${realPct != null ? `<span style="white-space:nowrap"><strong style="color:${reCol}">${realPct.toFixed(0)}%</strong> <span style="color:#64748b">Actual</span></span>` : ''}
+        <div style="font-size:12px;margin-top:4px${vv ? '' : ';padding-top:6px;border-top:1px dashed rgba(15,23,42,.18)'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${rd ? (rd.summary || '').replace(/"/g,'&quot;') : 'Expected = market-implied growth; Actual = trailing 12-month revenue growth'}">
+          <span style="color:#475569;font-weight:700">📈 Growth:</span>
+          ${expectsPct != null ? ` <strong style="color:${exCol}">${expectsPct.toFixed(0)}%</strong> <span style="color:#64748b">Exp</span>` : ''}
+          ${(expectsPct != null && realPct != null) ? ` <span style="color:#cbd5e1">·</span>` : ''}
+          ${realPct != null ? ` <strong style="color:${reCol}">${realPct.toFixed(0)}%</strong> <span style="color:#64748b">Act</span>` : ''}
         </div>`;
         })() : ''}
       </div>` : '';
