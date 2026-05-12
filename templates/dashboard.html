@@ -2667,12 +2667,11 @@ function renderHotList(data) {
             else                { exCol = '#0f172a'; reCol = '#dc2626'; }
           }
           return `
-        <div style="display:flex;align-items:flex-start;gap:10px;font-size:12px;margin-top:4px${vv ? '' : ';padding-top:6px;border-top:1px dashed rgba(15,23,42,.18)'}" title="${rd ? (rd.summary || '').replace(/"/g,'&quot;') : ''}">
-          <span style="color:#475569;font-weight:700;white-space:nowrap">📈 Growth Rate:</span>
-          <div style="display:grid;grid-template-columns:auto auto;column-gap:6px;row-gap:1px;line-height:1.3;align-items:baseline">
-            ${expectsPct != null ? `<strong style="color:${exCol};text-align:right">${expectsPct.toFixed(0)}%</strong><span style="color:#64748b;text-align:left">Expected</span>` : ''}
-            ${realPct != null ? `<strong style="color:${reCol};text-align:right">${realPct.toFixed(0)}%</strong><span style="color:#64748b;text-align:left">Actual</span>` : ''}
-          </div>
+        <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;font-size:12px;margin-top:4px${vv ? '' : ';padding-top:6px;border-top:1px dashed rgba(15,23,42,.18)'}" title="${rd ? (rd.summary || '').replace(/"/g,'&quot;') : ''}">
+          <span style="color:#475569;font-weight:700;white-space:nowrap">📈 Growth:</span>
+          ${expectsPct != null ? `<span style="white-space:nowrap"><strong style="color:${exCol}">${expectsPct.toFixed(0)}%</strong> <span style="color:#64748b">Expected</span></span>` : ''}
+          ${(expectsPct != null && realPct != null) ? `<span style="color:#cbd5e1">·</span>` : ''}
+          ${realPct != null ? `<span style="white-space:nowrap"><strong style="color:${reCol}">${realPct.toFixed(0)}%</strong> <span style="color:#64748b">Actual</span></span>` : ''}
         </div>`;
         })() : ''}
       </div>` : '';
@@ -2692,6 +2691,10 @@ function renderHotList(data) {
 
     const kt = keyTrigger(t);
     const ktBanner = kt ? `<div class="kt-banner ${kt.cls}">${kt.icon} ${kt.text}</div>` : '';
+    // SINGLE STATUS LINE per card. Priority: Earnings-in-Xd > EPS Beat > anything
+    // else. If earnings alert is showing, suppress the kt-banner so the card
+    // never has two stacked banners stealing space from the score.
+    const singleStatusBanner = earningsAlert || ktBanner;
 
     return `
     <div class="card hot-card ${gc} ${conf>=0.80?'conf-hi':conf>=0.70?'conf-med':'conf-lo'}" data-ticker="${t.ticker}" onclick="openStockModal('${t.ticker}')" style="cursor:pointer">
@@ -2703,8 +2706,7 @@ function renderHotList(data) {
           ${chg3m !== 0 ? `<div style="font-size:10px;color:${chg3m>=0?'#15803d':'#dc2626'};font-weight:600;margin-top:1px">${chg3m>=0?'▲':'▼'} ${Math.abs(chg3m).toFixed(1)}% · 3M</div>` : ''}
         </div>
       </div>
-      ${ktBanner}
-      ${earningsAlert}
+      ${singleStatusBanner}
       <div class="score-xl">
         <div class="score-block"><div class="score-big">${Math.round(pop)}</div><div class="score-label">Alpha Score</div></div>
         <div class="rating-stack">
