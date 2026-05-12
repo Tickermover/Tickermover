@@ -2249,9 +2249,11 @@ function reverseDCF(t) {
   // view on whether the company can clear that bar.
   // `scenarios` describes the LIKELY OUTCOME if the company beats/meets/misses
   // the implied bar — different for each tier because the asymmetry changes.
+  // Verdicts use plain-English labels so non-finance users can read them.
+  // The technical detail (CAGR, scenarios, bar level) stays in the tooltip.
   let verdict, color, bg, border, barLabel, scenarios;
   if (gPct < 0) {
-    verdict='Pricing in decline';  barLabel='UNUSUAL';
+    verdict='Pessimistic bar';      barLabel='UNUSUAL';
     color='#475569'; bg='#f1f5f9'; border='#cbd5e1';
     scenarios = {
       beats:  'Big upside — any positive growth re-rates a depressed multiple sharply higher.',
@@ -2259,7 +2261,7 @@ function reverseDCF(t) {
       misses: 'Limited downside — pessimism already in the price, but value-trap risk persists.',
     };
   } else if (gPct < 5) {
-    verdict='Conservative';        barLabel='LOW BAR';
+    verdict='Easy to clear';         barLabel='LOW BAR';
     color='#0c4a6e'; bg='#e0f2fe'; border='#7dd3fc';
     scenarios = {
       beats:  'Strong upside — easy bar means a beat triggers multiple expansion.',
@@ -2267,7 +2269,7 @@ function reverseDCF(t) {
       misses: 'Small drawdown — expectations were already low.',
     };
   } else if (gPct < 12) {
-    verdict='Reasonable';          barLabel='MODEST BAR';
+    verdict='Realistic';             barLabel='MODEST BAR';
     color='#1e3a8a'; bg='#dbeafe'; border='#93c5fd';
     scenarios = {
       beats:  'Healthy upside — beats compound nicely over time.',
@@ -2275,7 +2277,7 @@ function reverseDCF(t) {
       misses: 'Modest 10-15% pullback typical.',
     };
   } else if (gPct < 22) {
-    verdict='Demanding';           barLabel='HIGH BAR';
+    verdict='Tough ask';             barLabel='HIGH BAR';
     color='#3730a3'; bg='#e0e7ff'; border='#a5b4fc';
     scenarios = {
       beats:  'Modest upside — much of the optimism is already in the price.',
@@ -2283,7 +2285,7 @@ function reverseDCF(t) {
       misses: '15-25% drawdown likely as the multiple compresses.',
     };
   } else if (gPct < 35) {
-    verdict='Aggressive';          barLabel='VERY HIGH BAR';
+    verdict='Very ambitious';        barLabel='VERY HIGH BAR';
     color='#5b21b6'; bg='#ede9fe'; border='#c4b5fd';
     scenarios = {
       beats:  'Limited upside — even strong beats often fail to re-rate higher.',
@@ -2291,7 +2293,7 @@ function reverseDCF(t) {
       misses: '25-40% drawdown — multiple compression hits hard.',
     };
   } else {
-    verdict='Heroic';              barLabel='EXTREME BAR';
+    verdict='Almost impossible';     barLabel='EXTREME BAR';
     color='#6b21a8'; bg='#f3e8ff'; border='#d8b4fe';
     scenarios = {
       beats:  'Modest upside if the beat is genuinely transformative; otherwise priced in.',
@@ -2615,37 +2617,37 @@ function renderHotList(data) {
     const wkLo = parseFloat(t.week_52_low  || t.low_52w  || 0);
     const wkHi = parseFloat(t.week_52_high || t.high_52w || 0);
 
-    // Block 1: Analyst Target + % upside (single, clean row)
-    const analystBlock = (tgtMean > 0 && upside != null) ? `
-      <div class="price-target-row" style="grid-template-columns:1fr 1fr"
-           title="Wall Street analyst 12-month consensus target — sourced from FMP. NOT AlphaHunt's forecast.">
-        <div><div class="t-lbl">📊 Analyst Target</div><div class="t-val">${fmtP(tgtMean)}</div></div>
-        <div><div class="t-lbl">Implied Upside</div><div class="t-val ${pCls(upside)}">${fmtPct(upside)}</div></div>
-      </div>
-      <div style="font-size:9.5px;color:#94a3b8;margin-top:3px;text-align:center;font-style:italic">Wall Street analyst consensus · not AlphaHunt's forecast</div>` : '';
-
-    // Block 2: Valuation verdict + Reverse-DCF implied growth — replaces the
-    // 52W range (which was low-info on a card; users can see it in the modal).
+    // Compact 2x2 valuation grid: target | upside / valuation | reverse-DCF.
+    // Tight padding, smaller labels — pulls 4 datapoints into the space the
+    // old single row used. Reverse-DCF labels are layman-friendly (Realistic /
+    // Tough ask / Very ambitious / Almost impossible).
     const vv = valuationVerdict(t);
     const rd = reverseDCF(t);
-    const valCell = vv ? `
-      <div title="${(vv.summary || '').replace(/"/g,'&quot;')}">
-        <div class="t-lbl">💰 Valuation</div>
-        <div class="t-val" style="color:${vv.color};font-size:18px">${vv.verdict}</div>
-      </div>` : `
-      <div><div class="t-lbl">💰 Valuation</div><div class="t-val" style="color:#94a3b8;font-size:14px">—</div></div>`;
-    const rdCell = (rd && rd.impliedGrowth != null) ? `
-      <div title="${(rd.summary || '').replace(/"/g,'&quot;')}">
-        <div class="t-lbl">📐 Reverse DCF</div>
-        <div class="t-val" style="color:${rd.color};font-size:18px">${rd.verdict}</div>
-        <div style="font-size:10.5px;color:#64748b;margin-top:1px;font-weight:600">Implied ${rd.impliedGrowth.toFixed(0)}%/yr</div>
-      </div>` : `
-      <div><div class="t-lbl">📐 Reverse DCF</div><div class="t-val" style="color:#94a3b8;font-size:14px">—</div></div>`;
-    const wk52Block = `
-      <div class="price-target-row" style="grid-template-columns:1fr 1fr;margin-top:6px">
-        ${valCell}
-        ${rdCell}
-      </div>`;
+    const dcfSub = (rd && rd.impliedGrowth != null)
+      ? `Market needs ${rd.impliedGrowth.toFixed(0)}%/yr growth`
+      : '';
+    const analystBlock = (tgtMean > 0 || vv || rd) ? `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;background:#dbeafe;border:1px solid #93c5fd;border-radius:10px;padding:8px 12px;margin:8px 0">
+        <div title="Wall Street analyst 12-month consensus target — sourced from FMP. NOT AlphaHunt's forecast.">
+          <div style="font-size:9.5px;color:#475569;font-weight:700;letter-spacing:.04em;text-transform:uppercase">📊 Analyst Target</div>
+          <div style="font-size:16px;font-weight:900;color:#0f172a;margin-top:1px">${tgtMean > 0 ? fmtP(tgtMean) : '—'}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:9.5px;color:#475569;font-weight:700;letter-spacing:.04em;text-transform:uppercase">Implied Upside</div>
+          <div class="${pCls(upside)}" style="font-size:16px;font-weight:900;margin-top:1px">${upside != null ? fmtPct(upside) : '—'}</div>
+        </div>
+        <div style="border-top:1px dashed rgba(15,23,42,.18);padding-top:6px" title="${vv ? (vv.summary || '').replace(/"/g,'&quot;') : ''}">
+          <div style="font-size:9.5px;color:#475569;font-weight:700;letter-spacing:.04em;text-transform:uppercase">💰 Valuation</div>
+          <div style="font-size:14px;font-weight:800;color:${vv ? vv.color : '#94a3b8'};margin-top:1px">${vv ? vv.verdict : '—'}</div>
+        </div>
+        <div style="border-top:1px dashed rgba(15,23,42,.18);padding-top:6px;text-align:right" title="${rd ? (rd.summary || '').replace(/"/g,'&quot;') : ''}">
+          <div style="font-size:9.5px;color:#475569;font-weight:700;letter-spacing:.04em;text-transform:uppercase">📐 Market Expectations</div>
+          <div style="font-size:14px;font-weight:800;color:${rd ? rd.color : '#94a3b8'};margin-top:1px">${rd ? rd.verdict : '—'}</div>
+          ${dcfSub ? `<div style="font-size:9.5px;color:#64748b;margin-top:1px;font-weight:600">${dcfSub}</div>` : ''}
+        </div>
+      </div>` : '';
+    // wk52Block is no longer rendered separately — folded into analystBlock above.
+    const wk52Block = '';
 
     // Earnings proximity highlight — shown prominently on card
     const earningsAlert = (!isNaN(days2e) && days2e >= 0 && days2e <= 14)
