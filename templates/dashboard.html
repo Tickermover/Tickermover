@@ -2617,36 +2617,35 @@ function renderHotList(data) {
     const wkLo = parseFloat(t.week_52_low  || t.low_52w  || 0);
     const wkHi = parseFloat(t.week_52_high || t.high_52w || 0);
 
-    // Compact 2x2 valuation grid: target | upside / valuation | reverse-DCF.
-    // Tight padding, smaller labels — pulls 4 datapoints into the space the
-    // old single row used. Reverse-DCF labels are layman-friendly (Realistic /
-    // Tough ask / Very ambitious / Almost impossible).
+    // Compact valuation panel — 2x2 grid with FONT SIZES tuned so the
+    // longer layman verdicts ("Almost impossible", "Very ambitious") fit
+    // cleanly without wrapping. We trade big-number weight for fit.
     const vv = valuationVerdict(t);
     const rd = reverseDCF(t);
     const dcfSub = (rd && rd.impliedGrowth != null)
       ? `Market needs ${rd.impliedGrowth.toFixed(0)}%/yr growth`
       : '';
-    const analystBlock = (tgtMean > 0 || vv || rd) ? `
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;background:#dbeafe;border:1px solid #93c5fd;border-radius:10px;padding:8px 12px;margin:8px 0">
+    const valBlock = (tgtMean > 0 || vv || rd) ? `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 10px;background:#dbeafe;border:1px solid #93c5fd;border-radius:10px;padding:8px 12px;margin:8px 0">
         <div title="Wall Street analyst 12-month consensus target — sourced from FMP. NOT AlphaHunt's forecast.">
-          <div style="font-size:9.5px;color:#475569;font-weight:700;letter-spacing:.04em;text-transform:uppercase">📊 Analyst Target</div>
-          <div style="font-size:16px;font-weight:900;color:#0f172a;margin-top:1px">${tgtMean > 0 ? fmtP(tgtMean) : '—'}</div>
+          <div style="font-size:9px;color:#475569;font-weight:700;letter-spacing:.04em;text-transform:uppercase;line-height:1.2">📊 Analyst Target</div>
+          <div style="font-size:14px;font-weight:900;color:#0f172a;margin-top:1px;line-height:1.1">${tgtMean > 0 ? fmtP(tgtMean) : '—'}</div>
         </div>
         <div style="text-align:right">
-          <div style="font-size:9.5px;color:#475569;font-weight:700;letter-spacing:.04em;text-transform:uppercase">Implied Upside</div>
-          <div class="${pCls(upside)}" style="font-size:16px;font-weight:900;margin-top:1px">${upside != null ? fmtPct(upside) : '—'}</div>
+          <div style="font-size:9px;color:#475569;font-weight:700;letter-spacing:.04em;text-transform:uppercase;line-height:1.2">Implied Upside</div>
+          <div class="${pCls(upside)}" style="font-size:14px;font-weight:900;margin-top:1px;line-height:1.1">${upside != null ? fmtPct(upside) : '—'}</div>
         </div>
-        <div style="border-top:1px dashed rgba(15,23,42,.18);padding-top:6px" title="${vv ? (vv.summary || '').replace(/"/g,'&quot;') : ''}">
-          <div style="font-size:9.5px;color:#475569;font-weight:700;letter-spacing:.04em;text-transform:uppercase">💰 Valuation</div>
-          <div style="font-size:14px;font-weight:800;color:${vv ? vv.color : '#94a3b8'};margin-top:1px">${vv ? vv.verdict : '—'}</div>
+        <div style="border-top:1px dashed rgba(15,23,42,.18);padding-top:5px" title="${vv ? (vv.summary || '').replace(/"/g,'&quot;') : ''}">
+          <div style="font-size:9px;color:#475569;font-weight:700;letter-spacing:.04em;text-transform:uppercase;line-height:1.2">💰 Valuation</div>
+          <div style="font-size:12px;font-weight:800;color:${vv ? vv.color : '#94a3b8'};margin-top:1px;line-height:1.15;white-space:nowrap">${vv ? vv.verdict : '—'}</div>
         </div>
-        <div style="border-top:1px dashed rgba(15,23,42,.18);padding-top:6px;text-align:right" title="${rd ? (rd.summary || '').replace(/"/g,'&quot;') : ''}">
-          <div style="font-size:9.5px;color:#475569;font-weight:700;letter-spacing:.04em;text-transform:uppercase">📐 Market Expectations</div>
-          <div style="font-size:14px;font-weight:800;color:${rd ? rd.color : '#94a3b8'};margin-top:1px">${rd ? rd.verdict : '—'}</div>
-          ${dcfSub ? `<div style="font-size:9.5px;color:#64748b;margin-top:1px;font-weight:600">${dcfSub}</div>` : ''}
+        <div style="border-top:1px dashed rgba(15,23,42,.18);padding-top:5px;text-align:right" title="${rd ? (rd.summary || '').replace(/"/g,'&quot;') : ''}">
+          <div style="font-size:9px;color:#475569;font-weight:700;letter-spacing:.04em;text-transform:uppercase;line-height:1.2">📐 Market Expectations</div>
+          <div style="font-size:12px;font-weight:800;color:${rd ? rd.color : '#94a3b8'};margin-top:1px;line-height:1.15;white-space:nowrap">${rd ? rd.verdict : '—'}</div>
+          ${dcfSub ? `<div style="font-size:9px;color:#64748b;margin-top:1px;font-weight:600;line-height:1.2">${dcfSub}</div>` : ''}
         </div>
       </div>` : '';
-    // wk52Block is no longer rendered separately — folded into analystBlock above.
+    const analystBlock = valBlock;
     const wk52Block = '';
 
     // Earnings proximity highlight — shown prominently on card
@@ -5448,18 +5447,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     _hasReturningHint = localStorage.getItem('ah_seen_signin') === '1';
   } catch(e) {}
 
-  if (_signupFlow) {
-    history.replaceState({}, '', '/app');
-    openAuthModal('signup');
-    document.documentElement.classList.remove('auth-gating');
-  } else if (_signinFlow) {
+  // Signup wizard is retired — every entry point opens the unified Sign in view.
+  // The backend auto-creates the account if the email doesn't exist (handled in authSubmit).
+  if (_signupFlow || _signinFlow) {
     history.replaceState({}, '', '/app');
     openAuthModal('signin');
     document.documentElement.classList.remove('auth-gating');
   } else if (!_AUTH.token) {
-    // No session, no explicit intent — open the auth modal directly to
-    // SIGN IN if this device has logged in before, otherwise SIGN UP.
-    setTimeout(() => openAuthModal(_hasReturningHint ? 'signin' : 'signup'), 600);
+    setTimeout(() => openAuthModal('signin'), 600);
   } else {
     // Authed user — make sure the gate class isn't hanging around
     document.documentElement.classList.remove('auth-gating');
@@ -5597,10 +5592,12 @@ function _scheduleTokenRefresh() {
 // ── Modal ────────────────────────────────────────────────────────────────────
 
 function openAuthModal(mode) {
+  // Unified entry — always opens the sign-in view. The signup wizard is retired
+  // (auto-create happens transparently inside authSubmit when login fails).
   const m = document.getElementById('auth-modal');
   if (!m) return;
   m.style.display = 'flex';
-  _switchAuthView(mode === 'signup' ? 'signup' : 'signin');
+  _switchAuthView('signin');
 }
 
 function closeAuthModal() {
@@ -5621,14 +5618,17 @@ function _switchAuthMode(mode) {
 }
 
 function _switchAuthView(view) {
-  // Show ToS row only on signup steps; hide on signin / forgot / success
+  // Signup wizard retired — only signin / forgot / success views are reachable.
+  // Force any legacy 'signup' callers back to 'signin'.
+  if (view === 'signup' || (view && view.indexOf('signup-s') === 0)) view = 'signin';
+  // ToS row is ALWAYS shown on the signin view because we may silently
+  // auto-create the account if it doesn't exist — and that requires consent.
   const _tosRow = document.getElementById('ah-tos-row');
   if (_tosRow) {
-    const showTos = view && view.indexOf('signup-s') === 0;
-    _tosRow.style.display = showTos ? '' : 'none';
+    _tosRow.style.display = view === 'signin' ? '' : 'none';
   }
 
-  document.getElementById('auth-modal-mode').value = view === 'signin' ? 'signin' : 'signup';
+  document.getElementById('auth-modal-mode').value = 'signin';
   // Hide all views (new modal uses .ah-view + class 'on')
   document.querySelectorAll('.ah-view').forEach(s => s.classList.remove('on'));
   const target = view === 'signin'  ? 'ah-view-signin'
@@ -5789,42 +5789,64 @@ async function fpSubmit() {
 }
 
 async function authSubmit() {
-  const mode  = document.getElementById('auth-modal-mode').value;
+  // UNIFIED sign-in flow (modern auth pattern, Univest-style):
+  //   1. Try /api/auth/signin first
+  //   2. If it fails because the user doesn't exist, silently fall through
+  //      to /api/auth/signup using the same email + password
+  //   3. Either way, the user ends up signed in — no separate "Sign up" CTA
+  //      anywhere on the site
   const email = document.getElementById('auth-email').value.trim();
   const pass  = document.getElementById('auth-password').value;
   const errEl = document.getElementById('auth-error');
   const btn   = document.getElementById('auth-submit');
   if (!email || !pass) { errEl.textContent = 'Email and password required'; return; }
-
-  // ToS agreement required for new signups (not for sign-in)
-  if (mode === 'signup') {
-    const tosBox = document.getElementById('ah-tos-checkbox');
-    if (tosBox && !tosBox.checked) {
-      errEl.textContent = 'Please agree to the Terms, Privacy Policy, and Disclaimer to create your account.';
-      tosBox.focus();
-      return;
-    }
+  // ToS checkbox stays mandatory — first-time auto-signup needs legal agreement.
+  const tosBox = document.getElementById('ah-tos-checkbox');
+  if (tosBox && !tosBox.checked) {
+    errEl.textContent = 'Please agree to the Terms, Privacy Policy, and Disclaimer to continue.';
+    tosBox.focus();
+    return;
   }
   btn.disabled = true;
   btn.textContent = '…';
-  try {
-    const url = mode === 'signup' ? '/api/auth/signup' : '/api/auth/signin';
-    const r   = await fetch(url, {
+
+  async function _hit(url) {
+    const r = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password: pass }),
     });
-    const d = await r.json();
-    if (!r.ok) { errEl.textContent = d.detail || 'Authentication failed'; return; }
+    return { ok: r.ok, status: r.status, data: await r.json().catch(() => ({})) };
+  }
+
+  try {
+    // 1) Try sign in first
+    let res = await _hit('/api/auth/signin');
+    if (!res.ok) {
+      const msg = (res.data.detail || '').toLowerCase();
+      const looksLikeNewUser = res.status === 400 || res.status === 401 || res.status === 404
+                            || msg.includes('invalid') || msg.includes('not found')
+                            || msg.includes('credentials') || msg.includes('no user');
+      if (looksLikeNewUser) {
+        // 2) Fall through to silent auto-signup with the same creds
+        res = await _hit('/api/auth/signup');
+        if (!res.ok) {
+          errEl.textContent = res.data.detail || 'Could not create account — try again';
+          return;
+        }
+      } else {
+        errEl.textContent = res.data.detail || 'Authentication failed';
+        return;
+      }
+    }
+    const d = res.data;
     _AUTH.token   = d.access_token;
     _AUTH.refresh = d.refresh_token;
-    // Store user — use email from response or from the form input as fallback
     const userObj = d.user || {};
     _AUTH.user = { id: userObj.id || null, email: userObj.email || email };
     _authUpdateUI(_AUTH.user);
     _scheduleTokenRefresh();
     closeAuthModal();
-    // Fetch full profile to confirm email and get any extra fields
     fetch('/api/user/me', { headers: { Authorization: `Bearer ${_AUTH.token}` } })
       .then(r => r.ok ? r.json() : null)
       .then(d => { if (d?.email) { _AUTH.user = d; _authUpdateUI(d); } })
@@ -5833,7 +5855,7 @@ async function authSubmit() {
     errEl.textContent = 'Network error — try again';
   } finally {
     btn.disabled = false;
-    btn.textContent = mode === 'signup' ? 'Create Account' : 'Sign In';
+    btn.textContent = 'Sign in';
   }
 }
 
