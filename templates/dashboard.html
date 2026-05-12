@@ -2617,38 +2617,32 @@ function renderHotList(data) {
     const wkLo = parseFloat(t.week_52_low  || t.low_52w  || 0);
     const wkHi = parseFloat(t.week_52_high || t.high_52w || 0);
 
-    // Compact valuation panel — 2x2:
-    //   Top row: Analyst Target / Implied Upside
-    //   Bottom row: Valuation verdict / two plain lines:
-    //     "Expected growth: 46%/yr"
-    //     "Actual growth:   202%/yr"
-    // No verdict label, no color logic — just the two numbers the user reads.
+    // Compact valuation panel — three single-line rows (no wrapping):
+    //   Row 1: 📊 Analyst Target  $209.09   ·   Implied Upside +8.4%
+    //   Row 2: 💰 Valuation: Expensive
+    //   Row 3: Expected growth: 46%/yr  ·  Actual growth: 202%/yr
     const vv = valuationVerdict(t);
     const rd = reverseDCF(t);
     const expectsPct = (rd && rd.impliedGrowth != null) ? rd.impliedGrowth : null;
     const realPct    = (rd && rd.actualGrowth   != null) ? rd.actualGrowth   : null;
-    const growthCell = (expectsPct != null || realPct != null) ? `
-      <div style="font-size:11px;line-height:1.4;margin-top:1px;color:#0f172a">
-        ${expectsPct != null ? `<div>Expected growth: <strong>${expectsPct.toFixed(0)}%/yr</strong></div>` : ''}
-        ${realPct    != null ? `<div>Actual growth: <strong>${realPct.toFixed(0)}%/yr</strong></div>` : ''}
-      </div>` : `<div style="font-size:11px;color:#94a3b8;margin-top:1px">—</div>`;
-    const valBlock = (tgtMean > 0 || vv || expectsPct != null || realPct != null) ? `
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 10px;background:#dbeafe;border:1px solid #93c5fd;border-radius:10px;padding:8px 12px;margin:8px 0">
-        <div title="Wall Street analyst 12-month consensus target — sourced from FMP. NOT AlphaHunt's forecast.">
-          <div style="font-size:9px;color:#475569;font-weight:700;letter-spacing:.04em;text-transform:uppercase;line-height:1.2">📊 Analyst Target</div>
-          <div style="font-size:14px;font-weight:900;color:#0f172a;margin-top:1px;line-height:1.1">${tgtMean > 0 ? fmtP(tgtMean) : '—'}</div>
-        </div>
-        <div style="text-align:right">
-          <div style="font-size:9px;color:#475569;font-weight:700;letter-spacing:.04em;text-transform:uppercase;line-height:1.2">Implied Upside</div>
-          <div class="${pCls(upside)}" style="font-size:14px;font-weight:900;margin-top:1px;line-height:1.1">${upside != null ? fmtPct(upside) : '—'}</div>
-        </div>
-        <div style="border-top:1px dashed rgba(15,23,42,.18);padding-top:5px" title="${vv ? (vv.summary || '').replace(/"/g,'&quot;') : ''}">
-          <div style="font-size:9px;color:#475569;font-weight:700;letter-spacing:.04em;text-transform:uppercase;line-height:1.2">💰 Valuation</div>
-          <div style="font-size:12px;font-weight:800;color:${vv ? vv.color : '#94a3b8'};margin-top:1px;line-height:1.15;white-space:nowrap">${vv ? vv.verdict : '—'}</div>
-        </div>
-        <div style="border-top:1px dashed rgba(15,23,42,.18);padding-top:5px" title="${rd ? (rd.summary || '').replace(/"/g,'&quot;') : ''}">
-          ${growthCell}
-        </div>
+    const hasGrowth  = (expectsPct != null || realPct != null);
+    const valBlock = (tgtMean > 0 || vv || hasGrowth) ? `
+      <div style="background:#dbeafe;border:1px solid #93c5fd;border-radius:10px;padding:8px 12px;margin:8px 0">
+        ${(tgtMean > 0 || upside != null) ? `
+        <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-size:12px" title="Wall Street analyst 12-month consensus target — sourced from FMP. NOT AlphaHunt's forecast.">
+          <span><span style="color:#475569;font-weight:700">📊 Analyst Target:</span> <strong style="color:#0f172a">${tgtMean > 0 ? fmtP(tgtMean) : '—'}</strong></span>
+          <span><span style="color:#475569;font-weight:700">Upside:</span> <strong class="${pCls(upside)}">${upside != null ? fmtPct(upside) : '—'}</strong></span>
+        </div>` : ''}
+        ${vv ? `
+        <div style="font-size:12px;margin-top:6px;padding-top:6px;border-top:1px dashed rgba(15,23,42,.18)" title="${(vv.summary || '').replace(/"/g,'&quot;')}">
+          <span style="color:#475569;font-weight:700">💰 Valuation:</span> <strong style="color:${vv.color}">${vv.verdict}</strong>
+        </div>` : ''}
+        ${hasGrowth ? `
+        <div style="font-size:12px;margin-top:4px${vv ? '' : ';padding-top:6px;border-top:1px dashed rgba(15,23,42,.18)'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${rd ? (rd.summary || '').replace(/"/g,'&quot;') : ''}">
+          ${expectsPct != null ? `<span style="color:#475569;font-weight:700">Expected growth:</span> <strong style="color:#0f172a">${expectsPct.toFixed(0)}%/yr</strong>` : ''}
+          ${(expectsPct != null && realPct != null) ? `<span style="color:#94a3b8;margin:0 6px">·</span>` : ''}
+          ${realPct != null ? `<span style="color:#475569;font-weight:700">Actual growth:</span> <strong style="color:#0f172a">${realPct.toFixed(0)}%/yr</strong>` : ''}
+        </div>` : ''}
       </div>` : '';
     const analystBlock = valBlock;
     const wk52Block = '';
