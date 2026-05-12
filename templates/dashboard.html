@@ -383,6 +383,9 @@ tr:hover td{background:rgba(132,204,22,.06)}
 .kt-guide{background:rgba(5,150,105,.12);color:#047857;border:1px solid rgba(5,150,105,.3)}
 .kt-earnings{background:rgba(220,38,38,.1);color:#b91c1c;border:1px solid rgba(220,38,38,.25);
   animation:ers-pulse 2s ease-in-out infinite}
+/* Neutral fallback — used when no major catalyst fires, so every card keeps
+   the same vertical layout and the Alpha Score lines up across the grid. */
+.kt-neutral{background:rgba(15,23,42,.04);color:#475569;border:1px solid rgba(15,23,42,.10)}
 
 /* ====== THESIS COLUMN ====== */
 .thesis-box{max-width:360px;font-size:11.5px;line-height:1.5;color:var(--txt)}
@@ -2502,6 +2505,11 @@ function riskFlags(t) {
    Used to highlight WHY this stock is in the hot list.
    ---------------------------------------------------------- */
 function keyTrigger(t) {
+  // ALWAYS returns a key-trigger banner so every card has the same height
+  // and the Alpha Score stays vertically aligned across the grid. The
+  // primary catalyst (EPS Beat, Insider Buying, New High, Guidance Raised,
+  // Social Spike, Strong Momentum) takes priority; if none of those fire,
+  // we fall back to a neutral context line so the slot is never empty.
   const r    = (t.rationale || '').toLowerCase();
   const sigs = (t.signals   || []).slice(0, 4).join(' ').toLowerCase();
   const c    = r + ' ' + sigs;
@@ -2520,8 +2528,16 @@ function keyTrigger(t) {
   const pop = parseFloat(t.smart_score != null ? t.smart_score : (t.pop_score || 0));
   if (/strong momentum|price.*%|momentum/i.test(c) && pop >= 82)
     return { icon:'⚡', text:'Strong Price Momentum', cls:'kt-momentum' };
-  // Earnings proximity handled by earningsAlert banner — not duplicated here
-  return null;
+  // Fallback: keep the slot occupied with a neutral context line so cards
+  // line up. Pick the most informative passive signal we have available.
+  const chg3m = parseFloat(t.change_3m || t.momentum_3m || 0);
+  if (isFinite(chg3m) && chg3m >= 15)
+    return { icon:'🟢', text:`Up ${chg3m.toFixed(0)}% in last 3 months`, cls:'kt-neutral' };
+  if (pop >= 80)
+    return { icon:'⭐', text:'Top Tier — consistent high score', cls:'kt-neutral' };
+  if (pop >= 65)
+    return { icon:'📊', text:'Quality score — within tracking range', cls:'kt-neutral' };
+  return { icon:'📊', text:'No major catalyst — score reflects steady state', cls:'kt-neutral' };
 }
 
 function renderHotList(data) {
@@ -2637,14 +2653,28 @@ function renderHotList(data) {
         <div style="font-size:12px;margin-top:6px;padding-top:6px;border-top:1px dashed rgba(15,23,42,.18)" title="${(vv.summary || '').replace(/"/g,'&quot;')}">
           <span style="color:#475569;font-weight:700">💰 Valuation:</span> <strong style="color:${vv.color}">${vv.verdict}</strong>
         </div>` : ''}
-        ${hasGrowth ? `
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;font-size:12px;margin-top:4px${vv ? '' : ';padding-top:6px;border-top:1px dashed rgba(15,23,42,.18)'}" title="${rd ? (rd.summary || '').replace(/"/g,'&quot;') : ''}">
-          <span style="color:#475569;font-weight:700">Growth Rate:</span>
-          <div style="text-align:right;line-height:1.3">
-            ${expectsPct != null ? `<div><strong style="color:#0f172a">${expectsPct.toFixed(0)}%</strong> <span style="color:#64748b">Expected</span></div>` : ''}
-            ${realPct != null ? `<div><strong style="color:#0f172a">${realPct.toFixed(0)}%</strong> <span style="color:#64748b">Actual</span></div>` : ''}
+        ${hasGrowth ? (() => {
+          // Color-code: if Actual >= Expected (company beats the bar), both
+          // green (clean positive signal). If Actual lags, escalate the Actual
+          // color amber → red based on the size of the gap. Expected stays
+          // neutral dark — it's just the market's bar, not a value judgment.
+          let exCol = '#0f172a', reCol = '#0f172a';
+          if (expectsPct != null && realPct != null) {
+            const gap = expectsPct - realPct;
+            if (gap <= 0)       { exCol = '#15803d'; reCol = '#15803d'; }
+            else if (gap <= 5)  { exCol = '#0f172a'; reCol = '#0f172a'; }
+            else if (gap <= 15) { exCol = '#0f172a'; reCol = '#b45309'; }
+            else                { exCol = '#0f172a'; reCol = '#dc2626'; }
+          }
+          return `
+        <div style="display:flex;align-items:flex-start;gap:10px;font-size:12px;margin-top:4px${vv ? '' : ';padding-top:6px;border-top:1px dashed rgba(15,23,42,.18)'}" title="${rd ? (rd.summary || '').replace(/"/g,'&quot;') : ''}">
+          <span style="color:#475569;font-weight:700;white-space:nowrap">📈 Growth Rate:</span>
+          <div style="display:grid;grid-template-columns:auto auto;column-gap:6px;row-gap:1px;line-height:1.3;align-items:baseline">
+            ${expectsPct != null ? `<strong style="color:${exCol};text-align:right">${expectsPct.toFixed(0)}%</strong><span style="color:#64748b;text-align:left">Expected</span>` : ''}
+            ${realPct != null ? `<strong style="color:${reCol};text-align:right">${realPct.toFixed(0)}%</strong><span style="color:#64748b;text-align:left">Actual</span>` : ''}
           </div>
-        </div>` : ''}
+        </div>`;
+        })() : ''}
       </div>` : '';
     const analystBlock = valBlock;
     const wk52Block = '';
