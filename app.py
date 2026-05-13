@@ -493,6 +493,16 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="AlphaHunt", lifespan=lifespan)
 
+# ── GZip compression ────────────────────────────────────────────────
+# /api/universe and /app both return ~1.6 MB of JSON/HTML. Gzipping
+# shrinks them to ~170 KB and ~300 KB respectively — about 80% smaller.
+# Cloudflare-edge gzip is also applied but only for content >= 1KB and
+# only when the upstream doesn't compress; doing it here is reliable.
+# minimum_size=1000 means tiny responses (e.g. /api/regime at 500b) skip
+# compression to avoid wasting CPU on payloads that are already small.
+from fastapi.middleware.gzip import GZipMiddleware
+app.add_middleware(GZipMiddleware, minimum_size=1000)
+
 # Serve /static/ files (manifest.json, sw.js, icons)
 _STATIC = BASE_DIR / "static"
 _STATIC.mkdir(exist_ok=True)
@@ -1486,22 +1496,48 @@ async def dashboard():
 
 @app.get("/api/universe")
 async def api_universe():
-    return JSONResponse(_clean({
-        "tickers":        _universe_data,
-        "last_refresh":   _last_full_refresh,
-        "universe_mode":  config.UNIVERSE_MODE,
-        "account_size":   config.ACCOUNT_SIZE_USD,
-        "hot_list_n":     config.HOT_LIST_N,
-        "min_confidence": config.MIN_CONFIDENCE,
-        "warming_up":     len(_universe_data) == 0,
-        "regime":         market_regime.get(),
-    }))
+    # ── Payload slim-down ────────────────────────────────────────────
+    # Audit found 5 heavy fields (~6.6 KB/ticker × 187 tickers = 1.2 MB)
+    # that the dashboard never reads. Strip them so the wire payload is
+    # ~0.4 MB raw (~75 KB gzipped) instead of ~1.6 MB raw (~170 KB
+    # gzipped). Modal still gets full detail from /api/ticker/{symbol}.
+    _SKIP = ("news", "insider_detail", "description", "breakdown", "weighted")
+    slim = [
+        {k: v for k, v in t.items() if k not in _SKIP}
+        for t in _universe_data
+    ]
+    # ── CDN caching ──────────────────────────────────────────────────
+    # Universe refreshes every 5 min server-side, so a 30-second public
+    # cache at the Cloudflare edge dramatically reduces origin load
+    # without serving stale data. `s-maxage` is CDN-only, `max-age` is
+    # browser-only, kept small so each tab refresh still gets fresh data.
+    return JSONResponse(
+        _clean({
+            "tickers":        slim,
+            "last_refresh":   _last_full_refresh,
+            "universe_mode":  config.UNIVERSE_MODE,
+            "account_size":   config.ACCOUNT_SIZE_USD,
+            "hot_list_n":     config.HOT_LIST_N,
+            "min_confidence": config.MIN_CONFIDENCE,
+            "warming_up":     len(_universe_data) == 0,
+            "regime":         market_regime.get(),
+        }),
+        headers={
+            "Cache-Control": "public, max-age=15, s-maxage=30",
+            "Vary":          "Accept-Encoding",
+        },
+    )
 
 
 @app.get("/api/regime")
 async def api_regime():
     """Current macro regime snapshot (cached) — SPY/QQQ/VIX/^TNX overlay."""
-    return JSONResponse(_clean(market_regime.get()))
+    return JSONResponse(
+        _clean(market_regime.get()),
+        # Regime is refreshed every 15 min server-side. Cache aggressively
+        # at CDN edge so tabs that all check regime on load are basically free.
+        headers={"Cache-Control": "public, max-age=60, s-maxage=120"},
+    )
 
 
 @app.post("/api/regime/refresh")
@@ -3014,6 +3050,15 @@ def _enrich_model_portfolio(portfolio: dict) -> dict:
                 "tone":   "exit",
                 "label":  "📤 Removed from tracker",
                 "detail": exit_alert.get("reason", ""),
+            }
+        elif days_held < 2:
+            # Picks added today or yesterday haven't had a chance to perform.
+            # Showing "Score weakening · -0.2%" because of intraday noise is
+            # misleading. Use a neutral "just added" label until day 2.
+            decision = {
+                "tone":   "new",
+                "label":  "🆕 Just added · monitoring",
+                "detail": "Added recently — performance kicks in after day 2",
             }
         elif trail_active:
             # Profit-locked zone: stock has been to +10% peak at some point

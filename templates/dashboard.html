@@ -4091,7 +4091,9 @@ function renderReports(tickers) {
 function spotlightOpen() {
   const t = document.getElementById('spotlight-input').value.trim().toUpperCase();
   if (!t) return;
-  window.open('/infographics/earnings/' + t, '_blank', 'noopener');
+  // Use the canonical /tearsheet/ URL. /infographics/earnings/{T} still works
+  // as a legacy alias on the backend but the cleaner share-friendly URL is here.
+  window.open('/tearsheet/' + t, '_blank', 'noopener');
 }
 
 function renderBlog(articles) {
