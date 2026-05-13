@@ -5648,11 +5648,17 @@ function _switchAuthView(view) {
   // Signup wizard retired — only signin / forgot / success views are reachable.
   // Force any legacy 'signup' callers back to 'signin'.
   if (view === 'signup' || (view && view.indexOf('signup-s') === 0)) view = 'signin';
-  // ToS row is ALWAYS shown on the signin view because we may silently
-  // auto-create the account if it doesn't exist — and that requires consent.
+  // ToS row is shown on the signin view ONLY for first-time users — once consent
+  // has been recorded in localStorage, returning users never see it again.
   const _tosRow = document.getElementById('ah-tos-row');
   if (_tosRow) {
-    _tosRow.style.display = view === 'signin' ? '' : 'none';
+    let _tosAgreed = false;
+    try { _tosAgreed = localStorage.getItem('ah_tos_agreed') === '1'; } catch (e) {}
+    if (_tosAgreed) {
+      _tosRow.style.display = 'none';
+    } else {
+      _tosRow.style.display = view === 'signin' ? '' : 'none';
+    }
   }
 
   document.getElementById('auth-modal-mode').value = 'signin';
@@ -5827,9 +5833,12 @@ async function authSubmit() {
   const errEl = document.getElementById('auth-error');
   const btn   = document.getElementById('auth-submit');
   if (!email || !pass) { errEl.textContent = 'Email and password required'; return; }
-  // ToS checkbox stays mandatory — first-time auto-signup needs legal agreement.
+  // ToS checkbox is mandatory ONLY for first-time users on this device.
+  // Once consent is recorded in localStorage, returning users skip this check.
+  let _tosAlreadyAgreed = false;
+  try { _tosAlreadyAgreed = localStorage.getItem('ah_tos_agreed') === '1'; } catch (e) {}
   const tosBox = document.getElementById('ah-tos-checkbox');
-  if (tosBox && !tosBox.checked) {
+  if (!_tosAlreadyAgreed && tosBox && !tosBox.checked) {
     errEl.textContent = 'Please agree to the Terms, Privacy Policy, and Disclaimer to continue.';
     tosBox.focus();
     return;
@@ -5871,6 +5880,8 @@ async function authSubmit() {
     _AUTH.refresh = d.refresh_token;
     const userObj = d.user || {};
     _AUTH.user = { id: userObj.id || null, email: userObj.email || email };
+    // Persist ToS consent so returning users don't see the checkbox again.
+    try { localStorage.setItem('ah_tos_agreed', '1'); } catch (e) {}
     _authUpdateUI(_AUTH.user);
     _scheduleTokenRefresh();
     closeAuthModal();

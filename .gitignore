@@ -26,3 +26,11 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Backup files from theme experiments — never commit these to Railway
+*.bak
+*-bak
+*.rebrand-bak
+*.darkmode-bak
+*.adani-bak
+*.strict3-bak
