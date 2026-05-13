@@ -2794,8 +2794,12 @@ def _build_model_portfolio(existing: dict | None = None) -> dict:
     # (the predictive part), drop the upside floor (the discipline that
     # backfires in rallies). Upside is still used as a tiebreaker — given
     # equal score, we prefer the name with more headroom.
-    PORTFOLIO_SIZE  = 10
-    MIN_ALPHA_SCORE = 80   # only the strongest names by composite score
+    # Sized for natural churn: pool at threshold 75 yields ~20-25 qualifying
+    # names at any moment, so 12 slots give room for the strongest picks AND
+    # enough rotation that fresh names appear as the leaderboard evolves.
+    # At threshold 80 only 4 names qualified (May 2026), starving the tracker.
+    PORTFOLIO_SIZE  = 12
+    MIN_ALPHA_SCORE = 75   # top tier within Grade A — yields 20-25 candidates
 
     def _alpha(t: dict) -> float:
         """The displayed Alpha Score — smart_score with pop_score fallback."""
@@ -2919,9 +2923,18 @@ def _enrich_model_portfolio(portfolio: dict) -> dict:
     enriched, perfs = [], []
     GRADE_RANK = {"A": 4, "B": 3, "C": 2, "D": 1, "F": 0}
 
+    # Tickers that won't ever appear in _universe_data — surface a clear
+    # "no live data" state rather than fabricating +0.0% / Score 0 cards.
+    # (Happens when a seed pick is a Mega Cap, since the scanner excludes
+    # market_cap >= $200B from the tracked universe.)
+    out_of_universe = {p["ticker"] for p in picks_raw if p.get("ticker") not in lookup}
+    if out_of_universe:
+        logger.warning(f"⚠️  Picks not in universe (no live data): {sorted(out_of_universe)}")
+
     for p in picks_raw:
         live  = lookup.get(p["ticker"], {})
         entry = float(p.get("entry_price") or 0)
+        in_universe = bool(live)
         now   = float(live.get("price") or entry or 0)
         perf_frac = (now - entry) / entry if entry > 0 else 0.0
         perf = round(perf_frac * 100, 2)
@@ -3023,7 +3036,16 @@ def _enrich_model_portfolio(portfolio: dict) -> dict:
                 "detail": "",
             }
 
-        perfs.append(perf)
+        # Override decision if the pick is missing from the universe entirely
+        # — we can't trust the +0.0%, since `now` was forced to `entry`.
+        if not in_universe:
+            decision = {
+                "tone":   "no-data",
+                "label":  "⚠️ No live data",
+                "detail": "Not in tracked universe (mega-cap exclusion)",
+            }
+
+        perfs.append(perf if in_universe else 0)
         # Mutate the source pick so peak/trail flags persist across calls.
         # The caller (api endpoint) is responsible for cache.save_disk()
         # whenever any pick was modified.
@@ -3032,8 +3054,9 @@ def _enrich_model_portfolio(portfolio: dict) -> dict:
 
         enriched.append({
             **p,
+            "in_universe":       in_universe,
             "current_price":     now,
-            "performance_pct":   perf,
+            "performance_pct":   perf if in_universe else None,
             "days_held":         days_held,
             "current_pop":       live.get("pop_score"),
             "current_grade":     cur_grade,
@@ -3197,19 +3220,18 @@ def _close_triggered_picks(portfolio: dict, enriched_picks: list) -> tuple[dict,
 
 
 def _replenish_portfolio(portfolio: dict) -> dict:
-    """Refill the portfolio back to 20 picks AFTER exits have fired.
+    """Refill the portfolio back to target size AFTER exits have fired.
 
     Rule: existing healthy picks NEVER move. We only fill slots opened by
     exit triggers. New picks pulled from the universe must meet the same
-    strict criteria as the initial build (Grade A + smart_score >= 80 +
-    >= 20% upside to analyst target). Each new pick gets today's date so
-    the UI can flag it as NEW for a week.
+    bar as the initial build (Grade A + smart_score >= 75). Each new pick
+    gets today's date so the UI can flag it as NEW for a week.
 
-    If fewer than 20 stocks meet the criteria today, the portfolio stays
-    below 20 — we never lower the bar to fill slots.
+    If fewer than target_size stocks meet the criteria today, the portfolio
+    stays below target — we never lower the bar to fill slots.
     """
     from datetime import date as _date
-    target_size = 10   # backtest-validated portfolio size
+    target_size = 12   # matches PORTFOLIO_SIZE in _build_model_portfolio
     cur_picks = portfolio.get("picks", [])
     if len(cur_picks) >= target_size:
         return portfolio
@@ -3242,7 +3264,7 @@ def _replenish_portfolio(portfolio: dict) -> dict:
     qualified = sorted(
         [t for t in _universe_data
          if t.get("grade") == "A"
-         and _alpha(t) >= 80
+         and _alpha(t) >= 75   # matches MIN_ALPHA_SCORE in _build_model_portfolio
          and t.get("ticker") not in blocked],
         key=lambda t: (_alpha(t), _upside(t)),
         reverse=True,
@@ -3315,7 +3337,7 @@ async def api_model_portfolio():
         # only the FIRST call after market opens or score changes will find
         # newly-qualifying stocks.
         before_n = len(_model_portfolio.get("picks", []))
-        if before_n < 10:
+        if before_n < 12:   # matches PORTFOLIO_SIZE
             _model_portfolio = _replenish_portfolio(_model_portfolio)
             after_n = len(_model_portfolio.get("picks", []))
             if after_n != before_n or state_changed:

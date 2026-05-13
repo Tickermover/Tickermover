@@ -57,17 +57,17 @@
       "is_first_build": false
     },
     {
-      "ticker": "NVDA",
-      "name": "NVIDIA Corporation",
+      "ticker": "MRVL",
+      "name": "Marvell Technology, Inc.",
       "added_date": "2026-04-11",
-      "entry_price": 138.0,
+      "entry_price": 134.0,
       "is_first_build": false
     },
     {
-      "ticker": "AVGO",
-      "name": "Broadcom Inc.",
+      "ticker": "LITE",
+      "name": "Lumentum Holdings Inc.",
       "added_date": "2026-04-11",
-      "entry_price": 215.0,
+      "entry_price": 855.0,
       "is_first_build": false
     }
   ],

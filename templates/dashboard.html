@@ -150,8 +150,9 @@ table,th,td{
   padding:16px 32px;display:flex;align-items:center;gap:20px;flex-wrap:wrap;
   box-shadow:0 2px 16px rgba(0,0,0,.10);
   position:sticky;top:0;z-index:50}
-.logo{font-size:22px;font-weight:900;letter-spacing:-.5px;
-      background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+/* Canonical AlphaHunt wordmark: "Alpha" in default text color, "Hunt" in brand green. */
+.logo{font-size:22px;font-weight:900;letter-spacing:-.5px;color:#0f172a;display:inline-flex;align-items:center}
+.logo span{color:#15803d}
 .badge{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:.5px;border:1px solid}
 .badge.live{color:var(--grn);border-color:rgba(22,163,74,.4);background:rgba(22,163,74,.1);
             animation:live-pulse 2.5s ease-in-out infinite}
@@ -4726,6 +4727,9 @@ function renderModelPortfolio(data) {
     ${picks.map(p => {
       // ── Always pull LIVE data for consistency with all other modules ──
       const live      = _allTickerData[p.ticker] || {};
+      // If a pick is missing from the live universe (e.g. mega-cap excluded
+      // from the scanner), surface a clear "no data" state instead of fake 0%
+      const noLiveData = p.in_universe === false || (!live.price && !p.current_price);
       const curPrice  = parseFloat(live.price || p.current_price || 0);
       const curPop    = parseFloat(live.smart_score != null ? live.smart_score : (live.pop_score || p.current_pop || p.pop_at_entry || 0));
       const curGrade  = live.grade || p.current_grade || p.grade_at_entry || 'A';
@@ -4734,7 +4738,8 @@ function renderModelPortfolio(data) {
       const curTarget = parseFloat(live.target_mean || live.street_target || p.target_mean || 0);
       // Recalculate performance from entry using live price
       const entryPrc  = p.entry_price || 0;
-      const pct   = entryPrc > 0 && curPrice > 0 ? ((curPrice - entryPrc) / entryPrc * 100) : (p.performance_pct || 0);
+      const pct   = noLiveData ? null
+                  : (entryPrc > 0 && curPrice > 0 ? ((curPrice - entryPrc) / entryPrc * 100) : (p.performance_pct || 0));
       const pos   = pct >= 0;
       const todayChg = parseFloat(live.change_pct || p.change_today || 0);
       const accentCol = pos ? '#15803d' : '#dc2626';
@@ -6149,11 +6154,9 @@ function showUpgradeSuccess() {
 }
 .ah-left-content{position:relative;z-index:1;display:flex;flex-direction:column;height:100%}
 
-/* Logo */
+/* Logo — canonical brand wordmark: "Alpha" white on dark / dark on light, "Hunt" green */
 .ah-logo-row{display:flex;align-items:center;gap:10px;margin-bottom:44px}
-.ah-logo-row .name{font-size:20px;font-weight:900;letter-spacing:-.5px;
-  background:linear-gradient(135deg,#4ade80,#84cc16);
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.ah-logo-row .name{font-size:20px;font-weight:900;letter-spacing:-.5px;color:#fff}
 
 /* Headline */
 .ah-headline{font-size:38px;font-weight:900;line-height:1.12;color:#f0fdf4;letter-spacing:-.02em;margin-bottom:14px}
@@ -6324,8 +6327,10 @@ function showUpgradeSuccess() {
   <div class="ah-left-content">
 
     <div class="ah-logo-row">
-      <img src="/static/icons/alpha-logo-64.png" width="36" height="36" alt="AlphaHunt" style="border-radius:8px;display:block">
-      <div class="name" style="color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.2)">AlphaHunt</div>
+      <div style="background:#fff;border-radius:8px;padding:4px;display:flex;align-items:center;justify-content:center;width:36px;height:36px;box-shadow:0 2px 8px rgba(255,255,255,.15)">
+        <img src="/static/icons/alpha-logo-bare-64.png" width="28" height="28" alt="AlphaHunt" style="display:block">
+      </div>
+      <div class="name">Alpha<span style="color:#4ade80">Hunt</span></div>
     </div>
 
     <div class="ah-headline" style="color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.2)">Find the next<br>big <em style="font-style:normal;color:#dcfce7">breakout</em><br>before it moves.</div>
