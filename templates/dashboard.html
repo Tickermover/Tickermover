@@ -4884,6 +4884,43 @@ function renderModelPortfolio(data) {
         <!-- Action-oriented decision chip: action verb + current return + plain
              sell instruction. Replaces technical jargon ("trail floor", "buffer
              above stop") with one sentence a user can act on. -->
+        ${p.pillars ? (() => {
+          // 6-pillar breakdown (computed server-side from live data so the bars
+          // reflect the CURRENT state of the stock, not entry state). The fact
+          // that valuation can score 0 while momentum scores 100 explains why
+          // the same Alpha Score can mean very different things.
+          const pn = [
+            ['Momentum',       p.pillars.momentum],
+            ['Growth',         p.pillars.growth],
+            ['Quality',        p.pillars.quality],
+            ['Valuation',      p.pillars.valuation],
+            ['Sentiment',      p.pillars.sentiment],
+            ['Growth pot.',    p.pillars.growth_potential],
+          ];
+          const passCount = pn.filter(([_, v]) => v >= 50).length;
+          const passLabel = passCount >= 5 ? '🟢' : passCount >= 4 ? '🟡' : '🟠';
+          return `
+          <details style="margin-bottom:8px">
+            <summary style="cursor:pointer;font-size:11px;color:#475569;font-weight:700;list-style:none;outline:none;padding:6px 8px;background:#f8fafc;border-radius:8px;border:1px solid rgba(0,0,0,.06);display:flex;justify-content:space-between;align-items:center">
+              <span>${passLabel} Factor breakdown · ${passCount}/6 pass</span>
+              <span style="font-size:9px;color:#94a3b8">▼ tap</span>
+            </summary>
+            <div style="padding:8px 10px;background:#fafbfc;border:1px solid rgba(0,0,0,.05);border-top:none;border-radius:0 0 8px 8px;margin-top:-1px">
+              ${pn.map(([name, v]) => {
+                const color = v >= 70 ? '#15803d' : v >= 50 ? '#a16207' : '#dc2626';
+                return `
+                <div style="display:flex;align-items:center;gap:8px;font-size:10.5px;margin-bottom:3px">
+                  <span style="flex-shrink:0;width:78px;color:#475569">${name}</span>
+                  <div style="flex:1;height:6px;background:#e2e8f0;border-radius:3px;overflow:hidden">
+                    <div style="width:${v}%;height:100%;background:${color};border-radius:3px;transition:width .3s"></div>
+                  </div>
+                  <span style="flex-shrink:0;width:24px;text-align:right;font-weight:700;color:${color}">${v}</span>
+                </div>`;
+              }).join('')}
+            </div>
+          </details>`;
+        })() : ''}
+
         ${decision ? `
         <div style="background:${toneStyle.bg};border:1px solid ${toneStyle.bdr};border-radius:10px;padding:10px 12px;margin-bottom:8px">
           <div style="font-size:13px;font-weight:800;color:${toneStyle.fg};margin-bottom:3px;line-height:1.3">

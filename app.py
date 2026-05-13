@@ -2767,6 +2767,135 @@ MIN_MCAP_FILTER  = 500e6   # $500M floor — quality small-caps allowed
 MEGA_CAP_CUTOFF  = 200e9   # exclude Mega Caps (NVDA, AVGO, MSFT etc.) from Hot List
 
 
+# ── 6-PILLAR FACTOR BREAKDOWN ─────────────────────────────────────────────────
+# The Alpha Score (smart_score) is a multi-factor composite, but the user
+# can't see WHICH factors are driving it. _compute_pillars returns a 0-100
+# score for each of six investment dimensions so the UI can show:
+#
+#     Momentum     ████████░░  82
+#     Growth       ███████░░░  73
+#     Quality      ██████░░░░  61
+#     Valuation    ███░░░░░░░  28  ← stretched
+#     Sentiment    ██████░░░░  64
+#     Growth pot.  ████░░░░░░  41
+#
+# The selection filter also uses the pillars: a stock must score ≥ 50 on
+# at least 4 of the 6 pillars to enter the tracker — a "soft veto" so a
+# pure-momentum name with terrible fundamentals can't sneak in.
+
+def _compute_pillars(t: dict) -> dict:
+    """Return per-pillar 0-100 scores for a ticker.
+
+    Pillars: momentum, growth, quality, valuation, sentiment, growth_potential.
+    """
+    def clip(x, lo=0, hi=100):
+        return max(lo, min(hi, x))
+
+    price = float(t.get("price") or 0)
+    target = float(t.get("target_mean") or 0)
+
+    # ── 1. Momentum — recent price action ───────────────────────────────
+    mom1 = float(t.get("momentum_1m") or 0)   # %
+    mom3 = float(t.get("momentum_3m") or 0)   # %
+    sma50 = float(t.get("sma_50") or 0)
+    above_sma = ((price - sma50) / sma50 * 100) if sma50 > 0 else 0
+    # 0%/m → 50, +20%/m → 80, +30%/m → 95
+    momentum = clip(50 + mom1 * 1.5 + mom3 * 0.3 + (5 if above_sma > 0 else 0))
+
+    # ── 2. Growth — revenue + EPS growth ────────────────────────────────
+    rev_g = float(t.get("revenue_growth_yoy") or t.get("rev_growth_qyoy") or 0)
+    eps_g = float(t.get("eps_growth_yoy") or 0)
+    # 0% → 25, 20% rev → 75, 40%+ → 100
+    growth = clip(25 + rev_g * 2.5 + eps_g * 0.5)
+
+    # ── 3. Quality — margins, FCF, balance sheet ───────────────────────
+    gross_m = float(t.get("gross_margin") or 0)
+    fcf_m   = float(t.get("fcf_margin") or 0)
+    debt_eq = float(t.get("debt_to_equity") or 0)
+    # Handle both decimal (0.5) and percentage (50) representations
+    gm_pct = gross_m * 100 if 0 < gross_m < 2 else gross_m
+    fcf_pct = fcf_m * 100 if -2 < fcf_m < 2 else fcf_m
+    quality_score = 30
+    if gm_pct > 0:
+        quality_score += clip(gm_pct, 0, 60) * 0.8
+    if fcf_pct > 0:
+        quality_score += min(15, fcf_pct * 0.5)
+    elif fcf_pct < -10:
+        quality_score -= 10
+    if 0 < debt_eq < 1:
+        quality_score += 10
+    elif debt_eq > 3:
+        quality_score -= 15
+    quality = clip(quality_score)
+
+    # ── 4. Valuation — PEG + price vs. analyst target ──────────────────
+    peg = float(t.get("peg_ratio") or 0)
+    pe  = float(t.get("pe_ratio") or 0)
+    upside = float(t.get("target_upside_pct") or 0)
+    val_score = 50
+    if 0 < peg < 1:    val_score += 25
+    elif peg < 2:      val_score += 10
+    elif peg > 4:      val_score -= 30
+    elif peg > 3:      val_score -= 15
+    if pe > 80:        val_score -= 15
+    if upside > 20:    val_score += 15
+    elif upside > 10:  val_score += 5
+    elif upside < -25: val_score -= 35  # price 25%+ above target → stretched
+    elif upside < -10: val_score -= 20
+    elif upside < 0:   val_score -= 10
+    valuation = clip(val_score)
+
+    # ── 5. Sentiment — analysts + insiders + social ────────────────────
+    strong_buy = float(t.get("strong_buy_pct") or 0)
+    sb_pct = strong_buy * 100 if 0 < strong_buy < 1.5 else strong_buy
+    ins_buys = int(t.get("insider_buys_90d") or 0)
+    ins_sells = int(t.get("insider_sells_90d") or 0)
+    mv = float(t.get("mention_velocity") or 0)
+    sent_score = 30
+    if sb_pct > 0:
+        sent_score += min(40, sb_pct * 0.5)
+    net_ins = ins_buys - ins_sells
+    if net_ins > 0:    sent_score += min(15, net_ins * 5)
+    elif net_ins < -5: sent_score -= 10
+    if mv > 0.5:       sent_score += 10
+    elif mv > 0:       sent_score += 5
+    sentiment = clip(sent_score)
+
+    # ── 6. Growth potential — analyst headroom + reverse DCF ───────────
+    gp_score = 40
+    if upside > 30:    gp_score += 35
+    elif upside > 15:  gp_score += 20
+    elif upside > 5:   gp_score += 10
+    elif upside < -10: gp_score -= 25
+    elif upside < 0:   gp_score -= 10
+    # Reverse DCF: implied CAGR to reach analyst target in 3 years
+    if price > 0 and target > 0:
+        implied_cagr = ((target / price) ** (1/3) - 1) * 100
+        if 5 <= implied_cagr <= 35:
+            gp_score += 15      # realistic
+        elif implied_cagr > 50:
+            gp_score -= 10      # ambitious — too much priced in
+        elif implied_cagr < -15:
+            gp_score -= 25      # already past target
+    growth_potential = clip(gp_score)
+
+    return {
+        "momentum":         round(momentum),
+        "growth":           round(growth),
+        "quality":          round(quality),
+        "valuation":        round(valuation),
+        "sentiment":        round(sentiment),
+        "growth_potential": round(growth_potential),
+    }
+
+
+def _pillar_pass_count(t: dict, threshold: int = 50) -> int:
+    """How many of the 6 pillars score >= threshold. Used by the entry
+    soft-veto: a stock must hit at least 4 of 6 to enter the tracker."""
+    p = _compute_pillars(t)
+    return sum(1 for v in p.values() if v >= threshold)
+
+
 def _is_hot_eligible(t: dict) -> bool:
     """
     Hot-list eligibility — HIGH CONVICTION only:
@@ -2853,10 +2982,22 @@ def _build_model_portfolio(existing: dict | None = None) -> dict:
         return (tgt - price) / price
 
     grade_a_pool = [t for t in _universe_data if t.get("grade") == "A"]
-    qualified = [t for t in grade_a_pool if _alpha(t) >= MIN_ALPHA_SCORE]
+    score_qualified = [t for t in grade_a_pool if _alpha(t) >= MIN_ALPHA_SCORE]
+    # ── Soft 6-pillar veto ────────────────────────────────────────────
+    # A stock must hit >= 50 on AT LEAST 4 of the 6 pillars (momentum,
+    # growth, quality, valuation, sentiment, growth_potential). This
+    # prevents a pure-momentum name with terrible fundamentals or a
+    # stretched valuation from being selected just because its composite
+    # is high.
+    qualified = [t for t in score_qualified if _pillar_pass_count(t) >= 4]
+    # If the soft-veto leaves us with too few names (e.g. universe is
+    # thin or pillar data is missing), fall back to score_qualified so
+    # the portfolio is never starved. The displayed pillar bars will
+    # still warn the user when individual pillars are weak.
+    pool = qualified if len(qualified) >= PORTFOLIO_SIZE else score_qualified
     # Sort by alpha desc, upside desc as tiebreaker
-    qualified.sort(key=lambda t: (_alpha(t), _upside(t)), reverse=True)
-    top20 = qualified[:PORTFOLIO_SIZE]   # variable name kept for downstream code
+    pool.sort(key=lambda t: (_alpha(t), _upside(t)), reverse=True)
+    top20 = pool[:PORTFOLIO_SIZE]   # variable name kept for downstream code
     for t in top20:
         t["_entry_tier"] = 1   # all qualified picks are Tier 1 Premium
 
@@ -2999,7 +3140,12 @@ def _enrich_model_portfolio(portfolio: dict) -> dict:
         # ── Rule 2: Stair-stepped trailing stop (no fixed take-profit cap) ─
         # As peak gain rises, the trailing floor ratchets up.  The floor is
         # always the HIGHEST tier the peak has unlocked — never falls.
-        if   peak_perf_frac >= 1.00: trail_mult, trail_label = 1.50, "locks +50%"
+        # Extended rungs at +200/+300/+500 to better discipline extreme
+        # winners (a +400% gain on $50 entry locks $200, not just $75).
+        if   peak_perf_frac >= 5.00: trail_mult, trail_label = 3.50, "locks +250%"
+        elif peak_perf_frac >= 3.00: trail_mult, trail_label = 2.50, "locks +150%"
+        elif peak_perf_frac >= 2.00: trail_mult, trail_label = 2.00, "locks +100%"
+        elif peak_perf_frac >= 1.00: trail_mult, trail_label = 1.50, "locks +50%"
         elif peak_perf_frac >= 0.50: trail_mult, trail_label = 1.25, "locks +25%"
         elif peak_perf_frac >= 0.25: trail_mult, trail_label = 1.10, "locks +10%"
         elif peak_perf_frac >= 0.10: trail_mult, trail_label = 1.00, "break-even"
@@ -3022,6 +3168,25 @@ def _enrich_model_portfolio(portfolio: dict) -> dict:
             else:
                 signal_reason = f"Score dropped to {cur_score:.0f}"
 
+        # ── Rule 5: Stretched-valuation exit (NEW) ────────────────────
+        # If the stock has rallied 25%+ past consensus analyst target AND
+        # the valuation is priced for perfection (PEG > 4 OR P/E > 80),
+        # fire an exit. Disciplined investors take profit when there's
+        # literally no analyst left who thinks the stock has headroom.
+        target = float(live.get("target_mean") or 0)
+        peg    = float(live.get("peg_ratio") or 0)
+        pe     = float(live.get("pe_ratio") or 0)
+        valuation_stretched = False
+        valuation_reason = None
+        if entry > 0 and target > 0 and now > target * 1.25:
+            if peg > 4 or pe > 80:
+                valuation_stretched = True
+                valuation_reason = (
+                    f"Price ${now:.2f} is {((now/target)-1)*100:.0f}% above "
+                    f"analyst target ${target:.2f}"
+                    + (f" · PEG {peg:.1f}" if peg > 4 else f" · P/E {pe:.0f}")
+                )
+
         # ── Determine the EXIT ALERT (priority: protect capital first) ─
         # No fixed take-profit any more — winners run via the stair-step trail.
         exit_alert = None
@@ -3033,6 +3198,10 @@ def _enrich_model_portfolio(portfolio: dict) -> dict:
             exit_alert = {"type": "trail",
                           "label": "TRAIL STOP HIT",
                           "reason": f"Price ${now:.2f} ≤ trail ${trail_floor:.2f} ({trail_label})"}
+        elif valuation_stretched:
+            exit_alert = {"type": "stretched",
+                          "label": "VALUATION STRETCHED",
+                          "reason": valuation_reason}
         elif signal_triggered:
             exit_alert = {"type": "signal",
                           "label": "SIGNAL EXIT",
@@ -3097,9 +3266,14 @@ def _enrich_model_portfolio(portfolio: dict) -> dict:
         p["peak_price"]   = peak_price
         p["trail_active"] = trail_active
 
+        # 6-pillar breakdown (uses LIVE data from the universe so the
+        # bars reflect the current state of the stock, not entry state).
+        pillars = _compute_pillars(live) if in_universe else None
+
         enriched.append({
             **p,
             "in_universe":       in_universe,
+            "pillars":           pillars,
             "current_price":     now,
             "performance_pct":   perf if in_universe else None,
             "days_held":         days_held,
@@ -3306,11 +3480,17 @@ def _replenish_portfolio(portfolio: dict) -> dict:
 
     # Same filter as _build_model_portfolio: score discipline only, no
     # upside floor. Upside is the tiebreaker for equal-score stocks.
+    score_qualified = [
+        t for t in _universe_data
+        if t.get("grade") == "A"
+        and _alpha(t) >= 75   # matches MIN_ALPHA_SCORE in _build_model_portfolio
+        and t.get("ticker") not in blocked
+    ]
+    # Same soft 6-pillar veto as initial build — must hit >= 4 of 6 pillars.
+    # Falls back to score-only if the strict pool is too thin.
+    vetoed = [t for t in score_qualified if _pillar_pass_count(t) >= 4]
     qualified = sorted(
-        [t for t in _universe_data
-         if t.get("grade") == "A"
-         and _alpha(t) >= 75   # matches MIN_ALPHA_SCORE in _build_model_portfolio
-         and t.get("ticker") not in blocked],
+        vetoed if len(vetoed) >= 1 else score_qualified,
         key=lambda t: (_alpha(t), _upside(t)),
         reverse=True,
     )
