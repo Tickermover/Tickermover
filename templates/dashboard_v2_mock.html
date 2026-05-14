@@ -355,6 +355,28 @@ html.dark .regime-chip.bearish{background:rgba(220,38,38,.15);border-color:rgba(
 .page-head .last-refresh::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--brand-2);box-shadow:0 0 0 0 rgba(99,102,241,.6);animation:live-pulse 2s ease-in-out infinite}
 @keyframes live-pulse{0%,100%{box-shadow:0 0 0 0 rgba(99,102,241,.5)}60%{box-shadow:0 0 0 5px rgba(99,102,241,0)}}
 
+/* ── Ticker-logo helper — used everywhere a logo appears next to
+   a ticker. Pulls the image from a public CDN; if the request 404s,
+   the <img>'s onerror handler hides it and a colored initial shows
+   through, so the design never breaks on missing logos. */
+.tic-logo{
+  width:36px;height:36px;border-radius:8px;
+  background:#fff;border:1px solid var(--bdr);
+  display:grid;place-items:center;
+  overflow:hidden;flex-shrink:0;
+  position:relative;
+}
+.tic-logo img{width:78%;height:78%;object-fit:contain;display:block}
+.tic-logo .fb{
+  position:absolute;inset:0;
+  display:grid;place-items:center;
+  font-size:13px;font-weight:900;color:#fff;
+  background:linear-gradient(135deg,#4338ca,#6366f1);
+}
+.tic-logo--sm{width:28px;height:28px;border-radius:6px}
+.tic-logo--sm .fb{font-size:11px}
+.tic-logo--lg{width:40px;height:40px;border-radius:10px}
+
 /* ── KPI strip ───────────────────────────────────────────────── */
 .kpi-grid{
   display:grid;
@@ -372,7 +394,7 @@ html.dark .regime-chip.bearish{background:rgba(220,38,38,.15);border-color:rgba(
   box-shadow:var(--shadow-card);
   position:relative;overflow:hidden;
 }
-.kpi:hover{transform:translateY(-2px);box-shadow:var(--shadow-card-hover);border-color:rgba(132,204,22,.35)}
+.kpi:hover{transform:translateY(-2px);box-shadow:var(--shadow-card-hover);border-color:rgba(99,102,241,.35)}
 .kpi-head{display:flex;align-items:center;gap:10px;margin-bottom:14px}
 .kpi-logo{
   width:36px;height:36px;border-radius:8px;
@@ -715,80 +737,8 @@ html.dark .period-tab.active{background:#1f2937}
         <div class="last-refresh">Live · refreshed 12 s ago</div>
       </div>
 
-      <!-- KPI strip -->
-      <div class="kpi-grid">
-        <div class="kpi" onclick="showToast('Would open NVDA stock modal')">
-          <div class="kpi-head">
-            <div class="kpi-logo" style="background:linear-gradient(135deg,#4338ca,#6366f1)">N</div>
-            <div>
-              <div class="kpi-name">Nvidia Corp</div>
-              <div class="kpi-tic">NVDA</div>
-            </div>
-          </div>
-          <div class="kpi-row">
-            <div class="kpi-price">$1,247.30</div>
-            <div class="kpi-chg up">▲ 3.4%</div>
-          </div>
-          <div class="kpi-foot">
-            <div class="kpi-score">Score <strong>92</strong></div>
-            <div class="kpi-stars">★★★★★</div>
-          </div>
-        </div>
-
-        <div class="kpi" onclick="showToast('Would open MU stock modal')">
-          <div class="kpi-head">
-            <div class="kpi-logo" style="background:linear-gradient(135deg,#1d4ed8,#3b82f6)">M</div>
-            <div>
-              <div class="kpi-name">Micron Tech</div>
-              <div class="kpi-tic">MU</div>
-            </div>
-          </div>
-          <div class="kpi-row">
-            <div class="kpi-price">$189.41</div>
-            <div class="kpi-chg up">▲ 5.1%</div>
-          </div>
-          <div class="kpi-foot">
-            <div class="kpi-score">Score <strong>87</strong></div>
-            <div class="kpi-stars">★★★★★</div>
-          </div>
-        </div>
-
-        <div class="kpi" onclick="showToast('Would open LITE stock modal')">
-          <div class="kpi-head">
-            <div class="kpi-logo" style="background:linear-gradient(135deg,#7c3aed,#a855f7)">L</div>
-            <div>
-              <div class="kpi-name">Lumentum</div>
-              <div class="kpi-tic">LITE</div>
-            </div>
-          </div>
-          <div class="kpi-row">
-            <div class="kpi-price">$1,003.12</div>
-            <div class="kpi-chg dn">▼ 2.6%</div>
-          </div>
-          <div class="kpi-foot">
-            <div class="kpi-score">Score <strong>79</strong></div>
-            <div class="kpi-stars">★★★★★</div>
-          </div>
-        </div>
-
-        <div class="kpi" onclick="showToast('Would open APLD stock modal')">
-          <div class="kpi-head">
-            <div class="kpi-logo" style="background:linear-gradient(135deg,#ea580c,#facc15)">A</div>
-            <div>
-              <div class="kpi-name">AppLovin</div>
-              <div class="kpi-tic">APLD</div>
-            </div>
-          </div>
-          <div class="kpi-row">
-            <div class="kpi-price">$312.50</div>
-            <div class="kpi-chg up">▲ 8.9%</div>
-          </div>
-          <div class="kpi-foot">
-            <div class="kpi-score">Score <strong>84</strong></div>
-            <div class="kpi-stars">★★★★★</div>
-          </div>
-        </div>
-      </div>
+      <!-- KPI strip — logos rendered from FMP CDN with fallback to initial -->
+      <div class="kpi-grid" id="kpi-grid"></div>
 
       <!-- Main analytics row -->
       <div class="row-grid">
@@ -838,11 +788,7 @@ html.dark .period-tab.active{background:#1f2937}
 
           <div class="movers-section">
             <div class="movers-h">Today's biggest movers</div>
-            <div class="mover"><div class="mover-tic">APLD</div><div class="mover-name"><div class="t">APLD</div><div class="n">AppLovin Corp</div></div><div class="mover-pct up">+8.9%</div></div>
-            <div class="mover"><div class="mover-tic">MU</div>  <div class="mover-name"><div class="t">MU</div>  <div class="n">Micron Technology</div></div><div class="mover-pct up">+5.1%</div></div>
-            <div class="mover"><div class="mover-tic">NVDA</div><div class="mover-name"><div class="t">NVDA</div><div class="n">Nvidia Corp</div></div><div class="mover-pct up">+3.4%</div></div>
-            <div class="mover"><div class="mover-tic">LITE</div><div class="mover-name"><div class="t">LITE</div><div class="n">Lumentum Holdings</div></div><div class="mover-pct dn">−2.6%</div></div>
-            <div class="mover"><div class="mover-tic">SMCI</div><div class="mover-name"><div class="t">SMCI</div><div class="n">Super Micro Computer</div></div><div class="mover-pct dn">−4.7%</div></div>
+            <div id="movers-list"></div>
           </div>
         </div>
       </div>
@@ -903,43 +849,7 @@ html.dark .period-tab.active{background:#1f2937}
               <div class="card-sub">Last 5 reports across the universe</div>
             </div>
           </div>
-          <div>
-            <div class="tl-item">
-              <div class="tl-date"><strong>14</strong>May</div>
-              <div class="tl-body">
-                <div class="tl-row1"><span class="tl-tic">NVDA</span><span class="tl-name">Nvidia Corp</span><span class="tl-tag beat">BEAT</span></div>
-                <div class="tl-row2">EPS $5.16 vs $4.62 est · <span class="surp pos">+11.7%</span></div>
-              </div>
-            </div>
-            <div class="tl-item">
-              <div class="tl-date"><strong>09</strong>May</div>
-              <div class="tl-body">
-                <div class="tl-row1"><span class="tl-tic">LITE</span><span class="tl-name">Lumentum Holdings</span><span class="tl-tag beat">BEAT</span></div>
-                <div class="tl-row2">EPS $0.88 vs $0.76 est · <span class="surp pos">+15.8%</span></div>
-              </div>
-            </div>
-            <div class="tl-item">
-              <div class="tl-date"><strong>07</strong>May</div>
-              <div class="tl-body">
-                <div class="tl-row1"><span class="tl-tic">APLD</span><span class="tl-name">AppLovin</span><span class="tl-tag beat">BEAT</span></div>
-                <div class="tl-row2">EPS $1.42 vs $1.18 est · <span class="surp pos">+20.3%</span></div>
-              </div>
-            </div>
-            <div class="tl-item">
-              <div class="tl-date"><strong>02</strong>May</div>
-              <div class="tl-body">
-                <div class="tl-row1"><span class="tl-tic">SMCI</span><span class="tl-name">Super Micro Computer</span><span class="tl-tag miss">MISS</span></div>
-                <div class="tl-row2">EPS $0.61 vs $0.74 est · <span class="surp neg">−17.6%</span></div>
-              </div>
-            </div>
-            <div class="tl-item">
-              <div class="tl-date"><strong>28</strong>Apr</div>
-              <div class="tl-body">
-                <div class="tl-row1"><span class="tl-tic">MU</span><span class="tl-name">Micron Technology</span><span class="tl-tag beat">BEAT</span></div>
-                <div class="tl-row2">EPS $1.78 vs $1.62 est · <span class="surp pos">+9.9%</span></div>
-              </div>
-            </div>
-          </div>
+          <div id="earnings-list"></div>
         </div>
       </div>
 
@@ -961,7 +871,51 @@ html.dark .period-tab.active{background:#1f2937}
 <div class="toast" id="toast"></div>
 
 <script>
+/* ── Logo helper — render a ticker logo with image + fallback ─
+   The image is pulled from a public CDN; if it 404s, the colored
+   initial below it shows through. This is the same nominative-use
+   pattern every financial dashboard (Yahoo Finance, Robinhood,
+   Bloomberg…) uses for ticker icons. */
+function logoUrl(ticker){
+  return 'https://images.financialmodelingprep.com/symbol/' +
+         encodeURIComponent(ticker.toUpperCase()) + '.png';
+}
+function logoHTML(ticker, size){
+  const cls = size === 'sm' ? 'tic-logo tic-logo--sm'
+            : size === 'lg' ? 'tic-logo tic-logo--lg'
+            : 'tic-logo';
+  return '<div class="' + cls + '">' +
+           '<span class="fb">' + ticker.charAt(0) + '</span>' +
+           '<img src="' + logoUrl(ticker) + '" alt="" loading="lazy"' +
+              ' onerror="this.style.display=\'none\'"' +
+              ' onload="this.previousElementSibling.style.display=\'none\'">' +
+         '</div>';
+}
+
 /* ── Dummy data ───────────────────────────────────────────────── */
+const KPIS = [
+  { t:'NVDA', n:'Nvidia Corp',       p:'$1,247.30', c:'+3.4%',  cls:'up', score:92 },
+  { t:'MU',   n:'Micron Technology', p:'$189.41',   c:'+5.1%',  cls:'up', score:87 },
+  { t:'LITE', n:'Lumentum Holdings', p:'$1,003.12', c:'-2.6%',  cls:'dn', score:79 },
+  { t:'APLD', n:'AppLovin Corp',     p:'$312.50',   c:'+8.9%',  cls:'up', score:84 },
+];
+
+const MOVERS = [
+  { t:'APLD', n:'AppLovin Corp',         pct:'+8.9%', cls:'up' },
+  { t:'MU',   n:'Micron Technology',     pct:'+5.1%', cls:'up' },
+  { t:'NVDA', n:'Nvidia Corp',           pct:'+3.4%', cls:'up' },
+  { t:'LITE', n:'Lumentum Holdings',     pct:'-2.6%', cls:'dn' },
+  { t:'SMCI', n:'Super Micro Computer',  pct:'-4.7%', cls:'dn' },
+];
+
+const EARNINGS = [
+  { dd:'14', mm:'May', t:'NVDA', n:'Nvidia Corp',          tag:'beat', eps:'$5.16', est:'$4.62', surp:'+11.7%', surpcls:'pos' },
+  { dd:'09', mm:'May', t:'LITE', n:'Lumentum Holdings',    tag:'beat', eps:'$0.88', est:'$0.76', surp:'+15.8%', surpcls:'pos' },
+  { dd:'07', mm:'May', t:'APLD', n:'AppLovin',             tag:'beat', eps:'$1.42', est:'$1.18', surp:'+20.3%', surpcls:'pos' },
+  { dd:'02', mm:'May', t:'SMCI', n:'Super Micro Computer', tag:'miss', eps:'$0.61', est:'$0.74', surp:'-17.6%', surpcls:'neg' },
+  { dd:'28', mm:'Apr', t:'MU',   n:'Micron Technology',    tag:'beat', eps:'$1.78', est:'$1.62', surp:'+9.9%',  surpcls:'pos' },
+];
+
 const PERF_DATA = (() => {
   // Hot list (green) vs S&P (gray) — 90 days, hot list outperforms
   const days = 90, hot = [], spy = [];
@@ -1023,7 +977,62 @@ function renderChart(){
   });
 }
 
-/* ── Trending sparklines (inline SVG) ─────────────────────────── */
+/* ── KPI cards (real logos with fallback) ─────────────────────── */
+function renderKpis(){
+  const grid = document.getElementById('kpi-grid');
+  grid.innerHTML = KPIS.map(k => `
+    <div class="kpi" onclick="showToast('Would open ${k.t} stock modal')">
+      <div class="kpi-head">
+        ${logoHTML(k.t, 'lg')}
+        <div>
+          <div class="kpi-name">${k.n}</div>
+          <div class="kpi-tic">${k.t}</div>
+        </div>
+      </div>
+      <div class="kpi-row">
+        <div class="kpi-price">${k.p}</div>
+        <div class="kpi-chg ${k.cls}">${k.cls === 'up' ? '▲' : '▼'} ${k.c.replace(/^[+-]/, '')}</div>
+      </div>
+      <div class="kpi-foot">
+        <div class="kpi-score">Score <strong>${k.score}</strong></div>
+        <div class="kpi-stars">★★★★★</div>
+      </div>
+    </div>`).join('');
+}
+
+/* ── Today's movers (real logos with fallback) ────────────────── */
+function renderMovers(){
+  const root = document.getElementById('movers-list');
+  root.innerHTML = MOVERS.map(m => `
+    <div class="mover">
+      ${logoHTML(m.t, 'sm')}
+      <div class="mover-name">
+        <div class="t">${m.t}</div>
+        <div class="n">${m.n}</div>
+      </div>
+      <div class="mover-pct ${m.cls}">${m.pct.replace('-', '−')}</div>
+    </div>`).join('');
+}
+
+/* ── Recent earnings timeline (real logos with fallback) ──────── */
+function renderEarnings(){
+  const root = document.getElementById('earnings-list');
+  root.innerHTML = EARNINGS.map(e => `
+    <div class="tl-item">
+      <div class="tl-date"><strong>${e.dd}</strong>${e.mm}</div>
+      ${logoHTML(e.t, 'sm')}
+      <div class="tl-body">
+        <div class="tl-row1">
+          <span class="tl-tic">${e.t}</span>
+          <span class="tl-name">${e.n}</span>
+          <span class="tl-tag ${e.tag}">${e.tag.toUpperCase()}</span>
+        </div>
+        <div class="tl-row2">EPS ${e.eps} vs ${e.est} est · <span class="surp ${e.surpcls}">${e.surp.replace('-', '−')}</span></div>
+      </div>
+    </div>`).join('');
+}
+
+/* ── Trending sparklines (logos + inline SVG) ─────────────────── */
 function renderTrend(){
   const wrap = document.getElementById('trend-wrap');
   wrap.innerHTML = TREND.map(t => {
@@ -1037,14 +1046,19 @@ function renderTrend(){
     return `
       <div class="trend-card" onclick="showToast('Would open ${t.t} stock modal')">
         <div class="trend-head">
-          <div class="trend-tic">${t.t}</div>
+          <div style="display:flex;align-items:center;gap:8px;min-width:0">
+            ${logoHTML(t.t, 'sm')}
+            <div style="min-width:0">
+              <div class="trend-tic">${t.t}</div>
+              <div class="trend-name" style="margin:0">${t.n}</div>
+            </div>
+          </div>
           <div class="trend-vel">${t.vel}</div>
         </div>
-        <div class="trend-name">${t.n}</div>
         <svg class="trend-spark" viewBox="0 0 100 100" preserveAspectRatio="none">
           <polyline points="${pts}" fill="none" stroke="${stroke}" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>
         </svg>
-        <div class="trend-foot"><span class="p">${t.p}</span><span class="c ${t.cls}">${t.c}</span></div>
+        <div class="trend-foot"><span class="p">${t.p}</span><span class="c ${t.cls}">${t.c.replace('-', '−')}</span></div>
       </div>`;
   }).join('');
 }
@@ -1117,6 +1131,9 @@ function showToast(msg){
   let saved = 'light';
   try { saved = localStorage.getItem('ahv2-theme') || 'light'; } catch(e){}
   applyTheme(saved);
+  renderKpis();
+  renderMovers();
+  renderEarnings();
   renderChart();
   renderTrend();
 })();
