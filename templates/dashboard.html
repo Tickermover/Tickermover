@@ -1175,13 +1175,9 @@ body.v2{
   min-height:100vh;
 }
 
-/* Move ticker tape inside the inset card too so it doesn't sit on the
-   gradient awkwardly */
-body.v2 #ticker-tape{
-  position:relative;
-  border-radius:20px 20px 0 0;
-  overflow:hidden;
-}
+/* Hide the live ticker-tape strip in v2 — the preview doesn't have it and
+   it sits awkwardly above the inset card */
+body.v2 #ticker-tape{display:none!important}
 
 .v2-app{
   display:grid;
@@ -1359,7 +1355,27 @@ body.v2-drawer-open .v2-drawer-backdrop{display:block}
    #v2-overview at the top of the Hot List panel.
    ════════════════════════════════════════════════════════════════ */
 
-#v2-overview{margin-bottom:24px}
+#v2-overview{margin-bottom:24px;min-height:400px}
+
+/* Skeleton state while the universe payload is loading. Animated
+   shimmer keeps the layout from looking dead during the first second. */
+.v2ov-skeleton{display:grid;gap:14px}
+.v2ov-skeleton .row{display:grid;grid-template-columns:2fr 1fr;gap:14px}
+.v2ov-skeleton .row.kpis{grid-template-columns:repeat(4,1fr)}
+.v2ov-skeleton .sk{
+  background:linear-gradient(90deg,#f1f5f9 0%,#e2e8f0 50%,#f1f5f9 100%);
+  background-size:200% 100%;
+  border-radius:14px;
+  animation:v2sk 1.2s ease-in-out infinite;
+}
+.v2ov-skeleton .sk.kpi{height:128px}
+.v2ov-skeleton .sk.big{height:300px}
+.v2ov-skeleton .sk.side{height:300px}
+.v2ov-skeleton .sk.trend{height:120px;grid-column:1/-1}
+@keyframes v2sk{0%{background-position:200% 0}100%{background-position:-200% 0}}
+html.v2-dark .v2ov-skeleton .sk{background:linear-gradient(90deg,#121821 0%,#1f2937 50%,#121821 100%);background-size:200% 100%}
+@media (max-width: 1100px){.v2ov-skeleton .row{grid-template-columns:1fr}}
+@media (max-width: 768px){.v2ov-skeleton .row.kpis{grid-template-columns:repeat(2,1fr)}.v2ov-skeleton .sk.kpi{height:100px}}
 .v2ov-card{
   background:#fff;border:1px solid #e5e7eb;border-radius:14px;
   padding:20px;box-shadow:0 1px 3px rgba(15,23,42,.04);
@@ -1565,7 +1581,7 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 }
 </style>
 </head>
-<body>
+<body class="v2">
 <!-- PWA install button removed per user request. Manifest still present so users
      who want to install can use the browser's native menu (Chrome ⋮ → Install app,
      Safari Share → Add to Home Screen, etc.). -->
@@ -1729,8 +1745,17 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 <div id="panel-hot" class="panel active">
   <!-- v2 overview widgets: KPI strip, movers, score distribution, sector
        heat map, recent earnings, trending. Rendered by renderV2Overview()
-       on every refresh. -->
-  <div id="v2-overview"></div>
+       on every refresh; skeleton below is replaced on first render. -->
+  <div id="v2-overview">
+    <div class="v2ov-skeleton">
+      <div class="row kpis">
+        <div class="sk kpi"></div><div class="sk kpi"></div><div class="sk kpi"></div><div class="sk kpi"></div>
+      </div>
+      <div class="row"><div class="sk big"></div><div class="sk side"></div></div>
+      <div class="row"><div class="sk big"></div><div class="sk side"></div></div>
+      <div class="row"><div class="sk trend"></div></div>
+    </div>
+  </div>
   <div class="hot-grid" id="hot-grid"><div class="loading">⏳ Loading from API…</div></div>
 </div>
 
