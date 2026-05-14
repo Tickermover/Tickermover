@@ -622,12 +622,18 @@ tr:hover td{background:rgba(132,204,22,.06)}
   #user-avatar{width:36px!important;height:36px!important;font-size:15px!important}
   #user-menu button{padding:6px 9px!important;font-size:11px!important}
 
-  /* ── TABS ── horizontal scroll with snap, hidden scrollbar ── */
+  /* ── TABS ── horizontal scroll with snap + a fade-edge hint so
+     users see that Sector Map and Reports are reachable by swiping.
+     Without the right-edge fade the row looked like it just ended at
+     "Universe" with no way to reach the trailing tabs. */
   .tabs{padding:0 12px;gap:0;-webkit-overflow-scrolling:touch;
         scroll-snap-type:x proximity;scrollbar-width:none;
-        position:sticky;top:54px;z-index:49}
+        position:sticky;top:54px;z-index:49;
+        overflow-x:auto;overflow-y:hidden;
+        -webkit-mask-image:linear-gradient(90deg,#000 0,#000 calc(100% - 32px),transparent 100%);
+                mask-image:linear-gradient(90deg,#000 0,#000 calc(100% - 32px),transparent 100%)}
   .tabs::-webkit-scrollbar{display:none}
-  .tab{padding:10px 12px;font-size:12px;scroll-snap-align:start}
+  .tab{padding:10px 12px;font-size:12px;scroll-snap-align:start;flex-shrink:0}
 
   /* ── MAIN ── tighter padding ── */
   .main{padding:14px 12px}
@@ -664,12 +670,19 @@ tr:hover td{background:rgba(132,204,22,.06)}
   .co{max-width:90px;font-size:11px}
   .tic{font-size:12px}
 
-  /* All Stocks — fund-list table: tighter cells, slim name, scroll hint ── */
+  /* All Stocks — fund-list table: tighter cells, slim name, scroll hint ──
+     Ensure horizontal scrolling actually works on phones (it was getting
+     clipped by the panel's overflow chain). overflow-x:auto + a width
+     constraint pin the wrapper to the viewport so the table scrolls
+     inside it rather than pushing the layout. */
   .fund-list-wrap{
+    overflow-x:auto;
     -webkit-overflow-scrolling:touch;
+    max-width:100%;
     background:rgba(255,255,255,.85);
     box-shadow:inset -10px 0 8px -8px rgba(15,23,42,.08)
   }
+  .fund-list{min-width:560px}  /* force the table wider than viewport so it actually scrolls */
   .fund-list{font-size:12px}
   .fund-list th{padding:8px 8px;font-size:10px}
   .fund-list td{padding:8px 8px}
@@ -868,6 +881,26 @@ tr:hover td{background:rgba(132,204,22,.06)}
   /* fd-metrics inside a collapsible: tighter rows */
   .m-collapse .fd-metrics{grid-template-columns:1fr;gap:0;margin:0}
   .m-collapse .fd-metric{padding:8px 0;font-size:12.5px}
+
+  /* Reverse DCF row was breaking out of the modal on phones. The
+     verdict chip carries white-space:nowrap (good on desktop, breaks
+     on narrow viewports), and the right-aligned barLabel was getting
+     pushed off-screen. Force the chip to wrap and keep barLabel inside
+     the flow rather than margin-left:auto pinned right. */
+  .stock-modal-panel [style*="Reverse DCF"],
+  .stock-modal-panel div[style*="${dcf.border}"]{max-width:100%}
+  .stock-modal-panel .m-collapse-body > div[style*="border-left:4px solid"]{
+    padding:10px 12px!important;
+    overflow:hidden;
+  }
+  .stock-modal-panel .m-collapse-body > div[style*="border-left:4px solid"] > div:first-child{
+    flex-wrap:wrap!important;gap:6px 10px!important;
+  }
+  .stock-modal-panel .m-collapse-body > div[style*="border-left:4px solid"] > div:first-child > div{
+    white-space:normal!important;
+    line-height:1.35!important;
+    margin-left:0!important;
+  }
 }
 
 /* DESKTOP — collapsibles render as plain blocks: hide the summary toggle,
@@ -5648,7 +5681,11 @@ function renderRegimePill(regime) {
   if (!labelEl || !wrap) return;
 
   const label = regime.regime_label || 'Mixed';
-  labelEl.textContent = `Market: ${label}`;
+  // Drop the "Market:" prefix on phones — the green/red/blue dot already
+  // signals it's the market mood, and "Market: Bullish" was getting cut
+  // off in the cramped mobile header next to the avatar.
+  const isPhone = window.matchMedia && window.matchMedia('(max-width:768px)').matches;
+  labelEl.textContent = isPhone ? label : `Market: ${label}`;
 
   // Colour the chip by mood
   let bg, border, color;
