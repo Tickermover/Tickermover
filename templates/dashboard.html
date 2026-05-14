@@ -1545,10 +1545,19 @@ html.v2-dark .v2ov-tl-item{border-bottom-color:#1f2937}
 html.v2-dark .v2ov-movers-section,html.v2-dark .v2ov-kpi-foot{border-top-color:#1f2937}
 html.v2-dark .v2ov-tic-logo{background:#1f2937;border-color:#374151}
 
-/* When v2 is on, the original hot-card grid is replaced by the v2 overview
-   widgets above it — hide #hot-grid so the layout matches the v2-preview
-   mock exactly (KPI strip + chart + dist + sectors + earnings + trending). */
-body.v2 #hot-grid{display:none}
+/* v2 section heading — sits between the overview widgets and the
+   detailed Top-20 hot-card grid so users see what they're scrolling into */
+body.v2 .v2-section-h{
+  display:flex;align-items:center;justify-content:space-between;
+  font-size:18px;font-weight:800;color:#0f172a;
+  letter-spacing:-.01em;
+  margin:28px 0 14px;
+  padding-bottom:10px;
+  border-bottom:1px solid #e5e7eb;
+}
+body.v2 .v2-section-h .sub{font-size:12px;font-weight:600;color:#64748b}
+html.v2-dark body.v2 .v2-section-h{color:#f1f5f9;border-bottom-color:#1f2937}
+html.v2-dark body.v2 .v2-section-h .sub{color:#94a3b8}
 
 /* ── Hot List Performance chart (top of overview) ────────────── */
 .v2ov-chart-svg{width:100%;height:240px;display:block;overflow:visible}
@@ -1755,6 +1764,12 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
       <div class="row"><div class="sk big"></div><div class="sk side"></div></div>
       <div class="row"><div class="sk trend"></div></div>
     </div>
+  </div>
+  <!-- Section heading + the full 20-card hot list. Hidden by default;
+       body.v2 reveals it (so the non-v2 view, if any, stays untouched). -->
+  <div class="v2-section-h" style="display:none">
+    <span>🔥 Top 20 Hot Picks</span>
+    <span class="sub">A-tier and B-tier stocks ranked by Alpha Score · click any card to drill in</span>
   </div>
   <div class="hot-grid" id="hot-grid"><div class="loading">⏳ Loading from API…</div></div>
 </div>
@@ -2175,7 +2190,8 @@ function v2RenderSectors(tickers){
   };
 
   const cells = sectors.map(s =>
-    '<div class="v2ov-sector-cell" style="background:' + bgFor(s.mom) + '" title="' + s.name + '">' +
+    '<div class="v2ov-sector-cell" style="background:' + bgFor(s.mom) + '" ' +
+         'title="Open Sector Map" onclick="v2Show(\'sectors\', null)">' +
       '<div class="sn">' + v2EscHTML(s.name) + '</div>' +
       '<div class="sv">' + s.score + '</div>' +
       '<div class="sm">' + (s.mom >= 0 ? '+' : '') + s.mom.toFixed(1) + '% today</div>' +
@@ -2395,23 +2411,24 @@ function v2RenderPerformanceChart(tickers){
     '</div>';
 }
 
-/* ── Master renderer — matches the v2-preview layout exactly:
-     Row 1: Performance chart (2/3) + Distribution+Movers (1/3)
-     Row 2: Sector Heat Map  (2/3) + Recent Earnings   (1/3)
-     Row 3: Trending strip (full width)                            */
+/* ── Master renderer — Performance chart dropped (the procedural Hot
+   List vs S&P line was synthesized noise, not real data). The detailed
+   20-card hot list below the widgets is the real "how am I doing"
+   answer now. Layout:
+     Row 1: Sector Heat Map (2/3, click → Sector Map view)
+            + Distribution + Movers (1/3)
+     Row 2: Recent Earnings (full width)
+     Row 3: Trending strip (full width, horizontal scroll)            */
 function renderV2Overview(tickers){
   const root = document.getElementById('v2-overview');
   if (!root || !Array.isArray(tickers) || !tickers.length) return;
   root.innerHTML =
     v2RenderKpiStrip(tickers) +
     '<div class="v2ov-row">' +
-      v2RenderPerformanceChart(tickers) +
+      v2RenderSectors(tickers) +
       v2RenderDistAndMovers(tickers) +
     '</div>' +
-    '<div class="v2ov-row">' +
-      v2RenderSectors(tickers) +
-      v2RenderEarnings(tickers) +
-    '</div>' +
+    v2RenderEarnings(tickers) +
     v2RenderTrending(tickers);
 }
 
@@ -2480,11 +2497,15 @@ if (!v2InstallHook()){
 
 /* Switch panels — delegates to the existing showTab() so all the original
    panel logic continues to work. Sets active state on whichever sidebar
-   item was clicked (top-level OR sub-item). */
+   item was clicked. When called with `null` (e.g. from a sector heatmap
+   cell), we look up the matching sidebar item by its inline onclick and
+   highlight that, so the sidebar always reflects the current view. */
 function v2Show(panelId, item){
-  // Sidebar active state
   document.querySelectorAll('.v2-nav-item.active, .v2-sub.active').forEach(x => x.classList.remove('active'));
-  if (item) item.classList.add('active');
+  const target = item || document.querySelector(
+    ".v2-sub[onclick*=\"'" + panelId + "'\"], .v2-nav-item[onclick*=\"'" + panelId + "'\"]"
+  );
+  if (target) target.classList.add('active');
 
   // Hand off to existing tab switcher. showTab() expects a btn whose
   // .active class it sets — we pass a throwaway since we've already
