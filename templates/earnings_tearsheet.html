@@ -64,7 +64,7 @@
   }
   .ts-logo img{width:56px;height:56px;object-fit:contain;display:block}
   .ts-brand-text .ts-brand-name{
-    font-size:22px;font-weight:900;letter-spacing:-.02em;color:#0d2440;
+    font-size:22px;font-weight:900;letter-spacing:-.02em;color:#0f172a;
   }
   .ts-brand-text .ts-brand-name span{color:#15803d}
   .ts-brand-text .ts-brand-tag{
@@ -245,10 +245,10 @@
 
   <div class="page-head">
     <div style="display:flex;align-items:center;gap:12px">
-      <img src="/static/icons/alpha-logo-64.png" alt="" style="width:34px;height:34px;flex-shrink:0">
+      <img src="/static/icons/alpha-logo-64.png" alt="AlphaHunt" style="width:34px;height:34px;flex-shrink:0">
       <div>
-        <div class="title">📊 Stock <em>Tear Sheet</em></div>
-        <div class="sub">One-page A4 portrait — Alpha Score breakdown, 90-day price chart, quarterly earnings. Print or share.</div>
+        <div class="title">Stock <em>Tear Sheet</em></div>
+        <div class="sub">A shareable one-page summary of any US stock in our universe.</div>
       </div>
     </div>
     <div class="nav-links">
@@ -283,7 +283,7 @@
         <!-- HEADER -->
         <div class="ts-head">
           <div class="ts-brand">
-            <div class="ts-logo"><img src="/static/icons/icon-192.png" alt="AlphaHunt"></div>
+            <div class="ts-logo"><img src="/static/icons/alpha-logo-64.png" alt="AlphaHunt"></div>
             <div class="ts-brand-text">
               <div class="ts-brand-name">Alpha<span>Hunt</span></div>
               <div class="ts-brand-tag">US Stock Tear Sheet</div>
@@ -386,7 +386,7 @@
               <span>💰 Quarterly Revenue & EPS</span>
               <span class="pill">Last 4Q</span>
             </div>
-            <div class="ts-card-sub">Reported revenue (bar) and EPS actual (line)</div>
+            <div class="ts-card-sub">Revenue (bar) · EPS actual vs analyst estimate (lines) · green dot = beat, red dot = miss</div>
             <div style="height:200px;margin-top:10px"><canvas id="chart-earnings"></canvas></div>
           </div>
           <div class="ts-card-tall">
@@ -501,15 +501,26 @@ async function loadTicker() {
   document.getElementById('ts-content').style.display = 'none';
 
   try {
-    const [uniR, eiR, phR] = await Promise.all([
+    const [uniR, tickR, eiR, phR] = await Promise.all([
       fetch('/api/universe').then(r => r.json()),
+      // /api/ticker/{symbol} returns the unstripped row including `breakdown`
+      // and `weighted`, which /api/universe drops for payload-size reasons.
+      // We merge them in below so the Score Breakdown chart can render.
+      fetch('/api/ticker/' + t).then(r => r.ok ? r.json() : null).catch(() => null),
       fetch('/api/earnings-intel/' + t).then(r => r.ok ? r.json() : null).catch(() => null),
       fetch('/api/price-history/' + t + '?period=3mo').then(r => r.ok ? r.json() : null).catch(() => null),
     ]);
-    const stock = (uniR.tickers || []).find(x => x.ticker === t);
+    let stock = (uniR.tickers || []).find(x => x.ticker === t);
     if (!stock) {
       document.getElementById('loading').textContent = 'Ticker "' + t + '" not in our universe yet.';
       return;
+    }
+    // Merge in the heavy fields stripped from /api/universe
+    if (tickR) {
+      stock = Object.assign({}, stock, {
+        breakdown: tickR.breakdown || stock.breakdown,
+        weighted:  tickR.weighted  || stock.weighted,
+      });
     }
     _data = { stock, ei: eiR || {}, ph: phR || {points: []} };
     render();
@@ -796,7 +807,8 @@ function drawEarningsChart(stock) {
   const n = Math.max(inc.length, eps.length);
   const labels = [];
   const revs = [];
-  const epsVals = [];
+  const epsActuals = [];
+  const epsEstimates = [];
   for (let i = 0; i < n; i++) {
     const incRow = inc[i] || {};
     const epsRow = eps[i] || {};
@@ -811,8 +823,19 @@ function drawEarningsChart(stock) {
     }
     labels.push(lbl);
     revs.push(incRow.revenue != null ? incRow.revenue / 1e9 : null);   // $B
-    epsVals.push(epsRow.actual != null ? epsRow.actual : null);
+    epsActuals.push(epsRow.actual != null ? epsRow.actual : null);
+    epsEstimates.push(epsRow.estimate != null ? epsRow.estimate : null);
   }
+
+  // Per-point colour for the actual-EPS line: green if beat, red if miss.
+  // Makes the "4/4 beat streak" badge match what the chart shows, even when
+  // absolute EPS is declining (the bar they had to clear was lower).
+  const beatColors = epsActuals.map((a, i) => {
+    const e = epsEstimates[i];
+    if (a == null || e == null) return '#94a3b8';
+    return a >= e ? '#15803d' : '#dc2626';
+  });
+  const hasEstimates = epsEstimates.some(v => v != null);
 
   _charts.earnings = new Chart(ctx, {
     data: {
@@ -825,17 +848,36 @@ function drawEarningsChart(stock) {
           backgroundColor: 'rgba(13,36,64,0.78)',
           borderRadius: 5,
           yAxisID: 'y',
-          order: 2,
+          order: 3,
         },
+        // Analyst estimate — faded dashed reference line, only when we have it
+        ...(hasEstimates ? [{
+          type: 'line',
+          label: 'EPS estimate',
+          data: epsEstimates,
+          borderColor: 'rgba(100,116,139,0.55)',
+          backgroundColor: 'rgba(100,116,139,0.55)',
+          borderWidth: 1.5,
+          borderDash: [4, 4],
+          pointRadius: 3,
+          pointBackgroundColor: '#94a3b8',
+          pointBorderColor: '#fff',
+          pointBorderWidth: 1,
+          tension: 0.2,
+          yAxisID: 'y1',
+          order: 2,
+        }] : []),
         {
           type: 'line',
-          label: 'EPS ($)',
-          data: epsVals,
+          label: 'EPS actual',
+          data: epsActuals,
           borderColor: '#84cc16',
           backgroundColor: '#84cc16',
           borderWidth: 3,
-          pointRadius: 5,
-          pointBackgroundColor: '#15803d',
+          pointRadius: 6,
+          pointBackgroundColor: beatColors,
+          pointBorderColor: '#fff',
+          pointBorderWidth: 2,
           tension: 0.2,
           yAxisID: 'y1',
           order: 1,
