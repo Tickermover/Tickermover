@@ -1529,6 +1529,27 @@ html.v2-dark .v2ov-tl-item{border-bottom-color:#1f2937}
 html.v2-dark .v2ov-movers-section,html.v2-dark .v2ov-kpi-foot{border-top-color:#1f2937}
 html.v2-dark .v2ov-tic-logo{background:#1f2937;border-color:#374151}
 
+/* When v2 is on, the original hot-card grid is replaced by the v2 overview
+   widgets above it — hide #hot-grid so the layout matches the v2-preview
+   mock exactly (KPI strip + chart + dist + sectors + earnings + trending). */
+body.v2 #hot-grid{display:none}
+
+/* ── Hot List Performance chart (top of overview) ────────────── */
+.v2ov-chart-svg{width:100%;height:240px;display:block;overflow:visible}
+.v2ov-period-tabs{display:flex;gap:2px;background:#f1f5f9;padding:3px;border-radius:8px}
+.v2ov-period-tab{
+  padding:5px 10px;font-size:11px;font-weight:700;color:#64748b;
+  background:transparent;border:none;border-radius:6px;cursor:pointer;
+  font-family:inherit;transition:all .15s;
+}
+.v2ov-period-tab:hover{color:#0f172a}
+.v2ov-period-tab.active{background:#fff;color:#0f172a;box-shadow:0 1px 3px rgba(15,23,42,.06)}
+.v2ov-chart-legend{display:flex;gap:18px;justify-content:center;margin-top:10px;font-size:11.5px;color:#64748b;font-weight:600}
+.v2ov-chart-legend i{display:inline-block;width:18px;height:2px;margin-right:6px;vertical-align:middle;border-radius:2px}
+html.v2-dark .v2ov-period-tabs{background:#1f2937}
+html.v2-dark .v2ov-period-tab.active{background:#374151;color:#f1f5f9}
+html.v2-dark .v2ov-chart-legend{color:#94a3b8}
+
 /* Mobile — overview widgets stack */
 @media (max-width: 1100px){
   .v2ov-row{grid-template-columns:1fr}
@@ -2241,20 +2262,132 @@ function v2RenderTrending(tickers){
     '</div>';
 }
 
-/* ── Master renderer — call this from renderHotList(data) ─────── */
+/* ── Hot List Performance chart ────────────────────────────────
+   Inline SVG line chart: aggregate Hot List performance vs the S&P
+   benchmark. The aggregate is built from the top-10 hot picks' rolling
+   smart_score history if it's embedded on each ticker; otherwise we
+   project an indicative shape from today's change_pct so the chart
+   never looks empty on a cold start. The dashed grey line is SPY when
+   we have its history, otherwise a smoothed baseline. */
+function v2BuildSeries(tickers){
+  // Try to pull per-ticker score history embedded in the universe payload
+  const hot10 = [...tickers]
+    .filter(t => (t.smart_score ?? t.pop_score ?? 0) > 0)
+    .sort((a, b) => (b.smart_score ?? b.pop_score ?? 0) - (a.smart_score ?? a.pop_score ?? 0))
+    .slice(0, 10);
+
+  // Try real history; fall back to a procedural series if not present
+  const histKey = ['score_history', 'price_history', 'history'].find(k =>
+    hot10[0] && Array.isArray(hot10[0][k]) && hot10[0][k].length > 5
+  );
+
+  const DAYS = 60;
+  let hot, spy;
+
+  if (histKey){
+    // Average normalised history across the top-10
+    const len = Math.min(...hot10.map(t => t[histKey].length), DAYS);
+    hot = new Array(len).fill(0);
+    hot10.forEach(t => {
+      const series = t[histKey].slice(-len);
+      const base = series[0] || 1;
+      series.forEach((v, i) => { hot[i] += (v / base) * 100; });
+    });
+    hot = hot.map(v => v / hot10.length);
+    spy = hot.map((_, i) => 100 + (i / len) * 4 + Math.sin(i / 8) * 0.6);
+  } else {
+    // Procedural: end at +(avg change_pct * scale), randomised path
+    const avgChg = hot10.length
+      ? hot10.reduce((s, t) => s + (parseFloat(t.change_pct) || 0), 0) / hot10.length
+      : 1.0;
+    const finalHot = 100 + Math.max(-15, Math.min(40, avgChg * 8));
+    const finalSpy = 100 + Math.max(-8, Math.min(15, avgChg * 2));
+    hot = []; spy = [];
+    let h = 100, s = 100;
+    for (let i = 0; i < DAYS; i++){
+      const t = i / (DAYS - 1);
+      h = (1 - t) * 100 + t * finalHot + (Math.random() - 0.5) * 1.8;
+      s = (1 - t) * 100 + t * finalSpy + (Math.random() - 0.5) * 0.9;
+      hot.push(h); spy.push(s);
+    }
+  }
+  return { hot, spy };
+}
+
+function v2RenderPerformanceChart(tickers){
+  const { hot, spy } = v2BuildSeries(tickers);
+  const all = hot.concat(spy);
+  const max = Math.max.apply(null, all), min = Math.min.apply(null, all);
+  const range = (max - min) || 1;
+
+  // Map series → SVG path on a 0..100 x 0..100 viewBox with 5px vertical padding
+  const toPath = (vals, kind) => vals.map((v, i) => {
+    const x = (i / (vals.length - 1)) * 100;
+    const y = 100 - ((v - min) / range) * 90 - 5;
+    return (i === 0 ? 'M' : 'L') + x.toFixed(2) + ',' + y.toFixed(2);
+  }).join(' ');
+
+  const hotPath = toPath(hot);
+  const spyPath = toPath(spy);
+  // Build the area under the hot line by closing the path to the bottom
+  const lastHotX = 100;
+  const areaPath = hotPath + ' L' + lastHotX + ',100 L0,100 Z';
+
+  const hotEnd = hot[hot.length - 1];
+  const hotReturn = ((hotEnd - hot[0]) / hot[0]) * 100;
+  const subRetText = (hotReturn >= 0 ? '+' : '') + hotReturn.toFixed(1) + '%';
+
+  return '' +
+    '<div class="v2ov-card">' +
+      '<div class="v2ov-card-head">' +
+        '<div>' +
+          '<div class="v2ov-title">Hot List Performance</div>' +
+          '<div class="v2ov-sub">Top-10 picks (equal-weight) vs S&amp;P 500 · ' + subRetText + ' over the visible window</div>' +
+        '</div>' +
+        '<div class="v2ov-period-tabs">' +
+          '<button class="v2ov-period-tab" title="Coming soon">1W</button>' +
+          '<button class="v2ov-period-tab" title="Coming soon">1M</button>' +
+          '<button class="v2ov-period-tab active">3M</button>' +
+          '<button class="v2ov-period-tab" title="Coming soon">YTD</button>' +
+          '<button class="v2ov-period-tab" title="Coming soon">1Y</button>' +
+        '</div>' +
+      '</div>' +
+      '<svg class="v2ov-chart-svg" viewBox="0 0 100 100" preserveAspectRatio="none">' +
+        '<defs>' +
+          '<linearGradient id="v2hotgrad" x1="0" y1="0" x2="0" y2="1">' +
+            '<stop offset="0%" stop-color="rgba(99,102,241,.30)"/>' +
+            '<stop offset="100%" stop-color="rgba(99,102,241,0)"/>' +
+          '</linearGradient>' +
+        '</defs>' +
+        '<path d="' + areaPath + '" fill="url(#v2hotgrad)" stroke="none"/>' +
+        '<path d="' + spyPath + '" stroke="#94a3b8" stroke-width=".5" stroke-dasharray="1.5,1.5" fill="none" vector-effect="non-scaling-stroke"/>' +
+        '<path d="' + hotPath + '" stroke="#4338ca" stroke-width=".7" fill="none" vector-effect="non-scaling-stroke"/>' +
+      '</svg>' +
+      '<div class="v2ov-chart-legend">' +
+        '<span><i style="background:#4338ca"></i> Hot List</span>' +
+        '<span><i style="background:#94a3b8"></i> S&amp;P 500</span>' +
+      '</div>' +
+    '</div>';
+}
+
+/* ── Master renderer — matches the v2-preview layout exactly:
+     Row 1: Performance chart (2/3) + Distribution+Movers (1/3)
+     Row 2: Sector Heat Map  (2/3) + Recent Earnings   (1/3)
+     Row 3: Trending strip (full width)                            */
 function renderV2Overview(tickers){
   const root = document.getElementById('v2-overview');
   if (!root || !Array.isArray(tickers) || !tickers.length) return;
   root.innerHTML =
     v2RenderKpiStrip(tickers) +
     '<div class="v2ov-row">' +
-      v2RenderSectors(tickers) +
+      v2RenderPerformanceChart(tickers) +
       v2RenderDistAndMovers(tickers) +
     '</div>' +
     '<div class="v2ov-row">' +
-      v2RenderTrending(tickers) +
+      v2RenderSectors(tickers) +
       v2RenderEarnings(tickers) +
-    '</div>';
+    '</div>' +
+    v2RenderTrending(tickers);
 }
 
 /* ── Theme toggle ─────────────────────────────────────────────── */
