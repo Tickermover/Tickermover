@@ -32,6 +32,20 @@
   --red:#dc2626;
   --shadow-card:0 1px 3px rgba(15,23,42,.04),0 1px 2px rgba(15,23,42,.04);
   --shadow-card-hover:0 8px 24px rgba(15,23,42,.08),0 2px 6px rgba(15,23,42,.05);
+
+  /* Branded outer frame — same gradient in light + dark so the chrome
+     always feels like AlphaHunt. Green → lime → teal → gold.            */
+  --frame:linear-gradient(135deg,#0d9488 0%,#15803d 25%,#4ade80 55%,#84cc16 80%,#facc15 100%);
+
+  /* Sidebar stays dark in BOTH themes (user request: "left panel can be
+     black"). Treated as a separate surface, not tied to --bg.            */
+  --sb-bg:#0a0e15;
+  --sb-card:#121821;
+  --sb-bdr:#1f2937;
+  --sb-txt:#e2e8f0;
+  --sb-muted:#94a3b8;
+  --sb-muted-2:#64748b;
+  --sb-active-bg:rgba(132,204,22,.14);
 }
 html.dark{
   --bg:#0a0e15;
@@ -50,66 +64,85 @@ html.dark{
 html,body{height:100%}
 body{
   font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
-  background:var(--bg);
+  /* Branded gradient frame around the app. The .app card sits inside
+     with rounded corners, so the gradient shows as a colored border. */
+  background:var(--frame);
+  background-attachment:fixed;
   color:var(--txt);
   font-size:14px;
   letter-spacing:-.005em;
   -webkit-font-smoothing:antialiased;
-}
-
-/* ── App layout ───────────────────────────────────────────────── */
-.app{
-  display:grid;
-  grid-template-columns:240px 1fr;
+  padding:16px;
   min-height:100vh;
 }
 
-/* ══ SIDEBAR ═════════════════════════════════════════════════════ */
+/* ── App layout — rounded inset card so the gradient frame shows ── */
+.app{
+  display:grid;
+  grid-template-columns:240px 1fr;
+  background:var(--bg);
+  border-radius:20px;
+  overflow:hidden;
+  min-height:calc(100vh - 32px);
+  box-shadow:0 24px 60px rgba(15,23,42,.25),0 8px 20px rgba(15,23,42,.15);
+}
+
+/* ══ SIDEBAR — dark in both themes (user request) ═════════════════ */
 .sidebar{
-  background:var(--card);
-  border-right:1px solid var(--bdr);
+  background:var(--sb-bg);
+  border-right:1px solid var(--sb-bdr);
   padding:18px 14px;
   display:flex;flex-direction:column;
-  position:sticky;top:0;height:100vh;
+  height:calc(100vh - 32px);
   overflow-y:auto;
+  position:relative;
+}
+/* Subtle brand glow at the top of the dark sidebar */
+.sidebar::before{
+  content:'';position:absolute;left:0;right:0;top:0;height:200px;
+  background:radial-gradient(ellipse 70% 100% at 0% 0%,rgba(132,204,22,.12) 0%,transparent 60%);
+  pointer-events:none;
 }
 .sb-logo{
   display:flex;align-items:center;gap:10px;
   padding:0 6px 22px;
   font-size:18px;font-weight:900;letter-spacing:-.4px;
-  color:var(--txt);
+  color:#fff;
+  position:relative;
 }
 .sb-logo .mark{
   width:32px;height:32px;border-radius:8px;
   background:linear-gradient(135deg,var(--brand),var(--brand-2));
   display:grid;place-items:center;
   color:#fff;font-weight:900;font-size:18px;
-  box-shadow:0 2px 8px rgba(132,204,22,.35);
+  box-shadow:0 2px 12px rgba(132,204,22,.45);
 }
-.sb-logo .name span{color:var(--brand)}
+.sb-logo .name span{color:#4ade80}
 
-.sb-group{margin-bottom:14px}
+.sb-group{margin-bottom:14px;position:relative}
 .sb-group-title{
-  font-size:10.5px;font-weight:800;color:var(--muted-2);
+  font-size:10.5px;font-weight:800;color:var(--sb-muted-2);
   text-transform:uppercase;letter-spacing:.08em;
   padding:0 8px 6px;
 }
 .sb-item{
   display:flex;align-items:center;gap:10px;
   padding:9px 10px;border-radius:10px;
-  font-size:13.5px;font-weight:600;color:var(--muted);
+  font-size:13.5px;font-weight:600;color:var(--sb-muted);
   cursor:pointer;user-select:none;
   position:relative;
   transition:background .15s,color .15s;
 }
-.sb-item:hover{background:var(--bdr-soft);color:var(--txt)}
+.sb-item:hover{background:rgba(255,255,255,.04);color:var(--sb-txt)}
 .sb-item.active{
-  background:var(--brand-soft);color:var(--brand);font-weight:700;
+  background:var(--sb-active-bg);
+  color:#a3e635;font-weight:700;
 }
 .sb-item.active::before{
   content:'';position:absolute;left:-14px;top:6px;bottom:6px;
   width:3px;border-radius:0 3px 3px 0;
   background:linear-gradient(180deg,var(--brand),var(--brand-2));
+  box-shadow:0 0 8px rgba(132,204,22,.5);
 }
 .sb-item .ico{font-size:15px;width:18px;text-align:center;flex-shrink:0}
 .sb-item .badge{
@@ -117,6 +150,7 @@ body{
   background:linear-gradient(135deg,var(--brand),var(--brand-2));
   color:#fff;font-size:9px;font-weight:800;
   padding:2px 6px;border-radius:5px;letter-spacing:.04em;
+  box-shadow:0 1px 4px rgba(132,204,22,.4);
 }
 
 /* ══ TOP BAR ═════════════════════════════════════════════════════ */
@@ -419,13 +453,19 @@ html.dark .period-tab.active{background:#1f2937}
   .sector-grid{grid-template-columns:repeat(4,1fr)}
 }
 @media (max-width: 768px){
-  .app{grid-template-columns:1fr}
+  body{padding:8px}                              /* slimmer gradient frame on phone */
+  .app{
+    grid-template-columns:1fr;
+    border-radius:14px;
+    min-height:calc(100vh - 16px);
+  }
   .sidebar{
-    position:fixed;left:-260px;top:0;width:240px;
+    position:fixed;left:-260px;top:0;width:240px;height:100vh;
+    border-radius:0;
     transition:left .25s cubic-bezier(.22,.61,.36,1);
     z-index:50;
   }
-  body.drawer-open .sidebar{left:0;box-shadow:0 16px 40px rgba(0,0,0,.25)}
+  body.drawer-open .sidebar{left:0;box-shadow:0 16px 40px rgba(0,0,0,.4)}
   body.drawer-open .drawer-backdrop{display:block}
   .topbar-burger{display:flex}
   .topbar{padding:0 14px;gap:10px;height:56px}
