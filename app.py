@@ -1586,6 +1586,18 @@ async def dashboard():
         )
 
 
+@app.get("/v2-preview", response_class=HTMLResponse)
+async def dashboard_v2_preview():
+    """Static design mock for the proposed v2 redesign. Dummy data only,
+    no API calls, no auth. Reachable so the user can click through and
+    decide whether to commission the real port."""
+    path = BASE_DIR / "templates" / "dashboard_v2_mock.html"
+    try:
+        return HTMLResponse(content=path.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return HTMLResponse(content="<h2>v2 mock not found</h2>", status_code=404)
+
+
 # ── API Endpoints ─────────────────────────────────────────────────────
 
 @app.get("/api/universe")

@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AlphaHunt v2 — Design Preview</title>
+<meta name="robots" content="noindex">
+<link rel="icon" type="image/png" sizes="32x32" href="/static/icons/favicon-32.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<style>
+/* ════════════════════════════════════════════════════════════════
+   AlphaHunt v2 — Design Preview (dummy data, no API calls)
+   Original CSS — generic SaaS dashboard conventions, AlphaHunt brand.
+   ════════════════════════════════════════════════════════════════ */
+
+:root{
+  --brand:#15803d;
+  --brand-2:#84cc16;
+  --brand-soft:rgba(132,204,22,.10);
+  --bg:#f7fafc;
+  --card:#ffffff;
+  --bdr:#e5e7eb;
+  --bdr-soft:#f1f5f9;
+  --txt:#0f172a;
+  --muted:#64748b;
+  --muted-2:#94a3b8;
+  --green:#15803d;
+  --red:#dc2626;
+  --shadow-card:0 1px 3px rgba(15,23,42,.04),0 1px 2px rgba(15,23,42,.04);
+  --shadow-card-hover:0 8px 24px rgba(15,23,42,.08),0 2px 6px rgba(15,23,42,.05);
+}
+html.dark{
+  --bg:#0a0e15;
+  --card:#121821;
+  --bdr:#1f2937;
+  --bdr-soft:#1a2231;
+  --txt:#f1f5f9;
+  --muted:#94a3b8;
+  --muted-2:#64748b;
+  --brand-soft:rgba(132,204,22,.14);
+  --shadow-card:0 1px 3px rgba(0,0,0,.4);
+  --shadow-card-hover:0 8px 24px rgba(0,0,0,.5);
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+  background:var(--bg);
+  color:var(--txt);
+  font-size:14px;
+  letter-spacing:-.005em;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ── App layout ───────────────────────────────────────────────── */
+.app{
+  display:grid;
+  grid-template-columns:240px 1fr;
+  min-height:100vh;
+}
+
+/* ══ SIDEBAR ═════════════════════════════════════════════════════ */
+.sidebar{
+  background:var(--card);
+  border-right:1px solid var(--bdr);
+  padding:18px 14px;
+  display:flex;flex-direction:column;
+  position:sticky;top:0;height:100vh;
+  overflow-y:auto;
+}
+.sb-logo{
+  display:flex;align-items:center;gap:10px;
+  padding:0 6px 22px;
+  font-size:18px;font-weight:900;letter-spacing:-.4px;
+  color:var(--txt);
+}
+.sb-logo .mark{
+  width:32px;height:32px;border-radius:8px;
+  background:linear-gradient(135deg,var(--brand),var(--brand-2));
+  display:grid;place-items:center;
+  color:#fff;font-weight:900;font-size:18px;
+  box-shadow:0 2px 8px rgba(132,204,22,.35);
+}
+.sb-logo .name span{color:var(--brand)}
+
+.sb-group{margin-bottom:14px}
+.sb-group-title{
+  font-size:10.5px;font-weight:800;color:var(--muted-2);
+  text-transform:uppercase;letter-spacing:.08em;
+  padding:0 8px 6px;
+}
+.sb-item{
+  display:flex;align-items:center;gap:10px;
+  padding:9px 10px;border-radius:10px;
+  font-size:13.5px;font-weight:600;color:var(--muted);
+  cursor:pointer;user-select:none;
+  position:relative;
+  transition:background .15s,color .15s;
+}
+.sb-item:hover{background:var(--bdr-soft);color:var(--txt)}
+.sb-item.active{
+  background:var(--brand-soft);color:var(--brand);font-weight:700;
+}
+.sb-item.active::before{
+  content:'';position:absolute;left:-14px;top:6px;bottom:6px;
+  width:3px;border-radius:0 3px 3px 0;
+  background:linear-gradient(180deg,var(--brand),var(--brand-2));
+}
+.sb-item .ico{font-size:15px;width:18px;text-align:center;flex-shrink:0}
+.sb-item .badge{
+  margin-left:auto;
+  background:linear-gradient(135deg,var(--brand),var(--brand-2));
+  color:#fff;font-size:9px;font-weight:800;
+  padding:2px 6px;border-radius:5px;letter-spacing:.04em;
+}
+
+/* ══ TOP BAR ═════════════════════════════════════════════════════ */
+.content{display:flex;flex-direction:column;min-width:0}
+.topbar{
+  height:60px;
+  background:var(--card);
+  border-bottom:1px solid var(--bdr);
+  display:flex;align-items:center;
+  padding:0 24px;gap:16px;
+  position:sticky;top:0;z-index:30;
+}
+.topbar-burger{
+  display:none;
+  background:none;border:none;cursor:pointer;
+  width:36px;height:36px;border-radius:8px;
+  align-items:center;justify-content:center;
+  color:var(--txt);
+}
+.topbar-burger:hover{background:var(--bdr-soft)}
+
+.search{
+  flex:1;max-width:480px;position:relative;
+}
+.search input{
+  width:100%;
+  background:var(--bdr-soft);
+  border:1px solid transparent;
+  border-radius:10px;
+  padding:9px 14px 9px 38px;
+  font-size:13.5px;color:var(--txt);
+  font-family:inherit;
+  outline:none;
+  transition:border .15s,background .15s;
+}
+.search input::placeholder{color:var(--muted-2)}
+.search input:focus{border-color:var(--brand);background:var(--card)}
+.search .ico{
+  position:absolute;left:13px;top:50%;transform:translateY(-50%);
+  font-size:14px;color:var(--muted);
+}
+.search .kbd{
+  position:absolute;right:10px;top:50%;transform:translateY(-50%);
+  background:var(--card);border:1px solid var(--bdr);
+  border-radius:5px;padding:2px 6px;font-size:11px;font-weight:600;color:var(--muted);
+  font-family:'JetBrains Mono',monospace;
+}
+
+.tb-actions{margin-left:auto;display:flex;align-items:center;gap:8px}
+.tb-icon-btn{
+  width:36px;height:36px;border-radius:50%;
+  background:transparent;border:none;cursor:pointer;
+  display:grid;place-items:center;
+  font-size:16px;color:var(--txt);
+  position:relative;
+  transition:background .15s;
+}
+.tb-icon-btn:hover{background:var(--bdr-soft)}
+.tb-icon-btn .dot{
+  position:absolute;top:8px;right:8px;
+  width:8px;height:8px;border-radius:50%;
+  background:#dc2626;border:2px solid var(--card);
+}
+
+.regime-chip{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:6px 12px;border-radius:999px;
+  background:#dcfce7;border:1.5px solid rgba(22,163,74,.4);
+  color:#15803d;font-weight:700;font-size:12px;
+  letter-spacing:.02em;
+}
+html.dark .regime-chip{background:rgba(22,163,74,.15);border-color:rgba(22,163,74,.35);color:#4ade80}
+.regime-chip .dot{width:7px;height:7px;border-radius:50%;background:currentColor;flex-shrink:0}
+
+.avatar{
+  display:flex;align-items:center;gap:8px;
+  padding:4px 8px 4px 4px;
+  border-radius:999px;
+  cursor:pointer;
+  transition:background .15s;
+}
+.avatar:hover{background:var(--bdr-soft)}
+.avatar .img{
+  width:30px;height:30px;border-radius:50%;
+  background:linear-gradient(135deg,#15803d,#84cc16);
+  display:grid;place-items:center;
+  color:#fff;font-weight:800;font-size:12px;
+}
+.avatar .name{font-size:13px;font-weight:700;color:var(--txt)}
+
+/* ══ MAIN CONTENT ════════════════════════════════════════════════ */
+.main{
+  padding:24px 28px 60px;
+  max-width:1600px;width:100%;margin:0 auto;
+}
+
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:22px;flex-wrap:wrap;gap:12px}
+.page-head h1{font-size:22px;font-weight:800;letter-spacing:-.02em}
+.page-head .sub{font-size:13px;color:var(--muted);margin-top:2px}
+.page-head .last-refresh{
+  font-size:11.5px;color:var(--muted);font-weight:600;
+  display:inline-flex;align-items:center;gap:6px;
+}
+.page-head .last-refresh::before{content:'';width:6px;height:6px;border-radius:50%;background:#15803d;box-shadow:0 0 0 0 rgba(22,163,74,.6);animation:live-pulse 2s ease-in-out infinite}
+@keyframes live-pulse{0%,100%{box-shadow:0 0 0 0 rgba(22,163,74,.5)}60%{box-shadow:0 0 0 5px rgba(22,163,74,0)}}
+
+/* ── KPI strip ───────────────────────────────────────────────── */
+.kpi-grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:14px;
+  margin-bottom:20px;
+}
+.kpi{
+  background:var(--card);
+  border:1px solid var(--bdr);
+  border-radius:14px;
+  padding:18px;
+  cursor:pointer;
+  transition:transform .15s,box-shadow .2s,border-color .15s;
+  box-shadow:var(--shadow-card);
+  position:relative;overflow:hidden;
+}
+.kpi:hover{transform:translateY(-2px);box-shadow:var(--shadow-card-hover);border-color:rgba(132,204,22,.35)}
+.kpi-head{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.kpi-logo{
+  width:36px;height:36px;border-radius:8px;
+  display:grid;place-items:center;
+  color:#fff;font-weight:900;font-size:13px;
+  flex-shrink:0;
+}
+.kpi-name{font-size:13.5px;font-weight:800;color:var(--txt);line-height:1.2}
+.kpi-tic{font-size:11px;color:var(--muted);font-weight:600;letter-spacing:.04em;margin-top:1px}
+.kpi-row{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.kpi-price{font-size:22px;font-weight:800;letter-spacing:-.02em;font-family:'JetBrains Mono','Inter',monospace}
+.kpi-chg{
+  font-size:12px;font-weight:700;
+  padding:3px 8px;border-radius:6px;
+  white-space:nowrap;
+}
+.kpi-chg.up{background:rgba(22,163,74,.12);color:#15803d}
+.kpi-chg.dn{background:rgba(220,38,38,.10);color:#dc2626}
+.kpi-foot{display:flex;align-items:center;justify-content:space-between;margin-top:10px;padding-top:10px;border-top:1px dashed var(--bdr)}
+.kpi-score{font-size:11px;font-weight:700;color:var(--muted)}
+.kpi-score strong{color:var(--brand);font-size:13px}
+.kpi-stars{color:#fbbf24;font-size:11px;letter-spacing:1px}
+
+/* ── Main analytics row (2/3 + 1/3) ──────────────────────────── */
+.row-grid{
+  display:grid;
+  grid-template-columns:2fr 1fr;
+  gap:16px;
+  margin-bottom:20px;
+}
+
+.card{
+  background:var(--card);
+  border:1px solid var(--bdr);
+  border-radius:14px;
+  padding:20px;
+  box-shadow:var(--shadow-card);
+}
+.card-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;gap:12px;flex-wrap:wrap}
+.card-title{font-size:15px;font-weight:800;letter-spacing:-.01em}
+.card-sub{font-size:12px;color:var(--muted);margin-top:2px}
+
+/* Time-period tabs */
+.period-tabs{display:flex;gap:2px;background:var(--bdr-soft);padding:3px;border-radius:8px}
+.period-tab{
+  padding:5px 10px;font-size:11px;font-weight:700;color:var(--muted);
+  background:transparent;border:none;border-radius:6px;cursor:pointer;
+  font-family:inherit;
+  transition:all .15s;
+}
+.period-tab:hover{color:var(--txt)}
+.period-tab.active{background:var(--card);color:var(--txt);box-shadow:0 1px 3px rgba(15,23,42,.06)}
+html.dark .period-tab.active{background:#1f2937}
+
+.chart-wrap{position:relative;height:280px}
+
+/* ── Score Distribution widget ───────────────────────────────── */
+.dist-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.dist-bar{flex:1;height:8px;background:var(--bdr-soft);border-radius:4px;overflow:hidden;display:flex}
+.dist-seg{height:100%}
+.dist-seg.a{background:#15803d}
+.dist-seg.b{background:#84cc16}
+.dist-seg.c{background:#facc15}
+.dist-seg.d{background:#fb923c}
+.dist-seg.f{background:#dc2626}
+.dist-legend{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:14px}
+.dist-cell{text-align:center;padding:8px 4px;border-radius:8px;background:var(--bdr-soft)}
+.dist-cell .v{font-size:18px;font-weight:800;line-height:1}
+.dist-cell .l{font-size:10px;color:var(--muted);font-weight:700;margin-top:3px;letter-spacing:.04em}
+.dist-cell.a .v{color:#15803d}
+.dist-cell.b .v{color:#84cc16}
+.dist-cell.c .v{color:#ca8a04}
+.dist-cell.d .v{color:#ea580c}
+.dist-cell.f .v{color:#b91c1c}
+
+/* ── Movers list ─────────────────────────────────────────────── */
+.movers-section{margin-top:18px;padding-top:14px;border-top:1px solid var(--bdr-soft)}
+.movers-h{font-size:12px;font-weight:800;color:var(--muted);letter-spacing:.04em;text-transform:uppercase;margin-bottom:10px}
+.mover{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px dashed var(--bdr-soft)}
+.mover:last-child{border-bottom:none}
+.mover-tic{
+  width:28px;height:28px;border-radius:6px;
+  background:var(--bdr-soft);
+  display:grid;place-items:center;
+  font-size:10px;font-weight:800;
+}
+.mover-name{flex:1;min-width:0}
+.mover-name .t{font-size:12.5px;font-weight:700;line-height:1.2}
+.mover-name .n{font-size:10.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mover-pct{font-size:12.5px;font-weight:800;font-variant-numeric:tabular-nums}
+.mover-pct.up{color:#15803d}
+.mover-pct.dn{color:#dc2626}
+
+/* ── Sector heat map ─────────────────────────────────────────── */
+.sector-grid{
+  display:grid;
+  grid-template-columns:repeat(6,1fr);
+  gap:8px;
+}
+.sector-cell{
+  padding:14px 12px;border-radius:10px;cursor:pointer;
+  transition:transform .15s,box-shadow .2s;
+  color:#0f172a;
+  position:relative;overflow:hidden;
+}
+.sector-cell:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(15,23,42,.1)}
+.sector-cell .sn{font-size:11.5px;font-weight:800;line-height:1.2;letter-spacing:-.01em}
+.sector-cell .sv{font-size:18px;font-weight:900;margin-top:6px;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.sector-cell .sm{font-size:10px;font-weight:700;margin-top:2px;opacity:.8}
+
+/* ── Earnings timeline ───────────────────────────────────────── */
+.tl-item{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--bdr-soft)}
+.tl-item:last-child{border-bottom:none;padding-bottom:0}
+.tl-date{
+  width:46px;text-align:center;
+  font-size:10.5px;font-weight:700;color:var(--muted);
+  padding-top:2px;flex-shrink:0;
+  line-height:1.3;
+}
+.tl-date strong{display:block;font-size:16px;color:var(--txt);font-weight:800;letter-spacing:-.02em}
+.tl-body{flex:1;min-width:0}
+.tl-row1{display:flex;align-items:center;gap:8px;margin-bottom:3px}
+.tl-tic{font-size:13px;font-weight:800;letter-spacing:.02em}
+.tl-name{font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.tl-tag{font-size:9.5px;font-weight:800;padding:2px 7px;border-radius:5px;letter-spacing:.04em;flex-shrink:0;margin-left:auto}
+.tl-tag.beat{background:rgba(22,163,74,.12);color:#15803d}
+.tl-tag.miss{background:rgba(220,38,38,.10);color:#dc2626}
+.tl-row2{font-size:11.5px;color:var(--muted)}
+.tl-row2 .surp{font-weight:800}
+.tl-row2 .surp.pos{color:#15803d}
+.tl-row2 .surp.neg{color:#dc2626}
+
+/* ── Trending strip (horizontal scroll) ──────────────────────── */
+.trend-wrap{
+  display:flex;gap:12px;
+  overflow-x:auto;
+  -webkit-overflow-scrolling:touch;
+  scroll-snap-type:x mandatory;
+  padding-bottom:4px;
+  margin:0 -4px;
+}
+.trend-wrap::-webkit-scrollbar{height:6px}
+.trend-wrap::-webkit-scrollbar-track{background:transparent}
+.trend-wrap::-webkit-scrollbar-thumb{background:var(--bdr);border-radius:3px}
+.trend-card{
+  flex:0 0 220px;
+  background:var(--card);
+  border:1px solid var(--bdr);
+  border-radius:12px;
+  padding:14px;
+  scroll-snap-align:start;
+  cursor:pointer;
+  transition:transform .15s,box-shadow .2s,border-color .15s;
+}
+.trend-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-card-hover);border-color:rgba(132,204,22,.35)}
+.trend-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.trend-tic{font-size:14px;font-weight:800}
+.trend-vel{font-size:10px;font-weight:800;padding:2px 6px;border-radius:5px;background:var(--brand-soft);color:var(--brand)}
+.trend-name{font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:10px}
+.trend-spark{width:100%;height:32px;display:block}
+.trend-foot{display:flex;align-items:baseline;justify-content:space-between;margin-top:6px}
+.trend-foot .p{font-size:13px;font-weight:800;font-variant-numeric:tabular-nums}
+.trend-foot .c{font-size:11px;font-weight:700}
+.trend-foot .c.up{color:#15803d}
+.trend-foot .c.dn{color:#dc2626}
+
+/* ── Mobile drawer ───────────────────────────────────────────── */
+.drawer-backdrop{
+  display:none;position:fixed;inset:0;background:rgba(15,23,42,.45);
+  z-index:40;animation:fadein .2s;
+}
+@keyframes fadein{from{opacity:0}to{opacity:1}}
+
+@media (max-width: 1100px){
+  .row-grid{grid-template-columns:1fr}
+  .sector-grid{grid-template-columns:repeat(4,1fr)}
+}
+@media (max-width: 768px){
+  .app{grid-template-columns:1fr}
+  .sidebar{
+    position:fixed;left:-260px;top:0;width:240px;
+    transition:left .25s cubic-bezier(.22,.61,.36,1);
+    z-index:50;
+  }
+  body.drawer-open .sidebar{left:0;box-shadow:0 16px 40px rgba(0,0,0,.25)}
+  body.drawer-open .drawer-backdrop{display:block}
+  .topbar-burger{display:flex}
+  .topbar{padding:0 14px;gap:10px;height:56px}
+  .search{max-width:none}
+  .search .kbd{display:none}
+  .avatar .name{display:none}
+  .main{padding:18px 14px 60px}
+  .kpi-grid{grid-template-columns:repeat(2,1fr);gap:10px}
+  .kpi{padding:14px}
+  .kpi-price{font-size:18px}
+  .sector-grid{grid-template-columns:repeat(2,1fr)}
+  .page-head h1{font-size:18px}
+  .regime-chip{padding:5px 10px;font-size:11px}
+}
+
+/* Toast */
+.toast{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+  background:#0f172a;color:#fff;padding:10px 18px;border-radius:8px;
+  font-size:13px;font-weight:600;
+  box-shadow:0 8px 24px rgba(0,0,0,.3);
+  z-index:60;opacity:0;pointer-events:none;
+  transition:opacity .2s,transform .2s;
+}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(-4px)}
+</style>
+</head>
+<body>
+
+<div class="drawer-backdrop" onclick="closeDrawer()"></div>
+
+<div class="app">
+
+  <!-- ════ SIDEBAR ════ -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sb-logo">
+      <div class="mark">α</div>
+      <div class="name">Alpha<span>Hunt</span></div>
+    </div>
+
+    <div class="sb-group">
+      <div class="sb-group-title">Discover</div>
+      <div class="sb-item active" data-view="hot">     <span class="ico">🔥</span> <span>Hot List</span></div>
+      <div class="sb-item"        data-view="top">     <span class="ico">🎯</span> <span>Top Hunts</span></div>
+      <div class="sb-item"        data-view="sectors"> <span class="ico">🗺</span> <span>Sector Map</span></div>
+      <div class="sb-item"        data-view="universe"><span class="ico">📊</span> <span>Universe</span></div>
+    </div>
+
+    <div class="sb-group">
+      <div class="sb-group-title">Yours</div>
+      <div class="sb-item" data-view="watch"><span class="ico">⭐</span> <span>Watchlist</span></div>
+      <div class="sb-item" data-view="past"> <span class="ico">📕</span> <span>Past Trades</span></div>
+    </div>
+
+    <div class="sb-group">
+      <div class="sb-group-title">Intel</div>
+      <div class="sb-item" data-view="tearsheets"><span class="ico">📈</span> <span>Tear Sheets</span></div>
+      <div class="sb-item" data-view="reports">   <span class="ico">📰</span> <span>Reports</span></div>
+      <div class="sb-item" data-view="alerts">    <span class="ico">🏷</span> <span>Alerts</span><span class="badge">NEW</span></div>
+    </div>
+
+    <div class="sb-group" style="margin-top:auto">
+      <div class="sb-group-title">Account</div>
+      <div class="sb-item" data-view="profile"> <span class="ico">👤</span> <span>Profile</span></div>
+      <div class="sb-item" data-view="settings"><span class="ico">⚙</span>  <span>Settings</span></div>
+      <div class="sb-item" data-view="signout"> <span class="ico">↪</span>  <span>Sign out</span></div>
+    </div>
+  </aside>
+
+  <!-- ════ CONTENT ════ -->
+  <div class="content">
+
+    <!-- ── Top bar ── -->
+    <header class="topbar">
+      <button class="topbar-burger" onclick="openDrawer()" aria-label="Open menu">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+
+      <div class="search">
+        <span class="ico">🔍</span>
+        <input type="text" placeholder="Search ticker, sector, or command…">
+        <span class="kbd">⌘K</span>
+      </div>
+
+      <div class="tb-actions">
+        <button class="tb-icon-btn" onclick="toggleTheme()" title="Toggle theme" id="theme-btn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="theme-icon"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+        </button>
+        <button class="tb-icon-btn" title="Alerts">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+          <span class="dot"></span>
+        </button>
+        <div class="regime-chip"><span class="dot"></span><span>Bullish</span></div>
+        <div class="avatar" onclick="showToast('Profile menu — not wired up in mock')">
+          <div class="img">S</div>
+          <div class="name">Sourav</div>
+        </div>
+      </div>
+    </header>
+
+    <!-- ── Main scrollable content ── -->
+    <main class="main">
+
+      <div class="page-head">
+        <div>
+          <h1>🔥 Hot List</h1>
+          <div class="sub">Top-tier picks updated every 5 minutes</div>
+        </div>
+        <div class="last-refresh">Live · refreshed 12 s ago</div>
+      </div>
+
+      <!-- KPI strip -->
+      <div class="kpi-grid">
+        <div class="kpi" onclick="showToast('Would open NVDA stock modal')">
+          <div class="kpi-head">
+            <div class="kpi-logo" style="background:linear-gradient(135deg,#15803d,#84cc16)">N</div>
+            <div>
+              <div class="kpi-name">Nvidia Corp</div>
+              <div class="kpi-tic">NVDA</div>
+            </div>
+          </div>
+          <div class="kpi-row">
+            <div class="kpi-price">$1,247.30</div>
+            <div class="kpi-chg up">▲ 3.4%</div>
+          </div>
+          <div class="kpi-foot">
+            <div class="kpi-score">Score <strong>92</strong></div>
+            <div class="kpi-stars">★★★★★</div>
+          </div>
+        </div>
+
+        <div class="kpi" onclick="showToast('Would open MU stock modal')">
+          <div class="kpi-head">
+            <div class="kpi-logo" style="background:linear-gradient(135deg,#1d4ed8,#3b82f6)">M</div>
+            <div>
+              <div class="kpi-name">Micron Tech</div>
+              <div class="kpi-tic">MU</div>
+            </div>
+          </div>
+          <div class="kpi-row">
+            <div class="kpi-price">$189.41</div>
+            <div class="kpi-chg up">▲ 5.1%</div>
+          </div>
+          <div class="kpi-foot">
+            <div class="kpi-score">Score <strong>87</strong></div>
+            <div class="kpi-stars">★★★★★</div>
+          </div>
+        </div>
+
+        <div class="kpi" onclick="showToast('Would open LITE stock modal')">
+          <div class="kpi-head">
+            <div class="kpi-logo" style="background:linear-gradient(135deg,#7c3aed,#a855f7)">L</div>
+            <div>
+              <div class="kpi-name">Lumentum</div>
+              <div class="kpi-tic">LITE</div>
+            </div>
+          </div>
+          <div class="kpi-row">
+            <div class="kpi-price">$1,003.12</div>
+            <div class="kpi-chg dn">▼ 2.6%</div>
+          </div>
+          <div class="kpi-foot">
+            <div class="kpi-score">Score <strong>79</strong></div>
+            <div class="kpi-stars">★★★★★</div>
+          </div>
+        </div>
+
+        <div class="kpi" onclick="showToast('Would open APLD stock modal')">
+          <div class="kpi-head">
+            <div class="kpi-logo" style="background:linear-gradient(135deg,#ea580c,#facc15)">A</div>
+            <div>
+              <div class="kpi-name">AppLovin</div>
+              <div class="kpi-tic">APLD</div>
+            </div>
+          </div>
+          <div class="kpi-row">
+            <div class="kpi-price">$312.50</div>
+            <div class="kpi-chg up">▲ 8.9%</div>
+          </div>
+          <div class="kpi-foot">
+            <div class="kpi-score">Score <strong>84</strong></div>
+            <div class="kpi-stars">★★★★★</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main analytics row -->
+      <div class="row-grid">
+        <div class="card">
+          <div class="card-head">
+            <div>
+              <div class="card-title">Hot List Performance</div>
+              <div class="card-sub">Top-10 picks (equal-weight) vs S&amp;P 500</div>
+            </div>
+            <div class="period-tabs">
+              <button class="period-tab">1W</button>
+              <button class="period-tab">1M</button>
+              <button class="period-tab active">3M</button>
+              <button class="period-tab">YTD</button>
+              <button class="period-tab">1Y</button>
+              <button class="period-tab">All</button>
+            </div>
+          </div>
+          <div class="chart-wrap"><canvas id="chart-perf"></canvas></div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <div>
+              <div class="card-title">Score Distribution</div>
+              <div class="card-sub">187 stocks in our universe today</div>
+            </div>
+          </div>
+
+          <div class="dist-row">
+            <div class="dist-bar">
+              <div class="dist-seg a" style="width:21%"></div>
+              <div class="dist-seg b" style="width:34%"></div>
+              <div class="dist-seg c" style="width:28%"></div>
+              <div class="dist-seg d" style="width:12%"></div>
+              <div class="dist-seg f" style="width:5%"></div>
+            </div>
+          </div>
+
+          <div class="dist-legend">
+            <div class="dist-cell a"><div class="v">39</div><div class="l">A · Top</div></div>
+            <div class="dist-cell b"><div class="v">63</div><div class="l">B · Qual</div></div>
+            <div class="dist-cell c"><div class="v">53</div><div class="l">C · Avg</div></div>
+            <div class="dist-cell d"><div class="v">22</div><div class="l">D · Below</div></div>
+            <div class="dist-cell f"><div class="v">10</div><div class="l">F · Weak</div></div>
+          </div>
+
+          <div class="movers-section">
+            <div class="movers-h">Today's biggest movers</div>
+            <div class="mover"><div class="mover-tic">APLD</div><div class="mover-name"><div class="t">APLD</div><div class="n">AppLovin Corp</div></div><div class="mover-pct up">+8.9%</div></div>
+            <div class="mover"><div class="mover-tic">MU</div>  <div class="mover-name"><div class="t">MU</div>  <div class="n">Micron Technology</div></div><div class="mover-pct up">+5.1%</div></div>
+            <div class="mover"><div class="mover-tic">NVDA</div><div class="mover-name"><div class="t">NVDA</div><div class="n">Nvidia Corp</div></div><div class="mover-pct up">+3.4%</div></div>
+            <div class="mover"><div class="mover-tic">LITE</div><div class="mover-name"><div class="t">LITE</div><div class="n">Lumentum Holdings</div></div><div class="mover-pct dn">−2.6%</div></div>
+            <div class="mover"><div class="mover-tic">SMCI</div><div class="mover-name"><div class="t">SMCI</div><div class="n">Super Micro Computer</div></div><div class="mover-pct dn">−4.7%</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sector + Earnings row -->
+      <div class="row-grid">
+        <div class="card">
+          <div class="card-head">
+            <div>
+              <div class="card-title">Sector Strength</div>
+              <div class="card-sub">Avg score · 1-month momentum colour-coded</div>
+            </div>
+          </div>
+          <div class="sector-grid">
+            <div class="sector-cell" style="background:#dcfce7" onclick="showToast('Filter Universe by Semiconductors')">
+              <div class="sn">Semiconductors</div><div class="sv">78</div><div class="sm">+12.4% 1M</div>
+            </div>
+            <div class="sector-cell" style="background:#dcfce7">
+              <div class="sn">AI Infrastructure</div><div class="sv">81</div><div class="sm">+18.1% 1M</div>
+            </div>
+            <div class="sector-cell" style="background:#bbf7d0">
+              <div class="sn">Cloud / SaaS</div><div class="sv">71</div><div class="sm">+8.3% 1M</div>
+            </div>
+            <div class="sector-cell" style="background:#fef3c7">
+              <div class="sn">Quantum</div><div class="sv">64</div><div class="sm">+4.2% 1M</div>
+            </div>
+            <div class="sector-cell" style="background:#fed7aa">
+              <div class="sn">Fintech</div><div class="sv">52</div><div class="sm">−1.1% 1M</div>
+            </div>
+            <div class="sector-cell" style="background:#fecaca">
+              <div class="sn">Solar</div><div class="sv">41</div><div class="sm">−6.8% 1M</div>
+            </div>
+            <div class="sector-cell" style="background:#dcfce7">
+              <div class="sn">Networking</div><div class="sv">74</div><div class="sm">+9.7% 1M</div>
+            </div>
+            <div class="sector-cell" style="background:#fef3c7">
+              <div class="sn">Storage</div><div class="sv">58</div><div class="sm">+2.1% 1M</div>
+            </div>
+            <div class="sector-cell" style="background:#bbf7d0">
+              <div class="sn">Agentic AI</div><div class="sv">76</div><div class="sm">+15.2% 1M</div>
+            </div>
+            <div class="sector-cell" style="background:#fef3c7">
+              <div class="sn">Satellite</div><div class="sv">61</div><div class="sm">+3.7% 1M</div>
+            </div>
+            <div class="sector-cell" style="background:#fed7aa">
+              <div class="sn">EdTech</div><div class="sv">48</div><div class="sm">−2.4% 1M</div>
+            </div>
+            <div class="sector-cell" style="background:#bbf7d0">
+              <div class="sn">Fiber Infra</div><div class="sv">69</div><div class="sm">+6.8% 1M</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-head">
+            <div>
+              <div class="card-title">Recent Earnings</div>
+              <div class="card-sub">Last 5 reports across the universe</div>
+            </div>
+          </div>
+          <div>
+            <div class="tl-item">
+              <div class="tl-date"><strong>14</strong>May</div>
+              <div class="tl-body">
+                <div class="tl-row1"><span class="tl-tic">NVDA</span><span class="tl-name">Nvidia Corp</span><span class="tl-tag beat">BEAT</span></div>
+                <div class="tl-row2">EPS $5.16 vs $4.62 est · <span class="surp pos">+11.7%</span></div>
+              </div>
+            </div>
+            <div class="tl-item">
+              <div class="tl-date"><strong>09</strong>May</div>
+              <div class="tl-body">
+                <div class="tl-row1"><span class="tl-tic">LITE</span><span class="tl-name">Lumentum Holdings</span><span class="tl-tag beat">BEAT</span></div>
+                <div class="tl-row2">EPS $0.88 vs $0.76 est · <span class="surp pos">+15.8%</span></div>
+              </div>
+            </div>
+            <div class="tl-item">
+              <div class="tl-date"><strong>07</strong>May</div>
+              <div class="tl-body">
+                <div class="tl-row1"><span class="tl-tic">APLD</span><span class="tl-name">AppLovin</span><span class="tl-tag beat">BEAT</span></div>
+                <div class="tl-row2">EPS $1.42 vs $1.18 est · <span class="surp pos">+20.3%</span></div>
+              </div>
+            </div>
+            <div class="tl-item">
+              <div class="tl-date"><strong>02</strong>May</div>
+              <div class="tl-body">
+                <div class="tl-row1"><span class="tl-tic">SMCI</span><span class="tl-name">Super Micro Computer</span><span class="tl-tag miss">MISS</span></div>
+                <div class="tl-row2">EPS $0.61 vs $0.74 est · <span class="surp neg">−17.6%</span></div>
+              </div>
+            </div>
+            <div class="tl-item">
+              <div class="tl-date"><strong>28</strong>Apr</div>
+              <div class="tl-body">
+                <div class="tl-row1"><span class="tl-tic">MU</span><span class="tl-name">Micron Technology</span><span class="tl-tag beat">BEAT</span></div>
+                <div class="tl-row2">EPS $1.78 vs $1.62 est · <span class="surp pos">+9.9%</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Trending strip -->
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <div class="card-title">📈 Trending — Biggest score jumps this week</div>
+            <div class="card-sub">Stocks where Alpha Score moved up the most</div>
+          </div>
+        </div>
+        <div class="trend-wrap" id="trend-wrap"></div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ── Dummy data ───────────────────────────────────────────────── */
+const PERF_DATA = (() => {
+  // Hot list (green) vs S&P (gray) — 90 days, hot list outperforms
+  const days = 90, hot = [], spy = [];
+  let h = 100, s = 100;
+  for (let i = 0; i < days; i++) {
+    h *= 1 + (Math.random() - 0.42) * 0.022;
+    s *= 1 + (Math.random() - 0.48) * 0.012;
+    hot.push(h.toFixed(2));
+    spy.push(s.toFixed(2));
+  }
+  return { hot, spy, days };
+})();
+
+const TREND = [
+  { t:'NVDA', n:'Nvidia Corp',          p:'$1,247.30', c:'+3.4%',  cls:'up', vel:'+12 pts', spark:[8,9,10,12,11,14,15,18,17,20,22,24,26,28,32] },
+  { t:'AAOI', n:'Applied Optoelec.',    p:'$163.18',   c:'+18.4%', cls:'up', vel:'+9 pts',  spark:[10,11,9,12,14,13,15,18,17,20,23,25,24,27,30] },
+  { t:'APLD', n:'AppLovin Corp',        p:'$312.50',   c:'+8.9%',  cls:'up', vel:'+8 pts',  spark:[14,15,12,13,16,18,17,21,22,24,26,25,28,30,33] },
+  { t:'VRT',  n:'Vertiv Holdings',      p:'$317.87',   c:'+4.2%',  cls:'up', vel:'+7 pts',  spark:[12,13,14,12,15,17,16,19,21,20,23,25,24,27,28] },
+  { t:'MU',   n:'Micron Technology',    p:'$189.41',   c:'+5.1%',  cls:'up', vel:'+6 pts',  spark:[15,14,16,15,18,17,20,22,21,24,26,25,28,30,31] },
+  { t:'CRDO', n:'Credo Technology',     p:'$87.40',    c:'+2.8%',  cls:'up', vel:'+5 pts',  spark:[10,12,11,14,13,16,18,17,19,21,23,22,25,27,28] },
+  { t:'CIEN', n:'Ciena Corp',           p:'$92.50',    c:'-1.4%',  cls:'dn', vel:'+5 pts',  spark:[12,14,13,15,17,16,19,21,20,22,24,23,26,25,27] },
+  { t:'COHR', n:'Coherent Corp',        p:'$108.10',   c:'+1.7%',  cls:'up', vel:'+4 pts',  spark:[14,13,15,17,16,18,17,20,22,21,24,23,26,28,29] },
+];
+
+/* ── Chart ────────────────────────────────────────────────────── */
+function getCss(name){return getComputedStyle(document.documentElement).getPropertyValue(name).trim()}
+let perfChart;
+function renderChart(){
+  const ctx = document.getElementById('chart-perf');
+  if (perfChart) perfChart.destroy();
+  const labels = PERF_DATA.hot.map((_,i) => {
+    const d = new Date(); d.setDate(d.getDate() - (PERF_DATA.days - i));
+    return d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+  });
+  const dark = document.documentElement.classList.contains('dark');
+  const grid = dark ? 'rgba(255,255,255,.06)' : 'rgba(15,23,42,.06)';
+  const tick = dark ? '#94a3b8' : '#64748b';
+  const grad = ctx.getContext('2d').createLinearGradient(0,0,0,280);
+  grad.addColorStop(0,'rgba(132,204,22,.30)');
+  grad.addColorStop(1,'rgba(132,204,22,0)');
+  perfChart = new Chart(ctx, {
+    type:'line',
+    data:{
+      labels,
+      datasets:[
+        { label:'Hot List', data:PERF_DATA.hot, borderColor:'#15803d', backgroundColor:grad, fill:true, tension:.3, pointRadius:0, borderWidth:2.5 },
+        { label:'S&P 500',  data:PERF_DATA.spy, borderColor:'#94a3b8', borderDash:[5,5], fill:false, tension:.3, pointRadius:0, borderWidth:1.8 },
+      ],
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ position:'bottom', labels:{ font:{size:11,weight:'700'}, color:tick, boxWidth:12 } } },
+      scales:{
+        x:{ ticks:{ color:tick, font:{size:10}, maxTicksLimit:6 }, grid:{ display:false } },
+        y:{ ticks:{ color:tick, font:{size:10}, callback:v=>v.toFixed(0) }, grid:{ color:grid } },
+      },
+      interaction:{ mode:'index', intersect:false },
+    },
+  });
+}
+
+/* ── Trending sparklines (inline SVG) ─────────────────────────── */
+function renderTrend(){
+  const wrap = document.getElementById('trend-wrap');
+  wrap.innerHTML = TREND.map(t => {
+    const max = Math.max(...t.spark), min = Math.min(...t.spark), range = max - min || 1;
+    const pts = t.spark.map((v,i) => {
+      const x = (i / (t.spark.length - 1)) * 100;
+      const y = 100 - ((v - min) / range) * 100;
+      return `${x},${y}`;
+    }).join(' ');
+    const stroke = t.cls === 'up' ? '#15803d' : '#dc2626';
+    return `
+      <div class="trend-card" onclick="showToast('Would open ${t.t} stock modal')">
+        <div class="trend-head">
+          <div class="trend-tic">${t.t}</div>
+          <div class="trend-vel">${t.vel}</div>
+        </div>
+        <div class="trend-name">${t.n}</div>
+        <svg class="trend-spark" viewBox="0 0 100 100" preserveAspectRatio="none">
+          <polyline points="${pts}" fill="none" stroke="${stroke}" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>
+        </svg>
+        <div class="trend-foot"><span class="p">${t.p}</span><span class="c ${t.cls}">${t.c}</span></div>
+      </div>`;
+  }).join('');
+}
+
+/* ── Theme toggle ─────────────────────────────────────────────── */
+const SUN  = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>';
+const MOON = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+function applyTheme(t){
+  document.documentElement.classList.toggle('dark', t === 'dark');
+  document.getElementById('theme-icon').outerHTML = (t === 'dark' ? SUN : MOON).replace('<svg','<svg id="theme-icon"');
+  try { localStorage.setItem('ahv2-theme', t); } catch(e){}
+  if (perfChart) renderChart();
+}
+function toggleTheme(){
+  const next = document.documentElement.classList.contains('dark') ? 'light' : 'dark';
+  applyTheme(next);
+}
+
+/* ── Sidebar nav (visual only — switches active state + shows toast) ─ */
+document.querySelectorAll('.sb-item').forEach(it => {
+  it.addEventListener('click', () => {
+    document.querySelectorAll('.sb-item').forEach(x => x.classList.remove('active'));
+    it.classList.add('active');
+    const v = it.dataset.view;
+    const labels = {
+      hot:'🔥 Hot List', top:'🎯 Top Hunts', sectors:'🗺 Sector Map', universe:'📊 Universe',
+      watch:'⭐ Watchlist', past:'📕 Past Trades',
+      tearsheets:'📈 Tear Sheets', reports:'📰 Reports', alerts:'🏷 Alerts',
+      profile:'👤 Profile', settings:'⚙ Settings', signout:'↪ Sign out',
+    };
+    showToast(`Switched to "${labels[v] || v}" — this view isn't built in the mock`);
+    closeDrawer();
+  });
+});
+
+/* ── Mobile drawer ────────────────────────────────────────────── */
+function openDrawer(){ document.body.classList.add('drawer-open') }
+function closeDrawer(){ document.body.classList.remove('drawer-open') }
+
+/* ── Toast ────────────────────────────────────────────────────── */
+let _toastTimer;
+function showToast(msg){
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('on');
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => el.classList.remove('on'), 2200);
+}
+
+/* ── Init ─────────────────────────────────────────────────────── */
+(function init(){
+  let saved = 'light';
+  try { saved = localStorage.getItem('ahv2-theme') || 'light'; } catch(e){}
+  applyTheme(saved);
+  renderChart();
+  renderTrend();
+})();
+</script>
+
+</body>
+</html>
