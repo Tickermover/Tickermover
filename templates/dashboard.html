@@ -2434,15 +2434,49 @@ function v2ToggleTheme(){
 })();
 
 /* ── Hook into the existing renderHotList() so the overview rerenders
-   every time the universe refreshes (server pushes new data every 30s). */
-(function(){
-  if (typeof renderHotList !== 'function') return;
-  const _origRenderHotList = renderHotList;
+   every time the universe refreshes (server pushes new data every 30s).
+
+   IMPORTANT: this script block runs BEFORE the main dashboard JS that
+   actually defines renderHotList(). So we have to wait for DOMContentLoaded
+   (by which time all <script> blocks have run) before wrapping it. And
+   if renderHotList has already fired once with data, we replay the
+   current universe so the skeleton gets replaced immediately. */
+function v2InstallHook(){
+  if (typeof renderHotList !== 'function'){
+    console.warn('[v2] renderHotList not defined yet, retrying…');
+    return false;
+  }
+  if (window._v2HookInstalled) return true;
+  window._v2HookInstalled = true;
+  const _orig = renderHotList;
   window.renderHotList = function(data){
-    try { renderV2Overview((data && data.tickers) || []); } catch(e){ console.error('v2 overview render failed', e); }
-    return _origRenderHotList.apply(this, arguments);
+    try { renderV2Overview((data && data.tickers) || []); }
+    catch(e){ console.error('[v2] overview render failed', e); }
+    return _orig.apply(this, arguments);
   };
-})();
+  // Replay against currently-loaded data so the skeleton goes away
+  // even if renderHotList has already run once before our hook installed
+  try {
+    if (window._allTickerData && Object.keys(window._allTickerData).length){
+      renderV2Overview(Object.values(window._allTickerData));
+    } else if (window.__AH_DATA__ && Array.isArray(window.__AH_DATA__.tickers)){
+      renderV2Overview(window.__AH_DATA__.tickers);
+    }
+  } catch(e){ console.error('[v2] initial overview render failed', e); }
+  return true;
+}
+// Try immediately, on DOMContentLoaded, and on a short retry loop in case
+// the main JS block is slow to execute on a cold cache.
+if (!v2InstallHook()){
+  document.addEventListener('DOMContentLoaded', () => {
+    if (!v2InstallHook()){
+      let tries = 0;
+      const iv = setInterval(() => {
+        if (v2InstallHook() || ++tries > 40) clearInterval(iv);
+      }, 100);
+    }
+  });
+}
 
 /* Switch panels — delegates to the existing showTab() so all the original
    panel logic continues to work. Sets active state on whichever sidebar
