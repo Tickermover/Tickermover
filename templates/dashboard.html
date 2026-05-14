@@ -9,17 +9,14 @@
 <meta name="robots" content="noindex,follow">
 <title>AlphaHunt — Stock Intelligence Dashboard</title>
 <meta name="description" content="AlphaHunt — hunt for alpha with Alpha Score, IBD-style RS Rating, Blue Dot signals, Hot List picks and position sizing">
-<!-- ── PWA / iOS Add to Home Screen ────────────────────────────── -->
+<!-- ── Browser chrome (favicons + status bar tint, no PWA install) ──
+     PWA was removed at user's request — they didn't want "Install app"
+     appearing in the browser menu, and didn't want forgot-password
+     emails opening inside the installed PWA shell instead of a real
+     browser tab. No manifest, no service worker, no Add-to-Home-Screen. -->
 <meta name="theme-color" content="#15803d">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="AlphaHunt">
-<meta name="application-name" content="AlphaHunt">
-<meta name="mobile-web-app-capable" content="yes">
 <meta name="msapplication-TileColor" content="#15803d">
-<meta name="msapplication-TileImage" content="/static/icons/icon-192.png">
 <meta name="format-detection" content="telephone=no">
-<link rel="manifest" href="/static/manifest.json">
 <link rel="icon" type="image/png" sizes="32x32" href="/static/icons/favicon-32.png">
 <link rel="icon" type="image/png" sizes="192x192" href="/static/icons/icon-192.png">
 <link rel="icon" type="image/png" sizes="512x512" href="/static/icons/icon-512.png">
@@ -49,12 +46,15 @@
   html.auth-gating{background:#fafbfc}
 </style>
 
-<!-- PWA install prompt -->
+<!-- PWA removed: unregister any service worker that older versions of the
+     page might have installed on this device. Without this, users who
+     previously installed the PWA would keep getting served the cached
+     shell and would still see "AlphaHunt" as an installed app. -->
 <script>
   if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/static/sw.js').catch(() => {});
-    });
+    navigator.serviceWorker.getRegistrations().then(regs => {
+      regs.forEach(r => r.unregister().catch(() => {}));
+    }).catch(() => {});
   }
 </script>
 <style>
@@ -6035,7 +6035,8 @@ async function fpSubmit() {
     msg.style.color = '#dc2626';
     return;
   }
-  btn.disabled = true; btn.textContent = 'Sending reset link…';
+  btn.disabled = true; btn.classList.add('loading'); btn.textContent = 'Sending reset link…';
+  const _resetFp = () => { btn.disabled = false; btn.classList.remove('loading'); btn.textContent = 'Send reset link'; };
   try {
     const r = await fetch('/api/auth/forgot-password', {
       method: 'POST',
@@ -6051,12 +6052,12 @@ async function fpSubmit() {
     } else {
       msg.textContent = 'Could not send reset email. Check the address and try again.';
       msg.style.color = '#dc2626';
-      btn.disabled = false; btn.textContent = 'Send reset link';
+      _resetFp();
     }
   } catch {
     msg.textContent = 'Network error. Try again.';
     msg.style.color = '#dc2626';
-    btn.disabled = false; btn.textContent = 'Send reset link';
+    _resetFp();
   }
 }
 
@@ -6072,6 +6073,19 @@ async function authSubmit() {
   const errEl = document.getElementById('auth-error');
   const btn   = document.getElementById('auth-submit');
   if (!email || !pass) { errEl.textContent = 'Email and password required'; return; }
+  // Consistent password rule with the reset-password flow: at least 8 chars.
+  // Without this the silent auto-signup path would create accounts with
+  // 1-char passwords, while the reset flow enforces 8 — a confusing mismatch.
+  if (pass.length < 8) {
+    errEl.textContent = 'Password must be at least 8 characters';
+    document.getElementById('auth-password').focus();
+    return;
+  }
+  if (!/\S+@\S+\.\S+/.test(email)) {
+    errEl.textContent = 'Enter a valid email address';
+    document.getElementById('auth-email').focus();
+    return;
+  }
   // ToS checkbox is mandatory ONLY for first-time users on this device.
   // Once consent is recorded in localStorage, returning users skip this check.
   let _tosAlreadyAgreed = false;
@@ -6083,7 +6097,16 @@ async function authSubmit() {
     return;
   }
   btn.disabled = true;
-  btn.textContent = '…';
+  btn.classList.add('loading');
+  const _origLabel = btn.textContent;
+  btn.textContent = 'Signing in…';
+
+  // Always restore the button state before any early return / catch path
+  const _resetBtn = () => {
+    btn.disabled = false;
+    btn.classList.remove('loading');
+    btn.textContent = _origLabel || 'Sign in →';
+  };
 
   async function _hit(url) {
     const r = await fetch(url, {
@@ -6131,8 +6154,7 @@ async function authSubmit() {
   } catch (e) {
     errEl.textContent = 'Network error — try again';
   } finally {
-    btn.disabled = false;
-    btn.textContent = 'Sign in';
+    _resetBtn();
   }
 }
 
@@ -6495,28 +6517,49 @@ function showUpgradeSuccess() {
 .ah-field label{display:block;font-size:12px;font-weight:700;color:#374151;margin-bottom:6px}
 .ah-field input{
   width:100%;box-sizing:border-box;
-  padding:13px 16px;
-  background:#f8fafc;border:2px solid #e2e8f0;border-radius:12px;
-  font-size:14px;color:#0a0a0a;outline:none;
-  transition:border .15s,box-shadow .15s;font-family:inherit;
+  padding:14px 16px;
+  background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:12px;
+  font-size:15px;color:#0a0a0a;outline:none;
+  transition:border .15s,box-shadow .15s,background .15s;font-family:inherit;
+  font-weight:500;
 }
-.ah-field input:focus{border-color:#84cc16;background:#fff;box-shadow:0 0 0 4px rgba(132,204,22,.12)}
-.ah-field input::placeholder{color:#94a3b8}
+.ah-field input:hover{border-color:#cbd5e1;background:#fff}
+.ah-field input:focus{border-color:#15803d;background:#fff;box-shadow:0 0 0 4px rgba(21,128,61,.12)}
+.ah-field input::placeholder{color:#94a3b8;font-weight:400}
 .ah-pwd-wrap{position:relative}
 .ah-pwd-wrap input{padding-right:44px}
 .ah-pwd-eye{position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;color:#94a3b8;padding:0;line-height:1}
 
 .ah-submit{
-  width:100%;padding:14px;
+  width:100%;padding:15px;
   background:linear-gradient(135deg,#15803d 0%,#84cc16 100%);
   color:#fff;border:none;border-radius:12px;
   font-size:15px;font-weight:800;cursor:pointer;
   box-shadow:0 6px 20px rgba(132,204,22,.35);
-  transition:all .2s;letter-spacing:.02em;font-family:inherit;
+  transition:transform .15s,box-shadow .2s,opacity .2s;
+  letter-spacing:.02em;font-family:inherit;
   margin-bottom:20px;
+  position:relative;
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
 }
-.ah-submit:hover{transform:translateY(-1px);box-shadow:0 8px 28px rgba(132,204,22,.45)}
-.ah-submit:disabled{opacity:.65;cursor:not-allowed;transform:none}
+.ah-submit:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 10px 28px rgba(132,204,22,.45)}
+.ah-submit:active:not(:disabled){transform:translateY(0);box-shadow:0 4px 12px rgba(132,204,22,.35)}
+.ah-submit:disabled{opacity:.7;cursor:wait;transform:none}
+.ah-submit.loading{color:transparent}
+.ah-submit.loading::after{
+  content:'';position:absolute;
+  width:18px;height:18px;border-radius:50%;
+  border:2.5px solid rgba(255,255,255,.35);border-top-color:#fff;
+  animation:ah-spin .7s linear infinite;
+}
+@keyframes ah-spin{to{transform:rotate(360deg)}}
+
+/* Subtle entrance on the form view itself */
+.ah-view.on{animation:ah-view-in .35s cubic-bezier(.22,.61,.36,1)}
+@keyframes ah-view-in{
+  from{opacity:0;transform:translateY(6px)}
+  to{opacity:1;transform:translateY(0)}
+}
 
 .ah-err{color:#dc2626;font-size:12px;font-weight:600;min-height:18px;margin:-8px 0 10px}
 .ah-ok{color:#15803d;font-size:12px;font-weight:600;min-height:18px;margin:-8px 0 10px}
@@ -6721,7 +6764,7 @@ function showUpgradeSuccess() {
           <button class="ah-forgot" onclick="authForgotPassword()">Forgot password?</button>
         </div>
         <div class="ah-pwd-wrap">
-          <input id="auth-password" type="password" autocomplete="current-password" placeholder="Enter your password" onkeydown="if(event.key==='Enter')authSubmit()">
+          <input id="auth-password" type="password" autocomplete="current-password" minlength="8" placeholder="At least 8 characters" onkeydown="if(event.key==='Enter')authSubmit()">
           <button class="ah-pwd-eye" onclick="togglePwd('auth-password',this)">👁</button>
         </div>
       </div>
