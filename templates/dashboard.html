@@ -1150,6 +1150,208 @@ tr:hover td{background:rgba(132,204,22,.06)}
   color:var(--muted);padding:6px 14px;border-radius:8px;font-size:12px;cursor:pointer;font-weight:700;
   transition:all .15s}
 .modal-close-btn button:hover{background:var(--surf3);color:var(--txt)}
+
+/* ════════════════════════════════════════════════════════════════
+   v2 SHELL — gradient frame + dark sidebar + topbar
+   Wraps existing panels; original tabs/header are hidden via .v2-* rules
+   below. All existing IDs are preserved inside the new shell.
+   ════════════════════════════════════════════════════════════════ */
+
+/* Hide the old top header + tab bar (we still keep the elements in the
+   DOM so existing JS that targets their IDs continues to work) */
+body.v2 .hdr,
+body.v2 .tabs{display:none!important}
+
+/* Branded gradient frame around the whole app */
+body.v2{
+  background:
+    radial-gradient(ellipse 60% 80% at 0% 0%,    rgba(56,189,248,.95) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 80% at 100% 0%,  rgba(236,72,153,.95) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 80% at 100% 100%,rgba(251,113,133,.95) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 80% at 0% 100%,  rgba(139,92,246,.95) 0%, transparent 60%),
+    linear-gradient(135deg,#6366f1,#d946ef);
+  background-attachment:fixed;
+  padding:16px;
+  min-height:100vh;
+}
+
+/* Move ticker tape inside the inset card too so it doesn't sit on the
+   gradient awkwardly */
+body.v2 #ticker-tape{
+  position:relative;
+  border-radius:20px 20px 0 0;
+  overflow:hidden;
+}
+
+.v2-app{
+  display:grid;
+  grid-template-columns:240px 1fr;
+  background:#f7fafc;
+  border-radius:20px;
+  overflow:hidden;
+  min-height:calc(100vh - 32px);
+  box-shadow:0 24px 60px rgba(15,23,42,.25),0 8px 20px rgba(15,23,42,.15);
+}
+
+/* ── Sidebar (always dark) ──────────────────────────────────────── */
+.v2-sidebar{
+  background:#0a0e15;
+  border-right:1px solid #1f2937;
+  padding:18px 14px;
+  display:flex;flex-direction:column;
+  height:calc(100vh - 32px);
+  overflow-y:auto;
+  position:relative;
+  color:#e2e8f0;
+}
+.v2-sidebar::before{
+  content:'';position:absolute;left:0;right:0;top:0;height:200px;
+  background:radial-gradient(ellipse 70% 100% at 0% 0%,rgba(99,102,241,.16) 0%,transparent 60%);
+  pointer-events:none;
+}
+.v2-sb-logo{
+  display:flex;align-items:center;gap:10px;
+  padding:0 6px 22px;
+  font-size:18px;font-weight:900;letter-spacing:-.4px;
+  color:#fff;position:relative;
+}
+.v2-sb-logo img{
+  width:32px;height:32px;border-radius:8px;
+  background:#fff;padding:3px;
+  display:block;object-fit:contain;
+  box-shadow:0 2px 12px rgba(0,0,0,.35);
+}
+.v2-sb-logo .name span{color:#a5b4fc}
+.v2-sb-section{
+  font-size:10.5px;font-weight:800;color:#64748b;
+  text-transform:uppercase;letter-spacing:.10em;
+  padding:14px 8px 8px;position:relative;
+}
+.v2-nav-item{
+  display:flex;align-items:center;gap:10px;
+  padding:9px 10px;border-radius:10px;
+  font-size:13.5px;font-weight:600;color:#94a3b8;
+  cursor:pointer;user-select:none;position:relative;
+  transition:background .15s,color .15s;margin-bottom:2px;
+  text-decoration:none;
+}
+.v2-nav-item:hover{background:rgba(255,255,255,.04);color:#e2e8f0}
+.v2-nav-item.active{background:rgba(99,102,241,.16);color:#a5b4fc;font-weight:700}
+.v2-nav-item.active::before{
+  content:'';position:absolute;left:-14px;top:6px;bottom:6px;
+  width:3px;border-radius:0 3px 3px 0;
+  background:linear-gradient(180deg,#4338ca,#6366f1);
+  box-shadow:0 0 8px rgba(99,102,241,.55);
+}
+.v2-nav-item .ico{font-size:15px;width:18px;text-align:center;flex-shrink:0}
+.v2-tag{
+  margin-left:auto;
+  background:linear-gradient(135deg,#4338ca,#6366f1);
+  color:#fff;font-size:9px;font-weight:800;
+  padding:2px 7px;border-radius:5px;letter-spacing:.05em;
+  box-shadow:0 1px 3px rgba(99,102,241,.4);
+}
+
+/* Collapsible parent + children */
+.v2-collapse{margin-bottom:2px}
+.v2-parent .chev{margin-left:auto;font-size:14px;color:#64748b;transition:transform .2s;line-height:1}
+.v2-collapse[data-open="true"] .v2-parent .chev{transform:rotate(180deg)}
+.v2-children{display:none;padding:4px 0 6px 26px;position:relative}
+.v2-children::before{content:'';position:absolute;left:18px;top:6px;bottom:6px;width:1px;background:rgba(255,255,255,.06)}
+.v2-collapse[data-open="true"] .v2-children{display:block}
+.v2-sub{
+  display:flex;align-items:center;gap:8px;
+  padding:6px 10px;border-radius:7px;
+  font-size:12.5px;font-weight:500;color:#94a3b8;
+  cursor:pointer;margin-bottom:1px;
+  transition:background .15s,color .15s;
+}
+.v2-sub:hover{background:rgba(255,255,255,.04);color:#e2e8f0}
+.v2-sub.active{color:#a5b4fc;font-weight:700}
+
+/* Bottom-pinned auth pill — wraps the existing #auth-btn-wrap */
+.v2-sb-bottom{margin-top:auto;padding-top:14px;border-top:1px solid #1f2937}
+.v2-sb-bottom #auth-btn{width:100%;display:block;text-align:center;
+  padding:11px 14px;border-radius:10px;
+  background:linear-gradient(135deg,#4338ca,#6366f1)!important;
+  font-size:13px;font-weight:800;box-shadow:0 4px 14px rgba(99,102,241,.4)!important;
+  letter-spacing:.02em;
+}
+.v2-sb-bottom #user-menu{display:flex;width:100%}
+.v2-sb-bottom #user-menu > div:first-child{
+  flex:1;background:transparent!important;border:none!important;
+  padding:8px!important;border-radius:10px;color:#e2e8f0;
+}
+.v2-sb-bottom #user-menu > div:first-child:hover{background:rgba(255,255,255,.04)}
+.v2-sb-bottom #user-email{color:#e2e8f0!important}
+.v2-sb-bottom #user-menu > div:first-child > div > div:last-child{color:#64748b!important}
+.v2-sb-bottom #user-menu button{
+  background:transparent!important;border:none!important;
+  color:#64748b!important;padding:8px!important;font-size:14px!important;
+}
+.v2-sb-bottom #user-menu button:hover{color:#fca5a5!important;background:rgba(220,38,38,.12)!important}
+
+/* ── Content area ───────────────────────────────────────────────── */
+.v2-content{display:flex;flex-direction:column;min-width:0;background:#f7fafc}
+
+/* ── Top bar ────────────────────────────────────────────────────── */
+.v2-topbar{
+  height:60px;background:#fff;border-bottom:1px solid #e5e7eb;
+  display:flex;align-items:center;padding:0 24px;gap:16px;
+  position:sticky;top:0;z-index:30;
+}
+.v2-burger{display:none;background:none;border:none;cursor:pointer;
+  width:36px;height:36px;border-radius:8px;align-items:center;justify-content:center;color:#0f172a}
+.v2-burger:hover{background:#f1f5f9}
+.v2-search{flex:1;max-width:480px;position:relative}
+.v2-search input{
+  width:100%;background:#f1f5f9;border:1px solid transparent;border-radius:10px;
+  padding:9px 14px 9px 38px;font-size:13.5px;color:#0f172a;
+  font-family:inherit;outline:none;transition:border .15s,background .15s;
+}
+.v2-search input::placeholder{color:#94a3b8}
+.v2-search input:focus{border-color:#4338ca;background:#fff}
+.v2-search .ico{position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:14px;color:#64748b}
+.v2-search .kbd{position:absolute;right:10px;top:50%;transform:translateY(-50%);
+  background:#fff;border:1px solid #e5e7eb;border-radius:5px;padding:2px 6px;
+  font-size:11px;font-weight:600;color:#64748b;font-family:'JetBrains Mono',monospace}
+.v2-tb-actions{margin-left:auto;display:flex;align-items:center;gap:8px}
+
+/* Repurpose the existing #regime-pill INSIDE the new top bar */
+.v2-tb-actions #regime-pill{margin:0!important}
+
+/* Compact stats inside top bar */
+.v2-tb-stats{display:flex;gap:14px;padding-right:8px;border-right:1px solid #e5e7eb;margin-right:4px}
+.v2-tb-stat{text-align:center;line-height:1.1}
+.v2-tb-stat .n{font-size:14px;font-weight:800;color:#0f172a;font-variant-numeric:tabular-nums}
+.v2-tb-stat .l{font-size:9.5px;color:#64748b;font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin-top:1px}
+
+/* ── Main content wrapper — lets .main fill the right column ───── */
+.v2-scroll{flex:1;min-height:0}
+body.v2 .main{padding:24px 28px 60px;max-width:none!important}
+
+/* ── Mobile drawer ─────────────────────────────────────────────── */
+.v2-drawer-backdrop{display:none;position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:40}
+body.v2-drawer-open .v2-drawer-backdrop{display:block}
+
+@media (max-width: 1100px){
+  body.v2{padding:12px}
+}
+@media (max-width: 768px){
+  body.v2{padding:8px}
+  .v2-app{grid-template-columns:1fr;border-radius:14px;min-height:calc(100vh - 16px)}
+  .v2-sidebar{
+    position:fixed;left:-260px;top:0;width:240px;height:100vh;
+    border-radius:0;transition:left .25s cubic-bezier(.22,.61,.36,1);z-index:50;
+  }
+  body.v2-drawer-open .v2-sidebar{left:0;box-shadow:0 16px 40px rgba(0,0,0,.4)}
+  .v2-burger{display:flex}
+  .v2-topbar{padding:0 12px;gap:8px;height:54px}
+  .v2-search{max-width:none}
+  .v2-search .kbd{display:none}
+  .v2-tb-stats{display:none}             /* stats hide on phone, they're inside panels anyway */
+  body.v2 .main{padding:16px 12px 60px}
+}
 </style>
 </head>
 <body>
@@ -1207,56 +1409,105 @@ tr:hover td{background:rgba(132,204,22,.06)}
   </div>
 </div>
 
-<!-- HEADER -->
-<div class="hdr">
-  <div>
-    <div>
-      <div class="logo"><img src="/static/icons/alpha-logo-64.png" alt="" width="32" height="32" style="display:inline-block;vertical-align:middle;margin-right:8px;margin-bottom:2px">Alpha<span>Hunt</span>
+<!-- ═══════ v2 SHELL ═══════════════════════════════════════════
+     Activated by body.v2 (set inline below). Sidebar wraps the existing
+     panels; old hdr + tabs are hidden via CSS, the elements with IDs the
+     JS targets (#stat-*, #regime-pill, #auth-btn-wrap, #user-menu) are
+     moved into the new shell below. ─────────────────────────────────── -->
+<script>document.body.classList.add('v2')</script>
+
+<div class="v2-drawer-backdrop" onclick="document.body.classList.remove('v2-drawer-open')"></div>
+
+<div class="v2-app">
+
+  <!-- ── SIDEBAR ── -->
+  <aside class="v2-sidebar" id="v2-sidebar">
+    <div class="v2-sb-logo">
+      <img src="/static/icons/alpha-logo-bare-64.png" alt="AlphaHunt" width="32" height="32">
+      <div class="name">Alpha<span>Hunt</span></div>
+    </div>
+
+    <div class="v2-sb-section">MENU</div>
+
+    <!-- Collapsible: Discover -->
+    <div class="v2-collapse" data-open="true">
+      <div class="v2-nav-item v2-parent">
+        <span class="ico">📊</span><span>Discover</span><span class="chev">⌃</span>
       </div>
-      <div class="hdr-tagline" style="font-size:10.5px;color:#374151;letter-spacing:.6px;margin-top:2px;padding-left:2px">Hunt Alpha · Trade Smart · AI-Powered</div>
+      <div class="v2-children">
+        <div class="v2-sub active" onclick="v2Show('hot',this)">🔥 Hot List</div>
+        <div class="v2-sub"        onclick="v2Show('model',this)">🎯 Top Hunts</div>
+        <div class="v2-sub"        onclick="v2Show('sectors',this)">🗺 Sector Map</div>
+        <div class="v2-sub"        onclick="v2Show('fund',this)">🌐 Universe</div>
+      </div>
     </div>
-  </div>
-  <div class="hdr-stats">
-    <div class="stat"><div class="stat-n" id="stat-universe">—</div><div class="stat-l">Universe</div></div>
-    <div class="stat"><div class="stat-n" id="stat-hot">—</div><div class="stat-l">Hot Picks</div></div>
-    <div class="stat"><div class="stat-n" id="stat-flagged">—</div><div class="stat-l">Top Tier</div></div>
-    <!-- Market chip — Bullish / Mixed / Bearish based on SPY/QQQ/VIX/^TNX -->
-    <div id="regime-pill"
-         title="Overall market mood based on SPY, QQQ, VIX and the 10-year yield. Already factored into every Alpha Score."
-         style="display:inline-flex;align-items:center;gap:6px;
-                padding:6px 12px;border-radius:999px;font-weight:700;cursor:default;
-                background:#e0f2fe;border:1.5px solid rgba(59,130,246,.35);color:#1e40af;
-                font-size:12px;letter-spacing:.02em">
-      <span style="font-size:14px">●</span>
-      <span id="regime-label">Market: Loading…</span>
+
+    <div class="v2-nav-item" onclick="v2Show('watch',this)">
+      <span class="ico">⭐</span><span>Watchlist</span>
     </div>
-  </div>
-  <!-- Auth button / user pill -->
-  <div id="auth-btn-wrap" style="margin-left:12px">
-    <button id="auth-btn" onclick="openAuthModal()" style="background:linear-gradient(135deg,#15803d,#84cc16);color:#fff;border:none;padding:8px 20px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;letter-spacing:.03em;box-shadow:0 4px 14px rgba(132,204,22,.35);transition:all .2s">Sign In</button>
-    <!-- Logged-in user pill -->
-    <div id="user-menu" style="display:none;align-items:center;gap:10px">
-      <div style="display:flex;align-items:center;gap:8px;background:#f0fdf4;border:1.5px solid rgba(132,204,22,.3);border-radius:10px;padding:6px 12px">
-        <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#15803d,#84cc16);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;flex-shrink:0" id="user-avatar">U</div>
-        <div style="line-height:1.2">
-          <div id="user-email" style="font-size:12px;font-weight:700;color:#15803d;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></div>
-          <div style="font-size:10px;color:#64748b;font-weight:500">AlphaHunt Member</div>
+    <div class="v2-nav-item" onclick="v2Show('blog',this)">
+      <span class="ico">📰</span><span>Reports</span>
+    </div>
+
+    <div class="v2-sb-section">SUPPORT</div>
+    <a class="v2-nav-item" href="/learn" target="_blank" rel="noopener">
+      <span class="ico">❓</span><span>Help &amp; FAQ</span>
+    </a>
+    <a class="v2-nav-item" href="/sectors" target="_blank" rel="noopener">
+      <span class="ico">📖</span><span>Docs</span>
+    </a>
+
+    <!-- Bottom-pinned auth — hosts the existing #auth-btn-wrap so all
+         existing JS that updates the sign-in/user state keeps working. -->
+    <div class="v2-sb-bottom">
+      <div id="auth-btn-wrap">
+        <button id="auth-btn" onclick="openAuthModal()">Sign In</button>
+        <div id="user-menu" style="display:none">
+          <div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#4338ca,#6366f1);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;flex-shrink:0" id="user-avatar">U</div>
+              <div style="line-height:1.2;min-width:0;flex:1">
+                <div id="user-email" style="font-size:12.5px;font-weight:700;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></div>
+                <div style="font-size:10px;font-weight:500">AlphaHunt Member</div>
+              </div>
+            </div>
+          </div>
+          <button onclick="authSignOut()" title="Sign out">↪</button>
         </div>
       </div>
-      <button onclick="authSignOut()" style="background:#fff;color:#64748b;border:1px solid #e2e8f0;padding:7px 14px;border-radius:8px;font-size:12px;cursor:pointer;font-weight:600;transition:all .2s" onmouseover="this.style.borderColor='#dc2626';this.style.color='#dc2626'" onmouseout="this.style.borderColor='#e2e8f0';this.style.color='#64748b'">Sign Out</button>
     </div>
-  </div>
-</div>
+  </aside>
 
-<!-- TABS -->
-<div class="tabs">
-  <button class="tab active" onclick="showTab('hot',this)">🔥 Hot List</button>
-  <button class="tab" onclick="showTab('model',this)" id="tab-model">🎯 Top Hunts</button>
-  <button class="tab" onclick="showTab('watch',this)" id="tab-watch">⭐ Watchlist</button>
-  <button class="tab" onclick="showTab('fund',this)">🌐 Universe</button>
-  <button class="tab" onclick="showTab('sectors',this)">🗺 Sector Map</button>
-  <button class="tab" onclick="showTab('blog',this)" id="tab-blog">📊 Reports</button>
-</div>
+  <!-- ── CONTENT ── -->
+  <div class="v2-content">
+
+    <header class="v2-topbar">
+      <button class="v2-burger" onclick="document.body.classList.toggle('v2-drawer-open')" aria-label="Open menu">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+
+      <div class="v2-search">
+        <span class="ico">🔍</span>
+        <input type="text" placeholder="Search ticker, jump to a section…" onfocus="if(typeof openCmdK==='function'){openCmdK();this.blur()}">
+        <span class="kbd">⌘K</span>
+      </div>
+
+      <div class="v2-tb-actions">
+        <div class="v2-tb-stats">
+          <div class="v2-tb-stat"><div class="n" id="stat-universe">—</div><div class="l">Universe</div></div>
+          <div class="v2-tb-stat"><div class="n" id="stat-hot">—</div><div class="l">Hot</div></div>
+          <div class="v2-tb-stat"><div class="n" id="stat-flagged">—</div><div class="l">A-Tier</div></div>
+        </div>
+        <div id="regime-pill"
+             title="Overall market mood based on SPY, QQQ, VIX and the 10-year yield."
+             style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;font-weight:700;cursor:default;background:#e0f2fe;border:1.5px solid rgba(59,130,246,.35);color:#1e40af;font-size:12px;letter-spacing:.02em">
+          <span style="font-size:14px">●</span>
+          <span id="regime-label">Loading…</span>
+        </div>
+      </div>
+    </header>
+
+    <div class="v2-scroll">
 
 <div class="main">
 
@@ -1507,6 +1758,45 @@ tr:hover td{background:rgba(132,204,22,.06)}
 </div>
 
 </div><!-- /.main -->
+
+    </div><!-- /.v2-scroll -->
+  </div><!-- /.v2-content -->
+</div><!-- /.v2-app -->
+
+<script>
+/* ── v2 shell wiring — collapsibles, nav switching, mobile drawer ── */
+(function(){
+  // Collapsible parents in the sidebar
+  document.querySelectorAll('.v2-parent').forEach(p => {
+    p.addEventListener('click', () => {
+      const wrap = p.closest('.v2-collapse');
+      if (!wrap) return;
+      wrap.dataset.open = wrap.dataset.open === 'true' ? 'false' : 'true';
+    });
+  });
+})();
+
+/* Switch panels — delegates to the existing showTab() so all the original
+   panel logic continues to work. Sets active state on whichever sidebar
+   item was clicked (top-level OR sub-item). */
+function v2Show(panelId, item){
+  // Sidebar active state
+  document.querySelectorAll('.v2-nav-item.active, .v2-sub.active').forEach(x => x.classList.remove('active'));
+  if (item) item.classList.add('active');
+
+  // Hand off to existing tab switcher. showTab() expects a btn whose
+  // .active class it sets — we pass a throwaway since we've already
+  // styled the sidebar item ourselves.
+  if (typeof showTab === 'function') {
+    const ghost = document.createElement('button');
+    ghost.className = 'tab';
+    showTab(panelId, ghost);
+  }
+
+  // Close the mobile drawer after navigating
+  document.body.classList.remove('v2-drawer-open');
+}
+</script>
 
 <!-- STOCK DETAIL MODAL (side drawer) -->
 <div class="stock-modal-overlay" id="stock-modal-overlay" onclick="closeStockModal(event)">
