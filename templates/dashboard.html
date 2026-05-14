@@ -1352,6 +1352,196 @@ body.v2-drawer-open .v2-drawer-backdrop{display:block}
   .v2-tb-stats{display:none}             /* stats hide on phone, they're inside panels anyway */
   body.v2 .main{padding:16px 12px 60px}
 }
+
+/* ════════════════════════════════════════════════════════════════
+   v2 OVERVIEW WIDGETS — KPI strip, movers, score distribution,
+   sector heat map, recent earnings, trending strip. Rendered into
+   #v2-overview at the top of the Hot List panel.
+   ════════════════════════════════════════════════════════════════ */
+
+#v2-overview{margin-bottom:24px}
+.v2ov-card{
+  background:#fff;border:1px solid #e5e7eb;border-radius:14px;
+  padding:20px;box-shadow:0 1px 3px rgba(15,23,42,.04);
+}
+.v2ov-card-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px;gap:12px;flex-wrap:wrap}
+.v2ov-title{font-size:15px;font-weight:800;color:#0f172a;letter-spacing:-.01em}
+.v2ov-sub{font-size:12px;color:#64748b;margin-top:2px}
+
+/* Reusable ticker logo (real logo + colored-initial fallback) */
+.v2ov-tic-logo{
+  width:36px;height:36px;border-radius:8px;
+  background:#fff;border:1px solid #e5e7eb;
+  display:grid;place-items:center;
+  overflow:hidden;flex-shrink:0;position:relative;
+}
+.v2ov-tic-logo img{width:78%;height:78%;object-fit:contain;display:block}
+.v2ov-tic-logo .fb{
+  position:absolute;inset:0;display:grid;place-items:center;
+  font-size:13px;font-weight:900;color:#fff;
+  background:linear-gradient(135deg,#4338ca,#6366f1);
+}
+.v2ov-tic-logo.sm{width:28px;height:28px;border-radius:6px}
+.v2ov-tic-logo.sm .fb{font-size:11px}
+.v2ov-tic-logo.lg{width:40px;height:40px;border-radius:10px}
+
+/* ── KPI strip ───────────────────────────────────────────────── */
+.v2ov-kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+.v2ov-kpi{
+  background:#fff;border:1px solid #e5e7eb;border-radius:14px;
+  padding:18px;cursor:pointer;
+  transition:transform .15s,box-shadow .2s,border-color .15s;
+  box-shadow:0 1px 3px rgba(15,23,42,.04);
+}
+.v2ov-kpi:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(15,23,42,.08);border-color:rgba(99,102,241,.35)}
+.v2ov-kpi-head{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.v2ov-kpi-name{font-size:13.5px;font-weight:800;color:#0f172a;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.v2ov-kpi-tic{font-size:11px;color:#64748b;font-weight:600;letter-spacing:.04em;margin-top:1px}
+.v2ov-kpi-row{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.v2ov-kpi-price{font-size:22px;font-weight:800;letter-spacing:-.02em;font-family:'JetBrains Mono','Inter',monospace;color:#0f172a}
+.v2ov-kpi-chg{font-size:12px;font-weight:700;padding:3px 8px;border-radius:6px;white-space:nowrap}
+.v2ov-kpi-chg.up{background:rgba(22,163,74,.12);color:#15803d}
+.v2ov-kpi-chg.dn{background:rgba(220,38,38,.10);color:#dc2626}
+.v2ov-kpi-foot{display:flex;align-items:center;justify-content:space-between;margin-top:10px;padding-top:10px;border-top:1px dashed #e5e7eb}
+.v2ov-kpi-score{font-size:11px;font-weight:700;color:#64748b}
+.v2ov-kpi-score strong{color:#4338ca;font-size:13px}
+.v2ov-kpi-stars{color:#fbbf24;font-size:11px;letter-spacing:1px}
+
+/* ── 2/3 + 1/3 row ───────────────────────────────────────────── */
+.v2ov-row{display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:20px}
+
+/* ── Score Distribution ──────────────────────────────────────── */
+.v2ov-dist-row{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.v2ov-dist-bar{flex:1;height:8px;background:#f1f5f9;border-radius:4px;overflow:hidden;display:flex}
+.v2ov-dist-seg{height:100%}
+.v2ov-dist-seg.a{background:#15803d}
+.v2ov-dist-seg.b{background:#84cc16}
+.v2ov-dist-seg.c{background:#facc15}
+.v2ov-dist-seg.d{background:#fb923c}
+.v2ov-dist-seg.f{background:#dc2626}
+.v2ov-dist-legend{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:14px}
+.v2ov-dist-cell{text-align:center;padding:8px 4px;border-radius:8px;background:#f1f5f9}
+.v2ov-dist-cell .v{font-size:18px;font-weight:800;line-height:1}
+.v2ov-dist-cell .l{font-size:10px;color:#64748b;font-weight:700;margin-top:3px;letter-spacing:.04em}
+.v2ov-dist-cell.a .v{color:#15803d}.v2ov-dist-cell.b .v{color:#84cc16}.v2ov-dist-cell.c .v{color:#ca8a04}.v2ov-dist-cell.d .v{color:#ea580c}.v2ov-dist-cell.f .v{color:#b91c1c}
+
+/* ── Movers list ─────────────────────────────────────────────── */
+.v2ov-movers-section{margin-top:18px;padding-top:14px;border-top:1px solid #f1f5f9}
+.v2ov-movers-h{font-size:12px;font-weight:800;color:#64748b;letter-spacing:.04em;text-transform:uppercase;margin-bottom:10px}
+.v2ov-mover{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px dashed #f1f5f9;cursor:pointer}
+.v2ov-mover:last-child{border-bottom:none}
+.v2ov-mover:hover{background:#f8fafc;border-radius:6px;padding-left:6px;padding-right:6px}
+.v2ov-mover-name{flex:1;min-width:0}
+.v2ov-mover-name .t{font-size:12.5px;font-weight:700;line-height:1.2;color:#0f172a}
+.v2ov-mover-name .n{font-size:10.5px;color:#64748b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.v2ov-mover-pct{font-size:12.5px;font-weight:800;font-variant-numeric:tabular-nums}
+.v2ov-mover-pct.up{color:#15803d}.v2ov-mover-pct.dn{color:#dc2626}
+
+/* ── Sector Heat Map ─────────────────────────────────────────── */
+.v2ov-sector-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.v2ov-sector-cell{
+  padding:14px 12px;border-radius:10px;cursor:pointer;
+  transition:transform .15s,box-shadow .2s;color:#0f172a;
+  position:relative;overflow:hidden;
+}
+.v2ov-sector-cell:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(15,23,42,.1)}
+.v2ov-sector-cell .sn{font-size:11.5px;font-weight:800;line-height:1.2;letter-spacing:-.01em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.v2ov-sector-cell .sv{font-size:18px;font-weight:900;margin-top:6px;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.v2ov-sector-cell .sm{font-size:10px;font-weight:700;margin-top:2px;opacity:.8}
+
+/* ── Earnings Timeline ───────────────────────────────────────── */
+.v2ov-tl-item{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid #f1f5f9;cursor:pointer}
+.v2ov-tl-item:last-child{border-bottom:none;padding-bottom:0}
+.v2ov-tl-item:hover{background:#f8fafc;border-radius:6px;padding-left:8px;padding-right:8px}
+.v2ov-tl-date{width:46px;text-align:center;font-size:10.5px;font-weight:700;color:#64748b;padding-top:2px;flex-shrink:0;line-height:1.3}
+.v2ov-tl-date strong{display:block;font-size:16px;color:#0f172a;font-weight:800;letter-spacing:-.02em}
+.v2ov-tl-body{flex:1;min-width:0}
+.v2ov-tl-row1{display:flex;align-items:center;gap:8px;margin-bottom:3px}
+.v2ov-tl-tic{font-size:13px;font-weight:800;letter-spacing:.02em;color:#0f172a}
+.v2ov-tl-name{font-size:11px;color:#64748b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.v2ov-tl-tag{font-size:9.5px;font-weight:800;padding:2px 7px;border-radius:5px;letter-spacing:.04em;flex-shrink:0;margin-left:auto}
+.v2ov-tl-tag.beat{background:rgba(22,163,74,.12);color:#15803d}
+.v2ov-tl-tag.miss{background:rgba(220,38,38,.10);color:#dc2626}
+.v2ov-tl-row2{font-size:11.5px;color:#64748b}
+.v2ov-tl-row2 .surp{font-weight:800}
+.v2ov-tl-row2 .surp.pos{color:#15803d}.v2ov-tl-row2 .surp.neg{color:#dc2626}
+
+/* ── Trending strip ──────────────────────────────────────────── */
+.v2ov-trend-wrap{display:flex;gap:12px;overflow-x:auto;-webkit-overflow-scrolling:touch;
+  scroll-snap-type:x mandatory;padding-bottom:4px;margin:0 -4px}
+.v2ov-trend-wrap::-webkit-scrollbar{height:6px}
+.v2ov-trend-wrap::-webkit-scrollbar-thumb{background:#e5e7eb;border-radius:3px}
+.v2ov-trend-card{
+  flex:0 0 220px;background:#fff;border:1px solid #e5e7eb;border-radius:12px;
+  padding:14px;scroll-snap-align:start;cursor:pointer;
+  transition:transform .15s,box-shadow .2s,border-color .15s;
+}
+.v2ov-trend-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(15,23,42,.08);border-color:rgba(99,102,241,.35)}
+.v2ov-trend-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:8px}
+.v2ov-trend-tic{font-size:14px;font-weight:800;color:#0f172a}
+.v2ov-trend-vel{font-size:10px;font-weight:800;padding:2px 6px;border-radius:5px;background:rgba(99,102,241,.10);color:#4338ca;white-space:nowrap}
+.v2ov-trend-name{font-size:11px;color:#64748b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin:0 0 6px}
+.v2ov-trend-foot{display:flex;align-items:baseline;justify-content:space-between;margin-top:6px}
+.v2ov-trend-foot .p{font-size:13px;font-weight:800;font-variant-numeric:tabular-nums;color:#0f172a}
+.v2ov-trend-foot .c{font-size:11px;font-weight:700}
+.v2ov-trend-foot .c.up{color:#15803d}.v2ov-trend-foot .c.dn{color:#dc2626}
+
+/* ── Theme toggle button (lives in v2 topbar) ────────────────── */
+.v2-theme-btn{
+  width:36px;height:36px;border-radius:50%;
+  background:transparent;border:none;cursor:pointer;
+  display:grid;place-items:center;font-size:16px;color:#0f172a;
+  transition:background .15s;
+}
+.v2-theme-btn:hover{background:#f1f5f9}
+
+/* ── DARK MODE (toggled by html.v2-dark) ─────────────────────── */
+html.v2-dark .v2-app,
+html.v2-dark .v2-content{background:#0a0e15}
+html.v2-dark .v2-topbar{background:#121821;border-bottom-color:#1f2937}
+html.v2-dark .v2-search input{background:#1f2937;color:#f1f5f9}
+html.v2-dark .v2-search input::placeholder{color:#64748b}
+html.v2-dark .v2-search .kbd{background:#1f2937;border-color:#374151;color:#94a3b8}
+html.v2-dark .v2-search .ico{color:#94a3b8}
+html.v2-dark .v2-tb-stat .n{color:#f1f5f9}
+html.v2-dark .v2-tb-stats{border-right-color:#374151}
+html.v2-dark .v2-burger{color:#f1f5f9}
+html.v2-dark .v2-burger:hover{background:#1f2937}
+html.v2-dark .v2-theme-btn{color:#f1f5f9}
+html.v2-dark .v2-theme-btn:hover{background:#1f2937}
+html.v2-dark body.v2 .main{background:#0a0e15}
+html.v2-dark .v2ov-card,html.v2-dark .v2ov-kpi,html.v2-dark .v2ov-trend-card{
+  background:#121821;border-color:#1f2937;
+}
+html.v2-dark .v2ov-card-head,html.v2-dark .v2ov-title,
+html.v2-dark .v2ov-kpi-name,html.v2-dark .v2ov-kpi-price,
+html.v2-dark .v2ov-mover-name .t,html.v2-dark .v2ov-tl-date strong,
+html.v2-dark .v2ov-tl-tic,html.v2-dark .v2ov-trend-tic,
+html.v2-dark .v2ov-trend-foot .p,html.v2-dark .v2ov-sector-cell{color:#f1f5f9}
+html.v2-dark .v2ov-sub,html.v2-dark .v2ov-kpi-tic,html.v2-dark .v2ov-kpi-score,
+html.v2-dark .v2ov-movers-h,html.v2-dark .v2ov-mover-name .n,
+html.v2-dark .v2ov-tl-name,html.v2-dark .v2ov-tl-row2,html.v2-dark .v2ov-trend-name{color:#94a3b8}
+html.v2-dark .v2ov-dist-bar{background:#1f2937}
+html.v2-dark .v2ov-dist-cell{background:#1f2937}
+html.v2-dark .v2ov-mover{border-bottom-color:#1f2937}
+html.v2-dark .v2ov-mover:hover,html.v2-dark .v2ov-tl-item:hover{background:#1a2231}
+html.v2-dark .v2ov-tl-item{border-bottom-color:#1f2937}
+html.v2-dark .v2ov-movers-section,html.v2-dark .v2ov-kpi-foot{border-top-color:#1f2937}
+html.v2-dark .v2ov-tic-logo{background:#1f2937;border-color:#374151}
+
+/* Mobile — overview widgets stack */
+@media (max-width: 1100px){
+  .v2ov-row{grid-template-columns:1fr}
+  .v2ov-sector-grid{grid-template-columns:repeat(3,1fr)}
+}
+@media (max-width: 768px){
+  .v2ov-kpi-grid{grid-template-columns:repeat(2,1fr);gap:10px}
+  .v2ov-kpi{padding:14px}
+  .v2ov-kpi-price{font-size:18px}
+  .v2ov-sector-grid{grid-template-columns:repeat(2,1fr)}
+  #v2-overview{margin-bottom:16px}
+  .v2ov-card{padding:14px}
+}
 </style>
 </head>
 <body>
@@ -1493,6 +1683,9 @@ body.v2-drawer-open .v2-drawer-backdrop{display:block}
       </div>
 
       <div class="v2-tb-actions">
+        <button class="v2-theme-btn" onclick="v2ToggleTheme()" title="Toggle theme" id="v2-theme-btn">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="v2-theme-icon"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+        </button>
         <div class="v2-tb-stats">
           <div class="v2-tb-stat"><div class="n" id="stat-universe">—</div><div class="l">Universe</div></div>
           <div class="v2-tb-stat"><div class="n" id="stat-hot">—</div><div class="l">Hot</div></div>
@@ -1513,6 +1706,10 @@ body.v2-drawer-open .v2-drawer-backdrop{display:block}
 
 <!-- HOT LIST -->
 <div id="panel-hot" class="panel active">
+  <!-- v2 overview widgets: KPI strip, movers, score distribution, sector
+       heat map, recent earnings, trending. Rendered by renderV2Overview()
+       on every refresh. -->
+  <div id="v2-overview"></div>
   <div class="hot-grid" id="hot-grid"><div class="loading">⏳ Loading from API…</div></div>
 </div>
 
@@ -1774,6 +1971,319 @@ body.v2-drawer-open .v2-drawer-backdrop{display:block}
       wrap.dataset.open = wrap.dataset.open === 'true' ? 'false' : 'true';
     });
   });
+})();
+
+/* ════════════════════════════════════════════════════════════════
+   v2 OVERVIEW WIDGETS — render KPI strip, movers, score distribution,
+   sector heat map, recent earnings, trending strip from live data.
+   ════════════════════════════════════════════════════════════════ */
+
+/* Real company logo with colored-initial fallback. Pulls from FMP's
+   image CDN (same nominative-use pattern Yahoo Finance, Robinhood etc.
+   use). Onerror hides the img and the fallback letter shows through. */
+function v2LogoHTML(ticker, size){
+  const cls = size === 'sm' ? 'v2ov-tic-logo sm' : size === 'lg' ? 'v2ov-tic-logo lg' : 'v2ov-tic-logo';
+  const t = (ticker || '').toUpperCase();
+  const url = 'https://images.financialmodelingprep.com/symbol/' + encodeURIComponent(t) + '.png';
+  return '<div class="' + cls + '">' +
+           '<span class="fb">' + (t.charAt(0) || '?') + '</span>' +
+           '<img src="' + url + '" alt="" loading="lazy"' +
+              ' onerror="this.style.display=\'none\'"' +
+              ' onload="this.previousElementSibling.style.display=\'none\'">' +
+         '</div>';
+}
+
+function v2Pct(n, sign){
+  if (n == null || isNaN(n)) return '—';
+  const s = (n >= 0 ? '+' : '') + n.toFixed(1) + '%';
+  return sign === false ? s.replace('+', '') : s;
+}
+function v2Price(p){
+  if (p == null) return '$—';
+  return '$' + Number(p).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+}
+function v2EscHTML(s){
+  return (s || '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+}
+
+/* ── KPI strip — top 4 picks by Alpha Score ─────────────────── */
+function v2RenderKpiStrip(tickers){
+  const top4 = [...tickers]
+    .filter(t => (t.smart_score ?? t.pop_score ?? 0) > 0)
+    .sort((a, b) => (b.smart_score ?? b.pop_score ?? 0) - (a.smart_score ?? a.pop_score ?? 0))
+    .slice(0, 4);
+  if (!top4.length) return '';
+  const cards = top4.map(t => {
+    const sym  = t.ticker;
+    const name = v2EscHTML((t.name || sym).slice(0, 22));
+    const px   = v2Price(t.price);
+    const ch   = parseFloat(t.change_pct);
+    const cls  = ch >= 0 ? 'up' : 'dn';
+    const arr  = ch >= 0 ? '▲' : '▼';
+    const score = Math.round(t.smart_score ?? t.pop_score ?? 0);
+    const stars = ({A:'★★★★★',B:'★★★★',C:'★★★',D:'★★',F:'★'}[t.grade] || '');
+    return '<div class="v2ov-kpi" onclick="openStockModal(\'' + sym + '\')">' +
+             '<div class="v2ov-kpi-head">' + v2LogoHTML(sym, 'lg') +
+               '<div style="min-width:0">' +
+                 '<div class="v2ov-kpi-name">' + name + '</div>' +
+                 '<div class="v2ov-kpi-tic">' + sym + '</div>' +
+               '</div>' +
+             '</div>' +
+             '<div class="v2ov-kpi-row">' +
+               '<div class="v2ov-kpi-price">' + px + '</div>' +
+               '<div class="v2ov-kpi-chg ' + cls + '">' + arr + ' ' +
+                 (isNaN(ch) ? '—' : Math.abs(ch).toFixed(1) + '%') +
+               '</div>' +
+             '</div>' +
+             '<div class="v2ov-kpi-foot">' +
+               '<div class="v2ov-kpi-score">Score <strong>' + score + '</strong></div>' +
+               '<div class="v2ov-kpi-stars">' + stars + '</div>' +
+             '</div>' +
+           '</div>';
+  }).join('');
+  return '<div class="v2ov-kpi-grid">' + cards + '</div>';
+}
+
+/* ── Score Distribution + Movers (right column card) ────────── */
+function v2RenderDistAndMovers(tickers){
+  const total = tickers.length || 1;
+  const grades = {A:0,B:0,C:0,D:0,F:0};
+  tickers.forEach(t => { if (grades.hasOwnProperty(t.grade)) grades[t.grade]++; });
+  const pct = g => Math.max(0, (grades[g] / total) * 100);
+
+  const withChg = tickers.filter(t => t.change_pct != null && !isNaN(parseFloat(t.change_pct)));
+  const sortedByChg = [...withChg].sort((a, b) => parseFloat(b.change_pct) - parseFloat(a.change_pct));
+  const movers = [...sortedByChg.slice(0, 3), ...sortedByChg.slice(-2).reverse()];
+
+  const moverHTML = movers.map(t => {
+    const ch = parseFloat(t.change_pct);
+    const cls = ch >= 0 ? 'up' : 'dn';
+    return '<div class="v2ov-mover" onclick="openStockModal(\'' + t.ticker + '\')">' +
+             v2LogoHTML(t.ticker, 'sm') +
+             '<div class="v2ov-mover-name">' +
+               '<div class="t">' + t.ticker + '</div>' +
+               '<div class="n">' + v2EscHTML((t.name || '').slice(0, 26)) + '</div>' +
+             '</div>' +
+             '<div class="v2ov-mover-pct ' + cls + '">' + (ch >= 0 ? '+' : '−') + Math.abs(ch).toFixed(1) + '%</div>' +
+           '</div>';
+  }).join('');
+
+  return '' +
+    '<div class="v2ov-card">' +
+      '<div class="v2ov-card-head"><div>' +
+        '<div class="v2ov-title">Score Distribution</div>' +
+        '<div class="v2ov-sub">' + total + ' stocks in the universe</div>' +
+      '</div></div>' +
+      '<div class="v2ov-dist-row"><div class="v2ov-dist-bar">' +
+        '<div class="v2ov-dist-seg a" style="width:' + pct('A') + '%"></div>' +
+        '<div class="v2ov-dist-seg b" style="width:' + pct('B') + '%"></div>' +
+        '<div class="v2ov-dist-seg c" style="width:' + pct('C') + '%"></div>' +
+        '<div class="v2ov-dist-seg d" style="width:' + pct('D') + '%"></div>' +
+        '<div class="v2ov-dist-seg f" style="width:' + pct('F') + '%"></div>' +
+      '</div></div>' +
+      '<div class="v2ov-dist-legend">' +
+        '<div class="v2ov-dist-cell a"><div class="v">' + grades.A + '</div><div class="l">A · Top</div></div>' +
+        '<div class="v2ov-dist-cell b"><div class="v">' + grades.B + '</div><div class="l">B · Qual</div></div>' +
+        '<div class="v2ov-dist-cell c"><div class="v">' + grades.C + '</div><div class="l">C · Avg</div></div>' +
+        '<div class="v2ov-dist-cell d"><div class="v">' + grades.D + '</div><div class="l">D · Below</div></div>' +
+        '<div class="v2ov-dist-cell f"><div class="v">' + grades.F + '</div><div class="l">F · Weak</div></div>' +
+      '</div>' +
+      '<div class="v2ov-movers-section">' +
+        '<div class="v2ov-movers-h">Today\'s biggest movers</div>' +
+        moverHTML +
+      '</div>' +
+    '</div>';
+}
+
+/* ── Sector Heat Map ─────────────────────────────────────────── */
+function v2RenderSectors(tickers){
+  // Group by sector, average smart_score and change_pct
+  const groups = {};
+  tickers.forEach(t => {
+    const s = t.sector || t.sub_sector || '—';
+    if (!groups[s]) groups[s] = { tickers:[], score:0, chg:0, n:0 };
+    const sc = parseFloat(t.smart_score ?? t.pop_score ?? 0);
+    const ch = parseFloat(t.change_pct);
+    if (sc > 0){ groups[s].score += sc; groups[s].n++; }
+    if (!isNaN(ch)) groups[s].chg += ch;
+    groups[s].tickers.push(t.ticker);
+  });
+  const sectors = Object.entries(groups)
+    .filter(([k,v]) => v.n >= 1 && k !== '—')
+    .map(([k,v]) => ({
+      name: k,
+      score: v.n ? Math.round(v.score / v.n) : 0,
+      mom:   v.tickers.length ? (v.chg / v.tickers.length) : 0,
+    }))
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 12);
+
+  if (!sectors.length) return '';
+
+  const bgFor = mom => {
+    if (mom >=  3) return '#dcfce7';
+    if (mom >=  1) return '#bbf7d0';
+    if (mom >= -1) return '#fef3c7';
+    if (mom >= -3) return '#fed7aa';
+    return '#fecaca';
+  };
+
+  const cells = sectors.map(s =>
+    '<div class="v2ov-sector-cell" style="background:' + bgFor(s.mom) + '" title="' + s.name + '">' +
+      '<div class="sn">' + v2EscHTML(s.name) + '</div>' +
+      '<div class="sv">' + s.score + '</div>' +
+      '<div class="sm">' + (s.mom >= 0 ? '+' : '') + s.mom.toFixed(1) + '% today</div>' +
+    '</div>').join('');
+
+  return '' +
+    '<div class="v2ov-card">' +
+      '<div class="v2ov-card-head"><div>' +
+        '<div class="v2ov-title">Sector Strength</div>' +
+        '<div class="v2ov-sub">Avg Alpha Score · colour-coded by today\'s move</div>' +
+      '</div></div>' +
+      '<div class="v2ov-sector-grid">' + cells + '</div>' +
+    '</div>';
+}
+
+/* ── Recent Earnings timeline (last 5 reports across universe) ──── */
+function v2RenderEarnings(tickers){
+  const items = [];
+  tickers.forEach(t => {
+    const q = (t.eps_quarters || [])[0];
+    if (!q || !q.date) return;
+    items.push({ t: t, q: q });
+  });
+  items.sort((a, b) => (b.q.date || '').localeCompare(a.q.date || ''));
+  const top5 = items.slice(0, 5);
+  if (!top5.length) return '';
+
+  const rows = top5.map(({t, q}) => {
+    const d = new Date(q.date + 'T00:00:00');
+    const dd = isNaN(d) ? '—' : String(d.getUTCDate()).padStart(2, '0');
+    const mm = isNaN(d) ? '' : d.toLocaleDateString('en-US', {month:'short'});
+    const beat = q.beat === true;
+    const miss = q.beat === false;
+    const tag  = beat ? 'beat' : miss ? 'miss' : 'beat';
+    const tagText = beat ? 'BEAT' : miss ? 'MISS' : '—';
+    const surp = q.surprise_pct != null ? (q.surprise_pct >= 0 ? '+' : '') + q.surprise_pct.toFixed(1) + '%' : '—';
+    const surpcls = q.surprise_pct == null ? '' : (q.surprise_pct >= 0 ? 'pos' : 'neg');
+    const actual = q.actual != null ? '$' + q.actual.toFixed(2) : '—';
+    const est    = q.estimate != null ? '$' + q.estimate.toFixed(2) : '—';
+    return '<div class="v2ov-tl-item" onclick="openStockModal(\'' + t.ticker + '\')">' +
+             '<div class="v2ov-tl-date"><strong>' + dd + '</strong>' + mm + '</div>' +
+             v2LogoHTML(t.ticker, 'sm') +
+             '<div class="v2ov-tl-body">' +
+               '<div class="v2ov-tl-row1">' +
+                 '<span class="v2ov-tl-tic">' + t.ticker + '</span>' +
+                 '<span class="v2ov-tl-name">' + v2EscHTML((t.name || '').slice(0, 22)) + '</span>' +
+                 '<span class="v2ov-tl-tag ' + tag + '">' + tagText + '</span>' +
+               '</div>' +
+               '<div class="v2ov-tl-row2">EPS ' + actual + ' vs ' + est + ' est · ' +
+                 '<span class="surp ' + surpcls + '">' + surp.replace('-', '−') + '</span></div>' +
+             '</div>' +
+           '</div>';
+  }).join('');
+
+  return '' +
+    '<div class="v2ov-card">' +
+      '<div class="v2ov-card-head"><div>' +
+        '<div class="v2ov-title">Recent Earnings</div>' +
+        '<div class="v2ov-sub">Latest 5 reports across the universe</div>' +
+      '</div></div>' +
+      rows +
+    '</div>';
+}
+
+/* ── Trending — biggest score jumps this week ─────────────────── */
+function v2RenderTrending(tickers){
+  const withVel = tickers
+    .map(t => ({ t, vel: parseFloat(t.score_velocity_7d ?? t.score_velocity ?? 0) }))
+    .filter(x => !isNaN(x.vel) && x.vel > 0)
+    .sort((a, b) => b.vel - a.vel)
+    .slice(0, 8);
+  // Fall back to biggest positive change_pct if no velocity field
+  const trend = withVel.length ? withVel : [...tickers]
+    .filter(t => parseFloat(t.change_pct) > 0)
+    .sort((a, b) => parseFloat(b.change_pct) - parseFloat(a.change_pct))
+    .slice(0, 8)
+    .map(t => ({ t, vel: parseFloat(t.change_pct) }));
+
+  if (!trend.length) return '';
+
+  const cards = trend.map(({t, vel}) => {
+    const ch  = parseFloat(t.change_pct);
+    const cls = ch >= 0 ? 'up' : 'dn';
+    return '<div class="v2ov-trend-card" onclick="openStockModal(\'' + t.ticker + '\')">' +
+             '<div class="v2ov-trend-head">' +
+               '<div style="display:flex;align-items:center;gap:8px;min-width:0">' +
+                 v2LogoHTML(t.ticker, 'sm') +
+                 '<div style="min-width:0">' +
+                   '<div class="v2ov-trend-tic">' + t.ticker + '</div>' +
+                   '<div class="v2ov-trend-name">' + v2EscHTML((t.name || '').slice(0, 22)) + '</div>' +
+                 '</div>' +
+               '</div>' +
+               '<div class="v2ov-trend-vel">+' + vel.toFixed(1) + '</div>' +
+             '</div>' +
+             '<div class="v2ov-trend-foot">' +
+               '<span class="p">' + v2Price(t.price) + '</span>' +
+               '<span class="c ' + cls + '">' + (ch >= 0 ? '+' : '') + (isNaN(ch) ? '—' : ch.toFixed(1) + '%') + '</span>' +
+             '</div>' +
+           '</div>';
+  }).join('');
+
+  return '' +
+    '<div class="v2ov-card">' +
+      '<div class="v2ov-card-head"><div>' +
+        '<div class="v2ov-title">Trending</div>' +
+        '<div class="v2ov-sub">Biggest movers and score jumps right now</div>' +
+      '</div></div>' +
+      '<div class="v2ov-trend-wrap">' + cards + '</div>' +
+    '</div>';
+}
+
+/* ── Master renderer — call this from renderHotList(data) ─────── */
+function renderV2Overview(tickers){
+  const root = document.getElementById('v2-overview');
+  if (!root || !Array.isArray(tickers) || !tickers.length) return;
+  root.innerHTML =
+    v2RenderKpiStrip(tickers) +
+    '<div class="v2ov-row">' +
+      v2RenderSectors(tickers) +
+      v2RenderDistAndMovers(tickers) +
+    '</div>' +
+    '<div class="v2ov-row">' +
+      v2RenderTrending(tickers) +
+      v2RenderEarnings(tickers) +
+    '</div>';
+}
+
+/* ── Theme toggle ─────────────────────────────────────────────── */
+const V2_SUN_SVG  = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="v2-theme-icon"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>';
+const V2_MOON_SVG = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="v2-theme-icon"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+function v2ApplyTheme(t){
+  document.documentElement.classList.toggle('v2-dark', t === 'dark');
+  const icon = document.getElementById('v2-theme-icon');
+  if (icon) icon.outerHTML = t === 'dark' ? V2_SUN_SVG : V2_MOON_SVG;
+  try { localStorage.setItem('ah-v2-theme', t); } catch(e){}
+}
+function v2ToggleTheme(){
+  v2ApplyTheme(document.documentElement.classList.contains('v2-dark') ? 'light' : 'dark');
+}
+(function(){
+  let saved = 'light';
+  try { saved = localStorage.getItem('ah-v2-theme') || 'light'; } catch(e){}
+  v2ApplyTheme(saved);
+})();
+
+/* ── Hook into the existing renderHotList() so the overview rerenders
+   every time the universe refreshes (server pushes new data every 30s). */
+(function(){
+  if (typeof renderHotList !== 'function') return;
+  const _origRenderHotList = renderHotList;
+  window.renderHotList = function(data){
+    try { renderV2Overview((data && data.tickers) || []); } catch(e){ console.error('v2 overview render failed', e); }
+    return _origRenderHotList.apply(this, arguments);
+  };
 })();
 
 /* Switch panels — delegates to the existing showTab() so all the original
