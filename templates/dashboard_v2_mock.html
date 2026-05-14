@@ -132,11 +132,11 @@ body{
 }
 .sb-logo .name span{color:#a5b4fc}  /* indigo-300, not green */
 
-.sb-group{margin-bottom:14px;position:relative}
-.sb-group-title{
+.sb-group{margin-bottom:8px;position:relative}
+.sb-section-label{
   font-size:10.5px;font-weight:800;color:var(--sb-muted-2);
-  text-transform:uppercase;letter-spacing:.08em;
-  padding:0 8px 6px;
+  text-transform:uppercase;letter-spacing:.10em;
+  padding:14px 8px 8px;
 }
 .sb-item{
   display:flex;align-items:center;gap:10px;
@@ -145,6 +145,7 @@ body{
   cursor:pointer;user-select:none;
   position:relative;
   transition:background .15s,color .15s;
+  margin-bottom:2px;
 }
 .sb-item:hover{background:rgba(255,255,255,.04);color:var(--sb-txt)}
 .sb-item.active{
@@ -165,6 +166,84 @@ body{
   padding:2px 6px;border-radius:5px;letter-spacing:.04em;
   box-shadow:0 1px 4px rgba(99,102,241,.45);
 }
+
+/* Collapsible parent + child items */
+.sb-collapsible{margin-bottom:2px}
+.sb-parent .chev{
+  margin-left:auto;
+  font-size:14px;color:var(--sb-muted-2);
+  transition:transform .2s;
+  line-height:1;
+}
+.sb-collapsible[data-open="true"] .sb-parent .chev{transform:rotate(180deg)}
+.sb-children{
+  display:none;
+  padding:4px 0 6px 26px;
+  position:relative;
+}
+.sb-children::before{
+  content:'';position:absolute;left:18px;top:6px;bottom:6px;
+  width:1px;background:rgba(255,255,255,.06);
+}
+.sb-collapsible[data-open="true"] .sb-children{display:block}
+.sb-sub{
+  display:flex;align-items:center;gap:8px;
+  padding:6px 10px;border-radius:7px;
+  font-size:12.5px;font-weight:500;color:var(--sb-muted);
+  cursor:pointer;
+  margin-bottom:1px;
+  transition:background .15s,color .15s;
+}
+.sb-sub:hover{background:rgba(255,255,255,.04);color:var(--sb-txt)}
+.sb-sub.active{color:var(--sb-active-fg);font-weight:700}
+.sb-tag{
+  margin-left:auto;
+  background:linear-gradient(135deg,var(--brand),var(--brand-2));
+  color:#fff;font-size:9px;font-weight:800;
+  padding:2px 7px;border-radius:5px;letter-spacing:.05em;
+  box-shadow:0 1px 3px rgba(99,102,241,.4);
+}
+
+/* Bottom-pinned login / user pill */
+.sb-bottom{
+  margin-top:auto;
+  padding-top:14px;
+  border-top:1px solid var(--sb-bdr);
+}
+.sb-user{
+  display:flex;align-items:center;gap:10px;
+  padding:8px;border-radius:10px;
+  cursor:pointer;
+  transition:background .15s;
+}
+.sb-user:hover{background:rgba(255,255,255,.04)}
+.sb-user .ava{
+  width:34px;height:34px;border-radius:50%;
+  background:linear-gradient(135deg,#4338ca,#6366f1);
+  display:grid;place-items:center;
+  color:#fff;font-weight:800;font-size:13px;
+  flex-shrink:0;
+}
+.sb-user .who{flex:1;min-width:0}
+.sb-user .who .n{font-size:13px;font-weight:700;color:var(--sb-txt);line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sb-user .who .a{font-size:10.5px;color:var(--sb-muted-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sb-user .out{
+  color:var(--sb-muted);font-size:16px;
+  padding:6px 8px;border-radius:6px;
+  transition:background .15s,color .15s;
+}
+.sb-user .out:hover{background:rgba(220,38,38,.12);color:#fca5a5}
+
+.sb-login{
+  display:block;text-align:center;
+  padding:11px 14px;border-radius:10px;
+  background:linear-gradient(135deg,var(--brand),var(--brand-2));
+  color:#fff;font-size:13px;font-weight:800;letter-spacing:.02em;
+  text-decoration:none;cursor:pointer;
+  box-shadow:0 4px 14px rgba(99,102,241,.4);
+  transition:transform .15s,box-shadow .2s;
+}
+.sb-login:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(99,102,241,.5)}
 
 /* ══ TOP BAR ═════════════════════════════════════════════════════ */
 .content{display:flex;flex-direction:column;min-width:0}
@@ -525,32 +604,76 @@ html.dark .period-tab.active{background:#1f2937}
       <div class="name">Alpha<span>Hunt</span></div>
     </div>
 
-    <div class="sb-group">
-      <div class="sb-group-title">Discover</div>
-      <div class="sb-item active" data-view="hot">     <span class="ico">🔥</span> <span>Hot List</span></div>
-      <div class="sb-item"        data-view="top">     <span class="ico">🎯</span> <span>Top Hunts</span></div>
-      <div class="sb-item"        data-view="sectors"> <span class="ico">🗺</span> <span>Sector Map</span></div>
-      <div class="sb-item"        data-view="universe"><span class="ico">📊</span> <span>Universe</span></div>
+    <div class="sb-section-label">MENU</div>
+
+    <!-- Collapsible parent: Discover -->
+    <div class="sb-collapsible" data-open="true">
+      <div class="sb-item sb-parent">
+        <span class="ico">📊</span><span>Discover</span><span class="chev">⌃</span>
+      </div>
+      <div class="sb-children">
+        <div class="sb-sub active" data-view="hot">Hot List</div>
+        <div class="sb-sub"        data-view="top">Top Hunts</div>
+        <div class="sb-sub"        data-view="sectors">Sector Map <span class="sb-tag">NEW</span></div>
+        <div class="sb-sub"        data-view="universe">Universe</div>
+      </div>
     </div>
 
-    <div class="sb-group">
-      <div class="sb-group-title">Yours</div>
-      <div class="sb-item" data-view="watch"><span class="ico">⭐</span> <span>Watchlist</span></div>
-      <div class="sb-item" data-view="past"> <span class="ico">📕</span> <span>Past Trades</span></div>
+    <div class="sb-item" data-view="watch">
+      <span class="ico">⭐</span><span>Watchlist</span>
+    </div>
+    <div class="sb-item" data-view="calendar">
+      <span class="ico">📅</span><span>Earnings Calendar</span>
+    </div>
+    <div class="sb-item" data-view="profile">
+      <span class="ico">👤</span><span>Profile</span>
     </div>
 
-    <div class="sb-group">
-      <div class="sb-group-title">Intel</div>
-      <div class="sb-item" data-view="tearsheets"><span class="ico">📈</span> <span>Tear Sheets</span></div>
-      <div class="sb-item" data-view="reports">   <span class="ico">📰</span> <span>Reports</span></div>
-      <div class="sb-item" data-view="alerts">    <span class="ico">🏷</span> <span>Alerts</span><span class="badge">NEW</span></div>
+    <!-- Collapsible parent: Intel -->
+    <div class="sb-collapsible" data-open="false">
+      <div class="sb-item sb-parent">
+        <span class="ico">📈</span><span>Intel</span><span class="chev">⌃</span>
+      </div>
+      <div class="sb-children">
+        <div class="sb-sub" data-view="tearsheets">Tear Sheets</div>
+        <div class="sb-sub" data-view="reports">Reports</div>
+        <div class="sb-sub" data-view="alerts">Alerts <span class="sb-tag">NEW</span></div>
+      </div>
     </div>
 
-    <div class="sb-group" style="margin-top:auto">
-      <div class="sb-group-title">Account</div>
-      <div class="sb-item" data-view="profile"> <span class="ico">👤</span> <span>Profile</span></div>
-      <div class="sb-item" data-view="settings"><span class="ico">⚙</span>  <span>Settings</span></div>
-      <div class="sb-item" data-view="signout"> <span class="ico">↪</span>  <span>Sign out</span></div>
+    <!-- Collapsible parent: Settings -->
+    <div class="sb-collapsible" data-open="false">
+      <div class="sb-item sb-parent">
+        <span class="ico">⚙</span><span>Settings</span><span class="chev">⌃</span>
+      </div>
+      <div class="sb-children">
+        <div class="sb-sub" data-view="account">Account</div>
+        <div class="sb-sub" data-view="theme">Theme &amp; density</div>
+        <div class="sb-sub" data-view="notifications">Notifications</div>
+        <div class="sb-sub" data-view="billing">Billing</div>
+      </div>
+    </div>
+
+    <div class="sb-section-label">SUPPORT</div>
+    <div class="sb-item" data-view="help"><span class="ico">❓</span><span>Help &amp; FAQ</span></div>
+    <div class="sb-item" data-view="docs"><span class="ico">📖</span><span>Docs</span></div>
+
+    <!-- Bottom-pinned login / user — flips between signed-in and signed-out -->
+    <div class="sb-bottom">
+      <!-- Signed-in state: user pill with sign-out icon. Click toggles to signed-out. -->
+      <div class="sb-user" id="sb-user-signedin" onclick="setAuth(false)">
+        <div class="ava">S</div>
+        <div class="who">
+          <div class="n">Sourav</div>
+          <div class="a">souravkheto@…</div>
+        </div>
+        <div class="out" title="Sign out">↪</div>
+      </div>
+
+      <!-- Signed-out state: prominent Sign in CTA. Click toggles back to signed-in. -->
+      <a class="sb-login" id="sb-user-signedout" style="display:none" onclick="setAuth(true);return false;" href="javascript:void(0)">
+        Sign in →
+      </a>
     </div>
   </aside>
 
@@ -578,10 +701,6 @@ html.dark .period-tab.active{background:#1f2937}
           <span class="dot"></span>
         </button>
         <div class="regime-chip bullish"><span class="dot"></span><span>Bullish</span></div>
-        <div class="avatar" onclick="showToast('Profile menu — not wired up in mock')">
-          <div class="img">S</div>
-          <div class="name">Sourav</div>
-        </div>
       </div>
     </header>
 
@@ -944,22 +1063,40 @@ function toggleTheme(){
   applyTheme(next);
 }
 
+/* ── Sidebar: collapsible parents (toggle open/closed) ─ */
+document.querySelectorAll('.sb-parent').forEach(p => {
+  p.addEventListener('click', () => {
+    const wrap = p.closest('.sb-collapsible');
+    if (!wrap) return;
+    wrap.dataset.open = wrap.dataset.open === 'true' ? 'false' : 'true';
+  });
+});
+
 /* ── Sidebar nav (visual only — switches active state + shows toast) ─ */
-document.querySelectorAll('.sb-item').forEach(it => {
-  it.addEventListener('click', () => {
-    document.querySelectorAll('.sb-item').forEach(x => x.classList.remove('active'));
+const NAV_LABELS = {
+  hot:'Hot List', top:'Top Hunts', sectors:'Sector Map', universe:'Universe',
+  watch:'Watchlist', calendar:'Earnings Calendar', profile:'Profile',
+  tearsheets:'Tear Sheets', reports:'Reports', alerts:'Alerts',
+  account:'Account', theme:'Theme & density', notifications:'Notifications', billing:'Billing',
+  help:'Help & FAQ', docs:'Docs',
+};
+document.querySelectorAll('.sb-item[data-view], .sb-sub[data-view]').forEach(it => {
+  it.addEventListener('click', e => {
+    e.stopPropagation();   // don't bubble into the parent collapsible toggle
+    document.querySelectorAll('.sb-item.active, .sb-sub.active').forEach(x => x.classList.remove('active'));
     it.classList.add('active');
     const v = it.dataset.view;
-    const labels = {
-      hot:'🔥 Hot List', top:'🎯 Top Hunts', sectors:'🗺 Sector Map', universe:'📊 Universe',
-      watch:'⭐ Watchlist', past:'📕 Past Trades',
-      tearsheets:'📈 Tear Sheets', reports:'📰 Reports', alerts:'🏷 Alerts',
-      profile:'👤 Profile', settings:'⚙ Settings', signout:'↪ Sign out',
-    };
-    showToast(`Switched to "${labels[v] || v}" — this view isn't built in the mock`);
+    showToast(`Switched to "${NAV_LABELS[v] || v}" — this view isn't built in the mock`);
     closeDrawer();
   });
 });
+
+/* ── Auth state flip for the bottom-pinned pill ─ */
+function setAuth(signedIn){
+  document.getElementById('sb-user-signedin').style.display  = signedIn ? '' : 'none';
+  document.getElementById('sb-user-signedout').style.display = signedIn ? 'none' : '';
+  showToast(signedIn ? 'Signed in (mock)' : 'Signed out (mock)');
+}
 
 /* ── Mobile drawer ────────────────────────────────────────────── */
 function openDrawer(){ document.body.classList.add('drawer-open') }
