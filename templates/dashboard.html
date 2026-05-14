@@ -735,6 +735,154 @@ tr:hover td{background:rgba(132,204,22,.06)}
 
   /* Watchlist + sector grids reset */
   #watchlist-grid{grid-template-columns:1fr!important}
+
+  /* ════════════════════════════════════════════════════════════════
+     STOCK MODAL — MOBILE-FIRST REDESIGN
+     Strip the card chrome (gradients, heavy borders, big padding) that
+     made every section look like a desktop card scaled down. Replace
+     with flat sections separated by hairline dividers. Heavy boxes
+     remain only for genuine callouts (verdict, caveats).
+     ════════════════════════════════════════════════════════════════ */
+
+  /* Verdict callout — keep the colored left bar (it's the one signal
+     worth real estate), but flatten the box itself */
+  .stock-modal-panel .modal-verdict-box{
+    padding:9px 0 11px 12px!important;
+    background:transparent!important;
+    border-radius:0!important;
+    margin-bottom:10px!important;
+    gap:10px!important;
+  }
+  .stock-modal-panel .modal-verdict-box > div:first-child{font-size:18px!important}
+  .stock-modal-panel .modal-verdict-box .verdict-head{font-size:11.5px!important;margin-bottom:2px!important}
+  .stock-modal-panel .modal-verdict-box .verdict-body{font-size:12.5px!important;line-height:1.5!important}
+
+  /* fd-head — shrink price block; gauge slimmed via popGauge wrapper */
+  .stock-modal-panel .fd-head{margin-bottom:10px!important;gap:8px!important}
+  .stock-modal-panel .fd-tic{font-size:22px!important;letter-spacing:0!important}
+  .stock-modal-panel .fd-co{font-size:11px!important}
+  .stock-modal-panel .fd-price{font-size:18px!important}
+  /* Compact gauge: cap visual width so the right column doesn't dominate */
+  .stock-modal-panel .fd-head > div:last-child svg{max-width:140px!important;height:auto!important}
+
+  /* Investment Thesis + Tailwinds — strip green bg, use hairline */
+  .stock-modal-panel .fd-summary{
+    background:transparent!important;
+    border-left:none!important;
+    border-top:1px solid #f1f5f9;
+    border-bottom:1px solid #f1f5f9;
+    border-radius:0!important;
+    padding:11px 0!important;
+    margin:10px 0!important;
+    font-size:12.5px!important;
+  }
+
+  /* Price-target row — flat, no blue gradient. Hide 52W L/H cells
+     (the bar below replaces them with a visual range indicator) */
+  .stock-modal-panel .price-target-row{
+    background:transparent!important;
+    border:1px solid #e2e8f0!important;
+    box-shadow:none!important;
+    border-radius:8px!important;
+    padding:9px 10px!important;
+    grid-template-columns:1fr 1fr!important;
+  }
+  .stock-modal-panel .price-target-row .pt-cell-52w{display:none!important}
+
+  /* 52-week range bar (visible only on mobile — replaces 52W L/H cells visually) */
+  .w52-bar{display:block;margin-top:8px;padding:0 2px}
+  .w52-track{position:relative;height:6px;background:#e2e8f0;border-radius:3px}
+  .w52-fill{position:absolute;left:0;top:0;height:100%;background:linear-gradient(90deg,#94a3b8,#15803d);border-radius:3px}
+  .w52-dot{position:absolute;top:-3px;width:12px;height:12px;border-radius:50%;background:#15803d;border:2px solid #fff;box-shadow:0 1px 4px rgba(15,23,42,.25);transform:translateX(-50%)}
+  .w52-labels{display:flex;justify-content:space-between;margin-top:6px;font-size:10.5px;color:#64748b;font-weight:600;font-variant-numeric:tabular-nums}
+  .w52-labels span:last-child{font-weight:700;color:#0f172a}
+
+  /* Earnings card — strip yellow/green box chrome, use hairline */
+  .stock-modal-panel [data-modal-earnings] > div{
+    background:transparent!important;
+    border:none!important;
+    border-top:1px solid #f1f5f9!important;
+    border-radius:0!important;
+    padding:11px 0!important;
+    margin-bottom:0!important;
+  }
+
+  /* News card — flat */
+  .stock-modal-panel [id^="modal-news-"]{
+    background:transparent!important;
+    border:none!important;
+    border-top:1px solid #f1f5f9!important;
+    border-radius:0!important;
+    padding:11px 0!important;
+  }
+
+  /* Tear sheet CTA — flat, no green gradient box */
+  .stock-modal-panel .modal-cta-tearsheet{
+    background:transparent!important;
+    border:none!important;
+    border-top:1px solid #f1f5f9!important;
+    border-radius:0!important;
+    padding:12px 0!important;
+  }
+
+  /* External links — hairline top */
+  .stock-modal-panel .fd-links{border-top:1px solid #f1f5f9;padding-top:12px}
+
+  /* ── COLLAPSIBLE SECTIONS — native <details> for Valuation, DCF, Metrics, etc. */
+  .m-collapse{
+    border-top:1px solid #f1f5f9;
+    margin:0;
+    padding:0;
+  }
+  .m-collapse > summary{
+    list-style:none;
+    cursor:pointer;
+    padding:12px 2px;
+    font-size:13px;
+    font-weight:800;
+    color:#0f172a;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:8px;
+    -webkit-tap-highlight-color:rgba(132,204,22,.15);
+  }
+  .m-collapse > summary::-webkit-details-marker{display:none}
+  .m-collapse > summary::after{
+    content:'›';
+    font-size:18px;
+    line-height:1;
+    color:#94a3b8;
+    transition:transform .2s;
+    font-weight:400;
+  }
+  .m-collapse[open] > summary::after{transform:rotate(90deg)}
+  .m-collapse > .m-collapse-body{padding:2px 0 14px}
+
+  /* Inside a collapsible: also flatten any heavy chrome on inner cards */
+  .m-collapse .m-collapse-body > div[style*="linear-gradient(135deg,#fef3c7"],
+  .m-collapse .m-collapse-body > div[style*="border-left:4px solid"]{
+    background:transparent!important;
+    border:none!important;
+    border-left:3px solid currentColor!important;
+    border-radius:0!important;
+    box-shadow:none!important;
+    padding:6px 0 6px 11px!important;
+  }
+
+  /* fd-metrics inside a collapsible: tighter rows */
+  .m-collapse .fd-metrics{grid-template-columns:1fr;gap:0;margin:0}
+  .m-collapse .fd-metric{padding:8px 0;font-size:12.5px}
+}
+
+/* DESKTOP — collapsibles render as plain blocks: hide the summary toggle,
+   show body unconditionally, no left padding/hairline. Also hide the 52W
+   range bar — the 4-cell row already shows that info on a wide layout. */
+@media(min-width:769px){
+  .m-collapse{display:block}
+  .m-collapse > summary{display:none}
+  .m-collapse > .m-collapse-body{display:block!important}
+  .w52-bar{display:none}
 }
 
 /* Slide-up animation for bottom sheet (top-level, not nested in @media) */
@@ -3275,14 +3423,14 @@ function openStockModal(ticker) {
 
   document.getElementById('stock-modal-body').innerHTML = `
     ${bottomLine ? `
-    <div style="background:${blBg};border-left:4px solid ${blBorder};padding:11px 16px;border-radius:8px;
+    <div class="modal-verdict-box" style="background:${blBg};border-left:4px solid ${blBorder};padding:11px 16px;border-radius:8px;
                 margin-bottom:12px;display:flex;gap:12px;align-items:flex-start">
       <div style="font-size:20px;flex-shrink:0;line-height:1.2">${blIcon}</div>
       <div style="flex:1">
-        <div style="font-size:13px;font-weight:900;color:${blColor};text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px">
+        <div class="verdict-head" style="font-size:13px;font-weight:900;color:${blColor};text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px">
           ${_verdictHead}
         </div>
-        <div style="font-size:13px;color:#0f172a;line-height:1.55;font-weight:500">${bottomLine}</div>
+        <div class="verdict-body" style="font-size:13px;color:#0f172a;line-height:1.55;font-weight:500">${bottomLine}</div>
       </div>
     </div>` : ''}
 
@@ -3348,24 +3496,36 @@ function openStockModal(ticker) {
       const wLo = parseFloat(t.week_52_low  || t.low_52w  || 0);
       const wHi = parseFloat(t.week_52_high || t.high_52w || 0);
       const cells = [];
-      if (tgtMean > 0)             cells.push(`<div><div class="t-lbl">📊 Analyst Target</div><div class="t-val">${fmtP(tgtMean)}</div></div>`);
-      if (upside != null)          cells.push(`<div><div class="t-lbl">Implied Upside</div><div class="t-val ${pCls(upside)}">${fmtPct(upside)}</div></div>`);
-      if (wLo > 0)                 cells.push(`<div><div class="t-lbl">52W Low</div><div class="t-val" style="color:#475569">${fmtP(wLo)}</div></div>`);
-      if (wHi > 0)                 cells.push(`<div><div class="t-lbl">52W High</div><div class="t-val" style="color:#475569">${fmtP(wHi)}</div></div>`);
+      if (tgtMean > 0)             cells.push(`<div class="pt-cell-target"><div class="t-lbl">📊 Analyst Target</div><div class="t-val">${fmtP(tgtMean)}</div></div>`);
+      if (upside != null)          cells.push(`<div class="pt-cell-upside"><div class="t-lbl">Implied Upside</div><div class="t-val ${pCls(upside)}">${fmtPct(upside)}</div></div>`);
+      if (wLo > 0)                 cells.push(`<div class="pt-cell-52w pt-cell-lo"><div class="t-lbl">52W Low</div><div class="t-val" style="color:#475569">${fmtP(wLo)}</div></div>`);
+      if (wHi > 0)                 cells.push(`<div class="pt-cell-52w pt-cell-hi"><div class="t-lbl">52W High</div><div class="t-val" style="color:#475569">${fmtP(wHi)}</div></div>`);
       if (!cells.length) return '';
       const hasTarget = tgtMean > 0;
       const _attr = 'Analyst target = Wall Street 12-month consensus (FMP). NOT a prediction by AlphaHunt.';
+      // 52W range bar — visible only on mobile (CSS hides on desktop, where
+      // the L/H cells already do this job). Shows current price as a dot
+      // along the gradient from 52W low to 52W high.
+      let w52Bar = '';
+      if (wLo > 0 && wHi > 0 && wHi > wLo && price > 0) {
+        const pos = Math.max(0, Math.min(100, ((price - wLo) / (wHi - wLo)) * 100));
+        w52Bar = `<div class="w52-bar" title="52-week range — green dot is today's price">
+          <div class="w52-track"><div class="w52-fill" style="width:${pos.toFixed(1)}%"></div><div class="w52-dot" style="left:${pos.toFixed(1)}%"></div></div>
+          <div class="w52-labels"><span>${fmtP(wLo)} <span style="color:#94a3b8;font-weight:500">52W low</span></span><span><span style="color:#94a3b8;font-weight:500">52W high</span> ${fmtP(wHi)}</span></div>
+        </div>`;
+      }
       return `<div class="price-target-row" style="margin-top:8px;grid-template-columns:repeat(${cells.length},1fr)"
                    title="${hasTarget ? _attr : ''}">
         ${cells.join('')}
-      </div>${hasTarget ? '<div style="font-size:10px;color:#94a3b8;margin-top:4px;text-align:center;font-style:italic">📊 Analyst target = Wall Street 12-month consensus (FMP) · AlphaHunt does not provide price predictions or financial advice</div>' : ''}`;
+      </div>${w52Bar}${hasTarget ? '<div style="font-size:10px;color:#94a3b8;margin-top:4px;text-align:center;font-style:italic">📊 Analyst target = Wall Street 12-month consensus (FMP) · AlphaHunt does not provide price predictions or financial advice</div>' : ''}`;
     })()}
 
     <div id="modal-earnings-card-${ticker}" data-modal-earnings="${ticker}" style="margin-top:12px"></div>
 
     ${(() => {
       const v = valuationVerdict(t);
-      return `<div style="margin-top:12px;padding:14px 16px;border-radius:10px;
+      return `<details class="m-collapse" open><summary>💰 Valuation · <span style="color:${v.color};font-weight:900">${v.verdict}</span></summary><div class="m-collapse-body">
+        <div style="margin-top:12px;padding:14px 16px;border-radius:10px;
                 background:linear-gradient(135deg,#fef3c7 0%,#fef9c3 100%);
                 border:1px solid #fcd34d;border-left:5px solid ${v.border};
                 box-shadow:0 1px 2px rgba(15,23,42,.04);
@@ -3378,7 +3538,8 @@ function openStockModal(ticker) {
             Valuation: ${v.verdict}
           </div>
           <div style="font-size:14px;color:#0f172a;line-height:1.55;font-weight:500">${v.summary}</div>
-        </div>`;
+        </div>
+      </div></details>`;
     })()}
 
     ${(() => {
@@ -3386,7 +3547,8 @@ function openStockModal(ticker) {
       if (!dcf) return '';
       // Position on the difficulty thermometer (0% = far left, 40%+ = full)
       const fillPct = Math.max(2, Math.min(100, (dcf.impliedGrowth + 5) * 2.5));
-      return `<div style="margin-top:8px;padding:12px 14px;border-radius:8px;
+      return `<details class="m-collapse" open><summary>🎯 Reverse DCF · <span style="color:${dcf.color};font-weight:900">${dcf.verdict}</span></summary><div class="m-collapse-body">
+        <div style="margin-top:8px;padding:12px 14px;border-radius:8px;
                 background:${dcf.bg};border-left:4px solid ${dcf.border}">
           <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:8px">
             <div style="font-size:11px;font-weight:800;color:${dcf.color};
@@ -3427,9 +3589,11 @@ function openStockModal(ticker) {
           <div style="font-size:11.5px;color:#475569;line-height:1.5;margin-top:8px;padding-top:6px;border-top:1px dashed ${dcf.border}">
             <strong style="color:${dcf.color}">How to read this:</strong> the bar tells you what the market needs the company to deliver — not whether to buy or sell. Compare the implied growth to what the company is actually doing today. If actual &gt; implied = stock has room. If actual &lt; implied = stock needs an inflection.
           </div>
-        </div>`;
+        </div>
+      </div></details>`;
     })()}
 
+    <details class="m-collapse" open><summary>📊 Key Metrics &amp; Analyst Sentiment</summary><div class="m-collapse-body">
     <div class="fd-metrics" style="margin-top:12px">
       ${metric('Market Cap',    fmtM(t.market_cap))}
       ${metric('Rev Growth YoY',!isNaN(revG)?fmtPct2(t.revenue_growth_yoy):'—',!isNaN(revG)&&revG>0?'pos':!isNaN(revG)?'neg':'')}
@@ -3459,15 +3623,19 @@ function openStockModal(ticker) {
         <div>${rv.summary}</div>
       </div>`;
     })()}
+    </div></details>
 
-    <!-- Quarterly highlights + Pipeline + Investment Thesis (moved ABOVE news) -->
+    <!-- Quarterly highlights + Pipeline (collapsed on mobile) -->
+    <details class="m-collapse" open><summary>📋 Quarterly Highlights &amp; Pipeline</summary><div class="m-collapse-body">
     ${buildQuarterlyBlock(t)}
 
     ${buildPipelineBlock(t)}
+    </div></details>
 
     <!-- Investment Thesis moved up to sit right after the 4 status boxes. -->
 
-    <!-- Latest News (peers block removed — same data shown elsewhere) -->
+    <!-- Latest News (collapsed on mobile) -->
+    <details class="m-collapse" open><summary>📰 Latest News · last 7 days</summary><div class="m-collapse-body">
     <div id="modal-news-${t.ticker}" style="margin-top:14px;border:1px solid #e2e8f0;border-radius:10px;padding:10px 12px;background:#fff">
       <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
         <span style="font-size:13px;font-weight:800;color:#0f172a">📰 Latest News</span>
@@ -3475,9 +3643,10 @@ function openStockModal(ticker) {
       </div>
       <div id="news-body-${t.ticker}" style="font-size:11.5px;color:#475569">Loading…</div>
     </div>
+    </div></details>
 
     <!-- Share button — opens the per-stock A4 tear sheet for this ticker -->
-    <div style="margin-top:14px;padding:14px 16px;background:linear-gradient(135deg,#f0fdf4 0%,#ecfdf5 100%);border:1px solid #bbf7d0;border-radius:10px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+    <div class="modal-cta-tearsheet" style="margin-top:14px;padding:14px 16px;background:linear-gradient(135deg,#f0fdf4 0%,#ecfdf5 100%);border:1px solid #bbf7d0;border-radius:10px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
       <div>
         <div style="font-size:13px;font-weight:800;color:#0f172a">📊 Get the full ${t.ticker} tear sheet</div>
         <div style="font-size:11.5px;color:#475569;margin-top:2px">One-page A4 with the score breakdown, 90-day price chart, last 4 quarters &amp; key metrics. Save as PDF, share as PNG, or print for your records.</div>
@@ -3498,6 +3667,15 @@ function openStockModal(ticker) {
     </div>
   `;
   document.getElementById('stock-modal-overlay').classList.add('open');
+
+  // Mobile-only: collapse advanced sections by default so the first viewport
+  // shows verdict + chart + price target. Desktop keeps everything expanded
+  // (CSS forces summary hidden + body visible on min-width:769px anyway, but
+  // removing the `open` attribute on phones makes the chevrons feel right).
+  if (window.matchMedia && window.matchMedia('(max-width:768px)').matches) {
+    document.querySelectorAll('#stock-modal-body details.m-collapse').forEach(d => d.removeAttribute('open'));
+  }
+
   // Populate the post-earnings card asynchronously
   renderModalEarningsCard(ticker, t);
 
