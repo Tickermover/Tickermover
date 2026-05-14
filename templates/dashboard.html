@@ -602,15 +602,25 @@ tr:hover td{background:rgba(132,204,22,.06)}
     padding-right:env(safe-area-inset-right);
   }
 
-  /* ── HEADER ── compact, single-line ── */
-  .hdr{padding:10px 14px;gap:10px;flex-wrap:nowrap;overflow:hidden}
-  .logo{font-size:18px;flex-shrink:0}
-  .subtitle{display:none}
+  /* ── HEADER ── redesigned for mobile: logo · market chip · avatar ── */
+  .hdr{padding:9px 12px;gap:8px;flex-wrap:nowrap;overflow:visible;align-items:center}
+  .logo{font-size:17px;flex-shrink:0}
+  .logo img{width:26px!important;height:26px!important;margin-right:6px!important}
+  .subtitle,.hdr-tagline{display:none}        /* tagline hidden on phone */
   .badge{font-size:10px;padding:2px 7px;flex-shrink:0}
-  .hdr-stats{gap:10px;margin-left:auto;flex-wrap:nowrap}
-  .hdr-stats .stat-n{font-size:15px}
-  .hdr-stats .stat-l{font-size:9px;letter-spacing:.02em}
-  .hdr-stats .stat:nth-child(n+3){display:none}  /* keep 2 stats max */
+  /* Hide ALL header stats on mobile — Universe / Hot Picks / Top Tier
+     are already visible inside their own tabs, so they're redundant here */
+  .hdr-stats{gap:8px;margin-left:auto;flex-wrap:nowrap;flex-shrink:0;align-items:center}
+  .hdr-stats .stat{display:none}
+  #regime-pill{padding:5px 10px!important;font-size:11px!important;white-space:nowrap}
+  /* Compact user pill: avatar circle only, tiny outline Out button */
+  #auth-btn-wrap{margin-left:6px!important;flex-shrink:0}
+  #auth-btn{padding:7px 14px;font-size:12px}
+  #user-menu{gap:6px!important}
+  #user-menu > div:first-child{padding:0!important;border:none!important;background:transparent!important;border-radius:50%!important}
+  #user-menu > div:first-child > div:last-child{display:none!important}    /* hide email + member label */
+  #user-avatar{width:36px!important;height:36px!important;font-size:15px!important}
+  #user-menu button{padding:6px 9px!important;font-size:11px!important}
 
   /* ── TABS ── horizontal scroll with snap, hidden scrollbar ── */
   .tabs{padding:0 12px;gap:0;-webkit-overflow-scrolling:touch;
@@ -702,6 +712,12 @@ tr:hover td{background:rgba(132,204,22,.06)}
   #stock-modal-body [style*="repeat(4,1fr)"]{grid-template-columns:repeat(2,1fr)!important}
   .stock-modal-panel [style*="repeat(3,1fr)"],
   #stock-modal-body [style*="repeat(3,1fr)"]{grid-template-columns:repeat(2,1fr)!important}
+  /* Daily Top 5 grid — 5-up would crush each card to ~60px on phone, collapse to 2-up */
+  [style*="repeat(5,1fr)"]{grid-template-columns:repeat(2,1fr)!important}
+
+  /* Earnings card "Reported …" date — drop to its own line, left-aligned,
+     instead of staying right-aligned after wrap (looked detached on phone) */
+  .earnings-reported-date{margin-left:0!important;flex-basis:100%;font-size:10.5px!important}
 
   /* ── MODEL PORTFOLIO ── force 1-up cards, 2-up stats grid ── */
   #model-portfolio-root [style*="repeat(4,1fr)"]{grid-template-columns:1fr!important}
@@ -732,12 +748,13 @@ tr:hover td{background:rgba(132,204,22,.06)}
 
 /* ── Small phones (≤480px) — extra-tight ── */
 @media(max-width:480px){
-  .hdr{padding:8px 12px}
+  .hdr{padding:8px 10px;gap:6px}
   .logo{font-size:16px}
+  .logo img{width:24px!important;height:24px!important;margin-right:5px!important}
   .badge.live,.badge.ai{display:none}  /* keep header lean */
-  .hdr-stats{gap:8px}
-  .hdr-stats .stat-n{font-size:14px}
-  .hdr-stats .stat-l{font-size:8.5px}
+  .hdr-stats{gap:6px}
+  #regime-pill{padding:4px 9px!important;font-size:10.5px!important}
+  #user-avatar{width:32px!important;height:32px!important;font-size:14px!important}
 
   .tab{padding:9px 10px;font-size:11.5px}
   .main{padding:12px 10px}
@@ -1020,7 +1037,7 @@ tr:hover td{background:rgba(132,204,22,.06)}
     <div>
       <div class="logo"><img src="/static/icons/alpha-logo-64.png" alt="" width="32" height="32" style="display:inline-block;vertical-align:middle;margin-right:8px;margin-bottom:2px">Alpha<span>Hunt</span>
       </div>
-      <div style="font-size:10.5px;color:#374151;letter-spacing:.6px;margin-top:2px;padding-left:2px">Hunt Alpha · Trade Smart · AI-Powered</div>
+      <div class="hdr-tagline" style="font-size:10.5px;color:#374151;letter-spacing:.6px;margin-top:2px;padding-left:2px">Hunt Alpha · Trade Smart · AI-Powered</div>
     </div>
   </div>
   <div class="hdr-stats">
@@ -3092,7 +3109,7 @@ function renderModalEarningsCard(ticker, t) {
       }
 
       const dateLine = displayDate ?
-        ('<span style="font-size:11px;color:#64748b;margin-left:auto">Reported ' + displayDate + (daysAgo!=null?' &middot; '+_agoText(daysAgo):'') + '</span>') : '';
+        ('<span class="earnings-reported-date" style="font-size:11px;color:#64748b;margin-left:auto">Reported ' + displayDate + (daysAgo!=null?' &middot; '+_agoText(daysAgo):'') + '</span>') : '';
 
       const staleNote = (staleClass === 'dated' || staleClass === 'stale') ?
         '<div style="font-size:11px;color:#92400e;font-style:italic;margin-bottom:8px">⚠ This is the latest publicly-filed earnings (8-K). The next quarter has not yet been published by this company.</div>' : '';
