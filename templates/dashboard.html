@@ -765,16 +765,17 @@ tr:hover td{background:rgba(132,204,22,.06)}
   /* Compact gauge: cap visual width so the right column doesn't dominate */
   .stock-modal-panel .fd-head > div:last-child svg{max-width:140px!important;height:auto!important}
 
-  /* Investment Thesis + Tailwinds — strip green bg, use hairline */
+  /* Investment Thesis + Tailwinds — keep the soft-green tint (it's a
+     visual anchor on an otherwise flat layout) but with a slightly
+     tighter padding for phone */
   .stock-modal-panel .fd-summary{
-    background:transparent!important;
-    border-left:none!important;
-    border-top:1px solid #f1f5f9;
-    border-bottom:1px solid #f1f5f9;
-    border-radius:0!important;
-    padding:11px 0!important;
+    background:rgba(132,204,22,.07)!important;
+    border-left:3px solid var(--acc)!important;
+    border-radius:8px!important;
+    padding:10px 12px!important;
     margin:10px 0!important;
     font-size:12.5px!important;
+    line-height:1.55!important;
   }
 
   /* Price-target row — flat, no blue gradient. Hide 52W L/H cells
@@ -790,12 +791,14 @@ tr:hover td{background:rgba(132,204,22,.06)}
   .stock-modal-panel .price-target-row .pt-cell-52w{display:none!important}
 
   /* 52-week range bar (visible only on mobile — replaces 52W L/H cells visually) */
-  .w52-bar{display:block;margin-top:8px;padding:0 2px}
-  .w52-track{position:relative;height:6px;background:#e2e8f0;border-radius:3px}
-  .w52-fill{position:absolute;left:0;top:0;height:100%;background:linear-gradient(90deg,#94a3b8,#15803d);border-radius:3px}
-  .w52-dot{position:absolute;top:-3px;width:12px;height:12px;border-radius:50%;background:#15803d;border:2px solid #fff;box-shadow:0 1px 4px rgba(15,23,42,.25);transform:translateX(-50%)}
-  .w52-labels{display:flex;justify-content:space-between;margin-top:6px;font-size:10.5px;color:#64748b;font-weight:600;font-variant-numeric:tabular-nums}
-  .w52-labels span:last-child{font-weight:700;color:#0f172a}
+  .w52-bar{display:block;margin-top:14px;padding:0 6px 4px}
+  .w52-bar-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;font-size:10.5px;font-weight:800;color:#475569;letter-spacing:.04em;text-transform:uppercase}
+  .w52-bar-head .w52-cur{color:#15803d;font-size:12px;font-weight:900;text-transform:none;letter-spacing:0;font-variant-numeric:tabular-nums}
+  .w52-track{position:relative;height:10px;background:linear-gradient(90deg,#fee2e2 0%,#fef3c7 50%,#dcfce7 100%);border-radius:5px;border:1px solid #e2e8f0;box-shadow:inset 0 1px 2px rgba(15,23,42,.04)}
+  .w52-fill{position:absolute;left:0;top:0;height:100%;background:linear-gradient(90deg,rgba(21,128,61,.18) 0%,rgba(21,128,61,.45) 100%);border-radius:4px}
+  .w52-dot{position:absolute;top:-4px;width:18px;height:18px;border-radius:50%;background:linear-gradient(135deg,#15803d,#84cc16);border:3px solid #fff;box-shadow:0 2px 6px rgba(15,128,61,.45);transform:translateX(-50%);z-index:1}
+  .w52-labels{display:flex;justify-content:space-between;margin-top:7px;font-size:10.5px;color:#64748b;font-weight:600;font-variant-numeric:tabular-nums}
+  .w52-labels strong{color:#0f172a;font-weight:800}
 
   /* Earnings card — strip yellow/green box chrome, use hairline */
   .stock-modal-panel [data-modal-earnings] > div{
@@ -828,7 +831,9 @@ tr:hover td{background:rgba(132,204,22,.06)}
   /* External links — hairline top */
   .stock-modal-panel .fd-links{border-top:1px solid #f1f5f9;padding-top:12px}
 
-  /* ── COLLAPSIBLE SECTIONS — native <details> for Valuation, DCF, Metrics, etc. */
+  /* ── SECTION DIVIDERS — render <details> as flat section groups.
+     Everything stays visible (no collapse). The summary becomes a small
+     uppercase header that visually groups the content below it. */
   .m-collapse{
     border-top:1px solid #f1f5f9;
     margin:0;
@@ -836,28 +841,18 @@ tr:hover td{background:rgba(132,204,22,.06)}
   }
   .m-collapse > summary{
     list-style:none;
-    cursor:pointer;
-    padding:12px 2px;
-    font-size:13px;
+    padding:13px 2px 4px;
+    font-size:11px;
     font-weight:800;
-    color:#0f172a;
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:8px;
-    -webkit-tap-highlight-color:rgba(132,204,22,.15);
+    color:#475569;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    display:block;
+    pointer-events:none;        /* not interactive on mobile either */
   }
   .m-collapse > summary::-webkit-details-marker{display:none}
-  .m-collapse > summary::after{
-    content:'›';
-    font-size:18px;
-    line-height:1;
-    color:#94a3b8;
-    transition:transform .2s;
-    font-weight:400;
-  }
-  .m-collapse[open] > summary::after{transform:rotate(90deg)}
-  .m-collapse > .m-collapse-body{padding:2px 0 14px}
+  .m-collapse > summary::after{content:none}
+  .m-collapse > .m-collapse-body{display:block!important;padding:2px 0 12px}
 
   /* Inside a collapsible: also flatten any heavy chrome on inner cards */
   .m-collapse .m-collapse-body > div[style*="linear-gradient(135deg,#fef3c7"],
@@ -3510,8 +3505,9 @@ function openStockModal(ticker) {
       if (wLo > 0 && wHi > 0 && wHi > wLo && price > 0) {
         const pos = Math.max(0, Math.min(100, ((price - wLo) / (wHi - wLo)) * 100));
         w52Bar = `<div class="w52-bar" title="52-week range — green dot is today's price">
+          <div class="w52-bar-head"><span>52-week range</span><span class="w52-cur">${fmtP(price)}</span></div>
           <div class="w52-track"><div class="w52-fill" style="width:${pos.toFixed(1)}%"></div><div class="w52-dot" style="left:${pos.toFixed(1)}%"></div></div>
-          <div class="w52-labels"><span>${fmtP(wLo)} <span style="color:#94a3b8;font-weight:500">52W low</span></span><span><span style="color:#94a3b8;font-weight:500">52W high</span> ${fmtP(wHi)}</span></div>
+          <div class="w52-labels"><span><strong>${fmtP(wLo)}</strong> low</span><span>high <strong>${fmtP(wHi)}</strong></span></div>
         </div>`;
       }
       return `<div class="price-target-row" style="margin-top:8px;grid-template-columns:repeat(${cells.length},1fr)"
@@ -3667,14 +3663,6 @@ function openStockModal(ticker) {
     </div>
   `;
   document.getElementById('stock-modal-overlay').classList.add('open');
-
-  // Mobile-only: collapse advanced sections by default so the first viewport
-  // shows verdict + chart + price target. Desktop keeps everything expanded
-  // (CSS forces summary hidden + body visible on min-width:769px anyway, but
-  // removing the `open` attribute on phones makes the chevrons feel right).
-  if (window.matchMedia && window.matchMedia('(max-width:768px)').matches) {
-    document.querySelectorAll('#stock-modal-body details.m-collapse').forEach(d => d.removeAttribute('open'));
-  }
 
   // Populate the post-earnings card asynchronously
   renderModalEarningsCard(ticker, t);
@@ -6469,8 +6457,41 @@ function showUpgradeSuccess() {
 
 /* Form */
 .ah-form-wrap{max-width:360px;width:100%}
+.ah-form-head{margin-bottom:24px}
 .ah-form-title{font-size:28px;font-weight:900;color:#0a0a0a;margin-bottom:6px;letter-spacing:-.02em}
-.ah-form-sub{font-size:14px;color:#64748b;margin-bottom:32px}
+.ah-form-sub{font-size:14px;color:#64748b}
+
+/* Mobile hero strip — desktop hides this (the dark .ah-left panel
+   already covers the showcase role). On phones it gives the login
+   screen its visual identity. */
+.ah-mobile-hero{display:none}
+
+/* "First time?" friendly copy, replacing the casual "we'll create..." line */
+.ah-first-time{
+  margin-top:14px;
+  padding:11px 14px;
+  background:#f8fafc;
+  border:1px solid #e2e8f0;
+  border-radius:10px;
+  font-size:12px;
+  color:#475569;
+  line-height:1.55;
+  text-align:left;
+}
+
+/* Trust strip — sits below the form, calm tone */
+.ah-trust{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:6px;
+  margin-top:18px;
+  font-size:11px;
+  color:#94a3b8;
+  font-weight:600;
+}
+.ah-trust span:nth-child(even){color:#cbd5e1}
 .ah-field{margin-bottom:18px}
 .ah-field label{display:block;font-size:12px;font-weight:700;color:#374151;margin-bottom:6px}
 .ah-field input{
@@ -6535,23 +6556,75 @@ function showUpgradeSuccess() {
 /* View states */
 .ah-view{display:none}.ah-view.on{display:block}
 
-/* Mobile — auth modal goes full-bleed */
+/* Mobile — auth modal goes full-bleed and gains its own hero strip */
 @media(max-width:700px){
   #auth-modal{padding:0}
-  .ah-wrap{max-height:100vh;height:100vh;border-radius:0;width:100%}
+  .ah-wrap{max-height:100vh;height:100vh;border-radius:0;width:100%;box-shadow:none}
   .ah-left{display:none}
-  .ah-right{padding:24px 18px;overflow-y:auto;max-height:100vh;-webkit-overflow-scrolling:touch}
-  .ah-form-wrap{max-width:100%}
-  .ah-form-title{font-size:22px}
-  .ah-form-sub{font-size:13px;margin-bottom:22px}
+  .ah-right{padding:0 0 28px;overflow-y:auto;max-height:100vh;-webkit-overflow-scrolling:touch;background:#fff}
+  .ah-form-wrap{max-width:100%;padding:0 20px}
+  .ah-form-head{margin-bottom:20px;text-align:left}
+  .ah-form-title{font-size:24px}
+  .ah-form-sub{font-size:13px}
   .ah-field{margin-bottom:14px}
-  .ah-field input{font-size:16px;padding:12px 14px}  /* 16px = no iOS zoom */
-  .ah-submit{padding:13px;font-size:15px;margin-bottom:14px}
+  .ah-field label{font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:#475569}
+  .ah-field input{font-size:16px;padding:13px 14px;border-radius:10px}  /* 16px = no iOS zoom */
+  .ah-submit{padding:14px;font-size:15px;margin-bottom:0;border-radius:10px}
   .ah-opt{padding:11px 12px;margin-bottom:8px}
   .ah-opt-title{font-size:13px}
   .ah-opt-desc{font-size:11px}
   .ah-steps-prog{margin-bottom:18px}
-  .ah-close-btn{top:10px;right:10px}
+  .ah-close-btn{top:12px;right:14px;background:rgba(255,255,255,.9);box-shadow:0 2px 8px rgba(15,23,42,.15)}
+
+  /* ── Mobile hero — small dark showcase at the top of the login view ── */
+  .ah-mobile-hero{
+    display:block;
+    background:radial-gradient(ellipse 90% 100% at 0% 0%, rgba(132,204,22,.20) 0%, transparent 60%),
+               radial-gradient(ellipse 80% 100% at 100% 100%, rgba(74,222,128,.16) 0%, transparent 55%),
+               #070d12;
+    color:#fff;
+    padding:34px 20px 22px;
+    margin:0 0 24px;
+    position:relative;
+    overflow:hidden;
+  }
+  .ah-mobile-hero-logo{
+    display:flex;align-items:center;gap:8px;
+    font-size:18px;font-weight:900;letter-spacing:-.4px;
+    margin-bottom:14px;
+  }
+  .ah-mobile-hero-logo img{display:block;background:#fff;border-radius:5px;padding:2px}
+  .ah-mobile-hero-logo span{color:#fff}
+  .ah-mobile-hero-logo em{font-style:normal;color:#4ade80}
+
+  .ah-mobile-hero-tag{
+    font-size:15px;font-weight:600;line-height:1.4;
+    color:rgba(240,253,244,.92);
+    margin-bottom:18px;
+    max-width:280px;
+  }
+
+  .ah-mobile-hero-stats{
+    display:grid;grid-template-columns:repeat(3,1fr);
+    gap:0;padding-top:14px;
+    border-top:1px solid rgba(255,255,255,.15);
+  }
+  .ah-mobile-hero-stats > div{text-align:center;position:relative}
+  .ah-mobile-hero-stats > div:not(:last-child)::after{
+    content:'';position:absolute;right:0;top:6px;bottom:6px;width:1px;
+    background:rgba(255,255,255,.12);
+  }
+  .ah-mobile-hero-stats strong{
+    display:block;font-size:18px;font-weight:900;color:#a3e635;line-height:1;
+  }
+  .ah-mobile-hero-stats span{
+    display:block;font-size:10px;color:rgba(255,255,255,.55);
+    margin-top:4px;text-transform:uppercase;letter-spacing:.06em;font-weight:600;
+  }
+
+  /* "First time?" + trust strip — pull them slightly closer to the submit */
+  .ah-first-time{font-size:11.5px;margin-top:12px;padding:10px 12px}
+  .ah-trust{margin-top:14px;font-size:10.5px}
 }
 @media(max-width:480px){
   .ah-right{padding:20px 14px}
@@ -6618,13 +6691,30 @@ function showUpgradeSuccess() {
 
     <!-- ── SIGN IN ── -->
     <div id="ah-view-signin" class="ah-view on">
-      <div style="margin-bottom:32px">
-        <div class="ah-form-title">Welcome back</div>
-        <div class="ah-form-sub">Sign in to your AlphaHunt account</div>
+
+      <!-- Mobile-only hero strip: small showcase so the login screen still
+           feels like AlphaHunt on phones (where the left dark panel hides) -->
+      <div class="ah-mobile-hero">
+        <div class="ah-mobile-hero-logo">
+          <img src="/static/icons/alpha-logo-bare-64.png" width="22" height="22" alt="">
+          <span>Alpha<em>Hunt</em></span>
+        </div>
+        <div class="ah-mobile-hero-tag">AI-powered signals on 187 US stocks</div>
+        <div class="ah-mobile-hero-stats">
+          <div><strong>187</strong><span>Universe</span></div>
+          <div><strong>5 min</strong><span>Updates</span></div>
+          <div><strong>Free</strong><span>Forever</span></div>
+        </div>
       </div>
+
+      <div class="ah-form-head">
+        <div class="ah-form-title">Sign in</div>
+        <div class="ah-form-sub">Welcome back to AlphaHunt</div>
+      </div>
+
       <div class="ah-field">
-        <label>Email address</label>
-        <input id="auth-email" type="email" placeholder="you@example.com" onkeydown="if(event.key==='Enter')document.getElementById('auth-password').focus()">
+        <label>Email</label>
+        <input id="auth-email" type="email" autocomplete="email" placeholder="you@example.com" onkeydown="if(event.key==='Enter')document.getElementById('auth-password').focus()">
       </div>
       <div class="ah-field">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
@@ -6632,14 +6722,27 @@ function showUpgradeSuccess() {
           <button class="ah-forgot" onclick="authForgotPassword()">Forgot password?</button>
         </div>
         <div class="ah-pwd-wrap">
-          <input id="auth-password" type="password" placeholder="Enter your password" onkeydown="if(event.key==='Enter')authSubmit()">
+          <input id="auth-password" type="password" autocomplete="current-password" placeholder="Enter your password" onkeydown="if(event.key==='Enter')authSubmit()">
           <button class="ah-pwd-eye" onclick="togglePwd('auth-password',this)">👁</button>
         </div>
       </div>
       <div id="auth-error" class="ah-err"></div>
-      <button id="auth-submit" class="ah-submit" onclick="authSubmit()">Sign In →</button>
-      <div class="ah-toggle-row" style="text-align:center;color:#94a3b8;font-size:12px;margin-top:14px">
-        New here? Just enter your email and a password — we'll create your account automatically.
+      <button id="auth-submit" class="ah-submit" onclick="authSubmit()">Sign in →</button>
+
+      <!-- Cleaner "first time?" line: explains the create-on-first-sign-in
+           behaviour without sounding casual or unprofessional. -->
+      <div class="ah-first-time">
+        First time on AlphaHunt? Enter the email and password you'd like to use — your account is created automatically when you sign in.
+      </div>
+
+      <!-- Trust strip — same row of signals you'd expect from any modern
+           sign-in screen. Free tier framing, bank-grade security. -->
+      <div class="ah-trust">
+        <span>🔒 Bank-grade security</span>
+        <span>·</span>
+        <span>No credit card</span>
+        <span>·</span>
+        <span>Free forever</span>
       </div>
     </div>
 
