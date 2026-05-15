@@ -2669,13 +2669,17 @@ function v2RenderSectors(tickers){
     '</div>';
 }
 
-/* ── Recent Earnings timeline (last 5 reports across universe) ──── */
+/* ── Recent Earnings timeline (last 5 reports across universe) ────
+   IMPORTANT: backend stores eps_quarters in OLDEST-FIRST order, so
+   the latest report is the LAST element. Sort descending by date
+   per ticker to be order-agnostic, then pick the latest one each. */
 function v2RenderEarnings(tickers){
   const items = [];
   tickers.forEach(t => {
-    const q = (t.eps_quarters || [])[0];
-    if (!q || !q.date) return;
-    items.push({ t: t, q: q });
+    const all = (t.eps_quarters || []).filter(q => q && q.date);
+    if (!all.length) return;
+    const sorted = [...all].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+    items.push({ t: t, q: sorted[0] });
   });
   items.sort((a, b) => (b.q.date || '').localeCompare(a.q.date || ''));
   const top5 = items.slice(0, 5);
@@ -2880,35 +2884,46 @@ function v2RenderPerformanceChart(tickers){
     '</div>';
 }
 
-/* ── Upcoming earnings (next 60 days, sorted by closest date)
-   Field is t.earnings_date — confirmed from data_coordinator.py
-   where coordinator.earnings_date is the NEXT scheduled report. */
+/* ── Upcoming earnings (next 90 days, sorted by closest date)
+   The universe API doesn't actually populate the *_date fields
+   (all return null). But t.days_to_earnings IS populated by the
+   backend, so we derive the date from "today + N days". Fall back
+   to the named date fields in case the backend adds them later. */
 function v2RenderUpcomingEarnings(tickers){
   const now = new Date();
   now.setHours(0, 0, 0, 0);
   const upcoming = tickers
     .map(t => {
-      const dateStr = t.earnings_date || t.next_earnings_date || t.eps_date_next;
-      if (!dateStr) return null;
-      const d = new Date(String(dateStr).slice(0, 10) + 'T00:00:00');
-      if (isNaN(d) || d < now) return null;
-      const days = Math.round((d - now) / 86400000);
-      if (days > 60) return null;
+      let d = null, days = null;
+      // Preferred: explicit numeric days-until-earnings
+      if (t.days_to_earnings != null && t.days_to_earnings >= 0){
+        days = Number(t.days_to_earnings);
+        d = new Date(now.getTime() + days * 86400000);
+      } else {
+        // Fallback for backends that DO populate a real date string
+        const dateStr = t.earnings_date || t.next_earnings_date || t.eps_date_next;
+        if (!dateStr) return null;
+        d = new Date(String(dateStr).slice(0, 10) + 'T00:00:00');
+        if (isNaN(d)) return null;
+        days = Math.round((d - now) / 86400000);
+        if (days < 0) return null;
+      }
+      if (days > 90) return null;
       return { t, d, days };
     })
     .filter(Boolean)
-    .sort((a, b) => a.d - b.d)
+    .sort((a, b) => a.days - b.days)
     .slice(0, 5);
 
   const head = '<div class="v2ov-card-head"><div>' +
     '<div class="v2ov-title">📅 Upcoming Earnings</div>' +
-    '<div class="v2ov-sub">Next 60 days · sorted by closest date</div>' +
+    '<div class="v2ov-sub">Next 90 days · sorted by closest date</div>' +
     '</div></div>';
 
   if (!upcoming.length){
     return '<div class="v2ov-card">' + head +
       '<div style="padding:14px 4px;color:#94a3b8;font-size:12.5px;text-align:center">' +
-        'No earnings scheduled in the next 60 days for stocks in our universe.' +
+        'No earnings scheduled in the next 90 days for stocks in our universe.' +
       '</div></div>';
   }
 
