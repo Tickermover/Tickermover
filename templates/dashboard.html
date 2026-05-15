@@ -1844,7 +1844,16 @@ html.v2-dark body.v2 .v2-topbar{
 .v2ov-dist-seg.d{background:#fb923c}
 .v2ov-dist-seg.f{background:#dc2626}
 .v2ov-dist-legend{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:14px}
-.v2ov-dist-cell{text-align:center;padding:8px 4px;border-radius:8px;background:#f1f5f9}
+.v2ov-dist-cell{
+  text-align:center;padding:8px 4px;border-radius:8px;background:#f1f5f9;
+  cursor:pointer;
+  transition:transform .15s,box-shadow .2s,background .15s;
+}
+.v2ov-dist-cell:hover{
+  transform:translateY(-2px);
+  box-shadow:0 6px 14px rgba(15,23,42,.08);
+}
+html.v2-dark .v2ov-dist-cell:hover{box-shadow:0 6px 14px rgba(0,0,0,.35)}
 .v2ov-dist-cell .v{font-size:18px;font-weight:800;line-height:1}
 .v2ov-dist-cell .l{font-size:10px;color:#64748b;font-weight:700;margin-top:3px;letter-spacing:.04em}
 .v2ov-dist-cell.a .v{color:#15803d}.v2ov-dist-cell.b .v{color:#84cc16}.v2ov-dist-cell.c .v{color:#ca8a04}.v2ov-dist-cell.d .v{color:#ea580c}.v2ov-dist-cell.f .v{color:#b91c1c}
@@ -2479,6 +2488,27 @@ function v2EscHTML(s){
   return (s || '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 }
 
+/* Score-Distribution cell click → jump to Universe tab + apply the
+   grade filter so the user lands on just the bucket they tapped. */
+function v2FilterUniverseByGrade(g){
+  // 1. Switch to Universe view (uses the existing showTab pipeline so
+  //    panel-fund becomes active and renderFundamentals runs).
+  v2Show('fund', null);
+  // 2. Wait one tick so the panel is in the DOM, then set the grade
+  //    dropdown + re-run the existing filterFund() function.
+  setTimeout(() => {
+    const sel = document.getElementById('fd-grade');
+    if (sel){
+      sel.value = g || '';
+      if (typeof filterFund === 'function') filterFund();
+      // Visual nudge so the user notices the filter is now applied
+      sel.focus({preventScroll:true});
+      sel.style.boxShadow = '0 0 0 3px rgba(99,102,241,.35)';
+      setTimeout(() => { sel.style.boxShadow = ''; }, 1200);
+    }
+  }, 50);
+}
+
 /* ── KPI strip — top 10 picks, all visible (no rotation), each card
    colored by hot-tier so the strip reads at a glance.                */
 function v2HotTier(score){
@@ -2566,11 +2596,11 @@ function v2RenderDistAndMovers(tickers){
         '<div class="v2ov-dist-seg f" style="width:' + pct('F') + '%"></div>' +
       '</div></div>' +
       '<div class="v2ov-dist-legend">' +
-        '<div class="v2ov-dist-cell a"><div class="v">' + grades.A + '</div><div class="l">A · Top</div></div>' +
-        '<div class="v2ov-dist-cell b"><div class="v">' + grades.B + '</div><div class="l">B · Qual</div></div>' +
-        '<div class="v2ov-dist-cell c"><div class="v">' + grades.C + '</div><div class="l">C · Avg</div></div>' +
-        '<div class="v2ov-dist-cell d"><div class="v">' + grades.D + '</div><div class="l">D · Below</div></div>' +
-        '<div class="v2ov-dist-cell f"><div class="v">' + grades.F + '</div><div class="l">F · Weak</div></div>' +
+        '<div class="v2ov-dist-cell a" onclick="v2FilterUniverseByGrade(\'A\')" title="Open Universe filtered to Top Tier"><div class="v">' + grades.A + '</div><div class="l">A · Top</div></div>' +
+        '<div class="v2ov-dist-cell b" onclick="v2FilterUniverseByGrade(\'B\')" title="Open Universe filtered to Quality"><div class="v">' + grades.B + '</div><div class="l">B · Qual</div></div>' +
+        '<div class="v2ov-dist-cell c" onclick="v2FilterUniverseByGrade(\'C\')" title="Open Universe filtered to Average"><div class="v">' + grades.C + '</div><div class="l">C · Avg</div></div>' +
+        '<div class="v2ov-dist-cell d" onclick="v2FilterUniverseByGrade(\'D\')" title="Open Universe filtered to Below Avg"><div class="v">' + grades.D + '</div><div class="l">D · Below</div></div>' +
+        '<div class="v2ov-dist-cell f" onclick="v2FilterUniverseByGrade(\'F\')" title="Open Universe filtered to Weak"><div class="v">' + grades.F + '</div><div class="l">F · Weak</div></div>' +
       '</div>' +
       '<div class="v2ov-movers-section">' +
         '<div class="v2ov-movers-h">Today\'s biggest movers</div>' +
