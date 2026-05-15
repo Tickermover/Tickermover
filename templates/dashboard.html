@@ -1422,8 +1422,24 @@ html.v2-dark .v2ov-skeleton .sk{background:linear-gradient(90deg,#121821 0%,#1f2
 .v2ov-tic-logo.sm .fb{font-size:11px}
 .v2ov-tic-logo.lg{width:40px;height:40px;border-radius:10px}
 
-/* ── KPI strip — 10 cards, 5x2 grid, colored by hotness ────── */
-.v2ov-kpi-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:20px}
+/* ── KPI strip — 10 cards, locked to 5x2 on desktop. Cards are
+   compact enough that 5 fit cleanly down to a ~1000px content area. */
+.v2ov-kpi-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:20px}
+.v2ov-kpi{padding:13px 12px!important;min-width:0}
+.v2ov-kpi-head{margin-bottom:10px!important;gap:8px!important}
+.v2ov-kpi-head > div:last-child{min-width:0;overflow:hidden}
+.v2ov-kpi-name{font-size:12.5px!important;line-height:1.15!important}
+.v2ov-kpi-tic{font-size:10.5px!important}
+.v2ov-kpi-row{gap:6px!important}
+.v2ov-kpi-price{font-size:17px!important;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.v2ov-kpi-chg{font-size:10.5px!important;padding:2px 6px!important;flex-shrink:0;white-space:nowrap}
+.v2ov-kpi-foot{margin-top:8px!important;padding-top:8px!important;gap:6px}
+.v2ov-kpi-score{font-size:10.5px!important;white-space:nowrap}
+.v2ov-kpi-score strong{font-size:12px!important}
+.v2ov-kpi-stars{font-size:10px!important;letter-spacing:.5px!important;white-space:nowrap}
+/* Logo at 32px (small) — was 40px (lg) — buys 8px back per card */
+.v2ov-kpi-head .v2ov-tic-logo{width:32px;height:32px;border-radius:7px}
+.v2ov-kpi-head .v2ov-tic-logo .fb{font-size:12px}
 /* One-time entry animation on first paint, staggered per card */
 @keyframes v2-kpi-in{
   from{opacity:0;transform:translateY(6px)}
@@ -1639,12 +1655,15 @@ html.v2-dark .v2ov-period-tab.active{background:#374151;color:#f1f5f9}
 html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 
 /* Mobile — overview widgets stack */
-@media (max-width: 1280px){
-  .v2ov-kpi-grid{grid-template-columns:repeat(4,1fr)}
-}
+/* Hold 5-col as long as possible so the 10 cards stay in 2 clean rows.
+   Drop columns only when the cards would actually overflow. */
 @media (max-width: 1100px){
   .v2ov-row{grid-template-columns:1fr}
+  .v2ov-row.equal{grid-template-columns:1fr}
   .v2ov-sector-grid{grid-template-columns:repeat(3,1fr)}
+  .v2ov-kpi-grid{grid-template-columns:repeat(4,1fr)}
+}
+@media (max-width: 880px){
   .v2ov-kpi-grid{grid-template-columns:repeat(3,1fr)}
 }
 @media (max-width: 768px){
