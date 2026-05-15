@@ -1241,14 +1241,15 @@ body.v2 .ticker-chip .px{color:#cbd5e1!important}
   box-shadow:0 24px 60px rgba(15,23,42,.25),0 8px 20px rgba(15,23,42,.15);
 }
 
-/* ── Sidebar (always dark, fills the fixed-height .v2-app) ──────── */
+/* ── Sidebar (always dark, fills the fixed-height .v2-app)
+   No scrollbar — menu is fixed, items fit within viewport. */
 .v2-sidebar{
   background:#0a0e15;
   border-right:1px solid #1f2937;
   padding:18px 14px;
   display:flex;flex-direction:column;
   height:100%;
-  overflow-y:auto;
+  overflow:hidden;
   position:relative;
   color:#e2e8f0;
 }
