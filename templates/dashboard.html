@@ -1422,18 +1422,59 @@ html.v2-dark .v2ov-skeleton .sk{background:linear-gradient(90deg,#121821 0%,#1f2
 .v2ov-tic-logo.sm .fb{font-size:11px}
 .v2ov-tic-logo.lg{width:40px;height:40px;border-radius:10px}
 
-/* ── KPI strip ───────────────────────────────────────────────── */
+/* ── KPI strip — 10 cards, 5x2 grid, colored by hotness ────── */
 .v2ov-kpi-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:20px}
-/* Each card fades + slides in from the right on (re-)render so the
-   periodic 10-stock rotation FEELS like the cards are flipping into
-   place rather than a hard swap. Staggered by index via inline delay. */
+/* One-time entry animation on first paint, staggered per card */
 @keyframes v2-kpi-in{
-  from{opacity:0;transform:translateX(14px)}
-  to{opacity:1;transform:translateX(0)}
+  from{opacity:0;transform:translateY(6px)}
+  to{opacity:1;transform:translateY(0)}
 }
 .v2ov-kpi-grid > .v2ov-kpi{
-  animation:v2-kpi-in .45s cubic-bezier(.22,.61,.36,1) both;
+  animation:v2-kpi-in .4s cubic-bezier(.22,.61,.36,1) both;
 }
+
+/* Hot-tier colours — match the Sector Map palette so the dashboard
+   reads as one design system: green = strong, yellow = mid, red = weak */
+.v2ov-kpi.hot1{background:#dcfce7;border-color:rgba(22,163,74,.35)}
+.v2ov-kpi.hot2{background:#bbf7d0;border-color:rgba(22,163,74,.25)}
+.v2ov-kpi.hot3{background:#fef3c7;border-color:rgba(180,83,9,.30)}
+.v2ov-kpi.hot4{background:#fed7aa;border-color:rgba(180,83,9,.40)}
+.v2ov-kpi.hot5{background:#fecaca;border-color:rgba(220,38,38,.30)}
+html.v2-dark .v2ov-kpi.hot1{background:rgba(22,163,74,.18);border-color:rgba(22,163,74,.40)}
+html.v2-dark .v2ov-kpi.hot2{background:rgba(132,204,22,.14);border-color:rgba(132,204,22,.30)}
+html.v2-dark .v2ov-kpi.hot3{background:rgba(250,204,21,.10);border-color:rgba(180,83,9,.30)}
+html.v2-dark .v2ov-kpi.hot4{background:rgba(251,146,60,.14);border-color:rgba(180,83,9,.40)}
+html.v2-dark .v2ov-kpi.hot5{background:rgba(220,38,38,.14);border-color:rgba(220,38,38,.30)}
+
+/* Equal-width 2-col row variant (used for Recent + Upcoming earnings) */
+.v2ov-row.equal{grid-template-columns:1fr 1fr}
+
+/* Upcoming-earnings tag colour — indigo, not green */
+.v2ov-tl-tag.upcoming{background:rgba(99,102,241,.12);color:#4338ca}
+html.v2-dark .v2ov-tl-tag.upcoming{background:rgba(99,102,241,.18);color:#a5b4fc}
+
+/* ── Scrollbar theming — slate/indigo, no leftover brand-green ── */
+.v2-content::-webkit-scrollbar,.v2-sidebar::-webkit-scrollbar,
+.v2ov-trend-wrap::-webkit-scrollbar,.fund-list-wrap::-webkit-scrollbar{
+  width:8px;height:8px;
+}
+.v2-content::-webkit-scrollbar-track,.v2-sidebar::-webkit-scrollbar-track,
+.v2ov-trend-wrap::-webkit-scrollbar-track,.fund-list-wrap::-webkit-scrollbar-track{
+  background:transparent;
+}
+.v2-content::-webkit-scrollbar-thumb,
+.v2ov-trend-wrap::-webkit-scrollbar-thumb,
+.fund-list-wrap::-webkit-scrollbar-thumb{
+  background:#cbd5e1;border-radius:4px;
+}
+.v2-content::-webkit-scrollbar-thumb:hover,
+.v2ov-trend-wrap::-webkit-scrollbar-thumb:hover,
+.fund-list-wrap::-webkit-scrollbar-thumb:hover{background:#94a3b8}
+.v2-sidebar::-webkit-scrollbar-thumb{background:#1f2937;border-radius:4px}
+.v2-sidebar::-webkit-scrollbar-thumb:hover{background:#374151}
+body.v2 *{scrollbar-color:#cbd5e1 transparent;scrollbar-width:thin}
+body.v2 .v2-sidebar{scrollbar-color:#1f2937 transparent}
+html.v2-dark body.v2 *{scrollbar-color:#374151 transparent}
 .v2ov-kpi{
   background:#fff;border:1px solid #e5e7eb;border-radius:14px;
   padding:18px;cursor:pointer;
@@ -2093,24 +2134,23 @@ function v2EscHTML(s){
   return (s || '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 }
 
-/* ── KPI strip — top 10 picks, rotating: 5 visible at any moment,
-   advance the offset by 1 every 4 seconds so all 10 cycle through.
-   We render 5 cards each tick; the CSS keyframe animation on the
-   grid makes each new card slide-in from the right (flip-into-place
-   feel). The rotation is driven by a global timer set further down. */
-const V2_KPI_POOL    = 10;
-const V2_KPI_VISIBLE = 5;
-let   _v2KpiOffset   = 0;
-let   _v2KpiPool     = [];        // cached top 10 from last data refresh
+/* ── KPI strip — top 10 picks, all visible (no rotation), each card
+   colored by hot-tier so the strip reads at a glance.                */
+function v2HotTier(score){
+  if (score >= 85) return 'hot1';
+  if (score >= 75) return 'hot2';
+  if (score >= 65) return 'hot3';
+  if (score >= 55) return 'hot4';
+  return 'hot5';
+}
 
-function v2BuildKpiCards(top10){
-  if (!top10 || !top10.length) return '';
-  const visible = [];
-  const n = Math.min(V2_KPI_VISIBLE, top10.length);
-  for (let i = 0; i < n; i++){
-    visible.push(top10[(i + _v2KpiOffset) % top10.length]);
-  }
-  return visible.map((t, idx) => {
+function v2RenderKpiStrip(tickers){
+  const top10 = [...tickers]
+    .filter(t => (t.smart_score ?? t.pop_score ?? 0) > 0)
+    .sort((a, b) => (b.smart_score ?? b.pop_score ?? 0) - (a.smart_score ?? a.pop_score ?? 0))
+    .slice(0, 10);
+  if (!top10.length) return '';
+  const cards = top10.map((t, idx) => {
     const sym  = t.ticker;
     const name = v2EscHTML((t.name || sym).slice(0, 22));
     const px   = v2Price(t.price);
@@ -2119,9 +2159,9 @@ function v2BuildKpiCards(top10){
     const arr  = ch >= 0 ? '▲' : '▼';
     const score = Math.round(t.smart_score ?? t.pop_score ?? 0);
     const stars = ({A:'★★★★★',B:'★★★★',C:'★★★',D:'★★',F:'★'}[t.grade] || '');
-    // Staggered animation delay so cards flow in left-to-right
-    const delay = (idx * 60) + 'ms';
-    return '<div class="v2ov-kpi" style="animation-delay:' + delay + '" onclick="openStockModal(\'' + sym + '\')">' +
+    const tier  = v2HotTier(score);
+    const delay = (idx * 40) + 'ms';
+    return '<div class="v2ov-kpi ' + tier + '" style="animation-delay:' + delay + '" onclick="openStockModal(\'' + sym + '\')">' +
              '<div class="v2ov-kpi-head">' + v2LogoHTML(sym, 'lg') +
                '<div style="min-width:0">' +
                  '<div class="v2ov-kpi-name">' + name + '</div>' +
@@ -2140,29 +2180,7 @@ function v2BuildKpiCards(top10){
              '</div>' +
            '</div>';
   }).join('');
-}
-
-function v2RenderKpiStrip(tickers){
-  // Refresh the pool from the latest universe data (top 10 by Alpha Score)
-  _v2KpiPool = [...tickers]
-    .filter(t => (t.smart_score ?? t.pop_score ?? 0) > 0)
-    .sort((a, b) => (b.smart_score ?? b.pop_score ?? 0) - (a.smart_score ?? a.pop_score ?? 0))
-    .slice(0, V2_KPI_POOL);
-  if (!_v2KpiPool.length) return '';
-  return '<div class="v2ov-kpi-grid" id="v2-kpi-grid">' + v2BuildKpiCards(_v2KpiPool) + '</div>';
-}
-
-/* In-place rotation — replaces ONLY the KPI strip every 4 seconds
-   without re-rendering the whole overview. */
-function v2RotateKpi(){
-  if (!_v2KpiPool.length) return;
-  const grid = document.getElementById('v2-kpi-grid');
-  if (!grid) return;
-  _v2KpiOffset = (_v2KpiOffset + 1) % _v2KpiPool.length;
-  grid.innerHTML = v2BuildKpiCards(_v2KpiPool);
-}
-if (!window._v2KpiTimer){
-  window._v2KpiTimer = setInterval(v2RotateKpi, 4000);
+  return '<div class="v2ov-kpi-grid">' + cards + '</div>';
 }
 
 /* ── Score Distribution + Movers (right column card) ────────── */
@@ -2471,14 +2489,67 @@ function v2RenderPerformanceChart(tickers){
     '</div>';
 }
 
-/* ── Master renderer — Performance chart dropped (the procedural Hot
-   List vs S&P line was synthesized noise, not real data). The detailed
-   20-card hot list below the widgets is the real "how am I doing"
-   answer now. Layout:
-     Row 1: Sector Heat Map (2/3, click → Sector Map view)
-            + Distribution + Movers (1/3)
-     Row 2: Recent Earnings (full width)
-     Row 3: Trending strip (full width, horizontal scroll)            */
+/* ── Upcoming earnings (next 30 days, sorted by closest date) ──── */
+function v2RenderUpcomingEarnings(tickers){
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  const upcoming = tickers
+    .map(t => {
+      const dateStr = t.next_earnings_date || t.earnings_date || t.eps_date_next;
+      if (!dateStr) return null;
+      const d = new Date(String(dateStr).slice(0, 10) + 'T00:00:00');
+      if (isNaN(d) || d < now) return null;
+      const days = Math.round((d - now) / 86400000);
+      if (days > 45) return null;
+      return { t, d, days };
+    })
+    .filter(Boolean)
+    .sort((a, b) => a.d - b.d)
+    .slice(0, 5);
+
+  const head = '<div class="v2ov-card-head"><div>' +
+    '<div class="v2ov-title">📅 Upcoming Earnings</div>' +
+    '<div class="v2ov-sub">Next 45 days · sorted by closest date</div>' +
+    '</div></div>';
+
+  if (!upcoming.length){
+    return '<div class="v2ov-card">' + head +
+      '<div style="padding:14px 4px;color:#94a3b8;font-size:12.5px;text-align:center">' +
+        'No earnings dates in the universe payload yet.' +
+      '</div></div>';
+  }
+
+  const rows = upcoming.map(({t, d, days}) => {
+    const dd = String(d.getUTCDate()).padStart(2, '0');
+    const mm = d.toLocaleDateString('en-US', {month:'short'});
+    const inText = days === 0 ? 'Today'
+                 : days === 1 ? 'Tomorrow'
+                 : 'in ' + days + 'd';
+    const est = t.next_eps_estimate != null
+      ? '$' + parseFloat(t.next_eps_estimate).toFixed(2)
+      : (t.eps_estimate != null ? '$' + parseFloat(t.eps_estimate).toFixed(2) : '—');
+    return '<div class="v2ov-tl-item" onclick="openStockModal(\'' + t.ticker + '\')">' +
+             '<div class="v2ov-tl-date"><strong>' + dd + '</strong>' + mm + '</div>' +
+             v2LogoHTML(t.ticker, 'sm') +
+             '<div class="v2ov-tl-body">' +
+               '<div class="v2ov-tl-row1">' +
+                 '<span class="v2ov-tl-tic">' + t.ticker + '</span>' +
+                 '<span class="v2ov-tl-name">' + v2EscHTML((t.name || '').slice(0, 22)) + '</span>' +
+                 '<span class="v2ov-tl-tag upcoming">' + inText + '</span>' +
+               '</div>' +
+               '<div class="v2ov-tl-row2">Est EPS ' + est + '</div>' +
+             '</div>' +
+           '</div>';
+  }).join('');
+
+  return '<div class="v2ov-card">' + head + rows + '</div>';
+}
+
+/* ── Master renderer — final v2 layout:
+     KPI strip — 10 picks, hot-tier coloured, 5x2 grid
+     Row 1: Sector Map (2/3, clickable) + Distribution + Movers (1/3)
+     Row 2: Recent Earnings (1/2) + Upcoming Earnings (1/2)
+     (Trending strip dropped — duplicated movers and added noise)    */
 function renderV2Overview(tickers){
   const root = document.getElementById('v2-overview');
   if (!root || !Array.isArray(tickers) || !tickers.length) return;
@@ -2488,8 +2559,10 @@ function renderV2Overview(tickers){
       v2RenderSectors(tickers) +
       v2RenderDistAndMovers(tickers) +
     '</div>' +
-    v2RenderEarnings(tickers) +
-    v2RenderTrending(tickers);
+    '<div class="v2ov-row equal">' +
+      v2RenderEarnings(tickers) +
+      v2RenderUpcomingEarnings(tickers) +
+    '</div>';
 }
 
 /* ── Theme toggle ─────────────────────────────────────────────── */
