@@ -1181,11 +1181,11 @@ body.v2{
   box-sizing:border-box;
   overflow:hidden;
 }
-/* Ticker tape: rounded TOP corners only so it appears to flow into
-   the inset card below. Dark band continues into the sidebar. */
+/* Ticker tape: rounded TOP corners (more pronounced curve at the
+   farthest top of the page). Dark band continues into the sidebar. */
 body.v2 #ticker-tape{
   flex-shrink:0;
-  border-radius:14px 14px 0 0!important;
+  border-radius:18px 18px 0 0!important;
   box-shadow:none!important;
   margin:0!important;
 }
@@ -1193,7 +1193,7 @@ body.v2 #ticker-tape{
    the ticker tape seamlessly. Combined they read as one rectangle. */
 body.v2 .v2-app{
   flex:1;min-height:0;
-  border-radius:0 0 14px 14px!important;
+  border-radius:0 0 18px 18px!important;
   box-shadow:0 16px 40px rgba(15,23,42,.25),0 6px 16px rgba(15,23,42,.10)!important;
 }
 /* Sidebar inside .v2-app: kill its own corner radius — the outer
@@ -1913,24 +1913,48 @@ html.v2-dark body.v2 .v2ov-title{
   -webkit-text-fill-color:transparent;color:transparent;
 }
 
-/* KPI card hot-tier — replace the solid left-border with a subtle
-   gradient top strip so the accent reads as brand, not data-coded */
+/* KPI cards: NO top gradient bar (user feedback — too busy on the
+   hot list strip). Cards are clean white with the gradient card
+   background plus the indigo score number signalling hotness. */
 body.v2 .v2ov-kpi{position:relative;overflow:hidden}
 body.v2 .v2ov-kpi.hot1::before,
 body.v2 .v2ov-kpi.hot2::before,
 body.v2 .v2ov-kpi.hot3::before,
 body.v2 .v2ov-kpi.hot4::before,
-body.v2 .v2ov-kpi.hot5::before{
-  content:'';position:absolute;left:0;right:0;top:0;height:3px;
-  background:linear-gradient(90deg,#4338ca,#6366f1,#a855f7);
-  opacity:.85;
+body.v2 .v2ov-kpi.hot5::before{display:none!important}
+
+/* CLASS-BASED green rating pills (Universe table 'Top Tier' /
+   'Quality' badges). These are defined as CSS rules, not inline
+   styles, so the runtime DOM sweep doesn't catch them — they
+   need explicit overrides under body.v2. */
+body.v2 .rating-strong{
+  background:linear-gradient(135deg,#4338ca,#6366f1)!important;
+  color:#fff!important;border:none!important;
+  box-shadow:0 2px 8px rgba(99,102,241,.30)!important;
 }
-/* Higher tiers get fuller opacity strip so 'hotness' still shows */
-body.v2 .v2ov-kpi.hot1::before{opacity:1}
-body.v2 .v2ov-kpi.hot2::before{opacity:.85}
-body.v2 .v2ov-kpi.hot3::before{opacity:.55}
-body.v2 .v2ov-kpi.hot4::before{opacity:.35}
-body.v2 .v2ov-kpi.hot5::before{opacity:.20}
+body.v2 .rating-buy{
+  background:rgba(99,102,241,.10)!important;
+  color:#4338ca!important;
+  border-color:#4338ca!important;
+}
+body.v2 .conf.hi{color:#4338ca!important}
+
+/* Universe panel container: gradient background to match the v2
+   callouts elsewhere. Was plain white before. */
+body.v2 .fund-list-wrap{
+  background:linear-gradient(135deg,#ffffff 0%,#fbfbff 35%,#f3f1ff 100%)!important;
+  border-radius:14px;
+  border:1px solid #e5e7eb;
+}
+body.v2 #panel-fund .filters,
+body.v2 #panel-fund .fd-toolbar{
+  background:linear-gradient(135deg,#ffffff 0%,#fbfbff 70%,#f3f1ff 100%)!important;
+  border:1px solid #e5e7eb;border-radius:12px;
+}
+html.v2-dark body.v2 .fund-list-wrap{
+  background:linear-gradient(135deg,#121821 0%,#141a26 60%,#1a1830 100%)!important;
+  border-color:#1f2937;
+}
 
 /* KPI card hover lifts with a faint gradient halo */
 body.v2 .v2ov-kpi:hover{
@@ -2654,7 +2678,9 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
   const HAS_GREEN = /#(?:15803d|16a34a|22c55e|65a30d|84cc16|4ade80|a3e635|86efac|bbf7d0|dcfce7|f0fdf4|d1fae5)|rgba\((?:22,163,74|132,204,22|21,128,61|74,222,128),/i;
 
   // Things to LEAVE GREEN — semantic price-up / beat / bullish data
-  const SEMANTIC_SEL = '.pos,.up,.green,.kpi-chg.up,.mover-pct.up,.surp.pos,.v2ov-tl-tag.beat,.regime-chip.bullish,#regime-pill,.beat,.ticker-chip[class*=" up"]';
+  // PLUS the data-tier coloured tiles (sector map, score distribution)
+  // whose green/yellow/red is the actual score signal, not chrome.
+  const SEMANTIC_SEL = '.pos,.up,.green,.kpi-chg.up,.mover-pct.up,.surp.pos,.v2ov-tl-tag.beat,.regime-chip.bullish,#regime-pill,.beat,.ticker-chip[class*=" up"],.v2ov-sector-cell,.v2ov-sector-cell *,.v2ov-dist-cell,.v2ov-dist-cell *,.v2ov-dist-seg,[data-tier]';
 
   function isProbablyDataText(el){
     // Element's own text starts with +/-/▲/▼ or contains an explicit
@@ -2911,17 +2937,21 @@ function v2RenderSectors(tickers){
 
   if (!sectors.length) return '';
 
-  const bgFor = mom => {
-    if (mom >=  3) return '#dcfce7';
-    if (mom >=  1) return '#bbf7d0';
-    if (mom >= -1) return '#fef3c7';
-    if (mom >= -3) return '#fed7aa';
-    return '#fecaca';
+  // Colour each cell by AVERAGE SCORE (not today's momentum) so the
+  // map mirrors the Score Distribution palette: A=green, B=lime,
+  // C=yellow, D=orange, F=red. The cells are tagged data-tier so
+  // the v2-green-sweep knows to leave their backgrounds alone.
+  const bgForScore = sc => {
+    if (sc >= 80) return '#dcfce7';   // A · green
+    if (sc >= 70) return '#ecfccb';   // B · lime
+    if (sc >= 60) return '#fef3c7';   // C · yellow
+    if (sc >= 50) return '#fed7aa';   // D · orange
+    return '#fecaca';                  // F · red
   };
 
   const cells = sectors.map(s =>
-    '<div class="v2ov-sector-cell" style="background:' + bgFor(s.mom) + '" ' +
-         'title="' + v2EscHTML(s.name) + ' · ' + s.count + ' stocks · tap for full Sector Map" ' +
+    '<div class="v2ov-sector-cell" data-tier="score" style="background:' + bgForScore(s.score) + '" ' +
+         'title="' + v2EscHTML(s.name) + ' · ' + s.count + ' stocks · score ' + s.score + ' · tap for full Sector Map" ' +
          'onclick="v2Show(\'sectors\', null)">' +
       '<div class="sn">' + v2EscHTML(s.name) + '</div>' +
       '<div class="sv">' + s.score + '</div>' +
