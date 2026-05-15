@@ -2024,6 +2024,31 @@ html.v2-dark body.v2 .v2-topbar{
 .v2ov-kpi-chg.up{background:rgba(22,163,74,.12);color:#15803d}
 .v2ov-kpi-chg.dn{background:rgba(220,38,38,.10);color:#dc2626}
 .v2ov-kpi-foot{display:flex;align-items:center;justify-content:space-between;margin-top:10px;padding-top:10px;border-top:1px dashed #e5e7eb}
+
+/* Compact extra-data rows below the price (Option B from design call) */
+.v2ov-kpi-extra{
+  display:flex;align-items:center;gap:6px;flex-wrap:wrap;
+  margin-top:6px;
+  font-size:10.5px;line-height:1.25;
+  color:#475569;
+}
+.v2ov-kpi-extra .ext-pill{
+  display:inline-flex;align-items:center;gap:4px;
+  white-space:nowrap;
+  font-weight:600;
+}
+.v2ov-kpi-extra .ext-pill .ico{font-size:11px;opacity:.85}
+.v2ov-kpi-extra em{font-style:normal;color:#94a3b8;font-weight:500;margin-left:1px}
+.v2ov-kpi-extra .up{color:#15803d;font-weight:800}
+.v2ov-kpi-extra .dn{color:#dc2626;font-weight:800}
+html.v2-dark .v2ov-kpi-extra{color:#94a3b8}
+html.v2-dark .v2ov-kpi-extra em{color:#64748b}
+
+/* On narrower viewports (4/3/2-col grids) the pills can wrap. Keep
+   the row legible but allow the second pill to drop to its own line. */
+@media (max-width:1280px){
+  .v2ov-kpi-extra{font-size:10px}
+}
 .v2ov-kpi-score{font-size:11px;font-weight:700;color:#64748b}
 .v2ov-kpi-score strong{color:#4338ca;font-size:13px}
 .v2ov-kpi-stars{color:#fbbf24;font-size:11px;letter-spacing:1px}
@@ -2855,6 +2880,44 @@ function v2RenderKpiStrip(tickers){
     const stars = ({A:'★★★★★',B:'★★★★',C:'★★★',D:'★★',F:'★'}[t.grade] || '');
     const tier  = v2HotTier(score);
     const delay = (idx * 40) + 'ms';
+
+    // Extra data rows (Option B from design discussion): analyst target +
+    // upside on row A, valuation verdict + expected/actual growth on row B.
+    const price  = parseFloat(t.price || 0);
+    const tgtMn  = parseFloat(t.target_mean || t.street_target || 0);
+    const upSd   = (price > 0 && tgtMn > 0) ? ((tgtMn - price) / price * 100) : null;
+    const upCls  = upSd == null ? '' : (upSd >= 0 ? 'up' : 'dn');
+    const tgtStr = tgtMn > 0 ? '$' + (tgtMn >= 1000 ? tgtMn.toFixed(0) : tgtMn.toFixed(2)) : '';
+    const upStr  = upSd != null ? ((upSd >= 0 ? '+' : '') + upSd.toFixed(1) + '%') : '';
+
+    const vv     = (typeof valuationVerdict === 'function') ? valuationVerdict(t) : null;
+    const vvTxt  = vv && vv.verdict ? vv.verdict : '';
+
+    const rd     = (typeof reverseDCF === 'function') ? reverseDCF(t) : null;
+    const expG   = rd && rd.impliedGrowth != null ? rd.impliedGrowth : null;
+    const actG   = rd && rd.actualGrowth   != null ? rd.actualGrowth   : null;
+
+    // Row A only if we have at least target or valuation
+    const rowA = (tgtStr || vvTxt) ? (
+      '<div class="v2ov-kpi-extra">' +
+        (tgtStr ? '<span class="ext-pill"><span class="ico">🎯</span>' + tgtStr +
+                  (upStr ? ' <span class="' + upCls + '">' + upStr + '</span>' : '') +
+                  '</span>' : '') +
+        (vvTxt  ? '<span class="ext-pill"><span class="ico">💰</span>' + v2EscHTML(vvTxt) + '</span>' : '') +
+      '</div>'
+    ) : '';
+
+    // Row B only if growth data is available
+    const rowB = (expG != null || actG != null) ? (
+      '<div class="v2ov-kpi-extra">' +
+        '<span class="ext-pill"><span class="ico">📈</span>' +
+          (expG != null ? expG.toFixed(0) + '% <em>Exp</em>' : '— Exp') +
+          ' · ' +
+          (actG != null ? actG.toFixed(0) + '% <em>Act</em>' : '— Act') +
+        '</span>' +
+      '</div>'
+    ) : '';
+
     return '<div class="v2ov-kpi ' + tier + '" style="animation-delay:' + delay + '" onclick="openStockModal(\'' + sym + '\')">' +
              '<div class="v2ov-kpi-head">' + v2LogoHTML(sym, 'lg') +
                '<div style="min-width:0">' +
@@ -2868,6 +2931,7 @@ function v2RenderKpiStrip(tickers){
                  (isNaN(ch) ? '—' : Math.abs(ch).toFixed(1) + '%') +
                '</div>' +
              '</div>' +
+             rowA + rowB +
              '<div class="v2ov-kpi-foot">' +
                '<div class="v2ov-kpi-score">Score <strong>' + score + '</strong></div>' +
                '<div class="v2ov-kpi-stars">' + stars + '</div>' +
