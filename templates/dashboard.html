@@ -2587,6 +2587,108 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 })();
 
 /* ════════════════════════════════════════════════════════════════
+   v2 RUNTIME GREEN-TO-INDIGO SWEEP
+   CSS attribute selectors weren't catching every inline-styled green
+   hex emitted by the panel renderers. This walks the DOM and rewrites
+   any green hex in inline styles to its indigo equivalent — except:
+     • Elements that look like positive PRICE/% data (text starts with
+       +, -, ▲, ▼ or matches a percentage pattern)
+     • Elements carrying semantic classes (.pos, .up, .green, .beat,
+       the kpi-chg/mover-pct/surp positive variants, the bullish
+       regime chip, BEAT earnings tags)
+   Run on load and via MutationObserver so async panel renders are
+   caught the moment they hit the DOM.
+   ════════════════════════════════════════════════════════════════ */
+(function v2GreenSweep(){
+  if (!document.body.classList.contains('v2')) return;
+
+  const SWAPS = [
+    ['#15803d','#4338ca'],['#16a34a','#6366f1'],['#22c55e','#6366f1'],
+    ['#65a30d','#4338ca'],['#84cc16','#6366f1'],['#4ade80','#a5b4fc'],
+    ['#a3e635','#a5b4fc'],['#86efac','#a5b4fc'],
+    ['#bbf7d0','#e0e7ff'],['#dcfce7','#eef2ff'],['#f0fdf4','#eef2ff'],
+    ['#d1fae5','#eef2ff'],
+    ['rgba(22,163,74,','rgba(99,102,241,'],
+    ['rgba(132,204,22,','rgba(99,102,241,'],
+    ['rgba(21,128,61,','rgba(99,102,241,'],
+    ['rgba(74,222,128,','rgba(165,180,252,'],
+  ];
+  // Regex to detect ANY of the above so we can short-circuit when
+  // there's no green to swap (cheaper than running 16 string.split's)
+  const HAS_GREEN = /#(?:15803d|16a34a|22c55e|65a30d|84cc16|4ade80|a3e635|86efac|bbf7d0|dcfce7|f0fdf4|d1fae5)|rgba\((?:22,163,74|132,204,22|21,128,61|74,222,128),/i;
+
+  // Things to LEAVE GREEN — semantic price-up / beat / bullish data
+  const SEMANTIC_SEL = '.pos,.up,.green,.kpi-chg.up,.mover-pct.up,.surp.pos,.v2ov-tl-tag.beat,.regime-chip.bullish,#regime-pill,.beat,.ticker-chip[class*=" up"]';
+
+  function isProbablyDataText(el){
+    // Element's own text starts with +/-/▲/▼ or contains an explicit
+    // percentage — almost certainly a price-change indicator.
+    const t = (el.textContent || '').trim();
+    if (!t) return false;
+    return /^[\+\-▲▼]/.test(t) || /[\+\-]\d+(?:\.\d+)?%/.test(t);
+  }
+
+  function sweepEl(el){
+    if (!(el instanceof Element)) return;
+    // Quick rejections
+    if (el.matches && el.matches(SEMANTIC_SEL)) return;
+    if (el.closest && el.closest(SEMANTIC_SEL)) return;
+    const s = el.getAttribute('style');
+    if (!s || !HAS_GREEN.test(s)) return;
+
+    let out = s;
+
+    // BACKGROUNDS + BORDERS — always swap. These are chrome.
+    out = out.replace(/(background(?:-color)?\s*:\s*)([^;]+)/gi, (_, p, v) => {
+      let nv = v; for (const [a,b] of SWAPS) nv = nv.split(a).join(b);
+      return p + nv;
+    });
+    out = out.replace(/(border[^:]*:\s*)([^;]+)/gi, (_, p, v) => {
+      let nv = v; for (const [a,b] of SWAPS) nv = nv.split(a).join(b);
+      return p + nv;
+    });
+    out = out.replace(/(box-shadow\s*:\s*)([^;]+)/gi, (_, p, v) => {
+      let nv = v; for (const [a,b] of SWAPS) nv = nv.split(a).join(b);
+      return p + nv;
+    });
+
+    // TEXT COLOR — only swap if element doesn't read like data
+    if (!isProbablyDataText(el)){
+      out = out.replace(/(^|;)(\s*color\s*:\s*)([^;]+)/gi, (_, lead, p, v) => {
+        let nv = v; for (const [a,b] of SWAPS) nv = nv.split(a).join(b);
+        return lead + p + nv;
+      });
+    }
+
+    if (out !== s) el.setAttribute('style', out);
+  }
+
+  function sweepAll(){
+    document.querySelectorAll('[style]').forEach(sweepEl);
+  }
+
+  // Initial pass + watch for any future renders
+  sweepAll();
+  const obs = new MutationObserver(muts => {
+    for (const m of muts){
+      for (const n of m.addedNodes){
+        if (n instanceof Element){
+          sweepEl(n);
+          n.querySelectorAll && n.querySelectorAll('[style]').forEach(sweepEl);
+        }
+      }
+      if (m.type === 'attributes' && m.attributeName === 'style' && m.target instanceof Element){
+        sweepEl(m.target);
+      }
+    }
+  });
+  obs.observe(document.body, {childList:true, subtree:true, attributes:true, attributeFilter:['style']});
+
+  // Expose so we can force-sweep after big renders if needed
+  window.v2GreenSweep = sweepAll;
+})();
+
+/* ════════════════════════════════════════════════════════════════
    v2 OVERVIEW WIDGETS — render KPI strip, movers, score distribution,
    sector heat map, recent earnings, trending strip from live data.
    ════════════════════════════════════════════════════════════════ */
