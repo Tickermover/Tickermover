@@ -2025,6 +2025,149 @@ html.v2-dark body.v2 .v2-topbar{
 .v2ov-kpi-chg.dn{background:rgba(220,38,38,.10);color:#dc2626}
 .v2ov-kpi-foot{display:flex;align-items:center;justify-content:space-between;margin-top:10px;padding-top:10px;border-top:1px dashed #e5e7eb}
 
+/* ── TOP 6 IN-DEPTH DETAIL CARDS ─────────────────────────────────
+   Sits between the compact KPI strip and the sector/distribution row.
+   3-col grid on desktop, falls to 2-col / 1-col on narrower viewports.
+   Each card carries all the data points from the production hot list
+   card, themed for v2 (white bg with subtle indigo gradient + brand
+   stripe on top, picked up from .v2ov-card). */
+
+.v2-pick-section{margin:24px 0}
+.v2-pick-section-head{margin-bottom:14px}
+.v2-pick-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:14px;
+}
+.v2-pick-card{
+  background:linear-gradient(135deg,#ffffff 0%,#fbfbff 35%,#f3f1ff 100%);
+  border:1px solid #e5e7eb;
+  border-radius:14px;
+  padding:18px;
+  cursor:pointer;
+  transition:transform .15s,box-shadow .2s,border-color .15s;
+  box-shadow:0 1px 3px rgba(15,23,42,.04);
+  position:relative;overflow:hidden;
+}
+.v2-pick-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,
+    rgba(56,189,248,.55) 0%,
+    rgba(99,102,241,.65) 35%,
+    rgba(236,72,153,.55) 70%,
+    rgba(251,113,133,.45) 100%);
+  pointer-events:none;
+}
+.v2-pick-card:hover{
+  transform:translateY(-2px);
+  box-shadow:0 10px 24px rgba(15,23,42,.10);
+  border-color:rgba(99,102,241,.35);
+}
+
+/* Header: ticker + name (left), prices + changes (right) */
+.v2-pick-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:10px}
+.v2-pick-tic-wrap{min-width:0;flex:1}
+.v2-pick-tic{font-size:22px;font-weight:900;color:#4338ca;letter-spacing:-.01em;line-height:1.1}
+.v2-pick-name{font-size:11.5px;color:#64748b;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.v2-pick-prices{text-align:right;flex-shrink:0}
+.v2-pick-price{font-size:18px;font-weight:800;color:#0f172a;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
+.v2-pick-chg{font-size:11px;font-weight:700;font-variant-numeric:tabular-nums;margin-top:1px}
+.v2-pick-chg.up{color:#15803d}.v2-pick-chg.dn{color:#dc2626}
+
+/* Quality verdict summary */
+.v2-pick-qual{
+  background:#f8fafc;border:1px solid #e5e7eb;border-radius:8px;
+  padding:6px 10px;font-size:11.5px;color:#475569;font-weight:600;
+  margin-bottom:10px;
+}
+
+/* Hero: big Alpha Score + tier/RS pills */
+.v2-pick-hero{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}
+.v2-pick-score-block{flex-shrink:0}
+.v2-pick-score{
+  font-size:48px;font-weight:900;color:#4338ca;letter-spacing:-.03em;line-height:.95;
+  background:linear-gradient(135deg,#4338ca,#6366f1,#a855f7);
+  -webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;color:transparent;
+}
+.v2-pick-score-label{
+  font-size:9.5px;font-weight:800;color:#64748b;text-transform:uppercase;
+  letter-spacing:.08em;margin-top:1px;
+}
+.v2-pick-pills{display:flex;flex-direction:column;gap:6px;align-items:flex-end}
+.v2-pick-tier{
+  display:inline-flex;align-items:center;gap:4px;
+  background:linear-gradient(135deg,#4338ca,#6366f1);
+  color:#fff;font-size:11.5px;font-weight:800;
+  padding:5px 12px;border-radius:999px;letter-spacing:.02em;
+  box-shadow:0 2px 6px rgba(99,102,241,.30);
+}
+.v2-pick-rs{
+  display:inline-block;
+  background:rgba(99,102,241,.10);color:#4338ca;
+  font-size:11px;font-weight:700;
+  padding:4px 10px;border-radius:999px;
+  border:1px solid rgba(99,102,241,.25);
+}
+.v2-pick-rs strong{font-weight:900;margin-left:2px}
+
+/* Target/Valuation/Growth data box (indigo tinted) */
+.v2-pick-data{
+  background:rgba(99,102,241,.06);
+  border:1px solid rgba(99,102,241,.18);
+  border-radius:10px;
+  padding:10px 12px;
+  margin-bottom:10px;
+}
+.v2-pick-data-row{
+  font-size:12px;display:flex;justify-content:space-between;gap:10px;
+  align-items:baseline;
+  padding:3px 0;
+}
+.v2-pick-data-row + .v2-pick-data-row{border-top:1px dashed rgba(99,102,241,.20)}
+.v2-pick-data-l{color:#475569;font-weight:600}
+.v2-pick-data-r{color:#475569;font-weight:600;flex-shrink:0}
+.v2-pick-data-row strong{color:#0f172a;font-weight:800}
+.v2-pick-data-row em{font-style:normal;color:#94a3b8;font-weight:500;margin-left:1px}
+.v2-pick-data-row .up{color:#15803d!important}
+.v2-pick-data-row .dn{color:#dc2626!important}
+
+/* RSI pill */
+.v2-pick-rsi{
+  display:inline-block;font-size:11px;font-weight:700;
+  padding:5px 11px;border-radius:999px;
+  margin-bottom:10px;
+}
+.v2-pick-rsi.rsi-ok{background:rgba(99,102,241,.10);color:#4338ca;border:1px solid rgba(99,102,241,.25)}
+.v2-pick-rsi.rsi-hot{background:rgba(220,38,38,.08);color:#b91c1c;border:1px solid rgba(220,38,38,.20)}
+.v2-pick-rsi.rsi-cold{background:rgba(180,83,9,.08);color:#b45309;border:1px solid rgba(180,83,9,.20)}
+
+/* Thesis at bottom */
+.v2-pick-thesis{
+  background:rgba(99,102,241,.04);
+  border-left:3px solid #6366f1;
+  border-radius:0 8px 8px 0;
+  padding:8px 12px;
+  font-size:11.5px;color:#334155;line-height:1.4;
+  font-style:italic;
+}
+html.v2-dark .v2-pick-thesis{background:rgba(99,102,241,.10);color:#cbd5e1}
+
+/* Dark-mode tweaks */
+html.v2-dark .v2-pick-card{
+  background:linear-gradient(135deg,#121821 0%,#141a26 60%,#1a1830 100%);
+  border-color:#1f2937;
+}
+html.v2-dark .v2-pick-tic{color:#a5b4fc}
+html.v2-dark .v2-pick-name,html.v2-dark .v2-pick-data-l,html.v2-dark .v2-pick-data-r{color:#94a3b8}
+html.v2-dark .v2-pick-price,html.v2-dark .v2-pick-data-row strong{color:#f1f5f9}
+html.v2-dark .v2-pick-qual{background:#1f2937;border-color:#374151;color:#cbd5e1}
+html.v2-dark .v2-pick-data{background:rgba(99,102,241,.14);border-color:rgba(99,102,241,.30)}
+
+/* Responsive */
+@media (max-width:1280px){.v2-pick-grid{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:768px){.v2-pick-grid{grid-template-columns:1fr;gap:12px}.v2-pick-card{padding:14px}.v2-pick-score{font-size:40px}}
+
 /* Compact extra-data rows below the price (Option B from design call) */
 .v2ov-kpi-extra{
   display:flex;align-items:center;gap:6px;flex-wrap:wrap;
@@ -3340,16 +3483,127 @@ function v2RenderUpcomingEarnings(tickers){
   return '<div class="v2ov-card">' + head + rows + '</div>';
 }
 
+/* ── Top Picks (in-depth) — 6 detailed cards covering all the data
+   points the old prod hot-list card carried (Quality verdict, Alpha
+   Score, Top Tier pill, Relative Strength, Target+Upside, Valuation,
+   Exp/Act growth, RSI, top signal, thesis). 3-col grid sits between
+   the KPI strip and the sector/distribution row. */
+function v2RenderTopPicks(tickers){
+  const top6 = [...tickers]
+    .filter(t => (t.smart_score ?? t.pop_score ?? 0) > 0)
+    .sort((a, b) => (b.smart_score ?? b.pop_score ?? 0) - (a.smart_score ?? a.pop_score ?? 0))
+    .slice(0, 6);
+  if (!top6.length) return '';
+
+  const cards = top6.map(t => {
+    const sym   = t.ticker;
+    const name  = v2EscHTML((t.name || sym).slice(0, 32));
+    const price = parseFloat(t.price || 0);
+    const ch    = parseFloat(t.change_pct);
+    const chCls = ch >= 0 ? 'up' : 'dn';
+    const mom3m = parseFloat(t.mom_3m || t.momentum_3m || t.mom3m || 0);
+    const m3Cls = mom3m >= 0 ? 'up' : 'dn';
+    const score = Math.round(t.smart_score ?? t.pop_score ?? 0);
+    const rating = (typeof gradeToRating === 'function') ? gradeToRating(t.grade) : (t.grade || '');
+    const rs    = parseFloat(t.rs_rating || t.rs || 0);
+
+    const tgtMn = parseFloat(t.target_mean || t.street_target || 0);
+    const upSd  = (price > 0 && tgtMn > 0) ? ((tgtMn - price) / price * 100) : null;
+    const tgtStr = tgtMn > 0 ? '$' + (tgtMn >= 1000 ? tgtMn.toFixed(0) : tgtMn.toFixed(2)) : '—';
+    const upStr  = upSd != null ? ((upSd >= 0 ? '+' : '') + upSd.toFixed(1) + '%') : '—';
+    const upCls  = upSd == null ? '' : (upSd >= 0 ? 'up' : 'dn');
+
+    const vv    = (typeof valuationVerdict === 'function') ? valuationVerdict(t) : null;
+    const qv    = (typeof qualityVerdict   === 'function') ? qualityVerdict(t)   : null;
+    const rd    = (typeof reverseDCF       === 'function') ? reverseDCF(t)       : null;
+    const expG  = rd && rd.impliedGrowth != null ? rd.impliedGrowth : null;
+    const actG  = rd && rd.actualGrowth   != null ? rd.actualGrowth   : null;
+
+    const rsi   = parseFloat(t.rsi_14 || 0);
+    const rsiTxt = (rsi > 0) ? (
+      rsi > 70 ? rsi.toFixed(1) + ' — overbought territory'
+      : rsi < 30 ? rsi.toFixed(1) + ' — oversold territory'
+      : rsi.toFixed(1) + ' — ideal momentum zone'
+    ) : '';
+    const rsiCls = rsi > 70 ? 'rsi-hot' : rsi < 30 ? 'rsi-cold' : 'rsi-ok';
+
+    const thesis = (typeof buildThesis === 'function') ? buildThesis(t) : '';
+    const tierCls = t.grade === 'A' ? 'tier-a' : t.grade === 'B' ? 'tier-b' : 'tier-c';
+
+    return '<div class="v2-pick-card" onclick="openStockModal(\'' + sym + '\')">' +
+      // Header row: ticker + name on left, price + changes on right
+      '<div class="v2-pick-head">' +
+        '<div class="v2-pick-tic-wrap">' +
+          '<div class="v2-pick-tic">' + sym + '</div>' +
+          '<div class="v2-pick-name">' + name + '</div>' +
+        '</div>' +
+        '<div class="v2-pick-prices">' +
+          '<div class="v2-pick-price">' + v2Price(price) + '</div>' +
+          '<div class="v2-pick-chg ' + chCls + '">' +
+            (isNaN(ch) ? '—' : (ch >= 0 ? '+' : '') + ch.toFixed(2) + '%') +
+            ' · Today</div>' +
+          (mom3m !== 0 && !isNaN(mom3m) ? '<div class="v2-pick-chg ' + m3Cls + '">' +
+            (mom3m >= 0 ? '▲ ' : '▼ ') + Math.abs(mom3m).toFixed(1) + '% · 3M</div>' : '') +
+        '</div>' +
+      '</div>' +
+      // Quality summary chip
+      (qv && qv.headline ? '<div class="v2-pick-qual">📊 ' + v2EscHTML(qv.headline) + '</div>' : '') +
+      // Alpha Score + Tier + RS hero
+      '<div class="v2-pick-hero">' +
+        '<div class="v2-pick-score-block">' +
+          '<div class="v2-pick-score">' + score + '</div>' +
+          '<div class="v2-pick-score-label">Alpha Score</div>' +
+        '</div>' +
+        '<div class="v2-pick-pills">' +
+          (rating ? '<div class="v2-pick-tier ' + tierCls + '">★★★★★ ' + v2EscHTML(rating) + '</div>' : '') +
+          (rs > 0 ? '<div class="v2-pick-rs">Relative Strength <strong>' + Math.round(rs) + '</strong></div>' : '') +
+        '</div>' +
+      '</div>' +
+      // Target / Valuation / Growth box (indigo tinted)
+      '<div class="v2-pick-data" data-tier="info">' +
+        '<div class="v2-pick-data-row">' +
+          '<span class="v2-pick-data-l">🎯 Target: <strong>' + tgtStr + '</strong></span>' +
+          '<span class="v2-pick-data-r">Upside: <strong class="' + upCls + '">' + upStr + '</strong></span>' +
+        '</div>' +
+        (vv && vv.verdict ? '<div class="v2-pick-data-row">' +
+          '<span class="v2-pick-data-l">💰 Valuation: <strong style="color:' + (vv.color || '#0f172a') + '">' + v2EscHTML(vv.verdict) + '</strong></span>' +
+        '</div>' : '') +
+        ((expG != null || actG != null) ? '<div class="v2-pick-data-row">' +
+          '<span class="v2-pick-data-l">📈 Growth: ' +
+            (expG != null ? '<strong>' + expG.toFixed(0) + '%</strong> <em>Exp</em>' : '— Exp') +
+            ' · ' +
+            (actG != null ? '<strong>' + actG.toFixed(0) + '%</strong> <em>Act</em>' : '— Act') +
+          '</span>' +
+        '</div>' : '') +
+      '</div>' +
+      // RSI pill if available
+      (rsiTxt ? '<div class="v2-pick-rsi ' + rsiCls + '">RSI ' + rsiTxt + '</div>' : '') +
+      // Thesis line at the bottom
+      (thesis ? '<div class="v2-pick-thesis">💡 ' + v2EscHTML(thesis.slice(0, 90)) + (thesis.length > 90 ? '…' : '') + '</div>' : '') +
+    '</div>';
+  }).join('');
+
+  return '' +
+    '<div class="v2-pick-section">' +
+      '<div class="v2-pick-section-head">' +
+        '<div class="v2ov-title">🎯 Top 6 In Depth</div>' +
+        '<div class="v2ov-sub">Highest Alpha Score · all the data points from the production card</div>' +
+      '</div>' +
+      '<div class="v2-pick-grid">' + cards + '</div>' +
+    '</div>';
+}
+
 /* ── Master renderer — final v2 layout:
-     KPI strip — 10 picks, hot-tier coloured, 5x2 grid
+     KPI strip — 10 picks compact, 5x2 grid
+     Top Picks — 6 detail cards (prod-style, all data points)
      Row 1: Sector Map (2/3, clickable) + Distribution + Movers (1/3)
-     Row 2: Recent Earnings (1/2) + Upcoming Earnings (1/2)
-     (Trending strip dropped — duplicated movers and added noise)    */
+     Row 2: Recent Earnings (1/2) + Upcoming Earnings (1/2)            */
 function renderV2Overview(tickers){
   const root = document.getElementById('v2-overview');
   if (!root || !Array.isArray(tickers) || !tickers.length) return;
   root.innerHTML =
     v2RenderKpiStrip(tickers) +
+    v2RenderTopPicks(tickers) +
     '<div class="v2ov-row">' +
       v2RenderSectors(tickers) +
       v2RenderDistAndMovers(tickers) +
