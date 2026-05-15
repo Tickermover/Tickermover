@@ -1308,14 +1308,22 @@ body.v2 #ticker-tape{display:none!important}
 .v2-burger{display:none;background:none;border:none;cursor:pointer;
   width:36px;height:36px;border-radius:8px;align-items:center;justify-content:center;color:#0f172a}
 .v2-burger:hover{background:#f1f5f9}
-.v2-search{flex:1;max-width:480px;position:relative}
-.v2-search input{
-  width:100%;background:#f1f5f9;border:1px solid transparent;border-radius:10px;
-  padding:9px 14px 9px 38px;font-size:13.5px;color:#0f172a;
-  font-family:inherit;outline:none;transition:border .15s,background .15s;
+/* Topbar search is now a click-only trigger (not a real text input)
+   so accidental focus doesn't open the cmdk palette. */
+.v2-search{
+  flex:1;max-width:480px;position:relative;
+  display:flex;align-items:center;
+  background:#f1f5f9;border:1px solid transparent;border-radius:10px;
+  padding:9px 12px 9px 38px;
+  cursor:text;outline:none;
+  transition:border .15s,background .15s;
 }
-.v2-search input::placeholder{color:#94a3b8}
-.v2-search input:focus{border-color:#4338ca;background:#fff}
+.v2-search:hover{background:#e2e8f0}
+.v2-search:focus-visible{border-color:#4338ca;background:#fff}
+.v2-search-ph{
+  flex:1;font-size:13.5px;color:#94a3b8;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
 .v2-search .ico{position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:14px;color:#64748b}
 .v2-search .kbd{position:absolute;right:10px;top:50%;transform:translateY(-50%);
   background:#fff;border:1px solid #e5e7eb;border-radius:5px;padding:2px 6px;
@@ -1770,7 +1778,12 @@ body.v2 .verdict-positive{
 .v2ov-mover-pct.up{color:#15803d}.v2ov-mover-pct.dn{color:#dc2626}
 
 /* ── Sector Heat Map ─────────────────────────────────────────── */
-.v2ov-sector-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+/* 5-col so 20 sectors fit in 4 clean rows on desktop */
+.v2ov-sector-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.v2ov-sector-cell{padding:11px 10px!important}
+.v2ov-sector-cell .sn{font-size:11px!important;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.v2ov-sector-cell .sv{font-size:17px!important;margin-top:4px!important}
+.v2ov-sector-cell .sm{font-size:9.5px!important;margin-top:2px!important}
 .v2ov-sector-cell{
   padding:14px 12px;border-radius:10px;cursor:pointer;
   transition:transform .15s,box-shadow .2s;color:#0f172a;
@@ -2036,9 +2049,10 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
       </button>
 
-      <div class="v2-search">
+      <div class="v2-search" onclick="if(typeof openCmdK==='function')openCmdK()" role="button" tabindex="0"
+           onkeydown="if(event.key==='Enter'||event.key===' '){if(typeof openCmdK==='function')openCmdK()}">
         <span class="ico">🔍</span>
-        <input type="text" placeholder="Search ticker, jump to a section…" onfocus="if(typeof openCmdK==='function'){openCmdK();this.blur()}">
+        <span class="v2-search-ph">Search ticker, jump to a section…</span>
         <span class="kbd">⌘K</span>
       </div>
 
@@ -2483,10 +2497,14 @@ function v2RenderDistAndMovers(tickers){
 
 /* ── Sector Heat Map ─────────────────────────────────────────── */
 function v2RenderSectors(tickers){
-  // Group by sector, average smart_score and change_pct
+  // Group by sector. Normalise the key to Title Case so "TECHNOLOGY"
+  // and "Technology" collapse into one row (was duplicating before).
+  const titleCase = s => s.toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
   const groups = {};
   tickers.forEach(t => {
-    const s = t.sector || t.sub_sector || '—';
+    const raw = (t.sector || '').trim();
+    if (!raw) return;
+    const s = titleCase(raw);
     if (!groups[s]) groups[s] = { tickers:[], score:0, chg:0, n:0 };
     const sc = parseFloat(t.smart_score ?? t.pop_score ?? 0);
     const ch = parseFloat(t.change_pct);
@@ -2495,14 +2513,15 @@ function v2RenderSectors(tickers){
     groups[s].tickers.push(t.ticker);
   });
   const sectors = Object.entries(groups)
-    .filter(([k,v]) => v.n >= 1 && k !== '—')
+    .filter(([k,v]) => v.n >= 1)
     .map(([k,v]) => ({
       name: k,
       score: v.n ? Math.round(v.score / v.n) : 0,
       mom:   v.tickers.length ? (v.chg / v.tickers.length) : 0,
+      count: v.tickers.length,
     }))
     .sort((a, b) => b.score - a.score)
-    .slice(0, 12);
+    .slice(0, 20);
 
   if (!sectors.length) return '';
 
@@ -2516,10 +2535,11 @@ function v2RenderSectors(tickers){
 
   const cells = sectors.map(s =>
     '<div class="v2ov-sector-cell" style="background:' + bgFor(s.mom) + '" ' +
-         'title="Open Sector Map" onclick="v2Show(\'sectors\', null)">' +
+         'title="' + v2EscHTML(s.name) + ' · ' + s.count + ' stocks · tap for full Sector Map" ' +
+         'onclick="v2Show(\'sectors\', null)">' +
       '<div class="sn">' + v2EscHTML(s.name) + '</div>' +
       '<div class="sv">' + s.score + '</div>' +
-      '<div class="sm">' + (s.mom >= 0 ? '+' : '') + s.mom.toFixed(1) + '% today</div>' +
+      '<div class="sm">' + (s.mom >= 0 ? '+' : '') + s.mom.toFixed(1) + '% · ' + s.count + ' stk</div>' +
     '</div>').join('');
 
   return '' +
