@@ -1162,10 +1162,9 @@ tr:hover td{background:rgba(132,204,22,.06)}
 body.v2 .hdr,
 body.v2 .tabs{display:none!important}
 
-/* Branded gradient frame around the whole app. Wider padding now so
-   the gradient reads as a real frame, not a thin border. Body is a
-   flex column so the ticker-tape can sit above the inset .v2-app
-   without breaking the fixed-height layout. */
+/* Branded gradient frame — thin border, ticker-tape + inset card
+   visually merge into ONE rounded rectangle (no gap, no inner edge
+   curve where they meet). */
 body.v2{
   background:
     radial-gradient(ellipse 60% 80% at 0% 0%,    rgba(56,189,248,.95) 0%, transparent 60%),
@@ -1174,20 +1173,32 @@ body.v2{
     radial-gradient(ellipse 60% 80% at 0% 100%,  rgba(139,92,246,.95) 0%, transparent 60%),
     linear-gradient(135deg,#6366f1,#d946ef);
   background-attachment:fixed;
-  padding:24px;
+  padding:12px;                  /* thinner frame, more content room */
   height:100vh;
   display:flex;
   flex-direction:column;
-  gap:10px;
+  gap:0;                          /* no gap — tape joins app card */
   box-sizing:border-box;
   overflow:hidden;
 }
+/* Ticker tape: rounded TOP corners only so it appears to flow into
+   the inset card below. Dark band continues into the sidebar. */
 body.v2 #ticker-tape{
   flex-shrink:0;
-  border-radius:14px!important;
-  box-shadow:0 8px 20px rgba(15,23,42,.25)!important;
+  border-radius:14px 14px 0 0!important;
+  box-shadow:none!important;
+  margin:0!important;
 }
-body.v2 .v2-app{flex:1;min-height:0}
+/* App card: rounded BOTTOM corners only, square top so it joins
+   the ticker tape seamlessly. Combined they read as one rectangle. */
+body.v2 .v2-app{
+  flex:1;min-height:0;
+  border-radius:0 0 14px 14px!important;
+  box-shadow:0 16px 40px rgba(15,23,42,.25),0 6px 16px rgba(15,23,42,.10)!important;
+}
+/* Sidebar inside .v2-app: kill its own corner radius — the outer
+   wrapper now owns the rounding. */
+body.v2 .v2-sidebar{border-radius:0!important}
 
 /* Live ticker-tape strip lives INSIDE the inset card now (was hidden
    in early v2 builds). Restyled with a dark band to match the sidebar
@@ -1446,8 +1457,27 @@ html.v2-dark .v2ov-skeleton .sk{background:linear-gradient(90deg,#121821 0%,#1f2
 @media (max-width: 1100px){.v2ov-skeleton .row{grid-template-columns:1fr}}
 @media (max-width: 768px){.v2ov-skeleton .row.kpis{grid-template-columns:repeat(2,1fr)}.v2ov-skeleton .sk.kpi{height:100px}}
 .v2ov-card{
-  background:#fff;border:1px solid #e5e7eb;border-radius:14px;
+  /* Themed gradient — picks up faint hints of the outer frame
+     palette (indigo / cyan / violet) so each callout reads as
+     part of the brand instead of being a flat white slab. */
+  background:linear-gradient(135deg,#ffffff 0%,#fbfbff 35%,#f3f1ff 100%);
+  border:1px solid #e5e7eb;border-radius:14px;
   padding:20px;box-shadow:0 1px 3px rgba(15,23,42,.04);
+  position:relative;overflow:hidden;
+}
+/* Subtle top-edge gradient bar on every main card — same colour
+   family as the outer frame. Reads as a brand stripe. */
+.v2ov-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,
+    rgba(56,189,248,.55) 0%,
+    rgba(99,102,241,.65) 35%,
+    rgba(236,72,153,.55) 70%,
+    rgba(251,113,133,.45) 100%);
+  pointer-events:none;
+}
+html.v2-dark .v2ov-card{
+  background:linear-gradient(135deg,#121821 0%,#141a26 60%,#1a1830 100%);
 }
 .v2ov-card-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px;gap:12px;flex-wrap:wrap}
 .v2ov-title{font-size:15px;font-weight:800;color:#0f172a;letter-spacing:-.01em}
@@ -1497,14 +1527,20 @@ html.v2-dark .v2ov-skeleton .sk{background:linear-gradient(90deg,#121821 0%,#1f2
   animation:v2-kpi-in .4s cubic-bezier(.22,.61,.36,1) both;
 }
 
-/* Hot-tier — cards stay WHITE; hotness is now signalled by a thin
-   left-border accent + the indigo score number. Easier on the eyes
-   than a full-card colour wash, and the cards read as the same
-   surface as everything else on the dashboard. */
+/* Hot-tier — cards pick up the same subtle brand-gradient as the
+   main call-outs so the strip reads as one design system. Hotness
+   is signalled by the gradient top-strip overlay (set later) plus
+   the indigo score number, not by full-card colour wash. */
 .v2ov-kpi.hot1,.v2ov-kpi.hot2,.v2ov-kpi.hot3,.v2ov-kpi.hot4,.v2ov-kpi.hot5{
-  background:#fff;
+  background:linear-gradient(135deg,#ffffff 0%,#fbfbff 40%,#f3f1ff 100%);
   border-color:#e5e7eb;
-  border-left-width:3px;
+  border-left-width:1px;
+}
+html.v2-dark .v2ov-kpi.hot1,html.v2-dark .v2ov-kpi.hot2,
+html.v2-dark .v2ov-kpi.hot3,html.v2-dark .v2ov-kpi.hot4,
+html.v2-dark .v2ov-kpi.hot5{
+  background:linear-gradient(135deg,#121821 0%,#141a26 60%,#1a1830 100%);
+  border-color:#1f2937;
 }
 .v2ov-kpi.hot1{border-left-color:#15803d}
 .v2ov-kpi.hot2{border-left-color:#65a30d}
