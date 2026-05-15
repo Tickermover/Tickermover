@@ -3114,79 +3114,6 @@ function v2RenderKpiStrip(tickers){
     const stars = ({A:'★★★★★',B:'★★★★',C:'★★★',D:'★★',F:'★'}[t.grade] || '');
     const tier  = v2HotTier(score);
     const delay = (idx * 40) + 'ms';
-
-    // Extra data rows (Option B from design discussion): analyst target +
-    // upside on row A, valuation verdict + expected/actual growth on row B.
-    const price  = parseFloat(t.price || 0);
-    const tgtMn  = parseFloat(t.target_mean || t.street_target || 0);
-    const upSd   = (price > 0 && tgtMn > 0) ? ((tgtMn - price) / price * 100) : null;
-    const upCls  = upSd == null ? '' : (upSd >= 0 ? 'up' : 'dn');
-    const tgtStr = tgtMn > 0 ? '$' + (tgtMn >= 1000 ? tgtMn.toFixed(0) : tgtMn.toFixed(2)) : '';
-    const upStr  = upSd != null ? ((upSd >= 0 ? '+' : '') + upSd.toFixed(1) + '%') : '';
-
-    const vv     = (typeof valuationVerdict === 'function') ? valuationVerdict(t) : null;
-    const vvTxt  = vv && vv.verdict ? vv.verdict : '';
-
-    const rd     = (typeof reverseDCF === 'function') ? reverseDCF(t) : null;
-    const expG   = rd && rd.impliedGrowth != null ? rd.impliedGrowth : null;
-    const actG   = rd && rd.actualGrowth   != null ? rd.actualGrowth   : null;
-
-    // Row A only if we have at least target or valuation
-    const rowA = (tgtStr || vvTxt) ? (
-      '<div class="v2ov-kpi-extra">' +
-        (tgtStr ? '<span class="ext-pill"><span class="ico">🎯</span>' + tgtStr +
-                  (upStr ? ' <span class="' + upCls + '">' + upStr + '</span>' : '') +
-                  '</span>' : '') +
-        (vvTxt  ? '<span class="ext-pill"><span class="ico">💰</span>' + v2EscHTML(vvTxt) + '</span>' : '') +
-      '</div>'
-    ) : '';
-
-    // Row B only if growth data is available
-    const rowB = (expG != null || actG != null) ? (
-      '<div class="v2ov-kpi-extra">' +
-        '<span class="ext-pill"><span class="ico">📈</span>' +
-          (expG != null ? expG.toFixed(0) + '% <em>Exp</em>' : '— Exp') +
-          ' · ' +
-          (actG != null ? actG.toFixed(0) + '% <em>Act</em>' : '— Act') +
-        '</span>' +
-      '</div>'
-    ) : '';
-
-    // Hover popover (Option 3) — extra data points the inline rows
-    // don't show: quality verdict, RSI zone, Relative Strength, 3M
-    // momentum, market cap, sector, top signal, thesis.
-    const qv2     = (typeof qualityVerdict === 'function') ? qualityVerdict(t) : null;
-    const rsi     = parseFloat(t.rsi_14 || 0);
-    const rsiZone = rsi > 0 ? (rsi > 70 ? 'overbought' : rsi < 30 ? 'oversold' : 'ideal momentum zone') : '';
-    const rsRating = parseFloat(t.rs_rating || t.rs || 0);
-    const m3p     = parseFloat(t.mom_3m || t.momentum_3m || 0);
-    const m3Cls2  = m3p >= 0 ? 'up' : 'dn';
-    const mcap    = t.market_cap ? (
-      t.market_cap >= 1e12 ? '$' + (t.market_cap/1e12).toFixed(2) + 'T'
-      : t.market_cap >= 1e9 ? '$' + (t.market_cap/1e9).toFixed(1) + 'B'
-      : t.market_cap >= 1e6 ? '$' + (t.market_cap/1e6).toFixed(0) + 'M'
-      : '$' + t.market_cap
-    ) : '';
-    const sector  = v2EscHTML(t.sector || t.sub_sector || '');
-    const thesis2 = (typeof buildThesis === 'function') ? buildThesis(t) : '';
-
-    const popRows = [];
-    if (qv2 && qv2.headline) popRows.push('<div class="v2-kpop-row"><span class="v2-kpop-l">📊 Quality</span><span class="v2-kpop-r">' + v2EscHTML(qv2.headline) + '</span></div>');
-    if (rsi > 0)             popRows.push('<div class="v2-kpop-row"><span class="v2-kpop-l">📈 RSI</span><span class="v2-kpop-r">' + rsi.toFixed(1) + ' · ' + rsiZone + '</span></div>');
-    if (rsRating > 0)        popRows.push('<div class="v2-kpop-row"><span class="v2-kpop-l">⚡ RS Rating</span><span class="v2-kpop-r"><strong>' + Math.round(rsRating) + '</strong></span></div>');
-    if (!isNaN(m3p) && m3p !== 0) popRows.push('<div class="v2-kpop-row"><span class="v2-kpop-l">📅 3M Change</span><span class="v2-kpop-r ' + m3Cls2 + '">' + (m3p >= 0 ? '+' : '') + m3p.toFixed(1) + '%</span></div>');
-    if (mcap)                popRows.push('<div class="v2-kpop-row"><span class="v2-kpop-l">🏛 Market Cap</span><span class="v2-kpop-r">' + mcap + '</span></div>');
-    if (sector)              popRows.push('<div class="v2-kpop-row"><span class="v2-kpop-l">🗂 Sector</span><span class="v2-kpop-r">' + sector + '</span></div>');
-
-    const popover = (popRows.length || thesis2) ? (
-      '<div class="v2-kpop">' +
-        '<div class="v2-kpop-head">' + sym + ' · ' + name + '</div>' +
-        (popRows.length ? '<div class="v2-kpop-body">' + popRows.join('') + '</div>' : '') +
-        (thesis2 ? '<div class="v2-kpop-thesis">💡 ' + v2EscHTML(thesis2.slice(0, 110)) + (thesis2.length > 110 ? '…' : '') + '</div>' : '') +
-        '<div class="v2-kpop-foot">Click for full details →</div>' +
-      '</div>'
-    ) : '';
-
     return '<div class="v2ov-kpi ' + tier + '" style="animation-delay:' + delay + '" onclick="openStockModal(\'' + sym + '\')">' +
              '<div class="v2ov-kpi-head">' + v2LogoHTML(sym, 'lg') +
                '<div style="min-width:0">' +
@@ -3200,12 +3127,10 @@ function v2RenderKpiStrip(tickers){
                  (isNaN(ch) ? '—' : Math.abs(ch).toFixed(1) + '%') +
                '</div>' +
              '</div>' +
-             rowA + rowB +
              '<div class="v2ov-kpi-foot">' +
                '<div class="v2ov-kpi-score">Score <strong>' + score + '</strong></div>' +
                '<div class="v2ov-kpi-stars">' + stars + '</div>' +
              '</div>' +
-             popover +
            '</div>';
   }).join('');
   return '<div class="v2ov-kpi-grid">' + cards + '</div>';
@@ -3720,20 +3645,19 @@ function v2RenderTopPicks(tickers){
     '</div>';
 }
 
-/* ── Master renderer — Option 2 layout (testing):
-     Top Picks — 6 detail cards (prod-style, all data points) as the
-                 PRIMARY hot list display (no compact strip above)
+/* ── Master renderer — reverted to the clean original layout:
+     KPI strip — 10 compact picks, 5x2 grid
      Row 1: Sector Map (2/3, clickable) + Distribution + Movers (1/3)
      Row 2: Recent Earnings (1/2) + Upcoming Earnings (1/2)
 
-     The compact KPI strip + hover popover are kept in the code
-     (v2RenderKpiStrip + .v2-kpop CSS) so we can swap back without a
-     rewrite if Option 2 doesn't earn its keep.                       */
+     Option 1 (Top 6 detail) and Option 3 (hover popover) helper
+     code is kept in the file but no longer called — keeps the
+     diff small if we want to revisit.                              */
 function renderV2Overview(tickers){
   const root = document.getElementById('v2-overview');
   if (!root || !Array.isArray(tickers) || !tickers.length) return;
   root.innerHTML =
-    v2RenderTopPicks(tickers) +
+    v2RenderKpiStrip(tickers) +
     '<div class="v2ov-row">' +
       v2RenderSectors(tickers) +
       v2RenderDistAndMovers(tickers) +
