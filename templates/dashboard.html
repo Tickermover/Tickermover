@@ -1162,7 +1162,10 @@ tr:hover td{background:rgba(132,204,22,.06)}
 body.v2 .hdr,
 body.v2 .tabs{display:none!important}
 
-/* Branded gradient frame around the whole app */
+/* Branded gradient frame around the whole app. Wider padding now so
+   the gradient reads as a real frame, not a thin border. Body is a
+   flex column so the ticker-tape can sit above the inset .v2-app
+   without breaking the fixed-height layout. */
 body.v2{
   background:
     radial-gradient(ellipse 60% 80% at 0% 0%,    rgba(56,189,248,.95) 0%, transparent 60%),
@@ -1171,13 +1174,44 @@ body.v2{
     radial-gradient(ellipse 60% 80% at 0% 100%,  rgba(139,92,246,.95) 0%, transparent 60%),
     linear-gradient(135deg,#6366f1,#d946ef);
   background-attachment:fixed;
-  padding:16px;
-  min-height:100vh;
+  padding:24px;
+  height:100vh;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  box-sizing:border-box;
+  overflow:hidden;
 }
+body.v2 #ticker-tape{
+  flex-shrink:0;
+  border-radius:14px!important;
+  box-shadow:0 8px 20px rgba(15,23,42,.25)!important;
+}
+body.v2 .v2-app{flex:1;min-height:0}
 
-/* Hide the live ticker-tape strip in v2 — the preview doesn't have it and
-   it sits awkwardly above the inset card */
-body.v2 #ticker-tape{display:none!important}
+/* Live ticker-tape strip lives INSIDE the inset card now (was hidden
+   in early v2 builds). Restyled with a dark band to match the sidebar
+   so it ties into the theme. */
+body.v2 #ticker-tape{
+  position:relative!important;
+  background:#0a0e15!important;
+  border-bottom:1px solid #1f2937!important;
+  border-radius:0!important;
+  height:36px!important;
+  overflow:hidden;
+}
+body.v2 .ticker-chip{
+  background:transparent!important;
+  color:#e2e8f0!important;
+  border:none!important;
+  font-size:12px!important;
+}
+body.v2 .ticker-chip .sym,
+body.v2 .ticker-chip .tic{color:#f1f5f9!important;font-weight:800!important}
+body.v2 .ticker-chip .px{color:#cbd5e1!important}
+/* Ticker tape sits between the body's flex top and the .v2-app inset
+   card. Layered shadow + rounded corners give it the same 'lifted'
+   feel as the main card. */
 
 .v2-app{
   display:grid;
@@ -1185,10 +1219,9 @@ body.v2 #ticker-tape{display:none!important}
   background:#f7fafc;
   border-radius:20px;
   overflow:hidden;
-  /* Fixed height so the sidebar stays pinned and ONLY the content area
-     scrolls (.v2-content owns the scroll on desktop). Mobile drops back
-     to natural body-scroll because the sidebar becomes a slide-out drawer. */
-  height:calc(100vh - 32px);
+  /* Height is now driven by the flex column on body.v2 — .v2-app gets
+     flex:1 so it fills whatever the ticker-tape leaves. Sidebar stays
+     pinned, only .v2-content scrolls. */
   box-shadow:0 24px 60px rgba(15,23,42,.25),0 8px 20px rgba(15,23,42,.15);
 }
 
@@ -1351,14 +1384,21 @@ body.v2-drawer-open .v2-drawer-backdrop{display:block}
   body.v2{padding:12px}
 }
 @media (max-width: 768px){
-  body.v2{padding:8px}
-  /* On phones the sidebar is a slide-out drawer, so .v2-app reverts to
-     natural body-scroll instead of the desktop fixed-height container. */
+  /* Phones: body reverts to natural body scroll (sidebar is a drawer),
+     padding stays wide enough that the gradient frame still reads. */
+  body.v2{
+    padding:14px;
+    height:auto;
+    min-height:100vh;
+    display:block;
+    overflow:visible;
+  }
+  body.v2 #ticker-tape{margin-bottom:10px}
   .v2-app{
     grid-template-columns:1fr;
     border-radius:14px;
     height:auto;
-    min-height:calc(100vh - 16px);
+    min-height:calc(100vh - 80px);
     overflow:visible;
   }
   .v2-content{
@@ -1726,6 +1766,97 @@ body.v2 .score-strong,
 body.v2 .grade-a,
 body.v2 .verdict-positive{
   background:#4338ca!important;color:#fff!important;border-color:rgba(99,102,241,.40)!important;
+}
+
+/* (13) Subtle indigo-gradient TINT on the content area so the inset
+        card visually ties into the outer frame. Stays nearly white. */
+body.v2 .v2-content{
+  background:
+    radial-gradient(ellipse 90% 60% at 0% 0%, rgba(99,102,241,.04) 0%, transparent 55%),
+    radial-gradient(ellipse 90% 60% at 100% 100%, rgba(217,70,239,.03) 0%, transparent 55%),
+    #f7fafc!important;
+}
+html.v2-dark body.v2 .v2-content{
+  background:
+    radial-gradient(ellipse 90% 60% at 0% 0%, rgba(99,102,241,.10) 0%, transparent 55%),
+    radial-gradient(ellipse 90% 60% at 100% 100%, rgba(217,70,239,.07) 0%, transparent 55%),
+    #0a0e15!important;
+}
+
+/* (14) HOT-LIST PANEL chrome — buy/accum/avoid coloured strips and
+        ratings still using brand green. Convert to indigo for chrome,
+        keep red on .avoid (semantic warning). */
+body.v2 .hot-card.buy::before,
+body.v2 .hot-card.accum::before{
+  background:linear-gradient(90deg,#4338ca,#6366f1)!important;
+}
+body.v2 .rating-buy,
+body.v2 .rating-strongbuy,
+body.v2 .rating.buy,
+body.v2 .rating[class*="buy"]{
+  background:linear-gradient(135deg,#4338ca,#6366f1)!important;
+  color:#fff!important;
+  border-color:transparent!important;
+}
+
+/* (15) UNIVERSE TABLE — fund-list score column + grade pill chrome */
+body.v2 .fl-grade.grade-a,
+body.v2 .fl-grade.grade-A,
+body.v2 .fl-grade[class*="grade-a" i]{
+  background:linear-gradient(135deg,#4338ca,#6366f1)!important;color:#fff!important;
+}
+body.v2 .fl-score{color:#4338ca!important}
+body.v2 .fl-pop{color:#4338ca!important}
+body.v2 table th{color:#0f172a!important}
+body.v2 .fund-list tbody tr:hover td{background:rgba(99,102,241,.06)!important}
+
+/* (16) SECTOR-MAP PANEL (the full-page view, not the widget) —
+        progress bars and 'X stocks N hot' chrome chrome */
+body.v2 .sm-card{border-color:#e5e7eb!important}
+body.v2 .sm-bar{background:#f1f5f9!important}
+body.v2 .sm-bar > div,
+body.v2 .sm-bar-fill,
+body.v2 .sm-fill{
+  background:linear-gradient(90deg,#4338ca,#6366f1,#a855f7)!important;
+}
+body.v2 .sm-cagr,
+body.v2 .sm-tam,
+body.v2 .sm-cat,
+body.v2 .sm-chip{
+  background:#eef2ff!important;color:#4338ca!important;border-color:transparent!important;
+}
+
+/* (17) TOP HUNTS / MODEL PORTFOLIO PANEL — tracker card chrome
+        (Top Tier pill, Since Entry, Live factor profile bars) */
+body.v2 #panel-model .perf-pos,
+body.v2 #panel-model .since-entry,
+body.v2 #panel-model [class*="since-entry"]{
+  background:linear-gradient(135deg,#eef2ff,#e0e7ff)!important;
+  border-color:rgba(99,102,241,.30)!important;color:#0f172a!important;
+}
+/* Factor-profile bars: keep green/red SEMANTIC (data tells us
+   strong/weak), but use indigo for the 'good' bars in chrome
+   contexts. We target the strong-factor inline width bars: */
+body.v2 #panel-model [style*="background:#15803d"][style*="width:"],
+body.v2 #panel-model [style*="background-color:#15803d"][style*="width:"],
+body.v2 #panel-model [style*="background:#16a34a"][style*="width:"]{
+  background:linear-gradient(90deg,#4338ca,#6366f1)!important;
+}
+
+/* (18) BLANKET: any remaining green-text element inside body.v2 that
+        doesn't carry a price-up class gets flipped — last-resort net
+        over the 58 inline color:#15803d sites my targeted rules miss */
+body.v2 *[style*="color:#15803d"]:not(.pos):not(.up):not(.green):not(.kpi-chg):not(.mover-pct):not(.surp):not(.sec-mom){
+  color:#4338ca!important;
+}
+
+/* (19) Translucent green TINT backgrounds (e.g. light "Above target"
+        chip, "BEAT" pill bg) — keep BEAT/MISS semantic by class, flip
+        everything else */
+body.v2 *[style*="background:rgba(22,163,74"]:not(.v2ov-tl-tag):not(.beat),
+body.v2 *[style*="background:rgba(132,204,22"]:not(.v2ov-tl-tag):not(.beat),
+body.v2 *[style*="background:rgba(21,128,61"]:not(.v2ov-tl-tag):not(.beat){
+  background-color:rgba(99,102,241,.10)!important;
 }
 
 /* ════════════════════════════════════════════════════════════════
