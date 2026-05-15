@@ -1181,23 +1181,28 @@ body.v2{
   box-sizing:border-box;
   overflow:hidden;
 }
-/* Ticker tape: rounded TOP corners (more pronounced curve at the
-   farthest top of the page). Dark band continues into the sidebar. */
+/* SINGLE outer shell owns the rounding + shadow, so the curved
+   edge is one continuous arc instead of two pieces trying to align. */
+body.v2 .v2-shell{
+  flex:1;min-height:0;
+  display:flex;flex-direction:column;
+  border-radius:18px;
+  overflow:hidden;
+  box-shadow:0 16px 40px rgba(15,23,42,.25),0 6px 16px rgba(15,23,42,.10);
+}
+/* Inside the shell, ticker tape and app card are perfect rectangles —
+   the shell clips them to its rounded shape via overflow:hidden. */
 body.v2 #ticker-tape{
   flex-shrink:0;
-  border-radius:18px 18px 0 0!important;
+  border-radius:0!important;
   box-shadow:none!important;
   margin:0!important;
 }
-/* App card: rounded BOTTOM corners only, square top so it joins
-   the ticker tape seamlessly. Combined they read as one rectangle. */
 body.v2 .v2-app{
   flex:1;min-height:0;
-  border-radius:0 0 18px 18px!important;
-  box-shadow:0 16px 40px rgba(15,23,42,.25),0 6px 16px rgba(15,23,42,.10)!important;
+  border-radius:0!important;
+  box-shadow:none!important;
 }
-/* Sidebar inside .v2-app: kill its own corner radius — the outer
-   wrapper now owns the rounding. */
 body.v2 .v2-sidebar{border-radius:0!important}
 
 /* Live ticker-tape strip lives INSIDE the inset card now (was hidden
@@ -2644,6 +2649,24 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
       wrap.dataset.open = wrap.dataset.open === 'true' ? 'false' : 'true';
     });
   });
+})();
+
+/* Wrap ticker-tape + .v2-app inside a single .v2-shell so the outer
+   border-radius lives on ONE element. With each piece having its own
+   radius the corners didn't perfectly align — visible 'broken line'
+   at the top-left/right. One shell with overflow:hidden gives a single
+   continuous rounded edge around the whole dashboard. */
+(function v2WrapShell(){
+  if (!document.body.classList.contains('v2')) return;
+  const ticker = document.getElementById('ticker-tape');
+  const app    = document.querySelector('.v2-app');
+  if (!ticker || !app) return;
+  if (ticker.parentElement && ticker.parentElement.classList.contains('v2-shell')) return;
+  const shell = document.createElement('div');
+  shell.className = 'v2-shell';
+  ticker.parentNode.insertBefore(shell, ticker);
+  shell.appendChild(ticker);
+  shell.appendChild(app);
 })();
 
 /* ════════════════════════════════════════════════════════════════
