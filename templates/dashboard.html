@@ -2032,7 +2032,7 @@ html.v2-dark body.v2 .v2-topbar{
    card, themed for v2 (white bg with subtle indigo gradient + brand
    stripe on top, picked up from .v2ov-card). */
 
-.v2-pick-section{margin:24px 0}
+.v2-pick-section{margin:0 0 20px}
 .v2-pick-section-head{margin-bottom:14px}
 .v2-pick-grid{
   display:grid;
@@ -3713,23 +3713,26 @@ function v2RenderTopPicks(tickers){
   return '' +
     '<div class="v2-pick-section">' +
       '<div class="v2-pick-section-head">' +
-        '<div class="v2ov-title">🎯 Top 6 In Depth</div>' +
-        '<div class="v2ov-sub">Highest Alpha Score · all the data points from the production card</div>' +
+        '<div class="v2ov-title">🔥 Hot List · Top 6 Picks</div>' +
+        '<div class="v2ov-sub">Highest Alpha Score across the universe · click any card for the full tear sheet</div>' +
       '</div>' +
       '<div class="v2-pick-grid">' + cards + '</div>' +
     '</div>';
 }
 
-/* ── Master renderer — final v2 layout:
-     KPI strip — 10 picks compact, 5x2 grid
-     Top Picks — 6 detail cards (prod-style, all data points)
+/* ── Master renderer — Option 2 layout (testing):
+     Top Picks — 6 detail cards (prod-style, all data points) as the
+                 PRIMARY hot list display (no compact strip above)
      Row 1: Sector Map (2/3, clickable) + Distribution + Movers (1/3)
-     Row 2: Recent Earnings (1/2) + Upcoming Earnings (1/2)            */
+     Row 2: Recent Earnings (1/2) + Upcoming Earnings (1/2)
+
+     The compact KPI strip + hover popover are kept in the code
+     (v2RenderKpiStrip + .v2-kpop CSS) so we can swap back without a
+     rewrite if Option 2 doesn't earn its keep.                       */
 function renderV2Overview(tickers){
   const root = document.getElementById('v2-overview');
   if (!root || !Array.isArray(tickers) || !tickers.length) return;
   root.innerHTML =
-    v2RenderKpiStrip(tickers) +
     v2RenderTopPicks(tickers) +
     '<div class="v2ov-row">' +
       v2RenderSectors(tickers) +
