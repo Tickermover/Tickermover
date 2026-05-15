@@ -1583,6 +1583,142 @@ body.v2 .loading::after,
 body.v2 .ah-submit.loading::after{
   border-top-color:#4338ca!important;
 }
+
+/* ════════════════════════════════════════════════════════════════
+   v2 GREEN CHROME PURGE — DEEP SWEEP
+   Catches the inline-styled green chrome inside panel renderers
+   (Top Hunts tracker cards, Universe table tickers, Sector Map
+   category cards, Reports) that the first purge missed.
+
+   Semantic green is PRESERVED for:
+   - .pos / .up / .green classes (price-up percentages)
+   - .v2ov-tl-tag.beat (BEAT earnings tag)
+   - .v2ov-sector-cell (heat-map cells coloured by today's move)
+   - .v2ov-dist-cell.a / .v2ov-dist-seg.a (A-grade in score dist)
+   - .regime-chip / #regime-pill (Bullish chip)
+   ════════════════════════════════════════════════════════════════ */
+
+/* (1) Drop the 'green dash' left border on KPI cards entirely */
+body.v2 .v2ov-kpi.hot1,
+body.v2 .v2ov-kpi.hot2,
+body.v2 .v2ov-kpi.hot3,
+body.v2 .v2ov-kpi.hot4,
+body.v2 .v2ov-kpi.hot5{
+  border-left-color:#e5e7eb!important;
+  border-left-width:1px!important;
+}
+html.v2-dark body.v2 .v2ov-kpi.hot1,
+html.v2-dark body.v2 .v2ov-kpi.hot2,
+html.v2-dark body.v2 .v2ov-kpi.hot3,
+html.v2-dark body.v2 .v2ov-kpi.hot4,
+html.v2-dark body.v2 .v2ov-kpi.hot5{border-left-color:#1f2937!important}
+
+/* (2) Ticker symbols rendered in brand green — flip to indigo */
+body.v2 .fd-tic,
+body.v2 .fl-tic,
+body.v2 .hot-tic,
+body.v2 .tl-tic,
+body.v2 .trend-tic,
+body.v2 .kpi-tic{color:#4338ca!important}
+
+/* (3) Inline dark-green text → indigo. The :not() guards keep
+       semantic green on price-up / momentum classes. */
+body.v2 [style*="color:#15803d"]:not(.pos):not(.up):not(.green),
+body.v2 [style*="color: #15803d"]:not(.pos):not(.up):not(.green),
+body.v2 [style*="color:#16a34a"]:not(.pos):not(.up):not(.green),
+body.v2 [style*="color:#65a30d"]:not(.pos):not(.up):not(.green){
+  color:#4338ca!important;
+}
+
+/* (4) Solid green backgrounds (Top Tier pill, etc.) → indigo */
+body.v2 [style*="background:#15803d"],
+body.v2 [style*="background: #15803d"],
+body.v2 [style*="background:#16a34a"],
+body.v2 [style*="background-color:#15803d"],
+body.v2 [style*="background-color:#16a34a"]{
+  background-color:#4338ca!important;
+  background-image:none!important;
+}
+
+/* (5) Light green backgrounds (since-entry box, success states,
+       member pill, factor-profile 'good' rows) → light indigo */
+body.v2 [style*="background:#dcfce7"],
+body.v2 [style*="background: #dcfce7"],
+body.v2 [style*="background:#f0fdf4"],
+body.v2 [style*="background: #f0fdf4"],
+body.v2 [style*="background:#bbf7d0"],
+body.v2 [style*="background: #bbf7d0"],
+body.v2 [style*="background:#d1fae5"],
+body.v2 [style*="background:#ecfdf5"],
+body.v2 [style*="background: #ecfdf5"]{
+  background-color:#eef2ff!important;
+  background-image:none!important;
+}
+
+/* (6) Green linear-gradients (various since-entry / CTA / banner
+       boxes) → indigo gradient */
+body.v2 [style*="linear-gradient(135deg,#f0fdf4"],
+body.v2 [style*="linear-gradient(135deg, #f0fdf4"],
+body.v2 [style*="linear-gradient(135deg,#dcfce7"],
+body.v2 [style*="linear-gradient(135deg,#15803d"],
+body.v2 [style*="linear-gradient(135deg, #15803d"],
+body.v2 [style*="linear-gradient(135deg,#16a34a"],
+body.v2 [style*="linear-gradient(90deg,#15803d"],
+body.v2 [style*="linear-gradient(180deg,#15803d"]{
+  background-image:linear-gradient(135deg,#eef2ff,#e0e7ff)!important;
+}
+
+/* (7) Green border colours → indigo */
+body.v2 [style*="border-color:#15803d"],
+body.v2 [style*="border-color:#bbf7d0"],
+body.v2 [style*="border-color:#86efac"],
+body.v2 [style*="border:1px solid #15803d"],
+body.v2 [style*="border:1px solid #bbf7d0"],
+body.v2 [style*="border:1.5px solid #15803d"],
+body.v2 [style*="border:1.5px solid rgba(22,163,74"],
+body.v2 [style*="border:1.5px solid rgba(132,204,22"],
+body.v2 [style*="border-left:5px solid #15803d"],
+body.v2 [style*="border-left:4px solid #15803d"],
+body.v2 [style*="border-left:3px solid #15803d"]{
+  border-color:rgba(99,102,241,.30)!important;
+}
+
+/* (8) Translucent green backgrounds → translucent indigo */
+body.v2 [style*="background:rgba(22,163,74"],
+body.v2 [style*="background-color:rgba(22,163,74"],
+body.v2 [style*="background:rgba(132,204,22"],
+body.v2 [style*="background-color:rgba(132,204,22"],
+body.v2 [style*="background:rgba(21,128,61"]{
+  background-color:rgba(99,102,241,.10)!important;
+}
+
+/* (9) The 'Top Tier' / 'Quality' / 'Buy' rating pills + analyst
+       target ABOVE / BELOW pills — these are class-based with green
+       backgrounds rendered by qualityVerdict() etc. */
+body.v2 [style*="background:#15803d;color:#fff"],
+body.v2 [style*="background: #15803d; color: #fff"]{
+  background-color:#4338ca!important;color:#fff!important;
+}
+
+/* (10) Live-factor-profile horizontal progress bars — they're
+        drawn with a green/yellow/red palette based on factor value.
+        Recolour the GREEN ones (strong factor) to indigo so the
+        cards stop reading as a sea of green. */
+body.v2 [style*="background:#15803d"][style*="width:"]{
+  background-color:#4338ca!important;
+}
+
+/* (11) Anchor/link green underlines & primary-link colors */
+body.v2 a[style*="#15803d"]:not(.pos):not(.up){color:#4338ca!important}
+
+/* (12) Score percentage badges and similar — anywhere a strong
+        coloured chip with class indicating a positive grade has
+        a green hex. */
+body.v2 .score-strong,
+body.v2 .grade-a,
+body.v2 .verdict-positive{
+  background:#4338ca!important;color:#fff!important;border-color:rgba(99,102,241,.40)!important;
+}
 .v2ov-kpi{
   background:#fff;border:1px solid #e5e7eb;border-radius:14px;
   padding:18px;cursor:pointer;
