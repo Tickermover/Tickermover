@@ -1185,17 +1185,20 @@ body.v2 #ticker-tape{display:none!important}
   background:#f7fafc;
   border-radius:20px;
   overflow:hidden;
-  min-height:calc(100vh - 32px);
+  /* Fixed height so the sidebar stays pinned and ONLY the content area
+     scrolls (.v2-content owns the scroll on desktop). Mobile drops back
+     to natural body-scroll because the sidebar becomes a slide-out drawer. */
+  height:calc(100vh - 32px);
   box-shadow:0 24px 60px rgba(15,23,42,.25),0 8px 20px rgba(15,23,42,.15);
 }
 
-/* ── Sidebar (always dark) ──────────────────────────────────────── */
+/* ── Sidebar (always dark, fills the fixed-height .v2-app) ──────── */
 .v2-sidebar{
   background:#0a0e15;
   border-right:1px solid #1f2937;
   padding:18px 14px;
   display:flex;flex-direction:column;
-  height:calc(100vh - 32px);
+  height:100%;
   overflow-y:auto;
   position:relative;
   color:#e2e8f0;
@@ -1287,8 +1290,14 @@ body.v2 #ticker-tape{display:none!important}
 }
 .v2-sb-bottom #user-menu button:hover{color:#fca5a5!important;background:rgba(220,38,38,.12)!important}
 
-/* ── Content area ───────────────────────────────────────────────── */
-.v2-content{display:flex;flex-direction:column;min-width:0;background:#f7fafc}
+/* ── Content area — owns the desktop scroll; sidebar stays pinned ── */
+.v2-content{
+  display:flex;flex-direction:column;min-width:0;background:#f7fafc;
+  height:100%;
+  overflow-y:auto;
+  overflow-x:hidden;
+  -webkit-overflow-scrolling:touch;
+}
 
 /* ── Top bar ────────────────────────────────────────────────────── */
 .v2-topbar{
@@ -1335,7 +1344,19 @@ body.v2-drawer-open .v2-drawer-backdrop{display:block}
 }
 @media (max-width: 768px){
   body.v2{padding:8px}
-  .v2-app{grid-template-columns:1fr;border-radius:14px;min-height:calc(100vh - 16px)}
+  /* On phones the sidebar is a slide-out drawer, so .v2-app reverts to
+     natural body-scroll instead of the desktop fixed-height container. */
+  .v2-app{
+    grid-template-columns:1fr;
+    border-radius:14px;
+    height:auto;
+    min-height:calc(100vh - 16px);
+    overflow:visible;
+  }
+  .v2-content{
+    height:auto;
+    overflow:visible;
+  }
   .v2-sidebar{
     position:fixed;left:-260px;top:0;width:240px;height:100vh;
     border-radius:0;transition:left .25s cubic-bezier(.22,.61,.36,1);z-index:50;
@@ -1402,7 +1423,17 @@ html.v2-dark .v2ov-skeleton .sk{background:linear-gradient(90deg,#121821 0%,#1f2
 .v2ov-tic-logo.lg{width:40px;height:40px;border-radius:10px}
 
 /* ── KPI strip ───────────────────────────────────────────────── */
-.v2ov-kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+.v2ov-kpi-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:20px}
+/* Each card fades + slides in from the right on (re-)render so the
+   periodic 10-stock rotation FEELS like the cards are flipping into
+   place rather than a hard swap. Staggered by index via inline delay. */
+@keyframes v2-kpi-in{
+  from{opacity:0;transform:translateX(14px)}
+  to{opacity:1;transform:translateX(0)}
+}
+.v2ov-kpi-grid > .v2ov-kpi{
+  animation:v2-kpi-in .45s cubic-bezier(.22,.61,.36,1) both;
+}
 .v2ov-kpi{
   background:#fff;border:1px solid #e5e7eb;border-radius:14px;
   padding:18px;cursor:pointer;
@@ -1545,19 +1576,10 @@ html.v2-dark .v2ov-tl-item{border-bottom-color:#1f2937}
 html.v2-dark .v2ov-movers-section,html.v2-dark .v2ov-kpi-foot{border-top-color:#1f2937}
 html.v2-dark .v2ov-tic-logo{background:#1f2937;border-color:#374151}
 
-/* v2 section heading — sits between the overview widgets and the
-   detailed Top-20 hot-card grid so users see what they're scrolling into */
-body.v2 .v2-section-h{
-  display:flex;align-items:center;justify-content:space-between;
-  font-size:18px;font-weight:800;color:#0f172a;
-  letter-spacing:-.01em;
-  margin:28px 0 14px;
-  padding-bottom:10px;
-  border-bottom:1px solid #e5e7eb;
-}
-body.v2 .v2-section-h .sub{font-size:12px;font-weight:600;color:#64748b}
-html.v2-dark body.v2 .v2-section-h{color:#f1f5f9;border-bottom-color:#1f2937}
-html.v2-dark body.v2 .v2-section-h .sub{color:#94a3b8}
+/* Bottom Top-20 hot-card grid is hidden again in v2 — the rotating
+   10-stock KPI strip at the top is the only hot list now. */
+body.v2 #hot-grid,
+body.v2 .v2-section-h{display:none!important}
 
 /* ── Hot List Performance chart (top of overview) ────────────── */
 .v2ov-chart-svg{width:100%;height:240px;display:block;overflow:visible}
@@ -1576,9 +1598,13 @@ html.v2-dark .v2ov-period-tab.active{background:#374151;color:#f1f5f9}
 html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 
 /* Mobile — overview widgets stack */
+@media (max-width: 1280px){
+  .v2ov-kpi-grid{grid-template-columns:repeat(4,1fr)}
+}
 @media (max-width: 1100px){
   .v2ov-row{grid-template-columns:1fr}
   .v2ov-sector-grid{grid-template-columns:repeat(3,1fr)}
+  .v2ov-kpi-grid{grid-template-columns:repeat(3,1fr)}
 }
 @media (max-width: 768px){
   .v2ov-kpi-grid{grid-template-columns:repeat(2,1fr);gap:10px}
@@ -2067,14 +2093,24 @@ function v2EscHTML(s){
   return (s || '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 }
 
-/* ── KPI strip — top 4 picks by Alpha Score ─────────────────── */
-function v2RenderKpiStrip(tickers){
-  const top4 = [...tickers]
-    .filter(t => (t.smart_score ?? t.pop_score ?? 0) > 0)
-    .sort((a, b) => (b.smart_score ?? b.pop_score ?? 0) - (a.smart_score ?? a.pop_score ?? 0))
-    .slice(0, 4);
-  if (!top4.length) return '';
-  const cards = top4.map(t => {
+/* ── KPI strip — top 10 picks, rotating: 5 visible at any moment,
+   advance the offset by 1 every 4 seconds so all 10 cycle through.
+   We render 5 cards each tick; the CSS keyframe animation on the
+   grid makes each new card slide-in from the right (flip-into-place
+   feel). The rotation is driven by a global timer set further down. */
+const V2_KPI_POOL    = 10;
+const V2_KPI_VISIBLE = 5;
+let   _v2KpiOffset   = 0;
+let   _v2KpiPool     = [];        // cached top 10 from last data refresh
+
+function v2BuildKpiCards(top10){
+  if (!top10 || !top10.length) return '';
+  const visible = [];
+  const n = Math.min(V2_KPI_VISIBLE, top10.length);
+  for (let i = 0; i < n; i++){
+    visible.push(top10[(i + _v2KpiOffset) % top10.length]);
+  }
+  return visible.map((t, idx) => {
     const sym  = t.ticker;
     const name = v2EscHTML((t.name || sym).slice(0, 22));
     const px   = v2Price(t.price);
@@ -2083,7 +2119,9 @@ function v2RenderKpiStrip(tickers){
     const arr  = ch >= 0 ? '▲' : '▼';
     const score = Math.round(t.smart_score ?? t.pop_score ?? 0);
     const stars = ({A:'★★★★★',B:'★★★★',C:'★★★',D:'★★',F:'★'}[t.grade] || '');
-    return '<div class="v2ov-kpi" onclick="openStockModal(\'' + sym + '\')">' +
+    // Staggered animation delay so cards flow in left-to-right
+    const delay = (idx * 60) + 'ms';
+    return '<div class="v2ov-kpi" style="animation-delay:' + delay + '" onclick="openStockModal(\'' + sym + '\')">' +
              '<div class="v2ov-kpi-head">' + v2LogoHTML(sym, 'lg') +
                '<div style="min-width:0">' +
                  '<div class="v2ov-kpi-name">' + name + '</div>' +
@@ -2102,7 +2140,29 @@ function v2RenderKpiStrip(tickers){
              '</div>' +
            '</div>';
   }).join('');
-  return '<div class="v2ov-kpi-grid">' + cards + '</div>';
+}
+
+function v2RenderKpiStrip(tickers){
+  // Refresh the pool from the latest universe data (top 10 by Alpha Score)
+  _v2KpiPool = [...tickers]
+    .filter(t => (t.smart_score ?? t.pop_score ?? 0) > 0)
+    .sort((a, b) => (b.smart_score ?? b.pop_score ?? 0) - (a.smart_score ?? a.pop_score ?? 0))
+    .slice(0, V2_KPI_POOL);
+  if (!_v2KpiPool.length) return '';
+  return '<div class="v2ov-kpi-grid" id="v2-kpi-grid">' + v2BuildKpiCards(_v2KpiPool) + '</div>';
+}
+
+/* In-place rotation — replaces ONLY the KPI strip every 4 seconds
+   without re-rendering the whole overview. */
+function v2RotateKpi(){
+  if (!_v2KpiPool.length) return;
+  const grid = document.getElementById('v2-kpi-grid');
+  if (!grid) return;
+  _v2KpiOffset = (_v2KpiOffset + 1) % _v2KpiPool.length;
+  grid.innerHTML = v2BuildKpiCards(_v2KpiPool);
+}
+if (!window._v2KpiTimer){
+  window._v2KpiTimer = setInterval(v2RotateKpi, 4000);
 }
 
 /* ── Score Distribution + Movers (right column card) ────────── */
@@ -2200,8 +2260,8 @@ function v2RenderSectors(tickers){
   return '' +
     '<div class="v2ov-card">' +
       '<div class="v2ov-card-head"><div>' +
-        '<div class="v2ov-title">Sector Strength</div>' +
-        '<div class="v2ov-sub">Avg Alpha Score · colour-coded by today\'s move</div>' +
+        '<div class="v2ov-title">🗺 Sector Map</div>' +
+        '<div class="v2ov-sub">Avg Alpha Score by sector · tap any cell for the full Sector Map view</div>' +
       '</div></div>' +
       '<div class="v2ov-sector-grid">' + cells + '</div>' +
     '</div>';
