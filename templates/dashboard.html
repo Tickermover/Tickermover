@@ -1162,18 +1162,15 @@ tr:hover td{background:rgba(132,204,22,.06)}
 body.v2 .hdr,
 body.v2 .tabs{display:none!important}
 
-/* Branded gradient frame — DEEPER palette. Base goes from pastel
-   indigo→magenta to a saturated indigo-900 → purple-900 with the
-   four corner radials kept vibrant on top so the brand colours still
-   read. The frame now looks like a deep tech-tool bezel, not a
-   pastel halo. */
+/* Branded gradient frame — thin border, ticker-tape + inset card
+   visually merge into ONE rounded rectangle. */
 body.v2{
   background:
-    radial-gradient(ellipse 55% 75% at 0% 0%,    rgba(14,165,233,.90) 0%, transparent 62%),
-    radial-gradient(ellipse 55% 75% at 100% 0%,  rgba(219,39,119,.90) 0%, transparent 62%),
-    radial-gradient(ellipse 55% 75% at 100% 100%,rgba(244,63,94,.85)  0%, transparent 62%),
-    radial-gradient(ellipse 55% 75% at 0% 100%,  rgba(124,58,237,.90) 0%, transparent 62%),
-    linear-gradient(135deg,#1e1b4b 0%,#312e81 35%,#581c87 70%,#86198f 100%);
+    radial-gradient(ellipse 60% 80% at 0% 0%,    rgba(56,189,248,.95) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 80% at 100% 0%,  rgba(236,72,153,.95) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 80% at 100% 100%,rgba(251,113,133,.95) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 80% at 0% 100%,  rgba(139,92,246,.95) 0%, transparent 60%),
+    linear-gradient(135deg,#6366f1,#d946ef);
   background-attachment:fixed;
   padding:12px;
   height:100vh;
@@ -1486,6 +1483,17 @@ html.v2-dark .v2ov-skeleton .sk{background:linear-gradient(90deg,#121821 0%,#1f2
 }
 html.v2-dark .v2ov-card{
   background:linear-gradient(135deg,#121821 0%,#141a26 60%,#1a1830 100%);
+}
+
+/* Earnings cards (Recent + Upcoming) get a slightly darker background
+   tint so they read as a paired set distinct from the other widgets. */
+body.v2 .v2ov-card.earnings{
+  background:linear-gradient(135deg,#f1f5f9 0%,#e8ebf4 50%,#dee0ee 100%);
+  border-color:#d4d8e6;
+}
+html.v2-dark body.v2 .v2ov-card.earnings{
+  background:linear-gradient(135deg,#0f1520 0%,#101624 60%,#171530 100%);
+  border-color:#1f2937;
 }
 .v2ov-card-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px;gap:12px;flex-wrap:wrap}
 .v2ov-title{font-size:15px;font-weight:800;color:#0f172a;letter-spacing:-.01em}
@@ -3274,7 +3282,7 @@ function v2RenderEarnings(tickers){
   items.sort((a, b) => b.d - a.d);
   const top5 = items.slice(0, 5);
   if (!top5.length){
-    return '<div class="v2ov-card">' +
+    return '<div class="v2ov-card earnings">' +
       '<div class="v2ov-card-head"><div>' +
         '<div class="v2ov-title">Recent Earnings</div>' +
         '<div class="v2ov-sub">Last 30 days · sorted by latest first</div>' +
@@ -3318,7 +3326,7 @@ function v2RenderEarnings(tickers){
   }).join('');
 
   return '' +
-    '<div class="v2ov-card">' +
+    '<div class="v2ov-card earnings">' +
       '<div class="v2ov-card-head"><div>' +
         '<div class="v2ov-title">Recent Earnings</div>' +
         '<div class="v2ov-sub">Latest 5 reports across the universe</div>' +
@@ -3516,7 +3524,7 @@ function v2RenderUpcomingEarnings(tickers){
     '</div></div>';
 
   if (!upcoming.length){
-    return '<div class="v2ov-card">' + head +
+    return '<div class="v2ov-card earnings">' + head +
       '<div style="padding:14px 4px;color:#94a3b8;font-size:12.5px;text-align:center">' +
         'No earnings scheduled in the next 30 days for stocks in our universe.' +
       '</div></div>';
@@ -3545,7 +3553,7 @@ function v2RenderUpcomingEarnings(tickers){
            '</div>';
   }).join('');
 
-  return '<div class="v2ov-card">' + head + rows + '</div>';
+  return '<div class="v2ov-card earnings">' + head + rows + '</div>';
 }
 
 /* ── Top Picks (in-depth) — 6 detailed cards covering all the data
