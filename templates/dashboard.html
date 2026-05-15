@@ -1162,22 +1162,24 @@ tr:hover td{background:rgba(132,204,22,.06)}
 body.v2 .hdr,
 body.v2 .tabs{display:none!important}
 
-/* Branded gradient frame — thin border, ticker-tape + inset card
-   visually merge into ONE rounded rectangle (no gap, no inner edge
-   curve where they meet). */
+/* Branded gradient frame — DEEPER palette. Base goes from pastel
+   indigo→magenta to a saturated indigo-900 → purple-900 with the
+   four corner radials kept vibrant on top so the brand colours still
+   read. The frame now looks like a deep tech-tool bezel, not a
+   pastel halo. */
 body.v2{
   background:
-    radial-gradient(ellipse 60% 80% at 0% 0%,    rgba(56,189,248,.95) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 80% at 100% 0%,  rgba(236,72,153,.95) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 80% at 100% 100%,rgba(251,113,133,.95) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 80% at 0% 100%,  rgba(139,92,246,.95) 0%, transparent 60%),
-    linear-gradient(135deg,#6366f1,#d946ef);
+    radial-gradient(ellipse 55% 75% at 0% 0%,    rgba(14,165,233,.90) 0%, transparent 62%),
+    radial-gradient(ellipse 55% 75% at 100% 0%,  rgba(219,39,119,.90) 0%, transparent 62%),
+    radial-gradient(ellipse 55% 75% at 100% 100%,rgba(244,63,94,.85)  0%, transparent 62%),
+    radial-gradient(ellipse 55% 75% at 0% 100%,  rgba(124,58,237,.90) 0%, transparent 62%),
+    linear-gradient(135deg,#1e1b4b 0%,#312e81 35%,#581c87 70%,#86198f 100%);
   background-attachment:fixed;
-  padding:12px;                  /* thinner frame, more content room */
+  padding:12px;
   height:100vh;
   display:flex;
   flex-direction:column;
-  gap:0;                          /* no gap — tape joins app card */
+  gap:0;
   box-sizing:border-box;
   overflow:hidden;
 }
@@ -3251,32 +3253,46 @@ function v2RenderSectors(tickers){
     '</div>';
 }
 
-/* ── Recent Earnings timeline (last 5 reports across universe) ────
+/* ── Recent Earnings timeline (last 30 days only) ──────────────────
    IMPORTANT: backend stores eps_quarters in OLDEST-FIRST order, so
    the latest report is the LAST element. Sort descending by date
-   per ticker to be order-agnostic, then pick the latest one each. */
+   per ticker, pick the latest, then filter to the last 30 days. */
 function v2RenderEarnings(tickers){
+  const now = new Date();
+  now.setHours(0,0,0,0);
+  const cutoff = new Date(now.getTime() - 30 * 86400000);
   const items = [];
   tickers.forEach(t => {
     const all = (t.eps_quarters || []).filter(q => q && q.date);
     if (!all.length) return;
     const sorted = [...all].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
-    items.push({ t: t, q: sorted[0] });
+    const q = sorted[0];
+    const d = new Date(String(q.date).slice(0, 10) + 'T00:00:00');
+    if (isNaN(d) || d < cutoff || d > now) return;
+    items.push({ t: t, q: q, d: d });
   });
-  items.sort((a, b) => (b.q.date || '').localeCompare(a.q.date || ''));
+  items.sort((a, b) => b.d - a.d);
   const top5 = items.slice(0, 5);
-  if (!top5.length) return '';
+  if (!top5.length){
+    return '<div class="v2ov-card">' +
+      '<div class="v2ov-card-head"><div>' +
+        '<div class="v2ov-title">Recent Earnings</div>' +
+        '<div class="v2ov-sub">Last 30 days · sorted by latest first</div>' +
+      '</div></div>' +
+      '<div style="padding:14px 4px;color:#94a3b8;font-size:12.5px;text-align:center">' +
+        'No earnings reports in the last 30 days for stocks in our universe.' +
+      '</div></div>';
+  }
 
   // Show year on the date row so the user can immediately see if a
-  // record is stale (e.g. 2025 reports for tickers that haven't filed
-  // again yet). Without the year, "29 Jun" looked current even when it
-  // was nearly a year old.
-  const nowYr = new Date().getUTCFullYear();
-  const rows = top5.map(({t, q}) => {
-    const d = new Date(q.date + 'T00:00:00');
-    const dd = isNaN(d) ? '—' : String(d.getUTCDate()).padStart(2, '0');
+  // record is stale. Using local getDate()/getFullYear() so the
+  // displayed day matches the calendar everywhere (the previous
+  // getUTC* variants shifted by a day in non-UTC timezones).
+  const nowYr = new Date().getFullYear();
+  const rows = top5.map(({t, q, d}) => {
+    const dd = isNaN(d) ? '—' : String(d.getDate()).padStart(2, '0');
     const mm = isNaN(d) ? '' : d.toLocaleDateString('en-US', {month:'short'});
-    const yr = isNaN(d) ? '' : d.getUTCFullYear();
+    const yr = isNaN(d) ? '' : d.getFullYear();
     const yrLabel = (yr && yr !== nowYr) ? "'" + String(yr).slice(-2) : '';
     const beat = q.beat === true;
     const miss = q.beat === false;
@@ -3466,23 +3482,20 @@ function v2RenderPerformanceChart(tickers){
     '</div>';
 }
 
-/* ── Upcoming earnings (next 90 days, sorted by closest date)
+/* ── Upcoming earnings (next 30 days, sorted by closest date)
    The universe API doesn't actually populate the *_date fields
    (all return null). But t.days_to_earnings IS populated by the
-   backend, so we derive the date from "today + N days". Fall back
-   to the named date fields in case the backend adds them later. */
+   backend, so we derive the date from "today + N days". */
 function v2RenderUpcomingEarnings(tickers){
   const now = new Date();
   now.setHours(0, 0, 0, 0);
   const upcoming = tickers
     .map(t => {
       let d = null, days = null;
-      // Preferred: explicit numeric days-until-earnings
       if (t.days_to_earnings != null && t.days_to_earnings >= 0){
         days = Number(t.days_to_earnings);
         d = new Date(now.getTime() + days * 86400000);
       } else {
-        // Fallback for backends that DO populate a real date string
         const dateStr = t.earnings_date || t.next_earnings_date || t.eps_date_next;
         if (!dateStr) return null;
         d = new Date(String(dateStr).slice(0, 10) + 'T00:00:00');
@@ -3490,7 +3503,7 @@ function v2RenderUpcomingEarnings(tickers){
         days = Math.round((d - now) / 86400000);
         if (days < 0) return null;
       }
-      if (days > 90) return null;
+      if (days > 30) return null;
       return { t, d, days };
     })
     .filter(Boolean)
@@ -3499,18 +3512,18 @@ function v2RenderUpcomingEarnings(tickers){
 
   const head = '<div class="v2ov-card-head"><div>' +
     '<div class="v2ov-title">📅 Upcoming Earnings</div>' +
-    '<div class="v2ov-sub">Next 90 days · sorted by closest date</div>' +
+    '<div class="v2ov-sub">Next 30 days · sorted by closest date</div>' +
     '</div></div>';
 
   if (!upcoming.length){
     return '<div class="v2ov-card">' + head +
       '<div style="padding:14px 4px;color:#94a3b8;font-size:12.5px;text-align:center">' +
-        'No earnings scheduled in the next 90 days for stocks in our universe.' +
+        'No earnings scheduled in the next 30 days for stocks in our universe.' +
       '</div></div>';
   }
 
   const rows = upcoming.map(({t, d, days}) => {
-    const dd = String(d.getUTCDate()).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
     const mm = d.toLocaleDateString('en-US', {month:'short'});
     const inText = days === 0 ? 'Today'
                  : days === 1 ? 'Tomorrow'
