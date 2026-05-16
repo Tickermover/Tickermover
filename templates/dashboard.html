@@ -1485,6 +1485,87 @@ html.v2-dark .v2ov-card{
   background:linear-gradient(135deg,#121821 0%,#141a26 60%,#1a1830 100%);
 }
 
+/* ── KPI card tagline — small italic line that describes ONE
+   interesting fact about the stock (score velocity / recent earnings
+   / above analyst target / 3M momentum). Pure observation, no advice. */
+.v2ov-kpi-tag{
+  margin-top:6px;
+  font-size:10.5px;font-style:italic;color:#64748b;font-weight:500;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.v2ov-kpi-tag .v2-up{color:#15803d;font-style:normal;font-weight:700}
+.v2ov-kpi-tag .v2-dn{color:#dc2626;font-style:normal;font-weight:700}
+.v2ov-kpi-tag .v2-beat{color:#15803d;font-style:normal;font-weight:700}
+.v2ov-kpi-tag .v2-miss{color:#dc2626;font-style:normal;font-weight:700}
+html.v2-dark .v2ov-kpi-tag{color:#94a3b8}
+
+/* ── "What changed today" band — pure data delta at the top of the
+   Hot List view. Three compact columns (score climbing / recently
+   reported / today's movers). Descriptive only — no advice. */
+.v2-changed{
+  background:linear-gradient(135deg,#ffffff 0%,#fbfbff 35%,#f3f1ff 100%);
+  border:1px solid #e5e7eb;
+  border-radius:14px;
+  padding:14px 18px;
+  margin-bottom:18px;
+  box-shadow:0 1px 3px rgba(15,23,42,.04);
+  position:relative;overflow:hidden;
+}
+.v2-changed::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,
+    rgba(56,189,248,.55) 0%,rgba(99,102,241,.65) 35%,
+    rgba(236,72,153,.55) 70%,rgba(251,113,133,.45) 100%);
+}
+.v2-changed-head{
+  font-size:11.5px;font-weight:800;color:#475569;
+  text-transform:uppercase;letter-spacing:.08em;
+  margin-bottom:10px;
+}
+.v2-changed-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:18px;
+}
+.v2-changed-col{display:flex;flex-direction:column;gap:6px}
+.v2-changed-col-h{
+  font-size:11px;font-weight:700;color:#64748b;
+  display:flex;align-items:center;gap:5px;
+  padding-bottom:4px;border-bottom:1px dashed #e5e7eb;
+}
+.v2-changed-row{
+  display:flex;align-items:center;gap:8px;font-size:12px;
+  padding:3px 0;cursor:pointer;border-radius:4px;
+  transition:background .15s;
+}
+.v2-changed-row:hover{background:rgba(99,102,241,.05);padding-left:4px;padding-right:4px}
+.v2-changed-row .tic{font-weight:800;color:#4338ca;letter-spacing:.02em;flex-shrink:0;min-width:48px}
+.v2-changed-row .note{color:#475569;font-size:11.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+.v2-changed-row .val{font-weight:800;font-size:11.5px;flex-shrink:0}
+.v2-changed-row .val.up{color:#15803d}
+.v2-changed-row .val.dn{color:#dc2626}
+.v2-changed-empty{color:#94a3b8;font-size:11px;font-style:italic;padding:6px 0}
+html.v2-dark .v2-changed{background:linear-gradient(135deg,#121821 0%,#141a26 60%,#1a1830 100%);border-color:#1f2937}
+html.v2-dark .v2-changed-head{color:#cbd5e1}
+html.v2-dark .v2-changed-col-h{color:#94a3b8;border-bottom-color:#1f2937}
+html.v2-dark .v2-changed-row .note{color:#cbd5e1}
+
+@media (max-width:900px){
+  .v2-changed-grid{grid-template-columns:1fr;gap:14px}
+}
+
+/* ── Disclaimer band — always-visible footer band reinforcing the
+   educational/non-advice positioning. Subtle, doesn't dominate. */
+.v2-disclaimer{
+  margin-top:18px;
+  padding:11px 14px;
+  background:rgba(99,102,241,.05);
+  border:1px solid rgba(99,102,241,.18);
+  border-radius:10px;
+  font-size:11px;color:#64748b;line-height:1.55;
+  text-align:center;
+}
+.v2-disclaimer strong{color:#475569;font-weight:700}
+html.v2-dark .v2-disclaimer{background:rgba(99,102,241,.10);border-color:rgba(99,102,241,.25);color:#94a3b8}
+
 /* Sector Map card: flex column layout so the inner grid auto-fills
    any empty space at the bottom of the card. The background gradient
    stays the same as every other card — only the LAYOUT is special. */
@@ -2563,7 +2644,7 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
         <span class="ico">📊</span><span>Discover</span><span class="chev">⌃</span>
       </div>
       <div class="v2-children">
-        <div class="v2-sub active" onclick="v2Show('hot',this)">🔥 Hot List</div>
+        <div class="v2-sub active" onclick="v2Show('hot',this)">📊 Today's Signals</div>
         <div class="v2-sub"        onclick="v2Show('model',this)">🎯 Top Hunts</div>
         <div class="v2-sub"        onclick="v2Show('sectors',this)">🗺 Sector Map</div>
         <div class="v2-sub"        onclick="v2Show('fund',this)">🌐 Universe</div>
@@ -3113,6 +3194,131 @@ function v2HotTier(score){
   return 'hot5';
 }
 
+/* Single observational fact per KPI card. Pure description, no
+   buy/sell language. Priority picks the most interesting non-null
+   fact and emits a short phrase. */
+function v2KpiTagline(t){
+  const sv = parseFloat(t.score_velocity_7d ?? t.score_velocity ?? 0);
+  if (!isNaN(sv) && sv >= 5) return 'Score <span class="v2-up">+' + sv.toFixed(0) + '</span> this week';
+
+  // Recent earnings within 14 days
+  const eq = (t.eps_quarters || []).filter(q => q && q.date);
+  if (eq.length){
+    const sorted = [...eq].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+    const q = sorted[0];
+    const d = new Date(String(q.date).slice(0, 10) + 'T00:00:00');
+    if (!isNaN(d)){
+      const days = Math.round((Date.now() - d) / 86400000);
+      if (days >= 0 && days <= 14){
+        const tag = q.beat === true  ? '<span class="v2-beat">BEAT</span>'
+                  : q.beat === false ? '<span class="v2-miss">MISS</span>'
+                  : 'reported';
+        const when = days === 0 ? 'today' : days === 1 ? 'yesterday' : days + ' days ago';
+        return tag + ' ' + when;
+      }
+    }
+  }
+
+  // Price vs analyst target
+  const px  = parseFloat(t.price || 0);
+  const tgt = parseFloat(t.target_mean || t.street_target || 0);
+  if (px > 0 && tgt > 0){
+    const up = ((tgt - px) / px) * 100;
+    if (up >= 20) return 'Analyst target <span class="v2-up">+' + up.toFixed(0) + '%</span> above';
+    if (up <= -5) return 'Trades <span class="v2-dn">' + Math.abs(up).toFixed(0) + '%</span> above target';
+  }
+
+  // 3-month momentum
+  const m3 = parseFloat(t.mom_3m || t.momentum_3m || 0);
+  if (!isNaN(m3) && Math.abs(m3) >= 15){
+    const dir = m3 >= 0 ? '<span class="v2-up">+' + m3.toFixed(0) + '%</span>' : '<span class="v2-dn">' + m3.toFixed(0) + '%</span>';
+    return dir + ' · 3M';
+  }
+
+  // EPS beat streak
+  if (t.eps_beat_streak >= 3) return '<span class="v2-beat">' + t.eps_beat_streak + '/4</span> recent EPS beats';
+
+  return '';
+}
+
+/* ── "What changed this week" band — pure data delta, no advice.
+   Three columns: biggest score climbers, recent earnings reporters,
+   today's biggest price moves. */
+function v2RenderWhatChanged(tickers){
+  const climbers = [...tickers]
+    .map(t => ({ t, sv: parseFloat(t.score_velocity_7d ?? t.score_velocity ?? 0) }))
+    .filter(x => !isNaN(x.sv) && x.sv > 0)
+    .sort((a, b) => b.sv - a.sv)
+    .slice(0, 4);
+
+  const now = new Date();
+  const reported = [];
+  tickers.forEach(t => {
+    const eq = (t.eps_quarters || []).filter(q => q && q.date);
+    if (!eq.length) return;
+    const sorted = [...eq].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+    const q = sorted[0];
+    const d = new Date(String(q.date).slice(0, 10) + 'T00:00:00');
+    if (isNaN(d)) return;
+    const days = Math.round((now - d) / 86400000);
+    if (days >= 0 && days <= 7) reported.push({ t, q, days });
+  });
+  reported.sort((a, b) => a.days - b.days);
+
+  const movers = [...tickers]
+    .filter(t => t.change_pct != null && !isNaN(parseFloat(t.change_pct)))
+    .sort((a, b) => Math.abs(parseFloat(b.change_pct)) - Math.abs(parseFloat(a.change_pct)))
+    .slice(0, 4);
+
+  const climbCol = climbers.length ? climbers.map(x =>
+    '<div class="v2-changed-row" onclick="openStockModal(\'' + x.t.ticker + '\')">' +
+      '<span class="tic">' + x.t.ticker + '</span>' +
+      '<span class="note">' + v2EscHTML((x.t.name || '').slice(0, 18)) + '</span>' +
+      '<span class="val up">+' + x.sv.toFixed(0) + '</span>' +
+    '</div>').join('')
+    : '<div class="v2-changed-empty">No notable score moves this week</div>';
+
+  const reportCol = reported.length ? reported.slice(0, 4).map(x => {
+    const tag = x.q.beat === true  ? '<span class="val up">BEAT</span>'
+              : x.q.beat === false ? '<span class="val dn">MISS</span>'
+              : '<span class="val" style="color:#64748b">—</span>';
+    const when = x.days === 0 ? 'today' : x.days === 1 ? '1d ago' : x.days + 'd ago';
+    return '<div class="v2-changed-row" onclick="openStockModal(\'' + x.t.ticker + '\')">' +
+      '<span class="tic">' + x.t.ticker + '</span>' +
+      '<span class="note">' + when + '</span>' +
+      tag +
+    '</div>';
+  }).join('')
+    : '<div class="v2-changed-empty">No reports in the last 7 days</div>';
+
+  const moverCol = movers.length ? movers.map(t => {
+    const ch = parseFloat(t.change_pct);
+    const cls = ch >= 0 ? 'up' : 'dn';
+    return '<div class="v2-changed-row" onclick="openStockModal(\'' + t.ticker + '\')">' +
+      '<span class="tic">' + t.ticker + '</span>' +
+      '<span class="note">' + v2EscHTML((t.name || '').slice(0, 18)) + '</span>' +
+      '<span class="val ' + cls + '">' + (ch >= 0 ? '+' : '') + ch.toFixed(1) + '%</span>' +
+    '</div>';
+  }).join('')
+    : '<div class="v2-changed-empty">Market quiet today</div>';
+
+  return '' +
+    '<div class="v2-changed">' +
+      '<div class="v2-changed-head">📊 What changed this week</div>' +
+      '<div class="v2-changed-grid">' +
+        '<div class="v2-changed-col">' +
+          '<div class="v2-changed-col-h">📈 Score climbing</div>' + climbCol +
+        '</div>' +
+        '<div class="v2-changed-col">' +
+          '<div class="v2-changed-col-h">📰 Recently reported</div>' + reportCol +
+        '</div>' +
+        '<div class="v2-changed-col">' +
+          '<div class="v2-changed-col-h">⚡ Today\'s biggest moves</div>' + moverCol +
+        '</div>' +
+      '</div>' +
+    '</div>';
+}
+
 function v2RenderKpiStrip(tickers){
   const top10 = [...tickers]
     .filter(t => (t.smart_score ?? t.pop_score ?? 0) > 0)
@@ -3130,6 +3336,7 @@ function v2RenderKpiStrip(tickers){
     const stars = ({A:'★★★★★',B:'★★★★',C:'★★★',D:'★★',F:'★'}[t.grade] || '');
     const tier  = v2HotTier(score);
     const delay = (idx * 40) + 'ms';
+    const tagline = v2KpiTagline(t);          // ONE observational fact per card
     return '<div class="v2ov-kpi ' + tier + '" style="animation-delay:' + delay + '" onclick="openStockModal(\'' + sym + '\')">' +
              '<div class="v2ov-kpi-head">' + v2LogoHTML(sym, 'lg') +
                '<div style="min-width:0">' +
@@ -3143,6 +3350,7 @@ function v2RenderKpiStrip(tickers){
                  (isNaN(ch) ? '—' : Math.abs(ch).toFixed(1) + '%') +
                '</div>' +
              '</div>' +
+             (tagline ? '<div class="v2ov-kpi-tag">' + tagline + '</div>' : '') +
              '<div class="v2ov-kpi-foot">' +
                '<div class="v2ov-kpi-score">Score <strong>' + score + '</strong></div>' +
                '<div class="v2ov-kpi-stars">' + stars + '</div>' +
@@ -3684,6 +3892,7 @@ function renderV2Overview(tickers){
   const root = document.getElementById('v2-overview');
   if (!root || !Array.isArray(tickers) || !tickers.length) return;
   root.innerHTML =
+    v2RenderWhatChanged(tickers) +
     v2RenderKpiStrip(tickers) +
     '<div class="v2ov-row">' +
       v2RenderSectors(tickers) +
@@ -3692,6 +3901,13 @@ function renderV2Overview(tickers){
     '<div class="v2ov-row equal">' +
       v2RenderEarnings(tickers) +
       v2RenderUpcomingEarnings(tickers) +
+    '</div>' +
+    '<div class="v2-disclaimer">' +
+      '<strong>Educational research tool.</strong> ' +
+      'AlphaHunt is a quantitative analysis platform — not a SEBI / SEC-registered investment advisor. ' +
+      'The Alpha Score, ratings, signals, and tracker stats on this page are descriptive observations, ' +
+      'not personalized advice or recommendations to buy or sell any security. ' +
+      'Past performance and quantitative ratings do not guarantee future results. Always do your own research.' +
     '</div>';
 }
 
