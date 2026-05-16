@@ -1485,49 +1485,12 @@ html.v2-dark .v2ov-card{
   background:linear-gradient(135deg,#121821 0%,#141a26 60%,#1a1830 100%);
 }
 
-/* Earnings cards (Recent + Upcoming) — BRIGHTER, more saturated
-   background that picks up the body-frame palette (cyan / indigo /
-   violet) so the two boxes pop and read as a paired highlight set
-   distinct from the lighter widgets next to them. */
-body.v2 .v2ov-card.earnings{
-  background:linear-gradient(135deg,#e0f2fe 0%,#c7d2fe 45%,#ddd6fe 100%);
-  border-color:rgba(99,102,241,.35);
-  box-shadow:0 2px 10px rgba(99,102,241,.10),0 1px 3px rgba(15,23,42,.04);
-}
-body.v2 .v2ov-card.earnings::before{
-  /* Punch up the brand stripe on top so the highlight reads
-     immediately at a glance */
-  height:3px;
-  background:linear-gradient(90deg,
-    rgba(56,189,248,.85) 0%,
-    rgba(99,102,241,.95) 35%,
-    rgba(236,72,153,.85) 70%,
-    rgba(251,113,133,.75) 100%);
-}
-html.v2-dark body.v2 .v2ov-card.earnings{
-  background:linear-gradient(135deg,#1e1b4b 0%,#312e81 60%,#3730a3 100%);
-  border-color:rgba(99,102,241,.55);
-  box-shadow:0 4px 14px rgba(99,102,241,.20);
-}
-
-/* Sector Map card — same bright treatment as earnings cards, PLUS a
-   flex column layout so the sector grid stretches to fill any empty
-   space at the bottom of the card. Cells distribute the available
-   height evenly via grid-auto-rows: 1fr. */
+/* Sector Map card: flex column layout so the inner grid auto-fills
+   any empty space at the bottom of the card. The background gradient
+   stays the same as every other card — only the LAYOUT is special. */
 body.v2 .v2ov-card.sectors{
-  background:linear-gradient(135deg,#e0f2fe 0%,#c7d2fe 45%,#ddd6fe 100%);
-  border-color:rgba(99,102,241,.35);
-  box-shadow:0 2px 10px rgba(99,102,241,.10),0 1px 3px rgba(15,23,42,.04);
   display:flex;
   flex-direction:column;
-}
-body.v2 .v2ov-card.sectors::before{
-  height:3px;
-  background:linear-gradient(90deg,
-    rgba(56,189,248,.85) 0%,
-    rgba(99,102,241,.95) 35%,
-    rgba(236,72,153,.85) 70%,
-    rgba(251,113,133,.75) 100%);
 }
 body.v2 .v2ov-card.sectors .v2ov-sector-grid{
   flex:1;
@@ -1537,11 +1500,6 @@ body.v2 .v2ov-card.sectors .v2ov-sector-grid{
 body.v2 .v2ov-card.sectors .v2ov-sector-cell{
   display:flex;flex-direction:column;justify-content:center;
   min-height:60px;
-}
-html.v2-dark body.v2 .v2ov-card.sectors{
-  background:linear-gradient(135deg,#1e1b4b 0%,#312e81 60%,#3730a3 100%);
-  border-color:rgba(99,102,241,.55);
-  box-shadow:0 4px 14px rgba(99,102,241,.20);
 }
 .v2ov-card-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px;gap:12px;flex-wrap:wrap}
 .v2ov-title{font-size:15px;font-weight:800;color:#0f172a;letter-spacing:-.01em}
