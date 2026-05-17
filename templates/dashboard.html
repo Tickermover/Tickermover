@@ -425,6 +425,7 @@ tr:hover td{background:rgba(132,204,22,.06)}
 .fd-tic{font-size:20px;font-weight:900;color:var(--acc2);letter-spacing:.5px}
 .fd-co{font-size:11px;color:#374151;margin-top:2px}
 .fd-price{font-size:20px;font-weight:800;text-align:right}
+.fd-price.fd-price-xl{font-size:30px;font-weight:900;letter-spacing:-.01em;line-height:1.1}
 .fd-tgt{font-size:11px;color:var(--grn);font-weight:700;margin-top:2px}
 .fd-tgt.neg{color:var(--red)}
 .fd-metrics{display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;font-size:12px;margin:8px 0}
@@ -794,6 +795,7 @@ tr:hover td{background:rgba(132,204,22,.06)}
   .stock-modal-panel .fd-tic{font-size:22px!important;letter-spacing:0!important}
   .stock-modal-panel .fd-co{font-size:11px!important}
   .stock-modal-panel .fd-price{font-size:18px!important}
+  .stock-modal-panel .fd-price.fd-price-xl{font-size:24px!important}
   /* Compact gauge: cap visual width so the right column doesn't dominate */
   .stock-modal-panel .fd-head > div:last-child svg{max-width:140px!important;height:auto!important}
 
@@ -6261,7 +6263,7 @@ function buildRsBadge(ticker) {
   const tip  = rs >= 90 ? 'Exceptional \u2014 top 10% price momentum'
              : rs >= 80 ? 'Strong \u2014 top 20% price momentum'
              : rs >= 60 ? 'Average momentum' : 'Below-average momentum';
-  return '<span class="rs-badge ' + cls + '" title="Relative Strength ' + rs + '/99 \u2014 ' + tip + '">RS <span class="rs-num">' + rs + '</span>' + fire + up + '</span>';
+  return '<span class="rs-badge ' + cls + '" title="Relative Strength ' + rs + '/99 \u2014 ' + tip + '">Relative Strength <span class="rs-num">' + rs + '</span>' + fire + up + '</span>';
 }
 
 /* ----------------------------------------------------------
@@ -6661,39 +6663,24 @@ function openStockModal(ticker) {
 
   document.getElementById('stock-modal-body').innerHTML = `
     <div class="fd-head" style="margin-bottom:12px">
-      <div>
-        <div class="fd-tic">${t.ticker}</div>
-        <div class="fd-co">${t.name || ''} · ${sub || sector}</div>
-        ${(() => {
-          const tag = storyTag(t);
-          const sr  = sectorRank(t);
-          // Story tag chip + (if available) Sector Rank chip side-by-side
-          if (!tag && !sr) return '';
-          const tagChip = tag ? `<span style="display:inline-block;background:linear-gradient(135deg,#f5f3ff,#ede9fe);
+      <div style="display:flex;gap:12px;align-items:flex-start;min-width:0;flex:1">
+        ${(typeof v2LogoHTML === 'function') ? v2LogoHTML(t.ticker, 'lg') : ''}
+        <div style="min-width:0;flex:1">
+          <div class="fd-tic">${t.ticker}</div>
+          <div class="fd-co">${t.name || ''} · ${sub || sector}</div>
+          ${(() => {
+            const tag = storyTag(t);
+            if (!tag) return '';
+            return `<div style="margin-top:4px"><span style="display:inline-block;background:linear-gradient(135deg,#f5f3ff,#ede9fe);
                          color:#6d28d9;border:1px solid rgba(139,92,246,.35);border-radius:6px;
                          padding:2px 9px;font-size:10.5px;font-weight:800;letter-spacing:.03em;
-                         text-transform:uppercase">🧭 ${tag}</span>` : '';
-          let srChip = '';
-          if (sr) {
-            const tone = sr.quintile === 'top'    ? {bg:'#dcfce7',col:'#15803d',br:'rgba(22,163,74,.35)'}
-                       : sr.quintile === 'upper'  ? {bg:'#f0fdf4',col:'#16a34a',br:'rgba(22,163,74,.25)'}
-                       : sr.quintile === 'middle' ? {bg:'#f1f5f9',col:'#475569',br:'rgba(71,85,105,.25)'}
-                       : sr.quintile === 'lower'  ? {bg:'#fef3c7',col:'#b45309',br:'rgba(180,83,9,.30)'}
-                       :                            {bg:'#fee2e2',col:'#b91c1c',br:'rgba(185,28,28,.30)'};
-            srChip = `<span title="Sector ranking by avg 1-month momentum across the universe (IBD-style sector strength)"
-                      style="display:inline-block;background:${tone.bg};color:${tone.col};
-                             border:1px solid ${tone.br};border-radius:6px;
-                             padding:2px 9px;font-size:10.5px;font-weight:800;letter-spacing:.03em;
-                             text-transform:uppercase;margin-left:6px">
-                      📊 Sector #${sr.rank}/${sr.total}
-                    </span>`;
-          }
-          return `<div style="margin-top:4px">${tagChip}${srChip}</div>`;
-        })()}
-        <div class="badge-row" style="margin-top:6px">${buildRsBadge(t.ticker)}${buildBlueDot(t)}${buildEpsDateBadge(t)}</div>
+                         text-transform:uppercase">🧭 ${tag}</span></div>`;
+          })()}
+          <div class="badge-row" style="margin-top:6px">${buildRsBadge(t.ticker)}${buildBlueDot(t)}${buildEpsDateBadge(t)}</div>
+        </div>
       </div>
       <div style="text-align:right">
-        <div class="fd-price" id="modal-price-${t.ticker}">${fmtP(price)} <span style="font-size:12px" class="${pCls(chg)}">${fmtPct(chg)}</span></div>
+        <div class="fd-price fd-price-xl" id="modal-price-${t.ticker}">${fmtP(price)} <span style="font-size:14px" class="${pCls(chg)}">${fmtPct(chg)}</span></div>
         ${returnsRow(t)}
         <!-- Compact gauge: score inside arch, verdict label below the hub -->
         <div style="margin-top:4px;display:flex;flex-direction:column;align-items:flex-end">
