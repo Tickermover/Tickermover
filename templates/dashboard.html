@@ -78,8 +78,8 @@
   --txt:#0a0a0a;
   --muted:#374151;
   --bdr:rgba(0,0,0,0.08);
-  --grad:      linear-gradient(135deg,#16a34a 0%,#84cc16 55%,#a3e635 100%);
-  --grad-h:    linear-gradient(90deg,  #16a34a 0%,#84cc16 55%,#a3e635 100%);
+  --grad:      linear-gradient(135deg,#16a34a 0%,#84cc16 55%,#84cc16 100%);
+  --grad-h:    linear-gradient(90deg,  #16a34a 0%,#84cc16 55%,#84cc16 100%);
   --grad-cv:   linear-gradient(135deg, #16a34a,#84cc16);
   --grad-gold: linear-gradient(135deg, #eab308,#facc15);
   --grad-hot:  linear-gradient(135deg, #14532d,#16a34a);
@@ -117,7 +117,7 @@ body{
       #3d9400  8%,
       #5cb800 20%,
       #84cc16 38%,
-      #a3e635 55%,
+      #84cc16 55%,
       #cef06a 70%,
       #edfdb8 84%,
       #ffffff 100%
@@ -524,7 +524,7 @@ tr:hover td{background:rgba(132,204,22,.06)}
 ::-webkit-scrollbar{width:5px;height:5px}
 ::-webkit-scrollbar-track{background:var(--bg)}
 ::-webkit-scrollbar-thumb{background:linear-gradient(180deg,#16a34a,#84cc16);border-radius:3px}
-::-webkit-scrollbar-thumb:hover{background:linear-gradient(180deg,#84cc16,#a3e635)}
+::-webkit-scrollbar-thumb:hover{background:linear-gradient(180deg,#84cc16,#84cc16)}
 
 /* ── Go-to-top button ── */
 #go-top-btn{
@@ -1493,9 +1493,9 @@ html.v2-dark .v2ov-card{
   font-size:10.5px;font-style:italic;color:#64748b;font-weight:500;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
 }
-.v2ov-kpi-tag .v2-up{display:inline-block;color:#a3e635;background:#0f172a;font-style:normal;font-weight:900;padding:1px 6px;border-radius:4px;letter-spacing:.04em}
+.v2ov-kpi-tag .v2-up{display:inline-block;color:#84cc16;background:#0f172a;font-style:normal;font-weight:900;padding:1px 6px;border-radius:4px;letter-spacing:.04em}
 .v2ov-kpi-tag .v2-dn{color:#dc2626;font-style:normal;font-weight:700}
-.v2ov-kpi-tag .v2-beat{display:inline-block;color:#a3e635;background:#0f172a;font-style:normal;font-weight:900;padding:1px 6px;border-radius:4px;letter-spacing:.04em}
+.v2ov-kpi-tag .v2-beat{display:inline-block;color:#84cc16;background:#0f172a;font-style:normal;font-weight:900;padding:1px 6px;border-radius:4px;letter-spacing:.04em}
 .v2ov-kpi-tag .v2-miss{color:#dc2626;font-style:normal;font-weight:700}
 html.v2-dark .v2ov-kpi-tag{color:#94a3b8}
 
@@ -1750,7 +1750,7 @@ body.v2 .v2ov-card.sectors .v2ov-sector-cell{
 /* Reusable "positive callout" — bright lime on dark, all caps, pill */
 .v2-pos-pill{
   display:inline-block;font-size:10px;font-weight:900;letter-spacing:.08em;
-  color:#a3e635;background:#0f172a;padding:3px 8px;border-radius:4px;
+  color:#84cc16;background:#0f172a;padding:3px 8px;border-radius:4px;
   text-transform:uppercase;line-height:1.2;
 }
 
@@ -1768,7 +1768,7 @@ body.v2 .v2ov-card.sectors .v2ov-sector-cell{
 /* News materiality badge in modal news stream */
 .v2-news-material{
   display:inline-block;font-size:9px;font-weight:900;letter-spacing:.08em;
-  color:#a3e635;background:#0f172a;padding:2px 7px;border-radius:4px;
+  color:#84cc16;background:#0f172a;padding:2px 7px;border-radius:4px;
   margin-right:6px;vertical-align:middle;text-transform:uppercase;
 }
 
@@ -2781,7 +2781,7 @@ html.v2-dark .v2ov-dist-cell:hover{box-shadow:0 6px 14px rgba(0,0,0,.35)}
 .v2ov-tl-tic{font-size:13px;font-weight:800;letter-spacing:.02em;color:#0f172a}
 .v2ov-tl-name{font-size:11px;color:#64748b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 .v2ov-tl-tag{font-size:9.5px;font-weight:800;padding:2px 7px;border-radius:5px;letter-spacing:.04em;flex-shrink:0;margin-left:auto}
-.v2ov-tl-tag.beat{background:#0f172a;color:#a3e635;font-weight:900;letter-spacing:.06em}
+.v2ov-tl-tag.beat{background:#0f172a;color:#84cc16;font-weight:900;letter-spacing:.06em}
 .v2ov-tl-tag.miss{background:rgba(220,38,38,.10);color:#dc2626}
 .v2ov-tl-row2{font-size:11.5px;color:#64748b}
 .v2ov-tl-row2 .surp{font-weight:800}
@@ -3375,7 +3375,7 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
   const SWAPS = [
     ['#15803d','#4338ca'],['#16a34a','#6366f1'],['#22c55e','#6366f1'],
     ['#65a30d','#4338ca'],['#84cc16','#6366f1'],['#4ade80','#a5b4fc'],
-    ['#a3e635','#a5b4fc'],['#86efac','#a5b4fc'],
+    ['#84cc16','#a5b4fc'],['#86efac','#a5b4fc'],
     ['#bbf7d0','#e0e7ff'],['#dcfce7','#eef2ff'],['#f0fdf4','#eef2ff'],
     ['#d1fae5','#eef2ff'],
     ['rgba(22,163,74,','rgba(99,102,241,'],
@@ -6493,7 +6493,7 @@ function renderModalEarningsCard(ticker, t) {
       // neutral → slate. Returns full <span> HTML.
       function v2KeywordPill(text, score){
         const t = (text || '').toUpperCase();
-        if (score >= 0.10) return '<span style="display:inline-block;color:#a3e635;background:#0f172a;font-weight:900;letter-spacing:.08em;font-size:11px;padding:3px 9px;border-radius:5px;text-transform:uppercase">' + t + '</span>';
+        if (score >= 0.10) return '<span style="display:inline-block;color:#84cc16;background:#0f172a;font-weight:900;letter-spacing:.08em;font-size:11px;padding:3px 9px;border-radius:5px;text-transform:uppercase">' + t + '</span>';
         if (score <= -0.10) return '<span style="display:inline-block;color:#fff;background:#dc2626;font-weight:900;letter-spacing:.08em;font-size:11px;padding:3px 9px;border-radius:5px;text-transform:uppercase">' + t + '</span>';
         return '<span style="display:inline-block;color:#fff;background:#475569;font-weight:900;letter-spacing:.08em;font-size:11px;padding:3px 9px;border-radius:5px;text-transform:uppercase">' + t + '</span>';
       }
@@ -7523,7 +7523,7 @@ function renderBlog(articles) {
       <div style="font-size:22px;font-weight:900;line-height:1.25;margin-bottom:10px">${a.title}</div>
       <div style="font-size:14px;color:rgba(255,255,255,.8);line-height:1.6;max-width:700px">${a.summary}</div>
       <div style="margin-top:14px;display:flex;align-items:center;gap:12px;font-size:12px;color:rgba(255,255,255,.6)">
-        <span style="background:rgba(255,255,255,.15);border-radius:6px;padding:3px 10px;font-weight:700;font-size:13px;color:#a3e635">${a.ticker}</span>
+        <span style="background:rgba(255,255,255,.15);border-radius:6px;padding:3px 10px;font-weight:700;font-size:13px;color:#84cc16">${a.ticker}</span>
         <span>${new Date(a.date).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}</span>
         <span style="background:rgba(255,255,255,.2);border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700">Read Article →</span>
       </div>
@@ -7693,7 +7693,7 @@ function openBlogArticle(articleId) {
         <div style="background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.1)">
           <div style="background:linear-gradient(135deg,#0a2e10,#15803d,#84cc16);padding:36px 40px;color:#fff">
             <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
-              <span style="background:rgba(255,255,255,.2);border-radius:8px;padding:4px 12px;font-size:13px;font-weight:900;color:#a3e635">${a.ticker}</span>
+              <span style="background:rgba(255,255,255,.2);border-radius:8px;padding:4px 12px;font-size:13px;font-weight:900;color:#84cc16">${a.ticker}</span>
               <span style="font-size:11px;color:rgba(255,255,255,.7);font-weight:600;text-transform:uppercase;letter-spacing:.6px">${a.category}</span>
               <span style="font-size:11px;color:rgba(255,255,255,.5);margin-left:auto">${new Date(a.date).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}</span>
             </div>
@@ -9659,7 +9659,7 @@ function showUpgradeSuccess() {
   border-radius:12px;padding:10px 12px;
   backdrop-filter:blur(8px);
 }
-.ah-tick-sym{font-size:13px;font-weight:900;color:#a3e635;letter-spacing:.5px}
+.ah-tick-sym{font-size:13px;font-weight:900;color:#84cc16;letter-spacing:.5px}
 .ah-tick-price{font-size:15px;font-weight:800;color:#fff;margin:2px 0}
 .ah-tick-chg{font-size:11px;font-weight:700}
 .ah-tick-chg.pos{color:#fff}.ah-tick-chg.neg{color:#fca5a5}
@@ -9888,7 +9888,7 @@ function showUpgradeSuccess() {
     background:rgba(255,255,255,.12);
   }
   .ah-mobile-hero-stats strong{
-    display:block;font-size:18px;font-weight:900;color:#a3e635;line-height:1;
+    display:block;font-size:18px;font-weight:900;color:#84cc16;line-height:1;
   }
   .ah-mobile-hero-stats span{
     display:block;font-size:10px;color:rgba(255,255,255,.55);
