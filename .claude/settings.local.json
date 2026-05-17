@@ -9,7 +9,11 @@
       "WebFetch(domain:web-production-17a78.up.railway.app)",
       "Bash(curl -sL https://web-production-17a78.up.railway.app/app -o /tmp/dev-app.html)",
       "Read(//tmp/**)",
-      "Bash(git commit -m ' *)"
+      "Bash(git commit -m ' *)",
+      "Bash(git fetch *)",
+      "Bash(git checkout *)",
+      "Bash(git merge *)",
+      "Bash(git push *)"
     ]
   }
 }

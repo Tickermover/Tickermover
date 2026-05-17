@@ -1684,16 +1684,78 @@ body.v2 .v2ov-card.sectors .v2ov-sector-cell{
 .v2-sector-pulse .v2-sp-name{color:#0f172a}
 .v2-sector-pulse .v2-sp-delta{color:#16a34a;font-weight:800}
 
-/* Quant Snapshot — appears under the Investment Thesis in the stock modal */
+/* Quant Snapshot — rich panel: headline + 4-factor scoreboard + pos/neg lists + catalyst */
 .v2-quant-snapshot{
-  margin:10px 0 12px;padding:11px 13px;border-radius:10px;
+  margin:10px 0 14px;padding:14px 16px;border-radius:12px;
   background:linear-gradient(135deg,#f8fafc 0%,#eef2ff 100%);
   border:1px solid #e0e7ff;border-left:4px solid #4338ca;
-  font-size:12px;line-height:1.55;color:#1f2937;
+  font-size:12px;line-height:1.5;color:#1f2937;
 }
 .v2-quant-snapshot .v2-qs-hdr{
-  display:block;font-size:10.5px;font-weight:800;letter-spacing:.08em;
-  text-transform:uppercase;color:#4338ca;margin-bottom:4px;
+  font-size:10.5px;font-weight:800;letter-spacing:.08em;
+  text-transform:uppercase;color:#4338ca;margin-bottom:10px;
+}
+.v2-qs-head{
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  padding-bottom:10px;margin-bottom:10px;border-bottom:1px solid #e0e7ff;
+}
+.v2-qs-tier{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:28px;height:28px;border-radius:8px;font-weight:900;font-size:14px;color:#fff;
+}
+.v2-qs-tier-A{background:linear-gradient(135deg,#16a34a,#15803d)}
+.v2-qs-tier-B{background:linear-gradient(135deg,#65a30d,#4d7c0f)}
+.v2-qs-tier-C{background:linear-gradient(135deg,#d97706,#b45309)}
+.v2-qs-tier-D{background:linear-gradient(135deg,#ea580c,#c2410c)}
+.v2-qs-tier-F{background:linear-gradient(135deg,#dc2626,#991b1b)}
+.v2-qs-score{font-size:22px;font-weight:900;color:#0f172a;letter-spacing:-.02em;line-height:1}
+.v2-qs-score-lbl{font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.06em}
+.v2-qs-tier-lbl{margin-left:auto;font-size:11px;font-weight:700;color:#475569;text-transform:capitalize}
+
+.v2-qs-scoreboard{
+  display:grid;grid-template-columns:1fr 1fr;gap:6px 14px;margin-bottom:10px;
+}
+.v2-qs-f{display:flex;align-items:center;gap:8px;font-size:11px}
+.v2-qs-f-lbl{flex:0 0 62px;font-weight:700;color:#475569;font-size:10.5px;text-transform:uppercase;letter-spacing:.04em}
+.v2-qs-f-track{flex:1;height:6px;background:#e2e8f0;border-radius:999px;overflow:hidden;position:relative}
+.v2-qs-f-fill{display:block;height:100%;border-radius:999px;transition:width .3s ease}
+.v2-qs-f-num{flex:0 0 26px;text-align:right;font-weight:800;font-size:11px;font-variant-numeric:tabular-nums}
+.v2-qs-f-na{flex:1;font-size:10.5px;color:#94a3b8;text-align:right}
+
+.v2-qs-split{
+  display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px;
+}
+.v2-qs-col{padding:8px 10px;border-radius:8px;background:#fff;border:1px solid #e2e8f0}
+.v2-qs-col.pos{border-left:3px solid #16a34a}
+.v2-qs-col.neg{border-left:3px solid #dc2626}
+.v2-qs-col-hdr{
+  font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;
+  margin-bottom:5px;
+}
+.v2-qs-col.pos .v2-qs-col-hdr{color:#15803d}
+.v2-qs-col.neg .v2-qs-col-hdr{color:#b91c1c}
+.v2-qs-col ul{margin:0;padding:0;list-style:none}
+.v2-qs-col li{
+  font-size:11px;line-height:1.45;color:#1f2937;
+  padding:2px 0;padding-left:12px;position:relative;
+}
+.v2-qs-col li::before{
+  content:'';position:absolute;left:2px;top:9px;
+  width:4px;height:4px;border-radius:50%;
+}
+.v2-qs-col.pos li::before{background:#16a34a}
+.v2-qs-col.neg li::before{background:#dc2626}
+.v2-qs-col li strong{font-weight:800;color:#0f172a;font-variant-numeric:tabular-nums}
+
+.v2-qs-catalyst{
+  margin-top:6px;padding:6px 10px;border-radius:6px;
+  background:#fef3c7;border:1px solid #fcd34d;
+  font-size:11px;font-weight:700;color:#92400e;text-align:center;
+}
+
+@media (max-width:560px){
+  .v2-qs-scoreboard{grid-template-columns:1fr}
+  .v2-qs-split{grid-template-columns:1fr}
 }
 
 /* News materiality badge in modal news stream */
@@ -3527,58 +3589,156 @@ function v2KpiTagline(t){
    the stock modal. (Gap #3 from advisor plan, free-tier version.) */
 function v2BuildTemplateThesis(t){
   if (!t) return '';
-  const parts = [];
-  const sym = t.ticker;
-  const score = Math.round(t.smart_score ?? t.pop_score ?? 0);
+  const sym = t.ticker || '';
+  const score = Math.round(parseFloat(t.smart_score ?? t.pop_score ?? 0));
   const grade = t.grade || '';
   const sector = t.sub_sector || t.sector || '';
   const gradeText = grade === 'A' ? 'top-tier' : grade === 'B' ? 'quality' : grade === 'C' ? 'average' : grade === 'D' ? 'below-average' : grade === 'F' ? 'weak' : '';
-  if (score && gradeText) parts.push(sym + ' currently scores ' + score + ' on our quantitative model, placing it in the ' + gradeText + ' tier' + (sector ? ' within the ' + sector + ' sub-sector' : '') + '.');
+  const tierBadge = grade ? '<span class="v2-qs-tier v2-qs-tier-' + grade + '">' + grade + '</span>' : '';
 
-  // Earnings consistency
-  const beat = parseInt(t.eps_beat_streak) || 0;
-  const surp = parseFloat(t.avg_eps_surprise_pct);
-  if (beat >= 3 && !isNaN(surp)) parts.push('The company has beaten consensus EPS in ' + beat + ' of the last 4 quarters with an average surprise of ' + surp.toFixed(1) + '%.');
-  else if (beat >= 1)            parts.push('EPS history shows ' + beat + ' beats in the last 4 quarters.');
+  /* ── Factor scoreboard — 4 sub-scores derived from raw fields ── */
+  const clamp = (x) => Math.max(0, Math.min(100, x));
+  const num = (...vs) => { for (const v of vs){ const x = parseFloat(v); if (!isNaN(x)) return x; } return NaN; };
 
-  // Top-line growth
-  const revG = parseFloat(t.revenue_growth_yoy) * 100;
-  if (!isNaN(revG)){
-    if (revG >= 30) parts.push('Revenue is growing ' + revG.toFixed(0) + '% YoY — meaningful top-line expansion.');
-    else if (revG >= 10) parts.push('Revenue growth is ' + revG.toFixed(0) + '% YoY.');
-    else if (revG < -3)  parts.push('Revenue is contracting at ' + Math.abs(revG).toFixed(0) + '% YoY.');
+  // Quality: gross margin (0-100) blended with profit margin & debt/equity penalty
+  const gm = num(t.gross_margin) * 100;
+  const pm = num(t.profit_margin) * 100;
+  const de = num(t.debt_to_equity);
+  let qScore = NaN;
+  if (!isNaN(gm) || !isNaN(pm)){
+    const g = isNaN(gm) ? 50 : clamp(gm * 1.2);
+    const p = isNaN(pm) ? 50 : clamp(50 + pm * 1.5);
+    const dPenalty = isNaN(de) ? 0 : Math.min(20, Math.max(0, (de - 1) * 10));
+    qScore = clamp(((g + p) / 2) - dPenalty);
   }
 
-  // Valuation gap
-  const tgt = parseFloat(t.target_mean ?? t.street_target ?? 0);
-  const px  = parseFloat(t.price ?? 0);
+  // Momentum: mom_3m + score velocity contribution
+  const m3 = num(t.mom_3m, t.momentum_3m);
+  const sv = num(t.score_velocity_7d);
+  let mScore = NaN;
+  if (!isNaN(m3) || !isNaN(sv)){
+    const a = isNaN(m3) ? 50 : clamp(50 + m3 * 1.5);
+    const b = isNaN(sv) ? 50 : clamp(50 + sv * 3);
+    mScore = clamp((a + b) / 2);
+  }
+
+  // Value: target upside (the bigger the upside, the better)
+  const tgt = num(t.target_mean, t.street_target);
+  const px = num(t.price);
+  const fwdPE = num(t.pe_ratio, t.forward_pe, t.forwardPE);
+  let vScore = NaN;
   if (tgt > 0 && px > 0){
     const up = ((tgt - px) / px) * 100;
-    if (up >= 10)      parts.push('Wall Street\'s 12-month consensus target of $' + tgt.toFixed(0) + ' implies +' + up.toFixed(0) + '% from current levels.');
-    else if (up <= -5) parts.push('The stock trades ' + Math.abs(up).toFixed(0) + '% above the consensus 12-month target of $' + tgt.toFixed(0) + '.');
+    vScore = clamp(50 + up * 1.5);
+  }
+  if (!isNaN(fwdPE) && fwdPE > 0){
+    // Penalise extreme PE (>40); reward modest (<20)
+    const pePoints = fwdPE > 40 ? -15 : fwdPE > 25 ? -5 : fwdPE < 15 ? +10 : 0;
+    vScore = clamp((isNaN(vScore) ? 50 : vScore) + pePoints);
   }
 
-  // Momentum
-  const m3 = parseFloat(t.mom_3m ?? t.momentum_3m ?? 0);
-  if (!isNaN(m3) && Math.abs(m3) >= 10){
-    if (m3 >= 10) parts.push('Price has gained ' + m3.toFixed(0) + '% over the past 3 months.');
-    else          parts.push('Price has declined ' + Math.abs(m3).toFixed(0) + '% over the past 3 months.');
+  // Risk: lower = riskier. Beta, short interest, caution flag.
+  const beta = num(t.beta);
+  const sPct = num(t.short_percent_float, t.short_interest);
+  let rScore = NaN;
+  if (!isNaN(beta) || !isNaN(sPct) || t.caution != null){
+    let r = 75;
+    if (!isNaN(beta)) r -= Math.max(0, (beta - 1) * 15);
+    if (!isNaN(sPct)) r -= Math.max(0, (sPct - 3) * 2.5);
+    if (t.caution) r -= 15;
+    rScore = clamp(r);
   }
 
-  // Score velocity
-  const sv = parseFloat(t.score_velocity_7d ?? 0);
-  if (!isNaN(sv) && Math.abs(sv) >= 5){
-    if (sv > 0) parts.push('The model score has climbed ' + sv.toFixed(0) + ' points over the past week.');
-    else        parts.push('The model score has dropped ' + Math.abs(sv).toFixed(0) + ' points over the past week.');
+  const barColor = (v) => v >= 70 ? '#16a34a' : v >= 50 ? '#d97706' : '#dc2626';
+  const factorBar = (label, v) => {
+    if (isNaN(v)) return '<div class="v2-qs-f"><span class="v2-qs-f-lbl">' + label + '</span><span class="v2-qs-f-na">—</span></div>';
+    const c = barColor(v);
+    const w = Math.round(v);
+    return '<div class="v2-qs-f">' +
+      '<span class="v2-qs-f-lbl">' + label + '</span>' +
+      '<span class="v2-qs-f-track"><span class="v2-qs-f-fill" style="width:' + w + '%;background:' + c + '"></span></span>' +
+      '<span class="v2-qs-f-num" style="color:' + c + '">' + w + '</span>' +
+    '</div>';
+  };
+
+  const scoreboard =
+    '<div class="v2-qs-scoreboard">' +
+      factorBar('Quality',  qScore) +
+      factorBar('Momentum', mScore) +
+      factorBar('Value',    vScore) +
+      factorBar('Risk',     rScore) +
+    '</div>';
+
+  /* ── Strengths (green) and Watch-outs (amber/red) ── */
+  const strengths = [];
+  const risks = [];
+
+  const beat = parseInt(t.eps_beat_streak) || 0;
+  const surp = num(t.avg_eps_surprise_pct);
+  if (beat >= 3) strengths.push('<strong>' + beat + '/4</strong> recent EPS beats' + (!isNaN(surp) ? ' (avg +' + surp.toFixed(1) + '%)' : ''));
+  else if (beat === 0) risks.push('No EPS beats in last 4 quarters');
+
+  const revG = num(t.revenue_growth_yoy) * 100;
+  if (!isNaN(revG)){
+    if (revG >= 30) strengths.push('Revenue <strong>+' + revG.toFixed(0) + '% YoY</strong>');
+    else if (revG >= 10) strengths.push('Revenue +' + revG.toFixed(0) + '% YoY');
+    else if (revG < -3) risks.push('Revenue contracting <strong>' + revG.toFixed(0) + '% YoY</strong>');
   }
 
-  // Imminent catalyst
+  if (!isNaN(pm) && pm >= 20) strengths.push('Net margin <strong>' + pm.toFixed(0) + '%</strong>');
+  else if (!isNaN(pm) && pm < 0) risks.push('Unprofitable (' + pm.toFixed(0) + '% net margin)');
+
+  if (tgt > 0 && px > 0){
+    const up = ((tgt - px) / px) * 100;
+    if (up >= 10) strengths.push('Analyst target <strong>+' + up.toFixed(0) + '%</strong> ($' + tgt.toFixed(0) + ')');
+    else if (up <= -5) risks.push('Trades <strong>' + Math.abs(up).toFixed(0) + '%</strong> above target ($' + tgt.toFixed(0) + ')');
+  }
+
+  if (!isNaN(m3)){
+    if (m3 >= 15) strengths.push('Price <strong>+' + m3.toFixed(0) + '%</strong> over 3M');
+    else if (m3 <= -15) risks.push('Price <strong>' + m3.toFixed(0) + '%</strong> over 3M');
+  }
+
+  if (!isNaN(sv)){
+    if (sv >= 5) strengths.push('Score <strong>+' + sv.toFixed(0) + '</strong> this week');
+    else if (sv <= -5) risks.push('Score <strong>' + sv.toFixed(0) + '</strong> this week');
+  }
+
+  if (!isNaN(fwdPE) && fwdPE > 40) risks.push('Forward P/E <strong>' + fwdPE.toFixed(0) + 'x</strong> — premium valuation');
+  if (!isNaN(sPct) && sPct >= 10) risks.push('Short interest <strong>' + sPct.toFixed(1) + '%</strong> of float');
+  if (!isNaN(beta) && beta >= 1.8) risks.push('High beta <strong>' + beta.toFixed(2) + '</strong> — outsized swings');
+  if (t.caution) risks.push('Model flagged elevated risk');
+
+  const insBuys  = parseInt(t.insider_buys_90d || t.insider_buys || 0);
+  const insSells = parseInt(t.insider_sells_90d || t.insider_sells || 0);
+  if (insBuys > 0 && insBuys > insSells) strengths.push('Insider buys <strong>' + insBuys + '</strong> in last 90d');
+  if (insSells >= 5 && insSells > insBuys * 2) risks.push('Insider sells <strong>' + insSells + '</strong> in last 90d');
+
+  const listBlock = (title, items, cls) => {
+    if (!items.length) return '';
+    const lis = items.slice(0, 4).map(x => '<li>' + x + '</li>').join('');
+    return '<div class="v2-qs-col ' + cls + '"><div class="v2-qs-col-hdr">' + title + '</div><ul>' + lis + '</ul></div>';
+  };
+
+  const splitBlock = (strengths.length || risks.length) ?
+    '<div class="v2-qs-split">' + listBlock('What\'s working', strengths, 'pos') + listBlock('Watch-outs', risks, 'neg') + '</div>' : '';
+
+  /* ── Headline + catalyst footer ── */
+  const headline = '<div class="v2-qs-head">' +
+    (tierBadge) +
+    '<span class="v2-qs-score">' + (score || '—') + '</span>' +
+    '<span class="v2-qs-score-lbl">Alpha Score</span>' +
+    (gradeText ? '<span class="v2-qs-tier-lbl">' + gradeText + ' tier' + (sector ? ' · ' + v2EscHTML(sector) : '') + '</span>' : '') +
+  '</div>';
+
   const dte = parseInt(t.days_to_earnings);
+  let catalyst = '';
   if (!isNaN(dte) && dte >= 0 && dte <= 21){
-    parts.push('Next earnings report is ' + (dte === 0 ? 'today' : dte === 1 ? 'tomorrow' : 'in ' + dte + ' days') + '.');
+    const when = dte === 0 ? 'today' : dte === 1 ? 'tomorrow' : 'in ' + dte + ' days';
+    catalyst = '<div class="v2-qs-catalyst">📅 Next earnings ' + when + '</div>';
   }
 
-  return parts.join(' ');
+  return headline + scoreboard + splitBlock + catalyst;
 }
 
 /* News materiality classifier — keyword heuristic flagging headlines
@@ -6467,18 +6627,6 @@ function openStockModal(ticker) {
   const bottomLine = t.bottom_line || '';
 
   document.getElementById('stock-modal-body').innerHTML = `
-    ${bottomLine ? `
-    <div class="modal-verdict-box" style="background:${blBg};border-left:4px solid ${blBorder};padding:11px 16px;border-radius:8px;
-                margin-bottom:12px;display:flex;gap:12px;align-items:flex-start">
-      <div style="font-size:20px;flex-shrink:0;line-height:1.2">${blIcon}</div>
-      <div style="flex:1">
-        <div class="verdict-head" style="font-size:13px;font-weight:900;color:${blColor};text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px">
-          ${_verdictHead}
-        </div>
-        <div class="verdict-body" style="font-size:13px;color:#0f172a;line-height:1.55;font-weight:500">${bottomLine}</div>
-      </div>
-    </div>` : ''}
-
     <div class="fd-head" style="margin-bottom:12px">
       <div>
         <div class="fd-tic">${t.ticker}</div>
@@ -6538,7 +6686,7 @@ function openStockModal(ticker) {
     ${(() => {
       try {
         const qs = (typeof v2BuildTemplateThesis === 'function') ? v2BuildTemplateThesis(t) : '';
-        return qs ? `<div class="v2-quant-snapshot"><span class="v2-qs-hdr">📊 Quant Snapshot</span>${qs}</div>` : '';
+        return qs ? `<div class="v2-quant-snapshot"><div class="v2-qs-hdr">📊 Quant Snapshot</div>${qs}</div>` : '';
       } catch(e){ return ''; }
     })()}
 
