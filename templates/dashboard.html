@@ -2091,19 +2091,24 @@ body.v2 .v2ov-kpi.hot3::before,
 body.v2 .v2ov-kpi.hot4::before,
 body.v2 .v2ov-kpi.hot5::before{display:none!important}
 
-/* CLASS-BASED green rating pills (Universe table 'Top Tier' /
-   'Quality' badges). These are defined as CSS rules, not inline
-   styles, so the runtime DOM sweep doesn't catch them — they
-   need explicit overrides under body.v2. */
-body.v2 .rating-strong{
-  background:linear-gradient(135deg,#4338ca,#6366f1)!important;
-  color:#fff!important;border:none!important;
+/* CLASS-BASED rating pills + every other callout pill across v2
+   now share the SAME rich brand gradient (sky -> indigo -> purple
+   -> magenta) so 'Top Tier', 'Quality', 'Score N', 'Sub-sector',
+   'Analyst +X%', and the Top Picks tier pills all read as one
+   visual family. White text, soft indigo glow shadow, no border. */
+body.v2 .rating-strong,
+body.v2 .rating-buy,
+body.v2 .v2-pick-tier,
+body.v2 #panel-model span[style*="background:rgba(29,78,216,.1)"],
+body.v2 #panel-model span[style*="background:rgba(132,204,22,.1)"],
+body.v2 #panel-model span[style*="background:rgba(71,85,105,.08)"],
+body.v2 #panel-model span[style*="background:rgba(21,128,61,.08)"]{
+  background:linear-gradient(135deg,#3b82f6 0%,#6366f1 30%,#8b5cf6 55%,#d946ef 100%)!important;
+  color:#fff!important;
+  border:none!important;
   box-shadow:0 2px 8px rgba(99,102,241,.30)!important;
-}
-body.v2 .rating-buy{
-  background:rgba(99,102,241,.10)!important;
-  color:#4338ca!important;
-  border-color:#4338ca!important;
+  /* Ensure inner spans (like the underline em on 'Analyst +X%') stay readable */
+  text-shadow:0 1px 1px rgba(15,23,42,.10);
 }
 body.v2 .conf.hi{color:#4338ca!important}
 
