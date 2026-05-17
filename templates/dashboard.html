@@ -1822,6 +1822,8 @@ body.v2 .v2ov-card.sectors .v2ov-sector-cell{
   color:#84cc16;background:#0f172a;padding:2px 7px;border-radius:4px;
   margin-right:6px;vertical-align:middle;text-transform:uppercase;
 }
+.v2-news-row:hover{background:#f8fafc}
+.v2-news-row:hover .v2-news-material{box-shadow:0 0 0 2px rgba(132,204,22,.3)}
 
 /* Reusable ticker logo (real logo + colored-initial fallback) */
 .v2ov-tic-logo{
@@ -6890,8 +6892,9 @@ function openStockModal(ticker) {
 
     <!-- Latest News (collapsed on mobile) -->
     <details class="m-collapse" open><summary>📰 Latest News · last 7 days</summary><div class="m-collapse-body">
-    <div id="modal-news-${t.ticker}" style="margin-top:14px;border:1px solid #e2e8f0;border-radius:10px;padding:10px 12px;background:#fff">
-      <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">
+    <div id="modal-news-${t.ticker}" class="v2-news-card" style="position:relative;margin-top:14px;border:1px solid #e2e8f0;border-radius:10px;padding:12px 14px 12px 18px;background:#fff;overflow:hidden">
+      <span style="position:absolute;left:0;top:0;bottom:0;width:4px;background:linear-gradient(180deg,#4338ca 0%,#8b5cf6 50%,#ec4899 100%)"></span>
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px">
         <span style="font-size:13px;font-weight:800;color:#0f172a">📰 Latest News</span>
         <span style="font-size:10.5px;color:#64748b">— last 7 days</span>
       </div>
@@ -6970,13 +6973,29 @@ async function loadModalNews(ticker) {
       body.innerHTML = '<div style="color:#94a3b8;font-size:11.5px">No headlines in the last 7 days.</div>';
       return;
     }
+    const relTime = (ts) => {
+      if (!ts) return '';
+      const diff = (Date.now() - ts.getTime()) / 1000;
+      if (diff < 60) return 'just now';
+      if (diff < 3600) return Math.round(diff/60) + 'm ago';
+      if (diff < 86400) return Math.round(diff/3600) + 'h ago';
+      if (diff < 604800) return Math.round(diff/86400) + 'd ago';
+      return ts.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+    };
     body.innerHTML = news.map(n => {
       const ts = n.datetime ? new Date(n.datetime * 1000) : null;
-      const when = ts ? ts.toLocaleDateString('en-US',{month:'short',day:'numeric'}) : '';
-      const src  = (n.source || '').slice(0, 18);
+      const when = relTime(ts);
+      const src  = (n.source || '').slice(0, 22);
       const rawTitle = n.headline || '';
       const title = rawTitle.replace(/</g,'&lt;');
       const url = n.url || '#';
+      const sent = (n.sentiment || '').toLowerCase();
+      const dotColor = sent === 'positive' ? '#16a34a'
+                     : sent === 'negative' ? '#dc2626'
+                     : '#cbd5e1';
+      const dotTitle = sent === 'positive' ? 'Bullish-leaning headline'
+                     : sent === 'negative' ? 'Bearish-leaning headline'
+                     : 'Neutral / general';
       let badge = '';
       try {
         if (typeof v2NewsMateriality === 'function' && v2NewsMateriality(rawTitle) === 'material'){
@@ -6984,17 +7003,19 @@ async function loadModalNews(ticker) {
         }
       } catch(e){}
       return `
-        <a href="${url}" target="_blank" rel="noopener"
-           style="display:block;padding:7px 0;border-bottom:1px solid #f1f5f9;
-                  text-decoration:none;color:#0f172a;line-height:1.4">
-          <div style="font-size:12px;font-weight:600">${badge}${title}</div>
-          <div style="font-size:10.5px;color:#64748b;margin-top:2px">
-            ${when}${src ? ' · ' + src : ''}
+        <a href="${url}" target="_blank" rel="noopener" class="v2-news-row"
+           style="display:flex;gap:10px;align-items:flex-start;padding:9px 8px;margin:0 -8px;border-radius:6px;
+                  text-decoration:none;color:#0f172a;line-height:1.4;transition:background .15s">
+          <span title="${dotTitle}" style="flex:0 0 8px;width:8px;height:8px;border-radius:50%;background:${dotColor};margin-top:5px"></span>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:12.5px;font-weight:600;color:#0f172a">${badge}${title}</div>
+            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:10.5px;color:#64748b;margin-top:3px">
+              ${src ? `<span style="background:#f1f5f9;color:#475569;padding:1px 7px;border-radius:4px;font-weight:700;letter-spacing:.02em">${src}</span>` : ''}
+              <span>${when}</span>
+            </div>
           </div>
         </a>`;
-    }).join('');
-    // Strip border on the last item
-    body.lastElementChild?.style?.setProperty('border-bottom','none');
+    }).join('<div style="height:1px;background:#f1f5f9;margin:0 -8px"></div>');
   } catch (e) {
     body.innerHTML = `<div style="color:#94a3b8;font-size:11.5px">Couldn't load news (${e.message}).</div>`;
   }
