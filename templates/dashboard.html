@@ -480,6 +480,21 @@ tr:hover td{background:rgba(132,204,22,.06)}
 .eps-surp-bar-pos{background:#16a34a}
 .eps-surp-bar-neg{background:#dc2626}
 
+/* Inline positive callouts — readable lime on light surfaces (#65a30d) */
+.v2-pos-text{color:#65a30d !important;font-weight:700}
+.v2-neg-text{color:#dc2626 !important;font-weight:700}
+/* Lime-on-dark mini pill — reusable */
+.v2-pos-pill-sm{
+  display:inline-block;color:#84cc16;background:#0f172a;
+  font-weight:900;letter-spacing:.06em;font-size:10.5px;
+  padding:2px 8px;border-radius:5px;text-transform:uppercase;line-height:1.4;
+}
+.v2-neg-pill-sm{
+  display:inline-block;color:#fff;background:#dc2626;
+  font-weight:900;letter-spacing:.06em;font-size:10.5px;
+  padding:2px 8px;border-radius:5px;text-transform:uppercase;line-height:1.4;
+}
+
 /* ====== EPS BEATS STRIP ====== */
 .eps-strip{display:flex;gap:4px;align-items:center;margin-top:6px}
 .eps-strip-lbl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-right:2px}
@@ -3402,7 +3417,7 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
   // PLUS the data-tier coloured tiles (sector map, score distribution)
   // PLUS factor-profile bars (green/amber/red is the strength signal),
   // PLUS the SINCE-ENTRY +X% number (semantic green/red).
-  const SEMANTIC_SEL = '.pos,.up,.green,.kpi-chg.up,.mover-pct.up,.surp.pos,.v2ov-tl-tag.beat,.regime-chip.bullish,#regime-pill,.beat,.ticker-chip[class*=" up"],.v2ov-sector-cell,.v2ov-sector-cell *,.v2ov-dist-cell,.v2ov-dist-cell *,.v2ov-dist-seg,[data-tier],.v2-factor-bar,.v2-factor-num,.v2-qs-f,.v2-qs-f *,.v2-qs-tier,.v2-pos-pill,.v2-news-material,.v2-keyword-pill,.eps-surp-bar';
+  const SEMANTIC_SEL = '.pos,.up,.green,.kpi-chg.up,.mover-pct.up,.surp.pos,.v2ov-tl-tag.beat,.regime-chip.bullish,#regime-pill,.beat,.ticker-chip[class*=" up"],.v2ov-sector-cell,.v2ov-sector-cell *,.v2ov-dist-cell,.v2ov-dist-cell *,.v2ov-dist-seg,[data-tier],.v2-factor-bar,.v2-factor-num,.v2-qs-f,.v2-qs-f *,.v2-qs-tier,.v2-pos-pill,.v2-news-material,.v2-keyword-pill,.eps-surp-bar,.v2-pos-text,.v2-neg-text,.v2-pos-pill-sm,.v2-neg-pill-sm';
 
   function isProbablyDataText(el){
     // Element's own text starts with +/-/▲/▼ or contains an explicit
@@ -5584,9 +5599,8 @@ function returnsRow(t) {
   const chip = (label, v) => {
     if (!isFinite(v)) return null;
     const pos = v >= 0;
-    const bg = pos ? '#dcfce7' : '#fee2e2';
-    const cl = pos ? '#15803d' : '#b91c1c';
-    return `<span style="background:${bg};color:${cl};padding:3px 9px;border-radius:6px;font-size:11px;font-weight:700">
+    const cls = pos ? 'v2-pos-pill-sm' : 'v2-neg-pill-sm';
+    return `<span class="${cls}" style="font-size:11px">
               ${label} ${pos ? '+' : ''}${v.toFixed(1)}%
             </span>`;
   };
@@ -6456,10 +6470,10 @@ function renderModalEarningsCard(ticker, t) {
         const surp = epsQ.surprise_pct;
         const beatTag = (beat == null) ? '' :
           (beat
-            ? '<span style="background:#dcfce7;color:#15803d;font-weight:700;padding:3px 10px;border-radius:999px;font-size:10px;letter-spacing:.04em;margin-left:6px">BEAT</span>'
-            : '<span style="background:#fee2e2;color:#b91c1c;font-weight:700;padding:3px 10px;border-radius:999px;font-size:10px;letter-spacing:.04em;margin-left:6px">MISS</span>');
+            ? '<span class="v2-pos-pill-sm" style="margin-left:6px">BEAT</span>'
+            : '<span class="v2-neg-pill-sm" style="margin-left:6px">MISS</span>');
         const surpStr = (surp == null) ? '' :
-          ' &middot; <span style="color:' + (surp > 0 ? '#15803d' : '#b91c1c') + ';font-weight:600">' + (surp >= 0 ? '+' : '') + surp.toFixed(1) + '%</span> vs estimate';
+          ' &middot; <span class="' + (surp > 0 ? 'v2-pos-text' : 'v2-neg-text') + '">' + (surp >= 0 ? '+' : '') + surp.toFixed(1) + '%</span> vs estimate';
         epsRow = '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:13px">' +
                    '<span style="color:#64748b;font-weight:600">EPS</span>' +
                    '<span><span class="mono" style="font-weight:700">$' + epsQ.actual.toFixed(2) + '</span> ' +
@@ -6471,7 +6485,7 @@ function renderModalEarningsCard(ticker, t) {
         const revStr = _fmtMoney(incQ.revenue);
         const rg = t.rev_growth_qyoy;
         const rgStr = (rg == null) ? '' :
-          ' &middot; <span style="color:' + (rg > 0 ? '#15803d' : '#b91c1c') + ';font-weight:600">' + (rg >= 0 ? '+' : '') + (rg*100).toFixed(1) + '%</span> YoY';
+          ' &middot; <span class="' + (rg > 0 ? 'v2-pos-text' : 'v2-neg-text') + '">' + (rg >= 0 ? '+' : '') + (rg*100).toFixed(1) + '%</span> YoY';
         revRow = '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:13px">' +
                    '<span style="color:#64748b;font-weight:600">Revenue</span>' +
                    '<span><span class="mono" style="font-weight:700">' + revStr + '</span>' + rgStr + '</span></div>';
@@ -6544,8 +6558,8 @@ function renderModalEarningsCard(ticker, t) {
                    '</li>';
           }).join('');
         }
-        const pos = (s.positives && s.positives.length) ? '<div style="margin-top:5px"><div style="font-size:11px;color:#15803d;font-weight:800;margin-bottom:2px">Positives:</div><ul style="padding:0;margin:2px 0 0">' + bullets(s.positives, '#15803d') + '</ul></div>' : '';
-        const con = (s.concerns && s.concerns.length) ? '<div style="margin-top:5px"><div style="font-size:11px;color:#b91c1c;font-weight:800;margin-bottom:2px">Concerns:</div><ul style="padding:0;margin:2px 0 0">' + bullets(s.concerns, '#b91c1c') + '</ul></div>' : '';
+        const pos = (s.positives && s.positives.length) ? '<div style="margin-top:5px"><div class="v2-pos-text" style="font-size:11px;font-weight:800;margin-bottom:2px">Positives:</div><ul style="padding:0;margin:2px 0 0">' + bullets(s.positives, '#65a30d') + '</ul></div>' : '';
+        const con = (s.concerns && s.concerns.length) ? '<div style="margin-top:5px"><div class="v2-neg-text" style="font-size:11px;font-weight:800;margin-bottom:2px">Concerns:</div><ul style="padding:0;margin:2px 0 0">' + bullets(s.concerns, '#b91c1c') + '</ul></div>' : '';
         const qa  = s.qa_summary ? '<div style="font-size:11.5px;color:#475569;font-style:italic;margin-top:6px">Q&amp;A: ' + s.qa_summary + '</div>' : '';
         sSlot.innerHTML =
           '<div style="margin-top:12px;padding-top:10px;border-top:1px dashed #cbd5e1">' +
@@ -6744,19 +6758,28 @@ function openStockModal(ticker) {
 
     ${(() => {
       const v = valuationVerdict(t);
-      return `<details class="m-collapse" open><summary>💰 Valuation · <span style="color:${v.color};font-weight:900">${v.verdict}</span></summary><div class="m-collapse-body">
-        <div style="margin-top:12px;padding:14px 16px;border-radius:10px;
-                background:linear-gradient(135deg,#fef3c7 0%,#fef9c3 100%);
-                border:1px solid #fcd34d;border-left:5px solid ${v.border};
-                box-shadow:0 1px 2px rgba(15,23,42,.04);
-                display:flex;align-items:center;gap:14px">
-          <div style="font-size:12px;font-weight:900;color:${v.color};
+      const isPos = /^cheap$/i.test(v.verdict);
+      const isNeg = /^(expensive|very expensive)$/i.test(v.verdict);
+      const sumPillCls = isPos ? 'v2-pos-pill-sm' : isNeg ? 'v2-neg-pill-sm' : '';
+      const verdictBadge = isPos || isNeg
+        ? `<span class="${sumPillCls}" style="font-size:12px;padding:5px 12px">Valuation: ${v.verdict}</span>`
+        : `<div style="font-size:12px;font-weight:900;color:${v.color};
                      text-transform:uppercase;letter-spacing:.06em;
                      padding:5px 12px;background:#fff;border-radius:7px;
                      border:1.5px solid ${v.border};white-space:nowrap;
                      box-shadow:0 1px 1px rgba(15,23,42,.04)">
             Valuation: ${v.verdict}
-          </div>
+          </div>`;
+      const summaryClick = isPos
+        ? `<span class="v2-pos-pill-sm" style="font-size:11px">${v.verdict}</span>`
+        : `<span style="color:${v.color};font-weight:900">${v.verdict}</span>`;
+      return `<details class="m-collapse" open><summary>💰 Valuation · ${summaryClick}</summary><div class="m-collapse-body">
+        <div style="margin-top:12px;padding:14px 16px;border-radius:10px;
+                background:linear-gradient(135deg,#fef3c7 0%,#fef9c3 100%);
+                border:1px solid #fcd34d;border-left:5px solid ${v.border};
+                box-shadow:0 1px 2px rgba(15,23,42,.04);
+                display:flex;align-items:center;gap:14px">
+          ${verdictBadge}
           <div style="font-size:14px;color:#0f172a;line-height:1.55;font-weight:500">${v.summary}</div>
         </div>
       </div></details>`;
