@@ -476,6 +476,10 @@ tr:hover td{background:rgba(132,204,22,.06)}
 @keyframes bd-pulse{0%{box-shadow:0 0 0 0 rgba(59,130,246,.6)}70%{box-shadow:0 0 0 7px rgba(59,130,246,0)}100%{box-shadow:0 0 0 0 rgba(59,130,246,0)}}
 .badge-row{display:flex;flex-wrap:wrap;gap:5px;align-items:center;margin:6px 0 2px}
 
+/* EPS Surprise mini bars — colour set via class so green-sweep skips them */
+.eps-surp-bar-pos{background:#16a34a}
+.eps-surp-bar-neg{background:#dc2626}
+
 /* ====== EPS BEATS STRIP ====== */
 .eps-strip{display:flex;gap:4px;align-items:center;margin-top:6px}
 .eps-strip-lbl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-right:2px}
@@ -3398,7 +3402,7 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
   // PLUS the data-tier coloured tiles (sector map, score distribution)
   // PLUS factor-profile bars (green/amber/red is the strength signal),
   // PLUS the SINCE-ENTRY +X% number (semantic green/red).
-  const SEMANTIC_SEL = '.pos,.up,.green,.kpi-chg.up,.mover-pct.up,.surp.pos,.v2ov-tl-tag.beat,.regime-chip.bullish,#regime-pill,.beat,.ticker-chip[class*=" up"],.v2ov-sector-cell,.v2ov-sector-cell *,.v2ov-dist-cell,.v2ov-dist-cell *,.v2ov-dist-seg,[data-tier],.v2-factor-bar,.v2-factor-num,.v2-qs-f,.v2-qs-f *,.v2-qs-tier,.v2-pos-pill,.v2-news-material,.v2-keyword-pill';
+  const SEMANTIC_SEL = '.pos,.up,.green,.kpi-chg.up,.mover-pct.up,.surp.pos,.v2ov-tl-tag.beat,.regime-chip.bullish,#regime-pill,.beat,.ticker-chip[class*=" up"],.v2ov-sector-cell,.v2ov-sector-cell *,.v2ov-dist-cell,.v2ov-dist-cell *,.v2ov-dist-seg,[data-tier],.v2-factor-bar,.v2-factor-num,.v2-qs-f,.v2-qs-f *,.v2-qs-tier,.v2-pos-pill,.v2-news-material,.v2-keyword-pill,.eps-surp-bar';
 
   function isProbablyDataText(el){
     // Element's own text starts with +/-/▲/▼ or contains an explicit
@@ -5552,13 +5556,13 @@ function epsBeatBars(t) {
     const isBeat = surp >= 0;
     const mag = Math.min(Math.abs(surp), 50) / 50;   // cap visualisation at ±50%
     const h = Math.max(4, mag * 24);
-    const color = isBeat ? '#16a34a' : '#dc2626';
+    const cls = isBeat ? 'eps-surp-bar eps-surp-bar-pos' : 'eps-surp-bar eps-surp-bar-neg';
     const period = (row.period || '').slice(-7);
     const tip = `${period || 'Q' + (4-i)}: ${isBeat ? '+' : ''}${surp.toFixed(1)}% (act $${a.toFixed(2)} vs est $${e.toFixed(2)})`;
     return `
       <div title="${tip}" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px">
         <div style="width:100%;height:24px;display:flex;align-items:flex-end">
-          <div style="width:100%;height:${h}px;background:${color};border-radius:3px"></div>
+          <div class="${cls}" style="width:100%;height:${h}px;border-radius:3px"></div>
         </div>
         <div style="font-size:9px;color:#64748b">${isBeat ? '+' : ''}${surp.toFixed(0)}%</div>
       </div>`;
