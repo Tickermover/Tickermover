@@ -1718,9 +1718,16 @@ body.v2 .v2ov-card.sectors .v2ov-sector-cell{
 .v2-qs-f{display:flex;align-items:center;gap:8px;font-size:11px}
 .v2-qs-f-lbl{flex:0 0 62px;font-weight:700;color:#475569;font-size:10.5px;text-transform:uppercase;letter-spacing:.04em}
 .v2-qs-f-track{flex:1;height:6px;background:#e2e8f0;border-radius:999px;overflow:hidden;position:relative}
-.v2-qs-f-fill{display:block;height:100%;border-radius:999px;transition:width .3s ease}
-.v2-qs-f-num{flex:0 0 26px;text-align:right;font-weight:800;font-size:11px;font-variant-numeric:tabular-nums}
+.v2-qs-f-fill{display:block;height:100%;border-radius:999px;transition:width .3s ease;background:#94a3b8}
+.v2-qs-f-num{flex:0 0 26px;text-align:right;font-weight:800;font-size:11px;font-variant-numeric:tabular-nums;color:#475569}
 .v2-qs-f-na{flex:1;font-size:10.5px;color:#94a3b8;text-align:right}
+/* Tone variants — set via class so the runtime green-sweep can't touch them */
+.v2-qs-f.v2-qs-f-good .v2-qs-f-fill{background:#16a34a}
+.v2-qs-f.v2-qs-f-good .v2-qs-f-num{color:#16a34a}
+.v2-qs-f.v2-qs-f-avg  .v2-qs-f-fill{background:#d97706}
+.v2-qs-f.v2-qs-f-avg  .v2-qs-f-num{color:#d97706}
+.v2-qs-f.v2-qs-f-bad  .v2-qs-f-fill{background:#dc2626}
+.v2-qs-f.v2-qs-f-bad  .v2-qs-f-num{color:#dc2626}
 
 .v2-qs-split{
   display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px;
@@ -3656,15 +3663,15 @@ function v2BuildTemplateThesis(t){
     rScore = clamp(r);
   }
 
-  const barColor = (v) => v >= 70 ? '#16a34a' : v >= 50 ? '#d97706' : '#dc2626';
+  const barTone = (v) => v >= 70 ? 'good' : v >= 50 ? 'avg' : 'bad';
   const factorBar = (label, v) => {
     if (isNaN(v)) return '<div class="v2-qs-f"><span class="v2-qs-f-lbl">' + label + '</span><span class="v2-qs-f-na">—</span></div>';
-    const c = barColor(v);
+    const tone = barTone(v);
     const w = Math.round(v);
-    return '<div class="v2-qs-f">' +
+    return '<div class="v2-qs-f v2-qs-f-' + tone + '">' +
       '<span class="v2-qs-f-lbl">' + label + '</span>' +
-      '<span class="v2-qs-f-track"><span class="v2-qs-f-fill" style="width:' + w + '%;background:' + c + '"></span></span>' +
-      '<span class="v2-qs-f-num" style="color:' + c + '">' + w + '</span>' +
+      '<span class="v2-qs-f-track"><span class="v2-qs-f-fill" style="width:' + w + '%"></span></span>' +
+      '<span class="v2-qs-f-num">' + w + '</span>' +
     '</div>';
   };
 
