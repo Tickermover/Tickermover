@@ -3415,34 +3415,55 @@ function v2KpiTagline(t){
   return '';
 }
 
-/* ── "What changed this week" band — pure data delta, no advice.
-   Three columns: biggest score climbers, recent earnings reporters,
-   today's biggest price moves. */
+/* ── "What changed this week" band — REDESIGNED so no column
+   duplicates a module that lives elsewhere on the page. Three
+   columns of uniquely additive data:
+     - Score climbing  (top 4 by positive score_velocity_7d)
+     - Score declining (top 4 by negative score_velocity_7d)
+     - Universe pulse  (aggregate stats nothing else shows)
+   Recent Earnings module + Today's Movers list at the bottom keep
+   doing their job without overlap. */
 function v2RenderWhatChanged(tickers){
-  const climbers = [...tickers]
+  // Climbing & declining — score velocity gainers/losers this week
+  const withVel = tickers
     .map(t => ({ t, sv: parseFloat(t.score_velocity_7d ?? t.score_velocity ?? 0) }))
-    .filter(x => !isNaN(x.sv) && x.sv > 0)
-    .sort((a, b) => b.sv - a.sv)
-    .slice(0, 4);
+    .filter(x => !isNaN(x.sv));
+  const climbers = withVel.filter(x => x.sv > 0).sort((a, b) => b.sv - a.sv).slice(0, 4);
+  const decliners = withVel.filter(x => x.sv < 0).sort((a, b) => a.sv - b.sv).slice(0, 4);
 
-  const now = new Date();
-  const reported = [];
+  // Universe pulse — cross-cutting aggregate stats
+  const scores = tickers.map(t => parseFloat(t.smart_score ?? t.pop_score ?? 0)).filter(s => s > 0);
+  const avgScore = scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
+  const aTier = tickers.filter(t => t.grade === 'A').length;
+  const bTier = tickers.filter(t => t.grade === 'B').length;
+
+  // Strongest sub-sector (avg score, requires >=2 stocks to be meaningful)
+  const titleCase = s => s.toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+  const buckets = {};
   tickers.forEach(t => {
-    const eq = (t.eps_quarters || []).filter(q => q && q.date);
-    if (!eq.length) return;
-    const sorted = [...eq].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
-    const q = sorted[0];
-    const d = new Date(String(q.date).slice(0, 10) + 'T00:00:00');
-    if (isNaN(d)) return;
-    const days = Math.round((now - d) / 86400000);
-    if (days >= 0 && days <= 7) reported.push({ t, q, days });
+    const raw = (t.sub_sector || t.sector || '').trim();
+    if (!raw) return;
+    const s = titleCase(raw);
+    if (!buckets[s]) buckets[s] = { total: 0, n: 0 };
+    const sc = parseFloat(t.smart_score ?? 0);
+    if (sc > 0){ buckets[s].total += sc; buckets[s].n++; }
   });
-  reported.sort((a, b) => a.days - b.days);
+  const topSector = Object.entries(buckets)
+    .filter(([k, v]) => v.n >= 2)
+    .map(([k, v]) => ({ name: k, avg: Math.round(v.total / v.n) }))
+    .sort((a, b) => b.avg - a.avg)[0];
 
-  const movers = [...tickers]
-    .filter(t => t.change_pct != null && !isNaN(parseFloat(t.change_pct)))
-    .sort((a, b) => Math.abs(parseFloat(b.change_pct)) - Math.abs(parseFloat(a.change_pct)))
-    .slice(0, 4);
+  // Earnings reported in last 30 days
+  const now = Date.now();
+  const earningsLast30 = tickers.filter(t => {
+    const eq = (t.eps_quarters || []).filter(q => q && q.date);
+    if (!eq.length) return false;
+    const sorted = [...eq].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+    const d = new Date(String(sorted[0].date).slice(0, 10) + 'T00:00:00');
+    if (isNaN(d)) return false;
+    const days = (now - d) / 86400000;
+    return days >= 0 && days <= 30;
+  }).length;
 
   const climbCol = climbers.length ? climbers.map(x =>
     '<div class="v2-changed-row" onclick="openStockModal(\'' + x.t.ticker + '\')">' +
@@ -3450,31 +3471,27 @@ function v2RenderWhatChanged(tickers){
       '<span class="note">' + v2EscHTML((x.t.name || '').slice(0, 18)) + '</span>' +
       '<span class="val up">+' + x.sv.toFixed(0) + '</span>' +
     '</div>').join('')
-    : '<div class="v2-changed-empty">No notable score moves this week</div>';
+    : '<div class="v2-changed-empty">No notable climbers this week</div>';
 
-  const reportCol = reported.length ? reported.slice(0, 4).map(x => {
-    const tag = x.q.beat === true  ? '<span class="val up">BEAT</span>'
-              : x.q.beat === false ? '<span class="val dn">MISS</span>'
-              : '<span class="val" style="color:#64748b">—</span>';
-    const when = x.days === 0 ? 'today' : x.days === 1 ? '1d ago' : x.days + 'd ago';
-    return '<div class="v2-changed-row" onclick="openStockModal(\'' + x.t.ticker + '\')">' +
+  const declineCol = decliners.length ? decliners.map(x =>
+    '<div class="v2-changed-row" onclick="openStockModal(\'' + x.t.ticker + '\')">' +
       '<span class="tic">' + x.t.ticker + '</span>' +
-      '<span class="note">' + when + '</span>' +
-      tag +
-    '</div>';
-  }).join('')
-    : '<div class="v2-changed-empty">No reports in the last 7 days</div>';
+      '<span class="note">' + v2EscHTML((x.t.name || '').slice(0, 18)) + '</span>' +
+      '<span class="val dn">' + x.sv.toFixed(0) + '</span>' +
+    '</div>').join('')
+    : '<div class="v2-changed-empty">No notable decliners this week</div>';
 
-  const moverCol = movers.length ? movers.map(t => {
-    const ch = parseFloat(t.change_pct);
-    const cls = ch >= 0 ? 'up' : 'dn';
-    return '<div class="v2-changed-row" onclick="openStockModal(\'' + t.ticker + '\')">' +
-      '<span class="tic">' + t.ticker + '</span>' +
-      '<span class="note">' + v2EscHTML((t.name || '').slice(0, 18)) + '</span>' +
-      '<span class="val ' + cls + '">' + (ch >= 0 ? '+' : '') + ch.toFixed(1) + '%</span>' +
+  const pulseRow = (label, value) =>
+    '<div class="v2-changed-row" style="cursor:default">' +
+      '<span class="note" style="flex:1;color:#64748b">' + label + '</span>' +
+      '<span class="val" style="color:#0f172a">' + value + '</span>' +
     '</div>';
-  }).join('')
-    : '<div class="v2-changed-empty">Market quiet today</div>';
+
+  const pulseCol =
+    pulseRow('Avg score',       avgScore || '—') +
+    pulseRow('A-tier stocks',   aTier) +
+    pulseRow('Earnings · 30d',  earningsLast30) +
+    pulseRow('Top sub-sector',  topSector ? v2EscHTML(topSector.name) : '—');
 
   return '' +
     '<div class="v2-changed">' +
@@ -3484,10 +3501,10 @@ function v2RenderWhatChanged(tickers){
           '<div class="v2-changed-col-h">📈 Score climbing</div>' + climbCol +
         '</div>' +
         '<div class="v2-changed-col">' +
-          '<div class="v2-changed-col-h">📰 Recently reported</div>' + reportCol +
+          '<div class="v2-changed-col-h">📉 Score declining</div>' + declineCol +
         '</div>' +
         '<div class="v2-changed-col">' +
-          '<div class="v2-changed-col-h">⚡ Today\'s biggest moves</div>' + moverCol +
+          '<div class="v2-changed-col-h">✨ Universe pulse</div>' + pulseCol +
         '</div>' +
       '</div>' +
     '</div>';
