@@ -3391,7 +3391,7 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
   // PLUS the data-tier coloured tiles (sector map, score distribution)
   // PLUS factor-profile bars (green/amber/red is the strength signal),
   // PLUS the SINCE-ENTRY +X% number (semantic green/red).
-  const SEMANTIC_SEL = '.pos,.up,.green,.kpi-chg.up,.mover-pct.up,.surp.pos,.v2ov-tl-tag.beat,.regime-chip.bullish,#regime-pill,.beat,.ticker-chip[class*=" up"],.v2ov-sector-cell,.v2ov-sector-cell *,.v2ov-dist-cell,.v2ov-dist-cell *,.v2ov-dist-seg,[data-tier],.v2-factor-bar,.v2-factor-num,.v2-qs-f,.v2-qs-f *,.v2-qs-tier,.v2-pos-pill,.v2-news-material';
+  const SEMANTIC_SEL = '.pos,.up,.green,.kpi-chg.up,.mover-pct.up,.surp.pos,.v2ov-tl-tag.beat,.regime-chip.bullish,#regime-pill,.beat,.ticker-chip[class*=" up"],.v2ov-sector-cell,.v2ov-sector-cell *,.v2ov-dist-cell,.v2ov-dist-cell *,.v2ov-dist-seg,[data-tier],.v2-factor-bar,.v2-factor-num,.v2-qs-f,.v2-qs-f *,.v2-qs-tier,.v2-pos-pill,.v2-news-material,.v2-keyword-pill';
 
   function isProbablyDataText(el){
     // Element's own text starts with +/-/▲/▼ or contains an explicit
@@ -6493,9 +6493,9 @@ function renderModalEarningsCard(ticker, t) {
       // neutral → slate. Returns full <span> HTML.
       function v2KeywordPill(text, score){
         const t = (text || '').toUpperCase();
-        if (score >= 0.10) return '<span style="display:inline-block;color:#84cc16;background:#0f172a;font-weight:900;letter-spacing:.08em;font-size:11px;padding:3px 9px;border-radius:5px;text-transform:uppercase">' + t + '</span>';
-        if (score <= -0.10) return '<span style="display:inline-block;color:#fff;background:#dc2626;font-weight:900;letter-spacing:.08em;font-size:11px;padding:3px 9px;border-radius:5px;text-transform:uppercase">' + t + '</span>';
-        return '<span style="display:inline-block;color:#fff;background:#475569;font-weight:900;letter-spacing:.08em;font-size:11px;padding:3px 9px;border-radius:5px;text-transform:uppercase">' + t + '</span>';
+        if (score >= 0.10) return '<span class="v2-keyword-pill v2-keyword-pill-pos" style="display:inline-block;color:#84cc16;background:#0f172a;font-weight:900;letter-spacing:.08em;font-size:11px;padding:3px 9px;border-radius:5px;text-transform:uppercase">' + t + '</span>';
+        if (score <= -0.10) return '<span class="v2-keyword-pill v2-keyword-pill-neg" style="display:inline-block;color:#fff;background:#dc2626;font-weight:900;letter-spacing:.08em;font-size:11px;padding:3px 9px;border-radius:5px;text-transform:uppercase">' + t + '</span>';
+        return '<span class="v2-keyword-pill v2-keyword-pill-neu" style="display:inline-block;color:#fff;background:#475569;font-weight:900;letter-spacing:.08em;font-size:11px;padding:3px 9px;border-radius:5px;text-transform:uppercase">' + t + '</span>';
       }
       const rxSlot = root.querySelector('[data-modal-reaction-slot]');
       const rx = data.reaction || {};
