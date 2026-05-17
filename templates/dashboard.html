@@ -1499,6 +1499,63 @@ html.v2-dark .v2ov-card{
 .v2ov-kpi-tag .v2-miss{color:#dc2626;font-style:normal;font-weight:700}
 html.v2-dark .v2ov-kpi-tag{color:#94a3b8}
 
+/* ── Today's Brief — single-line greeting + key context at the very
+   top of the Hot List view. Time-aware so the greeting shifts. */
+.v2-brief{
+  display:flex;align-items:center;flex-wrap:wrap;gap:8px;
+  padding:11px 16px;margin-bottom:14px;
+  background:linear-gradient(90deg,rgba(99,102,241,.08) 0%,rgba(56,189,248,.04) 100%);
+  border:1px solid rgba(99,102,241,.18);
+  border-radius:12px;
+  font-size:12.5px;color:#475569;
+}
+.v2-brief-greet{font-weight:800;color:#0f172a;letter-spacing:-.01em}
+.v2-brief-dot{color:#cbd5e1}
+.v2-brief-stat strong{color:#4338ca;font-weight:800;margin-right:2px}
+.v2-brief-note{color:#94a3b8;font-style:italic;margin-left:auto;font-size:11.5px}
+html.v2-dark .v2-brief{background:linear-gradient(90deg,rgba(99,102,241,.18) 0%,rgba(56,189,248,.08) 100%);border-color:rgba(99,102,241,.35)}
+html.v2-dark .v2-brief-greet{color:#f1f5f9}
+html.v2-dark .v2-brief-stat strong{color:#a5b4fc}
+
+/* ── Tracker Stat Strip — surfaces Top Hunts paper-tracker stats on
+   the Hot List home. Subtle gold-amber gradient so it visually reads
+   as a 'trophy / track-record' panel distinct from the others. */
+#v2-tracker-strip:empty{display:none}
+.v2-track{
+  background:linear-gradient(135deg,#fffbeb 0%,#fef3c7 60%,#fde68a 100%);
+  border:1px solid rgba(180,83,9,.20);
+  border-radius:12px;
+  padding:12px 16px;
+  margin-bottom:18px;
+  box-shadow:0 1px 3px rgba(180,83,9,.08);
+}
+.v2-track-head{
+  font-size:11.5px;font-weight:800;color:#92400e;
+  letter-spacing:.04em;text-transform:uppercase;
+  margin-bottom:10px;
+}
+.v2-track-grid{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:14px;
+}
+.v2-track-cell{text-align:left}
+.v2-track-cell .n{font-size:18px;font-weight:900;color:#0f172a;line-height:1;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
+.v2-track-cell .n.up{color:#16a34a}
+.v2-track-cell .n.dn{color:#dc2626}
+.v2-track-cell .l{font-size:10.5px;color:#92400e;font-weight:700;margin-top:3px;text-transform:uppercase;letter-spacing:.04em}
+.v2-track-foot{font-size:10.5px;color:#92400e;font-style:italic;margin-top:10px;padding-top:8px;border-top:1px dashed rgba(180,83,9,.25)}
+html.v2-dark .v2-track{background:linear-gradient(135deg,#1c1505 0%,#2a1f0a 60%,#3a2c12 100%);border-color:rgba(245,158,11,.30)}
+html.v2-dark .v2-track-head,html.v2-dark .v2-track-foot,html.v2-dark .v2-track-cell .l{color:#fbbf24}
+html.v2-dark .v2-track-cell .n{color:#f1f5f9}
+@media (max-width:900px){.v2-track-grid{grid-template-columns:repeat(2,1fr);gap:10px}}
+
+/* ── Confidence number on KPI cards — small muted text right after
+   the Alpha Score so the user knows how 'aligned' the score is */
+.v2ov-kpi-conf{
+  color:#64748b;font-weight:600;font-size:9.5px;letter-spacing:.02em;
+  cursor:help;white-space:nowrap;
+}
+html.v2-dark .v2ov-kpi-conf{color:#94a3b8}
+
 /* ── "What changed today" band — pure data delta at the top of the
    Hot List view. Three compact columns (score climbing / recently
    reported / today's movers). Descriptive only — no advice. */
@@ -3372,6 +3429,20 @@ function v2HotTier(score){
    buy/sell language. Priority picks the most interesting non-null
    fact and emits a short phrase. */
 function v2KpiTagline(t){
+  // PRIORITY 0 — Pre-event probability: report imminent (≤14 days)
+  // with recent beat/miss history (Gap #2 from advisor plan).
+  const dte = parseInt(t.days_to_earnings);
+  if (!isNaN(dte) && dte >= 0 && dte <= 14){
+    const recent = (t.eps_quarters || []).slice().sort((a,b) => (b.date||'').localeCompare(a.date||'')).slice(0,4);
+    const beats = recent.filter(q => q && q.beat === true).length;
+    const counted = recent.filter(q => q && q.beat != null).length;
+    const whenText = dte === 0 ? 'today' : dte === 1 ? 'tomorrow' : 'in ' + dte + 'd';
+    if (counted >= 2){
+      return 'Reports ' + whenText + ' · <span class="v2-beat">' + beats + '/' + counted + '</span> recent beats';
+    }
+    return 'Reports ' + whenText;
+  }
+
   const sv = parseFloat(t.score_velocity_7d ?? t.score_velocity ?? 0);
   if (!isNaN(sv) && sv >= 5) return 'Score <span class="v2-up">+' + sv.toFixed(0) + '</span> this week';
 
@@ -3413,6 +3484,27 @@ function v2KpiTagline(t){
   if (t.eps_beat_streak >= 3) return '<span class="v2-beat">' + t.eps_beat_streak + '/4</span> recent EPS beats';
 
   return '';
+}
+
+/* Confidence — heuristic of how 'aligned' the supporting signals
+   are. A high Alpha Score with high beat streak + non-volatile +
+   positive momentum reads as a stronger signal than a high score
+   with weak/mixed supporting evidence. (Gap #4 from advisor plan.) */
+function v2Confidence(t){
+  const score = parseFloat(t.smart_score ?? t.pop_score ?? 0);
+  if (score <= 0) return null;
+  const beatStreak = parseInt(t.eps_beat_streak) || 0;
+  const sv         = parseFloat(t.score_velocity_7d ?? t.score_velocity ?? 0);
+  const chg        = Math.abs(parseFloat(t.change_pct ?? 0));
+  const rev        = parseFloat(t.revenue_growth_yoy ?? 0);
+  const margin     = parseFloat(t.profit_margin ?? t.gross_margin ?? 0);
+  let signals = 0, total = 5;
+  if (score >= 75)        signals++;   // strong primary score
+  if (beatStreak >= 3)    signals++;   // earnings consistency
+  if (sv >= 0)            signals++;   // not deteriorating
+  if (chg < 8)            signals++;   // not extreme volatility today
+  if (rev > 0.05 || margin > 0.10) signals++; // healthy fundamentals
+  return Math.round((signals / total) * 100);
 }
 
 /* ── "What changed this week" band — REDESIGNED so no column
@@ -3543,7 +3635,9 @@ function v2RenderKpiStrip(tickers){
              '</div>' +
              (tagline ? '<div class="v2ov-kpi-tag">' + tagline + '</div>' : '') +
              '<div class="v2ov-kpi-foot">' +
-               '<div class="v2ov-kpi-score">Score <strong>' + score + '</strong></div>' +
+               '<div class="v2ov-kpi-score">Score <strong>' + score + '</strong>' +
+                 (() => { const c = v2Confidence(t); return c != null ? ' <span class="v2ov-kpi-conf" title="Signal alignment: how many supporting indicators agree with the Alpha Score">· conf ' + c + '%</span>' : ''; })() +
+               '</div>' +
                '<div class="v2ov-kpi-stars">' + stars + '</div>' +
              '</div>' +
            '</div>';
@@ -4079,10 +4173,95 @@ function v2RenderTopPicks(tickers){
      Option 1 (Top 6 detail) and Option 3 (hover popover) helper
      code is kept in the file but no longer called — keeps the
      diff small if we want to revisit.                              */
+/* Today's Brief — single-line greeting + key context at the top of
+   the Hot List view (Gap #5 from advisor plan, MVP). Time-aware
+   so it changes naturally through the day. */
+function v2RenderTodaysBrief(tickers){
+  const now   = new Date();
+  const day   = now.toLocaleDateString('en-US', {weekday:'long'});
+  const hr    = now.getHours();
+  const greet = hr < 12 ? 'Good morning' : hr < 17 ? 'Good afternoon' : 'Good evening';
+
+  // Key counts the user wants at a glance
+  const aTier = tickers.filter(t => t.grade === 'A').length;
+  const upcoming = tickers.filter(t => {
+    const d = parseInt(t.days_to_earnings);
+    return !isNaN(d) && d >= 0 && d <= 7;
+  }).length;
+  const market = (typeof market_regime !== 'undefined' && market_regime?.regime_label) || '';
+
+  // Last visit
+  let lastVisitNote = '';
+  try {
+    const last = localStorage.getItem('ah-last-visit');
+    if (last){
+      const lastDate = new Date(parseInt(last));
+      const hrsAgo = Math.floor((now - lastDate) / 3600000);
+      if (hrsAgo >= 1 && hrsAgo < 720){
+        lastVisitNote = hrsAgo < 24
+          ? '· back after ' + hrsAgo + 'h'
+          : '· back after ' + Math.floor(hrsAgo/24) + 'd';
+      }
+    }
+    localStorage.setItem('ah-last-visit', String(Date.now()));
+  } catch(e){}
+
+  return '' +
+    '<div class="v2-brief">' +
+      '<span class="v2-brief-greet">' + greet + ' · ' + day + '</span>' +
+      '<span class="v2-brief-dot">·</span>' +
+      '<span class="v2-brief-stat"><strong>' + aTier + '</strong> A-tier picks</span>' +
+      '<span class="v2-brief-dot">·</span>' +
+      '<span class="v2-brief-stat"><strong>' + upcoming + '</strong> earnings this week</span>' +
+      (lastVisitNote ? '<span class="v2-brief-note">' + lastVisitNote + '</span>' : '') +
+    '</div>';
+}
+
+/* Tracker Stat Strip — surfaces Top Hunts hypothetical W/L + avg
+   performance on the Hot List home (Gap #1 from advisor plan).
+   Fetches /api/model-portfolio async after the rest of the overview
+   renders. Empty placeholder appears immediately so layout doesn't
+   jump when the real data lands. */
+async function v2LoadTrackerStrip(){
+  const root = document.getElementById('v2-tracker-strip');
+  if (!root) return;
+  try {
+    const r = await fetch('/api/model-portfolio', { credentials: 'include' });
+    if (!r.ok) { root.style.display = 'none'; return; }
+    const data = await r.json();
+    const stats = data.stats || {};
+    const picks = data.picks || [];
+    const wins   = stats.winners ?? picks.filter(p => (p.performance_pct||0) > 0).length;
+    const losses = stats.losers  ?? picks.filter(p => (p.performance_pct||0) < 0).length;
+    const total  = wins + losses;
+    const avgPct = stats.avg_pct ?? (picks.length ? picks.reduce((s,p)=>s+(p.performance_pct||0),0)/picks.length : 0);
+    const best   = stats.best    ?? Math.max(0, ...picks.map(p=>p.performance_pct||0));
+    const worst  = stats.worst   ?? Math.min(0, ...picks.map(p=>p.performance_pct||0));
+    if (total < 1){ root.style.display = 'none'; return; }
+    const hitRate = total ? Math.round((wins / total) * 100) : 0;
+    root.innerHTML =
+      '<div class="v2-track">' +
+        '<div class="v2-track-head">🏆 Tracker performance · paper-only, educational</div>' +
+        '<div class="v2-track-grid">' +
+          '<div class="v2-track-cell"><div class="n">' + wins + 'W / ' + losses + 'L</div><div class="l">Hit rate ' + hitRate + '%</div></div>' +
+          '<div class="v2-track-cell"><div class="n ' + (avgPct >= 0 ? 'up':'dn') + '">' + (avgPct>=0?'+':'') + avgPct.toFixed(1) + '%</div><div class="l">Avg performance</div></div>' +
+          '<div class="v2-track-cell"><div class="n up">+' + best.toFixed(0) + '%</div><div class="l">Best pick</div></div>' +
+          '<div class="v2-track-cell"><div class="n dn">' + worst.toFixed(0) + '%</div><div class="l">Worst pick</div></div>' +
+        '</div>' +
+        '<div class="v2-track-foot">Hypothetical equal-weight model · past performance does not guarantee future results</div>' +
+      '</div>';
+  } catch(e){
+    console.error('[v2] tracker strip render failed', e);
+    root.style.display = 'none';
+  }
+}
+
 function renderV2Overview(tickers){
   const root = document.getElementById('v2-overview');
   if (!root || !Array.isArray(tickers) || !tickers.length) return;
   root.innerHTML =
+    v2RenderTodaysBrief(tickers) +
+    '<div id="v2-tracker-strip"></div>' +
     v2RenderWhatChanged(tickers) +
     v2RenderKpiStrip(tickers) +
     '<div class="v2ov-row">' +
@@ -4100,6 +4279,8 @@ function renderV2Overview(tickers){
       'not personalized advice or recommendations to buy or sell any security. ' +
       'Past performance and quantitative ratings do not guarantee future results. Always do your own research.' +
     '</div>';
+  // Fire the async tracker strip load now that #v2-tracker-strip exists
+  v2LoadTrackerStrip();
 }
 
 /* ── Theme toggle ─────────────────────────────────────────────── */
