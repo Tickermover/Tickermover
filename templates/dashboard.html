@@ -2034,25 +2034,42 @@ body.v2 #panel-model div[onclick^="openStockModal"][style*="border-radius:14px"]
   pointer-events:none;z-index:2;
 }
 
-/* Ticker symbol — was solid indigo, now gradient-fill text */
+/* Ticker symbol — solid slate-900. It's already 18px / 900 weight,
+   doesn't need a gradient on top. */
 body.v2 #panel-model div[onclick^="openStockModal"] span[style*="font-size:18px"][style*="font-weight:900"]{
-  background:linear-gradient(135deg,#4338ca 0%,#6366f1 50%,#a855f7 100%)!important;
-  -webkit-background-clip:text!important;background-clip:text!important;
-  -webkit-text-fill-color:transparent!important;color:transparent!important;
+  background:none!important;
+  -webkit-background-clip:initial!important;background-clip:initial!important;
+  -webkit-text-fill-color:initial!important;
+  color:#0f172a!important;
 }
 
-/* SINCE ENTRY highlight box — promote to a brighter indigo gradient */
+/* SINCE ENTRY highlight box — subtle indigo-tinted bg (this stays the
+   one indigo accent on the card; the big number inside goes semantic) */
 body.v2 #panel-model div[onclick^="openStockModal"] div[style*="border-radius:10px"][style*="padding:10px 14px"]{
-  background:linear-gradient(135deg,#eef2ff 0%,#e0e7ff 50%,#ddd6fe 100%)!important;
-  border:1px solid rgba(99,102,241,.30)!important;
-  box-shadow:0 1px 4px rgba(99,102,241,.10);
+  background:linear-gradient(135deg,#eef2ff 0%,#e0e7ff 60%,#ddd6fe 100%)!important;
+  border:1px solid rgba(99,102,241,.25)!important;
+  box-shadow:none!important;
 }
 
-/* Big '+X.X%' return number inside the SINCE ENTRY box — gradient text */
-body.v2 #panel-model div[onclick^="openStockModal"] div[style*="font-size:26px"][style*="font-weight:900"]{
-  background:linear-gradient(135deg,#4338ca 0%,#6366f1 35%,#a855f7 100%)!important;
-  -webkit-background-clip:text!important;background-clip:text!important;
-  -webkit-text-fill-color:transparent!important;color:transparent!important;
+/* Big '+X.X%' return number — semantic colours, NOT a gradient.
+   Positive entries (was #15803d) render kelly green; negative (was
+   #dc2626) render red. The size already makes it the visual anchor. */
+body.v2 #panel-model div[onclick^="openStockModal"] div[style*="font-size:26px"][style*="font-weight:900"][style*="color:#15803d"]{
+  background:none!important;
+  -webkit-background-clip:initial!important;background-clip:initial!important;
+  -webkit-text-fill-color:initial!important;
+  color:#16a34a!important;
+}
+body.v2 #panel-model div[onclick^="openStockModal"] div[style*="font-size:26px"][style*="font-weight:900"][style*="color:#dc2626"],
+body.v2 #panel-model div[onclick^="openStockModal"] div[style*="font-size:26px"][style*="font-weight:900"][style*="color:#b91c1c"]{
+  background:none!important;
+  -webkit-background-clip:initial!important;background-clip:initial!important;
+  -webkit-text-fill-color:initial!important;
+  color:#dc2626!important;
+}
+/* Entry / Now strong values inside the SINCE ENTRY box → solid black */
+body.v2 #panel-model div[onclick^="openStockModal"] div[style*="border-radius:10px"][style*="padding:10px 14px"] strong{
+  color:#0f172a!important;
 }
 
 /* Live factor profile panel — subtle off-white gradient instead
@@ -3222,8 +3239,9 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 
   // Things to LEAVE GREEN — semantic price-up / beat / bullish data
   // PLUS the data-tier coloured tiles (sector map, score distribution)
-  // whose green/yellow/red is the actual score signal, not chrome.
-  const SEMANTIC_SEL = '.pos,.up,.green,.kpi-chg.up,.mover-pct.up,.surp.pos,.v2ov-tl-tag.beat,.regime-chip.bullish,#regime-pill,.beat,.ticker-chip[class*=" up"],.v2ov-sector-cell,.v2ov-sector-cell *,.v2ov-dist-cell,.v2ov-dist-cell *,.v2ov-dist-seg,[data-tier]';
+  // PLUS factor-profile bars (green/amber/red is the strength signal),
+  // PLUS the SINCE-ENTRY +X% number (semantic green/red).
+  const SEMANTIC_SEL = '.pos,.up,.green,.kpi-chg.up,.mover-pct.up,.surp.pos,.v2ov-tl-tag.beat,.regime-chip.bullish,#regime-pill,.beat,.ticker-chip[class*=" up"],.v2ov-sector-cell,.v2ov-sector-cell *,.v2ov-dist-cell,.v2ov-dist-cell *,.v2ov-dist-seg,[data-tier],.v2-factor-bar,.v2-factor-num';
 
   function isProbablyDataText(el){
     // Element's own text starts with +/-/▲/▼ or contains an explicit
@@ -7788,14 +7806,18 @@ function renderModelPortfolio(data) {
             </div>
             <div style="padding:8px 10px">
               ${pn.map(([name, v, tip]) => {
-                const color = v >= 70 ? '#15803d' : v >= 50 ? '#a16207' : '#dc2626';
+                // Traffic-light colours: strong = vibrant kelly green,
+                // medium = amber, weak = red. v2-factor-bar / v2-factor-num
+                // class names make these semantic so the green sweep
+                // leaves them alone.
+                const color = v >= 65 ? '#16a34a' : v >= 35 ? '#d97706' : '#dc2626';
                 return `
                 <div style="display:flex;align-items:center;gap:8px;font-size:10.5px;margin-bottom:3px" title="${tip}">
                   <span style="flex-shrink:0;width:100px;color:#475569;cursor:help">${name}</span>
                   <div style="flex:1;height:6px;background:#e2e8f0;border-radius:3px;overflow:hidden">
-                    <div style="width:${v}%;height:100%;background:${color};border-radius:3px;transition:width .3s"></div>
+                    <div class="v2-factor-bar" style="width:${v}%;height:100%;background:${color};border-radius:3px;transition:width .3s"></div>
                   </div>
-                  <span style="flex-shrink:0;width:24px;text-align:right;font-weight:700;color:${color}">${v}</span>
+                  <span class="v2-factor-num" style="flex-shrink:0;width:24px;text-align:right;font-weight:700;color:${color}">${v}</span>
                 </div>`;
               }).join('')}
               <div style="font-size:10px;color:#64748b;line-height:1.4;margin-top:6px;padding-top:6px;border-top:1px dashed rgba(0,0,0,.08);font-style:italic">
