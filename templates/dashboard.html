@@ -1566,6 +1566,35 @@ html.v2-dark .v2-changed-row .note{color:#cbd5e1}
 .v2-disclaimer strong{color:#475569;font-weight:700}
 html.v2-dark .v2-disclaimer{background:rgba(99,102,241,.10);border-color:rgba(99,102,241,.25);color:#94a3b8}
 
+/* Sector Map full-panel cards (#panel-sectors .sm-card) — same v2
+   light gradient + brand stripe as every other callout card.
+   Targets the FULL-PANEL view, not the small widget on Hot List. */
+body.v2 #panel-sectors .sm-card{
+  background:linear-gradient(135deg,#ffffff 0%,#fbfbff 35%,#f3f1ff 100%)!important;
+  border-color:#e5e7eb!important;
+  position:relative;overflow:hidden;
+  box-shadow:0 1px 3px rgba(15,23,42,.04);
+}
+body.v2 #panel-sectors .sm-card::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,
+    rgba(56,189,248,.55) 0%,
+    rgba(99,102,241,.65) 35%,
+    rgba(236,72,153,.55) 70%,
+    rgba(251,113,133,.45) 100%);
+  pointer-events:none;
+  border-radius:16px 16px 0 0;
+}
+body.v2 #panel-sectors .sm-card:hover{
+  border-color:rgba(99,102,241,.35)!important;
+  box-shadow:0 8px 24px rgba(99,102,241,.10),0 2px 8px rgba(15,23,42,.06);
+  transform:translateY(-2px);transition:transform .15s,box-shadow .2s,border-color .15s;
+}
+html.v2-dark body.v2 #panel-sectors .sm-card{
+  background:linear-gradient(135deg,#121821 0%,#141a26 60%,#1a1830 100%)!important;
+  border-color:#1f2937!important;
+}
+
 /* Sector Map card: flex column layout so the inner grid auto-fills
    any empty space at the bottom of the card. The background gradient
    stays the same as every other card — only the LAYOUT is special. */
