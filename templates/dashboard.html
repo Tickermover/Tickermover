@@ -1745,6 +1745,10 @@ body.v2 .v2ov-card.sectors .v2ov-sector-cell{
 .v2-qs-score{font-size:22px;font-weight:900;color:#0f172a;letter-spacing:-.02em;line-height:1}
 .v2-qs-score-lbl{font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.06em}
 .v2-qs-tier-lbl{margin-left:auto;font-size:11px;font-weight:700;color:#475569;text-transform:capitalize}
+.v2-qs-head-badges{margin-left:auto;display:inline-flex;gap:5px;align-items:center;flex-wrap:wrap}
+.v2-qs-head-badges .rs-badge,
+.v2-qs-head-badges .bd-wrap{font-size:10px;padding:2px 7px;line-height:1.4}
+.v2-qs-head-badges .rs-num{font-size:11px}
 
 .v2-qs-scoreboard{
   display:grid;grid-template-columns:1fr 1fr;gap:6px 14px;margin-bottom:10px;
@@ -3772,11 +3776,16 @@ function v2BuildTemplateThesis(t){
     '<div class="v2-qs-split">' + listBlock('What\'s working', strengths, 'pos') + listBlock('Watch-outs', risks, 'neg') + '</div>' : '';
 
   /* ── Headline + catalyst footer ── */
+  let extraBadges = '';
+  try {
+    if (typeof buildRsBadge === 'function') extraBadges += buildRsBadge(sym);
+    if (typeof buildBlueDot === 'function') extraBadges += buildBlueDot(t);
+  } catch(e){}
   const headline = '<div class="v2-qs-head">' +
     (tierBadge) +
     '<span class="v2-qs-score">' + (score || '—') + '</span>' +
     '<span class="v2-qs-score-lbl">Alpha Score</span>' +
-    (gradeText ? '<span class="v2-qs-tier-lbl">' + gradeText + ' tier' + (sector ? ' · ' + v2EscHTML(sector) : '') + '</span>' : '') +
+    (extraBadges ? '<span class="v2-qs-head-badges">' + extraBadges + '</span>' : '') +
   '</div>';
 
   const dte = parseInt(t.days_to_earnings);
@@ -5542,10 +5551,11 @@ function catalystVerdict(t) {
     try {
       if (eDate) dateStr = ' · ' + new Date(eDate).toLocaleDateString('en-US',{month:'short',day:'numeric'});
     } catch(e) {}
-    if (days <= 3)        { label='Imminent';   color='#991b1b'; bg='#fee2e2'; border='#fca5a5'; summary=`Earnings in ${days}d${dateStr}`; }
-    else if (days <= 14)  { label='Near-term';  color='#b45309'; bg='#fef3c7'; border='#fcd34d'; summary=`Earnings in ${days}d${dateStr}`; }
-    else if (days <= 45)  { label='Upcoming';   color='#1e40af'; bg='#dbeafe'; border='#93c5fd'; summary=`Earnings in ${days}d${dateStr}`; }
-    else                  { label='Distant';    color='#475569'; bg='#f1f5f9'; border='#cbd5e1'; summary=`Earnings in ${days}d${dateStr}`; }
+    const epsDue = `<strong style="font-size:14px;display:block;margin-bottom:2px">📅 EPS in ${days}d${dateStr}</strong>`;
+    if (days <= 3)        { label='Imminent';   color='#991b1b'; bg='#fee2e2'; border='#fca5a5'; summary=`${epsDue}Major price move likely on report`; }
+    else if (days <= 14)  { label='Near-term';  color='#b45309'; bg='#fef3c7'; border='#fcd34d'; summary=`${epsDue}Volatility tends to rise into report`; }
+    else if (days <= 45)  { label='Upcoming';   color='#1e40af'; bg='#dbeafe'; border='#93c5fd'; summary=`${epsDue}Window to position before report`; }
+    else                  { label='Distant';    color='#475569'; bg='#f1f5f9'; border='#cbd5e1'; summary=`${epsDue}No near-term event risk`; }
     return {label, color, bg, border, summary};
   }
   if (!isNaN(days) && days < 0) {
@@ -6681,9 +6691,6 @@ function openStockModal(ticker) {
         <div style="min-width:0;flex:1">
           <div class="fd-tic">${t.ticker}</div>
           <div class="fd-co">${t.name || ''} · ${sub || sector}</div>
-          <div class="badge-row" style="margin-top:5px">
-            ${buildRsBadge(t.ticker)}${buildBlueDot(t)}${buildEpsDateBadge(t)}
-          </div>
         </div>
       </div>
       <div style="text-align:right">
