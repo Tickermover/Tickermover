@@ -1982,6 +1982,71 @@ body.v2 #panel-model [style*="background:#16a34a"][style*="width:"]{
   background:linear-gradient(90deg,#4338ca,#6366f1)!important;
 }
 
+/* ── Top Hunts tracker card v2 GRADIENT THEME ──────────────────
+   The tracker cards use inline styles only (no classes), so we target
+   them via attribute selectors scoped under #panel-model. We paint
+   the card root + inner highlight boxes with gradients, and clip the
+   ticker symbol + big SINCE-ENTRY percentage to a gradient text fill. */
+
+/* Card root: replace flat #fff with the same subtle gradient every
+   other v2 card uses, plus a brand stripe on top */
+body.v2 #panel-model div[onclick^="openStockModal"][style*="border-radius:14px"]{
+  background:linear-gradient(135deg,#ffffff 0%,#fbfbff 35%,#f3f1ff 100%)!important;
+  position:relative;
+}
+body.v2 #panel-model div[onclick^="openStockModal"][style*="border-radius:14px"]::before{
+  content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  border-radius:14px 14px 0 0;
+  background:linear-gradient(90deg,
+    rgba(56,189,248,.55) 0%,rgba(99,102,241,.65) 35%,
+    rgba(236,72,153,.55) 70%,rgba(251,113,133,.45) 100%);
+  pointer-events:none;z-index:1;
+}
+
+/* Ticker symbol — was solid indigo, now gradient-fill text */
+body.v2 #panel-model div[onclick^="openStockModal"] span[style*="font-size:18px"][style*="font-weight:900"]{
+  background:linear-gradient(135deg,#4338ca 0%,#6366f1 50%,#a855f7 100%)!important;
+  -webkit-background-clip:text!important;background-clip:text!important;
+  -webkit-text-fill-color:transparent!important;color:transparent!important;
+}
+
+/* SINCE ENTRY highlight box — promote to a brighter indigo gradient */
+body.v2 #panel-model div[onclick^="openStockModal"] div[style*="border-radius:10px"][style*="padding:10px 14px"]{
+  background:linear-gradient(135deg,#eef2ff 0%,#e0e7ff 50%,#ddd6fe 100%)!important;
+  border:1px solid rgba(99,102,241,.30)!important;
+  box-shadow:0 1px 4px rgba(99,102,241,.10);
+}
+
+/* Big '+X.X%' return number inside the SINCE ENTRY box — gradient text */
+body.v2 #panel-model div[onclick^="openStockModal"] div[style*="font-size:26px"][style*="font-weight:900"]{
+  background:linear-gradient(135deg,#4338ca 0%,#6366f1 35%,#a855f7 100%)!important;
+  -webkit-background-clip:text!important;background-clip:text!important;
+  -webkit-text-fill-color:transparent!important;color:transparent!important;
+}
+
+/* Live factor profile panel — subtle off-white gradient instead
+   of flat #fafbfc */
+body.v2 #panel-model div[onclick^="openStockModal"] div[style*="background:#fafbfc"]{
+  background:linear-gradient(135deg,#fbfbff 0%,#f5f3ff 60%,#eef2ff 100%)!important;
+  border:1px solid rgba(99,102,241,.18)!important;
+}
+body.v2 #panel-model div[onclick^="openStockModal"] div[style*="background:#f1f5f9"][style*="border-bottom"]{
+  background:linear-gradient(90deg,rgba(99,102,241,.08),rgba(217,70,239,.04))!important;
+  color:#4338ca!important;font-weight:800!important;
+}
+
+/* 'Still tracked / Exit / Watching' decision chip — paint with the
+   v2 indigo gradient instead of the original green tint */
+body.v2 #panel-model div[onclick^="openStockModal"] div[style*="background:#dcfce7"][style*="border-radius:10px"][style*="padding:10px 12px"],
+body.v2 #panel-model div[onclick^="openStockModal"] div[style*="background:#fef3c7"][style*="border-radius:10px"][style*="padding:10px 12px"]{
+  background:linear-gradient(135deg,#eef2ff 0%,#e0e7ff 60%,#ddd6fe 100%)!important;
+  border-color:rgba(99,102,241,.30)!important;
+}
+body.v2 #panel-model div[onclick^="openStockModal"] div[style*="background:#dcfce7"][style*="border-radius:10px"][style*="padding:10px 12px"] div,
+body.v2 #panel-model div[onclick^="openStockModal"] div[style*="background:#fef3c7"][style*="border-radius:10px"][style*="padding:10px 12px"] div{
+  color:#4338ca!important;
+}
+
 /* (18) BLANKET: any remaining green-text element inside body.v2 that
         doesn't carry a price-up class gets flipped — last-resort net
         over the 58 inline color:#15803d sites my targeted rules miss */
