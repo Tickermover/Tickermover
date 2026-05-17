@@ -1171,11 +1171,13 @@ tr:hover td{background:rgba(132,204,22,.06)}
   box-shadow:0 24px 80px rgba(0,0,0,.18),0 0 40px rgba(132,204,22,.1);
   animation:popIn .22s cubic-bezier(.34,1.56,.64,1)}
 @keyframes popIn{from{transform:scale(.88);opacity:0}to{transform:scale(1);opacity:1}}
-.modal-close-btn{display:flex;justify-content:flex-end;margin-bottom:12px}
-.modal-close-btn button{background:var(--surf2);border:1px solid var(--bdr);
-  color:var(--muted);padding:6px 14px;border-radius:8px;font-size:12px;cursor:pointer;font-weight:700;
+.modal-close-btn{display:flex;justify-content:flex-end;margin-bottom:8px}
+.modal-close-btn button{background:transparent;border:1px solid var(--bdr);
+  color:var(--muted);width:28px;height:28px;padding:0;border-radius:50%;
+  font-size:15px;line-height:1;cursor:pointer;font-weight:700;
+  display:inline-flex;align-items:center;justify-content:center;
   transition:all .15s}
-.modal-close-btn button:hover{background:var(--surf3);color:var(--txt)}
+.modal-close-btn button:hover{background:var(--surf3);color:var(--txt);transform:rotate(90deg)}
 
 /* ════════════════════════════════════════════════════════════════
    v2 SHELL — gradient frame + dark sidebar + topbar
@@ -4726,7 +4728,7 @@ function v2Show(panelId, item){
 <!-- STOCK DETAIL MODAL (side drawer) -->
 <div class="stock-modal-overlay" id="stock-modal-overlay" onclick="closeStockModal(event)">
   <div class="stock-modal-panel" id="stock-modal-panel">
-    <div class="modal-close-btn"><button onclick="closeStockModal()">✕ Close</button></div>
+    <div class="modal-close-btn"><button onclick="closeStockModal()" title="Close" aria-label="Close">✕</button></div>
     <div id="stock-modal-body"></div>
   </div>
 </div>
@@ -6674,13 +6676,6 @@ function openStockModal(ticker) {
           <div class="fd-tic">${t.ticker}</div>
           <div class="fd-co">${t.name || ''} · ${sub || sector}</div>
           <div class="badge-row" style="margin-top:5px">
-            ${(() => {
-              const tag = storyTag(t);
-              return tag ? `<span style="display:inline-block;background:linear-gradient(135deg,#f5f3ff,#ede9fe);
-                           color:#6d28d9;border:1px solid rgba(139,92,246,.35);border-radius:6px;
-                           padding:2px 8px;font-size:10px;font-weight:800;letter-spacing:.03em;
-                           text-transform:uppercase">🧭 ${tag}</span>` : '';
-            })()}
             ${buildRsBadge(t.ticker)}${buildBlueDot(t)}${buildEpsDateBadge(t)}
           </div>
         </div>
