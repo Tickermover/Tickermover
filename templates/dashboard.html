@@ -1493,9 +1493,9 @@ html.v2-dark .v2ov-card{
   font-size:10.5px;font-style:italic;color:#64748b;font-weight:500;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
 }
-.v2ov-kpi-tag .v2-up{color:#15803d;font-style:normal;font-weight:700}
+.v2ov-kpi-tag .v2-up{display:inline-block;color:#a3e635;background:#0f172a;font-style:normal;font-weight:900;padding:1px 6px;border-radius:4px;letter-spacing:.04em}
 .v2ov-kpi-tag .v2-dn{color:#dc2626;font-style:normal;font-weight:700}
-.v2ov-kpi-tag .v2-beat{color:#15803d;font-style:normal;font-weight:700}
+.v2ov-kpi-tag .v2-beat{display:inline-block;color:#a3e635;background:#0f172a;font-style:normal;font-weight:900;padding:1px 6px;border-radius:4px;letter-spacing:.04em}
 .v2ov-kpi-tag .v2-miss{color:#dc2626;font-style:normal;font-weight:700}
 html.v2-dark .v2ov-kpi-tag{color:#94a3b8}
 
@@ -1725,27 +1725,37 @@ body.v2 .v2ov-card.sectors .v2ov-sector-cell{
 .v2-qs-split{
   display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px;
 }
-.v2-qs-col{padding:8px 10px;border-radius:8px;background:#fff;border:1px solid #e2e8f0}
-.v2-qs-col.pos{border-left:3px solid #16a34a}
-.v2-qs-col.neg{border-left:3px solid #dc2626}
+.v2-qs-col{padding:10px 12px;border-radius:8px;border:1px solid #e2e8f0}
+.v2-qs-col.pos{background:#0f172a;border-color:#1e293b;color:#a3e635}
+.v2-qs-col.neg{background:#fff;border-left:3px solid #dc2626}
 .v2-qs-col-hdr{
-  font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;
-  margin-bottom:5px;
+  font-size:9.5px;font-weight:900;text-transform:uppercase;letter-spacing:.08em;
+  margin-bottom:6px;
 }
-.v2-qs-col.pos .v2-qs-col-hdr{color:#15803d}
+.v2-qs-col.pos .v2-qs-col-hdr{color:#a3e635}
 .v2-qs-col.neg .v2-qs-col-hdr{color:#b91c1c}
 .v2-qs-col ul{margin:0;padding:0;list-style:none}
 .v2-qs-col li{
-  font-size:11px;line-height:1.45;color:#1f2937;
+  font-size:11px;line-height:1.5;
   padding:2px 0;padding-left:12px;position:relative;
 }
+.v2-qs-col.pos li{color:#a3e635}
+.v2-qs-col.neg li{color:#1f2937}
 .v2-qs-col li::before{
   content:'';position:absolute;left:2px;top:9px;
   width:4px;height:4px;border-radius:50%;
 }
-.v2-qs-col.pos li::before{background:#16a34a}
+.v2-qs-col.pos li::before{background:#a3e635;box-shadow:0 0 4px rgba(163,230,53,.6)}
 .v2-qs-col.neg li::before{background:#dc2626}
-.v2-qs-col li strong{font-weight:800;color:#0f172a;font-variant-numeric:tabular-nums}
+.v2-qs-col.pos li strong{font-weight:900;color:#fff;font-variant-numeric:tabular-nums}
+.v2-qs-col.neg li strong{font-weight:800;color:#0f172a;font-variant-numeric:tabular-nums}
+
+/* Reusable "positive callout" — bright lime on dark, all caps, pill */
+.v2-pos-pill{
+  display:inline-block;font-size:10px;font-weight:900;letter-spacing:.08em;
+  color:#a3e635;background:#0f172a;padding:3px 8px;border-radius:4px;
+  text-transform:uppercase;line-height:1.2;
+}
 
 .v2-qs-catalyst{
   margin-top:6px;padding:6px 10px;border-radius:6px;
@@ -1760,8 +1770,8 @@ body.v2 .v2ov-card.sectors .v2ov-sector-cell{
 
 /* News materiality badge in modal news stream */
 .v2-news-material{
-  display:inline-block;font-size:9px;font-weight:800;letter-spacing:.06em;
-  color:#fff;background:#dc2626;padding:1px 6px;border-radius:4px;
+  display:inline-block;font-size:9px;font-weight:900;letter-spacing:.08em;
+  color:#a3e635;background:#0f172a;padding:2px 7px;border-radius:4px;
   margin-right:6px;vertical-align:middle;text-transform:uppercase;
 }
 
@@ -2774,7 +2784,7 @@ html.v2-dark .v2ov-dist-cell:hover{box-shadow:0 6px 14px rgba(0,0,0,.35)}
 .v2ov-tl-tic{font-size:13px;font-weight:800;letter-spacing:.02em;color:#0f172a}
 .v2ov-tl-name{font-size:11px;color:#64748b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
 .v2ov-tl-tag{font-size:9.5px;font-weight:800;padding:2px 7px;border-radius:5px;letter-spacing:.04em;flex-shrink:0;margin-left:auto}
-.v2ov-tl-tag.beat{background:rgba(22,163,74,.12);color:#15803d}
+.v2ov-tl-tag.beat{background:#0f172a;color:#a3e635;font-weight:900;letter-spacing:.06em}
 .v2ov-tl-tag.miss{background:rgba(220,38,38,.10);color:#dc2626}
 .v2ov-tl-row2{font-size:11.5px;color:#64748b}
 .v2ov-tl-row2 .surp{font-weight:800}
@@ -4574,7 +4584,6 @@ function renderV2Overview(tickers){
   if (!root || !Array.isArray(tickers) || !tickers.length) return;
   root.innerHTML =
     v2RenderTodaysBrief(tickers) +
-    '<div id="v2-tracker-strip"></div>' +
     v2RenderWhatChanged(tickers) +
     v2RenderKpiStrip(tickers) +
     '<div class="v2ov-row">' +
@@ -4593,7 +4602,6 @@ function renderV2Overview(tickers){
       'Past performance and quantitative ratings do not guarantee future results. Always do your own research.' +
     '</div>';
   // Fire the async tracker strip load now that #v2-tracker-strip exists
-  v2LoadTrackerStrip();
 }
 
 /* ── Theme toggle ─────────────────────────────────────────────── */
