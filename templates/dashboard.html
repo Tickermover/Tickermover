@@ -2098,13 +2098,36 @@ body.v2 *[style*="background:rgba(21,128,61"]:not(.v2ov-tl-tag):not(.beat){
    consistent with the outer body gradient frame.
    ════════════════════════════════════════════════════════════════ */
 
-/* Section / widget titles get a subtle gradient text tone */
-body.v2 .v2ov-title{
+/* ALL leading/section headings across v2 panels share the same
+   slate -> indigo gradient text fill (matching .v2ov-title which
+   the user picked off the 'Upcoming Earnings' card). Covers:
+     - v2 widget titles (.v2ov-title)
+     - Top Picks section heading
+     - 'What changed this week' header
+     - Sector Map full-panel card titles (.sm-title)
+     - Existing .sec-heading used in older panels
+     - Watchlist / Top Hunts / Reports inline-styled headings
+       (font-size:18px + font-weight:800/900 pattern)            */
+body.v2 .v2ov-title,
+body.v2 .v2-changed-head,
+body.v2 .sm-title,
+body.v2 .sec-heading,
+body.v2 div[style*="font-size:18px"][style*="font-weight:800"],
+body.v2 div[style*="font-size:18px"][style*="font-weight:900"],
+body.v2 div[style*="font-size:19px"][style*="font-weight:800"],
+body.v2 div[style*="font-size:20px"][style*="font-weight:800"]{
   background:linear-gradient(135deg,#0f172a 0%,#4338ca 100%);
   -webkit-background-clip:text;background-clip:text;
   -webkit-text-fill-color:transparent;color:transparent;
 }
-html.v2-dark body.v2 .v2ov-title{
+html.v2-dark body.v2 .v2ov-title,
+html.v2-dark body.v2 .v2-changed-head,
+html.v2-dark body.v2 .sm-title,
+html.v2-dark body.v2 .sec-heading,
+html.v2-dark body.v2 div[style*="font-size:18px"][style*="font-weight:800"],
+html.v2-dark body.v2 div[style*="font-size:18px"][style*="font-weight:900"],
+html.v2-dark body.v2 div[style*="font-size:19px"][style*="font-weight:800"],
+html.v2-dark body.v2 div[style*="font-size:20px"][style*="font-weight:800"]{
   background:linear-gradient(135deg,#f1f5f9 0%,#a5b4fc 100%);
   -webkit-background-clip:text;background-clip:text;
   -webkit-text-fill-color:transparent;color:transparent;
