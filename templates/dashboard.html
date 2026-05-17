@@ -2018,18 +2018,20 @@ body.v2 #panel-model [style*="background:#16a34a"][style*="width:"]{
    ticker symbol + big SINCE-ENTRY percentage to a gradient text fill. */
 
 /* Card root: replace flat #fff with the same subtle gradient every
-   other v2 card uses, plus a brand stripe on top */
+   other v2 card uses, plus a brand stripe on top. overflow:hidden
+   so the 2px stripe clips cleanly to the card's rounded corners
+   (was peeking past the corners before). */
 body.v2 #panel-model div[onclick^="openStockModal"][style*="border-radius:14px"]{
   background:linear-gradient(135deg,#ffffff 0%,#fbfbff 35%,#f3f1ff 100%)!important;
   position:relative;
+  overflow:hidden!important;
 }
 body.v2 #panel-model div[onclick^="openStockModal"][style*="border-radius:14px"]::before{
   content:'';position:absolute;top:0;left:0;right:0;height:2px;
-  border-radius:14px 14px 0 0;
   background:linear-gradient(90deg,
     rgba(56,189,248,.55) 0%,rgba(99,102,241,.65) 35%,
     rgba(236,72,153,.55) 70%,rgba(251,113,133,.45) 100%);
-  pointer-events:none;z-index:1;
+  pointer-events:none;z-index:2;
 }
 
 /* Ticker symbol — was solid indigo, now gradient-fill text */
@@ -2098,39 +2100,23 @@ body.v2 *[style*="background:rgba(21,128,61"]:not(.v2ov-tl-tag):not(.beat){
    consistent with the outer body gradient frame.
    ════════════════════════════════════════════════════════════════ */
 
-/* ALL leading/section headings across v2 panels share the same
-   slate -> indigo gradient text fill (matching .v2ov-title which
-   the user picked off the 'Upcoming Earnings' card). Covers:
-     - v2 widget titles (.v2ov-title)
-     - Top Picks section heading
-     - 'What changed this week' header
-     - Sector Map full-panel card titles (.sm-title)
-     - Existing .sec-heading used in older panels
-     - Watchlist / Top Hunts / Reports inline-styled headings
-       (font-size:18px + font-weight:800/900 pattern)            */
+/* ALL leading/section headings across v2 are now SOLID BLACK
+   (slate-900). The gradient text-fill was visually noisy across
+   so many headings — solid black reads cleaner. */
 body.v2 .v2ov-title,
 body.v2 .v2-changed-head,
 body.v2 .sm-title,
-body.v2 .sec-heading,
-body.v2 div[style*="font-size:18px"][style*="font-weight:800"],
-body.v2 div[style*="font-size:18px"][style*="font-weight:900"],
-body.v2 div[style*="font-size:19px"][style*="font-weight:800"],
-body.v2 div[style*="font-size:20px"][style*="font-weight:800"]{
-  background:linear-gradient(135deg,#0f172a 0%,#4338ca 100%);
-  -webkit-background-clip:text;background-clip:text;
-  -webkit-text-fill-color:transparent;color:transparent;
+body.v2 .sec-heading{
+  color:#0f172a!important;
+  background:none!important;
+  -webkit-background-clip:initial!important;background-clip:initial!important;
+  -webkit-text-fill-color:initial!important;
 }
 html.v2-dark body.v2 .v2ov-title,
 html.v2-dark body.v2 .v2-changed-head,
 html.v2-dark body.v2 .sm-title,
-html.v2-dark body.v2 .sec-heading,
-html.v2-dark body.v2 div[style*="font-size:18px"][style*="font-weight:800"],
-html.v2-dark body.v2 div[style*="font-size:18px"][style*="font-weight:900"],
-html.v2-dark body.v2 div[style*="font-size:19px"][style*="font-weight:800"],
-html.v2-dark body.v2 div[style*="font-size:20px"][style*="font-weight:800"]{
-  background:linear-gradient(135deg,#f1f5f9 0%,#a5b4fc 100%);
-  -webkit-background-clip:text;background-clip:text;
-  -webkit-text-fill-color:transparent;color:transparent;
+html.v2-dark body.v2 .sec-heading{
+  color:#f1f5f9!important;
 }
 
 /* KPI cards: NO top gradient bar (user feedback — too busy on the
@@ -2183,27 +2169,31 @@ body.v2 #panel-model span[style*="background:rgba(71,85,105,.08)"]{
   text-shadow:none!important;
 }
 
-/* SEMANTIC GREEN (positive condition) — 'Above analyst target'
-   means the price has CLEARED the consensus target, a positive
-   data signal. Keep green; that's what users expect. */
+/* SEMANTIC GREEN (positive condition) — uses the vibrant kelly green
+   #16a34a (matching the user's reference badge image) for any
+   'success' signal: 'Above analyst target' pill, 'Still tracked'
+   panel, etc. */
 body.v2 #panel-model span[style*="background:rgba(21,128,61,.08)"]{
   background:#dcfce7!important;
-  color:#15803d!important;
-  border:1px solid rgba(21,128,61,.30)!important;
+  color:#16a34a!important;
+  border:1px solid rgba(22,163,74,.45)!important;
   box-shadow:none!important;
   text-shadow:none!important;
+  font-weight:700!important;
 }
 
 /* DECISION CHIPS — restore semantic colours by tone:
-     'Still tracked / Trailing' = green (positive outcome)
+     'Still tracked / Trailing' = vibrant green (positive outcome)
      'Watching'                 = amber (caution)
      'Exit'                     = red (already handled inline)   */
 body.v2 #panel-model div[onclick^="openStockModal"] div[style*="background:#dcfce7"][style*="border-radius:10px"][style*="padding:10px 12px"]{
   background:linear-gradient(135deg,#dcfce7 0%,#bbf7d0 100%)!important;
-  border-color:rgba(21,128,61,.30)!important;
+  border-color:rgba(22,163,74,.40)!important;
+  box-shadow:0 1px 4px rgba(22,163,74,.10)!important;
 }
 body.v2 #panel-model div[onclick^="openStockModal"] div[style*="background:#dcfce7"][style*="border-radius:10px"][style*="padding:10px 12px"] div{
-  color:#15803d!important;
+  color:#16a34a!important;
+  font-weight:800!important;
 }
 body.v2 #panel-model div[onclick^="openStockModal"] div[style*="background:#fef3c7"][style*="border-radius:10px"][style*="padding:10px 12px"]{
   background:linear-gradient(135deg,#fef3c7 0%,#fde68a 100%)!important;
@@ -7710,12 +7700,15 @@ function renderModelPortfolio(data) {
            onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
         ${alertBanner}
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;gap:10px">
-          <div style="min-width:0;flex:1">
-            <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">
-              <span style="font-size:18px;font-weight:900;color:${accentCol}">${p.ticker}</span>
-              ${newBadge}
+          <div style="display:flex;align-items:center;gap:10px;min-width:0;flex:1">
+            ${typeof v2LogoHTML === 'function' ? v2LogoHTML(p.ticker, 'lg') : ''}
+            <div style="min-width:0;flex:1">
+              <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">
+                <span style="font-size:18px;font-weight:900;color:${accentCol}">${p.ticker}</span>
+                ${newBadge}
+              </div>
+              <div style="font-size:11px;color:#64748b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.name}</div>
             </div>
-            <div style="font-size:11px;color:#64748b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.name}</div>
           </div>
           <div style="text-align:right;flex-shrink:0">
             <div style="font-size:18px;font-weight:800;color:var(--txt)">${fmtP(curPrice)}</div>
