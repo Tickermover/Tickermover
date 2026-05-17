@@ -6472,11 +6472,13 @@ function renderModalEarningsCard(ticker, t) {
       else if (daysAgo <= 90)       staleClass = 'dated';
       else                           staleClass = 'stale';
 
+      // Brand-gradient pill for the fresh/recent state, semantic for stale.
+      const brandGrad = 'linear-gradient(135deg,#4338ca 0%,#8b5cf6 50%,#ec4899 100%)';
       let badge;
       if (staleClass === 'fresh') {
-        badge = '<span style="background:#15803d;color:#fff;font-weight:800;font-size:10px;letter-spacing:.06em;padding:4px 10px;border-radius:999px">JUST REPORTED</span>';
+        badge = '<span style="background:' + brandGrad + ';color:#fff;font-weight:800;font-size:10px;letter-spacing:.06em;padding:4px 10px;border-radius:999px;box-shadow:0 1px 2px rgba(67,56,202,.25)">JUST REPORTED</span>';
       } else if (staleClass === 'recent') {
-        badge = '<span style="background:#e2e8f0;color:#475569;font-weight:700;font-size:10px;letter-spacing:.06em;padding:4px 10px;border-radius:999px">LAST EARNINGS</span>';
+        badge = '<span style="background:' + brandGrad + ';color:#fff;font-weight:800;font-size:10px;letter-spacing:.06em;padding:4px 10px;border-radius:999px">LAST EARNINGS</span>';
       } else if (staleClass === 'dated') {
         badge = '<span style="background:#fef3c7;color:#92400e;font-weight:800;font-size:10px;letter-spacing:.06em;padding:4px 10px;border-radius:999px;border:1px solid #fcd34d">DATED &middot; ' + (_agoText(daysAgo)||'').toUpperCase() + '</span>';
       } else if (staleClass === 'stale') {
@@ -6485,9 +6487,10 @@ function renderModalEarningsCard(ticker, t) {
         badge = '<span style="background:#e2e8f0;color:#475569;font-weight:700;font-size:10px;letter-spacing:.06em;padding:4px 10px;border-radius:999px">EARNINGS</span>';
       }
 
-      const bg  = (staleClass === 'dated' || staleClass === 'stale') ? '#fffbeb' : '#f0fdf4';
-      const bdr = (staleClass === 'dated' || staleClass === 'stale') ? '#fde68a' : '#bbf7d0';
-      const accentColor = (staleClass === 'dated' || staleClass === 'stale') ? '#d97706' : '#15803d';
+      // White card with brand-gradient strip for fresh/recent; soft amber surface for stale.
+      const isStale = (staleClass === 'dated' || staleClass === 'stale');
+      const bg  = isStale ? '#fffbeb' : '#ffffff';
+      const bdr = isStale ? '#fde68a' : '#e2e8f0';
 
       // EPS row from local t (only if data is from a recent quarter — i.e.,
       // the SEC filing date is fresh). If SEC says it's old, don't show
@@ -6529,8 +6532,10 @@ function renderModalEarningsCard(ticker, t) {
         '<div style="font-size:11px;color:#92400e;font-style:italic;margin-bottom:8px">⚠ This is the latest publicly-filed earnings (8-K). The next quarter has not yet been published by this company.</div>' : '';
 
       // ── Render the full card with authoritative data ──
+      const stripBg = isStale ? '#d97706' : brandGrad;
       root.innerHTML =
-        '<div style="background:' + bg + ';border:1px solid ' + bdr + ';border-left:4px solid ' + accentColor + ';border-radius:10px;padding:14px 16px;margin-bottom:14px">' +
+        '<div style="position:relative;background:' + bg + ';border:1px solid ' + bdr + ';border-radius:10px;padding:14px 16px 14px 20px;margin-bottom:14px;overflow:hidden">' +
+          '<span style="position:absolute;left:0;top:0;bottom:0;width:4px;background:' + stripBg + '"></span>' +
           '<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;flex-wrap:wrap">' +
             badge +
             '<span style="font-size:11.5px;color:#475569">' + (t.name || ticker) + '</span>' +
