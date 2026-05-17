@@ -1916,13 +1916,10 @@ body.v2 [style*="background: #15803d; color: #fff"]{
   background-color:#4338ca!important;color:#fff!important;
 }
 
-/* (10) Live-factor-profile horizontal progress bars — they're
-        drawn with a green/yellow/red palette based on factor value.
-        Recolour the GREEN ones (strong factor) to indigo so the
-        cards stop reading as a sea of green. */
-body.v2 [style*="background:#15803d"][style*="width:"]{
-  background-color:#4338ca!important;
-}
+/* (10) Live-factor-profile horizontal progress bars stay SEMANTIC
+        (green = strong, amber = medium, red = weak). Earlier this
+        rule flipped strong bars to indigo — removed so the bars
+        actually read as data. */
 
 /* (11) Anchor/link green underlines & primary-link colors */
 body.v2 a[style*="#15803d"]:not(.pos):not(.up){color:#4338ca!important}
@@ -2002,14 +1999,10 @@ body.v2 #panel-model [class*="since-entry"]{
   background:linear-gradient(135deg,#eef2ff,#e0e7ff)!important;
   border-color:rgba(99,102,241,.30)!important;color:#0f172a!important;
 }
-/* Factor-profile bars: keep green/red SEMANTIC (data tells us
-   strong/weak), but use indigo for the 'good' bars in chrome
-   contexts. We target the strong-factor inline width bars: */
-body.v2 #panel-model [style*="background:#15803d"][style*="width:"],
-body.v2 #panel-model [style*="background-color:#15803d"][style*="width:"],
-body.v2 #panel-model [style*="background:#16a34a"][style*="width:"]{
-  background:linear-gradient(90deg,#4338ca,#6366f1)!important;
-}
+/* Factor-profile bars stay their SEMANTIC traffic-light colours
+   (kelly green / amber / red) emitted by the JS render. Earlier
+   we had a rule here that flipped strong bars to indigo — that's
+   removed so the bars actually read as data, not chrome. */
 
 /* ── Top Hunts tracker card v2 GRADIENT THEME ──────────────────
    The tracker cards use inline styles only (no classes), so we target
