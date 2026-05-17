@@ -6704,7 +6704,17 @@ function openStockModal(ticker) {
       ${(() => { const v = qualityVerdict(t);  return glanceCell('Quality',  v); })()}
       ${(() => { const v = riskVerdict(t);     return glanceCell('Risk',     v); })()}
       ${(() => { const v = insiderVerdict(t);  return glanceCell('Insiders', v); })()}
-      ${(() => { const v = catalystVerdict(t); return glanceCell('Catalyst', v); })()}
+      ${(() => {
+        const rv = (typeof revisionsVerdict === 'function') ? revisionsVerdict(t) : null;
+        if (!rv) { const v = catalystVerdict(t); return glanceCell('Catalyst', v); }
+        return glanceCell('Analyst Sentiment', {
+          label:  rv.label,
+          color:  rv.color,
+          bg:     rv.bg,
+          border: rv.border,
+          summary:rv.summary,
+        });
+      })()}
     </div>
 
     <!-- INVESTMENT THESIS + GAUGE side-by-side -->
@@ -6856,27 +6866,6 @@ function openStockModal(ticker) {
 
     ${epsBeatBars(t)}
 
-    ${(() => {
-      const rv = revisionsVerdict(t);
-      if (!rv) return '';
-      const lbl = (rv.label || '').toUpperCase();
-      const isPos = /BULLISH/i.test(rv.label);
-      const isNeg = /BEARISH/i.test(rv.label);
-      const pillCls = isPos ? 'v2-keyword-pill v2-keyword-pill-pos'
-                    : isNeg ? 'v2-keyword-pill v2-keyword-pill-neg'
-                            : 'v2-keyword-pill v2-keyword-pill-neu';
-      const pillBg = isPos ? '#0f172a' : isNeg ? '#dc2626' : '#475569';
-      const pillCol = isPos ? '#84cc16' : '#fff';
-      const pill = `<span class="${pillCls}" style="display:inline-block;color:${pillCol};background:${pillBg};font-weight:900;letter-spacing:.08em;font-size:10.5px;padding:2px 8px;border-radius:5px;text-transform:uppercase;margin-left:6px;vertical-align:middle">${lbl}</span>`;
-      return `<div style="margin-top:8px;padding:10px 12px;background:${rv.bg};
-                border:1px solid ${rv.border};border-radius:8px;
-                font-size:12px;line-height:1.5;color:#0f172a">
-        <div style="font-weight:800;color:${rv.color};text-transform:uppercase;letter-spacing:.04em;font-size:10.5px;margin-bottom:5px">
-          📈 Analyst Sentiment: ${pill}
-        </div>
-        <div>${rv.summary}</div>
-      </div>`;
-    })()}
     </div></details>
 
     <!-- Quarterly highlights + Pipeline (collapsed on mobile) -->
