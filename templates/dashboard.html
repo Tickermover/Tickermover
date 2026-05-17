@@ -426,6 +426,10 @@ tr:hover td{background:rgba(132,204,22,.06)}
 .fd-co{font-size:11px;color:#374151;margin-top:2px}
 .fd-price{font-size:20px;font-weight:800;text-align:right}
 .fd-price.fd-price-xl{font-size:30px;font-weight:900;letter-spacing:-.01em;line-height:1.1}
+@media (max-width:520px){
+  .fd-summary{flex-direction:column!important;align-items:stretch!important}
+  .fd-thesis-gauge{flex:0 0 auto!important;width:100%!important;margin-top:6px}
+}
 .fd-tgt{font-size:11px;color:var(--grn);font-weight:700;margin-top:2px}
 .fd-tgt.neg{color:var(--red)}
 .fd-metrics{display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;font-size:12px;margin:8px 0}
@@ -1165,14 +1169,16 @@ tr:hover td{background:rgba(132,204,22,.06)}
   justify-content:center;align-items:center;padding:20px}
 .stock-modal-overlay.open{display:flex}
 .stock-modal-panel{
+  position:relative;
   width:min(720px,100%);max-height:90vh;overflow-y:auto;
   background:var(--surf);border:1px solid rgba(132,204,22,.3);
   border-radius:18px;padding:28px;
   box-shadow:0 24px 80px rgba(0,0,0,.18),0 0 40px rgba(132,204,22,.1);
   animation:popIn .22s cubic-bezier(.34,1.56,.64,1)}
 @keyframes popIn{from{transform:scale(.88);opacity:0}to{transform:scale(1);opacity:1}}
-.modal-close-btn{display:flex;justify-content:flex-end;margin-bottom:8px}
-.modal-close-btn button{background:transparent;border:1px solid var(--bdr);
+.modal-close-btn{position:absolute;top:10px;right:10px;z-index:10;margin:0}
+.modal-close-btn button{background:rgba(255,255,255,.85);backdrop-filter:blur(4px);
+  border:1px solid var(--bdr);
   color:var(--muted);width:28px;height:28px;padding:0;border-radius:50%;
   font-size:15px;line-height:1;cursor:pointer;font-weight:700;
   display:inline-flex;align-items:center;justify-content:center;
@@ -6683,10 +6689,6 @@ function openStockModal(ticker) {
       <div style="text-align:right">
         <div class="fd-price fd-price-xl" id="modal-price-${t.ticker}">${fmtP(price)} <span style="font-size:14px" class="${pCls(chg)}">${fmtPct(chg)}</span></div>
         ${returnsRow(t)}
-        <!-- Compact gauge: score inside arch, verdict label below the hub -->
-        <div style="margin-top:4px;display:flex;flex-direction:column;align-items:flex-end">
-          ${popGauge(pop, t.grade, rating, {width:200})}
-        </div>
       </div>
     </div>
 
@@ -6698,10 +6700,15 @@ function openStockModal(ticker) {
       ${(() => { const v = catalystVerdict(t); return glanceCell('Catalyst', v); })()}
     </div>
 
-    <!-- INVESTMENT THESIS — moved up here so it sits right after the 4 status boxes -->
-    <div class="fd-summary" style="margin-bottom:12px">
-      <strong style="color:var(--acc2)">Investment Thesis:</strong> ${thesis}
-      ${tw && tw !== '—' ? `<div style="margin-top:6px"><strong style="color:var(--acc3)">Tailwinds:</strong><br>• ${tw.split(' · ').join('<br>• ')}</div>` : ''}
+    <!-- INVESTMENT THESIS + GAUGE side-by-side -->
+    <div class="fd-summary" style="margin-bottom:12px;display:flex;gap:14px;align-items:center">
+      <div style="flex:1;min-width:0">
+        <strong style="color:var(--acc2)">Investment Thesis:</strong> ${thesis}
+        ${tw && tw !== '—' ? `<div style="margin-top:6px"><strong style="color:var(--acc3)">Tailwinds:</strong><br>• ${tw.split(' · ').join('<br>• ')}</div>` : ''}
+      </div>
+      <div class="fd-thesis-gauge" style="flex:0 0 180px;display:flex;flex-direction:column;align-items:center">
+        ${popGauge(pop, t.grade, rating, {width:170})}
+      </div>
     </div>
 
     ${(() => {
