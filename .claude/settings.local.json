@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git -C \"C:/Users/SOURA/Documents/Claude/Projects/USA Stock Market/PopDetector_v5\" status --short)",
+      "Bash(xargs -I{} echo \"Number of details tags added: {}\")",
+      "Bash(git add *)",
+      "Bash(git commit -m 'Mobile-first stock modal redesign *)",
+      "Bash(git commit -m 'Mobile v2: restore visibility + 52W bar + login redesign *)",
+      "WebFetch(domain:web-production-17a78.up.railway.app)",
+      "Bash(curl -sL https://web-production-17a78.up.railway.app/app -o /tmp/dev-app.html)",
+      "Read(//tmp/**)",
+      "Bash(git commit -m ' *)"
+    ]
+  }
+}

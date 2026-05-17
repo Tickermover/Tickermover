@@ -1672,6 +1672,37 @@ body.v2 .v2ov-card.sectors .v2ov-sector-cell{
 .v2ov-title{font-size:15px;font-weight:800;color:#0f172a;letter-spacing:-.01em}
 .v2ov-sub{font-size:12px;color:#64748b;margin-top:2px}
 
+/* Sector momentum pulse annotation — shown above the sector grid */
+.v2-sector-pulse{
+  display:inline-flex;align-items:center;gap:6px;
+  font-size:11.5px;font-weight:700;color:#4338ca;
+  background:linear-gradient(135deg,#eef2ff 0%,#e0e7ff 100%);
+  border:1px solid #c7d2fe;border-radius:999px;
+  padding:4px 10px;margin:0 0 10px 0;letter-spacing:.01em;
+}
+.v2-sector-pulse .v2-sp-em{color:#dc2626}
+.v2-sector-pulse .v2-sp-name{color:#0f172a}
+.v2-sector-pulse .v2-sp-delta{color:#16a34a;font-weight:800}
+
+/* Quant Snapshot — appears under the Investment Thesis in the stock modal */
+.v2-quant-snapshot{
+  margin:10px 0 12px;padding:11px 13px;border-radius:10px;
+  background:linear-gradient(135deg,#f8fafc 0%,#eef2ff 100%);
+  border:1px solid #e0e7ff;border-left:4px solid #4338ca;
+  font-size:12px;line-height:1.55;color:#1f2937;
+}
+.v2-quant-snapshot .v2-qs-hdr{
+  display:block;font-size:10.5px;font-weight:800;letter-spacing:.08em;
+  text-transform:uppercase;color:#4338ca;margin-bottom:4px;
+}
+
+/* News materiality badge in modal news stream */
+.v2-news-material{
+  display:inline-block;font-size:9px;font-weight:800;letter-spacing:.06em;
+  color:#fff;background:#dc2626;padding:1px 6px;border-radius:4px;
+  margin-right:6px;vertical-align:middle;text-transform:uppercase;
+}
+
 /* Reusable ticker logo (real logo + colored-initial fallback) */
 .v2ov-tic-logo{
   width:36px;height:36px;border-radius:8px;
@@ -3486,6 +3517,117 @@ function v2KpiTagline(t){
   return '';
 }
 
+/* ════════════════════════════════════════════════════════════════
+   v2 PHASE B (free, client-side) — Quant Snapshot thesis builder,
+   news materiality classifier, sector momentum signal.
+   ════════════════════════════════════════════════════════════════ */
+
+/* Deterministic narrative thesis assembled from quantitative fields
+   already on the ticker — no LLM, no cost. Renders as a paragraph in
+   the stock modal. (Gap #3 from advisor plan, free-tier version.) */
+function v2BuildTemplateThesis(t){
+  if (!t) return '';
+  const parts = [];
+  const sym = t.ticker;
+  const score = Math.round(t.smart_score ?? t.pop_score ?? 0);
+  const grade = t.grade || '';
+  const sector = t.sub_sector || t.sector || '';
+  const gradeText = grade === 'A' ? 'top-tier' : grade === 'B' ? 'quality' : grade === 'C' ? 'average' : grade === 'D' ? 'below-average' : grade === 'F' ? 'weak' : '';
+  if (score && gradeText) parts.push(sym + ' currently scores ' + score + ' on our quantitative model, placing it in the ' + gradeText + ' tier' + (sector ? ' within the ' + sector + ' sub-sector' : '') + '.');
+
+  // Earnings consistency
+  const beat = parseInt(t.eps_beat_streak) || 0;
+  const surp = parseFloat(t.avg_eps_surprise_pct);
+  if (beat >= 3 && !isNaN(surp)) parts.push('The company has beaten consensus EPS in ' + beat + ' of the last 4 quarters with an average surprise of ' + surp.toFixed(1) + '%.');
+  else if (beat >= 1)            parts.push('EPS history shows ' + beat + ' beats in the last 4 quarters.');
+
+  // Top-line growth
+  const revG = parseFloat(t.revenue_growth_yoy) * 100;
+  if (!isNaN(revG)){
+    if (revG >= 30) parts.push('Revenue is growing ' + revG.toFixed(0) + '% YoY — meaningful top-line expansion.');
+    else if (revG >= 10) parts.push('Revenue growth is ' + revG.toFixed(0) + '% YoY.');
+    else if (revG < -3)  parts.push('Revenue is contracting at ' + Math.abs(revG).toFixed(0) + '% YoY.');
+  }
+
+  // Valuation gap
+  const tgt = parseFloat(t.target_mean ?? t.street_target ?? 0);
+  const px  = parseFloat(t.price ?? 0);
+  if (tgt > 0 && px > 0){
+    const up = ((tgt - px) / px) * 100;
+    if (up >= 10)      parts.push('Wall Street\'s 12-month consensus target of $' + tgt.toFixed(0) + ' implies +' + up.toFixed(0) + '% from current levels.');
+    else if (up <= -5) parts.push('The stock trades ' + Math.abs(up).toFixed(0) + '% above the consensus 12-month target of $' + tgt.toFixed(0) + '.');
+  }
+
+  // Momentum
+  const m3 = parseFloat(t.mom_3m ?? t.momentum_3m ?? 0);
+  if (!isNaN(m3) && Math.abs(m3) >= 10){
+    if (m3 >= 10) parts.push('Price has gained ' + m3.toFixed(0) + '% over the past 3 months.');
+    else          parts.push('Price has declined ' + Math.abs(m3).toFixed(0) + '% over the past 3 months.');
+  }
+
+  // Score velocity
+  const sv = parseFloat(t.score_velocity_7d ?? 0);
+  if (!isNaN(sv) && Math.abs(sv) >= 5){
+    if (sv > 0) parts.push('The model score has climbed ' + sv.toFixed(0) + ' points over the past week.');
+    else        parts.push('The model score has dropped ' + Math.abs(sv).toFixed(0) + ' points over the past week.');
+  }
+
+  // Imminent catalyst
+  const dte = parseInt(t.days_to_earnings);
+  if (!isNaN(dte) && dte >= 0 && dte <= 21){
+    parts.push('Next earnings report is ' + (dte === 0 ? 'today' : dte === 1 ? 'tomorrow' : 'in ' + dte + ' days') + '.');
+  }
+
+  return parts.join(' ');
+}
+
+/* News materiality classifier — keyword heuristic flagging headlines
+   that are likely to move price (earnings, guidance, M&A, regulatory,
+   analyst actions). No LLM, just a vocabulary check. (Gap #6 from
+   advisor plan, free-tier version.) */
+function v2NewsMateriality(text){
+  const t = (text || '').toLowerCase();
+  const KW_MATERIAL = [
+    'beats','misses','beat estimates','missed estimates','crushed estimates',
+    'raises guidance','cuts guidance','lowers guidance','guidance','outlook',
+    'upgrade','downgrade','price target','target raised','target cut',
+    'acquires','acquisition','to acquire','merger','spin-off','spinoff',
+    'fda approval','fda clearance','fda rejects','recall',
+    'lawsuit','settlement','investigation','sec','doj','probe',
+    'dividend','buyback','share repurchase',
+    'partnership','contract win','wins contract','major deal',
+    'ceo steps down','cfo steps down','resigns','appointed','hires',
+    'launches','unveils','breakthrough','approved','rejected'
+  ];
+  for (const kw of KW_MATERIAL){
+    if (t.includes(kw)) return 'material';
+  }
+  return 'context';
+}
+
+/* Sector momentum signal — surfaces the sub-sector with the strongest
+   week-over-week score climb at the top of the Sector Map widget.
+   (Gap #7 from advisor plan, free-tier MVP from existing fields.) */
+function v2SectorMomentumSignal(tickers){
+  const titleCase = s => s.toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+  const groups = {};
+  tickers.forEach(t => {
+    const raw = (t.sub_sector || t.sector || '').trim();
+    if (!raw) return;
+    const sv = parseFloat(t.score_velocity_7d ?? t.score_velocity ?? 0);
+    if (isNaN(sv)) return;
+    const s = titleCase(raw);
+    if (!groups[s]) groups[s] = { total: 0, n: 0 };
+    groups[s].total += sv;
+    groups[s].n++;
+  });
+  const ranked = Object.entries(groups)
+    .filter(([k, v]) => v.n >= 2)
+    .map(([k, v]) => ({ name: k, avg: v.total / v.n, n: v.n }))
+    .sort((a, b) => b.avg - a.avg);
+  return ranked[0] || null;
+}
+
 /* Confidence — heuristic of how 'aligned' the supporting signals
    are. A high Alpha Score with high beat streak + non-volatile +
    positive momentum reads as a stronger signal than a high score
@@ -3750,12 +3892,23 @@ function v2RenderSectors(tickers){
       '<div class="sm">' + (s.mom >= 0 ? '+' : '') + s.mom.toFixed(1) + '% · ' + s.count + ' stk</div>' +
     '</div>').join('');
 
+  const pulse = v2SectorMomentumSignal(tickers);
+  const pulseHTML = (pulse && pulse.avg > 0) ?
+    '<div class="v2-sector-pulse">' +
+      '<span class="v2-sp-em">🔥</span>' +
+      '<span>Strongest momentum:</span> ' +
+      '<span class="v2-sp-name">' + v2EscHTML(pulse.name) + '</span> ' +
+      '<span class="v2-sp-delta">avg ' + Math.round(pulse.avg) + '</span>' +
+      '<span style="color:#64748b;font-weight:600"> · ' + pulse.n + ' stocks</span>' +
+    '</div>' : '';
+
   return '' +
     '<div class="v2ov-card sectors">' +
       '<div class="v2ov-card-head"><div>' +
         '<div class="v2ov-title">🗺 Sector Map</div>' +
         '<div class="v2ov-sub">Avg Alpha Score by sector · tap any cell for the full Sector Map view</div>' +
       '</div></div>' +
+      pulseHTML +
       '<div class="v2ov-sector-grid">' + cells + '</div>' +
     '</div>';
 }
@@ -6382,6 +6535,13 @@ function openStockModal(ticker) {
       ${tw && tw !== '—' ? `<div style="margin-top:6px"><strong style="color:var(--acc3)">Tailwinds:</strong><br>• ${tw.split(' · ').join('<br>• ')}</div>` : ''}
     </div>
 
+    ${(() => {
+      try {
+        const qs = (typeof v2BuildTemplateThesis === 'function') ? v2BuildTemplateThesis(t) : '';
+        return qs ? `<div class="v2-quant-snapshot"><span class="v2-qs-hdr">📊 Quant Snapshot</span>${qs}</div>` : '';
+      } catch(e){ return ''; }
+    })()}
+
     <div id="tv-chart-${t.ticker}" style="width:100%;height:300px;border-radius:10px;overflow:hidden;margin:12px 0;border:1px solid var(--bdr);background:#fff"></div>
 
     ${(() => {
@@ -6613,13 +6773,20 @@ async function loadModalNews(ticker) {
       const ts = n.datetime ? new Date(n.datetime * 1000) : null;
       const when = ts ? ts.toLocaleDateString('en-US',{month:'short',day:'numeric'}) : '';
       const src  = (n.source || '').slice(0, 18);
-      const title = (n.headline || '').replace(/</g,'&lt;');
+      const rawTitle = n.headline || '';
+      const title = rawTitle.replace(/</g,'&lt;');
       const url = n.url || '#';
+      let badge = '';
+      try {
+        if (typeof v2NewsMateriality === 'function' && v2NewsMateriality(rawTitle) === 'material'){
+          badge = '<span class="v2-news-material">MATERIAL</span>';
+        }
+      } catch(e){}
       return `
         <a href="${url}" target="_blank" rel="noopener"
            style="display:block;padding:7px 0;border-bottom:1px solid #f1f5f9;
                   text-decoration:none;color:#0f172a;line-height:1.4">
-          <div style="font-size:12px;font-weight:600">${title}</div>
+          <div style="font-size:12px;font-weight:600">${badge}${title}</div>
           <div style="font-size:10.5px;color:#64748b;margin-top:2px">
             ${when}${src ? ' · ' + src : ''}
           </div>
