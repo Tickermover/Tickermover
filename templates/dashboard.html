@@ -1725,30 +1725,27 @@ body.v2 .v2ov-card.sectors .v2ov-sector-cell{
 .v2-qs-split{
   display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px;
 }
-.v2-qs-col{padding:10px 12px;border-radius:8px;border:1px solid #e2e8f0}
-.v2-qs-col.pos{background:#0f172a;border-color:#1e293b;color:#a3e635}
-.v2-qs-col.neg{background:#fff;border-left:3px solid #dc2626}
+.v2-qs-col{padding:8px 10px;border-radius:8px;background:#fff;border:1px solid #e2e8f0}
+.v2-qs-col.pos{border-left:3px solid #16a34a}
+.v2-qs-col.neg{border-left:3px solid #dc2626}
 .v2-qs-col-hdr{
-  font-size:9.5px;font-weight:900;text-transform:uppercase;letter-spacing:.08em;
-  margin-bottom:6px;
+  font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;
+  margin-bottom:5px;
 }
-.v2-qs-col.pos .v2-qs-col-hdr{color:#a3e635}
+.v2-qs-col.pos .v2-qs-col-hdr{color:#15803d}
 .v2-qs-col.neg .v2-qs-col-hdr{color:#b91c1c}
 .v2-qs-col ul{margin:0;padding:0;list-style:none}
 .v2-qs-col li{
-  font-size:11px;line-height:1.5;
+  font-size:11px;line-height:1.45;color:#1f2937;
   padding:2px 0;padding-left:12px;position:relative;
 }
-.v2-qs-col.pos li{color:#a3e635}
-.v2-qs-col.neg li{color:#1f2937}
 .v2-qs-col li::before{
   content:'';position:absolute;left:2px;top:9px;
   width:4px;height:4px;border-radius:50%;
 }
-.v2-qs-col.pos li::before{background:#a3e635;box-shadow:0 0 4px rgba(163,230,53,.6)}
+.v2-qs-col.pos li::before{background:#16a34a}
 .v2-qs-col.neg li::before{background:#dc2626}
-.v2-qs-col.pos li strong{font-weight:900;color:#fff;font-variant-numeric:tabular-nums}
-.v2-qs-col.neg li strong{font-weight:800;color:#0f172a;font-variant-numeric:tabular-nums}
+.v2-qs-col li strong{font-weight:800;color:#0f172a;font-variant-numeric:tabular-nums}
 
 /* Reusable "positive callout" — bright lime on dark, all caps, pill */
 .v2-pos-pill{
@@ -3394,7 +3391,7 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
   // PLUS the data-tier coloured tiles (sector map, score distribution)
   // PLUS factor-profile bars (green/amber/red is the strength signal),
   // PLUS the SINCE-ENTRY +X% number (semantic green/red).
-  const SEMANTIC_SEL = '.pos,.up,.green,.kpi-chg.up,.mover-pct.up,.surp.pos,.v2ov-tl-tag.beat,.regime-chip.bullish,#regime-pill,.beat,.ticker-chip[class*=" up"],.v2ov-sector-cell,.v2ov-sector-cell *,.v2ov-dist-cell,.v2ov-dist-cell *,.v2ov-dist-seg,[data-tier],.v2-factor-bar,.v2-factor-num';
+  const SEMANTIC_SEL = '.pos,.up,.green,.kpi-chg.up,.mover-pct.up,.surp.pos,.v2ov-tl-tag.beat,.regime-chip.bullish,#regime-pill,.beat,.ticker-chip[class*=" up"],.v2ov-sector-cell,.v2ov-sector-cell *,.v2ov-dist-cell,.v2ov-dist-cell *,.v2ov-dist-seg,[data-tier],.v2-factor-bar,.v2-factor-num,.v2-qs-f,.v2-qs-f *,.v2-qs-tier,.v2-pos-pill,.v2-news-material';
 
   function isProbablyDataText(el){
     // Element's own text starts with +/-/▲/▼ or contains an explicit
@@ -6492,13 +6489,18 @@ function renderModalEarningsCard(ticker, t) {
         '</div>';
 
       // ── Reaction breakdown ──
+      // Small helper: positive → lime on dark pill, negative → white on red,
+      // neutral → slate. Returns full <span> HTML.
+      function v2KeywordPill(text, score){
+        const t = (text || '').toUpperCase();
+        if (score >= 0.10) return '<span style="display:inline-block;color:#a3e635;background:#0f172a;font-weight:900;letter-spacing:.08em;font-size:11px;padding:3px 9px;border-radius:5px;text-transform:uppercase">' + t + '</span>';
+        if (score <= -0.10) return '<span style="display:inline-block;color:#fff;background:#dc2626;font-weight:900;letter-spacing:.08em;font-size:11px;padding:3px 9px;border-radius:5px;text-transform:uppercase">' + t + '</span>';
+        return '<span style="display:inline-block;color:#fff;background:#475569;font-weight:900;letter-spacing:.08em;font-size:11px;padding:3px 9px;border-radius:5px;text-transform:uppercase">' + t + '</span>';
+      }
       const rxSlot = root.querySelector('[data-modal-reaction-slot]');
       const rx = data.reaction || {};
       if (rxSlot && rx.label && rx.components && rx.components.length) {
-        const lblColor = rx.score >=  0.30 ? '#15803d' :
-                        rx.score >=  0.10 ? '#16a34a' :
-                        rx.score >  -0.10 ? '#64748b' :
-                        rx.score >  -0.30 ? '#d97706' : '#b91c1c';
+        const scoreStr = ' (' + (rx.score >= 0 ? '+' : '') + rx.score + ')';
         const compHTML = rx.components.map(function(c) {
           const ptColor = c.points > 0  ? '#15803d' :
                           c.points < 0  ? '#b91c1c' : '#94a3b8';
@@ -6511,9 +6513,9 @@ function renderModalEarningsCard(ticker, t) {
         }).join('');
         rxSlot.innerHTML =
           '<div style="margin-top:12px;padding-top:10px;border-top:1px dashed #cbd5e1">' +
-            '<div style="display:flex;justify-content:space-between;margin-bottom:4px">' +
+            '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;gap:8px">' +
               '<div style="font-size:11px;color:#64748b;font-weight:800;letter-spacing:.07em;text-transform:uppercase">Earnings Reaction</div>' +
-              '<div style="font-size:11.5px;color:' + lblColor + ';font-weight:800">' + rx.label.toUpperCase() + ' (' + (rx.score >= 0 ? '+' : '') + rx.score + ')</div>' +
+              '<div>' + v2KeywordPill(rx.label + scoreStr, rx.score) + '</div>' +
             '</div>' + compHTML +
           '</div>';
       }
@@ -6522,8 +6524,7 @@ function renderModalEarningsCard(ticker, t) {
       const sSlot = root.querySelector('[data-modal-sentiment-slot]');
       const s = data.sentiment || {};
       if (sSlot && s.sentiment_label && (s.positives || s.concerns)) {
-        const lblColor = s.sentiment_score >  0.3 ? '#15803d' :
-                        s.sentiment_score < -0.3 ? '#b91c1c' : '#64748b';
+        const sScoreStr = ' (' + (s.sentiment_score >= 0 ? '+' : '') + s.sentiment_score + ')';
         function bullets(arr, color) {
           if (!arr || !arr.length) return '';
           return arr.map(function(q) {
@@ -6537,9 +6538,9 @@ function renderModalEarningsCard(ticker, t) {
         const qa  = s.qa_summary ? '<div style="font-size:11.5px;color:#475569;font-style:italic;margin-top:6px">Q&amp;A: ' + s.qa_summary + '</div>' : '';
         sSlot.innerHTML =
           '<div style="margin-top:12px;padding-top:10px;border-top:1px dashed #cbd5e1">' +
-            '<div style="display:flex;justify-content:space-between;align-items:center">' +
+            '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px">' +
               '<div style="font-size:11px;color:#64748b;font-weight:800;letter-spacing:.07em;text-transform:uppercase">Earnings Highlights</div>' +
-              '<div style="font-size:11.5px;color:' + lblColor + ';font-weight:800">' + s.sentiment_label.toUpperCase() + ' (' + (s.sentiment_score >= 0 ? '+' : '') + s.sentiment_score + ')</div>' +
+              '<div>' + v2KeywordPill(s.sentiment_label + sScoreStr, s.sentiment_score) + '</div>' +
             '</div>' + pos + con + qa +
           '</div>';
       }
@@ -6548,8 +6549,7 @@ function renderModalEarningsCard(ticker, t) {
       const gSlot = root.querySelector('[data-modal-guidance-slot]');
       const g = data.guidance || {};
       if (gSlot && g.tone && g.tone !== 'none') {
-        const toneColor = g.tone === 'raised'  ? '#15803d' :
-                          g.tone === 'lowered' ? '#b91c1c' : '#64748b';
+        const toneScore = g.tone === 'raised' ? 0.3 : g.tone === 'lowered' ? -0.3 : 0;
         const toneArrow = g.tone === 'raised'  ? '↗' :
                           g.tone === 'lowered' ? '↘' : '→';
         const rev2 = g.revenue_guidance ? '<div style="font-size:12.5px;color:#0f172a;margin-top:2px">Revenue: <span class="mono" style="font-weight:700">' + g.revenue_guidance + '</span></div>' : '';
@@ -6557,9 +6557,9 @@ function renderModalEarningsCard(ticker, t) {
         const sum  = g.summary          ? '<div style="font-size:12px;color:#475569;font-style:italic;margin-top:6px">"' + g.summary + '"</div>' : '';
         gSlot.innerHTML =
           '<div style="margin-top:12px;padding-top:10px;border-top:1px dashed #cbd5e1">' +
-            '<div style="display:flex;justify-content:space-between;align-items:center">' +
+            '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px">' +
               '<div style="font-size:11px;color:#64748b;font-weight:800;letter-spacing:.07em;text-transform:uppercase">Guidance</div>' +
-              '<div style="font-size:11.5px;color:' + toneColor + ';font-weight:800">' + toneArrow + ' ' + g.tone.toUpperCase() + '</div>' +
+              '<div>' + v2KeywordPill(toneArrow + ' ' + g.tone, toneScore) + '</div>' +
             '</div>' + rev2 + eps2 + sum +
           '</div>';
       }
