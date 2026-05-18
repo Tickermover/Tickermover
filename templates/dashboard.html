@@ -3734,35 +3734,22 @@ function v2BuildTemplateThesis(t){
     mScore = clamp((a + b) / 2);
   }
 
-  // Value: derive from the SAME logic as valuationVerdict() so the bar
-  // and the Valuation card never disagree (e.g. PEG-cheap but low upside
-  // used to read as Value 26 + 'CHEAP' simultaneously).
+  // Sector Strength: IBD-style ranking of the stock's sector by avg
+  // 1-month momentum across the universe. Not shown anywhere else in
+  // the modal (the Valuation card already covers the value angle).
   const tgt = num(t.target_mean, t.street_target);
   const px = num(t.price);
   const fwdPE = num(t.pe_ratio, t.forward_pe, t.forwardPE);
-  let vScore = NaN;
+  let secScore = NaN;
   try {
-    if (typeof valuationVerdict === 'function'){
-      const vv = valuationVerdict(t);
-      const verdictMap = {
-        'cheap':           88,
-        'fair':            62,
-        'pre-profit':      50,
-        'full':            42,
-        'expensive':       28,
-        'very expensive':  15,
-      };
-      const key = (vv && vv.verdict || '').toLowerCase();
-      if (verdictMap[key] != null) vScore = verdictMap[key];
+    if (typeof sectorRank === 'function'){
+      const sr = sectorRank(t);
+      if (sr){
+        const quintileMap = { top: 90, upper: 72, middle: 50, lower: 30, bottom: 15 };
+        secScore = quintileMap[sr.quintile] != null ? quintileMap[sr.quintile] : 50;
+      }
     }
   } catch(e){}
-  // Small analyst-upside nudge (±10) so two A-grade names with the same
-  // verdict but different street targets aren't visually identical.
-  if (tgt > 0 && px > 0){
-    const up = ((tgt - px) / px) * 100;
-    const nudge = up >= 25 ? 10 : up >= 10 ? 5 : up <= -10 ? -10 : up <= -5 ? -5 : 0;
-    vScore = clamp((isNaN(vScore) ? 50 : vScore) + nudge);
-  }
 
   // Risk: lower = riskier. Beta, short interest, caution flag.
   const beta = num(t.beta);
@@ -3821,14 +3808,14 @@ function v2BuildTemplateThesis(t){
     sScore = clamp(s);
   }
 
-  // 4 bars now — Momentum, Value, Growth, Setup. Quality + Risk are
-  // deliberately omitted (already in the At-a-Glance row above).
+  // 4 bars now — Momentum, Growth, Setup, Sector. Value is covered by
+  // the Valuation card below; Quality + Risk by the At-a-Glance row.
   const scoreboard =
     '<div class="v2-qs-scoreboard">' +
       factorBar('Momentum', mScore) +
-      factorBar('Value',    vScore) +
       factorBar('Growth',   gScore) +
       factorBar('Setup',    sScore) +
+      factorBar('Sector',   secScore) +
     '</div>';
 
   /* ── Strengths (green) and Watch-outs (amber/red) ── */
