@@ -1927,6 +1927,36 @@ body.v2 .v2ov-card.sectors .v2ov-sector-cell{
 }
 .v2-dd-survivor:hover{background:#bbf7d0;transform:translateY(-1px)}
 
+/* ───── Market Pulse (indices strip at top of overview) ───── */
+.v2-market-pulse{margin-bottom:14px}
+.v2-mp-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:10px}
+.v2-mp-h-l{display:flex;align-items:center;gap:10px}
+.v2-mp-h-title{font-size:13px;font-weight:800;color:#0f172a;letter-spacing:-.01em}
+.v2-mp-h-tag{font-size:11px;font-weight:800;letter-spacing:.02em}
+.v2-mp-grid{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:10px;
+}
+.v2-mp-card{
+  position:relative;background:#fff;border:1px solid #e2e8f0;border-radius:10px;
+  padding:10px 12px 10px 16px;overflow:hidden;
+  transition:transform .15s, box-shadow .15s;
+}
+.v2-mp-card:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(15,23,42,.08)}
+.v2-mp-stripe{position:absolute;left:0;top:0;bottom:0;width:4px;border-radius:10px 0 0 10px}
+.v2-mp-body{display:flex;flex-direction:column;gap:2px}
+.v2-mp-lbl{font-size:11px;font-weight:800;color:#0f172a;letter-spacing:.02em;text-transform:uppercase}
+.v2-mp-chg{font-size:18px;font-weight:900;letter-spacing:-.02em;line-height:1.1}
+.v2-mp-chg .v2-mp-up{color:#16a34a}
+.v2-mp-chg .v2-mp-dn{color:#dc2626}
+.v2-mp-period{font-size:9px;font-weight:700;color:#94a3b8;letter-spacing:.06em;margin-left:3px;vertical-align:2px}
+.v2-mp-px{font-size:12px;font-weight:700;color:#475569;font-variant-numeric:tabular-nums}
+@media (max-width:760px){
+  .v2-mp-grid{grid-template-columns:repeat(2,1fr)}
+}
+@media (max-width:420px){
+  .v2-mp-grid{grid-template-columns:1fr}
+}
+
 /* ───── Sector Map cooling / heating badges ───── */
 .v2ov-sector-cell{position:relative}
 .v2ov-sector-cell.is-cooling{opacity:.65}
@@ -3267,16 +3297,11 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
         <button class="v2-theme-btn" onclick="v2ToggleTheme()" title="Toggle theme" id="v2-theme-btn">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="v2-theme-icon"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
         </button>
-        <div class="v2-tb-stats">
-          <div class="v2-tb-stat"><div class="n" id="stat-universe">—</div><div class="l">Universe</div></div>
-          <div class="v2-tb-stat"><div class="n" id="stat-hot">—</div><div class="l">Hot</div></div>
-          <div class="v2-tb-stat"><div class="n" id="stat-flagged">—</div><div class="l">A-Tier</div></div>
-        </div>
-        <div id="regime-pill"
-             title="Overall market mood based on SPY, QQQ, VIX and the 10-year yield."
-             style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;font-weight:700;cursor:default;background:#e0f2fe;border:1.5px solid rgba(59,130,246,.35);color:#1e40af;font-size:12px;letter-spacing:.02em">
-          <span style="font-size:14px">●</span>
-          <span id="regime-label">Loading…</span>
+        <!-- Stats + regime pill removed — replaced by the in-page Market Pulse strip.
+             Hidden offscreen targets preserved so legacy JS updaters don't throw. -->
+        <div style="display:none">
+          <span id="stat-universe">—</span><span id="stat-hot">—</span><span id="stat-flagged">—</span>
+          <span id="regime-pill"><span id="regime-label">—</span></span>
         </div>
       </div>
     </header>
@@ -3622,7 +3647,7 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
   // PLUS the data-tier coloured tiles (sector map, score distribution)
   // PLUS factor-profile bars (green/amber/red is the strength signal),
   // PLUS the SINCE-ENTRY +X% number (semantic green/red).
-  const SEMANTIC_SEL = '.pos,.up,.green,.kpi-chg.up,.mover-pct.up,.surp.pos,.v2ov-tl-tag.beat,.regime-chip.bullish,#regime-pill,.beat,.ticker-chip[class*=" up"],.v2ov-sector-cell,.v2ov-sector-cell *,.v2ov-dist-cell,.v2ov-dist-cell *,.v2ov-dist-seg,[data-tier],.v2-factor-bar,.v2-factor-num,.v2-qs-f,.v2-qs-f *,.v2-qs-tier,.v2-pos-pill,.v2-news-material,.v2-keyword-pill,.eps-surp-bar,.v2-pos-text,.v2-neg-text,.v2-pos-pill-sm,.v2-neg-pill-sm';
+  const SEMANTIC_SEL = '.pos,.up,.green,.kpi-chg.up,.mover-pct.up,.surp.pos,.v2ov-tl-tag.beat,.regime-chip.bullish,#regime-pill,.beat,.ticker-chip[class*=" up"],.v2ov-sector-cell,.v2ov-sector-cell *,.v2ov-dist-cell,.v2ov-dist-cell *,.v2ov-dist-seg,[data-tier],.v2-factor-bar,.v2-factor-num,.v2-qs-f,.v2-qs-f *,.v2-qs-tier,.v2-pos-pill,.v2-news-material,.v2-keyword-pill,.eps-surp-bar,.v2-pos-text,.v2-neg-text,.v2-pos-pill-sm,.v2-neg-pill-sm,.v2-mp-card,.v2-mp-card *,.v2-mp-stripe';
 
   function isProbablyDataText(el){
     // Element's own text starts with +/-/▲/▼ or contains an explicit
@@ -5090,6 +5115,76 @@ function v2RenderDrawdownBanner(tickers){
   '</div>';
 }
 
+/* ════════════════════════════════════════════════════════════════
+   MARKET PULSE — top-of-overview strip showing the major indices
+   (SPY / QQQ / VIX) using the existing /api/regime feed. Mirrors the
+   reference Bloomberg/Investing.com style: colored left stripe per
+   index, big % change, last price. 5-day change shown because the
+   regime feed doesn't carry intraday daily change.
+   ════════════════════════════════════════════════════════════════ */
+let _v2MarketPulseCache = null;
+async function v2LoadMarketPulse(){
+  try {
+    const r = await fetch('/api/regime');
+    if (!r.ok) return null;
+    const data = await r.json();
+    _v2MarketPulseCache = data;
+    return data;
+  } catch(e){ return null; }
+}
+function v2RenderMarketPulseHTML(data){
+  if (!data || !data.components) return '';
+  const c = data.components;
+  const fmtPx = (n, decimals=2) => n != null ? n.toFixed(decimals) : '—';
+  const fmtPctSign = n => {
+    if (n == null || isNaN(n)) return '—';
+    const cls = n >= 0 ? 'v2-mp-up' : 'v2-mp-dn';
+    return '<span class="' + cls + '">' + (n >= 0 ? '+' : '') + n.toFixed(2) + '%</span>';
+  };
+  const cards = [
+    { key:'SPY',  label:'S&P 500',  stripe:'#2563eb', alias:'SPY' },
+    { key:'QQQ',  label:'NASDAQ',   stripe:'#8b5cf6', alias:'QQQ' },
+    { key:'^VIX', label:'VIX',      stripe:'#f97316', alias:'Volatility' },
+    { key:'^TNX', label:'10Y YIELD', stripe:'#10b981', alias:'Treasury', isYield:true },
+  ];
+  const cells = cards.map(card => {
+    const x = c[card.key];
+    if (!x) return '';
+    return '<div class="v2-mp-card">' +
+      '<span class="v2-mp-stripe" style="background:' + card.stripe + '"></span>' +
+      '<div class="v2-mp-body">' +
+        '<div class="v2-mp-lbl">' + card.label + '</div>' +
+        '<div class="v2-mp-chg">' + fmtPctSign(x.pct_5d) + ' <span class="v2-mp-period">5d</span></div>' +
+        '<div class="v2-mp-px">' + fmtPx(x.last, card.isYield ? 2 : 2) + (card.isYield ? '%' : '') + '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+  const regimeLabel = data.regime_label || 'Mixed';
+  const regimeColor = regimeLabel === 'Bullish' ? '#15803d' : regimeLabel === 'Bearish' ? '#b91c1c' : '#b45309';
+  return '<div class="v2-market-pulse">' +
+    '<div class="v2-mp-head">' +
+      '<div class="v2-mp-h-l">' +
+        '<span class="v2-mp-h-title">Market Pulse</span>' +
+        '<span class="v2-mp-h-tag" style="color:' + regimeColor + '">● Regime: ' + regimeLabel + '</span>' +
+      '</div>' +
+    '</div>' +
+    '<div class="v2-mp-grid">' + cells + '</div>' +
+  '</div>';
+}
+function v2RenderMarketPulse(){
+  // If we have cached data, render immediately. Then refresh async.
+  const cached = _v2MarketPulseCache;
+  const slot = '<div id="v2-market-pulse-slot">' + (cached ? v2RenderMarketPulseHTML(cached) : '') + '</div>';
+  // Fire async load if no cache yet
+  if (!cached){
+    v2LoadMarketPulse().then(data => {
+      const el = document.getElementById('v2-market-pulse-slot');
+      if (el && data) el.innerHTML = v2RenderMarketPulseHTML(data);
+    });
+  }
+  return slot;
+}
+
 /* ── Profile rerender hook ── */
 function v2RerenderProfile(){
   const universe = (typeof _allTickerData === 'object' && _allTickerData)
@@ -5120,6 +5215,7 @@ function renderV2Overview(tickers){
     : '';
 
   root.innerHTML =
+    v2RenderMarketPulse() +
     pilotBanner +
     v2RenderDrawdownBanner(fullUniverse) +
     v2RenderWatchlistExposure(fullUniverse) +
