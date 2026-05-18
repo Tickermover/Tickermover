@@ -4241,7 +4241,6 @@ function v2RenderSectors(tickers){
 function v2RenderEarnings(tickers){
   const now = new Date();
   now.setHours(0,0,0,0);
-  const cutoff = new Date(now.getTime() - 30 * 86400000);
   const items = [];
   tickers.forEach(t => {
     const all = (t.eps_quarters || []).filter(q => q && q.date);
@@ -4249,7 +4248,9 @@ function v2RenderEarnings(tickers){
     const sorted = [...all].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
     const q = sorted[0];
     const d = new Date(String(q.date).slice(0, 10) + 'T00:00:00');
-    if (isNaN(d) || d < cutoff || d > now) return;
+    // Drop only future-dated rows; otherwise show the 5 most recent
+    // regardless of age so the card always has content.
+    if (isNaN(d) || d > now) return;
     items.push({ t: t, q: q, d: d });
   });
   items.sort((a, b) => b.d - a.d);
@@ -4258,7 +4259,7 @@ function v2RenderEarnings(tickers){
     return '<div class="v2ov-card earnings">' +
       '<div class="v2ov-card-head"><div>' +
         '<div class="v2ov-title">Recent Earnings</div>' +
-        '<div class="v2ov-sub">Last 30 days · sorted by latest first</div>' +
+        '<div class="v2ov-sub">Latest 5 reports across the universe</div>' +
       '</div></div>' +
       '<div style="padding:14px 4px;color:#94a3b8;font-size:12.5px;text-align:center">' +
         'No earnings reports in the last 30 days for stocks in our universe.' +
