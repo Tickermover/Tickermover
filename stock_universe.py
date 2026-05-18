@@ -416,12 +416,53 @@ for _row in HG_DATA:
     }
 
 
+# ── Phase 2: Index constituent expansion ──────────────────────────────
+# The curated HG universe (~187 tickers) is tech/telecom/infra heavy.
+# To support Conservative / Balanced profiles drawn from S&P 500 /
+# NASDAQ-100 / Dow 30, we extend the ingestion list with everyone in
+# those indices who isn't already in HG. Metadata for these extras is
+# minimal — the pipeline fetches real name/sector/exchange from FMP/YF
+# at refresh time, so all we need is the symbol.
+try:
+    from index_constituents import SP500, NASDAQ_100, DOW_30
+    _INDEX_UNIVERSE: set[str] = set(SP500) | set(NASDAQ_100) | set(DOW_30)
+except Exception:
+    _INDEX_UNIVERSE = set()
+
+# Tickers in the major indices that aren't already in our curated HG list.
+INDEX_EXTRA: list[str] = sorted(_INDEX_UNIVERSE - set(HG))
+
+
+def _placeholder_meta(ticker: str) -> dict:
+    """Lightweight meta for index-extra tickers — the FMP/YF enrichment
+    overwrites these on the first refresh cycle. We provide a sensible
+    default so the universe list isn't empty before data lands."""
+    return {
+        "name":            ticker,              # FMP fills the real company name
+        "sector":          "—",                  # FMP fills the GICS sector
+        "sub_sector":      "—",
+        "subsector":       "—",
+        "market_cap_tier": "—",                  # filled from market_cap once known
+        "growth_tier":     "—",
+        "thesis":          "Index constituent",  # generic so the modal has something
+        "rationale":       "Index constituent",
+        "exchange":        _EXCHANGE.get(ticker, "NASDAQ"),
+    }
+
+
 # ── Public API ────────────────────────────────────────────────────────
 
 def get_universe(mode: str = "hg") -> list[str]:
-    if mode == "fast": return FAST
-    return HG   # "hg" and "all" both use the full curated universe
+    if mode == "fast":     return FAST
+    if mode == "indices":  return sorted(_INDEX_UNIVERSE)           # only the index list
+    if mode == "expanded": return HG + INDEX_EXTRA                  # curated + index extras
+    return HG   # "hg" / "all" — curated universe (unchanged default)
 
 
 def get_meta(ticker: str) -> dict:
-    return META.get(ticker.upper(), {})
+    t = (ticker or "").upper()
+    if t in META:
+        return META[t]
+    if t in _INDEX_UNIVERSE:
+        return _placeholder_meta(t)
+    return {}

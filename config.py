@@ -73,7 +73,11 @@ FINNHUB_CALLS_PER_MIN = 55
 AV_CALLS_PER_DAY      = 23
 
 # ── Universe ──────────────────────────────────────────────────────────────────
-UNIVERSE_MODE = _env("UNIVERSE_MODE", "hg")   # fast | hg | all
+# fast = ~30 tickers test set
+# hg = ~187 curated tech/telecom universe (legacy default)
+# indices = only S&P 500 + Nasdaq-100 + Dow 30 (~540 tickers, no curated tech extras)
+# expanded = HG + index extras (~540 unique tickers — Phase 2 default)
+UNIVERSE_MODE = _env("UNIVERSE_MODE", "expanded")
 
 # ── Server ────────────────────────────────────────────────────────────────────
 # On Railway, PORT is injected automatically — don't hardcode it
