@@ -3896,7 +3896,7 @@ function v2BuildTemplateThesis(t){
         );
         const tip = v2EscHTML((vv.summary || '').replace(/<[^>]+>/g,''));
         extraBadges += '<span class="' + cls + '" title="' + tip + '" style="' + inlineStyle + ';cursor:help">' +
-          '💰 ' + v2EscHTML(vv.verdict) + '</span>';
+          'Valuation: ' + v2EscHTML(vv.verdict) + '</span>';
       }
     }
   } catch(e){}
