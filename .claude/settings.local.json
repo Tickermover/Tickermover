@@ -15,7 +15,10 @@
       "Bash(git merge *)",
       "Bash(git push *)",
       "Bash(git commit --allow-empty -m ' *)",
-      "Bash(curl -s https://web-production-17a78.up.railway.app/api/regime)"
+      "Bash(curl -s https://web-production-17a78.up.railway.app/api/regime)",
+      "Bash(curl -s https://web-production-17a78.up.railway.app/api/universe)",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); ts=d.get\\('tickers',[]\\); print\\(f'Universe size: {len\\(ts\\)}'\\); sectors={}; [sectors.setdefault\\(t.get\\('sector','?'\\),0\\) for t in ts]; [sectors.update\\({t.get\\('sector','?'\\): sectors.get\\(t.get\\('sector','?'\\),0\\)+1}\\) for t in ts]; print\\('Sectors:'\\); [print\\(f'  {k}: {v}'\\) for k,v in sorted\\(sectors.items\\(\\), key=lambda x:-x[1]\\)]\")",
+      "Bash(node -e \"const d=require\\('/tmp/u.json'\\); const ts=d.tickers||[]; console.log\\('Universe:', ts.length\\); const sec={}; ts.forEach\\(t=>{const s=t.sector||'?'; sec[s]=\\(sec[s]||0\\)+1}\\); console.log\\('Sectors:'\\); Object.entries\\(sec\\).sort\\(\\(a,b\\)=>b[1]-a[1]\\).forEach\\(\\([k,v]\\)=>console.log\\(' ',k,v\\)\\)\")"
     ]
   }
 }

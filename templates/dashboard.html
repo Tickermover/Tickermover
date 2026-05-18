@@ -4950,8 +4950,17 @@ function v2SyncProfileButton(){
   const l = document.getElementById('v2-profile-label');
   if (e) e.textContent = info.emoji;
   if (l) l.textContent = info.label;
+  // Annotate each option with its current profile_count from backend
+  const counts = (window.__AH_DATA__ && window.__AH_DATA__.profile_counts) || {};
   document.querySelectorAll('.v2-profile-opt').forEach(b => {
-    b.classList.toggle('active', b.getAttribute('data-profile') === v2CurrentProfile());
+    const key = b.getAttribute('data-profile');
+    b.classList.toggle('active', key === v2CurrentProfile());
+    const small = b.querySelector('small');
+    if (small && counts[key] != null){
+      const base = small.getAttribute('data-base') || small.textContent;
+      small.setAttribute('data-base', base);
+      small.innerHTML = base + ' · <strong>' + counts[key] + '</strong> stocks';
+    }
   });
 }
 document.addEventListener('DOMContentLoaded', () => v2SyncProfileButton());
@@ -4963,7 +4972,11 @@ function v2FilterByProfile(tickers){
   const p = v2CurrentProfile();
   if (!Array.isArray(tickers) || !tickers.length) return tickers;
   if (p === 'aggressive') return tickers;
+  // Backend now tags each ticker with t.profiles = ['aggressive', 'balanced', ...]
+  // via index_constituents.py + profile_rules.py. Trust the backend tag if
+  // present; fall back to the legacy heuristic if the field is missing.
   return tickers.filter(t => {
+    if (Array.isArray(t.profiles)) return t.profiles.includes(p);
     const g = (t.grade || '').toUpperCase();
     const beta = parseFloat(t.beta);
     const sp = parseFloat(t.short_percent_float || t.short_interest);
@@ -4974,7 +4987,6 @@ function v2FilterByProfile(tickers){
       if (!isNaN(beta) && beta >= 2) return false;
       return sc >= 55;
     }
-    // conservative: A grade, beta < 1.5, profitable, low short interest
     if (g !== 'A' && g !== 'B') return false;
     if (!isNaN(beta) && beta >= 1.5) return false;
     if (!isNaN(pm) && pm < 0) return false;
@@ -5275,7 +5287,17 @@ function v2InstallHook(){
   window._v2HookInstalled = true;
   const _orig = renderHotList;
   window.renderHotList = function(data){
-    try { renderV2Overview((data && data.tickers) || []); }
+    try {
+      // Stash backend extras (profile_counts, index_coverage) onto a global
+      // so v2SyncProfileButton can read them after each refresh.
+      if (data && (data.profile_counts || data.index_coverage)){
+        window.__AH_DATA__ = window.__AH_DATA__ || {};
+        if (data.profile_counts) window.__AH_DATA__.profile_counts = data.profile_counts;
+        if (data.index_coverage) window.__AH_DATA__.index_coverage = data.index_coverage;
+      }
+      renderV2Overview((data && data.tickers) || []);
+      if (typeof v2SyncProfileButton === 'function') v2SyncProfileButton();
+    }
     catch(e){ console.error('[v2] overview render failed', e); }
     return _orig.apply(this, arguments);
   };

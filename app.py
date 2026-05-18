@@ -1608,15 +1608,37 @@ async def api_universe():
     # ~0.4 MB raw (~75 KB gzipped) instead of ~1.6 MB raw (~170 KB
     # gzipped). Modal still gets full detail from /api/ticker/{symbol}.
     _SKIP = ("news", "insider_detail", "description", "breakdown", "weighted")
-    slim = [
-        {k: v for k, v in t.items() if k not in _SKIP}
-        for t in _universe_data
-    ]
+    # Phase 1: enrich each ticker with index membership + profile eligibility
+    # so the frontend can filter Conservative/Balanced/Aggressive deterministically.
+    try:
+        from index_constituents import indices_for as _idx_for
+        from profile_rules import assign_profile as _assign_profile
+    except Exception:
+        _idx_for = lambda _s: []
+        _assign_profile = lambda _t: ["aggressive"]
+    slim = []
+    for t in _universe_data:
+        row = {k: v for k, v in t.items() if k not in _SKIP}
+        row["indices"]  = _idx_for(row.get("ticker", ""))
+        row["profiles"] = _assign_profile(row)
+        slim.append(row)
     # ── CDN caching ──────────────────────────────────────────────────
     # Universe refreshes every 5 min server-side, so a 30-second public
     # cache at the Cloudflare edge dramatically reduces origin load
     # without serving stale data. `s-maxage` is CDN-only, `max-age` is
     # browser-only, kept small so each tab refresh still gets fresh data.
+    # Coverage summary — how many of each index we currently track,
+    # plus how many tickers qualify for each profile in this snapshot.
+    try:
+        from index_constituents import coverage_summary as _coverage
+    except Exception:
+        _coverage = lambda _l: {}
+    _tracked_syms = [r.get("ticker", "") for r in slim]
+    _profile_counts = {"aggressive": 0, "balanced": 0, "conservative": 0}
+    for r in slim:
+        for p in r.get("profiles", []):
+            if p in _profile_counts:
+                _profile_counts[p] += 1
     return JSONResponse(
         _clean({
             "tickers":        slim,
@@ -1627,6 +1649,8 @@ async def api_universe():
             "min_confidence": config.MIN_CONFIDENCE,
             "warming_up":     len(_universe_data) == 0,
             "regime":         market_regime.get(),
+            "index_coverage": _coverage(_tracked_syms),
+            "profile_counts": _profile_counts,
         }),
         headers={
             "Cache-Control": "public, max-age=15, s-maxage=30",
