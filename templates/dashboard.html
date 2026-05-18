@@ -3780,24 +3780,40 @@ function v2BuildTemplateThesis(t){
     gScore = clamp(50 + revGFrac * 200);
   }
 
-  // Earnings Track: beat streak (4 max) + avg surprise contribution
-  const beats = parseInt(t.eps_beat_streak);
-  const avgSurp = num(t.avg_eps_surprise_pct);
-  let eScore = NaN;
-  if (!isNaN(beats) && beats >= 0){
-    let e = (beats / 4) * 70;
-    if (!isNaN(avgSurp)) e += Math.min(30, Math.max(-30, avgSurp * 3));
-    eScore = clamp(e);
+  // Setup: technical setup quality — RSI sweet-spot (50-70 = strong
+  // momentum without overbought) + proximity to 52-week high
+  const rsi = num(t.rsi_14, t.rsi);
+  const wLo52 = num(t.week_52_low, t.low_52w);
+  const wHi52 = num(t.week_52_high, t.high_52w);
+  const pxNow = num(t.price);
+  let sScore = NaN;
+  if (!isNaN(rsi) || (wLo52 > 0 && wHi52 > 0 && pxNow > 0)){
+    let s = 50;
+    if (!isNaN(rsi)){
+      if (rsi >= 50 && rsi <= 70)      s = 85;   // sweet spot
+      else if (rsi >= 40 && rsi < 50)  s = 65;   // building
+      else if (rsi > 70 && rsi <= 75)  s = 55;   // strong but stretched
+      else if (rsi > 75)               s = 30;   // overbought
+      else if (rsi >= 30 && rsi < 40)  s = 40;   // weak
+      else                             s = 25;   // oversold or unknown
+    }
+    if (wLo52 > 0 && wHi52 > wLo52 && pxNow > 0){
+      const proximity = (pxNow - wLo52) / (wHi52 - wLo52);
+      if (proximity >= 0.85)      s += 10;
+      else if (proximity >= 0.65) s += 5;
+      else if (proximity <= 0.20) s -= 10;
+    }
+    sScore = clamp(s);
   }
 
-  // 4 bars now — Momentum, Value, Growth, Earnings Track. Quality + Risk
-  // are deliberately omitted (already in the At-a-Glance row above).
+  // 4 bars now — Momentum, Value, Growth, Setup. Quality + Risk are
+  // deliberately omitted (already in the At-a-Glance row above).
   const scoreboard =
     '<div class="v2-qs-scoreboard">' +
       factorBar('Momentum', mScore) +
       factorBar('Value',    vScore) +
       factorBar('Growth',   gScore) +
-      factorBar('Earnings', eScore) +
+      factorBar('Setup',    sScore) +
     '</div>';
 
   /* ── Strengths (green) and Watch-outs (amber/red) ── */
