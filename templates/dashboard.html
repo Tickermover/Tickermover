@@ -1824,6 +1824,12 @@ body.v2 .v2ov-card.sectors .v2ov-sector-cell{
 }
 .v2-news-row:hover{background:#f8fafc}
 .v2-news-row:hover .v2-news-material{box-shadow:0 0 0 2px rgba(132,204,22,.3)}
+.v2-news-cat{
+  display:inline-flex;align-items:center;
+  font-size:9.5px;font-weight:800;letter-spacing:.05em;
+  padding:2px 7px;border-radius:4px;line-height:1.4;
+  text-transform:uppercase;white-space:nowrap;flex-shrink:0;
+}
 
 /* Tear sheet CTA card */
 .v2-tearsheet-cta{
@@ -3856,24 +3862,33 @@ function v2BuildTemplateThesis(t){
    that are likely to move price (earnings, guidance, M&A, regulatory,
    analyst actions). No LLM, just a vocabulary check. (Gap #6 from
    advisor plan, free-tier version.) */
-function v2NewsMateriality(text){
+/* Categorise a headline into a plain-English bucket so users can scan
+   the news feed at a glance. Returns {key, label, emoji, importance}.
+   Importance: 3 = price-moving event, 2 = context-shifting, 1 = general. */
+function v2NewsCategory(text){
   const t = (text || '').toLowerCase();
-  const KW_MATERIAL = [
-    'beats','misses','beat estimates','missed estimates','crushed estimates',
-    'raises guidance','cuts guidance','lowers guidance','guidance','outlook',
-    'upgrade','downgrade','price target','target raised','target cut',
-    'acquires','acquisition','to acquire','merger','spin-off','spinoff',
-    'fda approval','fda clearance','fda rejects','recall',
-    'lawsuit','settlement','investigation','sec','doj','probe',
-    'dividend','buyback','share repurchase',
-    'partnership','contract win','wins contract','major deal',
-    'ceo steps down','cfo steps down','resigns','appointed','hires',
-    'launches','unveils','breakthrough','approved','rejected'
-  ];
-  for (const kw of KW_MATERIAL){
-    if (t.includes(kw)) return 'material';
-  }
-  return 'context';
+  if (/\b(beat|miss|earnings|reports|q[1-4]\b|quarterly|revenue|eps|profit)\b/.test(t))
+    return {key:'earnings', label:'Earnings', emoji:'📊', importance:3, color:'#4338ca', bg:'#eef2ff'};
+  if (/\b(raises? guidance|cuts? guidance|lowers? guidance|raises? outlook|guidance|outlook|forecast)\b/.test(t))
+    return {key:'guidance', label:'Guidance', emoji:'🎯', importance:3, color:'#7c3aed', bg:'#f5f3ff'};
+  if (/\b(upgrade|downgrade|price target|analyst|reiterates?|initiates? coverage|buy rating|sell rating|overweight|underweight)\b/.test(t))
+    return {key:'analyst', label:'Analyst', emoji:'📝', importance:2, color:'#0369a1', bg:'#e0f2fe'};
+  if (/\b(acquires?|acquisition|to acquire|merger|merges|partnership|joint venture|deal worth|takeover)\b/.test(t))
+    return {key:'deal', label:'M&A', emoji:'🤝', importance:3, color:'#be185d', bg:'#fce7f3'};
+  if (/\b(fda|approval|approved|clearance|investigation|sec\s|doj\s|lawsuit|sued|settlement|fine|probe|recall|antitrust)\b/.test(t))
+    return {key:'regulatory', label:'Regulatory', emoji:'⚖️', importance:3, color:'#b45309', bg:'#fef3c7'};
+  if (/\b(launches?|unveils?|releases?|new (product|chip|platform|service|model)|debuts?|breakthrough)\b/.test(t))
+    return {key:'product', label:'Product', emoji:'🚀', importance:2, color:'#0e7490', bg:'#cffafe'};
+  if (/\b(dividend|buyback|share repurchase|stock split|spin-off|spinoff|ipo|offering|secondary)\b/.test(t))
+    return {key:'capital', label:'Capital', emoji:'💵', importance:2, color:'#15803d', bg:'#dcfce7'};
+  if (/\b(ceo|cfo|coo|cto|appoints?|resigns?|steps down|hires?|fired|named president)\b/.test(t))
+    return {key:'leadership', label:'Leadership', emoji:'👤', importance:2, color:'#475569', bg:'#f1f5f9'};
+  return {key:'general', label:'Coverage', emoji:'📰', importance:1, color:'#64748b', bg:'#f8fafc'};
+}
+/* Backwards-compat shim so older callers don't break. */
+function v2NewsMateriality(text){
+  const c = v2NewsCategory(text);
+  return c.importance >= 2 ? 'material' : 'context';
 }
 
 /* Sector momentum signal — surfaces the sub-sector with the strongest
@@ -7040,12 +7055,22 @@ async function loadModalNews(ticker) {
       if (diff < 604800) return Math.round(diff/86400) + 'd ago';
       return ts.toLocaleDateString('en-US',{month:'short',day:'numeric'});
     };
-    body.innerHTML = news.map(n => {
+
+    // Enrich + group: each headline gets a plain-English category. Split
+    // into two buckets so the user sees the price-moving stuff first
+    // and the general coverage as a quieter tail.
+    const enriched = news.map(n => {
+      const cat = (typeof v2NewsCategory === 'function') ? v2NewsCategory(n.headline || '') : {key:'general',label:'Coverage',emoji:'📰',importance:1,color:'#64748b',bg:'#f8fafc'};
+      return { n, cat };
+    });
+    const keyNews   = enriched.filter(x => x.cat.importance >= 2);
+    const otherNews = enriched.filter(x => x.cat.importance < 2);
+
+    const renderRow = ({n, cat}) => {
       const ts = n.datetime ? new Date(n.datetime * 1000) : null;
       const when = relTime(ts);
       const src  = (n.source || '').slice(0, 22);
-      const rawTitle = n.headline || '';
-      const title = rawTitle.replace(/</g,'&lt;');
+      const title = (n.headline || '').replace(/</g,'&lt;');
       const url = n.url || '#';
       const sent = (n.sentiment || '').toLowerCase();
       const dotColor = sent === 'positive' ? '#16a34a'
@@ -7054,26 +7079,44 @@ async function loadModalNews(ticker) {
       const dotTitle = sent === 'positive' ? 'Bullish-leaning headline'
                      : sent === 'negative' ? 'Bearish-leaning headline'
                      : 'Neutral / general';
-      let badge = '';
-      try {
-        if (typeof v2NewsMateriality === 'function' && v2NewsMateriality(rawTitle) === 'material'){
-          badge = '<span class="v2-news-material">MATERIAL</span>';
-        }
-      } catch(e){}
+      const catChip = `<span class="v2-news-cat" style="background:${cat.bg};color:${cat.color}">
+                         <span style="margin-right:3px">${cat.emoji}</span>${cat.label}
+                       </span>`;
       return `
         <a href="${url}" target="_blank" rel="noopener" class="v2-news-row"
            style="display:flex;gap:10px;align-items:flex-start;padding:9px 8px;margin:0 -8px;border-radius:6px;
                   text-decoration:none;color:#0f172a;line-height:1.4;transition:background .15s">
           <span title="${dotTitle}" style="flex:0 0 8px;width:8px;height:8px;border-radius:50%;background:${dotColor};margin-top:5px"></span>
           <div style="flex:1;min-width:0">
-            <div style="font-size:12.5px;font-weight:600;color:#0f172a">${badge}${title}</div>
-            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:10.5px;color:#64748b;margin-top:3px">
+            <div style="display:flex;align-items:flex-start;gap:6px;flex-wrap:wrap">
+              ${catChip}
+              <span style="font-size:12.5px;font-weight:600;color:#0f172a;flex:1;min-width:160px">${title}</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:10.5px;color:#64748b;margin-top:4px">
               ${src ? `<span style="background:#f1f5f9;color:#475569;padding:1px 7px;border-radius:4px;font-weight:700;letter-spacing:.02em">${src}</span>` : ''}
               <span>${when}</span>
             </div>
           </div>
         </a>`;
-    }).join('<div style="height:1px;background:#f1f5f9;margin:0 -8px"></div>');
+    };
+
+    const sectionHead = (label, count) => `
+      <div class="v2-news-section" style="font-size:10.5px;font-weight:800;color:#475569;text-transform:uppercase;letter-spacing:.08em;margin:4px 0 4px;display:flex;align-items:center;gap:6px">
+        ${label}
+        <span style="background:#f1f5f9;color:#475569;padding:1px 6px;border-radius:999px;font-size:10px">${count}</span>
+      </div>`;
+
+    let html = '';
+    if (keyNews.length){
+      html += sectionHead('🔑 Key headlines', keyNews.length);
+      html += keyNews.map(renderRow).join('<div style="height:1px;background:#f1f5f9;margin:0 -8px"></div>');
+    }
+    if (otherNews.length){
+      html += `<div style="margin-top:${keyNews.length ? '10px' : '0'}"></div>`;
+      html += sectionHead('📰 Other coverage', otherNews.length);
+      html += otherNews.map(renderRow).join('<div style="height:1px;background:#f1f5f9;margin:0 -8px"></div>');
+    }
+    body.innerHTML = html;
   } catch (e) {
     body.innerHTML = `<div style="color:#94a3b8;font-size:11.5px">Couldn't load news (${e.message}).</div>`;
   }
