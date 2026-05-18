@@ -5514,14 +5514,14 @@ function qualityVerdict(t) {
     else if (pm >= 0.05) { pts += 1; bits.push(`PM ${(pm*100).toFixed(0)}%`); }
     else if (pm >= 0)    { bits.push(`PM ${(pm*100).toFixed(0)}%`); }
     else if (isGrowthStage) { /* no penalty — reinvestment, not breakage */
-                              bits.push(`PM ${(pm*100).toFixed(0)}% (reinvesting)`); }
+                              bits.push(`PM ${(pm*100).toFixed(0)}%`); }
     else                 { pts -= 2; bits.push(`PM ${(pm*100).toFixed(0)}% (loss)`); }
   }
   if (isFinite(fm)) {
     if (fm >= 0.15)      { pts += 2; bits.push(`FCF ${(fm*100).toFixed(0)}%`); }
     else if (fm >= 0.05) { pts += 1; bits.push(`FCF ${(fm*100).toFixed(0)}%`); }
     else if (fm >= 0)    { bits.push(`FCF ${(fm*100).toFixed(0)}%`); }
-    else if (isGrowthStage) { bits.push(`FCF ${(fm*100).toFixed(0)}% (capex phase)`); }
+    else if (isGrowthStage) { bits.push(`FCF ${(fm*100).toFixed(0)}%`); }
     else                 { pts -= 1; bits.push(`FCF ${(fm*100).toFixed(0)}%`); }
   }
   if (isFinite(de) && de > 1.5) { pts -= 1; bits.push(`D/E ${de.toFixed(1)}`); }
@@ -5635,16 +5635,19 @@ function catalystVerdict(t) {
           summary:'No upcoming events on the calendar'};
 }
 
-/* Renders one cell of the "At a Glance" 4-row */
+/* Renders one cell of the "At a Glance" 4-row.
+   Cells use a fixed grid layout (title / label / summary) so all four
+   match height even when one has a longer descriptor. Summary line is
+   clamped to 2 lines to keep the row visually balanced. */
 function glanceCell(title, v) {
   return `
-    <div style="background:${v.bg};border:1px solid ${v.border};border-radius:10px;padding:10px 12px">
+    <div class="v2-glance-cell" style="background:${v.bg};border:1px solid ${v.border};border-radius:10px;padding:9px 11px;display:flex;flex-direction:column;min-height:96px">
       <div style="font-size:10px;font-weight:800;color:${v.color};text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px">${title}</div>
-      <div style="font-size:15px;font-weight:800;color:${v.color};line-height:1.1;margin-bottom:4px">
-        ${v.grade ? `<span style="display:inline-block;background:#fff;border:1px solid ${v.border};border-radius:6px;padding:1px 6px;margin-right:6px;font-size:13px">${v.grade}</span>` : ''}
+      <div style="font-size:14px;font-weight:800;color:${v.color};line-height:1.15;margin-bottom:3px;display:flex;align-items:flex-start;gap:5px;flex-wrap:wrap">
+        ${v.grade ? `<span style="display:inline-block;background:#fff;border:1px solid ${v.border};border-radius:5px;padding:0 5px;font-size:12px;line-height:1.4">${v.grade}</span>` : ''}
         ${v.label}
       </div>
-      <div style="font-size:11px;color:#475569;line-height:1.35">${v.summary}</div>
+      <div class="v2-glance-summary" style="font-size:10.5px;color:#475569;line-height:1.35;margin-top:auto;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${v.summary}</div>
     </div>`;
 }
 
