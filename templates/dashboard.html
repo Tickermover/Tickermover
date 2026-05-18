@@ -3773,12 +3773,31 @@ function v2BuildTemplateThesis(t){
     '</div>';
   };
 
-  // Only Momentum + Value here — Quality and Risk are already covered
-  // by the At-a-Glance cards above (avoid duplicate info).
+  // Growth: revenue YoY → 0-100 (10% = 50, 30%+ = 90)
+  const revGFrac = num(t.revenue_growth_yoy);
+  let gScore = NaN;
+  if (!isNaN(revGFrac)){
+    gScore = clamp(50 + revGFrac * 200);
+  }
+
+  // Earnings Track: beat streak (4 max) + avg surprise contribution
+  const beats = parseInt(t.eps_beat_streak);
+  const avgSurp = num(t.avg_eps_surprise_pct);
+  let eScore = NaN;
+  if (!isNaN(beats) && beats >= 0){
+    let e = (beats / 4) * 70;
+    if (!isNaN(avgSurp)) e += Math.min(30, Math.max(-30, avgSurp * 3));
+    eScore = clamp(e);
+  }
+
+  // 4 bars now — Momentum, Value, Growth, Earnings Track. Quality + Risk
+  // are deliberately omitted (already in the At-a-Glance row above).
   const scoreboard =
     '<div class="v2-qs-scoreboard">' +
       factorBar('Momentum', mScore) +
       factorBar('Value',    vScore) +
+      factorBar('Growth',   gScore) +
+      factorBar('Earnings', eScore) +
     '</div>';
 
   /* ── Strengths (green) and Watch-outs (amber/red) ── */
