@@ -1751,7 +1751,7 @@ body.v2 .v2ov-card.sectors .v2ov-sector-cell{
 .v2-qs-score{font-size:22px;font-weight:900;color:#0f172a;letter-spacing:-.02em;line-height:1}
 .v2-qs-score-lbl{font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.06em}
 .v2-qs-tier-lbl{margin-left:auto;font-size:11px;font-weight:700;color:#475569;text-transform:capitalize}
-.v2-qs-head-badges{margin-left:auto;display:inline-flex;gap:5px;align-items:center;flex-wrap:wrap}
+.v2-qs-head-badges{display:inline-flex;gap:6px;align-items:center;flex-wrap:wrap}
 .v2-qs-head-badges .rs-badge,
 .v2-qs-head-badges .bd-wrap{font-size:10px;padding:2px 7px;line-height:1.4}
 .v2-qs-head-badges .rs-num{font-size:11px}
@@ -3773,12 +3773,12 @@ function v2BuildTemplateThesis(t){
     '</div>';
   };
 
+  // Only Momentum + Value here — Quality and Risk are already covered
+  // by the At-a-Glance cards above (avoid duplicate info).
   const scoreboard =
     '<div class="v2-qs-scoreboard">' +
-      factorBar('Quality',  qScore) +
       factorBar('Momentum', mScore) +
       factorBar('Value',    vScore) +
-      factorBar('Risk',     rScore) +
     '</div>';
 
   /* ── Strengths (green) and Watch-outs (amber/red) ── */
@@ -3835,18 +3835,18 @@ function v2BuildTemplateThesis(t){
   const splitBlock = (strengths.length || risks.length) ?
     '<div class="v2-qs-split">' + listBlock('What\'s working', strengths, 'pos') + listBlock('Watch-outs', risks, 'neg') + '</div>' : '';
 
-  /* ── Headline + catalyst footer ── */
+  /* ── Headline + catalyst footer ──
+     Alpha Score number is deliberately omitted here — the gauge in the
+     Investment Thesis box already shows it. We only keep the Relative
+     Strength + Institutional Accumulation badges as the unique info. */
   let extraBadges = '';
   try {
     if (typeof buildRsBadge === 'function') extraBadges += buildRsBadge(sym);
     if (typeof buildBlueDot === 'function') extraBadges += buildBlueDot(t);
   } catch(e){}
-  const headline = '<div class="v2-qs-head">' +
-    (tierBadge) +
-    '<span class="v2-qs-score">' + (score || '—') + '</span>' +
-    '<span class="v2-qs-score-lbl">Alpha Score</span>' +
-    (extraBadges ? '<span class="v2-qs-head-badges">' + extraBadges + '</span>' : '') +
-  '</div>';
+  const headline = extraBadges
+    ? '<div class="v2-qs-head"><span class="v2-qs-head-badges">' + extraBadges + '</span></div>'
+    : '';
 
   const dte = parseInt(t.days_to_earnings);
   let catalyst = '';
