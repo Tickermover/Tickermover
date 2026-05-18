@@ -1824,6 +1824,120 @@ body.v2 .v2ov-card.sectors .v2ov-sector-cell{
 }
 .v2-news-row:hover{background:#f8fafc}
 .v2-news-row:hover .v2-news-material{box-shadow:0 0 0 2px rgba(132,204,22,.3)}
+
+/* ───── Risk Profile picker (topbar) ───── */
+.v2-profile-picker{position:relative}
+.v2-profile-btn{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:6px 12px;border-radius:8px;
+  background:linear-gradient(135deg,#eef2ff 0%,#f5f3ff 100%);
+  border:1px solid #c7d2fe;color:#4338ca;font-weight:800;font-size:12px;
+  cursor:pointer;transition:all .15s;
+}
+.v2-profile-btn:hover{background:linear-gradient(135deg,#e0e7ff 0%,#ede9fe 100%);border-color:#a5b4fc}
+.v2-profile-menu{
+  position:absolute;top:calc(100% + 6px);right:0;
+  min-width:240px;background:#fff;border:1px solid #e2e8f0;border-radius:10px;
+  box-shadow:0 12px 32px rgba(15,23,42,.12);
+  padding:6px;z-index:1000;display:none;
+}
+.v2-profile-picker.open .v2-profile-menu{display:block}
+.v2-profile-opt{
+  display:flex;width:100%;align-items:center;gap:10px;
+  padding:8px 10px;border-radius:8px;background:transparent;border:0;
+  text-align:left;cursor:pointer;color:#0f172a;
+}
+.v2-profile-opt:hover{background:#f8fafc}
+.v2-profile-opt.active{background:#eef2ff}
+.v2-profile-opt span{font-size:18px;flex-shrink:0}
+.v2-profile-opt div{display:flex;flex-direction:column;line-height:1.2}
+.v2-profile-opt strong{font-size:12.5px;font-weight:800;color:#0f172a}
+.v2-profile-opt small{font-size:10.5px;color:#64748b;margin-top:1px}
+
+/* ───── Profile pilot banner ───── */
+.v2-profile-banner{
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  padding:9px 14px;margin-bottom:14px;
+  background:linear-gradient(135deg,#eef2ff 0%,#f5f3ff 100%);
+  border:1px solid #c7d2fe;border-left:4px solid #4338ca;border-radius:8px;
+  font-size:12px;color:#1e293b;
+}
+.v2-pb-pill{font-weight:900;color:#4338ca;font-size:12px;letter-spacing:.02em}
+.v2-pb-text{flex:1;min-width:200px}
+.v2-pb-close{
+  background:#fff;border:1px solid #c7d2fe;color:#4338ca;
+  padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;
+}
+.v2-pb-close:hover{background:#eef2ff}
+
+/* ───── Star button on stock modal ───── */
+.v2-star-btn{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:30px;height:30px;border-radius:50%;
+  background:transparent;border:1px solid #e2e8f0;color:#cbd5e1;
+  cursor:pointer;transition:all .15s;flex-shrink:0;
+}
+.v2-star-btn:hover{background:#fef3c7;color:#f59e0b;border-color:#fcd34d}
+.v2-star-btn.starred{background:#fef3c7;color:#f59e0b;border-color:#fcd34d}
+.v2-star-btn.starred:hover{background:#fde68a}
+
+/* ───── Watchlist exposure widget ───── */
+.v2-watchlist-card{
+  position:relative;margin-bottom:14px;
+  background:linear-gradient(135deg,#fffbeb 0%,#fef3c7 100%);
+  border:1px solid #fcd34d;border-radius:12px;padding:14px 16px 14px 20px;
+  overflow:hidden;
+}
+.v2-watchlist-card::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;width:4px;
+  background:linear-gradient(180deg,#f59e0b 0%,#d97706 100%);
+}
+.v2-exp-warn{
+  background:#fee2e2;border:1px solid #fca5a5;border-radius:8px;
+  padding:8px 12px;margin:8px 0 12px;font-size:11.5px;color:#7f1d1d;line-height:1.5;
+}
+.v2-exp-list{display:flex;flex-direction:column;gap:5px}
+.v2-exp-row{display:flex;align-items:center;gap:10px;font-size:11.5px}
+.v2-exp-name{flex:0 0 140px;font-weight:700;color:#0f172a}
+.v2-exp-bar{flex:1;height:6px;background:#fef3c7;border-radius:999px;overflow:hidden}
+.v2-exp-fill{display:block;height:100%;background:linear-gradient(90deg,#f59e0b,#d97706);border-radius:999px}
+.v2-exp-count{flex:0 0 70px;text-align:right;color:#475569;font-weight:700}
+
+/* ───── Sector drawdown banner ───── */
+.v2-drawdown-banner{
+  margin-bottom:14px;background:linear-gradient(135deg,#fef2f2 0%,#fee2e2 100%);
+  border:1px solid #fca5a5;border-radius:12px;overflow:hidden;
+  position:relative;
+}
+.v2-drawdown-banner::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:#dc2626;
+}
+.v2-dd-head{display:flex;align-items:center;gap:12px;padding:14px 16px 6px 20px}
+.v2-dd-icon{font-size:24px;line-height:1}
+.v2-dd-title{font-size:14px;font-weight:800;color:#7f1d1d;letter-spacing:.01em}
+.v2-dd-sub{font-size:11px;color:#991b1b;margin-top:2px;font-weight:700}
+.v2-dd-playbook{padding:8px 16px 14px 20px;background:#fff;margin:6px 12px 12px;border-radius:8px;border:1px solid #fecaca}
+.v2-dd-pb-title{font-size:10px;font-weight:900;color:#0f172a;letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px}
+.v2-dd-pb-body{font-size:11.5px;color:#1f2937;line-height:1.5}
+.v2-dd-survivors{display:flex;gap:6px;flex-wrap:wrap;margin-top:5px}
+.v2-dd-survivor{
+  display:inline-flex;align-items:center;gap:5px;padding:3px 9px 3px 4px;
+  background:#dcfce7;border:1px solid #86efac;border-radius:999px;
+  font-size:11px;font-weight:800;color:#15803d;cursor:pointer;transition:all .15s;
+}
+.v2-dd-survivor:hover{background:#bbf7d0;transform:translateY(-1px)}
+
+/* ───── Sector Map cooling / heating badges ───── */
+.v2ov-sector-cell{position:relative}
+.v2ov-sector-cell.is-cooling{opacity:.65}
+.v2ov-sector-cell.is-cooling:hover{opacity:1}
+.v2-theme-state{
+  position:absolute;top:4px;right:4px;
+  font-size:8.5px;font-weight:900;letter-spacing:.06em;
+  padding:1px 5px;border-radius:3px;text-transform:uppercase;
+}
+.v2-theme-heating{background:#0f172a;color:#84cc16}
+.v2-theme-cooling{background:#dbeafe;color:#1e40af}
 .v2-news-cat{
   display:inline-flex;align-items:center;
   font-size:9.5px;font-weight:800;letter-spacing:.05em;
@@ -3138,6 +3252,18 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
       </div>
 
       <div class="v2-tb-actions">
+        <div class="v2-profile-picker" id="v2-profile-picker">
+          <button class="v2-profile-btn" onclick="document.getElementById('v2-profile-picker').classList.toggle('open')" title="Switch risk profile">
+            <span id="v2-profile-emoji">🚀</span>
+            <span id="v2-profile-label">Aggressive</span>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="v2-profile-menu">
+            <button class="v2-profile-opt" data-profile="conservative" onclick="v2SetProfile('conservative');document.getElementById('v2-profile-picker').classList.remove('open')"><span>🛡</span><div><strong>Conservative</strong><small>Quality first · low beta</small></div></button>
+            <button class="v2-profile-opt" data-profile="balanced" onclick="v2SetProfile('balanced');document.getElementById('v2-profile-picker').classList.remove('open')"><span>⚖️</span><div><strong>Balanced</strong><small>A &amp; B grades · moderate beta</small></div></button>
+            <button class="v2-profile-opt" data-profile="aggressive" onclick="v2SetProfile('aggressive');document.getElementById('v2-profile-picker').classList.remove('open')"><span>🚀</span><div><strong>Aggressive</strong><small>Full universe · high conviction</small></div></button>
+          </div>
+        </div>
         <button class="v2-theme-btn" onclick="v2ToggleTheme()" title="Toggle theme" id="v2-theme-btn">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="v2-theme-icon"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
         </button>
@@ -4225,14 +4351,29 @@ function v2RenderSectors(tickers){
     return '#fecaca';                  // F · red
   };
 
-  const cells = sectors.map(s =>
-    '<div class="v2ov-sector-cell" data-tier="score" style="background:' + bgForScore(s.score) + '" ' +
-         'title="' + v2EscHTML(s.name) + ' · ' + s.count + ' stocks · score ' + s.score + ' · tap for full Sector Map" ' +
+  // Theme rotation: auto-demote sectors with avg score < 55 ('Cooling')
+  // and crown the highest score in the top 3 with a 'Heating up' badge.
+  // Both badges are titles to the cell; the cell itself stays in place
+  // so the user can still see the sector — it just visibly indicates
+  // health so they know which themes to deprioritize.
+  const heatingName = sectors[0] && sectors[0].score >= 75 ? sectors[0].name : null;
+  const cells = sectors.map(s => {
+    const isCooling = s.score < 55;
+    const isHeating = s.name === heatingName;
+    const stateBadge = isHeating
+      ? '<span class="v2-theme-state v2-theme-heating">🔥 Heating</span>'
+      : isCooling
+        ? '<span class="v2-theme-state v2-theme-cooling">🥶 Cooling</span>'
+        : '';
+    return '<div class="v2ov-sector-cell ' + (isCooling ? 'is-cooling' : '') + '" data-tier="score" style="background:' + bgForScore(s.score) + '" ' +
+         'title="' + v2EscHTML(s.name) + ' · ' + s.count + ' stocks · score ' + s.score + (isCooling ? ' · COOLING — model score has weakened, prioritize stronger themes' : isHeating ? ' · HEATING UP — leading theme right now' : '') + '" ' +
          'onclick="v2Show(\'sectors\', null)">' +
+      stateBadge +
       '<div class="sn">' + v2EscHTML(s.name) + '</div>' +
       '<div class="sv">' + s.score + '</div>' +
       '<div class="sm">' + (s.mom >= 0 ? '+' : '') + s.mom.toFixed(1) + '% · ' + s.count + ' stk</div>' +
-    '</div>').join('');
+    '</div>';
+  }).join('');
 
   const pulse = v2SectorMomentumSignal(tickers);
   const pulseHTML = (pulse && pulse.avg > 0) ?
@@ -4752,20 +4893,246 @@ async function v2LoadTrackerStrip(){
   }
 }
 
+/* ════════════════════════════════════════════════════════════════
+   v2 RISK PROFILE · WATCHLIST · SECTOR DRAWDOWN PLAYBOOK
+   All client-side / localStorage. Phase 1 implementation:
+   - 3 risk profiles (Conservative / Balanced / Aggressive) curated as
+     subsets of the current universe until a true conservative universe
+     of dividend payers / defensives is added to the backend.
+   - Watchlist via stars (localStorage). Drives 'My Exposure' panel.
+   - Sector drawdown banner when any sub-sector with >=3 stocks has
+     avg 1-month momentum below -8%.
+   ════════════════════════════════════════════════════════════════ */
+
+const V2_PROFILES = {
+  conservative: { label: 'Conservative', emoji: '🛡', sub: 'Quality first · low beta · drawdown-aware' },
+  balanced:     { label: 'Balanced',     emoji: '⚖️', sub: 'Growth + quality blend · A & B grades' },
+  aggressive:   { label: 'Aggressive',   emoji: '🚀', sub: 'Full universe · high conviction signals' },
+};
+
+function v2CurrentProfile(){
+  try { return localStorage.getItem('v2_profile') || 'aggressive'; }
+  catch(e){ return 'aggressive'; }
+}
+function v2SetProfile(p){
+  try { localStorage.setItem('v2_profile', p); } catch(e){}
+  v2SyncProfileButton();
+  if (typeof v2RerenderProfile === 'function') v2RerenderProfile();
+}
+function v2SyncProfileButton(){
+  const info = V2_PROFILES[v2CurrentProfile()] || V2_PROFILES.aggressive;
+  const e = document.getElementById('v2-profile-emoji');
+  const l = document.getElementById('v2-profile-label');
+  if (e) e.textContent = info.emoji;
+  if (l) l.textContent = info.label;
+  document.querySelectorAll('.v2-profile-opt').forEach(b => {
+    b.classList.toggle('active', b.getAttribute('data-profile') === v2CurrentProfile());
+  });
+}
+document.addEventListener('DOMContentLoaded', () => v2SyncProfileButton());
+document.addEventListener('click', (e) => {
+  const picker = document.getElementById('v2-profile-picker');
+  if (picker && !picker.contains(e.target)) picker.classList.remove('open');
+});
+function v2FilterByProfile(tickers){
+  const p = v2CurrentProfile();
+  if (!Array.isArray(tickers) || !tickers.length) return tickers;
+  if (p === 'aggressive') return tickers;
+  return tickers.filter(t => {
+    const g = (t.grade || '').toUpperCase();
+    const beta = parseFloat(t.beta);
+    const sp = parseFloat(t.short_percent_float || t.short_interest);
+    const pm = parseFloat(t.profit_margin);
+    const sc = parseFloat(t.smart_score ?? t.pop_score ?? 0);
+    if (p === 'balanced'){
+      if (g === 'D' || g === 'F') return false;
+      if (!isNaN(beta) && beta >= 2) return false;
+      return sc >= 55;
+    }
+    // conservative: A grade, beta < 1.5, profitable, low short interest
+    if (g !== 'A' && g !== 'B') return false;
+    if (!isNaN(beta) && beta >= 1.5) return false;
+    if (!isNaN(pm) && pm < 0) return false;
+    if (!isNaN(sp) && sp >= 5) return false;
+    return sc >= 65;
+  });
+}
+
+/* ── Watchlist (localStorage-backed) ── */
+function v2GetWatchlist(){
+  try { return JSON.parse(localStorage.getItem('v2_watchlist') || '[]'); }
+  catch(e){ return []; }
+}
+function v2InWatchlist(ticker){ return v2GetWatchlist().includes((ticker||'').toUpperCase()); }
+function v2ToggleWatchlist(ticker){
+  const T = (ticker||'').toUpperCase();
+  const list = v2GetWatchlist();
+  const idx = list.indexOf(T);
+  if (idx >= 0) list.splice(idx, 1); else list.push(T);
+  try { localStorage.setItem('v2_watchlist', JSON.stringify(list)); } catch(e){}
+  // Re-render any star buttons on screen so they reflect new state
+  document.querySelectorAll('[data-v2-star]').forEach(btn => {
+    const tk = btn.getAttribute('data-v2-star');
+    btn.classList.toggle('starred', v2InWatchlist(tk));
+    btn.setAttribute('aria-pressed', v2InWatchlist(tk));
+  });
+  if (typeof v2RerenderProfile === 'function') v2RerenderProfile();
+}
+
+/* Star button HTML (used in stock modal). data-v2-star = ticker */
+function v2StarBtnHTML(ticker){
+  const on = v2InWatchlist(ticker);
+  return '<button class="v2-star-btn ' + (on ? 'starred' : '') + '" data-v2-star="' + ticker + '" ' +
+         'onclick="event.stopPropagation();v2ToggleWatchlist(\'' + ticker + '\')" ' +
+         'aria-pressed="' + on + '" title="' + (on ? 'Remove from watchlist' : 'Add to watchlist') + '">' +
+         '<svg width="16" height="16" viewBox="0 0 24 24" fill="' + (on ? '#f59e0b' : 'none') + '" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+         '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>' +
+         '</button>';
+}
+
+/* My Exposure widget — sector concentration of starred tickers. */
+function v2RenderWatchlistExposure(allTickers){
+  const watch = v2GetWatchlist();
+  if (!watch.length) return '';
+  const lookup = Object.fromEntries(allTickers.map(t => [(t.ticker||'').toUpperCase(), t]));
+  const items = watch.map(sym => lookup[sym]).filter(Boolean);
+  if (!items.length) return '';
+
+  // Group by sub-sector
+  const groups = {};
+  items.forEach(t => {
+    const s = (t.sub_sector || t.sector || 'Other').trim();
+    if (!groups[s]) groups[s] = { count:0, avgScore:0, scoreSum:0 };
+    groups[s].count++;
+    const sc = parseFloat(t.smart_score ?? t.pop_score ?? 0);
+    if (!isNaN(sc) && sc > 0){ groups[s].scoreSum += sc; }
+  });
+  Object.values(groups).forEach(g => { g.avgScore = g.count ? Math.round(g.scoreSum / g.count) : 0; });
+
+  const ranked = Object.entries(groups).map(([k,v]) => ({ name:k, ...v })).sort((a,b) => b.count - a.count);
+  const total = items.length;
+  const topPct = total ? (ranked[0].count / total) * 100 : 0;
+  const overweight = topPct >= 40;
+
+  const cells = ranked.map(r => {
+    const pct = total ? (r.count / total) * 100 : 0;
+    return '<div class="v2-exp-row">' +
+      '<div class="v2-exp-name">' + v2EscHTML(r.name) + '</div>' +
+      '<div class="v2-exp-bar"><div class="v2-exp-fill" style="width:' + pct.toFixed(0) + '%"></div></div>' +
+      '<div class="v2-exp-count">' + r.count + ' · ' + pct.toFixed(0) + '%</div>' +
+    '</div>';
+  }).join('');
+
+  const warning = overweight
+    ? '<div class="v2-exp-warn">⚠️ <strong>' + topPct.toFixed(0) + '%</strong> of your watchlist sits in <strong>' + v2EscHTML(ranked[0].name) + '</strong>. A sector drawdown would hit hard — consider balancing.</div>'
+    : '';
+
+  return '<div class="v2ov-card v2-watchlist-card">' +
+    '<div class="v2ov-card-head"><div>' +
+      '<div class="v2ov-title">⭐ My Watchlist · ' + total + ' stocks</div>' +
+      '<div class="v2ov-sub">Sector concentration · star a stock to add</div>' +
+    '</div></div>' +
+    warning +
+    '<div class="v2-exp-list">' + cells + '</div>' +
+  '</div>';
+}
+
+/* Sector drawdown banner — alert when any sub-sector is bleeding. */
+function v2RenderDrawdownBanner(tickers){
+  const groups = {};
+  tickers.forEach(t => {
+    const s = (t.sub_sector || t.sector || '').trim();
+    if (!s) return;
+    const m = parseFloat(t.momentum_1m);
+    if (isNaN(m)) return;
+    if (!groups[s]) groups[s] = { sum:0, n:0, items:[] };
+    groups[s].sum += m;
+    groups[s].n++;
+    groups[s].items.push(t);
+  });
+  let worst = null;
+  Object.entries(groups).forEach(([k, v]) => {
+    if (v.n < 3) return;
+    const avg = v.sum / v.n;
+    if (avg <= -8 && (worst === null || avg < worst.avg)){
+      worst = { name:k, avg, items:v.items };
+    }
+  });
+  if (!worst) return '';
+
+  // Find the most-resilient (highest Quality) names in the affected sector
+  const survivors = worst.items
+    .filter(t => (t.grade === 'A' || t.grade === 'B'))
+    .sort((a, b) => parseFloat(b.smart_score||0) - parseFloat(a.smart_score||0))
+    .slice(0, 3);
+
+  const survivorChips = survivors.map(t =>
+    '<span class="v2-dd-survivor" onclick="openStockModal(\'' + t.ticker + '\')">' +
+      v2LogoHTML(t.ticker, 'sm') + '<span>' + t.ticker + '</span>' +
+    '</span>'
+  ).join('');
+
+  return '<div class="v2-drawdown-banner">' +
+    '<div class="v2-dd-head">' +
+      '<span class="v2-dd-icon">📉</span>' +
+      '<div>' +
+        '<div class="v2-dd-title">' + v2EscHTML(worst.name) + ' under pressure</div>' +
+        '<div class="v2-dd-sub">Average ' + worst.avg.toFixed(1) + '% over 1 month · ' + worst.items.length + ' stocks in sector</div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="v2-dd-playbook">' +
+      '<div class="v2-dd-pb-title">📖 Playbook</div>' +
+      '<div class="v2-dd-pb-body">' +
+        'Sector drawdowns of this size typically recover over 4–8 weeks for quality names. Avoid catching the falling knife in C/D-grade picks — wait for the model score to bottom and start climbing.' +
+      '</div>' +
+      (survivors.length ? '<div class="v2-dd-pb-title" style="margin-top:8px">A/B-grade resilience</div><div class="v2-dd-survivors">' + survivorChips + '</div>' : '') +
+    '</div>' +
+  '</div>';
+}
+
+/* ── Profile rerender hook ── */
+function v2RerenderProfile(){
+  const universe = (typeof _allTickerData === 'object' && _allTickerData)
+    ? Object.values(_allTickerData)
+    : (window.__AH_DATA__ && window.__AH_DATA__.tickers) || [];
+  if (universe.length) renderV2Overview(universe);
+}
+
 function renderV2Overview(tickers){
   const root = document.getElementById('v2-overview');
   if (!root || !Array.isArray(tickers) || !tickers.length) return;
+
+  // Risk profile filtering — Aggressive returns the full universe;
+  // Balanced / Conservative apply tighter rules. The drawdown banner
+  // and watchlist exposure read from the FULL universe so the user
+  // can still see sector pressure even if their profile filtered the
+  // affected tickers out.
+  const fullUniverse = tickers;
+  const profile = v2CurrentProfile();
+  const filtered = v2FilterByProfile(tickers);
+  const profileInfo = V2_PROFILES[profile] || V2_PROFILES.aggressive;
+  const pilotBanner = profile !== 'aggressive'
+    ? '<div class="v2-profile-banner">' +
+        '<span class="v2-pb-pill">' + profileInfo.emoji + ' ' + profileInfo.label + '</span>' +
+        '<span class="v2-pb-text">' + profileInfo.sub + ' · showing <strong>' + filtered.length + '</strong> of ' + fullUniverse.length + ' stocks (pilot subset of current universe)</span>' +
+        '<button class="v2-pb-close" onclick="v2SetProfile(\'aggressive\')" title="Switch to Aggressive (full universe)">Show all →</button>' +
+      '</div>'
+    : '';
+
   root.innerHTML =
-    v2RenderTodaysBrief(tickers) +
-    v2RenderWhatChanged(tickers) +
-    v2RenderKpiStrip(tickers) +
+    pilotBanner +
+    v2RenderDrawdownBanner(fullUniverse) +
+    v2RenderWatchlistExposure(fullUniverse) +
+    v2RenderTodaysBrief(filtered) +
+    v2RenderWhatChanged(filtered) +
+    v2RenderKpiStrip(filtered) +
     '<div class="v2ov-row">' +
-      v2RenderSectors(tickers) +
-      v2RenderDistAndMovers(tickers) +
+      v2RenderSectors(filtered) +
+      v2RenderDistAndMovers(filtered) +
     '</div>' +
     '<div class="v2ov-row equal">' +
-      v2RenderEarnings(tickers) +
-      v2RenderUpcomingEarnings(tickers) +
+      v2RenderEarnings(filtered) +
+      v2RenderUpcomingEarnings(filtered) +
     '</div>' +
     '<div class="v2-disclaimer">' +
       '<strong>Educational research tool.</strong> ' +
@@ -6823,7 +7190,7 @@ function openStockModal(ticker) {
       <div style="display:flex;gap:12px;align-items:flex-start;min-width:0;flex:1">
         ${(typeof v2LogoHTML === 'function') ? v2LogoHTML(t.ticker, 'lg') : ''}
         <div style="min-width:0;flex:1">
-          <div class="fd-tic">${t.ticker}</div>
+          <div class="fd-tic" style="display:inline-flex;align-items:center;gap:8px">${t.ticker}${(typeof v2StarBtnHTML === 'function') ? v2StarBtnHTML(t.ticker) : ''}</div>
           <div class="fd-co">${t.name || ''} · ${sub || sector}</div>
         </div>
       </div>
