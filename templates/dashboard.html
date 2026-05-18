@@ -3875,11 +3875,30 @@ function v2BuildTemplateThesis(t){
   /* ── Headline + catalyst footer ──
      Alpha Score number is deliberately omitted here — the gauge in the
      Investment Thesis box already shows it. We only keep the Relative
-     Strength + Institutional Accumulation badges as the unique info. */
+     Strength + Institutional Accumulation + Valuation pills as the
+     unique info. The valuation summary becomes the hover tooltip. */
   let extraBadges = '';
   try {
     if (typeof buildRsBadge === 'function') extraBadges += buildRsBadge(sym);
     if (typeof buildBlueDot === 'function') extraBadges += buildBlueDot(t);
+    if (typeof valuationVerdict === 'function'){
+      const vv = valuationVerdict(t);
+      if (vv && vv.verdict){
+        const isPos = /^cheap$/i.test(vv.verdict);
+        const isNeg = /^(expensive|very expensive)$/i.test(vv.verdict);
+        const cls = isPos ? 'v2-pos-pill-sm v2-keyword-pill'
+                  : isNeg ? 'v2-neg-pill-sm v2-keyword-pill'
+                  : 'v2-keyword-pill';
+        const inlineStyle = (isPos || isNeg) ? '' : (
+          'background:#fff;color:' + vv.color + ';border:1px solid ' + vv.border + ';' +
+          'font-weight:900;letter-spacing:.06em;font-size:10.5px;padding:2px 8px;' +
+          'border-radius:5px;text-transform:uppercase;display:inline-block;line-height:1.4'
+        );
+        const tip = v2EscHTML((vv.summary || '').replace(/<[^>]+>/g,''));
+        extraBadges += '<span class="' + cls + '" title="' + tip + '" style="' + inlineStyle + ';cursor:help">' +
+          '💰 ' + v2EscHTML(vv.verdict) + '</span>';
+      }
+    }
   } catch(e){}
   const headline = extraBadges
     ? '<div class="v2-qs-head"><span class="v2-qs-head-badges">' + extraBadges + '</span></div>'
@@ -6883,36 +6902,6 @@ function openStockModal(ticker) {
 
     <div id="modal-earnings-card-${ticker}" data-modal-earnings="${ticker}" style="margin-top:12px"></div>
 
-    ${(() => {
-      const v = valuationVerdict(t);
-      const isPos = /^cheap$/i.test(v.verdict);
-      const isNeg = /^(expensive|very expensive)$/i.test(v.verdict);
-      const sumPillCls = isPos ? 'v2-pos-pill-sm' : isNeg ? 'v2-neg-pill-sm' : '';
-      const verdictBadge = isPos || isNeg
-        ? `<span class="${sumPillCls}" style="font-size:12px;padding:5px 12px">Valuation: ${v.verdict}</span>`
-        : `<div style="font-size:12px;font-weight:900;color:${v.color};
-                     text-transform:uppercase;letter-spacing:.06em;
-                     padding:5px 12px;background:#fff;border-radius:7px;
-                     border:1.5px solid ${v.border};white-space:nowrap;
-                     box-shadow:0 1px 1px rgba(15,23,42,.04)">
-            Valuation: ${v.verdict}
-          </div>`;
-      const summaryClick = isPos
-        ? `<span class="v2-pos-pill-sm" style="font-size:11px">${v.verdict}</span>`
-        : `<span style="color:${v.color};font-weight:900">${v.verdict}</span>`;
-      return `<details class="m-collapse" open><summary>💰 Valuation · ${summaryClick}</summary><div class="m-collapse-body">
-        <div style="position:relative;margin-top:12px;padding:14px 16px 14px 20px;border-radius:10px;
-                background:linear-gradient(135deg,#f8fafc 0%,#eef2ff 100%);
-                border:1px solid #e0e7ff;
-                box-shadow:0 1px 2px rgba(15,23,42,.04);
-                display:flex;align-items:center;gap:14px;overflow:hidden">
-          <span style="position:absolute;left:0;top:0;bottom:0;width:4px;
-                background:linear-gradient(180deg,#4338ca 0%,#8b5cf6 50%,#ec4899 100%)"></span>
-          ${verdictBadge}
-          <div style="font-size:14px;color:#0f172a;line-height:1.55;font-weight:500">${v.summary}</div>
-        </div>
-      </div></details>`;
-    })()}
 
     ${(() => {
       const dcf = reverseDCF(t);
