@@ -57,16 +57,27 @@ def assign_profile(t: dict) -> list[str]:
         out.append("balanced")
 
     # ── Conservative ──
+    # Audit on 2026-05-19: Conservative profile only captured 15 names —
+    # many quality blue chips (COST, LLY, V, XOM, JNJ, PEP) were excluded
+    # because (a) score 55-59 missed the score>=60 gate, or (b)
+    # dividend_yield is null in the feed so the dividend gate rejected them.
+    # Loosened to score>=55 and added a large-cap exemption so quality
+    # mega caps without populated dividend data still qualify.
     conservative_ok = True
     if grade not in ("A", "B"):                   conservative_ok = False
     if beta == beta and beta >= 1.3:              conservative_ok = False
     if pm == pm and pm < 0:                       conservative_ok = False  # must be profitable
     if short_pct == short_pct and short_pct >= 5: conservative_ok = False
-    if score and score < 60:                      conservative_ok = False
+    if score and score < 55:                      conservative_ok = False  # 60 -> 55
     if not in_spx and not in_dji:                 conservative_ok = False  # S&P/Dow members only
-    # Dividend OR Dow 30 (blue-chip exemption)
-    has_dividend = div_yield == div_yield and div_yield >= 0.005  # >=0.5%
-    if not has_dividend and not in_dji:           conservative_ok = False
+    # Dividend / blue-chip / large-cap exemption: must satisfy ONE of:
+    #   - dividend yield >= 0.5%
+    #   - Dow 30 member (blue-chip pedigree)
+    #   - market cap >= $50B AND grade A (mega-cap quality, dividend data missing)
+    has_dividend  = div_yield == div_yield and div_yield >= 0.005   # 0.5%
+    large_cap_a   = market_cap >= 50e9 and grade == "A"
+    if not (has_dividend or in_dji or large_cap_a):
+        conservative_ok = False
     if conservative_ok:
         out.append("conservative")
 

@@ -61,6 +61,61 @@ def _safe_float(v: Any, default: Optional[float] = None) -> Optional[float]:
         return default
 
 
+# Map common upstream sector labels to canonical GICS-aligned names that
+# the frontend baselines + backend SECTOR_WEIGHT_DELTAS keys use. Without
+# this normalization, legacy curated rows ('Telecom') and weird FMP values
+# ('Financial' instead of 'Financial Services') skip sector-aware scoring.
+_SECTOR_ALIASES = {
+    # Communication Services
+    "telecom":                  "Communication Services",
+    "telecommunications":       "Communication Services",
+    "communication":            "Communication Services",
+    "communications":           "Communication Services",
+    "media":                    "Communication Services",
+    # Financial Services
+    "financial":                "Financial Services",
+    "financials":               "Financial Services",
+    "banks":                    "Financial Services",
+    "banking":                  "Financial Services",
+    "insurance":                "Financial Services",
+    # Healthcare
+    "health care":              "Healthcare",
+    "health":                   "Healthcare",
+    "biotechnology":            "Healthcare",
+    # Consumer
+    "consumer staples":         "Consumer Defensive",
+    "consumer cyclical":        "Consumer Cyclical",
+    "consumer discretionary":   "Consumer Cyclical",
+    # Materials
+    "materials":                "Basic Materials",
+    # Real Estate
+    "real estate investment trusts (reits)": "Real Estate",
+    # Tech aliases
+    "information technology":   "Technology",
+    "tech":                     "Technology",
+    # Energy / Utilities / Industrials usually arrive already canonical
+}
+_CANONICAL_SECTORS = {
+    "Technology", "Communication Services", "Healthcare", "Financial Services",
+    "Consumer Defensive", "Consumer Cyclical", "Industrials", "Energy",
+    "Utilities", "Real Estate", "Basic Materials",
+}
+
+
+def _normalize_sector(s: Any) -> str:
+    """Map any upstream sector label to canonical GICS name. Returns empty
+    string for missing / placeholder values."""
+    if not s or not isinstance(s, str):
+        return ""
+    raw = s.strip()
+    if not raw or raw in ("—", "-", "?", "n/a", "N/A"):
+        return ""
+    if raw in _CANONICAL_SECTORS:
+        return raw
+    aliased = _SECTOR_ALIASES.get(raw.lower())
+    return aliased if aliased else raw  # unknown labels pass through as-is
+
+
 def _compute_rsi(closes: list[float], period: int = 14) -> Optional[float]:
     if len(closes) < period + 2:
         return None
@@ -1549,7 +1604,7 @@ class DataCoordinator:
 
             # Fundamentals — yf primary, AV fund secondary, FMP fallback
             "name":               _yf("name")    or fund.get("name")     or fmp_fund.get("name")    or meta.get("name", ""),
-            "sector":             _yf("sector")  or fund.get("sector")   or fmp_fund.get("sector")  or meta.get("sector", ""),
+            "sector":             _normalize_sector(_yf("sector")  or fund.get("sector")   or fmp_fund.get("sector")  or meta.get("sector", "")),
             "industry":           _yf("industry") or fund.get("industry") or fmp_fund.get("industry", ""),
             "exchange":           _yf("exchange") or fund.get("exchange") or fmp_fund.get("exchange") or meta.get("exchange", ""),
             "market_cap":         _yf("market_cap",         fund) or fmp_fund.get("market_cap"),

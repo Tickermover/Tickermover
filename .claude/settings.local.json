@@ -24,7 +24,14 @@
       "Bash(curl -s -o /dev/null -w \"HTTP %{http_code} · %{time_total}s · size %{size_download}\\\\n\" https://web-production-17a78.up.railway.app/api/regime)",
       "Bash(curl -s -I https://web-production-17a78.up.railway.app/api/universe)",
       "Bash(curl -s https://web-production-17a78.up.railway.app/app -o /tmp/app.html)",
-      "Bash(grep -o \"__AH_DATA__\\\\s*=\\\\s*[^;]\\\\{1,80\\\\}\" /tmp/app.html)"
+      "Bash(grep -o \"__AH_DATA__\\\\s*=\\\\s*[^;]\\\\{1,80\\\\}\" /tmp/app.html)",
+      "Bash(curl -s -o /tmp/u.json -w \"HTTP %{http_code} · %{time_total}s · %{size_download}b\\\\n\" https://web-production-17a78.up.railway.app/api/universe)",
+      "Bash(xargs echo \"Ticker count:\")",
+      "Bash(curl -s -o /tmp/app.html -w \"HTTP %{http_code} · %{time_total}s · %{size_download}b\\\\n\" https://web-production-17a78.up.railway.app/app)",
+      "Bash(curl -s -o /dev/null -w \"HTTP %{http_code} · %{time_total}s\\\\n\" https://web-production-17a78.up.railway.app/api/regime)",
+      "Bash(curl -s https://web-production-17a78.up.railway.app/api/universe -o /tmp/u.json)",
+      "Bash(python -c ' *)",
+      "Bash(cp /tmp/u.json ./u.json)"
     ]
   }
 }

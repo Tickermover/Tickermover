@@ -435,15 +435,18 @@ INDEX_EXTRA: list[str] = sorted(_INDEX_UNIVERSE - set(HG))
 
 def _placeholder_meta(ticker: str) -> dict:
     """Lightweight meta for index-extra tickers — the FMP/YF enrichment
-    overwrites these on the first refresh cycle. We provide a sensible
-    default so the universe list isn't empty before data lands."""
+    overwrites these on the first refresh cycle. Empty strings are used
+    for sector / sub_sector / tier so the merge logic in data_coordinator
+    falls THROUGH to live data instead of treating placeholder em-dashes
+    as truthy values (which previously left ~7% of the universe stuck on
+    '—' when YF returned partial data without sector)."""
     return {
         "name":            ticker,              # FMP fills the real company name
-        "sector":          "—",                  # FMP fills the GICS sector
-        "sub_sector":      "—",
-        "subsector":       "—",
-        "market_cap_tier": "—",                  # filled from market_cap once known
-        "growth_tier":     "—",
+        "sector":          "",                   # empty -> falls through merge chain
+        "sub_sector":      "",
+        "subsector":       "",
+        "market_cap_tier": "",
+        "growth_tier":     "",
         "thesis":          "Index constituent",  # generic so the modal has something
         "rationale":       "Index constituent",
         "exchange":        _EXCHANGE.get(ticker, "NASDAQ"),

@@ -308,8 +308,15 @@ async def _tech_refresh() -> None:
                         await coordinator.get_quarterly_results(sym)
 
                     # ── FMP fallback (if yfinance returned no data) ──────
-                    if cache.get(f"yf:{sym}") is None and config.FMP_API_KEY:
-                        await coordinator.get_fmp_fundamentals(sym)
+                    # Audit found ~7% of universe stuck without sector when YF
+                    # returned price/etc. but no sector field. Trigger FMP
+                    # whenever YF cache is empty OR YF returned no sector —
+                    # FMP profile reliably carries sector for SP500/Nasdaq names.
+                    _yf_cached = cache.get(f"yf:{sym}") or {}
+                    _yf_has_sector = bool((_yf_cached.get("sector") or "").strip())
+                    if (not _yf_cached or not _yf_has_sector) and config.FMP_API_KEY:
+                        if cache.get(f"fmp_fund:{sym}") is None:
+                            await coordinator.get_fmp_fundamentals(sym)
                         if cache.get(f"fmp_quote:{sym}") is None:
                             await coordinator.get_fmp_quote(sym)
 
