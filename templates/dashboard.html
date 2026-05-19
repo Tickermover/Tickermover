@@ -4722,24 +4722,102 @@ function v2RenderPerformanceChart(tickers){
    The universe API doesn't actually populate the *_date fields
    (all return null). But t.days_to_earnings IS populated by the
    backend, so we derive the date from "today + N days". */
+/* ── Row-only builders (used by the merged Earnings card) ──
+   Separated from v2RenderEarnings / v2RenderUpcomingEarnings so the
+   tabbed merged card can compose them without fragile HTML stripping. */
+function _v2RecentEarningsRowsHTML(tickers){
+  const now = new Date();
+  now.setHours(0,0,0,0);
+  const items = [];
+  tickers.forEach(t => {
+    const all = (t.eps_quarters || []).filter(q => q && q.date);
+    if (!all.length) return;
+    const sorted = [...all].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+    const q = sorted[0];
+    const d = new Date(String(q.date).slice(0, 10) + 'T00:00:00');
+    if (isNaN(d) || d > now) return;
+    items.push({ t, q, d });
+  });
+  items.sort((a, b) => b.d - a.d);
+  const top5 = items.slice(0, 5);
+  if (!top5.length){
+    return '<div style="padding:14px 4px;color:#94a3b8;font-size:12.5px;text-align:center">No recent earnings reports in our universe.</div>';
+  }
+  const nowYr = new Date().getFullYear();
+  return top5.map(({t, q, d}) => {
+    const dd = String(d.getDate()).padStart(2, '0');
+    const mm = d.toLocaleDateString('en-US', {month:'short'});
+    const yr = d.getFullYear();
+    const yrLabel = (yr && yr !== nowYr) ? "'" + String(yr).slice(-2) : '';
+    const beat = q.beat === true;
+    const miss = q.beat === false;
+    const tag = beat ? 'beat' : miss ? 'miss' : 'beat';
+    const tagText = beat ? 'BEAT' : miss ? 'MISS' : '—';
+    const surp = q.surprise_pct != null ? (q.surprise_pct >= 0 ? '+' : '') + q.surprise_pct.toFixed(1) + '%' : '—';
+    const surpcls = q.surprise_pct == null ? '' : (q.surprise_pct >= 0 ? 'pos' : 'neg');
+    const actual = q.actual != null ? '$' + q.actual.toFixed(2) : '—';
+    const est    = q.estimate != null ? '$' + q.estimate.toFixed(2) : '—';
+    return '<div class="v2ov-tl-item" onclick="openStockModal(\'' + t.ticker + '\')">' +
+      '<div class="v2ov-tl-date"><strong>' + dd + '</strong>' + mm + (yrLabel ? ' ' + yrLabel : '') + '</div>' +
+      v2LogoHTML(t.ticker, 'sm') +
+      '<div class="v2ov-tl-body">' +
+        '<div class="v2ov-tl-row1">' +
+          '<span class="v2ov-tl-tic">' + t.ticker + '</span>' +
+          '<span class="v2ov-tl-name">' + v2EscHTML((t.name || '').slice(0, 22)) + '</span>' +
+          '<span class="v2ov-tl-tag ' + tag + '">' + tagText + '</span>' +
+        '</div>' +
+        '<div class="v2ov-tl-row2">EPS ' + actual + ' vs ' + est + ' est · ' +
+          '<span class="surp ' + surpcls + '">' + surp.replace('-', '−') + '</span></div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+function _v2UpcomingEarningsRowsHTML(tickers){
+  const now = new Date();
+  now.setHours(0,0,0,0);
+  const upcoming = tickers.map(t => {
+    let d = null, days = null;
+    if (t.days_to_earnings != null && t.days_to_earnings >= 0){
+      days = Number(t.days_to_earnings);
+      d = new Date(now.getTime() + days * 86400000);
+    } else {
+      const dateStr = t.earnings_date || t.next_earnings_date || t.eps_date_next;
+      if (!dateStr) return null;
+      d = new Date(String(dateStr).slice(0, 10) + 'T00:00:00');
+      if (isNaN(d)) return null;
+      days = Math.round((d - now) / 86400000);
+      if (days < 0) return null;
+    }
+    if (days > 30) return null;
+    return { t, d, days };
+  }).filter(Boolean).sort((a, b) => a.days - b.days).slice(0, 5);
+  if (!upcoming.length){
+    return '<div style="padding:14px 4px;color:#94a3b8;font-size:12.5px;text-align:center">No earnings scheduled in the next 30 days.</div>';
+  }
+  return upcoming.map(({t, d, days}) => {
+    const dd = String(d.getDate()).padStart(2, '0');
+    const mm = d.toLocaleDateString('en-US', {month:'short'});
+    const inText = days === 0 ? 'Today' : days === 1 ? 'Tomorrow' : 'in ' + days + 'd';
+    const est = t.next_eps_estimate != null ? '$' + parseFloat(t.next_eps_estimate).toFixed(2)
+              : (t.eps_estimate != null ? '$' + parseFloat(t.eps_estimate).toFixed(2) : '—');
+    return '<div class="v2ov-tl-item" onclick="openStockModal(\'' + t.ticker + '\')">' +
+      '<div class="v2ov-tl-date"><strong>' + dd + '</strong>' + mm + '</div>' +
+      v2LogoHTML(t.ticker, 'sm') +
+      '<div class="v2ov-tl-body">' +
+        '<div class="v2ov-tl-row1">' +
+          '<span class="v2ov-tl-tic">' + t.ticker + '</span>' +
+          '<span class="v2ov-tl-name">' + v2EscHTML((t.name || '').slice(0, 22)) + '</span>' +
+          '<span class="v2ov-tl-tag upcoming">' + inText + '</span>' +
+        '</div>' +
+        '<div class="v2ov-tl-row2">Est EPS ' + est + '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
 /* Combined Earnings widget — single card hosting Recent + Upcoming via a
-   tab toggle. Replaces the side-by-side pair of cards (which left the
-   sector-drawdown banner with nowhere natural to live). */
+   tab toggle. Uses the dedicated row-only builders above for clean HTML. */
 function v2RenderEarningsCombined(tickers){
-  // Build inner HTML of each tab using the existing helpers, then strip
-  // their outer .v2ov-card wrapper so we can host both inside one card.
-  const recentHTML = (function(){
-    const html = v2RenderEarnings(tickers);
-    return html.replace(/^<div class="v2ov-card earnings">/, '')
-               .replace(/<\/div>$/, '')
-               .replace(/<div class="v2ov-card-head">[\s\S]*?<\/div><\/div>/, '');  // drop inner head
-  })();
-  const upcomingHTML = (function(){
-    const html = v2RenderUpcomingEarnings(tickers);
-    return html.replace(/^<div class="v2ov-card earnings">/, '')
-               .replace(/<\/div>$/, '')
-               .replace(/<div class="v2ov-card-head">[\s\S]*?<\/div><\/div>/, '');
-  })();
   return '<div class="v2ov-card earnings v2-earnings-merged">' +
     '<div class="v2ov-card-head"><div>' +
       '<div class="v2ov-title">📊 Earnings</div>' +
@@ -4749,8 +4827,8 @@ function v2RenderEarningsCombined(tickers){
       '<button class="v2-earn-tab active" data-tab="recent"   onclick="v2SwitchEarnTab(this,\'recent\')">Recent</button>' +
       '<button class="v2-earn-tab"        data-tab="upcoming" onclick="v2SwitchEarnTab(this,\'upcoming\')">Upcoming</button>' +
     '</div></div>' +
-    '<div class="v2-earn-panel" data-panel="recent">' + recentHTML + '</div>' +
-    '<div class="v2-earn-panel" data-panel="upcoming" style="display:none">' + upcomingHTML + '</div>' +
+    '<div class="v2-earn-panel" data-panel="recent">' + _v2RecentEarningsRowsHTML(tickers) + '</div>' +
+    '<div class="v2-earn-panel" data-panel="upcoming" style="display:none">' + _v2UpcomingEarningsRowsHTML(tickers) + '</div>' +
   '</div>';
 }
 function v2SwitchEarnTab(btn, which){
