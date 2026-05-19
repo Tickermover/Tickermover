@@ -353,7 +353,10 @@ class MarketRegime:
 
     CACHE_KEY = "intel:market_regime"
     TTL       = 1800   # 30 minutes
-    INDICES   = ("SPY", "QQQ", "^VIX", "^TNX")
+    # SPY = S&P 500 · QQQ = NASDAQ-100 · DIA = Dow Jones Industrial Average ·
+    # ^VIX = volatility · ^TNX = 10-year Treasury yield (kept for regime
+    # scoring but no longer surfaced in the topbar Market Pulse).
+    INDICES   = ("SPY", "QQQ", "DIA", "^VIX", "^TNX")
 
     def __init__(self, cache):
         self.cache = cache
@@ -418,12 +421,14 @@ class MarketRegime:
                     continue
                 closes = hist["Close"].tolist()
                 last   = closes[-1]
+                ref_1  = closes[-2]   if len(closes) >= 2  else last
                 ref_5  = closes[-5]   if len(closes) >= 5  else last
                 ref_22 = closes[-22]  if len(closes) >= 22 else last
                 hi_3m  = max(closes)
                 lo_3m  = min(closes)
                 out[sym] = {
                     "last":         round(last,   2),
+                    "pct_1d":       round((last/ref_1  - 1) * 100, 2),
                     "pct_5d":       round((last/ref_5  - 1) * 100, 2),
                     "pct_1m":       round((last/ref_22 - 1) * 100, 2),
                     "dist_3m_high": round((last/hi_3m  - 1) * 100, 2),

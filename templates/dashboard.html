@@ -5369,7 +5369,9 @@ async function v2LoadMarketPulse(){
     return data;
   } catch(e){ return null; }
 }
-/* Compact (topbar) variant — just the 4 pill cards inline, no header. */
+/* Compact (topbar) variant — 4 pill cards inline. Shows TODAY's change
+   (pct_1d) — matches what brokers / TV / Investing.com show in their
+   market-pulse strips. */
 function v2RenderMarketPulseCompact(data){
   if (!data || !data.components) return '';
   const c = data.components;
@@ -5381,17 +5383,21 @@ function v2RenderMarketPulseCompact(data){
   const cards = [
     { key:'SPY',  label:'S&P 500',   stripe:'#2563eb' },
     { key:'QQQ',  label:'NASDAQ',    stripe:'#8b5cf6' },
+    { key:'DIA',  label:'DOW 30',    stripe:'#10b981' },
     { key:'^VIX', label:'VIX',       stripe:'#f97316' },
-    { key:'^TNX', label:'10Y YIELD', stripe:'#10b981', isYield:true },
   ];
   return cards.map(card => {
     const x = c[card.key];
     if (!x) return '';
-    const px = x.last != null ? x.last.toFixed(2) + (card.isYield ? '%' : '') : '';
-    return '<div class="v2-mp-mini" title="' + card.label + ' · last ' + px + '">' +
+    // Prefer today's daily change; fall back to 5-day if backend hasn't
+    // populated pct_1d yet (older cached regime payload).
+    const chg = (x.pct_1d != null) ? x.pct_1d : x.pct_5d;
+    const period = (x.pct_1d != null) ? '' : ' (5d)';
+    const px = x.last != null ? x.last.toFixed(2) : '';
+    return '<div class="v2-mp-mini" title="' + card.label + ' · last ' + px + period + '">' +
       '<span class="v2-mp-mini-stripe" style="background:' + card.stripe + '"></span>' +
       '<span class="v2-mp-mini-lbl">' + card.label + '</span>' +
-      '<span class="v2-mp-mini-chg">' + fmtPctSign(x.pct_5d) + '</span>' +
+      '<span class="v2-mp-mini-chg">' + fmtPctSign(chg) + '</span>' +
     '</div>';
   }).join('');
 }
