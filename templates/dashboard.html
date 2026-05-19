@@ -3719,20 +3719,40 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 
   // Initial pass + watch for any future renders
   sweepAll();
+  // PERF: at 545 tickers the previous observer config had two problems:
+  // 1) attributes:true + filter:['style'] created a feedback loop — every
+  //    setAttribute('style', ...) inside sweepEl re-fired the observer.
+  // 2) processed every mutation synchronously, so a single table render of
+  //    545 rows caused thousands of redundant sweeps.
+  // Fix: only watch addedNodes (subtree adds), and batch via rAF so a
+  // single render produces ONE sweep pass, not thousands.
+  let _pendingNodes = new Set();
+  let _scheduled = false;
+  function _flushPending(){
+    _scheduled = false;
+    const nodes = _pendingNodes;
+    _pendingNodes = new Set();
+    nodes.forEach(n => {
+      try {
+        if (!(n instanceof Element)) return;
+        sweepEl(n);
+        const kids = n.querySelectorAll && n.querySelectorAll('[style]');
+        if (kids) kids.forEach(sweepEl);
+      } catch(e){}
+    });
+  }
   const obs = new MutationObserver(muts => {
     for (const m of muts){
       for (const n of m.addedNodes){
-        if (n instanceof Element){
-          sweepEl(n);
-          n.querySelectorAll && n.querySelectorAll('[style]').forEach(sweepEl);
-        }
-      }
-      if (m.type === 'attributes' && m.attributeName === 'style' && m.target instanceof Element){
-        sweepEl(m.target);
+        if (n instanceof Element) _pendingNodes.add(n);
       }
     }
+    if (_pendingNodes.size && !_scheduled){
+      _scheduled = true;
+      requestAnimationFrame(_flushPending);
+    }
   });
-  obs.observe(document.body, {childList:true, subtree:true, attributes:true, attributeFilter:['style']});
+  obs.observe(document.body, {childList:true, subtree:true});
 
   // Expose so we can force-sweep after big renders if needed
   window.v2GreenSweep = sweepAll;
@@ -9437,12 +9457,23 @@ async function fullRender() {
     // shown on the Hot List did nothing when clicked.)
     tickers.forEach(t => { if (t && t.ticker) _allTickerData[t.ticker] = t; });
 
+    // CRITICAL renders (visible immediately on dashboard load)
     renderTickerTape(tickers);
-    renderHotList(data);
-    renderRisk(tickers);
-    renderNews(tickers);
-    renderFundamentals(tickers);
-    renderSectors(tickers);
+    renderHotList(data);   // ← also triggers renderV2Overview via the hook
+
+    // DEFERRED renders — these panels are hidden until the user clicks
+    // their tab. With 545 tickers, rendering the Universe table (~545
+    // rows × ~1.5KB HTML) synchronously was the main culprit behind
+    // the 'site hangs on load' reports. Defer them off the critical
+    // path so first paint is fast. requestIdleCallback batches them
+    // into the browser's idle frames; setTimeout fallback for Safari.
+    const _idle = window.requestIdleCallback || ((cb) => setTimeout(cb, 16));
+    _idle(() => { try { renderRisk(tickers);         } catch(e){console.error(e);} }, {timeout: 600});
+    _idle(() => { try { renderNews(tickers);         } catch(e){console.error(e);} }, {timeout: 800});
+    _idle(() => { try { renderSectors(tickers);      } catch(e){console.error(e);} }, {timeout: 1000});
+    // Universe table is the heaviest — defer the longest. Users almost
+    // never land directly on the Universe tab on first load.
+    _idle(() => { try { renderFundamentals(tickers); } catch(e){console.error(e);} }, {timeout: 1500});
   } catch (e) {
     console.error('[PD] fullRender failed:', e.message);
     const hts2 = document.getElementById('hot-ts'); if (hts2) hts2.textContent = '⚠ Could not reach server — retrying…';
