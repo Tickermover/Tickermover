@@ -1963,6 +1963,19 @@ body.v2 .v2ov-card.sectors .v2ov-sector-cell{
   letter-spacing:0;font-variant-numeric:tabular-nums;
 }
 
+/* ───── Active profile hint (top of Today's Signals) ───── */
+.v2-profile-hint{
+  display:inline-flex;align-items:center;gap:6px;
+  font-size:11px;font-weight:700;color:#475569;
+  background:#f8fafc;border:1px solid #e2e8f0;border-radius:999px;
+  padding:4px 11px;margin-bottom:12px;
+}
+.v2-ph-em{font-size:13px;line-height:1}
+.v2-ph-label{color:#4338ca;font-weight:800;letter-spacing:.01em}
+.v2-ph-sep{color:#cbd5e1}
+.v2-ph-count{color:#475569}
+.v2-ph-count strong{color:#0f172a;font-weight:800;font-variant-numeric:tabular-nums}
+
 /* ───── Earnings merged card — Recent / Upcoming tabs ───── */
 .v2-earnings-merged .v2ov-card-head{align-items:center}
 .v2-earn-tabs{display:inline-flex;gap:4px;background:#f1f5f9;border-radius:8px;padding:3px;margin-left:auto}
@@ -4218,11 +4231,19 @@ function v2Confidence(t){
    Recent Earnings module + Today's Movers list at the bottom keep
    doing their job without overlap. */
 function v2RenderWhatChanged(tickers){
-  // Climbing & declining — score velocity gainers/losers this week
-  const withVel = tickers
-    .map(t => ({ t, sv: parseFloat(t.score_velocity_7d ?? t.score_velocity ?? 0) }))
-    .filter(x => !isNaN(x.sv));
-  const climbers = withVel.filter(x => x.sv > 0).sort((a, b) => b.sv - a.sv).slice(0, 4);
+  // Climbing & declining — prefer score-velocity (model conviction
+  // signal) when populated; fall back to momentum_1m (real % over 30d)
+  // since score_velocity_7d is null in current backend data.
+  const withVel = tickers.map(t => {
+    let sv = parseFloat(t.score_velocity_7d ?? t.score_velocity ?? NaN);
+    let unit = 'pts';
+    if (isNaN(sv) || sv === 0){
+      sv = parseFloat(t.momentum_1m);
+      unit = '%';
+    }
+    return { t, sv, unit };
+  }).filter(x => !isNaN(x.sv) && x.sv !== 0);
+  const climbers  = withVel.filter(x => x.sv > 0).sort((a, b) => b.sv - a.sv).slice(0, 4);
   const decliners = withVel.filter(x => x.sv < 0).sort((a, b) => a.sv - b.sv).slice(0, 4);
 
   // Universe pulse — cross-cutting aggregate stats
@@ -4263,17 +4284,17 @@ function v2RenderWhatChanged(tickers){
     '<div class="v2-changed-row" onclick="openStockModal(\'' + x.t.ticker + '\')">' +
       '<span class="tic">' + x.t.ticker + '</span>' +
       '<span class="note">' + v2EscHTML((x.t.name || '').slice(0, 18)) + '</span>' +
-      '<span class="val up">+' + x.sv.toFixed(0) + '</span>' +
+      '<span class="val up">+' + x.sv.toFixed(x.unit === '%' ? 1 : 0) + x.unit + '</span>' +
     '</div>').join('')
-    : '<div class="v2-changed-empty">No notable climbers this week</div>';
+    : '<div class="v2-changed-empty">No notable climbers</div>';
 
   const declineCol = decliners.length ? decliners.map(x =>
     '<div class="v2-changed-row" onclick="openStockModal(\'' + x.t.ticker + '\')">' +
       '<span class="tic">' + x.t.ticker + '</span>' +
       '<span class="note">' + v2EscHTML((x.t.name || '').slice(0, 18)) + '</span>' +
-      '<span class="val dn">' + x.sv.toFixed(0) + '</span>' +
+      '<span class="val dn">' + x.sv.toFixed(x.unit === '%' ? 1 : 0) + x.unit + '</span>' +
     '</div>').join('')
-    : '<div class="v2-changed-empty">No notable decliners this week</div>';
+    : '<div class="v2-changed-empty">No notable decliners</div>';
 
   const pulseRow = (label, value) =>
     '<div class="v2-changed-row" style="cursor:default">' +
@@ -4287,15 +4308,20 @@ function v2RenderWhatChanged(tickers){
     pulseRow('Earnings · 30d',  earningsLast30) +
     pulseRow('Top sub-sector',  topSector ? v2EscHTML(topSector.name) : '—');
 
+  // Honest column labels — say what the data actually is. When the
+  // backend starts populating score_velocity_7d the climbers will show
+  // 'pts' suffix and the heading still reads correctly.
+  const climbHead   = climbers.length  && climbers[0].unit  === '%' ? '📈 Top movers · 1M'    : '📈 Score climbing';
+  const declineHead = decliners.length && decliners[0].unit === '%' ? '📉 Lagging · 1M'       : '📉 Score declining';
   return '' +
     '<div class="v2-changed">' +
-      '<div class="v2-changed-head">📊 What changed this week</div>' +
+      '<div class="v2-changed-head">📊 What changed</div>' +
       '<div class="v2-changed-grid">' +
         '<div class="v2-changed-col">' +
-          '<div class="v2-changed-col-h">📈 Score climbing</div>' + climbCol +
+          '<div class="v2-changed-col-h">' + climbHead + '</div>' + climbCol +
         '</div>' +
         '<div class="v2-changed-col">' +
-          '<div class="v2-changed-col-h">📉 Score declining</div>' + declineCol +
+          '<div class="v2-changed-col-h">' + declineHead + '</div>' + declineCol +
         '</div>' +
         '<div class="v2-changed-col">' +
           '<div class="v2-changed-col-h">✨ Universe pulse</div>' + pulseCol +
@@ -4354,22 +4380,34 @@ function v2RenderDistAndMovers(tickers){
   tickers.forEach(t => { if (grades.hasOwnProperty(t.grade)) grades[t.grade]++; });
   const pct = g => Math.max(0, (grades[g] / total) * 100);
 
-  const withChg = tickers.filter(t => t.change_pct != null && !isNaN(parseFloat(t.change_pct)));
+  // Only count tickers that actually MOVED (|change| >= 0.3%). At small
+  // profile sizes (Conservative ~51) the universe contains many flat
+  // names; without this filter the 'Biggest Movers' card surfaces 0.0%
+  // tickers, which is meaningless.
+  const withChg = tickers
+    .filter(t => t.change_pct != null && !isNaN(parseFloat(t.change_pct)))
+    .filter(t => Math.abs(parseFloat(t.change_pct)) >= 0.3);
   const sortedByChg = [...withChg].sort((a, b) => parseFloat(b.change_pct) - parseFloat(a.change_pct));
-  const movers = [...sortedByChg.slice(0, 3), ...sortedByChg.slice(-2).reverse()];
+  // Top 3 gainers, bottom 2 decliners (negative). Avoids double-counting
+  // when there are only 3 movers total — slice handles overlap naturally.
+  const gainers = sortedByChg.filter(t => parseFloat(t.change_pct) > 0).slice(0, 3);
+  const losers  = sortedByChg.filter(t => parseFloat(t.change_pct) < 0).slice(-2).reverse();
+  const movers  = [...gainers, ...losers];
 
-  const moverHTML = movers.map(t => {
-    const ch = parseFloat(t.change_pct);
-    const cls = ch >= 0 ? 'up' : 'dn';
-    return '<div class="v2ov-mover" onclick="openStockModal(\'' + t.ticker + '\')">' +
-             v2LogoHTML(t.ticker, 'sm') +
-             '<div class="v2ov-mover-name">' +
-               '<div class="t">' + t.ticker + '</div>' +
-               '<div class="n">' + v2EscHTML((t.name || '').slice(0, 26)) + '</div>' +
-             '</div>' +
-             '<div class="v2ov-mover-pct ' + cls + '">' + (ch >= 0 ? '+' : '−') + Math.abs(ch).toFixed(1) + '%</div>' +
-           '</div>';
-  }).join('');
+  const moverHTML = movers.length
+    ? movers.map(t => {
+        const ch = parseFloat(t.change_pct);
+        const cls = ch >= 0 ? 'up' : 'dn';
+        return '<div class="v2ov-mover" onclick="openStockModal(\'' + t.ticker + '\')">' +
+                 v2LogoHTML(t.ticker, 'sm') +
+                 '<div class="v2ov-mover-name">' +
+                   '<div class="t">' + t.ticker + '</div>' +
+                   '<div class="n">' + v2EscHTML((t.name || '').slice(0, 26)) + '</div>' +
+                 '</div>' +
+                 '<div class="v2ov-mover-pct ' + cls + '">' + (ch >= 0 ? '+' : '−') + Math.abs(ch).toFixed(1) + '%</div>' +
+               '</div>';
+      }).join('')
+    : '<div style="padding:14px 4px;color:#94a3b8;font-size:12px;text-align:center">All stocks holding steady today.</div>';
 
   return '' +
     '<div class="v2ov-card">' +
@@ -5443,11 +5481,23 @@ function renderV2Overview(tickers){
   // affected tickers out.
   const fullUniverse = tickers;
   const filtered = v2FilterByProfile(tickers);
+  const profile = v2CurrentProfile();
+  const profileInfo = V2_PROFILES[profile] || V2_PROFILES.aggressive;
 
-  // Pilot banner intentionally removed — the profile chip in the topbar
-  // already communicates which profile is active; the banner was noisy
-  // and pushed the meaningful widgets down.
+  // Tiny profile indicator — confirms WHICH set of stocks the modules
+  // below are operating on. Aggressive (the default) gets no line so
+  // the dashboard stays clean for the most common case.
+  const profileHint = profile !== 'aggressive'
+    ? '<div class="v2-profile-hint">' +
+        '<span class="v2-ph-em">' + profileInfo.emoji + '</span>' +
+        '<span class="v2-ph-label">' + profileInfo.label + ' view</span>' +
+        '<span class="v2-ph-sep">·</span>' +
+        '<span class="v2-ph-count"><strong>' + filtered.length + '</strong> of ' + fullUniverse.length + ' stocks</span>' +
+      '</div>'
+    : '';
+
   root.innerHTML =
+    profileHint +
     v2RenderWatchlistExposure(fullUniverse) +
     v2RenderTodaysBrief(filtered) +
     v2RenderWhatChanged(filtered) +
