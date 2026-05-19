@@ -1870,6 +1870,27 @@ body.v2 .v2ov-card.sectors .v2ov-sector-cell{
 }
 .v2-pb-close:hover{background:#eef2ff}
 
+/* ───── Universe membership chips (under company name in modal) ───── */
+.v2-universe-row{
+  display:flex;align-items:center;gap:5px;flex-wrap:wrap;
+  margin-top:5px;font-size:11px;
+}
+.v2-uni-label{
+  font-size:9.5px;font-weight:800;letter-spacing:.06em;
+  text-transform:uppercase;color:#64748b;margin-right:2px;
+}
+.v2-uni-chip{
+  display:inline-flex;align-items:center;gap:3px;
+  font-size:10.5px;font-weight:800;letter-spacing:.02em;
+  border:1px solid;border-radius:5px;padding:2px 7px;line-height:1.4;
+}
+.v2-uni-chip.secondary{opacity:.55}
+.v2-uni-idx{
+  font-size:10px;font-weight:700;color:#475569;
+  background:#f1f5f9;border:1px solid #e2e8f0;border-radius:5px;
+  padding:2px 7px;letter-spacing:.02em;
+}
+
 /* ───── Star button on stock modal ───── */
 .v2-star-btn{
   display:inline-flex;align-items:center;justify-content:center;
@@ -5016,6 +5037,39 @@ function v2ToggleWatchlist(ticker){
   if (typeof v2RerenderProfile === 'function') v2RerenderProfile();
 }
 
+/* Universe membership chips — shows which profile(s) a ticker qualifies
+   for. Reads t.profiles (deterministic, populated by Phase 1 backend). */
+function v2UniverseChipsHTML(t){
+  const list = Array.isArray(t && t.profiles) ? t.profiles : [];
+  if (!list.length) return '';
+  const meta = {
+    aggressive:   { label:'Aggressive',   emoji:'🚀', bg:'#eef2ff', col:'#4338ca', br:'#c7d2fe' },
+    balanced:     { label:'Balanced',     emoji:'⚖️', bg:'#ecfeff', col:'#0e7490', br:'#a5f3fc' },
+    conservative: { label:'Conservative', emoji:'🛡', bg:'#dcfce7', col:'#15803d', br:'#86efac' },
+  };
+  // Show all profiles the ticker qualifies for. Conservative implies
+  // balanced + aggressive, so we de-duplicate visually by showing the
+  // strongest tier prominently and the weaker ones as smaller fade-outs.
+  const order = ['conservative', 'balanced', 'aggressive'];
+  const sorted = order.filter(p => list.includes(p));
+  const indices = Array.isArray(t.indices) ? t.indices : [];
+  const idxBadge = indices.length
+    ? '<span class="v2-uni-idx" title="Index memberships">' + indices.map(i =>
+        i === 'DJI' ? 'Dow 30' : i === 'NDX' ? 'Nasdaq 100' : i === 'SPX' ? 'S&P 500' : i
+      ).join(' · ') + '</span>'
+    : '';
+  const chips = sorted.map((p, i) => {
+    const m = meta[p];
+    if (!m) return '';
+    const primary = i === 0; // strongest tier — full opacity
+    return '<span class="v2-uni-chip ' + (primary ? 'primary' : 'secondary') + '" ' +
+           'style="background:' + m.bg + ';color:' + m.col + ';border-color:' + m.br + '" ' +
+           'title="This stock qualifies for the ' + m.label + ' universe">' +
+           m.emoji + ' ' + m.label + '</span>';
+  }).join('');
+  return '<div class="v2-universe-row"><span class="v2-uni-label">Universe</span>' + chips + idxBadge + '</div>';
+}
+
 /* Star button HTML (used in stock modal). data-v2-star = ticker */
 function v2StarBtnHTML(ticker){
   const on = v2InWatchlist(ticker);
@@ -7469,6 +7523,7 @@ function openStockModal(ticker) {
         <div style="min-width:0;flex:1">
           <div class="fd-tic" style="display:inline-flex;align-items:center;gap:8px">${t.ticker}${(typeof v2StarBtnHTML === 'function') ? v2StarBtnHTML(t.ticker) : ''}</div>
           <div class="fd-co">${t.name || ''} · ${sub || sector}</div>
+          ${(typeof v2UniverseChipsHTML === 'function') ? v2UniverseChipsHTML(t) : ''}
         </div>
       </div>
       <div style="text-align:right">
