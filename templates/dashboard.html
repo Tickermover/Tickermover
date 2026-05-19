@@ -1948,6 +1948,35 @@ body.v2 .v2ov-card.sectors .v2ov-sector-cell{
 }
 .v2-dd-survivor:hover{background:#bbf7d0;transform:translateY(-1px)}
 
+/* ───── Sidebar nav tags (PRO / count badges) ───── */
+.v2-nav-tag{
+  display:inline-block;font-size:9px;font-weight:900;letter-spacing:.06em;
+  padding:1px 6px;border-radius:4px;margin-left:6px;vertical-align:1px;
+  line-height:1.4;text-transform:uppercase;
+}
+.v2-tag-pro{
+  color:#fff;background:linear-gradient(135deg,#f59e0b,#d97706);
+  box-shadow:0 1px 2px rgba(217,119,6,.3);
+}
+.v2-tag-universe{
+  color:#a5b4fc;background:rgba(67,56,202,.18);border:1px solid rgba(99,102,241,.25);
+  letter-spacing:0;font-variant-numeric:tabular-nums;
+}
+
+/* ───── Earnings merged card — Recent / Upcoming tabs ───── */
+.v2-earnings-merged .v2ov-card-head{align-items:center}
+.v2-earn-tabs{display:inline-flex;gap:4px;background:#f1f5f9;border-radius:8px;padding:3px;margin-left:auto}
+.v2-earn-tab{
+  background:transparent;border:0;padding:5px 12px;border-radius:6px;
+  font-size:11.5px;font-weight:700;color:#64748b;cursor:pointer;
+  transition:all .15s;letter-spacing:.02em;
+}
+.v2-earn-tab:hover{color:#0f172a}
+.v2-earn-tab.active{background:#fff;color:#4338ca;box-shadow:0 1px 2px rgba(15,23,42,.06)}
+
+/* Empty-state companion card when no sector is in drawdown */
+.v2-dd-empty{background:#f8fafc;border:1px dashed #cbd5e1}
+
 /* ───── Market Pulse — compact topbar variant (4 inline pills) ───── */
 .v2-mp-topbar{
   display:inline-flex;align-items:center;gap:6px;flex-wrap:nowrap;
@@ -3242,9 +3271,9 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
       </div>
       <div class="v2-children">
         <div class="v2-sub active" onclick="v2Show('hot',this)">📊 Today's Signals</div>
-        <div class="v2-sub"        onclick="v2Show('model',this)">🎯 Top Hunts</div>
+        <div class="v2-sub"        onclick="v2Show('model',this)">🎯 Top Hunts <span class="v2-nav-tag v2-tag-pro">PRO</span></div>
         <div class="v2-sub"        onclick="v2Show('sectors',this)">🗺 Sector Map</div>
-        <div class="v2-sub"        onclick="v2Show('fund',this)">🌐 Universe</div>
+        <div class="v2-sub"        onclick="v2Show('fund',this)">🌐 Universe <span class="v2-nav-tag v2-tag-universe" id="v2-nav-universe-count">545</span></div>
       </div>
     </div>
 
@@ -4693,6 +4722,46 @@ function v2RenderPerformanceChart(tickers){
    The universe API doesn't actually populate the *_date fields
    (all return null). But t.days_to_earnings IS populated by the
    backend, so we derive the date from "today + N days". */
+/* Combined Earnings widget — single card hosting Recent + Upcoming via a
+   tab toggle. Replaces the side-by-side pair of cards (which left the
+   sector-drawdown banner with nowhere natural to live). */
+function v2RenderEarningsCombined(tickers){
+  // Build inner HTML of each tab using the existing helpers, then strip
+  // their outer .v2ov-card wrapper so we can host both inside one card.
+  const recentHTML = (function(){
+    const html = v2RenderEarnings(tickers);
+    return html.replace(/^<div class="v2ov-card earnings">/, '')
+               .replace(/<\/div>$/, '')
+               .replace(/<div class="v2ov-card-head">[\s\S]*?<\/div><\/div>/, '');  // drop inner head
+  })();
+  const upcomingHTML = (function(){
+    const html = v2RenderUpcomingEarnings(tickers);
+    return html.replace(/^<div class="v2ov-card earnings">/, '')
+               .replace(/<\/div>$/, '')
+               .replace(/<div class="v2ov-card-head">[\s\S]*?<\/div><\/div>/, '');
+  })();
+  return '<div class="v2ov-card earnings v2-earnings-merged">' +
+    '<div class="v2ov-card-head"><div>' +
+      '<div class="v2ov-title">📊 Earnings</div>' +
+      '<div class="v2ov-sub">Reports across the universe</div>' +
+    '</div>' +
+    '<div class="v2-earn-tabs" role="tablist">' +
+      '<button class="v2-earn-tab active" data-tab="recent"   onclick="v2SwitchEarnTab(this,\'recent\')">Recent</button>' +
+      '<button class="v2-earn-tab"        data-tab="upcoming" onclick="v2SwitchEarnTab(this,\'upcoming\')">Upcoming</button>' +
+    '</div></div>' +
+    '<div class="v2-earn-panel" data-panel="recent">' + recentHTML + '</div>' +
+    '<div class="v2-earn-panel" data-panel="upcoming" style="display:none">' + upcomingHTML + '</div>' +
+  '</div>';
+}
+function v2SwitchEarnTab(btn, which){
+  const card = btn.closest('.v2-earnings-merged');
+  if (!card) return;
+  card.querySelectorAll('.v2-earn-tab').forEach(b => b.classList.toggle('active', b === btn));
+  card.querySelectorAll('.v2-earn-panel').forEach(p => {
+    p.style.display = (p.getAttribute('data-panel') === which) ? '' : 'none';
+  });
+}
+
 function v2RenderUpcomingEarnings(tickers){
   const now = new Date();
   now.setHours(0, 0, 0, 0);
@@ -4981,6 +5050,13 @@ function v2SetProfile(p){
   try { localStorage.setItem('v2_profile', p); } catch(e){}
   v2SyncProfileButton();
   if (typeof v2RerenderProfile === 'function') v2RerenderProfile();
+}
+function v2SyncUniverseCount(){
+  const el = document.getElementById('v2-nav-universe-count');
+  if (!el) return;
+  const n = (window.__AH_DATA__ && Array.isArray(window.__AH_DATA__.tickers)) ? window.__AH_DATA__.tickers.length
+          : (window._allTickerData ? Object.keys(window._allTickerData).length : null);
+  if (n) el.textContent = String(n);
 }
 function v2SyncProfileButton(){
   const info = V2_PROFILES[v2CurrentProfile()] || V2_PROFILES.aggressive;
@@ -5282,20 +5358,12 @@ function renderV2Overview(tickers){
   // can still see sector pressure even if their profile filtered the
   // affected tickers out.
   const fullUniverse = tickers;
-  const profile = v2CurrentProfile();
   const filtered = v2FilterByProfile(tickers);
-  const profileInfo = V2_PROFILES[profile] || V2_PROFILES.aggressive;
-  const pilotBanner = profile !== 'aggressive'
-    ? '<div class="v2-profile-banner">' +
-        '<span class="v2-pb-pill">' + profileInfo.emoji + ' ' + profileInfo.label + '</span>' +
-        '<span class="v2-pb-text">' + profileInfo.sub + ' · showing <strong>' + filtered.length + '</strong> of ' + fullUniverse.length + ' stocks (pilot subset of current universe)</span>' +
-        '<button class="v2-pb-close" onclick="v2SetProfile(\'aggressive\')" title="Switch to Aggressive (full universe)">Show all →</button>' +
-      '</div>'
-    : '';
 
+  // Pilot banner intentionally removed — the profile chip in the topbar
+  // already communicates which profile is active; the banner was noisy
+  // and pushed the meaningful widgets down.
   root.innerHTML =
-    pilotBanner +
-    v2RenderDrawdownBanner(fullUniverse) +
     v2RenderWatchlistExposure(fullUniverse) +
     v2RenderTodaysBrief(filtered) +
     v2RenderWhatChanged(filtered) +
@@ -5304,9 +5372,11 @@ function renderV2Overview(tickers){
       v2RenderSectors(filtered) +
       v2RenderDistAndMovers(filtered) +
     '</div>' +
+    // Merged Recent+Upcoming earnings shares a row with the sector
+    // drawdown banner (which previously lived at the top of the overview).
     '<div class="v2ov-row equal">' +
-      v2RenderEarnings(filtered) +
-      v2RenderUpcomingEarnings(filtered) +
+      v2RenderEarningsCombined(filtered) +
+      (v2RenderDrawdownBanner(fullUniverse) || '<div class="v2ov-card v2-dd-empty"><div class="v2ov-card-head"><div><div class="v2ov-title">📉 Sector Pressure</div><div class="v2ov-sub">No sector currently in drawdown</div></div></div><div style="padding:14px 4px;color:#94a3b8;font-size:12.5px;text-align:center">All sectors holding steady this month.</div></div>') +
     '</div>' +
     '<div class="v2-disclaimer">' +
       '<strong>Educational research tool.</strong> ' +
@@ -5363,6 +5433,7 @@ function v2InstallHook(){
       }
       renderV2Overview((data && data.tickers) || []);
       if (typeof v2SyncProfileButton === 'function') v2SyncProfileButton();
+      if (typeof v2SyncUniverseCount === 'function') v2SyncUniverseCount();
     }
     catch(e){ console.error('[v2] overview render failed', e); }
     return _orig.apply(this, arguments);
