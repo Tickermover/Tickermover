@@ -3245,7 +3245,7 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
     <div class="cmdk-search">
       <span class="cmdk-icon">⌘</span>
       <input id="cmdk-input" class="cmdk-input" type="text" autocomplete="off" spellcheck="false"
-             placeholder="Search ticker, jump to tab, or run an action…" oninput="renderCmdK()" />
+             placeholder="Search by ticker or company name…" oninput="renderCmdK()" />
       <span class="cmdk-hint">ESC</span>
     </div>
     <div id="cmdk-list" class="cmdk-list"></div>
@@ -9892,77 +9892,74 @@ function closeCmdK(e){
   if (e && e.target.id !== 'cmdk-overlay' && e.type === 'click') return;
   document.getElementById('cmdk-overlay').classList.remove('open');
 }
+/* Build the ticker match list for the cmd-K palette. Stripped of tabs
+   and actions per user feedback — palette is now a focused stock search.
+   When the query is empty, surfaces the top 8 universe stocks by score
+   so the palette never opens blank. */
+function _cmdkTickerMatches(){
+  const inp = document.getElementById('cmdk-input');
+  const q = (inp?.value || '').trim().toLowerCase();
+  const universe = Object.values(_allTickerData || {});
+  if (!universe.length) return [];
+  let matches;
+  if (q){
+    // Exact-symbol match first, then prefix match on symbol, then
+    // substring match anywhere in symbol or company name.
+    const exact   = universe.filter(t => (t.ticker||'').toLowerCase() === q);
+    const prefix  = universe.filter(t => (t.ticker||'').toLowerCase().startsWith(q) && (t.ticker||'').toLowerCase() !== q);
+    const subSym  = universe.filter(t => (t.ticker||'').toLowerCase().includes(q) && !(t.ticker||'').toLowerCase().startsWith(q));
+    const subName = universe.filter(t => !(t.ticker||'').toLowerCase().includes(q) && (t.name||'').toLowerCase().includes(q));
+    matches = [...exact, ...prefix, ...subSym, ...subName].slice(0, 12);
+  } else {
+    // Empty query — show top 8 universe stocks by score so palette isn't blank
+    matches = [...universe]
+      .filter(t => (t.smart_score ?? t.pop_score ?? 0) > 0)
+      .sort((a, b) => (b.smart_score ?? b.pop_score ?? 0) - (a.smart_score ?? a.pop_score ?? 0))
+      .slice(0, 8);
+  }
+  return matches.map(t => ({
+    kind:'ticker',
+    icon: (t.ticker || '').slice(0, 3),
+    label: t.ticker,
+    sub: (t.name || '') + (t.smart_score != null ? ` · Score ${Math.round(t.smart_score)}` : ''),
+    run: () => openStockModal(t.ticker),
+  }));
+}
 function renderCmdK(){
   const list = document.getElementById('cmdk-list');
   const inp  = document.getElementById('cmdk-input');
-  const q = (inp?.value || '').trim().toLowerCase();
+  const q = (inp?.value || '').trim();
+  const tickers = _cmdkTickerMatches();
+  if (_cmdkActive >= tickers.length) _cmdkActive = Math.max(0, tickers.length - 1);
 
-  // Filter tabs + actions by query
-  const matchTabs    = _CMDK_TABS   .filter(i => !q || i.label.toLowerCase().includes(q) || i.sub.toLowerCase().includes(q));
-  const matchActions = _CMDK_ACTIONS.filter(i => !q || i.label.toLowerCase().includes(q) || i.sub.toLowerCase().includes(q));
-  // Filter tickers — match on symbol or company name
-  const tickers = q ? Object.values(_allTickerData || {})
-    .filter(t => (t.ticker||'').toLowerCase().includes(q) || (t.name||'').toLowerCase().includes(q))
-    .slice(0, 8)
-    .map(t => ({
-      kind:'ticker', icon: t.ticker, label: t.ticker,
-      sub: (t.name || '') + (t.smart_score != null ? ` · Score ${Math.round(t.smart_score)}` : ''),
-      run: () => openStockModal(t.ticker),
-    }))
-    : [];
-
-  // Build grouped rendered list
-  const sections = [];
-  if (tickers.length)       sections.push({title:'Stocks',  items:tickers});
-  if (matchTabs.length)     sections.push({title:'Tabs',    items:matchTabs});
-  if (matchActions.length)  sections.push({title:'Actions', items:matchActions});
-
-  // Flatten for keyboard nav
-  const flat = [];
-  sections.forEach(s => s.items.forEach(i => flat.push(i)));
-  if (_cmdkActive >= flat.length) _cmdkActive = Math.max(0, flat.length - 1);
-
-  if (!flat.length) {
-    list.innerHTML = `<div class="cmdk-empty">No matches for "${q}". Try a ticker symbol or tab name.</div>`;
+  if (!tickers.length){
+    list.innerHTML = q
+      ? `<div class="cmdk-empty">No stock matches "${q}". Try a ticker or company name.</div>`
+      : `<div class="cmdk-empty">Type a ticker symbol or company name.</div>`;
     return;
   }
-  let idx = 0;
-  list.innerHTML = sections.map(sec => {
-    const items = sec.items.map(i => {
-      const isActive = (idx === _cmdkActive);
-      const myIdx = idx;
-      idx += 1;
-      const iconCls = i.kind === 'tab' ? 'tab' : i.kind === 'action' ? 'action' : 'ticker';
-      const kbd = i.kind === 'tab' ? 'Tab' : i.kind === 'action' ? 'Action' : 'Stock';
+  const sectionTitle = q ? 'Stocks' : 'Top picks';
+  list.innerHTML =
+    `<div class="cmdk-group">${sectionTitle}</div>` +
+    tickers.map((i, myIdx) => {
+      const isActive = (myIdx === _cmdkActive);
       return `<div class="cmdk-item ${isActive?'active':''}" data-idx="${myIdx}"
                    onmouseenter="_cmdkActive=${myIdx};renderCmdK()"
                    onclick="_cmdkRun(${myIdx})">
-        <div class="cmdk-item-icon ${iconCls}">${i.icon}</div>
+        <div class="cmdk-item-icon ticker">${i.icon}</div>
         <div class="cmdk-item-main">
           <div class="cmdk-item-title">${i.label}</div>
           <div class="cmdk-item-sub">${i.sub || ''}</div>
         </div>
-        <div class="cmdk-item-kbd">${kbd}</div>
+        <div class="cmdk-item-kbd">Stock</div>
       </div>`;
     }).join('');
-    return `<div class="cmdk-group">${sec.title}</div>${items}`;
-  }).join('');
 }
 function _cmdkRun(idx){
-  // Re-derive flat list (mirrors renderCmdK logic) and run the entry
-  const inp  = document.getElementById('cmdk-input');
-  const q = (inp?.value || '').trim().toLowerCase();
-  const matchTabs    = _CMDK_TABS   .filter(i => !q || i.label.toLowerCase().includes(q) || i.sub.toLowerCase().includes(q));
-  const matchActions = _CMDK_ACTIONS.filter(i => !q || i.label.toLowerCase().includes(q) || i.sub.toLowerCase().includes(q));
-  const tickers = q ? Object.values(_allTickerData || {})
-    .filter(t => (t.ticker||'').toLowerCase().includes(q) || (t.name||'').toLowerCase().includes(q))
-    .slice(0, 8)
-    .map(t => ({kind:'ticker', run:()=>openStockModal(t.ticker)}))
-    : [];
-  const flat = [...tickers, ...matchTabs, ...matchActions];
-  if (flat[idx] && typeof flat[idx].run === 'function') {
+  const tickers = _cmdkTickerMatches();
+  if (tickers[idx] && typeof tickers[idx].run === 'function'){
     closeCmdK();
-    setTimeout(() => flat[idx].run(), 50);
+    setTimeout(() => tickers[idx].run(), 50);
   }
 }
 // Global keybindings
