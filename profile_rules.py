@@ -30,55 +30,62 @@ def _f(v, default: float = float("nan")) -> float:
 
 
 def assign_profile(t: dict) -> list[str]:
-    """Return the list of profiles this ticker is eligible for."""
-    out: list[str] = ["aggressive"]  # everyone qualifies for aggressive
+    """Return the SINGLE primary profile this ticker fits.
+
+    Mutually exclusive bucketing based on the stock's real risk profile —
+    primarily BETA, with quality / fundamentals as secondary gates.
+    Every ticker lands in exactly one of {conservative, balanced, aggressive}.
+
+    Rationale (May 19 user feedback): the prior 'everyone is aggressive +
+    maybe also balanced + maybe also conservative' design made the
+    Aggressive bucket meaningless (it was just the full universe).
+    Categorization should reflect the stock's actual character.
+    """
     sym = (t.get("ticker") or "").upper()
 
-    grade = (t.get("grade") or "").upper()
-    score = _f(t.get("smart_score", t.get("pop_score", 0)), 0)
-    beta = _f(t.get("beta"))
-    pm = _f(t.get("profit_margin"))
+    grade     = (t.get("grade") or "").upper()
+    score     = _f(t.get("smart_score", t.get("pop_score", 0)), 0)
+    beta      = _f(t.get("beta"))
+    pm        = _f(t.get("profit_margin"))
     short_pct = _f(t.get("short_percent_float", t.get("short_interest")))
-    div_yield = _f(t.get("dividend_yield"))  # already as fraction (e.g. 0.025 = 2.5%)
-    market_cap = _f(t.get("market_cap"), 0)
+    div_yield = _f(t.get("dividend_yield"))   # fraction (0.025 = 2.5%)
+    market_cap= _f(t.get("market_cap"), 0)
 
     in_spx = sym in SP500
     in_ndx = sym in NASDAQ_100
     in_dji = sym in DOW_30
     in_any_major = in_spx or in_ndx or in_dji
 
-    # ── Balanced ──
-    balanced_ok = True
-    if grade in ("D", "F"):                       balanced_ok = False
-    if not (beta != beta) and beta >= 2.0:        balanced_ok = False  # beta!=beta -> NaN
-    if score and score < 55:                      balanced_ok = False
-    if not in_any_major and market_cap < 10e9:    balanced_ok = False  # liquidity floor
-    if balanced_ok:
-        out.append("balanced")
+    has_beta = beta == beta  # NaN check (NaN != NaN)
+    has_pm   = pm   == pm
+    has_short= short_pct == short_pct
 
-    # ── Conservative ──
-    # Audit on 2026-05-19: Conservative profile only captured 15 names —
-    # many quality blue chips (COST, LLY, V, XOM, JNJ, PEP) were excluded
-    # because (a) score 55-59 missed the score>=60 gate, or (b)
-    # dividend_yield is null in the feed so the dividend gate rejected them.
-    # Loosened to score>=55 and added a large-cap exemption so quality
-    # mega caps without populated dividend data still qualify.
-    conservative_ok = True
-    if grade not in ("A", "B"):                   conservative_ok = False
-    if beta == beta and beta >= 1.3:              conservative_ok = False
-    if pm == pm and pm < 0:                       conservative_ok = False  # must be profitable
-    if short_pct == short_pct and short_pct >= 5: conservative_ok = False
-    if score and score < 55:                      conservative_ok = False  # 60 -> 55
-    if not in_spx and not in_dji:                 conservative_ok = False  # S&P/Dow members only
-    # Dividend / blue-chip / large-cap exemption: must satisfy ONE of:
-    #   - dividend yield >= 0.5%
-    #   - Dow 30 member (blue-chip pedigree)
-    #   - market cap >= $50B AND grade A (mega-cap quality, dividend data missing)
-    has_dividend  = div_yield == div_yield and div_yield >= 0.005   # 0.5%
-    large_cap_a   = market_cap >= 50e9 and grade == "A"
-    if not (has_dividend or in_dji or large_cap_a):
-        conservative_ok = False
-    if conservative_ok:
-        out.append("conservative")
+    # ─── 1. AGGRESSIVE: high-risk / high-volatility / high-conviction ───
+    # Any of these flags puts a ticker in the Aggressive bucket regardless
+    # of other criteria. These are the names that swing meaningfully.
+    if (has_beta and beta >= 1.5):                  return ["aggressive"]
+    if (has_short and short_pct >= 10):             return ["aggressive"]
+    if (has_pm and pm < 0):                         return ["aggressive"]  # loss-making
+    if grade in ("D", "F"):                         return ["aggressive"]
+    if not in_any_major and market_cap < 10e9:      return ["aggressive"]  # illiquid
 
-    return out
+    # ─── 2. CONSERVATIVE: low-beta, profitable quality, income-eligible ───
+    # Must clear ALL of these gates. Roughly the universe of names a
+    # widow-and-orphans fund would own.
+    cons_ok = (
+        has_beta and beta < 1.0                    # actually low-beta
+        and grade in ("A", "B")
+        and has_pm and pm > 0                       # profitable
+        and (not has_short or short_pct < 5)
+        and score >= 55
+        and (in_spx or in_dji)                      # S&P or Dow only
+    )
+    has_dividend = div_yield == div_yield and div_yield >= 0.005
+    large_cap_a  = market_cap >= 50e9 and grade == "A"
+    income_exempt = has_dividend or in_dji or large_cap_a
+    if cons_ok and income_exempt:
+        return ["conservative"]
+
+    # ─── 3. BALANCED: everything else (the middle ground) ───
+    # Mainstream names — moderate beta, decent quality, no red flags.
+    return ["balanced"]
