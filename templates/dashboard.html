@@ -1963,6 +1963,14 @@ body.v2 .v2ov-card.sectors .v2ov-sector-cell{
   letter-spacing:0;font-variant-numeric:tabular-nums;
 }
 
+/* ───── CSS-based profile filtering for the Universe table ─────
+   Avoids re-rendering 545 rows on every profile switch. Rows carry
+   data-profiles="..." and we hide non-matching ones via this rule.
+   Switching profile is just a body[data-active-profile] flip — instant. */
+body[data-active-profile="aggressive"]   .fund-row:not([data-profiles~="aggressive"])   { display:none; }
+body[data-active-profile="balanced"]     .fund-row:not([data-profiles~="balanced"])     { display:none; }
+body[data-active-profile="conservative"] .fund-row:not([data-profiles~="conservative"]) { display:none; }
+
 /* ───── Active profile hint (top of Today's Signals) ───── */
 .v2-profile-hint{
   display:inline-flex;align-items:center;gap:6px;
@@ -5164,6 +5172,9 @@ function v2CurrentProfile(){
 }
 function v2SetProfile(p){
   try { localStorage.setItem('v2_profile', p); } catch(e){}
+  // Flip the body attribute so CSS-based filters (Universe table) react
+  // instantly without a JS re-render.
+  document.body.setAttribute('data-active-profile', p);
   v2SyncProfileButton();
   if (typeof v2RerenderProfile === 'function') v2RerenderProfile();
 }
@@ -5174,10 +5185,8 @@ function v2SyncUniverseCount(){
     ? window.__AH_DATA__.tickers
     : (window._allTickerData ? Object.values(window._allTickerData) : []);
   if (!universe.length) return;
-  // Show the filtered count so the badge matches whatever the Universe
-  // table actually displays. Always at least 1 char so the chip never
-  // collapses to empty (was the cause of 'aggressive shows no number'
-  // when v2FilterByProfile returned an empty array transiently).
+  // Apply the active profile to the in-memory universe — same logic the
+  // CSS uses for the table, kept in sync so badge + table always agree.
   const filtered = (typeof v2FilterByProfile === 'function')
     ? v2FilterByProfile(universe) : universe;
   el.textContent = String(filtered.length || universe.length);
@@ -5201,7 +5210,12 @@ function v2SyncProfileButton(){
     }
   });
 }
-document.addEventListener('DOMContentLoaded', () => v2SyncProfileButton());
+document.addEventListener('DOMContentLoaded', () => {
+  v2SyncProfileButton();
+  // Initialise body attribute so the CSS-based Universe filter is correct
+  // on first paint, before the user touches the profile picker.
+  document.body.setAttribute('data-active-profile', v2CurrentProfile());
+});
 document.addEventListener('click', (e) => {
   const picker = document.getElementById('v2-profile-picker');
   if (picker && !picker.contains(e.target)) picker.classList.remove('open');
@@ -5482,25 +5496,54 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 /* ── Profile rerender hook ──
-   Re-renders EVERY panel that respects the profile filter so a profile
-   switch updates the whole app — not just Today's Signals. */
+   Lighter than before: the Universe table is filtered via CSS (no JS
+   re-render needed), so we only re-render the panels whose AGGREGATES
+   depend on the filtered subset (Today's Signals, Risk, News, Sectors).
+   On a typical switch the user only sees one panel anyway, so render of
+   the rest can happen lazily in idle frames. */
 function v2RerenderProfile(){
   const universe = (typeof _allTickerData === 'object' && _allTickerData)
     ? Object.values(_allTickerData)
     : (window.__AH_DATA__ && window.__AH_DATA__.tickers) || [];
   if (!universe.length) return;
-  // Today's Signals already handles its own filter via v2FilterByProfile.
+  // Today's Signals handles its own filter via v2FilterByProfile.
   renderV2Overview(universe);
-  // Other panels were getting the FULL universe. Apply the same filter so
-  // Universe / Risk / News / Sectors all reflect the active profile.
+  // Update the Universe tally + sidebar count (counts the rows that match
+  // the active profile — no DOM rebuild required).
+  try { if (typeof v2SyncUniverseTally === 'function') v2SyncUniverseTally(); } catch(e){}
+  try { if (typeof v2SyncUniverseCount === 'function') v2SyncUniverseCount(); } catch(e){}
+  // Risk / News / Sectors re-renders pushed to idle so they don't block
+  // the perceived profile-switch responsiveness.
   const filtered = (typeof v2FilterByProfile === 'function')
     ? v2FilterByProfile(universe) : universe;
-  try { if (typeof renderFundamentals === 'function') renderFundamentals(filtered); } catch(e){}
-  try { if (typeof renderRisk         === 'function') renderRisk(filtered);         } catch(e){}
-  try { if (typeof renderNews         === 'function') renderNews(filtered);         } catch(e){}
-  try { if (typeof renderSectors      === 'function') renderSectors(filtered);      } catch(e){}
-  // Refresh the sidebar Universe count badge so it matches the filter.
-  try { if (typeof v2SyncUniverseCount === 'function') v2SyncUniverseCount(); } catch(e){}
+  const _idle = window.requestIdleCallback || ((cb) => setTimeout(cb, 32));
+  _idle(() => { try { if (typeof renderRisk    === 'function') renderRisk(filtered);    } catch(e){} });
+  _idle(() => { try { if (typeof renderNews    === 'function') renderNews(filtered);    } catch(e){} });
+  _idle(() => { try { if (typeof renderSectors === 'function') renderSectors(filtered); } catch(e){} });
+  // Note: renderFundamentals is INTENTIONALLY not called here. The
+  // Universe table is rendered once with all 545 rows + data-profiles
+  // attributes, and CSS filters the visible set. Profile switch = instant.
+}
+
+/* Recompute the Universe tally + sidebar count by counting VISIBLE rows
+   (the ones the CSS-based profile filter is currently showing). Avoids
+   re-rendering 545 rows just to update a number. */
+function v2SyncUniverseTally(){
+  const tally = document.getElementById('tally-fund');
+  if (!tally) return;
+  const tbody = document.getElementById('fund-tbody');
+  if (!tbody) return;
+  // CSS hides non-matching rows; offsetParent === null is the cheap check.
+  let visible = 0, total = 0;
+  tbody.querySelectorAll('.fund-row').forEach(r => {
+    total += 1;
+    if (r.offsetParent !== null) visible += 1;
+  });
+  const prof = (typeof v2CurrentProfile === 'function') ? v2CurrentProfile() : 'aggressive';
+  const lbl  = prof === 'aggressive' ? 'aggressive view'
+             : prof === 'balanced'   ? 'balanced view'
+             : prof === 'conservative' ? 'conservative view' : prof;
+  tally.textContent = total ? `${visible} stocks · ${lbl}` : '';
 }
 
 function renderV2Overview(tickers){
@@ -8215,11 +8258,13 @@ function renderFundamentals(tickers) {
     const fwdPE   = parseFloat(t.pe_ratio || t.forward_pe || t.forwardPE);
     const tgtMean2 = parseFloat(t.target_mean || t.street_target || 0);
     const upsidePct = price > 0 && tgtMean2 > 0 ? ((tgtMean2 - price)/price*100) : null;
+    const _profiles = Array.isArray(t.profiles) ? t.profiles.join(' ') : '';
     return `<tr class="fund-row"
          data-ticker="${t.ticker}"
          data-name="${(t.name || '').replace(/"/g, '')}"
          data-sector="${sector}"
          data-subsector="${sub}"
+         data-profiles="${_profiles}"
          data-grade="${grade}"
          data-pop="${pop.toFixed(1)}"
          data-price="${price}"
@@ -9728,7 +9773,17 @@ async function fullRender() {
     _idle(() => { try { renderSectors(_profFiltered);      } catch(e){console.error(e);} }, {timeout: 1000});
     // Universe table is the heaviest — defer the longest. Users almost
     // never land directly on the Universe tab on first load.
-    _idle(() => { try { renderFundamentals(_profFiltered); } catch(e){console.error(e);} }, {timeout: 1500});
+    // Universe table renders the FULL universe once. Each row carries a
+    // data-profiles attribute, and CSS filters them. Profile switches are
+    // then a single body[data-active-profile] flip — no JS re-render.
+    _idle(() => {
+      try { renderFundamentals(tickers); }
+      catch(e){ console.error(e); }
+      finally {
+        try { if (typeof v2SyncUniverseTally === 'function') v2SyncUniverseTally(); } catch(e){}
+        try { if (typeof v2SyncUniverseCount === 'function') v2SyncUniverseCount(); } catch(e){}
+      }
+    }, {timeout: 1500});
   } catch (e) {
     console.error('[PD] fullRender failed:', e.message);
     const hts2 = document.getElementById('hot-ts'); if (hts2) hts2.textContent = '⚠ Could not reach server — retrying…';
