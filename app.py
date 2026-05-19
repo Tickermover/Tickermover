@@ -1566,10 +1566,31 @@ async def dashboard():
 
         if _universe_data:
             # Embed current data as window.__AH_DATA__ inside <head>
-            # The JS checks this and renders immediately — no /api/universe round-trip
+            # The JS checks this and renders immediately — no /api/universe round-trip.
+            # Apply the same slim-down rules as /api/universe so the inlined
+            # payload doesn't push the SSR HTML over 3 MB at 545 tickers.
             import json as _json
+            try:
+                from index_constituents import indices_for as _idx_for
+                from profile_rules import assign_profile as _assign_profile
+            except Exception:
+                _idx_for = lambda _s: []
+                _assign_profile = lambda _t: ["aggressive"]
+            _SKIP = (
+                "news", "insider_detail", "description", "breakdown", "weighted",
+                "quarterly_income", "quarterly_cashflow", "operating_cashflow",
+            )
+            _slim = []
+            for t in _universe_data:
+                row = {k: v for k, v in t.items() if k not in _SKIP}
+                epsq = row.get("eps_quarters")
+                if isinstance(epsq, list) and len(epsq) > 4:
+                    row["eps_quarters"] = epsq[-4:]
+                row["indices"]  = _idx_for(row.get("ticker", ""))
+                row["profiles"] = _assign_profile(row)
+                _slim.append(row)
             payload = _json.dumps(_clean({
-                "tickers":      _universe_data,
+                "tickers":      _slim,
                 "warming_up":   False,
                 "last_refresh": _last_full_refresh,
                 "hot_list_n":   config.HOT_LIST_N,
@@ -1607,7 +1628,17 @@ async def api_universe():
     # that the dashboard never reads. Strip them so the wire payload is
     # ~0.4 MB raw (~75 KB gzipped) instead of ~1.6 MB raw (~170 KB
     # gzipped). Modal still gets full detail from /api/ticker/{symbol}.
-    _SKIP = ("news", "insider_detail", "description", "breakdown", "weighted")
+    # Phase 2 follow-up: at 545 tickers the wire payload ballooned to
+    # ~1.8 MB raw, making /app + /api/universe sluggish on dev. quarterly_income
+    # and quarterly_cashflow are full statement objects only the per-stock
+    # modal needs (and the modal re-fetches via /api/ticker/{symbol} anyway).
+    # eps_quarters is universe-relevant (Recent Earnings widget) but we only
+    # need the last 4 quarters there — trim history to keep payload sane.
+    _SKIP = (
+        "news", "insider_detail", "description", "breakdown", "weighted",
+        "quarterly_income", "quarterly_cashflow",     # full statements -> /api/ticker only
+        "operating_cashflow",                          # series — universe uses only latest
+    )
     # Phase 1: enrich each ticker with index membership + profile eligibility
     # so the frontend can filter Conservative/Balanced/Aggressive deterministically.
     try:
@@ -1619,6 +1650,12 @@ async def api_universe():
     slim = []
     for t in _universe_data:
         row = {k: v for k, v in t.items() if k not in _SKIP}
+        # Trim eps_quarters to the last 4 — Recent Earnings widget + modal
+        # status pills only ever consume the most recent few.
+        epsq = row.get("eps_quarters")
+        if isinstance(epsq, list) and len(epsq) > 4:
+            # eps_quarters is oldest-first on the backend; keep the last 4.
+            row["eps_quarters"] = epsq[-4:]
         row["indices"]  = _idx_for(row.get("ticker", ""))
         row["profiles"] = _assign_profile(row)
         slim.append(row)
