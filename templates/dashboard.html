@@ -5170,9 +5170,17 @@ function v2SetProfile(p){
 function v2SyncUniverseCount(){
   const el = document.getElementById('v2-nav-universe-count');
   if (!el) return;
-  const n = (window.__AH_DATA__ && Array.isArray(window.__AH_DATA__.tickers)) ? window.__AH_DATA__.tickers.length
-          : (window._allTickerData ? Object.keys(window._allTickerData).length : null);
-  if (n) el.textContent = String(n);
+  const universe = (window.__AH_DATA__ && Array.isArray(window.__AH_DATA__.tickers))
+    ? window.__AH_DATA__.tickers
+    : (window._allTickerData ? Object.values(window._allTickerData) : []);
+  if (!universe.length) return;
+  // Show the filtered count so the badge matches whatever the Universe
+  // table actually displays. Always at least 1 char so the chip never
+  // collapses to empty (was the cause of 'aggressive shows no number'
+  // when v2FilterByProfile returned an empty array transiently).
+  const filtered = (typeof v2FilterByProfile === 'function')
+    ? v2FilterByProfile(universe) : universe;
+  el.textContent = String(filtered.length || universe.length);
 }
 function v2SyncProfileButton(){
   const info = V2_PROFILES[v2CurrentProfile()] || V2_PROFILES.aggressive;
@@ -5480,6 +5488,8 @@ function v2RerenderProfile(){
   try { if (typeof renderRisk         === 'function') renderRisk(filtered);         } catch(e){}
   try { if (typeof renderNews         === 'function') renderNews(filtered);         } catch(e){}
   try { if (typeof renderSectors      === 'function') renderSectors(filtered);      } catch(e){}
+  // Refresh the sidebar Universe count badge so it matches the filter.
+  try { if (typeof v2SyncUniverseCount === 'function') v2SyncUniverseCount(); } catch(e){}
 }
 
 function renderV2Overview(tickers){
