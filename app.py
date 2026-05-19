@@ -1697,7 +1697,14 @@ async def api_universe():
             "profile_counts": _profile_counts,
         }),
         headers={
-            "Cache-Control": "public, max-age=15, s-maxage=30",
+            # Cache extended (was max-age=15, s-maxage=30) — at 545 tickers
+            # the slow tech_refresh loop takes ~5 min to iterate everyone,
+            # so the previous 30s CDN cache let users see partial-update
+            # state every 30s for 5 minutes ('score taking time to refresh,
+            # 5 min to stabilise' user feedback). Now: CDN serves the same
+            # snapshot for 2 min before re-checking origin, browser cache
+            # 60s. Scores stabilize visually instead of churning.
+            "Cache-Control": "public, max-age=60, s-maxage=120",
             "Vary":          "Accept-Encoding",
         },
     )
