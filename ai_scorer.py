@@ -11,7 +11,13 @@ score_momentum) and a regime-multiplier "smart_score" output field.
 """
 from __future__ import annotations
 import logging
+import os
 from typing import Any, Optional
+
+# Kill switch for Phase 3b sector-aware scoring. Set SECTOR_AWARE_SCORING=0
+# on Railway to revert every ticker to the tech-default WEIGHTS instantly,
+# without redeploying code.
+_SECTOR_AWARE = os.getenv("SECTOR_AWARE_SCORING", "1") != "0"
 
 try:
     from intelligence import (
@@ -44,6 +50,111 @@ WEIGHTS: dict[str, int] = {
     "score_momentum":         2,
 }
 assert sum(WEIGHTS.values()) == 100
+
+# ═══════════════════════════════════════════════════════════════════
+# Phase 3b — SECTOR-AWARE SCORING
+# Per-GICS-sector weight overrides applied on top of the tech-tilted
+# default WEIGHTS above. Each delta dict MUST sum to zero so total
+# weights stay at 100. Tech / Healthcare / Communication / Industrials
+# / Consumer Cyclical use the default (no entry below).
+#
+# Tilts:
+# - Utilities / REITs / Consumer Defensive  -> income (dividend, FCF,
+#                                              balance sheet) over growth
+# - Financial Services                       -> analyst consensus +
+#                                              fundamentals (book value /
+#                                              NIM proxies) over momentum
+# - Energy / Basic Materials                 -> cyclical: FCF + analyst
+#                                              consensus over growth tier
+# ═══════════════════════════════════════════════════════════════════
+SECTOR_WEIGHT_DELTAS: dict[str, dict[str, int]] = {
+    "Utilities": {
+        "growth_tier":     -7,   # 11 -> 4   (low-growth by design)
+        "momentum_1m":     -5,   # 10 -> 5   (low-vol names)
+        "volume_spike":    -3,   # 6  -> 3
+        "rsi_zone":        -3,   # 7  -> 4
+        "social_momentum": -3,   # 4  -> 1   (utilities don't trend on socials)
+        "fundamentals":    +8,   # 5  -> 13  (cash flow + leverage matter)
+        "mkt_cap_fit":     +3,   # 3  -> 6
+        "low_short":       +2,   # 2  -> 4
+        "analyst_cons":    +2,   # 6  -> 8
+        "insider_bias":    +3,   # 3  -> 6
+        "earnings_quality":+3,   # 5  -> 8   (stable, dividend-supporting earnings)
+    },
+    "Real Estate": {
+        "growth_tier":     -6,   # 11 -> 5
+        "momentum_1m":     -4,   # 10 -> 6
+        "volume_spike":    -3,
+        "rsi_zone":        -2,
+        "social_momentum": -2,
+        "fundamentals":    +7,   # FFO/balance sheet matter most
+        "mkt_cap_fit":     +2,
+        "low_short":       +2,
+        "analyst_cons":    +2,
+        "insider_bias":    +2,
+        "earnings_quality":+2,
+    },
+    "Consumer Defensive": {
+        "growth_tier":     -5,
+        "momentum_1m":     -3,
+        "volume_spike":    -2,
+        "social_momentum": -2,
+        "fundamentals":    +5,
+        "earnings_quality":+3,
+        "analyst_cons":    +2,
+        "low_short":       +1,
+        "mkt_cap_fit":     +1,
+    },
+    "Financial Services": {
+        "growth_tier":     -5,
+        "momentum_1m":     -2,
+        "volume_spike":    -2,
+        "social_momentum": -2,
+        "trend_strength":  -2,
+        "fundamentals":    +5,   # book value / NIM proxies
+        "analyst_cons":    +4,   # consensus matters for cyclical earnings
+        "earnings_quality":+2,
+        "insider_bias":    +2,
+    },
+    "Energy": {
+        "growth_tier":     -6,   # cyclical, growth isn't structural
+        "earnings_acceleration": -2,
+        "social_momentum": -1,
+        "fundamentals":    +5,   # FCF / breakeven matters
+        "analyst_cons":    +2,
+        "earnings_quality":+1,
+        "low_short":       +1,
+    },
+    "Basic Materials": {
+        "growth_tier":     -5,
+        "earnings_acceleration": -2,
+        "social_momentum": -1,
+        "fundamentals":    +5,
+        "analyst_cons":    +1,
+        "earnings_quality":+1,
+        "low_short":       +1,
+    },
+}
+# Verify every delta sums to zero — guards against silent weight bugs.
+for _sec, _delta in SECTOR_WEIGHT_DELTAS.items():
+    assert sum(_delta.values()) == 0, f"Sector {_sec} weight deltas don't sum to zero: {_delta}"
+
+
+def _resolve_weights(ticker: dict) -> dict[str, int]:
+    """Return effective scoring weights for this ticker, applying sector
+    override if one exists. Falls back to base WEIGHTS for tech / default
+    or when SECTOR_AWARE_SCORING env kill-switch is off."""
+    if not _SECTOR_AWARE:
+        return WEIGHTS
+    sector = (ticker.get("sector") or "").strip()
+    delta = SECTOR_WEIGHT_DELTAS.get(sector)
+    if not delta:
+        return WEIGHTS
+    out = dict(WEIGHTS)
+    for k, dv in delta.items():
+        out[k] = out.get(k, 0) + dv
+    # Defensive clamp — no negative weights
+    return {k: max(0, v) for k, v in out.items()}
 
 _NEUTRAL = 0.60
 
@@ -316,13 +427,22 @@ def compute_pop_score(
         "score_momentum":         _score_momentum_history,
     }
 
+    # Phase 3b: resolve per-sector weights. Tech / Healthcare / etc. use
+    # the default WEIGHTS unchanged; Utilities / REITs / Financials /
+    # Energy / etc. get an income- or cyclical-tilted override.
+    eff_weights = _resolve_weights(t)
+    scoring_profile = "default"
+    sector = (t.get("sector") or "").strip()
+    if _SECTOR_AWARE and sector in SECTOR_WEIGHT_DELTAS:
+        scoring_profile = f"sector:{sector}"
+
     breakdown: dict[str, float] = {}
     weighted:  dict[str, float] = {}
     total_score  = 0.0
     data_present = 0
     for comp, fn in component_fns.items():
         raw = _clamp(fn(t))
-        w   = WEIGHTS[comp]
+        w   = eff_weights.get(comp, WEIGHTS[comp])
         contribution = raw * w
         breakdown[comp] = round(raw, 4)
         weighted[comp]  = round(contribution, 4)
@@ -396,6 +516,7 @@ def compute_pop_score(
         "breakdown":         breakdown,
         "weighted":          weighted,
         "signals":           signals,
+        "scoring_profile":   scoring_profile,
     }
 
 
