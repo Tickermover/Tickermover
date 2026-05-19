@@ -5209,22 +5209,33 @@ document.addEventListener('click', (e) => {
 function v2FilterByProfile(tickers){
   const p = v2CurrentProfile();
   if (!Array.isArray(tickers) || !tickers.length) return tickers;
-  if (p === 'aggressive') return tickers;
-  // Backend now tags each ticker with t.profiles = ['aggressive', 'balanced', ...]
-  // via index_constituents.py + profile_rules.py. Trust the backend tag if
-  // present; fall back to the legacy heuristic if the field is missing.
+  // Backend tags each ticker with EXACTLY ONE profile (mutually exclusive):
+  // t.profiles = ['aggressive'] | ['balanced'] | ['conservative']
+  // So all three profiles should filter, including aggressive.
+  // (Old short-circuit `if (p === 'aggressive') return tickers` was a leftover
+  // from when 'aggressive' meant 'show everyone' — caused 545 stocks to
+  // appear in the Universe panel even after Phase 2 expansion.)
   return tickers.filter(t => {
-    if (Array.isArray(t.profiles)) return t.profiles.includes(p);
+    if (Array.isArray(t.profiles) && t.profiles.length) return t.profiles.includes(p);
+    // Legacy heuristic fallback for tickers without a backend tag.
     const g = (t.grade || '').toUpperCase();
     const beta = parseFloat(t.beta);
     const sp = parseFloat(t.short_percent_float || t.short_interest);
     const pm = parseFloat(t.profit_margin);
     const sc = parseFloat(t.smart_score ?? t.pop_score ?? 0);
+    if (p === 'aggressive'){
+      if (!isNaN(beta) && beta >= 1.5) return true;
+      if (!isNaN(sp)   && sp   >= 10)  return true;
+      if (!isNaN(pm)   && pm   <  0)   return true;
+      if (g === 'D' || g === 'F')      return true;
+      return false;
+    }
     if (p === 'balanced'){
       if (g === 'D' || g === 'F') return false;
       if (!isNaN(beta) && beta >= 2) return false;
       return sc >= 55;
     }
+    // conservative
     if (g !== 'A' && g !== 'B') return false;
     if (!isNaN(beta) && beta >= 1.5) return false;
     if (!isNaN(pm) && pm < 0) return false;
