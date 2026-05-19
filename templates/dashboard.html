@@ -7963,25 +7963,9 @@ function renderFundamentals(tickers) {
   // Cache all ticker data for modal lookup
   cards.forEach(t => { _allTickerData[t.ticker] = t; });
 
-  document.getElementById('fd-grid').innerHTML = `
-  <table class="fund-list">
-    <thead>
-      <tr>
-        <th onclick="sortFundList('pop')">Score ▾</th>
-        <th>Ticker</th>
-        <th>Name</th>
-        <th onclick="sortFundList('price')">Price</th>
-        <th onclick="sortFundList('chg')">Today %</th>
-        <th onclick="sortFundList('mom3m')">3M Chg</th>
-        <th>Ratings</th>
-        <th onclick="sortFundList('rev')">Rev Growth</th>
-        <th onclick="sortFundList('mcap')">Mkt Cap</th>
-        <th onclick="sortFundList('pe')">P/E</th>
-        <th onclick="sortFundList('upside')">Upside</th>
-      </tr>
-    </thead>
-    <tbody id="fund-tbody">
-      ${cards.map(t => {
+  // Build one row's HTML — extracted from the inline map so we can chunk
+  // the render across animation frames without blocking the main thread.
+  function _fundRowHTML(t){
     const pop    = parseFloat(t.smart_score != null ? t.smart_score : (t.pop_score || 0));
     const price  = parseFloat(t.price || 0);
     const chg    = parseFloat(t.change_pct || 0);
@@ -7992,25 +7976,13 @@ function renderFundamentals(tickers) {
     const sector = t.sector || '';
     const grade  = t.grade || 'F';
     const _rs    = _rsMap[t.ticker] || 0;
-    // Resolve days-to-earnings from multiple fields
     let _dte = parseInt(t.days_to_earnings);
     if (isNaN(_dte) || _dte < 0) {
       const raw = t.earnings_date || t.next_earnings_date || '';
       if (raw) { _dte = Math.round((new Date(raw) - Date.now()) / 86400000); }
     }
     const _dteVal = (!isNaN(_dte) && _dte >= 0) ? _dte : 9999;
-    // Earnings display string
-    const _earningsRaw = t.earnings_date || t.next_earnings_date || '';
-    let _earningsLabel = '—';
-    if (!isNaN(_dte) && _dte >= -30 && _dte < 365) {
-      let _ds = '';
-      try { if (_earningsRaw) _ds = new Date(_earningsRaw).toLocaleDateString('en-US',{month:'short',day:'numeric'}); } catch(e){}
-      if (_dte === 0) _earningsLabel = `<span style="color:var(--red);font-weight:700">Today</span>`;
-      else if (_dte <= 7)  _earningsLabel = `<span style="color:var(--red);font-weight:700">⚡ ${_ds || _dte+'d'}</span>`;
-      else if (_dte <= 21) _earningsLabel = `<span style="color:var(--yel);font-weight:700">📅 ${_ds || _dte+'d'}</span>`;
-      else _earningsLabel = `<span style="color:var(--muted)">${_ds || _dte+'d'}</span>`;
-    }
-    const fwdPE  = parseFloat(t.pe_ratio || t.forward_pe || t.forwardPE);
+    const fwdPE   = parseFloat(t.pe_ratio || t.forward_pe || t.forwardPE);
     const tgtMean2 = parseFloat(t.target_mean || t.street_target || 0);
     const upsidePct = price > 0 && tgtMean2 > 0 ? ((tgtMean2 - price)/price*100) : null;
     return `<tr class="fund-row"
@@ -8043,13 +8015,58 @@ function renderFundamentals(tickers) {
       <td>${!isNaN(fwdPE)&&fwdPE>0&&fwdPE<999?fwdPE.toFixed(1)+'×':'—'}</td>
       <td class="${upsidePct!=null?pCls(upsidePct):''}">${upsidePct!=null?fmtPct(upsidePct):'—'}</td>
     </tr>`;
-  }).join('')}
-    </tbody>
-  </table>`;
+  }
 
-  document.getElementById('tally-fund').textContent = cards.length + ' stocks';
-  // Enable drag-to-resize on all column headers
-  initColResizers(document.querySelector('#fd-grid .fund-list'));
+  // Render table shell immediately so the user sees headers + tally instantly.
+  document.getElementById('fd-grid').innerHTML = `
+  <table class="fund-list">
+    <thead>
+      <tr>
+        <th onclick="sortFundList('pop')">Score ▾</th>
+        <th>Ticker</th>
+        <th>Name</th>
+        <th onclick="sortFundList('price')">Price</th>
+        <th onclick="sortFundList('chg')">Today %</th>
+        <th onclick="sortFundList('mom3m')">3M Chg</th>
+        <th>Ratings</th>
+        <th onclick="sortFundList('rev')">Rev Growth</th>
+        <th onclick="sortFundList('mcap')">Mkt Cap</th>
+        <th onclick="sortFundList('pe')">P/E</th>
+        <th onclick="sortFundList('upside')">Upside</th>
+      </tr>
+    </thead>
+    <tbody id="fund-tbody"></tbody>
+  </table>`;
+  const tbody = document.getElementById('fund-tbody');
+  const tallyEl = document.getElementById('tally-fund');
+  tallyEl.textContent = `0 / ${cards.length} stocks (rendering…)`;
+
+  // Chunked render — 60 rows per animation frame keeps each frame
+  // under ~10ms even on a slow laptop. 545 rows -> ~9 frames -> ~150ms
+  // wall-clock total, none of which blocks the main thread for >16ms.
+  // This eliminates the 'Page Unresponsive' dialog at large universe sizes.
+  const CHUNK = 60;
+  let idx = 0;
+  // Cancel any prior in-flight chunked render before starting a new one
+  // (refreshes call renderFundamentals repeatedly).
+  if (window._fundChunkRaf) cancelAnimationFrame(window._fundChunkRaf);
+  function _renderChunk(){
+    if (!document.body.contains(tbody)) return;  // tab swapped during render
+    const end = Math.min(idx + CHUNK, cards.length);
+    const html = [];
+    for (let i = idx; i < end; i++) html.push(_fundRowHTML(cards[i]));
+    tbody.insertAdjacentHTML('beforeend', html.join(''));
+    idx = end;
+    if (idx < cards.length){
+      tallyEl.textContent = `${idx} / ${cards.length} stocks (rendering…)`;
+      window._fundChunkRaf = requestAnimationFrame(_renderChunk);
+    } else {
+      tallyEl.textContent = `${cards.length} stocks`;
+      window._fundChunkRaf = null;
+      try { initColResizers(document.querySelector('#fd-grid .fund-list')); } catch(e){}
+    }
+  }
+  _renderChunk();
 }
 
 function sortFundList(key) {
