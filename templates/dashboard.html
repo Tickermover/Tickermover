@@ -5462,12 +5462,24 @@ document.addEventListener('DOMContentLoaded', () => {
   setInterval(v2RenderMarketPulseTopbar, 5 * 60 * 1000);
 });
 
-/* ── Profile rerender hook ── */
+/* ── Profile rerender hook ──
+   Re-renders EVERY panel that respects the profile filter so a profile
+   switch updates the whole app — not just Today's Signals. */
 function v2RerenderProfile(){
   const universe = (typeof _allTickerData === 'object' && _allTickerData)
     ? Object.values(_allTickerData)
     : (window.__AH_DATA__ && window.__AH_DATA__.tickers) || [];
-  if (universe.length) renderV2Overview(universe);
+  if (!universe.length) return;
+  // Today's Signals already handles its own filter via v2FilterByProfile.
+  renderV2Overview(universe);
+  // Other panels were getting the FULL universe. Apply the same filter so
+  // Universe / Risk / News / Sectors all reflect the active profile.
+  const filtered = (typeof v2FilterByProfile === 'function')
+    ? v2FilterByProfile(universe) : universe;
+  try { if (typeof renderFundamentals === 'function') renderFundamentals(filtered); } catch(e){}
+  try { if (typeof renderRisk         === 'function') renderRisk(filtered);         } catch(e){}
+  try { if (typeof renderNews         === 'function') renderNews(filtered);         } catch(e){}
+  try { if (typeof renderSectors      === 'function') renderSectors(filtered);      } catch(e){}
 }
 
 function renderV2Overview(tickers){
@@ -8236,7 +8248,10 @@ function renderFundamentals(tickers) {
   </table>`;
   const tbody = document.getElementById('fund-tbody');
   const tallyEl = document.getElementById('tally-fund');
-  tallyEl.textContent = `0 / ${cards.length} stocks (rendering…)`;
+  // Show which profile is filtering the list so the count makes sense.
+  const _curProfile = (typeof v2CurrentProfile === 'function') ? v2CurrentProfile() : 'aggressive';
+  const _profLabel = _curProfile === 'aggressive' ? '' : ` · ${_curProfile} view`;
+  tallyEl.textContent = `0 / ${cards.length} stocks${_profLabel} (rendering…)`;
 
   // Chunked render — 60 rows per animation frame keeps each frame
   // under ~10ms even on a slow laptop. 545 rows -> ~9 frames -> ~150ms
@@ -8255,10 +8270,10 @@ function renderFundamentals(tickers) {
     tbody.insertAdjacentHTML('beforeend', html.join(''));
     idx = end;
     if (idx < cards.length){
-      tallyEl.textContent = `${idx} / ${cards.length} stocks (rendering…)`;
+      tallyEl.textContent = `${idx} / ${cards.length} stocks${_profLabel} (rendering…)`;
       window._fundChunkRaf = requestAnimationFrame(_renderChunk);
     } else {
-      tallyEl.textContent = `${cards.length} stocks`;
+      tallyEl.textContent = `${cards.length} stocks${_profLabel}`;
       window._fundChunkRaf = null;
       try { initColResizers(document.querySelector('#fd-grid .fund-list')); } catch(e){}
     }
@@ -9682,12 +9697,17 @@ async function fullRender() {
     // path so first paint is fast. requestIdleCallback batches them
     // into the browser's idle frames; setTimeout fallback for Safari.
     const _idle = window.requestIdleCallback || ((cb) => setTimeout(cb, 16));
-    _idle(() => { try { renderRisk(tickers);         } catch(e){console.error(e);} }, {timeout: 600});
-    _idle(() => { try { renderNews(tickers);         } catch(e){console.error(e);} }, {timeout: 800});
-    _idle(() => { try { renderSectors(tickers);      } catch(e){console.error(e);} }, {timeout: 1000});
+    // Apply the active profile filter to non-overview panels too. The
+    // Universe / Risk / News / Sector Map tabs should reflect what the
+    // user has selected in the topbar, not the full 545-stock universe.
+    const _profFiltered = (typeof v2FilterByProfile === 'function')
+      ? v2FilterByProfile(tickers) : tickers;
+    _idle(() => { try { renderRisk(_profFiltered);         } catch(e){console.error(e);} }, {timeout: 600});
+    _idle(() => { try { renderNews(_profFiltered);         } catch(e){console.error(e);} }, {timeout: 800});
+    _idle(() => { try { renderSectors(_profFiltered);      } catch(e){console.error(e);} }, {timeout: 1000});
     // Universe table is the heaviest — defer the longest. Users almost
     // never land directly on the Universe tab on first load.
-    _idle(() => { try { renderFundamentals(tickers); } catch(e){console.error(e);} }, {timeout: 1500});
+    _idle(() => { try { renderFundamentals(_profFiltered); } catch(e){console.error(e);} }, {timeout: 1500});
   } catch (e) {
     console.error('[PD] fullRender failed:', e.message);
     const hts2 = document.getElementById('hot-ts'); if (hts2) hts2.textContent = '⚠ Could not reach server — retrying…';
