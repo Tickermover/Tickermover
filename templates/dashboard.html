@@ -4423,26 +4423,36 @@ function v2RenderTodaysFocus(tickers){
   // Sort each bucket by score desc
   const ss = t => parseFloat(t.smart_score ?? t.pop_score ?? 0);
   Object.values(buckets).forEach(arr => arr.sort((a, b) => ss(b.t) - ss(a.t)));
-  // Pick a balanced top 6: max 2 per kind, weight positive over negative
+  // Pick a balanced top 9 (3x3 grid): round-robin across kinds, weight
+  // positives over negatives. User wanted one extra row of cards in
+  // place of the brief greeting + pulse strip below.
   const picks = [];
   const order = ['breakout', 'upgrade', 'setup', 'earnings', 'flag'];
+  const TARGET = 9;
   // Round 1: best of each kind
   order.forEach(k => { if (buckets[k].length) picks.push(buckets[k].shift()); });
-  // Round 2: fill remaining slots up to 6 from any positive bucket
-  for (const k of order){
-    if (picks.length >= 6) break;
-    if (k === 'flag') continue;  // don't overweight red flags
-    if (buckets[k].length) picks.push(buckets[k].shift());
+  // Round 2: keep pulling from positive buckets in order until we hit TARGET
+  let madeProgress = true;
+  while (picks.length < TARGET && madeProgress){
+    madeProgress = false;
+    for (const k of order){
+      if (picks.length >= TARGET) break;
+      if (k === 'flag') continue;       // don't overweight red flags
+      if (buckets[k].length){
+        picks.push(buckets[k].shift());
+        madeProgress = true;
+      }
+    }
   }
   // Fill any remaining slots with red flags if room
-  while (picks.length < 6 && buckets.flag.length) picks.push(buckets.flag.shift());
+  while (picks.length < TARGET && buckets.flag.length) picks.push(buckets.flag.shift());
 
   if (!picks.length){
     return '<div class="v2-focus-card"><div class="v2-focus-head"><div class="v2-focus-title">🎯 Today\'s Focus</div><div class="v2-focus-sub">No standout setups in this view right now — consider broadening your profile.</div></div></div>';
   }
 
   // Compose card HTML
-  const cards = picks.slice(0, 6).map(({ t, kind, label, tone, reason }) => {
+  const cards = picks.slice(0, 9).map(({ t, kind, label, tone, reason }) => {
     const price = _f(t.price);
     const chg   = _f(t.change_pct);
     const chgClass = (chg ?? 0) >= 0 ? 'up' : 'dn';
@@ -4465,36 +4475,18 @@ function v2RenderTodaysFocus(tickers){
     '</div>';
   }).join('');
 
-  // Below: tiny universe-pulse strip with cross-cutting aggregate stats
-  const scores = tickers.map(t => parseFloat(t.smart_score ?? t.pop_score ?? 0)).filter(s => s > 0);
-  const avgScore = scores.length ? Math.round(scores.reduce((a,b)=>a+b,0) / scores.length) : 0;
-  const aTier = tickers.filter(t => t.grade === 'A').length;
-  const now = Date.now();
-  const earningsLast30 = tickers.filter(t => {
-    const eq = (t.eps_quarters || []).filter(q => q && q.date);
-    if (!eq.length) return false;
-    const sorted = [...eq].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
-    const d = new Date(String(sorted[0].date).slice(0, 10) + 'T00:00:00');
-    if (isNaN(d)) return false;
-    const days = (now - d) / 86400000;
-    return days >= 0 && days <= 30;
-  }).length;
-  const pulseStrip =
-    '<div class="v2-focus-pulse">' +
-      '<span class="v2-fp-chip"><span class="v2-fp-lbl">Avg score</span><strong>' + avgScore + '</strong></span>' +
-      '<span class="v2-fp-chip"><span class="v2-fp-lbl">A-tier</span><strong>' + aTier + '</strong></span>' +
-      '<span class="v2-fp-chip"><span class="v2-fp-lbl">Earnings (30d)</span><strong>' + earningsLast30 + '</strong></span>' +
-      '<span class="v2-fp-chip"><span class="v2-fp-lbl">Standout setups</span><strong>' + picks.length + '</strong></span>' +
-    '</div>';
+  // Pulse strip + brief greeting removed per user feedback — the freed
+  // space was used to fit a third row of opportunity cards (TARGET 9
+  // instead of 6). Each card now carries its own justification so the
+  // aggregate stats aren't needed at the top.
 
   return '' +
     '<div class="v2-focus-card">' +
       '<div class="v2-focus-head">' +
-        '<div class="v2-focus-title">🎯 Today\'s focus</div>' +
+        '<div class="v2-focus-title">🎯 Today\'s focus · ' + picks.length + ' standout setups</div>' +
         '<div class="v2-focus-sub">Stocks worth your attention right now — tap any card for the full thesis</div>' +
       '</div>' +
       '<div class="v2-focus-grid">' + cards + '</div>' +
-      pulseStrip +
     '</div>';
 }
 
@@ -5948,11 +5940,10 @@ function renderV2Overview(tickers){
   root.innerHTML =
     profileHint +
     v2RenderWatchlistExposure(fullUniverse) +
-    v2RenderTodaysBrief(filtered) +
-    // Today's Focus replaces What Changed + the bland 10-card KPI strip.
-    // Surfaces 4-6 actionable opportunity cards with clear labels (BREAKOUT,
-    // SCORE UPGRADE, STRONG SETUP, EARNINGS SOON, WATCH-OUT) + specific
-    // reasoning — so the user knows WHY each stock is up there + what to do.
+    // Today's Focus replaces the brief greeting + What Changed + 10-card
+    // KPI strip + pulse chips with up to 9 actionable opportunity cards.
+    // Each card has a clear label (BREAKOUT, SCORE UPGRADE, etc.) and a
+    // specific REASON so the user knows what to do with the info.
     v2RenderTodaysFocus(filtered) +
     '<div class="v2ov-row">' +
       v2RenderSectors(filtered) +
