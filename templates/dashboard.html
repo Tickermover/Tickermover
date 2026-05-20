@@ -1141,8 +1141,8 @@ tr:hover td{background:rgba(132,204,22,.06)}
 .fund-list{width:100%;min-width:1100px;border-collapse:collapse;font-size:13px}
 .fund-list th{background:rgba(255,255,255,.9);padding:10px 12px;text-align:left;font-weight:700;color:#374151;
   font-size:11px;text-transform:uppercase;letter-spacing:.5px;cursor:pointer;white-space:nowrap;
-  border-bottom:2px solid rgba(132,204,22,.3);position:sticky;top:0;position:relative;user-select:none}
-.fund-list th:hover{color:var(--acc2)}
+  border-bottom:2px solid #e2e8f0;position:sticky;top:0;position:relative;user-select:none}
+.fund-list th:hover{color:#4338ca}
 /* Card-style rows — no left-edge brand stripe (was visible lime green) */
 .fund-list td{padding:10px 12px;background:#ffffff;vertical-align:middle;white-space:nowrap;
   border-bottom:5px solid #f1f5f9}
@@ -1151,8 +1151,8 @@ tr:hover td{background:rgba(132,204,22,.06)}
   background:transparent;z-index:1}
 .col-resizer:hover,.col-resizer.resizing{background:rgba(132,204,22,.5)}
 .fund-list tr.fund-row{cursor:pointer;transition:all .15s}
-.fund-list tr.fund-row:hover td{background:rgba(240,253,244,.95);border-color:rgba(132,204,22,.25)}
-.fund-list tr.fund-row:hover .fl-tic{color:var(--hot)}
+.fund-list tr.fund-row:hover td{background:#f8fafc;border-color:#e2e8f0}
+.fund-list tr.fund-row:hover .fl-tic{color:#4338ca}
 .fl-tic{font-weight:900;color:var(--hot);font-size:14px;text-shadow:none}
 /* Tighten the Name column so we recover ~80px for the right-side columns
    (Mkt Cap / P/E / Upside) that were getting cut off. */
@@ -3453,6 +3453,9 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
          what's visible. Hidden inputs preserved so filterFund() and
          renderFundamentals() still resolve them without throwing. -->
     <input type="hidden" id="fd-search" value="">
+    <select id="fd-sector" onchange="v2OnSectorDropdown(this.value)" title="Filter by GICS sector / sub-sector">
+      <option value="">All Sectors</option>
+    </select>
     <select id="fd-rs" onchange="filterFund()" title="Relative Strength — how a stock is performing vs the market (0-100). Higher = stronger.">
       <option value="">All Relative Strength</option>
       <option value="70">Relative Strength 70+</option>
@@ -5554,14 +5557,49 @@ function v2RerenderProfile(){
 /* Recompute the Universe tally + sidebar count by counting VISIBLE rows
    (the ones the CSS-based profile filter is currently showing). Avoids
    re-rendering 545 rows just to update a number. */
+/* Sector dropdown change handler (Universe toolbar). */
+function v2OnSectorDropdown(value){
+  if (!value) v2ClearSectorFilter();
+  else v2SetSectorFilter(value);
+}
+
+/* Populate the #fd-sector dropdown with the sub-sectors present in the
+   loaded universe. Sorted alphabetically; falls back to GICS sector when
+   sub_sector isn't populated. Called after the universe finishes loading. */
+function v2PopulateSectorDropdown(){
+  const sel = document.getElementById('fd-sector');
+  if (!sel) return;
+  const universe = (window.__AH_DATA__ && Array.isArray(window.__AH_DATA__.tickers))
+    ? window.__AH_DATA__.tickers
+    : (window._allTickerData ? Object.values(window._allTickerData) : []);
+  if (!universe.length) return;
+  const seen = new Set();
+  universe.forEach(t => {
+    const s = (t.sub_sector || t.subsector || t.sector || '').trim();
+    if (s) seen.add(s);
+  });
+  const opts = [...seen].sort((a, b) => a.localeCompare(b));
+  const current = sel.value;
+  sel.innerHTML =
+    '<option value="">All Sectors</option>' +
+    opts.map(s => `<option value="${s.replace(/"/g, '&quot;')}">${s}</option>`).join('');
+  // Restore selection if user had one + it's still in the list
+  if (current && opts.includes(current)) sel.value = current;
+}
+
 /* Apply a sub-sector filter to the Universe table. Layered on top of the
    CSS-based profile filter — both must pass for a row to be visible.
-   Used by sector-cell click handlers on the dashboard + Sector Map. */
+   Used by sector-cell click handlers on the dashboard + Sector Map +
+   the Universe toolbar dropdown. */
 function v2SetSectorFilter(sectorName){
   const name = (sectorName || '').trim();
   if (!name){ v2ClearSectorFilter(); return; }
   // Tag body so the clear-pill renders + state is observable from CSS/JS.
   document.body.setAttribute('data-active-sector', name);
+  // Keep the toolbar dropdown in sync when the filter is applied from
+  // elsewhere (Sector Map card click, dashboard cell click).
+  const sel = document.getElementById('fd-sector');
+  if (sel && sel.value !== name) sel.value = name;
   // Tag non-matching rows. matches against sub_sector OR sector so a click
   // on a sub-sector cell ('AI Semiconductors') still works against rows
   // tagged with sector='Technology'.
@@ -5597,6 +5635,9 @@ function v2ClearSectorFilter(){
   document.querySelectorAll('#fund-tbody tr.fund-row.sector-hide').forEach(r => r.classList.remove('sector-hide'));
   const pill = document.getElementById('v2-universe-sector-pill');
   if (pill) pill.style.display = 'none';
+  // Reset the dropdown back to 'All Sectors'
+  const sel = document.getElementById('fd-sector');
+  if (sel) sel.value = '';
   if (typeof v2SyncUniverseTally === 'function') v2SyncUniverseTally();
 }
 /* Click-handler used by sector cells on the dashboard + Sector Map.
@@ -5729,6 +5770,7 @@ function v2InstallHook(){
       renderV2Overview((data && data.tickers) || []);
       if (typeof v2SyncProfileButton === 'function') v2SyncProfileButton();
       if (typeof v2SyncUniverseCount === 'function') v2SyncUniverseCount();
+      if (typeof v2PopulateSectorDropdown === 'function') v2PopulateSectorDropdown();
     }
     catch(e){ console.error('[v2] overview render failed', e); }
     return _orig.apply(this, arguments);
