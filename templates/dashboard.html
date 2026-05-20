@@ -3425,14 +3425,17 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 <!-- FUNDAMENTALS -->
 <div id="panel-fund" class="panel">
   <div class="fd-toolbar">
-    <input type="text" id="fd-search" placeholder="Search ticker…" oninput="filterFund()">
+    <!-- Per-table ticker search removed — global Cmd+K palette handles that.
+         Hide Mega Caps checkbox removed too; profile picker now controls
+         what's visible. Hidden inputs preserved so filterFund() and
+         renderFundamentals() still resolve them without throwing. -->
+    <input type="hidden" id="fd-search" value="">
     <select id="fd-rs" onchange="filterFund()" title="Relative Strength — how a stock is performing vs the market (0-100). Higher = stronger.">
       <option value="">All Relative Strength</option>
       <option value="70">Relative Strength 70+</option>
       <option value="80">Relative Strength 80+</option>
       <option value="90">Relative Strength 90+ 🔥</option>
     </select>
-<!-- Earnings filter removed — dates not reliably available -->
     <select id="fd-grade" onchange="filterFund()">
       <option value="">All ratings</option>
       <option value="A">★★★★★ Top Tier</option>
@@ -3448,10 +3451,7 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
       <option value="margin">Sort: Margin</option>
       <option value="mcap">Sort: Mkt Cap</option>
     </select>
-    <label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);cursor:pointer;white-space:nowrap">
-      <input type="checkbox" id="fd-hide-mega" onchange="filterFund()" style="width:16px;height:16px;accent-color:var(--acc)">
-      Hide Mega Caps
-    </label>
+    <input type="hidden" id="fd-hide-mega" value="">
     <span class="tally" id="tally-fund"></span>
   </div>
   <div class="fund-list-wrap" id="fd-grid"><div class="loading">Loading…</div></div>
@@ -8224,14 +8224,13 @@ window.addEventListener('popstate', () => {
    ---------------------------------------------------------- */
 function renderFundamentals(tickers) {
   computeRS(tickers);
-  const hideMega = document.getElementById('fd-hide-mega')?.checked ?? false;
-  const MEGA_CAP = 200e9;
-  const cards = tickers
-    .filter(t => t.market_cap == null || t.market_cap >= MIN_MCAP)
-    .filter(t => !hideMega ? true :
-      (t.market_cap_tier !== 'Mega Cap' && (t.market_cap == null || t.market_cap < MEGA_CAP)))
-    .sort((a, b) => (parseFloat(b.smart_score != null ? b.smart_score : (b.pop_score || 0)))
-                  - (parseFloat(a.smart_score != null ? a.smart_score : (a.pop_score || 0))));
+  // No MIN_MCAP / mega-cap pre-filter — render every ticker the backend
+  // sent. The profile picker (CSS-based filter on data-profiles) is the
+  // single source of truth for which rows are visible. This makes the
+  // sidebar count, the picker count, and the table tally all agree.
+  const cards = [...tickers].sort((a, b) =>
+    (parseFloat(b.smart_score != null ? b.smart_score : (b.pop_score || 0)))
+  - (parseFloat(a.smart_score != null ? a.smart_score : (a.pop_score || 0))));
 
   // Cache all ticker data for modal lookup
   cards.forEach(t => { _allTickerData[t.ticker] = t; });
