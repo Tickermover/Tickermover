@@ -1994,6 +1994,81 @@ body[data-active-profile="conservative"] .fund-row:not([data-profiles~="conserva
 }
 .v2-usp-clear:hover{background:#eef2ff}
 
+/* ───── Today's Focus — actionable opportunity cards ───── */
+.v2-focus-card{
+  position:relative;
+  margin-bottom:16px;padding:18px 20px;border-radius:14px;
+  background:linear-gradient(135deg,#ffffff 0%,#f8fafc 100%);
+  border:1px solid #e2e8f0;overflow:hidden;
+}
+.v2-focus-card::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;width:4px;
+  background:linear-gradient(180deg,#4338ca 0%,#8b5cf6 50%,#ec4899 100%);
+}
+.v2-focus-head{margin-bottom:14px;padding-left:6px}
+.v2-focus-title{
+  font-size:16px;font-weight:900;color:#0f172a;letter-spacing:-.01em;
+}
+.v2-focus-sub{
+  font-size:12px;color:#64748b;margin-top:3px;font-weight:600;
+}
+.v2-focus-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:10px;
+}
+.v2-focus-item{
+  position:relative;background:#fff;border:1px solid #e2e8f0;border-radius:10px;
+  padding:12px 14px;cursor:pointer;transition:transform .15s, box-shadow .15s, border-color .15s;
+  display:flex;flex-direction:column;gap:8px;
+}
+.v2-focus-item:hover{
+  transform:translateY(-2px);
+  box-shadow:0 8px 20px rgba(15,23,42,.08);
+}
+.v2-focus-pos:hover{border-color:#86efac}
+.v2-focus-neg:hover{border-color:#fca5a5}
+.v2-focus-label{
+  font-size:10px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;
+}
+.v2-focus-pos .v2-focus-label{color:#15803d}
+.v2-focus-neg .v2-focus-label{color:#b91c1c}
+.v2-focus-tic-row{display:flex;align-items:center;gap:8px}
+.v2-focus-tic-body{flex:1;min-width:0}
+.v2-focus-tic{font-size:15px;font-weight:900;color:#4338ca;letter-spacing:.01em}
+.v2-focus-name{font-size:11px;color:#64748b;margin-top:1px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.v2-focus-price{font-size:13px;font-weight:800;color:#0f172a;text-align:right;
+  font-variant-numeric:tabular-nums;flex-shrink:0}
+.v2-focus-price .up{color:#16a34a;font-weight:800;font-size:11px;margin-left:3px}
+.v2-focus-price .dn{color:#dc2626;font-weight:800;font-size:11px;margin-left:3px}
+.v2-focus-reason{
+  font-size:11.5px;color:#475569;line-height:1.4;
+  background:#f8fafc;border-left:3px solid #cbd5e1;
+  padding:6px 9px;border-radius:5px;
+}
+.v2-focus-pos .v2-focus-reason{background:#f0fdf4;border-left-color:#86efac;color:#15803d;font-weight:600}
+.v2-focus-neg .v2-focus-reason{background:#fef2f2;border-left-color:#fca5a5;color:#991b1b;font-weight:600}
+
+/* Mini pulse strip below the opportunity cards */
+.v2-focus-pulse{
+  display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;padding-top:14px;
+  border-top:1px dashed #e2e8f0;
+}
+.v2-fp-chip{
+  display:inline-flex;align-items:center;gap:5px;
+  font-size:11px;color:#475569;
+  background:#f1f5f9;border:1px solid #e2e8f0;border-radius:999px;
+  padding:3px 11px;
+}
+.v2-fp-lbl{font-weight:700;letter-spacing:.02em;font-size:10.5px}
+.v2-fp-chip strong{color:#0f172a;font-weight:900;font-variant-numeric:tabular-nums}
+
+@media (max-width:900px){
+  .v2-focus-grid{grid-template-columns:repeat(2,1fr)}
+}
+@media (max-width:560px){
+  .v2-focus-grid{grid-template-columns:1fr}
+}
+
 /* ───── Active profile hint (top of Today's Signals) ───── */
 .v2-profile-hint{
   display:inline-flex;align-items:center;gap:6px;
@@ -4264,6 +4339,160 @@ function v2Confidence(t){
      - Universe pulse  (aggregate stats nothing else shows)
    Recent Earnings module + Today's Movers list at the bottom keep
    doing their job without overlap. */
+/* ═══════════════════════════════════════════════════════════════════
+   TODAY'S FOCUS — actionable opportunity cards
+   Replaces the bland 10-card KPI strip + descriptive 'What Changed'.
+   Each card answers 'why look at this stock RIGHT NOW' with a clear
+   label + specific reason + minimal supporting data.
+   Categories (top-down, first match wins):
+   - 🚀 BREAKOUT      : within 3% of 52w high + score >= 70 + positive day
+   - 📈 SCORE UPGRADE : score_momentum >= 0.75 (model conviction climbing)
+   - 💎 STRONG SETUP  : grade A + RSI 50-70 sweet spot + positive 3M momentum
+   - 📅 EARNINGS SOON : within 7 days + beat streak >= 3
+   - 🎯 NEW TOP TIER  : just hit A grade (proxy: A + recent climb)
+   - ⚠️ WATCH-OUT    : caution flag OR score crashing
+   Picks the 4-6 most compelling across these categories.
+   ═══════════════════════════════════════════════════════════════════ */
+function v2RenderTodaysFocus(tickers){
+  if (!tickers || !tickers.length) return '';
+
+  const _f = v => { const x = parseFloat(v); return isNaN(x) ? null : x; };
+
+  function categorise(t){
+    const score   = _f(t.smart_score ?? t.pop_score);
+    const grade   = (t.grade || '').toUpperCase();
+    const chg     = _f(t.change_pct);
+    const m3      = _f(t.momentum_3m);
+    const dist52  = _f(t.dist_52w_high);
+    const rsi     = _f(t.rsi_14 ?? t.rsi);
+    const sm      = _f(t.score_momentum);   // 0-1 history-based velocity
+    const beats   = parseInt(t.eps_beat_streak) || 0;
+    const dte     = parseInt(t.days_to_earnings);
+    const sv      = _f(t.score_velocity_7d ?? t.score_velocity);
+
+    // RED FLAG — caution or score crashing
+    if (t.caution) {
+      return { kind:'flag', label:'⚠ WATCH-OUT', tone:'neg',
+               reason:'Model flagged elevated risk — review before adding' };
+    }
+    if (sv != null && sv <= -8) {
+      return { kind:'flag', label:'⚠ DOWNGRADED', tone:'neg',
+               reason:`Score dropped ${sv.toFixed(0)} pts this week` };
+    }
+
+    // EARNINGS SOON — high-confidence pre-earnings setup
+    if (!isNaN(dte) && dte >= 0 && dte <= 7 && beats >= 3) {
+      return { kind:'earnings', label:'📅 EARNINGS SOON', tone:'pos',
+               reason:`Reports in ${dte === 0 ? 'today' : dte === 1 ? 'tomorrow' : dte + ' days'} · ${beats}/4 beat streak` };
+    }
+
+    // BREAKOUT — within 3% of 52w high + healthy score + green today
+    if (dist52 != null && dist52 >= -3 && score >= 70 && (chg ?? 0) > 0) {
+      return { kind:'breakout', label:'🚀 BREAKOUT', tone:'pos',
+               reason:`Within ${Math.abs(dist52).toFixed(1)}% of 52w high · Score ${Math.round(score)}` };
+    }
+
+    // SCORE UPGRADE — model conviction climbing
+    if ((sv != null && sv >= 8) || (sm != null && sm >= 0.85 && score >= 70)) {
+      return { kind:'upgrade', label:'📈 SCORE UPGRADE', tone:'pos',
+               reason: sv != null && sv >= 8
+                 ? `Score +${sv.toFixed(0)} pts this week · Now ${Math.round(score)}`
+                 : `Model momentum at top quartile · Score ${Math.round(score)}` };
+    }
+
+    // STRONG SETUP — A grade + RSI sweet spot + positive 3M
+    if (grade === 'A' && rsi != null && rsi >= 50 && rsi <= 70 && (m3 ?? 0) > 5) {
+      return { kind:'setup', label:'💎 STRONG SETUP', tone:'pos',
+               reason:`A grade · RSI ${rsi.toFixed(0)} · +${m3.toFixed(0)}% over 3M` };
+    }
+    return null;
+  }
+
+  // Bucket by kind, pick best (highest score) per kind, then top 6 overall
+  const buckets = { breakout:[], upgrade:[], setup:[], earnings:[], flag:[] };
+  tickers.forEach(t => {
+    const c = categorise(t);
+    if (!c) return;
+    buckets[c.kind].push({ t, ...c });
+  });
+  // Sort each bucket by score desc
+  const ss = t => parseFloat(t.smart_score ?? t.pop_score ?? 0);
+  Object.values(buckets).forEach(arr => arr.sort((a, b) => ss(b.t) - ss(a.t)));
+  // Pick a balanced top 6: max 2 per kind, weight positive over negative
+  const picks = [];
+  const order = ['breakout', 'upgrade', 'setup', 'earnings', 'flag'];
+  // Round 1: best of each kind
+  order.forEach(k => { if (buckets[k].length) picks.push(buckets[k].shift()); });
+  // Round 2: fill remaining slots up to 6 from any positive bucket
+  for (const k of order){
+    if (picks.length >= 6) break;
+    if (k === 'flag') continue;  // don't overweight red flags
+    if (buckets[k].length) picks.push(buckets[k].shift());
+  }
+  // Fill any remaining slots with red flags if room
+  while (picks.length < 6 && buckets.flag.length) picks.push(buckets.flag.shift());
+
+  if (!picks.length){
+    return '<div class="v2-focus-card"><div class="v2-focus-head"><div class="v2-focus-title">🎯 Today\'s Focus</div><div class="v2-focus-sub">No standout setups in this view right now — consider broadening your profile.</div></div></div>';
+  }
+
+  // Compose card HTML
+  const cards = picks.slice(0, 6).map(({ t, kind, label, tone, reason }) => {
+    const price = _f(t.price);
+    const chg   = _f(t.change_pct);
+    const chgClass = (chg ?? 0) >= 0 ? 'up' : 'dn';
+    const chgStr = chg == null ? '—' : ((chg >= 0 ? '+' : '') + chg.toFixed(1) + '%');
+    return '<div class="v2-focus-item v2-focus-' + tone + ' v2-focus-kind-' + kind + '" ' +
+           'onclick="openStockModal(\'' + t.ticker + '\')">' +
+      '<div class="v2-focus-label">' + label + '</div>' +
+      '<div class="v2-focus-tic-row">' +
+        (typeof v2LogoHTML === 'function' ? v2LogoHTML(t.ticker, 'sm') : '') +
+        '<div class="v2-focus-tic-body">' +
+          '<div class="v2-focus-tic">' + t.ticker + '</div>' +
+          '<div class="v2-focus-name">' + v2EscHTML((t.name || '').slice(0, 24)) + '</div>' +
+        '</div>' +
+        '<div class="v2-focus-price">' +
+          (price != null ? '$' + price.toFixed(2) : '—') +
+          ' <span class="' + chgClass + '">' + chgStr + '</span>' +
+        '</div>' +
+      '</div>' +
+      '<div class="v2-focus-reason">' + reason + '</div>' +
+    '</div>';
+  }).join('');
+
+  // Below: tiny universe-pulse strip with cross-cutting aggregate stats
+  const scores = tickers.map(t => parseFloat(t.smart_score ?? t.pop_score ?? 0)).filter(s => s > 0);
+  const avgScore = scores.length ? Math.round(scores.reduce((a,b)=>a+b,0) / scores.length) : 0;
+  const aTier = tickers.filter(t => t.grade === 'A').length;
+  const now = Date.now();
+  const earningsLast30 = tickers.filter(t => {
+    const eq = (t.eps_quarters || []).filter(q => q && q.date);
+    if (!eq.length) return false;
+    const sorted = [...eq].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+    const d = new Date(String(sorted[0].date).slice(0, 10) + 'T00:00:00');
+    if (isNaN(d)) return false;
+    const days = (now - d) / 86400000;
+    return days >= 0 && days <= 30;
+  }).length;
+  const pulseStrip =
+    '<div class="v2-focus-pulse">' +
+      '<span class="v2-fp-chip"><span class="v2-fp-lbl">Avg score</span><strong>' + avgScore + '</strong></span>' +
+      '<span class="v2-fp-chip"><span class="v2-fp-lbl">A-tier</span><strong>' + aTier + '</strong></span>' +
+      '<span class="v2-fp-chip"><span class="v2-fp-lbl">Earnings (30d)</span><strong>' + earningsLast30 + '</strong></span>' +
+      '<span class="v2-fp-chip"><span class="v2-fp-lbl">Standout setups</span><strong>' + picks.length + '</strong></span>' +
+    '</div>';
+
+  return '' +
+    '<div class="v2-focus-card">' +
+      '<div class="v2-focus-head">' +
+        '<div class="v2-focus-title">🎯 Today\'s focus</div>' +
+        '<div class="v2-focus-sub">Stocks worth your attention right now — tap any card for the full thesis</div>' +
+      '</div>' +
+      '<div class="v2-focus-grid">' + cards + '</div>' +
+      pulseStrip +
+    '</div>';
+}
+
 function v2RenderWhatChanged(tickers){
   // Climbing & declining — prefer score-velocity (model conviction
   // signal) when populated; fall back to momentum_1m (real % over 30d)
@@ -5710,8 +5939,11 @@ function renderV2Overview(tickers){
     profileHint +
     v2RenderWatchlistExposure(fullUniverse) +
     v2RenderTodaysBrief(filtered) +
-    v2RenderWhatChanged(filtered) +
-    v2RenderKpiStrip(filtered) +
+    // Today's Focus replaces What Changed + the bland 10-card KPI strip.
+    // Surfaces 4-6 actionable opportunity cards with clear labels (BREAKOUT,
+    // SCORE UPGRADE, STRONG SETUP, EARNINGS SOON, WATCH-OUT) + specific
+    // reasoning — so the user knows WHY each stock is up there + what to do.
+    v2RenderTodaysFocus(filtered) +
     '<div class="v2ov-row">' +
       v2RenderSectors(filtered) +
       v2RenderDistAndMovers(filtered) +
