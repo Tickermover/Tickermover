@@ -1974,6 +1974,25 @@ body.v2 .v2ov-card.sectors .v2ov-sector-cell{
 body[data-active-profile="aggressive"]   .fund-row:not([data-profiles~="aggressive"])   { display:none; }
 body[data-active-profile="balanced"]     .fund-row:not([data-profiles~="balanced"])     { display:none; }
 body[data-active-profile="conservative"] .fund-row:not([data-profiles~="conservative"]) { display:none; }
+/* Sector filter layered on top of profile filter — both must pass */
+.fund-row.sector-hide{display:none}
+
+/* Clear-filter pill above the Universe table */
+.v2-uni-sector-pill{
+  display:inline-flex;align-items:center;gap:8px;
+  background:linear-gradient(135deg,#eef2ff 0%,#f5f3ff 100%);
+  border:1px solid #c7d2fe;border-left:4px solid #4338ca;border-radius:8px;
+  padding:7px 12px;margin:8px 0 12px;font-size:12px;
+}
+.v2-usp-em{font-size:14px}
+.v2-usp-text{color:#475569}
+.v2-usp-text strong{color:#4338ca;font-weight:800}
+.v2-usp-clear{
+  background:#fff;border:1px solid #c7d2fe;color:#4338ca;
+  padding:3px 9px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;
+  margin-left:6px;
+}
+.v2-usp-clear:hover{background:#eef2ff}
 
 /* ───── Active profile hint (top of Today's Signals) ───── */
 .v2-profile-hint{
@@ -4508,8 +4527,8 @@ function v2RenderSectors(tickers){
         ? '<span class="v2-theme-state v2-theme-cooling">🥶 Cooling</span>'
         : '';
     return '<div class="v2ov-sector-cell ' + (isCooling ? 'is-cooling' : '') + '" data-tier="score" style="background:' + bgForScore(s.score) + '" ' +
-         'title="' + v2EscHTML(s.name) + ' · ' + s.count + ' stocks · score ' + s.score + (isCooling ? ' · COOLING — model score has weakened, prioritize stronger themes' : isHeating ? ' · HEATING UP — leading theme right now' : '') + '" ' +
-         'onclick="v2Show(\'sectors\', null)">' +
+         'title="' + v2EscHTML(s.name) + ' · ' + s.count + ' stocks · click to view in Universe' + (isCooling ? ' · COOLING — model score has weakened, prioritize stronger themes' : isHeating ? ' · HEATING UP — leading theme right now' : '') + '" ' +
+         'onclick="v2OpenSectorInUniverse(\'' + s.name.replace(/\'/g, '\\\'') + '\')">' +
       stateBadge +
       '<div class="sn">' + v2EscHTML(s.name) + '</div>' +
       '<div class="sv">' + s.score + '</div>' +
@@ -5179,6 +5198,9 @@ function v2SetProfile(p){
   // Flip the body attribute so CSS-based filters (Universe table) react
   // instantly without a JS re-render.
   document.body.setAttribute('data-active-profile', p);
+  // Clear any active sector filter — its rows may not match the new
+  // profile, and we don't want the user staring at an empty table.
+  if (typeof v2ClearSectorFilter === 'function') v2ClearSectorFilter();
   v2SyncProfileButton();
   if (typeof v2RerenderProfile === 'function') v2RerenderProfile();
 }
@@ -5532,6 +5554,63 @@ function v2RerenderProfile(){
 /* Recompute the Universe tally + sidebar count by counting VISIBLE rows
    (the ones the CSS-based profile filter is currently showing). Avoids
    re-rendering 545 rows just to update a number. */
+/* Apply a sub-sector filter to the Universe table. Layered on top of the
+   CSS-based profile filter — both must pass for a row to be visible.
+   Used by sector-cell click handlers on the dashboard + Sector Map. */
+function v2SetSectorFilter(sectorName){
+  const name = (sectorName || '').trim();
+  if (!name){ v2ClearSectorFilter(); return; }
+  // Tag body so the clear-pill renders + state is observable from CSS/JS.
+  document.body.setAttribute('data-active-sector', name);
+  // Tag non-matching rows. matches against sub_sector OR sector so a click
+  // on a sub-sector cell ('AI Semiconductors') still works against rows
+  // tagged with sector='Technology'.
+  const nameLower = name.toLowerCase();
+  document.querySelectorAll('#fund-tbody tr.fund-row').forEach(r => {
+    const sub = (r.dataset.subsector || '').toLowerCase();
+    const sec = (r.dataset.sector || '').toLowerCase();
+    const matches = (sub === nameLower) || (sec === nameLower);
+    r.classList.toggle('sector-hide', !matches);
+  });
+  // Render or refresh the clear-filter pill.
+  let pill = document.getElementById('v2-universe-sector-pill');
+  if (!pill){
+    const toolbar = document.querySelector('#panel-fund .fd-toolbar');
+    if (toolbar){
+      pill = document.createElement('div');
+      pill.id = 'v2-universe-sector-pill';
+      pill.className = 'v2-uni-sector-pill';
+      toolbar.parentNode.insertBefore(pill, toolbar.nextSibling);
+    }
+  }
+  if (pill){
+    pill.innerHTML =
+      '<span class="v2-usp-em">🗺</span>' +
+      '<span class="v2-usp-text">Filtered to <strong>' + name + '</strong></span>' +
+      '<button class="v2-usp-clear" onclick="v2ClearSectorFilter()">✕ Clear</button>';
+    pill.style.display = '';
+  }
+  if (typeof v2SyncUniverseTally === 'function') v2SyncUniverseTally();
+}
+function v2ClearSectorFilter(){
+  document.body.removeAttribute('data-active-sector');
+  document.querySelectorAll('#fund-tbody tr.fund-row.sector-hide').forEach(r => r.classList.remove('sector-hide'));
+  const pill = document.getElementById('v2-universe-sector-pill');
+  if (pill) pill.style.display = 'none';
+  if (typeof v2SyncUniverseTally === 'function') v2SyncUniverseTally();
+}
+/* Click-handler used by sector cells on the dashboard + Sector Map.
+   Switches to the Universe panel and applies the sector filter in one go. */
+function v2OpenSectorInUniverse(sectorName){
+  v2SetSectorFilter(sectorName);
+  if (typeof v2Show === 'function') v2Show('fund', null);
+  // Scroll to top of universe table for clarity
+  setTimeout(() => {
+    const wrap = document.querySelector('#panel-fund .fund-list-wrap');
+    if (wrap) wrap.scrollTop = 0;
+  }, 100);
+}
+
 function v2SyncUniverseTally(){
   const tally = document.getElementById('tally-fund');
   if (!tally) return;
@@ -5544,10 +5623,12 @@ function v2SyncUniverseTally(){
     if (r.offsetParent !== null) visible += 1;
   });
   const prof = (typeof v2CurrentProfile === 'function') ? v2CurrentProfile() : 'aggressive';
-  const lbl  = prof === 'aggressive' ? 'aggressive view'
-             : prof === 'balanced'   ? 'balanced view'
-             : prof === 'conservative' ? 'conservative view' : prof;
-  tally.textContent = total ? `${visible} stocks · ${lbl}` : '';
+  const profLbl = prof === 'aggressive' ? 'aggressive view'
+                : prof === 'balanced'   ? 'balanced view'
+                : prof === 'conservative' ? 'conservative view' : prof;
+  const sector = document.body.getAttribute('data-active-sector');
+  const sectorLbl = sector ? ' · ' + sector : '';
+  tally.textContent = total ? `${visible} stocks · ${profLbl}${sectorLbl}` : '';
 }
 
 function renderV2Overview(tickers){
@@ -8510,7 +8591,9 @@ function renderSectors(tickers) {
     const remainCount    = topTickers.length - visibleTickers.length;
 
     return `
-    <div class="sm-card">
+    <div class="sm-card" style="cursor:pointer"
+         title="Click to open this sector in the Universe table"
+         onclick="if(!event.target.closest('.sm-chip')){v2OpenSectorInUniverse('${sub.replace(/'/g,"\\'")}')}">
       <div class="sm-header">
         <div class="sm-title">${sub}</div>
         <div class="sm-badges">
