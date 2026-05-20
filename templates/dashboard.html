@@ -8392,25 +8392,30 @@ function initColResizers(table) {
   });
 }
 
-/* kept for compat — also update liveQuoteRefresh to patch list prices */
+/* Patch fund-list prices. Only touches VISIBLE rows (CSS profile filter
+   hides others — no point patching offscreen DOM) and skips entirely when
+   the Universe panel isn't active. Big perf win at 545 rows. */
 function _patchFundListPrices(qmap) {
-  document.querySelectorAll('#fund-tbody tr.fund-row').forEach(row => {
-    const tk = row.dataset.ticker?.toUpperCase();
-    if (!tk || !qmap[tk]) return;
-    const q = qmap[tk];
-    const el = document.getElementById('fl-price-' + tk);
-    if (el && q.price != null) {
-      el.textContent = `$${parseFloat(q.price).toFixed(2)}`;
-    }
-    // Also patch the Today % cell (5th column)
-    const chgEl = el?.parentElement?.querySelector('td:nth-child(5)');
-    if (chgEl && q.change_pct != null) {
-      const chgV = parseFloat(q.change_pct);
-      chgEl.className = chgV >= 0 ? 'pos' : 'neg';
-      chgEl.textContent = (chgV >= 0 ? '+' : '') + chgV.toFixed(1) + '%';
-    }
-  });
-  // Also patch open modal price if the modal is showing a stock in qmap
+  const fundPanel = document.getElementById('panel-fund');
+  const panelVisible = fundPanel && fundPanel.classList.contains('active');
+  if (panelVisible){
+    // Only iterate rows that are currently displayed
+    document.querySelectorAll('#fund-tbody tr.fund-row').forEach(row => {
+      if (row.offsetParent === null) return;   // hidden by CSS profile filter
+      const tk = row.dataset.ticker;
+      if (!tk || !qmap[tk]) return;
+      const q = qmap[tk];
+      const el = document.getElementById('fl-price-' + tk);
+      if (el && q.price != null) el.textContent = '$' + parseFloat(q.price).toFixed(2);
+      const chgEl = el?.parentElement?.querySelector('td:nth-child(5)');
+      if (chgEl && q.change_pct != null){
+        const chgV = parseFloat(q.change_pct);
+        chgEl.className = chgV >= 0 ? 'pos' : 'neg';
+        chgEl.textContent = (chgV >= 0 ? '+' : '') + chgV.toFixed(1) + '%';
+      }
+    });
+  }
+  // Modal price is always cheap (one element) and matters when open.
   const overlay = document.getElementById('stock-modal-overlay');
   if (overlay && overlay.classList.contains('open')) {
     Object.keys(qmap).forEach(tk => {
@@ -8418,7 +8423,7 @@ function _patchFundListPrices(qmap) {
       if (el && qmap[tk].price != null) {
         const q = qmap[tk];
         const chgV = parseFloat(q.change_pct || 0);
-        el.innerHTML = `$${parseFloat(q.price).toFixed(2)} <span style="font-size:12px" class="${chgV>=0?'pos':'neg'}">${chgV>=0?'+':''}${chgV.toFixed(1)}%</span>`;
+        el.innerHTML = '$' + parseFloat(q.price).toFixed(2) + ' <span style="font-size:12px" class="' + (chgV>=0?'pos':'neg') + '">' + (chgV>=0?'+':'') + chgV.toFixed(1) + '%</span>';
       }
     });
   }
@@ -9846,42 +9851,72 @@ async function liveQuoteRefresh() {
    Falls back silently to polling if not on real-time plan.
    ---------------------------------------------------------- */
 let _wsConnected = false;
+let _wsRetryCount = 0;       // exponential backoff counter
+let _wsGaveUp = false;       // after N failures, fall back to /api/quotes/batch poll
+let _wsPending = new Map();  // ticker -> latest tick {price, pct} batched per frame
+let _wsRaf = null;
+
+function _wsFlush(){
+  _wsRaf = null;
+  if (!_wsPending.size) return;
+  const ticks = _wsPending;
+  _wsPending = new Map();
+  // Single querySelectorAll per frame, not per tick. Massive perf win at 545+ rows.
+  ticks.forEach((d, tk) => {
+    const cls = d.pct >= 0 ? 'pos' : 'neg';
+    const sgn = d.pct >= 0 ? '+' : '';
+    const html = '$' + d.price.toFixed(2) + ' <span style="font-size:12px;font-weight:600" class="' + cls + '">' + sgn + d.pct.toFixed(2) + '%</span>';
+    document.querySelectorAll('[data-ticker="' + tk + '"] .hot-price, [data-ticker="' + tk + '"] .fd-price').forEach(el => {
+      el.innerHTML = html;
+    });
+  });
+}
 
 function startPriceWS() {
+  if (_wsGaveUp) return;  // hard-stopped after too many failures
   const proto = location.protocol === 'https:' ? 'wss' : 'ws';
-  const ws    = new WebSocket(`${proto}://${location.host}/ws/prices`);
+  let ws;
+  try { ws = new WebSocket(proto + '://' + location.host + '/ws/prices'); }
+  catch(e){ _wsGaveUp = true; return; }
 
   ws.onopen = () => {
     _wsConnected = true;
+    _wsRetryCount = 0;   // reset backoff on successful connect
     console.log('[AlphaHunt] WebSocket price stream connected');
   };
 
   ws.onmessage = (evt) => {
     try {
       const d = JSON.parse(evt.data);
-      if (d.info) return;                     // info message — not a tick
+      if (d.info) return;
       if (!d.ticker || d.price == null) return;
-      const tk  = d.ticker.toUpperCase();
-      const pct = parseFloat(d.change_pct || 0);
-      const cls = pct >= 0 ? 'pos' : 'neg';
-      const sgn = pct >= 0 ? '+' : '';
-      const fmt = v => '$' + parseFloat(v).toFixed(2);
-      const html = `${fmt(d.price)} <span style="font-size:12px;font-weight:600" class="${cls}">${sgn}${pct.toFixed(2)}%</span>`;
-
-      // Update all price elements for this ticker (hot cards + fd-cards)
-      document.querySelectorAll(`[data-ticker="${tk}"] .hot-price, [data-ticker="${tk}"] .fd-price`).forEach(el => {
-        el.innerHTML = html;
+      // Batch ticks per animation frame. Polygon can fire dozens of ticks/
+      // second; without batching every tick triggered a querySelectorAll
+      // over 545+ rows and locked the main thread every few seconds.
+      _wsPending.set(d.ticker.toUpperCase(), {
+        price: parseFloat(d.price),
+        pct:   parseFloat(d.change_pct || 0),
       });
-    } catch (e) {}
+      if (!_wsRaf) _wsRaf = requestAnimationFrame(_wsFlush);
+    } catch(e){}
   };
 
   ws.onclose = () => {
     _wsConnected = false;
-    // Reconnect after 5s — handles server restart
-    setTimeout(startPriceWS, 5000);
+    _wsRetryCount += 1;
+    // Exponential backoff with cap, then give up entirely so a broken WS
+    // endpoint doesn't cause an endless reconnect storm (was the cause of
+    // 'dev site becomes unresponsive every ~10 seconds' user report).
+    if (_wsRetryCount > 4){
+      _wsGaveUp = true;
+      console.warn('[AlphaHunt] WebSocket price stream disabled after ' + _wsRetryCount + ' failures — falling back to 30s polling');
+      return;
+    }
+    const delay = Math.min(60000, 5000 * Math.pow(2, _wsRetryCount - 1));  // 5s, 10s, 20s, 40s, 60s
+    setTimeout(startPriceWS, delay);
   };
 
-  ws.onerror = () => ws.close();
+  ws.onerror = () => { try { ws.close(); } catch(e){} };
 }
 
 /* ----------------------------------------------------------
