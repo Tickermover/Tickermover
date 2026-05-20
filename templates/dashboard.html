@@ -5671,7 +5671,7 @@ function renderV2Overview(tickers){
     // drawdown banner (which previously lived at the top of the overview).
     '<div class="v2ov-row equal">' +
       v2RenderEarningsCombined(filtered) +
-      (v2RenderDrawdownBanner(fullUniverse) || '<div class="v2ov-card v2-dd-empty"><div class="v2ov-card-head"><div><div class="v2ov-title">📉 Sector Pressure</div><div class="v2ov-sub">No sector currently in drawdown</div></div></div><div style="padding:14px 4px;color:#94a3b8;font-size:12.5px;text-align:center">All sectors holding steady this month.</div></div>') +
+      (v2RenderDrawdownBanner(filtered) || '<div class="v2ov-card v2-dd-empty"><div class="v2ov-card-head"><div><div class="v2ov-title">📉 Sector Pressure</div><div class="v2ov-sub">No sector currently in drawdown</div></div></div><div style="padding:14px 4px;color:#94a3b8;font-size:12.5px;text-align:center">All sectors holding steady this month.</div></div>') +
     '</div>' +
     '<div class="v2-disclaimer">' +
       '<strong>Educational research tool.</strong> ' +
@@ -10130,9 +10130,13 @@ function renderCmdK(){
     `<div class="cmdk-group">${sectionTitle}</div>` +
     tickers.map((i, myIdx) => {
       const isActive = (myIdx === _cmdkActive);
+      // mousedown (not click) so the action fires before any re-render
+      // race; previously re-rendering on hover destroyed the click target
+      // mid-event and clicks silently dropped. We update _cmdkActive on
+      // hover via classList only — no DOM rebuild.
       return `<div class="cmdk-item ${isActive?'active':''}" data-idx="${myIdx}"
-                   onmouseenter="_cmdkActive=${myIdx};renderCmdK()"
-                   onclick="_cmdkRun(${myIdx})">
+                   onmouseenter="_cmdkSetActive(${myIdx})"
+                   onmousedown="_cmdkRun(${myIdx})">
         <div class="cmdk-item-icon ticker">${i.icon}</div>
         <div class="cmdk-item-main">
           <div class="cmdk-item-title">${i.label}</div>
@@ -10141,6 +10145,14 @@ function renderCmdK(){
         <div class="cmdk-item-kbd">Stock</div>
       </div>`;
     }).join('');
+}
+function _cmdkSetActive(idx){
+  _cmdkActive = idx;
+  // Toggle .active class WITHOUT rebuilding the list — preserves the
+  // click target so mousedown/click can fire successfully.
+  document.querySelectorAll('#cmdk-list .cmdk-item').forEach(el => {
+    el.classList.toggle('active', parseInt(el.dataset.idx, 10) === idx);
+  });
 }
 function _cmdkRun(idx){
   const tickers = _cmdkTickerMatches();
