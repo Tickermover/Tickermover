@@ -2124,13 +2124,18 @@ html.v2-dark .v2-mp-mini-lbl{color:#cbd5e1}
 }
 
 /* ───── Sector Map cooling / heating badges ───── */
-.v2ov-sector-cell{position:relative}
+.v2ov-sector-cell{position:relative;padding-top:18px!important}
 .v2ov-sector-cell.is-cooling{opacity:.65}
 .v2ov-sector-cell.is-cooling:hover{opacity:1}
+/* HEATING / COOLING badge sits in its own padded strip at the top of
+   the cell so it never overlaps the sector name. The cell got
+   padding-top:18px above to make room for it. */
 .v2-theme-state{
-  position:absolute;top:4px;right:4px;
-  font-size:8.5px;font-weight:900;letter-spacing:.06em;
-  padding:1px 5px;border-radius:3px;text-transform:uppercase;
+  position:absolute;top:3px;left:50%;transform:translateX(-50%);
+  font-size:8px;font-weight:900;letter-spacing:.08em;
+  padding:1px 6px;border-radius:3px;text-transform:uppercase;
+  white-space:nowrap;line-height:1.3;
+  box-shadow:0 1px 2px rgba(15,23,42,.08);
 }
 .v2-theme-heating{background:#0f172a;color:#84cc16}
 .v2-theme-cooling{background:#dbeafe;color:#1e40af}
@@ -4732,16 +4737,18 @@ function v2RenderSectors(tickers){
 
   if (!sectors.length) return '';
 
-  // Colour each cell by AVERAGE SCORE (not today's momentum) so the
-  // map mirrors the Score Distribution palette: A=green, B=lime,
-  // C=yellow, D=orange, F=red. The cells are tagged data-tier so
-  // the v2-green-sweep knows to leave their backgrounds alone.
+  // Finer-grained palette: typical universe scores cluster in 55-75,
+  // so the old 60-69='yellow' bucket made most cells look identical.
+  // New 5-pt steps in the visible range give real contrast.
   const bgForScore = sc => {
-    if (sc >= 80) return '#dcfce7';   // A · green
-    if (sc >= 70) return '#ecfccb';   // B · lime
-    if (sc >= 60) return '#fef3c7';   // C · yellow
-    if (sc >= 50) return '#fed7aa';   // D · orange
-    return '#fecaca';                  // F · red
+    if (sc >= 80) return '#bbf7d0';   // bright green   (A+)
+    if (sc >= 75) return '#dcfce7';   // light green    (A-)
+    if (sc >= 70) return '#ecfccb';   // lime           (B+)
+    if (sc >= 65) return '#fef9c3';   // pale yellow    (B-)
+    if (sc >= 60) return '#fef3c7';   // soft yellow    (C+)
+    if (sc >= 55) return '#fed7aa';   // light orange   (C-)
+    if (sc >= 50) return '#fdba74';   // orange         (D)
+    return '#fecaca';                  // red            (F)
   };
 
   // Theme rotation: auto-demote sectors with avg score < 55 ('Cooling')
@@ -5766,6 +5773,9 @@ function v2RerenderProfile(){
   if (!universe.length) return;
   // Today's Signals handles its own filter via v2FilterByProfile.
   renderV2Overview(universe);
+  // Refresh the scrolling ticker tape so its gainers/losers reflect the
+  // active profile (was previously stuck on whatever was loaded first).
+  try { if (typeof renderTickerTape === 'function') renderTickerTape(universe); } catch(e){}
   // Update the Universe tally + sidebar count (counts the rows that match
   // the active profile — no DOM rebuild required).
   try { if (typeof v2SyncUniverseTally === 'function') v2SyncUniverseTally(); } catch(e){}
@@ -10475,8 +10485,13 @@ function renderTickerTape(tickers) {
   const track = document.getElementById('ticker-track');
   if (!track || !tickers || !tickers.length) return;
 
-  // Mix top 12 gainers + top 8 losers + top 5 by Alpha Score for a balanced tape
-  const valid = tickers.filter(t => isFinite(parseFloat(t.change_pct)) && parseFloat(t.price) > 0);
+  // Respect the active profile so the tape only shows stocks the user
+  // actually cares about (Conservative shouldn't surface high-beta tech
+  // mover/loser headlines).
+  const scoped = (typeof v2FilterByProfile === 'function')
+    ? v2FilterByProfile(tickers) : tickers;
+  const valid = (scoped.length ? scoped : tickers)
+    .filter(t => isFinite(parseFloat(t.change_pct)) && parseFloat(t.price) > 0);
   const byChg = [...valid].sort((a,b) => parseFloat(b.change_pct) - parseFloat(a.change_pct));
   const topGain  = byChg.slice(0, 12);
   const topLose  = byChg.slice(-8).reverse();
