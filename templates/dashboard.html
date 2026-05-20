@@ -5657,17 +5657,25 @@ function v2SyncUniverseTally(){
   if (!tally) return;
   const tbody = document.getElementById('fund-tbody');
   if (!tbody) return;
-  // CSS hides non-matching rows; offsetParent === null is the cheap check.
+  // Count via classList + dataset, NOT offsetParent. When this runs right
+  // after a sector-click (which calls SetSectorFilter -> v2Show -> tally)
+  // the panel container can still be display:none for a frame, making
+  // offsetParent null for every row even though they will be visible
+  // after layout. That was the cause of '0 stocks · aggressive · Consumer
+  // Cyclical' when there were actually 2 matching rows.
+  const prof = (typeof v2CurrentProfile === 'function') ? v2CurrentProfile() : 'aggressive';
+  const sector = document.body.getAttribute('data-active-sector');
   let visible = 0, total = 0;
   tbody.querySelectorAll('.fund-row').forEach(r => {
     total += 1;
-    if (r.offsetParent !== null) visible += 1;
+    const profSet = (r.dataset.profiles || '').split(' ').filter(Boolean);
+    const profOk  = !profSet.length || profSet.includes(prof);
+    const sectorOk = !r.classList.contains('sector-hide');
+    if (profOk && sectorOk) visible += 1;
   });
-  const prof = (typeof v2CurrentProfile === 'function') ? v2CurrentProfile() : 'aggressive';
   const profLbl = prof === 'aggressive' ? 'aggressive view'
                 : prof === 'balanced'   ? 'balanced view'
                 : prof === 'conservative' ? 'conservative view' : prof;
-  const sector = document.body.getAttribute('data-active-sector');
   const sectorLbl = sector ? ' · ' + sector : '';
   tally.textContent = total ? `${visible} stocks · ${profLbl}${sectorLbl}` : '';
 }
@@ -8633,9 +8641,7 @@ function renderSectors(tickers) {
     const remainCount    = topTickers.length - visibleTickers.length;
 
     return `
-    <div class="sm-card" style="cursor:pointer"
-         title="Click to open this sector in the Universe table"
-         onclick="if(!event.target.closest('.sm-chip')){v2OpenSectorInUniverse('${sub.replace(/'/g,"\\'")}')}">
+    <div class="sm-card">
       <div class="sm-header">
         <div class="sm-title">${sub}</div>
         <div class="sm-badges">
