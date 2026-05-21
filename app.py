@@ -3170,12 +3170,12 @@ def _build_model_portfolio(existing: dict | None = None) -> dict:
     # prevents a pure-momentum name with terrible fundamentals or a
     # stretched valuation from being selected just because its composite
     # is high.
+    # MANDATORY pillar veto — no fallback. If today yields fewer than
+    # PORTFOLIO_SIZE names that pass, the tracker stays smaller. An
+    # empty slot is a signal that the market isn't offering enough
+    # high-conviction setups today, not an excuse to lower the bar.
     qualified = [t for t in score_qualified if _pillar_pass_count(t) >= 4]
-    # If the soft-veto leaves us with too few names (e.g. universe is
-    # thin or pillar data is missing), fall back to score_qualified so
-    # the portfolio is never starved. The displayed pillar bars will
-    # still warn the user when individual pillars are weak.
-    pool = qualified if len(qualified) >= PORTFOLIO_SIZE else score_qualified
+    pool = qualified
     # Sort by alpha desc, upside desc as tiebreaker
     pool.sort(key=lambda t: (_alpha(t), _upside(t)), reverse=True)
     top20 = pool[:PORTFOLIO_SIZE]   # variable name kept for downstream code
@@ -3707,11 +3707,12 @@ def _replenish_portfolio(portfolio: dict) -> dict:
         and _alpha(t) >= 75   # matches MIN_ALPHA_SCORE in _build_model_portfolio
         and t.get("ticker") not in blocked
     ]
-    # Same soft 6-pillar veto as initial build — must hit >= 4 of 6 pillars.
-    # Falls back to score-only if the strict pool is too thin.
+    # MANDATORY pillar veto — must hit >= 4 of 6 pillars. No fallback;
+    # if no eligible candidates exist, the portfolio stays below target
+    # rather than admit weaker names.
     vetoed = [t for t in score_qualified if _pillar_pass_count(t) >= 4]
     qualified = sorted(
-        vetoed if len(vetoed) >= 1 else score_qualified,
+        vetoed,
         key=lambda t: (_alpha(t), _upside(t)),
         reverse=True,
     )
@@ -3850,28 +3851,16 @@ async def api_hot(n: int = None):
     limit = n or config.HOT_LIST_N
 
     if _daily_hot_date != today_str or len(_daily_hot) == 0:
-        # Tier 1: strict — Pop ≥ 70, conf ≥ 70%, Grade A, not Mega Cap
+        # Strict tier ONLY — Pop ≥ 70, conf ≥ 70%, Grade A, not Mega Cap.
+        # No tier-2 backfill: if today yields 6 high-conviction names, the
+        # list shows 6. An empty slot is honest signal that the market
+        # isn't offering more setups at our bar.
         tier1 = [t for t in _universe_data if _is_hot_eligible(t)]
         picks = tier1[:limit]
 
-        # Tier 2: if still under 20, fill with best Grade A stocks (Pop ≥ 68, conf ≥ 60%)
-        # that aren't already in the list — ensures list always targets 20
-        if len(picks) < limit:
-            existing = {t["ticker"] for t in picks}
-            tier2 = [
-                t for t in _universe_data
-                if t.get("ticker") not in existing
-                and t.get("grade", "") == "A"
-                and float(t.get("pop_score") or 0) >= 68
-                and float(t.get("confidence") or 0) >= 0.60
-                and (t.get("market_cap") or 0) >= 250e6
-                and (t.get("market_cap") or 0) < MEGA_CAP_CUTOFF
-            ]
-            picks += tier2[: limit - len(picks)]
-
         _daily_hot     = picks
         _daily_hot_date = today_str
-        logger.info(f"📋 Hot list: {len(tier1)} tier-1 + {len(picks)-len(tier1)} tier-2 = {len(picks)} picks for {today_str}")
+        logger.info(f"📋 Hot list: {len(picks)} strict picks for {today_str} (no tier-2 backfill)")
 
     return JSONResponse(_clean({"hot": _daily_hot, "total_eligible": len(_daily_hot)}))
 
