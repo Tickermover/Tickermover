@@ -1365,10 +1365,10 @@ body.v2 .ticker-chip .px{color:#cbd5e1!important}
 .v2-sub.active{color:#a5b4fc;font-weight:700}
 
 /* Bottom-pinned auth pill — wraps the existing #auth-btn-wrap */
-/* Push the user box toward the bottom but stop ~24px before the edge
-   so it doesn't look clipped. Capped gap with min-height to avoid the
-   bottom section floating mid-sidebar when content is short. */
-.v2-sb-bottom{margin-top:auto;margin-bottom:8px;padding-top:14px;border-top:1px solid #1f2937}
+/* User box flows just below Help & FAQ instead of being pinned all the
+   way to the viewport edge (user feedback: 'move name section little up').
+   A modest top margin gives it breathing room from the nav items above. */
+.v2-sb-bottom{margin-top:18px;padding-top:14px;border-top:1px solid #1f2937}
 .v2-sb-bottom #auth-btn{width:100%;display:block;text-align:center;
   padding:11px 14px;border-radius:10px;
   background:linear-gradient(135deg,#4338ca,#6366f1)!important;
@@ -2460,22 +2460,21 @@ html.v2-dark .v2-mp-mini-lbl{color:#cbd5e1}
 }
 
 /* Reusable ticker logo (real logo + colored-initial fallback).
-   Strategy: dark navy container (#0f172a) so ANY logo — white,
-   light grey, transparent-background — pops with high contrast.
-   FMP logos are saved with transparent BGs; against a dark container
-   even white-only marks (ANET 'A', ADTN, WMT spark) read cleanly.
-   Adds a subtle inner highlight so coloured logos don't sit flat. */
+   Default = LIGHT background — works for the vast majority of FMP
+   logos (coloured marks, dark text marks). For tickers whose logo
+   is a white/near-white mark on transparent bg (ANET, ADTN etc.),
+   apply class 'dark-bg' via the v2_WHITE_LOGO_TICKERS list. */
 .v2ov-tic-logo{
   width:36px;height:36px;border-radius:8px;
-  background:#0f172a;border:1px solid #1f2937;
+  background:#fff;border:1px solid #e5e7eb;
   display:grid;place-items:center;
   overflow:hidden;flex-shrink:0;position:relative;
+}
+/* Dark variant — opt-in for white-logo tickers only. */
+.v2ov-tic-logo.dark-bg{
+  background:#0f172a;border-color:#1f2937;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.08);
 }
-/* The IMG itself gets a near-white tint via filter so logos read
-   crisply on the dark surface. Removed if we ever serve light-mode
-   logo PNGs separately. */
-.v2ov-tic-logo img{filter:brightness(1.04) contrast(1.04)}
 .v2ov-tic-logo img{width:78%;height:78%;object-fit:contain;display:block}
 .v2ov-tic-logo .fb{
   position:absolute;inset:0;display:grid;place-items:center;
@@ -3689,9 +3688,6 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
     <a class="v2-nav-item" href="/learn" target="_blank" rel="noopener">
       <span class="ico">❓</span><span>Help &amp; FAQ</span>
     </a>
-    <a class="v2-nav-item" href="/sectors" target="_blank" rel="noopener">
-      <span class="ico">📖</span><span>Docs</span>
-    </a>
 
     <!-- Bottom-pinned auth — hosts the existing #auth-btn-wrap so all
          existing JS that updates the sign-in/user state keeps working. -->
@@ -4194,11 +4190,26 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
    ════════════════════════════════════════════════════════════════ */
 
 /* Real company logo with colored-initial fallback. Pulls from FMP's
-   image CDN (same nominative-use pattern Yahoo Finance, Robinhood etc.
-   use). Onerror hides the img and the fallback letter shows through. */
+   image CDN. Most logos look fine on a white container; a handful of
+   tickers (Arista, ADTRAN etc.) have white-on-transparent marks and
+   need a DARK container to be visible — listed below. */
+const V2_WHITE_LOGO_TICKERS = new Set([
+  'ANET',  // Arista — stylised white 'A'
+  'ADTN',  // ADTRAN — white wordmark
+  'ADT',   // ADT — white logo
+  'CIEN',  // Ciena — light grey on transparent
+  'COIN',  // Coinbase — white 'C' mark
+  'JBL',   // Jabil — white
+  'VIAV',  // Viavi — near-white mark
+  'WBA',   // Walgreens — white W (sometimes)
+  'XPEV',  // XPeng
+  // Add tickers here as we spot them; everything else uses the default
+  // light container which reads cleanly for coloured / dark marks.
+]);
 function v2LogoHTML(ticker, size){
-  const cls = size === 'sm' ? 'v2ov-tic-logo sm' : size === 'lg' ? 'v2ov-tic-logo lg' : 'v2ov-tic-logo';
   const t = (ticker || '').toUpperCase();
+  let cls = size === 'sm' ? 'v2ov-tic-logo sm' : size === 'lg' ? 'v2ov-tic-logo lg' : 'v2ov-tic-logo';
+  if (V2_WHITE_LOGO_TICKERS.has(t)) cls += ' dark-bg';
   const url = 'https://images.financialmodelingprep.com/symbol/' + encodeURIComponent(t) + '.png';
   return '<div class="' + cls + '">' +
            '<span class="fb">' + (t.charAt(0) || '?') + '</span>' +
