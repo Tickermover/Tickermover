@@ -3455,33 +3455,21 @@ def _enrich_model_portfolio(portfolio: dict) -> dict:
             and now >= entry * 2.0
         )
 
-        # ── Rule 6: Re-vet against the live entry bar (May 21 product call) ──
-        # The tracker only holds picks that would qualify TODAY at the same
-        # bar that admitted them: Grade A + Alpha ≥ 75 + ≥4 of 6 pillars ≥ 50.
-        # If a pick no longer clears that bar, it is removed — no waiting for
-        # grade to drop to C or score to fall below 60. Keeps the 12 slots
-        # always reflecting current-day high-conviction setups.
-        #
-        # Grace period: skip re-vet for the first 2 days held, matching the
-        # existing "Just added · monitoring" UI window, so intraday noise on
-        # a fresh add can't immediately reverse the entry.
+        # NOTE: The "bar_failed" re-vet rule was tried on May 21 and removed
+        # the same day. It used pop_score against a 75 threshold, but the
+        # SELECTION path uses smart_score — different fields, so picks that
+        # cleanly passed entry got evicted on noise. The result was an
+        # 11-stock churn storm in a single refresh, which destroyed user
+        # confidence in the tracker. Once a pick is in, it stays until
+        # one of the original 5 exit rules fires: hard stop, +100% target,
+        # trail stop, valuation stretched, or signal exit (grade<B or
+        # score<60). Those are loose enough to let healthy picks run and
+        # tight enough to catch genuinely broken ones.
         bar_failed = False
         bar_reason = None
-        if has_live_price and bool(live_grade) and days_held >= 2:
-            live_pillars = _compute_pillars(live) if in_universe else None
-            live_pass = sum(1 for v in (live_pillars or {}).values() if (v or 0) >= 50)
-            if cur_grade != "A":
-                bar_failed = True
-                bar_reason = f"Grade slipped to {cur_grade} (entry bar requires A)"
-            elif cur_score and cur_score < 75:
-                bar_failed = True
-                bar_reason = f"Alpha Score {cur_score:.0f} (entry bar requires ≥75)"
-            elif live_pillars is not None and live_pass < 4:
-                bar_failed = True
-                bar_reason = f"Only {live_pass}/6 pillars strong (entry bar requires ≥4)"
 
         # ── Determine the EXIT ALERT (priority: protect capital first,
-        #    then book big wins, then trail / valuation / bar-fail / signal) ──
+        #    then book big wins, then trail / valuation / signal) ──────
         exit_alert = None
         if hard_stop_hit:
             exit_alert = {"type": "stop",
@@ -3499,10 +3487,6 @@ def _enrich_model_portfolio(portfolio: dict) -> dict:
             exit_alert = {"type": "stretched",
                           "label": "VALUATION STRETCHED",
                           "reason": valuation_reason}
-        elif bar_failed:
-            exit_alert = {"type": "bar_failed",
-                          "label": "ENTRY BAR NO LONGER MET",
-                          "reason": bar_reason}
         elif signal_triggered:
             exit_alert = {"type": "signal",
                           "label": "SIGNAL EXIT",
@@ -3797,7 +3781,20 @@ def _replenish_portfolio(portfolio: dict) -> dict:
         reverse=True,
     )
 
-    needed = target_size - len(cur_picks)
+    # ── Daily add cap (May 21 stability fix) ─────────────────────────────
+    # Cap how many NEW picks can enter on any single day. Without this, a
+    # mass-eviction event (e.g. multiple exits firing at once) refills all
+    # the freed slots in a single refresh, which looks like algorithmic
+    # instability and breaks user confidence in the tracker. The cap means
+    # rotation is visibly gradual.
+    DAILY_ADD_CAP = 2
+    added_today_n = sum(1 for p in cur_picks if p.get("added_date") == today_str)
+    remaining_today = max(0, DAILY_ADD_CAP - added_today_n)
+    if remaining_today == 0:
+        logger.info(f"📊 Replenish skipped: {added_today_n}/{DAILY_ADD_CAP} daily add cap reached")
+        return portfolio
+
+    needed = min(target_size - len(cur_picks), remaining_today)
     added = 0
     for t in qualified[:needed]:
         price = float(t.get("price") or 0)
