@@ -1375,17 +1375,28 @@ body.v2 .ticker-chip .px{color:#cbd5e1!important}
   font-size:13px;font-weight:800;box-shadow:0 4px 14px rgba(99,102,241,.4)!important;
   letter-spacing:.02em;
 }
-.v2-sb-bottom #user-menu{display:flex;width:100%;gap:6px;align-items:center}
+.v2-sb-bottom #user-menu{display:flex;width:100%;gap:6px;align-items:center;min-height:54px}
 .v2-sb-bottom #user-menu > div:first-child{
   flex:1;background:transparent!important;border:none!important;
-  padding:12px 14px!important;border-radius:10px;color:#e2e8f0;
+  padding:10px 12px!important;border-radius:10px;color:#e2e8f0;min-width:0;
 }
 .v2-sb-bottom #user-menu > div:first-child:hover{background:rgba(255,255,255,.04)}
-/* Bump the inner avatar+text gap so the name doesn't sit on top of
-   the avatar circle */
-.v2-sb-bottom #user-menu > div:first-child > div{gap:12px!important}
-.v2-sb-bottom #user-email{color:#e2e8f0!important;max-width:170px!important;font-size:13px!important;letter-spacing:.01em}
-.v2-sb-bottom #user-menu > div:first-child > div > div:last-child{color:#64748b!important;margin-top:3px!important;font-size:10.5px!important}
+/* Avatar↔text gap, and force the inner text column to actually use
+   line-height so the name doesn't crash into the role label below. */
+.v2-sb-bottom #user-menu > div:first-child > div{gap:12px!important;align-items:center!important}
+.v2-sb-bottom #user-menu > div:first-child > div > div:nth-child(2){
+  line-height:1.3!important;min-width:0;
+}
+.v2-sb-bottom #user-email{
+  color:#f1f5f9!important;max-width:140px!important;
+  font-size:13px!important;font-weight:700!important;letter-spacing:.01em;
+  line-height:1.25!important;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.v2-sb-bottom #user-menu > div:first-child > div > div:last-child{
+  color:#64748b!important;margin-top:4px!important;font-size:10.5px!important;
+  font-weight:600!important;letter-spacing:.02em;line-height:1.2!important;
+}
 .v2-sb-bottom #user-menu button{
   background:transparent!important;border:none!important;
   color:#64748b!important;padding:8px 10px!important;font-size:14px!important;
@@ -2448,10 +2459,14 @@ html.v2-dark .v2-mp-mini-lbl{color:#cbd5e1}
   .v2-tearsheet-btn{width:100%;justify-content:center}
 }
 
-/* Reusable ticker logo (real logo + colored-initial fallback) */
+/* Reusable ticker logo (real logo + colored-initial fallback).
+   Background is light slate (#f1f5f9) instead of pure white so logos
+   with white marks (ANET, ADTN, Cisco-style etc.) still show their
+   outline against the container instead of disappearing. Border
+   tightened to #cbd5e1 so the chip edge stays defined. */
 .v2ov-tic-logo{
   width:36px;height:36px;border-radius:8px;
-  background:#fff;border:1px solid #e5e7eb;
+  background:#f1f5f9;border:1px solid #cbd5e1;
   display:grid;place-items:center;
   overflow:hidden;flex-shrink:0;position:relative;
 }
