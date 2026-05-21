@@ -2305,6 +2305,19 @@ html.v2-dark .v2-mp-mini-lbl{color:#cbd5e1}
 
 /* ───── Sector Map cooling / heating badges ───── */
 /* ───── Sector Map (redesigned May 21) — compact bar list ───── */
+.v2-sm-header{
+  display:flex;align-items:center;gap:8px;
+  padding:6px 10px 4px;margin-top:6px;
+  border-bottom:1px solid #e2e8f0;
+  font-size:9.5px;font-weight:800;color:#64748b;
+  letter-spacing:.06em;text-transform:uppercase;
+}
+.v2-sm-h-name{flex:0 0 38%}
+.v2-sm-h-bar{flex:1;min-width:60px}
+.v2-sm-h-score{flex:0 0 28px;text-align:right}
+.v2-sm-h-mom{flex:0 0 52px;text-align:right}
+.v2-sm-h-count{flex:0 0 44px;text-align:right}
+
 .v2-sm-list{display:flex;flex-direction:column;gap:4px;margin-top:4px}
 .v2-sm-row{
   display:flex;align-items:center;gap:8px;
@@ -2328,6 +2341,14 @@ html.v2-dark .v2-mp-mini-lbl{color:#cbd5e1}
   min-width:60px;
 }
 .v2-sm-fill{display:block;height:100%;border-radius:4px;transition:width .3s}
+/* Brand-gradient fill — same indigo→violet→magenta strip used on the
+   Quant Snapshot / Valuation / News / Earnings / Tracker cards. Makes
+   the Sector Map feel like a unified theme accent. The score number on
+   the right still carries the colour-coded health signal. */
+.v2-sm-fill-brand{
+  background:linear-gradient(90deg,#4338ca 0%,#8b5cf6 50%,#ec4899 100%);
+  box-shadow:0 0 0 1px rgba(67,56,202,.08);
+}
 .v2-sm-score{
   flex:0 0 28px;text-align:right;font-size:13px;font-weight:900;
   font-variant-numeric:tabular-nums;letter-spacing:-.01em;
@@ -5056,19 +5077,33 @@ function v2RenderSectors(tickers){
     return '#fecaca';                  // red            (F)
   };
 
-  // REDESIGNED (May 21): scrap the 4×5 same-looking-grid; use a denser
-  // one-line-per-sector list with a progress bar that visualises the
-  // score. Much more skimmable, easier to compare scores side-by-side,
-  // and the strongest/weakest sectors jump out instantly.
+  // REDESIGNED (May 21 — iterated May 21):
+  // - Top 10 sectors only (was 12)
+  // - Bars now use the brand gradient strip (indigo→violet→magenta) so
+  //   the row reads as a unified theme accent rather than 10 different
+  //   colors. The SCORE NUMBER still carries the colour-coded
+  //   green/lime/amber/red so health is still readable at a glance.
+  // - Column-header row labels each column so the meaning of each
+  //   numeric is unambiguous.
   const heatingName = sectors[0] && sectors[0].score >= 75 ? sectors[0].name : null;
-  const barColor = sc =>
+  const scoreColor = sc =>
     sc >= 75 ? '#16a34a' :
     sc >= 65 ? '#65a30d' :
     sc >= 55 ? '#d97706' :
     sc >= 45 ? '#ea580c' :
                 '#dc2626';
 
-  const rows = sectors.slice(0, 12).map(s => {
+  const headerRow =
+    '<div class="v2-sm-header">' +
+      '<span class="v2-sm-tag-spacer"></span>' +
+      '<span class="v2-sm-h-name">Sector</span>' +
+      '<span class="v2-sm-h-bar">Avg Alpha Score</span>' +
+      '<span class="v2-sm-h-score">Score</span>' +
+      '<span class="v2-sm-h-mom">Today</span>' +
+      '<span class="v2-sm-h-count">Stocks</span>' +
+    '</div>';
+
+  const rows = sectors.slice(0, 10).map(s => {
     const isCooling = s.score < 55;
     const isHeating = s.name === heatingName;
     const tagHTML = isHeating
@@ -5083,14 +5118,14 @@ function v2RenderSectors(tickers){
            'title="' + v2EscHTML(s.name) + ' · ' + s.count + ' stocks · click to view in Universe">' +
       tagHTML +
       '<span class="v2-sm-name">' + v2EscHTML(s.name) + '</span>' +
-      '<span class="v2-sm-track"><span class="v2-sm-fill" style="width:' + Math.min(100, s.score) + '%;background:' + barColor(s.score) + '"></span></span>' +
-      '<span class="v2-sm-score" style="color:' + barColor(s.score) + '">' + s.score + '</span>' +
+      '<span class="v2-sm-track"><span class="v2-sm-fill v2-sm-fill-brand" style="width:' + Math.min(100, s.score) + '%"></span></span>' +
+      '<span class="v2-sm-score" style="color:' + scoreColor(s.score) + '">' + s.score + '</span>' +
       '<span class="v2-sm-mom ' + momCls + '">' + momStr + '</span>' +
       '<span class="v2-sm-count">' + s.count + ' stk</span>' +
     '</div>';
   }).join('');
 
-  const moreCount = sectors.length - 12;
+  const moreCount = sectors.length - 10;
   const moreLine = moreCount > 0
     ? '<div class="v2-sm-more" onclick="v2Show(\'sectors\', null)">+ ' + moreCount + ' more sectors · tap to view all →</div>'
     : '';
@@ -5112,6 +5147,7 @@ function v2RenderSectors(tickers){
         '<div class="v2ov-sub">Avg Alpha Score by sector · tap any row to filter Universe</div>' +
       '</div></div>' +
       pulseHTML +
+      headerRow +
       '<div class="v2-sm-list">' + rows + '</div>' +
       moreLine +
     '</div>';
