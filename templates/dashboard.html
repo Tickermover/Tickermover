@@ -1363,17 +1363,21 @@ body.v2 .ticker-chip .px{color:#cbd5e1!important}
   font-size:13px;font-weight:800;box-shadow:0 4px 14px rgba(99,102,241,.4)!important;
   letter-spacing:.02em;
 }
-.v2-sb-bottom #user-menu{display:flex;width:100%}
+.v2-sb-bottom #user-menu{display:flex;width:100%;gap:6px;align-items:center}
 .v2-sb-bottom #user-menu > div:first-child{
   flex:1;background:transparent!important;border:none!important;
-  padding:8px!important;border-radius:10px;color:#e2e8f0;
+  padding:12px 14px!important;border-radius:10px;color:#e2e8f0;
 }
 .v2-sb-bottom #user-menu > div:first-child:hover{background:rgba(255,255,255,.04)}
-.v2-sb-bottom #user-email{color:#e2e8f0!important}
-.v2-sb-bottom #user-menu > div:first-child > div > div:last-child{color:#64748b!important}
+/* Bump the inner avatar+text gap so the name doesn't sit on top of
+   the avatar circle */
+.v2-sb-bottom #user-menu > div:first-child > div{gap:12px!important}
+.v2-sb-bottom #user-email{color:#e2e8f0!important;max-width:170px!important;font-size:13px!important;letter-spacing:.01em}
+.v2-sb-bottom #user-menu > div:first-child > div > div:last-child{color:#64748b!important;margin-top:3px!important;font-size:10.5px!important}
 .v2-sb-bottom #user-menu button{
   background:transparent!important;border:none!important;
-  color:#64748b!important;padding:8px!important;font-size:14px!important;
+  color:#64748b!important;padding:8px 10px!important;font-size:14px!important;
+  border-radius:8px;flex-shrink:0;
 }
 .v2-sb-bottom #user-menu button:hover{color:#fca5a5!important;background:rgba(220,38,38,.12)!important}
 
