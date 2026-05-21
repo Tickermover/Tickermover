@@ -2106,13 +2106,21 @@ body[data-active-profile="conservative"] .fund-row:not([data-profiles~="conserva
 }
 
 /* ───── Tracker chart (Top Hunts vs SPY vs QQQ) ───── */
-.v2-tc-wrap{padding:2px 2px 0;font-size:11.5px;color:#475569}
-.v2-tc-legend{display:flex;flex-wrap:wrap;gap:14px;align-items:center;margin-bottom:2px;padding:0 2px}
+.v2-tc-wrap{padding:2px 2px 0;font-size:11.5px;color:#475569;display:flex;flex-direction:column}
+/* Legend moved to the BOTTOM of the chart (user feedback). Order is
+   set via flex-direction:column-reverse on the wrap so the SVG paints
+   first and the legend sits beneath it. */
+.v2-tc-wrap{flex-direction:column-reverse}
+.v2-tc-legend{display:flex;flex-wrap:wrap;gap:14px;align-items:center;margin-top:6px;padding:0 2px;justify-content:center}
 .v2-tc-lg{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:#475569;font-weight:700}
 .v2-tc-lg i{display:inline-block;width:18px;height:3px;border-radius:2px}
-.v2-tc-lg-t i{background:#4338ca;height:4px}
-.v2-tc-lg-s i{background:#3b82f6}
-.v2-tc-lg-q i{background:#a855f7}
+/* Brand-aligned line colours — bright emerald for Top Hunts (positive,
+   distinct from indigo brand chrome), amber for S&P, magenta-rose for
+   NASDAQ. More differentiated than the original indigo/blue/violet
+   trio (which all read 'blue-ish' together). */
+.v2-tc-lg-t i{background:#10b981;height:4px}
+.v2-tc-lg-s i{background:#f59e0b}
+.v2-tc-lg-q i{background:#ec4899}
 .v2-tc-pill-pos,.v2-tc-pill-neg{
   display:inline-block;font-variant-numeric:tabular-nums;font-weight:900;
   padding:1px 7px;border-radius:5px;font-size:11px;letter-spacing:.02em;margin-left:2px;
@@ -2120,7 +2128,7 @@ body[data-active-profile="conservative"] .fund-row:not([data-profiles~="conserva
 .v2-tc-pill-pos{color:#15803d;background:#dcfce7}
 .v2-tc-pill-neg{color:#b91c1c;background:#fee2e2}
 .v2-tc-sub{margin-left:auto;font-size:11px;color:#64748b;font-weight:700;letter-spacing:.01em}
-.v2-tc-svg{width:100%;height:170px;display:block;margin-top:2px}
+.v2-tc-svg{width:100%;height:240px;display:block;margin-top:2px}
 
 /* ───── Today's Focus — actionable opportunity cards ───── */
 .v2-focus-card{
@@ -5668,12 +5676,16 @@ function v2SetProfile(p){
 function v2SyncUniverseCount(){
   const el = document.getElementById('v2-nav-universe-count');
   if (!el) return;
+  // Prefer the backend profile_counts (computed over the FULL universe
+  // server-side) so the badge always matches what the picker dropdown
+  // shows. Falls back to client-side filter if the count isn't there.
+  const counts = (window.__AH_DATA__ && window.__AH_DATA__.profile_counts) || null;
+  const prof   = (typeof v2CurrentProfile === 'function') ? v2CurrentProfile() : 'aggressive';
+  if (counts && counts[prof] != null){ el.textContent = String(counts[prof]); return; }
   const universe = (window.__AH_DATA__ && Array.isArray(window.__AH_DATA__.tickers))
     ? window.__AH_DATA__.tickers
     : (window._allTickerData ? Object.values(window._allTickerData) : []);
   if (!universe.length) return;
-  // Apply the active profile to the in-memory universe — same logic the
-  // CSS uses for the table, kept in sync so badge + table always agree.
   const filtered = (typeof v2FilterByProfile === 'function')
     ? v2FilterByProfile(universe) : universe;
   el.textContent = String(filtered.length || universe.length);
@@ -6134,6 +6146,12 @@ function v2SyncUniverseTally(){
     const sectorOk = !r.classList.contains('sector-hide');
     if (profOk && sectorOk) visible += 1;
   });
+  // When no sector filter is active and the backend exposed profile_counts,
+  // prefer THAT number so this tally agrees with the picker dropdown
+  // (the 118 vs 153 mismatch the user reported). With a sector filter on,
+  // we must use the DOM-counted value (profile_counts is universe-wide).
+  const counts = (window.__AH_DATA__ && window.__AH_DATA__.profile_counts) || null;
+  if (!sector && counts && counts[prof] != null) visible = counts[prof];
   const profLbl = prof === 'aggressive' ? 'aggressive view'
                 : prof === 'balanced'   ? 'balanced view'
                 : prof === 'conservative' ? 'conservative view' : prof;
@@ -9679,19 +9697,19 @@ let _modelView = 'active';   // 'active' | 'history'
 function _modelViewToggle(active) {
   const tab = (key, label, count) =>
     `<button onclick="showModelView('${key}')"
-       style="flex:1;padding:9px 14px;border:none;cursor:pointer;font-weight:800;
-              font-size:13px;letter-spacing:.02em;font-family:inherit;
-              background:${active===key?'#15803d':'transparent'};
-              color:${active===key?'#fff':'#475569'};
-              border-radius:${active===key?'8px':'0'};
+       style="padding:5px 12px;border:none;cursor:pointer;font-weight:700;
+              font-size:11.5px;letter-spacing:.02em;font-family:inherit;
+              background:${active===key?'#4338ca':'transparent'};
+              color:${active===key?'#fff':'#64748b'};
+              border-radius:6px;
               transition:all .15s">
        ${label}${count!=null?` <span style="opacity:.85;font-weight:700">· ${count}</span>`:''}
      </button>`;
   return `
-    <div style="display:flex;gap:4px;background:#f1f5f9;border:1px solid rgba(0,0,0,.06);
-                border-radius:10px;padding:4px;margin-bottom:14px;max-width:420px">
-      ${tab('active','📊 Currently tracked', null)}
-      ${tab('history','📕 Past entries', null)}
+    <div style="display:inline-flex;gap:2px;background:#f1f5f9;border:1px solid rgba(0,0,0,.06);
+                border-radius:8px;padding:2px;margin-bottom:10px">
+      ${tab('active','Currently tracked', null)}
+      ${tab('history','Past entries', null)}
     </div>`;
 }
 
@@ -9917,7 +9935,7 @@ function renderModelPortfolio(data) {
       </button>
     </div>
     ${concentrationWarning}
-    <div id="v2-tracker-chart-slot" style="min-height:140px;margin-top:4px"></div>
+    <div id="v2-tracker-chart-slot" style="min-height:210px;margin-top:4px"></div>
   </div>`;
 
   const barHTML = '';
@@ -10056,10 +10074,14 @@ function renderModelPortfolio(data) {
         // is the only thing keeping you in. Tell the user explicitly so
         // they consider booking some gains rather than relying entirely
         // on the trail.
+        // Observational note (NOT advice). We can't tell users to trim
+        // positions — we're not registered investment advisors. Reframe
+        // as 'here's what the model sees' so users draw their own
+        // conclusion. Same trigger: <=2 pillars strong while up >=25%.
         const profitTakeRisk = passCount <= 2 && (pct ?? 0) >= 25;
         const profitTakeChip = profitTakeRisk
           ? `<div class="v2-mp-take-warn">
-               ⚠ <strong>Profit-take watch</strong> — only ${passCount}/6 pillars strong while up ${pos?'+':''}${pct.toFixed(0)}%. Consider trimming; trail stop is your safety net.
+               <strong>📊 Quality has weakened</strong> — only ${passCount}/6 pillars currently strong while position is up ${pos?'+':''}${pct.toFixed(0)}%. Trail stop remains active. Not investment advice.
              </div>`
           : '';
         return `
@@ -10322,20 +10344,22 @@ function v2RenderTrackerChartHTML(d){
       '</div>' +
       '<svg class="v2-tc-svg" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="xMidYMid meet">' +
         '<defs>' +
+          // Top Hunts gradient — emerald (matches the new legend swatch)
           '<linearGradient id="v2-tc-grad-t" x1="0" y1="0" x2="0" y2="1">' +
-            '<stop offset="0%"  stop-color="#4338ca" stop-opacity="0.22"/>' +
-            '<stop offset="100%" stop-color="#4338ca" stop-opacity="0"/>' +
+            '<stop offset="0%"  stop-color="#10b981" stop-opacity="0.22"/>' +
+            '<stop offset="100%" stop-color="#10b981" stop-opacity="0"/>' +
           '</linearGradient>' +
         '</defs>' +
         ticksHTML +
         xLabelsHTML +
         '<path d="' + tArea + '" fill="url(#v2-tc-grad-t)" stroke="none"/>' +
-        '<path d="' + sLine + '" fill="none" stroke="#3b82f6" stroke-width="2"   stroke-linejoin="round" stroke-linecap="round" opacity="0.95"/>' +
-        '<path d="' + qLine + '" fill="none" stroke="#a855f7" stroke-width="2"   stroke-linejoin="round" stroke-linecap="round" opacity="0.95"/>' +
-        '<path d="' + tLine + '" fill="none" stroke="#4338ca" stroke-width="2.8" stroke-linejoin="round" stroke-linecap="round"/>' +
-        endMarker(spy,     '#3b82f6', 3) +
-        endMarker(qqq,     '#a855f7', 3) +
-        endMarker(tracker, '#4338ca', 4) +
+        // SPY (S&P 500) — amber, NASDAQ — magenta-rose, Top Hunts — emerald
+        '<path d="' + sLine + '" fill="none" stroke="#f59e0b" stroke-width="2"   stroke-linejoin="round" stroke-linecap="round" opacity="0.95"/>' +
+        '<path d="' + qLine + '" fill="none" stroke="#ec4899" stroke-width="2"   stroke-linejoin="round" stroke-linecap="round" opacity="0.95"/>' +
+        '<path d="' + tLine + '" fill="none" stroke="#10b981" stroke-width="2.8" stroke-linejoin="round" stroke-linecap="round"/>' +
+        endMarker(spy,     '#f59e0b', 3) +
+        endMarker(qqq,     '#ec4899', 3) +
+        endMarker(tracker, '#10b981', 4) +
       '</svg>' +
     '</div>';
 }
