@@ -1964,6 +1964,30 @@ body.v2 .v2ov-card.sectors .v2ov-sector-cell{
 }
 .v2-dd-survivor:hover{background:#bbf7d0;transform:translateY(-1px)}
 
+/* Affected-stocks chip strip (drawdown banner) */
+.v2-dd-affected{
+  display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;
+}
+.v2-dd-chip{
+  display:inline-flex;align-items:center;gap:5px;padding:3px 9px 3px 4px;
+  background:#fef2f2;border:1px solid #fecaca;border-radius:999px;
+  font-size:11px;font-weight:700;cursor:pointer;transition:all .15s;
+}
+.v2-dd-chip:hover{background:#fee2e2;transform:translateY(-1px)}
+.v2-dd-chip-heavy{background:#fee2e2;border-color:#fca5a5}
+.v2-dd-chip-tic{font-weight:900;color:#0f172a}
+.v2-dd-chip-pct{font-weight:800;color:#b91c1c;font-variant-numeric:tabular-nums}
+.v2-dd-chip-grade{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:16px;height:16px;border-radius:3px;
+  font-size:9.5px;font-weight:900;color:#fff;line-height:1;
+}
+.v2-dd-chip-grade-A{background:#16a34a}
+.v2-dd-chip-grade-B{background:#65a30d}
+.v2-dd-chip-grade-C{background:#d97706}
+.v2-dd-chip-grade-D{background:#ea580c}
+.v2-dd-chip-grade-F{background:#dc2626}
+
 /* ───── Sidebar nav tags (PRO / count badges) ───── */
 .v2-nav-tag{
   display:inline-block;font-size:9px;font-weight:900;letter-spacing:.06em;
@@ -2280,6 +2304,57 @@ html.v2-dark .v2-mp-mini-lbl{color:#cbd5e1}
 }
 
 /* ───── Sector Map cooling / heating badges ───── */
+/* ───── Sector Map (redesigned May 21) — compact bar list ───── */
+.v2-sm-list{display:flex;flex-direction:column;gap:4px;margin-top:4px}
+.v2-sm-row{
+  display:flex;align-items:center;gap:8px;
+  padding:7px 10px;border-radius:7px;cursor:pointer;
+  background:#f8fafc;border:1px solid transparent;
+  transition:background .12s, border-color .12s;
+}
+.v2-sm-row:hover{background:#eef2ff;border-color:#c7d2fe}
+.v2-sm-row.is-cooling{opacity:.7}
+.v2-sm-row.is-cooling:hover{opacity:1}
+.v2-sm-tag{width:18px;font-size:13px;line-height:1;flex-shrink:0;text-align:center}
+.v2-sm-tag-spacer{width:18px;flex-shrink:0}
+.v2-sm-tag-hot{color:#dc2626}
+.v2-sm-tag-cold{color:#3b82f6}
+.v2-sm-name{
+  flex:0 0 38%;font-size:12px;font-weight:700;color:#0f172a;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:.01em;
+}
+.v2-sm-track{
+  flex:1;height:8px;background:#e2e8f0;border-radius:4px;overflow:hidden;
+  min-width:60px;
+}
+.v2-sm-fill{display:block;height:100%;border-radius:4px;transition:width .3s}
+.v2-sm-score{
+  flex:0 0 28px;text-align:right;font-size:13px;font-weight:900;
+  font-variant-numeric:tabular-nums;letter-spacing:-.01em;
+}
+.v2-sm-mom{
+  flex:0 0 52px;text-align:right;font-size:10.5px;font-weight:700;
+  font-variant-numeric:tabular-nums;
+}
+.v2-sm-mom.up{color:#16a34a}
+.v2-sm-mom.dn{color:#dc2626}
+.v2-sm-count{
+  flex:0 0 44px;text-align:right;font-size:10px;color:#94a3b8;font-weight:600;
+  font-variant-numeric:tabular-nums;
+}
+.v2-sm-more{
+  margin-top:6px;padding:7px 10px;font-size:11px;color:#4338ca;
+  font-weight:700;text-align:center;cursor:pointer;border-radius:7px;
+  background:#eef2ff;border:1px dashed #c7d2fe;transition:background .15s;
+}
+.v2-sm-more:hover{background:#e0e7ff}
+
+@media (max-width:560px){
+  .v2-sm-name{flex:0 0 50%}
+  .v2-sm-count{display:none}
+}
+
+/* Legacy grid still used elsewhere (full Sector Map panel etc.) */
 .v2ov-sector-cell{position:relative;padding-top:18px!important}
 .v2ov-sector-cell.is-cooling{opacity:.65}
 .v2ov-sector-cell.is-cooling:hover{opacity:1}
@@ -4981,29 +5056,44 @@ function v2RenderSectors(tickers){
     return '#fecaca';                  // red            (F)
   };
 
-  // Theme rotation: auto-demote sectors with avg score < 55 ('Cooling')
-  // and crown the highest score in the top 3 with a 'Heating up' badge.
-  // Both badges are titles to the cell; the cell itself stays in place
-  // so the user can still see the sector — it just visibly indicates
-  // health so they know which themes to deprioritize.
+  // REDESIGNED (May 21): scrap the 4×5 same-looking-grid; use a denser
+  // one-line-per-sector list with a progress bar that visualises the
+  // score. Much more skimmable, easier to compare scores side-by-side,
+  // and the strongest/weakest sectors jump out instantly.
   const heatingName = sectors[0] && sectors[0].score >= 75 ? sectors[0].name : null;
-  const cells = sectors.map(s => {
+  const barColor = sc =>
+    sc >= 75 ? '#16a34a' :
+    sc >= 65 ? '#65a30d' :
+    sc >= 55 ? '#d97706' :
+    sc >= 45 ? '#ea580c' :
+                '#dc2626';
+
+  const rows = sectors.slice(0, 12).map(s => {
     const isCooling = s.score < 55;
     const isHeating = s.name === heatingName;
-    const stateBadge = isHeating
-      ? '<span class="v2-theme-state v2-theme-heating">🔥 Heating</span>'
+    const tagHTML = isHeating
+      ? '<span class="v2-sm-tag v2-sm-tag-hot">🔥</span>'
       : isCooling
-        ? '<span class="v2-theme-state v2-theme-cooling">🥶 Cooling</span>'
-        : '';
-    return '<div class="v2ov-sector-cell ' + (isCooling ? 'is-cooling' : '') + '" data-tier="score" style="background:' + bgForScore(s.score) + '" ' +
-         'title="' + v2EscHTML(s.name) + ' · ' + s.count + ' stocks · click to view in Universe' + (isCooling ? ' · COOLING — model score has weakened, prioritize stronger themes' : isHeating ? ' · HEATING UP — leading theme right now' : '') + '" ' +
-         'onclick="v2OpenSectorInUniverse(\'' + s.name.replace(/\'/g, '\\\'') + '\')">' +
-      stateBadge +
-      '<div class="sn">' + v2EscHTML(s.name) + '</div>' +
-      '<div class="sv">' + s.score + '</div>' +
-      '<div class="sm">' + (s.mom >= 0 ? '+' : '') + s.mom.toFixed(1) + '% · ' + s.count + ' stk</div>' +
+        ? '<span class="v2-sm-tag v2-sm-tag-cold">🥶</span>'
+        : '<span class="v2-sm-tag-spacer"></span>';
+    const momCls = s.mom >= 0 ? 'up' : 'dn';
+    const momStr = (s.mom >= 0 ? '+' : '') + s.mom.toFixed(1) + '%';
+    return '<div class="v2-sm-row ' + (isCooling ? 'is-cooling' : '') + '" ' +
+           'onclick="v2OpenSectorInUniverse(\'' + s.name.replace(/\'/g, '\\\'') + '\')" ' +
+           'title="' + v2EscHTML(s.name) + ' · ' + s.count + ' stocks · click to view in Universe">' +
+      tagHTML +
+      '<span class="v2-sm-name">' + v2EscHTML(s.name) + '</span>' +
+      '<span class="v2-sm-track"><span class="v2-sm-fill" style="width:' + Math.min(100, s.score) + '%;background:' + barColor(s.score) + '"></span></span>' +
+      '<span class="v2-sm-score" style="color:' + barColor(s.score) + '">' + s.score + '</span>' +
+      '<span class="v2-sm-mom ' + momCls + '">' + momStr + '</span>' +
+      '<span class="v2-sm-count">' + s.count + ' stk</span>' +
     '</div>';
   }).join('');
+
+  const moreCount = sectors.length - 12;
+  const moreLine = moreCount > 0
+    ? '<div class="v2-sm-more" onclick="v2Show(\'sectors\', null)">+ ' + moreCount + ' more sectors · tap to view all →</div>'
+    : '';
 
   const pulse = v2SectorMomentumSignal(tickers);
   const pulseHTML = (pulse && pulse.avg > 0) ?
@@ -5019,10 +5109,11 @@ function v2RenderSectors(tickers){
     '<div class="v2ov-card sectors">' +
       '<div class="v2ov-card-head"><div>' +
         '<div class="v2ov-title">🗺 Sector Map</div>' +
-        '<div class="v2ov-sub">Avg Alpha Score by sector · tap any cell for the full Sector Map view</div>' +
+        '<div class="v2ov-sub">Avg Alpha Score by sector · tap any row to filter Universe</div>' +
       '</div></div>' +
       pulseHTML +
-      '<div class="v2ov-sector-grid">' + cells + '</div>' +
+      '<div class="v2-sm-list">' + rows + '</div>' +
+      moreLine +
     '</div>';
 }
 
@@ -5892,32 +5983,48 @@ function v2RenderDrawdownBanner(tickers){
   });
   if (!worst) return '';
 
-  // Find the most-resilient (highest Quality) names in the affected sector
-  const survivors = worst.items
-    .filter(t => (t.grade === 'A' || t.grade === 'B'))
-    .sort((a, b) => parseFloat(b.smart_score||0) - parseFloat(a.smart_score||0))
-    .slice(0, 3);
+  // List ALL affected stocks (user wants to see who's hit), sorted by
+  // 1-month performance ascending (worst first). Color-code by severity.
+  const affected = [...worst.items]
+    .map(t => {
+      const m = parseFloat(t.momentum_1m);
+      return { t, m: isNaN(m) ? 0 : m };
+    })
+    .sort((a, b) => a.m - b.m);
 
-  const survivorChips = survivors.map(t =>
-    '<span class="v2-dd-survivor" onclick="openStockModal(\'' + t.ticker + '\')">' +
-      v2LogoHTML(t.ticker, 'sm') + '<span>' + t.ticker + '</span>' +
-    '</span>'
-  ).join('');
+  const stockChips = affected.slice(0, 16).map(({ t, m }) => {
+    const grade = (t.grade || '').toUpperCase();
+    // Tone: deeper red for larger drops
+    const isHeavy = m <= -15;
+    const cls = isHeavy ? 'v2-dd-chip v2-dd-chip-heavy' : 'v2-dd-chip';
+    return '<span class="' + cls + '" onclick="event.stopPropagation();openStockModal(\'' + t.ticker + '\')">' +
+      v2LogoHTML(t.ticker, 'sm') +
+      '<span class="v2-dd-chip-tic">' + t.ticker + '</span>' +
+      '<span class="v2-dd-chip-pct">' + m.toFixed(1) + '%</span>' +
+      (grade ? '<span class="v2-dd-chip-grade v2-dd-chip-grade-' + grade + '">' + grade + '</span>' : '') +
+    '</span>';
+  }).join('');
 
+  // Observational copy (NOT advice). Drop 'Avoid catching the falling
+  // knife' and 'Wait for the model score to bottom' — both are
+  // prescriptive directives we shouldn't issue without an advisor
+  // registration. Replace with neutral context.
   return '<div class="v2-drawdown-banner">' +
     '<div class="v2-dd-head">' +
       '<span class="v2-dd-icon">📉</span>' +
       '<div>' +
         '<div class="v2-dd-title">' + v2EscHTML(worst.name) + ' under pressure</div>' +
-        '<div class="v2-dd-sub">Average ' + worst.avg.toFixed(1) + '% over 1 month · ' + worst.items.length + ' stocks in sector</div>' +
+        '<div class="v2-dd-sub">Avg ' + worst.avg.toFixed(1) + '% over 1 month · ' + worst.items.length + ' stocks · ' +
+          'Worst: ' + affected[0].t.ticker + ' ' + affected[0].m.toFixed(1) + '%</div>' +
       '</div>' +
     '</div>' +
     '<div class="v2-dd-playbook">' +
-      '<div class="v2-dd-pb-title">📖 Playbook</div>' +
+      '<div class="v2-dd-pb-title">📊 Sector context</div>' +
       '<div class="v2-dd-pb-body">' +
-        'Sector drawdowns of this size typically recover over 4–8 weeks for quality names. Avoid catching the falling knife in C/D-grade picks — wait for the model score to bottom and start climbing.' +
+        'Historically, sector drawdowns of this size have recovered over 4–8 weeks for the highest-quality names. The model score is the signal to watch. <em>Observational note — not investment advice.</em>' +
       '</div>' +
-      (survivors.length ? '<div class="v2-dd-pb-title" style="margin-top:8px">A/B-grade resilience</div><div class="v2-dd-survivors">' + survivorChips + '</div>' : '') +
+      '<div class="v2-dd-pb-title" style="margin-top:10px">' + affected.length + ' affected stocks</div>' +
+      '<div class="v2-dd-affected">' + stockChips + '</div>' +
     '</div>' +
   '</div>';
 }
