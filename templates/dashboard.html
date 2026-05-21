@@ -2006,6 +2006,94 @@ body[data-active-profile="conservative"] .fund-row:not([data-profiles~="conserva
 }
 .v2-usp-clear:hover{background:#eef2ff}
 
+/* ───── Top Hunts pick card (redesigned May 21) ───── */
+.v2-mp-card{
+  background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:14px;
+  padding:14px;cursor:pointer;transition:transform .15s, box-shadow .15s;
+  display:flex;flex-direction:column;gap:10px;
+}
+.v2-mp-card:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(15,23,42,.1)!important}
+.v2-mp-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.v2-mp-head-l{display:flex;align-items:center;gap:10px;min-width:0;flex:1}
+.v2-mp-head-text{min-width:0;flex:1;line-height:1.25}
+.v2-mp-tic-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.v2-mp-tic{font-size:18px;font-weight:900;letter-spacing:.01em}
+.v2-mp-name{font-size:11.5px;color:#64748b;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px}
+.v2-mp-since{font-size:10px;color:#94a3b8;margin-top:3px;letter-spacing:.01em}
+.v2-mp-since strong{color:#475569;font-weight:700}
+.v2-mp-price{text-align:right;flex-shrink:0}
+.v2-mp-px{font-size:17px;font-weight:900;color:#0f172a;font-variant-numeric:tabular-nums}
+.v2-mp-todo{font-size:11px;font-weight:800;margin-top:2px;font-variant-numeric:tabular-nums}
+
+/* Just-added pill (replaces the giant +0.0% block for day-0 picks) */
+.v2-mp-fresh{
+  display:flex;align-items:center;gap:8px;
+  padding:8px 12px;border-radius:8px;
+  background:#eef2ff;border:1px solid #c7d2fe;
+  font-size:11.5px;color:#4338ca;font-weight:600;line-height:1.4;
+}
+.v2-mp-fresh-dot{color:#4338ca;font-size:10px;line-height:1}
+.v2-mp-fresh strong{color:#1e1b4b;font-weight:800}
+
+/* Performance block — only for picks with non-zero return */
+.v2-mp-perf{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:10px 14px;border-radius:10px;border:1px solid;
+}
+.v2-mp-perf-lbl{font-size:9.5px;color:#64748b;text-transform:uppercase;
+  letter-spacing:.06em;font-weight:800;margin-bottom:2px}
+.v2-mp-perf-big{font-size:24px;font-weight:900;line-height:1.05;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.v2-mp-perf-r{text-align:right;font-size:10.5px;color:#64748b;line-height:1.45}
+.v2-mp-perf-r strong{color:#0f172a;font-weight:800;font-variant-numeric:tabular-nums}
+
+/* Meta strip — score badge + grade pill + sector + upside */
+.v2-mp-meta-row{display:flex;gap:5px;flex-wrap:wrap;align-items:center}
+.v2-mp-score{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-width:32px;height:22px;padding:0 7px;border-radius:6px;
+  background:linear-gradient(135deg,#4338ca,#6366f1);color:#fff;
+  font-size:12px;font-weight:900;letter-spacing:.01em;font-variant-numeric:tabular-nums;
+  box-shadow:0 1px 2px rgba(67,56,202,.25);
+}
+.v2-mp-grade{font-size:10px!important;font-weight:800!important;padding:3px 8px!important;border-radius:6px!important}
+.v2-mp-meta{font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px;letter-spacing:.01em}
+.v2-mp-meta-sec{background:#eef2ff;color:#4338ca}
+.v2-mp-meta-up{background:#dcfce7;color:#15803d}
+.v2-mp-meta-above{background:#f1f5f9;color:#475569;border:1px solid #cbd5e1}
+
+/* Compact 3-col pillar heatmap (replaces 6 stacked rows) */
+.v2-mp-pillars{
+  background:#fafbfc;border:1px solid rgba(0,0,0,.06);border-radius:8px;
+  padding:8px 10px;
+}
+.v2-mp-pillars-head{
+  display:flex;align-items:center;gap:5px;
+  font-size:10.5px;color:#475569;font-weight:800;
+  text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;
+}
+.v2-mp-pillars-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:5px;
+}
+.v2-mp-pillar{
+  border:1px solid;border-radius:6px;padding:5px 7px;
+  text-align:center;cursor:help;line-height:1.2;
+}
+.v2-mp-pillar-name{font-size:9.5px;color:#475569;font-weight:700;letter-spacing:.01em}
+.v2-mp-pillar-val{font-size:14px;font-weight:900;margin-top:1px;font-variant-numeric:tabular-nums}
+
+/* Decision chip — preserved from original */
+.v2-mp-decision{
+  padding:9px 12px;border-radius:8px;border:1px solid;
+}
+.v2-mp-decision-l{font-size:12.5px;font-weight:800;line-height:1.3}
+.v2-mp-decision-d{font-size:11px;line-height:1.45;margin-top:3px;opacity:.85}
+
+.v2-mp-rationale{
+  font-size:11px;color:#374151;line-height:1.45;
+  border-left:2px solid;padding-left:8px;
+}
+
 /* ───── Tracker chart (Top Hunts vs SPY vs QQQ) ───── */
 .v2-tc-wrap{padding:6px 4px 4px;font-size:11.5px;color:#475569}
 .v2-tc-legend{display:flex;flex-wrap:wrap;gap:16px;align-items:center;margin-bottom:6px;padding:0 4px}
@@ -9908,133 +9996,110 @@ function renderModelPortfolio(data) {
       const cardBdr = alert ? '#fca5a5' : 'rgba(0,0,0,.08)';
       const cardSh  = alert ? '0 2px 14px rgba(220,38,38,.18)' : '0 2px 10px rgba(0,0,0,.06)';
 
+      // ─── Redesigned compact card (May 21) ─────────────────────────
+      // Goals: tighter header, more impactful return display, smaller
+      // factor block, removed the 'Just added · monitoring' footer.
+      const pillarBars = (() => {
+        if (!p.pillars) return '';
+        const pn = [
+          ['Momentum',  p.pillars.momentum,    'Recent price action — 1m/3m gains, distance above SMA-50.'],
+          ['Growth',    p.pillars.growth,      'Revenue + EPS growth YoY.'],
+          ['Quality',   p.pillars.quality,     'Gross margin, FCF margin, debt/equity.'],
+          ['Valuation', p.pillars.valuation,   'PEG, P/E, price vs analyst target.'],
+          ['Sentiment', p.pillars.sentiment,   'Analyst recs, insider buys, social mentions.'],
+          ['Outlook',   p.pillars.growth_potential, 'Analyst gap + DCF-implied CAGR.'],
+        ];
+        const passCount = pn.filter(([_, v]) => v >= 50).length;
+        const dot = passCount >= 5 ? '#16a34a' : passCount >= 4 ? '#d97706' : '#dc2626';
+        // Compact 3-col heatmap — 3 pillars per row instead of 6 stacked rows
+        const cells = pn.map(([name, v, tip]) => {
+          const color = v >= 65 ? '#16a34a' : v >= 35 ? '#d97706' : '#dc2626';
+          const bg    = v >= 65 ? '#dcfce7' : v >= 35 ? '#fef3c7' : '#fee2e2';
+          return `<div class="v2-mp-pillar" style="background:${bg};border-color:${color}33" title="${tip}">
+            <div class="v2-mp-pillar-name">${name}</div>
+            <div class="v2-mp-pillar-val" style="color:${color}">${v}</div>
+          </div>`;
+        }).join('');
+        return `
+          <div class="v2-mp-pillars">
+            <div class="v2-mp-pillars-head">
+              <span style="color:${dot};font-size:9px">●</span>
+              <span>${passCount}/6 pillars strong</span>
+            </div>
+            <div class="v2-mp-pillars-grid">${cells}</div>
+          </div>`;
+      })();
+
+      // Performance display — bigger only when there's meaningful return;
+      // for brand-new picks (0%), show a clean 'Day X' pill instead of a
+      // huge +0.0%.
+      const isFresh = (Math.abs(pct || 0) < 0.05) && (daysHeld != null && daysHeld <= 1);
+      const perfBlock = isFresh
+        ? `<div class="v2-mp-fresh">
+             <span class="v2-mp-fresh-dot">●</span>
+             <strong>Just added</strong> · Entry ${fmtP(entryPrc)} · Day ${daysHeld != null ? daysHeld : 0}
+           </div>`
+        : `<div class="v2-mp-perf" style="background:${accBg};border-color:${accentCol}33">
+             <div class="v2-mp-perf-l">
+               <div class="v2-mp-perf-lbl">Since entry · ${daysStr}</div>
+               <div class="v2-mp-perf-big" style="color:${accentCol}">${pos?'+':''}${pct.toFixed(1)}%</div>
+             </div>
+             <div class="v2-mp-perf-r">
+               <div>Entry <strong>${fmtP(entryPrc)}</strong></div>
+               <div>Now <strong style="color:${accentCol}">${fmtP(curPrice)}</strong></div>
+             </div>
+           </div>`;
+
+      // Upside chip — only when populated and meaningful.
+      const upChip = (() => {
+        const up = targetUpside != null ? +targetUpside : null;
+        if (up == null) return '';
+        if (up > 0) {
+          return `<span class="v2-mp-meta v2-mp-meta-up" title="Wall St analyst 12-month consensus target — sourced from FMP. NOT AlphaHunt's forecast.">+${up.toFixed(1)}% target</span>`;
+        }
+        return `<span class="v2-mp-meta v2-mp-meta-above" title="Stock has rallied past Wall St's consensus target.">🎯 Above target</span>`;
+      })();
+
       return `
-      <div style="background:#ffffff;border:1px solid ${cardBdr};border-radius:14px;padding:16px;
-                  box-shadow:${cardSh};cursor:pointer;transition:transform .15s"
-           onclick="openStockModal('${p.ticker}')"
-           onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform=''">
+      <div class="v2-mp-card" style="border-color:${cardBdr};box-shadow:${cardSh}"
+           onclick="openStockModal('${p.ticker}')">
         ${alertBanner}
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;gap:10px">
-          <div style="display:flex;align-items:center;gap:10px;min-width:0;flex:1">
+        <div class="v2-mp-head">
+          <div class="v2-mp-head-l">
             ${typeof v2LogoHTML === 'function' ? v2LogoHTML(p.ticker, 'lg') : ''}
-            <div style="min-width:0;flex:1">
-              <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">
-                <span style="font-size:18px;font-weight:900;color:${accentCol}">${p.ticker}</span>
+            <div class="v2-mp-head-text">
+              <div class="v2-mp-tic-row">
+                <span class="v2-mp-tic" style="color:${accentCol}">${p.ticker}</span>
                 ${newBadge}
               </div>
-              <div style="font-size:11px;color:#64748b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.name}</div>
+              <div class="v2-mp-name">${p.name}</div>
+              <div class="v2-mp-since">${sinceLabel} <strong>${addedFmt}</strong>${heldStr ? ' · ' + heldStr : ''}</div>
             </div>
           </div>
-          <div style="text-align:right;flex-shrink:0">
-            <div style="font-size:18px;font-weight:800;color:var(--txt)">${fmtP(curPrice)}</div>
-            <div style="font-size:11px;font-weight:700;color:${todayChg>=0?'#15803d':'#dc2626'}">${todayChg>=0?'+':''}${todayChg.toFixed(2)}% today</div>
+          <div class="v2-mp-price">
+            <div class="v2-mp-px">${fmtP(curPrice)}</div>
+            <div class="v2-mp-todo" style="color:${todayChg>=0?'#15803d':'#dc2626'}">${todayChg>=0?'+':''}${todayChg.toFixed(2)}%</div>
           </div>
         </div>
 
-        <!-- Recommended since — small dated tag + tier badge -->
-        <div style="display:flex;align-items:center;gap:6px;font-size:10.5px;color:#64748b;margin-bottom:8px;flex-wrap:wrap">
-          <span style="font-size:11px">📅</span>
-          <span><strong style="color:#0f172a">${sinceLabel} ${addedFmt}</strong>${heldStr ? ` · ${heldStr}` : ''}</span>
-          ${tierBadge}
+        ${perfBlock}
+
+        <div class="v2-mp-meta-row">
+          <span class="v2-mp-score" title="Alpha Score · model conviction">${Math.round(curPop)}</span>
+          <span class="v2-mp-grade rating ${ratingClass(curRating)}">${curRating}</span>
+          ${p.sub_sector ? `<span class="v2-mp-meta v2-mp-meta-sec">${p.sub_sector}</span>` : ''}
+          ${upChip}
         </div>
 
-        <!-- Big performance number -->
-        <div style="background:${accBg};border-radius:10px;padding:10px 14px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between">
-          <div>
-            <div style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:.5px;font-weight:700">Since Entry (${daysStr})</div>
-            <div style="font-size:26px;font-weight:900;color:${accentCol};line-height:1.1">${pos?'+':''}${pct.toFixed(1)}%</div>
-          </div>
-          <div style="text-align:right;font-size:11px;color:#64748b">
-            <div>Entry: <strong style="color:var(--txt)">${fmtP(entryPrc)}</strong></div>
-            <div>Now:   <strong style="color:${accentCol}">${fmtP(curPrice)}</strong></div>
-          </div>
-        </div>
-
-        <!-- Meta row -->
-        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">
-          <span class="rating ${ratingClass(curRating)}" style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:6px">${curRating}</span>
-          <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:6px;background:rgba(29,78,216,.1);color:#1d4ed8">Score ${curPop.toFixed(0)}</span>
-          ${p.sub_sector ? `<span style="font-size:10px;padding:2px 7px;border-radius:6px;background:rgba(132,204,22,.1);color:#4d7c0f;font-weight:600">${p.sub_sector}</span>` : ''}
-          ${(() => {
-            // Only show the analyst-upside chip when there is meaningful upside
-            // remaining. Stocks that have rallied past their consensus target
-            // get a different, smaller "Above target" pill instead of a
-            // confusing "+-25%" — neither is a forecast by AlphaHunt.
-            const up = targetUpside != null ? +targetUpside : null;
-            if (up == null) return '';
-            if (up > 0) {
-              return `<span title="Wall Street analyst 12-month consensus target — sourced from FMP. NOT AlphaHunt's forecast." style="font-size:10px;padding:2px 7px;border-radius:6px;background:rgba(71,85,105,.08);color:#475569;font-weight:600;border:1px solid rgba(71,85,105,.2);font-family:inherit">📊 Analyst +${up.toFixed(1)}%</span>`;
-            }
-            return `<span title="Stock has rallied past Wall Street's 12-month consensus target. Trail stop continues to protect gains." style="font-size:10px;padding:2px 7px;border-radius:6px;background:rgba(21,128,61,.08);color:#15803d;font-weight:600;border:1px solid rgba(21,128,61,.2);font-family:inherit">🎯 Above analyst target</span>`;
-          })()}
-        </div>
-
-        <!-- Action-oriented decision chip: action verb + current return + plain
-             sell instruction. Replaces technical jargon ("trail floor", "buffer
-             above stop") with one sentence a user can act on. -->
-        ${p.pillars ? (() => {
-          // 6-pillar breakdown — always visible (computed server-side from
-          // LIVE data, so the bars reflect the CURRENT state, not entry state).
-          // Tooltip explains what each pillar measures so users don't have
-          // to wonder e.g. "what's growth vs headroom?".
-          const pn = [
-            ['Momentum',  p.pillars.momentum,
-              'Recent price action — 1-month and 3-month gains, distance above SMA-50.'],
-            ['Growth',    p.pillars.growth,
-              'Revenue and EPS growth (year-over-year). What the business has actually achieved.'],
-            ['Quality',   p.pillars.quality,
-              'Gross margin, free-cash-flow margin, debt/equity. How well-run the company is.'],
-            ['Valuation', p.pillars.valuation,
-              'PEG ratio, P/E, and price vs analyst target. Whether you\'re paying a fair price.'],
-            ['Sentiment', p.pillars.sentiment,
-              'Analyst strong-buy %, insider buys vs. sells, social mention velocity.'],
-            ['Fwd outlook',  p.pillars.growth_potential,
-              'Forward upside — analyst target gap plus reverse-DCF implied CAGR. How much room is left to run.'],
-          ];
-          const passCount = pn.filter(([_, v]) => v >= 50).length;
-          const passLabel = passCount >= 5 ? '🟢' : passCount >= 4 ? '🟡' : '🟠';
-          const contextNote = passCount >= 4
-            ? 'Strong on most pillars right now.'
-            : `Live snapshot — stocks enter when ≥4 of 6 are strong. Below that on a held pick means it has rallied past discipline; the trail stop handles the exit.`;
-          return `
-          <div style="margin-bottom:8px;background:#fafbfc;border:1px solid rgba(0,0,0,.06);border-radius:8px;overflow:hidden">
-            <div style="font-size:11px;color:#475569;font-weight:700;padding:6px 10px;background:#f1f5f9;border-bottom:1px solid rgba(0,0,0,.04)" title="${contextNote}">
-              ${passLabel} Live factor profile · ${passCount}/6 strong
-            </div>
-            <div style="padding:8px 10px">
-              ${pn.map(([name, v, tip]) => {
-                // Traffic-light colours: strong = vibrant kelly green,
-                // medium = amber, weak = red. v2-factor-bar / v2-factor-num
-                // class names make these semantic so the green sweep
-                // leaves them alone.
-                const color = v >= 65 ? '#16a34a' : v >= 35 ? '#d97706' : '#dc2626';
-                return `
-                <div style="display:flex;align-items:center;gap:8px;font-size:10.5px;margin-bottom:3px" title="${tip}">
-                  <span style="flex-shrink:0;width:100px;color:#475569;cursor:help">${name}</span>
-                  <div style="flex:1;height:6px;background:#e2e8f0;border-radius:3px;overflow:hidden">
-                    <div class="v2-factor-bar" style="width:${v}%;height:100%;background:${color};border-radius:3px;transition:width .3s"></div>
-                  </div>
-                  <span class="v2-factor-num" style="flex-shrink:0;width:24px;text-align:right;font-weight:700;color:${color}">${v}</span>
-                </div>`;
-              }).join('')}
-              <div style="font-size:10px;color:#64748b;line-height:1.4;margin-top:6px;padding-top:6px;border-top:1px dashed rgba(0,0,0,.08);font-style:italic">
-                ${passCount >= 4
-                  ? '✓ Strong on most pillars right now.'
-                  : '⚠ Rallied past entry discipline — trail stop manages exit timing.'}
-              </div>
-            </div>
-          </div>`;
-        })() : ''}
+        ${pillarBars}
 
         ${decision ? `
-        <div style="background:${toneStyle.bg};border:1px solid ${toneStyle.bdr};border-radius:10px;padding:10px 12px;margin-bottom:8px">
-          <div style="font-size:13px;font-weight:800;color:${toneStyle.fg};margin-bottom:3px;line-height:1.3">
-            ${decision.label}
-          </div>
-          ${decision.detail ? `<div style="font-size:11.5px;color:${toneStyle.fg};opacity:.85;line-height:1.45">${decision.detail}</div>` : ''}
+        <div class="v2-mp-decision" style="background:${toneStyle.bg};border-color:${toneStyle.bdr}">
+          <div class="v2-mp-decision-l" style="color:${toneStyle.fg}">${decision.label}</div>
+          ${decision.detail ? `<div class="v2-mp-decision-d" style="color:${toneStyle.fg}">${decision.detail}</div>` : ''}
         </div>` : ''}
 
-        ${p.rationale ? `<div style="font-size:11px;color:#374151;line-height:1.45;border-left:2px solid ${accentCol};padding-left:8px">💡 ${p.rationale.replace(/^💡\s*/,'')}</div>` : ''}
+        ${p.rationale ? `<div class="v2-mp-rationale" style="border-left-color:${accentCol}">💡 ${p.rationale.replace(/^💡\s*/,'')}</div>` : ''}
       </div>`;
     }).join('')}
   </div>`;
