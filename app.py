@@ -3404,8 +3404,33 @@ def _enrich_model_portfolio(portfolio: dict) -> dict:
             and now >= entry * 2.0
         )
 
+        # ── Rule 6: Re-vet against the live entry bar (May 21 product call) ──
+        # The tracker only holds picks that would qualify TODAY at the same
+        # bar that admitted them: Grade A + Alpha ≥ 75 + ≥4 of 6 pillars ≥ 50.
+        # If a pick no longer clears that bar, it is removed — no waiting for
+        # grade to drop to C or score to fall below 60. Keeps the 12 slots
+        # always reflecting current-day high-conviction setups.
+        #
+        # Grace period: skip re-vet for the first 2 days held, matching the
+        # existing "Just added · monitoring" UI window, so intraday noise on
+        # a fresh add can't immediately reverse the entry.
+        bar_failed = False
+        bar_reason = None
+        if has_live_price and bool(live_grade) and days_held >= 2:
+            live_pillars = _compute_pillars(live) if in_universe else None
+            live_pass = sum(1 for v in (live_pillars or {}).values() if (v or 0) >= 50)
+            if cur_grade != "A":
+                bar_failed = True
+                bar_reason = f"Grade slipped to {cur_grade} (entry bar requires A)"
+            elif cur_score and cur_score < 75:
+                bar_failed = True
+                bar_reason = f"Alpha Score {cur_score:.0f} (entry bar requires ≥75)"
+            elif live_pillars is not None and live_pass < 4:
+                bar_failed = True
+                bar_reason = f"Only {live_pass}/6 pillars strong (entry bar requires ≥4)"
+
         # ── Determine the EXIT ALERT (priority: protect capital first,
-        #    then book big wins, then trail / valuation / signal) ──────
+        #    then book big wins, then trail / valuation / bar-fail / signal) ──
         exit_alert = None
         if hard_stop_hit:
             exit_alert = {"type": "stop",
@@ -3423,6 +3448,10 @@ def _enrich_model_portfolio(portfolio: dict) -> dict:
             exit_alert = {"type": "stretched",
                           "label": "VALUATION STRETCHED",
                           "reason": valuation_reason}
+        elif bar_failed:
+            exit_alert = {"type": "bar_failed",
+                          "label": "ENTRY BAR NO LONGER MET",
+                          "reason": bar_reason}
         elif signal_triggered:
             exit_alert = {"type": "signal",
                           "label": "SIGNAL EXIT",
