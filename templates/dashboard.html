@@ -10217,14 +10217,16 @@ function renderModelPortfolio(data) {
         // is the only thing keeping you in. Tell the user explicitly so
         // they consider booking some gains rather than relying entirely
         // on the trail.
-        // Observational note (NOT advice). We can't tell users to trim
-        // positions — we're not registered investment advisors. Reframe
-        // as 'here's what the model sees' so users draw their own
-        // conclusion. Same trigger: <=2 pillars strong while up >=25%.
+        // Observational note (NOT advice). Reframed Jul 21:
+        //   'Quality has weakened' was confusing — Quality is ALSO one
+        //   of the 6 pillars by name, so users with a strong Quality
+        //   pillar reading 72 saw 'Quality has weakened' and were
+        //   confused. Use 'Profile has thinned out' instead — neutral,
+        //   doesn't collide with any pillar name.
         const profitTakeRisk = passCount <= 2 && (pct ?? 0) >= 25;
         const profitTakeChip = profitTakeRisk
           ? `<div class="v2-mp-take-warn">
-               <strong>📊 Quality has weakened</strong> — only ${passCount}/6 pillars currently strong while position is up ${pos?'+':''}${pct.toFixed(0)}%. Trail stop remains active. Not investment advice.
+               <strong>📊 Profile has thinned out</strong> — ${passCount}/6 pillars now strong (down from ≥4 at entry) while position is up ${pos?'+':''}${pct.toFixed(0)}%. Trail stop remains active. Observational only — not investment advice.
              </div>`
           : '';
         return `
@@ -10301,11 +10303,22 @@ function renderModelPortfolio(data) {
 
         ${pillarBars}
 
-        ${decision ? `
-        <div class="v2-mp-decision" style="background:${toneStyle.bg};border-color:${toneStyle.bdr}">
-          <div class="v2-mp-decision-l" style="color:${toneStyle.fg}">${decision.label}</div>
-          ${decision.detail ? `<div class="v2-mp-decision-d" style="color:${toneStyle.fg}">${decision.detail}</div>` : ''}
-        </div>` : ''}
+        ${(() => {
+          // Hide the idle 'Still tracked · +X%' chip — it's noise on
+          // healthy positions and the perf block already shows the
+          // return prominently. Keep the chip ONLY when it carries
+          // actionable info (exit triggers, warnings, trail-stop
+          // hits, etc.).
+          if (!decision) return '';
+          const label = (decision.label || '').toLowerCase();
+          const isIdle = /still tracked|trailing|monitoring|watching/.test(label);
+          if (isIdle) return '';
+          return `
+          <div class="v2-mp-decision" style="background:${toneStyle.bg};border-color:${toneStyle.bdr}">
+            <div class="v2-mp-decision-l" style="color:${toneStyle.fg}">${decision.label}</div>
+            ${decision.detail ? `<div class="v2-mp-decision-d" style="color:${toneStyle.fg}">${decision.detail}</div>` : ''}
+          </div>`;
+        })()}
 
         ${p.rationale ? `<div class="v2-mp-rationale" style="border-left-color:${accentCol}">💡 ${p.rationale.replace(/^💡\s*/,'')}</div>` : ''}
       </div>`;
