@@ -3390,13 +3390,31 @@ def _enrich_model_portfolio(portfolio: dict) -> dict:
                     + (f" · PEG {peg:.1f}" if peg > 4 else f" · P/E {pe:.0f}")
                 )
 
-        # ── Determine the EXIT ALERT (priority: protect capital first) ─
-        # No fixed take-profit any more — winners run via the stair-step trail.
+        # ── +100% TAKE-PROFIT CEILING (May 21 product call) ──────────────
+        # Philosophy: deliver FAST returns by rotating capital. A 100%
+        # gain in any timeframe is the marker of a successful pick —
+        # book it, surface a fresh hot name in the freed slot. Avoids
+        # the 'one stock takes a year to double' scenario the user
+        # explicitly does not want in this tracker.
+        # Only triggers on a real live price (has_live_price guard
+        # already established above prevents phantom fires on partial data).
+        take_profit_hit = (
+            has_live_price
+            and entry > 0
+            and now >= entry * 2.0
+        )
+
+        # ── Determine the EXIT ALERT (priority: protect capital first,
+        #    then book big wins, then trail / valuation / signal) ──────
         exit_alert = None
         if hard_stop_hit:
             exit_alert = {"type": "stop",
                           "label": "STOP HIT",
                           "reason": f"Price ${now:.2f} ≤ -8% stop ${hard_stop_price:.2f}"}
+        elif take_profit_hit:
+            exit_alert = {"type": "target",
+                          "label": "+100% TARGET HIT",
+                          "reason": f"Price ${now:.2f} ≥ 2× entry ${entry:.2f} — booked, rotating to next hot pick"}
         elif trail_stop_hit:
             exit_alert = {"type": "trail",
                           "label": "TRAIL STOP HIT",
