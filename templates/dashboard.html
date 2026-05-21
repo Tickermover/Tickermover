@@ -2106,8 +2106,8 @@ body[data-active-profile="conservative"] .fund-row:not([data-profiles~="conserva
 }
 
 /* ───── Tracker chart (Top Hunts vs SPY vs QQQ) ───── */
-.v2-tc-wrap{padding:6px 4px 4px;font-size:11.5px;color:#475569}
-.v2-tc-legend{display:flex;flex-wrap:wrap;gap:16px;align-items:center;margin-bottom:6px;padding:0 4px}
+.v2-tc-wrap{padding:2px 2px 0;font-size:11.5px;color:#475569}
+.v2-tc-legend{display:flex;flex-wrap:wrap;gap:14px;align-items:center;margin-bottom:2px;padding:0 2px}
 .v2-tc-lg{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:#475569;font-weight:700}
 .v2-tc-lg i{display:inline-block;width:18px;height:3px;border-radius:2px}
 .v2-tc-lg-t i{background:#4338ca;height:4px}
@@ -2120,7 +2120,7 @@ body[data-active-profile="conservative"] .fund-row:not([data-profiles~="conserva
 .v2-tc-pill-pos{color:#15803d;background:#dcfce7}
 .v2-tc-pill-neg{color:#b91c1c;background:#fee2e2}
 .v2-tc-sub{margin-left:auto;font-size:11px;color:#64748b;font-weight:700;letter-spacing:.01em}
-.v2-tc-svg{width:100%;height:260px;display:block;margin-top:4px}
+.v2-tc-svg{width:100%;height:170px;display:block;margin-top:2px}
 
 /* ───── Today's Focus — actionable opportunity cards ───── */
 .v2-focus-card{
@@ -9908,20 +9908,16 @@ function renderModelPortfolio(data) {
 
   // ── HEADER STATS ────────────────────────────────────────────────────
   const headerHTML = `
-  <div style="background:#ffffff;border:1px solid rgba(0,0,0,.08);border-radius:16px;padding:20px 24px;margin-bottom:18px;box-shadow:0 2px 12px rgba(0,0,0,.06)">
-    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px">
-      <div style="flex:1;min-width:0">
-        <div style="font-size:18px;font-weight:800;color:var(--txt)">🎯 Top Hunts</div>
-      </div>
+  <div style="background:#ffffff;border:1px solid rgba(0,0,0,.08);border-radius:14px;padding:12px 16px 10px;margin-bottom:12px;box-shadow:0 1px 6px rgba(0,0,0,.05)">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+      <div style="font-size:15px;font-weight:800;color:var(--txt);display:flex;align-items:center;gap:8px">🎯 Top Hunts</div>
       <button onclick="if(confirm('Reset rebuilds the tracker with today\\'s top 10 stocks by score. Continue?'))resetModelPortfolio()"
-        style="padding:7px 14px;background:#f1f5f9;border:1px solid rgba(0,0,0,.1);border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;color:#374151;flex-shrink:0">
-        🔄 Reset Tracker
+        style="padding:5px 11px;background:#f1f5f9;border:1px solid rgba(0,0,0,.1);border-radius:7px;font-size:11px;font-weight:600;cursor:pointer;color:#374151;flex-shrink:0">
+        🔄 Reset
       </button>
     </div>
     ${concentrationWarning}
-    <!-- 5-card stat strip replaced with a spline chart comparing Top Hunts
-         portfolio cumulative return vs SPY (S&P 500) vs QQQ (NASDAQ). -->
-    <div id="v2-tracker-chart-slot" style="min-height:220px"></div>
+    <div id="v2-tracker-chart-slot" style="min-height:140px;margin-top:4px"></div>
   </div>`;
 
   const barHTML = '';
@@ -10205,8 +10201,8 @@ function v2RenderTrackerChartHTML(d){
 
   // Chart geometry: full SVG coordinate system 800x300, padded so the
   // axis labels have room. Keeps the SVG sharp on any viewport.
-  const W = 800, H = 300;
-  const padL = 36, padR = 12, padT = 14, padB = 22;
+  const W = 800, H = 200;       // shorter viewBox to match the new compact 170px CSS height
+  const padL = 34, padR = 10, padT = 8, padB = 18;
   const innerW = W - padL - padR;
   const innerH = H - padT - padB;
 
