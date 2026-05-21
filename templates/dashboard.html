@@ -1283,13 +1283,18 @@ body.v2 .ticker-chip .px{color:#cbd5e1!important}
 .v2-sidebar{
   background:#0a0e15;
   border-right:1px solid #1f2937;
-  padding:18px 14px;
+  /* Extra bottom padding so the user box doesn't sit flush against
+     the viewport edge (was clipping 'AlphaHunt Member' on shorter
+     screens). */
+  padding:18px 14px 28px;
   display:flex;flex-direction:column;
   height:100%;
-  overflow:hidden;
+  overflow-y:auto;
   position:relative;
   color:#e2e8f0;
 }
+.v2-sidebar::-webkit-scrollbar{width:6px}
+.v2-sidebar::-webkit-scrollbar-thumb{background:#1f2937;border-radius:3px}
 .v2-sidebar::before{
   content:'';position:absolute;left:0;right:0;top:0;height:200px;
   background:radial-gradient(ellipse 70% 100% at 0% 0%,rgba(99,102,241,.16) 0%,transparent 60%);
@@ -1356,7 +1361,10 @@ body.v2 .ticker-chip .px{color:#cbd5e1!important}
 .v2-sub.active{color:#a5b4fc;font-weight:700}
 
 /* Bottom-pinned auth pill — wraps the existing #auth-btn-wrap */
-.v2-sb-bottom{margin-top:auto;padding-top:14px;border-top:1px solid #1f2937}
+/* Push the user box toward the bottom but stop ~24px before the edge
+   so it doesn't look clipped. Capped gap with min-height to avoid the
+   bottom section floating mid-sidebar when content is short. */
+.v2-sb-bottom{margin-top:auto;margin-bottom:8px;padding-top:14px;border-top:1px solid #1f2937}
 .v2-sb-bottom #auth-btn{width:100%;display:block;text-align:center;
   padding:11px 14px;border-radius:10px;
   background:linear-gradient(135deg,#4338ca,#6366f1)!important;
