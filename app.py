@@ -3242,6 +3242,57 @@ def _build_model_portfolio(existing: dict | None = None) -> dict:
             "target_mean":    float(t.get("target_mean") or 0),
         })
 
+    # ── Audit trail: every dropped pick MUST be recorded to closed trades ──
+    # The user's trust in our selection rests on the closed-trades tab being
+    # the complete history of every name we ever picked. So if a rebuild
+    # drops a ticker (admin Reset, or a future code path that passes an
+    # existing portfolio), record those drops as closed trades here. The
+    # normal daily exit path already goes through _close_triggered_picks
+    # — this is the safety net for rebuild paths only.
+    if existing and existing.get("picks"):
+        lookup = {t["ticker"]: t for t in _universe_data}
+        existing_tickers = {p["ticker"] for p in existing["picks"] if p.get("ticker")}
+        dropped = existing_tickers - new_tickers
+        if dropped:
+            history = _load_trade_history()
+            closed_records = []
+            for prev in existing["picks"]:
+                tkr = prev.get("ticker")
+                if tkr not in dropped:
+                    continue
+                live = lookup.get(tkr, {})
+                entry = float(prev.get("entry_price") or 0)
+                exit_price = float(live.get("price") or entry)
+                final_pct = round((exit_price - entry) / entry * 100, 2) if entry > 0 else 0
+                added_date = prev.get("added_date")
+                days_held = 0
+                if added_date:
+                    try:
+                        days_held = (today - _date.fromisoformat(added_date)).days
+                    except ValueError:
+                        pass
+                closed_records.append({
+                    "ticker":          tkr,
+                    "name":            prev.get("name", ""),
+                    "entry_date":      added_date,
+                    "entry_price":     entry,
+                    "pop_at_entry":    prev.get("pop_at_entry"),
+                    "grade_at_entry": prev.get("grade_at_entry"),
+                    "rationale":       prev.get("rationale", ""),
+                    "sub_sector":      prev.get("sub_sector", ""),
+                    "exit_date":       today_str,
+                    "exit_price":      exit_price,
+                    "exit_reason":     "rebuild",
+                    "exit_label":      "REBUILD",
+                    "exit_detail":     "Removed during portfolio rebuild — no longer in top-12 by selection bar",
+                    "final_pct":       final_pct,
+                    "days_held":       days_held,
+                    "won":             final_pct > 0,
+                })
+            history["trades"] = closed_records + history.get("trades", [])
+            _save_trade_history(history)
+            logger.info(f"📕 Rebuild closed {len(closed_records)} trade(s): {sorted(dropped)}")
+
     # Preserve the original `created_at` on refresh so the inception date
     # in the header stays meaningful (it's the date the portfolio was first built).
     created_at = (existing or {}).get("created_at", inception_str)
@@ -3865,7 +3916,11 @@ async def api_model_portfolio_reset():
     global _model_portfolio
     if not _universe_data:
         raise HTTPException(status_code=503, detail="Universe not loaded yet")
-    _model_portfolio = _build_model_portfolio()
+    # Pass the current portfolio as `existing` so any picks dropped during
+    # rebuild are recorded to closed trades. The user's track record depends
+    # on the closed-trades tab being a complete audit log — every pick we
+    # ever surfaced must leave through that tab, not vanish silently.
+    _model_portfolio = _build_model_portfolio(existing=_model_portfolio)
     _save_portfolio_to_disk(_model_portfolio)
     cache.save_disk()
     logger.info(f"📊 Model portfolio RESET: {len(_model_portfolio['picks'])} picks on {_model_portfolio['created_at']}")
