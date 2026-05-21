@@ -691,6 +691,18 @@ async def sitemap_xml():
 
 # ── HTML Dashboard ────────────────────────────────────────────────────
 
+@app.get("/preview", response_class=HTMLResponse)
+async def landing_v2_preview():
+    """Preview route for the redesigned landing (landing_v2.html). Lives
+    alongside `/` until the redesign is approved, then this swaps in for the
+    main landing route. Pure client-fetch — no SSR injection — so the diff
+    against the production landing is a pure design comparison."""
+    path = BASE_DIR / "templates" / "landing_v2.html"
+    if not path.exists():
+        raise HTTPException(status_code=404, detail="Preview template missing")
+    return HTMLResponse(path.read_text(encoding="utf-8"))
+
+
 @app.get("/", response_class=HTMLResponse)
 async def landing():
     """Landing page — alphahunt.in home.
