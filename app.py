@@ -4586,3 +4586,136 @@ async def api_price_history(ticker: str, period: str = "3mo"):
     payload = {"ticker": sym, "period": period, "points": pts}
     cache.set(cache_key, payload, 60 * 60 * 6)  # 6h
     return JSONResponse(payload)
+
+
+# ── /api/tracker-chart — Top Hunts portfolio vs SPY vs QQQ (90 days) ──
+@app.get("/api/tracker-chart")
+async def api_tracker_chart():
+    """Daily cumulative-return time series for the Top Hunts portfolio
+    compared to SPY (S&P 500) and QQQ (Nasdaq 100). 90-day window.
+
+    Portfolio NAV approximation: equal-weighted, each pick contributes
+    its (close_t / entry_close - 1) from entry_date onward. Dates before
+    a pick was added simply omit that pick from the average for that day.
+
+    Cached 15 min — the underlying yfinance fetches are also cached for
+    6 h each via /api/price-history.
+    """
+    cache_key = "tracker-chart:v1"
+    cached = cache.get(cache_key)
+    if cached is not None:
+        return JSONResponse(cached)
+
+    try:
+        import yfinance as yf  # type: ignore
+    except Exception:
+        return JSONResponse({"dates": [], "spy": [], "qqq": [], "tracker": []})
+
+    # Load current model portfolio picks (active only)
+    picks = []
+    try:
+        picks = list((_model_portfolio or {}).get("picks") or [])
+    except Exception:
+        picks = []
+
+    # Tickers to fetch: SPY, QQQ, plus every pick's symbol
+    syms = ["SPY", "QQQ"] + [
+        (p.get("ticker") or "").upper()
+        for p in picks
+        if (p.get("ticker") or "").strip()
+    ]
+    syms = list(dict.fromkeys(syms))  # de-dupe, preserve order
+
+    def _fetch_history(sym: str) -> dict[str, float]:
+        """Returns {date_str -> close} for the last 90 days; reuses the
+        per-ticker price-history cache so repeat hits are free."""
+        ck = f"price-history:{sym}:3mo"
+        c = cache.get(ck)
+        pts = (c or {}).get("points") or []
+        if not pts:
+            try:
+                tk = yf.Ticker(sym)
+                h = tk.history(period="3mo", interval="1d", auto_adjust=True)
+                if h is None or h.empty:
+                    return {}
+                pts = []
+                for idx, row in h.iterrows():
+                    d = idx.strftime("%Y-%m-%d") if hasattr(idx, "strftime") else str(idx)
+                    close = float(row["Close"]) if row.get("Close") is not None else None
+                    if close is not None and not (math.isnan(close) or math.isinf(close)):
+                        pts.append({"date": d, "close": round(close, 2)})
+                cache.set(ck, {"ticker": sym, "period": "3mo", "points": pts}, 60 * 60 * 6)
+            except Exception as exc:
+                logger.warning(f"tracker-chart history {sym} failed: {exc}")
+                return {}
+        return {p["date"]: p["close"] for p in pts}
+
+    histories = await asyncio.to_thread(lambda: {s: _fetch_history(s) for s in syms})
+    spy_hist = histories.get("SPY", {})
+    qqq_hist = histories.get("QQQ", {})
+    if not spy_hist or not qqq_hist:
+        return JSONResponse({"dates": [], "spy": [], "qqq": [], "tracker": []})
+
+    # Date axis = union of SPY and QQQ dates, sorted
+    dates = sorted(set(spy_hist.keys()) | set(qqq_hist.keys()))
+    if not dates:
+        return JSONResponse({"dates": [], "spy": [], "qqq": [], "tracker": []})
+
+    def pct_series(hist: dict[str, float]) -> list[float]:
+        vals = [hist.get(d) for d in dates]
+        # Forward-fill missing days from the previous available close
+        last = None
+        filled = []
+        for v in vals:
+            if v is not None:
+                last = v
+            filled.append(last)
+        # Drop leading None / find first real close as base
+        base = next((v for v in filled if v is not None), None)
+        if not base:
+            return [0.0] * len(dates)
+        return [round(((v if v is not None else base) / base - 1) * 100, 2) for v in filled]
+
+    spy_series = pct_series(spy_hist)
+    qqq_series = pct_series(qqq_hist)
+
+    # Tracker: equal-weighted, each pick contributes from its entry_date
+    tracker_series = []
+    for d in dates:
+        contributions = []
+        for p in picks:
+            sym = (p.get("ticker") or "").upper()
+            h   = histories.get(sym, {})
+            entry_date  = p.get("entry_date") or p.get("added_date")
+            entry_close = p.get("entry_price")
+            if not h or not entry_date or not entry_close:
+                continue
+            if d < entry_date:
+                continue
+            close_d = h.get(d)
+            if close_d is None:
+                # forward-fill from previous available close
+                prev_dates = [k for k in h.keys() if k <= d]
+                if not prev_dates:
+                    continue
+                close_d = h[max(prev_dates)]
+            try:
+                pct = (close_d / float(entry_close) - 1) * 100
+                contributions.append(pct)
+            except (TypeError, ValueError, ZeroDivisionError):
+                continue
+        if contributions:
+            tracker_series.append(round(sum(contributions) / len(contributions), 2))
+        else:
+            # Before any pick was added — anchor at 0
+            tracker_series.append(0.0)
+
+    payload = {
+        "dates":   dates,
+        "spy":     spy_series,
+        "qqq":     qqq_series,
+        "tracker": tracker_series,
+        "picks_count": len(picks),
+    }
+    cache.set(cache_key, payload, 60 * 15)  # 15 min
+    return JSONResponse(payload)

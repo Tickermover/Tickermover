@@ -1998,6 +1998,20 @@ body[data-active-profile="conservative"] .fund-row:not([data-profiles~="conserva
 }
 .v2-usp-clear:hover{background:#eef2ff}
 
+/* ───── Tracker chart (Top Hunts vs SPY vs QQQ) ───── */
+.v2-tc-wrap{padding:8px 4px 4px;font-size:11.5px;color:#475569}
+.v2-tc-legend{display:flex;flex-wrap:wrap;gap:14px;align-items:center;margin-bottom:8px}
+.v2-tc-lg{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:#475569;font-weight:700}
+.v2-tc-lg i{display:inline-block;width:14px;height:3px;border-radius:2px}
+.v2-tc-lg-t i{background:#4338ca}
+.v2-tc-lg-s i{background:#3b82f6}
+.v2-tc-lg-q i{background:#a855f7}
+.v2-tc-lg strong{font-weight:900;font-variant-numeric:tabular-nums;margin-left:2px}
+.v2-tc-sub{margin-left:auto;font-size:10.5px;color:#94a3b8;font-weight:600;letter-spacing:.02em}
+.v2-tc-svg{width:100%;height:200px;display:block}
+.v2-tc-x{display:flex;justify-content:space-between;font-size:10px;color:#94a3b8;
+  font-weight:700;letter-spacing:.04em;padding:4px 2px 0;}
+
 /* ───── Today's Focus — actionable opportunity cards ───── */
 .v2-focus-card{
   position:relative;
@@ -9693,20 +9707,9 @@ function renderModelPortfolio(data) {
       </button>
     </div>
     ${concentrationWarning}
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px">
-      ${[
-        [returnLabel, `<span class="${avgCls}" style="font-size:22px;font-weight:900">${avgPct>=0?'+':''}${avgPct.toFixed(1)}%</span>`, returnSub],
-        ['Winners', `<span style="font-size:22px;font-weight:900;color:#15803d">${stats.winners||0}</span>`, `of ${stats.total_picks||0} picks`],
-        ['Losers',  `<span style="font-size:22px;font-weight:900;color:#dc2626">${stats.losers||0}</span>`, 'in the red'],
-        ['Best Pick', `<span style="font-size:22px;font-weight:900;color:#15803d">+${(stats.best||0).toFixed(1)}%</span>`, 'top gainer'],
-        ['Worst Pick',`<span style="font-size:22px;font-weight:900;color:#dc2626">${(stats.worst||0).toFixed(1)}%</span>`, 'biggest drop'],
-      ].map(([label, val, sub]) => `
-        <div style="background:#f8fafc;border-radius:10px;padding:12px;text-align:center;border:1px solid rgba(0,0,0,.05)">
-          <div style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:4px">${label}</div>
-          <div>${val}</div>
-          <div style="font-size:10px;color:#94a3b8;margin-top:2px">${sub}</div>
-        </div>`).join('')}
-    </div>
+    <!-- 5-card stat strip replaced with a spline chart comparing Top Hunts
+         portfolio cumulative return vs SPY (S&P 500) vs QQQ (NASDAQ). -->
+    <div id="v2-tracker-chart-slot" style="min-height:220px"></div>
   </div>`;
 
   const barHTML = '';
@@ -9961,6 +9964,96 @@ function renderModelPortfolio(data) {
     </div>` : '';
 
   root.innerHTML = _modelViewToggle('active') + (picks.length === 0 ? emptyStateHTML : (headerHTML + barHTML + cardsHTML));
+  // Kick the tracker-chart fetch + render so the chart paints into the
+  // slot we reserved inside headerHTML. Idle-deferred so the rest of
+  // the panel renders first.
+  if (picks.length) {
+    const _idle = window.requestIdleCallback || ((cb) => setTimeout(cb, 16));
+    _idle(() => { try { v2LoadTrackerChart(); } catch(e){ console.error(e); } });
+  }
+}
+
+/* Fetch /api/tracker-chart and render a 3-line SVG spline comparing Top
+   Hunts portfolio cumulative return vs S&P 500 (SPY) vs NASDAQ (QQQ). */
+async function v2LoadTrackerChart(){
+  const slot = document.getElementById('v2-tracker-chart-slot');
+  if (!slot) return;
+  slot.innerHTML = '<div style="padding:40px 0;text-align:center;color:#94a3b8;font-size:12px">Loading 90-day comparison…</div>';
+  try {
+    const r = await fetch('/api/tracker-chart');
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const d = await r.json();
+    slot.innerHTML = v2RenderTrackerChartHTML(d);
+  } catch (e) {
+    slot.innerHTML = '<div style="padding:24px 0;text-align:center;color:#94a3b8;font-size:12px">Chart unavailable (' + e.message + ').</div>';
+  }
+}
+
+function v2RenderTrackerChartHTML(d){
+  const dates = (d && d.dates) || [];
+  const tracker = (d && d.tracker) || [];
+  const spy = (d && d.spy) || [];
+  const qqq = (d && d.qqq) || [];
+  if (!dates.length || !tracker.length){
+    return '<div style="padding:24px 0;text-align:center;color:#94a3b8;font-size:12px">No tracker history yet — chart appears once picks accumulate.</div>';
+  }
+
+  // Build inline SVG spline chart. 0..100 viewBox, 5% top/bottom padding.
+  const all = tracker.concat(spy, qqq);
+  const max = Math.max.apply(null, all);
+  const min = Math.min.apply(null, all);
+  const range = (max - min) || 1;
+
+  const toPath = (vals) => {
+    if (!vals.length) return '';
+    return vals.map((v, i) => {
+      const x = (i / (vals.length - 1)) * 100;
+      const y = 100 - ((v - min) / range) * 88 - 6;
+      return (i === 0 ? 'M' : 'L') + x.toFixed(2) + ',' + y.toFixed(2);
+    }).join(' ');
+  };
+
+  const tPath = toPath(tracker);
+  const sPath = toPath(spy);
+  const qPath = toPath(qqq);
+
+  const endVal = (a) => a.length ? a[a.length - 1] : 0;
+  const tEnd = endVal(tracker), sEnd = endVal(spy), qEnd = endVal(qqq);
+  const fmtPct = v => (v >= 0 ? '+' : '') + v.toFixed(1) + '%';
+  const cls    = v => v >= 0 ? '#16a34a' : '#dc2626';
+
+  // X-axis labels — first / mid / last date
+  const fmtDate = s => {
+    try { return new Date(s).toLocaleDateString('en-US',{month:'short', day:'numeric'}); }
+    catch(e){ return s; }
+  };
+  const dateL  = fmtDate(dates[0]);
+  const dateM  = fmtDate(dates[Math.floor(dates.length / 2)]);
+  const dateR  = fmtDate(dates[dates.length - 1]);
+
+  return '' +
+    '<div class="v2-tc-wrap">' +
+      '<div class="v2-tc-legend">' +
+        '<span class="v2-tc-lg v2-tc-lg-t"><i></i> Top Hunts <strong style="color:' + cls(tEnd) + '">' + fmtPct(tEnd) + '</strong></span>' +
+        '<span class="v2-tc-lg v2-tc-lg-s"><i></i> S&P 500 <strong style="color:' + cls(sEnd) + '">' + fmtPct(sEnd) + '</strong></span>' +
+        '<span class="v2-tc-lg v2-tc-lg-q"><i></i> NASDAQ <strong style="color:' + cls(qEnd) + '">' + fmtPct(qEnd) + '</strong></span>' +
+        '<span class="v2-tc-sub">90-day cumulative return</span>' +
+      '</div>' +
+      '<svg class="v2-tc-svg" viewBox="0 0 100 100" preserveAspectRatio="none">' +
+        // zero gridline
+        (min < 0 && max > 0
+          ? '<line x1="0" x2="100" y1="' + (100 - ((0 - min) / range) * 88 - 6).toFixed(2) + '" y2="' + (100 - ((0 - min) / range) * 88 - 6).toFixed(2) + '" stroke="#e2e8f0" stroke-width="0.3" stroke-dasharray="1.5,1.5"/>'
+          : '') +
+        '<path d="' + sPath + '" fill="none" stroke="#3b82f6" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round" opacity="0.85"/>' +
+        '<path d="' + qPath + '" fill="none" stroke="#a855f7" stroke-width="0.8" stroke-linejoin="round" stroke-linecap="round" opacity="0.85"/>' +
+        '<path d="' + tPath + '" fill="none" stroke="#4338ca" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round"/>' +
+      '</svg>' +
+      '<div class="v2-tc-x">' +
+        '<span>' + dateL + '</span>' +
+        '<span>' + dateM + '</span>' +
+        '<span>' + dateR + '</span>' +
+      '</div>' +
+    '</div>';
 }
 
 async function resetModelPortfolio() {
