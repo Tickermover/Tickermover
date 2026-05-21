@@ -1268,7 +1268,7 @@ body.v2 .ticker-chip .px{color:#cbd5e1!important}
 
 .v2-app{
   display:grid;
-  grid-template-columns:240px 1fr;
+  grid-template-columns:228px 1fr;
   background:#f7fafc;
   border-radius:20px;
   overflow:hidden;
@@ -1283,18 +1283,14 @@ body.v2 .ticker-chip .px{color:#cbd5e1!important}
 .v2-sidebar{
   background:#0a0e15;
   border-right:1px solid #1f2937;
-  /* Extra bottom padding so the user box doesn't sit flush against
-     the viewport edge (was clipping 'AlphaHunt Member' on shorter
-     screens). */
-  padding:18px 14px 28px;
+  /* No scroll — sidebar items must fit within viewport height. */
+  padding:18px 14px 22px;
   display:flex;flex-direction:column;
   height:100%;
-  overflow-y:auto;
+  overflow:hidden;
   position:relative;
   color:#e2e8f0;
 }
-.v2-sidebar::-webkit-scrollbar{width:6px}
-.v2-sidebar::-webkit-scrollbar-thumb{background:#1f2937;border-radius:3px}
 .v2-sidebar::before{
   content:'';position:absolute;left:0;right:0;top:0;height:200px;
   background:radial-gradient(ellipse 70% 100% at 0% 0%,rgba(99,102,241,.16) 0%,transparent 60%);
@@ -1307,12 +1303,20 @@ body.v2 .ticker-chip .px{color:#cbd5e1!important}
   color:#fff;position:relative;
 }
 .v2-sb-logo img{
-  width:32px;height:32px;border-radius:8px;
-  background:#fff;padding:3px;
+  width:34px;height:34px;border-radius:8px;
+  background:#0f172a;padding:4px;
   display:block;object-fit:contain;
-  box-shadow:0 2px 12px rgba(0,0,0,.35);
+  border:1px solid #1f2937;
+  box-shadow:0 2px 12px rgba(99,102,241,.18);
 }
-.v2-sb-logo .name span{color:#a5b4fc}
+/* AlphaHunt wordmark — Alpha in soft white, Hunt in indigo-violet
+   gradient so the brand colour pops against the dark sidebar bg. */
+.v2-sb-logo .name{color:#f1f5f9}
+.v2-sb-logo .name span{
+  background:linear-gradient(135deg,#a5b4fc 0%,#c4b5fd 50%,#f0abfc 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  font-weight:900;
+}
 .v2-sb-section{
   font-size:10.5px;font-weight:800;color:#64748b;
   text-transform:uppercase;letter-spacing:.10em;
@@ -11261,6 +11265,33 @@ async function authInit() {
   _scheduleTokenRefresh();
 }
 
+/* Derive a friendly display name from whatever the auth payload gives us.
+   Preference order:
+     1. Explicit name fields (user.name / user.full_name / user.user_metadata.name)
+     2. The email's local part, cleaned up:
+         - drop the +alias  ('sourcekheto+21' -> 'sourcekheto')
+         - replace . and _ with spaces
+         - title-case each word
+   When the signup wizard lands with a mandatory name field, the first
+   branch starts firing and this helper continues to do the right thing. */
+function _displayNameFromUser(user){
+  if (!user) return '';
+  const explicit = user.name
+                 || user.full_name
+                 || (user.user_metadata && (user.user_metadata.name || user.user_metadata.full_name))
+                 || '';
+  if (explicit && String(explicit).trim()) return String(explicit).trim();
+  const email = user.email || '';
+  if (!email) return '';
+  let local = email.split('@')[0] || '';
+  local = local.split('+')[0];                       // drop +alias
+  local = local.replace(/[._\-]+/g, ' ').trim();      // separators to spaces
+  if (!local) return '';
+  return local.split(/\s+/)
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .join(' ');
+}
+
 function _authUpdateUI(user) {
   const btn     = document.getElementById('auth-btn');
   const menu    = document.getElementById('user-menu');
@@ -11269,9 +11300,16 @@ function _authUpdateUI(user) {
   if (user && (user.email || user.id)) {
     btn.style.display  = 'none';
     menu.style.display = 'flex';
-    const email = user.email || '';
-    emailEl.textContent = email;
-    if (avatar) avatar.textContent = email ? email[0].toUpperCase() : '✓';
+    const display = _displayNameFromUser(user);
+    // The element is still id="user-email" for legacy compat, but now shows
+    // the friendly name. Full email moved to the title attribute so it's
+    // accessible on hover for debugging.
+    if (emailEl){
+      emailEl.textContent = display || user.email || '';
+      emailEl.setAttribute('title', user.email || display || '');
+    }
+    if (avatar) avatar.textContent = display ? display[0].toUpperCase()
+                                  : (user.email ? user.email[0].toUpperCase() : '✓');
     renderWatchlistPanel();
   } else {
     btn.style.display  = '';
