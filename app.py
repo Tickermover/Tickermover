@@ -4661,6 +4661,21 @@ async def api_tracker_chart():
     if not dates:
         return JSONResponse({"dates": [], "spy": [], "qqq": [], "tracker": []})
 
+    # Clip the date axis to start at the EARLIEST entry_date across picks
+    # so the chart doesn't show a long flat-zero head before any pick was
+    # added (which made the line look like it had a fake vertical jump on
+    # the day picks first appeared).
+    entry_dates = [
+        (p.get("entry_date") or p.get("added_date") or "")
+        for p in picks
+    ]
+    entry_dates = [d for d in entry_dates if d]
+    if entry_dates:
+        earliest = min(entry_dates)
+        dates = [d for d in dates if d >= earliest]
+        if not dates:
+            return JSONResponse({"dates": [], "spy": [], "qqq": [], "tracker": []})
+
     def pct_series(hist: dict[str, float]) -> list[float]:
         vals = [hist.get(d) for d in dates]
         # Forward-fill missing days from the previous available close
