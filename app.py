@@ -3293,7 +3293,16 @@ def _enrich_model_portfolio(portfolio: dict) -> dict:
         live  = lookup.get(p["ticker"], {})
         entry = float(p.get("entry_price") or 0)
         in_universe = bool(live)
-        now   = float(live.get("price") or entry or 0)
+        # Has the universe actually populated live data for this ticker on
+        # THIS refresh cycle? If not, we must SKIP exit-rule evaluation —
+        # falling back `now = entry` makes `now <= trail_floor` evaluate as
+        # `entry <= entry = True` whenever the break-even floor (peak >=
+        # +10%) is active, which fired phantom trail-stops on every
+        # partial-data refresh. That was the source of the '2 picks churn
+        # every day' bug.
+        live_price = live.get("price")
+        has_live_price = live_price is not None and float(live_price) > 0
+        now   = float(live_price) if has_live_price else float(entry or 0)
         perf_frac = (now - entry) / entry if entry > 0 else 0.0
         perf = round(perf_frac * 100, 2)
 
@@ -3315,8 +3324,12 @@ def _enrich_model_portfolio(portfolio: dict) -> dict:
         peak_perf_frac = (peak_price - entry) / entry if entry > 0 else 0.0
 
         # ── Rule 1: Hard stop at -8% (always applies) ────────────────────
+        # Only evaluable when we have a real live price — otherwise the
+        # fallback to `entry` would NEVER fire the hard stop, but ALSO
+        # we shouldn't fire any rule on partial data. Same guard applies
+        # to trail / signal / valuation below.
         hard_stop_price = round(entry * 0.92, 2) if entry > 0 else 0
-        hard_stop_hit   = entry > 0 and now <= hard_stop_price
+        hard_stop_hit   = has_live_price and entry > 0 and now <= hard_stop_price
 
         # ── Rule 2: Stair-stepped trailing stop (no fixed take-profit cap) ─
         # As peak gain rises, the trailing floor ratchets up.  The floor is
@@ -3333,12 +3346,21 @@ def _enrich_model_portfolio(portfolio: dict) -> dict:
         else:                        trail_mult, trail_label = None, None
         trail_floor    = round(entry * trail_mult, 2) if (entry > 0 and trail_mult) else 0
         trail_active   = trail_mult is not None
-        trail_stop_hit = trail_active and now <= trail_floor
+        # Trail stop only fires on a REAL live price — without this guard,
+        # missing-data refreshes set now=entry which trips the break-even
+        # floor (entry × 1.0) and incorrectly closes healthy picks.
+        trail_stop_hit = has_live_price and trail_active and now <= trail_floor
 
         # ── Rule 4: Signal stop ───────────────────────────────────────────
-        cur_grade = live.get("grade") or p.get("grade_at_entry") or "A"
+        # Use the LIVE grade only if it's actually present. Falling back to
+        # grade_at_entry on missing data prevents a phantom signal-exit on
+        # tickers whose enrichment hasn't completed yet.
+        live_grade = (live.get("grade") or "").strip()
+        cur_grade = live_grade if live_grade else (p.get("grade_at_entry") or "A")
         cur_score = float(live.get("pop_score") or 0)
-        signal_triggered = (
+        # Only fire signal-stop when we have a confirmed live grade or score
+        # — otherwise it'd churn picks mid-refresh.
+        signal_triggered = bool(live_grade) and (
             GRADE_RANK.get(cur_grade, 0) < GRADE_RANK["B"]
             or (cur_score and cur_score < 60)
         )
