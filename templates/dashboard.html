@@ -2460,16 +2460,22 @@ html.v2-dark .v2-mp-mini-lbl{color:#cbd5e1}
 }
 
 /* Reusable ticker logo (real logo + colored-initial fallback).
-   Background is light slate (#f1f5f9) instead of pure white so logos
-   with white marks (ANET, ADTN, Cisco-style etc.) still show their
-   outline against the container instead of disappearing. Border
-   tightened to #cbd5e1 so the chip edge stays defined. */
+   Strategy: dark navy container (#0f172a) so ANY logo — white,
+   light grey, transparent-background — pops with high contrast.
+   FMP logos are saved with transparent BGs; against a dark container
+   even white-only marks (ANET 'A', ADTN, WMT spark) read cleanly.
+   Adds a subtle inner highlight so coloured logos don't sit flat. */
 .v2ov-tic-logo{
   width:36px;height:36px;border-radius:8px;
-  background:#f1f5f9;border:1px solid #cbd5e1;
+  background:#0f172a;border:1px solid #1f2937;
   display:grid;place-items:center;
   overflow:hidden;flex-shrink:0;position:relative;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.08);
 }
+/* The IMG itself gets a near-white tint via filter so logos read
+   crisply on the dark surface. Removed if we ever serve light-mode
+   logo PNGs separately. */
+.v2ov-tic-logo img{filter:brightness(1.04) contrast(1.04)}
 .v2ov-tic-logo img{width:78%;height:78%;object-fit:contain;display:block}
 .v2ov-tic-logo .fb{
   position:absolute;inset:0;display:grid;place-items:center;
@@ -5149,23 +5155,15 @@ function v2RenderSectors(tickers){
     ? '<div class="v2-sm-more" onclick="v2Show(\'sectors\', null)">+ ' + moreCount + ' more sectors · tap to view all →</div>'
     : '';
 
-  const pulse = v2SectorMomentumSignal(tickers);
-  const pulseHTML = (pulse && pulse.avg > 0) ?
-    '<div class="v2-sector-pulse">' +
-      '<span class="v2-sp-em">🔥</span>' +
-      '<span>Strongest momentum:</span> ' +
-      '<span class="v2-sp-name">' + v2EscHTML(pulse.name) + '</span> ' +
-      '<span class="v2-sp-delta">avg ' + Math.round(pulse.avg) + '</span>' +
-      '<span style="color:#64748b;font-weight:600"> · ' + pulse.n + ' stocks</span>' +
-    '</div>' : '';
-
+  // Dropped 'Strongest momentum: X · avg N · M stocks' pulse pill — the
+  // 🔥 tag on the leading row + the column-header table now convey the
+  // same info without an extra row of chrome.
   return '' +
     '<div class="v2ov-card sectors">' +
       '<div class="v2ov-card-head"><div>' +
         '<div class="v2ov-title">🗺 Sector Map</div>' +
         '<div class="v2ov-sub">Avg Alpha Score by sector · tap any row to filter Universe</div>' +
       '</div></div>' +
-      pulseHTML +
       headerRow +
       '<div class="v2-sm-list">' + rows + '</div>' +
       moreLine +
