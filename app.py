@@ -691,119 +691,20 @@ async def sitemap_xml():
 
 # ── HTML Dashboard ────────────────────────────────────────────────────
 
-@app.get("/preview", response_class=HTMLResponse)
-async def landing_v2_preview():
-    """Preview route for the redesigned landing (landing_v2.html). Lives
-    alongside `/` until the redesign is approved, then this swaps in for the
-    main landing route. Pure client-fetch — no SSR injection — so the diff
-    against the production landing is a pure design comparison."""
-    path = BASE_DIR / "templates" / "landing_v2.html"
-    if not path.exists():
-        raise HTTPException(status_code=404, detail="Preview template missing")
-    return HTMLResponse(path.read_text(encoding="utf-8"))
-
-
 @app.get("/", response_class=HTMLResponse)
 async def landing():
     """Landing page — alphahunt.in home.
 
-    Pre-renders the ticker tape + Live Hot List section directly into the
-    HTML using the in-memory universe. This means visitors see real content
-    on the first paint instead of "Loading market data…" / "refreshing…"
-    spinners while a 1-3s API call resolves. The page's JavaScript still
-    runs to refresh the lists periodically.
+    The redesigned landing (May 21 2026) uses client-side fetches for the
+    ticker tape, live picks preview, and track-record stats — so SSR
+    injection is no longer needed. The handler just serves the template
+    with Schema.org JSON-LD prepended for SEO.
     """
     try:
         html = LANDING_HTML.read_text(encoding="utf-8")
-
-        # ── Inject Schema.org JSON-LD just before </head> for SEO ────────
         schema = _build_landing_schema()
         if "</head>" in html:
             html = html.replace("</head>", schema + "\n</head>", 1)
-
-        # ── Server-render ticker tape (12 gainers + 8 losers, top by score) ─
-        try:
-            uni = _universe_data or []
-            if uni:
-                # By daily move — same logic the JS uses, mirrored server-side
-                with_chg = [t for t in uni if t.get("price") and t.get("change_pct") is not None]
-                by_chg   = sorted(with_chg, key=lambda t: float(t.get("change_pct") or 0), reverse=True)
-                tape     = (by_chg[:12] + list(reversed(by_chg[-8:])))[:22]
-
-                def _tape_chip(t):
-                    sym = t.get("ticker", "")
-                    px  = float(t.get("price") or 0)
-                    chg = float(t.get("change_pct") or 0)
-                    cls = "up" if chg > 0.05 else "down" if chg < -0.05 else "flat"
-                    arrow = "▲" if chg > 0 else "▼" if chg < 0 else "·"
-                    sign = "+" if chg > 0 else ""
-                    px_str = f"{px:.0f}" if px >= 1000 else f"{px:.1f}" if px >= 100 else f"{px:.2f}"
-                    return (
-                        f'<span class="ticker-chip">'
-                        f'<span class="ticker-sym">{sym}</span>'
-                        f'<span class="ticker-px">${px_str}</span>'
-                        f'<span class="ticker-chg {cls}">{arrow} {sign}{chg:.2f}%</span>'
-                        f'</span>'
-                    )
-                tape_chips = "".join(_tape_chip(t) for t in tape)
-                # Double up so the CSS marquee animation has continuous content
-                tape_html  = tape_chips + tape_chips
-                html = html.replace(
-                    '<span class="ticker-loading">Loading market data…</span>',
-                    tape_html,
-                    1,
-                )
-
-                # ── Server-render Live Hot List preview cards (top 5 by score) ─
-                def _alpha(t):
-                    return float(t.get("smart_score") or t.get("pop_score") or 0)
-                top_hot = sorted(
-                    [t for t in uni if t.get("grade") == "A" and _alpha(t) > 0],
-                    key=_alpha, reverse=True,
-                )[:5]
-                if top_hot:
-                    cards = []
-                    for t in top_hot:
-                        sym = t.get("ticker", "")
-                        nm  = (t.get("name") or "")[:24]
-                        px  = float(t.get("price") or 0)
-                        chg = float(t.get("change_pct") or 0)
-                        rsi = t.get("rsi_14")
-                        rsi_str = f"{int(rsi)}" if rsi is not None else "-"
-                        score = _alpha(t)
-                        sign = "+" if chg >= 0 else ""
-                        cls  = "pos" if chg >= 0 else "neg"
-                        grade = t.get("grade") or "A"
-                        cards.append(
-                            f'<div class="preview-card">'
-                            f'<div class="pc-row">'
-                            f'<div><div class="pc-tic">{sym}</div><div class="pc-name">{nm}</div></div>'
-                            f'<span class="pc-grade">{grade}</span>'
-                            f'</div>'
-                            f'<div class="pc-score"><span class="pc-num">{score:.0f}</span><span class="pc-num-lbl">Alpha Score</span></div>'
-                            f'<div class="pc-foot">'
-                            f'<span class="pc-price">${px:.2f}</span>'
-                            f'<span class="pc-chg {cls}">{sign}{chg:.2f}%</span>'
-                            f'<span class="pc-pill">RSI {rsi_str}</span>'
-                            f'</div>'
-                            f'</div>'
-                        )
-                    html = html.replace(
-                        '<div class="preview-grid" id="landing-hot"><!-- filled by JS --></div>',
-                        f'<div class="preview-grid" id="landing-hot">{"".join(cards)}</div>',
-                        1,
-                    )
-                    # And clear the "refreshing…" label since data is here
-                    html = html.replace(
-                        '<div class="meta" id="live-meta">refreshing…</div>',
-                        '<div class="meta" id="live-meta">live</div>',
-                        1,
-                    )
-        except Exception as e:
-            # SSR is a nice-to-have, never block the page on it.
-            logger.warning(f"Landing SSR skipped: {e}")
-
-        # ── Light caching at the edge: refresh every 30s ─────────────────
         return HTMLResponse(
             content=html,
             headers={"Cache-Control": "public, max-age=30, s-maxage=60"},
