@@ -2149,17 +2149,23 @@ body[data-active-profile="conservative"] .fund-row:not([data-profiles~="conserva
 .v2-focus-label{
   font-size:10px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;
 }
+/* Lighter score badge — white surface with a thin border, colour
+   carried by the grade chip + the score number. No more heavy indigo
+   block that was overwhelming the card header. */
 .v2-focus-score{
-  display:inline-flex;align-items:center;gap:4px;
-  font-size:12px;font-weight:900;color:#fff;
-  padding:2px 8px;border-radius:5px;line-height:1.4;
+  display:inline-flex;align-items:center;gap:5px;
+  font-size:13px;font-weight:900;color:#0f172a;
+  background:#fff;border:1px solid #e2e8f0;
+  padding:2px 8px 2px 4px;border-radius:7px;line-height:1.35;
   font-variant-numeric:tabular-nums;letter-spacing:.02em;
-  box-shadow:0 1px 2px rgba(15,23,42,.12);
 }
 .v2-focus-grade{
-  font-size:9.5px;font-weight:900;letter-spacing:.04em;
-  background:rgba(255,255,255,.28);padding:0 4px;border-radius:3px;line-height:1.4;
+  display:inline-flex;align-items:center;justify-content:center;
+  width:18px;height:18px;border-radius:4px;
+  font-size:11px;font-weight:900;color:#fff;line-height:1;
 }
+/* Grade colour set on the parent .v2-focus-score via inline style so the
+   little grade chip and number colour match — done at render time. */
 .v2-focus-pos .v2-focus-label{color:#15803d}
 .v2-focus-neg .v2-focus-label{color:#b91c1c}
 .v2-focus-tic-row{display:flex;align-items:center;gap:8px}
@@ -4541,11 +4547,21 @@ function v2RenderTodaysFocus(tickers){
       return { kind:'setup', label:'💎 STRONG SETUP', tone:'pos',
                reason:`A grade · RSI ${rsi.toFixed(0)} · +${m3.toFixed(0)}% over 3M` };
     }
+
+    // TOP TIER fallback — catches HIGH-SCORE stocks that don't fit any
+    // narrative category. Without this, a score-90 grade-A name could
+    // miss the focus list just because RSI was 80 (overbought) or it
+    // wasn't quite at the 52w high. Now it's always surfaced with the
+    // simplest possible reason: 'top X stocks our model loves'.
+    if (score >= 80 && (grade === 'A' || grade === 'B')) {
+      return { kind:'top', label:'🏆 TOP TIER', tone:'pos',
+               reason: 'Score ' + Math.round(score) + ' · ' + (grade === 'A' ? 'A grade — model\'s highest conviction' : 'B grade with elite score') };
+    }
     return null;
   }
 
-  // Bucket by kind, pick best (highest score) per kind, then top 9 overall
-  const buckets = { breakout:[], upgrade:[], setup:[], earnings:[], flag:[] };
+  // Bucket by kind. 'top' included so top-score stocks always surface.
+  const buckets = { breakout:[], upgrade:[], setup:[], earnings:[], top:[], flag:[] };
   tickers.forEach(t => {
     const c = categorise(t);
     if (!c) return;
@@ -4564,7 +4580,10 @@ function v2RenderTodaysFocus(tickers){
   // Round-robin across kinds (max 1 per kind in round 1, then fill the rest)
   // so we get a variety of setups rather than 5 breakouts in a row.
   const picks = [];
-  const order = ['breakout', 'upgrade', 'setup', 'earnings', 'flag'];
+  // Order matters — Round 1 picks the best of each kind in this sequence,
+  // then Round 2 keeps filling. 'top' sits in the middle so the high-
+  // score fallback isn't last priority.
+  const order = ['breakout', 'upgrade', 'top', 'setup', 'earnings', 'flag'];
   const TARGET = 9;
   order.forEach(k => { if (buckets[k].length) picks.push(buckets[k].shift()); });
   let madeProgress = true;
@@ -4637,9 +4656,10 @@ function v2RenderTodaysFocus(tickers){
     return '<div class="v2-focus-card"><div class="v2-focus-head"><div class="v2-focus-title">🎯 Today\'s Focus</div><div class="v2-focus-sub">No standout setups in this view right now — consider broadening your profile.</div></div></div>';
   }
 
-  // Compose card HTML — includes Alpha Score badge so the user sees the
-  // model's confidence on every card.
-  const scoreBgFor = sc => sc >= 80 ? '#16a34a' : sc >= 70 ? '#65a30d' : sc >= 60 ? '#d97706' : '#dc2626';
+  // Compose card HTML — Alpha Score badge: white pill with a small
+  // colour-coded grade chip + the score number. Lighter than the old
+  // solid indigo block.
+  const gradeBg = g => ({A:'#16a34a',B:'#65a30d',C:'#d97706',D:'#ea580c',F:'#dc2626'})[g] || '#64748b';
   const cards = picks.slice(0, 9).map(({ t, kind, label, tone, reason }) => {
     const price = _f(t.price);
     const chg   = _f(t.change_pct);
@@ -4648,8 +4668,8 @@ function v2RenderTodaysFocus(tickers){
     const score = Math.round(_f(t.smart_score ?? t.pop_score ?? 0) || 0);
     const grade = (t.grade || '').toUpperCase();
     const scoreBadge = score > 0
-      ? '<span class="v2-focus-score" style="background:' + scoreBgFor(score) + '">' +
-          (grade ? '<span class="v2-focus-grade">' + grade + '</span>' : '') +
+      ? '<span class="v2-focus-score">' +
+          (grade ? '<span class="v2-focus-grade" style="background:' + gradeBg(grade) + '">' + grade + '</span>' : '') +
           score +
         '</span>'
       : '';
