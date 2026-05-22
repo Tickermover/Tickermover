@@ -2184,8 +2184,8 @@ body[data-active-profile="conservative"] .fund-row:not([data-profiles~="conserva
 .v2-tc-s-label{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#64748b;display:flex;align-items:center;gap:6px}
 .v2-tc-s-label i{display:inline-block;width:8px;height:8px;border-radius:2px;flex-shrink:0}
 .v2-tc-s-item.hero .v2-tc-s-label i{background:linear-gradient(135deg,#6366f1,#8b5cf6 50%,#ec4899);box-shadow:0 0 8px rgba(139,92,246,.7)}
-.v2-tc-s-item.bench-spy .v2-tc-s-label i{background:#475569;border:1px solid #64748b}
-.v2-tc-s-item.bench-qqq .v2-tc-s-label i{background:#64748b}
+.v2-tc-s-item.bench-spy .v2-tc-s-label i{background:#fbbf24;box-shadow:0 0 6px rgba(251,191,36,.5)}
+.v2-tc-s-item.bench-qqq .v2-tc-s-label i{background:#22d3ee;box-shadow:0 0 6px rgba(34,211,238,.5)}
 .v2-tc-s-val{font-size:22px;font-weight:900;letter-spacing:-.02em;line-height:1.1;color:#f1f5f9;font-variant-numeric:tabular-nums}
 .v2-tc-s-item.hero .v2-tc-s-val{font-size:24px;background:linear-gradient(135deg,#a5b4fc 0%,#c4b5fd 50%,#f9a8d4 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
 .v2-tc-s-delta{font-size:11px;font-weight:700;color:#64748b;font-variant-numeric:tabular-nums}
@@ -10437,6 +10437,10 @@ function renderModelPortfolio(data) {
 
 /* Fetch /api/tracker-chart and render a 3-line SVG spline comparing Top
    Hunts portfolio cumulative return vs S&P 500 (SPY) vs NASDAQ (QQQ). */
+// Module-level cache so the period chips can re-render without re-fetching.
+window._v2TrackerData = window._v2TrackerData || null;
+window._v2TrackerPeriod = window._v2TrackerPeriod || 'all';
+
 async function v2LoadTrackerChart(){
   const slot = document.getElementById('v2-tracker-chart-slot');
   if (!slot) return;
@@ -10445,10 +10449,44 @@ async function v2LoadTrackerChart(){
     const r = await fetch('/api/tracker-chart');
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const d = await r.json();
-    slot.innerHTML = v2RenderTrackerChartHTML(d);
+    window._v2TrackerData = d;
+    slot.innerHTML = v2RenderTrackerChartHTML(_v2SlicePeriod(d, window._v2TrackerPeriod));
   } catch (e) {
     slot.innerHTML = '<div style="padding:24px 0;text-align:center;color:#94a3b8;font-size:12px">Chart unavailable (' + e.message + ').</div>';
   }
+}
+
+/* Period filtering — slice the full dataset to last N days.
+   Re-bases all 3 series to 0% at the new start so the displayed
+   percentages reflect the SELECTED period, not the full lookback. */
+function _v2SlicePeriod(d, period){
+  if (!d || !Array.isArray(d.dates) || !d.dates.length) return d;
+  if (period === 'all') return d;
+  const n = d.dates.length;
+  const days = period === '1w' ? 7 : period === '1m' ? 30 : n;
+  const start = Math.max(0, n - days);
+  const slice = arr => Array.isArray(arr) ? arr.slice(start) : arr;
+  const rebase = arr => {
+    if (!Array.isArray(arr) || !arr.length) return arr;
+    const base = arr[0];
+    return arr.map(v => +(v - base).toFixed(2));
+  };
+  return {
+    dates: slice(d.dates),
+    tracker: rebase(slice(d.tracker)),
+    spy:     rebase(slice(d.spy)),
+    qqq:     rebase(slice(d.qqq)),
+    picks_count: d.picks_count,
+  };
+}
+
+/* Click handler for the period chips. Re-renders from cached data — no
+   network call needed since the API returns the full series each time. */
+function v2SetTrackerPeriod(period){
+  window._v2TrackerPeriod = period;
+  const slot = document.getElementById('v2-tracker-chart-slot');
+  if (!slot || !window._v2TrackerData) return;
+  slot.innerHTML = v2RenderTrackerChartHTML(_v2SlicePeriod(window._v2TrackerData, period));
 }
 
 function v2RenderTrackerChartHTML(d){
@@ -10460,10 +10498,11 @@ function v2RenderTrackerChartHTML(d){
     return '<div style="padding:24px 0;text-align:center;color:#94a3b8;font-size:12px">No tracker history yet — chart appears once picks accumulate.</div>';
   }
 
-  // Chart geometry: full SVG coordinate system 800x300, padded so the
-  // axis labels have room. Keeps the SVG sharp on any viewport.
-  const W = 800, H = 200;       // shorter viewBox to match the new compact 170px CSS height
-  const padL = 34, padR = 10, padT = 8, padB = 18;
+  // Chart geometry: 800x200 SVG with a wider right gutter so the reference
+  // labels ('+24%', '-7%') sit OUTSIDE the plot area instead of overlapping
+  // the hero line at the latest data point.
+  const W = 800, H = 200;
+  const padL = 14, padR = 56, padT = 12, padB = 22;
   const innerW = W - padL - padR;
   const innerH = H - padT - padB;
 
@@ -10543,7 +10582,9 @@ function v2RenderTrackerChartHTML(d){
   if (min < 0)  refLabels.push(min + padR_y / 2);
   const refHTML = refLabels.map(v => {
     const y = yAt(v).toFixed(1);
-    return `<text x="${padL + innerW - 4}" y="${(parseFloat(y) + 3.5).toFixed(1)}" text-anchor="end" font-size="10" fill="#cbd5e1" font-weight="700" font-variant-numeric="tabular-nums">${(v >= 0 ? '+' : '') + v.toFixed(0)}%</text>`;
+    // Position labels in the right gutter (outside the plot area) so they
+    // never sit on top of the hero line near the latest data point.
+    return `<text x="${padL + innerW + 8}" y="${(parseFloat(y) + 3.5).toFixed(1)}" text-anchor="start" font-size="10" fill="#64748b" font-weight="600" font-variant-numeric="tabular-nums" letter-spacing=".02em">${(v >= 0 ? '+' : '') + v.toFixed(0)}%</text>`;
   }).join('');
 
   // X-axis labels — first / last only, premium charts don't clutter the axis
@@ -10590,9 +10631,9 @@ function v2RenderTrackerChartHTML(d){
           '<div class="v2-tc-hl-sub">Since ' + fmtDate(dates[0]) + ' · ' + beatHTML + '</div>' +
         '</div>' +
         '<div class="v2-tc-hl-r">' +
-          '<button class="v2-tc-chip">1W</button>' +
-          '<button class="v2-tc-chip">1M</button>' +
-          '<button class="v2-tc-chip on">All</button>' +
+          '<button class="v2-tc-chip' + (window._v2TrackerPeriod === '1w'  ? ' on' : '') + '" onclick="v2SetTrackerPeriod(\'1w\')">1W</button>' +
+          '<button class="v2-tc-chip' + (window._v2TrackerPeriod === '1m'  ? ' on' : '') + '" onclick="v2SetTrackerPeriod(\'1m\')">1M</button>' +
+          '<button class="v2-tc-chip' + ((!window._v2TrackerPeriod || window._v2TrackerPeriod === 'all') ? ' on' : '') + '" onclick="v2SetTrackerPeriod(\'all\')">All</button>' +
         '</div>' +
       '</div>' +
       // ── SVG chart ───────────────────────────────────────────────────
@@ -10629,14 +10670,15 @@ function v2RenderTrackerChartHTML(d){
         xLabelsHTML +
         // Area fill under hero
         '<path d="' + tArea + '" fill="url(#v2-tc-grad-fill)" stroke="none"/>' +
-        // Benchmark lines — thin, ghost-like on dark
-        '<path d="' + sLine + '" fill="none" stroke="rgba(203,213,225,.55)" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="2,3"/>' +
-        '<path d="' + qLine + '" fill="none" stroke="rgba(148,163,184,.65)" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>' +
+        // Benchmark lines — amber for S&P 500, cyan for NASDAQ, both thin
+        // and pushed back via opacity so the hero line stays dominant.
+        '<path d="' + sLine + '" fill="none" stroke="#fbbf24" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="3,3" opacity="0.75"/>' +
+        '<path d="' + qLine + '" fill="none" stroke="#22d3ee" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round" opacity="0.80"/>' +
         // Hero line — brand gradient stroke with heavy glow
         '<path d="' + tLine + '" fill="none" stroke="url(#v2-tc-grad-stroke)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" filter="url(#v2-tc-line-glow)"/>' +
-        // Benchmark endpoints — subtle
-        `<circle cx="${sEndX}" cy="${sEndY}" r="3"   fill="#cbd5e1" stroke="#0a0e1a" stroke-width="1.5" opacity="0.85"/>` +
-        `<circle cx="${qEndX}" cy="${qEndY}" r="3"   fill="#94a3b8" stroke="#0a0e1a" stroke-width="1.5" opacity="0.85"/>` +
+        // Benchmark endpoints — colored to match their lines (amber + cyan)
+        `<circle cx="${sEndX}" cy="${sEndY}" r="3"   fill="#fbbf24" stroke="#0a0e1a" stroke-width="1.5" opacity="0.95"/>` +
+        `<circle cx="${qEndX}" cy="${qEndY}" r="3"   fill="#22d3ee" stroke="#0a0e1a" stroke-width="1.5" opacity="0.95"/>` +
         // Hero endpoint — bright magenta with heavy halo
         `<circle cx="${tEndX}" cy="${tEndY}" r="11" fill="#ec4899" opacity="0.45" filter="url(#v2-tc-dot-glow)"/>` +
         `<circle cx="${tEndX}" cy="${tEndY}" r="5"  fill="#f9a8d4" stroke="#fff" stroke-width="2"/>` +
