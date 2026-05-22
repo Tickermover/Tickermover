@@ -99,15 +99,13 @@ class PortfolioStore:
 
     # ── REST helpers ──────────────────────────────────────────────────────
 
-    def _headers(self) -> dict:
+    def _headers(self, prefer: str = "return=representation") -> dict:
         key = self.service_key or self.anon_key
         return {
             "apikey":        key,
             "Authorization": f"Bearer {key}",
             "Content-Type":  "application/json",
-            # Tell PostgREST to return the row representation on writes so we
-            # can log the affected rows for debug.
-            "Prefer":        "return=representation",
+            "Prefer":        prefer,
         }
 
     def _get(self, path: str, params: dict | None = None) -> Any:
@@ -116,10 +114,32 @@ class PortfolioStore:
             r.raise_for_status()
             return r.json()
 
-    def _post(self, path: str, body: Any, params: dict | None = None) -> Any:
+    def _post(self, path: str, body: Any, params: dict | None = None, prefer: str = "return=representation") -> Any:
+        """Plain INSERT. Use ``_upsert`` for rows that may already exist."""
         with httpx.Client(timeout=8) as c:
-            r = c.post(f"{self.url}{path}", headers=self._headers(),
+            r = c.post(f"{self.url}{path}", headers=self._headers(prefer),
                        json=body, params=params or {})
+            if r.status_code >= 400:
+                logger.error(f"PortfolioStore POST {path} → {r.status_code}: {r.text[:300]}")
+            r.raise_for_status()
+            try:
+                return r.json()
+            except Exception:
+                return {}
+
+    def _upsert(self, path: str, body: Any, on_conflict: str) -> Any:
+        """PostgREST upsert. Needs BOTH the on_conflict query param AND the
+        ``Prefer: resolution=merge-duplicates`` header — without the header,
+        PostgREST treats the POST as a plain INSERT and fails with a 409 PK
+        conflict whenever the row already exists. This was the original
+        bug that caused 'persistence not persisting' on May 22."""
+        prefer = "return=representation,resolution=merge-duplicates"
+        params = {"on_conflict": on_conflict}
+        with httpx.Client(timeout=8) as c:
+            r = c.post(f"{self.url}{path}", headers=self._headers(prefer),
+                       json=body, params=params)
+            if r.status_code >= 400:
+                logger.error(f"PortfolioStore UPSERT {path} → {r.status_code}: {r.text[:300]}")
             r.raise_for_status()
             try:
                 return r.json()
@@ -166,17 +186,19 @@ class PortfolioStore:
         if self.enabled and self.service_key:
             try:
                 with self._lock:
-                    self._post(
+                    # NB: `updated_at` is intentionally NOT sent — the column
+                    # has a DEFAULT now() on the table, and PostgREST upsert
+                    # would otherwise need an explicit ISO timestamp here.
+                    # We add a trigger in the SQL migration that bumps it on
+                    # every UPDATE so freshness is still tracked.
+                    self._upsert(
                         "/rest/v1/model_portfolio_state",
-                        body={
-                            "id":         self.env_id,
-                            "payload":    portfolio,
-                            "updated_at": "now()",
-                        },
-                        params={"on_conflict": "id"},
+                        body={"id": self.env_id, "payload": portfolio},
+                        on_conflict="id",
                     )
                 self._portfolio_cache = portfolio
                 ok = True
+                logger.info(f"💾 PortfolioStore.save_portfolio: persisted {len(portfolio.get('picks', []))} picks for env_id={self.env_id}")
             except Exception as e:
                 logger.error(f"PortfolioStore.save_portfolio Supabase upsert FAILED (env_id={self.env_id}): {e}")
         else:

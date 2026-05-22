@@ -37,6 +37,21 @@ INSERT INTO model_portfolio_state (id, payload) VALUES
     (2, '{"created_at":null,"version":2,"picks":[]}'::jsonb)
 ON CONFLICT (id) DO NOTHING;
 
+-- Trigger: bump updated_at on every UPDATE so freshness is queryable
+-- (the column DEFAULT only fires on INSERT, not UPDATE via PostgREST).
+CREATE OR REPLACE FUNCTION model_portfolio_state_set_updated_at()
+RETURNS trigger AS $$
+BEGIN
+    NEW.updated_at := now();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_model_portfolio_state_updated_at ON model_portfolio_state;
+CREATE TRIGGER trg_model_portfolio_state_updated_at
+    BEFORE UPDATE ON model_portfolio_state
+    FOR EACH ROW EXECUTE FUNCTION model_portfolio_state_set_updated_at();
+
 
 -- ── closed_trades ─────────────────────────────────────────────────────────
 -- One row per closed trade. Strict columns (not JSON) so the ledger can
