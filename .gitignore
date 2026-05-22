@@ -34,3 +34,8 @@ Thumbs.db
 *.darkmode-bak
 *.adani-bak
 *.strict3-bak
+
+# Runtime state — must be persistent storage, never committed (May 22 2026)
+data/model_portfolio.json
+data/model_portfolio_history.json
+data/.write_test

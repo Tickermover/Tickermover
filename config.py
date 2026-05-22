@@ -41,6 +41,12 @@ APEWISDOM_KEY = _env("APEWISDOM_KEY", "KNHvbGE_mK4k79IWd6yTvba3fjYz1Gmv")
 SUPABASE_URL      = _env("SUPABASE_URL",      "")
 SUPABASE_ANON_KEY = _env("SUPABASE_ANON_KEY", "")
 SUPABASE_JWT_SECRET = _env("SUPABASE_JWT_SECRET", "")
+# Service role key — required for server-side writes that bypass RLS.
+# Used by persistence.py to read/write the Top Hunts portfolio and the
+# closed-trades ledger so they survive Railway deploys (the ephemeral
+# filesystem wipes them otherwise). Falls back to anon key with a
+# warning if not set, but then writes will fail any non-open RLS table.
+SUPABASE_SERVICE_KEY = _env("SUPABASE_SERVICE_KEY", "")
 
 # ── Razorpay — payments ───────────────────────────────────────────────────────
 RAZORPAY_KEY_ID       = _env("RAZORPAY_KEY_ID",       "")

@@ -3189,7 +3189,6 @@ def _build_model_portfolio(existing: dict | None = None) -> dict:
         existing_tickers = {p["ticker"] for p in existing["picks"] if p.get("ticker")}
         dropped = existing_tickers - new_tickers
         if dropped:
-            history = _load_trade_history()
             closed_records = []
             for prev in existing["picks"]:
                 tkr = prev.get("ticker")
@@ -3224,8 +3223,7 @@ def _build_model_portfolio(existing: dict | None = None) -> dict:
                     "days_held":       days_held,
                     "won":             final_pct > 0,
                 })
-            history["trades"] = closed_records + history.get("trades", [])
-            _save_trade_history(history)
+            _append_closed_trades(closed_records)
             logger.info(f"📕 Rebuild closed {len(closed_records)} trade(s): {sorted(dropped)}")
 
     # Preserve the original `created_at` on refresh so the inception date
@@ -3532,73 +3530,50 @@ def _enrich_model_portfolio(portfolio: dict) -> dict:
 
 
 # ── Trade history persistence ─────────────────────────────────────────────────
-# Path is stable across Railway redeploys because the `data/` folder is checked
-# in. The file is append-only (newest trade pushed onto `trades`).
-_TRADE_HISTORY_PATH = "data/model_portfolio_history.json"
-_PORTFOLIO_PATH     = "data/model_portfolio.json"
+# Persistence — moved off ephemeral disk into Supabase (May 22 2026).
+#
+# Railway's filesystem is wiped on every deploy, so the previous JSON-on-disk
+# scheme silently rolled the portfolio back to the committed git state and
+# erased the closed-trades log entirely. Both now live in Supabase (see
+# db/2026-05-22-portfolio-persistence.sql) so state survives deploys,
+# restarts, and container reschedules. `persistence.store` transparently
+# falls back to disk if Supabase is unreachable so local dev still works.
+from persistence import store as _store
 
 
 def _load_portfolio_from_disk() -> dict:
-    """Read the active portfolio from disk. Survives Railway redeploys
-    because data/ is checked into the repo. Replaces the ephemeral cache
-    that was wiping every restart and shifting added_date by 1 day."""
-    import os, json
-    if not os.path.exists(_PORTFOLIO_PATH):
-        return {}
-    try:
-        with open(_PORTFOLIO_PATH, encoding="utf-8") as f:
-            d = json.load(f)
-            if isinstance(d, dict) and isinstance(d.get("picks"), list):
-                return d
-    except Exception:
-        pass
-    return {}
+    """Read the active portfolio. Name kept for call-site compatibility —
+    actually reads from Supabase first, then disk fallback."""
+    return _store.load_portfolio()
 
 
 def _save_portfolio_to_disk(portfolio: dict) -> None:
-    """Atomic write — never half-written on crash."""
-    import os, json, tempfile
-    os.makedirs(os.path.dirname(_PORTFOLIO_PATH), exist_ok=True)
-    fd, tmp = tempfile.mkstemp(prefix=".portfolio-", dir=os.path.dirname(_PORTFOLIO_PATH))
-    try:
-        with os.fdopen(fd, "w", encoding="utf-8") as f:
-            json.dump(portfolio, f, indent=2, ensure_ascii=False)
-        os.replace(tmp, _PORTFOLIO_PATH)
-    except Exception:
-        try: os.unlink(tmp)
-        except OSError: pass
-        raise
+    """Persist the active portfolio. Writes to Supabase + mirrors to disk."""
+    _store.save_portfolio(portfolio)
 
 
 def _load_trade_history() -> dict:
-    """Read closed-trades log from disk. Returns {version, trades:[...]}.
-    Missing or corrupt files yield an empty log so we never crash."""
-    import os, json
-    if not os.path.exists(_TRADE_HISTORY_PATH):
-        return {"version": 1, "trades": []}
-    try:
-        with open(_TRADE_HISTORY_PATH, encoding="utf-8") as f:
-            d = json.load(f)
-            if isinstance(d, dict) and isinstance(d.get("trades"), list):
-                return d
-    except Exception:
-        pass
-    return {"version": 1, "trades": []}
+    """Read closed-trades log. Returns {version, trades:[...]} for backward
+    compatibility with the existing call-sites that iterate ``history['trades']``."""
+    trades = _store.load_trades()
+    return {"version": 2, "trades": trades}
+
+
+def _append_closed_trades(new_trades: list) -> int:
+    """Append closed trades to the audit log. Returns count inserted.
+    Use this from exit-handling paths instead of save_trade_history —
+    the table is append-only, so we never rewrite the whole list."""
+    if not new_trades:
+        return 0
+    return _store.append_trades(new_trades)
 
 
 def _save_trade_history(history: dict) -> None:
-    """Atomic write so we never end up with a half-written file on crash."""
-    import os, json, tempfile
-    os.makedirs(os.path.dirname(_TRADE_HISTORY_PATH), exist_ok=True)
-    fd, tmp = tempfile.mkstemp(prefix=".history-", dir=os.path.dirname(_TRADE_HISTORY_PATH))
-    try:
-        with os.fdopen(fd, "w", encoding="utf-8") as f:
-            json.dump(history, f, indent=2, ensure_ascii=False)
-        os.replace(tmp, _TRADE_HISTORY_PATH)
-    except Exception:
-        try: os.unlink(tmp)
-        except OSError: pass
-        raise
+    """Deprecated. Kept to avoid breaking imports — does nothing because
+    closed_trades is append-only via _append_closed_trades(). If you see
+    this called from new code, refactor that call-site to use
+    _append_closed_trades(list_of_new_trades) directly."""
+    logger.debug("_save_trade_history called (deprecated; closed_trades is append-only via _append_closed_trades)")
 
 
 def _close_triggered_picks(portfolio: dict, enriched_picks: list) -> tuple[dict, list]:
@@ -3649,10 +3624,7 @@ def _close_triggered_picks(portfolio: dict, enriched_picks: list) -> tuple[dict,
         closed_tickers.add(ticker)
 
     if closed:
-        history = _load_trade_history()
-        # Newest at the top of the list (matches how UIs read it)
-        history["trades"] = closed + history.get("trades", [])
-        _save_trade_history(history)
+        _append_closed_trades(closed)
         portfolio["picks"] = keep
         logger.info(f"📕 Closed {len(closed)} trade(s): {sorted(closed_tickers)}")
     return portfolio, closed
