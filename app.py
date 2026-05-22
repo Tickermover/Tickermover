@@ -3138,24 +3138,32 @@ def _build_model_portfolio(existing: dict | None = None) -> dict:
 
         prev = existing_picks.get(ticker)
         if prev:
-            # Retained pick → keep its original added_date and entry_price.
-            # is_simulated_entry preserved for legacy rows so the UI badge
-            # still reads correctly until they organically exit.
-            added = prev.get("added_date") or today_str
+            # Retained pick → keep its original added_date, entry_price, and
+            # the original is_simulated_entry flag.
+            added = prev.get("added_date") or inception_str
             entry = float(prev.get("entry_price") or price)
-            pop_at_entry      = prev.get("pop_at_entry", round(float(t.get("pop_score") or 0), 1))
+            pop_at_entry      = prev.get("pop_at_entry", round(_alpha(t), 1))
             grade_at_entry    = prev.get("grade_at_entry", t.get("grade", "A"))
             is_simulated_entry = bool(prev.get("is_simulated_entry", False))
         else:
-            # New pick — always dated TODAY, entry = today's price. The old
-            # "first build = backdate 30 days with simulated prices" path was
-            # removed on May 22 because it confused real users into thinking
-            # a 30-day track record existed when none did. Performance now
-            # starts honest at 0% and grows from real entries.
-            added = today_str
-            entry = price
-            is_simulated_entry = False
-            pop_at_entry   = round(float(t.get("pop_score") or 0), 1)
+            # New pick. If this is the very first build (no `existing`), back-date
+            # to inception so the user sees a 30-day lookback. Mark it as
+            # simulated so the UI can label it honestly. If we're refreshing
+            # and adding a brand-new pick (e.g. on Reset), mark with today.
+            is_first_build = existing is None or not existing.get("picks")
+            added = inception_str if is_first_build else today_str
+            if is_first_build and price > 0 and mom_1m != 0:
+                entry = round(price / (1 + mom_1m / 100), 2)
+                is_simulated_entry = True   # back-dated demo entry, not a real recommendation
+            else:
+                entry = price               # new mid-cycle pick → entry = today's price
+                is_simulated_entry = False
+            # CRITICAL: use _alpha() (smart_score with pop_score fallback) — same
+            # field the selection bar uses. Previously stored pop_score directly
+            # which made cards display scores 5-7 points BELOW the actual
+            # admission threshold, looking like 65-70 picks were admitted at a
+            # 75 bar. They weren't; the display field was just wrong.
+            pop_at_entry   = round(_alpha(t), 1)
             grade_at_entry = t.get("grade", "A")
 
         picks.append({
@@ -3223,10 +3231,9 @@ def _build_model_portfolio(existing: dict | None = None) -> dict:
             _append_closed_trades(closed_records)
             logger.info(f"📕 Rebuild closed {len(closed_records)} trade(s): {sorted(dropped)}")
 
-    # Preserve the original `created_at` on refresh; if this IS the true
-    # first build, anchor it to today (not 30 days ago — the backdate
-    # behavior was retired with the simulated entries).
-    created_at = (existing or {}).get("created_at") or today_str
+    # Preserve the original `created_at` on refresh so the inception date
+    # in the header stays meaningful (it's the date the portfolio was first built).
+    created_at = (existing or {}).get("created_at", inception_str)
     return {"created_at": created_at, "version": 2, "picks": picks}
 
 
@@ -3339,7 +3346,9 @@ def _enrich_model_portfolio(portfolio: dict) -> dict:
         # tickers whose enrichment hasn't completed yet.
         live_grade = (live.get("grade") or "").strip()
         cur_grade = live_grade if live_grade else (p.get("grade_at_entry") or "A")
-        cur_score = float(live.get("pop_score") or 0)
+        # Use smart_score (the selection score) with pop_score fallback — must
+        # match what _alpha() returns or the signal exit + UI score will lie.
+        cur_score = float(live.get("smart_score") or live.get("pop_score") or 0)
         # Only fire signal-stop when we have a confirmed live grade or score
         # — otherwise it'd churn picks mid-refresh.
         signal_triggered = bool(live_grade) and (
@@ -3493,7 +3502,7 @@ def _enrich_model_portfolio(portfolio: dict) -> dict:
             "current_price":     now,
             "performance_pct":   perf if in_universe else None,
             "days_held":         days_held,
-            "current_pop":       live.get("pop_score"),
+            "current_pop":       live.get("smart_score") or live.get("pop_score"),
             "current_grade":     cur_grade,
             "change_today":      live.get("change_pct"),
             "peak_price":        peak_price,
