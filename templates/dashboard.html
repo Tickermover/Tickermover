@@ -2145,29 +2145,60 @@ body[data-active-profile="conservative"] .fund-row:not([data-profiles~="conserva
 }
 
 /* ───── Tracker chart (Top Hunts vs SPY vs QQQ) ───── */
-/* ── Premium tracker chart (May 22 2026 rebuild) ────────────────────────
-   Stripe-Treasury / Robinhood vibe: brand-gradient hero line + area fill,
-   thin neutral benchmark lines, big numerical display, glowing endpoint.
-   ──────────────────────────────────────────────────────────────────── */
-.v2-tc-wrap{padding:6px 4px 0;font-size:11.5px;color:#475569;display:flex;flex-direction:column;position:relative;background:radial-gradient(ellipse 60% 50% at 100% 0%, rgba(139,92,246,.05), transparent 65%),radial-gradient(ellipse 55% 45% at 0% 100%, rgba(67,56,202,.04), transparent 65%);border-radius:12px}
-.v2-tc-headline{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;padding:8px 10px 6px}
-.v2-tc-hl-l{display:flex;flex-direction:column;gap:2px;min-width:0}
-.v2-tc-hl-val{font-size:34px;font-weight:900;letter-spacing:-.025em;line-height:1;background:linear-gradient(135deg,#4338ca 0%,#8b5cf6 50%,#ec4899 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;font-variant-numeric:tabular-nums}
-.v2-tc-hl-val.neg{background:linear-gradient(135deg,#b91c1c 0%,#dc2626 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
-.v2-tc-hl-sub{font-size:12px;color:#64748b;font-weight:600;letter-spacing:-.005em;display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:4px}
-.v2-tc-hl-sub .beat{color:#15803d;font-weight:800;font-variant-numeric:tabular-nums}
-.v2-tc-hl-sub .miss{color:#b91c1c;font-weight:800;font-variant-numeric:tabular-nums}
+/* ── Premium tracker chart (May 22 2026 — dark hero card with glowing line) ──
+   Reference: Stripe / Linear / forecast-chart aesthetic. Dark navy canvas,
+   thin grid, hero line with heavy gaussian-blur glow, side stat panel.
+   ──────────────────────────────────────────────────────────────────────── */
+.v2-tc-wrap{
+  padding:18px 18px 16px;font-size:11.5px;color:#cbd5e1;
+  display:grid;grid-template-columns:1fr 168px;grid-template-rows:auto 1fr;gap:14px 18px;
+  position:relative;border-radius:16px;
+  background:
+    radial-gradient(ellipse 80% 70% at 20% 110%, rgba(67,56,202,.22), transparent 60%),
+    radial-gradient(ellipse 60% 60% at 90% -10%, rgba(139,92,246,.18), transparent 60%),
+    linear-gradient(180deg, #0b1020 0%, #0a0e1a 100%);
+  box-shadow:0 12px 36px -16px rgba(15,23,42,.45), 0 0 0 1px rgba(255,255,255,.05) inset;
+}
+@media (max-width:760px){
+  .v2-tc-wrap{grid-template-columns:1fr;grid-template-rows:auto auto auto}
+}
+.v2-tc-headline{grid-column:1;grid-row:1;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.v2-tc-hl-l{display:flex;flex-direction:column;gap:4px;min-width:0}
+.v2-tc-hl-eyebrow{font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#a5b4fc}
+.v2-tc-hl-val{font-size:34px;font-weight:900;letter-spacing:-.025em;line-height:1;color:#fff;font-variant-numeric:tabular-nums;text-shadow:0 0 24px rgba(139,92,246,.45)}
+.v2-tc-hl-val.neg{color:#fecaca}
+.v2-tc-hl-sub{font-size:12px;color:#94a3b8;font-weight:600;letter-spacing:-.005em;display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:2px}
+.v2-tc-hl-sub .beat{color:#a5f3fc;font-weight:800;font-variant-numeric:tabular-nums}
+.v2-tc-hl-sub .miss{color:#fda4af;font-weight:800;font-variant-numeric:tabular-nums}
 .v2-tc-hl-r{display:flex;gap:4px;align-items:center;flex-shrink:0}
-.v2-tc-chip{padding:5px 11px;border-radius:7px;font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#94a3b8;background:transparent;border:1px solid transparent;cursor:pointer;transition:all .15s;font-family:inherit;font-variant-numeric:tabular-nums}
-.v2-tc-chip:hover{color:#475569;background:rgba(99,102,241,.06)}
-.v2-tc-chip.on{color:#fff;background:linear-gradient(135deg,#4338ca,#6366f1);box-shadow:0 4px 12px -4px rgba(99,102,241,.45)}
+.v2-tc-chip{padding:5px 11px;border-radius:7px;font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#64748b;background:transparent;border:1px solid transparent;cursor:pointer;transition:all .15s;font-family:inherit;font-variant-numeric:tabular-nums}
+.v2-tc-chip:hover{color:#cbd5e1;background:rgba(255,255,255,.04)}
+.v2-tc-chip.on{color:#fff;background:rgba(139,92,246,.22);border-color:rgba(139,92,246,.45);box-shadow:0 4px 14px -4px rgba(139,92,246,.55)}
+
+/* ── Side stat panel (right of chart on desktop) ──────────────────── */
+.v2-tc-side{grid-column:2;grid-row:1 / span 2;display:flex;flex-direction:column;justify-content:center;gap:14px;padding-left:14px;border-left:1px solid rgba(255,255,255,.06)}
+@media (max-width:760px){
+  .v2-tc-side{grid-column:1;grid-row:3;border-left:none;border-top:1px solid rgba(255,255,255,.06);padding:14px 0 0;flex-direction:row;justify-content:space-around}
+}
+.v2-tc-s-item{display:flex;flex-direction:column;gap:1px;min-width:0}
+.v2-tc-s-label{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#64748b;display:flex;align-items:center;gap:6px}
+.v2-tc-s-label i{display:inline-block;width:8px;height:8px;border-radius:2px;flex-shrink:0}
+.v2-tc-s-item.hero .v2-tc-s-label i{background:linear-gradient(135deg,#6366f1,#8b5cf6 50%,#ec4899);box-shadow:0 0 8px rgba(139,92,246,.7)}
+.v2-tc-s-item.bench-spy .v2-tc-s-label i{background:#475569;border:1px solid #64748b}
+.v2-tc-s-item.bench-qqq .v2-tc-s-label i{background:#64748b}
+.v2-tc-s-val{font-size:22px;font-weight:900;letter-spacing:-.02em;line-height:1.1;color:#f1f5f9;font-variant-numeric:tabular-nums}
+.v2-tc-s-item.hero .v2-tc-s-val{font-size:24px;background:linear-gradient(135deg,#a5b4fc 0%,#c4b5fd 50%,#f9a8d4 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
+.v2-tc-s-delta{font-size:11px;font-weight:700;color:#64748b;font-variant-numeric:tabular-nums}
+.v2-tc-s-delta.up{color:#86efac}
+.v2-tc-s-delta.dn{color:#fda4af}
 /* Legend moved to the BOTTOM of the chart (user feedback). Order is
    set via flex-direction:column-reverse on the wrap so the SVG paints
    first and the legend sits beneath it. */
 .v2-tc-wrap{flex-direction:column-reverse}
-.v2-tc-legend{display:flex;flex-wrap:wrap;gap:18px;align-items:center;margin-top:10px;padding:8px 12px;justify-content:flex-start;border-top:1px solid rgba(15,23,42,.06)}
-.v2-tc-lg{display:inline-flex;align-items:center;gap:8px;font-size:12px;color:#475569;font-weight:700;font-variant-numeric:tabular-nums}
-.v2-tc-lg i{display:inline-block;width:14px;height:14px;border-radius:4px}
+/* Legacy bottom legend hidden in dark mode — side panel carries the values. */
+.v2-tc-legend{display:none}
+.v2-tc-lg{display:none}
+.v2-tc-lg i{display:none}
 /* Brand-aligned line colours — bright emerald for Top Hunts (positive,
    distinct from indigo brand chrome), amber for S&P, magenta-rose for
    NASDAQ. More differentiated than the original indigo/blue/violet
@@ -2183,7 +2214,8 @@ body[data-active-profile="conservative"] .fund-row:not([data-profiles~="conserva
 .v2-tc-pill-pos{color:#15803d;background:#dcfce7}
 .v2-tc-pill-neg{color:#b91c1c;background:#fee2e2}
 .v2-tc-sub{margin-left:auto;font-size:11px;color:#64748b;font-weight:700;letter-spacing:.01em}
-.v2-tc-svg{width:100%;height:240px;display:block;margin-top:2px}
+.v2-tc-svg{grid-column:1;grid-row:2;width:100%;height:240px;display:block;margin-top:2px}
+@media (max-width:760px){.v2-tc-svg{grid-row:2}}
 
 /* ───── Today's Focus — actionable opportunity cards ───── */
 .v2-focus-card{
@@ -10544,13 +10576,18 @@ function v2RenderTrackerChartHTML(d){
     ? `<span class="beat">+${beatSpy.toFixed(1)}pts</span> vs S&amp;P`
     : `<span class="miss">${beatSpy.toFixed(1)}pts</span> vs S&amp;P`;
 
+  const deltaCls = v => v >= 0 ? 'up' : 'dn';
+  const fmtDelta = v => (v >= 0 ? '+' : '') + v.toFixed(1) + 'pts';
+  const beatQqqPts = tEnd - qEnd;
+
   return '' +
     '<div class="v2-tc-wrap">' +
-      // ── Headline: big gradient value + subtitle + period chips (display-only) ──
+      // ── Headline: eyebrow + big value + subtitle + period chips ──
       '<div class="v2-tc-headline">' +
         '<div class="v2-tc-hl-l">' +
+          '<div class="v2-tc-hl-eyebrow">Top Hunts</div>' +
           '<div class="v2-tc-hl-val ' + valClass + '">' + fmtPct(tEnd) + '</div>' +
-          '<div class="v2-tc-hl-sub">Top Hunts · Since ' + fmtDate(dates[0]) + ' · ' + beatHTML + '</div>' +
+          '<div class="v2-tc-hl-sub">Since ' + fmtDate(dates[0]) + ' · ' + beatHTML + '</div>' +
         '</div>' +
         '<div class="v2-tc-hl-r">' +
           '<button class="v2-tc-chip">1W</button>' +
@@ -10561,48 +10598,65 @@ function v2RenderTrackerChartHTML(d){
       // ── SVG chart ───────────────────────────────────────────────────
       '<svg class="v2-tc-svg" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="xMidYMid meet">' +
         '<defs>' +
-          // Hero line: brand gradient indigo → violet → magenta (horizontal)
+          // Hero stroke: brand gradient
           '<linearGradient id="v2-tc-grad-stroke" x1="0" y1="0" x2="1" y2="0">' +
-            '<stop offset="0%"   stop-color="#4338ca"/>' +
-            '<stop offset="50%"  stop-color="#8b5cf6"/>' +
-            '<stop offset="100%" stop-color="#ec4899"/>' +
+            '<stop offset="0%"   stop-color="#6366f1"/>' +
+            '<stop offset="50%"  stop-color="#a78bfa"/>' +
+            '<stop offset="100%" stop-color="#f472b6"/>' +
           '</linearGradient>' +
           // Area fill: violet → transparent (vertical)
           '<linearGradient id="v2-tc-grad-fill" x1="0" y1="0" x2="0" y2="1">' +
-            '<stop offset="0%"  stop-color="#8b5cf6" stop-opacity="0.28"/>' +
+            '<stop offset="0%"  stop-color="#8b5cf6" stop-opacity="0.45"/>' +
+            '<stop offset="60%" stop-color="#8b5cf6" stop-opacity="0.10"/>' +
             '<stop offset="100%" stop-color="#8b5cf6" stop-opacity="0"/>' +
           '</linearGradient>' +
-          // Glow filter for the endpoint dot
-          '<filter id="v2-tc-glow" x="-50%" y="-50%" width="200%" height="200%">' +
-            '<feGaussianBlur stdDeviation="4" result="blur"/>' +
+          // Heavy glow filter for the hero line (drives the premium look)
+          '<filter id="v2-tc-line-glow" x="-20%" y="-50%" width="140%" height="200%">' +
+            '<feGaussianBlur stdDeviation="6" result="blur"/>' +
+            '<feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>' +
+          '</filter>' +
+          // Tighter glow for endpoint dot
+          '<filter id="v2-tc-dot-glow" x="-100%" y="-100%" width="300%" height="300%">' +
+            '<feGaussianBlur stdDeviation="6" result="blur"/>' +
             '<feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>' +
           '</filter>' +
         '</defs>' +
-        // Baseline 0%
-        `<line x1="${padL}" x2="${padL + innerW}" y1="${baselineY}" y2="${baselineY}" stroke="rgba(15,23,42,.10)" stroke-width="1"/>` +
-        // Ref labels on right edge
+        // Subtle baseline 0% (dim white)
+        `<line x1="${padL}" x2="${padL + innerW}" y1="${baselineY}" y2="${baselineY}" stroke="rgba(255,255,255,.06)" stroke-width="1"/>` +
+        // Right-edge reference labels (dim)
         refHTML +
-        // Date labels on bottom
+        // Bottom-edge date labels (dim)
         xLabelsHTML +
-        // Area fill under Top Hunts
+        // Area fill under hero
         '<path d="' + tArea + '" fill="url(#v2-tc-grad-fill)" stroke="none"/>' +
-        // Benchmark lines — thin neutral, pushed back
-        '<path d="' + sLine + '" fill="none" stroke="#cbd5e1" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round" opacity="0.95"/>' +
-        '<path d="' + qLine + '" fill="none" stroke="#94a3b8" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round" opacity="0.95"/>' +
-        // Hero Top Hunts line — brand gradient stroke
-        '<path d="' + tLine + '" fill="none" stroke="url(#v2-tc-grad-stroke)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>' +
-        // Benchmark endpoints — small subtle dots
-        `<circle cx="${sEndX}" cy="${sEndY}" r="3"   fill="#cbd5e1" stroke="#fff" stroke-width="1.5"/>` +
-        `<circle cx="${qEndX}" cy="${qEndY}" r="3"   fill="#94a3b8" stroke="#fff" stroke-width="1.5"/>` +
-        // Top Hunts endpoint — glowing halo + crisp dot
-        `<circle cx="${tEndX}" cy="${tEndY}" r="9"   fill="#8b5cf6" opacity="0.35" filter="url(#v2-tc-glow)"/>` +
-        `<circle cx="${tEndX}" cy="${tEndY}" r="5"   fill="#8b5cf6" stroke="#fff" stroke-width="2"/>` +
+        // Benchmark lines — thin, ghost-like on dark
+        '<path d="' + sLine + '" fill="none" stroke="rgba(203,213,225,.55)" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="2,3"/>' +
+        '<path d="' + qLine + '" fill="none" stroke="rgba(148,163,184,.65)" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>' +
+        // Hero line — brand gradient stroke with heavy glow
+        '<path d="' + tLine + '" fill="none" stroke="url(#v2-tc-grad-stroke)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" filter="url(#v2-tc-line-glow)"/>' +
+        // Benchmark endpoints — subtle
+        `<circle cx="${sEndX}" cy="${sEndY}" r="3"   fill="#cbd5e1" stroke="#0a0e1a" stroke-width="1.5" opacity="0.85"/>` +
+        `<circle cx="${qEndX}" cy="${qEndY}" r="3"   fill="#94a3b8" stroke="#0a0e1a" stroke-width="1.5" opacity="0.85"/>` +
+        // Hero endpoint — bright magenta with heavy halo
+        `<circle cx="${tEndX}" cy="${tEndY}" r="11" fill="#ec4899" opacity="0.45" filter="url(#v2-tc-dot-glow)"/>` +
+        `<circle cx="${tEndX}" cy="${tEndY}" r="5"  fill="#f9a8d4" stroke="#fff" stroke-width="2"/>` +
       '</svg>' +
-      // ── Compact legend below the chart (Top Hunts hero + 2 neutral benchmarks) ──
-      '<div class="v2-tc-legend">' +
-        '<span class="v2-tc-lg v2-tc-lg-t"><i></i> Top Hunts <strong>' + fmtPct(tEnd) + '</strong></span>' +
-        '<span class="v2-tc-lg v2-tc-lg-s"><i></i> S&amp;P 500 <strong>' + fmtPct(sEnd) + '</strong></span>' +
-        '<span class="v2-tc-lg v2-tc-lg-q"><i></i> NASDAQ <strong>' + fmtPct(qEnd) + '</strong></span>' +
+      // ── Side stat panel: scenario-style values (hero + 2 benchmarks) ──
+      '<div class="v2-tc-side">' +
+        '<div class="v2-tc-s-item hero">' +
+          '<div class="v2-tc-s-label"><i></i> Top Hunts</div>' +
+          '<div class="v2-tc-s-val">' + fmtPct(tEnd) + '</div>' +
+          '<div class="v2-tc-s-delta ' + deltaCls(beatSpy) + '">' + fmtDelta(beatSpy) + ' vs S&amp;P</div>' +
+        '</div>' +
+        '<div class="v2-tc-s-item bench-spy">' +
+          '<div class="v2-tc-s-label"><i></i> S&amp;P 500</div>' +
+          '<div class="v2-tc-s-val">' + fmtPct(sEnd) + '</div>' +
+        '</div>' +
+        '<div class="v2-tc-s-item bench-qqq">' +
+          '<div class="v2-tc-s-label"><i></i> NASDAQ</div>' +
+          '<div class="v2-tc-s-val">' + fmtPct(qEnd) + '</div>' +
+          '<div class="v2-tc-s-delta ' + deltaCls(beatQqqPts) + '">' + fmtDelta(beatQqqPts) + ' vs Top Hunts</div>' +
+        '</div>' +
       '</div>' +
     '</div>';
 }
