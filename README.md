@@ -139,3 +139,5 @@ Private — all rights reserved. Contact support@alphahunt.in for licensing.
 ---
 
 *Not financial advice. AlphaHunt is a data intelligence tool — always do your own research.*
+
+<!-- deploy survival test 2026-05-22 -->
