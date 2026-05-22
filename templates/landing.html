@@ -83,12 +83,12 @@
   .top-inner{display:flex;align-items:center;justify-content:space-between;height:62px}
   .brand{display:flex;align-items:center;gap:10px;font-weight:900;font-size:18px;letter-spacing:-.02em}
   .brand-mark{
-    width:32px;height:32px;border-radius:9px;
-    background:var(--bg-dark);
-    display:flex;align-items:center;justify-content:center;color:#fff;
-    font-family:'JetBrains Mono',monospace;font-weight:800;font-size:14px;
-    box-shadow:0 0 0 1px rgba(67,56,202,.30), 0 8px 20px -8px rgba(67,56,202,.55);
+    width:34px;height:34px;border-radius:9px;
+    background:#fff;
+    display:flex;align-items:center;justify-content:center;padding:3px;
+    box-shadow:0 0 0 1px rgba(67,56,202,.18), 0 8px 20px -8px rgba(67,56,202,.40);
   }
+  .brand-mark img{width:100%;height:100%;object-fit:contain;display:block}
   .brand-name{display:flex;align-items:baseline;gap:0;letter-spacing:-.025em}
   .brand-name .a{color:var(--ink)}
   .brand-name .h{
@@ -351,7 +351,7 @@
 <nav class="top">
   <div class="wrap top-inner">
     <a href="/" class="brand">
-      <span class="brand-mark">A</span>
+      <span class="brand-mark"><img src="/static/icons/alpha-logo-bare-64.png" alt="AlphaHunt"></span>
       <span class="brand-name"><span class="a">Alpha</span><span class="h">Hunt</span></span>
     </a>
     <div class="nav-links">
@@ -384,7 +384,7 @@
 
     <!-- Live preview cards -->
     <div class="preview-wrap reveal">
-      <div class="preview-label"><span class="line"></span> Today's top hunts <span class="line"></span></div>
+      <div class="preview-label"><span class="line"></span> Today's Hot List <span class="line"></span></div>
       <div class="preview-grid" id="hero-picks">
         <div class="pick-card">
           <div class="pick-head">
@@ -571,7 +571,7 @@
   <div class="wrap">
     <div class="foot-row">
       <a href="/" class="brand">
-        <span class="brand-mark">A</span>
+        <span class="brand-mark"><img src="/static/icons/alpha-logo-bare-64.png" alt="AlphaHunt"></span>
         <span class="brand-name" style="color:#fff"><span class="a" style="color:#fff">Alpha</span><span class="h">Hunt</span></span>
       </a>
       <div class="foot-links">

@@ -11375,6 +11375,36 @@ function openAuthModal(mode) {
   if (!m) return;
   m.style.display = 'flex';
   _switchAuthView('signin');
+  _ahLoadHotStrip();
+}
+
+// Populate the left-panel Hot List preview from /api/hot. Replaces the
+// stale hardcoded APLD/VRT/AAOI sample tickers with the actual current
+// list so the auth screen reflects real product state on every open.
+async function _ahLoadHotStrip(){
+  const strip = document.getElementById('ah-hot-strip');
+  if (!strip) return;
+  try {
+    const r = await fetch('/api/hot?n=3', {cache:'no-store'});
+    if (!r.ok) return;
+    const d = await r.json();
+    const picks = (d.hot || []).slice(0,3);
+    if (!picks.length) return;
+    strip.innerHTML = picks.map(p => {
+      const score = Math.round(p.smart_score || p.pop_score || 0);
+      const grade = p.grade || 'A';
+      const chg = p.change_pct != null ? parseFloat(p.change_pct) : 0;
+      const cls = chg >= 0 ? 'pos' : 'neg';
+      const sign = chg >= 0 ? '+' : '';
+      const px = p.price != null ? Number(p.price).toFixed(2) : '—';
+      return `<div class="ah-tick-card">
+        <div class="ah-tick-sym">${p.ticker || ''}</div>
+        <div class="ah-tick-price">$${px}</div>
+        <div class="ah-tick-chg ${cls}">${sign}${chg.toFixed(1)}%</div>
+        <div class="ah-tick-pop">Score ${score} · Grade ${grade}</div>
+      </div>`;
+    }).join('');
+  } catch(e){ /* swallow — modal still usable without preview */ }
 }
 
 function closeAuthModal() {
@@ -11939,7 +11969,7 @@ function showUpgradeSuccess() {
   border-radius:12px;padding:10px 12px;
   backdrop-filter:blur(8px);
 }
-.ah-tick-sym{font-size:13px;font-weight:900;color:#84cc16;letter-spacing:.5px}
+.ah-tick-sym{font-size:13px;font-weight:900;background:linear-gradient(135deg,#a5b4fc 0%,#c4b5fd 50%,#f0abfc 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;letter-spacing:.5px}
 .ah-tick-price{font-size:15px;font-weight:800;color:#fff;margin:2px 0}
 .ah-tick-chg{font-size:11px;font-weight:700}
 .ah-tick-chg.pos{color:#fff}.ah-tick-chg.neg{color:#fca5a5}
@@ -12203,32 +12233,17 @@ function showUpgradeSuccess() {
       <div style="background:#fff;border-radius:8px;padding:4px;display:flex;align-items:center;justify-content:center;width:36px;height:36px;box-shadow:0 2px 8px rgba(255,255,255,.15)">
         <img src="/static/icons/alpha-logo-bare-64.png" width="28" height="28" alt="AlphaHunt" style="display:block">
       </div>
-      <div class="name">Alpha<span style="color:#4ade80">Hunt</span></div>
+      <div class="name">Alpha<span style="background:linear-gradient(135deg,#a5b4fc 0%,#c4b5fd 50%,#f0abfc 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent">Hunt</span></div>
     </div>
 
-    <div class="ah-headline" style="color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.2)">Find the next<br>big <em style="font-style:normal;color:#dcfce7">breakout</em><br>before it moves.</div>
-    <p class="ah-sub" style="color:rgba(255,255,255,.85)">AI-powered signals on 187 US stocks, updated every 5 minutes. Alpha Score, RS Rating, Hot List — all in one dashboard.</p>
+    <div class="ah-headline" style="color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.2)">Find the next<br>big <em style="font-style:normal;background:linear-gradient(135deg,#a5b4fc 0%,#c4b5fd 50%,#f0abfc 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent">breakout</em><br>before it moves.</div>
+    <p class="ah-sub" style="color:rgba(255,255,255,.85)">540+ US stocks scored daily across six investment pillars. Alpha Score, Hot List, Top Hunts tracker — all in one dashboard.</p>
 
-    <!-- Live ticker cards — 3 per row -->
-    <div class="ah-ticker-strip" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
-      <div class="ah-tick-card">
-        <div class="ah-tick-sym">APLD</div>
-        <div class="ah-tick-price">$36.12</div>
-        <div class="ah-tick-chg pos">+11.4%</div>
-        <div class="ah-tick-pop">Score 77 · Grade A</div>
-      </div>
-      <div class="ah-tick-card">
-        <div class="ah-tick-sym">VRT</div>
-        <div class="ah-tick-price">$317.87</div>
-        <div class="ah-tick-chg pos">+4.2%</div>
-        <div class="ah-tick-pop">Score 76 · Grade A</div>
-      </div>
-      <div class="ah-tick-card">
-        <div class="ah-tick-sym">AAOI</div>
-        <div class="ah-tick-price">$163.18</div>
-        <div class="ah-tick-chg pos">+18.4%</div>
-        <div class="ah-tick-pop">Score 75 · Grade A</div>
-      </div>
+    <!-- Live Hot List preview — populated from /api/hot on load -->
+    <div class="ah-ticker-strip" id="ah-hot-strip" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+      <div class="ah-tick-card"><div class="ah-tick-sym">—</div><div class="ah-tick-price">—</div><div class="ah-tick-chg pos">—</div><div class="ah-tick-pop">Loading hot list…</div></div>
+      <div class="ah-tick-card"><div class="ah-tick-sym">—</div><div class="ah-tick-price">—</div><div class="ah-tick-chg pos">—</div><div class="ah-tick-pop">Loading hot list…</div></div>
+      <div class="ah-tick-card"><div class="ah-tick-sym">—</div><div class="ah-tick-price">—</div><div class="ah-tick-chg pos">—</div><div class="ah-tick-pop">Loading hot list…</div></div>
     </div>
 
 
@@ -12252,9 +12267,9 @@ function showUpgradeSuccess() {
           <img src="/static/icons/alpha-logo-bare-64.png" width="22" height="22" alt="">
           <span>Alpha<em>Hunt</em></span>
         </div>
-        <div class="ah-mobile-hero-tag">AI-powered signals on 187 US stocks</div>
+        <div class="ah-mobile-hero-tag">540+ US stocks scored daily</div>
         <div class="ah-mobile-hero-stats">
-          <div><strong>187</strong><span>Universe</span></div>
+          <div><strong>540+</strong><span>Universe</span></div>
           <div><strong>5 min</strong><span>Updates</span></div>
           <div><strong>Free</strong><span>Forever</span></div>
         </div>
