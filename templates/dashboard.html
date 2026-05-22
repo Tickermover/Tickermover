@@ -11929,10 +11929,11 @@ function showUpgradeSuccess() {
   align-items:center;justify-content:center;padding:20px}
 @keyframes authSlideIn{from{transform:scale(.9) translateY(16px);opacity:0}to{transform:scale(1) translateY(0);opacity:1}}
 .ah-wrap{
-  display:flex;width:100%;max-width:900px;max-height:88vh;
-  border-radius:22px;overflow:hidden;
-  box-shadow:0 32px 80px rgba(0,0,0,.5),0 0 0 1px rgba(255,255,255,.08);
-  animation:authSlideIn .3s cubic-bezier(.34,1.56,.64,1);
+  display:flex;width:100%;max-width:960px;max-height:90vh;
+  border-radius:24px;overflow:hidden;
+  box-shadow:0 40px 100px -20px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.06);
+  animation:authSlideIn .35s cubic-bezier(.34,1.56,.64,1);
+  background:#fff;
 }
 
 /* ── LEFT: Dark product showcase ───────────────────────────── */
@@ -11944,10 +11945,19 @@ function showUpgradeSuccess() {
 .ah-left-bg{
   position:absolute;inset:0;
   background:
-    radial-gradient(ellipse 70% 60% at 10% 10%, rgba(132,204,22,.18) 0%, transparent 55%),
-    radial-gradient(ellipse 50% 50% at 90% 80%, rgba(74,222,128,.12) 0%, transparent 50%),
-    radial-gradient(ellipse 40% 40% at 80% 10%, rgba(22,163,74,.08) 0%, transparent 45%),
-    #070d12;
+    radial-gradient(ellipse 70% 60% at 8% 8%, rgba(67,56,202,.32) 0%, transparent 55%),
+    radial-gradient(ellipse 55% 55% at 92% 82%, rgba(236,72,153,.20) 0%, transparent 55%),
+    radial-gradient(ellipse 50% 45% at 75% 12%, rgba(139,92,246,.18) 0%, transparent 50%),
+    #050810;
+}
+.ah-left-bg::after{
+  content:'';position:absolute;inset:0;
+  background-image:linear-gradient(rgba(255,255,255,.04) 1px,transparent 1px),
+                   linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px);
+  background-size:48px 48px;
+  mask-image:radial-gradient(ellipse 70% 60% at 20% 30%, #000 0%, transparent 75%);
+  -webkit-mask-image:radial-gradient(ellipse 70% 60% at 20% 30%, #000 0%, transparent 75%);
+  opacity:.6;pointer-events:none;
 }
 .ah-left-content{position:relative;z-index:1;display:flex;flex-direction:column;height:100%}
 
@@ -11956,19 +11966,23 @@ function showUpgradeSuccess() {
 .ah-logo-row .name{font-size:20px;font-weight:900;letter-spacing:-.5px;color:#fff}
 
 /* Headline */
-.ah-headline{font-size:38px;font-weight:900;line-height:1.12;color:#f0fdf4;letter-spacing:-.02em;margin-bottom:14px}
+.ah-headline{font-size:40px;font-weight:900;line-height:1.08;color:#fff;letter-spacing:-.028em;margin-bottom:16px}
 .ah-headline em{font-style:normal;
-  background:linear-gradient(135deg,#4ade80,#84cc16,#facc15);
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+  background:linear-gradient(135deg,#a5b4fc 0%,#c4b5fd 50%,#f0abfc 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;color:transparent}
 .ah-sub{font-size:15px;color:rgba(240,253,244,.6);line-height:1.65;max-width:380px;margin-bottom:36px}
 
 /* Live ticker strip */
 .ah-ticker-strip{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:32px}
 .ah-tick-card{
-  background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);
-  border-radius:12px;padding:10px 12px;
-  backdrop-filter:blur(8px);
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.10);
+  border-radius:14px;padding:12px 14px;
+  backdrop-filter:blur(12px);
+  transition:transform .15s, border-color .15s, background .15s;
+  position:relative;overflow:hidden;
 }
+.ah-tick-card:hover{transform:translateY(-2px);border-color:rgba(165,180,252,.32);background:rgba(255,255,255,.07)}
+.ah-tick-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;background:linear-gradient(180deg,#4338ca 0%,#8b5cf6 50%,#ec4899 100%);opacity:.85}
 .ah-tick-sym{font-size:13px;font-weight:900;background:linear-gradient(135deg,#a5b4fc 0%,#c4b5fd 50%,#f0abfc 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;letter-spacing:.5px}
 .ah-tick-price{font-size:15px;font-weight:800;color:#fff;margin:2px 0}
 .ah-tick-chg{font-size:11px;font-weight:700}
@@ -12058,33 +12072,34 @@ function showUpgradeSuccess() {
 .ah-field label{display:block;font-size:12px;font-weight:700;color:#374151;margin-bottom:6px}
 .ah-field input{
   width:100%;box-sizing:border-box;
-  padding:14px 16px;
+  padding:15px 16px;
   background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:12px;
   font-size:15px;color:#0a0a0a;outline:none;
   transition:border .15s,box-shadow .15s,background .15s;font-family:inherit;
   font-weight:500;
 }
 .ah-field input:hover{border-color:#cbd5e1;background:#fff}
-.ah-field input:focus{border-color:#15803d;background:#fff;box-shadow:0 0 0 4px rgba(21,128,61,.12)}
+.ah-field input:focus{border-color:#6366f1;background:#fff;box-shadow:0 0 0 4px rgba(99,102,241,.15)}
 .ah-field input::placeholder{color:#94a3b8;font-weight:400}
 .ah-pwd-wrap{position:relative}
 .ah-pwd-wrap input{padding-right:44px}
 .ah-pwd-eye{position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;color:#94a3b8;padding:0;line-height:1}
 
 .ah-submit{
-  width:100%;padding:15px;
-  background:linear-gradient(135deg,#15803d 0%,#84cc16 100%);
+  width:100%;padding:16px;
+  background:linear-gradient(135deg,#4338ca 0%,#8b5cf6 50%,#ec4899 100%);
+  background-size:200% 200%;background-position:0% 50%;
   color:#fff;border:none;border-radius:12px;
-  font-size:15px;font-weight:800;cursor:pointer;
-  box-shadow:0 6px 20px rgba(132,204,22,.35);
-  transition:transform .15s,box-shadow .2s,opacity .2s;
+  font-size:15.5px;font-weight:800;cursor:pointer;
+  box-shadow:0 10px 28px -8px rgba(99,102,241,.55), 0 0 0 1px rgba(255,255,255,.05) inset;
+  transition:transform .15s, box-shadow .2s, opacity .2s, background-position .35s ease;
   letter-spacing:.02em;font-family:inherit;
   margin-bottom:20px;
   position:relative;
   display:inline-flex;align-items:center;justify-content:center;gap:8px;
 }
-.ah-submit:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 10px 28px rgba(132,204,22,.45)}
-.ah-submit:active:not(:disabled){transform:translateY(0);box-shadow:0 4px 12px rgba(132,204,22,.35)}
+.ah-submit:hover:not(:disabled){transform:translateY(-1px);background-position:100% 50%;box-shadow:0 14px 36px -8px rgba(139,92,246,.70), 0 0 0 1px rgba(255,255,255,.08) inset}
+.ah-submit:active:not(:disabled){transform:translateY(0);box-shadow:0 6px 16px -6px rgba(99,102,241,.50)}
 .ah-submit:disabled{opacity:.7;cursor:wait;transform:none}
 .ah-submit.loading{color:transparent}
 .ah-submit.loading::after{
@@ -12103,13 +12118,13 @@ function showUpgradeSuccess() {
 }
 
 .ah-err{color:#dc2626;font-size:12px;font-weight:600;min-height:18px;margin:-8px 0 10px}
-.ah-ok{color:#15803d;font-size:12px;font-weight:600;min-height:18px;margin:-8px 0 10px}
+.ah-ok{color:#4338ca;font-size:12px;font-weight:600;min-height:18px;margin:-8px 0 10px}
 
 .ah-divider-row{display:flex;align-items:center;gap:14px;margin:4px 0 20px;color:#94a3b8;font-size:12px}
 .ah-divider-row::before,.ah-divider-row::after{content:'';flex:1;height:1px;background:#e2e8f0}
 
 .ah-toggle-row{text-align:center;font-size:13px;color:#64748b;margin-top:4px}
-.ah-toggle-btn{background:none;border:none;color:#15803d;font-weight:800;cursor:pointer;font-size:13px;font-family:inherit;text-decoration:underline}
+.ah-toggle-btn{background:none;border:none;color:#4338ca;font-weight:800;cursor:pointer;font-size:13px;font-family:inherit;text-decoration:underline}
 
 /* Forgot password */
 .ah-forgot{background:none;border:none;color:#94a3b8;font-size:11px;cursor:pointer;text-decoration:underline;float:right;margin-top:-12px;margin-bottom:16px;font-family:inherit}
@@ -12118,7 +12133,7 @@ function showUpgradeSuccess() {
 /* Step progress */
 .ah-steps-prog{display:flex;gap:6px;margin-bottom:28px}
 .ah-step-dot{height:3px;border-radius:2px;flex:1;background:#e2e8f0;transition:background .3s}
-.ah-step-dot.on{background:linear-gradient(90deg,#15803d,#84cc16)}
+.ah-step-dot.on{background:linear-gradient(90deg,#4338ca,#8b5cf6,#ec4899)}
 
 /* Option cards */
 .ah-opt{
@@ -12127,9 +12142,9 @@ function showUpgradeSuccess() {
   cursor:pointer;transition:all .15s;margin-bottom:10px;
   background:#fff;
 }
-.ah-opt:hover{border-color:#84cc16;background:#f0fdf4}
-.ah-opt.sel{border-color:#15803d;background:#f0fdf4}
-.ah-opt input[type=radio]{margin-top:3px;accent-color:#15803d;flex-shrink:0}
+.ah-opt:hover{border-color:#a5b4fc;background:#eef2ff}
+.ah-opt.sel{border-color:#6366f1;background:#eef2ff}
+.ah-opt input[type=radio]{margin-top:3px;accent-color:#4338ca;flex-shrink:0}
 .ah-opt-title{font-size:13px;font-weight:700;color:#0a0a0a}
 .ah-opt-desc{font-size:11px;color:#64748b;margin-top:2px}
 
