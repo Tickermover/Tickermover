@@ -11990,8 +11990,8 @@ function showUpgradeSuccess() {
   align-items:center;justify-content:center;padding:20px}
 @keyframes authSlideIn{from{transform:scale(.9) translateY(16px);opacity:0}to{transform:scale(1) translateY(0);opacity:1}}
 .ah-wrap{
-  display:flex;width:100%;max-width:960px;max-height:90vh;
-  border-radius:24px;overflow:hidden;
+  display:flex;width:100%;max-width:880px;max-height:min(680px,86vh);
+  border-radius:22px;overflow:hidden;
   box-shadow:0 40px 100px -20px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.06);
   animation:authSlideIn .35s cubic-bezier(.34,1.56,.64,1);
   background:#fff;
@@ -11999,8 +11999,8 @@ function showUpgradeSuccess() {
 
 /* ── LEFT: Dark product showcase ───────────────────────────── */
 .ah-left{
-  flex:0 0 52%;background:#070d12;
-  display:flex;flex-direction:column;padding:40px 48px;
+  flex:0 0 50%;background:#070d12;
+  display:flex;flex-direction:column;padding:32px 40px;
   position:relative;overflow:hidden;
 }
 .ah-left-bg{
@@ -12023,11 +12023,11 @@ function showUpgradeSuccess() {
 .ah-left-content{position:relative;z-index:1;display:flex;flex-direction:column;height:100%}
 
 /* Logo — canonical brand wordmark: "Alpha" white on dark / dark on light, "Hunt" green */
-.ah-logo-row{display:flex;align-items:center;gap:10px;margin-bottom:44px}
-.ah-logo-row .name{font-size:20px;font-weight:900;letter-spacing:-.5px;color:#fff}
+.ah-logo-row{display:flex;align-items:center;gap:10px;margin-bottom:32px}
+.ah-logo-row .name{font-size:19px;font-weight:900;letter-spacing:-.5px;color:#fff}
 
 /* Headline */
-.ah-headline{font-size:40px;font-weight:900;line-height:1.08;color:#fff;letter-spacing:-.028em;margin-bottom:16px}
+.ah-headline{font-size:34px;font-weight:900;line-height:1.08;color:#fff;letter-spacing:-.028em;margin-bottom:14px}
 .ah-headline em{font-style:normal;
   background:linear-gradient(135deg,#a5b4fc 0%,#c4b5fd 50%,#f0abfc 100%);
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;color:transparent}
@@ -12077,8 +12077,8 @@ function showUpgradeSuccess() {
 .ah-right{
   flex:1;background:#ffffff;
   display:flex;flex-direction:column;
-  justify-content:flex-start;align-items:center;
-  padding:56px 48px 40px;
+  justify-content:center;align-items:center;
+  padding:36px 44px;
   overflow-y:auto;
   position:relative;
 }
@@ -12093,10 +12093,10 @@ function showUpgradeSuccess() {
 .ah-close-btn:hover{background:#e2e8f0}
 
 /* Form */
-.ah-form-wrap{max-width:360px;width:100%}
-.ah-form-head{margin-bottom:20px;text-align:left}
-.ah-form-title{font-size:28px;font-weight:900;color:#0a0a0a;margin-bottom:6px;letter-spacing:-.02em}
-.ah-form-sub{font-size:14px;color:#64748b}
+.ah-form-wrap{max-width:340px;width:100%}
+.ah-form-head{margin-bottom:16px;text-align:left}
+.ah-form-title{font-size:24px;font-weight:900;color:#0a0a0a;margin-bottom:4px;letter-spacing:-.02em;line-height:1.15}
+.ah-form-sub{font-size:13px;color:#64748b}
 
 /* Mobile hero strip — desktop hides this (the dark .ah-left panel
    already covers the showcase role). On phones it gives the login
@@ -12129,13 +12129,13 @@ function showUpgradeSuccess() {
   font-weight:600;
 }
 .ah-trust span:nth-child(even){color:#cbd5e1}
-.ah-field{margin-bottom:14px}
-.ah-field label{display:block;font-size:12px;font-weight:700;color:#374151;margin-bottom:6px}
+.ah-field{margin-bottom:12px}
+.ah-field label{display:block;font-size:11.5px;font-weight:700;color:#374151;margin-bottom:5px}
 .ah-field input{
   width:100%;box-sizing:border-box;
-  padding:15px 16px;
-  background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:12px;
-  font-size:15px;color:#0a0a0a;outline:none;
+  padding:11px 14px;
+  background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:10px;
+  font-size:14px;color:#0a0a0a;outline:none;
   transition:border .15s,box-shadow .15s,background .15s;font-family:inherit;
   font-weight:500;
 }
@@ -12147,15 +12147,15 @@ function showUpgradeSuccess() {
 .ah-pwd-eye{position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;color:#94a3b8;padding:0;line-height:1}
 
 .ah-submit{
-  width:100%;padding:16px;
+  width:100%;padding:12px;
   background:linear-gradient(135deg,#4338ca 0%,#8b5cf6 50%,#ec4899 100%);
   background-size:200% 200%;background-position:0% 50%;
-  color:#fff;border:none;border-radius:12px;
-  font-size:15.5px;font-weight:800;cursor:pointer;
-  box-shadow:0 10px 28px -8px rgba(99,102,241,.55), 0 0 0 1px rgba(255,255,255,.05) inset;
+  color:#fff;border:none;border-radius:10px;
+  font-size:14.5px;font-weight:800;cursor:pointer;
+  box-shadow:0 8px 22px -8px rgba(99,102,241,.55), 0 0 0 1px rgba(255,255,255,.05) inset;
   transition:transform .15s, box-shadow .2s, opacity .2s, background-position .35s ease;
   letter-spacing:.02em;font-family:inherit;
-  margin-bottom:20px;
+  margin-bottom:10px;
   position:relative;
   display:inline-flex;align-items:center;justify-content:center;gap:8px;
 }
@@ -12181,15 +12181,15 @@ function showUpgradeSuccess() {
 .ah-err{color:#dc2626;font-size:12px;font-weight:600;min-height:18px;margin:-8px 0 10px}
 .ah-ok{color:#4338ca;font-size:12px;font-weight:600;min-height:18px;margin:-8px 0 10px}
 
-.ah-divider-row{display:flex;align-items:center;gap:14px;margin:8px 0 18px;color:#94a3b8;font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase}
+.ah-divider-row{display:flex;align-items:center;gap:12px;margin:6px 0 14px;color:#94a3b8;font-size:10.5px;font-weight:600;letter-spacing:.12em;text-transform:uppercase}
 .ah-divider-row::before,.ah-divider-row::after{content:'';flex:1;height:1px;background:#e2e8f0}
 
 /* ─── SSO buttons ─── */
 .ah-sso{
   width:100%;display:flex;align-items:center;justify-content:center;gap:10px;
-  padding:13px 16px;border-radius:12px;
+  padding:11px 14px;border-radius:10px;
   background:#fff;border:1.5px solid #e2e8f0;cursor:pointer;
-  font-size:14.5px;font-weight:700;color:#0a0a0a;font-family:inherit;
+  font-size:13.5px;font-weight:700;color:#0a0a0a;font-family:inherit;
   transition:transform .12s, border-color .15s, background .15s, box-shadow .15s;
   letter-spacing:-.005em;
 }
@@ -12418,15 +12418,10 @@ function showUpgradeSuccess() {
            button and the magic-link / Google options. -->
 
 
-      <!-- Trust strip — honest signals only. No 'bank-grade security' or
-           'free forever' claims since we can't guarantee either. -->
-      <div class="ah-trust">
-        <span>No credit card</span>
-        <span>·</span>
-        <span>Free during beta</span>
-        <span>·</span>
-        <span>Research tool · not advice</span>
-      </div>
+      <!-- Trust strip removed May 22 — user feedback: modal was too tall and
+           the strip didn't carry its weight. The disclaimer / footer copy on
+           the landing page covers the 'research tool, not advice' framing. -->
+
     </div>
 
     <!-- ── FORGOT PASSWORD ── -->
