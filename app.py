@@ -689,6 +689,28 @@ async def sitemap_xml():
     return HTMLResponse(content='\n'.join(parts), media_type="application/xml")
 
 
+@app.get("/api/ticker-strip")
+async def api_ticker_strip():
+    """Thin payload for the landing-page ticker tape: top 12 daily gainers
+    + bottom 8 daily losers, with only the fields the marquee needs. Avoids
+    forcing the landing page to download the ~1.6 MB /api/universe payload."""
+    uni = _universe_data or []
+    if not uni:
+        return JSONResponse({"items": []}, headers={"Cache-Control": "public, max-age=30, s-maxage=60"})
+    with_chg = [t for t in uni if t.get("price") and t.get("change_pct") is not None]
+    by_chg = sorted(with_chg, key=lambda t: float(t.get("change_pct") or 0), reverse=True)
+    picked = (by_chg[:12] + list(reversed(by_chg[-8:])))[:22]
+    items = [
+        {
+            "symbol": t.get("ticker", ""),
+            "price":  float(t.get("price") or 0),
+            "change_pct": float(t.get("change_pct") or 0),
+        }
+        for t in picked
+    ]
+    return JSONResponse({"items": items}, headers={"Cache-Control": "public, max-age=30, s-maxage=60"})
+
+
 # ── HTML Dashboard ────────────────────────────────────────────────────
 
 @app.get("/", response_class=HTMLResponse)

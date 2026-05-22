@@ -351,7 +351,7 @@
 <nav class="top">
   <div class="wrap top-inner">
     <a href="/" class="brand">
-      <span class="brand-mark">α</span>
+      <span class="brand-mark">A</span>
       <span class="brand-name"><span class="a">Alpha</span><span class="h">Hunt</span></span>
     </a>
     <div class="nav-links">
@@ -416,7 +416,7 @@
 </section>
 
 <!-- ─── TRACK RECORD ─── -->
-<section class="record">
+<section class="record" id="record-section" style="display:none">
   <div class="wrap record-head">
     <div class="record-eyebrow">Open ledger</div>
     <h2 class="record-title">Every pick. Every exit. <span class="gradient-text">Audited.</span></h2>
@@ -571,7 +571,7 @@
   <div class="wrap">
     <div class="foot-row">
       <a href="/" class="brand">
-        <span class="brand-mark">α</span>
+        <span class="brand-mark">A</span>
         <span class="brand-name" style="color:#fff"><span class="a" style="color:#fff">Alpha</span><span class="h">Hunt</span></span>
       </a>
       <div class="foot-links">
@@ -642,18 +642,26 @@
   }
   loadHero();
 
-  // Track record stats
+  // Track record stats — only reveal the section when we have real closed trades
   async function loadRecord(){
     try {
       const r = await fetch('/api/model-portfolio/history', {cache:'no-store'});
       if (!r.ok) return;
       const d = await r.json();
       const s = d.stats || {};
+      const section = document.getElementById('record-section');
+      if (!s.total || s.total < 1 || s.hit_rate == null) {
+        // No closed trades yet — keep the section hidden so the page doesn't
+        // show a row of "0 / — / — / —" cards which reads as broken/empty.
+        if (section) section.style.display = 'none';
+        return;
+      }
       const el = id => document.getElementById(id);
-      if (s.total != null) el('rec-total').textContent = s.total;
-      if (s.hit_rate != null) el('rec-hit').textContent = s.hit_rate.toFixed(0) + '%';
-      if (s.avg_win != null) el('rec-avg').textContent = (s.avg_win >= 0 ? '+' : '') + s.avg_win.toFixed(1) + '%';
-      if (s.best != null) el('rec-best').textContent = (s.best >= 0 ? '+' : '') + s.best.toFixed(1) + '%';
+      el('rec-total').textContent = s.total;
+      el('rec-hit').textContent   = (s.hit_rate || 0).toFixed(0) + '%';
+      el('rec-avg').textContent   = ((s.avg_win || 0) >= 0 ? '+' : '') + (s.avg_win || 0).toFixed(1) + '%';
+      el('rec-best').textContent  = ((s.best || 0) >= 0 ? '+' : '') + (s.best || 0).toFixed(1) + '%';
+      if (section) section.style.display = '';
     } catch(e){}
   }
   loadRecord();
