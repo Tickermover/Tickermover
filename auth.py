@@ -238,6 +238,34 @@ class SupabaseClient:
         resp = await self._post("/auth/v1/logout", {}, token=access_token)
         return not resp.get("error")
 
+    def oauth_authorize_url(self, provider: str, redirect_to: str) -> str:
+        """Build the Supabase OAuth authorize URL for an external provider
+        (google, apple, github, etc.). The frontend should `window.location =`
+        this URL. Supabase handles the provider handshake and returns the
+        user to `redirect_to` with access_token + refresh_token in the URL
+        hash fragment."""
+        if not self.enabled:
+            return ""
+        from urllib.parse import urlencode
+        qs = urlencode({"provider": provider, "redirect_to": redirect_to})
+        return f"{self.url}/auth/v1/authorize?{qs}"
+
+    async def send_magic_link(self, email: str, redirect_to: str) -> dict:
+        """Email the user a one-tap sign-in link via Supabase OTP. Costs $0
+        on Supabase's free tier (rate-limited) and works with any SMTP
+        configured in the Supabase dashboard (Resend free tier ~3k/mo is
+        the recommended pairing for low-volume production)."""
+        if not self.enabled:
+            return {"error": "Supabase not configured"}
+        resp = await self._post(
+            "/auth/v1/otp",
+            {"email": email, "create_user": True,
+             "options": {"email_redirect_to": redirect_to}},
+        )
+        if resp.get("error") or resp.get("error_code"):
+            return {"error": resp.get("error_description") or resp.get("msg") or "Magic link send failed"}
+        return {"ok": True}
+
     async def update_password(self, access_token: str, new_password: str) -> dict:
         """
         Update the password for the user identified by access_token.

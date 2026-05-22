@@ -3999,6 +3999,90 @@ async def api_signin(body: _AuthBody):
     return JSONResponse(result)
 
 
+class _OAuthBody(BaseModel):
+    redirect_to: Optional[str] = None
+
+@app.post("/api/auth/oauth/{provider}")
+async def api_oauth_start(provider: str, request: Request, body: _OAuthBody | None = None):
+    """Start an OAuth flow with an external provider (currently: google).
+    Returns {authorize_url} which the frontend should redirect the browser
+    to. Supabase handles the provider handshake and returns to our
+    /auth/callback page with tokens in the URL hash."""
+    if provider not in ("google", "apple", "github", "azure"):
+        raise HTTPException(status_code=400, detail=f"Unsupported provider: {provider}")
+    if not supabase.enabled:
+        raise HTTPException(status_code=503, detail="Auth not configured")
+    redirect_to = (body.redirect_to if body else None) or f"{request.url.scheme}://{request.url.netloc}/auth/callback"
+    url = supabase.oauth_authorize_url(provider, redirect_to)
+    if not url:
+        raise HTTPException(status_code=503, detail="OAuth URL build failed")
+    return JSONResponse({"authorize_url": url})
+
+
+class _MagicLinkBody(BaseModel):
+    email: str
+    redirect_to: Optional[str] = None
+
+@app.post("/api/auth/magic-link")
+async def api_magic_link(body: _MagicLinkBody, request: Request):
+    """Email the user a passwordless one-tap sign-in link. Free via Supabase
+    OTP + your configured SMTP (Resend free tier recommended)."""
+    if not supabase.enabled:
+        raise HTTPException(status_code=503, detail="Auth not configured")
+    redirect_to = body.redirect_to or f"{request.url.scheme}://{request.url.netloc}/auth/callback"
+    result = await supabase.send_magic_link(body.email, redirect_to)
+    if result.get("error"):
+        raise HTTPException(status_code=400, detail=result["error"])
+    return JSONResponse(result)
+
+
+@app.get("/auth/callback", response_class=HTMLResponse)
+async def auth_callback():
+    """OAuth + magic-link return target. Supabase puts the access_token
+    and refresh_token in the URL hash (#access_token=...). We can't read
+    a hash server-side, so this page is a thin JS shim that parses the
+    fragment, stores the session in localStorage in the same shape the
+    rest of the app expects, then redirects to /app."""
+    return HTMLResponse("""<!doctype html>
+<html><head><meta charset="utf-8"><title>Signing you in…</title>
+<style>
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,sans-serif;
+       background:#050810;color:#e2e8f0;
+       display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;gap:24px}
+  .ring{width:42px;height:42px;border-radius:50%;
+        border:3px solid rgba(255,255,255,.12);border-top-color:#8b5cf6;
+        animation:spin 1s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .msg{font-size:14px;color:#94a3b8;letter-spacing:.02em}
+</style>
+</head><body>
+<div class="ring"></div>
+<div class="msg">Signing you in…</div>
+<script>
+(function(){
+  // Supabase returns tokens in the URL hash fragment for OAuth + magic link.
+  // Parse and persist in the same localStorage keys the app uses.
+  const h = window.location.hash.substring(1);
+  const p = new URLSearchParams(h);
+  const access  = p.get('access_token');
+  const refresh = p.get('refresh_token');
+  if (access) {
+    try {
+      localStorage.setItem('ah_token', access);
+      if (refresh) localStorage.setItem('ah_refresh', refresh);
+    } catch(e) {}
+    window.location.replace('/app');
+  } else {
+    // No token — surface the error briefly then bounce home.
+    const err = p.get('error_description') || p.get('error') || 'Sign-in failed';
+    document.querySelector('.msg').textContent = err;
+    setTimeout(() => window.location.replace('/'), 2400);
+  }
+})();
+</script>
+</body></html>""")
+
+
 @app.post("/api/auth/refresh")
 async def api_refresh_token(body: _RefreshBody):
     """Exchange a refresh token for a new access token."""

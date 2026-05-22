@@ -11381,6 +11381,64 @@ function openAuthModal(mode) {
   _ahLoadHotStrip();
 }
 
+// ── SSO: Google ──────────────────────────────────────────────────────────
+// Asks the backend to build a Supabase OAuth authorize URL, then redirects
+// the browser. Supabase handles the Google handshake and returns the user
+// to /auth/callback with tokens in the URL hash, which the callback page
+// stores in localStorage before bouncing to /app.
+async function authOAuth(provider) {
+  const errEl = document.getElementById('auth-error');
+  if (errEl) errEl.textContent = '';
+  try {
+    const r = await fetch('/api/auth/oauth/' + encodeURIComponent(provider), {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({})
+    });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) {
+      const msg = (d && (d.detail || d.error)) ||
+                  (provider + ' sign-in is not configured yet — try email/password or magic link.');
+      if (errEl) errEl.textContent = msg;
+      return;
+    }
+    if (d.authorize_url) { window.location.href = d.authorize_url; return; }
+    if (errEl) errEl.textContent = 'Could not start ' + provider + ' sign-in.';
+  } catch(e) {
+    if (errEl) errEl.textContent = 'Network error starting ' + provider + ' sign-in.';
+  }
+}
+
+// ── Magic link ───────────────────────────────────────────────────────────
+// Sends a one-tap sign-in link to whatever email is in the form. Free with
+// Supabase OTP + your configured SMTP (Resend free tier ~3k/mo is fine).
+async function authMagicLink() {
+  const emailEl = document.getElementById('auth-email');
+  const errEl   = document.getElementById('auth-error');
+  const okEl    = document.getElementById('auth-ok');
+  if (okEl) okEl.textContent = '';
+  if (errEl) errEl.textContent = '';
+  const email = (emailEl && emailEl.value || '').trim();
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    if (errEl) errEl.textContent = 'Enter your email above first — we\'ll send a one-tap sign-in link.';
+    if (emailEl) emailEl.focus();
+    return;
+  }
+  try {
+    const r = await fetch('/api/auth/magic-link', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ email })
+    });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) {
+      if (errEl) errEl.textContent = (d && (d.detail || d.error)) || 'Could not send magic link.';
+      return;
+    }
+    if (okEl) okEl.textContent = 'Sent! Check ' + email + ' for your sign-in link.';
+  } catch(e) {
+    if (errEl) errEl.textContent = 'Network error sending the magic link.';
+  }
+}
+
 // Populate the left-panel Hot List preview from /api/hot. Replaces the
 // stale hardcoded APLD/VRT/AAOI sample tickers with the actual current
 // list so the auth screen reflects real product state on every open.
@@ -12123,8 +12181,30 @@ function showUpgradeSuccess() {
 .ah-err{color:#dc2626;font-size:12px;font-weight:600;min-height:18px;margin:-8px 0 10px}
 .ah-ok{color:#4338ca;font-size:12px;font-weight:600;min-height:18px;margin:-8px 0 10px}
 
-.ah-divider-row{display:flex;align-items:center;gap:14px;margin:4px 0 20px;color:#94a3b8;font-size:12px}
+.ah-divider-row{display:flex;align-items:center;gap:14px;margin:8px 0 18px;color:#94a3b8;font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase}
 .ah-divider-row::before,.ah-divider-row::after{content:'';flex:1;height:1px;background:#e2e8f0}
+
+/* ─── SSO buttons ─── */
+.ah-sso{
+  width:100%;display:flex;align-items:center;justify-content:center;gap:10px;
+  padding:13px 16px;border-radius:12px;
+  background:#fff;border:1.5px solid #e2e8f0;cursor:pointer;
+  font-size:14.5px;font-weight:700;color:#0a0a0a;font-family:inherit;
+  transition:transform .12s, border-color .15s, background .15s, box-shadow .15s;
+  letter-spacing:-.005em;
+}
+.ah-sso:hover{border-color:#cbd5e1;background:#f8fafc;transform:translateY(-1px);box-shadow:0 6px 18px -8px rgba(15,23,42,.12)}
+.ah-sso:active{transform:translateY(0)}
+.ah-sso svg{flex-shrink:0}
+
+/* Subtle alt-action row (magic link toggle below submit) */
+.ah-alt-row{text-align:center;margin-top:-8px;margin-bottom:12px}
+.ah-link-btn{
+  background:none;border:none;cursor:pointer;font-family:inherit;
+  font-size:12.5px;font-weight:600;color:#6366f1;letter-spacing:-.005em;
+  padding:6px 4px;border-radius:6px;transition:color .15s, background .15s;
+}
+.ah-link-btn:hover{color:#4338ca;background:rgba(99,102,241,.06)}
 
 .ah-toggle-row{text-align:center;font-size:13px;color:#64748b;margin-top:4px}
 .ah-toggle-btn{background:none;border:none;color:#4338ca;font-weight:800;cursor:pointer;font-size:13px;font-family:inherit;text-decoration:underline}
@@ -12298,6 +12378,19 @@ function showUpgradeSuccess() {
         <div class="ah-form-sub">Welcome back to AlphaHunt</div>
       </div>
 
+      <!-- ─── SSO options ─── -->
+      <button class="ah-sso ah-sso-google" onclick="authOAuth('google')" aria-label="Continue with Google">
+        <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
+          <path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"/>
+          <path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 16.318 4 9.656 8.337 6.306 14.691z"/>
+          <path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 35.091 26.715 36 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"/>
+          <path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303c-.792 2.237-2.231 4.166-4.087 5.571.001-.001.002-.001.003-.002l6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z"/>
+        </svg>
+        <span>Continue with Google</span>
+      </button>
+
+      <div class="ah-divider-row"><span>or</span></div>
+
       <div class="ah-field">
         <label>Email</label>
         <input id="auth-email" type="email" autocomplete="email" placeholder="you@example.com" onkeydown="if(event.key==='Enter')document.getElementById('auth-password').focus()">
@@ -12313,7 +12406,11 @@ function showUpgradeSuccess() {
         </div>
       </div>
       <div id="auth-error" class="ah-err"></div>
+      <div id="auth-ok" class="ah-ok"></div>
       <button id="auth-submit" class="ah-submit" onclick="authSubmit()">Sign in →</button>
+      <div class="ah-alt-row">
+        <button class="ah-link-btn" onclick="authMagicLink()">Email me a one-tap sign-in link instead →</button>
+      </div>
 
       <!-- Cleaner "first time?" line: explains the create-on-first-sign-in
            behaviour without sounding casual or unprofessional. -->
