@@ -2599,11 +2599,14 @@ body.v2 [style*="rgba(22,163,74,.4"]{
 /* 3. Auth modal — the existing class-based styles still default to
       green. Flip them all to indigo. */
 body.v2 .ah-submit{
-  background:linear-gradient(135deg,#4338ca,#6366f1)!important;
-  box-shadow:0 6px 20px rgba(99,102,241,.35)!important;
+  background:linear-gradient(135deg,#4338ca 0%,#8b5cf6 50%,#ec4899 100%)!important;
+  background-size:200% 200%!important;background-position:0% 50%!important;
+  box-shadow:0 10px 28px -8px rgba(139,92,246,.55), 0 0 0 1px rgba(255,255,255,.05) inset!important;
+  transition:transform .15s, box-shadow .2s, opacity .2s, background-position .35s ease!important;
 }
 body.v2 .ah-submit:hover:not(:disabled){
-  box-shadow:0 10px 28px rgba(99,102,241,.45)!important;
+  background-position:100% 50%!important;
+  box-shadow:0 14px 36px -8px rgba(236,72,153,.55), 0 0 0 1px rgba(255,255,255,.08) inset!important;
 }
 body.v2 .ah-field input:focus{
   border-color:#4338ca!important;
@@ -11983,7 +11986,7 @@ function showUpgradeSuccess() {
 }
 .ah-tick-card:hover{transform:translateY(-2px);border-color:rgba(165,180,252,.32);background:rgba(255,255,255,.07)}
 .ah-tick-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;background:linear-gradient(180deg,#4338ca 0%,#8b5cf6 50%,#ec4899 100%);opacity:.85}
-.ah-tick-sym{font-size:13px;font-weight:900;background:linear-gradient(135deg,#a5b4fc 0%,#c4b5fd 50%,#f0abfc 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;letter-spacing:.5px}
+.ah-tick-sym{font-size:13px;font-weight:900;background:linear-gradient(135deg,#818cf8 0%,#c084fc 50%,#f472b6 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;text-shadow:0 0 28px rgba(196,132,252,.55),0 0 12px rgba(244,114,182,.35);filter:drop-shadow(0 2px 18px rgba(139,92,246,.45));letter-spacing:.5px}
 .ah-tick-price{font-size:15px;font-weight:800;color:#fff;margin:2px 0}
 .ah-tick-chg{font-size:11px;font-weight:700}
 .ah-tick-chg.pos{color:#fff}.ah-tick-chg.neg{color:#fca5a5}
@@ -12248,10 +12251,10 @@ function showUpgradeSuccess() {
       <div style="background:#fff;border-radius:8px;padding:4px;display:flex;align-items:center;justify-content:center;width:36px;height:36px;box-shadow:0 2px 8px rgba(255,255,255,.15)">
         <img src="/static/icons/alpha-logo-bare-64.png" width="28" height="28" alt="AlphaHunt" style="display:block">
       </div>
-      <div class="name">Alpha<span style="background:linear-gradient(135deg,#a5b4fc 0%,#c4b5fd 50%,#f0abfc 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent">Hunt</span></div>
+      <div class="name">Alpha<span style="background:linear-gradient(135deg,#818cf8 0%,#c084fc 50%,#f472b6 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;text-shadow:0 0 28px rgba(196,132,252,.55),0 0 12px rgba(244,114,182,.35);filter:drop-shadow(0 2px 18px rgba(139,92,246,.45))">Hunt</span></div>
     </div>
 
-    <div class="ah-headline" style="color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.2)">Find the next<br>big <em style="font-style:normal;background:linear-gradient(135deg,#a5b4fc 0%,#c4b5fd 50%,#f0abfc 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent">breakout</em><br>before it moves.</div>
+    <div class="ah-headline" style="color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.2)">Find the next<br>big <em style="font-style:normal;background:linear-gradient(135deg,#818cf8 0%,#c084fc 50%,#f472b6 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;text-shadow:0 0 28px rgba(196,132,252,.55),0 0 12px rgba(244,114,182,.35);filter:drop-shadow(0 2px 18px rgba(139,92,246,.45))">breakout</em><br>before it moves.</div>
     <p class="ah-sub" style="color:rgba(255,255,255,.85)">540+ US stocks scored daily across six investment pillars. Alpha Score, Hot List, Top Hunts tracker — all in one dashboard.</p>
 
     <!-- Live Hot List preview — populated from /api/hot on load -->
@@ -12318,14 +12321,14 @@ function showUpgradeSuccess() {
         First time on AlphaHunt? Enter the email and password you'd like to use — your account is created automatically when you sign in.
       </div>
 
-      <!-- Trust strip — same row of signals you'd expect from any modern
-           sign-in screen. Free tier framing, bank-grade security. -->
+      <!-- Trust strip — honest signals only. No 'bank-grade security' or
+           'free forever' claims since we can't guarantee either. -->
       <div class="ah-trust">
-        <span>🔒 Bank-grade security</span>
-        <span>·</span>
         <span>No credit card</span>
         <span>·</span>
-        <span>Free forever</span>
+        <span>Free during beta</span>
+        <span>·</span>
+        <span>Research tool · not advice</span>
       </div>
     </div>
 
@@ -12373,7 +12376,7 @@ function showUpgradeSuccess() {
     <div id="ah-view-signup-s1" class="ah-view">
       <div class="ah-steps-prog"><div class="ah-step-dot on"></div><div class="ah-step-dot"></div><div class="ah-step-dot"></div></div>
       <div class="ah-form-title">Create account</div>
-      <div class="ah-form-sub" style="margin-bottom:28px">Free forever — no credit card needed</div>
+      <div class="ah-form-sub" style="margin-bottom:28px">Free during beta — no credit card needed</div>
       <div class="ah-field">
         <label>Email address</label>
         <input id="su-email" type="email" placeholder="you@example.com" onkeydown="if(event.key==='Enter')document.getElementById('su-password').focus()">
