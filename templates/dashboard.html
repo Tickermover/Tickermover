@@ -12044,7 +12044,7 @@ function showUpgradeSuccess() {
 }
 .ah-tick-card:hover{transform:translateY(-2px);border-color:rgba(165,180,252,.32);background:rgba(255,255,255,.07)}
 .ah-tick-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;background:linear-gradient(180deg,#4338ca 0%,#8b5cf6 50%,#ec4899 100%);opacity:.85}
-.ah-tick-sym{font-size:13px;font-weight:900;background:linear-gradient(135deg,#818cf8 0%,#c084fc 50%,#f472b6 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;text-shadow:0 0 28px rgba(196,132,252,.55),0 0 12px rgba(244,114,182,.35);filter:drop-shadow(0 2px 18px rgba(139,92,246,.45));letter-spacing:.5px}
+.ah-tick-sym{font-size:13px;font-weight:900;background:linear-gradient(135deg,#a5b4fc 0%,#c4b5fd 50%,#f0abfc 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;letter-spacing:.5px}
 .ah-tick-price{font-size:15px;font-weight:800;color:#fff;margin:2px 0}
 .ah-tick-chg{font-size:11px;font-weight:700}
 .ah-tick-chg.pos{color:#fff}.ah-tick-chg.neg{color:#fca5a5}
@@ -12077,8 +12077,8 @@ function showUpgradeSuccess() {
 .ah-right{
   flex:1;background:#ffffff;
   display:flex;flex-direction:column;
-  justify-content:center;
-  padding:48px 56px;
+  justify-content:flex-start;align-items:center;
+  padding:56px 48px 40px;
   overflow-y:auto;
   position:relative;
 }
@@ -12094,7 +12094,7 @@ function showUpgradeSuccess() {
 
 /* Form */
 .ah-form-wrap{max-width:360px;width:100%}
-.ah-form-head{margin-bottom:24px}
+.ah-form-head{margin-bottom:20px;text-align:left}
 .ah-form-title{font-size:28px;font-weight:900;color:#0a0a0a;margin-bottom:6px;letter-spacing:-.02em}
 .ah-form-sub{font-size:14px;color:#64748b}
 
@@ -12129,7 +12129,7 @@ function showUpgradeSuccess() {
   font-weight:600;
 }
 .ah-trust span:nth-child(even){color:#cbd5e1}
-.ah-field{margin-bottom:18px}
+.ah-field{margin-bottom:14px}
 .ah-field label{display:block;font-size:12px;font-weight:700;color:#374151;margin-bottom:6px}
 .ah-field input{
   width:100%;box-sizing:border-box;
@@ -12331,10 +12331,10 @@ function showUpgradeSuccess() {
       <div style="background:#fff;border-radius:8px;padding:4px;display:flex;align-items:center;justify-content:center;width:36px;height:36px;box-shadow:0 2px 8px rgba(255,255,255,.15)">
         <img src="/static/icons/alpha-logo-bare-64.png" width="28" height="28" alt="AlphaHunt" style="display:block">
       </div>
-      <div class="name">Alpha<span style="background:linear-gradient(135deg,#818cf8 0%,#c084fc 50%,#f472b6 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;text-shadow:0 0 28px rgba(196,132,252,.55),0 0 12px rgba(244,114,182,.35);filter:drop-shadow(0 2px 18px rgba(139,92,246,.45))">Hunt</span></div>
+      <div class="name">Alpha<span style="background:linear-gradient(135deg,#a5b4fc 0%,#c4b5fd 50%,#f0abfc 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent">Hunt</span></div>
     </div>
 
-    <div class="ah-headline" style="color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.2)">Find the next<br>big <em style="font-style:normal;background:linear-gradient(135deg,#818cf8 0%,#c084fc 50%,#f472b6 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;text-shadow:0 0 28px rgba(196,132,252,.55),0 0 12px rgba(244,114,182,.35);filter:drop-shadow(0 2px 18px rgba(139,92,246,.45))">breakout</em><br>before it moves.</div>
+    <div class="ah-headline" style="color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.2)">Find the next<br>big <em style="font-style:normal;background:linear-gradient(135deg,#a5b4fc 0%,#c4b5fd 50%,#f0abfc 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent">breakout</em><br>before it moves.</div>
     <p class="ah-sub" style="color:rgba(255,255,255,.85)">540+ US stocks scored daily across six investment pillars. Alpha Score, Hot List, Top Hunts tracker — all in one dashboard.</p>
 
     <!-- Live Hot List preview — populated from /api/hot on load -->
@@ -12412,11 +12412,11 @@ function showUpgradeSuccess() {
         <button class="ah-link-btn" onclick="authMagicLink()">Email me a one-tap sign-in link instead →</button>
       </div>
 
-      <!-- Cleaner "first time?" line: explains the create-on-first-sign-in
-           behaviour without sounding casual or unprofessional. -->
-      <div class="ah-first-time">
-        First time on AlphaHunt? Enter the email and password you'd like to use — your account is created automatically when you sign in.
-      </div>
+      <!-- The "first time on AlphaHunt..." explainer was removed in May 22 2026
+           polish pass — no modern auth UX shows that block. The auto-create
+           behaviour is still in authSubmit; users just see a single Sign in
+           button and the magic-link / Google options. -->
+
 
       <!-- Trust strip — honest signals only. No 'bank-grade security' or
            'free forever' claims since we can't guarantee either. -->
