@@ -2037,6 +2037,36 @@ body.v2 .v2ov-card.sectors .v2ov-sector-cell{
 .v2-hot-chip-heavy{background:#dcfce7;border-color:#86efac}
 .v2-hot-chip-pct{font-weight:800;color:#15803d;font-variant-numeric:tabular-nums}
 
+/* ── Hot News card (right side of earnings row) ─────────────────── */
+.v2-news-card{
+  display:flex;flex-direction:column;
+  background:#fff;border:1px solid var(--v2-bdr,#e2e8f0);border-radius:12px;
+  padding:14px 14px 6px;
+  box-shadow:0 1px 0 rgba(15,23,42,.02), 0 8px 20px -16px rgba(67,56,202,.14);
+}
+.v2-news-slot{display:flex;flex-direction:column;gap:2px;margin-top:6px;flex:1;min-height:200px}
+.v2-news-loading{padding:32px 8px;text-align:center;color:#94a3b8;font-size:12.5px}
+.v2-news-item{
+  display:flex;gap:10px;align-items:flex-start;
+  padding:9px 8px;border-radius:8px;cursor:pointer;
+  border-top:1px solid #f1f5f9;
+  transition:background .12s;
+}
+.v2-news-item:first-child{border-top:none}
+.v2-news-item:hover{background:#f8fafc}
+.v2-news-logo{flex-shrink:0;width:28px;height:28px;display:flex;align-items:center;justify-content:center}
+.v2-news-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.v2-news-tic{
+  display:inline-block;font-size:10.5px;font-weight:800;color:#4338ca;
+  background:#eef2ff;padding:1px 6px;border-radius:4px;align-self:flex-start;
+  letter-spacing:.02em;
+}
+.v2-news-head{
+  font-size:13px;font-weight:600;color:#0f172a;line-height:1.4;letter-spacing:-.005em;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+}
+.v2-news-meta{font-size:10.5px;color:#94a3b8;font-weight:500;margin-top:2px}
+
 /* ───── Sidebar nav tags (PRO / count badges) ───── */
 .v2-nav-tag{
   display:inline-block;font-size:9px;font-weight:900;letter-spacing:.06em;
@@ -6191,6 +6221,63 @@ function _v2SectorContext(items, hot){
   return { reason, facts };
 }
 
+// Hot News card — renders an initial placeholder, then v2LoadHotNews
+// fills the slot once /api/news/live resolves. Pattern mirrors the
+// tracker chart: synchronous skeleton, async fill, never blocks paint.
+function v2RenderHotNewsPlaceholder(){
+  return '<div class="v2ov-card v2-news-card" id="v2-hot-news-card">' +
+    '<div class="v2ov-card-head">' +
+      '<div>' +
+        '<div class="v2ov-title">📰 Hot News today</div>' +
+        '<div class="v2ov-sub">Headlines moving the names on our radar</div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="v2-news-slot" id="v2-hot-news-slot">' +
+      '<div class="v2-news-loading">Loading headlines…</div>' +
+    '</div>' +
+  '</div>';
+}
+
+async function v2LoadHotNews(){
+  const slot = document.getElementById('v2-hot-news-slot');
+  if (!slot) return;
+  try {
+    const r = await fetch('/api/news/live', { cache: 'no-store' });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const d = await r.json();
+    const items = (d.news || []).slice(0, 6);
+    if (!items.length) {
+      slot.innerHTML = '<div class="v2-news-loading">No recent headlines.</div>';
+      return;
+    }
+    const fmtAgo = ts => {
+      if (!ts) return '';
+      const s = Math.max(0, Math.floor(Date.now()/1000 - ts));
+      if (s < 60) return s + 's ago';
+      if (s < 3600) return Math.floor(s/60) + 'm ago';
+      if (s < 86400) return Math.floor(s/3600) + 'h ago';
+      return Math.floor(s/86400) + 'd ago';
+    };
+    slot.innerHTML = items.map(n => {
+      const tic = (n.ticker || (n.symbols && n.symbols[0]) || '').toUpperCase();
+      const head = (n.headline || '').slice(0, 130);
+      const src  = (n.source || '').slice(0, 24);
+      const ago  = fmtAgo(n.datetime);
+      const tap  = tic ? `onclick="event.stopPropagation();openStockModal('${tic}')"` : '';
+      return '<div class="v2-news-item" ' + tap + '>' +
+        (tic ? '<div class="v2-news-logo">' + v2LogoHTML(tic, 'sm') + '</div>' : '') +
+        '<div class="v2-news-body">' +
+          (tic ? '<span class="v2-news-tic">' + v2EscHTML(tic) + '</span>' : '') +
+          '<div class="v2-news-head">' + v2EscHTML(head) + '</div>' +
+          '<div class="v2-news-meta">' + (src ? v2EscHTML(src) : '') + (src && ago ? ' · ' : '') + (ago ? v2EscHTML(ago) : '') + '</div>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+  } catch (e) {
+    slot.innerHTML = '<div class="v2-news-loading">News feed temporarily unavailable.</div>';
+  }
+}
+
 function v2RenderDrawdownBanner(tickers){
   const groups = {};
   tickers.forEach(t => {
@@ -6605,17 +6692,20 @@ function renderV2Overview(tickers){
       v2RenderSectors(filtered) +
       v2RenderDistAndMovers(filtered) +
     '</div>' +
-    // Merged Recent+Upcoming earnings shares a row with the sector
-    // drawdown banner (which previously lived at the top of the overview).
+    // Row 1: Heating Up sector (left) + Drawdown sector (right). Both
+    // banners get equal width and matching empty-state placeholders so
+    // the row never collapses to a half-empty layout.
     '<div class="v2ov-row equal">' +
-      v2RenderEarningsCombined(filtered) +
+      (v2RenderHotSectorBanner(filtered) || '<div class="v2ov-card v2-dd-empty"><div class="v2ov-card-head"><div><div class="v2ov-title">🔥 Heating Up</div><div class="v2ov-sub">No sector running yet</div></div></div><div style="padding:14px 4px;color:#94a3b8;font-size:12.5px;text-align:center">No sub-sector with avg +8% over 1 month right now.</div></div>') +
       (v2RenderDrawdownBanner(filtered) || '<div class="v2ov-card v2-dd-empty"><div class="v2ov-card-head"><div><div class="v2ov-title">📉 Sector Pressure</div><div class="v2ov-sub">No sector currently in drawdown</div></div></div><div style="padding:14px 4px;color:#94a3b8;font-size:12.5px;text-align:center">All sectors holding steady this month.</div></div>') +
     '</div>' +
-    // Hot Sector banner — mirrors the drawdown card but for the strongest
-    // heating-up sub-sector. Renders only when at least one sub-sector has
-    // avg momentum_1m >= +8% across 3+ stocks, so quiet markets don't show
-    // a fake "hot" tile.
-    (v2RenderHotSectorBanner(filtered) ? '<div class="v2ov-row">' + v2RenderHotSectorBanner(filtered) + '</div>' : '') +
+    // Row 2: Earnings combined (left) + Hot News making headlines today
+    // (right). News is fetched async after this initial render so the
+    // overview paints without waiting on Alpaca.
+    '<div class="v2ov-row equal">' +
+      v2RenderEarningsCombined(filtered) +
+      v2RenderHotNewsPlaceholder() +
+    '</div>' +
     '<div class="v2-disclaimer">' +
       '<strong>Educational research tool.</strong> ' +
       'AlphaHunt is a quantitative analysis platform — not a SEBI / SEC-registered investment advisor. ' +
@@ -6623,7 +6713,11 @@ function renderV2Overview(tickers){
       'not personalized advice or recommendations to buy or sell any security. ' +
       'Past performance and quantitative ratings do not guarantee future results. Always do your own research.' +
     '</div>';
-  // Fire the async tracker strip load now that #v2-tracker-strip exists
+  // Fire the async tracker strip load now that #v2-tracker-strip exists.
+  // Also kick the Hot News fetch — the #v2-hot-news-slot placeholder is
+  // already in the DOM after the innerHTML assignment above.
+  const _idle = window.requestIdleCallback || ((cb) => setTimeout(cb, 32));
+  _idle(() => { try { v2LoadHotNews(); } catch(e){ console.error(e); } });
 }
 
 /* ── Theme toggle ─────────────────────────────────────────────── */
