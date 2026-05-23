@@ -4709,7 +4709,7 @@ async def api_tracker_chart():
     Cached 15 min — the underlying yfinance fetches are also cached for
     6 h each via /api/price-history.
     """
-    cache_key = "tracker-chart:v1"
+    cache_key = "tracker-chart:v2"  # bump on May 23 closed-pick inclusion
     cached = cache.get(cache_key)
     if cached is not None:
         return JSONResponse(cached)
@@ -4719,14 +4719,44 @@ async def api_tracker_chart():
     except Exception:
         return JSONResponse({"dates": [], "spy": [], "qqq": [], "tracker": []})
 
-    # Load current model portfolio picks (active only)
-    picks = []
+    # Load current model portfolio picks (active)
+    active_picks = []
     try:
-        picks = list((_model_portfolio or {}).get("picks") or [])
+        active_picks = list((_model_portfolio or {}).get("picks") or [])
     except Exception:
-        picks = []
+        active_picks = []
 
-    # Tickers to fetch: SPY, QQQ, plus every pick's symbol
+    # ALSO load closed trades — historical chart must include positions that
+    # have since exited, otherwise the line shows survivorship bias (e.g. a
+    # pick stopped out at -8% would disappear from the past 30 days entirely,
+    # making the chart look better than the strategy actually performed).
+    closed_trades = []
+    try:
+        closed_trades = _store.load_trades(limit=500) or []
+    except Exception:
+        closed_trades = []
+
+    # Normalize closed-trades into the same shape pick-loop expects.
+    # Skip exit_reason='rebuild' on May 22 only — those were admin closures
+    # of synthetic backdated entries, not real positions.
+    closed_picks = []
+    for t in closed_trades:
+        if t.get("exit_reason") == "rebuild" and str(t.get("exit_date")) == "2026-05-22":
+            continue
+        closed_picks.append({
+            "ticker":       t.get("ticker"),
+            "entry_date":   str(t.get("entry_date")) if t.get("entry_date") else None,
+            "added_date":   str(t.get("entry_date")) if t.get("entry_date") else None,
+            "entry_price":  t.get("entry_price"),
+            # exit_date / exit_price are the closed-trade-only fields the
+            # downstream loop reads to cap the contribution series.
+            "exit_date":    str(t.get("exit_date")) if t.get("exit_date") else None,
+            "exit_price":   t.get("exit_price"),
+        })
+
+    picks = active_picks + closed_picks
+
+    # Tickers to fetch: SPY, QQQ, plus every pick's symbol (active + closed)
     syms = ["SPY", "QQQ"] + [
         (p.get("ticker") or "").upper()
         for p in picks
@@ -4802,7 +4832,13 @@ async def api_tracker_chart():
     spy_series = pct_series(spy_hist)
     qqq_series = pct_series(qqq_hist)
 
-    # Tracker: equal-weighted, each pick contributes from its entry_date
+    # Tracker: equal-weighted, each pick contributes from its entry_date.
+    # For CLOSED picks (have exit_date + exit_price), the contribution is
+    # capped at the exit value from exit_date onwards. This is the fix for
+    # the survivorship-bias problem the user spotted: previously the chart
+    # only used active picks, so any position that exited disappeared from
+    # the historical line entirely. Now exits LOCK IN their final value at
+    # exit_date and that contribution stays in the average forever.
     tracker_series = []
     for d in dates:
         contributions = []
@@ -4811,9 +4847,24 @@ async def api_tracker_chart():
             h   = histories.get(sym, {})
             entry_date  = p.get("entry_date") or p.get("added_date")
             entry_close = p.get("entry_price")
-            if not h or not entry_date or not entry_close:
+            exit_date   = p.get("exit_date")
+            exit_close  = p.get("exit_price")
+            if not entry_date or not entry_close:
                 continue
             if d < entry_date:
+                continue
+            # If this pick has exited and the chart date is on/after exit,
+            # the contribution is the realised final return — frozen, doesn't
+            # follow the post-exit price action.
+            if exit_date and exit_close and d >= exit_date:
+                try:
+                    pct = (float(exit_close) / float(entry_close) - 1) * 100
+                    contributions.append(pct)
+                except (TypeError, ValueError, ZeroDivisionError):
+                    pass
+                continue
+            # Still active on this date — use the close from price history.
+            if not h:
                 continue
             close_d = h.get(d)
             if close_d is None:
