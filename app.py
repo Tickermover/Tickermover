@@ -4709,7 +4709,7 @@ async def api_tracker_chart():
     Cached 15 min — the underlying yfinance fetches are also cached for
     6 h each via /api/price-history.
     """
-    cache_key = "tracker-chart:v5"  # bump May 23 PM #3 — LITE de-duplicated, 6 backfilled closes remain
+    cache_key = "tracker-chart:v6"  # bump May 23 PM #4 — chart now uses real entry-date closes (anchored at 0%)
     cached = cache.get(cache_key)
     if cached is not None:
         return JSONResponse(cached)
@@ -4833,29 +4833,63 @@ async def api_tracker_chart():
     qqq_series = pct_series(qqq_hist)
 
     # Tracker: equal-weighted, each pick contributes from its entry_date.
-    # For CLOSED picks (have exit_date + exit_price), the contribution is
-    # capped at the exit value from exit_date onwards. This is the fix for
-    # the survivorship-bias problem the user spotted: previously the chart
-    # only used active picks, so any position that exited disappeared from
-    # the historical line entirely. Now exits LOCK IN their final value at
-    # exit_date and that contribution stays in the average forever.
+    # KEY INVARIANT (May 23 2026): the chart's pick baseline is the actual
+    # yfinance close on the pick's entry_date, NOT the recorded entry_price.
+    # Why: many active picks have simulated back-calculated entry prices
+    # (is_simulated_entry=true), which would make Day 1 = (real_close /
+    # synthetic_entry − 1) ≈ +43% — a fake jump that destroys chart trust.
+    # Using the real entry-date close anchors Day 1 = 0% by definition and
+    # makes every later day a true price-action gain or loss.
+    def _real_entry_close(sym: str, entry_date: str, hist: dict) -> float | None:
+        """yfinance close on entry_date, with forward-fill for weekends/
+        holidays. Falls back to the first available day after entry_date
+        when the entry day itself isn't a trading day."""
+        if not entry_date or not hist:
+            return None
+        if entry_date in hist:
+            return hist[entry_date]
+        # Forward-fill: next available trading day after entry_date
+        later = [k for k in hist.keys() if k >= entry_date]
+        if later:
+            return hist[min(later)]
+        return None
+
+    # Cache resolved entry closes per pick so we don't re-scan history dicts
+    # on every chart day.
+    pick_baselines: dict[int, float | None] = {}
+    for i, p in enumerate(picks):
+        sym = (p.get("ticker") or "").upper()
+        ed  = p.get("entry_date") or p.get("added_date")
+        pick_baselines[i] = _real_entry_close(sym, ed, histories.get(sym, {}))
+
+    # Same treatment for exit_close on closed picks — use yfinance close on
+    # exit_date so the realised return matches market reality, not whatever
+    # admin value lives in the DB row.
+    pick_exit_values: dict[int, float | None] = {}
+    for i, p in enumerate(picks):
+        sym = (p.get("ticker") or "").upper()
+        xd  = p.get("exit_date")
+        if xd:
+            pick_exit_values[i] = _real_entry_close(sym, xd, histories.get(sym, {}))
+        else:
+            pick_exit_values[i] = None
+
     tracker_series = []
     for d in dates:
         contributions = []
-        for p in picks:
+        for i, p in enumerate(picks):
             sym = (p.get("ticker") or "").upper()
             h   = histories.get(sym, {})
             entry_date  = p.get("entry_date") or p.get("added_date")
-            entry_close = p.get("entry_price")
+            entry_close = pick_baselines.get(i)
             exit_date   = p.get("exit_date")
-            exit_close  = p.get("exit_price")
+            exit_close  = pick_exit_values.get(i)
             if not entry_date or not entry_close:
                 continue
             if d < entry_date:
                 continue
-            # If this pick has exited and the chart date is on/after exit,
-            # the contribution is the realised final return — frozen, doesn't
-            # follow the post-exit price action.
+            # Closed pick on/after exit_date: realised return locks in,
+            # using real market exit close (not the admin-recorded value).
             if exit_date and exit_close and d >= exit_date:
                 try:
                     pct = (float(exit_close) / float(entry_close) - 1) * 100
@@ -4863,12 +4897,11 @@ async def api_tracker_chart():
                 except (TypeError, ValueError, ZeroDivisionError):
                     pass
                 continue
-            # Still active on this date — use the close from price history.
+            # Still active on this date — compare close-on-d to close-on-entry.
             if not h:
                 continue
             close_d = h.get(d)
             if close_d is None:
-                # forward-fill from previous available close
                 prev_dates = [k for k in h.keys() if k <= d]
                 if not prev_dates:
                     continue
