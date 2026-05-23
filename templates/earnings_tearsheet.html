@@ -1680,16 +1680,21 @@ async function downloadPdf() {
   if (!_data) { flash('Load a ticker first'); return; }
   flash('Rendering A4 PDF…');
   const node = document.getElementById('sheet');
-  // CRITICAL: html2canvas can't export -webkit-background-clip:text +
-  // -webkit-text-fill-color:transparent (the gradient-text trick we use
-  // for the Alpha Score). When captured, the text becomes fully
-  // transparent and the gradient block stays as a 'blue block' on the
-  // PDF with no visible number. Workaround: tag the body so a print-only
-  // CSS rule swaps the gradient text for a solid brand color during
-  // capture, then untag afterwards.
+  // CRITICAL FIX 1: when running inside the dashboard iframe (?embed=1),
+  // body has the .embed class which COMPACTS the sheet (removes width:1240,
+  // tightens padding). html2canvas was then capturing the COMPACT layout
+  // and stretching it across the A4 — producing the broken narrow-column
+  // PDF the user saw. Strip .embed for capture, restore afterwards.
+  // CRITICAL FIX 2: html2canvas can't export -webkit-background-clip:text
+  // + -webkit-text-fill-color:transparent (gradient text). Tagged via
+  // .exporting-pdf so a swap rule kicks in.
+  const wasEmbed = document.body.classList.contains('embed');
+  if (wasEmbed) document.body.classList.remove('embed');
   document.body.classList.add('exporting-pdf');
-  // Give the browser a paint frame to apply the swap before capture.
-  await new Promise(r => setTimeout(r, 250));
+  // Give the browser two paint frames so the layout reflow lands before
+  // html2canvas measures.
+  await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
+  await new Promise(r => setTimeout(r, 120));
   try {
     const c = await html2canvas(node, {
       backgroundColor:'#ffffff', scale:2,
@@ -1706,6 +1711,7 @@ async function downloadPdf() {
     flash('✓ PDF downloaded');
   } finally {
     document.body.classList.remove('exporting-pdf');
+    if (wasEmbed) document.body.classList.add('embed');
   }
 }
 

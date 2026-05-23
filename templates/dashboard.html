@@ -9829,11 +9829,7 @@ function openStockModal(ticker) {
       <div class="v2-ts-cta-actions">
         <button onclick="event.stopPropagation();v2OpenTearsheet('${t.ticker}');setTimeout(()=>v2TearsheetDownload(),120)" class="v2-ts-cta-btn v2-ts-cta-btn-primary" type="button" title="Download PDF">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          Download
-        </button>
-        <button onclick="event.stopPropagation();v2OpenTearsheet('${t.ticker}')" class="v2-ts-cta-btn v2-ts-cta-btn-ghost" type="button" title="Open options">
-          Options
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-left:4px"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          Download PDF
         </button>
       </div>
     </div>
@@ -13981,15 +13977,6 @@ function showUpgradeSuccess() {
       <div class="v2-tsp-action-body">
         <div class="v2-tsp-action-title">Download PDF</div>
         <div class="v2-tsp-action-sub">Full A4 analyst-style report</div>
-      </div>
-    </button>
-    <button class="v2-tsp-action" id="v2-tsp-share" onclick="v2TearsheetCopyShare()">
-      <div class="v2-tsp-action-icon">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-      </div>
-      <div class="v2-tsp-action-body">
-        <div class="v2-tsp-action-title">Copy share link</div>
-        <div class="v2-tsp-action-sub" id="v2-tsp-share-sub">alphahunt.in/tearsheet/—</div>
       </div>
     </button>
   </div>
