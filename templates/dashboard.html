@@ -7560,6 +7560,14 @@ function v2CloseBriefing(){
 function v2RenderBriefingHTML(sym, d){
   const back = '<button class="v2-brf-back" onclick="v2CloseBriefing()">← Back to all tickers</button>';
   if (!d || d.available === false){
+    // Distinguish rate-limit from genuine no-coverage so the user knows
+    // what's actually going on.
+    if (d && d.reason === 'rate_limited'){
+      return back + '<div class="v2-brf-empty-state">' +
+        '<strong>Briefing temporarily throttled</strong>' +
+        '<span>The transcript provider (Alpha Vantage) is rate-limiting us — free tier allows 25 requests/day. Already-summarised tickers still load instantly from cache; new ones unlock again tomorrow (or sooner if you upgrade the AV key). This is honest about a real constraint, not a bug.</span>' +
+      '</div>';
+    }
     return back + '<div class="v2-brf-empty-state">' +
       '<strong>No event coverage for ' + v2EscHTML(sym) + ' yet</strong>' +
       '<span>Alpha Vantage doesn\'t have a transcript for this ticker. We typically cover S&amp;P 500 + Nasdaq-100 + Dow names. Smaller caps fill in as transcripts are published.</span>' +

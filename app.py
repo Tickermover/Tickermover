@@ -1774,9 +1774,12 @@ async def api_event_intel(symbol: str, refresh: int = 0):
         logger.error(f"event-intel {sym}: {exc}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(exc))
     if not summary:
-        # Not an error — just no data available. Frontend renders an
-        # informative empty state.
         return JSONResponse({"ticker": sym, "available": False})
+    # Rate-limit signal passes through with a structured reason
+    if isinstance(summary, dict) and summary.get("error") == "rate_limited":
+        return JSONResponse({"ticker": sym, "available": False,
+                             "reason": "rate_limited",
+                             "info": summary.get("info")})
     summary["available"] = True
     return JSONResponse(_clean(summary))
 

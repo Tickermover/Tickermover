@@ -45,34 +45,77 @@ _AV_BASE           = "https://www.alphavantage.co/query"
 
 # ── 1. Transcript fetch ───────────────────────────────────────────────────
 
+def _recent_quarters(n: int = 4) -> list[str]:
+    """Return last N quarter labels (e.g. '2026Q1') newest-first.
+
+    Alpha Vantage's EARNINGS_CALL_TRANSCRIPT endpoint REQUIRES an
+    explicit quarter parameter — without it the response is an empty
+    array even for major tickers. We try the most-recent-reported
+    quarter first (the previous quarter; companies typically report
+    1-2 months after quarter-end) and fall back through older ones
+    until we find a populated transcript."""
+    from datetime import datetime as _dt
+    now = _dt.utcnow()
+    # Start from the PREVIOUS quarter — most companies have reported
+    # by mid-second-month of the new quarter.
+    y, m = now.year, now.month
+    prev_q = (m - 1) // 3   # 0..3 — Q1 of current year already finished if we subtract 1
+    # Build (year, quarter) pairs walking backwards
+    out = []
+    q = prev_q   # last completed quarter index (0-3)
+    yr = y
+    if q == 0:
+        # Wrap to Q4 of last year
+        q = 4
+        yr = y - 1
+    for _ in range(n):
+        out.append(f"{yr}Q{q}")
+        q -= 1
+        if q == 0:
+            q = 4
+            yr -= 1
+    return out
+
+
 async def _fetch_av_transcript(ticker: str, quarter: str | None = None) -> dict | None:
     """Hit Alpha Vantage EARNINGS_CALL_TRANSCRIPT. Returns the raw transcript
     payload or None when unavailable. Quarter format: '2026Q1'. When None,
-    Alpha Vantage returns the most recent."""
+    cycles through the last 4 quarters until a populated transcript lands."""
     if not config.ALPHA_VANTAGE_KEY:
         logger.warning("event_intel: ALPHA_VANTAGE_KEY not configured")
         return None
-    params = {
-        "function": "EARNINGS_CALL_TRANSCRIPT",
-        "symbol":   ticker.upper(),
-        "apikey":   config.ALPHA_VANTAGE_KEY,
-    }
-    if quarter:
-        params["quarter"] = quarter
-    try:
-        async with httpx.AsyncClient(timeout=20) as c:
-            r = await c.get(_AV_BASE, params=params)
-            if r.status_code != 200:
-                logger.warning(f"event_intel: AV transcript {ticker} HTTP {r.status_code}")
-                return None
-            data = r.json()
-    except Exception as exc:
-        logger.warning(f"event_intel: AV transcript {ticker} failed: {exc}")
-        return None
-    # Alpha Vantage returns {symbol, quarter, transcript:[{speaker, content, title?}]}
-    if not isinstance(data, dict) or not data.get("transcript"):
-        return None
-    return data
+    quarters_to_try = [quarter] if quarter else _recent_quarters(4)
+    last_info = None
+    for q in quarters_to_try:
+        params = {
+            "function": "EARNINGS_CALL_TRANSCRIPT",
+            "symbol":   ticker.upper(),
+            "quarter":  q,
+            "apikey":   config.ALPHA_VANTAGE_KEY,
+        }
+        try:
+            async with httpx.AsyncClient(timeout=20) as c:
+                r = await c.get(_AV_BASE, params=params)
+                if r.status_code != 200:
+                    logger.warning(f"event_intel: AV transcript {ticker} {q} HTTP {r.status_code}")
+                    continue
+                data = r.json()
+        except Exception as exc:
+            logger.warning(f"event_intel: AV transcript {ticker} {q} failed: {exc}")
+            continue
+        # Detect rate-limit message and abort the loop (no point trying more)
+        if isinstance(data, dict) and data.get("Information"):
+            last_info = data["Information"]
+            logger.warning(f"event_intel: AV rate-limited on {ticker} {q}: {last_info[:120]}")
+            break
+        if isinstance(data, dict) and data.get("transcript"):
+            data.setdefault("quarter", q)
+            return data
+    if last_info:
+        # Surface the AV rate-limit reason through the caller chain so the
+        # frontend can show a real message instead of generic 'no coverage'.
+        return {"error": "rate_limited", "info": last_info}
+    return None
 
 
 # ── 2. Summarization (Anthropic Haiku) ────────────────────────────────────
@@ -282,6 +325,11 @@ async def get_event_summary(ticker: str, force_refresh: bool = False) -> dict | 
 
     # Fetch transcript
     raw = await _fetch_av_transcript(sym)
+    # Rate-limit signal — surface so the UI can tell the user honestly
+    if isinstance(raw, dict) and raw.get("error") == "rate_limited":
+        cached = await _load_cached(sym)
+        if cached: return cached
+        return {"error": "rate_limited", "info": raw.get("info"), "ticker": sym}
     if not raw:
         # No transcript available — return whatever we have cached even if
         # stale, otherwise None. Honest fallback.
