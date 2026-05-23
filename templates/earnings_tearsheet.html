@@ -128,6 +128,21 @@
     -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;
     font-variant-numeric:tabular-nums;
   }
+  /* PDF export fallback — html2canvas can't render background-clip:text,
+     so the score would appear as a blue gradient block with no number.
+     During capture we tag body.exporting-pdf and the rule below disables
+     the gradient text in favour of a solid brand color. The number is
+     now readable in PDF; the on-screen gradient still applies normally. */
+  body.exporting-pdf .ts-hero-r .ts-scorenum{
+    background:none !important;
+    -webkit-text-fill-color:#4338ca !important;
+    color:#4338ca !important;
+  }
+  body.exporting-pdf .ts-hero-logo .fb{
+    /* Initial-letter fallback uses the same gradient — same risk */
+    background:#4338ca !important;
+    color:#fff !important;
+  }
   .ts-hero-r .ts-scorelbl{
     font-size:11.5px;color:#64748b;font-weight:800;letter-spacing:.12em;text-transform:uppercase;margin-top:6px;
   }
@@ -1279,20 +1294,33 @@ async function downloadPdf() {
   if (!_data) { flash('Load a ticker first'); return; }
   flash('Rendering A4 PDF…');
   const node = document.getElementById('sheet');
-  await new Promise(r => setTimeout(r, 200));
-  const c = await html2canvas(node, {
-    backgroundColor:'#ffffff', scale:2,
-    width:1240, height:1754,
-    windowWidth:1240, windowHeight:1754,
-    useCORS:true, logging:false,
-  });
-  const imgData = c.toDataURL('image/png');
-  // jsPDF — A4 is 210x297mm
-  const { jsPDF } = window.jspdf;
-  const pdf = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
-  pdf.addImage(imgData, 'PNG', 0, 0, 210, 297, undefined, 'FAST');
-  pdf.save('alphahunt-tearsheet-' + _data.stock.ticker + '-' + new Date().toISOString().slice(0,10) + '.pdf');
-  flash('✓ PDF downloaded');
+  // CRITICAL: html2canvas can't export -webkit-background-clip:text +
+  // -webkit-text-fill-color:transparent (the gradient-text trick we use
+  // for the Alpha Score). When captured, the text becomes fully
+  // transparent and the gradient block stays as a 'blue block' on the
+  // PDF with no visible number. Workaround: tag the body so a print-only
+  // CSS rule swaps the gradient text for a solid brand color during
+  // capture, then untag afterwards.
+  document.body.classList.add('exporting-pdf');
+  // Give the browser a paint frame to apply the swap before capture.
+  await new Promise(r => setTimeout(r, 250));
+  try {
+    const c = await html2canvas(node, {
+      backgroundColor:'#ffffff', scale:2,
+      width:1240, height:1754,
+      windowWidth:1240, windowHeight:1754,
+      useCORS:true, logging:false,
+    });
+    const imgData = c.toDataURL('image/png');
+    // jsPDF — A4 is 210x297mm
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+    pdf.addImage(imgData, 'PNG', 0, 0, 210, 297, undefined, 'FAST');
+    pdf.save('alphahunt-tearsheet-' + _data.stock.ticker + '-' + new Date().toISOString().slice(0,10) + '.pdf');
+    flash('✓ PDF downloaded');
+  } finally {
+    document.body.classList.remove('exporting-pdf');
+  }
 }
 
 function copyCaption() {
