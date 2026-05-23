@@ -2650,6 +2650,145 @@ html.v2-dark .v2-mp-mini-lbl{color:#cbd5e1}
   .v2-tearsheet-btn{width:100%;justify-content:center}
 }
 
+/* ──────────────────────────────────────────────────────────────────
+   TEAR SHEET DRAWER — right-side slide-in (May 23 2026)
+   Replaces the standalone /tearsheet/{ticker} new-tab page with an
+   inline 720px-wide drawer that opens within the dashboard. Closes
+   on backdrop click, ESC, or the X button. Body scrolls; backdrop
+   doesn't move. Same shareable URL still works via the share button.
+   ────────────────────────────────────────────────────────────────── */
+.v2-ts-backdrop{
+  position:fixed;inset:0;z-index:9000;
+  background:rgba(15,23,42,.55);backdrop-filter:blur(2px);
+  opacity:0;pointer-events:none;transition:opacity .22s ease;
+}
+.v2-ts-backdrop.on{opacity:1;pointer-events:auto}
+.v2-ts-drawer{
+  position:fixed;top:0;right:0;bottom:0;width:min(720px,94vw);z-index:9001;
+  background:linear-gradient(180deg,#0b1020 0%,#050810 100%);
+  color:#e2e8f0;
+  display:flex;flex-direction:column;
+  transform:translateX(100%);transition:transform .28s cubic-bezier(.22,.61,.36,1);
+  box-shadow:-32px 0 80px -20px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.06) inset;
+  font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+}
+.v2-ts-drawer.on{transform:translateX(0)}
+.v2-ts-head{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:16px 22px;border-bottom:1px solid rgba(255,255,255,.06);flex-shrink:0;
+  background:linear-gradient(180deg,rgba(67,56,202,.10) 0%,transparent 100%);
+}
+.v2-ts-head-l{display:flex;flex-direction:column;gap:1px}
+.v2-ts-eyebrow{font-size:10.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#a5b4fc}
+.v2-ts-head-tic{font-size:18px;font-weight:900;letter-spacing:-.01em;color:#fff;font-family:'JetBrains Mono',monospace}
+.v2-ts-head-r{display:flex;align-items:center;gap:8px}
+.v2-ts-share, .v2-ts-close{
+  width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);color:#cbd5e1;cursor:pointer;
+  transition:background .15s, color .15s, transform .12s;text-decoration:none;font-size:14px;font-weight:700;
+  font-family:inherit;
+}
+.v2-ts-share:hover, .v2-ts-close:hover{background:rgba(139,92,246,.18);color:#fff;transform:translateY(-1px)}
+.v2-ts-body{flex:1;overflow-y:auto;padding:20px 22px 32px;display:flex;flex-direction:column;gap:18px}
+.v2-ts-body::-webkit-scrollbar{width:8px}
+.v2-ts-body::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:4px}
+.v2-ts-loading{padding:60px 0;text-align:center;color:#94a3b8;font-size:13px}
+.v2-ts-section{
+  background:rgba(255,255,255,.025);border:1px solid rgba(255,255,255,.06);border-radius:14px;
+  padding:18px 20px;
+}
+.v2-ts-section-title{
+  font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#a5b4fc;
+  margin-bottom:14px;display:flex;align-items:center;gap:8px;
+}
+.v2-ts-section-title svg{flex-shrink:0}
+
+/* Hero: ticker + name + price/perf + Alpha Score gauge */
+.v2-ts-hero{
+  display:grid;grid-template-columns:1fr auto;gap:18px;align-items:center;
+  background:
+    radial-gradient(ellipse 80% 70% at 0% 0%, rgba(139,92,246,.18), transparent 60%),
+    radial-gradient(ellipse 60% 60% at 100% 100%, rgba(236,72,153,.12), transparent 60%),
+    rgba(255,255,255,.03);
+  border:1px solid rgba(255,255,255,.08);border-radius:16px;
+  padding:22px 24px;
+}
+.v2-ts-hero-l{min-width:0}
+.v2-ts-hero-row{display:flex;align-items:center;gap:12px;margin-bottom:8px;flex-wrap:wrap}
+.v2-ts-hero-logo{width:48px;height:48px;border-radius:11px;flex-shrink:0;background:#fff;display:flex;align-items:center;justify-content:center;padding:5px}
+.v2-ts-hero-logo img{width:100%;height:100%;object-fit:contain}
+.v2-ts-hero-name{font-size:14.5px;color:#cbd5e1;font-weight:600;line-height:1.3;margin-bottom:4px}
+.v2-ts-hero-price{font-size:34px;font-weight:900;color:#fff;letter-spacing:-.025em;line-height:1;font-variant-numeric:tabular-nums}
+.v2-ts-hero-chg{display:inline-flex;align-items:center;gap:6px;margin-left:12px;font-size:14px;font-weight:800;font-variant-numeric:tabular-nums}
+.v2-ts-hero-chg.up{color:#86efac}
+.v2-ts-hero-chg.dn{color:#fda4af}
+.v2-ts-hero-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.v2-ts-chip{
+  padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;letter-spacing:.02em;
+  background:rgba(255,255,255,.05);color:#cbd5e1;border:1px solid rgba(255,255,255,.08);
+}
+.v2-ts-chip.grade{background:linear-gradient(135deg,#4338ca,#8b5cf6);color:#fff;border-color:transparent}
+.v2-ts-hero-r{display:flex;flex-direction:column;align-items:center;flex-shrink:0;min-width:120px}
+.v2-ts-score{
+  font-size:48px;font-weight:900;letter-spacing:-.03em;line-height:1;
+  background:linear-gradient(135deg,#a5b4fc 0%,#c4b5fd 50%,#f9a8d4 100%);
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;
+  font-variant-numeric:tabular-nums;
+}
+.v2-ts-score-label{font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#a5b4fc;margin-top:4px}
+
+/* Thesis prose */
+.v2-ts-thesis{font-size:14px;color:#e2e8f0;line-height:1.65;letter-spacing:-.005em}
+.v2-ts-signals{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.v2-ts-signal{
+  padding:5px 11px;border-radius:7px;font-size:11.5px;font-weight:700;
+  background:rgba(99,102,241,.14);color:#c4b5fd;border:1px solid rgba(99,102,241,.30);
+}
+
+/* Pillar bars */
+.v2-ts-pillars{display:grid;grid-template-columns:repeat(2,1fr);gap:10px 16px}
+.v2-ts-pillar{display:flex;flex-direction:column;gap:6px}
+.v2-ts-pillar-row{display:flex;justify-content:space-between;align-items:center;font-size:12px}
+.v2-ts-pillar-label{color:#cbd5e1;font-weight:700}
+.v2-ts-pillar-val{font-weight:800;font-variant-numeric:tabular-nums;color:#fff}
+.v2-ts-pillar-track{height:6px;border-radius:3px;background:rgba(255,255,255,.06);overflow:hidden}
+.v2-ts-pillar-fill{
+  height:100%;border-radius:3px;
+  background:linear-gradient(90deg,#4338ca 0%,#8b5cf6 60%,#ec4899 100%);
+  transition:width .4s ease;
+}
+
+/* Chart */
+.v2-ts-chart-wrap{position:relative}
+.v2-ts-chart-meta{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:10px}
+.v2-ts-chart-period{display:flex;gap:4px}
+.v2-ts-chart-svg{width:100%;height:200px;display:block}
+
+/* Earnings table */
+.v2-ts-earnings-table{width:100%;border-collapse:collapse;font-size:12px;font-variant-numeric:tabular-nums}
+.v2-ts-earnings-table th{
+  text-align:left;font-size:10px;font-weight:700;color:#94a3b8;letter-spacing:.10em;text-transform:uppercase;
+  padding:6px 10px;border-bottom:1px solid rgba(255,255,255,.06);
+}
+.v2-ts-earnings-table td{padding:10px;border-bottom:1px solid rgba(255,255,255,.04);color:#e2e8f0;vertical-align:middle}
+.v2-ts-earnings-table td.r{text-align:right;font-weight:700}
+.v2-ts-earnings-table td.up{color:#86efac}
+.v2-ts-earnings-table td.dn{color:#fda4af}
+.v2-ts-no-data{padding:18px;text-align:center;color:#94a3b8;font-size:12px}
+
+/* Footer disclaimer */
+.v2-ts-disclaimer{
+  font-size:11px;line-height:1.6;color:#64748b;
+  padding:14px 16px;background:rgba(255,255,255,.02);border-radius:10px;
+  border-left:3px solid rgba(99,102,241,.35);
+}
+
+@media (max-width:520px){
+  .v2-ts-hero{grid-template-columns:1fr}
+  .v2-ts-hero-r{align-items:flex-start;min-width:0}
+  .v2-ts-pillars{grid-template-columns:1fr}
+}
+
 /* Reusable ticker logo (real logo + colored-initial fallback).
    Default = LIGHT background — works for the vast majority of FMP
    logos (coloured marks, dark text marks). For tickers whose logo
@@ -7064,6 +7203,286 @@ const TAILWINDS = {
   'ETF':                         'Broad market exposure · Sector rotation hedge · Liquidity benchmark',
 };
 
+/* ──────────────────────────────────────────────────────────────────
+   TEAR SHEET DRAWER — inline replacement for /tearsheet/{ticker}.
+   v2OpenTearsheet(ticker) opens the right-side drawer, fetches the
+   ticker's data, and renders 6 sections (hero, thesis, pillars,
+   chart, earnings, disclaimer). v2CloseTearsheet() closes it.
+   ────────────────────────────────────────────────────────────────── */
+let _v2TsCurrent = null;
+function v2OpenTearsheet(ticker){
+  if (!ticker) return;
+  const sym = String(ticker).toUpperCase();
+  _v2TsCurrent = sym;
+  const backdrop = document.getElementById('v2-ts-backdrop');
+  const drawer   = document.getElementById('v2-ts-drawer');
+  const head     = document.getElementById('v2-ts-head-tic');
+  const share    = document.getElementById('v2-ts-share');
+  const body     = document.getElementById('v2-ts-body');
+  if (!backdrop || !drawer || !body) return;
+  head.textContent = sym;
+  if (share) share.href = '/tearsheet/' + encodeURIComponent(sym);
+  body.innerHTML = '<div class="v2-ts-loading">Loading tear sheet for ' + sym + '…</div>';
+  backdrop.classList.add('on');
+  backdrop.setAttribute('aria-hidden', 'false');
+  drawer.classList.add('on');
+  drawer.setAttribute('aria-hidden', 'false');
+  document.body.style.overflow = 'hidden';
+  // Lazy-fetch the ticker's data, then render.
+  v2LoadTearsheetData(sym).then(data => {
+    if (_v2TsCurrent !== sym) return; // user navigated to a different ticker
+    body.innerHTML = v2RenderTearsheetHTML(sym, data);
+    v2WireTsChartScrubber(body);
+  }).catch(err => {
+    body.innerHTML = '<div class="v2-ts-loading">Couldn\'t load ' + sym + ' (' + (err && err.message || 'error') + ').</div>';
+  });
+}
+
+function v2CloseTearsheet(){
+  _v2TsCurrent = null;
+  const backdrop = document.getElementById('v2-ts-backdrop');
+  const drawer   = document.getElementById('v2-ts-drawer');
+  if (backdrop){ backdrop.classList.remove('on'); backdrop.setAttribute('aria-hidden', 'true'); }
+  if (drawer)  { drawer.classList.remove('on');   drawer.setAttribute('aria-hidden', 'true'); }
+  document.body.style.overflow = '';
+}
+
+// ESC closes the drawer when it's open
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && _v2TsCurrent) v2CloseTearsheet();
+});
+
+async function v2LoadTearsheetData(sym){
+  // Pull live ticker data from the loaded universe (fast, already in memory).
+  const live = (_allTickerData && _allTickerData[sym]) || null;
+  // Fetch the 90-day price history + earnings in parallel.
+  const [hist, earnings] = await Promise.allSettled([
+    fetch('/api/price-history/' + encodeURIComponent(sym), { cache: 'no-store' })
+      .then(r => r.ok ? r.json() : null).catch(() => null),
+    fetch('/api/earnings/' + encodeURIComponent(sym), { cache: 'no-store' })
+      .then(r => r.ok ? r.json() : null).catch(() => null),
+  ]);
+  return {
+    live,
+    history:  hist.status     === 'fulfilled' ? hist.value     : null,
+    earnings: earnings.status === 'fulfilled' ? earnings.value : null,
+  };
+}
+
+function v2RenderTearsheetHTML(sym, data){
+  const t = data.live || { ticker: sym };
+  // ── 1. Hero band ────────────────────────────────────────────────
+  const name   = (t.name || sym);
+  const price  = parseFloat(t.price || 0);
+  const chg    = parseFloat(t.change_pct == null ? 0 : t.change_pct);
+  const score  = Math.round(parseFloat(t.smart_score ?? t.pop_score ?? 0));
+  const grade  = (t.grade || '—').toUpperCase();
+  const sector = t.sector || '';
+  const sub    = t.sub_sector || t.subsector || '';
+  const mcap   = parseFloat(t.market_cap || 0);
+  const fmtMcap = v => {
+    if (!v) return '—';
+    if (v >= 1e12) return '$' + (v/1e12).toFixed(2) + 'T';
+    if (v >= 1e9)  return '$' + (v/1e9).toFixed(1) + 'B';
+    if (v >= 1e6)  return '$' + (v/1e6).toFixed(0) + 'M';
+    return '$' + v.toFixed(0);
+  };
+  const chgCls = chg >= 0 ? 'up' : 'dn';
+  const chgStr = (chg >= 0 ? '+' : '') + chg.toFixed(2) + '%';
+  const hero =
+    '<div class="v2-ts-hero">' +
+      '<div class="v2-ts-hero-l">' +
+        '<div class="v2-ts-hero-row">' +
+          '<div class="v2-ts-hero-logo">' + v2LogoHTML(sym, 'md') + '</div>' +
+          '<div style="flex:1;min-width:0">' +
+            '<div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#a5b4fc;font-weight:700">' + v2EscHTML(sym) + '</div>' +
+            '<div class="v2-ts-hero-name">' + v2EscHTML(name) + '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div>' +
+          '<span class="v2-ts-hero-price">$' + (isFinite(price) ? price.toFixed(2) : '—') + '</span>' +
+          '<span class="v2-ts-hero-chg ' + chgCls + '">' + chgStr + '</span>' +
+        '</div>' +
+        '<div class="v2-ts-hero-chips">' +
+          (grade !== '—' ? '<span class="v2-ts-chip grade">Grade ' + grade + '</span>' : '') +
+          (sector ? '<span class="v2-ts-chip">' + v2EscHTML(sector) + '</span>' : '') +
+          (sub && sub !== sector ? '<span class="v2-ts-chip">' + v2EscHTML(sub) + '</span>' : '') +
+          (mcap ? '<span class="v2-ts-chip">' + fmtMcap(mcap) + '</span>' : '') +
+        '</div>' +
+      '</div>' +
+      '<div class="v2-ts-hero-r">' +
+        '<div class="v2-ts-score">' + (score || '—') + '</div>' +
+        '<div class="v2-ts-score-label">Alpha Score</div>' +
+      '</div>' +
+    '</div>';
+
+  // ── 2. Investment thesis + key signals ───────────────────────────
+  let thesis = '';
+  try { thesis = (typeof buildThesis === 'function') ? buildThesis(t) : ''; } catch(e){ thesis = ''; }
+  if (!thesis) thesis = 'Quantitative scan flagged ' + sym + ' on a mix of momentum, growth, and quality signals. See the pillar breakdown below for the full picture.';
+  const sigList = Array.isArray(t.signals) ? t.signals.slice(0, 6) : [];
+  const sigHTML = sigList.length
+    ? '<div class="v2-ts-signals">' + sigList.map(s => '<span class="v2-ts-signal">' + v2EscHTML(s) + '</span>').join('') + '</div>'
+    : '';
+  const thesisSec =
+    '<section class="v2-ts-section">' +
+      '<div class="v2-ts-section-title">Investment thesis</div>' +
+      '<div class="v2-ts-thesis">' + v2EscHTML(thesis) + '</div>' +
+      sigHTML +
+    '</section>';
+
+  // ── 3. Six pillars ──────────────────────────────────────────────
+  let pillars = null;
+  try { pillars = (typeof _computePillarsForT === 'function') ? _computePillarsForT(t) : null; } catch(e){ pillars = null; }
+  if (!pillars) pillars = _v2DerivePillars(t);
+  const pillarRows = Object.entries(pillars || {}).map(([k, v]) => {
+    const pct = Math.max(0, Math.min(100, parseFloat(v) || 0));
+    return '<div class="v2-ts-pillar">' +
+      '<div class="v2-ts-pillar-row">' +
+        '<span class="v2-ts-pillar-label">' + v2EscHTML(k) + '</span>' +
+        '<span class="v2-ts-pillar-val">' + Math.round(pct) + '</span>' +
+      '</div>' +
+      '<div class="v2-ts-pillar-track"><div class="v2-ts-pillar-fill" style="width:' + pct + '%"></div></div>' +
+    '</div>';
+  }).join('');
+  const pillarSec = pillarRows
+    ? '<section class="v2-ts-section">' +
+        '<div class="v2-ts-section-title">Six investment pillars</div>' +
+        '<div class="v2-ts-pillars">' + pillarRows + '</div>' +
+      '</section>'
+    : '';
+
+  // ── 4. Price chart (90-day) ─────────────────────────────────────
+  const chartSec = '<section class="v2-ts-section v2-ts-chart-wrap">' +
+    '<div class="v2-ts-section-title">90-day price</div>' +
+    _v2RenderTsChart(data.history) +
+  '</section>';
+
+  // ── 5. Earnings history (last 4 quarters) ────────────────────────
+  const earningsSec = _v2RenderTsEarnings(data.earnings);
+
+  // ── 6. Disclaimer ────────────────────────────────────────────────
+  const disc = '<div class="v2-ts-disclaimer">' +
+    '<strong>Educational research tool.</strong> AlphaHunt is a quantitative analysis platform — not a SEBI / SEC-registered investment advisor. Nothing in this tear sheet is a personalised recommendation to buy or sell. Past performance and quant ratings don\'t guarantee future results. Do your own research.' +
+  '</div>';
+
+  return hero + thesisSec + pillarSec + chartSec + earningsSec + disc;
+}
+
+// Fallback: derive pillar-style scores from common fields when we don't
+// have a canonical _computePillarsForT helper available in this scope.
+function _v2DerivePillars(t){
+  const _n = v => { const x = parseFloat(v); return isFinite(x) ? x : null; };
+  const score = _n(t.smart_score) ?? _n(t.pop_score);
+  return {
+    'Momentum':         (_n(t.momentum_1m) != null) ? Math.max(0, Math.min(100, 50 + (_n(t.momentum_1m) || 0))) : (score || 0),
+    'Growth':           (_n(t.revenue_growth_yoy) != null) ? Math.max(0, Math.min(100, 50 + (_n(t.revenue_growth_yoy) || 0))) : (score || 0),
+    'Quality':          (_n(t.profit_margin) != null) ? Math.max(0, Math.min(100, 50 + (_n(t.profit_margin) || 0) * 2)) : (score || 0),
+    'Valuation':        (_n(t.target_upside_pct) != null) ? Math.max(0, Math.min(100, 50 + (_n(t.target_upside_pct) || 0) / 2)) : (score || 0),
+    'Sentiment':        (_n(t.short_percent_float) != null) ? Math.max(0, Math.min(100, 80 - (_n(t.short_percent_float) || 0) * 2)) : (score || 0),
+    'Growth Potential': score || 0,
+  };
+}
+
+function _v2RenderTsChart(hist){
+  // hist payload shape from /api/price-history: { ticker, points: [{date, close}, ...] }
+  const points = (hist && Array.isArray(hist.points)) ? hist.points : [];
+  if (points.length < 2){
+    return '<div class="v2-ts-no-data">No price history available.</div>';
+  }
+  const last = points[points.length - 1];
+  const first = points[0];
+  const base = parseFloat(first.close);
+  const series = points.map(p => ({ date: p.date, val: ((parseFloat(p.close) / base) - 1) * 100 }));
+  const W = 720, H = 200;
+  const padL = 14, padR = 50, padT = 14, padB = 24;
+  const innerW = W - padL - padR;
+  const innerH = H - padT - padB;
+  const vals = series.map(s => s.val);
+  let mn = Math.min(...vals), mx = Math.max(...vals);
+  if (mx < 0) mx = 0;
+  if (mn > 0) mn = 0;
+  const pad = Math.max(1, (mx - mn) * 0.10);
+  mn -= pad; mx += pad;
+  const range = (mx - mn) || 1;
+  const xAt = i => padL + (i / Math.max(1, series.length - 1)) * innerW;
+  const yAt = v => padT + (1 - (v - mn) / range) * innerH;
+  const path = series.map((s, i) => (i === 0 ? 'M' : 'L') + xAt(i).toFixed(1) + ',' + yAt(s.val).toFixed(1)).join(' ');
+  const areaPath = path + ` L${xAt(series.length-1).toFixed(1)},${yAt(0).toFixed(1)} L${xAt(0).toFixed(1)},${yAt(0).toFixed(1)} Z`;
+  const lastVal = series[series.length-1].val;
+  const lastX = xAt(series.length - 1);
+  const lastY = yAt(lastVal);
+  const fmtPct = v => (v >= 0 ? '+' : '') + v.toFixed(1) + '%';
+  const fmtDate = s => {
+    try { return new Date(s + 'T00:00:00').toLocaleDateString('en-US',{month:'short', day:'numeric'}); }
+    catch(e){ return s; }
+  };
+  return '' +
+    '<div class="v2-ts-chart-meta">' +
+      '<div style="font-size:24px;font-weight:900;color:#fff;font-variant-numeric:tabular-nums;letter-spacing:-.02em">' + fmtPct(lastVal) + '</div>' +
+      '<div style="font-size:11px;color:#94a3b8;font-weight:600">' + fmtDate(first.date) + ' → ' + fmtDate(last.date) + '</div>' +
+    '</div>' +
+    '<svg class="v2-ts-chart-svg" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="xMidYMid meet">' +
+      '<defs>' +
+        '<linearGradient id="v2-ts-chart-stroke" x1="0" y1="0" x2="1" y2="0">' +
+          '<stop offset="0%"   stop-color="#6366f1"/>' +
+          '<stop offset="50%"  stop-color="#a78bfa"/>' +
+          '<stop offset="100%" stop-color="#f472b6"/>' +
+        '</linearGradient>' +
+        '<linearGradient id="v2-ts-chart-fill" x1="0" y1="0" x2="0" y2="1">' +
+          '<stop offset="0%"  stop-color="#8b5cf6" stop-opacity="0.30"/>' +
+          '<stop offset="100%" stop-color="#8b5cf6" stop-opacity="0"/>' +
+        '</linearGradient>' +
+      '</defs>' +
+      `<line x1="${padL}" x2="${padL + innerW}" y1="${yAt(0).toFixed(1)}" y2="${yAt(0).toFixed(1)}" stroke="rgba(255,255,255,.08)" stroke-width="1"/>` +
+      '<path d="' + areaPath + '" fill="url(#v2-ts-chart-fill)" stroke="none"/>' +
+      '<path d="' + path + '" fill="none" stroke="url(#v2-ts-chart-stroke)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>' +
+      `<circle cx="${lastX.toFixed(1)}" cy="${lastY.toFixed(1)}" r="4" fill="#f9a8d4" stroke="#fff" stroke-width="2"/>` +
+      `<text x="${padL + innerW + 6}" y="${(parseFloat(lastY) + 4).toFixed(1)}" font-size="10" fill="#64748b" font-weight="700" font-variant-numeric="tabular-nums">${fmtPct(lastVal)}</text>` +
+      `<text x="${padL}" y="${H - 6}" font-size="10" fill="#64748b" font-weight="700">${fmtDate(first.date)}</text>` +
+      `<text x="${padL + innerW}" y="${H - 6}" text-anchor="end" font-size="10" fill="#64748b" font-weight="700">${fmtDate(last.date)}</text>` +
+    '</svg>';
+}
+
+function _v2RenderTsEarnings(eobj){
+  if (!eobj || !Array.isArray(eobj.history) || !eobj.history.length){
+    return '<section class="v2-ts-section">' +
+      '<div class="v2-ts-section-title">Recent earnings</div>' +
+      '<div class="v2-ts-no-data">No earnings history available.</div>' +
+    '</section>';
+  }
+  const rows = eobj.history.slice(0, 4).map(e => {
+    const dt  = e.date || e.reported_date || '';
+    const epsAct = e.eps_actual != null ? e.eps_actual : (e.actual_eps || null);
+    const epsEst = e.eps_estimate != null ? e.eps_estimate : (e.estimate_eps || null);
+    const beat = (epsAct != null && epsEst != null) ? (epsAct >= epsEst) : null;
+    const surp = (epsAct != null && epsEst != null && epsEst !== 0)
+      ? ((epsAct - epsEst) / Math.abs(epsEst)) * 100 : null;
+    const surpCls = (surp == null) ? '' : (surp >= 0 ? 'up' : 'dn');
+    const surpStr = (surp == null) ? '—' : (surp >= 0 ? '+' : '') + surp.toFixed(1) + '%';
+    const beatStr = beat == null ? '—' : (beat ? '✓ Beat' : '✗ Miss');
+    const beatCls = beat == null ? '' : (beat ? 'up' : 'dn');
+    let dtStr = dt;
+    try { dtStr = new Date(dt + 'T00:00:00').toLocaleDateString('en-US',{month:'short', year:'numeric'}); } catch(e){}
+    return '<tr>' +
+      '<td>' + v2EscHTML(dtStr) + '</td>' +
+      '<td class="r">' + (epsAct != null ? '$' + (+epsAct).toFixed(2) : '—') + '</td>' +
+      '<td class="r">' + (epsEst != null ? '$' + (+epsEst).toFixed(2) : '—') + '</td>' +
+      '<td class="r ' + surpCls + '">' + surpStr + '</td>' +
+      '<td class="r ' + beatCls + '">' + beatStr + '</td>' +
+    '</tr>';
+  }).join('');
+  return '<section class="v2-ts-section">' +
+    '<div class="v2-ts-section-title">Recent earnings</div>' +
+    '<table class="v2-ts-earnings-table">' +
+      '<thead><tr><th>Quarter</th><th class="r">EPS</th><th class="r">Est.</th><th class="r">Surprise</th><th class="r">Result</th></tr></thead>' +
+      '<tbody>' + rows + '</tbody>' +
+    '</table>' +
+  '</section>';
+}
+
+function v2WireTsChartScrubber(_root){ /* scrubber on tear-sheet chart is a future enhancement */ }
+
 function getTailwinds(t) {
   const sub  = t.sub_sector || t.subsector || (t.meta && t.meta.subsector) || '';
   const sec  = t.sector     || (t.meta && t.meta.sector) || '';
@@ -9229,10 +9648,10 @@ function openStockModal(ticker) {
           <span class="v2-ts-chip"><span class="v2-ts-chip-em">📄</span> PDF / PNG export</span>
         </div>
       </div>
-      <a href="/tearsheet/${t.ticker}" target="_blank" rel="noopener" class="v2-tearsheet-btn">
+      <button onclick="event.stopPropagation();v2OpenTearsheet('${t.ticker}')" class="v2-tearsheet-btn" style="border:none;cursor:pointer;font-family:inherit">
         Open tear sheet
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-left:6px;vertical-align:-2px"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-      </a>
+      </button>
     </div>
 
     <div class="fd-links" style="margin-top:12px">
@@ -9826,7 +10245,7 @@ function renderReports(tickers) {
   // ── Section 1: Daily Top 5 ────────────────────────────────────────────
   // Each card is now a clickable link to the per-stock tear sheet.
   const top5Cards = top5.map((t, i) => `
-    <a href="/tearsheet/${t.ticker}" target="_blank" rel="noopener" title="Open ${t.ticker} tear sheet"
+    <div onclick="v2OpenTearsheet('${t.ticker}')" title="Open ${t.ticker} tear sheet"
        style="background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:10px;padding:14px;text-align:center;min-width:0;text-decoration:none;color:inherit;display:block;cursor:pointer;transition:transform .15s,box-shadow .15s"
        onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 18px rgba(15,23,42,.18)'"
        onmouseout="this.style.transform='';this.style.boxShadow=''">
@@ -9836,7 +10255,7 @@ function renderReports(tickers) {
       <div style="font-size:13px;color:#fbbf24;margin-top:8px">${STAR[t.grade] || ''}</div>
       <div style="font-size:24px;font-weight:900;background:linear-gradient(135deg,#15803d,#84cc16);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-top:4px">${(t.smart_score ?? t.pop_score ?? 0).toFixed(0)}</div>
       <div style="font-size:9.5px;color:#15803d;font-weight:800;margin-top:6px;letter-spacing:.04em">Open tear sheet →</div>
-    </a>`).join('');
+    </div>`).join('');
 
   const dailyHTML = `
     <div style="background:linear-gradient(135deg,#0d2440 0%,#15803d 100%);border-radius:14px;padding:24px;margin-bottom:18px;color:#fff;box-shadow:0 6px 20px rgba(13,36,64,.2)">
@@ -9865,7 +10284,7 @@ function renderReports(tickers) {
       const date = eps.date || '';
       const dateStr = date ? new Date(date + 'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—';
       return `
-      <a href="/tearsheet/${t.ticker}" target="_blank" rel="noopener"
+      <div onclick="v2OpenTearsheet('${t.ticker}')"
          style="background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:12px;padding:14px;text-decoration:none;color:inherit;transition:transform .15s,box-shadow .15s;display:block;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.04)"
          onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 18px rgba(15,23,42,.12)'"
          onmouseout="this.style.transform='';this.style.boxShadow='0 1px 3px rgba(0,0,0,.04)'">
@@ -9882,7 +10301,7 @@ function renderReports(tickers) {
         </div>
         <div style="font-size:10.5px;color:#94a3b8;margin-top:6px">📅 Reported ${dateStr || '—'}</div>
         <div style="font-size:11px;color:#15803d;margin-top:8px;font-weight:700">📊 Open tear sheet →</div>
-      </a>`;
+      </div>`;
     }).join('');
 
   const earningsHTML = `
@@ -9934,9 +10353,10 @@ function renderReports(tickers) {
 function spotlightOpen() {
   const t = document.getElementById('spotlight-input').value.trim().toUpperCase();
   if (!t) return;
-  // Use the canonical /tearsheet/ URL. /infographics/earnings/{T} still works
-  // as a legacy alias on the backend but the cleaner share-friendly URL is here.
-  window.open('/tearsheet/' + t, '_blank', 'noopener');
+  // Open the inline tear sheet drawer instead of a new-tab page. The
+  // legacy /tearsheet/{T} URL still works as a share target via the
+  // drawer's top-right share button.
+  v2OpenTearsheet(t);
 }
 
 function renderBlog(articles) {
@@ -13357,5 +13777,26 @@ function showUpgradeSuccess() {
   }, {passive:true});
 })();
 </script>
+
+<!-- ─── TEAR SHEET DRAWER (right-side slide-in, replaces /tearsheet new-tab) ─── -->
+<div id="v2-ts-backdrop" class="v2-ts-backdrop" onclick="v2CloseTearsheet()" aria-hidden="true"></div>
+<aside id="v2-ts-drawer" class="v2-ts-drawer" aria-hidden="true" aria-label="Tear sheet">
+  <header class="v2-ts-head">
+    <div class="v2-ts-head-l">
+      <div class="v2-ts-eyebrow">Tear sheet</div>
+      <div class="v2-ts-head-tic" id="v2-ts-head-tic">—</div>
+    </div>
+    <div class="v2-ts-head-r">
+      <a id="v2-ts-share" class="v2-ts-share" href="#" target="_blank" rel="noopener" title="Open share URL in new tab">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2h4v4M14 2L8.5 7.5"/><path d="M13 9v4a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h4"/></svg>
+      </a>
+      <button class="v2-ts-close" onclick="v2CloseTearsheet()" aria-label="Close tear sheet">✕</button>
+    </div>
+  </header>
+  <div class="v2-ts-body" id="v2-ts-body">
+    <div class="v2-ts-loading">Loading tear sheet…</div>
+  </div>
+</aside>
+
 </body>
 </html>
