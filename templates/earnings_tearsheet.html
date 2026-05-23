@@ -871,18 +871,23 @@ async function loadTicker() {
   document.getElementById('ts-content').style.display = 'none';
 
   try {
-    const [uniR, tickR, eiR, phR, evR] = await Promise.all([
+    // INSTANT-DOWNLOAD MODE (May 23): /api/event-intel + /api/earnings-intel
+    // are slow on cold-cache paths (Alpha Vantage transcript fetch + Anthropic
+    // Haiku summarization can take 5-8s). User wants the PDF immediately, so
+    // we only fetch the FAST endpoints: universe snapshot, full ticker row,
+    // and the cached price history. Anything that requires a per-request
+    // network round-trip to an external API is removed.
+    const [uniR, tickR, phR] = await Promise.all([
       fetch('/api/universe').then(r => r.json()),
-      // /api/ticker/{symbol} returns the unstripped row including `breakdown`
-      // and `weighted`, which /api/universe drops for payload-size reasons.
-      // We merge them in below so the Score Breakdown chart can render.
       fetch('/api/ticker/' + t).then(r => r.ok ? r.json() : null).catch(() => null),
-      fetch('/api/earnings-intel/' + t).then(r => r.ok ? r.json() : null).catch(() => null),
       fetch('/api/price-history/' + t + '?period=3mo').then(r => r.ok ? r.json() : null).catch(() => null),
-      // Quartr-style event intel: Alpha Vantage transcript + Haiku summary.
-      // Lazy-fetched + cached server-side. Section hides itself if not available.
-      fetch('/api/event-intel/' + t).then(r => r.ok ? r.json() : null).catch(() => null),
     ]);
+    // Earnings-intel + event-intel are NULL in this mode. The tear sheet
+    // falls back to data already in the ticker payload (eps_quarters,
+    // quarterly_income, gross_margin, etc.). The dedicated event-summary
+    // section hides itself when _data.event is null.
+    const eiR = null;
+    const evR = null;
     let stock = (uniR.tickers || []).find(x => x.ticker === t);
     if (!stock) {
       document.getElementById('loading').textContent = 'Ticker "' + t + '" not in our universe yet.';
