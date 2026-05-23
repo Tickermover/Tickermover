@@ -1663,6 +1663,33 @@ async def api_regime_refresh():
     return JSONResponse(_clean(payload))
 
 
+@app.get("/api/event-intel/{symbol}")
+async def api_event_intel(symbol: str, refresh: int = 0):
+    """Quartr-style structured summary of the latest earnings call.
+
+    Returns: {ticker, event_title, event_date, source, key_updates[],
+    operations[], outlook[], risks[], raw_excerpt, summarized_at}.
+
+    Lazy-fetches from Alpha Vantage + summarizes via Anthropic Haiku when
+    cache is missing or stale (>14d). Pass ?refresh=1 to force a re-fetch
+    even when cache is fresh."""
+    import event_intel as _ei_mod
+    sym = symbol.upper().strip()
+    if not sym or len(sym) > 8:
+        raise HTTPException(status_code=400, detail="Bad ticker")
+    try:
+        summary = await _ei_mod.get_event_summary(sym, force_refresh=bool(refresh))
+    except Exception as exc:
+        logger.error(f"event-intel {sym}: {exc}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(exc))
+    if not summary:
+        # Not an error — just no data available. Frontend renders an
+        # informative empty state.
+        return JSONResponse({"ticker": sym, "available": False})
+    summary["available"] = True
+    return JSONResponse(_clean(summary))
+
+
 @app.get("/api/thesis/{symbol}")
 async def api_thesis(symbol: str):
     """

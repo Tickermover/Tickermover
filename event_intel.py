@@ -1,0 +1,290 @@
+"""
+AlphaHunt — Event intel (earnings call summarization)
+=====================================================
+
+Quartr-style structured event summary for a ticker. Pulls the most recent
+earnings call transcript from Alpha Vantage, summarizes via Anthropic
+Haiku into 4 topic buckets, caches the result in Supabase so subsequent
+hits are free + instant.
+
+Output shape (also the SQL row shape, see db/2026-05-23-event-intel.sql):
+    {
+        "ticker":       str,
+        "event_title":  "Q1 2026 earnings call",
+        "event_date":   "2026-04-30",
+        "source":       "alpha_vantage_transcript" | "sec_8k_fallback",
+        "key_updates":   ["...", "..."],         # 3-5 bullet points
+        "operations":    ["...", "..."],         # manufacturing / capex
+        "outlook":       ["...", "..."],         # guidance + forward-looking
+        "risks":         ["...", "..."],         # caveats / headwinds
+        "raw_excerpt":   "...",                  # 1-paragraph verbatim quote
+        "summarized_at": "2026-05-23T15:42:00Z",
+    }
+
+Cost: ~$0.001 per stock-quarter (Haiku is cheap). Cache TTL = 14 days so
+new earnings calls trigger a refresh automatically.
+"""
+from __future__ import annotations
+
+import json
+import logging
+import os
+from datetime import datetime, timezone
+
+import httpx
+
+import config
+
+logger = logging.getLogger(__name__)
+
+_ANTHROPIC_KEY     = os.environ.get("ANTHROPIC_API_KEY", "").strip()
+_ANTHROPIC_MODEL   = os.environ.get("ANTHROPIC_MODEL", "claude-haiku-4-5-20251001")
+_ANTHROPIC_TIMEOUT = 18.0
+_AV_BASE           = "https://www.alphavantage.co/query"
+
+
+# ── 1. Transcript fetch ───────────────────────────────────────────────────
+
+async def _fetch_av_transcript(ticker: str, quarter: str | None = None) -> dict | None:
+    """Hit Alpha Vantage EARNINGS_CALL_TRANSCRIPT. Returns the raw transcript
+    payload or None when unavailable. Quarter format: '2026Q1'. When None,
+    Alpha Vantage returns the most recent."""
+    if not config.ALPHA_VANTAGE_KEY:
+        logger.warning("event_intel: ALPHA_VANTAGE_KEY not configured")
+        return None
+    params = {
+        "function": "EARNINGS_CALL_TRANSCRIPT",
+        "symbol":   ticker.upper(),
+        "apikey":   config.ALPHA_VANTAGE_KEY,
+    }
+    if quarter:
+        params["quarter"] = quarter
+    try:
+        async with httpx.AsyncClient(timeout=20) as c:
+            r = await c.get(_AV_BASE, params=params)
+            if r.status_code != 200:
+                logger.warning(f"event_intel: AV transcript {ticker} HTTP {r.status_code}")
+                return None
+            data = r.json()
+    except Exception as exc:
+        logger.warning(f"event_intel: AV transcript {ticker} failed: {exc}")
+        return None
+    # Alpha Vantage returns {symbol, quarter, transcript:[{speaker, content, title?}]}
+    if not isinstance(data, dict) or not data.get("transcript"):
+        return None
+    return data
+
+
+# ── 2. Summarization (Anthropic Haiku) ────────────────────────────────────
+
+_SUMMARY_PROMPT = """You are summarising an earnings call transcript into a structured
+JSON object for an analyst-style stock research report. Be specific with numbers,
+quote exact figures and percentages from the transcript. Do NOT make up data.
+If the transcript doesn't cover a category, return an empty list for it.
+
+Return ONLY a JSON object (no prose, no markdown fences) with these keys:
+
+{{
+  "event_title":   "Q? YYYY earnings call",
+  "event_date":    "YYYY-MM-DD",
+  "key_updates":   ["3-5 bullet points covering the most important quantitative updates from the quarter"],
+  "operations":    ["2-4 bullets about manufacturing, capacity, supply chain, capex"],
+  "outlook":       ["2-4 bullets about forward guidance, expected ranges, qualitative drivers"],
+  "risks":         ["1-3 bullets about specific risks or headwinds management called out"],
+  "raw_excerpt":   "One verbatim paragraph (50-80 words) from the transcript that best captures the executive's key message"
+}}
+
+Style each bullet like the Quartr / Bloomberg pattern: combine the metric WITH the
+comparison inline, e.g. "Revenue of $407M, up 90% YoY led by datacenter products"
+rather than splitting into separate sentences. Each bullet 12-30 words.
+
+Transcript (ticker: {ticker}, quarter: {quarter}):
+
+{transcript_text}
+"""
+
+
+async def _summarize_with_haiku(ticker: str, quarter: str, transcript_text: str) -> dict | None:
+    """Call Anthropic Haiku to produce the structured summary. Returns dict
+    on success, None on failure (e.g. API key missing, rate-limited)."""
+    if not _ANTHROPIC_KEY:
+        logger.warning("event_intel: ANTHROPIC_API_KEY not set, skipping summarization")
+        return None
+    # Truncate the transcript so we stay under Haiku's context comfortably.
+    # Haiku 4.5 supports 200k tokens but cost scales linearly. 30k chars ≈
+    # 7-8k tokens — plenty of context, very cheap.
+    transcript_trimmed = transcript_text[:30000]
+    prompt = _SUMMARY_PROMPT.format(
+        ticker=ticker, quarter=quarter, transcript_text=transcript_trimmed
+    )
+    payload = {
+        "model":      _ANTHROPIC_MODEL,
+        "max_tokens": 1500,
+        "messages":   [{"role": "user", "content": prompt}],
+    }
+    headers = {
+        "x-api-key":         _ANTHROPIC_KEY,
+        "anthropic-version": "2023-06-01",
+        "content-type":      "application/json",
+    }
+    try:
+        async with httpx.AsyncClient(timeout=_ANTHROPIC_TIMEOUT) as c:
+            r = await c.post("https://api.anthropic.com/v1/messages",
+                             json=payload, headers=headers)
+            if r.status_code != 200:
+                logger.warning(f"event_intel: Anthropic {ticker} HTTP {r.status_code}: {r.text[:200]}")
+                return None
+            resp = r.json()
+    except Exception as exc:
+        logger.warning(f"event_intel: Anthropic {ticker} failed: {exc}")
+        return None
+    text = (resp.get("content") or [{}])[0].get("text", "").strip()
+    # Strip code fences if Haiku added any
+    if text.startswith("```"):
+        text = text.strip("`")
+        # Drop leading 'json' tag if present
+        if text.lower().startswith("json"):
+            text = text[4:].strip()
+    try:
+        parsed = json.loads(text)
+    except json.JSONDecodeError as exc:
+        logger.warning(f"event_intel: JSON decode failed for {ticker}: {exc}; text head: {text[:200]}")
+        return None
+    return parsed
+
+
+# ── 3. Supabase persistence ───────────────────────────────────────────────
+
+def _supabase_headers() -> dict | None:
+    if not config.SUPABASE_URL or not config.SUPABASE_SERVICE_KEY:
+        return None
+    return {
+        "apikey":        config.SUPABASE_SERVICE_KEY,
+        "Authorization": f"Bearer {config.SUPABASE_SERVICE_KEY}",
+        "Content-Type":  "application/json",
+        "Prefer":        "return=representation,resolution=merge-duplicates",
+    }
+
+
+async def _load_cached(ticker: str) -> dict | None:
+    """Latest cached summary for a ticker. Returns None if not found or
+    Supabase unconfigured. Caller decides whether the row is fresh enough."""
+    hdrs = _supabase_headers()
+    if not hdrs:
+        return None
+    base = config.SUPABASE_URL.rstrip("/")
+    try:
+        async with httpx.AsyncClient(timeout=8) as c:
+            r = await c.get(
+                f"{base}/rest/v1/event_summaries",
+                headers=hdrs,
+                params={
+                    "ticker": f"eq.{ticker.upper()}",
+                    "select": "*",
+                    "order":  "summarized_at.desc",
+                    "limit":  "1",
+                },
+            )
+            r.raise_for_status()
+            rows = r.json()
+            return rows[0] if rows else None
+    except Exception as exc:
+        logger.warning(f"event_intel: cache load {ticker} failed: {exc}")
+        return None
+
+
+async def _save_cache(ticker: str, summary: dict) -> bool:
+    hdrs = _supabase_headers()
+    if not hdrs:
+        return False
+    base = config.SUPABASE_URL.rstrip("/")
+    row = {
+        "ticker":        ticker.upper(),
+        "event_title":   summary.get("event_title"),
+        "event_date":    summary.get("event_date"),
+        "source":        summary.get("source", "alpha_vantage_transcript"),
+        "key_updates":   summary.get("key_updates"),
+        "operations":    summary.get("operations"),
+        "outlook":       summary.get("outlook"),
+        "risks":         summary.get("risks"),
+        "raw_excerpt":   summary.get("raw_excerpt"),
+        "summarized_at": datetime.now(timezone.utc).isoformat(),
+    }
+    try:
+        async with httpx.AsyncClient(timeout=10) as c:
+            r = await c.post(
+                f"{base}/rest/v1/event_summaries",
+                headers=hdrs,
+                json=row,
+                params={"on_conflict": "ticker,event_date"},
+            )
+            if r.status_code >= 400:
+                logger.error(f"event_intel: cache save {ticker} → {r.status_code}: {r.text[:200]}")
+                return False
+            return True
+    except Exception as exc:
+        logger.warning(f"event_intel: cache save {ticker} failed: {exc}")
+        return False
+
+
+# ── 4. Public API ────────────────────────────────────────────────────────
+
+# Cache TTL — re-fetch + re-summarize after this many days even if a row
+# already exists. Tuned to 14 days so a new quarterly call (every ~90 days)
+# always triggers a refresh.
+_CACHE_TTL_DAYS = 14
+
+
+def _is_stale(row: dict) -> bool:
+    ts = row.get("summarized_at")
+    if not ts:
+        return True
+    try:
+        when = datetime.fromisoformat(ts.replace("Z", "+00:00"))
+    except (TypeError, ValueError):
+        return True
+    age_days = (datetime.now(timezone.utc) - when).total_seconds() / 86400
+    return age_days > _CACHE_TTL_DAYS
+
+
+async def get_event_summary(ticker: str, force_refresh: bool = False) -> dict | None:
+    """Main entry. Returns the latest event summary for the ticker, falling
+    back to cache when fresh. Returns None when nothing is available
+    (e.g., Alpha Vantage doesn't cover the ticker AND no prior cached row).
+    """
+    sym = ticker.upper()
+    if not force_refresh:
+        cached = await _load_cached(sym)
+        if cached and not _is_stale(cached):
+            return cached
+
+    # Fetch transcript
+    raw = await _fetch_av_transcript(sym)
+    if not raw:
+        # No transcript available — return whatever we have cached even if
+        # stale, otherwise None. Honest fallback.
+        return await _load_cached(sym)
+
+    # Concat transcript segments into one block (preserve speaker order)
+    segments = raw.get("transcript", [])
+    if not segments:
+        return await _load_cached(sym)
+    transcript_text = "\n".join(
+        f"{s.get('speaker','')} ({s.get('title','')}): {s.get('content','')}"
+        for s in segments if s.get("content")
+    )
+    quarter = raw.get("quarter", "")
+
+    # Summarize
+    summary = await _summarize_with_haiku(sym, quarter, transcript_text)
+    if not summary:
+        # LLM failed — return stale cache if we have one
+        return await _load_cached(sym)
+
+    summary["source"] = "alpha_vantage_transcript"
+    # Persist for next time
+    await _save_cache(sym, summary)
+    # Re-load so the response shape matches what /api/event-intel returns
+    # from cache (with summarized_at populated by the DB default).
+    fresh = await _load_cached(sym)
+    return fresh or summary

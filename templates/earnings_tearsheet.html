@@ -280,6 +280,67 @@
   }
 
   /* ── TAKEAWAY + DISCLAIMER FOOTER ── */
+  /* Event summary section (Quartr-style 4-bucket grid) — appears after
+     Recent Earnings Highlights, only when an LLM-summarized event exists
+     in the cache. Whole section hides via inline style if not available. */
+  .ts-event-section{
+    padding:18px 0 4px;
+    border-bottom:1px solid rgba(15,23,42,.08);
+  }
+  .ts-event-head{
+    display:flex;align-items:flex-start;justify-content:space-between;gap:16px;
+    margin-bottom:14px;
+  }
+  .ts-event-title{display:flex;align-items:center;gap:12px}
+  .ts-event-icon{
+    width:36px;height:36px;border-radius:9px;flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;
+    background:linear-gradient(135deg,#4338ca 0%,#8b5cf6 100%);
+    color:#fff;font-size:17px;
+  }
+  .ts-event-eyebrow{font-size:10.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#4338ca}
+  .ts-event-name{font-size:16px;font-weight:800;color:#0d2440;letter-spacing:-.005em;line-height:1.25;margin-top:1px}
+  .ts-event-meta{display:flex;flex-direction:column;align-items:flex-end;gap:5px;font-size:11px;color:#64748b;font-weight:700}
+  .ts-event-pill{
+    padding:3px 9px;border-radius:5px;font-size:9.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;
+    background:linear-gradient(135deg,rgba(67,56,202,.10),rgba(139,92,246,.10));
+    color:#4338ca;border:1px solid rgba(99,102,241,.20);
+  }
+  .ts-event-grid{
+    display:grid;grid-template-columns:1fr 1fr;gap:12px;
+  }
+  .ts-event-bucket{
+    background:#f8fafc;border:1px solid rgba(15,23,42,.06);border-radius:10px;
+    padding:12px 14px;
+  }
+  .ts-event-bucket-h{
+    font-size:10.5px;font-weight:800;color:#0d2440;letter-spacing:.08em;text-transform:uppercase;
+    margin-bottom:8px;display:flex;align-items:center;gap:6px;
+  }
+  .ts-event-bullets{
+    list-style:none;padding:0;margin:0;
+    display:flex;flex-direction:column;gap:6px;
+  }
+  .ts-event-bullets li{
+    font-size:12.5px;color:#1e293b;line-height:1.55;letter-spacing:-.003em;
+    position:relative;padding-left:14px;
+  }
+  .ts-event-bullets li::before{
+    content:'';position:absolute;left:0;top:9px;
+    width:5px;height:5px;border-radius:50%;
+    background:linear-gradient(135deg,#4338ca,#8b5cf6);
+  }
+  .ts-event-quote{
+    margin-top:12px;padding:12px 16px;
+    background:#eef2ff;border-left:3px solid #4338ca;border-radius:0 8px 8px 0;
+    display:flex;gap:10px;
+  }
+  .ts-event-quote-mark{
+    font-family:Georgia, serif;font-size:38px;line-height:1;color:#4338ca;
+    font-weight:900;flex-shrink:0;align-self:flex-start;margin-top:-4px;
+  }
+  .ts-event-quote-text{font-size:12.5px;color:#1e293b;line-height:1.6;font-style:italic;letter-spacing:-.003em}
+
   /* Executive Summary — at-top observational block (different palette
      from Score Observation at bottom so they're visually distinct). */
   .ts-exec{
@@ -677,6 +738,52 @@
           </div>
         </div>
 
+        <!-- RECENT EVENT SUMMARY — Quartr-style structured highlights from
+             the most recent earnings call. Pulled via Alpha Vantage transcript
+             + Anthropic Haiku, cached in Supabase. Section hides itself if no
+             cached summary is available. -->
+        <div id="ts-event-section" class="ts-event-section" style="display:none">
+          <div class="ts-event-head">
+            <div class="ts-event-title">
+              <span class="ts-event-icon">🎤</span>
+              <div>
+                <div class="ts-event-eyebrow">Event summary</div>
+                <div class="ts-event-name" id="ts-event-name">—</div>
+              </div>
+            </div>
+            <div class="ts-event-meta">
+              <span id="ts-event-date">—</span>
+              <span id="ts-event-source" class="ts-event-pill">Earnings call</span>
+            </div>
+          </div>
+
+          <!-- 2-column bucket grid — Quartr pattern -->
+          <div class="ts-event-grid">
+            <div class="ts-event-bucket" id="ts-bucket-key">
+              <div class="ts-event-bucket-h">📊 Key updates</div>
+              <ul class="ts-event-bullets" id="ts-bullets-key"></ul>
+            </div>
+            <div class="ts-event-bucket" id="ts-bucket-ops">
+              <div class="ts-event-bucket-h">🏭 Operations &amp; capex</div>
+              <ul class="ts-event-bullets" id="ts-bullets-ops"></ul>
+            </div>
+            <div class="ts-event-bucket" id="ts-bucket-outlook">
+              <div class="ts-event-bucket-h">🎯 Outlook &amp; guidance</div>
+              <ul class="ts-event-bullets" id="ts-bullets-outlook"></ul>
+            </div>
+            <div class="ts-event-bucket" id="ts-bucket-risks">
+              <div class="ts-event-bucket-h">⚠️ Risks &amp; headwinds</div>
+              <ul class="ts-event-bullets" id="ts-bullets-risks"></ul>
+            </div>
+          </div>
+
+          <!-- Verbatim management quote -->
+          <div class="ts-event-quote" id="ts-event-quote-wrap" style="display:none">
+            <div class="ts-event-quote-mark">"</div>
+            <div class="ts-event-quote-text" id="ts-event-quote">—</div>
+          </div>
+        </div>
+
         <!-- TAKEAWAY -->
         <div class="ts-takeaway">
           <div class="ts-takeaway-icon">📊</div>
@@ -764,7 +871,7 @@ async function loadTicker() {
   document.getElementById('ts-content').style.display = 'none';
 
   try {
-    const [uniR, tickR, eiR, phR] = await Promise.all([
+    const [uniR, tickR, eiR, phR, evR] = await Promise.all([
       fetch('/api/universe').then(r => r.json()),
       // /api/ticker/{symbol} returns the unstripped row including `breakdown`
       // and `weighted`, which /api/universe drops for payload-size reasons.
@@ -772,6 +879,9 @@ async function loadTicker() {
       fetch('/api/ticker/' + t).then(r => r.ok ? r.json() : null).catch(() => null),
       fetch('/api/earnings-intel/' + t).then(r => r.ok ? r.json() : null).catch(() => null),
       fetch('/api/price-history/' + t + '?period=3mo').then(r => r.ok ? r.json() : null).catch(() => null),
+      // Quartr-style event intel: Alpha Vantage transcript + Haiku summary.
+      // Lazy-fetched + cached server-side. Section hides itself if not available.
+      fetch('/api/event-intel/' + t).then(r => r.ok ? r.json() : null).catch(() => null),
     ]);
     let stock = (uniR.tickers || []).find(x => x.ticker === t);
     if (!stock) {
@@ -785,7 +895,7 @@ async function loadTicker() {
         weighted:  tickR.weighted  || stock.weighted,
       });
     }
-    _data = { stock, ei: eiR || {}, ph: phR || {points: []} };
+    _data = { stock, ei: eiR || {}, ph: phR || {points: []}, event: evR || null };
     render();
   } catch(e) {
     document.getElementById('loading').textContent = 'Error: ' + (e.message || e);
@@ -1184,6 +1294,62 @@ function render() {
   // ── TAKEAWAY ──
   const obs = stock.bottom_line || ('Alpha Score is ' + Math.round(score) + ' — ' + (TIER_BY_GRADE[grade] || '') + '. Track the score for changes; movement matters more than the absolute level.');
   document.getElementById('ts-takeaway-text').textContent = obs;
+
+  // ── EVENT SUMMARY — Quartr-style structured highlights from the most
+  // recent earnings call. Renders only when /api/event-intel returned a
+  // populated summary. Section hides via inline display:none otherwise.
+  const evSection = document.getElementById('ts-event-section');
+  const evt = (_data && _data.event) || null;
+  if (evSection){
+    const hasContent = evt && evt.available && (
+      (Array.isArray(evt.key_updates) && evt.key_updates.length) ||
+      (Array.isArray(evt.outlook)     && evt.outlook.length) ||
+      (Array.isArray(evt.operations)  && evt.operations.length)
+    );
+    if (hasContent){
+      evSection.style.display = '';
+      setText('ts-event-name',   evt.event_title || 'Most recent event');
+      setText('ts-event-date',   evt.event_date  || '');
+      const sourceLabel = evt.source === 'alpha_vantage_transcript'
+        ? 'Earnings call · AI summary'
+        : 'AI summary';
+      setText('ts-event-source', sourceLabel);
+      const fill = (id, items) => {
+        const ul = document.getElementById(id);
+        if (!ul) return;
+        ul.innerHTML = '';
+        const arr = Array.isArray(items) ? items : [];
+        if (!arr.length){
+          const li = document.createElement('li');
+          li.style.color = '#94a3b8';
+          li.style.fontStyle = 'italic';
+          li.textContent = 'Not covered in this call.';
+          ul.appendChild(li);
+          return;
+        }
+        arr.slice(0, 5).forEach(text => {
+          const li = document.createElement('li');
+          li.textContent = String(text);
+          ul.appendChild(li);
+        });
+      };
+      fill('ts-bullets-key',     evt.key_updates);
+      fill('ts-bullets-ops',     evt.operations);
+      fill('ts-bullets-outlook', evt.outlook);
+      fill('ts-bullets-risks',   evt.risks);
+      // Verbatim quote — only if non-trivial
+      const quote = (evt.raw_excerpt || '').trim();
+      const quoteWrap = document.getElementById('ts-event-quote-wrap');
+      if (quote && quote.length > 20 && quoteWrap){
+        quoteWrap.style.display = '';
+        setText('ts-event-quote', quote);
+      } else if (quoteWrap){
+        quoteWrap.style.display = 'none';
+      }
+    } else {
+      evSection.style.display = 'none';
+    }
+  }
 
   // ── EXECUTIVE SUMMARY — at-top observational block, paragraph form.
   // Assembled from the strongest 2-3 signals we have. Plain English,
