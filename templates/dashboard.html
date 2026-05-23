@@ -7400,62 +7400,100 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && _v2TsCurrent) v2CloseTearsheet();
 });
 
-// ── DIRECT DOWNLOAD (no popover) ──────────────────────────────────
-// True one-click download: spawn a hidden iframe, wait for it to load,
-// call its downloadPdf(), tear down. Shows a small floating toast in
-// the bottom-right corner for feedback. NO modal, NO popover.
+// ── TEAR SHEET PRE-WARM + DIRECT DOWNLOAD ────────────────────────
+// Pre-warm cache: when the user opens a stock modal, we load that
+// ticker's tear sheet in a hidden iframe in the background. By the
+// time they click 'Download PDF', the iframe is fully loaded and
+// downloadPdf() fires immediately. No 'building' state, no polling.
+const _v2TsPrewarm = {};   // { TICKER: { iframe, ready } }
+const _V2_TS_MAX_FRAMES = 4;  // keep last N pre-warmed so memory doesn't grow forever
+
+function v2PrewarmTearsheet(ticker){
+  if (!ticker) return;
+  const sym = String(ticker).toUpperCase();
+  if (_v2TsPrewarm[sym] && _v2TsPrewarm[sym].iframe) return;  // already warming
+
+  // LRU eviction: if we're over the limit, drop the oldest entry.
+  const keys = Object.keys(_v2TsPrewarm);
+  if (keys.length >= _V2_TS_MAX_FRAMES){
+    const oldest = keys[0];
+    const stale = _v2TsPrewarm[oldest];
+    if (stale && stale.iframe) try { stale.iframe.remove(); } catch(_){}
+    delete _v2TsPrewarm[oldest];
+  }
+
+  const frame = document.createElement('iframe');
+  frame.style.cssText = 'position:absolute;width:1px;height:1px;border:0;opacity:0;pointer-events:none;left:-9999px;top:-9999px;';
+  frame.dataset.ticker = sym;
+  frame.src = '/tearsheet/' + encodeURIComponent(sym) + '?embed=1';
+  _v2TsPrewarm[sym] = { iframe: frame, ready: false };
+  frame.onload = () => {
+    // Poll for the tearsheet's _data inside this iframe to become non-null.
+    // Marks the entry ready so the download click fires immediately.
+    const start = Date.now();
+    const check = () => {
+      try {
+        const win = frame.contentWindow;
+        if (win && win._data && win.document &&
+            win.document.getElementById('ts-content') &&
+            win.document.getElementById('ts-content').style.display !== 'none'){
+          _v2TsPrewarm[sym].ready = true;
+          return;
+        }
+      } catch(_){}
+      if (Date.now() - start < 6000) setTimeout(check, 150);
+    };
+    check();
+  };
+  document.body.appendChild(frame);
+}
+
 function v2DownloadTearsheetPDF(ticker){
   if (!ticker) return;
   const sym = String(ticker).toUpperCase();
-  // Reuse a single hidden iframe across calls so we don't leak DOM
-  let frame = document.getElementById('v2-ts-direct-frame');
-  if (!frame){
-    frame = document.createElement('iframe');
-    frame.id = 'v2-ts-direct-frame';
-    frame.style.cssText = 'position:absolute;width:1px;height:1px;border:0;opacity:0;pointer-events:none;left:-9999px;top:-9999px;';
-    document.body.appendChild(frame);
+  // Fast path: pre-warmed iframe ready → fire immediately.
+  const cached = _v2TsPrewarm[sym];
+  if (cached && cached.ready && cached.iframe && cached.iframe.contentWindow){
+    _v2TriggerDownloadOn(sym, cached.iframe);
+    return;
   }
+  // Pre-warm wasn't ready (user clicked Download before opening the
+  // modal, or modal was opened <2s ago). Start warming now and trigger
+  // download as soon as it lands.
+  if (!cached) v2PrewarmTearsheet(sym);
+  const entry = _v2TsPrewarm[sym];
+  if (!entry || !entry.iframe){ _v2ShowDLToast(sym, 'fail', 'failed to start'); return; }
+  // Show a brief 'preparing' state ONLY when not pre-warmed; pre-warmed
+  // path has no toast at all (truly silent first-press).
   _v2ShowDLToast(sym, 'building');
-  let triggered = false;
-  frame.onload = async () => {
-    if (triggered) return;
-    triggered = true;
-    try {
-      // Poll for tearsheet readiness. After moving event-intel + earnings-
-      // intel out of the load path, the remaining fetches are universe +
-      // ticker + cached price-history — all of which complete in <2s on
-      // a warm process. Timeout reduced to 6s as a safety net.
-      const win = frame.contentWindow;
-      const start = Date.now();
-      const TIMEOUT_MS = 6000;
-      while (Date.now() - start < TIMEOUT_MS){
-        try {
-          const ready =
-            !!(win && win._data) &&
-            !!(win.document && win.document.getElementById('ts-content') &&
-               win.document.getElementById('ts-content').style.display !== 'none');
-          if (ready) break;
-        } catch(_){ /* cross-origin or detached — keep polling */ }
-        await new Promise(r => setTimeout(r, 120));
-      }
-      // 250ms paint settle so the last chart draws + setText calls land.
-      await new Promise(r => setTimeout(r, 250));
-      if (win && typeof win.downloadPdf === 'function' && win._data){
-        await win.downloadPdf();
-        _v2ShowDLToast(sym, 'done');
-      } else {
-        _v2ShowDLToast(sym, 'fail', 'data still loading — try again');
-      }
-    } catch(e){
-      console.error('direct-download failed:', e);
-      _v2ShowDLToast(sym, 'fail', e && e.message || 'error');
-    } finally {
-      // Release the iframe src after a beat so memory frees but the
-      // next click on a DIFFERENT ticker reloads cleanly.
-      setTimeout(() => { try { frame.src = 'about:blank'; } catch(_){} }, 800);
+  const start = Date.now();
+  const tick = () => {
+    if (entry.ready){
+      _v2TriggerDownloadOn(sym, entry.iframe);
+      return;
     }
+    if (Date.now() - start >= 6000){
+      _v2ShowDLToast(sym, 'fail', 'data still loading — try again');
+      return;
+    }
+    setTimeout(tick, 120);
   };
-  frame.src = '/tearsheet/' + encodeURIComponent(sym) + '?embed=1';
+  tick();
+}
+
+async function _v2TriggerDownloadOn(sym, frame){
+  const win = frame.contentWindow;
+  if (!win || typeof win.downloadPdf !== 'function'){
+    _v2ShowDLToast(sym, 'fail', 'generator missing');
+    return;
+  }
+  try {
+    await win.downloadPdf();
+    _v2ShowDLToast(sym, 'done');
+  } catch(e){
+    console.error('download failed:', e);
+    _v2ShowDLToast(sym, 'fail', e && e.message || 'error');
+  }
 }
 
 // Floating toast (bottom-right). Single shared element, reused across calls.
@@ -9686,6 +9724,11 @@ function openStockModal(ticker) {
   if (history.pushState && !location.hash.startsWith('#stock-')) {
     history.pushState({modal: 'stock', ticker}, '', `#stock-${ticker}`);
   }
+  // Pre-warm the tear sheet PDF generator in a hidden iframe so by the
+  // time the user clicks 'Download PDF', the data + DOM are already
+  // ready. v2DownloadTearsheetPDF will then call downloadPdf() directly
+  // without any 'building' toast or polling wait.
+  try { v2PrewarmTearsheet(ticker); } catch(_){}
   // _rsMap is already populated by renderFundamentals (full universe).
   // Do NOT call computeRS([t]) here — that would overwrite _rsMap with a
   // single-ticker ranking, giving every stock RS ~50.
