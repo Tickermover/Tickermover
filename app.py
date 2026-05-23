@@ -4709,7 +4709,7 @@ async def api_tracker_chart():
     Cached 15 min — the underlying yfinance fetches are also cached for
     6 h each via /api/price-history.
     """
-    cache_key = "tracker-chart:v2"  # bump on May 23 closed-pick inclusion
+    cache_key = "tracker-chart:v3"  # bump May 23 PM — v2 cached before closed trades were available
     cached = cache.get(cache_key)
     if cached is not None:
         return JSONResponse(cached)

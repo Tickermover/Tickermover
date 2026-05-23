@@ -10904,7 +10904,10 @@ function v2RenderTrackerChartHTML(d){
 
   const deltaCls = v => v >= 0 ? 'up' : 'dn';
   const fmtDelta = v => (v >= 0 ? '+' : '') + v.toFixed(1) + 'pts';
-  const beatQqqPts = tEnd - qEnd;
+  // NASDAQ row label reads 'vs Top Hunts', so this needs to be NASDAQ's
+  // gap relative to Top Hunts — not the other way around. Negative when
+  // NASDAQ is BEHIND, which makes the .dn red color render correctly.
+  const beatQqqPts = qEnd - tEnd;
 
   return '' +
     '<div class="v2-tc-wrap">' +
