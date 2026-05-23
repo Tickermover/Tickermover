@@ -7455,44 +7455,41 @@ function v2PrewarmTearsheet(ticker){
   document.body.appendChild(frame);
 }
 
-function v2DownloadTearsheetPDF(ticker){
+async function v2DownloadTearsheetPDF(ticker){
   if (!ticker) return;
   const sym = String(ticker).toUpperCase();
-  console.log('[ts-download]', sym, 'click');
-  // Fast path: pre-warmed iframe ready → fire immediately.
-  const cached = _v2TsPrewarm[sym];
-  if (cached && cached.ready && cached.iframe && cached.iframe.contentWindow){
-    console.log('[ts-download]', sym, 'cache hit, firing immediately');
-    _v2TriggerDownloadOn(sym, cached.iframe);
-    return;
-  }
-  // Cold path or warming-in-progress — show prep toast and wait.
-  if (!cached) v2PrewarmTearsheet(sym);
-  const entry = _v2TsPrewarm[sym];
-  if (!entry || !entry.iframe){
-    _v2ShowDLToast(sym, 'fail', 'failed to start');
-    return;
-  }
+  console.log('[pdf]', sym, 'click');
   _v2ShowDLToast(sym, 'building');
-  const start = Date.now();
-  const TIMEOUT_MS = 30000;
-  const tick = () => {
-    if (entry.ready){
-      console.log('[ts-download]', sym, 'ready after', Date.now() - start, 'ms wait, firing');
-      _v2TriggerDownloadOn(sym, entry.iframe);
-      return;
+  try {
+    // Server-side PDF: one HTTP call, no iframe, no separate URL.
+    // Backend renders with reportlab → returns application/pdf binary.
+    const resp = await fetch('/api/pdf/' + encodeURIComponent(sym), { cache: 'no-store' });
+    if (!resp.ok){
+      const errBody = await resp.text().catch(() => '');
+      throw new Error('HTTP ' + resp.status + (errBody ? ': ' + errBody.slice(0,80) : ''));
     }
-    if (Date.now() - start >= TIMEOUT_MS){
-      // No new-tab fallback per user direction — they don't want the
-      // separate URL to ever surface. Just tell them to retry.
-      console.error('[ts-download]', sym, 'timeout after 30s waiting for prewarm');
-      _v2ShowDLToast(sym, 'fail', 'still preparing — click again in a moment');
-      return;
-    }
-    setTimeout(tick, 140);
-  };
-  tick();
+    const blob = await resp.blob();
+    // Trigger download via anchor + revokeObjectURL after a beat
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'alphahunt-tearsheet-' + sym + '-' + new Date().toISOString().slice(0,10) + '.pdf';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+    console.log('[pdf]', sym, 'downloaded');
+    _v2ShowDLToast(sym, 'done');
+  } catch(e){
+    console.error('[pdf]', sym, 'failed:', e);
+    _v2ShowDLToast(sym, 'fail', e && e.message || 'error');
+  }
 }
+
+// Legacy iframe-based code retained but no longer called from any UI
+// entry point. _v2TriggerDownloadOn / v2PrewarmTearsheet stay defined
+// in case future workflows need them; v2PrewarmTearsheetBatch is now
+// a no-op since the server-side endpoint doesn't need pre-warming.
 
 // Quietly pre-warm a batch of tickers in the background, throttled so we
 // don't slam the network. Used by card renderers (Top Hunts picks, Hot
@@ -9751,11 +9748,8 @@ function openStockModal(ticker) {
   if (history.pushState && !location.hash.startsWith('#stock-')) {
     history.pushState({modal: 'stock', ticker}, '', `#stock-${ticker}`);
   }
-  // Pre-warm the tear sheet PDF generator in a hidden iframe so by the
-  // time the user clicks 'Download PDF', the data + DOM are already
-  // ready. v2DownloadTearsheetPDF will then call downloadPdf() directly
-  // without any 'building' toast or polling wait.
-  try { v2PrewarmTearsheet(ticker); } catch(_){}
+  // Prewarm removed May 23 — server-side PDF endpoint /api/pdf/{T}
+  // doesn't need it. Click Download → fetch → save. No iframe pipeline.
   // _rsMap is already populated by renderFundamentals (full universe).
   // Do NOT call computeRS([t]) here — that would overwrite _rsMap with a
   // single-ticker ranking, giving every stock RS ~50.
@@ -11265,15 +11259,6 @@ function renderClosedTrades(data) {
 function renderModelPortfolio(data) {
   const root  = document.getElementById('model-portfolio-root');
   const picks = data.picks || [];
-
-  // Pre-warm tear sheet PDFs for the first few visible picks so the
-  // Download button fires instantly when clicked. Idle-scheduled so it
-  // doesn't compete with the actual portfolio render.
-  try {
-    if (typeof v2PrewarmTearsheetBatch === 'function'){
-      v2PrewarmTearsheetBatch(picks.map(p => p.ticker).filter(Boolean));
-    }
-  } catch(_){}
 
   // Recalculate all stats using LIVE prices from _allTickerData (same as modal/hot list)
   const livePerfs = picks.map(p => {

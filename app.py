@@ -1663,6 +1663,74 @@ async def api_regime_refresh():
     return JSONResponse(_clean(payload))
 
 
+@app.get("/api/pdf/{symbol}")
+async def api_pdf(symbol: str):
+    """Server-rendered tear sheet PDF — one HTTP call returns the bytes.
+
+    Replaces the brittle client-side html2canvas + iframe approach.
+    Pulls live data from in-memory universe, fetches cached price-history,
+    runs pdf_render.generate_pdf() → returns application/pdf.
+
+    No client-side waiting, no separate URL ever surfaces."""
+    from fastapi.responses import Response
+    import pdf_render as _pdf
+    sym = (symbol or "").upper().strip()
+    if not sym or len(sym) > 8:
+        raise HTTPException(status_code=400, detail="Bad ticker")
+    # Find ticker in the loaded universe; fall back to on-demand build
+    target = next((t for t in _universe_data if t.get("ticker") == sym), None)
+    if not target:
+        try:
+            social_map = cache.get("ape:all") or {}
+            target = await coordinator.get_full_ticker(sym, get_meta(sym), social_map)
+            if target:
+                attach_score_history([target], score_history)
+                target.update(compute_pop_score(target, regime=market_regime.get()))
+        except Exception as exc:
+            logger.error(f"pdf build {sym}: on-demand fetch failed: {exc}")
+    if not target:
+        raise HTTPException(status_code=404, detail=f"Ticker {sym} not found in universe")
+
+    # Pull cached price history (6h TTL, populated by tracker-chart). On a
+    # miss, fetch directly so the PDF never renders without a chart.
+    pts = []
+    ck = f"price-history:{sym}:3mo"
+    c = cache.get(ck)
+    if c and c.get("points"):
+        pts = c["points"]
+    else:
+        try:
+            tk = yf.Ticker(sym)
+            h = tk.history(period="3mo", interval="1d", auto_adjust=True)
+            if h is not None and not h.empty:
+                for idx, row in h.iterrows():
+                    d = idx.strftime("%Y-%m-%d") if hasattr(idx, "strftime") else str(idx)
+                    close = float(row["Close"]) if row.get("Close") is not None else None
+                    if close is not None and not (math.isnan(close) or math.isinf(close)):
+                        pts.append({"date": d, "close": round(close, 2)})
+                cache.set(ck, {"ticker": sym, "period": "3mo", "points": pts}, 60 * 60 * 6)
+        except Exception as exc:
+            logger.warning(f"pdf build {sym}: yfinance history failed: {exc}")
+
+    # Render PDF (pure compute, no I/O — runs in a thread to keep event loop free)
+    try:
+        pdf_bytes = await asyncio.to_thread(_pdf.generate_pdf, sym, target, pts)
+    except Exception as exc:
+        logger.error(f"pdf build {sym}: render failed: {exc}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"PDF render failed: {exc}")
+
+    from datetime import date as _date
+    filename = f"alphahunt-tearsheet-{sym}-{_date.today().isoformat()}.pdf"
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"',
+            "Cache-Control":       "private, max-age=300",
+        },
+    )
+
+
 @app.get("/api/event-intel/{symbol}")
 async def api_event_intel(symbol: str, refresh: int = 0):
     """Quartr-style structured summary of the latest earnings call.

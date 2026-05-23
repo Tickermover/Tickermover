@@ -10,3 +10,7 @@ pandas>=2.0.0
 PyJWT>=2.8.0
 cryptography>=41.0.0
 Pillow>=10.0.0
+# Server-side PDF generation for one-click tear sheet downloads.
+# reportlab = pure Python, no system deps (works on Railway nixpacks).
+reportlab>=4.0.0
+matplotlib>=3.7.0
