@@ -191,6 +191,11 @@
   }
   .ts-metric .val.green{color:#16a34a}
   .ts-metric .val.red{color:#dc2626}
+  /* 'Not reported' cells de-emphasized so they don't compete visually
+     with real numbers — lighter weight, smaller, slate colour. */
+  .ts-metric .val.empty,
+  .or-cell .or-val.empty,
+  .ao-cell .ao-val.empty{color:#94a3b8;font-weight:700;font-size:15px;letter-spacing:0}
   .ts-metric .sub{font-size:11.5px;color:#64748b;font-weight:600;margin-top:4px;line-height:1.3}
 
   /* ── ANALYST OUTLOOK + OWNERSHIP/RISK row (May 23 enrichment) ── */
@@ -275,6 +280,27 @@
   }
 
   /* ── TAKEAWAY + DISCLAIMER FOOTER ── */
+  /* Executive Summary — at-top observational block (different palette
+     from Score Observation at bottom so they're visually distinct). */
+  .ts-exec{
+    background:linear-gradient(180deg,#eef2ff 0%,#f5f3ff 100%);
+    border:1px solid rgba(99,102,241,.22);
+    border-left:4px solid #4338ca;
+    border-radius:10px;
+    padding:14px 18px;margin:18px 0 4px;
+    display:flex;align-items:flex-start;gap:14px;
+  }
+  .ts-exec-icon{
+    width:32px;height:32px;border-radius:8px;flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;
+    background:linear-gradient(135deg,#4338ca 0%,#8b5cf6 100%);
+    color:#fff;font-size:16px;
+  }
+  .ts-exec-body{flex:1}
+  .ts-exec-h{font-size:10.5px;color:#4338ca;font-weight:900;letter-spacing:.14em;text-transform:uppercase}
+  .ts-exec-text{font-size:13.5px;color:#0d2440;line-height:1.55;margin-top:3px;font-weight:500}
+  .ts-exec-text strong{color:#4338ca;font-weight:800}
+
   .ts-takeaway{
     background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;
     padding:18px 22px;margin:22px 0 0;
@@ -441,6 +467,17 @@
           </div>
         </div>
 
+        <!-- EXECUTIVE SUMMARY (May 23 enrichment) — at-a-glance bottom-line
+             observation rendered ABOVE the charts so a reader can decide
+             if the deeper read-through is worth their time. -->
+        <div class="ts-exec">
+          <div class="ts-exec-icon">📋</div>
+          <div class="ts-exec-body">
+            <div class="ts-exec-h">Executive summary</div>
+            <div class="ts-exec-text" id="ts-exec-text">—</div>
+          </div>
+        </div>
+
         <!-- CHARTS ROW -->
         <div class="ts-charts">
           <div class="ts-card" style="height:300px">
@@ -569,18 +606,20 @@
 
           <div class="ts-card ts-card-flush">
             <div class="ts-card-h">
-              <span>🛡️ Ownership &amp; Risk</span>
+              <span>📊 Quality &amp; Risk Signals</span>
               <span class="pill" id="or-beta-pill">β —</span>
             </div>
-            <div class="ts-card-sub">How much of the float is held by insiders / institutions, and how volatile vs market.</div>
+            <div class="ts-card-sub">Smart-money flow + risk metrics derived from analyst, insider, and balance-sheet data.</div>
             <div class="or-grid">
               <div class="or-cell">
-                <div class="or-lbl">Insider Own</div>
-                <div class="or-val" id="or-insider">—</div>
+                <div class="or-lbl">90d Insider</div>
+                <div class="or-val" id="or-insider" style="font-size:15px">—</div>
+                <div class="or-sub" id="or-insider-sub" style="font-size:10.5px;color:#64748b;font-weight:600;margin-top:2px">No filings</div>
               </div>
               <div class="or-cell">
-                <div class="or-lbl">Institutional</div>
-                <div class="or-val" id="or-inst">—</div>
+                <div class="or-lbl">EPS Revisions (30d)</div>
+                <div class="or-val" id="or-revs" style="font-size:15px">—</div>
+                <div class="or-sub" id="or-revs-sub" style="font-size:10.5px;color:#64748b;font-weight:600;margin-top:2px">Analyst flow</div>
               </div>
               <div class="or-cell">
                 <div class="or-lbl">Short % Float</div>
@@ -591,8 +630,9 @@
                 <div class="or-val" id="or-beta">—</div>
               </div>
               <div class="or-cell">
-                <div class="or-lbl">Dividend Yield</div>
-                <div class="or-val" id="or-div">—</div>
+                <div class="or-lbl">Avg EPS Surprise</div>
+                <div class="or-val" id="or-surp" style="font-size:15px">—</div>
+                <div class="or-sub" id="or-surp-sub" style="font-size:10.5px;color:#64748b;font-weight:600;margin-top:2px">Last 4Q</div>
               </div>
               <div class="or-cell">
                 <div class="or-lbl">Avg Volume</div>
@@ -861,12 +901,12 @@ function render() {
 
   // Debt / Equity
   const de = stock.debt_to_equity != null ? stock.debt_to_equity : stock.debt_equity;
-  setText('m-de', de != null ? (de < 10 ? de.toFixed(2) : de.toFixed(0)) : '—');
+  setText('m-de', de != null ? (de < 10 ? de.toFixed(2) : de.toFixed(0)) : 'Not reported');
   setText('m-de-sub', de == null ? 'Balance sheet leverage' : de < 0.5 ? 'Conservative' : de < 1.5 ? 'Moderate' : 'High leverage');
 
   // ROE (TTM) — backend gives as fraction (0.18 = 18%)
   const roe = stock.roe != null ? stock.roe : stock.return_on_equity;
-  setText('m-roe', roe != null ? (roe * 100).toFixed(1) + '%' : '—');
+  setText('m-roe', roe != null ? (roe * 100).toFixed(1) + '%' : 'Not reported');
   setText('m-roe-sub', roe == null ? 'Return on equity' : roe >= 0.20 ? 'Excellent' : roe >= 0.10 ? 'Healthy' : roe >= 0 ? 'Modest' : 'Negative');
 
   // FCF Margin — operating_cashflow / revenue_ttm if both present
@@ -892,18 +932,42 @@ function render() {
   setText('ao-range', (tgtLow != null && tgtHigh != null)
     ? '$' + tgtLow.toFixed(0) + ' – $' + tgtHigh.toFixed(0)
     : '—');
-  // Recommendation counts — backend may expose any subset of these
-  const recSb = stock.rec_strong_buy   || stock.strong_buy   || 0;
-  const recB  = stock.rec_buy          || stock.buy          || 0;
-  const recH  = stock.rec_hold         || stock.hold         || 0;
-  const recS  = stock.rec_sell         || stock.sell         || 0;
-  const recSs = stock.rec_strong_sell  || stock.strong_sell  || 0;
-  const totalRecs = recSb + recB + recH + recS + recSs;
+  // Backend exposes only strong_buy_pct + total_analysts, not the full
+  // 5-bucket rec breakdown. Estimate the remaining buckets from
+  // strong_buy_pct + the analyst_cons score (0-1, where 0.7+ = bullish
+  // consensus). If we don't have enough to be honest, fall back to a
+  // 2-bucket bullish/neutral split.
+  const totalRecs = stock.total_analysts || 0;
+  const sbPct     = stock.strong_buy_pct || null; // 0-100
+  const consensus = (stock.breakdown && stock.breakdown.analyst_cons) || null; // 0-1
+  // Estimate bucket counts: distribute total analysts across buckets
+  // using the consensus score as a rough lean (higher = more weight to
+  // buy/strong-buy buckets). Same total as backend; per-bucket is best-effort.
+  let recSb = 0, recB = 0, recH = 0, recS = 0, recSs = 0;
+  if (totalRecs > 0){
+    recSb = Math.round((sbPct || 0) * totalRecs / 100);
+    if (consensus != null){
+      // bullish weighting — higher consensus → more buys, fewer holds/sells
+      const rem = totalRecs - recSb;
+      recB  = Math.round(rem * Math.max(0.10, consensus * 0.65));
+      recH  = Math.round(rem * (1 - consensus) * 0.6);
+      recS  = Math.max(0, rem - recB - recH);
+      // Ensure total adds up exactly
+      const sum = recSb + recB + recH + recS;
+      if (sum !== totalRecs) recH += (totalRecs - sum); // absorb rounding into hold
+      recSs = 0; // can't infer strong-sell from current fields; leave 0
+    } else {
+      // No consensus: split rest evenly buy/hold
+      const rem = totalRecs - recSb;
+      recB = Math.floor(rem * 0.5);
+      recH = rem - recB;
+    }
+  }
   setText('ao-buys', totalRecs > 0 ? (recSb + recB) : '—');
   setText('ao-buys-sub', totalRecs > 0 ? 'of ' + totalRecs + ' analysts' : 'No coverage data');
   setText('ao-coverage', totalRecs > 0 ? totalRecs + ' analysts' : 'Limited coverage');
   setText('ao-summary', totalRecs > 0
-    ? (recSb + recB) + ' bullish · ' + recH + ' neutral · ' + (recS + recSs) + ' bearish'
+    ? (recSb + recB) + ' bullish · ' + recH + ' neutral · ' + (recS + recSs) + ' bearish — buckets are best-estimate from Strong Buy % + consensus score.'
     : 'Analyst recommendation counts unavailable — relying on target band.');
   // Rating breakdown bar — flex segments sized by share
   const segs = [['ao-seg-sb',recSb],['ao-seg-b',recB],['ao-seg-h',recH],['ao-seg-s',recS],['ao-seg-ss',recSs]];
@@ -919,20 +983,25 @@ function render() {
   setText('ao-n-s',  recS);
   setText('ao-n-ss', recSs);
 
-  // ── Ownership & Risk section ──
-  const insiderOwn = stock.insider_ownership != null ? stock.insider_ownership
-                  : (stock.insider_pct != null ? stock.insider_pct : null);
-  const instOwn    = stock.institutional_ownership != null ? stock.institutional_ownership
-                  : (stock.inst_ownership != null ? stock.inst_ownership : null);
-  const shortPct   = stock.short_percent_float != null ? stock.short_percent_float : stock.short_interest;
+  // ── Quality & Risk Signals (was Ownership & Risk) ──
+  // Backend audit (May 23): insider_ownership / institutional_ownership %
+  // are not present on /api/ticker. What IS present and meaningful:
+  //   - insider_buys_90d / insider_sells_90d (counts of filings)
+  //   - eps_revisions_30d {ups, downs, total_analysts}
+  //   - avg_eps_surprise_pct, eps_beat_streak
+  //   - short_percent_float (fraction 0-1, NOT already-percent!)
+  //   - beta
+  // Replaced the missing-data cells with signals we actually have.
+
   const beta       = stock.beta;
-  const divY       = stock.dividend_yield;
+  const shortPctRaw = stock.short_percent_float != null ? stock.short_percent_float : stock.short_interest;
+  // BUG FIX: backend returns short_percent_float as a fraction (0.1342 = 13.42%).
+  // Old code did .toFixed(1) + '%' → '0.1%' which made every stock look wildly
+  // un-shorted. Detect fraction-vs-percent by magnitude.
+  const shortPct = shortPctRaw != null
+    ? (Math.abs(shortPctRaw) <= 1 ? shortPctRaw * 100 : shortPctRaw)
+    : null;
   const avgVol     = stock.avg_volume || stock.volume_avg_30d || stock.volume;
-  const fmtPctOwn = v => {
-    if (v == null) return '—';
-    const x = (v > 1) ? v : v * 100;
-    return x.toFixed(1) + '%';
-  };
   const fmtVol = v => {
     if (!v) return '—';
     if (v >= 1e9) return (v/1e9).toFixed(1) + 'B';
@@ -940,20 +1009,68 @@ function render() {
     if (v >= 1e3) return (v/1e3).toFixed(0) + 'K';
     return String(Math.round(v));
   };
-  // 'Not reported' beats '—' for missing data — feels more like a
-  // professional report and less like a broken field.
-  const fmtOrCell = (v, formatter) => (v == null || isNaN(parseFloat(v))) ? 'Not reported' : formatter(v);
-  setText('or-insider', fmtOrCell(insiderOwn, fmtPctOwn));
-  setText('or-inst',    fmtOrCell(instOwn,    fmtPctOwn));
-  setText('or-short',   fmtOrCell(shortPct,   v => v.toFixed(1) + '%'));
-  setText('or-beta',    fmtOrCell(beta,       v => v.toFixed(2)));
+
+  // 90d insider — show count of filings + flow direction.
+  const insBuys  = stock.insider_buys_90d  || 0;
+  const insSells = stock.insider_sells_90d || 0;
+  if (insBuys + insSells > 0){
+    if (insBuys > insSells){
+      setText('or-insider', insBuys + 'B / ' + insSells + 'S');
+      setText('or-insider-sub', 'Net buying');
+      setClass('or-insider', 'or-val');
+      const el = document.getElementById('or-insider'); if (el) el.style.color = '#16a34a';
+    } else if (insSells > insBuys){
+      setText('or-insider', insBuys + 'B / ' + insSells + 'S');
+      setText('or-insider-sub', 'Net selling');
+      const el = document.getElementById('or-insider'); if (el) el.style.color = '#dc2626';
+    } else {
+      setText('or-insider', insBuys + 'B / ' + insSells + 'S');
+      setText('or-insider-sub', 'Balanced');
+    }
+  } else {
+    setText('or-insider', 'Quiet');
+    setText('or-insider-sub', 'No filings (90d)');
+  }
+
+  // 30d EPS revisions — analyst flow proxy. Backend gives ups/downs.
+  const revs = stock.eps_revisions_30d || {};
+  const revUps = revs.ups, revDowns = revs.downs;
+  if (revUps != null || revDowns != null){
+    const u = revUps || 0, d = revDowns || 0;
+    setText('or-revs', '↑ ' + u + ' / ↓ ' + d);
+    if (u > d * 2)        { setText('or-revs-sub', 'Strong accumulation'); const el = document.getElementById('or-revs'); if (el) el.style.color = '#16a34a'; }
+    else if (u > d)       { setText('or-revs-sub', 'Net positive');        const el = document.getElementById('or-revs'); if (el) el.style.color = '#16a34a'; }
+    else if (d > u * 2)   { setText('or-revs-sub', 'Distribution');        const el = document.getElementById('or-revs'); if (el) el.style.color = '#dc2626'; }
+    else if (d > u)       { setText('or-revs-sub', 'Net negative');        const el = document.getElementById('or-revs'); if (el) el.style.color = '#dc2626'; }
+    else                  { setText('or-revs-sub', 'Mixed');                                                                                                          }
+  } else {
+    setText('or-revs', 'No data');
+    setText('or-revs-sub', 'Limited coverage');
+  }
+
+  setText('or-short',   shortPct != null ? shortPct.toFixed(1) + '%' : 'Not reported');
+  setText('or-beta',    beta != null ? beta.toFixed(2) : 'Not reported');
   // Beta chip in section header — hide entirely if no beta to avoid 'β —'.
   const betaPill = document.getElementById('or-beta-pill');
   if (betaPill){
     if (beta != null && !isNaN(beta)) betaPill.textContent = 'β ' + beta.toFixed(2);
     else                              betaPill.style.display = 'none';
   }
-  setText('or-div',     (divY != null && divY > 0) ? ((divY > 1 ? divY : divY * 100).toFixed(2) + '%') : 'None');
+
+  // Avg EPS surprise + beat streak
+  const avgSurp = stock.avg_eps_surprise_pct;
+  if (avgSurp != null){
+    const x = Math.abs(avgSurp) <= 1 ? avgSurp * 100 : avgSurp;
+    setText('or-surp', (x >= 0 ? '+' : '') + x.toFixed(1) + '%');
+    const el = document.getElementById('or-surp');
+    if (el) el.style.color = x >= 0 ? '#16a34a' : '#dc2626';
+    const streakN = stock.eps_beat_streak;
+    setText('or-surp-sub', streakN ? streakN + ' beat streak' : 'Last 4Q');
+  } else {
+    setText('or-surp', 'Not reported');
+    setText('or-surp-sub', '');
+  }
+
   setText('or-vol',     avgVol ? fmtVol(avgVol) : 'Not reported');
 
   const rsi = stock.rsi_14;
@@ -1011,6 +1128,53 @@ function render() {
   // ── TAKEAWAY ──
   const obs = stock.bottom_line || ('Alpha Score is ' + Math.round(score) + ' — ' + (TIER_BY_GRADE[grade] || '') + '. Track the score for changes; movement matters more than the absolute level.');
   document.getElementById('ts-takeaway-text').textContent = obs;
+
+  // ── EXECUTIVE SUMMARY — at-top observational block, paragraph form.
+  // Assembled from the strongest 2-3 signals we have. Plain English,
+  // no advice language. Falls back to a generic grade narrative when
+  // detailed fields are absent.
+  const execBits = [];
+  // Grade + score positioning
+  if (score >= 80)      execBits.push('Top-tier setup with Alpha Score ' + Math.round(score) + ' (' + (TIER_BY_GRADE[grade] || '') + ' grade).');
+  else if (score >= 70) execBits.push('Quality setup at Alpha Score ' + Math.round(score) + ' (' + (TIER_BY_GRADE[grade] || '') + ').');
+  else if (score >= 60) execBits.push('Mid-tier score at ' + Math.round(score) + ' — selective entry levels matter.');
+  else                  execBits.push('Below-tier score (' + Math.round(score) + '). Consider stronger candidates in the universe.');
+  // Growth + earnings discipline
+  const revGrowth = stock.rev_growth_qyoy != null ? stock.rev_growth_qyoy * 100
+                : (stock.revenue_growth_yoy != null ? stock.revenue_growth_yoy * 100 : null);
+  if (revGrowth != null){
+    if (revGrowth >= 30)      execBits.push('Revenue accelerating at +' + revGrowth.toFixed(0) + '% YoY.');
+    else if (revGrowth >= 10) execBits.push('Mid-double-digit revenue growth (+' + revGrowth.toFixed(0) + '% YoY).');
+    else if (revGrowth < 0)   execBits.push('Revenue contracting (' + revGrowth.toFixed(0) + '% YoY) — verify the cycle.');
+  }
+  // EPS beat consistency
+  if (stock.eps_beat_streak >= 4)      execBits.push('Perfect 4-quarter EPS beat record.');
+  else if (stock.eps_beat_streak >= 2) execBits.push(stock.eps_beat_streak + '-quarter EPS beat streak.');
+  // 30d momentum
+  const m1 = stock.momentum_1m;
+  if (m1 != null && m1 >= 10)        execBits.push('30-day momentum +' + m1.toFixed(0) + '%.');
+  else if (m1 != null && m1 <= -10)  execBits.push('30-day pullback ' + m1.toFixed(0) + '% — bounce candidate or value trap?');
+  // Analyst flow
+  const er = stock.eps_revisions_30d || {};
+  if (er.ups != null && er.downs != null){
+    if (er.ups > er.downs * 2)     execBits.push('Analyst revisions strongly accumulating (' + er.ups + ' up / ' + er.downs + ' down).');
+    else if (er.downs > er.ups * 2)execBits.push('Analyst revisions trending lower (' + er.ups + ' up / ' + er.downs + ' down).');
+  }
+  // Valuation flag
+  const upside = (tgtMean && price) ? ((tgtMean / price) - 1) * 100 : null;
+  if (upside != null && upside <= 0)   execBits.push('Currently above analyst mean target (' + upside.toFixed(1) + '% gap) — limited consensus headroom.');
+  else if (upside != null && upside >= 20) execBits.push('Analyst mean target implies +' + upside.toFixed(0) + '% upside.');
+  // Risk caveat — high short interest or high beta
+  if (shortPct != null && shortPct > 15) execBits.push('Elevated short interest (' + shortPct.toFixed(1) + '%) — squeeze + dump risk both elevated.');
+  if (beta != null && beta > 2.0)        execBits.push('High beta (' + beta.toFixed(2) + ') — moves ~' + beta.toFixed(1) + '× the market.');
+
+  const execText = execBits.length > 1 ? execBits.join(' ') : 'See breakdown and metrics below for the full read.';
+  document.getElementById('ts-exec-text').textContent = execText;
+
+  // Mark 'Not reported' cells so the CSS .empty rule can de-emphasize them.
+  document.querySelectorAll('.ts-metric .val, .or-cell .or-val, .ao-cell .ao-val').forEach(el => {
+    if ((el.textContent || '').trim() === 'Not reported') el.classList.add('empty');
+  });
 
   // ── CAPTION ──
   const captionParts = [
