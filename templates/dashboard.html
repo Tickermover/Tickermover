@@ -2276,6 +2276,64 @@ body[data-active-profile="conservative"] .fund-row:not([data-profiles~="conserva
 .v2-tc-tip-row strong{color:#fff;font-weight:800;font-size:12px;margin-left:auto}
 .v2-tc-tip-row strong.up{color:#86efac}
 .v2-tc-tip-row strong.dn{color:#fda4af}
+
+/* ── Audit drill-down (under chart, lazy-loaded) ─────────────────── */
+.v2-tc-audit{grid-column:1 / span 2;margin-top:6px;border-top:1px solid rgba(255,255,255,.07);padding-top:10px}
+@media (max-width:760px){.v2-tc-audit{grid-column:1}}
+.v2-tc-audit-toggle{
+  display:flex;align-items:center;gap:10px;width:100%;
+  background:transparent;border:none;cursor:pointer;
+  padding:6px 4px;font-family:inherit;color:#cbd5e1;font-size:12px;
+  transition:color .15s;
+}
+.v2-tc-audit-toggle:hover{color:#fff}
+.v2-tc-audit-toggle strong{color:#fff;font-weight:800;font-variant-numeric:tabular-nums}
+.v2-tc-audit-count{font-weight:600;letter-spacing:-.005em}
+.v2-tc-audit-cta{
+  margin-left:auto;color:#a5b4fc;font-weight:700;font-size:11.5px;
+  letter-spacing:.02em;
+}
+.v2-tc-audit-caret{
+  color:#a5b4fc;flex-shrink:0;transition:transform .2s;
+}
+.v2-tc-audit-toggle.on .v2-tc-audit-caret{transform:rotate(180deg)}
+.v2-tc-audit-panel{margin-top:8px;animation:v2-tc-audit-in .2s ease}
+@keyframes v2-tc-audit-in{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+.v2-tc-audit-loading{padding:20px 8px;text-align:center;color:#94a3b8;font-size:12px}
+.v2-tc-audit-meta{padding:4px 4px 8px;color:#64748b;font-size:11px;font-weight:500}
+.v2-tc-audit-tablewrap{overflow-x:auto;border-radius:10px;border:1px solid rgba(255,255,255,.06)}
+.v2-tc-audit-table{
+  width:100%;border-collapse:collapse;
+  font-size:12px;color:#e2e8f0;font-variant-numeric:tabular-nums;
+  background:rgba(255,255,255,.02);
+}
+.v2-tc-audit-table th{
+  text-align:left;font-size:10px;font-weight:700;color:#94a3b8;
+  letter-spacing:.10em;text-transform:uppercase;
+  padding:8px 12px;border-bottom:1px solid rgba(255,255,255,.06);
+  background:rgba(255,255,255,.03);position:sticky;top:0;
+}
+.v2-tc-audit-table td{
+  padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.04);
+  vertical-align:middle;
+}
+.v2-tc-audit-table tr{cursor:pointer;transition:background .12s}
+.v2-tc-audit-table tbody tr:hover{background:rgba(139,92,246,.08)}
+.v2-tc-audit-num{text-align:right;white-space:nowrap}
+.v2-tc-audit-tic{
+  display:flex;align-items:center;gap:8px;font-weight:800;color:#f1f5f9;
+  white-space:nowrap;
+}
+.v2-tc-audit-tic-text{font-weight:800;letter-spacing:.01em}
+.v2-tc-audit-st{
+  display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.02em;
+  padding:3px 8px;border-radius:5px;
+}
+.v2-tc-audit-st.active{background:rgba(139,92,246,.18);color:#c4b5fd}
+.v2-tc-audit-st.closed{background:rgba(34,197,94,.14);color:#86efac}
+.v2-tc-audit-pct strong{font-weight:800}
+.v2-tc-audit-pct.up strong{color:#86efac}
+.v2-tc-audit-pct.dn strong{color:#fda4af}
 /* Legend moved to the BOTTOM of the chart (user feedback). Order is
    set via flex-direction:column-reverse on the wrap so the SVG paints
    first and the legend sits beneath it. */
@@ -11137,7 +11195,135 @@ function v2RenderTrackerChartHTML(d){
           '<div class="v2-tc-s-delta ' + deltaCls(beatQqqPts) + '">' + fmtDelta(beatQqqPts) + ' vs Top Hunts</div>' +
         '</div>' +
       '</div>' +
+      // ── Audit footer: 'Built from N picks · See breakdown' ──
+      // Lazy-loads two API calls on first expand so the chart paints fast.
+      '<div class="v2-tc-audit">' +
+        '<button class="v2-tc-audit-toggle" type="button" aria-expanded="false" onclick="v2ToggleAudit(this)">' +
+          '<span class="v2-tc-audit-count">Built from <strong>' + (d.picks_count || tracker.length || '—') + '</strong> picks</span>' +
+          '<span class="v2-tc-audit-cta">See breakdown</span>' +
+          '<svg class="v2-tc-audit-caret" width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5 L6 7.5 L9 4.5" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>' +
+        '</button>' +
+        '<div class="v2-tc-audit-panel" style="display:none"></div>' +
+      '</div>' +
     '</div>';
+}
+
+/* Lazy-loaded audit drill-down. Fetches active picks + closed trades on
+   first expand, renders a single table sorted by performance desc. Lets
+   the user verify exactly which picks fed the chart line — addresses
+   the "I don't trust the chart values" feedback by making every input
+   inspectable. Re-toggling is purely CSS. */
+async function v2ToggleAudit(btn){
+  const panel = btn.nextElementSibling;
+  if (!panel) return;
+  const open = panel.style.display !== 'none';
+  if (open){
+    panel.style.display = 'none';
+    btn.setAttribute('aria-expanded', 'false');
+    btn.classList.remove('on');
+    return;
+  }
+  panel.style.display = '';
+  btn.setAttribute('aria-expanded', 'true');
+  btn.classList.add('on');
+  if (panel.dataset.loaded === '1') return;
+  panel.innerHTML = '<div class="v2-tc-audit-loading">Loading pick-by-pick breakdown…</div>';
+  try {
+    const [pRes, hRes] = await Promise.all([
+      fetch('/api/model-portfolio',          { cache: 'no-store' }).then(r => r.json()),
+      fetch('/api/model-portfolio/history',  { cache: 'no-store' }).then(r => r.json()),
+    ]);
+    const active = (pRes.picks  || []).map(p => ({
+      status:        'active',
+      ticker:        p.ticker,
+      name:          p.name,
+      entry_date:    p.added_date,
+      entry_price:   p.entry_price,
+      exit_date:     null,
+      exit_price:    p.current_price || p.entry_price,
+      pct:           (p.performance_pct == null ? 0 : +p.performance_pct),
+      days_held:     p.days_held || 0,
+      exit_reason:   null,
+      is_simulated:  !!p.is_simulated_entry,
+    }));
+    const closed = (hRes.trades || []).map(t => ({
+      status:        'closed',
+      ticker:        t.ticker,
+      name:          t.name,
+      entry_date:    t.entry_date,
+      entry_price:   t.entry_price,
+      exit_date:     t.exit_date,
+      exit_price:    t.exit_price,
+      pct:           (t.final_pct == null ? 0 : +t.final_pct),
+      days_held:     t.days_held || 0,
+      exit_reason:   t.exit_reason,
+      is_simulated:  false,
+    }));
+    // Filter out admin closures (rebuild) — they're not real performance
+    // and would clutter the audit view. Sort by performance desc.
+    const all = active.concat(closed).filter(r => r.status === 'active' || r.exit_reason !== 'rebuild');
+    all.sort((a, b) => b.pct - a.pct);
+
+    if (!all.length){
+      panel.innerHTML = '<div class="v2-tc-audit-loading">No picks recorded yet.</div>';
+      panel.dataset.loaded = '1';
+      return;
+    }
+
+    const fmtDate = s => {
+      if (!s) return '—';
+      try { return new Date(s + 'T00:00:00').toLocaleDateString('en-US',{month:'short', day:'numeric'}); }
+      catch(e){ return s; }
+    };
+    const fmtUsd    = v => (v == null) ? '—' : '$' + (+v).toFixed(2);
+    const fmtPctRow = v => ((v == null) ? '—' : (v >= 0 ? '+' : '') + (+v).toFixed(1) + '%');
+    const statusChip = r => {
+      if (r.status === 'active') return '<span class="v2-tc-audit-st active">Active</span>';
+      const reason = r.exit_reason || 'closed';
+      const label = reason === 'target' ? '🎯 Booked'
+                  : reason === 'stop'   ? '⚠ Stop'
+                  : reason === 'trail'  ? '📉 Trail'
+                  : reason === 'signal' ? '🚨 Signal'
+                  : reason.toUpperCase();
+      return '<span class="v2-tc-audit-st closed">' + label + '</span>';
+    };
+
+    const rows = all.map(r => {
+      const pctCls = r.pct >= 0 ? 'up' : 'dn';
+      const ticTitle = r.name ? ' title="' + v2EscHTML(r.name) + '"' : '';
+      return '<tr onclick="event.stopPropagation();openStockModal(\'' + r.ticker + '\')">' +
+        '<td class="v2-tc-audit-tic"' + ticTitle + '>' +
+          v2LogoHTML(r.ticker, 'sm') +
+          '<span class="v2-tc-audit-tic-text">' + v2EscHTML(r.ticker || '') + '</span>' +
+        '</td>' +
+        '<td>' + statusChip(r) + '</td>' +
+        '<td class="v2-tc-audit-num">' + fmtDate(r.entry_date) + '</td>' +
+        '<td class="v2-tc-audit-num">' + (r.exit_date ? fmtDate(r.exit_date) : '—') + '</td>' +
+        '<td class="v2-tc-audit-num">' + r.days_held + 'd</td>' +
+        '<td class="v2-tc-audit-num">' + fmtUsd(r.entry_price) + '</td>' +
+        '<td class="v2-tc-audit-num">' + fmtUsd(r.exit_price) + '</td>' +
+        '<td class="v2-tc-audit-pct ' + pctCls + '"><strong>' + fmtPctRow(r.pct) + '</strong></td>' +
+      '</tr>';
+    }).join('');
+
+    panel.innerHTML =
+      '<div class="v2-tc-audit-meta">Click any row to open the stock. Sorted by performance.</div>' +
+      '<div class="v2-tc-audit-tablewrap">' +
+        '<table class="v2-tc-audit-table">' +
+          '<thead><tr>' +
+            '<th>Ticker</th><th>Status</th><th>Entry</th><th>Exit</th>' +
+            '<th class="v2-tc-audit-num">Held</th>' +
+            '<th class="v2-tc-audit-num">Entry $</th>' +
+            '<th class="v2-tc-audit-num">Exit $</th>' +
+            '<th class="v2-tc-audit-num">Return</th>' +
+          '</tr></thead>' +
+          '<tbody>' + rows + '</tbody>' +
+        '</table>' +
+      '</div>';
+    panel.dataset.loaded = '1';
+  } catch(err){
+    panel.innerHTML = '<div class="v2-tc-audit-loading">Breakdown unavailable: ' + (err && err.message || 'error') + '</div>';
+  }
 }
 
 async function resetModelPortfolio() {
