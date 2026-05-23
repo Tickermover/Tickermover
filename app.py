@@ -3821,6 +3821,136 @@ async def api_model_portfolio_history():
     return JSONResponse({"trades": trades, "stats": stats})
 
 
+@app.post("/api/admin/reprice-closed-trades")
+async def api_admin_reprice_closed_trades(env_id: int = None):
+    """One-shot maintenance: re-price every closed_trade row using the actual
+    yfinance close on its entry_date and exit_date. Fixes the rows that were
+    backfilled with synthetic entry prices (back-calculated from momentum_1m)
+    which produced wildly inflated returns like AAOI +320% and LSCC +121%.
+
+    Idempotent — running twice is a no-op once prices are already real.
+    Returns a summary of which rows changed and by how much.
+
+    Auth: open admin endpoint. Lives behind the same trust model as
+    /api/model-portfolio/reset (single-user product, no real admin auth).
+    """
+    import httpx
+    if not supabase.enabled or not config.SUPABASE_SERVICE_KEY:
+        raise HTTPException(status_code=503, detail="Supabase service key not configured")
+
+    base = config.SUPABASE_URL.rstrip("/")
+    hdrs = {
+        "apikey":        config.SUPABASE_SERVICE_KEY,
+        "Authorization": f"Bearer {config.SUPABASE_SERVICE_KEY}",
+        "Content-Type":  "application/json",
+        "Prefer":        "return=representation",
+    }
+
+    # Read all closed_trades (optionally scoped to env_id)
+    sel_params = {"select": "id,env_id,ticker,entry_date,exit_date,entry_price,exit_price,final_pct"}
+    if env_id is not None:
+        sel_params["env_id"] = f"eq.{env_id}"
+    async with httpx.AsyncClient(timeout=15) as c:
+        r = await c.get(f"{base}/rest/v1/closed_trades", headers=hdrs, params=sel_params)
+        r.raise_for_status()
+        rows = r.json()
+
+    # For each unique ticker, fetch yfinance history once. We need ~3mo of
+    # daily closes to cover both entry_date and exit_date in most cases.
+    tickers = sorted({(row.get("ticker") or "").upper() for row in rows if row.get("ticker")})
+
+    def _fetch_history_for_ticker(sym: str) -> dict:
+        """{date_str -> close} for the last 3 months."""
+        try:
+            tk = yf.Ticker(sym)
+            h = tk.history(period="3mo", interval="1d", auto_adjust=True)
+            if h is None or h.empty:
+                return {}
+            out = {}
+            for idx, hrow in h.iterrows():
+                d = idx.strftime("%Y-%m-%d") if hasattr(idx, "strftime") else str(idx)
+                close = float(hrow["Close"]) if hrow.get("Close") is not None else None
+                if close is not None and not (math.isnan(close) or math.isinf(close)):
+                    out[d] = round(close, 2)
+            return out
+        except Exception as exc:
+            logger.warning(f"reprice: yfinance fetch for {sym} failed: {exc}")
+            return {}
+
+    histories = await asyncio.to_thread(
+        lambda: {s: _fetch_history_for_ticker(s) for s in tickers}
+    )
+
+    def _close_on_or_after(hist: dict, target: str) -> float | None:
+        if not target or not hist:
+            return None
+        if target in hist:
+            return hist[target]
+        # weekend/holiday → use next available trading day
+        later = sorted(k for k in hist.keys() if k >= target)
+        if later:
+            return hist[later[0]]
+        # No future data — fall back to most recent prior trading day
+        prior = sorted(k for k in hist.keys() if k <= target)
+        if prior:
+            return hist[prior[-1]]
+        return None
+
+    changed = []
+    skipped = []
+    async with httpx.AsyncClient(timeout=15) as c:
+        for row in rows:
+            sym = (row.get("ticker") or "").upper()
+            h   = histories.get(sym, {})
+            new_entry = _close_on_or_after(h, row.get("entry_date"))
+            new_exit  = _close_on_or_after(h, row.get("exit_date"))
+            if new_entry is None or new_exit is None:
+                skipped.append({"id": row["id"], "ticker": sym, "reason": "no_history"})
+                continue
+            new_pct = round((new_exit / new_entry - 1) * 100, 2) if new_entry > 0 else 0
+            old_pct = row.get("final_pct")
+            # Skip if already matching (idempotent)
+            try:
+                if (abs(float(row.get("entry_price") or 0) - new_entry) < 0.005 and
+                    abs(float(row.get("exit_price")  or 0) - new_exit)  < 0.005):
+                    skipped.append({"id": row["id"], "ticker": sym, "reason": "already_real"})
+                    continue
+            except (TypeError, ValueError):
+                pass
+            patch = {
+                "entry_price": new_entry,
+                "exit_price":  new_exit,
+                "final_pct":   new_pct,
+                "won":         new_pct > 0,
+            }
+            pr = await c.patch(
+                f"{base}/rest/v1/closed_trades",
+                headers=hdrs,
+                params={"id": f"eq.{row['id']}"},
+                json=patch,
+            )
+            if pr.status_code >= 400:
+                skipped.append({"id": row["id"], "ticker": sym, "reason": f"patch_failed_{pr.status_code}"})
+                continue
+            changed.append({
+                "id": row["id"], "ticker": sym,
+                "entry_was": row.get("entry_price"), "entry_now": new_entry,
+                "exit_was":  row.get("exit_price"),  "exit_now":  new_exit,
+                "pct_was":   old_pct,                "pct_now":   new_pct,
+            })
+
+    # Bust the tracker-chart cache so the chart picks up the corrected rows
+    cache.delete("tracker-chart:v6") if hasattr(cache, "delete") else None
+    return JSONResponse({
+        "ok": True,
+        "total_rows": len(rows),
+        "changed":    len(changed),
+        "skipped":    len(skipped),
+        "changes":    changed,
+        "skips":      skipped,
+    })
+
+
 @app.post("/api/model-portfolio/reset")
 async def api_model_portfolio_reset():
     """Rebuild model portfolio with today's top stocks (admin action)."""
