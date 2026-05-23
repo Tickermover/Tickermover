@@ -2710,6 +2710,79 @@ html.v2-dark .v2-mp-mini-lbl{color:#cbd5e1}
   opacity:0;pointer-events:none;transition:opacity .22s ease;
 }
 .v2-ts-backdrop.on{opacity:1;pointer-events:auto}
+/* ────────────────────────────────────────────────────────────────
+   BRIEFINGS PANEL — Quartr-style event summaries for every ticker
+   ──────────────────────────────────────────────────────────────── */
+.v2-brf-head{max-width:980px;margin:0 auto 22px;padding:0 4px}
+.v2-brf-eyebrow{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#4338ca}
+.v2-brf-title{font-size:24px;font-weight:900;letter-spacing:-.02em;color:#0f172a;margin-top:4px}
+.v2-brf-sub{font-size:13px;color:#64748b;font-weight:500;margin-top:6px;line-height:1.55;max-width:680px}
+.v2-brf-loading{padding:60px 0;text-align:center;color:#94a3b8;font-size:13px}
+.v2-brf-grid{
+  max-width:980px;margin:0 auto;
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;
+}
+.v2-brf-card{
+  background:#fff;border:1px solid #e2e8f0;border-radius:10px;
+  padding:12px 14px;cursor:pointer;
+  transition:transform .12s, border-color .15s, box-shadow .15s;
+  display:flex;align-items:center;gap:10px;
+}
+.v2-brf-card:hover{transform:translateY(-2px);border-color:rgba(67,56,202,.30);box-shadow:0 8px 22px -12px rgba(67,56,202,.30)}
+.v2-brf-card .v2-brf-logo{width:34px;height:34px;border-radius:8px;background:#f8fafc;border:1px solid #e2e8f0;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;padding:3px}
+.v2-brf-card .v2-brf-logo img{width:100%;height:100%;object-fit:contain}
+.v2-brf-card .v2-brf-logo .fb{font-family:'JetBrains Mono',monospace;font-weight:800;font-size:11px;color:#4338ca}
+.v2-brf-card-body{min-width:0;flex:1}
+.v2-brf-card-tic{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:800;letter-spacing:.01em;color:#0f172a}
+.v2-brf-card-name{font-size:11px;color:#64748b;margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* Detail view — Quartr-style summary */
+.v2-brf-detail{
+  max-width:780px;margin:24px auto 60px;padding:0 4px;
+}
+.v2-brf-back{
+  display:inline-flex;align-items:center;gap:6px;
+  font-size:13px;font-weight:700;color:#4338ca;cursor:pointer;
+  background:none;border:none;font-family:inherit;padding:6px 8px;border-radius:6px;
+  transition:background .15s;margin-bottom:16px;
+}
+.v2-brf-back:hover{background:#eef2ff}
+.v2-brf-d-hero{
+  background:linear-gradient(180deg,#eef2ff 0%,#f5f3ff 100%);
+  border:1px solid rgba(99,102,241,.22);border-left:4px solid #4338ca;border-radius:10px;
+  padding:18px 22px;margin-bottom:20px;
+}
+.v2-brf-d-h-tic{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+.v2-brf-d-h-logo{width:42px;height:42px;border-radius:9px;background:#fff;border:1px solid #e2e8f0;display:flex;align-items:center;justify-content:center;padding:4px}
+.v2-brf-d-h-logo img{width:100%;height:100%;object-fit:contain}
+.v2-brf-d-h-text{min-width:0}
+.v2-brf-d-h-name{font-size:11px;font-weight:700;letter-spacing:.10em;text-transform:uppercase;color:#4338ca}
+.v2-brf-d-h-co{font-size:17px;font-weight:800;color:#0f172a;letter-spacing:-.01em;margin-top:2px}
+.v2-brf-d-h-eye{font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#4338ca;margin-top:14px}
+.v2-brf-d-h-title{font-size:18px;font-weight:800;color:#0f172a;letter-spacing:-.015em;margin-top:4px;line-height:1.3}
+.v2-brf-d-h-date{font-size:13px;color:#64748b;font-weight:600;margin-top:6px}
+
+.v2-brf-sect{margin-bottom:22px}
+.v2-brf-sect-h{
+  font-size:15px;font-weight:800;color:#0d2440;letter-spacing:-.01em;
+  margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid #4338ca;display:inline-block;
+}
+.v2-brf-sect-body{font-size:13.5px;color:#1e293b;line-height:1.65;letter-spacing:-.003em}
+.v2-brf-sect-body p{margin:0 0 10px}
+.v2-brf-quote{
+  margin-top:14px;padding:12px 16px;
+  background:#eef2ff;border-left:3px solid #4338ca;border-radius:0 8px 8px 0;
+  display:flex;gap:10px;
+}
+.v2-brf-quote-mark{font-family:Georgia, serif;font-size:36px;line-height:1;color:#4338ca;font-weight:900;flex-shrink:0;align-self:flex-start;margin-top:-4px}
+.v2-brf-quote-text{font-size:13px;color:#1e293b;line-height:1.6;font-style:italic;letter-spacing:-.003em}
+.v2-brf-empty-state{
+  padding:48px 24px;text-align:center;color:#475569;
+  background:#f8fafc;border:1px dashed #cbd5e1;border-radius:10px;margin-top:18px;
+}
+.v2-brf-empty-state strong{display:block;color:#0f172a;font-size:14px;margin-bottom:6px}
+.v2-brf-empty-state span{font-size:12.5px;color:#64748b}
+
 /* Compact popover (replaces the full-iframe drawer). User direction:
    don't render the tearsheet inline — just give Download + Share. */
 .v2-ts-popover{
@@ -4127,10 +4200,9 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
     <div class="v2-nav-item" onclick="v2Show('watch',this)">
       <span class="ico">⭐</span><span>Watchlist</span>
     </div>
-    <!-- 'Reports' nav entry removed May 23 — slot reserved for future
-         repurposing per user direction. The #panel-blog DOM and the
-         renderBlog / loadBlog JS stay in place so the route is still
-         reachable programmatically if needed; just no sidebar link. -->
+    <div class="v2-nav-item" onclick="v2Show('briefings',this);v2LoadBriefings()">
+      <span class="ico">🎤</span><span>Briefings</span>
+    </div>
 
     <div class="v2-sb-section">SUPPORT</div>
     <a class="v2-nav-item" href="/learn" target="_blank" rel="noopener">
@@ -4444,6 +4516,23 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 <!-- BLOG -->
 <div id="panel-blog" class="panel">
   <div id="blog-root"><div class="loading" style="padding:40px 20px">📝 Loading articles…</div></div>
+</div>
+
+<!-- BRIEFINGS — Quartr-style event summaries (earnings calls, investor
+     conferences) for every ticker. Click a ticker → loads the structured
+     summary on-demand from /api/event-intel, cached in Supabase. -->
+<div id="panel-briefings" class="panel">
+  <div id="briefings-root">
+    <div class="v2-brf-head">
+      <div class="v2-brf-eyebrow">Briefings</div>
+      <div class="v2-brf-title">Event summaries — every ticker</div>
+      <div class="v2-brf-sub">Earnings calls, investor-day talks, technology conferences. AI-summarised into the topics that actually moved the conversation. First load per ticker takes ~6-10s, instant after that.</div>
+    </div>
+    <div class="v2-brf-grid" id="v2-brf-grid">
+      <div class="v2-brf-loading">Loading ticker list…</div>
+    </div>
+    <div id="v2-brf-detail" class="v2-brf-detail" style="display:none"></div>
+  </div>
 </div>
 
 <!-- MODEL PORTFOLIO -->
@@ -7400,6 +7489,135 @@ async function v2TearsheetCopyShare(){
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && _v2TsCurrent) v2CloseTearsheet();
 });
+
+// ── BRIEFINGS PANEL ───────────────────────────────────────────────
+// Quartr-style event summaries for every ticker in the universe.
+// Lists ticker cards in a grid; click → loads /api/event-intel and
+// renders structured sections with bullets + verbatim quote.
+
+let _v2BrfLoaded = false;
+function v2LoadBriefings(){
+  if (_v2BrfLoaded) return;
+  _v2BrfLoaded = true;
+  const grid = document.getElementById('v2-brf-grid');
+  if (!grid) return;
+  const tickers = (window.__AH_DATA__ && window.__AH_DATA__.tickers) || [];
+  if (!tickers.length){
+    grid.innerHTML = '<div class="v2-brf-loading">No tickers loaded yet — refresh in a moment.</div>';
+    return;
+  }
+  const sorted = [...tickers]
+    .filter(t => t.ticker)
+    .sort((a, b) => (a.ticker || '').localeCompare(b.ticker || ''));
+  grid.innerHTML = sorted.slice(0, 540).map(t => {
+    const sym = t.ticker;
+    const name = (t.name || '').slice(0, 30);
+    const logoUrl = 'https://images.financialmodelingprep.com/symbol/' + encodeURIComponent(sym) + '.png';
+    return `<div class="v2-brf-card" onclick="v2OpenBriefing('${sym}')">
+      <div class="v2-brf-logo">
+        <span class="fb">${(sym || '?').charAt(0)}</span>
+        <img src="${logoUrl}" alt="" loading="lazy"
+             onerror="this.style.display='none'"
+             onload="this.previousElementSibling.style.display='none'">
+      </div>
+      <div class="v2-brf-card-body">
+        <div class="v2-brf-card-tic">${sym}</div>
+        <div class="v2-brf-card-name">${v2EscHTML(name)}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function v2OpenBriefing(ticker){
+  if (!ticker) return;
+  const sym = String(ticker).toUpperCase();
+  const grid = document.getElementById('v2-brf-grid');
+  const det  = document.getElementById('v2-brf-detail');
+  if (!det) return;
+  if (grid) grid.style.display = 'none';
+  det.style.display = '';
+  det.innerHTML = '<button class="v2-brf-back" onclick="v2CloseBriefing()">← Back to all tickers</button>' +
+                  '<div class="v2-brf-loading">Loading ' + sym + ' briefing… (first load ~6-10s while AI summarises the transcript)</div>';
+  try {
+    const r = await fetch('/api/event-intel/' + encodeURIComponent(sym), { cache: 'no-store' });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const d = await r.json();
+    det.innerHTML = v2RenderBriefingHTML(sym, d);
+  } catch (e) {
+    det.innerHTML = '<button class="v2-brf-back" onclick="v2CloseBriefing()">← Back to all tickers</button>' +
+                    '<div class="v2-brf-empty-state"><strong>Couldn\'t load briefing</strong>' +
+                    '<span>' + v2EscHTML(e && e.message || 'error') + '</span></div>';
+  }
+}
+
+function v2CloseBriefing(){
+  const grid = document.getElementById('v2-brf-grid');
+  const det  = document.getElementById('v2-brf-detail');
+  if (grid) grid.style.display = '';
+  if (det)  det.style.display  = 'none';
+}
+
+function v2RenderBriefingHTML(sym, d){
+  const back = '<button class="v2-brf-back" onclick="v2CloseBriefing()">← Back to all tickers</button>';
+  if (!d || d.available === false){
+    return back + '<div class="v2-brf-empty-state">' +
+      '<strong>No event coverage for ' + v2EscHTML(sym) + ' yet</strong>' +
+      '<span>Alpha Vantage doesn\'t have a transcript for this ticker. We typically cover S&amp;P 500 + Nasdaq-100 + Dow names. Smaller caps fill in as transcripts are published.</span>' +
+    '</div>';
+  }
+  const live = (window._allTickerData && window._allTickerData[sym]) || {};
+  const coName = live.name || '';
+  const logoUrl = 'https://images.financialmodelingprep.com/symbol/' + encodeURIComponent(sym) + '.png';
+  let html = back +
+    '<div class="v2-brf-d-hero">' +
+      '<div class="v2-brf-d-h-tic">' +
+        '<div class="v2-brf-d-h-logo"><img src="' + logoUrl + '" alt="" onerror="this.style.display=\'none\'"></div>' +
+        '<div class="v2-brf-d-h-text">' +
+          '<div class="v2-brf-d-h-name">' + v2EscHTML(sym) + ' investor relations material</div>' +
+          '<div class="v2-brf-d-h-co">' + v2EscHTML(coName) + '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="v2-brf-d-h-eye">Event briefing</div>' +
+      '<div class="v2-brf-d-h-title">' + v2EscHTML(d.event_title || 'Latest event summary') + '</div>' +
+      (d.event_date ? '<div class="v2-brf-d-h-date">' + v2EscHTML(d.event_date) + '</div>' : '') +
+    '</div>';
+
+  let sections = Array.isArray(d.sections) ? d.sections : null;
+  if (!sections){
+    sections = [];
+    if (Array.isArray(d.key_updates) && d.key_updates.length)
+      sections.push({heading: 'Key business updates', bullets: d.key_updates});
+    if (Array.isArray(d.operations) && d.operations.length)
+      sections.push({heading: 'Operations &amp; capacity', bullets: d.operations});
+    if (Array.isArray(d.outlook) && d.outlook.length)
+      sections.push({heading: 'Outlook &amp; guidance', bullets: d.outlook});
+    if (Array.isArray(d.risks) && d.risks.length)
+      sections.push({heading: 'Risks &amp; headwinds', bullets: d.risks});
+  }
+  if (!sections.length){
+    html += '<div class="v2-brf-empty-state">' +
+      '<strong>Summary structure missing</strong>' +
+      '<span>The AI summariser returned an unexpected shape. Try reloading the page.</span>' +
+    '</div>';
+  } else {
+    sections.forEach(s => {
+      if (!s || !Array.isArray(s.bullets) || !s.bullets.length) return;
+      html += '<div class="v2-brf-sect">' +
+        '<div class="v2-brf-sect-h">' + v2EscHTML(s.heading || 'Highlights') + '</div>' +
+        '<div class="v2-brf-sect-body">' +
+          s.bullets.map(b => '<p>' + v2EscHTML(String(b)) + '</p>').join('') +
+        '</div>' +
+      '</div>';
+    });
+  }
+  if (d.raw_excerpt && d.raw_excerpt.length > 20){
+    html += '<div class="v2-brf-quote">' +
+      '<div class="v2-brf-quote-mark">"</div>' +
+      '<div class="v2-brf-quote-text">' + v2EscHTML(d.raw_excerpt) + '</div>' +
+    '</div>';
+  }
+  return html;
+}
 
 // ── TEAR SHEET PRE-WARM + DIRECT DOWNLOAD ────────────────────────
 // Pre-warm cache: when the user opens a stock modal, we load that

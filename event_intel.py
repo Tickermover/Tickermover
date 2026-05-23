@@ -78,25 +78,43 @@ async def _fetch_av_transcript(ticker: str, quarter: str | None = None) -> dict 
 # ── 2. Summarization (Anthropic Haiku) ────────────────────────────────────
 
 _SUMMARY_PROMPT = """You are summarising an earnings call transcript into a structured
-JSON object for an analyst-style stock research report. Be specific with numbers,
-quote exact figures and percentages from the transcript. Do NOT make up data.
-If the transcript doesn't cover a category, return an empty list for it.
+JSON object for an analyst-style stock research report (Quartr-style format).
+Be specific with numbers, quote exact figures and percentages from the transcript.
+Do NOT make up data. If the transcript doesn't cover something, omit that section.
 
-Return ONLY a JSON object (no prose, no markdown fences) with these keys:
+Generate 3-5 SECTIONS with DYNAMIC headings that reflect the actual content
+of this specific event. Typical headings might be:
+  - "Industry trends and demand drivers"
+  - "Technology innovation and roadmap"
+  - "Financial performance and outlook"
+  - "Capacity expansion and manufacturing"
+  - "Product roadmap"
+  - "Capital allocation"
+  - "Risks and headwinds"
+  - "Customer and segment dynamics"
+But choose what fits THIS event. A semiconductor company's tech-conference
+talk will have different headings than a bank's earnings call.
+
+Return ONLY a JSON object (no prose, no markdown fences):
 
 {{
-  "event_title":   "Q? YYYY earnings call",
+  "event_title":   "Short descriptive title (e.g. 'J.P. Morgan 54th Annual Global Technology Conference summary' or 'Q1 2026 earnings call')",
   "event_date":    "YYYY-MM-DD",
-  "key_updates":   ["3-5 bullet points covering the most important quantitative updates from the quarter"],
-  "operations":    ["2-4 bullets about manufacturing, capacity, supply chain, capex"],
-  "outlook":       ["2-4 bullets about forward guidance, expected ranges, qualitative drivers"],
-  "risks":         ["1-3 bullets about specific risks or headwinds management called out"],
-  "raw_excerpt":   "One verbatim paragraph (50-80 words) from the transcript that best captures the executive's key message"
+  "sections": [
+    {{
+      "heading": "Section heading (4-7 words, sentence case)",
+      "bullets": ["3-5 bullets per section, each 15-35 words"]
+    }},
+    ...
+  ],
+  "raw_excerpt": "One verbatim paragraph (50-80 words) from the transcript that best captures the executive's key message"
 }}
 
-Style each bullet like the Quartr / Bloomberg pattern: combine the metric WITH the
-comparison inline, e.g. "Revenue of $407M, up 90% YoY led by datacenter products"
-rather than splitting into separate sentences. Each bullet 12-30 words.
+Style each bullet like the Quartr / Bloomberg pattern: combine the metric WITH
+its driver / comparison inline:
+  "Revenue and margin predictability have improved due to build-to-order and
+   strong demand, with gross margins approaching 50%."
+NOT split sentences. Each bullet self-contained.
 
 Transcript (ticker: {ticker}, quarter: {quarter}):
 
@@ -203,6 +221,10 @@ async def _save_cache(ticker: str, summary: dict) -> bool:
         "event_title":   summary.get("event_title"),
         "event_date":    summary.get("event_date"),
         "source":        summary.get("source", "alpha_vantage_transcript"),
+        # New dynamic-sections shape (May 23 v2). Legacy 4-bucket fields
+        # left in for backwards compat with older cached rows during the
+        # transition; older clients can still read key_updates etc.
+        "sections":      summary.get("sections"),
         "key_updates":   summary.get("key_updates"),
         "operations":    summary.get("operations"),
         "outlook":       summary.get("outlook"),
