@@ -238,6 +238,17 @@
     .sheet-wrap{box-shadow:none;border:0}
     .sheet{box-shadow:none;border:0;width:100%;min-height:auto;page-break-inside:avoid}
   }
+
+  /* Embed mode — when loaded inside the dashboard drawer iframe with
+     ?embed=1, hide the page chrome (header / ticker input / share
+     buttons) since the drawer provides them. Keeps the A4 sheet itself
+     and trims the wrapping page padding. */
+  body.embed{padding:14px 8px;background:#e2e8f0}
+  body.embed .page-head,
+  body.embed .ticker-bar,
+  body.embed .actions{display:none !important}
+  body.embed .page{max-width:none}
+  body.embed .sheet-wrap{margin:0 auto}
 </style>
 </head>
 <body>
@@ -976,6 +987,11 @@ function fitSheet() {
 }
 
 window.addEventListener('load', () => {
+  // Embed mode: when loaded inside the dashboard drawer iframe via
+  // ?embed=1, tag the body so the chrome-hiding CSS kicks in.
+  if (new URLSearchParams(window.location.search).get('embed') === '1') {
+    document.body.classList.add('embed');
+  }
   fitSheet();
   // Pre-fill ticker from URL — supports both /infographics/earnings/{T} and /tearsheet/{T}
   const m = window.location.pathname.match(/\/(?:infographics\/earnings|tearsheet)\/([A-Z\.]+)/i);
