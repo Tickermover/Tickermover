@@ -157,6 +157,59 @@
   .ts-metric .val.red{color:#dc2626}
   .ts-metric .sub{font-size:11.5px;color:#64748b;font-weight:600;margin-top:4px;line-height:1.3}
 
+  /* ── ANALYST OUTLOOK + OWNERSHIP/RISK row (May 23 enrichment) ── */
+  .ts-twocol{
+    display:grid;grid-template-columns:1.2fr 1fr;gap:22px;
+    padding:20px 0;
+    border-bottom:1px solid rgba(15,23,42,.08);
+  }
+  .ts-card-flush{
+    background:#fff;border:1px solid rgba(15,23,42,.08);border-radius:12px;
+    padding:16px 18px;
+    box-shadow:0 1px 0 rgba(15,23,42,.02);
+  }
+  .ts-card-flush .ts-card-h{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    font-size:14px;font-weight:800;color:#0f172a;margin-bottom:2px;
+  }
+  .ts-card-flush .ts-card-h .pill{
+    font-size:10px;font-weight:800;letter-spacing:.06em;
+    padding:3px 8px;border-radius:5px;
+    background:linear-gradient(135deg,rgba(67,56,202,.10),rgba(139,92,246,.10));
+    color:#4338ca;
+  }
+  .ts-card-flush .ts-card-sub{font-size:11.5px;color:#64748b;font-weight:500;margin-bottom:12px;line-height:1.45}
+
+  .ao-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+  .ao-cell{background:#f8fafc;border:1px solid rgba(15,23,42,.06);border-radius:8px;padding:10px 12px}
+  .ao-lbl{font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#64748b}
+  .ao-val{font-size:20px;font-weight:900;color:#0d2440;margin-top:2px;letter-spacing:-.015em;line-height:1.1;font-variant-numeric:tabular-nums}
+  .ao-val.green{color:#16a34a}
+  .ao-val.red{color:#dc2626}
+  .ao-sub{font-size:11px;color:#64748b;font-weight:600;margin-top:3px}
+
+  .ao-bar{display:flex;height:10px;border-radius:5px;overflow:hidden;background:#f1f5f9;margin-bottom:8px}
+  .ao-bar-seg{height:100%;transition:flex .35s ease}
+  .ao-bar-seg.sb{background:linear-gradient(90deg,#16a34a,#22c55e)}
+  .ao-bar-seg.b {background:linear-gradient(90deg,#65a30d,#84cc16)}
+  .ao-bar-seg.h {background:linear-gradient(90deg,#d97706,#f59e0b)}
+  .ao-bar-seg.s {background:linear-gradient(90deg,#ea580c,#fb923c)}
+  .ao-bar-seg.ss{background:linear-gradient(90deg,#b91c1c,#dc2626)}
+  .ao-leg{display:flex;flex-wrap:wrap;gap:8px 14px;font-size:11px;color:#475569;font-weight:600}
+  .ao-leg span{display:inline-flex;align-items:center;gap:5px}
+  .ao-leg i{display:inline-block;width:9px;height:9px;border-radius:2px}
+  .ao-leg i.sb{background:#16a34a}
+  .ao-leg i.b {background:#84cc16}
+  .ao-leg i.h {background:#f59e0b}
+  .ao-leg i.s {background:#fb923c}
+  .ao-leg i.ss{background:#dc2626}
+  .ao-leg strong{color:#0f172a;font-weight:800}
+
+  .or-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .or-cell{background:#f8fafc;border:1px solid rgba(15,23,42,.06);border-radius:8px;padding:10px 12px}
+  .or-lbl{font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#64748b}
+  .or-val{font-size:19px;font-weight:900;color:#0d2440;margin-top:2px;letter-spacing:-.015em;font-variant-numeric:tabular-nums}
+
   /* ── EARNINGS / FUNDAMENTALS ROW ── */
   .ts-earnings{
     display:grid;grid-template-columns:1fr 1fr;gap:22px;
@@ -346,7 +399,7 @@
           </div>
         </div>
 
-        <!-- METRICS GRID -->
+        <!-- METRICS GRID — expanded from 8 → 12 cards (May 23 enrichment) -->
         <div class="ts-metrics">
           <div class="ts-metric">
             <div class="lbl">Market Cap</div>
@@ -364,19 +417,39 @@
             <div class="sub" id="m-gm-sub">—</div>
           </div>
           <div class="ts-metric">
+            <div class="lbl">FCF Margin</div>
+            <div class="val" id="m-fcfm">—</div>
+            <div class="sub" id="m-fcfm-sub">Cash from ops / revenue</div>
+          </div>
+          <div class="ts-metric">
             <div class="lbl">P/E (TTM)</div>
             <div class="val" id="m-pe">—</div>
             <div class="sub" id="m-pe-sub">—</div>
           </div>
           <div class="ts-metric">
+            <div class="lbl">P/S (TTM)</div>
+            <div class="val" id="m-ps">—</div>
+            <div class="sub" id="m-ps-sub">—</div>
+          </div>
+          <div class="ts-metric">
+            <div class="lbl">PEG</div>
+            <div class="val" id="m-peg">—</div>
+            <div class="sub" id="m-peg-sub">P/E ÷ growth</div>
+          </div>
+          <div class="ts-metric">
+            <div class="lbl">Debt / Equity</div>
+            <div class="val" id="m-de">—</div>
+            <div class="sub" id="m-de-sub">Balance sheet leverage</div>
+          </div>
+          <div class="ts-metric">
+            <div class="lbl">ROE (TTM)</div>
+            <div class="val" id="m-roe">—</div>
+            <div class="sub" id="m-roe-sub">Return on equity</div>
+          </div>
+          <div class="ts-metric">
             <div class="lbl">52W Range</div>
             <div class="val" id="m-52w" style="font-size:18px">—</div>
             <div class="sub" id="m-52w-sub">—</div>
-          </div>
-          <div class="ts-metric">
-            <div class="lbl">Analyst Mean</div>
-            <div class="val" id="m-tgt">—</div>
-            <div class="sub" id="m-tgt-sub">—</div>
           </div>
           <div class="ts-metric">
             <div class="lbl">RSI (14)</div>
@@ -387,6 +460,83 @@
             <div class="lbl">EPS Beat Streak</div>
             <div class="val" id="m-streak">—</div>
             <div class="sub" id="m-streak-sub">—</div>
+          </div>
+        </div>
+
+        <!-- ANALYST OUTLOOK + OWNERSHIP/RISK STRIP (May 23 enrichment) -->
+        <div class="ts-twocol">
+          <div class="ts-card ts-card-flush">
+            <div class="ts-card-h">
+              <span>🎯 Analyst Outlook</span>
+              <span class="pill" id="ao-coverage">—</span>
+            </div>
+            <div class="ts-card-sub" id="ao-summary">—</div>
+            <div class="ao-grid">
+              <div class="ao-cell">
+                <div class="ao-lbl">Mean Target</div>
+                <div class="ao-val" id="ao-mean">—</div>
+                <div class="ao-sub" id="ao-mean-up">—</div>
+              </div>
+              <div class="ao-cell">
+                <div class="ao-lbl">Low / High</div>
+                <div class="ao-val" id="ao-range" style="font-size:16px">—</div>
+                <div class="ao-sub" id="ao-range-sub">Analyst band</div>
+              </div>
+              <div class="ao-cell">
+                <div class="ao-lbl">Strong Buy / Buy</div>
+                <div class="ao-val green" id="ao-buys">—</div>
+                <div class="ao-sub" id="ao-buys-sub">Recommendations</div>
+              </div>
+            </div>
+            <!-- Visual rating breakdown bar — Strong Buy / Buy / Hold / Sell / Strong Sell -->
+            <div class="ao-bar" id="ao-bar">
+              <div class="ao-bar-seg sb"  id="ao-seg-sb"  title="Strong Buy"></div>
+              <div class="ao-bar-seg b"   id="ao-seg-b"   title="Buy"></div>
+              <div class="ao-bar-seg h"   id="ao-seg-h"   title="Hold"></div>
+              <div class="ao-bar-seg s"   id="ao-seg-s"   title="Sell"></div>
+              <div class="ao-bar-seg ss"  id="ao-seg-ss"  title="Strong Sell"></div>
+            </div>
+            <div class="ao-leg">
+              <span><i class="sb"></i>Strong Buy <strong id="ao-n-sb">0</strong></span>
+              <span><i class="b"></i>Buy <strong id="ao-n-b">0</strong></span>
+              <span><i class="h"></i>Hold <strong id="ao-n-h">0</strong></span>
+              <span><i class="s"></i>Sell <strong id="ao-n-s">0</strong></span>
+              <span><i class="ss"></i>Strong Sell <strong id="ao-n-ss">0</strong></span>
+            </div>
+          </div>
+
+          <div class="ts-card ts-card-flush">
+            <div class="ts-card-h">
+              <span>🛡️ Ownership &amp; Risk</span>
+              <span class="pill" id="or-beta-pill">β —</span>
+            </div>
+            <div class="ts-card-sub">How much of the float is held by insiders / institutions, and how volatile vs market.</div>
+            <div class="or-grid">
+              <div class="or-cell">
+                <div class="or-lbl">Insider Own</div>
+                <div class="or-val" id="or-insider">—</div>
+              </div>
+              <div class="or-cell">
+                <div class="or-lbl">Institutional</div>
+                <div class="or-val" id="or-inst">—</div>
+              </div>
+              <div class="or-cell">
+                <div class="or-lbl">Short % Float</div>
+                <div class="or-val" id="or-short">—</div>
+              </div>
+              <div class="or-cell">
+                <div class="or-lbl">Beta (5Y)</div>
+                <div class="or-val" id="or-beta">—</div>
+              </div>
+              <div class="or-cell">
+                <div class="or-lbl">Dividend Yield</div>
+                <div class="or-val" id="or-div">—</div>
+              </div>
+              <div class="or-cell">
+                <div class="or-lbl">Avg Volume</div>
+                <div class="or-val" id="or-vol">—</div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -605,12 +755,116 @@ function render() {
     document.getElementById('m-52w-sub').textContent = (distHi >= -2 ? 'At new highs' : distHi.toFixed(1) + '% from 52w high');
   }
 
-  const tgt = stock.target_mean;
-  document.getElementById('m-tgt').textContent = tgt != null ? '$' + tgt.toFixed(2) : '—';
-  if (tgt && price) {
-    const ups = ((tgt/price) - 1) * 100;
-    document.getElementById('m-tgt-sub').textContent = fmtPct(ups, 1) + ' implied upside';
+  // Note: the old m-tgt card was removed and replaced by the Analyst Outlook
+  // section below — analyst target now renders in ao-mean / ao-range with a
+  // richer presentation. The setText helper guards every write so a missing
+  // DOM id (whether removed or future) doesn't throw and break the page.
+  const setText = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+  const setHtml = (id, html) => { const el = document.getElementById(id); if (el) el.innerHTML = html; };
+  const setClass = (id, cls) => { const el = document.getElementById(id); if (el) el.className = cls; };
+
+  // ── Additional fundamentals (May 23 enrichment) ──
+  // P/S — prefer backend ps_ratio, else compute from market_cap / revenue_ttm.
+  const psRaw = stock.ps_ratio != null ? stock.ps_ratio
+              : (stock.price_to_sales != null ? stock.price_to_sales : null);
+  const revTtm = stock.revenue_ttm || stock.revenueTTM || null;
+  const psCalc = (psRaw == null && mc && revTtm && revTtm > 0) ? (mc / revTtm) : psRaw;
+  setText('m-ps', psCalc != null ? psCalc.toFixed(1) + 'x' : '—');
+  setText('m-ps-sub', psCalc == null ? '' : psCalc < 1 ? 'Bargain' : psCalc < 5 ? 'Reasonable' : psCalc < 15 ? 'Growth premium' : 'Very rich');
+
+  // PEG
+  const peg = stock.peg_ratio != null ? stock.peg_ratio : stock.peg;
+  setText('m-peg', peg != null ? peg.toFixed(2) : '—');
+  setText('m-peg-sub', peg == null ? 'P/E ÷ growth' : peg < 1 ? 'Cheap vs growth' : peg < 2 ? 'Fair vs growth' : 'Rich vs growth');
+
+  // Debt / Equity
+  const de = stock.debt_to_equity != null ? stock.debt_to_equity : stock.debt_equity;
+  setText('m-de', de != null ? (de < 10 ? de.toFixed(2) : de.toFixed(0)) : '—');
+  setText('m-de-sub', de == null ? 'Balance sheet leverage' : de < 0.5 ? 'Conservative' : de < 1.5 ? 'Moderate' : 'High leverage');
+
+  // ROE (TTM) — backend gives as fraction (0.18 = 18%)
+  const roe = stock.roe != null ? stock.roe : stock.return_on_equity;
+  setText('m-roe', roe != null ? (roe * 100).toFixed(1) + '%' : '—');
+  setText('m-roe-sub', roe == null ? 'Return on equity' : roe >= 0.20 ? 'Excellent' : roe >= 0.10 ? 'Healthy' : roe >= 0 ? 'Modest' : 'Negative');
+
+  // FCF Margin — operating_cashflow / revenue_ttm if both present
+  const opCf = stock.operating_cashflow || stock.fcf_ttm || null;
+  let fcfM = stock.fcf_margin != null ? stock.fcf_margin : null;
+  if (fcfM == null && opCf && revTtm && revTtm > 0) fcfM = opCf / revTtm;
+  setText('m-fcfm', fcfM != null ? (fcfM * 100).toFixed(1) + '%' : '—');
+  setText('m-fcfm-sub', fcfM == null ? 'Cash from ops / revenue' : fcfM >= 0.20 ? 'Cash machine' : fcfM >= 0.10 ? 'Healthy' : fcfM >= 0 ? 'Modest' : 'Cash-burning');
+
+  // ── Analyst Outlook section ──
+  const tgtMean = stock.target_mean;
+  const tgtLow  = stock.target_low;
+  const tgtHigh = stock.target_high;
+  setText('ao-mean', tgtMean != null ? '$' + tgtMean.toFixed(2) : '—');
+  if (tgtMean && price) {
+    const ups = ((tgtMean / price) - 1) * 100;
+    const upStr = (ups >= 0 ? '+' : '') + ups.toFixed(1) + '% upside';
+    setText('ao-mean-up', upStr);
+    setClass('ao-mean', 'ao-val ' + (ups >= 0 ? 'green' : 'red'));
+  } else {
+    setText('ao-mean-up', '—');
   }
+  setText('ao-range', (tgtLow != null && tgtHigh != null)
+    ? '$' + tgtLow.toFixed(0) + ' – $' + tgtHigh.toFixed(0)
+    : '—');
+  // Recommendation counts — backend may expose any subset of these
+  const recSb = stock.rec_strong_buy   || stock.strong_buy   || 0;
+  const recB  = stock.rec_buy          || stock.buy          || 0;
+  const recH  = stock.rec_hold         || stock.hold         || 0;
+  const recS  = stock.rec_sell         || stock.sell         || 0;
+  const recSs = stock.rec_strong_sell  || stock.strong_sell  || 0;
+  const totalRecs = recSb + recB + recH + recS + recSs;
+  setText('ao-buys', totalRecs > 0 ? (recSb + recB) : '—');
+  setText('ao-buys-sub', totalRecs > 0 ? 'of ' + totalRecs + ' analysts' : 'No coverage data');
+  setText('ao-coverage', totalRecs > 0 ? totalRecs + ' analysts' : 'Limited coverage');
+  setText('ao-summary', totalRecs > 0
+    ? (recSb + recB) + ' bullish · ' + recH + ' neutral · ' + (recS + recSs) + ' bearish'
+    : 'Analyst recommendation counts unavailable — relying on target band.');
+  // Rating breakdown bar — flex segments sized by share
+  const segs = [['ao-seg-sb',recSb],['ao-seg-b',recB],['ao-seg-h',recH],['ao-seg-s',recS],['ao-seg-ss',recSs]];
+  segs.forEach(([id, n]) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (totalRecs === 0){ el.style.flex = '1'; el.style.opacity = '0.18'; }
+    else                { el.style.flex = String(n); el.style.opacity = n > 0 ? '1' : '0.18'; }
+  });
+  setText('ao-n-sb', recSb);
+  setText('ao-n-b',  recB);
+  setText('ao-n-h',  recH);
+  setText('ao-n-s',  recS);
+  setText('ao-n-ss', recSs);
+
+  // ── Ownership & Risk section ──
+  const insiderOwn = stock.insider_ownership != null ? stock.insider_ownership
+                  : (stock.insider_pct != null ? stock.insider_pct : null);
+  const instOwn    = stock.institutional_ownership != null ? stock.institutional_ownership
+                  : (stock.inst_ownership != null ? stock.inst_ownership : null);
+  const shortPct   = stock.short_percent_float != null ? stock.short_percent_float : stock.short_interest;
+  const beta       = stock.beta;
+  const divY       = stock.dividend_yield;
+  const avgVol     = stock.avg_volume || stock.volume_avg_30d || stock.volume;
+  const fmtPctOwn = v => {
+    if (v == null) return '—';
+    const x = (v > 1) ? v : v * 100;
+    return x.toFixed(1) + '%';
+  };
+  const fmtVol = v => {
+    if (!v) return '—';
+    if (v >= 1e9) return (v/1e9).toFixed(1) + 'B';
+    if (v >= 1e6) return (v/1e6).toFixed(1) + 'M';
+    if (v >= 1e3) return (v/1e3).toFixed(0) + 'K';
+    return String(Math.round(v));
+  };
+  setText('or-insider', fmtPctOwn(insiderOwn));
+  setText('or-inst',    fmtPctOwn(instOwn));
+  setText('or-short',   shortPct != null ? (shortPct).toFixed(1) + '%' : '—');
+  setText('or-beta',    beta != null ? beta.toFixed(2) : '—');
+  setText('or-beta-pill', beta != null ? 'β ' + beta.toFixed(2) : 'β —');
+  setText('or-div',     (divY != null && divY > 0) ? ((divY > 1 ? divY : divY * 100).toFixed(2) + '%') : 'None');
+  setText('or-vol',     fmtVol(avgVol));
 
   const rsi = stock.rsi_14;
   document.getElementById('m-rsi').textContent = rsi != null ? rsi.toFixed(0) : '—';
