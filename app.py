@@ -1698,19 +1698,42 @@ async def api_pdf(symbol: str):
     c = cache.get(ck)
     if c and c.get("points"):
         pts = c["points"]
-    else:
-        try:
-            tk = yf.Ticker(sym)
-            h = tk.history(period="3mo", interval="1d", auto_adjust=True)
-            if h is not None and not h.empty:
-                for idx, row in h.iterrows():
-                    d = idx.strftime("%Y-%m-%d") if hasattr(idx, "strftime") else str(idx)
-                    close = float(row["Close"]) if row.get("Close") is not None else None
-                    if close is not None and not (math.isnan(close) or math.isinf(close)):
-                        pts.append({"date": d, "close": round(close, 2)})
-                cache.set(ck, {"ticker": sym, "period": "3mo", "points": pts}, 60 * 60 * 6)
-        except Exception as exc:
-            logger.warning(f"pdf build {sym}: yfinance history failed: {exc}")
+    if not pts:
+        # 3-layer fallback to dodge yfinance per-ticker rate limits
+        def _yf_fetch_sync():
+            out = []
+            try:
+                tk = yf.Ticker(sym)
+                h = tk.history(period="3mo", interval="1d", auto_adjust=True)
+                if h is not None and not h.empty:
+                    for idx, row in h.iterrows():
+                        d = idx.strftime("%Y-%m-%d") if hasattr(idx, "strftime") else str(idx)
+                        close = float(row["Close"]) if row.get("Close") is not None else None
+                        if close is not None and not (math.isnan(close) or math.isinf(close)):
+                            out.append({"date": d, "close": round(close, 2)})
+            except Exception as exc:
+                logger.warning(f"pdf build {sym}: Ticker.history failed: {exc}")
+            if not out:
+                try:
+                    df = yf.download(sym, period="3mo", interval="1d",
+                                     auto_adjust=True, progress=False, threads=False)
+                    if df is not None and not df.empty:
+                        closes = df["Close"] if "Close" in df.columns else df.get("Adj Close")
+                        if closes is not None:
+                            for idx, v in closes.items():
+                                try:
+                                    d = idx.strftime("%Y-%m-%d") if hasattr(idx, "strftime") else str(idx)
+                                    vf = float(v)
+                                    if not (math.isnan(vf) or math.isinf(vf)):
+                                        out.append({"date": d, "close": round(vf, 2)})
+                                except (TypeError, ValueError):
+                                    continue
+                except Exception as exc:
+                    logger.warning(f"pdf build {sym}: yf.download failed: {exc}")
+            return out
+        pts = await asyncio.to_thread(_yf_fetch_sync)
+        if pts:
+            cache.set(ck, {"ticker": sym, "period": "3mo", "points": pts}, 60 * 60 * 6)
 
     # Render PDF (pure compute, no I/O — runs in a thread to keep event loop free)
     try:
