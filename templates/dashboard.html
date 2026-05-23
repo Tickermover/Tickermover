@@ -4127,9 +4127,10 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
     <div class="v2-nav-item" onclick="v2Show('watch',this)">
       <span class="ico">⭐</span><span>Watchlist</span>
     </div>
-    <div class="v2-nav-item" onclick="v2Show('blog',this)">
-      <span class="ico">📰</span><span>Reports</span>
-    </div>
+    <!-- 'Reports' nav entry removed May 23 — slot reserved for future
+         repurposing per user direction. The #panel-blog DOM and the
+         renderBlog / loadBlog JS stay in place so the route is still
+         reachable programmatically if needed; just no sidebar link. -->
 
     <div class="v2-sb-section">SUPPORT</div>
     <a class="v2-nav-item" href="/learn" target="_blank" rel="noopener">
