@@ -7228,7 +7228,6 @@ function v2OpenTearsheet(ticker){
   const body     = document.getElementById('v2-ts-body');
   if (!backdrop || !drawer || !body) return;
   head.textContent = sym;
-  if (share) share.href = '/tearsheet/' + encodeURIComponent(sym);
   // Load the full /tearsheet/{TICKER} page inside an iframe so the user gets
   // ALL the original rich content (price chart, fundamentals, earnings,
   // signals, allocator, etc.) without leaving the dashboard. The frame's
@@ -13817,11 +13816,8 @@ function showUpgradeSuccess() {
     <div class="v2-ts-head-r">
       <button class="v2-ts-share" onclick="v2TearsheetDownload()" title="Download as PDF" type="button">
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 1.5v9M4.5 7L8 10.5L11.5 7"/><path d="M2 13.5h12"/></svg>
-        <span style="font-size:11px;font-weight:700;margin-left:4px">PDF</span>
+        <span style="font-size:11px;font-weight:700;margin-left:4px">Download PDF</span>
       </button>
-      <a id="v2-ts-share" class="v2-ts-share" href="#" target="_blank" rel="noopener" title="Open share URL in new tab">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2h4v4M14 2L8.5 7.5"/><path d="M13 9v4a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h4"/></svg>
-      </a>
       <button class="v2-ts-close" onclick="v2CloseTearsheet()" aria-label="Close tear sheet">✕</button>
     </div>
   </header>

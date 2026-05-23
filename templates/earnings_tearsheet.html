@@ -76,11 +76,27 @@
   .ts-meta .ts-quarter{font-size:18px;color:#0d2440;font-weight:800;margin-top:4px;letter-spacing:.02em}
   .ts-meta .ts-quarter strong{color:#4338ca}
 
-  /* ── HERO: TICKER + PRICE + SCORE + STARS ── */
+  /* ── HERO: LOGO + TICKER + PRICE + SCORE + STARS ── */
   .ts-hero{
     display:grid;grid-template-columns:1fr auto auto;gap:32px;align-items:center;
     padding:26px 0 22px;
     border-bottom:1px solid rgba(15,23,42,.08);
+  }
+  .ts-hero-l{display:flex;align-items:center;gap:18px;min-width:0}
+  .ts-hero-l-text{min-width:0}
+  .ts-hero-logo{
+    width:72px;height:72px;border-radius:14px;flex-shrink:0;
+    background:#fff;border:1px solid rgba(15,23,42,.08);
+    display:flex;align-items:center;justify-content:center;
+    padding:6px;box-shadow:0 4px 14px -6px rgba(67,56,202,.18);
+    position:relative;overflow:hidden;
+  }
+  .ts-hero-logo img{width:100%;height:100%;object-fit:contain;display:block}
+  .ts-hero-logo .fb{
+    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    font-family:'JetBrains Mono','Inter',monospace;font-size:24px;font-weight:900;letter-spacing:-.02em;
+    background:linear-gradient(135deg,#4338ca 0%,#8b5cf6 50%,#ec4899 100%);
+    color:#fff;
   }
   .ts-hero-l .ts-ticker{
     font-size:64px;font-weight:900;letter-spacing:-.04em;line-height:.95;color:#0d2440;
@@ -107,7 +123,10 @@
 
   .ts-hero-r{text-align:right;min-width:200px}
   .ts-hero-r .ts-scorenum{
-    font-size:64px;font-weight:900;line-height:.95;color:#16a34a;letter-spacing:-.04em;
+    font-size:64px;font-weight:900;line-height:.95;letter-spacing:-.04em;
+    background:linear-gradient(135deg,#4338ca 0%,#8b5cf6 50%,#ec4899 100%);
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;
+    font-variant-numeric:tabular-nums;
   }
   .ts-hero-r .ts-scorelbl{
     font-size:11.5px;color:#64748b;font-weight:800;letter-spacing:.12em;text-transform:uppercase;margin-top:6px;
@@ -130,8 +149,10 @@
     display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;
   }
   .ts-card-h .pill{
-    background:#0d2440;color:#84cc16;font-size:10.5px;font-weight:800;letter-spacing:.06em;
+    background:linear-gradient(135deg,#4338ca 0%,#8b5cf6 100%);color:#fff;
+    font-size:10.5px;font-weight:800;letter-spacing:.06em;
     padding:3px 8px;border-radius:5px;text-transform:uppercase;
+    box-shadow:0 2px 6px -2px rgba(99,102,241,.45);
   }
   .ts-card-sub{font-size:12px;color:#64748b;font-weight:600;margin-bottom:10px}
   .ts-card-canvas{flex:1;min-height:200px;position:relative}
@@ -380,12 +401,17 @@
           </div>
         </div>
 
-        <!-- HERO: TICKER · PRICE · SCORE -->
+        <!-- HERO: COMPANY LOGO + TICKER · PRICE · SCORE -->
         <div class="ts-hero">
           <div class="ts-hero-l">
-            <div class="ts-ticker" id="ts-ticker">—</div>
-            <div class="ts-name" id="ts-name">—</div>
-            <div class="ts-sector"><span id="ts-sector">—</span><span id="ts-sector-sep" style="color:#cbd5e1;margin:0 6px">·</span><span id="ts-industry">—</span></div>
+            <div class="ts-hero-logo" id="ts-hero-logo">
+              <span class="fb" id="ts-hero-logo-fb">—</span>
+            </div>
+            <div class="ts-hero-l-text">
+              <div class="ts-ticker" id="ts-ticker">—</div>
+              <div class="ts-name" id="ts-name">—</div>
+              <div class="ts-sector"><span id="ts-sector">—</span><span id="ts-sector-sep" style="color:#cbd5e1;margin:0 6px">·</span><span id="ts-industry">—</span></div>
+            </div>
           </div>
           <div class="ts-hero-c">
             <div class="ts-price" id="ts-price">$—</div>
@@ -732,6 +758,26 @@ function render() {
   document.getElementById('ts-sector').textContent = stock.sector || '—';
   document.getElementById('ts-industry').textContent = (stock.industry || '').slice(0, 50);
 
+  // Company logo — FMP image CDN. Fall back to a brand-gradient
+  // initial chip if the request 404s (covers tickers FMP doesn't have).
+  const logoWrap = document.getElementById('ts-hero-logo');
+  const logoFb   = document.getElementById('ts-hero-logo-fb');
+  if (logoWrap && logoFb) {
+    const sym = (stock.ticker || '').toUpperCase();
+    logoFb.textContent = sym.charAt(0) || '?';
+    // Remove any previous img then add fresh one with onload/onerror.
+    const oldImg = logoWrap.querySelector('img');
+    if (oldImg) oldImg.remove();
+    const img = document.createElement('img');
+    img.alt = sym;
+    img.loading = 'lazy';
+    img.src = 'https://images.financialmodelingprep.com/symbol/' + encodeURIComponent(sym) + '.png';
+    img.onload = () => { logoFb.style.display = 'none'; };
+    img.onerror = () => { img.remove(); logoFb.style.display = 'flex'; };
+    logoFb.style.display = 'flex'; // visible until image loads
+    logoWrap.appendChild(img);
+  }
+
   const price = stock.price;
   const ch    = stock.change_pct;
   document.getElementById('ts-price').textContent = price != null ? '$' + price.toFixed(2) : '$—';
@@ -879,13 +925,21 @@ function render() {
     if (v >= 1e3) return (v/1e3).toFixed(0) + 'K';
     return String(Math.round(v));
   };
-  setText('or-insider', fmtPctOwn(insiderOwn));
-  setText('or-inst',    fmtPctOwn(instOwn));
-  setText('or-short',   shortPct != null ? (shortPct).toFixed(1) + '%' : '—');
-  setText('or-beta',    beta != null ? beta.toFixed(2) : '—');
-  setText('or-beta-pill', beta != null ? 'β ' + beta.toFixed(2) : 'β —');
+  // 'Not reported' beats '—' for missing data — feels more like a
+  // professional report and less like a broken field.
+  const fmtOrCell = (v, formatter) => (v == null || isNaN(parseFloat(v))) ? 'Not reported' : formatter(v);
+  setText('or-insider', fmtOrCell(insiderOwn, fmtPctOwn));
+  setText('or-inst',    fmtOrCell(instOwn,    fmtPctOwn));
+  setText('or-short',   fmtOrCell(shortPct,   v => v.toFixed(1) + '%'));
+  setText('or-beta',    fmtOrCell(beta,       v => v.toFixed(2)));
+  // Beta chip in section header — hide entirely if no beta to avoid 'β —'.
+  const betaPill = document.getElementById('or-beta-pill');
+  if (betaPill){
+    if (beta != null && !isNaN(beta)) betaPill.textContent = 'β ' + beta.toFixed(2);
+    else                              betaPill.style.display = 'none';
+  }
   setText('or-div',     (divY != null && divY > 0) ? ((divY > 1 ? divY : divY * 100).toFixed(2) + '%') : 'None');
-  setText('or-vol',     fmtVol(avgVol));
+  setText('or-vol',     avgVol ? fmtVol(avgVol) : 'Not reported');
 
   const rsi = stock.rsi_14;
   document.getElementById('m-rsi').textContent = rsi != null ? rsi.toFixed(0) : '—';
@@ -903,10 +957,18 @@ function render() {
   // ── EARNINGS HIGHLIGHTS BLOCK ──
   const inc = (stock.quarterly_income || [])[0] || {};
   const eps0 = epsHist[0] || {};
-  document.getElementById('e-rev').textContent = fmtMoney(inc.revenue);
-  document.getElementById('e-eps').textContent = eps0.actual != null ? '$' + eps0.actual.toFixed(2) : '—';
-  document.getElementById('e-eps').className = 'v ' + (eps0.beat ? 'green' : eps0.beat === false ? 'red' : '');
-  document.getElementById('e-margin').textContent = inc.gross_margin != null ? (inc.gross_margin*100).toFixed(1) + '%' : '—';
+  // Revenue: prefer quarterly, fall back to TTM/4 (label the approximation),
+  // finally show 'Not reported'.
+  const revQ = inc.revenue != null ? inc.revenue
+             : (revTtm != null ? (revTtm / 4) : null);
+  const revQFallback = inc.revenue == null && revQ != null;
+  setText('e-rev', revQ != null ? (fmtMoney(revQ) + (revQFallback ? ' ~' : '')) : 'Not reported');
+  setText('e-eps', eps0.actual != null ? '$' + eps0.actual.toFixed(2) : 'Not reported');
+  setClass('e-eps', 'v ' + (eps0.beat ? 'green' : eps0.beat === false ? 'red' : ''));
+  // Gross margin: prefer quarterly, fall back to TTM gross_margin field.
+  const gmQ = inc.gross_margin != null ? inc.gross_margin
+            : (stock.gross_margin != null ? stock.gross_margin : null);
+  setText('e-margin', gmQ != null ? (gmQ*100).toFixed(1) + '%' : 'Not reported');
 
   const guidance = (ei && ei.guidance) || {};
   const tone = (guidance.tone || 'none').toLowerCase();
@@ -1157,8 +1219,8 @@ function drawEarningsChart(stock) {
           type: 'line',
           label: 'EPS actual',
           data: epsActuals,
-          borderColor: '#84cc16',
-          backgroundColor: '#84cc16',
+          borderColor: '#8b5cf6',
+          backgroundColor: '#8b5cf6',
           borderWidth: 3,
           pointRadius: 6,
           pointBackgroundColor: beatColors,
