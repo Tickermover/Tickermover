@@ -6324,9 +6324,33 @@ async function v2LoadHotNews(){
     const r = await fetch('/api/news/live', { cache: 'no-store' });
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const d = await r.json();
-    const items = (d.news || []).slice(0, 6);
+    // Build a Set of tickers in our universe so we can drop news for
+    // symbols we don't track (e.g. ASTS, private companies). User wants
+    // only headlines about names actually on the radar.
+    const universeData = (window.__AH_DATA__ && window.__AH_DATA__.tickers) || [];
+    const universe = new Set(universeData.map(t => (t.ticker || '').toUpperCase()).filter(Boolean));
+
+    const all = d.news || [];
+    // Keep only items where the primary or any related symbol is in our
+    // universe. Promotes the first matched symbol to the displayed ticker
+    // so the card always shows a stock we actually cover.
+    const filtered = [];
+    for (const n of all) {
+      const syms = []
+        .concat(n.ticker ? [n.ticker] : [])
+        .concat(Array.isArray(n.symbols) ? n.symbols : [])
+        .map(s => (s || '').toUpperCase())
+        .filter(Boolean);
+      const matched = syms.find(s => universe.has(s));
+      if (!matched) continue;
+      filtered.push({ ...n, ticker: matched });
+    }
+    // Sort by recency desc (datetime is unix seconds), then cap to top 5.
+    filtered.sort((a, b) => (b.datetime || 0) - (a.datetime || 0));
+    const items = filtered.slice(0, 5);
+
     if (!items.length) {
-      slot.innerHTML = '<div class="v2-news-loading">No recent headlines.</div>';
+      slot.innerHTML = '<div class="v2-news-loading">No headlines for tracked names in the last few hours.</div>';
       return;
     }
     const fmtAgo = ts => {
