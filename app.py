@@ -3860,22 +3860,59 @@ async def api_admin_reprice_closed_trades(env_id: int = None):
     tickers = sorted({(row.get("ticker") or "").upper() for row in rows if row.get("ticker")})
 
     def _fetch_history_for_ticker(sym: str) -> dict:
-        """{date_str -> close} for the last 3 months."""
+        """{date_str -> close} for the last 3 months.
+
+        Tries 3 sources in order: (1) the cached price-history blob that
+        /api/tracker-chart populates with a 6h TTL, (2) yfinance via the
+        Ticker.history API, (3) yfinance via download() as a fallback for
+        symbols that 401/429 on the per-ticker API. Returns {} only when
+        all three fail."""
+        # 1. Reuse the price-history cache populated by /api/tracker-chart
+        ck = f"price-history:{sym}:3mo"
+        c = cache.get(ck)
+        pts = (c or {}).get("points") or []
+        if pts:
+            return {p["date"]: p["close"] for p in pts}
+        # 2. yfinance Ticker.history
+        out: dict[str, float] = {}
         try:
             tk = yf.Ticker(sym)
             h = tk.history(period="3mo", interval="1d", auto_adjust=True)
-            if h is None or h.empty:
-                return {}
-            out = {}
-            for idx, hrow in h.iterrows():
-                d = idx.strftime("%Y-%m-%d") if hasattr(idx, "strftime") else str(idx)
-                close = float(hrow["Close"]) if hrow.get("Close") is not None else None
-                if close is not None and not (math.isnan(close) or math.isinf(close)):
-                    out[d] = round(close, 2)
-            return out
+            if h is not None and not h.empty:
+                for idx, hrow in h.iterrows():
+                    d = idx.strftime("%Y-%m-%d") if hasattr(idx, "strftime") else str(idx)
+                    close = float(hrow["Close"]) if hrow.get("Close") is not None else None
+                    if close is not None and not (math.isnan(close) or math.isinf(close)):
+                        out[d] = round(close, 2)
         except Exception as exc:
-            logger.warning(f"reprice: yfinance fetch for {sym} failed: {exc}")
-            return {}
+            logger.warning(f"reprice: Ticker.history({sym}) failed: {exc}")
+        # 3. yfinance download() fallback — different code path, often works
+        # when Ticker.history hits a 401/429 from Yahoo's per-ticker endpoint.
+        if not out:
+            try:
+                df = yf.download(sym, period="3mo", interval="1d",
+                                 auto_adjust=True, progress=False, threads=False)
+                if df is not None and not df.empty:
+                    # When download() is called with a single ticker the
+                    # frame is flat; when multiple it's a multi-index. Handle
+                    # both shapes defensively.
+                    closes = df["Close"] if "Close" in df.columns else df.get("Adj Close")
+                    if closes is not None:
+                        for idx, val in closes.items():
+                            try:
+                                d = idx.strftime("%Y-%m-%d") if hasattr(idx, "strftime") else str(idx)
+                                v = float(val)
+                                if not (math.isnan(v) or math.isinf(v)):
+                                    out[d] = round(v, 2)
+                            except (TypeError, ValueError):
+                                continue
+            except Exception as exc:
+                logger.warning(f"reprice: yf.download({sym}) failed: {exc}")
+        # Cache the result so subsequent re-runs don't re-fetch
+        if out:
+            pts_to_cache = [{"date": d, "close": v} for d, v in sorted(out.items())]
+            cache.set(ck, {"ticker": sym, "period": "3mo", "points": pts_to_cache}, 60 * 60 * 6)
+        return out
 
     histories = await asyncio.to_thread(
         lambda: {s: _fetch_history_for_ticker(s) for s in tickers}
