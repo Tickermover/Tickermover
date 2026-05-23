@@ -7400,6 +7400,93 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && _v2TsCurrent) v2CloseTearsheet();
 });
 
+// ── DIRECT DOWNLOAD (no popover) ──────────────────────────────────
+// True one-click download: spawn a hidden iframe, wait for it to load,
+// call its downloadPdf(), tear down. Shows a small floating toast in
+// the bottom-right corner for feedback. NO modal, NO popover.
+function v2DownloadTearsheetPDF(ticker){
+  if (!ticker) return;
+  const sym = String(ticker).toUpperCase();
+  // Reuse a single hidden iframe across calls so we don't leak DOM
+  let frame = document.getElementById('v2-ts-direct-frame');
+  if (!frame){
+    frame = document.createElement('iframe');
+    frame.id = 'v2-ts-direct-frame';
+    frame.style.cssText = 'position:absolute;width:1px;height:1px;border:0;opacity:0;pointer-events:none;left:-9999px;top:-9999px;';
+    document.body.appendChild(frame);
+  }
+  _v2ShowDLToast(sym, 'building');
+  let ready = false;
+  frame.onload = async () => {
+    if (ready) return;  // ignore subsequent loads
+    ready = true;
+    try {
+      // Small settle delay so the tearsheet's own loadTicker() chain
+      // (universe + ticker + earnings-intel + price-history + event-intel)
+      // has time to populate before we capture. ~2.5s covers the common
+      // case; cached tickers will be faster but it doesn't hurt to wait.
+      await new Promise(r => setTimeout(r, 2500));
+      if (frame.contentWindow && typeof frame.contentWindow.downloadPdf === 'function'){
+        await frame.contentWindow.downloadPdf();
+        _v2ShowDLToast(sym, 'done');
+      } else {
+        _v2ShowDLToast(sym, 'fail', 'PDF generator not ready');
+      }
+    } catch(e){
+      console.error('direct-download failed:', e);
+      _v2ShowDLToast(sym, 'fail', e && e.message || 'error');
+    } finally {
+      // Release the iframe src after a beat so memory frees but the
+      // next click on a DIFFERENT ticker reloads cleanly.
+      setTimeout(() => { try { frame.src = 'about:blank'; } catch(_){} }, 800);
+    }
+  };
+  frame.src = '/tearsheet/' + encodeURIComponent(sym) + '?embed=1';
+}
+
+// Floating toast (bottom-right). Single shared element, reused across calls.
+function _v2ShowDLToast(sym, state, errMsg){
+  let toast = document.getElementById('v2-dl-toast');
+  if (!toast){
+    toast = document.createElement('div');
+    toast.id = 'v2-dl-toast';
+    toast.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:10000;padding:12px 18px;border-radius:11px;background:#0f172a;color:#fff;font-family:Inter,sans-serif;font-size:13px;font-weight:600;letter-spacing:-.005em;box-shadow:0 18px 40px -12px rgba(0,0,0,.5),0 0 0 1px rgba(255,255,255,.06) inset;display:flex;align-items:center;gap:10px;opacity:0;transform:translateY(8px);transition:opacity .2s,transform .25s cubic-bezier(.22,.61,.36,1);';
+    document.body.appendChild(toast);
+  }
+  let html = '';
+  if (state === 'building'){
+    html = '<div style="width:14px;height:14px;border:2px solid rgba(255,255,255,.25);border-top-color:#a78bfa;border-radius:50%;animation:_v2DlSpin .8s linear infinite"></div>'
+         + '<span>Building <strong style="font-family:JetBrains Mono,monospace">' + sym + '</strong> PDF…</span>';
+  } else if (state === 'done'){
+    html = '<span style="color:#86efac;font-size:15px">✓</span>'
+         + '<span>Downloaded <strong style="font-family:JetBrains Mono,monospace">' + sym + '</strong> tear sheet</span>';
+  } else {
+    html = '<span style="color:#fda4af;font-size:15px">✕</span>'
+         + '<span>Failed: <strong style="font-family:JetBrains Mono,monospace">' + sym + '</strong>' + (errMsg ? ' — ' + errMsg : '') + '</span>';
+  }
+  toast.innerHTML = html;
+  // Ensure the spinner keyframes exist once
+  if (!document.getElementById('v2-dl-spin-css')){
+    const st = document.createElement('style');
+    st.id = 'v2-dl-spin-css';
+    st.textContent = '@keyframes _v2DlSpin{to{transform:rotate(360deg)}}';
+    document.head.appendChild(st);
+  }
+  // Animate in
+  requestAnimationFrame(() => {
+    toast.style.opacity = '1';
+    toast.style.transform = 'translateY(0)';
+  });
+  // Auto-dismiss on done/fail
+  clearTimeout(_v2ShowDLToast._t);
+  if (state !== 'building'){
+    _v2ShowDLToast._t = setTimeout(() => {
+      toast.style.opacity = '0';
+      toast.style.transform = 'translateY(8px)';
+    }, state === 'done' ? 2400 : 4200);
+  }
+}
+
 // Triggers the PDF generator inside the HIDDEN iframe and downloads.
 // Iframe is invisible — user only sees the popover with a progress note
 // in the status line. If the iframe hasn't loaded yet, polls until it
@@ -9827,7 +9914,7 @@ function openStockModal(ticker) {
         </div>
       </div>
       <div class="v2-ts-cta-actions">
-        <button onclick="event.stopPropagation();v2OpenTearsheet('${t.ticker}');setTimeout(()=>v2TearsheetDownload(),120)" class="v2-ts-cta-btn v2-ts-cta-btn-primary" type="button" title="Download PDF">
+        <button onclick="event.stopPropagation();v2DownloadTearsheetPDF('${t.ticker}')" class="v2-ts-cta-btn v2-ts-cta-btn-primary" type="button" title="Download PDF">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           Download PDF
         </button>
@@ -10425,7 +10512,7 @@ function renderReports(tickers) {
   // ── Section 1: Daily Top 5 ────────────────────────────────────────────
   // Each card is now a clickable link to the per-stock tear sheet.
   const top5Cards = top5.map((t, i) => `
-    <div onclick="v2OpenTearsheet('${t.ticker}')" title="Open ${t.ticker} tear sheet"
+    <div onclick="v2DownloadTearsheetPDF('${t.ticker}')" title="Download ${t.ticker} tear sheet"
        style="background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:10px;padding:14px;text-align:center;min-width:0;text-decoration:none;color:inherit;display:block;cursor:pointer;transition:transform .15s,box-shadow .15s"
        onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 18px rgba(15,23,42,.18)'"
        onmouseout="this.style.transform='';this.style.boxShadow=''">
@@ -10464,7 +10551,7 @@ function renderReports(tickers) {
       const date = eps.date || '';
       const dateStr = date ? new Date(date + 'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—';
       return `
-      <div onclick="v2OpenTearsheet('${t.ticker}')"
+      <div onclick="v2DownloadTearsheetPDF('${t.ticker}')"
          style="background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:12px;padding:14px;text-decoration:none;color:inherit;transition:transform .15s,box-shadow .15s;display:block;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.04)"
          onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 18px rgba(15,23,42,.12)'"
          onmouseout="this.style.transform='';this.style.boxShadow='0 1px 3px rgba(0,0,0,.04)'">
@@ -10533,10 +10620,8 @@ function renderReports(tickers) {
 function spotlightOpen() {
   const t = document.getElementById('spotlight-input').value.trim().toUpperCase();
   if (!t) return;
-  // Open the inline tear sheet drawer instead of a new-tab page. The
-  // legacy /tearsheet/{T} URL still works as a share target via the
-  // drawer's top-right share button.
-  v2OpenTearsheet(t);
+  // Direct download — no popover. User clicks 'Open' = file downloads.
+  v2DownloadTearsheetPDF(t);
 }
 
 function renderBlog(articles) {
