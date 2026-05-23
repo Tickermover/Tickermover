@@ -294,14 +294,35 @@
 
   /* Embed mode — when loaded inside the dashboard drawer iframe with
      ?embed=1, hide the page chrome (header / ticker input / share
-     buttons) since the drawer provides them. Keeps the A4 sheet itself
-     and trims the wrapping page padding. */
-  body.embed{padding:14px 8px;background:#e2e8f0}
+     buttons) since the drawer provides them. Also COMPACT the sheet:
+     reduce padding/margins and collapse min-height so it doesn't
+     reserve full A4 portrait height. The print/PDF path still uses
+     the canonical A4 size via the print stylesheet. */
+  body.embed{padding:10px;background:#e2e8f0}
   body.embed .page-head,
   body.embed .ticker-bar,
   body.embed .actions{display:none !important}
   body.embed .page{max-width:none}
-  body.embed .sheet-wrap{margin:0 auto}
+  body.embed .sheet-wrap{margin:0 auto;overflow:visible}
+  body.embed .sheet{
+    width:auto;min-height:0;
+    padding:24px 28px 22px;
+    transform:none !important; /* fitSheet may add scale — disable in embed */
+  }
+  /* Tighter section spacing in embed mode — saves ~120-180px vertical */
+  body.embed .ts-head{margin-bottom:14px}
+  body.embed .ts-hero{padding:16px 18px;margin-bottom:14px}
+  body.embed .ts-charts{gap:14px;padding:14px 0}
+  body.embed .ts-charts .ts-card{height:auto !important;min-height:230px;padding:14px 16px}
+  body.embed .ts-metrics{gap:10px;padding:14px 0}
+  body.embed .ts-metric{padding:10px 12px}
+  body.embed .ts-metric .val{font-size:20px}
+  body.embed .ts-twocol{gap:14px;padding:14px 0}
+  body.embed .ts-card-flush{padding:14px 16px}
+  body.embed .ts-earnings{gap:14px;padding:14px 0}
+  body.embed .ts-card-tall{height:auto !important;min-height:250px;padding:14px 16px}
+  body.embed .ts-takeaway{padding:14px 18px;margin:14px 0}
+  body.embed .ts-foot{padding-top:14px;margin-top:14px}
 </style>
 </head>
 <body>
@@ -922,7 +943,7 @@ function render() {
     'Price: ' + (price != null ? '$' + price.toFixed(2) : '—') + (ch != null ? ' (' + fmtPct(ch, 2) + ')' : ''),
     revG != null ? 'Rev growth: ' + fmtPct(revG, 0) + ' YoY' : '',
     gm != null ? 'Gross margin: ' + (gm*100).toFixed(1) + '%' : '',
-    tgt != null && price ? 'Implied upside: ' + fmtPct(((tgt/price)-1)*100, 0) : '',
+    (tgtMean != null && price) ? 'Implied upside: ' + fmtPct(((tgtMean/price)-1)*100, 0) : '',
     '',
     '📊 alphahunt.in · Quality descriptors only — not buy/sell advice',
     '',

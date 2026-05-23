@@ -2687,11 +2687,12 @@ html.v2-dark .v2-mp-mini-lbl{color:#cbd5e1}
 .v2-ts-head-tic{font-size:18px;font-weight:900;letter-spacing:-.01em;color:#0f172a;font-family:'JetBrains Mono',monospace}
 .v2-ts-head-r{display:flex;align-items:center;gap:8px}
 .v2-ts-share, .v2-ts-close{
-  width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;
+  height:34px;min-width:34px;padding:0 9px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;
   background:#f1f5f9;border:1px solid rgba(15,23,42,.08);color:#475569;cursor:pointer;
   transition:background .15s, color .15s, transform .12s;text-decoration:none;font-size:14px;font-weight:700;
   font-family:inherit;
 }
+button.v2-ts-share{padding:0 12px}
 .v2-ts-share:hover, .v2-ts-close:hover{background:#eef2ff;color:#4338ca;transform:translateY(-1px)}
 .v2-ts-body{flex:1;overflow:auto;background:#e2e8f0;padding:0}
 .v2-ts-body::-webkit-scrollbar{width:10px;height:10px}
@@ -7257,6 +7258,27 @@ function v2CloseTearsheet(){
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape' && _v2TsCurrent) v2CloseTearsheet();
 });
+
+// Triggers the PDF download inside the iframe (uses html2canvas + jspdf
+// loaded by the tear sheet template). The iframe exposes downloadPdf() at
+// window scope; we just need to find the frame and call it across the
+// same-origin boundary.
+function v2TearsheetDownload(){
+  const frame = document.querySelector('#v2-ts-drawer iframe.v2-ts-frame');
+  if (!frame || !frame.contentWindow) return;
+  try {
+    if (typeof frame.contentWindow.downloadPdf === 'function') {
+      frame.contentWindow.downloadPdf();
+    } else {
+      // Fallback: open the standalone page in a new tab so user can use
+      // its built-in download button.
+      window.open('/tearsheet/' + encodeURIComponent(_v2TsCurrent || ''), '_blank');
+    }
+  } catch(e){
+    console.error('tearsheet download failed:', e);
+    window.open('/tearsheet/' + encodeURIComponent(_v2TsCurrent || ''), '_blank');
+  }
+}
 
 async function v2LoadTearsheetData(sym){
   // Pull live ticker data from the loaded universe (fast, already in memory).
@@ -13793,6 +13815,10 @@ function showUpgradeSuccess() {
       <div class="v2-ts-head-tic" id="v2-ts-head-tic">—</div>
     </div>
     <div class="v2-ts-head-r">
+      <button class="v2-ts-share" onclick="v2TearsheetDownload()" title="Download as PDF" type="button">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M8 1.5v9M4.5 7L8 10.5L11.5 7"/><path d="M2 13.5h12"/></svg>
+        <span style="font-size:11px;font-weight:700;margin-left:4px">PDF</span>
+      </button>
       <a id="v2-ts-share" class="v2-ts-share" href="#" target="_blank" rel="noopener" title="Open share URL in new tab">
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2h4v4M14 2L8.5 7.5"/><path d="M13 9v4a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h4"/></svg>
       </a>
