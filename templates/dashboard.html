@@ -7425,60 +7425,89 @@ function v2PrewarmTearsheet(ticker){
   const frame = document.createElement('iframe');
   frame.style.cssText = 'position:absolute;width:1px;height:1px;border:0;opacity:0;pointer-events:none;left:-9999px;top:-9999px;';
   frame.dataset.ticker = sym;
+  const t0 = Date.now();
+  console.log('[ts-prewarm]', sym, 'start');
   frame.src = '/tearsheet/' + encodeURIComponent(sym) + '?embed=1';
-  _v2TsPrewarm[sym] = { iframe: frame, ready: false };
+  _v2TsPrewarm[sym] = { iframe: frame, ready: false, t0 };
   frame.onload = () => {
-    // Poll for the tearsheet's _data inside this iframe to become non-null.
-    // Marks the entry ready so the download click fires immediately.
+    console.log('[ts-prewarm]', sym, 'iframe.onload @', Date.now() - t0, 'ms');
+    // Poll the tearsheet's window for readiness.
     const start = Date.now();
     const check = () => {
       try {
         const win = frame.contentWindow;
-        if (win && win._data && win.document &&
-            win.document.getElementById('ts-content') &&
-            win.document.getElementById('ts-content').style.display !== 'none'){
+        const hasData = !!(win && win._data);
+        const tsContent = win && win.document && win.document.getElementById('ts-content');
+        const visible  = tsContent && tsContent.style.display !== 'none';
+        if (hasData && visible){
           _v2TsPrewarm[sym].ready = true;
+          console.log('[ts-prewarm]', sym, 'READY @', Date.now() - t0, 'ms');
           return;
         }
-      } catch(_){}
-      if (Date.now() - start < 6000) setTimeout(check, 150);
+      } catch(e){ console.warn('[ts-prewarm]', sym, 'poll exception', e); }
+      if (Date.now() - start < 18000) setTimeout(check, 200);
+      else console.warn('[ts-prewarm]', sym, 'TIMED OUT after 18s — data never populated');
     };
     check();
   };
+  frame.onerror = (e) => console.error('[ts-prewarm]', sym, 'iframe error', e);
   document.body.appendChild(frame);
 }
 
 function v2DownloadTearsheetPDF(ticker){
   if (!ticker) return;
   const sym = String(ticker).toUpperCase();
+  console.log('[ts-download]', sym, 'click');
   // Fast path: pre-warmed iframe ready → fire immediately.
   const cached = _v2TsPrewarm[sym];
   if (cached && cached.ready && cached.iframe && cached.iframe.contentWindow){
+    console.log('[ts-download]', sym, 'cache hit, firing immediately');
     _v2TriggerDownloadOn(sym, cached.iframe);
     return;
   }
-  // Pre-warm wasn't ready (user clicked Download before opening the
-  // modal, or modal was opened <2s ago). Start warming now and trigger
-  // download as soon as it lands.
+  // Cold path or warming-in-progress — show prep toast and wait.
   if (!cached) v2PrewarmTearsheet(sym);
   const entry = _v2TsPrewarm[sym];
-  if (!entry || !entry.iframe){ _v2ShowDLToast(sym, 'fail', 'failed to start'); return; }
-  // Show a brief 'preparing' state ONLY when not pre-warmed; pre-warmed
-  // path has no toast at all (truly silent first-press).
+  if (!entry || !entry.iframe){
+    _v2ShowDLToast(sym, 'fail', 'failed to start');
+    return;
+  }
   _v2ShowDLToast(sym, 'building');
   const start = Date.now();
+  const TIMEOUT_MS = 18000;
   const tick = () => {
     if (entry.ready){
+      console.log('[ts-download]', sym, 'ready after', Date.now() - start, 'ms wait, firing');
       _v2TriggerDownloadOn(sym, entry.iframe);
       return;
     }
-    if (Date.now() - start >= 6000){
-      _v2ShowDLToast(sym, 'fail', 'data still loading — try again');
+    if (Date.now() - start >= TIMEOUT_MS){
+      console.error('[ts-download]', sym, 'timeout after 18s waiting for prewarm');
+      // Last-resort fallback: open the standalone tear sheet so the
+      // user can still get the report manually instead of being blocked.
+      _v2ShowDLToast(sym, 'fail', 'falling back to direct page');
+      setTimeout(() => {
+        try { window.open('/tearsheet/' + encodeURIComponent(sym), '_blank'); } catch(_){}
+      }, 600);
       return;
     }
-    setTimeout(tick, 120);
+    setTimeout(tick, 140);
   };
   tick();
+}
+
+// Quietly pre-warm a batch of tickers in the background, throttled so we
+// don't slam the network. Used by card renderers (Top Hunts picks, Hot
+// List, Daily Top 5) so that by the time the user clicks Download on
+// ANY visible card, the iframe is already loaded.
+function v2PrewarmTearsheetBatch(tickers){
+  if (!Array.isArray(tickers) || !tickers.length) return;
+  const _idle = window.requestIdleCallback || ((cb) => setTimeout(cb, 64));
+  // Limit to the LRU cap so we don't churn — first N visible tickers win.
+  const slice = tickers.slice(0, _V2_TS_MAX_FRAMES);
+  slice.forEach((tic, i) => {
+    _idle(() => { try { v2PrewarmTearsheet(tic); } catch(_){} }, { timeout: 200 * (i + 1) });
+  });
 }
 
 async function _v2TriggerDownloadOn(sym, frame){
@@ -11238,6 +11267,15 @@ function renderClosedTrades(data) {
 function renderModelPortfolio(data) {
   const root  = document.getElementById('model-portfolio-root');
   const picks = data.picks || [];
+
+  // Pre-warm tear sheet PDFs for the first few visible picks so the
+  // Download button fires instantly when clicked. Idle-scheduled so it
+  // doesn't compete with the actual portfolio render.
+  try {
+    if (typeof v2PrewarmTearsheetBatch === 'function'){
+      v2PrewarmTearsheetBatch(picks.map(p => p.ticker).filter(Boolean));
+    }
+  } catch(_){}
 
   // Recalculate all stats using LIVE prices from _allTickerData (same as modal/hot list)
   const livePerfs = picks.map(p => {
