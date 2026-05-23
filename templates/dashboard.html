@@ -5084,7 +5084,7 @@ function v2RenderWhatChanged(tickers){
     if (!raw) return;
     const s = titleCase(raw);
     if (!buckets[s]) buckets[s] = { total: 0, n: 0 };
-    const sc = parseFloat(t.smart_score ?? 0);
+    const sc = parseFloat(t.smart_score ?? t.pop_score ?? 0);
     if (sc > 0){ buckets[s].total += sc; buckets[s].n++; }
   });
   const topSector = Object.entries(buckets)
@@ -12621,7 +12621,10 @@ async function loadWatchlistSet() {
 // Expose buildTickerCard as a helper used by watchlist panel
 // (it's defined earlier in the script — just a stub reference here)
 function buildTickerCard(t, showRemove) {
-  const ps   = parseFloat(t.pop_score || 0).toFixed(1);
+  // Use smart_score (the selection score) with pop_score fallback — same
+  // convention as every other display path so the number on this card
+  // matches the number elsewhere in the dashboard.
+  const ps   = parseFloat(t.smart_score ?? t.pop_score ?? 0).toFixed(1);
   const pct  = t.change_pct != null ? (t.change_pct >= 0 ? `+${t.change_pct.toFixed(2)}%` : `${t.change_pct.toFixed(2)}%`) : '—';
   const pclr = t.change_pct >= 0 ? 'var(--grn)' : 'var(--red)';
   const inList = _watchlistSet.has(t.ticker);
