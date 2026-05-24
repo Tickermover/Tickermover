@@ -706,6 +706,256 @@ def _draw_dual_block(c, top_y, t):
     return y
 
 
+# ── Page 2 drawers (AI narrative) ────────────────────────────────────
+
+def _draw_exec_summary_para(c, top_y, paragraph_text):
+    """AI-prose version of the exec summary — used when narrative is
+    available. Same brand-indigo card but with a wrapped paragraph
+    instead of stitched bullet fragments."""
+    summary_h = 72
+    y = top_y - summary_h - 10
+    c.setFillColor(BRAND_LIGHT)
+    c.roundRect(MARGIN_X, y, CONTENT_W, summary_h, 6, stroke=0, fill=1)
+    c.setFillColor(BRAND_INDIGO)
+    c.rect(MARGIN_X, y, 3, summary_h, stroke=0, fill=1)
+    c.setFont("Helvetica-Bold", 7.5)
+    c.drawString(MARGIN_X + 14, y + summary_h - 14, "EXECUTIVE SUMMARY")
+    p = _wrap_paragraph(paragraph_text, CONTENT_W - 30, font_size=9, leading=12, color=INK)
+    w, h = p.wrap(CONTENT_W - 30, summary_h - 22)
+    p.drawOn(c, MARGIN_X + 14, y + summary_h - 18 - h)
+    return y
+
+
+def _draw_page2_hero(c, ticker, t):
+    """Compact second-page header: brand band + ticker + name + page label."""
+    y = A4_H - 88
+    co_name = (t.get("name") or t.get("company_name") or "").strip()
+    c.setFillColor(BRAND_INDIGO)
+    c.setFont("Helvetica-Bold", 18)
+    c.drawString(MARGIN_X, y + 18, ticker)
+    c.setFillColor(INK)
+    c.setFont("Helvetica", 11)
+    c.drawString(MARGIN_X + 60, y + 22, co_name[:60])
+    c.setFillColor(INK_MUTED)
+    c.setFont("Helvetica", 7.5)
+    c.drawString(MARGIN_X + 60, y + 9, "ANALYST NARRATIVE  ·  PAGE 2")
+    # Brand accent bar
+    c.setStrokeColor(BRAND_INDIGO)
+    c.setLineWidth(1.2)
+    c.line(MARGIN_X, y, A4_W - MARGIN_X, y)
+
+
+def _conviction_color(level: str):
+    level = (level or "medium").lower()
+    if level == "high":   return GREEN, GREEN_LIGHT, "HIGH CONVICTION"
+    if level == "low":    return RED,   RED_LIGHT,   "LOW CONVICTION"
+    return AMBER, HexColor("#fef3c7"), "MEDIUM CONVICTION"
+
+
+def _draw_investment_thesis(c, top_y, narrative):
+    """Bull / Bear two-column block with conviction chip + verdict line.
+    Returns y-coordinate of the bottom of the block."""
+    bull   = narrative.get("bull")   or []
+    bear   = narrative.get("bear")   or []
+    verdict = (narrative.get("verdict") or "").strip()
+    conv_color, conv_bg, conv_label = _conviction_color(narrative.get("conviction"))
+
+    # Title row
+    title_y = top_y
+    c.setFillColor(INK)
+    c.setFont("Helvetica-Bold", 11)
+    c.drawString(MARGIN_X, title_y, "INVESTMENT THESIS")
+    # Conviction chip on the right
+    chip_label_w = c.stringWidth(conv_label, "Helvetica-Bold", 7)
+    chip_w = chip_label_w + 12
+    chip_h = 13
+    chip_x = A4_W - MARGIN_X - chip_w
+    chip_y = title_y - 3
+    c.setFillColor(conv_bg)
+    c.roundRect(chip_x, chip_y, chip_w, chip_h, 6, stroke=0, fill=1)
+    c.setFillColor(conv_color)
+    c.setFont("Helvetica-Bold", 7)
+    c.drawString(chip_x + 6, chip_y + 4, conv_label)
+
+    # Bull / Bear cards
+    card_top = title_y - 12
+    card_h   = 130
+    half_w   = (CONTENT_W - 10) / 2
+    card_y   = card_top - card_h
+
+    # ── Bull card ─────────────────────────────────────────────────────
+    c.setFillColor(BG_CARD)
+    c.setStrokeColor(BORDER)
+    c.setLineWidth(0.6)
+    c.roundRect(MARGIN_X, card_y, half_w, card_h, 6, stroke=1, fill=1)
+    # Header strip
+    c.setFillColor(GREEN_LIGHT)
+    c.roundRect(MARGIN_X, card_y + card_h - 22, half_w, 22, 6, stroke=0, fill=1)
+    c.setFillColor(BG_CARD)
+    c.rect(MARGIN_X, card_y + card_h - 22, half_w, 7, stroke=0, fill=1)  # square off bottom
+    c.setFillColor(GREEN_LIGHT)
+    c.rect(MARGIN_X, card_y + card_h - 22, half_w, 15, stroke=0, fill=1)
+    c.setFillColor(GREEN)
+    c.setFont("Helvetica-Bold", 8.5)
+    c.drawString(MARGIN_X + 10, card_y + card_h - 15, "▲ BULL CASE")
+    # Bullets
+    by = card_y + card_h - 32
+    c.setFillColor(INK)
+    for b in bull[:3]:
+        if not b: continue
+        c.setFillColor(GREEN)
+        c.circle(MARGIN_X + 12, by + 3, 1.5, stroke=0, fill=1)
+        p = _wrap_paragraph(str(b), half_w - 24, font_size=8, leading=10.5, color=INK)
+        w, h = p.wrap(half_w - 24, card_h)
+        p.drawOn(c, MARGIN_X + 18, by - h + 8)
+        by -= (h + 6)
+
+    # ── Bear card ─────────────────────────────────────────────────────
+    bx = MARGIN_X + half_w + 10
+    c.setFillColor(BG_CARD)
+    c.setStrokeColor(BORDER)
+    c.setLineWidth(0.6)
+    c.roundRect(bx, card_y, half_w, card_h, 6, stroke=1, fill=1)
+    c.setFillColor(RED_LIGHT)
+    c.roundRect(bx, card_y + card_h - 22, half_w, 22, 6, stroke=0, fill=1)
+    c.setFillColor(BG_CARD)
+    c.rect(bx, card_y + card_h - 22, half_w, 7, stroke=0, fill=1)
+    c.setFillColor(RED_LIGHT)
+    c.rect(bx, card_y + card_h - 22, half_w, 15, stroke=0, fill=1)
+    c.setFillColor(RED)
+    c.setFont("Helvetica-Bold", 8.5)
+    c.drawString(bx + 10, card_y + card_h - 15, "▼ BEAR CASE")
+    by = card_y + card_h - 32
+    for b in bear[:3]:
+        if not b: continue
+        c.setFillColor(RED)
+        c.circle(bx + 12, by + 3, 1.5, stroke=0, fill=1)
+        p = _wrap_paragraph(str(b), half_w - 24, font_size=8, leading=10.5, color=INK)
+        w, h = p.wrap(half_w - 24, card_h)
+        p.drawOn(c, bx + 18, by - h + 8)
+        by -= (h + 6)
+
+    # ── Verdict band ──────────────────────────────────────────────────
+    verdict_h = 36
+    verdict_y = card_y - verdict_h - 8
+    c.setFillColor(BRAND_LIGHT)
+    c.roundRect(MARGIN_X, verdict_y, CONTENT_W, verdict_h, 6, stroke=0, fill=1)
+    c.setFillColor(BRAND_INDIGO)
+    c.rect(MARGIN_X, verdict_y, 3, verdict_h, stroke=0, fill=1)
+    c.setFillColor(BRAND_INDIGO)
+    c.setFont("Helvetica-Bold", 7.5)
+    c.drawString(MARGIN_X + 14, verdict_y + verdict_h - 12, "VERDICT")
+    p = _wrap_paragraph(verdict or "—", CONTENT_W - 30, font_size=9.5,
+                         leading=12.5, color=INK)
+    w, h = p.wrap(CONTENT_W - 30, verdict_h - 16)
+    p.drawOn(c, MARGIN_X + 14, verdict_y + 6)
+
+    return verdict_y
+
+
+def _draw_catalysts(c, top_y, catalysts):
+    """Forward catalysts strip — bordered card with bulleted forward events."""
+    if not catalysts:
+        return top_y
+    items = [str(x) for x in catalysts if x][:5]
+    if not items:
+        return top_y
+
+    title_y = top_y
+    c.setFillColor(INK)
+    c.setFont("Helvetica-Bold", 11)
+    c.drawString(MARGIN_X, title_y, "FORWARD CATALYSTS")
+
+    card_top = title_y - 12
+    # Compute card height from item count (each row ~14pt)
+    card_h = 22 + len(items) * 13
+    card_y = card_top - card_h
+
+    c.setFillColor(BG_CARD)
+    c.setStrokeColor(BORDER)
+    c.setLineWidth(0.6)
+    c.roundRect(MARGIN_X, card_y, CONTENT_W, card_h, 6, stroke=1, fill=1)
+    # Side accent bar
+    c.setFillColor(BRAND_VIOLET)
+    c.rect(MARGIN_X, card_y, 3, card_h, stroke=0, fill=1)
+
+    iy = card_y + card_h - 14
+    c.setFont("Helvetica", 9)
+    for item in items:
+        c.setFillColor(BRAND_VIOLET)
+        c.circle(MARGIN_X + 16, iy + 3, 1.6, stroke=0, fill=1)
+        c.setFillColor(INK)
+        # Clip to single line — catalysts are short by construction
+        max_w = CONTENT_W - 30
+        text = item
+        while c.stringWidth(text, "Helvetica", 9) > max_w and len(text) > 6:
+            text = text[:-2]
+        if text != item:
+            text = text.rstrip(" ,;.") + "…"
+        c.drawString(MARGIN_X + 24, iy, text)
+        iy -= 13
+
+    return card_y
+
+
+def _draw_event_summary(c, top_y, event_row):
+    """Render the Quartr-style event summary block with dynamic section
+    headings + bullets. Stops drawing once we hit the footer reserve."""
+    title_y = top_y
+    if title_y < MARGIN_BOTTOM + 80:
+        return  # no room
+    title = (event_row.get("event_title") or "Latest event").strip()
+    date_s = (event_row.get("event_date") or "").strip()
+
+    c.setFillColor(INK)
+    c.setFont("Helvetica-Bold", 11)
+    c.drawString(MARGIN_X, title_y, "LATEST EVENT — " + title.upper()[:60])
+    if date_s:
+        c.setFillColor(INK_MUTED)
+        c.setFont("Helvetica", 8.5)
+        c.drawRightString(A4_W - MARGIN_X, title_y, date_s)
+
+    y = title_y - 16
+    reserve_y = MARGIN_BOTTOM + 50   # leave room for footer
+    sections = event_row.get("sections")
+    items = []
+    if isinstance(sections, list) and sections:
+        for s in sections:
+            heading = (s or {}).get("heading", "")
+            bullets = (s or {}).get("bullets", []) or []
+            if heading and bullets:
+                items.append((heading, bullets))
+    else:
+        for label, key in [("Key updates",  "key_updates"),
+                            ("Operations",   "operations"),
+                            ("Outlook",      "outlook"),
+                            ("Risks",        "risks")]:
+            vals = event_row.get(key) or []
+            if isinstance(vals, list) and vals:
+                items.append((label, vals))
+
+    for heading, bullets in items:
+        if y < reserve_y + 20:
+            break
+        # Heading
+        c.setFillColor(BRAND_INDIGO)
+        c.setFont("Helvetica-Bold", 8.5)
+        c.drawString(MARGIN_X, y, heading)
+        y -= 11
+        # Bullets
+        for b in bullets[:4]:
+            if y < reserve_y + 12:
+                break
+            p = _wrap_paragraph("•  " + str(b), CONTENT_W - 4,
+                                 font_size=8, leading=10.5, color=INK)
+            w, h = p.wrap(CONTENT_W - 4, 50)
+            if y - h < reserve_y + 12:
+                break
+            p.drawOn(c, MARGIN_X + 4, y - h)
+            y -= (h + 2)
+        y -= 4
+
+
 def _draw_footer(c):
     foot_y = MARGIN_BOTTOM
     c.setStrokeColor(INK)
@@ -732,7 +982,23 @@ def _draw_footer(c):
 
 # ── Public entry ─────────────────────────────────────────────────────
 
-def generate_pdf(ticker: str, t: dict, price_history: list[dict] | None = None) -> bytes:
+def generate_pdf(ticker: str, t: dict, price_history: list[dict] | None = None,
+                 narrative: dict | None = None, event_row: dict | None = None) -> bytes:
+    """Render the A4 tear sheet PDF.
+
+    Args:
+        ticker: stock symbol
+        t: live ticker row (metrics, score, etc.)
+        price_history: 90D price points [{date, close}, ...]
+        narrative: AI narrative dict from pdf_narrative.build_narrative()
+            with keys exec_para, bull[], bear[], verdict, conviction,
+            catalysts[]. When provided, page 2 is rendered.
+        event_row: cached event_summaries row (from event_intel) — its
+            sections[] are rendered on page 2 as the 'Latest event' block.
+
+    A narrative + event_row pair adds a second page; pass None for both
+    to produce the legacy 1-page snapshot only.
+    """
     ticker = (ticker or "").upper()
     price_history = price_history or []
 
@@ -760,15 +1026,32 @@ def generate_pdf(ticker: str, t: dict, price_history: list[dict] | None = None) 
     # 12-card metrics grid
     grid_bottom = _draw_metrics_grid(c, chart_bottom - 4, t)
 
-    # Executive summary
-    bits = _build_exec_bits(t, score, grade, tier_map)
-    exec_bottom = _draw_exec_summary(c, grid_bottom, bits)
+    # Executive summary — prefer AI-written prose when available, fall
+    # back to deterministic data-driven bullets when narrative absent
+    if narrative and narrative.get("exec_para"):
+        exec_bottom = _draw_exec_summary_para(c, grid_bottom, narrative["exec_para"])
+    else:
+        bits = _build_exec_bits(t, score, grade, tier_map)
+        exec_bottom = _draw_exec_summary(c, grid_bottom, bits)
 
     # Recent Earnings + Quality & Risk dual block
     _draw_dual_block(c, exec_bottom, t)
 
     # Footer
     _draw_footer(c)
+
+    # ── Page 2 — AI analyst narrative (only when we have content) ─────
+    if narrative or event_row:
+        c.showPage()
+        _draw_header(c, today, quarter_lbl)
+        _draw_page2_hero(c, ticker, t)
+        y = A4_H - 130
+        if narrative:
+            y = _draw_investment_thesis(c, y, narrative)
+            y = _draw_catalysts(c, y - 8, narrative.get("catalysts") or [])
+        if event_row:
+            _draw_event_summary(c, y - 8, event_row)
+        _draw_footer(c)
 
     c.showPage()
     c.save()

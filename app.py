@@ -1735,9 +1735,37 @@ async def api_pdf(symbol: str):
         if pts:
             cache.set(ck, {"ticker": sym, "period": "3mo", "points": pts}, 60 * 60 * 6)
 
+    # ── AI narrative + event summary for page 2 ──────────────────────
+    # Run in parallel. Both have their own short-circuit caches (event
+    # summary in Supabase, narrative in-process), so warm tickers add
+    # almost nothing to the latency. Cold tickers add ~3-6s for the
+    # Haiku synth on top of whatever event_intel needs (EDGAR is fast).
+    import event_intel as _ei_mod
+    import pdf_narrative as _nar_mod
+
+    async def _safe_event():
+        try:
+            return await _ei_mod.get_event_summary(sym)
+        except Exception as exc:
+            logger.warning(f"pdf build {sym}: event_summary failed: {exc}")
+            return None
+
+    event_row = await _safe_event()
+    # Don't treat rate-limited stub as a real event row
+    if isinstance(event_row, dict) and event_row.get("error") == "rate_limited":
+        event_row = None
+
+    try:
+        narrative = await _nar_mod.build_narrative(sym, target, event_row)
+    except Exception as exc:
+        logger.warning(f"pdf build {sym}: narrative failed: {exc}")
+        narrative = None
+
     # Render PDF (pure compute, no I/O — runs in a thread to keep event loop free)
     try:
-        pdf_bytes = await asyncio.to_thread(_pdf.generate_pdf, sym, target, pts)
+        pdf_bytes = await asyncio.to_thread(
+            _pdf.generate_pdf, sym, target, pts, narrative, event_row,
+        )
     except Exception as exc:
         logger.error(f"pdf build {sym}: render failed: {exc}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"PDF render failed: {exc}")
