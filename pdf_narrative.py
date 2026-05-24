@@ -239,38 +239,123 @@ async def _haiku_call(prompt: str) -> dict | None:
         return None
 
 
+_OBSERVATION_PROMPT = """You are writing the KEY TAKEAWAY line of an equity analyst report.
+This sits next to a 12-metric snapshot card on page 1. The reader cross-
+references your sentence against those metrics — so any number you quote
+MUST match what's in the metrics block. Do NOT pull figures from any
+other source (filings, press releases, news). The metrics card is the
+single source of truth for this field.
+
+Return ONLY a JSON object (no markdown fences, no surrounding prose):
+
+{{
+  "observation": "ONE sentence, 18-30 words. Lead with the headline read (top-tier / quality / mixed / weak setup), cite 2-3 strongest metrics from the block, end with one caveat. Example: 'Top-tier setup at score 81 — +27% YoY rev, 4/4 beats, +38% momentum, 41.6% gross margin; high 2.01 beta amplifies tape moves.' No hedging, no filler."
+}}
+
+TICKER: {ticker}
+SECTOR: {sector}
+ALPHA SCORE: {score}/100 ({grade})
+
+METRICS (your only allowed data source — values are already in display form):
+{metrics_block}
+"""
+
+
+_THESIS_PROMPT = """You are writing the Investment Thesis section of an equity
+analyst report — Bernstein / Morgan Stanley voice. Terse, metric-anchored,
+no essay prose, no hedging filler.
+
+CRITICAL DATA RULE: The KEY METRICS block shows values ALREADY in display
+form. If a margin reads '83.2%', that IS the margin. Quote numbers exactly
+as shown; never apply your own scaling.
+
+Bull/bear bullets MAY cite event-block numbers (e.g. segment revenue, a
+specific quarter's growth), but lead each bullet with a metric reference
+where possible so readers can cross-check page 1.
+
+Return ONLY a JSON object (no markdown fences, no surrounding prose):
+
+{{
+  "bull": [
+    "3 bullets, 15-25 words each. State a specific fact + its implication.",
+    "...",
+    "..."
+  ],
+  "bear": [
+    "3 bullets, 15-25 words each. Specific risk + supporting metric.",
+    "...",
+    "..."
+  ],
+  "verdict": "ONE sentence, ≤ 30 words. Action lens (build / hold / trim / wait) tied to a trigger. No phrases like 'monitor closely' or 'maintain conviction'.",
+  "conviction": "high|medium|low",
+  "catalysts": [
+    "4-5 items, 10-20 words each. Forward events, dated where possible."
+  ]
+}}
+
+TICKER: {ticker}
+SECTOR: {sector}
+ALPHA SCORE: {score}/100 ({grade})
+
+KEY METRICS (values are in display form — do not rescale):
+{metrics_block}
+
+LATEST EVENT (from SEC filing — may reference different periods than metrics):
+{event_block}
+"""
+
+
 async def build_narrative(ticker: str, t: dict, event_row: dict | None) -> dict | None:
     """Build the AI narrative dict consumed by pdf_render page 2.
 
-    Returns None when Haiku is unavailable — pdf_render then renders a
-    metrics-only page 2 with a small note rather than crashing."""
+    Uses a TWO-CALL pattern so the KEY TAKEAWAY (observation) is generated
+    with metrics-only input, completely insulated from event-block numbers
+    that may reference a different period. Without this isolation Haiku
+    would routinely cite event-block figures in the takeaway that
+    contradicted the metrics card on page 1 (e.g. takeaway says '+44%
+    revenue' while card shows '+27%'). The two calls run in parallel so
+    cold-ticker latency is unchanged. Cost: ~2x ($0.002 → $0.004), still
+    negligible at ~$0.20/mo for the full universe."""
+    import asyncio as _asyncio
     sym = (ticker or "").upper()
     now = time.time()
     cached = _CACHE.get(sym)
     if cached and now - cached[0] < _CACHE_TTL:
         return cached[1]
 
-    prompt = _PROMPT.format(
+    metrics_block = _format_metrics(t)
+    common = dict(
         ticker=sym,
         sector=t.get("sector") or t.get("sub_sector") or "—",
         score=int(t.get("smart_score") or t.get("pop_score") or 0),
         grade=(t.get("grade") or "—").upper(),
-        metrics_block=_format_metrics(t),
-        event_block=_format_event(event_row),
+        metrics_block=metrics_block,
     )
-    out = await _haiku_call(prompt)
+    obs_prompt    = _OBSERVATION_PROMPT.format(**common)
+    thesis_prompt = _THESIS_PROMPT.format(**common,
+                                          event_block=_format_event(event_row))
+
+    obs_task    = _haiku_call(obs_prompt)
+    thesis_task = _haiku_call(thesis_prompt)
+    obs_out, thesis_out = await _asyncio.gather(obs_task, thesis_task,
+                                                 return_exceptions=True)
+
+    out = {}
+    if isinstance(thesis_out, dict):
+        out = thesis_out
+    if isinstance(obs_out, dict) and obs_out.get("observation"):
+        out["observation"] = obs_out["observation"]
     if not out:
         return None
 
     # Normalise — guarantee the keys the PDF expects, even if Haiku omits one
-    out.setdefault("observation", out.get("exec_para", ""))  # back-compat
+    out.setdefault("observation", out.get("exec_para", ""))
     out.setdefault("bull", [])
     out.setdefault("bear", [])
     out.setdefault("verdict", "")
     out.setdefault("conviction", "medium")
     out.setdefault("catalysts", [])
     _CACHE[sym] = (now, out)
-    # LRU-trim
     if len(_CACHE) > 200:
         oldest_key = min(_CACHE, key=lambda k: _CACHE[k][0])
         _CACHE.pop(oldest_key, None)

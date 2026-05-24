@@ -340,6 +340,228 @@ def _draw_hero(c, top_y, ticker, t, logo_bytes):
     return hero_bottom
 
 
+def _make_revenue_eps_chart(quarterly_income: list, eps_quarters: list,
+                              width_pt: float, height_pt: float) -> bytes | None:
+    """Combo chart: revenue bars (left axis) + EPS actual & estimate lines
+    (right axis) over last 4-8 quarters. Beat/miss dots on EPS actual.
+    Quartr-style — the visualisation pro reports use to summarise the
+    most-recent earnings trajectory."""
+    # Pull oldest-first sequences of equal length, max 6 quarters
+    inc = [q for q in (quarterly_income or [])[:6] if q.get("revenue") is not None]
+    inc.reverse()
+    eps = [q for q in (eps_quarters or [])[:6] if q.get("actual") is not None]
+    eps.reverse()
+    if len(inc) < 2 and len(eps) < 2:
+        return None
+    try:
+        fig_w, fig_h = width_pt / 72.0, height_pt / 72.0
+        fig, ax = plt.subplots(figsize=(fig_w, fig_h), dpi=160)
+        ax.set_facecolor("#ffffff")
+        labels = []
+        revenues = []
+        for q in inc[-5:]:
+            rev = float(q.get("revenue") or 0) / 1e9
+            revenues.append(rev)
+            d = q.get("date") or q.get("period") or ""
+            try:
+                labels.append(datetime.fromisoformat(d).strftime("%b '%y"))
+            except (TypeError, ValueError):
+                labels.append(str(d)[-6:])
+        if revenues:
+            x = list(range(len(revenues)))
+            ax.bar(x, revenues, color="#c7d2fe", edgecolor="#6366f1",
+                   linewidth=0.8, label="Revenue ($B)", width=0.55)
+            for xi, v in zip(x, revenues):
+                ax.text(xi, v + max(revenues) * 0.02,
+                        f"${v:.2f}B", ha="center", va="bottom",
+                        fontsize=6.5, color="#475569")
+        # EPS overlay on twin axis
+        if len(eps) >= 2:
+            ax2 = ax.twinx()
+            n = min(len(eps), len(revenues)) if revenues else len(eps)
+            eps_x = list(range(n))[-n:]
+            eps_actual = [float((q.get("actual") or 0)) for q in eps[-n:]]
+            eps_est    = [float((q.get("estimate") or 0)) for q in eps[-n:]]
+            ax2.plot(eps_x, eps_est, "--", color="#94a3b8",
+                     linewidth=1.4, label="EPS estimate")
+            ax2.plot(eps_x, eps_actual, "-", color="#0f172a",
+                     linewidth=2.0, label="EPS actual")
+            # Beat/miss dots
+            for xi, a, e in zip(eps_x, eps_actual, eps_est):
+                color = "#16a34a" if a >= e else "#dc2626"
+                ax2.plot(xi, a, "o", color=color, markersize=6,
+                         markeredgecolor="white", markeredgewidth=1.2)
+            ax2.tick_params(colors="#94a3b8", labelsize=7)
+            for s in ("top", "right"):
+                ax2.spines[s].set_visible(False)
+            ax2.spines["right"].set_visible(True)
+            ax2.spines["right"].set_color("#cbd5e1")
+            ax2.set_ylabel("EPS", fontsize=7, color="#475569")
+        ax.set_xticks(list(range(len(labels))))
+        ax.set_xticklabels(labels, fontsize=7, color="#475569")
+        for s in ("top", "right"):
+            ax.spines[s].set_visible(False)
+        ax.spines["left"].set_color("#cbd5e1")
+        ax.spines["bottom"].set_color("#cbd5e1")
+        ax.tick_params(colors="#94a3b8", labelsize=7)
+        ax.grid(True, axis="y", color="#f1f5f9", linewidth=0.5)
+        ax.set_ylabel("Revenue ($B)", fontsize=7, color="#475569")
+        fig.tight_layout(pad=0.4)
+        buf = io.BytesIO()
+        fig.savefig(buf, format="png", dpi=160, bbox_inches="tight",
+                    facecolor="white", edgecolor="none")
+        plt.close(fig)
+        buf.seek(0)
+        return buf.read()
+    except Exception as exc:
+        logger.warning(f"_make_revenue_eps_chart failed: {exc}")
+        plt.close("all")
+        return None
+
+
+def _make_margin_trend_chart(quarterly_income: list,
+                              width_pt: float, height_pt: float) -> bytes | None:
+    """Two-line trend chart: GROSS margin + OPERATING margin over last
+    4-6 quarters. Surfaces the 'is margin expansion durable?' answer
+    that bull/bear narratives lean on but can't show numerically."""
+    inc = [q for q in (quarterly_income or [])[:6] if q.get("gross_margin") is not None]
+    inc.reverse()
+    if len(inc) < 2:
+        return None
+    try:
+        fig_w, fig_h = width_pt / 72.0, height_pt / 72.0
+        fig, ax = plt.subplots(figsize=(fig_w, fig_h), dpi=160)
+        ax.set_facecolor("#ffffff")
+        labels = []
+        gm_vals, om_vals = [], []
+        for q in inc[-5:]:
+            gm = q.get("gross_margin")
+            om = q.get("operating_margin")
+            # Try compute operating_margin from op_income / revenue if missing
+            if om is None and q.get("operating_income") and q.get("revenue"):
+                try:
+                    om = float(q["operating_income"]) / float(q["revenue"])
+                except (TypeError, ValueError, ZeroDivisionError):
+                    om = None
+            # Normalise to percent
+            try: gm_v = float(gm) * 100 if abs(float(gm)) <= 1 else float(gm)
+            except (TypeError, ValueError): gm_v = None
+            try: om_v = float(om) * 100 if abs(float(om)) <= 1 else float(om)
+            except (TypeError, ValueError): om_v = None
+            if gm_v is None and om_v is None:
+                continue
+            gm_vals.append(gm_v)
+            om_vals.append(om_v)
+            d = q.get("date") or q.get("period") or ""
+            try:
+                labels.append(datetime.fromisoformat(d).strftime("%b '%y"))
+            except (TypeError, ValueError):
+                labels.append(str(d)[-6:])
+        if not gm_vals:
+            plt.close(fig)
+            return None
+        x = list(range(len(labels)))
+        # Gross margin line
+        gm_plot = [v if v is not None else float("nan") for v in gm_vals]
+        ax.plot(x, gm_plot, "-o", color="#4338ca", linewidth=2.0,
+                markersize=4.5, label="Gross margin %")
+        for xi, v in zip(x, gm_plot):
+            if v == v:  # not NaN
+                ax.text(xi, v + 1.5, f"{v:.1f}%", ha="center", va="bottom",
+                        fontsize=6.5, color="#4338ca")
+        # Operating margin line (may have NaN slots)
+        if any(v is not None for v in om_vals):
+            om_plot = [v if v is not None else float("nan") for v in om_vals]
+            ax.plot(x, om_plot, "-s", color="#ec4899", linewidth=1.8,
+                    markersize=4, label="Operating margin %")
+        ax.set_xticks(x)
+        ax.set_xticklabels(labels, fontsize=7, color="#475569")
+        ax.tick_params(colors="#94a3b8", labelsize=7)
+        for s in ("top", "right"):
+            ax.spines[s].set_visible(False)
+        ax.spines["left"].set_color("#cbd5e1")
+        ax.spines["bottom"].set_color("#cbd5e1")
+        ax.grid(True, axis="y", color="#f1f5f9", linewidth=0.5)
+        ax.legend(fontsize=6.5, loc="lower right", frameon=False)
+        fig.tight_layout(pad=0.4)
+        buf = io.BytesIO()
+        fig.savefig(buf, format="png", dpi=160, bbox_inches="tight",
+                    facecolor="white", edgecolor="none")
+        plt.close(fig)
+        buf.seek(0)
+        return buf.read()
+    except Exception as exc:
+        logger.warning(f"_make_margin_trend_chart failed: {exc}")
+        plt.close("all")
+        return None
+
+
+def _draw_quarterly_charts_row(c, top_y, t):
+    """New page-1 row: Quarterly Revenue & EPS combo chart (left) +
+    Margin Trend chart (right). Always renders from t.quarterly_income +
+    t.eps_quarters — these fields are populated by the FMP fundamentals
+    pipeline and don't depend on flaky daily-price feeds. So this row
+    works for every ticker, unlike the 90-day price chart."""
+    block_h = 160
+    y = top_y - block_h - 10
+    gap = 10
+    half_w = (CONTENT_W - gap) / 2
+
+    qinc = t.get("quarterly_income") or []
+    eps  = t.get("eps_quarters") or []
+
+    # ── LEFT: Revenue + EPS combo chart ───────────────────────────────
+    c.setFillColor(BG_CARD)
+    c.setStrokeColor(BORDER)
+    c.setLineWidth(0.6)
+    c.roundRect(MARGIN_X, y, half_w, block_h, 6, stroke=1, fill=1)
+    c.setFillColor(INK)
+    c.setFont("Helvetica-Bold", 8.5)
+    c.drawString(MARGIN_X + 10, y + block_h - 13, "QUARTERLY REVENUE & EPS")
+    c.setFillColor(INK_MUTED)
+    c.setFont("Helvetica", 7)
+    c.drawString(MARGIN_X + 10, y + block_h - 22,
+                  "Revenue bars (left)  ·  EPS actual vs estimate  ·  green dot = beat, red dot = miss")
+    chart_png = _make_revenue_eps_chart(qinc, eps, half_w - 24, block_h - 36)
+    if chart_png:
+        img = ImageReader(io.BytesIO(chart_png))
+        c.drawImage(img, MARGIN_X + 6, y + 4,
+                    width=half_w - 12, height=block_h - 30,
+                    preserveAspectRatio=True, anchor='c', mask='auto')
+    else:
+        c.setFillColor(INK_MUTED)
+        c.setFont("Helvetica", 9)
+        c.drawCentredString(MARGIN_X + half_w / 2, y + block_h / 2 - 6,
+                             "Insufficient quarterly data")
+
+    # ── RIGHT: Margin trend chart ─────────────────────────────────────
+    mt_x = MARGIN_X + half_w + gap
+    c.setFillColor(BG_CARD)
+    c.setStrokeColor(BORDER)
+    c.setLineWidth(0.6)
+    c.roundRect(mt_x, y, half_w, block_h, 6, stroke=1, fill=1)
+    c.setFillColor(INK)
+    c.setFont("Helvetica-Bold", 8.5)
+    c.drawString(mt_x + 10, y + block_h - 13, "MARGIN TREND")
+    c.setFillColor(INK_MUTED)
+    c.setFont("Helvetica", 7)
+    c.drawString(mt_x + 10, y + block_h - 22,
+                  "Gross + operating margin over last 4-6 quarters  ·  durability check")
+    mt_png = _make_margin_trend_chart(qinc, half_w - 24, block_h - 36)
+    if mt_png:
+        img = ImageReader(io.BytesIO(mt_png))
+        c.drawImage(img, mt_x + 6, y + 4,
+                    width=half_w - 12, height=block_h - 30,
+                    preserveAspectRatio=True, anchor='c', mask='auto')
+    else:
+        c.setFillColor(INK_MUTED)
+        c.setFont("Helvetica", 9)
+        c.drawCentredString(mt_x + half_w / 2, y + block_h / 2 - 6,
+                             "Margin history unavailable")
+
+    return y
+
+
 # Human-friendly labels for the 19 score components (mirrors the JS
 # COMPONENT_LABELS in templates/earnings_tearsheet.html).
 _SCORE_COMPONENT_LABELS = {
@@ -633,12 +855,130 @@ def _draw_exec_summary(c, top_y, bits):
     return y
 
 
+def _draw_target_range_bar(c, x, y, w, low, high, mean, price):
+    """Horizontal range bar visualisation: $low ───●─── $high, with the
+    current price marked as a vertical line. The MEAN target sits as a
+    larger dot. Replaces the dry '$164 – $220' text label."""
+    bar_h = 6
+    bar_y = y
+    # Bar background
+    c.setFillColor(HexColor("#eef2ff"))
+    c.roundRect(x, bar_y, w, bar_h, bar_h / 2, stroke=0, fill=1)
+    # Inner gradient feel via two-tone fill: indigo-light → violet
+    c.setFillColor(BRAND_LIGHT)
+    c.roundRect(x, bar_y, w, bar_h, bar_h / 2, stroke=0, fill=1)
+    # Determine extent
+    lo = min(low, price or low, mean or low)
+    hi = max(high, price or high, mean or high)
+    rng = max(hi - lo, 0.01)
+
+    def _to_x(v):
+        return x + ((v - lo) / rng) * w
+
+    # Mean dot
+    if mean:
+        mx = _to_x(mean)
+        c.setFillColor(BRAND_INDIGO)
+        c.circle(mx, bar_y + bar_h / 2, 5, stroke=0, fill=1)
+        c.setFillColor(HexColor("#ffffff"))
+        c.setFont("Helvetica-Bold", 6)
+        c.drawCentredString(mx, bar_y + bar_h / 2 - 2, "T")
+    # Current price marker (vertical line)
+    if price:
+        px = _to_x(price)
+        c.setStrokeColor(INK)
+        c.setLineWidth(1.6)
+        c.line(px, bar_y - 4, px, bar_y + bar_h + 4)
+        c.setFillColor(INK)
+        c.setFont("Helvetica-Bold", 6.5)
+        c.drawCentredString(px, bar_y - 12, f"${price:.2f}")
+    # Endpoints labels
+    c.setFillColor(INK_MUTED)
+    c.setFont("Helvetica", 6.5)
+    c.drawString(x, bar_y + bar_h + 4, f"${low:.0f}")
+    c.drawRightString(x + w, bar_y + bar_h + 4, f"${high:.0f}")
+
+
+def _draw_rec_distribution_bar(c, x, y, w, strong_buy, buy, hold, sell, strong_sell):
+    """Stacked horizontal bar for analyst recommendation distribution.
+    Strong Buy / Buy = greens, Hold = amber, Sell / Strong Sell = reds.
+    Falls back gracefully when total is zero (renders nothing)."""
+    total = strong_buy + buy + hold + sell + strong_sell
+    if total <= 0:
+        return
+    bar_h = 7
+    segments = [
+        (strong_buy,  HexColor("#15803d")),  # deep green
+        (buy,         HexColor("#22c55e")),  # green
+        (hold,        HexColor("#f59e0b")),  # amber
+        (sell,        HexColor("#ef4444")),  # red
+        (strong_sell, HexColor("#991b1b")),  # deep red
+    ]
+    cx = x
+    for count, color in segments:
+        if count <= 0:
+            continue
+        seg_w = (count / total) * w
+        c.setFillColor(color)
+        c.rect(cx, y, seg_w, bar_h, stroke=0, fill=1)
+        cx += seg_w
+    # Mini legend underneath with counts
+    legend_y = y - 9
+    c.setFont("Helvetica", 5.5)
+    parts = [
+        ("S.Buy", strong_buy, HexColor("#15803d")),
+        ("Buy",   buy,        HexColor("#22c55e")),
+        ("Hold",  hold,       HexColor("#f59e0b")),
+        ("Sell",  sell,       HexColor("#ef4444")),
+        ("S.Sell",strong_sell,HexColor("#991b1b")),
+    ]
+    lx = x
+    for label, count, color in parts:
+        if count <= 0:
+            continue
+        c.setFillColor(color)
+        c.circle(lx + 2, legend_y + 2, 1.6, stroke=0, fill=1)
+        c.setFillColor(INK_SOFT)
+        text = f"{label} {count}"
+        c.drawString(lx + 6, legend_y, text)
+        lx += c.stringWidth(text, "Helvetica", 5.5) + 12
+
+
+def _derive_rec_counts(t: dict, total_analysts: int):
+    """Estimate the 5-bucket recommendation distribution from the limited
+    aggregate signals we have. Backend exposes strong_buy_pct + the
+    analyst_cons component score (0-1) in the breakdown. This mirrors
+    the JS logic in templates/earnings_tearsheet.html so the PDF and
+    web tear sheet show the same distribution."""
+    if not total_analysts:
+        return 0, 0, 0, 0, 0
+    strong_buy_pct = _safe_float(t.get("strong_buy_pct"))
+    breakdown = t.get("breakdown") or {}
+    consensus  = _safe_float(breakdown.get("analyst_cons"))   # 0..1
+    sb = int(round((strong_buy_pct or 0.4) * total_analysts))
+    # Buy share scales with bullish consensus (0.7+ → 0.35, 0.5 → 0.25)
+    bullish = max(0.0, min(1.0, (consensus or 0.6)))
+    b = int(round(bullish * 0.42 * total_analysts))
+    h = max(0, total_analysts - sb - b)
+    s = 0
+    ss = 0
+    # If consensus is weak, recover Hold→Sell split
+    if (consensus or 0.6) < 0.45:
+        s = max(0, int(round(h * 0.3)))
+        h -= s
+    # Clamp and re-balance to total
+    counts = [sb, b, h, s, ss]
+    diff = total_analysts - sum(counts)
+    counts[2] += diff   # absorb residual in Hold bucket
+    return tuple(max(0, x) for x in counts)
+
+
 def _draw_analyst_outlook_row(c, top_y, t):
-    """New page-1 row: Analyst Outlook (left) + Ownership Snapshot (right).
-    Restores the data-rich sections from the old CRDO tear sheet that the
-    AI-only v3 version dropped. Pure data — no AI commentary, so the page
-    reads as a pro analyst report, not an LLM essay."""
-    block_h = 86
+    """Page-1 row: Analyst Outlook (left, with range bar + rec
+    distribution) + Ownership Snapshot (right). Range bar replaces the
+    dry '$low–$high' text; rec distribution stack bar fills the empty
+    space inside the card."""
+    block_h = 110   # Taller now to fit range bar + rec distribution
     y = top_y - block_h - 10
     half_w = (CONTENT_W - 10) / 2
 
@@ -651,43 +991,46 @@ def _draw_analyst_outlook_row(c, top_y, t):
     c.setFillColor(INK)
     c.setFont("Helvetica-Bold", 8.5)
     c.drawString(left_x + 10, y + block_h - 13, "ANALYST OUTLOOK")
-    # Mean target with upside
+
     tgt_mean = _safe_float(t.get("target_mean"))
     tgt_low  = _safe_float(t.get("target_low"))
     tgt_high = _safe_float(t.get("target_high"))
     price    = _safe_float(t.get("price") or t.get("last_close"))
     total_an = int(t.get("total_analysts") or 0)
+
+    # Mean target + upside (top row)
     if tgt_mean and price and price > 0:
         upside = (tgt_mean / price - 1) * 100
         u_color = GREEN if upside >= 0 else RED
-        u_label = f"{'+' if upside >= 0 else ''}{upside:.1f}% upside"
         c.setFillColor(INK)
         c.setFont("Helvetica-Bold", 16)
         c.drawString(left_x + 10, y + block_h - 36, f"${tgt_mean:.2f}")
         c.setFillColor(INK_MUTED)
-        c.setFont("Helvetica", 7)
-        c.drawString(left_x + 10, y + block_h - 47, "MEAN TARGET")
+        c.setFont("Helvetica", 6.5)
+        c.drawString(left_x + 10, y + block_h - 44, "MEAN TARGET  ·  " +
+                     (f"{total_an} analyst" + ('s' if total_an != 1 else '')))
         c.setFillColor(u_color)
-        c.setFont("Helvetica-Bold", 8)
-        c.drawString(left_x + 10, y + 10, u_label)
+        c.setFont("Helvetica-Bold", 8.5)
+        c.drawRightString(left_x + half_w - 12, y + block_h - 36,
+                          f"{'+' if upside >= 0 else ''}{upside:.1f}% upside")
     else:
         c.setFillColor(INK_MUTED)
         c.setFont("Helvetica", 9)
-        c.drawString(left_x + 10, y + block_h / 2 - 4, "No analyst target data")
-    # Target band on the right of the card
-    if tgt_low and tgt_high:
-        band_x = left_x + half_w / 2 + 4
-        c.setFillColor(INK_MUTED)
-        c.setFont("Helvetica", 7)
-        c.drawString(band_x, y + block_h - 28, "TARGET BAND")
-        c.setFillColor(INK)
-        c.setFont("Helvetica-Bold", 11)
-        c.drawString(band_x, y + block_h - 44, f"${tgt_low:.0f} – ${tgt_high:.0f}")
-        # Coverage strip
-        c.setFillColor(INK_MUTED)
-        c.setFont("Helvetica", 7)
-        cov_text = f"{total_an} analyst{'s' if total_an != 1 else ''}" if total_an else "Limited coverage"
-        c.drawString(band_x, y + block_h - 56, cov_text)
+        c.drawString(left_x + 10, y + block_h - 36, "No analyst target data")
+
+    # Target range bar (middle row)
+    if tgt_low and tgt_high and tgt_low < tgt_high:
+        _draw_target_range_bar(
+            c, left_x + 14, y + 48, half_w - 28,
+            tgt_low, tgt_high, tgt_mean, price,
+        )
+
+    # Recommendation distribution (bottom)
+    if total_an:
+        sb, b, h, s, ss = _derive_rec_counts(t, total_an)
+        if sb + b + h + s + ss > 0:
+            _draw_rec_distribution_bar(c, left_x + 14, y + 22, half_w - 28,
+                                        sb, b, h, s, ss)
 
     # ── RIGHT: Ownership Snapshot ─────────────────────────────────────
     right_x = left_x + half_w + 10
@@ -1307,7 +1650,22 @@ def generate_pdf(ticker: str, t: dict, price_history: list[dict] | None = None,
     # Footer
     _draw_footer(c)
 
-    # ── Page 2 — AI analyst narrative (only when we have content) ─────
+    # ── Page 2 — Financial visualisations (quarterly + margin trend) ───
+    # Renders whenever we have at least 2 quarters of fundamental data,
+    # which is virtually every US-listed name. Independent of the flaky
+    # daily-price feeds that were leaving page 1's chart empty.
+    qinc = t.get("quarterly_income") or []
+    eps  = t.get("eps_quarters") or []
+    have_visuals = (len(qinc) >= 2 or len(eps) >= 2)
+    if have_visuals:
+        c.showPage()
+        _draw_header(c, today, quarter_lbl)
+        y2 = _draw_page2_hero(c, ticker, t)
+        # Override the default "ANALYST NARRATIVE" subtitle for this page
+        _draw_quarterly_charts_row(c, y2 - 4, t)
+        _draw_footer(c)
+
+    # ── Page 3 — AI analyst narrative (only when we have content) ─────
     if narrative or event_row:
         c.showPage()
         _draw_header(c, today, quarter_lbl)

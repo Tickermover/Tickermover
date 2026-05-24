@@ -1758,72 +1758,102 @@ async def api_pdf(symbol: str):
             except Exception as exc:
                 logger.warning(f"pdf build {sym}: FMP fallback failed: {exc}")
 
-        # 5th-layer fallback: Stooq.com CSV — truly free, no key, no
-        # rate-limit pressure. Returns full history in CSV; we take the
-        # last 90 trading days. URL pattern: stooq.com/q/d/l/?s=stx.us&i=d
-        if not pts:
+        # 5th-layer fallback: FMP stable endpoint (newer URL form, may be
+        # tier-included even when /api/v3/historical-price-full isn't).
+        if not pts and config.FMP_API_KEY:
             try:
-                async with httpx.AsyncClient(timeout=10, follow_redirects=True) as _c:
-                    stooq_url = f"https://stooq.com/q/d/l/?s={sym.lower()}.us&i=d"
-                    r = await _c.get(stooq_url)
-                    if r.status_code == 200 and r.text and "Date,Open" in r.text:
-                        lines = r.text.strip().splitlines()[1:]   # skip header
-                        for line in lines[-95:]:                   # last ~3mo
-                            parts = line.split(",")
-                            if len(parts) >= 5 and parts[0] and parts[4]:
-                                try:
-                                    pts.append({"date": parts[0], "close": round(float(parts[4]), 2)})
-                                except (TypeError, ValueError):
-                                    continue
-                        logger.info(f"pdf build {sym}: Stooq fallback returned {len(pts)} points")
+                async with httpx.AsyncClient(timeout=10) as _c:
+                    stable_url = (
+                        "https://financialmodelingprep.com/stable/historical-price-eod/light"
+                        f"?symbol={sym}&apikey={config.FMP_API_KEY}"
+                    )
+                    r = await _c.get(stable_url)
+                    if r.status_code == 200:
+                        data = r.json() or []
+                        if isinstance(data, list):
+                            # newest first → ascending; take last 90
+                            data_sorted = sorted(data, key=lambda h: h.get("date", ""))
+                            pts = [
+                                {"date": h.get("date"), "close": round(float(h.get("price") or h.get("close")), 2)}
+                                for h in data_sorted
+                                if (h.get("price") is not None or h.get("close") is not None) and h.get("date")
+                            ][-90:]
+                            logger.info(f"pdf build {sym}: FMP-stable returned {len(pts)} points")
                     else:
-                        logger.warning(f"pdf build {sym}: Stooq HTTP {r.status_code}, no data")
+                        logger.warning(f"pdf build {sym}: FMP-stable HTTP {r.status_code}: {r.text[:200]}")
             except Exception as exc:
-                logger.warning(f"pdf build {sym}: Stooq fallback failed: {exc}")
+                logger.warning(f"pdf build {sym}: FMP-stable failed: {exc}")
+
+        # 6th-layer fallback: Alpha Vantage TIME_SERIES_DAILY using the key
+        # we already have for Briefings. Free tier 25 calls/day total — so
+        # only triggers on the rare ticker where every other source failed.
+        if not pts and config.ALPHA_VANTAGE_KEY:
+            try:
+                async with httpx.AsyncClient(timeout=15) as _c:
+                    av_url = (
+                        "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY"
+                        f"&symbol={sym}&outputsize=compact&apikey={config.ALPHA_VANTAGE_KEY}"
+                    )
+                    r = await _c.get(av_url)
+                    if r.status_code == 200:
+                        data = r.json() or {}
+                        ts = data.get("Time Series (Daily)") or {}
+                        if ts:
+                            items = sorted(ts.items())   # ascending by date
+                            pts = [
+                                {"date": d, "close": round(float(v.get("4. close") or 0), 2)}
+                                for d, v in items if v.get("4. close")
+                            ][-90:]
+                            logger.info(f"pdf build {sym}: AV fallback returned {len(pts)} points")
+                        elif data.get("Information"):
+                            logger.warning(f"pdf build {sym}: AV rate-limited: {data['Information'][:120]}")
+            except Exception as exc:
+                logger.warning(f"pdf build {sym}: AV fallback failed: {exc}")
 
         if pts:
             cache.set(ck, {"ticker": sym, "period": "3mo", "points": pts}, 60 * 60 * 6)
 
     # ── Lazy ownership fetch (insider/institutional %, avg volume) ────
-    # These fields don't exist on the main ticker row but yfinance.info
-    # has them under heldPercentInsiders / heldPercentInstitutions /
-    # averageVolume. Cache 24h per ticker to keep PDF generation snappy.
+    # Uses FMP /profile (proven to work from this IP — already used by
+    # the rest of the app) rather than yfinance.info (yf is blocked from
+    # Render and was leaving these cells empty in v3.3). Cached 24h.
+    def _fmt_avg_volume(v):
+        try: v = float(v)
+        except (TypeError, ValueError): return None
+        if v >= 1e9: return f"{v/1e9:.2f}B"
+        if v >= 1e6: return f"{v/1e6:.2f}M"
+        if v >= 1e3: return f"{v/1e3:.0f}K"
+        return f"{v:.0f}"
+
     own_ck = f"ownership-info:{sym}"
     own_cached = cache.get(own_ck)
+    if not own_cached and config.FMP_API_KEY:
+        try:
+            async with httpx.AsyncClient(timeout=10) as _c:
+                prof_url = f"https://financialmodelingprep.com/api/v3/profile/{sym}?apikey={config.FMP_API_KEY}"
+                r = await _c.get(prof_url)
+                if r.status_code == 200:
+                    arr = r.json() or []
+                    prof = arr[0] if isinstance(arr, list) and arr else {}
+                    # FMP returns insider/institutional as fractions on some plans,
+                    # absolute pcts on others. Caller normalises in pdf_render.
+                    own_cached = {
+                        "insider_pct":        prof.get("insiderOwnership"),
+                        "institutional_pct":  prof.get("institutionalOwnership"),
+                        "avg_volume_str":     _fmt_avg_volume(prof.get("volAvg") or prof.get("averageVolume")),
+                        "div_yield":          prof.get("lastDiv"),
+                    }
+                    cache.set(own_ck, own_cached, 24 * 60 * 60)
+                    logger.info(f"pdf build {sym}: FMP profile populated ownership fields")
+                else:
+                    logger.warning(f"pdf build {sym}: FMP profile HTTP {r.status_code}")
+        except Exception as exc:
+            logger.warning(f"pdf build {sym}: FMP profile failed: {exc}")
     if own_cached:
         target.setdefault("insider_ownership",      own_cached.get("insider_pct"))
         target.setdefault("institutional_ownership", own_cached.get("institutional_pct"))
         target.setdefault("avg_volume_str",          own_cached.get("avg_volume_str"))
         target.setdefault("dividend_yield",          own_cached.get("div_yield"))
-    else:
-        def _fmt_avg_volume(v):
-            try:
-                v = float(v)
-            except (TypeError, ValueError):
-                return None
-            if v >= 1e9: return f"{v/1e9:.2f}B"
-            if v >= 1e6: return f"{v/1e6:.2f}M"
-            if v >= 1e3: return f"{v/1e3:.0f}K"
-            return f"{v:.0f}"
-        def _yf_info_sync():
-            try:
-                info = yf.Ticker(sym).info or {}
-            except Exception as exc:
-                logger.warning(f"pdf build {sym}: yf.info failed: {exc}")
-                return None
-            return {
-                "insider_pct":        info.get("heldPercentInsiders"),
-                "institutional_pct":  info.get("heldPercentInstitutions"),
-                "avg_volume_str":     _fmt_avg_volume(info.get("averageVolume")),
-                "div_yield":          info.get("dividendYield"),
-            }
-        info_dict = await asyncio.to_thread(_yf_info_sync)
-        if info_dict:
-            cache.set(own_ck, info_dict, 24 * 60 * 60)
-            target.setdefault("insider_ownership",      info_dict.get("insider_pct"))
-            target.setdefault("institutional_ownership", info_dict.get("institutional_pct"))
-            target.setdefault("avg_volume_str",          info_dict.get("avg_volume_str"))
-            target.setdefault("dividend_yield",          info_dict.get("div_yield"))
 
     # ── AI narrative + event summary for page 2 ──────────────────────
     # Run in parallel. Both have their own short-circuit caches (event
