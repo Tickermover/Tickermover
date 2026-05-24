@@ -2827,11 +2827,19 @@ html.v2-dark .v2-mp-mini-lbl{color:#cbd5e1}
 .v2-brf-q-metrics-label{font-size:10.5px;font-weight:800;letter-spacing:.14em;color:#94a3b8;text-transform:uppercase;margin-bottom:8px}
 .v2-brf-q-metrics-pills{display:flex;flex-wrap:wrap;gap:8px}
 .v2-brf-q-pill{
-  display:inline-flex;align-items:center;
-  padding:5px 11px;border-radius:999px;
-  background:#eef2ff;color:#4338ca;
-  font-size:12px;font-weight:700;letter-spacing:-.005em;
-  border:1px solid #e0e7ff;
+  display:inline-flex;flex-direction:column;align-items:flex-start;
+  padding:6px 12px;border-radius:10px;
+  background:#fff;border:1px solid #e0e7ff;
+  box-shadow:0 1px 2px rgba(67,56,202,.06);
+  min-width:80px;
+}
+.v2-brf-q-pill-label{
+  font-size:9px;font-weight:800;letter-spacing:.08em;
+  color:#6366f1;text-transform:uppercase;line-height:1;
+}
+.v2-brf-q-pill-val{
+  font-size:13px;font-weight:800;color:#0f172a;
+  letter-spacing:-.01em;margin-top:3px;line-height:1.1;
 }
 
 /* Pull-quote (investment angle / raw_excerpt) ────────────────── */
@@ -7720,52 +7728,111 @@ function v2RenderBriefingSourceBadge(d){
   return '<div class="v2-brf-d-h-src">Source: ' + v2EscHTML(label) + linkPart + '</div>';
 }
 
-// Extract 3-5 most distinctive numeric metrics from the briefing's
-// bullet text. Looks for dollar amounts, percentages, basis-point
-// movements and prioritises by 'distinctiveness' (longer numbers with
-// units win over bare digits). Returns array of {label, value} pairs.
+// Extract labeled key metrics from briefing bullets. Each result is
+// {label, value} — the LABEL is the metric name (Revenue, EBITDA,
+// FCF, etc.) and the VALUE is the formatted number. Without the label
+// the pills are nonsense ('$308.4 million' of what?).
+//
+// Strategy: known-keyword + nearby-number regex. We look for a metric
+// keyword followed within ~30 chars by a dollar amount or percentage.
+// Falls back to broader extraction only if no labeled metrics found.
 function v2ExtractKeyMetrics(sections){
   if (!Array.isArray(sections)) return [];
   const flat = [];
   sections.forEach(s => (s.bullets||[]).forEach(b => flat.push(String(b))));
   if (!flat.length) return [];
-  const pats = [
-    // Revenue / dollar figures with B / M suffix
-    /\$\s?[\d,]+(?:\.\d+)?\s*(?:billion|million|B|M)\b/gi,
-    // Percentage growth/change with direction word
-    /(?:up|down|grew|increased|decreased|rose|fell|expanded|contracted)\s+[\d,]+(?:\.\d+)?%/gi,
-    // Standalone YoY/QoQ deltas
-    /[+\-]?\s?\d{1,3}(?:\.\d+)?%\s*(?:YoY|QoQ|year[-\s]over[-\s]year)/gi,
-    // Basis point movements
-    /[\d,]+\s*(?:basis points|bps|bp)\b/gi,
-    // Bare percentages last (lower priority)
-    /[+\-]?\s?\d{1,3}(?:\.\d+)?%/g,
-  ];
+
+  // Compact value formatter: '$308.4 million' → '$308M'; '$2.15 billion' → '$2.15B'
+  const fmtMoney = raw => {
+    const m = raw.match(/\$\s?([\d,]+(?:\.\d+)?)\s*(billion|million|B|M)?/i);
+    if (!m) return raw.trim();
+    const n = m[1];
+    const u = (m[2]||'').toLowerCase();
+    const unit = u.startsWith('b') ? 'B' : u.startsWith('m') ? 'M' : '';
+    return '$' + n + unit;
+  };
+  // Percent formatter: 'up 6.8%' or '6.8% YoY' → '+6.8%'
+  const fmtPct = raw => {
+    const m = raw.match(/([\d,]+(?:\.\d+)?)\s*%/);
+    if (!m) return raw.trim();
+    const sign = /\b(down|fell|decreased|contracted)\b/i.test(raw) ? '-' : '+';
+    return sign + m[1] + '%';
+  };
+
+  // Map raw keyword → clean display label
+  const labelMap = {
+    'revenue':              'Revenue',
+    'sales':                'Sales',
+    'ebitda':               'EBITDA',
+    'adjusted ebitda':      'Adj. EBITDA',
+    'free cash flow':       'FCF',
+    'operating cash flow':  'OCF',
+    'cash flow from operations': 'OCF',
+    'net income':           'Net income',
+    'operating income':     'Op. income',
+    'gross profit':         'Gross profit',
+    'gross margin':         'Gross margin',
+    'operating margin':     'Op. margin',
+    'backlog':              'Backlog',
+    'capex':                'Capex',
+    'capital expenditure':  'Capex',
+    'capital expenditures': 'Capex',
+    'cash':                 'Cash',
+    'cash and equivalents': 'Cash',
+    'cash, equivalents':    'Cash',
+    'total debt':           'Debt',
+    'long-term debt':       'LT debt',
+    'dividend':             'Dividend',
+    'buyback':              'Buyback',
+    'repurchase':           'Buybacks',
+    'share repurchase':     'Buybacks',
+    'eps':                  'EPS',
+    'diluted eps':          'EPS',
+    'gaap eps':             'GAAP EPS',
+    'non-gaap eps':         'Adj. EPS',
+    'guidance':             'Guidance',
+    'order':                'Orders',
+    'bookings':             'Bookings',
+    'loss':                 'Loss',
+    'arr':                  'ARR',
+  };
+  const keywordRx = new RegExp(
+    '\\b(' + Object.keys(labelMap)
+                   .sort((a,b) => b.length - a.length)   // longest first
+                   .map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+                   .join('|') + ')\\b',
+    'gi'
+  );
+  // Dollar / percent value pattern that may follow within ~40 chars
+  const valueRx = /\$\s?[\d,]+(?:\.\d+)?\s*(?:billion|million|B|M)?\b|[\d,]+(?:\.\d+)?%/i;
+
   const found = [];
   const seen  = new Set();
+
   flat.forEach(text => {
-    pats.forEach(rx => {
-      const matches = text.match(rx) || [];
-      matches.forEach(m => {
-        const norm = m.replace(/\s+/g, ' ').trim();
-        if (norm.length > 32) return;
-        if (seen.has(norm.toLowerCase())) return;
-        seen.add(norm.toLowerCase());
-        found.push({raw: norm, src: text});
-      });
-    });
+    // For each keyword hit, grab the next 50 chars and search for a
+    // dollar amount or percentage. Pair them as (label, value).
+    keywordRx.lastIndex = 0;
+    let km;
+    while ((km = keywordRx.exec(text)) !== null) {
+      const keyword = km[1].toLowerCase();
+      const after   = text.substr(km.index + km[0].length, 60);
+      const vm = after.match(valueRx);
+      if (!vm) continue;
+      const rawValue = vm[0];
+      const isMoney = /\$/.test(rawValue);
+      const value = isMoney ? fmtMoney(rawValue) : fmtPct(after.slice(0, vm.index + vm[0].length));
+      const label = labelMap[keyword] || keyword.replace(/\b\w/g, c => c.toUpperCase());
+      const key = label + value;
+      if (seen.has(key.toLowerCase())) continue;
+      seen.add(key.toLowerCase());
+      found.push({label, value, isMoney});
+    }
   });
-  // Rank: prefer dollar amounts > percentages with directional words > bare %
-  found.sort((a, b) => {
-    const score = s => (
-      (/\$/.test(s.raw) ? 3 : 0) +
-      (/\b(?:billion|million)\b/i.test(s.raw) ? 2 : 0) +
-      (/up|down|grew|increased|YoY/i.test(s.raw) ? 2 : 0) +
-      (/basis point|bps/i.test(s.raw) ? 1 : 0)
-    );
-    return score(b) - score(a);
-  });
-  return found.slice(0, 5);
+
+  // Rank: prefer money metrics, then percentages
+  found.sort((a, b) => (b.isMoney ? 1 : 0) - (a.isMoney ? 1 : 0));
+  return found.slice(0, 6);
 }
 
 // Pick top 3 most-numeric / most-informative bullets across all
@@ -7878,7 +7945,12 @@ function v2RenderBriefingHTML(sym, d){
     html += '<div class="v2-brf-q-metrics">' +
       '<div class="v2-brf-q-metrics-label">KEY METRICS</div>' +
       '<div class="v2-brf-q-metrics-pills">' +
-        keyMetrics.map(m => '<span class="v2-brf-q-pill">' + v2EscHTML(m.raw) + '</span>').join('') +
+        keyMetrics.map(m => (
+          '<span class="v2-brf-q-pill">' +
+            '<span class="v2-brf-q-pill-label">' + v2EscHTML(m.label) + '</span>' +
+            '<span class="v2-brf-q-pill-val">'  + v2EscHTML(m.value) + '</span>' +
+          '</span>'
+        )).join('') +
       '</div>' +
     '</div>';
   }
