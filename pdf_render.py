@@ -162,13 +162,110 @@ def _make_price_chart(price_history: list[dict], width_pt: float, height_pt: flo
         return None
 
 
-def _draw_brand_mark(c: canvas.Canvas, x: float, y: float, size: float = 28):
+def _lerp(a: int, b: int, t: float) -> int:
+    """Integer-channel colour lerp helper."""
+    return int(a + (b - a) * t)
+
+
+def _brand_gradient_color(t: float):
+    """Sample the AlphaHunt brand gradient at position t in [0,1].
+    indigo (#4338ca) → violet (#8b5cf6) → magenta (#ec4899)."""
+    t = max(0.0, min(1.0, t))
+    if t < 0.5:
+        lt = t * 2
+        r = _lerp(0x43, 0x8b, lt)
+        g = _lerp(0x38, 0x5c, lt)
+        b = _lerp(0xca, 0xf6, lt)
+    else:
+        lt = (t - 0.5) * 2
+        r = _lerp(0x8b, 0xec, lt)
+        g = _lerp(0x5c, 0x48, lt)
+        b = _lerp(0xf6, 0x99, lt)
+    return r / 255.0, g / 255.0, b / 255.0
+
+
+def _draw_gradient_strip(c, x, y, w, h, n_steps=80):
+    """Horizontal strip filled with the brand gradient. Fakes a smooth
+    gradient by laying down N adjacent rectangles each filled with the
+    interpolated colour at its midpoint. n_steps=80 is visually
+    indistinguishable from a true gradient at A4 width."""
+    step_w = w / n_steps
+    for i in range(n_steps):
+        r, g, b = _brand_gradient_color((i + 0.5) / n_steps)
+        c.setFillColorRGB(r, g, b)
+        c.rect(x + i * step_w, y, step_w + 0.5, h, stroke=0, fill=1)
+
+
+def _draw_brand_mark(c: canvas.Canvas, x: float, y: float, size: float = 28,
+                      use_gradient: bool = True):
+    """The AlphaHunt α-mark. Rounded indigo/gradient square with a
+    white alpha glyph centered inside. Use use_gradient=True for the
+    page header (vivid) and False (solid indigo) for compact in-body
+    uses where the gradient noise distracts."""
     c.saveState()
-    c.setFillColor(BRAND_INDIGO)
-    c.roundRect(x, y, size, size, 5, stroke=0, fill=1)
-    c.setFont("Helvetica-Bold", size * 0.55)
+    if use_gradient:
+        # Fake the gradient by stacking horizontal strips inside the
+        # rounded clip region.
+        c.saveState()
+        p = c.beginPath()
+        # Approximate roundRect path manually for clipping
+        radius = size * 0.18
+        p.moveTo(x + radius, y)
+        p.lineTo(x + size - radius, y)
+        p.arcTo(x + size - 2*radius, y, x + size, y + 2*radius, 270, 90)
+        p.lineTo(x + size, y + size - radius)
+        p.arcTo(x + size - 2*radius, y + size - 2*radius, x + size, y + size, 0, 90)
+        p.lineTo(x + radius, y + size)
+        p.arcTo(x, y + size - 2*radius, x + 2*radius, y + size, 90, 90)
+        p.lineTo(x, y + radius)
+        p.arcTo(x, y, x + 2*radius, y + 2*radius, 180, 90)
+        p.close()
+        c.clipPath(p, stroke=0, fill=0)
+        # Vertical brand gradient inside the clip
+        n_steps = 24
+        for i in range(n_steps):
+            r, g, b = _brand_gradient_color(i / (n_steps - 1))
+            c.setFillColorRGB(r, g, b)
+            c.rect(x, y + (i / n_steps) * size, size, size / n_steps + 0.5,
+                   stroke=0, fill=1)
+        c.restoreState()
+    else:
+        c.setFillColor(BRAND_INDIGO)
+        c.roundRect(x, y, size, size, size * 0.18, stroke=0, fill=1)
+    c.setFont("Helvetica-Bold", size * 0.62)
     c.setFillColor(HexColor("#ffffff"))
-    c.drawCentredString(x + size / 2, y + size * 0.28, "α")
+    c.drawCentredString(x + size / 2, y + size * 0.26, "α")
+    c.restoreState()
+
+
+def _draw_brand_frame(c):
+    """Page chrome drawn FIRST on every page so all content sits on top.
+    Three elements that make the PDF read as an AlphaHunt document
+    rather than a generic reportlab template:
+      1. Top brand gradient strip (5pt tall, full bleed) — indigo →
+         violet → magenta. Same gradient as the dashboard hero text.
+      2. Thin indigo accent bar at the very bottom (2pt) — closes the
+         frame visually.
+      3. Subtle indigo border on left + right edges (0.4pt) — anchors
+         the eye and mirrors the site's bordered cards.
+      4. Watermark α-mark in the bottom-right corner (very low alpha)
+         so reproductions remain branded even on greyscale prints.
+    """
+    # Top brand gradient
+    _draw_gradient_strip(c, 0, A4_H - 5, A4_W, 5)
+    # Bottom accent strip
+    c.setFillColor(BRAND_INDIGO)
+    c.rect(0, 0, A4_W, 2, stroke=0, fill=1)
+    # Subtle vertical edges (very faint)
+    c.setStrokeColor(HexColor("#e0e7ff"))
+    c.setLineWidth(0.4)
+    c.line(2, 5, 2, A4_H - 5)
+    c.line(A4_W - 2, 5, A4_W - 2, A4_H - 5)
+    # Bottom-right watermark α (low-saturation indigo for non-distraction)
+    c.saveState()
+    c.setFillColor(HexColor("#e0e7ff"))
+    c.setFont("Helvetica-Bold", 38)
+    c.drawString(A4_W - MARGIN_X - 28, 14, "α")
     c.restoreState()
 
 
@@ -204,23 +301,45 @@ def _wrap_paragraph(text, width, font_size=8.5, color=INK, leading=11.5, align=T
 # ── Section drawers ──────────────────────────────────────────────────
 
 def _draw_header(c, today_str, quarter_lbl):
+    """Branded header — α mark + wordmark on the left, generation
+    timestamp + quarter chip on the right, divider line that uses the
+    brand gradient instead of solid ink. Sits below the page-top
+    gradient strip from _draw_brand_frame."""
+    # Page chrome (gradient strip + edges + watermark)
+    _draw_brand_frame(c)
+
     y = A4_H - MARGIN_TOP - 28
-    _draw_brand_mark(c, MARGIN_X, y + 2, size=28)
+    # Larger gradient α-mark
+    _draw_brand_mark(c, MARGIN_X, y + 2, size=30, use_gradient=True)
+    # Wordmark — 'AlphaHunt' in indigo, 'Hunt' bolder with subtle slant
     c.setFillColor(INK)
-    c.setFont("Helvetica-Bold", 12)
-    c.drawString(MARGIN_X + 38, y + 16, "AlphaHunt")
+    c.setFont("Helvetica-Bold", 13)
+    c.drawString(MARGIN_X + 40, y + 17, "Alpha")
+    c.setFillColor(BRAND_INDIGO)
+    c.setFont("Helvetica-Bold", 13)
+    alpha_w = c.stringWidth("Alpha", "Helvetica-Bold", 13)
+    c.drawString(MARGIN_X + 40 + alpha_w, y + 17, "Hunt")
     c.setFillColor(INK_MUTED)
     c.setFont("Helvetica-Bold", 7)
-    c.drawString(MARGIN_X + 38, y + 5, "US STOCK TEAR SHEET")
+    c.drawString(MARGIN_X + 40, y + 5, "US STOCK TEAR SHEET")
+
+    # Right side — date + quarter chip
     c.setFillColor(INK_MUTED)
     c.setFont("Helvetica", 7.5)
-    c.drawRightString(A4_W - MARGIN_X, y + 16, f"GENERATED {today_str.upper()}")
+    c.drawRightString(A4_W - MARGIN_X, y + 17, f"GENERATED {today_str.upper()}")
+    # Quarter chip — small brand-tinted pill
+    chip_label = quarter_lbl
+    chip_w = c.stringWidth(chip_label, "Helvetica-Bold", 8) + 14
+    chip_x = A4_W - MARGIN_X - chip_w
+    c.setFillColor(BRAND_LIGHT)
+    c.roundRect(chip_x, y + 1, chip_w, 13, 6, stroke=0, fill=1)
     c.setFillColor(BRAND_INDIGO)
     c.setFont("Helvetica-Bold", 8)
-    c.drawRightString(A4_W - MARGIN_X, y + 5, quarter_lbl)
-    c.setStrokeColor(INK)
-    c.setLineWidth(1.2)
-    c.line(MARGIN_X, y - 6, A4_W - MARGIN_X, y - 6)
+    c.drawString(chip_x + 7, y + 4, chip_label)
+
+    # Divider — brand gradient bar (2pt) instead of solid ink line
+    div_y = y - 6
+    _draw_gradient_strip(c, MARGIN_X, div_y, A4_W - 2 * MARGIN_X, 1.5, n_steps=60)
     return y - 14  # bottom of header
 
 
@@ -2430,10 +2549,13 @@ def _draw_event_summary(c, top_y, event_row, today_str=None, quarter_lbl=None,
 
 
 def _draw_footer(c):
+    """Branded footer — thin gradient divider above the disclaimer
+    text + 'alphahunt.in' wordmark in brand colour with the α mark."""
     foot_y = MARGIN_BOTTOM
-    c.setStrokeColor(INK)
-    c.setLineWidth(0.5)
-    c.line(MARGIN_X, foot_y + 26, A4_W - MARGIN_X, foot_y + 26)
+    # Brand gradient divider (matches the header divider)
+    _draw_gradient_strip(c, MARGIN_X, foot_y + 26, A4_W - 2 * MARGIN_X, 1.5,
+                          n_steps=60)
+    # Disclaimer
     c.setFillColor(INK_SOFT)
     c.setFont("Helvetica-Bold", 6.8)
     c.drawString(MARGIN_X, foot_y + 16, "EDUCATIONAL USE ONLY.")
@@ -2445,12 +2567,18 @@ def _draw_footer(c):
     c.setFont("Helvetica", 6.8)
     c.drawString(MARGIN_X, foot_y + 6,
                  "Data: SEC EDGAR, Yahoo Finance, FMP. Past performance does not guarantee future results. Do your own research.")
-    c.setFillColor(BRAND_INDIGO)
+    # Mini α + wordmark on the right
+    _draw_brand_mark(c, A4_W - MARGIN_X - 60, foot_y + 8, size=12,
+                     use_gradient=True)
+    c.setFillColor(INK)
     c.setFont("Helvetica-Bold", 8)
-    c.drawRightString(A4_W - MARGIN_X, foot_y + 16, "alphahunt.in")
+    c.drawString(A4_W - MARGIN_X - 46, foot_y + 13, "Alpha")
+    c.setFillColor(BRAND_INDIGO)
+    a_w = c.stringWidth("Alpha", "Helvetica-Bold", 8)
+    c.drawString(A4_W - MARGIN_X - 46 + a_w, foot_y + 13, "Hunt.in")
     c.setFillColor(INK_MUTED)
-    c.setFont("Helvetica", 6.8)
-    c.drawRightString(A4_W - MARGIN_X, foot_y + 6, "Hunt for Alpha")
+    c.setFont("Helvetica", 6.5)
+    c.drawRightString(A4_W - MARGIN_X, foot_y + 4, "Hunt for Alpha")
 
 
 # ── Public entry ─────────────────────────────────────────────────────
