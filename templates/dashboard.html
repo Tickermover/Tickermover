@@ -2666,10 +2666,24 @@ html.v2-dark .v2-mp-mini-lbl{color:#cbd5e1}
 .v2-ts-cta-tic{
   width:44px;height:44px;border-radius:9px;flex-shrink:0;
   display:flex;align-items:center;justify-content:center;
+  background:#fff;border:1px solid #e2e8f0;overflow:hidden;
+  position:relative;
+}
+.v2-ts-cta-tic img{
+  width:100%;height:100%;object-fit:contain;padding:4px;
+  background:#fff;
+}
+/* Fallback when the FMP logo image 404s — JS adds the .v2-ts-cta-tic-fallback
+   class which restores the indigo gradient + ticker text via ::after */
+.v2-ts-cta-tic-fallback{
   background:linear-gradient(135deg,#4338ca 0%,#6366f1 100%);
-  color:#fff;font-family:'JetBrains Mono',monospace;font-weight:800;font-size:13px;
-  letter-spacing:.01em;
+  border-color:transparent;
   box-shadow:0 4px 12px -4px rgba(99,102,241,.50);
+}
+.v2-ts-cta-tic-fallback::after{
+  content:attr(data-tic);
+  color:#fff;font-family:'JetBrains Mono',monospace;font-weight:800;
+  font-size:12px;letter-spacing:.01em;
 }
 .v2-ts-cta-title{font-size:14px;font-weight:800;color:#0f172a;letter-spacing:-.005em;line-height:1.2}
 .v2-ts-cta-sub{font-size:11.5px;color:#64748b;font-weight:500;margin-top:2px;line-height:1.4}
@@ -10240,10 +10254,14 @@ function openStockModal(ticker) {
     <div class="modal-cta-tearsheet v2-ts-cta-compact">
       <span class="v2-ts-cta-strip"></span>
       <div class="v2-ts-cta-body">
-        <div class="v2-ts-cta-tic">${t.ticker}</div>
+        <div class="v2-ts-cta-tic">
+          <img src="https://images.financialmodelingprep.com/symbol/${t.ticker}.png"
+               alt="${t.ticker}" loading="lazy"
+               onerror="this.style.display='none';this.parentNode.classList.add('v2-ts-cta-tic-fallback');this.parentNode.dataset.tic='${t.ticker}'"/>
+        </div>
         <div>
-          <div class="v2-ts-cta-title">One-page research brief</div>
-          <div class="v2-ts-cta-sub">Full analyst-style PDF · score breakdown · 90-day chart · last 4 quarters</div>
+          <div class="v2-ts-cta-title">Analyst research report</div>
+          <div class="v2-ts-cta-sub">5-page institutional brief · valuation scenarios · DCF model · risk scorecard · peer comp</div>
         </div>
       </div>
       <div class="v2-ts-cta-actions">
