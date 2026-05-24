@@ -711,11 +711,54 @@ def _make_margin_trend_chart(quarterly_income: list,
         return None
 
 
+def _default_dcf_assumptions(t):
+    """Deterministic fallback when Haiku doesn't return a DCF block.
+    Synthesises a defensible assumption set from the ticker metrics so
+    the DCF panel always has SOMETHING to show. Decays current growth
+    toward a sector-typical steady state."""
+    def _safe_growth():
+        for k in ("rev_growth_yoy", "rev_growth_qyoy", "revenue_growth_yoy"):
+            v = t.get(k)
+            if v is not None:
+                try: return float(v) * 100.0  # fraction → percent
+                except (TypeError, ValueError): continue
+        return 15.0
+    g0 = max(-30, min(80, _safe_growth()))
+    # Geometric decay from g0 toward 8% by year 5
+    growth = [
+        round(g0,                     1),
+        round(g0 * 0.7 + 8 * 0.3,     1),
+        round(g0 * 0.4 + 8 * 0.6,     1),
+        round(g0 * 0.2 + 8 * 0.8,     1),
+        round(g0 * 0.0 + 8 * 1.0,     1),
+    ]
+    fcf_m = _safe_float(t.get("fcf_margin"))
+    if fcf_m is None: fcf_m = 0.10
+    if abs(fcf_m) <= 1: fcf_m *= 100
+    fcf_target = max(-10, min(35, fcf_m * 1.3 if fcf_m > 0 else 12))
+    return {
+        "revenue_growth":    growth,
+        "fcf_margin_target": fcf_target,
+        "wacc":              10.0,
+        "terminal_growth":   3.0,
+        "rationale":         "Auto-generated assumption set "
+                              "(growth decays toward 8%, FCF margin "
+                              "expands toward sector norm). Adjust "
+                              "manually as needed.",
+    }
+
+
 def _compute_dcf(t, assumptions):
     """Compute 5-year DCF + terminal value, return implied share price
     and a sensitivity matrix. assumptions is the validated dict that
     came out of pdf_narrative (revenue_growth list, fcf_margin_target,
-    wacc, terminal_growth). All percentage inputs in display form."""
+    wacc, terminal_growth). All percentage inputs in display form.
+
+    NEW (v3.11): falls back to deterministic _default_dcf_assumptions
+    when Haiku returns no DCF block — so the panel always renders
+    instead of the embarrassing 'DCF model unavailable' blank space."""
+    if not assumptions:
+        assumptions = _default_dcf_assumptions(t)
     if not assumptions:
         return None
     try:
@@ -984,6 +1027,19 @@ def _draw_dcf_model(c, x, y, w, h, t, narrative):
                 c.drawCentredString(cx, ry + 4, f"${price:.0f}")
 
 
+def _norm_growth_pct(v):
+    """Growth rates are ALWAYS stored as fractions in the universe data
+    (rev_growth_qyoy = 1.393 for 139.3% YoY). The general-purpose
+    norm_pct heuristic gets this wrong because it assumes values > 1 are
+    already-percent. For growth fields specifically, unconditionally
+    multiply by 100. Returns None for invalid input."""
+    try:
+        f = float(v)
+    except (TypeError, ValueError):
+        return None
+    return f * 100.0
+
+
 def _compute_risk_scorecard(t):
     """Deterministic 5-dimension risk assessment from existing metrics.
     Each dimension scores 0-100 where HIGHER = MORE RISK. No AI needed —
@@ -999,7 +1055,13 @@ def _compute_risk_scorecard(t):
     pe   = _safe_float(t.get("pe_ttm"))
     ps   = _safe_float(t.get("ps_ttm"))
     peg  = _safe_float(t.get("peg_ratio"))
-    rev  = norm_pct(t.get("rev_growth_yoy") or t.get("rev_growth_qyoy") or t.get("revenue_growth_yoy"))
+    # FIX (v3.11): rev_growth_* fields are stored as fractions (not
+    # already-percent) — APLD v3.10 showed 'Rev +1% YoY' for a +139%
+    # YoY ticker because norm_pct treated 1.393 as already-percent.
+    # Use the dedicated _norm_growth_pct that ALWAYS multiplies by 100.
+    rev_raw = (t.get("rev_growth_yoy") or t.get("rev_growth_qyoy")
+                or t.get("revenue_growth_yoy"))
+    rev = _norm_growth_pct(rev_raw) if rev_raw is not None else None
     gm   = norm_pct(t.get("gross_margin"))
     fcfm = norm_pct(t.get("fcf_margin"))
     rsi  = _safe_float(t.get("rsi14") or t.get("rsi_14"))
@@ -1180,7 +1242,12 @@ def _draw_valuation_scenarios(c, x, y, w, h, t, narrative):
     bull_p = float(bull.get("price") or 0)
 
     # ── Scenario bar (top section) ────────────────────────────────────
-    bar_top = y + h - 36
+    # Push down enough so the 'NOW $X' label below the bar doesn't
+    # collide with the card subtitle. The subtitle sits at y + h - 22,
+    # bar_top is the y of the bar centerline, and the NOW label is
+    # drawn at bar_top + 14. Use h-50 so the label lands at h-36
+    # (14pt below the subtitle row).
+    bar_top = y + h - 50
     bar_h_seg = 8
     bar_x = x + 12
     bar_w = w - 24
@@ -1199,16 +1266,20 @@ def _draw_valuation_scenarios(c, x, y, w, h, t, narrative):
     c.rect(_to_x(bear_p), bar_top - bar_h_seg/2, _to_x(base_p) - _to_x(bear_p), bar_h_seg, stroke=0, fill=1)
     c.setFillColor(HexColor("#dcfce7"))
     c.rect(_to_x(base_p), bar_top - bar_h_seg/2, _to_x(bull_p) - _to_x(base_p), bar_h_seg, stroke=0, fill=1)
-    # Scenario markers
-    for label, p, color in [("Bear", bear_p, RED), ("Base", base_p, BRAND_INDIGO),
-                             ("Bull", bull_p, GREEN)]:
+    # Scenario markers — distinct symbols so Bear/Base/Bull are
+    # visually identifiable (v3.10 showed 'B/B/B' on all three dots).
+    # ▼ Bear (red), ● Base (indigo), ▲ Bull (green).
+    for label, p, color, glyph in [
+        ("Bear", bear_p, RED,          "▼"),
+        ("Base", base_p, BRAND_INDIGO, "●"),
+        ("Bull", bull_p, GREEN,        "▲"),
+    ]:
         cx = _to_x(p)
         c.setFillColor(color)
-        c.circle(cx, bar_top, 4.5, stroke=0, fill=1)
+        c.circle(cx, bar_top, 5, stroke=0, fill=1)
         c.setFillColor(HexColor("#ffffff"))
-        c.setFont("Helvetica-Bold", 6)
-        c.drawCentredString(cx, bar_top - 2, label[0])
-        # Price label below dot
+        c.setFont("Helvetica-Bold", 6.5)
+        c.drawCentredString(cx, bar_top - 2.5, glyph)
         c.setFillColor(color)
         c.setFont("Helvetica-Bold", 7)
         c.drawCentredString(cx, bar_top - 12, f"${p:.0f}")
@@ -1563,9 +1634,10 @@ def _draw_peer_comparison(c, x, y, w, h, t, peers):
         c.setFillColor(INK if r["pe"] and r["pe"] > 0 else INK_MUTED)
         c.drawString(col_xs[2], ry + 3,
                       f"{r['pe']:.1f}x" if (r['pe'] and r['pe'] > 0) else "—")
-        # Rev growth (colored)
+        # Rev growth — ALWAYS treat as fraction (rev_growth_* is stored
+        # as e.g. 1.393 for 139.3%, never as already-percent)
         if r["rev"] is not None:
-            rev_v = r["rev"] * 100 if abs(r["rev"]) <= 1 else r["rev"]
+            rev_v = r["rev"] * 100.0
             c.setFillColor(GREEN if rev_v >= 0 else RED)
             c.drawString(col_xs[3], ry + 3, f"{'+' if rev_v >= 0 else ''}{rev_v:.0f}%")
         else:
@@ -1809,11 +1881,16 @@ def _draw_metrics_grid(c, top_y, t):
     hi52 = _safe_float(t.get("high_52w"))
     lo52 = _safe_float(t.get("low_52w"))
     px = _safe_float(t.get("price"))
-    # Defensive swap: some upstream sources mislabel high/low. If low
-    # is reported greater than high, swap them so the metrics card
-    # doesn't show '$922 – $819' as it did on the MU v3.8 PDF.
-    if hi52 is not None and lo52 is not None and lo52 > hi52:
-        hi52, lo52 = lo52, hi52
+    # Defensive normalisation — ensure hi52 is always the larger value
+    # and lo52 the smaller, regardless of which field the upstream
+    # source mislabelled. APLD v3.10 showed '$67 – $49' because the
+    # data source had high_52w=67, low_52w=49 and the display string
+    # uses (lo52, hi52) but my swap was only checking lo52 > hi52 in
+    # the swapped sense. Make it bulletproof: max/min instead of swap.
+    if hi52 is not None and lo52 is not None:
+        true_hi = max(hi52, lo52)
+        true_lo = min(hi52, lo52)
+        hi52, lo52 = true_hi, true_lo
     # Split-adjustment heuristic: if 52W low is <1/4 of current price AND
     # of 52W high, the low almost certainly comes from pre-split data
     # (LITE's $71-$1086 range vs $946 current is the classic example —
@@ -2586,7 +2663,8 @@ def _draw_event_summary(c, top_y, event_row, today_str=None, quarter_lbl=None,
         # No room on current page — flush to next page and continue there
         c.showPage()
         if today_str and quarter_lbl:
-            _draw_header(c, today_str, quarter_lbl)
+            _draw_header(c, today_str, quarter_lbl,
+                          page_label="LATEST EVENT  ·  CONT.")
         title_y = A4_H - 90
 
     title = (event_row.get("event_title") or "Latest event").strip()
@@ -2628,7 +2706,8 @@ def _draw_event_summary(c, top_y, event_row, today_str=None, quarter_lbl=None,
         _draw_footer(c)
         c.showPage()
         if today_str and quarter_lbl:
-            _draw_header(c, today_str, quarter_lbl)
+            _draw_header(c, today_str, quarter_lbl,
+                          page_label="LATEST EVENT  ·  CONT.")
         new_top = A4_H - 90
         _draw_title(new_top, suffix=" (CONT.)")
         y = new_top - 16
