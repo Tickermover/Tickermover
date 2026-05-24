@@ -970,23 +970,20 @@ def _draw_investment_thesis(c, top_y, narrative):
     observation = (narrative.get("observation") or "").strip()
     conv_color, conv_bg, conv_label = _conviction_color(narrative.get("conviction"))
 
-    # ── Key Takeaway line (above the thesis title) — the AI's tight
-    # one-sentence read that distills the setup. Always single-line.
+    # ── Key Takeaway block (above the thesis title) — the AI's tight
+    # 1-2 sentence read that distills the setup. Wraps to multiple lines
+    # instead of truncating with '…' so dollar figures and key facts
+    # never get cut off mid-number. Adds explicit 16pt gap before
+    # INVESTMENT THESIS so the two never collide.
     if observation:
         c.setFillColor(BRAND_INDIGO)
         c.setFont("Helvetica-Bold", 7.5)
         c.drawString(MARGIN_X, top_y, "KEY TAKEAWAY")
-        c.setFillColor(INK)
-        c.setFont("Helvetica", 9.5)
-        # Trim to single line — fits because prompt enforces 15-25 words
-        max_w = CONTENT_W
-        text = observation
-        while c.stringWidth(text, "Helvetica", 9.5) > max_w and len(text) > 10:
-            text = text[:-2]
-        if text != observation:
-            text = text.rstrip(" ,;.") + "…"
-        c.drawString(MARGIN_X, top_y - 14, text)
-        top_y -= 28
+        p = _wrap_paragraph(observation, CONTENT_W, font_size=9.5,
+                             leading=12.5, color=INK)
+        _, ph = p.wrap(CONTENT_W, 60)
+        p.drawOn(c, MARGIN_X, top_y - 12 - ph)
+        top_y -= (16 + ph + 16)   # label + paragraph + 16pt gap
 
     # Title row
     title_y = top_y
@@ -1144,25 +1141,37 @@ def _draw_catalysts(c, top_y, catalysts):
     return card_y
 
 
-def _draw_event_summary(c, top_y, event_row):
+def _draw_event_summary(c, top_y, event_row, today_str=None, quarter_lbl=None,
+                         ticker="", t=None):
     """Render the Quartr-style event summary block with dynamic section
-    headings + bullets. Stops drawing once we hit the footer reserve."""
+    headings + bullets. When content overflows the page, auto-paginates
+    to a continuation page so the LATEST EVENT section never cuts off
+    mid-section (the v3.2 truncation bug)."""
     title_y = top_y
     if title_y < MARGIN_BOTTOM + 80:
-        return  # no room
+        # No room on current page — flush to next page and continue there
+        c.showPage()
+        if today_str and quarter_lbl:
+            _draw_header(c, today_str, quarter_lbl)
+        title_y = A4_H - 90
+
     title = (event_row.get("event_title") or "Latest event").strip()
     date_s = (event_row.get("event_date") or "").strip()
 
-    c.setFillColor(INK)
-    c.setFont("Helvetica-Bold", 11)
-    c.drawString(MARGIN_X, title_y, "LATEST EVENT — " + title.upper()[:60])
-    if date_s:
-        c.setFillColor(INK_MUTED)
-        c.setFont("Helvetica", 8.5)
-        c.drawRightString(A4_W - MARGIN_X, title_y, date_s)
+    def _draw_title(y_pos, suffix=""):
+        c.setFillColor(INK)
+        c.setFont("Helvetica-Bold", 11)
+        label = "LATEST EVENT — " + title.upper()[:60] + suffix
+        c.drawString(MARGIN_X, y_pos, label)
+        if date_s:
+            c.setFillColor(INK_MUTED)
+            c.setFont("Helvetica", 8.5)
+            c.drawRightString(A4_W - MARGIN_X, y_pos, date_s)
 
+    _draw_title(title_y)
     y = title_y - 16
-    reserve_y = MARGIN_BOTTOM + 50   # leave room for footer
+    reserve_y = MARGIN_BOTTOM + 50
+
     sections = event_row.get("sections")
     items = []
     if isinstance(sections, list) and sections:
@@ -1180,23 +1189,32 @@ def _draw_event_summary(c, top_y, event_row):
             if isinstance(vals, list) and vals:
                 items.append((label, vals))
 
+    def _new_continuation_page():
+        nonlocal y
+        _draw_footer(c)
+        c.showPage()
+        if today_str and quarter_lbl:
+            _draw_header(c, today_str, quarter_lbl)
+        new_top = A4_H - 90
+        _draw_title(new_top, suffix=" (CONT.)")
+        y = new_top - 16
+
     for heading, bullets in items:
-        if y < reserve_y + 20:
-            break
+        # If we can't even fit the heading + first bullet line, flip page
+        if y < reserve_y + 36:
+            _new_continuation_page()
         # Heading
         c.setFillColor(BRAND_INDIGO)
         c.setFont("Helvetica-Bold", 8.5)
         c.drawString(MARGIN_X, y, heading)
         y -= 11
-        # Bullets
-        for b in bullets[:4]:
-            if y < reserve_y + 12:
-                break
+        # Bullets — paginate per-bullet rather than dropping content
+        for b in bullets[:5]:
             p = _wrap_paragraph("•  " + str(b), CONTENT_W - 4,
                                  font_size=8, leading=10.5, color=INK)
-            w, h = p.wrap(CONTENT_W - 4, 50)
+            _, h = p.wrap(CONTENT_W - 4, 100)
             if y - h < reserve_y + 12:
-                break
+                _new_continuation_page()
             p.drawOn(c, MARGIN_X + 4, y - h)
             y -= (h + 2)
         y -= 4
@@ -1298,7 +1316,9 @@ def generate_pdf(ticker: str, t: dict, price_history: list[dict] | None = None,
             y = _draw_investment_thesis(c, y - 4, narrative)
             y = _draw_catalysts(c, y - 14, narrative.get("catalysts") or [])
         if event_row:
-            _draw_event_summary(c, y - 14, event_row)
+            _draw_event_summary(c, y - 14, event_row,
+                                 today_str=today, quarter_lbl=quarter_lbl,
+                                 ticker=ticker, t=t)
         _draw_footer(c)
 
     c.showPage()

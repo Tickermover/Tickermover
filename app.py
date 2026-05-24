@@ -1732,10 +1732,10 @@ async def api_pdf(symbol: str):
                     logger.warning(f"pdf build {sym}: yf.download failed: {exc}")
             return out
         pts = await asyncio.to_thread(_yf_fetch_sync)
+        logger.info(f"pdf build {sym}: yfinance returned {len(pts)} points")
 
         # 4th-layer fallback: FMP historical-price-full when yfinance is
-        # blocked or rate-limited from this IP range. Free tier covers
-        # 90D daily for any US listing.
+        # blocked or rate-limited from this IP range.
         if not pts and config.FMP_API_KEY:
             try:
                 async with httpx.AsyncClient(timeout=10) as _c:
@@ -1747,20 +1747,83 @@ async def api_pdf(symbol: str):
                     if r.status_code == 200:
                         data = r.json() or {}
                         hist = data.get("historical") or []
-                        # FMP returns newest-first; flip to ascending and
-                        # take only the close points the chart needs.
                         pts = [
                             {"date": h.get("date"), "close": round(float(h.get("close")), 2)}
                             for h in reversed(hist)
                             if h.get("close") is not None and h.get("date")
                         ][-90:]
-                        if pts:
-                            logger.info(f"pdf build {sym}: FMP fallback succeeded ({len(pts)} pts)")
+                        logger.info(f"pdf build {sym}: FMP returned {len(pts)} points (HTTP {r.status_code})")
+                    else:
+                        logger.warning(f"pdf build {sym}: FMP HTTP {r.status_code}: {r.text[:200]}")
             except Exception as exc:
                 logger.warning(f"pdf build {sym}: FMP fallback failed: {exc}")
 
+        # 5th-layer fallback: Stooq.com CSV — truly free, no key, no
+        # rate-limit pressure. Returns full history in CSV; we take the
+        # last 90 trading days. URL pattern: stooq.com/q/d/l/?s=stx.us&i=d
+        if not pts:
+            try:
+                async with httpx.AsyncClient(timeout=10, follow_redirects=True) as _c:
+                    stooq_url = f"https://stooq.com/q/d/l/?s={sym.lower()}.us&i=d"
+                    r = await _c.get(stooq_url)
+                    if r.status_code == 200 and r.text and "Date,Open" in r.text:
+                        lines = r.text.strip().splitlines()[1:]   # skip header
+                        for line in lines[-95:]:                   # last ~3mo
+                            parts = line.split(",")
+                            if len(parts) >= 5 and parts[0] and parts[4]:
+                                try:
+                                    pts.append({"date": parts[0], "close": round(float(parts[4]), 2)})
+                                except (TypeError, ValueError):
+                                    continue
+                        logger.info(f"pdf build {sym}: Stooq fallback returned {len(pts)} points")
+                    else:
+                        logger.warning(f"pdf build {sym}: Stooq HTTP {r.status_code}, no data")
+            except Exception as exc:
+                logger.warning(f"pdf build {sym}: Stooq fallback failed: {exc}")
+
         if pts:
             cache.set(ck, {"ticker": sym, "period": "3mo", "points": pts}, 60 * 60 * 6)
+
+    # ── Lazy ownership fetch (insider/institutional %, avg volume) ────
+    # These fields don't exist on the main ticker row but yfinance.info
+    # has them under heldPercentInsiders / heldPercentInstitutions /
+    # averageVolume. Cache 24h per ticker to keep PDF generation snappy.
+    own_ck = f"ownership-info:{sym}"
+    own_cached = cache.get(own_ck)
+    if own_cached:
+        target.setdefault("insider_ownership",      own_cached.get("insider_pct"))
+        target.setdefault("institutional_ownership", own_cached.get("institutional_pct"))
+        target.setdefault("avg_volume_str",          own_cached.get("avg_volume_str"))
+        target.setdefault("dividend_yield",          own_cached.get("div_yield"))
+    else:
+        def _fmt_avg_volume(v):
+            try:
+                v = float(v)
+            except (TypeError, ValueError):
+                return None
+            if v >= 1e9: return f"{v/1e9:.2f}B"
+            if v >= 1e6: return f"{v/1e6:.2f}M"
+            if v >= 1e3: return f"{v/1e3:.0f}K"
+            return f"{v:.0f}"
+        def _yf_info_sync():
+            try:
+                info = yf.Ticker(sym).info or {}
+            except Exception as exc:
+                logger.warning(f"pdf build {sym}: yf.info failed: {exc}")
+                return None
+            return {
+                "insider_pct":        info.get("heldPercentInsiders"),
+                "institutional_pct":  info.get("heldPercentInstitutions"),
+                "avg_volume_str":     _fmt_avg_volume(info.get("averageVolume")),
+                "div_yield":          info.get("dividendYield"),
+            }
+        info_dict = await asyncio.to_thread(_yf_info_sync)
+        if info_dict:
+            cache.set(own_ck, info_dict, 24 * 60 * 60)
+            target.setdefault("insider_ownership",      info_dict.get("insider_pct"))
+            target.setdefault("institutional_ownership", info_dict.get("institutional_pct"))
+            target.setdefault("avg_volume_str",          info_dict.get("avg_volume_str"))
+            target.setdefault("dividend_yield",          info_dict.get("div_yield"))
 
     # ── AI narrative + event summary for page 2 ──────────────────────
     # Run in parallel. Both have their own short-circuit caches (event

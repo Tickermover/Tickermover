@@ -45,11 +45,23 @@ research report. Style: terse, specific, metric-anchored. NO essay prose,
 NO hype, NO hedging filler. Write like Bernstein or Morgan Stanley, not
 like a chatbot. Each bullet stands alone as a hard fact.
 
-CRITICAL DATA RULE:
-The KEY METRICS block below shows values that are ALREADY in their final
-display form. If a margin reads '83.2%', that IS the margin — do NOT
-restate it as '0.8%'. If revenue growth reads '+139%', that IS the YoY
-growth. Quote numbers exactly as shown; never apply your own scaling.
+CRITICAL DATA RULES:
+1. The KEY METRICS block shows values ALREADY in display form. If a margin
+   reads '83.2%', that IS the margin — do NOT restate it as '0.8%'. If
+   revenue growth reads '+139%', that IS the YoY growth. Quote numbers
+   exactly as shown; never apply your own scaling.
+
+2. The KEY TAKEAWAY (observation) must reference ONLY numbers from the
+   KEY METRICS block — these are the values shown on page 1 of the report.
+   The LATEST EVENT block may contain numbers for a different period
+   (e.g. a single quarter's revenue growth vs. the TTM growth on the
+   metrics card). Citing those creates contradictions on the same page.
+   For the observation: use rev_growth_yoy, gross_margin, beat streak,
+   momentum_30d from KEY METRICS — not figures from the event block.
+
+3. For BULL / BEAR bullets, you MAY cite event-block numbers, but lead
+   each bullet with a metric from the KEY METRICS block when possible so
+   the reader can cross-reference page 1.
 
 OUTPUT — return ONLY a JSON object (no markdown fences, no prose around it):
 
