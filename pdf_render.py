@@ -60,7 +60,10 @@ AMBER         = HexColor("#f59e0b")
 
 A4_W, A4_H = A4              # 595 x 842 pts
 MARGIN_X = 32
-MARGIN_TOP = 28
+MARGIN_TOP = 18   # was 28 — trimmed to reclaim vertical space on
+                  # page 1 (user feedback v3.13: 'Front page wasting
+                  # lot of extra space in the beginning hence the
+                  # bottom is touching the footer line.')
 MARGIN_BOTTOM = 28
 CONTENT_W = A4_W - MARGIN_X * 2
 
@@ -399,17 +402,18 @@ def _draw_header(c, today_str, quarter_lbl, page_label=None):
     # Page chrome (light gradient + border + watermark)
     _draw_brand_frame(c)
 
-    y = A4_H - MARGIN_TOP - 28
+    y = A4_H - MARGIN_TOP - 26
     # Real AlphaHunt brand lockup (mark + wordmark as one asset)
-    lockup_w = _draw_brand_lockup(c, MARGIN_X, y + 2, height=26)
+    lockup_w = _draw_brand_lockup(c, MARGIN_X, y + 2, height=24)
 
-    # Single clean label under the lockup. User v3.12 feedback:
-    # 'add only Research report, delete rest all words' — so the
-    # multi-line tagline + page context were stripped. Only the
-    # words 'Research report' remain under the AlphaHunt mark.
+    # 'RESEARCH REPORT' positioned UNDER the 'AlphaHunt' wordmark
+    # text — not under the α icon — per user v3.13 feedback
+    # ('Placed research report word middle of alpha hunt'). We offset
+    # to MARGIN_X + 32 which is where the wordmark starts inside the
+    # lockup (after the 24pt α mark + 8pt gap).
     c.setFillColor(INK_MUTED)
-    c.setFont("Helvetica-Bold", 7.5)
-    c.drawString(MARGIN_X + 4, y - 6, "RESEARCH REPORT")
+    c.setFont("Helvetica-Bold", 7)
+    c.drawString(MARGIN_X + 32, y - 6, "RESEARCH REPORT")
 
     # Right side — date + quarter chip
     c.setFillColor(INK_MUTED)
@@ -433,7 +437,8 @@ def _draw_header(c, today_str, quarter_lbl, page_label=None):
 def _draw_hero(c, top_y, ticker, t, logo_bytes):
     """3-column hero: [logo + ticker/name/sector] [price block] [score block].
     Total height ~90 pts. Returns y of bottom of hero."""
-    hero_h = 86
+    hero_h = 76   # was 86 — trimmed 10pt to reclaim vertical room
+                  # on page 1 above the footer
     hero_bottom = top_y - hero_h
     # Three columns with explicit x ranges so nothing overlaps:
     col_a_x = MARGIN_X
@@ -1518,9 +1523,9 @@ def _draw_trend_strip(c, x, y, w, h, t):
         c.setFillColor(INK_MUTED)
         c.setFont("Helvetica-Bold", 6.5)
         c.drawString(cx + 6, cy + cell_h - 11, label.upper())
-        # Current value (rightmost) — fall back to 'Not reported' grey
-        # when the series has no values, instead of leaving the slot
-        # completely empty (user feedback v3.11).
+        # Current value (rightmost) — when data missing, show '—'
+        # in muted grey (smaller, less prominent than the real %s)
+        # so the cell reads as intentionally empty, not broken.
         current = next((v for v in reversed(series) if v is not None), None)
         if current is not None:
             sign = "+" if current >= 0 else ""
@@ -1530,8 +1535,12 @@ def _draw_trend_strip(c, x, y, w, h, t):
                                 f"{sign}{current:.1f}%")
         else:
             c.setFillColor(INK_MUTED)
-            c.setFont("Helvetica", 9)
-            c.drawRightString(cx + cell_w - 6, cy + cell_h - 13, "Not reported")
+            c.setFont("Helvetica-Bold", 11)
+            c.drawRightString(cx + cell_w - 6, cy + cell_h - 13, "—")
+            # Soft 'no data' note beneath the dash
+            c.setFillColor(INK_MUTED)
+            c.setFont("Helvetica", 6.5)
+            c.drawRightString(cx + cell_w - 6, cy + cell_h - 22, "no data")
         # Sparkline — when data missing, show a centered dotted
         # placeholder so the cell doesn't look broken.
         sp_png = _make_sparkline(series, cell_w - 14, cell_h - 26, color=color)
@@ -2513,20 +2522,11 @@ def _draw_investment_thesis(c, top_y, narrative):
     observation = (narrative.get("observation") or "").strip()
     conv_color, conv_bg, conv_label = _conviction_color(narrative.get("conviction"))
 
-    # ── Key Takeaway block (above the thesis title) — the AI's tight
-    # 1-2 sentence read that distills the setup. Wraps to multiple lines
-    # instead of truncating with '…' so dollar figures and key facts
-    # never get cut off mid-number. Adds explicit 16pt gap before
-    # INVESTMENT THESIS so the two never collide.
-    if observation:
-        c.setFillColor(BRAND_INDIGO)
-        c.setFont("Helvetica-Bold", 7.5)
-        c.drawString(MARGIN_X, top_y, "KEY TAKEAWAY")
-        p = _wrap_paragraph(observation, CONTENT_W, font_size=9.5,
-                             leading=12.5, color=INK)
-        _, ph = p.wrap(CONTENT_W, 60)
-        p.drawOn(c, MARGIN_X, top_y - 12 - ph)
-        top_y -= (16 + ph + 16)   # label + paragraph + 16pt gap
+    # KEY TAKEAWAY removed in v3.13 per user feedback — the takeaway
+    # already lives on the Briefings web UI when the user opens any
+    # stock (rendered by v2RenderBriefingHTML in dashboard.html).
+    # Duplicating it in the PDF wasted vertical space and repeated
+    # content the reader already saw before downloading.
 
     # Title row
     title_y = top_y
@@ -2696,7 +2696,14 @@ def _draw_event_summary(c, top_y, event_row, today_str=None, quarter_lbl=None,
     def _draw_title(y_pos, suffix=""):
         c.setFillColor(INK)
         c.setFont("Helvetica-Bold", 11)
-        label = "LATEST EVENT — " + title.upper()[:60] + suffix
+        # For continuation pages use a SHORT title so the '(CONT.)'
+        # suffix doesn't clip the event name (user v3.13 saw
+        # 'NOUNCEME (CONT.)' truncated). Continuation pages don't
+        # need the full event name repeated — short marker suffices.
+        if suffix:
+            label = "LATEST EVENT  ·  CONTINUED"
+        else:
+            label = "LATEST EVENT — " + title.upper()[:60]
         c.drawString(MARGIN_X, y_pos, label)
         if date_s:
             c.setFillColor(INK_MUTED)
@@ -2906,10 +2913,12 @@ def generate_pdf(ticker: str, t: dict, price_history: list[dict] | None = None,
         val_top = y3 - 2
         _draw_valuation_scenarios(c, MARGIN_X, val_top - val_h, CONTENT_W,
                                     val_h, t, narrative or {})
-        # DCF Model — middle (TALLER by 30pt for breathing room per
-        # user feedback 'too compact writing, need space')
+        # DCF Model — middle. v3.13 user: 'DCF box has plenty of
+        # space. Readjust accordingly.' Brought back down to 180pt;
+        # extra vertical space was empty between sensitivity table
+        # and the bottom edge.
         dcf_top = val_top - val_h - 12
-        dcf_h   = 230
+        dcf_h   = 180
         _draw_dcf_model(c, MARGIN_X, dcf_top - dcf_h, CONTENT_W,
                           dcf_h, t, narrative or {})
         # Risk Scorecard — bottom
