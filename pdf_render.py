@@ -196,20 +196,37 @@ def _draw_gradient_strip(c, x, y, w, h, n_steps=80):
         c.rect(x + i * step_w, y, step_w + 0.5, h, stroke=0, fill=1)
 
 
-# Resolve the brand assets shipped in /brand. Loaded once at module
-# load and cached as ImageReader instances. Falls back to synthesised
-# glyphs only if the files are missing.
+# Single source of truth for the brand logo: /static/icons. This is
+# the same folder the dashboard loads from at runtime (see
+# templates/dashboard.html — /static/icons/alpha-logo-bare-64.png),
+# so the PDF logo automatically tracks whatever's live on the site.
+# Update one file in /static/icons and BOTH the dashboard and the PDF
+# pick it up — no separate /brand folder to keep in sync.
 import os as _os
-_BRAND_DIR = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "brand")
-_BRAND_MARK_PATH   = _os.path.join(_BRAND_DIR, "alphahunt-mark-transparent-512.png")
-_BRAND_LOCKUP_PATH = _os.path.join(_BRAND_DIR, "alphahunt-lockup-light-1200x300.png")
+_STATIC_DIR = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)),
+                              "static", "icons")
+_BRAND_MARK_PATH   = _os.path.join(_STATIC_DIR, "alpha-logo-bare-512.png")
+_BRAND_LOCKUP_PATH = _os.path.join(_STATIC_DIR, "alpha-logo-512.png")
+
+# Legacy fallback to the older /brand folder so an incomplete deploy
+# (one folder pushed but not the other) still renders a logo.
+_LEGACY_BRAND_DIR  = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "brand")
+_LEGACY_MARK_PATH   = _os.path.join(_LEGACY_BRAND_DIR, "alphahunt-mark-transparent-512.png")
+_LEGACY_LOCKUP_PATH = _os.path.join(_LEGACY_BRAND_DIR, "alphahunt-lockup-light-1200x300.png")
+
 _BRAND_MARK_IMG   = None
 _BRAND_LOCKUP_IMG = None
 try:
-    if _os.path.exists(_BRAND_MARK_PATH):
-        _BRAND_MARK_IMG = ImageReader(_BRAND_MARK_PATH)
-    if _os.path.exists(_BRAND_LOCKUP_PATH):
-        _BRAND_LOCKUP_IMG = ImageReader(_BRAND_LOCKUP_PATH)
+    for path in (_BRAND_MARK_PATH, _LEGACY_MARK_PATH):
+        if _os.path.exists(path):
+            _BRAND_MARK_IMG = ImageReader(path)
+            logger.info(f"pdf_render: brand mark loaded from {path}")
+            break
+    for path in (_BRAND_LOCKUP_PATH, _LEGACY_LOCKUP_PATH):
+        if _os.path.exists(path):
+            _BRAND_LOCKUP_IMG = ImageReader(path)
+            logger.info(f"pdf_render: brand lockup loaded from {path}")
+            break
 except Exception as _exc:
     logger.warning(f"pdf_render: brand asset load failed: {_exc}")
 
@@ -236,26 +253,21 @@ def _draw_brand_mark(c: canvas.Canvas, x: float, y: float, size: float = 28,
 
 
 def _draw_brand_lockup(c, x, y, height):
-    """Render the AlphaHunt lockup (mark + wordmark) as a single brand
-    image. Used in the page header in place of separately drawn mark +
-    text. Returns the width drawn so the caller can lay out trailing
-    content. Falls back to drawing the mark + 'AlphaHunt' wordmark
-    separately when the lockup asset is missing."""
-    if _BRAND_LOCKUP_IMG is not None:
-        # Lockup is 1200x300 — aspect 4:1. Compute width from target h.
-        w = height * 4
-        c.drawImage(_BRAND_LOCKUP_IMG, x, y, width=w, height=height,
-                    preserveAspectRatio=True, anchor='w', mask='auto')
-        return w
-    # Fallback — mark + wordmark text
-    _draw_brand_mark(c, x, y, size=height, use_gradient=True)
+    """Render the AlphaHunt brand lockup: production bare mark
+    (/static/icons/alpha-logo-bare-512.png — same file the dashboard
+    loads) + two-tone 'AlphaHunt' wordmark. Built compositionally from
+    the bare mark + drawn text rather than loading a separate lockup
+    asset, so the PDF always picks up whatever bare-logo file is
+    deployed alongside the dashboard. Returns the total width drawn."""
+    _draw_brand_mark(c, x, y, size=height)
+    text_x = x + height + 8
     c.setFillColor(INK)
-    c.setFont("Helvetica-Bold", height * 0.48)
-    c.drawString(x + height + 8, y + height * 0.45, "Alpha")
+    c.setFont("Helvetica-Bold", height * 0.55)
+    c.drawString(text_x, y + height * 0.30, "Alpha")
     c.setFillColor(BRAND_INDIGO)
-    a_w = c.stringWidth("Alpha", "Helvetica-Bold", height * 0.48)
-    c.drawString(x + height + 8 + a_w, y + height * 0.45, "Hunt")
-    return height + 8 + c.stringWidth("AlphaHunt", "Helvetica-Bold", height * 0.48)
+    a_w = c.stringWidth("Alpha", "Helvetica-Bold", height * 0.55)
+    c.drawString(text_x + a_w, y + height * 0.30, "Hunt")
+    return height + 8 + c.stringWidth("AlphaHunt", "Helvetica-Bold", height * 0.55)
 
 
 def _draw_brand_frame(c):
