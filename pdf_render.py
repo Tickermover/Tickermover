@@ -259,22 +259,26 @@ def _draw_brand_lockup(c, x, y, height):
 
 
 def _draw_brand_frame(c):
-    """SUBTLE page chrome — user feedback v3.8: 'light gradient one, not
-    heavy strip'. Three soft elements that brand the page without
-    shouting:
-      1. Very soft top→bottom gradient from cream-indigo (#fafbff) at
-         the page top to pure white by 20% down. Reads as a barely-
-         there tint, not a coloured banner.
-      2. Tissue-thin (0.3pt) cool-grey border on all four edges.
-      3. Faint α watermark in the bottom-right corner — preserves
-         identity on greyscale prints without dominating colour pages.
+    """AlphaHunt page chrome — restored from v3.8 per user feedback.
+    Combines a vivid brand-gradient strip at the very top with a soft
+    light-gradient background fading through the page body:
+
+      1. TOP brand strip (4pt full-bleed) — indigo→violet→magenta,
+         the dashboard hero gradient. Vivid, the 'AlphaHunt handshake'.
+      2. Soft body gradient — cream-indigo (#f4f5ff) at top, fading to
+         pure white by 20% down. Subtle warmth under the cards.
+      3. Tissue-thin (0.3pt) cool-grey page border — anchors the layout
+         like the site's bordered components.
+      4. Branded watermark in bottom-right (real brand PNG at 8% alpha).
     """
-    # Soft tinted gradient at the top of the page
+    # 1) Top brand gradient strip — the chrome bar that says 'AlphaHunt'
+    _draw_gradient_strip(c, 0, A4_H - 4, A4_W, 4, n_steps=80)
+
+    # 2) Soft body gradient — starts JUST below the brand strip
     n_strips = 40
-    strip_h  = (A4_H * 0.18) / n_strips   # gradient fades over top 18%
-    top_y    = A4_H
+    strip_h  = (A4_H * 0.18) / n_strips
+    top_y    = A4_H - 4
     for i in range(n_strips):
-        # Cream-indigo (#f4f5ff ≈ rgb 244 245 255) → pure white
         t = i / (n_strips - 1)
         r = 244 + int((255 - 244) * t)
         g = 245 + int((255 - 245) * t)
@@ -283,23 +287,20 @@ def _draw_brand_frame(c):
         c.rect(0, top_y - (i + 1) * strip_h, A4_W, strip_h + 0.5,
                stroke=0, fill=1)
 
-    # Tissue-thin border all around (cool grey, almost invisible)
+    # 3) Tissue-thin border around the page
     c.setStrokeColor(HexColor("#e8eaf6"))
     c.setLineWidth(0.3)
-    c.rect(4, 4, A4_W - 8, A4_H - 8, stroke=1, fill=0)
+    c.rect(4, 4, A4_W - 8, A4_H - 12, stroke=1, fill=0)
 
-    # Faint α watermark in bottom-right — uses brand mark if available,
-    # rendered at very low opacity so it doesn't distract.
+    # 4) Branded watermark — bigger and a bit more visible than v3.9
     if _BRAND_MARK_IMG is not None:
-        # Watermark uses a transparency mask via fillAlpha via canvas
         c.saveState()
         try:
-            from reportlab.pdfgen.canvas import Canvas
-            c.setFillAlpha(0.06)
+            c.setFillAlpha(0.08)
         except Exception:
             pass
-        c.drawImage(_BRAND_MARK_IMG, A4_W - MARGIN_X - 60, 12,
-                    width=50, height=50,
+        c.drawImage(_BRAND_MARK_IMG, A4_W - MARGIN_X - 56, 12,
+                    width=46, height=46,
                     preserveAspectRatio=True, anchor='c', mask='auto')
         c.restoreState()
     else:
@@ -310,11 +311,59 @@ def _draw_brand_frame(c):
         c.restoreState()
 
 
-def _draw_metric_card(c, x, y, w, h, label, value, sub="", value_color=INK, empty=False):
-    c.setFillColor(BG_CARD)
+def _card_bg(c, x, y, w, h, radius=6):
+    """One-call replacement for the (setFillColor + setStroke + roundRect)
+    pattern that 14 different drawers use. Renders the card with the
+    light gradient fill + standard border in one shot. Use this in
+    every drawer that previously did:
+        c.setFillColor(BG_CARD); c.setStrokeColor(BORDER); c.setLineWidth(0.6)
+        c.roundRect(x, y, w, h, R, stroke=1, fill=1)
+    """
+    _fill_card_gradient(c, x, y, w, h, radius=radius)
     c.setStrokeColor(BORDER)
     c.setLineWidth(0.6)
-    c.roundRect(x, y, w, h, 5, stroke=1, fill=1)
+    c.roundRect(x, y, w, h, radius, stroke=1, fill=0)
+
+
+def _fill_card_gradient(c, x, y, w, h, radius=6):
+    """Fill a rounded-rect region with a subtle vertical gradient — pure
+    white at the top fading to faintly tinted cream-indigo (#fafbff) at
+    the bottom. Replaces flat white card fills throughout the report
+    so the cards have visual depth without being noisy.
+
+    Uses a polygonal clip path so the gradient stays inside the card.
+    Caller is responsible for stroking the border afterwards if needed."""
+    c.saveState()
+    # Build the rounded-rect clip path
+    p = c.beginPath()
+    p.moveTo(x + radius, y)
+    p.lineTo(x + w - radius, y)
+    p.arcTo(x + w - 2*radius, y, x + w, y + 2*radius, 270, 90)
+    p.lineTo(x + w, y + h - radius)
+    p.arcTo(x + w - 2*radius, y + h - 2*radius, x + w, y + h, 0, 90)
+    p.lineTo(x + radius, y + h)
+    p.arcTo(x, y + h - 2*radius, x + 2*radius, y + h, 90, 90)
+    p.lineTo(x, y + radius)
+    p.arcTo(x, y, x + 2*radius, y + 2*radius, 180, 90)
+    p.close()
+    c.clipPath(p, stroke=0, fill=0)
+    # Vertical gradient — top (white) → bottom (#fafbff)
+    n_steps = 12
+    step_h = h / n_steps
+    for i in range(n_steps):
+        # 0 at bottom (most tinted), 1 at top (pure white)
+        t_pos = i / (n_steps - 1)
+        r = 250 + int((255 - 250) * t_pos)
+        g = 251 + int((255 - 251) * t_pos)
+        b = 255
+        c.setFillColorRGB(r / 255, g / 255, b / 255)
+        c.rect(x, y + i * step_h, w, step_h + 0.5, stroke=0, fill=1)
+    c.restoreState()
+
+
+def _draw_metric_card(c, x, y, w, h, label, value, sub="", value_color=INK, empty=False):
+    # Light gradient card fill (replaces flat white) + border in one helper
+    _card_bg(c, x, y, w, h, radius=5)
     c.setFillColor(INK_MUTED)
     c.setFont("Helvetica-Bold", 6.5)
     c.drawString(x + 8, y + h - 11, label.upper())
@@ -399,10 +448,7 @@ def _draw_hero(c, top_y, ticker, t, logo_bytes):
     logo_x = col_a_x
     logo_y = top_y - 50
     # Logo card frame
-    c.setFillColor(BG_CARD)
-    c.setStrokeColor(BORDER)
-    c.setLineWidth(0.6)
-    c.roundRect(logo_x, logo_y, logo_size, logo_size, 6, stroke=1, fill=1)
+    _card_bg(c, logo_x, logo_y, logo_size, logo_size, radius=6)
     if logo_bytes:
         try:
             img = ImageReader(io.BytesIO(logo_bytes))
@@ -767,10 +813,7 @@ def _draw_dcf_model(c, x, y, w, h, t, narrative):
     pushes the report from buy-side tear sheet to sell-side research
     note. All math is deterministic; only the input assumptions come
     from Haiku (and are clamped on the way out)."""
-    c.setFillColor(BG_CARD)
-    c.setStrokeColor(BORDER)
-    c.setLineWidth(0.6)
-    c.roundRect(x, y, w, h, 6, stroke=1, fill=1)
+    _card_bg(c, x, y, w, h, radius=6)
     c.setFillColor(INK)
     c.setFont("Helvetica-Bold", 8.5)
     c.drawString(x + 10, y + h - 13, "DCF VALUATION MODEL")
@@ -1042,10 +1085,7 @@ def _draw_risk_scorecard(c, x, y, w, h, t):
     Sentiment, Momentum — with mini horizontal meters and one-line
     metric anchors. The deterministic counterpart to the AI thesis
     page; a real institutional report always shows this."""
-    c.setFillColor(BG_CARD)
-    c.setStrokeColor(BORDER)
-    c.setLineWidth(0.6)
-    c.roundRect(x, y, w, h, 6, stroke=1, fill=1)
+    _card_bg(c, x, y, w, h, radius=6)
     c.setFillColor(INK)
     c.setFont("Helvetica-Bold", 8.5)
     c.drawString(x + 10, y + h - 13, "RISK SCORECARD")
@@ -1106,10 +1146,7 @@ def _draw_valuation_scenarios(c, x, y, w, h, t, narrative):
     label  ·  $price ·  ±%  ·  rationale. Above the rows sits a horizontal
     scenario bar showing the three prices arranged left→right with the
     current price marked as a vertical line."""
-    c.setFillColor(BG_CARD)
-    c.setStrokeColor(BORDER)
-    c.setLineWidth(0.6)
-    c.roundRect(x, y, w, h, 6, stroke=1, fill=1)
+    _card_bg(c, x, y, w, h, radius=6)
     c.setFillColor(INK)
     c.setFont("Helvetica-Bold", 8.5)
     c.drawString(x + 10, y + h - 13, "VALUATION SCENARIOS")
@@ -1368,10 +1405,7 @@ def _draw_trend_strip(c, x, y, w, h, t):
     Surfaces the 'are the fundamentals durably improving?' answer at a
     glance — what a real analyst tear sheet uses instead of bare prose."""
     # Outer card
-    c.setFillColor(BG_CARD)
-    c.setStrokeColor(BORDER)
-    c.setLineWidth(0.6)
-    c.roundRect(x, y, w, h, 6, stroke=1, fill=1)
+    _card_bg(c, x, y, w, h, radius=6)
     c.setFillColor(INK)
     c.setFont("Helvetica-Bold", 8.5)
     c.drawString(x + 10, y + h - 13, "FINANCIAL TREND STRIP")
@@ -1426,10 +1460,7 @@ def _draw_peer_comparison(c, x, y, w, h, t, peers):
     """Compact peer-comparison table. peers is a list of dicts with keys
     {ticker, name, market_cap, pe_ttm, rev_growth_yoy, gross_margin,
      smart_score}. Shows our target plus up to 3 peers as rows."""
-    c.setFillColor(BG_CARD)
-    c.setStrokeColor(BORDER)
-    c.setLineWidth(0.6)
-    c.roundRect(x, y, w, h, 6, stroke=1, fill=1)
+    _card_bg(c, x, y, w, h, radius=6)
     c.setFillColor(INK)
     c.setFont("Helvetica-Bold", 8.5)
     c.drawString(x + 10, y + h - 13, "PEER COMPARISON")
@@ -1561,10 +1592,7 @@ def _draw_quarterly_charts_row(c, top_y, t):
     eps  = t.get("eps_quarters") or []
 
     # ── LEFT: Revenue + EPS combo chart ───────────────────────────────
-    c.setFillColor(BG_CARD)
-    c.setStrokeColor(BORDER)
-    c.setLineWidth(0.6)
-    c.roundRect(MARGIN_X, y, half_w, block_h, 6, stroke=1, fill=1)
+    _card_bg(c, MARGIN_X, y, half_w, block_h, radius=6)
     c.setFillColor(INK)
     c.setFont("Helvetica-Bold", 8.5)
     c.drawString(MARGIN_X + 10, y + block_h - 13, "QUARTERLY REVENUE & EPS")
@@ -1586,10 +1614,7 @@ def _draw_quarterly_charts_row(c, top_y, t):
 
     # ── RIGHT: Margin trend chart ─────────────────────────────────────
     mt_x = MARGIN_X + half_w + gap
-    c.setFillColor(BG_CARD)
-    c.setStrokeColor(BORDER)
-    c.setLineWidth(0.6)
-    c.roundRect(mt_x, y, half_w, block_h, 6, stroke=1, fill=1)
+    _card_bg(c, mt_x, y, half_w, block_h, radius=6)
     c.setFillColor(INK)
     c.setFont("Helvetica-Bold", 8.5)
     c.drawString(mt_x + 10, y + block_h - 13, "MARGIN TREND")
@@ -1648,10 +1673,7 @@ def _draw_chart_and_breakdown(c, top_y, price_history, t):
     half_w  = (CONTENT_W - gap) / 2
 
     # ── LEFT: 90-Day Price chart ──────────────────────────────────────
-    c.setFillColor(BG_CARD)
-    c.setStrokeColor(BORDER)
-    c.setLineWidth(0.6)
-    c.roundRect(MARGIN_X, chart_y, half_w, chart_h, 6, stroke=1, fill=1)
+    _card_bg(c, MARGIN_X, chart_y, half_w, chart_h, radius=6)
     c.setFillColor(INK)
     c.setFont("Helvetica-Bold", 8.5)
     c.drawString(MARGIN_X + 10, chart_y + chart_h - 13, "90-DAY PRICE")
@@ -1688,10 +1710,7 @@ def _draw_chart_and_breakdown(c, top_y, price_history, t):
 
     # ── RIGHT: Score Breakdown ────────────────────────────────────────
     sb_x = MARGIN_X + half_w + gap
-    c.setFillColor(BG_CARD)
-    c.setStrokeColor(BORDER)
-    c.setLineWidth(0.6)
-    c.roundRect(sb_x, chart_y, half_w, chart_h, 6, stroke=1, fill=1)
+    _card_bg(c, sb_x, chart_y, half_w, chart_h, radius=6)
     c.setFillColor(INK)
     c.setFont("Helvetica-Bold", 8.5)
     c.drawString(sb_x + 10, chart_y + chart_h - 13, "SCORE BREAKDOWN")
@@ -2060,10 +2079,7 @@ def _draw_analyst_outlook_row(c, top_y, t):
 
     # ── LEFT: Analyst Outlook ─────────────────────────────────────────
     left_x = MARGIN_X
-    c.setFillColor(BG_CARD)
-    c.setStrokeColor(BORDER)
-    c.setLineWidth(0.6)
-    c.roundRect(left_x, y, half_w, block_h, 6, stroke=1, fill=1)
+    _card_bg(c, left_x, y, half_w, block_h, radius=6)
     c.setFillColor(INK)
     c.setFont("Helvetica-Bold", 8.5)
     c.drawString(left_x + 10, y + block_h - 13, "ANALYST OUTLOOK")
@@ -2110,10 +2126,7 @@ def _draw_analyst_outlook_row(c, top_y, t):
 
     # ── RIGHT: Ownership Snapshot ─────────────────────────────────────
     right_x = left_x + half_w + 10
-    c.setFillColor(BG_CARD)
-    c.setStrokeColor(BORDER)
-    c.setLineWidth(0.6)
-    c.roundRect(right_x, y, half_w, block_h, 6, stroke=1, fill=1)
+    _card_bg(c, right_x, y, half_w, block_h, radius=6)
     c.setFillColor(INK)
     c.setFont("Helvetica-Bold", 8.5)
     c.drawString(right_x + 10, y + block_h - 13, "OWNERSHIP & FLOAT")
@@ -2161,24 +2174,24 @@ def _draw_analyst_outlook_row(c, top_y, t):
 
 def _draw_dual_block(c, top_y, t):
     """Two cards side-by-side: Recent Earnings bullets + Quality & Risk Signals.
-    Designed to fill the empty bottom half the user complained about."""
-    block_h = 130
-    y = top_y - block_h - 10
+    Shorter than v3.9 to prevent collision with the page-1 footer
+    disclaimer band (the 'Daily shares' / 'Aggressive' subtitle cells
+    were overlapping the disclaimer text)."""
+    block_h = 112   # Tightened from 130
+    y = top_y - block_h - 8
     half_w = (CONTENT_W - 10) / 2
 
     # ── LEFT: Recent Earnings Highlights ─────────────────────────────
     left_x = MARGIN_X
-    c.setFillColor(BG_CARD)
-    c.setStrokeColor(BORDER)
-    c.setLineWidth(0.6)
-    c.roundRect(left_x, y, half_w, block_h, 6, stroke=1, fill=1)
+    _card_bg(c, left_x, y, half_w, block_h, radius=6)
     c.setFillColor(INK)
     c.setFont("Helvetica-Bold", 8.5)
     c.drawString(left_x + 10, y + block_h - 13, "RECENT EARNINGS HIGHLIGHTS")
 
     # Build bullets (Quartr-style: metric + YoY comparison inline)
     inc = (t.get("quarterly_income") or [{}])[0] or {}
-    inc_prev = (t.get("quarterly_income") or [{}, {}, {}, {}])[3] or {}
+    _qi = t.get("quarterly_income") or []
+    inc_prev = _qi[3] if len(_qi) > 3 else {}
     eps0 = (t.get("eps_quarters") or [{}])[0] or {}
     bullets = []
     rev_cur = _safe_float(inc.get("revenue"))
@@ -2235,10 +2248,7 @@ def _draw_dual_block(c, top_y, t):
 
     # ── RIGHT: Quality & Risk Signals ────────────────────────────────
     right_x = left_x + half_w + 10
-    c.setFillColor(BG_CARD)
-    c.setStrokeColor(BORDER)
-    c.setLineWidth(0.6)
-    c.roundRect(right_x, y, half_w, block_h, 6, stroke=1, fill=1)
+    _card_bg(c, right_x, y, half_w, block_h, radius=6)
     c.setFillColor(INK)
     c.setFont("Helvetica-Bold", 8.5)
     c.drawString(right_x + 10, y + block_h - 13, "QUALITY & RISK SIGNALS")
@@ -2444,10 +2454,7 @@ def _draw_investment_thesis(c, top_y, narrative):
     card_y   = card_top - card_h
 
     # ── Bull card ─────────────────────────────────────────────────────
-    c.setFillColor(BG_CARD)
-    c.setStrokeColor(BORDER)
-    c.setLineWidth(0.6)
-    c.roundRect(MARGIN_X, card_y, half_w, card_h, 6, stroke=1, fill=1)
+    _card_bg(c, MARGIN_X, card_y, half_w, card_h, radius=6)
     # Header strip
     c.setFillColor(GREEN_LIGHT)
     c.roundRect(MARGIN_X, card_y + card_h - 22, half_w, 22, 6, stroke=0, fill=1)
@@ -2472,10 +2479,7 @@ def _draw_investment_thesis(c, top_y, narrative):
 
     # ── Bear card ─────────────────────────────────────────────────────
     bx = MARGIN_X + half_w + 10
-    c.setFillColor(BG_CARD)
-    c.setStrokeColor(BORDER)
-    c.setLineWidth(0.6)
-    c.roundRect(bx, card_y, half_w, card_h, 6, stroke=1, fill=1)
+    _card_bg(c, bx, card_y, half_w, card_h, radius=6)
     c.setFillColor(RED_LIGHT)
     c.roundRect(bx, card_y + card_h - 22, half_w, 22, 6, stroke=0, fill=1)
     c.setFillColor(BG_CARD)
@@ -2544,10 +2548,7 @@ def _draw_catalysts(c, top_y, catalysts):
     card_h = 14 + sum(h + 5 for _, h in paras) + 6   # top pad + items + bottom pad
     card_y = card_top - card_h
 
-    c.setFillColor(BG_CARD)
-    c.setStrokeColor(BORDER)
-    c.setLineWidth(0.6)
-    c.roundRect(MARGIN_X, card_y, CONTENT_W, card_h, 6, stroke=1, fill=1)
+    _card_bg(c, MARGIN_X, card_y, CONTENT_W, card_h, radius=6)
     c.setFillColor(BRAND_VIOLET)
     c.rect(MARGIN_X, card_y, 3, card_h, stroke=0, fill=1)
 
