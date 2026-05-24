@@ -1732,6 +1732,33 @@ async def api_pdf(symbol: str):
                     logger.warning(f"pdf build {sym}: yf.download failed: {exc}")
             return out
         pts = await asyncio.to_thread(_yf_fetch_sync)
+
+        # 4th-layer fallback: FMP historical-price-full when yfinance is
+        # blocked or rate-limited from this IP range. Free tier covers
+        # 90D daily for any US listing.
+        if not pts and config.FMP_API_KEY:
+            try:
+                async with httpx.AsyncClient(timeout=10) as _c:
+                    fmp_url = (
+                        "https://financialmodelingprep.com/api/v3/historical-price-full/"
+                        f"{sym}?serietype=line&timeseries=90&apikey={config.FMP_API_KEY}"
+                    )
+                    r = await _c.get(fmp_url)
+                    if r.status_code == 200:
+                        data = r.json() or {}
+                        hist = data.get("historical") or []
+                        # FMP returns newest-first; flip to ascending and
+                        # take only the close points the chart needs.
+                        pts = [
+                            {"date": h.get("date"), "close": round(float(h.get("close")), 2)}
+                            for h in reversed(hist)
+                            if h.get("close") is not None and h.get("date")
+                        ][-90:]
+                        if pts:
+                            logger.info(f"pdf build {sym}: FMP fallback succeeded ({len(pts)} pts)")
+            except Exception as exc:
+                logger.warning(f"pdf build {sym}: FMP fallback failed: {exc}")
+
         if pts:
             cache.set(ck, {"ticker": sym, "period": "3mo", "points": pts}, 60 * 60 * 6)
 

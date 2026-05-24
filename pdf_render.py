@@ -340,42 +340,145 @@ def _draw_hero(c, top_y, ticker, t, logo_bytes):
     return hero_bottom
 
 
-def _draw_chart(c, top_y, price_history):
-    chart_h = 130
+# Human-friendly labels for the 19 score components (mirrors the JS
+# COMPONENT_LABELS in templates/earnings_tearsheet.html).
+_SCORE_COMPONENT_LABELS = {
+    "growth_tier":           "Growth tier",
+    "momentum_1m":           "1-month momentum",
+    "rel_strength":          "Relative strength",
+    "volume_spike":          "Volume spike",
+    "rsi_zone":              "RSI zone",
+    "dist_52w_high":         "Dist. 52w high",
+    "analyst_cons":          "Analyst consensus",
+    "earnings_prox":         "Earnings proximity",
+    "low_short":             "Low short interest",
+    "mkt_cap_fit":           "Market-cap fit",
+    "fundamentals":          "Fundamentals",
+    "social_momentum":       "Social momentum",
+    "insider_bias":          "Insider bias",
+    "earnings_quality":      "Earnings quality",
+    "trend_strength":        "Trend strength",
+    "breakout_proximity":    "Breakout proximity",
+    "news_sentiment":        "News sentiment",
+    "earnings_acceleration": "Earnings acceleration",
+    "score_momentum":        "Score momentum",
+}
+
+
+def _draw_chart_and_breakdown(c, top_y, price_history, t):
+    """Side-by-side row: 90-day price chart (left) + Score Breakdown
+    bar chart (right). Replaces the single full-width chart so we
+    surface the top-8 score contributions on page 1 — the panel that
+    was in the old CRDO version of the tear sheet."""
+    chart_h = 140
     chart_y = top_y - chart_h - 10
-    chart_w = CONTENT_W
-    # Card frame
+    gap     = 10
+    half_w  = (CONTENT_W - gap) / 2
+
+    # ── LEFT: 90-Day Price chart ──────────────────────────────────────
     c.setFillColor(BG_CARD)
     c.setStrokeColor(BORDER)
     c.setLineWidth(0.6)
-    c.roundRect(MARGIN_X, chart_y, chart_w, chart_h, 6, stroke=1, fill=1)
+    c.roundRect(MARGIN_X, chart_y, half_w, chart_h, 6, stroke=1, fill=1)
     c.setFillColor(INK)
     c.setFont("Helvetica-Bold", 8.5)
     c.drawString(MARGIN_X + 10, chart_y + chart_h - 13, "90-DAY PRICE")
-    chart_png = _make_price_chart(price_history, chart_w - 20, chart_h - 30)
+    chart_png = _make_price_chart(price_history, half_w - 20, chart_h - 32)
     if chart_png:
-        # Performance pill (right of title)
         if price_history and len(price_history) >= 2:
             first = _safe_float(price_history[0].get("close"))
             last  = _safe_float(price_history[-1].get("close"))
             if first and first > 0 and last is not None:
                 perf = (last / first - 1) * 100
+                # Subtitle: 'From $X to $Y · adjusted' (under title)
+                c.setFillColor(INK_MUTED)
+                c.setFont("Helvetica", 7)
+                c.drawString(MARGIN_X + 10, chart_y + chart_h - 22,
+                             f"From ${first:.2f} to ${last:.2f}  ·  adjusted")
+                # Performance pill (right of title)
                 pill_label = f"{('+' if perf >= 0 else '')}{perf:.1f}% · {len(price_history)}D"
                 pw = c.stringWidth(pill_label, "Helvetica-Bold", 7) + 12
-                c.setFillColor(BRAND_INDIGO)
-                c.roundRect(MARGIN_X + chart_w - pw - 10, chart_y + chart_h - 18, pw, 12, 3, stroke=0, fill=1)
+                pill_color = GREEN if perf >= 0 else RED
+                c.setFillColor(pill_color)
+                c.roundRect(MARGIN_X + half_w - pw - 10, chart_y + chart_h - 18, pw, 12, 3, stroke=0, fill=1)
                 c.setFillColor(HexColor("#ffffff"))
                 c.setFont("Helvetica-Bold", 7)
-                c.drawString(MARGIN_X + chart_w - pw - 4, chart_y + chart_h - 14.5, pill_label)
+                c.drawString(MARGIN_X + half_w - pw - 4, chart_y + chart_h - 14.5, pill_label)
         img = ImageReader(io.BytesIO(chart_png))
-        c.drawImage(img, MARGIN_X + 6, chart_y + 4,
-                    width=chart_w - 12, height=chart_h - 22,
+        c.drawImage(img, MARGIN_X + 4, chart_y + 4,
+                    width=half_w - 8, height=chart_h - 30,
                     preserveAspectRatio=True, anchor='c', mask='auto')
     else:
         c.setFillColor(INK_MUTED)
         c.setFont("Helvetica", 9)
-        c.drawCentredString(A4_W / 2, chart_y + chart_h / 2, "Price history unavailable")
+        c.drawCentredString(MARGIN_X + half_w / 2, chart_y + chart_h / 2,
+                             "Price history unavailable")
+
+    # ── RIGHT: Score Breakdown ────────────────────────────────────────
+    sb_x = MARGIN_X + half_w + gap
+    c.setFillColor(BG_CARD)
+    c.setStrokeColor(BORDER)
+    c.setLineWidth(0.6)
+    c.roundRect(sb_x, chart_y, half_w, chart_h, 6, stroke=1, fill=1)
+    c.setFillColor(INK)
+    c.setFont("Helvetica-Bold", 8.5)
+    c.drawString(sb_x + 10, chart_y + chart_h - 13, "SCORE BREAKDOWN")
+    c.setFillColor(INK_MUTED)
+    c.setFont("Helvetica", 7)
+    c.drawString(sb_x + 10, chart_y + chart_h - 22,
+                  "19-component composite  ·  contribution to Alpha Score")
+
+    weighted = (t.get("weighted") or {}) if isinstance(t.get("weighted"), dict) else {}
+    entries = sorted(
+        [(k, v) for k, v in weighted.items()
+         if isinstance(v, (int, float)) and v is not None and v > 0],
+        key=lambda kv: kv[1], reverse=True,
+    )[:8]
+
+    if not entries:
+        c.setFillColor(INK_MUTED)
+        c.setFont("Helvetica", 9)
+        c.drawCentredString(sb_x + half_w / 2, chart_y + chart_h / 2 - 6,
+                             "Score breakdown unavailable")
+        return chart_y
+
+    max_v = max(v for _, v in entries) or 1.0
+    bar_area_x = sb_x + 92
+    bar_area_w = half_w - 110
+    row_h      = (chart_h - 38) / len(entries)
+    label_font = "Helvetica"
+    c.setFont(label_font, 7)
+
+    for i, (k, v) in enumerate(entries):
+        ry = chart_y + chart_h - 32 - row_h * (i + 1) + row_h * 0.18
+        # Label
+        c.setFillColor(INK_SOFT)
+        c.setFont(label_font, 7)
+        label = _SCORE_COMPONENT_LABELS.get(k, k.replace("_", " ").title())
+        c.drawString(sb_x + 10, ry + 3, label[:22])
+        # Bar (deeper green = larger contribution)
+        bar_w = bar_area_w * (v / max_v)
+        # Tween light green → deep green by value/10
+        t01 = min(1.0, v / 10.0)
+        r = int(132 + (21 - 132) * t01)
+        g = int(204 + (128 - 204) * t01)
+        b = int(22  + (61  - 22 ) * t01)
+        bar_color = HexColor(f"#{r:02x}{g:02x}{b:02x}")
+        c.setFillColor(bar_color)
+        c.roundRect(bar_area_x, ry, max(2, bar_w), row_h * 0.6, 1.2, stroke=0, fill=1)
+        # Value at end of bar
+        c.setFillColor(INK)
+        c.setFont("Helvetica-Bold", 7)
+        c.drawString(bar_area_x + bar_w + 3, ry + 2, f"{v:.1f}")
+
     return chart_y
+
+
+# Legacy alias so callers (and old tests) using _draw_chart keep working.
+def _draw_chart(c, top_y, price_history):
+    """Deprecated — kept for backwards compatibility. Renders only the
+    price chart at full width when no ticker row is available."""
+    return _draw_chart_and_breakdown(c, top_y, price_history, {})
 
 
 def _draw_metrics_grid(c, top_y, t):
@@ -727,22 +830,28 @@ def _draw_exec_summary_para(c, top_y, paragraph_text):
 
 
 def _draw_page2_hero(c, ticker, t):
-    """Compact second-page header: brand band + ticker + name + page label."""
-    y = A4_H - 88
+    """Compact second-page header: ticker + name + page label.
+    Positioned BELOW the header band so it doesn't overlap. Returns
+    the y-coordinate where downstream content can start."""
+    # Header band's _draw_header() leaves us around A4_H - 75.
+    # Push hero to A4_H - 115 so the divider line and the ticker
+    # don't collide.
+    y = A4_H - 105
     co_name = (t.get("name") or t.get("company_name") or "").strip()
     c.setFillColor(BRAND_INDIGO)
-    c.setFont("Helvetica-Bold", 18)
+    c.setFont("Helvetica-Bold", 20)
     c.drawString(MARGIN_X, y + 18, ticker)
     c.setFillColor(INK)
     c.setFont("Helvetica", 11)
-    c.drawString(MARGIN_X + 60, y + 22, co_name[:60])
+    c.drawString(MARGIN_X + 65, y + 22, co_name[:60])
     c.setFillColor(INK_MUTED)
     c.setFont("Helvetica", 7.5)
-    c.drawString(MARGIN_X + 60, y + 9, "ANALYST NARRATIVE  ·  PAGE 2")
-    # Brand accent bar
+    c.drawString(MARGIN_X + 65, y + 9, "ANALYST NARRATIVE  ·  PAGE 2")
+    # Thin brand accent bar at bottom of the hero band
     c.setStrokeColor(BRAND_INDIGO)
     c.setLineWidth(1.2)
-    c.line(MARGIN_X, y, A4_W - MARGIN_X, y)
+    c.line(MARGIN_X, y - 2, A4_W - MARGIN_X, y - 2)
+    return y - 12
 
 
 def _conviction_color(level: str):
@@ -777,10 +886,24 @@ def _draw_investment_thesis(c, top_y, narrative):
     c.setFont("Helvetica-Bold", 7)
     c.drawString(chip_x + 6, chip_y + 4, conv_label)
 
-    # Bull / Bear cards
+    # Bull / Bear cards. Card height pre-measured against the actual
+    # wrapped bullet heights so the verdict band never overlaps the
+    # cards even when bullets run 3+ lines each.
     card_top = title_y - 12
-    card_h   = 130
     half_w   = (CONTENT_W - 10) / 2
+    avail_w  = half_w - 24
+
+    def _measured_card_h(bullets):
+        total = 22 + 10  # header strip + bottom pad
+        for b in (bullets or [])[:3]:
+            if not b:
+                continue
+            p = _wrap_paragraph(str(b), avail_w, font_size=8, leading=10.5, color=INK)
+            _, h = p.wrap(avail_w, 200)
+            total += h + 8
+        return max(total, 90)
+
+    card_h = max(_measured_card_h(bull), _measured_card_h(bear))
     card_y   = card_top - card_h
 
     # ── Bull card ─────────────────────────────────────────────────────
@@ -854,7 +977,10 @@ def _draw_investment_thesis(c, top_y, narrative):
 
 
 def _draw_catalysts(c, top_y, catalysts):
-    """Forward catalysts strip — bordered card with bulleted forward events."""
+    """Forward catalysts strip — bordered card with bulleted forward events.
+    Each bullet wraps to as many lines as needed; pre-measures the card
+    height from actual wrapped paragraph dimensions so we never overflow
+    or truncate with an ellipsis."""
     if not catalysts:
         return top_y
     items = [str(x) for x in catalysts if x][:5]
@@ -867,33 +993,29 @@ def _draw_catalysts(c, top_y, catalysts):
     c.drawString(MARGIN_X, title_y, "FORWARD CATALYSTS")
 
     card_top = title_y - 12
-    # Compute card height from item count (each row ~14pt)
-    card_h = 22 + len(items) * 13
+    avail_w  = CONTENT_W - 30
+    paras = []
+    for item in items:
+        p = _wrap_paragraph(str(item), avail_w, font_size=9, leading=11.5, color=INK)
+        _, h = p.wrap(avail_w, 100)
+        paras.append((p, h))
+    card_h = 14 + sum(h + 5 for _, h in paras) + 6   # top pad + items + bottom pad
     card_y = card_top - card_h
 
     c.setFillColor(BG_CARD)
     c.setStrokeColor(BORDER)
     c.setLineWidth(0.6)
     c.roundRect(MARGIN_X, card_y, CONTENT_W, card_h, 6, stroke=1, fill=1)
-    # Side accent bar
     c.setFillColor(BRAND_VIOLET)
     c.rect(MARGIN_X, card_y, 3, card_h, stroke=0, fill=1)
 
-    iy = card_y + card_h - 14
-    c.setFont("Helvetica", 9)
-    for item in items:
+    iy = card_y + card_h - 10
+    for p, h in paras:
+        # Bullet dot aligns with the first line of the wrapped paragraph
         c.setFillColor(BRAND_VIOLET)
-        c.circle(MARGIN_X + 16, iy + 3, 1.6, stroke=0, fill=1)
-        c.setFillColor(INK)
-        # Clip to single line — catalysts are short by construction
-        max_w = CONTENT_W - 30
-        text = item
-        while c.stringWidth(text, "Helvetica", 9) > max_w and len(text) > 6:
-            text = text[:-2]
-        if text != item:
-            text = text.rstrip(" ,;.") + "…"
-        c.drawString(MARGIN_X + 24, iy, text)
-        iy -= 13
+        c.circle(MARGIN_X + 16, iy - 5, 1.6, stroke=0, fill=1)
+        p.drawOn(c, MARGIN_X + 24, iy - h)
+        iy -= (h + 5)
 
     return card_y
 
@@ -1020,8 +1142,8 @@ def generate_pdf(ticker: str, t: dict, price_history: list[dict] | None = None,
     tier_map = {"A": "Top Tier", "B": "Quality", "C": "Average", "D": "Below Avg", "F": "Weak"}
     hero_bottom = _draw_hero(c, header_bottom, ticker, t, logo_bytes)
 
-    # 90-day chart
-    chart_bottom = _draw_chart(c, hero_bottom, price_history)
+    # 90-day chart + Score Breakdown (side-by-side)
+    chart_bottom = _draw_chart_and_breakdown(c, hero_bottom, price_history, t)
 
     # 12-card metrics grid
     grid_bottom = _draw_metrics_grid(c, chart_bottom - 4, t)
@@ -1044,13 +1166,12 @@ def generate_pdf(ticker: str, t: dict, price_history: list[dict] | None = None,
     if narrative or event_row:
         c.showPage()
         _draw_header(c, today, quarter_lbl)
-        _draw_page2_hero(c, ticker, t)
-        y = A4_H - 130
+        y = _draw_page2_hero(c, ticker, t)
         if narrative:
-            y = _draw_investment_thesis(c, y, narrative)
-            y = _draw_catalysts(c, y - 8, narrative.get("catalysts") or [])
+            y = _draw_investment_thesis(c, y - 4, narrative)
+            y = _draw_catalysts(c, y - 14, narrative.get("catalysts") or [])
         if event_row:
-            _draw_event_summary(c, y - 8, event_row)
+            _draw_event_summary(c, y - 14, event_row)
         _draw_footer(c)
 
     c.showPage()
