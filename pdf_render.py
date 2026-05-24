@@ -403,17 +403,13 @@ def _draw_header(c, today_str, quarter_lbl, page_label=None):
     # Real AlphaHunt brand lockup (mark + wordmark as one asset)
     lockup_w = _draw_brand_lockup(c, MARGIN_X, y + 2, height=26)
 
-    # Context label + tagline under the lockup (replaces user's
-    # 'Your text here 1' placeholder — a real sub-line that says
-    # what this document IS, not what it's labelled as).
+    # Single clean label under the lockup. User v3.12 feedback:
+    # 'add only Research report, delete rest all words' — so the
+    # multi-line tagline + page context were stripped. Only the
+    # words 'Research report' remain under the AlphaHunt mark.
     c.setFillColor(INK_MUTED)
-    c.setFont("Helvetica-Bold", 7)
-    label = (page_label or "EQUITY RESEARCH BRIEF").upper()
-    c.drawString(MARGIN_X + 4, y - 6, label)
-    c.setFillColor(INK_MUTED)
-    c.setFont("Helvetica", 7)
-    c.drawString(MARGIN_X + 4, y - 14,
-                 "Multi-factor analysis  ·  AI-augmented thesis  ·  SEC-sourced")
+    c.setFont("Helvetica-Bold", 7.5)
+    c.drawString(MARGIN_X + 4, y - 6, "RESEARCH REPORT")
 
     # Right side — date + quarter chip
     c.setFillColor(INK_MUTED)
@@ -427,12 +423,11 @@ def _draw_header(c, today_str, quarter_lbl, page_label=None):
     c.setFont("Helvetica-Bold", 8)
     c.drawString(chip_x + 7, y + 4, quarter_lbl)
 
-    # Thin grey divider — pushed down 8pt to give the new tagline
-    # breathing room above the divider.
+    # Thin grey divider — tighter since the tagline was removed.
     c.setStrokeColor(HexColor("#d4d8e8"))
     c.setLineWidth(0.6)
-    c.line(MARGIN_X, y - 22, A4_W - MARGIN_X, y - 22)
-    return y - 30  # bottom of header
+    c.line(MARGIN_X, y - 14, A4_W - MARGIN_X, y - 14)
+    return y - 22  # bottom of header
 
 
 def _draw_hero(c, top_y, ticker, t, logo_bytes):
@@ -1887,9 +1882,34 @@ def _draw_metrics_grid(c, top_y, t):
     if gm is not None: gm *= 100
     pe = _safe_float(t.get("pe_ratio"))
     peg = _safe_float(t.get("peg_ratio"))
+    # COMPUTED FALLBACK: if upstream PEG is missing but we have P/E +
+    # YoY growth, derive PEG = P/E / growth%. Standard analyst formula.
+    # User v3.13: 'Add all missing values in all places where there is
+    # missing value.'
+    if peg is None and pe is not None and pe > 0:
+        growth_pct = _safe_float(t.get("rev_growth_yoy") or
+                                  t.get("rev_growth_qyoy") or
+                                  t.get("revenue_growth_yoy"))
+        if growth_pct is not None:
+            if abs(growth_pct) <= 5:    # stored as fraction
+                growth_pct *= 100
+            if growth_pct > 0:
+                peg = pe / growth_pct
     de = _safe_float(t.get("debt_to_equity"))
+    # COMPUTED FALLBACK for D/E: total_debt / total_equity if both present
+    if de is None:
+        td = _safe_float(t.get("total_debt"))
+        te = _safe_float(t.get("total_equity") or t.get("stockholders_equity"))
+        if td is not None and te is not None and te > 0:
+            de = td / te
     roe = _safe_float(t.get("roe") or t.get("return_on_equity"))
     if roe is not None and abs(roe) <= 1: roe *= 100
+    # COMPUTED FALLBACK for ROE: net_income / equity
+    if roe is None:
+        ni = _safe_float(t.get("net_income_ttm") or t.get("net_income"))
+        te = _safe_float(t.get("total_equity") or t.get("stockholders_equity"))
+        if ni is not None and te is not None and te > 0:
+            roe = (ni / te) * 100
     fcfm = _safe_float(t.get("fcf_margin"))
     if fcfm is not None and abs(fcfm) <= 1: fcfm *= 100
     revttm = _safe_float(t.get("revenue_ttm"))
@@ -2469,27 +2489,12 @@ def _draw_exec_summary_para(c, top_y, paragraph_text):
 
 
 def _draw_page2_hero(c, ticker, t, subtitle=None):
-    """Compact secondary-page hero. The page CONTEXT is already in the
-    header band (e.g. 'FINANCIAL TRENDS · PAGE 2') so we drop the
-    duplicate sub-heading under the ticker name per user v3.11
-    feedback ('dont need this extra heading'). Now: ticker + company
-    name on one line, accent rule below, no redundant label.
-
-    `subtitle` is kept as a parameter for back-compat but ignored."""
-    y = A4_H - 95   # tighter — removing the subtitle line freed 10pt
-    co_name = (t.get("name") or t.get("company_name") or "").strip()
-    c.setFillColor(BRAND_INDIGO)
-    c.setFont("Helvetica-Bold", 20)
-    c.drawString(MARGIN_X, y + 12, ticker)
-    # Company name on the same baseline as the ticker for tighter
-    # vertical rhythm (no longer a stacked subtitle line below).
-    c.setFillColor(INK)
-    c.setFont("Helvetica", 11.5)
-    c.drawString(MARGIN_X + 70, y + 14, co_name[:60])
-    c.setStrokeColor(BRAND_INDIGO)
-    c.setLineWidth(1.2)
-    c.line(MARGIN_X, y - 4, A4_W - MARGIN_X, y - 4)
-    return y - 14
+    """No-op on pages 2+ per v3.13 user feedback: 'dont add any heading
+    like stock name from second page onwards.' The ticker is already
+    obvious from page 1 and from the header AlphaHunt mark + page
+    label. Returns the y-coordinate where content can start (just
+    below the header divider)."""
+    return A4_H - 90
 
 
 def _conviction_color(level: str):
@@ -2758,27 +2763,32 @@ def _draw_event_summary(c, top_y, event_row, today_str=None, quarter_lbl=None,
         y -= 6   # was 4 — extra space BELOW the section
 
 
-def _draw_footer(c):
-    """Branded footer — thin grey divider above the disclaimer text,
-    real brand mark + 'alphahunt.in' on the right."""
+def _draw_footer(c, with_disclaimer=False):
+    """Branded footer. The disclaimer text only renders when
+    with_disclaimer=True — caller passes True only for the LAST
+    page of the report. All earlier pages get a compact footer with
+    just the brand mark + alphahunt.in URL on the right. User v3.13:
+    'Remove the disclaimer from the footer. Only keep this in the
+    last page footer. Not all pages.'"""
     foot_y = MARGIN_BOTTOM
-    # Thin grey divider (matches the header)
+    # Thin grey divider — always shown
     c.setStrokeColor(HexColor("#d4d8e8"))
     c.setLineWidth(0.5)
     c.line(MARGIN_X, foot_y + 26, A4_W - MARGIN_X, foot_y + 26)
-    # Disclaimer
-    c.setFillColor(INK_SOFT)
-    c.setFont("Helvetica-Bold", 6.8)
-    c.drawString(MARGIN_X, foot_y + 16, "EDUCATIONAL USE ONLY.")
-    c.setFillColor(INK_MUTED)
-    c.setFont("Helvetica", 6.8)
-    c.drawString(MARGIN_X + 96, foot_y + 16,
-                 "AlphaHunt is not a SEBI-registered advisor. Alpha Score is a quantitative composite — not investment advice.")
-    c.setFillColor(INK_MUTED)
-    c.setFont("Helvetica", 6.8)
-    c.drawString(MARGIN_X, foot_y + 6,
-                 "Data: SEC EDGAR, Yahoo Finance, FMP. Past performance does not guarantee future results. Do your own research.")
-    # Mini real brand mark + url on the right
+
+    if with_disclaimer:
+        c.setFillColor(INK_SOFT)
+        c.setFont("Helvetica-Bold", 6.8)
+        c.drawString(MARGIN_X, foot_y + 16, "EDUCATIONAL USE ONLY.")
+        c.setFillColor(INK_MUTED)
+        c.setFont("Helvetica", 6.8)
+        c.drawString(MARGIN_X + 96, foot_y + 16,
+                     "AlphaHunt is not a SEBI-registered advisor. Alpha Score is a quantitative composite — not investment advice.")
+        c.setFillColor(INK_MUTED)
+        c.setFont("Helvetica", 6.8)
+        c.drawString(MARGIN_X, foot_y + 6,
+                     "Data: SEC EDGAR, Yahoo Finance, FMP. Past performance does not guarantee future results. Do your own research.")
+    # Brand mark + URL on the right — every page
     _draw_brand_mark(c, A4_W - MARGIN_X - 64, foot_y + 6, size=14)
     c.setFillColor(BRAND_INDIGO)
     c.setFont("Helvetica-Bold", 8.5)
@@ -2850,18 +2860,22 @@ def generate_pdf(ticker: str, t: dict, price_history: list[dict] | None = None,
     # Recent Earnings + Quality & Risk dual block
     _draw_dual_block(c, exec_bottom, t)
 
-    # Footer
-    _draw_footer(c)
-
-    # ── Page 2 — Financial visualisations (now FULL page) ─────────────
-    # Three blocks fill the page top-to-bottom:
-    #   1. Quarterly Revenue & EPS + Margin Trend (existing dual chart row)
-    #   2. NEW 4-metric Financial Trend Strip (Rev Growth, GM, OpM, FCF)
-    #   3. NEW Peer Comparison table vs same-sector peers
+    # ── Pre-determine which pages will render so the FINAL one
+    # gets the disclaimer footer and every intermediate page gets
+    # a compact footer without it (user v3.13: 'Remove the disclaimer
+    # from the footer. Only keep this in the last page footer.').
     qinc = t.get("quarterly_income") or []
     eps  = t.get("eps_quarters") or []
-    have_visuals = (len(qinc) >= 2 or len(eps) >= 2)
-    if have_visuals:
+    have_p2 = (len(qinc) >= 2 or len(eps) >= 2)
+    have_p3 = (bool(narrative and narrative.get("valuation")) or
+                bool(narrative and narrative.get("dcf")) or
+                bool(qinc))
+    have_p4 = bool(narrative or event_row)
+
+    # Page 1 footer — disclaimer only if no other pages will render
+    _draw_footer(c, with_disclaimer=not (have_p2 or have_p3 or have_p4))
+
+    if have_p2:
         c.showPage()
         _draw_header(c, today, quarter_lbl,
                       page_label="FINANCIAL TRENDS  ·  PAGE 2")
@@ -2877,14 +2891,11 @@ def generate_pdf(ticker: str, t: dict, price_history: list[dict] | None = None,
         b3_h   = 140
         _draw_peer_comparison(c, MARGIN_X, b3_top - b3_h, CONTENT_W,
                                 b3_h, t, peers or [])
-        _draw_footer(c)
+        # Page 2 footer — disclaimer only if no later page will render
+        _draw_footer(c, with_disclaimer=not (have_p3 or have_p4))
 
     # ── Page 3 — Valuation Scenarios + DCF Model + Risk Scorecard ────
-    # Three analyst-grade panels that elevate the report from
-    # "AI-written summary" to "sell-side institutional research".
-    has_valuation = narrative and narrative.get("valuation")
-    has_dcf       = narrative and narrative.get("dcf")
-    if has_valuation or has_dcf or t.get("quarterly_income"):
+    if have_p3:
         c.showPage()
         _draw_header(c, today, quarter_lbl,
                       page_label="VALUATION & RISK  ·  PAGE 3")
@@ -2906,10 +2917,11 @@ def generate_pdf(ticker: str, t: dict, price_history: list[dict] | None = None,
         risk_h   = 160
         _draw_risk_scorecard(c, MARGIN_X, risk_top - risk_h, CONTENT_W,
                                risk_h, t)
-        _draw_footer(c)
+        # Page 3 footer — disclaimer only if page 4 won't render
+        _draw_footer(c, with_disclaimer=not have_p4)
 
     # ── Page 4 — AI analyst narrative (only when we have content) ─────
-    if narrative or event_row:
+    if have_p4:
         c.showPage()
         _draw_header(c, today, quarter_lbl,
                       page_label="ANALYST NARRATIVE  ·  PAGE 4")
@@ -2921,7 +2933,12 @@ def generate_pdf(ticker: str, t: dict, price_history: list[dict] | None = None,
             _draw_event_summary(c, y - 14, event_row,
                                  today_str=today, quarter_lbl=quarter_lbl,
                                  ticker=ticker, t=t)
-        _draw_footer(c)
+        # Page 4 (and any LATEST EVENT continuation) IS the last page
+        # — disclaimer goes here. The continuation pages drawn inside
+        # _draw_event_summary call _draw_footer(c) without args, so
+        # they default to with_disclaimer=False; only this final
+        # outer call carries the disclaimer.
+        _draw_footer(c, with_disclaimer=True)
 
     c.showPage()
     c.save()
