@@ -304,23 +304,9 @@ def _draw_brand_frame(c):
     c.setLineWidth(0.3)
     c.rect(4, 4, A4_W - 8, A4_H - 12, stroke=1, fill=0)
 
-    # 4) Branded watermark — bigger and a bit more visible than v3.9
-    if _BRAND_MARK_IMG is not None:
-        c.saveState()
-        try:
-            c.setFillAlpha(0.08)
-        except Exception:
-            pass
-        c.drawImage(_BRAND_MARK_IMG, A4_W - MARGIN_X - 56, 12,
-                    width=46, height=46,
-                    preserveAspectRatio=True, anchor='c', mask='auto')
-        c.restoreState()
-    else:
-        c.saveState()
-        c.setFillColor(HexColor("#eef2ff"))
-        c.setFont("Helvetica-Bold", 40)
-        c.drawString(A4_W - MARGIN_X - 28, 14, "α")
-        c.restoreState()
+    # NOTE: Watermark deliberately removed per user feedback v3.11
+    # ('delete the watermark'). The brand strip + lockup in the
+    # header already carry the brand identity sufficiently.
 
 
 def _card_bg(c, x, y, w, h, radius=6):
@@ -417,11 +403,17 @@ def _draw_header(c, today_str, quarter_lbl, page_label=None):
     # Real AlphaHunt brand lockup (mark + wordmark as one asset)
     lockup_w = _draw_brand_lockup(c, MARGIN_X, y + 2, height=26)
 
-    # Context label under the lockup
+    # Context label + tagline under the lockup (replaces user's
+    # 'Your text here 1' placeholder — a real sub-line that says
+    # what this document IS, not what it's labelled as).
     c.setFillColor(INK_MUTED)
     c.setFont("Helvetica-Bold", 7)
-    label = (page_label or "US STOCK TEAR SHEET").upper()
+    label = (page_label or "EQUITY RESEARCH BRIEF").upper()
     c.drawString(MARGIN_X + 4, y - 6, label)
+    c.setFillColor(INK_MUTED)
+    c.setFont("Helvetica", 7)
+    c.drawString(MARGIN_X + 4, y - 14,
+                 "Multi-factor analysis  ·  AI-augmented thesis  ·  SEC-sourced")
 
     # Right side — date + quarter chip
     c.setFillColor(INK_MUTED)
@@ -435,11 +427,12 @@ def _draw_header(c, today_str, quarter_lbl, page_label=None):
     c.setFont("Helvetica-Bold", 8)
     c.drawString(chip_x + 7, y + 4, quarter_lbl)
 
-    # Thin grey divider (no more loud gradient)
+    # Thin grey divider — pushed down 8pt to give the new tagline
+    # breathing room above the divider.
     c.setStrokeColor(HexColor("#d4d8e8"))
     c.setLineWidth(0.6)
-    c.line(MARGIN_X, y - 14, A4_W - MARGIN_X, y - 14)
-    return y - 22  # bottom of header
+    c.line(MARGIN_X, y - 22, A4_W - MARGIN_X, y - 22)
+    return y - 30  # bottom of header
 
 
 def _draw_hero(c, top_y, ticker, t, logo_bytes):
@@ -697,7 +690,10 @@ def _make_margin_trend_chart(quarterly_income: list,
         ax.spines["left"].set_color("#cbd5e1")
         ax.spines["bottom"].set_color("#cbd5e1")
         ax.grid(True, axis="y", color="#f1f5f9", linewidth=0.5)
-        ax.legend(fontsize=6.5, loc="lower right", frameon=False)
+        # Legend OUTSIDE the plot area (above, horizontal, no frame)
+        # per user feedback v3.11: 'legend is within graph'.
+        ax.legend(fontsize=6.5, loc="lower center",
+                  bbox_to_anchor=(0.5, -0.32), ncol=2, frameon=False)
         fig.tight_layout(pad=0.4)
         buf = io.BytesIO()
         fig.savefig(buf, format="png", dpi=160, bbox_inches="tight",
@@ -1166,19 +1162,24 @@ def _draw_risk_scorecard(c, x, y, w, h, t):
     c.setFillColor(INK_MUTED)
     c.setFont("Helvetica", 7)
     c.drawString(x + 10, y + h - 22, "5-dimension risk profile  ·  green = low, red = high")
-    # Legend on right
-    c.setFillColor(INK_MUTED)
-    c.setFont("Helvetica", 6)
-    legend = [(GREEN, "LOW"), (BRAND_INDIGO, "MOD"), (AMBER, "ELEV"), (RED, "HIGH")]
-    lx = x + w - 10
-    for color, label in reversed(legend):
-        text_w = c.stringWidth(label, "Helvetica-Bold", 6.5)
+    # Legend on right — uniform-width slots so the dots line up on a
+    # grid instead of bunching unevenly (user feedback v3.11:
+    # 'needs alignment in the buttons'). Reserve 40pt per item:
+    # 6pt for the dot + 4pt gap + 30pt for the label, right-aligned.
+    c.setFontSize(6.5)
+    slot_w = 40
+    legend = [(GREEN, "LOW"), (BRAND_INDIGO, "MOD"),
+              (AMBER, "ELEV"), (RED, "HIGH")]
+    legend_right = x + w - 10
+    for i, (color, label) in enumerate(legend):
+        slot_x = legend_right - (len(legend) - i) * slot_w
+        # Dot
         c.setFillColor(color)
-        c.circle(lx - text_w - 4, y + h - 19, 2.2, stroke=0, fill=1)
+        c.circle(slot_x + 4, y + h - 18, 2.4, stroke=0, fill=1)
+        # Label (left-aligned to a fixed offset from the dot)
         c.setFillColor(INK_MUTED)
         c.setFont("Helvetica-Bold", 6.5)
-        c.drawRightString(lx, y + h - 17, label)
-        lx -= (text_w + 22)
+        c.drawString(slot_x + 10, y + h - 20, label)
 
     items = _compute_risk_scorecard(t)
     if not items:
@@ -1522,7 +1523,9 @@ def _draw_trend_strip(c, x, y, w, h, t):
         c.setFillColor(INK_MUTED)
         c.setFont("Helvetica-Bold", 6.5)
         c.drawString(cx + 6, cy + cell_h - 11, label.upper())
-        # Current value (rightmost)
+        # Current value (rightmost) — fall back to 'Not reported' grey
+        # when the series has no values, instead of leaving the slot
+        # completely empty (user feedback v3.11).
         current = next((v for v in reversed(series) if v is not None), None)
         if current is not None:
             sign = "+" if current >= 0 else ""
@@ -1530,13 +1533,26 @@ def _draw_trend_strip(c, x, y, w, h, t):
             c.setFont("Helvetica-Bold", 11)
             c.drawRightString(cx + cell_w - 6, cy + cell_h - 13,
                                 f"{sign}{current:.1f}%")
-        # Sparkline
+        else:
+            c.setFillColor(INK_MUTED)
+            c.setFont("Helvetica", 9)
+            c.drawRightString(cx + cell_w - 6, cy + cell_h - 13, "Not reported")
+        # Sparkline — when data missing, show a centered dotted
+        # placeholder so the cell doesn't look broken.
         sp_png = _make_sparkline(series, cell_w - 14, cell_h - 26, color=color)
         if sp_png:
             img = ImageReader(io.BytesIO(sp_png))
             c.drawImage(img, cx + 6, cy + 4,
                         width=cell_w - 12, height=cell_h - 26,
                         preserveAspectRatio=True, anchor='c', mask='auto')
+        else:
+            # Dotted placeholder line for empty series
+            c.setStrokeColor(HexColor("#e2e8f0"))
+            c.setDash(2, 3)
+            c.setLineWidth(0.8)
+            c.line(cx + 8, cy + (cell_h - 26)/2 + 4,
+                   cx + cell_w - 8, cy + (cell_h - 26)/2 + 4)
+            c.setDash()
 
 
 def _draw_peer_comparison(c, x, y, w, h, t, peers):
@@ -2452,26 +2468,28 @@ def _draw_exec_summary_para(c, top_y, paragraph_text):
     return y
 
 
-def _draw_page2_hero(c, ticker, t, subtitle="Analyst Narrative"):
-    """Compact secondary-page hero with context-specific subtitle —
-    'Financial Trends', 'Valuation & Risk', 'Analyst Narrative'. The
-    v3.8 version printed 'ANALYST NARRATIVE · PAGE 2' on every page
-    regardless of content; this fixes that."""
-    y = A4_H - 105
+def _draw_page2_hero(c, ticker, t, subtitle=None):
+    """Compact secondary-page hero. The page CONTEXT is already in the
+    header band (e.g. 'FINANCIAL TRENDS · PAGE 2') so we drop the
+    duplicate sub-heading under the ticker name per user v3.11
+    feedback ('dont need this extra heading'). Now: ticker + company
+    name on one line, accent rule below, no redundant label.
+
+    `subtitle` is kept as a parameter for back-compat but ignored."""
+    y = A4_H - 95   # tighter — removing the subtitle line freed 10pt
     co_name = (t.get("name") or t.get("company_name") or "").strip()
     c.setFillColor(BRAND_INDIGO)
     c.setFont("Helvetica-Bold", 20)
-    c.drawString(MARGIN_X, y + 18, ticker)
+    c.drawString(MARGIN_X, y + 12, ticker)
+    # Company name on the same baseline as the ticker for tighter
+    # vertical rhythm (no longer a stacked subtitle line below).
     c.setFillColor(INK)
-    c.setFont("Helvetica", 11)
-    c.drawString(MARGIN_X + 65, y + 22, co_name[:60])
-    c.setFillColor(INK_MUTED)
-    c.setFont("Helvetica", 7.5)
-    c.drawString(MARGIN_X + 65, y + 9, subtitle.upper())
+    c.setFont("Helvetica", 11.5)
+    c.drawString(MARGIN_X + 70, y + 14, co_name[:60])
     c.setStrokeColor(BRAND_INDIGO)
     c.setLineWidth(1.2)
-    c.line(MARGIN_X, y - 2, A4_W - MARGIN_X, y - 2)
-    return y - 12
+    c.line(MARGIN_X, y - 4, A4_W - MARGIN_X, y - 4)
+    return y - 14
 
 
 def _conviction_color(level: str):
@@ -2713,15 +2731,22 @@ def _draw_event_summary(c, top_y, event_row, today_str=None, quarter_lbl=None,
         y = new_top - 16
 
     for heading, bullets in items:
-        # If we can't even fit the heading + first bullet line, flip page
         if y < reserve_y + 36:
             _new_continuation_page()
-        # Heading
+        # Heading — bigger padding above + below so it doesn't kiss
+        # the previous section's last bullet OR the first bullet
+        # below it. User feedback v3.11: 'space issue between heading
+        # and content'.
+        y -= 4   # extra breathing room ABOVE the heading
         c.setFillColor(BRAND_INDIGO)
         c.setFont("Helvetica-Bold", 8.5)
         c.drawString(MARGIN_X, y, heading)
-        y -= 11
-        # Bullets — paginate per-bullet rather than dropping content
+        # Thin indigo underline so the heading separates visually
+        head_w = c.stringWidth(heading, "Helvetica-Bold", 8.5)
+        c.setStrokeColor(BRAND_INDIGO)
+        c.setLineWidth(0.4)
+        c.line(MARGIN_X, y - 2, MARGIN_X + head_w, y - 2)
+        y -= 14   # was 11 — gives 3 more pt before first bullet
         for b in bullets[:5]:
             p = _wrap_paragraph("•  " + str(b), CONTENT_W - 4,
                                  font_size=8, leading=10.5, color=INK)
@@ -2730,7 +2755,7 @@ def _draw_event_summary(c, top_y, event_row, today_str=None, quarter_lbl=None,
                 _new_continuation_page()
             p.drawOn(c, MARGIN_X + 4, y - h)
             y -= (h + 2)
-        y -= 4
+        y -= 6   # was 4 — extra space BELOW the section
 
 
 def _draw_footer(c):
@@ -2796,7 +2821,7 @@ def generate_pdf(ticker: str, t: dict, price_history: list[dict] | None = None,
     today = date.today().strftime("%b %d, %Y")
     quarter_lbl = f"Q{(date.today().month - 1)//3 + 1}'{str(date.today().year)[-2:]} Reported"
     header_bottom = _draw_header(c, today, quarter_lbl,
-                                   page_label="US STOCK TEAR SHEET")
+                                   page_label="EQUITY RESEARCH BRIEF  ·  PAGE 1")
 
     # Hero
     logo_bytes = _fetch_logo_bytes(ticker)
@@ -2841,8 +2866,8 @@ def generate_pdf(ticker: str, t: dict, price_history: list[dict] | None = None,
         _draw_header(c, today, quarter_lbl,
                       page_label="FINANCIAL TRENDS  ·  PAGE 2")
         y2 = _draw_page2_hero(c, ticker, t, subtitle="Financial Trends")
-        # Block 1: existing quarterly+margin dual chart row (160pt tall)
-        b1_bottom = _draw_quarterly_charts_row(c, y2 - 4, t)
+        # Block 1: existing quarterly+margin dual chart row
+        b1_bottom = _draw_quarterly_charts_row(c, y2 - 2, t)
         # Block 2: 4-metric trend strip (160pt tall)
         b2_top = b1_bottom - 14
         b2_h   = 180
@@ -2864,14 +2889,16 @@ def generate_pdf(ticker: str, t: dict, price_history: list[dict] | None = None,
         _draw_header(c, today, quarter_lbl,
                       page_label="VALUATION & RISK  ·  PAGE 3")
         y3 = _draw_page2_hero(c, ticker, t, subtitle="Valuation & Risk")
-        # Valuation Scenarios — top
+        # Valuation Scenarios — top (push CLOSER to header per user
+        # feedback v3.11 'delete this space')
         val_h = 200
-        val_top = y3 - 4
+        val_top = y3 - 2
         _draw_valuation_scenarios(c, MARGIN_X, val_top - val_h, CONTENT_W,
                                     val_h, t, narrative or {})
-        # DCF Model — middle
+        # DCF Model — middle (TALLER by 30pt for breathing room per
+        # user feedback 'too compact writing, need space')
         dcf_top = val_top - val_h - 12
-        dcf_h   = 200
+        dcf_h   = 230
         _draw_dcf_model(c, MARGIN_X, dcf_top - dcf_h, CONTENT_W,
                           dcf_h, t, narrative or {})
         # Risk Scorecard — bottom
