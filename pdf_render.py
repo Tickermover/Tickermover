@@ -496,6 +496,283 @@ def _make_margin_trend_chart(quarterly_income: list,
         return None
 
 
+def _make_sparkline(values, width_pt, height_pt, color="#4338ca",
+                     fill_color=None, label_last=True, unit="%"):
+    """Tiny inline-style sparkline: thin line + optional fill, latest value
+    annotated. Returns PNG bytes or None when no data."""
+    vals = [v for v in (values or []) if v is not None]
+    if len(vals) < 2:
+        return None
+    try:
+        fig_w, fig_h = width_pt / 72.0, height_pt / 72.0
+        fig, ax = plt.subplots(figsize=(fig_w, fig_h), dpi=160)
+        ax.set_facecolor("#ffffff")
+        x = list(range(len(vals)))
+        ax.plot(x, vals, "-", color=color, linewidth=1.8)
+        if fill_color is None:
+            fill_color = color
+        ax.fill_between(x, vals, min(vals), color=fill_color, alpha=0.15)
+        # Annotate first & last
+        ax.plot([0], [vals[0]], "o", color=color, markersize=3,
+                markeredgecolor="white", markeredgewidth=0.8)
+        ax.plot([len(vals)-1], [vals[-1]], "o", color=color, markersize=4,
+                markeredgecolor="white", markeredgewidth=0.8)
+        # Axis cosmetics: hide everything for a true sparkline feel
+        ax.set_xticks([])
+        ax.set_yticks([])
+        for s in ("top", "right", "left", "bottom"):
+            ax.spines[s].set_visible(False)
+        # Pad y-range so dots don't clip
+        ymin, ymax = min(vals), max(vals)
+        pad = max(0.5, (ymax - ymin) * 0.18)
+        ax.set_ylim(ymin - pad, ymax + pad)
+        fig.tight_layout(pad=0.05)
+        buf = io.BytesIO()
+        fig.savefig(buf, format="png", dpi=160, bbox_inches="tight",
+                    facecolor="white", edgecolor="none",
+                    pad_inches=0.01)
+        plt.close(fig)
+        buf.seek(0)
+        return buf.read()
+    except Exception:
+        plt.close("all")
+        return None
+
+
+def _compute_trend_metrics(t):
+    """Build the 4-metric time series for the Trend Strip card.
+    Returns list of (label, series, current, color) tuples."""
+    qinc = list(t.get("quarterly_income") or [])
+    qinc.reverse()   # oldest-first
+    if len(qinc) < 2:
+        return []
+
+    rev_series, gm_series, om_series, fcf_series = [], [], [], []
+    for i, q in enumerate(qinc[-6:]):
+        rev = _safe_float(q.get("revenue"))
+        # Revenue growth YoY — needs prior year quarter (i-4)
+        prior_idx = len(qinc) - len(qinc[-6:]) + i - 4
+        rev_prev = _safe_float(qinc[prior_idx].get("revenue")) if 0 <= prior_idx < len(qinc) else None
+        if rev and rev_prev and rev_prev > 0:
+            rev_series.append((rev / rev_prev - 1) * 100)
+        else:
+            rev_series.append(None)
+        # Gross margin
+        gm = _safe_float(q.get("gross_margin"))
+        if gm is not None and abs(gm) <= 1: gm *= 100
+        gm_series.append(gm)
+        # Operating margin (compute if not provided)
+        om = _safe_float(q.get("operating_margin"))
+        if om is None:
+            op_inc = _safe_float(q.get("operating_income"))
+            if op_inc and rev and rev > 0:
+                om = (op_inc / rev) * 100
+        elif abs(om) <= 1:
+            om *= 100
+        om_series.append(om)
+        # FCF margin
+        fcf = _safe_float(q.get("fcf_margin") or q.get("free_cash_flow_margin"))
+        if fcf is None:
+            fcf_v = _safe_float(q.get("free_cash_flow"))
+            if fcf_v and rev and rev > 0:
+                fcf = (fcf_v / rev) * 100
+        elif abs(fcf) <= 1:
+            fcf *= 100
+        fcf_series.append(fcf)
+
+    metrics = [
+        ("Revenue Growth YoY", rev_series, "#4338ca"),
+        ("Gross Margin",       gm_series,  "#8b5cf6"),
+        ("Operating Margin",   om_series,  "#ec4899"),
+        ("FCF Margin",         fcf_series, "#16a34a"),
+    ]
+    return metrics
+
+
+def _draw_trend_strip(c, x, y, w, h, t):
+    """2x2 grid of sparkline cards for the four financial-trend metrics
+    (Revenue Growth YoY %, Gross Margin %, Op Margin %, FCF Margin %).
+    Surfaces the 'are the fundamentals durably improving?' answer at a
+    glance — what a real analyst tear sheet uses instead of bare prose."""
+    # Outer card
+    c.setFillColor(BG_CARD)
+    c.setStrokeColor(BORDER)
+    c.setLineWidth(0.6)
+    c.roundRect(x, y, w, h, 6, stroke=1, fill=1)
+    c.setFillColor(INK)
+    c.setFont("Helvetica-Bold", 8.5)
+    c.drawString(x + 10, y + h - 13, "FINANCIAL TREND STRIP")
+    c.setFillColor(INK_MUTED)
+    c.setFont("Helvetica", 7)
+    c.drawString(x + 10, y + h - 22, "4-quarter trajectory  ·  durability check")
+
+    metrics = _compute_trend_metrics(t)
+    if not metrics:
+        c.setFillColor(INK_MUTED)
+        c.setFont("Helvetica", 9)
+        c.drawCentredString(x + w/2, y + h/2 - 6, "Insufficient quarterly data")
+        return
+
+    # 2x2 sparkline grid
+    inner_y_top = y + h - 30
+    inner_y_bot = y + 12
+    cell_w = (w - 30) / 2
+    cell_h = (inner_y_top - inner_y_bot - 8) / 2
+
+    for i, (label, series, color) in enumerate(metrics[:4]):
+        col = i % 2
+        row = i // 2
+        cx = x + 10 + col * (cell_w + 10)
+        cy = inner_y_top - (row + 1) * cell_h - row * 8
+        # Cell border
+        c.setStrokeColor(HexColor("#f1f5f9"))
+        c.setLineWidth(0.5)
+        c.roundRect(cx, cy, cell_w, cell_h, 4, stroke=1, fill=0)
+        # Label
+        c.setFillColor(INK_MUTED)
+        c.setFont("Helvetica-Bold", 6.5)
+        c.drawString(cx + 6, cy + cell_h - 11, label.upper())
+        # Current value (rightmost)
+        current = next((v for v in reversed(series) if v is not None), None)
+        if current is not None:
+            sign = "+" if current >= 0 else ""
+            c.setFillColor(GREEN if current >= 0 else RED)
+            c.setFont("Helvetica-Bold", 11)
+            c.drawRightString(cx + cell_w - 6, cy + cell_h - 13,
+                                f"{sign}{current:.1f}%")
+        # Sparkline
+        sp_png = _make_sparkline(series, cell_w - 14, cell_h - 26, color=color)
+        if sp_png:
+            img = ImageReader(io.BytesIO(sp_png))
+            c.drawImage(img, cx + 6, cy + 4,
+                        width=cell_w - 12, height=cell_h - 26,
+                        preserveAspectRatio=True, anchor='c', mask='auto')
+
+
+def _draw_peer_comparison(c, x, y, w, h, t, peers):
+    """Compact peer-comparison table. peers is a list of dicts with keys
+    {ticker, name, market_cap, pe_ttm, rev_growth_yoy, gross_margin,
+     smart_score}. Shows our target plus up to 3 peers as rows."""
+    c.setFillColor(BG_CARD)
+    c.setStrokeColor(BORDER)
+    c.setLineWidth(0.6)
+    c.roundRect(x, y, w, h, 6, stroke=1, fill=1)
+    c.setFillColor(INK)
+    c.setFont("Helvetica-Bold", 8.5)
+    c.drawString(x + 10, y + h - 13, "PEER COMPARISON")
+    c.setFillColor(INK_MUTED)
+    c.setFont("Helvetica", 7)
+    c.drawString(x + 10, y + h - 22,
+                  "Same sector  ·  ranked by Alpha Score")
+
+    if not peers:
+        c.setFillColor(INK_MUTED)
+        c.setFont("Helvetica", 9)
+        c.drawCentredString(x + w/2, y + h/2 - 6, "No peer data available")
+        return
+
+    # Build rows: target first, then peers
+    target_row = {
+        "ticker": (t.get("ticker") or "—").upper(),
+        "name":   t.get("name", "")[:18],
+        "mcap":   _safe_float(t.get("market_cap")),
+        "pe":     _safe_float(t.get("pe_ttm")),
+        "rev":    _safe_float(t.get("rev_growth_yoy")),
+        "gm":     _safe_float(t.get("gross_margin")),
+        "score":  int(t.get("smart_score") or t.get("pop_score") or 0),
+        "is_target": True,
+    }
+    rows = [target_row]
+    for p in peers[:3]:
+        rows.append({
+            "ticker": (p.get("ticker") or "—").upper(),
+            "name":   (p.get("name") or "")[:18],
+            "mcap":   _safe_float(p.get("market_cap")),
+            "pe":     _safe_float(p.get("pe_ttm")),
+            "rev":    _safe_float(p.get("rev_growth_yoy")),
+            "gm":     _safe_float(p.get("gross_margin")),
+            "score":  int(p.get("smart_score") or p.get("pop_score") or 0),
+            "is_target": False,
+        })
+
+    # Column layout
+    cols = [
+        ("TICKER",  0.18),
+        ("MKT CAP", 0.16),
+        ("P/E",     0.12),
+        ("REV YoY", 0.14),
+        ("GM",      0.12),
+        ("SCORE",   0.14),
+    ]
+    inner_w = w - 24
+    col_xs = []
+    acc = x + 12
+    for name, frac in cols:
+        col_xs.append(acc)
+        acc += inner_w * frac
+
+    # Header row
+    hdr_y = y + h - 36
+    c.setFillColor(INK_MUTED)
+    c.setFont("Helvetica-Bold", 6.5)
+    for (name, _), cx in zip(cols, col_xs):
+        c.drawString(cx, hdr_y, name)
+    # Underline
+    c.setStrokeColor(BORDER)
+    c.setLineWidth(0.4)
+    c.line(x + 12, hdr_y - 3, x + w - 12, hdr_y - 3)
+
+    # Data rows
+    row_h = (hdr_y - 14 - (y + 10)) / max(len(rows), 1)
+    row_h = min(row_h, 22)
+    for i, r in enumerate(rows):
+        ry = hdr_y - 12 - (i + 1) * row_h + 2
+        # Highlight the target row with a light brand fill
+        if r["is_target"]:
+            c.setFillColor(HexColor("#eef2ff"))
+            c.rect(x + 8, ry - 3, w - 16, row_h, stroke=0, fill=1)
+        # Ticker (bold for target)
+        c.setFillColor(BRAND_INDIGO if r["is_target"] else INK)
+        c.setFont("Helvetica-Bold" if r["is_target"] else "Helvetica-Bold", 8)
+        c.drawString(col_xs[0], ry + 3, r["ticker"])
+        # Market cap
+        c.setFillColor(INK)
+        c.setFont("Helvetica", 8)
+        if r["mcap"]:
+            mcap_str = _fmt_money(r["mcap"]).replace("$", "")
+            c.drawString(col_xs[1], ry + 3, mcap_str)
+        else:
+            c.drawString(col_xs[1], ry + 3, "—")
+        # P/E
+        c.setFillColor(INK if r["pe"] and r["pe"] > 0 else INK_MUTED)
+        c.drawString(col_xs[2], ry + 3,
+                      f"{r['pe']:.1f}x" if (r['pe'] and r['pe'] > 0) else "—")
+        # Rev growth (colored)
+        if r["rev"] is not None:
+            rev_v = r["rev"] * 100 if abs(r["rev"]) <= 1 else r["rev"]
+            c.setFillColor(GREEN if rev_v >= 0 else RED)
+            c.drawString(col_xs[3], ry + 3, f"{'+' if rev_v >= 0 else ''}{rev_v:.0f}%")
+        else:
+            c.setFillColor(INK_MUTED)
+            c.drawString(col_xs[3], ry + 3, "—")
+        # Gross margin
+        if r["gm"] is not None:
+            gm_v = r["gm"] * 100 if abs(r["gm"]) <= 1 else r["gm"]
+            c.setFillColor(INK)
+            c.drawString(col_xs[4], ry + 3, f"{gm_v:.0f}%")
+        else:
+            c.setFillColor(INK_MUTED)
+            c.drawString(col_xs[4], ry + 3, "—")
+        # Alpha Score (badge)
+        score = r["score"]
+        if score >= 80:    score_color = GREEN
+        elif score >= 60:  score_color = BRAND_INDIGO
+        else:              score_color = AMBER
+        c.setFillColor(score_color)
+        c.setFont("Helvetica-Bold", 9)
+        c.drawString(col_xs[5], ry + 3, str(score) if score else "—")
+
+
 def _draw_quarterly_charts_row(c, top_y, t):
     """New page-1 row: Quarterly Revenue & EPS combo chart (left) +
     Margin Trend chart (right). Always renders from t.quarterly_income +
@@ -728,6 +1005,21 @@ def _draw_metrics_grid(c, top_y, t):
     hi52 = _safe_float(t.get("high_52w"))
     lo52 = _safe_float(t.get("low_52w"))
     px = _safe_float(t.get("price"))
+    # Split-adjustment heuristic: if 52W low is <1/4 of current price AND
+    # of 52W high, the low almost certainly comes from pre-split data
+    # (LITE's $71-$1086 range vs $946 current is the classic example —
+    # a 10:1 reverse split that the data source didn't carry through).
+    # We scale the low up by the implied ratio to give a sane range bar.
+    if hi52 and lo52 and px and lo52 > 0:
+        ratio_to_px = px / lo52
+        ratio_to_hi = hi52 / lo52
+        if ratio_to_px >= 4 and ratio_to_hi >= 4:
+            # Round to a sensible split factor (typically 2, 3, 4, 5, 10)
+            for factor in (10, 5, 4, 3, 2):
+                if hi52 / (lo52 * factor) <= 4:
+                    lo52 = lo52 * factor
+                    logger.info(f"PDF: 52W low split-adjusted x{factor} → ${lo52:.2f}")
+                    break
     rsi = _safe_float(t.get("rsi_14"))
     eps_hist = t.get("eps_quarters") or []
     beats = sum(1 for q in eps_hist if q.get("beat"))
@@ -947,14 +1239,20 @@ def _draw_rec_distribution_bar(c, x, y, w, strong_buy, buy, hold, sell, strong_s
 def _derive_rec_counts(t: dict, total_analysts: int):
     """Estimate the 5-bucket recommendation distribution from the limited
     aggregate signals we have. Backend exposes strong_buy_pct + the
-    analyst_cons component score (0-1) in the breakdown. This mirrors
-    the JS logic in templates/earnings_tearsheet.html so the PDF and
-    web tear sheet show the same distribution."""
+    analyst_cons component score (0-1) in the breakdown."""
     if not total_analysts:
         return 0, 0, 0, 0, 0
     strong_buy_pct = _safe_float(t.get("strong_buy_pct"))
+    # Bug from v3.4: strong_buy_pct is sometimes stored as 0-1 fraction
+    # (e.g. 0.55) and sometimes as 0-100 percent (e.g. 26.7). The raw
+    # multiplication produced 'S.Buy 641' on a 24-analyst ticker.
+    # Normalise to fraction.
+    if strong_buy_pct is not None and strong_buy_pct > 1:
+        strong_buy_pct = strong_buy_pct / 100.0
     breakdown = t.get("breakdown") or {}
     consensus  = _safe_float(breakdown.get("analyst_cons"))   # 0..1
+    if consensus is not None and consensus > 1:
+        consensus = consensus / 100.0
     sb = int(round((strong_buy_pct or 0.4) * total_analysts))
     # Buy share scales with bullish consensus (0.7+ → 0.35, 0.5 → 0.25)
     bullish = max(0.0, min(1.0, (consensus or 0.6)))
@@ -1054,7 +1352,12 @@ def _draw_analyst_outlook_row(c, top_y, t):
     if inst    is not None and inst    <= 1: inst    = inst * 100
     div_y   = _safe_float(t.get("dividend_yield"))
     if div_y is not None and div_y <= 1: div_y = div_y * 100
-    avg_vol = t.get("avg_volume_str") or (_fmt_vol(t.get("avg_volume")) if t.get("avg_volume") else None)
+    # Em-dash is truthy in Python — explicitly reject it so the universe
+    # loader's placeholder doesn't shadow real data from FMP profile.
+    raw_avg = t.get("avg_volume_str")
+    if raw_avg in (None, "", "—", "-"):
+        raw_avg = None
+    avg_vol = raw_avg or (_fmt_vol(t.get("avg_volume")) if t.get("avg_volume") else None)
 
     cells = [
         ("INSIDER OWN",  f"{ins_own:.1f}%" if ins_own else "—",          "Self-held"),
@@ -1590,7 +1893,8 @@ def _draw_footer(c):
 # ── Public entry ─────────────────────────────────────────────────────
 
 def generate_pdf(ticker: str, t: dict, price_history: list[dict] | None = None,
-                 narrative: dict | None = None, event_row: dict | None = None) -> bytes:
+                 narrative: dict | None = None, event_row: dict | None = None,
+                 peers: list | None = None) -> bytes:
     """Render the A4 tear sheet PDF.
 
     Args:
@@ -1650,10 +1954,11 @@ def generate_pdf(ticker: str, t: dict, price_history: list[dict] | None = None,
     # Footer
     _draw_footer(c)
 
-    # ── Page 2 — Financial visualisations (quarterly + margin trend) ───
-    # Renders whenever we have at least 2 quarters of fundamental data,
-    # which is virtually every US-listed name. Independent of the flaky
-    # daily-price feeds that were leaving page 1's chart empty.
+    # ── Page 2 — Financial visualisations (now FULL page) ─────────────
+    # Three blocks fill the page top-to-bottom:
+    #   1. Quarterly Revenue & EPS + Margin Trend (existing dual chart row)
+    #   2. NEW 4-metric Financial Trend Strip (Rev Growth, GM, OpM, FCF)
+    #   3. NEW Peer Comparison table vs same-sector peers
     qinc = t.get("quarterly_income") or []
     eps  = t.get("eps_quarters") or []
     have_visuals = (len(qinc) >= 2 or len(eps) >= 2)
@@ -1661,8 +1966,17 @@ def generate_pdf(ticker: str, t: dict, price_history: list[dict] | None = None,
         c.showPage()
         _draw_header(c, today, quarter_lbl)
         y2 = _draw_page2_hero(c, ticker, t)
-        # Override the default "ANALYST NARRATIVE" subtitle for this page
-        _draw_quarterly_charts_row(c, y2 - 4, t)
+        # Block 1: existing quarterly+margin dual chart row (160pt tall)
+        b1_bottom = _draw_quarterly_charts_row(c, y2 - 4, t)
+        # Block 2: 4-metric trend strip (160pt tall)
+        b2_top = b1_bottom - 14
+        b2_h   = 180
+        _draw_trend_strip(c, MARGIN_X, b2_top - b2_h, CONTENT_W, b2_h, t)
+        # Block 3: peer comparison (140pt tall)
+        b3_top = b2_top - b2_h - 14
+        b3_h   = 140
+        _draw_peer_comparison(c, MARGIN_X, b3_top - b3_h, CONTENT_W,
+                                b3_h, t, peers or [])
         _draw_footer(c)
 
     # ── Page 3 — AI analyst narrative (only when we have content) ─────

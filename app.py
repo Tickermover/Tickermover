@@ -1784,6 +1784,43 @@ async def api_pdf(symbol: str):
             except Exception as exc:
                 logger.warning(f"pdf build {sym}: FMP-stable failed: {exc}")
 
+        # 5b-layer fallback: Yahoo Query v8 direct (bypasses yfinance pkg).
+        # If yfinance is blocked from Render but direct HTTP works (it
+        # sometimes does — yf adds extra headers Yahoo dislikes), this
+        # picks up the slack. Truly free, no key.
+        if not pts:
+            try:
+                async with httpx.AsyncClient(timeout=10) as _c:
+                    yq_url = (
+                        f"https://query1.finance.yahoo.com/v8/finance/chart/{sym}"
+                        "?range=3mo&interval=1d"
+                    )
+                    r = await _c.get(yq_url, headers={
+                        "User-Agent": "Mozilla/5.0 (compatible; AlphaHunt/1.0)",
+                    })
+                    if r.status_code == 200:
+                        data = r.json() or {}
+                        result = (data.get("chart") or {}).get("result") or []
+                        if result:
+                            ts_ms   = result[0].get("timestamp") or []
+                            indic   = result[0].get("indicators") or {}
+                            closes  = ((indic.get("adjclose") or [{}])[0].get("adjclose")
+                                        or (indic.get("quote") or [{}])[0].get("close")
+                                        or [])
+                            from datetime import datetime as _dt
+                            for ts, cl in zip(ts_ms, closes):
+                                if ts is None or cl is None: continue
+                                try:
+                                    d = _dt.utcfromtimestamp(ts).strftime("%Y-%m-%d")
+                                    pts.append({"date": d, "close": round(float(cl), 2)})
+                                except (TypeError, ValueError):
+                                    continue
+                            logger.info(f"pdf build {sym}: Yahoo-v8 returned {len(pts)} points")
+                    else:
+                        logger.warning(f"pdf build {sym}: Yahoo-v8 HTTP {r.status_code}")
+            except Exception as exc:
+                logger.warning(f"pdf build {sym}: Yahoo-v8 failed: {exc}")
+
         # 6th-layer fallback: Alpha Vantage TIME_SERIES_DAILY using the key
         # we already have for Briefings. Free tier 25 calls/day total — so
         # only triggers on the rare ticker where every other source failed.
@@ -1881,10 +1918,33 @@ async def api_pdf(symbol: str):
         logger.warning(f"pdf build {sym}: narrative failed: {exc}")
         narrative = None
 
+    # Build peer set — same-sector tickers (sub_sector preferred), excluding
+    # ourselves, sorted by smart_score desc. Top 3. Pulled straight from the
+    # in-memory universe so it's free and instant.
+    peers = []
+    try:
+        target_sub  = (target.get("sub_sector") or "").strip().lower()
+        target_sect = (target.get("sector") or "").strip().lower()
+        cand = []
+        for other in _universe_data:
+            if other.get("ticker") == sym:
+                continue
+            o_sub  = (other.get("sub_sector") or "").strip().lower()
+            o_sect = (other.get("sector") or "").strip().lower()
+            if target_sub and o_sub == target_sub:
+                cand.append((2, other))   # exact sub-sector match — strongest peer
+            elif target_sect and o_sect == target_sect:
+                cand.append((1, other))   # same broader sector — okay peer
+        cand.sort(key=lambda r: (r[0], r[1].get("smart_score") or r[1].get("pop_score") or 0),
+                  reverse=True)
+        peers = [r[1] for r in cand[:3]]
+    except Exception as exc:
+        logger.warning(f"pdf build {sym}: peer build failed: {exc}")
+
     # Render PDF (pure compute, no I/O — runs in a thread to keep event loop free)
     try:
         pdf_bytes = await asyncio.to_thread(
-            _pdf.generate_pdf, sym, target, pts, narrative, event_row,
+            _pdf.generate_pdf, sym, target, pts, narrative, event_row, peers,
         )
     except Exception as exc:
         logger.error(f"pdf build {sym}: render failed: {exc}", exc_info=True)
