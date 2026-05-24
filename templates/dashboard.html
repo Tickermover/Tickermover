@@ -2761,6 +2761,9 @@ html.v2-dark .v2-mp-mini-lbl{color:#cbd5e1}
 .v2-brf-d-h-eye{font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#4338ca;margin-top:14px}
 .v2-brf-d-h-title{font-size:18px;font-weight:800;color:#0f172a;letter-spacing:-.015em;margin-top:4px;line-height:1.3}
 .v2-brf-d-h-date{font-size:13px;color:#64748b;font-weight:600;margin-top:6px}
+.v2-brf-d-h-src{font-size:11px;color:#64748b;font-weight:500;margin-top:10px;padding-top:10px;border-top:1px solid #e2e8f0;letter-spacing:.01em}
+.v2-brf-d-h-src a{color:#4338ca;text-decoration:none;font-weight:600}
+.v2-brf-d-h-src a:hover{text-decoration:underline}
 
 .v2-brf-sect{margin-bottom:22px}
 .v2-brf-sect-h{
@@ -7557,6 +7560,31 @@ function v2CloseBriefing(){
   if (det)  det.style.display  = 'none';
 }
 
+// Render the small "source: SEC 8-K · filing link" citation badge that
+// sits under the briefing title. Lets the user verify any number in the
+// summary against the primary filing in one click — same audit-trail
+// pattern as the chart's data-tc scrubber.
+function v2RenderBriefingSourceBadge(d){
+  if (!d) return '';
+  const src = String(d.source || '').toLowerCase();
+  const url = d.source_url || '';
+  let label = '';
+  if (src.startsWith('sec_edgar')){
+    if (src.indexOf('8-k') >= 0)       label = 'SEC 8-K filing';
+    else if (src.indexOf('10-q') >= 0) label = 'SEC 10-Q filing';
+    else                                label = 'SEC EDGAR filing';
+  } else if (src === 'alpha_vantage_transcript'){
+    label = 'Earnings call transcript';
+  } else if (src){
+    label = src;
+  }
+  if (!label) return '';
+  const linkPart = url
+    ? ' &middot; <a href="' + v2EscHTML(url) + '" target="_blank" rel="noopener">View primary source</a>'
+    : '';
+  return '<div class="v2-brf-d-h-src">Source: ' + v2EscHTML(label) + linkPart + '</div>';
+}
+
 function v2RenderBriefingHTML(sym, d){
   const back = '<button class="v2-brf-back" onclick="v2CloseBriefing()">← Back to all tickers</button>';
   if (!d || d.available === false){
@@ -7570,7 +7598,7 @@ function v2RenderBriefingHTML(sym, d){
     }
     return back + '<div class="v2-brf-empty-state">' +
       '<strong>No event coverage for ' + v2EscHTML(sym) + ' yet</strong>' +
-      '<span>Alpha Vantage doesn\'t have a transcript for this ticker. We typically cover S&amp;P 500 + Nasdaq-100 + Dow names. Smaller caps fill in as transcripts are published.</span>' +
+      '<span>We could not find a recent 8-K earnings release or 10-Q filing for this ticker on SEC EDGAR. Coverage refreshes whenever a new filing is posted (typically within hours of an earnings announcement).</span>' +
     '</div>';
   }
   const live = (window._allTickerData && window._allTickerData[sym]) || {};
@@ -7588,6 +7616,7 @@ function v2RenderBriefingHTML(sym, d){
       '<div class="v2-brf-d-h-eye">Event briefing</div>' +
       '<div class="v2-brf-d-h-title">' + v2EscHTML(d.event_title || 'Latest event summary') + '</div>' +
       (d.event_date ? '<div class="v2-brf-d-h-date">' + v2EscHTML(d.event_date) + '</div>' : '') +
+      v2RenderBriefingSourceBadge(d) +
     '</div>';
 
   let sections = Array.isArray(d.sections) ? d.sections : null;

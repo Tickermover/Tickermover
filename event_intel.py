@@ -42,6 +42,16 @@ _ANTHROPIC_MODEL   = os.environ.get("ANTHROPIC_MODEL", "claude-haiku-4-5-2025100
 _ANTHROPIC_TIMEOUT = 18.0
 _AV_BASE           = "https://www.alphavantage.co/query"
 
+# SEC EDGAR — free, no key, no rate limit beyond their fair-use 10 req/s
+# policy. They require a descriptive User-Agent identifying who's hitting
+# the service (their robots.txt enforces this).
+_EDGAR_UA = os.environ.get(
+    "SEC_EDGAR_UA",
+    "AlphaHunt Research alphahunt-bot@example.com",
+)
+_EDGAR_HEADERS = {"User-Agent": _EDGAR_UA, "Accept-Encoding": "gzip, deflate"}
+_EDGAR_TICKER_MAP: dict[str, str] | None = None   # ticker -> 10-digit CIK
+
 
 # ── 1. Transcript fetch ───────────────────────────────────────────────────
 
@@ -118,12 +128,177 @@ async def _fetch_av_transcript(ticker: str, quarter: str | None = None) -> dict 
     return None
 
 
+# ── 1b. SEC EDGAR fetch (free primary source) ─────────────────────────────
+
+async def _edgar_ticker_to_cik(ticker: str) -> str | None:
+    """Resolve a ticker to a zero-padded 10-digit CIK using the SEC's
+    public ticker map. Cached in-process after first hit."""
+    global _EDGAR_TICKER_MAP
+    sym = ticker.upper()
+    if _EDGAR_TICKER_MAP is None:
+        try:
+            async with httpx.AsyncClient(timeout=10, headers=_EDGAR_HEADERS) as c:
+                r = await c.get("https://www.sec.gov/files/company_tickers.json")
+                r.raise_for_status()
+                raw = r.json()
+            # The JSON is keyed by integer strings: { "0": {cik_str, ticker, title}, ... }
+            _EDGAR_TICKER_MAP = {
+                str(v.get("ticker", "")).upper(): str(v.get("cik_str", "")).zfill(10)
+                for v in raw.values()
+            }
+            logger.info(f"event_intel: loaded EDGAR ticker map ({len(_EDGAR_TICKER_MAP)} entries)")
+        except Exception as exc:
+            logger.warning(f"event_intel: EDGAR ticker map fetch failed: {exc}")
+            return None
+    return _EDGAR_TICKER_MAP.get(sym)
+
+
+def _strip_html(html: str, limit: int = 60000) -> str:
+    """Crude HTML-to-text strip. EDGAR filings are dense — we just need
+    enough clean prose for Haiku. Drops <script>/<style>, collapses
+    whitespace, decodes basic entities."""
+    import re
+    from html import unescape
+    txt = re.sub(r"<(script|style)[^>]*>.*?</\1>", " ", html, flags=re.DOTALL | re.IGNORECASE)
+    txt = re.sub(r"<[^>]+>", " ", txt)
+    txt = unescape(txt)
+    txt = re.sub(r"\s+", " ", txt).strip()
+    return txt[:limit]
+
+
+async def _fetch_edgar_recent(ticker: str) -> dict | None:
+    """Pull the most recent earnings-bearing filings from EDGAR.
+
+    Strategy: fetch the last ~40 filings, pick the most recent 8-K with an
+    earnings press release (Item 2.02) AND the most recent 10-Q for MD&A.
+    Returns dict with {event_date, source_url, source_label, text} or None.
+    """
+    cik = await _edgar_ticker_to_cik(ticker)
+    if not cik:
+        return None
+    sub_url = f"https://data.sec.gov/submissions/CIK{cik}.json"
+    try:
+        async with httpx.AsyncClient(timeout=12, headers=_EDGAR_HEADERS) as c:
+            r = await c.get(sub_url)
+            r.raise_for_status()
+            sub = r.json()
+    except Exception as exc:
+        logger.warning(f"event_intel: EDGAR submissions {ticker} failed: {exc}")
+        return None
+    recent = sub.get("filings", {}).get("recent", {}) or {}
+    forms     = recent.get("form", []) or []
+    dates     = recent.get("filingDate", []) or []
+    accs      = recent.get("accessionNumber", []) or []
+    primaries = recent.get("primaryDocument", []) or []
+    items     = recent.get("items", []) or []
+
+    # Prefer 8-K with Item 2.02 (Results of Operations) — that's the
+    # quarterly earnings release. Falls back to any 8-K, then 10-Q.
+    pick_idx = None
+    pick_form = None
+    for i, form in enumerate(forms[:40]):
+        if form == "8-K" and i < len(items) and "2.02" in (items[i] or ""):
+            pick_idx, pick_form = i, "8-K (earnings)"
+            break
+    if pick_idx is None:
+        for i, form in enumerate(forms[:40]):
+            if form == "10-Q":
+                pick_idx, pick_form = i, "10-Q"
+                break
+    if pick_idx is None:
+        for i, form in enumerate(forms[:40]):
+            if form == "8-K":
+                pick_idx, pick_form = i, "8-K"
+                break
+    if pick_idx is None:
+        return None
+
+    acc       = accs[pick_idx].replace("-", "")
+    primary   = primaries[pick_idx]
+    filing_dt = dates[pick_idx]
+    base_dir  = f"https://www.sec.gov/Archives/edgar/data/{int(cik)}/{acc}"
+    doc_url   = f"{base_dir}/{primary}"
+
+    # For 8-Ks the primaryDocument is the cover sheet (mostly boilerplate).
+    # The actual earnings press release is usually Exhibit 99.1. Pull the
+    # filing index and concatenate the cover + any ex-99* exhibit so Haiku
+    # has the real content.
+    html_blobs: list[str] = []
+    try:
+        async with httpx.AsyncClient(timeout=20, headers=_EDGAR_HEADERS) as c:
+            r = await c.get(doc_url)
+            if r.status_code == 200:
+                html_blobs.append(r.text)
+            # For 8-Ks, the primaryDocument is just the cover sheet. The
+            # actual earnings press release / CFO commentary lives in
+            # sibling .htm files. Some filers use ex99*.htm (the canonical
+            # exhibit naming); others (e.g. NVDA) use custom names like
+            # q1fy27pr.htm. Filter by size + extension + exclusions to
+            # capture the real content regardless of naming convention.
+            if pick_form.startswith("8-K"):
+                try:
+                    idx_r = await c.get(f"{base_dir}/index.json")
+                    if idx_r.status_code == 200:
+                        idx_data = idx_r.json() or {}
+                        items_list = (idx_data.get("directory") or {}).get("item") or []
+                        primary_lower = (primary or "").lower()
+                        candidates = []
+                        for it in items_list:
+                            name = (it.get("name") or "")
+                            nlow = name.lower()
+                            try:
+                                sz = int(it.get("size") or 0)
+                            except (TypeError, ValueError):
+                                sz = 0
+                            if not nlow.endswith((".htm", ".html")):
+                                continue
+                            if nlow == primary_lower:
+                                continue
+                            # Skip XBRL viewer reports (R1.htm, R2.htm, …)
+                            # and the auto-generated index file
+                            if nlow.startswith("r") and nlow[1:nlow.index(".")].isdigit():
+                                continue
+                            if "index" in nlow:
+                                continue
+                            # Filings have a lot of tiny boilerplate .htm
+                            # files — anything >20KB is meaningful prose.
+                            if sz < 20000:
+                                continue
+                            candidates.append((sz, name))
+                        # Largest first — press release usually dwarfs other
+                        # exhibits. Pull up to 2 of them.
+                        candidates.sort(reverse=True)
+                        for _, name in candidates[:2]:
+                            ex_r = await c.get(f"{base_dir}/{name}")
+                            if ex_r.status_code == 200:
+                                html_blobs.append(ex_r.text)
+                except Exception as exc:
+                    logger.debug(f"event_intel: EDGAR index {ticker} skipped: {exc}")
+    except Exception as exc:
+        logger.warning(f"event_intel: EDGAR doc {ticker} {doc_url} failed: {exc}")
+        return None
+    if not html_blobs:
+        return None
+    text = " ".join(_strip_html(b, limit=40000) for b in html_blobs)[:90000]
+    if len(text) < 500:
+        return None
+    return {
+        "event_date":   filing_dt,
+        "source_url":   doc_url,
+        "source_label": pick_form,
+        "text":         text,
+    }
+
+
 # ── 2. Summarization (Anthropic Haiku) ────────────────────────────────────
 
-_SUMMARY_PROMPT = """You are summarising an earnings call transcript into a structured
-JSON object for an analyst-style stock research report (Quartr-style format).
-Be specific with numbers, quote exact figures and percentages from the transcript.
-Do NOT make up data. If the transcript doesn't cover something, omit that section.
+_SUMMARY_PROMPT = """You are summarising a corporate filing or earnings call into a
+structured JSON object for an analyst-style stock research report
+(Quartr-style format). The input may be an earnings call transcript, an
+8-K earnings press release, or a 10-Q MD&A section.
+
+Be specific with numbers, quote exact figures and percentages from the source.
+Do NOT make up data. If the source doesn't cover something, omit that section.
 
 Generate 3-5 SECTIONS with DYNAMIC headings that reflect the actual content
 of this specific event. Typical headings might be:
@@ -159,13 +334,14 @@ its driver / comparison inline:
    strong demand, with gross margins approaching 50%."
 NOT split sentences. Each bullet self-contained.
 
-Transcript (ticker: {ticker}, quarter: {quarter}):
+Source ({source_label}, ticker: {ticker}, date: {quarter}):
 
 {transcript_text}
 """
 
 
-async def _summarize_with_haiku(ticker: str, quarter: str, transcript_text: str) -> dict | None:
+async def _summarize_with_haiku(ticker: str, quarter: str, transcript_text: str,
+                                source_label: str = "earnings call transcript") -> dict | None:
     """Call Anthropic Haiku to produce the structured summary. Returns dict
     on success, None on failure (e.g. API key missing, rate-limited)."""
     if not _ANTHROPIC_KEY:
@@ -176,7 +352,8 @@ async def _summarize_with_haiku(ticker: str, quarter: str, transcript_text: str)
     # 7-8k tokens — plenty of context, very cheap.
     transcript_trimmed = transcript_text[:30000]
     prompt = _SUMMARY_PROMPT.format(
-        ticker=ticker, quarter=quarter, transcript_text=transcript_trimmed
+        ticker=ticker, quarter=quarter, transcript_text=transcript_trimmed,
+        source_label=source_label,
     )
     payload = {
         "model":      _ANTHROPIC_MODEL,
@@ -323,38 +500,69 @@ async def get_event_summary(ticker: str, force_refresh: bool = False) -> dict | 
         if cached and not _is_stale(cached):
             return cached
 
-    # Fetch transcript
-    raw = await _fetch_av_transcript(sym)
-    # Rate-limit signal — surface so the UI can tell the user honestly
-    if isinstance(raw, dict) and raw.get("error") == "rate_limited":
-        cached = await _load_cached(sym)
-        if cached: return cached
-        return {"error": "rate_limited", "info": raw.get("info"), "ticker": sym}
-    if not raw:
-        # No transcript available — return whatever we have cached even if
-        # stale, otherwise None. Honest fallback.
-        return await _load_cached(sym)
+    # ── Primary source: SEC EDGAR (free, unlimited) ───────────────────
+    # 8-K Item 2.02 earnings press releases give us the actual numbers and
+    # management commentary that Quartr would surface. 10-Q MD&A covers the
+    # narrative when no recent 8-K is available. No API key, no rate limit
+    # beyond polite use.
+    summary = None
+    source_tag = None
+    edgar = await _fetch_edgar_recent(sym)
+    if edgar:
+        summary = await _summarize_with_haiku(
+            sym, edgar["event_date"], edgar["text"],
+            source_label=edgar["source_label"],
+        )
+        if summary:
+            source_tag = f"sec_edgar:{edgar['source_label']}"
+            # Stamp the filing URL into raw_excerpt suffix so the UI can
+            # show a 'Source: SEC filing' link if it wants. Append softly.
+            summary.setdefault("source_url", edgar["source_url"])
+            # Override event_date with the actual filing date if Haiku
+            # didn't extract one cleanly.
+            summary.setdefault("event_date", edgar["event_date"])
 
-    # Concat transcript segments into one block (preserve speaker order)
-    segments = raw.get("transcript", [])
-    if not segments:
-        return await _load_cached(sym)
-    transcript_text = "\n".join(
-        f"{s.get('speaker','')} ({s.get('title','')}): {s.get('content','')}"
-        for s in segments if s.get("content")
-    )
-    quarter = raw.get("quarter", "")
+    # ── Fallback: Alpha Vantage transcript ─────────────────────────────
+    # Only enter this path when EDGAR found NO filing at all (edgar is
+    # falsy). If EDGAR fetched a filing but Haiku summarization failed
+    # (transient network blip, missing API key, JSON parse fail), we'd
+    # rather return stale cache or None than burn an AV call and surface
+    # a misleading "rate limited" message — EDGAR succeeding is terminal.
+    if not summary and not edgar:
+        raw = await _fetch_av_transcript(sym)
+        if isinstance(raw, dict) and raw.get("error") == "rate_limited":
+            cached = await _load_cached(sym)
+            if cached: return cached
+            return {"error": "rate_limited", "info": raw.get("info"), "ticker": sym}
+        if raw:
+            segments = raw.get("transcript", [])
+            if segments:
+                transcript_text = "\n".join(
+                    f"{s.get('speaker','')} ({s.get('title','')}): {s.get('content','')}"
+                    for s in segments if s.get("content")
+                )
+                quarter = raw.get("quarter", "")
+                summary = await _summarize_with_haiku(
+                    sym, quarter, transcript_text,
+                    source_label="earnings call transcript",
+                )
+                if summary:
+                    source_tag = "alpha_vantage_transcript"
 
-    # Summarize
-    summary = await _summarize_with_haiku(sym, quarter, transcript_text)
     if not summary:
-        # LLM failed — return stale cache if we have one
+        # Nothing worked — return stale cache if we have one
         return await _load_cached(sym)
 
-    summary["source"] = "alpha_vantage_transcript"
+    summary["source"] = source_tag or "sec_edgar"
     # Persist for next time
     await _save_cache(sym, summary)
     # Re-load so the response shape matches what /api/event-intel returns
     # from cache (with summarized_at populated by the DB default).
     fresh = await _load_cached(sym)
-    return fresh or summary
+    if fresh:
+        # Merge non-persisted fields (source_url isn't in the DB schema)
+        # so the UI can render a citation link.
+        if summary.get("source_url") and not fresh.get("source_url"):
+            fresh["source_url"] = summary["source_url"]
+        return fresh
+    return summary
