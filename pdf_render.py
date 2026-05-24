@@ -496,6 +496,282 @@ def _make_margin_trend_chart(quarterly_income: list,
         return None
 
 
+def _compute_dcf(t, assumptions):
+    """Compute 5-year DCF + terminal value, return implied share price
+    and a sensitivity matrix. assumptions is the validated dict that
+    came out of pdf_narrative (revenue_growth list, fcf_margin_target,
+    wacc, terminal_growth). All percentage inputs in display form."""
+    if not assumptions:
+        return None
+    try:
+        growth = [float(g) / 100.0 for g in assumptions["revenue_growth"]]
+        if len(growth) != 5:
+            return None
+        fcf_m  = float(assumptions["fcf_margin_target"]) / 100.0
+        wacc   = float(assumptions["wacc"]) / 100.0
+        tg     = float(assumptions["terminal_growth"]) / 100.0
+        if wacc <= tg:
+            return None
+    except (KeyError, TypeError, ValueError):
+        return None
+
+    # Derive starting revenue (TTM) — sum last 4 quarters
+    qinc = t.get("quarterly_income") or []
+    rev_ttm = 0.0
+    for q in qinc[:4]:
+        try:
+            rev_ttm += float(q.get("revenue") or 0)
+        except (TypeError, ValueError):
+            pass
+    if rev_ttm <= 0:
+        # Fall back to market_cap / ps_ttm if quarterly income is missing
+        mcap = _safe_float(t.get("market_cap"))
+        ps   = _safe_float(t.get("ps_ttm"))
+        if mcap and ps and ps > 0:
+            rev_ttm = mcap / ps
+    if rev_ttm <= 0:
+        return None
+
+    # Project 5 years, compute FCF and discount
+    proj = []
+    rev = rev_ttm
+    for y, g in enumerate(growth, start=1):
+        rev = rev * (1 + g)
+        fcf = rev * fcf_m
+        dcf = fcf / ((1 + wacc) ** y)
+        proj.append({"year": y, "revenue": rev, "fcf": fcf, "pv_fcf": dcf})
+
+    fcf_y5      = proj[-1]["fcf"]
+    terminal_v  = fcf_y5 * (1 + tg) / (wacc - tg)
+    pv_terminal = terminal_v / ((1 + wacc) ** 5)
+    enterprise_value = sum(p["pv_fcf"] for p in proj) + pv_terminal
+
+    # Net debt adjustment (rough — most tear sheets approximate equity = EV)
+    # When we don't have net debt, equity value ≈ EV. Acceptable
+    # approximation given the precision of the assumption set.
+    equity_value = enterprise_value
+
+    # Share count from market cap / current price
+    mcap  = _safe_float(t.get("market_cap"))
+    price = _safe_float(t.get("price") or t.get("last_close"))
+    shares = (mcap / price) if (mcap and price and price > 0) else None
+    if not shares or shares <= 0:
+        return None
+    implied_price = equity_value / shares
+
+    # Sensitivity grid: WACC ± 1%, terminal growth ± 1%
+    def _run_with(w_pct, tg_pct):
+        w = w_pct / 100.0
+        g_t = tg_pct / 100.0
+        if w <= g_t:
+            return None
+        ev = 0.0
+        r = rev_ttm
+        for y, g in enumerate(growth, start=1):
+            r = r * (1 + g)
+            ev += (r * fcf_m) / ((1 + w) ** y)
+        fcf5 = r * fcf_m
+        ev += (fcf5 * (1 + g_t) / (w - g_t)) / ((1 + w) ** 5)
+        return ev / shares
+
+    wacc_pct = wacc * 100
+    tg_pct = tg * 100
+    sensitivity = []
+    for w_delta in (-1, 0, +1):
+        row = []
+        for g_delta in (-1, 0, +1):
+            p = _run_with(wacc_pct + w_delta, tg_pct + g_delta)
+            row.append(p)
+        sensitivity.append({
+            "wacc": wacc_pct + w_delta,
+            "prices": row,
+        })
+
+    return {
+        "proj":          proj,
+        "rev_ttm":       rev_ttm,
+        "fcf_margin":    fcf_m * 100,
+        "wacc":          wacc_pct,
+        "terminal_g":    tg_pct,
+        "terminal_v":    terminal_v,
+        "pv_terminal":   pv_terminal,
+        "enterprise_v":  enterprise_value,
+        "implied_price": implied_price,
+        "current_price": price,
+        "shares":        shares,
+        "sensitivity":   sensitivity,
+        "tg_band":       [tg_pct - 1, tg_pct, tg_pct + 1],
+    }
+
+
+def _draw_dcf_model(c, x, y, w, h, t, narrative):
+    """DCF Valuation Model card — 5-year projection bars + assumptions
+    chip row + implied price + 3x3 sensitivity matrix. The piece that
+    pushes the report from buy-side tear sheet to sell-side research
+    note. All math is deterministic; only the input assumptions come
+    from Haiku (and are clamped on the way out)."""
+    c.setFillColor(BG_CARD)
+    c.setStrokeColor(BORDER)
+    c.setLineWidth(0.6)
+    c.roundRect(x, y, w, h, 6, stroke=1, fill=1)
+    c.setFillColor(INK)
+    c.setFont("Helvetica-Bold", 8.5)
+    c.drawString(x + 10, y + h - 13, "DCF VALUATION MODEL")
+    c.setFillColor(INK_MUTED)
+    c.setFont("Helvetica", 7)
+    c.drawString(x + 10, y + h - 22,
+                  "5-year free cash flow + terminal value  ·  sensitivity to WACC & terminal growth")
+
+    dcf_in = (narrative or {}).get("dcf")
+    result = _compute_dcf(t, dcf_in)
+    if not result:
+        c.setFillColor(INK_MUTED)
+        c.setFont("Helvetica", 9)
+        c.drawCentredString(x + w/2, y + h/2 - 6,
+                             "DCF model unavailable (insufficient fundamental data)")
+        return
+
+    # ── Left side: 5-year FCF projection bars + assumption chips ──────
+    left_x = x + 12
+    left_w = (w - 24) * 0.58 - 6
+    chart_top = y + h - 38
+    chart_h   = 70
+
+    proj   = result["proj"]
+    fcfs   = [p["fcf"] / 1e9 for p in proj]   # to $B
+    max_fcf = max(fcfs) if fcfs else 1
+    bar_w  = (left_w - 30) / 5
+    bar_x0 = left_x + 22
+    bar_top = chart_top
+    bar_bot = chart_top - chart_h
+
+    # Mini Y-axis with $B
+    c.setFillColor(INK_MUTED)
+    c.setFont("Helvetica", 6)
+    c.drawString(left_x, chart_top - 6, f"${max_fcf:.1f}B")
+    c.drawString(left_x, bar_bot,        "$0")
+    # Axis line
+    c.setStrokeColor(BORDER)
+    c.setLineWidth(0.4)
+    c.line(bar_x0, bar_bot, bar_x0 + left_w - 22, bar_bot)
+
+    # FCF bars
+    for i, p in enumerate(proj):
+        v = p["fcf"] / 1e9
+        h_bar = (v / max_fcf) * chart_h
+        cx = bar_x0 + i * bar_w + bar_w * 0.15
+        cw = bar_w * 0.7
+        c.setFillColor(BRAND_VIOLET)
+        c.roundRect(cx, bar_bot, cw, max(2, h_bar), 2, stroke=0, fill=1)
+        # Value above bar
+        c.setFillColor(INK)
+        c.setFont("Helvetica-Bold", 6.5)
+        c.drawCentredString(cx + cw / 2, bar_bot + h_bar + 3,
+                             f"${v:.1f}B")
+        # X-axis label
+        c.setFillColor(INK_MUTED)
+        c.setFont("Helvetica", 6)
+        c.drawCentredString(cx + cw / 2, bar_bot - 8, f"Y{p['year']}")
+
+    # Chart title
+    c.setFillColor(INK)
+    c.setFont("Helvetica-Bold", 7)
+    c.drawString(left_x, chart_top + 8, "PROJECTED FREE CASH FLOW")
+
+    # Assumption chip row beneath the chart
+    chip_y = bar_bot - 32
+    chips = [
+        ("WACC",            f"{result['wacc']:.1f}%"),
+        ("Term. growth",    f"{result['terminal_g']:.1f}%"),
+        ("FCF margin (Y5)", f"{result['fcf_margin']:.0f}%"),
+    ]
+    cx = left_x
+    for label, val in chips:
+        chip_w = c.stringWidth(f"{label}: {val}", "Helvetica-Bold", 7) + 12
+        c.setFillColor(BRAND_LIGHT)
+        c.roundRect(cx, chip_y, chip_w, 13, 6, stroke=0, fill=1)
+        c.setFillColor(BRAND_INDIGO)
+        c.setFont("Helvetica-Bold", 7)
+        c.drawString(cx + 6, chip_y + 4, f"{label}: {val}")
+        cx += chip_w + 6
+
+    # Rationale line
+    rationale = ((narrative or {}).get("dcf") or {}).get("rationale") or ""
+    if rationale:
+        c.setFillColor(INK_SOFT)
+        c.setFont("Helvetica", 7.5)
+        max_w = left_w
+        text = rationale
+        while c.stringWidth(text, "Helvetica", 7.5) > max_w and len(text) > 12:
+            text = text[:-2]
+        if text != rationale:
+            text = text.rstrip(" ,;.") + "…"
+        c.drawString(left_x, chip_y - 14, text)
+
+    # ── Right side: Implied price + Sensitivity 3x3 grid ──────────────
+    right_x = x + 12 + left_w + 12
+    right_w = w - (right_x - x) - 12
+
+    implied = result["implied_price"]
+    current = result["current_price"] or 0
+    upside  = ((implied / current - 1) * 100) if current > 0 else 0
+    u_color = GREEN if upside >= 0 else RED
+
+    # Implied price big number
+    c.setFillColor(INK_MUTED)
+    c.setFont("Helvetica-Bold", 7)
+    c.drawString(right_x, chart_top + 8, "IMPLIED SHARE PRICE")
+    c.setFillColor(INK)
+    c.setFont("Helvetica-Bold", 22)
+    c.drawString(right_x, chart_top - 18, f"${implied:.2f}")
+    c.setFillColor(u_color)
+    c.setFont("Helvetica-Bold", 9)
+    c.drawString(right_x, chart_top - 30,
+                  f"{'+' if upside >= 0 else ''}{upside:.1f}% vs ${current:.2f}")
+
+    # Sensitivity 3x3 table
+    sens_top = chart_top - 50
+    cell_w = (right_w - 22) / 4   # 3 cols of values + 1 label col
+    cell_h = 16
+    # Header row
+    c.setFillColor(INK_MUTED)
+    c.setFont("Helvetica-Bold", 6)
+    c.drawString(right_x, sens_top, "SENSITIVITY  ·  WACC \\  TERM g →")
+    th_y = sens_top - 12
+    sens = result["sensitivity"]
+    tg_labels = result["tg_band"]
+    # Column headers (terminal growth)
+    c.setFillColor(INK)
+    c.setFont("Helvetica-Bold", 6.5)
+    for i, g in enumerate(tg_labels):
+        c.drawCentredString(right_x + cell_w * 0.5 + (i + 1) * cell_w,
+                             th_y, f"{g:.1f}%g")
+    # Rows
+    for ri, row in enumerate(sens):
+        ry = th_y - (ri + 1) * cell_h
+        # Row label
+        c.setFillColor(INK_MUTED)
+        c.setFont("Helvetica-Bold", 6.5)
+        c.drawString(right_x, ry + 4, f"WACC {row['wacc']:.1f}%")
+        # Cells
+        for ci, price in enumerate(row["prices"]):
+            cx = right_x + cell_w * 0.5 + (ci + 1) * cell_w
+            if price is None:
+                c.setFillColor(INK_MUTED)
+                c.setFont("Helvetica", 7)
+                c.drawCentredString(cx, ry + 4, "—")
+            else:
+                # Highlight the centre cell (the base case)
+                is_center = (ri == 1 and ci == 1)
+                if is_center:
+                    c.setFillColor(BRAND_LIGHT)
+                    c.rect(cx - cell_w * 0.45, ry, cell_w * 0.9, cell_h - 2,
+                           stroke=0, fill=1)
+                c.setFillColor(BRAND_INDIGO if is_center else INK)
+                c.setFont("Helvetica-Bold" if is_center else "Helvetica", 7)
+                c.drawCentredString(cx, ry + 4, f"${price:.0f}")
+
+
 def _compute_risk_scorecard(t):
     """Deterministic 5-dimension risk assessment from existing metrics.
     Each dimension scores 0-100 where HIGHER = MORE RISK. No AI needed —
@@ -2266,22 +2542,28 @@ def generate_pdf(ticker: str, t: dict, price_history: list[dict] | None = None,
                                 b3_h, t, peers or [])
         _draw_footer(c)
 
-    # ── Page 3 — Valuation Scenarios + Risk Scorecard ────────────────
-    # Two more analyst-grade panels that elevate the report from
-    # "AI-written summary" to "institutional-style research".
-    # Valuation requires Haiku output; Risk is purely deterministic.
+    # ── Page 3 — Valuation Scenarios + DCF Model + Risk Scorecard ────
+    # Three analyst-grade panels that elevate the report from
+    # "AI-written summary" to "sell-side institutional research".
     has_valuation = narrative and narrative.get("valuation")
-    if has_valuation or t.get("quarterly_income"):
+    has_dcf       = narrative and narrative.get("dcf")
+    if has_valuation or has_dcf or t.get("quarterly_income"):
         c.showPage()
         _draw_header(c, today, quarter_lbl)
         y3 = _draw_page2_hero(c, ticker, t)
-        # Valuation Scenarios — top half of page
-        val_h = 220
-        _draw_valuation_scenarios(c, MARGIN_X, y3 - 4 - val_h, CONTENT_W,
+        # Valuation Scenarios — top
+        val_h = 200
+        val_top = y3 - 4
+        _draw_valuation_scenarios(c, MARGIN_X, val_top - val_h, CONTENT_W,
                                     val_h, t, narrative or {})
-        # Risk Scorecard — bottom half
-        risk_top = y3 - 4 - val_h - 18
-        risk_h   = 200
+        # DCF Model — middle
+        dcf_top = val_top - val_h - 12
+        dcf_h   = 200
+        _draw_dcf_model(c, MARGIN_X, dcf_top - dcf_h, CONTENT_W,
+                          dcf_h, t, narrative or {})
+        # Risk Scorecard — bottom
+        risk_top = dcf_top - dcf_h - 12
+        risk_h   = 160
         _draw_risk_scorecard(c, MARGIN_X, risk_top - risk_h, CONTENT_W,
                                risk_h, t)
         _draw_footer(c)

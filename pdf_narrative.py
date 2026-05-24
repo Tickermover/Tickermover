@@ -309,6 +309,42 @@ LATEST EVENT (forward guidance and recent narrative context):
 """
 
 
+_DCF_PROMPT = """You are an equity analyst building a 5-year DCF model. Generate the
+KEY ASSUMPTIONS only — the math is computed downstream. Be defensible:
+ground each number in the metrics block, current trajectory, and sector
+norms. Do NOT manufacture aggressive numbers to hit a desired price.
+
+Constraints — Haiku output is sanitised downstream, but stay reasonable:
+- Year 1-5 revenue growth: each value in [-30, 80] percent. Smooth
+  decay from current rate toward steady-state typical for the sector.
+- FCF margin target (steady-state by year 5): in [-20, 50] percent.
+  Anchor to current FCF margin trajectory + reasonable expansion.
+- WACC: in [6, 14] percent. Use sector beta as guide (high-beta tech =
+  10-12%, mature low-beta = 7-9%).
+- Terminal growth: in [1.5, 4.5] percent. Long-run nominal GDP-ish.
+
+Return ONLY a JSON object (no markdown fences):
+
+{{
+  "revenue_growth": [<y1>, <y2>, <y3>, <y4>, <y5>],
+  "fcf_margin_target": <number>,
+  "wacc": <number>,
+  "terminal_growth": <number>,
+  "rationale": "≤ 25 words: anchor for the assumption set. e.g. 'Decay from current +68% to 12% steady-state on competitive AI infra; 18% FCF margin by Y5 on scale.'"
+}}
+
+TICKER: {ticker}
+SECTOR: {sector}
+CURRENT PRICE: ${price}
+
+KEY METRICS (anchor your assumptions in this data):
+{metrics_block}
+
+LATEST EVENT (recent trajectory, guidance, capacity / pricing dynamics):
+{event_block}
+"""
+
+
 _THESIS_PROMPT = """You are writing the Investment Thesis section of an equity
 analyst report — Bernstein / Morgan Stanley voice. Terse, metric-anchored,
 no essay prose, no hedging filler.
@@ -385,12 +421,15 @@ async def build_narrative(ticker: str, t: dict, event_row: dict | None) -> dict 
     thesis_prompt = _THESIS_PROMPT.format(**common, event_block=event_block)
     val_prompt    = _VALUATION_PROMPT.format(**common, event_block=event_block,
                                               price=f"{price:.2f}" if price else "—")
+    dcf_prompt    = _DCF_PROMPT.format(**common, event_block=event_block,
+                                        price=f"{price:.2f}" if price else "—")
 
     obs_task    = _haiku_call(obs_prompt)
     thesis_task = _haiku_call(thesis_prompt)
     val_task    = _haiku_call(val_prompt)
-    obs_out, thesis_out, val_out = await _asyncio.gather(
-        obs_task, thesis_task, val_task, return_exceptions=True,
+    dcf_task    = _haiku_call(dcf_prompt)
+    obs_out, thesis_out, val_out, dcf_out = await _asyncio.gather(
+        obs_task, thesis_task, val_task, dcf_task, return_exceptions=True,
     )
 
     out = {}
@@ -412,6 +451,28 @@ async def build_narrative(ticker: str, t: dict, event_row: dict | None) -> dict 
                 }
         if len(valuation) == 3:
             out["valuation"] = valuation
+    if isinstance(dcf_out, dict):
+        # Sanitise DCF assumptions — clamp to defensible ranges so a
+        # hallucinated 200% growth assumption can't produce a $50k
+        # implied price. The PDF renderer also validates downstream.
+        try:
+            rev_growth = [float(x) for x in (dcf_out.get("revenue_growth") or [])][:5]
+            if len(rev_growth) == 5:
+                rev_growth = [max(-30.0, min(80.0, v)) for v in rev_growth]
+                fcf_m = max(-20.0, min(50.0, float(dcf_out.get("fcf_margin_target", 10))))
+                wacc  = max(6.0,   min(14.0, float(dcf_out.get("wacc", 10))))
+                tg    = max(1.5,   min(4.5,  float(dcf_out.get("terminal_growth", 3))))
+                if wacc <= tg:   # math safety — terminal must converge
+                    wacc = tg + 2
+                out["dcf"] = {
+                    "revenue_growth":    rev_growth,
+                    "fcf_margin_target": fcf_m,
+                    "wacc":              wacc,
+                    "terminal_growth":   tg,
+                    "rationale":         str(dcf_out.get("rationale") or "")[:200],
+                }
+        except (TypeError, ValueError):
+            pass
     if not out:
         return None
 
@@ -423,6 +484,7 @@ async def build_narrative(ticker: str, t: dict, event_row: dict | None) -> dict 
     out.setdefault("conviction", "medium")
     out.setdefault("catalysts", [])
     out.setdefault("valuation", None)
+    out.setdefault("dcf", None)
     _CACHE[sym] = (now, out)
     if len(_CACHE) > 200:
         oldest_key = min(_CACHE, key=lambda k: _CACHE[k][0])
