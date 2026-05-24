@@ -1664,12 +1664,17 @@ async def api_regime_refresh():
 
 
 @app.get("/api/pdf/{symbol}")
-async def api_pdf(symbol: str):
+async def api_pdf(symbol: str, debug: int = 0):
     """Server-rendered tear sheet PDF — one HTTP call returns the bytes.
 
     Replaces the brittle client-side html2canvas + iframe approach.
     Pulls live data from in-memory universe, fetches cached price-history,
     runs pdf_render.generate_pdf() → returns application/pdf.
+
+    Pass ?debug=1 to get a JSON dump instead of the PDF — shows what
+    each layer of the chart fallback chain returned and what ticker
+    fields are populated. Use this when the PDF chart says 'Price
+    history unavailable' or the Ownership cells are empty.
 
     No client-side waiting, no separate URL ever surfaces."""
     from fastapi.responses import Response
@@ -1691,6 +1696,13 @@ async def api_pdf(symbol: str):
     if not target:
         raise HTTPException(status_code=404, detail=f"Ticker {sym} not found in universe")
 
+    # ── Diagnostic short-circuit ───────────────────────────────────────
+    # When debug=1, capture what each layer of the chart fallback chain
+    # returns and dump as JSON. Same code path as the real run but with
+    # tracing — lets us see live which tier is failing for a given
+    # ticker without grepping server logs.
+    diag = {"ticker": sym, "layers": []} if debug else None
+
     # Pull cached price history (6h TTL, populated by tracker-chart). On a
     # miss, fetch directly so the PDF never renders without a chart.
     pts = []
@@ -1698,6 +1710,8 @@ async def api_pdf(symbol: str):
     c = cache.get(ck)
     if c and c.get("points"):
         pts = c["points"]
+        if diag is not None:
+            diag["layers"].append({"layer": "cache", "points": len(pts), "status": "hit"})
     if not pts:
         # 3-layer fallback to dodge yfinance per-ticker rate limits
         def _yf_fetch_sync():
@@ -1733,9 +1747,12 @@ async def api_pdf(symbol: str):
             return out
         pts = await asyncio.to_thread(_yf_fetch_sync)
         logger.info(f"pdf build {sym}: yfinance returned {len(pts)} points")
+        if diag is not None:
+            diag["layers"].append({"layer": "yfinance", "points": len(pts)})
 
         # 4th-layer fallback: FMP historical-price-full when yfinance is
         # blocked or rate-limited from this IP range.
+        fmp_v3_status = None
         if not pts and config.FMP_API_KEY:
             try:
                 async with httpx.AsyncClient(timeout=10) as _c:
@@ -1744,6 +1761,7 @@ async def api_pdf(symbol: str):
                         f"{sym}?serietype=line&timeseries=90&apikey={config.FMP_API_KEY}"
                     )
                     r = await _c.get(fmp_url)
+                    fmp_v3_status = r.status_code
                     if r.status_code == 200:
                         data = r.json() or {}
                         hist = data.get("historical") or []
@@ -1757,6 +1775,10 @@ async def api_pdf(symbol: str):
                         logger.warning(f"pdf build {sym}: FMP HTTP {r.status_code}: {r.text[:200]}")
             except Exception as exc:
                 logger.warning(f"pdf build {sym}: FMP fallback failed: {exc}")
+        if diag is not None and (not pts or fmp_v3_status is not None):
+            diag["layers"].append({"layer": "fmp_v3_historical",
+                                    "points": len(pts),
+                                    "http": fmp_v3_status})
 
         # 5th-layer fallback: FMP stable endpoint (newer URL form, may be
         # tier-included even when /api/v3/historical-price-full isn't).
@@ -1917,6 +1939,27 @@ async def api_pdf(symbol: str):
     except Exception as exc:
         logger.warning(f"pdf build {sym}: narrative failed: {exc}")
         narrative = None
+
+    # Diagnostic dump — return JSON instead of PDF when debug=1
+    if diag is not None:
+        # Layer marker for completion + ticker field audit
+        diag["final_points"] = len(pts)
+        diag["target_fields"] = {
+            k: target.get(k) for k in (
+                "ticker", "name", "price", "last_close", "market_cap",
+                "rev_growth_yoy", "rev_growth_qyoy", "gross_margin",
+                "fcf_margin", "pe_ttm", "ps_ttm", "peg_ratio",
+                "high_52w", "low_52w",
+                "target_mean", "target_low", "target_high", "total_analysts",
+                "insider_ownership", "institutional_ownership",
+                "avg_volume_str", "dividend_yield",
+                "strong_buy_pct",
+            )
+        }
+        diag["quarterly_income_count"] = len(target.get("quarterly_income") or [])
+        diag["eps_quarters_count"]      = len(target.get("eps_quarters") or [])
+        diag["weighted_keys"]            = list((target.get("weighted") or {}).keys())
+        return JSONResponse(diag)
 
     # Build peer set — same-sector tickers (sub_sector preferred), excluding
     # ourselves, sorted by smart_score desc. Top 3. Pulled straight from the

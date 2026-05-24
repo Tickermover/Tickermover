@@ -196,77 +196,118 @@ def _draw_gradient_strip(c, x, y, w, h, n_steps=80):
         c.rect(x + i * step_w, y, step_w + 0.5, h, stroke=0, fill=1)
 
 
+# Resolve the brand assets shipped in /brand. Loaded once at module
+# load and cached as ImageReader instances. Falls back to synthesised
+# glyphs only if the files are missing.
+import os as _os
+_BRAND_DIR = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "brand")
+_BRAND_MARK_PATH   = _os.path.join(_BRAND_DIR, "alphahunt-mark-transparent-512.png")
+_BRAND_LOCKUP_PATH = _os.path.join(_BRAND_DIR, "alphahunt-lockup-light-1200x300.png")
+_BRAND_MARK_IMG   = None
+_BRAND_LOCKUP_IMG = None
+try:
+    if _os.path.exists(_BRAND_MARK_PATH):
+        _BRAND_MARK_IMG = ImageReader(_BRAND_MARK_PATH)
+    if _os.path.exists(_BRAND_LOCKUP_PATH):
+        _BRAND_LOCKUP_IMG = ImageReader(_BRAND_LOCKUP_PATH)
+except Exception as _exc:
+    logger.warning(f"pdf_render: brand asset load failed: {_exc}")
+
+
 def _draw_brand_mark(c: canvas.Canvas, x: float, y: float, size: float = 28,
                       use_gradient: bool = True):
-    """The AlphaHunt α-mark. Rounded indigo/gradient square with a
-    white alpha glyph centered inside. Use use_gradient=True for the
-    page header (vivid) and False (solid indigo) for compact in-body
-    uses where the gradient noise distracts."""
+    """The AlphaHunt α-mark — uses the real brand PNG when available
+    (brand/alphahunt-mark-transparent-512.png), falls back to a
+    synthesised gradient α tile only if the asset is missing. The
+    use_gradient flag is retained for back-compat but ignored when the
+    real asset is present (the brand PNG is already correctly styled)."""
+    if _BRAND_MARK_IMG is not None:
+        c.drawImage(_BRAND_MARK_IMG, x, y, width=size, height=size,
+                    preserveAspectRatio=True, anchor='c', mask='auto')
+        return
+    # ── Fallback: synthesised glyph ───────────────────────────────────
     c.saveState()
-    if use_gradient:
-        # Fake the gradient by stacking horizontal strips inside the
-        # rounded clip region.
-        c.saveState()
-        p = c.beginPath()
-        # Approximate roundRect path manually for clipping
-        radius = size * 0.18
-        p.moveTo(x + radius, y)
-        p.lineTo(x + size - radius, y)
-        p.arcTo(x + size - 2*radius, y, x + size, y + 2*radius, 270, 90)
-        p.lineTo(x + size, y + size - radius)
-        p.arcTo(x + size - 2*radius, y + size - 2*radius, x + size, y + size, 0, 90)
-        p.lineTo(x + radius, y + size)
-        p.arcTo(x, y + size - 2*radius, x + 2*radius, y + size, 90, 90)
-        p.lineTo(x, y + radius)
-        p.arcTo(x, y, x + 2*radius, y + 2*radius, 180, 90)
-        p.close()
-        c.clipPath(p, stroke=0, fill=0)
-        # Vertical brand gradient inside the clip
-        n_steps = 24
-        for i in range(n_steps):
-            r, g, b = _brand_gradient_color(i / (n_steps - 1))
-            c.setFillColorRGB(r, g, b)
-            c.rect(x, y + (i / n_steps) * size, size, size / n_steps + 0.5,
-                   stroke=0, fill=1)
-        c.restoreState()
-    else:
-        c.setFillColor(BRAND_INDIGO)
-        c.roundRect(x, y, size, size, size * 0.18, stroke=0, fill=1)
+    c.setFillColor(BRAND_INDIGO)
+    c.roundRect(x, y, size, size, size * 0.18, stroke=0, fill=1)
     c.setFont("Helvetica-Bold", size * 0.62)
     c.setFillColor(HexColor("#ffffff"))
     c.drawCentredString(x + size / 2, y + size * 0.26, "α")
     c.restoreState()
 
 
-def _draw_brand_frame(c):
-    """Page chrome drawn FIRST on every page so all content sits on top.
-    Three elements that make the PDF read as an AlphaHunt document
-    rather than a generic reportlab template:
-      1. Top brand gradient strip (5pt tall, full bleed) — indigo →
-         violet → magenta. Same gradient as the dashboard hero text.
-      2. Thin indigo accent bar at the very bottom (2pt) — closes the
-         frame visually.
-      3. Subtle indigo border on left + right edges (0.4pt) — anchors
-         the eye and mirrors the site's bordered cards.
-      4. Watermark α-mark in the bottom-right corner (very low alpha)
-         so reproductions remain branded even on greyscale prints.
-    """
-    # Top brand gradient
-    _draw_gradient_strip(c, 0, A4_H - 5, A4_W, 5)
-    # Bottom accent strip
+def _draw_brand_lockup(c, x, y, height):
+    """Render the AlphaHunt lockup (mark + wordmark) as a single brand
+    image. Used in the page header in place of separately drawn mark +
+    text. Returns the width drawn so the caller can lay out trailing
+    content. Falls back to drawing the mark + 'AlphaHunt' wordmark
+    separately when the lockup asset is missing."""
+    if _BRAND_LOCKUP_IMG is not None:
+        # Lockup is 1200x300 — aspect 4:1. Compute width from target h.
+        w = height * 4
+        c.drawImage(_BRAND_LOCKUP_IMG, x, y, width=w, height=height,
+                    preserveAspectRatio=True, anchor='w', mask='auto')
+        return w
+    # Fallback — mark + wordmark text
+    _draw_brand_mark(c, x, y, size=height, use_gradient=True)
+    c.setFillColor(INK)
+    c.setFont("Helvetica-Bold", height * 0.48)
+    c.drawString(x + height + 8, y + height * 0.45, "Alpha")
     c.setFillColor(BRAND_INDIGO)
-    c.rect(0, 0, A4_W, 2, stroke=0, fill=1)
-    # Subtle vertical edges (very faint)
-    c.setStrokeColor(HexColor("#e0e7ff"))
-    c.setLineWidth(0.4)
-    c.line(2, 5, 2, A4_H - 5)
-    c.line(A4_W - 2, 5, A4_W - 2, A4_H - 5)
-    # Bottom-right watermark α (low-saturation indigo for non-distraction)
-    c.saveState()
-    c.setFillColor(HexColor("#e0e7ff"))
-    c.setFont("Helvetica-Bold", 38)
-    c.drawString(A4_W - MARGIN_X - 28, 14, "α")
-    c.restoreState()
+    a_w = c.stringWidth("Alpha", "Helvetica-Bold", height * 0.48)
+    c.drawString(x + height + 8 + a_w, y + height * 0.45, "Hunt")
+    return height + 8 + c.stringWidth("AlphaHunt", "Helvetica-Bold", height * 0.48)
+
+
+def _draw_brand_frame(c):
+    """SUBTLE page chrome — user feedback v3.8: 'light gradient one, not
+    heavy strip'. Three soft elements that brand the page without
+    shouting:
+      1. Very soft top→bottom gradient from cream-indigo (#fafbff) at
+         the page top to pure white by 20% down. Reads as a barely-
+         there tint, not a coloured banner.
+      2. Tissue-thin (0.3pt) cool-grey border on all four edges.
+      3. Faint α watermark in the bottom-right corner — preserves
+         identity on greyscale prints without dominating colour pages.
+    """
+    # Soft tinted gradient at the top of the page
+    n_strips = 40
+    strip_h  = (A4_H * 0.18) / n_strips   # gradient fades over top 18%
+    top_y    = A4_H
+    for i in range(n_strips):
+        # Cream-indigo (#f4f5ff ≈ rgb 244 245 255) → pure white
+        t = i / (n_strips - 1)
+        r = 244 + int((255 - 244) * t)
+        g = 245 + int((255 - 245) * t)
+        b = 255
+        c.setFillColorRGB(r / 255, g / 255, b / 255)
+        c.rect(0, top_y - (i + 1) * strip_h, A4_W, strip_h + 0.5,
+               stroke=0, fill=1)
+
+    # Tissue-thin border all around (cool grey, almost invisible)
+    c.setStrokeColor(HexColor("#e8eaf6"))
+    c.setLineWidth(0.3)
+    c.rect(4, 4, A4_W - 8, A4_H - 8, stroke=1, fill=0)
+
+    # Faint α watermark in bottom-right — uses brand mark if available,
+    # rendered at very low opacity so it doesn't distract.
+    if _BRAND_MARK_IMG is not None:
+        # Watermark uses a transparency mask via fillAlpha via canvas
+        c.saveState()
+        try:
+            from reportlab.pdfgen.canvas import Canvas
+            c.setFillAlpha(0.06)
+        except Exception:
+            pass
+        c.drawImage(_BRAND_MARK_IMG, A4_W - MARGIN_X - 60, 12,
+                    width=50, height=50,
+                    preserveAspectRatio=True, anchor='c', mask='auto')
+        c.restoreState()
+    else:
+        c.saveState()
+        c.setFillColor(HexColor("#eef2ff"))
+        c.setFont("Helvetica-Bold", 40)
+        c.drawString(A4_W - MARGIN_X - 28, 14, "α")
+        c.restoreState()
 
 
 def _draw_metric_card(c, x, y, w, h, label, value, sub="", value_color=INK, empty=False):
@@ -300,47 +341,44 @@ def _wrap_paragraph(text, width, font_size=8.5, color=INK, leading=11.5, align=T
 
 # ── Section drawers ──────────────────────────────────────────────────
 
-def _draw_header(c, today_str, quarter_lbl):
-    """Branded header — α mark + wordmark on the left, generation
-    timestamp + quarter chip on the right, divider line that uses the
-    brand gradient instead of solid ink. Sits below the page-top
-    gradient strip from _draw_brand_frame."""
-    # Page chrome (gradient strip + edges + watermark)
+def _draw_header(c, today_str, quarter_lbl, page_label=None):
+    """Branded header — real AlphaHunt lockup PNG on the left, generation
+    timestamp + quarter chip on the right, subtle thin divider. Sits
+    on top of the soft light gradient drawn by _draw_brand_frame.
+
+    page_label: optional context label rendered under the lockup,
+    e.g. 'US STOCK TEAR SHEET' (page 1) or 'FINANCIAL TRENDS · PAGE 2'.
+    """
+    # Page chrome (light gradient + border + watermark)
     _draw_brand_frame(c)
 
     y = A4_H - MARGIN_TOP - 28
-    # Larger gradient α-mark
-    _draw_brand_mark(c, MARGIN_X, y + 2, size=30, use_gradient=True)
-    # Wordmark — 'AlphaHunt' in indigo, 'Hunt' bolder with subtle slant
-    c.setFillColor(INK)
-    c.setFont("Helvetica-Bold", 13)
-    c.drawString(MARGIN_X + 40, y + 17, "Alpha")
-    c.setFillColor(BRAND_INDIGO)
-    c.setFont("Helvetica-Bold", 13)
-    alpha_w = c.stringWidth("Alpha", "Helvetica-Bold", 13)
-    c.drawString(MARGIN_X + 40 + alpha_w, y + 17, "Hunt")
+    # Real AlphaHunt brand lockup (mark + wordmark as one asset)
+    lockup_w = _draw_brand_lockup(c, MARGIN_X, y + 2, height=26)
+
+    # Context label under the lockup
     c.setFillColor(INK_MUTED)
     c.setFont("Helvetica-Bold", 7)
-    c.drawString(MARGIN_X + 40, y + 5, "US STOCK TEAR SHEET")
+    label = (page_label or "US STOCK TEAR SHEET").upper()
+    c.drawString(MARGIN_X + 4, y - 6, label)
 
     # Right side — date + quarter chip
     c.setFillColor(INK_MUTED)
     c.setFont("Helvetica", 7.5)
     c.drawRightString(A4_W - MARGIN_X, y + 17, f"GENERATED {today_str.upper()}")
-    # Quarter chip — small brand-tinted pill
-    chip_label = quarter_lbl
-    chip_w = c.stringWidth(chip_label, "Helvetica-Bold", 8) + 14
+    chip_w = c.stringWidth(quarter_lbl, "Helvetica-Bold", 8) + 14
     chip_x = A4_W - MARGIN_X - chip_w
     c.setFillColor(BRAND_LIGHT)
     c.roundRect(chip_x, y + 1, chip_w, 13, 6, stroke=0, fill=1)
     c.setFillColor(BRAND_INDIGO)
     c.setFont("Helvetica-Bold", 8)
-    c.drawString(chip_x + 7, y + 4, chip_label)
+    c.drawString(chip_x + 7, y + 4, quarter_lbl)
 
-    # Divider — brand gradient bar (2pt) instead of solid ink line
-    div_y = y - 6
-    _draw_gradient_strip(c, MARGIN_X, div_y, A4_W - 2 * MARGIN_X, 1.5, n_steps=60)
-    return y - 14  # bottom of header
+    # Thin grey divider (no more loud gradient)
+    c.setStrokeColor(HexColor("#d4d8e8"))
+    c.setLineWidth(0.6)
+    c.line(MARGIN_X, y - 14, A4_W - MARGIN_X, y - 14)
+    return y - 22  # bottom of header
 
 
 def _draw_hero(c, top_y, ticker, t, logo_bytes):
@@ -906,7 +944,7 @@ def _compute_risk_scorecard(t):
     pe   = _safe_float(t.get("pe_ttm"))
     ps   = _safe_float(t.get("ps_ttm"))
     peg  = _safe_float(t.get("peg_ratio"))
-    rev  = norm_pct(t.get("rev_growth_yoy"))
+    rev  = norm_pct(t.get("rev_growth_yoy") or t.get("rev_growth_qyoy") or t.get("revenue_growth_yoy"))
     gm   = norm_pct(t.get("gross_margin"))
     fcfm = norm_pct(t.get("fcf_margin"))
     rsi  = _safe_float(t.get("rsi14") or t.get("rsi_14"))
@@ -1223,52 +1261,105 @@ def _make_sparkline(values, width_pt, height_pt, color="#4338ca",
 
 def _compute_trend_metrics(t):
     """Build the 4-metric time series for the Trend Strip card.
-    Returns list of (label, series, current, color) tuples."""
+
+    Robust to incomplete data: rev growth falls back to QoQ when YoY
+    history (8 quarters) isn't available. Operating margin computes
+    from op_income/revenue when not provided directly. FCF margin
+    pulls from a separate quarterly_cashflow list if present, otherwise
+    falls back to the TTM fcf_margin value as a flat reference line.
+
+    Returns list of (label, series, color) where series is a list of
+    floats/None. Missing dimensions render as labelled empty cards
+    rather than disappearing — the user can see what's not available."""
     qinc = list(t.get("quarterly_income") or [])
     qinc.reverse()   # oldest-first
     if len(qinc) < 2:
         return []
 
-    rev_series, gm_series, om_series, fcf_series = [], [], [], []
-    for i, q in enumerate(qinc[-6:]):
+    # Separate cashflow stream if it exists (some pipelines store FCF
+    # in quarterly_cashflow keyed by date, not on the income row)
+    qcf = list(t.get("quarterly_cashflow") or [])
+    qcf.reverse()
+    cf_by_date = {}
+    for q in qcf:
+        d = q.get("date") or q.get("period")
+        if d:
+            cf_by_date[d] = q
+
+    rev_growth = []
+    rev_growth_label = "Revenue Growth YoY"
+    have_yoy_data = len(qinc) >= 5
+    gm_series, om_series, fcf_series = [], [], []
+    last_n = qinc[-6:]
+
+    for i, q in enumerate(last_n):
         rev = _safe_float(q.get("revenue"))
-        # Revenue growth YoY — needs prior year quarter (i-4)
-        prior_idx = len(qinc) - len(qinc[-6:]) + i - 4
-        rev_prev = _safe_float(qinc[prior_idx].get("revenue")) if 0 <= prior_idx < len(qinc) else None
-        if rev and rev_prev and rev_prev > 0:
-            rev_series.append((rev / rev_prev - 1) * 100)
+        # Revenue growth — prefer YoY (i-4) but fall back to QoQ (i-1)
+        if have_yoy_data:
+            prior_idx = len(qinc) - len(last_n) + i - 4
+            rev_prev = _safe_float(qinc[prior_idx].get("revenue")) if 0 <= prior_idx < len(qinc) else None
         else:
-            rev_series.append(None)
+            prior_idx = len(qinc) - len(last_n) + i - 1
+            rev_prev = _safe_float(qinc[prior_idx].get("revenue")) if 0 <= prior_idx < len(qinc) else None
+            rev_growth_label = "Revenue Growth QoQ"
+        if rev and rev_prev and rev_prev > 0:
+            rev_growth.append((rev / rev_prev - 1) * 100)
+        else:
+            rev_growth.append(None)
+
         # Gross margin
         gm = _safe_float(q.get("gross_margin"))
         if gm is not None and abs(gm) <= 1: gm *= 100
         gm_series.append(gm)
-        # Operating margin (compute if not provided)
+
+        # Operating margin — prefer field, else compute, else None
         om = _safe_float(q.get("operating_margin"))
         if om is None:
             op_inc = _safe_float(q.get("operating_income"))
-            if op_inc and rev and rev > 0:
+            if op_inc is not None and rev and rev > 0:
                 om = (op_inc / rev) * 100
         elif abs(om) <= 1:
             om *= 100
         om_series.append(om)
-        # FCF margin
+
+        # FCF margin — try the row, the matching cashflow row, then None
         fcf = _safe_float(q.get("fcf_margin") or q.get("free_cash_flow_margin"))
         if fcf is None:
             fcf_v = _safe_float(q.get("free_cash_flow"))
-            if fcf_v and rev and rev > 0:
+            if fcf_v is None:
+                qd = q.get("date") or q.get("period")
+                if qd and qd in cf_by_date:
+                    fcf_v = _safe_float(cf_by_date[qd].get("free_cash_flow")
+                                          or cf_by_date[qd].get("freeCashFlow"))
+            if fcf_v is not None and rev and rev > 0:
                 fcf = (fcf_v / rev) * 100
         elif abs(fcf) <= 1:
             fcf *= 100
         fcf_series.append(fcf)
 
-    metrics = [
-        ("Revenue Growth YoY", rev_series, "#4338ca"),
-        ("Gross Margin",       gm_series,  "#8b5cf6"),
-        ("Operating Margin",   om_series,  "#ec4899"),
-        ("FCF Margin",         fcf_series, "#16a34a"),
+    # Heuristic fallback: if op_margin / fcf_margin series have <2 real
+    # values, fill from the headline ticker fields as a flat reference.
+    def _meaningful(seq):
+        return sum(1 for v in seq if v is not None) >= 2
+
+    if not _meaningful(om_series):
+        # Try operating_margin TTM on the ticker, expand as flat series
+        om_ttm = _safe_float(t.get("operating_margin"))
+        if om_ttm is not None:
+            if abs(om_ttm) <= 1: om_ttm *= 100
+            om_series = [om_ttm] * len(om_series)
+    if not _meaningful(fcf_series):
+        fcf_ttm = _safe_float(t.get("fcf_margin"))
+        if fcf_ttm is not None:
+            if abs(fcf_ttm) <= 1: fcf_ttm *= 100
+            fcf_series = [fcf_ttm] * len(fcf_series)
+
+    return [
+        (rev_growth_label, rev_growth, "#4338ca"),
+        ("Gross Margin",   gm_series,  "#8b5cf6"),
+        ("Operating Margin", om_series, "#ec4899"),
+        ("FCF Margin",     fcf_series, "#16a34a"),
     ]
-    return metrics
 
 
 def _draw_trend_strip(c, x, y, w, h, t):
@@ -1359,7 +1450,7 @@ def _draw_peer_comparison(c, x, y, w, h, t, peers):
         "name":   t.get("name", "")[:18],
         "mcap":   _safe_float(t.get("market_cap")),
         "pe":     _safe_float(t.get("pe_ttm")),
-        "rev":    _safe_float(t.get("rev_growth_yoy")),
+        "rev":    _safe_float(t.get("rev_growth_yoy") or t.get("rev_growth_qyoy") or t.get("revenue_growth_yoy")),
         "gm":     _safe_float(t.get("gross_margin")),
         "score":  int(t.get("smart_score") or t.get("pop_score") or 0),
         "is_target": True,
@@ -1371,7 +1462,7 @@ def _draw_peer_comparison(c, x, y, w, h, t, peers):
             "name":   (p.get("name") or "")[:18],
             "mcap":   _safe_float(p.get("market_cap")),
             "pe":     _safe_float(p.get("pe_ttm")),
-            "rev":    _safe_float(p.get("rev_growth_yoy")),
+            "rev":    _safe_float(p.get("rev_growth_yoy") or p.get("rev_growth_qyoy") or p.get("revenue_growth_yoy")),
             "gm":     _safe_float(p.get("gross_margin")),
             "score":  int(p.get("smart_score") or p.get("pop_score") or 0),
             "is_target": False,
@@ -1687,6 +1778,11 @@ def _draw_metrics_grid(c, top_y, t):
     hi52 = _safe_float(t.get("high_52w"))
     lo52 = _safe_float(t.get("low_52w"))
     px = _safe_float(t.get("price"))
+    # Defensive swap: some upstream sources mislabel high/low. If low
+    # is reported greater than high, swap them so the metrics card
+    # doesn't show '$922 – $819' as it did on the MU v3.8 PDF.
+    if hi52 is not None and lo52 is not None and lo52 > hi52:
+        hi52, lo52 = lo52, hi52
     # Split-adjustment heuristic: if 52W low is <1/4 of current price AND
     # of 52W high, the low almost certainly comes from pre-split data
     # (LITE's $71-$1086 range vs $946 current is the classic example —
@@ -2257,13 +2353,11 @@ def _draw_exec_summary_para(c, top_y, paragraph_text):
     return y
 
 
-def _draw_page2_hero(c, ticker, t):
-    """Compact second-page header: ticker + name + page label.
-    Positioned BELOW the header band so it doesn't overlap. Returns
-    the y-coordinate where downstream content can start."""
-    # Header band's _draw_header() leaves us around A4_H - 75.
-    # Push hero to A4_H - 115 so the divider line and the ticker
-    # don't collide.
+def _draw_page2_hero(c, ticker, t, subtitle="Analyst Narrative"):
+    """Compact secondary-page hero with context-specific subtitle —
+    'Financial Trends', 'Valuation & Risk', 'Analyst Narrative'. The
+    v3.8 version printed 'ANALYST NARRATIVE · PAGE 2' on every page
+    regardless of content; this fixes that."""
     y = A4_H - 105
     co_name = (t.get("name") or t.get("company_name") or "").strip()
     c.setFillColor(BRAND_INDIGO)
@@ -2274,8 +2368,7 @@ def _draw_page2_hero(c, ticker, t):
     c.drawString(MARGIN_X + 65, y + 22, co_name[:60])
     c.setFillColor(INK_MUTED)
     c.setFont("Helvetica", 7.5)
-    c.drawString(MARGIN_X + 65, y + 9, "ANALYST NARRATIVE  ·  PAGE 2")
-    # Thin brand accent bar at bottom of the hero band
+    c.drawString(MARGIN_X + 65, y + 9, subtitle.upper())
     c.setStrokeColor(BRAND_INDIGO)
     c.setLineWidth(1.2)
     c.line(MARGIN_X, y - 2, A4_W - MARGIN_X, y - 2)
@@ -2549,12 +2642,13 @@ def _draw_event_summary(c, top_y, event_row, today_str=None, quarter_lbl=None,
 
 
 def _draw_footer(c):
-    """Branded footer — thin gradient divider above the disclaimer
-    text + 'alphahunt.in' wordmark in brand colour with the α mark."""
+    """Branded footer — thin grey divider above the disclaimer text,
+    real brand mark + 'alphahunt.in' on the right."""
     foot_y = MARGIN_BOTTOM
-    # Brand gradient divider (matches the header divider)
-    _draw_gradient_strip(c, MARGIN_X, foot_y + 26, A4_W - 2 * MARGIN_X, 1.5,
-                          n_steps=60)
+    # Thin grey divider (matches the header)
+    c.setStrokeColor(HexColor("#d4d8e8"))
+    c.setLineWidth(0.5)
+    c.line(MARGIN_X, foot_y + 26, A4_W - MARGIN_X, foot_y + 26)
     # Disclaimer
     c.setFillColor(INK_SOFT)
     c.setFont("Helvetica-Bold", 6.8)
@@ -2567,18 +2661,14 @@ def _draw_footer(c):
     c.setFont("Helvetica", 6.8)
     c.drawString(MARGIN_X, foot_y + 6,
                  "Data: SEC EDGAR, Yahoo Finance, FMP. Past performance does not guarantee future results. Do your own research.")
-    # Mini α + wordmark on the right
-    _draw_brand_mark(c, A4_W - MARGIN_X - 60, foot_y + 8, size=12,
-                     use_gradient=True)
-    c.setFillColor(INK)
-    c.setFont("Helvetica-Bold", 8)
-    c.drawString(A4_W - MARGIN_X - 46, foot_y + 13, "Alpha")
+    # Mini real brand mark + url on the right
+    _draw_brand_mark(c, A4_W - MARGIN_X - 64, foot_y + 6, size=14)
     c.setFillColor(BRAND_INDIGO)
-    a_w = c.stringWidth("Alpha", "Helvetica-Bold", 8)
-    c.drawString(A4_W - MARGIN_X - 46 + a_w, foot_y + 13, "Hunt.in")
+    c.setFont("Helvetica-Bold", 8.5)
+    c.drawString(A4_W - MARGIN_X - 46, foot_y + 12, "alphahunt.in")
     c.setFillColor(INK_MUTED)
     c.setFont("Helvetica", 6.5)
-    c.drawRightString(A4_W - MARGIN_X, foot_y + 4, "Hunt for Alpha")
+    c.drawRightString(A4_W - MARGIN_X, foot_y + 2, "Hunt for Alpha")
 
 
 # ── Public entry ─────────────────────────────────────────────────────
@@ -2613,7 +2703,8 @@ def generate_pdf(ticker: str, t: dict, price_history: list[dict] | None = None,
     # Header band
     today = date.today().strftime("%b %d, %Y")
     quarter_lbl = f"Q{(date.today().month - 1)//3 + 1}'{str(date.today().year)[-2:]} Reported"
-    header_bottom = _draw_header(c, today, quarter_lbl)
+    header_bottom = _draw_header(c, today, quarter_lbl,
+                                   page_label="US STOCK TEAR SHEET")
 
     # Hero
     logo_bytes = _fetch_logo_bytes(ticker)
@@ -2655,8 +2746,9 @@ def generate_pdf(ticker: str, t: dict, price_history: list[dict] | None = None,
     have_visuals = (len(qinc) >= 2 or len(eps) >= 2)
     if have_visuals:
         c.showPage()
-        _draw_header(c, today, quarter_lbl)
-        y2 = _draw_page2_hero(c, ticker, t)
+        _draw_header(c, today, quarter_lbl,
+                      page_label="FINANCIAL TRENDS  ·  PAGE 2")
+        y2 = _draw_page2_hero(c, ticker, t, subtitle="Financial Trends")
         # Block 1: existing quarterly+margin dual chart row (160pt tall)
         b1_bottom = _draw_quarterly_charts_row(c, y2 - 4, t)
         # Block 2: 4-metric trend strip (160pt tall)
@@ -2677,8 +2769,9 @@ def generate_pdf(ticker: str, t: dict, price_history: list[dict] | None = None,
     has_dcf       = narrative and narrative.get("dcf")
     if has_valuation or has_dcf or t.get("quarterly_income"):
         c.showPage()
-        _draw_header(c, today, quarter_lbl)
-        y3 = _draw_page2_hero(c, ticker, t)
+        _draw_header(c, today, quarter_lbl,
+                      page_label="VALUATION & RISK  ·  PAGE 3")
+        y3 = _draw_page2_hero(c, ticker, t, subtitle="Valuation & Risk")
         # Valuation Scenarios — top
         val_h = 200
         val_top = y3 - 4
@@ -2699,8 +2792,9 @@ def generate_pdf(ticker: str, t: dict, price_history: list[dict] | None = None,
     # ── Page 4 — AI analyst narrative (only when we have content) ─────
     if narrative or event_row:
         c.showPage()
-        _draw_header(c, today, quarter_lbl)
-        y = _draw_page2_hero(c, ticker, t)
+        _draw_header(c, today, quarter_lbl,
+                      page_label="ANALYST NARRATIVE  ·  PAGE 4")
+        y = _draw_page2_hero(c, ticker, t, subtitle="Analyst Narrative")
         if narrative:
             y = _draw_investment_thesis(c, y - 4, narrative)
             y = _draw_catalysts(c, y - 14, narrative.get("catalysts") or [])
