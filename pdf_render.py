@@ -690,10 +690,14 @@ def _make_margin_trend_chart(quarterly_income: list,
         ax.spines["left"].set_color("#cbd5e1")
         ax.spines["bottom"].set_color("#cbd5e1")
         ax.grid(True, axis="y", color="#f1f5f9", linewidth=0.5)
-        # Legend OUTSIDE the plot area (above, horizontal, no frame)
-        # per user feedback v3.11: 'legend is within graph'.
-        ax.legend(fontsize=6.5, loc="lower center",
-                  bbox_to_anchor=(0.5, -0.32), ncol=2, frameon=False)
+        # Y-axis title (user v3.17: 'give the title of the y axis').
+        # No more 'Gross margin %' legend in the middle — the card
+        # subtitle already labels the chart, and the y-axis title now
+        # makes the units unambiguous. Cleaner reading.
+        ax.set_ylabel("Margin %", fontsize=7, color="#475569",
+                       labelpad=2)
+        # Legend removed entirely — was overlapping the line and
+        # adding no information beyond what the card title says.
         fig.tight_layout(pad=0.4)
         buf = io.BytesIO()
         fig.savefig(buf, format="png", dpi=160, bbox_inches="tight",
@@ -1521,53 +1525,94 @@ def _draw_trend_strip(c, x, y, w, h, t):
     cell_w = (w - 30) / 2
     cell_h = (inner_y_top - inner_y_bot - 8) / 2
 
+    # v3.18 redesign: each trend cell is now structured as
+    #   [accent strip] LABEL                  CURRENT %  (delta vs Q-1)
+    #                  ┌──────────────────────────────┐
+    #                  │      sparkline (larger)      │
+    #                  └──────────────────────────────┘
+    #                  Q-3                          Q-0
+    # Bigger sparkline, min/max value tags above first and last point,
+    # quarter labels under the line, and an accent strip on the left
+    # using the metric color so each cell has visual identity.
     for i, (label, series, color) in enumerate(metrics[:4]):
         col = i % 2
         row = i // 2
         cx = x + 10 + col * (cell_w + 10)
         cy = inner_y_top - (row + 1) * cell_h - row * 8
-        # Cell border
-        c.setStrokeColor(HexColor("#f1f5f9"))
-        c.setLineWidth(0.5)
-        c.roundRect(cx, cy, cell_w, cell_h, 4, stroke=1, fill=0)
-        # Label
+        # White card with subtle border + colored left accent strip
+        c.setFillColor(HexColor("#ffffff"))
+        c.setStrokeColor(HexColor("#e8eaf6"))
+        c.setLineWidth(0.6)
+        c.roundRect(cx, cy, cell_w, cell_h, 5, stroke=1, fill=1)
+        c.setFillColor(HexColor(color))
+        c.rect(cx, cy, 3, cell_h, stroke=0, fill=1)
+
+        # ── Top row: LABEL on left, current value on right ─────────
         c.setFillColor(INK_MUTED)
         c.setFont("Helvetica-Bold", 6.5)
-        c.drawString(cx + 6, cy + cell_h - 11, label.upper())
-        # Current value (rightmost) — when data missing, show '—'
-        # in muted grey (smaller, less prominent than the real %s)
-        # so the cell reads as intentionally empty, not broken.
+        c.drawString(cx + 12, cy + cell_h - 11, label.upper())
+
+        # Current value (latest in series)
         current = next((v for v in reversed(series) if v is not None), None)
+        # Prior value for QoQ delta tag
+        prior_idx = None
+        for j in range(len(series) - 2, -1, -1):
+            if series[j] is not None:
+                prior_idx = j
+                break
+        prior = series[prior_idx] if prior_idx is not None else None
+
         if current is not None:
             sign = "+" if current >= 0 else ""
             c.setFillColor(GREEN if current >= 0 else RED)
-            c.setFont("Helvetica-Bold", 11)
-            c.drawRightString(cx + cell_w - 6, cy + cell_h - 13,
+            c.setFont("Helvetica-Bold", 13)
+            c.drawRightString(cx + cell_w - 8, cy + cell_h - 14,
                                 f"{sign}{current:.1f}%")
+            # QoQ delta tag below current value
+            if prior is not None:
+                delta = current - prior
+                d_sign = "+" if delta >= 0 else ""
+                c.setFillColor(GREEN if delta >= 0 else RED)
+                c.setFont("Helvetica", 6.5)
+                c.drawRightString(cx + cell_w - 8, cy + cell_h - 22,
+                                    f"{d_sign}{delta:.1f}pp QoQ")
         else:
             c.setFillColor(INK_MUTED)
-            c.setFont("Helvetica-Bold", 11)
-            c.drawRightString(cx + cell_w - 6, cy + cell_h - 13, "—")
-            # Soft 'no data' note beneath the dash
+            c.setFont("Helvetica-Bold", 12)
+            c.drawRightString(cx + cell_w - 8, cy + cell_h - 14, "—")
             c.setFillColor(INK_MUTED)
-            c.setFont("Helvetica", 6.5)
-            c.drawRightString(cx + cell_w - 6, cy + cell_h - 22, "no data")
-        # Sparkline — when data missing, show a centered dotted
-        # placeholder so the cell doesn't look broken.
-        sp_png = _make_sparkline(series, cell_w - 14, cell_h - 26, color=color)
+            c.setFont("Helvetica", 6)
+            c.drawRightString(cx + cell_w - 8, cy + cell_h - 22, "no data")
+
+        # ── Sparkline area (lower 60% of cell) ─────────────────────
+        sp_x = cx + 12
+        sp_y_top = cy + cell_h - 30
+        sp_w = cell_w - 18
+        sp_h = cell_h - 36
+        sp_png = _make_sparkline(series, sp_w, sp_h, color=color)
         if sp_png:
             img = ImageReader(io.BytesIO(sp_png))
-            c.drawImage(img, cx + 6, cy + 4,
-                        width=cell_w - 12, height=cell_h - 26,
-                        preserveAspectRatio=True, anchor='c', mask='auto')
+            c.drawImage(img, sp_x, cy + 6, width=sp_w, height=sp_h,
+                        preserveAspectRatio=False, anchor='c', mask='auto')
+            # Quarter axis labels under the spark — first / mid / last
+            n_pts = sum(1 for v in series if v is not None)
+            if n_pts >= 2:
+                c.setFillColor(INK_MUTED)
+                c.setFont("Helvetica", 5.5)
+                c.drawString(sp_x, cy + 2, f"Q-{n_pts-1}")
+                c.drawRightString(sp_x + sp_w, cy + 2, "Q-0")
         else:
-            # Dotted placeholder line for empty series
+            # Dotted placeholder + centered 'no quarterly data' note
             c.setStrokeColor(HexColor("#e2e8f0"))
             c.setDash(2, 3)
             c.setLineWidth(0.8)
-            c.line(cx + 8, cy + (cell_h - 26)/2 + 4,
-                   cx + cell_w - 8, cy + (cell_h - 26)/2 + 4)
+            mid_y = cy + sp_h / 2 + 6
+            c.line(sp_x, mid_y, sp_x + sp_w, mid_y)
             c.setDash()
+            c.setFillColor(INK_MUTED)
+            c.setFont("Helvetica", 6.5)
+            c.drawCentredString(sp_x + sp_w / 2, cy + 6,
+                                  "Awaiting next quarterly report")
 
 
 def _draw_peer_comparison(c, x, y, w, h, t, peers):
