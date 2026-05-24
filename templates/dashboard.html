@@ -7806,12 +7806,29 @@ function v2ExtractKeyMetrics(sections){
   // Dollar / percent value pattern that may follow within ~40 chars
   const valueRx = /\$\s?[\d,]+(?:\.\d+)?\s*(?:billion|million|B|M)?\b|[\d,]+(?:\.\d+)?%/i;
 
-  const found = [];
-  const seen  = new Set();
+  // Specificity priority — when the same number is caught by two
+  // keywords (e.g. 'guidance' AND 'EPS' both near '$13.05'), the
+  // more-specific keyword wins. Higher number = more specific.
+  const priority = {
+    'eps': 10, 'diluted eps': 10, 'gaap eps': 10, 'non-gaap eps': 10,
+    'ebitda': 9, 'adjusted ebitda': 9,
+    'free cash flow': 9, 'operating cash flow': 9, 'cash flow from operations': 9,
+    'net income': 8, 'operating income': 8, 'gross profit': 8,
+    'gross margin': 8, 'operating margin': 8,
+    'backlog': 8, 'arr': 8,
+    'capex': 7, 'capital expenditure': 7, 'capital expenditures': 7,
+    'dividend': 7, 'buyback': 7, 'repurchase': 7, 'share repurchase': 7,
+    'cash': 6, 'cash and equivalents': 6, 'cash, equivalents': 6,
+    'total debt': 6, 'long-term debt': 6,
+    'orders': 6, 'bookings': 6, 'shipments': 6,
+    'revenue': 5, 'sales': 4,         // 'revenue' beats 'sales' for the same number
+    'guidance': 2,                     // generic — bottom rank
+    'loss': 3,
+  };
 
-  flat.forEach(text => {
-    // For each keyword hit, grab the next 50 chars and search for a
-    // dollar amount or percentage. Pair them as (label, value).
+  // First pass: collect ALL matches with their priority + value
+  const candidates = [];
+  flat.forEach((text, ti) => {
     keywordRx.lastIndex = 0;
     let km;
     while ((km = keywordRx.exec(text)) !== null) {
@@ -7820,19 +7837,52 @@ function v2ExtractKeyMetrics(sections){
       const vm = after.match(valueRx);
       if (!vm) continue;
       const rawValue = vm[0];
-      const isMoney = /\$/.test(rawValue);
-      const value = isMoney ? fmtMoney(rawValue) : fmtPct(after.slice(0, vm.index + vm[0].length));
-      const label = labelMap[keyword] || keyword.replace(/\b\w/g, c => c.toUpperCase());
-      const key = label + value;
-      if (seen.has(key.toLowerCase())) continue;
-      seen.add(key.toLowerCase());
-      found.push({label, value, isMoney});
+      const isMoney  = /\$/.test(rawValue);
+      const value    = isMoney ? fmtMoney(rawValue)
+                                : fmtPct(after.slice(0, vm.index + vm[0].length));
+      const label    = labelMap[keyword] || keyword.replace(/\b\w/g, c => c.toUpperCase());
+      candidates.push({
+        label, value, isMoney,
+        prio:     priority[keyword] || 1,
+        textPos:  ti,                  // earlier bullet = better
+      });
     }
   });
 
-  // Rank: prefer money metrics, then percentages
-  found.sort((a, b) => (b.isMoney ? 1 : 0) - (a.isMoney ? 1 : 0));
-  return found.slice(0, 6);
+  // Second pass — dedupe by VALUE: when the same dollar amount shows
+  // up under multiple labels (the '$13.05 in EPS guidance' case),
+  // keep only the highest-priority label for that value.
+  const bestForValue = {};
+  candidates.forEach(c => {
+    const v = c.value;
+    if (!bestForValue[v] || c.prio > bestForValue[v].prio) {
+      bestForValue[v] = c;
+    }
+  });
+  const dedupedByValue = Object.values(bestForValue);
+
+  // Third pass — dedupe by LABEL: keep the FIRST occurrence of each
+  // label (typically the headline number in the lead bullet, not a
+  // segment / quarter-guide repeat further down).
+  const seenLabel = new Set();
+  const final = [];
+  dedupedByValue
+    .sort((a, b) => a.textPos - b.textPos)   // preserve narrative order
+    .forEach(c => {
+      const lk = c.label.toLowerCase();
+      if (seenLabel.has(lk)) return;
+      seenLabel.add(lk);
+      final.push(c);
+    });
+
+  // Final rank: money pills first (more headline-y), then percentages.
+  // Within each band, keep narrative order (so Revenue stays above
+  // Cash if Revenue was mentioned first).
+  final.sort((a, b) => {
+    const m = (b.isMoney ? 1 : 0) - (a.isMoney ? 1 : 0);
+    return m !== 0 ? m : a.textPos - b.textPos;
+  });
+  return final.slice(0, 6);
 }
 
 // Pick top 3 most-numeric / most-informative bullets across all
