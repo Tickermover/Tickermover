@@ -2783,9 +2783,12 @@ html.v2-dark .v2-mp-mini-lbl{color:#cbd5e1}
    Briefings — Quartr-style executive briefing redesign (v2)
    ────────────────────────────────────────────────────────────── */
 .v2-brf-quartr{max-width:1100px;margin:0 auto}
-.v2-brf-q-grid{display:grid;grid-template-columns:1fr 280px;gap:24px;align-items:start}
+.v2-brf-topbar{display:flex;justify-content:flex-end;margin-bottom:14px}
+.v2-brf-topbar .v2-brf-back{margin:0}
+.v2-brf-q-grid{display:grid;grid-template-columns:1fr 240px;gap:24px;align-items:start}
 @media (max-width:900px){
   .v2-brf-q-grid{grid-template-columns:1fr}
+  .v2-brf-topbar{justify-content:flex-start}
 }
 
 /* Compact hero ─────────────────────────────────────────────────── */
@@ -4662,7 +4665,6 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
     <div class="v2-brf-head">
       <div class="v2-brf-eyebrow">Briefings</div>
       <div class="v2-brf-title">Event summaries — every ticker</div>
-      <div class="v2-brf-sub">Earnings calls, investor-day talks, technology conferences. AI-summarised into the topics that actually moved the conversation. First load per ticker takes ~6-10s, instant after that.</div>
     </div>
     <div class="v2-brf-grid" id="v2-brf-grid">
       <div class="v2-brf-loading">Loading ticker list…</div>
@@ -7784,7 +7786,11 @@ function v2PickTldrBullets(sections){
 }
 
 function v2RenderBriefingHTML(sym, d){
-  const back = '<button class="v2-brf-back" onclick="v2CloseBriefing()">← Back to all tickers</button>';
+  // 'Back to all tickers' button — positioned in a top-right strip so
+  // it doesn't sit alone on the left above the hero (user feedback).
+  const back = '<div class="v2-brf-topbar">' +
+    '<button class="v2-brf-back" onclick="v2CloseBriefing()">← Back to all tickers</button>' +
+    '</div>';
   if (!d || d.available === false){
     if (d && d.reason === 'rate_limited'){
       return back + '<div class="v2-brf-empty-state">' +
@@ -7908,15 +7914,14 @@ function v2RenderBriefingHTML(sym, d){
   }
 
   // ── Close LEFT, open SIDEBAR ─────────────────────────────────────
+  // User feedback: ticker/company info is already prominent in the hero
+  // — DELETED the redundant 'AAOI / company name / sector chip' card.
+  // Sidebar now opens directly with Key Takeaways + the PDF CTA, and
+  // the hero in the main column gets extra width because the sidebar
+  // is narrower.
   html += '</div>' +    // /v2-brf-q-main
 
     '<aside class="v2-brf-q-side">' +
-      '<div class="v2-brf-q-side-card">' +
-        '<div class="v2-brf-q-side-tic">' + v2EscHTML(sym) + '</div>' +
-        '<div class="v2-brf-q-side-co">' + v2EscHTML(coName) + '</div>' +
-        (sector ? '<div class="v2-brf-q-side-sector">' + v2EscHTML(sector) + '</div>' : '') +
-      '</div>' +
-
       (tldrBullets.length ? (
         '<div class="v2-brf-q-side-card">' +
           '<div class="v2-brf-q-side-label">KEY TAKEAWAYS</div>' +
