@@ -614,24 +614,124 @@ def _build_exec_bits(t, score, grade, tier_map):
 
 
 def _draw_exec_summary(c, top_y, bits):
-    """Brand-indigo block with the assembled summary as a wrapped paragraph."""
-    summary_h = 60
+    """Brand-indigo block with the assembled summary as a wrapped paragraph.
+    Pre-measures the paragraph height so the box always fits the content
+    (no more clipping with '$1 billion buyback and…' cut off mid-sentence)."""
+    text = " ".join(bits) if bits else "See metrics above for the full read."
+    p = _wrap_paragraph(text, CONTENT_W - 30, font_size=9, leading=12, color=INK)
+    _, ph = p.wrap(CONTENT_W - 30, 200)
+    summary_h = max(60, ph + 28)   # label band + paragraph + pad
     y = top_y - summary_h - 10
-    # Soft brand-tinted background
     c.setFillColor(BRAND_LIGHT)
-    c.setStrokeColor(BRAND_INDIGO)
-    c.setLineWidth(0)
     c.roundRect(MARGIN_X, y, CONTENT_W, summary_h, 6, stroke=0, fill=1)
     c.setFillColor(BRAND_INDIGO)
     c.rect(MARGIN_X, y, 3, summary_h, stroke=0, fill=1)
     c.setFillColor(BRAND_INDIGO)
     c.setFont("Helvetica-Bold", 7.5)
     c.drawString(MARGIN_X + 14, y + summary_h - 14, "EXECUTIVE SUMMARY")
-    text = " ".join(bits) if bits else "See metrics above for the full read."
-    p = _wrap_paragraph(text, CONTENT_W - 30, font_size=9, leading=12, color=INK)
-    avail_h = summary_h - 22
-    w, h = p.wrap(CONTENT_W - 30, avail_h)
-    p.drawOn(c, MARGIN_X + 14, y + summary_h - 18 - h)
+    p.drawOn(c, MARGIN_X + 14, y + 8)
+    return y
+
+
+def _draw_analyst_outlook_row(c, top_y, t):
+    """New page-1 row: Analyst Outlook (left) + Ownership Snapshot (right).
+    Restores the data-rich sections from the old CRDO tear sheet that the
+    AI-only v3 version dropped. Pure data — no AI commentary, so the page
+    reads as a pro analyst report, not an LLM essay."""
+    block_h = 86
+    y = top_y - block_h - 10
+    half_w = (CONTENT_W - 10) / 2
+
+    # ── LEFT: Analyst Outlook ─────────────────────────────────────────
+    left_x = MARGIN_X
+    c.setFillColor(BG_CARD)
+    c.setStrokeColor(BORDER)
+    c.setLineWidth(0.6)
+    c.roundRect(left_x, y, half_w, block_h, 6, stroke=1, fill=1)
+    c.setFillColor(INK)
+    c.setFont("Helvetica-Bold", 8.5)
+    c.drawString(left_x + 10, y + block_h - 13, "ANALYST OUTLOOK")
+    # Mean target with upside
+    tgt_mean = _safe_float(t.get("target_mean"))
+    tgt_low  = _safe_float(t.get("target_low"))
+    tgt_high = _safe_float(t.get("target_high"))
+    price    = _safe_float(t.get("price") or t.get("last_close"))
+    total_an = int(t.get("total_analysts") or 0)
+    if tgt_mean and price and price > 0:
+        upside = (tgt_mean / price - 1) * 100
+        u_color = GREEN if upside >= 0 else RED
+        u_label = f"{'+' if upside >= 0 else ''}{upside:.1f}% upside"
+        c.setFillColor(INK)
+        c.setFont("Helvetica-Bold", 16)
+        c.drawString(left_x + 10, y + block_h - 36, f"${tgt_mean:.2f}")
+        c.setFillColor(INK_MUTED)
+        c.setFont("Helvetica", 7)
+        c.drawString(left_x + 10, y + block_h - 47, "MEAN TARGET")
+        c.setFillColor(u_color)
+        c.setFont("Helvetica-Bold", 8)
+        c.drawString(left_x + 10, y + 10, u_label)
+    else:
+        c.setFillColor(INK_MUTED)
+        c.setFont("Helvetica", 9)
+        c.drawString(left_x + 10, y + block_h / 2 - 4, "No analyst target data")
+    # Target band on the right of the card
+    if tgt_low and tgt_high:
+        band_x = left_x + half_w / 2 + 4
+        c.setFillColor(INK_MUTED)
+        c.setFont("Helvetica", 7)
+        c.drawString(band_x, y + block_h - 28, "TARGET BAND")
+        c.setFillColor(INK)
+        c.setFont("Helvetica-Bold", 11)
+        c.drawString(band_x, y + block_h - 44, f"${tgt_low:.0f} – ${tgt_high:.0f}")
+        # Coverage strip
+        c.setFillColor(INK_MUTED)
+        c.setFont("Helvetica", 7)
+        cov_text = f"{total_an} analyst{'s' if total_an != 1 else ''}" if total_an else "Limited coverage"
+        c.drawString(band_x, y + block_h - 56, cov_text)
+
+    # ── RIGHT: Ownership Snapshot ─────────────────────────────────────
+    right_x = left_x + half_w + 10
+    c.setFillColor(BG_CARD)
+    c.setStrokeColor(BORDER)
+    c.setLineWidth(0.6)
+    c.roundRect(right_x, y, half_w, block_h, 6, stroke=1, fill=1)
+    c.setFillColor(INK)
+    c.setFont("Helvetica-Bold", 8.5)
+    c.drawString(right_x + 10, y + block_h - 13, "OWNERSHIP & FLOAT")
+    # 4-cell mini-grid: Insider Own / Institutional / Dividend Yield / Avg Volume
+    o_cols, o_rows = 4, 1
+    o_gap = 4
+    o_inner_w = half_w - 20
+    o_cell_w = (o_inner_w - o_gap * (o_cols - 1)) / o_cols
+    o_y = y + 14
+
+    ins_own = _safe_float(t.get("insider_ownership"))
+    inst    = _safe_float(t.get("institutional_ownership"))
+    if ins_own is not None and ins_own <= 1: ins_own = ins_own * 100
+    if inst    is not None and inst    <= 1: inst    = inst * 100
+    div_y   = _safe_float(t.get("dividend_yield"))
+    if div_y is not None and div_y <= 1: div_y = div_y * 100
+    avg_vol = t.get("avg_volume_str") or (_fmt_vol(t.get("avg_volume")) if t.get("avg_volume") else None)
+
+    cells = [
+        ("INSIDER OWN",  f"{ins_own:.1f}%" if ins_own else "—",          "Self-held"),
+        ("INSTITUTIONAL", f"{inst:.0f}%" if inst else "—",                "Held by funds"),
+        ("DIVIDEND YIELD", f"{div_y:.2f}%" if (div_y and div_y > 0) else "None", "Trailing"),
+        ("AVG VOLUME",   avg_vol or "—",                                  "Daily shares"),
+    ]
+    for i, (label, val, sub) in enumerate(cells):
+        cx = right_x + 10 + i * (o_cell_w + o_gap)
+        c.setFillColor(INK_MUTED)
+        c.setFont("Helvetica-Bold", 6.5)
+        c.drawString(cx, o_y + 50, label)
+        empty = val == "—" or val == "None"
+        c.setFillColor(INK_MUTED if empty else INK)
+        c.setFont("Helvetica-Bold", 11 if not empty else 10)
+        c.drawString(cx, o_y + 32, str(val))
+        c.setFillColor(INK_MUTED)
+        c.setFont("Helvetica", 6)
+        c.drawString(cx, o_y + 18, sub)
+
     return y
 
 
@@ -867,7 +967,26 @@ def _draw_investment_thesis(c, top_y, narrative):
     bull   = narrative.get("bull")   or []
     bear   = narrative.get("bear")   or []
     verdict = (narrative.get("verdict") or "").strip()
+    observation = (narrative.get("observation") or "").strip()
     conv_color, conv_bg, conv_label = _conviction_color(narrative.get("conviction"))
+
+    # ── Key Takeaway line (above the thesis title) — the AI's tight
+    # one-sentence read that distills the setup. Always single-line.
+    if observation:
+        c.setFillColor(BRAND_INDIGO)
+        c.setFont("Helvetica-Bold", 7.5)
+        c.drawString(MARGIN_X, top_y, "KEY TAKEAWAY")
+        c.setFillColor(INK)
+        c.setFont("Helvetica", 9.5)
+        # Trim to single line — fits because prompt enforces 15-25 words
+        max_w = CONTENT_W
+        text = observation
+        while c.stringWidth(text, "Helvetica", 9.5) > max_w and len(text) > 10:
+            text = text[:-2]
+        if text != observation:
+            text = text.rstrip(" ,;.") + "…"
+        c.drawString(MARGIN_X, top_y - 14, text)
+        top_y -= 28
 
     # Title row
     title_y = top_y
@@ -959,18 +1078,23 @@ def _draw_investment_thesis(c, top_y, narrative):
         by -= (h + 6)
 
     # ── Verdict band ──────────────────────────────────────────────────
-    verdict_h = 36
+    # Layout: 'VERDICT' label on its own line at the top of the band,
+    # paragraph on subsequent line(s) below. Pre-measure the paragraph
+    # height so the band is always tall enough — no overlap, no clipping.
+    p = _wrap_paragraph(verdict or "—", CONTENT_W - 30, font_size=9.5,
+                         leading=12.5, color=INK)
+    _, ph = p.wrap(CONTENT_W - 30, 200)
+    verdict_h = max(36, ph + 22)  # 22 = label + top/bottom pad
     verdict_y = card_y - verdict_h - 8
     c.setFillColor(BRAND_LIGHT)
     c.roundRect(MARGIN_X, verdict_y, CONTENT_W, verdict_h, 6, stroke=0, fill=1)
     c.setFillColor(BRAND_INDIGO)
     c.rect(MARGIN_X, verdict_y, 3, verdict_h, stroke=0, fill=1)
+    # Label on its own line, top-aligned in the band
     c.setFillColor(BRAND_INDIGO)
     c.setFont("Helvetica-Bold", 7.5)
     c.drawString(MARGIN_X + 14, verdict_y + verdict_h - 12, "VERDICT")
-    p = _wrap_paragraph(verdict or "—", CONTENT_W - 30, font_size=9.5,
-                         leading=12.5, color=INK)
-    w, h = p.wrap(CONTENT_W - 30, verdict_h - 16)
+    # Paragraph below the label
     p.drawOn(c, MARGIN_X + 14, verdict_y + 6)
 
     return verdict_y
@@ -1148,13 +1272,16 @@ def generate_pdf(ticker: str, t: dict, price_history: list[dict] | None = None,
     # 12-card metrics grid
     grid_bottom = _draw_metrics_grid(c, chart_bottom - 4, t)
 
-    # Executive summary — prefer AI-written prose when available, fall
-    # back to deterministic data-driven bullets when narrative absent
-    if narrative and narrative.get("exec_para"):
-        exec_bottom = _draw_exec_summary_para(c, grid_bottom, narrative["exec_para"])
-    else:
-        bits = _build_exec_bits(t, score, grade, tier_map)
-        exec_bottom = _draw_exec_summary(c, grid_bottom, bits)
+    # Analyst Outlook + Ownership row (restored from old CRDO layout —
+    # data-rich, no AI commentary, makes page 1 read like a pro report)
+    outlook_bottom = _draw_analyst_outlook_row(c, grid_bottom - 4, t)
+
+    # Executive summary on page 1 — ALWAYS the deterministic data-driven
+    # bullets, never the AI prose. The user explicitly wants page 1 to
+    # feel like a pro analyst report ("not AI generated"). The AI's tight
+    # observation lives on page 2 as a takeaway, not here.
+    bits = _build_exec_bits(t, score, grade, tier_map)
+    exec_bottom = _draw_exec_summary(c, outlook_bottom, bits)
 
     # Recent Earnings + Quality & Risk dual block
     _draw_dual_block(c, exec_bottom, t)

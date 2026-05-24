@@ -40,26 +40,35 @@ _CACHE: dict[str, tuple[float, dict]] = {}
 _CACHE_TTL = 7 * 24 * 3600   # 7 days
 
 
-_PROMPT = """You are an equity analyst producing the narrative page of a one-pager
-research report. Be specific, metric-anchored, neutral. Quote actual numbers
-from the data provided. Do NOT make up data. Do NOT hedge needlessly.
+_PROMPT = """You are an equity analyst writing the narrative section of an analyst
+research report. Style: terse, specific, metric-anchored. NO essay prose,
+NO hype, NO hedging filler. Write like Bernstein or Morgan Stanley, not
+like a chatbot. Each bullet stands alone as a hard fact.
 
-Return ONLY a JSON object (no prose, no markdown fences):
+CRITICAL DATA RULE:
+The KEY METRICS block below shows values that are ALREADY in their final
+display form. If a margin reads '83.2%', that IS the margin — do NOT
+restate it as '0.8%'. If revenue growth reads '+139%', that IS the YoY
+growth. Quote numbers exactly as shown; never apply your own scaling.
+
+OUTPUT — return ONLY a JSON object (no markdown fences, no prose around it):
 
 {{
-  "exec_para": "3-4 sentence prose paragraph tying the metrics to the recent event. State the setup factually: e.g. 'Lattice trades at a growth premium (P/E 1023x) on accelerating revenue (+38% YoY) and 3-quarter beat streak; the Q1 print showed gross margin expanding to 68.4% despite mix headwinds.' No hype.",
+  "observation": "ONE compact sentence (15-25 words) summarising the setup. Combine 2-3 strongest signals + 1 caveat. Example: 'Top-tier setup — +139% rev growth, 4/4 beats, +21% 30D momentum; tempered by RSI 60 and -2.3% FCF margin.' No hedges, no filler words like 'overall' or 'in conclusion'.",
   "bull": [
-    "Each bullet 15-30 words. Cite a specific metric or event detail. Example: 'Revenue accelerating to +38% YoY with gross margin expanding 47 bps to 68.4%, signalling pricing power despite mix headwinds.'",
-    "Two more like that"
+    "3 bullets, each 15-25 words. State a specific fact + its implication. Cite numbers exactly as shown in the metrics block. Example: 'Revenue accelerated to +139% YoY on \\$126.6M, with HPC Hosting contributing \\$71M as Polaris Forge 1 reached full 100MW operational status.'",
+    "...",
+    "..."
   ],
   "bear": [
-    "Each bullet 15-30 words. Cite a specific risk metric. Example: 'P/E of 1023x and P/S of 34x leave zero margin for execution slip; analyst revisions could turn fast on any guide-down.'",
-    "Two more like that"
+    "3 bullets, each 15-25 words. Specific risk + supporting metric. NEVER invent margins or growth rates — only use values present in the metrics or event blocks.",
+    "...",
+    "..."
   ],
-  "verdict": "ONE sentence, conviction-led: e.g. 'Quality setup with overbought signals (RSI 71) — wait for pullback to scale in.' Avoid generic phrases.",
+  "verdict": "ONE sentence, ≤ 30 words, conviction-led. State an action lens (build, hold, trim, wait for pullback) tied to a specific trigger. No generic phrases like 'monitor closely' or 'maintain conviction'.",
   "conviction": "high|medium|low",
   "catalysts": [
-    "Each item 8-15 words. Forward-looking events: next earnings expected ~late Aug 2026, product launches, conference participation. Pull from the event summary where possible. Be specific."
+    "4-5 items, each 10-20 words. Forward-looking, dated where possible. Examples: 'Q1 FY27 earnings expected late Aug 2026', 'Avant E1 customer ramp through Q3', 'Industry conference participation in October'. Pull from the event block where it provides clues."
   ]
 }}
 
@@ -67,7 +76,7 @@ TICKER: {ticker}
 SECTOR: {sector}
 ALPHA SCORE: {score}/100 ({grade})
 
-KEY METRICS:
+KEY METRICS (values are already in display form — do not rescale):
 {metrics_block}
 
 LATEST EVENT (from SEC filing):
@@ -75,9 +84,31 @@ LATEST EVENT (from SEC filing):
 """
 
 
+def _pct(v):
+    """Normalise a percent value that might be stored as either a fraction
+    (0.832) OR a percent (83.2). Returns a percent number for display, or
+    None if invalid. Heuristic: any absolute value <= 1 is assumed to be a
+    fraction (since real-world margins / growth rates virtually never sit
+    in (0, 1) as percents — 0.5% gross margin is nonsensical for an
+    operating company). Above 1 → already a percent."""
+    try:
+        f = float(v)
+    except (TypeError, ValueError):
+        return None
+    if -1.0 <= f <= 1.0 and f != 0:
+        return f * 100.0
+    return f
+
+
 def _format_metrics(t: dict) -> str:
     """Compact 'label: value' block for the prompt — only fields with real
-    values, skip nulls so Haiku doesn't reference 'Not reported'."""
+    values, skip nulls so Haiku doesn't reference 'Not reported'.
+
+    All percent-style fields run through _pct() which auto-detects the
+    fraction-vs-percent encoding the rest of the codebase is inconsistent
+    about (some tickers store 0.832 for 83.2% gross margin, others 83.2).
+    Without this, Haiku quotes 'Gross margin of 0.8%' which is nonsensical
+    and looks AI-hallucinated to the reader."""
     def fmt(label, key, fmt_str="{}"):
         v = t.get(key)
         if v is None or v == "" or v == "—":
@@ -87,28 +118,40 @@ def _format_metrics(t: dict) -> str:
         except Exception:
             return f"{label}: {v}"
 
+    def fmt_pct(label, key, sign=False):
+        v = _pct(t.get(key))
+        if v is None:
+            return None
+        spec = "{:+.1f}%" if sign else "{:.1f}%"
+        return f"{label}: " + spec.format(v)
+
     rows = [
         fmt("Last price",      "last_close",      "${:.2f}"),
-        fmt("Day change %",    "change_pct",      "{:+.2f}%"),
+        fmt_pct("Day change",  "change_pct",      sign=True),
         fmt("Market cap",      "market_cap_str"),
-        fmt("Revenue growth (YoY)", "rev_growth_yoy", "{:+.1f}%"),
-        fmt("Gross margin",    "gross_margin",    "{:.1f}%"),
-        fmt("FCF margin",      "fcf_margin",      "{:.1f}%"),
+        fmt_pct("Revenue growth (YoY)", "rev_growth_yoy", sign=True),
+        fmt_pct("Gross margin",         "gross_margin"),
+        fmt_pct("FCF margin",           "fcf_margin", sign=True),
         fmt("P/E (TTM)",       "pe_ttm",          "{:.1f}x"),
         fmt("P/S (TTM)",       "ps_ttm",          "{:.1f}x"),
         fmt("PEG",             "peg_ratio",       "{:.2f}"),
         fmt("Debt/Equity",     "debt_equity",     "{:.2f}"),
-        fmt("ROE (TTM)",       "roe_ttm",         "{:.1f}%"),
+        fmt_pct("ROE (TTM)",   "roe_ttm"),
         fmt("52W range",       "wk52_range_str"),
         fmt("RSI (14)",        "rsi14",           "{:.0f}"),
         fmt("Beat streak",     "beat_streak_str"),
         fmt("90D insider",     "insider_90d_str"),
         fmt("EPS revisions (30D)", "eps_revisions_30d_str"),
-        fmt("Short % float",   "short_pct_float", "{:.1f}%"),
+        fmt_pct("Short % float",   "short_pct_float"),
         fmt("Beta (5Y)",       "beta_5y",         "{:.2f}"),
-        fmt("Avg EPS surprise","avg_eps_surprise","{:+.1f}%"),
+        fmt_pct("Avg EPS surprise","avg_eps_surprise", sign=True),
         fmt("Avg volume",      "avg_volume_str"),
-        fmt("30D momentum %",  "momentum_30d",    "{:+.1f}%"),
+        fmt_pct("30D momentum",    "momentum_30d", sign=True),
+        # Analyst data (new — drives the AI's coverage commentary)
+        fmt("Analyst mean target", "target_mean", "${:.2f}"),
+        fmt("Analyst high target", "target_high", "${:.2f}"),
+        fmt("Analyst low target",  "target_low",  "${:.2f}"),
+        fmt("Total analysts",      "total_analysts", "{:.0f}"),
     ]
     return "\n".join(r for r in rows if r)
 
@@ -208,7 +251,7 @@ async def build_narrative(ticker: str, t: dict, event_row: dict | None) -> dict 
         return None
 
     # Normalise — guarantee the keys the PDF expects, even if Haiku omits one
-    out.setdefault("exec_para", "")
+    out.setdefault("observation", out.get("exec_para", ""))  # back-compat
     out.setdefault("bull", [])
     out.setdefault("bear", [])
     out.setdefault("verdict", "")
