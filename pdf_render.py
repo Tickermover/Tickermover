@@ -496,6 +496,293 @@ def _make_margin_trend_chart(quarterly_income: list,
         return None
 
 
+def _compute_risk_scorecard(t):
+    """Deterministic 5-dimension risk assessment from existing metrics.
+    Each dimension scores 0-100 where HIGHER = MORE RISK. No AI needed —
+    this is a pure visualization of what the metrics card already shows.
+    Returns list of (label, score, color, one_liner) tuples."""
+    def norm_pct(v):
+        if v is None: return None
+        try: f = float(v)
+        except (TypeError, ValueError): return None
+        if -1 <= f <= 1 and f != 0: f *= 100
+        return f
+
+    pe   = _safe_float(t.get("pe_ttm"))
+    ps   = _safe_float(t.get("ps_ttm"))
+    peg  = _safe_float(t.get("peg_ratio"))
+    rev  = norm_pct(t.get("rev_growth_yoy"))
+    gm   = norm_pct(t.get("gross_margin"))
+    fcfm = norm_pct(t.get("fcf_margin"))
+    rsi  = _safe_float(t.get("rsi14") or t.get("rsi_14"))
+    mom  = norm_pct(t.get("momentum_30d") or t.get("momentum_1m"))
+    short_p = norm_pct(t.get("short_pct_float"))
+    revs    = t.get("eps_revisions_30d") or {}
+    ups, dns = revs.get("ups") or 0, revs.get("downs") or 0
+
+    # ── Valuation risk ────────────────────────────────────────────────
+    val_score = 50
+    if peg is not None:
+        if peg < 0.8:   val_score = 25
+        elif peg < 1.2: val_score = 40
+        elif peg < 2.0: val_score = 60
+        else:           val_score = 80
+    elif pe is not None and pe > 0:
+        if pe < 15:     val_score = 30
+        elif pe < 30:   val_score = 50
+        elif pe < 80:   val_score = 70
+        else:           val_score = 85
+    val_note = (f"PEG {peg:.2f}" if peg else
+                (f"P/E {pe:.1f}x" if pe and pe > 0 else "Limited data"))
+
+    # ── Growth risk ───────────────────────────────────────────────────
+    grw_score = 50
+    if rev is not None:
+        if rev >= 40:   grw_score = 15
+        elif rev >= 20: grw_score = 30
+        elif rev >= 10: grw_score = 50
+        elif rev >= 0:  grw_score = 70
+        else:           grw_score = 90
+    grw_note = f"Rev {('+' if rev >= 0 else '')}{rev:.0f}% YoY" if rev is not None else "—"
+
+    # ── Quality risk ──────────────────────────────────────────────────
+    qual_score = 50
+    qual_factors = []
+    if gm is not None:
+        qual_factors.append(20 if gm >= 60 else 35 if gm >= 40 else 55 if gm >= 25 else 75)
+    if fcfm is not None:
+        qual_factors.append(20 if fcfm >= 15 else 35 if fcfm >= 5 else 60 if fcfm >= 0 else 85)
+    if qual_factors:
+        qual_score = sum(qual_factors) / len(qual_factors)
+    parts = []
+    if gm is not None:   parts.append(f"GM {gm:.0f}%")
+    if fcfm is not None: parts.append(f"FCF {'+' if fcfm >= 0 else ''}{fcfm:.0f}%")
+    qual_note = " · ".join(parts) or "—"
+
+    # ── Sentiment risk ────────────────────────────────────────────────
+    sent_score = 50
+    if short_p is not None:
+        if short_p >= 25:    sent_score = 80
+        elif short_p >= 15:  sent_score = 65
+        elif short_p >= 7:   sent_score = 50
+        else:                sent_score = 30
+    # Revision adjustment
+    if ups + dns >= 3:
+        ratio = ups / max(dns, 1)
+        if ratio >= 3:   sent_score -= 15
+        elif ratio <= 0.5: sent_score += 15
+    sent_score = max(0, min(100, sent_score))
+    sent_note = (f"Short {short_p:.1f}% · revisions {ups}↑/{dns}↓"
+                  if short_p is not None else f"Revisions {ups}↑/{dns}↓")
+
+    # ── Momentum risk ─────────────────────────────────────────────────
+    mom_score = 50
+    if rsi is not None:
+        if rsi >= 75:    mom_score = 80   # overbought
+        elif rsi >= 60:  mom_score = 55
+        elif rsi >= 40:  mom_score = 40
+        elif rsi >= 30:  mom_score = 55
+        else:            mom_score = 75   # oversold
+    if mom is not None:
+        if mom <= -15:   mom_score = max(mom_score, 75)
+        elif mom >= 30:  mom_score = max(mom_score, 70)   # parabolic
+    mom_note = (f"RSI {rsi:.0f}" + (f" · {('+' if mom >= 0 else '')}{mom:.0f}% 30D" if mom is not None else "")
+                  if rsi is not None else "—")
+
+    def color_for(s):
+        if s >= 70: return RED
+        if s >= 55: return AMBER
+        if s >= 40: return BRAND_INDIGO
+        return GREEN
+
+    return [
+        ("Valuation", val_score,  color_for(val_score),  val_note),
+        ("Growth",    grw_score,  color_for(grw_score),  grw_note),
+        ("Quality",   qual_score, color_for(qual_score), qual_note),
+        ("Sentiment", sent_score, color_for(sent_score), sent_note),
+        ("Momentum",  mom_score,  color_for(mom_score),  mom_note),
+    ]
+
+
+def _draw_risk_scorecard(c, x, y, w, h, t):
+    """5-dimension risk scorecard card — Valuation, Growth, Quality,
+    Sentiment, Momentum — with mini horizontal meters and one-line
+    metric anchors. The deterministic counterpart to the AI thesis
+    page; a real institutional report always shows this."""
+    c.setFillColor(BG_CARD)
+    c.setStrokeColor(BORDER)
+    c.setLineWidth(0.6)
+    c.roundRect(x, y, w, h, 6, stroke=1, fill=1)
+    c.setFillColor(INK)
+    c.setFont("Helvetica-Bold", 8.5)
+    c.drawString(x + 10, y + h - 13, "RISK SCORECARD")
+    c.setFillColor(INK_MUTED)
+    c.setFont("Helvetica", 7)
+    c.drawString(x + 10, y + h - 22, "5-dimension risk profile  ·  green = low, red = high")
+    # Legend on right
+    c.setFillColor(INK_MUTED)
+    c.setFont("Helvetica", 6)
+    legend = [(GREEN, "LOW"), (BRAND_INDIGO, "MOD"), (AMBER, "ELEV"), (RED, "HIGH")]
+    lx = x + w - 10
+    for color, label in reversed(legend):
+        text_w = c.stringWidth(label, "Helvetica-Bold", 6.5)
+        c.setFillColor(color)
+        c.circle(lx - text_w - 4, y + h - 19, 2.2, stroke=0, fill=1)
+        c.setFillColor(INK_MUTED)
+        c.setFont("Helvetica-Bold", 6.5)
+        c.drawRightString(lx, y + h - 17, label)
+        lx -= (text_w + 22)
+
+    items = _compute_risk_scorecard(t)
+    if not items:
+        return
+    n = len(items)
+    row_top = y + h - 36
+    row_bot = y + 10
+    row_h = (row_top - row_bot) / n
+
+    for i, (label, score, color, note) in enumerate(items):
+        ry = row_top - (i + 1) * row_h + row_h * 0.2
+        # Row label
+        c.setFillColor(INK)
+        c.setFont("Helvetica-Bold", 8)
+        c.drawString(x + 10, ry + 4, label.upper())
+        # Bar background
+        bar_x = x + 88
+        bar_w = w - 110 - 100   # leave room for label + score + note
+        bar_h = 6
+        bar_y = ry + 2
+        c.setFillColor(HexColor("#f1f5f9"))
+        c.roundRect(bar_x, bar_y, bar_w, bar_h, bar_h / 2, stroke=0, fill=1)
+        # Filled portion
+        fill_w = bar_w * (score / 100.0)
+        c.setFillColor(color)
+        c.roundRect(bar_x, bar_y, max(2, fill_w), bar_h, bar_h / 2, stroke=0, fill=1)
+        # Score number
+        c.setFillColor(color)
+        c.setFont("Helvetica-Bold", 9)
+        c.drawString(bar_x + bar_w + 6, ry + 3, f"{int(score)}")
+        # Anchor note (right side)
+        c.setFillColor(INK_MUTED)
+        c.setFont("Helvetica", 7)
+        c.drawRightString(x + w - 10, ry + 4, note[:32])
+
+
+def _draw_valuation_scenarios(c, x, y, w, h, t, narrative):
+    """Bear / Base / Bull price-target scenarios. Each renders as a row:
+    label  ·  $price ·  ±%  ·  rationale. Above the rows sits a horizontal
+    scenario bar showing the three prices arranged left→right with the
+    current price marked as a vertical line."""
+    c.setFillColor(BG_CARD)
+    c.setStrokeColor(BORDER)
+    c.setLineWidth(0.6)
+    c.roundRect(x, y, w, h, 6, stroke=1, fill=1)
+    c.setFillColor(INK)
+    c.setFont("Helvetica-Bold", 8.5)
+    c.drawString(x + 10, y + h - 13, "VALUATION SCENARIOS")
+    c.setFillColor(INK_MUTED)
+    c.setFont("Helvetica", 7)
+    c.drawString(x + 10, y + h - 22, "Bear / Base / Bull price targets  ·  rationale tied to specific triggers")
+
+    val = (narrative or {}).get("valuation")
+    price = _safe_float(t.get("price") or t.get("last_close")) or 0
+    if not val or not all(k in val for k in ("bear", "base", "bull")):
+        c.setFillColor(INK_MUTED)
+        c.setFont("Helvetica", 9)
+        c.drawCentredString(x + w/2, y + h/2 - 6, "Valuation scenarios unavailable")
+        return
+
+    bear = val["bear"]; base = val["base"]; bull = val["bull"]
+    bear_p = float(bear.get("price") or 0)
+    base_p = float(base.get("price") or 0)
+    bull_p = float(bull.get("price") or 0)
+
+    # ── Scenario bar (top section) ────────────────────────────────────
+    bar_top = y + h - 36
+    bar_h_seg = 8
+    bar_x = x + 12
+    bar_w = w - 24
+    lo = min(bear_p, price * 0.7) if price else bear_p
+    hi = max(bull_p, price * 1.3) if price else bull_p
+    rng = max(hi - lo, 1)
+
+    def _to_x(v):
+        return bar_x + ((v - lo) / rng) * bar_w
+
+    # Background track
+    c.setFillColor(HexColor("#f1f5f9"))
+    c.roundRect(bar_x, bar_top - bar_h_seg / 2, bar_w, bar_h_seg, bar_h_seg/2, stroke=0, fill=1)
+    # Bear→base gradient red, base→bull gradient green
+    c.setFillColor(HexColor("#fee2e2"))
+    c.rect(_to_x(bear_p), bar_top - bar_h_seg/2, _to_x(base_p) - _to_x(bear_p), bar_h_seg, stroke=0, fill=1)
+    c.setFillColor(HexColor("#dcfce7"))
+    c.rect(_to_x(base_p), bar_top - bar_h_seg/2, _to_x(bull_p) - _to_x(base_p), bar_h_seg, stroke=0, fill=1)
+    # Scenario markers
+    for label, p, color in [("Bear", bear_p, RED), ("Base", base_p, BRAND_INDIGO),
+                             ("Bull", bull_p, GREEN)]:
+        cx = _to_x(p)
+        c.setFillColor(color)
+        c.circle(cx, bar_top, 4.5, stroke=0, fill=1)
+        c.setFillColor(HexColor("#ffffff"))
+        c.setFont("Helvetica-Bold", 6)
+        c.drawCentredString(cx, bar_top - 2, label[0])
+        # Price label below dot
+        c.setFillColor(color)
+        c.setFont("Helvetica-Bold", 7)
+        c.drawCentredString(cx, bar_top - 12, f"${p:.0f}")
+    # Current price marker
+    if price:
+        px = _to_x(price)
+        c.setStrokeColor(INK)
+        c.setLineWidth(1.5)
+        c.line(px, bar_top - 10, px, bar_top + 10)
+        c.setFillColor(INK)
+        c.setFont("Helvetica-Bold", 6.5)
+        c.drawCentredString(px, bar_top + 14, f"NOW ${price:.2f}")
+
+    # ── Scenario rows (bottom section) ────────────────────────────────
+    rows_top = bar_top - 36
+    rows_bot = y + 8
+    row_h = (rows_top - rows_bot) / 3
+    scenarios = [
+        ("BEAR", bear, RED,   HexColor("#fee2e2")),
+        ("BASE", base, BRAND_INDIGO, BRAND_LIGHT),
+        ("BULL", bull, GREEN, HexColor("#dcfce7")),
+    ]
+    for i, (label, sc, color, bg_color) in enumerate(scenarios):
+        ry = rows_top - (i + 1) * row_h + 2
+        # Soft band
+        c.setFillColor(bg_color)
+        c.rect(x + 10, ry, w - 20, row_h - 2, stroke=0, fill=1)
+        # Label chip
+        c.setFillColor(color)
+        c.setFont("Helvetica-Bold", 8)
+        c.drawString(x + 16, ry + row_h/2 - 2, label)
+        # Price + delta
+        sc_price = float(sc.get("price") or 0)
+        delta_pct = ((sc_price / price - 1) * 100) if price > 0 else 0
+        c.setFillColor(INK)
+        c.setFont("Helvetica-Bold", 11)
+        c.drawString(x + 60, ry + row_h/2 - 3, f"${sc_price:.0f}")
+        c.setFillColor(color)
+        c.setFont("Helvetica-Bold", 8)
+        c.drawString(x + 105, ry + row_h/2 - 2,
+                      f"{'+' if delta_pct >= 0 else ''}{delta_pct:.1f}%")
+        # Rationale
+        rat = (sc.get("rationale") or "").strip()
+        if rat:
+            c.setFillColor(INK_SOFT)
+            c.setFont("Helvetica", 7.5)
+            # Trim to fit
+            max_w = w - 170
+            text = rat
+            while c.stringWidth(text, "Helvetica", 7.5) > max_w and len(text) > 12:
+                text = text[:-2]
+            if text != rat:
+                text = text.rstrip(" ,;.") + "…"
+            c.drawString(x + 155, ry + row_h/2 - 2, text)
+
+
 def _make_sparkline(values, width_pt, height_pt, color="#4338ca",
                      fill_color=None, label_last=True, unit="%"):
     """Tiny inline-style sparkline: thin line + optional fill, latest value
@@ -1979,7 +2266,27 @@ def generate_pdf(ticker: str, t: dict, price_history: list[dict] | None = None,
                                 b3_h, t, peers or [])
         _draw_footer(c)
 
-    # ── Page 3 — AI analyst narrative (only when we have content) ─────
+    # ── Page 3 — Valuation Scenarios + Risk Scorecard ────────────────
+    # Two more analyst-grade panels that elevate the report from
+    # "AI-written summary" to "institutional-style research".
+    # Valuation requires Haiku output; Risk is purely deterministic.
+    has_valuation = narrative and narrative.get("valuation")
+    if has_valuation or t.get("quarterly_income"):
+        c.showPage()
+        _draw_header(c, today, quarter_lbl)
+        y3 = _draw_page2_hero(c, ticker, t)
+        # Valuation Scenarios — top half of page
+        val_h = 220
+        _draw_valuation_scenarios(c, MARGIN_X, y3 - 4 - val_h, CONTENT_W,
+                                    val_h, t, narrative or {})
+        # Risk Scorecard — bottom half
+        risk_top = y3 - 4 - val_h - 18
+        risk_h   = 200
+        _draw_risk_scorecard(c, MARGIN_X, risk_top - risk_h, CONTENT_W,
+                               risk_h, t)
+        _draw_footer(c)
+
+    # ── Page 4 — AI analyst narrative (only when we have content) ─────
     if narrative or event_row:
         c.showPage()
         _draw_header(c, today, quarter_lbl)

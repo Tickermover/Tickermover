@@ -261,6 +261,54 @@ METRICS (your only allowed data source — values are already in display form):
 """
 
 
+_VALUATION_PROMPT = """You are an equity analyst writing the VALUATION SCENARIOS
+section of a research report. Three price-target scenarios — Bear / Base
+/ Bull — each with a one-sentence rationale tied to specific multiples,
+growth assumptions, or events. Style: terse, conviction-led. No hedging.
+
+Anchor the BASE case to the analyst mean target if available, otherwise
+to a defensible multiple expansion / contraction from current.
+
+Bear case: meaningful downside from current price — typically 15-30% off
+the current level, anchored to a specific multiple compression or
+fundamental disappointment. Cite WHAT goes wrong.
+
+Bull case: meaningful upside — typically 20-50% above current — anchored
+to a specific scenario (margin expansion sustaining, multiple re-rate,
+TAM growth materialising). Cite WHAT goes right.
+
+Numerical rules: prices ABSOLUTE dollar values. Cite multiples or
+percentages exactly as they appear in the metrics block.
+
+Return ONLY a JSON object (no markdown fences, no surrounding prose):
+
+{{
+  "bear": {{
+    "price":     <number, dollar target>,
+    "rationale": "≤ 18 words tying the bear price to a specific trigger"
+  }},
+  "base": {{
+    "price":     <number>,
+    "rationale": "≤ 18 words anchored to consensus or central call"
+  }},
+  "bull": {{
+    "price":     <number>,
+    "rationale": "≤ 18 words tied to a specific upside scenario"
+  }}
+}}
+
+TICKER: {ticker}
+SECTOR: {sector}
+CURRENT PRICE: ${price}
+
+KEY METRICS (values are in display form — quote exactly):
+{metrics_block}
+
+LATEST EVENT (forward guidance and recent narrative context):
+{event_block}
+"""
+
+
 _THESIS_PROMPT = """You are writing the Investment Thesis section of an equity
 analyst report — Bernstein / Morgan Stanley voice. Terse, metric-anchored,
 no essay prose, no hedging filler.
@@ -324,6 +372,7 @@ async def build_narrative(ticker: str, t: dict, event_row: dict | None) -> dict 
         return cached[1]
 
     metrics_block = _format_metrics(t)
+    event_block   = _format_event(event_row)
     common = dict(
         ticker=sym,
         sector=t.get("sector") or t.get("sub_sector") or "—",
@@ -331,20 +380,38 @@ async def build_narrative(ticker: str, t: dict, event_row: dict | None) -> dict 
         grade=(t.get("grade") or "—").upper(),
         metrics_block=metrics_block,
     )
+    price = t.get("last_close") or t.get("price") or 0
     obs_prompt    = _OBSERVATION_PROMPT.format(**common)
-    thesis_prompt = _THESIS_PROMPT.format(**common,
-                                          event_block=_format_event(event_row))
+    thesis_prompt = _THESIS_PROMPT.format(**common, event_block=event_block)
+    val_prompt    = _VALUATION_PROMPT.format(**common, event_block=event_block,
+                                              price=f"{price:.2f}" if price else "—")
 
     obs_task    = _haiku_call(obs_prompt)
     thesis_task = _haiku_call(thesis_prompt)
-    obs_out, thesis_out = await _asyncio.gather(obs_task, thesis_task,
-                                                 return_exceptions=True)
+    val_task    = _haiku_call(val_prompt)
+    obs_out, thesis_out, val_out = await _asyncio.gather(
+        obs_task, thesis_task, val_task, return_exceptions=True,
+    )
 
     out = {}
     if isinstance(thesis_out, dict):
         out = thesis_out
     if isinstance(obs_out, dict) and obs_out.get("observation"):
         out["observation"] = obs_out["observation"]
+    if isinstance(val_out, dict):
+        # Validate the valuation shape so a malformed Haiku response
+        # doesn't break rendering — we only require the three keys, the
+        # PDF renderer handles missing rationale gracefully.
+        valuation = {}
+        for k in ("bear", "base", "bull"):
+            v = val_out.get(k)
+            if isinstance(v, dict) and isinstance(v.get("price"), (int, float)):
+                valuation[k] = {
+                    "price":     float(v["price"]),
+                    "rationale": str(v.get("rationale") or "")[:200],
+                }
+        if len(valuation) == 3:
+            out["valuation"] = valuation
     if not out:
         return None
 
@@ -355,6 +422,7 @@ async def build_narrative(ticker: str, t: dict, event_row: dict | None) -> dict 
     out.setdefault("verdict", "")
     out.setdefault("conviction", "medium")
     out.setdefault("catalysts", [])
+    out.setdefault("valuation", None)
     _CACHE[sym] = (now, out)
     if len(_CACHE) > 200:
         oldest_key = min(_CACHE, key=lambda k: _CACHE[k][0])
