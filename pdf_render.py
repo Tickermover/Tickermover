@@ -1589,14 +1589,35 @@ def _draw_peer_comparison(c, x, y, w, h, t, peers):
         c.drawCentredString(x + w/2, y + h/2 - 6, "No peer data available")
         return
 
-    # Build rows: target first, then peers
+    # v3.17: tri-field fallback for P/E (universe stores it under
+    # multiple aliases — 'pe_ttm', 'pe_ratio', 'pe' — depending on the
+    # data path). v3.16 only checked pe_ttm so all peer rows showed
+    # '—' even though P/E was available under pe_ratio. Also added
+    # FCF MARGIN column per user feedback 'additional column can be
+    # added' — complements GM with cash-quality signal.
+    def _pe(row):
+        return _safe_float(row.get("pe_ttm") or row.get("pe_ratio") or row.get("pe"))
+    def _fcfm(row):
+        v = _safe_float(row.get("fcf_margin"))
+        if v is None: return None
+        return v * 100 if abs(v) <= 1 else v
+    def _gm(row):
+        v = _safe_float(row.get("gross_margin"))
+        if v is None: return None
+        return v * 100 if abs(v) <= 1 else v
+    def _rev(row):
+        return _safe_float(row.get("rev_growth_yoy")
+                           or row.get("rev_growth_qyoy")
+                           or row.get("revenue_growth_yoy"))
+
     target_row = {
         "ticker": (t.get("ticker") or "—").upper(),
         "name":   t.get("name", "")[:18],
         "mcap":   _safe_float(t.get("market_cap")),
-        "pe":     _safe_float(t.get("pe_ttm")),
-        "rev":    _safe_float(t.get("rev_growth_yoy") or t.get("rev_growth_qyoy") or t.get("revenue_growth_yoy")),
-        "gm":     _safe_float(t.get("gross_margin")),
+        "pe":     _pe(t),
+        "rev":    _rev(t),
+        "gm":     _gm(t),
+        "fcfm":   _fcfm(t),
         "score":  int(t.get("smart_score") or t.get("pop_score") or 0),
         "is_target": True,
     }
@@ -1606,20 +1627,23 @@ def _draw_peer_comparison(c, x, y, w, h, t, peers):
             "ticker": (p.get("ticker") or "—").upper(),
             "name":   (p.get("name") or "")[:18],
             "mcap":   _safe_float(p.get("market_cap")),
-            "pe":     _safe_float(p.get("pe_ttm")),
-            "rev":    _safe_float(p.get("rev_growth_yoy") or p.get("rev_growth_qyoy") or p.get("revenue_growth_yoy")),
-            "gm":     _safe_float(p.get("gross_margin")),
+            "pe":     _pe(p),
+            "rev":    _rev(p),
+            "gm":     _gm(p),
+            "fcfm":   _fcfm(p),
             "score":  int(p.get("smart_score") or p.get("pop_score") or 0),
             "is_target": False,
         })
 
-    # Column layout
+    # Column layout — added FCF column (7 total). Widths re-balanced
+    # so the header row still sums to ~1.0.
     cols = [
-        ("TICKER",  0.18),
-        ("MKT CAP", 0.16),
-        ("P/E",     0.12),
-        ("REV YoY", 0.14),
-        ("GM",      0.12),
+        ("TICKER",  0.13),
+        ("MKT CAP", 0.15),
+        ("P/E",     0.11),
+        ("REV YoY", 0.13),
+        ("GM",      0.11),
+        ("FCF",     0.11),
         ("SCORE",   0.14),
     ]
     inner_w = w - 24
@@ -1674,14 +1698,21 @@ def _draw_peer_comparison(c, x, y, w, h, t, peers):
         else:
             c.setFillColor(INK_MUTED)
             c.drawString(col_xs[3], ry + 3, "—")
-        # Gross margin
+        # Gross margin (already normalised in row construction)
         if r["gm"] is not None:
-            gm_v = r["gm"] * 100 if abs(r["gm"]) <= 1 else r["gm"]
             c.setFillColor(INK)
-            c.drawString(col_xs[4], ry + 3, f"{gm_v:.0f}%")
+            c.drawString(col_xs[4], ry + 3, f"{r['gm']:.0f}%")
         else:
             c.setFillColor(INK_MUTED)
             c.drawString(col_xs[4], ry + 3, "—")
+        # FCF margin — green if positive cash generation, red if burning
+        if r["fcfm"] is not None:
+            c.setFillColor(GREEN if r["fcfm"] >= 0 else RED)
+            c.drawString(col_xs[5], ry + 3,
+                          f"{'+' if r['fcfm'] >= 0 else ''}{r['fcfm']:.0f}%")
+        else:
+            c.setFillColor(INK_MUTED)
+            c.drawString(col_xs[5], ry + 3, "—")
         # Alpha Score (badge)
         score = r["score"]
         if score >= 80:    score_color = GREEN
@@ -1689,7 +1720,8 @@ def _draw_peer_comparison(c, x, y, w, h, t, peers):
         else:              score_color = AMBER
         c.setFillColor(score_color)
         c.setFont("Helvetica-Bold", 9)
-        c.drawString(col_xs[5], ry + 3, str(score) if score else "—")
+        # Score column moved from index 5 → 6 after FCF column inserted
+        c.drawString(col_xs[6], ry + 3, str(score) if score else "—")
 
 
 def _draw_quarterly_charts_row(c, top_y, t):
