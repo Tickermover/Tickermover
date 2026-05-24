@@ -2779,6 +2779,125 @@ html.v2-dark .v2-mp-mini-lbl{color:#cbd5e1}
 .v2-brf-d-h-src a{color:#4338ca;text-decoration:none;font-weight:600}
 .v2-brf-d-h-src a:hover{text-decoration:underline}
 
+/* ──────────────────────────────────────────────────────────────────
+   Briefings — Quartr-style executive briefing redesign (v2)
+   ────────────────────────────────────────────────────────────── */
+.v2-brf-quartr{max-width:1100px;margin:0 auto}
+.v2-brf-q-grid{display:grid;grid-template-columns:1fr 280px;gap:24px;align-items:start}
+@media (max-width:900px){
+  .v2-brf-q-grid{grid-template-columns:1fr}
+}
+
+/* Compact hero ─────────────────────────────────────────────────── */
+.v2-brf-q-hero{
+  display:flex;gap:16px;align-items:center;
+  padding:18px 20px;border-radius:14px;
+  background:linear-gradient(135deg,#eef2ff 0%,#faf5ff 50%,#fdf2f8 100%);
+  border:1px solid #e2e8f0;
+  box-shadow:0 1px 2px rgba(15,23,42,.04);
+  margin-bottom:18px;
+}
+.v2-brf-q-hero-logo{
+  width:54px;height:54px;border-radius:11px;flex-shrink:0;
+  background:#fff;border:1px solid #e2e8f0;overflow:hidden;
+  display:flex;align-items:center;justify-content:center;
+}
+.v2-brf-q-hero-logo img{width:100%;height:100%;object-fit:contain;padding:5px;background:#fff}
+.v2-brf-q-logo-fallback{
+  background:linear-gradient(135deg,#4338ca 0%,#8b5cf6 100%);
+  border:0;color:#fff;font-family:'JetBrains Mono',monospace;font-weight:800;font-size:12px;
+}
+.v2-brf-q-logo-fallback::after{content:attr(data-tic)}
+.v2-brf-q-hero-text{min-width:0;flex:1}
+.v2-brf-q-hero-eye{font-size:10.5px;font-weight:800;letter-spacing:.14em;color:#4338ca;text-transform:uppercase}
+.v2-brf-q-hero-title{font-size:18px;font-weight:800;color:#0f172a;letter-spacing:-.02em;line-height:1.3;margin-top:3px}
+.v2-brf-q-hero-meta{font-size:11.5px;color:#64748b;font-weight:500;margin-top:6px}
+.v2-brf-q-hero-meta a{color:#4338ca;text-decoration:none;font-weight:600}
+.v2-brf-q-hero-meta a:hover{text-decoration:underline}
+.v2-brf-q-dot{margin:0 6px;opacity:.5}
+
+/* Key Metrics pill strip ───────────────────────────────────────── */
+.v2-brf-q-metrics{
+  padding:14px 18px;border-radius:12px;
+  background:#fff;border:1px solid #e2e8f0;margin-bottom:18px;
+}
+.v2-brf-q-metrics-label{font-size:10.5px;font-weight:800;letter-spacing:.14em;color:#94a3b8;text-transform:uppercase;margin-bottom:8px}
+.v2-brf-q-metrics-pills{display:flex;flex-wrap:wrap;gap:8px}
+.v2-brf-q-pill{
+  display:inline-flex;align-items:center;
+  padding:5px 11px;border-radius:999px;
+  background:#eef2ff;color:#4338ca;
+  font-size:12px;font-weight:700;letter-spacing:-.005em;
+  border:1px solid #e0e7ff;
+}
+
+/* Pull-quote (investment angle / raw_excerpt) ────────────────── */
+.v2-brf-q-quote{
+  position:relative;
+  padding:16px 20px 16px 50px;border-radius:12px;
+  background:linear-gradient(135deg,#f8fafc 0%,#eef2ff 100%);
+  border:1px solid #e2e8f0;border-left:3px solid #4338ca;
+  margin-bottom:18px;
+}
+.v2-brf-q-quote-mark{
+  position:absolute;left:14px;top:6px;
+  font-size:38px;font-weight:800;color:#4338ca;line-height:1;font-family:Georgia,serif;
+}
+.v2-brf-q-quote-text{font-size:13.5px;font-style:italic;color:#334155;line-height:1.55;font-weight:500}
+
+/* Section cards ─────────────────────────────────────────────── */
+.v2-brf-q-sect{
+  padding:18px 20px;border-radius:12px;
+  background:#fff;border:1px solid #e2e8f0;
+  margin-bottom:14px;
+  box-shadow:0 1px 2px rgba(15,23,42,.03);
+}
+.v2-brf-q-sect-head{display:flex;align-items:center;gap:10px;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid #f1f5f9}
+.v2-brf-q-sect-icon{font-size:18px;line-height:1;width:32px;height:32px;border-radius:8px;background:#eef2ff;display:inline-flex;align-items:center;justify-content:center}
+.v2-brf-q-sect-h{font-size:14px;font-weight:800;color:#0f172a;letter-spacing:-.015em}
+.v2-brf-q-sect-bullets{margin:0;padding:0;list-style:none}
+.v2-brf-q-sect-bullets li{
+  position:relative;padding:6px 0 6px 18px;
+  font-size:13px;color:#334155;line-height:1.6;font-weight:500;
+}
+.v2-brf-q-sect-bullets li:before{
+  content:"";position:absolute;left:4px;top:13px;
+  width:6px;height:6px;border-radius:999px;background:#8b5cf6;
+}
+
+/* Sticky right sidebar ──────────────────────────────────────── */
+.v2-brf-q-side{position:sticky;top:20px;display:flex;flex-direction:column;gap:12px}
+@media (max-width:900px){.v2-brf-q-side{position:static}}
+.v2-brf-q-side-card{
+  padding:16px 18px;border-radius:12px;
+  background:#fff;border:1px solid #e2e8f0;
+  box-shadow:0 1px 2px rgba(15,23,42,.03);
+}
+.v2-brf-q-side-tic{font-size:22px;font-weight:900;color:#4338ca;letter-spacing:-.02em;font-family:'JetBrains Mono',monospace}
+.v2-brf-q-side-co{font-size:12px;color:#475569;font-weight:600;margin-top:2px}
+.v2-brf-q-side-sector{
+  display:inline-block;margin-top:8px;
+  padding:3px 9px;border-radius:999px;
+  font-size:10px;font-weight:700;letter-spacing:.05em;
+  background:#eef2ff;color:#4338ca;text-transform:uppercase;
+}
+.v2-brf-q-side-label{font-size:10px;font-weight:800;letter-spacing:.14em;color:#94a3b8;text-transform:uppercase;margin-bottom:10px}
+.v2-brf-q-tldr{margin:0;padding-left:18px;font-size:12px;color:#334155;line-height:1.55;font-weight:500}
+.v2-brf-q-tldr li{margin-bottom:8px}
+.v2-brf-q-tldr li::marker{color:#4338ca;font-weight:800}
+
+.v2-brf-q-cta{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  padding:11px 14px;border-radius:10px;width:100%;
+  background:linear-gradient(135deg,#4338ca 0%,#8b5cf6 50%,#ec4899 100%);
+  background-size:200% 200%;background-position:0% 50%;
+  color:#fff;border:0;cursor:pointer;
+  font-family:inherit;font-size:12.5px;font-weight:800;letter-spacing:-.005em;
+  box-shadow:0 6px 16px -6px rgba(139,92,246,.45);
+  transition:transform .12s, box-shadow .15s, background-position .35s;
+}
+.v2-brf-q-cta:hover{transform:translateY(-1px);background-position:100% 50%;box-shadow:0 10px 22px -6px rgba(139,92,246,.55)}
+
 .v2-brf-sect{margin-bottom:22px}
 .v2-brf-sect-h{
   font-size:15px;font-weight:800;color:#0d2440;letter-spacing:-.01em;
@@ -7599,15 +7718,78 @@ function v2RenderBriefingSourceBadge(d){
   return '<div class="v2-brf-d-h-src">Source: ' + v2EscHTML(label) + linkPart + '</div>';
 }
 
+// Extract 3-5 most distinctive numeric metrics from the briefing's
+// bullet text. Looks for dollar amounts, percentages, basis-point
+// movements and prioritises by 'distinctiveness' (longer numbers with
+// units win over bare digits). Returns array of {label, value} pairs.
+function v2ExtractKeyMetrics(sections){
+  if (!Array.isArray(sections)) return [];
+  const flat = [];
+  sections.forEach(s => (s.bullets||[]).forEach(b => flat.push(String(b))));
+  if (!flat.length) return [];
+  const pats = [
+    // Revenue / dollar figures with B / M suffix
+    /\$\s?[\d,]+(?:\.\d+)?\s*(?:billion|million|B|M)\b/gi,
+    // Percentage growth/change with direction word
+    /(?:up|down|grew|increased|decreased|rose|fell|expanded|contracted)\s+[\d,]+(?:\.\d+)?%/gi,
+    // Standalone YoY/QoQ deltas
+    /[+\-]?\s?\d{1,3}(?:\.\d+)?%\s*(?:YoY|QoQ|year[-\s]over[-\s]year)/gi,
+    // Basis point movements
+    /[\d,]+\s*(?:basis points|bps|bp)\b/gi,
+    // Bare percentages last (lower priority)
+    /[+\-]?\s?\d{1,3}(?:\.\d+)?%/g,
+  ];
+  const found = [];
+  const seen  = new Set();
+  flat.forEach(text => {
+    pats.forEach(rx => {
+      const matches = text.match(rx) || [];
+      matches.forEach(m => {
+        const norm = m.replace(/\s+/g, ' ').trim();
+        if (norm.length > 32) return;
+        if (seen.has(norm.toLowerCase())) return;
+        seen.add(norm.toLowerCase());
+        found.push({raw: norm, src: text});
+      });
+    });
+  });
+  // Rank: prefer dollar amounts > percentages with directional words > bare %
+  found.sort((a, b) => {
+    const score = s => (
+      (/\$/.test(s.raw) ? 3 : 0) +
+      (/\b(?:billion|million)\b/i.test(s.raw) ? 2 : 0) +
+      (/up|down|grew|increased|YoY/i.test(s.raw) ? 2 : 0) +
+      (/basis point|bps/i.test(s.raw) ? 1 : 0)
+    );
+    return score(b) - score(a);
+  });
+  return found.slice(0, 5);
+}
+
+// Pick top 3 most-numeric / most-informative bullets across all
+// sections to use as the sticky-sidebar TL;DR. Prefers bullets that
+// quote dollar figures and percentages — the actionable ones.
+function v2PickTldrBullets(sections){
+  if (!Array.isArray(sections)) return [];
+  const all = [];
+  sections.forEach(s => (s.bullets||[]).forEach(b => all.push(String(b))));
+  if (!all.length) return [];
+  const score = b => (
+    (b.match(/\$/g) || []).length * 2 +
+    (b.match(/%/g)  || []).length * 1 +
+    (b.match(/\b\d/g) || []).length * 0.5 -
+    Math.max(0, (b.length - 180) / 30)   // penalise overly long bullets
+  );
+  return all.slice().sort((a, b) => score(b) - score(a)).slice(0, 3);
+}
+
 function v2RenderBriefingHTML(sym, d){
   const back = '<button class="v2-brf-back" onclick="v2CloseBriefing()">← Back to all tickers</button>';
   if (!d || d.available === false){
-    // Distinguish rate-limit from genuine no-coverage so the user knows
-    // what's actually going on.
     if (d && d.reason === 'rate_limited'){
       return back + '<div class="v2-brf-empty-state">' +
         '<strong>Briefing temporarily throttled</strong>' +
-        '<span>The transcript provider (Alpha Vantage) is rate-limiting us — free tier allows 25 requests/day. Already-summarised tickers still load instantly from cache; new ones unlock again tomorrow (or sooner if you upgrade the AV key). This is honest about a real constraint, not a bug.</span>' +
+        '<span>The transcript provider (Alpha Vantage) is rate-limiting us — free tier allows 25 requests/day. Already-summarised tickers still load instantly from cache; new ones unlock again tomorrow.</span>' +
       '</div>';
     }
     return back + '<div class="v2-brf-empty-state">' +
@@ -7617,56 +7799,142 @@ function v2RenderBriefingHTML(sym, d){
   }
   const live = (window._allTickerData && window._allTickerData[sym]) || {};
   const coName = live.name || '';
+  const sector = live.sector || live.sub_sector || '';
   const logoUrl = 'https://images.financialmodelingprep.com/symbol/' + encodeURIComponent(sym) + '.png';
-  let html = back +
-    '<div class="v2-brf-d-hero">' +
-      '<div class="v2-brf-d-h-tic">' +
-        '<div class="v2-brf-d-h-logo"><img src="' + logoUrl + '" alt="" onerror="this.style.display=\'none\'"></div>' +
-        '<div class="v2-brf-d-h-text">' +
-          '<div class="v2-brf-d-h-name">' + v2EscHTML(sym) + ' investor relations material</div>' +
-          '<div class="v2-brf-d-h-co">' + v2EscHTML(coName) + '</div>' +
-        '</div>' +
-      '</div>' +
-      '<div class="v2-brf-d-h-eye">Event briefing</div>' +
-      '<div class="v2-brf-d-h-title">' + v2EscHTML(d.event_title || 'Latest event summary') + '</div>' +
-      (d.event_date ? '<div class="v2-brf-d-h-date">' + v2EscHTML(d.event_date) + '</div>' : '') +
-      v2RenderBriefingSourceBadge(d) +
-    '</div>';
 
+  // Normalise sections (legacy 4-bucket or new dynamic-sections shape)
   let sections = Array.isArray(d.sections) ? d.sections : null;
   if (!sections){
     sections = [];
     if (Array.isArray(d.key_updates) && d.key_updates.length)
       sections.push({heading: 'Key business updates', bullets: d.key_updates});
     if (Array.isArray(d.operations) && d.operations.length)
-      sections.push({heading: 'Operations &amp; capacity', bullets: d.operations});
+      sections.push({heading: 'Operations & capacity',  bullets: d.operations});
     if (Array.isArray(d.outlook) && d.outlook.length)
-      sections.push({heading: 'Outlook &amp; guidance', bullets: d.outlook});
+      sections.push({heading: 'Outlook & guidance',     bullets: d.outlook});
     if (Array.isArray(d.risks) && d.risks.length)
-      sections.push({heading: 'Risks &amp; headwinds', bullets: d.risks});
+      sections.push({heading: 'Risks & headwinds',      bullets: d.risks});
   }
+
+  // Section icon heuristic — map heading keywords to emoji
+  const sectionIcon = heading => {
+    const h = (heading||'').toLowerCase();
+    if (/revenue|financial|earnings|profit|margin/.test(h))   return '💰';
+    if (/capacity|operation|production|manufact|capex/.test(h)) return '🏭';
+    if (/outlook|guidance|forecast|forward/.test(h))           return '🔭';
+    if (/risk|headwind|caveat|challenge/.test(h))              return '⚠️';
+    if (/customer|segment|market|demand/.test(h))              return '👥';
+    if (/product|innovat|launch|tech|roadmap/.test(h))         return '🚀';
+    if (/capital|debt|cash|balance|funding/.test(h))           return '🏦';
+    if (/strateg|partner|acquisi|merger/.test(h))              return '🤝';
+    return '📊';
+  };
+
+  const keyMetrics = v2ExtractKeyMetrics(sections);
+  const tldrBullets = v2PickTldrBullets(sections);
+  const srcUrl = d.source_url || '';
+  const srcLabel = (() => {
+    const s = String(d.source || '').toLowerCase();
+    if (s.indexOf('8-k') >= 0)  return 'SEC 8-K filing';
+    if (s.indexOf('10-q') >= 0) return 'SEC 10-Q filing';
+    if (s.startsWith('sec_'))   return 'SEC EDGAR';
+    if (s === 'alpha_vantage_transcript') return 'Earnings call transcript';
+    return s || 'SEC EDGAR';
+  })();
+
+  // ── Compact hero ──────────────────────────────────────────────────
+  let html = back +
+    '<div class="v2-brf-quartr">' +
+      // Two-column wrapper: main content (left) + sticky sidebar (right)
+      '<div class="v2-brf-q-grid">' +
+
+        // ── LEFT COLUMN ────────────────────────────────────────────
+        '<div class="v2-brf-q-main">' +
+          '<div class="v2-brf-q-hero">' +
+            '<div class="v2-brf-q-hero-logo">' +
+              '<img src="' + logoUrl + '" alt="" loading="lazy" ' +
+              'onerror="this.style.display=\'none\';this.parentNode.dataset.tic=\'' + v2EscHTML(sym) + '\';this.parentNode.classList.add(\'v2-brf-q-logo-fallback\')"/>' +
+            '</div>' +
+            '<div class="v2-brf-q-hero-text">' +
+              '<div class="v2-brf-q-hero-eye">' + v2EscHTML(sym) + ' · EVENT BRIEFING</div>' +
+              '<div class="v2-brf-q-hero-title">' + v2EscHTML(d.event_title || 'Latest event summary') + '</div>' +
+              '<div class="v2-brf-q-hero-meta">' +
+                (d.event_date ? '<span>' + v2EscHTML(d.event_date) + '</span>' : '') +
+                '<span class="v2-brf-q-dot">·</span>' +
+                '<span>' + v2EscHTML(srcLabel) + '</span>' +
+                (srcUrl ? ' <span class="v2-brf-q-dot">·</span> <a href="' + v2EscHTML(srcUrl) + '" target="_blank" rel="noopener">View source ↗</a>' : '') +
+              '</div>' +
+            '</div>' +
+          '</div>';
+
+  // ── Key Metrics pill strip ────────────────────────────────────────
+  if (keyMetrics.length){
+    html += '<div class="v2-brf-q-metrics">' +
+      '<div class="v2-brf-q-metrics-label">KEY METRICS</div>' +
+      '<div class="v2-brf-q-metrics-pills">' +
+        keyMetrics.map(m => '<span class="v2-brf-q-pill">' + v2EscHTML(m.raw) + '</span>').join('') +
+      '</div>' +
+    '</div>';
+  }
+
+  // ── Investment angle (uses raw_excerpt as a pull-quote if present) ─
+  if (d.raw_excerpt && d.raw_excerpt.length > 20){
+    html += '<div class="v2-brf-q-quote">' +
+      '<div class="v2-brf-q-quote-mark">"</div>' +
+      '<div class="v2-brf-q-quote-text">' + v2EscHTML(d.raw_excerpt) + '</div>' +
+    '</div>';
+  }
+
+  // ── Section cards with icons ──────────────────────────────────────
   if (!sections.length){
     html += '<div class="v2-brf-empty-state">' +
       '<strong>Summary structure missing</strong>' +
       '<span>The AI summariser returned an unexpected shape. Try reloading the page.</span>' +
     '</div>';
   } else {
-    sections.forEach(s => {
+    sections.forEach((s, i) => {
       if (!s || !Array.isArray(s.bullets) || !s.bullets.length) return;
-      html += '<div class="v2-brf-sect">' +
-        '<div class="v2-brf-sect-h">' + v2EscHTML(s.heading || 'Highlights') + '</div>' +
-        '<div class="v2-brf-sect-body">' +
-          s.bullets.map(b => '<p>' + v2EscHTML(String(b)) + '</p>').join('') +
+      const icon = sectionIcon(s.heading);
+      html += '<div class="v2-brf-q-sect">' +
+        '<div class="v2-brf-q-sect-head">' +
+          '<span class="v2-brf-q-sect-icon">' + icon + '</span>' +
+          '<span class="v2-brf-q-sect-h">' + v2EscHTML(s.heading || 'Highlights') + '</span>' +
         '</div>' +
+        '<ul class="v2-brf-q-sect-bullets">' +
+          s.bullets.map(b => '<li>' + v2EscHTML(String(b)) + '</li>').join('') +
+        '</ul>' +
       '</div>';
     });
   }
-  if (d.raw_excerpt && d.raw_excerpt.length > 20){
-    html += '<div class="v2-brf-quote">' +
-      '<div class="v2-brf-quote-mark">"</div>' +
-      '<div class="v2-brf-quote-text">' + v2EscHTML(d.raw_excerpt) + '</div>' +
-    '</div>';
-  }
+
+  // ── Close LEFT, open SIDEBAR ─────────────────────────────────────
+  html += '</div>' +    // /v2-brf-q-main
+
+    '<aside class="v2-brf-q-side">' +
+      '<div class="v2-brf-q-side-card">' +
+        '<div class="v2-brf-q-side-tic">' + v2EscHTML(sym) + '</div>' +
+        '<div class="v2-brf-q-side-co">' + v2EscHTML(coName) + '</div>' +
+        (sector ? '<div class="v2-brf-q-side-sector">' + v2EscHTML(sector) + '</div>' : '') +
+      '</div>' +
+
+      (tldrBullets.length ? (
+        '<div class="v2-brf-q-side-card">' +
+          '<div class="v2-brf-q-side-label">KEY TAKEAWAYS</div>' +
+          '<ol class="v2-brf-q-tldr">' +
+            tldrBullets.map(b => '<li>' + v2EscHTML(b) + '</li>').join('') +
+          '</ol>' +
+        '</div>'
+      ) : '') +
+
+      '<button class="v2-brf-q-cta" onclick="event.stopPropagation();v2DownloadTearsheetPDF(\'' + v2EscHTML(sym) + '\')">' +
+        '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>' +
+        ' Download analyst tear sheet' +
+      '</button>' +
+    '</aside>' +
+
+      '</div>' +    // /v2-brf-q-grid
+    '</div>';       // /v2-brf-quartr
+
   return html;
 }
 
