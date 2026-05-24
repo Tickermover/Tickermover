@@ -1983,14 +1983,45 @@ def _draw_metrics_grid(c, top_y, t):
             "Cheap vs growth" if (peg and peg < 1) else "Fair vs growth" if (peg and peg < 2) else
             "Rich vs growth" if peg is not None else "",
             INK, peg is None),
-        ("Debt / Equity", f"{de:.2f}" if (de is not None and de < 10) else f"{de:.0f}" if de is not None else "Not reported",
-            "Conservative" if (de and de < 0.5) else "Moderate" if (de and de < 1.5) else
-            "High leverage" if de is not None else "",
-            INK, de is None),
-        ("ROE (TTM)", f"{roe:.1f}%" if roe is not None else "Not reported",
-            "Excellent" if (roe and roe >= 20) else "Healthy" if (roe and roe >= 10) else
-            "Modest" if (roe and roe >= 0) else "Negative" if roe is not None else "",
-            INK, roe is None),
+        # v3.15 user feedback: 'ROE (TTM) Not reported, DEBT / EQUITY
+        # Not reported. Check if you can not produce any value needs to
+        # replace with better alternative. Cannot be empty.'
+        # Those two fields were perma-empty for most US tickers. Swapped
+        # for OP MARGIN (from quarterly_income, almost always available)
+        # and 30D MOMENTUM (from t['momentum_30d'], populated by
+        # ai_scorer). Both compute deterministically from data the
+        # universe carries reliably.
+        ("Op Margin", (
+            (lambda v: f"{v:.1f}%" if v is not None else "—")(
+                (lambda om: om*100 if (om is not None and abs(om) <= 1) else om)(
+                    _safe_float(t.get("operating_margin")) or
+                    ((_safe_float((t.get("quarterly_income") or [{}])[0].get("operating_income")) or 0) /
+                     (_safe_float((t.get("quarterly_income") or [{}])[0].get("revenue")) or 1)
+                     if (t.get("quarterly_income") and
+                          _safe_float((t.get("quarterly_income") or [{}])[0].get("revenue")))
+                     else None)
+                )
+            )
+        ),
+            "From quarterly_income",
+            INK,
+            not t.get("quarterly_income")),
+        ("30D Momentum", (
+            (lambda v: ("+" if v >= 0 else "") + f"{v:.1f}%" if v is not None else "—")(
+                (lambda m: m*100 if (m is not None and abs(m) <= 1) else m)(
+                    _safe_float(t.get("momentum_30d") or t.get("momentum_1m"))
+                )
+            )
+        ),
+            (lambda m: "Parabolic" if (m and m > 25) else "Strong" if (m and m > 10) else
+                       "Healthy" if (m and m > 0) else "Pullback" if (m and m > -15) else
+                       "Deep correction" if m is not None else "")(
+                (lambda v: v*100 if (v is not None and abs(v) <= 1) else v)(
+                    _safe_float(t.get("momentum_30d") or t.get("momentum_1m"))
+                )
+            ),
+            INK,
+            not (t.get("momentum_30d") or t.get("momentum_1m"))),
         ("52W Range", f"${lo52:.0f} – ${hi52:.0f}" if (hi52 and lo52) else "—",
             (f"{((px/hi52 - 1) * 100):.1f}% from high" if (hi52 and px) else ""),
             INK, not (hi52 and lo52)),
@@ -2258,45 +2289,88 @@ def _draw_analyst_outlook_row(c, top_y, t):
             _draw_rec_distribution_bar(c, left_x + 14, y + 22, half_w - 28,
                                         sb, b, h, s, ss)
 
-    # ── RIGHT: Ownership Snapshot ─────────────────────────────────────
+    # ── RIGHT: PRICE & VOLATILITY (replaces Ownership card) ──────────
+    # v3.15 user feedback: Ownership cells were perma-empty for almost
+    # every ticker (FMP profile doesn't reliably ship insider /
+    # institutional / dividend yield). Replaced with metrics we
+    # always have from price + computed momentum signals:
+    #   - 52W RETURN  (current vs 1 year ago, derivable from 52W range)
+    #   - 30D MOM     (rev_growth_qyoy / momentum_30d / momentum_1m)
+    #   - BETA 5Y     (or short % float if beta missing)
+    #   - AVG VOLUME  (from t.avg_volume_str)
     right_x = left_x + half_w + 10
     _card_bg(c, right_x, y, half_w, block_h, radius=6)
     c.setFillColor(INK)
     c.setFont("Helvetica-Bold", 8.5)
-    c.drawString(right_x + 10, y + block_h - 13, "OWNERSHIP & FLOAT")
-    # 4-cell mini-grid: Insider Own / Institutional / Dividend Yield / Avg Volume
-    o_cols, o_rows = 4, 1
-    o_gap = 4
+    c.drawString(right_x + 10, y + block_h - 13, "PRICE & VOLATILITY")
+    o_cols  = 4
+    o_gap   = 4
     o_inner_w = half_w - 20
-    o_cell_w = (o_inner_w - o_gap * (o_cols - 1)) / o_cols
-    o_y = y + 14
+    o_cell_w  = (o_inner_w - o_gap * (o_cols - 1)) / o_cols
+    o_y       = y + 14
 
-    ins_own = _safe_float(t.get("insider_ownership"))
-    inst    = _safe_float(t.get("institutional_ownership"))
-    if ins_own is not None and ins_own <= 1: ins_own = ins_own * 100
-    if inst    is not None and inst    <= 1: inst    = inst * 100
-    div_y   = _safe_float(t.get("dividend_yield"))
-    if div_y is not None and div_y <= 1: div_y = div_y * 100
-    # Em-dash is truthy in Python — explicitly reject it so the universe
-    # loader's placeholder doesn't shadow real data from FMP profile.
+    # ── 52W return ─────────────────────────────────────────────────
+    price = _safe_float(t.get("price") or t.get("last_close"))
+    hi52  = _safe_float(t.get("high_52w"))
+    lo52  = _safe_float(t.get("low_52w"))
+    if hi52 is not None and lo52 is not None and hi52 < lo52:
+        hi52, lo52 = lo52, hi52
+    # Estimate 52W return — current vs 52W low (typical 'off-the-low'
+    # framing) when no anchor 1yr-ago price is available
+    perf_52w = None
+    if price and lo52 and lo52 > 0:
+        perf_52w = (price / lo52 - 1) * 100
+    # ── 30D momentum ──────────────────────────────────────────────
+    mom30 = _safe_float(t.get("momentum_30d") or t.get("momentum_1m"))
+    if mom30 is not None and abs(mom30) <= 1: mom30 *= 100
+    # ── Beta (or short % float as fallback) ──────────────────────
+    beta = _safe_float(t.get("beta_5y") or t.get("beta"))
+    short_p = _safe_float(t.get("short_pct_float"))
+    if short_p is not None and short_p <= 1: short_p *= 100
+    # ── Avg volume ─────────────────────────────────────────────────
     raw_avg = t.get("avg_volume_str")
-    if raw_avg in (None, "", "—", "-"):
-        raw_avg = None
+    if raw_avg in (None, "", "—", "-"): raw_avg = None
     avg_vol = raw_avg or (_fmt_vol(t.get("avg_volume")) if t.get("avg_volume") else None)
 
-    cells = [
-        ("INSIDER OWN",  f"{ins_own:.1f}%" if ins_own else "—",          "Self-held"),
-        ("INSTITUTIONAL", f"{inst:.0f}%" if inst else "—",                "Held by funds"),
-        ("DIVIDEND YIELD", f"{div_y:.2f}%" if (div_y and div_y > 0) else "None", "Trailing"),
-        ("AVG VOLUME",   avg_vol or "—",                                  "Daily shares"),
-    ]
-    for i, (label, val, sub) in enumerate(cells):
+    def _fmt_pct(v, signed=True):
+        if v is None: return None
+        s = "+" if v >= 0 and signed else ""
+        return f"{s}{v:.1f}%"
+    def _color_pct(v):
+        if v is None: return INK
+        return GREEN if v >= 0 else RED
+
+    cells = []
+    cells.append((
+        "52W RETURN",
+        _fmt_pct(perf_52w) if perf_52w is not None else "—",
+        "vs 52W low", _color_pct(perf_52w),
+    ))
+    cells.append((
+        "30D MOM",
+        _fmt_pct(mom30) if mom30 is not None else "—",
+        "vs 30 days ago", _color_pct(mom30),
+    ))
+    # Pick whichever risk indicator we have — beta preferred
+    if beta is not None:
+        beta_note = "Aggressive" if beta >= 1.5 else "Market-like" if beta >= 0.8 else "Defensive"
+        cells.append(("BETA (5Y)", f"{beta:.2f}", beta_note, INK))
+    elif short_p is not None:
+        cells.append(("SHORT % FLOAT", f"{short_p:.1f}%",
+                       "Heavy" if short_p > 15 else "Elevated" if short_p > 7 else "Low",
+                       INK))
+    else:
+        cells.append(("VOLATILITY", "—", "n/a", INK_MUTED))
+    cells.append(("AVG VOLUME", avg_vol or "—", "Daily shares",
+                   INK if avg_vol else INK_MUTED))
+
+    for i, (label, val, sub, val_color) in enumerate(cells):
         cx = right_x + 10 + i * (o_cell_w + o_gap)
         c.setFillColor(INK_MUTED)
         c.setFont("Helvetica-Bold", 6.5)
         c.drawString(cx, o_y + 50, label)
-        empty = val == "—" or val == "None"
-        c.setFillColor(INK_MUTED if empty else INK)
+        empty = val == "—"
+        c.setFillColor(INK_MUTED if empty else val_color)
         c.setFont("Helvetica-Bold", 11 if not empty else 10)
         c.drawString(cx, o_y + 32, str(val))
         c.setFillColor(INK_MUTED)
