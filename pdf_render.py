@@ -885,7 +885,11 @@ def _draw_dcf_model(c, x, y, w, h, t, narrative):
     # ── Left side: 5-year FCF projection bars + assumption chips ──────
     left_x = x + 12
     left_w = (w - 24) * 0.58 - 6
-    chart_top = y + h - 38
+    # User v3.15: 'Give space between the line 5yr cashflow and below
+    # line Project Free cashflow.' — moved chart_top down 12pt so the
+    # 'PROJECTED FREE CASH FLOW' title sits below the card subtitle
+    # with breathing room.
+    chart_top = y + h - 50
     chart_h   = 70
 
     proj   = result["proj"]
@@ -929,16 +933,23 @@ def _draw_dcf_model(c, x, y, w, h, t, narrative):
     c.setFont("Helvetica-Bold", 7)
     c.drawString(left_x, chart_top + 8, "PROJECTED FREE CASH FLOW")
 
-    # Assumption chip row beneath the chart
+    # Assumption chip row beneath the chart — center-aligned within
+    # the left column (user v3.15: 'move the below ledgers in the
+    # right little bit so they adjust middle alignment'). Pre-measure
+    # total chip-row width, then start at the column's centerline
+    # minus half the total width.
     chip_y = bar_bot - 32
     chips = [
         ("WACC",            f"{result['wacc']:.1f}%"),
         ("Term. growth",    f"{result['terminal_g']:.1f}%"),
         ("FCF margin (Y5)", f"{result['fcf_margin']:.0f}%"),
     ]
-    cx = left_x
-    for label, val in chips:
-        chip_w = c.stringWidth(f"{label}: {val}", "Helvetica-Bold", 7) + 12
+    chip_widths = [c.stringWidth(f"{label}: {val}", "Helvetica-Bold", 7) + 12
+                   for label, val in chips]
+    total_chip_w = sum(chip_widths) + 6 * (len(chips) - 1)
+    col_center_x = left_x + left_w / 2
+    cx = col_center_x - total_chip_w / 2
+    for (label, val), chip_w in zip(chips, chip_widths):
         c.setFillColor(BRAND_LIGHT)
         c.roundRect(cx, chip_y, chip_w, 13, 6, stroke=0, fill=1)
         c.setFillColor(BRAND_INDIGO)
