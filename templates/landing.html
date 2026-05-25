@@ -66,11 +66,12 @@
     --prism:linear-gradient(135deg,#16a34a 0%,#4ade80 25%,#22d3ee 55%,#6366f1 80%,#a78bfa 100%);
     --cta-grad:linear-gradient(135deg,#22d3ee 0%,#6366f1 55%,#a78bfa 100%);
     --aurora:linear-gradient(135deg,#86efac 0%,#22c55e 30%,#22d3ee 65%,#a78bfa 100%);
-    /* "Green chrome" — used by .metallic for highlight words in headlines.
-       Pure green-family stops (no white), so it reads vivid on dark bg
-       instead of looking washed-out. The drop-shadow on .metallic adds
-       a soft halo for the "premium fintech" gleam. */
-    --metallic:linear-gradient(135deg,#86efac 0%,#22c55e 35%,#4ade80 65%,#16a34a 100%);
+    /* Cool-prism — used for animated gradient TEXT (.metallic, .prism-text,
+       engine score, hero picks score). Drops green entirely so the
+       shimmer reads calm and premium. Green stays as static brand
+       colour on icons, dots, eyebrows, the logo wordmark, etc. */
+    --metallic:linear-gradient(135deg,#c4b5fd 0%,#22d3ee 30%,#a78bfa 60%,#67e8f9 100%);
+    --prism-cool:linear-gradient(135deg,#22d3ee 0%,#a78bfa 35%,#6366f1 70%,#22d3ee 100%);
     --aurum:linear-gradient(135deg,#f6e7a4 0%,#e6c97a 40%,#b8860b 70%,#f6e7a4 100%);
 
     --wrap-max:1200px;
@@ -252,13 +253,13 @@
     -webkit-text-fill-color:transparent;color:transparent;
     animation:metalShift 8s ease-in-out infinite;
     font-style:italic;
-    /* Soft green halo behind the text — gives the chrome gradient
-       the premium "lit-from-behind" look without washing out. */
-    filter:drop-shadow(0 0 22px rgba(34,197,94,.30)) drop-shadow(0 1px 0 rgba(22,163,74,.45));
+    /* Cool halo (violet/cyan) — matches the cool-prism palette and
+       gives the text a premium "lit-from-behind" gleam without green. */
+    filter:drop-shadow(0 0 22px rgba(167,139,250,.30)) drop-shadow(0 1px 0 rgba(99,102,241,.40));
   }
   @keyframes metalShift{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
   .prism-text{
-    background:var(--prism);
+    background:var(--prism-cool);
     background-size:240% 100%;
     -webkit-background-clip:text;background-clip:text;
     -webkit-text-fill-color:transparent;color:transparent;
@@ -445,7 +446,7 @@
   @keyframes flow{to{stroke-dashoffset:-50}}
   .engine-score{
     font-family:'Fraunces',serif;font-weight:900;font-size:64px;
-    background:var(--prism);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;
+    background:var(--prism-cool);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;
     line-height:1;letter-spacing:-.04em;
   }
   .engine-score-label{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-top:6px;font-weight:700}
