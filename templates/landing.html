@@ -248,37 +248,113 @@
   .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;max-width:1020px;margin:0 auto}
   @media (max-width:880px){.steps{grid-template-columns:1fr}}
   .step{
-    position:relative;border-radius:18px;padding:28px 26px;
+    position:relative;border-radius:18px;padding:36px 28px 28px;
     background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.01));
     border:1px solid rgba(255,255,255,.08);
     transition:transform .15s, border-color .15s;
+    overflow:hidden;
   }
   .step:hover{transform:translateY(-3px);border-color:rgba(139,92,246,.30)}
+  .step:hover .step-num{opacity:.22;transform:translateY(-2px)}
+
+  /* Modern oversized ghosted numeral, sitting top-right of the card.
+     Gradient stroke, transparent fill — editorial feel. */
   .step-num{
-    display:inline-flex;align-items:center;justify-content:center;
-    width:34px;height:34px;border-radius:10px;
-    background:var(--grad);color:#fff;font-family:'JetBrains Mono',monospace;font-weight:800;font-size:14px;
-    margin-bottom:18px;letter-spacing:.01em;
+    position:absolute;top:14px;right:22px;
+    font-family:'Inter','JetBrains Mono',sans-serif;
+    font-size:88px;font-weight:900;line-height:1;letter-spacing:-.05em;
+    background:var(--grad);
+    -webkit-background-clip:text;background-clip:text;
+    -webkit-text-fill-color:transparent;color:transparent;
+    -webkit-text-stroke:1.5px transparent;
+    opacity:.14;
+    transition:opacity .25s, transform .25s;
+    pointer-events:none;
+    user-select:none;
   }
-  .step h3{font-size:18.5px;font-weight:800;color:#fff;margin-bottom:8px;letter-spacing:-.012em}
-  .step p{color:#cbd5e1;font-size:14.5px;line-height:1.6}
+
+  /* Small accent line under the eyebrow label — fills the role the old
+     gradient box played: a tiny brand cue at the top of each card. */
+  .step-mark{
+    display:flex;align-items:center;gap:10px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;font-weight:700;letter-spacing:.18em;
+    color:#a5b4fc;text-transform:uppercase;
+    margin-bottom:18px;
+  }
+  .step-mark::before{
+    content:"";width:24px;height:2px;border-radius:2px;
+    background:var(--grad);
+  }
+
+  .step h3{font-size:18.5px;font-weight:800;color:#fff;margin-bottom:8px;letter-spacing:-.012em;position:relative;z-index:1}
+  .step p{color:#cbd5e1;font-size:14.5px;line-height:1.6;position:relative;z-index:1}
 
   /* ─── PILLARS ─── */
-  .pillars{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;max-width:1020px;margin:0 auto}
+  /* ─── PILLARS — six color-coded research dimensions ─── */
+  .pillars{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;max-width:1060px;margin:0 auto}
   @media (max-width:880px){.pillars{grid-template-columns:1fr}}
   .pillar{
-    background:#fff;border:1px solid var(--bdr);border-radius:14px;padding:22px 22px;
-    position:relative;overflow:hidden;transition:transform .15s, border-color .15s, box-shadow .15s;
+    --pc:#4338ca;            /* per-pillar accent, overridden inline */
+    --pc-soft:rgba(67,56,202,.10);
+    background:#fff;border:1px solid var(--bdr);border-radius:16px;padding:24px 22px 20px;
+    position:relative;overflow:hidden;
+    transition:transform .18s ease, border-color .18s ease, box-shadow .18s ease;
   }
-  .pillar:hover{transform:translateY(-2px);border-color:rgba(67,56,202,.30);box-shadow:0 18px 32px -22px rgba(67,56,202,.30)}
-  .pillar .ico{
-    width:36px;height:36px;border-radius:10px;
-    background:var(--grad-soft);color:var(--indigo);
-    display:flex;align-items:center;justify-content:center;
-    font-weight:800;font-size:18px;margin-bottom:14px;
+  /* top accent bar, animates in from left on hover */
+  .pillar::before{
+    content:"";position:absolute;top:0;left:0;right:0;height:3px;
+    background:linear-gradient(90deg, var(--pc), transparent 80%);
+    transform:scaleX(.18);transform-origin:left;
+    transition:transform .35s cubic-bezier(.2,.7,.2,1);
   }
-  .pillar h4{font-size:16px;font-weight:800;letter-spacing:-.01em;margin-bottom:6px}
-  .pillar p{font-size:13.5px;color:var(--ink-soft);line-height:1.55}
+  /* radial glow blob in top-right that fades in on hover */
+  .pillar::after{
+    content:"";position:absolute;top:-40px;right:-40px;width:160px;height:160px;border-radius:50%;
+    background:radial-gradient(circle, var(--pc) 0%, transparent 65%);
+    opacity:0;transition:opacity .25s;pointer-events:none;
+  }
+  .pillar:hover{
+    transform:translateY(-4px);
+    border-color:color-mix(in srgb, var(--pc) 35%, transparent);
+    box-shadow:0 22px 40px -22px color-mix(in srgb, var(--pc) 35%, transparent);
+  }
+  .pillar:hover::before{transform:scaleX(1)}
+  .pillar:hover::after{opacity:.10}
+  .pillar:hover .pillar-ico{transform:scale(1.06) rotate(-3deg)}
+
+  /* icon tile — gradient background tinted with pillar color */
+  .pillar-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+  .pillar-ico{
+    width:44px;height:44px;border-radius:12px;
+    display:inline-flex;align-items:center;justify-content:center;
+    background:linear-gradient(135deg, color-mix(in srgb, var(--pc) 18%, #fff), color-mix(in srgb, var(--pc) 8%, #fff));
+    border:1px solid color-mix(in srgb, var(--pc) 20%, transparent);
+    color:var(--pc);
+    box-shadow:0 6px 16px -10px color-mix(in srgb, var(--pc) 60%, transparent);
+    transition:transform .25s ease;
+  }
+  .pillar-ico svg{width:22px;height:22px}
+
+  /* tiny weight badge — "+20 pts" feel */
+  .pillar-tag{
+    font-family:'JetBrains Mono',monospace;
+    font-size:10.5px;font-weight:800;letter-spacing:.08em;
+    color:var(--pc);background:var(--pc-soft);
+    padding:5px 9px;border-radius:999px;
+    text-transform:uppercase;
+  }
+
+  .pillar h4{
+    font-size:17px;font-weight:800;letter-spacing:-.012em;margin-bottom:8px;
+    display:flex;align-items:baseline;gap:8px;
+  }
+  .pillar h4 .dot{
+    width:6px;height:6px;border-radius:50%;background:var(--pc);
+    display:inline-block;flex-shrink:0;
+    box-shadow:0 0 0 3px color-mix(in srgb, var(--pc) 18%, transparent);
+  }
+  .pillar p{font-size:13.5px;color:var(--ink-soft);line-height:1.6}
 
   /* ─── PROFILE PICKER ─── */
   .profiles{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;max-width:1020px;margin:0 auto}
@@ -352,6 +428,133 @@
   /* Reveal */
   .reveal{opacity:0;transform:translateY(14px);transition:opacity .55s ease, transform .55s ease}
   .reveal.in{opacity:1;transform:translateY(0)}
+
+  /* ════════════════════════════════════════════════════════════════════
+     TECH-FX LAYER — animated mesh, ambient orbs, mouse-tilt, magnetic
+     buttons, cursor spotlight, count-up, marquee, glow pulses.
+     Everything respects prefers-reduced-motion.
+     ════════════════════════════════════════════════════════════════════ */
+
+  /* —— Animated hero mesh gradient (slow morphing blobs) —— */
+  .hero-fx{
+    position:absolute;inset:0;pointer-events:none;z-index:0;overflow:hidden;
+    mask-image:radial-gradient(ellipse at 50% 50%, #000 50%, transparent 100%);
+    -webkit-mask-image:radial-gradient(ellipse at 50% 50%, #000 50%, transparent 100%);
+  }
+  .hero-fx .blob{
+    position:absolute;border-radius:50%;filter:blur(80px);opacity:.55;mix-blend-mode:multiply;
+    will-change:transform;
+  }
+  .hero-fx .b1{width:520px;height:520px;background:#8b5cf6;top:-120px;left:-80px;animation:floatA 18s ease-in-out infinite}
+  .hero-fx .b2{width:460px;height:460px;background:#4338ca;top:-60px;right:-100px;animation:floatB 22s ease-in-out infinite}
+  .hero-fx .b3{width:380px;height:380px;background:#ec4899;bottom:-140px;left:30%;animation:floatC 26s ease-in-out infinite;opacity:.32}
+  @keyframes floatA{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(60px,40px) scale(1.08)}66%{transform:translate(-30px,80px) scale(.96)}}
+  @keyframes floatB{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(-50px,30px) scale(1.05)}66%{transform:translate(40px,-30px) scale(.94)}}
+  @keyframes floatC{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(80px,-60px) scale(1.1)}}
+
+  /* Make hero content sit above the FX layer */
+  .hero > .wrap{position:relative;z-index:1}
+
+  /* Drifting grid (the existing hero::before grid now gently drifts) */
+  .hero::before{animation:gridDrift 80s linear infinite}
+  @keyframes gridDrift{from{background-position:0 0,0 0}to{background-position:64px 64px,64px 64px}}
+
+  /* —— Ambient orbs for dark sections —— */
+  .ambient{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+  .ambient .orb{position:absolute;border-radius:50%;filter:blur(70px);will-change:transform}
+  .ambient .o1{width:340px;height:340px;background:#6366f1;opacity:.16;top:10%;left:-80px;animation:floatA 24s ease-in-out infinite}
+  .ambient .o2{width:280px;height:280px;background:#ec4899;opacity:.12;bottom:8%;right:-60px;animation:floatB 30s ease-in-out infinite}
+  section.block.dark{position:relative}
+  section.block.dark .wrap{position:relative;z-index:1}
+
+  /* Animated scan-line on dark section bottom */
+  section.block.dark::after{
+    content:"";position:absolute;left:0;right:0;bottom:0;height:1px;
+    background:linear-gradient(90deg,transparent,#8b5cf6,#ec4899,transparent);
+    background-size:200% 100%;animation:scanLine 6s linear infinite;opacity:.55;
+  }
+  @keyframes scanLine{0%{background-position:200% 0}100%{background-position:-200% 0}}
+
+  /* —— Stagger reveal — children animate in sequence —— */
+  .stagger > *{
+    opacity:0;transform:translateY(18px) scale(.985);
+    transition:opacity .6s cubic-bezier(.2,.7,.2,1), transform .6s cubic-bezier(.2,.7,.2,1);
+  }
+  .stagger.in > *{opacity:1;transform:translateY(0) scale(1)}
+  .stagger.in > *:nth-child(1){transition-delay:.05s}
+  .stagger.in > *:nth-child(2){transition-delay:.13s}
+  .stagger.in > *:nth-child(3){transition-delay:.21s}
+  .stagger.in > *:nth-child(4){transition-delay:.29s}
+  .stagger.in > *:nth-child(5){transition-delay:.37s}
+  .stagger.in > *:nth-child(6){transition-delay:.45s}
+
+  /* —— Mouse-tilt prep (JS sets --rx and --ry) —— */
+  .tilt{
+    transform-style:preserve-3d;
+    transition:transform .25s cubic-bezier(.2,.7,.2,1), box-shadow .25s ease;
+    will-change:transform;
+  }
+  .tilt:hover{transform:perspective(900px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg)) translateZ(0)}
+
+  /* —— Magnetic button (JS sets --mx, --my) —— */
+  .magnetic{
+    transition:transform .18s cubic-bezier(.2,.7,.2,1), box-shadow .18s ease;
+    will-change:transform;
+  }
+  .magnetic:hover{transform:translate(var(--mx,0px), var(--my,0px))}
+
+  /* —— Cursor spotlight overlay (light follows mouse on cards) —— */
+  .spot{position:relative;overflow:hidden}
+  .spot::after{
+    content:"";position:absolute;inset:0;pointer-events:none;
+    background:radial-gradient(280px circle at var(--sx,50%) var(--sy,0%), rgba(139,92,246,.18), transparent 60%);
+    opacity:0;transition:opacity .25s;
+  }
+  .spot:hover::after{opacity:1}
+
+  /* —— Number tick / count-up styling —— */
+  .count{font-variant-numeric:tabular-nums}
+
+  /* —— Marquee strip —— */
+  .marquee{
+    overflow:hidden;mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);
+    -webkit-mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);
+  }
+  .marquee-track{display:inline-flex;gap:36px;white-space:nowrap;animation:marquee 32s linear infinite;will-change:transform}
+  @keyframes marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+  /* —— Live pulse-ring (used on the "Live scoring" pill) —— */
+  .pulse-ring{position:relative;display:inline-block;width:8px;height:8px;border-radius:50%;background:#22c55e}
+  .pulse-ring::after{
+    content:"";position:absolute;inset:-4px;border-radius:50%;
+    border:2px solid #22c55e;animation:pulseRing 2.2s ease-out infinite;opacity:0;
+  }
+  @keyframes pulseRing{0%{transform:scale(.7);opacity:.7}100%{transform:scale(2.6);opacity:0}}
+
+  /* —— Section title shimmer on view —— */
+  .gradient-text{
+    background:linear-gradient(120deg,#4338ca 0%,#8b5cf6 40%,#ec4899 60%,#8b5cf6 80%,#4338ca 100%);
+    background-size:240% 100%;
+    -webkit-background-clip:text;background-clip:text;
+    -webkit-text-fill-color:transparent;color:transparent;
+    animation:shimmer 9s ease-in-out infinite;
+  }
+  @keyframes shimmer{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+
+  /* —— Pick-card chart sparkline draw-in —— */
+  .draw-path{stroke-dasharray:300;stroke-dashoffset:300;animation:draw 2.4s ease-out forwards}
+  @keyframes draw{to{stroke-dashoffset:0}}
+
+  /* —— Soft floating motion for hero CTA shadow —— */
+  .cta{box-shadow:0 8px 24px -8px rgba(99,102,241,.55), 0 0 0 0 rgba(139,92,246,.45);animation:ctaBreathe 4.5s ease-in-out infinite}
+  @keyframes ctaBreathe{0%,100%{box-shadow:0 8px 24px -8px rgba(99,102,241,.55), 0 0 0 0 rgba(139,92,246,0)}50%{box-shadow:0 12px 30px -10px rgba(99,102,241,.7), 0 0 0 8px rgba(139,92,246,.07)}}
+
+  /* —— Reduce-motion users get a calmer page —— */
+  @media (prefers-reduced-motion: reduce){
+    *, *::before, *::after{animation:none !important;transition:none !important}
+    .hero-fx,.ambient{display:none}
+    .stagger > *{opacity:1;transform:none}
+  }
 </style>
 </head>
 <body>
@@ -382,8 +585,14 @@
 
 <!-- ─── HERO ─── -->
 <section class="hero">
+  <!-- Animated gradient mesh + ambient blobs (decorative, behind content) -->
+  <div class="hero-fx" aria-hidden="true">
+    <div class="blob b1"></div>
+    <div class="blob b2"></div>
+    <div class="blob b3"></div>
+  </div>
   <div class="wrap hero-inner">
-    <span class="hero-pill"><span class="dot"></span> Live scoring · 540+ US stocks · updated every 5 min</span>
+    <span class="hero-pill"><span class="pulse-ring"></span> Live scoring · <span class="count" data-count="540" data-suffix="+">540+</span> US stocks · updated every 5 min</span>
     <h1 class="hero-title">
       Stock research without<br>
       the <span class="gradient-text">guesswork.</span>
@@ -393,15 +602,15 @@
       Quality picks only — and every exit recorded so you can audit the track record.
     </p>
     <div class="hero-ctas">
-      <a class="cta" href="/app">Get started →</a>
-      <a class="cta-ghost" href="#how">See how it works</a>
+      <a class="cta magnetic" href="/app">Get started →</a>
+      <a class="cta-ghost magnetic" href="#how">See how it works</a>
     </div>
     <p class="hero-meta"><span class="check">✓</span> Free during beta · <span class="check">✓</span> No card required · <span class="check">✓</span> US market hours</p>
 
     <!-- Live preview cards -->
     <div class="preview-wrap reveal">
       <div class="preview-label"><span class="line"></span> Today's Hot List <span class="line"></span></div>
-      <div class="preview-grid" id="hero-picks">
+      <div class="preview-grid stagger reveal" id="hero-picks">
         <div class="pick-card">
           <div class="pick-head">
             <div class="pick-logo">—</div>
@@ -450,25 +659,29 @@
 
 <!-- ─── HOW IT WORKS ─── -->
 <section id="how" class="block dark">
+  <div class="ambient" aria-hidden="true"><div class="orb o1"></div><div class="orb o2"></div></div>
   <div class="wrap head">
     <div class="eyebrow">How it works</div>
     <h2 class="title-h">Three steps. No mysticism.</h2>
     <p class="sub">A disciplined process you can see end-to-end — from score to entry to exit.</p>
   </div>
   <div class="wrap">
-    <div class="steps">
+    <div class="steps stagger reveal">
       <div class="step">
-        <div class="step-num">01</div>
+        <div class="step-num" aria-hidden="true">01</div>
+        <div class="step-mark">Step 01</div>
         <h3>We score 540+ US stocks daily</h3>
         <p>Every name on the S&amp;P 500, Nasdaq-100 and Dow gets an Alpha Score across six investment pillars: momentum, growth, quality, valuation, sentiment, and growth potential.</p>
       </div>
       <div class="step">
-        <div class="step-num">02</div>
+        <div class="step-num" aria-hidden="true">02</div>
+        <div class="step-mark">Step 02</div>
         <h3>Only Grade-A names enter the tracker</h3>
         <p>Our Top Hunts list holds at most 12 picks — and only stocks scoring 75+ with at least 4 strong pillars get in. Empty slots beat weak picks.</p>
       </div>
       <div class="step">
-        <div class="step-num">03</div>
+        <div class="step-num" aria-hidden="true">03</div>
+        <div class="step-mark">Step 03</div>
         <h3>Disciplined exits, recorded forever</h3>
         <p>Trail stops, +100% take-profit targets, and signal exits decide when a pick leaves. Every exit is logged so the track record is auditable, not anecdotal.</p>
       </div>
@@ -484,13 +697,66 @@
     <p class="sub">Alpha Score is a composite. Hover any pick on the dashboard to see all six bars — so you know exactly why a name is on the list.</p>
   </div>
   <div class="wrap">
-    <div class="pillars">
-      <div class="pillar"><div class="ico">↗</div><h4>Momentum</h4><p>Price action over 1- and 3-month windows, vs. its own 50-day moving average.</p></div>
-      <div class="pillar"><div class="ico">⤴</div><h4>Growth</h4><p>Revenue and EPS year-over-year. Penalties for declining top-line, bonuses for &gt;20% growth.</p></div>
-      <div class="pillar"><div class="ico">◆</div><h4>Quality</h4><p>Gross and FCF margins, leverage. High-margin businesses with clean balance sheets score top.</p></div>
-      <div class="pillar"><div class="ico">⚖</div><h4>Valuation</h4><p>PEG and P/E vs. growth, plus analyst-implied upside. Avoids names priced past perfection.</p></div>
-      <div class="pillar"><div class="ico">★</div><h4>Sentiment</h4><p>Strong-buy ratio, insider net buys, mention velocity. Captures professional + crowd signal.</p></div>
-      <div class="pillar"><div class="ico">⚡</div><h4>Growth Potential</h4><p>Forward EPS revision velocity and addressable-market tailwinds. The 'tomorrow' pillar.</p></div>
+    <div class="pillars stagger reveal">
+      <!-- 01 MOMENTUM — indigo, rising trend icon -->
+      <div class="pillar tilt spot" style="--pc:#4338ca;--pc-soft:rgba(67,56,202,.10)">
+        <div class="pillar-head">
+          <div class="pillar-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 17 9 11 13 15 21 7"/><polyline points="14 7 21 7 21 14"/></svg></div>
+          <span class="pillar-tag">Price action</span>
+        </div>
+        <h4><span class="dot"></span>Momentum</h4>
+        <p>Price action over 1- and 3-month windows, measured against the stock's own 50-day moving average.</p>
+      </div>
+
+      <!-- 02 GROWTH — emerald, sprouting bar chart -->
+      <div class="pillar tilt spot" style="--pc:#10b981;--pc-soft:rgba(16,185,129,.10)">
+        <div class="pillar-head">
+          <div class="pillar-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="20" x2="6" y2="14"/><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="6"/><polyline points="3 8 7 4 11 8"/></svg></div>
+          <span class="pillar-tag">Top-line</span>
+        </div>
+        <h4><span class="dot"></span>Growth</h4>
+        <p>Revenue and EPS year-over-year. Penalties for declining top-line, bonuses for &gt;20% growth.</p>
+      </div>
+
+      <!-- 03 QUALITY — violet, shield with check (financial integrity) -->
+      <div class="pillar tilt spot" style="--pc:#8b5cf6;--pc-soft:rgba(139,92,246,.10)">
+        <div class="pillar-head">
+          <div class="pillar-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 L20 5 V12 C20 17 16 21 12 22 C8 21 4 17 4 12 V5 Z"/><polyline points="8.5 12 11 14.5 15.5 10"/></svg></div>
+          <span class="pillar-tag">Margins</span>
+        </div>
+        <h4><span class="dot"></span>Quality</h4>
+        <p>Gross and FCF margins, leverage. High-margin businesses with clean balance sheets score the top.</p>
+      </div>
+
+      <!-- 04 VALUATION — cyan, balanced scale -->
+      <div class="pillar tilt spot" style="--pc:#06b6d4;--pc-soft:rgba(6,182,212,.10)">
+        <div class="pillar-head">
+          <div class="pillar-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="3" x2="12" y2="20"/><line x1="6" y1="20" x2="18" y2="20"/><path d="M3 9 L6 4 L9 9 Z"/><path d="M15 9 L18 4 L21 9 Z"/><path d="M3 9 C3 11 4.3 12 6 12 C7.7 12 9 11 9 9"/><path d="M15 9 C15 11 16.3 12 18 12 C19.7 12 21 11 21 9"/></svg></div>
+          <span class="pillar-tag">PEG / P/E</span>
+        </div>
+        <h4><span class="dot"></span>Valuation</h4>
+        <p>PEG and P/E vs. growth, plus analyst-implied upside. Avoids names priced past perfection.</p>
+      </div>
+
+      <!-- 05 SENTIMENT — pink, signal waves -->
+      <div class="pillar tilt spot" style="--pc:#ec4899;--pc-soft:rgba(236,72,153,.10)">
+        <div class="pillar-head">
+          <div class="pillar-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2"/><path d="M8.5 8.5 a5 5 0 0 0 0 7"/><path d="M15.5 8.5 a5 5 0 0 1 0 7"/><path d="M5 5 a10 10 0 0 0 0 14"/><path d="M19 5 a10 10 0 0 1 0 14"/></svg></div>
+          <span class="pillar-tag">Crowd + pros</span>
+        </div>
+        <h4><span class="dot"></span>Sentiment</h4>
+        <p>Strong-buy ratio, insider net buys, mention velocity. Captures professional and crowd signal in one read.</p>
+      </div>
+
+      <!-- 06 GROWTH POTENTIAL — amber, telescope/eye-on-future -->
+      <div class="pillar tilt spot" style="--pc:#f59e0b;--pc-soft:rgba(245,158,11,.10)">
+        <div class="pillar-head">
+          <div class="pillar-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.5"/><path d="M3 12 C7 6 17 6 21 12"/><path d="M3 12 C7 18 17 18 21 12"/><line x1="12" y1="3" x2="12" y2="5.5"/><line x1="12" y1="18.5" x2="12" y2="21"/></svg></div>
+          <span class="pillar-tag">Tomorrow</span>
+        </div>
+        <h4><span class="dot"></span>Growth Potential</h4>
+        <p>Forward EPS revision velocity and addressable-market tailwinds. The pillar that looks past today's print.</p>
+      </div>
     </div>
   </div>
 </section>
@@ -681,6 +947,82 @@
     } catch(e){}
   }
   loadRecord();
+
+  // ────────────────────────────────────────────────────────────────────
+  //  TECH-FX interactions (mouse-tilt, magnetic buttons, cursor
+  //  spotlight, count-up). All listeners are passive and bail out
+  //  early on touch / reduced-motion to keep mobile snappy.
+  // ────────────────────────────────────────────────────────────────────
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const isCoarse     = window.matchMedia('(pointer: coarse)').matches;
+
+  // 1. Mouse-tilt on .tilt elements (3D hover)
+  if (!reduceMotion && !isCoarse) {
+    document.querySelectorAll('.tilt').forEach(el => {
+      el.addEventListener('mousemove', (e) => {
+        const r = el.getBoundingClientRect();
+        const px = (e.clientX - r.left) / r.width;
+        const py = (e.clientY - r.top) / r.height;
+        // Rotate by max 6deg — strong enough to feel, subtle enough to not feel cheesy
+        el.style.setProperty('--ry', ((px - 0.5) * 12).toFixed(2) + 'deg');
+        el.style.setProperty('--rx', ((0.5 - py) * 12).toFixed(2) + 'deg');
+      }, {passive:true});
+      el.addEventListener('mouseleave', () => {
+        el.style.setProperty('--rx', '0deg');
+        el.style.setProperty('--ry', '0deg');
+      });
+    });
+  }
+
+  // 2. Magnetic buttons — the button drifts toward the cursor
+  if (!reduceMotion && !isCoarse) {
+    document.querySelectorAll('.magnetic').forEach(el => {
+      el.addEventListener('mousemove', (e) => {
+        const r = el.getBoundingClientRect();
+        const dx = (e.clientX - (r.left + r.width / 2)) * 0.18;
+        const dy = (e.clientY - (r.top + r.height / 2)) * 0.18;
+        el.style.setProperty('--mx', dx.toFixed(1) + 'px');
+        el.style.setProperty('--my', dy.toFixed(1) + 'px');
+      }, {passive:true});
+      el.addEventListener('mouseleave', () => {
+        el.style.setProperty('--mx', '0px');
+        el.style.setProperty('--my', '0px');
+      });
+    });
+  }
+
+  // 3. Cursor spotlight — light follows mouse inside .spot cards
+  if (!reduceMotion && !isCoarse) {
+    document.querySelectorAll('.spot').forEach(el => {
+      el.addEventListener('mousemove', (e) => {
+        const r = el.getBoundingClientRect();
+        el.style.setProperty('--sx', ((e.clientX - r.left) / r.width  * 100).toFixed(1) + '%');
+        el.style.setProperty('--sy', ((e.clientY - r.top)  / r.height * 100).toFixed(1) + '%');
+      }, {passive:true});
+    });
+  }
+
+  // 4. Count-up: any .count[data-count="540"] ticks up to its target when scrolled into view.
+  const countObs = new IntersectionObserver((entries) => {
+    entries.forEach(en => {
+      if (!en.isIntersecting) return;
+      const el = en.target;
+      countObs.unobserve(el);
+      const target = parseFloat(el.dataset.count || '0');
+      const suffix = el.dataset.suffix || '';
+      const duration = 1400;
+      const t0 = performance.now();
+      const tick = (t) => {
+        const k = Math.min(1, (t - t0) / duration);
+        const eased = 1 - Math.pow(1 - k, 3);          // ease-out cubic
+        el.textContent = Math.round(target * eased) + suffix;
+        if (k < 1) requestAnimationFrame(tick);
+        else el.textContent = target + suffix;
+      };
+      requestAnimationFrame(tick);
+    });
+  }, {threshold:.4});
+  document.querySelectorAll('.count[data-count]').forEach(el => countObs.observe(el));
 })();
 </script>
 

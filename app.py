@@ -21,6 +21,7 @@ from pydantic import BaseModel
 import config
 from auth import SupabaseClient
 from billing import RazorpayClient, is_pro
+from email_sender import send_welcome_email
 from data_coordinator import DataCoordinator
 from ai_scorer import score_and_rank, compute_pop_score
 from stock_universe import get_universe, get_meta
@@ -4501,7 +4502,14 @@ class _WatchlistBody(BaseModel):
 
 @app.post("/api/auth/signup")
 async def api_signup(body: _AuthBody):
-    """Register a new user account."""
+    """Register a new user account.
+
+    Supabase sends the confirmation email via custom SMTP (Resend), so the
+    branded email_welcome.html template configured in the Supabase
+    dashboard becomes both the "confirm your email" and "welcome to
+    AlphaHunt" message in one. Rate limit is Resend's (3k/month free),
+    not Supabase's built-in 3/hour cap.
+    """
     result = await supabase.sign_up(body.email, body.password)
     if result.get("error"):
         raise HTTPException(status_code=400, detail=result["error"])
@@ -4535,6 +4543,91 @@ async def api_oauth_start(provider: str, request: Request, body: _OAuthBody | No
     if not url:
         raise HTTPException(status_code=503, detail="OAuth URL build failed")
     return JSONResponse({"authorize_url": url})
+
+
+class _OnSigninBody(BaseModel):
+    access_token: str
+
+@app.post("/api/auth/on-signin")
+async def api_on_signin(body: _OnSigninBody):
+    """Called by the OAuth/magic-link callback page after the browser has
+    persisted its tokens. Detects first-time sign-ins (mostly Google OAuth,
+    since those skip Supabase's normal Confirm-signup email) and fires our
+    branded welcome email via Resend.
+
+    Why this endpoint exists
+    ------------------------
+    Email+password signups hit /api/auth/signup → Supabase sends the
+    Confirm-signup email through custom SMTP (Resend). Google OAuth users
+    bypass that path entirely — Supabase trusts Google's email verification
+    and never sends a confirmation. Without this endpoint, Google users
+    would join AlphaHunt in silence and never see our welcome.
+
+    "First-time" heuristic
+    ----------------------
+    We fetch the user from Supabase and compare `created_at` vs
+    `last_sign_in_at`. If they're within ~60s of each other, this sign-in
+    IS the account-creation event — treat it as a new signup and send the
+    welcome. On subsequent sign-ins those timestamps diverge and we skip.
+
+    Failure mode: silent. The frontend doesn't need to know whether we
+    sent an email — login proceeds either way.
+    """
+    if not supabase.enabled:
+        return JSONResponse({"ok": False, "reason": "auth-disabled"})
+
+    try:
+        import httpx
+        from datetime import datetime, timezone
+
+        # Fetch raw user object (not via supabase.get_user, which strips
+        # the timestamp fields we need for the first-time check).
+        async with httpx.AsyncClient(timeout=8) as c:
+            r = await c.get(
+                f"{supabase.url}/auth/v1/user",
+                headers={
+                    "apikey":        supabase.anon_key,
+                    "Authorization": f"Bearer {body.access_token}",
+                },
+            )
+            user = r.json() if r.status_code < 400 else {}
+
+        email = user.get("email")
+        if not email:
+            return JSONResponse({"ok": False, "reason": "no-email"})
+
+        def _parse_ts(s: Optional[str]) -> Optional[datetime]:
+            if not s:
+                return None
+            try:
+                # Supabase returns ISO-8601 with trailing Z or +00:00
+                return datetime.fromisoformat(s.replace("Z", "+00:00"))
+            except Exception:
+                return None
+
+        created    = _parse_ts(user.get("created_at"))
+        last_signin = _parse_ts(user.get("last_sign_in_at"))
+
+        # First-time: account was just created (treat <2min gap as "now"
+        # to absorb any clock skew between Supabase and our server).
+        is_first_time = False
+        if created and last_signin:
+            is_first_time = abs((last_signin - created).total_seconds()) < 120
+        elif created:
+            # No last_sign_in_at yet → definitely first sign-in.
+            is_first_time = (datetime.now(timezone.utc) - created).total_seconds() < 120
+
+        if not is_first_time:
+            return JSONResponse({"ok": True, "welcomed": False, "reason": "returning-user"})
+
+        # Fire welcome (don't block on it).
+        asyncio.create_task(send_welcome_email(email))
+        logger.info(f"[ON-SIGNIN] First-time user, welcome queued: {email[:4]}***")
+        return JSONResponse({"ok": True, "welcomed": True})
+
+    except Exception as exc:
+        logger.warning(f"[ON-SIGNIN] non-fatal: {exc}")
+        return JSONResponse({"ok": False, "reason": str(exc)})
 
 
 class _MagicLinkBody(BaseModel):
@@ -4588,6 +4681,18 @@ async def auth_callback():
     try {
       localStorage.setItem('ah_token', access);
       if (refresh) localStorage.setItem('ah_refresh', refresh);
+    } catch(e) {}
+    // Fire-and-forget: ping our backend so it can detect first-time
+    // Google sign-ins (which skip Supabase's Confirm-signup email) and
+    // dispatch our branded welcome email via Resend. We don't await this
+    // — login proceeds immediately regardless of whether the email sends.
+    try {
+      fetch('/api/auth/on-signin', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({access_token: access}),
+        keepalive: true,
+      }).catch(() => {});
     } catch(e) {}
     window.location.replace('/app');
   } else {
