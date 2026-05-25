@@ -1121,6 +1121,30 @@ tr:hover td{background:rgba(132,204,22,.06)}
 .cmdk-item-sub{font-size:11.5px;color:#64748b;margin-top:1px;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cmdk-item-kbd{font-size:10.5px;color:#94a3b8;font-weight:600;letter-spacing:.04em}
+
+/* v3.20: action chips inside each cmd-K row — Briefing + Download PDF.
+   So the user can hit the search bar, type a ticker, and download
+   the research report or open its briefing without clicking through
+   the stock modal. */
+.cmdk-actions{display:flex;gap:6px;align-items:center;flex-shrink:0}
+.cmdk-action-chip{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:6px 10px;border-radius:7px;cursor:pointer;
+  background:#fff;border:1px solid #e2e8f0;
+  font-family:inherit;font-size:11px;font-weight:700;color:#475569;
+  letter-spacing:-.005em;
+  transition:all .12s;
+}
+.cmdk-action-chip:hover{background:#f1f5f9;color:#0f172a;border-color:#cbd5e1;transform:translateY(-1px)}
+.cmdk-action-chip.primary{
+  background:linear-gradient(135deg,#4338ca 0%,#8b5cf6 60%,#ec4899 100%);
+  background-size:200% 200%;background-position:0% 50%;
+  color:#fff;border-color:transparent;
+  box-shadow:0 4px 10px -4px rgba(99,102,241,.45);
+}
+.cmdk-action-chip.primary:hover{background-position:100% 50%;transform:translateY(-1px)}
+.cmdk-chip-icon{font-size:12px;line-height:1}
+
 .cmdk-empty{padding:32px 18px;text-align:center;color:#94a3b8;font-size:13px}
 .cmdk-foot{
   display:flex;gap:14px;padding:10px 16px;
@@ -7274,7 +7298,11 @@ function renderV2Overview(tickers){
 
   root.innerHTML =
     profileHint +
-    v2RenderWatchlistExposure(fullUniverse) +
+    // v3.20: Watchlist exposure widget MOVED to the dedicated Watchlist
+    // tab (user feedback: 'why watchlist get added in the homepage
+    // while clicking the star from the stock list instead of watchlist
+    // tab'). Homepage now stays focused on Today's Focus / Sectors /
+    // Hot News rather than mixing watchlist concerns in.
     // Today's Focus replaces the brief greeting + What Changed + 10-card
     // KPI strip + pulse chips with up to 9 actionable opportunity cards.
     // Each card has a clear label (BREAKOUT, SCORE UPGRADE, etc.) and a
@@ -13212,8 +13240,35 @@ function _cmdkTickerMatches(){
     icon: (t.ticker || '').slice(0, 3),
     label: t.ticker,
     sub: (t.name || '') + (t.smart_score != null ? ` · Score ${Math.round(t.smart_score)}` : ''),
+    ticker: t.ticker,
     run: () => openStockModal(t.ticker),
   }));
+}
+
+// v3.20: action helpers triggered from cmd-K result quick-action chips.
+// 'Briefing' opens the Briefings panel and loads the ticker's brief.
+// 'PDF' fires the same direct-download path the modal CTA uses, so the
+// user can search → download in one flow without opening the modal.
+function _cmdkOpenBriefing(ticker){
+  closeCmdK();
+  // Show the Briefings panel — same code path the sidebar nav uses.
+  if (typeof v2Nav === 'function') {
+    v2Nav('briefings');
+  } else {
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    const bp = document.getElementById('panel-briefings');
+    if (bp) bp.classList.add('active');
+  }
+  // Open this ticker's briefing detail inside the panel.
+  setTimeout(() => {
+    if (typeof v2OpenBriefing === 'function') v2OpenBriefing(ticker);
+  }, 60);
+}
+function _cmdkDownloadPDF(ticker){
+  closeCmdK();
+  if (typeof v2DownloadTearsheetPDF === 'function') {
+    v2DownloadTearsheetPDF(ticker);
+  }
 }
 function renderCmdK(){
   const list = document.getElementById('cmdk-list');
@@ -13237,15 +13292,22 @@ function renderCmdK(){
       // race; previously re-rendering on hover destroyed the click target
       // mid-event and clicks silently dropped. We update _cmdkActive on
       // hover via classList only — no DOM rebuild.
+      const tk = (i.ticker || i.label || '').replace(/'/g, "\\'");
       return `<div class="cmdk-item ${isActive?'active':''}" data-idx="${myIdx}"
-                   onmouseenter="_cmdkSetActive(${myIdx})"
-                   onmousedown="_cmdkRun(${myIdx})">
-        <div class="cmdk-item-icon ticker">${i.icon}</div>
-        <div class="cmdk-item-main">
+                   onmouseenter="_cmdkSetActive(${myIdx})">
+        <div class="cmdk-item-icon ticker" onmousedown="_cmdkRun(${myIdx})">${i.icon}</div>
+        <div class="cmdk-item-main" onmousedown="_cmdkRun(${myIdx})">
           <div class="cmdk-item-title">${i.label}</div>
           <div class="cmdk-item-sub">${i.sub || ''}</div>
         </div>
-        <div class="cmdk-item-kbd">Stock</div>
+        <div class="cmdk-actions">
+          <button class="cmdk-action-chip" onmousedown="event.stopPropagation();_cmdkOpenBriefing('${tk}')" title="Open briefing">
+            <span class="cmdk-chip-icon">📊</span><span>Briefing</span>
+          </button>
+          <button class="cmdk-action-chip primary" onmousedown="event.stopPropagation();_cmdkDownloadPDF('${tk}')" title="Download research report PDF">
+            <span class="cmdk-chip-icon">⬇</span><span>PDF</span>
+          </button>
+        </div>
       </div>`;
     }).join('');
 }
@@ -14028,7 +14090,15 @@ async function renderWatchlistPanel() {
       return;
     }
     if (empty) empty.style.display = 'none';
-    grid.innerHTML = items.map(t => buildTickerCard(t, true)).join('');
+    // v3.20: render the sector-exposure widget AT THE TOP of the
+    // watchlist tab (was on the homepage — user wanted it here
+    // instead). Falls back to nothing when the universe payload
+    // hasn't loaded yet — the widget only makes sense with sector
+    // data, not raw watchlist IDs.
+    const universe = Object.values(_allTickerData || {});
+    const exposure = universe.length ? v2RenderWatchlistExposure(universe) : '';
+    grid.innerHTML = (exposure ? `<div style="grid-column:1/-1">${exposure}</div>` : '')
+                      + items.map(t => buildTickerCard(t, true)).join('');
   } catch {}
 }
 
