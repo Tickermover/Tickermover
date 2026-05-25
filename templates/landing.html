@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AlphaHunt — AI-driven stock research. Audited every day.</title>
 <meta name="description" content="AI-driven Alpha Score on 540+ US stocks, refreshed every 5 minutes. Six research pillars, a public track record, and disciplined exits. Built for serious investors.">
-<meta name="theme-color" content="#06070d">
+<meta name="theme-color" content="#0d1320">
 
 <link rel="icon" type="image/png" sizes="32x32" href="/static/icons/favicon-32.png">
 <link rel="icon" type="image/png" sizes="192x192" href="/static/icons/icon-192.png">
@@ -24,35 +24,41 @@
      ═══════════════════════════════════════════════════════════════════════ */
 
   :root{
-    /* base palette */
-    --bg:#06070d;
-    --bg-2:#0a0c14;
-    --bg-3:#0f1220;
-    --surface:rgba(255,255,255,.035);
-    --surface-2:rgba(255,255,255,.06);
-    --bdr:rgba(255,255,255,.07);
-    --bdr-2:rgba(255,255,255,.12);
+    /* base palette — twilight slate (lighter, more positive than obsidian) */
+    --bg:#0d1320;
+    --bg-2:#141a2b;
+    --bg-3:#1c2440;
+    --surface:rgba(255,255,255,.05);
+    --surface-2:rgba(255,255,255,.085);
+    --bdr:rgba(255,255,255,.10);
+    --bdr-2:rgba(255,255,255,.18);
 
     /* type */
-    --ink:#eef1fb;
-    --ink-2:#c5cce0;
-    --muted:#7a839e;
-    --muted-2:#525a73;
+    --ink:#f0f4ff;
+    --ink-2:#cdd5e8;
+    --muted:#8c97b3;
+    --muted-2:#5d6680;
 
-    /* accents */
+    /* accents — lime is now THE brand color, matching the logo */
+    --lime:#84e02b;          /* logo green */
+    --lime-2:#a3e635;        /* brighter highlight */
+    --lime-3:#bef264;        /* softest tint */
+    --lime-glow:rgba(132,224,43,.55);
+    --emerald:#10d97e;
+    --cyan:#22d3ee;
     --indigo:#6366f1;
     --violet:#a78bfa;
     --pink:#ec4899;
-    --cyan:#22d3ee;
     --gold:#e6c97a;
     --gold-2:#f6e7a4;
-    --silver:#c0c8d8;
     --up:#10d97e;
     --down:#ff6b6b;
 
-    /* gradients */
-    --prism:linear-gradient(135deg,#6366f1 0%,#a78bfa 30%,#ec4899 60%,#22d3ee 100%);
-    --metallic:linear-gradient(135deg,#fafbff 0%,#9aa5c7 40%,#fafbff 65%,#cfd6ec 100%);
+    /* gradients — anchored in lime now, flowing through cyan to violet
+       (warm-to-cool, drops the heavy pink that dominated before) */
+    --prism:linear-gradient(135deg,#84e02b 0%,#22d3ee 38%,#6366f1 70%,#a78bfa 100%);
+    --aurora:linear-gradient(135deg,#bef264 0%,#84e02b 25%,#22d3ee 60%,#a78bfa 100%);
+    --metallic:linear-gradient(135deg,#f0fff0 0%,#a3e635 35%,#ffffff 65%,#bef264 100%);
     --aurum:linear-gradient(135deg,#f6e7a4 0%,#e6c97a 40%,#b8860b 70%,#f6e7a4 100%);
 
     --wrap-max:1200px;
@@ -76,13 +82,14 @@
   .mono{font-family:'JetBrains Mono',monospace;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
   .serif{font-family:'Fraunces',Georgia,serif;letter-spacing:-.03em}
 
-  /* ─── Page-wide ambient: cosmic nebula backdrop ──────────────────────── */
+  /* ─── Page-wide ambient: aurora backdrop (lime + cyan + violet) ─── */
   body::before{
     content:"";position:fixed;inset:0;z-index:-2;pointer-events:none;
     background:
-      radial-gradient(60vw 50vh at 10% 0%, rgba(99,102,241,.18), transparent 60%),
-      radial-gradient(50vw 50vh at 100% 30%, rgba(236,72,153,.13), transparent 60%),
-      radial-gradient(40vw 40vh at 50% 100%, rgba(34,211,238,.10), transparent 70%),
+      radial-gradient(70vw 55vh at 8% -5%, rgba(132,224,43,.20), transparent 60%),
+      radial-gradient(55vw 50vh at 100% 25%, rgba(34,211,238,.18), transparent 60%),
+      radial-gradient(50vw 45vh at 30% 90%, rgba(167,139,250,.15), transparent 65%),
+      radial-gradient(40vw 40vh at 90% 95%, rgba(190,242,100,.10), transparent 70%),
       var(--bg);
   }
   /* fine noise + subtle grid overlay for "premium paper" texture */
@@ -147,17 +154,19 @@
   }
   .top-inner{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;max-width:var(--wrap-max);margin:0 auto}
   .brand{display:flex;align-items:center;gap:11px;font-weight:900;font-size:18px;letter-spacing:-.02em}
+  /* Logo tile — neutral dark backing so the lime α stays vivid and
+     doesn't fight with a competing gradient behind it */
   .brand-mark{
-    width:30px;height:30px;border-radius:9px;
-    background:var(--prism);
+    width:32px;height:32px;border-radius:10px;
+    background:linear-gradient(135deg,#1a2138,#0d1320);
     display:flex;align-items:center;justify-content:center;
-    box-shadow:0 0 0 1px rgba(167,139,250,.35), 0 6px 22px -6px rgba(167,139,250,.6);
+    box-shadow:0 0 0 1px rgba(132,224,43,.30), 0 6px 22px -6px rgba(132,224,43,.45);
     overflow:hidden;
   }
-  .brand-mark img{width:74%;height:74%;object-fit:contain}
+  .brand-mark img{width:80%;height:80%;object-fit:contain;filter:drop-shadow(0 0 6px rgba(132,224,43,.45))}
   .brand-name{display:flex;align-items:baseline;letter-spacing:-.025em;color:#fff}
   .brand-name .h{
-    background:var(--prism);
+    background:linear-gradient(135deg,#84e02b 0%,#a3e635 50%,#22d3ee 100%);
     -webkit-background-clip:text;background-clip:text;
     -webkit-text-fill-color:transparent;color:transparent;
   }
@@ -188,10 +197,10 @@
     position:absolute;top:-30%;left:50%;transform:translateX(-50%);
     width:130vw;height:130vw;max-width:1400px;max-height:1400px;
     background:conic-gradient(from 0deg,
-      rgba(99,102,241,.32),rgba(167,139,250,.28),rgba(236,72,153,.30),rgba(34,211,238,.28),
-      rgba(99,102,241,.32));
+      rgba(132,224,43,.34),rgba(34,211,238,.30),rgba(167,139,250,.28),rgba(190,242,100,.32),
+      rgba(132,224,43,.34));
     border-radius:50%;
-    filter:blur(80px);opacity:.55;
+    filter:blur(80px);opacity:.62;
     animation:slowSpin 32s linear infinite;
   }
   @keyframes slowSpin{to{transform:translateX(-50%) rotate(360deg)}}
@@ -207,14 +216,14 @@
     margin-bottom:28px;
   }
   .badge .ai-dot{
-    width:18px;height:18px;border-radius:50%;
-    background:var(--prism);
-    box-shadow:0 0 18px rgba(167,139,250,.7);
+    width:20px;height:20px;border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, #d4ff7a, #84e02b 55%, #65a30d);
+    box-shadow:0 0 22px rgba(132,224,43,.8), inset 0 0 0 1px rgba(255,255,255,.25);
     display:flex;align-items:center;justify-content:center;
-    font-size:10px;color:#fff;font-weight:900;
+    font-size:11px;color:#0d1320;font-weight:900;
   }
-  .pulse-ring{position:relative;display:inline-block;width:7px;height:7px;border-radius:50%;background:#10d97e;margin-left:4px;margin-right:2px}
-  .pulse-ring::after{content:"";position:absolute;inset:-4px;border-radius:50%;border:2px solid #10d97e;animation:pulseRing 2s ease-out infinite;opacity:0}
+  .pulse-ring{position:relative;display:inline-block;width:8px;height:8px;border-radius:50%;background:#84e02b;margin-left:4px;margin-right:2px;box-shadow:0 0 10px rgba(132,224,43,.7)}
+  .pulse-ring::after{content:"";position:absolute;inset:-4px;border-radius:50%;border:2px solid #84e02b;animation:pulseRing 2s ease-out infinite;opacity:0}
   @keyframes pulseRing{0%{transform:scale(.7);opacity:.7}100%{transform:scale(3);opacity:0}}
 
   h1.hero-title{
@@ -346,8 +355,9 @@
   .eyebrow{
     display:inline-flex;align-items:center;gap:8px;
     font-size:11.5px;letter-spacing:.20em;text-transform:uppercase;font-weight:700;
-    color:var(--violet);margin-bottom:18px;
-    padding:6px 12px;border-radius:999px;background:rgba(167,139,250,.10);border:1px solid rgba(167,139,250,.25);
+    color:var(--lime-2);margin-bottom:18px;
+    padding:6px 12px;border-radius:999px;background:rgba(132,224,43,.10);border:1px solid rgba(132,224,43,.30);
+    text-shadow:0 0 12px rgba(132,224,43,.35);
   }
   .title-h{
     font-family:'Fraunces',Georgia,serif;font-weight:500;
@@ -385,7 +395,7 @@
   .step-mark{
     display:inline-flex;align-items:center;gap:10px;
     font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.16em;
-    color:var(--violet);text-transform:uppercase;font-weight:700;
+    color:var(--lime-2);text-transform:uppercase;font-weight:700;
     margin-bottom:20px;
   }
   .step-mark::before{content:"";width:22px;height:2px;border-radius:2px;background:var(--prism)}
@@ -395,8 +405,9 @@
   /* ─── AI Engine visualization ─────────────────────────────────────── */
   .engine{
     position:relative;max-width:1000px;margin:0 auto;padding:48px 32px;border-radius:24px;
-    background:radial-gradient(ellipse 120% 100% at 50% 0%, rgba(167,139,250,.10), transparent 60%), var(--surface);
-    border:1px solid var(--bdr-2);overflow:hidden;
+    background:radial-gradient(ellipse 120% 100% at 50% 0%, rgba(132,224,43,.12), transparent 60%), var(--surface);
+    border:1px solid rgba(132,224,43,.22);overflow:hidden;
+    box-shadow:0 0 60px -20px rgba(132,224,43,.30);
   }
   .engine-grid{display:grid;grid-template-columns:1fr 1.2fr 1fr;gap:24px;align-items:center}
   @media (max-width:820px){.engine-grid{grid-template-columns:1fr;gap:20px}}
@@ -413,8 +424,8 @@
     text-align:center;position:relative;padding:24px 16px;
   }
   .engine-svg{width:100%;max-width:380px;margin:0 auto;display:block}
-  .engine-svg .node{fill:#a78bfa}
-  .engine-svg .link{stroke:rgba(167,139,250,.35);stroke-width:1;fill:none}
+  .engine-svg .node{fill:#84e02b;filter:drop-shadow(0 0 4px rgba(132,224,43,.6))}
+  .engine-svg .link{stroke:rgba(132,224,43,.40);stroke-width:1;fill:none}
   .engine-svg .link.flow{stroke-dasharray:4 6;animation:flow 3s linear infinite}
   @keyframes flow{to{stroke-dashoffset:-50}}
   .engine-score{
@@ -511,8 +522,9 @@
   }
   .profile:hover{transform:translateY(-5px);border-color:rgba(167,139,250,.30);box-shadow:0 30px 60px -28px rgba(167,139,250,.5)}
   .profile.popular{
-    background:linear-gradient(180deg, rgba(167,139,250,.10), var(--surface));
-    border-color:rgba(167,139,250,.35);
+    background:linear-gradient(180deg, rgba(132,224,43,.12), var(--surface));
+    border-color:rgba(132,224,43,.40);
+    box-shadow:0 0 40px -10px rgba(132,224,43,.30);
   }
   .profile.popular::before{
     content:"Most picked";
@@ -520,7 +532,7 @@
     padding:5px 14px;border-radius:999px;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;
     background:var(--prism);color:#fff;box-shadow:0 8px 22px -8px rgba(167,139,250,.7);
   }
-  .profile-tag{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--violet);letter-spacing:.14em;text-transform:uppercase;font-weight:700}
+  .profile-tag{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--lime-2);letter-spacing:.14em;text-transform:uppercase;font-weight:700}
   .profile h3{font-family:'Fraunces',serif;font-size:26px;font-weight:500;color:#fff;margin:6px 0 8px;letter-spacing:-.02em}
   .profile .desc{color:var(--ink-2);font-size:14px;line-height:1.6;margin-bottom:18px}
   .profile ul{list-style:none;margin-bottom:22px}
@@ -549,7 +561,7 @@
   }
   .faq summary::-webkit-details-marker{display:none}
   .faq summary::after{
-    content:"+";font-family:'JetBrains Mono',monospace;font-size:22px;color:var(--violet);
+    content:"+";font-family:'JetBrains Mono',monospace;font-size:22px;color:var(--lime-2);
     transition:transform .25s;
   }
   .faq[open] summary::after{transform:rotate(45deg)}
@@ -562,8 +574,9 @@
   .final::before{
     content:"";position:absolute;inset:0;z-index:0;
     background:
-      radial-gradient(40vw 30vh at 50% 30%, rgba(167,139,250,.22), transparent 70%),
-      radial-gradient(50vw 40vh at 50% 100%, rgba(236,72,153,.16), transparent 70%);
+      radial-gradient(40vw 30vh at 50% 30%, rgba(132,224,43,.22), transparent 70%),
+      radial-gradient(50vw 40vh at 50% 100%, rgba(34,211,238,.18), transparent 70%),
+      radial-gradient(30vw 30vh at 80% 50%, rgba(167,139,250,.14), transparent 70%);
   }
   .final-inner{position:relative;z-index:1;max-width:780px;margin:0 auto;padding:0 24px}
   .final h2{
@@ -832,7 +845,7 @@
   </div>
   <div class="wrap">
     <div class="pillars stagger reveal">
-      <div class="pillar tilt spot" style="--pc:#6366f1">
+      <div class="pillar tilt spot" style="--pc:#84e02b">
         <div class="pillar-head">
           <div class="pillar-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 17 9 11 13 15 21 7"/><polyline points="14 7 21 7 21 14"/></svg></div>
           <span class="pillar-tag">Price action</span>
