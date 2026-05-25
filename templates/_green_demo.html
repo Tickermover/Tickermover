@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Green palette demo — AlphaHunt</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800;900&family=Fraunces:opsz,wght@9..144,500;9..144,900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:'Inter',system-ui,sans-serif;
+    background:#0d1320;
+    color:#f0f4ff;
+    padding:32px 24px;
+    min-height:100vh;
+  }
+  body::before{
+    content:"";position:fixed;inset:0;z-index:-1;
+    background:
+      radial-gradient(60vw 50vh at 10% 0%, rgba(255,255,255,.04), transparent 60%),
+      radial-gradient(50vw 50vh at 100% 30%, rgba(34,211,238,.10), transparent 60%);
+  }
+  h1{
+    font-family:'Fraunces',serif;font-weight:500;font-size:36px;letter-spacing:-.02em;margin-bottom:6px;
+  }
+  .lede{color:#cdd5e8;font-size:14.5px;margin-bottom:36px}
+
+  .grid{
+    display:grid;grid-template-columns:repeat(2,1fr);gap:20px;
+    max-width:1280px;margin:0 auto;
+  }
+  @media (max-width:880px){.grid{grid-template-columns:1fr}}
+
+  .card{
+    --g1:#84e02b;--g2:#a3e635;--g3:#bef264;--g-soft:rgba(132,224,43,.12);--g-bdr:rgba(132,224,43,.30);
+    background:rgba(255,255,255,.04);
+    border:1px solid rgba(255,255,255,.10);
+    border-radius:18px;padding:26px;
+    backdrop-filter:blur(10px);
+    position:relative;overflow:hidden;
+  }
+  .card::before{
+    content:"";position:absolute;top:0;left:0;right:0;height:3px;
+    background:linear-gradient(90deg, var(--g1), var(--g3));
+  }
+  .card-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+  .card h2{font-family:'Fraunces',serif;font-weight:500;font-size:24px;letter-spacing:-.015em}
+  .card .hexes{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#8c97b3;letter-spacing:.04em}
+  .card .label{font-size:13px;color:#cdd5e8;margin-bottom:20px;line-height:1.5}
+
+  .swatch-row{display:flex;gap:8px;margin-bottom:22px}
+  .swatch{flex:1;height:42px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:#0d1320;}
+
+  /* Hero badge mock */
+  .badge{
+    display:inline-flex;align-items:center;gap:9px;
+    padding:6px 13px 6px 8px;border-radius:999px;
+    background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.18);
+    font-size:12px;font-weight:600;color:#cdd5e8;margin-bottom:18px;
+  }
+  .badge .dot{
+    width:18px;height:18px;border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, color-mix(in srgb, var(--g1) 60%, #fff), var(--g1) 55%, color-mix(in srgb, var(--g1) 70%, #000));
+    box-shadow:0 0 16px var(--g-bdr), inset 0 0 0 1px rgba(255,255,255,.25);
+    display:flex;align-items:center;justify-content:center;
+    font-size:10px;color:#0d1320;font-weight:900;
+  }
+  .badge .pulse{width:7px;height:7px;border-radius:50%;background:var(--g1);box-shadow:0 0 10px var(--g-bdr);position:relative}
+  .badge .pulse::after{content:"";position:absolute;inset:-4px;border-radius:50%;border:2px solid var(--g1);animation:pulseRing 2s ease-out infinite;opacity:0}
+  @keyframes pulseRing{0%{transform:scale(.7);opacity:.7}100%{transform:scale(3);opacity:0}}
+
+  /* Eyebrow */
+  .eyebrow{
+    display:inline-block;font-size:11px;letter-spacing:.18em;text-transform:uppercase;font-weight:700;
+    color:var(--g2);padding:5px 10px;border-radius:999px;
+    background:var(--g-soft);border:1px solid var(--g-bdr);
+    margin-bottom:14px;
+    text-shadow:0 0 12px var(--g-bdr);
+  }
+
+  /* Wordmark */
+  .wordmark{
+    font-weight:900;font-size:22px;letter-spacing:-.025em;margin-bottom:18px;display:inline-flex;align-items:baseline;
+  }
+  .wordmark .a{color:#fff}
+  .wordmark .h{
+    background:linear-gradient(135deg,var(--g1) 0%,var(--g2) 50%,#22d3ee 100%);
+    -webkit-background-clip:text;background-clip:text;
+    -webkit-text-fill-color:transparent;color:transparent;
+  }
+
+  /* CTA button */
+  .btn{
+    display:inline-flex;align-items:center;gap:8px;
+    padding:12px 22px;border-radius:999px;font-weight:700;font-size:13.5px;
+    color:#0d1320;
+    background:linear-gradient(135deg,var(--g1) 0%,var(--g2) 50%,#22d3ee 100%);
+    box-shadow:0 10px 28px -10px var(--g-bdr);
+    margin-right:10px;margin-bottom:14px;cursor:pointer;border:none;
+  }
+  .btn.ghost{
+    background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.2);color:#f0f4ff;
+    box-shadow:none;
+  }
+
+  /* Tag */
+  .tag{
+    display:inline-block;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:800;letter-spacing:.10em;
+    color:var(--g2);background:var(--g-soft);
+    padding:5px 9px;border-radius:999px;text-transform:uppercase;margin-right:6px;
+  }
+
+  /* Pillar mini */
+  .pillar-mini{
+    display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:12px;
+    background:rgba(255,255,255,.03);border:1px solid var(--g-bdr);margin-top:12px;
+  }
+  .pillar-ico{
+    width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;
+    background:linear-gradient(135deg, color-mix(in srgb, var(--g1) 28%, transparent), color-mix(in srgb, var(--g1) 8%, transparent));
+    border:1px solid var(--g-bdr);color:var(--g1);
+    box-shadow:0 0 18px -6px var(--g-bdr);
+  }
+  .pillar-ico svg{width:20px;height:20px}
+  .pillar-mini .ptitle{font-family:'Fraunces',serif;font-size:16px;color:#fff;font-weight:500}
+  .pillar-mini .psub{font-size:11.5px;color:#8c97b3}
+  .dot-small{width:7px;height:7px;border-radius:50%;background:var(--g1);box-shadow:0 0 0 3px color-mix(in srgb,var(--g1) 22%,transparent);display:inline-block;margin-right:8px;vertical-align:middle}
+
+  /* big gradient strip */
+  .strip{
+    height:60px;border-radius:12px;margin-top:18px;
+    background:linear-gradient(135deg,var(--g1) 0%,var(--g2) 25%,#22d3ee 60%,#a78bfa 100%);
+    position:relative;overflow:hidden;
+  }
+  .strip span{position:absolute;left:14px;top:50%;transform:translateY(-50%);font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:rgba(0,0,0,.7);letter-spacing:.04em}
+
+  /* ── Per-option color tokens (override --g1/2/3 + alpha) ── */
+  .opt-1{ /* LIME (current) */
+    --g1:#84e02b; --g2:#a3e635; --g3:#bef264;
+    --g-soft:rgba(132,224,43,.12); --g-bdr:rgba(132,224,43,.40);
+  }
+  .opt-2{ /* EMERALD — finance classic */
+    --g1:#10d97e; --g2:#34d399; --g3:#6ee7b7;
+    --g-soft:rgba(16,217,126,.14); --g-bdr:rgba(16,217,126,.42);
+  }
+  .opt-3{ /* MINT — soft premium */
+    --g1:#34d399; --g2:#6ee7b7; --g3:#a7f3d0;
+    --g-soft:rgba(52,211,153,.14); --g-bdr:rgba(52,211,153,.42);
+  }
+  .opt-4{ /* CHARTREUSE — warm spring */
+    --g1:#a3e635; --g2:#bef264; --g3:#d9f99d;
+    --g-soft:rgba(163,230,53,.14); --g-bdr:rgba(163,230,53,.42);
+  }
+  .opt-5{ /* JADE — grounded rich */
+    --g1:#22c55e; --g2:#16a34a; --g3:#4ade80;
+    --g-soft:rgba(34,197,94,.14); --g-bdr:rgba(34,197,94,.42);
+  }
+  .opt-6{ /* TEAL-SEA — sophisticated */
+    --g1:#2dd4bf; --g2:#5eead4; --g3:#99f6e4;
+    --g-soft:rgba(45,212,191,.14); --g-bdr:rgba(45,212,191,.42);
+  }
+  .opt-7{ /* HOMESPOT — bright lime → kelly → emerald, on navy */
+    --g1:#5cb83c; --g2:#a4d33e; --g3:#17a574;
+    --g-soft:rgba(92,184,60,.16); --g-bdr:rgba(92,184,60,.45);
+  }
+  .opt-7 .wordmark .h{
+    background:linear-gradient(135deg,#a4d33e 0%,#5cb83c 50%,#17a574 100%);
+    -webkit-background-clip:text;background-clip:text;
+    -webkit-text-fill-color:transparent;color:transparent;
+  }
+  .opt-7 .btn{
+    background:linear-gradient(135deg,#a4d33e 0%,#5cb83c 45%,#17a574 100%);
+    color:#0a1a1f;
+  }
+  .opt-7 .strip{
+    background:linear-gradient(135deg,#a4d33e 0%,#5cb83c 35%,#17a574 70%,#0a1a1f 100%);
+  }
+  .opt-7 .pillar-ico{
+    background:linear-gradient(135deg, rgba(164,211,62,.28), rgba(23,165,116,.10));
+    color:#a4d33e;
+  }
+  .opt-7 .featured-card-bg{background:#0a1a1f}
+  .opt-7-card{
+    background:linear-gradient(180deg, rgba(164,211,62,.06), rgba(23,165,116,.04)), rgba(255,255,255,.02);
+    border-color:rgba(164,211,62,.30);
+    box-shadow:0 0 60px -20px rgba(92,184,60,.35);
+  }
+</style>
+</head>
+<body>
+
+<h1>Green palette options for AlphaHunt</h1>
+<p class="lede">Each card shows the same UI elements in a different green family. Pick the one that feels right and tell me the option number (or paste your own hex).</p>
+
+<div class="grid">
+
+  <!-- ───── OPTION 1: LIME (current) ───── -->
+  <div class="card opt-1">
+    <div class="card-head"><h2>1 · Lime <small style="color:#8c97b3;font-size:13px">(current)</small></h2><span class="hexes">#84e02b · #a3e635</span></div>
+    <p class="label">Neon, energetic, very "tech-startup." Matches the logo exactly.</p>
+    <div class="swatch-row"><div class="swatch" style="background:#84e02b">#84e02b</div><div class="swatch" style="background:#a3e635">#a3e635</div><div class="swatch" style="background:#bef264">#bef264</div></div>
+    <div class="badge"><span class="dot">α</span> AI-driven · <span class="pulse"></span> Live · 540+ stocks</div>
+    <div><span class="eyebrow">Methodology</span></div>
+    <div class="wordmark"><span class="a">Alpha</span><span class="h">Hunt</span></div>
+    <button class="btn">Open dashboard →</button>
+    <button class="btn ghost">How it works</button>
+    <div><span class="tag">Price action</span><span class="tag">Top-line</span></div>
+    <div class="pillar-mini"><div class="pillar-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 17 9 11 13 15 21 7"/><polyline points="14 7 21 7 21 14"/></svg></div><div><div class="ptitle"><span class="dot-small"></span>Momentum</div><div class="psub">Price action over 1- and 3-month windows</div></div></div>
+    <div class="strip"><span>brand gradient</span></div>
+  </div>
+
+  <!-- ───── OPTION 2: EMERALD ───── -->
+  <div class="card opt-2">
+    <div class="card-head"><h2>2 · Emerald</h2><span class="hexes">#10d97e · #34d399</span></div>
+    <p class="label">Classic finance "money" green. Premium, serious. Pairs naturally with cyan.</p>
+    <div class="swatch-row"><div class="swatch" style="background:#10d97e">#10d97e</div><div class="swatch" style="background:#34d399">#34d399</div><div class="swatch" style="background:#6ee7b7">#6ee7b7</div></div>
+    <div class="badge"><span class="dot">α</span> AI-driven · <span class="pulse"></span> Live · 540+ stocks</div>
+    <div><span class="eyebrow">Methodology</span></div>
+    <div class="wordmark"><span class="a">Alpha</span><span class="h">Hunt</span></div>
+    <button class="btn">Open dashboard →</button>
+    <button class="btn ghost">How it works</button>
+    <div><span class="tag">Price action</span><span class="tag">Top-line</span></div>
+    <div class="pillar-mini"><div class="pillar-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 17 9 11 13 15 21 7"/><polyline points="14 7 21 7 21 14"/></svg></div><div><div class="ptitle"><span class="dot-small"></span>Momentum</div><div class="psub">Price action over 1- and 3-month windows</div></div></div>
+    <div class="strip"><span>brand gradient</span></div>
+  </div>
+
+  <!-- ───── OPTION 3: MINT ───── -->
+  <div class="card opt-3">
+    <div class="card-head"><h2>3 · Mint</h2><span class="hexes">#34d399 · #6ee7b7</span></div>
+    <p class="label">Softer, fresher, "wellness" feel. Best for "positive energy." Less aggressive than lime.</p>
+    <div class="swatch-row"><div class="swatch" style="background:#34d399">#34d399</div><div class="swatch" style="background:#6ee7b7">#6ee7b7</div><div class="swatch" style="background:#a7f3d0">#a7f3d0</div></div>
+    <div class="badge"><span class="dot">α</span> AI-driven · <span class="pulse"></span> Live · 540+ stocks</div>
+    <div><span class="eyebrow">Methodology</span></div>
+    <div class="wordmark"><span class="a">Alpha</span><span class="h">Hunt</span></div>
+    <button class="btn">Open dashboard →</button>
+    <button class="btn ghost">How it works</button>
+    <div><span class="tag">Price action</span><span class="tag">Top-line</span></div>
+    <div class="pillar-mini"><div class="pillar-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 17 9 11 13 15 21 7"/><polyline points="14 7 21 7 21 14"/></svg></div><div><div class="ptitle"><span class="dot-small"></span>Momentum</div><div class="psub">Price action over 1- and 3-month windows</div></div></div>
+    <div class="strip"><span>brand gradient</span></div>
+  </div>
+
+  <!-- ───── OPTION 4: CHARTREUSE ───── -->
+  <div class="card opt-4">
+    <div class="card-head"><h2>4 · Chartreuse</h2><span class="hexes">#a3e635 · #bef264</span></div>
+    <p class="label">Warmer, yellow-leaning green. Spring-like. Slightly softer than lime but same family.</p>
+    <div class="swatch-row"><div class="swatch" style="background:#a3e635">#a3e635</div><div class="swatch" style="background:#bef264">#bef264</div><div class="swatch" style="background:#d9f99d">#d9f99d</div></div>
+    <div class="badge"><span class="dot">α</span> AI-driven · <span class="pulse"></span> Live · 540+ stocks</div>
+    <div><span class="eyebrow">Methodology</span></div>
+    <div class="wordmark"><span class="a">Alpha</span><span class="h">Hunt</span></div>
+    <button class="btn">Open dashboard →</button>
+    <button class="btn ghost">How it works</button>
+    <div><span class="tag">Price action</span><span class="tag">Top-line</span></div>
+    <div class="pillar-mini"><div class="pillar-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 17 9 11 13 15 21 7"/><polyline points="14 7 21 7 21 14"/></svg></div><div><div class="ptitle"><span class="dot-small"></span>Momentum</div><div class="psub">Price action over 1- and 3-month windows</div></div></div>
+    <div class="strip"><span>brand gradient</span></div>
+  </div>
+
+  <!-- ───── OPTION 5: JADE ───── -->
+  <div class="card opt-5">
+    <div class="card-head"><h2>5 · Jade</h2><span class="hexes">#22c55e · #16a34a</span></div>
+    <p class="label">Deeper, grounded, aristocratic. Less "tech," more "trust." Best with subtle gold accents.</p>
+    <div class="swatch-row"><div class="swatch" style="background:#22c55e">#22c55e</div><div class="swatch" style="background:#16a34a">#16a34a</div><div class="swatch" style="background:#4ade80">#4ade80</div></div>
+    <div class="badge"><span class="dot">α</span> AI-driven · <span class="pulse"></span> Live · 540+ stocks</div>
+    <div><span class="eyebrow">Methodology</span></div>
+    <div class="wordmark"><span class="a">Alpha</span><span class="h">Hunt</span></div>
+    <button class="btn">Open dashboard →</button>
+    <button class="btn ghost">How it works</button>
+    <div><span class="tag">Price action</span><span class="tag">Top-line</span></div>
+    <div class="pillar-mini"><div class="pillar-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 17 9 11 13 15 21 7"/><polyline points="14 7 21 7 21 14"/></svg></div><div><div class="ptitle"><span class="dot-small"></span>Momentum</div><div class="psub">Price action over 1- and 3-month windows</div></div></div>
+    <div class="strip"><span>brand gradient</span></div>
+  </div>
+
+  <!-- ───── OPTION 7: HOMESPOT-inspired tri-green (NEW) ───── -->
+  <div class="card opt-7 opt-7-card" style="grid-column:span 2">
+    <div class="card-head">
+      <h2>7 · HomeSpot tri-green <small style="color:#a4d33e;font-size:13px;font-weight:700">★ recommended for fintech</small></h2>
+      <span class="hexes">#a4d33e · #5cb83c · #17a574 · #0a1a1f</span>
+    </div>
+    <p class="label">Bright lime → kelly grass → deep emerald, anchored on near-black navy. Has range (light to dark) which lime alone lacks — gives the brand depth without losing energy. Best fit for fintech: energetic on the surface, grounded underneath.</p>
+    <div class="swatch-row">
+      <div class="swatch" style="background:#a4d33e">#a4d33e</div>
+      <div class="swatch" style="background:#5cb83c">#5cb83c</div>
+      <div class="swatch" style="background:#17a574;color:#fff">#17a574</div>
+      <div class="swatch" style="background:#0a1a1f;color:#a4d33e">#0a1a1f</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px">
+      <div>
+        <div class="badge"><span class="dot">α</span> AI-driven · <span class="pulse"></span> Live · 540+ stocks</div>
+        <div><span class="eyebrow">Methodology</span></div>
+        <div class="wordmark"><span class="a">Alpha</span><span class="h">Hunt</span></div>
+        <button class="btn">Open dashboard →</button>
+        <button class="btn ghost">How it works</button>
+        <div><span class="tag">Price action</span><span class="tag">Top-line</span><span class="tag">Margins</span></div>
+      </div>
+      <div>
+        <div class="pillar-mini"><div class="pillar-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 17 9 11 13 15 21 7"/><polyline points="14 7 21 7 21 14"/></svg></div><div><div class="ptitle"><span class="dot-small"></span>Momentum</div><div class="psub">Bright lime — the energy pillar</div></div></div>
+        <div class="pillar-mini" style="--g1:#5cb83c;--g-bdr:rgba(92,184,60,.42)"><div class="pillar-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="20" x2="6" y2="14"/><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="6"/><polyline points="3 8 7 4 11 8"/></svg></div><div><div class="ptitle"><span class="dot-small"></span>Growth</div><div class="psub">Mid kelly green — strong & confident</div></div></div>
+        <div class="pillar-mini" style="--g1:#17a574;--g-bdr:rgba(23,165,116,.42)"><div class="pillar-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 L20 5 V12 C20 17 16 21 12 22 C8 21 4 17 4 12 V5 Z"/><polyline points="8.5 12 11 14.5 15.5 10"/></svg></div><div><div class="ptitle"><span class="dot-small"></span>Quality</div><div class="psub">Deep emerald — premium & trustworthy</div></div></div>
+      </div>
+    </div>
+    <div class="strip"><span style="color:#fff">brand gradient · lime → kelly → emerald → navy</span></div>
+  </div>
+
+  <!-- ───── OPTION 6: TEAL-SEA ───── -->
+  <div class="card opt-6">
+    <div class="card-head"><h2>6 · Teal-Sea</h2><span class="hexes">#2dd4bf · #5eead4</span></div>
+    <p class="label">Cool, sophisticated, fintech-modern. Leans toward cyan. Calmer than mint.</p>
+    <div class="swatch-row"><div class="swatch" style="background:#2dd4bf">#2dd4bf</div><div class="swatch" style="background:#5eead4">#5eead4</div><div class="swatch" style="background:#99f6e4">#99f6e4</div></div>
+    <div class="badge"><span class="dot">α</span> AI-driven · <span class="pulse"></span> Live · 540+ stocks</div>
+    <div><span class="eyebrow">Methodology</span></div>
+    <div class="wordmark"><span class="a">Alpha</span><span class="h">Hunt</span></div>
+    <button class="btn">Open dashboard →</button>
+    <button class="btn ghost">How it works</button>
+    <div><span class="tag">Price action</span><span class="tag">Top-line</span></div>
+    <div class="pillar-mini"><div class="pillar-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 17 9 11 13 15 21 7"/><polyline points="14 7 21 7 21 14"/></svg></div><div><div class="ptitle"><span class="dot-small"></span>Momentum</div><div class="psub">Price action over 1- and 3-month windows</div></div></div>
+    <div class="strip"><span>brand gradient</span></div>
+  </div>
+
+</div>
+
+</body>
+</html>
