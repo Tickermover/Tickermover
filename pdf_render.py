@@ -2932,31 +2932,132 @@ def _draw_event_summary(c, top_y, event_row, today_str=None, quarter_lbl=None,
         y -= 6   # was 4 — extra space BELOW the section
 
 
+def _draw_endnotes_page(c, today_str, quarter_lbl):
+    """Dedicated final page: full disclaimer paragraph + glossary of
+    abbreviations used throughout the report. v3.19 — replaces the
+    footer disclaimer band per user feedback 'Add Disclaimer as last
+    para instead of footer. And add abbreviation list used in this
+    report on the last page.'"""
+    _draw_header(c, today_str, quarter_lbl,
+                 page_label="DISCLAIMER & GLOSSARY")
+    y = A4_H - 100
+
+    # ── DISCLAIMER ────────────────────────────────────────────────
+    c.setFillColor(INK)
+    c.setFont("Helvetica-Bold", 12)
+    c.drawString(MARGIN_X, y, "DISCLAIMER")
+    # Underline accent
+    c.setStrokeColor(BRAND_INDIGO)
+    c.setLineWidth(1.2)
+    c.line(MARGIN_X, y - 4, MARGIN_X + 90, y - 4)
+    y -= 16
+
+    disclaimer_html = (
+        "<b>Educational use only.</b> AlphaHunt is not a SEBI-registered "
+        "investment advisor and does not provide buy / sell recommendations. "
+        "The Alpha Score is a quantitative composite for screening purposes; "
+        "it is not investment advice. Past performance does not guarantee "
+        "future results. Forward-looking statements in this report reflect "
+        "analyst estimates and AI-augmented synthesis of public filings — "
+        "actual outcomes may differ materially."
+        "<br/><br/>"
+        "<b>Data sources:</b> SEC EDGAR (8-K, 10-Q filings), Yahoo Finance, "
+        "Financial Modeling Prep (FMP), and Anthropic Haiku 4.5 for narrative "
+        "synthesis. All figures are derived from publicly available data as "
+        "of the report generation date."
+        "<br/><br/>"
+        "<b>Always conduct your own research</b> and consult a registered "
+        "financial advisor before making investment decisions. AlphaHunt "
+        "assumes no liability for investment outcomes based on this report."
+    )
+    p = _wrap_paragraph(disclaimer_html, CONTENT_W,
+                         font_size=9, leading=12.5, color=INK)
+    _, ph = p.wrap(CONTENT_W, 300)
+    p.drawOn(c, MARGIN_X, y - ph)
+    y -= (ph + 28)
+
+    # ── GLOSSARY ─────────────────────────────────────────────────
+    c.setFillColor(INK)
+    c.setFont("Helvetica-Bold", 12)
+    c.drawString(MARGIN_X, y, "GLOSSARY OF ABBREVIATIONS")
+    c.setStrokeColor(BRAND_INDIGO)
+    c.setLineWidth(1.2)
+    c.line(MARGIN_X, y - 4, MARGIN_X + 195, y - 4)
+    y -= 18
+
+    glossary = [
+        ("FCF",     "Free Cash Flow — cash from operations less capex"),
+        ("EBITDA",  "Earnings Before Interest, Taxes, Depreciation & Amortization"),
+        ("EPS",     "Earnings Per Share"),
+        ("P/E",     "Price-to-Earnings ratio (TTM unless noted)"),
+        ("P/S",     "Price-to-Sales ratio (TTM)"),
+        ("PEG",     "P/E ratio ÷ earnings growth rate"),
+        ("ROE",     "Return on Equity (net income ÷ shareholder equity)"),
+        ("ROIC",    "Return on Invested Capital"),
+        ("D/E",     "Debt-to-Equity ratio"),
+        ("OCF",     "Operating Cash Flow"),
+        ("GAAP",    "Generally Accepted Accounting Principles (U.S.)"),
+        ("YoY",     "Year-over-Year (vs same quarter prior year)"),
+        ("QoQ",     "Quarter-over-Quarter (vs immediately prior quarter)"),
+        ("TTM",     "Trailing Twelve Months"),
+        ("FY",      "Fiscal Year (may differ from calendar year)"),
+        ("RSI",     "Relative Strength Index (technical, 0-100)"),
+        ("ARR",     "Annual Recurring Revenue (subscription businesses)"),
+        ("WACC",    "Weighted Average Cost of Capital (DCF discount rate)"),
+        ("TAM",     "Total Addressable Market"),
+        ("DCF",     "Discounted Cash Flow valuation method"),
+        ("bps",     "Basis Points (1 bp = 0.01 %)"),
+        ("Capex",   "Capital Expenditures"),
+        ("Op",      "Operating (as in Op Margin, Op Income)"),
+        ("GM",      "Gross Margin"),
+        ("52W",     "52-Week (typically high / low price range)"),
+        ("NRR",     "Net Revenue Retention (subscription cohort retention)"),
+    ]
+
+    # 2-column layout: 13 terms per column
+    col_w        = (CONTENT_W - 24) / 2
+    rows_per_col = (len(glossary) + 1) // 2
+    term_col_w   = 56   # left-side term column width in each section
+
+    for i, (term, defn) in enumerate(glossary):
+        col = i // rows_per_col
+        row = i % rows_per_col
+        rx = MARGIN_X + col * (col_w + 24)
+        ry = y - (row + 1) * 14
+        # Term (indigo, bold, mono-ish)
+        c.setFillColor(BRAND_INDIGO)
+        c.setFont("Helvetica-Bold", 8)
+        c.drawString(rx, ry, term)
+        # Definition (slate)
+        c.setFillColor(INK_SOFT)
+        c.setFont("Helvetica", 8)
+        # Trim to fit column
+        max_w = col_w - term_col_w
+        text = defn
+        while c.stringWidth(text, "Helvetica", 8) > max_w and len(text) > 10:
+            text = text[:-2]
+        if text != defn:
+            text = text.rstrip(" ,;.") + "…"
+        c.drawString(rx + term_col_w, ry, text)
+
+    _draw_footer(c, with_disclaimer=False)
+
+
 def _draw_footer(c, with_disclaimer=False):
-    """Branded footer. The disclaimer text only renders when
-    with_disclaimer=True — caller passes True only for the LAST
-    page of the report. All earlier pages get a compact footer with
-    just the brand mark + alphahunt.in URL on the right. User v3.13:
-    'Remove the disclaimer from the footer. Only keep this in the
-    last page footer. Not all pages.'"""
+    """Branded footer. v3.19: the disclaimer text NEVER renders in the
+    footer anymore — moved to a dedicated 'Disclaimer & Glossary'
+    endnotes page (rendered as the absolute last page by
+    _draw_endnotes_page). The with_disclaimer flag is kept for
+    back-compat but is now ignored. Every page footer is the compact
+    brand-mark + alphahunt.in URL only. User v3.18: 'Add Disclaimer as
+    last para instead of footer.'"""
     foot_y = MARGIN_BOTTOM
     # Thin grey divider — always shown
     c.setStrokeColor(HexColor("#d4d8e8"))
     c.setLineWidth(0.5)
     c.line(MARGIN_X, foot_y + 26, A4_W - MARGIN_X, foot_y + 26)
 
-    if with_disclaimer:
-        c.setFillColor(INK_SOFT)
-        c.setFont("Helvetica-Bold", 6.8)
-        c.drawString(MARGIN_X, foot_y + 16, "EDUCATIONAL USE ONLY.")
-        c.setFillColor(INK_MUTED)
-        c.setFont("Helvetica", 6.8)
-        c.drawString(MARGIN_X + 96, foot_y + 16,
-                     "AlphaHunt is not a SEBI-registered advisor. Alpha Score is a quantitative composite — not investment advice.")
-        c.setFillColor(INK_MUTED)
-        c.setFont("Helvetica", 6.8)
-        c.drawString(MARGIN_X, foot_y + 6,
-                     "Data: SEC EDGAR, Yahoo Finance, FMP. Past performance does not guarantee future results. Do your own research.")
+    # v3.19: disclaimer text no longer renders here — see endnotes page.
     # Brand mark + URL on the right — every page
     _draw_brand_mark(c, A4_W - MARGIN_X - 64, foot_y + 6, size=14)
     c.setFillColor(BRAND_INDIGO)
@@ -3104,12 +3205,13 @@ def generate_pdf(ticker: str, t: dict, price_history: list[dict] | None = None,
             _draw_event_summary(c, y - 14, event_row,
                                  today_str=today, quarter_lbl=quarter_lbl,
                                  ticker=ticker, t=t)
-        # Page 4 (and any LATEST EVENT continuation) IS the last page
-        # — disclaimer goes here. The continuation pages drawn inside
-        # _draw_event_summary call _draw_footer(c) without args, so
-        # they default to with_disclaimer=False; only this final
-        # outer call carries the disclaimer.
-        _draw_footer(c, with_disclaimer=True)
+        _draw_footer(c)
+
+    # ── ENDNOTES PAGE — always last (disclaimer + abbreviation list) ──
+    # v3.19: moved disclaimer out of footer per user, added glossary
+    # of abbreviations used throughout the report.
+    c.showPage()
+    _draw_endnotes_page(c, today, quarter_lbl)
 
     c.showPage()
     c.save()
