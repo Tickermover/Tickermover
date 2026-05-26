@@ -178,6 +178,15 @@ table,th,td{
 
 .main{padding:24px 32px;max-width:1800px;margin:0 auto}
 .panel{display:none}.panel.active{display:block}
+
+/* Reusable page header for in-app panels — Fraunces serif italic
+   accent matches landing/brief/report headlines so the whole site
+   speaks one editorial voice. */
+.panel-header{margin:0 0 22px;display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap}
+.panel-h-title{font-family:'Fraunces',Georgia,serif;font-weight:500;font-size:30px;color:#0d1320;letter-spacing:-.025em;line-height:1.1}
+.panel-h-title em{font-style:italic;color:#15803d}
+.panel-h-sub{font-family:'Manrope','Inter',sans-serif;font-size:13.5px;color:#475569;margin-top:6px;font-weight:500}
+.panel-h-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .sec-heading{font-size:17px;font-weight:800;margin-bottom:14px}
 .sec-heading span{color:var(--acc)}
 
@@ -1453,7 +1462,11 @@ body.v2 .ticker-chip .px{color:#cbd5e1!important}
 
 /* ── Content area — owns the desktop scroll; sidebar stays pinned ── */
 .v2-content{
-  display:flex;flex-direction:column;min-width:0;background:#f7fafc;
+  display:flex;flex-direction:column;min-width:0;
+  /* Warm cream — matches the Daily Brief / Reports / Report pages so the
+     dashboard reads as the same product, not a separate SaaS app. The
+     subtle warmth makes green accents feel intentional, not clinical. */
+  background:#fafbf7;
   height:100%;
   overflow-y:auto;
   overflow-x:hidden;
@@ -4530,14 +4543,14 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 
 <!-- WATCHLIST — user's saved tickers (localStorage backed) -->
 <div id="panel-watch" class="panel">
-  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:14px">
+  <div class="panel-header">
     <div>
-      <div style="font-family:'Fraunces',Georgia,serif;font-weight:500;font-size:26px;color:#0d1320;letter-spacing:-.02em;line-height:1.15">⭐ Your <em style="font-style:italic;color:#15803d">watchlist</em></div>
-      <div style="font-size:13px;color:#475569;margin-top:6px">Star any stock to save it here. Persists on this browser.</div>
+      <div class="panel-h-title">⭐ Your <em>watchlist</em></div>
+      <div class="panel-h-sub">Star any stock to save it here. Persists on this browser.</div>
     </div>
-    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+    <div class="panel-h-actions">
       <input id="watch-add-input" type="text" placeholder="Add ticker (e.g., NVDA)" maxlength="6" oninput="this.value=this.value.toUpperCase()" onkeydown="if(event.key==='Enter')addToWatchFromInput()" style="padding:8px 12px;border:1px solid rgba(15,23,42,.12);border-radius:7px;font-size:13px;font-weight:700;width:170px;text-transform:uppercase;font-family:'JetBrains Mono','Inter',monospace">
-      <button onclick="addToWatchFromInput()" style="padding:8px 14px;background:linear-gradient(135deg,#15803d,#84cc16);color:#fff;border:none;border-radius:7px;font-size:12.5px;font-weight:800;cursor:pointer">+ Add</button>
+      <button onclick="addToWatchFromInput()" style="padding:8px 14px;background:linear-gradient(135deg,#15803d,#22c55e);color:#fff;border:none;border-radius:7px;font-size:12.5px;font-weight:800;cursor:pointer">+ Add</button>
     </div>
   </div>
   <div id="watch-grid" class="hot-grid"></div>
@@ -4550,6 +4563,12 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 
 <!-- FUNDAMENTALS -->
 <div id="panel-fund" class="panel">
+  <div class="panel-header">
+    <div>
+      <div class="panel-h-title">🌐 The <em>universe</em></div>
+      <div class="panel-h-sub">Every covered US stock — sortable, filterable, scored. Tap any ticker for the full report.</div>
+    </div>
+  </div>
   <div class="fd-toolbar">
     <!-- Per-table ticker search removed — global Cmd+K palette handles that.
          Hide Mega Caps checkbox removed too; profile picker now controls
@@ -4588,6 +4607,12 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 
 <!-- SECTORS -->
 <div id="panel-sectors" class="panel">
+  <div class="panel-header">
+    <div>
+      <div class="panel-h-title">🗺 Sector <em>map</em></div>
+      <div class="panel-h-sub">Where the alpha is hiding today — every sub-sector ranked by avg α-Score.</div>
+    </div>
+  </div>
   <div class="sec-grid-map" id="sectors-grid"><div class="loading">Loading…</div></div>
 </div>
 
@@ -4766,6 +4791,12 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 
 <!-- MODEL PORTFOLIO -->
 <div id="panel-model" class="panel">
+  <div class="panel-header">
+    <div>
+      <div class="panel-h-title">🎯 Top <em>hunts</em></div>
+      <div class="panel-h-sub">Live tracker of every open and closed pick — entry, exit, percent. The public ledger.</div>
+    </div>
+  </div>
   <div id="model-portfolio-root"><div class="loading">📊 Loading model portfolio…</div></div>
 </div>
 
