@@ -2458,6 +2458,24 @@ body[data-active-profile="conservative"] .fund-row:not([data-profiles~="conserva
 .v2-focus-pos .v2-focus-reason{background:#f0fdf4;border-left-color:#86efac;color:#15803d;font-weight:600}
 .v2-focus-neg .v2-focus-reason{background:#fef2f2;border-left-color:#fca5a5;color:#991b1b;font-weight:600}
 
+/* "Read full report →" CTA — appears below the reason on each focus card.
+   Quiet at rest so it doesn't compete with the card's primary content,
+   pops to brand-green on hover. Stays inline-block + self-aligned to
+   the right so the card body still feels like one tap-target. */
+.v2-focus-cta{
+  display:inline-block;align-self:flex-end;margin-top:10px;
+  padding:6px 12px;border-radius:8px;
+  font-family:'JetBrains Mono','Inter',monospace;
+  font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  color:#64748b;background:transparent;border:1px solid #e2e8f0;
+  text-decoration:none;
+  transition:color .15s, background .15s, border-color .15s, transform .15s;
+}
+.v2-focus-cta:hover{
+  color:#15803d;background:#f0fdf4;border-color:#86efac;transform:translateX(2px);
+}
+.v2-focus-item{display:flex;flex-direction:column}
+
 /* Mini pulse strip below the opportunity cards */
 .v2-focus-pulse{
   display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;padding-top:14px;
@@ -5549,6 +5567,14 @@ function v2RenderTodaysFocus(tickers){
         '</div>' +
       '</div>' +
       '<div class="v2-focus-reason">' + reason + '</div>' +
+      // "Read full report →" deep-link to /report/{TICKER}. Uses
+      // event.stopPropagation() + preventDefault() control flow so it
+      // navigates to the Reading-Mode report INSTEAD of the parent
+      // card's onclick which opens the in-app modal. Both interactions
+      // coexist: tap card body → modal (quick glance), tap this CTA →
+      // full long-form research page.
+      '<a class="v2-focus-cta" href="/report/' + encodeURIComponent(t.ticker) + '" ' +
+         'onclick="event.stopPropagation()">📖 Read full report →</a>' +
     '</div>';
   }).join('');
 
