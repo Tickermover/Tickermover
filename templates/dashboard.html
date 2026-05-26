@@ -166,7 +166,7 @@ table,th,td{
 .stat-l{font-size:11px;color:#374151;font-weight:600}
 
 /* ====== TABS ====== */
-.tabs{display:flex;gap:2px;padding:0 28px;border-bottom:2px solid rgba(132,204,22,.25);background:#ffffff;overflow-x:auto}
+.tabs{display:flex;gap:2px;padding:0 28px;border-bottom:1px solid rgba(34,197,94,.25);background:#ffffff;overflow-x:auto}
 .tab{padding:12px 18px;cursor:pointer;border-radius:0;font-size:13px;font-weight:600;color:#374151;
      border:none;background:transparent;border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap;
      letter-spacing:.02em}
@@ -190,7 +190,8 @@ table,th,td{
 .tally{color:var(--muted);font-size:12px;align-self:center;margin-left:auto}
 
 /* ====== CARDS ====== */
-.card{background:#ffffff;border:1px solid rgba(0,0,0,.08);border-radius:14px;padding:18px;transition:all .2s;position:relative;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.07),0 1px 3px rgba(0,0,0,.04)}
+.card{background:#ffffff;border:1px solid rgba(15,23,42,.07);border-radius:16px;padding:20px;transition:transform .2s, box-shadow .2s, border-color .2s;position:relative;overflow:hidden;box-shadow:0 1px 0 rgba(255,255,255,.9) inset, 0 1px 2px rgba(15,23,42,.04), 0 12px 32px -20px rgba(34,197,94,.18)}
+.card:hover{transform:translateY(-2px);box-shadow:0 1px 0 rgba(255,255,255,.9) inset, 0 1px 2px rgba(15,23,42,.04), 0 20px 44px -22px rgba(34,197,94,.30)}
 .card:hover{border-color:rgba(132,204,22,.35);transform:translateY(-2px);
             box-shadow:0 4px 20px rgba(0,0,0,.1),0 1px 4px rgba(0,0,0,.05)}
 
@@ -315,7 +316,10 @@ tr:hover td{background:rgba(132,204,22,.06)}
 .sec-thesis{font-size:12px;color:#111827;line-height:1.6;margin:6px 0}
 .sec-drivers{font-size:11px;color:#374151;line-height:1.5}
 /* New sector map cards */
-.sm-card{background:var(--surf);border:1px solid var(--bdr);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:10px;transition:border-color .2s,box-shadow .2s}
+/* Sector Map cards — same premium card surface as the rest of the
+   dashboard so the whole site reads with one brand voice. */
+.sm-card{background:#ffffff;border:1px solid rgba(15,23,42,.07);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:10px;transition:transform .2s, box-shadow .2s, border-color .2s;box-shadow:0 1px 0 rgba(255,255,255,.9) inset, 0 1px 2px rgba(15,23,42,.04), 0 12px 32px -20px rgba(34,197,94,.18)}
+.sm-card:hover{transform:translateY(-2px);box-shadow:0 1px 0 rgba(255,255,255,.9) inset, 0 1px 2px rgba(15,23,42,.04), 0 20px 44px -22px rgba(34,197,94,.30);border-color:rgba(34,197,94,.18)}
 .sm-card:hover{border-color:rgba(132,204,22,.35);box-shadow:0 4px 16px rgba(0,0,0,.08)}
 .sm-header{display:flex;flex-direction:column;gap:6px}
 .sm-title{font-size:15px;font-weight:800;color:var(--txt)}
@@ -422,7 +426,9 @@ tr:hover td{background:rgba(132,204,22,.06)}
 .fd-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(380px,1fr));gap:14px}
 .fd-card{background:var(--surf);border:1px solid var(--bdr);border-radius:14px;padding:16px}
 .fd-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
-.fd-tic{font-size:28px;font-weight:900;color:var(--acc2);letter-spacing:.5px;line-height:1.1}
+/* Ticker symbol — used in fund cards AND the stock detail modal head.
+   Editorial Fraunces serif treatment matches landing/report headlines. */
+.fd-tic{font-family:'Fraunces',Georgia,serif;font-size:32px;font-weight:500;color:#0d1320;letter-spacing:-.02em;line-height:1}
 .fd-co{font-size:12px;color:#374151;margin-top:3px;margin-bottom:8px}
 .fd-price{font-size:20px;font-weight:800;text-align:right}
 .fd-price.fd-price-xl{font-size:30px;font-weight:900;letter-spacing:-.01em;line-height:1.1}
@@ -1196,13 +1202,24 @@ tr:hover td{background:rgba(132,204,22,.06)}
   backdrop-filter:blur(10px);z-index:200;
   justify-content:center;align-items:center;padding:20px}
 .stock-modal-overlay.open{display:flex}
+/* Stock detail "pop view" modal — premium polished surface with a
+   brand-green halo + editorial top stripe so it reads as a research
+   moment, not a generic data dialog. */
 .stock-modal-panel{
   position:relative;
-  width:min(720px,100%);max-height:90vh;overflow-y:auto;
-  background:var(--surf);border:1px solid rgba(132,204,22,.3);
-  border-radius:18px;padding:28px;
-  box-shadow:0 24px 80px rgba(0,0,0,.18),0 0 40px rgba(132,204,22,.1);
-  animation:popIn .22s cubic-bezier(.34,1.56,.64,1)}
+  width:min(760px,100%);max-height:90vh;overflow-y:auto;
+  background:#ffffff;border:1px solid rgba(34,197,94,.22);
+  border-radius:20px;padding:30px;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.9) inset,
+    0 24px 80px rgba(0,0,0,.22),
+    0 0 60px rgba(34,197,94,.18);
+  animation:popIn .25s cubic-bezier(.34,1.56,.64,1)}
+.stock-modal-panel::after{
+  content:"";position:absolute;top:0;left:0;right:0;height:3px;border-radius:20px 20px 0 0;
+  background:linear-gradient(90deg,#22c55e 0%,#4ade80 40%,#22d3ee 100%);
+  pointer-events:none;
+}
 @keyframes popIn{from{transform:scale(.88);opacity:0}to{transform:scale(1);opacity:1}}
 .modal-close-btn{position:absolute;top:10px;right:10px;z-index:10;margin:0}
 .modal-close-btn button{background:rgba(255,255,255,.85);backdrop-filter:blur(4px);
@@ -4520,8 +4537,8 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 <div id="panel-watch" class="panel">
   <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:14px">
     <div>
-      <div style="font-size:18px;font-weight:800;color:#0a0a0a">⭐ Your Watchlist</div>
-      <div style="font-size:12.5px;color:#475569;margin-top:2px">Star any stock to save it here. Persists on this browser.</div>
+      <div style="font-family:'Fraunces',Georgia,serif;font-weight:500;font-size:26px;color:#0d1320;letter-spacing:-.02em;line-height:1.15">⭐ Your <em style="font-style:italic;color:#15803d">watchlist</em></div>
+      <div style="font-size:13px;color:#475569;margin-top:6px">Star any stock to save it here. Persists on this browser.</div>
     </div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
       <input id="watch-add-input" type="text" placeholder="Add ticker (e.g., NVDA)" maxlength="6" oninput="this.value=this.value.toUpperCase()" onkeydown="if(event.key==='Enter')addToWatchFromInput()" style="padding:8px 12px;border:1px solid rgba(15,23,42,.12);border-radius:7px;font-size:13px;font-weight:700;width:170px;text-transform:uppercase;font-family:'JetBrains Mono','Inter',monospace">
