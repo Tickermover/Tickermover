@@ -1059,6 +1059,15 @@ def _render_report_page(t: dict) -> str:
   *{{box-sizing:border-box;margin:0;padding:0}}
   html{{scroll-behavior:smooth}}
   body{{background:#fafbf7;color:#1a1f2e;font-family:'Source Serif 4',Georgia,serif;-webkit-font-smoothing:antialiased;line-height:1.6}}
+  /* OpenType polish — tabular numbers + Inter alt glyphs on every
+     numeric / mono / UI surface. Prose stays proportional. */
+  .verdict-score .num,.verdict-meta,.verdict-sym,.verdict-tag,
+  .pbr-score,.pbr-label,
+  .read-meta,.byline,.breadcrumb,
+  .top-nav,.top-cta,.related-meta,.related-tag{{
+    font-feature-settings:'tnum' 1, 'cv02' 1, 'cv11' 1;
+    font-variant-numeric:tabular-nums;
+  }}
   a{{color:#15803d;text-decoration:underline;text-decoration-color:rgba(34,197,94,.4);text-underline-offset:3px}}
   img{{display:block;max-width:100%}}
 

@@ -93,6 +93,20 @@
 
   .wrap{max-width:var(--wrap-max);margin:0 auto;padding:0 24px}
   .mono{font-family:'JetBrains Mono',monospace;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+
+  /* ─── OpenType polish ──────────────────────────────────────────────
+     Apply tabular numbers + Inter's refined alt glyphs (cv02 single-
+     storey 'a', cv11 cleaner '1') to every numeric / mono surface in
+     the page. Prose stays proportional. */
+  .ticker-sym,.ticker-px,.ticker-chg,
+  .pick-score,.pick-score-label,.pick-row .v,
+  .stat .num,.engine-score,
+  .pillar-tag,.pillar-bar .label,.pillar-bar .score,
+  .meta-row,.badge,
+  .mono{
+    font-feature-settings:'tnum' 1, 'cv02' 1, 'cv11' 1;
+    font-variant-numeric:tabular-nums;
+  }
   .serif{font-family:'Fraunces',Georgia,serif;letter-spacing:-.03em}
 
   /* ─── Page-wide ambient: aurora backdrop (lime + cyan + violet) ─── */
