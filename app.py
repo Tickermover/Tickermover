@@ -1182,7 +1182,7 @@ async def reports_index():
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Manrope:wght@400;500;600;700;800;900&family=Fraunces:opsz,wght@9..144,500;9..144,700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <style>
   *{{box-sizing:border-box;margin:0;padding:0}}
-  body{{background:#fafbf7;color:#1a1f2e;font-family:'Inter',system-ui,sans-serif;-webkit-font-smoothing:antialiased}}
+  body{{background:#fafbf7;color:#1a1f2e;font-family:'Manrope','Inter',system-ui,sans-serif;font-weight:500;-webkit-font-smoothing:antialiased}}
   a{{text-decoration:none;color:inherit}}
   .top{{background:#fff;border-bottom:1px solid rgba(15,23,42,.08);position:sticky;top:0;z-index:50}}
   .top-inner{{display:flex;align-items:center;justify-content:space-between;max-width:1200px;margin:0 auto;padding:14px 28px}}

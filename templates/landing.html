@@ -83,8 +83,12 @@
     background:var(--bg);
     color:var(--ink);
     /* Manrope = humanist geometric sans, warmer than Inter, pairs
-       beautifully with Fraunces. Inter stays as graceful fallback. */
+       beautifully with Fraunces. Inter stays as graceful fallback.
+       NOTE: Manrope renders thinner than Inter at the same weight,
+       so we set the base body weight to 500 (medium) for readability
+       parity — Manrope 500 ≈ Inter 400 visually. */
     font-family:'Manrope','Inter',system-ui,-apple-system,sans-serif;
+    font-weight:500;
     font-feature-settings:'cv02','cv03','cv04','cv11';
     -webkit-font-smoothing:antialiased;
     line-height:1.5;
