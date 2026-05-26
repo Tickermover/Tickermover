@@ -1554,23 +1554,35 @@ html.v2-dark .v2ov-skeleton .sk{background:linear-gradient(90deg,#121821 0%,#1f2
 @media (max-width: 1100px){.v2ov-skeleton .row{grid-template-columns:1fr}}
 @media (max-width: 768px){.v2ov-skeleton .row.kpis{grid-template-columns:repeat(2,1fr)}.v2ov-skeleton .sk.kpi{height:100px}}
 .v2ov-card{
-  /* Themed gradient — picks up faint hints of the outer frame
-     palette (indigo / cyan / violet) so each callout reads as
-     part of the brand instead of being a flat white slab. */
-  background:linear-gradient(135deg,#ffffff 0%,#fbfbff 35%,#f3f1ff 100%);
-  border:1px solid #e5e7eb;border-radius:14px;
-  padding:20px;box-shadow:0 1px 3px rgba(15,23,42,.04);
+  /* Premium white surface — clean cream-tinged white with a soft
+     green-tinted shadow for the brand-cohesion + depth that matches
+     the landing/report pages. No more muddy violet-tint background. */
+  background:#ffffff;
+  border:1px solid rgba(15,23,42,.07);border-radius:16px;
+  padding:22px;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.9) inset,
+    0 1px 2px rgba(15,23,42,.04),
+    0 12px 32px -20px rgba(34,197,94,.18);
   position:relative;overflow:hidden;
+  transition:transform .2s, box-shadow .2s;
 }
-/* Subtle top-edge gradient bar on every main card — same colour
-   family as the outer frame. Reads as a brand stripe. */
+.v2ov-card:hover{
+  transform:translateY(-2px);
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.9) inset,
+    0 1px 2px rgba(15,23,42,.04),
+    0 20px 44px -22px rgba(34,197,94,.30);
+}
+/* Brand-green top-edge accent — matches the landing's brand voice.
+   Replaces the previous indigo→pink stripe so the dashboard reads
+   as the SAME product as the landing/report pages. */
 .v2ov-card::before{
   content:'';position:absolute;top:0;left:0;right:0;height:2px;
   background:linear-gradient(90deg,
-    rgba(56,189,248,.55) 0%,
-    rgba(99,102,241,.65) 35%,
-    rgba(236,72,153,.55) 70%,
-    rgba(251,113,133,.45) 100%);
+    rgba(34,197,94,.65) 0%,
+    rgba(74,222,128,.55) 50%,
+    rgba(34,211,238,.45) 100%);
   pointer-events:none;
 }
 html.v2-dark .v2ov-card{
@@ -1761,8 +1773,11 @@ body.v2 .v2ov-card.sectors .v2ov-sector-cell{
   min-height:60px;
 }
 .v2ov-card-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px;gap:12px;flex-wrap:wrap}
-.v2ov-title{font-size:15px;font-weight:800;color:#0f172a;letter-spacing:-.01em}
-.v2ov-sub{font-size:12px;color:#64748b;margin-top:2px}
+/* Card titles — Fraunces serif, same editorial voice as the landing
+   page section titles and /report headlines. The whole site speaks
+   one language now. */
+.v2ov-title{font-family:'Fraunces',Georgia,serif;font-weight:500;font-size:20px;color:#0d1320;letter-spacing:-.015em;line-height:1.15}
+.v2ov-sub{font-size:12.5px;color:#64748b;margin-top:4px;font-weight:500}
 
 /* Sector momentum pulse annotation — shown above the sector grid */
 .v2-sector-pulse{
@@ -1787,7 +1802,7 @@ body.v2 .v2ov-card.sectors .v2ov-sector-cell{
 }
 .v2-quant-snapshot::before{
   content:'';position:absolute;left:0;top:0;bottom:0;width:4px;
-  background:linear-gradient(180deg,#4338ca 0%,#8b5cf6 50%,#ec4899 100%);
+  background:linear-gradient(180deg,#22c55e 0%,#4ade80 50%,#22d3ee 100%);
 }
 .v2-quant-snapshot .v2-qs-hdr{
   font-size:10.5px;font-weight:800;letter-spacing:.08em;
@@ -2396,7 +2411,7 @@ body[data-active-profile="conservative"] .fund-row:not([data-profiles~="conserva
 }
 .v2-focus-card::before{
   content:'';position:absolute;left:0;top:0;bottom:0;width:4px;
-  background:linear-gradient(180deg,#4338ca 0%,#8b5cf6 50%,#ec4899 100%);
+  background:linear-gradient(180deg,#22c55e 0%,#4ade80 50%,#22d3ee 100%);
 }
 .v2-focus-head{margin-bottom:14px;padding-left:6px}
 /* Editorial serif title — matches the Fraunces treatment from the
