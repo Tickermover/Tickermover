@@ -784,6 +784,140 @@ def _build_landing_schema() -> str:
 
 
 # ═════════════════════════════════════════════════════════════════════════
+#  /reports — Reading Mode index (all covered tickers, ranked)
+# ═════════════════════════════════════════════════════════════════════════
+@app.get("/reports", response_class=HTMLResponse)
+async def reports_index():
+    """Light, editorial index of every covered ticker — sorted by Alpha
+    Score, each row deep-links to its full /report/{TICKER} page.
+
+    This is the destination behind the landing nav's "Reports" link.
+    Built so a reader can browse the universe in Reading Mode without
+    having to type a ticker into the URL.
+    """
+    import html as _html
+    rows_data = sorted(
+        (x for x in (_universe_data or []) if x.get("ticker")),
+        key=lambda x: (x.get("smart_score") or x.get("pop_score") or 0),
+        reverse=True,
+    )
+    items_html = []
+    for t in rows_data[:300]:  # cap to keep first paint fast
+        sym  = (t.get("ticker") or "").upper()
+        name = _html.escape(t.get("name") or sym)
+        sect = _html.escape(t.get("sector") or "—")
+        try:
+            sc = int(round(float(t.get("smart_score") or t.get("pop_score") or 0)))
+        except Exception:
+            sc = 0
+        chg = t.get("change_pct")
+        chg_str = ""
+        chg_cls = ""
+        if isinstance(chg, (int, float)):
+            chg_str = f"{'+' if chg>=0 else ''}{chg:.2f}%"
+            chg_cls = "up" if chg >= 0 else "dn"
+        # Color the score by band
+        band = "hi" if sc >= 80 else "mid" if sc >= 60 else "lo"
+        items_html.append(
+            f'<a class="row" href="/report/{sym}">'
+            f'<span class="sym">{sym}</span>'
+            f'<span class="nm">{name}</span>'
+            f'<span class="sect">{sect}</span>'
+            f'<span class="chg {chg_cls}">{chg_str}</span>'
+            f'<span class="sc {band}">{sc}</span>'
+            f'</a>'
+        )
+    rows_html = "\n".join(items_html) or '<div class="empty">Universe not loaded yet — refresh in a moment.</div>'
+    total = len(rows_data)
+    return HTMLResponse(content=f"""<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Reports — {total} US stocks scored & explained | AlphaHunt</title>
+<meta name="description" content="Every US stock in the AlphaHunt universe, scored across six investment pillars and explained in a long-form research report. Sorted by today's Alpha Score.">
+<meta name="theme-color" content="#fafbf7">
+<link rel="canonical" href="{SITE_ORIGIN}/reports">
+<link rel="icon" type="image/png" sizes="32x32" href="/static/icons/favicon-32.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Fraunces:opsz,wght@9..144,500;9..144,700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  *{{box-sizing:border-box;margin:0;padding:0}}
+  body{{background:#fafbf7;color:#1a1f2e;font-family:'Inter',system-ui,sans-serif;-webkit-font-smoothing:antialiased}}
+  a{{text-decoration:none;color:inherit}}
+  .top{{background:#fff;border-bottom:1px solid rgba(15,23,42,.08);position:sticky;top:0;z-index:50}}
+  .top-inner{{display:flex;align-items:center;justify-content:space-between;max-width:1200px;margin:0 auto;padding:14px 28px}}
+  .brand{{display:flex;align-items:center;gap:10px;font-weight:900;font-size:17px;letter-spacing:-.02em;color:#0d1320}}
+  .brand-mark{{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,#fff,#f1f5f9);display:flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:0 0 0 1px rgba(34,197,94,.4),0 6px 16px -6px rgba(34,197,94,.3)}}
+  .brand-mark img{{width:80%;height:80%;object-fit:contain;filter:drop-shadow(0 0 5px rgba(132,224,43,.45))}}
+  .brand .h{{background:linear-gradient(135deg,#a3e635 0%,#4ade80 50%,#22c55e 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;filter:drop-shadow(0 0 6px rgba(132,224,43,.25))}}
+  .top-nav{{display:flex;gap:24px;font-size:13.5px;font-weight:600;color:#475569}}
+  .top-nav a.active{{color:#15803d}}
+  .top-cta{{padding:8px 18px;border-radius:999px;background:#0d1320;color:#fff;font-size:13px;font-weight:700}}
+  @media (max-width:760px){{.top-nav{{display:none}}}}
+
+  .head{{max-width:1100px;margin:0 auto;padding:56px 28px 32px}}
+  .eyebrow{{display:inline-block;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#15803d;font-weight:700;padding:5px 10px;border-radius:999px;background:rgba(34,197,94,.10);border:1px solid rgba(34,197,94,.30);margin-bottom:14px}}
+  h1{{font-family:'Fraunces',serif;font-weight:500;font-size:clamp(36px,5vw,56px);line-height:1.05;letter-spacing:-.025em;color:#0d1320;margin-bottom:14px}}
+  h1 em{{font-style:italic;color:#15803d}}
+  .sub{{font-size:16px;color:#475569;line-height:1.6;max-width:600px}}
+
+  .list-wrap{{max-width:1100px;margin:0 auto;padding:0 28px 60px}}
+  .list-head{{display:grid;grid-template-columns:80px 1fr 180px 90px 70px;gap:14px;padding:12px 22px;background:#fff;border:1px solid rgba(15,23,42,.08);border-radius:14px 14px 0 0;border-bottom:none;font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:#94a3b8;font-weight:700}}
+  .list{{background:#fff;border:1px solid rgba(15,23,42,.08);border-radius:0 0 14px 14px;overflow:hidden;box-shadow:0 1px 2px rgba(15,23,42,.04),0 12px 30px -22px rgba(15,23,42,.15)}}
+  .row{{display:grid;grid-template-columns:80px 1fr 180px 90px 70px;gap:14px;padding:16px 22px;border-bottom:1px solid rgba(15,23,42,.06);align-items:center;font-size:14px;transition:background .12s,transform .15s;color:inherit;text-decoration:none}}
+  .row:last-child{{border-bottom:none}}
+  .row:hover{{background:#f7faf4;transform:translateX(4px)}}
+  .row .sym{{font-family:'JetBrains Mono',monospace;font-weight:800;color:#0d1320;letter-spacing:-.01em}}
+  .row .nm{{font-family:'Fraunces',serif;font-weight:500;font-size:16px;color:#0d1320;letter-spacing:-.01em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}}
+  .row .sect{{color:#64748b;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}}
+  .row .chg{{font-family:'JetBrains Mono',monospace;font-weight:700;text-align:right;color:#64748b}}
+  .row .chg.up{{color:#15803d}} .row .chg.dn{{color:#b91c1c}}
+  .row .sc{{font-family:'Fraunces',serif;font-weight:500;font-size:24px;text-align:right;letter-spacing:-.02em}}
+  .row .sc.hi{{color:#15803d}} .row .sc.mid{{color:#b45309}} .row .sc.lo{{color:#64748b}}
+  .empty{{padding:36px;text-align:center;color:#94a3b8}}
+
+  @media (max-width:760px){{
+    .list-head{{grid-template-columns:70px 1fr 70px;gap:10px;font-size:9.5px}}
+    .list-head .sect-h,.list-head .chg-h{{display:none}}
+    .row{{grid-template-columns:70px 1fr 70px;gap:10px;padding:14px 16px;font-size:13px}}
+    .row .sect,.row .chg{{display:none}}
+    .row .sc{{font-size:20px}}
+  }}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <div class="top-inner">
+    <a class="brand" href="/">
+      <span class="brand-mark"><img src="/static/icons/alpha-logo-bare-64.png" alt=""></span>
+      Alpha<span class="h">Hunt</span>
+    </a>
+    <div class="top-nav">
+      <a href="/reports" class="active">Reports</a>
+      <a href="/#how">How it works</a>
+      <a href="/#pillars">Methodology</a>
+      <a href="/app">Dashboard</a>
+    </div>
+    <a class="top-cta" href="/app">Open dashboard →</a>
+  </div>
+</div>
+
+<div class="head">
+  <div class="eyebrow">Research library</div>
+  <h1>{total} stocks. <em>Every</em> one explained.</h1>
+  <p class="sub">Every name we cover gets a full research report with Alpha Score, six-pillar breakdown, verdict, and the reasoning behind it. Sorted by today's score.</p>
+</div>
+
+<div class="list-wrap">
+  <div class="list-head"><span>Ticker</span><span>Name</span><span class="sect-h">Sector</span><span class="chg-h" style="text-align:right">Δ Day</span><span style="text-align:right">α-Score</span></div>
+  <div class="list">{rows_html}</div>
+</div>
+
+</body></html>""")
+
+
+# ═════════════════════════════════════════════════════════════════════════
 #  /report/{ticker} — "Reading Mode" research report (Phase 1)
 # ═════════════════════════════════════════════════════════════════════════
 #  Long-form, editorial single-ticker page styled like a Bloomberg or

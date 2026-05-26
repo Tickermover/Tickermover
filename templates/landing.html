@@ -403,6 +403,16 @@
   .pick-row .k{color:var(--muted)}
   .pick-row .v{font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--ink)}
   .pick-row .v.up{color:var(--up);text-shadow:0 0 12px rgba(16,217,126,.35)} .pick-row .v.dn{color:var(--down)}
+  /* When a .pick is rendered as an <a>, kill default link styling and
+     show the 'Read full report →' CTA on hover. */
+  a.pick-link{text-decoration:none;color:inherit;display:block;cursor:pointer}
+  .pick-cta{
+    margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,.06);
+    font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.10em;text-transform:uppercase;
+    color:#a78bfa;opacity:0;transform:translateY(-4px);
+    transition:opacity .25s, transform .25s, color .25s;
+  }
+  a.pick-link:hover .pick-cta{opacity:1;transform:translateY(0);color:#c4b5fd}
 
   /* ─── Trust strip ──────────────────────────────────────────────────── */
   .trust{
@@ -842,10 +852,10 @@
       <span class="brand-name">Alpha<span class="h">Hunt</span></span>
     </a>
     <div class="nav-links">
+      <a href="/reports">Reports</a>
       <a href="#how">How it works</a>
       <a href="#engine">AI Engine</a>
       <a href="#pillars">Methodology</a>
-      <a href="#profiles">Profiles</a>
       <a href="#faq">FAQ</a>
     </div>
     <a class="nav-cta magnetic" href="/app">Open dashboard →</a>
@@ -1442,14 +1452,18 @@
         // text tile so we never show a broken-image icon.
         const logoUrl = `https://assets.parqet.com/logos/symbol/${encodeURIComponent(ticker)}`;
         const onerror = `this.parentElement.outerHTML='<div class=&quot;pick-logo-text&quot;>${short}</div>'`;
-        return `<div class="pick">
+        // Pick card is now a clickable link → /report/{TICKER}
+        // Whole card is one tap target so visitors flow naturally from
+        // "today's picks" → full research report.
+        return `<a class="pick pick-link" href="/report/${encodeURIComponent(ticker)}">
           <div class="pick-head">
             <div class="pick-logo"><img src="${logoUrl}" alt="${ticker} logo" loading="lazy" onerror="${onerror}"></div>
             <div class="pick-info"><div class="pick-sym">${ticker}</div><div class="pick-name">${name}</div></div>
             <div class="pick-score-wrap"><div class="pick-score-label">α-score</div><div class="pick-score">${score}</div></div>
           </div>
           <div class="pick-row"><span class="k">Today</span><span class="v ${chgCls}">${chgStr}</span></div>
-        </div>`;
+          <div class="pick-cta">Read full report →</div>
+        </a>`;
       }).join('');
       document.getElementById('hero-picks').innerHTML = html;
     } catch(e){}
