@@ -178,10 +178,13 @@
   }
   .brand-mark img{width:80%;height:80%;object-fit:contain;filter:drop-shadow(0 0 6px rgba(34,197,94,.45))}
   .brand-name{display:flex;align-items:baseline;letter-spacing:-.025em;color:#fff}
+  /* "Hunt" wordmark — matches the hero .brand-alpha gradient so the
+     two brand surfaces sing in unison */
   .brand-name .h{
-    background:linear-gradient(135deg,#22c55e 0%,#4ade80 50%,#22d3ee 100%);
+    background:linear-gradient(135deg,#a3e635 0%,#4ade80 50%,#22c55e 100%);
     -webkit-background-clip:text;background-clip:text;
     -webkit-text-fill-color:transparent;color:transparent;
+    filter:drop-shadow(0 0 8px rgba(132,224,43,.35));
   }
   .nav-links{display:flex;gap:28px;font-size:14px;font-weight:500;color:var(--ink-2)}
   .nav-links a{position:relative;padding:4px 0;transition:color .2s}
@@ -325,44 +328,75 @@
   .picks-label .line{width:48px;height:1px;background:linear-gradient(90deg,transparent,var(--bdr-2),transparent)}
   .picks-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;max-width:920px;margin:0 auto}
   @media (max-width:760px){.picks-grid{grid-template-columns:1fr}}
+  /* "Pick sticker" cards — luminous on dark, real company logos,
+     hover lifts the card with a clear violet halo */
   .pick{
     position:relative;padding:18px 18px 16px;border-radius:18px;
-    background:var(--surface);backdrop-filter:blur(14px);
-    border:1px solid var(--bdr);overflow:hidden;
-    transition:transform .25s ease,border-color .25s ease, box-shadow .25s ease;
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.025) 60%, rgba(255,255,255,.02)),
+      rgba(15,18,32,.55);
+    backdrop-filter:blur(14px);
+    border:1px solid rgba(255,255,255,.12);
+    overflow:hidden;
+    transition:transform .28s cubic-bezier(.2,.7,.2,1), border-color .28s, box-shadow .28s;
   }
-  /* rotating gradient border via mask */
+  /* Subtle inner highlight at top — gives a "polished sticker" look */
+  .pick::after{
+    content:"";position:absolute;top:0;left:8%;right:8%;height:1px;
+    background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent);
+    pointer-events:none;
+  }
+  /* Animated conic glow border — only on hover */
   .pick::before{
     content:"";position:absolute;inset:-1px;border-radius:inherit;padding:1px;
-    background:conic-gradient(from var(--ang,0deg), transparent 70%, #a78bfa, #ec4899, transparent 100%);
+    background:conic-gradient(from var(--ang,0deg), transparent 65%, #a78bfa, #22d3ee, transparent 100%);
     -webkit-mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-    mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+            mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
     -webkit-mask-composite:xor;mask-composite:exclude;
-    animation:spinBorder 6s linear infinite;
+    animation:spinBorder 6s linear infinite paused;
     opacity:0;transition:opacity .3s;pointer-events:none;
   }
   @property --ang{syntax:'<angle>';inherits:false;initial-value:0deg}
   @keyframes spinBorder{to{--ang:360deg}}
-  .pick:hover{transform:translateY(-4px);border-color:rgba(167,139,250,.35);box-shadow:0 24px 50px -22px rgba(167,139,250,.5)}
-  .pick:hover::before{opacity:1}
-  .pick-head{display:flex;align-items:center;gap:11px}
+  .pick:hover{
+    transform:translateY(-5px);
+    border-color:rgba(167,139,250,.45);
+    box-shadow:0 28px 56px -22px rgba(167,139,250,.55), 0 0 0 1px rgba(167,139,250,.10) inset;
+  }
+  .pick:hover::before{opacity:1;animation-play-state:running}
+  .pick-head{display:flex;align-items:center;gap:12px}
+  /* Logo tile — white surface so company logos sit cleanly on top */
   .pick-logo{
-    width:38px;height:38px;border-radius:10px;
-    background:var(--prism);color:#fff;display:flex;align-items:center;justify-content:center;
-    font-family:'JetBrains Mono',monospace;font-weight:800;font-size:13px;letter-spacing:.02em;
-    box-shadow:0 0 0 1px rgba(255,255,255,.08) inset;
+    width:42px;height:42px;border-radius:11px;flex-shrink:0;
+    background:#ffffff;
+    display:flex;align-items:center;justify-content:center;overflow:hidden;
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,.18),
+      0 6px 16px -6px rgba(0,0,0,.5);
+    position:relative;
+  }
+  .pick-logo img{width:100%;height:100%;object-fit:contain;padding:4px}
+  /* Fallback: text inside when no image */
+  .pick-logo-text{
+    width:42px;height:42px;border-radius:11px;flex-shrink:0;
+    background:linear-gradient(135deg,#a78bfa,#22d3ee);color:#0d1320;
+    display:flex;align-items:center;justify-content:center;
+    font-family:'JetBrains Mono',monospace;font-weight:800;font-size:12px;letter-spacing:.02em;
+    box-shadow:0 0 0 1px rgba(255,255,255,.18), 0 6px 16px -6px rgba(0,0,0,.5);
   }
   .pick-info{flex:1;min-width:0}
-  .pick-sym{font-weight:800;font-size:15px;color:#fff;letter-spacing:-.01em}
+  .pick-sym{font-weight:800;font-size:16px;color:#fff;letter-spacing:-.01em}
   .pick-name{font-size:11.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .pick-score-wrap{display:flex;flex-direction:column;align-items:flex-end;line-height:1}
+  .pick-score-label{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.16em;color:var(--muted);text-transform:uppercase;margin-bottom:3px}
   .pick-score{
-    font-family:'JetBrains Mono',monospace;font-weight:800;font-size:22px;
+    font-family:'JetBrains Mono',monospace;font-weight:800;font-size:24px;
     background:var(--metallic);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;
   }
-  .pick-row{display:flex;justify-content:space-between;align-items:center;margin-top:14px;padding-top:12px;border-top:1px solid var(--bdr);font-size:12px}
+  .pick-row{display:flex;justify-content:space-between;align-items:center;margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,.08);font-size:12px}
   .pick-row .k{color:var(--muted)}
   .pick-row .v{font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--ink)}
-  .pick-row .v.up{color:var(--up)} .pick-row .v.dn{color:var(--down)}
+  .pick-row .v.up{color:var(--up);text-shadow:0 0 12px rgba(16,217,126,.35)} .pick-row .v.dn{color:var(--down)}
 
   /* ─── Trust strip ──────────────────────────────────────────────────── */
   .trust{
@@ -513,7 +547,6 @@
   .pillar:hover::before{opacity:.95;animation-play-state:running}
   .pillar:hover::after{opacity:.22;transform:scale(1.15)}
   .pillar:hover .pillar-ico{transform:scale(1.08) rotate(-4deg)}
-  .pillar:hover .pillar-ico::before{opacity:1;animation-play-state:running}
   .pillar:hover .bar-fill{transform:scaleX(var(--bar,.78))}
   .pillar:hover .light-sweep{transform:translateX(220%);opacity:.7}
 
@@ -543,16 +576,6 @@
       inset 0 1px 0 rgba(255,255,255,.15);
     transition:transform .35s cubic-bezier(.2,.7,.2,1);
     position:relative;
-  }
-  /* Concentric halo ring that pulses out from the icon on hover */
-  .pillar-ico::before{
-    content:"";position:absolute;inset:-6px;border-radius:18px;
-    border:1.5px solid color-mix(in srgb, var(--pc) 50%, transparent);
-    opacity:0;animation:haloPulse 1.8s ease-out infinite paused;
-  }
-  @keyframes haloPulse{
-    0%{transform:scale(.9);opacity:.7}
-    100%{transform:scale(1.5);opacity:0}
   }
   .pillar-ico svg{width:24px;height:24px;filter:drop-shadow(0 0 6px color-mix(in srgb, var(--pc) 70%, transparent))}
 
@@ -638,11 +661,14 @@
   .quote p{font-family:'Fraunces',serif;font-size:17.5px;line-height:1.55;color:#fff;margin-bottom:24px;letter-spacing:-.005em;font-weight:400}
   .quote footer{display:flex;align-items:center;gap:12px}
   .quote .avatar{
-    width:44px;height:44px;border-radius:50%;
-    display:flex;align-items:center;justify-content:center;
-    font-weight:800;font-size:14px;color:#fff;
-    background:var(--prism);border:1px solid rgba(255,255,255,.18);
+    width:48px;height:48px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;
+    overflow:hidden;
+    background:linear-gradient(135deg,#1c2440,#0d1320);
+    border:2px solid rgba(167,139,250,.30);
+    box-shadow:0 6px 18px -6px rgba(99,102,241,.45);
   }
+  .quote .avatar img{width:100%;height:100%;object-fit:cover;display:block}
   .quote .who{font-size:14px;font-weight:700;color:#fff}
   .quote .role{font-size:12.5px;color:var(--muted)}
   .quote .stars{display:flex;gap:2px;color:var(--gold)}
@@ -665,6 +691,20 @@
      label — no floating ::before badge (it was duplicating and getting
      clipped by the card's overflow). */
   .profile-tag{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--lime-2);letter-spacing:.14em;text-transform:uppercase;font-weight:700}
+  /* On the popular plan the tag IS the headline label, so it gets a
+     proper highlighted pill treatment (background + glow + slight scale) */
+  .profile.popular .profile-tag{
+    display:inline-flex;align-items:center;gap:6px;
+    color:#0d1320;font-weight:800;font-size:10.5px;
+    padding:6px 12px;border-radius:999px;
+    background:linear-gradient(135deg,#a3e635 0%,#4ade80 50%,#22c55e 100%);
+    box-shadow:0 0 22px rgba(74,222,128,.55), 0 6px 18px -8px rgba(34,197,94,.7);
+    border:1px solid rgba(255,255,255,.25);
+  }
+  .profile.popular .profile-tag::before{
+    content:"";width:6px;height:6px;border-radius:50%;background:#0d1320;
+    box-shadow:0 0 6px rgba(0,0,0,.4);
+  }
   .profile h3{font-family:'Fraunces',serif;font-size:26px;font-weight:500;color:#fff;margin:6px 0 8px;letter-spacing:-.02em}
   .profile .desc{color:var(--ink-2);font-size:14px;line-height:1.6;margin-bottom:18px}
   .profile ul{list-style:none;margin-bottom:22px}
@@ -988,7 +1028,7 @@
         <div class="pillar-bar"><span class="label">Sample</span><span class="track"><span class="bar-fill"></span></span><span class="score">86</span></div>
       </div>
 
-      <div class="pillar tilt spot" style="--pc:#14b8a6;--bar:.72">
+      <div class="pillar tilt spot" style="--pc:#84cc16;--bar:.72">
         <div class="light-sweep"></div>
         <div class="pillar-head">
           <div class="pillar-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="20" x2="6" y2="14"/><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="6"/><polyline points="3 8 7 4 11 8"/></svg></div>
@@ -1075,7 +1115,7 @@
         <span class="glyph">"</span>
         <p>Finally, a research tool that tells me <em>why</em> a stock is on the list. The six-pillar breakdown saves me hours of digging.</p>
         <footer>
-          <div class="avatar">RM</div>
+          <div class="avatar"><img src="https://api.dicebear.com/7.x/notionists/svg?seed=Rohit&backgroundColor=22c55e,4ade80,a78bfa&backgroundType=gradientLinear" alt="Rohit M." loading="lazy"></div>
           <div><div class="who">Rohit M.</div><div class="role">Independent trader · Mumbai</div></div>
           <div class="stars" style="margin-left:auto">★★★★★</div>
         </footer>
@@ -1084,7 +1124,7 @@
         <span class="glyph">"</span>
         <p>The audit-grade ledger is the differentiator. I can show clients <em>exactly</em> when we entered and why we exited.</p>
         <footer>
-          <div class="avatar">SP</div>
+          <div class="avatar"><img src="https://api.dicebear.com/7.x/notionists/svg?seed=SarahPro&backgroundColor=ec4899,a78bfa,22d3ee&backgroundType=gradientLinear" alt="Sarah P." loading="lazy"></div>
           <div><div class="who">Sarah P.</div><div class="role">RIA / Portfolio manager</div></div>
           <div class="stars" style="margin-left:auto">★★★★★</div>
         </footer>
@@ -1093,7 +1133,7 @@
         <span class="glyph">"</span>
         <p>Empty slots when the market is weak — that's the discipline I needed. AlphaHunt won't force a bad pick just to fill space.</p>
         <footer>
-          <div class="avatar">AK</div>
+          <div class="avatar"><img src="https://api.dicebear.com/7.x/notionists/svg?seed=ArjunBlr&backgroundColor=f59e0b,22c55e,22d3ee&backgroundType=gradientLinear" alt="Arjun K." loading="lazy"></div>
           <div><div class="who">Arjun K.</div><div class="role">Long-term investor · Bangalore</div></div>
           <div class="stars" style="margin-left:auto">★★★★★</div>
         </footer>
@@ -1369,16 +1409,23 @@
       const picks = (d.hot || []).slice(0, 3);
       if (!picks.length) return;
       const html = picks.map(p => {
-        const score = Math.round(p.smart_score || p.pop_score || 0);
-        const chg = p.change_pct != null ? parseFloat(p.change_pct) : null;
-        const chgCls = chg == null ? '' : chg >= 0 ? 'up' : 'dn';
-        const chgStr = chg == null ? '—' : (chg >= 0 ? '+' : '') + chg.toFixed(2) + '%';
-        const name = (p.name || '').slice(0, 26);
+        const score   = Math.round(p.smart_score || p.pop_score || 0);
+        const chg     = p.change_pct != null ? parseFloat(p.change_pct) : null;
+        const chgCls  = chg == null ? '' : chg >= 0 ? 'up' : 'dn';
+        const chgStr  = chg == null ? '—' : (chg >= 0 ? '+' : '') + chg.toFixed(2) + '%';
+        const name    = (p.name || '').slice(0, 26);
+        const ticker  = (p.ticker || '');
+        const short   = ticker.slice(0,3);
+        // Try Parqet's free public logo CDN (no auth, no rate limit for low
+        // traffic). On 404/network error, swap the <img> out for a styled
+        // text tile so we never show a broken-image icon.
+        const logoUrl = `https://assets.parqet.com/logos/symbol/${encodeURIComponent(ticker)}`;
+        const onerror = `this.parentElement.outerHTML='<div class=&quot;pick-logo-text&quot;>${short}</div>'`;
         return `<div class="pick">
           <div class="pick-head">
-            <div class="pick-logo">${(p.ticker || '').slice(0,3)}</div>
-            <div class="pick-info"><div class="pick-sym">${p.ticker || ''}</div><div class="pick-name">${name}</div></div>
-            <div class="pick-score">${score}</div>
+            <div class="pick-logo"><img src="${logoUrl}" alt="${ticker} logo" loading="lazy" onerror="${onerror}"></div>
+            <div class="pick-info"><div class="pick-sym">${ticker}</div><div class="pick-name">${name}</div></div>
+            <div class="pick-score-wrap"><div class="pick-score-label">α-score</div><div class="pick-score">${score}</div></div>
           </div>
           <div class="pick-row"><span class="k">Today</span><span class="v ${chgCls}">${chgStr}</span></div>
         </div>`;
