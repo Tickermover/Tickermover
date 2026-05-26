@@ -1991,7 +1991,7 @@ body.v2 .v2ov-card.sectors .v2ov-sector-cell{
   border:1px solid #86efac;border-left:4px solid #15803d;border-radius:8px;
   font-size:12px;color:#1e293b;
 }
-.v2-pb-pill{font-weight:900;color:#15803d;font-size:12px;letter-spacing:.02em}
+.v2-pb-pill{font-weight:900;color:#6366f1;font-size:12px;letter-spacing:.02em}
 .v2-pb-text{flex:1;min-width:200px}
 .v2-pb-close{
   background:#fff;border:1px solid #86efac;color:#15803d;
@@ -2260,7 +2260,7 @@ body[data-active-profile="conservative"] .fund-row:not([data-profiles~="conserva
 }
 .v2-mp-grade{font-size:10px!important;font-weight:800!important;padding:3px 8px!important;border-radius:6px!important}
 .v2-mp-meta{font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px;letter-spacing:.01em}
-.v2-mp-meta-sec{background:#f0fdf4;color:#15803d}
+.v2-mp-meta-sec{background:#eef2ff;color:#6366f1}
 .v2-mp-meta-up{background:#dcfce7;color:#15803d}
 .v2-mp-meta-above{background:#f1f5f9;color:#475569;border:1px solid #cbd5e1}
 
@@ -2499,6 +2499,10 @@ body[data-active-profile="conservative"] .fund-row:not([data-profiles~="conserva
 .v2-focus-label{
   font-size:10px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;
 }
+/* Default label color — violet/indigo as the SECONDARY brand accent
+   (kept distinct from primary green on tickers/scores/CTAs). Creates
+   visual rhythm: green = brand identity, violet = meta-labels. */
+.v2-focus-label{color:#6366f1}
 /* Lighter score badge — white surface with a thin border, colour
    carried by the grade chip + the score number. No more heavy indigo
    block that was overwhelming the card header. */
@@ -7128,18 +7132,18 @@ function v2RenderHotSectorBanner(tickers){
     '<div class="v2-dd-head">' +
       '<span class="v2-dd-icon" style="color:#16a34a">🔥</span>' +
       '<div>' +
-        '<div class="v2-dd-title" style="font-family:\'Fraunces\',Georgia,serif;font-weight:500;font-size:22px;color:#0f5132;letter-spacing:-.015em;line-height:1.2">' + v2EscHTML(best.name) + ' <em style="font-style:italic;color:#15803d">heating up</em></div>' +
+        '<div class="v2-dd-title" style="font-family:\'Fraunces\',Georgia,serif;font-weight:500;font-size:22px;color:#0f5132;letter-spacing:-.015em;line-height:1.2">' + v2EscHTML(best.name) + ' <em style="font-style:italic;color:#6366f1">heating up</em></div>' +
         '<div class="v2-dd-sub" style="color:#15803d;margin-top:4px">Avg +' + best.avg.toFixed(1) + '% over 1 month · ' + best.items.length + ' stocks · ' +
           'Leader: ' + top[0].t.ticker + ' +' + top[0].m.toFixed(1) + '%</div>' +
       '</div>' +
     '</div>' +
     '<div class="v2-dd-playbook" style="background:rgba(22,163,74,.04);border-color:rgba(22,163,74,.18)">' +
-      '<div class="v2-dd-pb-title" style="color:#15803d;font-family:\'JetBrains Mono\',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:700">📊 Why the sector is heating up</div>' +
+      '<div class="v2-dd-pb-title" style="color:#6366f1;font-family:\'JetBrains Mono\',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:700">📊 Why the sector is heating up</div>' +
       '<div class="v2-dd-pb-body">' + v2EscHTML(ctx.reason) +
         ' <em>Observational note — not investment advice.</em>' +
       '</div>' +
       factsHTML +
-      '<div class="v2-dd-pb-title" style="color:#15803d;margin-top:10px;font-family:\'JetBrains Mono\',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:700">' + top.length + ' related stocks</div>' +
+      '<div class="v2-dd-pb-title" style="color:#6366f1;margin-top:10px;font-family:\'JetBrains Mono\',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:700">' + top.length + ' related stocks</div>' +
       '<div class="v2-dd-affected">' + stockChips + '</div>' +
     '</div>' +
   '</div>';
