@@ -187,6 +187,29 @@ table,th,td{
 .panel-h-title em{font-style:italic;color:#15803d}
 .panel-h-sub{font-family:'Manrope','Inter',sans-serif;font-size:13.5px;color:#475569;margin-top:6px;font-weight:500}
 .panel-h-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+
+/* ── Unified call-to-action pill ──────────────────────────────────
+   Same pill used on landing hero, Daily Brief mode-swap, /report
+   bottom callout. ONE button shape for the entire product so users
+   instantly recognize 'this is the action.' */
+.cta-pill{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:11px 22px;border-radius:999px;
+  background:linear-gradient(135deg,#a3e635 0%,#4ade80 50%,#22c55e 100%);
+  color:#0d1320;
+  font-family:'Manrope','Inter',sans-serif;font-weight:800;font-size:13.5px;letter-spacing:-.005em;
+  text-decoration:none;border:none;cursor:pointer;
+  box-shadow:0 8px 22px -8px rgba(34,197,94,.55), 0 0 0 1px rgba(255,255,255,.18) inset;
+  transition:transform .15s, box-shadow .15s;
+}
+.cta-pill:hover{transform:translateY(-1px);box-shadow:0 12px 28px -8px rgba(34,197,94,.7), 0 0 0 1px rgba(255,255,255,.25) inset}
+.cta-pill.compact{padding:8px 16px;font-size:12.5px}
+.cta-pill.ghost{
+  background:transparent;color:#15803d;
+  border:1.5px solid #22c55e;
+  box-shadow:none;
+}
+.cta-pill.ghost:hover{background:rgba(34,197,94,.08);box-shadow:none}
 .sec-heading{font-size:17px;font-weight:800;margin-bottom:14px}
 .sec-heading span{color:var(--acc)}
 
@@ -2643,13 +2666,12 @@ html.v2-dark .v2-mp-mini-lbl{color:#cbd5e1}
   min-width:60px;
 }
 .v2-sm-fill{display:block;height:100%;border-radius:4px;transition:width .3s}
-/* Brand-gradient fill — same indigo→violet→magenta strip used on the
-   Quant Snapshot / Valuation / News / Earnings / Tracker cards. Makes
-   the Sector Map feel like a unified theme accent. The score number on
-   the right still carries the colour-coded health signal. */
+/* Brand-gradient fill — flipped from indigo→violet→pink to the
+   AlphaHunt brand-green family so Sector Map bars match the rest of
+   the site (Pillar cards, hero CTAs, brief callouts). */
 .v2-sm-fill-brand{
-  background:linear-gradient(90deg,#4338ca 0%,#8b5cf6 50%,#ec4899 100%);
-  box-shadow:0 0 0 1px rgba(67,56,202,.08);
+  background:linear-gradient(90deg,#15803d 0%,#22c55e 50%,#4ade80 100%);
+  box-shadow:0 0 0 1px rgba(34,197,94,.08);
 }
 .v2-sm-score{
   flex:0 0 28px;text-align:right;font-size:13px;font-weight:900;
@@ -4550,7 +4572,7 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
     </div>
     <div class="panel-h-actions">
       <input id="watch-add-input" type="text" placeholder="Add ticker (e.g., NVDA)" maxlength="6" oninput="this.value=this.value.toUpperCase()" onkeydown="if(event.key==='Enter')addToWatchFromInput()" style="padding:8px 12px;border:1px solid rgba(15,23,42,.12);border-radius:7px;font-size:13px;font-weight:700;width:170px;text-transform:uppercase;font-family:'JetBrains Mono','Inter',monospace">
-      <button onclick="addToWatchFromInput()" style="padding:8px 14px;background:linear-gradient(135deg,#15803d,#22c55e);color:#fff;border:none;border-radius:7px;font-size:12.5px;font-weight:800;cursor:pointer">+ Add</button>
+      <button class="cta-pill compact" onclick="addToWatchFromInput()">+ Add</button>
     </div>
   </div>
   <div id="watch-grid" class="hot-grid"></div>
