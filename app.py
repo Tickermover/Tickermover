@@ -1030,9 +1030,11 @@ def _render_morning_brief() -> str:
   .b-mini-chg{{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:12.5px;text-align:right;font-feature-settings:'tnum' 1}}
 
   /* Sector spotlight */
-  .b-sector{{padding:18px 20px;border-radius:14px;background:linear-gradient(135deg,#f0fdf4 0%,#ffffff 70%);border:1px solid rgba(34,197,94,.25);font-family:'Manrope','Inter',sans-serif}}
+  /* Heating Up sector card — saffron warmth matches the fire metaphor
+     (was green-on-green wash). Cold/pressure card stays semantic red. */
+  .b-sector{{padding:18px 20px;border-radius:14px;background:linear-gradient(135deg,#fff7ed 0%,#ffffff 70%);border:1px solid rgba(234,88,12,.25);font-family:'Manrope','Inter',sans-serif}}
   .b-sector.cold{{background:linear-gradient(135deg,#fef3f2 0%,#ffffff 70%);border-color:rgba(220,38,38,.20)}}
-  .b-sector-tag{{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.10em;text-transform:uppercase;font-weight:700;color:#15803d;margin-bottom:8px}}
+  .b-sector-tag{{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.10em;text-transform:uppercase;font-weight:700;color:#ea580c;margin-bottom:8px}}
   .b-sector.cold .b-sector-tag{{color:#b91c1c}}
   .b-sector-name{{font-family:'Fraunces',serif;font-weight:500;font-size:22px;color:#0d1320;letter-spacing:-.015em;margin-bottom:6px}}
   .b-sector-meta{{font-size:13px;color:#475569}}

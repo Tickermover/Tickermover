@@ -327,7 +327,7 @@ tr:hover td{background:rgba(132,204,22,.06)}
 .news-h a{color:inherit;text-decoration:none}
 .news-h a:hover{color:var(--acc2)}
 .news-meta{display:flex;gap:8px;font-size:10px;color:#374151;margin-top:6px}
-.news-tag{padding:2px 6px;border-radius:6px;background:rgba(59,130,246,.1);color:var(--acc2);font-weight:700}
+.news-tag{padding:2px 6px;border-radius:6px;background:rgba(8,145,178,.10);color:#0891b2;font-weight:700}
 .sent-B{color:var(--grn)}.sent-Be{color:var(--red)}.sent-N{color:var(--muted)}
 
 /* ====== POSITION SIZER ====== */
@@ -585,7 +585,7 @@ tr:hover td{background:rgba(132,204,22,.06)}
 .qr-chip-green{background:rgba(22,163,74,.12);color:#15803d}
 .qr-chip-yellow{background:rgba(180,83,9,.1);color:#b45309}
 .qr-chip-red{background:rgba(220,38,38,.1);color:#b91c1c}
-.qr-chip-blue{background:rgba(132,204,22,.12);color:var(--acc2)}
+.qr-chip-blue{background:rgba(8,145,178,.10);color:#0891b2}
 
 .empty{text-align:center;padding:60px 20px;color:var(--muted)}
 .empty .emoji{font-size:48px;margin-bottom:12px}
@@ -653,7 +653,7 @@ tr:hover td{background:rgba(132,204,22,.06)}
 .qr-bar{background:rgba(132,204,22,.5)}
 .qr-bar.pos{background:rgba(22,163,74,.65)}
 .qr-bar.neg{background:rgba(239,68,68,.5)}
-.qr-chip-blue{background:rgba(132,204,22,.12);color:var(--acc2)}
+.qr-chip-blue{background:rgba(8,145,178,.10);color:#0891b2}
 
 /* Risk radar */
 .risk-card.high{border-left-color:var(--red)}
@@ -1952,7 +1952,7 @@ body.v2 .v2ov-card.sectors .v2ov-sector-cell{
   margin-right:6px;vertical-align:middle;text-transform:uppercase;
 }
 .v2-news-row:hover{background:#f8fafc}
-.v2-news-row:hover .v2-news-material{box-shadow:0 0 0 2px rgba(132,204,22,.3)}
+.v2-news-row:hover .v2-news-material{box-shadow:0 0 0 2px rgba(8,145,178,.30)}
 
 /* ───── Risk Profile picker (topbar) ───── */
 .v2-profile-picker{position:relative}
@@ -2853,7 +2853,9 @@ html.v2-dark .v2-mp-mini-lbl{color:#cbd5e1}
    BRIEFINGS PANEL — Quartr-style event summaries for every ticker
    ──────────────────────────────────────────────────────────────── */
 .v2-brf-head{max-width:980px;margin:0 auto 22px;padding:0 4px}
-.v2-brf-eyebrow{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#15803d}
+/* Briefings eyebrow → violet to match the meta-label color rhythm
+   established elsewhere (sets up secondary brand accent). */
+.v2-brf-eyebrow{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#6366f1}
 .v2-brf-title{font-size:24px;font-weight:900;letter-spacing:-.02em;color:#0f172a;margin-top:4px}
 .v2-brf-sub{font-size:13px;color:#64748b;font-weight:500;margin-top:6px;line-height:1.55;max-width:680px}
 .v2-brf-loading{padding:60px 0;text-align:center;color:#94a3b8;font-size:13px}
@@ -3459,15 +3461,15 @@ body.v2 .ah-submit.loading::after{
    - .regime-chip / #regime-pill (Bullish chip)
    ════════════════════════════════════════════════════════════════ */
 
-/* (1) Drop the 'green dash' left border on KPI cards entirely */
-body.v2 .v2ov-kpi.hot1,
-body.v2 .v2ov-kpi.hot2,
-body.v2 .v2ov-kpi.hot3,
-body.v2 .v2ov-kpi.hot4,
-body.v2 .v2ov-kpi.hot5{
-  border-left-color:#e5e7eb!important;
-  border-left-width:1px!important;
-}
+/* (1) KPI strip — restore THE ORIGINAL HEAT-CODED borders (was flattened
+   to flat gray by the old purge). Now: green → lime → gold → amber → red
+   reading left-to-right shows intensity from cool to hot at a glance.
+   This is one of the page's main visual color-rhythm moments. */
+body.v2 .v2ov-kpi.hot1{border-left-color:#15803d!important;border-left-width:3px!important}
+body.v2 .v2ov-kpi.hot2{border-left-color:#65a30d!important;border-left-width:3px!important}
+body.v2 .v2ov-kpi.hot3{border-left-color:#ca8a04!important;border-left-width:3px!important}
+body.v2 .v2ov-kpi.hot4{border-left-color:#ea580c!important;border-left-width:3px!important}
+body.v2 .v2ov-kpi.hot5{border-left-color:#b91c1c!important;border-left-width:3px!important}
 html.v2-dark body.v2 .v2ov-kpi.hot1,
 html.v2-dark body.v2 .v2ov-kpi.hot2,
 html.v2-dark body.v2 .v2ov-kpi.hot3,
