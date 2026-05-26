@@ -328,22 +328,25 @@
   .picks-label .line{width:48px;height:1px;background:linear-gradient(90deg,transparent,var(--bdr-2),transparent)}
   .picks-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;max-width:920px;margin:0 auto}
   @media (max-width:760px){.picks-grid{grid-template-columns:1fr}}
-  /* "Pick sticker" cards — luminous on dark, real company logos,
-     hover lifts the card with a clear violet halo */
+  /* "Pick sticker" cards — bright, frosted-white glass that POPS against
+     the dark page. The brightness gives the page its key contrast point. */
   .pick{
     position:relative;padding:18px 18px 16px;border-radius:18px;
     background:
-      linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.025) 60%, rgba(255,255,255,.02)),
-      rgba(15,18,32,.55);
-    backdrop-filter:blur(14px);
-    border:1px solid rgba(255,255,255,.12);
+      linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,.07) 50%, rgba(255,255,255,.04)),
+      rgba(40,48,80,.45);
+    backdrop-filter:blur(18px) saturate(140%);
+    border:1px solid rgba(255,255,255,.22);
     overflow:hidden;
+    box-shadow:
+      0 1px 0 rgba(255,255,255,.18) inset,
+      0 18px 38px -18px rgba(0,0,0,.55);
     transition:transform .28s cubic-bezier(.2,.7,.2,1), border-color .28s, box-shadow .28s;
   }
-  /* Subtle inner highlight at top — gives a "polished sticker" look */
+  /* Stronger inner top-edge highlight — the "glass sticker" gleam */
   .pick::after{
-    content:"";position:absolute;top:0;left:8%;right:8%;height:1px;
-    background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent);
+    content:"";position:absolute;top:0;left:6%;right:6%;height:1px;
+    background:linear-gradient(90deg,transparent,rgba(255,255,255,.7),transparent);
     pointer-events:none;
   }
   /* Animated conic glow border — only on hover */
@@ -359,9 +362,12 @@
   @property --ang{syntax:'<angle>';inherits:false;initial-value:0deg}
   @keyframes spinBorder{to{--ang:360deg}}
   .pick:hover{
-    transform:translateY(-5px);
-    border-color:rgba(167,139,250,.45);
-    box-shadow:0 28px 56px -22px rgba(167,139,250,.55), 0 0 0 1px rgba(167,139,250,.10) inset;
+    transform:translateY(-6px);
+    border-color:rgba(255,255,255,.40);
+    box-shadow:
+      0 1px 0 rgba(255,255,255,.25) inset,
+      0 28px 56px -22px rgba(167,139,250,.55),
+      0 0 0 1px rgba(167,139,250,.18) inset;
   }
   .pick:hover::before{opacity:1;animation-play-state:running}
   .pick-head{display:flex;align-items:center;gap:12px}
@@ -682,11 +688,26 @@
     transition:transform .25s, border-color .25s, box-shadow .25s;
   }
   .profile:hover{transform:translateY(-5px);border-color:rgba(167,139,250,.30);box-shadow:0 30px 60px -28px rgba(167,139,250,.5)}
+  /* "Most picked" Balanced card — deliberately brighter than the
+     other two plans so it acts as the page's primary white-contrast
+     anchor against the dark theme. Frosted-white glass with a green
+     glow halo to underline the "recommended" status. */
   .profile.popular{
-    background:linear-gradient(180deg, rgba(34,197,94,.12), var(--surface));
-    border-color:rgba(34,197,94,.40);
-    box-shadow:0 0 40px -10px rgba(34,197,94,.30);
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,.06) 60%, rgba(255,255,255,.03)),
+      linear-gradient(180deg, rgba(34,197,94,.10), rgba(34,197,94,.03));
+    border-color:rgba(255,255,255,.30);
+    box-shadow:
+      0 1px 0 rgba(255,255,255,.25) inset,
+      0 0 50px -10px rgba(34,197,94,.35),
+      0 24px 50px -22px rgba(0,0,0,.55);
   }
+  .profile.popular::after{
+    content:"";position:absolute;top:0;left:6%;right:6%;height:1px;
+    background:linear-gradient(90deg,transparent,rgba(255,255,255,.7),transparent);
+    pointer-events:none;
+  }
+  .profile.popular h3{color:#fff;text-shadow:0 0 22px rgba(255,255,255,.18)}
   /* The popular card uses its inline .profile-tag for the "Most picked"
      label — no floating ::before badge (it was duplicating and getting
      clipped by the card's overflow). */
@@ -1017,7 +1038,7 @@
   </div>
   <div class="wrap">
     <div class="pillars stagger reveal">
-      <div class="pillar tilt spot" style="--pc:#22c55e;--bar:.86">
+      <div class="pillar tilt" style="--pc:#22c55e;--bar:.86">
         <div class="light-sweep"></div>
         <div class="pillar-head">
           <div class="pillar-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 17 9 11 13 15 21 7"/><polyline points="14 7 21 7 21 14"/></svg></div>
@@ -1028,7 +1049,7 @@
         <div class="pillar-bar"><span class="label">Sample</span><span class="track"><span class="bar-fill"></span></span><span class="score">86</span></div>
       </div>
 
-      <div class="pillar tilt spot" style="--pc:#84cc16;--bar:.72">
+      <div class="pillar tilt" style="--pc:#84cc16;--bar:.72">
         <div class="light-sweep"></div>
         <div class="pillar-head">
           <div class="pillar-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="20" x2="6" y2="14"/><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="6"/><polyline points="3 8 7 4 11 8"/></svg></div>
@@ -1039,7 +1060,7 @@
         <div class="pillar-bar"><span class="label">Sample</span><span class="track"><span class="bar-fill"></span></span><span class="score">72</span></div>
       </div>
 
-      <div class="pillar tilt spot" style="--pc:#a78bfa;--bar:.81">
+      <div class="pillar tilt" style="--pc:#a78bfa;--bar:.81">
         <div class="light-sweep"></div>
         <div class="pillar-head">
           <div class="pillar-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 L20 5 V12 C20 17 16 21 12 22 C8 21 4 17 4 12 V5 Z"/><polyline points="8.5 12 11 14.5 15.5 10"/></svg></div>
@@ -1050,7 +1071,7 @@
         <div class="pillar-bar"><span class="label">Sample</span><span class="track"><span class="bar-fill"></span></span><span class="score">81</span></div>
       </div>
 
-      <div class="pillar tilt spot" style="--pc:#22d3ee;--bar:.64">
+      <div class="pillar tilt" style="--pc:#22d3ee;--bar:.64">
         <div class="light-sweep"></div>
         <div class="pillar-head">
           <div class="pillar-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="3" x2="12" y2="20"/><line x1="6" y1="20" x2="18" y2="20"/><path d="M3 9 L6 4 L9 9 Z"/><path d="M15 9 L18 4 L21 9 Z"/><path d="M3 9 C3 11 4.3 12 6 12 C7.7 12 9 11 9 9"/><path d="M15 9 C15 11 16.3 12 18 12 C19.7 12 21 11 21 9"/></svg></div>
@@ -1061,7 +1082,7 @@
         <div class="pillar-bar"><span class="label">Sample</span><span class="track"><span class="bar-fill"></span></span><span class="score">64</span></div>
       </div>
 
-      <div class="pillar tilt spot" style="--pc:#ec4899;--bar:.77">
+      <div class="pillar tilt" style="--pc:#ec4899;--bar:.77">
         <div class="light-sweep"></div>
         <div class="pillar-head">
           <div class="pillar-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2"/><path d="M8.5 8.5 a5 5 0 0 0 0 7"/><path d="M15.5 8.5 a5 5 0 0 1 0 7"/><path d="M5 5 a10 10 0 0 0 0 14"/><path d="M19 5 a10 10 0 0 1 0 14"/></svg></div>
@@ -1072,7 +1093,7 @@
         <div class="pillar-bar"><span class="label">Sample</span><span class="track"><span class="bar-fill"></span></span><span class="score">77</span></div>
       </div>
 
-      <div class="pillar tilt spot" style="--pc:#f59e0b;--bar:.69">
+      <div class="pillar tilt" style="--pc:#f59e0b;--bar:.69">
         <div class="light-sweep"></div>
         <div class="pillar-head">
           <div class="pillar-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.5"/><path d="M3 12 C7 6 17 6 21 12"/><path d="M3 12 C7 18 17 18 21 12"/></svg></div>
