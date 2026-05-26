@@ -2115,16 +2115,19 @@ body.v2 .v2ov-card.sectors .v2ov-sector-cell{
 }
 
 /* ── Hot Sector banner — green mirror of the drawdown card ── */
+/* Heating Up sector — warmth + flame energy. Amber-orange gradient
+   evokes 'fire' (the 🔥 emoji) instead of more green-on-green wash.
+   Adds a saffron-warm color to the overall palette. */
 .v2-hot-banner{
-  background:linear-gradient(180deg,#f0fdf4 0%,#dcfce7 100%);
-  border:1px solid #bbf7d0;border-radius:12px;
+  background:linear-gradient(180deg,#fff7ed 0%,#ffedd5 100%);
+  border:1px solid #fed7aa;border-radius:12px;
   padding:14px 4px 4px;
   position:relative;overflow:hidden;
-  box-shadow:0 1px 0 rgba(15,23,42,.02), 0 8px 20px -14px rgba(22,163,74,.30);
+  box-shadow:0 1px 0 rgba(15,23,42,.02), 0 8px 20px -14px rgba(234,88,12,.30);
 }
 .v2-hot-banner::before{
   content:'';position:absolute;left:0;top:0;bottom:0;width:4px;
-  background:linear-gradient(180deg,#16a34a,#65a30d);
+  background:linear-gradient(180deg,#ea580c,#f59e0b);
 }
 .v2-hot-chip{
   display:inline-flex;align-items:center;gap:5px;padding:3px 9px 3px 4px;
@@ -7132,18 +7135,18 @@ function v2RenderHotSectorBanner(tickers){
     '<div class="v2-dd-head">' +
       '<span class="v2-dd-icon" style="color:#16a34a">🔥</span>' +
       '<div>' +
-        '<div class="v2-dd-title" style="font-family:\'Fraunces\',Georgia,serif;font-weight:500;font-size:22px;color:#0f5132;letter-spacing:-.015em;line-height:1.2">' + v2EscHTML(best.name) + ' <em style="font-style:italic;color:#6366f1">heating up</em></div>' +
-        '<div class="v2-dd-sub" style="color:#15803d;margin-top:4px">Avg +' + best.avg.toFixed(1) + '% over 1 month · ' + best.items.length + ' stocks · ' +
+        '<div class="v2-dd-title" style="font-family:\'Fraunces\',Georgia,serif;font-weight:500;font-size:22px;color:#7c2d12;letter-spacing:-.015em;line-height:1.2">' + v2EscHTML(best.name) + ' <em style="font-style:italic;color:#ea580c">heating up</em></div>' +
+        '<div class="v2-dd-sub" style="color:#c2410c;margin-top:4px">Avg +' + best.avg.toFixed(1) + '% over 1 month · ' + best.items.length + ' stocks · ' +
           'Leader: ' + top[0].t.ticker + ' +' + top[0].m.toFixed(1) + '%</div>' +
       '</div>' +
     '</div>' +
-    '<div class="v2-dd-playbook" style="background:rgba(22,163,74,.04);border-color:rgba(22,163,74,.18)">' +
-      '<div class="v2-dd-pb-title" style="color:#6366f1;font-family:\'JetBrains Mono\',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:700">📊 Why the sector is heating up</div>' +
+    '<div class="v2-dd-playbook" style="background:rgba(234,88,12,.04);border-color:rgba(234,88,12,.18)">' +
+      '<div class="v2-dd-pb-title" style="color:#c2410c;font-family:\'JetBrains Mono\',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:700">📊 Why the sector is heating up</div>' +
       '<div class="v2-dd-pb-body">' + v2EscHTML(ctx.reason) +
         ' <em>Observational note — not investment advice.</em>' +
       '</div>' +
       factsHTML +
-      '<div class="v2-dd-pb-title" style="color:#6366f1;margin-top:10px;font-family:\'JetBrains Mono\',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:700">' + top.length + ' related stocks</div>' +
+      '<div class="v2-dd-pb-title" style="color:#c2410c;margin-top:10px;font-family:\'JetBrains Mono\',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:700">' + top.length + ' related stocks</div>' +
       '<div class="v2-dd-affected">' + stockChips + '</div>' +
     '</div>' +
   '</div>';
@@ -12238,23 +12241,27 @@ function renderModelPortfolio(data) {
       // factor block, removed the 'Just added · monitoring' footer.
       const pillarBars = (() => {
         if (!p.pillars) return '';
+        // Each pillar gets a brand IDENTITY color (matching the landing
+        // page's 6-pillar palette) — the value-based health color sits
+        // on the number itself. Border carries the identity, number
+        // carries the status: two layers of meaning, not one wash.
         const pn = [
-          ['Momentum',  p.pillars.momentum,    'Recent price action — 1m/3m gains, distance above SMA-50.'],
-          ['Growth',    p.pillars.growth,      'Revenue + EPS growth YoY.'],
-          ['Quality',   p.pillars.quality,     'Gross margin, FCF margin, debt/equity.'],
-          ['Valuation', p.pillars.valuation,   'PEG, P/E, price vs analyst target.'],
-          ['Sentiment', p.pillars.sentiment,   'Analyst recs, insider buys, social mentions.'],
-          ['Outlook',   p.pillars.growth_potential, 'Analyst gap + DCF-implied CAGR.'],
+          ['Momentum',  p.pillars.momentum,           'Recent price action — 1m/3m gains, distance above SMA-50.',           '#22c55e', '#f0fdf4'],
+          ['Growth',    p.pillars.growth,             'Revenue + EPS growth YoY.',                                            '#84cc16', '#f7fee7'],
+          ['Quality',   p.pillars.quality,            'Gross margin, FCF margin, debt/equity.',                               '#8b5cf6', '#f5f3ff'],
+          ['Valuation', p.pillars.valuation,          'PEG, P/E, price vs analyst target.',                                   '#0891b2', '#ecfeff'],
+          ['Sentiment', p.pillars.sentiment,          'Analyst recs, insider buys, social mentions.',                         '#db2777', '#fdf2f8'],
+          ['Outlook',   p.pillars.growth_potential,   'Analyst gap + DCF-implied CAGR.',                                      '#d97706', '#fef3c7'],
         ];
         const passCount = pn.filter(([_, v]) => v >= 50).length;
         const dot = passCount >= 5 ? '#16a34a' : passCount >= 4 ? '#d97706' : '#dc2626';
-        // Compact 3-col heatmap — 3 pillars per row instead of 6 stacked rows
-        const cells = pn.map(([name, v, tip]) => {
-          const color = v >= 65 ? '#16a34a' : v >= 35 ? '#d97706' : '#dc2626';
-          const bg    = v >= 65 ? '#dcfce7' : v >= 35 ? '#fef3c7' : '#fee2e2';
-          return `<div class="v2-mp-pillar" style="background:${bg};border-color:${color}33" title="${tip}">
-            <div class="v2-mp-pillar-name">${name}</div>
-            <div class="v2-mp-pillar-val" style="color:${color}">${v}</div>
+        // Compact 3-col heatmap — pillar identity (border + bg tint) +
+        // value-based number color (green if strong, amber mid, red weak)
+        const cells = pn.map(([name, v, tip, idColor, idBg]) => {
+          const numColor = v >= 65 ? '#15803d' : v >= 35 ? '#475569' : '#b91c1c';
+          return `<div class="v2-mp-pillar" style="background:${idBg};border-color:${idColor}55" title="${tip}">
+            <div class="v2-mp-pillar-name" style="color:${idColor}">${name}</div>
+            <div class="v2-mp-pillar-val" style="color:${numColor}">${v}</div>
           </div>`;
         }).join('');
         // Profit-take warning — if the stock has run hard but fundamentals
