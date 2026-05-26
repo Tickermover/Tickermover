@@ -1115,7 +1115,7 @@ tr:hover td{background:rgba(132,204,22,.06)}
   transition:background .1s;
 }
 .cmdk-item:hover, .cmdk-item.active{background:#f8fafc}
-.cmdk-item.active{box-shadow:inset 3px 0 0 #4338ca}
+.cmdk-item.active{box-shadow:inset 3px 0 0 #15803d}
 .cmdk-item-icon{
   width:30px;height:30px;border-radius:7px;
   display:flex;align-items:center;justify-content:center;
@@ -1124,7 +1124,7 @@ tr:hover td{background:rgba(132,204,22,.06)}
 }
 .cmdk-item-icon.tab{background:#dbeafe;color:#1e40af}
 .cmdk-item-icon.action{background:#fef3c7;color:#b45309}
-.cmdk-item-icon.ticker{background:#eef2ff;color:#4338ca}
+.cmdk-item-icon.ticker{background:#f0fdf4;color:#15803d}
 .cmdk-item-main{flex:1;min-width:0}
 .cmdk-item-title{font-weight:600;color:#0a0a0a;letter-spacing:-.005em}
 .cmdk-item-sub{font-size:11.5px;color:#64748b;margin-top:1px;
@@ -1146,7 +1146,7 @@ tr:hover td{background:rgba(132,204,22,.06)}
 }
 .cmdk-action-chip:hover{background:#f1f5f9;color:#0f172a;border-color:#cbd5e1;transform:translateY(-1px)}
 .cmdk-action-chip.primary{
-  background:linear-gradient(135deg,#4338ca 0%,#8b5cf6 60%,#ec4899 100%);
+  background:linear-gradient(135deg,#15803d 0%,#22c55e 60%,#4ade80 100%);
   background-size:200% 200%;background-position:0% 50%;
   color:#fff;border-color:transparent;
   box-shadow:0 4px 10px -4px rgba(99,102,241,.45);
@@ -4434,14 +4434,6 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
       <span class="ico">🎤</span><span>Briefings</span>
     </div>
 
-    <!-- Reading-Mode research library — opens the editorial /reports
-         index in a new tab so users can browse long-form reports
-         without losing their dashboard context. -->
-    <a class="v2-nav-item" href="/reports" target="_blank" rel="noopener">
-      <span class="ico">📖</span><span>Reports</span>
-      <span class="v2-nav-tag" style="margin-left:auto;background:rgba(34,197,94,.15);color:#86efac;font-size:9.5px;padding:2px 6px;border-radius:6px;font-weight:800;letter-spacing:.08em">NEW</span>
-    </a>
-
     <div class="v2-sb-section">SUPPORT</div>
     <a class="v2-nav-item" href="/learn" target="_blank" rel="noopener">
       <span class="ico">❓</span><span>Help &amp; FAQ</span>
@@ -7083,18 +7075,18 @@ function v2RenderHotSectorBanner(tickers){
     '<div class="v2-dd-head">' +
       '<span class="v2-dd-icon" style="color:#16a34a">🔥</span>' +
       '<div>' +
-        '<div class="v2-dd-title" style="color:#0f5132">' + v2EscHTML(best.name) + ' heating up</div>' +
-        '<div class="v2-dd-sub" style="color:#15803d">Avg +' + best.avg.toFixed(1) + '% over 1 month · ' + best.items.length + ' stocks · ' +
+        '<div class="v2-dd-title" style="font-family:\'Fraunces\',Georgia,serif;font-weight:500;font-size:22px;color:#0f5132;letter-spacing:-.015em;line-height:1.2">' + v2EscHTML(best.name) + ' <em style="font-style:italic;color:#15803d">heating up</em></div>' +
+        '<div class="v2-dd-sub" style="color:#15803d;margin-top:4px">Avg +' + best.avg.toFixed(1) + '% over 1 month · ' + best.items.length + ' stocks · ' +
           'Leader: ' + top[0].t.ticker + ' +' + top[0].m.toFixed(1) + '%</div>' +
       '</div>' +
     '</div>' +
     '<div class="v2-dd-playbook" style="background:rgba(22,163,74,.04);border-color:rgba(22,163,74,.18)">' +
-      '<div class="v2-dd-pb-title" style="color:#15803d">📊 Why the sector is heating up</div>' +
+      '<div class="v2-dd-pb-title" style="color:#15803d;font-family:\'JetBrains Mono\',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:700">📊 Why the sector is heating up</div>' +
       '<div class="v2-dd-pb-body">' + v2EscHTML(ctx.reason) +
         ' <em>Observational note — not investment advice.</em>' +
       '</div>' +
       factsHTML +
-      '<div class="v2-dd-pb-title" style="color:#15803d;margin-top:10px">' + top.length + ' related stocks</div>' +
+      '<div class="v2-dd-pb-title" style="color:#15803d;margin-top:10px;font-family:\'JetBrains Mono\',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:700">' + top.length + ' related stocks</div>' +
       '<div class="v2-dd-affected">' + stockChips + '</div>' +
     '</div>' +
   '</div>';
