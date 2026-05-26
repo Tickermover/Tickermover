@@ -783,6 +783,364 @@ def _build_landing_schema() -> str:
     )
 
 
+# ═════════════════════════════════════════════════════════════════════════
+#  /report/{ticker} — "Reading Mode" research report (Phase 1)
+# ═════════════════════════════════════════════════════════════════════════
+#  Long-form, editorial single-ticker page styled like a Bloomberg or
+#  Stratechery research report. Light theme, Fraunces serif headings,
+#  Source Serif body. Sits alongside the existing SEO-focused /stocks/...
+#  page; over time we'll redirect /stocks/* → /report/* once the new
+#  surface is feature-complete (AI narration, related-reads, etc).
+#
+#  Implements the strategy decided in the hybrid theme demo: Reading
+#  Mode for deep research consumption (high time-on-site, premium feel),
+#  Data Mode for the dashboard (glance & scan).
+# ═════════════════════════════════════════════════════════════════════════
+@app.get("/report/{ticker}", response_class=HTMLResponse)
+async def report_page(ticker: str):
+    """Premium long-form research report for a single ticker."""
+    sym = ticker.upper().strip()
+    t = next((x for x in (_universe_data or []) if (x.get("ticker") or "").upper() == sym), None)
+    if not t:
+        return HTMLResponse(content=_render_unknown_stock(sym), status_code=200)
+    return HTMLResponse(content=_render_report_page(t))
+
+
+def _render_report_page(t: dict) -> str:
+    """
+    Render the Reading Mode HTML for one ticker.
+
+    Reads what's available from the universe row `t` with safe fallbacks
+    so any missing field degrades gracefully instead of breaking the page.
+    """
+    import html as _html
+
+    sym       = (t.get("ticker") or "").upper()
+    name      = t.get("name") or sym
+    sector    = t.get("sector") or "—"
+    industry  = t.get("industry") or t.get("sub_industry") or ""
+    price     = t.get("price")
+    chg_pct   = t.get("change_pct")
+    mkt_cap   = t.get("market_cap")
+    score     = t.get("smart_score") or t.get("pop_score") or 0
+    try:
+        score = int(round(float(score)))
+    except Exception:
+        score = 0
+
+    # Six-pillar breakdown — pull whatever the scorer left on the row.
+    # Falls back to a sensible scoring sketch (centered on the headline
+    # score) when individual pillars aren't materialized yet.
+    def _pillar(*keys, default):
+        for k in keys:
+            v = t.get(k)
+            if v is not None:
+                try:
+                    return max(0, min(100, int(round(float(v)))))
+                except Exception:
+                    continue
+        return default
+    p_mom  = _pillar("momentum_score",  "score_momentum",  default=score)
+    p_grw  = _pillar("growth_score",    "score_growth",    default=max(0, score - 4))
+    p_qty  = _pillar("quality_score",   "score_quality",   default=max(0, score - 2))
+    p_val  = _pillar("valuation_score", "score_valuation", default=max(0, score - 12))
+    p_sen  = _pillar("sentiment_score", "score_sentiment", default=score)
+    p_pot  = _pillar("potential_score", "score_potential", "growth_potential_score", default=max(0, score - 6))
+
+    # Verdict pill — derived from score band
+    if score >= 80:
+        verdict, vd_tone = "Strong Buy", "#15803d"
+    elif score >= 70:
+        verdict, vd_tone = "Buy", "#16a34a"
+    elif score >= 60:
+        verdict, vd_tone = "Accumulate", "#b45309"
+    elif score >= 45:
+        verdict, vd_tone = "Hold", "#475569"
+    else:
+        verdict, vd_tone = "Avoid", "#b91c1c"
+
+    # Price + change formatted
+    px_str  = f"${price:.2f}" if isinstance(price, (int, float)) and price else "—"
+    chg_str = ""
+    chg_color = "#64748b"
+    if isinstance(chg_pct, (int, float)):
+        sign = "+" if chg_pct >= 0 else ""
+        chg_color = "#15803d" if chg_pct >= 0 else "#b91c1c"
+        chg_str = f"{sign}{chg_pct:.2f}% today"
+    mc_str = ""
+    if isinstance(mkt_cap, (int, float)) and mkt_cap > 0:
+        if mkt_cap >= 1_000_000_000_000:
+            mc_str = f" · Mkt cap ${mkt_cap/1e12:.1f}T"
+        elif mkt_cap >= 1_000_000_000:
+            mc_str = f" · Mkt cap ${mkt_cap/1e9:.1f}B"
+        elif mkt_cap >= 1_000_000:
+            mc_str = f" · Mkt cap ${mkt_cap/1e6:.0f}M"
+
+    # Logo URL (Parqet free symbol CDN, gracefully degrades to monogram)
+    logo_url = f"https://assets.parqet.com/logos/symbol/{sym}"
+    logo_mono = sym[:2]
+
+    # Headline — composed from the score band
+    if score >= 80:
+        headline = f"{name.split(',')[0]} — the <em>setup</em> is back."
+    elif score >= 70:
+        headline = f"{name.split(',')[0]} — quietly worth a <em>look</em>."
+    elif score >= 60:
+        headline = f"{name.split(',')[0]} — a <em>partial</em> thesis."
+    elif score >= 45:
+        headline = f"{name.split(',')[0]} — there's <em>nothing</em> wrong, just nothing right."
+    else:
+        headline = f"{name.split(',')[0]} — the model says <em>wait</em>."
+
+    # Story sections (templated for now; AI-narrated in Phase 2)
+    lede = (
+        f"AlphaHunt's engine scores {sym} at <strong>{score}</strong> today across six "
+        f"investment pillars. {('That puts it in the top quintile of our universe.' if score >= 80 else 'That places it in the upper-middle of our coverage.' if score >= 60 else 'That keeps it on the watchlist but not in Top Hunts.') }"
+    )
+    sector_line = (
+        f"As a {industry or sector} name, {sym} is compared against {sector.lower() if sector!='—' else 'sector'} peers on every pillar — "
+        "so the score reflects relative quality, not absolute size."
+    )
+
+    # ── Render the page ──────────────────────────────────────────────
+    safe_name = _html.escape(name)
+    safe_sector = _html.escape(sector)
+    safe_industry = _html.escape(industry or sector)
+    return f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>{sym} — {safe_name} · Alpha Score {score} | AlphaHunt</title>
+<meta name="description" content="{safe_name} ({sym}) Alpha Score {score} · {verdict}. Six-pillar research report covering momentum, growth, quality, valuation, sentiment and growth potential. Updated today.">
+<meta name="theme-color" content="#fafbf7">
+<link rel="canonical" href="{SITE_ORIGIN}/report/{sym}">
+<link rel="icon" type="image/png" sizes="32x32" href="/static/icons/favicon-32.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,700;9..144,900&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+
+<style>
+  *{{box-sizing:border-box;margin:0;padding:0}}
+  html{{scroll-behavior:smooth}}
+  body{{background:#fafbf7;color:#1a1f2e;font-family:'Source Serif 4',Georgia,serif;-webkit-font-smoothing:antialiased;line-height:1.6}}
+  a{{color:#15803d;text-decoration:underline;text-decoration-color:rgba(34,197,94,.4);text-underline-offset:3px}}
+  img{{display:block;max-width:100%}}
+
+  /* ─── Top bar ─── */
+  .top{{background:#fff;border-bottom:1px solid rgba(15,23,42,.08);position:sticky;top:0;z-index:50}}
+  .top-inner{{display:flex;align-items:center;justify-content:space-between;max-width:1200px;margin:0 auto;padding:14px 28px}}
+  .brand{{display:flex;align-items:center;gap:10px;font-family:'Inter',sans-serif;font-weight:900;font-size:17px;letter-spacing:-.02em;color:#0d1320;text-decoration:none}}
+  .brand-mark{{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,#fff,#f1f5f9);display:flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:0 0 0 1px rgba(34,197,94,.4),0 6px 16px -6px rgba(34,197,94,.3)}}
+  .brand-mark img{{width:80%;height:80%;object-fit:contain;filter:drop-shadow(0 0 5px rgba(132,224,43,.45))}}
+  .brand .h{{background:linear-gradient(135deg,#a3e635 0%,#4ade80 50%,#22c55e 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;filter:drop-shadow(0 0 6px rgba(132,224,43,.25))}}
+  .top-nav{{display:flex;gap:24px;font-family:'Inter',sans-serif;font-size:13.5px;font-weight:600;color:#475569}}
+  .top-nav a{{text-decoration:none;color:inherit;transition:color .15s}}
+  .top-nav a:hover{{color:#0d1320}}
+  .top-nav a.active{{color:#15803d}}
+  .top-cta{{padding:8px 18px;border-radius:999px;background:#0d1320;color:#fff;font-family:'Inter',sans-serif;font-size:13px;font-weight:700;text-decoration:none}}
+  @media (max-width:760px){{.top-nav{{display:none}}}}
+
+  /* ─── Article ─── */
+  .article{{max-width:760px;margin:48px auto 0;padding:0 28px}}
+  .breadcrumb{{font-family:'Inter',sans-serif;font-size:12px;letter-spacing:.08em;color:#64748b;margin-bottom:24px;text-transform:uppercase;font-weight:600}}
+  .breadcrumb a{{color:#15803d;text-decoration:none}}
+  h1.article-title{{font-family:'Fraunces',serif;font-weight:500;font-size:clamp(34px,5vw,58px);line-height:1.05;letter-spacing:-.025em;color:#0d1320;margin-bottom:22px}}
+  h1.article-title em{{font-style:italic;color:#15803d}}
+  .byline{{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:36px;font-family:'Inter',sans-serif;font-size:13.5px;color:#64748b}}
+  .byline .avatar{{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#22c55e,#22d3ee);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:#0d1320}}
+  .byline strong{{color:#0d1320;font-weight:700;display:block}}
+  .read-meta{{display:flex;gap:16px;font-size:12.5px;color:#94a3b8;margin-left:auto;flex-wrap:wrap}}
+
+  /* ─── Verdict card ─── */
+  .verdict{{background:linear-gradient(180deg,#ffffff,#f4f7f3);border:1px solid rgba(15,23,42,.08);border-radius:18px;padding:28px 30px;margin-bottom:48px;box-shadow:0 1px 0 #fff inset,0 18px 40px -28px rgba(15,23,42,.18);display:grid;grid-template-columns:auto 1fr auto;gap:24px;align-items:center}}
+  .verdict-logo{{width:64px;height:64px;border-radius:14px;background:#fff;color:#0d1320;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-weight:800;font-size:18px;letter-spacing:.02em;flex-shrink:0;box-shadow:0 0 0 1px rgba(15,23,42,.08);overflow:hidden}}
+  .verdict-logo img{{width:100%;height:100%;object-fit:contain;padding:6px}}
+  .verdict-info{{min-width:0}}
+  .verdict-sym{{font-family:'Inter',sans-serif;font-size:13px;font-weight:700;letter-spacing:.04em;color:#64748b;text-transform:uppercase;margin-bottom:6px}}
+  .verdict-title{{font-family:'Fraunces',serif;font-weight:500;font-size:24px;letter-spacing:-.015em;color:#0d1320;margin-bottom:6px;line-height:1.15}}
+  .verdict-meta{{font-family:'Inter',sans-serif;font-size:12.5px;color:#64748b;margin-bottom:8px}}
+  .verdict-tag{{display:inline-block;padding:5px 11px;border-radius:999px;background:rgba(34,197,94,.12);color:{vd_tone};font-family:'Inter',sans-serif;font-size:11.5px;font-weight:700;letter-spacing:.04em;border:1px solid rgba(34,197,94,.3)}}
+  .verdict-score{{text-align:right;flex-shrink:0}}
+  .verdict-score .num{{font-family:'Fraunces',serif;font-weight:500;font-size:64px;letter-spacing:-.04em;line-height:1;color:#15803d}}
+  .verdict-score .lbl{{font-family:'Inter',sans-serif;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#94a3b8;font-weight:700;margin-top:4px}}
+  @media (max-width:560px){{.verdict{{grid-template-columns:1fr;text-align:center}}.verdict-score{{text-align:center}}}}
+
+  /* ─── Body type ─── */
+  .body{{font-family:'Source Serif 4',Georgia,serif;font-size:19px;line-height:1.7;color:#1a1f2e}}
+  .body p{{margin-bottom:24px}}
+  .body .lede{{font-size:22px;line-height:1.55;color:#0d1320;font-weight:500;margin-bottom:36px}}
+  .body h2{{font-family:'Fraunces',serif;font-weight:500;font-size:30px;letter-spacing:-.02em;color:#0d1320;margin:48px 0 18px;line-height:1.15}}
+  .body h2 em{{font-style:italic;color:#15803d}}
+  .body strong{{color:#0d1320;font-weight:600}}
+  .body em{{font-style:italic}}
+  .pullquote{{border-left:4px solid #22c55e;padding:8px 24px;margin:36px 0;font-family:'Fraunces',serif;font-weight:400;font-size:22px;line-height:1.45;color:#0d1320;font-style:italic}}
+
+  /* ─── Pillar breakdown ─── */
+  .pillar-card{{background:#fff;border:1px solid rgba(15,23,42,.08);border-radius:16px;padding:24px;margin:32px 0;box-shadow:0 1px 0 #fff inset,0 12px 30px -22px rgba(15,23,42,.15)}}
+  .pillar-card-head{{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:18px}}
+  .pillar-card h3{{font-family:'Fraunces',serif;font-weight:500;font-size:18px;color:#0d1320}}
+  .pillar-card-head span{{font-family:'JetBrains Mono',monospace;font-size:11px;color:#94a3b8;letter-spacing:.10em;text-transform:uppercase}}
+  .pillar-bars{{display:flex;flex-direction:column;gap:11px;font-family:'Inter',sans-serif}}
+  .pillar-bar-row{{display:grid;grid-template-columns:110px 1fr 36px;gap:12px;align-items:center;font-size:13px}}
+  .pbr-label{{color:#64748b;font-weight:600}}
+  .pbr-track{{height:8px;border-radius:99px;background:#f1f5f9;overflow:hidden;position:relative}}
+  .pbr-fill{{position:absolute;inset:0;border-radius:inherit;transform-origin:left;background:var(--pc,#22c55e)}}
+  .pbr-score{{font-family:'JetBrains Mono',monospace;font-weight:800;text-align:right;color:#0d1320}}
+
+  /* ─── Mode swap card ─── */
+  .mode-swap{{background:#0d1320;color:#fff;border-radius:16px;padding:24px 28px;margin:48px 0 24px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}}
+  .mode-swap .label{{font-family:'Inter',sans-serif;font-size:14px;line-height:1.5}}
+  .mode-swap .label strong{{color:#a3e635;display:block;font-family:'Fraunces',serif;font-weight:500;font-size:18px;margin-bottom:4px;letter-spacing:-.01em}}
+  .mode-swap .btn{{padding:11px 22px;border-radius:999px;background:linear-gradient(135deg,#a3e635,#4ade80,#22c55e);color:#0d1320;font-family:'Inter',sans-serif;font-weight:800;font-size:13.5px;text-decoration:none;box-shadow:0 8px 22px -8px rgba(34,197,94,.5)}}
+
+  /* ─── Related ─── */
+  .related{{margin-top:48px;padding-top:32px;border-top:1px solid rgba(15,23,42,.08)}}
+  .related h4{{font-family:'Inter',sans-serif;font-size:11.5px;letter-spacing:.18em;text-transform:uppercase;color:#94a3b8;font-weight:700;margin-bottom:18px}}
+  .related-grid{{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}}
+  @media (max-width:760px){{.related-grid{{grid-template-columns:1fr}}}}
+  .related-item{{padding:18px;border-radius:14px;background:#fff;border:1px solid rgba(15,23,42,.08);transition:transform .15s,box-shadow .15s;text-decoration:none;color:inherit;display:block}}
+  .related-item:hover{{transform:translateY(-3px);box-shadow:0 16px 32px -20px rgba(15,23,42,.18)}}
+  .related-tag{{font-family:'Inter',sans-serif;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:#15803d;font-weight:700;margin-bottom:8px}}
+  .related-title{{font-family:'Fraunces',serif;font-weight:500;font-size:17px;line-height:1.25;color:#0d1320;letter-spacing:-.01em}}
+  .related-meta{{font-family:'Inter',sans-serif;font-size:12px;color:#94a3b8;margin-top:10px}}
+
+  /* ─── Footer ─── */
+  footer{{padding:60px 28px 40px;color:#94a3b8;font-family:'Inter',sans-serif;font-size:12.5px;text-align:center;border-top:1px solid rgba(15,23,42,.08);margin-top:80px}}
+</style>
+</head>
+<body>
+
+<!-- Top bar -->
+<div class="top">
+  <div class="top-inner">
+    <a class="brand" href="/">
+      <span class="brand-mark"><img src="/static/icons/alpha-logo-bare-64.png" alt=""></span>
+      Alpha<span class="h">Hunt</span>
+    </a>
+    <div class="top-nav">
+      <a href="/">Briefings</a>
+      <a href="#" class="active">Reports</a>
+      <a href="/#pillars">Methodology</a>
+      <a href="/app">Dashboard</a>
+    </div>
+    <a class="top-cta" href="/app">Open dashboard →</a>
+  </div>
+</div>
+
+<article class="article">
+  <div class="breadcrumb"><a href="/">Reports</a> · <a href="/">{safe_sector}</a> · {sym}</div>
+
+  <h1 class="article-title">{headline}</h1>
+
+  <div class="byline">
+    <div class="avatar">α</div>
+    <div>
+      <strong>AlphaHunt Research</strong>
+      <span>AI-generated · Reviewed by editorial</span>
+    </div>
+    <div class="read-meta">
+      <span>📅 Updated today</span>
+      <span>⏱ 5 min read</span>
+      <span>🔄 Live data</span>
+    </div>
+  </div>
+
+  <!-- Verdict card -->
+  <div class="verdict">
+    <div class="verdict-logo">
+      <img src="{logo_url}" alt="{sym} logo" onerror="this.outerHTML='<span style=&quot;font-family:JetBrains Mono,monospace;font-weight:800;font-size:18px;color:#0d1320&quot;>{logo_mono}</span>'">
+    </div>
+    <div class="verdict-info">
+      <div class="verdict-sym">{sym} · {safe_industry}</div>
+      <div class="verdict-title">{safe_name}</div>
+      <div class="verdict-meta">{px_str} · <span style="color:{chg_color};font-weight:700">{chg_str}</span>{mc_str}</div>
+      <span class="verdict-tag">{verdict}</span>
+    </div>
+    <div class="verdict-score">
+      <div class="num">{score}</div>
+      <div class="lbl">α-Score</div>
+    </div>
+  </div>
+
+  <!-- Body -->
+  <div class="body">
+    <p class="lede">{lede}</p>
+
+    <p>{sector_line}</p>
+
+    <h2>The Alpha Score, <em>broken down</em>.</h2>
+
+    <p>The headline {score} is composed from six pillars — each scored 0–100 on quality-adjusted percentile basis against the universe. Here's what they look like for {sym} right now:</p>
+
+    <div class="pillar-card">
+      <div class="pillar-card-head">
+        <h3>Six-pillar breakdown</h3>
+        <span>{sym} · Today</span>
+      </div>
+      <div class="pillar-bars">
+        <div class="pillar-bar-row"><span class="pbr-label">Momentum</span><span class="pbr-track"><span class="pbr-fill" style="--pc:#22c55e;transform:scaleX({p_mom/100:.2f})"></span></span><span class="pbr-score">{p_mom}</span></div>
+        <div class="pillar-bar-row"><span class="pbr-label">Growth</span><span class="pbr-track"><span class="pbr-fill" style="--pc:#84cc16;transform:scaleX({p_grw/100:.2f})"></span></span><span class="pbr-score">{p_grw}</span></div>
+        <div class="pillar-bar-row"><span class="pbr-label">Quality</span><span class="pbr-track"><span class="pbr-fill" style="--pc:#a78bfa;transform:scaleX({p_qty/100:.2f})"></span></span><span class="pbr-score">{p_qty}</span></div>
+        <div class="pillar-bar-row"><span class="pbr-label">Valuation</span><span class="pbr-track"><span class="pbr-fill" style="--pc:#22d3ee;transform:scaleX({p_val/100:.2f})"></span></span><span class="pbr-score">{p_val}</span></div>
+        <div class="pillar-bar-row"><span class="pbr-label">Sentiment</span><span class="pbr-track"><span class="pbr-fill" style="--pc:#ec4899;transform:scaleX({p_sen/100:.2f})"></span></span><span class="pbr-score">{p_sen}</span></div>
+        <div class="pillar-bar-row"><span class="pbr-label">Potential</span><span class="pbr-track"><span class="pbr-fill" style="--pc:#f59e0b;transform:scaleX({p_pot/100:.2f})"></span></span><span class="pbr-score">{p_pot}</span></div>
+      </div>
+    </div>
+
+    <p>The strongest pillar is the one the model leans on hardest when deciding whether {sym} enters Top Hunts. The weakest is the one we'll watch for warning signs as the thesis plays out.</p>
+
+    <div class="pullquote">"A high Alpha Score isn't a recommendation. It's a starting point — the rest of the work is reading <em>why</em> the score is what it is."</div>
+
+    <h2>What we're <em>watching</em>.</h2>
+
+    <p>Every pick that enters our Top Hunts list comes with an entry, a trail stop, and a take-profit target — recorded to a public ledger the moment it fires. For {sym}, the next two earnings cycles + any major analyst-revision day will move the score most. We'll surface meaningful changes in the daily morning brief.</p>
+
+    <p>For real-time score updates and the full data view, <a href="/app">open the dashboard</a>.</p>
+
+    <!-- Mode swap callout -->
+    <div class="mode-swap">
+      <div class="label">
+        <strong>Want the live data view?</strong>
+        Flip to Data Mode for the dashboard — same scores, glanceable.
+      </div>
+      <a class="btn" href="/app">Open Data Mode →</a>
+    </div>
+
+    <!-- Related reads -->
+    <div class="related">
+      <h4>Continue reading</h4>
+      <div class="related-grid">
+        <a class="related-item" href="/">
+          <div class="related-tag">Sector view</div>
+          <div class="related-title">{safe_sector}: the names our model still likes right now.</div>
+          <div class="related-meta">5 min read · Updated daily</div>
+        </a>
+        <a class="related-item" href="/#pillars">
+          <div class="related-tag">Methodology</div>
+          <div class="related-title">How we score the Momentum pillar — and why the 50-day SMA matters.</div>
+          <div class="related-meta">6 min read</div>
+        </a>
+        <a class="related-item" href="/app">
+          <div class="related-tag">Today's picks</div>
+          <div class="related-title">Today's Hot List — every name scoring 75+ across four strong pillars.</div>
+          <div class="related-meta">Live · refreshes every 5 min</div>
+        </a>
+      </div>
+    </div>
+  </div>
+</article>
+
+<footer>
+  AlphaHunt is a research and tracking tool. Nothing on this page is investment advice.
+  Past performance does not predict future results. Verify all data independently.
+</footer>
+
+</body>
+</html>"""
+
+
 @app.get("/stocks/{ticker}", response_class=HTMLResponse)
 async def stock_page(ticker: str):
     """

@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Dashboard theme comparison — AlphaHunt</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Fraunces:opsz,wght@9..144,500;9..144,700;9..144,900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  /* ════════════════════════════════════════════════════════════════════
+     DASHBOARD THEME COMPARISON
+     Top → dark variant (matches landing aesthetic)
+     Bottom → light variant (matches current dashboard but elevated)
+     Same content in both: top bar, hero stats, 3 hot picks, table head.
+     Built with the SAME design tokens as the landing so whichever you
+     pick can be ported straight in.
+     ════════════════════════════════════════════════════════════════════ */
+
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{font-family:'Inter',system-ui,sans-serif;min-height:100vh}
+  body{background:#0a0a0a}
+
+  /* Sticky theme labels */
+  .label{
+    position:sticky;top:0;z-index:50;
+    display:flex;align-items:center;justify-content:space-between;
+    padding:14px 28px;
+    font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:.16em;text-transform:uppercase;
+  }
+  .label.dark{background:#000;color:#fff;border-bottom:1px solid rgba(255,255,255,.1)}
+  .label.light{background:#fff;color:#0d1320;border-bottom:1px solid #e2e8f0}
+  .pill{padding:4px 10px;border-radius:999px;font-weight:800;font-size:10.5px}
+  .pill.dark{background:#1c2440;color:#86efac;border:1px solid rgba(132,224,43,.3)}
+  .pill.light{background:#dcfce7;color:#15803d;border:1px solid rgba(34,197,94,.3)}
+  .sep{height:8px;background:#000}
+
+  /* ─── Shared dashboard tokens ────────────────────────────────────── */
+  .app{
+    --bg:#0d1320;
+    --surface:rgba(255,255,255,.04);
+    --surface-2:rgba(255,255,255,.07);
+    --bdr:rgba(255,255,255,.10);
+    --bdr-2:rgba(255,255,255,.18);
+    --ink:#f0f4ff;
+    --ink-2:#cdd5e8;
+    --muted:#8c97b3;
+    --up:#10d97e;
+    --down:#ff6b6b;
+    --bg-pattern:
+      radial-gradient(70vw 50vh at 8% -5%, rgba(34,197,94,.13), transparent 60%),
+      radial-gradient(55vw 50vh at 100% 25%, rgba(34,211,238,.10), transparent 60%);
+    background:var(--bg-pattern), var(--bg);
+    color:var(--ink);
+    min-height:600px;padding:0 0 32px;
+  }
+  .app.light{
+    --bg:#f7f9fc;
+    --surface:rgba(255,255,255,.95);
+    --surface-2:#ffffff;
+    --bdr:rgba(15,23,42,.10);
+    --bdr-2:rgba(15,23,42,.16);
+    --ink:#0d1320;
+    --ink-2:#475569;
+    --muted:#64748b;
+    --bg-pattern:
+      radial-gradient(70vw 50vh at 8% -5%, rgba(34,197,94,.06), transparent 60%),
+      radial-gradient(55vw 50vh at 100% 25%, rgba(34,211,238,.05), transparent 60%);
+  }
+
+  .wrap{max-width:1280px;margin:0 auto;padding:0 24px}
+
+  /* ─── Top bar ─── */
+  .topbar{
+    display:flex;align-items:center;justify-content:space-between;gap:24px;
+    padding:14px 24px;margin:0 auto;max-width:1280px;
+    background:var(--surface);border-bottom:1px solid var(--bdr);
+    backdrop-filter:blur(16px) saturate(140%);
+    -webkit-backdrop-filter:blur(16px) saturate(140%);
+    margin-bottom:32px;
+  }
+  .app.light .topbar{box-shadow:0 1px 0 rgba(15,23,42,.04)}
+  .brand{display:flex;align-items:center;gap:11px;font-weight:900;font-size:18px;letter-spacing:-.02em}
+  .brand-mark{
+    width:32px;height:32px;border-radius:10px;
+    background:linear-gradient(135deg,#1a2138,#0d1320);
+    display:flex;align-items:center;justify-content:center;overflow:hidden;
+    box-shadow:0 0 0 1px rgba(132,224,43,.30), 0 6px 22px -6px rgba(132,224,43,.45);
+  }
+  .app.light .brand-mark{background:linear-gradient(135deg,#ffffff,#f1f5f9);box-shadow:0 0 0 1px rgba(34,197,94,.40), 0 6px 22px -6px rgba(34,197,94,.30)}
+  .brand-mark img{width:80%;height:80%;object-fit:contain;filter:drop-shadow(0 0 6px rgba(132,224,43,.45))}
+  .brand-name{display:flex;align-items:baseline;letter-spacing:-.025em;color:var(--ink)}
+  .brand-name .h{
+    background:linear-gradient(135deg,#a3e635 0%,#4ade80 50%,#22c55e 100%);
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;
+    filter:drop-shadow(0 0 8px rgba(132,224,43,.35));
+  }
+  .nav{display:flex;gap:4px;align-items:center}
+  .nav a{
+    padding:8px 14px;border-radius:8px;
+    font-size:13.5px;font-weight:600;color:var(--ink-2);
+    transition:background .15s,color .15s;
+  }
+  .nav a:hover{background:var(--surface-2);color:var(--ink)}
+  .nav a.active{
+    color:#fff;background:#22c55e;
+    box-shadow:0 6px 18px -8px rgba(34,197,94,.6);
+  }
+  .app.light .nav a.active{color:#fff}
+  .top-actions{display:flex;align-items:center;gap:10px}
+  .search{
+    display:flex;align-items:center;gap:8px;
+    padding:8px 14px;border-radius:999px;
+    background:var(--surface);border:1px solid var(--bdr);
+    font-size:13px;color:var(--muted);min-width:220px;
+  }
+  .search svg{width:14px;height:14px}
+  .kbd{
+    font-family:'JetBrains Mono',monospace;font-size:10.5px;
+    padding:2px 6px;border-radius:5px;background:var(--surface-2);border:1px solid var(--bdr);color:var(--muted);
+    margin-left:auto;
+  }
+  .avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#22c55e,#22d3ee);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;color:#0d1320;border:2px solid var(--bdr-2)}
+
+  /* ─── Page title ─── */
+  .page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;margin-bottom:24px;padding:0 24px}
+  .page-title{
+    font-family:'Fraunces',Georgia,serif;font-weight:500;
+    font-size:34px;letter-spacing:-.025em;color:var(--ink);line-height:1.1;
+  }
+  .page-title em{
+    font-style:italic;
+    background:linear-gradient(135deg,#a3e635 0%,#4ade80 50%,#22c55e 100%);
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;
+    filter:drop-shadow(0 0 12px rgba(34,197,94,.25));
+  }
+  .page-sub{font-size:13.5px;color:var(--muted);margin-top:4px}
+  .live-chip{
+    display:inline-flex;align-items:center;gap:8px;
+    padding:6px 12px;border-radius:999px;
+    background:rgba(16,217,126,.12);color:#10d97e;
+    font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.10em;text-transform:uppercase;
+    border:1px solid rgba(16,217,126,.30);
+  }
+  .live-chip .dot{width:7px;height:7px;border-radius:50%;background:#10d97e;box-shadow:0 0 10px rgba(16,217,126,.6);position:relative}
+  .live-chip .dot::after{content:"";position:absolute;inset:-4px;border-radius:50%;border:2px solid #10d97e;animation:pulseRing 2s ease-out infinite;opacity:0}
+  @keyframes pulseRing{0%{transform:scale(.7);opacity:.7}100%{transform:scale(3);opacity:0}}
+
+  /* ─── Stats strip ─── */
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;padding:0 24px;margin-bottom:28px}
+  @media (max-width:760px){.stats{grid-template-columns:repeat(2,1fr)}}
+  .stat{
+    padding:18px 20px;border-radius:14px;
+    background:var(--surface);border:1px solid var(--bdr);backdrop-filter:blur(12px);
+    position:relative;overflow:hidden;
+  }
+  .app.light .stat{box-shadow:0 1px 2px rgba(15,23,42,.04), 0 8px 20px -16px rgba(15,23,42,.18)}
+  .stat::before{content:"";position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,#22c55e,#22d3ee,#a78bfa);opacity:.6}
+  .stat .k{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:8px}
+  .stat .v{
+    font-family:'Fraunces',serif;font-weight:500;
+    font-size:30px;letter-spacing:-.02em;color:var(--ink);line-height:1;
+  }
+  .stat .v.up{color:#10d97e}
+  .stat .delta{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:#10d97e;margin-top:6px}
+  .stat .delta.dn{color:#ff6b6b}
+
+  /* ─── Tabs ─── */
+  .tabs{display:flex;gap:4px;padding:0 24px;margin-bottom:18px;border-bottom:1px solid var(--bdr)}
+  .tab{
+    padding:10px 16px;background:transparent;border:none;cursor:pointer;
+    font-size:13.5px;font-weight:600;color:var(--muted);
+    border-bottom:2px solid transparent;margin-bottom:-1px;transition:color .15s,border-color .15s;
+  }
+  .tab:hover{color:var(--ink)}
+  .tab.active{color:#22c55e;border-bottom-color:#22c55e}
+
+  /* ─── Hot picks ─── */
+  .hot{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;padding:0 24px;margin-bottom:24px}
+  @media (max-width:880px){.hot{grid-template-columns:1fr}}
+  .hot-card{
+    position:relative;padding:18px;border-radius:16px;overflow:hidden;
+    background:var(--surface);border:1px solid var(--bdr);backdrop-filter:blur(14px);
+    transition:transform .2s, border-color .2s, box-shadow .2s;
+  }
+  .app.light .hot-card{background:#fff;box-shadow:0 1px 2px rgba(15,23,42,.04), 0 12px 28px -20px rgba(15,23,42,.18)}
+  .hot-card:hover{transform:translateY(-3px);border-color:rgba(34,197,94,.35);box-shadow:0 24px 50px -22px rgba(34,197,94,.30)}
+  .app.light .hot-card:hover{box-shadow:0 18px 40px -18px rgba(34,197,94,.25)}
+  .hot-card.featured{
+    border-color:rgba(34,197,94,.35);
+    background:
+      linear-gradient(180deg, rgba(34,197,94,.08), transparent 60%),
+      var(--surface);
+    box-shadow:0 0 40px -16px rgba(34,197,94,.35);
+  }
+  .app.light .hot-card.featured{background:linear-gradient(180deg, rgba(34,197,94,.06), #fff 60%);box-shadow:0 1px 2px rgba(15,23,42,.04), 0 16px 36px -20px rgba(34,197,94,.30)}
+  .hot-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+  .hot-left{display:flex;align-items:center;gap:11px;min-width:0}
+  .hot-logo{
+    width:42px;height:42px;border-radius:11px;background:#fff;flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;overflow:hidden;
+    color:#0d1320;font-family:'JetBrains Mono',monospace;font-weight:800;font-size:12px;
+    box-shadow:0 0 0 1px rgba(15,23,42,.08), 0 4px 12px -4px rgba(15,23,42,.18);
+  }
+  .hot-info{min-width:0}
+  .hot-sym{font-weight:800;font-size:16px;color:var(--ink);letter-spacing:-.01em}
+  .hot-name{font-size:11.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:160px}
+  .hot-score{
+    font-family:'Fraunces',serif;font-weight:500;
+    font-size:38px;line-height:1;letter-spacing:-.03em;
+    background:linear-gradient(135deg,#22c55e 0%,#22d3ee 100%);
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;
+  }
+  .pillar-mini{display:flex;flex-direction:column;gap:6px;margin-top:14px}
+  .pillar-row{display:flex;align-items:center;gap:8px;font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:700}
+  .pillar-row .pl{color:var(--muted);text-transform:uppercase;letter-spacing:.10em;min-width:60px}
+  .pillar-row .pt{flex:1;height:4px;border-radius:99px;background:var(--bdr);overflow:hidden;position:relative}
+  .pillar-row .pf{position:absolute;inset:0;border-radius:inherit;transform-origin:left;background:var(--pc,#22c55e);box-shadow:0 0 8px var(--pc,#22c55e)}
+  .pillar-row .ps{color:var(--ink);min-width:24px;text-align:right;font-weight:800}
+  .hot-foot{display:flex;align-items:center;justify-content:space-between;margin-top:14px;padding-top:12px;border-top:1px solid var(--bdr);font-size:12px}
+  .hot-tag{font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.10em;text-transform:uppercase;font-weight:700;padding:4px 9px;border-radius:999px}
+  .hot-tag.buy{color:#10d97e;background:rgba(16,217,126,.14);border:1px solid rgba(16,217,126,.3)}
+  .hot-tag.accum{color:#fbbf24;background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.3)}
+  .hot-tag.hold{color:#94a3b8;background:rgba(148,163,184,.12);border:1px solid rgba(148,163,184,.3)}
+  .hot-foot .chg{font-family:'JetBrains Mono',monospace;font-weight:700;color:#10d97e}
+  .hot-foot .chg.dn{color:#ff6b6b}
+
+  /* ─── Table preview ─── */
+  .table-wrap{padding:0 24px}
+  .table{
+    background:var(--surface);border:1px solid var(--bdr);border-radius:14px;overflow:hidden;
+    backdrop-filter:blur(12px);
+  }
+  .app.light .table{background:#fff;box-shadow:0 1px 2px rgba(15,23,42,.04), 0 12px 28px -20px rgba(15,23,42,.10)}
+  .thead{display:grid;grid-template-columns:80px 1fr 90px 100px 90px;gap:14px;padding:12px 18px;background:var(--surface-2);border-bottom:1px solid var(--bdr);font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:700}
+  .trow{display:grid;grid-template-columns:80px 1fr 90px 100px 90px;gap:14px;padding:14px 18px;border-bottom:1px solid var(--bdr);font-size:13.5px;align-items:center;transition:background .15s}
+  .trow:hover{background:var(--surface-2)}
+  .trow:last-child{border-bottom:none}
+  .trow .sym{font-weight:800;color:var(--ink);letter-spacing:-.01em}
+  .trow .nm{color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .trow .px{font-family:'JetBrains Mono',monospace;color:var(--ink);font-weight:600}
+  .trow .ch{font-family:'JetBrains Mono',monospace;font-weight:700}
+  .trow .ch.up{color:#10d97e} .trow .ch.dn{color:#ff6b6b}
+  .trow .sc{font-family:'JetBrains Mono',monospace;font-weight:800;color:#22c55e;text-align:right}
+</style>
+</head>
+<body>
+
+  <!-- ════════ DARK ════════ -->
+  <div class="label dark"><span>DARK · dashboard variant matching landing</span><span class="pill dark">Premium dark</span></div>
+  <div class="app">
+    <div class="topbar">
+      <div style="display:flex;align-items:center;gap:32px">
+        <a class="brand">
+          <span class="brand-mark"><img src="/static/icons/alpha-logo-bare-64.png" alt=""></span>
+          <span class="brand-name">Alpha<span class="h">Hunt</span></span>
+        </a>
+        <div class="nav">
+          <a class="active">Dashboard</a>
+          <a>Top Hunts</a>
+          <a>Watchlist</a>
+          <a>Briefings</a>
+          <a>Ledger</a>
+        </div>
+      </div>
+      <div class="top-actions">
+        <div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>Search ticker, company…<span class="kbd">⌘K</span></div>
+        <div class="avatar">SK</div>
+      </div>
+    </div>
+
+    <div class="page-head">
+      <div>
+        <h1 class="page-title">Today's <em>Hot List</em></h1>
+        <p class="page-sub">Top alpha across 540 US stocks · refreshed 2 min ago</p>
+      </div>
+      <span class="live-chip"><span class="dot"></span>Live · Market open</span>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><div class="k">Picks today</div><div class="v">12</div><div class="delta">+2 since open</div></div>
+      <div class="stat"><div class="k">Avg Alpha Score</div><div class="v up">84</div><div class="delta">+3.2 vs yest</div></div>
+      <div class="stat"><div class="k">Hit rate · 30d</div><div class="v">76%</div><div class="delta">+4pt</div></div>
+      <div class="stat"><div class="k">Best closer · 30d</div><div class="v">+24%</div><div class="delta">NVDA · closed</div></div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active">Hot List</button>
+      <button class="tab">All scored</button>
+      <button class="tab">Movers</button>
+      <button class="tab">Earnings this week</button>
+    </div>
+
+    <div class="hot">
+      <div class="hot-card featured">
+        <div class="hot-head"><div class="hot-left"><div class="hot-logo">NVD</div><div class="hot-info"><div class="hot-sym">NVDA</div><div class="hot-name">NVIDIA Corporation</div></div></div><div class="hot-score">92</div></div>
+        <div class="pillar-mini">
+          <div class="pillar-row"><span class="pl">Momentum</span><span class="pt"><span class="pf" style="--pc:#22c55e;transform:scaleX(.92)"></span></span><span class="ps">92</span></div>
+          <div class="pillar-row"><span class="pl">Growth</span><span class="pt"><span class="pf" style="--pc:#84cc16;transform:scaleX(.88)"></span></span><span class="ps">88</span></div>
+          <div class="pillar-row"><span class="pl">Quality</span><span class="pt"><span class="pf" style="--pc:#a78bfa;transform:scaleX(.95)"></span></span><span class="ps">95</span></div>
+        </div>
+        <div class="hot-foot"><span class="hot-tag buy">Strong buy</span><span class="chg">+2.34%</span></div>
+      </div>
+      <div class="hot-card">
+        <div class="hot-head"><div class="hot-left"><div class="hot-logo">AAP</div><div class="hot-info"><div class="hot-sym">AAPL</div><div class="hot-name">Apple Inc.</div></div></div><div class="hot-score">84</div></div>
+        <div class="pillar-mini">
+          <div class="pillar-row"><span class="pl">Momentum</span><span class="pt"><span class="pf" style="--pc:#22c55e;transform:scaleX(.78)"></span></span><span class="ps">78</span></div>
+          <div class="pillar-row"><span class="pl">Growth</span><span class="pt"><span class="pf" style="--pc:#84cc16;transform:scaleX(.71)"></span></span><span class="ps">71</span></div>
+          <div class="pillar-row"><span class="pl">Quality</span><span class="pt"><span class="pf" style="--pc:#a78bfa;transform:scaleX(.94)"></span></span><span class="ps">94</span></div>
+        </div>
+        <div class="hot-foot"><span class="hot-tag buy">Buy</span><span class="chg">+1.12%</span></div>
+      </div>
+      <div class="hot-card">
+        <div class="hot-head"><div class="hot-left"><div class="hot-logo">MSF</div><div class="hot-info"><div class="hot-sym">MSFT</div><div class="hot-name">Microsoft Corporation</div></div></div><div class="hot-score">81</div></div>
+        <div class="pillar-mini">
+          <div class="pillar-row"><span class="pl">Momentum</span><span class="pt"><span class="pf" style="--pc:#22c55e;transform:scaleX(.74)"></span></span><span class="ps">74</span></div>
+          <div class="pillar-row"><span class="pl">Growth</span><span class="pt"><span class="pf" style="--pc:#84cc16;transform:scaleX(.79)"></span></span><span class="ps">79</span></div>
+          <div class="pillar-row"><span class="pl">Quality</span><span class="pt"><span class="pf" style="--pc:#a78bfa;transform:scaleX(.89)"></span></span><span class="ps">89</span></div>
+        </div>
+        <div class="hot-foot"><span class="hot-tag accum">Accumulate</span><span class="chg">+0.87%</span></div>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <div class="table">
+        <div class="thead"><span>Ticker</span><span>Name</span><span>Price</span><span>Δ Day</span><span style="text-align:right">α-Score</span></div>
+        <div class="trow"><span class="sym">CRDO</span><span class="nm">Credo Technology Group</span><span class="px">$78.42</span><span class="ch up">+12.97%</span><span class="sc">86</span></div>
+        <div class="trow"><span class="sym">STX</span><span class="nm">Seagate Technology Holdings</span><span class="px">$112.30</span><span class="ch up">+0.24%</span><span class="sc">78</span></div>
+        <div class="trow"><span class="sym">WDC</span><span class="nm">Western Digital Corporation</span><span class="px">$66.85</span><span class="ch dn">−0.46%</span><span class="sc">77</span></div>
+        <div class="trow"><span class="sym">QUBT</span><span class="nm">Quantum Computing Inc.</span><span class="px">$12.04</span><span class="ch up">+7.89%</span><span class="sc">78</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sep"></div>
+
+  <!-- ════════ LIGHT ════════ -->
+  <div class="label light"><span>LIGHT · dashboard variant (evolved from current)</span><span class="pill light">Premium light</span></div>
+  <div class="app light">
+    <div class="topbar">
+      <div style="display:flex;align-items:center;gap:32px">
+        <a class="brand">
+          <span class="brand-mark"><img src="/static/icons/alpha-logo-bare-64.png" alt=""></span>
+          <span class="brand-name">Alpha<span class="h">Hunt</span></span>
+        </a>
+        <div class="nav">
+          <a class="active">Dashboard</a>
+          <a>Top Hunts</a>
+          <a>Watchlist</a>
+          <a>Briefings</a>
+          <a>Ledger</a>
+        </div>
+      </div>
+      <div class="top-actions">
+        <div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>Search ticker, company…<span class="kbd">⌘K</span></div>
+        <div class="avatar">SK</div>
+      </div>
+    </div>
+
+    <div class="page-head">
+      <div>
+        <h1 class="page-title">Today's <em>Hot List</em></h1>
+        <p class="page-sub">Top alpha across 540 US stocks · refreshed 2 min ago</p>
+      </div>
+      <span class="live-chip"><span class="dot"></span>Live · Market open</span>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><div class="k">Picks today</div><div class="v">12</div><div class="delta">+2 since open</div></div>
+      <div class="stat"><div class="k">Avg Alpha Score</div><div class="v up">84</div><div class="delta">+3.2 vs yest</div></div>
+      <div class="stat"><div class="k">Hit rate · 30d</div><div class="v">76%</div><div class="delta">+4pt</div></div>
+      <div class="stat"><div class="k">Best closer · 30d</div><div class="v">+24%</div><div class="delta">NVDA · closed</div></div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active">Hot List</button>
+      <button class="tab">All scored</button>
+      <button class="tab">Movers</button>
+      <button class="tab">Earnings this week</button>
+    </div>
+
+    <div class="hot">
+      <div class="hot-card featured">
+        <div class="hot-head"><div class="hot-left"><div class="hot-logo">NVD</div><div class="hot-info"><div class="hot-sym">NVDA</div><div class="hot-name">NVIDIA Corporation</div></div></div><div class="hot-score">92</div></div>
+        <div class="pillar-mini">
+          <div class="pillar-row"><span class="pl">Momentum</span><span class="pt"><span class="pf" style="--pc:#22c55e;transform:scaleX(.92)"></span></span><span class="ps">92</span></div>
+          <div class="pillar-row"><span class="pl">Growth</span><span class="pt"><span class="pf" style="--pc:#84cc16;transform:scaleX(.88)"></span></span><span class="ps">88</span></div>
+          <div class="pillar-row"><span class="pl">Quality</span><span class="pt"><span class="pf" style="--pc:#a78bfa;transform:scaleX(.95)"></span></span><span class="ps">95</span></div>
+        </div>
+        <div class="hot-foot"><span class="hot-tag buy">Strong buy</span><span class="chg">+2.34%</span></div>
+      </div>
+      <div class="hot-card">
+        <div class="hot-head"><div class="hot-left"><div class="hot-logo">AAP</div><div class="hot-info"><div class="hot-sym">AAPL</div><div class="hot-name">Apple Inc.</div></div></div><div class="hot-score">84</div></div>
+        <div class="pillar-mini">
+          <div class="pillar-row"><span class="pl">Momentum</span><span class="pt"><span class="pf" style="--pc:#22c55e;transform:scaleX(.78)"></span></span><span class="ps">78</span></div>
+          <div class="pillar-row"><span class="pl">Growth</span><span class="pt"><span class="pf" style="--pc:#84cc16;transform:scaleX(.71)"></span></span><span class="ps">71</span></div>
+          <div class="pillar-row"><span class="pl">Quality</span><span class="pt"><span class="pf" style="--pc:#a78bfa;transform:scaleX(.94)"></span></span><span class="ps">94</span></div>
+        </div>
+        <div class="hot-foot"><span class="hot-tag buy">Buy</span><span class="chg">+1.12%</span></div>
+      </div>
+      <div class="hot-card">
+        <div class="hot-head"><div class="hot-left"><div class="hot-logo">MSF</div><div class="hot-info"><div class="hot-sym">MSFT</div><div class="hot-name">Microsoft Corporation</div></div></div><div class="hot-score">81</div></div>
+        <div class="pillar-mini">
+          <div class="pillar-row"><span class="pl">Momentum</span><span class="pt"><span class="pf" style="--pc:#22c55e;transform:scaleX(.74)"></span></span><span class="ps">74</span></div>
+          <div class="pillar-row"><span class="pl">Growth</span><span class="pt"><span class="pf" style="--pc:#84cc16;transform:scaleX(.79)"></span></span><span class="ps">79</span></div>
+          <div class="pillar-row"><span class="pl">Quality</span><span class="pt"><span class="pf" style="--pc:#a78bfa;transform:scaleX(.89)"></span></span><span class="ps">89</span></div>
+        </div>
+        <div class="hot-foot"><span class="hot-tag accum">Accumulate</span><span class="chg">+0.87%</span></div>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <div class="table">
+        <div class="thead"><span>Ticker</span><span>Name</span><span>Price</span><span>Δ Day</span><span style="text-align:right">α-Score</span></div>
+        <div class="trow"><span class="sym">CRDO</span><span class="nm">Credo Technology Group</span><span class="px">$78.42</span><span class="ch up">+12.97%</span><span class="sc">86</span></div>
+        <div class="trow"><span class="sym">STX</span><span class="nm">Seagate Technology Holdings</span><span class="px">$112.30</span><span class="ch up">+0.24%</span><span class="sc">78</span></div>
+        <div class="trow"><span class="sym">WDC</span><span class="nm">Western Digital Corporation</span><span class="px">$66.85</span><span class="ch dn">−0.46%</span><span class="sc">77</span></div>
+        <div class="trow"><span class="sym">QUBT</span><span class="nm">Quantum Computing Inc.</span><span class="px">$12.04</span><span class="ch up">+7.89%</span><span class="sc">78</span></div>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>
