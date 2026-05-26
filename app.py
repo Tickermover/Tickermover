@@ -784,6 +784,346 @@ def _build_landing_schema() -> str:
 
 
 # ═════════════════════════════════════════════════════════════════════════
+#  /brief — Daily Morning Brief (Reading Mode)
+# ═════════════════════════════════════════════════════════════════════════
+#  The single biggest retention lever: a one-page editorial brief
+#  published daily that users open over morning coffee. Same Reading
+#  Mode design language as /report/{ticker}, structured as: market
+#  overview → today's 3 picks → sector spotlight → what's changed →
+#  earnings calendar. Pulls all data from the live universe so it
+#  refreshes throughout the trading day without manual editorial work.
+# ═════════════════════════════════════════════════════════════════════════
+@app.get("/brief", response_class=HTMLResponse)
+async def daily_brief():
+    """Today's Morning Brief — auto-assembled from live universe data."""
+    return HTMLResponse(content=_render_morning_brief())
+
+
+def _render_morning_brief() -> str:
+    """Assemble + render the Daily Morning Brief as a long-form Reading
+    Mode page. Pulls live data from the in-memory universe.
+    """
+    import html as _html
+    from datetime import datetime, timezone, timedelta
+
+    # ── Date / greeting ──────────────────────────────────────────────
+    # Use US/Eastern for the masthead since the brief is a US-market product.
+    et = timezone(timedelta(hours=-5))  # EST; close enough for the masthead
+    now = datetime.now(et)
+    date_full  = now.strftime("%A, %B %-d") if hasattr(now, "strftime") else str(now)
+    try:
+        date_full = now.strftime("%A, %B %d").replace(" 0", " ")
+    except Exception:
+        date_full = now.strftime("%A, %B %d")
+    weekday = now.strftime("%A")
+
+    # ── Universe slice ───────────────────────────────────────────────
+    universe = [x for x in (_universe_data or []) if x.get("ticker")]
+
+    # Top 3 picks — highest Alpha Score with a positive day move
+    def _score(t): return float(t.get("smart_score") or t.get("pop_score") or 0)
+    def _chg(t):
+        v = t.get("change_pct")
+        return float(v) if isinstance(v, (int, float)) else 0.0
+    ranked = sorted(universe, key=_score, reverse=True)
+    top3 = ranked[:3]
+
+    # Notable movers (top 3 up, top 3 down by change_pct)
+    movers_up   = sorted([t for t in universe if _chg(t) >  0.5], key=_chg, reverse=True)[:3]
+    movers_down = sorted([t for t in universe if _chg(t) < -0.5], key=_chg)[:3]
+
+    # Sector roll-up — best avg score sector
+    sector_buckets = {}
+    for t in universe:
+        s = (t.get("sector") or "").strip()
+        if not s: continue
+        sector_buckets.setdefault(s, []).append(_score(t))
+    sector_avgs = [
+        (s, sum(scores)/len(scores), len(scores))
+        for s, scores in sector_buckets.items() if len(scores) >= 3
+    ]
+    sector_avgs.sort(key=lambda x: x[1], reverse=True)
+    hot_sector = sector_avgs[0] if sector_avgs else None
+    cold_sector = sector_avgs[-1] if len(sector_avgs) > 1 else None
+
+    # Aggregate stats
+    avg_score = (sum(_score(t) for t in universe) / len(universe)) if universe else 0
+    a_grade   = sum(1 for t in universe if (t.get("grade") or "").upper() == "A")
+    total_n   = len(universe)
+
+    # Earnings reporting in next 24h (best effort — uses next_earnings_date if available)
+    earnings_today = []
+    for t in universe:
+        ne = t.get("next_earnings_date") or t.get("earnings_date")
+        if not ne: continue
+        try:
+            ned = datetime.fromisoformat(str(ne)[:10] + "T00:00:00").date()
+            if 0 <= (ned - now.date()).days <= 1:
+                earnings_today.append(t)
+        except Exception:
+            continue
+    earnings_today = earnings_today[:5]
+
+    # ── Pick card helper ─────────────────────────────────────────────
+    def _pick_card(t):
+        sym = (t.get("ticker") or "").upper()
+        nm  = _html.escape((t.get("name") or sym)[:40])
+        sc  = int(round(_score(t)))
+        chg = _chg(t)
+        chg_str = f"{'+' if chg>=0 else ''}{chg:.2f}%"
+        chg_color = "#15803d" if chg >= 0 else "#b91c1c"
+        sect = _html.escape((t.get("sector") or "—")[:24])
+        logo_url = f"https://assets.parqet.com/logos/symbol/{sym}"
+        return (
+            f'<a class="b-pick" href="/report/{sym}">'
+              f'<div class="b-pick-logo"><img src="{logo_url}" alt="{sym}" '
+                f'onerror="this.outerHTML=\'<span>{sym[:2]}</span>\'"></div>'
+              f'<div class="b-pick-body">'
+                f'<div class="b-pick-row"><span class="b-pick-sym">{sym}</span>'
+                  f'<span class="b-pick-score">{sc}</span></div>'
+                f'<div class="b-pick-name">{nm}</div>'
+                f'<div class="b-pick-meta"><span>{sect}</span>'
+                  f'<span style="color:{chg_color};font-weight:700">{chg_str} today</span></div>'
+              f'</div>'
+              f'<span class="b-pick-arrow">→</span>'
+            f'</a>'
+        )
+
+    top3_html = "".join(_pick_card(t) for t in top3) if top3 \
+                else '<div class="empty">Universe still loading…</div>'
+
+    def _mini_row(t, with_chg=True):
+        sym = (t.get("ticker") or "").upper()
+        nm  = _html.escape((t.get("name") or sym)[:28])
+        chg = _chg(t)
+        chg_str = f"{'+' if chg>=0 else ''}{chg:.2f}%"
+        chg_color = "#15803d" if chg >= 0 else "#b91c1c"
+        return (
+            f'<a class="b-mini" href="/report/{sym}">'
+              f'<span class="b-mini-sym">{sym}</span>'
+              f'<span class="b-mini-name">{nm}</span>'
+              + (f'<span class="b-mini-chg" style="color:{chg_color}">{chg_str}</span>' if with_chg else '')
+            + '</a>'
+        )
+
+    movers_up_html   = "".join(_mini_row(t) for t in movers_up)   or '<div class="empty">No notable risers yet.</div>'
+    movers_down_html = "".join(_mini_row(t) for t in movers_down) or '<div class="empty">No notable decliners — market is calm.</div>'
+
+    earnings_html = ""
+    if earnings_today:
+        earnings_html = '<div class="b-mini-list">' + "".join(_mini_row(t, with_chg=False) for t in earnings_today) + '</div>'
+    else:
+        earnings_html = '<div class="empty">No earnings reports in our universe today.</div>'
+
+    # ── Sector spotlight ─────────────────────────────────────────────
+    if hot_sector:
+        hs_name, hs_avg, hs_n = hot_sector
+        hot_sect_html = (
+            f'<div class="b-sector"><div class="b-sector-tag">🔥 Heating up</div>'
+            f'<div class="b-sector-name">{_html.escape(hs_name)}</div>'
+            f'<div class="b-sector-meta">Avg α-Score <strong>{hs_avg:.0f}</strong> across {hs_n} names</div></div>'
+        )
+    else:
+        hot_sect_html = ""
+    if cold_sector and cold_sector != hot_sector:
+        cs_name, cs_avg, cs_n = cold_sector
+        cold_sect_html = (
+            f'<div class="b-sector cold"><div class="b-sector-tag">📉 Cooling off</div>'
+            f'<div class="b-sector-name">{_html.escape(cs_name)}</div>'
+            f'<div class="b-sector-meta">Avg α-Score <strong>{cs_avg:.0f}</strong> across {cs_n} names</div></div>'
+        )
+    else:
+        cold_sect_html = ""
+
+    # ── Lede paragraph (templated; AI-narrated in Phase 2) ──────────
+    lede = (
+        f"Good morning. Across the {total_n} US stocks AlphaHunt covers, the average "
+        f"α-Score sits at <strong>{avg_score:.0f}</strong> today — with "
+        f"<strong>{a_grade}</strong> names holding A-grade status. "
+    )
+    if hot_sector:
+        lede += f"<strong>{_html.escape(hot_sector[0])}</strong> is the strongest pocket of the universe, averaging {hot_sector[1]:.0f}. "
+    if top3:
+        lede += f"Three names earned the top of today's list — {', '.join((t.get('ticker') or '') for t in top3)}."
+
+    # ── Page render ──────────────────────────────────────────────────
+    return f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Morning Brief · {date_full} | AlphaHunt</title>
+<meta name="description" content="AlphaHunt's daily morning brief for {date_full}: top picks, sector spotlight, notable movers, and what's reporting today. 4-minute read.">
+<meta name="theme-color" content="#fafbf7">
+<link rel="canonical" href="{SITE_ORIGIN}/brief">
+<link rel="icon" type="image/png" sizes="32x32" href="/static/icons/favicon-32.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Fraunces:opsz,wght@9..144,500;9..144,700;9..144,900&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+
+<style>
+  *{{box-sizing:border-box;margin:0;padding:0}}
+  html{{scroll-behavior:smooth}}
+  body{{background:#fafbf7;color:#1a1f2e;font-family:'Source Serif 4',Georgia,serif;line-height:1.6;-webkit-font-smoothing:antialiased}}
+  a{{color:inherit;text-decoration:none}}
+
+  .top{{background:#fff;border-bottom:1px solid rgba(15,23,42,.08);position:sticky;top:0;z-index:50}}
+  .top-inner{{display:flex;align-items:center;justify-content:space-between;max-width:1100px;margin:0 auto;padding:14px 28px}}
+  .brand{{display:flex;align-items:center;gap:10px;font-family:'Inter',sans-serif;font-weight:900;font-size:17px;color:#0d1320}}
+  .brand-mark{{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,#fff,#f1f5f9);display:flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:0 0 0 1px rgba(34,197,94,.4)}}
+  .brand-mark img{{width:80%;height:80%;object-fit:contain;filter:drop-shadow(0 0 5px rgba(132,224,43,.45))}}
+  .brand .h{{background:linear-gradient(135deg,#a3e635 0%,#4ade80 50%,#22c55e 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}}
+  .top-nav{{display:flex;gap:24px;font-family:'Inter',sans-serif;font-size:13.5px;font-weight:600;color:#475569}}
+  .top-nav a.active{{color:#15803d}}
+  .top-cta{{padding:8px 18px;border-radius:999px;background:#0d1320;color:#fff;font-family:'Inter',sans-serif;font-size:13px;font-weight:700}}
+  @media (max-width:760px){{.top-nav{{display:none}}}}
+
+  /* ── Article shell ── */
+  .brief{{max-width:760px;margin:0 auto;padding:56px 28px 80px}}
+  .masthead{{display:flex;align-items:center;gap:10px;font-family:'Inter',sans-serif;font-size:11px;font-weight:700;letter-spacing:.18em;color:#15803d;text-transform:uppercase;margin-bottom:14px}}
+  .masthead::before{{content:"";width:24px;height:2px;background:linear-gradient(90deg,#22c55e,#22d3ee);border-radius:2px}}
+  h1.brief-title{{font-family:'Fraunces',serif;font-weight:500;font-size:clamp(36px,5vw,58px);line-height:1.05;letter-spacing:-.025em;color:#0d1320;margin-bottom:14px}}
+  h1.brief-title em{{font-style:italic;color:#15803d}}
+  .brief-date{{font-family:'Inter',sans-serif;font-size:13.5px;color:#64748b;margin-bottom:8px;font-weight:500}}
+  .brief-meta{{font-family:'Inter',sans-serif;font-size:12.5px;color:#94a3b8;display:flex;gap:14px;flex-wrap:wrap;margin-bottom:36px}}
+  .brief-meta span{{display:inline-flex;align-items:center;gap:6px}}
+
+  .lede{{font-family:'Source Serif 4',serif;font-size:22px;line-height:1.55;color:#0d1320;font-weight:500;margin-bottom:48px}}
+  .lede strong{{color:#15803d;font-weight:700}}
+
+  h2{{font-family:'Fraunces',serif;font-weight:500;font-size:30px;letter-spacing:-.02em;color:#0d1320;margin:48px 0 18px;line-height:1.15}}
+  h2 em{{font-style:italic;color:#15803d}}
+
+  /* ── Top 3 pick cards ── */
+  .b-picks{{display:flex;flex-direction:column;gap:10px;margin-bottom:24px}}
+  .b-pick{{
+    display:grid;grid-template-columns:auto 1fr auto;gap:16px;align-items:center;
+    padding:18px 22px;border-radius:14px;background:#fff;border:1px solid rgba(15,23,42,.08);
+    transition:transform .15s,box-shadow .15s,border-color .15s;
+    box-shadow:0 1px 2px rgba(15,23,42,.04);
+  }}
+  .b-pick:hover{{transform:translateX(4px);border-color:rgba(34,197,94,.30);box-shadow:0 12px 28px -16px rgba(34,197,94,.25)}}
+  .b-pick-logo{{width:48px;height:48px;border-radius:11px;background:#fff;box-shadow:0 0 0 1px rgba(15,23,42,.08);display:flex;align-items:center;justify-content:center;overflow:hidden}}
+  .b-pick-logo img{{width:100%;height:100%;object-fit:contain;padding:5px}}
+  .b-pick-logo span{{font-family:'JetBrains Mono',monospace;font-weight:800;font-size:14px;color:#0d1320}}
+  .b-pick-body{{min-width:0;font-family:'Inter',sans-serif}}
+  .b-pick-row{{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:4px}}
+  .b-pick-sym{{font-family:'JetBrains Mono',monospace;font-weight:800;font-size:16px;color:#0d1320;letter-spacing:-.01em}}
+  .b-pick-score{{font-family:'Fraunces',serif;font-weight:500;font-size:28px;color:#15803d;line-height:1;letter-spacing:-.02em}}
+  .b-pick-name{{font-size:13.5px;color:#475569;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}}
+  .b-pick-meta{{font-family:'Inter',sans-serif;font-size:12px;color:#94a3b8;margin-top:6px;display:flex;gap:12px;font-feature-settings:'tnum' 1}}
+  .b-pick-arrow{{font-family:'Inter',sans-serif;font-size:22px;color:#94a3b8;transition:transform .15s,color .15s}}
+  .b-pick:hover .b-pick-arrow{{color:#15803d;transform:translateX(4px)}}
+
+  /* ── Two-column row (movers / sectors) ── */
+  .b-row{{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:24px}}
+  @media (max-width:640px){{.b-row{{grid-template-columns:1fr}}}}
+  .b-col{{background:#fff;border:1px solid rgba(15,23,42,.08);border-radius:14px;padding:20px;box-shadow:0 1px 2px rgba(15,23,42,.04)}}
+  .b-col h3{{font-family:'Fraunces',serif;font-weight:500;font-size:18px;color:#0d1320;letter-spacing:-.01em;margin-bottom:14px;display:flex;align-items:center;gap:8px}}
+
+  /* Mini ticker rows */
+  .b-mini-list{{display:flex;flex-direction:column;gap:2px}}
+  .b-mini{{display:grid;grid-template-columns:60px 1fr auto;gap:10px;align-items:baseline;padding:8px 10px;border-radius:8px;font-family:'Inter',sans-serif;transition:background .12s;color:inherit}}
+  .b-mini:hover{{background:#f7faf4}}
+  .b-mini-sym{{font-family:'JetBrains Mono',monospace;font-weight:800;font-size:13px;color:#0d1320}}
+  .b-mini-name{{font-size:12.5px;color:#475569;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}}
+  .b-mini-chg{{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:12.5px;text-align:right;font-feature-settings:'tnum' 1}}
+
+  /* Sector spotlight */
+  .b-sector{{padding:18px 20px;border-radius:14px;background:linear-gradient(135deg,#f0fdf4 0%,#ffffff 70%);border:1px solid rgba(34,197,94,.25);font-family:'Inter',sans-serif}}
+  .b-sector.cold{{background:linear-gradient(135deg,#fef3f2 0%,#ffffff 70%);border-color:rgba(220,38,38,.20)}}
+  .b-sector-tag{{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.10em;text-transform:uppercase;font-weight:700;color:#15803d;margin-bottom:8px}}
+  .b-sector.cold .b-sector-tag{{color:#b91c1c}}
+  .b-sector-name{{font-family:'Fraunces',serif;font-weight:500;font-size:22px;color:#0d1320;letter-spacing:-.015em;margin-bottom:6px}}
+  .b-sector-meta{{font-size:13px;color:#475569}}
+  .b-sector-meta strong{{color:#0d1320;font-weight:700;font-family:'JetBrains Mono',monospace;font-feature-settings:'tnum' 1}}
+
+  .empty{{padding:20px 4px;color:#94a3b8;font-size:13px;font-family:'Inter',sans-serif;font-style:italic;text-align:center}}
+
+  /* ── Mode swap CTA ── */
+  .swap{{background:#0d1320;color:#fff;border-radius:16px;padding:24px 28px;margin:48px 0 24px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}}
+  .swap .lbl{{font-family:'Inter',sans-serif;font-size:14px;line-height:1.5}}
+  .swap .lbl strong{{color:#a3e635;display:block;font-family:'Fraunces',serif;font-weight:500;font-size:18px;margin-bottom:4px;letter-spacing:-.01em;font-style:italic}}
+  .swap .btn{{padding:11px 22px;border-radius:999px;background:linear-gradient(135deg,#a3e635,#4ade80,#22c55e);color:#0d1320;font-family:'Inter',sans-serif;font-weight:800;font-size:13.5px;text-decoration:none;box-shadow:0 8px 22px -8px rgba(34,197,94,.5)}}
+
+  footer{{padding:60px 28px 40px;color:#94a3b8;font-family:'Inter',sans-serif;font-size:12.5px;text-align:center;border-top:1px solid rgba(15,23,42,.08);margin-top:60px}}
+  footer a{{color:#15803d;font-weight:700}}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <div class="top-inner">
+    <a class="brand" href="/">
+      <span class="brand-mark"><img src="/static/icons/alpha-logo-bare-64.png" alt=""></span>
+      Alpha<span class="h">Hunt</span>
+    </a>
+    <div class="top-nav">
+      <a href="/brief" class="active">Daily Brief</a>
+      <a href="/reports">Reports</a>
+      <a href="/#how">How it works</a>
+      <a href="/app">Dashboard</a>
+    </div>
+    <a class="top-cta" href="/app">Open dashboard →</a>
+  </div>
+</div>
+
+<article class="brief">
+  <div class="masthead">Morning Brief</div>
+  <h1 class="brief-title">{weekday}'s <em>edition</em>.</h1>
+  <div class="brief-date">{date_full}</div>
+  <div class="brief-meta">
+    <span>📅 Auto-refreshes during US market hours</span>
+    <span>⏱ 4 min read</span>
+    <span>📊 {total_n} US stocks scanned</span>
+  </div>
+
+  <p class="lede">{lede}</p>
+
+  <h2>Today's <em>three to watch</em>.</h2>
+  <div class="b-picks">{top3_html}</div>
+
+  <div class="b-row">
+    {hot_sect_html}
+    {cold_sect_html}
+  </div>
+
+  <h2>Notable <em>movers</em>.</h2>
+  <div class="b-row">
+    <div class="b-col">
+      <h3>📈 Up today</h3>
+      <div class="b-mini-list">{movers_up_html}</div>
+    </div>
+    <div class="b-col">
+      <h3>📉 Down today</h3>
+      <div class="b-mini-list">{movers_down_html}</div>
+    </div>
+  </div>
+
+  <h2>Reporting <em>today</em>.</h2>
+  <div class="b-col">
+    <h3>🗓 Earnings calendar</h3>
+    {earnings_html}
+  </div>
+
+  <div class="swap">
+    <div class="lbl">
+      <strong>Want the live data view?</strong>
+      Open the dashboard for real-time scores, sector heat map, and the full watchlist.
+    </div>
+    <a class="btn" href="/app">Open Dashboard →</a>
+  </div>
+
+</article>
+
+<footer>
+  Daily Brief is auto-assembled from live universe data. Not investment advice. <a href="/reports">Browse all reports →</a>
+</footer>
+
+</body></html>"""
+
+
+# ═════════════════════════════════════════════════════════════════════════
 #  /reports — Reading Mode index (all covered tickers, ranked)
 # ═════════════════════════════════════════════════════════════════════════
 @app.get("/reports", response_class=HTMLResponse)
