@@ -265,6 +265,18 @@
     -webkit-text-fill-color:transparent;color:transparent;
     animation:metalShift 9s ease-in-out infinite;
   }
+  /* Brand "alpha" word — deliberate green callout in the hero.
+     The only place green flows through gradient text — used specifically
+     on the brand word so it carries the AlphaHunt identity. */
+  .brand-alpha{
+    background:linear-gradient(135deg, #a3e635 0%, #4ade80 50%, #22c55e 100%);
+    background-size:220% 100%;
+    -webkit-background-clip:text;background-clip:text;
+    -webkit-text-fill-color:transparent;color:transparent;
+    animation:metalShift 8s ease-in-out infinite;
+    font-style:italic;
+    filter:drop-shadow(0 0 22px rgba(34,197,94,.40)) drop-shadow(0 1px 0 rgba(22,163,74,.45));
+  }
 
   .hero-sub{
     font-size:clamp(16px,1.6vw,20px);
@@ -467,8 +479,8 @@
     transition:transform .35s cubic-bezier(.2,.7,.2,1), border-color .35s, box-shadow .35s;
   }
 
-  /* Animated gradient border — always subtle, full on hover.
-     Uses CSS @property + mask trick for an outlined gradient ring. */
+  /* Gradient border — quiet at rest, spins only on hover.
+     (Previously animated always; that read as too busy across 6 cards.) */
   .pillar::before{
     content:"";position:absolute;inset:-1px;border-radius:inherit;padding:1px;
     background:conic-gradient(from var(--ang,0deg),
@@ -479,8 +491,8 @@
     -webkit-mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
             mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
     -webkit-mask-composite:xor;mask-composite:exclude;
-    opacity:.35;
-    animation:spinPillarBorder 8s linear infinite;
+    opacity:0;
+    animation:spinPillarBorder 8s linear infinite paused;
     pointer-events:none;
     transition:opacity .3s;
   }
@@ -498,7 +510,7 @@
     border-color:var(--pc-bdr);
     box-shadow:0 30px 64px -28px color-mix(in srgb, var(--pc) 60%, transparent);
   }
-  .pillar:hover::before{opacity:.95}
+  .pillar:hover::before{opacity:.95;animation-play-state:running}
   .pillar:hover::after{opacity:.22;transform:scale(1.15)}
   .pillar:hover .pillar-ico{transform:scale(1.08) rotate(-4deg)}
   .pillar:hover .pillar-ico::before{opacity:1;animation-play-state:running}
@@ -559,17 +571,13 @@
     margin-bottom:10px;letter-spacing:-.012em;
     display:flex;align-items:center;gap:10px;position:relative;z-index:2;
   }
+  /* Title dot — static glow, no pulse (cleaner on a 6-card grid) */
   .pillar h4 .dot{
     width:8px;height:8px;border-radius:50%;background:var(--pc);
     box-shadow:
-      0 0 0 4px color-mix(in srgb, var(--pc) 22%, transparent),
-      0 0 12px color-mix(in srgb, var(--pc) 70%, transparent);
+      0 0 0 4px color-mix(in srgb, var(--pc) 18%, transparent),
+      0 0 10px color-mix(in srgb, var(--pc) 60%, transparent);
     flex-shrink:0;
-    animation:dotPulse 2.4s ease-in-out infinite;
-  }
-  @keyframes dotPulse{
-    0%,100%{box-shadow:0 0 0 4px color-mix(in srgb, var(--pc) 22%, transparent), 0 0 12px color-mix(in srgb, var(--pc) 70%, transparent)}
-    50%{box-shadow:0 0 0 6px color-mix(in srgb, var(--pc) 12%, transparent), 0 0 18px color-mix(in srgb, var(--pc) 90%, transparent)}
   }
 
   .pillar p{color:var(--ink-2);font-size:13.5px;line-height:1.65;position:relative;z-index:2;margin-bottom:18px}
@@ -796,7 +804,7 @@
     </span>
 
     <h1 class="hero-title">
-      Find your <span class="metallic">alpha</span><br>
+      Find your <span class="brand-alpha">alpha</span><br>
       without the <span class="prism-text">guesswork.</span>
     </h1>
 
@@ -980,7 +988,7 @@
         <div class="pillar-bar"><span class="label">Sample</span><span class="track"><span class="bar-fill"></span></span><span class="score">86</span></div>
       </div>
 
-      <div class="pillar tilt spot" style="--pc:#10d97e;--bar:.72">
+      <div class="pillar tilt spot" style="--pc:#14b8a6;--bar:.72">
         <div class="light-sweep"></div>
         <div class="pillar-head">
           <div class="pillar-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="20" x2="6" y2="14"/><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="6"/><polyline points="3 8 7 4 11 8"/></svg></div>
