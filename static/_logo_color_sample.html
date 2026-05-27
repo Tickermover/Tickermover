@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AlphaHunt — Logo color sample v2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800;900&family=Fraunces:opsz,wght@9..144,400;9..144,500&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    background:#0A0A0A;color:#fff;
+    font-family:'Manrope',sans-serif;font-weight:500;
+    min-height:100vh;padding:64px 32px;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1200px;margin:0 auto}
+  h1{
+    font-family:'Fraunces',serif;font-weight:500;font-size:38px;
+    letter-spacing:-.02em;margin-bottom:8px;
+  }
+  h1 em{font-style:italic;background:linear-gradient(135deg,#FFE9B0,#FFC75F,#F5A623);
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;}
+  .lede{color:#B8B8B8;font-size:15px;margin-bottom:42px;line-height:1.6;max-width:760px}
+  .lede b{color:#FFC75F;font-weight:700}
+
+  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}
+  @media (max-width:780px){.grid{grid-template-columns:1fr}}
+
+  .card{
+    padding:28px 26px;border-radius:18px;
+    background:rgba(255,255,255,.025);
+    border:1px solid rgba(255,255,255,.08);
+  }
+  .card.recommended{
+    border-color:rgba(245,166,35,.45);
+    box-shadow:0 0 0 1px rgba(245,166,35,.18), 0 28px 60px -22px rgba(245,166,35,.30);
+  }
+  .lbl{
+    font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:700;
+    letter-spacing:.18em;text-transform:uppercase;color:#8A8A8A;
+    margin-bottom:6px;
+  }
+  .name{font-family:'Fraunces',serif;font-size:20px;font-weight:500;color:#fff;margin-bottom:4px}
+  .desc{font-size:13px;color:#B8B8B8;line-height:1.55;margin-bottom:22px}
+  .filter-code{
+    display:block;font-family:'JetBrains Mono',monospace;font-size:11px;
+    color:#85A8F3;background:rgba(86,136,238,.10);
+    padding:8px 12px;border-radius:8px;margin-top:12px;
+    border:1px solid rgba(86,136,238,.22);word-break:break-all;line-height:1.5;
+  }
+
+  .bar{
+    display:flex;align-items:center;gap:14px;
+    padding:14px 18px;border-radius:14px;
+    background:rgba(255,255,255,.04);
+    border:1px solid rgba(255,255,255,.10);
+    margin-bottom:14px;
+  }
+  .brand-mark{
+    width:42px;height:42px;border-radius:11px;flex-shrink:0;
+    background:linear-gradient(135deg,#1F1F1F,#0A0A0A);
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 0 0 1px rgba(245,166,35,.15), 0 4px 14px -6px rgba(245,166,35,.22);
+    overflow:hidden;
+  }
+  .brand-mark img{width:80%;height:80%;object-fit:contain}
+
+  /* ── The 4 logo variants ─────────────────────────────────────── */
+  .v-original img{filter:none}
+  /* Variant B — hue-rotate calibrated to the actual lime source (~72°). */
+  .v-gold-hue img{filter:hue-rotate(325deg) saturate(1.40) brightness(1.05)}
+  /* Variant C — bulletproof recolor. Knock to black first, then recolor
+     to amber. Works regardless of source hue. */
+  .v-gold-recolor img{
+    filter:
+      brightness(0) saturate(100%)
+      invert(72%) sepia(67%) saturate(2459%)
+      hue-rotate(347deg) brightness(101%) contrast(91%);
+  }
+  .v-gold-bright img{
+    filter:
+      brightness(0) saturate(100%)
+      invert(80%) sepia(60%) saturate(1500%)
+      hue-rotate(355deg) brightness(105%) contrast(95%);
+  }
+
+  .wordmark{
+    display:flex;align-items:baseline;font-weight:900;font-size:22px;
+    letter-spacing:-.025em;color:#fff;
+  }
+  .wordmark .h{
+    background:linear-gradient(135deg,#FFE9B0 0%,#FFC75F 50%,#F5A623 100%);
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;
+  }
+
+  .target{
+    display:inline-flex;align-items:center;gap:10px;
+    padding:10px 16px;border-radius:999px;
+    background:rgba(245,166,35,.10);border:1px solid rgba(245,166,35,.30);
+    font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.10em;
+    color:#FFC75F;margin-bottom:34px;
+  }
+  .target .swatch{
+    width:18px;height:18px;border-radius:50%;
+    background:linear-gradient(135deg,#FFE9B0,#FFC75F,#F5A623);
+    box-shadow:0 0 0 1px rgba(255,255,255,.18) inset;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>Logo color sample <em>v2</em></h1>
+  <p class="lede">
+    The previous sample rendered <b>pink</b> instead of gold — the hue-rotate angle assumed
+    a pure-green source but the actual PNG is closer to lime, so my +258° rotation landed on
+    magenta. Below are four corrected attempts. The right answer is whichever one looks closest
+    to the "Hunt" wordmark on the right side of each bar.
+  </p>
+
+  <div class="target">Target <span class="swatch"></span> Hunt wordmark gradient</div>
+
+  <div class="grid">
+
+    <div class="card v-original">
+      <div class="lbl">Variant A · original (no filter)</div>
+      <div class="name">Original lime</div>
+      <div class="desc">The PNG as it ships today. Untouched.</div>
+      <div class="bar">
+        <span class="brand-mark"><img src="/static/icons/alpha-logo-bare-64.png" alt="AlphaHunt"></span>
+        <span class="wordmark">Alpha<span class="h">Hunt</span></span>
+      </div>
+      <code class="filter-code">filter: none;</code>
+    </div>
+
+    <div class="card v-gold-hue">
+      <div class="lbl">Variant B · hue-rotate (corrected)</div>
+      <div class="name">Hue-rotated gold</div>
+      <div class="desc">Same trick as before, but with the correct angle for the actual lime source. 325° forward from lime should land near amber.</div>
+      <div class="bar">
+        <span class="brand-mark"><img src="/static/icons/alpha-logo-bare-64.png" alt="AlphaHunt"></span>
+        <span class="wordmark">Alpha<span class="h">Hunt</span></span>
+      </div>
+      <code class="filter-code">filter: hue-rotate(325deg) saturate(1.40) brightness(1.05);</code>
+    </div>
+
+    <div class="card v-gold-recolor recommended">
+      <div class="lbl">Variant C · bulletproof recolor ← recommended</div>
+      <div class="name">Brand gold (knock + recolor)</div>
+      <div class="desc">First flattens the PNG to pure black, then recolors black → amber. Works regardless of source hue, so always lands on gold.</div>
+      <div class="bar">
+        <span class="brand-mark"><img src="/static/icons/alpha-logo-bare-64.png" alt="AlphaHunt"></span>
+        <span class="wordmark">Alpha<span class="h">Hunt</span></span>
+      </div>
+      <code class="filter-code">filter: brightness(0) saturate(100%) invert(72%) sepia(67%) saturate(2459%) hue-rotate(347deg) brightness(101%) contrast(91%);</code>
+    </div>
+
+    <div class="card v-gold-bright">
+      <div class="lbl">Variant D · bright recolor</div>
+      <div class="name">Brighter amber</div>
+      <div class="desc">Same bulletproof technique with values tuned for a brighter, more saturated gold. Closer to cream-gold.</div>
+      <div class="bar">
+        <span class="brand-mark"><img src="/static/icons/alpha-logo-bare-64.png" alt="AlphaHunt"></span>
+        <span class="wordmark">Alpha<span class="h">Hunt</span></span>
+      </div>
+      <code class="filter-code">filter: brightness(0) saturate(100%) invert(80%) sepia(60%) saturate(1500%) hue-rotate(355deg) brightness(105%) contrast(95%);</code>
+    </div>
+
+  </div>
+</div>
+</body>
+</html>
