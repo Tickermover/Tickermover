@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AlphaHunt — Palette Demo (3 directions)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Manrope:wght@400;500;600;700;800;900&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,700;9..144,900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  /* ═══════════════════════════════════════════════════════════════════════
+     PALETTE DEMO — three full-page treatments stacked vertically.
+     Each section renders the EXACT same slice of the AlphaHunt site:
+       1) Top nav strip
+       2) Hero (title + sub + CTA + 3 pick cards)
+       3) Six pillar grid (Today's Signals style)
+       4) Data row (numbers + up/down chips, JetBrains Mono)
+       5) Module card (Focus card / report deep-link)
+     The only difference between sections is the CSS variables.
+     ═══════════════════════════════════════════════════════════════════════ */
+
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{
+    font-family:'Manrope','Inter',system-ui,sans-serif;
+    font-weight:500;
+    background:#000;
+    -webkit-font-smoothing:antialiased;
+    line-height:1.5;
+  }
+  a{color:inherit;text-decoration:none}
+
+  /* ─── Sticky palette switcher ─────────────────────────────────────────── */
+  .switcher{
+    position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:100;
+    display:flex;gap:6px;padding:6px;
+    background:rgba(10,10,10,.78);
+    border:1px solid rgba(255,255,255,.14);
+    border-radius:999px;
+    backdrop-filter:blur(14px) saturate(140%);
+    box-shadow:0 18px 40px -16px rgba(0,0,0,.6);
+  }
+  .switcher a{
+    padding:9px 18px;border-radius:999px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+    color:#cdd5e8;transition:all .2s;
+  }
+  .switcher a:hover{color:#fff;background:rgba(255,255,255,.06)}
+
+  /* ─── Section wrapper (one palette per section) ───────────────────────── */
+  .palette{
+    position:relative;overflow:hidden;
+    padding:96px 24px 120px;
+    background:var(--bg);
+    color:var(--ink);
+  }
+  .palette::before{
+    content:"";position:absolute;inset:0;pointer-events:none;
+    background:var(--bg-pattern);
+    opacity:1;
+  }
+  .palette::after{
+    content:"";position:absolute;inset:0;pointer-events:none;
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size:60px 60px;
+    mask-image:radial-gradient(closest-side, #000 30%, transparent 75%);
+    -webkit-mask-image:radial-gradient(closest-side, #000 30%, transparent 75%);
+  }
+  .palette > *{position:relative;z-index:1}
+  .wrap{max-width:1200px;margin:0 auto}
+
+  /* ─── Palette banner (palette name + spec card) ───────────────────────── */
+  .banner{
+    display:flex;justify-content:space-between;align-items:center;gap:24px;
+    padding:18px 22px;margin-bottom:48px;
+    background:var(--surface);
+    border:1px solid var(--bdr);
+    border-radius:18px;
+    backdrop-filter:blur(10px);
+  }
+  .banner-name{
+    font-family:'Fraunces',Georgia,serif;
+    font-size:24px;font-weight:500;
+    color:var(--ink);
+    letter-spacing:-.02em;
+  }
+  .banner-name em{
+    font-style:italic;
+    color:var(--primary);
+  }
+  .banner-meta{
+    font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.16em;
+    color:var(--muted);text-transform:uppercase;
+  }
+  .swatches{display:flex;gap:8px;flex-wrap:wrap}
+  .swatch{
+    display:inline-flex;align-items:center;gap:6px;
+    padding:5px 9px 5px 5px;border-radius:999px;
+    background:var(--surface-2);border:1px solid var(--bdr);
+    font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:700;
+    color:var(--ink-2);
+  }
+  .swatch .dot{width:14px;height:14px;border-radius:50%;display:inline-block;border:1px solid var(--bdr)}
+
+  /* ─── Top nav strip ───────────────────────────────────────────────────── */
+  .nav{
+    display:flex;justify-content:space-between;align-items:center;gap:32px;
+    padding:14px 22px;margin-bottom:64px;
+    background:var(--surface);
+    border:1px solid var(--bdr);
+    border-radius:18px;
+    backdrop-filter:blur(10px);
+  }
+  .logo{
+    display:inline-flex;align-items:center;gap:10px;
+    font-family:'Fraunces',Georgia,serif;
+    font-size:22px;font-weight:500;letter-spacing:-.015em;
+    color:var(--ink);
+  }
+  .logo em{font-style:italic;color:var(--primary)}
+  .logo-mark{
+    width:32px;height:32px;border-radius:9px;
+    background:var(--primary-grad);
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 6px 18px -6px var(--primary-glow);
+    font-family:'JetBrains Mono',monospace;font-weight:800;font-size:12px;
+    color:var(--ink-on-primary);
+  }
+  .nav-links{display:flex;gap:24px}
+  .nav-links a{
+    font-size:13.5px;font-weight:600;color:var(--ink-2);
+    padding:6px 0;border-bottom:1.5px solid transparent;transition:.2s;
+  }
+  .nav-links a:hover{color:var(--ink);border-color:var(--primary)}
+  .nav-cta{
+    padding:10px 18px;border-radius:999px;
+    font-size:13px;font-weight:700;
+    background:var(--primary-grad);color:var(--ink-on-primary);
+    box-shadow:0 10px 24px -10px var(--primary-glow);
+  }
+
+  /* ─── Hero ────────────────────────────────────────────────────────────── */
+  .hero{text-align:center;margin-bottom:80px}
+  .eyebrow{
+    display:inline-flex;align-items:center;gap:8px;
+    padding:7px 14px;border-radius:999px;
+    background:var(--surface-2);border:1px solid var(--bdr);
+    font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.18em;text-transform:uppercase;
+    color:var(--meta);font-weight:700;
+    margin-bottom:28px;
+  }
+  .eyebrow .pulse{
+    width:7px;height:7px;border-radius:50%;background:var(--primary);
+    box-shadow:0 0 12px var(--primary-glow);
+    animation:pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+  .hero h1{
+    font-family:'Fraunces',Georgia,serif;
+    font-weight:500;
+    font-size:clamp(44px,6.5vw,82px);
+    line-height:1.02;letter-spacing:-.035em;
+    color:var(--ink);
+    margin-bottom:22px;
+  }
+  .hero h1 em{
+    font-style:italic;
+    background:var(--accent-grad);
+    -webkit-background-clip:text;background-clip:text;
+    -webkit-text-fill-color:transparent;color:transparent;
+  }
+  .hero p.sub{
+    font-size:18px;color:var(--ink-2);max-width:640px;
+    margin:0 auto 32px;line-height:1.6;
+  }
+  .ctas{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:18px}
+  .btn{
+    display:inline-flex;align-items:center;gap:8px;
+    padding:14px 26px;border-radius:999px;
+    font-weight:700;font-size:14px;
+    transition:transform .2s, box-shadow .2s;
+  }
+  .btn-primary{
+    background:var(--primary-grad);color:var(--ink-on-primary);
+    box-shadow:0 14px 34px -10px var(--primary-glow);
+  }
+  .btn-primary:hover{transform:translateY(-2px);box-shadow:0 22px 44px -10px var(--primary-glow)}
+  .btn-ghost{
+    background:var(--surface-2);color:var(--ink);
+    border:1px solid var(--bdr-2);
+  }
+  .btn-ghost:hover{transform:translateY(-2px)}
+  .meta-row{
+    display:flex;gap:22px;justify-content:center;flex-wrap:wrap;
+    font-size:12.5px;color:var(--muted);
+  }
+  .meta-row span{display:inline-flex;align-items:center;gap:6px}
+  .meta-row .chk{color:var(--up);font-weight:800}
+
+  /* ─── Pick cards ──────────────────────────────────────────────────────── */
+  .picks{
+    display:grid;grid-template-columns:repeat(3,1fr);gap:16px;
+    max-width:980px;margin:48px auto 0;
+  }
+  @media (max-width:760px){.picks{grid-template-columns:1fr}}
+  .pick{
+    position:relative;padding:20px;border-radius:18px;
+    background:var(--card-bg);
+    border:1px solid var(--bdr-2);
+    box-shadow:var(--card-shadow);
+    transition:transform .25s, border-color .25s, box-shadow .25s;
+  }
+  .pick:hover{
+    transform:translateY(-4px);
+    border-color:var(--primary);
+    box-shadow:0 20px 50px -16px var(--primary-glow);
+  }
+  .pick-head{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+  .pick-logo{
+    width:42px;height:42px;border-radius:11px;flex-shrink:0;
+    background:var(--accent-grad);
+    color:var(--ink-on-primary);
+    display:flex;align-items:center;justify-content:center;
+    font-family:'JetBrains Mono',monospace;font-weight:800;font-size:12px;
+  }
+  .pick-info{flex:1;min-width:0}
+  .pick-sym{font-weight:800;font-size:16px;color:var(--ink);letter-spacing:-.01em}
+  .pick-name{font-size:11.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .pick-score-wrap{display:flex;flex-direction:column;align-items:flex-end;line-height:1}
+  .pick-score-label{
+    font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.16em;
+    color:var(--muted);text-transform:uppercase;margin-bottom:3px;
+  }
+  .pick-score{
+    font-family:'JetBrains Mono',monospace;font-weight:800;font-size:24px;
+    background:var(--score-grad);
+    -webkit-background-clip:text;background-clip:text;
+    -webkit-text-fill-color:transparent;color:transparent;
+  }
+  .pick-row{
+    display:flex;justify-content:space-between;align-items:center;
+    padding-top:12px;margin-top:12px;
+    border-top:1px solid var(--bdr);font-size:12px;
+  }
+  .pick-row .k{color:var(--muted)}
+  .pick-row .v{font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--ink)}
+  .pick-row .v.up{color:var(--up)} .pick-row .v.dn{color:var(--down)}
+  .pick-cta{
+    margin-top:12px;padding-top:10px;
+    border-top:1px solid var(--bdr);
+    font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:700;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--primary);
+  }
+
+  /* ─── Pillar grid (Six research pillars) ──────────────────────────────── */
+  .section-head{text-align:center;max-width:780px;margin:0 auto 48px}
+  .section-head .eyebrow{margin-bottom:18px}
+  .section-head h2{
+    font-family:'Fraunces',Georgia,serif;
+    font-weight:500;font-size:clamp(28px,3.6vw,40px);
+    color:var(--ink);letter-spacing:-.02em;line-height:1.15;
+  }
+  .section-head h2 em{
+    font-style:italic;color:var(--primary);
+  }
+  .section-head p{color:var(--ink-2);font-size:15.5px;margin-top:12px;line-height:1.6}
+
+  .pillars{
+    display:grid;grid-template-columns:repeat(3,1fr);gap:14px;
+    max-width:1100px;margin:0 auto 80px;
+  }
+  @media (max-width:900px){.pillars{grid-template-columns:repeat(2,1fr)}}
+  @media (max-width:560px){.pillars{grid-template-columns:1fr}}
+  .pillar{
+    position:relative;padding:22px;border-radius:18px;
+    background:var(--card-bg);
+    border:1px solid var(--bdr);
+    transition:transform .22s, border-color .22s;
+  }
+  .pillar:hover{transform:translateY(-3px);border-color:var(--accent-1)}
+  .pillar-ico{
+    width:38px;height:38px;border-radius:10px;
+    background:color-mix(in srgb, var(--pc) 18%, transparent);
+    color:var(--pc);
+    display:flex;align-items:center;justify-content:center;
+    font-family:'JetBrains Mono',monospace;font-weight:800;font-size:14px;
+    margin-bottom:14px;
+    border:1px solid color-mix(in srgb, var(--pc) 30%, transparent);
+  }
+  .pillar h3{
+    font-size:15px;font-weight:800;color:var(--ink);
+    margin-bottom:6px;letter-spacing:-.005em;
+  }
+  .pillar p{font-size:13px;color:var(--ink-2);line-height:1.6;margin-bottom:14px}
+  .pillar-stat{
+    display:flex;align-items:baseline;gap:8px;
+    padding-top:12px;border-top:1px solid var(--bdr);
+  }
+  .pillar-stat .num{
+    font-family:'JetBrains Mono',monospace;font-weight:800;font-size:22px;
+    color:var(--pc);letter-spacing:-.01em;
+  }
+  .pillar-stat .lbl{font-size:11px;color:var(--muted);letter-spacing:.06em}
+
+  /* ─── Signals data row ────────────────────────────────────────────────── */
+  .signals{
+    display:grid;grid-template-columns:repeat(4,1fr);gap:12px;
+    max-width:1100px;margin:0 auto 80px;
+  }
+  @media (max-width:760px){.signals{grid-template-columns:repeat(2,1fr)}}
+  .signal{
+    padding:18px;border-radius:16px;
+    background:var(--card-bg);
+    border:1px solid var(--bdr);
+  }
+  .signal .k{
+    font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.14em;
+    color:var(--muted);text-transform:uppercase;margin-bottom:8px;
+  }
+  .signal .v{
+    font-family:'JetBrains Mono',monospace;font-weight:800;font-size:28px;
+    color:var(--ink);letter-spacing:-.02em;
+  }
+  .signal .delta{
+    display:inline-flex;align-items:center;gap:4px;
+    margin-top:6px;padding:3px 8px;border-radius:999px;
+    font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;
+  }
+  .signal .delta.up{
+    color:var(--up);background:color-mix(in srgb, var(--up) 14%, transparent);
+    border:1px solid color-mix(in srgb, var(--up) 30%, transparent);
+  }
+  .signal .delta.dn{
+    color:var(--down);background:color-mix(in srgb, var(--down) 14%, transparent);
+    border:1px solid color-mix(in srgb, var(--down) 30%, transparent);
+  }
+
+  /* ─── Focus card (deep-link module) ───────────────────────────────────── */
+  .focus{
+    max-width:780px;margin:0 auto;
+    padding:32px 36px;border-radius:22px;
+    background:var(--card-bg);
+    border:1px solid var(--bdr-2);
+    box-shadow:var(--card-shadow);
+    display:grid;grid-template-columns:1fr auto;gap:24px;align-items:center;
+  }
+  @media (max-width:680px){.focus{grid-template-columns:1fr}}
+  .focus h3{
+    font-family:'Fraunces',Georgia,serif;font-weight:500;
+    font-size:24px;color:var(--ink);letter-spacing:-.015em;margin-bottom:8px;
+  }
+  .focus h3 em{font-style:italic;color:var(--primary)}
+  .focus p{color:var(--ink-2);font-size:14.5px;line-height:1.6}
+  .focus-score{
+    text-align:center;padding:18px 24px;
+    background:var(--surface-2);border:1px solid var(--bdr);
+    border-radius:16px;
+  }
+  .focus-score .lbl{
+    font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.18em;
+    text-transform:uppercase;color:var(--muted);margin-bottom:6px;
+  }
+  .focus-score .num{
+    font-family:'JetBrains Mono',monospace;font-weight:800;font-size:42px;
+    background:var(--score-grad);
+    -webkit-background-clip:text;background-clip:text;
+    -webkit-text-fill-color:transparent;color:transparent;
+    line-height:1;
+  }
+
+  /* ════════════════════════════════════════════════════════════════════════
+     PALETTE A — MIDNIGHT JADE  (dark navy + jade-mint + honey + coral)
+     ════════════════════════════════════════════════════════════════════════ */
+  .palette.midnight-jade{
+    --bg:#0B1220;
+    --bg-2:#0F172A;
+    --surface:rgba(255,255,255,.04);
+    --surface-2:rgba(255,255,255,.07);
+    --bdr:rgba(255,255,255,.08);
+    --bdr-2:rgba(255,255,255,.14);
+    --ink:#F5F7FB;
+    --ink-2:#C5CCDE;
+    --muted:#8A93AC;
+    --meta:#7C9BFF;
+    --primary:#22D3A4;
+    --primary-glow:rgba(34,211,164,.45);
+    --ink-on-primary:#0B1220;
+    --primary-grad:linear-gradient(135deg,#5EEAC6 0%,#22D3A4 50%,#0FB386 100%);
+    --accent-1:#7C9BFF;
+    --accent-grad:linear-gradient(135deg,#22D3A4 0%,#7C9BFF 100%);
+    --score-grad:linear-gradient(135deg,#5EEAC6 0%,#22D3A4 50%,#FFB627 100%);
+    --up:#22D3A4;
+    --down:#FF5A5F;
+    --card-bg:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+    --card-shadow:0 18px 38px -18px rgba(0,0,0,.6), 0 1px 0 rgba(255,255,255,.05) inset;
+    --bg-pattern:
+      radial-gradient(70vw 55vh at 8% -5%, rgba(34,211,164,.15), transparent 60%),
+      radial-gradient(55vw 50vh at 100% 30%, rgba(124,155,255,.10), transparent 60%),
+      radial-gradient(50vw 45vh at 50% 110%, rgba(255,182,39,.07), transparent 65%);
+    --grid:rgba(255,255,255,.025);
+  }
+
+  /* ════════════════════════════════════════════════════════════════════════
+     PALETTE B — QUIET CONFIDENCE  (warm paper + deep emerald + amber + coral)
+     ════════════════════════════════════════════════════════════════════════ */
+  .palette.quiet-confidence{
+    --bg:#FAFAF7;
+    --bg-2:#F3F1EC;
+    --surface:rgba(255,255,255,.7);
+    --surface-2:rgba(15,23,42,.04);
+    --bdr:rgba(10,10,10,.10);
+    --bdr-2:rgba(10,10,10,.16);
+    --ink:#0A0A0A;
+    --ink-2:#3A3F4D;
+    --muted:#6B7280;
+    --meta:#525B6F;
+    --primary:#0F7A4E;
+    --primary-glow:rgba(15,122,78,.30);
+    --ink-on-primary:#FAFAF7;
+    --primary-grad:linear-gradient(135deg,#10B981 0%,#0F7A4E 100%);
+    --accent-1:#D97706;
+    --accent-grad:linear-gradient(135deg,#0F7A4E 0%,#D97706 100%);
+    --score-grad:linear-gradient(135deg,#0F7A4E 0%,#10B981 50%,#D97706 100%);
+    --up:#10B981;
+    --down:#E11D48;
+    --card-bg:#FFFFFF;
+    --card-shadow:0 12px 30px -16px rgba(10,10,10,.18), 0 1px 0 rgba(10,10,10,.04);
+    --bg-pattern:
+      radial-gradient(70vw 55vh at 8% -5%, rgba(15,122,78,.08), transparent 60%),
+      radial-gradient(55vw 50vh at 100% 30%, rgba(217,119,6,.06), transparent 60%),
+      radial-gradient(50vw 45vh at 50% 110%, rgba(82,91,111,.05), transparent 65%);
+    --grid:rgba(10,10,10,.04);
+  }
+
+  /* ════════════════════════════════════════════════════════════════════════
+     PALETTE C — DAYBREAK  (white + indigo + emerald + gold)
+     ════════════════════════════════════════════════════════════════════════ */
+  .palette.daybreak{
+    --bg:#FFFFFF;
+    --bg-2:#F7F7F5;
+    --surface:rgba(255,255,255,.72);
+    --surface-2:rgba(59,91,255,.05);
+    --bdr:rgba(11,16,32,.09);
+    --bdr-2:rgba(11,16,32,.15);
+    --ink:#0B1020;
+    --ink-2:#3D4459;
+    --muted:#6B7280;
+    --meta:#4F5B76;
+    --primary:#3B5BFF;
+    --primary-glow:rgba(59,91,255,.35);
+    --ink-on-primary:#FFFFFF;
+    --primary-grad:linear-gradient(135deg,#6E86FF 0%,#3B5BFF 60%,#1E40FF 100%);
+    --accent-1:#F59E0B;
+    --accent-grad:linear-gradient(135deg,#3B5BFF 0%,#F59E0B 100%);
+    --score-grad:linear-gradient(135deg,#3B5BFF 0%,#7C3AED 50%,#F59E0B 100%);
+    --up:#059669;
+    --down:#DC2626;
+    --card-bg:#FFFFFF;
+    --card-shadow:0 14px 36px -18px rgba(11,16,32,.14), 0 1px 0 rgba(11,16,32,.04);
+    --bg-pattern:
+      radial-gradient(70vw 55vh at 8% -5%, rgba(59,91,255,.08), transparent 60%),
+      radial-gradient(55vw 50vh at 100% 30%, rgba(245,158,11,.06), transparent 60%),
+      radial-gradient(50vw 45vh at 50% 110%, rgba(5,150,105,.05), transparent 65%);
+    --grid:rgba(11,16,32,.045);
+  }
+</style>
+</head>
+<body>
+
+<!-- Sticky switcher -->
+<div class="switcher">
+  <a href="#midnight-jade">A · Midnight Jade</a>
+  <a href="#quiet-confidence">B · Quiet Confidence</a>
+  <a href="#daybreak">C · Daybreak</a>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     PALETTE A — MIDNIGHT JADE
+     ═══════════════════════════════════════════════════════════════════════ -->
+<section id="midnight-jade" class="palette midnight-jade">
+  <div class="wrap">
+
+    <div class="banner">
+      <div>
+        <div class="banner-name">Midnight <em>Jade</em></div>
+        <div class="banner-meta">Palette A · Dark navy · Jade-mint primary</div>
+      </div>
+      <div class="swatches">
+        <span class="swatch"><span class="dot" style="background:#0B1220"></span>#0B1220</span>
+        <span class="swatch"><span class="dot" style="background:#22D3A4"></span>#22D3A4</span>
+        <span class="swatch"><span class="dot" style="background:#FFB627"></span>#FFB627</span>
+        <span class="swatch"><span class="dot" style="background:#7C9BFF"></span>#7C9BFF</span>
+        <span class="swatch"><span class="dot" style="background:#FF5A5F"></span>#FF5A5F</span>
+      </div>
+    </div>
+
+    <!-- Nav -->
+    <div class="nav">
+      <div class="logo"><span class="logo-mark">AH</span><span>Alpha<em>Hunt</em></span></div>
+      <div class="nav-links">
+        <a>Dashboard</a><a>Today's signals</a><a>Reports</a><a>Pricing</a>
+      </div>
+      <a class="nav-cta">Get the brief</a>
+    </div>
+
+    <!-- Hero -->
+    <div class="hero">
+      <div class="eyebrow"><span class="pulse"></span>540+ tickers · refreshed every 5 min</div>
+      <h1>AI-driven <em>Alpha</em> on every<br>US stock that matters.</h1>
+      <p class="sub">Six research pillars. A public track record. Disciplined exits. Built for serious investors who refuse to gamble.</p>
+      <div class="ctas">
+        <a class="btn btn-primary">Start free brief →</a>
+        <a class="btn btn-ghost">See the live track record</a>
+      </div>
+      <div class="meta-row">
+        <span><span class="chk">✓</span>No card. No demo. Just data.</span>
+        <span><span class="chk">✓</span>Audited every day.</span>
+        <span><span class="chk">✓</span>Cancel anytime.</span>
+      </div>
+
+      <!-- Pick cards -->
+      <div class="picks">
+        <a class="pick">
+          <div class="pick-head">
+            <div class="pick-logo">NV</div>
+            <div class="pick-info"><div class="pick-sym">NVDA</div><div class="pick-name">NVIDIA Corporation</div></div>
+            <div class="pick-score-wrap"><div class="pick-score-label">Alpha</div><div class="pick-score">94</div></div>
+          </div>
+          <div class="pick-row"><span class="k">5d move</span><span class="v up">+8.4%</span></div>
+          <div class="pick-row"><span class="k">Conviction</span><span class="v">High</span></div>
+          <div class="pick-cta">Read full report →</div>
+        </a>
+        <a class="pick">
+          <div class="pick-head">
+            <div class="pick-logo">MS</div>
+            <div class="pick-info"><div class="pick-sym">MSFT</div><div class="pick-name">Microsoft Corporation</div></div>
+            <div class="pick-score-wrap"><div class="pick-score-label">Alpha</div><div class="pick-score">88</div></div>
+          </div>
+          <div class="pick-row"><span class="k">5d move</span><span class="v up">+3.2%</span></div>
+          <div class="pick-row"><span class="k">Conviction</span><span class="v">High</span></div>
+          <div class="pick-cta">Read full report →</div>
+        </a>
+        <a class="pick">
+          <div class="pick-head">
+            <div class="pick-logo">PL</div>
+            <div class="pick-info"><div class="pick-sym">PLTR</div><div class="pick-name">Palantir Technologies</div></div>
+            <div class="pick-score-wrap"><div class="pick-score-label">Alpha</div><div class="pick-score">81</div></div>
+          </div>
+          <div class="pick-row"><span class="k">5d move</span><span class="v dn">−1.7%</span></div>
+          <div class="pick-row"><span class="k">Conviction</span><span class="v">Medium</span></div>
+          <div class="pick-cta">Read full report →</div>
+        </a>
+      </div>
+    </div>
+
+    <!-- Pillar grid -->
+    <div class="section-head">
+      <div class="eyebrow">Six research pillars</div>
+      <h2>Every signal is <em>triangulated</em> across six independent views.</h2>
+      <p>No black box. Every score on the dashboard breaks down into a transparent pillar trail.</p>
+    </div>
+    <div class="pillars">
+      <div class="pillar" style="--pc:#22D3A4"><div class="pillar-ico">FN</div><h3>Fundamentals</h3><p>10-K factor model on growth, margin, leverage, and quality of earnings.</p><div class="pillar-stat"><span class="num">540</span><span class="lbl">tickers scored</span></div></div>
+      <div class="pillar" style="--pc:#7C9BFF"><div class="pillar-ico">TX</div><h3>Technicals</h3><p>Multi-timeframe momentum, regime detection, support/resistance pressure.</p><div class="pillar-stat"><span class="num">14</span><span class="lbl">signal families</span></div></div>
+      <div class="pillar" style="--pc:#FFB627"><div class="pillar-ico">EI</div><h3>Event intel</h3><p>Earnings, guidance, FDA, regulatory and macro catalysts in one feed.</p><div class="pillar-stat"><span class="num">5min</span><span class="lbl">refresh cadence</span></div></div>
+      <div class="pillar" style="--pc:#A78BFA"><div class="pillar-ico">SN</div><h3>Sentiment</h3><p>Analyst revisions, news velocity, and retail-flow weighted by source quality.</p><div class="pillar-stat"><span class="num">12K</span><span class="lbl">sources/day</span></div></div>
+      <div class="pillar" style="--pc:#22D3A4"><div class="pillar-ico">FL</div><h3>Flow</h3><p>Dark-pool prints, options unusual activity, and institutional flow heatmap.</p><div class="pillar-stat"><span class="num">1.2M</span><span class="lbl">prints/day</span></div></div>
+      <div class="pillar" style="--pc:#FF5A5F"><div class="pillar-ico">RK</div><h3>Risk</h3><p>Drawdown, factor exposure, position-sizing and exit-discipline engine.</p><div class="pillar-stat"><span class="num">−18%</span><span class="lbl">avg max DD</span></div></div>
+    </div>
+
+    <!-- Signals row -->
+    <div class="signals">
+      <div class="signal"><div class="k">Alpha avg</div><div class="v">72.4</div><div class="delta up">▲ +3.2 vs yesterday</div></div>
+      <div class="signal"><div class="k">Live picks</div><div class="v">17</div><div class="delta up">▲ +2 today</div></div>
+      <div class="signal"><div class="k">Hit rate (30d)</div><div class="v">68%</div><div class="delta up">▲ +4 pts</div></div>
+      <div class="signal"><div class="k">Avg holding</div><div class="v">9.4d</div><div class="delta dn">▼ −0.6d</div></div>
+    </div>
+
+    <!-- Focus card -->
+    <div class="focus">
+      <div>
+        <h3>Today's <em>focus</em> · NVDA</h3>
+        <p>Earnings beat, guidance raised, options flow heavily skewed to calls 1w out. Risk engine flags moderate exhaustion above $145 — exit-discipline rule applies.</p>
+      </div>
+      <div class="focus-score"><div class="lbl">Alpha</div><div class="num">94</div></div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     PALETTE B — QUIET CONFIDENCE
+     ═══════════════════════════════════════════════════════════════════════ -->
+<section id="quiet-confidence" class="palette quiet-confidence">
+  <div class="wrap">
+
+    <div class="banner">
+      <div>
+        <div class="banner-name">Quiet <em>Confidence</em></div>
+        <div class="banner-meta">Palette B · Warm paper · Deep emerald · Institutional</div>
+      </div>
+      <div class="swatches">
+        <span class="swatch"><span class="dot" style="background:#FAFAF7"></span>#FAFAF7</span>
+        <span class="swatch"><span class="dot" style="background:#0F7A4E"></span>#0F7A4E</span>
+        <span class="swatch"><span class="dot" style="background:#D97706"></span>#D97706</span>
+        <span class="swatch"><span class="dot" style="background:#E11D48"></span>#E11D48</span>
+        <span class="swatch"><span class="dot" style="background:#0A0A0A"></span>#0A0A0A</span>
+      </div>
+    </div>
+
+    <div class="nav">
+      <div class="logo"><span class="logo-mark">AH</span><span>Alpha<em>Hunt</em></span></div>
+      <div class="nav-links">
+        <a>Dashboard</a><a>Today's signals</a><a>Reports</a><a>Pricing</a>
+      </div>
+      <a class="nav-cta">Get the brief</a>
+    </div>
+
+    <div class="hero">
+      <div class="eyebrow"><span class="pulse"></span>540+ tickers · refreshed every 5 min</div>
+      <h1>AI-driven <em>Alpha</em> on every<br>US stock that matters.</h1>
+      <p class="sub">Six research pillars. A public track record. Disciplined exits. Built for serious investors who refuse to gamble.</p>
+      <div class="ctas">
+        <a class="btn btn-primary">Start free brief →</a>
+        <a class="btn btn-ghost">See the live track record</a>
+      </div>
+      <div class="meta-row">
+        <span><span class="chk">✓</span>No card. No demo. Just data.</span>
+        <span><span class="chk">✓</span>Audited every day.</span>
+        <span><span class="chk">✓</span>Cancel anytime.</span>
+      </div>
+
+      <div class="picks">
+        <a class="pick">
+          <div class="pick-head">
+            <div class="pick-logo">NV</div>
+            <div class="pick-info"><div class="pick-sym">NVDA</div><div class="pick-name">NVIDIA Corporation</div></div>
+            <div class="pick-score-wrap"><div class="pick-score-label">Alpha</div><div class="pick-score">94</div></div>
+          </div>
+          <div class="pick-row"><span class="k">5d move</span><span class="v up">+8.4%</span></div>
+          <div class="pick-row"><span class="k">Conviction</span><span class="v">High</span></div>
+          <div class="pick-cta">Read full report →</div>
+        </a>
+        <a class="pick">
+          <div class="pick-head">
+            <div class="pick-logo">MS</div>
+            <div class="pick-info"><div class="pick-sym">MSFT</div><div class="pick-name">Microsoft Corporation</div></div>
+            <div class="pick-score-wrap"><div class="pick-score-label">Alpha</div><div class="pick-score">88</div></div>
+          </div>
+          <div class="pick-row"><span class="k">5d move</span><span class="v up">+3.2%</span></div>
+          <div class="pick-row"><span class="k">Conviction</span><span class="v">High</span></div>
+          <div class="pick-cta">Read full report →</div>
+        </a>
+        <a class="pick">
+          <div class="pick-head">
+            <div class="pick-logo">PL</div>
+            <div class="pick-info"><div class="pick-sym">PLTR</div><div class="pick-name">Palantir Technologies</div></div>
+            <div class="pick-score-wrap"><div class="pick-score-label">Alpha</div><div class="pick-score">81</div></div>
+          </div>
+          <div class="pick-row"><span class="k">5d move</span><span class="v dn">−1.7%</span></div>
+          <div class="pick-row"><span class="k">Conviction</span><span class="v">Medium</span></div>
+          <div class="pick-cta">Read full report →</div>
+        </a>
+      </div>
+    </div>
+
+    <div class="section-head">
+      <div class="eyebrow">Six research pillars</div>
+      <h2>Every signal is <em>triangulated</em> across six independent views.</h2>
+      <p>No black box. Every score on the dashboard breaks down into a transparent pillar trail.</p>
+    </div>
+    <div class="pillars">
+      <div class="pillar" style="--pc:#0F7A4E"><div class="pillar-ico">FN</div><h3>Fundamentals</h3><p>10-K factor model on growth, margin, leverage, and quality of earnings.</p><div class="pillar-stat"><span class="num">540</span><span class="lbl">tickers scored</span></div></div>
+      <div class="pillar" style="--pc:#525B6F"><div class="pillar-ico">TX</div><h3>Technicals</h3><p>Multi-timeframe momentum, regime detection, support/resistance pressure.</p><div class="pillar-stat"><span class="num">14</span><span class="lbl">signal families</span></div></div>
+      <div class="pillar" style="--pc:#D97706"><div class="pillar-ico">EI</div><h3>Event intel</h3><p>Earnings, guidance, FDA, regulatory and macro catalysts in one feed.</p><div class="pillar-stat"><span class="num">5min</span><span class="lbl">refresh cadence</span></div></div>
+      <div class="pillar" style="--pc:#7C3AED"><div class="pillar-ico">SN</div><h3>Sentiment</h3><p>Analyst revisions, news velocity, and retail-flow weighted by source quality.</p><div class="pillar-stat"><span class="num">12K</span><span class="lbl">sources/day</span></div></div>
+      <div class="pillar" style="--pc:#0F7A4E"><div class="pillar-ico">FL</div><h3>Flow</h3><p>Dark-pool prints, options unusual activity, and institutional flow heatmap.</p><div class="pillar-stat"><span class="num">1.2M</span><span class="lbl">prints/day</span></div></div>
+      <div class="pillar" style="--pc:#E11D48"><div class="pillar-ico">RK</div><h3>Risk</h3><p>Drawdown, factor exposure, position-sizing and exit-discipline engine.</p><div class="pillar-stat"><span class="num">−18%</span><span class="lbl">avg max DD</span></div></div>
+    </div>
+
+    <div class="signals">
+      <div class="signal"><div class="k">Alpha avg</div><div class="v">72.4</div><div class="delta up">▲ +3.2 vs yesterday</div></div>
+      <div class="signal"><div class="k">Live picks</div><div class="v">17</div><div class="delta up">▲ +2 today</div></div>
+      <div class="signal"><div class="k">Hit rate (30d)</div><div class="v">68%</div><div class="delta up">▲ +4 pts</div></div>
+      <div class="signal"><div class="k">Avg holding</div><div class="v">9.4d</div><div class="delta dn">▼ −0.6d</div></div>
+    </div>
+
+    <div class="focus">
+      <div>
+        <h3>Today's <em>focus</em> · NVDA</h3>
+        <p>Earnings beat, guidance raised, options flow heavily skewed to calls 1w out. Risk engine flags moderate exhaustion above $145 — exit-discipline rule applies.</p>
+      </div>
+      <div class="focus-score"><div class="lbl">Alpha</div><div class="num">94</div></div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     PALETTE C — DAYBREAK
+     ═══════════════════════════════════════════════════════════════════════ -->
+<section id="daybreak" class="palette daybreak">
+  <div class="wrap">
+
+    <div class="banner">
+      <div>
+        <div class="banner-name">Day<em>break</em></div>
+        <div class="banner-meta">Palette C · White · Indigo trust-blue · Modern SaaS</div>
+      </div>
+      <div class="swatches">
+        <span class="swatch"><span class="dot" style="background:#FFFFFF"></span>#FFFFFF</span>
+        <span class="swatch"><span class="dot" style="background:#3B5BFF"></span>#3B5BFF</span>
+        <span class="swatch"><span class="dot" style="background:#059669"></span>#059669</span>
+        <span class="swatch"><span class="dot" style="background:#F59E0B"></span>#F59E0B</span>
+        <span class="swatch"><span class="dot" style="background:#DC2626"></span>#DC2626</span>
+      </div>
+    </div>
+
+    <div class="nav">
+      <div class="logo"><span class="logo-mark">AH</span><span>Alpha<em>Hunt</em></span></div>
+      <div class="nav-links">
+        <a>Dashboard</a><a>Today's signals</a><a>Reports</a><a>Pricing</a>
+      </div>
+      <a class="nav-cta">Get the brief</a>
+    </div>
+
+    <div class="hero">
+      <div class="eyebrow"><span class="pulse"></span>540+ tickers · refreshed every 5 min</div>
+      <h1>AI-driven <em>Alpha</em> on every<br>US stock that matters.</h1>
+      <p class="sub">Six research pillars. A public track record. Disciplined exits. Built for serious investors who refuse to gamble.</p>
+      <div class="ctas">
+        <a class="btn btn-primary">Start free brief →</a>
+        <a class="btn btn-ghost">See the live track record</a>
+      </div>
+      <div class="meta-row">
+        <span><span class="chk">✓</span>No card. No demo. Just data.</span>
+        <span><span class="chk">✓</span>Audited every day.</span>
+        <span><span class="chk">✓</span>Cancel anytime.</span>
+      </div>
+
+      <div class="picks">
+        <a class="pick">
+          <div class="pick-head">
+            <div class="pick-logo">NV</div>
+            <div class="pick-info"><div class="pick-sym">NVDA</div><div class="pick-name">NVIDIA Corporation</div></div>
+            <div class="pick-score-wrap"><div class="pick-score-label">Alpha</div><div class="pick-score">94</div></div>
+          </div>
+          <div class="pick-row"><span class="k">5d move</span><span class="v up">+8.4%</span></div>
+          <div class="pick-row"><span class="k">Conviction</span><span class="v">High</span></div>
+          <div class="pick-cta">Read full report →</div>
+        </a>
+        <a class="pick">
+          <div class="pick-head">
+            <div class="pick-logo">MS</div>
+            <div class="pick-info"><div class="pick-sym">MSFT</div><div class="pick-name">Microsoft Corporation</div></div>
+            <div class="pick-score-wrap"><div class="pick-score-label">Alpha</div><div class="pick-score">88</div></div>
+          </div>
+          <div class="pick-row"><span class="k">5d move</span><span class="v up">+3.2%</span></div>
+          <div class="pick-row"><span class="k">Conviction</span><span class="v">High</span></div>
+          <div class="pick-cta">Read full report →</div>
+        </a>
+        <a class="pick">
+          <div class="pick-head">
+            <div class="pick-logo">PL</div>
+            <div class="pick-info"><div class="pick-sym">PLTR</div><div class="pick-name">Palantir Technologies</div></div>
+            <div class="pick-score-wrap"><div class="pick-score-label">Alpha</div><div class="pick-score">81</div></div>
+          </div>
+          <div class="pick-row"><span class="k">5d move</span><span class="v dn">−1.7%</span></div>
+          <div class="pick-row"><span class="k">Conviction</span><span class="v">Medium</span></div>
+          <div class="pick-cta">Read full report →</div>
+        </a>
+      </div>
+    </div>
+
+    <div class="section-head">
+      <div class="eyebrow">Six research pillars</div>
+      <h2>Every signal is <em>triangulated</em> across six independent views.</h2>
+      <p>No black box. Every score on the dashboard breaks down into a transparent pillar trail.</p>
+    </div>
+    <div class="pillars">
+      <div class="pillar" style="--pc:#3B5BFF"><div class="pillar-ico">FN</div><h3>Fundamentals</h3><p>10-K factor model on growth, margin, leverage, and quality of earnings.</p><div class="pillar-stat"><span class="num">540</span><span class="lbl">tickers scored</span></div></div>
+      <div class="pillar" style="--pc:#059669"><div class="pillar-ico">TX</div><h3>Technicals</h3><p>Multi-timeframe momentum, regime detection, support/resistance pressure.</p><div class="pillar-stat"><span class="num">14</span><span class="lbl">signal families</span></div></div>
+      <div class="pillar" style="--pc:#F59E0B"><div class="pillar-ico">EI</div><h3>Event intel</h3><p>Earnings, guidance, FDA, regulatory and macro catalysts in one feed.</p><div class="pillar-stat"><span class="num">5min</span><span class="lbl">refresh cadence</span></div></div>
+      <div class="pillar" style="--pc:#7C3AED"><div class="pillar-ico">SN</div><h3>Sentiment</h3><p>Analyst revisions, news velocity, and retail-flow weighted by source quality.</p><div class="pillar-stat"><span class="num">12K</span><span class="lbl">sources/day</span></div></div>
+      <div class="pillar" style="--pc:#0EA5E9"><div class="pillar-ico">FL</div><h3>Flow</h3><p>Dark-pool prints, options unusual activity, and institutional flow heatmap.</p><div class="pillar-stat"><span class="num">1.2M</span><span class="lbl">prints/day</span></div></div>
+      <div class="pillar" style="--pc:#DC2626"><div class="pillar-ico">RK</div><h3>Risk</h3><p>Drawdown, factor exposure, position-sizing and exit-discipline engine.</p><div class="pillar-stat"><span class="num">−18%</span><span class="lbl">avg max DD</span></div></div>
+    </div>
+
+    <div class="signals">
+      <div class="signal"><div class="k">Alpha avg</div><div class="v">72.4</div><div class="delta up">▲ +3.2 vs yesterday</div></div>
+      <div class="signal"><div class="k">Live picks</div><div class="v">17</div><div class="delta up">▲ +2 today</div></div>
+      <div class="signal"><div class="k">Hit rate (30d)</div><div class="v">68%</div><div class="delta up">▲ +4 pts</div></div>
+      <div class="signal"><div class="k">Avg holding</div><div class="v">9.4d</div><div class="delta dn">▼ −0.6d</div></div>
+    </div>
+
+    <div class="focus">
+      <div>
+        <h3>Today's <em>focus</em> · NVDA</h3>
+        <p>Earnings beat, guidance raised, options flow heavily skewed to calls 1w out. Risk engine flags moderate exhaustion above $145 — exit-discipline rule applies.</p>
+      </div>
+      <div class="focus-score"><div class="lbl">Alpha</div><div class="num">94</div></div>
+    </div>
+
+  </div>
+</section>
+
+</body>
+</html>
