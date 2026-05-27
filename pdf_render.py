@@ -40,7 +40,7 @@ import matplotlib.pyplot as plt
 logger = logging.getLogger(__name__)
 
 # ── Design tokens (mirror the dashboard's brand palette) ─────────────
-BRAND_INDIGO  = HexColor("#4338ca")
+BRAND_INDIGO  = HexColor("#D4860A")
 BRAND_VIOLET  = HexColor("#8b5cf6")
 BRAND_MAGENTA = HexColor("#ec4899")
 BRAND_LIGHT   = HexColor("#eef2ff")
@@ -52,7 +52,7 @@ BG_SOFT       = HexColor("#f8fafc")
 BG_CARD       = HexColor("#ffffff")
 BORDER        = HexColor("#e2e8f0")
 BORDER_LIGHT  = HexColor("#f1f5f9")
-GREEN         = HexColor("#16a34a")
+GREEN         = HexColor("#D4860A")
 GREEN_LIGHT   = HexColor("#dcfce7")
 RED           = HexColor("#dc2626")
 RED_LIGHT     = HexColor("#fee2e2")
@@ -172,7 +172,7 @@ def _lerp(a: int, b: int, t: float) -> int:
 
 def _brand_gradient_color(t: float):
     """Sample the AlphaHunt brand gradient at position t in [0,1].
-    indigo (#4338ca) → violet (#8b5cf6) → magenta (#ec4899)."""
+    indigo (#D4860A) → violet (#8b5cf6) → magenta (#ec4899)."""
     t = max(0.0, min(1.0, t))
     if t < 0.5:
         lt = t * 2
@@ -596,7 +596,7 @@ def _make_revenue_eps_chart(quarterly_income: list, eps_quarters: list,
                      linewidth=2.0, label="EPS actual")
             # Beat/miss dots
             for xi, a, e in zip(eps_x, eps_actual, eps_est):
-                color = "#16a34a" if a >= e else "#dc2626"
+                color = "#D4860A" if a >= e else "#dc2626"
                 ax2.plot(xi, a, "o", color=color, markersize=6,
                          markeredgecolor="white", markeredgewidth=1.2)
             ax2.tick_params(colors="#94a3b8", labelsize=7)
@@ -671,12 +671,12 @@ def _make_margin_trend_chart(quarterly_income: list,
         x = list(range(len(labels)))
         # Gross margin line
         gm_plot = [v if v is not None else float("nan") for v in gm_vals]
-        ax.plot(x, gm_plot, "-o", color="#4338ca", linewidth=2.0,
+        ax.plot(x, gm_plot, "-o", color="#D4860A", linewidth=2.0,
                 markersize=4.5, label="Gross margin %")
         for xi, v in zip(x, gm_plot):
             if v == v:  # not NaN
                 ax.text(xi, v + 1.5, f"{v:.1f}%", ha="center", va="bottom",
-                        fontsize=6.5, color="#4338ca")
+                        fontsize=6.5, color="#D4860A")
         # Operating margin line (may have NaN slots)
         if any(v is not None for v in om_vals):
             om_plot = [v if v is not None else float("nan") for v in om_vals]
@@ -1352,7 +1352,7 @@ def _draw_valuation_scenarios(c, x, y, w, h, t, narrative):
             c.drawString(x + 155, ry + row_h/2 - 2, text)
 
 
-def _make_sparkline(values, width_pt, height_pt, color="#4338ca",
+def _make_sparkline(values, width_pt, height_pt, color="#D4860A",
                      fill_color=None, label_last=True, unit="%"):
     """Tiny inline-style sparkline: thin line + optional fill, latest value
     annotated. Returns PNG bytes or None when no data."""
@@ -1491,10 +1491,10 @@ def _compute_trend_metrics(t):
             fcf_series = [fcf_ttm] * len(fcf_series)
 
     return [
-        (rev_growth_label, rev_growth, "#4338ca"),
+        (rev_growth_label, rev_growth, "#D4860A"),
         ("Gross Margin",   gm_series,  "#8b5cf6"),
         ("Operating Margin", om_series, "#ec4899"),
-        ("FCF Margin",     fcf_series, "#16a34a"),
+        ("FCF Margin",     fcf_series, "#D4860A"),
     ]
 
 
@@ -2251,7 +2251,7 @@ def _draw_rec_distribution_bar(c, x, y, w, strong_buy, buy, hold, sell, strong_s
     bar_h = 7
     segments = [
         (strong_buy,  HexColor("#15803d")),  # deep green
-        (buy,         HexColor("#22c55e")),  # green
+        (buy,         HexColor("#F5A623")),  # green
         (hold,        HexColor("#f59e0b")),  # amber
         (sell,        HexColor("#ef4444")),  # red
         (strong_sell, HexColor("#991b1b")),  # deep red
@@ -2269,7 +2269,7 @@ def _draw_rec_distribution_bar(c, x, y, w, strong_buy, buy, hold, sell, strong_s
     c.setFont("Helvetica", 5.5)
     parts = [
         ("S.Buy", strong_buy, HexColor("#15803d")),
-        ("Buy",   buy,        HexColor("#22c55e")),
+        ("Buy",   buy,        HexColor("#F5A623")),
         ("Hold",  hold,       HexColor("#f59e0b")),
         ("Sell",  sell,       HexColor("#ef4444")),
         ("S.Sell",strong_sell,HexColor("#991b1b")),

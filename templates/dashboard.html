@@ -186,7 +186,7 @@ table,th,td{
    accent matches landing/brief/report headlines so the whole site
    speaks one editorial voice. */
 .panel-header{margin:0 0 22px;display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap}
-.panel-h-title{font-family:'Fraunces',Georgia,serif;font-weight:500;font-size:30px;color:#0d1320;letter-spacing:-.025em;line-height:1.1}
+.panel-h-title{font-family:'Fraunces',Georgia,serif;font-weight:500;font-size:30px;color:#0A0A0A;letter-spacing:-.025em;line-height:1.1}
 .panel-h-title em{font-style:italic;color:#15803d}
 .panel-h-sub{font-family:'Manrope','Inter',sans-serif;font-size:13.5px;color:#475569;margin-top:6px;font-weight:500}
 .panel-h-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
@@ -199,7 +199,7 @@ table,th,td{
   display:inline-flex;align-items:center;gap:8px;
   padding:11px 22px;border-radius:999px;
   background:linear-gradient(135deg,#FFE9B0 0%,#FFC75F 50%,#F5A623 100%);
-  color:#0d1320;
+  color:#0A0A0A;
   font-family:'Manrope','Inter',sans-serif;font-weight:800;font-size:13.5px;letter-spacing:-.005em;
   text-decoration:none;border:none;cursor:pointer;
   box-shadow:0 8px 22px -8px rgba(245,166,35,.55), 0 0 0 1px rgba(255,255,255,.18) inset;
@@ -466,7 +466,7 @@ tr:hover td{background:rgba(245,166,35,.06)}
 .fd-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
 /* Ticker symbol — used in fund cards AND the stock detail modal head.
    Editorial Fraunces serif treatment matches landing/report headlines. */
-.fd-tic{font-family:'Fraunces',Georgia,serif;font-size:32px;font-weight:500;color:#0d1320;letter-spacing:-.02em;line-height:1}
+.fd-tic{font-family:'Fraunces',Georgia,serif;font-size:32px;font-weight:500;color:#0A0A0A;letter-spacing:-.02em;line-height:1}
 .fd-co{font-size:12px;color:#374151;margin-top:3px;margin-bottom:8px}
 .fd-price{font-size:20px;font-weight:800;text-align:right}
 .fd-price.fd-price-xl{font-size:30px;font-weight:900;letter-spacing:-.01em;line-height:1.1}
@@ -520,7 +520,7 @@ tr:hover td{background:rgba(245,166,35,.06)}
 .rs-num{font-size:13px;font-weight:900;line-height:1}
 /* ====== IBD-STYLE BLUE DOT ====== */
 .bd-wrap{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:8px;background:rgba(59,130,246,.12);border:1px solid rgba(59,130,246,.35);cursor:default;white-space:nowrap}
-.bd-dot{width:9px;height:9px;border-radius:50%;background:#3b82f6;flex-shrink:0;box-shadow:0 0 0 0 rgba(59,130,246,.6);animation:bd-pulse 2s ease-in-out infinite}
+.bd-dot{width:9px;height:9px;border-radius:50%;background:#F5A623;flex-shrink:0;box-shadow:0 0 0 0 rgba(59,130,246,.6);animation:bd-pulse 2s ease-in-out infinite}
 .bd-label{font-size:10px;font-weight:800;color:#93c5fd;letter-spacing:.2px}
 @keyframes bd-pulse{0%{box-shadow:0 0 0 0 rgba(59,130,246,.6)}70%{box-shadow:0 0 0 7px rgba(59,130,246,0)}100%{box-shadow:0 0 0 0 rgba(59,130,246,0)}}
 .badge-row{display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin:5px 0 2px}
@@ -1255,7 +1255,7 @@ tr:hover td{background:rgba(245,166,35,.06)}
   animation:popIn .25s cubic-bezier(.34,1.56,.64,1)}
 .stock-modal-panel::after{
   content:"";position:absolute;top:0;left:0;right:0;height:3px;border-radius:20px 20px 0 0;
-  background:linear-gradient(90deg,#F5A623 0%,#FFC75F 40%,#22d3ee 100%);
+  background:linear-gradient(90deg,#F5A623 0%,#FFC75F 40%,#FFC75F 100%);
   pointer-events:none;
 }
 @keyframes popIn{from{transform:scale(.88);opacity:0}to{transform:scale(1);opacity:1}}
@@ -1641,7 +1641,7 @@ html.v2-dark .v2ov-skeleton .sk{background:linear-gradient(90deg,#121821 0%,#1f2
   background:linear-gradient(90deg,
     rgba(245,166,35,.65) 0%,
     rgba(74,222,128,.55) 50%,
-    rgba(34,211,238,.45) 100%);
+    rgba(255,199,95,.45) 100%);
   pointer-events:none;
 }
 html.v2-dark .v2ov-card{
@@ -1835,14 +1835,14 @@ body.v2 .v2ov-card.sectors .v2ov-sector-cell{
 /* Card titles — Fraunces serif, same editorial voice as the landing
    page section titles and /report headlines. The whole site speaks
    one language now. */
-.v2ov-title{font-family:'Fraunces',Georgia,serif;font-weight:500;font-size:20px;color:#0d1320;letter-spacing:-.015em;line-height:1.15}
+.v2ov-title{font-family:'Fraunces',Georgia,serif;font-weight:500;font-size:20px;color:#0A0A0A;letter-spacing:-.015em;line-height:1.15}
 .v2ov-sub{font-size:12.5px;color:#64748b;margin-top:4px;font-weight:500}
 
 /* Sector momentum pulse annotation — shown above the sector grid */
 .v2-sector-pulse{
   display:inline-flex;align-items:center;gap:6px;
   font-size:11.5px;font-weight:700;color:#15803d;
-  background:linear-gradient(135deg,#eef2ff 0%,#e0e7ff 100%);
+  background:linear-gradient(135deg,#FFF8E5 0%,#e0e7ff 100%);
   border:1px solid #86efac;border-radius:999px;
   padding:4px 10px;margin:0 0 10px 0;letter-spacing:.01em;
 }
@@ -1854,14 +1854,14 @@ body.v2 .v2ov-card.sectors .v2ov-sector-cell{
 .v2-quant-snapshot{
   position:relative;
   margin:10px 0 14px;padding:14px 16px 14px 20px;border-radius:12px;
-  background:linear-gradient(135deg,#f8fafc 0%,#eef2ff 100%);
+  background:linear-gradient(135deg,#f8fafc 0%,#FFF8E5 100%);
   border:1px solid #e0e7ff;
   font-size:12px;line-height:1.5;color:#1f2937;
   overflow:hidden;
 }
 .v2-quant-snapshot::before{
   content:'';position:absolute;left:0;top:0;bottom:0;width:4px;
-  background:linear-gradient(180deg,#F5A623 0%,#FFC75F 50%,#22d3ee 100%);
+  background:linear-gradient(180deg,#F5A623 0%,#FFC75F 50%,#FFC75F 100%);
 }
 .v2-quant-snapshot .v2-qs-hdr{
   font-size:10.5px;font-weight:800;letter-spacing:.08em;
@@ -1962,7 +1962,7 @@ body.v2 .v2ov-card.sectors .v2ov-sector-cell{
 .v2-profile-btn{
   display:inline-flex;align-items:center;gap:6px;
   padding:6px 12px;border-radius:8px;
-  background:linear-gradient(135deg,#eef2ff 0%,#f5f3ff 100%);
+  background:linear-gradient(135deg,#FFF8E5 0%,#FFF8E5 100%);
   border:1px solid #86efac;color:#15803d;font-weight:800;font-size:12px;
   cursor:pointer;transition:all .15s;
 }
@@ -1990,11 +1990,11 @@ body.v2 .v2ov-card.sectors .v2ov-sector-cell{
 .v2-profile-banner{
   display:flex;align-items:center;gap:10px;flex-wrap:wrap;
   padding:9px 14px;margin-bottom:14px;
-  background:linear-gradient(135deg,#eef2ff 0%,#f5f3ff 100%);
+  background:linear-gradient(135deg,#FFF8E5 0%,#FFF8E5 100%);
   border:1px solid #86efac;border-left:4px solid #15803d;border-radius:8px;
   font-size:12px;color:#1e293b;
 }
-.v2-pb-pill{font-weight:900;color:#6366f1;font-size:12px;letter-spacing:.02em}
+.v2-pb-pill{font-weight:900;color:#F5A623;font-size:12px;letter-spacing:.02em}
 .v2-pb-text{flex:1;min-width:200px}
 .v2-pb-close{
   background:#fff;border:1px solid #86efac;color:#15803d;
@@ -2199,7 +2199,7 @@ body[data-active-profile="conservative"] .fund-row:not([data-profiles~="conserva
 /* Clear-filter pill above the Universe table */
 .v2-uni-sector-pill{
   display:inline-flex;align-items:center;gap:8px;
-  background:linear-gradient(135deg,#eef2ff 0%,#f5f3ff 100%);
+  background:linear-gradient(135deg,#FFF8E5 0%,#FFF8E5 100%);
   border:1px solid #86efac;border-left:4px solid #15803d;border-radius:8px;
   padding:7px 12px;margin:8px 0 12px;font-size:12px;
 }
@@ -2266,7 +2266,7 @@ body[data-active-profile="conservative"] .fund-row:not([data-profiles~="conserva
 }
 .v2-mp-grade{font-size:10px!important;font-weight:800!important;padding:3px 8px!important;border-radius:6px!important}
 .v2-mp-meta{font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px;letter-spacing:.01em}
-.v2-mp-meta-sec{background:#eef2ff;color:#6366f1}
+.v2-mp-meta-sec{background:#FFF8E5;color:#F5A623}
 .v2-mp-meta-up{background:#FFF3D9;color:#15803d}
 .v2-mp-meta-above{background:#f1f5f9;color:#475569;border:1px solid #cbd5e1}
 
@@ -2353,7 +2353,7 @@ body[data-active-profile="conservative"] .fund-row:not([data-profiles~="conserva
 .v2-tc-s-label i{display:inline-block;width:8px;height:8px;border-radius:2px;flex-shrink:0}
 .v2-tc-s-item.hero .v2-tc-s-label i{background:linear-gradient(135deg,#15803d,#F5A623 50%,#FFC75F);box-shadow:0 0 8px rgba(74,222,128,.7)}
 .v2-tc-s-item.bench-spy .v2-tc-s-label i{background:#fbbf24;box-shadow:0 0 6px rgba(251,191,36,.5)}
-.v2-tc-s-item.bench-qqq .v2-tc-s-label i{background:#22d3ee;box-shadow:0 0 6px rgba(34,211,238,.5)}
+.v2-tc-s-item.bench-qqq .v2-tc-s-label i{background:#FFC75F;box-shadow:0 0 6px rgba(255,199,95,.5)}
 .v2-tc-s-val{font-size:22px;font-weight:900;letter-spacing:-.02em;line-height:1.1;color:#f1f5f9;font-variant-numeric:tabular-nums}
 .v2-tc-s-item.hero .v2-tc-s-val{font-size:24px;background:linear-gradient(135deg,#FFE9B0 0%,#FFC75F 50%,#F5A623 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
 .v2-tc-s-delta{font-size:11px;font-weight:700;color:#64748b;font-variant-numeric:tabular-nums}
@@ -2376,7 +2376,7 @@ body[data-active-profile="conservative"] .fund-row:not([data-profiles~="conserva
 .v2-tc-tip-row .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
 .v2-tc-tip-row .dot.t{background:linear-gradient(135deg,#15803d,#F5A623 50%,#FFC75F);box-shadow:0 0 6px rgba(74,222,128,.6)}
 .v2-tc-tip-row .dot.s{background:#fbbf24}
-.v2-tc-tip-row .dot.q{background:#22d3ee}
+.v2-tc-tip-row .dot.q{background:#FFC75F}
 .v2-tc-tip-row strong{color:#fff;font-weight:800;font-size:12px;margin-left:auto}
 .v2-tc-tip-row strong.up{color:#86efac}
 .v2-tc-tip-row strong.dn{color:#fda4af}
@@ -2473,14 +2473,14 @@ body[data-active-profile="conservative"] .fund-row:not([data-profiles~="conserva
 }
 .v2-focus-card::before{
   content:'';position:absolute;left:0;top:0;bottom:0;width:4px;
-  background:linear-gradient(180deg,#F5A623 0%,#FFC75F 50%,#22d3ee 100%);
+  background:linear-gradient(180deg,#F5A623 0%,#FFC75F 50%,#FFC75F 100%);
 }
 .v2-focus-head{margin-bottom:14px;padding-left:6px}
 /* Editorial serif title — matches the Fraunces treatment from the
    landing page and from /report/{ticker}. Same brand voice everywhere. */
 .v2-focus-title{
   font-family:'Fraunces',Georgia,serif;font-weight:500;
-  font-size:22px;color:#0d1320;letter-spacing:-.02em;line-height:1.15;
+  font-size:22px;color:#0A0A0A;letter-spacing:-.02em;line-height:1.15;
 }
 .v2-focus-sub{
   font-size:12px;color:#64748b;margin-top:3px;font-weight:600;
@@ -2508,7 +2508,7 @@ body[data-active-profile="conservative"] .fund-row:not([data-profiles~="conserva
 /* Default label color — violet/indigo as the SECONDARY brand accent
    (kept distinct from primary green on tickers/scores/CTAs). Creates
    visual rhythm: green = brand identity, violet = meta-labels. */
-.v2-focus-label{color:#6366f1}
+.v2-focus-label{color:#F5A623}
 /* Lighter score badge — white surface with a thin border, colour
    carried by the grade chip + the score number. No more heavy indigo
    block that was overwhelming the card header. */
@@ -2666,7 +2666,7 @@ html.v2-dark .v2-mp-mini-lbl{color:#cbd5e1}
 .v2-sm-tag{width:18px;font-size:13px;line-height:1;flex-shrink:0;text-align:center}
 .v2-sm-tag-spacer{width:18px;flex-shrink:0}
 .v2-sm-tag-hot{color:#dc2626}
-.v2-sm-tag-cold{color:#3b82f6}
+.v2-sm-tag-cold{color:#F5A623}
 .v2-sm-name{
   flex:0 0 38%;font-size:12px;font-weight:700;color:#0f172a;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:.01em;
@@ -2700,7 +2700,7 @@ html.v2-dark .v2-mp-mini-lbl{color:#cbd5e1}
 .v2-sm-more{
   margin-top:6px;padding:7px 10px;font-size:11px;color:#15803d;
   font-weight:700;text-align:center;cursor:pointer;border-radius:7px;
-  background:#FFF8E5;border:1px dashed #c7d2fe;transition:background .15s;
+  background:#FFF8E5;border:1px dashed #FFE9B0;transition:background .15s;
 }
 .v2-sm-more:hover{background:#FFF3D9}
 
@@ -2858,7 +2858,7 @@ html.v2-dark .v2-mp-mini-lbl{color:#cbd5e1}
 .v2-brf-head{max-width:980px;margin:0 auto 22px;padding:0 4px}
 /* Briefings eyebrow → violet to match the meta-label color rhythm
    established elsewhere (sets up secondary brand accent). */
-.v2-brf-eyebrow{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#6366f1}
+.v2-brf-eyebrow{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#F5A623}
 .v2-brf-title{font-size:24px;font-weight:900;letter-spacing:-.02em;color:#0f172a;margin-top:4px}
 .v2-brf-sub{font-size:13px;color:#64748b;font-weight:500;margin-top:6px;line-height:1.55;max-width:680px}
 .v2-brf-loading{padding:60px 0;text-align:center;color:#94a3b8;font-size:13px}
@@ -2892,7 +2892,7 @@ html.v2-dark .v2-mp-mini-lbl{color:#cbd5e1}
 }
 .v2-brf-back:hover{background:#FFF8E5}
 .v2-brf-d-hero{
-  background:linear-gradient(180deg,#eef2ff 0%,#f5f3ff 100%);
+  background:linear-gradient(180deg,#FFF8E5 0%,#FFF8E5 100%);
   border:1px solid rgba(245,166,35,.22);border-left:4px solid #15803d;border-radius:10px;
   padding:18px 22px;margin-bottom:20px;
 }
@@ -2925,7 +2925,7 @@ html.v2-dark .v2-mp-mini-lbl{color:#cbd5e1}
 .v2-brf-q-hero{
   display:flex;gap:16px;align-items:center;
   padding:18px 20px;border-radius:14px;
-  background:linear-gradient(135deg,#eef2ff 0%,#faf5ff 50%,#fdf2f8 100%);
+  background:linear-gradient(135deg,#FFF8E5 0%,#faf5ff 50%,#fdf2f8 100%);
   border:1px solid #e2e8f0;
   box-shadow:0 1px 2px rgba(15,23,42,.04);
   margin-bottom:18px;
@@ -2976,7 +2976,7 @@ html.v2-dark .v2-mp-mini-lbl{color:#cbd5e1}
 .v2-brf-q-quote{
   position:relative;
   padding:16px 20px 16px 50px;border-radius:12px;
-  background:linear-gradient(135deg,#f8fafc 0%,#eef2ff 100%);
+  background:linear-gradient(135deg,#f8fafc 0%,#FFF8E5 100%);
   border:1px solid #e2e8f0;border-left:3px solid #15803d;
   margin-bottom:18px;
 }
@@ -3632,7 +3632,7 @@ body.v2 .sm-bar{background:#f1f5f9!important}
 body.v2 .sm-bar > div,
 body.v2 .sm-bar-fill,
 body.v2 .sm-fill{
-  background:linear-gradient(90deg,#15803d,#F5A623,#22d3ee)!important;
+  background:linear-gradient(90deg,#15803d,#F5A623,#FFC75F)!important;
 }
 body.v2 .sm-cagr,
 body.v2 .sm-tam,
@@ -3718,7 +3718,7 @@ body.v2 #panel-model div[onclick^="openStockModal"] div[style*="border-radius:10
 /* Live factor profile panel — subtle off-white gradient instead
    of flat #fafbfc */
 body.v2 #panel-model div[onclick^="openStockModal"] div[style*="background:#fafbfc"]{
-  background:linear-gradient(135deg,#fbfbff 0%,#f5f3ff 60%,#FFF8E5 100%)!important;
+  background:linear-gradient(135deg,#fbfbff 0%,#FFF8E5 60%,#FFF8E5 100%)!important;
   border:1px solid rgba(245,166,35,.18)!important;
 }
 body.v2 #panel-model div[onclick^="openStockModal"] div[style*="background:#f1f5f9"][style*="border-bottom"]{
@@ -3795,7 +3795,7 @@ body.v2 .v2ov-kpi.hot5::before{display:none!important}
    TIER label, the most important pill on the card. */
 body.v2 .rating-strong,
 body.v2 .v2-pick-tier{
-  background:linear-gradient(135deg,#3b82f6 0%,#6366f1 30%,#8b5cf6 55%,#d946ef 100%)!important;
+  background:linear-gradient(135deg,#F5A623 0%,#F5A623 30%,#FFC75F 55%,#F5A623 100%)!important;
   color:#fff!important;
   border:none!important;
   box-shadow:0 2px 8px rgba(245,166,35,.30)!important;
@@ -4907,11 +4907,11 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
   if (!document.body.classList.contains('v2')) return;
 
   const SWAPS = [
-    ['#15803d','#4338ca'],['#D4860A','#6366f1'],['#F5A623','#6366f1'],
-    ['#D4860A','#4338ca'],['#F5A623','#6366f1'],['#FFC75F','#a5b4fc'],
-    ['#F5A623','#a5b4fc'],['#86efac','#a5b4fc'],
-    ['#bbf7d0','#e0e7ff'],['#FFF3D9','#eef2ff'],['#FFF8E5','#eef2ff'],
-    ['#d1fae5','#eef2ff'],
+    ['#15803d','#D4860A'],['#D4860A','#F5A623'],['#F5A623','#F5A623'],
+    ['#D4860A','#D4860A'],['#F5A623','#F5A623'],['#FFC75F','#FFE9B0'],
+    ['#F5A623','#FFE9B0'],['#86efac','#FFE9B0'],
+    ['#bbf7d0','#e0e7ff'],['#FFF3D9','#FFF8E5'],['#FFF8E5','#FFF8E5'],
+    ['#d1fae5','#FFF8E5'],
     ['rgba(212,134,10,','rgba(245,166,35,'],
     ['rgba(245,166,35,','rgba(245,166,35,'],
     ['rgba(21,128,61,','rgba(245,166,35,'],
@@ -5390,7 +5390,7 @@ function v2NewsCategory(text){
   if (/\b(beat|miss|earnings|reports|q[1-4]\b|quarterly|revenue|eps|profit)\b/.test(t))
     return {key:'earnings', label:'Earnings', emoji:'📊', importance:3, color:'#15803d', bg:'#FFF8E5'};
   if (/\b(raises? guidance|cuts? guidance|lowers? guidance|raises? outlook|guidance|outlook|forecast)\b/.test(t))
-    return {key:'guidance', label:'Guidance', emoji:'🎯', importance:3, color:'#7c3aed', bg:'#f5f3ff'};
+    return {key:'guidance', label:'Guidance', emoji:'🎯', importance:3, color:'#7c3aed', bg:'#FFF8E5'};
   if (/\b(upgrade|downgrade|price target|analyst|reiterates?|initiates? coverage|buy rating|sell rating|overweight|underweight)\b/.test(t))
     return {key:'analyst', label:'Analyst', emoji:'📝', importance:2, color:'#0369a1', bg:'#e0f2fe'};
   if (/\b(acquires?|acquisition|to acquire|merger|merges|partnership|joint venture|deal worth|takeover)\b/.test(t))
@@ -6233,7 +6233,7 @@ function v2RenderPerformanceChart(tickers){
         '</defs>' +
         '<path d="' + areaPath + '" fill="url(#v2hotgrad)" stroke="none"/>' +
         '<path d="' + spyPath + '" stroke="#94a3b8" stroke-width=".5" stroke-dasharray="1.5,1.5" fill="none" vector-effect="non-scaling-stroke"/>' +
-        '<path d="' + hotPath + '" stroke="#4338ca" stroke-width=".7" fill="none" vector-effect="non-scaling-stroke"/>' +
+        '<path d="' + hotPath + '" stroke="#D4860A" stroke-width=".7" fill="none" vector-effect="non-scaling-stroke"/>' +
       '</svg>' +
       '<div class="v2ov-chart-legend">' +
         '<span><i style="background:#15803d"></i> Hot List</span>' +
@@ -6770,7 +6770,7 @@ function v2UniverseChipsHTML(t){
   const list = Array.isArray(t && t.profiles) ? t.profiles : [];
   if (!list.length) return '';
   const meta = {
-    aggressive:   { label:'Aggressive',   emoji:'🚀', bg:'#eef2ff', col:'#4338ca', br:'#c7d2fe' },
+    aggressive:   { label:'Aggressive',   emoji:'🚀', bg:'#FFF8E5', col:'#D4860A', br:'#FFE9B0' },
     balanced:     { label:'Balanced',     emoji:'⚖️', bg:'#ecfeff', col:'#0e7490', br:'#a5f3fc' },
     conservative: { label:'Conservative', emoji:'🛡', bg:'#FFF3D9', col:'#15803d', br:'#86efac' },
   };
@@ -7187,7 +7187,7 @@ function v2RenderMarketPulseCompact(data){
   };
   const cards = [
     { key:'SPY',  label:'S&P 500',   stripe:'#2563eb' },
-    { key:'QQQ',  label:'NASDAQ',    stripe:'#8b5cf6' },
+    { key:'QQQ',  label:'NASDAQ',    stripe:'#FFC75F' },
     { key:'DIA',  label:'DOW 30',    stripe:'#10b981' },
     { key:'^VIX', label:'VIX',       stripe:'#f97316' },
   ];
@@ -8588,13 +8588,13 @@ function _v2RenderTsChart(hist){
     '<svg class="v2-ts-chart-svg" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="xMidYMid meet">' +
       '<defs>' +
         '<linearGradient id="v2-ts-chart-stroke" x1="0" y1="0" x2="1" y2="0">' +
-          '<stop offset="0%"   stop-color="#6366f1"/>' +
-          '<stop offset="50%"  stop-color="#a78bfa"/>' +
+          '<stop offset="0%"   stop-color="#F5A623"/>' +
+          '<stop offset="50%"  stop-color="#FFC75F"/>' +
           '<stop offset="100%" stop-color="#f472b6"/>' +
         '</linearGradient>' +
         '<linearGradient id="v2-ts-chart-fill" x1="0" y1="0" x2="0" y2="1">' +
-          '<stop offset="0%"  stop-color="#8b5cf6" stop-opacity="0.30"/>' +
-          '<stop offset="100%" stop-color="#8b5cf6" stop-opacity="0"/>' +
+          '<stop offset="0%"  stop-color="#FFC75F" stop-opacity="0.30"/>' +
+          '<stop offset="100%" stop-color="#FFC75F" stop-opacity="0"/>' +
         '</linearGradient>' +
       '</defs>' +
       `<line x1="${padL}" x2="${padL + innerW}" y1="${yAt(0).toFixed(1)}" y2="${yAt(0).toFixed(1)}" stroke="rgba(255,255,255,.08)" stroke-width="1"/>` +
@@ -9624,7 +9624,7 @@ function reverseDCF(t) {
     };
   } else if (gPct < 22) {
     verdict='Tough ask';             barLabel='HIGH BAR';
-    color='#3730a3'; bg='#e0e7ff'; border='#a5b4fc';
+    color='#3730a3'; bg='#e0e7ff'; border='#FFE9B0';
     scenarios = {
       beats:  'Modest upside — much of the optimism is already in the price.',
       meets:  'Roughly flat — meeting an already-elevated bar is not enough.',
@@ -11423,7 +11423,7 @@ function renderReports(tickers) {
     </div>`).join('');
 
   const dailyHTML = `
-    <div style="background:linear-gradient(135deg,#0d2440 0%,#15803d 100%);border-radius:14px;padding:24px;margin-bottom:18px;color:#fff;box-shadow:0 6px 20px rgba(13,36,64,.2)">
+    <div style="background:linear-gradient(135deg,#0d2440 0%,#15803d 100%);border-radius:14px;padding:24px;margin-bottom:18px;color:#fff;box-shadow:0 6px 20px rgba(10,10,10,.2)">
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:14px">
         <div>
           <div style="font-size:11px;color:#F5A623;font-weight:800;letter-spacing:.1em;text-transform:uppercase">Today's Daily Report</div>
@@ -11892,7 +11892,7 @@ function _modelViewToggle(active) {
     `<button onclick="showModelView('${key}')"
        style="padding:5px 12px;border:none;cursor:pointer;font-weight:700;
               font-size:11.5px;letter-spacing:.02em;font-family:inherit;
-              background:${active===key?'#4338ca':'transparent'};
+              background:${active===key?'#D4860A':'transparent'};
               color:${active===key?'#fff':'#64748b'};
               border-radius:6px;
               transition:all .15s">
@@ -12020,7 +12020,7 @@ function renderClosedTrades(data) {
     stretched:  {bg:'rgba(217,119,6,.1)',  fg:'#b45309', label:'📈 Valuation Stretched'},
     bar_failed: {bg:'rgba(124,58,237,.1)', fg:'#7c3aed', label:'🚨 Signal Exit'},
     signal:     {bg:'rgba(124,58,237,.1)', fg:'#7c3aed', label:'🚨 Signal Exit'},
-    rebuild:    {bg:'rgba(245,166,35,.1)', fg:'#4338ca', label:'🔄 Replaced'},
+    rebuild:    {bg:'rgba(245,166,35,.1)', fg:'#D4860A', label:'🔄 Replaced'},
     time:       {bg:'rgba(217,119,6,.1)',  fg:'#b45309', label:'⏰ Time Exit'},
   };
 
@@ -12253,7 +12253,7 @@ function renderModelPortfolio(data) {
         const pn = [
           ['Momentum',  p.pillars.momentum,           'Recent price action — 1m/3m gains, distance above SMA-50.',           '#F5A623', '#FFF8E5'],
           ['Growth',    p.pillars.growth,             'Revenue + EPS growth YoY.',                                            '#F5A623', '#f7fee7'],
-          ['Quality',   p.pillars.quality,            'Gross margin, FCF margin, debt/equity.',                               '#8b5cf6', '#f5f3ff'],
+          ['Quality',   p.pillars.quality,            'Gross margin, FCF margin, debt/equity.',                               '#FFC75F', '#FFF8E5'],
           ['Valuation', p.pillars.valuation,          'PEG, P/E, price vs analyst target.',                                   '#0891b2', '#ecfeff'],
           ['Sentiment', p.pillars.sentiment,          'Analyst recs, insider buys, social mentions.',                         '#db2777', '#fdf2f8'],
           ['Outlook',   p.pillars.growth_potential,   'Analyst gap + DCF-implied CAGR.',                                      '#d97706', '#fef3c7'],
@@ -12725,15 +12725,15 @@ function v2RenderTrackerChartHTML(d){
         '<defs>' +
           // Hero stroke: brand gradient
           '<linearGradient id="v2-tc-grad-stroke" x1="0" y1="0" x2="1" y2="0">' +
-            '<stop offset="0%"   stop-color="#6366f1"/>' +
-            '<stop offset="50%"  stop-color="#a78bfa"/>' +
+            '<stop offset="0%"   stop-color="#F5A623"/>' +
+            '<stop offset="50%"  stop-color="#FFC75F"/>' +
             '<stop offset="100%" stop-color="#f472b6"/>' +
           '</linearGradient>' +
           // Area fill: violet → transparent (vertical)
           '<linearGradient id="v2-tc-grad-fill" x1="0" y1="0" x2="0" y2="1">' +
-            '<stop offset="0%"  stop-color="#8b5cf6" stop-opacity="0.45"/>' +
-            '<stop offset="60%" stop-color="#8b5cf6" stop-opacity="0.10"/>' +
-            '<stop offset="100%" stop-color="#8b5cf6" stop-opacity="0"/>' +
+            '<stop offset="0%"  stop-color="#FFC75F" stop-opacity="0.45"/>' +
+            '<stop offset="60%" stop-color="#FFC75F" stop-opacity="0.10"/>' +
+            '<stop offset="100%" stop-color="#FFC75F" stop-opacity="0"/>' +
           '</linearGradient>' +
           // Heavy glow filter for the hero line (drives the premium look)
           '<filter id="v2-tc-line-glow" x="-20%" y="-50%" width="140%" height="200%">' +
@@ -12757,12 +12757,12 @@ function v2RenderTrackerChartHTML(d){
         // Benchmark lines — amber for S&P 500, cyan for NASDAQ, both thin
         // and pushed back via opacity so the hero line stays dominant.
         '<path d="' + sLine + '" fill="none" stroke="#fbbf24" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="3,3" opacity="0.75"/>' +
-        '<path d="' + qLine + '" fill="none" stroke="#22d3ee" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round" opacity="0.80"/>' +
+        '<path d="' + qLine + '" fill="none" stroke="#FFC75F" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round" opacity="0.80"/>' +
         // Hero line — brand gradient stroke with heavy glow
         '<path d="' + tLine + '" fill="none" stroke="url(#v2-tc-grad-stroke)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" filter="url(#v2-tc-line-glow)"/>' +
         // Benchmark endpoints — colored to match their lines (amber + cyan)
         `<circle cx="${sEndX}" cy="${sEndY}" r="3"   fill="#fbbf24" stroke="#0a0e1a" stroke-width="1.5" opacity="0.95"/>` +
-        `<circle cx="${qEndX}" cy="${qEndY}" r="3"   fill="#22d3ee" stroke="#0a0e1a" stroke-width="1.5" opacity="0.95"/>` +
+        `<circle cx="${qEndX}" cy="${qEndY}" r="3"   fill="#FFC75F" stroke="#0a0e1a" stroke-width="1.5" opacity="0.95"/>` +
         // Hero endpoint — bright magenta with heavy halo
         `<circle cx="${tEndX}" cy="${tEndY}" r="11" fill="#ec4899" opacity="0.45" filter="url(#v2-tc-dot-glow)"/>` +
         `<circle cx="${tEndX}" cy="${tEndY}" r="5"  fill="#f9a8d4" stroke="#fff" stroke-width="2"/>` +
@@ -12774,7 +12774,7 @@ function v2RenderTrackerChartHTML(d){
           `<line class="v2-tc-cursor-line" x1="0" x2="0" y1="${padT}" y2="${padT + innerH}" stroke="rgba(255,255,255,.35)" stroke-width="1" stroke-dasharray="3,3"/>` +
           '<circle class="v2-tc-cursor-dot v2-tc-cursor-dot-t" r="6" fill="#f9a8d4" stroke="#fff" stroke-width="2"/>' +
           '<circle class="v2-tc-cursor-dot v2-tc-cursor-dot-s" r="3.5" fill="#fbbf24" stroke="#0a0e1a" stroke-width="1.5"/>' +
-          '<circle class="v2-tc-cursor-dot v2-tc-cursor-dot-q" r="3.5" fill="#22d3ee" stroke="#0a0e1a" stroke-width="1.5"/>' +
+          '<circle class="v2-tc-cursor-dot v2-tc-cursor-dot-q" r="3.5" fill="#FFC75F" stroke="#0a0e1a" stroke-width="1.5"/>' +
         '</g>' +
         // Invisible overlay catches mouse moves across the whole plot.
         // Without this, mousemove only fires when directly over a stroke.
@@ -14428,7 +14428,7 @@ function showUpgradeSuccess() {
 /* ── Auth modal dark hero — same frequency as landing page ───────── */
 .ah-left{
   flex:0 0 50%;
-  background:#0d1320;
+  background:#0A0A0A;
   display:flex;flex-direction:column;padding:40px 44px;
   position:relative;overflow:hidden;
 }
@@ -14440,8 +14440,8 @@ function showUpgradeSuccess() {
     radial-gradient(ellipse 60% 50% at 12% 8%,   rgba(245,166,35,.22)  0%, transparent 60%),
     radial-gradient(ellipse 50% 45% at 88% 78%,  rgba(167,139,250,.18) 0%, transparent 60%),
     radial-gradient(ellipse 45% 40% at 72% 22%,  rgba(74,222,128,.18) 0%, transparent 55%),
-    radial-gradient(ellipse 40% 40% at 30% 95%,  rgba(34,211,238,.14) 0%, transparent 60%),
-    #0d1320;
+    radial-gradient(ellipse 40% 40% at 30% 95%,  rgba(255,199,95,.14) 0%, transparent 60%),
+    #0A0A0A;
 }
 .ah-left-bg::before{
   content:"";position:absolute;top:-30%;left:50%;transform:translateX(-50%);
@@ -14449,7 +14449,7 @@ function showUpgradeSuccess() {
   background:conic-gradient(from 0deg,
     rgba(245,166,35,.30),
     rgba(74,222,128,.28),
-    rgba(34,211,238,.24),
+    rgba(255,199,95,.24),
     rgba(167,139,250,.26),
     rgba(245,166,35,.30));
   filter:blur(90px);opacity:.55;
@@ -14490,7 +14490,7 @@ function showUpgradeSuccess() {
   background:radial-gradient(circle at 35% 30%, #d4ff7a, #F5A623 55%, #15803d);
   box-shadow:0 0 22px rgba(245,166,35,.7);
   display:flex;align-items:center;justify-content:center;
-  font-size:11px;color:#0d1320;font-weight:900;
+  font-size:11px;color:#0A0A0A;font-weight:900;
 }
 .ah-live-badge .pulse{
   position:relative;width:7px;height:7px;border-radius:50%;background:#FFC75F;

@@ -92,8 +92,8 @@ def _shell(title: str, slug: str, body_html: str) -> str:
 <a href="/" class="brand-bar">
   <svg viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg" style="width:20px;height:20px">
     <defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#16a34a"/>
-      <stop offset=".55" stop-color="#84cc16"/>
+      <stop offset="0" stop-color="#D4860A"/>
+      <stop offset=".55" stop-color="#F5A623"/>
       <stop offset="1" stop-color="#a3e635"/>
     </linearGradient></defs>
     <rect width="28" height="28" rx="7" fill="#0f172a"/>

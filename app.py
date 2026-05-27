@@ -554,13 +554,13 @@ async def favicon():
     svg = (
         '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">'
         '<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">'
-        '<stop offset="0" stop-color="#16a34a"/>'
-        '<stop offset="0.5" stop-color="#84cc16"/>'
-        '<stop offset="1" stop-color="#a3e635"/></linearGradient></defs>'
+        '<stop offset="0" stop-color="#D4860A"/>'
+        '<stop offset="0.5" stop-color="#F5A623"/>'
+        '<stop offset="1" stop-color="#FFE9B0"/></linearGradient></defs>'
         '<rect width="32" height="32" rx="7" fill="#0f172a"/>'
         '<polyline points="4,22 10,13 16,17 21,7 28,14" stroke="url(#g)" '
         'stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>'
-        '<circle cx="21" cy="7" r="2.8" fill="#a3e635"/></svg>'
+        '<circle cx="21" cy="7" r="2.8" fill="#FFE9B0"/></svg>'
     )
     return Response(content=svg, media_type="image/svg+xml",
                     headers={"Cache-Control": "public, max-age=86400"})
@@ -579,13 +579,13 @@ async def static_icon_fallback(filename: str):
     svg = (
         '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">'
         '<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">'
-        '<stop offset="0" stop-color="#16a34a"/>'
-        '<stop offset="0.55" stop-color="#84cc16"/>'
-        '<stop offset="1" stop-color="#a3e635"/></linearGradient></defs>'
+        '<stop offset="0" stop-color="#D4860A"/>'
+        '<stop offset="0.55" stop-color="#F5A623"/>'
+        '<stop offset="1" stop-color="#FFE9B0"/></linearGradient></defs>'
         '<rect width="512" height="512" rx="112" fill="#0f172a"/>'
         '<polyline points="72,360 160,232 256,290 352,128 432,210" stroke="url(#g)" '
         'stroke-width="38" fill="none" stroke-linecap="round" stroke-linejoin="round"/>'
-        '<circle cx="352" cy="128" r="42" fill="#a3e635"/></svg>'
+        '<circle cx="352" cy="128" r="42" fill="#FFE9B0"/></svg>'
     )
     # Crawlers care most about getting 200 + valid image data; SVG is fine
     return Response(content=svg, media_type="image/svg+xml",
@@ -969,29 +969,29 @@ def _render_morning_brief() -> str:
 
   .top{{background:#fff;border-bottom:1px solid rgba(15,23,42,.08);position:sticky;top:0;z-index:50}}
   .top-inner{{display:flex;align-items:center;justify-content:space-between;max-width:1100px;margin:0 auto;padding:14px 28px}}
-  .brand{{display:flex;align-items:center;gap:10px;font-family:'Manrope','Inter',sans-serif;font-weight:900;font-size:17px;color:#0d1320}}
-  .brand-mark{{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,#fff,#f1f5f9);display:flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:0 0 0 1px rgba(34,197,94,.4)}}
+  .brand{{display:flex;align-items:center;gap:10px;font-family:'Manrope','Inter',sans-serif;font-weight:900;font-size:17px;color:#0A0A0A}}
+  .brand-mark{{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,#fff,#f1f5f9);display:flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:0 0 0 1px rgba(245,166,35,.4)}}
   .brand-mark img{{width:80%;height:80%;object-fit:contain;filter:drop-shadow(0 0 5px rgba(132,224,43,.45))}}
-  .brand .h{{background:linear-gradient(135deg,#a3e635 0%,#4ade80 50%,#22c55e 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}}
+  .brand .h{{background:linear-gradient(135deg,#FFE9B0 0%,#FFC75F 50%,#F5A623 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}}
   .top-nav{{display:flex;gap:24px;font-family:'Manrope','Inter',sans-serif;font-size:13.5px;font-weight:600;color:#475569}}
   .top-nav a.active{{color:#15803d}}
-  .top-cta{{padding:8px 18px;border-radius:999px;background:#0d1320;color:#fff;font-family:'Manrope','Inter',sans-serif;font-size:13px;font-weight:700}}
+  .top-cta{{padding:8px 18px;border-radius:999px;background:#0A0A0A;color:#fff;font-family:'Manrope','Inter',sans-serif;font-size:13px;font-weight:700}}
   @media (max-width:760px){{.top-nav{{display:none}}}}
 
   /* ── Article shell ── */
   .brief{{max-width:760px;margin:0 auto;padding:56px 28px 80px}}
   .masthead{{display:flex;align-items:center;gap:10px;font-family:'Manrope','Inter',sans-serif;font-size:11px;font-weight:700;letter-spacing:.18em;color:#15803d;text-transform:uppercase;margin-bottom:14px}}
-  .masthead::before{{content:"";width:24px;height:2px;background:linear-gradient(90deg,#22c55e,#22d3ee);border-radius:2px}}
-  h1.brief-title{{font-family:'Fraunces',serif;font-weight:500;font-size:clamp(36px,5vw,58px);line-height:1.05;letter-spacing:-.025em;color:#0d1320;margin-bottom:14px}}
+  .masthead::before{{content:"";width:24px;height:2px;background:linear-gradient(90deg,#F5A623,#FFC75F);border-radius:2px}}
+  h1.brief-title{{font-family:'Fraunces',serif;font-weight:500;font-size:clamp(36px,5vw,58px);line-height:1.05;letter-spacing:-.025em;color:#0A0A0A;margin-bottom:14px}}
   h1.brief-title em{{font-style:italic;color:#15803d}}
   .brief-date{{font-family:'Manrope','Inter',sans-serif;font-size:13.5px;color:#64748b;margin-bottom:8px;font-weight:500}}
   .brief-meta{{font-family:'Manrope','Inter',sans-serif;font-size:12.5px;color:#94a3b8;display:flex;gap:14px;flex-wrap:wrap;margin-bottom:36px}}
   .brief-meta span{{display:inline-flex;align-items:center;gap:6px}}
 
-  .lede{{font-family:'Source Serif 4',serif;font-size:22px;line-height:1.55;color:#0d1320;font-weight:500;margin-bottom:48px}}
+  .lede{{font-family:'Source Serif 4',serif;font-size:22px;line-height:1.55;color:#0A0A0A;font-weight:500;margin-bottom:48px}}
   .lede strong{{color:#15803d;font-weight:700}}
 
-  h2{{font-family:'Fraunces',serif;font-weight:500;font-size:30px;letter-spacing:-.02em;color:#0d1320;margin:48px 0 18px;line-height:1.15}}
+  h2{{font-family:'Fraunces',serif;font-weight:500;font-size:30px;letter-spacing:-.02em;color:#0A0A0A;margin:48px 0 18px;line-height:1.15}}
   h2 em{{font-style:italic;color:#15803d}}
 
   /* ── Top 3 pick cards ── */
@@ -1002,13 +1002,13 @@ def _render_morning_brief() -> str:
     transition:transform .15s,box-shadow .15s,border-color .15s;
     box-shadow:0 1px 2px rgba(15,23,42,.04);
   }}
-  .b-pick:hover{{transform:translateX(4px);border-color:rgba(34,197,94,.30);box-shadow:0 12px 28px -16px rgba(34,197,94,.25)}}
+  .b-pick:hover{{transform:translateX(4px);border-color:rgba(245,166,35,.30);box-shadow:0 12px 28px -16px rgba(245,166,35,.25)}}
   .b-pick-logo{{width:48px;height:48px;border-radius:11px;background:#fff;box-shadow:0 0 0 1px rgba(15,23,42,.08);display:flex;align-items:center;justify-content:center;overflow:hidden}}
   .b-pick-logo img{{width:100%;height:100%;object-fit:contain;padding:5px}}
-  .b-pick-logo span{{font-family:'JetBrains Mono',monospace;font-weight:800;font-size:14px;color:#0d1320}}
+  .b-pick-logo span{{font-family:'JetBrains Mono',monospace;font-weight:800;font-size:14px;color:#0A0A0A}}
   .b-pick-body{{min-width:0;font-family:'Manrope','Inter',sans-serif}}
   .b-pick-row{{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:4px}}
-  .b-pick-sym{{font-family:'JetBrains Mono',monospace;font-weight:800;font-size:16px;color:#0d1320;letter-spacing:-.01em}}
+  .b-pick-sym{{font-family:'JetBrains Mono',monospace;font-weight:800;font-size:16px;color:#0A0A0A;letter-spacing:-.01em}}
   .b-pick-score{{font-family:'Fraunces',serif;font-weight:500;font-size:28px;color:#15803d;line-height:1;letter-spacing:-.02em}}
   .b-pick-name{{font-size:13.5px;color:#475569;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}}
   .b-pick-meta{{font-family:'Manrope','Inter',sans-serif;font-size:12px;color:#94a3b8;margin-top:6px;display:flex;gap:12px;font-feature-settings:'tnum' 1}}
@@ -1019,13 +1019,13 @@ def _render_morning_brief() -> str:
   .b-row{{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:24px}}
   @media (max-width:640px){{.b-row{{grid-template-columns:1fr}}}}
   .b-col{{background:#fff;border:1px solid rgba(15,23,42,.08);border-radius:14px;padding:20px;box-shadow:0 1px 2px rgba(15,23,42,.04)}}
-  .b-col h3{{font-family:'Fraunces',serif;font-weight:500;font-size:18px;color:#0d1320;letter-spacing:-.01em;margin-bottom:14px;display:flex;align-items:center;gap:8px}}
+  .b-col h3{{font-family:'Fraunces',serif;font-weight:500;font-size:18px;color:#0A0A0A;letter-spacing:-.01em;margin-bottom:14px;display:flex;align-items:center;gap:8px}}
 
   /* Mini ticker rows */
   .b-mini-list{{display:flex;flex-direction:column;gap:2px}}
   .b-mini{{display:grid;grid-template-columns:60px 1fr auto;gap:10px;align-items:baseline;padding:8px 10px;border-radius:8px;font-family:'Manrope','Inter',sans-serif;transition:background .12s;color:inherit}}
   .b-mini:hover{{background:#f7faf4}}
-  .b-mini-sym{{font-family:'JetBrains Mono',monospace;font-weight:800;font-size:13px;color:#0d1320}}
+  .b-mini-sym{{font-family:'JetBrains Mono',monospace;font-weight:800;font-size:13px;color:#0A0A0A}}
   .b-mini-name{{font-size:12.5px;color:#475569;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}}
   .b-mini-chg{{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:12.5px;text-align:right;font-feature-settings:'tnum' 1}}
 
@@ -1036,17 +1036,17 @@ def _render_morning_brief() -> str:
   .b-sector.cold{{background:linear-gradient(135deg,#fef3f2 0%,#ffffff 70%);border-color:rgba(220,38,38,.20)}}
   .b-sector-tag{{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.10em;text-transform:uppercase;font-weight:700;color:#ea580c;margin-bottom:8px}}
   .b-sector.cold .b-sector-tag{{color:#b91c1c}}
-  .b-sector-name{{font-family:'Fraunces',serif;font-weight:500;font-size:22px;color:#0d1320;letter-spacing:-.015em;margin-bottom:6px}}
+  .b-sector-name{{font-family:'Fraunces',serif;font-weight:500;font-size:22px;color:#0A0A0A;letter-spacing:-.015em;margin-bottom:6px}}
   .b-sector-meta{{font-size:13px;color:#475569}}
-  .b-sector-meta strong{{color:#0d1320;font-weight:700;font-family:'JetBrains Mono',monospace;font-feature-settings:'tnum' 1}}
+  .b-sector-meta strong{{color:#0A0A0A;font-weight:700;font-family:'JetBrains Mono',monospace;font-feature-settings:'tnum' 1}}
 
   .empty{{padding:20px 4px;color:#94a3b8;font-size:13px;font-family:'Manrope','Inter',sans-serif;font-style:italic;text-align:center}}
 
   /* ── Mode swap CTA ── */
-  .swap{{background:#0d1320;color:#fff;border-radius:16px;padding:24px 28px;margin:48px 0 24px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}}
+  .swap{{background:#0A0A0A;color:#fff;border-radius:16px;padding:24px 28px;margin:48px 0 24px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}}
   .swap .lbl{{font-family:'Manrope','Inter',sans-serif;font-size:14px;line-height:1.5}}
-  .swap .lbl strong{{color:#a3e635;display:block;font-family:'Fraunces',serif;font-weight:500;font-size:18px;margin-bottom:4px;letter-spacing:-.01em;font-style:italic}}
-  .swap .btn{{padding:11px 22px;border-radius:999px;background:linear-gradient(135deg,#a3e635,#4ade80,#22c55e);color:#0d1320;font-family:'Manrope','Inter',sans-serif;font-weight:800;font-size:13.5px;text-decoration:none;box-shadow:0 8px 22px -8px rgba(34,197,94,.5)}}
+  .swap .lbl strong{{color:#FFE9B0;display:block;font-family:'Fraunces',serif;font-weight:500;font-size:18px;margin-bottom:4px;letter-spacing:-.01em;font-style:italic}}
+  .swap .btn{{padding:11px 22px;border-radius:999px;background:linear-gradient(135deg,#FFE9B0,#FFC75F,#F5A623);color:#0A0A0A;font-family:'Manrope','Inter',sans-serif;font-weight:800;font-size:13.5px;text-decoration:none;box-shadow:0 8px 22px -8px rgba(245,166,35,.5)}}
 
   footer{{padding:60px 28px 40px;color:#94a3b8;font-family:'Manrope','Inter',sans-serif;font-size:12.5px;text-align:center;border-top:1px solid rgba(15,23,42,.08);margin-top:60px}}
   footer a{{color:#15803d;font-weight:700}}
@@ -1188,18 +1188,18 @@ async def reports_index():
   a{{text-decoration:none;color:inherit}}
   .top{{background:#fff;border-bottom:1px solid rgba(15,23,42,.08);position:sticky;top:0;z-index:50}}
   .top-inner{{display:flex;align-items:center;justify-content:space-between;max-width:1200px;margin:0 auto;padding:14px 28px}}
-  .brand{{display:flex;align-items:center;gap:10px;font-weight:900;font-size:17px;letter-spacing:-.02em;color:#0d1320}}
-  .brand-mark{{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,#fff,#f1f5f9);display:flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:0 0 0 1px rgba(34,197,94,.4),0 6px 16px -6px rgba(34,197,94,.3)}}
+  .brand{{display:flex;align-items:center;gap:10px;font-weight:900;font-size:17px;letter-spacing:-.02em;color:#0A0A0A}}
+  .brand-mark{{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,#fff,#f1f5f9);display:flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:0 0 0 1px rgba(245,166,35,.4),0 6px 16px -6px rgba(245,166,35,.3)}}
   .brand-mark img{{width:80%;height:80%;object-fit:contain;filter:drop-shadow(0 0 5px rgba(132,224,43,.45))}}
-  .brand .h{{background:linear-gradient(135deg,#a3e635 0%,#4ade80 50%,#22c55e 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;filter:drop-shadow(0 0 6px rgba(132,224,43,.25))}}
+  .brand .h{{background:linear-gradient(135deg,#FFE9B0 0%,#FFC75F 50%,#F5A623 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;filter:drop-shadow(0 0 6px rgba(132,224,43,.25))}}
   .top-nav{{display:flex;gap:24px;font-size:13.5px;font-weight:600;color:#475569}}
   .top-nav a.active{{color:#15803d}}
-  .top-cta{{padding:8px 18px;border-radius:999px;background:#0d1320;color:#fff;font-size:13px;font-weight:700}}
+  .top-cta{{padding:8px 18px;border-radius:999px;background:#0A0A0A;color:#fff;font-size:13px;font-weight:700}}
   @media (max-width:760px){{.top-nav{{display:none}}}}
 
   .head{{max-width:1100px;margin:0 auto;padding:56px 28px 32px}}
-  .eyebrow{{display:inline-block;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#15803d;font-weight:700;padding:5px 10px;border-radius:999px;background:rgba(34,197,94,.10);border:1px solid rgba(34,197,94,.30);margin-bottom:14px}}
-  h1{{font-family:'Fraunces',serif;font-weight:500;font-size:clamp(36px,5vw,56px);line-height:1.05;letter-spacing:-.025em;color:#0d1320;margin-bottom:14px}}
+  .eyebrow{{display:inline-block;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#15803d;font-weight:700;padding:5px 10px;border-radius:999px;background:rgba(245,166,35,.10);border:1px solid rgba(245,166,35,.30);margin-bottom:14px}}
+  h1{{font-family:'Fraunces',serif;font-weight:500;font-size:clamp(36px,5vw,56px);line-height:1.05;letter-spacing:-.025em;color:#0A0A0A;margin-bottom:14px}}
   h1 em{{font-style:italic;color:#15803d}}
   .sub{{font-size:16px;color:#475569;line-height:1.6;max-width:600px}}
 
@@ -1209,8 +1209,8 @@ async def reports_index():
   .row{{display:grid;grid-template-columns:80px 1fr 180px 90px 70px;gap:14px;padding:16px 22px;border-bottom:1px solid rgba(15,23,42,.06);align-items:center;font-size:14px;transition:background .12s,transform .15s;color:inherit;text-decoration:none}}
   .row:last-child{{border-bottom:none}}
   .row:hover{{background:#f7faf4;transform:translateX(4px)}}
-  .row .sym{{font-family:'JetBrains Mono',monospace;font-weight:800;color:#0d1320;letter-spacing:-.01em}}
-  .row .nm{{font-family:'Fraunces',serif;font-weight:500;font-size:16px;color:#0d1320;letter-spacing:-.01em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}}
+  .row .sym{{font-family:'JetBrains Mono',monospace;font-weight:800;color:#0A0A0A;letter-spacing:-.01em}}
+  .row .nm{{font-family:'Fraunces',serif;font-weight:500;font-size:16px;color:#0A0A0A;letter-spacing:-.01em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}}
   .row .sect{{color:#64748b;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}}
   .row .chg{{font-family:'JetBrains Mono',monospace;font-weight:700;text-align:right;color:#64748b}}
   .row .chg.up{{color:#15803d}} .row .chg.dn{{color:#b91c1c}}
@@ -1327,7 +1327,7 @@ def _render_report_page(t: dict) -> str:
     if score >= 80:
         verdict, vd_tone = "Strong Buy", "#15803d"
     elif score >= 70:
-        verdict, vd_tone = "Buy", "#16a34a"
+        verdict, vd_tone = "Buy", "#D4860A"
     elif score >= 60:
         verdict, vd_tone = "Accumulate", "#b45309"
     elif score >= 45:
@@ -1410,43 +1410,43 @@ def _render_report_page(t: dict) -> str:
     font-feature-settings:'tnum' 1, 'cv02' 1, 'cv11' 1;
     font-variant-numeric:tabular-nums;
   }}
-  a{{color:#15803d;text-decoration:underline;text-decoration-color:rgba(34,197,94,.4);text-underline-offset:3px}}
+  a{{color:#15803d;text-decoration:underline;text-decoration-color:rgba(245,166,35,.4);text-underline-offset:3px}}
   img{{display:block;max-width:100%}}
 
   /* ─── Top bar ─── */
   .top{{background:#fff;border-bottom:1px solid rgba(15,23,42,.08);position:sticky;top:0;z-index:50}}
   .top-inner{{display:flex;align-items:center;justify-content:space-between;max-width:1200px;margin:0 auto;padding:14px 28px}}
-  .brand{{display:flex;align-items:center;gap:10px;font-family:'Manrope','Inter',sans-serif;font-weight:900;font-size:17px;letter-spacing:-.02em;color:#0d1320;text-decoration:none}}
-  .brand-mark{{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,#fff,#f1f5f9);display:flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:0 0 0 1px rgba(34,197,94,.4),0 6px 16px -6px rgba(34,197,94,.3)}}
+  .brand{{display:flex;align-items:center;gap:10px;font-family:'Manrope','Inter',sans-serif;font-weight:900;font-size:17px;letter-spacing:-.02em;color:#0A0A0A;text-decoration:none}}
+  .brand-mark{{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,#fff,#f1f5f9);display:flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:0 0 0 1px rgba(245,166,35,.4),0 6px 16px -6px rgba(245,166,35,.3)}}
   .brand-mark img{{width:80%;height:80%;object-fit:contain;filter:drop-shadow(0 0 5px rgba(132,224,43,.45))}}
-  .brand .h{{background:linear-gradient(135deg,#a3e635 0%,#4ade80 50%,#22c55e 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;filter:drop-shadow(0 0 6px rgba(132,224,43,.25))}}
+  .brand .h{{background:linear-gradient(135deg,#FFE9B0 0%,#FFC75F 50%,#F5A623 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;filter:drop-shadow(0 0 6px rgba(132,224,43,.25))}}
   .top-nav{{display:flex;gap:24px;font-family:'Manrope','Inter',sans-serif;font-size:13.5px;font-weight:600;color:#475569}}
   .top-nav a{{text-decoration:none;color:inherit;transition:color .15s}}
-  .top-nav a:hover{{color:#0d1320}}
+  .top-nav a:hover{{color:#0A0A0A}}
   .top-nav a.active{{color:#15803d}}
-  .top-cta{{padding:8px 18px;border-radius:999px;background:#0d1320;color:#fff;font-family:'Manrope','Inter',sans-serif;font-size:13px;font-weight:700;text-decoration:none}}
+  .top-cta{{padding:8px 18px;border-radius:999px;background:#0A0A0A;color:#fff;font-family:'Manrope','Inter',sans-serif;font-size:13px;font-weight:700;text-decoration:none}}
   @media (max-width:760px){{.top-nav{{display:none}}}}
 
   /* ─── Article ─── */
   .article{{max-width:760px;margin:48px auto 0;padding:0 28px}}
   .breadcrumb{{font-family:'Manrope','Inter',sans-serif;font-size:12px;letter-spacing:.08em;color:#64748b;margin-bottom:24px;text-transform:uppercase;font-weight:600}}
   .breadcrumb a{{color:#15803d;text-decoration:none}}
-  h1.article-title{{font-family:'Fraunces',serif;font-weight:500;font-size:clamp(34px,5vw,58px);line-height:1.05;letter-spacing:-.025em;color:#0d1320;margin-bottom:22px}}
+  h1.article-title{{font-family:'Fraunces',serif;font-weight:500;font-size:clamp(34px,5vw,58px);line-height:1.05;letter-spacing:-.025em;color:#0A0A0A;margin-bottom:22px}}
   h1.article-title em{{font-style:italic;color:#15803d}}
   .byline{{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:36px;font-family:'Manrope','Inter',sans-serif;font-size:13.5px;color:#64748b}}
-  .byline .avatar{{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#22c55e,#22d3ee);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:#0d1320}}
-  .byline strong{{color:#0d1320;font-weight:700;display:block}}
+  .byline .avatar{{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#F5A623,#FFC75F);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:#0A0A0A}}
+  .byline strong{{color:#0A0A0A;font-weight:700;display:block}}
   .read-meta{{display:flex;gap:16px;font-size:12.5px;color:#94a3b8;margin-left:auto;flex-wrap:wrap}}
 
   /* ─── Verdict card ─── */
   .verdict{{background:linear-gradient(180deg,#ffffff,#f4f7f3);border:1px solid rgba(15,23,42,.08);border-radius:18px;padding:28px 30px;margin-bottom:48px;box-shadow:0 1px 0 #fff inset,0 18px 40px -28px rgba(15,23,42,.18);display:grid;grid-template-columns:auto 1fr auto;gap:24px;align-items:center}}
-  .verdict-logo{{width:64px;height:64px;border-radius:14px;background:#fff;color:#0d1320;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-weight:800;font-size:18px;letter-spacing:.02em;flex-shrink:0;box-shadow:0 0 0 1px rgba(15,23,42,.08);overflow:hidden}}
+  .verdict-logo{{width:64px;height:64px;border-radius:14px;background:#fff;color:#0A0A0A;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-weight:800;font-size:18px;letter-spacing:.02em;flex-shrink:0;box-shadow:0 0 0 1px rgba(15,23,42,.08);overflow:hidden}}
   .verdict-logo img{{width:100%;height:100%;object-fit:contain;padding:6px}}
   .verdict-info{{min-width:0}}
   .verdict-sym{{font-family:'Manrope','Inter',sans-serif;font-size:13px;font-weight:700;letter-spacing:.04em;color:#64748b;text-transform:uppercase;margin-bottom:6px}}
-  .verdict-title{{font-family:'Fraunces',serif;font-weight:500;font-size:24px;letter-spacing:-.015em;color:#0d1320;margin-bottom:6px;line-height:1.15}}
+  .verdict-title{{font-family:'Fraunces',serif;font-weight:500;font-size:24px;letter-spacing:-.015em;color:#0A0A0A;margin-bottom:6px;line-height:1.15}}
   .verdict-meta{{font-family:'Manrope','Inter',sans-serif;font-size:12.5px;color:#64748b;margin-bottom:8px}}
-  .verdict-tag{{display:inline-block;padding:5px 11px;border-radius:999px;background:rgba(34,197,94,.12);color:{vd_tone};font-family:'Manrope','Inter',sans-serif;font-size:11.5px;font-weight:700;letter-spacing:.04em;border:1px solid rgba(34,197,94,.3)}}
+  .verdict-tag{{display:inline-block;padding:5px 11px;border-radius:999px;background:rgba(245,166,35,.12);color:{vd_tone};font-family:'Manrope','Inter',sans-serif;font-size:11.5px;font-weight:700;letter-spacing:.04em;border:1px solid rgba(245,166,35,.3)}}
   .verdict-score{{text-align:right;flex-shrink:0}}
   .verdict-score .num{{font-family:'Fraunces',serif;font-weight:500;font-size:64px;letter-spacing:-.04em;line-height:1;color:#15803d}}
   .verdict-score .lbl{{font-family:'Manrope','Inter',sans-serif;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#94a3b8;font-weight:700;margin-top:4px}}
@@ -1455,30 +1455,30 @@ def _render_report_page(t: dict) -> str:
   /* ─── Body type ─── */
   .body{{font-family:'Source Serif 4',Georgia,serif;font-size:19px;line-height:1.7;color:#1a1f2e}}
   .body p{{margin-bottom:24px}}
-  .body .lede{{font-size:22px;line-height:1.55;color:#0d1320;font-weight:500;margin-bottom:36px}}
-  .body h2{{font-family:'Fraunces',serif;font-weight:500;font-size:30px;letter-spacing:-.02em;color:#0d1320;margin:48px 0 18px;line-height:1.15}}
+  .body .lede{{font-size:22px;line-height:1.55;color:#0A0A0A;font-weight:500;margin-bottom:36px}}
+  .body h2{{font-family:'Fraunces',serif;font-weight:500;font-size:30px;letter-spacing:-.02em;color:#0A0A0A;margin:48px 0 18px;line-height:1.15}}
   .body h2 em{{font-style:italic;color:#15803d}}
-  .body strong{{color:#0d1320;font-weight:600}}
+  .body strong{{color:#0A0A0A;font-weight:600}}
   .body em{{font-style:italic}}
-  .pullquote{{border-left:4px solid #22c55e;padding:8px 24px;margin:36px 0;font-family:'Fraunces',serif;font-weight:400;font-size:22px;line-height:1.45;color:#0d1320;font-style:italic}}
+  .pullquote{{border-left:4px solid #F5A623;padding:8px 24px;margin:36px 0;font-family:'Fraunces',serif;font-weight:400;font-size:22px;line-height:1.45;color:#0A0A0A;font-style:italic}}
 
   /* ─── Pillar breakdown ─── */
   .pillar-card{{background:#fff;border:1px solid rgba(15,23,42,.08);border-radius:16px;padding:24px;margin:32px 0;box-shadow:0 1px 0 #fff inset,0 12px 30px -22px rgba(15,23,42,.15)}}
   .pillar-card-head{{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:18px}}
-  .pillar-card h3{{font-family:'Fraunces',serif;font-weight:500;font-size:18px;color:#0d1320}}
+  .pillar-card h3{{font-family:'Fraunces',serif;font-weight:500;font-size:18px;color:#0A0A0A}}
   .pillar-card-head span{{font-family:'JetBrains Mono',monospace;font-size:11px;color:#94a3b8;letter-spacing:.10em;text-transform:uppercase}}
   .pillar-bars{{display:flex;flex-direction:column;gap:11px;font-family:'Manrope','Inter',sans-serif}}
   .pillar-bar-row{{display:grid;grid-template-columns:110px 1fr 36px;gap:12px;align-items:center;font-size:13px}}
   .pbr-label{{color:#64748b;font-weight:600}}
   .pbr-track{{height:8px;border-radius:99px;background:#f1f5f9;overflow:hidden;position:relative}}
-  .pbr-fill{{position:absolute;inset:0;border-radius:inherit;transform-origin:left;background:var(--pc,#22c55e)}}
-  .pbr-score{{font-family:'JetBrains Mono',monospace;font-weight:800;text-align:right;color:#0d1320}}
+  .pbr-fill{{position:absolute;inset:0;border-radius:inherit;transform-origin:left;background:var(--pc,#F5A623)}}
+  .pbr-score{{font-family:'JetBrains Mono',monospace;font-weight:800;text-align:right;color:#0A0A0A}}
 
   /* ─── Mode swap card ─── */
-  .mode-swap{{background:#0d1320;color:#fff;border-radius:16px;padding:24px 28px;margin:48px 0 24px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}}
+  .mode-swap{{background:#0A0A0A;color:#fff;border-radius:16px;padding:24px 28px;margin:48px 0 24px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}}
   .mode-swap .label{{font-family:'Manrope','Inter',sans-serif;font-size:14px;line-height:1.5}}
-  .mode-swap .label strong{{color:#a3e635;display:block;font-family:'Fraunces',serif;font-weight:500;font-size:18px;margin-bottom:4px;letter-spacing:-.01em}}
-  .mode-swap .btn{{padding:11px 22px;border-radius:999px;background:linear-gradient(135deg,#a3e635,#4ade80,#22c55e);color:#0d1320;font-family:'Manrope','Inter',sans-serif;font-weight:800;font-size:13.5px;text-decoration:none;box-shadow:0 8px 22px -8px rgba(34,197,94,.5)}}
+  .mode-swap .label strong{{color:#FFE9B0;display:block;font-family:'Fraunces',serif;font-weight:500;font-size:18px;margin-bottom:4px;letter-spacing:-.01em}}
+  .mode-swap .btn{{padding:11px 22px;border-radius:999px;background:linear-gradient(135deg,#FFE9B0,#FFC75F,#F5A623);color:#0A0A0A;font-family:'Manrope','Inter',sans-serif;font-weight:800;font-size:13.5px;text-decoration:none;box-shadow:0 8px 22px -8px rgba(245,166,35,.5)}}
 
   /* ─── Related ─── */
   .related{{margin-top:48px;padding-top:32px;border-top:1px solid rgba(15,23,42,.08)}}
@@ -1488,7 +1488,7 @@ def _render_report_page(t: dict) -> str:
   .related-item{{padding:18px;border-radius:14px;background:#fff;border:1px solid rgba(15,23,42,.08);transition:transform .15s,box-shadow .15s;text-decoration:none;color:inherit;display:block}}
   .related-item:hover{{transform:translateY(-3px);box-shadow:0 16px 32px -20px rgba(15,23,42,.18)}}
   .related-tag{{font-family:'Manrope','Inter',sans-serif;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:#15803d;font-weight:700;margin-bottom:8px}}
-  .related-title{{font-family:'Fraunces',serif;font-weight:500;font-size:17px;line-height:1.25;color:#0d1320;letter-spacing:-.01em}}
+  .related-title{{font-family:'Fraunces',serif;font-weight:500;font-size:17px;line-height:1.25;color:#0A0A0A;letter-spacing:-.01em}}
   .related-meta{{font-family:'Manrope','Inter',sans-serif;font-size:12px;color:#94a3b8;margin-top:10px}}
 
   /* ─── Footer ─── */
@@ -1535,7 +1535,7 @@ def _render_report_page(t: dict) -> str:
   <!-- Verdict card -->
   <div class="verdict">
     <div class="verdict-logo">
-      <img src="{logo_url}" alt="{sym} logo" onerror="this.outerHTML='<span style=&quot;font-family:JetBrains Mono,monospace;font-weight:800;font-size:18px;color:#0d1320&quot;>{logo_mono}</span>'">
+      <img src="{logo_url}" alt="{sym} logo" onerror="this.outerHTML='<span style=&quot;font-family:JetBrains Mono,monospace;font-weight:800;font-size:18px;color:#0A0A0A&quot;>{logo_mono}</span>'">
     </div>
     <div class="verdict-info">
       <div class="verdict-sym">{sym} · {safe_industry}</div>
@@ -1565,11 +1565,11 @@ def _render_report_page(t: dict) -> str:
         <span>{sym} · Today</span>
       </div>
       <div class="pillar-bars">
-        <div class="pillar-bar-row"><span class="pbr-label">Momentum</span><span class="pbr-track"><span class="pbr-fill" style="--pc:#22c55e;transform:scaleX({p_mom/100:.2f})"></span></span><span class="pbr-score">{p_mom}</span></div>
-        <div class="pillar-bar-row"><span class="pbr-label">Growth</span><span class="pbr-track"><span class="pbr-fill" style="--pc:#84cc16;transform:scaleX({p_grw/100:.2f})"></span></span><span class="pbr-score">{p_grw}</span></div>
-        <div class="pillar-bar-row"><span class="pbr-label">Quality</span><span class="pbr-track"><span class="pbr-fill" style="--pc:#a78bfa;transform:scaleX({p_qty/100:.2f})"></span></span><span class="pbr-score">{p_qty}</span></div>
-        <div class="pillar-bar-row"><span class="pbr-label">Valuation</span><span class="pbr-track"><span class="pbr-fill" style="--pc:#22d3ee;transform:scaleX({p_val/100:.2f})"></span></span><span class="pbr-score">{p_val}</span></div>
-        <div class="pillar-bar-row"><span class="pbr-label">Sentiment</span><span class="pbr-track"><span class="pbr-fill" style="--pc:#ec4899;transform:scaleX({p_sen/100:.2f})"></span></span><span class="pbr-score">{p_sen}</span></div>
+        <div class="pillar-bar-row"><span class="pbr-label">Momentum</span><span class="pbr-track"><span class="pbr-fill" style="--pc:#F5A623;transform:scaleX({p_mom/100:.2f})"></span></span><span class="pbr-score">{p_mom}</span></div>
+        <div class="pillar-bar-row"><span class="pbr-label">Growth</span><span class="pbr-track"><span class="pbr-fill" style="--pc:#F5A623;transform:scaleX({p_grw/100:.2f})"></span></span><span class="pbr-score">{p_grw}</span></div>
+        <div class="pillar-bar-row"><span class="pbr-label">Quality</span><span class="pbr-track"><span class="pbr-fill" style="--pc:#FFC75F;transform:scaleX({p_qty/100:.2f})"></span></span><span class="pbr-score">{p_qty}</span></div>
+        <div class="pillar-bar-row"><span class="pbr-label">Valuation</span><span class="pbr-track"><span class="pbr-fill" style="--pc:#FFC75F;transform:scaleX({p_val/100:.2f})"></span></span><span class="pbr-score">{p_val}</span></div>
+        <div class="pillar-bar-row"><span class="pbr-label">Sentiment</span><span class="pbr-track"><span class="pbr-fill" style="--pc:#F5A623;transform:scaleX({p_sen/100:.2f})"></span></span><span class="pbr-score">{p_sen}</span></div>
         <div class="pillar-bar-row"><span class="pbr-label">Potential</span><span class="pbr-track"><span class="pbr-fill" style="--pc:#f59e0b;transform:scaleX({p_pot/100:.2f})"></span></span><span class="pbr-score">{p_pot}</span></div>
       </div>
     </div>
@@ -1841,7 +1841,7 @@ def _render_post_earnings_card(t: dict, name: str, sym: str) -> str:
           var rx = data.reaction || {{}};
           if (sSlot && rx.label && rx.components && rx.components.length) {{
             var lblColor = rx.score >=  0.30 ? '#15803d' :
-                           rx.score >=  0.10 ? '#16a34a' :
+                           rx.score >=  0.10 ? '#D4860A' :
                            rx.score >  -0.10 ? '#64748b' :
                            rx.score >  -0.30 ? '#d97706' : '#b91c1c';
             var compHTML = rx.components.map(function(c) {{
@@ -2068,7 +2068,7 @@ h2{{font-size:21px;font-weight:800;letter-spacing:-.015em;margin:32px 0 12px;col
 <div class="wrap">
 
   <a href="/" class="brand">
-    <svg width="22" height="22" viewBox="0 0 28 28"><defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#16a34a"/><stop offset=".55" stop-color="#84cc16"/><stop offset="1" stop-color="#a3e635"/></linearGradient></defs><rect width="28" height="28" rx="7" fill="#0f172a"/><polyline points="4,21 9,13 15,17 20,7 24,12" stroke="url(#lg)" stroke-width="2.3" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="20" cy="7" r="2.5" fill="#a3e635"/></svg>
+    <svg width="22" height="22" viewBox="0 0 28 28"><defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#D4860A"/><stop offset=".55" stop-color="#F5A623"/><stop offset="1" stop-color="#FFE9B0"/></linearGradient></defs><rect width="28" height="28" rx="7" fill="#0f172a"/><polyline points="4,21 9,13 15,17 20,7 24,12" stroke="url(#lg)" stroke-width="2.3" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="20" cy="7" r="2.5" fill="#FFE9B0"/></svg>
     Alpha<em>Hunt</em>
   </a>
 
@@ -5504,7 +5504,7 @@ async def auth_callback():
        background:#050810;color:#e2e8f0;
        display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;gap:24px}
   .ring{width:42px;height:42px;border-radius:50%;
-        border:3px solid rgba(255,255,255,.12);border-top-color:#8b5cf6;
+        border:3px solid rgba(255,255,255,.12);border-top-color:#FFC75F;
         animation:spin 1s linear infinite}
   @keyframes spin{to{transform:rotate(360deg)}}
   .msg{font-size:14px;color:#94a3b8;letter-spacing:.02em}
@@ -5682,7 +5682,7 @@ input[type=password]:focus,input[type=text]:focus{outline:none;border-color:#158
 .strength span{flex:1;background:#e2e8f0;border-radius:2px;transition:background .2s}
 .strength.s1 span:nth-child(1){background:#dc2626}
 .strength.s2 span:nth-child(-n+2){background:#f59e0b}
-.strength.s3 span:nth-child(-n+3){background:#84cc16}
+.strength.s3 span:nth-child(-n+3){background:#F5A623}
 .strength.s4 span{background:#15803d}
 .strength-label{font-size:11.5px;color:#64748b;font-weight:600;margin-top:6px;letter-spacing:.02em;height:14px}
 .strength-label.s1{color:#dc2626}.strength-label.s2{color:#b45309}.strength-label.s3{color:#4d7c0f}.strength-label.s4{color:#15803d}
@@ -5708,7 +5708,7 @@ button.submit:disabled{opacity:.6;cursor:not-allowed}
 <div class="card">
 
   <div class="brand">
-    <svg width="22" height="22" viewBox="0 0 28 28"><defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#16a34a"/><stop offset=".55" stop-color="#84cc16"/><stop offset="1" stop-color="#a3e635"/></linearGradient></defs><rect width="28" height="28" rx="7" fill="#0f172a"/><polyline points="4,21 9,13 15,17 20,7 24,12" stroke="url(#lg)" stroke-width="2.3" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="20" cy="7" r="2.5" fill="#a3e635"/></svg>
+    <svg width="22" height="22" viewBox="0 0 28 28"><defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#D4860A"/><stop offset=".55" stop-color="#F5A623"/><stop offset="1" stop-color="#FFE9B0"/></linearGradient></defs><rect width="28" height="28" rx="7" fill="#0f172a"/><polyline points="4,21 9,13 15,17 20,7 24,12" stroke="url(#lg)" stroke-width="2.3" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="20" cy="7" r="2.5" fill="#FFE9B0"/></svg>
     Alpha<em>Hunt</em>
   </div>
 

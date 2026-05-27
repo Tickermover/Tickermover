@@ -131,8 +131,8 @@ _FONTS_LINK = (
 _BRAND_SVG = (
     '<svg width="22" height="22" viewBox="0 0 28 28">'
     '<defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1">'
-    '<stop offset="0" stop-color="#16a34a"/>'
-    '<stop offset=".55" stop-color="#84cc16"/>'
+    '<stop offset="0" stop-color="#D4860A"/>'
+    '<stop offset=".55" stop-color="#F5A623"/>'
     '<stop offset="1" stop-color="#a3e635"/></linearGradient></defs>'
     '<rect width="28" height="28" rx="7" fill="#0f172a"/>'
     '<polyline points="4,21 9,13 15,17 20,7 24,12" stroke="url(#lg)" '
