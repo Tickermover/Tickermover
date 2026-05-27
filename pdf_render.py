@@ -43,7 +43,7 @@ logger = logging.getLogger(__name__)
 BRAND_INDIGO  = HexColor("#D4860A")
 BRAND_VIOLET  = HexColor("#FFC75F")
 BRAND_MAGENTA = HexColor("#F5A623")
-BRAND_LIGHT   = HexColor("#eef2ff")
+BRAND_LIGHT   = HexColor("#FFF8E5")
 INK           = HexColor("#0f172a")
 INK_SOFT      = HexColor("#475569")
 INK_MUTED     = HexColor("#94a3b8")
@@ -53,10 +53,10 @@ BG_CARD       = HexColor("#ffffff")
 BORDER        = HexColor("#e2e8f0")
 BORDER_LIGHT  = HexColor("#f1f5f9")
 GREEN         = HexColor("#D4860A")
-GREEN_LIGHT   = HexColor("#dcfce7")
+GREEN_LIGHT   = HexColor("#FFF3D9")
 RED           = HexColor("#dc2626")
 RED_LIGHT     = HexColor("#fee2e2")
-AMBER         = HexColor("#f59e0b")
+AMBER         = HexColor("#F5A623")
 
 A4_W, A4_H = A4              # 595 x 842 pts
 MARGIN_X = 32
@@ -126,7 +126,7 @@ def _make_price_chart(price_history: list[dict], width_pt: float, height_pt: flo
         closes = [float(p.get("close") or 0) for p in price_history]
         fig_w, fig_h = width_pt / 72.0, height_pt / 72.0
         fig, ax = plt.subplots(figsize=(fig_w, fig_h), dpi=160)
-        ax.plot(range(len(closes)), closes, color="#6366f1", linewidth=2.0)
+        ax.plot(range(len(closes)), closes, color="#F5A623", linewidth=2.0)
         ax.fill_between(range(len(closes)), closes, min(closes),
                         color="#FFC75F", alpha=0.18)
         ax.set_facecolor("#ffffff")
@@ -280,7 +280,7 @@ def _draw_brand_frame(c):
 
       1. TOP brand strip (4pt full-bleed) — indigo→violet→magenta,
          the dashboard hero gradient. Vivid, the 'AlphaHunt handshake'.
-      2. Soft body gradient — cream-indigo (#f4f5ff) at top, fading to
+      2. Soft body gradient — cream-indigo (#FFFFFF) at top, fading to
          pure white by 20% down. Subtle warmth under the cards.
       3. Tissue-thin (0.3pt) cool-grey page border — anchors the layout
          like the site's bordered components.
@@ -303,7 +303,7 @@ def _draw_brand_frame(c):
                stroke=0, fill=1)
 
     # 3) Tissue-thin border around the page
-    c.setStrokeColor(HexColor("#e8eaf6"))
+    c.setStrokeColor(HexColor("#FFF8E5"))
     c.setLineWidth(0.3)
     c.rect(4, 4, A4_W - 8, A4_H - 12, stroke=1, fill=0)
 
@@ -328,7 +328,7 @@ def _card_bg(c, x, y, w, h, radius=6):
 
 def _fill_card_gradient(c, x, y, w, h, radius=6):
     """Fill a rounded-rect region with a subtle vertical gradient — pure
-    white at the top fading to faintly tinted cream-indigo (#fafbff) at
+    white at the top fading to faintly tinted cream-indigo (#FFFFFF) at
     the bottom. Replaces flat white card fills throughout the report
     so the cards have visual depth without being noisy.
 
@@ -348,7 +348,7 @@ def _fill_card_gradient(c, x, y, w, h, radius=6):
     p.arcTo(x, y, x + 2*radius, y + 2*radius, 180, 90)
     p.close()
     c.clipPath(p, stroke=0, fill=0)
-    # Vertical gradient — top (white) → bottom (#fafbff)
+    # Vertical gradient — top (white) → bottom (#FFFFFF)
     n_steps = 12
     step_h = h / n_steps
     for i in range(n_steps):
@@ -428,7 +428,7 @@ def _draw_header(c, today_str, quarter_lbl, page_label=None):
     c.drawString(chip_x + 7, y + 4, quarter_lbl)
 
     # Thin grey divider — tighter since the tagline was removed.
-    c.setStrokeColor(HexColor("#d4d8e8"))
+    c.setStrokeColor(HexColor("#E2E8F0"))
     c.setLineWidth(0.6)
     c.line(MARGIN_X, y - 14, A4_W - MARGIN_X, y - 14)
     return y - 22  # bottom of header
@@ -577,7 +577,7 @@ def _make_revenue_eps_chart(quarterly_income: list, eps_quarters: list,
                 labels.append(str(d)[-6:])
         if revenues:
             x = list(range(len(revenues)))
-            ax.bar(x, revenues, color="#c7d2fe", edgecolor="#6366f1",
+            ax.bar(x, revenues, color="#FFE9B0", edgecolor="#F5A623",
                    linewidth=0.8, label="Revenue ($B)", width=0.55)
             for xi, v in zip(x, revenues):
                 ax.text(xi, v + max(revenues) * 0.02,
@@ -1280,7 +1280,7 @@ def _draw_valuation_scenarios(c, x, y, w, h, t, narrative):
     # Bear→base gradient red, base→bull gradient green
     c.setFillColor(HexColor("#fee2e2"))
     c.rect(_to_x(bear_p), bar_top - bar_h_seg/2, _to_x(base_p) - _to_x(bear_p), bar_h_seg, stroke=0, fill=1)
-    c.setFillColor(HexColor("#dcfce7"))
+    c.setFillColor(HexColor("#FFF3D9"))
     c.rect(_to_x(base_p), bar_top - bar_h_seg/2, _to_x(bull_p) - _to_x(base_p), bar_h_seg, stroke=0, fill=1)
     # Scenario markers — distinct symbols so Bear/Base/Bull are
     # visually identifiable (v3.10 showed 'B/B/B' on all three dots).
@@ -1316,7 +1316,7 @@ def _draw_valuation_scenarios(c, x, y, w, h, t, narrative):
     scenarios = [
         ("BEAR", bear, RED,   HexColor("#fee2e2")),
         ("BASE", base, BRAND_INDIGO, BRAND_LIGHT),
-        ("BULL", bull, GREEN, HexColor("#dcfce7")),
+        ("BULL", bull, GREEN, HexColor("#FFF3D9")),
     ]
     for i, (label, sc, color, bg_color) in enumerate(scenarios):
         ry = rows_top - (i + 1) * row_h + 2
@@ -1541,7 +1541,7 @@ def _draw_trend_strip(c, x, y, w, h, t):
         cy = inner_y_top - (row + 1) * cell_h - row * 8
         # White card with subtle border + colored left accent strip
         c.setFillColor(HexColor("#ffffff"))
-        c.setStrokeColor(HexColor("#e8eaf6"))
+        c.setStrokeColor(HexColor("#FFF8E5"))
         c.setLineWidth(0.6)
         c.roundRect(cx, cy, cell_w, cell_h, 5, stroke=1, fill=1)
         c.setFillColor(HexColor(color))
@@ -1716,7 +1716,7 @@ def _draw_peer_comparison(c, x, y, w, h, t, peers):
         ry = hdr_y - 12 - (i + 1) * row_h + 2
         # Highlight the target row with a light brand fill
         if r["is_target"]:
-            c.setFillColor(HexColor("#eef2ff"))
+            c.setFillColor(HexColor("#FFF8E5"))
             c.rect(x + 8, ry - 3, w - 16, row_h, stroke=0, fill=1)
         # Ticker (bold for target)
         c.setFillColor(BRAND_INDIGO if r["is_target"] else INK)
@@ -2204,7 +2204,7 @@ def _draw_target_range_bar(c, x, y, w, low, high, mean, price):
     bar_h = 6
     bar_y = y
     # Bar background
-    c.setFillColor(HexColor("#eef2ff"))
+    c.setFillColor(HexColor("#FFF8E5"))
     c.roundRect(x, bar_y, w, bar_h, bar_h / 2, stroke=0, fill=1)
     # Inner gradient feel via two-tone fill: indigo-light → violet
     c.setFillColor(BRAND_LIGHT)
@@ -2252,7 +2252,7 @@ def _draw_rec_distribution_bar(c, x, y, w, strong_buy, buy, hold, sell, strong_s
     segments = [
         (strong_buy,  HexColor("#15803d")),  # deep green
         (buy,         HexColor("#F5A623")),  # green
-        (hold,        HexColor("#f59e0b")),  # amber
+        (hold,        HexColor("#F5A623")),  # amber
         (sell,        HexColor("#ef4444")),  # red
         (strong_sell, HexColor("#991b1b")),  # deep red
     ]
@@ -2270,7 +2270,7 @@ def _draw_rec_distribution_bar(c, x, y, w, strong_buy, buy, hold, sell, strong_s
     parts = [
         ("S.Buy", strong_buy, HexColor("#15803d")),
         ("Buy",   buy,        HexColor("#F5A623")),
-        ("Hold",  hold,       HexColor("#f59e0b")),
+        ("Hold",  hold,       HexColor("#F5A623")),
         ("Sell",  sell,       HexColor("#ef4444")),
         ("S.Sell",strong_sell,HexColor("#991b1b")),
     ]
@@ -2672,7 +2672,7 @@ def _conviction_color(level: str):
     level = (level or "medium").lower()
     if level == "high":   return GREEN, GREEN_LIGHT, "HIGH CONVICTION"
     if level == "low":    return RED,   RED_LIGHT,   "LOW CONVICTION"
-    return AMBER, HexColor("#fef3c7"), "MEDIUM CONVICTION"
+    return AMBER, HexColor("#FFF3D9"), "MEDIUM CONVICTION"
 
 
 def _draw_investment_thesis(c, top_y, narrative):
@@ -3053,7 +3053,7 @@ def _draw_footer(c, with_disclaimer=False):
     last para instead of footer.'"""
     foot_y = MARGIN_BOTTOM
     # Thin grey divider — always shown
-    c.setStrokeColor(HexColor("#d4d8e8"))
+    c.setStrokeColor(HexColor("#E2E8F0"))
     c.setLineWidth(0.5)
     c.line(MARGIN_X, foot_y + 26, A4_W - MARGIN_X, foot_y + 26)
 

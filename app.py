@@ -964,14 +964,14 @@ def _render_morning_brief() -> str:
 <style>
   *{{box-sizing:border-box;margin:0;padding:0}}
   html{{scroll-behavior:smooth}}
-  body{{background:#fafbf7;color:#1a1f2e;font-family:'Source Serif 4',Georgia,serif;line-height:1.6;-webkit-font-smoothing:antialiased}}
+  body{{background:#fafbf7;color:#1A1A1A;font-family:'Source Serif 4',Georgia,serif;line-height:1.6;-webkit-font-smoothing:antialiased}}
   a{{color:inherit;text-decoration:none}}
 
-  .top{{background:#fff;border-bottom:1px solid rgba(15,23,42,.08);position:sticky;top:0;z-index:50}}
+  .top{{background:#fff;border-bottom:1px solid rgba(10,10,10,.08);position:sticky;top:0;z-index:50}}
   .top-inner{{display:flex;align-items:center;justify-content:space-between;max-width:1100px;margin:0 auto;padding:14px 28px}}
   .brand{{display:flex;align-items:center;gap:10px;font-family:'Manrope','Inter',sans-serif;font-weight:900;font-size:17px;color:#0A0A0A}}
   .brand-mark{{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,#fff,#f1f5f9);display:flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:0 0 0 1px rgba(245,166,35,.4)}}
-  .brand-mark img{{width:80%;height:80%;object-fit:contain;filter:drop-shadow(0 0 5px rgba(132,224,43,.45))}}
+  .brand-mark img{{width:80%;height:80%;object-fit:contain;filter:drop-shadow(0 0 5px rgba(245,166,35,.45))}}
   .brand .h{{background:linear-gradient(135deg,#FFE9B0 0%,#FFC75F 50%,#F5A623 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}}
   .top-nav{{display:flex;gap:24px;font-family:'Manrope','Inter',sans-serif;font-size:13.5px;font-weight:600;color:#475569}}
   .top-nav a.active{{color:#15803d}}
@@ -998,12 +998,12 @@ def _render_morning_brief() -> str:
   .b-picks{{display:flex;flex-direction:column;gap:10px;margin-bottom:24px}}
   .b-pick{{
     display:grid;grid-template-columns:auto 1fr auto;gap:16px;align-items:center;
-    padding:18px 22px;border-radius:14px;background:#fff;border:1px solid rgba(15,23,42,.08);
+    padding:18px 22px;border-radius:14px;background:#fff;border:1px solid rgba(10,10,10,.08);
     transition:transform .15s,box-shadow .15s,border-color .15s;
-    box-shadow:0 1px 2px rgba(15,23,42,.04);
+    box-shadow:0 1px 2px rgba(10,10,10,.04);
   }}
   .b-pick:hover{{transform:translateX(4px);border-color:rgba(245,166,35,.30);box-shadow:0 12px 28px -16px rgba(245,166,35,.25)}}
-  .b-pick-logo{{width:48px;height:48px;border-radius:11px;background:#fff;box-shadow:0 0 0 1px rgba(15,23,42,.08);display:flex;align-items:center;justify-content:center;overflow:hidden}}
+  .b-pick-logo{{width:48px;height:48px;border-radius:11px;background:#fff;box-shadow:0 0 0 1px rgba(10,10,10,.08);display:flex;align-items:center;justify-content:center;overflow:hidden}}
   .b-pick-logo img{{width:100%;height:100%;object-fit:contain;padding:5px}}
   .b-pick-logo span{{font-family:'JetBrains Mono',monospace;font-weight:800;font-size:14px;color:#0A0A0A}}
   .b-pick-body{{min-width:0;font-family:'Manrope','Inter',sans-serif}}
@@ -1018,13 +1018,13 @@ def _render_morning_brief() -> str:
   /* ── Two-column row (movers / sectors) ── */
   .b-row{{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:24px}}
   @media (max-width:640px){{.b-row{{grid-template-columns:1fr}}}}
-  .b-col{{background:#fff;border:1px solid rgba(15,23,42,.08);border-radius:14px;padding:20px;box-shadow:0 1px 2px rgba(15,23,42,.04)}}
+  .b-col{{background:#fff;border:1px solid rgba(10,10,10,.08);border-radius:14px;padding:20px;box-shadow:0 1px 2px rgba(10,10,10,.04)}}
   .b-col h3{{font-family:'Fraunces',serif;font-weight:500;font-size:18px;color:#0A0A0A;letter-spacing:-.01em;margin-bottom:14px;display:flex;align-items:center;gap:8px}}
 
   /* Mini ticker rows */
   .b-mini-list{{display:flex;flex-direction:column;gap:2px}}
   .b-mini{{display:grid;grid-template-columns:60px 1fr auto;gap:10px;align-items:baseline;padding:8px 10px;border-radius:8px;font-family:'Manrope','Inter',sans-serif;transition:background .12s;color:inherit}}
-  .b-mini:hover{{background:#f7faf4}}
+  .b-mini:hover{{background:#FAFBFC}}
   .b-mini-sym{{font-family:'JetBrains Mono',monospace;font-weight:800;font-size:13px;color:#0A0A0A}}
   .b-mini-name{{font-size:12.5px;color:#475569;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}}
   .b-mini-chg{{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:12.5px;text-align:right;font-feature-settings:'tnum' 1}}
@@ -1032,9 +1032,9 @@ def _render_morning_brief() -> str:
   /* Sector spotlight */
   /* Heating Up sector card — saffron warmth matches the fire metaphor
      (was green-on-green wash). Cold/pressure card stays semantic red. */
-  .b-sector{{padding:18px 20px;border-radius:14px;background:linear-gradient(135deg,#fff7ed 0%,#ffffff 70%);border:1px solid rgba(234,88,12,.25);font-family:'Manrope','Inter',sans-serif}}
-  .b-sector.cold{{background:linear-gradient(135deg,#fef3f2 0%,#ffffff 70%);border-color:rgba(220,38,38,.20)}}
-  .b-sector-tag{{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.10em;text-transform:uppercase;font-weight:700;color:#ea580c;margin-bottom:8px}}
+  .b-sector{{padding:18px 20px;border-radius:14px;background:linear-gradient(135deg,#FFF8E5 0%,#ffffff 70%);border:1px solid rgba(245,166,35,.25);font-family:'Manrope','Inter',sans-serif}}
+  .b-sector.cold{{background:linear-gradient(135deg,#FEE2E2 0%,#ffffff 70%);border-color:rgba(220,38,38,.20)}}
+  .b-sector-tag{{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.10em;text-transform:uppercase;font-weight:700;color:#F5A623;margin-bottom:8px}}
   .b-sector.cold .b-sector-tag{{color:#b91c1c}}
   .b-sector-name{{font-family:'Fraunces',serif;font-weight:500;font-size:22px;color:#0A0A0A;letter-spacing:-.015em;margin-bottom:6px}}
   .b-sector-meta{{font-size:13px;color:#475569}}
@@ -1048,7 +1048,7 @@ def _render_morning_brief() -> str:
   .swap .lbl strong{{color:#FFE9B0;display:block;font-family:'Fraunces',serif;font-weight:500;font-size:18px;margin-bottom:4px;letter-spacing:-.01em;font-style:italic}}
   .swap .btn{{padding:11px 22px;border-radius:999px;background:linear-gradient(135deg,#FFE9B0,#FFC75F,#F5A623);color:#0A0A0A;font-family:'Manrope','Inter',sans-serif;font-weight:800;font-size:13.5px;text-decoration:none;box-shadow:0 8px 22px -8px rgba(245,166,35,.5)}}
 
-  footer{{padding:60px 28px 40px;color:#94a3b8;font-family:'Manrope','Inter',sans-serif;font-size:12.5px;text-align:center;border-top:1px solid rgba(15,23,42,.08);margin-top:60px}}
+  footer{{padding:60px 28px 40px;color:#94a3b8;font-family:'Manrope','Inter',sans-serif;font-size:12.5px;text-align:center;border-top:1px solid rgba(10,10,10,.08);margin-top:60px}}
   footer a{{color:#15803d;font-weight:700}}
 </style>
 </head>
@@ -1184,14 +1184,14 @@ async def reports_index():
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Manrope:wght@400;500;600;700;800;900&family=Fraunces:opsz,wght@9..144,500;9..144,700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <style>
   *{{box-sizing:border-box;margin:0;padding:0}}
-  body{{background:#fafbf7;color:#1a1f2e;font-family:'Manrope','Inter',system-ui,sans-serif;font-weight:500;-webkit-font-smoothing:antialiased}}
+  body{{background:#fafbf7;color:#1A1A1A;font-family:'Manrope','Inter',system-ui,sans-serif;font-weight:500;-webkit-font-smoothing:antialiased}}
   a{{text-decoration:none;color:inherit}}
-  .top{{background:#fff;border-bottom:1px solid rgba(15,23,42,.08);position:sticky;top:0;z-index:50}}
+  .top{{background:#fff;border-bottom:1px solid rgba(10,10,10,.08);position:sticky;top:0;z-index:50}}
   .top-inner{{display:flex;align-items:center;justify-content:space-between;max-width:1200px;margin:0 auto;padding:14px 28px}}
   .brand{{display:flex;align-items:center;gap:10px;font-weight:900;font-size:17px;letter-spacing:-.02em;color:#0A0A0A}}
   .brand-mark{{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,#fff,#f1f5f9);display:flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:0 0 0 1px rgba(245,166,35,.4),0 6px 16px -6px rgba(245,166,35,.3)}}
-  .brand-mark img{{width:80%;height:80%;object-fit:contain;filter:drop-shadow(0 0 5px rgba(132,224,43,.45))}}
-  .brand .h{{background:linear-gradient(135deg,#FFE9B0 0%,#FFC75F 50%,#F5A623 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;filter:drop-shadow(0 0 6px rgba(132,224,43,.25))}}
+  .brand-mark img{{width:80%;height:80%;object-fit:contain;filter:drop-shadow(0 0 5px rgba(245,166,35,.45))}}
+  .brand .h{{background:linear-gradient(135deg,#FFE9B0 0%,#FFC75F 50%,#F5A623 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;filter:drop-shadow(0 0 6px rgba(245,166,35,.25))}}
   .top-nav{{display:flex;gap:24px;font-size:13.5px;font-weight:600;color:#475569}}
   .top-nav a.active{{color:#15803d}}
   .top-cta{{padding:8px 18px;border-radius:999px;background:#0A0A0A;color:#fff;font-size:13px;font-weight:700}}
@@ -1204,18 +1204,18 @@ async def reports_index():
   .sub{{font-size:16px;color:#475569;line-height:1.6;max-width:600px}}
 
   .list-wrap{{max-width:1100px;margin:0 auto;padding:0 28px 60px}}
-  .list-head{{display:grid;grid-template-columns:80px 1fr 180px 90px 70px;gap:14px;padding:12px 22px;background:#fff;border:1px solid rgba(15,23,42,.08);border-radius:14px 14px 0 0;border-bottom:none;font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:#94a3b8;font-weight:700}}
-  .list{{background:#fff;border:1px solid rgba(15,23,42,.08);border-radius:0 0 14px 14px;overflow:hidden;box-shadow:0 1px 2px rgba(15,23,42,.04),0 12px 30px -22px rgba(15,23,42,.15)}}
-  .row{{display:grid;grid-template-columns:80px 1fr 180px 90px 70px;gap:14px;padding:16px 22px;border-bottom:1px solid rgba(15,23,42,.06);align-items:center;font-size:14px;transition:background .12s,transform .15s;color:inherit;text-decoration:none}}
+  .list-head{{display:grid;grid-template-columns:80px 1fr 180px 90px 70px;gap:14px;padding:12px 22px;background:#fff;border:1px solid rgba(10,10,10,.08);border-radius:14px 14px 0 0;border-bottom:none;font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:#94a3b8;font-weight:700}}
+  .list{{background:#fff;border:1px solid rgba(10,10,10,.08);border-radius:0 0 14px 14px;overflow:hidden;box-shadow:0 1px 2px rgba(10,10,10,.04),0 12px 30px -22px rgba(10,10,10,.15)}}
+  .row{{display:grid;grid-template-columns:80px 1fr 180px 90px 70px;gap:14px;padding:16px 22px;border-bottom:1px solid rgba(10,10,10,.06);align-items:center;font-size:14px;transition:background .12s,transform .15s;color:inherit;text-decoration:none}}
   .row:last-child{{border-bottom:none}}
-  .row:hover{{background:#f7faf4;transform:translateX(4px)}}
+  .row:hover{{background:#FAFBFC;transform:translateX(4px)}}
   .row .sym{{font-family:'JetBrains Mono',monospace;font-weight:800;color:#0A0A0A;letter-spacing:-.01em}}
   .row .nm{{font-family:'Fraunces',serif;font-weight:500;font-size:16px;color:#0A0A0A;letter-spacing:-.01em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}}
   .row .sect{{color:#64748b;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}}
   .row .chg{{font-family:'JetBrains Mono',monospace;font-weight:700;text-align:right;color:#64748b}}
   .row .chg.up{{color:#15803d}} .row .chg.dn{{color:#b91c1c}}
   .row .sc{{font-family:'Fraunces',serif;font-weight:500;font-size:24px;text-align:right;letter-spacing:-.02em}}
-  .row .sc.hi{{color:#15803d}} .row .sc.mid{{color:#b45309}} .row .sc.lo{{color:#64748b}}
+  .row .sc.hi{{color:#15803d}} .row .sc.mid{{color:#D4860A}} .row .sc.lo{{color:#64748b}}
   .empty{{padding:36px;text-align:center;color:#94a3b8}}
 
   @media (max-width:760px){{
@@ -1329,7 +1329,7 @@ def _render_report_page(t: dict) -> str:
     elif score >= 70:
         verdict, vd_tone = "Buy", "#D4860A"
     elif score >= 60:
-        verdict, vd_tone = "Accumulate", "#b45309"
+        verdict, vd_tone = "Accumulate", "#D4860A"
     elif score >= 45:
         verdict, vd_tone = "Hold", "#475569"
     else:
@@ -1400,7 +1400,7 @@ def _render_report_page(t: dict) -> str:
 <style>
   *{{box-sizing:border-box;margin:0;padding:0}}
   html{{scroll-behavior:smooth}}
-  body{{background:#fafbf7;color:#1a1f2e;font-family:'Source Serif 4',Georgia,serif;-webkit-font-smoothing:antialiased;line-height:1.6}}
+  body{{background:#fafbf7;color:#1A1A1A;font-family:'Source Serif 4',Georgia,serif;-webkit-font-smoothing:antialiased;line-height:1.6}}
   /* OpenType polish — tabular numbers + Inter alt glyphs on every
      numeric / mono / UI surface. Prose stays proportional. */
   .verdict-score .num,.verdict-meta,.verdict-sym,.verdict-tag,
@@ -1414,12 +1414,12 @@ def _render_report_page(t: dict) -> str:
   img{{display:block;max-width:100%}}
 
   /* ─── Top bar ─── */
-  .top{{background:#fff;border-bottom:1px solid rgba(15,23,42,.08);position:sticky;top:0;z-index:50}}
+  .top{{background:#fff;border-bottom:1px solid rgba(10,10,10,.08);position:sticky;top:0;z-index:50}}
   .top-inner{{display:flex;align-items:center;justify-content:space-between;max-width:1200px;margin:0 auto;padding:14px 28px}}
   .brand{{display:flex;align-items:center;gap:10px;font-family:'Manrope','Inter',sans-serif;font-weight:900;font-size:17px;letter-spacing:-.02em;color:#0A0A0A;text-decoration:none}}
   .brand-mark{{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,#fff,#f1f5f9);display:flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:0 0 0 1px rgba(245,166,35,.4),0 6px 16px -6px rgba(245,166,35,.3)}}
-  .brand-mark img{{width:80%;height:80%;object-fit:contain;filter:drop-shadow(0 0 5px rgba(132,224,43,.45))}}
-  .brand .h{{background:linear-gradient(135deg,#FFE9B0 0%,#FFC75F 50%,#F5A623 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;filter:drop-shadow(0 0 6px rgba(132,224,43,.25))}}
+  .brand-mark img{{width:80%;height:80%;object-fit:contain;filter:drop-shadow(0 0 5px rgba(245,166,35,.45))}}
+  .brand .h{{background:linear-gradient(135deg,#FFE9B0 0%,#FFC75F 50%,#F5A623 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;filter:drop-shadow(0 0 6px rgba(245,166,35,.25))}}
   .top-nav{{display:flex;gap:24px;font-family:'Manrope','Inter',sans-serif;font-size:13.5px;font-weight:600;color:#475569}}
   .top-nav a{{text-decoration:none;color:inherit;transition:color .15s}}
   .top-nav a:hover{{color:#0A0A0A}}
@@ -1439,8 +1439,8 @@ def _render_report_page(t: dict) -> str:
   .read-meta{{display:flex;gap:16px;font-size:12.5px;color:#94a3b8;margin-left:auto;flex-wrap:wrap}}
 
   /* ─── Verdict card ─── */
-  .verdict{{background:linear-gradient(180deg,#ffffff,#f4f7f3);border:1px solid rgba(15,23,42,.08);border-radius:18px;padding:28px 30px;margin-bottom:48px;box-shadow:0 1px 0 #fff inset,0 18px 40px -28px rgba(15,23,42,.18);display:grid;grid-template-columns:auto 1fr auto;gap:24px;align-items:center}}
-  .verdict-logo{{width:64px;height:64px;border-radius:14px;background:#fff;color:#0A0A0A;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-weight:800;font-size:18px;letter-spacing:.02em;flex-shrink:0;box-shadow:0 0 0 1px rgba(15,23,42,.08);overflow:hidden}}
+  .verdict{{background:linear-gradient(180deg,#ffffff,#FAFBFC);border:1px solid rgba(10,10,10,.08);border-radius:18px;padding:28px 30px;margin-bottom:48px;box-shadow:0 1px 0 #fff inset,0 18px 40px -28px rgba(10,10,10,.18);display:grid;grid-template-columns:auto 1fr auto;gap:24px;align-items:center}}
+  .verdict-logo{{width:64px;height:64px;border-radius:14px;background:#fff;color:#0A0A0A;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-weight:800;font-size:18px;letter-spacing:.02em;flex-shrink:0;box-shadow:0 0 0 1px rgba(10,10,10,.08);overflow:hidden}}
   .verdict-logo img{{width:100%;height:100%;object-fit:contain;padding:6px}}
   .verdict-info{{min-width:0}}
   .verdict-sym{{font-family:'Manrope','Inter',sans-serif;font-size:13px;font-weight:700;letter-spacing:.04em;color:#64748b;text-transform:uppercase;margin-bottom:6px}}
@@ -1453,7 +1453,7 @@ def _render_report_page(t: dict) -> str:
   @media (max-width:560px){{.verdict{{grid-template-columns:1fr;text-align:center}}.verdict-score{{text-align:center}}}}
 
   /* ─── Body type ─── */
-  .body{{font-family:'Source Serif 4',Georgia,serif;font-size:19px;line-height:1.7;color:#1a1f2e}}
+  .body{{font-family:'Source Serif 4',Georgia,serif;font-size:19px;line-height:1.7;color:#1A1A1A}}
   .body p{{margin-bottom:24px}}
   .body .lede{{font-size:22px;line-height:1.55;color:#0A0A0A;font-weight:500;margin-bottom:36px}}
   .body h2{{font-family:'Fraunces',serif;font-weight:500;font-size:30px;letter-spacing:-.02em;color:#0A0A0A;margin:48px 0 18px;line-height:1.15}}
@@ -1463,7 +1463,7 @@ def _render_report_page(t: dict) -> str:
   .pullquote{{border-left:4px solid #F5A623;padding:8px 24px;margin:36px 0;font-family:'Fraunces',serif;font-weight:400;font-size:22px;line-height:1.45;color:#0A0A0A;font-style:italic}}
 
   /* ─── Pillar breakdown ─── */
-  .pillar-card{{background:#fff;border:1px solid rgba(15,23,42,.08);border-radius:16px;padding:24px;margin:32px 0;box-shadow:0 1px 0 #fff inset,0 12px 30px -22px rgba(15,23,42,.15)}}
+  .pillar-card{{background:#fff;border:1px solid rgba(10,10,10,.08);border-radius:16px;padding:24px;margin:32px 0;box-shadow:0 1px 0 #fff inset,0 12px 30px -22px rgba(10,10,10,.15)}}
   .pillar-card-head{{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:18px}}
   .pillar-card h3{{font-family:'Fraunces',serif;font-weight:500;font-size:18px;color:#0A0A0A}}
   .pillar-card-head span{{font-family:'JetBrains Mono',monospace;font-size:11px;color:#94a3b8;letter-spacing:.10em;text-transform:uppercase}}
@@ -1481,18 +1481,18 @@ def _render_report_page(t: dict) -> str:
   .mode-swap .btn{{padding:11px 22px;border-radius:999px;background:linear-gradient(135deg,#FFE9B0,#FFC75F,#F5A623);color:#0A0A0A;font-family:'Manrope','Inter',sans-serif;font-weight:800;font-size:13.5px;text-decoration:none;box-shadow:0 8px 22px -8px rgba(245,166,35,.5)}}
 
   /* ─── Related ─── */
-  .related{{margin-top:48px;padding-top:32px;border-top:1px solid rgba(15,23,42,.08)}}
+  .related{{margin-top:48px;padding-top:32px;border-top:1px solid rgba(10,10,10,.08)}}
   .related h4{{font-family:'Manrope','Inter',sans-serif;font-size:11.5px;letter-spacing:.18em;text-transform:uppercase;color:#94a3b8;font-weight:700;margin-bottom:18px}}
   .related-grid{{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}}
   @media (max-width:760px){{.related-grid{{grid-template-columns:1fr}}}}
-  .related-item{{padding:18px;border-radius:14px;background:#fff;border:1px solid rgba(15,23,42,.08);transition:transform .15s,box-shadow .15s;text-decoration:none;color:inherit;display:block}}
-  .related-item:hover{{transform:translateY(-3px);box-shadow:0 16px 32px -20px rgba(15,23,42,.18)}}
+  .related-item{{padding:18px;border-radius:14px;background:#fff;border:1px solid rgba(10,10,10,.08);transition:transform .15s,box-shadow .15s;text-decoration:none;color:inherit;display:block}}
+  .related-item:hover{{transform:translateY(-3px);box-shadow:0 16px 32px -20px rgba(10,10,10,.18)}}
   .related-tag{{font-family:'Manrope','Inter',sans-serif;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:#15803d;font-weight:700;margin-bottom:8px}}
   .related-title{{font-family:'Fraunces',serif;font-weight:500;font-size:17px;line-height:1.25;color:#0A0A0A;letter-spacing:-.01em}}
   .related-meta{{font-family:'Manrope','Inter',sans-serif;font-size:12px;color:#94a3b8;margin-top:10px}}
 
   /* ─── Footer ─── */
-  footer{{padding:60px 28px 40px;color:#94a3b8;font-family:'Manrope','Inter',sans-serif;font-size:12.5px;text-align:center;border-top:1px solid rgba(15,23,42,.08);margin-top:80px}}
+  footer{{padding:60px 28px 40px;color:#94a3b8;font-family:'Manrope','Inter',sans-serif;font-size:12.5px;text-align:center;border-top:1px solid rgba(10,10,10,.08);margin-top:80px}}
 </style>
 </head>
 <body>
@@ -1570,7 +1570,7 @@ def _render_report_page(t: dict) -> str:
         <div class="pillar-bar-row"><span class="pbr-label">Quality</span><span class="pbr-track"><span class="pbr-fill" style="--pc:#FFC75F;transform:scaleX({p_qty/100:.2f})"></span></span><span class="pbr-score">{p_qty}</span></div>
         <div class="pillar-bar-row"><span class="pbr-label">Valuation</span><span class="pbr-track"><span class="pbr-fill" style="--pc:#FFC75F;transform:scaleX({p_val/100:.2f})"></span></span><span class="pbr-score">{p_val}</span></div>
         <div class="pillar-bar-row"><span class="pbr-label">Sentiment</span><span class="pbr-track"><span class="pbr-fill" style="--pc:#F5A623;transform:scaleX({p_sen/100:.2f})"></span></span><span class="pbr-score">{p_sen}</span></div>
-        <div class="pillar-bar-row"><span class="pbr-label">Potential</span><span class="pbr-track"><span class="pbr-fill" style="--pc:#f59e0b;transform:scaleX({p_pot/100:.2f})"></span></span><span class="pbr-score">{p_pot}</span></div>
+        <div class="pillar-bar-row"><span class="pbr-label">Potential</span><span class="pbr-track"><span class="pbr-fill" style="--pc:#F5A623;transform:scaleX({p_pot/100:.2f})"></span></span><span class="pbr-score">{p_pot}</span></div>
       </div>
     </div>
 
@@ -1697,7 +1697,7 @@ def _render_post_earnings_card(t: dict, name: str, sym: str) -> str:
     # ── EPS row ──
     if eps_actual is not None and eps_estimate is not None:
         beat_tag = (
-            '<span style="background:#dcfce7;color:#15803d;font-weight:700;'
+            '<span style="background:#FFF3D9;color:#15803d;font-weight:700;'
             'padding:3px 10px;border-radius:999px;font-size:11px;letter-spacing:.04em">BEAT</span>'
             if beat else
             '<span style="background:#fee2e2;color:#b91c1c;font-weight:700;'
@@ -1787,15 +1787,15 @@ def _render_post_earnings_card(t: dict, name: str, sym: str) -> str:
         'letter-spacing:.06em;padding:4px 10px;border-radius:999px">LAST EARNINGS</span>'
     )
     bg_grad = (
-        "linear-gradient(135deg,#f0fdf4 0%,#fefce8 100%)" if just_reported
+        "linear-gradient(135deg,#FFF8E5 0%,#FFF8E5 100%)" if just_reported
         else "linear-gradient(135deg,#f8fafc 0%,#f1f5f9 100%)"
     )
-    border_color = "#bbf7d0" if just_reported else "#e2e8f0"
+    border_color = "#FFE9B0" if just_reported else "#e2e8f0"
     return f"""
   <div style="background:{bg_grad};
               border:1px solid {border_color};border-radius:12px;
               padding:18px 22px;margin-bottom:24px;
-              box-shadow:0 1px 3px rgba(15,23,42,.04)"
+              box-shadow:0 1px 3px rgba(10,10,10,.04)"
        data-earnings-card="{sym}">
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
       {badge_html}
@@ -1891,7 +1891,7 @@ def _render_stock_page(t: dict) -> str:
     pop    = _f(t.get("smart_score") if t.get("smart_score") is not None else t.get("pop_score"))
     grade  = t.get("grade") or "—"
     rating = {"A":"★★★★★ Top Tier","B":"★★★★ Quality","C":"★★★ Average","D":"★★ Below Avg","F":"★ Weak"}.get(grade, "Under Review")
-    verdict_color = {"A":"#15803d","B":"#1e40af","C":"#b45309","D":"#dc2626","F":"#991b1b"}.get(grade, "#475569")
+    verdict_color = {"A":"#15803d","B":"#D4860A","C":"#D4860A","D":"#dc2626","F":"#991b1b"}.get(grade, "#475569")
     bottom_line = t.get("bottom_line") or f"{name} is currently scored {round(pop)}/100 on Alpha Score."
     chg = _f(t.get("change_pct"))
     chg_sign = "+" if chg >= 0 else ""
@@ -2035,7 +2035,7 @@ a:hover{{text-decoration:underline}}
 h1{{font-size:38px;font-weight:900;letter-spacing:-.03em;margin-bottom:6px;color:#0a0a0a}}
 h1 .sym{{font-family:'JetBrains Mono',monospace;color:#15803d}}
 .subhead{{font-size:15px;color:#475569;margin-bottom:24px}}
-.verdict-box{{background:#fff;border:1px solid #e2e8f0;border-left:4px solid {verdict_color};border-radius:12px;padding:20px 24px;margin-bottom:28px;box-shadow:0 1px 3px rgba(15,23,42,.04)}}
+.verdict-box{{background:#fff;border:1px solid #e2e8f0;border-left:4px solid {verdict_color};border-radius:12px;padding:20px 24px;margin-bottom:28px;box-shadow:0 1px 3px rgba(10,10,10,.04)}}
 .verdict-head{{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px}}
 .verdict-tag{{background:{verdict_color};color:#fff;padding:5px 12px;border-radius:7px;font-weight:800;font-size:13px;letter-spacing:.04em}}
 .verdict-score{{font-family:'JetBrains Mono',monospace;font-size:24px;font-weight:800;color:#0a0a0a}}
@@ -2055,7 +2055,7 @@ h2{{font-size:21px;font-weight:800;letter-spacing:-.015em;margin:32px 0 12px;col
 .peers{{display:flex;flex-wrap:wrap;gap:8px}}
 .peer{{display:inline-block;padding:7px 12px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:13px;color:#0a0a0a;font-weight:700;transition:all .15s}}
 .peer:hover{{border-color:#15803d;color:#15803d;text-decoration:none}}
-.cta{{margin-top:40px;padding:28px 32px;background:linear-gradient(135deg,#0a0e1a 0%,#1a2e1a 100%);border-radius:16px;text-align:center;color:#fff}}
+.cta{{margin-top:40px;padding:28px 32px;background:linear-gradient(135deg,#0A0A0A 0%,#1a2e1a 100%);border-radius:16px;text-align:center;color:#fff}}
 .cta h3{{font-size:22px;font-weight:800;letter-spacing:-.02em;margin-bottom:8px;color:#fff}}
 .cta p{{color:rgba(255,255,255,.7);margin-bottom:18px}}
 .cta-btn{{display:inline-block;background:#fff;color:#0a0a0a;padding:13px 26px;border-radius:10px;font-weight:700;font-size:14.5px}}
@@ -5501,7 +5501,7 @@ async def auth_callback():
 <html><head><meta charset="utf-8"><title>Signing you in…</title>
 <style>
   body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,sans-serif;
-       background:#050810;color:#e2e8f0;
+       background:#050505;color:#e2e8f0;
        display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;gap:24px}
   .ring{width:42px;height:42px;border-radius:50%;
         border:3px solid rgba(255,255,255,.12);border-top-color:#FFC75F;
@@ -5665,8 +5665,8 @@ _RESET_PASSWORD_HTML = """<!DOCTYPE html>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Inter',-apple-system,sans-serif;color:#0a0a0a;background:#0a0e1a;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;-webkit-font-smoothing:antialiased;
-  background-image:radial-gradient(ellipse at top,#1a2e1a 0%,#0a0e1a 60%);}
+body{font-family:'Inter',-apple-system,sans-serif;color:#0a0a0a;background:#0A0A0A;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;-webkit-font-smoothing:antialiased;
+  background-image:radial-gradient(ellipse at top,#1a2e1a 0%,#0A0A0A 60%);}
 .card{background:#fff;border-radius:18px;padding:40px 36px;max-width:440px;width:100%;box-shadow:0 24px 60px rgba(0,0,0,.35),0 8px 20px rgba(0,0,0,.2)}
 .brand{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:800;color:#0a0a0a;margin-bottom:28px;justify-content:center}
 .brand em{font-style:normal;color:#15803d}
@@ -5681,18 +5681,18 @@ input[type=password]:focus,input[type=text]:focus{outline:none;border-color:#158
 .strength{display:flex;gap:4px;margin-top:8px;height:4px}
 .strength span{flex:1;background:#e2e8f0;border-radius:2px;transition:background .2s}
 .strength.s1 span:nth-child(1){background:#dc2626}
-.strength.s2 span:nth-child(-n+2){background:#f59e0b}
+.strength.s2 span:nth-child(-n+2){background:#F5A623}
 .strength.s3 span:nth-child(-n+3){background:#F5A623}
 .strength.s4 span{background:#15803d}
 .strength-label{font-size:11.5px;color:#64748b;font-weight:600;margin-top:6px;letter-spacing:.02em;height:14px}
-.strength-label.s1{color:#dc2626}.strength-label.s2{color:#b45309}.strength-label.s3{color:#4d7c0f}.strength-label.s4{color:#15803d}
+.strength-label.s1{color:#dc2626}.strength-label.s2{color:#D4860A}.strength-label.s3{color:#9E6308}.strength-label.s4{color:#15803d}
 button.submit{width:100%;margin-top:24px;padding:14px;background:#0a0a0a;color:#fff;border:none;border-radius:10px;font-weight:700;font-size:15px;cursor:pointer;font-family:inherit;transition:background .15s}
 button.submit:hover{background:#15803d}
 button.submit:disabled{opacity:.6;cursor:not-allowed}
 .msg{margin-top:18px;padding:11px 14px;border-radius:9px;font-size:13.5px;font-weight:600;line-height:1.45;display:none}
 .msg.show{display:block}
 .msg.err{background:#fef2f2;color:#991b1b;border:1px solid #fecaca}
-.msg.ok{background:#f0fdf4;color:#14532d;border:1px solid #bbf7d0}
+.msg.ok{background:#FFF8E5;color:#14532d;border:1px solid #FFE9B0}
 .tips{margin-top:18px;font-size:12px;color:#64748b;line-height:1.6;background:#f8fafc;border-radius:9px;padding:12px 14px}
 .tips strong{color:#0a0a0a;font-weight:700}
 .foot{margin-top:24px;font-size:13px;color:#64748b;text-align:center}

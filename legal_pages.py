@@ -50,8 +50,8 @@ p{margin-bottom:12px;color:#0f172a}
 ul,ol{margin:8px 0 14px 22px;color:#0f172a}
 li{margin-bottom:6px}
 strong{font-weight:700;color:#0a0a0a}
-.callout{background:#fffbeb;border-left:4px solid #f59e0b;padding:14px 18px;border-radius:8px;margin:16px 0;font-size:14.5px}
-.callout-green{background:#f0fdf4;border-left-color:#15803d}
+.callout{background:#FFF8E5;border-left:4px solid #F5A623;padding:14px 18px;border-radius:8px;margin:16px 0;font-size:14.5px}
+.callout-green{background:#FFF8E5;border-left-color:#15803d}
 a{color:#15803d;font-weight:600;text-decoration:none}
 a:hover{text-decoration:underline}
 .legal-meta{font-size:12.5px;color:#64748b;margin-top:48px;padding-top:20px;border-top:1px solid #e2e8f0}

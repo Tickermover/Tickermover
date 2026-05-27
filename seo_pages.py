@@ -68,10 +68,10 @@ h3{font-size:19px;font-weight:800;letter-spacing:-.012em;margin:28px 0 10px;colo
 p{margin-bottom:16px;color:#1e293b}
 ul,ol{margin:8px 0 20px 22px}
 li{margin-bottom:8px;color:#1e293b}
-.tag{display:inline-block;background:#ecfdf5;color:#15803d;padding:4px 10px;border-radius:5px;font-size:11.5px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;margin-bottom:14px}
-blockquote{border-left:3px solid #15803d;background:#f0fdf4;padding:14px 20px;margin:20px 0;border-radius:0 8px 8px 0;color:#14532d;font-style:italic;font-size:15.5px}
+.tag{display:inline-block;background:#FFF8E5;color:#15803d;padding:4px 10px;border-radius:5px;font-size:11.5px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;margin-bottom:14px}
+blockquote{border-left:3px solid #15803d;background:#FFF8E5;padding:14px 20px;margin:20px 0;border-radius:0 8px 8px 0;color:#14532d;font-style:italic;font-size:15.5px}
 code{background:#f1f5f9;padding:2px 6px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:14px;color:#0f172a}
-.cta{margin-top:48px;padding:30px 32px;background:linear-gradient(135deg,#0a0e1a 0%,#1a2e1a 100%);border-radius:16px;text-align:center;color:#fff}
+.cta{margin-top:48px;padding:30px 32px;background:linear-gradient(135deg,#0A0A0A 0%,#1a2e1a 100%);border-radius:16px;text-align:center;color:#fff}
 .cta h3{font-size:22px;font-weight:800;letter-spacing:-.02em;margin-bottom:8px;color:#fff}
 .cta p{color:rgba(255,255,255,.7);margin-bottom:18px}
 .cta-btn{display:inline-block;background:#fff;color:#0a0a0a;padding:13px 26px;border-radius:10px;font-weight:700;font-size:14.5px}
@@ -93,7 +93,7 @@ code{background:#f1f5f9;padding:2px 6px;border-radius:4px;font-family:'JetBrains
 /* Sector / pillar / compare cards */
 .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin:18px 0 28px}
 .card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:18px 20px;transition:all .15s}
-.card:hover{border-color:#15803d;box-shadow:0 4px 12px rgba(15,23,42,.06);text-decoration:none}
+.card:hover{border-color:#15803d;box-shadow:0 4px 12px rgba(10,10,10,.06);text-decoration:none}
 .card a{color:inherit;text-decoration:none;display:block}
 .card .ttl{font-size:15.5px;font-weight:800;color:#0a0a0a;margin-bottom:4px}
 .card .sub{font-size:13px;color:#64748b;line-height:1.5}
@@ -106,7 +106,7 @@ code{background:#f1f5f9;padding:2px 6px;border-radius:4px;font-family:'JetBrains
 .tbl .tk{font-family:'JetBrains Mono',monospace;font-weight:800;color:#15803d}
 .tbl .pop{font-family:'JetBrains Mono',monospace;font-weight:800}
 .tbl .grade{display:inline-block;width:24px;text-align:center;padding:3px 0;border-radius:5px;font-weight:800;font-size:12.5px;color:#fff}
-.tbl .grade.A{background:#15803d}.tbl .grade.B{background:#1e40af}.tbl .grade.C{background:#b45309}.tbl .grade.D{background:#dc2626}.tbl .grade.F{background:#991b1b}
+.tbl .grade.A{background:#15803d}.tbl .grade.B{background:#D4860A}.tbl .grade.C{background:#D4860A}.tbl .grade.D{background:#dc2626}.tbl .grade.F{background:#991b1b}
 .tbl .vd{color:#475569;font-size:13.5px;line-height:1.5}
 @media(max-width:640px){h1{font-size:32px}.lede{font-size:17px}.tbl{font-size:13px}.tbl td,.tbl th{padding:9px 8px}}
 /* Compare layout */
