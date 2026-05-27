@@ -57,6 +57,15 @@
     --emerald:#5BFF6B;       /* up indicator — kept green for finance UX */
     --cyan:#FFC75F;          /* light gold (was cool cyan) */
     --indigo:#122142;        /* deep navy (was indigo) — cool counter */
+    /* ── Sapphire blue — the third accent that cools the warm gold.
+       Lives in: live-pulse, atmosphere orb (top-right), secondary CTAs,
+       pick-card "Read full report →" links, link hovers, and any "fresh /
+       live / streaming" cue. Keeps the brand from reading mono-amber. */
+    --sapphire:#3B6EE6;
+    --sapphire-2:#6E94F0;
+    --sapphire-deep:#1D3FA8;
+    --sapphire-glow:rgba(59,110,230,.45);
+    --sapphire-bg:rgba(29,63,168,.18);
     --violet:#FFC75F;        /* light gold (was violet) */
     --pink:#F5A623;          /* amber (was decorative pink) */
     --gold:#FFC75F;
@@ -122,7 +131,7 @@
     content:"";position:fixed;inset:0;z-index:-2;pointer-events:none;
     background:
       radial-gradient(70vw 55vh at 8% -5%, rgba(245,166,35,.20), transparent 60%),
-      radial-gradient(55vw 50vh at 100% 25%, rgba(255,199,95,.18), transparent 60%),
+      radial-gradient(55vw 50vh at 100% 25%, rgba(59,110,230,.18), transparent 60%),
       radial-gradient(50vw 45vh at 30% 90%, rgba(255,199,95,.15), transparent 65%),
       radial-gradient(40vw 40vh at 90% 95%, rgba(255,233,176,.10), transparent 70%),
       var(--bg);
@@ -260,8 +269,9 @@
     display:flex;align-items:center;justify-content:center;
     font-size:11px;color:#0A0A0A;font-weight:900;
   }
-  .pulse-ring{position:relative;display:inline-block;width:8px;height:8px;border-radius:50%;background:#F5A623;margin-left:4px;margin-right:2px;box-shadow:0 0 10px rgba(245,166,35,.7)}
-  .pulse-ring::after{content:"";position:absolute;inset:-4px;border-radius:50%;border:2px solid #F5A623;animation:pulseRing 2s ease-out infinite;opacity:0}
+  /* "Live" pulse — sapphire-blue dot. Cool against the warm gold hero. */
+  .pulse-ring{position:relative;display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--sapphire);margin-left:4px;margin-right:2px;box-shadow:0 0 10px var(--sapphire-glow)}
+  .pulse-ring::after{content:"";position:absolute;inset:-4px;border-radius:50%;border:2px solid var(--sapphire);animation:pulseRing 2s ease-out infinite;opacity:0}
   @keyframes pulseRing{0%{transform:scale(.7);opacity:.7}100%{transform:scale(3);opacity:0}}
 
   h1.hero-title{
@@ -435,10 +445,10 @@
   .pick-cta{
     margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,.06);
     font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;letter-spacing:.10em;text-transform:uppercase;
-    color:#FFC75F;opacity:0;transform:translateY(-4px);
+    color:var(--sapphire);opacity:0;transform:translateY(-4px);
     transition:opacity .25s, transform .25s, color .25s;
   }
-  a.pick-link:hover .pick-cta{opacity:1;transform:translateY(0);color:#FFE9B0}
+  a.pick-link:hover .pick-cta{opacity:1;transform:translateY(0);color:var(--sapphire-2)}
 
   /* ─── Trust strip ──────────────────────────────────────────────────── */
   .trust{
