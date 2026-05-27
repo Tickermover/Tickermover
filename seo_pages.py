@@ -133,11 +133,11 @@ _BRAND_SVG = (
     '<defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1">'
     '<stop offset="0" stop-color="#D4860A"/>'
     '<stop offset=".55" stop-color="#F5A623"/>'
-    '<stop offset="1" stop-color="#a3e635"/></linearGradient></defs>'
+    '<stop offset="1" stop-color="#FFE9B0"/></linearGradient></defs>'
     '<rect width="28" height="28" rx="7" fill="#0f172a"/>'
     '<polyline points="4,21 9,13 15,17 20,7 24,12" stroke="url(#lg)" '
     'stroke-width="2.3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>'
-    '<circle cx="20" cy="7" r="2.5" fill="#a3e635"/></svg>'
+    '<circle cx="20" cy="7" r="2.5" fill="#FFE9B0"/></svg>'
 )
 
 

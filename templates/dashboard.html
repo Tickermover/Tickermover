@@ -3041,7 +3041,7 @@ html.v2-dark .v2-mp-mini-lbl{color:#cbd5e1}
 
 .v2-brf-sect{margin-bottom:22px}
 .v2-brf-sect-h{
-  font-size:15px;font-weight:800;color:#0d2440;letter-spacing:-.01em;
+  font-size:15px;font-weight:800;color:#0A0A0A;letter-spacing:-.01em;
   margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid #15803d;display:inline-block;
 }
 .v2-brf-sect-body{font-size:13.5px;color:#1e293b;line-height:1.65;letter-spacing:-.003em}
@@ -11423,7 +11423,7 @@ function renderReports(tickers) {
     </div>`).join('');
 
   const dailyHTML = `
-    <div style="background:linear-gradient(135deg,#0d2440 0%,#15803d 100%);border-radius:14px;padding:24px;margin-bottom:18px;color:#fff;box-shadow:0 6px 20px rgba(10,10,10,.2)">
+    <div style="background:linear-gradient(135deg,#0A0A0A 0%,#15803d 100%);border-radius:14px;padding:24px;margin-bottom:18px;color:#fff;box-shadow:0 6px 20px rgba(10,10,10,.2)">
       <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:14px">
         <div>
           <div style="font-size:11px;color:#F5A623;font-weight:800;letter-spacing:.1em;text-transform:uppercase">Today's Daily Report</div>
@@ -12764,7 +12764,7 @@ function v2RenderTrackerChartHTML(d){
         `<circle cx="${sEndX}" cy="${sEndY}" r="3"   fill="#fbbf24" stroke="#0a0e1a" stroke-width="1.5" opacity="0.95"/>` +
         `<circle cx="${qEndX}" cy="${qEndY}" r="3"   fill="#FFC75F" stroke="#0a0e1a" stroke-width="1.5" opacity="0.95"/>` +
         // Hero endpoint — bright magenta with heavy halo
-        `<circle cx="${tEndX}" cy="${tEndY}" r="11" fill="#ec4899" opacity="0.45" filter="url(#v2-tc-dot-glow)"/>` +
+        `<circle cx="${tEndX}" cy="${tEndY}" r="11" fill="#F5A623" opacity="0.45" filter="url(#v2-tc-dot-glow)"/>` +
         `<circle cx="${tEndX}" cy="${tEndY}" r="5"  fill="#f9a8d4" stroke="#fff" stroke-width="2"/>` +
         // Hover scrubber — vertical guide + 3 dots (one per series).
         // Hidden by default (display:none on the group), shown by JS on
@@ -14697,7 +14697,7 @@ function showUpgradeSuccess() {
 /* Step progress */
 .ah-steps-prog{display:flex;gap:6px;margin-bottom:28px}
 .ah-step-dot{height:3px;border-radius:2px;flex:1;background:#e2e8f0;transition:background .3s}
-.ah-step-dot.on{background:linear-gradient(90deg,#15803d,#F5A623,#ec4899)}
+.ah-step-dot.on{background:linear-gradient(90deg,#15803d,#F5A623,#F5A623)}
 
 /* Option cards */
 .ah-opt{

@@ -41,8 +41,8 @@ logger = logging.getLogger(__name__)
 
 # ── Design tokens (mirror the dashboard's brand palette) ─────────────
 BRAND_INDIGO  = HexColor("#D4860A")
-BRAND_VIOLET  = HexColor("#8b5cf6")
-BRAND_MAGENTA = HexColor("#ec4899")
+BRAND_VIOLET  = HexColor("#FFC75F")
+BRAND_MAGENTA = HexColor("#F5A623")
 BRAND_LIGHT   = HexColor("#eef2ff")
 INK           = HexColor("#0f172a")
 INK_SOFT      = HexColor("#475569")
@@ -128,7 +128,7 @@ def _make_price_chart(price_history: list[dict], width_pt: float, height_pt: flo
         fig, ax = plt.subplots(figsize=(fig_w, fig_h), dpi=160)
         ax.plot(range(len(closes)), closes, color="#6366f1", linewidth=2.0)
         ax.fill_between(range(len(closes)), closes, min(closes),
-                        color="#8b5cf6", alpha=0.18)
+                        color="#FFC75F", alpha=0.18)
         ax.set_facecolor("#ffffff")
         for s in ("top", "right"):
             ax.spines[s].set_visible(False)
@@ -150,7 +150,7 @@ def _make_price_chart(price_history: list[dict], width_pt: float, height_pt: flo
         ax.yaxis.tick_right()
         ax.grid(True, axis="y", color="#f1f5f9", linewidth=0.5)
         ax.plot([len(closes) - 1], [closes[-1]], "o",
-                color="#ec4899", markersize=6,
+                color="#F5A623", markersize=6,
                 markeredgecolor="white", markeredgewidth=1.5)
         fig.tight_layout(pad=0.4)
         buf = io.BytesIO()
@@ -172,7 +172,7 @@ def _lerp(a: int, b: int, t: float) -> int:
 
 def _brand_gradient_color(t: float):
     """Sample the AlphaHunt brand gradient at position t in [0,1].
-    indigo (#D4860A) → violet (#8b5cf6) → magenta (#ec4899)."""
+    indigo (#D4860A) → violet (#FFC75F) → magenta (#F5A623)."""
     t = max(0.0, min(1.0, t))
     if t < 0.5:
         lt = t * 2
@@ -680,7 +680,7 @@ def _make_margin_trend_chart(quarterly_income: list,
         # Operating margin line (may have NaN slots)
         if any(v is not None for v in om_vals):
             om_plot = [v if v is not None else float("nan") for v in om_vals]
-            ax.plot(x, om_plot, "-s", color="#ec4899", linewidth=1.8,
+            ax.plot(x, om_plot, "-s", color="#F5A623", linewidth=1.8,
                     markersize=4, label="Operating margin %")
         ax.set_xticks(x)
         ax.set_xticklabels(labels, fontsize=7, color="#475569")
@@ -1492,8 +1492,8 @@ def _compute_trend_metrics(t):
 
     return [
         (rev_growth_label, rev_growth, "#D4860A"),
-        ("Gross Margin",   gm_series,  "#8b5cf6"),
-        ("Operating Margin", om_series, "#ec4899"),
+        ("Gross Margin",   gm_series,  "#FFC75F"),
+        ("Operating Margin", om_series, "#F5A623"),
         ("FCF Margin",     fcf_series, "#D4860A"),
     ]
 
