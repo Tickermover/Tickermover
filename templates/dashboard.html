@@ -99,13 +99,6 @@
   --sapphire-glow: rgba(59,110,230,.45);
 }
 
-/* ── Logo recolor — the bundled alpha-logo PNGs are baked green
-   (legacy lime brand). Recolor them to amber-gold via CSS filter so
-   we don't need to ship new PNG assets. Applies anywhere the bare
-   alpha logo is used inside an <img> tag. */
-img[src*="alpha-logo-bare"]{
-  filter: hue-rotate(258deg) saturate(1.45) brightness(1.05);
-}
 *{box-sizing:border-box;margin:0;padding:0}
 body{
   background:

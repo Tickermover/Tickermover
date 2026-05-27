@@ -199,9 +199,8 @@
   }
   .top-inner{display:flex;align-items:center;justify-content:space-between;padding:14px 24px;max-width:var(--wrap-max);margin:0 auto}
   .brand{display:flex;align-items:center;gap:11px;font-weight:900;font-size:18px;letter-spacing:-.02em}
-  /* Logo tile — dark backing with amber halo. The old PNG had the green
-     α baked in; we now render α as a typographic glyph so the gold
-     gradient comes from CSS (and follows the Black & Gold theme). */
+  /* Logo tile — dark backing keeps the original α PNG vivid and lets
+     the amber halo around it sing. Logo asset is left untouched. */
   .brand-mark{
     width:32px;height:32px;border-radius:10px;
     background:linear-gradient(135deg,#1F1F1F,#0A0A0A);
@@ -209,15 +208,7 @@
     box-shadow:0 0 0 1px rgba(245,166,35,.30), 0 6px 22px -6px rgba(245,166,35,.45);
     overflow:hidden;
   }
-  .brand-mark .alpha-glyph{
-    font-family:'Fraunces',Georgia,serif;
-    font-style:italic;font-weight:600;font-size:24px;line-height:1;
-    background:linear-gradient(135deg,#FFE9B0 0%,#FFC75F 50%,#F5A623 100%);
-    -webkit-background-clip:text;background-clip:text;
-    -webkit-text-fill-color:transparent;color:transparent;
-    filter:drop-shadow(0 0 6px rgba(245,166,35,.55));
-    transform:translateY(-1px);
-  }
+  .brand-mark img{width:80%;height:80%;object-fit:contain;filter:drop-shadow(0 0 6px rgba(245,166,35,.45))}
   .brand-name{display:flex;align-items:baseline;letter-spacing:-.025em;color:#fff}
   /* "Hunt" wordmark — matches the hero .brand-alpha gradient so the
      two brand surfaces sing in unison */
@@ -462,6 +453,59 @@
     transition:opacity .25s, transform .25s, color .25s;
   }
   a.pick-link:hover .pick-cta{opacity:1;transform:translateY(0);color:var(--sapphire-2)}
+
+  /* ───────────────────────────────────────────────────────────────
+     TIER CHIP SYSTEM — Olympic-style medal rating for every Alpha
+     Score. Reusable on pick cards, signal tables, anywhere a score
+     surfaces. Drop-in: <span class="tchip gold">Gold</span>
+     ─────────────────────────────────────────────────────────────── */
+  .tchip{
+    display:inline-flex;align-items:center;gap:6px;
+    padding:5px 11px;border-radius:999px;
+    font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:800;
+    letter-spacing:.14em;text-transform:uppercase;line-height:1;
+    white-space:nowrap;
+  }
+  .tchip::before{
+    content:"";width:9px;height:9px;border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, color-mix(in srgb, currentColor 95%, white), currentColor 70%);
+    box-shadow:0 0 0 1px color-mix(in srgb, currentColor 30%, transparent), 0 0 8px color-mix(in srgb, currentColor 40%, transparent);
+  }
+  .tchip.gold   {color:#F5A623;background:rgba(245,166,35,.14);border:1px solid rgba(245,166,35,.36)}
+  .tchip.silver {color:#C8CDD9;background:rgba(200,205,217,.12);border:1px solid rgba(200,205,217,.32)}
+  .tchip.bronze {color:#C97D3F;background:rgba(201,125,63,.14);border:1px solid rgba(201,125,63,.34)}
+  .tchip.pyrite {color:#7A6B52;background:rgba(122,107,82,.12);border:1px solid rgba(122,107,82,.28)}
+
+  /* Small variant for tight rows (signal tables, list views) */
+  .tchip.sm{padding:3px 9px;font-size:9px}
+  .tchip.sm::before{width:7px;height:7px}
+
+  /* Tier row inside a pick card — slots between score and CTA */
+  .pick-tier-row{
+    display:flex;justify-content:space-between;align-items:center;
+    margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.06);
+    font-size:11.5px;color:var(--muted);
+  }
+  .pick-tier-row .k{font-family:'JetBrains Mono',monospace;letter-spacing:.10em;text-transform:uppercase;font-weight:700}
+
+  /* ───────────────────────────────────────────────────────────────
+     STREAMING / LIVE BADGE — sapphire-glowing pill with pulse dot.
+     Drop-in: <span class="stream-badge"><span class="sb-pulse"></span>Streaming · Live</span>
+     ─────────────────────────────────────────────────────────────── */
+  .stream-badge{
+    display:inline-flex;align-items:center;gap:8px;
+    padding:6px 13px;border-radius:999px;
+    background:var(--sapphire-bg);border:1px solid var(--sapphire);
+    font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:800;
+    letter-spacing:.14em;text-transform:uppercase;color:var(--sapphire-2);
+    line-height:1;
+  }
+  .stream-badge .sb-pulse{
+    width:7px;height:7px;border-radius:50%;background:var(--sapphire);
+    box-shadow:0 0 10px var(--sapphire-glow);
+    animation:sbPulse 1.6s ease-in-out infinite;
+  }
+  @keyframes sbPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.45;transform:scale(.85)}}
 
   /* ─── Trust strip ──────────────────────────────────────────────────── */
   .trust{
@@ -897,7 +941,7 @@
 <nav class="top">
   <div class="top-inner">
     <a href="/" class="brand">
-      <span class="brand-mark" aria-label="AlphaHunt"><span class="alpha-glyph">α</span></span>
+      <span class="brand-mark"><img src="/static/icons/alpha-logo-bare-64.png" alt="AlphaHunt"></span>
       <span class="brand-name">Alpha<span class="h">Hunt</span></span>
     </a>
     <div class="nav-links">
@@ -1318,7 +1362,7 @@
   <div class="wrap foot-inner">
     <div class="foot-brand">
       <a href="/" class="brand">
-        <span class="brand-mark" aria-label="AlphaHunt"><span class="alpha-glyph">α</span></span>
+        <span class="brand-mark"><img src="/static/icons/alpha-logo-bare-64.png" alt="AlphaHunt"></span>
         <span class="brand-name">Alpha<span class="h">Hunt</span></span>
       </a>
       <p>AI-driven stock research. Audited every day. Built for people who want signal, not noise.</p>
@@ -1501,6 +1545,19 @@
         // text tile so we never show a broken-image icon.
         const logoUrl = `https://assets.parqet.com/logos/symbol/${encodeURIComponent(ticker)}`;
         const onerror = `this.parentElement.outerHTML='<div class=&quot;pick-logo-text&quot;>${short}</div>'`;
+        // Tier classification — Olympic-style medal grade based on Alpha
+        // Score. Gold (80+) / Silver (65-79) / Bronze (50-64) / Pyrite
+        // (<50). The chip surfaces on every pick card so users instantly
+        // see ranking without parsing the raw number.
+        const sNum  = typeof score === 'number' ? score : parseFloat(score);
+        const tier  = !isFinite(sNum) ? null
+                    : sNum >= 80 ? 'gold'
+                    : sNum >= 65 ? 'silver'
+                    : sNum >= 50 ? 'bronze'
+                    : 'pyrite';
+        const tierHtml = tier
+          ? `<div class="pick-tier-row"><span class="k">Tier</span><span class="tchip ${tier}">${tier}</span></div>`
+          : '';
         // Pick card is now a clickable link → /report/{TICKER}
         // Whole card is one tap target so visitors flow naturally from
         // "today's picks" → full research report.
@@ -1508,9 +1565,10 @@
           <div class="pick-head">
             <div class="pick-logo"><img src="${logoUrl}" alt="${ticker} logo" loading="lazy" onerror="${onerror}"></div>
             <div class="pick-info"><div class="pick-sym">${ticker}</div><div class="pick-name">${name}</div></div>
-            <div class="pick-score-wrap"><div class="pick-score-label">α-score</div><div class="pick-score">${score}</div></div>
+            <div class="pick-score-wrap"><div class="pick-score-label">Alpha</div><div class="pick-score">${score}</div></div>
           </div>
           <div class="pick-row"><span class="k">Today</span><span class="v ${chgCls}">${chgStr}</span></div>
+          ${tierHtml}
           <div class="pick-cta">Read full report →</div>
         </a>`;
       }).join('');
