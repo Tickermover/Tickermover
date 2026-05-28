@@ -1541,7 +1541,7 @@ body.v2 .ticker-chip .px{color:#cbd5e1!important}
   transition:border .15s,background .15s;
 }
 .v2-search:hover{background:#e2e8f0}
-.v2-search:focus-visible{border-color:#15803d;background:#fff}
+.v2-search:focus-visible{border-color:#33569E;background:#fff;box-shadow:0 0 0 3px rgba(51,86,158,.14)}
 .v2-search-ph{
   flex:1;font-size:13.5px;color:#94a3b8;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
@@ -2511,16 +2511,22 @@ body[data-active-profile="conservative"] .fund-row:not([data-profiles~="conserva
   display:grid;grid-template-columns:repeat(3,1fr);gap:10px;
 }
 .v2-focus-item{
-  position:relative;background:#fff;border:1px solid #e2e8f0;border-radius:10px;
-  padding:12px 14px;cursor:pointer;transition:transform .15s, box-shadow .15s, border-color .15s;
-  display:flex;flex-direction:column;gap:8px;
+  position:relative;background:#fff;border:1px solid rgba(51,86,158,.26);border-radius:14px;
+  padding:14px 16px;cursor:pointer;overflow:hidden;
+  box-shadow:0 1px 2px rgba(20,25,45,.05), 0 10px 26px -22px rgba(20,25,45,.30);
+  transition:transform .16s, box-shadow .2s, border-color .2s;
+  display:flex;flex-direction:column;gap:9px;
 }
+/* sapphire = interactive: a thin top accent line reveals on hover */
+.v2-focus-item::after{content:"";position:absolute;top:0;left:16%;right:16%;height:1px;
+  background:linear-gradient(90deg,transparent,#33569E,transparent);opacity:0;transition:opacity .2s;pointer-events:none}
 .v2-focus-item:hover{
-  transform:translateY(-2px);
-  box-shadow:0 8px 20px rgba(10,10,10,.08);
+  transform:translateY(-3px);border-color:rgba(51,86,158,.52);
+  box-shadow:0 2px 5px rgba(20,25,45,.07), 0 16px 40px -26px rgba(51,86,158,.40);
 }
-.v2-focus-pos:hover{border-color:#FFE9B0}
-.v2-focus-neg:hover{border-color:#fca5a5}
+.v2-focus-item:hover::after{opacity:.7}
+.v2-focus-pos:hover{border-color:rgba(51,86,158,.52)}
+.v2-focus-neg:hover{border-color:rgba(51,86,158,.52)}
 .v2-focus-label-row{
   display:flex;align-items:center;justify-content:space-between;gap:8px;
 }
@@ -2530,15 +2536,15 @@ body[data-active-profile="conservative"] .fund-row:not([data-profiles~="conserva
 /* Default label color — violet/indigo as the SECONDARY brand accent
    (kept distinct from primary green on tickers/scores/CTAs). Creates
    visual rhythm: green = brand identity, violet = meta-labels. */
-.v2-focus-label{color:#F5A623}
+.v2-focus-label{color:#B9770F}
 /* Lighter score badge — white surface with a thin border, colour
    carried by the grade chip + the score number. No more heavy indigo
    block that was overwhelming the card header. */
 .v2-focus-score{
   display:inline-flex;align-items:center;gap:5px;
-  font-size:13px;font-weight:900;color:#0f172a;
-  background:#fff;border:1px solid #e2e8f0;
-  padding:2px 8px 2px 4px;border-radius:7px;line-height:1.35;
+  font-size:13px;font-weight:900;color:#A66E0C;
+  background:rgba(201,138,18,.10);border:1px solid rgba(201,138,18,.28);
+  padding:2px 8px 2px 4px;border-radius:8px;line-height:1.35;
   font-variant-numeric:tabular-nums;letter-spacing:.02em;
 }
 .v2-focus-grade{
@@ -2552,20 +2558,20 @@ body[data-active-profile="conservative"] .fund-row:not([data-profiles~="conserva
 .v2-focus-neg .v2-focus-label{color:#b91c1c}
 .v2-focus-tic-row{display:flex;align-items:center;gap:8px}
 .v2-focus-tic-body{flex:1;min-width:0}
-.v2-focus-tic{font-size:15px;font-weight:900;color:#15803d;letter-spacing:.01em}
+.v2-focus-tic{font-size:15px;font-weight:900;color:#1A1F2B;letter-spacing:.01em}
 .v2-focus-name{font-size:11px;color:#64748b;margin-top:1px;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .v2-focus-price{font-size:13px;font-weight:800;color:#0f172a;text-align:right;
   font-variant-numeric:tabular-nums;flex-shrink:0}
-.v2-focus-price .up{color:#D4860A;font-weight:800;font-size:11px;margin-left:3px}
-.v2-focus-price .dn{color:#dc2626;font-weight:800;font-size:11px;margin-left:3px}
+.v2-focus-price .up{color:#16783B;font-weight:800;font-size:11px;margin-left:3px}
+.v2-focus-price .dn{color:#C0392B;font-weight:800;font-size:11px;margin-left:3px}
 .v2-focus-reason{
-  font-size:11.5px;color:#475569;line-height:1.4;
-  background:#f8fafc;border-left:3px solid #cbd5e1;
-  padding:6px 9px;border-radius:5px;
+  font-size:11.5px;color:#7A5A16;line-height:1.45;
+  background:rgba(201,138,18,.09);border:1px solid rgba(201,138,18,.22);border-left:3px solid rgba(201,138,18,.5);
+  padding:7px 10px;border-radius:9px;
 }
-.v2-focus-pos .v2-focus-reason{background:#FFF8E5;border-left-color:#FFE9B0;color:#15803d;font-weight:600}
-.v2-focus-neg .v2-focus-reason{background:#fef2f2;border-left-color:#fca5a5;color:#991b1b;font-weight:600}
+.v2-focus-pos .v2-focus-reason{background:rgba(201,138,18,.10);border-color:rgba(201,138,18,.26);border-left-color:#C98A12;color:#6B5418;font-weight:600}
+.v2-focus-neg .v2-focus-reason{background:rgba(192,57,43,.08);border-color:rgba(192,57,43,.24);border-left-color:#C0392B;color:#9A3328;font-weight:600}
 
 /* "Read full report →" CTA — appears below the reason on each focus card.
    Quiet at rest so it doesn't compete with the card's primary content,
@@ -2581,7 +2587,7 @@ body[data-active-profile="conservative"] .fund-row:not([data-profiles~="conserva
   transition:color .15s, background .15s, border-color .15s, transform .15s;
 }
 .v2-focus-cta:hover{
-  color:#15803d;background:#FFF8E5;border-color:#FFE9B0;transform:translateX(2px);
+  color:#33569E;background:rgba(51,86,158,.08);border-color:rgba(51,86,158,.30);transform:translateX(2px);
 }
 .v2-focus-item{display:flex;flex-direction:column}
 
@@ -3611,10 +3617,8 @@ body.v2 .verdict-positive{
 /* (13) Subtle indigo-gradient TINT on the content area so the inset
         card visually ties into the outer frame. Stays nearly white. */
 body.v2 .v2-content{
-  background:
-    radial-gradient(ellipse 90% 60% at 0% 0%, rgba(245,166,35,.04) 0%, transparent 55%),
-    radial-gradient(ellipse 90% 60% at 100% 100%, rgba(245,166,35,.03) 0%, transparent 55%),
-    #F8FAFC!important;
+  /* Paper White — clean near-white canvas (premium light direction). */
+  background:#FBFBFD!important;
 }
 html.v2-dark body.v2 .v2-content{
   background:
