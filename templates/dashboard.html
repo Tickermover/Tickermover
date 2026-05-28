@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="v2-dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -14,8 +14,8 @@
      appearing in the browser menu, and didn't want forgot-password
      emails opening inside the installed PWA shell instead of a real
      browser tab. No manifest, no service worker, no Add-to-Home-Screen. -->
-<meta name="theme-color" content="#15803d">
-<meta name="msapplication-TileColor" content="#15803d">
+<meta name="theme-color" content="#0A0A0A">
+<meta name="msapplication-TileColor" content="#0A0A0A">
 <meta name="format-detection" content="telephone=no">
 <link rel="icon" type="image/png" sizes="32x32" href="/static/icons/favicon-32.png">
 <link rel="icon" type="image/png" sizes="192x192" href="/static/icons/icon-192.png">
@@ -56,7 +56,7 @@
   html.auth-gating body > *:not(#auth-modal):not(script):not(style){
     visibility:hidden !important;
   }
-  html.auth-gating{background:#fafbfc;overflow:hidden}
+  html.auth-gating{background:#0A0A0A;overflow:hidden}
 </style>
 
 <!-- PWA removed: unregister any service worker that older versions of the
@@ -7502,9 +7502,10 @@ function v2ToggleTheme(){
   v2ApplyTheme(document.documentElement.classList.contains('v2-dark') ? 'light' : 'dark');
 }
 (function(){
-  let saved = 'light';
-  try { saved = localStorage.getItem('ah-v2-theme') || 'light'; } catch(e){}
-  v2ApplyTheme(saved);
+  // Brand-aligned: the dashboard is dark-only (no toggle). Force dark
+  // regardless of any stale saved 'light' preference from when the toggle
+  // still existed. <html> already carries class="v2-dark" to avoid a flash.
+  v2ApplyTheme('dark');
 })();
 
 /* ── Hook into the existing renderHotList() so the overview rerenders
