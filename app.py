@@ -44,6 +44,7 @@ logger = logging.getLogger(__name__)
 BASE_DIR       = Path(__file__).parent
 DASHBOARD_HTML = BASE_DIR / "templates" / "dashboard.html"
 LANDING_HTML   = BASE_DIR / "templates" / "landing.html"
+LOGIN_HTML     = BASE_DIR / "templates" / "login.html"
 
 
 # ── NaN/Inf sanitiser — Python json.dumps crashes on NaN/Infinity ─────
@@ -2336,6 +2337,17 @@ async def og_image(ticker: str):
     _OG_CACHE[sym] = (time.time(), png)
     return Response(content=png, media_type="image/png",
                     headers={"Cache-Control": "public, max-age=600"})
+
+
+@app.get("/login", response_class=HTMLResponse)
+async def login_page():
+    """Full-page sign-in. Auth is client-side (JWT in localStorage); if a
+    session already exists the page redirects itself to /app. The scoring
+    wall is hydrated live from /api/hot."""
+    try:
+        return HTMLResponse(content=LOGIN_HTML.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return HTMLResponse(content="<h2>templates/login.html not found</h2>", status_code=500)
 
 
 @app.get("/app", response_class=HTMLResponse)

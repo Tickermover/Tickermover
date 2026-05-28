@@ -29,8 +29,21 @@
      so the dashboard never flashes behind the auth modal on the way in from
      the landing page. The class is removed by the auth code once resolved. -->
 <script>
-  // Hide the dashboard until the auth modal pops, on either ?signup=1 or
-  // ?signin=1 deep links from the landing page.
+  // Front-door gate (synchronous, runs before any dashboard JS/CSS/websockets):
+  // a visitor with no stored session is bounced straight to the full-page
+  // /login, so the dashboard never flashes and its live data loops never spin
+  // up for logged-out users. We require BOTH tokens to be absent — a lingering
+  // refresh token alone can still be revived by authInit, so we let that case
+  // through to the post-validation backstop below.
+  (function(){
+    try {
+      if (!localStorage.getItem('ah_token') && !localStorage.getItem('ah_refresh')) {
+        window.location.replace('/login');
+      }
+    } catch(e){}
+  })();
+
+  // Hide the dashboard until resolved, on either ?signup=1 or ?signin=1 deep links.
   (function(){
     var _q = new URLSearchParams(window.location.search);
     if (_q.get('signup') === '1' || _q.get('signin') === '1') {
@@ -43,7 +56,7 @@
   html.auth-gating body > *:not(#auth-modal):not(script):not(style){
     visibility:hidden !important;
   }
-  html.auth-gating{background:#fafbfc}
+  html.auth-gating{background:#fafbfc;overflow:hidden}
 </style>
 
 <!-- PWA removed: unregister any service worker that older versions of the
@@ -3401,29 +3414,32 @@ body.v2 [style*="rgba(212,134,10,.4"]{
 
 /* 3. Auth modal — the existing class-based styles still default to
       green. Flip them all to indigo. */
+/* v2 auth overrides — retuned to the Black & Gold + Sapphire system.
+   (Previously forced legacy green #15803d via !important, which leaked
+   onto the redesigned dark modal.) */
 body.v2 .ah-submit{
-  background:linear-gradient(135deg,#15803d 0%,#FFC75F 50%,#F5A623 100%)!important;
+  background:linear-gradient(135deg,#FFE9B0 0%,#FFC75F 50%,#F5A623 100%)!important;
   background-size:200% 200%!important;background-position:0% 50%!important;
-  box-shadow:0 10px 28px -8px rgba(255,199,95,.55), 0 0 0 1px rgba(255,255,255,.05) inset!important;
+  box-shadow:0 12px 30px -10px rgba(245,166,35,.45), 0 0 0 1px rgba(255,255,255,.22) inset!important;
   transition:transform .15s, box-shadow .2s, opacity .2s, background-position .35s ease!important;
 }
 body.v2 .ah-submit:hover:not(:disabled){
   background-position:100% 50%!important;
-  box-shadow:0 14px 36px -8px rgba(245,166,35,.55), 0 0 0 1px rgba(255,255,255,.08) inset!important;
+  box-shadow:0 18px 40px -10px rgba(245,166,35,.6), 0 0 0 1px rgba(255,255,255,.28) inset!important;
 }
 body.v2 .ah-field input:focus{
-  border-color:#15803d!important;
-  box-shadow:0 0 0 4px rgba(245,166,35,.12)!important;
+  border-color:#5688EE!important;
+  box-shadow:0 0 0 3px rgba(86,136,238,.15)!important;
 }
 body.v2 .ah-opt:hover,
 body.v2 .ah-opt.sel{
-  border-color:#15803d!important;background:#FFF8E5!important;
+  border-color:#F5A623!important;background:rgba(245,166,35,.10)!important;
 }
-body.v2 .ah-opt input[type=radio]{accent-color:#15803d!important}
+body.v2 .ah-opt input[type=radio]{accent-color:#F5A623!important}
 body.v2 .ah-toggle-btn,
 body.v2 .ah-forgot:hover,
-body.v2 .tos-row a{color:#15803d!important}
-body.v2 .ah-step-dot.on{background:linear-gradient(90deg,#15803d,#F5A623)!important}
+body.v2 .tos-row a{color:#5688EE!important}
+body.v2 .ah-step-dot.on{background:linear-gradient(90deg,#FFC75F,#F5A623)!important}
 body.v2 .ah-mobile-hero-stats strong{color:#FFE9B0!important}
 body.v2 .ah-mobile-hero-logo em{color:#FFE9B0!important}
 
@@ -13600,36 +13616,18 @@ document.addEventListener('DOMContentLoaded', async () => {
   setTimeout(liveQuoteRefresh,   8 * 1000);          // first price update after 8s
 
   // ── Auth gate ─────────────────────────────────────────────────
-  // The .auth-gating class on <html> hides the dashboard while the modal
-  // appears, so users coming from the landing page never see a Hot List
-  // flash before the signup form pops. Removed once the modal opens (or
-  // the user is already authed and we don't need it).
+  // authInit validates/refreshes a stored session. Logged-out visitors are
+  // sent to the full-page /login (a synchronous guard in <head> catches the
+  // common case before this runs; this is the post-validation backstop for
+  // sessions that turn out to be dead). The dismissible modal is kept only
+  // for in-app prompts like adding to a watchlist mid-browse.
   await authInit();
-  const _urlParams = new URLSearchParams(window.location.search);
-  const _signupFlow = _urlParams.get('signup') === '1';
-  const _signinFlow = _urlParams.get('signin') === '1';
-
-  // Returning-visitor heuristic: if this device has signed in before we
-  // default the auth modal to SIGN IN, not sign up. This fixes the awkward
-  // "open signup → click 'already have an account?' → switch" flow for
-  // anyone who's previously logged in on this browser.
-  let _hasReturningHint = false;
-  try {
-    _hasReturningHint = localStorage.getItem('ah_seen_signin') === '1';
-  } catch(e) {}
-
-  // Signup wizard is retired — every entry point opens the unified Sign in view.
-  // The backend auto-creates the account if the email doesn't exist (handled in authSubmit).
-  if (_signupFlow || _signinFlow) {
-    history.replaceState({}, '', '/app');
-    openAuthModal('signin');
-    document.documentElement.classList.remove('auth-gating');
-  } else if (!_AUTH.token) {
-    setTimeout(() => openAuthModal('signin'), 600);
-  } else {
-    // Authed user — make sure the gate class isn't hanging around
-    document.documentElement.classList.remove('auth-gating');
+  if (!_AUTH.token) {
+    window.location.replace('/login');
+    return;
   }
+  // Authed user — make sure the gate class isn't hanging around
+  document.documentElement.classList.remove('auth-gating');
 });
 
 
@@ -13802,6 +13800,8 @@ function openAuthModal(mode) {
   const m = document.getElementById('auth-modal');
   if (!m) return;
   m.style.display = 'flex';
+  document.documentElement.style.overflow = 'hidden';
+  document.body.style.overflow = 'hidden';
   _switchAuthView('signin');
   _ahLoadHotStrip();
 }
@@ -13864,33 +13864,63 @@ async function authMagicLink() {
   }
 }
 
-// Populate the left-panel Hot List preview from /api/hot. Replaces the
-// stale hardcoded APLD/VRT/AAOI sample tickers with the actual current
-// list so the auth screen reflects real product state on every open.
+// Build the left-panel SCROLLING WALL from /api/hot. Two columns drift
+// in opposite directions; each column's cards are duplicated 2x so the
+// CSS translateY(-50%) loop is seamless. Falls back to a curated sample
+// set if the API isn't reachable, so the wall is never empty.
 async function _ahLoadHotStrip(){
-  const strip = document.getElementById('ah-hot-strip');
-  if (!strip) return;
+  const colA = document.getElementById('ah-scroll-a');
+  const colB = document.getElementById('ah-scroll-b');
+  if (!colA || !colB) return;
+
+  const tierOf = s => s >= 80 ? 'gold' : s >= 50 ? 'silver' : 'bronze';
+  const cardHTML = (sym, score, tier, chg) => {
+    const dir  = chg >= 0 ? 'up' : 'dn';
+    const sign = chg >= 0 ? '+' : '';
+    // Real company logo from Parqet's free CDN; on 404 the <img> is
+    // swapped for the ticker's first 2 letters so the tile is never empty.
+    const logoUrl = `https://assets.parqet.com/logos/symbol/${encodeURIComponent(sym)}`;
+    const onerr = `this.outerHTML='${(sym||'').slice(0,2)}'`;
+    return `<div class="ah-sc-card">
+      <div class="ah-sc-top">
+        <div class="ah-sc-symrow"><div class="ah-sc-logo"><img src="${logoUrl}" alt="" loading="lazy" onerror="${onerr}"></div><div class="ah-sc-sym">${sym}</div></div>
+        <div class="ah-sc-score">${score}</div>
+      </div>
+      <div class="ah-sc-bot">
+        <span class="ah-sc-chip ${tier}">${tier}</span>
+        <span class="ah-sc-move ${dir}">${sign}${chg.toFixed(1)}%</span>
+      </div>
+    </div>`;
+  };
+
+  // Sample fallback — used if /api/hot fails or returns nothing.
+  let rows = [
+    ['NVDA',94,8.4],['MSFT',88,3.2],['AMD',79,4.1],['PLTR',81,-1.7],
+    ['SHOP',82,6.0],['CRWD',72,-2.4],['AVGO',86,2.1],['NFLX',77,1.3],
+    ['URI',85,2.4],['TSLA',64,-3.1],['ANET',83,3.8],['UBER',74,0.9],
+  ].map(([sym,score,chg]) => ({sym, score, tier:tierOf(score), chg}));
+
   try {
-    const r = await fetch('/api/hot?n=3', {cache:'no-store'});
-    if (!r.ok) return;
-    const d = await r.json();
-    const picks = (d.hot || []).slice(0,3);
-    if (!picks.length) return;
-    strip.innerHTML = picks.map(p => {
-      const score = Math.round(p.smart_score || p.pop_score || 0);
-      const grade = p.grade || 'A';
-      const chg = p.change_pct != null ? parseFloat(p.change_pct) : 0;
-      const cls = chg >= 0 ? 'pos' : 'neg';
-      const sign = chg >= 0 ? '+' : '';
-      const px = p.price != null ? Number(p.price).toFixed(2) : '—';
-      return `<div class="ah-tick-card">
-        <div class="ah-tick-sym">${p.ticker || ''}</div>
-        <div class="ah-tick-price">$${px}</div>
-        <div class="ah-tick-chg ${cls}">${sign}${chg.toFixed(1)}%</div>
-        <div class="ah-tick-pop">Score ${score} · Grade ${grade}</div>
-      </div>`;
-    }).join('');
-  } catch(e){ /* swallow — modal still usable without preview */ }
+    const r = await fetch('/api/hot?n=14', {cache:'no-store'});
+    if (r.ok){
+      const d = await r.json();
+      const picks = (d.hot || []);
+      if (picks.length){
+        rows = picks.map(p => {
+          const score = Math.round(p.smart_score || p.pop_score || 0);
+          const chg = p.change_pct != null ? parseFloat(p.change_pct) : 0;
+          return {sym:p.ticker||'—', score, tier:tierOf(score), chg};
+        });
+      }
+    }
+  } catch(e){ /* keep sample fallback */ }
+
+  const mid = Math.ceil(rows.length / 2);
+  const a = rows.slice(0, mid).map(x => cardHTML(x.sym, x.score, x.tier, x.chg)).join('');
+  const b = rows.slice(mid).map(x => cardHTML(x.sym, x.score, x.tier, x.chg)).join('');
+  // repeat 2x for seamless infinite scroll
+  colA.innerHTML = a + a;
+  colB.innerHTML = (b || a) + (b || a);
 }
 
 function closeAuthModal() {
@@ -13901,6 +13931,8 @@ function closeAuthModal() {
   }
   const m = document.getElementById('auth-modal');
   if (m) m.style.display = 'none';
+  document.documentElement.style.overflow = '';
+  document.body.style.overflow = '';
   const e = document.getElementById('auth-error');
   if (e) e.textContent = '';
 }
@@ -13914,17 +13946,12 @@ function _switchAuthView(view) {
   // Signup wizard retired — only signin / forgot / success views are reachable.
   // Force any legacy 'signup' callers back to 'signin'.
   if (view === 'signup' || (view && view.indexOf('signup-s') === 0)) view = 'signin';
-  // ToS row is shown on the signin view ONLY for first-time users — once consent
-  // has been recorded in localStorage, returning users never see it again.
+  // ToS consent belongs on the SIGNUP flow only — never on the signin
+  // view (per product decision). Hidden everywhere except signup steps.
   const _tosRow = document.getElementById('ah-tos-row');
   if (_tosRow) {
-    let _tosAgreed = false;
-    try { _tosAgreed = localStorage.getItem('ah_tos_agreed') === '1'; } catch (e) {}
-    if (_tosAgreed) {
-      _tosRow.style.display = 'none';
-    } else {
-      _tosRow.style.display = view === 'signin' ? '' : 'none';
-    }
+    const _isSignup = view && view.indexOf('signup') === 0;
+    _tosRow.style.display = _isSignup ? '' : 'none';
   }
 
   document.getElementById('auth-modal-mode').value = 'signin';
@@ -14421,424 +14448,279 @@ function showUpgradeSuccess() {
      ══════════════════════════════════════════════════════════════ -->
 <style>
 /* ── Centred pop-up overlay ─────────────────────────────────── */
-#auth-modal{display:none;position:fixed;inset:0;z-index:9999;
-  background:rgba(0,0,0,.6);backdrop-filter:blur(10px);
-  align-items:center;justify-content:center;padding:20px}
-@keyframes authSlideIn{from{transform:scale(.9) translateY(16px);opacity:0}to{transform:scale(1) translateY(0);opacity:1}}
-.ah-wrap{
-  display:flex;width:100%;max-width:880px;max-height:min(680px,86vh);
-  border-radius:22px;overflow:hidden;
-  box-shadow:0 40px 100px -20px rgba(0,0,0,.55), 0 0 0 1px rgba(255,255,255,.06);
-  animation:authSlideIn .35s cubic-bezier(.34,1.56,.64,1);
-  background:#fff;
+/* ════════════════════════════════════════════════════════════════════
+   AUTH MODAL - fresh dark Black & Gold + Sapphire design.
+   The legacy two-panel layout (dark showcase + white form) is gone;
+   everything is now a single centered dark card. Every view
+   (signin / forgot / signup steps / success) inherits this styling.
+   All class names + IDs preserved so the existing JS still works. */
+#auth-modal{
+  display:none;position:fixed;inset:0;z-index:9999;
+  background:rgba(5,5,5,.74);backdrop-filter:blur(12px);
+  align-items:center;justify-content:center;padding:20px;
 }
+@keyframes authSlideIn{from{transform:scale(.96) translateY(14px);opacity:0}to{transform:scale(1) translateY(0);opacity:1}}
 
-/* ── LEFT: Dark product showcase ───────────────────────────── */
-/* ── Auth modal dark hero — same frequency as landing page ───────── */
-.ah-left{
-  flex:0 0 50%;
-  background:#0A0A0A;
-  display:flex;flex-direction:column;padding:40px 44px;
-  position:relative;overflow:hidden;
+/* Two-panel container: scrolling wall (left) + form (right). The wrap
+   itself carries the border + glow + rounded clip. */
+.ah-wrap{
+  position:relative;display:flex;
+  width:100%;max-width:940px;max-height:min(640px,92vh);
+  border-radius:22px;overflow:hidden;
+  border:1px solid rgba(86,136,238,.30);
+  box-shadow:
+    0 0 0 1px rgba(86,136,238,.10),
+    0 40px 90px -28px rgba(0,0,0,.8),
+    0 0 60px -20px rgba(86,136,238,.30);
+  animation:authSlideIn .35s cubic-bezier(.34,1.56,.64,1);
+  background:#0E0E0E;
 }
-/* Animated conic-gradient mesh — same trick as landing's hero-fx.
-   Slowly rotates behind everything; mask-image keeps the edges soft. */
-.ah-left-bg{
-  position:absolute;inset:0;pointer-events:none;
+.ah-mobile-hero{display:none !important}
+
+/* LEFT — scrolling wall */
+.ah-left{
+  flex:0 0 52%;position:relative;overflow:hidden;
   background:
-    radial-gradient(ellipse 60% 50% at 12% 8%,   rgba(245,166,35,.22)  0%, transparent 60%),
-    radial-gradient(ellipse 50% 45% at 88% 78%,  rgba(255,199,95,.18) 0%, transparent 60%),
-    radial-gradient(ellipse 45% 40% at 72% 22%,  rgba(255,199,95,.18) 0%, transparent 55%),
-    radial-gradient(ellipse 40% 40% at 30% 95%,  rgba(255,199,95,.14) 0%, transparent 60%),
+    radial-gradient(60% 50% at 15% 10%, rgba(245,166,35,.22), transparent 60%),
+    radial-gradient(55% 50% at 90% 90%, rgba(86,136,238,.22), transparent 60%),
     #0A0A0A;
 }
-.ah-left-bg::before{
-  content:"";position:absolute;top:-30%;left:50%;transform:translateX(-50%);
-  width:140%;height:140%;border-radius:50%;
-  background:conic-gradient(from 0deg,
-    rgba(245,166,35,.30),
-    rgba(255,199,95,.28),
-    rgba(255,199,95,.24),
-    rgba(255,199,95,.26),
-    rgba(245,166,35,.30));
-  filter:blur(90px);opacity:.55;
-  animation:ahSpin 40s linear infinite;
+.ah-scroll-cols{
+  position:absolute;inset:-8% 0;
+  display:grid;grid-template-columns:1fr 1fr;gap:11px;padding:0 22px;
+  transform:rotate(-2.5deg) scale(1.04);transform-origin:center;opacity:1;
 }
-@keyframes ahSpin{to{transform:translateX(-50%) rotate(360deg)}}
-@media (prefers-reduced-motion: reduce){.ah-left-bg::before{animation:none}}
-/* Fine grid overlay, softly masked so only the upper-left quadrant
-   shows it. Adds depth without busy-noise. */
-.ah-left-bg::after{
-  content:'';position:absolute;inset:0;
-  background-image:linear-gradient(rgba(255,255,255,.05) 1px,transparent 1px),
-                   linear-gradient(90deg,rgba(255,255,255,.05) 1px,transparent 1px);
-  background-size:56px 56px;
-  mask-image:radial-gradient(ellipse 75% 65% at 18% 28%, #000 0%, transparent 75%);
-  -webkit-mask-image:radial-gradient(ellipse 75% 65% at 18% 28%, #000 0%, transparent 75%);
-  opacity:.55;pointer-events:none;
+.ah-scroll-col{display:flex;flex-direction:column;gap:11px;will-change:transform}
+.ah-scroll-col.up{animation:ahScrollUp 34s linear infinite}
+.ah-scroll-col.down{animation:ahScrollDown 34s linear infinite}
+@keyframes ahScrollUp{from{transform:translateY(0)}to{transform:translateY(-50%)}}
+@keyframes ahScrollDown{from{transform:translateY(-50%)}to{transform:translateY(0)}}
+@media (prefers-reduced-motion:reduce){.ah-scroll-col{animation:none}}
+.ah-sc-card{
+  background:linear-gradient(180deg, rgba(255,255,255,.11), rgba(255,255,255,.05));
+  border:1px solid rgba(255,255,255,.17);border-radius:12px;padding:11px 12px 10px;
+  box-shadow:0 10px 24px -16px rgba(0,0,0,.75), 0 0 0 1px rgba(255,255,255,.03) inset;
 }
-.ah-left-content{position:relative;z-index:2;display:flex;flex-direction:column;height:100%}
-
-/* Brand wordmark — exact same treatment as landing nav. */
-.ah-logo-row{display:flex;align-items:center;gap:11px;margin-bottom:30px}
-.ah-logo-row .name{font-size:20px;font-weight:900;letter-spacing:-.025em;color:#fff}
-
-/* "Live" pulse badge — mirrors the landing hero's
-   "AI-driven · Live · 540+ US stocks" pill. */
-.ah-live-badge{
-  display:inline-flex;align-items:center;gap:10px;
-  padding:7px 14px 7px 12px;border-radius:999px;
-  background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.18);
-  font-family:'Manrope','Inter',sans-serif;font-size:12.5px;font-weight:600;
-  color:rgba(255,255,255,.85);
-  backdrop-filter:blur(6px);
-  margin-bottom:22px;align-self:flex-start;
+.ah-sc-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}
+.ah-sc-symrow{display:flex;align-items:center;gap:8px}
+/* Dark-glass logo tile (no stark white). Colored brand logos read on it;
+   on 404 the img is swapped for the ticker initials. */
+.ah-sc-logo{width:26px;height:26px;border-radius:7px;flex-shrink:0;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;overflow:hidden;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:800;color:#E0E0E0}
+.ah-sc-logo img{width:100%;height:100%;object-fit:contain;padding:3px}
+.ah-sc-sym{font-weight:800;font-size:13px;color:#fff;letter-spacing:-.01em}
+.ah-sc-score{font-family:'JetBrains Mono',monospace;font-weight:800;font-size:18px;line-height:1;background:linear-gradient(135deg,#FFE9B0,#FFC75F 50%,#F5A623);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
+.ah-sc-bot{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.ah-sc-chip{display:inline-flex;align-items:center;gap:5px;padding:3px 8px;border-radius:999px;font-family:'JetBrains Mono',monospace;font-size:8px;font-weight:800;letter-spacing:.10em;text-transform:uppercase;line-height:1}
+.ah-sc-chip::before{content:"";width:5px;height:5px;border-radius:50%;background:currentColor}
+.ah-sc-chip.gold{color:#F5A623;background:rgba(245,166,35,.14);border:1px solid rgba(245,166,35,.34)}
+.ah-sc-chip.silver{color:#C8CDD9;background:rgba(200,205,217,.12);border:1px solid rgba(200,205,217,.30)}
+.ah-sc-chip.bronze{color:#C97D3F;background:rgba(201,125,63,.14);border:1px solid rgba(201,125,63,.32)}
+.ah-sc-move{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:12px}
+.ah-sc-move.up{color:#5BFF6B}.ah-sc-move.dn{color:#FF5A5F}
+/* top fade only — overlay handles the bottom */
+.ah-left::before{content:"";position:absolute;top:0;left:0;right:0;height:26%;z-index:2;pointer-events:none;background:linear-gradient(180deg,#0A0A0A 8%,transparent)}
+/* Brand + headline overlay — near-solid scrim so NO cards bleed through
+   behind the brand mark / headline. Solid black up to 68%, then a short
+   fade. The brand row sits well inside the solid zone. */
+/* Compact overlay — the text block sits on a SOLID black panel (so no
+   card ever bleeds through behind the brand/headline), with a short
+   gradient fade-edge ABOVE it where the scrolling cards dissolve. This
+   gives a clean gap between the card wall and the text. */
+.ah-left-overlay{
+  position:absolute;left:0;right:0;bottom:0;z-index:3;padding:26px 36px 26px;
+  background:#0A0A0A;
 }
-.ah-live-badge .ai-dot{
-  width:20px;height:20px;border-radius:50%;
-  background:radial-gradient(circle at 35% 30%, #FFE9B0, #F5A623 55%, #15803d);
-  box-shadow:0 0 22px rgba(245,166,35,.7);
-  display:flex;align-items:center;justify-content:center;
-  font-size:11px;color:#0A0A0A;font-weight:900;
+.ah-left-overlay::before{
+  content:"";position:absolute;left:0;right:0;top:-56px;height:56px;
+  background:linear-gradient(0deg,#0A0A0A 0%,rgba(10,10,10,.6) 50%,transparent);
+  pointer-events:none;
 }
-.ah-live-badge .pulse{
-  position:relative;width:7px;height:7px;border-radius:50%;background:#FFC75F;
-  margin-left:2px;box-shadow:0 0 10px rgba(255,199,95,.8);
-}
-.ah-live-badge .pulse::after{content:"";position:absolute;inset:-4px;border-radius:50%;border:2px solid #FFC75F;animation:ahPulseRing 2s ease-out infinite;opacity:0}
-@keyframes ahPulseRing{0%{transform:scale(.7);opacity:.7}100%{transform:scale(3);opacity:0}}
+.ah-left-brand{display:inline-flex;align-items:center;gap:10px;font-family:'Fraunces',Georgia,serif;font-weight:500;font-size:19px;letter-spacing:-.022em;color:#fff;margin-bottom:12px}
+.ah-left-brand-mark{width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,#1F1F1F,#0A0A0A);display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 1px rgba(245,166,35,.18)}
+.ah-left-brand-glyph{font-family:'Fraunces',serif;font-style:italic;font-weight:600;font-size:19px;background:linear-gradient(135deg,#FFE9B0,#FFC75F 50%,#F5A623);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;transform:translateY(-1px)}
+.ah-left-brand .h{font-style:italic;background:linear-gradient(135deg,#FFE9B0,#FFC75F 50%,#F5A623);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
+.ah-left-headline{font-family:'Fraunces',Georgia,serif;font-weight:500;font-size:25px;line-height:1.14;letter-spacing:-.02em;color:#fff;margin-bottom:8px;max-width:400px}
+.ah-left-headline em{font-style:italic;background:linear-gradient(135deg,#FFE9B0,#FFC75F 50%,#F5A623);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
+.ah-left-sub{font-size:12.5px;color:rgba(255,255,255,.58);max-width:360px;line-height:1.55}
+.ah-left-stats{display:flex;gap:22px;margin-top:14px}
+.ah-left-stat .n{font-family:'JetBrains Mono',monospace;font-weight:800;font-size:17px;background:linear-gradient(135deg,#FFE9B0,#FFC75F 50%,#F5A623);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
+.ah-left-stat .l{font-size:10px;color:#8A8A8A;letter-spacing:.10em;text-transform:uppercase;font-weight:700;margin-top:3px}
 
-/* Headline — bumped size + bolder italic gradient with more contrast */
-.ah-headline{font-family:'Fraunces',Georgia,serif;font-size:52px;font-weight:500;line-height:1.04;color:#fff;letter-spacing:-.028em;margin-bottom:18px}
-.ah-headline em{
-  font-style:italic;
-  /* Higher-contrast green gradient — bright mint → kelly → deep so
-     the word reads as a vibrant accent, not a flat muted shade. */
-  background:linear-gradient(135deg,#FFE9B0 0%,#FFE9B0 25%,#F5A623 60%,#15803d 100%);
-  background-size:200% 100%;
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;color:transparent;
-  filter:drop-shadow(0 0 18px rgba(255,199,95,.55)) drop-shadow(0 0 4px rgba(245,166,35,.4));
-  animation:ahMetalShift 7s ease-in-out infinite;
-}
-@keyframes ahMetalShift{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
-.ah-sub{font-family:'Manrope','Inter',sans-serif;font-size:15.5px;color:rgba(255,248,229,.72);line-height:1.65;max-width:420px;margin-bottom:36px;font-weight:500}
-
-/* Live ticker strip */
-.ah-ticker-strip{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:32px}
-.ah-tick-card{
-  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.10);
-  border-radius:14px;padding:12px 14px;
-  backdrop-filter:blur(12px);
-  transition:transform .15s, border-color .15s, background .15s;
-  position:relative;overflow:hidden;
-}
-.ah-tick-card:hover{transform:translateY(-2px);border-color:rgba(255,199,95,.35);background:rgba(255,255,255,.07)}
-.ah-tick-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;background:linear-gradient(180deg,#FFE9B0 0%,#FFC75F 50%,#F5A623 100%);opacity:.95}
-.ah-tick-sym{font-size:13px;font-weight:900;background:linear-gradient(135deg,#FFE9B0 0%,#FFC75F 50%,#F5A623 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;letter-spacing:.5px}
-.ah-tick-price{font-size:15px;font-weight:800;color:#fff;margin:2px 0}
-.ah-tick-chg{font-size:11px;font-weight:700}
-.ah-tick-chg.pos{color:#fff}.ah-tick-chg.neg{color:#fca5a5}
-.ah-tick-pop{font-size:10px;color:rgba(255,255,255,.5);margin-top:3px;font-weight:500}
-
-/* Animated chart line */
-.ah-chart-wrap{margin-bottom:28px;position:relative}
-.ah-chart-wrap svg{width:100%;height:80px;overflow:visible}
-.ah-chart-line{stroke:#fff;stroke-width:2.5;fill:none;filter:drop-shadow(0 0 8px rgba(255,255,255,.6))}
-.ah-chart-fill{fill:url(#chartGrad);opacity:.35}
-
-/* Feature pills */
-.ah-pills{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:auto}
-.ah-pill{
-  display:inline-flex;align-items:center;gap:6px;
-  background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);
-  color:rgba(255,255,255,.9);font-size:12px;font-weight:600;
-  padding:5px 12px;border-radius:20px;
-}
-.ah-pill .dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.8);flex-shrink:0}
-
-/* Bottom stats */
-.ah-stats-row{display:flex;gap:0;border-top:1px solid rgba(255,255,255,.2);padding-top:20px;margin-top:20px}
-.ah-stat-item{flex:1;text-align:center}
-.ah-stat-item:not(:last-child){border-right:1px solid rgba(255,255,255,.2)}
-.ah-stat-n{font-size:24px;font-weight:900;color:#fff;line-height:1;text-shadow:0 1px 3px rgba(0,0,0,.2)}
-.ah-stat-l{font-size:10px;color:rgba(255,255,255,.6);margin-top:4px;font-weight:500}
-
-/* ── RIGHT: Clean form ───────────────────────────────────────── */
+/* RIGHT — form (right half of the two-panel; no own border).
+   No justify-content:center — that clips the top when the form is
+   taller than the panel. Instead the inner .ah-form-wrap uses
+   margin:auto, which centers when there's room and top-aligns
+   (never clips) when the content overflows. */
 .ah-right{
-  flex:1;background:#ffffff;
-  display:flex;flex-direction:column;
-  justify-content:center;align-items:center;
-  padding:36px 44px;
-  overflow-y:auto;
-  position:relative;
+  flex:1;position:relative;display:flex;flex-direction:column;
+  padding:34px 40px 28px;
+  background:
+    radial-gradient(70% 50% at 100% 0%, rgba(86,136,238,.08), transparent 60%),
+    #0E0E0E;
+  overflow-y:auto;max-height:92vh;
+  /* hide the scrollbar chrome (still scrollable, just no visible bar) */
+  scrollbar-width:none;-ms-overflow-style:none;
 }
+.ah-right::-webkit-scrollbar{display:none;width:0;height:0}
+.ah-wrap{scrollbar-width:none;-ms-overflow-style:none}
+.ah-wrap::-webkit-scrollbar{display:none;width:0;height:0}
+/* Beat the global `body.v2 *{scrollbar-width:thin}` rule (line ~3371),
+   which otherwise re-enables a thin scrollbar on the form panel. */
+body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
+.ah-right .ah-form-wrap{margin:auto !important}
 .ah-close-btn{
-  position:absolute;top:20px;right:24px;
-  width:36px;height:36px;border-radius:50%;
-  background:#f1f5f9;border:none;
-  font-size:18px;cursor:pointer;color:#64748b;
+  position:absolute;top:14px;right:14px;
+  width:32px;height:32px;border-radius:50%;border:none;cursor:pointer;
+  background:rgba(255,255,255,.05);color:#8A8A8A;
+  display:flex;align-items:center;justify-content:center;font-size:14px;
+  transition:background .15s,color .15s;z-index:3;
+}
+.ah-close-btn:hover{background:rgba(255,255,255,.10);color:#fff}
+
+.ah-brand{
+  display:flex;align-items:center;justify-content:center;gap:11px;
+  font-family:'Fraunces',Georgia,serif;font-weight:500;font-size:22px;
+  letter-spacing:-.022em;color:#fff;margin-bottom:22px;
+}
+.ah-brand-mark{
+  width:36px;height:36px;border-radius:10px;flex-shrink:0;
+  background:linear-gradient(135deg,#1F1F1F,#0A0A0A);
   display:flex;align-items:center;justify-content:center;
-  transition:background .2s;z-index:2;
+  box-shadow:0 0 0 1px rgba(245,166,35,.18),0 4px 14px -6px rgba(245,166,35,.30);
 }
-.ah-close-btn:hover{background:#e2e8f0}
-
-/* Form */
-.ah-form-wrap{max-width:340px;width:100%}
-.ah-form-head{margin-bottom:16px;text-align:left}
-.ah-form-title{font-size:24px;font-weight:900;color:#0a0a0a;margin-bottom:4px;letter-spacing:-.02em;line-height:1.15}
-.ah-form-sub{font-size:13px;color:#64748b}
-
-/* Mobile hero strip — desktop hides this (the dark .ah-left panel
-   already covers the showcase role). On phones it gives the login
-   screen its visual identity. */
-.ah-mobile-hero{display:none}
-
-/* "First time?" friendly copy, replacing the casual "we'll create..." line */
-.ah-first-time{
-  margin-top:14px;
-  padding:11px 14px;
-  background:#f8fafc;
-  border:1px solid #e2e8f0;
-  border-radius:10px;
-  font-size:12px;
-  color:#475569;
-  line-height:1.55;
-  text-align:left;
+.ah-brand-glyph{
+  font-family:'Fraunces',Georgia,serif;font-style:italic;font-weight:600;
+  font-size:24px;line-height:1;transform:translateY(-1px);
+  background:linear-gradient(135deg,#FFE9B0,#FFC75F 50%,#F5A623);
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;
 }
+.ah-brand-name{display:inline-flex;align-items:baseline;line-height:1}
+.ah-brand-name .h{font-style:italic;font-weight:500;background:linear-gradient(135deg,#FFE9B0,#FFC75F 50%,#F5A623);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
 
-/* Trust strip — sits below the form, calm tone */
-.ah-trust{
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  flex-wrap:wrap;
-  gap:6px;
-  margin-top:18px;
-  font-size:11px;
-  color:#94a3b8;
-  font-weight:600;
-}
-.ah-trust span:nth-child(even){color:#cbd5e1}
-.ah-field{margin-bottom:12px}
-.ah-field label{display:block;font-size:11.5px;font-weight:700;color:#374151;margin-bottom:5px}
+.ah-form-wrap{max-width:100%;width:100%;margin:0 auto}
+.ah-form-head{margin-bottom:22px;text-align:center}
+.ah-form-title{font-family:'Fraunces',Georgia,serif;font-size:28px;font-weight:500;color:#fff;margin-bottom:6px;letter-spacing:-.02em;line-height:1.1}
+.ah-form-sub{font-size:13.5px;color:#8A8A8A;line-height:1.5}
+
+.ah-field{margin-bottom:11px}
+.ah-field label{display:block;font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#8A8A8A;margin-bottom:6px}
 .ah-field input{
-  width:100%;box-sizing:border-box;
-  padding:11px 14px;
-  background:#f8fafc;border:1.5px solid #e2e8f0;border-radius:10px;
-  font-size:14px;color:#0a0a0a;outline:none;
-  transition:border .15s,box-shadow .15s,background .15s;font-family:inherit;
-  font-weight:500;
+  width:100%;box-sizing:border-box;padding:13px 16px;
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12);border-radius:11px;
+  font-size:15px;color:#fff;outline:none;font-family:inherit;font-weight:500;
+  transition:border .15s,box-shadow .15s,background .15s;
 }
-.ah-field input:hover{border-color:#cbd5e1;background:#fff}
-.ah-field input:focus{border-color:#15803d;background:#fff;box-shadow:0 0 0 4px rgba(245,166,35,.15)}
-.ah-field input::placeholder{color:#94a3b8;font-weight:400}
+.ah-field input:hover{border-color:rgba(255,255,255,.20)}
+.ah-field input:focus{border-color:#5688EE;background:rgba(86,136,238,.05);box-shadow:0 0 0 3px rgba(86,136,238,.15)}
+.ah-field input::placeholder{color:#5E5E5E;font-weight:400}
 .ah-pwd-wrap{position:relative}
-.ah-pwd-wrap input{padding-right:44px}
-.ah-pwd-eye{position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;color:#94a3b8;padding:0;line-height:1}
+.ah-pwd-wrap input{padding-right:46px}
+.ah-pwd-eye{position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;color:#8A8A8A;padding:6px;line-height:1;border-radius:6px;transition:color .15s,background .15s}
+.ah-pwd-eye:hover{color:#fff;background:rgba(255,255,255,.06)}
 
 .ah-submit{
-  width:100%;padding:12px;
-  background:linear-gradient(135deg,#15803d 0%,#F5A623 50%,#FFC75F 100%);
-  background-size:200% 200%;background-position:0% 50%;
-  color:#fff;border:none;border-radius:10px;
+  width:100%;padding:14px;
+  background:linear-gradient(135deg,#FFE9B0 0%,#FFC75F 50%,#F5A623 100%);
+  color:#0A0A0A;border:none;border-radius:11px;
   font-size:14.5px;font-weight:800;cursor:pointer;
-  box-shadow:0 8px 22px -8px rgba(245,166,35,.55), 0 0 0 1px rgba(255,255,255,.05) inset;
-  transition:transform .15s, box-shadow .2s, opacity .2s, background-position .35s ease;
-  letter-spacing:.02em;font-family:inherit;
-  margin-bottom:10px;
-  position:relative;
-  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  box-shadow:0 12px 30px -10px rgba(245,166,35,.45),0 0 0 1px rgba(255,255,255,.22) inset;
+  transition:transform .15s,box-shadow .2s,opacity .2s;
+  letter-spacing:.01em;font-family:inherit;margin-bottom:10px;
+  position:relative;display:inline-flex;align-items:center;justify-content:center;gap:8px;
 }
-.ah-submit:hover:not(:disabled){transform:translateY(-1px);background-position:100% 50%;box-shadow:0 14px 36px -8px rgba(255,199,95,.70), 0 0 0 1px rgba(255,255,255,.08) inset}
-.ah-submit:active:not(:disabled){transform:translateY(0);box-shadow:0 6px 16px -6px rgba(245,166,35,.50)}
+.ah-submit:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 18px 40px -10px rgba(245,166,35,.6),0 0 0 1px rgba(255,255,255,.28) inset}
+.ah-submit:active:not(:disabled){transform:translateY(0)}
 .ah-submit:disabled{opacity:.7;cursor:wait;transform:none}
 .ah-submit.loading{color:transparent}
-.ah-submit.loading::after{
-  content:'';position:absolute;
-  width:18px;height:18px;border-radius:50%;
-  border:2.5px solid rgba(255,255,255,.35);border-top-color:#fff;
-  animation:ah-spin .7s linear infinite;
-}
+.ah-submit.loading::after{content:'';position:absolute;width:18px;height:18px;border-radius:50%;border:2.5px solid rgba(10,10,10,.3);border-top-color:#0A0A0A;animation:ah-spin .7s linear infinite}
 @keyframes ah-spin{to{transform:rotate(360deg)}}
 
-/* Subtle entrance on the form view itself */
-.ah-view.on{animation:ah-view-in .35s cubic-bezier(.22,.61,.36,1)}
-@keyframes ah-view-in{
-  from{opacity:0;transform:translateY(6px)}
-  to{opacity:1;transform:translateY(0)}
-}
+.ah-view{display:none}.ah-view.on{display:block;animation:ah-view-in .35s cubic-bezier(.22,.61,.36,1)}
+@keyframes ah-view-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 
-.ah-err{color:#dc2626;font-size:12px;font-weight:600;min-height:18px;margin:-8px 0 10px}
-.ah-ok{color:#15803d;font-size:12px;font-weight:600;min-height:18px;margin:-8px 0 10px}
+.ah-err{color:#FF8E92;font-size:12.5px;font-weight:600;min-height:0;margin:-2px 0 6px}
+.ah-err:empty,.ah-ok:empty{margin:0}
+.ah-ok{color:#8AFF96;font-size:12.5px;font-weight:600;min-height:0;margin:-2px 0 6px}
 
-.ah-divider-row{display:flex;align-items:center;gap:12px;margin:6px 0 14px;color:#94a3b8;font-size:10.5px;font-weight:600;letter-spacing:.12em;text-transform:uppercase}
-.ah-divider-row::before,.ah-divider-row::after{content:'';flex:1;height:1px;background:#e2e8f0}
+.ah-divider-row{display:flex;align-items:center;gap:14px;margin:14px 0;color:#5E5E5E;font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:700;letter-spacing:.18em;text-transform:uppercase}
+.ah-divider-row::before,.ah-divider-row::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.10),transparent)}
 
-/* ─── SSO buttons ─── */
-.ah-sso{
-  width:100%;display:flex;align-items:center;justify-content:center;gap:10px;
-  padding:11px 14px;border-radius:10px;
-  background:#fff;border:1.5px solid #e2e8f0;cursor:pointer;
-  font-size:13.5px;font-weight:700;color:#0a0a0a;font-family:inherit;
-  transition:transform .12s, border-color .15s, background .15s, box-shadow .15s;
-  letter-spacing:-.005em;
-}
-.ah-sso:hover{border-color:#cbd5e1;background:#f8fafc;transform:translateY(-1px);box-shadow:0 6px 18px -8px rgba(10,10,10,.12)}
+.ah-sso{width:100%;display:flex;align-items:center;justify-content:center;gap:10px;padding:13px 18px;border-radius:11px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12);cursor:pointer;font-size:14px;font-weight:600;color:#fff;font-family:inherit;transition:transform .15s,border-color .15s,background .15s,box-shadow .15s}
+/* Clear sapphire hover on the Google button (cool = secondary action;
+   gold stays reserved for the primary Sign-in submit). */
+.ah-sso:hover{border-color:var(--sapphire,#5688EE);background:rgba(86,136,238,.10);transform:translateY(-1px);box-shadow:0 10px 26px -10px rgba(86,136,238,.45)}
 .ah-sso:active{transform:translateY(0)}
 .ah-sso svg{flex-shrink:0}
 
-/* Subtle alt-action row (magic link toggle below submit) */
-.ah-alt-row{text-align:center;margin-top:-8px;margin-bottom:12px}
-.ah-link-btn{
-  background:none;border:none;cursor:pointer;font-family:inherit;
-  font-size:12.5px;font-weight:600;color:#15803d;letter-spacing:-.005em;
-  padding:6px 4px;border-radius:6px;transition:color .15s, background .15s;
-}
-.ah-link-btn:hover{color:#166534;background:rgba(245,166,35,.08)}
+.ah-alt-row{text-align:center;margin-top:2px;margin-bottom:6px}
+.ah-link-btn{background:none;border:none;cursor:pointer;font-family:inherit;font-size:13px;font-weight:600;color:#5688EE;padding:6px 4px;border-radius:6px;transition:color .15s}
+.ah-link-btn:hover{color:#85A8F3}
 
-.ah-toggle-row{text-align:center;font-size:13px;color:#64748b;margin-top:4px}
-.ah-toggle-btn{background:none;border:none;color:#15803d;font-weight:800;cursor:pointer;font-size:13px;font-family:inherit;text-decoration:underline}
+.ah-toggle-row{text-align:center;font-size:13px;color:#8A8A8A;margin-top:16px;padding-top:18px;border-top:1px solid rgba(255,255,255,.06)}
+.ah-toggle-btn{background:none;border:none;color:#5688EE;font-weight:700;cursor:pointer;font-size:13px;font-family:inherit}
+.ah-toggle-btn:hover{color:#85A8F3}
 
-/* Forgot password */
-.ah-forgot{background:none;border:none;color:#94a3b8;font-size:11px;cursor:pointer;text-decoration:underline;float:right;margin-top:-12px;margin-bottom:16px;font-family:inherit}
-.ah-forgot:hover{color:#64748b}
+.ah-forgot{background:none;border:none;color:#5688EE;font-size:12px;cursor:pointer;font-family:inherit;font-weight:600}
+.ah-forgot:hover{color:#85A8F3}
 
-/* Step progress */
-.ah-steps-prog{display:flex;gap:6px;margin-bottom:28px}
-.ah-step-dot{height:3px;border-radius:2px;flex:1;background:#e2e8f0;transition:background .3s}
-.ah-step-dot.on{background:linear-gradient(90deg,#15803d,#F5A623,#F5A623)}
+.ah-steps-prog{display:flex;gap:6px;margin-bottom:26px}
+.ah-step-dot{height:3px;border-radius:2px;flex:1;background:rgba(255,255,255,.10);transition:background .3s}
+.ah-step-dot.on{background:linear-gradient(90deg,#FFC75F,#F5A623)}
 
-/* Option cards */
-.ah-opt{
-  display:flex;align-items:flex-start;gap:12px;
-  padding:13px 14px;border:2px solid #e2e8f0;border-radius:12px;
-  cursor:pointer;transition:all .15s;margin-bottom:10px;
-  background:#fff;
-}
-.ah-opt:hover{border-color:#FFE9B0;background:#FFF8E5}
-.ah-opt.sel{border-color:#15803d;background:#FFF8E5}
-.ah-opt input[type=radio]{margin-top:3px;accent-color:#15803d;flex-shrink:0}
-.ah-opt-title{font-size:13px;font-weight:700;color:#0a0a0a}
-.ah-opt-desc{font-size:11px;color:#64748b;margin-top:2px}
+.ah-opt{display:flex;align-items:flex-start;gap:12px;padding:13px 14px;border:1px solid rgba(255,255,255,.12);border-radius:12px;cursor:pointer;transition:all .15s;margin-bottom:10px;background:rgba(255,255,255,.03)}
+.ah-opt:hover{border-color:rgba(245,166,35,.40);background:rgba(245,166,35,.06)}
+.ah-opt.sel{border-color:#F5A623;background:rgba(245,166,35,.10)}
+.ah-opt input[type=radio]{margin-top:3px;accent-color:#F5A623;flex-shrink:0}
+.ah-opt-title{font-size:13.5px;font-weight:700;color:#fff}
+.ah-opt-desc{font-size:11.5px;color:#8A8A8A;margin-top:2px}
 
-/* Success */
 .ah-success-icon{font-size:60px;margin-bottom:16px;display:block;animation:popIn .4s cubic-bezier(.34,1.56,.64,1)}
+@keyframes popIn{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
 
-/* View states */
-.ah-view{display:none}.ah-view.on{display:block}
+/* Form brand row — hidden on desktop (the left panel carries the brand),
+   shown on mobile where the left panel is hidden. */
+.ah-brand{display:none}
 
-/* Mobile — auth modal goes full-bleed and gains its own hero strip */
-@media(max-width:700px){
+@media(max-width:880px){
   #auth-modal{padding:0}
-  .ah-wrap{max-height:100vh;height:100vh;border-radius:0;width:100%;box-shadow:none}
+  .ah-wrap{max-width:100%;max-height:100vh;height:100vh;border-radius:0;border:none;flex-direction:column}
   .ah-left{display:none}
-  .ah-right{padding:0 0 28px;overflow-y:auto;max-height:100vh;-webkit-overflow-scrolling:touch;background:#fff}
-  .ah-form-wrap{max-width:100%;padding:0 20px}
-  .ah-form-head{margin-bottom:20px;text-align:left}
-  .ah-form-title{font-size:24px}
-  .ah-form-sub{font-size:13px}
-  .ah-field{margin-bottom:14px}
-  .ah-field label{font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:#475569}
-  .ah-field input{font-size:16px;padding:13px 14px;border-radius:10px}  /* 16px = no iOS zoom */
-  .ah-submit{padding:14px;font-size:15px;margin-bottom:0;border-radius:10px}
-  .ah-opt{padding:11px 12px;margin-bottom:8px}
-  .ah-opt-title{font-size:13px}
-  .ah-opt-desc{font-size:11px}
-  .ah-steps-prog{margin-bottom:18px}
-  .ah-close-btn{top:12px;right:14px;background:rgba(255,255,255,.9);box-shadow:0 2px 8px rgba(10,10,10,.15)}
-
-  /* ── Mobile hero — small dark showcase at the top of the login view ── */
-  .ah-mobile-hero{
-    display:block;
-    background:radial-gradient(ellipse 90% 100% at 0% 0%, rgba(245,166,35,.20) 0%, transparent 60%),
-               radial-gradient(ellipse 80% 100% at 100% 100%, rgba(255,199,95,.16) 0%, transparent 55%),
-               #050505;
-    color:#fff;
-    padding:34px 20px 22px;
-    margin:0 0 24px;
-    position:relative;
-    overflow:hidden;
-  }
-  .ah-mobile-hero-logo{
-    display:flex;align-items:center;gap:8px;
-    font-size:18px;font-weight:900;letter-spacing:-.4px;
-    margin-bottom:14px;
-  }
-  .ah-mobile-hero-logo img{display:block;background:#fff;border-radius:5px;padding:2px}
-  .ah-mobile-hero-logo span{color:#fff}
-  .ah-mobile-hero-logo em{font-style:normal;color:#FFC75F}
-
-  .ah-mobile-hero-tag{
-    font-size:15px;font-weight:600;line-height:1.4;
-    color:rgba(255,248,229,.92);
-    margin-bottom:18px;
-    max-width:280px;
-  }
-
-  .ah-mobile-hero-stats{
-    display:grid;grid-template-columns:repeat(3,1fr);
-    gap:0;padding-top:14px;
-    border-top:1px solid rgba(255,255,255,.15);
-  }
-  .ah-mobile-hero-stats > div{text-align:center;position:relative}
-  .ah-mobile-hero-stats > div:not(:last-child)::after{
-    content:'';position:absolute;right:0;top:6px;bottom:6px;width:1px;
-    background:rgba(255,255,255,.12);
-  }
-  .ah-mobile-hero-stats strong{
-    display:block;font-size:18px;font-weight:900;color:#F5A623;line-height:1;
-  }
-  .ah-mobile-hero-stats span{
-    display:block;font-size:10px;color:rgba(255,255,255,.55);
-    margin-top:4px;text-transform:uppercase;letter-spacing:.06em;font-weight:600;
-  }
-
-  /* "First time?" + trust strip — pull them slightly closer to the submit */
-  .ah-first-time{font-size:11.5px;margin-top:12px;padding:10px 12px}
-  .ah-trust{margin-top:14px;font-size:10.5px}
+  .ah-right{max-height:100vh;padding:48px 24px 28px;justify-content:flex-start;overflow-y:auto}
+  .ah-brand{display:flex}
+  .ah-form-title{font-size:26px}
+  .ah-field input{font-size:16px}
 }
-@media(max-width:480px){
-  .ah-right{padding:20px 14px}
-  .ah-form-title{font-size:20px}
-}
-/* TOS row — class-based so a OneDrive mid-line truncation can't break the
-   inline style attribute (was breaking and leaking text onto the page). */
-.tos-row{margin-top:24px;font-size:11.5px;color:#475569;line-height:1.55;text-align:left;background:#f8fafc;border-radius:8px;padding:10px 12px}
+
+.tos-row{margin-top:18px;font-size:11px;color:#8A8A8A;line-height:1.55;text-align:left;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:11px 13px}
 .tos-row label{display:flex;align-items:flex-start;gap:8px;cursor:pointer}
-.tos-row input[type=checkbox]{margin-top:3px;cursor:pointer}
-.tos-row a{color:#15803d;font-weight:700}
+.tos-row input[type=checkbox]{margin-top:3px;cursor:pointer;accent-color:#F5A623}
+.tos-row a{color:#5688EE;font-weight:700}
 </style>
 
 <div id="auth-modal" onclick="if(event.target===this)closeAuthModal()">
 <div class="ah-wrap">
 
-<!-- ══ LEFT: Dark product showcase ══ -->
+<!-- ══ LEFT: scrolling wall of live stock cards ══
+     Two columns drift in opposite directions behind a brand+headline
+     overlay. Cards populated from /api/hot by ahBuildScrollWall();
+     fall back to sample data if the API isn't reachable. -->
 <div class="ah-left">
-  <div class="ah-left-bg"></div>
-  <div class="ah-left-content">
-
-    <div class="ah-logo-row">
-      <div style="background:#fff;border-radius:8px;padding:4px;display:flex;align-items:center;justify-content:center;width:36px;height:36px;box-shadow:0 2px 8px rgba(255,255,255,.15)">
-        <img src="/static/icons/alpha-logo-bare-64.png" width="28" height="28" alt="AlphaHunt" style="display:block">
-      </div>
-      <div class="name">Alpha<span style="background:linear-gradient(135deg,#FFE9B0 0%,#FFC75F 50%,#F5A623 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent">Hunt</span></div>
+  <div class="ah-scroll-cols">
+    <div class="ah-scroll-col up" id="ah-scroll-a"></div>
+    <div class="ah-scroll-col down" id="ah-scroll-b"></div>
+  </div>
+  <div class="ah-left-overlay">
+    <div class="ah-left-brand">
+      <span class="ah-left-brand-mark"><span class="ah-left-brand-glyph">α</span></span>
+      <span>Alpha<span class="h">Hunt</span></span>
     </div>
-
-    <span class="ah-live-badge">
-      <span class="ai-dot">α</span>
-      AI-driven · <span class="pulse"></span> Live · 540+ US stocks
-    </span>
-    <div class="ah-headline">Find the next<br>big <em>breakout</em><br>before it moves.</div>
-    <p class="ah-sub" style="color:rgba(255,255,255,.85)">540+ US stocks scored daily across six investment pillars. Alpha Score, Hot List, Top Hunts tracker — all in one dashboard.</p>
-
-    <!-- Live Hot List preview — populated from /api/hot on load -->
-    <div class="ah-ticker-strip" id="ah-hot-strip" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
-      <div class="ah-tick-card"><div class="ah-tick-sym">—</div><div class="ah-tick-price">—</div><div class="ah-tick-chg pos">—</div><div class="ah-tick-pop">Loading hot list…</div></div>
-      <div class="ah-tick-card"><div class="ah-tick-sym">—</div><div class="ah-tick-price">—</div><div class="ah-tick-chg pos">—</div><div class="ah-tick-pop">Loading hot list…</div></div>
-      <div class="ah-tick-card"><div class="ah-tick-sym">—</div><div class="ah-tick-price">—</div><div class="ah-tick-chg pos">—</div><div class="ah-tick-pop">Loading hot list…</div></div>
+    <div class="ah-left-headline">540+ stocks, scored <em>every day</em>.</div>
+    <p class="ah-left-sub">Alpha Score, live signals, and an audited track record.</p>
+    <div class="ah-left-stats">
+      <div class="ah-left-stat"><div class="n">540+</div><div class="l">US stocks</div></div>
+      <div class="ah-left-stat"><div class="n">5 min</div><div class="l">refresh</div></div>
+      <div class="ah-left-stat"><div class="n">6</div><div class="l">pillars</div></div>
     </div>
-
-
   </div>
 </div>
 
@@ -14849,36 +14731,29 @@ function showUpgradeSuccess() {
 
   <div class="ah-form-wrap" style="margin:0 auto">
 
+    <!-- Brand row — sits above all views (the logo used to live in the
+         now-hidden left showcase panel). Typographic α in gold, not the
+         legacy green PNG. -->
+    <div class="ah-brand">
+      <span class="ah-brand-mark"><span class="ah-brand-glyph">α</span></span>
+      <span class="ah-brand-name">Alpha<span class="h">Hunt</span></span>
+    </div>
+
     <!-- ── SIGN IN ── -->
     <div id="ah-view-signin" class="ah-view on">
 
-      <!-- Mobile-only hero strip: small showcase so the login screen still
-           feels like AlphaHunt on phones (where the left dark panel hides) -->
-      <div class="ah-mobile-hero">
-        <div class="ah-mobile-hero-logo">
-          <img src="/static/icons/alpha-logo-bare-64.png" width="22" height="22" alt="">
-          <span>Alpha<em>Hunt</em></span>
-        </div>
-        <div class="ah-mobile-hero-tag">540+ US stocks scored daily</div>
-        <div class="ah-mobile-hero-stats">
-          <div><strong>540+</strong><span>Universe</span></div>
-          <div><strong>5 min</strong><span>Updates</span></div>
-          <div><strong>Free</strong><span>Forever</span></div>
-        </div>
-      </div>
-
       <div class="ah-form-head">
-        <div class="ah-form-title">Sign in</div>
-        <div class="ah-form-sub">Welcome back to AlphaHunt</div>
+        <div class="ah-form-title">Welcome back</div>
+        <div class="ah-form-sub">Sign in — your watchlist is waiting.</div>
       </div>
 
       <!-- ─── SSO options ─── -->
       <button class="ah-sso ah-sso-google" onclick="authOAuth('google')" aria-label="Continue with Google">
         <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
-          <path fill="#F5A623" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"/>
-          <path fill="#F5A623" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 16.318 4 9.656 8.337 6.306 14.691z"/>
-          <path fill="#5BFF6B" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 35.091 26.715 36 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"/>
-          <path fill="#F5A623" d="M43.611 20.083H42V20H24v8h11.303c-.792 2.237-2.231 4.166-4.087 5.571.001-.001.002-.001.003-.002l6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z"/>
+          <path fill="#4285F4" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"/>
+          <path fill="#EA4335" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 16.318 4 9.656 8.337 6.306 14.691z"/>
+          <path fill="#34A853" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 35.091 26.715 36 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"/>
+          <path fill="#FBBC05" d="M43.611 20.083H42V20H24v8h11.303c-.792 2.237-2.231 4.166-4.087 5.571.001-.001.002-.001.003-.002l6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z"/>
         </svg>
         <span>Continue with Google</span>
       </button>
@@ -14944,9 +14819,9 @@ function showUpgradeSuccess() {
         <div class="ah-form-title" style="margin-bottom:10px">Check your inbox</div>
         <div class="ah-form-sub" style="margin-bottom:18px">
           We've sent a password reset link to<br>
-          <strong id="fp-sent-email" style="color:#0a0a0a;font-weight:700"></strong>
+          <strong id="fp-sent-email" style="color:#fff;font-weight:700"></strong>
         </div>
-        <div style="background:#f8fafc;border-radius:9px;padding:14px;font-size:13px;color:#475569;line-height:1.55;margin-bottom:18px;text-align:left">
+        <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:9px;padding:14px;font-size:13px;color:#B8B8B8;line-height:1.55;margin-bottom:18px;text-align:left">
           The link is valid for <strong>1 hour</strong>.<br>
           Don't see it? Check your spam folder, or wait 30 seconds and try again — first-time emails sometimes take a moment.
         </div>
@@ -14988,7 +14863,7 @@ function showUpgradeSuccess() {
         <label>Your name <span style="color:#94a3b8;font-weight:400">(optional)</span></label>
         <input id="su-name" type="text" placeholder="First name">
       </div>
-      <label style="font-size:12px;font-weight:700;color:#374151;display:block;margin-bottom:10px">Trading experience</label>
+      <label style="font-size:12px;font-weight:700;color:#8A8A8A;display:block;margin-bottom:10px">Trading experience</label>
       <label class="ah-opt" onclick="selectOption(this,'exp')"><input type="radio" name="exp" value="beginner"><div><div class="ah-opt-title">🌱 Beginner — learning the basics</div><div class="ah-opt-desc">New to stocks, building my knowledge</div></div></label>
       <label class="ah-opt" onclick="selectOption(this,'exp')"><input type="radio" name="exp" value="intermediate"><div><div class="ah-opt-title">📊 Intermediate — comfortable with charts</div><div class="ah-opt-desc">I follow markets and read financials</div></div></label>
       <label class="ah-opt" onclick="selectOption(this,'exp')"><input type="radio" name="exp" value="advanced"><div><div class="ah-opt-title">⚡ Advanced — active trader</div><div class="ah-opt-desc">Technical + fundamental analysis daily</div></div></label>
@@ -15012,7 +14887,7 @@ function showUpgradeSuccess() {
     <!-- ── SUCCESS ── -->
     <div id="ah-view-success" class="ah-view" style="text-align:center;padding:20px 0">
       <span class="ah-success-icon">🎉</span>
-      <div class="ah-form-title" style="color:#15803d;margin-bottom:10px">You're in!</div>
+      <div class="ah-form-title" style="color:#FFC75F;margin-bottom:10px">You're in!</div>
       <div class="ah-form-sub" style="margin-bottom:28px">Welcome to AlphaHunt. Start hunting alpha right now.</div>
       <button class="ah-submit" onclick="closeAuthModal()">Open Dashboard →</button>
     </div>

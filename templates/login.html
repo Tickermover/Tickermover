@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AlphaHunt — Sign in</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+<script>
+  /* If a session already exists, skip the login page entirely. authInit on
+     /app validates the token and bounces back here if it's actually dead. */
+  (function(){
+    try { if (localStorage.getItem('ah_token')) location.replace('/app'); } catch(e){}
+  })();
+</script>
+<style>
+  :root{
+    --bg:#0A0A0A;--ink:#fff;--ink-2:#E0E0E0;--muted:#8A8A8A;--muted-2:#5E5E5E;
+    --gold:#F5A623;--gold-2:#FFC75F;--gold-3:#FFE9B0;
+    --gold-grad:linear-gradient(135deg,#FFE9B0 0%,#FFC75F 50%,#F5A623 100%);
+    --gold-glow:rgba(245,166,35,.45);
+    --sapphire:#5688EE;--sapphire-2:#85A8F3;
+    --up:#5BFF6B;--down:#FF5A5F;
+    --silver:#C8CDD9;--bronze:#C97D3F;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    background:var(--bg);color:var(--ink);
+    font-family:'Manrope','Inter',system-ui,sans-serif;font-weight:500;
+    -webkit-font-smoothing:antialiased;line-height:1.5;overflow:hidden;
+  }
+  a{color:inherit;text-decoration:none}
+
+  .login-screen{display:grid;grid-template-columns:1.05fr .95fr;width:100%;height:100vh}
+  @media (max-width:880px){
+    .login-screen{grid-template-columns:1fr}
+    .login-left{display:none}
+  }
+
+  /* ═══ LEFT — scrolling showcase ═══ */
+  .login-left{
+    position:relative;overflow:hidden;padding:0;
+    background:
+      radial-gradient(60% 50% at 15% 10%, rgba(245,166,35,.22), transparent 60%),
+      radial-gradient(55% 50% at 90% 90%, rgba(86,136,238,.22), transparent 60%),
+      #0A0A0A;
+  }
+  .scroll-cols{
+    position:absolute;inset:-6% 0;
+    display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0 24px;
+    transform:rotate(-4deg) scale(.92);transform-origin:center;opacity:1;
+  }
+  .scroll-col{display:flex;flex-direction:column;gap:12px;will-change:transform}
+  .scroll-col.up{animation:scrollUp 34s linear infinite}
+  .scroll-col.down{animation:scrollDown 34s linear infinite}
+  @keyframes scrollUp{from{transform:translateY(0)}to{transform:translateY(-50%)}}
+  @keyframes scrollDown{from{transform:translateY(-50%)}to{transform:translateY(0)}}
+  @media (prefers-reduced-motion:reduce){.scroll-col{animation:none}}
+
+  .sc-card{
+    background:linear-gradient(180deg, rgba(255,255,255,.11), rgba(255,255,255,.05));
+    border:1px solid rgba(255,255,255,.17);border-radius:13px;padding:11px 13px 10px;
+    box-shadow:0 10px 24px -16px rgba(0,0,0,.75), 0 0 0 1px rgba(255,255,255,.03) inset;
+  }
+  .sc-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+  .sc-sym-row{display:flex;align-items:center;gap:8px}
+  .sc-logo{
+    width:27px;height:27px;border-radius:8px;flex-shrink:0;overflow:hidden;
+    background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.12);
+    display:flex;align-items:center;justify-content:center;
+    font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:800;color:var(--ink-2);
+  }
+  .sc-logo img{width:100%;height:100%;object-fit:contain;padding:3px}
+  .sc-sym{font-weight:800;font-size:13.5px;color:#fff;letter-spacing:-.01em}
+  .sc-score{
+    font-family:'JetBrains Mono',monospace;font-weight:800;font-size:18px;line-height:1;
+    background:var(--gold-grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;
+  }
+  .sc-bot{display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .tchip{
+    display:inline-flex;align-items:center;gap:5px;padding:3px 8px;border-radius:999px;
+    font-family:'JetBrains Mono',monospace;font-size:8.5px;font-weight:800;
+    letter-spacing:.10em;text-transform:uppercase;line-height:1;
+  }
+  .tchip::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+  .tchip.gold{color:var(--gold);background:rgba(245,166,35,.14);border:1px solid rgba(245,166,35,.34)}
+  .tchip.silver{color:var(--silver);background:rgba(200,205,217,.12);border:1px solid rgba(200,205,217,.30)}
+  .tchip.bronze{color:var(--bronze);background:rgba(201,125,63,.14);border:1px solid rgba(201,125,63,.32)}
+  .sc-move{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:11.5px}
+  .sc-move.up{color:var(--up)} .sc-move.dn{color:var(--down)}
+
+  .login-left::before,.login-left::after{content:"";position:absolute;left:0;right:0;height:30%;z-index:2;pointer-events:none}
+  .login-left::before{top:0;background:linear-gradient(180deg,#0A0A0A 10%,transparent)}
+  .login-left::after{bottom:0;background:linear-gradient(0deg,#0A0A0A 10%,transparent)}
+
+  /* Solid panel for the brand/headline/stats so NO cards bleed through
+     behind the text, with a short gradient fade above where the scrolling
+     wall dissolves into it. */
+  .left-overlay{
+    position:absolute;left:0;right:0;bottom:0;z-index:3;padding:22px 48px 28px;
+    background:#0A0A0A;
+  }
+  .left-overlay::before{
+    content:"";position:absolute;left:0;right:0;top:-52px;height:52px;
+    background:linear-gradient(0deg,#0A0A0A 0%,rgba(10,10,10,.55) 55%,transparent);
+    pointer-events:none;
+  }
+  .left-brand{
+    display:inline-flex;align-items:center;gap:10px;
+    font-family:'Fraunces',Georgia,serif;font-weight:500;font-size:19px;letter-spacing:-.022em;
+    color:#fff;margin-bottom:10px;
+  }
+  .left-brand-mark{
+    width:32px;height:32px;border-radius:9px;
+    background:linear-gradient(135deg,#1F1F1F,#0A0A0A);
+    display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 1px rgba(245,166,35,.18);
+  }
+  .left-brand-glyph{
+    font-family:'Fraunces',serif;font-style:italic;font-weight:600;font-size:21px;
+    background:var(--gold-grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;transform:translateY(-1px);
+  }
+  .left-brand .h{font-style:italic;background:var(--gold-grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
+  .left-headline{
+    font-family:'Fraunces',Georgia,serif;font-weight:500;font-size:28px;line-height:1.1;
+    letter-spacing:-.025em;color:#fff;margin-bottom:8px;max-width:440px;
+  }
+  .left-headline em{font-style:italic;background:var(--gold-grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
+  .left-sub{font-size:13px;color:rgba(255,255,255,.65);max-width:400px;line-height:1.5}
+  .left-stats{display:flex;gap:22px;margin-top:14px}
+  .left-stat .n{font-family:'JetBrains Mono',monospace;font-weight:800;font-size:18px;background:var(--gold-grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
+  .left-stat .l{font-size:10.5px;color:var(--muted);letter-spacing:.10em;text-transform:uppercase;font-weight:700;margin-top:3px}
+
+  /* ═══ RIGHT — form ═══ */
+  .login-right{
+    display:flex;align-items:center;justify-content:center;padding:36px 40px;position:relative;
+    background:radial-gradient(70% 50% at 100% 0%, rgba(86,136,238,.08), transparent 60%),#0E0E0E;
+    overflow:hidden;
+  }
+  .form-wrap{width:100%;max-width:360px}
+  .brand-sm{display:none;align-items:center;gap:10px;font-family:'Fraunces',Georgia,serif;font-weight:500;font-size:20px;color:#fff;margin-bottom:22px}
+  @media (max-width:880px){.brand-sm{display:inline-flex}}
+  .form-title{font-family:'Fraunces',Georgia,serif;font-weight:500;font-size:30px;letter-spacing:-.02em;color:#fff;margin-bottom:6px;text-align:center}
+  .form-sub{font-size:13.5px;color:var(--muted);margin-bottom:24px;text-align:center}
+
+  .sso{
+    width:100%;display:flex;align-items:center;justify-content:center;gap:10px;
+    padding:13px 18px;border-radius:11px;cursor:pointer;
+    background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12);
+    color:#fff;font-family:inherit;font-size:14px;font-weight:600;
+    transition:background .15s,border-color .15s,transform .15s,box-shadow .15s;
+  }
+  .sso:hover{border-color:var(--sapphire);background:rgba(86,136,238,.10);transform:translateY(-1px);box-shadow:0 10px 26px -10px rgba(86,136,238,.45)}
+
+  .divider{display:flex;align-items:center;gap:14px;margin:16px 0;color:var(--muted-2);font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:700;letter-spacing:.18em;text-transform:uppercase}
+  .divider::before,.divider::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.1),transparent)}
+
+  .field{margin-bottom:12px}
+  .field-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+  .label{font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+  .flink{font-size:12px;font-weight:600;color:var(--sapphire);background:none;border:none;cursor:pointer;font-family:inherit}
+  .flink:hover{color:var(--sapphire-2)}
+  .inp-wrap{position:relative}
+  .inp{
+    width:100%;padding:13px 16px;border-radius:11px;
+    background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12);
+    color:#fff;font-family:inherit;font-size:15px;font-weight:500;
+    transition:border-color .15s,background .15s,box-shadow .15s;
+  }
+  .inp::placeholder{color:var(--muted-2)}
+  .inp:focus{outline:none;border-color:var(--sapphire);background:rgba(86,136,238,.05);box-shadow:0 0 0 3px rgba(86,136,238,.15)}
+  .inp.has-eye{padding-right:46px}
+  .eye{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:34px;height:34px;border-radius:8px;border:none;background:transparent;color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px}
+  .eye:hover{color:#fff;background:rgba(255,255,255,.06)}
+
+  .msg{font-size:12.5px;font-weight:600;min-height:0;margin:2px 0 0}
+  .msg:empty{margin:0}
+  .msg.err{color:#FF8E92}
+  .msg.ok{color:#8AFF96}
+
+  .submit{
+    width:100%;margin-top:18px;padding:14px;border-radius:11px;border:none;cursor:pointer;
+    background:var(--gold-grad);color:#0A0A0A;font-family:inherit;font-size:14.5px;font-weight:800;
+    box-shadow:0 12px 30px -10px var(--gold-glow),0 0 0 1px rgba(255,255,255,.22) inset;
+    transition:transform .15s,box-shadow .15s;
+    display:flex;align-items:center;justify-content:center;gap:8px;position:relative;
+  }
+  .submit:hover:not(:disabled){transform:translateY(-2px);box-shadow:0 18px 40px -10px var(--gold-glow),0 0 0 1px rgba(255,255,255,.28) inset}
+  .submit:disabled{opacity:.7;cursor:wait;transform:none}
+  .submit.loading{color:transparent}
+  .submit.loading::after{content:'';position:absolute;width:18px;height:18px;border-radius:50%;border:2.5px solid rgba(10,10,10,.3);border-top-color:#0A0A0A;animation:spin .7s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  .alt{text-align:center;margin-top:14px}
+  .magic{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--sapphire);background:none;border:none;cursor:pointer;font-family:inherit;padding:6px}
+  .magic:hover{color:var(--sapphire-2)}
+
+  .foot{margin-top:22px;padding-top:18px;border-top:1px solid rgba(255,255,255,.06);text-align:center;font-size:13px;color:var(--muted)}
+  .foot a{color:var(--sapphire);font-weight:700;margin-left:4px}
+  .foot a:hover{color:var(--sapphire-2)}
+</style>
+</head>
+<body>
+
+<div class="login-screen">
+
+  <!-- ═══ LEFT — scrolling wall of live stock cards ═══ -->
+  <div class="login-left">
+    <div class="scroll-cols">
+      <div class="scroll-col up" id="col-a"></div>
+      <div class="scroll-col down" id="col-b"></div>
+    </div>
+    <div class="left-overlay">
+      <div class="left-brand">
+        <span class="left-brand-mark"><span class="left-brand-glyph">α</span></span>
+        <span>Alpha<span class="h">Hunt</span></span>
+      </div>
+      <div class="left-headline">540+ stocks, scored <em>every day</em>.</div>
+      <p class="left-sub">Alpha Score, live signals, and an audited track record — the whole tape, in one dashboard.</p>
+      <div class="left-stats">
+        <div class="left-stat"><div class="n">540+</div><div class="l">US stocks</div></div>
+        <div class="left-stat"><div class="n">5 min</div><div class="l">refresh</div></div>
+        <div class="left-stat"><div class="n">6</div><div class="l">pillars</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ RIGHT — form ═══ -->
+  <div class="login-right">
+    <div class="form-wrap">
+      <a class="brand-sm" href="/">
+        <span class="left-brand-mark"><span class="left-brand-glyph">α</span></span>
+        <span>Alpha<span class="h">Hunt</span></span>
+      </a>
+      <h1 class="form-title">Welcome back</h1>
+      <p class="form-sub">Sign in — your watchlist is waiting.</p>
+
+      <button class="sso" id="google-btn" onclick="authOAuth('google')">
+        <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#4285F4" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"/><path fill="#EA4335" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 16.318 4 9.656 8.337 6.306 14.691z"/><path fill="#34A853" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 35.091 26.715 36 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"/><path fill="#FBBC05" d="M43.611 20.083H42V20H24v8h11.303c-.792 2.237-2.231 4.166-4.087 5.571l6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z"/></svg>
+        <span>Continue with Google</span>
+      </button>
+
+      <div class="divider">or</div>
+
+      <div class="field">
+        <div class="field-head"><label class="label" for="login-email">Email</label></div>
+        <div class="inp-wrap"><input class="inp" id="login-email" type="email" autocomplete="email" placeholder="you@example.com"></div>
+      </div>
+      <div class="field">
+        <div class="field-head"><label class="label" for="login-password">Password</label><button class="flink" type="button" onclick="authForgot()">Forgot password?</button></div>
+        <div class="inp-wrap">
+          <input class="inp has-eye" id="login-password" type="password" autocomplete="current-password" minlength="8" placeholder="At least 8 characters">
+          <button class="eye" type="button" onclick="togglePwd('login-password',this)">👁</button>
+        </div>
+      </div>
+
+      <div id="login-msg" class="msg"></div>
+
+      <button class="submit" id="login-submit" onclick="authSubmit()">Sign in <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12 H19"/><path d="M13 6 L19 12 L13 18"/></svg></button>
+
+      <div class="alt"><button class="magic" onclick="authMagicLink()">Email me a one-tap sign-in link instead →</button></div>
+
+      <div class="foot">New to AlphaHunt? Just enter your email and a password above —<a href="javascript:document.getElementById('login-email').focus()">we'll create your account.</a></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  /* ── Session storage — identical localStorage keys to the dashboard, so a
+        login here is recognised the instant /app loads. ── */
+  const _AUTH = {
+    get token()  { return localStorage.getItem('ah_token'); },
+    set token(v) { v ? (localStorage.setItem('ah_token', v), localStorage.setItem('ah_seen_signin','1')) : localStorage.removeItem('ah_token'); },
+    set refresh(v){ v ? localStorage.setItem('ah_refresh', v) : localStorage.removeItem('ah_refresh'); },
+    set user(v)  { v ? localStorage.setItem('ah_user', JSON.stringify(v)) : localStorage.removeItem('ah_user'); },
+  };
+
+  const $ = id => document.getElementById(id);
+  function showMsg(text, kind){ const el=$('login-msg'); if(!el) return; el.textContent=text||''; el.className='msg '+(kind||''); }
+
+  function togglePwd(inputId, btn){
+    const inp=$(inputId); if(!inp) return;
+    inp.type = inp.type==='password' ? 'text' : 'password';
+    btn.textContent = inp.type==='password' ? '👁' : '🙈';
+  }
+
+  const _validEmail = e => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
+
+  // ── Email / password (sign in, with silent auto-signup for new emails) ──
+  async function authSubmit(){
+    const email=($('login-email').value||'').trim();
+    const pass = $('login-password').value||'';
+    const btn  = $('login-submit');
+    if(!email || !pass){ showMsg('Email and password required','err'); return; }
+    if(!_validEmail(email)){ showMsg('Enter a valid email address','err'); $('login-email').focus(); return; }
+    if(pass.length<8){ showMsg('Password must be at least 8 characters','err'); $('login-password').focus(); return; }
+
+    btn.disabled=true; btn.classList.add('loading');
+    const reset=()=>{ btn.disabled=false; btn.classList.remove('loading'); };
+    const hit = async url => {
+      const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:pass})});
+      return { ok:r.ok, status:r.status, data: await r.json().catch(()=>({})) };
+    };
+    try{
+      let res=await hit('/api/auth/signin');
+      if(!res.ok){
+        const m=(res.data.detail||'').toLowerCase();
+        const newUser = res.status===400||res.status===401||res.status===404
+                      || m.includes('invalid')||m.includes('not found')||m.includes('credentials')||m.includes('no user');
+        if(newUser){
+          res=await hit('/api/auth/signup');
+          if(!res.ok){ showMsg(res.data.detail||'Could not create account — try again','err'); reset(); return; }
+        } else { showMsg(res.data.detail||'Authentication failed','err'); reset(); return; }
+      }
+      const d=res.data;
+      _AUTH.token=d.access_token; _AUTH.refresh=d.refresh_token;
+      const u=d.user||{}; _AUTH.user={id:u.id||null, email:u.email||email};
+      try{ localStorage.setItem('ah_tos_agreed','1'); }catch(e){}
+      showMsg('Signed in — loading your dashboard…','ok');
+      window.location.href='/app';
+    }catch(e){ showMsg('Network error — try again','err'); reset(); }
+  }
+
+  // ── Google OAuth ──
+  async function authOAuth(provider){
+    showMsg('');
+    try{
+      const r=await fetch('/api/auth/oauth/'+encodeURIComponent(provider),{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
+      const d=await r.json().catch(()=>({}));
+      if(!r.ok){ showMsg((d&&(d.detail||d.error))||(provider+' sign-in is not configured yet — use email or magic link.'),'err'); return; }
+      if(d.authorize_url){ window.location.href=d.authorize_url; return; }
+      showMsg('Could not start '+provider+' sign-in.','err');
+    }catch(e){ showMsg('Network error starting '+provider+' sign-in.','err'); }
+  }
+
+  // ── Magic link ──
+  async function authMagicLink(){
+    const email=($('login-email').value||'').trim();
+    if(!_validEmail(email)){ showMsg("Enter your email above first — we'll send a one-tap sign-in link.",'err'); $('login-email').focus(); return; }
+    try{
+      const r=await fetch('/api/auth/magic-link',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email})});
+      const d=await r.json().catch(()=>({}));
+      if(!r.ok){ showMsg((d&&(d.detail||d.error))||'Could not send magic link.','err'); return; }
+      showMsg('Sent! Check '+email+' for your sign-in link.','ok');
+    }catch(e){ showMsg('Network error sending the magic link.','err'); }
+  }
+
+  // ── Forgot password ──
+  async function authForgot(){
+    const email=($('login-email').value||'').trim();
+    if(!_validEmail(email)){ showMsg('Enter your email above, then click “Forgot password?” to get a reset link.','err'); $('login-email').focus(); return; }
+    try{
+      const r=await fetch('/api/auth/forgot-password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email})});
+      if(r.ok){ showMsg('Reset link sent to '+email+' — check your inbox (and spam).','ok'); }
+      else { showMsg('Could not send reset email. Check the address and try again.','err'); }
+    }catch(e){ showMsg('Network error. Try again.','err'); }
+  }
+
+  // Enter-to-advance / submit
+  $('login-email').addEventListener('keydown', e=>{ if(e.key==='Enter') $('login-password').focus(); });
+  $('login-password').addEventListener('keydown', e=>{ if(e.key==='Enter') authSubmit(); });
+
+  /* ── Live scoring wall from /api/hot — two columns drifting in opposite
+        directions, each duplicated 2× for a seamless loop. Pads with a
+        curated sample set so the wall is always full, even when the strict
+        hot list returns only a few names. ── */
+  (async function loadWall(){
+    const colA=$('col-a'), colB=$('col-b'); if(!colA||!colB) return;
+    const tierOf = s => s>=80 ? 'gold' : s>=50 ? 'silver' : 'bronze';
+    const card = (sym,score,tier,chg) => {
+      const dir = chg>=0?'up':'dn', sign = chg>=0?'+':'';
+      const logo = 'https://assets.parqet.com/logos/symbol/'+encodeURIComponent(sym);
+      const onerr = "this.outerHTML='"+(sym||'').slice(0,2)+"'";
+      return '<div class="sc-card"><div class="sc-top"><div class="sc-sym-row">'
+           + '<div class="sc-logo"><img src="'+logo+'" alt="" loading="lazy" onerror="'+onerr+'"></div>'
+           + '<div class="sc-sym">'+sym+'</div></div><div class="sc-score">'+score+'</div></div>'
+           + '<div class="sc-bot"><span class="tchip '+tier+'">'+tier+'</span>'
+           + '<span class="sc-move '+dir+'">'+sign+chg.toFixed(1)+'%</span></div></div>';
+    };
+    const sample = [
+      ['NVDA',94,8.4],['MSFT',88,3.2],['AMD',79,4.1],['PLTR',81,-1.7],
+      ['SHOP',82,6.0],['CRWD',72,-2.4],['AVGO',86,2.1],['NFLX',77,1.3],
+      ['URI',85,2.4],['TSLA',64,-3.1],['ANET',83,3.8],['UBER',74,0.9],
+    ].map(([sym,score,chg])=>({sym,score,tier:tierOf(score),chg}));
+
+    // Hydrate from the full scored universe (same source + score fields the
+    // dashboard uses) and show the highest-scored names — a genuinely live,
+    // always-full wall. /api/hot is too strict (often returns nothing), so
+    // it's a poor showcase source. Falls back to the curated sample below.
+    const scoreOf = t => parseFloat(t.smart_score ?? t.pop_score ?? 0) || 0;
+    let rows = sample;
+    try{
+      const r=await fetch('/api/universe',{cache:'no-store'});
+      if(r.ok){
+        const d=await r.json();
+        const picks=(d.tickers||[])
+          .filter(t => scoreOf(t) > 0)
+          .sort((a,b) => scoreOf(b) - scoreOf(a))
+          .slice(0,16);
+        if(picks.length){
+          rows = picks.map(p=>{
+            const score=Math.round(scoreOf(p));
+            const chg = parseFloat(p.change_pct);
+            return {sym:p.ticker||'—', score, tier:tierOf(score), chg: isNaN(chg)?0:chg};
+          });
+        }
+      }
+    }catch(e){}
+
+    // Top up to a full wall (≥12) with sample names not already present.
+    if(rows.length<12){
+      const have=new Set(rows.map(x=>x.sym));
+      for(const s of sample){ if(rows.length>=12) break; if(!have.has(s.sym)){ rows.push(s); have.add(s.sym); } }
+    }
+
+    const mid=Math.ceil(rows.length/2);
+    const a=rows.slice(0,mid).map(x=>card(x.sym,x.score,x.tier,x.chg)).join('');
+    const b=rows.slice(mid).map(x=>card(x.sym,x.score,x.tier,x.chg)).join('');
+    colA.innerHTML=a+a;
+    colB.innerHTML=(b||a)+(b||a);
+  })();
+</script>
+</body>
+</html>
