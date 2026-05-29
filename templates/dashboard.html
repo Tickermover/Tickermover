@@ -2519,9 +2519,9 @@ body[data-active-profile="conservative"] .fund-row:not([data-profiles~="conserva
 /* Warm translucent glass card on dark (Channel-Analytics style). */
 .v2-focus-item{
   position:relative;
-  background:radial-gradient(130% 90% at 0% 0%, rgba(255,214,158,.07), transparent 55%), linear-gradient(150deg, rgba(56,48,41,.42), rgba(22,22,27,.52));
-  backdrop-filter:blur(16px) saturate(1.1);-webkit-backdrop-filter:blur(16px) saturate(1.1);
-  border:1px solid rgba(255,255,255,.10);border-radius:16px;
+  background:radial-gradient(130% 90% at 0% 0%, rgba(255,214,158,.09), transparent 55%), linear-gradient(150deg, rgba(62,52,44,.48), rgba(22,22,27,.5));
+  backdrop-filter:blur(18px) saturate(1.15);-webkit-backdrop-filter:blur(18px) saturate(1.15);
+  border:1px solid rgba(255,255,255,.10);border-radius:20px;
   padding:14px 16px;cursor:pointer;overflow:hidden;
   box-shadow:0 16px 38px -24px rgba(0,0,0,.85), inset 0 1px 0 rgba(255,255,255,.07);
   transition:transform .16s, box-shadow .2s, border-color .2s;
@@ -3640,9 +3640,12 @@ body.v2 .v2-content{
   background:#FBFBFD!important;
 }
 html.v2-dark body.v2 .v2-content{
+  /* Warm top-left glow (+ faint sapphire) like the v16 mockup, so the
+     glass cards' backdrop-blur actually picks up warmth. */
   background:
-    radial-gradient(ellipse 90% 60% at 0% 0%, rgba(245,166,35,.10) 0%, transparent 55%),
-    radial-gradient(ellipse 90% 60% at 100% 100%, rgba(245,166,35,.07) 0%, transparent 55%),
+    radial-gradient(46% 42% at 13% 2%, rgba(150,108,58,.18) 0%, transparent 60%),
+    radial-gradient(42% 36% at 95% 6%, rgba(91,134,240,.07) 0%, transparent 60%),
+    radial-gradient(50% 44% at 60% 116%, rgba(150,108,58,.08) 0%, transparent 64%),
     #0A0A0A!important;
 }
 
