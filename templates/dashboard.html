@@ -10894,7 +10894,7 @@ function openStockSheet(ticker){
       '<div class="ssx-panel" data-panel="financials"><div class="ssx-stub"><span class="si">📊</span>Loading financials…</div></div>'+
       '<div class="ssx-panel" data-panel="news"><div class="ssx-stub"><span class="si">📰</span>Loading news…</div></div>'+
       '<div class="ssx-panel" data-panel="deepdive"><div class="ssx-card"><div class="ssx-card-h">🔬 AI Deep Dive</div><div id="dd-body-'+ticker+'"><button class="dd-btn" onclick="loadDeepDive(\''+ticker+'\')">Generate AI Deep Dive →</button></div></div></div>'+
-      ['valuation','health','technicals','estimates','earnings','ownership','peers'].map(function(p){return '<div class="ssx-panel" data-panel="'+p+'"><div class="ssx-stub"><span class="si">🧩</span>'+(p[0].toUpperCase()+p.slice(1))+' — coming soon.</div></div>';}).join('')+
+      ['valuation','health','technicals','estimates','earnings','ownership','peers'].map(function(p){return '<div class="ssx-panel" data-panel="'+p+'"><div class="ssx-stub"><span class="si">⏳</span>Loading…</div></div>';}).join('')+
     '</div>'+
     '<aside class="ssx-rail"><div class="ssx-card"><div class="ssx-card-h" style="font-size:14px">Key statistics</div>'+railHtml+rangeHtml+'</div></aside>'+
     '</div>';
@@ -10938,8 +10938,193 @@ function ssxChart(ticker){
 function ssxLoadTab(ticker,id){
   window._ssxLoaded=window._ssxLoaded||{};
   if(window._ssxLoaded[id]) return;
-  if(id==='financials'){ window._ssxLoaded[id]=1; ssxFinancials(ticker); }
-  else if(id==='news'){ window._ssxLoaded[id]=1; ssxNews(ticker); }
+  window._ssxLoaded[id]=1;
+  const map={financials:ssxFinancials,news:ssxNews,valuation:ssxValuation,health:ssxHealth,
+    technicals:ssxTechnicals,estimates:ssxEstimates,earnings:ssxEarnings,ownership:ssxOwnership,peers:ssxPeers};
+  const fn=map[id]; if(typeof fn==='function'){ try{ fn(ticker); }catch(e){ console.error('ssx tab',id,e); } }
+}
+
+/* ── shared helpers for the data tabs ── */
+function _ssxPanel(id){ return document.querySelector('#ssx-sheet .ssx-panel[data-panel="'+id+'"]'); }
+function _ssxEmpty(panel,icon,msg){ if(panel) panel.innerHTML='<div class="ssx-stub"><span class="si">'+icon+'</span>'+msg+'</div>'; }
+function _ssxField(t,keys){ for(var i=0;i<keys.length;i++){ var n=_ssxNum(t[keys[i]]); if(n!=null) return n; } return null; }
+function _ssxFx(n,suf,dp){ return n==null?null:(n.toFixed(dp==null?1:dp)+(suf||'')); }
+function _ssxColorPct(n){ return n==null?null:('<span class="'+(n>=0?'ssx-up':'ssx-dn')+'">'+_ssxPct(n)+'</span>'); }
+function _ssxGrid(title,pairs){
+  var cells=pairs.filter(function(p){return p[1]!=null&&p[1]!=='';}).map(function(p){return '<div class="ssx-m"><div class="ssx-mk">'+p[0]+'</div><div class="ssx-mv">'+p[1]+'</div></div>';}).join('');
+  return cells?('<div class="ssx-card"><div class="ssx-card-h">'+title+'</div><div class="ssx-metrics">'+cells+'</div></div>'):'';
+}
+async function _ssxDetail(ticker){
+  window._ssxDetailCache=window._ssxDetailCache||{};
+  if(window._ssxDetailCache[ticker]) return window._ssxDetailCache[ticker];
+  try{ const r=await fetch('/api/ticker/'+encodeURIComponent(ticker)); const d=await r.json(); window._ssxDetailCache[ticker]=(d&&typeof d==='object')?d:{}; return window._ssxDetailCache[ticker]; }
+  catch(e){ return {}; }
+}
+
+function ssxValuation(ticker){
+  const panel=_ssxPanel('valuation'); if(!panel) return;
+  const t=_allTickerData[ticker]||{};
+  const price=_ssxNum(t.price);
+  const tgtL=_ssxNum(t.target_low), tgtM=_ssxField(t,['target_mean','street_target']), tgtH=_ssxNum(t.target_high);
+  const up=(price&&tgtM)?((tgtM-price)/price*100):null;
+  let tgtCard='';
+  if(tgtM!=null&&price!=null){
+    let bar='';
+    if(tgtL!=null&&tgtH!=null&&tgtH>tgtL){
+      const pos=Math.max(0,Math.min(100,((price-tgtL)/(tgtH-tgtL))*100));
+      bar='<div style="margin-top:12px"><div class="ssx-range-bar" style="background:linear-gradient(90deg,#FF6B70,#FFC75F,#5BD17A)"><span class="ssx-range-dot" style="left:'+pos+'%"></span></div><div class="ssx-range-ends"><span>$'+tgtL.toFixed(0)+'</span><span>mean $'+tgtM.toFixed(0)+'</span><span>$'+tgtH.toFixed(0)+'</span></div></div>';
+    }
+    tgtCard='<div class="ssx-card"><div class="ssx-card-h">Analyst price target</div><div class="ssx-metrics">'+
+      '<div class="ssx-m"><div class="ssx-mk">Current</div><div class="ssx-mv">$'+price.toFixed(2)+'</div></div>'+
+      '<div class="ssx-m"><div class="ssx-mk">Mean target</div><div class="ssx-mv">$'+tgtM.toFixed(2)+'</div></div>'+
+      '<div class="ssx-m"><div class="ssx-mk">Upside</div><div class="ssx-mv">'+(up!=null?_ssxColorPct(up):'—')+'</div></div>'+
+      '</div>'+bar+'</div>';
+  }
+  const grid=_ssxGrid('Valuation multiples',[
+    ['P/E (ttm)',_ssxFx(_ssxField(t,['pe_ratio','trailing_pe','forward_pe']))],
+    ['Forward P/E',_ssxFx(_ssxField(t,['forward_pe','forwardPE']))],
+    ['PEG',_ssxFx(_ssxField(t,['peg_ratio','pegRatio']),'',2)],
+    ['P/S',_ssxFx(_ssxField(t,['ps_ratio','price_to_sales','ps']))],
+    ['P/B',_ssxFx(_ssxField(t,['pb_ratio','price_to_book','pb']))],
+    ['EV/EBITDA',_ssxFx(_ssxField(t,['ev_ebitda','ev_to_ebitda','enterprise_to_ebitda']))],
+    ['Price/FCF',_ssxFx(_ssxField(t,['price_to_fcf','pfcf']))]
+  ]);
+  panel.innerHTML=grid+tgtCard; if(!panel.innerHTML) _ssxEmpty(panel,'💰','No valuation data.');
+}
+
+function ssxHealth(ticker){
+  const panel=_ssxPanel('health'); if(!panel) return; const t=_allTickerData[ticker]||{};
+  const prof=_ssxGrid('Profitability & returns',[
+    ['Gross margin',_ssxFx(_ssxField(t,['gross_margin']),'%')],
+    ['Operating margin',_ssxFx(_ssxField(t,['operating_margin']),'%')],
+    ['Net margin',_ssxFx(_ssxField(t,['profit_margin','net_margin']),'%')],
+    ['FCF margin',_ssxFx(_ssxField(t,['fcf_margin']),'%')],
+    ['ROE',_ssxFx(_ssxField(t,['roe','return_on_equity']),'%',0)],
+    ['ROIC',_ssxFx(_ssxField(t,['roic','return_on_invested_capital']),'%',0)]
+  ]);
+  const grow=_ssxGrid('Growth',[
+    ['Revenue YoY',_ssxColorPct(_ssxField(t,['revenue_growth_yoy','revenue_growth']))],
+    ['EPS YoY',_ssxColorPct(_ssxField(t,['eps_growth_yoy','eps_growth','earnings_growth']))]
+  ]);
+  const bs=_ssxGrid('Balance sheet',[
+    ['Debt / Equity',_ssxFx(_ssxField(t,['debt_to_equity','debt_equity']),'',2)],
+    ['Current ratio',_ssxFx(_ssxField(t,['current_ratio']),'',2)],
+    ['Quick ratio',_ssxFx(_ssxField(t,['quick_ratio']),'',2)]
+  ]);
+  panel.innerHTML=prof+grow+bs; if(!panel.innerHTML) _ssxEmpty(panel,'🩺','No fundamentals available.');
+}
+
+function ssxTechnicals(ticker){
+  const panel=_ssxPanel('technicals'); if(!panel) return; const t=_allTickerData[ticker]||{};
+  const price=_ssxNum(t.price), atr=_ssxField(t,['atr_14','atr']);
+  const sma50=_ssxField(t,['sma_50','ma_50']), sma200=_ssxField(t,['sma_200','ma_200']);
+  const mom=_ssxGrid('Trend & momentum',[
+    ['RS rating',_ssxFx(_ssxField(t,['rs_rating','rs']),'',0)],
+    ['RSI (14)',_ssxFx(_ssxField(t,['rsi_14','rsi']),'',0)],
+    ['Momentum 1M',_ssxColorPct(_ssxField(t,['momentum_1m','mom_1m']))],
+    ['Momentum 3M',_ssxColorPct(_ssxField(t,['momentum_3m','mom_3m']))],
+    ['Beta',_ssxFx(_ssxField(t,['beta']),'',2)],
+    ['Volume ratio',_ssxFx(_ssxField(t,['volume_ratio','rel_volume']),'×',2)]
+  ]);
+  const lvl=_ssxGrid('Levels',[
+    ['Price',price!=null?'$'+price.toFixed(2):null],
+    ['50-day MA',sma50!=null?'$'+sma50.toFixed(2):null],
+    ['200-day MA',sma200!=null?'$'+sma200.toFixed(2):null],
+    ['ATR (14)',atr!=null?'$'+atr.toFixed(2):null],
+    ['Support ≈',(price!=null&&atr!=null)?'$'+(price-1.5*atr).toFixed(2):null],
+    ['Resistance ≈',(price!=null&&atr!=null)?'$'+(price+3*atr).toFixed(2):null]
+  ]);
+  panel.innerHTML=mom+lvl; if(!panel.innerHTML) _ssxEmpty(panel,'📈','No technical data.');
+}
+
+function ssxEstimates(ticker){
+  const panel=_ssxPanel('estimates'); if(!panel) return; const t=_allTickerData[ticker]||{};
+  const price=_ssxNum(t.price), tgtL=_ssxNum(t.target_low), tgtM=_ssxField(t,['target_mean','street_target']), tgtH=_ssxNum(t.target_high);
+  const up=(price&&tgtM)?((tgtM-price)/price*100):null;
+  const analysts=_ssxField(t,['total_analysts','analyst_count','numAnalystOpinions']);
+  const tg=_ssxGrid('Price targets',[
+    ['Low',tgtL!=null?'$'+tgtL.toFixed(2):null],['Mean',tgtM!=null?'$'+tgtM.toFixed(2):null],
+    ['High',tgtH!=null?'$'+tgtH.toFixed(2):null],['Upside',up!=null?_ssxColorPct(up):null],
+    ['# Analysts',analysts!=null?Math.round(analysts):null]
+  ]);
+  const parts=[['Strong Buy',_ssxField(t,['strong_buy','analyst_strong_buy']),'#16a34a'],
+    ['Buy',_ssxField(t,['buy','analyst_buy']),'#5BD17A'],['Hold',_ssxField(t,['hold','analyst_hold']),'#FFC75F'],
+    ['Sell',_ssxField(t,['sell','analyst_sell']),'#FF9B8F'],['Strong Sell',_ssxField(t,['strong_sell','analyst_strong_sell']),'#FF6B70']
+  ].filter(function(p){return p[1]!=null;});
+  let dist='';
+  if(parts.length){ const tot=parts.reduce(function(a,p){return a+p[1];},0)||1;
+    dist='<div class="ssx-card"><div class="ssx-card-h">Analyst ratings</div><div style="display:flex;height:12px;border-radius:6px;overflow:hidden;margin-bottom:10px">'+
+      parts.map(function(p){return '<div style="width:'+(p[1]/tot*100)+'%;background:'+p[2]+'"></div>';}).join('')+'</div>'+
+      parts.map(function(p){return '<div class="ssx-kv"><span class="k">'+p[0]+'</span><span class="v">'+p[1]+'</span></div>';}).join('')+'</div>';
+  }
+  panel.innerHTML=tg+dist; if(!panel.innerHTML) _ssxEmpty(panel,'🎯','No estimates available.');
+}
+
+async function ssxEarnings(ticker){
+  const panel=_ssxPanel('earnings'); if(!panel) return; const t=_allTickerData[ticker]||{};
+  const dte=_ssxField(t,['days_to_earnings']);
+  const head=_ssxGrid('Next earnings',[
+    ['In',dte!=null?Math.round(dte)+' days':null],['Date',t.earnings_date||t.next_earnings_date||null]
+  ]);
+  let eq=t.eps_quarters; if(!Array.isArray(eq)||!eq.length){ eq=(await _ssxDetail(ticker)).eps_quarters||[]; }
+  let tbl='';
+  if(Array.isArray(eq)&&eq.length){
+    const rows=eq.slice(-6).reverse();
+    tbl='<div class="ssx-card"><div class="ssx-card-h">Earnings history</div><table class="ssx-fin"><thead><tr><th>Period</th><th>EPS actual</th><th>Estimate</th><th>Surprise</th></tr></thead><tbody>'+
+      rows.map(function(q){
+        const per=q.period||q.date||q.quarter||q.fiscal_period||'';
+        const act=_ssxNum(q.actual!=null?q.actual:q.eps_actual);
+        const est=_ssxNum(q.estimate!=null?q.estimate:q.eps_estimate);
+        let sur=_ssxNum(q.surprise); if(sur==null&&act!=null&&est!=null&&est!=0) sur=(act-est)/Math.abs(est)*100;
+        return '<tr><td>'+per+'</td><td>'+(act!=null?act.toFixed(2):'—')+'</td><td>'+(est!=null?est.toFixed(2):'—')+'</td><td>'+(sur!=null?_ssxColorPct(sur):'—')+'</td></tr>';
+      }).join('')+'</tbody></table></div>';
+  }
+  panel.innerHTML=head+tbl; if(!panel.innerHTML) _ssxEmpty(panel,'📅','No earnings data.');
+}
+
+async function ssxOwnership(ticker){
+  const panel=_ssxPanel('ownership'); if(!panel) return; const t=_allTickerData[ticker]||{};
+  const d=await _ssxDetail(ticker);
+  const inst=_ssxField(t,['institutional_ownership','held_by_institutions'])??_ssxField(d,['institutional_ownership','held_by_institutions']);
+  const ins=_ssxField(t,['insider_ownership','held_by_insiders'])??_ssxField(d,['insider_ownership','held_by_insiders']);
+  const own=_ssxGrid('Ownership',[
+    ['Institutional',inst!=null?inst.toFixed(1)+'%':null],
+    ['Insider',ins!=null?ins.toFixed(2)+'%':null],
+    ['Short float',_ssxFx(_ssxField(t,['short_percent_float','short_interest']),'%')]
+  ]);
+  const detail=d.insider_detail||t.insider_detail||[];
+  let tbl='';
+  if(Array.isArray(detail)&&detail.length){
+    tbl='<div class="ssx-card"><div class="ssx-card-h">Recent insider transactions</div><table class="ssx-fin"><thead><tr><th>Insider</th><th>Type</th><th>Shares</th><th>Date</th></tr></thead><tbody>'+
+      detail.slice(0,12).map(function(x){ const sh=_ssxNum(x.shares);
+        return '<tr><td>'+(x.name||x.insider||'—')+'</td><td>'+(x.type||x.transaction||'')+'</td><td>'+(sh!=null?Math.round(sh).toLocaleString():'—')+'</td><td>'+(x.date||'')+'</td></tr>';
+      }).join('')+'</tbody></table></div>';
+  }
+  panel.innerHTML=own+tbl; if(!panel.innerHTML) _ssxEmpty(panel,'🏦','No ownership data.');
+}
+
+function ssxPeers(ticker){
+  const panel=_ssxPanel('peers'); if(!panel) return; const t=_allTickerData[ticker]||{};
+  const sec=t.sub_sector||t.subsector||t.sector;
+  const all=Object.keys(_allTickerData||{}).map(function(k){return _allTickerData[k];});
+  let peers=all.filter(function(x){return x.ticker!==ticker && (x.sub_sector||x.subsector||x.sector)===sec;});
+  if(peers.length<3){ peers=all.filter(function(x){return x.ticker!==ticker && x.sector===t.sector;}); }
+  peers=peers.sort(function(a,b){return (_ssxNum(b.smart_score)||0)-(_ssxNum(a.smart_score)||0);}).slice(0,7);
+  if(!peers.length){ _ssxEmpty(panel,'⚖️','No peer data for this sector.'); return; }
+  const rows=[Object.assign({},t,{_self:true})].concat(peers);
+  const cell=function(x){
+    const chg=_ssxNum(x.change_pct), sc=Math.round(_ssxNum(x.smart_score)||_ssxNum(x.pop_score)||0),
+      pe=_ssxField(x,['pe_ratio','forward_pe']), rg=_ssxNum(x.revenue_growth_yoy), px=_ssxNum(x.price);
+    return '<tr'+(x._self?' class="major"':' style="cursor:pointer" onclick="openStockSheet(\''+x.ticker+'\')"')+'>'+
+      '<td>'+x.ticker+'</td>'+
+      '<td>'+(px!=null?'$'+px.toFixed(2):'—')+'</td>'+
+      '<td>'+(chg!=null?'<span class="'+(chg>=0?'ssx-up':'ssx-dn')+'">'+_ssxPct(chg)+'</span>':'—')+'</td>'+
+      '<td>'+(sc||'—')+'</td><td>'+((x.grade||'').toUpperCase()||'—')+'</td>'+
+      '<td>'+(pe!=null?pe.toFixed(1):'—')+'</td>'+
+      '<td>'+(rg!=null?'<span class="'+(rg>=0?'ssx-up':'ssx-dn')+'">'+_ssxPct(rg)+'</span>':'—')+'</td></tr>';
+  };
+  panel.innerHTML='<div class="ssx-card"><div class="ssx-card-h">Sector peers <span style="font-size:11px;color:var(--muted);font-family:Manrope">· '+(sec||'')+'</span></div>'+
+    '<table class="ssx-fin"><thead><tr><th>Ticker</th><th>Price</th><th>Chg</th><th>Score</th><th>Grade</th><th>P/E</th><th>Rev YoY</th></tr></thead><tbody>'+rows.map(cell).join('')+'</tbody></table></div>';
 }
 
 async function ssxFinancials(ticker){
