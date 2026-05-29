@@ -569,7 +569,12 @@ tr:hover td{background:rgba(245,166,35,.06)}
 .ssx-card{background:var(--glass);backdrop-filter:blur(14px);border:1px solid var(--hair);border-radius:16px;padding:16px 18px;box-shadow:0 16px 38px -26px rgba(0,0,0,.8), inset 0 1px 0 rgba(255,255,255,.05);margin-bottom:18px}
 .ssx-card-h{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:17px;margin-bottom:12px;letter-spacing:-.01em}
 .ssx-panel{display:none} .ssx-panel.on{display:block;animation:ssxFade .25s ease}
+.ssx-panel.on.slide-r{animation:ssxSlideR .34s cubic-bezier(.22,.61,.36,1)}
+.ssx-panel.on.slide-l{animation:ssxSlideL .34s cubic-bezier(.22,.61,.36,1)}
 @keyframes ssxFade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@keyframes ssxSlideR{from{opacity:0;transform:translateX(34px)}to{opacity:1;transform:none}}
+@keyframes ssxSlideL{from{opacity:0;transform:translateX(-34px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.ssx-panel.on,.ssx-panel.on.slide-r,.ssx-panel.on.slide-l{animation:ssxFade .2s ease}}
 .ssx-chart{height:240px;border-radius:12px;border:1px solid var(--hair);background:rgba(255,255,255,.02);overflow:hidden;margin-bottom:14px}
 .ssx-verdict{display:flex;align-items:center;gap:12px;padding:13px 15px;border-radius:12px;margin-bottom:14px;background:rgba(245,166,35,.10);border:1px solid rgba(245,166,35,.26)}
 .ssx-verdict .vs{font-size:13px;color:#FFC75F;letter-spacing:1px;flex-shrink:0}
@@ -10893,7 +10898,7 @@ function openStockSheet(ticker){
       '</div>'+
       '<div class="ssx-panel" data-panel="financials"><div class="ssx-stub"><span class="si">📊</span>Loading financials…</div></div>'+
       '<div class="ssx-panel" data-panel="news"><div class="ssx-stub"><span class="si">📰</span>Loading news…</div></div>'+
-      '<div class="ssx-panel" data-panel="deepdive"><div class="ssx-card"><div class="ssx-card-h">🔬 AI Deep Dive</div><div id="dd-body-'+ticker+'"><button class="dd-btn" onclick="loadDeepDive(\''+ticker+'\')">Generate AI Deep Dive →</button></div></div></div>'+
+      '<div class="ssx-panel" data-panel="deepdive"><div class="ssx-card"><div class="ssx-card-h">🔬 AI Deep Dive</div><div id="dd-body-'+ticker+'"><div class="dd-loading">Open this tab to generate the brief…</div></div></div></div>'+
       ['valuation','health','technicals','estimates','earnings','ownership','peers'].map(function(p){return '<div class="ssx-panel" data-panel="'+p+'"><div class="ssx-stub"><span class="si">⏳</span>Loading…</div></div>';}).join('')+
     '</div>'+
     '<aside class="ssx-rail"><div class="ssx-card"><div class="ssx-card-h" style="font-size:14px">Key statistics</div>'+railHtml+rangeHtml+'</div></aside>'+
@@ -10902,12 +10907,23 @@ function openStockSheet(ticker){
   document.getElementById('ssx-overlay').classList.add('open');
   document.body.style.overflow='hidden';
   const tabsEl=document.getElementById('ssx-tabs');
+  let _ssxTabIdx=0;
   tabsEl.onclick=function(e){const b=e.target.closest('.ssx-tab');if(!b)return;
-    tabsEl.querySelectorAll('.ssx-tab').forEach(function(x){x.classList.toggle('on',x===b);});
+    const allTabs=[].slice.call(tabsEl.querySelectorAll('.ssx-tab'));
+    const newIdx=allTabs.indexOf(b);
+    if(newIdx===_ssxTabIdx) return;
+    const dir = newIdx>_ssxTabIdx ? 'slide-r' : 'slide-l';
+    _ssxTabIdx=newIdx;
+    allTabs.forEach(function(x){x.classList.toggle('on',x===b);});
     const id=b.dataset.tab;
-    document.querySelectorAll('#ssx-sheet .ssx-panel').forEach(function(p){p.classList.toggle('on',p.dataset.panel===id);});
+    document.querySelectorAll('#ssx-sheet .ssx-panel').forEach(function(p){
+      p.classList.remove('slide-r','slide-l');
+      if(p.dataset.panel===id){ void p.offsetWidth; p.classList.add('on',dir); }
+      else p.classList.remove('on');
+    });
     ssxLoadTab(ticker,id);
     document.getElementById('ssx-overlay').scrollTo({top:0,behavior:'smooth'});
+    b.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});
   };
   ssxChart(ticker);
 }
@@ -10940,7 +10956,8 @@ function ssxLoadTab(ticker,id){
   if(window._ssxLoaded[id]) return;
   window._ssxLoaded[id]=1;
   const map={financials:ssxFinancials,news:ssxNews,valuation:ssxValuation,health:ssxHealth,
-    technicals:ssxTechnicals,estimates:ssxEstimates,earnings:ssxEarnings,ownership:ssxOwnership,peers:ssxPeers};
+    technicals:ssxTechnicals,estimates:ssxEstimates,earnings:ssxEarnings,ownership:ssxOwnership,peers:ssxPeers,
+    deepdive:loadDeepDive};
   const fn=map[id]; if(typeof fn==='function'){ try{ fn(ticker); }catch(e){ console.error('ssx tab',id,e); } }
 }
 
