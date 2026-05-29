@@ -1107,8 +1107,8 @@ tr:hover td{background:rgba(245,166,35,.06)}
   padding:2px 7px;border-radius:5px;
   font-feature-settings:'tnum' 1;
 }
-.ticker-chg.up  {color:#FFE9B0;background:rgba(212,134,10,.18)}
-.ticker-chg.down{color:#fca5a5;background:rgba(220,38,38,.18)}
+.ticker-chg.up  {color:#5BD17A;background:rgba(91,209,122,.16)}
+.ticker-chg.down{color:#FF6B70;background:rgba(255,90,95,.16)}
 .ticker-chg.flat{color:#cbd5e1;background:rgba(138,138,138,.12)}
 @media(max-width:600px){.ticker-tape{height:34px} .ticker-chip{padding:0 14px;height:34px}}
 
@@ -1440,7 +1440,7 @@ body.v2 .ticker-chip .px{color:#cbd5e1!important}
 .v2-nav-item.active::before{
   content:'';position:absolute;left:-14px;top:6px;bottom:6px;
   width:3px;border-radius:0 3px 3px 0;
-  background:linear-gradient(180deg,#15803d,#F5A623);
+  background:linear-gradient(180deg,#FFC75F,#F5A623);
   box-shadow:0 0 8px rgba(245,166,35,.55);
 }
 .v2-nav-item .ico{font-size:15px;width:18px;text-align:center;flex-shrink:0}
@@ -2213,7 +2213,7 @@ body.v2 .v2ov-card.sectors .v2ov-sector-cell{
   box-shadow:0 1px 2px rgba(245,166,35,.3);
 }
 .v2-tag-universe{
-  color:#FFE9B0;background:rgba(21,128,61,.18);border:1px solid rgba(245,166,35,.25);
+  color:#C7CDDA;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);
   letter-spacing:0;font-variant-numeric:tabular-nums;
 }
 
@@ -2526,7 +2526,7 @@ body[data-active-profile="conservative"] .fund-row:not([data-profiles~="conserva
   border:1px solid rgba(255,255,255,.10);border-radius:20px;
   padding:16px 18px;cursor:pointer;overflow:hidden;
   box-shadow:0 18px 42px -24px rgba(0,0,0,.85), inset 0 1px 0 rgba(255,255,255,.07);
-  transition:transform .16s, box-shadow .2s, border-color .2s;
+  transition:transform .18s ease, border-color .2s ease, box-shadow .2s ease;
   display:flex;flex-direction:column;gap:9px;
 }
 /* hover/select pop = the card's CATEGORY colour (not blue) — v16 */
@@ -4390,6 +4390,15 @@ html.v2-dark .v2ov-card,html.v2-dark .v2ov-kpi,html.v2-dark .v2ov-trend-card{
   backdrop-filter:blur(14px) saturate(1.1);-webkit-backdrop-filter:blur(14px) saturate(1.1);
   border-color:rgba(255,255,255,.09);border-radius:16px;
   box-shadow:0 16px 38px -26px rgba(0,0,0,.8), inset 0 1px 0 rgba(255,255,255,.05);
+}
+/* Other standalone panels -> same warm-glass surface (v16). Surface-only
+   (no backdrop-filter) to avoid clipping/perf issues on bigger panels. */
+html.v2-dark .v2-track,
+html.v2-dark .v2-pick-card,
+html.v2-dark body.v2 #panel-sectors .sm-card{
+  background:linear-gradient(150deg, rgba(54,46,40,.42) 0%, #15131A 72%)!important;
+  border-color:rgba(255,255,255,.09)!important;border-radius:16px!important;
+  box-shadow:0 16px 38px -26px rgba(0,0,0,.8), inset 0 1px 0 rgba(255,255,255,.05)!important;
 }
 html.v2-dark .v2ov-card-head,html.v2-dark .v2ov-title,
 html.v2-dark .v2ov-kpi-name,html.v2-dark .v2ov-kpi-price,
@@ -7248,10 +7257,10 @@ function v2RenderMarketPulseCompact(data){
     return '<span class="' + cls + '">' + (n >= 0 ? '+' : '') + n.toFixed(2) + '%</span>';
   };
   const cards = [
-    { key:'SPY',  label:'S&P 500',   stripe:'#F5A623' },
-    { key:'QQQ',  label:'NASDAQ',    stripe:'#FFC75F' },
-    { key:'DIA',  label:'DOW 30',    stripe:'#10b981' },
-    { key:'^VIX', label:'VIX',       stripe:'#F5A623' },
+    { key:'SPY',  label:'S&P 500' },
+    { key:'QQQ',  label:'NASDAQ'  },
+    { key:'DIA',  label:'DOW 30'  },
+    { key:'^VIX', label:'VIX'     },
   ];
   return cards.map(card => {
     const x = c[card.key];
@@ -7261,8 +7270,10 @@ function v2RenderMarketPulseCompact(data){
     const chg = (x.pct_1d != null) ? x.pct_1d : x.pct_5d;
     const period = (x.pct_1d != null) ? '' : ' (5d)';
     const px = x.last != null ? x.last.toFixed(2) : '';
+    // Stripe reflects direction (green up / red down) — not a fixed colour.
+    const stripe = (chg == null || isNaN(chg)) ? '#8A93A6' : (chg >= 0 ? '#5BD17A' : '#FF6B70');
     return '<div class="v2-mp-mini" title="' + card.label + ' · last ' + px + period + '">' +
-      '<span class="v2-mp-mini-stripe" style="background:' + card.stripe + '"></span>' +
+      '<span class="v2-mp-mini-stripe" style="background:' + stripe + '"></span>' +
       '<span class="v2-mp-mini-lbl">' + card.label + '</span>' +
       '<span class="v2-mp-mini-chg">' + fmtPctSign(chg) + '</span>' +
     '</div>';
