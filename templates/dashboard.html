@@ -5687,11 +5687,9 @@ function v2RenderTodaysFocus(tickers){
     const chgStr = chg == null ? '—' : ((chg >= 0 ? '+' : '') + chg.toFixed(1) + '%');
     const score = Math.round(_f(t.smart_score ?? t.pop_score ?? 0) || 0);
     const grade = (t.grade || '').toUpperCase();
+    // v16: single gold chip "A · 84" (no separate coloured grade square).
     const scoreBadge = score > 0
-      ? '<span class="v2-focus-score">' +
-          (grade ? '<span class="v2-focus-grade" style="background:' + gradeBg(grade) + '">' + grade + '</span>' : '') +
-          score +
-        '</span>'
+      ? '<span class="v2-focus-score">' + (grade ? grade + ' · ' : '') + score + '</span>'
       : '';
     return '<div class="v2-focus-item v2-focus-' + tone + ' v2-focus-kind-' + kind + '" ' +
            'onclick="openStockModal(\'' + t.ticker + '\')">' +
