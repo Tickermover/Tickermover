@@ -2988,6 +2988,70 @@ async def api_research(ticker: str, force: bool = False):
     return JSONResponse({"ticker": sym, "status": "generating"})
 
 
+# ── AI head-to-head comparison cards (cached; web-grounded) ────────────────
+_compare_generating: set = set()
+
+
+async def _run_compare_job(sym: str, target: dict | None):
+    import compare_gen
+    from compare_store import store as _cstore
+    try:
+        out = await compare_gen.generate_compare_card(sym, target)
+        _cstore.save(sym, out)
+    except Exception as exc:
+        logger.error(f"Comparison card generation failed for {sym}: {exc}")
+    finally:
+        _compare_generating.discard(sym)
+
+
+@app.get("/api/compare-card/{ticker}")
+async def api_compare_card(ticker: str, force: bool = False):
+    """Per-stock structured comparison card (operational stage, revenue,
+    backlog, execution risk, profitability path). Served from cache and
+    regenerated in the background when missing/stale, so the Peers tab never
+    blocks. The ticker's own live data is the ground truth."""
+    import asyncio
+    import compare_gen
+    from compare_store import store as _cstore
+
+    sym = ticker.upper()
+    doc = _cstore.get(sym)
+
+    def _payload(d: dict, **extra) -> dict:
+        out = {
+            "ticker":       sym,
+            "status":       "ready",
+            "card":         d.get("card", {}) or {},
+            "sources":      d.get("sources", []) or [],
+            "model":        d.get("model", ""),
+            "generated_at": d.get("generated_at") or d.get("generated_epoch"),
+        }
+        out.update(extra)
+        return out
+
+    fresh = bool(doc) and doc.get("status") == "ready" and not _cstore.is_stale(doc) and not force
+    if fresh:
+        return JSONResponse(_payload(doc))
+
+    if not compare_gen.available():
+        if doc:
+            return JSONResponse(_payload(doc, stale=True))
+        return JSONResponse({"ticker": sym, "status": "unavailable",
+                             "detail": "AI comparison is not enabled (set ANTHROPIC_API_KEY)."})
+
+    if sym not in _compare_generating:
+        _compare_generating.add(sym)
+        target = next((t for t in _universe_data if t.get("ticker") == sym), None)
+        try:
+            asyncio.create_task(_run_compare_job(sym, target))
+        except RuntimeError:
+            _compare_generating.discard(sym)
+
+    if doc:
+        return JSONResponse(_payload(doc, regenerating=True))
+    return JSONResponse({"ticker": sym, "status": "generating"})
+
+
 @app.get("/api/quotes/batch")
 async def api_quotes_batch():
     slim = [

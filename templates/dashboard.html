@@ -575,16 +575,6 @@ tr:hover td{background:rgba(245,166,35,.06)}
 @keyframes ssxSlideR{from{opacity:0;transform:translateX(34px)}to{opacity:1;transform:none}}
 @keyframes ssxSlideL{from{opacity:0;transform:translateX(-34px)}to{opacity:1;transform:none}}
 @media(prefers-reduced-motion:reduce){.ssx-panel.on,.ssx-panel.on.slide-r,.ssx-panel.on.slide-l{animation:ssxFade .2s ease}}
-.ssx-pageturn{position:fixed;left:50%;bottom:22px;z-index:20;transform:translateX(-50%) translateY(14px);
-  display:flex;align-items:center;gap:8px;padding:9px 16px;border-radius:999px;cursor:pointer;
-  background:rgba(245,166,35,.16);border:1px solid rgba(245,166,35,.34);color:#FFE9B0;
-  font-size:12.5px;font-weight:700;letter-spacing:.01em;backdrop-filter:blur(10px);
-  box-shadow:0 12px 34px -14px rgba(0,0,0,.75);opacity:0;pointer-events:none;
-  transition:opacity .3s ease, transform .3s ease}
-.ssx-pageturn.show{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}
-.ssx-pageturn .ssx-pt-ico{font-size:14px;line-height:1;animation:ssxPtBob 1.3s ease-in-out infinite}
-@keyframes ssxPtBob{0%,100%{transform:translateY(0)}50%{transform:translateY(3px)}}
-@media(prefers-reduced-motion:reduce){.ssx-pageturn .ssx-pt-ico{animation:none}}
 .ssx-chart{height:240px;border-radius:12px;border:1px solid var(--hair);background:rgba(255,255,255,.02);overflow:hidden;margin-bottom:14px}
 .ssx-verdict{display:flex;align-items:center;gap:12px;padding:13px 15px;border-radius:12px;margin-bottom:14px;background:rgba(245,166,35,.10);border:1px solid rgba(245,166,35,.26)}
 .ssx-verdict .vs{font-size:13px;color:#FFC75F;letter-spacing:1px;flex-shrink:0}
@@ -617,6 +607,25 @@ table.ssx-fin tr.major td:first-child{font-weight:800;color:#fff;font-family:'Ma
 .ssx-news-item:hover .nh{color:var(--sapphire-2,#9BBBFF)}
 .ssx-news-item .nh{font-size:13px;font-weight:600;color:#E4E8F0;line-height:1.4}
 .ssx-news-item .nm{font-size:10.5px;color:var(--muted);margin-top:3px}
+
+/* dark-mode overrides for the reused light-theme dd-* classes inside the sheet */
+#ssx-sheet .dd-loading{color:var(--muted)}
+#ssx-sheet .dd-sources{border-top-color:var(--hair)}
+#ssx-sheet .dd-sources a{color:var(--sapphire-2,#9BBBFF)}
+/* head-to-head AI comparison (Peers tab) */
+.ssx-h2h-picks{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:14px;font-size:12px;color:var(--muted);font-weight:700}
+.ssx-h2h-pick{padding:5px 11px;border-radius:8px;border:1px solid var(--hair);background:none;color:var(--muted);font-weight:700;font-size:12px;cursor:pointer;font-family:inherit;transition:.15s}
+.ssx-h2h-pick:hover{color:#fff;background:rgba(255,255,255,.05)}
+.ssx-h2h-pick.on{color:#FFE9B0;background:rgba(245,166,35,.14);border-color:rgba(245,166,35,.32)}
+table.ssx-h2h{width:100%;border-collapse:collapse;font-size:13px}
+table.ssx-h2h th,table.ssx-h2h td{text-align:left;padding:11px 12px;vertical-align:top;border-bottom:1px solid var(--hair)}
+table.ssx-h2h thead th{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:15.5px;color:#fff;border-bottom:1px solid rgba(255,255,255,.16)}
+table.ssx-h2h thead th.self{color:#FFE9B0}
+table.ssx-h2h .ssx-h2h-name{display:block;font-family:'Manrope',sans-serif;font-weight:500;font-size:10.5px;color:var(--muted);margin-top:2px}
+table.ssx-h2h tbody th{font-weight:700;color:var(--muted);width:168px;font-size:10px;text-transform:uppercase;letter-spacing:.06em;font-family:'JetBrains Mono',monospace}
+table.ssx-h2h tbody td{color:#D8DEE9;line-height:1.45}
+table.ssx-h2h tbody td.self{color:#fff;font-weight:600}
+.ssx-h2h-note{margin-top:10px;font-size:11px;color:var(--muted)}
 
 .fd-links{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
 .fd-link{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:700;padding:6px 11px;border-radius:8px;
@@ -10912,15 +10921,15 @@ function openStockSheet(ticker){
       ['valuation','health','technicals','estimates','earnings','ownership','peers'].map(function(p){return '<div class="ssx-panel" data-panel="'+p+'"><div class="ssx-stub"><span class="si">⏳</span>Loading…</div></div>';}).join('')+
     '</div>'+
     '<aside class="ssx-rail"><div class="ssx-card"><div class="ssx-card-h" style="font-size:14px">Key statistics</div>'+railHtml+rangeHtml+'</div></aside>'+
-    '</div>'+
-    '<div class="ssx-pageturn" id="ssx-pageturn"><span class="ssx-pt-label"></span><span class="ssx-pt-ico">↓</span></div>';
+    '</div>';
 
   document.getElementById('ssx-overlay').classList.add('open');
   document.body.style.overflow='hidden';
   const tabsEl=document.getElementById('ssx-tabs');
   const overlay=document.getElementById('ssx-overlay');
   const allTabs=[].slice.call(tabsEl.querySelectorAll('.ssx-tab'));
-  const ptEl=document.getElementById('ssx-pageturn');
+  // Clear any handlers a previous open may have left on the shared overlay.
+  overlay.onwheel=null; overlay.onscroll=null; overlay.ontouchstart=null; overlay.ontouchend=null;
   let _ssxTabIdx=0;
 
   function ssxGoTab(newIdx){
@@ -10936,52 +10945,15 @@ function openStockSheet(ticker){
       else p.classList.remove('on');
     });
     ssxLoadTab(ticker,id);
+    // Land at the top of the new tab (its header), never mid-content.
     overlay.scrollTo({top:0,behavior:'smooth'});
-    b.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});
-    ssxUpdatePageTurn();
+    // Keep the active tab centered in the strip WITHOUT moving vertical scroll.
+    tabsEl.scrollTo({left:Math.max(0,b.offsetLeft-(tabsEl.clientWidth-b.clientWidth)/2),behavior:'smooth'});
   }
   tabsEl.onclick=function(e){const b=e.target.closest('.ssx-tab');if(!b)return;
     ssxGoTab(allTabs.indexOf(b));
   };
 
-  // Page-turn: finish a tab, push past the bottom, and the next tab opens —
-  // like turning the page of a book. A hint pill invites the gesture.
-  function _ssxHasNext(){ return _ssxTabIdx < allTabs.length-1; }
-  function ssxUpdatePageTurn(){
-    if(!ptEl) return;
-    const next=allTabs[_ssxTabIdx+1];
-    ptEl.querySelector('.ssx-pt-label').textContent = next ? ('Continue to '+next.textContent) : '';
-    ptEl.classList.remove('show');
-  }
-  function _ssxAtBottom(){ return overlay.scrollTop + overlay.clientHeight >= overlay.scrollHeight - 8; }
-  if(ptEl) ptEl.onclick=function(){ if(_ssxHasNext()) ssxGoTab(_ssxTabIdx+1); };
-  let _ptAccum=0, _ptCooldown=false, _tY=null;
-  function _ssxAdvance(){
-    if(_ptCooldown||!_ssxHasNext()) return;
-    _ptCooldown=true; _ptAccum=0;
-    ssxGoTab(_ssxTabIdx+1);
-    setTimeout(function(){ _ptCooldown=false; }, 850);
-  }
-  overlay.onscroll=function(){
-    if(!ptEl) return;
-    if(_ssxAtBottom() && _ssxHasNext() && !_ptCooldown) ptEl.classList.add('show');
-    else { ptEl.classList.remove('show'); if(!_ssxAtBottom()) _ptAccum=0; }
-  };
-  overlay.onwheel=function(e){
-    if(e.deltaY>0 && _ssxAtBottom() && _ssxHasNext()){
-      _ptAccum += e.deltaY;
-      if(_ptAccum > 130) _ssxAdvance();
-    } else if(e.deltaY<0){ _ptAccum=0; }
-  };
-  overlay.ontouchstart=function(e){ _tY = e.touches[0] ? e.touches[0].clientY : null; };
-  overlay.ontouchend=function(e){
-    if(_tY==null) return;
-    const endY=(e.changedTouches[0]||{}).clientY;
-    if(endY!=null && _ssxAtBottom() && (_tY-endY)>60) _ssxAdvance();
-    _tY=null;
-  };
-
-  ssxUpdatePageTurn();
   ssxChart(ticker);
 }
 
@@ -11197,8 +11169,84 @@ function ssxPeers(ticker){
       '<td>'+(pe!=null?pe.toFixed(1):'—')+'</td>'+
       '<td>'+(rg!=null?'<span class="'+(rg>=0?'ssx-up':'ssx-dn')+'">'+_ssxPct(rg)+'</span>':'—')+'</td></tr>';
   };
-  panel.innerHTML='<div class="ssx-card"><div class="ssx-card-h">Sector peers <span style="font-size:11px;color:var(--muted);font-family:Manrope">· '+(sec||'')+'</span></div>'+
+  const tableHtml='<div class="ssx-card"><div class="ssx-card-h">Sector peers <span style="font-size:11px;color:var(--muted);font-family:Manrope">· '+(sec||'')+'</span></div>'+
     '<table class="ssx-fin"><thead><tr><th>Ticker</th><th>Price</th><th>Chg</th><th>Score</th><th>Grade</th><th>P/E</th><th>Rev YoY</th></tr></thead><tbody>'+rows.map(cell).join('')+'</tbody></table></div>';
+
+  const picks=peers.map(function(p,i){return '<button class="ssx-h2h-pick'+(i===0?' on':'')+'" data-peer="'+p.ticker+'">'+p.ticker+'</button>';}).join('');
+  const h2hHtml='<div class="ssx-card"><div class="ssx-card-h">Head-to-head <span style="font-size:11px;color:var(--muted);font-family:Manrope">· AI comparison</span></div>'+
+    '<div class="ssx-h2h-picks"><span>'+ticker+' vs</span>'+picks+'</div>'+
+    '<div id="ssx-h2h-body"><div class="dd-loading">Comparing…</div></div></div>';
+
+  panel.innerHTML=tableHtml+h2hHtml;
+  const picksEl=panel.querySelector('.ssx-h2h-picks');
+  if(picksEl) picksEl.onclick=function(e){const b=e.target.closest('.ssx-h2h-pick'); if(!b) return;
+    picksEl.querySelectorAll('.ssx-h2h-pick').forEach(function(x){x.classList.toggle('on',x===b);});
+    ssxRenderH2H(ticker, b.dataset.peer);
+  };
+  ssxRenderH2H(ticker, peers[0].ticker);
+}
+
+/* ── AI head-to-head comparison — two cached compare-cards side by side ── */
+const _ssxCardCache={};
+function _ssxFetchCard(ticker){
+  ticker=String(ticker).toUpperCase();
+  if(_ssxCardCache[ticker]) return Promise.resolve(_ssxCardCache[ticker]);
+  return new Promise(function(resolve){
+    let tries=0;
+    const poll=function(){
+      tries++;
+      fetch('/api/compare-card/'+encodeURIComponent(ticker)).then(function(r){return r.json();}).then(function(d){
+        if(d.status==='ready'){ _ssxCardCache[ticker]=d; resolve(d); return; }
+        if(d.status==='unavailable'){ resolve(d); return; }
+        if(tries<20) setTimeout(poll,3000); else resolve(d);
+      }).catch(function(){ resolve(null); });
+    };
+    poll();
+  });
+}
+function _ssxMcapDisp(t){
+  if(typeof t.market_cap==='string' && /[TBM]/i.test(t.market_cap)) return (t.market_cap[0]==='$'?'':'$')+t.market_cap;
+  const n=_ssxNum(t.market_cap); return n!=null?_ssxMoney(n):null;
+}
+let _ssxH2HSeq=0;
+async function ssxRenderH2H(selfT, peerT){
+  const body=document.getElementById('ssx-h2h-body'); if(!body) return;
+  const seq=++_ssxH2HSeq;
+  body.innerHTML='<div class="dd-loading">🔬 Building AI comparison — '+selfT+' vs '+peerT+'… (~15–30s)</div>';
+  const A=_allTickerData[selfT]||{}, B=_allTickerData[peerT]||{};
+  const res=await Promise.all([_ssxFetchCard(selfT), _ssxFetchCard(peerT)]);
+  if(seq!==_ssxH2HSeq) return;  // a newer selection superseded this render
+  const ca=res[0], cb=res[1];
+  const cardA=(ca&&ca.card)||{}, cardB=(cb&&cb.card)||{};
+  const anyA=Object.keys(cardA).some(function(k){return cardA[k];});
+  const anyB=Object.keys(cardB).some(function(k){return cardB[k];});
+  if(!anyA && !anyB){
+    const detail=(ca&&ca.detail)||(cb&&cb.detail);
+    body.innerHTML='<div class="dd-loading">'+(detail||'Still generating the comparison — reopen this tab in ~20s.')+'</div>'; return;
+  }
+  const D=function(v){return (v==null||v==='')?'—':v;};
+  const row=function(label,va,vb){return '<tr><th>'+label+'</th><td class="self">'+D(va)+'</td><td>'+D(vb)+'</td></tr>';};
+  const scoreA=Math.round(_ssxNum(A.smart_score)||_ssxNum(A.pop_score)||0), scoreB=Math.round(_ssxNum(B.smart_score)||_ssxNum(B.pop_score)||0);
+  const gA=(A.grade||'').toUpperCase(), gB=(B.grade||'').toUpperCase();
+  const rowsHtml=
+    row('Operational stage', cardA.operational_stage, cardB.operational_stage)+
+    row('Latest revenue', cardA.revenue_latest, cardB.revenue_latest)+
+    row('Contract backlog', cardA.contract_backlog, cardB.contract_backlog)+
+    row('Execution risk', cardA.execution_risk, cardB.execution_risk)+
+    row('Path to profitability', cardA.path_to_profitability, cardB.path_to_profitability)+
+    row('Market cap', _ssxMcapDisp(A), _ssxMcapDisp(B))+
+    row('Alpha Score', (scoreA||'—')+(gA?' · '+gA:''), (scoreB||'—')+(gB?' · '+gB:''));
+  let allSrc=[]; [ca,cb].forEach(function(c){ if(c&&c.sources&&c.sources.length) allSrc=allSrc.concat(c.sources); });
+  const seen={}; const srcList=allSrc.filter(function(s){ if(!s||!s.url||seen[s.url]) return false; seen[s.url]=1; return true; });
+  let srcHtml='';
+  if(srcList.length){ srcHtml='<div class="dd-sources"><div class="dd-sources-h">Sources</div>'+srcList.slice(0,12).map(function(s,i){return '<a href="'+s.url+'" target="_blank" rel="noopener">['+(i+1)+'] '+(s.title||s.url)+'</a>';}).join('')+'</div>'; }
+  const regen=(ca&&ca.regenerating)||(cb&&cb.regenerating)||!anyA||!anyB;
+  body.innerHTML=
+    '<table class="ssx-h2h"><thead><tr><th></th>'+
+      '<th class="self">'+selfT+'<span class="ssx-h2h-name">'+(A.name||'')+'</span></th>'+
+      '<th>'+peerT+'<span class="ssx-h2h-name">'+(B.name||'')+'</span></th></tr></thead>'+
+    '<tbody>'+rowsHtml+'</tbody></table>'+srcHtml+
+    (regen?'<div class="ssx-h2h-note">Refreshing in the background — reopen shortly for the latest.</div>':'');
 }
 
 async function ssxFinancials(ticker){
