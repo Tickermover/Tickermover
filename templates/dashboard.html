@@ -1304,12 +1304,12 @@ body.v2 .tabs{display:none!important}
 /* Branded gradient frame — thin border, ticker-tape + inset card
    visually merge into ONE rounded rectangle. */
 body.v2{
+  /* Calm dark frame (was a loud gold/red gradient). Faint gold + sapphire
+     hints in the corners keep it on-brand without shouting. */
   background:
-    radial-gradient(ellipse 60% 80% at 0% 0%,    rgba(245,166,35,.95) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 80% at 100% 0%,  rgba(245,166,35,.95) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 80% at 100% 100%,rgba(255,90,95,.95) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 80% at 0% 100%,  rgba(255,199,95,.95) 0%, transparent 60%),
-    linear-gradient(135deg,#F5A623,#FFC75F);
+    radial-gradient(60% 55% at 0% 0%,    rgba(245,166,35,.10), transparent 60%),
+    radial-gradient(55% 55% at 100% 100%, rgba(91,134,240,.08), transparent 60%),
+    #060708;
   background-attachment:fixed;
   padding:12px;
   height:100vh;
@@ -2540,8 +2540,11 @@ body[data-active-profile="conservative"] .fund-row:not([data-profiles~="conserva
   display:flex;align-items:center;justify-content:space-between;gap:8px;
 }
 .v2-focus-label{
+  display:inline-flex;align-items:center;gap:8px;
   font-size:10px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;
 }
+/* v16 eyebrow: a glowing category dot instead of an emoji */
+.v2-focus-label::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor;box-shadow:0 0 8px -1px currentColor;flex-shrink:0}
 /* Default label color — violet/indigo as the SECONDARY brand accent
    (kept distinct from primary green on tickers/scores/CTAs). Creates
    visual rhythm: green = brand identity, violet = meta-labels. */
@@ -2565,6 +2568,13 @@ body[data-active-profile="conservative"] .fund-row:not([data-profiles~="conserva
    little grade chip and number colour match — done at render time. */
 .v2-focus-pos .v2-focus-label{color:#5BD17A}
 .v2-focus-neg .v2-focus-label{color:#FF6B70}
+/* per-category eyebrow colour (v16): gold breakout · green setup ·
+   blue earnings · red watch — overrides the tone colour above. */
+.v2-focus-kind-breakout .v2-focus-label{color:#FFC75F}
+.v2-focus-kind-setup .v2-focus-label{color:#5BD17A}
+.v2-focus-kind-upgrade .v2-focus-label{color:#5BD17A}
+.v2-focus-kind-earnings .v2-focus-label{color:#5B86F0}
+.v2-focus-kind-flag .v2-focus-label{color:#FF6B70}
 .v2-focus-tic-row{display:flex;align-items:center;gap:8px}
 .v2-focus-tic-body{flex:1;min-width:0}
 .v2-focus-tic{font-size:15px;font-weight:900;color:#fff;letter-spacing:.01em}
@@ -4363,7 +4373,13 @@ html.v2-dark .v2-theme-btn{color:#f1f5f9}
 html.v2-dark .v2-theme-btn:hover{background:#1f2937}
 html.v2-dark body.v2 .main{background:#0A0A0A}
 html.v2-dark .v2ov-card,html.v2-dark .v2ov-kpi,html.v2-dark .v2ov-trend-card{
-  background:#0A0A0A;border-color:#1f2937;
+  /* warm translucent glass (matches the Today's Focus cards / v16) */
+  background:
+    radial-gradient(130% 90% at 0% 0%, rgba(255,214,158,.05), transparent 55%),
+    linear-gradient(150deg, rgba(54,46,40,.36), rgba(20,20,25,.5));
+  backdrop-filter:blur(14px) saturate(1.1);-webkit-backdrop-filter:blur(14px) saturate(1.1);
+  border-color:rgba(255,255,255,.09);border-radius:16px;
+  box-shadow:0 16px 38px -26px rgba(0,0,0,.8), inset 0 1px 0 rgba(255,255,255,.05);
 }
 html.v2-dark .v2ov-card-head,html.v2-dark .v2ov-title,
 html.v2-dark .v2ov-kpi-name,html.v2-dark .v2ov-kpi-price,
@@ -5694,7 +5710,7 @@ function v2RenderTodaysFocus(tickers){
     return '<div class="v2-focus-item v2-focus-' + tone + ' v2-focus-kind-' + kind + '" ' +
            'onclick="openStockModal(\'' + t.ticker + '\')">' +
       '<div class="v2-focus-label-row">' +
-        '<div class="v2-focus-label">' + label + '</div>' +
+        '<div class="v2-focus-label">' + String(label).replace(/^[^A-Za-z]+/, '') + '</div>' +
         scoreBadge +
       '</div>' +
       '<div class="v2-focus-tic-row">' +
