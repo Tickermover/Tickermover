@@ -1311,7 +1311,7 @@ body.v2{
     radial-gradient(55% 55% at 100% 100%, rgba(91,134,240,.08), transparent 60%),
     #060708;
   background-attachment:fixed;
-  padding:12px;
+  padding:0;                 /* full-bleed page (was a 12px inset frame) */
   height:100vh;
   display:flex;
   flex-direction:column;
@@ -1319,14 +1319,12 @@ body.v2{
   box-sizing:border-box;
   overflow:hidden;
 }
-/* SINGLE outer shell owns the rounding + shadow, so the curved
-   edge is one continuous arc instead of two pieces trying to align. */
+/* Full-scale: the shell fills the viewport edge-to-edge (no rounding/frame). */
 body.v2 .v2-shell{
   flex:1;min-height:0;
   display:flex;flex-direction:column;
-  border-radius:18px;
+  border-radius:0;
   overflow:hidden;
-  box-shadow:0 16px 40px rgba(10,10,10,.25),0 6px 16px rgba(10,10,10,.10);
 }
 /* Inside the shell, ticker tape and app card are perfect rectangles —
    the shell clips them to its rounded shape via overflow:hidden. */
@@ -2510,11 +2508,15 @@ body[data-active-profile="conservative"] .fund-row:not([data-profiles~="conserva
   font-family:'Fraunces',Georgia,serif;font-weight:500;
   font-size:22px;color:#fff;letter-spacing:-.02em;line-height:1.15;
 }
+/* gold-italic emphasis on "N standout setups" (v16) */
+.v2-focus-title-em{font-style:italic;font-weight:600;
+  background:linear-gradient(135deg,#FFE9B0,#FFC75F 45%,#F5A623);
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
 .v2-focus-sub{
   font-size:12px;color:#9AA3B5;margin-top:3px;font-weight:600;
 }
 .v2-focus-grid{
-  display:grid;grid-template-columns:repeat(3,1fr);gap:10px;
+  display:grid;grid-template-columns:repeat(3,1fr);gap:18px;
 }
 /* Warm translucent glass card on dark (Channel-Analytics style). */
 .v2-focus-item{
@@ -2527,15 +2529,19 @@ body[data-active-profile="conservative"] .fund-row:not([data-profiles~="conserva
   transition:transform .16s, box-shadow .2s, border-color .2s;
   display:flex;flex-direction:column;gap:9px;
 }
+/* hover/select pop = the card's CATEGORY colour (not blue) — v16 */
 .v2-focus-item::after{content:"";position:absolute;top:0;left:16%;right:16%;height:1px;
-  background:linear-gradient(90deg,transparent,#5B86F0,transparent);opacity:0;transition:opacity .2s;pointer-events:none}
+  background:linear-gradient(90deg,transparent,rgba(var(--cs,245 166 35),.9),transparent);opacity:0;transition:opacity .2s;pointer-events:none}
 .v2-focus-item:hover{
-  transform:translateY(-3px);border-color:rgba(255,255,255,.20);
-  box-shadow:0 22px 46px -24px rgba(0,0,0,.9), 0 0 28px -16px rgba(245,166,35,.30);
+  transform:translateY(-3px);border-color:rgba(var(--cs,245 166 35),.5);
+  box-shadow:0 22px 46px -24px rgba(0,0,0,.9), 0 0 30px -16px rgba(var(--cs,245 166 35),.5);
 }
-.v2-focus-item:hover::after{opacity:.7}
-.v2-focus-pos:hover{border-color:rgba(255,255,255,.20)}
-.v2-focus-neg:hover{border-color:rgba(255,255,255,.20)}
+.v2-focus-item:hover::after{opacity:.85}
+.v2-focus-pos:hover,.v2-focus-neg:hover{border-color:rgba(var(--cs,245 166 35),.5)}
+/* per-category colour var (gold breakout · green setup · blue earnings · red watch) */
+.v2-focus-kind-breakout{--cs:245,166,35} .v2-focus-kind-setup{--cs:91,209,122}
+.v2-focus-kind-upgrade{--cs:91,209,122} .v2-focus-kind-earnings{--cs:91,134,240}
+.v2-focus-kind-flag{--cs:255,107,112}
 .v2-focus-label-row{
   display:flex;align-items:center;justify-content:space-between;gap:8px;
 }
@@ -2577,10 +2583,10 @@ body[data-active-profile="conservative"] .fund-row:not([data-profiles~="conserva
 .v2-focus-kind-flag .v2-focus-label{color:#FF6B70}
 .v2-focus-tic-row{display:flex;align-items:center;gap:8px}
 .v2-focus-tic-body{flex:1;min-width:0}
-.v2-focus-tic{font-size:15px;font-weight:900;color:#fff;letter-spacing:.01em}
-.v2-focus-name{font-size:11px;color:#9AA3B5;margin-top:1px;
+.v2-focus-tic{font-size:17px;font-weight:900;color:#fff;letter-spacing:-.01em}
+.v2-focus-name{font-size:11.5px;color:#9AA3B5;margin-top:1px;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.v2-focus-price{font-size:13px;font-weight:800;color:#fff;text-align:right;
+.v2-focus-price{font-size:15px;font-weight:800;color:#fff;text-align:right;
   font-variant-numeric:tabular-nums;flex-shrink:0}
 .v2-focus-price .up{color:#5BD17A;font-weight:800;font-size:11px;margin-left:3px}
 .v2-focus-price .dn{color:#FF6B70;font-weight:800;font-size:11px;margin-left:3px}
@@ -5740,7 +5746,7 @@ function v2RenderTodaysFocus(tickers){
   return '' +
     '<div class="v2-focus-card">' +
       '<div class="v2-focus-head">' +
-        '<div class="v2-focus-title">🎯 Today\'s focus · ' + picks.length + ' standout setups</div>' +
+        '<div class="v2-focus-title">🎯 Today\'s focus · <span class="v2-focus-title-em">' + picks.length + ' standout setups</span></div>' +
         '<div class="v2-focus-sub">Stocks worth your attention right now — tap any card for the full thesis</div>' +
       '</div>' +
       '<div class="v2-focus-grid">' + cards + '</div>' +
