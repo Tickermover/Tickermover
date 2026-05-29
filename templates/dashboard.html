@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="v2-dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -14,8 +14,8 @@
      appearing in the browser menu, and didn't want forgot-password
      emails opening inside the installed PWA shell instead of a real
      browser tab. No manifest, no service worker, no Add-to-Home-Screen. -->
-<meta name="theme-color" content="#15803d">
-<meta name="msapplication-TileColor" content="#15803d">
+<meta name="theme-color" content="#0A0A0A">
+<meta name="msapplication-TileColor" content="#0A0A0A">
 <meta name="format-detection" content="telephone=no">
 <link rel="icon" type="image/png" sizes="32x32" href="/static/icons/favicon-32.png">
 <link rel="icon" type="image/png" sizes="192x192" href="/static/icons/icon-192.png">
@@ -56,7 +56,7 @@
   html.auth-gating body > *:not(#auth-modal):not(script):not(style){
     visibility:hidden !important;
   }
-  html.auth-gating{background:#fafbfc;overflow:hidden}
+  html.auth-gating{background:#0A0A0A;overflow:hidden}
 </style>
 
 <!-- PWA removed: unregister any service worker that older versions of the
@@ -1382,14 +1382,17 @@ body.v2 .ticker-chip .px{color:#cbd5e1!important}
 /* ── Sidebar (always dark, fills the fixed-height .v2-app)
    No scrollbar — menu is fixed, items fit within viewport. */
 .v2-sidebar{
-  background:#0A0A0A;
-  border-right:1px solid #1f2937;
+  /* Raised 3D panel — lighter than the near-black content, beveled edge
+     + drop shadow so the rail reads as elevated, not flat black. */
+  background:linear-gradient(165deg,#1F2129,#16171F 58%,#101117);
+  border-right:1px solid rgba(0,0,0,.55);
+  box-shadow:inset 1.5px 1.5px 0 rgba(255,255,255,.07), inset -1px 0 0 rgba(0,0,0,.5), 16px 0 38px -18px rgba(0,0,0,.9);
   /* No scroll — sidebar items must fit within viewport height. */
   padding:18px 14px 22px;
   display:flex;flex-direction:column;
   height:100%;
   overflow:hidden;
-  position:relative;
+  position:relative;z-index:2;
   color:#e2e8f0;
 }
 .v2-sidebar::before{
@@ -1550,6 +1553,14 @@ body.v2 .ticker-chip .px{color:#cbd5e1!important}
 .v2-search .kbd{position:absolute;right:10px;top:50%;transform:translateY(-50%);
   background:#fff;border:1px solid #e5e7eb;border-radius:5px;padding:2px 6px;
   font-size:11px;font-weight:600;color:#64748b;font-family:'JetBrains Mono',monospace}
+/* Dark-theme search bar (the v2-dark theme only styled the legacy <input>,
+   not this click-trigger container, so it was left light). */
+html.v2-dark .v2-search{background:#15161D;border-color:rgba(255,255,255,.08)}
+html.v2-dark .v2-search:hover{background:#1B1D26}
+html.v2-dark .v2-search:focus-visible{border-color:#5B86F0;background:#15161D}
+html.v2-dark .v2-search-ph{color:#8A93A6}
+html.v2-dark .v2-search .ico{color:#9AA3B5}
+html.v2-dark .v2-search .kbd{background:#1B1D26;border-color:rgba(255,255,255,.1);color:#9AA3B5}
 .v2-tb-actions{margin-left:auto;display:flex;align-items:center;gap:8px}
 
 /* Repurpose the existing #regime-pill INSIDE the new top bar */
@@ -2487,46 +2498,44 @@ body[data-active-profile="conservative"] .fund-row:not([data-profiles~="conserva
 @media (max-width:760px){.v2-tc-svg{grid-row:2}}
 
 /* ───── Today's Focus — actionable opportunity cards ───── */
+/* Dark — section sits on the dark canvas (no white container). */
 .v2-focus-card{
   position:relative;
-  margin-bottom:16px;padding:18px 20px;border-radius:14px;
-  background:linear-gradient(135deg,#ffffff 0%,#f8fafc 100%);
-  border:1px solid #e2e8f0;overflow:hidden;
+  margin-bottom:16px;padding:2px;border-radius:14px;
+  background:transparent;border:1px solid transparent;overflow:visible;
 }
-.v2-focus-card::before{
-  content:'';position:absolute;left:0;top:0;bottom:0;width:4px;
-  background:linear-gradient(180deg,#F5A623 0%,#FFC75F 50%,#FFC75F 100%);
-}
-.v2-focus-head{margin-bottom:14px;padding-left:6px}
-/* Editorial serif title — matches the Fraunces treatment from the
-   landing page and from /report/{ticker}. Same brand voice everywhere. */
+.v2-focus-card::before{content:none}
+.v2-focus-head{margin-bottom:14px;padding-left:2px}
 .v2-focus-title{
   font-family:'Fraunces',Georgia,serif;font-weight:500;
-  font-size:22px;color:#0A0A0A;letter-spacing:-.02em;line-height:1.15;
+  font-size:22px;color:#fff;letter-spacing:-.02em;line-height:1.15;
 }
 .v2-focus-sub{
-  font-size:12px;color:#64748b;margin-top:3px;font-weight:600;
+  font-size:12px;color:#9AA3B5;margin-top:3px;font-weight:600;
 }
 .v2-focus-grid{
   display:grid;grid-template-columns:repeat(3,1fr);gap:10px;
 }
+/* Warm translucent glass card on dark (Channel-Analytics style). */
 .v2-focus-item{
-  position:relative;background:#fff;border:1px solid rgba(51,86,158,.26);border-radius:14px;
+  position:relative;
+  background:radial-gradient(130% 90% at 0% 0%, rgba(255,214,158,.07), transparent 55%), linear-gradient(150deg, rgba(56,48,41,.42), rgba(22,22,27,.52));
+  backdrop-filter:blur(16px) saturate(1.1);-webkit-backdrop-filter:blur(16px) saturate(1.1);
+  border:1px solid rgba(255,255,255,.10);border-radius:16px;
   padding:14px 16px;cursor:pointer;overflow:hidden;
-  box-shadow:0 1px 2px rgba(20,25,45,.05), 0 10px 26px -22px rgba(20,25,45,.30);
+  box-shadow:0 16px 38px -24px rgba(0,0,0,.85), inset 0 1px 0 rgba(255,255,255,.07);
   transition:transform .16s, box-shadow .2s, border-color .2s;
   display:flex;flex-direction:column;gap:9px;
 }
-/* sapphire = interactive: a thin top accent line reveals on hover */
 .v2-focus-item::after{content:"";position:absolute;top:0;left:16%;right:16%;height:1px;
-  background:linear-gradient(90deg,transparent,#33569E,transparent);opacity:0;transition:opacity .2s;pointer-events:none}
+  background:linear-gradient(90deg,transparent,#5B86F0,transparent);opacity:0;transition:opacity .2s;pointer-events:none}
 .v2-focus-item:hover{
-  transform:translateY(-3px);border-color:rgba(51,86,158,.52);
-  box-shadow:0 2px 5px rgba(20,25,45,.07), 0 16px 40px -26px rgba(51,86,158,.40);
+  transform:translateY(-3px);border-color:rgba(255,255,255,.20);
+  box-shadow:0 22px 46px -24px rgba(0,0,0,.9), 0 0 28px -16px rgba(245,166,35,.30);
 }
 .v2-focus-item:hover::after{opacity:.7}
-.v2-focus-pos:hover{border-color:rgba(51,86,158,.52)}
-.v2-focus-neg:hover{border-color:rgba(51,86,158,.52)}
+.v2-focus-pos:hover{border-color:rgba(255,255,255,.20)}
+.v2-focus-neg:hover{border-color:rgba(255,255,255,.20)}
 .v2-focus-label-row{
   display:flex;align-items:center;justify-content:space-between;gap:8px;
 }
@@ -2536,14 +2545,14 @@ body[data-active-profile="conservative"] .fund-row:not([data-profiles~="conserva
 /* Default label color — violet/indigo as the SECONDARY brand accent
    (kept distinct from primary green on tickers/scores/CTAs). Creates
    visual rhythm: green = brand identity, violet = meta-labels. */
-.v2-focus-label{color:#B9770F}
+.v2-focus-label{color:#FFC75F}
 /* Lighter score badge — white surface with a thin border, colour
    carried by the grade chip + the score number. No more heavy indigo
    block that was overwhelming the card header. */
 .v2-focus-score{
   display:inline-flex;align-items:center;gap:5px;
-  font-size:13px;font-weight:900;color:#A66E0C;
-  background:rgba(201,138,18,.10);border:1px solid rgba(201,138,18,.28);
+  font-size:13px;font-weight:900;color:#FFC75F;
+  background:rgba(245,166,35,.14);border:1px solid rgba(245,166,35,.32);
   padding:2px 8px 2px 4px;border-radius:8px;line-height:1.35;
   font-variant-numeric:tabular-nums;letter-spacing:.02em;
 }
@@ -2554,24 +2563,24 @@ body[data-active-profile="conservative"] .fund-row:not([data-profiles~="conserva
 }
 /* Grade colour set on the parent .v2-focus-score via inline style so the
    little grade chip and number colour match — done at render time. */
-.v2-focus-pos .v2-focus-label{color:#15803d}
-.v2-focus-neg .v2-focus-label{color:#b91c1c}
+.v2-focus-pos .v2-focus-label{color:#5BD17A}
+.v2-focus-neg .v2-focus-label{color:#FF6B70}
 .v2-focus-tic-row{display:flex;align-items:center;gap:8px}
 .v2-focus-tic-body{flex:1;min-width:0}
-.v2-focus-tic{font-size:15px;font-weight:900;color:#1A1F2B;letter-spacing:.01em}
-.v2-focus-name{font-size:11px;color:#64748b;margin-top:1px;
+.v2-focus-tic{font-size:15px;font-weight:900;color:#fff;letter-spacing:.01em}
+.v2-focus-name{font-size:11px;color:#9AA3B5;margin-top:1px;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.v2-focus-price{font-size:13px;font-weight:800;color:#0f172a;text-align:right;
+.v2-focus-price{font-size:13px;font-weight:800;color:#fff;text-align:right;
   font-variant-numeric:tabular-nums;flex-shrink:0}
-.v2-focus-price .up{color:#16783B;font-weight:800;font-size:11px;margin-left:3px}
-.v2-focus-price .dn{color:#C0392B;font-weight:800;font-size:11px;margin-left:3px}
+.v2-focus-price .up{color:#5BD17A;font-weight:800;font-size:11px;margin-left:3px}
+.v2-focus-price .dn{color:#FF6B70;font-weight:800;font-size:11px;margin-left:3px}
 .v2-focus-reason{
-  font-size:11.5px;color:#7A5A16;line-height:1.45;
-  background:rgba(201,138,18,.09);border:1px solid rgba(201,138,18,.22);border-left:3px solid rgba(201,138,18,.5);
+  font-size:11.5px;color:#C7CDDA;line-height:1.45;
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-left:3px solid rgba(245,166,35,.55);
   padding:7px 10px;border-radius:9px;
 }
-.v2-focus-pos .v2-focus-reason{background:rgba(201,138,18,.10);border-color:rgba(201,138,18,.26);border-left-color:#C98A12;color:#6B5418;font-weight:600}
-.v2-focus-neg .v2-focus-reason{background:rgba(192,57,43,.08);border-color:rgba(192,57,43,.24);border-left-color:#C0392B;color:#9A3328;font-weight:600}
+.v2-focus-pos .v2-focus-reason{background:rgba(245,166,35,.08);border-color:rgba(245,166,35,.20);border-left-color:#F5A623;color:#E6CFA0;font-weight:600}
+.v2-focus-neg .v2-focus-reason{background:rgba(255,107,112,.08);border-color:rgba(255,107,112,.22);border-left-color:#FF6B70;color:#FFB3B5;font-weight:600}
 
 /* "Read full report →" CTA — appears below the reason on each focus card.
    Quiet at rest so it doesn't compete with the card's primary content,
@@ -2582,12 +2591,12 @@ body[data-active-profile="conservative"] .fund-row:not([data-profiles~="conserva
   padding:6px 12px;border-radius:8px;
   font-family:'JetBrains Mono','Inter',monospace;
   font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
-  color:#64748b;background:transparent;border:1px solid #e2e8f0;
+  color:#8A93A6;background:transparent;border:1px solid rgba(255,255,255,.12);
   text-decoration:none;
   transition:color .15s, background .15s, border-color .15s, transform .15s;
 }
 .v2-focus-cta:hover{
-  color:#33569E;background:rgba(51,86,158,.08);border-color:rgba(51,86,158,.30);transform:translateX(2px);
+  color:#9BBBFF;background:rgba(91,134,240,.12);border-color:rgba(91,134,240,.4);transform:translateX(2px);
 }
 .v2-focus-item{display:flex;flex-direction:column}
 
@@ -7506,9 +7515,10 @@ function v2ToggleTheme(){
   v2ApplyTheme(document.documentElement.classList.contains('v2-dark') ? 'light' : 'dark');
 }
 (function(){
-  let saved = 'light';
-  try { saved = localStorage.getItem('ah-v2-theme') || 'light'; } catch(e){}
-  v2ApplyTheme(saved);
+  // Brand-aligned: dashboard is dark-only (the toggle was retired). Force
+  // dark regardless of any stale saved preference. <html> already carries
+  // class="v2-dark" to avoid a flash.
+  v2ApplyTheme('dark');
 })();
 
 /* ── Hook into the existing renderHotList() so the overview rerenders
