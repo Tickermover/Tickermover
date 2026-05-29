@@ -505,6 +505,33 @@ tr:hover td{background:rgba(245,166,35,.06)}
 .fd-metric .v.pos{color:var(--grn)}.fd-metric .v.neg{color:var(--red)}
 .fd-summary{font-size:11.5px;color:#1f2937;line-height:1.55;margin:8px 0;padding:8px;
   background:rgba(245,166,35,.08);border-radius:8px;border-left:3px solid var(--acc)}
+/* ── AI Deep Dive (web-grounded research brief in the stock modal) ── */
+.fd-deepdive{margin-top:16px;border:1px solid #e2e8f0;border-radius:12px;padding:14px 16px;
+  background:linear-gradient(135deg,#FFFDF8 0%,#fff 60%)}
+.dd-head{font-family:'Fraunces',Georgia,serif;font-size:16px;font-weight:600;color:#0A0A0A}
+.dd-sub{font-family:'Manrope',sans-serif;font-size:11px;color:#64748b;font-weight:500}
+.dd-btn{margin-top:10px;padding:9px 16px;border-radius:9px;border:1px solid #FFE9B0;cursor:pointer;
+  background:linear-gradient(135deg,#FFE9B0,#FFC75F 60%,#F5A623);color:#3a2a05;font-weight:800;font-size:12.5px;font-family:'Manrope',sans-serif;
+  box-shadow:0 6px 16px -8px rgba(245,166,35,.5);transition:transform .15s,box-shadow .15s}
+.dd-btn:hover{transform:translateY(-1px);box-shadow:0 10px 24px -8px rgba(245,166,35,.6)}
+.dd-loading{font-size:12.5px;color:#64748b;padding:8px 0;line-height:1.5}
+.dd-content{font-size:12.5px;line-height:1.6;color:#334155;margin-top:8px}
+.dd-content h2{font-family:'Fraunces',Georgia,serif;font-size:15px;color:#0A0A0A;margin:14px 0 6px;font-weight:600}
+.dd-content h3{font-size:13px;color:#0f172a;margin:10px 0 4px;font-weight:800}
+.dd-content p{margin:7px 0}
+.dd-content strong{color:#0f172a;font-weight:800}
+.dd-content a{color:#2F5FD0;text-decoration:none}
+.dd-content a:hover{text-decoration:underline}
+.dd-content ul{margin:6px 0 6px 18px}.dd-content li{margin:3px 0}
+.dd-content table{width:100%;border-collapse:collapse;margin:10px 0;font-size:11.5px}
+.dd-content th,.dd-content td{border:1px solid #e2e8f0;padding:6px 8px;text-align:left;vertical-align:top}
+.dd-content th{background:#f8fafc;font-weight:800;color:#0f172a}
+.dd-content em{color:#94a3b8;font-style:italic}
+.dd-sources{margin-top:12px;border-top:1px solid #f1f5f9;padding-top:10px;display:flex;flex-direction:column;gap:3px}
+.dd-sources-h{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;color:#94a3b8;margin-bottom:2px}
+.dd-sources a{font-size:11px;color:#2F5FD0;text-decoration:none}
+.dd-sources a:hover{text-decoration:underline}
+
 .fd-links{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
 .fd-link{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:700;padding:6px 11px;border-radius:8px;
   background:#fff;border:1.5px solid #e2e8f0;color:#0f172a;text-decoration:none;transition:all .15s;
@@ -10629,6 +10656,70 @@ function renderModalEarningsCard(ticker, t) {
     });
 }
 
+/* ── AI Deep Dive — fetch the cached/grounded brief and render it ────────
+   Lazy: only runs when the user clicks "Generate". The endpoint serves a
+   cached brief instantly or generates one in the background (we poll). */
+let _markedPromise = null;
+function _ensureMarked(){
+  if (window.marked) return Promise.resolve(window.marked);
+  if (_markedPromise) return _markedPromise;
+  _markedPromise = new Promise((res) => {
+    const s = document.createElement('script');
+    s.src = 'https://cdn.jsdelivr.net/npm/marked@12/marked.min.js';
+    s.onload = () => res(window.marked || null);
+    s.onerror = () => res(null);
+    document.head.appendChild(s);
+  });
+  return _markedPromise;
+}
+function _basicMd(md){
+  // Fallback renderer (no tables) if the marked CDN is blocked.
+  let h = md
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/^### (.*)$/gm,'<h3>$1</h3>')
+    .replace(/^## (.*)$/gm,'<h2>$1</h2>')
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\[(.+?)\]\((https?:[^)]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>')
+    .replace(/^[*-] (.*)$/gm,'<li>$1</li>');
+  h = h.replace(/(<li>[\s\S]*?<\/li>)/g, m => '<ul>'+m+'</ul>');
+  return h.split(/\n{2,}/).map(p => /^\s*<(h\d|ul|li)/.test(p) ? p : '<p>'+p.replace(/\n/g,'<br>')+'</p>').join('');
+}
+async function loadDeepDive(ticker){
+  const body = document.getElementById('dd-body-'+ticker);
+  if (!body) return;
+  body.innerHTML = '<div class="dd-loading">🔎 Researching '+ticker+' — searching the web &amp; writing the brief… (~15–30s)</div>';
+  let tries = 0;
+  const poll = async () => {
+    tries++;
+    try {
+      const r = await fetch('/api/research/'+encodeURIComponent(ticker));
+      const d = await r.json();
+      if (d.status === 'ready') { await renderDeepDive(ticker, d); return; }
+      if (d.status === 'unavailable') {
+        body.innerHTML = '<div class="dd-loading">'+(d.detail||'Deep Dive isn’t enabled.')+'</div>'; return;
+      }
+      if (tries < 30) setTimeout(poll, 3000);
+      else body.innerHTML = '<div class="dd-loading">Still working — reopen in a moment to see the brief.</div>';
+    } catch(e){ body.innerHTML = '<div class="dd-loading">Couldn’t load the brief. Try again.</div>'; }
+  };
+  poll();
+}
+async function renderDeepDive(ticker, d){
+  const body = document.getElementById('dd-body-'+ticker);
+  if (!body) return;
+  const marked = await _ensureMarked();
+  let html;
+  try { html = (marked && marked.parse) ? marked.parse(d.markdown || '') : _basicMd(d.markdown || ''); }
+  catch(e){ html = _basicMd(d.markdown || ''); }
+  let src = '';
+  if (d.sources && d.sources.length){
+    src = '<div class="dd-sources"><div class="dd-sources-h">Sources</div>' +
+      d.sources.map(s => '<a href="'+s.url+'" target="_blank" rel="noopener">['+s.n+'] '+(s.title||s.url)+'</a>').join('') +
+      '</div>';
+  }
+  body.innerHTML = '<div class="dd-content">'+html+'</div>'+src;
+}
+
 function openStockModal(ticker) {
   const t = _allTickerData[ticker];
   if (!t) return;
@@ -10868,6 +10959,14 @@ function openStockModal(ticker) {
       <div id="news-body-${t.ticker}" style="font-size:11.5px;color:#475569">Loading…</div>
     </div>
     </div></details>
+
+    <!-- AI Deep Dive — web-grounded research brief (lazy, click-to-generate) -->
+    <div class="fd-deepdive">
+      <div class="dd-head">🔬 AI Deep Dive <span class="dd-sub">— live catalysts &amp; thesis, with sources</span></div>
+      <div class="dd-body" id="dd-body-${t.ticker}">
+        <button class="dd-btn" onclick="loadDeepDive('${t.ticker}')">Generate AI Deep Dive →</button>
+      </div>
+    </div>
 
     <!-- Tear sheet CTA — compact (May 23): chips removed, two direct
          actions (Download PDF / Copy link). Open-tear-sheet button kept

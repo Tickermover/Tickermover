@@ -2923,6 +2923,71 @@ async def api_thesis(symbol: str):
         raise HTTPException(status_code=500, detail="Thesis generation failed")
 
 
+# ── AI Deep-Dive research (cached; web-grounded via Anthropic) ─────────────
+_research_generating: set = set()
+
+
+async def _run_research_job(sym: str, target: dict | None):
+    import research_gen
+    from research_store import store as _rstore
+    try:
+        out = await research_gen.generate_research(sym, target)
+        _rstore.save(sym, out)
+    except Exception as exc:
+        logger.error(f"Deep-Dive research generation failed for {sym}: {exc}")
+    finally:
+        _research_generating.discard(sym)
+
+
+@app.get("/api/research/{ticker}")
+async def api_research(ticker: str, force: bool = False):
+    """Per-stock AI Deep-Dive brief. Served from cache and regenerated in the
+    background when missing/stale (so page-load is never blocked). The brief is
+    web-grounded with citations; the ticker's own live data is the ground truth."""
+    import asyncio
+    import research_gen
+    from research_store import store as _rstore
+
+    sym = ticker.upper()
+    doc = _rstore.get(sym)
+
+    def _payload(d: dict, **extra) -> dict:
+        out = {
+            "ticker":       sym,
+            "status":       "ready",
+            "markdown":     d.get("markdown", ""),
+            "sources":      d.get("sources", []) or [],
+            "model":        d.get("model", ""),
+            "generated_at": d.get("generated_at") or d.get("generated_epoch"),
+        }
+        out.update(extra)
+        return out
+
+    fresh = bool(doc) and doc.get("status") == "ready" and not _rstore.is_stale(doc) and not force
+    if fresh:
+        return JSONResponse(_payload(doc))
+
+    if not research_gen.available():
+        if doc:
+            return JSONResponse(_payload(doc, stale=True))
+        return JSONResponse({"ticker": sym, "status": "unavailable",
+                             "detail": "AI Deep-Dive is not enabled (set ANTHROPIC_API_KEY)."})
+
+    # Kick off a single background generation per ticker.
+    if sym not in _research_generating:
+        _research_generating.add(sym)
+        target = next((t for t in _universe_data if t.get("ticker") == sym), None)
+        try:
+            asyncio.create_task(_run_research_job(sym, target))
+        except RuntimeError:
+            _research_generating.discard(sym)
+
+    # Serve a stale brief immediately while the fresh one regenerates.
+    if doc:
+        return JSONResponse(_payload(doc, regenerating=True))
+    return JSONResponse({"ticker": sym, "status": "generating"})
+
+
 @app.get("/api/quotes/batch")
 async def api_quotes_batch():
     slim = [
