@@ -4937,8 +4937,11 @@ body.v2 #v2-mp-topbar-slot .idx.vix{background:linear-gradient(135deg,#F5A623,#c
 html.v2-dark body.v2 #ticker-tape{display:none!important}              /* drop the duplicate legacy tape; keep .ts-tape */
 html.v2-dark body.v2 .v2-topbar{background:#f5f8fd!important}          /* full-width light topbar */
 html.v2-dark body.v2 .v2-mp-topbar,html.v2-dark body.v2 #v2-mp-topbar-slot{background:transparent!important}
-/* drop the sidebar's legacy gold glow */
+/* drop the sidebar's legacy gold glow + recolor the wordmark blue (was amber) */
 html.v2-dark body.v2 .v2-sidebar::before{display:none!important}
+html.v2-dark body.v2 .v2-sb-logo .name{color:#0f172a!important}
+html.v2-dark body.v2 .v2-sb-logo .name span{background:linear-gradient(90deg,#1c43a3 0%,#0040c1 100%)!important;-webkit-background-clip:text!important;background-clip:text!important;color:transparent!important;filter:none!important}
+html.v2-dark body.v2 .v2-sb-logo img{box-shadow:none!important}
 /* reliable light theme on the On-the-Radar tab — body.ts-active is toggled by v2Show (no :has dependency) */
 html.v2-dark body.v2.ts-active{background:#e9f1fc!important}
 html.v2-dark body.v2.ts-active .v2-app{background:#eef6fe!important}
