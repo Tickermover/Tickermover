@@ -2375,7 +2375,8 @@ async def dashboard():
                 _idx_for = lambda _s: []
                 _assign_profile = lambda _t: ["aggressive"]
             _SKIP = (
-                "news", "insider_detail", "description", "breakdown", "weighted",
+                # keep `breakdown` — the Today's-Signals pillars are derived from it
+                "news", "insider_detail", "description", "weighted",
                 "quarterly_income", "quarterly_cashflow", "operating_cashflow",
             )
             _slim = []
@@ -2488,7 +2489,8 @@ async def api_universe():
     # eps_quarters is universe-relevant (Recent Earnings widget) but we only
     # need the last 4 quarters there — trim history to keep payload sane.
     _SKIP = (
-        "news", "insider_detail", "description", "breakdown", "weighted",
+        # keep `breakdown` — Today's-Signals pillars are derived from it
+        "news", "insider_detail", "description", "weighted",
         "quarterly_income", "quarterly_cashflow",     # full statements -> /api/ticker only
         "operating_cashflow",                          # series — universe uses only latest
     )
