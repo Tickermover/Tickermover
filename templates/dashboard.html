@@ -4937,7 +4937,15 @@ body.v2 #v2-mp-topbar-slot .idx.vix{background:linear-gradient(135deg,#F5A623,#c
 html.v2-dark body.v2 #ticker-tape{display:none!important}              /* drop the duplicate legacy tape; keep .ts-tape */
 html.v2-dark body.v2 .v2-topbar{background:#f5f8fd!important}          /* full-width light topbar */
 html.v2-dark body.v2 .v2-mp-topbar,html.v2-dark body.v2 #v2-mp-topbar-slot{background:transparent!important}
-/* relight the content area ONLY when the signals tab is active (other tabs stay dark) */
+/* drop the sidebar's legacy gold glow */
+html.v2-dark body.v2 .v2-sidebar::before{display:none!important}
+/* reliable light theme on the On-the-Radar tab — body.ts-active is toggled by v2Show (no :has dependency) */
+html.v2-dark body.v2.ts-active{background:#e9f1fc!important}
+html.v2-dark body.v2.ts-active .v2-app{background:#eef6fe!important}
+html.v2-dark body.v2.ts-active .v2-content{background:linear-gradient(180deg,#eef6fe 0%,#e6eefb 45%,#dde8f9 100%)!important}
+html.v2-dark body.v2.ts-active .v2-scroll{background:transparent!important}
+html.v2-dark body.v2.ts-active .v2-content::-webkit-scrollbar-thumb,html.v2-dark body.v2.ts-active .v2-scroll::-webkit-scrollbar-thumb{background:linear-gradient(180deg,#2970ff,#0040c1)!important}
+/* :has fallback (also relights when supported) */
 html.v2-dark body.v2 .v2-content:has(#panel-hot.active){background:linear-gradient(180deg,#eef6fe 0%,#e6eefb 45%,#dde8f9 100%)!important}
 </style>
 </head>
@@ -15681,7 +15689,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
         '<div class="sm-mom-avg '+(hot?'up':'dn')+'">'+(grp.avg>=0?'+':'')+grp.avg.toFixed(1)+'% · 1mo</div></div>'+
         '<div class="bn-reason">'+escHTML(ctx.reason)+' <em>Observational — not advice.</em></div>'+
         (ctx.facts.length?'<div class="bn-facts">'+ctx.facts.map(f=>'<span class="bn-fact">'+escHTML(f)+'</span>').join('')+'</div>':'')+
-        '<div class="bn-chips">'+arr.slice(0,10).map(({t,m})=>chip(t,m)).join('')+'</div>';
+        '<div class="bn-chips">'+arr.slice(0,6).map(({t,m})=>chip(t,m)).join('')+'</div>';
     };
     const el=document.getElementById('sectorMomSlot'); if(!el) return;
     el.innerHTML='<div class="ts-card"><div class="ts-card-head"><div class="ts-card-title">🔥 Sector Momentum</div><div class="ts-card-sub">Hottest &amp; weakest sub-sectors over the past month</div></div>'+
@@ -15754,7 +15762,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
       const all=d.news||[], filtered=[];
       for(const n of all){ const syms=[].concat(n.ticker?[n.ticker]:[]).concat(Array.isArray(n.symbols)?n.symbols:[]).map(s=>(s||'').toUpperCase()).filter(Boolean);
         const m=syms.find(s=>uni.has(s)); if(!m)continue; filtered.push({...n,ticker:m}); }
-      filtered.sort((a,b)=>(b.datetime||0)-(a.datetime||0)); const items=filtered.slice(0,5);
+      filtered.sort((a,b)=>(b.datetime||0)-(a.datetime||0)); const items=filtered.slice(0,4);
       if(!items.length){ inner.innerHTML='<div class="news-loading">No headlines for tracked names in the last few hours.</div>'; return; }
       const ago=ts=>{ if(!ts)return''; const s=Math.max(0,Math.floor(Date.now()/1000-ts)); return s<60?s+'s ago':s<3600?Math.floor(s/60)+'m ago':s<86400?Math.floor(s/3600)+'h ago':Math.floor(s/86400)+'d ago'; };
       inner.innerHTML=items.map(n=>{ const tic=(n.ticker||'').toUpperCase(), head=(n.headline||'').slice(0,130), src=(n.source||'').slice(0,24), a=ago(n.datetime);
@@ -15810,6 +15818,19 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
   };
   // Re-run with the last-loaded snapshot (used on profile switches).
   window.tsRerender = function(){ if(DATA) window.tsRender(DATA); };
+})();
+</script>
+
+<script>
+/* Light-theme scope: add body.ts-active only while the On-the-Radar (hot) tab
+   is showing, so the light shell/content applies there and other tabs stay dark.
+   Wraps v2Show (reliable, no :has dependency) and sets the initial state. */
+(function(){
+  function setActive(p){ try{ document.body.classList.toggle('ts-active', p==='hot'); }catch(e){} }
+  var _s=window.v2Show;
+  if(typeof _s==='function'){ window.v2Show=function(p,el){ var r=_s.apply(this,arguments); setActive(p); return r; }; }
+  function init(){ var ph=document.getElementById('panel-hot'); document.body.classList.toggle('ts-active', !!(ph&&ph.classList.contains('active'))); }
+  if(document.readyState!=='loading') init(); else document.addEventListener('DOMContentLoaded', init);
 })();
 </script>
 
