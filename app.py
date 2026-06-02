@@ -2417,6 +2417,61 @@ async def dashboard_v2_preview():
         return HTMLResponse(content="<h2>v2 mock not found</h2>", status_code=404)
 
 
+@app.get("/signals-preview", response_class=HTMLResponse)
+async def signals_preview():
+    """Standalone light redesign of the 'Today's Signals' page (no auth).
+
+    Built for review before porting the look into the real /app dashboard.
+    Serves templates/signals_preview.html with the SAME SSR data injection
+    as /app, EXCEPT it keeps the per-factor `breakdown`/`weighted` objects
+    (those are normally stripped) so the page can render REAL six-pillar
+    bars (M·G·Q·V·S·R). If the local universe is cold, the template falls
+    back to /api/universe and then to /static/_universe_fixture.json."""
+    path = BASE_DIR / "templates" / "signals_preview.html"
+    try:
+        html = path.read_text(encoding="utf-8")
+    except FileNotFoundError:
+        return HTMLResponse(content="<h2>signals_preview.html not found</h2>", status_code=404)
+
+    if _universe_data:
+        import json as _json
+        try:
+            from index_constituents import indices_for as _idx_for
+            from profile_rules import assign_profile as _assign_profile
+        except Exception:
+            _idx_for = lambda _s: []
+            _assign_profile = lambda _t: ["aggressive"]
+        # NOTE: unlike /app and /api/universe, we deliberately KEEP `breakdown`
+        # and `weighted` here — the light page reads `breakdown` to build the
+        # real six-pillar bars. We still drop the genuinely heavy fields the
+        # page never touches so the SSR HTML stays a sane size.
+        _SKIP = (
+            "news", "insider_detail", "description",
+            "quarterly_income", "quarterly_cashflow", "operating_cashflow",
+        )
+        _slim = []
+        for t in _universe_data:
+            row = {k: v for k, v in t.items() if k not in _SKIP}
+            epsq = row.get("eps_quarters")
+            if isinstance(epsq, list) and len(epsq) > 4:
+                row["eps_quarters"] = epsq[-4:]
+            row["indices"] = _idx_for(row.get("ticker", ""))
+            row["profiles"] = _assign_profile(row)
+            _slim.append(row)
+        payload = _json.dumps(_clean({
+            "tickers":      _slim,
+            "warming_up":   False,
+            "last_refresh": _last_full_refresh,
+            "hot_list_n":   config.HOT_LIST_N,
+            "account_size": config.ACCOUNT_SIZE_USD,
+            "regime":       market_regime.get(),
+        }), ensure_ascii=False, separators=(",", ":"))
+        injection = f'\n<script>window.__AH_DATA__={payload};</script>\n'
+        html = html.replace("</head>", injection + "</head>", 1)
+
+    return HTMLResponse(content=html)
+
+
 # ── API Endpoints ─────────────────────────────────────────────────────
 
 @app.get("/api/universe")
