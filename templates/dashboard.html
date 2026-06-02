@@ -4944,6 +4944,8 @@ html.v2-dark body.v2.ts-active{background:#e9f1fc!important}
 html.v2-dark body.v2.ts-active .v2-app{background:#eef6fe!important}
 html.v2-dark body.v2.ts-active .v2-content{background:linear-gradient(180deg,#eef6fe 0%,#e6eefb 45%,#dde8f9 100%)!important}
 html.v2-dark body.v2.ts-active .v2-scroll{background:transparent!important}
+html.v2-dark body.v2.ts-active .main{background:transparent!important}   /* the panels wrapper was the dark layer on top */
+html.v2-dark body.v2 .main:has(#panel-hot.active){background:transparent!important}
 html.v2-dark body.v2.ts-active .v2-content::-webkit-scrollbar-thumb,html.v2-dark body.v2.ts-active .v2-scroll::-webkit-scrollbar-thumb{background:linear-gradient(180deg,#2970ff,#0040c1)!important}
 /* :has fallback (also relights when supported) */
 html.v2-dark body.v2 .v2-content:has(#panel-hot.active){background:linear-gradient(180deg,#eef6fe 0%,#e6eefb 45%,#dde8f9 100%)!important}
