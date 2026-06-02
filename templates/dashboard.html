@@ -4933,6 +4933,12 @@ body.v2 #v2-mp-topbar-slot .idx.nas{background:linear-gradient(135deg,#8b5cf6,#6
 body.v2 #v2-mp-topbar-slot .idx.dow{background:linear-gradient(135deg,#14b8a6,#0f766e)}
 body.v2 #v2-mp-topbar-slot .idx.vix{background:linear-gradient(135deg,#F5A623,#c9790a)}
 @media(max-width:980px){body.v2 #v2-mp-topbar-slot{display:none}}
+/* ── remove legacy dark remnants on the On-the-Radar (Today's Signals) view ── */
+html.v2-dark body.v2 #ticker-tape{display:none!important}              /* drop the duplicate legacy tape; keep .ts-tape */
+html.v2-dark body.v2 .v2-topbar{background:#f5f8fd!important}          /* full-width light topbar */
+html.v2-dark body.v2 .v2-mp-topbar,html.v2-dark body.v2 #v2-mp-topbar-slot{background:transparent!important}
+/* relight the content area ONLY when the signals tab is active (other tabs stay dark) */
+html.v2-dark body.v2 .v2-content:has(#panel-hot.active){background:linear-gradient(180deg,#eef6fe 0%,#e6eefb 45%,#dde8f9 100%)!important}
 </style>
 </head>
 <body class="v2">
