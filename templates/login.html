@@ -316,7 +316,20 @@ $('eyeBtn').addEventListener('click', () => {
 
 const _validEmail = e => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
 
-$('login-submit').addEventListener('click', () => {
+/* ── Session storage — same localStorage keys the dashboard reads, so a
+      sign-in here is recognised the instant /app loads. ── */
+const _AUTH = {
+  get token(){ return localStorage.getItem('ah_token'); },
+  set token(v){ v ? (localStorage.setItem('ah_token', v), localStorage.setItem('ah_seen_signin','1')) : localStorage.removeItem('ah_token'); },
+  set refresh(v){ v ? localStorage.setItem('ah_refresh', v) : localStorage.removeItem('ah_refresh'); },
+  set user(v){ v ? localStorage.setItem('ah_user', JSON.stringify(v)) : localStorage.removeItem('ah_user'); },
+};
+
+/* Already signed in? Go straight to the app. */
+try{ if(_AUTH.token) location.replace('/app'); }catch(e){}
+
+/* ── Email / password (sign in, with silent auto-signup for new emails) ── */
+async function authSubmit(){
   const email=($('login-email').value||'').trim();
   const pass = $('login-password').value||'';
   const btn  = $('login-submit');
@@ -324,11 +337,73 @@ $('login-submit').addEventListener('click', () => {
   if(!_validEmail(email)){ showMsg('Enter a valid email address','err'); $('login-email').focus(); return; }
   if(pass.length<8){ showMsg('Password must be at least 8 characters','err'); $('login-password').focus(); return; }
   btn.disabled=true; btn.classList.add('loading');
-  /* (would POST /api/auth/signin here) */
-});
+  const reset=()=>{ btn.disabled=false; btn.classList.remove('loading'); };
+  const hit = async url => {
+    const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password:pass})});
+    return { ok:r.ok, status:r.status, data: await r.json().catch(()=>({})) };
+  };
+  try{
+    let res=await hit('/api/auth/signin');
+    if(!res.ok){
+      const m=(res.data.detail||'').toLowerCase();
+      const newUser = res.status===400||res.status===401||res.status===404
+                    || m.includes('invalid')||m.includes('not found')||m.includes('credentials')||m.includes('no user');
+      if(newUser){
+        res=await hit('/api/auth/signup');
+        if(!res.ok){ showMsg(res.data.detail||'Could not create account — try again','err'); reset(); return; }
+      } else { showMsg(res.data.detail||'Authentication failed','err'); reset(); return; }
+    }
+    const d=res.data;
+    _AUTH.token=d.access_token; _AUTH.refresh=d.refresh_token;
+    const u=d.user||{}; _AUTH.user={id:u.id||null, email:u.email||email};
+    try{ localStorage.setItem('ah_tos_agreed','1'); }catch(e){}
+    showMsg('Signed in — loading your dashboard…','ok');
+    window.location.href='/app';
+  }catch(e){ showMsg('Network error — try again','err'); reset(); }
+}
 
+/* ── Google OAuth ── */
+async function authOAuth(provider){
+  showMsg('');
+  try{
+    const r=await fetch('/api/auth/oauth/'+encodeURIComponent(provider),{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok){ showMsg((d&&(d.detail||d.error))||(provider+' sign-in is not configured yet — use email or magic link.'),'err'); return; }
+    if(d.authorize_url){ window.location.href=d.authorize_url; return; }
+    showMsg('Could not start '+provider+' sign-in.','err');
+  }catch(e){ showMsg('Network error starting '+provider+' sign-in.','err'); }
+}
+
+/* ── Magic link ── */
+async function authMagicLink(){
+  const email=($('login-email').value||'').trim();
+  if(!_validEmail(email)){ showMsg("Enter your email above first — we'll send a one-tap sign-in link.",'err'); $('login-email').focus(); return; }
+  try{
+    const r=await fetch('/api/auth/magic-link',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email})});
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok){ showMsg((d&&(d.detail||d.error))||'Could not send magic link.','err'); return; }
+    showMsg('Sent! Check '+email+' for your sign-in link.','ok');
+  }catch(e){ showMsg('Network error sending the magic link.','err'); }
+}
+
+/* ── Forgot password ── */
+async function authForgot(){
+  const email=($('login-email').value||'').trim();
+  if(!_validEmail(email)){ showMsg('Enter your email above, then click “Forgot password?” to get a reset link.','err'); $('login-email').focus(); return; }
+  try{
+    const r=await fetch('/api/auth/forgot-password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email})});
+    if(r.ok){ showMsg('Reset link sent to '+email+' — check your inbox (and spam).','ok'); }
+    else { showMsg('Could not send reset email. Check the address and try again.','err'); }
+  }catch(e){ showMsg('Network error. Try again.','err'); }
+}
+
+/* Wire up controls */
+$('login-submit').addEventListener('click', authSubmit);
+var _gBtn=$('google-btn'); if(_gBtn) _gBtn.addEventListener('click', function(){ authOAuth('google'); });
+var _mBtn=document.querySelector('.magic'); if(_mBtn) _mBtn.addEventListener('click', authMagicLink);
+var _fBtn=document.querySelector('.flink'); if(_fBtn) _fBtn.addEventListener('click', authForgot);
 $('login-email').addEventListener('keydown', e=>{ if(e.key==='Enter') $('login-password').focus(); });
-$('login-password').addEventListener('keydown', e=>{ if(e.key==='Enter') $('login-submit').click(); });
+$('login-password').addEventListener('keydown', e=>{ if(e.key==='Enter') authSubmit(); });
 
 /* ── Live scoring wall — two columns drifting in opposite directions ── */
 (function loadWall(){
