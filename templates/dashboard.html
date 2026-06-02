@@ -4615,7 +4615,7 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 #panel-hot .dm-row[data-row]{animation:tsah-deal .45s ease both}
 @media(prefers-reduced-motion:reduce){#panel-hot .wrap>*,
 #panel-hot .dm-row[data-row]{animation:none!important}}
-#panel-hot .wrap{padding:26px 26px 70px;max-width:1320px;width:100%;margin:0 auto;display:flex;flex-direction:column;gap:26px}
+#panel-hot .wrap{padding:22px 26px 24px;max-width:1320px;width:100%;margin:0 auto;display:flex;flex-direction:column;gap:22px}
 #panel-hot .pg-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap}
 #panel-hot .pg-title{font-size:27px;font-weight:700;letter-spacing:-.02em;color:var(--ink)}
 #panel-hot .pg-title .em{background:var(--blue-grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
@@ -4948,6 +4948,11 @@ html.v2-dark body.v2 .v2-mp-mini-lbl{color:#475569!important}
 html.v2-dark body.v2 .v2-mp-mini-chg .v2-mp-up{color:#16a34a!important}
 /* user avatar — blue brand, not amber */
 html.v2-dark body.v2 #user-avatar{background:linear-gradient(135deg,#2970ff,#0040c1)!important}
+/* footer user name/text — readable dark on the light sidebar (was ghosted) */
+html.v2-dark body.v2 .v2-sb-bottom #user-menu,html.v2-dark body.v2 .v2-sb-bottom #user-menu div{color:#1e293b!important;opacity:1!important}
+html.v2-dark body.v2 #user-email{color:#0f172a!important}
+/* unify the panel frame so there's no extra light box around the content */
+html.v2-dark body.v2.ts-active .v2-app{background:transparent!important}
 /* reliable light theme on the On-the-Radar tab — body.ts-active is toggled by v2Show (no :has dependency) */
 html.v2-dark body.v2.ts-active{background:#e9f1fc!important}
 html.v2-dark body.v2.ts-active .v2-app{background:#eef6fe!important}
@@ -15829,6 +15834,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
   };
   // Re-run with the last-loaded snapshot (used on profile switches).
   window.tsRerender = function(){ if(DATA) window.tsRender(DATA); };
+  window.tsIndexPills = renderIndexPills;   // exposed so the topbar slot uses the deep colored pills
 })();
 </script>
 
@@ -15842,6 +15848,10 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
   if(typeof _s==='function'){ window.v2Show=function(p,el){ var r=_s.apply(this,arguments); setActive(p); return r; }; }
   function init(){ var ph=document.getElementById('panel-hot'); document.body.classList.toggle('ts-active', !!(ph&&ph.classList.contains('active'))); }
   if(document.readyState!=='loading') init(); else document.addEventListener('DOMContentLoaded', init);
+  /* Own the topbar index-pill slot: redirect the legacy market-pulse renderer to
+     our deep colored pills so it can't overwrite them on load/interval. */
+  window.v2RenderMarketPulseTopbar = function(){ try{ if(window.tsIndexPills) window.tsIndexPills(); }catch(e){} };
+  try{ window.v2RenderMarketPulseTopbar(); }catch(e){}
 })();
 </script>
 
