@@ -3034,7 +3034,7 @@ html.v2-dark .v2-mp-mini-lbl{color:#cbd5e1}
 /* ────────────────────────────────────────────────────────────────
    BRIEFINGS PANEL — Quartr-style event summaries for every ticker
    ──────────────────────────────────────────────────────────────── */
-.v2-brf-head{max-width:980px;margin:0 auto 22px;padding:0 4px}
+.v2-brf-head{max-width:1240px;margin:0 auto 18px;padding:0 4px}
 /* Briefings eyebrow → violet to match the meta-label color rhythm
    established elsewhere (sets up secondary brand accent). */
 .v2-brf-eyebrow{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#0040c1}
@@ -3042,7 +3042,7 @@ html.v2-dark .v2-mp-mini-lbl{color:#cbd5e1}
 .v2-brf-sub{font-size:13px;color:#64748b;font-weight:500;margin-top:6px;line-height:1.55;max-width:680px}
 .v2-brf-loading{padding:60px 0;text-align:center;color:#94a3b8;font-size:13px}
 .v2-brf-grid{
-  max-width:980px;margin:0 auto;
+  max-width:1240px;margin:0 auto;
   display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;
 }
 .v2-brf-card{
@@ -3061,7 +3061,7 @@ html.v2-dark .v2-mp-mini-lbl{color:#cbd5e1}
 
 /* Detail view — Quartr-style summary */
 .v2-brf-detail{
-  max-width:780px;margin:24px auto 60px;padding:0 4px;
+  max-width:1240px;margin:4px auto 60px;padding:0 4px;
 }
 .v2-brf-back{
   display:inline-flex;align-items:center;gap:6px;
@@ -3166,10 +3166,10 @@ html.v2-dark .v2-mp-mini-lbl{color:#cbd5e1}
 .v2-brf-q-quote-text{font-size:13.5px;font-style:italic;color:#334155;line-height:1.55;font-weight:500}
 
 /* Section cards ─────────────────────────────────────────────── */
+.v2-brf-q-sects{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:14px;align-items:start}
 .v2-brf-q-sect{
   padding:18px 20px;border-radius:12px;
   background:#fff;border:1px solid #e2e8f0;
-  margin-bottom:14px;
   box-shadow:0 1px 2px rgba(10,10,10,.03);
 }
 .v2-brf-q-sect-head{display:flex;align-items:center;gap:10px;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid #f1f5f9}
@@ -7991,6 +7991,7 @@ function v2RenderBriefingHTML(sym, d){
       '<span>The AI summariser returned an unexpected shape. Try reloading the page.</span>' +
     '</div>';
   } else {
+    html += '<div class="v2-brf-q-sects">';
     sections.forEach((s, i) => {
       if (!s || !Array.isArray(s.bullets) || !s.bullets.length) return;
       const icon = sectionIcon(s.heading);
@@ -8004,6 +8005,7 @@ function v2RenderBriefingHTML(sym, d){
         '</ul>' +
       '</div>';
     });
+    html += '</div>';
   }
 
   // ── Close LEFT, open SIDEBAR ─────────────────────────────────────
