@@ -1,0 +1,297 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stock view — direction demos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=JetBrains+Mono:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--blue:#0040c1;--blue2:#2970ff;--ink:#0f172a;--ink2:#1e293b;--muted:#64748b;--grey:#94a3b8;
+  --up:#16a34a;--down:#ea384c;--amber:#D4860A;--hair:rgba(9,9,9,.08);--surf3:#f6f9ff;--alice:#eef4ff;
+  --grad:linear-gradient(135deg,#2970ff 0%,#0042c5 55%,#00359e 100%);}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Instrument Sans',system-ui,sans-serif;color:var(--ink);background:#dfe8f6;min-height:100vh}
+/* ── top controls ── */
+.demo-topbar{position:fixed;top:0;left:0;right:0;z-index:100;background:#fff;border-bottom:1px solid var(--hair);
+  padding:12px 22px;display:flex;align-items:center;gap:20px;flex-wrap:wrap;box-shadow:0 2px 12px -6px rgba(0,40,120,.25)}
+.demo-title{font-family:'Fraunces',serif;font-weight:600;font-size:18px}
+.demo-toggle{display:inline-flex;background:#eef2f8;border-radius:11px;padding:3px;gap:2px}
+.dt-btn{font-family:inherit;font-size:12.5px;font-weight:700;color:var(--muted);background:none;border:0;cursor:pointer;
+  padding:8px 14px;border-radius:9px;transition:.15s}
+.dt-btn.on{background:var(--grad);color:#fff;box-shadow:0 4px 10px -3px rgba(0,64,193,.4)}
+.demo-hint{font-size:12px;color:var(--muted);font-weight:600}
+.demo-hint b{color:var(--blue)}
+/* ── stage ── */
+.demo-stage{position:fixed;inset:62px 0 0 0;overflow:hidden;background:
+  linear-gradient(180deg,#eef6fe,#e3ecfb)}
+.demo-appbg{position:absolute;inset:0;filter:blur(2px) saturate(.7);opacity:.5;pointer-events:none;padding:30px}
+.demo-appbg .row{height:54px;background:#fff;border-radius:12px;margin-bottom:12px;max-width:760px;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.scrim{position:absolute;inset:0;background:rgba(9,20,50,.35);backdrop-filter:blur(3px);opacity:0;transition:opacity .3s;pointer-events:none}
+.scrim.on{opacity:1}
+
+/* ════ SHARED SURFACE (drawer / sheet) ════ */
+.surface{position:absolute;top:0;right:0;height:100%;width:min(94%,1080px);max-width:460px;background:#fff;z-index:20;
+  box-shadow:-24px 0 70px -30px rgba(0,40,120,.5);display:flex;flex-direction:column;
+  transition:max-width .42s cubic-bezier(.5,.05,.2,1), top .42s, height .42s, border-radius .42s;overflow:hidden}
+.surface.expanded{max-width:1080px;left:50%;right:auto;transform:translateX(-50%);border-radius:18px 18px 0 0;
+  top:14px;height:calc(100% - 14px);box-shadow:0 30px 90px -30px rgba(0,40,120,.55)}
+.s-scroll{flex:1;overflow-y:auto;padding:22px 24px 24px}
+
+/* head */
+.s-head{display:flex;align-items:center;gap:14px;padding:20px 24px 14px;border-bottom:1px solid var(--hair)}
+.s-logo{width:46px;height:46px;border-radius:12px;border:1px solid var(--hair);flex:none;display:grid;place-items:center;
+  background:#fff;font-weight:800;color:var(--blue)}
+.s-logo svg{width:30px;height:30px}
+.s-id{min-width:0;flex:1}
+.s-tic{font-family:'Fraunces',serif;font-weight:600;font-size:26px;letter-spacing:-.01em;line-height:1}
+.s-name{font-size:13px;color:var(--muted);font-weight:500;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.s-x{width:38px;height:38px;border-radius:10px;border:1px solid var(--hair);background:#fff;color:var(--muted);cursor:pointer;
+  display:grid;place-items:center;font-size:16px;flex:none}
+.s-x:hover{background:var(--surf3);color:var(--ink)}
+
+/* ── verdict banner (Direction A signature) ── */
+.verdict{display:flex;align-items:center;gap:14px;margin-bottom:16px;padding:15px 16px;border-radius:14px;
+  background:linear-gradient(120deg,rgba(22,163,74,.12),rgba(22,163,74,.05));border:1px solid rgba(22,163,74,.30)}
+.verdict.exp{display:none}
+.v-badge{display:flex;flex-direction:column;align-items:center;gap:1px;flex:none;width:74px;
+  padding:8px 6px;border-radius:11px;background:#fff;border:1px solid rgba(22,163,74,.3)}
+.v-badge .stars{font-size:12px;color:var(--up);letter-spacing:.5px}
+.v-badge .alpha{font-family:'JetBrains Mono',monospace;font-weight:800;font-size:24px;color:#15803d;line-height:1}
+.v-badge .lbl{font-size:8px;font-weight:800;letter-spacing:.12em;color:var(--grey)}
+.v-txt{min-width:0}
+.v-call{font-size:16px;font-weight:800;color:#15803d}
+.v-thesis{font-size:12.5px;color:var(--ink2);line-height:1.5;margin-top:3px;font-weight:500}
+
+.glance{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;margin-bottom:14px}
+.g-cell{background:var(--surf3);border:1px solid var(--hair);border-radius:12px;padding:11px 12px}
+.g-k{font-size:9.5px;font-weight:800;letter-spacing:.1em;color:var(--grey);text-transform:uppercase}
+.g-v{font-family:'JetBrains Mono',monospace;font-weight:800;font-size:19px;margin-top:5px}
+.g-v.blue{color:var(--blue)} .g-v.dn{color:var(--down)} .g-v.up{color:var(--up)}
+
+.sect-lbl{font-size:10px;font-weight:800;letter-spacing:.13em;color:var(--grey);text-transform:uppercase;margin:18px 0 9px}
+.riskbar{display:flex;align-items:center;gap:12px;margin-bottom:4px}
+.riskbar .track{flex:1;height:8px;border-radius:99px;background:#e7edf5;overflow:hidden}
+.riskbar .fill{height:100%;width:71%;background:var(--grad);border-radius:99px}
+.riskbar .n{font-family:'JetBrains Mono',monospace;font-weight:800;font-size:14px}
+
+.val{background:#FFF6E0;border:1px solid #FFD98A;border-radius:13px;padding:14px 16px;font-size:13px}
+.val-row{display:flex;justify-content:space-between;gap:10px;align-items:center}
+.val-row+.val-row{margin-top:9px;padding-top:9px;border-top:1px dashed rgba(180,120,10,.35)}
+.val b{color:var(--ink)} .val .exp{color:var(--down);font-weight:700}
+
+.pills{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.pill{font-size:12px;font-weight:700;padding:7px 12px;border-radius:9px;font-family:'JetBrains Mono',monospace}
+.pill.rs{background:#FFF6E0;color:var(--amber);border:1px solid #FFD98A}
+.pill.inst{background:var(--alice);color:var(--blue);border:1px solid #dbe6fb}
+.pill.sig{font-family:'Instrument Sans';font-size:12.5px}
+.pill.sig.b{background:var(--alice);color:var(--blue);border:1px solid #dbe6fb}
+.pill.sig.g{background:rgba(22,163,74,.1);color:#15803d;border:1px solid rgba(22,163,74,.25)}
+.pill.sig.a{background:#FFF6E0;color:var(--amber);border:1px solid #FFD98A}
+.rationale{font-size:14px;color:var(--ink2);font-weight:500;line-height:1.5;margin-top:4px}
+
+/* ── action row (Direction A signature) ── */
+.actionrow{flex:none;display:flex;gap:9px;padding:14px 20px;border-top:1px solid var(--hair);background:#fbfcff}
+.act-primary{flex:1;display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  font-family:inherit;font-size:14px;font-weight:800;color:#fff;border:0;cursor:pointer;
+  padding:13px 16px;border-radius:12px;background:var(--grad);box-shadow:0 8px 20px -8px rgba(0,64,193,.55);transition:.14s}
+.act-primary:hover{transform:translateY(-1px)}
+.act-ghost{display:inline-flex;align-items:center;justify-content:center;gap:6px;font-family:inherit;font-size:13px;font-weight:700;
+  color:var(--ink2);background:#fff;border:1px solid var(--hair);border-radius:12px;padding:13px 14px;cursor:pointer;transition:.14s}
+.act-ghost:hover{background:var(--surf3);border-color:#cbd5e1}
+
+/* ── expand affordance (Direction B signature) ── */
+.expand-cta{display:none;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:18px;
+  font-family:inherit;font-size:13.5px;font-weight:800;color:var(--blue);background:var(--alice);border:1px dashed rgba(41,112,255,.4);
+  border-radius:12px;padding:13px;cursor:pointer;transition:.14s}
+.expand-cta:hover{background:#e3edff}
+body[data-dir="B"] .expand-cta{display:flex}
+body[data-dir="B"] .actionrow{display:none}
+body[data-dir="A"] .expand-handle{display:none}
+
+/* ── tabs (appear only when expanded) ── */
+.s-tabs{display:none;gap:4px;padding:0 24px 12px;overflow-x:auto}
+.surface.expanded .s-tabs{display:flex}
+.s-tab{flex:none;font-family:inherit;font-size:12.5px;font-weight:700;color:var(--muted);background:none;border:1px solid transparent;
+  border-radius:9px;padding:8px 14px;cursor:pointer;white-space:nowrap}
+.s-tab.on{background:var(--grad);color:#fff;box-shadow:0 4px 10px -3px rgba(0,64,193,.3)}
+.s-tab:not(.on):hover{background:var(--surf3);color:var(--ink)}
+/* in expanded mode, lay summary + deep panels in 2 cols */
+.deep{display:none;margin-top:6px}
+.surface.expanded .deep{display:block;animation:fade .3s ease}
+.surface.expanded .compact-only{opacity:.55}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.deep-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:6px}
+.deep-card{background:#fff;border:1px solid var(--hair);border-radius:14px;padding:16px 18px;box-shadow:0 1px 2px rgba(0,40,120,.06)}
+.deep-card h4{font-family:'Fraunces',serif;font-weight:600;font-size:15px;margin-bottom:10px}
+.kv{display:flex;justify-content:space-between;font-size:12.5px;padding:6px 0;border-bottom:1px solid #f1f5f9}
+.kv:last-child{border:0} .kv .k{color:var(--muted)} .kv .v{font-family:'JetBrains Mono',monospace;font-weight:700}
+.collapse-cta{display:none;margin-top:16px}
+.surface.expanded .collapse-cta{display:inline-flex;align-items:center;gap:7px;font-family:inherit;font-size:13px;font-weight:700;
+  color:var(--muted);background:#fff;border:1px solid var(--hair);border-radius:11px;padding:10px 16px;cursor:pointer}
+.surface.expanded .collapse-cta:hover{background:var(--surf3)}
+.foot-note{text-align:center;font-size:10.5px;font-weight:700;letter-spacing:.12em;color:var(--grey);margin-top:18px;text-transform:uppercase}
+</style></head>
+<body data-dir="A">
+<div class="demo-topbar">
+  <div class="demo-title">Stock view — <span style="color:var(--blue)">direction demos</span></div>
+  <div class="demo-toggle">
+    <button class="dt-btn on" id="btnA" onclick="setDir('A')">A · Funnel</button>
+    <button class="dt-btn" id="btnB" onclick="setDir('B')">B · Expand</button>
+  </div>
+  <div class="demo-hint" id="hint"><b>Direction A:</b> decision card on top, hand-off button at the bottom → opens the full sheet.</div>
+</div>
+
+<div class="demo-stage">
+  <div class="demo-appbg"><div class="row" style="width:60%"></div><div class="row"></div><div class="row" style="width:70%"></div><div class="row"></div><div class="row" style="width:55%"></div></div>
+  <div class="scrim on" id="scrim"></div>
+
+  <div class="surface" id="surface">
+    <div class="s-head">
+      <div class="s-logo"><svg viewBox="0 0 24 24" fill="none"><circle cx="8" cy="8" r="3" fill="#0040c1"/><circle cx="15" cy="7" r="2.2" fill="#2970ff"/><circle cx="16" cy="14" r="2.6" fill="#5DB3F1"/><circle cx="9" cy="15" r="2" fill="#0042c5"/></svg></div>
+      <div class="s-id"><div class="s-tic">CRDO</div><div class="s-name">Credo Technology Group Holding Ltd</div></div>
+      <button class="s-x" onclick="collapse()">✕</button>
+    </div>
+
+    <div class="s-tabs" id="tabs">
+      <button class="s-tab on">Overview</button><button class="s-tab">Financials</button><button class="s-tab">Valuation</button>
+      <button class="s-tab">Technicals</button><button class="s-tab">Estimates</button><button class="s-tab">News</button><button class="s-tab">Peers</button>
+    </div>
+
+    <div class="s-scroll">
+      <!-- VERDICT BANNER -->
+      <div class="verdict">
+        <div class="v-badge"><span class="stars">★★★★★</span><span class="alpha">83</span><span class="lbl">ALPHA</span></div>
+        <div class="v-txt">
+          <div class="v-call">Strong Outperform</div>
+          <div class="v-thesis">Top-tier AI-interconnect play — momentum, growth and analyst support all line up. Valuation is rich, so mind the entry.</div>
+        </div>
+      </div>
+
+      <div class="glance">
+        <div class="g-cell"><div class="g-k">Alpha</div><div class="g-v blue">83</div></div>
+        <div class="g-cell"><div class="g-k">Price</div><div class="g-v">$213.38</div></div>
+        <div class="g-cell"><div class="g-k">Today</div><div class="g-v dn">−6.9%</div></div>
+      </div>
+
+      <div class="sect-lbl">Risk</div>
+      <div class="riskbar"><div class="track"><div class="fill"></div></div><span class="n">71</span></div>
+
+      <div class="sect-lbl">Valuation &amp; Analyst View</div>
+      <div class="val">
+        <div class="val-row"><span>📊 Target: <b>$231.59</b></span><span>Upside: <b style="color:var(--up)">+8.9%</b></span></div>
+        <div class="val-row"><span>💰 Valuation: <span class="exp">Expensive</span></span><span>—</span></div>
+        <div class="val-row"><span>📈 Growth bar</span><span><b>48%</b> implied · <b>157%</b> actual</span></div>
+      </div>
+
+      <div class="pills">
+        <span class="pill rs">Relative Strength 92 /99</span>
+        <span class="pill inst">● Institutional Accumulation</span>
+      </div>
+
+      <div class="sect-lbl">Model Rationale</div>
+      <div class="rationale">💡 High-speed SerDes for AI data center interconnect</div>
+
+      <div class="sect-lbl">Signals</div>
+      <div class="pills">
+        <span class="pill sig b">RSI 56.7 · ideal momentum zone</span>
+        <span class="pill sig b">+18.0% price momentum (30d)</span>
+        <span class="pill sig g">EPS beat 4/4 last quarters</span>
+        <span class="pill sig g">Very High growth tier (&gt;25% CAGR)</span>
+        <span class="pill sig a">Multi-timeframe uptrend</span>
+        <span class="pill sig a">News flow leans bullish</span>
+      </div>
+
+      <!-- Direction B: expand affordance -->
+      <button class="expand-cta" onclick="expand()">⤢ Expand to full analysis — financials, technicals, peers &amp; AI deep-dive</button>
+
+      <!-- DEEP CONTENT (revealed when expanded) -->
+      <div class="deep">
+        <div class="sect-lbl">The full picture</div>
+        <div class="deep-grid">
+          <div class="deep-card"><h4>Financials · quarterly</h4>
+            <div class="kv"><span class="k">Revenue</span><span class="v">$170M</span></div>
+            <div class="kv"><span class="k">Gross margin</span><span class="v">64.2%</span></div>
+            <div class="kv"><span class="k">Net income</span><span class="v">$31M</span></div>
+            <div class="kv"><span class="k">EPS (dil.)</span><span class="v">0.18</span></div></div>
+          <div class="deep-card"><h4>Valuation multiples</h4>
+            <div class="kv"><span class="k">P/E (fwd)</span><span class="v">95.3</span></div>
+            <div class="kv"><span class="k">PEG</span><span class="v">0.62</span></div>
+            <div class="kv"><span class="k">P/S</span><span class="v">24.1</span></div>
+            <div class="kv"><span class="k">EV/EBITDA</span><span class="v">71.4</span></div></div>
+          <div class="deep-card"><h4>Technicals</h4>
+            <div class="kv"><span class="k">RS rating</span><span class="v">92</span></div>
+            <div class="kv"><span class="k">50-day MA</span><span class="v">$188.40</span></div>
+            <div class="kv"><span class="k">Support ≈</span><span class="v">$196.10</span></div>
+            <div class="kv"><span class="k">Beta</span><span class="v">1.84</span></div></div>
+          <div class="deep-card"><h4>Estimates</h4>
+            <div class="kv"><span class="k"># Analysts</span><span class="v">14</span></div>
+            <div class="kv"><span class="k">Mean target</span><span class="v">$231.59</span></div>
+            <div class="kv"><span class="k">High / Low</span><span class="v">$300 / $160</span></div>
+            <div class="kv"><span class="k">Upside</span><span class="v" style="color:var(--up)">+8.9%</span></div></div>
+        </div>
+        <button class="collapse-cta" onclick="collapse2()">◂ Back to summary</button>
+      </div>
+
+      <div class="foot-note">Live data · educational only</div>
+    </div>
+
+    <!-- Direction A: action hand-off row -->
+    <div class="actionrow">
+      <button class="act-primary" onclick="openFull()">Open full analysis →</button>
+      <button class="act-ghost" title="Add to watchlist">★</button>
+      <button class="act-ghost" title="Download tearsheet">⤓ PDF</button>
+    </div>
+  </div>
+
+  <!-- Direction A: the full sheet it funnels into -->
+  <div class="surface" id="fullsheet" style="display:none">
+    <div class="s-head">
+      <div class="s-logo"><svg viewBox="0 0 24 24" fill="none"><circle cx="8" cy="8" r="3" fill="#0040c1"/><circle cx="15" cy="7" r="2.2" fill="#2970ff"/><circle cx="16" cy="14" r="2.6" fill="#5DB3F1"/><circle cx="9" cy="15" r="2" fill="#0042c5"/></svg></div>
+      <div class="s-id"><div class="s-tic">CRDO</div><div class="s-name">Full analysis · Credo Technology</div></div>
+      <button class="s-x" onclick="closeFull()">✕</button>
+    </div>
+    <div class="s-tabs" style="display:flex">
+      <button class="s-tab on">Overview</button><button class="s-tab">Financials</button><button class="s-tab">Valuation</button>
+      <button class="s-tab">Technicals</button><button class="s-tab">Estimates</button><button class="s-tab">News</button><button class="s-tab">Peers</button>
+    </div>
+    <div class="s-scroll">
+      <div style="background:var(--surf3);border:1px solid var(--hair);border-radius:14px;height:230px;display:grid;place-items:center;color:var(--muted);font-size:13px;margin-bottom:16px">📈 Interactive price chart</div>
+      <div class="sect-lbl">The full picture</div>
+      <div class="deep-grid">
+        <div class="deep-card"><h4>Financials · quarterly</h4><div class="kv"><span class="k">Revenue</span><span class="v">$170M</span></div><div class="kv"><span class="k">Gross margin</span><span class="v">64.2%</span></div><div class="kv"><span class="k">Net income</span><span class="v">$31M</span></div></div>
+        <div class="deep-card"><h4>Valuation</h4><div class="kv"><span class="k">P/E (fwd)</span><span class="v">95.3</span></div><div class="kv"><span class="k">PEG</span><span class="v">0.62</span></div><div class="kv"><span class="k">P/S</span><span class="v">24.1</span></div></div>
+        <div class="deep-card"><h4>Technicals</h4><div class="kv"><span class="k">RS</span><span class="v">92</span></div><div class="kv"><span class="k">50-day MA</span><span class="v">$188.40</span></div><div class="kv"><span class="k">Beta</span><span class="v">1.84</span></div></div>
+        <div class="deep-card"><h4>AI Deep Dive</h4><div style="font-size:12.5px;color:var(--ink2);line-height:1.55">Web-grounded research brief — thesis, risks, catalysts, sources…</div></div>
+      </div>
+      <button class="act-ghost" style="margin-top:16px" onclick="closeFull()">◂ Back to quick look</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const body=document.body, surface=document.getElementById('surface'), full=document.getElementById('fullsheet');
+function setDir(d){
+  body.setAttribute('data-dir',d);
+  document.getElementById('btnA').classList.toggle('on',d==='A');
+  document.getElementById('btnB').classList.toggle('on',d==='B');
+  document.getElementById('hint').innerHTML = d==='A'
+    ? '<b>Direction A:</b> decision card on top, hand-off button at the bottom → opens the full sheet.'
+    : '<b>Direction B:</b> one surface — tap “Expand” and the drawer grows into the full sheet in place.';
+  collapse2(); closeFull();
+}
+/* Direction A — funnel to a separate full sheet */
+function openFull(){ full.style.display='flex'; requestAnimationFrame(()=>full.style.right='0'); }
+function closeFull(){ full.style.display='none'; }
+/* Direction B — expand in place (inline styles drive the width/position so the
+   cascade can't fight it; the class only toggles the tabs + deep content) */
+function expand(){
+  surface.classList.add('expanded');
+  // plain px target so the max-width transition interpolates smoothly (px->px)
+  surface.style.maxWidth=Math.round(Math.min(window.innerWidth*0.94,1080))+'px';
+  surface.style.left='50%'; surface.style.right='auto'; surface.style.transform='translateX(-50%)';
+}
+function collapse2(){
+  surface.classList.remove('expanded');
+  surface.style.maxWidth=''; surface.style.left=''; surface.style.right=''; surface.style.transform='';
+}
+function collapse(){ /* close (demo no-op) */ }
+</script>
+</body></html>
