@@ -4805,6 +4805,17 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 #ts-drawer .dr-stat .v.dn{color:var(--down)}
 #ts-drawer .dr-body{padding:18px 24px 30px;display:flex;flex-direction:column;gap:20px}
 #ts-drawer .dr-sec-t{font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--grey);font-weight:700;margin-bottom:11px}
+/* Direction B — "Expand to full analysis" CTA + the sheet's grow-from-drawer anim */
+#ts-drawer .dr-expand{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;
+  font-family:inherit;font-size:14px;font-weight:800;color:#fff;border:0;cursor:pointer;
+  padding:13px 16px;border-radius:13px;background:linear-gradient(135deg,#2970ff 0%,#0042c5 55%,#00359e 100%);
+  box-shadow:0 10px 22px -8px rgba(0,64,193,.55);transition:transform .14s, box-shadow .14s}
+#ts-drawer .dr-expand:hover{transform:translateY(-1px);box-shadow:0 14px 28px -8px rgba(0,64,193,.6)}
+#ts-drawer .dr-expand:active{transform:translateY(0)}
+#ts-drawer .dr-expand-sub{margin-top:-15px;text-align:center;font-size:11px;font-weight:600;color:var(--grey-2);letter-spacing:.01em}
+.ssx-overlay.from-drawer .ssx-sheet{animation:ssxGrowFromDrawer .5s cubic-bezier(.34,0,.18,1);transform-origin:100% 20%}
+@keyframes ssxGrowFromDrawer{from{transform:translateX(20%) scaleX(.45) scaleY(.94);opacity:.25}to{transform:none;opacity:1}}
+@media(prefers-reduced-motion:reduce){.ssx-overlay.from-drawer .ssx-sheet{animation:none}}
 #ts-drawer .mono{font-family:'JetBrains Mono',monospace}
 #ts-drawer .up{color:var(--up)} #ts-drawer .dn{color:var(--down)} #ts-drawer .pos{color:var(--up)} #ts-drawer .neg{color:var(--down)}
 #ts-drawer .kt-banner{display:flex;align-items:center;gap:8px;padding:9px 13px;border-radius:10px;font-size:12.5px;font-weight:700}
@@ -10857,6 +10868,12 @@ function closeStockSheet(){
   if(o) o.classList.remove('open');
   document.body.style.overflow='';
   if(location.hash.startsWith('#stock-')){ try{ history.back(); }catch(e){} }
+  // Direction B: if this sheet was expanded from the radar quick-look, collapse
+  // back to that drawer instead of dropping the user on the page.
+  if(window._ssxFromDrawer){
+    const tk=window._ssxFromDrawer; window._ssxFromDrawer=null;
+    if(typeof window.tsOpenDrawer==='function') setTimeout(()=>window.tsOpenDrawer(tk), 70);
+  }
 }
 window.addEventListener('popstate', function(){
   if(!location.hash.startsWith('#stock-')){
@@ -15895,6 +15912,10 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
         rationale+
         sigHTML+
         riskHTML+
+        '<button class="dr-expand" onclick="tsExpandToFull(\''+escHTML(t.ticker)+'\')">'+
+          '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>'+
+          'Expand to full analysis</button>'+
+        '<div class="dr-expand-sub">Financials · technicals · estimates · peers · AI deep-dive</div>'+
         '<div style="font-family:\'JetBrains Mono\',monospace;font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--grey-3);text-align:center;margin-top:4px">'+srcLabel+' · educational only</div>'+
       '</div>';
     drawer.classList.add('open'); drawer.setAttribute('aria-hidden','false'); scrim.classList.add('open');
@@ -15905,7 +15926,18 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     if(_selRow) _selRow.classList.add('sel');
   }
   function closeDrawer(){ drawer.classList.remove('open'); drawer.setAttribute('aria-hidden','true'); scrim.classList.remove('open'); if(_selRow){_selRow.classList.remove('sel');_selRow=null;} }
+  /* Direction B — expand the quick-look into the full tabbed sheet. The sheet
+     grows from the drawer's right edge (one-surface feel) and remembers it came
+     from the drawer, so closing it collapses back to the quick-look. */
+  function tsExpandToFull(ticker){
+    window._ssxFromDrawer = ticker;
+    const ov=document.getElementById('ssx-overlay');
+    if(ov){ ov.classList.add('from-drawer'); setTimeout(()=>{ if(ov) ov.classList.remove('from-drawer'); }, 560); }
+    if(typeof window.openStockSheet==='function') window.openStockSheet(ticker);
+    closeDrawer();
+  }
   window.tsOpenDrawer = tsOpenDrawer;
+  window.tsExpandToFull = tsExpandToFull;
 
   (function wireStatic(){
     const table=document.getElementById('picksTable');
