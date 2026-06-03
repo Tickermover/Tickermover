@@ -12479,16 +12479,10 @@ function renderModelPortfolio(data) {
 
   // ── HEADER STATS ────────────────────────────────────────────────────
   const headerHTML = `
-  <div style="background:#ffffff;border:1px solid rgba(0,0,0,.08);border-radius:14px;padding:12px 16px 10px;margin-bottom:12px;box-shadow:0 1px 6px rgba(0,0,0,.05)">
-    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
-      <div style="font-size:15px;font-weight:800;color:var(--txt);display:flex;align-items:center;gap:8px">🎯 Top Hunts</div>
-      <button onclick="if(confirm('Reset rebuilds the tracker with today\\'s top 10 stocks by score. Continue?'))resetModelPortfolio()"
-        style="padding:5px 11px;background:#f1f5f9;border:1px solid rgba(0,0,0,.1);border-radius:7px;font-size:11px;font-weight:600;cursor:pointer;color:#374151;flex-shrink:0">
-        🔄 Reset
-      </button>
-    </div>
+  <div style="background:#ffffff;border:1px solid rgba(0,0,0,.08);border-radius:14px;padding:10px 14px;margin-bottom:12px;box-shadow:0 1px 6px rgba(0,0,0,.05)">
     ${concentrationWarning}
-    <div id="v2-tracker-chart-slot" style="min-height:210px;margin-top:4px"></div>
+    <div id="v2-tracker-chart-slot" style="min-height:210px">
+    </div>
   </div>`;
 
   const barHTML = '';
@@ -12980,10 +12974,25 @@ function v2RenderTrackerChartHTML(d){
     return `${line} L${lastX.toFixed(1)},${baseY.toFixed(1)} L${firstX.toFixed(1)},${baseY.toFixed(1)} Z`;
   };
 
-  const tLine = smoothPath(tracker);
-  const sLine = smoothPath(spy);
-  const qLine = smoothPath(qqq);
-  const tArea = areaPath(tracker);
+  // Light moving-average pre-pass so the lines read as smooth premium curves
+  // instead of tracking every noisy daily wiggle. Endpoints are anchored to
+  // the real values so the end dots + headline percentages stay exact.
+  const smoothSeries = (a) => {
+    if (!a || a.length < 5) return a;
+    const win = a.length > 40 ? 7 : 5, half = (win - 1) / 2;
+    const out = a.map((_, i) => {
+      let s = 0, n = 0;
+      for (let j = i - half; j <= i + half; j++){ if (j >= 0 && j < a.length){ s += a[j]; n++; } }
+      return s / n;
+    });
+    out[0] = a[0]; out[a.length - 1] = a[a.length - 1];
+    return out;
+  };
+  const trackerS = smoothSeries(tracker), spyS = smoothSeries(spy), qqqS = smoothSeries(qqq);
+  const tLine = smoothPath(trackerS);
+  const sLine = smoothPath(spyS);
+  const qLine = smoothPath(qqqS);
+  const tArea = areaPath(trackerS);
 
   // Y-axis ticks: nice round numbers across the range (5 ticks total)
   const niceStep = r => {
@@ -13057,7 +13066,7 @@ function v2RenderTrackerChartHTML(d){
       // ── Headline: eyebrow + big value + subtitle + period chips ──
       '<div class="v2-tc-headline">' +
         '<div class="v2-tc-hl-l">' +
-          '<div class="v2-tc-hl-eyebrow">Top Hunts</div>' +
+          '<div class="v2-tc-hl-eyebrow">Tracker performance</div>' +
           '<div class="v2-tc-hl-val ' + valClass + '">' + fmtPct(tEnd) + '</div>' +
           '<div class="v2-tc-hl-sub">Since ' + fmtDate(dates[0]) + ' · ' + beatHTML + '</div>' +
         '</div>' +
@@ -13091,9 +13100,10 @@ function v2RenderTrackerChartHTML(d){
             '<stop offset="60%" stop-color="#2970ff" stop-opacity="0.08"/>' +
             '<stop offset="100%" stop-color="#2970ff" stop-opacity="0"/>' +
           '</linearGradient>' +
-          // Heavy glow filter for the hero line (drives the premium look)
-          '<filter id="v2-tc-line-glow" x="-20%" y="-50%" width="140%" height="200%">' +
-            '<feGaussianBlur stdDeviation="6" result="blur"/>' +
+          // Soft glow for the hero line — subtle, not neon (a faint blurred
+          // copy behind the crisp stroke gives depth without the fuzzy look)
+          '<filter id="v2-tc-line-glow" x="-20%" y="-60%" width="140%" height="220%">' +
+            '<feGaussianBlur stdDeviation="2.5" result="blur"/>' +
             '<feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>' +
           '</filter>' +
           // Tighter glow for endpoint dot
