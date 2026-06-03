@@ -378,19 +378,19 @@ tr:hover td{background:rgba(245,166,35,.06)}
 /* New sector map cards */
 /* Sector Map cards — same premium card surface as the rest of the
    dashboard so the whole site reads with one brand voice. */
-.sm-card{background:#ffffff;border:1px solid rgba(10,10,10,.07);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:10px;transition:transform .2s, box-shadow .2s, border-color .2s;box-shadow:0 1px 0 rgba(255,255,255,.9) inset, 0 1px 2px rgba(10,10,10,.04), 0 12px 32px -20px rgba(245,166,35,.18)}
-.sm-card:hover{transform:translateY(-2px);box-shadow:0 1px 0 rgba(255,255,255,.9) inset, 0 1px 2px rgba(10,10,10,.04), 0 20px 44px -22px rgba(245,166,35,.30);border-color:rgba(245,166,35,.18)}
-.sm-card:hover{border-color:rgba(245,166,35,.35);box-shadow:0 4px 16px rgba(0,0,0,.08)}
+.sm-card{background:#ffffff;border:1px solid rgba(10,10,10,.07);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:10px;transition:transform .2s, box-shadow .2s, border-color .2s;box-shadow:0 1px 0 rgba(255,255,255,.9) inset, 0 1px 2px rgba(10,10,10,.04), 0 12px 32px -20px rgba(0,40,120,.18)}
+.sm-card:hover{transform:translateY(-2px);box-shadow:0 1px 0 rgba(255,255,255,.9) inset, 0 1px 2px rgba(10,10,10,.04), 0 20px 44px -22px rgba(0,40,120,.30);border-color:rgba(41,112,255,.18)}
+.sm-card:hover{border-color:rgba(41,112,255,.30);box-shadow:0 4px 16px rgba(0,40,120,.10)}
 .sm-header{display:flex;flex-direction:column;gap:6px}
 .sm-title{font-size:15px;font-weight:800;color:var(--txt)}
 .sm-badges{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
-.sm-sector-badge{font-size:10px;font-weight:600;padding:2px 8px;border-radius:6px;background:rgba(245,166,35,.1);color:var(--acc2)}
+.sm-sector-badge{font-size:10px;font-weight:600;padding:2px 8px;border-radius:6px;background:rgba(41,112,255,.10);color:#0040c1}
 .sm-tier{font-size:10px;font-weight:700;padding:2px 8px;border-radius:6px}
 .tier-very-high{background:rgba(220,38,38,.1);color:#b91c1c}
 .tier-high{background:rgba(212,134,10,.1);color:#D4860A}
 .tier-mod{background:rgba(110,110,110,.1);color:#475569}
-.sm-cagr{font-size:10px;font-weight:700;padding:2px 8px;border-radius:6px;background:rgba(245,166,35,.12);color:var(--acc3)}
-.sm-mkt{font-size:10px;font-weight:600;padding:2px 8px;border-radius:6px;background:rgba(245,166,35,.12);color:var(--acc3)}
+.sm-cagr{font-size:10px;font-weight:700;padding:2px 8px;border-radius:6px;background:rgba(41,112,255,.12);color:#0040c1}
+.sm-mkt{font-size:10px;font-weight:600;padding:2px 8px;border-radius:6px;background:rgba(41,112,255,.12);color:#0040c1}
 .sm-desc{font-size:12px;color:#1f2937;line-height:1.65}
 .sm-tags{font-size:11px;color:var(--txt);display:flex;flex-wrap:wrap;gap:6px;align-items:center}
 .sm-tag{background:rgba(0,0,0,.04);border:1px solid rgba(0,0,0,.08);border-radius:6px;padding:2px 8px;font-size:10px;color:var(--muted)}
@@ -399,13 +399,13 @@ tr:hover td{background:rgba(245,166,35,.06)}
 .sm-chips{display:flex;flex-wrap:wrap;gap:4px}
 .sm-chip{font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px;background:rgba(0,0,0,.04);color:var(--txt);cursor:default}
 .sm-chip.chip-hot{background:rgba(220,38,38,.1);color:#b91c1c;border:1px solid rgba(220,38,38,.25)}
-.sm-chip.chip-more{background:rgba(245,166,35,.1);color:var(--acc3)}
+.sm-chip.chip-more{background:rgba(41,112,255,.10);color:#0040c1}
 .sm-stats{display:flex;gap:8px;align-items:center;flex-shrink:0}
 .sm-stat{font-size:10px;color:var(--muted)}
 .sm-stat.hot-stat{color:#fca5a5}
 .sm-bar-wrap{height:3px;background:rgba(0,0,0,.06);border-radius:3px;overflow:hidden}
-.sm-bar{height:100%;background:var(--grad-h);border-radius:3px;transition:width .6s ease;
-        box-shadow:0 0 6px rgba(245,166,35,.35)}
+.sm-bar{height:100%;background:linear-gradient(90deg,#2970ff 0%,#0042c5 55%,#00359e 100%);border-radius:3px;transition:width .6s ease;
+        box-shadow:0 0 6px rgba(41,112,255,.35)}
 
 /* ====== UTILITY ====== */
 .freshness{display:inline-flex;align-items:center;gap:5px;font-size:10px;color:var(--muted);
@@ -1947,24 +1947,23 @@ html.v2-dark .v2-disclaimer{background:rgba(245,166,35,.10);border-color:rgba(24
    light gradient + brand stripe as every other callout card.
    Targets the FULL-PANEL view, not the small widget on Hot List. */
 body.v2 #panel-sectors .sm-card{
-  background:linear-gradient(135deg,#ffffff 0%,#FFFFFF 35%,#FFF8E5 100%)!important;
-  border-color:#e5e7eb!important;
+  background:linear-gradient(135deg,#ffffff 0%,#ffffff 55%,#f6f9ff 100%)!important;
+  border-color:rgba(9,9,9,.07)!important;
   position:relative;overflow:hidden;
-  box-shadow:0 1px 3px rgba(10,10,10,.04);
+  box-shadow:0 1px 2px rgba(0,40,120,.08),0 10px 24px -14px rgba(0,40,120,.26);
 }
 body.v2 #panel-sectors .sm-card::before{
   content:'';position:absolute;top:0;left:0;right:0;height:2px;
   background:linear-gradient(90deg,
-    rgba(245,166,35,.55) 0%,
-    rgba(245,166,35,.65) 35%,
-    rgba(245,166,35,.55) 70%,
-    rgba(255,90,95,.45) 100%);
+    #2970ff 0%,
+    #0042c5 55%,
+    #00359e 100%);
   pointer-events:none;
   border-radius:16px 16px 0 0;
 }
 body.v2 #panel-sectors .sm-card:hover{
-  border-color:rgba(245,166,35,.35)!important;
-  box-shadow:0 8px 24px rgba(245,166,35,.10),0 2px 8px rgba(10,10,10,.06);
+  border-color:rgba(41,112,255,.30)!important;
+  box-shadow:0 8px 24px rgba(0,40,120,.12),0 2px 8px rgba(10,10,10,.06);
   transform:translateY(-2px);transition:transform .15s,box-shadow .2s,border-color .15s;
 }
 html.v2-dark body.v2 #panel-sectors .sm-card{
@@ -2119,11 +2118,11 @@ body.v2 .v2ov-card.sectors .v2ov-sector-cell{
 .v2-profile-btn{
   display:inline-flex;align-items:center;gap:6px;
   padding:6px 12px;border-radius:8px;
-  background:linear-gradient(135deg,#FFF8E5 0%,#FFF8E5 100%);
-  border:1px solid #FFE9B0;color:#15803d;font-weight:800;font-size:12px;
+  background:linear-gradient(135deg,#f6f9ff 0%,#eef4ff 100%);
+  border:1px solid rgba(41,112,255,.25);color:#0040c1;font-weight:800;font-size:12px;
   cursor:pointer;transition:all .15s;
 }
-.v2-profile-btn:hover{background:linear-gradient(135deg,#FFE9B0 0%,#FFF8E5 100%);border-color:#FFE9B0}
+.v2-profile-btn:hover{background:linear-gradient(135deg,#eef4ff 0%,#e6eefb 100%);border-color:rgba(41,112,255,.40)}
 .v2-profile-menu{
   position:absolute;top:calc(100% + 6px);right:0;
   min-width:240px;background:#fff;border:1px solid #e2e8f0;border-radius:10px;
@@ -2137,7 +2136,7 @@ body.v2 .v2ov-card.sectors .v2ov-sector-cell{
   text-align:left;cursor:pointer;color:#0f172a;
 }
 .v2-profile-opt:hover{background:#f8fafc}
-.v2-profile-opt.active{background:#FFF8E5}
+.v2-profile-opt.active{background:#eef4ff}
 .v2-profile-opt span{font-size:18px;flex-shrink:0}
 .v2-profile-opt div{display:flex;flex-direction:column;line-height:1.2}
 .v2-profile-opt strong{font-size:12.5px;font-weight:800;color:#0f172a}
@@ -2423,7 +2422,7 @@ body[data-active-profile="conservative"] .fund-row:not([data-profiles~="conserva
 }
 .v2-mp-grade{font-size:10px!important;font-weight:800!important;padding:3px 8px!important;border-radius:6px!important}
 .v2-mp-meta{font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px;letter-spacing:.01em}
-.v2-mp-meta-sec{background:#FFF8E5;color:#F5A623}
+.v2-mp-meta-sec{background:#eef4ff;color:#0040c1}
 .v2-mp-meta-up{background:#FFF3D9;color:#15803d}
 .v2-mp-meta-above{background:#f1f5f9;color:#475569;border:1px solid #cbd5e1}
 
@@ -2808,7 +2807,7 @@ body[data-active-profile="conservative"] .fund-row:not([data-profiles~="conserva
 .v2-mp-mini-stripe{position:absolute;left:0;top:3px;bottom:3px;width:3px;border-radius:2px}
 .v2-mp-mini-lbl{font-size:10px;font-weight:800;color:#475569;letter-spacing:.02em;text-transform:uppercase}
 .v2-mp-mini-chg{font-size:12px;font-weight:900;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
-.v2-mp-mini-chg .v2-mp-up{color:#D4860A}
+.v2-mp-mini-chg .v2-mp-up{color:#16a34a}
 .v2-mp-mini-chg .v2-mp-dn{color:#dc2626}
 html.v2-dark .v2-mp-mini{background:#1f2937;border-color:#374151}
 html.v2-dark .v2-mp-mini-lbl{color:#cbd5e1}
@@ -3039,7 +3038,7 @@ html.v2-dark .v2-mp-mini-lbl{color:#cbd5e1}
 .v2-brf-head{max-width:980px;margin:0 auto 22px;padding:0 4px}
 /* Briefings eyebrow → violet to match the meta-label color rhythm
    established elsewhere (sets up secondary brand accent). */
-.v2-brf-eyebrow{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#F5A623}
+.v2-brf-eyebrow{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#15803d}
 .v2-brf-title{font-size:24px;font-weight:900;letter-spacing:-.02em;color:#0f172a;margin-top:4px}
 .v2-brf-sub{font-size:13px;color:#64748b;font-weight:500;margin-top:6px;line-height:1.55;max-width:680px}
 .v2-brf-loading{padding:60px 0;text-align:center;color:#94a3b8;font-size:13px}
@@ -3071,7 +3070,7 @@ html.v2-dark .v2-mp-mini-lbl{color:#cbd5e1}
   background:none;border:none;font-family:inherit;padding:6px 8px;border-radius:6px;
   transition:background .15s;margin-bottom:16px;
 }
-.v2-brf-back:hover{background:#FFF8E5}
+.v2-brf-back:hover{background:#f6f9ff}
 .v2-brf-d-hero{
   background:linear-gradient(180deg,#FFF8E5 0%,#FFF8E5 100%);
   border:1px solid rgba(245,166,35,.22);border-left:4px solid #15803d;border-radius:10px;
@@ -3175,7 +3174,7 @@ html.v2-dark .v2-mp-mini-lbl{color:#cbd5e1}
   box-shadow:0 1px 2px rgba(10,10,10,.03);
 }
 .v2-brf-q-sect-head{display:flex;align-items:center;gap:10px;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid #f1f5f9}
-.v2-brf-q-sect-icon{font-size:18px;line-height:1;width:32px;height:32px;border-radius:8px;background:#FFF8E5;display:inline-flex;align-items:center;justify-content:center}
+.v2-brf-q-sect-icon{font-size:18px;line-height:1;width:32px;height:32px;border-radius:8px;background:#eef4ff;display:inline-flex;align-items:center;justify-content:center}
 .v2-brf-q-sect-h{font-size:14px;font-weight:800;color:#0f172a;letter-spacing:-.015em}
 .v2-brf-q-sect-bullets{margin:0;padding:0;list-style:none}
 .v2-brf-q-sect-bullets li{
@@ -3822,13 +3821,13 @@ body.v2 .sm-bar{background:#f1f5f9!important}
 body.v2 .sm-bar > div,
 body.v2 .sm-bar-fill,
 body.v2 .sm-fill{
-  background:linear-gradient(90deg,#15803d,#F5A623,#FFC75F)!important;
+  background:linear-gradient(90deg,#2970ff,#0042c5,#00359e)!important;
 }
 body.v2 .sm-cagr,
 body.v2 .sm-tam,
 body.v2 .sm-cat,
 body.v2 .sm-chip{
-  background:#FFF8E5!important;color:#15803d!important;border-color:transparent!important;
+  background:rgba(41,112,255,.10)!important;color:#0040c1!important;border-color:transparent!important;
 }
 
 /* (17) TOP HUNTS / MODEL PORTFOLIO PANEL — tracker card chrome
@@ -3836,8 +3835,8 @@ body.v2 .sm-chip{
 body.v2 #panel-model .perf-pos,
 body.v2 #panel-model .since-entry,
 body.v2 #panel-model [class*="since-entry"]{
-  background:linear-gradient(135deg,#FFF8E5,#FFF3D9)!important;
-  border-color:rgba(245,166,35,.30)!important;color:#0f172a!important;
+  background:linear-gradient(135deg,#f6f9ff,#eef4ff)!important;
+  border-color:rgba(41,112,255,.30)!important;color:#0f172a!important;
 }
 /* Factor-profile bars stay their SEMANTIC traffic-light colours
    (kelly green / amber / red) emitted by the JS render. Earlier
@@ -3855,15 +3854,14 @@ body.v2 #panel-model [class*="since-entry"]{
    so the 2px stripe clips cleanly to the card's rounded corners
    (was peeking past the corners before). */
 body.v2 #panel-model div[onclick^="openStockModal"][style*="border-radius:14px"]{
-  background:linear-gradient(135deg,#ffffff 0%,#FFFFFF 35%,#FFF8E5 100%)!important;
+  background:linear-gradient(135deg,#ffffff 0%,#ffffff 55%,#f6f9ff 100%)!important;
   position:relative;
   overflow:hidden!important;
 }
 body.v2 #panel-model div[onclick^="openStockModal"][style*="border-radius:14px"]::before{
   content:'';position:absolute;top:0;left:0;right:0;height:2px;
   background:linear-gradient(90deg,
-    rgba(245,166,35,.55) 0%,rgba(245,166,35,.65) 35%,
-    rgba(245,166,35,.55) 70%,rgba(255,90,95,.45) 100%);
+    #2970ff 0%,#0042c5 55%,#00359e 100%);
   pointer-events:none;z-index:2;
 }
 
@@ -3879,8 +3877,8 @@ body.v2 #panel-model div[onclick^="openStockModal"] span[style*="font-size:18px"
 /* SINCE ENTRY highlight box — subtle indigo-tinted bg (this stays the
    one indigo accent on the card; the big number inside goes semantic) */
 body.v2 #panel-model div[onclick^="openStockModal"] div[style*="border-radius:10px"][style*="padding:10px 14px"]{
-  background:linear-gradient(135deg,#FFF8E5 0%,#FFF3D9 60%,#FFE9B0 100%)!important;
-  border:1px solid rgba(245,166,35,.25)!important;
+  background:linear-gradient(135deg,#f6f9ff 0%,#eef4ff 60%,#e6eefb 100%)!important;
+  border:1px solid rgba(41,112,255,.22)!important;
   box-shadow:none!important;
 }
 
@@ -3891,7 +3889,7 @@ body.v2 #panel-model div[onclick^="openStockModal"] div[style*="font-size:26px"]
   background:none!important;
   -webkit-background-clip:initial!important;background-clip:initial!important;
   -webkit-text-fill-color:initial!important;
-  color:#D4860A!important;
+  color:#15803d!important;
 }
 body.v2 #panel-model div[onclick^="openStockModal"] div[style*="font-size:26px"][style*="font-weight:900"][style*="color:#dc2626"],
 body.v2 #panel-model div[onclick^="openStockModal"] div[style*="font-size:26px"][style*="font-weight:900"][style*="color:#b91c1c"]{
@@ -3908,20 +3906,20 @@ body.v2 #panel-model div[onclick^="openStockModal"] div[style*="border-radius:10
 /* Live factor profile panel — subtle off-white gradient instead
    of flat #fafbfc */
 body.v2 #panel-model div[onclick^="openStockModal"] div[style*="background:#fafbfc"]{
-  background:linear-gradient(135deg,#FFFFFF 0%,#FFF8E5 60%,#FFF8E5 100%)!important;
-  border:1px solid rgba(245,166,35,.18)!important;
+  background:linear-gradient(135deg,#ffffff 0%,#f6f9ff 60%,#f6f9ff 100%)!important;
+  border:1px solid rgba(41,112,255,.16)!important;
 }
 body.v2 #panel-model div[onclick^="openStockModal"] div[style*="background:#f1f5f9"][style*="border-bottom"]{
-  background:linear-gradient(90deg,rgba(245,166,35,.08),rgba(245,166,35,.04))!important;
-  color:#15803d!important;font-weight:800!important;
+  background:linear-gradient(90deg,rgba(41,112,255,.08),rgba(41,112,255,.04))!important;
+  color:#0040c1!important;font-weight:800!important;
 }
 
 /* 'Still tracked / Exit / Watching' decision chip — paint with the
    v2 indigo gradient instead of the original green tint */
 body.v2 #panel-model div[onclick^="openStockModal"] div[style*="background:#FFF3D9"][style*="border-radius:10px"][style*="padding:10px 12px"],
 body.v2 #panel-model div[onclick^="openStockModal"] div[style*="background:#FFF3D9"][style*="border-radius:10px"][style*="padding:10px 12px"]{
-  background:linear-gradient(135deg,#FFF8E5 0%,#FFF3D9 60%,#FFE9B0 100%)!important;
-  border-color:rgba(245,166,35,.30)!important;
+  background:linear-gradient(135deg,rgba(22,163,74,.10) 0%,rgba(22,163,74,.06) 100%)!important;
+  border-color:rgba(22,163,74,.30)!important;
 }
 body.v2 #panel-model div[onclick^="openStockModal"] div[style*="background:#FFF3D9"][style*="border-radius:10px"][style*="padding:10px 12px"] div,
 body.v2 #panel-model div[onclick^="openStockModal"] div[style*="background:#FFF3D9"][style*="border-radius:10px"][style*="padding:10px 12px"] div{
@@ -3941,7 +3939,7 @@ body.v2 *[style*="color:#15803d"]:not(.pos):not(.up):not(.green):not(.kpi-chg):n
 body.v2 *[style*="background:rgba(212,134,10"]:not(.v2ov-tl-tag):not(.beat),
 body.v2 *[style*="background:rgba(245,166,35"]:not(.v2ov-tl-tag):not(.beat),
 body.v2 *[style*="background:rgba(21,128,61"]:not(.v2ov-tl-tag):not(.beat){
-  background-color:rgba(245,166,35,.10)!important;
+  background-color:rgba(41,112,255,.10)!important;
 }
 
 /* ════════════════════════════════════════════════════════════════
@@ -3985,25 +3983,25 @@ body.v2 .v2ov-kpi.hot5::before{display:none!important}
    TIER label, the most important pill on the card. */
 body.v2 .rating-strong,
 body.v2 .v2-pick-tier{
-  background:linear-gradient(135deg,#F5A623 0%,#F5A623 30%,#FFC75F 55%,#F5A623 100%)!important;
+  background:linear-gradient(135deg,#16a34a 0%,#15803d 60%,#15803d 100%)!important;
   color:#fff!important;
   border:none!important;
-  box-shadow:0 2px 8px rgba(245,166,35,.30)!important;
+  box-shadow:0 2px 8px rgba(22,163,74,.30)!important;
   text-shadow:0 1px 1px rgba(10,10,10,.10);
 }
 
-/* SECONDARY (indigo outline, no fill) — Quality tier + Score N
-   pills. Same colour family but visibly lighter weight. */
+/* SECONDARY (blue outline, no fill) — Quality tier + Score N
+   pills. Brand blue, visibly lighter weight than the green TIER pill. */
 body.v2 .rating-buy{
-  background:rgba(245,166,35,.06)!important;
-  color:#15803d!important;
-  border:1px solid rgba(245,166,35,.35)!important;
+  background:rgba(41,112,255,.08)!important;
+  color:#0040c1!important;
+  border:1px solid rgba(41,112,255,.35)!important;
   box-shadow:none!important;
 }
 body.v2 #panel-model span[style*="background:rgba(212,134,10,.1)"]{
-  background:rgba(245,166,35,.06)!important;
-  color:#15803d!important;
-  border:1px solid rgba(245,166,35,.30)!important;
+  background:rgba(41,112,255,.08)!important;
+  color:#0040c1!important;
+  border:1px solid rgba(41,112,255,.30)!important;
   box-shadow:none!important;
   text-shadow:none!important;
 }
@@ -4024,9 +4022,9 @@ body.v2 #panel-model span[style*="background:rgba(75,75,75,.08)"]{
    'success' signal: 'Above analyst target' pill, 'Still tracked'
    panel, etc. */
 body.v2 #panel-model span[style*="background:rgba(21,128,61,.08)"]{
-  background:#FFF3D9!important;
-  color:#D4860A!important;
-  border:1px solid rgba(212,134,10,.45)!important;
+  background:rgba(22,163,74,.10)!important;
+  color:#15803d!important;
+  border:1px solid rgba(22,163,74,.40)!important;
   box-shadow:none!important;
   text-shadow:none!important;
   font-weight:700!important;
@@ -4037,20 +4035,20 @@ body.v2 #panel-model span[style*="background:rgba(21,128,61,.08)"]{
      'Watching'                 = amber (caution)
      'Exit'                     = red (already handled inline)   */
 body.v2 #panel-model div[onclick^="openStockModal"] div[style*="background:#FFF3D9"][style*="border-radius:10px"][style*="padding:10px 12px"]{
-  background:linear-gradient(135deg,#FFF3D9 0%,#FFE9B0 100%)!important;
-  border-color:rgba(212,134,10,.40)!important;
-  box-shadow:0 1px 4px rgba(212,134,10,.10)!important;
+  background:linear-gradient(135deg,rgba(22,163,74,.10) 0%,rgba(22,163,74,.06) 100%)!important;
+  border-color:rgba(22,163,74,.40)!important;
+  box-shadow:0 1px 4px rgba(22,163,74,.10)!important;
 }
 body.v2 #panel-model div[onclick^="openStockModal"] div[style*="background:#FFF3D9"][style*="border-radius:10px"][style*="padding:10px 12px"] div{
-  color:#D4860A!important;
+  color:#15803d!important;
   font-weight:800!important;
 }
 body.v2 #panel-model div[onclick^="openStockModal"] div[style*="background:#FFF3D9"][style*="border-radius:10px"][style*="padding:10px 12px"]{
-  background:linear-gradient(135deg,#FFF3D9 0%,#FFE9B0 100%)!important;
-  border-color:rgba(212,134,10,.30)!important;
+  background:linear-gradient(135deg,rgba(22,163,74,.10) 0%,rgba(22,163,74,.06) 100%)!important;
+  border-color:rgba(22,163,74,.30)!important;
 }
 body.v2 #panel-model div[onclick^="openStockModal"] div[style*="background:#FFF3D9"][style*="border-radius:10px"][style*="padding:10px 12px"] div{
-  color:#D4860A!important;
+  color:#15803d!important;
 }
 
 body.v2 .conf.hi{color:#15803d!important}
@@ -12226,7 +12224,7 @@ function _modelViewToggle(active) {
     `<button onclick="showModelView('${key}')"
        style="padding:5px 12px;border:none;cursor:pointer;font-weight:700;
               font-size:11.5px;letter-spacing:.02em;font-family:inherit;
-              background:${active===key?'#D4860A':'transparent'};
+              background:${active===key?'#0040c1':'transparent'};
               color:${active===key?'#fff':'#64748b'};
               border-radius:6px;
               transition:all .15s">
@@ -12536,7 +12534,7 @@ function renderModelPortfolio(data) {
       // so it actually stands out in the card header (was getting lost
       // in the previous light-green gradient).
       const newBadge = isRecentAdd
-        ? `<span style="display:inline-flex;align-items:center;gap:3px;padding:3px 10px;border-radius:5px;background:#0f172a;color:#F5A623;font-size:11px;font-weight:900;letter-spacing:.1em;line-height:1.2">✨ NEW</span>`
+        ? `<span style="display:inline-flex;align-items:center;gap:3px;padding:3px 10px;border-radius:5px;background:#0040c1;color:#fff;font-size:11px;font-weight:900;letter-spacing:.1em;line-height:1.2">✨ NEW</span>`
         : '';
 
       // ── Tier badge: shows which strictness tier this pick passed ─────────
@@ -12547,7 +12545,7 @@ function renderModelPortfolio(data) {
       const tierBadge = (tier === 1)
         ? `<span title="Tier 1 Premium: Alpha Score ≥80 AND ≥20% analyst upside" style="font-size:9px;font-weight:800;letter-spacing:.06em;padding:2px 6px;border-radius:5px;background:rgba(21,128,61,.12);color:#15803d;border:1px solid rgba(21,128,61,.25)">PREMIUM</span>`
         : (tier === 2)
-        ? `<span title="Tier 2 Strong: Alpha Score ≥75 AND ≥15% analyst upside" style="font-size:9px;font-weight:800;letter-spacing:.06em;padding:2px 6px;border-radius:5px;background:rgba(212,134,10,.1);color:#F5A623;border:1px solid rgba(212,134,10,.2)">STRONG</span>`
+        ? `<span title="Tier 2 Strong: Alpha Score ≥75 AND ≥15% analyst upside" style="font-size:9px;font-weight:800;letter-spacing:.06em;padding:2px 6px;border-radius:5px;background:rgba(41,112,255,.10);color:#0040c1;border:1px solid rgba(41,112,255,.25)">STRONG</span>`
         : (tier === 3)
         ? `<span title="Tier 3 Eligible: top Grade A pick to fill out the 20-stock portfolio" style="font-size:9px;font-weight:800;letter-spacing:.06em;padding:2px 6px;border-radius:5px;background:rgba(110,110,110,.1);color:#475569;border:1px solid rgba(110,110,110,.2)">ELIGIBLE</span>`
         : '';
@@ -12557,8 +12555,8 @@ function renderModelPortfolio(data) {
       const tone = (decision && decision.tone) || 'holding';
       const toneStyle = {
         exit:     {bg:'#fee2e2', bdr:'#f87171', fg:'#991b1b', icon:''},
-        trailing: {bg:'#FFF3D9', bdr:'#FFE9B0', fg:'#166534', icon:''},
-        holding:  {bg:'#FFF3D9', bdr:'#FFE9B0', fg:'#166534', icon:''},
+        trailing: {bg:'rgba(22,163,74,.10)', bdr:'rgba(22,163,74,.35)', fg:'#166534', icon:''},
+        holding:  {bg:'rgba(22,163,74,.10)', bdr:'rgba(22,163,74,.35)', fg:'#166534', icon:''},
         watching: {bg:'#FFF3D9', bdr:'#FFC75F', fg:'#9E6308', icon:''},
       }[tone] || {bg:'#f1f5f9', bdr:'#cbd5e1', fg:'#0f172a', icon:''};
 
@@ -12585,15 +12583,15 @@ function renderModelPortfolio(data) {
         // on the number itself. Border carries the identity, number
         // carries the status: two layers of meaning, not one wash.
         const pn = [
-          ['Momentum',  p.pillars.momentum,           'Recent price action — 1m/3m gains, distance above SMA-50.',           '#F5A623', '#FFF8E5'],
-          ['Growth',    p.pillars.growth,             'Revenue + EPS growth YoY.',                                            '#F5A623', '#FFF8E5'],
-          ['Quality',   p.pillars.quality,            'Gross margin, FCF margin, debt/equity.',                               '#FFC75F', '#FFF8E5'],
-          ['Valuation', p.pillars.valuation,          'PEG, P/E, price vs analyst target.',                                   '#F5A623', '#FFF8E5'],
-          ['Sentiment', p.pillars.sentiment,          'Analyst recs, insider buys, social mentions.',                         '#F5A623', '#FFF8E5'],
-          ['Outlook',   p.pillars.growth_potential,   'Analyst gap + DCF-implied CAGR.',                                      '#d97706', '#FFF3D9'],
+          ['Momentum',  p.pillars.momentum,           'Recent price action — 1m/3m gains, distance above SMA-50.',           '#0040c1', '#eef4ff'],
+          ['Growth',    p.pillars.growth,             'Revenue + EPS growth YoY.',                                            '#0040c1', '#eef4ff'],
+          ['Quality',   p.pillars.quality,            'Gross margin, FCF margin, debt/equity.',                               '#2970ff', '#eef4ff'],
+          ['Valuation', p.pillars.valuation,          'PEG, P/E, price vs analyst target.',                                   '#0040c1', '#eef4ff'],
+          ['Sentiment', p.pillars.sentiment,          'Analyst recs, insider buys, social mentions.',                         '#0040c1', '#eef4ff'],
+          ['Outlook',   p.pillars.growth_potential,   'Analyst gap + DCF-implied CAGR.',                                      '#2970ff', '#eef4ff'],
         ];
         const passCount = pn.filter(([_, v]) => v >= 50).length;
-        const dot = passCount >= 5 ? '#D4860A' : passCount >= 4 ? '#d97706' : '#dc2626';
+        const dot = passCount >= 5 ? '#16a34a' : passCount >= 4 ? '#f5a623' : '#dc2626';
         // Compact 3-col heatmap — pillar identity (border + bg tint) +
         // value-based number color (green if strong, amber mid, red weak)
         const cells = pn.map(([name, v, tip, idColor, idBg]) => {
