@@ -4803,8 +4803,48 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 #ts-drawer .dr-stat .v.mono{font-family:'JetBrains Mono',monospace;font-size:15px}
 #ts-drawer .dr-stat .v.up{color:var(--up)}
 #ts-drawer .dr-stat .v.dn{color:var(--down)}
-#ts-drawer .dr-body{padding:18px 24px 30px;display:flex;flex-direction:column;gap:20px}
-#ts-drawer .dr-sec-t{font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--grey);font-weight:700;margin-bottom:11px}
+#ts-drawer .dr-body{padding:16px 22px 26px;display:flex;flex-direction:column;gap:14px}
+#ts-drawer .dr-sec{margin:0}
+#ts-drawer .dr-sec-t{font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--grey);font-weight:700;margin-bottom:9px}
+/* ── THE CALL — premium verdict card ── */
+#ts-drawer .dr-call{border-radius:16px;padding:15px 16px}
+#ts-drawer .dr-call-pos{background:linear-gradient(125deg,rgba(22,163,74,.12),rgba(22,163,74,.025));border:1px solid rgba(22,163,74,.30)}
+#ts-drawer .dr-call-buy{background:linear-gradient(125deg,rgba(41,112,255,.11),rgba(41,112,255,.025));border:1px solid rgba(41,112,255,.28)}
+#ts-drawer .dr-call-neu{background:linear-gradient(125deg,#FFF8E8,#fffdf7);border:1px solid #FFE2A8}
+#ts-drawer .dr-call-neg{background:linear-gradient(125deg,rgba(234,56,76,.10),rgba(234,56,76,.025));border:1px solid rgba(234,56,76,.30)}
+#ts-drawer .dr-call-top{display:flex;align-items:center;gap:13px}
+#ts-drawer .dr-call-badge{flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;width:60px;height:60px;border-radius:14px;background:#fff;border:1px solid var(--hair);box-shadow:0 5px 13px -6px rgba(0,40,120,.28)}
+#ts-drawer .dr-call-badge .n{font-family:'JetBrains Mono',monospace;font-weight:800;font-size:26px;line-height:1;color:#0040c1}
+#ts-drawer .dr-call-badge .l{font-size:8px;font-weight:800;letter-spacing:.13em;color:var(--grey);margin-top:3px}
+#ts-drawer .dr-call-v{min-width:0;flex:1}
+#ts-drawer .dr-call-stars{display:block;font-size:12px;letter-spacing:1px;line-height:1}
+#ts-drawer .dr-call-tier{display:block;font-size:19px;font-weight:800;letter-spacing:-.015em;line-height:1.12;margin-top:2px}
+#ts-drawer .dr-call-px{display:block;margin-top:4px;font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700;color:var(--grey-2)}
+#ts-drawer .dr-call-px b.up{color:var(--up)} #ts-drawer .dr-call-px b.dn{color:var(--down)}
+#ts-drawer .dr-call-pos .dr-call-tier,#ts-drawer .dr-call-pos .dr-call-stars{color:#15803d}
+#ts-drawer .dr-call-buy .dr-call-tier,#ts-drawer .dr-call-buy .dr-call-stars{color:#0040c1}
+#ts-drawer .dr-call-neu .dr-call-tier,#ts-drawer .dr-call-neu .dr-call-stars{color:#b4780a}
+#ts-drawer .dr-call-neg .dr-call-tier,#ts-drawer .dr-call-neg .dr-call-stars{color:#b91c1c}
+#ts-drawer .dr-call-thesis{font-size:12.5px;line-height:1.5;color:var(--ink-2);font-weight:500;margin-top:11px}
+#ts-drawer .dr-call-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:11px}
+#ts-drawer .dr-cc{font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:800;padding:5px 9px;border-radius:8px;letter-spacing:.01em;background:#fff;border:1px solid var(--hair);color:var(--ink-2)}
+#ts-drawer .dr-cc.cc-up{color:#15803d;border-color:rgba(22,163,74,.32);background:rgba(22,163,74,.07)}
+#ts-drawer .dr-cc.cc-dn{color:#b91c1c;border-color:rgba(220,38,38,.32);background:rgba(220,38,38,.07)}
+#ts-drawer .dr-cc.cc-blue{color:#0040c1;border-color:rgba(41,112,255,.32);background:rgba(41,112,255,.07)}
+#ts-drawer .dr-cc.cc-val{color:var(--cc,#b4780a);border-color:rgba(180,120,10,.32);background:rgba(245,166,35,.10)}
+/* ── compact six-pillar grid ── */
+#ts-drawer .dr-pillars-c{display:grid;grid-template-columns:1fr 1fr;gap:9px 18px}
+#ts-drawer .dr-pc-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px}
+#ts-drawer .dr-pc-n{font-size:11.5px;color:var(--ink-2);font-weight:600}
+#ts-drawer .dr-pc-v{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:800;color:var(--ink)}
+#ts-drawer .dr-pc.w .dr-pc-v{color:#b4780a}
+#ts-drawer .dr-pc-bar{display:block;height:5px;border-radius:99px;background:#e7edf5;overflow:hidden}
+#ts-drawer .dr-pc-fill{display:block;height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,#2970ff,#0040c1);transition:width .6s cubic-bezier(.2,.7,.3,1)}
+#ts-drawer .dr-pc.w .dr-pc-fill{background:linear-gradient(90deg,#f7b733,#e08600)}
+/* ── compact analyst line ── */
+#ts-drawer .dr-analyst{font-size:12px;color:var(--ink-2);font-weight:600;background:#FFF6E0;border:1px solid #FFD98A;border-radius:11px;padding:9px 13px;display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+#ts-drawer .dr-analyst b{color:var(--ink);font-family:'JetBrains Mono',monospace;font-weight:800}
+#ts-drawer .dr-analyst .dot{opacity:.4}
 /* Direction B — "Expand to full analysis" CTA */
 #ts-drawer .dr-expand{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;
   font-family:inherit;font-size:14px;font-weight:800;color:#fff;border:0;cursor:pointer;
@@ -15888,53 +15928,64 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     const tgt=parseFloat(t.target_mean||t.target_price||0);
     const days2e=parseInt(t.days_to_earnings);
 
-    const pillarsHTML=pl.map((v,i)=> v==null?'':
-      '<div class="pillar '+(v<65?'w':'')+'"><span class="pn">'+PILLAR_LABELS[i]+'</span><span class="pt"><span class="pf" data-w="'+v+'"></span></span><span class="pv">'+v+'</span></div>'
-    ).join('');
-
     const earnAlert=(!isNaN(days2e)&&days2e>=0&&days2e<=14)
       ? '<div class="earn-alert '+(days2e<=3?'urgent':'soon')+'">'+(days2e<=3?'🔴':'🟡')+' Earnings in <strong>'+days2e+'d</strong></div>' : '';
 
-    const valRows=[];
-    if(tgt>0||!isNaN(up)) valRows.push('<div class="val-row"><span><span class="lbl">📊 Target:</span> <b>'+(tgt>0?fmtP(tgt):'—')+'</b></span><span><span class="lbl">Upside:</span> <b class="'+pCls(up)+'">'+(isNaN(up)?'—':fmtPct(up))+'</b></span></div>');
-    if(vv) valRows.push('<div class="val-row val-div"><span><span class="lbl">💰 Valuation:</span> <b style="color:'+vv.color+'">'+vv.verdict+'</b></span></div>');
-    if(rd&&(rd.impliedGrowth!=null||rd.actualGrowth!=null)) valRows.push('<div class="val-row '+(vv?'':'val-div')+'"><span class="lbl">📈 Growth bar:</span><span>'+(rd.impliedGrowth!=null?'<b>'+rd.impliedGrowth.toFixed(0)+'%</b> implied':'')+(rd.actualGrowth!=null?' · <b>'+rd.actualGrowth.toFixed(0)+'%</b> actual':'')+'</span></div>');
-    const valPanel=valRows.length?'<div class="val-panel">'+valRows.join('')+'</div>':'';
+    // ── THE CALL — lead with the decision ──────────────────────────────
+    const grade=(t.grade||'').toUpperCase();
+    const TIER={A:['★★★★★','Strong Outperform'],B:['★★★★','Outperform'],C:['★★★','Neutral'],D:['★★','Lagging'],F:['★','Avoid']}[grade]||['','No call yet'];
+    const tone=({A:'pos',B:'buy',C:'neu',D:'neg',F:'neg'})[grade]||'neu';
+    const thesis=(t.rationale?t.rationale.replace(/^💡\s*/,''):((kt&&kt.text)||''));
+    const ccUp = !isNaN(up) ? '<span class="dr-cc '+(up>=0?'cc-up':'cc-dn')+'">'+(up>=0?'▲':'▼')+' '+Math.abs(up).toFixed(0)+'% upside</span>' : '';
+    const ccVal = vv ? '<span class="dr-cc cc-val" style="--cc:'+vv.color+'">💰 '+escHTML(vv.verdict)+'</span>' : '';
+    const ccRs = rs>0 ? '<span class="dr-cc cc-blue">RS '+rs+'</span>' : '';
+    const ccInst = isBlueDot(t) ? '<span class="dr-cc cc-blue">● Inst. accum</span>' : '';
+    const callCard=
+      '<div class="dr-call dr-call-'+tone+'">'+
+        '<div class="dr-call-top">'+
+          '<div class="dr-call-badge"><span class="n">'+pop+'</span><span class="l">ALPHA</span></div>'+
+          '<div class="dr-call-v"><span class="dr-call-stars">'+TIER[0]+'</span><span class="dr-call-tier">'+TIER[1]+'</span>'+
+            '<span class="dr-call-px">'+fmtP(parseFloat(t.price||0))+' <b class="'+(chg>=0?'up':'dn')+'">'+fmtPct(chg)+'</b></span></div>'+
+        '</div>'+
+        (thesis?'<div class="dr-call-thesis">'+escHTML(thesis)+'</div>':'')+
+        '<div class="dr-call-chips">'+ccUp+ccVal+ccRs+ccInst+'</div>'+
+      '</div>';
 
-    const rsBadge=rs>0?'<span class="rs-badge '+(rs>=90?'rs-gold':rs>=70?'rs-green':'')+'">Relative Strength <span class="rs-num">'+rs+'</span>/99</span>':'';
-    const blueDot=isBlueDot(t)?'<span class="bd-wrap"><span class="bd-dot"></span>Institutional Accumulation</span>':'';
-    const badges=(rsBadge||blueDot)?'<div class="badges">'+rsBadge+blueDot+'</div>':'';
+    // compact six-pillar grid (2 columns)
+    const pillarsC=pl.map((v,i)=> v==null?'' :
+      '<div class="dr-pc'+(v<65?' w':'')+'"><div class="dr-pc-top"><span class="dr-pc-n">'+PILLAR_LABELS[i]+'</span><span class="dr-pc-v">'+v+'</span></div>'+
+      '<span class="dr-pc-bar"><span class="dr-pc-fill pf" data-w="'+v+'"></span></span></div>'
+    ).join('');
+    const pillarsBlock=pillarsC?'<div class="dr-sec"><div class="dr-sec-t">Six pillars</div><div class="dr-pillars-c">'+pillarsC+'</div></div>':'';
+
+    // compact analyst line (target + growth)
+    const anParts=[];
+    if(tgt>0) anParts.push('🎯 Target <b>'+fmtP(tgt)+'</b>');
+    if(rd&&rd.impliedGrowth!=null&&rd.actualGrowth!=null) anParts.push('Growth <b>'+rd.impliedGrowth.toFixed(0)+'%</b>→<b>'+rd.actualGrowth.toFixed(0)+'%</b>');
+    const analystLine=anParts.length?'<div class="dr-analyst">'+anParts.join('<span class="dot">·</span>')+'</div>':'';
 
     const sigs=(t.signals||[]).filter(s=>!/earnings|eps.in|days.to.earn/i.test(s));
-    const sigHTML=sigs.length?'<div><div class="dr-sec-t">Signals</div><div class="sig-wrap">'+sigChips(sigs)+'</div></div>':'';
-    const riskHTML=flags.length?'<div><div class="dr-sec-t">Risk flags</div><div class="risk-wrap">'+flags.map(f=>'<span class="risk-chip risk-'+f.level+'">'+escHTML(f.label)+'</span>').join('')+'</div></div>':'';
-    const rationale=t.rationale?'<div><div class="dr-sec-t">Model rationale</div><p class="dr-thesis">💡 '+escHTML(t.rationale.replace(/^💡\s*/,''))+'</p></div>':'';
+    const sigHTML=sigs.length?'<div class="dr-sec"><div class="dr-sec-t">Signals</div><div class="sig-wrap">'+sigChips(sigs)+'</div></div>':'';
+    const riskHTML=flags.length?'<div class="dr-sec"><div class="dr-sec-t">Risk flags</div><div class="risk-wrap">'+flags.map(f=>'<span class="risk-chip risk-'+f.level+'">'+escHTML(f.label)+'</span>').join('')+'</div></div>':'';
     const srcLabel=(DATA&&DATA.__src==='fixture')?'Fixture snapshot':'Live data';
 
     drawer.innerHTML=
       '<div class="dr-head"><div class="dr-top">'+logoHTML(t.ticker,'lg')+
-        '<div><div class="dr-tic">'+escHTML(t.ticker)+'</div><div class="dr-name">'+escHTML(t.name||'')+'</div></div>'+
-        '<button class="dr-close" id="tsDrClose" aria-label="Close">×</button></div>'+
-        '<div class="dr-stats">'+
-          '<div class="dr-stat"><div class="k">Alpha</div><div class="v alpha">'+pop+'</div></div>'+
-          '<div class="dr-stat"><div class="k">Price</div><div class="v mono">'+fmtP(parseFloat(t.price||0))+'</div></div>'+
-          '<div class="dr-stat"><div class="k">Today</div><div class="v mono '+(chg>=0?'up':'dn')+'">'+fmtPct(chg)+'</div></div>'+
-        '</div>'+
-      '</div>'+
+        '<div class="dr-id"><div class="dr-tic">'+escHTML(t.ticker)+'</div><div class="dr-name">'+escHTML(t.name||'')+'</div></div>'+
+        '<button class="dr-close" id="tsDrClose" aria-label="Close">×</button></div></div>'+
       '<div class="dr-body">'+
         earnAlert+
-        '<div class="kt-banner '+kt.cls+'">'+kt.icon+' '+escHTML(kt.text)+'</div>'+
-        (pillarsHTML?'<div><div class="dr-sec-t">Six pillars</div>'+pillarsHTML+'</div>':'')+
-        (valPanel?'<div><div class="dr-sec-t">Valuation &amp; analyst view</div>'+valPanel+'</div>':'')+
-        badges+
-        rationale+
+        callCard+
+        ((kt&&kt.text)?'<div class="kt-banner '+kt.cls+'">'+kt.icon+' '+escHTML(kt.text)+'</div>':'')+
+        pillarsBlock+
+        analystLine+
         sigHTML+
         riskHTML+
         '<button class="dr-expand" onclick="tsExpandToFull(\''+escHTML(t.ticker)+'\')">'+
           '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>'+
           'Expand to full analysis</button>'+
         '<div class="dr-expand-sub">Financials · technicals · estimates · peers · AI deep-dive</div>'+
-        '<div style="font-family:\'JetBrains Mono\',monospace;font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--grey-3);text-align:center;margin-top:4px">'+srcLabel+' · educational only</div>'+
+        '<div style="font-family:\'JetBrains Mono\',monospace;font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--grey-3);text-align:center;margin-top:2px">'+srcLabel+' · educational only</div>'+
       '</div>';
     drawer.classList.add('open'); drawer.setAttribute('aria-hidden','false'); scrim.classList.add('open');
     const cl=document.getElementById('tsDrClose'); if(cl) cl.addEventListener('click',closeDrawer);
