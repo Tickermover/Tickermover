@@ -786,7 +786,7 @@ table.ssx-h2h tbody td.self{color:var(--ink);font-weight:600}
 /* Subtle glow on filter/toolbar inputs when focused */
 .filters input:focus,.filters select:focus,
 .fd-toolbar input:focus,.fd-toolbar select:focus{
-  border-color:var(--acc);box-shadow:0 0 0 2px rgba(245,166,35,.18)}
+  border-color:#2970ff;box-shadow:0 0 0 2px rgba(41,112,255,.18)}
 
 /* IBD Blue Dot — Lime Green */
 .bd-wrap{background:rgba(245,166,35,.08);border-color:rgba(245,166,35,.3)}
@@ -1358,29 +1358,29 @@ table.ssx-h2h tbody td.self{color:var(--ink);font-weight:600}
 .fund-list th{background:rgba(255,255,255,.9);padding:10px 12px;text-align:left;font-weight:700;color:#374151;
   font-size:11px;text-transform:uppercase;letter-spacing:.5px;cursor:pointer;white-space:nowrap;
   border-bottom:2px solid #e2e8f0;position:sticky;top:0;position:relative;user-select:none}
-.fund-list th:hover{color:#15803d}
+.fund-list th:hover{color:#0040c1}
 /* Card-style rows — no left-edge brand stripe (was visible lime green) */
 .fund-list td{padding:10px 12px;background:#ffffff;vertical-align:middle;white-space:nowrap;
   border-bottom:5px solid #f1f5f9}
 /* Column resizer handle */
 .col-resizer{position:absolute;right:0;top:0;bottom:0;width:5px;cursor:col-resize;
   background:transparent;z-index:1}
-.col-resizer:hover,.col-resizer.resizing{background:rgba(245,166,35,.5)}
+.col-resizer:hover,.col-resizer.resizing{background:rgba(41,112,255,.5)}
 .fund-list tr.fund-row{cursor:pointer;transition:all .15s}
-.fund-list tr.fund-row:hover td{background:#f8fafc;border-color:#e2e8f0}
-.fund-list tr.fund-row:hover .fl-tic{color:#15803d}
-.fl-tic{font-weight:900;color:var(--hot);font-size:14px;text-shadow:none}
+.fund-list tr.fund-row:hover td{background:#f6f9ff;border-color:#e2e8f0}
+.fund-list tr.fund-row:hover .fl-tic{color:#0040c1}
+.fl-tic{font-weight:900;color:#0f172a;font-size:14px;text-shadow:none}
 /* Tighten the Name column so we recover ~80px for the right-side columns
    (Mkt Cap / P/E / Upside) that were getting cut off. */
 .fund-list td:nth-child(3){max-width:200px;width:200px;overflow:hidden;text-overflow:ellipsis}
 .fl-name{color:#374151;font-size:12px;max-width:200px;overflow:hidden;text-overflow:ellipsis;
   white-space:nowrap;display:inline-block;vertical-align:middle}
-.fl-pop{font-size:15px;font-weight:900;color:var(--gold)}
+.fl-pop{font-size:15px;font-weight:900;color:#0040c1}
 .fl-grade{display:inline-block;padding:3px 8px;border-radius:8px;font-size:10px;font-weight:800}
 .fl-open-btn{display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:3px 9px;
-  border-radius:7px;background:rgba(245,166,35,.12);border:1px solid rgba(245,166,35,.35);
-  color:var(--acc2);cursor:pointer;transition:all .15s;white-space:nowrap}
-.fl-open-btn:hover{background:rgba(245,166,35,.22);border-color:var(--acc);color:var(--acc2)}
+  border-radius:7px;background:rgba(41,112,255,.10);border:1px solid rgba(41,112,255,.30);
+  color:#0040c1;cursor:pointer;transition:all .15s;white-space:nowrap}
+.fl-open-btn:hover{background:rgba(41,112,255,.18);border-color:#2970ff;color:#0040c1}
 
 /* ====== STOCK DETAIL MODAL — center popup ====== */
 .stock-modal-overlay{
@@ -3802,12 +3802,18 @@ body.v2 .rating[class*="buy"]{
 body.v2 .fl-grade.grade-a,
 body.v2 .fl-grade.grade-A,
 body.v2 .fl-grade[class*="grade-a" i]{
-  background:linear-gradient(135deg,#15803d,#F5A623)!important;color:#fff!important;
+  background:linear-gradient(135deg,#2970ff,#0040c1)!important;color:#fff!important;
 }
-body.v2 .fl-score{color:#15803d!important}
-body.v2 .fl-pop{color:#15803d!important}
+body.v2 .fl-score{color:#0040c1!important}
+body.v2 .fl-pop{color:#0040c1!important}
 body.v2 table th{color:#0f172a!important}
-body.v2 .fund-list tbody tr:hover td{background:rgba(245,166,35,.06)!important}
+body.v2 .fund-list tbody tr:hover td{background:rgba(41,112,255,.05)!important}
+/* Quality (B) rating pill → brand blue in the universe table (matches the
+   On-the-Radar grade scheme: A green · B blue · C amber · D/F red). Scoped
+   to #panel-fund so the shared .rating-buy elsewhere is untouched. */
+#panel-fund .fl-grade.rating-buy{
+  background:rgba(41,112,255,.10)!important;color:#0040c1!important;border:1.5px solid rgba(41,112,255,.45)!important;
+}
 
 /* (16) SECTOR-MAP PANEL (the full-page view, not the widget) —
         progress bars and 'X stocks N hot' chrome chrome */
@@ -4049,17 +4055,18 @@ body.v2 #panel-model div[onclick^="openStockModal"] div[style*="background:#FFF3
 
 body.v2 .conf.hi{color:#15803d!important}
 
-/* Universe panel container: gradient background to match the v2
-   callouts elsewhere. Was plain white before. */
+/* Universe panel container: soft brand-blue tinted surface to match the
+   /app cards. Was an amber gradient before. */
 body.v2 .fund-list-wrap{
-  background:linear-gradient(135deg,#ffffff 0%,#FFFFFF 35%,#FFF8E5 100%)!important;
+  background:linear-gradient(135deg,#ffffff 0%,#ffffff 55%,#f6f9ff 100%)!important;
   border-radius:14px;
-  border:1px solid #e5e7eb;
+  border:1px solid rgba(9,9,9,.07);
+  box-shadow:0 1px 2px rgba(0,40,120,.08),0 10px 24px -14px rgba(0,40,120,.26)!important;
 }
 body.v2 #panel-fund .filters,
 body.v2 #panel-fund .fd-toolbar{
-  background:linear-gradient(135deg,#ffffff 0%,#FFFFFF 70%,#FFF8E5 100%)!important;
-  border:1px solid #e5e7eb;border-radius:12px;
+  background:linear-gradient(135deg,#ffffff 0%,#ffffff 70%,#f6f9ff 100%)!important;
+  border:1px solid rgba(9,9,9,.07);border-radius:12px;
 }
 html.v2-dark body.v2 .fund-list-wrap{
   background:linear-gradient(135deg,#0A0A0A 0%,#141414 60%,#1A1A1A 100%)!important;
