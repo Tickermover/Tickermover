@@ -4805,7 +4805,7 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 #ts-drawer .dr-stat .v.dn{color:var(--down)}
 #ts-drawer .dr-body{padding:18px 24px 30px;display:flex;flex-direction:column;gap:20px}
 #ts-drawer .dr-sec-t{font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--grey);font-weight:700;margin-bottom:11px}
-/* Direction B — "Expand to full analysis" CTA + the sheet's grow-from-drawer anim */
+/* Direction B — "Expand to full analysis" CTA */
 #ts-drawer .dr-expand{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;
   font-family:inherit;font-size:14px;font-weight:800;color:#fff;border:0;cursor:pointer;
   padding:13px 16px;border-radius:13px;background:linear-gradient(135deg,#2970ff 0%,#0042c5 55%,#00359e 100%);
@@ -4813,9 +4813,33 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 #ts-drawer .dr-expand:hover{transform:translateY(-1px);box-shadow:0 14px 28px -8px rgba(0,64,193,.6)}
 #ts-drawer .dr-expand:active{transform:translateY(0)}
 #ts-drawer .dr-expand-sub{margin-top:-15px;text-align:center;font-size:11px;font-weight:600;color:var(--grey-2);letter-spacing:.01em}
-.ssx-overlay.from-drawer .ssx-sheet{animation:ssxGrowFromDrawer .5s cubic-bezier(.34,0,.18,1);transform-origin:100% 20%}
-@keyframes ssxGrowFromDrawer{from{transform:translateX(20%) scaleX(.45) scaleY(.94);opacity:.25}to{transform:none;opacity:1}}
-@media(prefers-reduced-motion:reduce){.ssx-overlay.from-drawer .ssx-sheet{animation:none}}
+
+/* Direction B — drawer expands IN PLACE into a wide, centered sheet */
+#ts-drawer.expanded{top:14px;height:calc(100vh - 14px);border-radius:18px 18px 0 0;
+  box-shadow:0 30px 90px -30px rgba(0,40,120,.55);transform-origin:right center;
+  animation:drGrow .46s cubic-bezier(.34,0,.18,1)}
+@keyframes drGrow{from{transform:translateX(16%) scaleX(.5);opacity:.35}to{transform:none;opacity:1}}
+@media(prefers-reduced-motion:reduce){#ts-drawer.expanded{animation:none}}
+/* tabs strip (visible only when expanded) */
+#ts-drawer .dr-tabs{display:flex;gap:4px;overflow-x:auto;margin-top:16px;scrollbar-width:none}
+#ts-drawer .dr-tabs::-webkit-scrollbar{display:none}
+#ts-drawer:not(.expanded) .dr-tabs{display:none}
+#ts-drawer .dr-tab{flex:none;font-family:inherit;font-size:12.5px;font-weight:700;color:var(--grey-2);background:none;
+  border:1px solid transparent;border-radius:9px;padding:8px 14px;cursor:pointer;white-space:nowrap}
+#ts-drawer .dr-tab.on{background:linear-gradient(135deg,#2970ff,#0040c1);color:#fff;box-shadow:0 4px 10px -3px rgba(0,64,193,.3)}
+#ts-drawer .dr-tab:not(.on):hover{background:var(--surf-3);color:var(--ink)}
+/* the full-picture deep section */
+#ts-drawer .dr-deep{display:flex;flex-direction:column;gap:14px}
+#ts-drawer .dr-deep-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(228px,1fr));gap:14px}
+#ts-drawer .dr-deep-card{background:#fff;border:1px solid var(--hair);border-radius:14px;padding:16px 18px;box-shadow:0 1px 2px rgba(0,40,120,.06)}
+#ts-drawer .dr-deep-card h4{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:15px;margin-bottom:10px;color:var(--ink)}
+#ts-drawer .dr-deep-card .kv{display:flex;justify-content:space-between;font-size:12.5px;padding:6px 0;border-bottom:1px solid #f1f5f9}
+#ts-drawer .dr-deep-card .kv:last-child{border:0}
+#ts-drawer .dr-deep-card .kv .k{color:var(--grey-2)}
+#ts-drawer .dr-deep-card .kv .v{font-family:'JetBrains Mono',monospace;font-weight:700}
+#ts-drawer .dr-back{align-self:flex-start;font-family:inherit;font-size:13px;font-weight:700;color:var(--grey-2);
+  background:#fff;border:1px solid var(--hair);border-radius:11px;padding:10px 16px;cursor:pointer}
+#ts-drawer .dr-back:hover{background:var(--surf-3);color:var(--ink)}
 #ts-drawer .mono{font-family:'JetBrains Mono',monospace}
 #ts-drawer .up{color:var(--up)} #ts-drawer .dn{color:var(--down)} #ts-drawer .pos{color:var(--up)} #ts-drawer .neg{color:var(--down)}
 #ts-drawer .kt-banner{display:flex;align-items:center;gap:8px;padding:9px 13px;border-radius:10px;font-size:12.5px;font-weight:700}
@@ -10868,12 +10892,6 @@ function closeStockSheet(){
   if(o) o.classList.remove('open');
   document.body.style.overflow='';
   if(location.hash.startsWith('#stock-')){ try{ history.back(); }catch(e){} }
-  // Direction B: if this sheet was expanded from the radar quick-look, collapse
-  // back to that drawer instead of dropping the user on the page.
-  if(window._ssxFromDrawer){
-    const tk=window._ssxFromDrawer; window._ssxFromDrawer=null;
-    if(typeof window.tsOpenDrawer==='function') setTimeout(()=>window.tsOpenDrawer(tk), 70);
-  }
 }
 window.addEventListener('popstate', function(){
   if(!location.hash.startsWith('#stock-')){
@@ -15925,19 +15943,62 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     _selRow=document.querySelector('#picksTable [data-tic="'+CSS.escape(t.ticker)+'"]');
     if(_selRow) _selRow.classList.add('sel');
   }
-  function closeDrawer(){ drawer.classList.remove('open'); drawer.setAttribute('aria-hidden','true'); scrim.classList.remove('open'); if(_selRow){_selRow.classList.remove('sel');_selRow=null;} }
-  /* Direction B — expand the quick-look into the full tabbed sheet. The sheet
-     grows from the drawer's right edge (one-surface feel) and remembers it came
-     from the drawer, so closing it collapses back to the quick-look. */
+  function closeDrawer(){ tsCollapseDrawer(); drawer.classList.remove('open'); drawer.setAttribute('aria-hidden','true'); scrim.classList.remove('open'); if(_selRow){_selRow.classList.remove('sel');_selRow=null;} }
+  /* ── Direction B — expand the quick-look IN PLACE ──────────────────────────
+     The drawer itself grows into a wide, centered sheet and reveals "the full
+     picture" cards below the summary; "Back to summary" collapses it again. */
+  function _fpNum(t,keys){ for(const k of keys){ const n=parseFloat(t[k]); if(!isNaN(n)) return n; } return null; }
+  function _fpKV(k,v){ return (v==null||v==='')?'':'<div class="kv"><span class="k">'+k+'</span><span class="v">'+v+'</span></div>'; }
+  function buildFullPicture(t){
+    const F=(v,suf,dp)=>v==null?null:(v.toFixed(dp==null?1:dp)+(suf||''));
+    const pe=_fpNum(t,['pe_ratio','forward_pe','forwardPE']), peg=_fpNum(t,['peg_ratio','pegRatio']),
+      ps=_fpNum(t,['ps_ratio','price_to_sales']), pb=_fpNum(t,['pb_ratio','price_to_book']), ev=_fpNum(t,['ev_ebitda','ev_to_ebitda']);
+    const gm=_fpNum(t,['gross_margin']), nm=_fpNum(t,['profit_margin','net_margin']), fm=_fpNum(t,['fcf_margin']), om=_fpNum(t,['operating_margin']), rg=_fpNum(t,['revenue_growth_yoy']);
+    const rs=_rsMap[t.ticker]||_fpNum(t,['rs_rating','rs']), rsi=_fpNum(t,['rsi_14','rsi']), sma=_fpNum(t,['sma_50','ma_50']), beta=_fpNum(t,['beta']), atr=_fpNum(t,['atr_14']);
+    const na=_fpNum(t,['total_analysts','analyst_count','numAnalystOpinions']), tm=_fpNum(t,['target_mean','street_target']), tl=_fpNum(t,['target_low']), th=_fpNum(t,['target_high']), px=parseFloat(t.price);
+    const upside=(px&&tm)?((tm-px)/px*100):null, rgPct=rg!=null?(Math.abs(rg)<=2?rg*100:rg):null;
+    const card=(title,rows)=> rows.filter(Boolean).length?'<div class="dr-deep-card"><h4>'+title+'</h4>'+rows.filter(Boolean).join('')+'</div>':'';
+    return '<div class="dr-sec-t" style="margin-top:2px">The full picture</div><div class="dr-deep-grid">'+
+      card('Profitability &amp; growth',[ _fpKV('Gross margin',F(gm,'%')),_fpKV('Operating margin',F(om,'%')),_fpKV('Net margin',F(nm,'%')),_fpKV('FCF margin',F(fm,'%')),_fpKV('Revenue YoY',rgPct!=null?'<span class="'+(rgPct>=0?'up':'dn')+'">'+(rgPct>=0?'+':'')+rgPct.toFixed(0)+'%</span>':null) ])+
+      card('Valuation multiples',[ _fpKV('P/E (fwd)',F(pe)),_fpKV('PEG',F(peg,'',2)),_fpKV('P/S',F(ps)),_fpKV('P/B',F(pb)),_fpKV('EV/EBITDA',F(ev)) ])+
+      card('Technicals',[ _fpKV('RS rating',rs!=null?Math.round(rs):null),_fpKV('RSI (14)',rsi!=null?Math.round(rsi):null),_fpKV('50-day MA',sma!=null?'$'+sma.toFixed(2):null),_fpKV('ATR (14)',atr!=null?'$'+atr.toFixed(2):null),_fpKV('Beta',F(beta,'',2)) ])+
+      card('Analyst estimates',[ _fpKV('# Analysts',na!=null?Math.round(na):null),_fpKV('Mean target',tm!=null?'$'+tm.toFixed(2):null),_fpKV('Range',(tl!=null&&th!=null)?'$'+tl.toFixed(0)+' – $'+th.toFixed(0):null),_fpKV('Upside',upside!=null?'<span class="'+(upside>=0?'up':'dn')+'">'+(upside>=0?'+':'')+upside.toFixed(1)+'%</span>':null) ])+
+    '</div>';
+  }
+  const DR_TABS=['Overview','Financials','Valuation','Technicals','Estimates','News','Peers'];
   function tsExpandToFull(ticker){
-    window._ssxFromDrawer = ticker;
-    const ov=document.getElementById('ssx-overlay');
-    if(ov){ ov.classList.add('from-drawer'); setTimeout(()=>{ if(ov) ov.classList.remove('from-drawer'); }, 560); }
-    if(typeof window.openStockSheet==='function') window.openStockSheet(ticker);
-    closeDrawer();
+    const t=_byTicker[(ticker||'').toUpperCase()]; if(!t) return;
+    if(drawer.classList.contains('expanded')) return;
+    const head=drawer.querySelector('.dr-head');
+    if(head && !drawer.querySelector('.dr-tabs')){
+      const tb=document.createElement('div'); tb.className='dr-tabs';
+      tb.innerHTML=DR_TABS.map((x,i)=>'<button class="dr-tab'+(i===0?' on':'')+'">'+x+'</button>').join('');
+      head.appendChild(tb);
+    }
+    const body=drawer.querySelector('.dr-body');
+    if(body && !drawer.querySelector('.dr-deep')){
+      const ex=body.querySelector('.dr-expand'), exs=body.querySelector('.dr-expand-sub');
+      if(ex) ex.style.display='none'; if(exs) exs.style.display='none';
+      const dd=document.createElement('div'); dd.className='dr-deep';
+      dd.innerHTML=buildFullPicture(t)+'<button class="dr-back" onclick="tsCollapseDrawer()">◂ Back to summary</button>';
+      const discl=body.lastElementChild; body.insertBefore(dd, discl);
+    }
+    const w=Math.round(Math.min(window.innerWidth*0.94,1080));
+    drawer.style.width=w+'px'; drawer.style.left='50%'; drawer.style.right='auto'; drawer.style.marginLeft=(-w/2)+'px';
+    drawer.classList.add('expanded'); drawer.scrollTop=0;
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{ drawer.querySelectorAll('.pf').forEach(el=>{el.style.width=el.getAttribute('data-w')+'%';}); }));
+  }
+  function tsCollapseDrawer(){
+    drawer.classList.remove('expanded');
+    drawer.style.width=''; drawer.style.left=''; drawer.style.right=''; drawer.style.marginLeft='';
+    const tb=drawer.querySelector('.dr-tabs'); if(tb) tb.remove();
+    const dd=drawer.querySelector('.dr-deep'); if(dd) dd.remove();
+    const ex=drawer.querySelector('.dr-expand'), exs=drawer.querySelector('.dr-expand-sub');
+    if(ex) ex.style.display=''; if(exs) exs.style.display='';
   }
   window.tsOpenDrawer = tsOpenDrawer;
   window.tsExpandToFull = tsExpandToFull;
+  window.tsCollapseDrawer = tsCollapseDrawer;
 
   (function wireStatic(){
     const table=document.getElementById('picksTable');
