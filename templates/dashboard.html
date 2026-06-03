@@ -5087,6 +5087,22 @@ html.v2-dark body.v2 .v2-sidebar .v2-nav-item:hover svg{background:#e6efff;color
 html.v2-dark body.v2 .v2-sidebar .v2-nav-item.active{
   box-shadow:0 10px 22px -8px rgba(0,64,193,.45), inset 0 1px 0 rgba(255,255,255,.32)!important;
 }
+/* Edge bend — the active pill docks flush to the right rail wall with a smooth
+   concave fillet above and below, so it reads as connected to the content
+   surface (iOS/macOS sidebar style). */
+html.v2-dark body.v2 .v2-sidebar .v2-nav-item.active,body.v2 .v2-sidebar .v2-nav-item.active{
+  margin-right:-13px!important;padding-right:19px!important;
+  border-radius:14px 0 0 14px!important;overflow:visible;
+}
+html.v2-dark body.v2 .v2-sidebar .v2-nav-item.active::before,body.v2 .v2-sidebar .v2-nav-item.active::before{
+  content:''!important;display:block!important;position:absolute!important;
+  right:0;top:0;left:auto;bottom:auto;width:13px;height:13px;pointer-events:none;
+  background:radial-gradient(circle at left bottom, transparent 0 12px, #ffffff 12.5px)!important;
+}
+html.v2-dark body.v2 .v2-sidebar .v2-nav-item.active::after,body.v2 .v2-sidebar .v2-nav-item.active::after{
+  content:'';position:absolute;right:0;bottom:0;width:13px;height:13px;pointer-events:none;
+  background:radial-gradient(circle at left top, transparent 0 12px, #ffffff 12.5px);
+}
 /* brighter active icon tile so the current section pops */
 html.v2-dark body.v2 .v2-sidebar .v2-nav-item.active svg{
   background:rgba(255,255,255,.30);color:#fff;
