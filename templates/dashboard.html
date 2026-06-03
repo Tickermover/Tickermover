@@ -5039,6 +5039,65 @@ html.v2-dark body.v2 .v2-sidebar::before{display:none!important}
 html.v2-dark body.v2 .v2-sb-logo .name{color:#0f172a!important}
 html.v2-dark body.v2 .v2-sb-logo .name span{background:linear-gradient(90deg,#1c43a3 0%,#0040c1 100%)!important;-webkit-background-clip:text!important;background-clip:text!important;color:transparent!important;filter:none!important}
 html.v2-dark body.v2 .v2-sb-logo img{box-shadow:none!important}
+
+/* ════════ SIDEBAR — premium "architect" polish ════════════════════
+   Structured icon tiles, refined active rail, sectioned hairlines and a
+   barely-there blueprint texture so the rail reads as a crafted panel. */
+html.v2-dark body.v2 .v2-sidebar,body.v2 .v2-sidebar{
+  background:linear-gradient(180deg,#ffffff 0%,#ffffff 62%,#f3f7ff 100%)!important;
+  box-shadow:inset -1px 0 0 rgba(9,9,9,.05), inset 1px 0 0 rgba(255,255,255,.7), 18px 0 44px -28px rgba(0,40,120,.34)!important;
+}
+/* faint blueprint grid + cool corner wash — re-enables ::before (was hidden) */
+html.v2-dark body.v2 .v2-sidebar::before,body.v2 .v2-sidebar::before{
+  content:''!important;display:block!important;position:absolute;inset:0;pointer-events:none;z-index:0;opacity:1;
+  background:
+    radial-gradient(135% 48% at 0% 0%, rgba(41,112,255,.055), transparent 56%),
+    repeating-linear-gradient(0deg, rgba(9,30,80,.020) 0 1px, transparent 1px 30px),
+    repeating-linear-gradient(90deg, rgba(9,30,80,.014) 0 1px, transparent 1px 30px)!important;
+  -webkit-mask:linear-gradient(180deg,#000 0%,#000 80%,transparent 100%);
+          mask:linear-gradient(180deg,#000 0%,#000 80%,transparent 100%);
+}
+html.v2-dark body.v2 .v2-sidebar > *{position:relative;z-index:1}
+
+/* Section labels — short brand tick + tighter tracking */
+html.v2-dark body.v2 .v2-sidebar .v2-sb-section,body.v2 .v2-sidebar .v2-sb-section{
+  display:flex;align-items:center;gap:9px;color:#9aa6b6;font-size:10px;font-weight:800;letter-spacing:.14em;padding:16px 8px 8px;
+}
+html.v2-dark body.v2 .v2-sidebar .v2-sb-section::before,body.v2 .v2-sidebar .v2-sb-section::before{
+  content:'';width:14px;height:2px;border-radius:2px;flex:none;
+  background:linear-gradient(90deg,#2970ff,rgba(41,112,255,0));
+}
+
+/* Nav items — structured icon tiles + smooth hover lift */
+html.v2-dark body.v2 .v2-sidebar .v2-nav-item,body.v2 .v2-sidebar .v2-nav-item{
+  padding:7px 11px 7px 9px;border-radius:12px;gap:11px;font-weight:600;
+  transition:background .16s,color .16s,transform .16s,box-shadow .16s;
+}
+html.v2-dark body.v2 .v2-sidebar .v2-nav-item svg,body.v2 .v2-sidebar .v2-nav-item svg{
+  width:30px!important;height:30px!important;padding:7px;flex:none;border-radius:9px;
+  background:#eef2f8;color:#5d6c7b;box-shadow:inset 0 0 0 1px rgba(9,9,9,.04);
+  transition:background .16s,color .16s,box-shadow .16s,transform .16s;
+}
+html.v2-dark body.v2 .v2-sidebar .v2-nav-item:hover{transform:translateX(2px)}
+html.v2-dark body.v2 .v2-sidebar .v2-nav-item:hover svg{background:#e6efff;color:#0040c1;box-shadow:inset 0 0 0 1px rgba(41,112,255,.20)}
+html.v2-dark body.v2 .v2-sidebar .v2-nav-item.active{
+  box-shadow:0 10px 22px -8px rgba(0,64,193,.45), inset 0 1px 0 rgba(255,255,255,.32)!important;
+}
+html.v2-dark body.v2 .v2-sidebar .v2-nav-item.active svg{
+  background:rgba(255,255,255,.20);color:#fff;box-shadow:inset 0 0 0 1px rgba(255,255,255,.22)}
+html.v2-dark body.v2 .v2-sidebar .v2-nav-item.active:hover{transform:none}
+
+/* Logo — soft brand halo under the mark, refined divider */
+html.v2-dark body.v2 .v2-sb-logo,body.v2 .v2-sb-logo{border-bottom:1px solid rgba(9,9,9,.06);padding-bottom:18px;margin-bottom:2px}
+html.v2-dark body.v2 .v2-sb-logo::before,body.v2 .v2-sb-logo::before{filter:drop-shadow(0 5px 14px rgba(41,112,255,.34))!important}
+
+/* Bottom user — premium card */
+html.v2-dark body.v2 .v2-sb-bottom,body.v2 .v2-sb-bottom{border-top:1px solid rgba(9,9,9,.06)}
+html.v2-dark body.v2 .v2-sb-bottom #user-menu > div:first-child,body.v2 .v2-sb-bottom #user-menu > div:first-child{
+  background:linear-gradient(180deg,#ffffff,#f4f8ff)!important;border:1px solid rgba(9,9,9,.06)!important;border-radius:13px!important;
+  box-shadow:0 1px 2px rgba(0,40,120,.05);transition:box-shadow .16s,border-color .16s}
+html.v2-dark body.v2 .v2-sb-bottom #user-menu > div:first-child:hover{box-shadow:0 8px 20px -10px rgba(0,40,120,.30)!important;border-color:rgba(41,112,255,.22)!important}
+
 /* index pills (legacy market-pulse) — light pills, green up-value (was dark + amber) */
 html.v2-dark body.v2 .v2-mp-mini{background:#fff!important;border-color:#e2e8f0!important}
 html.v2-dark body.v2 .v2-mp-mini-lbl{color:#475569!important}
