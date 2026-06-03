@@ -3065,14 +3065,14 @@ html.v2-dark .v2-mp-mini-lbl{color:#cbd5e1}
 }
 .v2-brf-back{
   display:inline-flex;align-items:center;gap:6px;
-  font-size:13px;font-weight:700;color:#15803d;cursor:pointer;
+  font-size:13px;font-weight:700;color:#0040c1;cursor:pointer;
   background:none;border:none;font-family:inherit;padding:6px 8px;border-radius:6px;
   transition:background .15s;margin-bottom:16px;
 }
-.v2-brf-back:hover{background:#f6f9ff}
+.v2-brf-back:hover{background:#eef4ff}
 .v2-brf-d-hero{
-  background:linear-gradient(180deg,#FFF8E5 0%,#FFF8E5 100%);
-  border:1px solid rgba(245,166,35,.22);border-left:4px solid #15803d;border-radius:10px;
+  background:linear-gradient(180deg,#ffffff 0%,#f6f9ff 100%);
+  border:1px solid rgba(9,9,9,.08);border-left:4px solid #0040c1;border-radius:10px;
   padding:18px 22px;margin-bottom:20px;
 }
 .v2-brf-d-h-tic{display:flex;align-items:center;gap:12px;margin-bottom:8px}
@@ -3091,10 +3091,10 @@ html.v2-dark .v2-mp-mini-lbl{color:#cbd5e1}
 /* ──────────────────────────────────────────────────────────────────
    Briefings — Quartr-style executive briefing redesign (v2)
    ────────────────────────────────────────────────────────────── */
-.v2-brf-quartr{max-width:1100px;margin:0 auto}
+.v2-brf-quartr{max-width:1240px;margin:0 auto}
 .v2-brf-topbar{display:flex;justify-content:flex-end;margin-bottom:14px}
 .v2-brf-topbar .v2-brf-back{margin:0}
-.v2-brf-q-grid{display:grid;grid-template-columns:1fr 240px;gap:24px;align-items:start}
+.v2-brf-q-grid{display:grid;grid-template-columns:1fr 320px;gap:24px;align-items:start}
 @media (max-width:900px){
   .v2-brf-q-grid{grid-template-columns:1fr}
   .v2-brf-topbar{justify-content:flex-start}
@@ -3104,9 +3104,9 @@ html.v2-dark .v2-mp-mini-lbl{color:#cbd5e1}
 .v2-brf-q-hero{
   display:flex;gap:16px;align-items:center;
   padding:18px 20px;border-radius:14px;
-  background:linear-gradient(135deg,#FFF8E5 0%,#FFF8E5 50%,#FFF8E5 100%);
+  background:linear-gradient(135deg,#ffffff 0%,#f6f9ff 100%);
   border:1px solid #e2e8f0;
-  box-shadow:0 1px 2px rgba(10,10,10,.04);
+  box-shadow:0 1px 2px rgba(0,40,120,.06);
   margin-bottom:18px;
 }
 .v2-brf-q-hero-logo{
@@ -3116,7 +3116,7 @@ html.v2-dark .v2-mp-mini-lbl{color:#cbd5e1}
 }
 .v2-brf-q-hero-logo img{width:100%;height:100%;object-fit:contain;padding:5px;background:#fff}
 .v2-brf-q-logo-fallback{
-  background:linear-gradient(135deg,#15803d 0%,#F5A623 100%);
+  background:linear-gradient(135deg,#2970ff 0%,#0040c1 100%);
   border:0;color:#fff;font-family:'JetBrains Mono',monospace;font-weight:800;font-size:12px;
 }
 .v2-brf-q-logo-fallback::after{content:attr(data-tic)}
@@ -3134,17 +3134,17 @@ html.v2-dark .v2-mp-mini-lbl{color:#cbd5e1}
   background:#fff;border:1px solid #e2e8f0;margin-bottom:18px;
 }
 .v2-brf-q-metrics-label{font-size:10.5px;font-weight:800;letter-spacing:.14em;color:#94a3b8;text-transform:uppercase;margin-bottom:8px}
-.v2-brf-q-metrics-pills{display:flex;flex-wrap:wrap;gap:8px}
+.v2-brf-q-metrics-pills{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px}
 .v2-brf-q-pill{
   display:inline-flex;flex-direction:column;align-items:flex-start;
-  padding:6px 12px;border-radius:10px;
-  background:#fff;border:1px solid #FFE9B0;
-  box-shadow:0 1px 2px rgba(21,128,61,.06);
+  padding:8px 12px;border-radius:10px;
+  background:#f6f9ff;border:1px solid #dbe6fb;
+  box-shadow:0 1px 2px rgba(0,40,120,.05);
   min-width:80px;
 }
 .v2-brf-q-pill-label{
   font-size:9px;font-weight:800;letter-spacing:.08em;
-  color:#15803d;text-transform:uppercase;line-height:1;
+  color:#0040c1;text-transform:uppercase;line-height:1;
 }
 .v2-brf-q-pill-val{
   font-size:13px;font-weight:800;color:#0f172a;
@@ -3155,13 +3155,13 @@ html.v2-dark .v2-mp-mini-lbl{color:#cbd5e1}
 .v2-brf-q-quote{
   position:relative;
   padding:16px 20px 16px 50px;border-radius:12px;
-  background:linear-gradient(135deg,#f8fafc 0%,#FFF8E5 100%);
-  border:1px solid #e2e8f0;border-left:3px solid #15803d;
+  background:linear-gradient(135deg,#f8fafc 0%,#eef4ff 100%);
+  border:1px solid #e2e8f0;border-left:3px solid #0040c1;
   margin-bottom:18px;
 }
 .v2-brf-q-quote-mark{
   position:absolute;left:14px;top:6px;
-  font-size:38px;font-weight:800;color:#15803d;line-height:1;font-family:Georgia,serif;
+  font-size:38px;font-weight:800;color:#0040c1;line-height:1;font-family:Georgia,serif;
 }
 .v2-brf-q-quote-text{font-size:13.5px;font-style:italic;color:#334155;line-height:1.55;font-weight:500}
 
@@ -3182,7 +3182,7 @@ html.v2-dark .v2-mp-mini-lbl{color:#cbd5e1}
 }
 .v2-brf-q-sect-bullets li:before{
   content:"";position:absolute;left:4px;top:13px;
-  width:6px;height:6px;border-radius:999px;background:#F5A623;
+  width:6px;height:6px;border-radius:999px;background:#2970ff;
 }
 
 /* Sticky right sidebar ──────────────────────────────────────── */
@@ -3199,7 +3199,7 @@ html.v2-dark .v2-mp-mini-lbl{color:#cbd5e1}
   display:inline-block;margin-top:8px;
   padding:3px 9px;border-radius:999px;
   font-size:10px;font-weight:700;letter-spacing:.05em;
-  background:#FFF8E5;color:#15803d;text-transform:uppercase;
+  background:#eef4ff;color:#0040c1;text-transform:uppercase;
 }
 .v2-brf-q-side-label{font-size:10px;font-weight:800;letter-spacing:.14em;color:#94a3b8;text-transform:uppercase;margin-bottom:10px}
 .v2-brf-q-tldr{margin:0;padding-left:18px;font-size:12px;color:#334155;line-height:1.55;font-weight:500}
@@ -3209,25 +3209,25 @@ html.v2-dark .v2-mp-mini-lbl{color:#cbd5e1}
 .v2-brf-q-cta{
   display:inline-flex;align-items:center;justify-content:center;gap:8px;
   padding:11px 14px;border-radius:10px;width:100%;
-  background:linear-gradient(135deg,#15803d 0%,#F5A623 50%,#FFC75F 100%);
+  background:linear-gradient(135deg,#2970ff 0%,#0042c5 55%,#00359e 100%);
   background-size:200% 200%;background-position:0% 50%;
   color:#fff;border:0;cursor:pointer;
   font-family:inherit;font-size:12.5px;font-weight:800;letter-spacing:-.005em;
-  box-shadow:0 6px 16px -6px rgba(255,199,95,.45);
+  box-shadow:0 6px 16px -6px rgba(0,64,193,.45);
   transition:transform .12s, box-shadow .15s, background-position .35s;
 }
-.v2-brf-q-cta:hover{transform:translateY(-1px);background-position:100% 50%;box-shadow:0 10px 22px -6px rgba(255,199,95,.55)}
+.v2-brf-q-cta:hover{transform:translateY(-1px);background-position:100% 50%;box-shadow:0 10px 22px -6px rgba(0,64,193,.55)}
 
 .v2-brf-sect{margin-bottom:22px}
 .v2-brf-sect-h{
   font-size:15px;font-weight:800;color:#0A0A0A;letter-spacing:-.01em;
-  margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid #15803d;display:inline-block;
+  margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid #0040c1;display:inline-block;
 }
 .v2-brf-sect-body{font-size:13.5px;color:#1e293b;line-height:1.65;letter-spacing:-.003em}
 .v2-brf-sect-body p{margin:0 0 10px}
 .v2-brf-quote{
   margin-top:14px;padding:12px 16px;
-  background:#FFF8E5;border-left:3px solid #15803d;border-radius:0 8px 8px 0;
+  background:#eef4ff;border-left:3px solid #0040c1;border-radius:0 8px 8px 0;
   display:flex;gap:10px;
 }
 .v2-brf-quote-mark{font-family:Georgia, serif;font-size:36px;line-height:1;color:#0040c1;font-weight:900;flex-shrink:0;align-self:flex-start;margin-top:-4px}
@@ -3257,8 +3257,8 @@ html.v2-dark .v2-mp-mini-lbl{color:#cbd5e1}
   display:flex;align-items:flex-start;justify-content:space-between;gap:10px;
   padding:20px 22px 14px;
   background:
-    radial-gradient(ellipse 80% 70% at 0% 0%, rgba(245,166,35,.10), transparent 60%),
-    radial-gradient(ellipse 60% 60% at 100% 100%, rgba(245,166,35,.08), transparent 60%),
+    radial-gradient(ellipse 80% 70% at 0% 0%, rgba(41,112,255,.10), transparent 60%),
+    radial-gradient(ellipse 60% 60% at 100% 100%, rgba(41,112,255,.07), transparent 60%),
     #fff;
 }
 .v2-tsp-eyebrow{font-size:10.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#15803d}
