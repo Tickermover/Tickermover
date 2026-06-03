@@ -1390,16 +1390,16 @@ table.ssx-h2h tbody td.self{color:#fff;font-weight:600}
 .stock-modal-panel{
   position:relative;
   width:min(760px,100%);max-height:90vh;overflow-y:auto;
-  background:#ffffff;border:1px solid rgba(245,166,35,.22);
+  background:#ffffff;border:1px solid rgba(41,112,255,.18);
   border-radius:20px;padding:30px;
   box-shadow:
     0 1px 0 rgba(255,255,255,.9) inset,
     0 24px 80px rgba(0,0,0,.22),
-    0 0 60px rgba(245,166,35,.18);
+    0 0 60px rgba(0,40,120,.16);
   animation:popIn .25s cubic-bezier(.34,1.56,.64,1)}
 .stock-modal-panel::after{
   content:"";position:absolute;top:0;left:0;right:0;height:3px;border-radius:20px 20px 0 0;
-  background:linear-gradient(90deg,#F5A623 0%,#FFC75F 40%,#FFC75F 100%);
+  background:linear-gradient(90deg,#2970ff 0%,#0042c5 60%,#00359e 100%);
   pointer-events:none;
 }
 @keyframes popIn{from{transform:scale(.88);opacity:0}to{transform:scale(1);opacity:1}}
@@ -11044,7 +11044,7 @@ function openStockModal(ticker) {
           <!-- Thermometer: shows where this stock sits on the expectations spectrum -->
           <div title="Visual scale: left = market expects little, right = market expects a lot"
                style="position:relative;height:6px;background:rgba(10,10,10,.06);border-radius:3px;overflow:hidden;margin-bottom:8px">
-            <div style="position:absolute;inset:0;width:${fillPct}%;background:linear-gradient(90deg,#FFC75F,#FFC75F,#FFC75F,#F5A623);border-radius:3px"></div>
+            <div style="position:absolute;inset:0;width:${fillPct}%;background:linear-gradient(90deg,#5DB3F1,#2970FF,#0040c1);border-radius:3px"></div>
           </div>
           <div style="font-size:12.5px;color:#0f172a;line-height:1.5">${dcf.summary}</div>
 
@@ -11101,7 +11101,7 @@ function openStockModal(ticker) {
     <!-- Latest News (collapsed on mobile) -->
     <details class="m-collapse" open><summary>📰 Latest News · last 7 days</summary><div class="m-collapse-body">
     <div id="modal-news-${t.ticker}" class="v2-news-card" style="position:relative;margin-top:14px;border:1px solid #e2e8f0;border-radius:10px;padding:12px 14px 12px 18px;background:#fff;overflow:hidden">
-      <span style="position:absolute;left:0;top:0;bottom:0;width:4px;background:linear-gradient(180deg,#15803d 0%,#F5A623 50%,#FFC75F 100%)"></span>
+      <span style="position:absolute;left:0;top:0;bottom:0;width:4px;background:linear-gradient(180deg,#5DB3F1 0%,#2970FF 50%,#0040c1 100%)"></span>
       <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px">
         <span style="font-size:13px;font-weight:800;color:#0f172a">📰 Latest News</span>
         <span style="font-size:10.5px;color:#64748b">— last 7 days</span>
@@ -11172,9 +11172,9 @@ function openStockModal(ticker) {
       locale: 'en',
       dateRange: '3M',
       colorTheme: 'light',
-      trendLineColor: '#D4860A',
-      underLineColor: 'rgba(245,166,35,0.15)',
-      underLineBottomColor: 'rgba(245,166,35,0)',
+      trendLineColor: '#2970ff',
+      underLineColor: 'rgba(41,112,255,0.15)',
+      underLineBottomColor: 'rgba(41,112,255,0)',
       isTransparent: true,
       autosize: true,
       largeChartUrl: 'https://www.tradingview.com/symbols/' + ticker + '/'
