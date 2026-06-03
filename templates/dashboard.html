@@ -5046,22 +5046,26 @@ html.v2-dark body.v2 .v2-sb-logo img{box-shadow:none!important}
 html.v2-dark body.v2 .v2-sidebar,body.v2 .v2-sidebar{
   background:linear-gradient(180deg,#ffffff 0%,#ffffff 62%,#f3f7ff 100%)!important;
   box-shadow:inset -1px 0 0 rgba(9,9,9,.05), inset 1px 0 0 rgba(255,255,255,.7), 18px 0 44px -28px rgba(0,40,120,.34)!important;
+  padding:15px 13px 14px!important;
+  overflow-y:auto!important;overflow-x:hidden!important;
 }
-/* faint blueprint grid + cool corner wash — re-enables ::before (was hidden) */
+/* cool corner wash + a barely-there blueprint dot grid (cleaner than lines —
+   reads as texture/depth, never as accidental dividers) */
 html.v2-dark body.v2 .v2-sidebar::before,body.v2 .v2-sidebar::before{
   content:''!important;display:block!important;position:absolute;inset:0;pointer-events:none;z-index:0;opacity:1;
-  background:
-    radial-gradient(135% 48% at 0% 0%, rgba(41,112,255,.055), transparent 56%),
-    repeating-linear-gradient(0deg, rgba(9,30,80,.020) 0 1px, transparent 1px 30px),
-    repeating-linear-gradient(90deg, rgba(9,30,80,.014) 0 1px, transparent 1px 30px)!important;
-  -webkit-mask:linear-gradient(180deg,#000 0%,#000 80%,transparent 100%);
-          mask:linear-gradient(180deg,#000 0%,#000 80%,transparent 100%);
+  background-image:
+    radial-gradient(135% 48% at 0% 0%, rgba(41,112,255,.05), transparent 56%),
+    radial-gradient(rgba(15,40,100,.05) 0.7px, transparent 0.8px)!important;
+  background-size:100% 100%, 22px 22px!important;
+  background-position:0 0, 1px 1px!important;
+  -webkit-mask:linear-gradient(180deg,#000 0%,#000 82%,transparent 100%);
+          mask:linear-gradient(180deg,#000 0%,#000 82%,transparent 100%);
 }
 html.v2-dark body.v2 .v2-sidebar > *{position:relative;z-index:1}
 
 /* Section labels — short brand tick + tighter tracking */
 html.v2-dark body.v2 .v2-sidebar .v2-sb-section,body.v2 .v2-sidebar .v2-sb-section{
-  display:flex;align-items:center;gap:9px;color:#9aa6b6;font-size:10px;font-weight:800;letter-spacing:.14em;padding:16px 8px 8px;
+  display:flex;align-items:center;gap:9px;color:#9aa6b6;font-size:10px;font-weight:800;letter-spacing:.14em;padding:11px 8px 6px;
 }
 html.v2-dark body.v2 .v2-sidebar .v2-sb-section::before,body.v2 .v2-sidebar .v2-sb-section::before{
   content:'';width:14px;height:2px;border-radius:2px;flex:none;
@@ -5070,11 +5074,11 @@ html.v2-dark body.v2 .v2-sidebar .v2-sb-section::before,body.v2 .v2-sidebar .v2-
 
 /* Nav items — structured icon tiles + smooth hover lift */
 html.v2-dark body.v2 .v2-sidebar .v2-nav-item,body.v2 .v2-sidebar .v2-nav-item{
-  padding:7px 11px 7px 9px;border-radius:12px;gap:11px;font-weight:600;
+  padding:6px 11px 6px 9px;border-radius:12px;gap:11px;font-weight:600;margin-bottom:1px;
   transition:background .16s,color .16s,transform .16s,box-shadow .16s;
 }
 html.v2-dark body.v2 .v2-sidebar .v2-nav-item svg,body.v2 .v2-sidebar .v2-nav-item svg{
-  width:30px!important;height:30px!important;padding:7px;flex:none;border-radius:9px;
+  width:28px!important;height:28px!important;padding:6px;flex:none;border-radius:8px;
   background:#eef2f8;color:#5d6c7b;box-shadow:inset 0 0 0 1px rgba(9,9,9,.04);
   transition:background .16s,color .16s,box-shadow .16s,transform .16s;
 }
@@ -5083,16 +5087,18 @@ html.v2-dark body.v2 .v2-sidebar .v2-nav-item:hover svg{background:#e6efff;color
 html.v2-dark body.v2 .v2-sidebar .v2-nav-item.active{
   box-shadow:0 10px 22px -8px rgba(0,64,193,.45), inset 0 1px 0 rgba(255,255,255,.32)!important;
 }
+/* brighter active icon tile so the current section pops */
 html.v2-dark body.v2 .v2-sidebar .v2-nav-item.active svg{
-  background:rgba(255,255,255,.20);color:#fff;box-shadow:inset 0 0 0 1px rgba(255,255,255,.22)}
+  background:rgba(255,255,255,.30);color:#fff;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.40), 0 2px 7px rgba(2,18,60,.16)}
 html.v2-dark body.v2 .v2-sidebar .v2-nav-item.active:hover{transform:none}
 
 /* Logo — soft brand halo under the mark, refined divider */
-html.v2-dark body.v2 .v2-sb-logo,body.v2 .v2-sb-logo{border-bottom:1px solid rgba(9,9,9,.06);padding-bottom:18px;margin-bottom:2px}
+html.v2-dark body.v2 .v2-sb-logo,body.v2 .v2-sb-logo{border-bottom:1px solid rgba(9,9,9,.06);padding-bottom:13px;margin-bottom:2px;flex:none}
 html.v2-dark body.v2 .v2-sb-logo::before,body.v2 .v2-sb-logo::before{filter:drop-shadow(0 5px 14px rgba(41,112,255,.34))!important}
 
-/* Bottom user — premium card */
-html.v2-dark body.v2 .v2-sb-bottom,body.v2 .v2-sb-bottom{border-top:1px solid rgba(9,9,9,.06)}
+/* Bottom user — premium card, pinned to the foot so it never clips */
+html.v2-dark body.v2 .v2-sb-bottom,body.v2 .v2-sb-bottom{border-top:1px solid rgba(9,9,9,.06);margin-top:auto;flex:none}
 html.v2-dark body.v2 .v2-sb-bottom #user-menu > div:first-child,body.v2 .v2-sb-bottom #user-menu > div:first-child{
   background:linear-gradient(180deg,#ffffff,#f4f8ff)!important;border:1px solid rgba(9,9,9,.06)!important;border-radius:13px!important;
   box-shadow:0 1px 2px rgba(0,40,120,.05);transition:box-shadow .16s,border-color .16s}
