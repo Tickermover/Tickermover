@@ -2123,6 +2123,36 @@ body.v2 .v2ov-card.sectors .v2ov-sector-cell{
   cursor:pointer;transition:all .15s;
 }
 .v2-profile-btn:hover{background:linear-gradient(135deg,#eef4ff 0%,#e6eefb 100%);border-color:rgba(41,112,255,.40)}
+/* ── Risk-profile switch feedback: button pulse + floating toast + a soft
+      content fade so the re-rendered picks read as a deliberate change ── */
+.v2-profile-btn.switched{animation:v2ProfilePulse .6s ease}
+@keyframes v2ProfilePulse{
+  0%{box-shadow:0 0 0 0 rgba(41,112,255,.45)}
+  70%{box-shadow:0 0 0 9px rgba(41,112,255,0)}
+  100%{box-shadow:0 0 0 0 rgba(41,112,255,0)}
+}
+.v2-profile-toast{
+  position:fixed;top:72px;left:50%;z-index:6000;
+  display:flex;align-items:center;gap:9px;
+  padding:9px 16px;border-radius:999px;
+  background:#fff;border:1px solid rgba(9,9,9,.08);
+  box-shadow:0 12px 32px -8px rgba(0,40,120,.32);
+  font-family:'Instrument Sans',system-ui,sans-serif;font-size:13px;font-weight:700;color:#0f172a;
+  pointer-events:none;white-space:nowrap;
+  transform:translate(-50%,-14px);opacity:0;
+  animation:v2ptIn .32s cubic-bezier(.2,.7,.3,1) forwards, v2ptOut .45s ease 1.55s forwards;
+}
+.v2-profile-toast .em{font-size:16px;line-height:1}
+.v2-profile-toast b{color:#0040c1}
+.v2-profile-toast .ct{font-weight:600;color:#64748b;font-size:12px}
+@keyframes v2ptIn{to{opacity:1;transform:translate(-50%,0)}}
+@keyframes v2ptOut{to{opacity:0;transform:translate(-50%,-14px)}}
+@keyframes v2ProfileFade{0%{opacity:.35;transform:translateY(5px)}100%{opacity:1;transform:none}}
+.profile-switched #panel-hot,.profile-switched #picksTable{animation:v2ProfileFade .42s cubic-bezier(.2,.7,.3,1)}
+@media(prefers-reduced-motion:reduce){
+  .v2-profile-toast,.v2-profile-btn.switched,.profile-switched #panel-hot,.profile-switched #picksTable{animation:none!important}
+  .v2-profile-toast{opacity:1;transform:translate(-50%,0)}
+}
 .v2-profile-menu{
   position:absolute;top:calc(100% + 6px);right:0;
   min-width:240px;background:#fff;border:1px solid #e2e8f0;border-radius:10px;
@@ -6803,6 +6833,7 @@ function v2CurrentProfile(){
   catch(e){ return 'aggressive'; }
 }
 function v2SetProfile(p){
+  const prev = v2CurrentProfile();
   try { localStorage.setItem('v2_profile', p); } catch(e){}
   // Flip the body attribute so CSS-based filters (Universe table) react
   // instantly without a JS re-render.
@@ -6812,6 +6843,34 @@ function v2SetProfile(p){
   if (typeof v2ClearSectorFilter === 'function') v2ClearSectorFilter();
   v2SyncProfileButton();
   if (typeof v2RerenderProfile === 'function') v2RerenderProfile();
+  // Always re-render On-the-Radar (Today's Signals + Top Picks) with the new
+  // profile. tsRerender re-runs from its own stored snapshot, so it works even
+  // if v2RerenderProfile short-circuits (e.g. _allTickerData not yet hydrated).
+  if (typeof window.tsRerender === 'function') window.tsRerender();
+  // Visible feedback so the user knows the switch took effect.
+  try { v2ProfileToast(p); } catch(e){}
+}
+/* Floating confirmation toast + button pulse on a risk-profile switch. */
+function v2ProfileToast(p){
+  const info = (typeof V2_PROFILES === 'object' && V2_PROFILES[p]) || { label:p, emoji:'•' };
+  let count = null;
+  const counts = (window.__AH_DATA__ && window.__AH_DATA__.profile_counts) || null;
+  if (counts && counts[p] != null) count = counts[p];
+  else if (window._allTickerData && typeof v2FilterByProfile === 'function') {
+    try { count = v2FilterByProfile(Object.values(window._allTickerData)).length; } catch(e){}
+  }
+  document.querySelectorAll('.v2-profile-toast').forEach(t => t.remove());
+  const el = document.createElement('div');
+  el.className = 'v2-profile-toast';
+  el.innerHTML = '<span class="em">' + info.emoji + '</span>' +
+    '<span><b>' + info.label + '</b>' + (count != null ? ' <span class="ct">· ' + count + ' stocks</span>' : '') + '</span>';
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 2200);
+  const btn = document.querySelector('.v2-profile-btn');
+  if (btn) { btn.classList.remove('switched'); void btn.offsetWidth; btn.classList.add('switched'); }
+  // Pulse the content so the re-rendered picks read as a deliberate change.
+  const scroll = document.querySelector('.v2-scroll') || document.querySelector('.main');
+  if (scroll) { scroll.classList.remove('profile-switched'); void scroll.offsetWidth; scroll.classList.add('profile-switched'); }
 }
 function v2SyncUniverseCount(){
   const el = document.getElementById('v2-nav-universe-count');
@@ -15869,8 +15928,11 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     DATA=data; ALL=data.tickers||[];
     _byTicker={}; ALL.forEach(t=>{ if(t&&t.ticker) _byTicker[t.ticker.toUpperCase()]=t; });
     computeRS(ALL);
-    renderPicks(ALL, data);
+    // Top Picks must respect the active risk profile too (was rendering from
+    // the full universe, so Conservative/Balanced/Aggressive looked identical).
+    // Fall back to ALL only if profile tagging is missing so we never blank out.
     const filtered=filterByProfile(ALL);
+    renderPicks(filtered && filtered.length ? filtered : ALL, data);
     renderSectors(filtered);
     renderSectorMomentum(filtered);
     renderMovers(filtered);
