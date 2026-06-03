@@ -209,7 +209,7 @@ table,th,td{
    speaks one editorial voice. */
 .panel-header{margin:0 0 22px;display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap}
 .panel-h-title{font-family:'Fraunces',Georgia,serif;font-weight:500;font-size:30px;color:#0A0A0A;letter-spacing:-.025em;line-height:1.1}
-.panel-h-title em{font-style:italic;color:#15803d}
+.panel-h-title em{font-style:italic;background:linear-gradient(120deg,#2970ff 0%,#0042c5 60%,#00359e 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
 .panel-h-sub{font-family:'Manrope','Inter',sans-serif;font-size:13.5px;color:#475569;margin-top:6px;font-weight:500}
 .panel-h-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 
@@ -220,21 +220,21 @@ table,th,td{
 .cta-pill{
   display:inline-flex;align-items:center;gap:8px;
   padding:11px 22px;border-radius:999px;
-  background:linear-gradient(135deg,#FFE9B0 0%,#FFC75F 50%,#F5A623 100%);
-  color:#0A0A0A;
+  background:linear-gradient(135deg,#2970ff 0%,#0042c5 55%,#00359e 100%);
+  color:#fff;
   font-family:'Manrope','Inter',sans-serif;font-weight:800;font-size:13.5px;letter-spacing:-.005em;
   text-decoration:none;border:none;cursor:pointer;
-  box-shadow:0 8px 22px -8px rgba(245,166,35,.55), 0 0 0 1px rgba(255,255,255,.18) inset;
+  box-shadow:0 8px 22px -8px rgba(0,64,193,.55), 0 0 0 1px rgba(255,255,255,.18) inset;
   transition:transform .15s, box-shadow .15s;
 }
-.cta-pill:hover{transform:translateY(-1px);box-shadow:0 12px 28px -8px rgba(245,166,35,.7), 0 0 0 1px rgba(255,255,255,.25) inset}
+.cta-pill:hover{transform:translateY(-1px);box-shadow:0 12px 28px -8px rgba(0,64,193,.7), 0 0 0 1px rgba(255,255,255,.25) inset}
 .cta-pill.compact{padding:8px 16px;font-size:12.5px}
 .cta-pill.ghost{
-  background:transparent;color:#15803d;
-  border:1.5px solid #F5A623;
+  background:transparent;color:#0040c1;
+  border:1.5px solid rgba(41,112,255,.45);
   box-shadow:none;
 }
-.cta-pill.ghost:hover{background:rgba(245,166,35,.08);box-shadow:none}
+.cta-pill.ghost:hover{background:rgba(41,112,255,.08);box-shadow:none}
 .sec-heading{font-size:17px;font-weight:800;margin-bottom:14px}
 .sec-heading span{color:var(--acc)}
 
@@ -386,8 +386,8 @@ tr:hover td{background:rgba(245,166,35,.06)}
 .sm-badges{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
 .sm-sector-badge{font-size:10px;font-weight:600;padding:2px 8px;border-radius:6px;background:rgba(41,112,255,.10);color:#0040c1}
 .sm-tier{font-size:10px;font-weight:700;padding:2px 8px;border-radius:6px}
-.tier-very-high{background:rgba(220,38,38,.1);color:#b91c1c}
-.tier-high{background:rgba(212,134,10,.1);color:#D4860A}
+.tier-very-high{background:rgba(0,64,193,.12);color:#0040c1}
+.tier-high{background:rgba(41,112,255,.10);color:#2970ff}
 .tier-mod{background:rgba(110,110,110,.1);color:#475569}
 .sm-cagr{font-size:10px;font-weight:700;padding:2px 8px;border-radius:6px;background:rgba(41,112,255,.12);color:#0040c1}
 .sm-mkt{font-size:10px;font-weight:600;padding:2px 8px;border-radius:6px;background:rgba(41,112,255,.12);color:#0040c1}
@@ -440,12 +440,12 @@ tr:hover td{background:rgba(245,166,35,.06)}
 /* ====== KEY CATALYST BANNER ====== */
 .kt-banner{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:800;
   padding:4px 10px;border-radius:7px;margin:6px 0 2px;letter-spacing:.3px;width:100%}
-.kt-beat{background:rgba(212,134,10,.12);color:#15803d;border:1px solid rgba(212,134,10,.3)}
-.kt-insider{background:rgba(245,166,35,.1);color:#F5A623;border:1px solid rgba(245,166,35,.25)}
-.kt-breakout{background:rgba(212,134,10,.1);color:#D4860A;border:1px solid rgba(212,134,10,.25)}
+.kt-beat{background:rgba(22,163,74,.12);color:#15803d;border:1px solid rgba(22,163,74,.30)}
+.kt-insider{background:rgba(41,112,255,.10);color:#0040c1;border:1px solid rgba(41,112,255,.25)}
+.kt-breakout{background:rgba(41,112,255,.10);color:#0040c1;border:1px solid rgba(41,112,255,.25)}
 .kt-social{background:rgba(220,38,38,.1);color:#b91c1c;border:1px solid rgba(220,38,38,.25)}
-.kt-momentum{background:rgba(212,134,10,.1);color:#FFC75F;border:1px solid rgba(212,134,10,.25)}
-.kt-guide{background:rgba(212,134,10,.12);color:#D4860A;border:1px solid rgba(212,134,10,.3)}
+.kt-momentum{background:rgba(41,112,255,.10);color:#0040c1;border:1px solid rgba(41,112,255,.25)}
+.kt-guide{background:rgba(41,112,255,.12);color:#0040c1;border:1px solid rgba(41,112,255,.30)}
 .kt-earnings{background:rgba(220,38,38,.1);color:#b91c1c;border:1px solid rgba(220,38,38,.25);
   animation:ers-pulse 2s ease-in-out infinite}
 /* Neutral fallback — used when no major catalyst fires, so every card keeps
@@ -653,8 +653,8 @@ table.ssx-h2h tbody td.self{color:var(--ink);font-weight:600}
 /* ====== EARNINGS DATE BADGE ====== */
 .ers-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:800;padding:3px 9px;border-radius:8px;letter-spacing:.3px;white-space:nowrap;cursor:default}
 .ers-urgent{background:rgba(220,38,38,.1);color:#b91c1c;border:1px solid rgba(220,38,38,.3);animation:ers-pulse 1.5s ease-in-out infinite}
-.ers-soon{background:rgba(212,134,10,.1);color:#D4860A;border:1px solid rgba(212,134,10,.3)}
-.ers-coming{background:rgba(245,166,35,.1);color:#D4860A;border:1px solid rgba(245,166,35,.3)}
+.ers-soon{background:rgba(41,112,255,.10);color:#0040c1;border:1px solid rgba(41,112,255,.30)}
+.ers-coming{background:rgba(41,112,255,.08);color:#2970ff;border:1px solid rgba(41,112,255,.25)}
 .ers-past{background:rgba(110,110,110,.08);color:#64748b;border:1px solid rgba(110,110,110,.18)}
 @keyframes ers-pulse{0%,100%{box-shadow:0 0 0 0 rgba(244,63,94,.45)}60%{box-shadow:0 0 0 5px rgba(244,63,94,0)}}
 /* ====== RS RATING BADGE ====== */
@@ -1599,11 +1599,11 @@ body.v2 .ticker-chip .px{color:#cbd5e1!important}
 /* User box flows just below Help & FAQ instead of being pinned all the
    way to the viewport edge (user feedback: 'move name section little up').
    A modest top margin gives it breathing room from the nav items above. */
-.v2-sb-bottom{margin-top:18px;padding-top:14px;border-top:1px solid #1f2937}
+.v2-sb-bottom{margin-top:18px;padding-top:14px;border-top:1px solid rgba(9,9,9,.08)}
 .v2-sb-bottom #auth-btn{width:100%;display:block;text-align:center;
   padding:11px 14px;border-radius:10px;
-  background:linear-gradient(135deg,#15803d,#F5A623)!important;
-  font-size:13px;font-weight:800;box-shadow:0 4px 14px rgba(245,166,35,.4)!important;
+  background:linear-gradient(135deg,#2970ff,#0040c1)!important;
+  font-size:13px;font-weight:800;box-shadow:0 4px 14px rgba(0,64,193,.4)!important;
   letter-spacing:.02em;
 }
 .v2-sb-bottom #user-menu{display:flex;width:100%;gap:6px;align-items:center;min-height:54px}
@@ -2334,8 +2334,8 @@ body.v2 .v2ov-card.sectors .v2ov-sector-cell{
   line-height:1.4;text-transform:uppercase;
 }
 .v2-tag-pro{
-  color:#fff;background:linear-gradient(135deg,#F5A623,#d97706);
-  box-shadow:0 1px 2px rgba(245,166,35,.3);
+  color:#fff;background:linear-gradient(135deg,#2970ff,#0040c1);
+  box-shadow:0 1px 2px rgba(0,64,193,.3);
 }
 .v2-tag-universe{
   color:#C7CDDA;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);
@@ -3038,7 +3038,7 @@ html.v2-dark .v2-mp-mini-lbl{color:#cbd5e1}
 .v2-brf-head{max-width:980px;margin:0 auto 22px;padding:0 4px}
 /* Briefings eyebrow → violet to match the meta-label color rhythm
    established elsewhere (sets up secondary brand accent). */
-.v2-brf-eyebrow{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#15803d}
+.v2-brf-eyebrow{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#0040c1}
 .v2-brf-title{font-size:24px;font-weight:900;letter-spacing:-.02em;color:#0f172a;margin-top:4px}
 .v2-brf-sub{font-size:13px;color:#64748b;font-weight:500;margin-top:6px;line-height:1.55;max-width:680px}
 .v2-brf-loading{padding:60px 0;text-align:center;color:#94a3b8;font-size:13px}
@@ -3052,10 +3052,10 @@ html.v2-dark .v2-mp-mini-lbl{color:#cbd5e1}
   transition:transform .12s, border-color .15s, box-shadow .15s;
   display:flex;align-items:center;gap:10px;
 }
-.v2-brf-card:hover{transform:translateY(-2px);border-color:rgba(21,128,61,.30);box-shadow:0 8px 22px -12px rgba(21,128,61,.30)}
+.v2-brf-card:hover{transform:translateY(-2px);border-color:rgba(41,112,255,.30);box-shadow:0 8px 22px -12px rgba(41,112,255,.30)}
 .v2-brf-card .v2-brf-logo{width:34px;height:34px;border-radius:8px;background:#f8fafc;border:1px solid #e2e8f0;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;padding:3px}
 .v2-brf-card .v2-brf-logo img{width:100%;height:100%;object-fit:contain}
-.v2-brf-card .v2-brf-logo .fb{font-family:'JetBrains Mono',monospace;font-weight:800;font-size:11px;color:#15803d}
+.v2-brf-card .v2-brf-logo .fb{font-family:'JetBrains Mono',monospace;font-weight:800;font-size:11px;color:#0040c1}
 .v2-brf-card-body{min-width:0;flex:1}
 .v2-brf-card-tic{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:800;letter-spacing:.01em;color:#0f172a}
 .v2-brf-card-name{font-size:11px;color:#64748b;margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -3080,13 +3080,13 @@ html.v2-dark .v2-mp-mini-lbl{color:#cbd5e1}
 .v2-brf-d-h-logo{width:42px;height:42px;border-radius:9px;background:#fff;border:1px solid #e2e8f0;display:flex;align-items:center;justify-content:center;padding:4px}
 .v2-brf-d-h-logo img{width:100%;height:100%;object-fit:contain}
 .v2-brf-d-h-text{min-width:0}
-.v2-brf-d-h-name{font-size:11px;font-weight:700;letter-spacing:.10em;text-transform:uppercase;color:#15803d}
+.v2-brf-d-h-name{font-size:11px;font-weight:700;letter-spacing:.10em;text-transform:uppercase;color:#0040c1}
 .v2-brf-d-h-co{font-size:17px;font-weight:800;color:#0f172a;letter-spacing:-.01em;margin-top:2px}
-.v2-brf-d-h-eye{font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#15803d;margin-top:14px}
+.v2-brf-d-h-eye{font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#0040c1;margin-top:14px}
 .v2-brf-d-h-title{font-size:18px;font-weight:800;color:#0f172a;letter-spacing:-.015em;margin-top:4px;line-height:1.3}
 .v2-brf-d-h-date{font-size:13px;color:#64748b;font-weight:600;margin-top:6px}
 .v2-brf-d-h-src{font-size:11px;color:#64748b;font-weight:500;margin-top:10px;padding-top:10px;border-top:1px solid #e2e8f0;letter-spacing:.01em}
-.v2-brf-d-h-src a{color:#15803d;text-decoration:none;font-weight:600}
+.v2-brf-d-h-src a{color:#0040c1;text-decoration:none;font-weight:600}
 .v2-brf-d-h-src a:hover{text-decoration:underline}
 
 /* ──────────────────────────────────────────────────────────────────
@@ -3122,10 +3122,10 @@ html.v2-dark .v2-mp-mini-lbl{color:#cbd5e1}
 }
 .v2-brf-q-logo-fallback::after{content:attr(data-tic)}
 .v2-brf-q-hero-text{min-width:0;flex:1}
-.v2-brf-q-hero-eye{font-size:10.5px;font-weight:800;letter-spacing:.14em;color:#15803d;text-transform:uppercase}
+.v2-brf-q-hero-eye{font-size:10.5px;font-weight:800;letter-spacing:.14em;color:#0040c1;text-transform:uppercase}
 .v2-brf-q-hero-title{font-size:18px;font-weight:800;color:#0f172a;letter-spacing:-.02em;line-height:1.3;margin-top:3px}
 .v2-brf-q-hero-meta{font-size:11.5px;color:#64748b;font-weight:500;margin-top:6px}
-.v2-brf-q-hero-meta a{color:#15803d;text-decoration:none;font-weight:600}
+.v2-brf-q-hero-meta a{color:#0040c1;text-decoration:none;font-weight:600}
 .v2-brf-q-hero-meta a:hover{text-decoration:underline}
 .v2-brf-q-dot{margin:0 6px;opacity:.5}
 
@@ -3194,7 +3194,7 @@ html.v2-dark .v2-mp-mini-lbl{color:#cbd5e1}
   background:#fff;border:1px solid #e2e8f0;
   box-shadow:0 1px 2px rgba(10,10,10,.03);
 }
-.v2-brf-q-side-tic{font-size:22px;font-weight:900;color:#15803d;letter-spacing:-.02em;font-family:'JetBrains Mono',monospace}
+.v2-brf-q-side-tic{font-size:22px;font-weight:900;color:#0040c1;letter-spacing:-.02em;font-family:'JetBrains Mono',monospace}
 .v2-brf-q-side-co{font-size:12px;color:#475569;font-weight:600;margin-top:2px}
 .v2-brf-q-side-sector{
   display:inline-block;margin-top:8px;
@@ -3205,7 +3205,7 @@ html.v2-dark .v2-mp-mini-lbl{color:#cbd5e1}
 .v2-brf-q-side-label{font-size:10px;font-weight:800;letter-spacing:.14em;color:#94a3b8;text-transform:uppercase;margin-bottom:10px}
 .v2-brf-q-tldr{margin:0;padding-left:18px;font-size:12px;color:#334155;line-height:1.55;font-weight:500}
 .v2-brf-q-tldr li{margin-bottom:8px}
-.v2-brf-q-tldr li::marker{color:#15803d;font-weight:800}
+.v2-brf-q-tldr li::marker{color:#0040c1;font-weight:800}
 
 .v2-brf-q-cta{
   display:inline-flex;align-items:center;justify-content:center;gap:8px;
@@ -3231,7 +3231,7 @@ html.v2-dark .v2-mp-mini-lbl{color:#cbd5e1}
   background:#FFF8E5;border-left:3px solid #15803d;border-radius:0 8px 8px 0;
   display:flex;gap:10px;
 }
-.v2-brf-quote-mark{font-family:Georgia, serif;font-size:36px;line-height:1;color:#15803d;font-weight:900;flex-shrink:0;align-self:flex-start;margin-top:-4px}
+.v2-brf-quote-mark{font-family:Georgia, serif;font-size:36px;line-height:1;color:#0040c1;font-weight:900;flex-shrink:0;align-self:flex-start;margin-top:-4px}
 .v2-brf-quote-text{font-size:13px;color:#1e293b;line-height:1.6;font-style:italic;letter-spacing:-.003em}
 .v2-brf-empty-state{
   padding:48px 24px;text-align:center;color:#475569;
@@ -3557,17 +3557,17 @@ html.v2-dark body.v2 *{scrollbar-color:#374151 transparent}
 body.v2 [style*="linear-gradient(135deg,#15803d"],
 body.v2 [style*="linear-gradient(135deg, #15803d"],
 body.v2 [style*="linear-gradient(135deg,#D4860A"]{
-  background:linear-gradient(135deg,#15803d,#F5A623)!important;
+  background:linear-gradient(135deg,#2970ff,#0040c1)!important;
 }
 
-/* 2. Brand-green box-shadow / glow — replace with indigo glow */
+/* 2. Brand-green box-shadow / glow — replace with brand-blue glow */
 body.v2 [style*="rgba(245,166,35"]{
-  box-shadow:0 4px 14px rgba(245,166,35,.35)!important;
+  box-shadow:0 4px 14px rgba(0,64,193,.30)!important;
 }
 body.v2 [style*="rgba(212,134,10,.3"],
 body.v2 [style*="rgba(212,134,10,.4"]{
   /* used as borders on member pills etc. */
-  border-color:rgba(245,166,35,.30)!important;
+  border-color:rgba(41,112,255,.30)!important;
 }
 
 /* 3. Auth modal — the existing class-based styles still default to
@@ -3576,35 +3576,35 @@ body.v2 [style*="rgba(212,134,10,.4"]{
    (Previously forced legacy green #15803d via !important, which leaked
    onto the redesigned dark modal.) */
 body.v2 .ah-submit{
-  background:linear-gradient(135deg,#FFE9B0 0%,#FFC75F 50%,#F5A623 100%)!important;
+  background:linear-gradient(135deg,#2970ff 0%,#0042c5 55%,#00359e 100%)!important;
   background-size:200% 200%!important;background-position:0% 50%!important;
-  box-shadow:0 12px 30px -10px rgba(245,166,35,.45), 0 0 0 1px rgba(255,255,255,.22) inset!important;
+  box-shadow:0 12px 30px -10px rgba(0,64,193,.45), 0 0 0 1px rgba(255,255,255,.22) inset!important;
   transition:transform .15s, box-shadow .2s, opacity .2s, background-position .35s ease!important;
 }
 body.v2 .ah-submit:hover:not(:disabled){
   background-position:100% 50%!important;
-  box-shadow:0 18px 40px -10px rgba(245,166,35,.6), 0 0 0 1px rgba(255,255,255,.28) inset!important;
+  box-shadow:0 18px 40px -10px rgba(0,64,193,.6), 0 0 0 1px rgba(255,255,255,.28) inset!important;
 }
 body.v2 .ah-field input:focus{
-  border-color:#5688EE!important;
-  box-shadow:0 0 0 3px rgba(86,136,238,.15)!important;
+  border-color:#2970ff!important;
+  box-shadow:0 0 0 3px rgba(41,112,255,.15)!important;
 }
 body.v2 .ah-opt:hover,
 body.v2 .ah-opt.sel{
-  border-color:#F5A623!important;background:rgba(245,166,35,.10)!important;
+  border-color:#2970ff!important;background:rgba(41,112,255,.10)!important;
 }
-body.v2 .ah-opt input[type=radio]{accent-color:#F5A623!important}
+body.v2 .ah-opt input[type=radio]{accent-color:#0040c1!important}
 body.v2 .ah-toggle-btn,
 body.v2 .ah-forgot:hover,
-body.v2 .tos-row a{color:#5688EE!important}
-body.v2 .ah-step-dot.on{background:linear-gradient(90deg,#FFC75F,#F5A623)!important}
-body.v2 .ah-mobile-hero-stats strong{color:#FFE9B0!important}
-body.v2 .ah-mobile-hero-logo em{color:#FFE9B0!important}
+body.v2 .tos-row a{color:#0040c1!important}
+body.v2 .ah-step-dot.on{background:linear-gradient(90deg,#2970ff,#0040c1)!important}
+body.v2 .ah-mobile-hero-stats strong{color:#9BBBFF!important}
+body.v2 .ah-mobile-hero-logo em{color:#9BBBFF!important}
 
 /* 4. Watchlist '+ Add' input focus border */
 body.v2 #watch-add-input:focus{
-  border-color:#15803d!important;
-  box-shadow:0 0 0 3px rgba(245,166,35,.12)!important;
+  border-color:#2970ff!important;
+  box-shadow:0 0 0 3px rgba(41,112,255,.15)!important;
 }
 
 /* 5. Inline text colour set to brand green — flip ONLY where the
@@ -3612,20 +3612,20 @@ body.v2 #watch-add-input:focus{
       semantic price-up green is via the .pos / .up classes which
       we leave alone. */
 body.v2 a[style*="color:#15803d"],
-body.v2 a[style*="color: #15803d"]{color:#15803d!important}
+body.v2 a[style*="color: #15803d"]{color:#0040c1!important}
 
-/* 6. Filters input/select focus border (was green) */
+/* 6. Filters input/select focus border (was green) → brand blue */
 body.v2 .filters input:focus,
 body.v2 .filters select:focus,
 body.v2 .fd-toolbar input:focus,
-body.v2 .fd-toolbar select:focus{border-color:#15803d!important}
+body.v2 .fd-toolbar select:focus{border-color:#2970ff!important}
 
 /* 7. Live-pulse 'JUST REPORTED' green badge stays — that's semantic
       (it means the company just reported, which is good news). But
       the brand-green border-bottom on the .tabs (kept hidden, but
       defensive) and any leftover '.acc' / lime accent classes
       should reflect the new theme: */
-body.v2 .tabs{border-bottom-color:rgba(245,166,35,.25)!important}
+body.v2 .tabs{border-bottom-color:rgba(41,112,255,.25)!important}
 
 /* 8. Loading state dots / spinners that used brand green */
 body.v2 .loading::after,
@@ -3662,13 +3662,13 @@ html.v2-dark body.v2 .v2ov-kpi.hot3,
 html.v2-dark body.v2 .v2ov-kpi.hot4,
 html.v2-dark body.v2 .v2ov-kpi.hot5{border-left-color:#1f2937!important}
 
-/* (2) Ticker symbols rendered in brand green — flip to indigo */
+/* (2) Ticker symbols rendered in brand green — flip to brand blue */
 body.v2 .fd-tic,
 body.v2 .fl-tic,
 body.v2 .hot-tic,
 body.v2 .tl-tic,
 body.v2 .trend-tic,
-body.v2 .kpi-tic{color:#15803d!important}
+body.v2 .kpi-tic{color:#0040c1!important}
 
 /* (3) Inline dark-green text → indigo. The :not() guards keep
        semantic green on price-up / momentum classes. */
@@ -3676,7 +3676,7 @@ body.v2 [style*="color:#15803d"]:not(.pos):not(.up):not(.green),
 body.v2 [style*="color: #15803d"]:not(.pos):not(.up):not(.green),
 body.v2 [style*="color:#D4860A"]:not(.pos):not(.up):not(.green),
 body.v2 [style*="color:#D4860A"]:not(.pos):not(.up):not(.green){
-  color:#15803d!important;
+  color:#0040c1!important;
 }
 
 /* (4) Solid green backgrounds (Top Tier pill, etc.) → indigo */
@@ -3685,7 +3685,7 @@ body.v2 [style*="background: #15803d"],
 body.v2 [style*="background:#D4860A"],
 body.v2 [style*="background-color:#15803d"],
 body.v2 [style*="background-color:#D4860A"]{
-  background-color:#15803d!important;
+  background-color:#0040c1!important;
   background-image:none!important;
 }
 
@@ -3700,7 +3700,7 @@ body.v2 [style*="background: #FFE9B0"],
 body.v2 [style*="background:#FFF8E5"],
 body.v2 [style*="background:#FFF8E5"],
 body.v2 [style*="background: #FFF8E5"]{
-  background-color:#FFF8E5!important;
+  background-color:#eef4ff!important;
   background-image:none!important;
 }
 
@@ -3714,7 +3714,7 @@ body.v2 [style*="linear-gradient(135deg, #15803d"],
 body.v2 [style*="linear-gradient(135deg,#D4860A"],
 body.v2 [style*="linear-gradient(90deg,#15803d"],
 body.v2 [style*="linear-gradient(180deg,#15803d"]{
-  background-image:linear-gradient(135deg,#FFF8E5,#FFF3D9)!important;
+  background-image:linear-gradient(135deg,#f6f9ff,#eef4ff)!important;
 }
 
 /* (7) Green border colours → indigo */
@@ -3729,16 +3729,16 @@ body.v2 [style*="border:1.5px solid rgba(245,166,35"],
 body.v2 [style*="border-left:5px solid #15803d"],
 body.v2 [style*="border-left:4px solid #15803d"],
 body.v2 [style*="border-left:3px solid #15803d"]{
-  border-color:rgba(245,166,35,.30)!important;
+  border-color:rgba(41,112,255,.30)!important;
 }
 
-/* (8) Translucent green backgrounds → translucent indigo */
+/* (8) Translucent green/amber backgrounds → translucent brand blue */
 body.v2 [style*="background:rgba(212,134,10"],
 body.v2 [style*="background-color:rgba(212,134,10"],
 body.v2 [style*="background:rgba(245,166,35"],
 body.v2 [style*="background-color:rgba(245,166,35"],
 body.v2 [style*="background:rgba(21,128,61"]{
-  background-color:rgba(245,166,35,.10)!important;
+  background-color:rgba(41,112,255,.10)!important;
 }
 
 /* (9) The 'Top Tier' / 'Quality' / 'Buy' rating pills + analyst
@@ -3754,8 +3754,8 @@ body.v2 [style*="background: #15803d; color: #fff"]{
         rule flipped strong bars to indigo — removed so the bars
         actually read as data. */
 
-/* (11) Anchor/link green underlines & primary-link colors */
-body.v2 a[style*="#15803d"]:not(.pos):not(.up){color:#15803d!important}
+/* (11) Anchor/link green underlines & primary-link colors → brand blue */
+body.v2 a[style*="#15803d"]:not(.pos):not(.up){color:#0040c1!important}
 
 /* (12) Score percentage badges and similar — anywhere a strong
         coloured chip with class indicating a positive grade has
@@ -3763,7 +3763,7 @@ body.v2 a[style*="#15803d"]:not(.pos):not(.up){color:#15803d!important}
 body.v2 .score-strong,
 body.v2 .grade-a,
 body.v2 .verdict-positive{
-  background:#15803d!important;color:#fff!important;border-color:rgba(245,166,35,.40)!important;
+  background:#15803d!important;color:#fff!important;border-color:rgba(22,163,74,.40)!important;
 }
 
 /* (13) Subtle indigo-gradient TINT on the content area so the inset
@@ -4632,7 +4632,7 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 #panel-hot .pg-meta{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 #panel-hot .meta-pill{font-weight:600;font-size:11.5px;padding:6px 11px;border-radius:var(--r-pill);background:var(--alice-2);color:var(--primary)}
 #panel-hot .meta-pill.green{background:rgba(22,163,74,.10);color:var(--up)}
-#panel-hot .meta-pill.regime{background:rgba(245,166,35,.12);color:var(--amber-2)}
+#panel-hot .meta-pill.regime{background:var(--alice-2);color:var(--primary)}
 #panel-hot .meta-pill.live{font-family:'JetBrains Mono',monospace;display:inline-flex;align-items:center;gap:7px;background:rgba(22,163,74,.10);color:var(--up)}
 #panel-hot .meta-pill.live .dot{width:6px;height:6px;border-radius:50%;background:var(--up);animation:tspulse 2s infinite}
 #panel-hot .src-banner{display:none;align-items:center;gap:8px;padding:8px 14px;border-radius:10px;font-size:12px;font-weight:600;
@@ -4724,7 +4724,7 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 #ts-drawer .kt-banner{display:flex;align-items:center;gap:8px;padding:9px 13px;border-radius:10px;font-size:12.5px;font-weight:700}
 #ts-drawer .kt-beat,#ts-drawer .kt-guide{background:rgba(22,163,74,.10);color:var(--up)}
 #ts-drawer .kt-insider,#ts-drawer .kt-momentum{background:rgba(41,112,255,.09);color:var(--primary)}
-#ts-drawer .kt-breakout,#ts-drawer .kt-social{background:rgba(245,166,35,.13);color:var(--amber-2)}
+#ts-drawer .kt-breakout,#ts-drawer .kt-social{background:rgba(41,112,255,.10);color:#0040c1}
 #ts-drawer .kt-neutral{background:var(--surf-2);color:var(--grey-2);border:1px solid var(--hair)}
 #ts-drawer .earn-alert{display:flex;align-items:center;gap:7px;padding:8px 12px;border-radius:9px;font-size:12px;font-weight:800}
 #ts-drawer .earn-alert.urgent{background:rgba(220,38,38,.10);color:var(--down);border:1px solid rgba(220,38,38,.28);animation:tsers 1.6s infinite}
@@ -4776,9 +4776,9 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 #panel-hot .ts-card-sub{font-size:11.5px;color:var(--grey);margin-top:2px}
 #panel-hot .focus-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
 #panel-hot .focus-item{border:1px solid var(--hair);border-radius:13px;padding:13px 14px;cursor:pointer;background:#fff;transition:transform .16s,box-shadow .2s,border-color .2s;position:relative;overflow:hidden}
-#panel-hot .focus-item::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--amber)}
+#panel-hot .focus-item::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--primary-2)}
 #panel-hot .focus-item.v2-focus-neg::before{background:var(--down)}
-#panel-hot .focus-item.v2-focus-kind-breakout::before{background:var(--amber)}
+#panel-hot .focus-item.v2-focus-kind-breakout::before{background:var(--primary-2)}
 #panel-hot .focus-item.v2-focus-kind-upgrade::before,
 #panel-hot .focus-item.v2-focus-kind-setup::before{background:var(--primary-2)}
 #panel-hot .focus-item.v2-focus-kind-earnings::before{background:#7c3aed}
@@ -4786,7 +4786,7 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 #panel-hot .focus-item:hover{transform:translateY(-2px);border-color:rgba(41,112,255,.4);box-shadow:0 14px 30px -18px rgba(9,20,60,.4)}
 #panel-hot .focus-label-row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:9px}
 #panel-hot .focus-label{font-family:'JetBrains Mono',monospace;font-size:9.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--grey-2)}
-#panel-hot .focus-score{font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:800;padding:2px 7px;border-radius:6px;background:rgba(245,166,35,.13);color:var(--amber-2)}
+#panel-hot .focus-score{font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:800;padding:2px 7px;border-radius:6px;background:rgba(41,112,255,.12);color:#0040c1}
 #panel-hot .focus-tic-row{display:flex;align-items:center;gap:9px;margin-bottom:8px}
 #panel-hot .focus-tic{font-weight:700;font-size:14px}
 #panel-hot .focus-name{font-size:11px;color:var(--grey);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:90px}
@@ -4838,7 +4838,7 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 #panel-hot .sm-mom-avg.up{color:var(--up)}
 #panel-hot .sm-mom-avg.dn{color:var(--down)}
 #panel-hot .banner{border-radius:16px;padding:16px 18px;border:1px solid var(--hair);background:#fff;box-shadow:var(--shadow-card)}
-#panel-hot .banner.hot{background:linear-gradient(180deg,#fff,#fff8ec);border-color:rgba(245,166,35,.3)}
+#panel-hot .banner.hot{background:linear-gradient(180deg,#fff,#eef4ff);border-color:rgba(41,112,255,.3)}
 #panel-hot .banner.dd{background:linear-gradient(180deg,#fff,#fef2f2);border-color:rgba(220,38,38,.22)}
 #panel-hot .bn-head{display:flex;align-items:center;gap:11px;margin-bottom:10px}
 #panel-hot .bn-icon{font-size:20px}
@@ -8804,9 +8804,9 @@ function revisionsVerdict(t) {
     summary = `${totalLabel}${ups} raised and ${downs} cut their next-quarter EPS forecast in the last 30 days. Sentiment is split.`;
   }
   if (net >= 3 && ups >= 2 * Math.max(downs, 1))
-    return {label:'Strongly Bullish', color:'#15803d', bg:'#FFF3D9', border:'#FFE9B0', summary};
+    return {label:'Strongly Bullish', color:'#15803d', bg:'rgba(22,163,74,.12)', border:'rgba(22,163,74,.40)', summary};
   if (net >= 1)
-    return {label:'Bullish',          color:'#D4860A', bg:'#FFF8E5', border:'#FFE9B0', summary};
+    return {label:'Bullish',          color:'#15803d', bg:'rgba(22,163,74,.10)', border:'rgba(22,163,74,.35)', summary};
   if (net <= -3 && downs >= 2 * Math.max(ups, 1))
     return {label:'Strongly Bearish', color:'#991b1b', bg:'#fee2e2', border:'#fca5a5', summary};
   if (net <= -1)
@@ -9263,7 +9263,7 @@ function insiderVerdict(t) {
     return {label:'Net Buying', color:'#15803d', bg:'#FFF3D9', border:'#FFE9B0',
             summary:`${b} buy${b>1?'s':''}, no sells (90d)`};
   if (b > s * 2)
-    return {label:'Bullish', color:'#15803d', bg:'#FFF3D9', border:'#FFE9B0',
+    return {label:'Bullish', color:'#15803d', bg:'rgba(22,163,74,.10)', border:'rgba(22,163,74,.35)',
             summary:`${b} buys vs ${s} sells (90d)`};
   if (s > b * 3)
     return {label:'Net Selling', color:'#b91c1c', bg:'#fee2e2', border:'#fca5a5',
@@ -13903,9 +13903,9 @@ function renderRegimePill(regime) {
 
   // Colour the chip by mood
   let bg, border, color;
-  if (label === 'Bullish')      { bg='#FFF3D9'; border='rgba(212,134,10,.45)';  color='#15803d'; }
+  if (label === 'Bullish')      { bg='rgba(22,163,74,.10)'; border='rgba(22,163,74,.40)';  color='#15803d'; }
   else if (label === 'Bearish') { bg='#fee2e2'; border='rgba(220,38,38,.45)';  color='#b91c1c'; }
-  else                           { bg='#FFF8E5'; border='rgba(245,166,35,.35)'; color='#D4860A'; }
+  else                           { bg='#eef4ff'; border='rgba(41,112,255,.30)'; color='#0040c1'; }
   wrap.style.background  = bg;
   wrap.style.borderColor = border;
   wrap.style.color       = color;
