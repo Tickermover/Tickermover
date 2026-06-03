@@ -2172,6 +2172,63 @@ body.v2 .v2ov-card.sectors .v2ov-sector-cell{
 .v2-profile-opt strong{font-size:12.5px;font-weight:800;color:#0f172a}
 .v2-profile-opt small{font-size:10.5px;color:#64748b;margin-top:1px}
 
+/* ───── Risk-profile Q&A modal + circular transition ───── */
+.v2-risk-overlay{position:fixed;inset:0;z-index:7000;display:none;align-items:center;justify-content:center;
+  background:rgba(9,20,50,.45);backdrop-filter:blur(5px);padding:20px}
+.v2-risk-overlay.open{display:flex;animation:v2riskFade .2s ease}
+@keyframes v2riskFade{from{opacity:0}to{opacity:1}}
+.v2-risk-modal{position:relative;width:min(560px,100%);max-height:92vh;overflow-y:auto;
+  background:linear-gradient(180deg,#ffffff 0%,#f6f9ff 100%);
+  border:1px solid rgba(9,9,9,.08);border-radius:20px;padding:28px 26px 22px;
+  box-shadow:0 30px 80px -20px rgba(0,40,120,.45);
+  font-family:'Instrument Sans',system-ui,sans-serif;
+  animation:v2riskPop .32s cubic-bezier(.34,1.56,.64,1)}
+@keyframes v2riskPop{from{transform:scale(.9) translateY(8px);opacity:0}to{transform:none;opacity:1}}
+.v2-risk-close{position:absolute;top:14px;right:14px;width:32px;height:32px;border-radius:9px;
+  border:1px solid rgba(9,9,9,.08);background:#fff;color:#64748b;font-size:15px;cursor:pointer;display:grid;place-items:center}
+.v2-risk-close:hover{background:#eef4ff;color:#0040c1}
+.v2-risk-eyebrow{font-size:10.5px;font-weight:800;letter-spacing:.16em;color:#0040c1}
+.v2-risk-title{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:25px;color:#0f172a;letter-spacing:-.01em;margin-top:3px}
+.v2-risk-title em{font-style:italic;background:linear-gradient(120deg,#2970ff,#0040c1);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
+.v2-risk-subt{font-size:13px;color:#64748b;font-weight:500;margin-top:6px;line-height:1.5}
+.v2-risk-qs{margin-top:18px;display:flex;flex-direction:column;gap:16px}
+.v2-risk-q-t{font-size:13.5px;font-weight:700;color:#0f172a;margin-bottom:8px}
+.v2-risk-opts{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+@media(max-width:520px){.v2-risk-opts{grid-template-columns:1fr}}
+.v2-risk-opt{font-family:inherit;font-size:12px;font-weight:600;color:#334155;text-align:left;
+  padding:10px 12px;border-radius:11px;border:1.5px solid rgba(9,9,9,.10);background:#fff;cursor:pointer;
+  transition:border-color .14s,background .14s,transform .1s;line-height:1.3}
+.v2-risk-opt:hover{border-color:rgba(41,112,255,.4);background:#f6f9ff}
+.v2-risk-opt.on{border-color:#0040c1;background:#eef4ff;color:#0040c1;box-shadow:0 4px 12px -6px rgba(0,64,193,.4)}
+.v2-risk-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:20px}
+.v2-risk-hint{font-size:12px;color:#94a3b8;font-weight:600}
+.v2-risk-apply{font-family:inherit;font-size:13.5px;font-weight:800;color:#fff;border:0;cursor:pointer;
+  padding:11px 20px;border-radius:11px;background:linear-gradient(135deg,#2970ff 0%,#0042c5 55%,#00359e 100%);
+  box-shadow:0 8px 20px -8px rgba(0,64,193,.55);transition:transform .12s,box-shadow .15s,opacity .15s}
+.v2-risk-apply:hover:not(:disabled){transform:translateY(-1px)}
+.v2-risk-apply:disabled{opacity:.4;cursor:not-allowed;box-shadow:none}
+.v2-risk-direct{margin-top:18px;padding-top:16px;border-top:1px solid rgba(9,9,9,.07);display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.v2-risk-direct-lbl{font-size:11.5px;font-weight:700;color:#94a3b8;width:100%;margin-bottom:2px}
+.v2-risk-chip{flex:1;min-width:150px;border:1px solid rgba(9,9,9,.08)!important;border-radius:11px!important;background:#fff!important}
+.v2-risk-chip:hover{background:#f6f9ff!important;border-color:rgba(41,112,255,.35)!important}
+/* transition view */
+#v2-risk-trans{padding:34px 10px 26px;text-align:center}
+.v2-risk-ring{width:96px;height:96px;margin:0 auto 18px;border-radius:50%;position:relative;
+  display:grid;place-items:center;
+  background:conic-gradient(#2970ff,#0042c5,#5DB3F1,#2970ff);
+  -webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 7px),#000 calc(100% - 6px));
+          mask:radial-gradient(farthest-side,transparent calc(100% - 7px),#000 calc(100% - 6px));
+  animation:v2riskSpin 1s linear infinite}
+.v2-risk-ring-emoji{position:absolute;font-size:34px;line-height:1;animation:v2riskPulse 1s ease-in-out infinite}
+@keyframes v2riskSpin{to{transform:rotate(360deg)}}
+@keyframes v2riskPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.12)}}
+.v2-risk-trans-label{font-size:17px;font-weight:800;color:#0f172a}
+.v2-risk-trans-sub{font-size:12.5px;color:#64748b;font-weight:500;margin-top:4px}
+@media(prefers-reduced-motion:reduce){
+  .v2-risk-modal,.v2-risk-overlay.open{animation:none}
+  .v2-risk-ring{animation:none}.v2-risk-ring-emoji{animation:none}
+}
+
 /* ───── Profile pilot banner ───── */
 .v2-profile-banner{
   display:flex;align-items:center;gap:10px;flex-wrap:wrap;
@@ -5172,15 +5229,40 @@ html.v2-dark body.v2 .sm-title,html.v2-dark body.v2 .sec-heading{color:#0f172a!i
 
       <div class="v2-tb-actions">
         <div class="v2-profile-picker" id="v2-profile-picker">
-          <button class="v2-profile-btn" onclick="document.getElementById('v2-profile-picker').classList.toggle('open')" title="Switch risk profile">
+          <button class="v2-profile-btn" onclick="v2OpenRiskQuiz()" title="Risk profile &amp; quiz">
             <span id="v2-profile-emoji">🚀</span>
             <span id="v2-profile-label">Aggressive</span>
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
           </button>
-          <div class="v2-profile-menu">
-            <button class="v2-profile-opt" data-profile="conservative" onclick="v2SetProfile('conservative');document.getElementById('v2-profile-picker').classList.remove('open')"><span>🛡</span><div><strong>Conservative</strong><small>Quality first · low beta</small></div></button>
-            <button class="v2-profile-opt" data-profile="balanced" onclick="v2SetProfile('balanced');document.getElementById('v2-profile-picker').classList.remove('open')"><span>⚖️</span><div><strong>Balanced</strong><small>A &amp; B grades · moderate beta</small></div></button>
-            <button class="v2-profile-opt" data-profile="aggressive" onclick="v2SetProfile('aggressive');document.getElementById('v2-profile-picker').classList.remove('open')"><span>🚀</span><div><strong>Aggressive</strong><small>Full universe · high conviction</small></div></button>
+        </div>
+
+        <!-- ── Risk profile Q&A + circular transition modal ── -->
+        <div class="v2-risk-overlay" id="v2-risk-overlay" onclick="if(event.target===this)v2CloseRiskQuiz()">
+          <div class="v2-risk-modal" role="dialog" aria-modal="true" aria-label="Risk profile quiz">
+            <button class="v2-risk-close" onclick="v2CloseRiskQuiz()" aria-label="Close">✕</button>
+            <!-- QUIZ -->
+            <div id="v2-risk-quiz">
+              <div class="v2-risk-eyebrow">RISK CHECK</div>
+              <div class="v2-risk-title">Find your <em>risk profile</em></div>
+              <div class="v2-risk-subt">Three quick questions — we’ll tune your Top Picks to match how you invest.</div>
+              <div class="v2-risk-qs" id="v2-risk-qs"></div>
+              <div class="v2-risk-foot">
+                <span class="v2-risk-hint" id="v2-risk-hint">Answer all three to continue</span>
+                <button class="v2-risk-apply" id="v2-risk-apply" disabled onclick="v2RiskApply()">See my profile →</button>
+              </div>
+              <div class="v2-risk-direct">
+                <span class="v2-risk-direct-lbl">Already know yours?</span>
+                <button class="v2-profile-opt v2-risk-chip" data-profile="conservative" onclick="v2ProfileTransition('conservative')"><span>🛡</span><div><strong>Conservative</strong><small>Quality first · low beta</small></div></button>
+                <button class="v2-profile-opt v2-risk-chip" data-profile="balanced" onclick="v2ProfileTransition('balanced')"><span>⚖️</span><div><strong>Balanced</strong><small>A &amp; B grades · moderate beta</small></div></button>
+                <button class="v2-profile-opt v2-risk-chip" data-profile="aggressive" onclick="v2ProfileTransition('aggressive')"><span>🚀</span><div><strong>Aggressive</strong><small>Full universe · high conviction</small></div></button>
+              </div>
+            </div>
+            <!-- TRANSITION -->
+            <div id="v2-risk-trans" style="display:none">
+              <div class="v2-risk-ring"><div class="v2-risk-ring-emoji" id="v2-risk-ring-emoji">⚖️</div></div>
+              <div class="v2-risk-trans-label" id="v2-risk-trans-label">Tuning your picks…</div>
+              <div class="v2-risk-trans-sub" id="v2-risk-trans-sub">Re-ranking the universe for your risk level</div>
+            </div>
           </div>
         </div>
         <!-- Compact Market Pulse — fills the space where theme toggle used to live. -->
@@ -6871,6 +6953,77 @@ function v2ProfileToast(p){
   // Pulse the content so the re-rendered picks read as a deliberate change.
   const scroll = document.querySelector('.v2-scroll') || document.querySelector('.main');
   if (scroll) { scroll.classList.remove('profile-switched'); void scroll.offsetWidth; scroll.classList.add('profile-switched'); }
+}
+
+/* ── Risk-profile Q&A quiz + circular transition ───────────────── */
+const V2_RISK_QS = [
+  { q: 'A stock you hold drops 20% in a week. You…', a: [
+      { t: 'Sell to protect capital', s: 1 },
+      { t: 'Hold and wait it out',    s: 2 },
+      { t: 'Buy more — it’s cheaper', s: 3 } ] },
+  { q: 'Right now your main goal is…', a: [
+      { t: 'Protect what I have',     s: 1 },
+      { t: 'Steady, balanced growth', s: 2 },
+      { t: 'Maximise upside',         s: 3 } ] },
+  { q: 'Your investing horizon is…', a: [
+      { t: 'Under 1 year',  s: 1 },
+      { t: '1 – 3 years',   s: 2 },
+      { t: '3+ years',      s: 3 } ] },
+];
+let _v2RiskAns = [];
+function v2OpenRiskQuiz(){
+  _v2RiskAns = [];
+  const qs = document.getElementById('v2-risk-qs');
+  if (qs) qs.innerHTML = V2_RISK_QS.map((q, i) =>
+    '<div class="v2-risk-q" data-qi="' + i + '"><div class="v2-risk-q-t">' + (i + 1) + '. ' + q.q + '</div>' +
+    '<div class="v2-risk-opts">' + q.a.map(o =>
+      '<button class="v2-risk-opt" onclick="v2RiskPick(' + i + ',' + o.s + ',this)">' + o.t + '</button>').join('') +
+    '</div></div>').join('');
+  const quiz = document.getElementById('v2-risk-quiz'); if (quiz) quiz.style.display = '';
+  const trans = document.getElementById('v2-risk-trans'); if (trans) trans.style.display = 'none';
+  const ap = document.getElementById('v2-risk-apply'); if (ap) ap.disabled = true;
+  const hint = document.getElementById('v2-risk-hint'); if (hint) hint.textContent = 'Answer all three to continue';
+  const ov = document.getElementById('v2-risk-overlay'); if (ov) ov.classList.add('open');
+}
+function v2RiskPick(qi, score, btn){
+  _v2RiskAns[qi] = score;
+  const wrap = btn.closest('.v2-risk-q');
+  if (wrap) wrap.querySelectorAll('.v2-risk-opt').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  const answered = _v2RiskAns.filter(x => x != null).length;
+  const ap = document.getElementById('v2-risk-apply');
+  const hint = document.getElementById('v2-risk-hint');
+  if (answered === V2_RISK_QS.length){ if (ap) ap.disabled = false; if (hint) hint.textContent = 'Ready when you are'; }
+  else if (hint) hint.textContent = (V2_RISK_QS.length - answered) + ' to go';
+}
+function v2RiskApply(){
+  const filled = _v2RiskAns.filter(x => x != null);
+  if (filled.length < V2_RISK_QS.length) return;
+  const avg = filled.reduce((s, v) => s + v, 0) / filled.length;
+  const profile = avg <= 1.5 ? 'conservative' : avg < 2.5 ? 'balanced' : 'aggressive';
+  v2ProfileTransition(profile);
+}
+function v2CloseRiskQuiz(){
+  const ov = document.getElementById('v2-risk-overlay'); if (ov) ov.classList.remove('open');
+}
+/* Circular "transitioning" animation, then apply the profile. */
+function v2ProfileTransition(profile){
+  const info = (typeof V2_PROFILES === 'object' && V2_PROFILES[profile]) || { emoji: '•', label: profile };
+  const ov = document.getElementById('v2-risk-overlay');
+  if (ov) ov.classList.add('open');
+  const quiz = document.getElementById('v2-risk-quiz'); if (quiz) quiz.style.display = 'none';
+  const trans = document.getElementById('v2-risk-trans'); if (trans) trans.style.display = '';
+  const em = document.getElementById('v2-risk-ring-emoji'); if (em) em.textContent = info.emoji;
+  const lbl = document.getElementById('v2-risk-trans-label'); if (lbl) lbl.textContent = 'Switching to ' + info.label + '…';
+  const sub = document.getElementById('v2-risk-trans-sub'); if (sub) sub.textContent = 'Re-ranking the universe for your risk level';
+  const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const spin = reduce ? 150 : 1300;
+  setTimeout(() => {
+    try { v2SetProfile(profile); } catch(e){}
+    if (lbl) lbl.textContent = info.label + ' applied';
+    if (sub) sub.textContent = 'Your Top Picks are tuned';
+    setTimeout(() => { if (ov) ov.classList.remove('open'); }, reduce ? 200 : 700);
+  }, spin);
 }
 function v2SyncUniverseCount(){
   const el = document.getElementById('v2-nav-universe-count');
