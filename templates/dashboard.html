@@ -2839,7 +2839,7 @@ html.v2-dark .v2-mp-mini-lbl{color:#cbd5e1}
   background:#f8fafc;border:1px solid transparent;
   transition:background .12s, border-color .12s;
 }
-.v2-sm-row:hover{background:#FFF8E5;border-color:#FFE9B0}
+.v2-sm-row:hover{background:#eef4ff;border-color:#dbe6fb}
 .v2-sm-row.is-cooling{opacity:.7}
 .v2-sm-row.is-cooling:hover{opacity:1}
 .v2-sm-tag{width:18px;font-size:13px;line-height:1;flex-shrink:0;text-align:center}
@@ -3374,11 +3374,11 @@ button.v2-ts-share{padding:0 12px}
 .v2-ts-hero-r{display:flex;flex-direction:column;align-items:center;flex-shrink:0;min-width:120px}
 .v2-ts-score{
   font-size:48px;font-weight:900;letter-spacing:-.03em;line-height:1;
-  background:linear-gradient(135deg,#FFE9B0 0%,#FFC75F 50%,#F5A623 100%);
+  background:linear-gradient(135deg,#2970ff 0%,#0040c1 100%);
   -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;
   font-variant-numeric:tabular-nums;
 }
-.v2-ts-score-label{font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#FFE9B0;margin-top:4px}
+.v2-ts-score-label{font-size:10.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#0040c1;margin-top:4px}
 
 /* Thesis prose */
 .v2-ts-thesis{font-size:14px;color:#e2e8f0;line-height:1.65;letter-spacing:-.005em}
@@ -11774,8 +11774,8 @@ function renderReports(tickers) {
       <div style="font-size:18px;font-weight:900;color:#0f172a;margin-top:2px">${t.ticker}</div>
       <div style="font-size:10px;color:#64748b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px">${(t.name || '').slice(0,16)}</div>
       <div style="font-size:13px;color:#F5A623;margin-top:8px">${STAR[t.grade] || ''}</div>
-      <div style="font-size:24px;font-weight:900;background:linear-gradient(135deg,#15803d,#F5A623);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-top:4px">${(t.smart_score ?? t.pop_score ?? 0).toFixed(0)}</div>
-      <div style="font-size:9.5px;color:#15803d;font-weight:800;margin-top:6px;letter-spacing:.04em">Open tear sheet →</div>
+      <div style="font-size:24px;font-weight:900;background:linear-gradient(135deg,#2970ff,#0040c1);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-top:4px">${(t.smart_score ?? t.pop_score ?? 0).toFixed(0)}</div>
+      <div style="font-size:9.5px;color:#0040c1;font-weight:800;margin-top:6px;letter-spacing:.04em">Open tear sheet →</div>
     </div>`).join('');
 
   const dailyHTML = `
@@ -12227,7 +12227,7 @@ function renderWatchlist() {
           <span style="color:${chgCol};font-size:12px">${chgStr}</span>
         </div>
         <div style="display:flex;align-items:baseline;gap:6px;margin-top:8px">
-          <span style="font-size:24px;font-weight:900;color:#15803d">${score.toFixed(0)}</span>
+          <span style="font-size:24px;font-weight:900;color:#0040c1">${score.toFixed(0)}</span>
           <span style="font-size:10.5px;color:#94a3b8;letter-spacing:.06em;font-weight:600">ALPHA SCORE</span>
         </div>
       </div>`;
@@ -14839,7 +14839,7 @@ function showUpgradeSuccess() {
 .ah-sc-logo{width:26px;height:26px;border-radius:7px;flex-shrink:0;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;overflow:hidden;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:800;color:#E0E0E0}
 .ah-sc-logo img{width:100%;height:100%;object-fit:contain;padding:3px}
 .ah-sc-sym{font-weight:800;font-size:13px;color:#fff;letter-spacing:-.01em}
-.ah-sc-score{font-family:'JetBrains Mono',monospace;font-weight:800;font-size:18px;line-height:1;background:linear-gradient(135deg,#FFE9B0,#FFC75F 50%,#F5A623);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
+.ah-sc-score{font-family:'JetBrains Mono',monospace;font-weight:800;font-size:18px;line-height:1;background:linear-gradient(135deg,#2970ff,#0040c1);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
 .ah-sc-bot{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .ah-sc-chip{display:inline-flex;align-items:center;gap:5px;padding:3px 8px;border-radius:999px;font-family:'JetBrains Mono',monospace;font-size:8px;font-weight:800;letter-spacing:.10em;text-transform:uppercase;line-height:1}
 .ah-sc-chip::before{content:"";width:5px;height:5px;border-radius:50%;background:currentColor}
@@ -15643,7 +15643,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     const slot=document.getElementById('sectorsSlot'); if(!slot) return;
     if(!sectors.length){ slot.innerHTML=''; return; }
     const heatingName=sectors[0]&&sectors[0].score>=75?sectors[0].name:null;
-    const scoreColor=sc=>sc>=70?'#15803d':sc>=60?'#D4860A':sc>=50?'#f97316':'#dc2626';
+    const scoreColor=sc=>sc>=70?'#0040c1':sc>=55?'#2970ff':'#94a3b8';
     const rows=sectors.slice(0,6).map(s=>{
       const tag=s.name===heatingName?'🔥':(s.score<55?'🥶':'');
       const momCls=s.mom>=0?'up':'dn', momStr=(s.mom>=0?'+':'')+s.mom.toFixed(1)+'%';
