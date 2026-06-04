@@ -4896,6 +4896,17 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 #ts-drawer .rep-blue{border-color:rgba(41,112,255,.22)} #ts-drawer .rep-teal{border-color:rgba(20,184,166,.22)} #ts-drawer .rep-green{border-color:rgba(91,185,71,.24)} #ts-drawer .rep-violet{border-color:rgba(139,92,246,.22)} #ts-drawer .rep-amber{border-color:rgba(212,134,10,.24)} #ts-drawer .rep-red{border-color:rgba(193,29,51,.22)}
 #ts-drawer .reb-row{display:flex;align-items:center;gap:14px}
 #ts-drawer .reb-row .reb-bar{flex:1;margin:0}
+/* SVG infographic primitives */
+#ts-drawer .radar-wrap{display:flex;justify-content:center;padding:6px 0 10px}
+#ts-drawer .radar-svg{width:230px;height:210px;max-width:100%}
+#ts-drawer .reb-gauge{display:flex;align-items:center;gap:16px}
+#ts-drawer .ring-svg{width:84px;height:84px;flex:none}
+#ts-drawer .donut-wrap{display:flex;align-items:center;gap:16px;margin-bottom:12px}
+#ts-drawer .donut-svg{width:84px;height:84px;flex:none}
+#ts-drawer .donut-legend{display:flex;flex-direction:column;gap:6px;font-size:12px;color:var(--ink-2)}
+#ts-drawer .donut-legend b{font-family:'JetBrains Mono',monospace;color:var(--ink)}
+#ts-drawer .dl-row{display:flex;align-items:center;gap:8px}
+#ts-drawer .dl-dot{width:11px;height:11px;border-radius:3px;flex:none}
 #ts-drawer .dr-back{align-self:flex-start;font-family:inherit;font-size:13px;font-weight:700;color:var(--grey-2);
   background:#fff;border:1px solid var(--hair);border-radius:11px;padding:10px 16px;cursor:pointer}
 #ts-drawer .dr-back:hover{background:var(--surf-3);color:var(--ink)}
@@ -16272,7 +16283,42 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     if(insd!=null) rows.push(['Insiders', insd.toFixed(1)+'%', '<span class="muted">Execs &amp; directors</span>']);
     if(!isNaN(ib)||!isNaN(is)){ const b=ib||0,s=is||0; rows.push(['Insider trades · 90d', b+' buys · '+s+' sells', b>=s?_badge('NET BUY','ok'):(s>b*3?_badge('NET SELL','bad'):_badge('NEUTRAL','neu'))]); }
     if(si!=null) rows.push(['Short interest', si.toFixed(1)+'%', si<10?_badge('OK','ok'):si<20?_badge('ELEVATED','warn'):_badge('HIGH','bad')]);
-    return _sigTable('Ownership','👥','violet',['Holder','Value','Note'],rows);
+    if(!rows.length) return '';
+    let donut='';
+    if(inst!=null){
+      const i=Math.max(0,Math.min(100,inst)), ins=Math.max(0,Math.min(100-i,insd||0)), pub=Math.max(0,100-i-ins);
+      donut='<div class="donut-wrap">'+_donutSVG([{v:i,color:'#2970ff'},{v:ins,color:'#8b5cf6'},{v:pub,color:'#cbd5e1'}])+
+        '<div class="donut-legend">'+
+          '<div class="dl-row"><span class="dl-dot" style="background:#2970ff"></span>Institutional <b>'+i.toFixed(0)+'%</b></div>'+
+          (insd!=null?'<div class="dl-row"><span class="dl-dot" style="background:#8b5cf6"></span>Insiders <b>'+ins.toFixed(1)+'%</b></div>':'')+
+          '<div class="dl-row"><span class="dl-dot" style="background:#cbd5e1"></span>Public float <b>'+pub.toFixed(0)+'%</b></div>'+
+        '</div></div>';
+    }
+    const tbl='<table><thead><tr><th>Holder</th><th>Value</th><th>Note</th></tr></thead><tbody>'+rows.map(r=>'<tr><td>'+r[0]+'</td><td>'+r[1]+'</td><td>'+r[2]+'</td></tr>').join('')+'</tbody></table>';
+    return _sec('Ownership','👥','violet',donut+tbl);
+  }
+  /* ── SVG infographic primitives ── */
+  function _ringSVG(score,color){
+    const r=34, c=2*Math.PI*r, off=c*(1-Math.max(0,Math.min(100,score))/100);
+    return '<svg viewBox="0 0 90 90" class="ring-svg"><circle cx="45" cy="45" r="'+r+'" fill="none" stroke="rgba(15,23,42,.09)" stroke-width="9"/>'+
+      '<circle cx="45" cy="45" r="'+r+'" fill="none" stroke="'+color+'" stroke-width="9" stroke-linecap="round" stroke-dasharray="'+c.toFixed(1)+'" stroke-dashoffset="'+off.toFixed(1)+'" transform="rotate(-90 45 45)"/>'+
+      '<text x="45" y="46" text-anchor="middle" font-size="21" font-weight="800" font-family="JetBrains Mono,monospace" fill="'+color+'">'+score+'</text>'+
+      '<text x="45" y="59" text-anchor="middle" font-size="8" fill="#94a3b8">/100</text></svg>';
+  }
+  function _donutSVG(segs){
+    const r=30, c=2*Math.PI*r; let acc=0, arcs='';
+    segs.forEach(s=>{ if(s.v<=0)return; const len=c*(s.v/100); arcs+='<circle cx="45" cy="45" r="'+r+'" fill="none" stroke="'+s.color+'" stroke-width="14" stroke-dasharray="'+len.toFixed(1)+' '+(c-len).toFixed(1)+'" stroke-dashoffset="'+(-acc).toFixed(1)+'" transform="rotate(-90 45 45)"/>'; acc+=len; });
+    return '<svg viewBox="0 0 90 90" class="donut-svg">'+arcs+'</svg>';
+  }
+  function _radarSVG(vals,labels){
+    const S=200,cx=S/2,cy=S/2,R=62,N=vals.length;
+    const ang=i=>(-90+i*360/N)*Math.PI/180, pt=(i,rr)=>[cx+Math.cos(ang(i))*rr, cy+Math.sin(ang(i))*rr];
+    let grid=''; [0.25,0.5,0.75,1].forEach(f=>{ grid+='<polygon points="'+vals.map((_,i)=>pt(i,R*f).map(n=>n.toFixed(1)).join(',')).join(' ')+'" fill="none" stroke="rgba(15,23,42,.08)" stroke-width="1"/>'; });
+    let axes=''; for(let i=0;i<N;i++){ const [x,y]=pt(i,R); axes+='<line x1="'+cx+'" y1="'+cy+'" x2="'+x.toFixed(1)+'" y2="'+y.toFixed(1)+'" stroke="rgba(15,23,42,.07)"/>'; }
+    const dp=vals.map((v,i)=>pt(i,R*Math.max(0.05,(v||0)/100)).map(n=>n.toFixed(1)).join(',')).join(' ');
+    const dots=vals.map((v,i)=>{const[x,y]=pt(i,R*Math.max(0.05,(v||0)/100));return '<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="2.6" fill="#0040c1"/>';}).join('');
+    let lab=''; for(let i=0;i<N;i++){ const [x,y]=pt(i,R+15), v=vals[i]; const anchor=Math.abs(x-cx)<6?'middle':(x>cx?'start':'end'); lab+='<text x="'+x.toFixed(1)+'" y="'+(y-1).toFixed(1)+'" text-anchor="'+anchor+'" font-size="8.5" font-weight="700" fill="#5d6c7b">'+labels[i]+'</text><text x="'+x.toFixed(1)+'" y="'+(y+9).toFixed(1)+'" text-anchor="'+anchor+'" font-size="8.5" font-family="JetBrains Mono,monospace" font-weight="800" fill="'+(v<65?'#b4780a':'#0040c1')+'">'+v+'</text>'; }
+    return '<svg viewBox="-18 -8 '+(S+36)+' '+(S+16)+'" class="radar-svg">'+grid+axes+'<polygon points="'+dp+'" fill="rgba(41,112,255,.16)" stroke="#2970ff" stroke-width="1.8"/>'+dots+lab+'</svg>';
   }
   function _aiThesis(t){
     const bl=(t.bottom_line||'').trim(), th=(t.thesis||t.rationale||'').trim();
@@ -16369,14 +16415,16 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
         _lvl('RSI (14)',S.rsi!=null?S.rsi.toFixed(0):'—',S.rsi!=null?(S.rsi>70?'neg':S.rsi<35?'pos':''):'')+
         _lvl('Volume',S.volR!=null?S.volR.toFixed(1)+'×':'—',S.volR!=null?(S.volR>=1.3?'pos':''):'')+
       '</div>') : '';
-    const cls=S?(S.rebound>=66?'hi':S.rebound>=40?'mid':'lo'):'mid';
     const rebAccent=S?(S.rebound>=66?'green':S.rebound>=40?'amber':'red'):'slate';
+    const rebColor=S?(S.rebound>=66?'#16a34a':S.rebound>=40?'#e08600':'#e11d48'):'#94a3b8';
     const rebound = S? _sec('Rebound potential','🔄',rebAccent,
-      '<div class="reb-row"><span class="reb-score reb-'+cls+'">'+S.rebound+'<small>/100</small></span>'+
-        '<div class="reb-bar"><span class="reb-fill reb-'+cls+'" data-w="'+S.rebound+'"></span></div></div>'+
-      '<div class="reb-sub">'+((S.recoverDays!=null&&S.recoverN>=2)?'Historically reclaims a dip in ~<b>'+S.recoverDays+'</b> sessions <span class="muted">('+S.recoverN+' samples, 1&nbsp;yr)</span>':'Score blends RSI, trend, support proximity &amp; drawdown room.')+'</div>') : '';
+      '<div class="reb-gauge">'+_ringSVG(S.rebound,rebColor)+
+        '<div class="reb-sub" style="margin:0">'+((S.recoverDays!=null&&S.recoverN>=2)?'Historically reclaims a dip in ~<b>'+S.recoverDays+'</b> sessions <span class="muted">('+S.recoverN+' samples, 1&nbsp;yr)</span>':'Score blends RSI, trend, support proximity &amp; drawdown room into a single 0&ndash;100 read.')+'</div></div>') : '';
     const pl=computePillars(t);
-    const pillars=_sec('Six pillars','📶','teal','<div class="dr-pillars-c">'+
+    const hasRadar=pl.filter(v=>v!=null).length>=5;
+    const pillars=_sec('Six pillars','📶','teal',
+      (hasRadar?'<div class="radar-wrap">'+_radarSVG(pl.map(v=>v||0),PILLAR_LABELS)+'</div>':'')+
+      '<div class="dr-pillars-c">'+
       pl.map((v,i)=>v==null?'':'<div class="dr-pc'+(v<65?' w':'')+'"><div class="dr-pc-top"><span class="dr-pc-n">'+PILLAR_LABELS[i]+'</span><span class="dr-pc-v">'+v+'</span></div><span class="dr-pc-bar"><span class="dr-pc-fill pf" data-w="'+v+'"></span></span></div>').join('')+
       '</div>');
     return verdict+chart+_aiThesis(full)+_catalystCard(full)+setup+_windsCard(full)+rebound+_keyEvents(full)+pillars;
