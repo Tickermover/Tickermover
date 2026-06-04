@@ -16281,6 +16281,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     return arr.length>=3?_med(arr):null;
   }
   function _badge(txt,cls){ return '<span class="badge '+cls+'">'+txt+'</span>'; }
+  function _nb(){ return '<span class="badge neu">—</span>'; }
   function _pctf(v){ return v==null?null:(Math.abs(v)<=1?v*100:v); }
   function _valSig(cur,med){ if(cur==null) return null; if(med==null||med<=0) return ['—','neu']; if(cur<med*0.9) return ['CHEAP','ok']; if(cur>med*1.1) return ['EXPENSIVE','bad']; return ['FAIR','neu']; }
   function _sigTable(title,icon,accent,cols,rows){ if(!rows.length)return ''; const b='<table><thead><tr>'+cols.map(c=>'<th>'+c+'</th>').join('')+'</tr></thead><tbody>'+rows.map(r=>'<tr>'+r.map(c=>'<td>'+(c==null?'<span class="muted">—</span>':c)+'</td>').join('')+'</tr>').join('')+'</tbody></table>'; return _sec(title,icon,accent,b); }
@@ -16362,13 +16363,16 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
   function _valPos(v){ if(!v)return 50; return ({'Cheap':16,'Fair':46,'Full':64,'Expensive':82,'Very Expensive':93,'Pre-profit':50})[v.verdict]; }
   function _sparkSVG(vals,color){ if(!vals||vals.length<2)return ''; const W=120,H=30,mn=Math.min.apply(null,vals),mx=Math.max.apply(null,vals),rng=(mx-mn)||1; const pts=vals.map((v,i)=>[(i/(vals.length-1))*W,H-((v-mn)/rng)*(H-4)-2]); return '<svg viewBox="0 0 '+W+' '+H+'" class="spark-svg" preserveAspectRatio="none"><polyline points="'+pts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ')+'" fill="none" stroke="'+color+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="'+pts[pts.length-1][0].toFixed(1)+'" cy="'+pts[pts.length-1][1].toFixed(1)+'" r="2.6" fill="'+color+'"/></svg>'; }
   function _heroStats(t,S,full){
-    const pop=Math.round(parseFloat(full.smart_score!=null?full.smart_score:(full.pop_score||0)));
-    const price=parseFloat(full.price||0), tm=_fpNum(full,['target_mean','street_target']);
-    const up=(price&&tm)?((tm-price)/price*100):null, rs=_rsMap[t.ticker]||_fpNum(full,['rs_rating','rs']);
-    const cards=[ {ic:'⚡',l:'Alpha',v:pop,c:'b'},
-      {ic:'🎯',l:'Upside',v:up!=null?(up>=0?'+':'')+up.toFixed(0)+'%':'—',c:up>=0?'g':'r'},
-      S?{ic:'🔄',l:'Rebound',v:S.rebound,c:S.rebound>=66?'g':S.rebound>=40?'a':'r'}:null,
-      rs!=null?{ic:'💪',l:'RS rank',v:Math.round(rs),c:'v'}:null ].filter(Boolean);
+    /* complements the verdict strip (which already shows Alpha, price & Upside) — no repeats */
+    const rs=_rsMap[t.ticker]||_fpNum(full,['rs_rating','rs']);
+    const rsi=(S&&S.rsi!=null)?S.rsi:_fpNum(full,['rsi_14']);
+    const m1=_fpNum(full,['momentum_1m']);
+    const cards=[];
+    if(S) cards.push({ic:'🔄',l:'Rebound',v:S.rebound,c:S.rebound>=66?'g':S.rebound>=40?'a':'r'});
+    if(rs!=null) cards.push({ic:'💪',l:'RS rank',v:Math.round(rs),c:'v'});
+    if(rsi!=null) cards.push({ic:'🌡️',l:'RSI',v:Math.round(rsi),c:rsi>70?'r':rsi<40?'a':'g'});
+    if(m1!=null) cards.push({ic:'📈',l:'1-Month',v:(m1>=0?'+':'')+Math.round(m1)+'%',c:m1>=0?'g':'r'});
+    if(!cards.length) return '';
     return '<div class="hero-stats">'+cards.map(c=>'<div class="hs '+c.c+'"><span class="hs-ic">'+c.ic+'</span><span class="hs-v">'+c.v+'</span><span class="hs-l">'+c.l+'</span></div>').join('')+'</div>';
   }
   function _trendCard(t){
@@ -16437,15 +16441,16 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     return _card('Earnings summary',rows);
   }
   function _quoteCard(t){
-    const bid=parseFloat(t.bid),ask=parseFloat(t.ask),px=parseFloat(t.price),hi=parseFloat(t.high),lo=parseFloat(t.low),vw=parseFloat(t.vwap),vol=parseFloat(t.volume);
+    const bid=parseFloat(t.bid),ask=parseFloat(t.ask),px=parseFloat(t.price),hi=parseFloat(t.high),lo=parseFloat(t.low),vw=parseFloat(t.vwap),vol=parseFloat(t.volume),vr=_fpNum(t,['volume_ratio']);
     const rows=[];
-    if(!isNaN(bid)&&!isNaN(ask)&&ask>bid){ rows.push(_fpKV('Bid / Ask','$'+bid.toFixed(2)+' / $'+ask.toFixed(2))); if(px)rows.push(_fpKV('Spread',((ask-bid)/px*100).toFixed(2)+'%')); }
-    if(!isNaN(lo)&&!isNaN(hi)) rows.push(_fpKV('Day range','$'+lo.toFixed(2)+' – $'+hi.toFixed(2)));
-    if(!isNaN(vw)) rows.push(_fpKV('VWAP','$'+vw.toFixed(2)));
-    if(!isNaN(vol)) rows.push(_fpKV('Volume',_volFmt(vol)));
-    if(t.volume_ratio!=null) rows.push(_fpKV('Vol vs 20-day',parseFloat(t.volume_ratio).toFixed(1)+'×'));
+    if(!isNaN(bid)&&!isNaN(ask)&&ask>bid){ rows.push(['Bid / Ask','$'+bid.toFixed(2)+' / $'+ask.toFixed(2),_nb()]); if(px){ const spp=(ask-bid)/px*100; rows.push(['Spread',spp.toFixed(2)+'%', spp<0.1?_badge('TIGHT','ok'):spp<0.5?_badge('OK','warn'):_badge('WIDE','bad')]); } }
+    if(!isNaN(lo)&&!isNaN(hi)) rows.push(['Day range','$'+lo.toFixed(2)+' – $'+hi.toFixed(2),_nb()]);
+    if(!isNaN(vw)) rows.push(['VWAP','$'+vw.toFixed(2),_nb()]);
+    if(!isNaN(vol)) rows.push(['Volume',_volFmt(vol),_nb()]);
+    if(vr!=null) rows.push(['Vol vs 20-day',vr.toFixed(1)+'×', vr>=1.3?_badge('ACTIVE','ok'):_badge('NORMAL','neu')]);
     if(!rows.length) return '';
-    return _sec('Quote & liquidity','💧','slate',rows.join('')+'<div class="muted small" style="margin-top:8px">Level-2 depth &amp; pending-order book aren’t available from our data feed.</div>');
+    const tbl='<table><thead><tr><th>Metric</th><th>Value</th><th>Signal</th></tr></thead><tbody>'+rows.map(r=>'<tr><td>'+r[0]+'</td><td>'+r[1]+'</td><td>'+r[2]+'</td></tr>').join('')+'</tbody></table><div class="muted small" style="margin-top:8px">Level-2 depth &amp; pending-order book aren’t available from our data feed.</div>';
+    return _sec('Quote & liquidity','💧','slate',tbl);
   }
   function paneOverview(t,S,full,candles){
     const g=(full.grade||'').toUpperCase(), TI=_tierOf(g);
@@ -16493,26 +16498,44 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
   }
   function paneTechnicals(t,S){
     const m1=_fpNum(t,['momentum_1m']),m3=_fpNum(t,['momentum_3m']),m6=_fpNum(t,['momentum_6m']);
-    const pct=v=>v==null?null:'<span class="'+(v>=0?'up':'dn')+'">'+(v>=0?'+':'')+v.toFixed(0)+'%</span>';
     const rs=_rsMap[t.ticker]||_fpNum(t,['rs_rating','rs']);
-    const sp=_fpNum(t,['short_percent_float']);
+    const momRows=[];
+    if(rs!=null) momRows.push(['RS rating',Math.round(rs)+'', rs>=80?_badge('LEADER','ok'):rs>=50?_badge('AVERAGE','warn'):_badge('LAGGARD','bad')]);
+    const mrow=(lab,v)=>{ if(v==null)return; momRows.push([lab,(v>=0?'+':'')+v.toFixed(0)+'%', v>=10?_badge('STRONG','ok'):v>=0?_badge('UP','warn'):_badge('DOWN','bad')]); };
+    mrow('1-month',m1); mrow('3-month',m3); mrow('6-month',m6);
+    const rsi=(S&&S.rsi!=null)?S.rsi:_fpNum(t,['rsi_14']); const atr=_fpNum(t,['atr_14']); const beta=_fpNum(t,['beta']);
+    const volR=(S&&S.volR!=null)?S.volR:_fpNum(t,['volume_ratio']); const sp=_fpNum(t,['short_percent_float']); const spP=sp!=null?(sp<=1?sp*100:sp):null;
+    const volRows=[];
+    if(rsi!=null) volRows.push(['RSI (14)',Math.round(rsi)+'', (rsi>=40&&rsi<=65)?_badge('HEALTHY','ok'):rsi>70?_badge('OVERBOUGHT','bad'):rsi<30?_badge('OVERSOLD','warn'):_badge('NEUTRAL','warn')]);
+    if(atr!=null) volRows.push(['ATR (14)','$'+atr.toFixed(2),_nb()]);
+    if(beta!=null) volRows.push(['Beta',beta.toFixed(2), beta>1.5?_badge('HIGH','bad'):beta>=0.8?_badge('MARKET','warn'):_badge('LOW','ok')]);
+    if(volR!=null) volRows.push(['Volume vs avg',volR.toFixed(1)+'×', volR>=1.3?_badge('ACTIVE','ok'):_badge('NORMAL','neu')]);
+    if(spP!=null) volRows.push(['Short % float',spP.toFixed(1)+'%', spP<5?_badge('LOW','ok'):spP<10?_badge('MODERATE','warn'):_badge('HIGH','bad')]);
     return '<div class="dr-deep-grid">'+
-      _card('Momentum & strength',[_fpKV('RS rating',rs!=null?Math.round(rs):null),_fpKV('1-month',pct(m1)),_fpKV('3-month',pct(m3)),_fpKV('6-month',pct(m6))])+
-      _card('Volatility & risk',[_fpKV('RSI (14)',S&&S.rsi!=null?S.rsi.toFixed(0):(_fpNum(t,['rsi_14'])!=null?_fpNum(t,['rsi_14']).toFixed(0):null)),_fpKV('ATR (14)',_fpNum(t,['atr_14'])!=null?'$'+_fpNum(t,['atr_14']).toFixed(2):null),_fpKV('Beta',_fpNum(t,['beta'])!=null?_fpNum(t,['beta']).toFixed(2):null),_fpKV('Volume vs avg',S&&S.volR!=null?S.volR.toFixed(1)+'×':null),_fpKV('Short % float',sp!=null?(sp<=1?sp*100:sp).toFixed(1)+'%':null)])+
+      _sigTable('Momentum & strength','⚡','blue',['Metric','Value','Signal'],momRows)+
+      _sigTable('Volatility & risk','🛡️','amber',['Metric','Value','Signal'],volRows)+
       _quoteCard(t)+
     '</div>';
   }
   function paneFinancials(t){
-    const gm=_fpNum(t,['gross_margin']),nm=_fpNum(t,['profit_margin','net_margin']),fm=_fpNum(t,['fcf_margin']),om=_fpNum(t,['operating_margin']),rg=_fpNum(t,['revenue_growth_yoy']);
-    const rgPct=rg!=null?(Math.abs(rg)<=2?rg*100:rg):null, mp=v=>v==null?null:(Math.abs(v)<=1?v*100:v).toFixed(0)+'%';
-    const qi=t.quarterly_income;
-    const qiCard = Array.isArray(qi)&&qi.length?_card('Quarterly revenue',qi.slice(-4).map(q=>_fpKV(q.date||q.quarter||'',q.revenue!=null?_money(q.revenue):'—'))):'';
+    const M=v=>v==null?null:(Math.abs(v)<=1?v*100:v);
+    const gm=M(_fpNum(t,['gross_margin'])),nm=M(_fpNum(t,['profit_margin','net_margin'])),fm=M(_fpNum(t,['fcf_margin'])),om=M(_fpNum(t,['operating_margin']));
+    const rg=_fpNum(t,['revenue_growth_yoy']), rgPct=rg!=null?(Math.abs(rg)<=2?rg*100:rg):null;
+    const profRows=[];
+    if(gm!=null) profRows.push(['Gross margin',gm.toFixed(0)+'%', gm>=50?_badge('STRONG','ok'):gm>=30?_badge('SOLID','warn'):_badge('THIN','bad')]);
+    if(om!=null) profRows.push(['Operating margin',om.toFixed(0)+'%', om>=20?_badge('STRONG','ok'):om>=8?_badge('SOLID','warn'):om>=0?_badge('THIN','bad'):_badge('LOSS','bad')]);
+    if(nm!=null) profRows.push(['Net margin',nm.toFixed(0)+'%', nm>=15?_badge('STRONG','ok'):nm>=5?_badge('SOLID','warn'):nm>=0?_badge('THIN','bad'):_badge('LOSS','bad')]);
+    if(fm!=null) profRows.push(['FCF margin',fm.toFixed(0)+'%', fm>=10?_badge('STRONG','ok'):fm>=0?_badge('OK','warn'):_badge('BURN','bad')]);
+    if(rgPct!=null) profRows.push(['Revenue YoY',(rgPct>=0?'+':'')+rgPct.toFixed(0)+'%', rgPct>=20?_badge('FAST','ok'):rgPct>=5?_badge('STEADY','warn'):rgPct>=0?_badge('SLOW','bad'):_badge('DECLINE','bad')]);
+    const byDate=a=>a.slice().sort((x,y)=>String(x.date||x.quarter||'').localeCompare(String(y.date||y.quarter||'')));
+    const qi=Array.isArray(t.quarterly_income)?byDate(t.quarterly_income).slice(-4):[];
+    const qiRows=qi.map((q,i)=>{ const rev=parseFloat(q.revenue), prev=i>0?parseFloat(qi[i-1].revenue):null; let sig=_nb(); if(prev&&!isNaN(rev)){ const ch=(rev-prev)/prev*100; sig=ch>=0?_badge('▲ '+ch.toFixed(0)+'%','ok'):_badge('▼ '+Math.abs(ch).toFixed(0)+'%','bad'); } return [q.date||q.quarter||'', isNaN(rev)?'—':_money(rev), sig]; });
     return '<div class="dr-deep-grid">'+
-      _card('Profitability & growth',[_fpKV('Gross margin',mp(gm)),_fpKV('Operating margin',mp(om)),_fpKV('Net margin',mp(nm)),_fpKV('FCF margin',mp(fm)),_fpKV('Revenue YoY',rgPct!=null?'<span class="'+(rgPct>=0?'up':'dn')+'">'+(rgPct>=0?'+':'')+rgPct.toFixed(0)+'%</span>':null)])+
+      _sigTable('Profitability & growth','💰','green',['Metric','Value','Signal'],profRows)+
       _healthCard(t)+
       _returnsCard(t)+
       _ownershipCard(t)+
-      qiCard+
+      (qiRows.length?_sigTable('Quarterly revenue','📊','blue',['Metric','Value','Signal'],qiRows):'')+
     '</div>'+_trendCard(t);
   }
   function paneValuation(t){
@@ -16533,12 +16556,25 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
   }
   function paneEstimates(t){
     const na=_fpNum(t,['total_analysts','analyst_count','numAnalystOpinions']),tm=_fpNum(t,['target_mean','street_target']),tl=_fpNum(t,['target_low']),th=_fpNum(t,['target_high']),px=parseFloat(t.price);
-    const upside=(px&&tm)?((tm-px)/px*100):null, eq=t.eps_quarters;
-    const epsCard = Array.isArray(eq)&&eq.length?_card('EPS surprise history',eq.slice(-4).map(q=>{ const s=q.surprise_pct; return _fpKV(q.date||q.quarter||'',(q.beat?'<span class="up">✓ ':'<span class="dn">✗ ')+(s!=null?(s>=0?'+':'')+s.toFixed(0)+'%':'')+'</span>'); })):'';
+    const upside=(px&&tm)?((tm-px)/px*100):null;
+    const beat=parseInt(t.eps_beat_streak),avg=_fpNum(t,['avg_eps_surprise_pct']),days=parseInt(t.days_to_earnings),rev=t.eps_revisions_30d;
+    const esRows=[];
+    if(!isNaN(beat)) esRows.push(['Beat streak',beat+' / 4', beat>=4?_badge('PERFECT','ok'):beat>=2?_badge('GOOD','warn'):_badge('MIXED','bad')]);
+    if(avg!=null){ const a=Math.abs(avg)<=1?avg*100:avg; esRows.push(['Avg surprise',(a>=0?'+':'')+a.toFixed(0)+'%', a>=5?_badge('STRONG','ok'):a>=0?_badge('INLINE','warn'):_badge('MISS','bad')]); }
+    if(t.eps_last_beat!=null) esRows.push(['Last quarter',t.eps_last_beat?'Beat':'Miss', t.eps_last_beat?_badge('BEAT','ok'):_badge('MISS','bad')]);
+    if(rev) esRows.push(['Revisions · 30d',rev.ups+'↑ '+rev.downs+'↓', rev.ups>rev.downs?_badge('RISING','ok'):rev.downs>rev.ups?_badge('FALLING','bad'):_badge('FLAT','neu')]);
+    if(!isNaN(days)&&days>=0) esRows.push(['Next earnings','in ~'+days+'d', days<=14?_badge('SOON','warn'):_nb()]);
+    const atRows=[];
+    if(na!=null) atRows.push(['# Analysts',Math.round(na)+'', na>=20?_badge('BROAD','ok'):na>=5?_badge('OK','warn'):_badge('THIN','bad')]);
+    if(tm!=null) atRows.push(['Mean target','$'+tm.toFixed(2),_nb()]);
+    if(tl!=null&&th!=null) atRows.push(['Range','$'+tl.toFixed(0)+' – $'+th.toFixed(0),_nb()]);
+    if(upside!=null) atRows.push(['Upside',(upside>=0?'+':'')+upside.toFixed(1)+'%', upside>=10?_badge('UPSIDE','ok'):upside>=0?_badge('SLIGHT','warn'):_badge('ABOVE TGT','bad')]);
+    const eq=t.eps_quarters, epsRows=[];
+    if(Array.isArray(eq)) eq.slice(-4).forEach(q=>{ const s=q.surprise_pct; epsRows.push([q.date||q.quarter||'', s!=null?((s>=0?'+':'')+(Math.abs(s)<=1?s*100:s).toFixed(0)+'%'):'—', q.beat?_badge('BEAT','ok'):_badge('MISS','bad')]); });
     return '<div class="dr-deep-grid">'+
-      _earningsSummary(t)+
-      _card('Analyst targets',[_fpKV('# Analysts',na!=null?Math.round(na):null),_fpKV('Mean target',tm!=null?'$'+tm.toFixed(2):null),_fpKV('Range',(tl!=null&&th!=null)?'$'+tl.toFixed(0)+' – $'+th.toFixed(0):null),_fpKV('Upside',upside!=null?'<span class="'+(upside>=0?'up':'dn')+'">'+(upside>=0?'+':'')+upside.toFixed(1)+'%</span>':null)])+
-      epsCard+
+      _sigTable('Earnings summary','🎯','green',['Metric','Value','Signal'],esRows)+
+      _sigTable('Analyst targets','🏦','blue',['Metric','Value','Signal'],atRows)+
+      (epsRows.length?_sigTable('EPS surprise history','📊','violet',['Metric','Value','Signal'],epsRows):'')+
     '</div>';
   }
   function paneNews(t){
