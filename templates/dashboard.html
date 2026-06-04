@@ -16308,8 +16308,8 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     const inst=_pc(_fpNum(t,['held_pct_institutions'])), insd=_pc(_fpNum(t,['held_pct_insiders']));
     const ib=parseInt(t.insider_buys_90d), is=parseInt(t.insider_sells_90d), si=_pc(_fpNum(t,['short_percent_float']));
     const rows=[];
-    if(inst!=null) rows.push(['Institutional', inst.toFixed(0)+'%', '<span class="muted">13F holders</span>']);
-    if(insd!=null) rows.push(['Insiders', insd.toFixed(1)+'%', '<span class="muted">Execs &amp; directors</span>']);
+    if(inst!=null) rows.push(['Institutional', inst.toFixed(0)+'%', inst>=60?_badge('STRONG','ok'):inst>=30?_badge('MODERATE','warn'):_badge('LIGHT','neu')]);
+    if(insd!=null) rows.push(['Insiders', insd.toFixed(1)+'%', insd>=5?_badge('ALIGNED','ok'):insd>=1?_badge('SOME','neu'):_badge('LOW','neu')]);
     if(!isNaN(ib)||!isNaN(is)){ const b=ib||0,s=is||0; rows.push(['Insider trades · 90d', b+' buys · '+s+' sells', b>=s?_badge('NET BUY','ok'):(s>b*3?_badge('NET SELL','bad'):_badge('NEUTRAL','neu'))]); }
     if(si!=null) rows.push(['Short interest', si.toFixed(1)+'%', si<10?_badge('OK','ok'):si<20?_badge('ELEVATED','warn'):_badge('HIGH','bad')]);
     if(!rows.length) return '';
@@ -16323,7 +16323,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
           '<div class="dl-row"><span class="dl-dot" style="background:#cbd5e1"></span>Public float <b>'+pub.toFixed(0)+'%</b></div>'+
         '</div></div>';
     }
-    const tbl='<table><thead><tr><th>Holder</th><th>Value</th><th>Note</th></tr></thead><tbody>'+rows.map(r=>'<tr><td>'+r[0]+'</td><td>'+r[1]+'</td><td>'+r[2]+'</td></tr>').join('')+'</tbody></table>';
+    const tbl='<table><thead><tr><th>Metric</th><th>Value</th><th>Signal</th></tr></thead><tbody>'+rows.map(r=>'<tr><td>'+r[0]+'</td><td>'+r[1]+'</td><td>'+r[2]+'</td></tr>').join('')+'</tbody></table>';
     return _sec('Ownership','👥','violet',donut+tbl);
   }
   /* ── SVG infographic primitives ── */
