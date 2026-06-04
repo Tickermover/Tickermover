@@ -16681,7 +16681,8 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     if(!drawer.querySelector('#aiThesisBody')) return;
     fetch('/api/thesis/'+encodeURIComponent(tk)).then(r=>r.ok?r.json():null).then(d=>{
       const e=drawer.querySelector('#aiThesisBody'); if(!e) return;
-      if(d&&d.status==='ready'&&d.thesis){ e.innerHTML=escHTML(d.thesis)+' <span class="ai-tag ok">✦ AI · live</span>'; }
+      const txt=d&&(d.explanation||d.headline);
+      if(txt){ e.innerHTML=escHTML(txt)+' <span class="ai-tag ok">✦ AI · live</span>'; }
       else { const tag=drawer.querySelector('#aiThesisTag'); if(tag) tag.remove(); }
     }).catch(()=>{ const tag=drawer.querySelector('#aiThesisTag'); if(tag) tag.remove(); });
   }
