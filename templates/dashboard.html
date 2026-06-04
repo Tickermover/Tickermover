@@ -16159,7 +16159,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
   function _smaSeries(a,p){ const o=Array(a.length).fill(null); let s=0; for(let i=0;i<a.length;i++){ s+=a[i]; if(i>=p)s-=a[i-p]; if(i>=p-1)o[i]=s/p; } return o; }
   function _recoveryStats(cl){ const recs=[]; let pk=cl[0],pi=0,inDip=false; for(let i=1;i<cl.length;i++){ const c=cl[i]; if(c>=pk){ if(inDip){recs.push(i-pi);inDip=false;} pk=c;pi=i; } else if((pk-c)/pk>=0.08){ inDip=true; } } if(!recs.length)return null; recs.sort((a,b)=>a-b); return {n:recs.length, median:recs[Math.floor(recs.length/2)]}; }
   /* infographic report section wrapper */
-  const _SECMETA=[['Profitability','💰','green'],['Quarterly','📊','teal'],['Valuation multiples','⚖️','amber'],['Valuation verdict','💎','amber'],['Analyst targets','🏦','blue'],['EPS surprise','📊','violet'],['Earnings summary','🎯','green'],['Momentum','⚡','blue'],['Volatility','🛡️','amber'],['Setup','📐','blue'],['Quote','💧','slate'],['Six pillars','📶','teal'],['Signals','✨','teal'],['Recent headlines','📰','slate'],['News','📰','slate'],['Peers','👥','violet']];
+  const _SECMETA=[['Profitability','💰','green'],['Quarterly revenue','📊','blue'],['Quarterly','📊','blue'],['Valuation multiples','⚖️','amber'],['Valuation verdict','💎','amber'],['Analyst targets','🏦','blue'],['EPS surprise','📊','violet'],['Earnings summary','🎯','green'],['Momentum','⚡','blue'],['Volatility','🛡️','amber'],['Setup','📐','blue'],['Quote','💧','slate'],['Six pillars','📶','teal'],['Signals','✨','teal'],['Recent headlines','📰','slate'],['News','📰','slate'],['Peers','👥','violet']];
   function _secMeta(title){ for(const m of _SECMETA){ if(title.indexOf(m[0])>=0) return m; } return [title,'•','slate']; }
   function _sec(title,icon,accent,body,span){ if(body==null||body==='') return ''; return '<div class="rep-sec rep-'+accent+(span?' rep-span':'')+'"><div class="rep-rib"><span class="rep-num"></span><span class="rep-ico">'+icon+'</span><span class="rep-title">'+title+'</span><span class="rep-wm">'+icon+'</span></div><div class="rep-body">'+body+'</div></div>'; }
   function _card(title,rows){ const r=(rows||[]).filter(Boolean); if(!r.length) return ''; const m=_secMeta(title); return _sec(title,m[1],m[2],r.join('')); }
@@ -16301,7 +16301,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     if(roa!=null) rows.push(['ROA', roa.toFixed(1)+'%', roa>8?_badge('GOOD','ok'):roa>=4?_badge('AVERAGE','warn'):_badge('WEAK','bad')]);
     if(dy!=null) rows.push(['Dividend yield', dy.toFixed(2)+'%', dy>0?_badge('PAYS','info'):_badge('NONE','neu')]);
     if(po!=null&&po>0) rows.push(['Payout ratio', po.toFixed(0)+'%', po<80?_badge('SUSTAINABLE','ok'):_badge('HIGH','warn')]);
-    return _sigTable('Return quality','🏆','green',['Metric','Value','Signal'],rows);
+    return _sigTable('Return quality','🏆','amber',['Metric','Value','Signal'],rows);
   }
   function _ownershipCard(t){
     const inst=_pc(_fpNum(t,['held_pct_institutions'])), insd=_pc(_fpNum(t,['held_pct_insiders']));
@@ -16380,7 +16380,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     const eps=eq.slice(-8).map(q=>parseFloat(q.actual)).filter(v=>!isNaN(v));
     if(eps.length>=2) rows.push('<div class="trend-row"><span class="trend-k">EPS</span>'+_sparkSVG(eps,'#16a34a')+'<span class="trend-v">$'+eps[eps.length-1].toFixed(2)+'</span></div>');
     if(!rows.length) return '';
-    return _sec('Quarterly trend','📈','blue',rows.join(''));
+    return _sec('Quarterly trend','📈','slate',rows.join(''));
   }
   function _aiThesis(t){
     const bl=(t.bottom_line||'').trim(), th=(t.thesis||t.rationale||'').trim();
@@ -16496,9 +16496,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     const pct=v=>v==null?null:'<span class="'+(v>=0?'up':'dn')+'">'+(v>=0?'+':'')+v.toFixed(0)+'%</span>';
     const rs=_rsMap[t.ticker]||_fpNum(t,['rs_rating','rs']);
     const sp=_fpNum(t,['short_percent_float']);
-    const setupCard = S? _card('Setup & key levels',[_fpKV('Stage',_stageLabel(S.stage)),_fpKV('Breakout trigger','$'+(S.trigger<10?S.trigger.toFixed(2):S.trigger.toFixed(0))),_fpKV('50-day MA',S.sma50!=null?'$'+S.sma50.toFixed(2):null),_fpKV('200-day MA',S.sma200!=null?'$'+S.sma200.toFixed(2):null),_fpKV('52-week high','$'+S.hi52.toFixed(2)),_fpKV('52-week low','$'+S.lo52.toFixed(2))]):'';
     return '<div class="dr-deep-grid">'+
-      setupCard+
       _card('Momentum & strength',[_fpKV('RS rating',rs!=null?Math.round(rs):null),_fpKV('1-month',pct(m1)),_fpKV('3-month',pct(m3)),_fpKV('6-month',pct(m6))])+
       _card('Volatility & risk',[_fpKV('RSI (14)',S&&S.rsi!=null?S.rsi.toFixed(0):(_fpNum(t,['rsi_14'])!=null?_fpNum(t,['rsi_14']).toFixed(0):null)),_fpKV('ATR (14)',_fpNum(t,['atr_14'])!=null?'$'+_fpNum(t,['atr_14']).toFixed(2):null),_fpKV('Beta',_fpNum(t,['beta'])!=null?_fpNum(t,['beta']).toFixed(2):null),_fpKV('Volume vs avg',S&&S.volR!=null?S.volR.toFixed(1)+'×':null),_fpKV('Short % float',sp!=null?(sp<=1?sp*100:sp).toFixed(1)+'%':null)])+
       _quoteCard(t)+
@@ -16524,13 +16522,13 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
       const med=_sectorMed(t,key), sig=_valSig(cur,med);
       return [lbl, cur!=null?cur.toFixed(1)+'x':null, med!=null?med.toFixed(1)+'x':null, sig?_badge(sig[0],sig[1]):null];
     }).filter(r=>r[1]!=null);
-    const valTable = rows.length? _sec('Valuation vs sector','⚖️','amber',
+    const valTable = rows.length? _sec('Valuation vs sector','⚖️','blue',
       '<table><thead><tr><th>Metric</th><th>Current</th><th>Sector median</th><th>Signal</th></tr></thead><tbody>'+
       rows.map(r=>'<tr><td>'+r[0]+'</td><td>'+r[1]+'</td><td>'+(r[2]||'<span class="muted">—</span>')+'</td><td>'+(r[3]||'<span class="muted">—</span>')+'</td></tr>').join('')+
       '</tbody></table><div class="muted small" style="margin-top:6px">Sector median computed from our universe · lower multiple than sector = cheaper.</div>') : '';
     const vv=valuationVerdict(t), rd=reverseDCF(t);
     const gauge = vv&&_valPos(vv)!=null? _sec('Valuation gauge','🌡️','amber','<div class="gauge-wrap">'+_gaugeSVG(_valPos(vv),vv.verdict)+'</div>') : '';
-    const vvCard = vv?_sec('Valuation verdict','💎','amber','<div class="vv-line" style="--cc:'+vv.color+'">💰 <b>'+escHTML(vv.verdict)+'</b></div>'+(vv.summary?'<div class="muted small">'+escHTML(vv.summary)+'</div>':'')+((rd&&rd.impliedGrowth!=null&&rd.actualGrowth!=null)?'<div class="rd-line">Market prices in <b>'+rd.impliedGrowth.toFixed(0)+'%</b> growth · actual <b>'+rd.actualGrowth.toFixed(0)+'%</b></div>':'')):'';
+    const vvCard = vv?_sec('Valuation verdict','💎','violet','<div class="vv-line" style="--cc:'+vv.color+'">💰 <b>'+escHTML(vv.verdict)+'</b></div>'+(vv.summary?'<div class="muted small">'+escHTML(vv.summary)+'</div>':'')+((rd&&rd.impliedGrowth!=null&&rd.actualGrowth!=null)?'<div class="rd-line">Market prices in <b>'+rd.impliedGrowth.toFixed(0)+'%</b> growth · actual <b>'+rd.actualGrowth.toFixed(0)+'%</b></div>':'')):'';
     return gauge+'<div class="dr-deep-grid">'+valTable+vvCard+'</div>';
   }
   function paneEstimates(t){
