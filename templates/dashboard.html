@@ -4789,7 +4789,7 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
     box-shadow:-24px 0 60px rgba(9,20,60,.24);transform:translateX(100%);transition:transform .26s cubic-bezier(.4,0,.2,1);
     display:flex;flex-direction:column;overflow-y:auto;color:var(--ink)}
 #ts-drawer.open{transform:translateX(0)}
-#ts-drawer .dr-head{padding:16px 22px 13px;border-bottom:1px solid var(--hair);position:sticky;top:0;background:#fff;z-index:1}
+#ts-drawer .dr-head{padding:13px 22px 11px;border-bottom:1px solid var(--hair);position:sticky;top:0;background:#fff;z-index:1}
 #ts-drawer .dr-top{display:flex;align-items:center;gap:12px}
 #ts-drawer .dr-tic{font-weight:700;font-size:21px;letter-spacing:-.01em}
 #ts-drawer .dr-name{font-size:12.5px;color:var(--grey)}
@@ -4803,7 +4803,7 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 #ts-drawer .dr-stat .v.mono{font-family:'JetBrains Mono',monospace;font-size:15px}
 #ts-drawer .dr-stat .v.up{color:var(--up)}
 #ts-drawer .dr-stat .v.dn{color:var(--down)}
-#ts-drawer .dr-body{padding:11px 22px 12px;display:flex;flex-direction:column;gap:7px}
+#ts-drawer .dr-body{padding:11px 22px 12px;display:flex;flex-direction:column;gap:6px}
 #ts-drawer .dr-sec{margin:0}
 #ts-drawer .dr-sec-t{font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--grey);font-weight:700;margin-bottom:4px}
 /* ── THE CALL — premium verdict card ── */
@@ -4833,12 +4833,12 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 #ts-drawer .dr-cc.cc-blue{color:#0040c1;border-color:rgba(41,112,255,.32);background:rgba(41,112,255,.07)}
 #ts-drawer .dr-cc.cc-val{color:var(--cc,#b4780a);border-color:rgba(180,120,10,.32);background:rgba(245,166,35,.10)}
 /* ── compact six-pillar grid ── */
-#ts-drawer .dr-pillars-c{display:grid;grid-template-columns:1fr 1fr;gap:6px 18px}
-#ts-drawer .dr-pc-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:3px}
+#ts-drawer .dr-pillars-c{display:grid;grid-template-columns:1fr 1fr;gap:5px 18px}
+#ts-drawer .dr-pc-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:2px}
 #ts-drawer .dr-pc-n{font-size:11.5px;color:var(--ink-2);font-weight:600}
 #ts-drawer .dr-pc-v{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:800;color:var(--ink)}
 #ts-drawer .dr-pc.w .dr-pc-v{color:#b4780a}
-#ts-drawer .dr-pc-bar{display:block;height:5px;border-radius:99px;background:#e7edf5;overflow:hidden}
+#ts-drawer .dr-pc-bar{display:block;height:4px;border-radius:99px;background:#e7edf5;overflow:hidden}
 #ts-drawer .dr-pc-fill{display:block;height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,#2970ff,#0040c1);transition:width .6s cubic-bezier(.2,.7,.3,1)}
 #ts-drawer .dr-pc.w .dr-pc-fill{background:linear-gradient(90deg,#f7b733,#e08600)}
 /* ── compact analyst line ── */
@@ -15967,7 +15967,6 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     const sigs=(t.signals||[]).filter(s=>!/earnings|eps.in|days.to.earn/i.test(s));
     const sigHTML=sigs.length?'<div class="dr-sec"><div class="dr-sec-t">Signals</div><div class="sig-wrap">'+sigChips(sigs)+'</div></div>':'';
     const riskHTML=flags.length?'<div class="dr-sec"><div class="dr-sec-t">Risk flags</div><div class="risk-wrap">'+flags.map(f=>'<span class="risk-chip risk-'+f.level+'">'+escHTML(f.label)+'</span>').join('')+'</div></div>':'';
-    const srcLabel=(DATA&&DATA.__src==='fixture')?'Fixture snapshot':'Live data';
 
     drawer.innerHTML=
       '<div class="dr-head"><div class="dr-top">'+logoHTML(t.ticker,'lg')+
@@ -15976,7 +15975,6 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
       '<div class="dr-body">'+
         earnAlert+
         callCard+
-        ((kt&&kt.text)?'<div class="kt-banner '+kt.cls+'">'+kt.icon+' '+escHTML(kt.text)+'</div>':'')+
         pillarsBlock+
         analystLine+
         sigHTML+
@@ -15984,7 +15982,6 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
         '<button class="dr-expand" onclick="tsExpandToFull(\''+escHTML(t.ticker)+'\')">'+
           '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>'+
           'Expand to full analysis</button>'+
-        '<div style="font-family:\'JetBrains Mono\',monospace;font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--grey-3);text-align:center;margin-top:2px">'+srcLabel+' · educational only</div>'+
       '</div>';
     drawer.classList.add('open'); drawer.setAttribute('aria-hidden','false'); scrim.classList.add('open');
     const cl=document.getElementById('tsDrClose'); if(cl) cl.addEventListener('click',closeDrawer);
