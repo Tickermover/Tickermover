@@ -4877,6 +4877,25 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 #ts-drawer .dr-deep-card .kv:last-child{border:0}
 #ts-drawer .dr-deep-card .kv .k{color:var(--grey-2)}
 #ts-drawer .dr-deep-card .kv .v{font-family:'JetBrains Mono',monospace;font-weight:700}
+/* ── infographic report sections (ribbon style) ── */
+#ts-drawer .rep-sec{position:relative;background:#fff;border:1px solid var(--hair);border-radius:14px;overflow:hidden;box-shadow:0 3px 16px -7px rgba(0,40,120,.18)}
+#ts-drawer .rep-rib{position:relative;display:flex;align-items:center;gap:11px;padding:10px 15px;color:#fff}
+#ts-drawer .rep-rib::after{content:'';position:absolute;left:0;top:0;bottom:0;width:5px;background:rgba(0,0,0,.2)}
+#ts-drawer .rep-ico{flex:none;width:30px;height:30px;border-radius:9px;background:rgba(255,255,255,.22);display:grid;place-items:center;font-size:15px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.28)}
+#ts-drawer .rep-title{font-weight:800;font-size:13.5px;letter-spacing:.01em;text-shadow:0 1px 1px rgba(0,0,0,.14)}
+#ts-drawer .rep-wm{margin-left:auto;font-size:22px;opacity:.26;line-height:1}
+#ts-drawer .rep-body{padding:13px 15px}
+#ts-drawer .rep-body .kv:first-child{padding-top:0}
+#ts-drawer .rep-blue .rep-rib{background:linear-gradient(100deg,#3b86ff,#0040c1)}
+#ts-drawer .rep-teal .rep-rib{background:linear-gradient(100deg,#14b8a6,#0d8f86)}
+#ts-drawer .rep-green .rep-rib{background:linear-gradient(100deg,#5bb947,#3d9140)}
+#ts-drawer .rep-violet .rep-rib{background:linear-gradient(100deg,#8b5cf6,#5b21b6)}
+#ts-drawer .rep-amber .rep-rib{background:linear-gradient(100deg,#f7a823,#d4860a)}
+#ts-drawer .rep-red .rep-rib{background:linear-gradient(100deg,#f5576c,#c11d33)}
+#ts-drawer .rep-slate .rep-rib{background:linear-gradient(100deg,#7c8aa0,#4a5568)}
+#ts-drawer .rep-blue{border-color:rgba(41,112,255,.22)} #ts-drawer .rep-teal{border-color:rgba(20,184,166,.22)} #ts-drawer .rep-green{border-color:rgba(91,185,71,.24)} #ts-drawer .rep-violet{border-color:rgba(139,92,246,.22)} #ts-drawer .rep-amber{border-color:rgba(212,134,10,.24)} #ts-drawer .rep-red{border-color:rgba(193,29,51,.22)}
+#ts-drawer .reb-row{display:flex;align-items:center;gap:14px}
+#ts-drawer .reb-row .reb-bar{flex:1;margin:0}
 #ts-drawer .dr-back{align-self:flex-start;font-family:inherit;font-size:13px;font-weight:700;color:var(--grey-2);
   background:#fff;border:1px solid var(--hair);border-radius:11px;padding:10px 16px;cursor:pointer}
 #ts-drawer .dr-back:hover{background:var(--surf-3);color:var(--ink)}
@@ -16100,7 +16119,11 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
   function _sma(a,p){ if(!a||a.length<p)return null; let s=0; for(let i=a.length-p;i<a.length;i++)s+=a[i]; return s/p; }
   function _smaSeries(a,p){ const o=Array(a.length).fill(null); let s=0; for(let i=0;i<a.length;i++){ s+=a[i]; if(i>=p)s-=a[i-p]; if(i>=p-1)o[i]=s/p; } return o; }
   function _recoveryStats(cl){ const recs=[]; let pk=cl[0],pi=0,inDip=false; for(let i=1;i<cl.length;i++){ const c=cl[i]; if(c>=pk){ if(inDip){recs.push(i-pi);inDip=false;} pk=c;pi=i; } else if((pk-c)/pk>=0.08){ inDip=true; } } if(!recs.length)return null; recs.sort((a,b)=>a-b); return {n:recs.length, median:recs[Math.floor(recs.length/2)]}; }
-  function _card(title,rows){ const r=(rows||[]).filter(Boolean); return r.length?'<div class="dr-deep-card"><h4>'+title+'</h4>'+r.join('')+'</div>':''; }
+  /* infographic report section wrapper */
+  const _SECMETA=[['Profitability','💰','green'],['Quarterly','📊','teal'],['Valuation multiples','⚖️','amber'],['Valuation verdict','💎','amber'],['Analyst targets','🏦','blue'],['EPS surprise','📊','violet'],['Earnings summary','🎯','green'],['Momentum','⚡','blue'],['Volatility','🛡️','amber'],['Setup','📐','blue'],['Quote','💧','slate'],['Six pillars','📶','teal'],['Signals','✨','teal'],['Recent headlines','📰','slate'],['News','📰','slate'],['Peers','👥','violet']];
+  function _secMeta(title){ for(const m of _SECMETA){ if(title.indexOf(m[0])>=0) return m; } return [title,'•','slate']; }
+  function _sec(title,icon,accent,body){ if(body==null||body==='') return ''; return '<div class="rep-sec rep-'+accent+'"><div class="rep-rib"><span class="rep-ico">'+icon+'</span><span class="rep-title">'+title+'</span><span class="rep-wm">'+icon+'</span></div><div class="rep-body">'+body+'</div></div>'; }
+  function _card(title,rows){ const r=(rows||[]).filter(Boolean); if(!r.length) return ''; const m=_secMeta(title); return _sec(title,m[1],m[2],r.join('')); }
   function _money(v){ v=parseFloat(v); if(isNaN(v))return '—'; const a=Math.abs(v); if(a>=1e12)return '$'+(v/1e12).toFixed(2)+'T'; if(a>=1e9)return '$'+(v/1e9).toFixed(2)+'B'; if(a>=1e6)return '$'+(v/1e6).toFixed(1)+'M'; return '$'+v.toFixed(0); }
   function _stageLabel(s){ return {pre:'PRE-BREAKOUT',breakout:'BREAKOUT',extended:'EXTENDED',false:'FALSE BREAKOUT',pullback:'PULLBACK',downtrend:'DOWNTREND',base:'BASING'}[s]||(s||'').toUpperCase(); }
   function _tierOf(g){ return ({A:['★★★★★','Strong Outperform','pos'],B:['★★★★','Outperform','buy'],C:['★★★','Neutral','neu'],D:['★★','Lagging','neg'],F:['★','Avoid','neg']})[g]||['','No call yet','neu']; }
@@ -16212,10 +16235,9 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
   function _aiThesis(t){
     const bl=(t.bottom_line||'').trim(), th=(t.thesis||t.rationale||'').trim();
     if(!bl&&!th) return '';
-    return '<div class="dr-deep-card ai-thesis"><div class="ai-h"><span class="ai-spark">✦</span><h4>AI thesis</h4></div>'+
-      (bl?'<div class="ai-read">'+escHTML(bl)+'</div>':'')+
-      (th&&th.toLowerCase()!==bl.toLowerCase()?'<div class="ai-biz"><span class="ai-biz-k">Business</span> '+escHTML(th)+'</div>':'')+
-    '</div>';
+    const body=(bl?'<div class="ai-read">'+escHTML(bl)+'</div>':'')+
+      (th&&th.toLowerCase()!==bl.toLowerCase()?'<div class="ai-biz"><span class="ai-biz-k">Business</span> '+escHTML(th)+'</div>':'');
+    return _sec('AI thesis','✦','violet',body);
   }
   function _catalystCard(t){
     const kt=(typeof keyTrigger==='function')?keyTrigger(t):null;
@@ -16242,7 +16264,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     const T=uniq(tw), H=uniq(hw);
     if(!T.length&&!H.length) return '';
     const col=(title,arr,cls,ico)=>'<div class="winds-col"><div class="winds-h '+cls+'">'+ico+' '+title+'</div>'+(arr.length?arr.map(x=>'<div class="wind-row '+cls+'">'+escHTML(x)+'</div>').join(''):'<div class="wind-row muted">None flagged</div>')+'</div>';
-    return '<div class="dr-deep-card winds-card"><h4>Tailwinds & headwinds</h4><div class="winds-grid">'+col('Tailwinds',T,'tw','▲')+col('Headwinds',H,'hw','▼')+'</div></div>';
+    return _sec('Tailwinds & headwinds','⚖️','teal','<div class="winds-grid">'+col('Tailwinds',T,'tw','▲')+col('Headwinds',H,'hw','▼')+'</div>');
   }
   function _keyEvents(t){
     const rows=[]; const days=parseInt(t.days_to_earnings), rev=t.eps_revisions_30d, beat=parseInt(t.eps_beat_streak)||0;
@@ -16252,7 +16274,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     const is=parseInt(t.insider_sells_90d)||0, ib=parseInt(t.insider_buys_90d)||0;
     if(ib>0||is>0) rows.push({ico:'🏛',t:'Insider activity · 90d',sub:ib+' buys · '+is+' sells',tone:ib>=is?'pos':(is>ib*3?'neg':'')});
     if(!rows.length) return '';
-    return '<div class="dr-deep-card events-card"><h4>Key events</h4>'+rows.map(r=>'<div class="ev-row"><span class="ev-ico">'+r.ico+'</span><span class="ev-t">'+r.t+'</span><span class="ev-sub '+(r.tone||'')+'">'+escHTML(r.sub)+'</span></div>').join('')+'</div>';
+    return _sec('Key events','📅','blue','<div class="events-card">'+rows.map(r=>'<div class="ev-row"><span class="ev-ico">'+r.ico+'</span><span class="ev-t">'+r.t+'</span><span class="ev-sub '+(r.tone||'')+'">'+escHTML(r.sub)+'</span></div>').join('')+'</div>');
   }
   function _earningsSummary(t){
     const beat=parseInt(t.eps_beat_streak), avg=parseFloat(t.avg_eps_surprise_pct), days=parseInt(t.days_to_earnings), rev=t.eps_revisions_30d;
@@ -16273,7 +16295,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     if(!isNaN(vol)) rows.push(_fpKV('Volume',_volFmt(vol)));
     if(t.volume_ratio!=null) rows.push(_fpKV('Vol vs 20-day',parseFloat(t.volume_ratio).toFixed(1)+'×'));
     if(!rows.length) return '';
-    return '<div class="dr-deep-card"><h4>Quote & liquidity</h4>'+rows.join('')+'<div class="muted small" style="margin-top:8px">Level-2 depth &amp; pending-order book aren’t available from our data feed.</div></div>';
+    return _sec('Quote & liquidity','💧','slate',rows.join('')+'<div class="muted small" style="margin-top:8px">Level-2 depth &amp; pending-order book aren’t available from our data feed.</div>');
   }
   function paneOverview(t,S,full,candles){
     const g=(full.grade||'').toUpperCase(), TI=_tierOf(g);
@@ -16288,11 +16310,12 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
         (upside!=null?'<div class="dv-up '+(upside>=0?'pos':'neg')+'"><span class="k">UPSIDE</span><span class="v">'+(upside>=0?'+':'')+upside.toFixed(0)+'%</span></div>':'')+
       '</div></div>';
     const chart = candles?
-      '<div class="dr-deep-card chart-card"><div class="cc-head"><h4>Price action · 1 year</h4>'+
-        '<div class="cc-legend"><span class="lg-px">Price</span><span class="lg-50">50d</span><span class="lg-200">200d</span><span class="lg-trig">Trigger</span></div></div>'+
-        '<canvas id="drChart" class="dr-chart"></canvas></div>'
-      : '<div class="dr-deep-card"><h4>Price action</h4><div class="muted small">Live chart unavailable for this ticker.</div></div>';
-    const setup = S? '<div class="dr-setup stg-'+S.tone+'">'+
+      _sec('Price action · 1 year','📈','blue',
+        '<div class="cc-legend"><span class="lg-px">Price</span><span class="lg-50">50d</span><span class="lg-200">200d</span><span class="lg-trig">Trigger</span></div>'+
+        '<canvas id="drChart" class="dr-chart"></canvas>')
+      : _sec('Price action','📈','blue','<div class="muted small">Live chart unavailable for this ticker.</div>');
+    const setupAccent = S?({pos:'green',neg:'red',warn:'amber',blue:'blue',neu:'slate'}[S.tone]||'slate'):'slate';
+    const setup = S? _sec('Technical setup','📐',setupAccent,
       '<div class="setup-h"><span class="stg-badge stg-'+S.tone+'">'+_stageLabel(S.stage)+'</span><span class="setup-title">'+S.title+'</span></div>'+
       '<div class="setup-note">'+S.note+'</div>'+
       (S.alert?'<div class="setup-alert stg-'+S.tone+'">⚑ '+S.alert+'</div>':'')+
@@ -16303,17 +16326,17 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
         _lvl('52-week range','$'+S.lo52.toFixed(0)+' – $'+S.hi52.toFixed(0))+
         _lvl('RSI (14)',S.rsi!=null?S.rsi.toFixed(0):'—',S.rsi!=null?(S.rsi>70?'neg':S.rsi<35?'pos':''):'')+
         _lvl('Volume',S.volR!=null?S.volR.toFixed(1)+'×':'—',S.volR!=null?(S.volR>=1.3?'pos':''):'')+
-      '</div></div>' : '';
+      '</div>') : '';
     const cls=S?(S.rebound>=66?'hi':S.rebound>=40?'mid':'lo'):'mid';
-    const rebound = S? '<div class="dr-reb">'+
-      '<div class="reb-top"><div class="reb-title">Rebound potential</div><div class="reb-score reb-'+cls+'">'+S.rebound+'<small>/100</small></div></div>'+
-      '<div class="reb-bar"><span class="reb-fill reb-'+cls+'" data-w="'+S.rebound+'"></span></div>'+
-      '<div class="reb-sub">'+((S.recoverDays!=null&&S.recoverN>=2)?'Historically reclaims a dip in ~<b>'+S.recoverDays+'</b> sessions <span class="muted">('+S.recoverN+' samples, 1&nbsp;yr)</span>':'Score blends RSI, trend, support proximity &amp; drawdown room.')+'</div>'+
-      '</div>' : '';
+    const rebAccent=S?(S.rebound>=66?'green':S.rebound>=40?'amber':'red'):'slate';
+    const rebound = S? _sec('Rebound potential','🔄',rebAccent,
+      '<div class="reb-row"><span class="reb-score reb-'+cls+'">'+S.rebound+'<small>/100</small></span>'+
+        '<div class="reb-bar"><span class="reb-fill reb-'+cls+'" data-w="'+S.rebound+'"></span></div></div>'+
+      '<div class="reb-sub">'+((S.recoverDays!=null&&S.recoverN>=2)?'Historically reclaims a dip in ~<b>'+S.recoverDays+'</b> sessions <span class="muted">('+S.recoverN+' samples, 1&nbsp;yr)</span>':'Score blends RSI, trend, support proximity &amp; drawdown room.')+'</div>') : '';
     const pl=computePillars(t);
-    const pillars='<div class="dr-deep-card"><h4>Six pillars</h4><div class="dr-pillars-c">'+
+    const pillars=_sec('Six pillars','📶','teal','<div class="dr-pillars-c">'+
       pl.map((v,i)=>v==null?'':'<div class="dr-pc'+(v<65?' w':'')+'"><div class="dr-pc-top"><span class="dr-pc-n">'+PILLAR_LABELS[i]+'</span><span class="dr-pc-v">'+v+'</span></div><span class="dr-pc-bar"><span class="dr-pc-fill pf" data-w="'+v+'"></span></span></div>').join('')+
-      '</div></div>';
+      '</div>');
     return verdict+chart+_aiThesis(full)+_catalystCard(full)+setup+_windsCard(full)+rebound+_keyEvents(full)+pillars;
   }
   function paneTechnicals(t,S){
@@ -16343,7 +16366,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     const F=(v,dp)=>v==null?null:v.toFixed(dp==null?1:dp);
     const pe=_fpNum(t,['pe_ratio','forward_pe','forwardPE']),peg=_fpNum(t,['peg_ratio','pegRatio']),ps=_fpNum(t,['ps_ratio','price_to_sales']),pb=_fpNum(t,['pb_ratio','price_to_book']),ev=_fpNum(t,['ev_ebitda','ev_to_ebitda']);
     const vv=valuationVerdict(t), rd=reverseDCF(t);
-    const vvCard = vv?'<div class="dr-deep-card"><h4>Valuation verdict</h4><div class="vv-line" style="--cc:'+vv.color+'">💰 <b>'+escHTML(vv.verdict)+'</b></div>'+(vv.summary?'<div class="muted small">'+escHTML(vv.summary)+'</div>':'')+((rd&&rd.impliedGrowth!=null&&rd.actualGrowth!=null)?'<div class="rd-line">Market prices in <b>'+rd.impliedGrowth.toFixed(0)+'%</b> growth · actual <b>'+rd.actualGrowth.toFixed(0)+'%</b></div>':'')+'</div>':'';
+    const vvCard = vv?_sec('Valuation verdict','💎','amber','<div class="vv-line" style="--cc:'+vv.color+'">💰 <b>'+escHTML(vv.verdict)+'</b></div>'+(vv.summary?'<div class="muted small">'+escHTML(vv.summary)+'</div>':'')+((rd&&rd.impliedGrowth!=null&&rd.actualGrowth!=null)?'<div class="rd-line">Market prices in <b>'+rd.impliedGrowth.toFixed(0)+'%</b> growth · actual <b>'+rd.actualGrowth.toFixed(0)+'%</b></div>':'')):'';
     return '<div class="dr-deep-grid">'+
       _card('Valuation multiples',[_fpKV('P/E (fwd)',F(pe)),_fpKV('PEG',F(peg,2)),_fpKV('P/S',F(ps)),_fpKV('P/B',F(pb)),_fpKV('EV/EBITDA',F(ev))])+
       vvCard+
@@ -16360,15 +16383,15 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     '</div>';
   }
   function paneNews(t){
-    const nw=t.news; if(!Array.isArray(nw)||!nw.length) return '<div class="dr-deep-card"><h4>News</h4><div class="muted small">No recent headlines.</div></div>';
+    const nw=t.news; if(!Array.isArray(nw)||!nw.length) return _sec('News','📰','slate','<div class="muted small">No recent headlines.</div>');
     const rel=ts=>{ if(!ts)return''; const d=Date.now()/1000-ts; if(d<3600)return Math.round(d/60)+'m ago'; if(d<86400)return Math.round(d/3600)+'h ago'; return Math.round(d/86400)+'d ago'; };
-    return '<div class="dr-deep-card news-card"><h4>Recent headlines</h4>'+nw.slice(0,8).map(a=>'<div class="news-row"><div class="news-hl">'+escHTML(a.headline||a.title||'')+'</div><div class="news-meta">'+escHTML(a.source||'')+(a.datetime?' · '+rel(a.datetime):'')+'</div></div>').join('')+'</div>';
+    return _sec('Recent headlines','📰','slate','<div class="news-card">'+nw.slice(0,8).map(a=>'<div class="news-row"><div class="news-hl">'+escHTML(a.headline||a.title||'')+'</div><div class="news-meta">'+escHTML(a.source||'')+(a.datetime?' · '+rel(a.datetime):'')+'</div></div>').join('')+'</div>');
   }
   function panePeers(t){
     const key=(t.sub_sector||t.subsector||t.sector||'').toLowerCase();
     const peers=(ALL||[]).filter(x=>x.ticker!==t.ticker && ((x.sub_sector||x.subsector||x.sector||'').toLowerCase()===key)).sort((a,b)=>parseFloat(b.smart_score||b.pop_score||0)-parseFloat(a.smart_score||a.pop_score||0)).slice(0,8);
-    if(!peers.length) return '<div class="dr-deep-card"><h4>Peers</h4><div class="muted small">No peers in the same group.</div></div>';
-    return '<div class="dr-deep-card peers-card"><h4>Peers · '+escHTML(t.sub_sector||t.sector||'')+'</h4>'+peers.map(p=>{ const pop=Math.round(parseFloat(p.smart_score!=null?p.smart_score:(p.pop_score||0))), ch=parseFloat(p.change_pct||0); return '<div class="peer-row" onclick="tsCollapseDrawer();setTimeout(function(){tsOpenDrawer(\''+escHTML(p.ticker)+'\');},60)"><span class="peer-tic">'+escHTML(p.ticker)+'</span><span class="peer-nm">'+escHTML((p.name||'').slice(0,22))+'</span><span class="peer-alpha">'+pop+'</span><span class="peer-chg '+(ch>=0?'up':'dn')+'">'+fmtPct(ch)+'</span></div>'; }).join('')+'</div>';
+    if(!peers.length) return _sec('Peers','👥','violet','<div class="muted small">No peers in the same group.</div>');
+    return _sec('Peers · '+escHTML(t.sub_sector||t.sector||''),'👥','violet','<div class="peers-card">'+peers.map(p=>{ const pop=Math.round(parseFloat(p.smart_score!=null?p.smart_score:(p.pop_score||0))), ch=parseFloat(p.change_pct||0); return '<div class="peer-row" onclick="tsCollapseDrawer();setTimeout(function(){tsOpenDrawer(\''+escHTML(p.ticker)+'\');},60)"><span class="peer-tic">'+escHTML(p.ticker)+'</span><span class="peer-nm">'+escHTML((p.name||'').slice(0,22))+'</span><span class="peer-alpha">'+pop+'</span><span class="peer-chg '+(ch>=0?'up':'dn')+'">'+fmtPct(ch)+'</span></div>'; }).join('')+'</div>');
   }
 
   const DR_TABS=['Overview','Technicals','Financials','Valuation','Estimates','News','Peers'];
