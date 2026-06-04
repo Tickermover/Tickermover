@@ -4856,9 +4856,9 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 
 /* Direction B — drawer expands IN PLACE into a wide, centered sheet */
 #ts-drawer.expanded{top:14px;height:calc(100vh - 14px);border-radius:18px 18px 0 0;
-  box-shadow:0 30px 90px -30px rgba(0,40,120,.55);transform-origin:right center;
-  animation:drGrow .46s cubic-bezier(.34,0,.18,1)}
-@keyframes drGrow{from{transform:translateX(16%) scaleX(.5);opacity:.35}to{transform:none;opacity:1}}
+  box-shadow:0 30px 90px -30px rgba(0,40,120,.55);
+  animation:drGrow .4s cubic-bezier(.34,0,.18,1) both}
+@keyframes drGrow{from{transform:translateY(12px);opacity:.4}to{transform:translateY(0);opacity:1}}
 @media(prefers-reduced-motion:reduce){#ts-drawer.expanded{animation:none}}
 /* tabs strip (visible only when expanded) */
 #ts-drawer .dr-tabs{display:flex;gap:4px;overflow-x:auto;margin-top:16px;scrollbar-width:none}
