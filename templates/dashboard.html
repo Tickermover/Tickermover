@@ -4929,7 +4929,7 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 #ts-drawer .trend-v{font-family:'JetBrains Mono',monospace;font-weight:800;font-size:12px;min-width:62px;text-align:right;color:var(--ink)}
 /* poster: 2-column Overview on wide screens */
 @media(min-width:780px){
-  #ts-drawer.expanded .dr-pane[data-pane="Overview"]{display:grid;grid-template-columns:1fr 1fr;gap:13px;align-items:start}
+  #ts-drawer.expanded .dr-pane[data-pane="Overview"]:not([hidden]){display:grid;grid-template-columns:1fr 1fr;gap:13px;align-items:start}
   #ts-drawer.expanded .dr-pane[data-pane="Overview"]>.rep-span,
   #ts-drawer.expanded .dr-pane[data-pane="Overview"]>.dv-strip,
   #ts-drawer.expanded .dr-pane[data-pane="Overview"]>.hero-stats,
