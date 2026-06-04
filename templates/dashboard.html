@@ -4974,7 +4974,7 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 #ts-drawer .cc-legend{display:flex;gap:11px;font-size:10px;font-weight:700;color:var(--grey-2);flex-wrap:wrap}
 #ts-drawer .cc-legend span{display:inline-flex;align-items:center;gap:4px}
 #ts-drawer .cc-legend span::before{content:'';width:11px;height:2.5px;border-radius:2px;background:currentColor}
-#ts-drawer .cc-legend .lg-px{color:#2563eb} #ts-drawer .cc-legend .lg-50{color:#f59e0b} #ts-drawer .cc-legend .lg-200{color:#94a3b8} #ts-drawer .cc-legend .lg-trig{color:#d97706}
+#ts-drawer .cc-legend .lg-px{color:#2563eb} #ts-drawer .cc-legend .lg-50{color:#f59e0b} #ts-drawer .cc-legend .lg-200{color:#94a3b8} #ts-drawer .cc-legend .lg-trig{color:#db2777}
 #ts-drawer .cc-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:7px;flex-wrap:wrap}
 #ts-drawer .cc-tf{display:flex;gap:2px;background:var(--surf-2);border:1px solid var(--hair);border-radius:9px;padding:2px;flex:none}
 #ts-drawer .cc-tf button{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:800;color:var(--grey-2);background:none;border:0;border-radius:7px;padding:3px 10px;cursor:pointer;transition:color .12s,background .12s}
@@ -16272,7 +16272,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     let lo_=Math.min.apply(null,lo.slice(s)), hi_=Math.max.apply(null,hi.slice(s));
     const PX='#2563eb';
     const levels=[];
-    if(S){ levels.push([S.trigger,'#d97706',[6,4],'Trigger']); levels.push([S.hi52,'rgba(239,68,68,.5)',[5,4],'52w H']); levels.push([S.lo52,'rgba(22,163,74,.45)',[5,4],'52w L']); }
+    if(S){ levels.push([S.trigger,'#db2777',[6,4],'Trigger']); }
     if(opts.target) levels.push([opts.target,'rgba(124,58,237,.6)',[2,4],'Target']);
     const visR=(hi_-lo_)||1;
     levels.forEach(L=>{ const v=L[0]; if(v!=null && v>=lo_-visR*0.45 && v<=hi_+visR*0.45){ lo_=Math.min(lo_,v); hi_=Math.max(hi_,v); } });
@@ -16281,8 +16281,9 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     x.textBaseline='middle';
     x.font='10px JetBrains Mono,monospace'; x.lineWidth=1;
     for(let g=0;g<=4;g++){ const yy=padT+g/4*plotH, val=hi_-(g/4)*(hi_-lo_); x.strokeStyle='rgba(15,23,42,.045)'; x.beginPath(); x.moveTo(padL,yy); x.lineTo(padL+plotW,yy); x.stroke(); x.fillStyle='#aeb8c7'; x.fillText('$'+val.toFixed(0),padL+plotW+6,yy); }
-    const vmax=Math.max.apply(null,vo.slice(s))||1, vH=22;
-    for(let i=0;i<n;i++){ const gi=s+i, bh=(vo[gi]/vmax)*vH, up=gi>0?cl[gi]>=cl[gi-1]:true; x.fillStyle=up?'rgba(37,99,235,.13)':'rgba(148,163,184,.2)'; x.fillRect(xof(i)-1,H-padB+(vH-bh)+8,2,bh); }
+    const vmax=Math.max.apply(null,vo.slice(s))||1, vH=26, vBase=H-6;
+    const bw=Math.max(1.5,Math.min(7,plotW/n-1));
+    for(let i=0;i<n;i++){ const gi=s+i, bh=Math.max(0,(vo[gi]/vmax)*vH), up=gi>0?cl[gi]>=cl[gi-1]:true; x.fillStyle=up?'rgba(37,99,235,.30)':'rgba(148,163,184,.38)'; x.fillRect(xof(i)-bw/2,vBase-bh,bw,bh); }
     const _lbls=[];
     function hline(v,color,dash,label){ if(v==null||v<lo_||v>hi_)return; x.save(); x.strokeStyle=color; x.setLineDash(dash||[]); x.lineWidth=1; const yy=yof(v); x.beginPath(); x.moveTo(padL,yy); x.lineTo(padL+plotW,yy); x.stroke(); x.restore(); if(label)_lbls.push({y:yy,text:label+' $'+(v<10?v.toFixed(2):v.toFixed(0)),color}); }
     levels.forEach(L=>hline(L[0],L[1],L[2],L[3]));
@@ -16498,7 +16499,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     const chart = candles?
       _sec('Price action','📈','blue',
         '<div class="cc-bar"><div class="cc-legend"><span class="lg-px">Price</span><span class="lg-50">50d</span><span class="lg-200">200d</span><span class="lg-trig">Trigger</span></div>'+
-        '<div class="cc-tf"><button data-tf="1M">1M</button><button data-tf="6M">6M</button><button class="on" data-tf="1Y">1Y</button></div></div>'+
+        '<div class="cc-tf"><button data-tf="1M">1M</button><button class="on" data-tf="6M">6M</button><button data-tf="1Y">1Y</button></div></div>'+
         '<canvas id="drChart" class="dr-chart"></canvas>', true)
       : _sec('Price action','📈','blue','<div class="muted small">Live chart unavailable for this ticker.</div>', true);
     const setupAccent = S?({pos:'green',neg:'red',warn:'amber',blue:'blue',neu:'slate'}[S.tone]||'slate'):'slate';
@@ -16667,7 +16668,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     const w=Math.round(Math.min(window.innerWidth*0.9,1000));
     drawer.style.width=w+'px'; drawer.style.left='50%'; drawer.style.right='auto'; drawer.style.marginLeft=(-w/2)+'px';
     drawer.classList.add('expanded'); drawer.scrollTop=0;
-    _drState={t,candles:null,setup:null,full:t,tab:'Overview'};
+    _drState={t,candles:null,setup:null,full:t,tab:'Overview',tf:'6M'};
     Promise.allSettled([
       fetch('/api/candles/'+encodeURIComponent(t.ticker)+'?days=365').then(r=>r.ok?r.json():null).catch(()=>null),
       fetch('/api/ticker/'+encodeURIComponent(t.ticker)).then(r=>r.ok?r.json():null).catch(()=>null),
@@ -16713,7 +16714,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
   }
   function tsDrawChartEl(){
     const cv=drawer.querySelector('#drChart'); if(!cv||!_drState||!_drState.candles) return;
-    const tf=_drState.tf||'1Y', N=_drState.candles.length;
+    const tf=_drState.tf||'6M', N=_drState.candles.length;
     const visN = tf==='1M'?Math.min(N,22) : tf==='6M'?Math.min(N,126) : N;
     tsDrawChart(cv,_drState.candles,_drState.setup,{target:_fpNum(_drState.full,['target_mean','street_target']),visN});
   }
