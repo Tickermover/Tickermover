@@ -16296,12 +16296,12 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
   function _pc(v){ return v==null?null:v*100; }   /* yfinance decimals → % */
   function _returnsCard(t){
     const roe=_pc(_fpNum(t,['roe'])), roa=_pc(_fpNum(t,['roa'])), po=_pc(_fpNum(t,['payout_ratio']));
-    let dy=_fpNum(t,['dividend_yield']); if(dy!=null) dy = dy<0.25 ? dy*100 : dy;  /* yfinance yield is already % (older builds = decimal) */
+    const dy=_fpNum(t,['dividend_yield']);   /* yfinance dividendYield is already a percentage */
     const rows=[];
     if(roe!=null) rows.push(['ROE', roe.toFixed(1)+'%', roe>15?_badge('GOOD','ok'):roe>=10?_badge('AVERAGE','warn'):_badge('WEAK','bad')]);
     if(roa!=null) rows.push(['ROA', roa.toFixed(1)+'%', roa>8?_badge('GOOD','ok'):roa>=4?_badge('AVERAGE','warn'):_badge('WEAK','bad')]);
-    if(dy!=null) rows.push(['Dividend yield', dy.toFixed(2)+'%', dy>0?_badge('PAYS','info'):_badge('NONE','neu')]);
-    if(po!=null&&po>0) rows.push(['Payout ratio', po.toFixed(0)+'%', po<80?_badge('SUSTAINABLE','ok'):_badge('HIGH','warn')]);
+    if(dy!=null&&dy>0&&dy<=20) rows.push(['Dividend yield', dy.toFixed(2)+'%', dy>=3?_badge('INCOME','ok'):_badge('PAYS','info')]);
+    if(po!=null&&po>0&&po<=100) rows.push(['Payout ratio', po.toFixed(0)+'%', po<80?_badge('SUSTAINABLE','ok'):_badge('HIGH','warn')]);
     return _sigTable('Return quality','🏆','amber',['Metric','Value','Signal'],rows);
   }
   function _ownershipCard(t){
@@ -16521,11 +16521,12 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     const M=v=>v==null?null:(Math.abs(v)<=1?v*100:v);
     const gm=M(_fpNum(t,['gross_margin'])),nm=M(_fpNum(t,['profit_margin','net_margin'])),fm=M(_fpNum(t,['fcf_margin'])),om=M(_fpNum(t,['operating_margin']));
     const rg=_fpNum(t,['revenue_growth_yoy']), rgPct=rg!=null?(Math.abs(rg)<=2?rg*100:rg):null;
+    const okM=v=>v!=null&&(gm==null||v<=gm+1);   /* margins can't exceed gross — guards bad feed data */
     const profRows=[];
     if(gm!=null) profRows.push(['Gross margin',gm.toFixed(0)+'%', gm>=50?_badge('STRONG','ok'):gm>=30?_badge('SOLID','warn'):_badge('THIN','bad')]);
-    if(om!=null) profRows.push(['Operating margin',om.toFixed(0)+'%', om>=20?_badge('STRONG','ok'):om>=8?_badge('SOLID','warn'):om>=0?_badge('THIN','bad'):_badge('LOSS','bad')]);
-    if(nm!=null) profRows.push(['Net margin',nm.toFixed(0)+'%', nm>=15?_badge('STRONG','ok'):nm>=5?_badge('SOLID','warn'):nm>=0?_badge('THIN','bad'):_badge('LOSS','bad')]);
-    if(fm!=null) profRows.push(['FCF margin',fm.toFixed(0)+'%', fm>=10?_badge('STRONG','ok'):fm>=0?_badge('OK','warn'):_badge('BURN','bad')]);
+    if(okM(om)) profRows.push(['Operating margin',om.toFixed(0)+'%', om>=20?_badge('STRONG','ok'):om>=8?_badge('SOLID','warn'):om>=0?_badge('THIN','bad'):_badge('LOSS','bad')]);
+    if(okM(nm)) profRows.push(['Net margin',nm.toFixed(0)+'%', nm>=15?_badge('STRONG','ok'):nm>=5?_badge('SOLID','warn'):nm>=0?_badge('THIN','bad'):_badge('LOSS','bad')]);
+    if(okM(fm)) profRows.push(['FCF margin',fm.toFixed(0)+'%', fm>=10?_badge('STRONG','ok'):fm>=0?_badge('OK','warn'):_badge('BURN','bad')]);
     if(rgPct!=null) profRows.push(['Revenue YoY',(rgPct>=0?'+':'')+rgPct.toFixed(0)+'%', rgPct>=20?_badge('FAST','ok'):rgPct>=5?_badge('STEADY','warn'):rgPct>=0?_badge('SLOW','bad'):_badge('DECLINE','bad')]);
     const byDate=a=>a.slice().sort((x,y)=>String(x.date||x.quarter||'').localeCompare(String(y.date||y.quarter||'')));
     const qi=Array.isArray(t.quarterly_income)?byDate(t.quarterly_income).slice(-4):[];
