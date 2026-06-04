@@ -1401,7 +1401,7 @@ class DataCoordinator:
                 analyst targets (low/mean/high), beta, short %, description.
         Cached for CACHE_TECH_TTL (1 hour).
         """
-        key    = f"yf:{ticker}"
+        key    = f"yf:{ticker}:v2"
         cached = self.cache.get(key)
         if cached is not None:
             return cached
@@ -1596,7 +1596,7 @@ class DataCoordinator:
         quote   = await self.get_quote(ticker)
 
         # Primary: Yahoo Finance enrichment (candles + fundamentals in one call)
-        yf      = self.cache.get(f"yf:{ticker}") or {}
+        yf      = self.cache.get(f"yf:{ticker}:v2") or {}
 
         # Fallbacks: Finnhub candles, Alpha Vantage fundamentals
         candles = self.cache.get(f"candles:{ticker}") or {}
