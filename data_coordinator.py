@@ -441,7 +441,7 @@ class DataCoordinator:
     async def get_candles_raw(self, ticker: str, days: int = 130) -> dict:
         """Full daily OHLCV array for client charting + price-action analysis.
         Cached 24h under candles_raw:{ticker}. Alpaca primary, Finnhub fallback."""
-        key    = f"candles_raw:{ticker}"
+        key    = f"candles_raw:{ticker}:{days}"
         cached = self.cache.get(key)
         if cached is not None:
             return cached

@@ -3160,7 +3160,7 @@ async def api_candles(symbol: str, days: int = 130):
     """Daily OHLCV candles for client-side charting + price-action analysis.
     Returns candles plus key levels and (when known) analyst-target overlays."""
     sym  = symbol.upper()
-    days = max(40, min(int(days or 130), 260))
+    days = max(40, min(int(days or 130), 400))
     try:
         data = await coordinator.get_candles_raw(sym, days)
     except Exception as exc:
