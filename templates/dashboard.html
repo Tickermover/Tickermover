@@ -4970,10 +4970,15 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 #ts-drawer .chart-card{padding:14px 14px 8px}
 #ts-drawer .cc-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:6px}
 #ts-drawer .cc-head h4{margin:0}
-#ts-drawer .cc-legend{display:flex;gap:11px;font-size:10px;font-weight:700;color:var(--grey-2)}
+#ts-drawer .cc-legend{display:flex;gap:11px;font-size:10px;font-weight:700;color:var(--grey-2);flex-wrap:wrap}
 #ts-drawer .cc-legend span{display:inline-flex;align-items:center;gap:4px}
 #ts-drawer .cc-legend span::before{content:'';width:11px;height:2.5px;border-radius:2px;background:currentColor}
-#ts-drawer .cc-legend .lg-px{color:#0040c1} #ts-drawer .cc-legend .lg-50{color:#e08600} #ts-drawer .cc-legend .lg-200{color:#64748b} #ts-drawer .cc-legend .lg-trig{color:#b4780a}
+#ts-drawer .cc-legend .lg-px{color:#2563eb} #ts-drawer .cc-legend .lg-50{color:#f59e0b} #ts-drawer .cc-legend .lg-200{color:#94a3b8} #ts-drawer .cc-legend .lg-trig{color:#d97706}
+#ts-drawer .cc-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:7px;flex-wrap:wrap}
+#ts-drawer .cc-tf{display:flex;gap:2px;background:var(--surf-2);border:1px solid var(--hair);border-radius:9px;padding:2px;flex:none}
+#ts-drawer .cc-tf button{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:800;color:var(--grey-2);background:none;border:0;border-radius:7px;padding:3px 10px;cursor:pointer;transition:color .12s,background .12s}
+#ts-drawer .cc-tf button.on{background:#fff;color:#2563eb;box-shadow:0 1px 3px rgba(0,40,120,.14)}
+#ts-drawer .cc-tf button:not(.on):hover{color:var(--ink)}
 #ts-drawer .dr-chart{width:100%;height:250px;display:block}
 /* technical setup card */
 #ts-drawer .dr-setup{border:1px solid var(--hair);border-left-width:4px;border-radius:14px;padding:14px 16px;background:#fff;box-shadow:0 1px 2px rgba(0,40,120,.06)}
@@ -16256,37 +16261,40 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
   function tsDrawChart(cv,candles,S,opts){
     opts=opts||{}; if(!cv||!candles||!candles.length) return;
     const dpr=window.devicePixelRatio||1;
-    const W=cv.clientWidth||640, H=cv.clientHeight||240;
-    if(!W) return;
+    const W=cv.clientWidth||640, H=cv.clientHeight||240; if(!W) return;
     cv.width=W*dpr; cv.height=H*dpr;
     const x=cv.getContext('2d'); x.setTransform(dpr,0,0,dpr,0,0); x.clearRect(0,0,W,H);
-    const cl=candles.map(c=>c.c),hi=candles.map(c=>c.h),lo=candles.map(c=>c.l),vo=candles.map(c=>c.v),n=cl.length;
-    const padL=4,padR=58,padT=10,padB=40, plotW=W-padL-padR, plotH=H-padT-padB;
-    let lo_=Math.min.apply(null,lo), hi_=Math.max.apply(null,hi);
-    [S&&S.hi52,S&&S.lo52,S&&S.trigger,opts.target].forEach(v=>{ if(v!=null){lo_=Math.min(lo_,v);hi_=Math.max(hi_,v);} });
+    const cl=candles.map(c=>c.c),hi=candles.map(c=>c.h),lo=candles.map(c=>c.l),vo=candles.map(c=>c.v),N=cl.length;
+    const sma50=_smaSeries(cl,50), sma200=_smaSeries(cl,200);
+    const n=Math.max(2,Math.min(N,opts.visN||N)), s=N-n;   // visible window [s..N-1]
+    const padL=4,padR=58,padT=12,padB=36, plotW=W-padL-padR, plotH=H-padT-padB;
+    let lo_=Math.min.apply(null,lo.slice(s)), hi_=Math.max.apply(null,hi.slice(s));
+    const PX='#2563eb';
+    const levels=[];
+    if(S){ levels.push([S.trigger,'#d97706',[6,4],'Trigger']); levels.push([S.hi52,'rgba(239,68,68,.5)',[5,4],'52w H']); levels.push([S.lo52,'rgba(22,163,74,.45)',[5,4],'52w L']); }
+    if(opts.target) levels.push([opts.target,'rgba(124,58,237,.6)',[2,4],'Target']);
+    const visR=(hi_-lo_)||1;
+    levels.forEach(L=>{ const v=L[0]; if(v!=null && v>=lo_-visR*0.45 && v<=hi_+visR*0.45){ lo_=Math.min(lo_,v); hi_=Math.max(hi_,v); } });
     const pad=(hi_-lo_)*0.06||1; lo_-=pad; hi_+=pad;
     const yof=v=>padT+(1-(v-lo_)/(hi_-lo_))*plotH, xof=i=>padL+(n<2?0:(i/(n-1))*plotW);
-    x.font='10px JetBrains Mono,monospace'; x.textBaseline='middle';
-    x.strokeStyle='rgba(15,23,42,.06)'; x.lineWidth=1; x.fillStyle='#94a3b8';
-    for(let g=0;g<=4;g++){ const yy=padT+g/4*plotH, val=hi_-(g/4)*(hi_-lo_); x.beginPath(); x.moveTo(padL,yy); x.lineTo(padL+plotW,yy); x.stroke(); x.fillText('$'+val.toFixed(0),padL+plotW+6,yy); }
-    const vmax=Math.max.apply(null,vo)||1, vH=26;
-    for(let i=0;i<n;i++){ const bh=(vo[i]/vmax)*vH, up=i>0?cl[i]>=cl[i-1]:true; x.fillStyle=up?'rgba(22,163,74,.16)':'rgba(234,56,76,.15)'; x.fillRect(xof(i)-1,H-padB+(vH-bh)+8,2,bh); }
+    x.textBaseline='middle';
+    x.font='10px JetBrains Mono,monospace'; x.lineWidth=1;
+    for(let g=0;g<=4;g++){ const yy=padT+g/4*plotH, val=hi_-(g/4)*(hi_-lo_); x.strokeStyle='rgba(15,23,42,.045)'; x.beginPath(); x.moveTo(padL,yy); x.lineTo(padL+plotW,yy); x.stroke(); x.fillStyle='#aeb8c7'; x.fillText('$'+val.toFixed(0),padL+plotW+6,yy); }
+    const vmax=Math.max.apply(null,vo.slice(s))||1, vH=22;
+    for(let i=0;i<n;i++){ const gi=s+i, bh=(vo[gi]/vmax)*vH, up=gi>0?cl[gi]>=cl[gi-1]:true; x.fillStyle=up?'rgba(37,99,235,.13)':'rgba(148,163,184,.2)'; x.fillRect(xof(i)-1,H-padB+(vH-bh)+8,2,bh); }
     const _lbls=[];
-    function hline(v,color,dash,label){ if(v==null)return; x.save(); x.strokeStyle=color; x.setLineDash(dash||[]); x.lineWidth=1.1; const yy=yof(v); x.beginPath(); x.moveTo(padL,yy); x.lineTo(padL+plotW,yy); x.stroke(); x.restore(); if(label)_lbls.push({y:yy,text:label,color}); }
-    hline(S&&S.hi52,'rgba(234,56,76,.45)',[4,4],'52w H');
-    hline(S&&S.lo52,'rgba(22,163,74,.4)',[4,4],'52w L');
-    if(S&&S.trigger) hline(S.trigger,'rgba(180,120,10,.85)',[6,3],'Trigger $'+(S.trigger<10?S.trigger.toFixed(2):S.trigger.toFixed(0)));
-    if(opts.target) hline(opts.target,'rgba(41,112,255,.5)',[2,3],'Target $'+opts.target.toFixed(0));
+    function hline(v,color,dash,label){ if(v==null||v<lo_||v>hi_)return; x.save(); x.strokeStyle=color; x.setLineDash(dash||[]); x.lineWidth=1; const yy=yof(v); x.beginPath(); x.moveTo(padL,yy); x.lineTo(padL+plotW,yy); x.stroke(); x.restore(); if(label)_lbls.push({y:yy,text:label+' $'+(v<10?v.toFixed(2):v.toFixed(0)),color}); }
+    levels.forEach(L=>hline(L[0],L[1],L[2],L[3]));
     _lbls.sort((a,b)=>a.y-b.y); let _ly=-99; x.setLineDash([]); x.font='9px JetBrains Mono,monospace';
-    _lbls.forEach(L=>{ let yy=L.y-7; if(yy<_ly+11)yy=_ly+11; _ly=yy; x.fillStyle='rgba(255,255,255,.85)'; x.fillRect(padL+1,yy-5,x.measureText(L.text).width+4,10); x.fillStyle=L.color; x.fillText(L.text,padL+3,yy); });
-    function series(arr,color,w){ x.strokeStyle=color; x.lineWidth=w||1.4; x.beginPath(); let st=false; for(let i=0;i<arr.length;i++){ const v=arr[i]; if(v==null)continue; const px=xof(i),py=yof(v); if(!st){x.moveTo(px,py);st=true;}else x.lineTo(px,py);} x.stroke(); }
-    const grad=x.createLinearGradient(0,padT,0,padT+plotH); grad.addColorStop(0,'rgba(41,112,255,.20)'); grad.addColorStop(1,'rgba(41,112,255,.01)');
-    x.beginPath(); x.moveTo(xof(0),yof(cl[0])); for(let i=1;i<n;i++)x.lineTo(xof(i),yof(cl[i])); x.lineTo(xof(n-1),padT+plotH); x.lineTo(xof(0),padT+plotH); x.closePath(); x.fillStyle=grad; x.fill();
-    series(cl,'#0040c1',1.8);
-    series(_smaSeries(cl,50),'rgba(245,166,35,.95)',1.2);
-    series(_smaSeries(cl,200),'rgba(100,116,139,.85)',1.2);
-    const lp=cl[n-1],ly=yof(lp); x.fillStyle='#0040c1'; x.beginPath(); x.arc(xof(n-1),ly,3,0,7); x.fill();
-    x.fillStyle='#0040c1'; x.font='700 11px JetBrains Mono,monospace'; x.fillText('$'+lp.toFixed(2),padL+plotW+6,ly);
+    _lbls.forEach(L=>{ let yy=L.y-7; if(yy<_ly+11)yy=_ly+11; _ly=yy; const w=x.measureText(L.text).width; x.fillStyle='rgba(255,255,255,.82)'; x.fillRect(padL+1,yy-5,w+4,10); x.fillStyle=L.color; x.fillText(L.text,padL+3,yy); });
+    const grad=x.createLinearGradient(0,padT,0,padT+plotH); grad.addColorStop(0,'rgba(37,99,235,.18)'); grad.addColorStop(1,'rgba(37,99,235,.01)');
+    x.beginPath(); x.moveTo(xof(0),yof(cl[s])); for(let i=1;i<n;i++)x.lineTo(xof(i),yof(cl[s+i])); x.lineTo(xof(n-1),padT+plotH); x.lineTo(xof(0),padT+plotH); x.closePath(); x.fillStyle=grad; x.fill();
+    function series(arr,color,w){ x.strokeStyle=color; x.lineWidth=w; x.lineJoin='round'; x.beginPath(); let st=false; for(let i=0;i<n;i++){ const v=arr[s+i]; if(v==null)continue; const px=xof(i),py=yof(v); if(!st){x.moveTo(px,py);st=true;}else x.lineTo(px,py);} x.stroke(); }
+    series(sma200,'#94a3b8',1.3);
+    series(sma50,'#f59e0b',1.5);
+    series(cl,PX,2);
+    const lp=cl[N-1],ly=yof(lp); x.fillStyle=PX; x.beginPath(); x.arc(xof(n-1),ly,3.4,0,7); x.fill(); x.fillStyle='#fff'; x.beginPath(); x.arc(xof(n-1),ly,1.3,0,7); x.fill();
+    x.fillStyle=PX; x.font='700 11px JetBrains Mono,monospace'; x.fillText('$'+lp.toFixed(2),padL+plotW+6,ly);
   }
 
   /* ── Tab panes ── */
@@ -16486,8 +16494,9 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
         (upside!=null?'<div class="dv-up '+(upside>=0?'pos':'neg')+'"><span class="k">UPSIDE</span><span class="v">'+(upside>=0?'+':'')+upside.toFixed(0)+'%</span></div>':'')+
       '</div></div>';
     const chart = candles?
-      _sec('Price action · 1 year','📈','blue',
-        '<div class="cc-legend"><span class="lg-px">Price</span><span class="lg-50">50d</span><span class="lg-200">200d</span><span class="lg-trig">Trigger</span></div>'+
+      _sec('Price action','📈','blue',
+        '<div class="cc-bar"><div class="cc-legend"><span class="lg-px">Price</span><span class="lg-50">50d</span><span class="lg-200">200d</span><span class="lg-trig">Trigger</span></div>'+
+        '<div class="cc-tf"><button data-tf="1M">1M</button><button data-tf="6M">6M</button><button class="on" data-tf="1Y">1Y</button></div></div>'+
         '<canvas id="drChart" class="dr-chart"></canvas>', true)
       : _sec('Price action','📈','blue','<div class="muted small">Live chart unavailable for this ticker.</div>', true);
     const setupAccent = S?({pos:'green',neg:'red',warn:'amber',blue:'blue',neu:'slate'}[S.tone]||'slate'):'slate';
@@ -16701,7 +16710,9 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
   }
   function tsDrawChartEl(){
     const cv=drawer.querySelector('#drChart'); if(!cv||!_drState||!_drState.candles) return;
-    tsDrawChart(cv,_drState.candles,_drState.setup,{target:_fpNum(_drState.full,['target_mean','street_target'])});
+    const tf=_drState.tf||'1Y', N=_drState.candles.length;
+    const visN = tf==='1M'?Math.min(N,22) : tf==='6M'?Math.min(N,126) : N;
+    tsDrawChart(cv,_drState.candles,_drState.setup,{target:_fpNum(_drState.full,['target_mean','street_target']),visN});
   }
   function tsCollapseDrawer(){
     drawer.classList.remove('expanded');
@@ -16711,6 +16722,8 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     _drState=null;
   }
   window.addEventListener('resize',()=>{ if(drawer.classList.contains('expanded')) tsDrawChartEl(); });
+  /* chart timeframe toggle (1M / 6M / 1Y) */
+  drawer.addEventListener('click',(e)=>{ const b=e.target.closest('.cc-tf button'); if(!b||!_drState) return; _drState.tf=b.getAttribute('data-tf'); drawer.querySelectorAll('.cc-tf button').forEach(x=>x.classList.toggle('on',x===b)); tsDrawChartEl(); });
   /* reach the end of a tab → glide to the next one (and top → previous) */
   let _tabFlipTs=0;
   function _tabFlip(dir){
