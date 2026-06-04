@@ -4929,11 +4929,11 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 #ts-drawer .trend-v{font-family:'JetBrains Mono',monospace;font-weight:800;font-size:12px;min-width:62px;text-align:right;color:var(--ink)}
 /* poster: 2-column Overview on wide screens */
 @media(min-width:780px){
-  #ts-drawer.expanded .dr-pane[data-pane="Overview"]{display:block;column-count:2;column-gap:14px}
-  #ts-drawer.expanded .dr-pane[data-pane="Overview"]>*{break-inside:avoid;margin-bottom:14px;display:block}
+  #ts-drawer.expanded .dr-pane[data-pane="Overview"]{display:grid;grid-template-columns:1fr 1fr;gap:13px;align-items:start}
   #ts-drawer.expanded .dr-pane[data-pane="Overview"]>.rep-span,
   #ts-drawer.expanded .dr-pane[data-pane="Overview"]>.dv-strip,
-  #ts-drawer.expanded .dr-pane[data-pane="Overview"]>.hero-stats{column-span:all}
+  #ts-drawer.expanded .dr-pane[data-pane="Overview"]>.hero-stats,
+  #ts-drawer.expanded .dr-pane[data-pane="Overview"]>.dr-catalyst{grid-column:1/-1}
 }
 #ts-drawer .dr-back{align-self:flex-start;font-family:inherit;font-size:13px;font-weight:700;color:var(--grey-2);
   background:#fff;border:1px solid var(--hair);border-radius:11px;padding:10px 16px;cursor:pointer}
