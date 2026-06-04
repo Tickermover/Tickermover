@@ -4878,22 +4878,21 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 #ts-drawer .dr-deep-card .kv .k,#ts-drawer .rep-body .kv .k{color:var(--grey-2)}
 #ts-drawer .dr-deep-card .kv .v,#ts-drawer .rep-body .kv .v{font-family:'JetBrains Mono',monospace;font-weight:700;text-align:right;white-space:nowrap}
 /* ── infographic report sections (ribbon style) ── */
-#ts-drawer .rep-sec{position:relative;background:#fff;border:1px solid var(--hair);border-radius:14px;overflow:hidden;box-shadow:0 3px 16px -7px rgba(0,40,120,.18)}
-#ts-drawer .rep-rib{position:relative;display:flex;align-items:center;gap:11px;padding:10px 15px;color:#fff}
-#ts-drawer .rep-rib::after{content:'';position:absolute;left:0;top:0;bottom:0;width:5px;background:rgba(0,0,0,.2)}
-#ts-drawer .rep-ico{flex:none;width:30px;height:30px;border-radius:9px;background:rgba(255,255,255,.22);display:grid;place-items:center;font-size:15px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.28)}
-#ts-drawer .rep-title{font-weight:800;font-size:13.5px;letter-spacing:.01em;text-shadow:0 1px 1px rgba(0,0,0,.14)}
-#ts-drawer .rep-wm{margin-left:auto;font-size:22px;opacity:.26;line-height:1}
-#ts-drawer .rep-body{padding:13px 15px}
+#ts-drawer .rep-sec{position:relative;background:#fff;border:1px solid var(--hair);border-radius:15px;overflow:hidden;box-shadow:0 6px 20px -10px rgba(15,40,100,.2),0 1px 2px rgba(15,40,100,.05)}
+#ts-drawer .rep-rib{position:relative;display:flex;align-items:center;gap:10px;padding:9px 15px;color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.2),inset 0 -1px 0 rgba(0,0,0,.06)}
+#ts-drawer .rep-ico{flex:none;width:27px;height:27px;border-radius:9px;background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.36);display:grid;place-items:center;font-size:14px;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+#ts-drawer .rep-title{font-weight:700;font-size:13.5px;letter-spacing:-.005em;text-shadow:0 1px 1px rgba(0,0,0,.1)}
+#ts-drawer .rep-wm{display:none}
+#ts-drawer .rep-body{padding:14px 15px}
 #ts-drawer .rep-body .kv:first-child{padding-top:0}
-#ts-drawer .rep-blue .rep-rib{background:linear-gradient(100deg,#3b86ff,#0040c1)}
-#ts-drawer .rep-teal .rep-rib{background:linear-gradient(100deg,#14b8a6,#0d8f86)}
-#ts-drawer .rep-green .rep-rib{background:linear-gradient(100deg,#5bb947,#3d9140)}
-#ts-drawer .rep-violet .rep-rib{background:linear-gradient(100deg,#8b5cf6,#5b21b6)}
-#ts-drawer .rep-amber .rep-rib{background:linear-gradient(100deg,#f7a823,#d4860a)}
-#ts-drawer .rep-red .rep-rib{background:linear-gradient(100deg,#f5576c,#c11d33)}
-#ts-drawer .rep-slate .rep-rib{background:linear-gradient(100deg,#7c8aa0,#4a5568)}
-#ts-drawer .rep-blue{border-color:rgba(41,112,255,.22)} #ts-drawer .rep-teal{border-color:rgba(20,184,166,.22)} #ts-drawer .rep-green{border-color:rgba(91,185,71,.24)} #ts-drawer .rep-violet{border-color:rgba(139,92,246,.22)} #ts-drawer .rep-amber{border-color:rgba(212,134,10,.24)} #ts-drawer .rep-red{border-color:rgba(193,29,51,.22)}
+#ts-drawer .rep-blue .rep-rib{background:linear-gradient(105deg,#3f86f7,#1e44c9)}
+#ts-drawer .rep-teal .rep-rib{background:linear-gradient(105deg,#16c2af,#0c8a82)}
+#ts-drawer .rep-green .rep-rib{background:linear-gradient(105deg,#5fc24a,#398f3c)}
+#ts-drawer .rep-violet .rep-rib{background:linear-gradient(105deg,#8b5cf6,#5b21b6)}
+#ts-drawer .rep-amber .rep-rib{background:linear-gradient(105deg,#f9b234,#db880b)}
+#ts-drawer .rep-red .rep-rib{background:linear-gradient(105deg,#f5576c,#c11d33)}
+#ts-drawer .rep-slate .rep-rib{background:linear-gradient(105deg,#7c8aa0,#4a5568)}
+#ts-drawer .rep-blue{border-color:rgba(41,112,255,.18)} #ts-drawer .rep-teal{border-color:rgba(20,184,166,.18)} #ts-drawer .rep-green{border-color:rgba(91,185,71,.2)} #ts-drawer .rep-violet{border-color:rgba(139,92,246,.18)} #ts-drawer .rep-amber{border-color:rgba(212,134,10,.2)} #ts-drawer .rep-red{border-color:rgba(193,29,51,.18)}
 #ts-drawer .reb-row{display:flex;align-items:center;gap:14px}
 #ts-drawer .reb-row .reb-bar{flex:1;margin:0}
 /* signal badge colors (override the global grey catch-all) */
@@ -4916,7 +4915,7 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 #ts-drawer .dl-dot{width:11px;height:11px;border-radius:3px;flex:none}
 /* numbered section badges (auto via CSS counter, DOM order) */
 #ts-drawer .dr-pane{counter-reset:secn}
-#ts-drawer .rep-num{flex:none;width:19px;height:19px;border-radius:50%;background:rgba(255,255,255,.25);display:grid;place-items:center;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:800;box-shadow:inset 0 0 0 1px rgba(255,255,255,.4)}
+#ts-drawer .rep-num{flex:none;width:20px;height:20px;border-radius:50%;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.42);display:grid;place-items:center;font-family:'JetBrains Mono',monospace;font-size:9.5px;font-weight:800;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
 #ts-drawer .rep-num::before{counter-increment:secn;content:counter(secn)}
 /* hero stat callouts */
 #ts-drawer .hero-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:10px}
