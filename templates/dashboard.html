@@ -4932,6 +4932,7 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 #ts-drawer .trend-row:last-child{border:0}
 #ts-drawer .trend-k{font-size:12px;color:var(--grey-2);min-width:62px;font-weight:600}
 #ts-drawer .spark-svg{flex:1;height:30px}
+#ts-drawer .bar-svg{flex:1;height:34px}
 #ts-drawer .trend-v{font-family:'JetBrains Mono',monospace;font-weight:800;font-size:12px;min-width:62px;text-align:right;color:var(--ink)}
 /* poster: 2-column Overview on wide screens */
 @media(min-width:780px){
@@ -16391,6 +16392,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
   }
   function _valPos(v){ if(!v)return 50; return ({'Cheap':16,'Fair':46,'Full':64,'Expensive':82,'Very Expensive':93,'Pre-profit':50})[v.verdict]; }
   function _sparkSVG(vals,color){ if(!vals||vals.length<2)return ''; const W=120,H=30,mn=Math.min.apply(null,vals),mx=Math.max.apply(null,vals),rng=(mx-mn)||1; const pts=vals.map((v,i)=>[(i/(vals.length-1))*W,H-((v-mn)/rng)*(H-4)-2]); return '<svg viewBox="0 0 '+W+' '+H+'" class="spark-svg" preserveAspectRatio="none"><polyline points="'+pts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ')+'" fill="none" stroke="'+color+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="'+pts[pts.length-1][0].toFixed(1)+'" cy="'+pts[pts.length-1][1].toFixed(1)+'" r="2.6" fill="'+color+'"/></svg>'; }
+  function _barSVG(vals,color){ if(!vals||!vals.length)return ''; const W=120,H=34,n=vals.length,mn=Math.min(0,Math.min.apply(null,vals)),mx=Math.max.apply(null,vals)||1,rng=(mx-mn)||1,step=W/n,bw=Math.max(3,step-3); let bars=''; for(let i=0;i<n;i++){ const v=vals[i],h=Math.max(1.5,((v-mn)/rng)*(H-3)),xx=i*step+(step-bw)/2,yy=H-h,last=i===n-1; bars+='<rect x="'+xx.toFixed(1)+'" y="'+yy.toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+h.toFixed(1)+'" rx="1.4" fill="'+color+'" fill-opacity="'+(last?'1':'.42')+'"/>'; } return '<svg viewBox="0 0 '+W+' '+H+'" class="bar-svg" preserveAspectRatio="none">'+bars+'</svg>'; }
   function _heroStats(t,S,full){
     /* complements the verdict strip (which already shows Alpha, price & Upside) — no repeats */
     const rs=_rsMap[t.ticker]||_fpNum(full,['rs_rating','rs']);
@@ -16408,12 +16410,12 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     const byDate=a=>a.slice().sort((x,y)=>String(x.date||x.quarter||'').localeCompare(String(y.date||y.quarter||'')));
     const qi=Array.isArray(t.quarterly_income)?byDate(t.quarterly_income):[], eq=Array.isArray(t.eps_quarters)?byDate(t.eps_quarters):[];
     const rows=[];
-    const rev=qi.slice(-8).map(q=>parseFloat(q.revenue)).filter(v=>!isNaN(v));
-    if(rev.length>=2) rows.push('<div class="trend-row"><span class="trend-k">Revenue</span>'+_sparkSVG(rev,'#2970ff')+'<span class="trend-v">'+_money(rev[rev.length-1])+'</span></div>');
-    const eps=eq.slice(-8).map(q=>parseFloat(q.actual)).filter(v=>!isNaN(v));
-    if(eps.length>=2) rows.push('<div class="trend-row"><span class="trend-k">EPS</span>'+_sparkSVG(eps,'#16a34a')+'<span class="trend-v">$'+eps[eps.length-1].toFixed(2)+'</span></div>');
+    const rev=qi.slice(-6).map(q=>parseFloat(q.revenue)).filter(v=>!isNaN(v));
+    if(rev.length>=2) rows.push('<div class="trend-row"><span class="trend-k">Revenue</span>'+_barSVG(rev,'#2563eb')+'<span class="trend-v">'+_money(rev[rev.length-1])+'</span></div>');
+    const eps=eq.slice(-6).map(q=>parseFloat(q.actual)).filter(v=>!isNaN(v));
+    if(eps.length>=2) rows.push('<div class="trend-row"><span class="trend-k">EPS</span>'+_barSVG(eps,'#16a34a')+'<span class="trend-v">$'+eps[eps.length-1].toFixed(2)+'</span></div>');
     if(!rows.length) return '';
-    return _sec('Quarterly trend','📈','slate',rows.join(''));
+    return _sec('Quarterly trend','📊','slate',rows.join(''));
   }
   function _aiThesis(t){
     const bl=(t.bottom_line||'').trim(), th=(t.thesis||t.rationale||'').trim();
@@ -16567,7 +16569,8 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
       _returnsCard(t)+
       _ownershipCard(t)+
       (qiRows.length?_sigTable('Quarterly revenue','📊','blue',['Metric','Value','Signal'],qiRows):'')+
-    '</div>'+_trendCard(t);
+      _trendCard(t)+
+    '</div>';
   }
   function paneValuation(t){
     const defs=[['P/E','pe_ratio'],['P/B','pb_ratio'],['P/S','ps_ratio'],['EV/EBITDA','ev_ebitda'],['PEG','peg_ratio']];
