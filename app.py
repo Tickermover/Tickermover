@@ -2980,6 +2980,37 @@ async def api_thesis(symbol: str):
         raise HTTPException(status_code=500, detail="Thesis generation failed")
 
 
+@app.get("/api/thesis/{ticker}")
+async def api_thesis(ticker: str):
+    """Fresh, LLM-generated 2–3 sentence 'current read', grounded on the
+    ticker's live data + recent headlines. Cached 6h under thesis:{ticker}."""
+    import thesis_gen
+    sym = ticker.upper()
+    ck  = f"thesis:{sym}"
+    cached = cache.get(ck)
+    if cached:
+        return JSONResponse(cached)
+    if not thesis_gen.available():
+        return JSONResponse({"ticker": sym, "status": "unavailable"})
+    t = next((x for x in _universe_data if x.get("ticker") == sym), None)
+    if not t:
+        try:
+            t = await coordinator.get_full_ticker(sym, get_meta(sym), cache.get("ape:all") or {})
+        except Exception:
+            t = None
+    try:
+        txt = await thesis_gen.generate_thesis(sym, t)
+    except Exception as exc:
+        logger.error(f"thesis {sym}: {exc}")
+        return JSONResponse({"ticker": sym, "status": "error"})
+    if not txt:
+        return JSONResponse({"ticker": sym, "status": "error"})
+    out = {"ticker": sym, "status": "ready", "thesis": txt,
+           "model": thesis_gen._MODEL, "generated_at": int(time.time())}
+    cache.set(ck, out, 6 * 3600)
+    return JSONResponse(out, headers={"Cache-Control": "public, max-age=600"})
+
+
 # ── AI Deep-Dive research (cached; web-grounded via Anthropic) ─────────────
 _research_generating: set = set()
 
