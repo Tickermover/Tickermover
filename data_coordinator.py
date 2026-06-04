@@ -1477,6 +1477,24 @@ class DataCoordinator:
                 yf_ocf     = _safe_float(info.get("operatingCashflow"))
                 yf_rev_ttm = _safe_float(info.get("totalRevenue"))
 
+                # ── Extended fundamentals (long-term lens) ─────────────
+                fwd_pe      = _safe_float(info.get("forwardPE"))
+                pb          = _safe_float(info.get("priceToBook"))
+                ps          = _safe_float(info.get("priceToSalesTrailing12Months"))
+                ev_ebitda   = _safe_float(info.get("enterpriseToEbitda"))
+                op_m        = _safe_float(info.get("operatingMargins"))
+                ebitda_m    = _safe_float(info.get("ebitdaMargins"))
+                roe         = _safe_float(info.get("returnOnEquity"))
+                roa         = _safe_float(info.get("returnOnAssets"))
+                de_raw      = _safe_float(info.get("debtToEquity"))
+                de          = (de_raw / 100.0) if (de_raw is not None and de_raw > 5) else de_raw
+                curr_ratio  = _safe_float(info.get("currentRatio"))
+                quick_ratio = _safe_float(info.get("quickRatio"))
+                div_yield   = _safe_float(info.get("dividendYield"))
+                payout      = _safe_float(info.get("payoutRatio"))
+                inst_pct    = _safe_float(info.get("heldPercentInstitutions"))
+                insider_pct = _safe_float(info.get("heldPercentInsiders"))
+
                 return {
                     # Technical
                     "rsi_14":        rsi,
@@ -1516,6 +1534,22 @@ class DataCoordinator:
                     "target_mean":   tgt_mean or tgt_med,
                     "target_high":   tgt_high,
                     "total_analysts": analysts,
+                    # Extended fundamentals (long-term lens)
+                    "forward_pe":            fwd_pe,
+                    "pb_ratio":              pb,
+                    "ps_ratio":              ps,
+                    "ev_ebitda":             ev_ebitda,
+                    "operating_margin":      op_m,
+                    "ebitda_margin":         ebitda_m,
+                    "roe":                   roe,
+                    "roa":                   roa,
+                    "debt_to_equity":        de,
+                    "current_ratio":         curr_ratio,
+                    "quick_ratio":           quick_ratio,
+                    "dividend_yield":        div_yield,
+                    "payout_ratio":          payout,
+                    "held_pct_institutions": inst_pct,
+                    "held_pct_insiders":     insider_pct,
                     # Description
                     "description":   desc,
                     # Earnings date from yfinance info
@@ -1661,6 +1695,21 @@ class DataCoordinator:
             "beta":               _yf("beta",                fund) or fmp_fund.get("beta"),
             "short_percent_float":_yf("short_percent_float",  fund),
             "debt_to_equity":     _yf("debt_to_equity",       fund) or fund.get("debt_to_equity") or fmp_fund.get("debt_to_equity"),
+            # Extended fundamentals (long-term lens)
+            "forward_pe":            _yf("forward_pe"),
+            "pb_ratio":              _yf("pb_ratio",  fund) or fmp_fund.get("pb_ratio"),
+            "ps_ratio":              _yf("ps_ratio",  fund) or fmp_fund.get("ps_ratio"),
+            "ev_ebitda":             _yf("ev_ebitda", fund) or fmp_fund.get("ev_ebitda"),
+            "operating_margin":      _yf("operating_margin", fund),
+            "ebitda_margin":         _yf("ebitda_margin", fund),
+            "roe":                   _yf("roe",  fund) or fmp_fund.get("roe"),
+            "roa":                   _yf("roa",  fund),
+            "current_ratio":         _yf("current_ratio", fund) or fmp_fund.get("current_ratio"),
+            "quick_ratio":           _yf("quick_ratio", fund),
+            "dividend_yield":        _yf("dividend_yield", fund),
+            "payout_ratio":          _yf("payout_ratio", fund),
+            "held_pct_institutions": _yf("held_pct_institutions"),
+            "held_pct_insiders":     _yf("held_pct_insiders"),
             "description":        _yf("description") or fund.get("description", "") or fmp_fund.get("description", ""),
 
             # Analyst price targets (yf has all three; AV only has mean)
