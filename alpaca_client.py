@@ -251,6 +251,54 @@ class AlpacaClient:
             "closes":        closes[-66:],   # last 66 for mini-chart
         }
 
+    async def get_candles_raw(self, ticker: str, days: int = 130) -> dict:
+        """
+        Returns the full daily OHLCV array (for client-side charting + price-action
+        analysis), trimmed to the most recent `days` trading sessions, plus a few
+        key levels. Same upstream call as get_candles() — we just keep the bars.
+        """
+        to_dt   = date.today()
+        from_dt = to_dt - timedelta(days=days + 60)
+        params = {
+            "timeframe":  "1Day",
+            "start":      from_dt.isoformat(),
+            "end":        to_dt.isoformat(),
+            "limit":      1000,
+            "adjustment": "split",
+            "feed":       "iex",
+            "sort":       "asc",
+        }
+        data = await self._get(f"/v2/stocks/{ticker}/bars", params)
+        if not data:
+            return {}
+        bars = data.get("bars") or []
+        if len(bars) < 5:
+            return {}
+
+        highs = [b["h"] for b in bars]
+        lows  = [b["l"] for b in bars]
+        closes = [b["c"] for b in bars]
+        n = len(bars)
+        hi52 = max(highs[-252:]) if n >= 252 else max(highs)
+        lo52 = min(lows[-252:])  if n >= 252 else min(lows)
+
+        candles = [{
+            "t": (b.get("t") or "")[:10],
+            "o": round(_sf(b["o"]) or 0, 4),
+            "h": round(_sf(b["h"]) or 0, 4),
+            "l": round(_sf(b["l"]) or 0, 4),
+            "c": round(_sf(b["c"]) or 0, 4),
+            "v": int(b.get("v") or 0),
+        } for b in bars[-days:]]
+
+        return {
+            "ticker":       ticker,
+            "candles":      candles,
+            "week_52_high": round(hi52, 4) if hi52 else None,
+            "week_52_low":  round(lo52, 4) if lo52 else None,
+            "atr_14":       _compute_atr(highs, lows, closes),
+        }
+
     # ── WebSocket real-time stream (FREE IEX feed) ────────────────────────────
 
     async def start_ws_stream(self, tickers: List[str]) -> None:

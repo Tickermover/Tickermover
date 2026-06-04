@@ -3155,6 +3155,36 @@ async def api_ticker(symbol: str):
     raise HTTPException(status_code=404, detail=f"Ticker {sym} not found")
 
 
+@app.get("/api/candles/{symbol}")
+async def api_candles(symbol: str, days: int = 130):
+    """Daily OHLCV candles for client-side charting + price-action analysis.
+    Returns candles plus key levels and (when known) analyst-target overlays."""
+    sym  = symbol.upper()
+    days = max(40, min(int(days or 130), 260))
+    try:
+        data = await coordinator.get_candles_raw(sym, days)
+    except Exception as exc:
+        logger.error(f"Candles fetch {sym}: {exc}")
+        data = {}
+    if not data or not data.get("candles"):
+        raise HTTPException(status_code=404, detail=f"No candle data for {sym}")
+
+    # Overlay levels from the live universe row when available.
+    meta = {}
+    for t in _universe_data:
+        if t.get("ticker") == sym:
+            for k in ("price", "target_mean", "target_low", "target_high",
+                      "sma_50", "sma_200", "smart_score", "grade"):
+                if t.get(k) is not None:
+                    meta[k] = t[k]
+            break
+    data["meta"] = meta
+    return JSONResponse(
+        content=data,
+        headers={"Cache-Control": "public, max-age=300, s-maxage=900"},
+    )
+
+
 # IMPORTANT: /api/news/live MUST be defined BEFORE /api/news/{symbol}
 # otherwise FastAPI matches "live" as a ticker symbol parameter.
 @app.get("/api/news/live")

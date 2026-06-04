@@ -438,6 +438,49 @@ class DataCoordinator:
         self.cache.set(key, result, config.CACHE_TECH_TTL)
         return result
 
+    async def get_candles_raw(self, ticker: str, days: int = 130) -> dict:
+        """Full daily OHLCV array for client charting + price-action analysis.
+        Cached 24h under candles_raw:{ticker}. Alpaca primary, Finnhub fallback."""
+        key    = f"candles_raw:{ticker}"
+        cached = self.cache.get(key)
+        if cached is not None:
+            return cached
+
+        if self.alpaca.enabled:
+            alp = await self.alpaca.get_candles_raw(ticker, days)
+            if alp and alp.get("candles"):
+                self.cache.set(key, alp, config.CACHE_TECH_TTL)
+                return alp
+
+        # ── Finnhub fallback ─────────────────────────────────────────
+        to_ts   = int(time.time())
+        from_ts = to_ts - (days + 60) * 86_400
+        data    = await self._fh_get("/stock/candle", {
+            "symbol": ticker, "resolution": "D",
+            "from": from_ts, "to": to_ts,
+        })
+        if not data or data.get("s") != "ok":
+            return {}
+        ts  = data.get("t", []); op = data.get("o", []); hi = data.get("h", [])
+        lo  = data.get("l", []); cl = data.get("c", []); vo = data.get("v", [])
+        n   = len(cl)
+        if n < 5:
+            return {}
+        candles = [{
+            "t": datetime.utcfromtimestamp(ts[i]).strftime("%Y-%m-%d") if i < len(ts) else "",
+            "o": round(op[i], 4), "h": round(hi[i], 4), "l": round(lo[i], 4),
+            "c": round(cl[i], 4), "v": int(vo[i] if i < len(vo) else 0),
+        } for i in range(n)][-days:]
+        result = {
+            "ticker":       ticker,
+            "candles":      candles,
+            "week_52_high": max(hi[-252:]) if n >= 60 else max(hi),
+            "week_52_low":  min(lo[-252:]) if n >= 60 else min(lo),
+            "atr_14":       _compute_atr(hi, lo, cl),
+        }
+        self.cache.set(key, result, config.CACHE_TECH_TTL)
+        return result
+
     async def get_recommendation(self, ticker: str) -> dict:
         key    = f"rec:{ticker}"
         cached = self.cache.get(key)
