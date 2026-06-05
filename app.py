@@ -2711,9 +2711,10 @@ async def api_market_analysis():
 #  Desk reports — two dated editions (pre-market & post-market) that publish
 #  on a schedule and otherwise serve the previous (yesterday's) edition.
 # ══════════════════════════════════════════════════════════════════════════
-# ET publish times: pre-market edition freezes at 09:00 ET (before the 9:30
-# open); post-market edition freezes at 16:15 ET (after the 4:00 close).
-_DESK_PUBLISH = {"pre": (9, 0), "post": (16, 15)}
+# ET publish times: the pre-market edition freezes at 04:00 ET (pre-market
+# open) so it's live all morning; the post-market edition freezes at 16:15 ET
+# (just after the 4:00 close).
+_DESK_PUBLISH = {"pre": (4, 0), "post": (16, 15)}
 _DESK_TTL     = 60 * 60 * 30        # 30h — a daily edition outlives the gap to the next
 
 
