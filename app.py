@@ -46,6 +46,7 @@ BASE_DIR       = Path(__file__).parent
 DASHBOARD_HTML = BASE_DIR / "templates" / "dashboard.html"
 LANDING_HTML   = BASE_DIR / "templates" / "landing.html"
 LOGIN_HTML     = BASE_DIR / "templates" / "login.html"
+DESK_HTML      = BASE_DIR / "templates" / "desk.html"
 
 
 # ── NaN/Inf sanitiser — Python json.dumps crashes on NaN/Infinity ─────
@@ -2358,6 +2359,17 @@ async def login_page():
         return HTMLResponse(content="<h2>templates/login.html not found</h2>", status_code=500)
 
 
+@app.get("/desk", response_class=HTMLResponse)
+async def desk_report():
+    """Public pre/post-market report page — the standalone version of the
+    in-app Market Analysis panel. No login required; reuses the shared
+    /static/market_report.{css,js} renderer and the /api/market-analysis feed."""
+    try:
+        return HTMLResponse(content=DESK_HTML.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return HTMLResponse(content="<h2>templates/desk.html not found</h2>", status_code=500)
+
+
 @app.get("/app", response_class=HTMLResponse)
 async def dashboard():
     """
@@ -2584,21 +2596,95 @@ async def api_regime_refresh():
     return JSONResponse(_clean(payload))
 
 
+def _market_movers() -> dict:
+    """Stock-level detail for the Market Analysis report, computed live from the
+    in-memory universe (always current — not tied to the 5-min macro cache)."""
+    uni = _universe_data or []
+
+    def fnum(t, k):
+        try:
+            v = float(t.get(k))
+            return v if v == v else None   # drop NaN
+        except (TypeError, ValueError):
+            return None
+
+    def from_high(t):
+        """Clean % distance from the 52-week high (0 = at high, negative = below)
+        computed straight from price/high_52w so it never depends on a possibly
+        stale precomputed field."""
+        p, h = fnum(t, "price"), fnum(t, "high_52w")
+        return round((p / h - 1) * 100, 2) if (p and h and h > 0) else None
+
+    def slim(t):
+        return {
+            "ticker":     t.get("ticker"),
+            "name":       (t.get("name") or "")[:34],
+            "price":      fnum(t, "price"),
+            "change_pct": fnum(t, "change_pct"),
+            "grade":      t.get("grade"),
+            "score":      fnum(t, "smart_score") or fnum(t, "pop_score"),
+            "sector":     t.get("sub_sector") or t.get("subsector") or t.get("sector"),
+            "dte":        fnum(t, "days_to_earnings"),
+            "vol_ratio":  fnum(t, "volume_ratio"),
+            "from_high":  from_high(t),
+            "upside":     fnum(t, "target_upside_pct"),
+        }
+
+    have_chg = [t for t in uni if fnum(t, "price") and fnum(t, "change_pct") is not None]
+    gainers  = sorted(have_chg, key=lambda t: fnum(t, "change_pct"), reverse=True)[:8]
+    losers   = sorted(have_chg, key=lambda t: fnum(t, "change_pct"))[:8]
+
+    scored    = [t for t in uni if fnum(t, "smart_score") is not None]
+    top_score = sorted(scored, key=lambda t: fnum(t, "smart_score") or 0, reverse=True)[:8]
+
+    earnings = sorted(
+        [t for t in uni if fnum(t, "days_to_earnings") is not None
+         and 0 <= fnum(t, "days_to_earnings") <= 7],
+        key=lambda t: fnum(t, "days_to_earnings"),
+    )[:10]
+    just_reported = [t for t in uni if t.get("earnings_just_reported")][:10]
+
+    unusual = sorted(
+        [t for t in uni if fnum(t, "volume_ratio") is not None and fnum(t, "volume_ratio") >= 1.5],
+        key=lambda t: fnum(t, "volume_ratio"), reverse=True,
+    )[:8]
+    # Within 3% below the high, up to 2% above (genuine fresh highs) — the upper
+    # cap drops names whose stored 52-week high is stale after a big gap.
+    near_high = sorted(
+        [t for t in uni if from_high(t) is not None and -3.0 <= from_high(t) <= 2.0],
+        key=from_high, reverse=True,
+    )[:8]
+
+    return {
+        "count":          len(uni),
+        "gainers":        [slim(t) for t in gainers],
+        "losers":         [slim(t) for t in losers],
+        "top_score":      [slim(t) for t in top_score],
+        "earnings":       [slim(t) for t in earnings],
+        "just_reported":  [slim(t) for t in just_reported],
+        "unusual_volume": [slim(t) for t in unusual],
+        "near_high":      [slim(t) for t in near_high],
+    }
+
+
 @app.get("/api/market-analysis")
 async def api_market_analysis():
-    """US pre/post-market snapshot for the Market Analysis panel.
+    """US pre/post-market report feed for the Market Analysis panel + /desk page.
 
-    Indices, equity futures, rates/VIX/dollar, commodities, sector rotation,
-    and SPY technicals. Served from a 5-min cache; refreshed on demand when
-    the cache is cold so the first opener pays the fetch and everyone after
-    rides the cache.
+    Macro half (indices, equity futures, rates/VIX/dollar, commodities, sector
+    rotation, SPY technicals, AI narrative) comes from a 5-min cache. The
+    stock-level 'stocks' half is layered on live from the in-memory universe so
+    movers stay current with the 30-second quote loop.
     """
     data = market_analysis.get()
     if not data or not data.get("available"):
         data = await market_analysis.refresh()
+    if isinstance(data, dict) and data.get("available"):
+        data = dict(data)                  # shallow copy — never mutate the cache
+        data["stocks"] = _market_movers()
     return JSONResponse(
         _clean(data),
-        headers={"Cache-Control": "public, max-age=120, s-maxage=180"},
+        headers={"Cache-Control": "public, max-age=60, s-maxage=90"},
     )
 
 

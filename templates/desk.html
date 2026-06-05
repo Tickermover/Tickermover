@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pre &amp; Post-Market Report — AlphaHunt</title>
+  <meta name="description" content="AlphaHunt's daily US pre-market and post-market report — index futures, sector rotation, rates, commodities, top movers, and an AI-written read of the tape.">
+  <link rel="icon" href="/static/icons/alpha-logo-bare-64.png">
+  <link rel="stylesheet" href="/static/market_report.css">
+  <style>
+    :root{--blue:#2970ff;--ink:#0f172a}
+    *{box-sizing:border-box}
+    body{margin:0;background:#f4f7fc;color:var(--ink);
+      font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;
+      -webkit-font-smoothing:antialiased}
+    .desk-top{position:sticky;top:0;z-index:20;background:rgba(255,255,255,.86);backdrop-filter:saturate(180%) blur(12px);
+      border-bottom:1px solid rgba(15,23,42,.08)}
+    .desk-top-in{max-width:1080px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 18px}
+    .desk-brand{display:flex;align-items:center;gap:9px;text-decoration:none;color:var(--ink)}
+    .desk-brand img{width:28px;height:28px}
+    .desk-brand b{font-size:16px;font-weight:800}
+    .desk-brand b span{color:var(--blue)}
+    .desk-cta{display:inline-flex;align-items:center;gap:7px;background:var(--blue);color:#fff;text-decoration:none;
+      font-size:13px;font-weight:700;padding:9px 16px;border-radius:10px;box-shadow:0 6px 16px rgba(41,112,255,.25)}
+    .desk-cta:hover{background:#1f5fe0}
+    .desk-hero{max-width:1080px;margin:0 auto;padding:26px 18px 6px}
+    .desk-hero .eyebrow{font-size:11px;font-weight:800;letter-spacing:.16em;color:var(--blue)}
+    .desk-hero h1{font-size:28px;font-weight:800;margin:6px 0 6px;line-height:1.12}
+    .desk-hero h1 em{font-style:normal;color:var(--blue)}
+    .desk-hero p{font-size:14px;color:#475569;max-width:640px;line-height:1.55;margin:0}
+    .desk-main{padding:14px 18px 60px}
+    .desk-foot{max-width:1080px;margin:0 auto;padding:0 18px 50px;text-align:center}
+    .desk-foot a{color:var(--blue);text-decoration:none;font-weight:700}
+  </style>
+</head>
+<body>
+  <header class="desk-top">
+    <div class="desk-top-in">
+      <a class="desk-brand" href="/"><img src="/static/icons/alpha-logo-bare-64.png" alt="AlphaHunt"><b>Alpha<span>Hunt</span></b></a>
+      <a class="desk-cta" href="/app">Open the dashboard
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a>
+    </div>
+  </header>
+
+  <section class="desk-hero">
+    <div class="eyebrow">FROM THE DESK</div>
+    <h1>The US <em>pre &amp; post-market</em> report</h1>
+    <p>Everything to walk into the session with the desk's read — index futures, sector rotation, rates &amp; commodities, today's biggest movers across 540+ stocks, and an AI-written take on the tape. Check it once before the bell and once after the close.</p>
+  </section>
+
+  <main class="desk-main">
+    <div id="desk-report"></div>
+    <div class="ma-disc-line">This report is for education and market awareness only — not investment advice. Consult a licensed financial advisor before acting on anything shown here.</div>
+  </main>
+
+  <footer class="desk-foot">
+    <p style="font-size:12px;color:#94a3b8;line-height:1.6">AlphaHunt scores public US stocks for research and educational purposes.<br>
+      <a href="/app">Open the dashboard →</a> &nbsp;·&nbsp; <a href="/">Back to home</a></p>
+  </footer>
+
+  <script src="/static/market_report.js"></script>
+  <script>
+    (function(){
+      function start(){
+        var host=document.getElementById('desk-report');
+        if(!host||!window.MarketReport){ return setTimeout(start,60); }
+        var ctrl=window.MarketReport.mount(host, {
+          compact:true,
+          onTicker:function(tk){ window.location.href='/stocks/'+encodeURIComponent(tk); }
+        });
+        // Refresh the live feed every 2 minutes while the tab stays open.
+        setInterval(function(){ if(!document.hidden && ctrl) ctrl.reload(); }, 120000);
+      }
+      start();
+    })();
+  </script>
+</body>
+</html>

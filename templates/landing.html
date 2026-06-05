@@ -1636,36 +1636,36 @@ h1,h2,h3,h4,h5{font-family:'Instrument Sans',sans-serif;font-weight:600;letter-s
       <a class="btn btn-ghost reveal" href="/desk"><span>All reports</span><span class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span></a>
     </div>
     <div class="posts stagger reveal">
-      <article class="post">
+      <a class="post" href="/desk" style="text-decoration:none;color:inherit;cursor:pointer">
         <div class="post-img post-mock pre">
-          <div class="pm-badge"><span class="pm-dot live"></span> Live · 8:00 ET</div>
-          <div class="mock-rows">
-            <div class="mock-row"><b>NVDA</b><span class="mr-tag up">+2.3% pre</span></div>
-            <div class="mock-row"><b>AMD</b><span class="mr-tag">earnings tonight</span></div>
-            <div class="mock-row"><b>SHOP</b><span class="mr-tag up">+1.1% pre</span></div>
+          <div class="pm-badge"><span class="pm-dot live"></span> Live</div>
+          <div class="mock-rows" id="lp-premkt-rows">
+            <div class="mock-row"><b>NVDA</b><span class="mr-tag up">+2.3%</span></div>
+            <div class="mock-row"><b>AMD</b><span class="mr-tag up">+1.6%</span></div>
+            <div class="mock-row"><b>SHOP</b><span class="mr-tag up">+1.1%</span></div>
           </div>
         </div>
         <div class="post-body">
           <span class="post-cat">Pre-market</span>
           <h3>What's moving before the bell</h3>
-          <p class="date">Today · 8:00 ET · 4 min read</p>
+          <p class="date">Live movers · updated continuously</p>
         </div>
-      </article>
-      <article class="post">
+      </a>
+      <a class="post" href="/desk" style="text-decoration:none;color:inherit;cursor:pointer">
         <div class="post-img post-mock post">
-          <div class="pm-badge"><span class="pm-dot live"></span> Live · 4:30 ET</div>
-          <div class="mock-rows">
+          <div class="pm-badge"><span class="pm-dot live"></span> Live</div>
+          <div class="mock-rows" id="lp-postmkt-rows">
             <div class="mock-row"><b>Top gainer</b><span class="mr-tag up">PLTR +5.4%</span></div>
-            <div class="mock-row"><b>Risk flag</b><span class="mr-tag dn">NVDA exhaustion</span></div>
-            <div class="mock-row"><b>Closed</b><span class="mr-tag up">URI +12% locked</span></div>
+            <div class="mock-row"><b>Top loser</b><span class="mr-tag dn">NVDA −2.1%</span></div>
+            <div class="mock-row"><b>Runner-up</b><span class="mr-tag up">URI +3.0%</span></div>
           </div>
         </div>
         <div class="post-body">
           <span class="post-cat">Post-market</span>
           <h3>Today's tape, decoded</h3>
-          <p class="date">Today · 4:30 ET · 6 min read</p>
+          <p class="date">Live movers · updated continuously</p>
         </div>
-      </article>
+      </a>
       <article class="post">
         <div class="post-img post-mock feat">
           <div class="pm-badge feat"><svg viewBox="0 0 24 24" fill="currentColor" width="11" height="11"><path d="M12 2l2.4 7.4H22l-6 4.4 2.3 7.2L12 16.4 3.7 21l2.3-7.2-6-4.4H9.6z"/></svg> Featured this week</div>
@@ -2110,6 +2110,37 @@ setTimeout(()=>{revealEls.forEach(e=>e.classList.add('in'));countEls.forEach(run
   var tri=[P(13,0),P(-7,8),P(-7,-8)];
   document.getElementById('heroArrow').setAttribute('points',
     tri.map(function(p){return p[0].toFixed(1)+','+p[1].toFixed(1);}).join(' '));
+})();
+
+/* ── From the desk — populate the pre/post-market cards with live movers ── */
+(function(){
+  function row(label, sym, pct){
+    var up = pct >= 0;
+    var tag = (up?'+':'−') + Math.abs(pct).toFixed(1) + '%';
+    return '<div class="mock-row"><b>'+label+'</b><span class="mr-tag '+(up?'up':'dn')+'">'+
+           (sym?(sym+' '):'')+tag+'</span></div>';
+  }
+  fetch('/api/ticker-strip').then(function(r){return r.json();}).then(function(j){
+    var items=(j&&j.items)||[];
+    if(!items.length) return;
+    var byChg=items.slice().sort(function(a,b){return (b.change_pct||0)-(a.change_pct||0);});
+    var gain=byChg.filter(function(x){return (x.change_pct||0)>0;});
+    var lose=byChg.filter(function(x){return (x.change_pct||0)<0;});
+    var pre=document.getElementById('lp-premkt-rows');
+    if(pre && gain.length>=3){
+      pre.innerHTML = gain.slice(0,3).map(function(x){
+        return '<div class="mock-row"><b>'+x.symbol+'</b><span class="mr-tag up">+'+Math.abs(x.change_pct).toFixed(1)+'%</span></div>';
+      }).join('');
+    }
+    var post=document.getElementById('lp-postmkt-rows');
+    if(post){
+      var html='';
+      if(gain[0]) html+=row('Top gainer', gain[0].symbol, gain[0].change_pct);
+      if(lose.length) html+=row('Top loser', lose[lose.length-1].symbol, lose[lose.length-1].change_pct);
+      if(gain[1]) html+=row('Runner-up', gain[1].symbol, gain[1].change_pct);
+      if(html) post.innerHTML=html;
+    }
+  }).catch(function(){ /* keep the static teaser rows on failure */ });
 })();
 
 </script>
