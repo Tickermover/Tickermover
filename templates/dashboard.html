@@ -533,19 +533,22 @@ tr:hover td{background:rgba(245,166,35,.06)}
 .dd-sources a:hover{text-decoration:underline}
 
 /* ════════ FULL STOCK SHEET (light · brand-blue · tabbed, full-screen) ════════ */
-.ssx-overlay{position:fixed;inset:0;z-index:10000;display:none;background:rgba(9,20,50,.42);backdrop-filter:blur(6px);overflow-y:auto;
+.ssx-overlay{position:fixed;inset:0;z-index:10000;display:none;background:rgba(64,54,104,.28);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);overflow-y:auto;
   --blue:#0040c1;--blue-2:#2970ff;--blue-grad:linear-gradient(120deg,#2970ff 0%,#0042c5 55%,#00359e 100%);
   --up:#16a34a;--down:#ea384c;--ink:#0f172a;--ink-2:#1e293b;--muted:#5d6c7b;--muted-2:#94a3b8;
   --hair:rgba(9,9,9,.07);--hair-2:rgba(9,9,9,.10);--surf:#ffffff;--surf-2:#fafbff;--surf-3:#f6f9ff;
   --shadow-card:0 1px 2px rgba(0,40,120,.08),0 10px 24px -14px rgba(0,40,120,.26)}
 .ssx-overlay.open{display:block}
-.ssx-sheet{max-width:1240px;margin:0 auto;min-height:100vh;color:var(--ink);font-family:'Manrope',sans-serif;
-  background:radial-gradient(46% 40% at 12% 0%, rgba(41,112,255,.07), transparent 60%),
-             radial-gradient(40% 36% at 95% 4%, rgba(0,64,193,.05), transparent 60%),
-             linear-gradient(180deg,#eef6fe 0%,#e9f1fd 45%,#e3ecfb 100%)}
+.ssx-sheet{max-width:1240px;margin:18px auto;min-height:calc(100vh - 36px);border-radius:26px;overflow:hidden;color:var(--ink);
+  font-family:'Instrument Sans',system-ui,sans-serif;
+  background:rgba(255,255,255,.52);
+  -webkit-backdrop-filter:blur(34px) saturate(160%);
+  backdrop-filter:blur(34px) saturate(160%);
+  border:1px solid rgba(255,255,255,.55);
+  box-shadow:0 40px 90px -30px rgba(50,35,90,.5)}
 .ssx-mono{font-family:'JetBrains Mono',monospace;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
 .ssx-up{color:var(--up)} .ssx-dn{color:var(--down)}
-.ssx-head{position:sticky;top:0;z-index:20;backdrop-filter:blur(16px);background:rgba(238,246,254,.85);border-bottom:1px solid var(--hair);display:flex;align-items:center;gap:16px;padding:14px 24px}
+.ssx-head{position:sticky;top:0;z-index:20;-webkit-backdrop-filter:blur(16px) saturate(150%);backdrop-filter:blur(16px) saturate(150%);background:rgba(255,255,255,.5);border-bottom:1px solid rgba(255,255,255,.5);display:flex;align-items:center;gap:16px;padding:14px 24px}
 .ssx-logo{width:46px;height:46px;border-radius:12px;background:#fff;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;box-shadow:0 4px 12px rgba(0,40,120,.14);border:1px solid var(--hair);font-weight:800;color:#334155}
 .ssx-logo img{width:100%;height:100%;object-fit:contain;padding:6px}
 .ssx-id{min-width:0;flex:1}
@@ -562,7 +565,7 @@ tr:hover td{background:rgba(245,166,35,.06)}
 .ssx-btn{height:40px;min-width:40px;padding:0 10px;border-radius:11px;border:1px solid var(--hair);background:var(--surf);color:var(--muted);cursor:pointer;display:grid;place-items:center;font-size:15px;transition:.15s}
 .ssx-btn:hover{background:var(--surf-3);color:var(--ink);border-color:var(--hair-2)}
 .ssx-btn.pdf{background:var(--blue-grad);color:#fff;border:none;font-weight:800;font-size:12.5px;padding:0 14px;box-shadow:0 6px 14px rgba(0,64,193,.20)}
-.ssx-tabs{position:sticky;top:69px;z-index:15;display:flex;gap:4px;overflow-x:auto;padding:10px 24px;background:rgba(238,246,254,.82);backdrop-filter:blur(12px);border-bottom:1px solid var(--hair);scrollbar-width:none}
+.ssx-tabs{position:sticky;top:69px;z-index:15;display:flex;gap:4px;overflow-x:auto;padding:10px 24px;background:rgba(255,255,255,.42);-webkit-backdrop-filter:blur(12px) saturate(150%);backdrop-filter:blur(12px) saturate(150%);border-bottom:1px solid rgba(255,255,255,.45);scrollbar-width:none}
 .ssx-tabs::-webkit-scrollbar{display:none}
 .ssx-tab{flex-shrink:0;padding:8px 14px;border-radius:9px;border:1px solid transparent;cursor:pointer;font-size:12.5px;font-weight:700;color:var(--muted);white-space:nowrap;transition:.15s;background:none;font-family:inherit}
 .ssx-tab:hover{color:var(--ink);background:var(--surf-3)}
@@ -4784,12 +4787,12 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
    by the scrolling content container; matched selectors below. */
 #ts-scrim{position:fixed;inset:0;background:rgba(9,20,60,.32);backdrop-filter:blur(2px);opacity:0;pointer-events:none;transition:opacity .22s;z-index:600}
 #ts-scrim.open{opacity:1;pointer-events:auto}
-#ts-drawer{position:fixed;top:0;right:0;height:100vh;width:min(460px,92vw);background:#fff;z-index:601;font-family:'Instrument Sans',system-ui,sans-serif;
+#ts-drawer{position:fixed;top:0;right:0;height:100vh;width:min(460px,92vw);background:rgba(255,255,255,.58);-webkit-backdrop-filter:blur(34px) saturate(160%);backdrop-filter:blur(34px) saturate(160%);z-index:601;font-family:'Instrument Sans',system-ui,sans-serif;
     --primary:#0040c1;--amber-2:#D4860A;--ink:#0f172a;--ink-2:#1e293b;--grey:#758696;--grey-2:#5d6c7b;--grey-3:#94a3b8;--up:#16a34a;--down:#ea384c;--hair:rgba(9,9,9,.07);--surf:#ffffff;--surf-2:#fafbff;--surf-3:#f6f9ff;--blue-grad:linear-gradient(120deg,#2970ff 0%,#0042c5 55%,#00359e 100%);
     box-shadow:-24px 0 60px rgba(9,20,60,.24);transform:translateX(100%);transition:transform .26s cubic-bezier(.4,0,.2,1);
     display:flex;flex-direction:column;overflow-y:auto;color:var(--ink)}
 #ts-drawer.open{transform:translateX(0)}
-#ts-drawer .dr-head{padding:15px 22px 12px;border-bottom:1px solid var(--hair);position:sticky;top:0;background:#fff;z-index:1}
+#ts-drawer .dr-head{padding:15px 22px 12px;border-bottom:1px solid rgba(255,255,255,.5);position:sticky;top:0;background:rgba(255,255,255,.5);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);z-index:1}
 #ts-drawer .dr-top{display:flex;align-items:center;gap:12px}
 #ts-drawer .dr-tic{font-weight:700;font-size:21px;letter-spacing:-.01em}
 #ts-drawer .dr-name{font-size:12.5px;color:var(--grey)}
@@ -5447,8 +5450,11 @@ body.v2 .v2-content .panel.active:not(#panel-market){
   border:1px solid rgba(255,255,255,.55);
   border-radius:22px;
   box-shadow:0 26px 70px -32px rgba(72,52,110,.4);
-  padding:18px 18px 24px;
-  margin-bottom:24px;
+  padding:18px 20px 24px;
+  /* align with the floating topbar (same width + centering) */
+  width:calc(100% - 52px);
+  max-width:1268px;
+  margin:0 auto 24px;
 }
 /* 4 · Cards become lighter glass panes on the frosted panel (no per-card blur) */
 body.v2 .card, body.v2 .hot-card, body.v2 .alloc-card, body.v2 .risk-card,
