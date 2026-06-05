@@ -3,9 +3,11 @@
    public /desk report page. Scope everything under .ma-report so it is safe to
    drop into either host without leaking.
    ========================================================================== */
+/* One typeface across the whole report — Instrument Sans (the brand font,
+   loaded by both the dashboard and /desk). Keeps the type consistent. */
 .ma-report{max-width:1080px;margin:0 auto;color:#0f172a;
-  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
-.ma-report *{box-sizing:border-box}
+  font-family:'Instrument Sans',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif}
+.ma-report *{box-sizing:border-box;font-family:inherit}
 .ma-report .ma-head{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:14px}
 .ma-report .ma-eyebrow{font-size:11px;font-weight:800;letter-spacing:.14em;color:#2970ff}
 .ma-report .ma-title{font-size:23px;font-weight:800;color:#0f172a;line-height:1.15}
@@ -131,3 +133,40 @@
 .ma-report .ma-foot{font-size:11px;color:#94a3b8;margin-top:18px;line-height:1.6}
 .ma-report .ma-foot a{color:#64748b}
 .ma-disc-line{max-width:1080px;margin:14px auto 0;font-size:11px;color:#94a3b8;line-height:1.55;text-align:center}
+
+/* ==========================================================================
+   .ma-glass — frosted "floating panel" treatment shared by the /desk page and
+   the in-app Market Analysis panel. Add it to the element that wraps the
+   .ma-report (the report host on the app, the floating box on /desk).
+   ========================================================================== */
+.ma-glass{
+  background:rgba(255,255,255,.40);
+  -webkit-backdrop-filter:blur(26px) saturate(160%);
+  backdrop-filter:blur(26px) saturate(160%);
+  border:1px solid rgba(255,255,255,.55);
+  border-radius:28px;
+  box-shadow:0 30px 80px -30px rgba(72,52,110,.45), inset 0 1px 0 rgba(255,255,255,.55);
+  padding:24px 26px 28px;
+}
+/* Inner panels become lighter glass panes (no nested backdrop-filter). */
+.ma-glass .ma-card,.ma-glass .ma-stat,.ma-glass .ma-tbl,.ma-glass .ma-ev,
+.ma-glass .ma-edition,.ma-glass .ma-verdict,.ma-glass .ma-note,.ma-glass .ma-watch-note,
+.ma-glass .ma-news-item,.ma-glass .ma-session{
+  background:rgba(255,255,255,.58)!important;
+  border-color:rgba(255,255,255,.5)!important;
+  box-shadow:0 2px 12px rgba(72,52,110,.06)!important;
+}
+.ma-glass .ma-hero{background:linear-gradient(135deg,rgba(255,255,255,.66),rgba(255,255,255,.5))!important;border-color:rgba(255,255,255,.55)!important}
+.ma-glass .ma-tabs{background:rgba(255,255,255,.34)!important;border-color:rgba(255,255,255,.45)!important}
+.ma-glass .ma-tab.on{background:rgba(255,255,255,.9)!important}
+.ma-glass .ma-bar-track{background:rgba(255,255,255,.45)!important}
+/* Readability on glass — darken the muted greys. */
+.ma-glass .ma-lead,.ma-glass .ma-note,.ma-glass .ma-watch-note,
+.ma-glass .ma-hero-text,.ma-glass .ma-verdict .kv{color:#283749!important}
+.ma-glass .ma-card .lbl,.ma-glass .ma-card .sub,.ma-glass .ma-stat .s-l,
+.ma-glass .ev-meta,.ma-glass .ma-nm,.ma-glass .ma-bar-row .nm,
+.ma-glass .ma-news-item .mt,.ma-glass .ma-news-item .meta,.ma-glass .ma-foot,
+.ma-glass .ma-card .sym,.ma-glass .ma-ed-pub,.ma-glass .ma-ed-date,
+.ma-glass .ma-tab:not(.on){color:#465569!important}
+.ma-glass .ma-sec-h{color:#566576!important}
+@media(max-width:560px){ .ma-glass{padding:18px 14px 20px;border-radius:22px} }

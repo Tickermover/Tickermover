@@ -8,13 +8,14 @@
   <link rel="icon" href="/static/brand/alphahunt-mark-transparent-128.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@1,500;1,600&family=Instrument+Sans:wght@400;500;600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@1,500;1,600&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/market_report.css">
   <style>
     :root{--blue:#2970ff;--ink:#0f172a;--raisin:#22202a}
     *{box-sizing:border-box}
+    /* One typeface for the page — Instrument Sans (Fraunces only for accents) */
     body{margin:0;background:#fdeede;color:var(--ink);
-      font-family:'Poppins',system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
+      font-family:'Instrument Sans',system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
     /* Pastel wave backdrop image (fixed, behind all content).
        Optimised derivatives of static/background 2.png — WebP with a JPEG
        fallback so the page isn't loading an 11 MB PNG. */
@@ -26,10 +27,6 @@
     }
     /* Lift the report a touch off the colourful waves for readability */
     .desk-main .ma-report,.desk-hero{position:relative;z-index:1}
-    /* report inherits the page font instead of the system stack */
-    .ma-report{font-family:inherit}
-    .ma-report .ma-title,.ma-report .ma-tab,.ma-report .ma-mv-h,.ma-report .ma-verdict .big,
-    .ma-report .ma-eyebrow,.ma-report .ma-sec-h{font-family:'Instrument Sans',sans-serif}
     .desk-top{position:sticky;top:0;z-index:20;background:rgba(255,255,255,.86);backdrop-filter:saturate(180%) blur(12px);
       border-bottom:1px solid rgba(15,23,42,.08)}
     .desk-top-in{max-width:1080px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 18px}
@@ -60,74 +57,15 @@
     .desk-foot{max-width:1080px;margin:0 auto;padding:8px 18px 50px;text-align:center}
     .desk-foot a{color:var(--blue);text-decoration:none;font-weight:600;font-family:'Instrument Sans',sans-serif}
 
-    /* ── Glassmorphism floating box ─────────────────────────────────────── */
-    /* Header floats transparently over the waves; the report lives in one
-       frosted glass panel. */
+    /* ── Glass floating box — geometry/inner/readability come from .ma-glass
+       in market_report.css; only desk-page chrome lives here. ──────────── */
     .desk-top{background:transparent;backdrop-filter:none;-webkit-backdrop-filter:none;border-bottom:0;position:static}
     .desk-shell{max-width:1140px;margin:0 auto;padding:10px 16px 14px}
-    .desk-glass{
-      background:rgba(255,255,255,.40);
-      -webkit-backdrop-filter:blur(26px) saturate(160%);
-      backdrop-filter:blur(26px) saturate(160%);
-      border:1px solid rgba(255,255,255,.55);
-      border-radius:28px;
-      box-shadow:0 30px 80px -30px rgba(72,52,110,.45), inset 0 1px 0 rgba(255,255,255,.55);
-      padding:24px 26px 28px;
-    }
     .desk-glass .desk-hero{max-width:none;margin:0;padding:4px 2px 0}
     .desk-glass .desk-main{padding:6px 0 0}
-    /* Inner panels become lighter glass panes so the frosted box shows through.
-       No nested backdrop-filter — they just sit translucently on the glass. */
-    .desk-glass .ma-report .ma-card,
-    .desk-glass .ma-report .ma-stat,
-    .desk-glass .ma-report .ma-tbl,
-    .desk-glass .ma-report .ma-ev,
-    .desk-glass .ma-report .ma-edition,
-    .desk-glass .ma-report .ma-verdict,
-    .desk-glass .ma-report .ma-note,
-    .desk-glass .ma-report .ma-watch-note,
-    .desk-glass .ma-report .ma-news-item,
-    .desk-glass .ma-report .ma-session{
-      background:rgba(255,255,255,.58)!important;
-      border-color:rgba(255,255,255,.5)!important;
-      box-shadow:0 2px 12px rgba(72,52,110,.06)!important;
-    }
-    .desk-glass .ma-report .ma-hero{
-      background:linear-gradient(135deg,rgba(255,255,255,.66),rgba(255,255,255,.5))!important;
-      border-color:rgba(255,255,255,.55)!important;
-    }
-    .desk-glass .ma-report .ma-tabs{background:rgba(255,255,255,.34)!important;border-color:rgba(255,255,255,.45)!important}
-    .desk-glass .ma-report .ma-tab.on{background:rgba(255,255,255,.9)!important}
-    .desk-glass .ma-report .ma-bar-track{background:rgba(255,255,255,.45)!important}
+    .desk-glass .desk-hero p{color:#283749!important}
     .desk-glass .desk-switch{background:rgba(255,255,255,.4)!important;border-color:rgba(255,255,255,.5)!important}
     .desk-glass .desk-switch button.on{background:rgba(255,255,255,.92)!important}
-    @media(max-width:560px){ .desk-glass{padding:18px 14px 20px;border-radius:22px} }
-
-    /* ── Readability on glass — darken the muted greys ──────────────────── */
-    /* Prose / sentences */
-    .desk-glass .desk-hero p,
-    .desk-glass .ma-report .ma-lead,
-    .desk-glass .ma-report .ma-note,
-    .desk-glass .ma-report .ma-watch-note,
-    .desk-glass .ma-report .ma-hero-text,
-    .desk-glass .ma-report .ma-verdict .kv{color:#283749!important}
-    /* Secondary labels / meta / captions (was #64748b / #94a3b8) */
-    .desk-glass .ma-report .ma-card .lbl,
-    .desk-glass .ma-report .ma-card .sub,
-    .desk-glass .ma-report .ma-stat .s-l,
-    .desk-glass .ma-report .ev-meta,
-    .desk-glass .ma-report .ma-nm,
-    .desk-glass .ma-report .ma-bar-row .nm,
-    .desk-glass .ma-report .ma-news-item .mt,
-    .desk-glass .ma-report .ma-news-item .meta,
-    .desk-glass .ma-report .ma-foot,
-    .desk-glass .ma-report .ma-card .sym,
-    .desk-glass .ma-report .ma-ed-pub,
-    .desk-glass .ma-report .ma-ed-date,
-    .desk-glass .ma-report .ma-tab:not(.on){color:#465569!important}
-    /* Uppercase section headers (was a too-light #94a3b8) */
-    .desk-glass .ma-report .ma-sec-h{color:#566576!important}
-    /* Disclaimer line */
     .desk-glass .ma-disc-line{color:#5b6a7c!important}
     /* Drop the data-source attribution foot line on the public report */
     .desk-glass .ma-report .ma-foot{display:none}
@@ -146,7 +84,7 @@
   </header>
 
   <div class="desk-shell">
-    <div class="desk-glass">
+    <div class="desk-glass ma-glass">
       <section class="desk-hero">
         <div class="eyebrow">From the desk</div>
         <h1>The US <em>market</em> reports</h1>

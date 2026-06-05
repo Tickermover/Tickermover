@@ -5909,8 +5909,19 @@ html.v2-dark body.v2 .sm-title,html.v2-dark body.v2 .sec-heading{color:#0f172a!i
 <!-- MARKET ANALYSIS — US pre/post-market report (shared renderer) ───────── -->
 <link rel="stylesheet" href="/static/market_report.css">
 <script src="/static/market_report.js" defer></script>
+<style>
+  /* Pastel wave backdrop + frosted glass, matching the public /desk page. */
+  #panel-market{position:relative;border-radius:20px;overflow:hidden;padding:20px 18px 26px;
+    background:#fbe0e8 url('/static/desk-bg.jpg') center center / cover no-repeat}
+  @supports (background-image: image-set(url('/static/desk-bg.webp') type('image/webp'))){
+    #panel-market{background-image:image-set(url('/static/desk-bg.webp') type('image/webp'),
+                                             url('/static/desk-bg.jpg')  type('image/jpeg'))}
+  }
+  #panel-market #ma-host{max-width:1100px;margin:0 auto}
+  #panel-market .ma-disc-line{color:#5b6a7c;margin-top:16px}
+</style>
 <div id="panel-market" class="panel">
-  <div id="ma-host"></div>
+  <div id="ma-host" class="ma-glass"></div>
   <div class="ma-disc-line">This report is for education and market awareness only — not investment advice.<br>Consult a licensed financial advisor before acting on anything shown here.</div>
 </div>
 
