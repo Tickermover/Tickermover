@@ -14,13 +14,12 @@
     :root{--blue:#2970ff;--ink:#0f172a;--raisin:#22202a}
     *{box-sizing:border-box}
     /* One typeface for the page — Instrument Sans (Fraunces only for accents) */
-    body{margin:0;background:#fdeede;color:var(--ink);
+    body{margin:0;background:#fcece2;color:var(--ink);
       font-family:'Instrument Sans',system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
-    /* Pastel wave backdrop image (fixed, behind all content).
-       Optimised derivatives of static/background 2.png — WebP with a JPEG
-       fallback so the page isn't loading an 11 MB PNG. */
+    /* Site backdrop image (fixed, behind all content).
+       Optimised derivatives of static/3.jpg — WebP with a JPEG fallback. */
     .desk-bg{position:fixed;inset:0;z-index:-1;pointer-events:none;
-      background:#fbe0e8 url('/static/desk-bg.jpg') center center / cover no-repeat}
+      background:#fcece2 url('/static/desk-bg.jpg') center center / cover no-repeat}
     @supports (background-image: image-set(url('/static/desk-bg.webp') type('image/webp'))){
       .desk-bg{background-image:image-set(url('/static/desk-bg.webp') type('image/webp'),
                                           url('/static/desk-bg.jpg')  type('image/jpeg'))}
