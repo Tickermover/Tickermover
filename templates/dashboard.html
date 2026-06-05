@@ -16321,10 +16321,11 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
       '</div>';
     drawer.classList.add('open'); drawer.setAttribute('aria-hidden','false'); scrim.classList.add('open');
     const cl=document.getElementById('tsDrClose'); if(cl) cl.addEventListener('click',closeDrawer);
-    requestAnimationFrame(()=>requestAnimationFrame(()=>{ drawer.querySelectorAll('.pf').forEach(el=>{el.style.width=el.getAttribute('data-w')+'%';}); }));
     if(_selRow) _selRow.classList.remove('sel');
     _selRow=document.querySelector('#picksTable [data-tic="'+CSS.escape(t.ticker)+'"]');
     if(_selRow) _selRow.classList.add('sel');
+    // Skip the compact summary — open straight into the full analysis.
+    tsExpandToFull(t.ticker);
   }
   function closeDrawer(){ tsCollapseDrawer(); drawer.classList.remove('open'); drawer.setAttribute('aria-hidden','true'); scrim.classList.remove('open'); if(_selRow){_selRow.classList.remove('sel');_selRow=null;} }
   /* ── Direction B — expand the quick-look IN PLACE ──────────────────────────
