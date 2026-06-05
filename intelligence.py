@@ -866,6 +866,11 @@ class MarketAnalysis:
             f"{s['name']} {s['chg_1d']:+.2f}%" for s in secs[:11]
         ) or "n/a"
         st = d.get("stocks", {}) or {}
+        evs = d.get("events", []) or []
+        ev_line = "; ".join(
+            f"{e.get('event')} ({e.get('country')}, {e.get('when')}, {e.get('impact')})"
+            for e in evs[:8]
+        ) or "n/a"
 
         if kind == "pre":
             frame = ("This is a PRE-MARKET report, written before the 9:30 ET open. "
@@ -903,7 +908,8 @@ class MarketAnalysis:
             f"Top gainers: {stk(st.get('gainers'))}\n"
             f"Top losers: {stk(st.get('losers'))}\n"
             f"Earnings on deck: {stk(st.get('earnings'))}\n"
-            f"Just reported: {stk(st.get('just_reported'))}\n\n"
+            f"Just reported: {stk(st.get('just_reported'))}\n"
+            f"Upcoming macro events: {ev_line}\n\n"
             "Return ONLY a JSON object (no markdown, no commentary) with exactly "
             "these keys:\n"
             "{\n"
@@ -914,6 +920,9 @@ class MarketAnalysis:
             '  "sectors_note": "1 short sentence on which sectors lead/lag and '
             'what that rotation suggests.",\n'
             '  "movers_note": "1 short sentence on the standout stock movers.",\n'
+            '  "watching": "1 short sentence on the key macro event(s) the market '
+            'is waiting on for direction, by name and day. If none, say markets '
+            'have a light data calendar.",\n'
             '  "verdict": {\n'
             f'    "headline": "{verdict_head}",\n'
             '    "what_it_means": "2-3 short lines of plain context. No trade calls.",\n'

@@ -2701,6 +2701,7 @@ async def api_market_analysis():
     if isinstance(data, dict) and data.get("available"):
         data = dict(data)                  # shallow copy — never mutate the cache
         data["stocks"] = _market_movers()
+        data["events"] = await _key_events()
     return JSONResponse(
         _clean(data),
         headers={"Cache-Control": "public, max-age=60, s-maxage=90"},
@@ -2716,6 +2717,36 @@ async def api_market_analysis():
 # (just after the 4:00 close).
 _DESK_PUBLISH = {"pre": (4, 0), "post": (16, 15)}
 _DESK_TTL     = 60 * 60 * 30        # 30h — a daily edition outlives the gap to the next
+
+# Major economies whose data the US market actually reacts to.
+# Nasdaq country label -> (display label, flag, scope)
+_EVENT_COUNTRIES = {
+    "United States":  ("United States",  "🇺🇸", "usa"),
+    "Euro Zone":      ("Euro Area",      "🇪🇺", "global"),
+    "European Union": ("Euro Area",      "🇪🇺", "global"),
+    "China":          ("China",          "🇨🇳", "global"),
+    "Japan":          ("Japan",          "🇯🇵", "global"),
+    "United Kingdom": ("United Kingdom", "🇬🇧", "global"),
+    "Germany":        ("Germany",        "🇩🇪", "global"),
+}
+# Event-name keywords that make a release genuinely market-moving.
+_EVENT_HIGH_KW = (
+    "nonfarm payroll", "cpi", "core pce", "pce price", "ppi", "gdp",
+    "interest rate decision", "fed funds", "fomc statement", "rate decision",
+    "retail sales", "unemployment rate", "ism ",
+)
+_EVENT_MED_KW = (
+    "pmi", "jobless claims", "consumer confidence", "consumer sentiment",
+    "durable goods", "trade balance", "factory orders", "housing starts",
+    "building permits", "michigan", "jolts", "adp employment change",
+)
+# Central-bank-speaker appearances — relevant but secondary to data releases.
+_EVENT_SPEAK_KW = ("speaks", "speech", "testimony", "press conf")
+# Sub-component / weekly noise we never want crowding the headline releases.
+_EVENT_SKIP_KW = (
+    "private nonfarm", "government payrolls", "manufacturing payrolls",
+    "weekly", "n.s.a", "adjusted", "revised",
+)
 
 
 def _et_now():
@@ -2753,6 +2784,116 @@ def _next_publish_date(kind: str, now=None):
     return d
 
 
+def _event_when_et(d, gmt: str):
+    """Nasdaq's calendar lists the date + an Eastern-time clock (despite the
+    'gmt' field name — e.g. 08:30 is the 8:30 AM ET jobs-report slot). Return
+    (label, epoch, all_day)."""
+    from datetime import datetime
+    g = (gmt or "").strip()
+    try:
+        hh, mm = g.split(":")
+        hh, mm = int(hh), int(mm)
+        ts = datetime(d.year, d.month, d.day, hh, mm).timestamp()
+        ap = "AM" if hh < 12 else "PM"
+        return (f"{d.strftime('%a %d %b')} · {(hh % 12) or 12}:{mm:02d} {ap} ET", ts, False)
+    except Exception:
+        ts = datetime(d.year, d.month, d.day).timestamp()
+        return (d.strftime("%a %d %b"), ts, True)
+
+
+def _clean_econ_val(v):
+    v = (v or "").replace("&nbsp;", "").strip()
+    return v or None
+
+
+async def _key_events() -> list:
+    """Upcoming high/medium-impact macro events (Fed, CPI, jobs, ECB, …) for the
+    next week — 'what the market is waiting for'. Sourced from Nasdaq's free
+    economic calendar, filtered to the economies the US tape reacts to and to
+    genuinely market-moving releases. Cached ~45 min."""
+    cached = cache.get("desk:events:v4")
+    if cached is not None:
+        return cached
+    from datetime import timedelta
+    today = _et_now().date()
+    days = [today + timedelta(days=i) for i in range(0, 7)]
+    hdrs = {
+        "User-Agent": ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                       "(KHTML, like Gecko) Chrome/124 Safari/537.36"),
+        "Accept": "application/json",
+        "Accept-Language": "en-US,en;q=0.9",
+    }
+
+    async def _fetch_day(client, d):
+        try:
+            r = await client.get(
+                f"https://api.nasdaq.com/api/calendar/economicevents?date={d.isoformat()}",
+                headers=hdrs)
+            if r.status_code != 200:
+                return d, []
+            return d, ((r.json().get("data") or {}).get("rows") or [])
+        except Exception:
+            return d, []
+
+    try:
+        import httpx
+        async with httpx.AsyncClient(timeout=12) as client:
+            results = await asyncio.gather(*[_fetch_day(client, d) for d in days])
+    except Exception as exc:
+        logger.warning(f"key-events fetch failed: {exc}")
+        cache.set("desk:events:v4", [], 600)
+        return []
+
+    now_ts, seen = _et_now().timestamp(), {}
+    for d, rows in results:
+        for x in rows or []:
+            meta = _EVENT_COUNTRIES.get((x.get("country") or "").strip())
+            if not meta:
+                continue
+            name = (x.get("eventName") or "").strip()
+            low = name.lower()
+            if any(k in low for k in _EVENT_SKIP_KW):
+                continue
+            base = next((k for k in _EVENT_SPEAK_KW if k in low), None)
+            impact = "Medium" if base else None
+            if not base:
+                base = next((k for k in _EVENT_HIGH_KW if k in low), None)
+                if base:
+                    impact = "High"
+            if not base:
+                base = next((k for k in _EVENT_MED_KW if k in low), None)
+                if base:
+                    impact = "Medium"
+            if not base:
+                continue
+            if meta[2] == "global" and impact != "High":
+                continue                                   # foreign: high impact only
+            when_label, when_ts, all_day = _event_when_et(d, x.get("gmt"))
+            if when_ts and when_ts < now_ts - 3600:        # drop already-passed
+                continue
+            # Collapse sub-components (GDP / GDP Annualized / GDP Price Index …)
+            # to the single headline release per country + topic + day.
+            day_key = (meta[0], base, d.isoformat())
+            cand = {
+                "event":    name, "country": meta[0], "flag": meta[1], "scope": meta[2],
+                "impact":   impact, "when": when_label, "when_ts": when_ts, "all_day": all_day,
+                "estimate": _clean_econ_val(x.get("consensus")),
+                "previous": _clean_econ_val(x.get("previous")),
+            }
+            prev = seen.get(day_key)
+            if prev is None or len(name) < len(prev["event"]):
+                seen[day_key] = cand            # keep the shortest = headline name
+
+    out = list(seen.values())
+    out.sort(key=lambda e: (e["when_ts"] or 0))
+    high = [e for e in out if e["impact"] == "High"][:8]
+    med  = [e for e in out if e["impact"] == "Medium"]
+    picked = (high + med)[:12]
+    picked.sort(key=lambda e: (e["when_ts"] or 0))
+    cache.set("desk:events:v4", picked, 2700)                 # 45 min
+    return picked
+
+
 def _edition_date_for(kind: str, now=None):
     """The trading date the *current* edition of `kind` represents. Today once
     we're past today's publish time on a weekday; otherwise the prior weekday."""
@@ -2771,7 +2912,7 @@ def _edition_date_for(kind: str, now=None):
 
 
 def _desk_key(kind: str) -> str:
-    return f"desk:report:v2:{kind}"
+    return f"desk:report:v3:{kind}"
 
 
 async def _build_desk_report(kind: str, edition_date) -> dict:
@@ -2783,6 +2924,7 @@ async def _build_desk_report(kind: str, edition_date) -> dict:
     data = dict(macro) if isinstance(macro, dict) else {"available": False}
     data["kind"]   = kind
     data["stocks"] = _market_movers()
+    data["events"] = await _key_events()
     try:
         data["ai"] = await market_analysis.ai_narrative(data, kind)
     except Exception as exc:

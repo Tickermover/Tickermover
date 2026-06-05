@@ -209,8 +209,31 @@ window.MarketReport = (function () {
         gapChip(d) +
       `</div>` +
       scorecard(d) +
+      events(d) +
       `<div class="ma-sec-h">${d.kind === 'post' ? 'The verdict · into tomorrow' : 'The verdict · the day ahead'}</div>` +
       verdict(d);
+  }
+
+  // Key macro events — "what the market is waiting for"
+  function events(d) {
+    const evs = d.events || [];
+    if (!evs.length) return '';
+    const note = (d.ai && d.ai.watching)
+      ? `<div class="ma-note">${aiTag()}${d.ai.watching}</div>` : '';
+    const rows = evs.map(e => {
+      const imp = e.impact === 'High' ? 'high' : 'med';
+      const est = (e.estimate != null && e.estimate !== '') ? `est <b>${e.estimate}</b>` : '';
+      const prev = (e.previous != null && e.previous !== '') ? `prev ${e.previous}` : '';
+      const fc = [est, prev].filter(Boolean).join(' · ');
+      return `<div class="ma-ev ${imp}">` +
+        `<div class="ev-imp">${e.impact}</div>` +
+        `<div class="ev-main"><div class="ev-name">${e.flag || ''} ${e.event}</div>` +
+        `<div class="ev-meta">${e.country} · ${e.when}${fc ? (' · ' + fc) : ''}</div></div>` +
+        `<div class="ev-scope ${e.scope}">${e.scope === 'usa' ? 'US' : 'GLOBAL'}</div>` +
+      `</div>`;
+    }).join('');
+    return `<div class="ma-sec-h">📌 Key events — what the market's watching</div>` +
+      note + `<div class="ma-events">${rows}</div>`;
   }
 
   function indices(d) {
