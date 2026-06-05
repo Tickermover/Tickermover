@@ -56,9 +56,52 @@
     .desk-switch button .d{display:block;font-size:10.5px;font-weight:500;color:#94a3b8;margin-top:1px}
     .desk-switch button.on{background:#fff;color:var(--blue);box-shadow:0 2px 8px rgba(0,40,120,.12)}
     .desk-switch button.on .d{color:#7c93b4}
-    .desk-main{padding:8px 18px 60px}
-    .desk-foot{max-width:1080px;margin:0 auto;padding:0 18px 50px;text-align:center}
+    .desk-main{padding:8px 0 0}
+    .desk-foot{max-width:1080px;margin:0 auto;padding:8px 18px 50px;text-align:center}
     .desk-foot a{color:var(--blue);text-decoration:none;font-weight:600;font-family:'Instrument Sans',sans-serif}
+
+    /* ── Glassmorphism floating box ─────────────────────────────────────── */
+    /* Header floats transparently over the waves; the report lives in one
+       frosted glass panel. */
+    .desk-top{background:transparent;backdrop-filter:none;-webkit-backdrop-filter:none;border-bottom:0;position:static}
+    .desk-shell{max-width:1140px;margin:0 auto;padding:10px 16px 14px}
+    .desk-glass{
+      background:rgba(255,255,255,.40);
+      -webkit-backdrop-filter:blur(26px) saturate(160%);
+      backdrop-filter:blur(26px) saturate(160%);
+      border:1px solid rgba(255,255,255,.55);
+      border-radius:28px;
+      box-shadow:0 30px 80px -30px rgba(72,52,110,.45), inset 0 1px 0 rgba(255,255,255,.55);
+      padding:24px 26px 28px;
+    }
+    .desk-glass .desk-hero{max-width:none;margin:0;padding:4px 2px 0}
+    .desk-glass .desk-main{padding:6px 0 0}
+    /* Inner panels become lighter glass panes so the frosted box shows through.
+       No nested backdrop-filter — they just sit translucently on the glass. */
+    .desk-glass .ma-report .ma-card,
+    .desk-glass .ma-report .ma-stat,
+    .desk-glass .ma-report .ma-tbl,
+    .desk-glass .ma-report .ma-ev,
+    .desk-glass .ma-report .ma-edition,
+    .desk-glass .ma-report .ma-verdict,
+    .desk-glass .ma-report .ma-note,
+    .desk-glass .ma-report .ma-watch-note,
+    .desk-glass .ma-report .ma-news-item,
+    .desk-glass .ma-report .ma-session{
+      background:rgba(255,255,255,.58)!important;
+      border-color:rgba(255,255,255,.5)!important;
+      box-shadow:0 2px 12px rgba(72,52,110,.06)!important;
+    }
+    .desk-glass .ma-report .ma-hero{
+      background:linear-gradient(135deg,rgba(255,255,255,.66),rgba(255,255,255,.5))!important;
+      border-color:rgba(255,255,255,.55)!important;
+    }
+    .desk-glass .ma-report .ma-tabs{background:rgba(255,255,255,.34)!important;border-color:rgba(255,255,255,.45)!important}
+    .desk-glass .ma-report .ma-tab.on{background:rgba(255,255,255,.9)!important}
+    .desk-glass .ma-report .ma-bar-track{background:rgba(255,255,255,.45)!important}
+    .desk-glass .desk-switch{background:rgba(255,255,255,.4)!important;border-color:rgba(255,255,255,.5)!important}
+    .desk-glass .desk-switch button.on{background:rgba(255,255,255,.92)!important}
+    @media(max-width:560px){ .desk-glass{padding:18px 14px 20px;border-radius:22px} }
   </style>
 </head>
 <body>
@@ -73,20 +116,24 @@
     </div>
   </header>
 
-  <section class="desk-hero">
-    <div class="eyebrow">From the desk</div>
-    <h1>The US <em>market</em> reports</h1>
-    <p>Two daily editions — read the <b>Pre-Market</b> report before the bell and the <b>Post-Market</b> report after the close. Index futures, sector rotation, rates &amp; commodities, the day's biggest movers across 540+ stocks, and an AI-written take on the tape.</p>
-    <div class="desk-switch" id="desk-switch">
-      <button data-kind="pre"  onclick="deskShow('pre',this)">Pre-Market<span class="d">Before the bell</span></button>
-      <button data-kind="post" onclick="deskShow('post',this)">Post-Market<span class="d">After the close</span></button>
-    </div>
-  </section>
+  <div class="desk-shell">
+    <div class="desk-glass">
+      <section class="desk-hero">
+        <div class="eyebrow">From the desk</div>
+        <h1>The US <em>market</em> reports</h1>
+        <p>Two daily editions — read the <b>Pre-Market</b> report before the bell and the <b>Post-Market</b> report after the close. Index futures, sector rotation, rates &amp; commodities, the day's biggest movers across 540+ stocks, and an AI-written take on the tape.</p>
+        <div class="desk-switch" id="desk-switch">
+          <button data-kind="pre"  onclick="deskShow('pre',this)">Pre-Market<span class="d">Before the bell</span></button>
+          <button data-kind="post" onclick="deskShow('post',this)">Post-Market<span class="d">After the close</span></button>
+        </div>
+      </section>
 
-  <main class="desk-main">
-    <div id="desk-report"></div>
-    <div class="ma-disc-line">These reports are for education and market awareness only — not investment advice. Consult a licensed financial advisor before acting on anything shown here.</div>
-  </main>
+      <main class="desk-main">
+        <div id="desk-report"></div>
+        <div class="ma-disc-line">These reports are for education and market awareness only — not investment advice. Consult a licensed financial advisor before acting on anything shown here.</div>
+      </main>
+    </div>
+  </div>
 
   <footer class="desk-foot">
     <p style="font-size:12px;color:#94a3b8;line-height:1.7;font-weight:300">AlphaHunt scores public US stocks for research and educational purposes.<br>

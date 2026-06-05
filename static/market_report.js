@@ -214,26 +214,27 @@ window.MarketReport = (function () {
       verdict(d);
   }
 
-  // Key macro events — "what the market is waiting for"
+  // Key macro events — a compact "what the market is waiting for" grid
   function events(d) {
-    const evs = d.events || [];
-    if (!evs.length) return '';
+    const all = d.events || [];
+    if (!all.length) return '';
+    // Prioritise high-impact, top up with medium, keep it short, then show soonest-first.
+    const high = all.filter(e => e.impact === 'High');
+    const med = all.filter(e => e.impact !== 'High');
+    const evs = high.concat(med).slice(0, 6).sort((a, b) => (a.when_ts || 0) - (b.when_ts || 0));
     const note = (d.ai && d.ai.watching)
-      ? `<div class="ma-note">${aiTag()}${d.ai.watching}</div>` : '';
-    const rows = evs.map(e => {
-      const imp = e.impact === 'High' ? 'high' : 'med';
-      const est = (e.estimate != null && e.estimate !== '') ? `est <b>${e.estimate}</b>` : '';
-      const prev = (e.previous != null && e.previous !== '') ? `prev ${e.previous}` : '';
-      const fc = [est, prev].filter(Boolean).join(' · ');
-      return `<div class="ma-ev ${imp}">` +
-        `<div class="ev-imp">${e.impact}</div>` +
-        `<div class="ev-main"><div class="ev-name">${e.flag || ''} ${e.event}</div>` +
-        `<div class="ev-meta">${e.country} · ${e.when}${fc ? (' · ' + fc) : ''}</div></div>` +
-        `<div class="ev-scope ${e.scope}">${e.scope === 'usa' ? 'US' : 'GLOBAL'}</div>` +
+      ? `<div class="ma-watch-note">${aiTag()}${d.ai.watching}</div>` : '';
+    const items = evs.map(e => {
+      const when = (e.when || '').replace(' ET', '');
+      const est = (e.estimate != null && e.estimate !== '') ? ` · est <b>${e.estimate}</b>` : '';
+      return `<div class="ma-ev ${e.impact === 'High' ? 'high' : 'med'}">` +
+        `<span class="ev-dot"></span>` +
+        `<div class="ev-body"><div class="ev-name">${e.event} <span class="ev-flag">${e.flag || ''}</span></div>` +
+        `<div class="ev-meta">${when}${est}</div></div>` +
       `</div>`;
     }).join('');
-    return `<div class="ma-sec-h">📌 Key events — what the market's watching</div>` +
-      note + `<div class="ma-events">${rows}</div>`;
+    return `<div class="ma-sec-h">📌 What the market's watching</div>` +
+      note + `<div class="ma-events">${items}</div>`;
   }
 
   function indices(d) {
