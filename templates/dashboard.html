@@ -541,11 +541,13 @@ tr:hover td{background:rgba(245,166,35,.06)}
 .ssx-overlay.open{display:block}
 .ssx-sheet{max-width:1240px;margin:18px auto;min-height:calc(100vh - 36px);border-radius:26px;overflow:hidden;color:var(--ink);
   font-family:'Instrument Sans',system-ui,sans-serif;
-  background:rgba(255,255,255,.52);
-  -webkit-backdrop-filter:blur(34px) saturate(160%);
-  backdrop-filter:blur(34px) saturate(160%);
+  background:#fbe0e8 url('/static/desk-bg.jpg') center center / cover no-repeat fixed;
   border:1px solid rgba(255,255,255,.55);
   box-shadow:0 40px 90px -30px rgba(50,35,90,.5)}
+@supports (background-image: image-set(url('/static/desk-bg.webp') type('image/webp'))){
+  .ssx-sheet{background-image:image-set(url('/static/desk-bg.webp') type('image/webp'),
+                                        url('/static/desk-bg.jpg')  type('image/jpeg'))}
+}
 .ssx-mono{font-family:'JetBrains Mono',monospace;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
 .ssx-up{color:var(--up)} .ssx-dn{color:var(--down)}
 .ssx-head{position:sticky;top:0;z-index:20;-webkit-backdrop-filter:blur(16px) saturate(150%);backdrop-filter:blur(16px) saturate(150%);background:rgba(255,255,255,.5);border-bottom:1px solid rgba(255,255,255,.5);display:flex;align-items:center;gap:16px;padding:14px 24px}
