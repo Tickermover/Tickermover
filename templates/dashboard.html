@@ -5983,13 +5983,25 @@ html.v2-dark body.v2 .main, body.v2 .main{padding:0 0 30px !important;max-width:
 <script src="/static/market_report.js" defer></script>
 <style>
   /* The wave comes from the global content backdrop; here we only center the
-     single frosted report box and tidy the disclaimer. */
+     single frosted report box, the Pre/Post switch, and the disclaimer. */
   #panel-market{padding:0}
   /* match the floating topbar + every other panel's width and centering */
-  #panel-market #ma-host{width:calc(100% - 52px);max-width:1268px;margin:18px auto 0}
+  #panel-market .ma-inapp-top{width:calc(100% - 52px);max-width:1268px;margin:18px auto 0;display:flex;justify-content:center}
+  #panel-market #ma-host{width:calc(100% - 52px);max-width:1268px;margin:12px auto 0}
   #panel-market .ma-disc-line{color:#5b6a7c;margin-top:16px}
+  /* Pre/Post switch — mirrors the /desk page */
+  #ma-inapp-switch{display:inline-flex;gap:4px;background:rgba(255,255,255,.55);border:1px solid rgba(255,255,255,.5);border-radius:12px;padding:4px;box-shadow:0 2px 10px rgba(0,40,120,.06)}
+  #ma-inapp-switch button{font-family:'Instrument Sans',sans-serif;font-size:13.5px;font-weight:600;color:#5d6c7b;background:none;border:0;border-radius:9px;padding:9px 18px;cursor:pointer;transition:.14s}
+  #ma-inapp-switch button .d{display:block;font-size:10.5px;font-weight:500;color:#7c93b4;margin-top:1px}
+  #ma-inapp-switch button.on{background:#fff;color:#2970ff;box-shadow:0 2px 8px rgba(0,40,120,.12)}
 </style>
 <div id="panel-market" class="panel">
+  <div class="ma-inapp-top">
+    <div class="ma-inapp-switch" id="ma-inapp-switch">
+      <button data-kind="pre"  onclick="maShow('pre',this)">Pre-Market<span class="d">Before the bell</span></button>
+      <button data-kind="post" onclick="maShow('post',this)">Post-Market<span class="d">After the close</span></button>
+    </div>
+  </div>
   <div id="ma-host" class="ma-glass"></div>
   <div class="ma-disc-line">This report is for education and market awareness only — not investment advice.<br>Consult a licensed financial advisor before acting on anything shown here.</div>
 </div>
@@ -8001,17 +8013,38 @@ function v2Show(panelId, item){
 }
 </script>
 
-<!-- ── MARKET ANALYSIS — mounts the shared report renderer ─────────────── -->
+<!-- ── MARKET ANALYSIS — mounts the shared report renderer (pre/post editions,
+     mirroring the public /desk page) ─────────────────────────────────────── -->
 <script>
-  window.loadMarketAnalysis = function(){
+  function maShow(kind, btn){
+    document.querySelectorAll('#ma-inapp-switch button').forEach(function(b){
+      b.classList.toggle('on', b===btn || b.getAttribute('data-kind')===kind);
+    });
     var host=document.getElementById('ma-host'); if(!host||!window.MarketReport) return;
-    if(host.__mr){ host.__mr.reload(); return; }
     host.__mr = window.MarketReport.mount(host, {
-      onTicker: function(tk){
+      kind:kind,
+      endpoint:'/api/desk-report?type='+kind,
+      onTicker:function(tk){
         if(typeof tsOpenDrawer==='function') tsOpenDrawer(tk);
         else if(typeof openStockModal==='function') openStockModal(tk);
       }
     });
+  }
+  window.loadMarketAnalysis = function(){
+    if(!window.MarketReport) return;
+    var host=document.getElementById('ma-host');
+    var on=document.querySelector('#ma-inapp-switch button.on');
+    if(on && host && host.__mr){ host.__mr.reload(); return; }   // already mounted → refresh
+    // Default to the edition most relevant now: post-market after ~4:15 PM ET,
+    // otherwise pre-market. (ET via the runtime's locale offset.)
+    var initial='pre';
+    try{
+      var et=new Date(new Date().toLocaleString('en-US',{timeZone:'America/New_York'}));
+      var mins=et.getHours()*60+et.getMinutes();
+      if(et.getDay()>=1 && et.getDay()<=5 && mins>=16*60+15) initial='post';
+    }catch(e){}
+    var btn=document.querySelector('#ma-inapp-switch button[data-kind="'+initial+'"]');
+    maShow(initial, btn);
   };
 </script>
 
