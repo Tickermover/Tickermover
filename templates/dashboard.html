@@ -533,20 +533,24 @@ tr:hover td{background:rgba(245,166,35,.06)}
 .dd-sources a:hover{text-decoration:underline}
 
 /* ════════ FULL STOCK SHEET (light · brand-blue · tabbed, full-screen) ════════ */
-.ssx-overlay{position:fixed;inset:0;z-index:10000;display:none;background:rgba(64,54,104,.28);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);overflow-y:auto;
+.ssx-overlay{position:fixed;inset:0;z-index:10000;display:none;background:#fbe0e8 url('/static/desk-bg.jpg') center center / cover no-repeat fixed;overflow-y:auto;
   --blue:#0040c1;--blue-2:#2970ff;--blue-grad:linear-gradient(120deg,#2970ff 0%,#0042c5 55%,#00359e 100%);
   --up:#16a34a;--down:#ea384c;--ink:#0f172a;--ink-2:#1e293b;--muted:#5d6c7b;--muted-2:#94a3b8;
-  --hair:rgba(9,9,9,.07);--hair-2:rgba(9,9,9,.10);--surf:#ffffff;--surf-2:#fafbff;--surf-3:#f6f9ff;
-  --shadow-card:0 1px 2px rgba(0,40,120,.08),0 10px 24px -14px rgba(0,40,120,.26)}
+  --hair:rgba(9,9,9,.07);--hair-2:rgba(9,9,9,.10);
+  /* translucent surfaces so the frosted wave shows through, like the main app */
+  --surf:rgba(255,255,255,.60);--surf-2:rgba(255,255,255,.46);--surf-3:rgba(255,255,255,.40);
+  --shadow-card:0 2px 14px rgba(50,35,90,.07)}
 .ssx-overlay.open{display:block}
 .ssx-sheet{max-width:1240px;margin:18px auto;min-height:calc(100vh - 36px);border-radius:26px;overflow:hidden;color:var(--ink);
   font-family:'Instrument Sans',system-ui,sans-serif;
-  background:#fbe0e8 url('/static/desk-bg.jpg') center center / cover no-repeat fixed;
+  background:rgba(255,255,255,.42);
+  -webkit-backdrop-filter:blur(30px) saturate(160%);
+  backdrop-filter:blur(30px) saturate(160%);
   border:1px solid rgba(255,255,255,.55);
   box-shadow:0 40px 90px -30px rgba(50,35,90,.5)}
 @supports (background-image: image-set(url('/static/desk-bg.webp') type('image/webp'))){
-  .ssx-sheet{background-image:image-set(url('/static/desk-bg.webp') type('image/webp'),
-                                        url('/static/desk-bg.jpg')  type('image/jpeg'))}
+  .ssx-overlay{background-image:image-set(url('/static/desk-bg.webp') type('image/webp'),
+                                          url('/static/desk-bg.jpg')  type('image/jpeg'))}
 }
 .ssx-mono{font-family:'JetBrains Mono',monospace;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
 .ssx-up{color:var(--up)} .ssx-dn{color:var(--down)}
