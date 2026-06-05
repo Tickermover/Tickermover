@@ -496,6 +496,7 @@ async def lifespan(app: FastAPI):
         asyncio.create_task(_quote_refresh()),
         asyncio.create_task(_yf_concurrent_load()),
         asyncio.create_task(_tech_refresh()),
+        asyncio.create_task(_desk_publisher()),     # freeze pre/post editions
     ]
     yield
     for t in tasks:
@@ -2359,15 +2360,33 @@ async def login_page():
         return HTMLResponse(content="<h2>templates/login.html not found</h2>", status_code=500)
 
 
-@app.get("/desk", response_class=HTMLResponse)
-async def desk_report():
-    """Public pre/post-market report page — the standalone version of the
-    in-app Market Analysis panel. No login required; reuses the shared
-    /static/market_report.{css,js} renderer and the /api/market-analysis feed."""
+def _render_desk(initial_kind: str) -> HTMLResponse:
+    """Serve the public desk page, seeding the initial report (pre/post/auto)."""
     try:
-        return HTMLResponse(content=DESK_HTML.read_text(encoding="utf-8"))
+        html = DESK_HTML.read_text(encoding="utf-8")
     except FileNotFoundError:
         return HTMLResponse(content="<h2>templates/desk.html not found</h2>", status_code=500)
+    html = html.replace("__DESK_INITIAL__", initial_kind, 1)
+    return HTMLResponse(content=html)
+
+
+@app.get("/desk", response_class=HTMLResponse)
+async def desk_report():
+    """Public pre/post-market report hub. Defaults to whichever edition is most
+    relevant right now (post-market after ~16:15 ET, otherwise pre-market)."""
+    now = _et_now()
+    initial = "post" if (now.weekday() < 5 and (now.hour, now.minute) >= (16, 15)) else "pre"
+    return _render_desk(initial)
+
+
+@app.get("/desk/pre", response_class=HTMLResponse)
+async def desk_report_pre():
+    return _render_desk("pre")
+
+
+@app.get("/desk/post", response_class=HTMLResponse)
+async def desk_report_post():
+    return _render_desk("post")
 
 
 @app.get("/app", response_class=HTMLResponse)
@@ -2684,6 +2703,120 @@ async def api_market_analysis():
         data["stocks"] = _market_movers()
     return JSONResponse(
         _clean(data),
+        headers={"Cache-Control": "public, max-age=60, s-maxage=90"},
+    )
+
+
+# ══════════════════════════════════════════════════════════════════════════
+#  Desk reports — two dated editions (pre-market & post-market) that publish
+#  on a schedule and otherwise serve the previous (yesterday's) edition.
+# ══════════════════════════════════════════════════════════════════════════
+# ET publish times: pre-market edition freezes at 09:00 ET (before the 9:30
+# open); post-market edition freezes at 16:15 ET (after the 4:00 close).
+_DESK_PUBLISH = {"pre": (9, 0), "post": (16, 15)}
+_DESK_TTL     = 60 * 60 * 30        # 30h — a daily edition outlives the gap to the next
+
+
+def _et_now():
+    try:
+        from zoneinfo import ZoneInfo
+        from datetime import datetime as _dt
+        return _dt.now(ZoneInfo("America/New_York"))
+    except Exception:
+        from datetime import datetime as _dt, timezone as _tz
+        return _dt.now(_tz.utc)
+
+
+def _prev_weekday(d):
+    from datetime import timedelta
+    d -= timedelta(days=1)
+    while d.weekday() >= 5:
+        d -= timedelta(days=1)
+    return d
+
+
+def _edition_date_for(kind: str, now=None):
+    """The trading date the *current* edition of `kind` represents. Today once
+    we're past today's publish time on a weekday; otherwise the prior weekday."""
+    now = now or _et_now()
+    h, m = _DESK_PUBLISH.get(kind, (9, 0))
+    today = now.date()
+    if today.weekday() < 5 and (now.hour, now.minute) >= (h, m):
+        return today                       # today's edition is out
+    if today.weekday() >= 5:               # weekend → roll back to Friday
+        d = today
+        while d.weekday() >= 5:
+            from datetime import timedelta
+            d -= timedelta(days=1)
+        return d
+    return _prev_weekday(today)            # weekday but before publish → yesterday
+
+
+def _desk_key(kind: str) -> str:
+    return f"desk:report:{kind}"
+
+
+async def _build_desk_report(kind: str, edition_date) -> dict:
+    """Assemble a full report payload (macro + stocks + kind-framed AI) and
+    stamp it with the edition date it represents."""
+    macro = market_analysis.get()
+    if not macro or not macro.get("available"):
+        macro = await market_analysis.refresh()
+    data = dict(macro) if isinstance(macro, dict) else {"available": False}
+    data["kind"]   = kind
+    data["stocks"] = _market_movers()
+    try:
+        data["ai"] = await market_analysis.ai_narrative(data, kind)
+    except Exception as exc:
+        logger.warning(f"desk {kind} AI narrative failed: {exc}")
+        data["ai"] = None
+    data["edition"] = {
+        "kind":         kind,
+        "date":         edition_date.isoformat(),
+        "date_label":   edition_date.strftime("%a %d %b %Y"),
+        "published_at": _et_now().strftime("%H:%M ET"),
+        "is_today":     edition_date == _et_now().date(),
+        "title":        "Pre-Market Report" if kind == "pre" else "Post-Market Report",
+    }
+    return data
+
+
+async def _publish_desk(kind: str, force: bool = False) -> dict:
+    """Return the current edition for `kind`, freezing a fresh snapshot when the
+    stored edition is stale (i.e., a new edition has just come due)."""
+    ed  = _edition_date_for(kind)
+    key = _desk_key(kind)
+    cur = cache.get(key)
+    if (not force and cur and isinstance(cur, dict)
+            and cur.get("edition", {}).get("date") == ed.isoformat()):
+        return cur
+    report = await _build_desk_report(kind, ed)
+    cache.set(key, report, _DESK_TTL)
+    logger.info("🗞️  Published %s desk edition for %s", kind, ed.isoformat())
+    return report
+
+
+async def _desk_publisher() -> None:
+    """Background heartbeat — re-publishes each edition as soon as its publish
+    time rolls past, so snapshots freeze near 09:00 / 16:15 ET rather than at a
+    random first-visit time. Idempotent: skips when the edition is already current."""
+    while True:
+        for kind in ("pre", "post"):
+            try:
+                await _publish_desk(kind)
+            except Exception as exc:
+                logger.warning(f"desk publisher ({kind}) failed: {exc}")
+        await asyncio.sleep(600)            # 10 min
+
+
+@app.get("/api/desk-report")
+async def api_desk_report(type: str = "pre"):
+    """Current pre- or post-market edition. Serves the frozen snapshot for the
+    edition that's due now; before today's publish time that's yesterday's."""
+    kind = "post" if str(type).startswith("post") else "pre"
+    report = await _publish_desk(kind)
+    return JSONResponse(
+        _clean(report),
         headers={"Cache-Control": "public, max-age=60, s-maxage=90"},
     )
 

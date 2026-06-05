@@ -786,16 +786,20 @@ class MarketAnalysis:
         }
 
     # ── AI narrative — Claude writes the report from the live numbers ─────
-    async def _ai_narrative(self, data: dict) -> Optional[dict]:
+    async def ai_narrative(self, data: dict, kind: Optional[str] = None) -> Optional[dict]:
+        """Public entry: generate a (optionally pre/post-framed) AI narrative."""
+        return await self._ai_narrative(data, kind)
+
+    async def _ai_narrative(self, data: dict, kind: Optional[str] = None) -> Optional[dict]:
         """Ask Claude to turn the fetched market data into a plain-English
         briefing. The numbers are passed as ground truth — the model only
-        writes prose, never invents figures. Returns a structured dict or None
-        (no key / disabled / timeout / parse error → frontend uses its own
-        deterministic fallback copy)."""
+        writes prose, never invents figures. `kind` ('pre'/'post') frames the
+        report. Returns a structured dict or None (no key / disabled / timeout /
+        parse error → frontend uses its own deterministic fallback copy)."""
         if not _ANTHROPIC_KEY or not _HTTPX_AVAILABLE:
             return None
         try:
-            prompt = self._build_ai_prompt(data)
+            prompt = self._build_ai_prompt(data, kind)
             async with httpx.AsyncClient(timeout=18.0) as c:
                 r = await c.post(
                     "https://api.anthropic.com/v1/messages",
@@ -831,7 +835,7 @@ class MarketAnalysis:
             logger.warning(f"market-analysis AI narrative failed: {exc}")
             return None
 
-    def _build_ai_prompt(self, d: dict) -> str:
+    def _build_ai_prompt(self, d: dict, kind: Optional[str] = None) -> str:
         ses = d.get("session", {})
 
         def line(rows):
@@ -844,6 +848,13 @@ class MarketAnalysis:
                            + (f", {chg:+.2f}%" if chg is not None else ""))
             return "; ".join(out) or "n/a"
 
+        def stk(rows):
+            out = []
+            for s in (rows or [])[:6]:
+                chg = s.get("change_pct")
+                out.append(f"{s.get('ticker')} {chg:+.1f}%" if chg is not None else f"{s.get('ticker')}")
+            return ", ".join(out) or "n/a"
+
         t = d.get("technicals", {}) or {}
         tech_line = "n/a"
         if t.get("price") is not None:
@@ -854,14 +865,33 @@ class MarketAnalysis:
         sec_line = "; ".join(
             f"{s['name']} {s['chg_1d']:+.2f}%" for s in secs[:11]
         ) or "n/a"
+        st = d.get("stocks", {}) or {}
+
+        if kind == "pre":
+            frame = ("This is a PRE-MARKET report, written before the 9:30 ET open. "
+                     "Frame everything around the expected open and the day ahead: "
+                     "the futures gap, overnight moves, and stocks with earnings due today.")
+            verdict_head = ('one sentence on the expected open (gap up/down/flat) '
+                            'and the overall bias (bullish/bearish/neutral) for the day.')
+        elif kind == "post":
+            frame = ("This is a POST-MARKET report, written after the 4:00 ET close. "
+                     "Frame everything around how the day closed and the setup for "
+                     "tomorrow: today's biggest movers, who just reported earnings, "
+                     "and where the tape finished.")
+            verdict_head = ('one sentence on how the day closed and the overall bias '
+                            '(bullish/bearish/neutral) heading into tomorrow.')
+        else:
+            frame = ("This is a US market briefing for the current session.")
+            verdict_head = ('one sentence on the expected open and overall bias '
+                            '(bullish/bearish/neutral).')
 
         return (
             "You are a US equity market analyst writing a short, plain-English "
-            "pre/post-market briefing for retail investors. Use ONLY the data "
-            "below as ground truth — never invent or alter any number. Keep "
-            "every sentence short and simple. No jargon without a plain gloss. "
-            "Do NOT give buy/sell/hold advice or price targets — this is market "
-            "context only.\n\n"
+            "briefing for retail investors. Use ONLY the data below as ground "
+            "truth — never invent or alter any number. Keep every sentence short "
+            "and simple. No jargon without a plain gloss. Do NOT give "
+            "buy/sell/hold advice or price targets — this is market context only.\n\n"
+            f"{frame}\n\n"
             f"Session: {ses.get('label')} ({ses.get('et_time')})\n"
             f"S&P futures gap: {d.get('gap_pct')}%\n"
             f"Index ETFs: {line(d.get('indices'))}\n"
@@ -869,21 +899,24 @@ class MarketAnalysis:
             f"Rates/VIX/Dollar: {line(d.get('rates_fx'))}\n"
             f"Commodities: {line(d.get('commodities'))}\n"
             f"Technicals: {tech_line}\n"
-            f"Sector moves today: {sec_line}\n\n"
+            f"Sector moves today: {sec_line}\n"
+            f"Top gainers: {stk(st.get('gainers'))}\n"
+            f"Top losers: {stk(st.get('losers'))}\n"
+            f"Earnings on deck: {stk(st.get('earnings'))}\n"
+            f"Just reported: {stk(st.get('just_reported'))}\n\n"
             "Return ONLY a JSON object (no markdown, no commentary) with exactly "
             "these keys:\n"
             "{\n"
-            '  "brief": "3-4 short sentences on how the session looks, the '
-            'futures gap, the broad-market move, and the VIX mood.",\n'
+            '  "brief": "3-4 short sentences on the session, the futures gap, the '
+            'broad-market move, the VIX mood, and one notable stock move.",\n'
             '  "technicals_note": "1-2 short sentences on where SPY sits vs its '
             'moving averages and what RSI/MACD momentum says.",\n'
             '  "sectors_note": "1 short sentence on which sectors lead/lag and '
             'what that rotation suggests.",\n'
+            '  "movers_note": "1 short sentence on the standout stock movers.",\n'
             '  "verdict": {\n'
-            '    "headline": "one sentence on the expected open and overall '
-            'bias (bullish/bearish/neutral).",\n'
-            '    "what_it_means": "2-3 short lines of plain context for the day. '
-            'No trade calls.",\n'
+            f'    "headline": "{verdict_head}",\n'
+            '    "what_it_means": "2-3 short lines of plain context. No trade calls.",\n'
             '    "confidence": "High | Medium | Low"\n'
             "  }\n"
             "}"

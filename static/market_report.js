@@ -49,18 +49,25 @@ window.MarketReport = (function () {
   }
 
   // ── skeleton + mount ────────────────────────────────────────────────────
-  function skeleton(compact) {
+  function titleFor(kind) {
+    return kind === 'pre' ? 'Pre-Market Report'
+      : kind === 'post' ? 'Post-Market Report'
+      : 'US pre &amp; post-market report';
+  }
+
+  function skeleton(compact, kind) {
     const sessionBadge = `<div class="ma-session" data-ma-session><span class="ma-dot"></span><span data-ma-session-label>Loading…</span></div>`;
     const head = compact
       ? `<div class="ma-head" style="justify-content:flex-end">${sessionBadge}</div>`
       : `<div class="ma-head"><div>` +
           `<div class="ma-eyebrow">MARKET ANALYSIS</div>` +
-          `<div class="ma-title">US <em>pre &amp; post-market</em> report</div></div>` +
+          `<div class="ma-title">${titleFor(kind)}</div></div>` +
         sessionBadge + `</div>`;
+    const edition = `<div class="ma-edition" data-ma-edition hidden></div>`;
     const tabs = `<div class="ma-tabs" data-ma-tabs>` +
       TABS.map((t, i) => `<button class="ma-tab${i === 0 ? ' on' : ''}" data-ma="${t[0]}">${t[1]}</button>`).join('') +
       `</div>`;
-    return head + tabs +
+    return head + edition + tabs +
       `<div class="ma-content" data-ma-content><div class="ma-loading">📈 Fetching live market data…</div></div>` +
       `<div class="ma-foot" data-ma-foot></div>`;
   }
@@ -68,8 +75,11 @@ window.MarketReport = (function () {
   function mount(host, opts) {
     opts = opts || {};
     host.classList.add('ma-report');
-    host.innerHTML = skeleton(opts.compact);
-    const st = host.__ma = { data: null, tab: 'brief', news: null, newsState: 'idle', opts, loading: false };
+    host.innerHTML = skeleton(opts.compact, opts.kind);
+    const st = host.__ma = {
+      data: null, tab: 'brief', news: null, newsState: 'idle', opts,
+      kind: opts.kind || null, endpoint: opts.endpoint || '/api/market-analysis', loading: false,
+    };
 
     host.querySelector('[data-ma-tabs]').addEventListener('click', e => {
       const b = e.target.closest('.ma-tab'); if (!b) return;
@@ -92,7 +102,7 @@ window.MarketReport = (function () {
     st.loading = true;
     const c = host.querySelector('[data-ma-content]');
     if (c && !st.data) c.innerHTML = '<div class="ma-loading">📈 Fetching live market data…</div>';
-    fetch('/api/market-analysis').then(r => r.json()).then(d => {
+    fetch(st.endpoint).then(r => r.json()).then(d => {
       st.data = d; st.loading = false; setSession(host, st); render(host, st);
     }).catch(() => {
       st.loading = false;
@@ -107,6 +117,19 @@ window.MarketReport = (function () {
     if (badge && d.session) {
       badge.className = 'ma-session ' + (d.session.phase || '');
       if (lab) lab.textContent = (d.session.label || 'Market') + (d.session.et_time ? (' · ' + d.session.et_time) : '');
+    }
+    const ed = host.querySelector('[data-ma-edition]');
+    if (ed) {
+      if (d.edition) {
+        const e = d.edition;
+        const tag = e.is_today
+          ? `<span class="ma-ed-tag today">Today's edition</span>`
+          : `<span class="ma-ed-tag prior">Latest edition</span>`;
+        ed.hidden = false;
+        ed.innerHTML = `<span class="ma-ed-cal">🗓️</span><b>${e.title || 'Report'}</b>` +
+          `<span class="ma-ed-date">${e.date_label}</span>` +
+          (e.published_at ? `<span class="ma-ed-pub">published ${e.published_at}</span>` : '') + tag;
+      } else { ed.hidden = true; ed.innerHTML = ''; }
     }
     const foot = host.querySelector('[data-ma-foot]');
     if (foot) foot.innerHTML = 'Market data: ' + (d.source || 'Yahoo Finance') +
@@ -140,9 +163,18 @@ window.MarketReport = (function () {
       const v = vix.last, w = v < 15 ? 'calm' : v < 20 ? 'a little nervous' : v < 25 ? 'anxious' : 'fearful';
       vixTxt = `Volatility (VIX) is <b>${v.toFixed(2)}</b> — the market looks <b>${w}</b>.`;
     }
+    let body;
+    if (d.kind === 'post') {
+      const ah = (gap != null && Math.abs(gap) >= 0.15)
+        ? ` Futures already point <b>${gap > 0 ? 'higher' : 'lower'}</b> for tomorrow.` : '';
+      body = `After the close. ${moodTxt} ${vixTxt}${ah}`;
+    } else {
+      const intro = d.kind === 'pre' ? 'Heading into the open. ' : `It is <b>${ses.label || '—'}</b>. `;
+      body = `${intro}${gapTxt} ${moodTxt} ${vixTxt}`;
+    }
     const lead = (d.ai && d.ai.brief)
       ? `<div class="ma-lead">${aiTag()}${d.ai.brief}</div>`
-      : `<div class="ma-lead">It is <b>${ses.label || '—'}</b>. ${gapTxt} ${moodTxt} ${vixTxt}</div>`;
+      : `<div class="ma-lead">${body}</div>`;
     return lead +
       `<div class="ma-sec-h">Headline indices</div>` +
       `<div class="ma-grid">${(d.indices || []).map(r => card(r)).join('')}</div>` +
@@ -253,26 +285,34 @@ window.MarketReport = (function () {
   function movers(d) {
     const s = d.stocks;
     if (!s || !s.count) return '<div class="ma-loading">Stock data is unavailable right now.</div>';
-    const post = d.session && (d.session.phase === 'post' || d.session.phase === 'closed');
+    // Post-market emphasises what just reported; pre/live emphasises what's on deck.
+    const post = d.kind === 'post' || (!d.kind && d.session && (d.session.phase === 'post' || d.session.phase === 'closed'));
     const dteCell = x => x.dte == null ? '—' : (x.dte <= 0 ? 'today' : x.dte + 'd');
     const volCell = x => x.vol_ratio == null ? '—' : x.vol_ratio.toFixed(1) + '×';
     const highCell = x => x.from_high == null ? '—' : (x.from_high >= 0 ? 'new high' : x.from_high.toFixed(1) + '%');
+    const usePost = post && (s.just_reported || []).length;
 
-    const earningsList = post && (s.just_reported || []).length ? s.just_reported : s.earnings;
-    const earningsHdr = post && (s.just_reported || []).length ? 'Reported' : 'Reports';
-    const earningsCell = post && (s.just_reported || []).length ? (() => 'done') : dteCell;
+    const earningsList = usePost ? s.just_reported : s.earnings;
+    const earningsHdr = usePost ? 'Reported' : 'Reports';
+    const earningsCell = usePost ? (() => 'done') : dteCell;
+    const gainersLbl = post ? "Today's biggest winners" : 'Top gainers';
+    const losersLbl = post ? "Today's biggest losers" : 'Top losers';
+    const earningsTitle = usePost ? 'Just reported earnings' : 'Earnings on deck (next 7 days)';
 
-    return `<div class="ma-lead">Stock-level detail across the <b>${s.count}-name</b> AlphaHunt universe — today's movers, the engine's top picks, earnings on deck, and momentum flags.</div>` +
+    const lead = (d.ai && d.ai.movers_note)
+      ? `<div class="ma-lead">${aiTag()}${d.ai.movers_note}</div>`
+      : `<div class="ma-lead">Stock-level detail across the <b>${s.count}-name</b> AlphaHunt universe — ${post ? "the day's tape" : "what's moving"}, the engine's top picks, earnings, and momentum flags.</div>`;
 
+    return lead +
       `<div class="ma-two">` +
-        `<div><div class="ma-mv-h"><span class="ic">📈</span> Top gainers today</div>${table('Gainer', 'Score', s.gainers)}</div>` +
-        `<div><div class="ma-mv-h"><span class="ic">📉</span> Top losers today</div>${table('Loser', 'Score', s.losers)}</div>` +
+        `<div><div class="ma-mv-h"><span class="ic">📈</span> ${gainersLbl}</div>${table('Gainer', 'Score', s.gainers)}</div>` +
+        `<div><div class="ma-mv-h"><span class="ic">📉</span> ${losersLbl}</div>${table('Loser', 'Score', s.losers)}</div>` +
       `</div>` +
 
       `<div class="ma-mv-h"><span class="ic">⭐</span> Highest Alpha Score right now</div>` +
       `<div style="margin-bottom:18px">${table('Stock', 'Score', s.top_score)}</div>` +
 
-      `<div class="ma-mv-h"><span class="ic">🗓️</span> ${post && (s.just_reported || []).length ? 'Just reported earnings' : 'Earnings on deck (next 7 days)'}</div>` +
+      `<div class="ma-mv-h"><span class="ic">🗓️</span> ${earningsTitle}</div>` +
       `<div style="margin-bottom:18px">${table('Stock', earningsHdr, earningsList, earningsCell)}</div>` +
 
       `<div class="ma-two">` +
@@ -305,13 +345,17 @@ window.MarketReport = (function () {
     if (vix.last != null) { if (vix.last < 16) bull++; else if (vix.last > 24) bear++; }
     const diff = bull - bear;
     const bias = diff >= 2 ? 'bullish' : diff <= -2 ? 'bearish' : 'neutral';
-    const openExp = gap == null ? 'open near flat' : gap > 0.15 ? 'open higher' : gap < -0.15 ? 'open lower' : 'open near flat';
     const conf = Math.abs(diff) >= 4 ? ['high', 'High'] : Math.abs(diff) >= 2 ? ['med', 'Medium'] : ['low', 'Low'];
     const keyLvl = t.sma20 != null ? t.sma20 : (t.sma50 != null ? t.sma50 : null);
     const biasCls = bias === 'bullish' ? 'ma-pos' : bias === 'bearish' ? 'ma-neg' : 'ma-flat';
+    const openExp = gap == null ? 'open near flat' : gap > 0.15 ? 'open higher' : gap < -0.15 ? 'open lower' : 'open near flat';
+    const spyChg = spy.chg_pct;
+    const closeExp = spyChg == null ? 'finished mixed' : spyChg > 0.15 ? 'closed higher' : spyChg < -0.15 ? 'closed lower' : 'closed near flat';
+    const headline = d.kind === 'post'
+      ? `The US market <span class="${spyChg > 0.15 ? 'ma-pos' : spyChg < -0.15 ? 'ma-neg' : 'ma-flat'}">${closeExp}</span>, with a <span class="${biasCls}">${bias}</span> tone into tomorrow.`
+      : `US market is set to <span class="${gap > 0.15 ? 'ma-pos' : gap < -0.15 ? 'ma-neg' : 'ma-flat'}">${openExp}</span>, with an overall <span class="${biasCls}">${bias}</span> bias.`;
     return `<div class="ma-verdict">` +
-      `<div class="big">US market is set to <span class="${gap > 0.15 ? 'ma-pos' : gap < -0.15 ? 'ma-neg' : 'ma-flat'}">${openExp}</span>, ` +
-        `with an overall <span class="${biasCls}">${bias}</span> bias.</div>` +
+      `<div class="big">${headline}</div>` +
       `<div class="kv"><b>Read:</b> ${bull} bullish vs ${bear} bearish signals across futures, trend, RSI and volatility.</div>` +
       (keyLvl != null ? `<div class="kv"><b>Key level to watch:</b> SPY $${N(keyLvl, 2)} (20-day line).<br>If it holds, the up-trend stays intact. If it breaks, expect more two-way chop.</div>` : '') +
       `<div class="ma-conf ${conf[0]}">Confidence: ${conf[1]}</div>` +
