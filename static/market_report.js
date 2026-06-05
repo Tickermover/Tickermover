@@ -221,7 +221,7 @@ window.MarketReport = (function () {
     // Prioritise high-impact, top up with medium, keep it short, then show soonest-first.
     const high = all.filter(e => e.impact === 'High');
     const med = all.filter(e => e.impact !== 'High');
-    const evs = high.concat(med).slice(0, 6).sort((a, b) => (a.when_ts || 0) - (b.when_ts || 0));
+    const evs = high.concat(med).slice(0, 8).sort((a, b) => (a.when_ts || 0) - (b.when_ts || 0));
     const note = (d.ai && d.ai.watching)
       ? `<div class="ma-watch-note">${aiTag()}${d.ai.watching}</div>` : '';
     const items = evs.map(e => {

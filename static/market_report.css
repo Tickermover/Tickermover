@@ -29,7 +29,7 @@
 .ma-report .ma-tab:hover{color:#0f172a}
 .ma-report .ma-tab.on{background:#fff;color:#2970ff;box-shadow:0 2px 6px rgba(0,40,120,.12)}
 .ma-report .ma-loading{padding:46px 20px;text-align:center;color:#64748b;font-size:14px}
-.ma-report .ma-sec-h{font-size:12px;font-weight:800;letter-spacing:.06em;color:#94a3b8;text-transform:uppercase;margin:0 0 9px}
+.ma-report .ma-sec-h{font-size:12px;font-weight:800;letter-spacing:.06em;color:#94a3b8;text-transform:uppercase;margin:8px 0 11px}
 .ma-report .ma-lead{font-size:14px;line-height:1.65;color:#334155;margin-bottom:16px}
 .ma-report .ma-lead b{color:#0f172a}
 .ma-report .ma-ai-tag{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.03em;color:#7c3aed;background:rgba(124,58,237,.10);border:1px solid rgba(124,58,237,.22);border-radius:6px;padding:1px 7px;vertical-align:1px;margin-right:5px}
@@ -57,7 +57,7 @@
 .ma-report .ma-stat .s-v{font-size:22px;font-weight:800;color:#0f172a;font-variant-numeric:tabular-nums;margin-top:3px;line-height:1;font-family:'Instrument Sans',system-ui,sans-serif}
 .ma-report .ma-stat .s-c{font-size:12.5px;font-weight:800;margin-top:5px;font-variant-numeric:tabular-nums}
 /* ── Key events — compact "what the market is watching" grid ─────────────── */
-.ma-report .ma-watch-note{font-size:12.5px;color:#475569;line-height:1.5;margin-bottom:10px}
+.ma-report .ma-watch-note{font-size:12.5px;color:#475569;line-height:1.55;padding:11px 15px;border-radius:11px;margin:2px 0 14px}
 .ma-report .ma-events{display:grid;grid-template-columns:repeat(auto-fill,minmax(244px,1fr));gap:8px;margin-bottom:18px}
 .ma-report .ma-ev{display:flex;align-items:flex-start;gap:9px;background:#fff;border:1px solid rgba(15,23,42,.08);border-radius:10px;padding:9px 12px;box-shadow:0 1px 6px rgba(0,40,120,.04)}
 .ma-report .ma-ev .ev-dot{width:8px;height:8px;border-radius:50%;margin-top:5px;flex:none}
