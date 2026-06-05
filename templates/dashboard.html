@@ -5434,13 +5434,21 @@ body.v2 .v2-content{
 }
 /* keep inner wrappers transparent so the content wave shows through */
 html.v2-dark body.v2 .v2-scroll, html.v2-dark body.v2 .main{background:transparent !important}
-/* 2 · Frosted-glass topbar (the left sidebar is deliberately NOT changed) */
+/* 2 · Frosted-glass topbar (the left sidebar is deliberately NOT changed).
+   The blur lives on a ::before pseudo, NOT the topbar itself — a backdrop-filter
+   on the topbar would make it the containing block for its position:fixed
+   children (e.g. the risk-quiz overlay) and break them. */
 html.v2-dark body.v2 .v2-topbar, body.v2 .v2-topbar{
-  background:rgba(255,255,255,.5) !important;
-  -webkit-backdrop-filter:blur(22px) saturate(160%);
-  backdrop-filter:blur(22px) saturate(160%);
+  background:transparent !important;
   border:1px solid rgba(255,255,255,.5) !important;
   box-shadow:0 10px 30px -16px rgba(72,52,110,.32) !important;
+  position:relative;
+}
+html.v2-dark body.v2 .v2-topbar::before, body.v2 .v2-topbar::before{
+  content:'';position:absolute;inset:0;z-index:-1;border-radius:inherit;
+  background:rgba(255,255,255,.5);
+  -webkit-backdrop-filter:blur(22px) saturate(160%);
+  backdrop-filter:blur(22px) saturate(160%);
 }
 /* 3 · Each active view becomes a frosted glass panel (only one is active at a
    time, so just one backdrop-filter surface). Market Analysis keeps its own. */
