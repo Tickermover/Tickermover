@@ -15,9 +15,15 @@
     *{box-sizing:border-box}
     body{margin:0;background:#fdeede;color:var(--ink);
       font-family:'Poppins',system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
-    /* Soft pastel wave backdrop (fixed, behind all content) */
-    .desk-bg{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none}
-    .desk-bg svg{position:absolute;inset:0;width:100%;height:100%;display:block}
+    /* Pastel wave backdrop image (fixed, behind all content).
+       Optimised derivatives of static/background 2.png — WebP with a JPEG
+       fallback so the page isn't loading an 11 MB PNG. */
+    .desk-bg{position:fixed;inset:0;z-index:-1;pointer-events:none;
+      background:#fbe0e8 url('/static/desk-bg.jpg') center center / cover no-repeat}
+    @supports (background-image: image-set(url('/static/desk-bg.webp') type('image/webp'))){
+      .desk-bg{background-image:image-set(url('/static/desk-bg.webp') type('image/webp'),
+                                          url('/static/desk-bg.jpg')  type('image/jpeg'))}
+    }
     /* Lift the report a touch off the colourful waves for readability */
     .desk-main .ma-report,.desk-hero{position:relative;z-index:1}
     /* report inherits the page font instead of the system stack */
@@ -56,71 +62,8 @@
   </style>
 </head>
 <body>
-  <!-- ── Soft pastel wave backdrop ──────────────────────────────────────── -->
-  <div class="desk-bg" aria-hidden="true">
-    <svg viewBox="0 0 800 700" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id="wbBase" x1="0.1" y1="0" x2="0.45" y2="1">
-          <stop offset="0" stop-color="#fdeede"/>
-          <stop offset="0.42" stop-color="#fbdfe8"/>
-          <stop offset="0.74" stop-color="#eccdf0"/>
-          <stop offset="1" stop-color="#cdbef3"/>
-        </linearGradient>
-        <radialGradient id="wbGlow" cx="0.46" cy="0.26" r="0.55">
-          <stop offset="0" stop-color="#fff7ef" stop-opacity="0.95"/>
-          <stop offset="0.6" stop-color="#fdeadd" stop-opacity="0.35"/>
-          <stop offset="1" stop-color="#fdeadd" stop-opacity="0"/>
-        </radialGradient>
-        <linearGradient id="wbPink" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stop-color="#f9d2de"/>
-          <stop offset="1" stop-color="#f4b8c8"/>
-        </linearGradient>
-        <linearGradient id="wbCoral" x1="1" y1="0.1" x2="0.1" y2="1">
-          <stop offset="0" stop-color="#f59a92"/>
-          <stop offset="0.55" stop-color="#f4a9a6"/>
-          <stop offset="1" stop-color="#f6c4c4"/>
-        </linearGradient>
-        <linearGradient id="wbLav" x1="0.1" y1="0" x2="0.9" y2="1">
-          <stop offset="0" stop-color="#b6a3ed"/>
-          <stop offset="1" stop-color="#d6b6e6"/>
-        </linearGradient>
-        <linearGradient id="wbBlue" x1="0" y1="1" x2="1" y2="0">
-          <stop offset="0" stop-color="#a9c6f5"/>
-          <stop offset="1" stop-color="#c4b9f2"/>
-        </linearGradient>
-        <linearGradient id="wbPeach" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stop-color="#fde4d2"/>
-          <stop offset="1" stop-color="#f9cdd5"/>
-        </linearGradient>
-        <filter id="wbSoft" x="-15%" y="-15%" width="130%" height="130%">
-          <feGaussianBlur stdDeviation="4"/>
-        </filter>
-      </defs>
-      <rect width="800" height="700" fill="url(#wbBase)"/>
-      <ellipse cx="380" cy="150" rx="400" ry="300" fill="url(#wbGlow)"/>
-      <!-- Layered ribbon waves — gentle blur keeps the curves clearly visible -->
-      <g filter="url(#wbSoft)">
-        <!-- peach swell rolling down from the top-left -->
-        <path d="M0,250 C170,300 330,250 470,300 C610,348 720,300 800,330 L800,700 L0,700 Z"
-              fill="url(#wbPeach)" opacity="0.55"/>
-        <!-- pink crest -->
-        <path d="M0,400 C160,330 320,430 470,400 C620,372 720,410 800,388 L800,700 L0,700 Z"
-              fill="url(#wbPink)" opacity="0.7"/>
-        <!-- coral wave sweeping across -->
-        <path d="M800,360 C650,378 560,500 430,520 C300,540 170,470 0,540 L0,700 L800,700 Z"
-              fill="url(#wbCoral)" opacity="0.9"/>
-        <!-- lighter crest highlight riding the coral curve -->
-        <path d="M800,360 C650,378 560,500 430,520 C300,540 170,470 0,540"
-              fill="none" stroke="#ffe3df" stroke-width="10" opacity="0.5"/>
-        <!-- lavender ribbon lower-left -->
-        <path d="M0,470 C150,452 280,560 410,610 C300,650 150,648 0,700 Z"
-              fill="url(#wbLav)" opacity="0.9"/>
-        <!-- blue at the very bottom-left -->
-        <path d="M0,580 C120,560 240,610 340,665 C250,690 130,690 0,700 Z"
-              fill="url(#wbBlue)" opacity="0.8"/>
-      </g>
-    </svg>
-  </div>
+  <!-- ── Pastel wave backdrop image ─────────────────────────────────────── -->
+  <div class="desk-bg" aria-hidden="true"></div>
 
   <header class="desk-top">
     <div class="desk-top-in">
