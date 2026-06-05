@@ -5405,6 +5405,63 @@ html.v2-dark .v2-track-head,html.v2-dark .v2-track-foot,html.v2-dark .v2-track-c
 html.v2-dark .v2-track-cell .n{color:#0f172a!important}
 /* restore dark text where the dark theme forced panel titles light */
 html.v2-dark body.v2 .sm-title,html.v2-dark body.v2 .sec-heading{color:#0f172a!important}
+
+/* ════════════════════════════════════════════════════════════════════════
+   SITE GLASS THEME — pastel wave backdrop + frosted glass across the whole
+   app, matching the Market Analysis panel. One block; remove to revert.
+   ════════════════════════════════════════════════════════════════════════ */
+/* 1 · Pastel wave behind the entire app — fixed ::before layer so it sits
+   behind content without fighting the theme's !important body background. */
+body.v2::before{
+  content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:#fbe0e8 url('/static/desk-bg.jpg') center center / cover no-repeat;
+}
+@supports (background-image: image-set(url('/static/desk-bg.webp') type('image/webp'))){
+  body.v2::before{background-image:image-set(url('/static/desk-bg.webp') type('image/webp'),
+                                             url('/static/desk-bg.jpg')  type('image/jpeg'))}
+}
+/* keep the app shell above the wave layer */
+body.v2 .v2-sidebar, body.v2 .v2-content{position:relative;z-index:1}
+html.v2-dark body.v2 .v2-app, html.v2-dark body.v2 .v2-content,
+html.v2-dark body.v2.ts-active .v2-content, body.v2 .v2-content,
+html.v2-dark body.v2 .v2-scroll, html.v2-dark body.v2 .main{
+  background:transparent !important;
+}
+/* 2 · Frosted-glass sidebar + topbar */
+html.v2-dark body.v2 .v2-sidebar, body.v2 .v2-sidebar{
+  background:rgba(255,255,255,.55) !important;
+  -webkit-backdrop-filter:blur(22px) saturate(160%);
+  backdrop-filter:blur(22px) saturate(160%);
+  border-right:1px solid rgba(255,255,255,.5) !important;
+  box-shadow:0 20px 50px -28px rgba(72,52,110,.4) !important;
+}
+html.v2-dark body.v2 .v2-topbar, body.v2 .v2-topbar{
+  background:rgba(255,255,255,.5) !important;
+  -webkit-backdrop-filter:blur(22px) saturate(160%);
+  backdrop-filter:blur(22px) saturate(160%);
+  border:1px solid rgba(255,255,255,.5) !important;
+  box-shadow:0 10px 30px -16px rgba(72,52,110,.32) !important;
+}
+/* 3 · Each active view becomes a frosted glass panel (only one is active at a
+   time, so just one backdrop-filter surface). Market Analysis keeps its own. */
+body.v2 .v2-content .panel.active:not(#panel-market){
+  background:rgba(255,255,255,.40) !important;
+  -webkit-backdrop-filter:blur(26px) saturate(160%);
+  backdrop-filter:blur(26px) saturate(160%);
+  border:1px solid rgba(255,255,255,.55);
+  border-radius:22px;
+  box-shadow:0 26px 70px -32px rgba(72,52,110,.4);
+  padding:18px 18px 24px;
+  margin-bottom:24px;
+}
+/* 4 · Cards become lighter glass panes on the frosted panel (no per-card blur) */
+body.v2 .card, body.v2 .hot-card, body.v2 .alloc-card, body.v2 .risk-card,
+body.v2 .news-card, body.v2 .sm-card, body.v2 .fund-list-wrap, body.v2 .v2-track,
+body.v2 .v2-pick-card, body.v2 .dr-deep-card{
+  background:rgba(255,255,255,.62) !important;
+  border-color:rgba(255,255,255,.55) !important;
+  box-shadow:0 2px 14px rgba(72,52,110,.07) !important;
+}
 </style>
 </head>
 <body class="v2">
