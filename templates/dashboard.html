@@ -4945,7 +4945,15 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 #ts-drawer .hs-pos::before{background:#16a34a} #ts-drawer .hs-pos .hs-sub{color:#15803d}
 #ts-drawer .hs-neg::before{background:#e11d48} #ts-drawer .hs-neg .hs-sub{color:#be123c}
 #ts-drawer .hs-warn::before{background:#e08600} #ts-drawer .hs-warn .hs-sub{color:#b4780a}
-#ts-drawer .hs-neu::before{background:#94a3b8}
+#ts-drawer .hs-neu::before{background:#2970ff}
+/* six-pillar tiles: a mini 0-100 bar under the score */
+#ts-drawer .hs-bar{display:block;height:4px;border-radius:3px;background:rgba(15,23,42,.08);margin-top:7px;overflow:hidden}
+#ts-drawer .hs-bar-f{display:block;height:100%;border-radius:3px}
+#ts-drawer .hs-pos .hs-bar-f{background:#16a34a} #ts-drawer .hs-neu .hs-bar-f{background:#2970ff} #ts-drawer .hs-warn .hs-bar-f{background:#e08600} #ts-drawer .hs-neg .hs-bar-f{background:#e11d48}
+/* verdict meta chips */
+#ts-drawer .dv-meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+#ts-drawer .dv-m{font-size:11px;font-weight:600;color:var(--grey-2);background:rgba(255,255,255,.5);border:1px solid var(--hair);border-radius:8px;padding:4px 9px}
+#ts-drawer .dv-m b{color:var(--ink);font-weight:800}
 /* valuation gauge */
 #ts-drawer .gauge-wrap{display:flex;justify-content:center;padding:2px 0}
 #ts-drawer .gauge-svg{width:210px;height:122px;max-width:100%}
@@ -16553,27 +16561,16 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
   function _sparkSVG(vals,color){ if(!vals||vals.length<2)return ''; const W=120,H=30,mn=Math.min.apply(null,vals),mx=Math.max.apply(null,vals),rng=(mx-mn)||1; const pts=vals.map((v,i)=>[(i/(vals.length-1))*W,H-((v-mn)/rng)*(H-4)-2]); return '<svg viewBox="0 0 '+W+' '+H+'" class="spark-svg" preserveAspectRatio="none"><polyline points="'+pts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ')+'" fill="none" stroke="'+color+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="'+pts[pts.length-1][0].toFixed(1)+'" cy="'+pts[pts.length-1][1].toFixed(1)+'" r="2.6" fill="'+color+'"/></svg>'; }
   function _barSVG(vals,color){ if(!vals||!vals.length)return ''; const W=120,H=34,n=vals.length,mn=Math.min(0,Math.min.apply(null,vals)),mx=Math.max.apply(null,vals)||1,rng=(mx-mn)||1,step=W/n,bw=Math.max(3,step-3); let bars=''; for(let i=0;i<n;i++){ const v=vals[i],h=Math.max(1.5,((v-mn)/rng)*(H-3)),xx=i*step+(step-bw)/2,yy=H-h,last=i===n-1; bars+='<rect x="'+xx.toFixed(1)+'" y="'+yy.toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+h.toFixed(1)+'" rx="1.4" fill="'+color+'" fill-opacity="'+(last?'1':'.42')+'"/>'; } return '<svg viewBox="0 0 '+W+' '+H+'" class="bar-svg" preserveAspectRatio="none">'+bars+'</svg>'; }
   function _heroStats(t,S,full){
-    /* Modern at-a-glance metric tiles. Complements the verdict strip (which
-       already shows Alpha, price & Upside) — no repeats. */
-    const rs=_rsMap[t.ticker]||_fpNum(full,['rs_rating','rs']);
-    const rsi=(S&&S.rsi!=null)?S.rsi:_fpNum(full,['rsi_14']);
-    const m1=_fpNum(full,['momentum_1m']), m3=_fpNum(full,['momentum_3m']);
-    const vol=_fpNum(full,['volume_ratio']);
-    const pe=_fpNum(full,['pe_ratio','forward_pe']);
-    const mcap=_fpNum(full,['market_cap']);
-    const tiles=[];
-    const add=(l,v,sub,tone)=>tiles.push({l,v,sub:sub||'',tone:tone||'neu'});
-    if(rs!=null)  add('RS Rank', Math.round(rs), rs>=80?'Leader':rs>=50?'In line':'Laggard', rs>=80?'pos':rs>=50?'neu':'neg');
-    if(rsi!=null) add('RSI (14)', Math.round(rsi), rsi>70?'Overbought':rsi<35?'Oversold':'Healthy', rsi>70?'neg':rsi<35?'warn':'pos');
-    if(m1!=null)  add('1-Month', (m1>=0?'+':'')+Math.round(m1)+'%', 'momentum', m1>=0?'pos':'neg');
-    if(m3!=null)  add('3-Month', (m3>=0?'+':'')+Math.round(m3)+'%', 'momentum', m3>=0?'pos':'neg');
-    if(vol!=null) add('Volume', vol.toFixed(1)+'×', vol>=1.5?'Heavy':vol>=1?'Average':'Light', vol>=1.5?'pos':'neu');
-    if(pe!=null && pe>0) add('P/E', pe.toFixed(1), 'earnings mult.', 'neu');
-    else if(mcap!=null)  add('Mkt cap', _money(mcap).replace('$',''), 'size', 'neu');
-    if(!tiles.length) return '';
-    return '<div class="hero-stats">'+tiles.map(c=>
-      '<div class="hs hs-'+c.tone+'"><span class="hs-l">'+c.l+'</span><span class="hs-v">'+c.v+'</span>'+
-      (c.sub?'<span class="hs-sub">'+c.sub+'</span>':'')+'</div>').join('')+'</div>';
+    /* The six pillars as modern at-a-glance tiles (replaces the radar). Each:
+       label · score · qualitative read · a mini 0-100 bar. */
+    const pl=computePillars(t);
+    if(!pl || pl.filter(v=>v!=null).length<3) return '';
+    const word=v=> v>=70?'Strong':v>=50?'Solid':v>=35?'Soft':'Weak';
+    const tone=v=> v>=65?'pos':v>=45?'neu':'warn';
+    return '<div class="hero-stats pillar-stats">'+pl.map((v,i)=> v==null?'' :
+      '<div class="hs hs-'+tone(v)+'"><span class="hs-l">'+PILLAR_LABELS[i]+'</span>'+
+      '<span class="hs-v">'+v+'</span><span class="hs-sub">'+word(v)+'</span>'+
+      '<span class="hs-bar"><span class="hs-bar-f" style="width:'+Math.max(3,v)+'%"></span></span></div>').join('')+'</div>';
   }
   function _trendCard(t){
     const byDate=a=>a.slice().sort((x,y)=>String(x.date||x.quarter||'').localeCompare(String(y.date||y.quarter||'')));
@@ -16657,13 +16654,28 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     const pop=Math.round(parseFloat(full.smart_score!=null?full.smart_score:(full.pop_score||0)));
     const chg=parseFloat(full.change_pct||0), price=parseFloat(full.price||0);
     const tm=_fpNum(full,['target_mean','street_target']); const upside=(price&&tm)?((tm-price)/price*100):null;
+    // Key context for the verdict card
+    const _kt=keyTrigger(full); const thesis=(full.rationale?String(full.rationale).replace(/^💡\s*/,''):((_kt&&_kt.text)||''));
+    const sector=full.sub_sector||full.subsector||full.sector||'';
+    const mcap=_fpNum(full,['market_cap']);
+    const lo52=_fpNum(full,['low_52w','week_52_low','fifty_two_week_low']), hi52=_fpNum(full,['high_52w','week_52_high','fifty_two_week_high']);
+    const rsRank=_rsMap[t.ticker]||_fpNum(full,['rs_rating','rs']);
+    const _chips=[];
+    if(tm>0)        _chips.push('🎯 Target <b>'+fmtP(tm)+'</b>');
+    if(sector)      _chips.push('🏷 '+escHTML(sector));
+    if(mcap!=null)  _chips.push('Mkt cap <b>'+_money(mcap)+'</b>');
+    if(rsRank!=null)_chips.push('RS <b>'+Math.round(rsRank)+'</b>');
+    if(lo52&&hi52)  _chips.push('52w <b>$'+lo52.toFixed(0)+'–$'+hi52.toFixed(0)+'</b>');
     const verdict=
       '<div class="dr-call dr-call-'+TI[2]+' dv-strip"><div class="dr-call-top">'+
         '<div class="dr-call-badge"><span class="n">'+pop+'</span><span class="l">ALPHA</span></div>'+
         '<div class="dr-call-v"><span class="dr-call-stars">'+TI[0]+'</span><span class="dr-call-tier">'+TI[1]+'</span>'+
           '<span class="dr-call-px">'+fmtP(price)+' <b class="'+(chg>=0?'up':'dn')+'">'+fmtPct(chg)+'</b></span></div>'+
         (upside!=null?'<div class="dv-up '+(upside>=0?'pos':'neg')+'"><span class="k">UPSIDE</span><span class="v">'+(upside>=0?'+':'')+upside.toFixed(0)+'%</span></div>':'')+
-      '</div></div>';
+      '</div>'+
+      (thesis?'<div class="dr-call-thesis">'+escHTML(thesis)+'</div>':'')+
+      (_chips.length?'<div class="dv-meta">'+_chips.map(c=>'<span class="dv-m">'+c+'</span>').join('')+'</div>':'')+
+      '</div>';
     const chart = candles?
       _sec('Price action','📈','blue',
         '<div class="cc-bar"><div class="cc-legend"><span class="lg-px">Price</span><span class="lg-50">50d</span><span class="lg-200">200d</span><span class="lg-trig">Trigger</span></div>'+
@@ -16688,13 +16700,8 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     const rebound = S? _sec('Rebound potential','🔄',rebAccent,
       '<div class="reb-gauge">'+_ringSVG(S.rebound,rebColor)+
         '<div class="reb-sub" style="margin:0">'+((S.recoverDays!=null&&S.recoverN>=2)?'Historically reclaims a dip in ~<b>'+S.recoverDays+'</b> sessions <span class="muted">('+S.recoverN+' samples, 1&nbsp;yr)</span>':'Score blends RSI, trend, support proximity &amp; drawdown room into a single 0&ndash;100 read.')+'</div></div>') : '';
-    const pl=computePillars(t);
-    const hasRadar=pl.filter(v=>v!=null).length>=5;
-    // Spider chart only — the bar list was redundant with the radar's labels.
-    const pillars=hasRadar
-      ? _sec('Six pillars','📶','teal','<div class="radar-wrap">'+_radarSVG(pl.map(v=>v||0),PILLAR_LABELS)+'</div>')
-      : '';
-    return verdict+_heroStats(t,S,full)+chart+_catalystCard(full)+_aiThesis(full)+setup+_windsCard(full)+rebound+_keyEvents(full)+pillars;
+    // verdict → six-pillar tiles → catalyst (above the chart) → chart → the rest.
+    return verdict+_heroStats(t,S,full)+_catalystCard(full)+chart+_aiThesis(full)+setup+_windsCard(full)+rebound+_keyEvents(full);
   }
   function paneTechnicals(t,S){
     const m1=_fpNum(t,['momentum_1m']),m3=_fpNum(t,['momentum_3m']),m6=_fpNum(t,['momentum_6m']);
