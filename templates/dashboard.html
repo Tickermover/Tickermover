@@ -1496,7 +1496,7 @@ body.v2 .ticker-chip .px{color:#cbd5e1!important}
 
 .v2-app{
   display:grid;
-  grid-template-columns:228px 1fr;
+  grid-template-columns:198px 1fr;
   background:#F8FAFC;
   border-radius:20px;
   overflow:hidden;
@@ -5450,11 +5450,11 @@ body.v2 .v2-content .panel.active:not(#panel-market){
   border:1px solid rgba(255,255,255,.55);
   border-radius:22px;
   box-shadow:0 26px 70px -32px rgba(72,52,110,.4);
-  padding:18px 20px 24px;
-  /* align with the floating topbar (same width + centering) */
+  padding:16px 12px 22px;            /* slimmer frame → inner boxes get wider */
+  /* align with the floating topbar (same width + centering) + a clear gap */
   width:calc(100% - 52px);
   max-width:1268px;
-  margin:0 auto 24px;
+  margin:18px auto 26px;
 }
 /* 4 · Cards become lighter glass panes on the frosted panel (no per-card blur) */
 body.v2 .card, body.v2 .hot-card, body.v2 .alloc-card, body.v2 .risk-card,
