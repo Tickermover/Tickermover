@@ -5926,6 +5926,7 @@ html.v2-dark body.v2 .sm-title,html.v2-dark body.v2 .sec-heading{color:#0f172a!i
   #panel-market .ma-loading{padding:46px 20px;text-align:center;color:#64748b;font-size:14px}
   #panel-market .ma-sec-h{font-size:12px;font-weight:800;letter-spacing:.06em;color:#94a3b8;text-transform:uppercase;margin:0 0 9px}
   #panel-market .ma-lead{font-size:14px;line-height:1.65;color:#334155;margin-bottom:16px}
+  #panel-market .ma-ai-tag{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.03em;color:#7c3aed;background:rgba(124,58,237,.10);border:1px solid rgba(124,58,237,.22);border-radius:6px;padding:1px 7px;vertical-align:1px;margin-right:5px}
   #panel-market .ma-lead b{color:#0f172a}
   #panel-market .ma-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px;margin-bottom:18px}
   #panel-market .ma-card{background:#fff;border:1px solid rgba(15,23,42,.08);border-radius:13px;padding:13px 14px;box-shadow:0 2px 10px rgba(0,40,120,.04)}
@@ -8033,6 +8034,7 @@ function v2Show(panelId, item){
            (sub?`<div class="sub">${sub}</div>`:'')+`</div>`;
   }
   function _maFind(arr,sym){ return (arr||[]).find(x=>x.symbol===sym)||{}; }
+  function _maAiTag(){ return '<span class="ma-ai-tag">✦ AI</span> '; }
 
   // ── data load ────────────────────────────────────────────────────────
   window.loadMarketAnalysis = function(){
@@ -8097,7 +8099,10 @@ function v2Show(panelId, item){
       const v=vix.last, w= v<15?'calm':v<20?'a little nervous':v<25?'anxious':'fearful';
       vixTxt=`Volatility (VIX) is <b>${v.toFixed(2)}</b> — the market looks <b>${w}</b>.`;
     }
-    return `<div class="ma-lead">It is <b>${ses.label||'—'}</b>. ${gapTxt} ${moodTxt} ${vixTxt}</div>`+
+    const lead = (d.ai&&d.ai.brief)
+      ? `<div class="ma-lead">${_maAiTag()}${d.ai.brief}</div>`
+      : `<div class="ma-lead">It is <b>${ses.label||'—'}</b>. ${gapTxt} ${moodTxt} ${vixTxt}</div>`;
+    return lead+
       `<div class="ma-sec-h">Headline indices</div>`+
       `<div class="ma-grid">${(d.indices||[]).map(r=>_maCard(r)).join('')}</div>`+
       `<div class="ma-sec-h">Pre-market futures · gap read</div>`+
@@ -8129,7 +8134,10 @@ function v2Show(panelId, item){
       else if(t.rsi14<=40){rsiNote='Oversold-leaning — may bounce.';rsiCls='ma-pos';} }
     const macdPos = (t.hist!=null && t.hist>=0);
     const macdNote = t.hist==null?'Not available.':(macdPos?'Momentum building upward.':'Momentum fading / downward.');
-    return `<div class="ma-lead">Where the <b>S&P 500 (SPY)</b> trades relative to its key moving averages, and what momentum says.</div>`+
+    const techLead = (d.ai&&d.ai.technicals_note)
+      ? `<div class="ma-lead">${_maAiTag()}${d.ai.technicals_note}</div>`
+      : `<div class="ma-lead">Where the <b>S&P 500 (SPY)</b> trades relative to its key moving averages, and what momentum says.</div>`;
+    return techLead+
       `<div class="ma-tech">`+
         sma(t.sma20,'20-day average','Short-term trend.')+
         sma(t.sma50,'50-day average','Medium-term trend / support.')+
@@ -8160,7 +8168,10 @@ function v2Show(panelId, item){
     }).join('');
     const top=secs[0], bot=secs[secs.length-1];
     const wk=v=>v==null?'':`, ${v>=0?'+':''}${v.toFixed(2)}% on the week`;
-    return `<div class="ma-lead">SPDR sector ETFs ranked by <b>today's move</b>. This shows where money is rotating.</div>`+
+    const secLead = (d.ai&&d.ai.sectors_note)
+      ? `<div class="ma-lead">${_maAiTag()}${d.ai.sectors_note}</div>`
+      : `<div class="ma-lead">SPDR sector ETFs ranked by <b>today's move</b>. This shows where money is rotating.</div>`;
+    return secLead+
       `<div class="ma-bars">${rows}</div>`+
       `<div class="ma-note"><b>Leading:</b> ${top.name} (${top.chg_1d>=0?'+':''}${top.chg_1d.toFixed(2)}% today${wk(top.chg_5d)}). `+
       `<b>Lagging:</b> ${bot.name} (${bot.chg_1d>=0?'+':''}${bot.chg_1d.toFixed(2)}% today).</div>`;
@@ -8188,6 +8199,19 @@ function v2Show(panelId, item){
     const conf = Math.abs(diff)>=4?['high','High']:Math.abs(diff)>=2?['med','Medium']:['low','Low'];
     const keyLvl = t.sma20!=null?t.sma20:(t.sma50!=null?t.sma50:null);
     const biasCls = bias==='bullish'?'ma-pos':bias==='bearish'?'ma-neg':'ma-flat';
+    // AI-written verdict when available, grounded on the same key-level number.
+    if(d.ai&&d.ai.verdict&&d.ai.verdict.headline){
+      const v=d.ai.verdict;
+      const cf=(v.confidence||'').toLowerCase();
+      const cfCls=cf.indexOf('high')>=0?'high':cf.indexOf('low')>=0?'low':'med';
+      return `<div class="ma-verdict">`+
+        `<div class="big">${_maAiTag()}${v.headline}</div>`+
+        (v.what_it_means?`<div class="kv">${String(v.what_it_means).replace(/\n/g,'<br>')}</div>`:'')+
+        (keyLvl!=null?`<div class="kv" style="margin-top:8px"><b>Key level to watch:</b> SPY ${'$'+_maN(keyLvl,2)} (20-day line).</div>`:'')+
+        `<div class="ma-conf ${cfCls}">Confidence: ${v.confidence||'Medium'}</div>`+
+        `<div class="kv" style="margin-top:12px;color:#64748b">AI-written from live data — context only, no buy or sell calls.</div>`+
+      `</div>`;
+    }
     return `<div class="ma-verdict">`+
       `<div class="big">US market is set to <span class="${gap>0.15?'ma-pos':gap<-0.15?'ma-neg':'ma-flat'}">${openExp}</span>, `+
         `with an overall <span class="${biasCls}">${bias}</span> bias.</div>`+

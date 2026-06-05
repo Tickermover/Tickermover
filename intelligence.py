@@ -613,6 +613,10 @@ class MarketAnalysis:
         try:
             payload = await asyncio.to_thread(self._build)
             if payload and payload.get("available"):
+                # AI narrative — Claude writes the report from the live numbers.
+                # Best-effort: on no-key/timeout/parse-failure we cache the data
+                # alone and the frontend renders its deterministic fallback prose.
+                payload["ai"] = await self._ai_narrative(payload)
                 self.cache.set(self.CACHE_KEY, payload, self.TTL)
                 return payload
         except Exception as exc:
@@ -780,6 +784,110 @@ class MarketAnalysis:
             "source":      "Yahoo Finance (finance.yahoo.com)",
             "ts":          datetime.now(tz=timezone.utc).isoformat(),
         }
+
+    # ── AI narrative — Claude writes the report from the live numbers ─────
+    async def _ai_narrative(self, data: dict) -> Optional[dict]:
+        """Ask Claude to turn the fetched market data into a plain-English
+        briefing. The numbers are passed as ground truth — the model only
+        writes prose, never invents figures. Returns a structured dict or None
+        (no key / disabled / timeout / parse error → frontend uses its own
+        deterministic fallback copy)."""
+        if not _ANTHROPIC_KEY or not _HTTPX_AVAILABLE:
+            return None
+        try:
+            prompt = self._build_ai_prompt(data)
+            async with httpx.AsyncClient(timeout=18.0) as c:
+                r = await c.post(
+                    "https://api.anthropic.com/v1/messages",
+                    headers={
+                        "x-api-key":         _ANTHROPIC_KEY,
+                        "anthropic-version": "2023-06-01",
+                        "content-type":      "application/json",
+                    },
+                    json={
+                        "model":      _ANTHROPIC_MODEL,
+                        "max_tokens": 900,
+                        "messages":   [{"role": "user", "content": prompt}],
+                    },
+                )
+                r.raise_for_status()
+                payload = r.json()
+            text = "".join(
+                b.get("text", "") for b in payload.get("content", [])
+                if b.get("type") == "text"
+            ).strip()
+            if not text:
+                return None
+            # Tolerate ```json fences / leading prose — grab the JSON object.
+            i, j = text.find("{"), text.rfind("}")
+            if i < 0 or j <= i:
+                return None
+            import json as _json
+            obj = _json.loads(text[i:j + 1])
+            obj["generated"] = True
+            obj["model"] = _ANTHROPIC_MODEL
+            return obj
+        except Exception as exc:
+            logger.warning(f"market-analysis AI narrative failed: {exc}")
+            return None
+
+    def _build_ai_prompt(self, d: dict) -> str:
+        ses = d.get("session", {})
+
+        def line(rows):
+            out = []
+            for r in rows or []:
+                if r.get("last") is None:
+                    continue
+                chg = r.get("chg_pct")
+                out.append(f"{r['label']} ({r['symbol']}): {r['last']}"
+                           + (f", {chg:+.2f}%" if chg is not None else ""))
+            return "; ".join(out) or "n/a"
+
+        t = d.get("technicals", {}) or {}
+        tech_line = "n/a"
+        if t.get("price") is not None:
+            tech_line = (f"SPY {t.get('price')}, 20DMA {t.get('sma20')}, "
+                         f"50DMA {t.get('sma50')}, 200DMA {t.get('sma200')}, "
+                         f"RSI14 {t.get('rsi14')}, MACD hist {t.get('hist')}")
+        secs = d.get("sectors", []) or []
+        sec_line = "; ".join(
+            f"{s['name']} {s['chg_1d']:+.2f}%" for s in secs[:11]
+        ) or "n/a"
+
+        return (
+            "You are a US equity market analyst writing a short, plain-English "
+            "pre/post-market briefing for retail investors. Use ONLY the data "
+            "below as ground truth — never invent or alter any number. Keep "
+            "every sentence short and simple. No jargon without a plain gloss. "
+            "Do NOT give buy/sell/hold advice or price targets — this is market "
+            "context only.\n\n"
+            f"Session: {ses.get('label')} ({ses.get('et_time')})\n"
+            f"S&P futures gap: {d.get('gap_pct')}%\n"
+            f"Index ETFs: {line(d.get('indices'))}\n"
+            f"Futures: {line(d.get('futures'))}\n"
+            f"Rates/VIX/Dollar: {line(d.get('rates_fx'))}\n"
+            f"Commodities: {line(d.get('commodities'))}\n"
+            f"Technicals: {tech_line}\n"
+            f"Sector moves today: {sec_line}\n\n"
+            "Return ONLY a JSON object (no markdown, no commentary) with exactly "
+            "these keys:\n"
+            "{\n"
+            '  "brief": "3-4 short sentences on how the session looks, the '
+            'futures gap, the broad-market move, and the VIX mood.",\n'
+            '  "technicals_note": "1-2 short sentences on where SPY sits vs its '
+            'moving averages and what RSI/MACD momentum says.",\n'
+            '  "sectors_note": "1 short sentence on which sectors lead/lag and '
+            'what that rotation suggests.",\n'
+            '  "verdict": {\n'
+            '    "headline": "one sentence on the expected open and overall '
+            'bias (bullish/bearish/neutral).",\n'
+            '    "what_it_means": "2-3 short lines of plain context for the day. '
+            'No trade calls.",\n'
+            '    "confidence": "High | Medium | Low"\n'
+            "  }\n"
+            "}"
+        )
 
 
 # ╔════════════════════════════════════════════════════════════════════════╗
