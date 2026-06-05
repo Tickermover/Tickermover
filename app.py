@@ -2735,6 +2735,23 @@ def _prev_weekday(d):
     return d
 
 
+def _clock(h, m):
+    """12-hour ET clock label, e.g. (9,0) -> '9:00 AM ET'."""
+    ap = "AM" if h < 12 else "PM"
+    return f"{(h % 12) or 12}:{m:02d} {ap} ET"
+
+
+def _next_publish_date(kind: str, now=None):
+    """Trading date of the NEXT edition of `kind` after the one showing now."""
+    from datetime import timedelta
+    now = now or _et_now()
+    ed, today = _edition_date_for(kind, now), now.date()
+    d = today + timedelta(days=1) if ed == today else today
+    while d.weekday() >= 5:
+        d += timedelta(days=1)
+    return d
+
+
 def _edition_date_for(kind: str, now=None):
     """The trading date the *current* edition of `kind` represents. Today once
     we're past today's publish time on a weekday; otherwise the prior weekday."""
@@ -2753,7 +2770,7 @@ def _edition_date_for(kind: str, now=None):
 
 
 def _desk_key(kind: str) -> str:
-    return f"desk:report:{kind}"
+    return f"desk:report:v2:{kind}"
 
 
 async def _build_desk_report(kind: str, edition_date) -> dict:
@@ -2770,12 +2787,17 @@ async def _build_desk_report(kind: str, edition_date) -> dict:
     except Exception as exc:
         logger.warning(f"desk {kind} AI narrative failed: {exc}")
         data["ai"] = None
+    now = _et_now()
+    h, m = _DESK_PUBLISH.get(kind, (9, 0))
+    nxt = _next_publish_date(kind, now)
+    next_when = "today" if nxt == now.date() else nxt.strftime("%a %d %b")
     data["edition"] = {
         "kind":         kind,
         "date":         edition_date.isoformat(),
         "date_label":   edition_date.strftime("%a %d %b %Y"),
-        "published_at": _et_now().strftime("%H:%M ET"),
-        "is_today":     edition_date == _et_now().date(),
+        "published_at": _clock(h, m),                 # scheduled drop time, not build time
+        "is_today":     edition_date == now.date(),
+        "next_label":   f"{next_when} {_clock(h, m)}",
         "title":        "Pre-Market Report" if kind == "pre" else "Post-Market Report",
     }
     return data

@@ -33,6 +33,29 @@
 .ma-report .ma-lead{font-size:14px;line-height:1.65;color:#334155;margin-bottom:16px}
 .ma-report .ma-lead b{color:#0f172a}
 .ma-report .ma-ai-tag{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.03em;color:#7c3aed;background:rgba(124,58,237,.10);border:1px solid rgba(124,58,237,.22);border-radius:6px;padding:1px 7px;vertical-align:1px;margin-right:5px}
+.ma-report .ma-ed-next{font-size:11px;color:#2970ff;font-weight:700}
+/* ── Hero narrative (front page of the Brief) ─────────────────────────────── */
+.ma-report .ma-hero{position:relative;background:linear-gradient(135deg,#ffffff 0%,#f3f8ff 100%);border:1px solid rgba(15,23,42,.08);border-radius:16px;padding:20px 22px 18px 26px;margin-bottom:16px;box-shadow:0 8px 26px rgba(0,40,120,.07);overflow:hidden}
+.ma-report .ma-hero::before{content:'';position:absolute;left:0;top:0;bottom:0;width:5px;background:#94a3b8}
+.ma-report .ma-hero.pos::before{background:linear-gradient(180deg,#22c55e,#0e8a4f)}
+.ma-report .ma-hero.neg::before{background:linear-gradient(180deg,#ef4444,#b01818)}
+.ma-report .ma-hero.flat::before{background:linear-gradient(180deg,#f59e0b,#b45309)}
+.ma-report .ma-hero-eyebrow{font-size:10.5px;font-weight:800;letter-spacing:.16em;color:#2970ff;margin-bottom:8px}
+.ma-report .ma-hero-text{font-size:16px;line-height:1.62;color:#1e293b;font-weight:400}
+.ma-report .ma-hero-text b{color:#0f172a;font-weight:700}
+.ma-report .ma-gapchip{display:inline-flex;align-items:center;gap:9px;margin-top:15px;background:#fff;border:1px solid rgba(15,23,42,.10);border-radius:999px;padding:7px 7px 7px 14px;font-size:12.5px;box-shadow:0 2px 8px rgba(0,40,120,.06)}
+.ma-report .ma-gapchip .g-k{font-size:9.5px;font-weight:800;letter-spacing:.08em;color:#94a3b8}
+.ma-report .ma-gapchip .g-v{font-weight:700;color:#334155}
+.ma-report .ma-gapchip .g-n{font-weight:800;padding:2px 9px;border-radius:999px;background:#f1f5f9}
+.ma-report .ma-gapchip.ma-pos .g-n{color:#15803d;background:rgba(22,163,74,.12)}
+.ma-report .ma-gapchip.ma-neg .g-n{color:#b91c1c;background:rgba(220,38,38,.10)}
+.ma-report .ma-gapchip.ma-flat .g-n{color:#b45309;background:rgba(217,119,6,.12)}
+/* ── Scorecard strip ─────────────────────────────────────────────────────── */
+.ma-report .ma-scorecard{display:grid;grid-template-columns:repeat(auto-fit,minmax(116px,1fr));gap:10px;margin-bottom:18px}
+.ma-report .ma-stat{background:#fff;border:1px solid rgba(15,23,42,.08);border-radius:13px;padding:12px 14px;box-shadow:0 2px 10px rgba(0,40,120,.04)}
+.ma-report .ma-stat .s-l{font-size:11px;font-weight:700;color:#64748b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ma-report .ma-stat .s-v{font-size:22px;font-weight:800;color:#0f172a;font-variant-numeric:tabular-nums;margin-top:3px;line-height:1;font-family:'Instrument Sans',system-ui,sans-serif}
+.ma-report .ma-stat .s-c{font-size:12.5px;font-weight:800;margin-top:5px;font-variant-numeric:tabular-nums}
 .ma-report .ma-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px;margin-bottom:18px}
 .ma-report .ma-card{background:#fff;border:1px solid rgba(15,23,42,.08);border-radius:13px;padding:13px 14px;box-shadow:0 2px 10px rgba(0,40,120,.04)}
 .ma-report .ma-card .lbl{font-size:11.5px;font-weight:700;color:#64748b;display:flex;align-items:center;justify-content:space-between;gap:6px}

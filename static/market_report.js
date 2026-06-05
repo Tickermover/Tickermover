@@ -8,16 +8,17 @@
      compact           optional — hides the big standalone header
    ========================================================================== */
 window.MarketReport = (function () {
-  const TABS = [
-    ['brief',   'Opening Brief'],
-    ['indices', 'US Indices'],
-    ['tech',    'Technicals'],
-    ['sectors', 'Sectors'],
-    ['movers',  'Movers'],
-    ['macro',   'Commodities & Rates'],
-    ['news',    'News'],
-    ['verdict', 'Verdict'],
-  ];
+  function tabsFor(kind) {
+    return [
+      ['brief',   kind === 'post' ? 'Closing Brief' : 'Opening Brief'],
+      ['indices', 'Markets'],
+      ['tech',    'Technicals'],
+      ['sectors', 'Sectors'],
+      ['movers',  'Movers'],
+      ['macro',   'Commodities & Rates'],
+      ['news',    'News'],
+    ];
+  }
 
   // ── formatters ──────────────────────────────────────────────────────────
   function N(v, dec) {
@@ -65,7 +66,7 @@ window.MarketReport = (function () {
         sessionBadge + `</div>`;
     const edition = `<div class="ma-edition" data-ma-edition hidden></div>`;
     const tabs = `<div class="ma-tabs" data-ma-tabs>` +
-      TABS.map((t, i) => `<button class="ma-tab${i === 0 ? ' on' : ''}" data-ma="${t[0]}">${t[1]}</button>`).join('') +
+      tabsFor(kind).map((t, i) => `<button class="ma-tab${i === 0 ? ' on' : ''}" data-ma="${t[0]}">${t[1]}</button>`).join('') +
       `</div>`;
     return head + edition + tabs +
       `<div class="ma-content" data-ma-content><div class="ma-loading">📈 Fetching live market data…</div></div>` +
@@ -126,9 +127,12 @@ window.MarketReport = (function () {
           ? `<span class="ma-ed-tag today">Today's edition</span>`
           : `<span class="ma-ed-tag prior">Latest edition</span>`;
         ed.hidden = false;
+        const nextHint = (!e.is_today && e.next_label)
+          ? `<span class="ma-ed-next">Next: ${e.next_label}</span>` : '';
         ed.innerHTML = `<span class="ma-ed-cal">🗓️</span><b>${e.title || 'Report'}</b>` +
           `<span class="ma-ed-date">${e.date_label}</span>` +
-          (e.published_at ? `<span class="ma-ed-pub">published ${e.published_at}</span>` : '') + tag;
+          (e.published_at ? `<span class="ma-ed-pub">· ${e.published_at}</span>` : '') +
+          nextHint + tag;
       } else { ed.hidden = true; ed.innerHTML = ''; }
     }
     const foot = host.querySelector('[data-ma-foot]');
@@ -145,14 +149,37 @@ window.MarketReport = (function () {
       return;
     }
     if (st.tab === 'news') return renderNews(host, st, c);
-    const fn = { brief, indices, tech, sectors, movers, macro, verdict }[st.tab];
+    const fn = { brief, indices, tech, sectors, movers, macro }[st.tab];
     c.innerHTML = fn ? fn(d) : '';
   }
 
-  // ── macro tabs (ported) ─────────────────────────────────────────────────
+  // ── Opening / Closing Brief — the editorial front page ───────────────────
+  function statTile(label, sym, val, chg, dec) {
+    return `<div class="ma-stat"><div class="s-l">${label}</div>` +
+      `<div class="s-v">${val == null ? '—' : N(val, dec == null ? 2 : dec)}</div>` +
+      `<div class="s-c ${cls(chg)}">${arr(chg)} ${pctTxt(chg)}</div></div>`;
+  }
+  function scorecard(d) {
+    const idx = d.indices || [], tiles = [];
+    ['SPY', 'QQQ', 'DIA', 'IWM'].forEach(s => {
+      const r = find(idx, s);
+      if (r.last != null) tiles.push(statTile(r.label, s, r.last, r.chg_pct));
+    });
+    const vix = find(d.rates_fx, '^VIX');
+    if (vix.last != null) tiles.push(statTile('Volatility', 'VIX', vix.last, vix.chg_pct));
+    return tiles.length ? `<div class="ma-scorecard">${tiles.join('')}</div>` : '';
+  }
+  function gapChip(d) {
+    const gap = d.gap_pct;
+    if (gap == null) return '';
+    const dir = Math.abs(gap) < 0.15 ? 'flat' : gap > 0 ? 'up' : 'down';
+    const word = d.kind === 'post' ? (dir === 'flat' ? 'Flat into tomorrow' : dir === 'up' ? 'Futures higher' : 'Futures lower')
+      : (dir === 'flat' ? 'Flat open expected' : dir === 'up' ? 'Gap-up open' : 'Gap-down open');
+    const c = dir === 'flat' ? 'ma-flat' : dir === 'up' ? 'ma-pos' : 'ma-neg';
+    return `<div class="ma-gapchip ${c}"><span class="g-k">S&P FUTURES</span><span class="g-v">${word}</span><span class="g-n">${pctTxt(gap)}</span></div>`;
+  }
   function brief(d) {
-    const ses = d.session || {}, gap = d.gap_pct;
-    const spy = find(d.indices, 'SPY'), vix = find(d.rates_fx, '^VIX');
+    const gap = d.gap_pct, spy = find(d.indices, 'SPY'), vix = find(d.rates_fx, '^VIX');
     const gapTxt = gap == null ? 'Equity futures data is unavailable right now.'
       : Math.abs(gap) < 0.15 ? 'S&P 500 futures are <b>roughly flat</b> — a quiet open is likely.'
       : `S&P 500 futures point to a <b>${gap > 0 ? 'higher' : 'lower'} open</b>, about ${Math.abs(gap).toFixed(2)}%.`;
@@ -169,25 +196,28 @@ window.MarketReport = (function () {
         ? ` Futures already point <b>${gap > 0 ? 'higher' : 'lower'}</b> for tomorrow.` : '';
       body = `After the close. ${moodTxt} ${vixTxt}${ah}`;
     } else {
-      const intro = d.kind === 'pre' ? 'Heading into the open. ' : `It is <b>${ses.label || '—'}</b>. `;
+      const intro = d.kind === 'pre' ? 'Heading into the open. ' : 'For the current session. ';
       body = `${intro}${gapTxt} ${moodTxt} ${vixTxt}`;
     }
-    const lead = (d.ai && d.ai.brief)
-      ? `<div class="ma-lead">${aiTag()}${d.ai.brief}</div>`
-      : `<div class="ma-lead">${body}</div>`;
-    return lead +
-      `<div class="ma-sec-h">Headline indices</div>` +
-      `<div class="ma-grid">${(d.indices || []).map(r => card(r)).join('')}</div>` +
-      `<div class="ma-sec-h">Pre-market futures · gap read</div>` +
-      `<div class="ma-grid">${(d.futures || []).map(r => card(r)).join('')}` +
-        card(vix, vix.last == null ? '' : (vix.last < 15 ? 'Calm' : vix.last < 20 ? 'Some nervousness' : vix.last < 25 ? 'Anxious' : 'High fear')) + `</div>`;
+    const eyebrow = d.kind === 'post' ? 'THE CLOSE' : 'BEFORE THE BELL';
+    const accent = spy.chg_pct == null ? 'flat' : spy.chg_pct > 0.05 ? 'pos' : spy.chg_pct < -0.05 ? 'neg' : 'flat';
+    const narrative = (d.ai && d.ai.brief) ? `${aiTag()}${d.ai.brief}` : body;
+
+    return `<div class="ma-hero ${accent}">` +
+        `<div class="ma-hero-eyebrow">${eyebrow}</div>` +
+        `<div class="ma-hero-text">${narrative}</div>` +
+        gapChip(d) +
+      `</div>` +
+      scorecard(d) +
+      `<div class="ma-sec-h">${d.kind === 'post' ? 'The verdict · into tomorrow' : 'The verdict · the day ahead'}</div>` +
+      verdict(d);
   }
 
   function indices(d) {
     return `<div class="ma-sec-h">Index ETFs</div>` +
       `<div class="ma-grid">${(d.indices || []).map(r => card(r)).join('')}</div>` +
-      `<div class="ma-sec-h">Equity futures — overnight &amp; pre-market</div>` +
-      `<div class="ma-note">Futures trade nearly around the clock, so they show where the market is leaning before the 9:30&nbsp;ET open.</div>` +
+      `<div class="ma-sec-h">Equity futures — overnight &amp; ${d.kind === 'post' ? 'after-hours' : 'pre-market'}</div>` +
+      `<div class="ma-note">Futures trade nearly around the clock, so they show where the market is leaning ${d.kind === 'post' ? 'after the close' : 'before the 9:30 ET open'}.</div>` +
       `<div class="ma-grid">${(d.futures || []).map(r => card(r)).join('')}</div>`;
   }
 
@@ -297,7 +327,7 @@ window.MarketReport = (function () {
     const earningsCell = usePost ? (() => 'done') : dteCell;
     const gainersLbl = post ? "Today's biggest winners" : 'Top gainers';
     const losersLbl = post ? "Today's biggest losers" : 'Top losers';
-    const earningsTitle = usePost ? 'Just reported earnings' : 'Earnings on deck (next 7 days)';
+    const earningsTitle = usePost ? 'Just reported' : 'Earnings on deck';
 
     const lead = (d.ai && d.ai.movers_note)
       ? `<div class="ma-lead">${aiTag()}${d.ai.movers_note}</div>`
@@ -309,11 +339,10 @@ window.MarketReport = (function () {
         `<div><div class="ma-mv-h"><span class="ic">📉</span> ${losersLbl}</div>${table('Loser', 'Score', s.losers)}</div>` +
       `</div>` +
 
-      `<div class="ma-mv-h"><span class="ic">⭐</span> Highest Alpha Score right now</div>` +
-      `<div style="margin-bottom:18px">${table('Stock', 'Score', s.top_score)}</div>` +
-
-      `<div class="ma-mv-h"><span class="ic">🗓️</span> ${earningsTitle}</div>` +
-      `<div style="margin-bottom:18px">${table('Stock', earningsHdr, earningsList, earningsCell)}</div>` +
+      `<div class="ma-two">` +
+        `<div><div class="ma-mv-h"><span class="ic">⭐</span> Highest Alpha Score</div>${table('Stock', 'Score', s.top_score)}</div>` +
+        `<div><div class="ma-mv-h"><span class="ic">🗓️</span> ${earningsTitle}</div>${table('Stock', earningsHdr, earningsList, earningsCell)}</div>` +
+      `</div>` +
 
       `<div class="ma-two">` +
         `<div><div class="ma-mv-h"><span class="ic">🔊</span> Unusual volume</div>${table('Stock', 'Vol', s.unusual_volume, volCell)}</div>` +
