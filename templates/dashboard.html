@@ -1496,7 +1496,7 @@ body.v2 .ticker-chip .px{color:#cbd5e1!important}
 
 .v2-app{
   display:grid;
-  grid-template-columns:198px 1fr;
+  grid-template-columns:212px 1fr;
   background:#F8FAFC;
   border-radius:20px;
   overflow:hidden;
@@ -1557,13 +1557,14 @@ body.v2 .ticker-chip .px{color:#cbd5e1!important}
   padding:14px 8px 8px;position:relative;
 }
 .v2-nav-item{
-  display:flex;align-items:center;gap:10px;
+  display:flex;align-items:center;gap:10px;white-space:nowrap;
   padding:9px 10px;border-radius:10px;
   font-size:13.5px;font-weight:600;color:#94a3b8;
   cursor:pointer;user-select:none;position:relative;
   transition:background .15s,color .15s;margin-bottom:2px;
   text-decoration:none;
 }
+.v2-nav-item > span:not(.v2-nav-tag){flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis}
 .v2-nav-item:hover{background:rgba(255,255,255,.04);color:#e2e8f0}
 .v2-nav-item.active{background:rgba(245,166,35,.16);color:#FFE9B0;font-weight:700}
 .v2-nav-item.active::before{
@@ -5464,6 +5465,10 @@ body.v2 .v2-pick-card, body.v2 .dr-deep-card{
   border-color:rgba(255,255,255,.55) !important;
   box-shadow:0 2px 14px rgba(72,52,110,.07) !important;
 }
+/* 5 · Uniform content width on EVERY tab. The radar tab already zeroed .main's
+   padding; do it everywhere so all panels resolve to the same width as the
+   floating topbar (calc(100% - 52px), max 1268, centered). */
+html.v2-dark body.v2 .main, body.v2 .main{padding:0 0 30px !important;max-width:none !important}
 </style>
 </head>
 <body class="v2">
@@ -5972,7 +5977,8 @@ body.v2 .v2-pick-card, body.v2 .dr-deep-card{
   /* The wave comes from the global content backdrop; here we only center the
      single frosted report box and tidy the disclaimer. */
   #panel-market{padding:0}
-  #panel-market #ma-host{max-width:1100px;margin:0 auto}
+  /* match the floating topbar + every other panel's width and centering */
+  #panel-market #ma-host{width:calc(100% - 52px);max-width:1268px;margin:18px auto 0}
   #panel-market .ma-disc-line{color:#5b6a7c;margin-top:16px}
 </style>
 <div id="panel-market" class="panel">
