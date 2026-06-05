@@ -490,6 +490,299 @@ def _clamp_signed(val: float, cap: float) -> float:
 
 
 # ╔════════════════════════════════════════════════════════════════════════╗
+# ║  3b. MarketAnalysis — US pre/post-market snapshot for the dashboard     ║
+# ╚════════════════════════════════════════════════════════════════════════╝
+
+def _ema(values: list[float], period: int) -> Optional[float]:
+    """Exponential moving average of the last value in `values`."""
+    if not values or len(values) < period:
+        return None
+    k = 2.0 / (period + 1)
+    ema = sum(values[:period]) / period
+    for v in values[period:]:
+        ema = v * k + ema * (1 - k)
+    return ema
+
+
+def _rsi(closes: list[float], period: int = 14) -> Optional[float]:
+    """Wilder's RSI on a list of closing prices."""
+    if len(closes) < period + 1:
+        return None
+    gains, losses = [], []
+    for i in range(1, period + 1):
+        d = closes[i] - closes[i - 1]
+        gains.append(max(d, 0.0))
+        losses.append(max(-d, 0.0))
+    avg_gain = sum(gains) / period
+    avg_loss = sum(losses) / period
+    for i in range(period + 1, len(closes)):
+        d = closes[i] - closes[i - 1]
+        avg_gain = (avg_gain * (period - 1) + max(d, 0.0)) / period
+        avg_loss = (avg_loss * (period - 1) + max(-d, 0.0)) / period
+    if avg_loss == 0:
+        return 100.0
+    rs = avg_gain / avg_loss
+    return round(100 - (100 / (1 + rs)), 1)
+
+
+def _macd(closes: list[float]) -> dict:
+    """MACD(12,26,9). Returns macd, signal, hist (or None values)."""
+    if len(closes) < 35:
+        return {"macd": None, "signal": None, "hist": None}
+    # Build a short MACD-line series so the 9-EMA signal has something to chew on.
+    macd_series = []
+    for i in range(26, len(closes) + 1):
+        window = closes[:i]
+        e12, e26 = _ema(window, 12), _ema(window, 26)
+        if e12 is None or e26 is None:
+            continue
+        macd_series.append(e12 - e26)
+    if not macd_series:
+        return {"macd": None, "signal": None, "hist": None}
+    macd_line = macd_series[-1]
+    signal = _ema(macd_series, 9) if len(macd_series) >= 9 else macd_series[-1]
+    return {
+        "macd":   round(macd_line, 2),
+        "signal": round(signal, 2) if signal is not None else None,
+        "hist":   round(macd_line - signal, 2) if signal is not None else None,
+    }
+
+
+class MarketAnalysis:
+    """
+    Builds a US pre/post-market 'Market Analysis' snapshot from a basket of
+    macro tickers via yfinance. Powers the dashboard's Market Analysis panel:
+    index ETFs (S&P/Nasdaq/Dow/Russell), equity futures (pre-market gap),
+    rates/VIX/dollar, commodities, sector-ETF rotation, and SPY technicals.
+
+    Cached ~5 min — pre/post-market readings drift but don't whip second to
+    second, and yfinance is rate-limited.
+    """
+
+    CACHE_KEY = "intel:market_analysis"
+    TTL       = 300   # 5 minutes
+
+    INDEX_ETFS = {
+        "SPY": "S&P 500",
+        "QQQ": "Nasdaq 100",
+        "DIA": "Dow Jones",
+        "IWM": "Russell 2000",
+    }
+    FUTURES = {
+        "ES=F": "S&P 500 Futures",
+        "NQ=F": "Nasdaq 100 Futures",
+        "YM=F": "Dow Futures",
+    }
+    # symbol -> (label, unit, decimals)
+    RATES_FX = {
+        "^VIX":     ("Volatility (VIX)", "",   2),
+        "^TNX":     ("US 10Y Yield",     "%",  2),
+        "DX-Y.NYB": ("Dollar Index",     "",   2),
+    }
+    COMMODITIES = {
+        "CL=F": ("WTI Crude",   "$/bbl", 2),
+        "BZ=F": ("Brent Crude", "$/bbl", 2),
+        "GC=F": ("Gold",        "$/oz",  1),
+        "SI=F": ("Silver",      "$/oz",  2),
+    }
+    SECTORS = {
+        "XLK":  "Technology",
+        "XLF":  "Financials",
+        "XLE":  "Energy",
+        "XLV":  "Health Care",
+        "XLY":  "Consumer Disc.",
+        "XLP":  "Consumer Staples",
+        "XLI":  "Industrials",
+        "XLB":  "Materials",
+        "XLRE": "Real Estate",
+        "XLU":  "Utilities",
+        "XLC":  "Communication",
+    }
+
+    def __init__(self, cache):
+        self.cache = cache
+
+    def get(self) -> Optional[dict]:
+        return self.cache.get(self.CACHE_KEY)
+
+    async def refresh(self) -> dict:
+        """Fetch the macro basket and rebuild the snapshot. Cached on success."""
+        if not _YF_AVAILABLE:
+            return {"available": False, "reason": "Market data feed unavailable.",
+                    "ts": datetime.now(tz=timezone.utc).isoformat()}
+        try:
+            payload = await asyncio.to_thread(self._build)
+            if payload and payload.get("available"):
+                self.cache.set(self.CACHE_KEY, payload, self.TTL)
+                return payload
+        except Exception as exc:
+            logger.warning(f"MarketAnalysis.refresh failed: {exc}")
+        return self.get() or {"available": False,
+                              "reason": "Could not fetch market data right now.",
+                              "ts": datetime.now(tz=timezone.utc).isoformat()}
+
+    # ── session clock (US/Eastern) ───────────────────────────────────────
+    def _session(self) -> dict:
+        try:
+            from zoneinfo import ZoneInfo
+            now = datetime.now(ZoneInfo("America/New_York"))
+        except Exception:
+            now = datetime.now(timezone.utc)
+        wd = now.weekday()            # 0=Mon .. 6=Sun
+        mins = now.hour * 60 + now.minute
+        if wd >= 5:
+            phase, label = "closed", "Weekend — markets closed"
+        elif mins < 4 * 60:
+            phase, label = "closed", "Overnight — markets closed"
+        elif mins < 9 * 60 + 30:
+            phase, label = "pre",  "Pre-market"
+        elif mins < 16 * 60:
+            phase, label = "live", "Regular session — live"
+        elif mins < 20 * 60:
+            phase, label = "post", "After-hours"
+        else:
+            phase, label = "closed", "Overnight — markets closed"
+        return {"phase": phase, "label": label,
+                "et_time": now.strftime("%H:%M ET · %d %b %Y")}
+
+    # ── quote helpers ────────────────────────────────────────────────────
+    @staticmethod
+    def _fi_val(fi, *keys):
+        for k in keys:
+            try:
+                v = fi[k]
+            except Exception:
+                v = getattr(fi, k, None)
+            if v is not None and isinstance(v, (int, float)) and not math.isnan(v):
+                return float(v)
+        return None
+
+    def _quote(self, sym: str) -> dict:
+        """last / previous_close / % change for one symbol via fast_info."""
+        try:
+            fi = yf.Ticker(sym).fast_info
+            last = self._fi_val(fi, "last_price", "lastPrice")
+            prev = self._fi_val(fi, "previous_close", "previousClose")
+            if last is None or prev is None or prev == 0:
+                return {"last": last, "prev": prev, "chg_abs": None, "chg_pct": None}
+            return {
+                "last":    round(last, 2),
+                "prev":    round(prev, 2),
+                "chg_abs": round(last - prev, 2),
+                "chg_pct": round((last / prev - 1) * 100, 2),
+            }
+        except Exception as exc:
+            logger.debug(f"market-analysis quote {sym} failed: {exc}")
+            return {"last": None, "prev": None, "chg_abs": None, "chg_pct": None}
+
+    def _quotes(self, syms: list[str]) -> dict:
+        from concurrent.futures import ThreadPoolExecutor
+        out: dict = {}
+        with ThreadPoolExecutor(max_workers=10) as ex:
+            for sym, res in zip(syms, ex.map(self._quote, syms)):
+                out[sym] = res
+        return out
+
+    def _spy_technicals(self) -> dict:
+        try:
+            hist = yf.Ticker("SPY").history(period="1y", interval="1d", auto_adjust=True)
+            if hist is None or hist.empty:
+                return {}
+            closes = [float(c) for c in hist["Close"].tolist() if c == c]
+            if len(closes) < 60:
+                return {}
+            price = round(closes[-1], 2)
+            def sma(n):
+                return round(sum(closes[-n:]) / n, 2) if len(closes) >= n else None
+            return {
+                "price":  price,
+                "sma20":  sma(20),
+                "sma50":  sma(50),
+                "sma200": sma(200),
+                "rsi14":  _rsi(closes, 14),
+                **_macd(closes),
+            }
+        except Exception as exc:
+            logger.debug(f"market-analysis SPY technicals failed: {exc}")
+            return {}
+
+    def _sectors(self) -> list:
+        """1d + 5d % change for the 11 SPDR sector ETFs.
+
+        The 1-day move comes from fast_info (the same reliable path the index
+        cards use) so every sector shows; the 5-day move is a best-effort
+        batch history read layered on top.
+        """
+        quotes = self._quotes(list(self.SECTORS))   # reliable 1d via fast_info
+        five: dict = {}
+        try:
+            df = yf.download(list(self.SECTORS), period="1mo", interval="1d",
+                             auto_adjust=True, group_by="ticker",
+                             threads=True, progress=False)
+            for sym in self.SECTORS:
+                try:
+                    closes = [float(c) for c in df[sym]["Close"].tolist() if c == c]
+                    if len(closes) >= 6:
+                        five[sym] = round((closes[-1] / closes[-6] - 1) * 100, 2)
+                except Exception:
+                    continue
+        except Exception as exc:
+            logger.debug(f"market-analysis sector 5d download failed: {exc}")
+
+        out = []
+        for sym, name in self.SECTORS.items():
+            q = quotes.get(sym, {})
+            if q.get("chg_pct") is None:
+                continue
+            out.append({"symbol": sym, "name": name,
+                        "chg_1d": q["chg_pct"], "chg_5d": five.get(sym)})
+        out.sort(key=lambda s: s["chg_1d"], reverse=True)
+        return out
+
+    def _build(self) -> dict:
+        session = self._session()
+        indices = self._quotes(list(self.INDEX_ETFS))
+        futures = self._quotes(list(self.FUTURES))
+        macro   = self._quotes(list(self.RATES_FX) + list(self.COMMODITIES))
+        tech    = self._spy_technicals()
+        sectors = self._sectors()
+
+        def pack(d: dict, meta: dict):
+            rows = []
+            for sym, m in meta.items():
+                q = d.get(sym, {})
+                if isinstance(m, tuple):
+                    label, unit, dec = m
+                else:
+                    label, unit, dec = m, "", 2
+                rows.append({"symbol": sym, "label": label, "unit": unit,
+                             "decimals": dec, **q})
+            return rows
+
+        # Pre-market gap read off the S&P futures (or SPY pre-market quote).
+        gap_pct = None
+        es = futures.get("ES=F", {})
+        if es.get("chg_pct") is not None:
+            gap_pct = es["chg_pct"]
+        elif indices.get("SPY", {}).get("chg_pct") is not None:
+            gap_pct = indices["SPY"]["chg_pct"]
+
+        return {
+            "available":   True,
+            "session":     session,
+            "gap_pct":     gap_pct,
+            "indices":     pack(indices, self.INDEX_ETFS),
+            "futures":     pack(futures, self.FUTURES),
+            "rates_fx":    pack(macro, self.RATES_FX),
+            "commodities": pack(macro, self.COMMODITIES),
+            "sectors":     sectors,
+            "technicals":  tech,
+            "source":      "Yahoo Finance (finance.yahoo.com)",
+            "ts":          datetime.now(tz=timezone.utc).isoformat(),
+        }
+
+
+# ╔════════════════════════════════════════════════════════════════════════╗
 # ║  4. ThesisGenerator — structured per-stock investment thesis           ║
 # ╚════════════════════════════════════════════════════════════════════════╝
 

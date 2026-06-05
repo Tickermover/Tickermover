@@ -27,6 +27,7 @@ from ai_scorer import score_and_rank, compute_pop_score
 from stock_universe import get_universe, get_meta
 from intelligence import (
     MarketRegime,
+    MarketAnalysis,
     ScoreHistory,
     ThesisGenerator,
     attach_score_history,
@@ -69,6 +70,7 @@ cache       = coordinator.cache
 # universe re-score; thesis_gen is stateless and reads from the other two.
 # Intelligence singletons - refreshed on 30-min cycle by _regime_refresh
 market_regime  = MarketRegime(cache)
+market_analysis = MarketAnalysis(cache)
 score_history  = ScoreHistory(cache)
 thesis_gen     = ThesisGenerator(market_regime, score_history)
 supabase    = SupabaseClient(
@@ -419,6 +421,12 @@ async def _regime_refresh() -> None:
             )
         except Exception as exc:
             logger.warning(f"Regime refresh failed: {exc}")
+        # Keep the Market Analysis snapshot warm on the same cadence so the
+        # first panel opener rides the cache instead of paying the yfinance fetch.
+        try:
+            await market_analysis.refresh()
+        except Exception as exc:
+            logger.warning(f"Market analysis refresh failed: {exc}")
         await asyncio.sleep(1800)   # 30 min
 
 
@@ -2574,6 +2582,24 @@ async def api_regime_refresh():
     """Force a regime refresh (admin / debug)."""
     payload = await market_regime.refresh()
     return JSONResponse(_clean(payload))
+
+
+@app.get("/api/market-analysis")
+async def api_market_analysis():
+    """US pre/post-market snapshot for the Market Analysis panel.
+
+    Indices, equity futures, rates/VIX/dollar, commodities, sector rotation,
+    and SPY technicals. Served from a 5-min cache; refreshed on demand when
+    the cache is cold so the first opener pays the fetch and everyone after
+    rides the cache.
+    """
+    data = market_analysis.get()
+    if not data or not data.get("available"):
+        data = await market_analysis.refresh()
+    return JSONResponse(
+        _clean(data),
+        headers={"Cache-Control": "public, max-age=120, s-maxage=180"},
+    )
 
 
 @app.get("/api/pdf/{symbol}")
