@@ -5073,6 +5073,22 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 #ts-drawer .ev-sub.pos{color:var(--up)} #ts-drawer .ev-sub.neg{color:var(--down)}
 #ts-drawer .vv-line{font-size:14px;color:var(--cc,#b4780a);font-weight:700;margin-bottom:5px} #ts-drawer .vv-line b{color:var(--cc,#b4780a)}
 #ts-drawer .rd-line{margin-top:8px;font-size:12px;color:var(--ink-2);border-top:1px solid #f1f5f9;padding-top:8px} #ts-drawer .rd-line b{font-family:'JetBrains Mono',monospace;color:var(--ink)}
+/* ── Reverse DCF card ─────────────────────────────────────────────────── */
+#ts-drawer .rdcf-verdict{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:11px}
+#ts-drawer .rdcf-v{font-size:18px;font-weight:800;line-height:1}
+#ts-drawer .rdcf-bl{font-size:9px;font-weight:800;letter-spacing:.07em;padding:3px 9px;border-radius:999px}
+#ts-drawer .rdcf-growth{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:10px}
+#ts-drawer .rdcf-g{background:rgba(255,255,255,.55);border:1px solid var(--hair);border-radius:11px;padding:10px 12px}
+#ts-drawer .rg-k{display:block;font-size:9.5px;font-weight:800;color:var(--grey);text-transform:uppercase;letter-spacing:.05em}
+#ts-drawer .rg-v{display:block;font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:800;color:var(--ink);margin-top:3px;line-height:1}
+#ts-drawer .rg-v small{font-size:9.5px;font-weight:600;color:var(--grey-2);margin-left:2px}
+#ts-drawer .rg-v.pos{color:#15803d} #ts-drawer .rg-v.neg{color:#dc2626}
+#ts-drawer .rdcf-summary{font-size:12px;line-height:1.5;color:var(--ink-2);margin-bottom:10px}
+#ts-drawer .rdcf-scen{display:flex;flex-direction:column;gap:7px}
+#ts-drawer .rsc{display:flex;gap:10px;font-size:11.5px;line-height:1.4;padding:7px 11px;border-radius:9px;background:rgba(255,255,255,.5);border:1px solid var(--hair);border-left:3px solid #94a3b8}
+#ts-drawer .rsc-up{border-left-color:#16a34a} #ts-drawer .rsc-mid{border-left-color:#94a3b8} #ts-drawer .rsc-dn{border-left-color:#e11d48}
+#ts-drawer .rsc-k{flex:none;font-weight:800;color:var(--grey-2);width:62px}
+#ts-drawer .rsc-v{color:var(--ink-2)}
 #ts-drawer .news-card .news-row{padding:8px 0;border-bottom:1px solid #f1f5f9} #ts-drawer .news-card .news-row:last-child{border:0}
 #ts-drawer .news-hl{font-size:12.5px;font-weight:600;color:var(--ink);line-height:1.4}
 #ts-drawer .news-meta{font-size:10.5px;color:var(--grey-3);margin-top:2px;font-family:'JetBrains Mono',monospace}
@@ -16758,14 +16774,35 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
       '<table><thead><tr><th>Metric</th><th>Current</th><th>Sector median</th><th>Signal</th></tr></thead><tbody>'+
       rows.map(r=>'<tr><td>'+r[0]+'</td><td>'+r[1]+'</td><td>'+(r[2]||'<span class="muted">—</span>')+'</td><td>'+(r[3]||'<span class="muted">—</span>')+'</td></tr>').join('')+
       '</tbody></table><div class="muted small" style="margin-top:6px">Sector median computed from our universe · lower multiple than sector = cheaper.</div>') : '';
-    const vv=valuationVerdict(t), rd=reverseDCF(t);
+    const vv=valuationVerdict(t);
     const gaugeHtml = (vv&&_valPos(vv)!=null)? '<div class="gauge-wrap">'+_gaugeSVG(_valPos(vv),vv.verdict)+'</div>' : '';
     const vvCard = vv?_sec('Valuation verdict','💎','violet',
       gaugeHtml+
       '<div class="vv-line" style="--cc:'+vv.color+'">💰 <b>'+escHTML(vv.verdict)+'</b></div>'+
-      (vv.summary?'<div class="muted small">'+escHTML(vv.summary)+'</div>':'')+
-      ((rd&&rd.impliedGrowth!=null&&rd.actualGrowth!=null)?'<div class="rd-line">Market prices in <b>'+rd.impliedGrowth.toFixed(0)+'%</b> growth · actual <b>'+rd.actualGrowth.toFixed(0)+'%</b></div>':'')):'';
-    return '<div class="dr-deep-grid">'+valTable+vvCard+'</div>';
+      (vv.summary?'<div class="muted small">'+escHTML(vv.summary)+'</div>':'')):'';
+    // ── Reverse DCF — the market-implied expectations bar (full model) ──
+    const rd = (typeof window.reverseDCF==='function') ? window.reverseDCF(t) : null;
+    let rdcfCard='';
+    if(rd && rd.impliedGrowth!=null){
+      const ig=rd.impliedGrowth, ag=rd.actualGrowth;
+      const beats=(ag!=null && ag>=ig);
+      const sc=rd.scenarios||{};
+      rdcfCard=_sec('Reverse DCF · the expectations bar','🎯','amber',
+        '<div class="rdcf-verdict"><span class="rdcf-v" style="color:'+rd.color+'">'+escHTML(rd.verdict)+'</span>'+
+          (rd.barLabel?'<span class="rdcf-bl" style="background:'+rd.bg+';border:1px solid '+rd.border+';color:'+rd.color+'">'+escHTML(rd.barLabel)+'</span>':'')+'</div>'+
+        '<div class="rdcf-growth">'+
+          '<div class="rdcf-g"><span class="rg-k">Market is pricing in</span><span class="rg-v">'+ig.toFixed(0)+'%<small>/yr · 10y</small></span></div>'+
+          (ag!=null?'<div class="rdcf-g"><span class="rg-k">Actual growth · TTM</span><span class="rg-v '+(beats?'pos':'neg')+'">'+ag.toFixed(0)+'%<small>/yr</small></span></div>':'')+
+        '</div>'+
+        (rd.summary?'<div class="rdcf-summary">'+escHTML(rd.summary)+'</div>':'')+
+        (sc.beats||sc.meets||sc.misses?'<div class="rdcf-scen">'+
+          (sc.beats?'<div class="rsc rsc-up"><span class="rsc-k">If it beats</span><span class="rsc-v">'+escHTML(sc.beats)+'</span></div>':'')+
+          (sc.meets?'<div class="rsc rsc-mid"><span class="rsc-k">If it meets</span><span class="rsc-v">'+escHTML(sc.meets)+'</span></div>':'')+
+          (sc.misses?'<div class="rsc rsc-dn"><span class="rsc-k">If it misses</span><span class="rsc-v">'+escHTML(sc.misses)+'</span></div>':'')+
+        '</div>':'')+
+        '<div class="muted small" style="margin-top:8px">Solves for the 10-year revenue CAGR the current price implies (10% discount, 3% terminal growth). It is an expectations gauge, not a buy/sell call.</div>');
+    }
+    return '<div class="dr-deep-grid">'+valTable+vvCard+rdcfCard+'</div>';
   }
   function paneEstimates(t){
     const na=_fpNum(t,['total_analysts','analyst_count','numAnalystOpinions']),tm=_fpNum(t,['target_mean','street_target']),tl=_fpNum(t,['target_low']),th=_fpNum(t,['target_high']),px=parseFloat(t.price);
