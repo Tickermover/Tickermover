@@ -10203,14 +10203,27 @@ function reverseDCF(t) {
     };
   }
 
-  // Build a plain-English summary that compares implied vs actual growth
+  // Build a plain-English summary that compares implied vs actual growth.
   let summary = `Market is pricing in ~${gPct.toFixed(0)}% revenue CAGR over 10 years (assuming ${(termFcfM*100).toFixed(0)}% terminal FCF margin).`;
   if (actualPct != null) {
     const gap = actualPct - gPct;
-    if (gap > 8)        summary += ` Trailing 12-month growth of ${actualPct.toFixed(0)}% is well above the implied bar — undemanding setup.`;
-    else if (gap > 0)   summary += ` Trailing growth of ${actualPct.toFixed(0)}% is slightly above — achievable.`;
-    else if (gap > -5)  summary += ` Trailing growth of ${actualPct.toFixed(0)}% is in line with the implied bar.`;
-    else                summary += ` Trailing growth of ${actualPct.toFixed(0)}% is below the implied bar — needs an inflection or the multiple compresses.`;
+    if (gap > 8)        summary += ` Trailing 12-month growth of ${actualPct.toFixed(0)}% clears the implied bar comfortably today — the real test is holding it for a decade.`;
+    else if (gap > 0)   summary += ` Trailing growth of ${actualPct.toFixed(0)}% is just above the bar — achievable if it sustains.`;
+    else if (gap > -5)  summary += ` Trailing growth of ${actualPct.toFixed(0)}% is roughly in line with the bar.`;
+    else                summary += ` Trailing growth of ${actualPct.toFixed(0)}% is below the bar — needs an inflection, or the multiple compresses.`;
+  }
+
+  // The big headline reflects the company's CURRENT STANDING against the bar
+  // (when we know actual growth), so it never contradicts the summary. The chip
+  // (barLabel) still conveys how high the 10-year bar itself is. Without this,
+  // a stock growing 93% against a 47% implied bar showed "Almost impossible",
+  // which read as a verdict on the stock rather than on the bar.
+  if (actualPct != null) {
+    const gap = actualPct - gPct;
+    if (gap > 8)        verdict = 'Clearing the bar';
+    else if (gap > 0)   verdict = 'Keeping pace';
+    else if (gap > -5)  verdict = 'Right at the bar';
+    else                verdict = 'Falling behind';
   }
 
   return {verdict, color, bg, border, barLabel, scenarios, impliedGrowth: gPct, actualGrowth: actualPct, summary, termFcfM: termFcfM*100};
@@ -17002,19 +17015,28 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     else if(_drState&&_drState.t){ if(r&&r.classList.contains('show')){ _drRailPosition(); } else { tsBuildSideRail(_drState.t); } } } });
   /* chart timeframe toggle (1M / 6M / 1Y) */
   drawer.addEventListener('click',(e)=>{ const b=e.target.closest('.cc-tf button'); if(!b||!_drState) return; _drState.tf=b.getAttribute('data-tf'); drawer.querySelectorAll('.cc-tf button').forEach(x=>x.classList.toggle('on',x===b)); tsDrawChartEl(); });
-  /* reach the end of a tab → glide to the next one (and top → previous) */
-  let _tabFlipTs=0;
+  /* Reach the end of a tab → glide to the next one (top → previous). This used
+     to fire on the slightest wheel tick at the edge, which flung users between
+     tabs unexpectedly. Now it requires a DELIBERATE overscroll: you must keep
+     pushing past the edge (~260px of accumulated wheel delta) before it flips,
+     with a generous cooldown so it never double-flips. */
+  let _tabFlipTs=0, _osAccum=0, _osDir=0;
   function _tabFlip(dir){
     if(!_drState) return; const i=DR_TABS.indexOf(_drState.tab); const j=i+dir;
     if(j<0||j>=DR_TABS.length) return;
-    const now=Date.now(); if(now-_tabFlipTs<650) return; _tabFlipTs=now; tsShowTab(DR_TABS[j]);
+    const now=Date.now(); if(now-_tabFlipTs<900) return; _tabFlipTs=now; _osAccum=0; tsShowTab(DR_TABS[j]);
   }
   drawer.addEventListener('wheel',(e)=>{
-    if(!drawer.classList.contains('expanded')||!_drState) return;
+    if(!drawer.classList.contains('expanded')||!_drState){ _osAccum=0; return; }
     const atBottom=drawer.scrollTop+drawer.clientHeight>=drawer.scrollHeight-2;
     const atTop=drawer.scrollTop<=0;
-    if(e.deltaY>4&&atBottom) _tabFlip(1);
-    else if(e.deltaY<-4&&atTop) _tabFlip(-1);
+    const dir=e.deltaY>0?1:(e.deltaY<0?-1:0);
+    // Only build intent while actively pushing AGAINST the edge in one direction.
+    if((dir>0&&atBottom)||(dir<0&&atTop)){
+      if(dir!==_osDir){ _osAccum=0; _osDir=dir; }
+      _osAccum+=Math.abs(e.deltaY);
+      if(_osAccum>=260) _tabFlip(dir);
+    }else{ _osAccum=0; _osDir=0; }
   },{passive:true});
   window.tsOpenDrawer = tsOpenDrawer;
   window.tsExpandToFull = tsExpandToFull;
