@@ -4876,6 +4876,24 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
   animation:drGrow .4s cubic-bezier(.34,0,.18,1) both}
 @keyframes drGrow{from{transform:translateY(12px);opacity:.4}to{transform:translateY(0);opacity:1}}
 @media(prefers-reduced-motion:reduce){#ts-drawer.expanded{animation:none}}
+/* ── Suggestion rail — "stronger in this space", floats in the left margin of the expanded drawer.
+   Only shown when the centered drawer leaves enough room (wide screens). ── */
+#dr-side-rail{position:fixed;top:50%;left:24px;width:210px;z-index:602;display:flex;flex-direction:column;gap:9px;
+  transform:translateX(-14px) translateY(-50%);opacity:0;pointer-events:none;
+  transition:opacity .38s cubic-bezier(.19,1,.22,1),transform .44s cubic-bezier(.19,1,.22,1)}
+#dr-side-rail.show{opacity:1;transform:translateX(0) translateY(-50%);pointer-events:auto}
+#dr-side-rail .dsr-h{font-family:'Instrument Sans',sans-serif;font-weight:800;font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:#fff;background:linear-gradient(135deg,#2970ff,#0040c1);padding:8px 12px;border-radius:11px;box-shadow:0 10px 22px -8px rgba(0,64,193,.6);text-align:center}
+#dr-side-rail .dsr-card{display:block;width:100%;text-align:left;border:1px solid rgba(9,9,9,.08);background:rgba(255,255,255,.94);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border-radius:13px;padding:11px 13px;cursor:pointer;font-family:'Instrument Sans',sans-serif;box-shadow:0 12px 28px -14px rgba(9,20,60,.5);transition:transform .16s,box-shadow .2s,border-color .16s}
+#dr-side-rail .dsr-card:hover{transform:translateX(3px);border-color:rgba(41,112,255,.4);box-shadow:0 16px 32px -12px rgba(9,20,60,.55)}
+#dr-side-rail .dsr-top{display:flex;align-items:center;gap:8px}
+#dr-side-rail .dsr-tic{font-weight:800;font-size:14px;color:#0f172a;letter-spacing:-.01em}
+#dr-side-rail .dsr-a{margin-left:auto;font-family:'JetBrains Mono',monospace;font-weight:800;font-size:16px;color:#15803d}
+#dr-side-rail .dsr-name{font-size:11px;color:#64748b;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#dr-side-rail .dsr-delta{margin-top:6px;font-size:10px;font-weight:700;color:#15803d;background:rgba(22,163,74,.10);border-radius:999px;padding:3px 9px;display:inline-block}
+#dr-side-rail .dsr-foot{font-size:10px;color:#fff;text-align:center;font-weight:600;text-shadow:0 1px 6px rgba(0,0,0,.4)}
+#dr-side-rail.pulse .dsr-card{animation:dsrPulse 1.5s ease 1}
+@keyframes dsrPulse{0%,100%{box-shadow:0 12px 28px -14px rgba(9,20,60,.5)}42%{box-shadow:0 12px 28px -14px rgba(9,20,60,.5),0 0 0 4px rgba(41,112,255,.20)}}
+@media(prefers-reduced-motion:reduce){#dr-side-rail,#dr-side-rail.show{transition:none}#dr-side-rail.pulse .dsr-card{animation:none}}
 /* tabs strip (visible only when expanded) */
 #ts-drawer .dr-tabs{display:flex;gap:4px;overflow-x:auto;margin-top:16px;scrollbar-width:none}
 #ts-drawer .dr-tabs::-webkit-scrollbar{display:none}
@@ -16882,6 +16900,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     const w=Math.round(Math.min(window.innerWidth*0.9,1000));
     drawer.style.width=w+'px'; drawer.style.left='50%'; drawer.style.right='auto'; drawer.style.marginLeft=(-w/2)+'px';
     drawer.classList.add('expanded'); drawer.scrollTop=0;
+    try{ tsBuildSideRail(t); }catch(e){}
     _drState={t,candles:null,setup:null,full:t,tab:'Overview',tf:'6M'};
     Promise.allSettled([
       fetch('/api/candles/'+encodeURIComponent(t.ticker)+'?days=365').then(r=>r.ok?r.json():null).catch(()=>null),
@@ -16893,6 +16912,43 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
       _drState.full=full; tsRenderDetail();
     });
   }
+
+  /* ── Suggestion rail: "stronger in this space" — higher-Alpha names in the same group.
+     Floats in the left margin of the expanded drawer on wide screens. ── */
+  function _drRailAlpha(x){ return Math.round(parseFloat(x.smart_score!=null?x.smart_score:(x.pop_score||0))); }
+  function _drRailPicks(t){
+    const key=(t.sub_sector||t.subsector||t.sector||'').toLowerCase(); if(!key) return [];
+    const cur=_drRailAlpha(t);
+    return (ALL||[]).filter(x=>x&&x.ticker&&x.ticker!==t.ticker
+        && ((x.sub_sector||x.subsector||x.sector||'').toLowerCase()===key)
+        && _drRailAlpha(x)>cur)
+      .sort((a,b)=>_drRailAlpha(b)-_drRailAlpha(a)).slice(0,3);
+  }
+  function _drRailRoom(){ const w=Math.min(window.innerWidth*0.9,1000); return (window.innerWidth/2 - w/2) >= 252; }
+  function _drRailPosition(){ const r=document.getElementById('dr-side-rail'); if(!r) return;
+    const w=Math.min(window.innerWidth*0.9,1000); const drawerLeft=window.innerWidth/2 - w/2;
+    r.style.left=Math.max(16,Math.round(drawerLeft - 18 - 210))+'px'; }
+  function tsBuildSideRail(t){
+    let r=document.getElementById('dr-side-rail');
+    if(!r){ r=document.createElement('div'); r.id='dr-side-rail'; r.addEventListener('click',e=>e.stopPropagation()); document.body.appendChild(r); }
+    const picks=t?_drRailPicks(t):[];
+    if(!picks.length || !_drRailRoom()){ r.classList.remove('show','pulse'); return; }
+    const cur=_drRailAlpha(t);
+    r.innerHTML='<div class="dsr-h">Stronger in this space</div>'+
+      picks.map(x=>{ const a=_drRailAlpha(x);
+        return '<button class="dsr-card" onclick="tsCollapseDrawer();setTimeout(function(){tsOpenDrawer(\''+escHTML(x.ticker)+'\');},70)">'+
+          '<div class="dsr-top"><span class="dsr-tic">'+escHTML(x.ticker)+'</span><span class="dsr-a">'+a+'</span></div>'+
+          '<div class="dsr-name">'+escHTML((x.name||'').slice(0,24))+'</div>'+
+          '<div class="dsr-delta">▲ '+(a-cur)+' Alpha vs '+escHTML(t.ticker)+'</div>'+
+        '</button>';
+      }).join('')+
+      '<div class="dsr-foot">Worth comparing · tap to open</div>';
+    _drRailPosition();
+    r.classList.add('show','pulse');
+    setTimeout(function(){ r.classList.remove('pulse'); },1700);
+  }
+  function _drRailHide(){ const r=document.getElementById('dr-side-rail'); if(r) r.classList.remove('show','pulse'); }
+
   function tsRenderDetail(){
     const dd=drawer.querySelector('.dr-deep'); if(!dd||!_drState) return;
     const S=_drState.setup, full=_drState.full, t=_drState.t, candles=_drState.candles;
@@ -16937,9 +16993,13 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     drawer.style.width=''; drawer.style.left=''; drawer.style.right=''; drawer.style.marginLeft='';
     const tb=drawer.querySelector('.dr-tabs'); if(tb) tb.remove();
     const dd=drawer.querySelector('.dr-deep'); if(dd) dd.remove();
+    _drRailHide();
     _drState=null;
   }
-  window.addEventListener('resize',()=>{ if(drawer.classList.contains('expanded')) tsDrawChartEl(); });
+  window.addEventListener('resize',()=>{ if(drawer.classList.contains('expanded')){ tsDrawChartEl();
+    const r=document.getElementById('dr-side-rail');
+    if(!_drRailRoom()){ _drRailHide(); }
+    else if(_drState&&_drState.t){ if(r&&r.classList.contains('show')){ _drRailPosition(); } else { tsBuildSideRail(_drState.t); } } } });
   /* chart timeframe toggle (1M / 6M / 1Y) */
   drawer.addEventListener('click',(e)=>{ const b=e.target.closest('.cc-tf button'); if(!b||!_drState) return; _drState.tf=b.getAttribute('data-tf'); drawer.querySelectorAll('.cc-tf button').forEach(x=>x.classList.toggle('on',x===b)); tsDrawChartEl(); });
   /* reach the end of a tab → glide to the next one (and top → previous) */
