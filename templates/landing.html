@@ -626,6 +626,15 @@ h1,h2,h3,h4,h5{font-family:'Instrument Sans',sans-serif;font-weight:600;letter-s
 .pc-card-feats .pc-plus{color:#7ec5f7;font-weight:700;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;font-family:'Instrument Sans',sans-serif;margin:2px 0 -2px;opacity:.85}
 .pc-foot-cell{margin-top:auto;display:flex;flex-direction:column;gap:10px;padding-top:6px}
 .pc-card .pc-cta{justify-content:space-between!important;width:100%}
+/* Free CTA — same signature call-out sweep as .btn-primary, secondary (outlined → black fills from the arrow on hover) */
+.pc-free .pc-cta{--btn-fill:0%;border:1.5px solid rgba(9,9,9,.16);
+  background:radial-gradient(circle at calc(100% - 28px) 50%,#0a0e22 var(--btn-fill),transparent calc(var(--btn-fill) + 1%));
+  transition:--btn-fill .85s cubic-bezier(.19,1,.22,1),color .45s,border-color .45s,box-shadow .55s ease}
+.pc-free .pc-cta .arrow{background:#0a0e22;color:#fff}
+.pc-free .pc-cta:hover{--btn-fill:135%;color:#fff;border-color:#0a0e22;
+  background:radial-gradient(circle at calc(100% - 28px) 50%,#0a0e22 var(--btn-fill),transparent calc(var(--btn-fill) + 1%));
+  box-shadow:0 14px 30px rgba(9,20,60,.16)}
+.pc-free .pc-cta:hover .arrow{transform:translateX(2px)}
 .pc-tiny{font-family:'Instrument Sans',sans-serif;font-size:12px;text-align:center}
 .pc-free .pc-tiny{color:var(--grey)}
 .pc-pro .pc-tiny{color:rgba(255,255,255,.55)}
@@ -1781,7 +1790,7 @@ h1,h2,h3,h4,h5{font-family:'Instrument Sans',sans-serif;font-weight:600;letter-s
           <li><span class="pc-chk">✓</span><span class="pc-ft"><b>Weekly editorial</b><span>One long-form pick of the week, members-only</span></span></li>
         </ul>
         <div class="pc-foot-cell">
-          <a class="btn btn-white pc-cta" href="/app">Get Pro free <span class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span></a>
+          <a class="btn btn-primary pc-cta" href="/app">Get Pro free <span class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span></a>
           <div class="pc-tiny">No card · Cancel anytime · 312 beta seats left</div>
         </div>
       </div>
