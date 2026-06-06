@@ -4878,7 +4878,7 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 @media(prefers-reduced-motion:reduce){#ts-drawer.expanded{animation:none}}
 /* ── Suggestion rail — "stronger in this space", floats in the left margin of the expanded drawer.
    Only shown when the centered drawer leaves enough room (wide screens). ── */
-#dr-side-rail{position:fixed;top:50%;left:24px;width:210px;z-index:602;display:flex;flex-direction:column;gap:9px;
+#dr-side-rail{position:fixed;top:50%;left:24px;width:184px;z-index:602;display:flex;flex-direction:column;gap:9px;
   transform:translateX(-14px) translateY(-50%);opacity:0;pointer-events:none;
   transition:opacity .38s cubic-bezier(.19,1,.22,1),transform .44s cubic-bezier(.19,1,.22,1)}
 #dr-side-rail.show{opacity:1;transform:translateX(0) translateY(-50%);pointer-events:auto}
@@ -16937,10 +16937,10 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
         && _drRailAlpha(x)>cur)
       .sort((a,b)=>_drRailAlpha(b)-_drRailAlpha(a)).slice(0,3);
   }
-  function _drRailRoom(){ const w=Math.min(window.innerWidth*0.9,1000); return (window.innerWidth/2 - w/2) >= 252; }
+  function _drRailRoom(){ const w=Math.min(window.innerWidth*0.9,1000); return (window.innerWidth/2 - w/2) >= 200; }
   function _drRailPosition(){ const r=document.getElementById('dr-side-rail'); if(!r) return;
     const w=Math.min(window.innerWidth*0.9,1000); const drawerLeft=window.innerWidth/2 - w/2;
-    r.style.left=Math.max(16,Math.round(drawerLeft - 18 - 210))+'px'; }
+    r.style.left=Math.max(10,Math.round(drawerLeft - 14 - 184))+'px'; }
   function tsBuildSideRail(t){
     let r=document.getElementById('dr-side-rail');
     if(!r){ r=document.createElement('div'); r.id='dr-side-rail'; r.addEventListener('click',e=>e.stopPropagation()); document.body.appendChild(r); }
