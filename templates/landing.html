@@ -612,9 +612,14 @@ h1,h2,h3,h4,h5{font-family:'Instrument Sans',sans-serif;font-weight:600;letter-s
 .pc-pro .pc-note{color:rgba(255,255,255,.62)}
 .pc-card-feats{list-style:none;padding:18px 0 0;margin:0;display:flex;flex-direction:column;gap:12px;border-top:1px solid rgba(9,9,9,.08)}
 .pc-pro .pc-card-feats{border-top-color:rgba(255,255,255,.12)}
-.pc-card-feats li{display:flex;align-items:flex-start;gap:11px;font-size:14px;line-height:1.45;font-family:'Poppins',sans-serif}
-.pc-free .pc-card-feats li{color:var(--grey-2)}
-.pc-pro .pc-card-feats li{color:rgba(255,255,255,.88)}
+.pc-card-feats li{display:flex;align-items:flex-start;gap:12px;font-family:'Poppins',sans-serif}
+.pc-ft{display:flex;flex-direction:column;gap:2px;min-width:0}
+.pc-ft b{font-family:'Instrument Sans',sans-serif;font-weight:700;font-size:14.5px;letter-spacing:-.005em;line-height:1.25}
+.pc-ft span{font-size:12.5px;line-height:1.4}
+.pc-free .pc-ft b{color:var(--text-dark)}
+.pc-free .pc-ft span{color:var(--grey)}
+.pc-pro .pc-ft b{color:#fff}
+.pc-pro .pc-ft span{color:rgba(255,255,255,.62)}
 .pc-card-feats .pc-chk{flex:none;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:700;margin-top:1px}
 .pc-free .pc-card-feats .pc-chk{background:rgba(41,112,255,.12);color:var(--primary)}
 .pc-pro .pc-card-feats .pc-chk{background:rgba(93,179,241,.20);color:#7ec5f7}
@@ -1743,12 +1748,12 @@ h1,h2,h3,h4,h5{font-family:'Instrument Sans',sans-serif;font-weight:600;letter-s
           <span class="pc-note">forever · no card required</span>
         </div>
         <ul class="pc-card-feats">
-          <li><span class="pc-chk">✓</span> <b>On the Radar</b> — daily picks scored on six pillars</li>
-          <li><span class="pc-chk">✓</span> <b>Market Analysis</b> — regime, breadth &amp; sector rotation</li>
-          <li><span class="pc-chk">✓</span> Sector Map &amp; full Universe (545 stocks)</li>
-          <li><span class="pc-chk">✓</span> Real-time scores, quotes &amp; bid/ask</li>
-          <li><span class="pc-chk">✓</span> Three risk profiles (Conservative · Balanced · Hunters)</li>
-          <li><span class="pc-chk">✓</span> Daily morning brief &amp; personal watchlist</li>
+          <li><span class="pc-chk">✓</span><span class="pc-ft"><b>On the Radar</b><span>Daily picks scored across six pillars</span></span></li>
+          <li><span class="pc-chk">✓</span><span class="pc-ft"><b>Market Analysis</b><span>Regime, breadth &amp; sector rotation</span></span></li>
+          <li><span class="pc-chk">✓</span><span class="pc-ft"><b>Universe &amp; Sector Map</b><span>All 545 stocks, mapped by sector</span></span></li>
+          <li><span class="pc-chk">✓</span><span class="pc-ft"><b>Real-time data</b><span>Live scores, quotes &amp; bid/ask</span></span></li>
+          <li><span class="pc-chk">✓</span><span class="pc-ft"><b>Three risk profiles</b><span>Conservative · Balanced · Hunters</span></span></li>
+          <li><span class="pc-chk">✓</span><span class="pc-ft"><b>Daily brief &amp; watchlist</b><span>Morning read plus your own list</span></span></li>
         </ul>
         <div class="pc-foot-cell">
           <a class="btn btn-ghost pc-cta" href="/app">Start free <span class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span></a>
@@ -1771,9 +1776,9 @@ h1,h2,h3,h4,h5{font-family:'Instrument Sans',sans-serif;font-weight:600;letter-s
         </div>
         <ul class="pc-card-feats">
           <li><span class="pc-plus">Everything in Free, plus</span></li>
-          <li><span class="pc-chk">✓</span> <b>Top Hunts</b> — live tracker of every open &amp; closed pick (entry, exit, %)</li>
-          <li><span class="pc-chk">✓</span> <b>Briefings</b> — AI event &amp; earnings-call summaries, every ticker</li>
-          <li><span class="pc-chk">✓</span> Exclusive <b>weekly editorial</b> — one long-form pick of the week</li>
+          <li><span class="pc-chk">✓</span><span class="pc-ft"><b>Top Hunts</b><span>Live tracker of every open &amp; closed pick — entry, exit, %</span></span></li>
+          <li><span class="pc-chk">✓</span><span class="pc-ft"><b>Briefings</b><span>AI event &amp; earnings-call summaries, every ticker</span></span></li>
+          <li><span class="pc-chk">✓</span><span class="pc-ft"><b>Weekly editorial</b><span>One long-form pick of the week, members-only</span></span></li>
         </ul>
         <div class="pc-foot-cell">
           <a class="btn btn-white pc-cta" href="/app">Get Pro free <span class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span></a>
