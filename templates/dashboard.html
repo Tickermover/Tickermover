@@ -4931,6 +4931,11 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 #dr-right-rail .drk-nav button{display:block;width:100%;text-align:left;border:0;background:none;font-family:'Instrument Sans',sans-serif;font-size:11.5px;font-weight:600;color:#64748b;padding:6px 9px;border-radius:8px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:background .14s,color .14s}
 #dr-right-rail .drk-nav button:hover{background:rgba(41,112,255,.07);color:#0f172a}
 #dr-right-rail .drk-nav button.on{background:linear-gradient(135deg,#2970ff,#0040c1);color:#fff;font-weight:700}
+#dr-right-rail .drk-actions{display:flex;flex-direction:column;gap:6px;background:rgba(255,255,255,.94);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border:1px solid rgba(9,9,9,.08);border-radius:14px;padding:9px;box-shadow:0 12px 28px -14px rgba(9,20,60,.5)}
+#dr-right-rail .qa{display:flex;align-items:center;gap:9px;width:100%;text-align:left;border:1px solid transparent;background:rgba(41,112,255,.06);color:#0f172a;font-family:'Instrument Sans',sans-serif;font-weight:700;font-size:12px;padding:9px 11px;border-radius:10px;cursor:pointer;transition:background .14s,transform .14s,border-color .14s}
+#dr-right-rail .qa:hover{background:rgba(41,112,255,.12);transform:translateX(2px);border-color:rgba(41,112,255,.22)}
+#dr-right-rail .qa .qa-ic{font-size:14px;width:18px;text-align:center;flex:none}
+#dr-right-rail .qa.on{background:linear-gradient(135deg,#FFF3D9,#FFE9B0);color:#9E6308;border-color:#FFD98A}
 @media(prefers-reduced-motion:reduce){#dr-right-rail,#dr-right-rail.show{transition:none}}
 /* ── Ambient motion in the side margins — keeps the rails feeling alive.
    Gentle vertical bob (left/right desynced), a drifting glow behind each rail,
@@ -4944,17 +4949,17 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 #dr-side-rail.show::before,#dr-right-rail.show::before{opacity:1;animation:ambGlow 9s ease-in-out infinite}
 #dr-right-rail.show::before{animation-duration:11s;animation-direction:reverse}
 @keyframes ambGlow{0%,100%{transform:translateY(-10px) scale(.95)}50%{transform:translateY(18px) scale(1.14)}}
-#dr-side-rail .dsr-card,#dr-side-rail .dsr-recent,#dr-right-rail .drk-card{position:relative;overflow:hidden}
-#dr-side-rail .dsr-card::after,#dr-right-rail .drk-card::after{content:'';position:absolute;inset:0;pointer-events:none;transform:translateX(-130%);
-  background:linear-gradient(115deg,transparent 32%,rgba(255,255,255,.55) 50%,transparent 68%)}
-#dr-side-rail.show .dsr-card::after,#dr-right-rail.show .drk-card::after{animation:railSheen 5s ease-in-out infinite}
+#dr-side-rail .dsr-card,#dr-right-rail .drk-actions{position:relative;overflow:hidden}
+#dr-side-rail .dsr-card::after,#dr-right-rail .drk-actions::after{content:'';position:absolute;inset:0;pointer-events:none;transform:translateX(-130%);
+  background:linear-gradient(115deg,transparent 32%,rgba(255,255,255,.5) 50%,transparent 68%)}
+#dr-side-rail.show .dsr-card::after,#dr-right-rail.show .drk-actions::after{animation:railSheen 5s ease-in-out infinite}
 #dr-side-rail.show .dsr-card:nth-child(3)::after{animation-delay:.7s}
 #dr-side-rail.show .dsr-card:nth-child(4)::after{animation-delay:1.4s}
 @keyframes railSheen{0%,72%{transform:translateX(-130%)}88%,100%{transform:translateX(130%)}}
 @media(prefers-reduced-motion:reduce){
   #dr-side-rail.show,#dr-right-rail.show{animation:none}
   #dr-side-rail.show::before,#dr-right-rail.show::before{animation:none}
-  #dr-side-rail .dsr-card::after,#dr-right-rail .drk-card::after{display:none}
+  #dr-side-rail .dsr-card::after,#dr-right-rail .drk-actions::after{display:none}
 }
 /* tabs strip (visible only when expanded) */
 #ts-drawer .dr-tabs{display:flex;gap:4px;overflow-x:auto;margin-top:16px;scrollbar-width:none}
@@ -17013,30 +17018,19 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     if(!r){ r=document.createElement('div'); r.id='dr-side-rail'; r.addEventListener('click',e=>e.stopPropagation()); document.body.appendChild(r); }
     const picks=t?_drRailPicks(t):[];
     const cur=t?_drRailAlpha(t):0;
-    const recent=(t?_recent.filter(x=>x!==(t.ticker||'').toUpperCase()):_recent).slice(0,4);
-    if((!picks.length && !recent.length) || !_drRailRoom()){ r.classList.remove('show','pulse'); return; }
-    let html='';
-    if(picks.length){
-      html+='<div class="dsr-h">Stronger in this space</div>'+
-        picks.map(x=>{ const a=_drRailAlpha(x);
-          return '<button class="dsr-card" onclick="tsCollapseDrawer();setTimeout(function(){tsOpenDrawer(\''+escHTML(x.ticker)+'\');},70)">'+
-            '<div class="dsr-top"><span class="dsr-tic">'+escHTML(x.ticker)+'</span><span class="dsr-a">'+a+'</span></div>'+
-            '<div class="dsr-name">'+escHTML((x.name||'').slice(0,24))+'</div>'+
-            '<div class="dsr-delta">▲ '+(a-cur)+' Alpha vs '+escHTML(t.ticker)+'</div>'+
-          '</button>';
-        }).join('')+
-        '<div class="dsr-foot">Worth comparing · tap to open</div>';
-    }
-    if(recent.length){
-      html+='<div class="dsr-recent"><div class="rh">Recently viewed</div>'+
-        recent.map(tk=>{ const d=_byTicker[tk]; const a=d?_drRailAlpha(d):'';
-          return '<button onclick="tsCollapseDrawer();setTimeout(function(){tsOpenDrawer(\''+escHTML(tk)+'\');},70)">'+escHTML(tk)+(a!==''?'<span class="ra">'+a+'</span>':'')+'</button>';
-        }).join('')+'</div>';
-    }
-    r.innerHTML=html;
+    if(!picks.length || !_drRailRoom()){ r.classList.remove('show','pulse'); return; }
+    r.innerHTML='<div class="dsr-h">Stronger in this space</div>'+
+      picks.map(x=>{ const a=_drRailAlpha(x);
+        return '<button class="dsr-card" onclick="tsCollapseDrawer();setTimeout(function(){tsOpenDrawer(\''+escHTML(x.ticker)+'\');},70)">'+
+          '<div class="dsr-top"><span class="dsr-tic">'+escHTML(x.ticker)+'</span><span class="dsr-a">'+a+'</span></div>'+
+          '<div class="dsr-name">'+escHTML((x.name||'').slice(0,24))+'</div>'+
+          '<div class="dsr-delta">▲ '+(a-cur)+' Alpha vs '+escHTML(t.ticker)+'</div>'+
+        '</button>';
+      }).join('')+
+      '<div class="dsr-foot">Worth comparing · tap to open</div>';
     _drRailPosition();
-    r.classList.add('show');
-    if(picks.length){ r.classList.add('pulse'); setTimeout(function(){ r.classList.remove('pulse'); },1700); }
+    r.classList.add('show','pulse');
+    setTimeout(function(){ r.classList.remove('pulse'); },1700);
   }
   function _drRailHide(){ const r=document.getElementById('dr-side-rail'); if(r) r.classList.remove('show','pulse'); }
 
@@ -17049,20 +17043,17 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     let r=document.getElementById('dr-right-rail');
     if(!r){ r=document.createElement('div'); r.id='dr-right-rail'; r.addEventListener('click',e=>e.stopPropagation()); document.body.appendChild(r); }
     if(!t || !_drRailRoom()){ r.classList.remove('show'); return; }
-    const pop=Math.round(parseFloat(t.smart_score!=null?t.smart_score:(t.pop_score||0)));
-    const grade=(t.grade||'').toUpperCase();
-    const verdict={A:'Strong Outperform',B:'Outperform',C:'Neutral',D:'Lagging',F:'Avoid'}[grade]||'No call yet';
-    const tone={A:'#15803d',B:'#0040c1',C:'#b4780a',D:'#b91c1c',F:'#b91c1c'}[grade]||'#475569';
-    const px=parseFloat(t.price||0), chg=parseFloat(t.change_pct||0);
-    const up=parseFloat(t.target_upside_pct); const rs=(_rsMap&&_rsMap[t.ticker])||0;
-    const chips=[];
-    if(!isNaN(up)) chips.push('<span class="drk-chip" style="background:'+(up>=0?'rgba(22,163,74,.12)':'rgba(220,38,38,.10)')+';color:'+(up>=0?'#15803d':'#b91c1c')+'">'+(up>=0?'+':'')+up.toFixed(0)+'% upside</span>');
-    if(rs>0) chips.push('<span class="drk-chip">RS '+Math.round(rs)+'</span>');
-    r.innerHTML='<div class="drk-card">'+
-        '<div class="drk-alpha">'+pop+'</div><div class="drk-alpha-l">Alpha Score</div>'+
-        '<div class="drk-verdict" style="color:'+tone+'">'+escHTML(verdict)+'</div>'+
-        '<div class="drk-px">'+(px?('$'+px.toFixed(2)):'—')+(isNaN(chg)?'':' <b style="color:'+(chg>=0?'#15803d':'#b91c1c')+'">'+(chg>=0?'+':'')+chg.toFixed(1)+'%</b>')+'</div>'+
-        (chips.length?'<div class="drk-meta">'+chips.join('')+'</div>':'')+
+    // Quick actions (only ones that genuinely do something) + the section nav.
+    // We deliberately do NOT repeat the Alpha/verdict/price here — that's all in
+    // the header card already; duplicating it just looked redundant (and drifted).
+    const tk=escHTML(t.ticker||'');
+    const inWl=(typeof v2InWatchlist==='function') && v2InWatchlist(t.ticker);
+    const watchOn=inWl?' on':'';
+    r.innerHTML='<div class="drk-actions">'+
+        '<button class="qa'+watchOn+'" onclick="v2ToggleWatchlist(\''+tk+'\');var on=v2InWatchlist(\''+tk+'\');this.classList.toggle(\'on\',on);this.querySelector(\'.qa-ic\').textContent=on?\'★\':\'☆\';this.querySelector(\'.qa-t\').textContent=on?\'In watchlist\':\'Add to watchlist\';">'+
+          '<span class="qa-ic">'+(inWl?'★':'☆')+'</span><span class="qa-t">'+(inWl?'In watchlist':'Add to watchlist')+'</span></button>'+
+        '<button class="qa" onclick="if(window.tsShowTab)tsShowTab(\'Peers\')"><span class="qa-ic">⇄</span><span class="qa-t">Compare peers</span></button>'+
+        '<button class="qa" onclick="window.open(\'/report/'+tk+'\',\'_blank\',\'noopener\')"><span class="qa-ic">⤢</span><span class="qa-t">Full report</span></button>'+
       '</div>'+
       '<div class="drk-nav" id="drkNav"></div>';
     _drRightPosition();
@@ -17199,6 +17190,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
   window.tsOpenDrawer = tsOpenDrawer;
   window.tsExpandToFull = tsExpandToFull;
   window.tsCollapseDrawer = tsCollapseDrawer;
+  window.tsShowTab = tsShowTab;
 
   (function wireStatic(){
     const table=document.getElementById('picksTable');
