@@ -4894,6 +4894,20 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 #dr-side-rail.pulse .dsr-card{animation:dsrPulse 1.5s ease 1}
 @keyframes dsrPulse{0%,100%{box-shadow:0 12px 28px -14px rgba(9,20,60,.5)}42%{box-shadow:0 12px 28px -14px rgba(9,20,60,.5),0 0 0 4px rgba(41,112,255,.20)}}
 @media(prefers-reduced-motion:reduce){#dr-side-rail,#dr-side-rail.show{transition:none}#dr-side-rail.pulse .dsr-card{animation:none}}
+/* In-drawer fallback for the suggestion rail — used when the screen is too
+   narrow to float it in the margin. Sits at the top of the expanded analysis. */
+#ts-drawer .dr-inline-sug{margin:0 0 14px;padding:11px 13px;border:1px solid var(--hair);border-radius:14px;background:linear-gradient(135deg,#eef4ff 0%,#fff 70%);animation:disFade .4s ease both}
+@keyframes disFade{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){#ts-drawer .dr-inline-sug{animation:none}}
+#ts-drawer .dis-h{font-size:10.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--primary);margin-bottom:9px}
+#ts-drawer .dis-row{display:flex;gap:9px;overflow-x:auto;scrollbar-width:none}
+#ts-drawer .dis-row::-webkit-scrollbar{display:none}
+#ts-drawer .dis-card{flex:0 0 auto;min-width:130px;text-align:left;border:1px solid var(--hair);background:#fff;border-radius:11px;padding:9px 11px;cursor:pointer;font-family:inherit;transition:transform .14s,box-shadow .18s,border-color .14s}
+#ts-drawer .dis-card:hover{transform:translateY(-2px);border-color:rgba(41,112,255,.4);box-shadow:0 8px 18px -8px rgba(9,20,60,.4)}
+#ts-drawer .dis-top{display:flex;align-items:center;gap:8px}
+#ts-drawer .dis-tic{font-weight:800;font-size:13px;color:var(--ink)}
+#ts-drawer .dis-a{margin-left:auto;font-family:'JetBrains Mono',monospace;font-weight:800;font-size:14px;color:#15803d}
+#ts-drawer .dis-delta{margin-top:4px;font-size:9.5px;font-weight:700;color:#15803d;background:rgba(22,163,74,.10);border-radius:999px;padding:2px 7px;display:inline-block}
 /* tabs strip (visible only when expanded) */
 #ts-drawer .dr-tabs{display:flex;gap:4px;overflow-x:auto;margin-top:16px;scrollbar-width:none}
 #ts-drawer .dr-tabs::-webkit-scrollbar{display:none}
@@ -16961,11 +16975,27 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     setTimeout(function(){ r.classList.remove('pulse'); },1700);
   }
   function _drRailHide(){ const r=document.getElementById('dr-side-rail'); if(r) r.classList.remove('show','pulse'); }
+  /* In-drawer fallback: when the screen is too narrow to float the rail in the
+     margin, render the same higher-Alpha picks as a strip at the top of the
+     expanded analysis so the suggestion is never lost. Returns '' when the
+     floating rail will be used (wide screen) or there's nothing to suggest. */
+  function _drInlineSuggest(t){
+    if(!t || _drRailRoom()) return '';
+    const picks=_drRailPicks(t); if(!picks.length) return '';
+    const cur=_drRailAlpha(t);
+    return '<div class="dr-inline-sug"><div class="dis-h">Stronger in this space</div><div class="dis-row">'+
+      picks.map(x=>{ const a=_drRailAlpha(x);
+        return '<button class="dis-card" onclick="tsCollapseDrawer();setTimeout(function(){tsOpenDrawer(\''+escHTML(x.ticker)+'\');},70)">'+
+          '<div class="dis-top"><span class="dis-tic">'+escHTML(x.ticker)+'</span><span class="dis-a">'+a+'</span></div>'+
+          '<div class="dis-delta">▲ '+(a-cur)+' vs '+escHTML(t.ticker)+'</div>'+
+        '</button>';
+      }).join('')+'</div></div>';
+  }
 
   function tsRenderDetail(){
     const dd=drawer.querySelector('.dr-deep'); if(!dd||!_drState) return;
     const S=_drState.setup, full=_drState.full, t=_drState.t, candles=_drState.candles;
-    dd.innerHTML='<div class="dr-panes">'+
+    dd.innerHTML=_drInlineSuggest(t)+'<div class="dr-panes">'+
       '<div class="dr-pane" data-pane="Overview">'+paneOverview(t,S,full,candles)+'</div>'+
       '<div class="dr-pane" data-pane="Technicals" hidden>'+paneTechnicals(full,S)+'</div>'+
       '<div class="dr-pane" data-pane="Financials" hidden>'+paneFinancials(full)+'</div>'+
@@ -17011,8 +17041,9 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
   }
   window.addEventListener('resize',()=>{ if(drawer.classList.contains('expanded')){ tsDrawChartEl();
     const r=document.getElementById('dr-side-rail');
-    if(!_drRailRoom()){ _drRailHide(); }
-    else if(_drState&&_drState.t){ if(r&&r.classList.contains('show')){ _drRailPosition(); } else { tsBuildSideRail(_drState.t); } } } });
+    const sug=drawer.querySelector('.dr-inline-sug');
+    if(!_drRailRoom()){ _drRailHide(); if(sug) sug.style.display=''; }
+    else { if(sug) sug.style.display='none'; if(_drState&&_drState.t){ if(r&&r.classList.contains('show')){ _drRailPosition(); } else { tsBuildSideRail(_drState.t); } } } } });
   /* chart timeframe toggle (1M / 6M / 1Y) */
   drawer.addEventListener('click',(e)=>{ const b=e.target.closest('.cc-tf button'); if(!b||!_drState) return; _drState.tf=b.getAttribute('data-tf'); drawer.querySelectorAll('.cc-tf button').forEach(x=>x.classList.toggle('on',x===b)); tsDrawChartEl(); });
   /* Reach the end of a tab → glide to the next one (top → previous). This used
