@@ -591,6 +591,41 @@ h1,h2,h3,h4,h5{font-family:'Instrument Sans',sans-serif;font-weight:600;letter-s
 .pc-foot{font-family:'Instrument Sans',sans-serif;font-size:12px;color:rgba(255,255,255,.55);text-align:center;margin-top:2px}
 @media(max-width:560px){.price-solo{padding:36px 22px 24px}.ps-now-amt{font-size:52px}}
 
+/* Two-tier pricing — Free (light) vs Pro (premium dark) */
+.price-duo{display:grid;grid-template-columns:1fr 1.08fr;gap:22px;max-width:940px;margin:0 auto;align-items:stretch}
+.price-card{position:relative;border-radius:var(--r-xxl);padding:38px 34px 30px;display:flex;flex-direction:column;gap:18px;text-align:left}
+.pc-free{background:#fff;border:1px solid rgba(9,9,9,.09);box-shadow:0 20px 50px rgba(9,20,60,.10)}
+.pc-pro{color:#fff;border:1px solid rgba(93,179,241,.40);
+  background:
+    radial-gradient(120% 80% at 50% -10%, rgba(41,112,255,.22), transparent 55%),
+    linear-gradient(160deg,#0a0e22 0%,#0f1530 68%,#15234d 100%);
+  box-shadow:0 0 0 1px rgba(93,179,241,.16),0 0 56px -12px rgba(41,112,255,.44),0 30px 72px rgba(9,20,60,.34)}
+.pc-name{font-family:'Instrument Sans',sans-serif;font-weight:700;font-size:12px;letter-spacing:.14em;text-transform:uppercase}
+.pc-free .pc-name{color:var(--grey)}
+.pc-pro .pc-name{color:#7ec5f7}
+.pc-price{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.pc-price-amt{font-family:'Instrument Sans',sans-serif;font-weight:800;font-size:48px;line-height:.95;letter-spacing:-.035em}
+.pc-free .pc-price-amt{color:var(--text-dark)}
+.pc-pro .pc-price-amt{background:linear-gradient(135deg,#A9D1F9 0%,#5DB3F1 45%,#2970FF 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
+.pc-note{font-family:'Instrument Sans',sans-serif;font-size:13px;line-height:1.4}
+.pc-free .pc-note{color:var(--grey)}
+.pc-pro .pc-note{color:rgba(255,255,255,.62)}
+.pc-card-feats{list-style:none;padding:18px 0 0;margin:0;display:flex;flex-direction:column;gap:12px;border-top:1px solid rgba(9,9,9,.08)}
+.pc-pro .pc-card-feats{border-top-color:rgba(255,255,255,.12)}
+.pc-card-feats li{display:flex;align-items:flex-start;gap:11px;font-size:14px;line-height:1.45;font-family:'Poppins',sans-serif}
+.pc-free .pc-card-feats li{color:var(--grey-2)}
+.pc-pro .pc-card-feats li{color:rgba(255,255,255,.88)}
+.pc-card-feats .pc-chk{flex:none;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:700;margin-top:1px}
+.pc-free .pc-card-feats .pc-chk{background:rgba(41,112,255,.12);color:var(--primary)}
+.pc-pro .pc-card-feats .pc-chk{background:rgba(93,179,241,.20);color:#7ec5f7}
+.pc-card-feats .pc-plus{color:#7ec5f7;font-weight:700;font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;font-family:'Instrument Sans',sans-serif;margin:2px 0 -2px;opacity:.85}
+.pc-foot-cell{margin-top:auto;display:flex;flex-direction:column;gap:10px;padding-top:6px}
+.pc-card .pc-cta{justify-content:space-between!important;width:100%}
+.pc-tiny{font-family:'Instrument Sans',sans-serif;font-size:12px;text-align:center}
+.pc-free .pc-tiny{color:var(--grey)}
+.pc-pro .pc-tiny{color:rgba(255,255,255,.55)}
+@media(max-width:760px){.price-duo{grid-template-columns:1fr;max-width:480px;gap:20px}}
+
 /* ───────── FOOTER ───────── */
 .footer{background:var(--text-dark);color:#fff;padding:0 0 28px;margin-top:48px;overflow:hidden}
 /* giant brand wordmark reveal at the top of the footer */
@@ -1025,14 +1060,17 @@ h1,h2,h3,h4,h5{font-family:'Instrument Sans',sans-serif;font-weight:600;letter-s
           mask:url('/static/brand/alphahunt-mark-transparent-128.png') center/contain no-repeat;
   font-size:0;color:transparent}
 .ds-name{font-family:'Instrument Sans',sans-serif;font-weight:700;font-size:15px;letter-spacing:-.01em}
-.ds-nav{display:flex;flex-direction:column;gap:3px}
+.ds-nav{display:flex;flex-direction:column;gap:2px}
+.ds-sec{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:9.5px;letter-spacing:.14em;color:var(--grey);text-transform:uppercase;padding:14px 12px 5px}
+.ds-sec:first-child{padding-top:4px}
 .ds-link{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;font-family:'Instrument Sans',sans-serif;font-weight:500;font-size:13.5px;color:var(--grey-2);cursor:pointer;transition:background .2s,color .2s}
 .ds-link svg{width:16px;height:16px;flex:none}
 .ds-link:hover{background:rgba(41,112,255,.06);color:var(--primary)}
 .ds-link.active{background:var(--blue-grad);color:#fff;box-shadow:0 6px 14px rgba(0,64,193,.20)}
-.ds-profile-chip{margin-top:auto;display:inline-flex;align-items:center;gap:7px;padding:9px 12px;border-radius:var(--r-pill);background:rgba(41,112,255,.08);color:var(--primary);font-family:'Instrument Sans',sans-serif;font-size:12px;font-weight:500}
-.ds-profile-chip b{font-weight:700}
-.ds-pchip-dot{width:6px;height:6px;border-radius:50%;background:var(--primary)}
+.ds-tag{margin-left:auto;font-family:'Instrument Sans',sans-serif;font-weight:700;font-size:9px;letter-spacing:.05em;padding:2px 7px;border-radius:var(--r-pill)}
+.ds-tag.pro{background:linear-gradient(120deg,#FBBF24,#F59E0B);color:#3a2400}
+.ds-tag.count{background:rgba(41,112,255,.10);color:var(--primary)}
+.ds-link.active .ds-tag.count{background:rgba(255,255,255,.22);color:#fff}
 .dash-main{padding:22px 24px;overflow:hidden}
 .dm-head{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:18px;flex-wrap:wrap}
 .dm-head h3{font-family:'Instrument Sans',sans-serif;font-weight:700;font-size:20px;letter-spacing:-.02em;color:var(--text-dark)}
@@ -1355,138 +1393,6 @@ h1,h2,h3,h4,h5{font-family:'Instrument Sans',sans-serif;font-weight:600;letter-s
   </div>
 </section>
 
-<!-- ───────── PROFILES (dark, three curated universes from dev landing) ───────── -->
-<section class="section bg-dark" id="profiles">
-  <div class="wrap">
-    <div class="sec-head center reveal">
-      <span class="eyebrow">Built for your style</span>
-      <h2 class="sec-title">Three profiles. <span class="amber-grad-text">One dashboard.</span></h2>
-      <p class="sec-sub">One click flips between three curated universes — Aggressive for the hunters, Conservative for the patient, Balanced for everyone in between.</p>
-    </div>
-    <div class="profiles stagger reveal">
-      <div class="profile">
-        <span class="profile-tag">Conservative</span>
-        <h3>Steady compounders</h3>
-        <p class="desc">Blue-chip names with low beta, real margins, and durable demand. For long-term wealth.</p>
-        <ul>
-          <li>S&amp;P 500 / Dow members only</li>
-          <li>Beta &lt; 1.0, profit-positive</li>
-          <li>Defensive sector tilt</li>
-        </ul>
-        <a class="profile-cta" href="/app?profile=conservative"><span>View Conservative</span><span class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span></a>
-      </div>
-      <div class="profile popular">
-        <span class="profile-tag">Most popular</span>
-        <h3>Balanced</h3>
-        <p class="desc">A mix of growth and quality. The dashboard's default — for investors who want both ends of the curve.</p>
-        <ul>
-          <li>~250 names across all sectors</li>
-          <li>Mid-beta growers + cash cows</li>
-          <li>Best Alpha Score discovery</li>
-        </ul>
-        <a class="profile-cta" href="/app?profile=balanced"><span>View Balanced</span><span class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span></a>
-      </div>
-      <div class="profile">
-        <span class="profile-tag">Aggressive</span>
-        <h3>Hunters</h3>
-        <p class="desc">High beta, high momentum, high conviction. For traders chasing fast growth — with discipline.</p>
-        <ul>
-          <li>Beta ≥ 1.5 or breakout setups</li>
-          <li>Loss-makers with momentum OK</li>
-          <li>+100% take-profit rotation</li>
-        </ul>
-        <a class="profile-cta" href="/app?profile=aggressive"><span>View Aggressive</span><span class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span></a>
-      </div>
-    </div>
-  </div>
-</section>
-
-
-<!-- ───────── INSIDE THE DASHBOARD (high-fidelity HTML/CSS mockup) ───────── -->
-<section class="section bg-alice" id="dashboard">
-  <div class="wrap">
-    <div class="sec-head center reveal">
-      <span class="eyebrow" style="margin-left:auto;margin-right:auto">See it in action</span>
-      <h2 class="sec-title">Inside the dashboard.</h2>
-      <p class="sec-sub">Where every pick lives — score, six pillars, trade plan and exit rule, all on one screen.</p>
-    </div>
-    <div class="dash-mock reveal">
-      <!-- browser chrome -->
-      <div class="dash-chrome">
-        <span class="dc-dot r"></span><span class="dc-dot y"></span><span class="dc-dot g"></span>
-        <div class="dc-url">app.alphahunt.io / dashboard</div>
-        <div class="dc-live"><span class="dc-live-dot"></span> Live · <span data-clock>—</span> ET</div>
-      </div>
-      <!-- app body: sidebar + main + right rail -->
-      <div class="dash-body">
-        <!-- sidebar -->
-        <aside class="dash-side">
-          <div class="ds-brand"><span class="ds-mark" role="img" aria-label="AlphaHunt"></span><span class="ds-name">AlphaHunt</span></div>
-          <nav class="ds-nav">
-            <a class="ds-link active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg> Hot List</a>
-            <a class="ds-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> Today's brief</a>
-            <a class="ds-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><polyline points="6 14 10 10 13 13 21 5"/></svg> Open ledger</a>
-            <a class="ds-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 1 1-7-7"/></svg> Profiles</a>
-            <a class="ds-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 9h18"/></svg> Watchlist</a>
-          </nav>
-          <div class="ds-profile-chip"><span class="ds-pchip-dot"></span> Profile: <b>Balanced</b></div>
-        </aside>
-        <!-- main -->
-        <main class="dash-main">
-          <div class="dm-head">
-            <h3>Today's Hot List</h3>
-            <div class="dm-meta">
-              <span class="dm-pill">Alpha ≥ 75</span>
-              <span class="dm-pill">4+ pillars green</span>
-              <span class="dm-pill green">11 picks · 1 slot empty</span>
-            </div>
-          </div>
-          <div class="dm-table">
-            <div class="dm-row dm-head-row">
-              <span>Ticker</span><span>Alpha</span><span class="dm-pillars-h">Pillars (M · G · Q · V · S · R)</span><span>5d</span><span>Action</span>
-            </div>
-            <div class="dm-row" data-row-score="94">
-              <span class="dm-tick"><span class="dm-logo nv">NV</span>NVDA<small>NVIDIA</small></span>
-              <span class="dm-alpha" data-tick-score>94</span>
-              <span class="dm-mini-bars"><i style="--h:92%"></i><i style="--h:91%"></i><i style="--h:88%"></i><i style="--h:71%" class="w"></i><i style="--h:96%"></i><i style="--h:78%"></i></span>
-              <span class="dm-chg up">+8.4%</span>
-              <span><a class="dm-btn">Open →</a></span>
-            </div>
-            <div class="dm-row" data-row-score="86">
-              <span class="dm-tick"><span class="dm-logo ap">AP</span>AAPL<small>Apple</small></span>
-              <span class="dm-alpha">86</span>
-              <span class="dm-mini-bars"><i style="--h:78%"></i><i style="--h:84%"></i><i style="--h:92%"></i><i style="--h:66%" class="w"></i><i style="--h:88%"></i><i style="--h:90%"></i></span>
-              <span class="dm-chg up">+3.1%</span>
-              <span><a class="dm-btn">Open →</a></span>
-            </div>
-            <div class="dm-row" data-row-score="82">
-              <span class="dm-tick"><span class="dm-logo sh">SH</span>SHOP<small>Shopify</small></span>
-              <span class="dm-alpha">82</span>
-              <span class="dm-mini-bars"><i style="--h:86%"></i><i style="--h:82%"></i><i style="--h:84%"></i><i style="--h:68%" class="w"></i><i style="--h:83%"></i><i style="--h:80%"></i></span>
-              <span class="dm-chg up">+6.0%</span>
-              <span><a class="dm-btn">Open →</a></span>
-            </div>
-            <div class="dm-row" data-row-score="81">
-              <span class="dm-tick"><span class="dm-logo pl">PL</span>PLTR<small>Palantir</small></span>
-              <span class="dm-alpha">81</span>
-              <span class="dm-mini-bars"><i style="--h:85%"></i><i style="--h:78%"></i><i style="--h:72%"></i><i style="--h:55%" class="w"></i><i style="--h:90%"></i><i style="--h:68%"></i></span>
-              <span class="dm-chg up">+5.1%</span>
-              <span><a class="dm-btn">Open →</a></span>
-            </div>
-            <div class="dm-row dm-empty">
-              <span class="dm-tick muted">— empty by rule —</span>
-              <span class="dm-alpha muted">—</span>
-              <span class="dm-mini-bars muted"><i></i><i></i><i></i><i></i><i></i><i></i></span>
-              <span class="dm-chg muted">—</span>
-              <span class="muted">—</span>
-            </div>
-          </div>
-        </main>
-      </div>
-    </div>
-  </div>
-</section>
-
 <!-- ───────── AI ENGINE (dark, neural-net viz from dev landing) ───────── -->
 <section class="section bg-dark" id="ai-engine">
   <div class="wrap">
@@ -1572,6 +1478,141 @@ h1,h2,h3,h4,h5{font-family:'Instrument Sans',sans-serif;font-weight:600;letter-s
     </div>
   </div>
 </section>
+
+<!-- ───────── INSIDE THE DASHBOARD (high-fidelity HTML/CSS mockup) ───────── -->
+<section class="section bg-alice" id="dashboard">
+  <div class="wrap">
+    <div class="sec-head center reveal">
+      <span class="eyebrow" style="margin-left:auto;margin-right:auto">See it in action</span>
+      <h2 class="sec-title">Inside the dashboard.</h2>
+      <p class="sec-sub">Where every pick lives — score, six pillars, trade plan and exit rule, all on one screen.</p>
+    </div>
+    <div class="dash-mock reveal">
+      <!-- browser chrome -->
+      <div class="dash-chrome">
+        <span class="dc-dot r"></span><span class="dc-dot y"></span><span class="dc-dot g"></span>
+        <div class="dc-url">app.alphahunt.io / dashboard</div>
+        <div class="dc-live"><span class="dc-live-dot"></span> Live · <span data-clock>—</span> ET</div>
+      </div>
+      <!-- app body: sidebar + main + right rail -->
+      <div class="dash-body">
+        <!-- sidebar -->
+        <aside class="dash-side">
+          <div class="ds-brand"><span class="ds-mark" role="img" aria-label="AlphaHunt"></span><span class="ds-name">AlphaHunt</span></div>
+          <nav class="ds-nav">
+            <div class="ds-sec">Discover</div>
+            <a class="ds-link active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg> On the Radar</a>
+            <a class="ds-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l2.5 7H22l-6 4.5 2.3 7L12 16l-6.3 4.5L8 13.5 2 9h7.5z"/></svg> Top Hunts <span class="ds-tag pro">PRO</span></a>
+            <a class="ds-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><polyline points="6 14 10 10 13 13 21 5"/></svg> Sector Map</a>
+            <a class="ds-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M2 12h20"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18z"/></svg> Universe <span class="ds-tag count">545</span></a>
+            <a class="ds-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 15l3-4 3 2 4-6"/></svg> Market Analysis</a>
+            <div class="ds-sec">Your Lists</div>
+            <a class="ds-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3 6.5 7 .6-5.3 4.6L18.5 21 12 17.3 5.5 21l1.8-7.3L2 9.1l7-.6z"/></svg> Watchlist</a>
+            <a class="ds-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16v12H7l-3 3z"/></svg> Briefings</a>
+          </nav>
+        </aside>
+        <!-- main -->
+        <main class="dash-main">
+          <div class="dm-head">
+            <h3>On the Radar</h3>
+            <div class="dm-meta">
+              <span class="dm-pill">Alpha ≥ 75</span>
+              <span class="dm-pill">4+ pillars green</span>
+              <span class="dm-pill green">11 picks · 1 slot empty</span>
+            </div>
+          </div>
+          <div class="dm-table">
+            <div class="dm-row dm-head-row">
+              <span>Ticker</span><span>Alpha</span><span class="dm-pillars-h">Pillars (M · G · Q · V · S · R)</span><span>5d</span><span>Action</span>
+            </div>
+            <div class="dm-row" data-row-score="94">
+              <span class="dm-tick"><span class="dm-logo nv">NV</span>NVDA<small>NVIDIA</small></span>
+              <span class="dm-alpha" data-tick-score>94</span>
+              <span class="dm-mini-bars"><i style="--h:92%"></i><i style="--h:91%"></i><i style="--h:88%"></i><i style="--h:71%" class="w"></i><i style="--h:96%"></i><i style="--h:78%"></i></span>
+              <span class="dm-chg up">+8.4%</span>
+              <span><a class="dm-btn">Open →</a></span>
+            </div>
+            <div class="dm-row" data-row-score="86">
+              <span class="dm-tick"><span class="dm-logo ap">AP</span>AAPL<small>Apple</small></span>
+              <span class="dm-alpha">86</span>
+              <span class="dm-mini-bars"><i style="--h:78%"></i><i style="--h:84%"></i><i style="--h:92%"></i><i style="--h:66%" class="w"></i><i style="--h:88%"></i><i style="--h:90%"></i></span>
+              <span class="dm-chg up">+3.1%</span>
+              <span><a class="dm-btn">Open →</a></span>
+            </div>
+            <div class="dm-row" data-row-score="82">
+              <span class="dm-tick"><span class="dm-logo sh">SH</span>SHOP<small>Shopify</small></span>
+              <span class="dm-alpha">82</span>
+              <span class="dm-mini-bars"><i style="--h:86%"></i><i style="--h:82%"></i><i style="--h:84%"></i><i style="--h:68%" class="w"></i><i style="--h:83%"></i><i style="--h:80%"></i></span>
+              <span class="dm-chg up">+6.0%</span>
+              <span><a class="dm-btn">Open →</a></span>
+            </div>
+            <div class="dm-row" data-row-score="81">
+              <span class="dm-tick"><span class="dm-logo pl">PL</span>PLTR<small>Palantir</small></span>
+              <span class="dm-alpha">81</span>
+              <span class="dm-mini-bars"><i style="--h:85%"></i><i style="--h:78%"></i><i style="--h:72%"></i><i style="--h:55%" class="w"></i><i style="--h:90%"></i><i style="--h:68%"></i></span>
+              <span class="dm-chg up">+5.1%</span>
+              <span><a class="dm-btn">Open →</a></span>
+            </div>
+            <div class="dm-row dm-empty">
+              <span class="dm-tick muted">— empty by rule —</span>
+              <span class="dm-alpha muted">—</span>
+              <span class="dm-mini-bars muted"><i></i><i></i><i></i><i></i><i></i><i></i></span>
+              <span class="dm-chg muted">—</span>
+              <span class="muted">—</span>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ───────── PROFILES (dark, three curated universes from dev landing) ───────── -->
+<section class="section bg-dark" id="profiles">
+  <div class="wrap">
+    <div class="sec-head center reveal">
+      <span class="eyebrow">Built for your style</span>
+      <h2 class="sec-title">Three profiles. <span class="amber-grad-text">One dashboard.</span></h2>
+      <p class="sec-sub">One click flips between three curated universes — Aggressive for the hunters, Conservative for the patient, Balanced for everyone in between.</p>
+    </div>
+    <div class="profiles stagger reveal">
+      <div class="profile">
+        <span class="profile-tag">Conservative</span>
+        <h3>Steady compounders</h3>
+        <p class="desc">Blue-chip names with low beta, real margins, and durable demand. For long-term wealth.</p>
+        <ul>
+          <li>S&amp;P 500 / Dow members only</li>
+          <li>Beta &lt; 1.0, profit-positive</li>
+          <li>Defensive sector tilt</li>
+        </ul>
+        <a class="profile-cta" href="/app?profile=conservative"><span>View Conservative</span><span class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span></a>
+      </div>
+      <div class="profile popular">
+        <span class="profile-tag">Most popular</span>
+        <h3>Balanced</h3>
+        <p class="desc">A mix of growth and quality. The dashboard's default — for investors who want both ends of the curve.</p>
+        <ul>
+          <li>~250 names across all sectors</li>
+          <li>Mid-beta growers + cash cows</li>
+          <li>Best Alpha Score discovery</li>
+        </ul>
+        <a class="profile-cta" href="/app?profile=balanced"><span>View Balanced</span><span class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span></a>
+      </div>
+      <div class="profile">
+        <span class="profile-tag">Aggressive</span>
+        <h3>Hunters</h3>
+        <p class="desc">High beta, high momentum, high conviction. For traders chasing fast growth — with discipline.</p>
+        <ul>
+          <li>Beta ≥ 1.5 or breakout setups</li>
+          <li>Loss-makers with momentum OK</li>
+          <li>+100% take-profit rotation</li>
+        </ul>
+        <a class="profile-cta" href="/app?profile=aggressive"><span>View Aggressive</span><span class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span></a>
+      </div>
+    </div>
+  </div>
+</section>
+
 
 <!-- ───────── TESTIMONIALS ───────── -->
 <section class="section bg-alice" id="voices">
@@ -1680,6 +1721,61 @@ h1,h2,h3,h4,h5{font-family:'Instrument Sans',sans-serif;font-weight:600;letter-s
           <p class="date">Featured · 12 min read</p>
         </div>
       </article>
+    </div>
+  </div>
+</section>
+
+<!-- ───────── PRICING (beta → launch transparency) ───────── -->
+<section class="section bg-alice" id="pricing">
+  <div class="wrap">
+    <div class="sec-head center reveal">
+      <span class="eyebrow" style="margin-left:auto;margin-right:auto">Pricing</span>
+      <h2 class="sec-title">Two ways to hunt.</h2>
+      <p class="sec-sub">Research on <b>US-listed stocks</b> (S&amp;P 500 · Nasdaq-100 · Dow), priced in ₹ for Indian investors. Start free — upgrade to Pro for the desk's editorial edge. Beta members lock in <b>₹499/mo</b>, half price, for a full year.</p>
+    </div>
+    <div class="price-duo reveal">
+
+      <!-- FREE -->
+      <div class="price-card pc-free">
+        <span class="pc-name">Free</span>
+        <div class="pc-price">
+          <span class="pc-price-amt">₹0</span>
+          <span class="pc-note">forever · no card required</span>
+        </div>
+        <ul class="pc-card-feats">
+          <li><span class="pc-chk">✓</span> On the Radar — daily scored picks across six pillars</li>
+          <li><span class="pc-chk">✓</span> Full open ledger — every entry &amp; exit</li>
+          <li><span class="pc-chk">✓</span> Three risk profiles (Conservative · Balanced · Hunters)</li>
+          <li><span class="pc-chk">✓</span> Daily morning brief</li>
+          <li><span class="pc-chk">✓</span> Personal watchlist</li>
+        </ul>
+        <div class="pc-foot-cell">
+          <a class="btn btn-ghost pc-cta" href="/app">Start free <span class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span></a>
+        </div>
+      </div>
+
+      <!-- PRO -->
+      <div class="price-card pc-pro">
+        <span class="ps-ribbon">Beta lock-in · 50% off</span>
+        <span class="pc-name">Pro</span>
+        <div class="pc-price">
+          <span class="pc-price-amt">Free</span>
+          <span class="pc-note">during beta · then ₹499<span class="pc-per">/mo</span> from August <span class="pricing-strike">₹999</span></span>
+        </div>
+        <ul class="pc-card-feats">
+          <li><span class="pc-plus">Everything in Free, plus</span></li>
+          <li><span class="pc-chk">✓</span> <b>Top Hunts</b> — the desk's highest-conviction calls</li>
+          <li><span class="pc-chk">✓</span> <b>Briefings</b> — pre- &amp; post-market reads, every session</li>
+          <li><span class="pc-chk">✓</span> Exclusive <b>weekly editorial</b> — one long-form pick</li>
+          <li><span class="pc-chk">✓</span> Full Universe (545) &amp; Sector Map deep-dives</li>
+          <li><span class="pc-chk">✓</span> Priority signals &amp; alerts</li>
+        </ul>
+        <div class="pc-foot-cell">
+          <a class="btn btn-white pc-cta" href="/app">Get Pro free <span class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span></a>
+          <div class="pc-tiny">No card · Cancel anytime · 312 beta seats left</div>
+        </div>
+      </div>
+
     </div>
   </div>
 </section>
@@ -1825,39 +1921,6 @@ h1,h2,h3,h4,h5{font-family:'Instrument Sans',sans-serif;font-weight:600;letter-s
           </div>
         </div>
       </div>
-    </div>
-  </div>
-</section>
-
-<!-- ───────── PRICING (beta → launch transparency) ───────── -->
-<section class="section bg-alice" id="pricing">
-  <div class="wrap">
-    <div class="sec-head center reveal">
-      <span class="eyebrow" style="margin-left:auto;margin-right:auto">Pricing</span>
-      <h2 class="sec-title">One plan. Free while we're in beta.</h2>
-      <p class="sec-sub">Research on <b>US-listed stocks</b> (S&amp;P 500 · Nasdaq-100 · Dow), priced in ₹ for Indian investors. Free right now during beta — when we launch in August, beta members lock in ₹499/mo, half the regular price, for a full year.</p>
-    </div>
-    <div class="price-solo reveal">
-      <span class="ps-ribbon">Beta lock-in</span>
-      <div class="ps-hero">
-        <span class="ps-now-amt">Free</span>
-        <span class="ps-now-sub">for the entire beta · no card required</span>
-      </div>
-      <div class="ps-later">
-        <span class="ps-later-lbl">From August</span>
-        <span class="pricing-strike">₹999</span>
-        <span class="ps-later-amt">₹499<span class="pc-per">/mo</span></span>
-        <span class="ps-later-pill">Save 50% · locked 12 mo</span>
-      </div>
-      <ul class="pc-feats ps-feats">
-        <li><span class="pc-chk">✓</span> Daily Grade-A picks, scored across six pillars</li>
-        <li><span class="pc-chk">✓</span> Full open ledger — every entry &amp; exit</li>
-        <li><span class="pc-chk">✓</span> Three risk profiles (Conservative · Balanced · Hunters)</li>
-        <li><span class="pc-chk">✓</span> Daily morning brief</li>
-        <li><span class="pc-chk">✓</span> Personal watchlist</li>
-      </ul>
-      <a class="btn btn-white pc-cta" href="/app">Start free <span class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span></a>
-      <div class="pc-foot">No card · Cancel anytime · 312 beta seats left</div>
     </div>
   </div>
 </section>
