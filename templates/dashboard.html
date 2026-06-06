@@ -4932,6 +4932,30 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 #dr-right-rail .drk-nav button:hover{background:rgba(41,112,255,.07);color:#0f172a}
 #dr-right-rail .drk-nav button.on{background:linear-gradient(135deg,#2970ff,#0040c1);color:#fff;font-weight:700}
 @media(prefers-reduced-motion:reduce){#dr-right-rail,#dr-right-rail.show{transition:none}}
+/* ── Ambient motion in the side margins — keeps the rails feeling alive.
+   Gentle vertical bob (left/right desynced), a drifting glow behind each rail,
+   and a periodic sheen sweep across the cards. ── */
+@keyframes railBobL{0%,100%{top:calc(50% - 6px)}50%{top:calc(50% + 6px)}}
+@keyframes railBobR{0%,100%{top:calc(50% + 6px)}50%{top:calc(50% - 6px)}}
+#dr-side-rail.show{animation:railBobL 5.5s ease-in-out infinite}
+#dr-right-rail.show{animation:railBobR 6.7s ease-in-out infinite}
+#dr-side-rail::before,#dr-right-rail::before{content:'';position:absolute;inset:-44px -34px;z-index:-1;pointer-events:none;border-radius:36px;opacity:0;transition:opacity .6s;
+  background:radial-gradient(130px 170px at 50% 32%,rgba(41,112,255,.22),transparent 72%)}
+#dr-side-rail.show::before,#dr-right-rail.show::before{opacity:1;animation:ambGlow 9s ease-in-out infinite}
+#dr-right-rail.show::before{animation-duration:11s;animation-direction:reverse}
+@keyframes ambGlow{0%,100%{transform:translateY(-10px) scale(.95)}50%{transform:translateY(18px) scale(1.14)}}
+#dr-side-rail .dsr-card,#dr-side-rail .dsr-recent,#dr-right-rail .drk-card{position:relative;overflow:hidden}
+#dr-side-rail .dsr-card::after,#dr-right-rail .drk-card::after{content:'';position:absolute;inset:0;pointer-events:none;transform:translateX(-130%);
+  background:linear-gradient(115deg,transparent 32%,rgba(255,255,255,.55) 50%,transparent 68%)}
+#dr-side-rail.show .dsr-card::after,#dr-right-rail.show .drk-card::after{animation:railSheen 5s ease-in-out infinite}
+#dr-side-rail.show .dsr-card:nth-child(3)::after{animation-delay:.7s}
+#dr-side-rail.show .dsr-card:nth-child(4)::after{animation-delay:1.4s}
+@keyframes railSheen{0%,72%{transform:translateX(-130%)}88%,100%{transform:translateX(130%)}}
+@media(prefers-reduced-motion:reduce){
+  #dr-side-rail.show,#dr-right-rail.show{animation:none}
+  #dr-side-rail.show::before,#dr-right-rail.show::before{animation:none}
+  #dr-side-rail .dsr-card::after,#dr-right-rail .drk-card::after{display:none}
+}
 /* tabs strip (visible only when expanded) */
 #ts-drawer .dr-tabs{display:flex;gap:4px;overflow-x:auto;margin-top:16px;scrollbar-width:none}
 #ts-drawer .dr-tabs::-webkit-scrollbar{display:none}
