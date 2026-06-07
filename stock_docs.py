@@ -71,7 +71,7 @@ async def list_documents(ticker: str, limit: int = 10) -> dict:
         acc = (accs[i] if i < len(accs) else "").replace("-", "")
         return f"https://www.sec.gov/Archives/edgar/data/{cik_int}/{acc}/"
 
-    ANN_CAP, QTR_CAP = 6, 4          # last few annuals; only the last 4 quarters
+    ANN_CAP, QTR_CAP = 4, 4          # last 4 annual reports and last 4 quarters
     annual, quarterly = [], []
     for i, f in enumerate(forms):
         if len(annual) >= ANN_CAP and len(quarterly) >= QTR_CAP:

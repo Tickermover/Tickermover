@@ -5228,6 +5228,8 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 #ts-drawer .doc-l small{font-size:10px;color:var(--grey-3,#94a3b8);font-family:'JetBrains Mono',monospace}
 #ts-drawer .doc-ar{flex:none;color:var(--grey-3,#94a3b8);font-weight:700;font-size:13px}
 #ts-drawer .doc-link:hover .doc-ar{color:var(--primary)}
+#ts-drawer .doc-link-pdf{background:linear-gradient(135deg,rgba(21,128,61,.10),rgba(15,118,110,.10));border:1px solid rgba(21,128,61,.25);border-radius:10px;margin-bottom:4px}
+#ts-drawer .doc-link-pdf .doc-l b{color:#15803d}
 /* Documents tab — action chips + dated EDGAR lists */
 #ts-drawer .doc-actions{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
 #ts-drawer .doc-chip{display:inline-flex;align-items:center;gap:5px;border:1px solid rgba(41,112,255,.25);background:rgba(41,112,255,.07);color:var(--primary);font-family:inherit;font-weight:700;font-size:12px;padding:7px 12px;border-radius:999px;cursor:pointer;text-decoration:none;transition:background .14s}
@@ -17064,28 +17066,30 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
      link to EDGAR (works for any US ticker); earnings/news link to features we
      already have. No fabricated documents. */
   function paneDocuments(t){
-    const tk=(t.ticker||'').toUpperCase(), tkE=encodeURIComponent(tk), nm=(t.name||'').replace(/'/g,'');
-    const actions='<div class="doc-actions">'+
-      '<a class="doc-chip doc-chip-pdf" href="/api/pdf/'+tkE+'" target="_blank" rel="noopener">📄 Download PDF report</a>'+
-      '<a class="doc-chip" href="/report/'+tkE+'" target="_blank" rel="noopener">Full report ↗</a>'+
-      '<button class="doc-chip doc-chip-ai" onclick="tsOpenAsk(\''+escHTML(tk)+'\',\''+escHTML(nm)+'\')">✦ Ask AI</button>'+
-      '<a class="doc-chip" href="https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&ticker='+tkE+'&type=&dateb=&owner=include&count=40" target="_blank" rel="noopener">All EDGAR ↗</a>'+
-    '</div>';
-    return _sec('Documents · SEC EDGAR','📄','blue', actions+
-      '<div id="docs-root" data-tk="'+escHTML(tk)+'"><div class="muted small" style="padding:12px 2px">Loading filings from SEC EDGAR…</div></div>'+
-      '<div class="muted small" style="margin-top:6px">Annual report (10-K) &amp; last 4 quarters (10-Q) open on SEC EDGAR (official HTML). The one-click <b>PDF</b> above is AlphaHunt\'s research report.</div>');
+    const tk=(t.ticker||'').toUpperCase();
+    return '<div id="docs-root" data-tk="'+escHTML(tk)+'"><div class="muted small" style="padding:14px 2px">Loading filings from SEC EDGAR…</div></div>';
   }
   function _loadDocuments(){
     const root=drawer.querySelector('#docs-root'); if(!root||root.dataset.loaded==='1') return;
     const tk=root.getAttribute('data-tk'); if(!tk) return;
     root.dataset.loaded='1';
+    const tkE=encodeURIComponent(tk);
     const row=it=>'<a class="doc-row" href="'+it.url+'" target="_blank" rel="noopener"><span class="doc-row-l"><b>'+escHTML(it.label)+'</b>'+(it.date?'<small>'+escHTML(it.date)+'</small>':'')+'</span><span class="doc-ar">↗</span></a>';
-    const col=(title,html)=>'<div class="doc-col"><div class="doc-col-h">'+title+'</div>'+(html||'<div class="muted small">None found.</div>')+'</div>';
-    fetch('/api/documents/'+encodeURIComponent(tk)).then(r=>r.json()).then(d=>{
-      const ann=(d.annual||[]).map(row).join(''), qtr=(d.quarterly||[]).map(row).join('');
-      if(!ann && !qtr){ root.innerHTML='<div class="muted small" style="padding:10px 2px">No SEC filings found for '+escHTML(tk)+' — it may be a non-US listing without EDGAR coverage.</div>'; return; }
-      root.innerHTML='<div class="doc-grid doc-grid-2">'+col('Annual reports',ann)+col('Last 4 quarters',qtr)+'</div>';
-    }).catch(()=>{ root.innerHTML='<div class="muted small" style="padding:10px 2px">Couldn\'t load filings right now — try again shortly.</div>'; root.dataset.loaded=''; });
+    const actions='<div class="doc-list">'+
+      '<a class="doc-link doc-link-pdf" href="/api/pdf/'+tkE+'" target="_blank" rel="noopener"><span class="doc-l"><b>⤓ Download PDF report</b><small>AlphaHunt tear sheet · one click</small></span></a>'+
+      '<a class="doc-link" href="/report/'+tkE+'" target="_blank" rel="noopener"><span class="doc-l"><b>Full research report</b><small>Long-form deep dive</small></span><span class="doc-ar">↗</span></a>'+
+      '<button class="doc-link" onclick="tsOpenAsk(\''+escHTML(tk)+'\')"><span class="doc-l"><b>✦ Ask AI</b><small>Chat about this stock</small></span><span class="doc-ar">→</span></button>'+
+      '<a class="doc-link" href="https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&ticker='+tkE+'&type=&dateb=&owner=include&count=40" target="_blank" rel="noopener"><span class="doc-l"><b>All EDGAR filings</b><small>Full filing history</small></span><span class="doc-ar">↗</span></a>'+
+    '</div>';
+    const note='<div class="muted small" style="margin-top:10px">Annual (10-K) &amp; quarterly (10-Q) open on SEC EDGAR (official HTML). The one-click PDF is AlphaHunt\'s research report.</div>';
+    const build=(ann,qtr)=>{ root.innerHTML='<div class="dr-deep-grid">'+
+        _sec('Annual reports','📄','blue', ann||'<div class="muted small">None found.</div>')+
+        _sec('Last 4 quarters','📊','violet', qtr||'<div class="muted small">None found.</div>')+
+        _sec('Full detailed report','🧭','green', actions)+
+      '</div>'+note; };
+    fetch('/api/documents/'+tkE).then(r=>r.json()).then(d=>{
+      build((d.annual||[]).map(row).join(''),(d.quarterly||[]).map(row).join(''));
+    }).catch(()=>{ build('',''); });
   }
 
   const DR_TABS=['Overview','Technicals','Financials','Valuation','Estimates','News','Peers','Documents'];
