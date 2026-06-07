@@ -5196,8 +5196,13 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 /* News word cloud spread across both side margins of the expanded drawer */
 #dr-news-cloud{position:fixed;inset:0;z-index:601;pointer-events:none;opacity:0;transition:opacity .6s ease}
 #dr-news-cloud.show{opacity:1}
-#dr-news-cloud .ncw{position:absolute;transform:translate(-50%,-50%);font-family:'Instrument Sans',sans-serif;font-weight:800;letter-spacing:-.01em;white-space:nowrap;opacity:.92;
-  text-shadow:0 1px 12px rgba(255,255,255,.7),0 0 1px rgba(255,255,255,.9);animation:ncwDrift ease-in-out infinite}
+#dr-news-cloud .ncw{position:absolute;transform:translate(-50%,-50%);font-family:'Instrument Sans',sans-serif;font-weight:800;letter-spacing:-.01em;white-space:nowrap;
+  padding:5px 12px;border-radius:999px;background:rgba(255,255,255,.78);-webkit-backdrop-filter:blur(7px);backdrop-filter:blur(7px);
+  box-shadow:0 6px 18px -8px rgba(9,20,60,.4),inset 0 0 0 1px rgba(255,255,255,.55);cursor:pointer;pointer-events:auto;animation:ncwDrift ease-in-out infinite}
+#dr-news-cloud .ncw:hover{background:rgba(255,255,255,.97);box-shadow:0 10px 24px -8px rgba(9,20,60,.5),inset 0 0 0 1px rgba(41,112,255,.3)}
+#ts-drawer .news-filter-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:11.5px;font-weight:700;color:var(--primary);background:rgba(41,112,255,.08);border:1px solid rgba(41,112,255,.2);border-radius:9px;padding:7px 11px;margin-bottom:8px}
+#ts-drawer .news-filter-bar .nfb-clear{border:0;background:rgba(41,112,255,.15);color:var(--primary);font-family:inherit;font-weight:700;font-size:11px;padding:3px 9px;border-radius:7px;cursor:pointer}
+#ts-drawer .news-filter-bar .nfb-clear:hover{background:rgba(41,112,255,.25)}
 @keyframes ncwDrift{0%{transform:translate(-50%,-50%)}50%{transform:translate(-50%,calc(-50% - 11px))}100%{transform:translate(-50%,-50%)}}
 @media(prefers-reduced-motion:reduce){#dr-news-cloud .ncw{animation:none}}
 #ts-drawer .peers-card .peer-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f1f5f9;cursor:pointer}
@@ -17082,9 +17087,19 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
       }
       toks.forEach(w=>{ if(SIGNAL.has(w)&&!BLOCK.has(w)&&!tick.has(w)) bump(cap(w),1); });
     });
-    return Object.values(found)
-      .filter(x=>!x[0].toLowerCase().split(/\s+/).some(w=>BLOCK.has(w)))
-      .sort((a,b)=>b[1]-a[1]).slice(0,12);
+    const POS=new Set("beat beats upside raise raises raised surge surges jump jumps growth record expansion demand ramp gain gains rally deal deals win wins accelerate accelerating momentum double doubles soar soars boost upgrade".split(' '));
+    const NEG=new Set("miss misses cut cuts drop drops fall falls fears drawdown downside weak weakness slow slowdown warning warn decline declines loss losses plunge risk risks compression dip dips concern concerns downgrade".split(' '));
+    const arr=Object.values(found).filter(x=>!x[0].toLowerCase().split(/\s+/).some(w=>BLOCK.has(w))).sort((a,b)=>b[1]-a[1]);
+    // Dedup: keep multi-word phrases, then drop any single word already inside one
+    // (so "Memory chip" stays but bare "Chip" is dropped).
+    const kept=[], seen=new Set();
+    arr.forEach(x=>{ if(x[0].indexOf(' ')>-1){ kept.push(x); x[0].toLowerCase().split(' ').forEach(w=>seen.add(w)); } });
+    arr.forEach(x=>{ if(x[0].indexOf(' ')===-1 && !seen.has(x[0].toLowerCase())) kept.push(x); });
+    kept.sort((a,b)=>b[1]-a[1]);
+    return kept.slice(0,8).map(x=>{ const lw=x[0].toLowerCase().split(/\s+/);
+      let s='neu'; if(lw.some(w=>POS.has(w))) s='pos'; if(lw.some(w=>NEG.has(w))) s='neg';
+      return [x[0], x[1], s];
+    });
   }
   function tsBuildNewsCloud(full){
     let layer=document.getElementById('dr-news-cloud');
@@ -17092,25 +17107,40 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     layer.innerHTML='';
     if(!drawer.classList.contains('expanded')||!_drRailRoom()){ layer.classList.remove('show'); return; }
     const words=_newsCloudWords(full); if(!words.length){ layer.classList.remove('show'); return; }
-    const PAL=['#2970ff','#0040c1','#5DB3F1','#D4860A','#9E6308','#15803d','#7c3aed','#0f766e'];
+    const SENT={pos:'#15803d',neg:'#dc2626',neu:'#2970ff'};
     const w=Math.min(window.innerWidth*0.9,1000); const margin=window.innerWidth/2 - w/2;
     const max=words[0][1], min=words[words.length-1][1];
     const perSide=Math.ceil(words.length/2);
     words.forEach((wd,i)=>{
-      const word=wd[0], c=wd[1], side=i%2, idxInSide=Math.floor(i/2);
+      const word=wd[0], c=wd[1], sent=wd[2]||'neu', side=i%2, idxInSide=Math.floor(i/2);
       const sz=14+Math.round((c-min)/Math.max(1,max-min)*12);
       const span=document.createElement('span'); span.className='ncw';
       span.textContent=word;
-      span.title='from recent headlines';
-      const yPct=9 + (idxInSide/Math.max(1,(perSide-1)||1))*80 + (Math.random()*6-3);
-      const zone=Math.max(40,margin-70);
-      const x = side===0 ? (16 + Math.random()*zone) : (window.innerWidth - margin + 16 + Math.random()*zone);
-      span.style.cssText='left:'+Math.round(x)+'px;top:'+yPct.toFixed(1)+'%;font-size:'+sz+'px;color:'+PAL[i%PAL.length]+';animation-delay:'+(Math.random()*4).toFixed(2)+'s;animation-duration:'+(5+Math.random()*4).toFixed(1)+'s';
+      span.title='“'+word+'” in recent headlines · tap to filter';
+      const yPct=14 + (idxInSide/Math.max(1,(perSide-1)||1))*72 + (Math.random()*6-3);
+      const cx = side===0 ? (margin/2) : (window.innerWidth - margin/2);
+      const x = Math.round(cx + (Math.random()*56-28));
+      span.style.cssText='left:'+x+'px;top:'+yPct.toFixed(1)+'%;font-size:'+sz+'px;color:'+SENT[sent]+';animation-delay:'+(Math.random()*4).toFixed(2)+'s;animation-duration:'+(5+Math.random()*4).toFixed(1)+'s';
+      span.addEventListener('click',e=>{ e.stopPropagation(); _newsFilter(word); });
       layer.appendChild(span);
     });
     layer.classList.add('show');
   }
   function _newsCloudHide(){ const n=document.getElementById('dr-news-cloud'); if(n) n.classList.remove('show'); }
+  /* Click a cloud phrase → jump to the News tab and filter headlines to it. */
+  function _newsFilter(phrase){
+    tsShowTab('News');
+    const pane=drawer.querySelector('.dr-pane[data-pane="News"]'); if(!pane) return;
+    const card=pane.querySelector('.news-card'); if(!card) return;
+    const pw=phrase.toLowerCase().split(/\s+/).filter(Boolean);
+    let shown=0;
+    pane.querySelectorAll('.news-row').forEach(row=>{ const tx=row.textContent.toLowerCase(); const match=pw.every(w=>tx.indexOf(w)>-1); row.style.display=match?'':'none'; if(match)shown++; });
+    let bar=pane.querySelector('.news-filter-bar');
+    if(!bar){ bar=document.createElement('div'); bar.className='news-filter-bar'; card.parentNode.insertBefore(bar,card); }
+    bar.innerHTML='<span>Filtered to “'+escHTML(phrase)+'” · '+shown+' headline'+(shown===1?'':'s')+'</span><button class="nfb-clear">Clear ✕</button>';
+    bar.querySelector('.nfb-clear').addEventListener('click',()=>{ pane.querySelectorAll('.news-row').forEach(r=>r.style.display=''); bar.remove(); });
+    drawer.scrollTop=0;
+  }
 
   /* ── Right rail: sticky key-card (Alpha / verdict / price / upside) + a
      section navigator (scrollspy) for the current tab. Wide screens only. ── */
