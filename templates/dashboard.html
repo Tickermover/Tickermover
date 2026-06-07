@@ -5773,8 +5773,16 @@ html.v2-dark body.v2 .main, body.v2 .main{padding:0 0 30px !important;max-width:
     <div class="v2-nav-item" onclick="v2Show('watch',this)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3 6.5 7 .6-5.3 4.6L18.5 21 12 17.3 5.5 21l1.8-7.3L2 9.1l7-.6z"/></svg><span>Watchlist</span>
     </div>
+
+    <div class="v2-sb-section">AI Research</div>
+    <div class="v2-nav-item" onclick="if(window.tsOpenAsk)tsOpenAsk()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l1.6 5.2L19 10l-5.4 1.8L12 17l-1.6-5.2L5 10l5.4-1.8z"/><path d="M18 15l.7 2.3L21 18l-2.3.7L18 21l-.7-2.3L15 18l2.3-.7z"/></svg><span>Ask AI</span><span class="v2-nav-tag" style="background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff">NEW</span>
+    </div>
     <div class="v2-nav-item" onclick="v2Show('briefings',this);v2LoadBriefings()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16v12H7l-3 3z"/></svg><span>Briefings</span>
+    </div>
+    <div class="v2-nav-item" onclick="v2Show('concall',this);v2LoadConcall()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg><span>Concall Summary</span>
     </div>
 
     <div class="v2-sb-section">SUPPORT</div>
@@ -6165,6 +6173,21 @@ html.v2-dark body.v2 .main, body.v2 .main{padding:0 0 30px !important;max-width:
     </div>
     <div id="v2-brf-detail" class="v2-brf-detail" style="display:none"></div>
   </div>
+</div>
+
+<!-- CONCALL SUMMARY — detailed AI summary of the latest earnings call -->
+<div id="panel-concall" class="panel">
+  <div class="panel-header">
+    <div>
+      <div class="panel-h-title">🎙️ Concall <em>summary</em></div>
+      <div class="panel-h-sub">Detailed AI summary of the latest earnings call — grounded in the transcript / latest filing.</div>
+    </div>
+  </div>
+  <div class="cc-bar">
+    <input id="cc-tk" type="text" placeholder="Enter a ticker — e.g. NVDA, AAPL, STX" onkeydown="if(event.key==='Enter')v2LoadConcall()">
+    <button class="cc-go" onclick="v2LoadConcall()">Summarise →</button>
+  </div>
+  <div id="concall-root"><div class="muted" style="padding:14px 2px">Enter a ticker above to generate a detailed concall summary.</div></div>
 </div>
 
 <!-- MODEL PORTFOLIO -->
@@ -17714,6 +17737,25 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
 #askai-modal .ai-send{width:40px;height:40px;border-radius:50%;border:0;background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff;font-size:18px;cursor:pointer;flex:none}
 #askai-modal .ai-send:disabled{opacity:.5;cursor:default}
 #askai-modal .ai-disc{font-size:10px;color:#cbd5e1;text-align:center;padding:0 16px 10px;background:#fff}
+#askai-modal .ai-pick{display:flex;gap:8px;max-width:420px;margin:0 auto}
+#askai-modal .ai-pick input{flex:1;border:1px solid #e5e7eb;border-radius:12px;padding:11px 14px;font-family:inherit;font-size:14px;outline:none;text-transform:uppercase}
+#askai-modal .ai-pick input:focus{border-color:#a78bfa}
+#askai-modal .ai-pick-go{border:0;background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff;font-family:inherit;font-weight:700;font-size:13px;padding:0 16px;border-radius:12px;cursor:pointer}
+/* Concall summary panel */
+#panel-concall .cc-bar{display:flex;gap:8px;max-width:520px;margin:0 0 18px}
+#panel-concall .cc-bar input{flex:1;border:1px solid var(--hair,#e5e7eb);border-radius:12px;padding:11px 14px;font-family:inherit;font-size:14px;outline:none;text-transform:uppercase}
+#panel-concall .cc-bar input:focus{border-color:#7c3aed}
+#panel-concall .cc-go{border:0;background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff;font-family:inherit;font-weight:700;font-size:13px;padding:0 18px;border-radius:12px;cursor:pointer;white-space:nowrap}
+#panel-concall .cc-loading{display:flex;align-items:center;gap:10px;color:#6d28d9;font-weight:600;font-size:13px;padding:16px 2px}
+#panel-concall .cc-loading .ai-load i{width:6px;height:6px;border-radius:50%;background:#a78bfa;display:inline-block;animation:aiBlink 1s infinite}
+#panel-concall .cc-doc{max-width:880px;background:#fff;border:1px solid var(--hair,#e5e7eb);border-radius:16px;padding:22px 26px;box-shadow:0 10px 30px -18px rgba(15,40,100,.25);line-height:1.6;color:#1e293b;font-size:14px}
+#panel-concall .cc-doc .cc-h{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:17px;color:#0f172a;margin:20px 0 8px;letter-spacing:-.01em}
+#panel-concall .cc-doc .cc-h:first-child{margin-top:0}
+#panel-concall .cc-doc .cc-ul{margin:6px 0 12px;padding-left:20px}
+#panel-concall .cc-doc .cc-ul li{margin:4px 0}
+#panel-concall .cc-doc .cc-p{margin:8px 0}
+#panel-concall .cc-doc b{color:#0f172a;font-weight:700}
+#panel-concall .cc-foot{max-width:880px;font-size:11px;color:#94a3b8;margin-top:10px;padding:0 4px}
 </style>
 <script>
 (function(){
@@ -17754,6 +17796,16 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
   }
   function welcome(){
     var s=el().querySelector('.ai-scroll');
+    if(!TICK){   // opened globally (sidebar) — pick a stock first
+      s.innerHTML='<div class="ai-hello">Ask AI about a stock</div>'+
+        '<div class="ai-pick"><input id="ai-pick-tk" placeholder="Enter a ticker — e.g. NVDA"><button class="ai-pick-go">Start →</button></div>'+
+        '<div class="ai-ground">Grounded in SEC filings, earnings transcript &amp; AlphaHunt metrics</div>';
+      var go=function(){ var v=((s.querySelector('#ai-pick-tk')||{}).value||'').trim().toUpperCase(); if(v){ TICK=v; NAME=v; el().querySelector('.ai-title').textContent=v; welcome(); var ta=el().querySelector('textarea'); if(ta) ta.focus(); } };
+      s.querySelector('.ai-pick-go').addEventListener('click',go);
+      s.querySelector('#ai-pick-tk').addEventListener('keydown',function(e){ if(e.key==='Enter') go(); });
+      setTimeout(function(){ var i=s.querySelector('#ai-pick-tk'); if(i) i.focus(); },60);
+      return;
+    }
     s.innerHTML='<div class="ai-hello">How can I help you with <b>'+esc(NAME||TICK)+'</b>?</div>'+
       '<div class="ai-suggest">'+SUGGEST.map(function(q){return '<button class="ai-sug" data-q="'+esc(q)+'">'+esc(q)+'<span class="ar">→</span></button>';}).join('')+'</div>'+
       '<div class="ai-ground">Grounded in SEC filings, earnings transcript &amp; AlphaHunt metrics</div>';
@@ -17780,10 +17832,46 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
   window.tsOpenAsk=function(ticker,name){
     TICK=(ticker||'').toUpperCase(); NAME=name||TICK;
     build();
-    el().querySelector('.ai-title').textContent=TICK;
+    el().querySelector('.ai-title').textContent=TICK||'AI';
     welcome();
     el().classList.add('open');
-    setTimeout(function(){ var ta=el().querySelector('textarea'); if(ta) ta.focus(); },60);
+  };
+})();
+</script>
+
+<!-- ─────────── Concall summary panel loader ─────────── -->
+<script>
+(function(){
+  function esc(s){var d=document.createElement('div');d.textContent=s==null?'':String(s);return d.innerHTML;}
+  // Minimal Markdown → HTML for the concall summary (bold, headings, bullets).
+  function md(src){
+    var lines=String(src||'').split(/\r?\n/), out=[], inList=false;
+    function closeList(){ if(inList){ out.push('</ul>'); inList=false; } }
+    lines.forEach(function(ln){
+      var t=ln.trim();
+      if(!t){ closeList(); return; }
+      var b=esc(t).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>');
+      var heading=/^\*\*[^*]+\*\*:?$/.test(t) || /^#{1,4}\s+/.test(t);
+      if(/^#{1,4}\s+/.test(t)){ closeList(); out.push('<h4 class="cc-h">'+esc(t.replace(/^#{1,4}\s+/,''))+'</h4>'); return; }
+      if(heading){ closeList(); out.push('<h4 class="cc-h">'+b.replace(/<\/?b>/g,'').replace(/:$/,'')+'</h4>'); return; }
+      if(/^[-•*]\s+/.test(t)){ if(!inList){ out.push('<ul class="cc-ul">'); inList=true; } out.push('<li>'+b.replace(/^[-•*]\s+/,'')+'</li>'); return; }
+      closeList(); out.push('<p class="cc-p">'+b+'</p>');
+    });
+    closeList();
+    return out.join('');
+  }
+  window.v2LoadConcall=function(ticker){
+    var root=document.getElementById('concall-root'); if(!root) return;
+    var inp=document.getElementById('cc-tk');
+    var tk=(ticker||(inp&&inp.value)||'').trim().toUpperCase();
+    if(!tk){ root.innerHTML='<div class="muted" style="padding:14px 2px">Enter a ticker above to generate a detailed concall summary.</div>'; return; }
+    if(inp) inp.value=tk;
+    root.innerHTML='<div class="cc-loading"><span class="ai-load"><i></i><i></i><i></i></span> Summarising the latest call for <b>'+esc(tk)+'</b>… (first load can take ~10s)</div>';
+    fetch('/api/concall/'+encodeURIComponent(tk)).then(function(r){return r.json();}).then(function(d){
+      if(!d.ok){ root.innerHTML='<div class="muted" style="padding:14px 2px">'+esc(d.summary||'No summary available.')+'</div>'; return; }
+      root.innerHTML='<div class="cc-doc">'+md(d.summary)+'</div>'+
+        '<div class="cc-foot">Source: '+esc(d.source||'filing')+' · AI-generated, grounded in the transcript · not investment advice — verify against the source.</div>';
+    }).catch(function(){ root.innerHTML='<div class="muted" style="padding:14px 2px">Couldn\'t generate the summary right now — try again shortly.</div>'; });
   };
 })();
 </script>

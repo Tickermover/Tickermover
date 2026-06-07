@@ -3397,6 +3397,26 @@ async def api_documents(ticker: str):
     return JSONResponse(_clean(data), headers={"Cache-Control": "public, max-age=3600"})
 
 
+def _ticker_metrics_block(tk: str) -> str:
+    t = next((x for x in (_universe_data or []) if (x.get("ticker", "").upper() == tk)), None)
+    if not t:
+        return ""
+    sc = t.get("smart_score") if t.get("smart_score") is not None else t.get("pop_score")
+    return (f"Name: {t.get('name')} | Sector: {t.get('sector')} / {t.get('sub_sector')}\n"
+            f"Alpha score: {sc} | Grade: {t.get('grade')}\n"
+            f"Price: {t.get('price')} | Target upside %: {t.get('target_upside_pct')}\n"
+            f"Rev growth YoY: {t.get('revenue_growth_yoy')} | EPS growth YoY: {t.get('eps_growth_yoy')}")
+
+
+@app.get("/api/concall/{ticker}")
+async def api_concall(ticker: str):
+    """Detailed earnings-call (concall) summary from the latest transcript/filing."""
+    import stock_rag
+    tk = (ticker or "").upper()
+    res = await stock_rag.concall_summary(tk, _ticker_metrics_block(tk))
+    return JSONResponse(res, headers={"Cache-Control": "public, max-age=1800"})
+
+
 @app.get("/api/thesis/{symbol}")
 async def api_thesis(symbol: str):
     """

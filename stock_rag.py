@@ -191,6 +191,77 @@ async def _claude_answer(ticker, question, context_blocks, profile_data) -> str 
         return None
 
 
+async def _claude_raw(prompt: str, max_tokens: int = 2500) -> str | None:
+    if not ANTHROPIC_KEY:
+        return None
+    payload = {"model": ANTHROPIC_MODEL, "max_tokens": max_tokens,
+               "messages": [{"role": "user", "content": prompt}]}
+    headers = {"x-api-key": ANTHROPIC_KEY, "anthropic-version": "2023-06-01",
+               "content-type": "application/json"}
+    try:
+        async with httpx.AsyncClient(timeout=60) as c:
+            r = await c.post("https://api.anthropic.com/v1/messages",
+                             json=payload, headers=headers)
+            if r.status_code != 200:
+                logger.warning(f"stock_rag: Anthropic HTTP {r.status_code}: {r.text[:200]}")
+                return None
+            return (r.json().get("content") or [{}])[0].get("text", "").strip()
+    except Exception as exc:
+        logger.warning(f"stock_rag: Anthropic raw: {exc}")
+        return None
+
+
+_CONCALL_PROMPT = (
+    "You are an equity analyst writing a DETAILED earnings-call (concall) summary "
+    "for {ticker}, grounded strictly in the transcript/filing text below. Produce a "
+    "thorough, investor-grade brief in Markdown with this structure:\n\n"
+    "**One-line takeaway** — a single bold sentence.\n\n"
+    "Then 4-8 thematic sections, each a bold heading on its own line followed by "
+    "tight bullets. Cover, where the text supports it: strategy & positioning; "
+    "the financial snapshot (quote exact figures — revenue, EBITDA, PBT, margins, "
+    "guidance); segment-by-segment detail with numbers; new assets / capacity / "
+    "ramp timelines; capex & leverage; and management's forward guidance. "
+    "End with a section **Key investor takeaways** (3-5 bullets).\n\n"
+    "Rules: use ONLY facts present in the text; quote concrete numbers verbatim; "
+    "attribute guidance to management; do NOT give buy/sell advice; if a topic isn't "
+    "covered, omit it rather than inventing. Be specific, not generic.\n\n"
+    "=== OUR METRICS ===\n{metrics}\n\n=== SOURCE ({src}) ===\n{text}\n\nSummary:"
+)
+
+
+async def concall_summary(ticker: str, profile_data: str = "") -> dict:
+    """Detailed concall/earnings summary from the latest transcript or filing."""
+    if not ANTHROPIC_KEY:
+        return {"ok": False, "summary": "The AI summary isn't enabled yet "
+                "(set ANTHROPIC_API_KEY).", "source": None}
+    text = src = None
+    try:
+        import event_intel as ei
+        try:
+            tr = await ei._fetch_av_transcript(ticker)
+            if tr and tr.get("text"):
+                text, src = tr["text"], "earnings call transcript"
+        except Exception:
+            pass
+        if not text:
+            ed = await ei._fetch_edgar_recent(ticker)
+            if ed and ed.get("text"):
+                text, src = ed["text"], ed.get("source_label", "recent SEC filing")
+    except Exception as exc:
+        logger.warning(f"stock_rag: concall fetch {ticker}: {exc}")
+    if not text:
+        return {"ok": False, "source": None,
+                "summary": "No earnings-call transcript or recent filing is available "
+                           "to summarise for this ticker yet."}
+    prompt = _CONCALL_PROMPT.format(ticker=ticker, src=src, text=text[:45000],
+                                    metrics=profile_data or "(none)")
+    ans = await _claude_raw(prompt, max_tokens=2600)
+    if not ans:
+        return {"ok": False, "source": src,
+                "summary": "Couldn't generate the summary right now — try again shortly."}
+    return {"ok": True, "summary": ans, "source": src}
+
+
 async def ask(ticker: str, question: str, profile_data: str = "") -> dict:
     """Main entry: returns {ok, answer, sources[]}."""
     question = (question or "").strip()
