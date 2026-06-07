@@ -17057,13 +17057,34 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
 
   /* ── Floating news word cloud spread across BOTH side margins of the expanded
      drawer. Built from the current stock's headlines once full data loads. ── */
+  /* Extract short, descriptive KEY PHRASES from the headlines — not single
+     words. Recommendation/rating language (buy/sell/hold/upgrade ratings/etc.)
+     is blocked so the cloud never reads as advice from us. */
   function _newsCloudWords(full){
     const nw=(full&&full.news)||[]; if(!Array.isArray(nw)||!nw.length) return [];
-    const STOP=new Set(("a an the of to in on for and or but with at by from as is are be was were been has have had will would can could may might do does did this that these those it its their they them he she his her you your we our us not no new news amid over under after before into out up down off than then so if vs via per inc corp ltd co company shares stock stocks share market markets report reports says said say according more most much many also what when where which who how why about back still get got just like one two").split(/\s+/));
-    const tickWords=new Set((((full&&full.ticker)||'')+' '+((full&&full.name)||'')).toLowerCase().split(/[^a-z0-9]+/).filter(Boolean));
-    const freq={};
-    nw.slice(0,20).forEach(a=>{ (a.headline||a.title||'').toLowerCase().split(/[^a-z0-9']+/).forEach(w=>{ w=w.replace(/^'+|'+$/g,''); if(w.length<3||/^\d+$/.test(w)||STOP.has(w)||tickWords.has(w))return; freq[w]=(freq[w]||0)+1; }); });
-    return Object.keys(freq).map(w=>[w,freq[w]]).sort((a,b)=>b[1]-a[1]).slice(0,18);
+    const BLOCK=new Set("buy buys buying bought sell sells selling sold hold holds holding overweight underweight outperform underperform accumulate reduce neutral rating ratings recommend recommends recommendation conviction strong long short".split(' '));
+    const STOP=new Set("a an the of to in on for and or but with at by from as is are be was were been has have had will would can could may might do does did this that these those it its their they them he she his her you your we our us not no new amid over under after before into out up down off than then so if vs via per inc corp ltd co company shares stock stocks share market markets says said say according more most much many also what when where which who how why about back still get got just like one two three presents present conference call take takes".split(' '));
+    const SIGNAL=new Set("revenue margin margins earnings guidance growth deal deals demand backlog contract contracts order orders upside downside beat beats miss misses ramp dip dips raise raises raised cut cuts optics optical chip chips semiconductor profit sales outlook forecast expansion partnership acquisition launch record dividend quarter quarterly target targets upgrade downgrade phase opportunity number numbers maintains initiates".split(' '));
+    const tick=new Set((((full&&full.ticker)||'')+' '+((full&&full.name)||'')).toLowerCase().split(/[^a-z0-9]+/).filter(Boolean));
+    const found={}; const cap=w=>w.charAt(0).toUpperCase()+w.slice(1);
+    const bump=(p,s)=>{ const k=p.toLowerCase(); if(!found[k]||found[k][1]<s) found[k]=[p,s]; };
+    nw.slice(0,16).forEach(a=>{
+      const raw=(a.headline||a.title||'');
+      (raw.match(/\$\s?\d+(?:\.\d+)?\s?(?:million|billion|thousand|m|b|k)?/ig)||[]).forEach(m=>{
+        bump(m.replace(/\s+/g,'').toUpperCase().replace('MILLION','M').replace('BILLION','B').replace('THOUSAND','K'),5);
+      });
+      const toks=raw.toLowerCase().split(/[^a-z0-9']+/).map(w=>w.replace(/^'+|'+$/g,'')).filter(Boolean);
+      for(let i=0;i<toks.length-1;i++){
+        const a1=toks[i], b1=toks[i+1];
+        if(a1.length<3||b1.length<3) continue;
+        if(BLOCK.has(a1)||BLOCK.has(b1)||STOP.has(a1)||STOP.has(b1)||tick.has(a1)||tick.has(b1)) continue;
+        if(SIGNAL.has(a1)||SIGNAL.has(b1)) bump(cap(a1)+' '+b1, SIGNAL.has(b1)?3:2);
+      }
+      toks.forEach(w=>{ if(SIGNAL.has(w)&&!BLOCK.has(w)&&!tick.has(w)) bump(cap(w),1); });
+    });
+    return Object.values(found)
+      .filter(x=>!x[0].toLowerCase().split(/\s+/).some(w=>BLOCK.has(w)))
+      .sort((a,b)=>b[1]-a[1]).slice(0,12);
   }
   function tsBuildNewsCloud(full){
     let layer=document.getElementById('dr-news-cloud');
@@ -17077,10 +17098,10 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     const perSide=Math.ceil(words.length/2);
     words.forEach((wd,i)=>{
       const word=wd[0], c=wd[1], side=i%2, idxInSide=Math.floor(i/2);
-      const sz=15+Math.round((c-min)/Math.max(1,max-min)*22);
+      const sz=14+Math.round((c-min)/Math.max(1,max-min)*12);
       const span=document.createElement('span'); span.className='ncw';
-      span.textContent=word.charAt(0).toUpperCase()+word.slice(1);
-      span.title=c+' mention'+(c>1?'s':'');
+      span.textContent=word;
+      span.title='from recent headlines';
       const yPct=9 + (idxInSide/Math.max(1,(perSide-1)||1))*80 + (Math.random()*6-3);
       const zone=Math.max(40,margin-70);
       const x = side===0 ? (16 + Math.random()*zone) : (window.innerWidth - margin + 16 + Math.random()*zone);
