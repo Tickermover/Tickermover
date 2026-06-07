@@ -292,13 +292,19 @@ async def _fetch_edgar_recent(ticker: str) -> dict | None:
 
 # ── 2. Summarization (Anthropic Haiku) ────────────────────────────────────
 
-_SUMMARY_PROMPT = """You are summarising a corporate filing or earnings call into a
-structured JSON object for an analyst-style stock research report
-(Quartr-style format). The input may be an earnings call transcript, an
-8-K earnings press release, or a 10-Q MD&A section.
+_SUMMARY_PROMPT = """You are writing a FAST RESULTS BRIEFING — a quantitative, skimmable
+"catch me up in 30 seconds" digest of what this company just REPORTED. The
+input is usually an 8-K earnings press release or a 10-Q (the filed numbers).
+
+OBJECTIVE: lead with the hard reported results and what changed this period —
+revenue, EPS, margins, growth rates, beats/misses vs expectations, and the
+headline guidance figures. This is the NUMBERS view; a separate "Concall
+Summary" feature covers the management narrative, so stay results-first and
+tight here rather than retelling the story.
 
 Be specific with numbers, quote exact figures and percentages from the source.
-Do NOT make up data. If the source doesn't cover something, omit that section.
+Keep every bullet dense and decision-relevant — no filler. Do NOT make up data.
+If the source doesn't cover something, omit that section.
 
 Generate 3-5 SECTIONS with DYNAMIC headings that reflect the actual content
 of this specific event. Typical headings might be:

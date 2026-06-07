@@ -222,9 +222,16 @@ async def _claude_raw(prompt: str, max_tokens: int = 2500) -> str | None:
 
 
 _CONCALL_PROMPT = (
-    "You are an equity analyst writing a DETAILED earnings-call (concall) summary "
-    "for {ticker}, grounded strictly in the transcript/filing text below. Produce a "
-    "thorough, investor-grade brief in Markdown with this structure:\n\n"
+    "You are an equity analyst writing a DEEP, qualitative earnings-call (concall) "
+    "summary for {ticker}, grounded strictly in the transcript/filing text below. "
+    "OBJECTIVE: capture the NARRATIVE management gave on the call — the strategy, "
+    "the segment-by-segment color, demand commentary, management's framing and tone, "
+    "what came out of Q&A, and forward guidance in their own words. This is the "
+    "STORY companion to a separate fast 'Briefings' digest that already lists the "
+    "headline reported numbers — so don't just restate those figures; explain the "
+    "WHY and the context behind them. Cite concrete numbers only where they support "
+    "the narrative. Produce a thorough, investor-grade brief in Markdown with this "
+    "structure:\n\n"
     "**One-line takeaway** — a single bold sentence.\n\n"
     "Then 4-8 thematic sections, each a bold heading on its own line followed by "
     "tight bullets. Cover, where the text supports it: strategy & positioning; "

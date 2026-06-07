@@ -6171,7 +6171,8 @@ html.v2-dark body.v2 .main, body.v2 .main{padding:0 0 30px !important;max-width:
   <div id="briefings-root">
     <div class="v2-brf-head">
       <div class="v2-brf-eyebrow">Briefings</div>
-      <div class="v2-brf-title">Event summaries — every ticker</div>
+      <div class="v2-brf-title">Catch up on the numbers — fast</div>
+      <div class="v2-brf-sub">Skim what any company just <b>reported</b>: headline results, beats &amp; misses, and guidance figures, straight from the latest 8-K / 10-Q. Pick a ticker for a 30-second brief. <span style="color:#94a3b8">Want the story behind the numbers? See <b>Concall&nbsp;Summary</b>.</span></div>
     </div>
     <div class="v2-brf-grid" id="v2-brf-grid">
       <div class="v2-brf-loading">Loading ticker list…</div>
@@ -6185,14 +6186,14 @@ html.v2-dark body.v2 .main, body.v2 .main{padding:0 0 30px !important;max-width:
   <div class="panel-header">
     <div>
       <div class="panel-h-title">🎙️ Concall <em>summary</em></div>
-      <div class="panel-h-sub">Detailed AI summary of the latest earnings call — grounded in the transcript / latest filing.</div>
+      <div class="panel-h-sub">Go deep on what management <b>said</b> — strategy, segment-by-segment color, Q&amp;A signals and guidance in their own words, straight from the earnings-call transcript. For the reported numbers at a glance, see <b>Briefings</b>.</div>
     </div>
   </div>
   <div class="cc-bar">
     <input id="cc-tk" type="text" placeholder="Enter a ticker — e.g. NVDA, AAPL, STX" onkeydown="if(event.key==='Enter')v2LoadConcall()">
-    <button class="cc-go" onclick="v2LoadConcall()">Summarise →</button>
+    <button class="cc-go" onclick="v2LoadConcall()">Go deep →</button>
   </div>
-  <div id="concall-root"><div class="muted" style="padding:14px 2px">Enter a ticker above to generate a detailed concall summary.</div></div>
+  <div id="concall-root"><div class="muted" style="padding:14px 2px">Enter a ticker to read the full story from its latest earnings call.</div></div>
 </div>
 
 <!-- MODEL PORTFOLIO -->
