@@ -29,6 +29,9 @@ VOYAGE_KEY      = os.environ.get("VOYAGE_API_KEY", "").strip()
 VOYAGE_MODEL    = os.environ.get("VOYAGE_MODEL", "voyage-3-lite")
 ANTHROPIC_KEY   = os.environ.get("ANTHROPIC_API_KEY", "").strip()
 ANTHROPIC_MODEL = os.environ.get("ANTHROPIC_MODEL", "claude-haiku-4-5-20251001")
+# The chat assistant uses a stronger model for best-in-class answers; the long
+# concall summary keeps ANTHROPIC_MODEL. Both are env-overridable.
+ASK_MODEL = os.environ.get("ASK_MODEL", "claude-sonnet-4-6")
 
 _INDEX: dict[str, dict] = {}          # ticker -> {ts, chunks:[str], vecs: np.ndarray}
 _INDEX_TTL = 24 * 3600               # rebuild a ticker's index once a day
@@ -163,18 +166,25 @@ async def _claude_answer(ticker, question, context_blocks, profile_data) -> str 
         return None
     ctx = "\n\n".join(context_blocks[:8])[:60000]
     prompt = (
-        f"You are AlphaHunt's research assistant for the US-listed stock {ticker}. "
-        "Answer the user's question using ONLY the context below (SEC filings, an "
-        "earnings transcript, and our own metrics). Be concise and specific; use "
-        "short bullet points or a small table when it helps. If the context does "
-        "not cover the question, say so plainly rather than guessing.\n"
+        f"You are AlphaHunt's senior equity-research assistant for the US-listed "
+        f"stock {ticker}. Give a best-in-class, investor-grade answer.\n"
+        "Ground your answer FIRST in the context below (SEC filings, an earnings "
+        "transcript, and our own metrics) and quote concrete figures from it where "
+        "relevant. You may ALSO draw on your own broader knowledge of the company, "
+        "its industry, competitors, business model, and the macro backdrop to make "
+        "the answer genuinely useful and complete — the context is a starting point, "
+        "not a hard boundary. When the documents and your general knowledge conflict, "
+        "prefer the documents, and don't invent specific figures that aren't either "
+        "in the context or well established. It's fine to present reasoning and "
+        "industry context as your own analysis. Be concise and specific; use short "
+        "bullet points or a small table when it helps.\n"
         "IMPORTANT: You are NOT a financial advisor. Describe and explain; never "
         "tell the user to buy, sell, or hold.\n\n"
         f"=== ALPHAHUNT METRICS ===\n{profile_data or '(none provided)'}\n\n"
         f"=== DOCUMENT CONTEXT ===\n{ctx or '(no documents retrieved)'}\n\n"
         f"=== QUESTION ===\n{question}\n\nAnswer:"
     )
-    payload = {"model": ANTHROPIC_MODEL, "max_tokens": 1200,
+    payload = {"model": ASK_MODEL, "max_tokens": 1500,
                "messages": [{"role": "user", "content": prompt}]}
     headers = {"x-api-key": ANTHROPIC_KEY, "anthropic-version": "2023-06-01",
                "content-type": "application/json"}
@@ -267,17 +277,19 @@ async def ask(ticker: str, question: str, profile_data: str = "") -> dict:
     question = (question or "").strip()
     if not question:
         return {"ok": False, "answer": "Ask something about the stock.", "sources": []}
-    if not is_enabled():
+    # Anthropic is the only hard requirement. Voyage embeddings just add document
+    # retrieval (RAG); without them the assistant still answers from our metrics
+    # plus Claude's own knowledge rather than being switched off entirely.
+    if not ANTHROPIC_KEY:
         return {"ok": False, "sources": [],
-                "answer": "The AI assistant isn't enabled yet. Set VOYAGE_API_KEY "
-                          "and ANTHROPIC_API_KEY to turn it on."}
-    blocks = await _retrieve(ticker, question)
+                "answer": "The AI assistant isn't enabled yet. Set ANTHROPIC_API_KEY "
+                          "to turn it on (add VOYAGE_API_KEY for filing-grounded RAG)."}
+    blocks = await _retrieve(ticker, question) if VOYAGE_KEY else []
     answer = await _claude_answer(ticker, question, blocks, profile_data)
     if not answer:
         return {"ok": False, "sources": [],
-                "answer": "I couldn't pull enough source documents to answer that "
-                          "reliably right now. Try a different question or check back "
-                          "after the next filing."}
+                "answer": "The assistant is having trouble responding right now. "
+                          "Please try again in a moment."}
     # surface which document types backed the answer
     srcs = []
     for b in blocks:
@@ -285,4 +297,6 @@ async def ask(ticker: str, question: str, profile_data: str = "") -> dict:
             lbl = b[1:b.find("]")]
             if lbl and lbl not in srcs:
                 srcs.append(lbl)
+    if not srcs:
+        srcs = ["AlphaHunt metrics + Claude analysis"]
     return {"ok": True, "answer": answer, "sources": srcs[:4]}

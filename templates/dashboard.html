@@ -17759,18 +17759,18 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
 (function(){
   var TICK='', NAME='', busy=false;
   var SUGGEST=[
-    "Explain the business model",
-    "What are the red flags?",
-    "How has the company evolved over 3 years?",
-    "Growth outlook for the next few years",
-    "Summarize the latest earnings",
-    "Bull case vs bear case",
-    "Management's recent commentary",
-    "Key products & segments",
+    "Explain me the business model of the company?",
+    "What are the red flags in the company?",
+    "Evolution of the company over last 3 years",
+    "Growth outlook for next 3 years",
+    "What is the management's recent commentary?",
+    "Create a table of key products",
+    "How is the stock expected to perform?",
+    "Management's past guidance vs delivery",
     "Is the valuation cheap or expensive?",
-    "What is the competitive moat?",
-    "Biggest risks to the thesis",
-    "Management guidance vs delivery"
+    "What is the company's competitive moat?",
+    "What are the biggest risks to the thesis?",
+    "Summarize the latest earnings call"
   ];
   function esc(s){var d=document.createElement('div');d.textContent=s==null?'':String(s);return d.innerHTML;}
   function fmt(s){ // light markdown: bold, bullets, line breaks
@@ -17801,7 +17801,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     if(!TICK){   // opened globally (sidebar) — pick a stock first
       s.innerHTML='<div class="ai-hello">Ask AI about a stock</div>'+
         '<div class="ai-pick"><input id="ai-pick-tk" placeholder="Enter a ticker — e.g. NVDA"><button class="ai-pick-go">Start →</button></div>'+
-        '<div class="ai-ground">Grounded in SEC filings, earnings transcript &amp; AlphaHunt metrics</div>';
+        '<div class="ai-ground">Powered by Claude — grounded in SEC filings, earnings transcript &amp; AlphaHunt metrics, enriched with broader market knowledge</div>';
       var go=function(){ var v=((s.querySelector('#ai-pick-tk')||{}).value||'').trim().toUpperCase(); if(v){ TICK=v; NAME=v; el().querySelector('.ai-title').textContent=v; welcome(); var ta=el().querySelector('textarea'); if(ta) ta.focus(); } };
       s.querySelector('.ai-pick-go').addEventListener('click',go);
       s.querySelector('#ai-pick-tk').addEventListener('keydown',function(e){ if(e.key==='Enter') go(); });
@@ -17810,7 +17810,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     }
     s.innerHTML='<div class="ai-hello"><span class="ai-sub">Hello,</span>How can I help you with <b>'+esc(NAME||TICK)+'</b>?</div>'+
       '<div class="ai-suggest">'+SUGGEST.map(function(q){return '<button class="ai-sug" data-q="'+esc(q)+'">'+esc(q)+'<span class="ar">→</span></button>';}).join('')+'</div>'+
-      '<div class="ai-ground">Grounded in SEC filings, earnings transcript &amp; AlphaHunt metrics</div>';
+      '<div class="ai-ground">Powered by Claude — grounded in SEC filings, earnings transcript &amp; AlphaHunt metrics, enriched with broader market knowledge</div>';
     s.querySelectorAll('.ai-sug').forEach(function(b){ b.addEventListener('click',function(){ send(b.getAttribute('data-q')); }); });
   }
   function add(html,cls){ var s=el().querySelector('.ai-scroll'); var d=document.createElement('div'); d.className='ai-msg '+(cls||''); d.innerHTML=html; s.appendChild(d); s.scrollTop=s.scrollHeight; return d; }
