@@ -17068,27 +17068,28 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
   function _newsCloudWords(full){
     const nw=(full&&full.news)||[]; if(!Array.isArray(nw)||!nw.length) return [];
     const BLOCK=new Set("buy buys buying bought sell sells selling sold hold holds holding overweight underweight outperform underperform accumulate reduce neutral rating ratings recommend recommends recommendation conviction strong long short".split(' '));
-    const STOP=new Set("a an the of to in on for and or but with at by from as is are be was were been has have had will would can could may might do does did this that these those it its their they them he she his her you your we our us not no new amid over under after before into out up down off than then so if vs via per inc corp ltd co company shares stock stocks share market markets says said say according more most much many also what when where which who how why about back still get got just like one two three presents present conference call take takes".split(' '));
-    const SIGNAL=new Set("revenue margin margins earnings guidance growth deal deals demand backlog contract contracts order orders upside downside beat beats miss misses ramp dip dips raise raises raised cut cuts optics optical chip chips semiconductor profit sales outlook forecast expansion partnership acquisition launch record dividend quarter quarterly target targets upgrade downgrade phase opportunity number numbers maintains initiates".split(' '));
+    const STOP=new Set("a an the of to in on for and or but with at by from as is are be was were been has have had will would can could may might do does did this that these those it its their they them he she his her you your we our us not no new amid over under after before into out up down off than then so if vs via per inc corp ltd co company market markets says said say according more most much many also what when where which who how why about back still get gets got go goes going just like one two three here heres make makes made meet meets meeting see sees seen little key blunt singles crowded coming suggest level looks despite day week month year january february march april june july august september october november december".split(' '));
+    const THEME=new Set("ai fed rate rates hike hikes cut cuts crypto bitcoin ethereum supercycle cycle trillion billion gains gain parabolic rebound crash rally robotics cloud memory semiconductor chip chips datacenter earnings guidance revenue margin margins upside downside dividend buyback valuation recession inflation tariff tariffs lawsuit demand supply growth deal deals contract order orders beat beats miss raise raises record forecast outlook target analyst bullish bearish opportunity risk risks warning surge boost momentum benchmarks ramp optics optical".split(' '));
     const tick=new Set((((full&&full.ticker)||'')+' '+((full&&full.name)||'')).toLowerCase().split(/[^a-z0-9]+/).filter(Boolean));
-    const found={}; const cap=w=>w.charAt(0).toUpperCase()+w.slice(1);
-    const bump=(p,s)=>{ const k=p.toLowerCase(); if(!found[k]||found[k][1]<s) found[k]=[p,s]; };
+    const ACR={ai:'AI',eps:'EPS',ipo:'IPO',ceo:'CEO',ev:'EV',q1:'Q1',q2:'Q2',q3:'Q3',q4:'Q4'};
+    const cap=w=>ACR[w]||(w.charAt(0).toUpperCase()+w.slice(1));
+    const found={}; const bump=(p,s)=>{ const k=p.toLowerCase(); if(!found[k]||found[k][1]<s) found[k]=[p,s]; };
+    const ok=w=>w.length>=3 && !BLOCK.has(w) && !STOP.has(w) && !tick.has(w) && !/^\d+$/.test(w);
     nw.slice(0,16).forEach(a=>{
       const raw=(a.headline||a.title||'');
-      (raw.match(/\$\s?\d+(?:\.\d+)?\s?(?:million|billion|thousand|m|b|k)?/ig)||[]).forEach(m=>{
-        bump(m.replace(/\s+/g,'').toUpperCase().replace('MILLION','M').replace('BILLION','B').replace('THOUSAND','K'),5);
+      (raw.match(/\$\s?\d+(?:\.\d+)?\s?(?:trillion|billion|million|thousand|t|b|m|k)?/ig)||[]).forEach(m=>{
+        bump(m.replace(/\s+/g,'').toUpperCase().replace('TRILLION','T').replace('BILLION','B').replace('MILLION','M').replace('THOUSAND','K'),5);
       });
       const toks=raw.toLowerCase().split(/[^a-z0-9']+/).map(w=>w.replace(/^'+|'+$/g,'')).filter(Boolean);
       for(let i=0;i<toks.length-1;i++){
         const a1=toks[i], b1=toks[i+1];
-        if(a1.length<3||b1.length<3) continue;
-        if(BLOCK.has(a1)||BLOCK.has(b1)||STOP.has(a1)||STOP.has(b1)||tick.has(a1)||tick.has(b1)) continue;
-        if(SIGNAL.has(a1)||SIGNAL.has(b1)) bump(cap(a1)+' '+b1, SIGNAL.has(b1)?3:2);
+        if(!ok(a1)||!ok(b1)) continue;
+        bump(cap(a1)+' '+cap(b1), 2+(THEME.has(a1)?1:0)+(THEME.has(b1)?1:0));
       }
-      toks.forEach(w=>{ if(SIGNAL.has(w)&&!BLOCK.has(w)&&!tick.has(w)) bump(cap(w),1); });
+      toks.forEach(w=>{ if(THEME.has(w)&&ok(w)) bump(cap(w),1); });
     });
-    const POS=new Set("beat beats upside raise raises raised surge surges jump jumps growth record expansion demand ramp gain gains rally deal deals win wins accelerate accelerating momentum double doubles soar soars boost upgrade".split(' '));
-    const NEG=new Set("miss misses cut cuts drop drops fall falls fears drawdown downside weak weakness slow slowdown warning warn decline declines loss losses plunge risk risks compression dip dips concern concerns downgrade".split(' '));
+    const POS=new Set("beat beats upside raise raises raised surge surges jump jumps growth record expansion demand ramp gain gains rally deal deals win wins accelerate accelerating momentum double doubles soar soars boost upgrade rebound parabolic supercycle bullish opportunity".split(' '));
+    const NEG=new Set("miss misses cut cuts drop drops fall falls fears drawdown downside weak weakness slow slowdown warning warn decline declines loss losses plunge risk risks compression dip dips concern concerns downgrade crash crashes hike hikes recession lawsuit corruption tariff tariffs bearish".split(' '));
     const arr=Object.values(found).filter(x=>!x[0].toLowerCase().split(/\s+/).some(w=>BLOCK.has(w))).sort((a,b)=>b[1]-a[1]);
     // Dedup: keep multi-word phrases, then drop any single word already inside one
     // (so "Memory chip" stays but bare "Chip" is dropped).
