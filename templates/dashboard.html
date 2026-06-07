@@ -5787,7 +5787,7 @@ html.v2-dark body.v2 .main, body.v2 .main{padding:0 0 30px !important;max-width:
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16v12H7l-3 3z"/></svg><span>Earnings Brief</span>
     </div>
     <div class="v2-nav-item" onclick="v2Show('concall',this);v2LoadCalls()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg><span>Earnings Call</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg><span>Concall Summary</span>
     </div>
 
     <div class="v2-sb-section">SUPPORT</div>
@@ -6172,7 +6172,7 @@ html.v2-dark body.v2 .main, body.v2 .main{padding:0 0 30px !important;max-width:
     <div class="v2-brf-head">
       <div class="v2-brf-eyebrow">Earnings Brief</div>
       <div class="v2-brf-title">Catch up on the numbers — fast</div>
-      <div class="v2-brf-sub">Skim what any company just <b>reported</b>: headline results, beats &amp; misses, and guidance figures, straight from the latest 8-K / 10-Q. Pick a ticker for a 30-second brief. <span style="color:#94a3b8">Want the story behind the numbers? See <b>Earnings&nbsp;Call</b>.</span></div>
+      <div class="v2-brf-sub">Skim what any company just <b>reported</b>: headline results, beats &amp; misses, and guidance figures, straight from the latest 8-K / 10-Q. Pick a ticker for a 30-second brief. <span style="color:#94a3b8">Want the story behind the numbers? See <b>Concall&nbsp;Summary</b>.</span></div>
     </div>
     <div class="v2-brf-grid" id="v2-brf-grid">
       <div class="v2-brf-loading">Loading ticker list…</div>
@@ -6185,7 +6185,7 @@ html.v2-dark body.v2 .main, body.v2 .main{padding:0 0 30px !important;max-width:
 <div id="panel-concall" class="panel">
   <div id="ec-root">
     <div class="v2-brf-head">
-      <div class="v2-brf-eyebrow">Earnings Call</div>
+      <div class="v2-brf-eyebrow">Concall Summary</div>
       <div class="v2-brf-title">Go deep on what management said</div>
       <div class="v2-brf-sub">Read the <b>story</b> behind the quarter: strategy, segment-by-segment color, Q&amp;A signals and guidance in management’s own words, straight from the call transcript. Pick a ticker for the full narrative. <span style="color:#94a3b8">Just want the reported numbers? See <b>Earnings&nbsp;Brief</b>.</span></div>
     </div>
@@ -8600,7 +8600,7 @@ function v2OpenCall(ticker){
     gridId: 'v2-ec-grid', detailId: 'v2-ec-detail',
     endpoint: '/api/concall/', what: 'earnings call',
     loading: 'Reading {sym}’s latest earnings call… (first load ~10s while AI digests the transcript)',
-    opts: { eyebrow: 'EARNINGS CALL', backFn: 'v2CloseCall' },
+    opts: { eyebrow: 'CONCALL SUMMARY', backFn: 'v2CloseCall' },
   });
 }
 function v2CloseCall(){
