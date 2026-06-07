@@ -17110,7 +17110,6 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     const w=Math.round(Math.min(window.innerWidth*0.9,1000));
     drawer.style.width=w+'px'; drawer.style.left='50%'; drawer.style.right='auto'; drawer.style.marginLeft=(-w/2)+'px';
     drawer.classList.add('expanded'); drawer.scrollTop=0;
-    try{ tsBuildSideRail(t); }catch(e){}
     _drState={t,candles:null,setup:null,full:t,tab:'Overview',tf:'6M'};
     Promise.allSettled([
       fetch('/api/candles/'+encodeURIComponent(t.ticker)+'?days=365').then(r=>r.ok?r.json():null).catch(()=>null),
@@ -17351,7 +17350,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
       '<div class="dr-pane" data-pane="News" hidden>'+paneNews(full)+'</div>'+
       '<div class="dr-pane" data-pane="Peers" hidden>'+panePeers(t)+'</div>'+
       '<div class="dr-pane" data-pane="Documents" hidden>'+paneDocuments(full)+'</div>'+
-    '</div><div class="dr-scrollhint" id="drHint"></div><button class="dr-back" onclick="tsCollapseDrawer()">◂ Back to summary</button>';
+    '</div><div class="dr-scrollhint" id="drHint"></div>';
     tsShowTab(_drState.tab||'Overview');
     try{ _drNavBuild(); }catch(e){}
     requestAnimationFrame(()=>requestAnimationFrame(()=>{ dd.querySelectorAll('.pf,.reb-fill').forEach(el=>{el.style.width=el.getAttribute('data-w')+'%';}); tsDrawChartEl(); }));
@@ -17390,13 +17389,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     _drRailHide(); _drRightHide();
     _drState=null;
   }
-  window.addEventListener('resize',()=>{ if(drawer.classList.contains('expanded')){ tsDrawChartEl();
-    const r=document.getElementById('dr-side-rail');
-    const sug=drawer.querySelector('.dr-inline-sug');
-    if(!_drRailRoom()){ _drRailHide(); _drRightHide(); }
-    else if(_drState&&_drState.t){
-      const lr=document.getElementById('dr-side-rail'); if(lr&&lr.classList.contains('show')) _drRailPosition(); else tsBuildSideRail(_drState.t);
-    } } });
+  window.addEventListener('resize',()=>{ if(drawer.classList.contains('expanded')) tsDrawChartEl(); });
   /* chart timeframe toggle (1M / 6M / 1Y) */
   drawer.addEventListener('click',(e)=>{ const b=e.target.closest('.cc-tf button'); if(!b||!_drState) return; _drState.tf=b.getAttribute('data-tf'); drawer.querySelectorAll('.cc-tf button').forEach(x=>x.classList.toggle('on',x===b)); tsDrawChartEl(); });
   /* Reach the end of a tab → glide to the next one (top → previous). This used
