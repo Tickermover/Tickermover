@@ -4936,6 +4936,18 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 #dr-right-rail .qa:hover{background:rgba(41,112,255,.12);transform:translateX(2px);border-color:rgba(41,112,255,.22)}
 #dr-right-rail .qa .qa-ic{font-size:14px;width:18px;text-align:center;flex:none}
 #dr-right-rail .qa.on{background:linear-gradient(135deg,#FFF3D9,#FFE9B0);color:#9E6308;border-color:#FFD98A}
+#dr-right-rail .bb-card{background:rgba(255,255,255,.94);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border:1px solid rgba(9,9,9,.08);border-radius:14px;padding:12px 13px;box-shadow:0 12px 28px -14px rgba(9,20,60,.5)}
+#dr-right-rail .bb-bull{border-left:3px solid #15803d}
+#dr-right-rail .bb-bear{border-left:3px solid #dc2626}
+#dr-right-rail .bb-h{font-family:'Instrument Sans',sans-serif;font-weight:800;font-size:11px;letter-spacing:.05em;text-transform:uppercase;margin-bottom:8px}
+#dr-right-rail .bb-bull .bb-h{color:#15803d} #dr-right-rail .bb-bear .bb-h{color:#dc2626}
+#dr-right-rail .bb-body{display:flex;flex-wrap:wrap;gap:6px}
+#dr-right-rail .bb-pill{font-family:'Instrument Sans',sans-serif;font-size:10.5px;font-weight:700;padding:4px 9px;border-radius:999px;white-space:nowrap}
+#dr-right-rail .bb-pill b{font-family:'JetBrains Mono',monospace;font-weight:800}
+#dr-right-rail .bb-pos{background:rgba(22,163,74,.12);color:#15803d}
+#dr-right-rail .bb-neg{background:rgba(220,38,38,.10);color:#b91c1c}
+#dr-right-rail .bb-flag{background:rgba(245,158,11,.14);color:#b45309}
+#dr-right-rail .bb-empty{font-size:10.5px;color:#94a3b8;font-style:italic}
 @media(prefers-reduced-motion:reduce){#dr-right-rail,#dr-right-rail.show{transition:none}}
 /* ── Ambient motion in the side margins — keeps the rails feeling alive.
    Gentle vertical bob (left/right desynced), a drifting glow behind each rail,
@@ -17008,6 +17020,8 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     const w=Math.round(Math.min(window.innerWidth*0.9,1000));
     drawer.style.width=w+'px'; drawer.style.left='50%'; drawer.style.right='auto'; drawer.style.marginLeft=(-w/2)+'px';
     drawer.classList.add('expanded'); drawer.scrollTop=0;
+    try{ tsBuildSideRail(t); }catch(e){}
+    try{ tsBuildBullBear(t); }catch(e){}
     _drState={t,candles:null,setup:null,full:t,tab:'Overview',tf:'6M'};
     Promise.allSettled([
       fetch('/api/candles/'+encodeURIComponent(t.ticker)+'?days=365').then(r=>r.ok?r.json():null).catch(()=>null),
@@ -17017,7 +17031,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
       const cd=res[0]&&res[0].value, full=(res[1]&&res[1].value)||t;
       if(cd&&cd.candles){ _drState.candles=cd.candles; if(cd.week_52_high)full._hi52=cd.week_52_high; if(cd.week_52_low)full._lo52=cd.week_52_low; _drState.setup=tsAnalyzeSetup(cd.candles,full); }
       _drState.full=full; tsRenderDetail();
-      try{ tsBuildNewsCloud(full); }catch(e){}
+      try{ tsBuildBullBear(full); }catch(e){}
     });
   }
 
@@ -17170,6 +17184,30 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     _drNavBuild();
   }
   function _drRightHide(){ const r=document.getElementById('dr-right-rail'); if(r) r.classList.remove('show'); }
+  /* Right rail: Bull case / Bear case — derived from the six pillars + risk
+     flags (all computed, never parsed text, so it can't produce junk). */
+  function tsBuildBullBear(t){
+    let r=document.getElementById('dr-right-rail');
+    if(!r){ r=document.createElement('div'); r.id='dr-right-rail'; r.addEventListener('click',e=>e.stopPropagation()); document.body.appendChild(r); }
+    if(!t || !_drRailRoom()){ r.classList.remove('show'); return; }
+    const pl=computePillars(t);
+    const items=PILLAR_LABELS.map((lbl,i)=>({lbl,v:pl[i]})).filter(x=>x.v!=null);
+    if(!items.length){ r.classList.remove('show'); return; }
+    const bulls=[...items].sort((a,b)=>b.v-a.v).filter(x=>x.v>=62).slice(0,3);
+    const bears=[...items].sort((a,b)=>a.v-b.v).filter(x=>x.v<=52).slice(0,3);
+    const flags=(typeof riskFlags==='function'?riskFlags(t):[]).slice(0,2);
+    const up=parseFloat(t.target_upside_pct);
+    const pill=(lbl,val,cls)=>'<span class="bb-pill bb-'+cls+'">'+escHTML(lbl)+' <b>'+val+'</b></span>';
+    let bull=bulls.map(x=>pill(x.lbl,x.v,'pos')).join('');
+    if(!isNaN(up)&&up>5) bull+='<span class="bb-pill bb-pos">Upside <b>+'+up.toFixed(0)+'%</b></span>';
+    let bear=bears.map(x=>pill(x.lbl,x.v,'neg')).join('')+flags.map(f=>'<span class="bb-pill bb-flag">⚠ '+escHTML(f.label)+'</span>').join('');
+    if(!isNaN(up)&&up<0) bear+='<span class="bb-pill bb-neg">Above target <b>'+up.toFixed(0)+'%</b></span>';
+    r.innerHTML=
+      '<div class="bb-card bb-bull"><div class="bb-h">▲ Bull case</div><div class="bb-body">'+(bull||'<span class="bb-empty">No standout strengths</span>')+'</div></div>'+
+      '<div class="bb-card bb-bear"><div class="bb-h">▼ Bear case</div><div class="bb-body">'+(bear||'<span class="bb-empty">No major risks flagged</span>')+'</div></div>';
+    _drRightPosition();
+    r.classList.add('show');
+  }
   function _drNavBuild(){
     const nav=document.getElementById('drkNav'); if(!nav) return;
     const pane=drawer.querySelector('.dr-pane:not([hidden])');
@@ -17259,13 +17297,17 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     drawer.style.width=''; drawer.style.left=''; drawer.style.right=''; drawer.style.marginLeft='';
     const tb=drawer.querySelector('.dr-tabs'); if(tb) tb.remove();
     const dd=drawer.querySelector('.dr-deep'); if(dd) dd.remove();
-    _drRailHide(); _newsCloudHide();
+    _drRailHide(); _drRightHide();
     _drState=null;
   }
   window.addEventListener('resize',()=>{ if(drawer.classList.contains('expanded')){ tsDrawChartEl();
     const r=document.getElementById('dr-side-rail');
     const sug=drawer.querySelector('.dr-inline-sug');
-    if(_drState&&_drState.full){ tsBuildNewsCloud(_drState.full); } else { _newsCloudHide(); } } });
+    if(!_drRailRoom()){ _drRailHide(); _drRightHide(); }
+    else if(_drState&&_drState.t){
+      const lr=document.getElementById('dr-side-rail'); if(lr&&lr.classList.contains('show')) _drRailPosition(); else tsBuildSideRail(_drState.t);
+      const rr=document.getElementById('dr-right-rail'); if(rr&&rr.classList.contains('show')) _drRightPosition(); else tsBuildBullBear(_drState.full||_drState.t);
+    } } });
   /* chart timeframe toggle (1M / 6M / 1Y) */
   drawer.addEventListener('click',(e)=>{ const b=e.target.closest('.cc-tf button'); if(!b||!_drState) return; _drState.tf=b.getAttribute('data-tf'); drawer.querySelectorAll('.cc-tf button').forEach(x=>x.classList.toggle('on',x===b)); tsDrawChartEl(); });
   /* Reach the end of a tab → glide to the next one (top → previous). This used
