@@ -17081,12 +17081,11 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
       '<button class="doc-link" onclick="tsOpenAsk(\''+escHTML(tk)+'\')"><span class="doc-l"><b>✦ Ask AI</b><small>Chat about this stock</small></span><span class="doc-ar">→</span></button>'+
       '<a class="doc-link" href="https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&ticker='+tkE+'&type=&dateb=&owner=include&count=40" target="_blank" rel="noopener"><span class="doc-l"><b>All EDGAR filings</b><small>Full filing history</small></span><span class="doc-ar">↗</span></a>'+
     '</div>';
-    const note='<div class="muted small" style="margin-top:10px">Annual (10-K) &amp; quarterly (10-Q) open on SEC EDGAR (official HTML). The one-click PDF is AlphaHunt\'s research report.</div>';
     const build=(ann,qtr)=>{ root.innerHTML='<div class="dr-deep-grid">'+
         _sec('Annual reports','📄','blue', ann||'<div class="muted small">None found.</div>')+
         _sec('Last 4 quarters','📊','violet', qtr||'<div class="muted small">None found.</div>')+
         _sec('Full detailed report','🧭','green', actions)+
-      '</div>'+note; };
+      '</div>'; };
     fetch('/api/documents/'+tkE).then(r=>r.json()).then(d=>{
       build((d.annual||[]).map(row).join(''),(d.quarterly||[]).map(row).join(''));
     }).catch(()=>{ build('',''); });
@@ -17112,7 +17111,6 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     drawer.style.width=w+'px'; drawer.style.left='50%'; drawer.style.right='auto'; drawer.style.marginLeft=(-w/2)+'px';
     drawer.classList.add('expanded'); drawer.scrollTop=0;
     try{ tsBuildSideRail(t); }catch(e){}
-    try{ tsBuildBullBear(t); }catch(e){}
     _drState={t,candles:null,setup:null,full:t,tab:'Overview',tf:'6M'};
     Promise.allSettled([
       fetch('/api/candles/'+encodeURIComponent(t.ticker)+'?days=365').then(r=>r.ok?r.json():null).catch(()=>null),
@@ -17122,7 +17120,6 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
       const cd=res[0]&&res[0].value, full=(res[1]&&res[1].value)||t;
       if(cd&&cd.candles){ _drState.candles=cd.candles; if(cd.week_52_high)full._hi52=cd.week_52_high; if(cd.week_52_low)full._lo52=cd.week_52_low; _drState.setup=tsAnalyzeSetup(cd.candles,full); }
       _drState.full=full; tsRenderDetail();
-      try{ tsBuildBullBear(full); }catch(e){}
     });
   }
 
@@ -17399,7 +17396,6 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     if(!_drRailRoom()){ _drRailHide(); _drRightHide(); }
     else if(_drState&&_drState.t){
       const lr=document.getElementById('dr-side-rail'); if(lr&&lr.classList.contains('show')) _drRailPosition(); else tsBuildSideRail(_drState.t);
-      const rr=document.getElementById('dr-right-rail'); if(rr&&rr.classList.contains('show')) _drRightPosition(); else tsBuildBullBear(_drState.full||_drState.t);
     } } });
   /* chart timeframe toggle (1M / 6M / 1Y) */
   drawer.addEventListener('click',(e)=>{ const b=e.target.closest('.cc-tf button'); if(!b||!_drState) return; _drState.tf=b.getAttribute('data-tf'); drawer.querySelectorAll('.cc-tf button').forEach(x=>x.classList.toggle('on',x===b)); tsDrawChartEl(); });
