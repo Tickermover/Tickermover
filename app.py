@@ -3397,6 +3397,16 @@ async def api_documents(ticker: str):
     return JSONResponse(_clean(data), headers={"Cache-Control": "public, max-age=3600"})
 
 
+@app.get("/api/operating-kpis/{ticker}")
+async def api_operating_kpis(ticker: str):
+    """Beta: company-specific OPERATING KPIs (volumes, capacity, units …)
+    extracted by AI from the last few annual SEC filings, as a per-fiscal-year
+    grid. Lazily computed on first open, then served from a 30-day disk cache."""
+    import operating_kpis
+    data = await operating_kpis.get_operating_kpis((ticker or "").upper())
+    return JSONResponse(_clean(data), headers={"Cache-Control": "no-store"})
+
+
 def _ticker_metrics_block(tk: str) -> str:
     t = next((x for x in (_universe_data or []) if (x.get("ticker", "").upper() == tk)), None)
     if not t:
