@@ -5235,7 +5235,10 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 #ts-drawer .doc-chip-ai{border-color:rgba(124,58,237,.3);background:rgba(124,58,237,.08);color:#6d28d9}
 #ts-drawer .doc-chip-ai:hover{background:rgba(124,58,237,.16)}
 #ts-drawer .doc-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
-@media(max-width:760px){#ts-drawer .doc-grid{grid-template-columns:1fr}}
+#ts-drawer .doc-grid-2{grid-template-columns:1fr 1fr;max-width:640px}
+@media(max-width:760px){#ts-drawer .doc-grid,#ts-drawer .doc-grid-2{grid-template-columns:1fr}}
+#ts-drawer .doc-chip-pdf{background:linear-gradient(135deg,#15803d,#0f766e);color:#fff;border-color:transparent;font-weight:800}
+#ts-drawer .doc-chip-pdf:hover{filter:brightness(1.06);background:linear-gradient(135deg,#15803d,#0f766e)}
 #ts-drawer .doc-col-h{font-family:'Instrument Sans',sans-serif;font-weight:800;font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--grey-2);margin-bottom:6px}
 #ts-drawer .doc-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 4px;border-bottom:1px solid #f1f5f9;text-decoration:none;color:inherit}
 #ts-drawer .doc-row:last-child{border-bottom:0}
@@ -17063,26 +17066,25 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
   function paneDocuments(t){
     const tk=(t.ticker||'').toUpperCase(), tkE=encodeURIComponent(tk), nm=(t.name||'').replace(/'/g,'');
     const actions='<div class="doc-actions">'+
-      '<a class="doc-chip" href="/report/'+tkE+'" target="_blank" rel="noopener">📄 Full report ↗</a>'+
-      (typeof window._cmdkOpenBriefing==='function'?'<button class="doc-chip" onclick="_cmdkOpenBriefing(\''+escHTML(tk)+'\')">🎙️ AI earnings briefing</button>':'')+
+      '<a class="doc-chip doc-chip-pdf" href="/api/pdf/'+tkE+'" target="_blank" rel="noopener">📄 Download PDF report</a>'+
+      '<a class="doc-chip" href="/report/'+tkE+'" target="_blank" rel="noopener">Full report ↗</a>'+
       '<button class="doc-chip doc-chip-ai" onclick="tsOpenAsk(\''+escHTML(tk)+'\',\''+escHTML(nm)+'\')">✦ Ask AI</button>'+
       '<a class="doc-chip" href="https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&ticker='+tkE+'&type=&dateb=&owner=include&count=40" target="_blank" rel="noopener">All EDGAR ↗</a>'+
     '</div>';
     return _sec('Documents · SEC EDGAR','📄','blue', actions+
       '<div id="docs-root" data-tk="'+escHTML(tk)+'"><div class="muted small" style="padding:12px 2px">Loading filings from SEC EDGAR…</div></div>'+
-      '<div class="muted small" style="margin-top:6px">Annual reports, quarterly results &amp; events from SEC EDGAR (free, official). US credit-rating reports are paywalled and not shown.</div>');
+      '<div class="muted small" style="margin-top:6px">Annual report (10-K) &amp; last 4 quarters (10-Q) open on SEC EDGAR (official HTML). The one-click <b>PDF</b> above is AlphaHunt\'s research report.</div>');
   }
   function _loadDocuments(){
     const root=drawer.querySelector('#docs-root'); if(!root||root.dataset.loaded==='1') return;
     const tk=root.getAttribute('data-tk'); if(!tk) return;
     root.dataset.loaded='1';
     const row=it=>'<a class="doc-row" href="'+it.url+'" target="_blank" rel="noopener"><span class="doc-row-l"><b>'+escHTML(it.label)+'</b>'+(it.date?'<small>'+escHTML(it.date)+'</small>':'')+'</span><span class="doc-ar">↗</span></a>';
-    const evtRow=it=>'<div class="doc-row doc-evt"><span class="doc-row-l"><b>'+escHTML(it.label)+'</b><small>'+escHTML(it.date||'')+'</small></span><span class="doc-evt-btns"><a class="doc-b" href="'+it.url+'" target="_blank" rel="noopener">Filing</a><a class="doc-b" href="'+it.index+'" target="_blank" rel="noopener">Exhibits</a></span></div>';
     const col=(title,html)=>'<div class="doc-col"><div class="doc-col-h">'+title+'</div>'+(html||'<div class="muted small">None found.</div>')+'</div>';
     fetch('/api/documents/'+encodeURIComponent(tk)).then(r=>r.json()).then(d=>{
-      const ann=(d.annual||[]).map(row).join(''), qtr=(d.quarterly||[]).map(row).join(''), evt=(d.events||[]).map(evtRow).join('');
-      if(!ann && !qtr && !evt){ root.innerHTML='<div class="muted small" style="padding:10px 2px">No SEC filings found for '+escHTML(tk)+' — it may be a non-US listing without EDGAR coverage.</div>'; return; }
-      root.innerHTML='<div class="doc-grid">'+col('Annual reports',ann)+col('Quarterly',qtr)+col('Earnings &amp; events',evt)+'</div>';
+      const ann=(d.annual||[]).map(row).join(''), qtr=(d.quarterly||[]).map(row).join('');
+      if(!ann && !qtr){ root.innerHTML='<div class="muted small" style="padding:10px 2px">No SEC filings found for '+escHTML(tk)+' — it may be a non-US listing without EDGAR coverage.</div>'; return; }
+      root.innerHTML='<div class="doc-grid doc-grid-2">'+col('Annual reports',ann)+col('Last 4 quarters',qtr)+'</div>';
     }).catch(()=>{ root.innerHTML='<div class="muted small" style="padding:10px 2px">Couldn\'t load filings right now — try again shortly.</div>'; root.dataset.loaded=''; });
   }
 

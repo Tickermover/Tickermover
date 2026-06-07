@@ -71,24 +71,17 @@ async def list_documents(ticker: str, limit: int = 10) -> dict:
         acc = (accs[i] if i < len(accs) else "").replace("-", "")
         return f"https://www.sec.gov/Archives/edgar/data/{cik_int}/{acc}/"
 
-    annual, quarterly, events = [], [], []
+    ANN_CAP, QTR_CAP = 6, 4          # last few annuals; only the last 4 quarters
+    annual, quarterly = [], []
     for i, f in enumerate(forms):
-        if len(annual) >= limit and len(quarterly) >= limit and len(events) >= limit:
+        if len(annual) >= ANN_CAP and len(quarterly) >= QTR_CAP:
             break
         d = dates[i] if i < len(dates) else ""
         yr = d[:4] if d else ""
-        if f in ("10-K", "20-F", "40-F") and len(annual) < limit:
+        if f in ("10-K", "20-F", "40-F") and len(annual) < ANN_CAP:
             annual.append({"label": f"FY {yr}" if yr else "Annual report",
                            "date": d, "url": doc_url(i), "type": f})
-        elif f in ("10-Q", "6-K") and len(quarterly) < limit:
-            annual_yr = f"{yr}" if yr else ""
-            quarterly.append({"label": f"Quarterly · {d}" if d else "Quarterly",
+        elif f in ("10-Q", "6-K") and len(quarterly) < QTR_CAP:
+            quarterly.append({"label": f"Quarter ending {d}" if d else "Quarterly",
                               "date": d, "url": doc_url(i), "type": f})
-        elif f == "8-K" and len(events) < limit:
-            it = (items[i] if i < len(items) else "") or ""
-            desc = (descs[i] if i < len(descs) else "") or ""
-            is_earn = "2.02" in it
-            label = "Earnings release" if is_earn else (desc or "Material event")
-            events.append({"label": label, "date": d, "url": doc_url(i),
-                           "index": idx_url(i), "items": it, "earnings": is_earn})
-    return {"annual": annual, "quarterly": quarterly, "events": events, "cik": cik_int}
+    return {"annual": annual, "quarterly": quarterly, "events": [], "cik": cik_int}
