@@ -3424,7 +3424,7 @@ async def api_concall(ticker: str):
     import stock_rag
     tk = (ticker or "").upper()
     res = await stock_rag.concall_summary(tk, _ticker_metrics_block(tk))
-    return JSONResponse(res, headers={"Cache-Control": "public, max-age=1800"})
+    return JSONResponse(_clean(res), headers={"Cache-Control": "no-store"})
 
 
 @app.get("/api/thesis/{symbol}")

@@ -16,6 +16,7 @@ Env:
 """
 from __future__ import annotations
 
+import json
 import os
 import re
 import time
@@ -222,61 +223,94 @@ async def _claude_raw(prompt: str, max_tokens: int = 2500) -> str | None:
 
 
 _CONCALL_PROMPT = (
-    "You are an equity analyst writing a DEEP, qualitative earnings-call (concall) "
-    "summary for {ticker}, grounded strictly in the transcript/filing text below. "
-    "OBJECTIVE: capture the NARRATIVE management gave on the call — the strategy, "
-    "the segment-by-segment color, demand commentary, management's framing and tone, "
-    "what came out of Q&A, and forward guidance in their own words. This is the "
-    "STORY companion to a separate fast 'Briefings' digest that already lists the "
-    "headline reported numbers — so don't just restate those figures; explain the "
-    "WHY and the context behind them. Cite concrete numbers only where they support "
-    "the narrative. Produce a thorough, investor-grade brief in Markdown with this "
-    "structure:\n\n"
-    "**One-line takeaway** — a single bold sentence.\n\n"
-    "Then 4-8 thematic sections, each a bold heading on its own line followed by "
-    "tight bullets. Cover, where the text supports it: strategy & positioning; "
-    "the financial snapshot (quote exact figures — revenue, EBITDA, PBT, margins, "
-    "guidance); segment-by-segment detail with numbers; new assets / capacity / "
-    "ramp timelines; capex & leverage; and management's forward guidance. "
-    "End with a section **Key investor takeaways** (3-5 bullets).\n\n"
-    "Rules: use ONLY facts present in the text; quote concrete numbers verbatim; "
-    "attribute guidance to management; do NOT give buy/sell advice; if a topic isn't "
-    "covered, omit it rather than inventing. Be specific, not generic.\n\n"
-    "=== OUR METRICS ===\n{metrics}\n\n=== SOURCE ({src}) ===\n{text}\n\nSummary:"
+    "You are an equity analyst writing a DEEP, qualitative earnings-call summary "
+    "for {ticker}, grounded strictly in the transcript/filing text below.\n"
+    "OBJECTIVE: capture the NARRATIVE management gave on the call — strategy and "
+    "positioning, segment-by-segment color, demand commentary, management's framing "
+    "and tone, what came out of Q&A, and forward guidance in their own words. This "
+    "is the STORY companion to a separate fast 'Earnings Brief' that already lists "
+    "the headline reported numbers — so do NOT just restate those figures; explain "
+    "the WHY and the context behind them. Cite concrete numbers only where they "
+    "support the narrative.\n\n"
+    "Generate 5-8 SECTIONS with DYNAMIC headings reflecting what THIS call actually "
+    "covered (e.g. 'Strategy and positioning', 'Segment color', 'Demand and pricing', "
+    "'Management tone and Q&A', 'Forward guidance', 'Risks management flagged'). End "
+    "with a section 'Key investor takeaways' (3-5 bullets).\n\n"
+    "Rules: use ONLY facts present in the text; attribute guidance to management; do "
+    "NOT give buy/sell advice; omit a section rather than inventing. Be specific, not "
+    "generic. Each bullet is self-contained and combines the point WITH its driver.\n\n"
+    "Return ONLY a JSON object (no prose, no markdown fences):\n"
+    "{{\n"
+    '  "event_title": "Short title (e.g. \'Q1 FY26 earnings call\')",\n'
+    '  "event_date":  "YYYY-MM-DD or empty if unknown",\n'
+    '  "sections": [\n'
+    '    {{"heading": "Section heading (4-7 words, sentence case)",\n'
+    '      "bullets": ["3-5 bullets, each 15-35 words"]}}\n'
+    "  ],\n"
+    '  "raw_excerpt": "One verbatim sentence (40-70 words) from management that best '
+    'captures the call\'s key message"\n'
+    "}}\n\n"
+    "=== OUR METRICS ===\n{metrics}\n\n=== SOURCE ({src}) ===\n{text}\n"
 )
 
 
+def _parse_json_block(text: str) -> dict | None:
+    text = (text or "").strip()
+    if text.startswith("```"):
+        text = text.strip("`")
+        if text.lower().startswith("json"):
+            text = text[4:].strip()
+    try:
+        return json.loads(text)
+    except (json.JSONDecodeError, TypeError):
+        return None
+
+
 async def concall_summary(ticker: str, profile_data: str = "") -> dict:
-    """Detailed concall/earnings summary from the latest transcript or filing."""
+    """Deep, narrative earnings-call summary as STRUCTURED sections — the same
+    shape /api/event-intel returns, so the premium briefing UI renders both.
+    Returns {available, event_title, event_date, sections[], raw_excerpt,
+    source, source_url} or {available: False, reason}."""
     if not ANTHROPIC_KEY:
-        return {"ok": False, "summary": "The AI summary isn't enabled yet "
-                "(set ANTHROPIC_API_KEY).", "source": None}
-    text = src = None
+        return {"available": False, "reason": "disabled",
+                "note": "The AI summary isn't enabled yet (set ANTHROPIC_API_KEY)."}
+    text = src = src_url = None
+    src_tag = "sec_edgar"
     try:
         import event_intel as ei
         try:
             tr = await ei._fetch_av_transcript(ticker)
+            if isinstance(tr, dict) and tr.get("error") == "rate_limited":
+                return {"available": False, "reason": "rate_limited",
+                        "info": tr.get("info")}
             if tr and tr.get("text"):
                 text, src = tr["text"], "earnings call transcript"
+                src_tag = "alpha_vantage_transcript"
         except Exception:
             pass
         if not text:
             ed = await ei._fetch_edgar_recent(ticker)
             if ed and ed.get("text"):
                 text, src = ed["text"], ed.get("source_label", "recent SEC filing")
+                src_url = ed.get("source_url")
+                src_tag = f"sec_edgar:{ed.get('source_label', '')}"
     except Exception as exc:
         logger.warning(f"stock_rag: concall fetch {ticker}: {exc}")
     if not text:
-        return {"ok": False, "source": None,
-                "summary": "No earnings-call transcript or recent filing is available "
-                           "to summarise for this ticker yet."}
+        return {"available": False, "reason": "no_coverage"}
+
     prompt = _CONCALL_PROMPT.format(ticker=ticker, src=src, text=text[:45000],
                                     metrics=profile_data or "(none)")
     ans = await _claude_raw(prompt, max_tokens=2600)
-    if not ans:
-        return {"ok": False, "source": src,
-                "summary": "Couldn't generate the summary right now — try again shortly."}
-    return {"ok": True, "summary": ans, "source": src}
+    parsed = _parse_json_block(ans)
+    if not parsed or not isinstance(parsed.get("sections"), list):
+        return {"available": False, "reason": "generation_failed"}
+
+    parsed["available"] = True
+    parsed["source"]    = src_tag
+    if src_url:
+        parsed["source_url"] = src_url
+    return parsed
 
 
 async def ask(ticker: str, question: str, profile_data: str = "") -> dict:

@@ -5784,10 +5784,10 @@ html.v2-dark body.v2 .main, body.v2 .main{padding:0 0 30px !important;max-width:
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l1.6 5.2L19 10l-5.4 1.8L12 17l-1.6-5.2L5 10l5.4-1.8z"/><path d="M18 15l.7 2.3L21 18l-2.3.7L18 21l-.7-2.3L15 18l2.3-.7z"/></svg><span>Ask AI</span><span class="v2-nav-tag" style="background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff">NEW</span>
     </div>
     <div class="v2-nav-item" onclick="v2Show('briefings',this);v2LoadBriefings()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16v12H7l-3 3z"/></svg><span>Briefings</span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16v12H7l-3 3z"/></svg><span>Earnings Brief</span>
     </div>
-    <div class="v2-nav-item" onclick="v2Show('concall',this);v2LoadConcall()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg><span>Concall Summary</span>
+    <div class="v2-nav-item" onclick="v2Show('concall',this);v2LoadCalls()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg><span>Earnings Call</span>
     </div>
 
     <div class="v2-sb-section">SUPPORT</div>
@@ -6170,9 +6170,9 @@ html.v2-dark body.v2 .main, body.v2 .main{padding:0 0 30px !important;max-width:
 <div id="panel-briefings" class="panel">
   <div id="briefings-root">
     <div class="v2-brf-head">
-      <div class="v2-brf-eyebrow">Briefings</div>
+      <div class="v2-brf-eyebrow">Earnings Brief</div>
       <div class="v2-brf-title">Catch up on the numbers — fast</div>
-      <div class="v2-brf-sub">Skim what any company just <b>reported</b>: headline results, beats &amp; misses, and guidance figures, straight from the latest 8-K / 10-Q. Pick a ticker for a 30-second brief. <span style="color:#94a3b8">Want the story behind the numbers? See <b>Concall&nbsp;Summary</b>.</span></div>
+      <div class="v2-brf-sub">Skim what any company just <b>reported</b>: headline results, beats &amp; misses, and guidance figures, straight from the latest 8-K / 10-Q. Pick a ticker for a 30-second brief. <span style="color:#94a3b8">Want the story behind the numbers? See <b>Earnings&nbsp;Call</b>.</span></div>
     </div>
     <div class="v2-brf-grid" id="v2-brf-grid">
       <div class="v2-brf-loading">Loading ticker list…</div>
@@ -6181,19 +6181,19 @@ html.v2-dark body.v2 .main, body.v2 .main{padding:0 0 30px !important;max-width:
   </div>
 </div>
 
-<!-- CONCALL SUMMARY — detailed AI summary of the latest earnings call -->
+<!-- EARNINGS CALL — deep, narrative AI summary of the latest earnings call -->
 <div id="panel-concall" class="panel">
-  <div class="panel-header">
-    <div>
-      <div class="panel-h-title">🎙️ Concall <em>summary</em></div>
-      <div class="panel-h-sub">Go deep on what management <b>said</b> — strategy, segment-by-segment color, Q&amp;A signals and guidance in their own words, straight from the earnings-call transcript. For the reported numbers at a glance, see <b>Briefings</b>.</div>
+  <div id="ec-root">
+    <div class="v2-brf-head">
+      <div class="v2-brf-eyebrow">Earnings Call</div>
+      <div class="v2-brf-title">Go deep on what management said</div>
+      <div class="v2-brf-sub">Read the <b>story</b> behind the quarter: strategy, segment-by-segment color, Q&amp;A signals and guidance in management’s own words, straight from the call transcript. Pick a ticker for the full narrative. <span style="color:#94a3b8">Just want the reported numbers? See <b>Earnings&nbsp;Brief</b>.</span></div>
     </div>
+    <div class="v2-brf-grid" id="v2-ec-grid">
+      <div class="v2-brf-loading">Loading ticker list…</div>
+    </div>
+    <div id="v2-ec-detail" class="v2-brf-detail" style="display:none"></div>
   </div>
-  <div class="cc-bar">
-    <input id="cc-tk" type="text" placeholder="Enter a ticker — e.g. NVDA, AAPL, STX" onkeydown="if(event.key==='Enter')v2LoadConcall()">
-    <button class="cc-go" onclick="v2LoadConcall()">Go deep →</button>
-  </div>
-  <div id="concall-root"><div class="muted" style="padding:14px 2px">Enter a ticker to read the full story from its latest earnings call.</div></div>
 </div>
 
 <!-- MODEL PORTFOLIO -->
@@ -8510,11 +8510,10 @@ document.addEventListener('keydown', (e) => {
 // Lists ticker cards in a grid; click → loads /api/event-intel and
 // renders structured sections with bullets + verbatim quote.
 
-let _v2BrfLoaded = false;
-function v2LoadBriefings(){
-  if (_v2BrfLoaded) return;
-  _v2BrfLoaded = true;
-  const grid = document.getElementById('v2-brf-grid');
+// Shared ticker-grid builder — both Earnings Brief and Earnings Call use the
+// same premium card grid; only the click handler (which detail to open) differs.
+function v2BuildTickerGrid(gridId, openFn){
+  const grid = document.getElementById(gridId);
   if (!grid) return;
   const tickers = (window.__AH_DATA__ && window.__AH_DATA__.tickers) || [];
   if (!tickers.length){
@@ -8528,7 +8527,7 @@ function v2LoadBriefings(){
     const sym = t.ticker;
     const name = (t.name || '').slice(0, 30);
     const logoUrl = 'https://images.financialmodelingprep.com/symbol/' + encodeURIComponent(sym) + '.png';
-    return `<div class="v2-brf-card" onclick="v2OpenBriefing('${sym}')">
+    return `<div class="v2-brf-card" onclick="${openFn}('${sym}')">
       <div class="v2-brf-logo">
         <span class="fb">${(sym || '?').charAt(0)}</span>
         <img src="${logoUrl}" alt="" loading="lazy"
@@ -8543,31 +8542,70 @@ function v2LoadBriefings(){
   }).join('');
 }
 
-async function v2OpenBriefing(ticker){
+// Shared detail loader — fetch a structured summary and render it in the
+// premium shell. `endpoint` + `opts` (eyebrow/back handler) pick the feature.
+async function v2OpenDetail(ticker, cfg){
   if (!ticker) return;
   const sym = String(ticker).toUpperCase();
-  const grid = document.getElementById('v2-brf-grid');
-  const det  = document.getElementById('v2-brf-detail');
+  const grid = document.getElementById(cfg.gridId);
+  const det  = document.getElementById(cfg.detailId);
   if (!det) return;
   if (grid) grid.style.display = 'none';
   det.style.display = '';
-  det.innerHTML = '<button class="v2-brf-back" onclick="v2CloseBriefing()">← Back to all tickers</button>' +
-                  '<div class="v2-brf-loading">Loading ' + sym + ' briefing… (first load ~6-10s while AI summarises the transcript)</div>';
+  det.innerHTML = '<button class="v2-brf-back" onclick="' + cfg.opts.backFn + '()">← Back to all tickers</button>' +
+                  '<div class="v2-brf-loading">' + cfg.loading.replace('{sym}', sym) + '</div>';
   try {
-    const r = await fetch('/api/event-intel/' + encodeURIComponent(sym), { cache: 'no-store' });
+    const r = await fetch(cfg.endpoint + encodeURIComponent(sym), { cache: 'no-store' });
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const d = await r.json();
-    det.innerHTML = v2RenderBriefingHTML(sym, d);
+    det.innerHTML = v2RenderBriefingHTML(sym, d, cfg.opts);
   } catch (e) {
-    det.innerHTML = '<button class="v2-brf-back" onclick="v2CloseBriefing()">← Back to all tickers</button>' +
-                    '<div class="v2-brf-empty-state"><strong>Couldn\'t load briefing</strong>' +
+    det.innerHTML = '<button class="v2-brf-back" onclick="' + cfg.opts.backFn + '()">← Back to all tickers</button>' +
+                    '<div class="v2-brf-empty-state"><strong>Couldn\'t load ' + cfg.what + '</strong>' +
                     '<span>' + v2EscHTML(e && e.message || 'error') + '</span></div>';
   }
 }
 
+// ── Earnings Brief (was "Briefings") — the fast, numbers-first results digest.
+let _v2BrfLoaded = false;
+function v2LoadBriefings(){
+  if (_v2BrfLoaded) return;
+  _v2BrfLoaded = true;
+  v2BuildTickerGrid('v2-brf-grid', 'v2OpenBriefing');
+}
+function v2OpenBriefing(ticker){
+  return v2OpenDetail(ticker, {
+    gridId: 'v2-brf-grid', detailId: 'v2-brf-detail',
+    endpoint: '/api/event-intel/', what: 'briefing',
+    loading: 'Loading {sym} earnings brief… (first load ~6-10s while AI reads the filing)',
+    opts: { eyebrow: 'EARNINGS BRIEF', backFn: 'v2CloseBriefing' },
+  });
+}
 function v2CloseBriefing(){
   const grid = document.getElementById('v2-brf-grid');
   const det  = document.getElementById('v2-brf-detail');
+  if (grid) grid.style.display = '';
+  if (det)  det.style.display  = 'none';
+}
+
+// ── Earnings Call (was "Concall") — the deep, narrative summary of the call.
+let _v2CallLoaded = false;
+function v2LoadCalls(){
+  if (_v2CallLoaded) return;
+  _v2CallLoaded = true;
+  v2BuildTickerGrid('v2-ec-grid', 'v2OpenCall');
+}
+function v2OpenCall(ticker){
+  return v2OpenDetail(ticker, {
+    gridId: 'v2-ec-grid', detailId: 'v2-ec-detail',
+    endpoint: '/api/concall/', what: 'earnings call',
+    loading: 'Reading {sym}’s latest earnings call… (first load ~10s while AI digests the transcript)',
+    opts: { eyebrow: 'EARNINGS CALL', backFn: 'v2CloseCall' },
+  });
+}
+function v2CloseCall(){
+  const grid = document.getElementById('v2-ec-grid');
+  const det  = document.getElementById('v2-ec-detail');
   if (grid) grid.style.display = '';
   if (det)  det.style.display  = 'none';
 }
@@ -8771,16 +8809,22 @@ function v2PickTldrBullets(sections){
   return all.slice().sort((a, b) => score(b) - score(a)).slice(0, 3);
 }
 
-function v2RenderBriefingHTML(sym, d){
+function v2RenderBriefingHTML(sym, d, opts){
+  // opts lets the same premium shell serve two features:
+  //   Earnings Brief (event-intel)  → eyebrow 'EARNINGS BRIEF', back v2CloseBriefing
+  //   Earnings Call  (concall)      → eyebrow 'EARNINGS CALL',  back v2CloseCall
+  opts = opts || {};
+  const eyebrow = opts.eyebrow || 'EARNINGS BRIEF';
+  const backFn  = opts.backFn  || 'v2CloseBriefing';
   // 'Back to all tickers' button — positioned in a top-right strip so
   // it doesn't sit alone on the left above the hero (user feedback).
   const back = '<div class="v2-brf-topbar">' +
-    '<button class="v2-brf-back" onclick="v2CloseBriefing()">← Back to all tickers</button>' +
+    '<button class="v2-brf-back" onclick="' + backFn + '()">← Back to all tickers</button>' +
     '</div>';
   if (!d || d.available === false){
     if (d && d.reason === 'rate_limited'){
       return back + '<div class="v2-brf-empty-state">' +
-        '<strong>Briefing temporarily throttled</strong>' +
+        '<strong>Summary temporarily throttled</strong>' +
         '<span>The transcript provider (Alpha Vantage) is rate-limiting us — free tier allows 25 requests/day. Already-summarised tickers still load instantly from cache; new ones unlock again tomorrow.</span>' +
       '</div>';
     }
@@ -8848,7 +8892,7 @@ function v2RenderBriefingHTML(sym, d){
               'onerror="this.style.display=\'none\';this.parentNode.dataset.tic=\'' + v2EscHTML(sym) + '\';this.parentNode.classList.add(\'v2-brf-q-logo-fallback\')"/>' +
             '</div>' +
             '<div class="v2-brf-q-hero-text">' +
-              '<div class="v2-brf-q-hero-eye">' + v2EscHTML(sym) + ' · EVENT BRIEFING</div>' +
+              '<div class="v2-brf-q-hero-eye">' + v2EscHTML(sym) + ' · ' + v2EscHTML(eyebrow) + '</div>' +
               '<div class="v2-brf-q-hero-title">' + v2EscHTML(d.event_title || 'Latest event summary') + '</div>' +
               '<div class="v2-brf-q-hero-meta">' +
                 (d.event_date ? '<span>' + v2EscHTML(d.event_date) + '</span>' : '') +
@@ -14711,8 +14755,8 @@ function renderCmdK(){
           <div class="cmdk-item-sub">${i.sub || ''}</div>
         </div>
         <div class="cmdk-actions">
-          <button class="cmdk-action-chip" onmousedown="event.stopPropagation();_cmdkOpenBriefing('${tk}')" title="Open briefing">
-            <span class="cmdk-chip-icon">📊</span><span>Briefing</span>
+          <button class="cmdk-action-chip" onmousedown="event.stopPropagation();_cmdkOpenBriefing('${tk}')" title="Open earnings brief">
+            <span class="cmdk-chip-icon">📊</span><span>Brief</span>
           </button>
           <button class="cmdk-action-chip primary" onmousedown="event.stopPropagation();_cmdkDownloadPDF('${tk}')" title="Download research report PDF">
             <span class="cmdk-chip-icon">⬇</span><span>PDF</span>
@@ -17899,43 +17943,6 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     el().querySelector('.ai-title').textContent=TICK||'AI';
     welcome();
     el().classList.add('open');
-  };
-})();
-</script>
-
-<!-- ─────────── Concall summary panel loader ─────────── -->
-<script>
-(function(){
-  function esc(s){var d=document.createElement('div');d.textContent=s==null?'':String(s);return d.innerHTML;}
-  // Minimal Markdown → HTML for the concall summary (bold, headings, bullets).
-  function md(src){
-    var lines=String(src||'').split(/\r?\n/), out=[], inList=false;
-    function closeList(){ if(inList){ out.push('</ul>'); inList=false; } }
-    lines.forEach(function(ln){
-      var t=ln.trim();
-      if(!t){ closeList(); return; }
-      var b=esc(t).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>');
-      var heading=/^\*\*[^*]+\*\*:?$/.test(t) || /^#{1,4}\s+/.test(t);
-      if(/^#{1,4}\s+/.test(t)){ closeList(); out.push('<h4 class="cc-h">'+esc(t.replace(/^#{1,4}\s+/,''))+'</h4>'); return; }
-      if(heading){ closeList(); out.push('<h4 class="cc-h">'+b.replace(/<\/?b>/g,'').replace(/:$/,'')+'</h4>'); return; }
-      if(/^[-•*]\s+/.test(t)){ if(!inList){ out.push('<ul class="cc-ul">'); inList=true; } out.push('<li>'+b.replace(/^[-•*]\s+/,'')+'</li>'); return; }
-      closeList(); out.push('<p class="cc-p">'+b+'</p>');
-    });
-    closeList();
-    return out.join('');
-  }
-  window.v2LoadConcall=function(ticker){
-    var root=document.getElementById('concall-root'); if(!root) return;
-    var inp=document.getElementById('cc-tk');
-    var tk=(ticker||(inp&&inp.value)||'').trim().toUpperCase();
-    if(!tk){ root.innerHTML='<div class="muted" style="padding:14px 2px">Enter a ticker above to generate a detailed concall summary.</div>'; return; }
-    if(inp) inp.value=tk;
-    root.innerHTML='<div class="cc-loading"><span class="ai-load"><i></i><i></i><i></i></span> Summarising the latest call for <b>'+esc(tk)+'</b>… (first load can take ~10s)</div>';
-    fetch('/api/concall/'+encodeURIComponent(tk)).then(function(r){return r.json();}).then(function(d){
-      if(!d.ok){ root.innerHTML='<div class="muted" style="padding:14px 2px">'+esc(d.summary||'No summary available.')+'</div>'; return; }
-      root.innerHTML='<div class="cc-doc">'+md(d.summary)+'</div>'+
-        '<div class="cc-foot">Source: '+esc(d.source||'filing')+' · AI-generated, grounded in the transcript · not investment advice — verify against the source.</div>';
-    }).catch(function(){ root.innerHTML='<div class="muted" style="padding:14px 2px">Couldn\'t generate the summary right now — try again shortly.</div>'; });
   };
 })();
 </script>
