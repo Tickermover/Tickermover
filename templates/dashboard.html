@@ -4809,6 +4809,9 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 #ts-drawer .dr-top{display:flex;align-items:center;gap:12px}
 #ts-drawer .dr-tic{font-weight:700;font-size:21px;letter-spacing:-.01em}
 #ts-drawer .dr-name{font-size:12.5px;color:var(--grey)}
+#ts-drawer .dr-ai-btn{margin-left:auto;display:inline-flex;align-items:center;gap:5px;border:1px solid rgba(124,58,237,.28);background:linear-gradient(135deg,rgba(124,58,237,.10),rgba(79,70,229,.10));color:#6d28d9;font-family:inherit;font-weight:800;font-size:12px;padding:7px 13px;border-radius:999px;cursor:pointer;white-space:nowrap;transition:background .14s,box-shadow .14s}
+#ts-drawer .dr-ai-btn:hover{background:linear-gradient(135deg,rgba(124,58,237,.18),rgba(79,70,229,.18));box-shadow:0 6px 16px -8px rgba(124,58,237,.5)}
+#ts-drawer .dr-ai-btn + .dr-close{margin-left:8px}
 #ts-drawer .dr-close{margin-left:auto;width:32px;height:32px;border-radius:9px;border:1px solid var(--hair);background:var(--surf-2);color:var(--grey-2);font-size:18px;cursor:pointer;display:grid;place-items:center;line-height:1}
 #ts-drawer .dr-close:hover{background:#eef2f8;color:var(--ink)}
 #ts-drawer .dr-stats{display:flex;gap:9px;margin-top:16px}
@@ -16486,6 +16489,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     drawer.innerHTML=
       '<div class="dr-head"><div class="dr-top">'+logoHTML(t.ticker,'lg')+
         '<div class="dr-id"><div class="dr-tic">'+escHTML(t.ticker)+'</div><div class="dr-name">'+escHTML(t.name||'')+'</div></div>'+
+        '<button class="dr-ai-btn" onclick="tsOpenAsk(\''+escHTML(t.ticker)+'\',\''+escHTML((t.name||'').replace(/\x27/g,""))+'\')">✦ Ask AI</button>'+
         '<button class="dr-close" id="tsDrClose" aria-label="Close">×</button></div></div>'+
       '<div class="dr-body">'+
         earnAlert+
@@ -17653,6 +17657,112 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
      our deep colored pills so it can't overwrite them on load/interval. */
   window.v2RenderMarketPulseTopbar = function(){ try{ if(window.tsIndexPills) window.tsIndexPills(); }catch(e){} };
   try{ window.v2RenderMarketPulseTopbar(); }catch(e){}
+})();
+</script>
+
+<!-- ─────────── Per-stock AI assistant (RAG over filings + our metrics) ─────────── -->
+<style>
+#askai-overlay{position:fixed;inset:0;z-index:1200;display:none;align-items:center;justify-content:center;background:rgba(15,23,42,.45);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
+#askai-overlay.open{display:flex}
+#askai-modal{width:min(760px,94vw);height:min(80vh,720px);background:linear-gradient(180deg,#f5f3ff 0%,#fff 22%);border-radius:20px;box-shadow:0 40px 100px -30px rgba(15,23,42,.6);display:flex;flex-direction:column;overflow:hidden;font-family:'Instrument Sans',system-ui,sans-serif}
+#askai-modal .ai-head{display:flex;align-items:center;gap:10px;padding:16px 20px;border-bottom:1px solid #eef}
+#askai-modal .ai-title{font-weight:800;font-size:17px;color:#0f172a}
+#askai-modal .ai-badge{font-size:11px;font-weight:700;color:#6d28d9;background:rgba(124,58,237,.10);border:1px solid rgba(124,58,237,.25);padding:3px 9px;border-radius:999px;margin-left:6px}
+#askai-modal .ai-x{margin-left:auto;width:32px;height:32px;border-radius:9px;border:1px solid #e5e7eb;background:#fff;color:#64748b;font-size:18px;cursor:pointer}
+#askai-modal .ai-scroll{flex:1;overflow-y:auto;padding:22px 22px 8px}
+#askai-modal .ai-hello{text-align:center;font-size:21px;font-weight:800;color:#0f172a;margin:14px 0 18px}
+#askai-modal .ai-suggest{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:560px){#askai-modal .ai-suggest{grid-template-columns:1fr}}
+#askai-modal .ai-sug{text-align:left;border:1px solid #e7e7f3;background:#fff;border-radius:13px;padding:13px 14px;font-family:inherit;font-size:13.5px;font-weight:600;color:#1e293b;cursor:pointer;transition:border-color .14s,box-shadow .14s,transform .14s}
+#askai-modal .ai-sug:hover{border-color:#a78bfa;box-shadow:0 8px 20px -10px rgba(124,58,237,.4);transform:translateY(-1px)}
+#askai-modal .ai-sug .ar{display:block;color:#6d28d9;margin-top:8px;font-weight:800}
+#askai-modal .ai-ground{text-align:center;font-size:11px;color:#94a3b8;margin:16px 0 4px}
+#askai-modal .ai-msg{margin:0 0 16px;font-size:14px;line-height:1.55}
+#askai-modal .ai-q{font-weight:700;color:#0f172a;background:#eef2ff;border-radius:12px;padding:9px 13px;display:inline-block;max-width:92%}
+#askai-modal .ai-a{color:#1e293b}
+#askai-modal .ai-a b{color:#0f172a}
+#askai-modal .ai-src{margin-top:7px;font-size:10.5px;color:#94a3b8;font-family:'JetBrains Mono',monospace}
+#askai-modal .ai-load{display:inline-flex;gap:5px;align-items:center;color:#6d28d9;font-weight:700;font-size:13px}
+#askai-modal .ai-load i{width:6px;height:6px;border-radius:50%;background:#a78bfa;animation:aiBlink 1s infinite}
+#askai-modal .ai-load i:nth-child(2){animation-delay:.2s}#askai-modal .ai-load i:nth-child(3){animation-delay:.4s}
+@keyframes aiBlink{0%,100%{opacity:.3}50%{opacity:1}}
+#askai-modal .ai-input{display:flex;align-items:flex-end;gap:8px;padding:12px 16px;border-top:1px solid #eef;background:#fff}
+#askai-modal .ai-input textarea{flex:1;border:1px solid #e5e7eb;border-radius:14px;padding:11px 14px;font-family:inherit;font-size:14px;resize:none;max-height:120px;outline:none}
+#askai-modal .ai-input textarea:focus{border-color:#a78bfa}
+#askai-modal .ai-send{width:40px;height:40px;border-radius:50%;border:0;background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff;font-size:18px;cursor:pointer;flex:none}
+#askai-modal .ai-send:disabled{opacity:.5;cursor:default}
+#askai-modal .ai-disc{font-size:10px;color:#cbd5e1;text-align:center;padding:0 16px 10px;background:#fff}
+</style>
+<script>
+(function(){
+  var TICK='', NAME='', busy=false;
+  var SUGGEST=[
+    "Explain the business model",
+    "What are the red flags?",
+    "How has the company evolved over 3 years?",
+    "Growth outlook for the next few years",
+    "Summarize the latest earnings",
+    "Bull case vs bear case",
+    "Management's recent commentary",
+    "Key products & segments"
+  ];
+  function esc(s){var d=document.createElement('div');d.textContent=s==null?'':String(s);return d.innerHTML;}
+  function fmt(s){ // light markdown: bold, bullets, line breaks
+    s=esc(s).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/^[-•]\s+/gm,'• ').replace(/\n/g,'<br>');
+    return s;
+  }
+  function el(){ return document.getElementById('askai-overlay'); }
+  function build(){
+    if(el()) return;
+    var o=document.createElement('div'); o.id='askai-overlay';
+    o.innerHTML='<div id="askai-modal">'+
+      '<div class="ai-head"><span class="ai-title"></span><span class="ai-badge">✦ AlphaHunt AI</span><button class="ai-x" aria-label="Close">×</button></div>'+
+      '<div class="ai-scroll"></div>'+
+      '<div class="ai-input"><textarea rows="1" placeholder="Ask anything about this stock…"></textarea><button class="ai-send">↑</button></div>'+
+      '<div class="ai-disc">Educational research only · not investment advice · AI can be wrong — verify against the filings.</div>'+
+    '</div>';
+    document.body.appendChild(o);
+    o.addEventListener('click',function(e){ if(e.target===o) close(); });
+    o.querySelector('.ai-x').addEventListener('click',close);
+    var ta=o.querySelector('textarea');
+    ta.addEventListener('input',function(){ ta.style.height='auto'; ta.style.height=Math.min(120,ta.scrollHeight)+'px'; });
+    ta.addEventListener('keydown',function(e){ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); send(ta.value); } });
+    o.querySelector('.ai-send').addEventListener('click',function(){ send(ta.value); });
+    document.addEventListener('keydown',function(e){ if(e.key==='Escape'&&el()&&el().classList.contains('open')) close(); });
+  }
+  function welcome(){
+    var s=el().querySelector('.ai-scroll');
+    s.innerHTML='<div class="ai-hello">How can I help you with <b>'+esc(NAME||TICK)+'</b>?</div>'+
+      '<div class="ai-suggest">'+SUGGEST.map(function(q){return '<button class="ai-sug" data-q="'+esc(q)+'">'+esc(q)+'<span class="ar">→</span></button>';}).join('')+'</div>'+
+      '<div class="ai-ground">Grounded in SEC filings, earnings transcript &amp; AlphaHunt metrics</div>';
+    s.querySelectorAll('.ai-sug').forEach(function(b){ b.addEventListener('click',function(){ send(b.getAttribute('data-q')); }); });
+  }
+  function add(html,cls){ var s=el().querySelector('.ai-scroll'); var d=document.createElement('div'); d.className='ai-msg '+(cls||''); d.innerHTML=html; s.appendChild(d); s.scrollTop=s.scrollHeight; return d; }
+  function send(q){
+    q=(q||'').trim(); if(!q||busy) return;
+    var ta=el().querySelector('textarea'); ta.value=''; ta.style.height='auto';
+    var w=el().querySelector('.ai-hello'); if(w){ el().querySelector('.ai-scroll').innerHTML=''; }
+    add('<span class="ai-q">'+esc(q)+'</span>','');
+    var a=add('<span class="ai-load"><i></i><i></i><i></i></span>','ai-a-wrap');
+    busy=true; el().querySelector('.ai-send').disabled=true;
+    fetch('/api/ask/'+encodeURIComponent(TICK),{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({question:q})})
+      .then(function(r){return r.json();})
+      .then(function(d){
+        var src=(d.sources&&d.sources.length)?'<div class="ai-src">Sources: '+d.sources.map(esc).join(' · ')+'</div>':'';
+        a.innerHTML='<div class="ai-a">'+fmt(d.answer||'No answer.')+'</div>'+src;
+      })
+      .catch(function(){ a.innerHTML='<div class="ai-a">Something went wrong reaching the assistant. Try again.</div>'; })
+      .finally(function(){ busy=false; el().querySelector('.ai-send').disabled=false; el().querySelector('.ai-scroll').scrollTop=el().querySelector('.ai-scroll').scrollHeight; });
+  }
+  function close(){ if(el()) el().classList.remove('open'); }
+  window.tsOpenAsk=function(ticker,name){
+    TICK=(ticker||'').toUpperCase(); NAME=name||TICK;
+    build();
+    el().querySelector('.ai-title').textContent=TICK;
+    welcome();
+    el().classList.add('open');
+    setTimeout(function(){ var ta=el().querySelector('textarea'); if(ta) ta.focus(); },60);
+  };
 })();
 </script>
 

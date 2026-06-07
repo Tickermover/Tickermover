@@ -3358,6 +3358,37 @@ async def api_event_intel(symbol: str, refresh: int = 0):
     return JSONResponse(_clean(summary))
 
 
+@app.post("/api/ask/{ticker}")
+async def api_ask(ticker: str, request: Request):
+    """Per-stock AI assistant — RAG over SEC filings + transcript, grounded
+    with our own metrics. Degrades gracefully when keys aren't configured."""
+    import stock_rag
+    try:
+        body = await request.json()
+    except Exception:
+        body = {}
+    question = (body.get("question") or "").strip()[:600]
+    tk = (ticker or "").upper()
+    # Compact metrics block from the loaded universe (cheap, always available)
+    t = next((x for x in (_universe_data or []) if (x.get("ticker", "").upper() == tk)), None)
+    lines = []
+    if t:
+        sc = t.get("smart_score") if t.get("smart_score") is not None else t.get("pop_score")
+        lines.append(f"Name: {t.get('name')} | Sector: {t.get('sector')} / {t.get('sub_sector')}")
+        lines.append(f"Alpha score: {sc} | Grade: {t.get('grade')} | RS context via app")
+        lines.append(f"Price: {t.get('price')} | Target upside %: {t.get('target_upside_pct')}")
+        lines.append(f"Rev growth YoY: {t.get('revenue_growth_yoy')} | EPS growth YoY: {t.get('eps_growth_yoy')}")
+        lines.append(f"P/E: {t.get('pe_ratio') or t.get('forward_pe')} | PEG: {t.get('peg_ratio')} | Profit margin: {t.get('profit_margin')}")
+    res = await stock_rag.ask(tk, question, "\n".join(lines))
+    return JSONResponse(res, headers={"Cache-Control": "no-store"})
+
+
+@app.get("/api/ask-status")
+async def api_ask_status():
+    import stock_rag
+    return JSONResponse(stock_rag.status())
+
+
 @app.get("/api/thesis/{symbol}")
 async def api_thesis(symbol: str):
     """
