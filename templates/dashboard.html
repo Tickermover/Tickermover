@@ -5188,6 +5188,13 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 #ts-drawer .nw:hover{transform:scale(1.14)!important;filter:brightness(1.08)}
 @keyframes nwFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
 @media(prefers-reduced-motion:reduce){#ts-drawer .nw{animation:none}}
+/* News word cloud spread across both side margins of the expanded drawer */
+#dr-news-cloud{position:fixed;inset:0;z-index:601;pointer-events:none;opacity:0;transition:opacity .6s ease}
+#dr-news-cloud.show{opacity:1}
+#dr-news-cloud .ncw{position:absolute;transform:translate(-50%,-50%);font-family:'Instrument Sans',sans-serif;font-weight:800;letter-spacing:-.01em;white-space:nowrap;opacity:.92;
+  text-shadow:0 1px 12px rgba(255,255,255,.7),0 0 1px rgba(255,255,255,.9);animation:ncwDrift ease-in-out infinite}
+@keyframes ncwDrift{0%{transform:translate(-50%,-50%)}50%{transform:translate(-50%,calc(-50% - 11px))}100%{transform:translate(-50%,-50%)}}
+@media(prefers-reduced-motion:reduce){#dr-news-cloud .ncw{animation:none}}
 #ts-drawer .peers-card .peer-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f1f5f9;cursor:pointer}
 #ts-drawer .peers-card .peer-row:last-child{border:0} #ts-drawer .peers-card .peer-row:hover{background:var(--surf-3);margin:0 -8px;padding-left:8px;padding-right:8px;border-radius:8px}
 #ts-drawer .peer-tic{font-weight:800;font-size:13px;min-width:54px}
@@ -16940,27 +16947,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
   function paneNews(t){
     const nw=t.news; if(!Array.isArray(nw)||!nw.length) return _sec('News','📰','slate','<div class="muted small">No recent headlines.</div>');
     const rel=ts=>{ if(!ts)return''; const d=Date.now()/1000-ts; if(d<3600)return Math.round(d/60)+'m ago'; if(d<86400)return Math.round(d/3600)+'h ago'; return Math.round(d/86400)+'d ago'; };
-    // ── Floating word cloud built from the headlines ──
-    const STOP=new Set(("a an the of to in on for and or but with at by from as is are be was were been has have had will would can could may might do does did this that these those it itself their they them he she his her you your we our us not no new news amid over under after before into out up down off than then so if vs via per inc corp ltd co company shares stock stocks share market markets report reports says said say according more most much many also what when where which who how why about back out still get got just like one two amid").split(/\s+/));
-    const tickWords=new Set(((t.ticker||'')+' '+(t.name||'')).toLowerCase().split(/[^a-z0-9]+/).filter(Boolean));
-    const freq={};
-    nw.slice(0,20).forEach(a=>{ const h=(a.headline||a.title||'').toLowerCase();
-      h.split(/[^a-z0-9']+/).forEach(w=>{ w=w.replace(/^'+|'+$/g,''); if(w.length<3) return; if(/^\d+$/.test(w)) return; if(STOP.has(w)||tickWords.has(w)) return; freq[w]=(freq[w]||0)+1; });
-    });
-    const words=Object.keys(freq).map(w=>[w,freq[w]]).sort((a,b)=>b[1]-a[1]).slice(0,26);
-    const PAL=['#2970ff','#0040c1','#5DB3F1','#D4860A','#9E6308','#15803d','#7c3aed','#0f766e'];
-    let cloud='';
-    if(words.length){
-      const max=words[0][1], min=words[words.length-1][1];
-      cloud='<div class="ncloud-sub">What the headlines are talking about</div><div class="ncloud">'+
-        words.map((wd,i)=>{ const w=wd[0],c=wd[1];
-          const sz=13+Math.round((c-min)/Math.max(1,max-min)*19);
-          const cap=w.charAt(0).toUpperCase()+w.slice(1);
-          return '<span class="nw" style="font-size:'+sz+'px;color:'+PAL[i%PAL.length]+';animation-delay:'+((i*0.17)%3).toFixed(2)+'s;animation-duration:'+(4.2+(i%4)*0.6).toFixed(1)+'s" title="'+c+' mention'+(c>1?'s':'')+'">'+escHTML(cap)+'</span>';
-        }).join('')+'</div>';
-    }
-    const list='<div class="news-card"'+(cloud?' style="margin-top:6px"':'')+'>'+nw.slice(0,6).map(a=>'<div class="news-row"><div class="news-hl">'+escHTML(a.headline||a.title||'')+'</div><div class="news-meta">'+escHTML(a.source||'')+(a.datetime?' · '+rel(a.datetime):'')+'</div></div>').join('')+'</div>';
-    return _sec('In the headlines','📰','slate',cloud+list);
+    return _sec('Recent headlines','📰','slate','<div class="news-card">'+nw.slice(0,8).map(a=>'<div class="news-row"><div class="news-hl">'+escHTML(a.headline||a.title||'')+'</div><div class="news-meta">'+escHTML(a.source||'')+(a.datetime?' · '+rel(a.datetime):'')+'</div></div>').join('')+'</div>');
   }
   function panePeers(t){
     const key=(t.sub_sector||t.subsector||t.sector||'').toLowerCase();
@@ -17009,7 +16996,6 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     const w=Math.round(Math.min(window.innerWidth*0.9,1000));
     drawer.style.width=w+'px'; drawer.style.left='50%'; drawer.style.right='auto'; drawer.style.marginLeft=(-w/2)+'px';
     drawer.classList.add('expanded'); drawer.scrollTop=0;
-    try{ tsBuildSideRail(t); }catch(e){}
     _drState={t,candles:null,setup:null,full:t,tab:'Overview',tf:'6M'};
     Promise.allSettled([
       fetch('/api/candles/'+encodeURIComponent(t.ticker)+'?days=365').then(r=>r.ok?r.json():null).catch(()=>null),
@@ -17019,6 +17005,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
       const cd=res[0]&&res[0].value, full=(res[1]&&res[1].value)||t;
       if(cd&&cd.candles){ _drState.candles=cd.candles; if(cd.week_52_high)full._hi52=cd.week_52_high; if(cd.week_52_low)full._lo52=cd.week_52_low; _drState.setup=tsAnalyzeSetup(cd.candles,full); }
       _drState.full=full; tsRenderDetail();
+      try{ tsBuildNewsCloud(full); }catch(e){}
     });
   }
 
@@ -17060,6 +17047,42 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     setTimeout(function(){ r.classList.remove('pulse'); },1700);
   }
   function _drRailHide(){ const r=document.getElementById('dr-side-rail'); if(r) r.classList.remove('show','pulse'); }
+
+  /* ── Floating news word cloud spread across BOTH side margins of the expanded
+     drawer. Built from the current stock's headlines once full data loads. ── */
+  function _newsCloudWords(full){
+    const nw=(full&&full.news)||[]; if(!Array.isArray(nw)||!nw.length) return [];
+    const STOP=new Set(("a an the of to in on for and or but with at by from as is are be was were been has have had will would can could may might do does did this that these those it its their they them he she his her you your we our us not no new news amid over under after before into out up down off than then so if vs via per inc corp ltd co company shares stock stocks share market markets report reports says said say according more most much many also what when where which who how why about back still get got just like one two").split(/\s+/));
+    const tickWords=new Set((((full&&full.ticker)||'')+' '+((full&&full.name)||'')).toLowerCase().split(/[^a-z0-9]+/).filter(Boolean));
+    const freq={};
+    nw.slice(0,20).forEach(a=>{ (a.headline||a.title||'').toLowerCase().split(/[^a-z0-9']+/).forEach(w=>{ w=w.replace(/^'+|'+$/g,''); if(w.length<3||/^\d+$/.test(w)||STOP.has(w)||tickWords.has(w))return; freq[w]=(freq[w]||0)+1; }); });
+    return Object.keys(freq).map(w=>[w,freq[w]]).sort((a,b)=>b[1]-a[1]).slice(0,18);
+  }
+  function tsBuildNewsCloud(full){
+    let layer=document.getElementById('dr-news-cloud');
+    if(!layer){ layer=document.createElement('div'); layer.id='dr-news-cloud'; document.body.appendChild(layer); }
+    layer.innerHTML='';
+    if(!drawer.classList.contains('expanded')||!_drRailRoom()){ layer.classList.remove('show'); return; }
+    const words=_newsCloudWords(full); if(!words.length){ layer.classList.remove('show'); return; }
+    const PAL=['#2970ff','#0040c1','#5DB3F1','#D4860A','#9E6308','#15803d','#7c3aed','#0f766e'];
+    const w=Math.min(window.innerWidth*0.9,1000); const margin=window.innerWidth/2 - w/2;
+    const max=words[0][1], min=words[words.length-1][1];
+    const perSide=Math.ceil(words.length/2);
+    words.forEach((wd,i)=>{
+      const word=wd[0], c=wd[1], side=i%2, idxInSide=Math.floor(i/2);
+      const sz=15+Math.round((c-min)/Math.max(1,max-min)*22);
+      const span=document.createElement('span'); span.className='ncw';
+      span.textContent=word.charAt(0).toUpperCase()+word.slice(1);
+      span.title=c+' mention'+(c>1?'s':'');
+      const yPct=9 + (idxInSide/Math.max(1,(perSide-1)||1))*80 + (Math.random()*6-3);
+      const zone=Math.max(40,margin-70);
+      const x = side===0 ? (16 + Math.random()*zone) : (window.innerWidth - margin + 16 + Math.random()*zone);
+      span.style.cssText='left:'+Math.round(x)+'px;top:'+yPct.toFixed(1)+'%;font-size:'+sz+'px;color:'+PAL[i%PAL.length]+';animation-delay:'+(Math.random()*4).toFixed(2)+'s;animation-duration:'+(5+Math.random()*4).toFixed(1)+'s';
+      layer.appendChild(span);
+    });
+    layer.classList.add('show');
+  }
+  function _newsCloudHide(){ const n=document.getElementById('dr-news-cloud'); if(n) n.classList.remove('show'); }
 
   /* ── Right rail: sticky key-card (Alpha / verdict / price / upside) + a
      section navigator (scrollspy) for the current tab. Wide screens only. ── */
@@ -17134,7 +17157,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
   function tsRenderDetail(){
     const dd=drawer.querySelector('.dr-deep'); if(!dd||!_drState) return;
     const S=_drState.setup, full=_drState.full, t=_drState.t, candles=_drState.candles;
-    dd.innerHTML=_drInlineSuggest(t)+'<div class="dr-panes">'+
+    dd.innerHTML='<div class="dr-panes">'+
       '<div class="dr-pane" data-pane="Overview">'+paneOverview(t,S,full,candles)+'</div>'+
       '<div class="dr-pane" data-pane="Technicals" hidden>'+paneTechnicals(full,S)+'</div>'+
       '<div class="dr-pane" data-pane="Financials" hidden>'+paneFinancials(full)+'</div>'+
@@ -17177,16 +17200,13 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     drawer.style.width=''; drawer.style.left=''; drawer.style.right=''; drawer.style.marginLeft='';
     const tb=drawer.querySelector('.dr-tabs'); if(tb) tb.remove();
     const dd=drawer.querySelector('.dr-deep'); if(dd) dd.remove();
-    _drRailHide(); _drRightHide();
+    _drRailHide(); _newsCloudHide();
     _drState=null;
   }
   window.addEventListener('resize',()=>{ if(drawer.classList.contains('expanded')){ tsDrawChartEl();
     const r=document.getElementById('dr-side-rail');
     const sug=drawer.querySelector('.dr-inline-sug');
-    if(!_drRailRoom()){ _drRailHide(); if(sug) sug.style.display=''; }
-    else { if(sug) sug.style.display='none'; if(_drState&&_drState.t){
-      if(r&&r.classList.contains('show')){ _drRailPosition(); } else { tsBuildSideRail(_drState.t); }
-    } } } });
+    if(_drState&&_drState.full){ tsBuildNewsCloud(_drState.full); } else { _newsCloudHide(); } } });
   /* chart timeframe toggle (1M / 6M / 1Y) */
   drawer.addEventListener('click',(e)=>{ const b=e.target.closest('.cc-tf button'); if(!b||!_drState) return; _drState.tf=b.getAttribute('data-tf'); drawer.querySelectorAll('.cc-tf button').forEach(x=>x.classList.toggle('on',x===b)); tsDrawChartEl(); });
   /* Reach the end of a tab → glide to the next one (top → previous). This used
