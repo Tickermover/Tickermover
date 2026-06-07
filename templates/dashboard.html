@@ -5177,6 +5177,11 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 #ts-drawer .rsc-up{border-left-color:#16a34a} #ts-drawer .rsc-mid{border-left-color:#94a3b8} #ts-drawer .rsc-dn{border-left-color:#e11d48}
 #ts-drawer .rsc-k{flex:none;font-weight:800;color:var(--grey-2);width:62px}
 #ts-drawer .rsc-v{color:var(--ink-2)}
+/* Scenarios pulled into their own full-width box below the grid — 3 across, compact */
+#ts-drawer .rdcf-scen-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+#ts-drawer .rdcf-scen-row .rsc{flex-direction:column;gap:3px;font-size:11px;line-height:1.35}
+#ts-drawer .rdcf-scen-row .rsc-k{width:auto;font-size:9.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--grey-3)}
+@media(max-width:760px){#ts-drawer .rdcf-scen-row{grid-template-columns:1fr}}
 #ts-drawer .news-card .news-row{padding:8px 0;border-bottom:1px solid #f1f5f9} #ts-drawer .news-card .news-row:last-child{border:0}
 #ts-drawer .news-hl{font-size:12.5px;font-weight:600;color:var(--ink);line-height:1.4}
 #ts-drawer .news-meta{font-size:10.5px;color:var(--grey-3);margin-top:2px;font-family:'JetBrains Mono',monospace}
@@ -16899,7 +16904,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
       (vv.summary?'<div class="muted small">'+escHTML(vv.summary)+'</div>':'')):'';
     // ── Reverse DCF — the market-implied expectations bar (full model) ──
     const rd = (typeof window.reverseDCF==='function') ? window.reverseDCF(t) : null;
-    let rdcfCard='';
+    let rdcfCard='', scenCard='';
     if(rd && rd.impliedGrowth!=null){
       const ig=rd.impliedGrowth, ag=rd.actualGrowth;
       const beats=(ag!=null && ag>=ig);
@@ -16912,14 +16917,16 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
           (ag!=null?'<div class="rdcf-g"><span class="rg-k">Actual growth · TTM</span><span class="rg-v '+(beats?'pos':'neg')+'">'+ag.toFixed(0)+'%<small>/yr</small></span></div>':'')+
         '</div>'+
         (rd.summary?'<div class="rdcf-summary">'+escHTML(rd.summary)+'</div>':'')+
-        (sc.beats||sc.meets||sc.misses?'<div class="rdcf-scen">'+
+        '<div class="muted small" style="margin-top:8px">Solves for the 10-year revenue CAGR the current price implies (10% discount, 3% terminal growth). It is an expectations gauge, not a buy/sell call.</div>');
+      if(sc.beats||sc.meets||sc.misses){
+        scenCard=_sec('If it beats · meets · misses','🎲','slate','<div class="rdcf-scen-row">'+
           (sc.beats?'<div class="rsc rsc-up"><span class="rsc-k">If it beats</span><span class="rsc-v">'+escHTML(sc.beats)+'</span></div>':'')+
           (sc.meets?'<div class="rsc rsc-mid"><span class="rsc-k">If it meets</span><span class="rsc-v">'+escHTML(sc.meets)+'</span></div>':'')+
           (sc.misses?'<div class="rsc rsc-dn"><span class="rsc-k">If it misses</span><span class="rsc-v">'+escHTML(sc.misses)+'</span></div>':'')+
-        '</div>':'')+
-        '<div class="muted small" style="margin-top:8px">Solves for the 10-year revenue CAGR the current price implies (10% discount, 3% terminal growth). It is an expectations gauge, not a buy/sell call.</div>');
+        '</div>');
+      }
     }
-    return '<div class="dr-deep-grid">'+valTable+vvCard+rdcfCard+'</div>';
+    return '<div class="dr-deep-grid">'+valTable+vvCard+rdcfCard+'</div>'+scenCard;
   }
   function paneEstimates(t){
     const na=_fpNum(t,['total_analysts','analyst_count','numAnalystOpinions']),tm=_fpNum(t,['target_mean','street_target']),tl=_fpNum(t,['target_low']),th=_fpNum(t,['target_high']),px=parseFloat(t.price);
