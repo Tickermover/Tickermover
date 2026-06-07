@@ -3389,6 +3389,14 @@ async def api_ask_status():
     return JSONResponse(stock_rag.status())
 
 
+@app.get("/api/documents/{ticker}")
+async def api_documents(ticker: str):
+    """Real dated filing lists from SEC EDGAR (free, no key): 10-K, 10-Q, 8-K."""
+    import stock_docs
+    data = await stock_docs.list_documents((ticker or "").upper())
+    return JSONResponse(_clean(data), headers={"Cache-Control": "public, max-age=3600"})
+
+
 @app.get("/api/thesis/{symbol}")
 async def api_thesis(symbol: str):
     """
