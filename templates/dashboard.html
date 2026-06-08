@@ -15847,7 +15847,7 @@ async function startRazorpayCheckout() {
       headers: { Authorization: `Bearer ${_AUTH.token}` },
     });
     const d = await r.json();
-    if (!r.ok) { errEl.textContent = d.detail || 'Failed to create order'; return; }
+    if (!r.ok) { errEl.textContent = d.detail || 'Failed to create order'; btn.disabled=false; btn.textContent='Pay ₹499 — Upgrade Now'; return; }
 
     // Open Razorpay checkout
     const options = {

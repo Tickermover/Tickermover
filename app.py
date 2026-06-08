@@ -6798,10 +6798,22 @@ async def api_payment_plan():
 
 
 @app.post("/api/payment/create-order")
-async def api_create_order(user: Optional[dict] = Depends(_current_user)):
-    """Create a Razorpay order for Pro plan checkout."""
+async def api_create_order(request: Request, user: Optional[dict] = Depends(_current_user)):
+    """Create a Razorpay order for Pro checkout. Paid plans are billed in INR and
+    offered to users in India only; global users stay on the free plan."""
     if not user:
         raise HTTPException(status_code=401, detail="Not authenticated")
+    # Best-effort geo gate that FAILS OPEN — only blocks when a country is clearly
+    # detected AND is not India, so an Indian user is never wrongly blocked when
+    # geo is unknown. The reliable backstop is disabling International Payments in
+    # the Razorpay dashboard (limits payment to Indian instruments regardless).
+    geo = (request.headers.get("CF-IPCountry")
+           or request.headers.get("X-Vercel-IP-Country")
+           or request.headers.get("X-AppEngine-Country") or "").upper()
+    if geo and geo not in ("IN", "XX", "T1"):   # XX / T1 = CF unknown / Tor → allow
+        raise HTTPException(status_code=403, detail=(
+            "Paid plans are currently available to users in India only. "
+            "You can keep using AlphaHunt on the free plan."))
     result = await razorpay.create_order(receipt=f"user_{user['user_id'][:8]}")
     if result.get("error"):
         raise HTTPException(status_code=400, detail=result["error"])
