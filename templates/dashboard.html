@@ -1575,9 +1575,12 @@ body.v2 .ticker-chip .px{color:#cbd5e1!important}
   position:relative;z-index:2;
   color:#e2e8f0;
 }
+/* Blue light spilling from the top, focused around the AlphaHunt wordmark. */
 .v2-sidebar::before{
-  content:'';position:absolute;left:0;right:0;top:0;height:200px;
-  background:radial-gradient(ellipse 70% 100% at 0% 0%,rgba(245,166,35,.16) 0%,transparent 60%);
+  content:'';position:absolute;left:0;right:0;top:0;height:230px;
+  background:
+    radial-gradient(150px 130px at 40px 38px, rgba(41,112,255,.34) 0%, rgba(41,112,255,.10) 46%, transparent 72%),
+    radial-gradient(ellipse 90% 55% at 22% -10%, rgba(41,112,255,.16) 0%, transparent 66%);
   pointer-events:none;
 }
 .v2-sb-logo{
@@ -1603,6 +1606,28 @@ body.v2 .ticker-chip .px{color:#cbd5e1!important}
   -webkit-background-clip:text;background-clip:text;color:transparent;
   font-weight:900;
   filter:drop-shadow(0 0 8px rgba(245,166,35,.35));
+}
+/* ── Collapsible sidebar ── */
+.v2-sb-collapse{margin-left:auto;flex-shrink:0;width:26px;height:26px;display:flex;align-items:center;justify-content:center;border:1px solid rgba(10,10,10,.12);border-radius:7px;background:rgba(41,112,255,.06);color:#64748b;cursor:pointer;transition:background .15s,color .15s}
+.v2-sb-collapse:hover{background:rgba(41,112,255,.13);color:#0040c1}
+.v2-sb-collapse svg{transition:transform .2s}
+body.sb-collapsed .v2-sb-collapse svg{transform:rotate(180deg)}
+@media(min-width:769px){
+  body.sb-collapsed .v2-app{grid-template-columns:64px 1fr}
+  body.sb-collapsed .v2-sidebar{padding-left:9px;padding-right:9px}
+  body.sb-collapsed .v2-sb-logo{flex-direction:column;gap:10px;padding:0 0 14px}
+  body.sb-collapsed .v2-sb-logo .name{display:none}
+  body.sb-collapsed .v2-sb-section{font-size:0;padding:12px 0 6px}
+  body.sb-collapsed .v2-sb-section::after{content:'';display:block;height:1px;background:rgba(10,10,10,.10);margin:0 6px}
+  body.sb-collapsed .v2-nav-item{justify-content:center;gap:0;padding-left:0;padding-right:0}
+  body.sb-collapsed .v2-nav-item > span:not(.v2-nav-tag){display:none}
+  body.sb-collapsed .v2-nav-tag{display:none}
+  body.sb-collapsed .v2-nav-item.active::before{left:-9px}
+  body.sb-collapsed .v2-sb-collapse{margin:0}
+  body.sb-collapsed .v2-sb-bottom #user-email,
+  body.sb-collapsed .v2-sb-bottom #user-email + div{display:none}
+  body.sb-collapsed .v2-sb-bottom #auth-btn{font-size:0;padding:9px 0}
+  body.sb-collapsed .v2-sb-bottom #auth-btn::after{content:'⊕';font-size:15px}
 }
 .v2-sb-section{
   font-size:10.5px;font-weight:800;color:#64748b;
@@ -5933,7 +5958,23 @@ html.v2-dark body.v2 .main, body.v2 .main{padding:0 0 30px !important;max-width:
      panels; old hdr + tabs are hidden via CSS, the elements with IDs the
      JS targets (#stat-*, #regime-pill, #auth-btn-wrap, #user-menu) are
      moved into the new shell below. ─────────────────────────────────── -->
-<script>document.body.classList.add('v2')</script>
+<script>
+document.body.classList.add('v2');
+// Restore collapsed-sidebar preference before paint (no flash).
+try { if (localStorage.getItem('ah_sb_collapsed') === '1') document.body.classList.add('sb-collapsed'); } catch(e){}
+function toggleSidebar(){
+  var c = document.body.classList.toggle('sb-collapsed');
+  try { localStorage.setItem('ah_sb_collapsed', c ? '1' : '0'); } catch(e){}
+}
+// Give each nav item a tooltip = its label, so the collapsed icon-only rail is still legible.
+document.addEventListener('DOMContentLoaded', function(){
+  document.querySelectorAll('.v2-sidebar .v2-nav-item').forEach(function(it){
+    if (it.title) return;
+    var s = it.querySelector('span:not(.v2-nav-tag)');
+    if (s) it.title = s.textContent.trim();
+  });
+});
+</script>
 
 <div class="v2-drawer-backdrop" onclick="document.body.classList.remove('v2-drawer-open')"></div>
 
@@ -5944,6 +5985,9 @@ html.v2-dark body.v2 .main, body.v2 .main{padding:0 0 30px !important;max-width:
     <div class="v2-sb-logo">
       <img src="/static/icons/alpha-logo-bare-64.png" alt="AlphaHunt" width="32" height="32">
       <div class="name">Alpha<span>Hunt</span></div>
+      <button class="v2-sb-collapse" onclick="toggleSidebar()" aria-label="Collapse sidebar" title="Collapse menu">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="16" height="16"><path d="M15 6l-6 6 6 6"/></svg>
+      </button>
     </div>
 
     <div class="v2-sb-section">DISCOVER</div>
@@ -6034,7 +6078,7 @@ html.v2-dark body.v2 .main, body.v2 .main{padding:0 0 30px !important;max-width:
             <div id="v2-risk-quiz">
               <div class="v2-risk-eyebrow">RISK CHECK</div>
               <div class="v2-risk-title">Find your <em>risk profile</em></div>
-              <div class="v2-risk-subt">Three quick questions — we’ll tune your Top Picks to match how you invest.</div>
+              <div class="v2-risk-subt">Three quick questions — we’ll tune your Prime Opportunities to match how you invest.</div>
               <div class="v2-risk-qs" id="v2-risk-qs"></div>
               <div class="v2-risk-foot">
                 <span class="v2-risk-hint" id="v2-risk-hint">Answer all three to continue</span>
@@ -6083,7 +6127,7 @@ html.v2-dark body.v2 .main, body.v2 .main{padding:0 0 30px !important;max-width:
     <div>
       <div class="picks-card">
         <div class="pk-head">
-          <h3>🔥 Top Picks</h3>
+          <h3>🔥 Prime Opportunities</h3>
           <div class="pk-meta">
             <span class="meta-pill">High Alpha</span>
             <span class="meta-pill">+ a live signal</span>
@@ -7639,7 +7683,7 @@ function v2RenderTopPicks(tickers){
   return '' +
     '<div class="v2-pick-section">' +
       '<div class="v2-pick-section-head">' +
-        '<div class="v2ov-title">🔥 Hot List · Top 6 Picks</div>' +
+        '<div class="v2ov-title">🔥 Prime Opportunities · Top 6</div>' +
         '<div class="v2ov-sub">Highest Alpha Score across the universe · click any card for the full tear sheet</div>' +
       '</div>' +
       '<div class="v2-pick-grid">' + cards + '</div>' +
@@ -7865,7 +7909,7 @@ function v2ProfileTransition(profile){
   setTimeout(() => {
     try { v2SetProfile(profile); } catch(e){}
     if (lbl) lbl.textContent = info.label + ' applied';
-    if (sub) sub.textContent = 'Your Top Picks are tuned';
+    if (sub) sub.textContent = 'Your Prime Opportunities are tuned';
     setTimeout(() => { if (ov) ov.classList.remove('open'); }, reduce ? 200 : 700);
   }, spin);
 }
@@ -15123,7 +15167,7 @@ function renderAll(data) {
    Vercel/Linear-style fast navigation. Indexes tabs, quick actions, tickers. */
 let _cmdkActive = 0;
 const _CMDK_TABS = [
-  {kind:'tab', icon:'🔥', label:'Hot List',     sub:'Top picks right now',      run:()=>document.querySelector('[onclick*="showTab(\'hot\'"]')?.click()},
+  {kind:'tab', icon:'🔥', label:'On the Radar',  sub:'Prime opportunities right now', run:()=>document.querySelector('[onclick*="showTab(\'hot\'"]')?.click()},
   {kind:'tab', icon:'🎯', label:'Top Hunts',    sub:'Tracked top-10 picks',     run:()=>document.querySelector('[onclick*="showTab(\'model\'"]')?.click()},
   {kind:'tab', icon:'⭐', label:'Watchlist',    sub:'Your saved stocks',        run:()=>document.querySelector('[onclick*="showTab(\'watch\'"]')?.click()},
   {kind:'tab', icon:'🌐', label:'Universe',     sub:'Sector heat map + all stocks', run:()=>document.querySelector('[onclick*="v2Show(\'fund\'"]')?.click()},
@@ -15214,7 +15258,7 @@ function renderCmdK(){
       : `<div class="cmdk-empty">Type a ticker symbol or company name.</div>`;
     return;
   }
-  const sectionTitle = q ? 'Stocks' : 'Top picks';
+  const sectionTitle = q ? 'Stocks' : 'Prime opportunities';
   list.innerHTML =
     `<div class="cmdk-group">${sectionTitle}</div>` +
     tickers.map((i, myIdx) => {
