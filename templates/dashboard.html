@@ -3247,7 +3247,7 @@ html.v2-dark .v2-mp-mini-lbl{color:#cbd5e1}
 .ce-back{z-index:0}
 .ce-back:hover{color:#0f172a;opacity:1 !important}
 .ce-hidden-extra{display:none}
-@keyframes ceDrift{0%,100%{transform:translate(0,0) rotate(var(--rot,0deg))}25%{transform:translate(7px,-6px) rotate(var(--rot,0deg))}50%{transform:translate(-5px,5px) rotate(var(--rot,0deg))}75%{transform:translate(5px,4px) rotate(var(--rot,0deg))}}
+@keyframes ceDrift{0%,100%{transform:translate(0,0)}25%{transform:translate(4px,-3px)}50%{transform:translate(-3px,4px)}75%{transform:translate(3px,2px)}}
 @keyframes cePulseG{0%,100%{box-shadow:0 2px 6px rgba(10,125,51,.15)}50%{box-shadow:0 9px 22px -8px rgba(10,125,51,.6)}}
 @keyframes cePulseB{0%,100%{box-shadow:0 2px 6px rgba(0,64,193,.15)}50%{box-shadow:0 9px 22px -8px rgba(0,64,193,.6)}}
 @media(prefers-reduced-motion:reduce){.ce-word{animation:none!important}}
@@ -8860,8 +8860,10 @@ function ceCollide(a, b, pad){
 }
 
 // Scatter the (non-search) chips evenly across the WHOLE area via random
-// rejection sampling — fresh near-event chips are placed first so they claim
-// space, then the backdrop fills the rest edge-to-edge without overlap.
+// rejection sampling. Boxes are MEASURED (real rendered size, incl. logo + hint),
+// and we keep a margin >= the drift amplitude from edges and neighbours so the
+// gentle float can never push a chip into a neighbour or off the edge.
+const CE_DRIFT = 4;   // must match the max translate in @keyframes ceDrift
 function ceLayoutCloud(){
   const cloud = document.getElementById('ce-cloud');
   if (!cloud || cloud.classList.contains('searching')) return;
@@ -8869,24 +8871,31 @@ function ceLayoutCloud(){
   if (!W){ setTimeout(ceLayoutCloud, 150); return; }   // panel not visible yet → retry
   const H = Math.max(380, Math.min(680, Math.round(W * 0.5)));
   cloud.style.height = H + 'px';
-  const placed = [];
+  const M = CE_DRIFT + 6;            // edge margin (clears the rounded corners + drift)
+  const PAD = 2 * CE_DRIFT + 7;      // gap between chips: both can drift toward each other + visual gap
+  // measure every chip's true box first (one reflow pass), then place
+  const items = [];
   cloud.querySelectorAll('.ce-word:not(.ce-hidden-extra)').forEach(function(el){
-    const fs = parseFloat(getComputedStyle(el).fontSize) || 13;
-    const tic = el.getAttribute('data-tic') || '';
-    const w = Math.round(tic.length * fs * 0.62 + fs * 1.7 + 24);   // logo + ticker (+ hint, roughly)
-    const h = Math.round(fs * 1.7 + 10);
+    el.style.display = ''; el.style.left = ''; el.style.top = '';
+    items.push({ el: el, w: el.offsetWidth || 44, h: el.offsetHeight || 20 });
+  });
+  const placed = [];
+  items.forEach(function(it){
+    const w = it.w, h = it.h;
+    const maxX = W - w - M, maxY = H - h - M;
     let fitX = 0, fitY = 0, ok = false;
-    for (let k = 0; k < 450; k++){
-      const x = 3 + Math.random() * Math.max(1, W - w - 6);
-      const y = 3 + Math.random() * Math.max(1, H - h - 6);
-      const box = { x, y, w, h };
-      if (!placed.some(p => ceCollide(p, box, 12))){ fitX = x; fitY = y; ok = true; break; }
+    if (maxX > M && maxY > M){
+      for (let k = 0; k < 600; k++){
+        const x = M + Math.random() * (maxX - M);
+        const y = M + Math.random() * (maxY - M);
+        const box = { x, y, w, h };
+        if (!placed.some(p => ceCollide(p, box, PAD))){ fitX = x; fitY = y; ok = true; break; }
+      }
     }
-    if (!ok){ el.style.display = 'none'; return; }   // couldn't fit → drop from scatter (still searchable)
-    el.style.display = '';
-    el.style.left = Math.round(fitX) + 'px';
-    el.style.top  = Math.round(fitY) + 'px';
-    placed.push({ x: fitX, y: fitY, w, h });
+    if (!ok){ it.el.style.display = 'none'; return; }   // couldn't fit → drop from scatter (still searchable)
+    it.el.style.left = Math.round(fitX) + 'px';
+    it.el.style.top  = Math.round(fitY) + 'px';
+    placed.push({ x: fitX, y: fitY, w: w, h: h });
   });
 }
 
