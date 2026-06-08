@@ -44,12 +44,15 @@ class DocError(Exception):
     pass
 
 
+_HOST_ALLOW = ("sec.gov", "q4cdn.com")   # SEC filings + Q4 Inc IR CDN (decks)
+
+
 def _allowed(url: str) -> bool:
     try:
         host = (urlparse(url).hostname or "").lower()
     except Exception:
         return False
-    return host == "sec.gov" or host.endswith(".sec.gov")
+    return any(host == d or host.endswith("." + d) for d in _HOST_ALLOW)
 
 
 async def fetch_doc_pdf(url: str, title: str = "") -> tuple[bytes, str]:

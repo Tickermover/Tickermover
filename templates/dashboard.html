@@ -17285,6 +17285,18 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     const fr=document.getElementById('docv-frame'); if(fr) fr.src='about:blank';
     document.body.style.overflow='';
   };
+  /* Find a quarter's investor deck on the company IR CDN (q4cdn) when SEC has
+     none. Opens it in the in-app viewer; falls back to a manual web search when
+     no deck is found / no search key is configured. */
+  window.findSlides=function(btn,tk,qLabel){
+    const orig=btn?btn.innerHTML:'';
+    const manual=function(){ const sq=encodeURIComponent(tk+' '+qLabel+' earnings presentation filetype:pdf'); window.open('https://www.google.com/search?q='+sq,'_blank','noopener'); };
+    if(btn){ btn.innerHTML='Searching…'; btn.disabled=true; }
+    fetch('/api/slides/'+encodeURIComponent(tk)+'?q='+encodeURIComponent(qLabel)).then(function(r){return r.json();}).then(function(d){
+      if(d&&d.available&&d.url){ window.openDocViewer('/api/doc-pdf?u='+encodeURIComponent(d.url),'Slides · '+qLabel); if(btn){ btn.innerHTML='📊 Slides'; btn.disabled=false; } }
+      else { manual(); if(btn){ btn.innerHTML='🔎 IR search ↗'; btn.disabled=false; } }
+    }).catch(function(){ manual(); if(btn){ btn.innerHTML=orig||'🔎 IR search ↗'; btn.disabled=false; } });
+  };
 
   /* Documents pane — three boxes (Earnings releases / Quarterly / Annual),
      each listing the last 4. Every document opens in the in-app PDF viewer:
@@ -17323,7 +17335,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
       const main=rel||cfo||rows[0];
       const sub=[];
       if(sld&&sld.url) sub.push('<a class="doc-sub-link" onclick="event.stopPropagation();'+view(sld.url,'Slides · '+qLabel)+'">📊 Slides'+(sld.pdf?' <span class="doc-pdf">PDF</span>':'')+'</a>');
-      else { const sq=encodeURIComponent(tk+' '+qLabel+' earnings presentation filetype:pdf'); sub.push('<a class="doc-sub-link doc-sub-find" href="https://www.google.com/search?q='+sq+'" target="_blank" rel="noopener" title="This company didn\'t file a deck to SEC — search its IR site">🔎 Find slides ↗</a>'); }
+      else { sub.push('<button class="doc-sub-link doc-sub-find" onclick="event.stopPropagation();findSlides(this,\''+escHTML(tk)+'\',\''+qLabel+'\')" title="Look for this quarter\'s deck on the company IR site (q4cdn)">📊 Find slides</button>'); }
       if(cfo&&cfo.url&&cfo!==main) sub.push('<a class="doc-sub-link" onclick="event.stopPropagation();'+view(cfo.url,'CFO commentary · '+qLabel)+'">🧾 CFO commentary</a>');
       if(trx) sub.push('<a class="doc-sub-link" href="'+trx.url+'" target="_blank" rel="noopener">🎙 Transcript →</a>');
       const head=(main&&main.url)

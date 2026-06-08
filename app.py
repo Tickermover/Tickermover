@@ -3413,6 +3413,32 @@ async def api_doc_pdf(u: str, title: str = ""):
                              "Cache-Control": "public, max-age=86400"})
 
 
+@app.get("/api/slides/{ticker}")
+async def api_slides(ticker: str, q: str = ""):
+    """Find an earnings-presentation deck on the company's IR CDN (q4cdn) for a
+    given quarter, when SEC has no deck. Returns {available, url}. Needs a search
+    key (SERPER_API_KEY / BRAVE_API_KEY); without one, available is False and the
+    UI falls back to a manual web-search link."""
+    import slides_finder
+    tk = (ticker or "").upper()
+    quarter = (q or "").strip()
+    name = tk
+    row = next((x for x in (_universe_data or []) if x.get("ticker") == tk), None)
+    if row and row.get("name"):
+        name = row["name"]
+    else:
+        try:
+            from stock_universe import get_meta
+            m = get_meta(tk)
+            if m and m.get("name"):
+                name = m["name"]
+        except Exception:
+            pass
+    url = await slides_finder.find_deck(name, tk, quarter)
+    return JSONResponse({"available": bool(url), "url": url or ""},
+                        headers={"Cache-Control": "public, max-age=86400"})
+
+
 @app.get("/api/transcripts/{ticker}")
 async def api_transcripts(ticker: str):
     """Dated earnings-call transcripts list (last 8 quarters). Each row links to
