@@ -3238,6 +3238,11 @@ html.v2-dark .v2-mp-mini-lbl{color:#cbd5e1}
 .ce-pill.ce-lg{font-size:14px;padding:6px 13px 6px 6px}
 .ce-pill.ce-md{font-size:12.5px}
 .ce-pill.ce-sm{font-size:11px;color:#94a3b8;border-color:rgba(10,10,10,.08)}
+/* default view = only the near-event tickers; the no-event long tail is hidden
+   until the user searches (then any company is reachable). */
+.ce-cloud:not(.searching) .ce-pill.ce-sm{display:none}
+.ce-empty-note{width:100%;text-align:center;color:#94a3b8;font-size:13px;padding:22px 0}
+.ce-cloud.searching .ce-empty-note{display:none}
 /* recent = green, upcoming = blue; both float + glow (per-pill --t/--d stagger) */
 .ce-pill.rep{color:#0a7d33;border-color:rgba(10,125,51,.4);animation:ceFloat var(--t,4s) ease-in-out var(--d,0s) infinite,cePulseG 2.4s ease-in-out infinite}
 .ce-pill.soon{color:#0040c1;border-color:rgba(0,64,193,.4);animation:ceFloat var(--t,4s) ease-in-out var(--d,0s) infinite,cePulseB 2.4s ease-in-out infinite}
@@ -6343,7 +6348,7 @@ html.v2-dark body.v2 .main, body.v2 .main{padding:0 0 30px !important;max-width:
     <div class="v2-brf-head">
       <div class="v2-brf-eyebrow">Company Events</div>
       <div class="v2-brf-title">Pick a company, then pick the view</div>
-      <div class="v2-brf-sub">Every company AlphaHunt tracks. The ones that <b>just reported</b> or <b>report soon</b> are pulsing. Tap a ticker, then choose what to read.</div>
+      <div class="v2-brf-sub">The companies that <b>just reported</b> or <b>report soon</b> — floating, sized by how fresh the event is. Tap one, then choose what to read. Need a different company? <b>Search</b> above.</div>
     </div>
 
     <div class="v2-ev-search"><span class="v2-ev-si">🔎</span>
@@ -8817,14 +8822,24 @@ function ceBuildCloud(){
       '" onclick="ceSelectTicker(\'' + t.ticker + '\')" title="' + v2EscHTML(t.name || t.ticker) + (hint(t) ? ' · ' + hint(t) : '') + '">' +
       logoBox(t.ticker) + '<span class="ce-pill-t">' + t.ticker + '</span>' + (hint(t) ? '<i>' + hint(t) + '</i>' : '') + '</button>';
   };
-  cloud.innerHTML = [...rep, ...soon, ...rest].map(pill).join('');
+  // Near-event tickers float up top; the no-event tail stays in the DOM (hidden
+  // by CSS) so search can still reach any company.
+  const note = (rep.length + soon.length) ? '' :
+    '<div class="ce-empty-note">No companies are reporting in the window right now — <b>search</b> above to open any company.</div>';
+  cloud.innerHTML = note + [...rep, ...soon, ...rest].map(pill).join('');
 }
 
 function ceFilter(q){
   q = (q || '').toLowerCase().trim();
-  document.querySelectorAll('#ce-cloud .ce-pill').forEach(function(p){
+  const cloud = document.getElementById('ce-cloud');
+  if (!cloud) return;
+  // 'searching' lifts the CSS that hides the no-event tail, so a typed query
+  // can reach any company. Empty query → back to near-event tickers only.
+  cloud.classList.toggle('searching', !!q);
+  cloud.querySelectorAll('.ce-pill').forEach(function(p){
+    if (!q){ p.style.display = ''; return; }   // CSS re-hides .ce-sm when not searching
     const tic = (p.getAttribute('data-tic') || '').toLowerCase(), nm = p.getAttribute('data-nm') || '';
-    p.style.display = (!q || tic.indexOf(q) >= 0 || nm.indexOf(q) >= 0) ? '' : 'none';
+    p.style.display = (tic.indexOf(q) >= 0 || nm.indexOf(q) >= 0) ? '' : 'none';
   });
 }
 
