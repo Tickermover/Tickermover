@@ -3257,6 +3257,22 @@ html.v2-dark .v2-mp-mini-lbl{color:#cbd5e1}
 .ce-card-d{display:block;font-size:11.5px;color:#64748b;margin-top:2px;line-height:1.45}
 .ce-status{max-width:1268px;margin:0 auto 12px;font-size:12.5px;color:#475569;padding:0 4px}
 .ce-status b{color:#0040c1}
+/* search autocomplete dropdown */
+.ce-search-wrap{position:relative;max-width:1268px;margin:0 auto 16px}
+.ce-search-wrap .v2-ev-search{max-width:none;margin:0}
+.ce-search-dd{position:absolute;left:0;right:0;top:calc(100% + 6px);z-index:30;background:#fff;border:1px solid rgba(10,10,10,.12);border-radius:12px;box-shadow:0 20px 44px -14px rgba(0,40,120,.30);overflow:hidden;max-height:344px;overflow-y:auto}
+.ce-dd-row{display:flex;align-items:center;gap:11px;padding:9px 14px;cursor:pointer;border-bottom:1px solid rgba(10,10,10,.05)}
+.ce-dd-row:last-child{border-bottom:none}
+.ce-dd-row.on{background:#eff5ff}
+.ce-dd-logo{width:24px;height:24px;border-radius:6px;overflow:hidden;flex-shrink:0;background:#f1f5f9;display:flex;align-items:center;justify-content:center}
+.ce-dd-logo img{width:100%;height:100%;object-fit:contain;background:#fff}
+.ce-dd-tic{font-weight:800;font-size:13px;color:#0040c1;flex-shrink:0;min-width:56px}
+.ce-dd-nm{font-size:12.5px;color:#475569;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+.ce-dd-hint{font-size:10.5px;font-weight:700;color:#0a7d33;flex-shrink:0}
+.ce-dd-hint.soon{color:#0040c1}
+.ce-dd-empty{padding:16px 14px;text-align:center;color:#94a3b8;font-size:13px}
+.ce-dd-row::-webkit-scrollbar,.ce-search-dd::-webkit-scrollbar{width:8px}
+.ce-search-dd::-webkit-scrollbar-thumb{background:rgba(10,10,10,.15);border-radius:8px}
 /* ── Floating word-cloud: scatter layout, items absolutely positioned by JS.
    Near-event tickers = bold/colored/with-logo in front; the rest of the universe
    drifts faintly behind for depth. Every word drifts (staggered --t/--d). ── */
@@ -6406,8 +6422,12 @@ document.addEventListener('DOMContentLoaded', function(){
       <div class="v2-brf-sub">Companies that <b>just reported</b> or <b>report soon</b> float bold up front, sized by how fresh the event is; the rest of the universe drifts faintly behind. Tap any ticker, then choose what to read — or <b>search</b> for one.</div>
     </div>
 
-    <div class="v2-ev-search"><span class="v2-ev-si">🔎</span>
-      <input type="text" placeholder="Search ticker or company…" oninput="ceFilter(this.value)">
+    <div class="ce-search-wrap">
+      <div class="v2-ev-search"><span class="v2-ev-si">🔎</span>
+        <input id="ce-search-input" type="text" autocomplete="off" spellcheck="false" placeholder="Search any company — type a ticker or name…"
+               oninput="ceSearch(this.value)" onkeydown="ceSearchKey(event)" onfocus="ceSearch(this.value)" onblur="setTimeout(ceCloseDD,140)">
+      </div>
+      <div id="ce-search-dd" class="ce-search-dd" style="display:none"></div>
     </div>
 
     <div class="ce-cards" id="ce-cards">
@@ -8871,8 +8891,7 @@ function ceBuildCloud(){
   // backdrop: most-notable names first (by smart_score) make a nicer faint cloud
   const score = t => { const s = parseFloat(t.smart_score); return isNaN(s) ? 0 : s; };
   const restAll = all.filter(t => !flagged.has(t.ticker)).sort((a, b) => score(b) - score(a));
-  const backdrop = restAll.slice(0, CE_BACKDROP_MAX);
-  const extra    = restAll.slice(CE_BACKDROP_MAX);   // search-only, kept light (no logo, hidden)
+  const backdrop = restAll.slice(0, CE_BACKDROP_MAX);   // the rest are reachable via the search dropdown
 
   const open = t => 'data-tic="' + t.ticker + '" data-nm="' + v2EscHTML((t.name || '').toLowerCase()) +
     '" onclick="ceSelectTicker(\'' + t.ticker + '\')" title="' + v2EscHTML(t.name || t.ticker) + (hint(t) ? ' · ' + hint(t) : '') + '"';
@@ -8890,12 +8909,7 @@ function ceBuildCloud(){
     html += '<button class="ce-word ce-back" ' + motion(i + 3) + 'font-size:' + fs + 'px" ' + open(t) + '>' +
       logoBox(t.ticker) + '<span class="ce-pill-t">' + t.ticker + '</span></button>';
   });
-  // remaining universe — present for search only (no logo/animation), kept light
-  extra.forEach(t => {
-    html += '<button class="ce-word ce-back ce-hidden-extra" ' + open(t) + '><span class="ce-pill-t">' + t.ticker + '</span></button>';
-  });
   cloud.innerHTML = html;
-  cloud.classList.remove('searching');
   ceLayoutCloud();
 
   if (!_ceResizeBound){
@@ -8949,25 +8963,87 @@ function ceLayoutCloud(){
   });
 }
 
-function ceFilter(q){
-  q = (q || '').toLowerCase().trim();
-  const cloud = document.getElementById('ce-cloud');
-  if (!cloud) return;
-  if (!q){
-    // back to the scatter cloud
-    cloud.classList.remove('searching');
-    cloud.querySelectorAll('.ce-word').forEach(p => { p.style.display = ''; });
-    cloud.querySelectorAll('.ce-hidden-extra').forEach(p => { p.style.display = 'none'; });
-    ceLayoutCloud();
+/* ── Search autocomplete — a real dropdown under the box. Type a ticker or
+   company name → ranked matches across the WHOLE universe (logo + ticker +
+   name); ↑/↓ to move, Enter or click to open, Esc to dismiss. ── */
+let _ceSearchList = [], _ceSearchIdx = -1;
+
+function ceSearch(q){
+  const dd = document.getElementById('ce-search-dd');
+  if (!dd) return;
+  q = (q || '').trim();
+  if (!q){ ceCloseDD(); return; }
+  const ql = q.toLowerCase();
+  const ts = (window.__AH_DATA__ && window.__AH_DATA__.tickers) || [];
+  const scored = [];
+  for (const t of ts){
+    if (!t || !t.ticker) continue;
+    const tic = t.ticker.toLowerCase(), nm = (t.name || '').toLowerCase();
+    let s = -1;
+    if (tic === ql) s = 0;
+    else if (tic.startsWith(ql)) s = 1;
+    else if (nm.startsWith(ql)) s = 2;
+    else if (tic.indexOf(ql) >= 0) s = 3;
+    else if (nm.indexOf(ql) >= 0) s = 4;
+    if (s >= 0) scored.push([s, t]);
+  }
+  scored.sort((a, b) => a[0] - b[0] || a[1].ticker.length - b[1].ticker.length || a[1].ticker.localeCompare(b[1].ticker));
+  _ceSearchList = scored.slice(0, 8).map(x => x[1]);
+  _ceSearchIdx = _ceSearchList.length ? 0 : -1;
+  ceRenderDD();
+}
+
+function ceRenderDD(){
+  const dd = document.getElementById('ce-search-dd');
+  if (!dd) return;
+  if (!_ceSearchList.length){
+    dd.innerHTML = '<div class="ce-dd-empty">No matching company — check the ticker or name.</div>';
+    dd.style.display = 'block';
     return;
   }
-  // searching → readable flow layout, every company reachable
-  cloud.classList.add('searching');
-  cloud.style.height = 'auto';
-  cloud.querySelectorAll('.ce-word').forEach(function(p){
-    const tic = (p.getAttribute('data-tic') || '').toLowerCase(), nm = p.getAttribute('data-nm') || '';
-    p.style.display = (tic.indexOf(q) >= 0 || nm.indexOf(q) >= 0) ? '' : 'none';
-  });
+  const logo = sym => 'https://images.financialmodelingprep.com/symbol/' + encodeURIComponent(sym) + '.png';
+  const d2e = t => { const d = parseInt(t.days_to_earnings); return isNaN(d) ? null : d; };
+  const tag = t => {
+    const d = d2e(t);
+    if (t.earnings_just_reported) return '<span class="ce-dd-hint">just reported</span>';
+    if (d != null && d >= 0 && d <= 45) return '<span class="ce-dd-hint soon">in ' + d + 'd</span>';
+    return '';
+  };
+  dd.innerHTML = _ceSearchList.map((t, i) =>
+    '<div class="ce-dd-row' + (i === _ceSearchIdx ? ' on' : '') + '" data-tic="' + t.ticker +
+      '" onmousedown="event.preventDefault();ceSearchPick(\'' + t.ticker + '\')" onmousemove="ceSearchHover(' + i + ')">' +
+      '<span class="ce-dd-logo"><img src="' + logo(t.ticker) + '" loading="lazy" onerror="this.style.visibility=\'hidden\'"></span>' +
+      '<span class="ce-dd-tic">' + v2EscHTML(t.ticker) + '</span>' +
+      '<span class="ce-dd-nm">' + v2EscHTML((t.name || '').slice(0, 52)) + '</span>' + tag(t) +
+    '</div>').join('');
+  dd.style.display = 'block';
+}
+
+function ceSearchHover(i){
+  if (i === _ceSearchIdx) return;
+  _ceSearchIdx = i;
+  const dd = document.getElementById('ce-search-dd');
+  if (dd) dd.querySelectorAll('.ce-dd-row').forEach((r, j) => r.classList.toggle('on', j === i));
+}
+
+function ceSearchKey(e){
+  const dd = document.getElementById('ce-search-dd');
+  const open = dd && dd.style.display !== 'none' && _ceSearchList.length;
+  if (e.key === 'ArrowDown'){ if (open){ e.preventDefault(); _ceSearchIdx = Math.min(_ceSearchIdx + 1, _ceSearchList.length - 1); ceRenderDD(); } }
+  else if (e.key === 'ArrowUp'){ if (open){ e.preventDefault(); _ceSearchIdx = Math.max(_ceSearchIdx - 1, 0); ceRenderDD(); } }
+  else if (e.key === 'Enter'){ if (open && _ceSearchIdx >= 0){ e.preventDefault(); ceSearchPick(_ceSearchList[_ceSearchIdx].ticker); } }
+  else if (e.key === 'Escape'){ ceCloseDD(); const si = document.getElementById('ce-search-input'); if (si) si.blur(); }
+}
+
+function ceSearchPick(sym){
+  ceCloseDD();
+  ceSelectTicker(sym);   // clears the input, highlights the chip, opens the detail
+}
+
+function ceCloseDD(){
+  const dd = document.getElementById('ce-search-dd');
+  if (dd){ dd.style.display = 'none'; dd.innerHTML = ''; }
+  _ceSearchList = []; _ceSearchIdx = -1;
 }
 
 function ceSetMode(m){
@@ -8980,10 +9056,11 @@ function ceSetMode(m){
 
 function ceSelectTicker(sym){
   ceTicker = String(sym || '').toUpperCase();
-  // Auto-clear the search box and restore the scatter cloud, so coming back
-  // from the detail lands on a fresh, unfiltered cloud.
-  const si = document.querySelector('#ce-hub .v2-ev-search input');
-  if (si && si.value) { si.value = ''; ceFilter(''); }
+  // Auto-clear the search box + close the dropdown, so coming back from the
+  // detail lands on a fresh, unfiltered cloud.
+  const si = document.getElementById('ce-search-input');
+  if (si) si.value = '';
+  ceCloseDD();
   document.querySelectorAll('#ce-cloud .ce-word').forEach(function(p){ p.classList.toggle('sel', (p.getAttribute('data-tic') || '') === ceTicker); });
   ceLoad();
 }
