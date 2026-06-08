@@ -13682,11 +13682,6 @@ function renderWatchlist() {
     const price = t.price;
     const chg   = t.change_pct;
     const headline = (t.name ? t.name.slice(0,40) : sym) + (c.read !== 'flat' ? ' — ' + c.text : '');
-    let desc = (t.rationale || '').trim();
-    if (!desc) {
-      const sig = (t.signals || []).slice(0,3).join(' · ');
-      desc = sig || (c.read === 'flat' ? c.text : 'On your watchlist — no fresh catalyst in the latest refresh.');
-    }
     // today's move
     const todayCls = chg == null ? '' : (chg >= 0 ? 'up' : 'down');
     const todayStr = chg == null ? '—' : ((chg >= 0 ? '+' : '') + chg.toFixed(2) + '% today');
@@ -13705,7 +13700,6 @@ function renderWatchlist() {
         <span class="wl-alpha">Alpha ${score.toFixed(0)}</span>
         <button class="wl-x" onclick="event.stopPropagation();toggleWatch('${sym}')" title="Remove from watchlist">✕</button>
       </div>
-      <p class="wl-desc">${desc}</p>
       <div class="wl-stats">
         <div class="wl-stat"><span class="wl-k">Added</span><span class="wl-v">${addedDate}</span>${addedSub?`<span class="wl-sub">${addedSub}</span>`:''}</div>
         <div class="wl-stat"><span class="wl-k">Price now</span><span class="wl-v">${price != null ? money(price) : '—'}</span><span class="wl-sub ${todayCls}">${todayStr}</span></div>
