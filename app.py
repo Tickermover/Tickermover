@@ -3417,6 +3417,37 @@ async def api_doc_pdf(u: str, dl: int = 0):
                              "X-Content-Type-Options": "nosniff"})
 
 
+@app.get("/api/corporate-actions")
+async def api_corporate_actions():
+    """Universe-scoped corporate-actions feed (ex-dividends + stock splits),
+    aggregated from per-ticker yfinance data already held in memory. Returns a
+    dated feed: {date, symbol, name, type, action, upcoming}."""
+    from datetime import date as _date, timedelta as _td
+    today = _date.today()
+    today_s = today.isoformat()
+    div_lo = (today - _td(days=120)).isoformat()
+    div_hi = (today + _td(days=90)).isoformat()
+    split_lo = (today - _td(days=540)).isoformat()
+    events = []
+    for t in (_universe_data or []):
+        sym = t.get("ticker")
+        name = t.get("name") or sym
+        exd = t.get("ex_dividend_date")
+        if exd and div_lo <= exd <= div_hi:
+            dv = t.get("last_dividend_value")
+            amt = f"${dv:.2f} " if isinstance(dv, (int, float)) and dv else ""
+            events.append({"date": exd, "symbol": sym, "name": name, "type": "Dividend",
+                           "action": f"{amt}ex-dividend", "upcoming": exd >= today_s})
+        spf = (t.get("last_split_factor") or "").strip()
+        spd = t.get("last_split_date")
+        if spf and spd and spd >= split_lo and spf not in ("1:1", "1:0", "0:0"):
+            events.append({"date": spd, "symbol": sym, "name": name, "type": "Split",
+                           "action": f"{spf} stock split", "upcoming": spd >= today_s})
+    events.sort(key=lambda e: e["date"], reverse=True)
+    return JSONResponse({"actions": events[:250], "as_of": today_s},
+                        headers={"Cache-Control": "public, max-age=1800"})
+
+
 @app.get("/api/slides/{ticker}")
 async def api_slides(ticker: str, q: str = ""):
     """Find an earnings-presentation deck on the company's IR CDN (q4cdn) for a

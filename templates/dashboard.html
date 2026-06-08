@@ -3169,6 +3169,28 @@ html.v2-dark .v2-mp-mini-lbl{color:#cbd5e1}
 /* ────────────────────────────────────────────────────────────────
    BRIEFINGS PANEL — Quartr-style event summaries for every ticker
    ──────────────────────────────────────────────────────────────── */
+/* Company Events hub — sub-tab bar + corporate-actions table */
+.ev-subtabs{display:flex;gap:6px;max-width:1268px;margin:0 auto 20px;padding:4px;background:#f1f5f9;border:1px solid rgba(10,10,10,.06);border-radius:11px;width:max-content}
+.ev-subtab{border:none;background:transparent;font-family:inherit;font-size:13px;font-weight:700;color:#64748b;padding:8px 16px;border-radius:8px;cursor:pointer;transition:background .15s,color .15s;white-space:nowrap}
+.ev-subtab:hover{color:#0f172a}
+.ev-subtab.on{background:#fff;color:#0040c1;box-shadow:0 1px 3px rgba(10,10,10,.08)}
+@media(max-width:620px){.ev-subtabs{width:auto;overflow-x:auto}}
+.ca-wrap{max-width:1268px;margin:0 auto;background:#fff;border:1px solid rgba(10,10,10,.08);border-radius:14px;overflow:hidden}
+.ca-table{width:100%;border-collapse:collapse;font-size:13.5px}
+.ca-table th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;color:#94a3b8;background:#fafbfc;padding:11px 16px;border-bottom:1px solid rgba(10,10,10,.06)}
+.ca-table td{padding:11px 16px;border-bottom:1px solid rgba(10,10,10,.05);vertical-align:middle}
+.ca-table tbody tr{cursor:pointer;transition:background .12s}
+.ca-table tbody tr:hover{background:#f6f9ff}
+.ca-table tr:last-child td{border-bottom:none}
+.ca-date{color:#64748b;white-space:nowrap;font-family:'JetBrains Mono',monospace;font-size:12px}
+.ca-sym{color:#0040c1;font-weight:800;font-size:14px}
+.ca-name{display:block;font-size:11px;color:#94a3b8;font-weight:500}
+.ca-type{display:inline-block;font-size:10.5px;font-weight:800;border-radius:6px;padding:2px 8px}
+.ca-type.ca-div{background:#e6f5ec;color:#0a7d33}
+.ca-type.ca-split{background:rgba(124,58,237,.1);color:#6d28d9}
+.ca-act{color:#1f2937}
+.ca-up{display:inline-block;margin-left:8px;font-size:10px;font-weight:800;color:#0040c1;background:rgba(41,112,255,.1);border-radius:5px;padding:1px 7px}
+.ca-empty{max-width:1268px;margin:0 auto;padding:48px 24px;text-align:center;color:#94a3b8;font-size:13.5px;background:#fff;border:1px dashed rgba(10,10,10,.12);border-radius:14px}
 .v2-brf-head{max-width:1268px;margin:0 auto 18px;padding:0 4px}
 /* Briefings eyebrow → violet to match the meta-label color rhythm
    established elsewhere (sets up secondary brand accent). */
@@ -5878,11 +5900,8 @@ html.v2-dark body.v2 .main, body.v2 .main{padding:0 0 30px !important;max-width:
     <div class="v2-nav-item" onclick="if(window.tsOpenAsk)tsOpenAsk()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l1.6 5.2L19 10l-5.4 1.8L12 17l-1.6-5.2L5 10l5.4-1.8z"/><path d="M18 15l.7 2.3L21 18l-2.3.7L18 21l-.7-2.3L15 18l2.3-.7z"/></svg><span>Ask AI</span><span class="v2-nav-tag" style="background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff">NEW</span>
     </div>
-    <div class="v2-nav-item" onclick="v2Show('briefings',this);v2LoadBriefings()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16v12H7l-3 3z"/></svg><span>Earnings Brief</span>
-    </div>
-    <div class="v2-nav-item" onclick="v2Show('concall',this);v2LoadCalls()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg><span>Concall Summary</span>
+    <div class="v2-nav-item" onclick="v2Show('events',this);eventsTab(window._evTab||'brief')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16v12H7l-3 3z"/><path d="M8 9h8M8 13h5"/></svg><span>Company Events</span>
     </div>
 
     <div class="v2-sb-section">SUPPORT</div>
@@ -6265,32 +6284,44 @@ html.v2-dark body.v2 .main, body.v2 .main{padding:0 0 30px !important;max-width:
 <!-- BRIEFINGS — Quartr-style event summaries (earnings calls, investor
      conferences) for every ticker. Click a ticker → loads the structured
      summary on-demand from /api/event-intel, cached in Supabase. -->
-<div id="panel-briefings" class="panel">
-  <div id="briefings-root">
-    <div class="v2-brf-head">
-      <div class="v2-brf-eyebrow">Earnings Brief</div>
-      <div class="v2-brf-title">Catch up on the numbers — fast</div>
-      <div class="v2-brf-sub">Skim what any company just <b>reported</b>: headline results, beats &amp; misses, and guidance figures, straight from the latest 8-K / 10-Q. Pick a ticker for a 30-second brief. <span style="color:#94a3b8">Want the story behind the numbers? See <b>Concall&nbsp;Summary</b>.</span></div>
-    </div>
-    <div class="v2-brf-grid" id="v2-brf-grid">
-      <div class="v2-brf-loading">Loading ticker list…</div>
-    </div>
-    <div id="v2-brf-detail" class="v2-brf-detail" style="display:none"></div>
+<!-- COMPANY EVENTS hub — Earnings Brief + Concall Summary + Corporate Actions -->
+<div id="panel-events" class="panel">
+  <div class="ev-subtabs" id="ev-subtabs">
+    <button class="ev-subtab on" data-ev="brief"   onclick="eventsTab('brief')">📋 Earnings Brief</button>
+    <button class="ev-subtab"    data-ev="concall" onclick="eventsTab('concall')">🎙 Concall Summary</button>
+    <button class="ev-subtab"    data-ev="actions" onclick="eventsTab('actions')">🏛 Corporate Actions</button>
   </div>
-</div>
 
-<!-- EARNINGS CALL — deep, narrative AI summary of the latest earnings call -->
-<div id="panel-concall" class="panel">
-  <div id="ec-root">
-    <div class="v2-brf-head">
-      <div class="v2-brf-eyebrow">Concall Summary</div>
-      <div class="v2-brf-title">Go deep on what management said</div>
-      <div class="v2-brf-sub">Read the <b>story</b> behind the quarter: strategy, segment-by-segment color, Q&amp;A signals and guidance in management’s own words, straight from the call transcript. Pick a ticker for the full narrative. <span style="color:#94a3b8">Just want the reported numbers? See <b>Earnings&nbsp;Brief</b>.</span></div>
+  <div id="ev-brief" class="ev-pane">
+    <div id="briefings-root">
+      <div class="v2-brf-head">
+        <div class="v2-brf-eyebrow">Earnings Brief</div>
+        <div class="v2-brf-title">Catch up on the numbers — fast</div>
+        <div class="v2-brf-sub">Skim what any company just <b>reported</b>: headline results, beats &amp; misses, and guidance figures, straight from the latest 8-K / 10-Q. Pick a ticker for a 30-second brief. <span style="color:#94a3b8">Want the story behind the numbers? See <b>Concall&nbsp;Summary</b>.</span></div>
+      </div>
+      <div class="v2-brf-grid" id="v2-brf-grid">
+        <div class="v2-brf-loading">Loading ticker list…</div>
+      </div>
+      <div id="v2-brf-detail" class="v2-brf-detail" style="display:none"></div>
     </div>
-    <div class="v2-brf-grid" id="v2-ec-grid">
-      <div class="v2-brf-loading">Loading ticker list…</div>
+  </div>
+
+  <div id="ev-concall" class="ev-pane" style="display:none">
+    <div id="ec-root">
+      <div class="v2-brf-head">
+        <div class="v2-brf-eyebrow">Concall Summary</div>
+        <div class="v2-brf-title">Go deep on what management said</div>
+        <div class="v2-brf-sub">Read the <b>story</b> behind the quarter: strategy, segment-by-segment color, Q&amp;A signals and guidance in management’s own words, straight from the call transcript. Pick a ticker for the full narrative. <span style="color:#94a3b8">Just want the reported numbers? See <b>Earnings&nbsp;Brief</b>.</span></div>
+      </div>
+      <div class="v2-brf-grid" id="v2-ec-grid">
+        <div class="v2-brf-loading">Loading ticker list…</div>
+      </div>
+      <div id="v2-ec-detail" class="v2-brf-detail" style="display:none"></div>
     </div>
-    <div id="v2-ec-detail" class="v2-brf-detail" style="display:none"></div>
+  </div>
+
+  <div id="ev-actions" class="ev-pane" style="display:none">
+    <div id="actions-root"><div class="v2-brf-loading">Loading corporate actions…</div></div>
   </div>
 </div>
 
@@ -8739,6 +8770,45 @@ function v2LoadCalls(){
   if (_v2CallLoaded) return;
   _v2CallLoaded = true;
   v2BuildTickerGrid('v2-ec-grid', 'v2OpenCall');
+}
+
+/* ── Company Events hub: switch between Earnings Brief / Concall / Actions ── */
+function eventsTab(name){
+  name = name || 'brief';
+  window._evTab = name;
+  document.querySelectorAll('#ev-subtabs .ev-subtab').forEach(function(b){ b.classList.toggle('on', b.getAttribute('data-ev')===name); });
+  var panes={brief:'ev-brief', concall:'ev-concall', actions:'ev-actions'};
+  Object.keys(panes).forEach(function(k){ var el=document.getElementById(panes[k]); if(el) el.style.display = (k===name)?'':'none'; });
+  if(name==='brief'){ if(typeof v2LoadBriefings==='function') v2LoadBriefings(); }
+  else if(name==='concall'){ if(typeof v2LoadCalls==='function') v2LoadCalls(); }
+  else if(name==='actions'){ loadCorporateActions(); }
+}
+
+let _caLoaded = false;
+function loadCorporateActions(force){
+  const root=document.getElementById('actions-root'); if(!root) return;
+  if(_caLoaded && !force) return;
+  _caLoaded = true;
+  root.innerHTML='<div class="v2-brf-loading">Loading corporate actions…</div>';
+  fetch('/api/corporate-actions').then(function(r){return r.json();})
+    .then(function(d){ renderCorporateActions(root, d); })
+    .catch(function(){ _caLoaded=false; root.innerHTML='<div class="v2-brf-loading">Could not load corporate actions — try again.</div>'; });
+}
+function renderCorporateActions(root, d){
+  const acts=(d&&d.actions)||[];
+  const head='<div class="v2-brf-head"><div class="v2-brf-eyebrow">Corporate Actions</div>'+
+    '<div class="v2-brf-title">Dividends &amp; splits across your universe</div>'+
+    '<div class="v2-brf-sub">Ex-dividend dates and stock splits for the stocks AlphaHunt tracks. Tap any row to open the stock.</div></div>';
+  if(!acts.length){ root.innerHTML=head+'<div class="ca-empty">No recent or upcoming dividends/splits in the tracked universe yet — this fills in as the universe refreshes.</div>'; return; }
+  const fmtDate=function(iso){ const dt=new Date(iso+'T00:00:00'); return isNaN(dt.getTime())?iso:dt.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); };
+  const rows=acts.map(function(a){
+    const badge=a.type==='Dividend'?'<span class="ca-type ca-div">Dividend</span>':'<span class="ca-type ca-split">Split</span>';
+    const up=a.upcoming?'<span class="ca-up">Upcoming</span>':'';
+    return '<tr onclick="openStockModal(\''+a.symbol+'\')"><td class="ca-date">'+escHTML(fmtDate(a.date))+'</td>'+
+      '<td><b class="ca-sym">'+escHTML(a.symbol)+'</b><span class="ca-name">'+escHTML((a.name||'').slice(0,26))+'</span></td>'+
+      '<td>'+badge+'</td><td class="ca-act">'+escHTML(a.action)+up+'</td></tr>';
+  }).join('');
+  root.innerHTML=head+'<div class="ca-wrap"><table class="ca-table"><thead><tr><th>Date</th><th>Symbol</th><th>Type</th><th>Action</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
 }
 function v2OpenCall(ticker){
   return v2OpenDetail(ticker, {
@@ -13231,6 +13301,10 @@ function openBlogArticle(articleId) {
 function showTab(id, btn) {
   // Sector Map merged into the Universe panel — route legacy 'sectors' there.
   if (id === 'sectors') id = 'fund';
+  // Earnings Brief / Concall merged into the Company Events hub.
+  let _evSub = null;
+  if (id === 'briefings') { _evSub = 'brief';   id = 'events'; }
+  if (id === 'concall')   { _evSub = 'concall'; id = 'events'; }
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   btn.classList.add('active');
@@ -13239,6 +13313,7 @@ function showTab(id, btn) {
   if (id === 'model') loadModelPortfolio();
   if (id === 'blog')  loadBlog();
   if (id === 'market') loadMarketAnalysis();
+  if (id === 'events' && typeof eventsTab === 'function') eventsTab(_evSub || window._evTab || 'brief');
 }
 
 /* ----------------------------------------------------------
@@ -14875,14 +14950,9 @@ function _cmdkTickerMatches(){
 // user can search → download in one flow without opening the modal.
 function _cmdkOpenBriefing(ticker){
   closeCmdK();
-  // Show the Briefings panel — same code path the sidebar nav uses.
-  if (typeof v2Nav === 'function') {
-    v2Nav('briefings');
-  } else {
-    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-    const bp = document.getElementById('panel-briefings');
-    if (bp) bp.classList.add('active');
-  }
+  // Earnings Brief merged into the Company Events hub.
+  if (typeof v2Show === 'function') v2Show('events', null);
+  if (typeof eventsTab === 'function') eventsTab('brief');
   // Open this ticker's briefing detail inside the panel.
   setTimeout(() => {
     if (typeof v2OpenBriefing === 'function') v2OpenBriefing(ticker);
@@ -18214,20 +18284,20 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
 #ts-drawer .kpi-src{color:#0f766e;text-decoration:none;font-size:10px;opacity:.55}
 #ts-drawer .kpi-src:hover{opacity:1}
 #ts-drawer .kpi-foot{margin-top:10px;padding:0 2px}
-#panel-concall .cc-bar{display:flex;gap:8px;max-width:520px;margin:0 0 18px}
-#panel-concall .cc-bar input{flex:1;border:1px solid var(--hair,#e5e7eb);border-radius:12px;padding:11px 14px;font-family:inherit;font-size:14px;outline:none;text-transform:uppercase}
-#panel-concall .cc-bar input:focus{border-color:#7c3aed}
-#panel-concall .cc-go{border:0;background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff;font-family:inherit;font-weight:700;font-size:13px;padding:0 18px;border-radius:12px;cursor:pointer;white-space:nowrap}
-#panel-concall .cc-loading{display:flex;align-items:center;gap:10px;color:#6d28d9;font-weight:600;font-size:13px;padding:16px 2px}
-#panel-concall .cc-loading .ai-load i{width:6px;height:6px;border-radius:50%;background:#a78bfa;display:inline-block;animation:aiBlink 1s infinite}
-#panel-concall .cc-doc{max-width:880px;background:#fff;border:1px solid var(--hair,#e5e7eb);border-radius:16px;padding:22px 26px;box-shadow:0 10px 30px -18px rgba(15,40,100,.25);line-height:1.6;color:#1e293b;font-size:14px}
-#panel-concall .cc-doc .cc-h{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:17px;color:#0f172a;margin:20px 0 8px;letter-spacing:-.01em}
-#panel-concall .cc-doc .cc-h:first-child{margin-top:0}
-#panel-concall .cc-doc .cc-ul{margin:6px 0 12px;padding-left:20px}
-#panel-concall .cc-doc .cc-ul li{margin:4px 0}
-#panel-concall .cc-doc .cc-p{margin:8px 0}
-#panel-concall .cc-doc b{color:#0f172a;font-weight:700}
-#panel-concall .cc-foot{max-width:880px;font-size:11px;color:#94a3b8;margin-top:10px;padding:0 4px}
+#ec-root .cc-bar{display:flex;gap:8px;max-width:520px;margin:0 0 18px}
+#ec-root .cc-bar input{flex:1;border:1px solid var(--hair,#e5e7eb);border-radius:12px;padding:11px 14px;font-family:inherit;font-size:14px;outline:none;text-transform:uppercase}
+#ec-root .cc-bar input:focus{border-color:#7c3aed}
+#ec-root .cc-go{border:0;background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff;font-family:inherit;font-weight:700;font-size:13px;padding:0 18px;border-radius:12px;cursor:pointer;white-space:nowrap}
+#ec-root .cc-loading{display:flex;align-items:center;gap:10px;color:#6d28d9;font-weight:600;font-size:13px;padding:16px 2px}
+#ec-root .cc-loading .ai-load i{width:6px;height:6px;border-radius:50%;background:#a78bfa;display:inline-block;animation:aiBlink 1s infinite}
+#ec-root .cc-doc{max-width:880px;background:#fff;border:1px solid var(--hair,#e5e7eb);border-radius:16px;padding:22px 26px;box-shadow:0 10px 30px -18px rgba(15,40,100,.25);line-height:1.6;color:#1e293b;font-size:14px}
+#ec-root .cc-doc .cc-h{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:17px;color:#0f172a;margin:20px 0 8px;letter-spacing:-.01em}
+#ec-root .cc-doc .cc-h:first-child{margin-top:0}
+#ec-root .cc-doc .cc-ul{margin:6px 0 12px;padding-left:20px}
+#ec-root .cc-doc .cc-ul li{margin:4px 0}
+#ec-root .cc-doc .cc-p{margin:8px 0}
+#ec-root .cc-doc b{color:#0f172a;font-weight:700}
+#ec-root .cc-foot{max-width:880px;font-size:11px;color:#94a3b8;margin-top:10px;padding:0 4px}
 </style>
 <script>
 (function(){

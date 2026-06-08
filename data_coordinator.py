@@ -61,6 +61,14 @@ def _safe_float(v: Any, default: Optional[float] = None) -> Optional[float]:
         return default
 
 
+def _yf_ts(v: Any) -> Optional[str]:
+    """yfinance unix-seconds timestamp → 'YYYY-MM-DD' (or None)."""
+    try:
+        return datetime.utcfromtimestamp(int(v)).date().isoformat() if v else None
+    except (TypeError, ValueError, OSError, OverflowError):
+        return None
+
+
 # Map common upstream sector labels to canonical GICS-aligned names that
 # the frontend baselines + backend SECTOR_WEIGHT_DELTAS keys use. Without
 # this normalization, legacy curated rows ('Telecom') and weird FMP values
@@ -1401,7 +1409,7 @@ class DataCoordinator:
                 analyst targets (low/mean/high), beta, short %, description.
         Cached for CACHE_TECH_TTL (1 hour).
         """
-        key    = f"yf:{ticker}:v4"   # v4: adds analyst recommendation (Buy/Sell consensus)
+        key    = f"yf:{ticker}:v5"   # v5: adds corporate actions (ex-dividend / splits)
         cached = self.cache.get(key)
         if cached is not None:
             return cached
@@ -1561,6 +1569,13 @@ class DataCoordinator:
                     "payout_ratio":          payout,
                     "held_pct_institutions": inst_pct,
                     "held_pct_insiders":     insider_pct,
+                    # Corporate actions (dividends / splits) from the yfinance quote
+                    "ex_dividend_date":      _yf_ts(info.get("exDividendDate")),
+                    "dividend_rate":         _safe_float(info.get("dividendRate")),
+                    "last_dividend_value":   _safe_float(info.get("lastDividendValue")),
+                    "last_dividend_date":    _yf_ts(info.get("lastDividendDate")),
+                    "last_split_factor":     info.get("lastSplitFactor"),
+                    "last_split_date":       _yf_ts(info.get("lastSplitDate")),
                     # Description
                     "description":   desc,
                     # Earnings date from yfinance info
@@ -1607,7 +1622,7 @@ class DataCoordinator:
         quote   = await self.get_quote(ticker)
 
         # Primary: Yahoo Finance enrichment (candles + fundamentals in one call)
-        yf      = self.cache.get(f"yf:{ticker}:v4") or {}
+        yf      = self.cache.get(f"yf:{ticker}:v5") or {}
 
         # Fallbacks: Finnhub candles, Alpha Vantage fundamentals
         candles = self.cache.get(f"candles:{ticker}") or {}
@@ -1731,6 +1746,12 @@ class DataCoordinator:
             "target_high":  target_high,
             "analyst_recommendation": yf.get("analyst_recommendation"),
             "recommendation_mean":    yf.get("recommendation_mean"),
+            "ex_dividend_date":       yf.get("ex_dividend_date"),
+            "dividend_rate":          yf.get("dividend_rate"),
+            "last_dividend_value":    yf.get("last_dividend_value"),
+            "last_dividend_date":     yf.get("last_dividend_date"),
+            "last_split_factor":      yf.get("last_split_factor"),
+            "last_split_date":        yf.get("last_split_date"),
 
             # Pre-market / after-hours snapshot (yfinance quote, refreshed with
             # the fundamentals cycle — informational, not tick-by-tick).
