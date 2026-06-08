@@ -3226,7 +3226,7 @@ html.v2-dark .v2-mp-mini-lbl{color:#cbd5e1}
 /* ── Floating word-cloud: scatter layout, items absolutely positioned by JS.
    Near-event tickers = bold/colored/with-logo in front; the rest of the universe
    drifts faintly behind for depth. Every word drifts (staggered --t/--d). ── */
-.ce-cloud{position:relative;max-width:1268px;margin:0 auto;overflow:hidden;padding:0}
+.ce-cloud{position:relative;max-width:1268px;margin:0 auto;overflow:hidden;padding:0;background:rgba(255,251,248,.9);border-radius:18px}
 .ce-word{position:absolute;display:inline-flex;align-items:center;gap:.4em;white-space:nowrap;cursor:pointer;font-family:inherit;font-weight:800;line-height:1;border:none;background:transparent;color:#64748b;transform:rotate(var(--rot,0deg));animation:ceDrift var(--t,9s) ease-in-out var(--d,0s) infinite}
 .ce-word .ce-pill-t{letter-spacing:-.01em}
 .ce-word i{font-style:normal;font-size:.62em;font-weight:700;opacity:.85;margin-left:.1em}
@@ -3238,7 +3238,7 @@ html.v2-dark .v2-mp-mini-lbl{color:#cbd5e1}
 .ce-lg-img img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#fff}
 /* fresh = solid colored chip with logo, sized by how near the event is */
 .ce-fresh{z-index:2;padding:5px 13px 5px 6px;border-radius:999px;background:#fff;border:1px solid rgba(10,10,10,.1);box-shadow:0 2px 9px -5px rgba(0,40,120,.3)}
-.ce-fresh.ce-xl{font-size:23px}.ce-fresh.ce-lg{font-size:19px}.ce-fresh.ce-md{font-size:16px}
+.ce-fresh.ce-xl{font-size:26px}.ce-fresh.ce-lg{font-size:21px}.ce-fresh.ce-md{font-size:16px}
 .ce-fresh.rep{color:#0a7d33;border-color:rgba(10,125,51,.45);animation:ceDrift var(--t,9s) ease-in-out var(--d,0s) infinite,cePulseG 2.4s ease-in-out infinite}
 .ce-fresh.soon{color:#0040c1;border-color:rgba(0,64,193,.45);animation:ceDrift var(--t,9s) ease-in-out var(--d,0s) infinite,cePulseB 2.4s ease-in-out infinite}
 .ce-fresh.rep i{color:#0a7d33}.ce-fresh.soon i{color:#0040c1}
@@ -8833,9 +8833,10 @@ function ceBuildCloud(){
     html += '<button class="ce-word ce-fresh ' + tier(t) + ' ' + cls(t) + '" ' + motion(i) + '" ' + open(t) + '>' +
       logoBox(t.ticker) + '<span class="ce-pill-t">' + t.ticker + '</span>' + (hint(t) ? '<i>' + hint(t) + '</i>' : '') + '</button>';
   });
-  // backdrop chips — every one carries a logo + ticker; varied size/opacity for depth, horizontal
+  // backdrop chips — no event date, so all the same small size (size encodes
+  // event proximity only); a little opacity variation keeps some depth. Horizontal.
   backdrop.forEach((t, i) => {
-    const fs = rnd(13, 24).toFixed(1), op = rnd(0.5, 0.88).toFixed(2);
+    const fs = 14, op = rnd(0.6, 0.92).toFixed(2);
     html += '<button class="ce-word ce-back" ' + motion(i + 3) + 'font-size:' + fs + 'px;opacity:' + op + '" ' + open(t) + '>' +
       logoBox(t.ticker) + '<span class="ce-pill-t">' + t.ticker + '</span></button>';
   });
