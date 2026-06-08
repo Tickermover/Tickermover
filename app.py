@@ -3501,12 +3501,14 @@ def _ticker_metrics_block(tk: str) -> str:
 
 
 @app.get("/api/concall/{ticker}")
-async def api_concall(ticker: str):
-    """Detailed earnings-call (concall) summary from the latest transcript/filing."""
+async def api_concall(ticker: str, q: str = ""):
+    """Detailed earnings-call (concall) summary. `q` (e.g. '2026Q1') targets a
+    specific call for the per-card Documents view; omitted = latest."""
     import stock_rag
     tk = (ticker or "").upper()
-    res = await stock_rag.concall_summary(tk, _ticker_metrics_block(tk))
-    return JSONResponse(_clean(res), headers={"Cache-Control": "no-store"})
+    quarter = (q or "").upper().strip() or None
+    res = await stock_rag.concall_summary(tk, _ticker_metrics_block(tk), quarter=quarter)
+    return JSONResponse(_clean(res), headers={"Cache-Control": "public, max-age=3600"})
 
 
 @app.get("/api/thesis/{symbol}")

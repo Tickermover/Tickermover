@@ -266,11 +266,20 @@ def _parse_json_block(text: str) -> dict | None:
         return None
 
 
-async def concall_summary(ticker: str, profile_data: str = "") -> dict:
+_CONCALL_CACHE: dict = {}   # (ticker, quarter) -> result, avoids repeat Claude calls
+
+
+async def concall_summary(ticker: str, profile_data: str = "", quarter: str | None = None) -> dict:
     """Deep, narrative earnings-call summary as STRUCTURED sections — the same
     shape /api/event-intel returns, so the premium briefing UI renders both.
     Returns {available, event_title, event_date, sections[], raw_excerpt,
-    source, source_url} or {available: False, reason}."""
+    source, source_url} or {available: False, reason}.
+
+    `quarter` (e.g. '2026Q1') targets a specific call; None = most recent."""
+    ck = ((ticker or "").upper(), (quarter or "latest"))
+    cached = _CONCALL_CACHE.get(ck)
+    if cached is not None:
+        return cached
     if not ANTHROPIC_KEY:
         return {"available": False, "reason": "disabled",
                 "note": "The AI summary isn't enabled yet (set ANTHROPIC_API_KEY)."}
@@ -279,16 +288,26 @@ async def concall_summary(ticker: str, profile_data: str = "") -> dict:
     try:
         import event_intel as ei
         try:
-            tr = await ei._fetch_av_transcript(ticker)
+            tr = await ei._fetch_av_transcript(ticker, quarter)
             if isinstance(tr, dict) and tr.get("error") == "rate_limited":
                 return {"available": False, "reason": "rate_limited",
                         "info": tr.get("info")}
-            if tr and tr.get("text"):
-                text, src = tr["text"], "earnings call transcript"
+            if tr and (tr.get("text") or tr.get("transcript")):
+                if tr.get("text"):
+                    text = tr["text"]
+                else:
+                    segs = tr.get("transcript") or []
+                    text = "\n".join(
+                        ((s.get("speaker", "") + ": ") if s.get("speaker") else "")
+                        + (s.get("content", "") or "")
+                        for s in segs if isinstance(s, dict) and s.get("content"))
+                src = "earnings call transcript"
                 src_tag = "alpha_vantage_transcript"
         except Exception:
             pass
-        if not text:
+        # EDGAR fallback is the *latest* filing — only use it for the default
+        # (latest) request, never when a specific quarter was asked for.
+        if not text and not quarter:
             ed = await ei._fetch_edgar_recent(ticker)
             if ed and ed.get("text"):
                 text, src = ed["text"], ed.get("source_label", "recent SEC filing")
@@ -310,6 +329,7 @@ async def concall_summary(ticker: str, profile_data: str = "") -> dict:
     parsed["source"]    = src_tag
     if src_url:
         parsed["source_url"] = src_url
+    _CONCALL_CACHE[ck] = parsed
     return parsed
 
 
