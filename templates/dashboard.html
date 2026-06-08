@@ -6421,7 +6421,7 @@ document.addEventListener('DOMContentLoaded', function(){
       </button>
       <button class="ce-card" data-mode="actions" onclick="ceSetMode('actions')">
         <span class="ce-card-ic">🏛</span>
-        <span><span class="ce-card-t">Corporate Actions</span><span class="ce-card-d">Dividends &amp; splits — for one stock, or the whole universe.</span></span>
+        <span><span class="ce-card-t">Corporate Actions</span><span class="ce-card-d">Dividends, ex-dates &amp; stock splits — the calendar that moves shares.</span></span>
       </button>
     </div>
 
@@ -8980,13 +8980,17 @@ function ceSetMode(m){
 
 function ceSelectTicker(sym){
   ceTicker = String(sym || '').toUpperCase();
-  document.querySelectorAll('#ce-cloud .ce-pill').forEach(function(p){ p.classList.toggle('sel', (p.getAttribute('data-tic') || '') === ceTicker); });
+  // Auto-clear the search box and restore the scatter cloud, so coming back
+  // from the detail lands on a fresh, unfiltered cloud.
+  const si = document.querySelector('#ce-hub .v2-ev-search input');
+  if (si && si.value) { si.value = ''; ceFilter(''); }
+  document.querySelectorAll('#ce-cloud .ce-word').forEach(function(p){ p.classList.toggle('sel', (p.getAttribute('data-tic') || '') === ceTicker); });
   ceLoad();
 }
 
 function ceAllActions(){
   ceTicker = null;
-  document.querySelectorAll('#ce-cloud .ce-pill').forEach(function(p){ p.classList.remove('sel'); });
+  document.querySelectorAll('#ce-cloud .ce-word').forEach(function(p){ p.classList.remove('sel'); });
   ceSetMode('actions');
 }
 
