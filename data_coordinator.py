@@ -1604,7 +1604,7 @@ class DataCoordinator:
         quote   = await self.get_quote(ticker)
 
         # Primary: Yahoo Finance enrichment (candles + fundamentals in one call)
-        yf      = self.cache.get(f"yf:{ticker}:v2") or {}
+        yf      = self.cache.get(f"yf:{ticker}:v3") or {}
 
         # Fallbacks: Finnhub candles, Alpha Vantage fundamentals
         candles = self.cache.get(f"candles:{ticker}") or {}
