@@ -476,24 +476,19 @@ tr:hover td{background:rgba(245,166,35,.06)}
    the same vertical layout and the Alpha Score lines up across the grid. */
 .kt-neutral{background:rgba(10,10,10,.04);color:#475569;border:1px solid rgba(10,10,10,.10)}
 
-/* ====== WATCHLIST — news & catalysts table ====== */
+/* ====== WATCHLIST — news & catalysts feed (news-snapshot style) ====== */
 .wl-news-cap{font-size:12.5px;color:var(--muted);margin:0 0 10px;font-weight:600}
-.wl-news-wrap{background:#fff;border:1px solid rgba(10,10,10,.08);border-radius:12px;overflow:hidden;margin-bottom:18px}
-.wl-news-table{width:100%;border-collapse:collapse;font-size:13px}
-.wl-news-table th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;color:#94a3b8;background:#fafafa;padding:8px 12px;border-bottom:1px solid rgba(10,10,10,.06);white-space:nowrap}
-.wl-news-table td{padding:9px 12px;border-bottom:1px solid rgba(10,10,10,.05);vertical-align:middle}
-.wl-news-table tr:last-child td{border-bottom:none}
-.wl-news-table tbody tr{cursor:pointer;transition:background .12s}
-.wl-news-table tbody tr:hover{background:#f6f9ff}
-.wl-tk{font-weight:800;color:#0040c1}
-.wl-nm{color:#64748b;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.wl-read{display:inline-block;font-size:10.5px;font-weight:700;border-radius:5px;padding:1px 7px;white-space:nowrap}
-.wl-read.pos{background:#e6f5ec;color:#0a7d33}
-.wl-read.hot{background:rgba(220,38,38,.1);color:#b91c1c}
-.wl-read.evt{background:rgba(41,112,255,.1);color:#0040c1}
-.wl-read.flat{background:#eef1f4;color:#69707a}
-.wl-cat{color:#1f2937}
-.wl-cat .wl-ico{margin-right:6px}
+.wl-feed{background:#fff;border:1px solid rgba(10,10,10,.08);border-radius:12px;overflow:hidden}
+.wl-item{padding:12px 16px;border-bottom:1px solid rgba(10,10,10,.06);transition:background .12s;cursor:pointer}
+.wl-item:last-child{border-bottom:none}
+.wl-item:hover{background:#f6f9ff}
+.wl-item-head{display:flex;align-items:center;gap:8px}
+.wl-tk{display:inline-block;font-weight:800;background:rgba(41,112,255,.10);color:#0040c1;border-radius:5px;padding:1px 8px;font-size:11.5px;flex-shrink:0}
+.wl-title{font-size:14px;font-weight:800;color:#0f172a;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wl-x{background:none;border:none;cursor:pointer;color:#94a3b8;font-size:14px;flex-shrink:0;padding:2px 5px;border-radius:4px;line-height:1}
+.wl-x:hover{color:#dc2626;background:rgba(220,38,38,.08)}
+.wl-desc{margin:6px 0 0;color:#3a4048;font-size:13px;line-height:1.55}
+.wl-meta{margin-top:5px;font-size:11px;color:#94a3b8;font-weight:600;letter-spacing:.02em}
 
 /* ====== THESIS COLUMN ====== */
 .thesis-box{max-width:360px;font-size:11.5px;line-height:1.5;color:var(--txt)}
@@ -13249,62 +13244,51 @@ function renderWatchlist() {
     const t = (typeof _allTickerData !== 'undefined' && _allTickerData[sym]) || null;
     return t ? Object.assign({}, t) : { ticker: sym, name: 'Not in universe', __unknown: true };
   });
-  // News & catalysts snapshot — one line per watched name, tap to open.
+  // News & catalysts feed — news-snapshot style (pill + headline + detail),
+  // one item per watched name. Tap an item to open the full report.
+  const items = found.map(t => {
+    if (t.__unknown) {
+      return `<div class="wl-item" style="cursor:default">
+        <div class="wl-item-head">
+          <span class="wl-tk">${t.ticker}</span>
+          <b class="wl-title">Not in the AlphaHunt universe</b>
+          <button class="wl-x" onclick="event.stopPropagation();toggleWatch('${t.ticker}')" title="Remove from watchlist">✕</button>
+        </div>
+        <p class="wl-desc">No Alpha Score or catalyst is computed for this ticker — kept on your list as a reminder.</p>
+      </div>`;
+    }
+    const c = watchCatalyst(t);
+    const score = (t.smart_score ?? t.pop_score ?? 0);
+    const chg   = t.change_pct;
+    const chgStr = chg != null ? ((chg >= 0 ? '+' : '') + chg.toFixed(2) + '% today') : '';
+    const px    = t.price != null ? '$' + t.price.toFixed(2) : '';
+    // Headline = company name, plus the catalyst when it's a real trigger
+    // (skip the dash for neutral "steady state" reads so titles stay clean).
+    const headline = (t.name ? t.name.slice(0,40) : t.ticker)
+                   + (c.read !== 'flat' ? ' — ' + c.text : '');
+    let desc = (t.rationale || '').trim();
+    if (!desc) {
+      const sig = (t.signals || []).slice(0,3).join(' · ');
+      desc = sig || (c.read === 'flat' ? c.text : 'On your watchlist — no fresh catalyst in the latest refresh.');
+    }
+    const meta = ['Alpha ' + score.toFixed(0), px, chgStr].filter(Boolean).join(' · ');
+    return `<div class="wl-item" onclick="openStockModal('${t.ticker}')">
+      <div class="wl-item-head">
+        <span class="wl-tk">${t.ticker}</span>
+        <b class="wl-title">${headline}</b>
+        <button class="wl-x" onclick="event.stopPropagation();toggleWatch('${t.ticker}')" title="Remove from watchlist">✕</button>
+      </div>
+      <p class="wl-desc">${desc}</p>
+      <div class="wl-meta">${meta}</div>
+    </div>`;
+  }).join('');
   if (news) {
-    const readLbl = { pos:'Bullish', hot:'Hot', evt:'Event', flat:'Neutral' };
-    const rows = found.map(t => {
-      const c = watchCatalyst(t);
-      return `<tr onclick="openStockModal('${t.ticker}')">
-        <td><span class="wl-tk">${t.ticker}</span></td>
-        <td class="wl-nm">${(t.name || '').slice(0,32)}</td>
-        <td><span class="wl-read ${c.read}">${readLbl[c.read]}</span></td>
-        <td class="wl-cat"><span class="wl-ico">${c.icon}</span>${c.text}</td>
-      </tr>`;
-    }).join('');
     news.innerHTML =
       `<div class="wl-news-cap">📰 News &amp; catalysts — latest read on each name you're watching</div>
-       <div class="wl-news-wrap"><table class="wl-news-table"><thead><tr>
-         <th>Ticker</th><th>Company</th><th>Read</th><th>Latest news / catalyst</th>
-       </tr></thead><tbody>${rows}</tbody></table></div>`;
+       <div class="wl-feed">${items}</div>`;
   }
-  grid.innerHTML = found.map(t => {
-    const score = (t.smart_score ?? t.pop_score ?? 0);
-    const px    = t.price != null ? '$' + t.price.toFixed(2) : '—';
-    const chg   = t.change_pct;
-    const chgStr = chg != null ? ((chg >= 0 ? '+' : '') + chg.toFixed(2) + '%') : '';
-    const chgCol = chg == null ? '#64748b' : chg > 0 ? '#15803d' : chg < 0 ? '#dc2626' : '#64748b';
-    if (t.__unknown) {
-      return `
-        <div class="hot-card" style="cursor:default;background:#fff;border:1px dashed rgba(10,10,10,.18);padding:14px">
-          <div style="display:flex;justify-content:space-between;align-items:center">
-            <div style="font-size:18px;font-weight:900;color:#0f172a">${t.ticker}</div>
-            <button onclick="toggleWatch('${t.ticker}')" title="Remove from watchlist" style="background:none;border:none;cursor:pointer;font-size:18px;color:#F5A623">★</button>
-          </div>
-          <div style="font-size:11px;color:#94a3b8;margin-top:2px;font-style:italic">${t.name}</div>
-          <div style="font-size:11.5px;color:#64748b;margin-top:8px;line-height:1.4">Ticker is not in the AlphaHunt universe — no Alpha Score is computed for it. You can still keep it on your list as a reminder.</div>
-        </div>`;
-    }
-    return `
-      <div class="hot-card" onclick="openStockModal('${t.ticker}')" style="cursor:pointer;background:#fff;border:1px solid rgba(10,10,10,.08);padding:14px;border-radius:12px;transition:transform .15s,box-shadow .15s"
-           onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 18px rgba(10,10,10,.12)'"
-           onmouseout="this.style.transform='';this.style.boxShadow=''">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
-          <div style="min-width:0;flex:1">
-            <div style="font-size:18px;font-weight:900;color:#0f172a">${t.ticker}</div>
-            <div style="font-size:11px;color:#64748b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${(t.name || '').slice(0,32)}</div>
-          </div>
-          <button onclick="event.stopPropagation();toggleWatch('${t.ticker}')" title="Remove from watchlist" style="background:none;border:none;cursor:pointer;font-size:18px;color:#F5A623;flex-shrink:0">★</button>
-        </div>
-        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:10px;font-size:13px;font-weight:600">
-          <span style="color:#0f172a">${px}</span>
-          <span style="color:${chgCol};font-size:12px">${chgStr}</span>
-        </div>
-        <div style="display:flex;align-items:baseline;gap:6px;margin-top:8px">
-          <span style="font-size:24px;font-weight:900;color:#0040c1">${score.toFixed(0)}</span>
-          <span style="font-size:10.5px;color:#94a3b8;letter-spacing:.06em;font-weight:600">ALPHA SCORE</span>
-        </div>
-      </div>`;
-  }).join('');
+  // Box-style ticker cards dropped — the news feed above IS the watchlist now.
+  grid.innerHTML = '';
 }
 
 /* ----------------------------------------------------------
