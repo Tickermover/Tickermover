@@ -3169,12 +3169,7 @@ html.v2-dark .v2-mp-mini-lbl{color:#cbd5e1}
 /* ────────────────────────────────────────────────────────────────
    BRIEFINGS PANEL — Quartr-style event summaries for every ticker
    ──────────────────────────────────────────────────────────────── */
-/* Company Events hub — sub-tab bar + corporate-actions table */
-.ev-subtabs{display:flex;gap:6px;max-width:1268px;margin:0 auto 20px;padding:4px;background:#f1f5f9;border:1px solid rgba(10,10,10,.06);border-radius:11px;width:max-content}
-.ev-subtab{border:none;background:transparent;font-family:inherit;font-size:13px;font-weight:700;color:#64748b;padding:8px 16px;border-radius:8px;cursor:pointer;transition:background .15s,color .15s;white-space:nowrap}
-.ev-subtab:hover{color:#0f172a}
-.ev-subtab.on{background:#fff;color:#0040c1;box-shadow:0 1px 3px rgba(10,10,10,.08)}
-@media(max-width:620px){.ev-subtabs{width:auto;overflow-x:auto}}
+/* Company Events hub — corporate-actions table (cards/cloud styles below) */
 .ca-wrap{max-width:1268px;margin:0 auto;background:#fff;border:1px solid rgba(10,10,10,.08);border-radius:14px;overflow:hidden}
 .ca-table{width:100%;border-collapse:collapse;font-size:13.5px}
 .ca-table th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;color:#94a3b8;background:#fafbfc;padding:11px 16px;border-bottom:1px solid rgba(10,10,10,.06)}
@@ -3218,6 +3213,29 @@ html.v2-dark .v2-mp-mini-lbl{color:#cbd5e1}
 .v2-ev-name{flex:1;font-size:13px;color:#475569;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .v2-ev-hint{font-size:11px;font-weight:700;color:#94a3b8;white-space:nowrap;flex-shrink:0}
 .v2-ev-hint.rep{color:#0a7d33}.v2-ev-hint.soon{color:#0040c1}
+/* ── Company Events hub: view cards (pick what to read) + word-cloud ticker picker ── */
+.ce-cards{display:flex;gap:12px;max-width:1268px;margin:0 auto 14px;flex-wrap:wrap}
+.ce-card{flex:1 1 220px;display:flex;gap:11px;align-items:flex-start;text-align:left;background:#fff;border:1.5px solid rgba(10,10,10,.1);border-radius:14px;padding:13px 15px;cursor:pointer;font-family:inherit;transition:border-color .15s,box-shadow .15s,transform .12s}
+.ce-card:hover{transform:translateY(-2px);border-color:rgba(41,112,255,.35);box-shadow:0 8px 22px -12px rgba(41,112,255,.3)}
+.ce-card.on{border-color:#2970ff;box-shadow:0 0 0 3px rgba(41,112,255,.12)}
+.ce-card-ic{font-size:20px;line-height:1.2;flex-shrink:0}
+.ce-card-t{display:block;font-weight:800;font-size:13.5px;color:#0f172a}
+.ce-card-d{display:block;font-size:11.5px;color:#64748b;margin-top:2px;line-height:1.45}
+.ce-status{max-width:1268px;margin:0 auto 12px;font-size:12.5px;color:#475569;padding:0 4px}
+.ce-status b{color:#0040c1}
+.ce-cloud{max-width:1268px;margin:0 auto;display:flex;flex-wrap:wrap;gap:7px;align-items:center;max-height:52vh;overflow:auto;padding:4px 2px 8px}
+.ce-pill{display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid rgba(10,10,10,.1);border-radius:9px;padding:5px 10px;cursor:pointer;font-family:inherit;color:#64748b;font-weight:700;font-size:12px;line-height:1.1;transition:border-color .14s,box-shadow .14s,transform .1s,color .14s}
+.ce-pill .ce-pill-t{font-weight:800}
+.ce-pill:hover{transform:translateY(-1px);border-color:rgba(41,112,255,.4);color:#0f172a}
+.ce-pill i{font-style:normal;font-size:10px;font-weight:700;opacity:.85}
+.ce-pill.sel{border-color:#2970ff;box-shadow:0 0 0 3px rgba(41,112,255,.14);color:#0040c1}
+.ce-pill.rep{color:#0a7d33;border-color:rgba(10,125,51,.35);font-size:13px;animation:cePulseG 2.4s ease-in-out infinite}
+.ce-pill.soon{color:#0040c1;border-color:rgba(0,64,193,.35);font-size:13px;animation:cePulseB 2.4s ease-in-out infinite}
+.ce-pill.rep i{color:#0a7d33}.ce-pill.soon i{color:#0040c1}
+@keyframes cePulseG{0%,100%{box-shadow:0 0 0 0 rgba(10,125,51,0)}50%{box-shadow:0 0 0 4px rgba(10,125,51,.13)}}
+@keyframes cePulseB{0%,100%{box-shadow:0 0 0 0 rgba(0,64,193,0)}50%{box-shadow:0 0 0 4px rgba(0,64,193,.13)}}
+@media(prefers-reduced-motion:reduce){.ce-pill.rep,.ce-pill.soon{animation:none}}
+.ce-cloud::-webkit-scrollbar{width:8px}.ce-cloud::-webkit-scrollbar-thumb{background:rgba(10,10,10,.15);border-radius:8px}
 .v2-brf-head{max-width:1268px;margin:0 auto 18px;padding:0 4px}
 /* Briefings eyebrow → violet to match the meta-label color rhythm
    established elsewhere (sets up secondary brand accent). */
@@ -6310,43 +6328,38 @@ html.v2-dark body.v2 .main, body.v2 .main{padding:0 0 30px !important;max-width:
      summary on-demand from /api/event-intel, cached in Supabase. -->
 <!-- COMPANY EVENTS hub — Earnings Brief + Concall Summary + Corporate Actions -->
 <div id="panel-events" class="panel">
-  <div class="ev-subtabs" id="ev-subtabs">
-    <button class="ev-subtab on" data-ev="brief"   onclick="eventsTab('brief')">📋 Earnings Brief</button>
-    <button class="ev-subtab"    data-ev="concall" onclick="eventsTab('concall')">🎙 Concall Summary</button>
-    <button class="ev-subtab"    data-ev="actions" onclick="eventsTab('actions')">🏛 Corporate Actions</button>
-  </div>
-
-  <div id="ev-brief" class="ev-pane">
-    <div id="briefings-root">
-      <div class="v2-brf-head">
-        <div class="v2-brf-eyebrow">Earnings Brief</div>
-        <div class="v2-brf-title">Catch up on the numbers — fast</div>
-        <div class="v2-brf-sub">Skim what any company just <b>reported</b>: headline results, beats &amp; misses, and guidance figures, straight from the latest 8-K / 10-Q. Pick a ticker for a 30-second brief. <span style="color:#94a3b8">Want the story behind the numbers? See <b>Concall&nbsp;Summary</b>.</span></div>
-      </div>
-      <div class="v2-brf-grid" id="v2-brf-grid">
-        <div class="v2-brf-loading">Loading ticker list…</div>
-      </div>
-      <div id="v2-brf-detail" class="v2-brf-detail" style="display:none"></div>
+  <div id="ce-hub">
+    <div class="v2-brf-head">
+      <div class="v2-brf-eyebrow">Company Events</div>
+      <div class="v2-brf-title">Pick a company, then pick the view</div>
+      <div class="v2-brf-sub">Every company AlphaHunt tracks. The ones that <b>just reported</b> or <b>report soon</b> are pulsing. Tap a ticker, then choose what to read.</div>
     </div>
-  </div>
 
-  <div id="ev-concall" class="ev-pane" style="display:none">
-    <div id="ec-root">
-      <div class="v2-brf-head">
-        <div class="v2-brf-eyebrow">Concall Summary</div>
-        <div class="v2-brf-title">Go deep on what management said</div>
-        <div class="v2-brf-sub">Read the <b>story</b> behind the quarter: strategy, segment-by-segment color, Q&amp;A signals and guidance in management’s own words, straight from the call transcript. Pick a ticker for the full narrative. <span style="color:#94a3b8">Just want the reported numbers? See <b>Earnings&nbsp;Brief</b>.</span></div>
-      </div>
-      <div class="v2-brf-grid" id="v2-ec-grid">
-        <div class="v2-brf-loading">Loading ticker list…</div>
-      </div>
-      <div id="v2-ec-detail" class="v2-brf-detail" style="display:none"></div>
+    <div class="v2-ev-search"><span class="v2-ev-si">🔎</span>
+      <input type="text" placeholder="Search ticker or company…" oninput="ceFilter(this.value)">
     </div>
+
+    <div class="ce-cards" id="ce-cards">
+      <button class="ce-card on" data-mode="brief" onclick="ceSetMode('brief')">
+        <span class="ce-card-ic">📋</span>
+        <span><span class="ce-card-t">Earnings Brief</span><span class="ce-card-d">Headline results, beats &amp; misses, guidance — the numbers, fast.</span></span>
+      </button>
+      <button class="ce-card" data-mode="concall" onclick="ceSetMode('concall')">
+        <span class="ce-card-ic">🎙</span>
+        <span><span class="ce-card-t">Concall Summary</span><span class="ce-card-d">The story management told — strategy, segments, Q&amp;A signals.</span></span>
+      </button>
+      <button class="ce-card" data-mode="actions" onclick="ceSetMode('actions')">
+        <span class="ce-card-ic">🏛</span>
+        <span><span class="ce-card-t">Corporate Actions</span><span class="ce-card-d">Dividends &amp; splits — for one stock, or the whole universe.</span></span>
+      </button>
+    </div>
+
+    <div class="ce-status" id="ce-status">Pick a company below — <b>Earnings Brief</b> opens for it.</div>
+
+    <div class="ce-cloud" id="ce-cloud"><div class="v2-brf-loading">Loading companies…</div></div>
   </div>
 
-  <div id="ev-actions" class="ev-pane" style="display:none">
-    <div id="actions-root"><div class="v2-brf-loading">Loading corporate actions…</div></div>
-  </div>
+  <div id="ce-detail" class="v2-brf-detail" style="display:none"></div>
 </div>
 
 <!-- MODEL PORTFOLIO -->
@@ -8710,65 +8723,6 @@ document.addEventListener('keydown', (e) => {
 // Lists ticker cards in a grid; click → loads /api/event-intel and
 // renders structured sections with bullets + verbatim quote.
 
-// Shared ticker-grid builder — both Earnings Brief and Earnings Call use the
-// same premium card grid; only the click handler (which detail to open) differs.
-function v2BuildTickerGrid(gridId, openFn){
-  const grid = document.getElementById(gridId);
-  if (!grid) return;
-  const tickers = (window.__AH_DATA__ && window.__AH_DATA__.tickers) || [];
-  if (!tickers.length){
-    grid.innerHTML = '<div class="v2-brf-loading">No tickers loaded yet — refresh in a moment.</div>';
-    return;
-  }
-  const all = [...tickers].filter(t => t.ticker);
-  const d2e = t => { const d = parseInt(t.days_to_earnings);    return isNaN(d) ? null : d; };
-  const dse = t => { const d = parseInt(t.days_since_earnings); return isNaN(d) ? null : d; };
-  const logo = sym => 'https://images.financialmodelingprep.com/symbol/' + encodeURIComponent(sym) + '.png';
-  const isRep  = t => t.earnings_just_reported || (dse(t) != null && dse(t) >= 0 && dse(t) <= 12);
-  const isSoon = t => d2e(t) != null && d2e(t) >= 0 && d2e(t) <= 21;
-  const hint = t => {
-    if (isRep(t))  { const s = dse(t); return s === 0 ? 'Reported today' : (s != null ? 'Reported ' + s + 'd ago' : 'Just reported'); }
-    if (isSoon(t)) { const d = d2e(t); return d === 0 ? 'Reports today' : 'Reports in ' + d + 'd'; }
-    return '';
-  };
-  const hintCls = t => isRep(t) ? 'rep' : (isSoon(t) ? 'soon' : '');
-  const logoBox = (sym, cls) => '<span class="' + cls + '"><span class="fb">' + (sym || '?').charAt(0) +
-    '</span><img src="' + logo(sym) + '" loading="lazy" onerror="this.style.display=\'none\'" onload="this.previousElementSibling.style.display=\'none\'"></span>';
-
-  const justReported = all.filter(isRep).sort((a, b) => (dse(a) == null ? 99 : dse(a)) - (dse(b) == null ? 99 : dse(b))).slice(0, 14);
-  const soon = all.filter(isSoon).sort((a, b) => d2e(a) - d2e(b)).slice(0, 14);
-  const sorted = all.sort((a, b) => (a.ticker || '').localeCompare(b.ticker || ''));
-
-  const chip = t => '<button class="v2-ev-chip" onclick="' + openFn + '(\'' + t.ticker + '\')">' +
-    logoBox(t.ticker, 'v2-ev-chip-logo') + '<b>' + t.ticker + '</b>' +
-    (hint(t) ? '<small class="' + hintCls(t) + '">' + hint(t) + '</small>' : '') + '</button>';
-  const row = t => '<div class="v2-ev-row" onclick="' + openFn + '(\'' + t.ticker + '\')">' +
-    logoBox(t.ticker, 'v2-ev-logo') +
-    '<span class="v2-ev-tic">' + t.ticker + '</span>' +
-    '<span class="v2-ev-name">' + v2EscHTML((t.name || '').slice(0, 44)) + '</span>' +
-    '<span class="v2-ev-hint ' + hintCls(t) + '">' + hint(t) + '</span></div>';
-  const quick = (title, arr) => arr.length ? '<div class="v2-ev-quick"><div class="v2-ev-quick-h">' + title +
-    '</div><div class="v2-ev-chips">' + arr.map(chip).join('') + '</div></div>' : '';
-
-  grid.innerHTML =
-    '<div class="v2-ev-search"><span class="v2-ev-si">🔎</span><input type="text" placeholder="Search ticker or company…" oninput="v2EvFilter(this,\'' + gridId + '\')"></div>' +
-    quick('📣 Just reported', justReported) +
-    quick('📅 Reporting soon', soon) +
-    '<div class="v2-ev-list-h">All companies <span>' + sorted.length + '</span></div>' +
-    '<div class="v2-ev-list">' + sorted.map(row).join('') + '</div>';
-}
-
-function v2EvFilter(input, gridId){
-  const q = (input.value || '').toLowerCase().trim();
-  const grid = document.getElementById(gridId);
-  if (!grid) return;
-  grid.querySelectorAll('.v2-ev-row').forEach(function(r){
-    const tEl = r.querySelector('.v2-ev-tic'), nEl = r.querySelector('.v2-ev-name');
-    const tic = (tEl ? tEl.textContent : '').toLowerCase(), nm = (nEl ? nEl.textContent : '').toLowerCase();
-    r.style.display = (!q || tic.indexOf(q) >= 0 || nm.indexOf(q) >= 0) ? '' : 'none';
-  });
-}
-
 // Shared detail loader — fetch a structured summary and render it in the
 // premium shell. `endpoint` + `opts` (eyebrow/back handler) pick the feature.
 async function v2OpenDetail(ticker, cfg){
@@ -8793,95 +8747,155 @@ async function v2OpenDetail(ticker, cfg){
   }
 }
 
-// ── Earnings Brief (was "Briefings") — the fast, numbers-first results digest.
-let _v2BrfLoaded = false;
-function v2LoadBriefings(){
-  if (_v2BrfLoaded) return;
-  _v2BrfLoaded = true;
-  v2BuildTickerGrid('v2-brf-grid', 'v2OpenBriefing');
+/* ──────────────────────────────────────────────────────────────────────
+   COMPANY EVENTS hub — one surface. Pick a company from the word-cloud
+   (recent + upcoming reporters pulse), then pick a view: Earnings Brief /
+   Concall Summary / Corporate Actions. Brief + Concall reuse v2OpenDetail;
+   Actions reuses the universe feed, filtered to the picked ticker.
+   ────────────────────────────────────────────────────────────────────── */
+let _ceBuilt = false, ceMode = 'brief', ceTicker = null, _ceFeed = null;
+const _ceModeLabel = { brief: 'Earnings Brief', concall: 'Concall Summary', actions: 'Corporate Actions' };
+
+// Nav still calls eventsTab(...) from a few places — keep it as the entry shim.
+function eventsTab(){ ceInit(); }
+
+function ceInit(){
+  ceBack();                     // make sure the hub is showing, detail cleared
+  if (_ceBuilt) return;
+  _ceBuilt = true;
+  ceBuildCloud();
 }
-function v2OpenBriefing(ticker){
-  return v2OpenDetail(ticker, {
-    gridId: 'v2-brf-grid', detailId: 'v2-brf-detail',
-    endpoint: '/api/event-intel/', what: 'briefing',
-    loading: 'Loading {sym} earnings brief… (first load ~6-10s while AI reads the filing)',
-    opts: { eyebrow: 'EARNINGS BRIEF', backFn: 'v2CloseBriefing' },
+
+function ceBuildCloud(){
+  const cloud = document.getElementById('ce-cloud');
+  if (!cloud) return;
+  const tickers = (window.__AH_DATA__ && window.__AH_DATA__.tickers) || [];
+  const all = tickers.filter(t => t && t.ticker);
+  if (!all.length){ cloud.innerHTML = '<div class="v2-brf-loading">No companies loaded yet — refresh in a moment.</div>'; return; }
+  const d2e = t => { const d = parseInt(t.days_to_earnings);    return isNaN(d) ? null : d; };
+  const dse = t => { const d = parseInt(t.days_since_earnings); return isNaN(d) ? null : d; };
+  const isRep  = t => t.earnings_just_reported || (dse(t) != null && dse(t) >= 0 && dse(t) <= 12);
+  const isSoon = t => d2e(t) != null && d2e(t) >= 0 && d2e(t) <= 21;
+  const hint = t => {
+    if (isRep(t))  { const s = dse(t); return s === 0 ? 'reported today' : (s != null ? 'reported ' + s + 'd ago' : 'just reported'); }
+    if (isSoon(t)) { const d = d2e(t); return d === 0 ? 'reports today' : 'in ' + d + 'd'; }
+    return '';
+  };
+  const cls = t => isRep(t) ? 'rep' : (isSoon(t) ? 'soon' : '');
+  // recent first, then upcoming, then the rest alphabetically — keeps the
+  // pulsing tickers clustered at the top of the cloud where the eye lands.
+  const rep  = all.filter(isRep).sort((a, b) => (dse(a) == null ? 99 : dse(a)) - (dse(b) == null ? 99 : dse(b)));
+  const soon = all.filter(isSoon).sort((a, b) => d2e(a) - d2e(b));
+  const flagged = new Set([...rep, ...soon].map(t => t.ticker));
+  const rest = all.filter(t => !flagged.has(t.ticker)).sort((a, b) => (a.ticker || '').localeCompare(b.ticker || ''));
+  const pill = t => '<button class="ce-pill ' + cls(t) + '" data-tic="' + t.ticker +
+    '" data-nm="' + v2EscHTML((t.name || '').toLowerCase()) +
+    '" onclick="ceSelectTicker(\'' + t.ticker + '\')" title="' + v2EscHTML(t.name || t.ticker) + (hint(t) ? ' · ' + hint(t) : '') + '">' +
+    '<span class="ce-pill-t">' + t.ticker + '</span>' + (hint(t) ? '<i>' + hint(t) + '</i>' : '') + '</button>';
+  cloud.innerHTML = [...rep, ...soon, ...rest].map(pill).join('');
+}
+
+function ceFilter(q){
+  q = (q || '').toLowerCase().trim();
+  document.querySelectorAll('#ce-cloud .ce-pill').forEach(function(p){
+    const tic = (p.getAttribute('data-tic') || '').toLowerCase(), nm = p.getAttribute('data-nm') || '';
+    p.style.display = (!q || tic.indexOf(q) >= 0 || nm.indexOf(q) >= 0) ? '' : 'none';
   });
 }
-function v2CloseBriefing(){
-  const grid = document.getElementById('v2-brf-grid');
-  const det  = document.getElementById('v2-brf-detail');
-  if (grid) grid.style.display = '';
-  if (det)  det.style.display  = 'none';
+
+function ceSetMode(m){
+  ceMode = m;
+  document.querySelectorAll('#ce-cards .ce-card').forEach(function(c){ c.classList.toggle('on', c.getAttribute('data-mode') === m); });
+  ceSyncStatus();
+  if (ceTicker) return ceLoad();             // a ticker is picked → reload it in the new view
+  if (m === 'actions') return ceLoadActions(null);  // Actions works with no ticker → whole universe
 }
 
-// ── Earnings Call (was "Concall") — the deep, narrative summary of the call.
-let _v2CallLoaded = false;
-function v2LoadCalls(){
-  if (_v2CallLoaded) return;
-  _v2CallLoaded = true;
-  v2BuildTickerGrid('v2-ec-grid', 'v2OpenCall');
+function ceSelectTicker(sym){
+  ceTicker = String(sym || '').toUpperCase();
+  document.querySelectorAll('#ce-cloud .ce-pill').forEach(function(p){ p.classList.toggle('sel', (p.getAttribute('data-tic') || '') === ceTicker); });
+  ceLoad();
 }
 
-/* ── Company Events hub: switch between Earnings Brief / Concall / Actions ── */
-function eventsTab(name){
-  name = name || 'brief';
-  window._evTab = name;
-  document.querySelectorAll('#ev-subtabs .ev-subtab').forEach(function(b){ b.classList.toggle('on', b.getAttribute('data-ev')===name); });
-  var panes={brief:'ev-brief', concall:'ev-concall', actions:'ev-actions'};
-  Object.keys(panes).forEach(function(k){ var el=document.getElementById(panes[k]); if(el) el.style.display = (k===name)?'':'none'; });
-  if(name==='brief'){ if(typeof v2LoadBriefings==='function') v2LoadBriefings(); }
-  else if(name==='concall'){ if(typeof v2LoadCalls==='function') v2LoadCalls(); }
-  else if(name==='actions'){ loadCorporateActions(); }
+function ceAllActions(){
+  ceTicker = null;
+  document.querySelectorAll('#ce-cloud .ce-pill').forEach(function(p){ p.classList.remove('sel'); });
+  ceSetMode('actions');
 }
 
-let _caLoaded = false;
-function loadCorporateActions(force){
-  const root=document.getElementById('actions-root'); if(!root) return;
-  if(_caLoaded && !force) return;
-  _caLoaded = true;
-  root.innerHTML='<div class="v2-brf-loading">Loading corporate actions…</div>';
-  fetch('/api/corporate-actions').then(function(r){return r.json();})
-    .then(function(d){ renderCorporateActions(root, d); })
-    .catch(function(){ _caLoaded=false; root.innerHTML='<div class="v2-brf-loading">Could not load corporate actions — try again.</div>'; });
+function ceSyncStatus(){
+  const el = document.getElementById('ce-status');
+  if (!el) return;
+  if (ceTicker) el.innerHTML = '<b>' + v2EscHTML(ceTicker) + '</b> selected · showing <b>' + _ceModeLabel[ceMode] + '</b>. Switch the view above, or pick another company.';
+  else if (ceMode === 'actions') el.innerHTML = 'Showing <b>Corporate Actions</b> across the whole universe — or pick a company below for just its dividends &amp; splits.';
+  else el.innerHTML = 'Pick a company below — <b>' + _ceModeLabel[ceMode] + '</b> opens for it.';
 }
-function renderCorporateActions(root, d){
-  const acts=(d&&d.actions)||[];
-  const head='<div class="v2-brf-head"><div class="v2-brf-eyebrow">Corporate Actions</div>'+
-    '<div class="v2-brf-title">Dividends &amp; splits across your universe</div>'+
-    '<div class="v2-brf-sub">Ex-dividend dates and stock splits for the stocks AlphaHunt tracks. Tap any row to open the stock.</div></div>';
-  if(!acts.length){ root.innerHTML=head+'<div class="ca-empty">No recent or upcoming dividends/splits in the tracked universe yet — this fills in as the universe refreshes.</div>'; return; }
-  const search='<div class="v2-ev-search" style="margin-bottom:14px"><span class="v2-ev-si">🔎</span><input type="text" placeholder="Filter by ticker or company…" oninput="caFilter(this)"></div>';
-  const fmtDate=function(iso){ const dt=new Date(iso+'T00:00:00'); return isNaN(dt.getTime())?iso:dt.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); };
-  const rows=acts.map(function(a){
-    const badge=a.type==='Dividend'?'<span class="ca-type ca-div">Dividend</span>':'<span class="ca-type ca-split">Split</span>';
-    const up=a.upcoming?'<span class="ca-up">Upcoming</span>':'';
-    return '<tr onclick="openStockModal(\''+a.symbol+'\')"><td class="ca-date">'+escHTML(fmtDate(a.date))+'</td>'+
-      '<td><b class="ca-sym">'+escHTML(a.symbol)+'</b><span class="ca-name">'+escHTML((a.name||'').slice(0,26))+'</span></td>'+
-      '<td>'+badge+'</td><td class="ca-act">'+escHTML(a.action)+up+'</td></tr>';
+
+function ceLoad(){
+  if (ceMode === 'actions') return ceLoadActions(ceTicker);
+  ceSyncStatus();
+  const cfg = ceMode === 'concall'
+    ? { endpoint: '/api/concall/',     what: 'earnings call', loading: 'Reading {sym}’s latest earnings call… (first load ~10s while AI digests the transcript)', eyebrow: 'CONCALL SUMMARY' }
+    : { endpoint: '/api/event-intel/', what: 'briefing',      loading: 'Loading {sym} earnings brief… (first load ~6-10s while AI reads the filing)',          eyebrow: 'EARNINGS BRIEF' };
+  return v2OpenDetail(ceTicker, {
+    gridId: 'ce-hub', detailId: 'ce-detail',
+    endpoint: cfg.endpoint, what: cfg.what, loading: cfg.loading,
+    opts: { eyebrow: cfg.eyebrow, backFn: 'ceBack' },
+  });
+}
+
+function ceBack(){
+  const hub = document.getElementById('ce-hub'), det = document.getElementById('ce-detail');
+  if (hub) hub.style.display = '';
+  if (det){ det.style.display = 'none'; det.innerHTML = ''; }
+}
+
+// Corporate Actions detail — universe feed (cached once), optionally filtered
+// to the picked ticker. No ticker → whole-universe feed.
+async function ceLoadActions(sym){
+  const hub = document.getElementById('ce-hub'), det = document.getElementById('ce-detail');
+  if (!det) return;
+  ceSyncStatus();
+  if (hub) hub.style.display = 'none';
+  det.style.display = '';
+  const back = '<div class="v2-brf-topbar"><button class="v2-brf-back" onclick="ceBack()">← Back to companies</button></div>';
+  det.innerHTML = back + '<div class="v2-brf-loading">Loading corporate actions…</div>';
+  try {
+    if (!_ceFeed){
+      const r = await fetch('/api/corporate-actions', { cache: 'no-store' });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      _ceFeed = await r.json();
+    }
+    det.innerHTML = ceRenderActions(sym, _ceFeed);
+  } catch (e) {
+    _ceFeed = null;
+    det.innerHTML = back + '<div class="v2-brf-empty-state"><strong>Couldn\'t load corporate actions</strong>' +
+                    '<span>' + v2EscHTML(e && e.message || 'error') + '</span></div>';
+  }
+}
+
+function ceRenderActions(sym, feed){
+  const all  = (feed && feed.actions) || [];
+  const acts = sym ? all.filter(a => a.symbol === sym) : all;
+  const back = '<div class="v2-brf-topbar"><button class="v2-brf-back" onclick="ceBack()">← Back to companies</button></div>';
+  const fmtDate = function(iso){ const dt = new Date(iso + 'T00:00:00'); return isNaN(dt.getTime()) ? iso : dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); };
+  const head = '<div class="v2-brf-head"><div class="v2-brf-eyebrow">Corporate Actions</div>' +
+    '<div class="v2-brf-title">' + (sym ? v2EscHTML(sym) + ' — dividends &amp; splits' : 'Dividends &amp; splits across your universe') + '</div>' +
+    '<div class="v2-brf-sub">Ex-dividend dates and stock splits' + (sym ? ' on record for ' + v2EscHTML(sym) : ' for the stocks AlphaHunt tracks') + '. Tap a row to open the stock.' +
+    (sym ? ' <a href="#" onclick="ceAllActions();return false;">See the whole universe →</a>' : '') + '</div></div>';
+  if (!acts.length){
+    return back + head + '<div class="ca-empty">' +
+      (sym ? 'No dividends or splits on record for ' + v2EscHTML(sym) + ' in the tracked window. <a href="#" onclick="ceAllActions();return false;">See the whole universe →</a>'
+           : 'No recent or upcoming dividends/splits yet — this fills in as the universe refreshes.') + '</div>';
+  }
+  const rows = acts.map(function(a){
+    const badge = a.type === 'Dividend' ? '<span class="ca-type ca-div">Dividend</span>' : '<span class="ca-type ca-split">Split</span>';
+    const up = a.upcoming ? '<span class="ca-up">Upcoming</span>' : '';
+    return '<tr onclick="openStockModal(\'' + a.symbol + '\')"><td class="ca-date">' + v2EscHTML(fmtDate(a.date)) + '</td>' +
+      '<td><b class="ca-sym">' + v2EscHTML(a.symbol) + '</b><span class="ca-name">' + v2EscHTML((a.name || '').slice(0, 26)) + '</span></td>' +
+      '<td>' + badge + '</td><td class="ca-act">' + v2EscHTML(a.action) + up + '</td></tr>';
   }).join('');
-  root.innerHTML=head+search+'<div class="ca-wrap"><table class="ca-table"><thead><tr><th>Date</th><th>Symbol</th><th>Type</th><th>Action</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
-}
-function caFilter(input){
-  const q=(input.value||'').toLowerCase().trim();
-  document.querySelectorAll('#actions-root .ca-table tbody tr').forEach(function(r){
-    const t=(r.textContent||'').toLowerCase();
-    r.style.display=(!q||t.indexOf(q)>=0)?'':'none';
-  });
-}
-function v2OpenCall(ticker){
-  return v2OpenDetail(ticker, {
-    gridId: 'v2-ec-grid', detailId: 'v2-ec-detail',
-    endpoint: '/api/concall/', what: 'earnings call',
-    loading: 'Reading {sym}’s latest earnings call… (first load ~10s while AI digests the transcript)',
-    opts: { eyebrow: 'CONCALL SUMMARY', backFn: 'v2CloseCall' },
-  });
-}
-function v2CloseCall(){
-  const grid = document.getElementById('v2-ec-grid');
-  const det  = document.getElementById('v2-ec-detail');
-  if (grid) grid.style.display = '';
-  if (det)  det.style.display  = 'none';
+  return back + head + '<div class="ca-wrap"><table class="ca-table"><thead><tr><th>Date</th><th>Symbol</th><th>Type</th><th>Action</th></tr></thead><tbody>' + rows + '</tbody></table></div>';
 }
 
 // Render the small "source: SEC 8-K · filing link" citation badge that
@@ -15009,12 +15023,13 @@ function _cmdkTickerMatches(){
 // user can search → download in one flow without opening the modal.
 function _cmdkOpenBriefing(ticker){
   closeCmdK();
-  // Earnings Brief merged into the Company Events hub.
+  // Earnings Brief lives in the Company Events hub — open it, pick the
+  // Brief view, then select the ticker (which loads its detail).
   if (typeof v2Show === 'function') v2Show('events', null);
-  if (typeof eventsTab === 'function') eventsTab('brief');
-  // Open this ticker's briefing detail inside the panel.
+  if (typeof ceInit === 'function') ceInit();
   setTimeout(() => {
-    if (typeof v2OpenBriefing === 'function') v2OpenBriefing(ticker);
+    if (typeof ceSetMode === 'function') ceSetMode('brief');
+    if (typeof ceSelectTicker === 'function') ceSelectTicker(ticker);
   }, 60);
 }
 function _cmdkDownloadPDF(ticker){
