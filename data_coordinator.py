@@ -1401,7 +1401,7 @@ class DataCoordinator:
                 analyst targets (low/mean/high), beta, short %, description.
         Cached for CACHE_TECH_TTL (1 hour).
         """
-        key    = f"yf:{ticker}:v3"   # v3: adds target_median + pre/after-hours
+        key    = f"yf:{ticker}:v4"   # v4: adds analyst recommendation (Buy/Sell consensus)
         cached = self.cache.get(key)
         if cached is not None:
             return cached
@@ -1535,6 +1535,9 @@ class DataCoordinator:
                     "target_median": tgt_med,
                     "target_high":   tgt_high,
                     "total_analysts": analysts,
+                    # Real analyst consensus (1=Strong Buy … 5=Strong Sell)
+                    "analyst_recommendation": info.get("recommendationKey"),
+                    "recommendation_mean":    _safe_float(info.get("recommendationMean")),
                     # Pre-market / after-hours snapshot (from the yfinance quote)
                     "market_state":           info.get("marketState"),
                     "pre_market_price":       _safe_float(info.get("preMarketPrice")),
@@ -1604,7 +1607,7 @@ class DataCoordinator:
         quote   = await self.get_quote(ticker)
 
         # Primary: Yahoo Finance enrichment (candles + fundamentals in one call)
-        yf      = self.cache.get(f"yf:{ticker}:v3") or {}
+        yf      = self.cache.get(f"yf:{ticker}:v4") or {}
 
         # Fallbacks: Finnhub candles, Alpha Vantage fundamentals
         candles = self.cache.get(f"candles:{ticker}") or {}
@@ -1726,6 +1729,8 @@ class DataCoordinator:
             "target_low":   target_low,
             "target_median": yf.get("target_median"),
             "target_high":  target_high,
+            "analyst_recommendation": yf.get("analyst_recommendation"),
+            "recommendation_mean":    yf.get("recommendation_mean"),
 
             # Pre-market / after-hours snapshot (yfinance quote, refreshed with
             # the fundamentals cycle — informational, not tick-by-tick).
