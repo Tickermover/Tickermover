@@ -3242,10 +3242,8 @@ html.v2-dark .v2-mp-mini-lbl{color:#cbd5e1}
 .ce-fresh.rep{color:#0a7d33;border-color:rgba(10,125,51,.45);animation:ceDrift var(--t,9s) ease-in-out var(--d,0s) infinite,cePulseG 2.4s ease-in-out infinite}
 .ce-fresh.soon{color:#0040c1;border-color:rgba(0,64,193,.45);animation:ceDrift var(--t,9s) ease-in-out var(--d,0s) infinite,cePulseB 2.4s ease-in-out infinite}
 .ce-fresh.rep i{color:#0a7d33}.ce-fresh.soon i{color:#0040c1}
-.ce-fresh:hover{border-color:rgba(41,112,255,.55);box-shadow:0 9px 22px -8px rgba(0,40,120,.45)}
-/* backdrop = faint grey words (depth), no logo, behind the fresh ones */
-.ce-back{z-index:0}
-.ce-back:hover{color:#0f172a;opacity:1 !important}
+/* backdrop = solid dark tickers (logo + name), behind the fresh chips */
+.ce-back{z-index:0;color:#0f172a}
 .ce-hidden-extra{display:none}
 @keyframes ceDrift{0%,100%{transform:translate(0,0)}25%{transform:translate(4px,-3px)}50%{transform:translate(-3px,4px)}75%{transform:translate(3px,2px)}}
 @keyframes cePulseG{0%,100%{box-shadow:0 2px 6px rgba(10,125,51,.15)}50%{box-shadow:0 9px 22px -8px rgba(10,125,51,.6)}}
@@ -8813,7 +8811,6 @@ function ceBuildCloud(){
   const logoBox = sym => '<span class="ce-lg-img"><span class="fb">' + ((sym || '?').charAt(0)) + '</span>' +
     '<img src="' + logo(sym) + '" loading="lazy" onerror="this.style.display=\'none\'" onload="this.previousElementSibling.style.display=\'none\'"></span>';
   const motion = i => 'style="--t:' + (7.5 + (i % 9) * 0.7).toFixed(2) + 's;--d:' + ((i % 17) * 0.22).toFixed(2) + 's;';
-  const rnd = (a, b) => a + Math.random() * (b - a);
 
   const rep  = all.filter(isRep).sort((a, b) => (dse(a) == null ? 99 : dse(a)) - (dse(b) == null ? 99 : dse(b)));
   const soon = all.filter(isSoon).sort((a, b) => d2e(a) - d2e(b));
@@ -8834,10 +8831,10 @@ function ceBuildCloud(){
       logoBox(t.ticker) + '<span class="ce-pill-t">' + t.ticker + '</span>' + (hint(t) ? '<i>' + hint(t) + '</i>' : '') + '</button>';
   });
   // backdrop chips — no event date, so all the same small size (size encodes
-  // event proximity only); a little opacity variation keeps some depth. Horizontal.
+  // event proximity only); solid dark, full opacity. Horizontal.
   backdrop.forEach((t, i) => {
-    const fs = 14, op = rnd(0.6, 0.92).toFixed(2);
-    html += '<button class="ce-word ce-back" ' + motion(i + 3) + 'font-size:' + fs + 'px;opacity:' + op + '" ' + open(t) + '>' +
+    const fs = 14;
+    html += '<button class="ce-word ce-back" ' + motion(i + 3) + 'font-size:' + fs + 'px" ' + open(t) + '>' +
       logoBox(t.ticker) + '<span class="ce-pill-t">' + t.ticker + '</span></button>';
   });
   // remaining universe — present for search only (no logo/animation), kept light
