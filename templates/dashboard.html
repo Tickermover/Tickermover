@@ -3191,6 +3191,33 @@ html.v2-dark .v2-mp-mini-lbl{color:#cbd5e1}
 .ca-act{color:#1f2937}
 .ca-up{display:inline-block;margin-left:8px;font-size:10px;font-weight:800;color:#0040c1;background:rgba(41,112,255,.1);border-radius:5px;padding:1px 7px}
 .ca-empty{max-width:1268px;margin:0 auto;padding:48px 24px;text-align:center;color:#94a3b8;font-size:13.5px;background:#fff;border:1px dashed rgba(10,10,10,.12);border-radius:14px}
+/* Company Events — search + relevance chips + compact list */
+.v2-ev-search{max-width:1268px;margin:0 auto 16px;position:relative}
+.v2-ev-search input{width:100%;border:1px solid rgba(10,10,10,.1);border-radius:11px;padding:12px 14px 12px 40px;font-size:14px;font-family:inherit;outline:none;background:#fff}
+.v2-ev-search input:focus{border-color:#2970ff;box-shadow:0 0 0 3px rgba(41,112,255,.12)}
+.v2-ev-si{position:absolute;left:13px;top:50%;transform:translateY(-50%);opacity:.55;font-size:14px;pointer-events:none}
+.v2-ev-quick{max-width:1268px;margin:0 auto 14px}
+.v2-ev-quick-h{font-size:12px;font-weight:800;color:#475569;margin:0 0 8px}
+.v2-ev-chips{display:flex;gap:8px;flex-wrap:wrap}
+.v2-ev-chip{display:inline-flex;align-items:center;gap:7px;background:#fff;border:1px solid rgba(10,10,10,.1);border-radius:10px;padding:6px 12px;cursor:pointer;font-family:inherit;transition:border-color .14s,box-shadow .14s}
+.v2-ev-chip:hover{border-color:rgba(41,112,255,.35);box-shadow:0 4px 12px -6px rgba(0,40,120,.25)}
+.v2-ev-chip b{font-size:13px;font-weight:800;color:#0f172a}
+.v2-ev-chip small{font-size:10.5px;font-weight:700;color:#94a3b8}
+.v2-ev-chip small.rep{color:#0a7d33}.v2-ev-chip small.soon{color:#0040c1}
+.v2-ev-chip-logo,.v2-ev-logo{position:relative;border-radius:6px;overflow:hidden;flex-shrink:0;background:#f1f5f9;display:inline-flex;align-items:center;justify-content:center}
+.v2-ev-chip-logo{width:22px;height:22px}.v2-ev-logo{width:26px;height:26px}
+.v2-ev-chip-logo .fb,.v2-ev-logo .fb{font-size:11px;font-weight:800;color:#64748b}
+.v2-ev-chip-logo img,.v2-ev-logo img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#fff}
+.v2-ev-list-h{max-width:1268px;margin:8px auto 8px;font-size:12px;font-weight:800;color:#475569}
+.v2-ev-list-h span{color:#94a3b8;font-weight:600;margin-left:4px}
+.v2-ev-list{max-width:1268px;margin:0 auto;background:#fff;border:1px solid rgba(10,10,10,.08);border-radius:14px;overflow:hidden}
+.v2-ev-row{display:flex;align-items:center;gap:12px;padding:9px 16px;border-bottom:1px solid rgba(10,10,10,.05);cursor:pointer;transition:background .12s}
+.v2-ev-row:last-child{border-bottom:none}
+.v2-ev-row:hover{background:#f6f9ff}
+.v2-ev-tic{font-weight:800;font-size:13.5px;color:#0040c1;min-width:62px}
+.v2-ev-name{flex:1;font-size:13px;color:#475569;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.v2-ev-hint{font-size:11px;font-weight:700;color:#94a3b8;white-space:nowrap;flex-shrink:0}
+.v2-ev-hint.rep{color:#0a7d33}.v2-ev-hint.soon{color:#0040c1}
 .v2-brf-head{max-width:1268px;margin:0 auto 18px;padding:0 4px}
 /* Briefings eyebrow → violet to match the meta-label color rhythm
    established elsewhere (sets up secondary brand accent). */
@@ -8696,26 +8723,53 @@ function v2BuildTickerGrid(gridId, openFn){
     grid.innerHTML = '<div class="v2-brf-loading">No tickers loaded yet — refresh in a moment.</div>';
     return;
   }
-  const sorted = [...tickers]
-    .filter(t => t.ticker)
-    .sort((a, b) => (a.ticker || '').localeCompare(b.ticker || ''));
-  grid.innerHTML = sorted.slice(0, 540).map(t => {
-    const sym = t.ticker;
-    const name = (t.name || '').slice(0, 30);
-    const logoUrl = 'https://images.financialmodelingprep.com/symbol/' + encodeURIComponent(sym) + '.png';
-    return `<div class="v2-brf-card" onclick="${openFn}('${sym}')">
-      <div class="v2-brf-logo">
-        <span class="fb">${(sym || '?').charAt(0)}</span>
-        <img src="${logoUrl}" alt="" loading="lazy"
-             onerror="this.style.display='none'"
-             onload="this.previousElementSibling.style.display='none'">
-      </div>
-      <div class="v2-brf-card-body">
-        <div class="v2-brf-card-tic">${sym}</div>
-        <div class="v2-brf-card-name">${v2EscHTML(name)}</div>
-      </div>
-    </div>`;
-  }).join('');
+  const all = [...tickers].filter(t => t.ticker);
+  const d2e = t => { const d = parseInt(t.days_to_earnings);    return isNaN(d) ? null : d; };
+  const dse = t => { const d = parseInt(t.days_since_earnings); return isNaN(d) ? null : d; };
+  const logo = sym => 'https://images.financialmodelingprep.com/symbol/' + encodeURIComponent(sym) + '.png';
+  const isRep  = t => t.earnings_just_reported || (dse(t) != null && dse(t) >= 0 && dse(t) <= 12);
+  const isSoon = t => d2e(t) != null && d2e(t) >= 0 && d2e(t) <= 21;
+  const hint = t => {
+    if (isRep(t))  { const s = dse(t); return s === 0 ? 'Reported today' : (s != null ? 'Reported ' + s + 'd ago' : 'Just reported'); }
+    if (isSoon(t)) { const d = d2e(t); return d === 0 ? 'Reports today' : 'Reports in ' + d + 'd'; }
+    return '';
+  };
+  const hintCls = t => isRep(t) ? 'rep' : (isSoon(t) ? 'soon' : '');
+  const logoBox = (sym, cls) => '<span class="' + cls + '"><span class="fb">' + (sym || '?').charAt(0) +
+    '</span><img src="' + logo(sym) + '" loading="lazy" onerror="this.style.display=\'none\'" onload="this.previousElementSibling.style.display=\'none\'"></span>';
+
+  const justReported = all.filter(isRep).sort((a, b) => (dse(a) == null ? 99 : dse(a)) - (dse(b) == null ? 99 : dse(b))).slice(0, 14);
+  const soon = all.filter(isSoon).sort((a, b) => d2e(a) - d2e(b)).slice(0, 14);
+  const sorted = all.sort((a, b) => (a.ticker || '').localeCompare(b.ticker || ''));
+
+  const chip = t => '<button class="v2-ev-chip" onclick="' + openFn + '(\'' + t.ticker + '\')">' +
+    logoBox(t.ticker, 'v2-ev-chip-logo') + '<b>' + t.ticker + '</b>' +
+    (hint(t) ? '<small class="' + hintCls(t) + '">' + hint(t) + '</small>' : '') + '</button>';
+  const row = t => '<div class="v2-ev-row" onclick="' + openFn + '(\'' + t.ticker + '\')">' +
+    logoBox(t.ticker, 'v2-ev-logo') +
+    '<span class="v2-ev-tic">' + t.ticker + '</span>' +
+    '<span class="v2-ev-name">' + v2EscHTML((t.name || '').slice(0, 44)) + '</span>' +
+    '<span class="v2-ev-hint ' + hintCls(t) + '">' + hint(t) + '</span></div>';
+  const quick = (title, arr) => arr.length ? '<div class="v2-ev-quick"><div class="v2-ev-quick-h">' + title +
+    '</div><div class="v2-ev-chips">' + arr.map(chip).join('') + '</div></div>' : '';
+
+  grid.innerHTML =
+    '<div class="v2-ev-search"><span class="v2-ev-si">🔎</span><input type="text" placeholder="Search ticker or company…" oninput="v2EvFilter(this,\'' + gridId + '\')"></div>' +
+    quick('📣 Just reported', justReported) +
+    quick('📅 Reporting soon', soon) +
+    '<div class="v2-ev-list-h">All companies <span>' + sorted.length + '</span></div>' +
+    '<div class="v2-ev-list">' + sorted.map(row).join('') + '</div>';
+}
+
+function v2EvFilter(input, gridId){
+  const q = (input.value || '').toLowerCase().trim();
+  const grid = document.getElementById(gridId);
+  if (!grid) return;
+  grid.querySelectorAll('.v2-ev-row').forEach(function(r){
+    const tEl = r.querySelector('.v2-ev-tic'), nEl = r.querySelector('.v2-ev-name');
+    const tic = (tEl ? tEl.textContent : '').toLowerCase(), nm = (nEl ? nEl.textContent : '').toLowerCase();
+    r.style.display = (!q || tic.indexOf(q) >= 0 || nm.indexOf(q) >= 0) ? '' : 'none';
+  });
 }
 
 // Shared detail loader — fetch a structured summary and render it in the
@@ -8800,6 +8854,7 @@ function renderCorporateActions(root, d){
     '<div class="v2-brf-title">Dividends &amp; splits across your universe</div>'+
     '<div class="v2-brf-sub">Ex-dividend dates and stock splits for the stocks AlphaHunt tracks. Tap any row to open the stock.</div></div>';
   if(!acts.length){ root.innerHTML=head+'<div class="ca-empty">No recent or upcoming dividends/splits in the tracked universe yet — this fills in as the universe refreshes.</div>'; return; }
+  const search='<div class="v2-ev-search" style="margin-bottom:14px"><span class="v2-ev-si">🔎</span><input type="text" placeholder="Filter by ticker or company…" oninput="caFilter(this)"></div>';
   const fmtDate=function(iso){ const dt=new Date(iso+'T00:00:00'); return isNaN(dt.getTime())?iso:dt.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); };
   const rows=acts.map(function(a){
     const badge=a.type==='Dividend'?'<span class="ca-type ca-div">Dividend</span>':'<span class="ca-type ca-split">Split</span>';
@@ -8808,7 +8863,14 @@ function renderCorporateActions(root, d){
       '<td><b class="ca-sym">'+escHTML(a.symbol)+'</b><span class="ca-name">'+escHTML((a.name||'').slice(0,26))+'</span></td>'+
       '<td>'+badge+'</td><td class="ca-act">'+escHTML(a.action)+up+'</td></tr>';
   }).join('');
-  root.innerHTML=head+'<div class="ca-wrap"><table class="ca-table"><thead><tr><th>Date</th><th>Symbol</th><th>Type</th><th>Action</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+  root.innerHTML=head+search+'<div class="ca-wrap"><table class="ca-table"><thead><tr><th>Date</th><th>Symbol</th><th>Type</th><th>Action</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+}
+function caFilter(input){
+  const q=(input.value||'').toLowerCase().trim();
+  document.querySelectorAll('#actions-root .ca-table tbody tr').forEach(function(r){
+    const t=(r.textContent||'').toLowerCase();
+    r.style.display=(!q||t.indexOf(q)>=0)?'':'none';
+  });
 }
 function v2OpenCall(ticker){
   return v2OpenDetail(ticker, {
