@@ -17309,10 +17309,8 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     root.dataset.loaded='1';
     const tkE=encodeURIComponent(tk);
     root.innerHTML='<div class="muted small" style="padding:14px 2px">Loading documents…</div>';
-    Promise.all([
-      fetch('/api/documents/'+tkE).then(function(r){return r.json();}).catch(function(){return {};}),
-      fetch('/api/transcripts/'+tkE).then(function(r){return r.json();}).catch(function(){return {};})
-    ]).then(function(res){ _renderDocBoxes(root, tk, res[0]||{}, (res[1]&&res[1].transcripts)||[]); })
+    fetch('/api/documents/'+tkE).then(function(r){return r.json();})
+     .then(function(d){ _renderDocBoxes(root, tk, d||{}); })
      .catch(function(){ root.innerHTML='<div class="muted small" style="padding:14px 2px">Could not load documents.</div>'; });
   }
 
@@ -17339,7 +17337,6 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     const reports=(docs.annual||[]).map(function(a){return {date:a.date,period:a.period};})
                    .concat((docs.quarterly||[]).map(function(q){return {date:q.date,period:q.period};}));
     const byDate={}; (docs.events||[]).forEach(function(e){ (byDate[e.date]=byDate[e.date]||[]).push(e); });
-    const trxByLabel={}; transcripts.forEach(function(t){ trxByLabel[t.label]=t; });
     const seenQ={}, relCards=[];
     Object.keys(byDate).sort(function(a,b){return b.localeCompare(a);}).forEach(function(date){
       const rows=byDate[date];
@@ -17351,14 +17348,13 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
       const qLabel=(rep&&fiscalQ(rep.period))||calLabel;
       if(seenQ[qLabel]) return; seenQ[qLabel]=1;          // dedupe — keep latest filing per quarter
       relCards.push({date:date, qLabel:qLabel, rel:find('press release'), sld:find('investor presentation'),
-                     cfo:find('cfo commentary'), trx:trxByLabel[calLabel]});
+                     cfo:find('cfo commentary')});
     });
     const relRows=relCards.slice(0,4).map(function(c){
       const main=c.rel||c.cfo||null, sub=[];
       if(c.sld&&c.sld.url) sub.push('<a class="doc-sub-link" onclick="event.stopPropagation();'+view(c.sld.url,'Slides · '+c.qLabel)+'">📊 Slides'+(c.sld.pdf?' <span class="doc-pdf">PDF</span>':'')+'</a>');
       else { sub.push('<button class="doc-sub-link doc-sub-find" onclick="event.stopPropagation();findSlides(this,\''+escHTML(tk)+'\',\''+c.qLabel+'\')" title="Look for this quarter\'s deck on the company IR site">📊 Find slides</button>'); }
       if(c.cfo&&c.cfo.url&&c.cfo!==main) sub.push('<a class="doc-sub-link" onclick="event.stopPropagation();'+view(c.cfo.url,'CFO commentary · '+c.qLabel)+'">🧾 CFO commentary</a>');
-      if(c.trx) sub.push('<a class="doc-sub-link" href="'+c.trx.url+'" target="_blank" rel="noopener">🎙 Transcript →</a>');
       const head=(main&&main.url)
         ? '<a class="doc-row" onclick="'+view(main.url,'Earnings release · '+c.qLabel)+'"><span class="doc-row-l"><b>Earnings release</b><small>'+escHTML(c.qLabel)+' · '+escHTML(c.date)+'</small></span><span class="doc-ar">⤢</span></a>'
         : '<div class="doc-row"><span class="doc-row-l"><b>Earnings release</b><small>'+escHTML(c.qLabel)+' · '+escHTML(c.date)+'</small></span></div>';
