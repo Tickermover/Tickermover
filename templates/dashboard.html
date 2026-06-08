@@ -5317,6 +5317,24 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 .docv-btn.docv-dl{background:linear-gradient(135deg,#15803d,#0f766e);color:#fff;border-color:transparent}
 .docv-btn.docv-x{color:#64748b;background:transparent;border-color:#d6dae0;font-weight:800}
 .docv-frame{flex:1;width:100%;border:0;background:#fff}
+/* Price forecast card */
+#ts-drawer .fc-wrap{display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start}
+#ts-drawer .fc-left{flex:0 0 230px;min-width:200px}
+#ts-drawer .fc-right{flex:1;min-width:300px}
+#ts-drawer .fc-chart{width:100%;height:auto;display:block}
+#ts-drawer .fc-sub{font-size:11.5px;color:#64748b;text-align:center;margin:-2px 0 10px;font-weight:600}
+#ts-drawer .fc-tbl{width:100%;border-collapse:collapse;font-size:12.5px}
+#ts-drawer .fc-tbl th{text-align:left;color:#94a3b8;font-size:10px;text-transform:uppercase;letter-spacing:.03em;padding:4px 6px;border-bottom:1px solid #eef1f4}
+#ts-drawer .fc-tbl td{padding:5px 6px;border-bottom:1px solid #f4f6f8}
+#ts-drawer .fc-tbl tr:last-child td{border-bottom:0}
+#ts-drawer .fc-tbl td.pos{color:#16a34a;font-weight:700}
+#ts-drawer .fc-tbl td.neg{color:#dc2626;font-weight:700}
+/* Pre / after-hours badge */
+#ts-drawer .premkt{display:inline-flex;align-items:center;gap:8px;background:#f1f5f9;border:1px solid #e2e8f0;border-radius:9px;padding:6px 11px;font-size:12.5px;margin-bottom:10px}
+#ts-drawer .premkt .pm-k{font-weight:800;color:#475569;font-size:10.5px;text-transform:uppercase;letter-spacing:.04em}
+#ts-drawer .premkt .pm-v{font-weight:800;color:#0f172a}
+#ts-drawer .premkt .pos{color:#16a34a;font-weight:800}
+#ts-drawer .premkt .neg{color:#dc2626;font-weight:800}
 @keyframes ncwDrift{0%{transform:translate(-50%,-50%)}50%{transform:translate(-50%,calc(-50% - 11px))}100%{transform:translate(-50%,-50%)}}
 @media(prefers-reduced-motion:reduce){#dr-news-cloud .ncw{animation:none}}
 #ts-drawer .peers-card .peer-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f1f5f9;cursor:pointer}
@@ -17050,6 +17068,17 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     const tbl='<table><thead><tr><th>Metric</th><th>Value</th><th>Signal</th></tr></thead><tbody>'+rows.map(r=>'<tr><td>'+r[0]+'</td><td>'+r[1]+'</td><td>'+r[2]+'</td></tr>').join('')+'</tbody></table><div class="muted small" style="margin-top:8px">Level-2 depth &amp; pending-order book aren’t available from our data feed.</div>';
     return _sec('Quote & liquidity','💧','slate',tbl);
   }
+  /* Pre-market / after-hours price (from the yfinance quote on the periodic
+     refresh). Shows only while the market is in an extended session. */
+  function _premktBadge(t){
+    const st=(t.market_state||'').toUpperCase();
+    let px=null,chg=null,lbl='';
+    if(st==='PRE'){ px=_fpNum(t,['pre_market_price']); chg=_fpNum(t,['pre_market_change_pct']); lbl='Pre-market'; }
+    else if(st==='POST'||st==='POSTPOST'){ px=_fpNum(t,['post_market_price']); chg=_fpNum(t,['post_market_change_pct']); lbl='After-hours'; }
+    if(px==null) return '';
+    const cstr=(chg==null)?'':' <span class="'+(chg>=0?'pos':'neg')+'">'+(chg>=0?'+':'')+chg.toFixed(2)+'%</span>';
+    return '<div class="premkt"><span class="pm-k">'+lbl+'</span><span class="pm-v">$'+px.toFixed(2)+'</span>'+cstr+'</div>';
+  }
   function paneOverview(t,S,full,candles){
     const g=(full.grade||'').toUpperCase(), TI=_tierOf(g);
     const pop=Math.round(parseFloat(full.smart_score!=null?full.smart_score:(full.pop_score||0)));
@@ -17101,8 +17130,8 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     const rebound = S? _sec('Rebound potential','🔄',rebAccent,
       '<div class="reb-gauge">'+_ringSVG(S.rebound,rebColor)+
         '<div class="reb-sub" style="margin:0">'+((S.recoverDays!=null&&S.recoverN>=2)?'Historically reclaims a dip in ~<b>'+S.recoverDays+'</b> sessions <span class="muted">('+S.recoverN+' samples, 1&nbsp;yr)</span>':'Score blends RSI, trend, support proximity &amp; drawdown room into a single 0&ndash;100 read.')+'</div></div>') : '';
-    // verdict → six-pillar tiles → catalyst (above the chart) → chart → the rest.
-    return verdict+_heroStats(t,S,full)+_catalystCard(full)+chart+_aiThesis(full)+setup+_windsCard(full)+rebound+_keyEvents(full);
+    // pre/after-hours badge → verdict → six-pillar tiles → catalyst → chart → rest.
+    return _premktBadge(full)+verdict+_heroStats(t,S,full)+_catalystCard(full)+chart+_aiThesis(full)+setup+_windsCard(full)+rebound+_keyEvents(full);
   }
   function paneTechnicals(t,S){
     const m1=_fpNum(t,['momentum_1m']),m3=_fpNum(t,['momentum_3m']),m6=_fpNum(t,['momentum_6m']);
@@ -17206,6 +17235,60 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     }
     return '<div class="dr-deep-grid">'+valTable+vvCard+rdcfCard+'</div>'+scenCard;
   }
+  /* Buy/Sell consensus gauge — red(left)→amber→green(right), needle at pos. */
+  function _consensusGauge(pos,label){
+    pos=Math.max(0,Math.min(100,pos)); const cx=90,cy=88,r=62, th=Math.PI+Math.PI*(pos/100);
+    const nx=cx+(r-6)*Math.cos(th), ny=cy+(r-6)*Math.sin(th);
+    return '<svg viewBox="0 0 180 106" class="gauge-svg">'+
+      _polyline(_arcPts(cx,cy,r,0,33),'#e11d48',11)+_polyline(_arcPts(cx,cy,r,33,66),'#e0a000',11)+_polyline(_arcPts(cx,cy,r,66,100),'#16a34a',11)+
+      '<line x1="'+cx+'" y1="'+cy+'" x2="'+nx.toFixed(1)+'" y2="'+ny.toFixed(1)+'" stroke="#0f172a" stroke-width="3" stroke-linecap="round"/><circle cx="'+cx+'" cy="'+cy+'" r="5" fill="#0f172a"/>'+
+      '<text x="22" y="101" font-size="8" font-weight="700" fill="#e11d48">SELL</text><text x="158" y="101" text-anchor="end" font-size="8" font-weight="700" fill="#16a34a">BUY</text>'+
+      '<text x="90" y="72" text-anchor="middle" font-size="12.5" font-weight="800" fill="#0f172a">'+escHTML(label)+'</text></svg>';
+  }
+  /* 12-month price-forecast chart: past closes + dashed projections to the
+     analyst high / average / low targets. */
+  function _forecastChart(candles, price, low, mean, high){
+    const closes=(candles||[]).map(function(c){return parseFloat(c.c);}).filter(function(v){return !isNaN(v);}).slice(-260);
+    if(closes.length<5||!price||isNaN(price)) return '';
+    const W=560,H=240, padT=18,padB=24,padL=8,padR=82, plotW=W-padL-padR, plotH=H-padT-padB, pastW=plotW*0.56;
+    const tg=[low,mean,high].filter(function(v){return v!=null&&!isNaN(v);});
+    let lo=Math.min.apply(null,closes.concat(tg).concat([price])), hi=Math.max.apply(null,closes.concat(tg).concat([price]));
+    const pad=(hi-lo)*0.08||1; lo-=pad; hi+=pad;
+    const yOf=function(v){return padT+plotH-((v-lo)/(hi-lo))*plotH;};
+    const xPast=function(i){return padL+(i/(closes.length-1))*pastW;};
+    const xNow=padL+pastW, xEnd=padL+plotW, yNow=yOf(price);
+    const up=closes[closes.length-1]>=closes[0];
+    const pts=closes.map(function(v,i){return xPast(i).toFixed(1)+','+yOf(v).toFixed(1);}).join(' ');
+    let svg='<svg viewBox="0 0 '+W+' '+H+'" class="fc-chart" preserveAspectRatio="xMidYMid meet">';
+    svg+='<line x1="'+xNow.toFixed(1)+'" y1="'+padT+'" x2="'+xNow.toFixed(1)+'" y2="'+(padT+plotH)+'" stroke="#e4e7eb" stroke-dasharray="3 3"/>';
+    svg+='<polyline points="'+pts+'" fill="none" stroke="'+(up?'#16a34a':'#dc2626')+'" stroke-width="2"/>';
+    svg+='<circle cx="'+xNow.toFixed(1)+'" cy="'+yNow.toFixed(1)+'" r="3" fill="#0f172a"/>';
+    const proj=function(v,color,lab){ if(v==null||isNaN(v))return ''; const y=yOf(v),pct=((v-price)/price*100);
+      return '<line x1="'+xNow.toFixed(1)+'" y1="'+yNow.toFixed(1)+'" x2="'+xEnd.toFixed(1)+'" y2="'+y.toFixed(1)+'" stroke="'+color+'" stroke-width="1.6" stroke-dasharray="5 4"/>'+
+        '<text x="'+(xEnd+4)+'" y="'+(y-3).toFixed(1)+'" font-size="10" font-weight="800" fill="'+color+'">'+lab+' $'+Math.round(v)+'</text>'+
+        '<text x="'+(xEnd+4)+'" y="'+(y+9).toFixed(1)+'" font-size="8.5" fill="'+color+'">'+(pct>=0?'+':'')+pct.toFixed(0)+'%</text>'; };
+    svg+=proj(high,'#16a34a','High')+proj(mean,'#64748b','Avg')+proj(low,'#dc2626','Low')+'</svg>';
+    return svg;
+  }
+  function _forecastCard(t){
+    const px=parseFloat(t.price);
+    const low=_fpNum(t,['target_low']),mean=_fpNum(t,['target_mean','street_target']),med=_fpNum(t,['target_median']),high=_fpNum(t,['target_high']),na=_fpNum(t,['total_analysts','analyst_count']);
+    if(mean==null&&low==null&&high==null) return '';
+    const RAT={A:['Strong Buy',90],B:['Buy',72],C:['Hold',50],D:['Sell',28],F:['Strong Sell',10]};
+    const r=RAT[t.grade]||['No rating',50];
+    const chg=function(v){return (px&&v!=null)?((v-px)/px*100):null;};
+    const fmt=function(v){return v==null?'—':'$'+v.toFixed(0);};
+    const fpct=function(v){return v==null?'—':((v>=0?'+':'')+v.toFixed(1)+'%');};
+    const rows=[['Low',low],['Average',mean],['Median',med],['High',high]].filter(function(rw){return rw[1]!=null;}).map(function(rw){ const c=chg(rw[1]); return '<tr><td>'+rw[0]+'</td><td>'+fmt(rw[1])+'</td><td class="'+(c==null?'':(c>=0?'pos':'neg'))+'">'+fpct(c)+'</td></tr>'; }).join('');
+    const sub=(na!=null?Math.round(na)+' analysts · ':'')+'consensus '+r[0];
+    const candles=(typeof _drState!=='undefined'&&_drState&&_drState.candles)?_drState.candles:null;
+    const chart=_forecastChart(candles, px, low, mean, high);
+    return _sec('Price forecast','🎯','blue',
+      '<div class="fc-wrap"><div class="fc-left"><div class="gauge-wrap">'+_consensusGauge(r[1],r[0])+'</div>'+
+        '<div class="fc-sub">'+escHTML(sub)+'</div>'+
+        '<table class="fc-tbl"><thead><tr><th>Target</th><th>Price</th><th>vs now</th></tr></thead><tbody>'+rows+'</tbody></table></div>'+
+        (chart?'<div class="fc-right">'+chart+'</div>':'')+'</div>');
+  }
   function paneEstimates(t){
     const na=_fpNum(t,['total_analysts','analyst_count','numAnalystOpinions']),tm=_fpNum(t,['target_mean','street_target']),tl=_fpNum(t,['target_low']),th=_fpNum(t,['target_high']),px=parseFloat(t.price);
     const upside=(px&&tm)?((tm-px)/px*100):null;
@@ -17223,7 +17306,8 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     if(upside!=null) atRows.push(['Upside',(upside>=0?'+':'')+upside.toFixed(1)+'%', upside>=10?_badge('UPSIDE','ok'):upside>=0?_badge('SLIGHT','warn'):_badge('ABOVE TGT','bad')]);
     const eq=t.eps_quarters, epsRows=[];
     if(Array.isArray(eq)) eq.slice(-4).forEach(q=>{ const s=q.surprise_pct; epsRows.push([q.date||q.quarter||'', s!=null?((s>=0?'+':'')+(Math.abs(s)<=1?s*100:s).toFixed(0)+'%'):'—', q.beat?_badge('BEAT','ok'):_badge('MISS','bad')]); });
-    return '<div class="dr-deep-grid">'+
+    return _forecastCard(t)+
+    '<div class="dr-deep-grid">'+
       _sigTable('Earnings summary','🎯','green',['Metric','Value','Signal'],esRows)+
       _sigTable('Analyst targets','🏦','blue',['Metric','Value','Signal'],atRows)+
       (epsRows.length?_sigTable('EPS surprise history','📊','violet',['Metric','Value','Signal'],epsRows):'')+

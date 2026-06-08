@@ -1401,7 +1401,7 @@ class DataCoordinator:
                 analyst targets (low/mean/high), beta, short %, description.
         Cached for CACHE_TECH_TTL (1 hour).
         """
-        key    = f"yf:{ticker}:v2"
+        key    = f"yf:{ticker}:v3"   # v3: adds target_median + pre/after-hours
         cached = self.cache.get(key)
         if cached is not None:
             return cached
@@ -1532,8 +1532,16 @@ class DataCoordinator:
                     # Analyst targets
                     "target_low":    tgt_low,
                     "target_mean":   tgt_mean or tgt_med,
+                    "target_median": tgt_med,
                     "target_high":   tgt_high,
                     "total_analysts": analysts,
+                    # Pre-market / after-hours snapshot (from the yfinance quote)
+                    "market_state":           info.get("marketState"),
+                    "pre_market_price":       _safe_float(info.get("preMarketPrice")),
+                    "pre_market_change_pct":  _safe_float(info.get("preMarketChangePercent")),
+                    "post_market_price":      _safe_float(info.get("postMarketPrice")),
+                    "post_market_change_pct": _safe_float(info.get("postMarketChangePercent")),
+                    "regular_close":          _safe_float(info.get("regularMarketPrice")),
                     # Extended fundamentals (long-term lens)
                     "forward_pe":            fwd_pe,
                     "pb_ratio":              pb,
@@ -1716,7 +1724,17 @@ class DataCoordinator:
             "target_price": target_mean,     # legacy field — same as mean
             "target_mean":  target_mean,
             "target_low":   target_low,
+            "target_median": yf.get("target_median"),
             "target_high":  target_high,
+
+            # Pre-market / after-hours snapshot (yfinance quote, refreshed with
+            # the fundamentals cycle — informational, not tick-by-tick).
+            "market_state":           yf.get("market_state"),
+            "pre_market_price":       yf.get("pre_market_price"),
+            "pre_market_change_pct":  yf.get("pre_market_change_pct"),
+            "post_market_price":      yf.get("post_market_price"),
+            "post_market_change_pct": yf.get("post_market_change_pct"),
+            "regular_close":          yf.get("regular_close"),
 
             # FCF / OCF — quarterly actuals → yfinance TTM → AV fallback
             "free_cashflow":      _fcf,
