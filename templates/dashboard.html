@@ -489,6 +489,15 @@ tr:hover td{background:rgba(245,166,35,.06)}
 .wl-x:hover{color:#dc2626;background:rgba(220,38,38,.08)}
 .wl-desc{margin:6px 0 0;color:#3a4048;font-size:13px;line-height:1.55}
 .wl-meta{margin-top:5px;font-size:11px;color:#94a3b8;font-weight:600;letter-spacing:.02em}
+.wl-alpha{font-size:11px;font-weight:700;color:#64748b;background:#f1f5f9;border-radius:5px;padding:1px 7px;flex-shrink:0}
+/* watchlist stats strip: date added · price now (today move) · since-added delta */
+.wl-stats{display:flex;gap:26px;margin-top:10px;flex-wrap:wrap}
+.wl-stat{display:flex;flex-direction:column;gap:1px;min-width:90px}
+.wl-k{font-size:9.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#94a3b8}
+.wl-v{font-size:14px;font-weight:800;color:#0f172a;font-variant-numeric:tabular-nums;line-height:1.25}
+.wl-sub{font-size:11px;font-weight:600;color:#94a3b8;font-variant-numeric:tabular-nums}
+.wl-v.delta.up,.wl-sub.up{color:#0a7d33}
+.wl-v.delta.down,.wl-sub.down{color:#dc2626}
 
 /* ====== THESIS COLUMN ====== */
 .thesis-box{max-width:360px;font-size:11.5px;line-height:1.5;color:var(--txt)}
@@ -13509,29 +13518,47 @@ function showTab(id, btn) {
    (could be added later via /api/watchlist tied to user_id).
    ---------------------------------------------------------- */
 const WATCH_KEY = 'ah-watchlist-v1';
+const WATCH_RE  = /^[A-Z][A-Z0-9.\-]{0,7}$/;
 
+// Stored as [{t, at, p}] — ticker, epoch-ms when added, price at add (or null).
+// Back-compatible with the legacy plain-string array (those normalise to
+// {t, at:null, p:null} and get stamped on the next render once data exists).
 function getWatchlist() {
-  try {
-    const raw = JSON.parse(localStorage.getItem(WATCH_KEY) || '[]');
-    // Sanitize: strip empty/whitespace tickers and uppercase
-    return [...new Set(raw
-      .map(s => (s || '').toString().toUpperCase().trim())
-      .filter(s => s && /^[A-Z][A-Z0-9.\-]{0,7}$/.test(s)))];
-  } catch(e) { return []; }
+  let raw = [];
+  try { raw = JSON.parse(localStorage.getItem(WATCH_KEY) || '[]'); } catch(e) { return []; }
+  if (!Array.isArray(raw)) return [];
+  const seen = new Set(), out = [];
+  for (const e of raw) {
+    let t, at = null, p = null;
+    if (typeof e === 'string') { t = e; }
+    else if (e && typeof e === 'object') { t = e.t || e.ticker; at = (e.at != null ? e.at : null); p = (e.p != null ? e.p : null); }
+    if (!t) continue;
+    t = t.toString().toUpperCase().trim();
+    if (!WATCH_RE.test(t) || seen.has(t)) continue;
+    seen.add(t);
+    out.push({ t, at, p });
+  }
+  return out;
 }
 function saveWatchlist(list) {
   try { localStorage.setItem(WATCH_KEY, JSON.stringify(list)); } catch(e) {}
 }
+function watchSymbols() { return getWatchlist().map(e => e.t); }
+// Best-known live price for a ticker (from the universe feed), or null.
+function _watchPrice(sym) {
+  const t = (typeof _allTickerData !== 'undefined' && _allTickerData[sym]) || null;
+  return (t && t.price != null) ? t.price : null;
+}
 function isWatched(ticker) {
-  return getWatchlist().includes((ticker || '').toUpperCase());
+  return watchSymbols().includes((ticker || '').toUpperCase());
 }
 function toggleWatch(ticker) {
   const sym = (ticker || '').toUpperCase().trim();
-  if (!sym || !/^[A-Z][A-Z0-9.\-]{0,7}$/.test(sym)) return false;
+  if (!sym || !WATCH_RE.test(sym)) return false;
   const list = getWatchlist();
-  const i = list.indexOf(sym);
+  const i = list.findIndex(e => e.t === sym);
   const adding = (i < 0);
-  if (i >= 0) { list.splice(i, 1); } else { list.push(sym); }
+  if (i >= 0) { list.splice(i, 1); } else { list.push({ t: sym, at: Date.now(), p: _watchPrice(sym) }); }
   saveWatchlist(list);
   const panel = document.getElementById('panel-watch');
   if (panel && panel.classList.contains('active')) renderWatchlist();
@@ -13541,9 +13568,9 @@ function addToWatchFromInput() {
   const input = document.getElementById('watch-add-input');
   if (!input) return;
   const sym = (input.value || '').toUpperCase().trim();
-  if (!sym || !/^[A-Z][A-Z0-9.\-]{0,7}$/.test(sym)) { input.value = ''; return; }
+  if (!sym || !WATCH_RE.test(sym)) { input.value = ''; return; }
   const list = getWatchlist();
-  if (!list.includes(sym)) { list.push(sym); saveWatchlist(list); }
+  if (!list.some(e => e.t === sym)) { list.push({ t: sym, at: Date.now(), p: _watchPrice(sym) }); saveWatchlist(list); }
   input.value = '';
   renderWatchlist();
 }
@@ -13565,58 +13592,81 @@ function renderWatchlist() {
   const grid  = document.getElementById('watch-grid');
   const empty = document.getElementById('watch-empty');
   const news  = document.getElementById('watch-news');
-  if (!grid) return;
+  if (!grid && !news) return;
   const list = getWatchlist();
-  // Re-save the sanitized list to scrub any old empty entries from localStorage
+  // Stamp added-date / add-price on legacy or just-added rows once data exists,
+  // then persist (also scrubs any old empty entries).
+  let changed = false;
+  list.forEach(e => {
+    if (e.at == null) { e.at = Date.now(); changed = true; }
+    if (e.p  == null) { const px = _watchPrice(e.t); if (px != null) { e.p = px; changed = true; } }
+  });
   saveWatchlist(list);
   if (!list.length) {
-    grid.innerHTML = '';
+    if (grid) grid.innerHTML = '';
     if (news) news.innerHTML = '';
     if (empty) empty.style.display = 'block';
     return;
   }
   if (empty) empty.style.display = 'none';
-  // Pull from _allTickerData (populated by main universe fetch)
-  const found = list.map(sym => {
+
+  const fmtDate = ms => { try { return new Date(ms).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' }); } catch(e){ return '—'; } };
+  const agoStr  = ms => { const d = Math.floor((Date.now() - ms) / 86400000); return d <= 0 ? 'today' : (d === 1 ? '1 day ago' : d + ' days ago'); };
+  const money   = v => '$' + Number(v).toFixed(2);
+  const signed  = v => (v >= 0 ? '+$' : '-$') + Math.abs(v).toFixed(2);
+
+  // News & catalysts feed — one row per watched name with date added, live
+  // price + today's move, and the gain/loss since it went on the list.
+  const items = list.map(e => {
+    const sym = e.t;
     const t = (typeof _allTickerData !== 'undefined' && _allTickerData[sym]) || null;
-    return t ? Object.assign({}, t) : { ticker: sym, name: 'Not in universe', __unknown: true };
-  });
-  // News & catalysts feed — news-snapshot style (pill + headline + detail),
-  // one item per watched name. Tap an item to open the full report.
-  const items = found.map(t => {
-    if (t.__unknown) {
+    const addedDate = e.at != null ? fmtDate(e.at) : '—';
+    const addedSub  = (e.p != null) ? '@ ' + money(e.p) : (e.at != null ? agoStr(e.at) : '');
+    if (!t) {
       return `<div class="wl-item" style="cursor:default">
         <div class="wl-item-head">
-          <span class="wl-tk">${t.ticker}</span>
+          <span class="wl-tk">${sym}</span>
           <b class="wl-title">Not in the AlphaHunt universe</b>
-          <button class="wl-x" onclick="event.stopPropagation();toggleWatch('${t.ticker}')" title="Remove from watchlist">✕</button>
+          <button class="wl-x" onclick="event.stopPropagation();toggleWatch('${sym}')" title="Remove from watchlist">✕</button>
         </div>
-        <p class="wl-desc">No Alpha Score or catalyst is computed for this ticker — kept on your list as a reminder.</p>
+        <p class="wl-desc">No price or catalyst is computed for this ticker — kept on your list as a reminder.</p>
+        <div class="wl-stats"><div class="wl-stat"><span class="wl-k">Added</span><span class="wl-v">${addedDate}</span>${addedSub?`<span class="wl-sub">${addedSub}</span>`:''}</div></div>
       </div>`;
     }
     const c = watchCatalyst(t);
     const score = (t.smart_score ?? t.pop_score ?? 0);
+    const price = t.price;
     const chg   = t.change_pct;
-    const chgStr = chg != null ? ((chg >= 0 ? '+' : '') + chg.toFixed(2) + '% today') : '';
-    const px    = t.price != null ? '$' + t.price.toFixed(2) : '';
-    // Headline = company name, plus the catalyst when it's a real trigger
-    // (skip the dash for neutral "steady state" reads so titles stay clean).
-    const headline = (t.name ? t.name.slice(0,40) : t.ticker)
-                   + (c.read !== 'flat' ? ' — ' + c.text : '');
+    const headline = (t.name ? t.name.slice(0,40) : sym) + (c.read !== 'flat' ? ' — ' + c.text : '');
     let desc = (t.rationale || '').trim();
     if (!desc) {
       const sig = (t.signals || []).slice(0,3).join(' · ');
       desc = sig || (c.read === 'flat' ? c.text : 'On your watchlist — no fresh catalyst in the latest refresh.');
     }
-    const meta = ['Alpha ' + score.toFixed(0), px, chgStr].filter(Boolean).join(' · ');
-    return `<div class="wl-item" onclick="openStockModal('${t.ticker}')">
+    // today's move
+    const todayCls = chg == null ? '' : (chg >= 0 ? 'up' : 'down');
+    const todayStr = chg == null ? '—' : ((chg >= 0 ? '+' : '') + chg.toFixed(2) + '% today');
+    // change since it was added
+    let sinceHtml = '<span class="wl-v">—</span>';
+    if (e.p != null && price != null && e.p > 0) {
+      const dPct = (price - e.p) / e.p * 100;
+      const dAbs = price - e.p;
+      const cls  = dPct >= 0 ? 'up' : 'down';
+      sinceHtml = `<span class="wl-v delta ${cls}">${dPct >= 0 ? '▲' : '▼'} ${(dPct >= 0 ? '+' : '') + dPct.toFixed(2)}%</span><span class="wl-sub ${cls}">${signed(dAbs)}</span>`;
+    }
+    return `<div class="wl-item" onclick="openStockModal('${sym}')">
       <div class="wl-item-head">
-        <span class="wl-tk">${t.ticker}</span>
+        <span class="wl-tk">${sym}</span>
         <b class="wl-title">${headline}</b>
-        <button class="wl-x" onclick="event.stopPropagation();toggleWatch('${t.ticker}')" title="Remove from watchlist">✕</button>
+        <span class="wl-alpha">Alpha ${score.toFixed(0)}</span>
+        <button class="wl-x" onclick="event.stopPropagation();toggleWatch('${sym}')" title="Remove from watchlist">✕</button>
       </div>
       <p class="wl-desc">${desc}</p>
-      <div class="wl-meta">${meta}</div>
+      <div class="wl-stats">
+        <div class="wl-stat"><span class="wl-k">Added</span><span class="wl-v">${addedDate}</span>${addedSub?`<span class="wl-sub">${addedSub}</span>`:''}</div>
+        <div class="wl-stat"><span class="wl-k">Price now</span><span class="wl-v">${price != null ? money(price) : '—'}</span><span class="wl-sub ${todayCls}">${todayStr}</span></div>
+        <div class="wl-stat"><span class="wl-k">Since added</span>${sinceHtml}</div>
+      </div>
     </div>`;
   }).join('');
   if (news) {
@@ -13624,8 +13674,7 @@ function renderWatchlist() {
       `<div class="wl-news-cap">📰 News &amp; catalysts — latest read on each name you're watching</div>
        <div class="wl-feed">${items}</div>`;
   }
-  // Box-style ticker cards dropped — the news feed above IS the watchlist now.
-  grid.innerHTML = '';
+  if (grid) grid.innerHTML = '';
 }
 
 /* ----------------------------------------------------------
