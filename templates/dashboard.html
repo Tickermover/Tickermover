@@ -16881,10 +16881,13 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
   function _valSig(cur,med){ if(cur==null) return null; if(med==null||med<=0) return ['—','neu']; if(cur<med*0.9) return ['CHEAP','ok']; if(cur>med*1.1) return ['EXPENSIVE','bad']; return ['FAIR','neu']; }
   function _sigTable(title,icon,accent,cols,rows){ if(!rows.length)return ''; const b='<table><thead><tr>'+cols.map(c=>'<th>'+c+'</th>').join('')+'</tr></thead><tbody>'+rows.map(r=>'<tr>'+r.map(c=>'<td>'+(c==null?'<span class="muted">—</span>':c)+'</td>').join('')+'</tr>').join('')+'</tbody></table>'; return _sec(title,icon,accent,b); }
   function _healthCard(t){
-    const de=_fpNum(t,['debt_to_equity']), cr=_fpNum(t,['current_ratio']), fcf=_fpNum(t,['free_cashflow']);
+    const de=_fpNum(t,['debt_to_equity']), cr=_fpNum(t,['current_ratio']), qr=_fpNum(t,['quick_ratio']),
+          ocf=_fpNum(t,['operating_cashflow']), fcf=_fpNum(t,['free_cashflow']);
     const rows=[];
     if(de!=null) rows.push(['Debt / Equity', de.toFixed(2), de<1?_badge('SAFE','ok'):de<=2?_badge('MODERATE','warn'):_badge('LEVERAGED','bad')]);
     if(cr!=null) rows.push(['Current ratio', cr.toFixed(2), cr>1.5?_badge('COMFORTABLE','ok'):cr>=1?_badge('WATCH','warn'):_badge('RISK','bad')]);
+    if(qr!=null) rows.push(['Quick ratio', qr.toFixed(2), qr>=1?_badge('COMFORTABLE','ok'):qr>=0.7?_badge('WATCH','warn'):_badge('RISK','bad')]);
+    if(ocf!=null) rows.push(['Operating cash flow', _money(ocf), ocf>0?_badge('POSITIVE','ok'):_badge('NEGATIVE','bad')]);
     if(fcf!=null) rows.push(['Free cash flow', _money(fcf), fcf>0?_badge('POSITIVE','ok'):_badge('NEGATIVE','bad')]);
     return _sigTable('Financial health','🛡️','teal',['Metric','Value','Signal'],rows);
   }
@@ -17124,15 +17127,18 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
   }
   function paneFinancials(t){
     const M=v=>v==null?null:(Math.abs(v)<=1?v*100:v);
-    const gm=M(_fpNum(t,['gross_margin'])),nm=M(_fpNum(t,['profit_margin','net_margin'])),fm=M(_fpNum(t,['fcf_margin'])),om=M(_fpNum(t,['operating_margin']));
+    const gm=M(_fpNum(t,['gross_margin'])),nm=M(_fpNum(t,['profit_margin','net_margin'])),fm=M(_fpNum(t,['fcf_margin'])),om=M(_fpNum(t,['operating_margin'])),ebm=M(_fpNum(t,['ebitda_margin']));
     const rg=_fpNum(t,['revenue_growth_yoy']), rgPct=rg!=null?(Math.abs(rg)<=2?rg*100:rg):null;
+    const eg=_fpNum(t,['eps_growth_yoy']), egPct=eg!=null?(Math.abs(eg)<=2?eg*100:eg):null;
     const okM=v=>v!=null&&(gm==null||v<=gm+1);   /* margins can't exceed gross — guards bad feed data */
     const profRows=[];
     if(gm!=null) profRows.push(['Gross margin',gm.toFixed(0)+'%', gm>=50?_badge('STRONG','ok'):gm>=30?_badge('SOLID','warn'):_badge('THIN','bad')]);
     if(okM(om)) profRows.push(['Operating margin',om.toFixed(0)+'%', om>=20?_badge('STRONG','ok'):om>=8?_badge('SOLID','warn'):om>=0?_badge('THIN','bad'):_badge('LOSS','bad')]);
+    if(okM(ebm)) profRows.push(['EBITDA margin',ebm.toFixed(0)+'%', ebm>=25?_badge('STRONG','ok'):ebm>=12?_badge('SOLID','warn'):ebm>=0?_badge('THIN','bad'):_badge('LOSS','bad')]);
     if(okM(nm)) profRows.push(['Net margin',nm.toFixed(0)+'%', nm>=15?_badge('STRONG','ok'):nm>=5?_badge('SOLID','warn'):nm>=0?_badge('THIN','bad'):_badge('LOSS','bad')]);
     if(okM(fm)) profRows.push(['FCF margin',fm.toFixed(0)+'%', fm>=10?_badge('STRONG','ok'):fm>=0?_badge('OK','warn'):_badge('BURN','bad')]);
     if(rgPct!=null) profRows.push(['Revenue YoY',(rgPct>=0?'+':'')+rgPct.toFixed(0)+'%', rgPct>=20?_badge('FAST','ok'):rgPct>=5?_badge('STEADY','warn'):rgPct>=0?_badge('SLOW','bad'):_badge('DECLINE','bad')]);
+    if(egPct!=null) profRows.push(['EPS YoY',(egPct>=0?'+':'')+egPct.toFixed(0)+'%', egPct>=20?_badge('FAST','ok'):egPct>=5?_badge('STEADY','warn'):egPct>=0?_badge('SLOW','bad'):_badge('DECLINE','bad')]);
     const byDate=a=>a.slice().sort((x,y)=>String(x.date||x.quarter||'').localeCompare(String(y.date||y.quarter||'')));
     const qi=Array.isArray(t.quarterly_income)?byDate(t.quarterly_income).slice(-4):[];
     const qiRows=qi.map((q,i)=>{ const rev=parseFloat(q.revenue), prev=i>0?parseFloat(qi[i-1].revenue):null; let sig=_nb(); if(prev&&!isNaN(rev)){ const ch=(rev-prev)/prev*100; sig=ch>=0?_badge('▲ '+ch.toFixed(0)+'%','ok'):_badge('▼ '+Math.abs(ch).toFixed(0)+'%','bad'); } return [q.date||q.quarter||'', isNaN(rev)?'—':_money(rev), sig]; });
@@ -17152,6 +17158,18 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
       const med=_sectorMed(t,key), sig=_valSig(cur,med);
       return [lbl, cur!=null?cur.toFixed(1)+'x':null, med!=null?med.toFixed(1)+'x':null, sig?_badge(sig[0],sig[1]):null];
     }).filter(r=>r[1]!=null);
+    // P/FCF — computed (market cap ÷ trailing free cash flow), with a sector
+    // median derived the same way. A core valuation multiple we otherwise miss.
+    const _mc=_fpNum(t,['market_cap']), _fcf=_fpNum(t,['free_cashflow']);
+    if(_mc&&_fcf&&_fcf>0){
+      const pfcf=_mc/_fcf;
+      const sub=(t.sub_sector||t.subsector||'').toLowerCase(), sec=(t.sector||'').toLowerCase();
+      const calc=sel=>(ALL||[]).filter(x=>x.ticker!==t.ticker&&sel(x)).map(x=>{const m=parseFloat(x.market_cap),f=parseFloat(x.free_cashflow);return (m&&f&&f>0)?m/f:NaN;}).filter(v=>!isNaN(v)&&v>0);
+      let pv=sub?calc(x=>(x.sub_sector||x.subsector||'').toLowerCase()===sub):[];
+      if(pv.length<3&&sec)pv=calc(x=>(x.sector||'').toLowerCase()===sec);
+      const med=pv.length>=3?_med(pv):null, sig=_valSig(pfcf,med);
+      rows.push(['P/FCF', pfcf.toFixed(1)+'x', med!=null?med.toFixed(1)+'x':null, sig?_badge(sig[0],sig[1]):null]);
+    }
     const valTable = rows.length? _sec('Valuation vs sector','⚖️','blue',
       '<table><thead><tr><th>Metric</th><th>Current</th><th>Sector median</th><th>Signal</th></tr></thead><tbody>'+
       rows.map(r=>'<tr><td>'+r[0]+'</td><td>'+r[1]+'</td><td>'+(r[2]||'<span class="muted">—</span>')+'</td><td>'+(r[3]||'<span class="muted">—</span>')+'</td></tr>').join('')+
