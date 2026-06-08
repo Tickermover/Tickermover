@@ -3223,17 +3223,28 @@ html.v2-dark .v2-mp-mini-lbl{color:#cbd5e1}
 .ce-card-d{display:block;font-size:11.5px;color:#64748b;margin-top:2px;line-height:1.45}
 .ce-status{max-width:1268px;margin:0 auto 12px;font-size:12.5px;color:#475569;padding:0 4px}
 .ce-status b{color:#0040c1}
-.ce-cloud{max-width:1268px;margin:0 auto;display:flex;flex-wrap:wrap;gap:7px;align-items:center;max-height:52vh;overflow:auto;padding:4px 2px 8px}
-.ce-pill{display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid rgba(10,10,10,.1);border-radius:9px;padding:5px 10px;cursor:pointer;font-family:inherit;color:#64748b;font-weight:700;font-size:12px;line-height:1.1;transition:border-color .14s,box-shadow .14s,transform .1s,color .14s}
-.ce-pill .ce-pill-t{font-weight:800}
-.ce-pill:hover{transform:translateY(-1px);border-color:rgba(41,112,255,.4);color:#0f172a}
-.ce-pill i{font-style:normal;font-size:10px;font-weight:700;opacity:.85}
-.ce-pill.sel{border-color:#2970ff;box-shadow:0 0 0 3px rgba(41,112,255,.14);color:#0040c1}
-.ce-pill.rep{color:#0a7d33;border-color:rgba(10,125,51,.35);font-size:13px;animation:cePulseG 2.4s ease-in-out infinite}
-.ce-pill.soon{color:#0040c1;border-color:rgba(0,64,193,.35);font-size:13px;animation:cePulseB 2.4s ease-in-out infinite}
+.ce-cloud{max-width:1268px;margin:0 auto;display:flex;flex-wrap:wrap;gap:9px 8px;align-items:center;justify-content:center;max-height:58vh;overflow:auto;padding:12px 2px 16px}
+.ce-pill{display:inline-flex;align-items:center;gap:.45em;background:#fff;border:1px solid rgba(10,10,10,.1);border-radius:999px;padding:5px 12px 5px 6px;cursor:pointer;font-family:inherit;color:#64748b;font-weight:800;font-size:12px;line-height:1.1;transition:border-color .14s,box-shadow .14s,color .14s;will-change:transform}
+.ce-pill .ce-pill-t{letter-spacing:-.01em}
+.ce-pill i{font-style:normal;font-size:.72em;font-weight:700;opacity:.9}
+.ce-pill:hover{border-color:rgba(41,112,255,.5);color:#0f172a;box-shadow:0 7px 18px -9px rgba(0,40,120,.4);animation-play-state:paused}
+.ce-pill.sel{outline:2px solid #2970ff;outline-offset:1px;color:#0040c1;animation-play-state:paused}
+/* logo chip — em-sized so it scales with each pill's freshness tier */
+.ce-lg-img{position:relative;width:1.55em;height:1.55em;border-radius:50%;overflow:hidden;flex-shrink:0;background:#f1f5f9;display:inline-flex;align-items:center;justify-content:center}
+.ce-lg-img .fb{font-size:.62em;font-weight:800;color:#64748b}
+.ce-lg-img img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#fff}
+/* freshness-weighted sizes — the fresher the event, the bigger the pill */
+.ce-pill.ce-xl{font-size:16.5px;padding:7px 16px 7px 7px}
+.ce-pill.ce-lg{font-size:14px;padding:6px 13px 6px 6px}
+.ce-pill.ce-md{font-size:12.5px}
+.ce-pill.ce-sm{font-size:11px;color:#94a3b8;border-color:rgba(10,10,10,.08)}
+/* recent = green, upcoming = blue; both float + glow (per-pill --t/--d stagger) */
+.ce-pill.rep{color:#0a7d33;border-color:rgba(10,125,51,.4);animation:ceFloat var(--t,4s) ease-in-out var(--d,0s) infinite,cePulseG 2.4s ease-in-out infinite}
+.ce-pill.soon{color:#0040c1;border-color:rgba(0,64,193,.4);animation:ceFloat var(--t,4s) ease-in-out var(--d,0s) infinite,cePulseB 2.4s ease-in-out infinite}
 .ce-pill.rep i{color:#0a7d33}.ce-pill.soon i{color:#0040c1}
-@keyframes cePulseG{0%,100%{box-shadow:0 0 0 0 rgba(10,125,51,0)}50%{box-shadow:0 0 0 4px rgba(10,125,51,.13)}}
-@keyframes cePulseB{0%,100%{box-shadow:0 0 0 0 rgba(0,64,193,0)}50%{box-shadow:0 0 0 4px rgba(0,64,193,.13)}}
+@keyframes ceFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+@keyframes cePulseG{0%,100%{box-shadow:0 1px 3px rgba(10,125,51,.12)}50%{box-shadow:0 8px 20px -8px rgba(10,125,51,.55)}}
+@keyframes cePulseB{0%,100%{box-shadow:0 1px 3px rgba(0,64,193,.12)}50%{box-shadow:0 8px 20px -8px rgba(0,64,193,.55)}}
 @media(prefers-reduced-motion:reduce){.ce-pill.rep,.ce-pill.soon{animation:none}}
 .ce-cloud::-webkit-scrollbar{width:8px}.ce-cloud::-webkit-scrollbar-thumb{background:rgba(10,10,10,.15);border-radius:8px}
 .v2-brf-head{max-width:1268px;margin:0 auto 18px;padding:0 4px}
@@ -8782,16 +8793,30 @@ function ceBuildCloud(){
     return '';
   };
   const cls = t => isRep(t) ? 'rep' : (isSoon(t) ? 'soon' : '');
+  // Freshness weight → pill size. The closer the event (just reported / about to
+  // report), the bigger the tag; companies with no event in the window stay small.
+  const tier = t => {
+    if (isRep(t))  { const s = dse(t); return (s != null && s <= 1) ? 'ce-xl' : (s != null && s <= 4) ? 'ce-lg' : 'ce-md'; }
+    if (isSoon(t)) { const d = d2e(t); return (d != null && d <= 2) ? 'ce-xl' : (d != null && d <= 7) ? 'ce-lg' : 'ce-md'; }
+    return 'ce-sm';
+  };
+  const logo   = sym => 'https://images.financialmodelingprep.com/symbol/' + encodeURIComponent(sym) + '.png';
+  const logoBox = sym => '<span class="ce-lg-img"><span class="fb">' + ((sym || '?').charAt(0)) + '</span>' +
+    '<img src="' + logo(sym) + '" loading="lazy" onerror="this.style.display=\'none\'" onload="this.previousElementSibling.style.display=\'none\'"></span>';
   // recent first, then upcoming, then the rest alphabetically — keeps the
-  // pulsing tickers clustered at the top of the cloud where the eye lands.
+  // floating/pulsing tickers clustered at the top of the cloud where the eye lands.
   const rep  = all.filter(isRep).sort((a, b) => (dse(a) == null ? 99 : dse(a)) - (dse(b) == null ? 99 : dse(b)));
   const soon = all.filter(isSoon).sort((a, b) => d2e(a) - d2e(b));
   const flagged = new Set([...rep, ...soon].map(t => t.ticker));
   const rest = all.filter(t => !flagged.has(t.ticker)).sort((a, b) => (a.ticker || '').localeCompare(b.ticker || ''));
-  const pill = t => '<button class="ce-pill ' + cls(t) + '" data-tic="' + t.ticker +
-    '" data-nm="' + v2EscHTML((t.name || '').toLowerCase()) +
-    '" onclick="ceSelectTicker(\'' + t.ticker + '\')" title="' + v2EscHTML(t.name || t.ticker) + (hint(t) ? ' · ' + hint(t) : '') + '">' +
-    '<span class="ce-pill-t">' + t.ticker + '</span>' + (hint(t) ? '<i>' + hint(t) + '</i>' : '') + '</button>';
+  const pill = (t, i) => {
+    const dur = (3.6 + (i % 7) * 0.4).toFixed(2);   // staggered float so the cloud bobs organically, not in lockstep
+    const del = ((i % 13) * 0.22).toFixed(2);
+    return '<button class="ce-pill ' + tier(t) + ' ' + cls(t) + '" style="--t:' + dur + 's;--d:' + del + 's" data-tic="' + t.ticker +
+      '" data-nm="' + v2EscHTML((t.name || '').toLowerCase()) +
+      '" onclick="ceSelectTicker(\'' + t.ticker + '\')" title="' + v2EscHTML(t.name || t.ticker) + (hint(t) ? ' · ' + hint(t) : '') + '">' +
+      logoBox(t.ticker) + '<span class="ce-pill-t">' + t.ticker + '</span>' + (hint(t) ? '<i>' + hint(t) + '</i>' : '') + '</button>';
+  };
   cloud.innerHTML = [...rep, ...soon, ...rest].map(pill).join('');
 }
 
