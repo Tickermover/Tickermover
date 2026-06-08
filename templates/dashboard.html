@@ -3223,34 +3223,38 @@ html.v2-dark .v2-mp-mini-lbl{color:#cbd5e1}
 .ce-card-d{display:block;font-size:11.5px;color:#64748b;margin-top:2px;line-height:1.45}
 .ce-status{max-width:1268px;margin:0 auto 12px;font-size:12.5px;color:#475569;padding:0 4px}
 .ce-status b{color:#0040c1}
-.ce-cloud{max-width:1268px;margin:0 auto;display:flex;flex-wrap:wrap;gap:9px 8px;align-items:center;justify-content:center;max-height:58vh;overflow:auto;padding:12px 2px 16px}
-.ce-pill{display:inline-flex;align-items:center;gap:.45em;background:#fff;border:1px solid rgba(10,10,10,.1);border-radius:999px;padding:5px 12px 5px 6px;cursor:pointer;font-family:inherit;color:#64748b;font-weight:800;font-size:12px;line-height:1.1;transition:border-color .14s,box-shadow .14s,color .14s;will-change:transform}
-.ce-pill .ce-pill-t{letter-spacing:-.01em}
-.ce-pill i{font-style:normal;font-size:.72em;font-weight:700;opacity:.9}
-.ce-pill:hover{border-color:rgba(41,112,255,.5);color:#0f172a;box-shadow:0 7px 18px -9px rgba(0,40,120,.4);animation-play-state:paused}
-.ce-pill.sel{outline:2px solid #2970ff;outline-offset:1px;color:#0040c1;animation-play-state:paused}
-/* logo chip — em-sized so it scales with each pill's freshness tier */
-.ce-lg-img{position:relative;width:1.55em;height:1.55em;border-radius:50%;overflow:hidden;flex-shrink:0;background:#f1f5f9;display:inline-flex;align-items:center;justify-content:center}
-.ce-lg-img .fb{font-size:.62em;font-weight:800;color:#64748b}
+/* ── Floating word-cloud: scatter layout, items absolutely positioned by JS.
+   Near-event tickers = bold/colored/with-logo in front; the rest of the universe
+   drifts faintly behind for depth. Every word drifts (staggered --t/--d). ── */
+.ce-cloud{position:relative;max-width:1268px;margin:0 auto;overflow:hidden;padding:0}
+.ce-word{position:absolute;display:inline-flex;align-items:center;gap:.4em;white-space:nowrap;cursor:pointer;font-family:inherit;font-weight:800;line-height:1;border:none;background:transparent;color:#64748b;transform:rotate(var(--rot,0deg));animation:ceDrift var(--t,9s) ease-in-out var(--d,0s) infinite}
+.ce-word .ce-pill-t{letter-spacing:-.01em}
+.ce-word i{font-style:normal;font-size:.62em;font-weight:700;opacity:.85;margin-left:.1em}
+.ce-word:hover{animation-play-state:paused}
+.ce-word.sel{outline:2px solid #2970ff;outline-offset:2px;border-radius:8px;z-index:5}
+/* logo chip — em-sized so it scales with each word's freshness tier */
+.ce-lg-img{position:relative;width:1.5em;height:1.5em;border-radius:50%;overflow:hidden;flex-shrink:0;background:#f1f5f9;display:inline-flex;align-items:center;justify-content:center}
+.ce-lg-img .fb{font-size:.6em;font-weight:800;color:#64748b}
 .ce-lg-img img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#fff}
-/* freshness-weighted sizes — the fresher the event, the bigger the pill */
-.ce-pill.ce-xl{font-size:16.5px;padding:7px 16px 7px 7px}
-.ce-pill.ce-lg{font-size:14px;padding:6px 13px 6px 6px}
-.ce-pill.ce-md{font-size:12.5px}
-.ce-pill.ce-sm{font-size:11px;color:#94a3b8;border-color:rgba(10,10,10,.08)}
-/* default view = only the near-event tickers; the no-event long tail is hidden
-   until the user searches (then any company is reachable). */
-.ce-cloud:not(.searching) .ce-pill.ce-sm{display:none}
-.ce-empty-note{width:100%;text-align:center;color:#94a3b8;font-size:13px;padding:22px 0}
-.ce-cloud.searching .ce-empty-note{display:none}
-/* recent = green, upcoming = blue; both float + glow (per-pill --t/--d stagger) */
-.ce-pill.rep{color:#0a7d33;border-color:rgba(10,125,51,.4);animation:ceFloat var(--t,4s) ease-in-out var(--d,0s) infinite,cePulseG 2.4s ease-in-out infinite}
-.ce-pill.soon{color:#0040c1;border-color:rgba(0,64,193,.4);animation:ceFloat var(--t,4s) ease-in-out var(--d,0s) infinite,cePulseB 2.4s ease-in-out infinite}
-.ce-pill.rep i{color:#0a7d33}.ce-pill.soon i{color:#0040c1}
-@keyframes ceFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
-@keyframes cePulseG{0%,100%{box-shadow:0 1px 3px rgba(10,125,51,.12)}50%{box-shadow:0 8px 20px -8px rgba(10,125,51,.55)}}
-@keyframes cePulseB{0%,100%{box-shadow:0 1px 3px rgba(0,64,193,.12)}50%{box-shadow:0 8px 20px -8px rgba(0,64,193,.55)}}
-@media(prefers-reduced-motion:reduce){.ce-pill.rep,.ce-pill.soon{animation:none}}
+/* fresh = solid colored chip with logo, sized by how near the event is */
+.ce-fresh{z-index:2;padding:5px 13px 5px 6px;border-radius:999px;background:#fff;border:1px solid rgba(10,10,10,.1);box-shadow:0 2px 9px -5px rgba(0,40,120,.3)}
+.ce-fresh.ce-xl{font-size:18.5px}.ce-fresh.ce-lg{font-size:15px}.ce-fresh.ce-md{font-size:13px}
+.ce-fresh.rep{color:#0a7d33;border-color:rgba(10,125,51,.45);animation:ceDrift var(--t,9s) ease-in-out var(--d,0s) infinite,cePulseG 2.4s ease-in-out infinite}
+.ce-fresh.soon{color:#0040c1;border-color:rgba(0,64,193,.45);animation:ceDrift var(--t,9s) ease-in-out var(--d,0s) infinite,cePulseB 2.4s ease-in-out infinite}
+.ce-fresh.rep i{color:#0a7d33}.ce-fresh.soon i{color:#0040c1}
+.ce-fresh:hover{border-color:rgba(41,112,255,.55);box-shadow:0 9px 22px -8px rgba(0,40,120,.45)}
+/* backdrop = faint grey words (depth), no logo, behind the fresh ones */
+.ce-back{z-index:0}
+.ce-back:hover{color:#0f172a;opacity:1 !important}
+.ce-hidden-extra{display:none}
+@keyframes ceDrift{0%,100%{transform:translate(0,0) rotate(var(--rot,0deg))}25%{transform:translate(7px,-6px) rotate(var(--rot,0deg))}50%{transform:translate(-5px,5px) rotate(var(--rot,0deg))}75%{transform:translate(5px,4px) rotate(var(--rot,0deg))}}
+@keyframes cePulseG{0%,100%{box-shadow:0 2px 6px rgba(10,125,51,.15)}50%{box-shadow:0 9px 22px -8px rgba(10,125,51,.6)}}
+@keyframes cePulseB{0%,100%{box-shadow:0 2px 6px rgba(0,64,193,.15)}50%{box-shadow:0 9px 22px -8px rgba(0,64,193,.6)}}
+@media(prefers-reduced-motion:reduce){.ce-word{animation:none!important}}
+/* search mode: drop the scatter, show matches in a readable centered flow */
+.ce-cloud.searching{overflow:auto;max-height:58vh;height:auto!important;display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-items:flex-start;padding:8px 2px}
+.ce-cloud.searching .ce-word{position:static;transform:none;animation:none;opacity:1!important;z-index:auto}
+.ce-cloud.searching .ce-back{padding:5px 12px;border:1px solid rgba(10,10,10,.1);border-radius:999px;background:#fff;font-size:12px;color:#475569}
 .ce-cloud::-webkit-scrollbar{width:8px}.ce-cloud::-webkit-scrollbar-thumb{background:rgba(10,10,10,.15);border-radius:8px}
 .v2-brf-head{max-width:1268px;margin:0 auto 18px;padding:0 4px}
 /* Briefings eyebrow → violet to match the meta-label color rhythm
@@ -6348,7 +6352,7 @@ html.v2-dark body.v2 .main, body.v2 .main{padding:0 0 30px !important;max-width:
     <div class="v2-brf-head">
       <div class="v2-brf-eyebrow">Company Events</div>
       <div class="v2-brf-title">Pick a company, then pick the view</div>
-      <div class="v2-brf-sub">The companies that <b>just reported</b> or <b>report soon</b> — floating, sized by how fresh the event is. Tap one, then choose what to read. Need a different company? <b>Search</b> above.</div>
+      <div class="v2-brf-sub">Companies that <b>just reported</b> or <b>report soon</b> float bold up front, sized by how fresh the event is; the rest of the universe drifts faintly behind. Tap any ticker, then choose what to read — or <b>search</b> for one.</div>
     </div>
 
     <div class="v2-ev-search"><span class="v2-ev-si">🔎</span>
@@ -8782,6 +8786,9 @@ function ceInit(){
   ceBuildCloud();
 }
 
+let _ceResizeBound = false;
+const CE_BACKDROP_MAX = 150;   // # faint background words actually scattered (rest are search-only, for perf)
+
 function ceBuildCloud(){
   const cloud = document.getElementById('ce-cloud');
   if (!cloud) return;
@@ -8797,47 +8804,112 @@ function ceBuildCloud(){
     if (isSoon(t)) { const d = d2e(t); return d === 0 ? 'reports today' : 'in ' + d + 'd'; }
     return '';
   };
-  const cls = t => isRep(t) ? 'rep' : (isSoon(t) ? 'soon' : '');
-  // Freshness weight → pill size. The closer the event (just reported / about to
-  // report), the bigger the tag; companies with no event in the window stay small.
-  const tier = t => {
+  const cls = t => isRep(t) ? 'rep' : 'soon';
+  const tier = t => {                 // freshness → size of the bold word
     if (isRep(t))  { const s = dse(t); return (s != null && s <= 1) ? 'ce-xl' : (s != null && s <= 4) ? 'ce-lg' : 'ce-md'; }
-    if (isSoon(t)) { const d = d2e(t); return (d != null && d <= 2) ? 'ce-xl' : (d != null && d <= 7) ? 'ce-lg' : 'ce-md'; }
-    return 'ce-sm';
+    const d = d2e(t); return (d != null && d <= 2) ? 'ce-xl' : (d != null && d <= 7) ? 'ce-lg' : 'ce-md';
   };
   const logo   = sym => 'https://images.financialmodelingprep.com/symbol/' + encodeURIComponent(sym) + '.png';
   const logoBox = sym => '<span class="ce-lg-img"><span class="fb">' + ((sym || '?').charAt(0)) + '</span>' +
     '<img src="' + logo(sym) + '" loading="lazy" onerror="this.style.display=\'none\'" onload="this.previousElementSibling.style.display=\'none\'"></span>';
-  // recent first, then upcoming, then the rest alphabetically — keeps the
-  // floating/pulsing tickers clustered at the top of the cloud where the eye lands.
+  const motion = i => 'style="--t:' + (7.5 + (i % 9) * 0.7).toFixed(2) + 's;--d:' + ((i % 17) * 0.22).toFixed(2) + 's;';
+  const rnd = (a, b) => a + Math.random() * (b - a);
+
   const rep  = all.filter(isRep).sort((a, b) => (dse(a) == null ? 99 : dse(a)) - (dse(b) == null ? 99 : dse(b)));
   const soon = all.filter(isSoon).sort((a, b) => d2e(a) - d2e(b));
   const flagged = new Set([...rep, ...soon].map(t => t.ticker));
-  const rest = all.filter(t => !flagged.has(t.ticker)).sort((a, b) => (a.ticker || '').localeCompare(b.ticker || ''));
-  const pill = (t, i) => {
-    const dur = (3.6 + (i % 7) * 0.4).toFixed(2);   // staggered float so the cloud bobs organically, not in lockstep
-    const del = ((i % 13) * 0.22).toFixed(2);
-    return '<button class="ce-pill ' + tier(t) + ' ' + cls(t) + '" style="--t:' + dur + 's;--d:' + del + 's" data-tic="' + t.ticker +
-      '" data-nm="' + v2EscHTML((t.name || '').toLowerCase()) +
-      '" onclick="ceSelectTicker(\'' + t.ticker + '\')" title="' + v2EscHTML(t.name || t.ticker) + (hint(t) ? ' · ' + hint(t) : '') + '">' +
+  // backdrop: most-notable names first (by smart_score) make a nicer faint cloud
+  const score = t => { const s = parseFloat(t.smart_score); return isNaN(s) ? 0 : s; };
+  const restAll = all.filter(t => !flagged.has(t.ticker)).sort((a, b) => score(b) - score(a));
+  const backdrop = restAll.slice(0, CE_BACKDROP_MAX);
+  const extra    = restAll.slice(CE_BACKDROP_MAX);   // search-only, kept light (no logo, hidden)
+
+  const open = t => 'data-tic="' + t.ticker + '" data-nm="' + v2EscHTML((t.name || '').toLowerCase()) +
+    '" onclick="ceSelectTicker(\'' + t.ticker + '\')" title="' + v2EscHTML(t.name || t.ticker) + (hint(t) ? ' · ' + hint(t) : '') + '"';
+
+  let html = '';
+  // bold near-event words (drawn last → on top); slight rotation for organic feel
+  [...rep, ...soon].forEach((t, i) => {
+    const rot = rnd(-7, 7).toFixed(1);
+    html += '<button class="ce-word ce-fresh ' + tier(t) + ' ' + cls(t) + '" ' + motion(i) + '--rot:' + rot + 'deg" ' + open(t) + '>' +
       logoBox(t.ticker) + '<span class="ce-pill-t">' + t.ticker + '</span>' + (hint(t) ? '<i>' + hint(t) + '</i>' : '') + '</button>';
-  };
-  // Near-event tickers float up top; the no-event tail stays in the DOM (hidden
-  // by CSS) so search can still reach any company.
-  const note = (rep.length + soon.length) ? '' :
-    '<div class="ce-empty-note">No companies are reporting in the window right now — <b>search</b> above to open any company.</div>';
-  cloud.innerHTML = note + [...rep, ...soon, ...rest].map(pill).join('');
+  });
+  // faint backdrop words — varied size, rotation and opacity give the cloud depth
+  backdrop.forEach((t, i) => {
+    const fs = rnd(11, 23).toFixed(1), op = rnd(0.13, 0.4).toFixed(2), rot = rnd(-26, 26).toFixed(1);
+    html += '<button class="ce-word ce-back" ' + motion(i + 3) + '--rot:' + rot + 'deg;font-size:' + fs + 'px;opacity:' + op + '" ' + open(t) + '>' +
+      '<span class="ce-pill-t">' + t.ticker + '</span></button>';
+  });
+  // remaining universe — present for search only, no animation/logo
+  extra.forEach(t => {
+    html += '<button class="ce-word ce-back ce-hidden-extra" ' + open(t) + '><span class="ce-pill-t">' + t.ticker + '</span></button>';
+  });
+  cloud.innerHTML = html;
+  cloud.classList.remove('searching');
+  ceLayoutCloud();
+
+  if (!_ceResizeBound){
+    _ceResizeBound = true;
+    let to; window.addEventListener('resize', () => { clearTimeout(to); to = setTimeout(ceLayoutCloud, 180); });
+  }
+}
+
+// AABB overlap test with padding
+function ceCollide(a, b, pad){
+  return !(a.x + a.w + pad < b.x || b.x + b.w + pad < a.x || a.y + a.h + pad < b.y || b.y + b.h + pad < a.y);
+}
+
+// Scatter-place the (non-search) words with a greedy spiral so big near-event
+// words land centrally and the faint backdrop fills around them without overlap.
+function ceLayoutCloud(){
+  const cloud = document.getElementById('ce-cloud');
+  if (!cloud || cloud.classList.contains('searching')) return;
+  const W = cloud.clientWidth;
+  if (!W){ setTimeout(ceLayoutCloud, 150); return; }   // panel not visible yet → retry
+  const H = Math.max(360, Math.min(640, Math.round(W * 0.46)));
+  cloud.style.height = H + 'px';
+  const cx = W / 2, cy = H / 2;
+  const placed = [];
+  cloud.querySelectorAll('.ce-word:not(.ce-hidden-extra)').forEach(function(el){
+    const fs = parseFloat(getComputedStyle(el).fontSize) || 13;
+    const tic = el.getAttribute('data-tic') || '';
+    const hasLogo = el.classList.contains('ce-fresh');
+    const w = Math.round(tic.length * fs * 0.62 + (hasLogo ? fs * 1.8 : 0) + (hasLogo ? 28 : 8));
+    const h = Math.round(fs * (hasLogo ? 1.7 : 1.3) + (hasLogo ? 10 : 4));
+    let a = Math.random() * 6.283, r = 0, fitX = 0, fitY = 0, ok = false;
+    for (let k = 0; k < 500; k++){
+      const x = cx + r * Math.cos(a) - w / 2;
+      const y = cy + r * Math.sin(a) - h / 2;
+      const box = { x, y, w, h };
+      if (x >= 2 && y >= 2 && x + w <= W - 2 && y + h <= H - 2 && !placed.some(p => ceCollide(p, box, 5))){
+        fitX = x; fitY = y; ok = true; break;
+      }
+      a += 0.45; r += 1.5;
+    }
+    if (!ok){ el.style.display = 'none'; return; }   // couldn't fit → drop from scatter (still searchable)
+    el.style.display = '';
+    el.style.left = Math.round(fitX) + 'px';
+    el.style.top  = Math.round(fitY) + 'px';
+    placed.push({ x: fitX, y: fitY, w, h });
+  });
 }
 
 function ceFilter(q){
   q = (q || '').toLowerCase().trim();
   const cloud = document.getElementById('ce-cloud');
   if (!cloud) return;
-  // 'searching' lifts the CSS that hides the no-event tail, so a typed query
-  // can reach any company. Empty query → back to near-event tickers only.
-  cloud.classList.toggle('searching', !!q);
-  cloud.querySelectorAll('.ce-pill').forEach(function(p){
-    if (!q){ p.style.display = ''; return; }   // CSS re-hides .ce-sm when not searching
+  if (!q){
+    // back to the scatter cloud
+    cloud.classList.remove('searching');
+    cloud.querySelectorAll('.ce-word').forEach(p => { p.style.display = ''; });
+    cloud.querySelectorAll('.ce-hidden-extra').forEach(p => { p.style.display = 'none'; });
+    ceLayoutCloud();
+    return;
+  }
+  // searching → readable flow layout, every company reachable
+  cloud.classList.add('searching');
+  cloud.style.height = 'auto';
+  cloud.querySelectorAll('.ce-word').forEach(function(p){
     const tic = (p.getAttribute('data-tic') || '').toLowerCase(), nm = p.getAttribute('data-nm') || '';
     p.style.display = (tic.indexOf(q) >= 0 || nm.indexOf(q) >= 0) ? '' : 'none';
   });
