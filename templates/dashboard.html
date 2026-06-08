@@ -8787,7 +8787,7 @@ function ceInit(){
 }
 
 let _ceResizeBound = false;
-const CE_BACKDROP_MAX = 55;   // # faint background words actually scattered (rest are search-only); kept low so the cloud breathes
+const CE_BACKDROP_MAX = 70;   // # backdrop tickers actually scattered (rest are search-only)
 
 function ceBuildCloud(){
   const cloud = document.getElementById('ce-cloud');
@@ -8798,7 +8798,7 @@ function ceBuildCloud(){
   const d2e = t => { const d = parseInt(t.days_to_earnings);    return isNaN(d) ? null : d; };
   const dse = t => { const d = parseInt(t.days_since_earnings); return isNaN(d) ? null : d; };
   const isRep  = t => t.earnings_just_reported || (dse(t) != null && dse(t) >= 0 && dse(t) <= 12);
-  const isSoon = t => d2e(t) != null && d2e(t) >= 0 && d2e(t) <= 21;
+  const isSoon = t => d2e(t) != null && d2e(t) >= 0 && d2e(t) <= 45;   // data only carries days_to_earnings on a few dozen names; widen so it's not literally one
   const hint = t => {
     if (isRep(t))  { const s = dse(t); return s === 0 ? 'reported today' : (s != null ? 'reported ' + s + 'd ago' : 'just reported'); }
     if (isSoon(t)) { const d = d2e(t); return d === 0 ? 'reports today' : 'in ' + d + 'd'; }
@@ -8828,19 +8828,18 @@ function ceBuildCloud(){
     '" onclick="ceSelectTicker(\'' + t.ticker + '\')" title="' + v2EscHTML(t.name || t.ticker) + (hint(t) ? ' · ' + hint(t) : '') + '"';
 
   let html = '';
-  // bold near-event words (drawn last → on top); slight rotation for organic feel
+  // bold near-event chips (drawn last → on top); horizontal, with logo
   [...rep, ...soon].forEach((t, i) => {
-    const rot = rnd(-7, 7).toFixed(1);
-    html += '<button class="ce-word ce-fresh ' + tier(t) + ' ' + cls(t) + '" ' + motion(i) + '--rot:' + rot + 'deg" ' + open(t) + '>' +
+    html += '<button class="ce-word ce-fresh ' + tier(t) + ' ' + cls(t) + '" ' + motion(i) + '" ' + open(t) + '>' +
       logoBox(t.ticker) + '<span class="ce-pill-t">' + t.ticker + '</span>' + (hint(t) ? '<i>' + hint(t) + '</i>' : '') + '</button>';
   });
-  // faint backdrop words — varied size, rotation and opacity give the cloud depth
+  // backdrop chips — every one carries a logo + ticker; varied size/opacity for depth, horizontal
   backdrop.forEach((t, i) => {
-    const fs = rnd(16, 34).toFixed(1), op = rnd(0.14, 0.42).toFixed(2), rot = rnd(-26, 26).toFixed(1);
-    html += '<button class="ce-word ce-back" ' + motion(i + 3) + '--rot:' + rot + 'deg;font-size:' + fs + 'px;opacity:' + op + '" ' + open(t) + '>' +
-      '<span class="ce-pill-t">' + t.ticker + '</span></button>';
+    const fs = rnd(13, 24).toFixed(1), op = rnd(0.5, 0.88).toFixed(2);
+    html += '<button class="ce-word ce-back" ' + motion(i + 3) + 'font-size:' + fs + 'px;opacity:' + op + '" ' + open(t) + '>' +
+      logoBox(t.ticker) + '<span class="ce-pill-t">' + t.ticker + '</span></button>';
   });
-  // remaining universe — present for search only, no animation/logo
+  // remaining universe — present for search only (no logo/animation), kept light
   extra.forEach(t => {
     html += '<button class="ce-word ce-back ce-hidden-extra" ' + open(t) + '><span class="ce-pill-t">' + t.ticker + '</span></button>';
   });
@@ -8859,32 +8858,28 @@ function ceCollide(a, b, pad){
   return !(a.x + a.w + pad < b.x || b.x + b.w + pad < a.x || a.y + a.h + pad < b.y || b.y + b.h + pad < a.y);
 }
 
-// Scatter-place the (non-search) words with a greedy spiral so big near-event
-// words land centrally and the faint backdrop fills around them without overlap.
+// Scatter the (non-search) chips evenly across the WHOLE area via random
+// rejection sampling — fresh near-event chips are placed first so they claim
+// space, then the backdrop fills the rest edge-to-edge without overlap.
 function ceLayoutCloud(){
   const cloud = document.getElementById('ce-cloud');
   if (!cloud || cloud.classList.contains('searching')) return;
   const W = cloud.clientWidth;
   if (!W){ setTimeout(ceLayoutCloud, 150); return; }   // panel not visible yet → retry
-  const H = Math.max(360, Math.min(640, Math.round(W * 0.46)));
+  const H = Math.max(380, Math.min(680, Math.round(W * 0.5)));
   cloud.style.height = H + 'px';
-  const cx = W / 2, cy = H / 2;
   const placed = [];
   cloud.querySelectorAll('.ce-word:not(.ce-hidden-extra)').forEach(function(el){
     const fs = parseFloat(getComputedStyle(el).fontSize) || 13;
     const tic = el.getAttribute('data-tic') || '';
-    const hasLogo = el.classList.contains('ce-fresh');
-    const w = Math.round(tic.length * fs * 0.62 + (hasLogo ? fs * 1.8 : 0) + (hasLogo ? 28 : 8));
-    const h = Math.round(fs * (hasLogo ? 1.7 : 1.3) + (hasLogo ? 10 : 4));
-    let a = Math.random() * 6.283, r = 0, fitX = 0, fitY = 0, ok = false;
-    for (let k = 0; k < 500; k++){
-      const x = cx + r * Math.cos(a) - w / 2;
-      const y = cy + r * Math.sin(a) - h / 2;
+    const w = Math.round(tic.length * fs * 0.62 + fs * 1.7 + 24);   // logo + ticker (+ hint, roughly)
+    const h = Math.round(fs * 1.7 + 10);
+    let fitX = 0, fitY = 0, ok = false;
+    for (let k = 0; k < 450; k++){
+      const x = 3 + Math.random() * Math.max(1, W - w - 6);
+      const y = 3 + Math.random() * Math.max(1, H - h - 6);
       const box = { x, y, w, h };
-      if (x >= 2 && y >= 2 && x + w <= W - 2 && y + h <= H - 2 && !placed.some(p => ceCollide(p, box, 14))){
-        fitX = x; fitY = y; ok = true; break;
-      }
-      a += 0.45; r += 1.5;
+      if (!placed.some(p => ceCollide(p, box, 12))){ fitX = x; fitY = y; ok = true; break; }
     }
     if (!ok){ el.style.display = 'none'; return; }   // couldn't fit → drop from scatter (still searchable)
     el.style.display = '';
