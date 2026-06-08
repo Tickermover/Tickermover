@@ -3252,6 +3252,13 @@ html.v2-dark .v2-mp-mini-lbl{color:#cbd5e1}
 .ce-card{flex:1 1 220px;display:flex;gap:11px;align-items:flex-start;text-align:left;background:#fff;border:1.5px solid rgba(10,10,10,.1);border-radius:14px;padding:13px 15px;cursor:pointer;font-family:inherit;transition:border-color .15s,box-shadow .15s,transform .12s}
 .ce-card:hover{transform:translateY(-2px);border-color:rgba(41,112,255,.35);box-shadow:0 8px 22px -12px rgba(41,112,255,.3)}
 .ce-card.on{border-color:#2970ff;box-shadow:0 0 0 3px rgba(41,112,255,.12)}
+/* a ticker is chosen but no view yet — invite the user to pick a box (step 2) */
+#ce-cards.armed .ce-card{border-color:rgba(41,112,255,.45);animation:ceCardPulse 1.7s ease-in-out infinite}
+@keyframes ceCardPulse{0%,100%{box-shadow:0 0 0 0 rgba(41,112,255,0)}50%{box-shadow:0 0 0 5px rgba(41,112,255,.11)}}
+@media(prefers-reduced-motion:reduce){#ce-cards.armed .ce-card{animation:none}}
+/* nudge bounce when a view is clicked before a company is picked */
+.ce-nudge{animation:ceNudge .42s cubic-bezier(.36,.07,.19,.97)}
+@keyframes ceNudge{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(5px)}60%{transform:translateX(-3px)}80%{transform:translateX(2px)}}
 .ce-card-ic{font-size:20px;line-height:1.2;flex-shrink:0}
 .ce-card-t{display:block;font-weight:800;font-size:13.5px;color:#0f172a}
 .ce-card-d{display:block;font-size:11.5px;color:#64748b;margin-top:2px;line-height:1.45}
@@ -6431,7 +6438,7 @@ document.addEventListener('DOMContentLoaded', function(){
     </div>
 
     <div class="ce-cards" id="ce-cards">
-      <button class="ce-card on" data-mode="brief" onclick="ceSetMode('brief')">
+      <button class="ce-card" data-mode="brief" onclick="ceSetMode('brief')">
         <span class="ce-card-ic">📋</span>
         <span><span class="ce-card-t">Earnings Brief</span><span class="ce-card-d">Headline results, beats &amp; misses, guidance — the numbers, fast.</span></span>
       </button>
@@ -6445,7 +6452,7 @@ document.addEventListener('DOMContentLoaded', function(){
       </button>
     </div>
 
-    <div class="ce-status" id="ce-status">Pick a company below — <b>Earnings Brief</b> opens for it.</div>
+    <div class="ce-status" id="ce-status">Search or tap a company to begin — then choose a view above.</div>
 
     <div class="ce-cloud" id="ce-cloud"><div class="v2-brf-loading">Loading companies…</div></div>
   </div>
@@ -8844,7 +8851,7 @@ async function v2OpenDetail(ticker, cfg){
    Concall Summary / Corporate Actions. Brief + Concall reuse v2OpenDetail;
    Actions reuses the universe feed, filtered to the picked ticker.
    ────────────────────────────────────────────────────────────────────── */
-let _ceBuilt = false, ceMode = 'brief', ceTicker = null, _ceFeed = null;
+let _ceBuilt = false, ceMode = null, ceTicker = null, _ceFeed = null;
 const _ceModeLabel = { brief: 'Earnings Brief', concall: 'Concall Summary', actions: 'Corporate Actions' };
 
 // Nav still calls eventsTab(...) from a few places — keep it as the entry shim.
@@ -9046,37 +9053,64 @@ function ceCloseDD(){
   _ceSearchList = []; _ceSearchIdx = -1;
 }
 
-function ceSetMode(m){
-  ceMode = m;
+function _ceCards(){ return document.getElementById('ce-cards'); }
+function _ceHighlightCard(m){
   document.querySelectorAll('#ce-cards .ce-card').forEach(function(c){ c.classList.toggle('on', c.getAttribute('data-mode') === m); });
-  ceSyncStatus();
-  if (ceTicker) return ceLoad();             // a ticker is picked → reload it in the new view
-  if (m === 'actions') return ceLoadActions(null);  // Actions works with no ticker → whole universe
 }
 
+// Step 1 of the flow: pick a company. This only ARMS the ticker — it does not
+// open a view. The user then clicks one of the three cards (step 2).
 function ceSelectTicker(sym){
   ceTicker = String(sym || '').toUpperCase();
-  // Auto-clear the search box + close the dropdown, so coming back from the
-  // detail lands on a fresh, unfiltered cloud.
+  ceMode = null;                       // no view chosen yet — wait for the user to pick a box
   const si = document.getElementById('ce-search-input');
   if (si) si.value = '';
   ceCloseDD();
   document.querySelectorAll('#ce-cloud .ce-word').forEach(function(p){ p.classList.toggle('sel', (p.getAttribute('data-tic') || '') === ceTicker); });
+  _ceHighlightCard(null);              // clear any prior view highlight
+  const cards = _ceCards(); if (cards) cards.classList.add('armed');   // invite the user to pick a view
+  ceSyncStatus();
+}
+
+// Step 2: pick a view. Requires a ticker first (ticker-first flow).
+function ceSetMode(m){
+  if (!ceTicker){ ceNudgePick(); return; }   // no company yet → nudge, don't load
+  ceMode = m;
+  _ceHighlightCard(m);
+  const cards = _ceCards(); if (cards) cards.classList.remove('armed');
+  ceSyncStatus();
   ceLoad();
 }
 
+// Explicit "see the whole universe" escape hatch (from inside a ticker's actions).
 function ceAllActions(){
-  ceTicker = null;
+  ceTicker = null; ceMode = 'actions';
   document.querySelectorAll('#ce-cloud .ce-word').forEach(function(p){ p.classList.remove('sel'); });
-  ceSetMode('actions');
+  _ceHighlightCard('actions');
+  const cards = _ceCards(); if (cards) cards.classList.remove('armed');
+  ceSyncStatus();
+  ceLoadActions(null);
+}
+
+// Bounce the search box + status when someone clicks a view before picking a company.
+function ceNudgePick(){
+  const si = document.getElementById('ce-search-input');
+  if (si) si.focus();
+  ['ce-status', 'ce-search-input'].forEach(function(id){
+    const el = id === 'ce-search-input' ? document.querySelector('#ce-hub .ce-search-wrap') : document.getElementById(id);
+    if (!el) return;
+    el.classList.remove('ce-nudge'); void el.offsetWidth; el.classList.add('ce-nudge');
+  });
+  const st = document.getElementById('ce-status');
+  if (st) st.innerHTML = '👆 Pick a company first — search above or tap one in the cloud, then choose a view.';
 }
 
 function ceSyncStatus(){
   const el = document.getElementById('ce-status');
   if (!el) return;
-  if (ceTicker) el.innerHTML = '<b>' + v2EscHTML(ceTicker) + '</b> selected · showing <b>' + _ceModeLabel[ceMode] + '</b>. Switch the view above, or pick another company.';
-  else if (ceMode === 'actions') el.innerHTML = 'Showing <b>Corporate Actions</b> across the whole universe — or pick a company below for just its dividends &amp; splits.';
-  else el.innerHTML = 'Pick a company below — <b>' + _ceModeLabel[ceMode] + '</b> opens for it.';
+  if (ceTicker && ceMode) el.innerHTML = '<b>' + v2EscHTML(ceTicker) + '</b> · showing <b>' + _ceModeLabel[ceMode] + '</b>. Switch the view above, or pick another company.';
+  else if (ceTicker) el.innerHTML = '<b>' + v2EscHTML(ceTicker) + '</b> selected — now choose a view above: <b>Earnings Brief</b>, <b>Concall Summary</b> or <b>Corporate Actions</b>.';
+  else el.innerHTML = 'Search or tap a company to begin — then choose a view above.';
 }
 
 function ceLoad(){
@@ -15305,13 +15339,13 @@ function _cmdkTickerMatches(){
 // user can search → download in one flow without opening the modal.
 function _cmdkOpenBriefing(ticker){
   closeCmdK();
-  // Earnings Brief lives in the Company Events hub — open it, pick the
-  // Brief view, then select the ticker (which loads its detail).
+  // Earnings Brief lives in the Company Events hub — open it, arm the ticker,
+  // then pick the Brief view (ticker-first flow loads its detail).
   if (typeof v2Show === 'function') v2Show('events', null);
   if (typeof ceInit === 'function') ceInit();
   setTimeout(() => {
-    if (typeof ceSetMode === 'function') ceSetMode('brief');
     if (typeof ceSelectTicker === 'function') ceSelectTicker(ticker);
+    if (typeof ceSetMode === 'function') ceSetMode('brief');
   }, 60);
 }
 function _cmdkDownloadPDF(ticker){
