@@ -17271,12 +17271,13 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
   /* In-app PDF viewer — embeds a same-origin PDF (our /api/pdf tear sheet or
      the /api/doc-pdf SEC converter) with a Download button. Globals so the
      inline onclick handlers built below can reach them. */
-  window.openDocViewer=function(pdfUrl,title){
-    const ov=document.getElementById('docv-overlay'); if(!ov){ window.open(pdfUrl,'_blank'); return; }
+  window.openDocViewer=function(viewUrl,title){
+    const ov=document.getElementById('docv-overlay'); if(!ov){ window.open(viewUrl,'_blank'); return; }
     const tEl=document.getElementById('docv-title'); if(tEl) tEl.textContent=title||'Document';
-    const fr=document.getElementById('docv-frame'); if(fr) fr.src=pdfUrl;
-    const dl=document.getElementById('docv-dl'); if(dl) dl.href=pdfUrl;
-    const op=document.getElementById('docv-open'); if(op) op.href=pdfUrl;
+    const fr=document.getElementById('docv-frame'); if(fr) fr.src=viewUrl;
+    const dl=document.getElementById('docv-dl'); if(dl) dl.href=viewUrl+(viewUrl.indexOf('?')>=0?'&':'?')+'dl=1';
+    let orig=viewUrl; try{ const p=new URL(viewUrl,location.href).searchParams.get('u'); if(p) orig=p; }catch(e){}
+    const op=document.getElementById('docv-open'); if(op) op.href=orig;
     ov.classList.add('open'); document.body.style.overflow='hidden';
   };
   window.closeDocViewer=function(){

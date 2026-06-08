@@ -3398,19 +3398,23 @@ async def api_documents(ticker: str):
 
 
 @app.get("/api/doc-pdf")
-async def api_doc_pdf(u: str, title: str = ""):
-    """Render a SEC document as an in-app PDF: passthrough when the source is
-    already a PDF, else convert the filing HTML to a clean PDF. `u` is the SEC
-    document URL (sec.gov only — SSRF-guarded inside doc_pdf)."""
+async def api_doc_pdf(u: str, dl: int = 0):
+    """Serve a SEC / IR document for the in-app viewer: PDFs stream through
+    unchanged; HTML is served faithfully (with a <base> so assets load) so the
+    viewer shows the real original. `dl=1` forces a download. `u` is the source
+    URL — SSRF-guarded to SEC + approved IR CDNs inside doc_pdf."""
     import doc_pdf
     from starlette.responses import Response
     try:
-        content, mt = await doc_pdf.fetch_doc_pdf(u, title)
+        content, mt = await doc_pdf.fetch_doc(u)
     except doc_pdf.DocError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
+    fn = "document.pdf" if "pdf" in mt else "document.html"
+    disp = "attachment" if dl else "inline"
     return Response(content=content, media_type=mt,
-                    headers={"Content-Disposition": 'inline; filename="sec-document.pdf"',
-                             "Cache-Control": "public, max-age=86400"})
+                    headers={"Content-Disposition": f'{disp}; filename="{fn}"',
+                             "Cache-Control": "public, max-age=86400",
+                             "X-Content-Type-Options": "nosniff"})
 
 
 @app.get("/api/slides/{ticker}")
@@ -3434,9 +3438,10 @@ async def api_slides(ticker: str, q: str = ""):
                 name = m["name"]
         except Exception:
             pass
-    url = await slides_finder.find_deck(name, tk, quarter)
-    return JSONResponse({"available": bool(url), "url": url or ""},
-                        headers={"Cache-Control": "public, max-age=86400"})
+    res = await slides_finder.find_deck(name, tk, quarter)
+    return JSONResponse({"available": bool(res.get("url")), "url": res.get("url") or "",
+                         "reason": res.get("reason")},
+                        headers={"Cache-Control": "public, max-age=3600"})
 
 
 @app.get("/api/transcripts/{ticker}")

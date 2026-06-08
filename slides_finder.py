@@ -71,25 +71,37 @@ async def _serper(q: str, key: str) -> list[str]:
         return []
 
 
-async def find_deck(company: str, ticker: str, quarter_label: str) -> str | None:
-    """Return a q4cdn earnings-presentation PDF URL for this ticker+quarter, or
-    None when no provider is configured / nothing suitable is found."""
+async def find_deck(company: str, ticker: str, quarter_label: str) -> dict:
+    """Return {url, reason, n}. reason ∈ no_key | found | no_results | cache*.
+    Tries Serper then Brave, with a site-restricted query first and a broad
+    fallback, accepting only PDFs on the trusted IR CDNs."""
     ck = ((ticker or "").upper(), quarter_label or "")
     if ck in _CACHE:
-        return _CACHE[ck] or None
+        c = _CACHE[ck]
+        return {"url": c or None, "reason": "cache" if c else "cache_empty", "n": 0}
 
     serper = os.environ.get("SERPER_API_KEY")
     brave = os.environ.get("BRAVE_API_KEY") or os.environ.get("SEARCH_API_KEY")
     if not (serper or brave):
-        return None
+        return {"url": None, "reason": "no_key", "n": 0}
 
     name = (company or ticker or "").strip()
     sites = " OR ".join(f"site:{d}" for d in TRUSTED_HOSTS)
-    query = f'{name} {quarter_label} earnings presentation filetype:pdf ({sites})'
-    results = await (_serper(query, serper) if serper else _brave(query, brave))
-
-    trusted = [u for u in results if _trusted_pdf(u)]
-    # Prefer real decks (presentation/doc_earnings paths) over news-release PDFs.
-    deck = next((u for u in trusted if any(h in u.lower() for h in _DECK_HINTS)), None)
-    _CACHE[ck] = deck or ""
-    return deck
+    queries = [
+        f'{name} {quarter_label} earnings presentation filetype:pdf ({sites})',
+        f'{name} {quarter_label} investor presentation slides filetype:pdf',
+    ]
+    seen: list[str] = []
+    for q in queries:
+        res = await _serper(q, serper) if serper else []
+        if not res and brave:
+            res = await _brave(q, brave)
+        seen.extend(res or [])
+        trusted = [u for u in seen if _trusted_pdf(u)]
+        deck = next((u for u in trusted if any(h in u.lower() for h in _DECK_HINTS)), None) \
+            or (trusted[0] if trusted else None)
+        if deck:
+            _CACHE[ck] = deck
+            return {"url": deck, "reason": "found", "n": len(seen)}
+    _CACHE[ck] = ""
+    return {"url": None, "reason": "no_results", "n": len(seen)}
