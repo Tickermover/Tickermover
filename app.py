@@ -3397,6 +3397,22 @@ async def api_documents(ticker: str):
     return JSONResponse(_clean(data), headers={"Cache-Control": "public, max-age=3600"})
 
 
+@app.get("/api/doc-pdf")
+async def api_doc_pdf(u: str, title: str = ""):
+    """Render a SEC document as an in-app PDF: passthrough when the source is
+    already a PDF, else convert the filing HTML to a clean PDF. `u` is the SEC
+    document URL (sec.gov only — SSRF-guarded inside doc_pdf)."""
+    import doc_pdf
+    from starlette.responses import Response
+    try:
+        content, mt = await doc_pdf.fetch_doc_pdf(u, title)
+    except doc_pdf.DocError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    return Response(content=content, media_type=mt,
+                    headers={"Content-Disposition": 'inline; filename="sec-document.pdf"',
+                             "Cache-Control": "public, max-age=86400"})
+
+
 @app.get("/api/transcripts/{ticker}")
 async def api_transcripts(ticker: str):
     """Dated earnings-call transcripts list (last 8 quarters). Each row links to

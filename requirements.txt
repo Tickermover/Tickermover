@@ -14,3 +14,7 @@ Pillow>=10.0.0
 # reportlab = pure Python, no system deps (works on Railway nixpacks).
 reportlab>=4.0.0
 matplotlib>=3.7.0
+# HTML parsing for the in-app SEC-document → PDF converter (doc_pdf.py).
+# Both are also pulled in transitively by yfinance; pinned here to be explicit.
+beautifulsoup4>=4.12.0
+lxml>=4.9.0

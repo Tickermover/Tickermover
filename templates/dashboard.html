@@ -5293,34 +5293,28 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 #ts-drawer .doc-b:hover{background:rgba(41,112,255,.16)}
 #ts-drawer .doc-pdf{font-size:9px;font-weight:800;letter-spacing:.03em;color:#fff;background:linear-gradient(135deg,#15803d,#0f766e);border-radius:5px;padding:1px 6px;flex-shrink:0;margin-left:auto}
 #ts-drawer .doc-row .doc-ar{color:var(--grey-3,#94a3b8);font-size:13px;flex-shrink:0;margin-left:8px}
-/* Earnings-call document hub (stockanalysis-style) */
-#ts-drawer .ec-year{font-family:'Instrument Sans',sans-serif;font-weight:800;font-size:16px;color:var(--ink,#0f172a);margin:20px 0 10px}
-#ts-drawer .ec-year:first-child{margin-top:2px}
-#ts-drawer .ec-card{border:1px solid #e4e7eb;border-radius:12px;background:#fff;margin-bottom:12px;overflow:hidden}
-#ts-drawer .ec-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px;cursor:pointer}
-#ts-drawer .ec-card.ec-open .ec-head{border-bottom:1px solid #f1f5f9}
-#ts-drawer .ec-title{font-weight:800;font-size:15px;color:var(--ink,#0f172a)}
-#ts-drawer .ec-meta{display:flex;align-items:center;gap:10px;color:#94a3b8;font-size:12.5px;flex-shrink:0}
-#ts-drawer .ec-chev{font-size:13px;transition:transform .18s}
-#ts-drawer .ec-card.ec-open .ec-chev{transform:rotate(180deg)}
-#ts-drawer .ec-body{display:none;padding:16px;gap:20px}
-#ts-drawer .ec-card.ec-open .ec-body{display:flex}
-@media(max-width:680px){#ts-drawer .ec-card.ec-open .ec-body{flex-direction:column}}
-#ts-drawer .ec-main{flex:1;min-width:0}
-#ts-drawer .ec-sum{color:#3a4048;font-size:13.5px;line-height:1.6;margin-bottom:14px}
-#ts-drawer .ec-sum:empty{margin-bottom:0}
-#ts-drawer .ec-load{color:#94a3b8;font-style:italic}
-#ts-drawer .ec-actions{display:flex;gap:8px;flex-wrap:wrap}
-#ts-drawer .ec-btn{display:inline-flex;align-items:center;border:1px solid #d6dae0;border-radius:9px;padding:8px 14px;font-size:13px;font-weight:600;color:var(--ink,#0f172a);text-decoration:none;background:#fff}
-#ts-drawer .ec-btn:hover{background:#f6f9ff;border-color:rgba(41,112,255,.3)}
-#ts-drawer .ec-btn-off{color:#94a3b8;cursor:default}
-#ts-drawer .ec-chips{display:flex;flex-direction:column;gap:8px;min-width:160px;flex-shrink:0}
-#ts-drawer .ec-chip{display:inline-flex;align-items:center;justify-content:space-between;gap:8px;border:1px solid #d6dae0;border-radius:999px;padding:7px 15px;font-size:12.5px;font-weight:600;color:var(--ink,#0f172a);text-decoration:none;background:#fff}
-#ts-drawer .ec-chip:hover{background:#f6f9ff;border-color:rgba(41,112,255,.35)}
-#ts-drawer .ec-pdf{font-size:9px;font-weight:800;color:#fff;background:linear-gradient(135deg,#15803d,#0f766e);border-radius:4px;padding:1px 5px}
-#ts-drawer .ec-foot{display:flex;gap:16px;flex-wrap:wrap;margin-top:16px;padding-top:14px;border-top:1px solid #f1f5f9}
-#ts-drawer .ec-foot-link{font-size:12px;color:var(--primary);text-decoration:none}
-#ts-drawer .ec-foot-link:hover{text-decoration:underline}
+/* Documents — release sub-links + footer actions */
+#ts-drawer .doc-row{cursor:pointer}
+#ts-drawer .doc-erow{padding:2px 0 6px;border-bottom:1px solid #f1f5f9}
+#ts-drawer .doc-erow:last-child{border-bottom:0}
+#ts-drawer .doc-sub{display:flex;flex-wrap:wrap;gap:6px;padding:2px 4px 4px}
+#ts-drawer .doc-sub-link{font-size:11px;font-weight:600;color:var(--primary);background:rgba(41,112,255,.07);border:1px solid rgba(41,112,255,.16);border-radius:7px;padding:3px 9px;cursor:pointer;text-decoration:none}
+#ts-drawer .doc-sub-link:hover{background:rgba(41,112,255,.14)}
+#ts-drawer .doc-foot{display:flex;gap:16px;flex-wrap:wrap;margin-top:16px;padding-top:14px;border-top:1px solid #f1f5f9}
+#ts-drawer .doc-foot-link{font-size:12px;font-weight:600;color:var(--primary);text-decoration:none;background:none;border:none;cursor:pointer;font-family:inherit;padding:0}
+#ts-drawer .doc-foot-link:hover{text-decoration:underline}
+/* In-app PDF viewer overlay */
+.docv-overlay{position:fixed;inset:0;z-index:5000;background:rgba(10,12,20,.55);backdrop-filter:blur(2px);display:none;align-items:center;justify-content:center;padding:24px}
+.docv-overlay.open{display:flex}
+.docv-panel{width:min(960px,96vw);height:min(90vh,1000px);background:#fff;border-radius:14px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 30px 80px -20px rgba(0,0,0,.5)}
+.docv-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;border-bottom:1px solid #e4e7eb;background:#fafbfc}
+.docv-title{font-weight:800;font-size:14px;color:#0f172a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.docv-actions{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.docv-btn{display:inline-flex;align-items:center;font-size:12.5px;font-weight:700;color:#0040c1;background:rgba(41,112,255,.08);border:1px solid rgba(41,112,255,.2);border-radius:8px;padding:6px 12px;cursor:pointer;text-decoration:none}
+.docv-btn:hover{background:rgba(41,112,255,.16)}
+.docv-btn.docv-dl{background:linear-gradient(135deg,#15803d,#0f766e);color:#fff;border-color:transparent}
+.docv-btn.docv-x{color:#64748b;background:transparent;border-color:#d6dae0;font-weight:800}
+.docv-frame{flex:1;width:100%;border:0;background:#525659}
 @keyframes ncwDrift{0%{transform:translate(-50%,-50%)}50%{transform:translate(-50%,calc(-50% - 11px))}100%{transform:translate(-50%,-50%)}}
 @media(prefers-reduced-motion:reduce){#dr-news-cloud .ncw{animation:none}}
 #ts-drawer .peers-card .peer-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f1f5f9;cursor:pointer}
@@ -8388,6 +8382,21 @@ function v2Show(panelId, item){
 <!-- Full-screen tabbed stock sheet (dark) -->
 <div class="ssx-overlay" id="ssx-overlay" onclick="if(event.target===this)closeStockSheet()">
   <div class="ssx-sheet" id="ssx-sheet"></div>
+</div>
+
+<!-- In-app PDF viewer (documents) -->
+<div class="docv-overlay" id="docv-overlay" onclick="if(event.target===this)closeDocViewer()">
+  <div class="docv-panel">
+    <div class="docv-head">
+      <div class="docv-title" id="docv-title">Document</div>
+      <div class="docv-actions">
+        <a class="docv-btn docv-dl" id="docv-dl" href="#" download>⤓ Download</a>
+        <a class="docv-btn" id="docv-open" href="#" target="_blank" rel="noopener">Open ↗</a>
+        <button class="docv-btn docv-x" onclick="closeDocViewer()" aria-label="Close">✕</button>
+      </div>
+    </div>
+    <iframe class="docv-frame" id="docv-frame" title="Document viewer" src="about:blank"></iframe>
+  </div>
 </div>
 
 <script>
@@ -17239,74 +17248,28 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     const tk=(t.ticker||'').toUpperCase();
     return '<div id="docs-root" data-tk="'+escHTML(tk)+'"><div class="muted small" style="padding:14px 2px">Loading filings from SEC EDGAR…</div></div>';
   }
-  /* Lazy-load the AI summary for one earnings-call card (cached server-side). */
-  window.ecLoadSummary=function(card,tk,av){
-    const sum=card&&card.querySelector('.ec-sum'); if(!sum||sum.dataset.loaded==='1'||!av) return;
-    sum.dataset.loaded='1'; sum.innerHTML='<span class="ec-load">Loading summary…</span>';
-    fetch('/api/concall/'+encodeURIComponent(tk)+'?q='+encodeURIComponent(av)).then(function(r){return r.json();}).then(function(d){
-      var s=''; if(d&&d.available){ s=d.tldr||d.summary||(d.sections&&d.sections[0]&&(d.sections[0].body||d.sections[0].text))||d.event_title||''; }
-      if(s){ sum.textContent = s.length>340?s.slice(0,340)+'…':s; }
-      else { sum.innerHTML='<span class="ec-load">AI summary isn\'t available for this call yet.</span>'; sum.dataset.loaded=''; }
-    }).catch(function(){ sum.innerHTML='<span class="ec-load">Summary unavailable right now.</span>'; sum.dataset.loaded=''; });
+  /* In-app PDF viewer — embeds a same-origin PDF (our /api/pdf tear sheet or
+     the /api/doc-pdf SEC converter) with a Download button. Globals so the
+     inline onclick handlers built below can reach them. */
+  window.openDocViewer=function(pdfUrl,title){
+    const ov=document.getElementById('docv-overlay'); if(!ov){ window.open(pdfUrl,'_blank'); return; }
+    const tEl=document.getElementById('docv-title'); if(tEl) tEl.textContent=title||'Document';
+    const fr=document.getElementById('docv-frame'); if(fr) fr.src=pdfUrl;
+    const dl=document.getElementById('docv-dl'); if(dl) dl.href=pdfUrl;
+    const op=document.getElementById('docv-open'); if(op) op.href=pdfUrl;
+    ov.classList.add('open'); document.body.style.overflow='hidden';
   };
-  /* Toggle a card open/closed; load its summary the first time it opens. */
-  window.ecToggle=function(hdr,tk,av){ const card=hdr&&hdr.closest('.ec-card'); if(!card) return; if(card.classList.toggle('ec-open')) window.ecLoadSummary(card,tk,av); };
+  window.closeDocViewer=function(){
+    const ov=document.getElementById('docv-overlay'); if(!ov) return;
+    ov.classList.remove('open');
+    const fr=document.getElementById('docv-frame'); if(fr) fr.src='about:blank';
+    document.body.style.overflow='';
+  };
 
-  /* Render the stockanalysis-style earnings-call hub: cards grouped by year,
-     each with the call's documents (release / slides / report) as DIRECT links
-     plus a transcript button and a lazy AI summary. */
-  function _renderEarningsDocs(root,tk,docs,transcripts){
-    const fmtDate=function(iso){ if(!iso) return ''; const dt=new Date(iso+'T00:00:00'); if(isNaN(dt.getTime())) return iso; return dt.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); };
-    const events=docs.events||[], annual=docs.annual||[], quarterly=docs.quarterly||[];
-    const trxByLabel={}; transcripts.forEach(function(t){ trxByLabel[t.label]=t; });
-    const byDate={}; events.forEach(function(e){ (byDate[e.date]=byDate[e.date]||[]).push(e); });
-    const reports=annual.map(function(a){ return {date:a.date,url:a.url,pdf:a.pdf,kind:'10-K'}; })
-                   .concat(quarterly.map(function(q){ return {date:q.date,url:q.url,pdf:q.pdf,kind:'10-Q'}; }));
-    const dayMs=86400000;
-    const cards=Object.keys(byDate).sort(function(a,b){return b.localeCompare(a);}).map(function(date){
-      const rows=byDate[date];
-      const find=function(pfx){ return rows.find(function(r){ return (r.label||'').toLowerCase().indexOf(pfx)===0; }); };
-      const rel=find('press release'), sld=find('investor presentation'), cfo=find('cfo commentary');
-      const ed=new Date(date+'T00:00:00'); const rd=new Date(ed.getTime()-35*dayMs);
-      const y=rd.getFullYear(), qn=Math.floor(rd.getMonth()/3)+1;
-      const qLabel='Q'+qn+' '+y, av=y+'Q'+qn;
-      let rep=null, best=80;
-      reports.forEach(function(r){ if(!r.date) return; const diff=Math.abs((new Date(r.date+'T00:00:00').getTime()-ed.getTime())/dayMs); if(diff<=best){ best=diff; rep=r; } });
-      return {date:date,qLabel:qLabel,av:av,year:y,rel:rel,sld:sld,cfo:cfo,rep:rep,trx:trxByLabel[qLabel]};
-    });
-    const byYear={}; cards.forEach(function(c){ (byYear[c.year]=byYear[c.year]||[]).push(c); });
-    const years=Object.keys(byYear).sort(function(a,b){return b-a;});
-    const chip=function(label,it){ if(!it||!it.url||!label) return ''; return '<a class="ec-chip" href="'+it.url+'" target="_blank" rel="noopener">'+escHTML(label)+(it.pdf?'<span class="ec-pdf">PDF</span>':'')+'</a>'; };
-    let html='', firstOpen=true;
-    years.forEach(function(y){
-      html+='<div class="ec-year">Fiscal Year '+y+'</div>';
-      byYear[y].forEach(function(c){
-        const repLabel=c.rep?(c.rep.kind==='10-K'?'Annual report':'Quarterly report'):'';
-        const chips=[ chip('Earnings release',c.rel), chip('Slides',c.sld), chip('CFO commentary',c.cfo), chip(repLabel,c.rep) ].filter(Boolean).join('');
-        const open=firstOpen?' ec-open':''; firstOpen=false;
-        const trxBtn=c.trx?('<a class="ec-btn" href="'+c.trx.url+'" target="_blank" rel="noopener">Read full transcript →</a>'):'<span class="ec-btn ec-btn-off">Transcript unavailable</span>';
-        html+='<div class="ec-card'+open+'" data-av="'+c.av+'">'+
-          '<div class="ec-head" onclick="ecToggle(this,\''+escHTML(tk)+'\',\''+c.av+'\')">'+
-            '<div class="ec-title">Earnings Call: '+escHTML(c.qLabel)+'</div>'+
-            '<div class="ec-meta"><span class="ec-date">'+escHTML(fmtDate(c.date))+'</span><span class="ec-chev">⌄</span></div>'+
-          '</div>'+
-          '<div class="ec-body">'+
-            '<div class="ec-main"><div class="ec-sum"></div><div class="ec-actions">'+trxBtn+'</div></div>'+
-            (chips?'<div class="ec-chips">'+chips+'</div>':'')+
-          '</div>'+
-        '</div>';
-      });
-    });
-    if(!html) html='<div class="muted small" style="padding:14px 2px">No earnings documents found for this ticker.</div>';
-    html+='<div class="ec-foot">'+
-      '<a class="ec-foot-link" href="/api/pdf/'+encodeURIComponent(tk)+'" target="_blank" rel="noopener">⤓ AlphaHunt PDF tear sheet</a>'+
-      '<a class="ec-foot-link" href="https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&ticker='+encodeURIComponent(tk)+'&type=&dateb=&owner=include&count=40" target="_blank" rel="noopener">All SEC filings ↗</a>'+
-    '</div>';
-    root.innerHTML=html;
-    const first=root.querySelector('.ec-card.ec-open');
-    if(first) window.ecLoadSummary(first,tk,first.getAttribute('data-av'));
-  }
-
+  /* Documents pane — three boxes (Earnings releases / Quarterly / Annual),
+     each listing the last 4. Every document opens in the in-app PDF viewer:
+     our tear sheet and SEC HTML are rendered to PDF, slide-deck PDFs stream
+     through unchanged. A transcript link sits under each release. */
   function _loadDocuments(){
     const root=drawer.querySelector('#docs-root'); if(!root||root.dataset.loaded==='1') return;
     const tk=root.getAttribute('data-tk'); if(!tk) return;
@@ -17316,9 +17279,53 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     Promise.all([
       fetch('/api/documents/'+tkE).then(function(r){return r.json();}).catch(function(){return {};}),
       fetch('/api/transcripts/'+tkE).then(function(r){return r.json();}).catch(function(){return {};})
-    ]).then(function(res){
-      _renderEarningsDocs(root, tk, res[0]||{}, (res[1]&&res[1].transcripts)||[]);
-    }).catch(function(){ root.innerHTML='<div class="muted small" style="padding:14px 2px">Could not load documents.</div>'; });
+    ]).then(function(res){ _renderDocBoxes(root, tk, res[0]||{}, (res[1]&&res[1].transcripts)||[]); })
+     .catch(function(){ root.innerHTML='<div class="muted small" style="padding:14px 2px">Could not load documents.</div>'; });
+  }
+
+  function _renderDocBoxes(root, tk, docs, transcripts){
+    const tkE=encodeURIComponent(tk);
+    const titleEsc=function(s){ return String(s||'').replace(/\\/g,'').replace(/'/g,'').replace(/"/g,'&quot;'); };
+    const view=function(url,title){ return "openDocViewer('/api/doc-pdf?u="+encodeURIComponent(url)+"','"+titleEsc(title)+"')"; };
+    const none='<div class="muted small">None found.</div>';
+    const dayMs=86400000;
+
+    // Earnings releases — group 8-K exhibits by filing date, last 4 calls.
+    const byDate={}; (docs.events||[]).forEach(function(e){ (byDate[e.date]=byDate[e.date]||[]).push(e); });
+    const trxByLabel={}; transcripts.forEach(function(t){ trxByLabel[t.label]=t; });
+    const relRows=Object.keys(byDate).sort(function(a,b){return b.localeCompare(a);}).slice(0,4).map(function(date){
+      const rows=byDate[date];
+      const find=function(pfx){ return rows.find(function(r){ return (r.label||'').toLowerCase().indexOf(pfx)===0; }); };
+      const rel=find('press release'), sld=find('investor presentation'), cfo=find('cfo commentary');
+      const rd=new Date(new Date(date+'T00:00:00').getTime()-35*dayMs);
+      const qLabel='Q'+(Math.floor(rd.getMonth()/3)+1)+' '+rd.getFullYear();
+      const trx=trxByLabel[qLabel];
+      const main=rel||cfo||rows[0];
+      const sub=[];
+      if(sld&&sld.url) sub.push('<a class="doc-sub-link" onclick="event.stopPropagation();'+view(sld.url,'Slides · '+qLabel)+'">📊 Slides'+(sld.pdf?' <span class="doc-pdf">PDF</span>':'')+'</a>');
+      if(cfo&&cfo.url&&cfo!==main) sub.push('<a class="doc-sub-link" onclick="event.stopPropagation();'+view(cfo.url,'CFO commentary · '+qLabel)+'">🧾 CFO commentary</a>');
+      if(trx) sub.push('<a class="doc-sub-link" href="'+trx.url+'" target="_blank" rel="noopener">🎙 Transcript →</a>');
+      const head=(main&&main.url)
+        ? '<a class="doc-row" onclick="'+view(main.url,'Earnings release · '+qLabel)+'"><span class="doc-row-l"><b>Earnings release</b><small>'+escHTML(qLabel)+' · '+escHTML(date)+'</small></span><span class="doc-ar">⤢</span></a>'
+        : '<div class="doc-row"><span class="doc-row-l"><b>Earnings release</b><small>'+escHTML(qLabel)+' · '+escHTML(date)+'</small></span></div>';
+      return '<div class="doc-erow">'+head+(sub.length?'<div class="doc-sub">'+sub.join('')+'</div>':'')+'</div>';
+    }).join('');
+
+    const repRow=function(it,label){ return '<a class="doc-row" onclick="'+view(it.url,label+' · '+it.label)+'"><span class="doc-row-l"><b>'+escHTML(it.label)+'</b>'+(it.date?'<small>'+escHTML(it.date)+'</small>':'')+'</span>'+(it.pdf?'<span class="doc-pdf">PDF</span>':'')+'<span class="doc-ar">⤢</span></a>'; };
+    const qtrRows=(docs.quarterly||[]).slice(0,4).map(function(it){return repRow(it,'Quarterly report');}).join('');
+    const annRows=(docs.annual||[]).slice(0,4).map(function(it){return repRow(it,'Annual report');}).join('');
+
+    const grid='<div class="dr-deep-grid">'+
+      _sec('Earnings releases','🗞','blue',  relRows||none)+
+      _sec('Quarterly reports','📊','violet',qtrRows||none)+
+      _sec('Annual reports','📄','green',    annRows||none)+
+    '</div>';
+    const foot='<div class="doc-foot">'+
+      '<a class="doc-foot-link" onclick="openDocViewer(\'/api/pdf/'+tkE+'\',\'AlphaHunt tear sheet · '+escHTML(tk)+'\')">⤓ AlphaHunt tear sheet (PDF)</a>'+
+      '<button class="doc-foot-link" onclick="tsOpenAsk(\''+escHTML(tk)+'\')">✦ Ask AI</button>'+
+      '<a class="doc-foot-link" href="https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&ticker='+tkE+'&type=&dateb=&owner=include&count=40" target="_blank" rel="noopener">All SEC filings ↗</a>'+
+    '</div>';
+    root.innerHTML=grid+foot;
   }
 
   /* Insights — Screener-style OPERATING KPIs (volumes, capacity, units …)
