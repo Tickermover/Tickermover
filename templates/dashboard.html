@@ -3238,7 +3238,7 @@ html.v2-dark .v2-mp-mini-lbl{color:#cbd5e1}
 .ce-lg-img img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#fff}
 /* fresh = solid colored chip with logo, sized by how near the event is */
 .ce-fresh{z-index:2;padding:5px 13px 5px 6px;border-radius:999px;background:#fff;border:1px solid rgba(10,10,10,.1);box-shadow:0 2px 9px -5px rgba(0,40,120,.3)}
-.ce-fresh.ce-xl{font-size:18.5px}.ce-fresh.ce-lg{font-size:15px}.ce-fresh.ce-md{font-size:13px}
+.ce-fresh.ce-xl{font-size:23px}.ce-fresh.ce-lg{font-size:19px}.ce-fresh.ce-md{font-size:16px}
 .ce-fresh.rep{color:#0a7d33;border-color:rgba(10,125,51,.45);animation:ceDrift var(--t,9s) ease-in-out var(--d,0s) infinite,cePulseG 2.4s ease-in-out infinite}
 .ce-fresh.soon{color:#0040c1;border-color:rgba(0,64,193,.45);animation:ceDrift var(--t,9s) ease-in-out var(--d,0s) infinite,cePulseB 2.4s ease-in-out infinite}
 .ce-fresh.rep i{color:#0a7d33}.ce-fresh.soon i{color:#0040c1}
@@ -8787,7 +8787,7 @@ function ceInit(){
 }
 
 let _ceResizeBound = false;
-const CE_BACKDROP_MAX = 150;   // # faint background words actually scattered (rest are search-only, for perf)
+const CE_BACKDROP_MAX = 55;   // # faint background words actually scattered (rest are search-only); kept low so the cloud breathes
 
 function ceBuildCloud(){
   const cloud = document.getElementById('ce-cloud');
@@ -8836,7 +8836,7 @@ function ceBuildCloud(){
   });
   // faint backdrop words — varied size, rotation and opacity give the cloud depth
   backdrop.forEach((t, i) => {
-    const fs = rnd(11, 23).toFixed(1), op = rnd(0.13, 0.4).toFixed(2), rot = rnd(-26, 26).toFixed(1);
+    const fs = rnd(16, 34).toFixed(1), op = rnd(0.14, 0.42).toFixed(2), rot = rnd(-26, 26).toFixed(1);
     html += '<button class="ce-word ce-back" ' + motion(i + 3) + '--rot:' + rot + 'deg;font-size:' + fs + 'px;opacity:' + op + '" ' + open(t) + '>' +
       '<span class="ce-pill-t">' + t.ticker + '</span></button>';
   });
@@ -8881,7 +8881,7 @@ function ceLayoutCloud(){
       const x = cx + r * Math.cos(a) - w / 2;
       const y = cy + r * Math.sin(a) - h / 2;
       const box = { x, y, w, h };
-      if (x >= 2 && y >= 2 && x + w <= W - 2 && y + h <= H - 2 && !placed.some(p => ceCollide(p, box, 5))){
+      if (x >= 2 && y >= 2 && x + w <= W - 2 && y + h <= H - 2 && !placed.some(p => ceCollide(p, box, 14))){
         fitX = x; fitY = y; ok = true; break;
       }
       a += 0.45; r += 1.5;
