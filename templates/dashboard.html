@@ -478,10 +478,10 @@ tr:hover td{background:rgba(245,166,35,.06)}
 
 /* ====== WATCHLIST — news & catalysts feed (news-snapshot style) ====== */
 .wl-news-cap{font-size:12.5px;color:var(--muted);margin:0 0 10px;font-weight:600}
-.wl-feed{background:#fff;border:1px solid rgba(10,10,10,.08);border-radius:12px;overflow:hidden}
-.wl-item{padding:12px 16px;border-bottom:1px solid rgba(10,10,10,.06);transition:background .12s;cursor:pointer}
-.wl-item:last-child{border-bottom:none}
-.wl-item:hover{background:#f6f9ff}
+.wl-feed{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.wl-item{background:#fff;border:1px solid rgba(10,10,10,.08);border-radius:12px;padding:13px 16px;transition:background .12s,box-shadow .12s;cursor:pointer}
+.wl-item:hover{background:#f6f9ff;box-shadow:0 6px 18px -10px rgba(0,40,120,.22)}
+@media(max-width:760px){.wl-feed{grid-template-columns:1fr}}
 .wl-item-head{display:flex;align-items:center;gap:8px}
 .wl-tk{display:inline-block;font-weight:800;background:rgba(41,112,255,.10);color:#0040c1;border-radius:5px;padding:1px 8px;font-size:11.5px;flex-shrink:0}
 .wl-title{font-size:14px;font-weight:800;color:#0f172a;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
