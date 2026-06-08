@@ -26,7 +26,10 @@ import httpx
 
 logger = logging.getLogger(__name__)
 
-TRUSTED_HOSTS = ("q4cdn.com",)
+# Reputable IR content CDNs we trust to fetch/embed deck PDFs from. Keep in
+# sync with doc_pdf._HOST_ALLOW (minus sec.gov).
+TRUSTED_HOSTS = ("q4cdn.com", "gcs-web.com", "irpass.com",
+                 "investorroom.com", "media-server.com")
 _DECK_HINTS = ("presentation", "doc_earnings", "slides", "deck", "investor", "earnings-call")
 _CACHE: dict = {}        # (ticker, quarter) -> url|"" (process-life cache)
 
@@ -81,7 +84,8 @@ async def find_deck(company: str, ticker: str, quarter_label: str) -> str | None
         return None
 
     name = (company or ticker or "").strip()
-    query = f'{name} {quarter_label} earnings presentation filetype:pdf site:q4cdn.com'
+    sites = " OR ".join(f"site:{d}" for d in TRUSTED_HOSTS)
+    query = f'{name} {quarter_label} earnings presentation filetype:pdf ({sites})'
     results = await (_serper(query, serper) if serper else _brave(query, brave))
 
     trusted = [u for u in results if _trusted_pdf(u)]

@@ -44,7 +44,9 @@ class DocError(Exception):
     pass
 
 
-_HOST_ALLOW = ("sec.gov", "q4cdn.com")   # SEC filings + Q4 Inc IR CDN (decks)
+# SEC filings + reputable IR content CDNs that host investor decks/releases.
+_HOST_ALLOW = ("sec.gov", "q4cdn.com", "gcs-web.com", "irpass.com",
+               "investorroom.com", "media-server.com")
 
 
 def _allowed(url: str) -> bool:
