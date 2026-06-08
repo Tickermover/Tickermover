@@ -5300,6 +5300,8 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 #ts-drawer .doc-sub{display:flex;flex-wrap:wrap;gap:6px;padding:2px 4px 4px}
 #ts-drawer .doc-sub-link{font-size:11px;font-weight:600;color:var(--primary);background:rgba(41,112,255,.07);border:1px solid rgba(41,112,255,.16);border-radius:7px;padding:3px 9px;cursor:pointer;text-decoration:none}
 #ts-drawer .doc-sub-link:hover{background:rgba(41,112,255,.14)}
+#ts-drawer .doc-sub-find{color:#64748b;background:rgba(100,116,139,.07);border-color:rgba(100,116,139,.18);border-style:dashed}
+#ts-drawer .doc-sub-find:hover{background:rgba(100,116,139,.14)}
 #ts-drawer .doc-foot{display:flex;gap:16px;flex-wrap:wrap;margin-top:16px;padding-top:14px;border-top:1px solid #f1f5f9}
 #ts-drawer .doc-foot-link{font-size:12px;font-weight:600;color:var(--primary);text-decoration:none;background:none;border:none;cursor:pointer;font-family:inherit;padding:0}
 #ts-drawer .doc-foot-link:hover{text-decoration:underline}
@@ -17303,6 +17305,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
       const main=rel||cfo||rows[0];
       const sub=[];
       if(sld&&sld.url) sub.push('<a class="doc-sub-link" onclick="event.stopPropagation();'+view(sld.url,'Slides · '+qLabel)+'">📊 Slides'+(sld.pdf?' <span class="doc-pdf">PDF</span>':'')+'</a>');
+      else { const sq=encodeURIComponent(tk+' '+qLabel+' earnings presentation filetype:pdf'); sub.push('<a class="doc-sub-link doc-sub-find" href="https://www.google.com/search?q='+sq+'" target="_blank" rel="noopener" title="This company didn\'t file a deck to SEC — search its IR site">🔎 Find slides ↗</a>'); }
       if(cfo&&cfo.url&&cfo!==main) sub.push('<a class="doc-sub-link" onclick="event.stopPropagation();'+view(cfo.url,'CFO commentary · '+qLabel)+'">🧾 CFO commentary</a>');
       if(trx) sub.push('<a class="doc-sub-link" href="'+trx.url+'" target="_blank" rel="noopener">🎙 Transcript →</a>');
       const head=(main&&main.url)

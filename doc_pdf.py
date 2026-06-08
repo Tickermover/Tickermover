@@ -15,8 +15,9 @@ SSRF guard: only sec.gov hosts are fetched.
 from __future__ import annotations
 
 import io
+import asyncio
 import logging
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urljoin
 from xml.sax.saxutils import escape as _xesc
 
 import httpx
@@ -25,9 +26,10 @@ from bs4 import BeautifulSoup
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import mm
 from reportlab.lib import colors
+from reportlab.lib.utils import ImageReader
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import (SimpleDocTemplate, Paragraph, Spacer, Table,
-                                TableStyle)
+                                TableStyle, Image as RLImage)
 
 logger = logging.getLogger(__name__)
 
@@ -71,7 +73,10 @@ async def fetch_doc_pdf(url: str, title: str = "") -> tuple[bytes, str]:
         return r.content, "application/pdf"
 
     try:
-        pdf = _html_to_pdf(r.text, title or _guess_title(r.text), url)
+        # Conversion (incl. synchronous image fetches for slide decks) runs in
+        # a worker thread so it never blocks the event loop.
+        pdf = await asyncio.to_thread(_html_to_pdf, r.text,
+                                      title or _guess_title(r.text), url)
     except Exception as exc:
         logger.warning(f"doc_pdf: render {url} failed: {exc}")
         raise DocError("Could not render this document as a PDF.")
@@ -110,8 +115,25 @@ def _clean(text: str) -> str:
 
 def _html_to_pdf(html: str, title: str, source_url: str) -> bytes:
     soup = BeautifulSoup(html, "lxml")
-    for t in soup(["script", "style", "head", "noscript", "img"]):
+    for t in soup(["script", "style", "head", "noscript"]):
         t.decompose()
+
+    # Slide decks (e.g. an EX-99.2 investor presentation) are usually a thin
+    # HTML wrapper around a sequence of slide images. When the page is
+    # image-heavy, render those images one per page so the actual slides show.
+    imgs = []
+    for im in soup.find_all("img"):
+        src = (im.get("src") or "").strip()
+        if not src:
+            continue
+        absu = urljoin(source_url, src)
+        if _allowed(absu) and absu not in imgs:
+            imgs.append(absu)
+    if len(imgs) >= 5:
+        return _images_to_pdf(imgs, title, source_url)
+
+    for im in soup.find_all("img"):       # text doc — drop inline images
+        im.decompose()
 
     body, h_st, title_st, small_st, cell_st = _styles()
     story = [Paragraph(_xesc(_clean(title) or "SEC document"), title_st),
@@ -148,6 +170,34 @@ def _html_to_pdf(html: str, title: str, source_url: str) -> bytes:
         txt = _clean(root.get_text(" ", strip=True))[:20000]
         story.append(Paragraph(_xesc(txt) or "No readable content found.", body))
 
+    buf = io.BytesIO()
+    doc = SimpleDocTemplate(buf, pagesize=A4, leftMargin=18 * mm, rightMargin=18 * mm,
+                            topMargin=16 * mm, bottomMargin=16 * mm, title=title)
+    doc.build(story)
+    return buf.getvalue()
+
+
+def _images_to_pdf(imgs: list[str], title: str, source_url: str) -> bytes:
+    """Render a sequence of slide images (a deck) as a one-image-per-row PDF."""
+    body, h_st, title_st, small_st, cell_st = _styles()
+    story = [Paragraph(_xesc(_clean(title) or "Investor presentation"), title_st),
+             Paragraph("Source: " + _xesc(source_url), small_st)]
+    avail_w = A4[0] - 36 * mm
+    avail_h = A4[1] - 46 * mm
+    with httpx.Client(timeout=20, headers=_HEADERS, follow_redirects=True) as c:
+        for u in imgs[:80]:
+            try:
+                raw = c.get(u).content
+                iw, ih = ImageReader(io.BytesIO(raw)).getSize()
+                if not iw or not ih:
+                    continue
+                scale = min(avail_w / iw, avail_h / ih)
+                story.append(RLImage(io.BytesIO(raw), width=iw * scale, height=ih * scale))
+                story.append(Spacer(1, 10))
+            except Exception:
+                continue
+    if len(story) <= 2:
+        story.append(Paragraph("Could not load the presentation images — open the original filing.", body))
     buf = io.BytesIO()
     doc = SimpleDocTemplate(buf, pagesize=A4, leftMargin=18 * mm, rightMargin=18 * mm,
                             topMargin=16 * mm, bottomMargin=16 * mm, title=title)
