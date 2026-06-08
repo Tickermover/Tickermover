@@ -407,6 +407,30 @@ tr:hover td{background:rgba(245,166,35,.06)}
 .sm-bar{height:100%;background:linear-gradient(90deg,#2970ff 0%,#0042c5 55%,#00359e 100%);border-radius:3px;transition:width .6s ease;
         box-shadow:0 0 6px rgba(41,112,255,.35)}
 
+/* ── Universe: embedded sector heat-map band (navigator over the table) ── */
+.uni-map{margin-bottom:18px}
+.uni-map-head{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;margin-bottom:12px}
+.uni-map-title{font-size:13px;font-weight:800;color:var(--txt);letter-spacing:.2px}
+.uni-map-sub{font-size:11.5px;color:var(--muted);margin-top:2px}
+.uni-map-toggle{flex-shrink:0;font-size:11px;font-weight:700;color:#0040c1;background:rgba(41,112,255,.08);
+  border:1px solid rgba(41,112,255,.18);border-radius:8px;padding:6px 12px;cursor:pointer;white-space:nowrap;transition:background .15s,border-color .15s}
+.uni-map-toggle:hover{background:rgba(41,112,255,.14);border-color:rgba(41,112,255,.32)}
+.uni-map-collapsed .sec-grid-map{display:none}
+/* Sector card — interactive (clicks filter the table below) */
+.sm-card{cursor:pointer}
+.sm-drill{font-size:10px;font-weight:700;color:#0040c1;background:rgba(41,112,255,.10);border-radius:6px;
+  padding:2px 7px;margin-left:8px;opacity:0;transform:translateX(-4px);transition:opacity .18s,transform .18s;vertical-align:middle}
+.sm-card:hover .sm-drill{opacity:1;transform:translateX(0)}
+.sm-title{display:flex;align-items:center}
+/* Selected sector card */
+.sm-active{border-color:#2970ff !important;box-shadow:0 0 0 2px rgba(41,112,255,.35),0 12px 32px -18px rgba(0,40,120,.4) !important;
+  background:linear-gradient(180deg,#f5f9ff 0%,#ffffff 60%)}
+.sm-active .sm-drill{opacity:1;transform:translateX(0);background:#2970ff;color:#fff}
+.sm-active .sm-drill::after{content:' ✓'}
+/* Clickable ticker chips inside cards */
+.sm-chip.chip-link{cursor:pointer;transition:background .12s,color .12s}
+.sm-chip.chip-link:hover{background:rgba(41,112,255,.14);color:#0040c1}
+
 /* ====== UTILITY ====== */
 .freshness{display:inline-flex;align-items:center;gap:5px;font-size:10px;color:var(--muted);
            padding:2px 8px;border-radius:20px;background:rgba(0,0,0,.03);border:1px solid var(--bdr)}
@@ -1953,16 +1977,16 @@ html.v2-dark .v2-changed-row .note{color:#cbd5e1}
 .v2-disclaimer strong{color:#475569;font-weight:700}
 html.v2-dark .v2-disclaimer{background:rgba(245,166,35,.10);border-color:rgba(245,166,35,.25);color:#94a3b8}
 
-/* Sector Map full-panel cards (#panel-sectors .sm-card) — same v2
+/* Sector Map full-panel cards (#sectors-grid .sm-card) — same v2
    light gradient + brand stripe as every other callout card.
    Targets the FULL-PANEL view, not the small widget on Hot List. */
-body.v2 #panel-sectors .sm-card{
+body.v2 #sectors-grid .sm-card{
   background:linear-gradient(135deg,#ffffff 0%,#ffffff 55%,#f6f9ff 100%)!important;
   border-color:rgba(9,9,9,.07)!important;
   position:relative;overflow:hidden;
   box-shadow:0 1px 2px rgba(0,40,120,.08),0 10px 24px -14px rgba(0,40,120,.26);
 }
-body.v2 #panel-sectors .sm-card::before{
+body.v2 #sectors-grid .sm-card::before{
   content:'';position:absolute;top:0;left:0;right:0;height:2px;
   background:linear-gradient(90deg,
     #2970ff 0%,
@@ -1971,12 +1995,12 @@ body.v2 #panel-sectors .sm-card::before{
   pointer-events:none;
   border-radius:16px 16px 0 0;
 }
-body.v2 #panel-sectors .sm-card:hover{
+body.v2 #sectors-grid .sm-card:hover{
   border-color:rgba(41,112,255,.30)!important;
   box-shadow:0 8px 24px rgba(0,40,120,.12),0 2px 8px rgba(10,10,10,.06);
   transform:translateY(-2px);transition:transform .15s,box-shadow .2s,border-color .15s;
 }
-html.v2-dark body.v2 #panel-sectors .sm-card{
+html.v2-dark body.v2 #sectors-grid .sm-card{
   background:linear-gradient(135deg,#0A0A0A 0%,#141414 60%,#1A1A1A 100%)!important;
   border-color:#1f2937!important;
 }
@@ -4622,7 +4646,7 @@ html.v2-dark .v2ov-card,html.v2-dark .v2ov-kpi,html.v2-dark .v2ov-trend-card{
    (no backdrop-filter) to avoid clipping/perf issues on bigger panels. */
 html.v2-dark .v2-track,
 html.v2-dark .v2-pick-card,
-html.v2-dark body.v2 #panel-sectors .sm-card{
+html.v2-dark body.v2 #sectors-grid .sm-card{
   background:linear-gradient(150deg, rgba(54,46,40,.42) 0%, #15131A 72%)!important;
   border-color:rgba(255,255,255,.09)!important;border-radius:16px!important;
   box-shadow:0 16px 38px -26px rgba(0,0,0,.8), inset 0 1px 0 rgba(255,255,255,.05)!important;
@@ -5608,7 +5632,7 @@ html.v2-dark body.v2 .v2-scroll{background:transparent!important}
 html.v2-dark body.v2 .main{background:transparent!important}
 /* panel card surfaces that still carried a dark-mode override */
 html.v2-dark body.v2 .fund-list-wrap{background:linear-gradient(135deg,#ffffff 0%,#ffffff 55%,#f6f9ff 100%)!important;border-color:rgba(9,9,9,.07)!important}
-html.v2-dark body.v2 #panel-sectors .sm-card{background:linear-gradient(135deg,#ffffff 0%,#ffffff 55%,#f6f9ff 100%)!important;border-color:rgba(9,9,9,.07)!important}
+html.v2-dark body.v2 #sectors-grid .sm-card{background:linear-gradient(135deg,#ffffff 0%,#ffffff 55%,#f6f9ff 100%)!important;border-color:rgba(9,9,9,.07)!important}
 html.v2-dark .v2-track{background:linear-gradient(135deg,#ffffff 0%,#f6f9ff 100%)!important;border-color:rgba(41,112,255,.20)!important}
 html.v2-dark .v2-track-head,html.v2-dark .v2-track-foot,html.v2-dark .v2-track-cell .l{color:#5d6c7b!important}
 html.v2-dark .v2-track-cell .n{color:#0f172a!important}
@@ -5763,9 +5787,6 @@ html.v2-dark body.v2 .main, body.v2 .main{padding:0 0 30px !important;max-width:
     </div>
     <div class="v2-nav-item" onclick="v2Show('model',this)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l2.5 7H22l-6 4.5 2.3 7L12 16l-6.3 4.5L8 13.5 2 9h7.5z"/></svg><span>Top Hunts</span><span class="v2-nav-tag v2-tag-pro">PRO</span>
-    </div>
-    <div class="v2-nav-item" onclick="v2Show('sectors',this)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><polyline points="6 14 10 10 13 13 21 5"/></svg><span>Sector Map</span>
     </div>
     <div class="v2-nav-item" onclick="v2Show('fund',this)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M2 12h20"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18z"/></svg><span>Universe</span><span class="v2-nav-tag v2-tag-universe" id="v2-nav-universe-count">545</span>
@@ -5952,14 +5973,27 @@ html.v2-dark body.v2 .main, body.v2 .main{padding:0 0 30px !important;max-width:
   </div>
 </div>
 
-<!-- FUNDAMENTALS -->
+<!-- UNIVERSE — sector heat map (navigator) + full stock table, one product -->
 <div id="panel-fund" class="panel">
   <div class="panel-header">
     <div>
       <div class="panel-h-title">🌐 The <em>universe</em></div>
-      <div class="panel-h-sub">Every covered US stock — sortable, filterable, scored. Tap any ticker for the full report.</div>
+      <div class="panel-h-sub">Start with the sector map to see where alpha is concentrating, then drill into the stocks. Tap any ticker for the full report.</div>
     </div>
   </div>
+
+  <!-- ── SECTOR HEAT MAP — the navigator layer over the universe ── -->
+  <div class="uni-map" id="uni-map">
+    <div class="uni-map-head">
+      <div class="uni-map-titles">
+        <div class="uni-map-title">🗺 Sector heat map</div>
+        <div class="uni-map-sub">Every sub-sector ranked by average α-Score · tap one to filter the table below</div>
+      </div>
+      <button class="uni-map-toggle" id="uni-map-toggle" onclick="v2ToggleSectorMap()" aria-expanded="true">Hide map ▲</button>
+    </div>
+    <div class="sec-grid-map" id="sectors-grid"><div class="loading">Loading…</div></div>
+  </div>
+
   <div class="fd-toolbar">
     <!-- Per-table ticker search removed — global Cmd+K palette handles that.
          Hide Mega Caps checkbox removed too; profile picker now controls
@@ -5994,17 +6028,6 @@ html.v2-dark body.v2 .main, body.v2 .main{padding:0 0 30px !important;max-width:
     <span class="tally" id="tally-fund"></span>
   </div>
   <div class="fund-list-wrap" id="fd-grid"><div class="loading">Loading…</div></div>
-</div>
-
-<!-- SECTORS -->
-<div id="panel-sectors" class="panel">
-  <div class="panel-header">
-    <div>
-      <div class="panel-h-title">🗺 Sector <em>map</em></div>
-      <div class="panel-h-sub">Where the alpha is hiding today — every sub-sector ranked by avg α-Score.</div>
-    </div>
-  </div>
-  <div class="sec-grid-map" id="sectors-grid"><div class="loading">Loading…</div></div>
 </div>
 
 <!-- DATA SOURCES -->
@@ -8074,6 +8097,10 @@ function v2SetSectorFilter(sectorName){
       '<button class="v2-usp-clear" onclick="v2ClearSectorFilter()">✕ Clear</button>';
     pill.style.display = '';
   }
+  // Highlight the matching sector-map card (sync map ↔ dropdown ↔ table).
+  document.querySelectorAll('#sectors-grid .sm-card').forEach(c => {
+    c.classList.toggle('sm-active', (c.dataset.sector || '').toLowerCase() === nameLower);
+  });
   if (typeof v2SyncUniverseTally === 'function') v2SyncUniverseTally();
 }
 function v2ClearSectorFilter(){
@@ -8084,7 +8111,35 @@ function v2ClearSectorFilter(){
   // Reset the dropdown back to 'All Sectors'
   const sel = document.getElementById('fd-sector');
   if (sel) sel.value = '';
+  // De-highlight every sector-map card.
+  document.querySelectorAll('#sectors-grid .sm-card.sm-active').forEach(c => c.classList.remove('sm-active'));
   if (typeof v2SyncUniverseTally === 'function') v2SyncUniverseTally();
+}
+
+/* Sector-map card click — toggles the filter for that sub-sector. Clicking
+   the already-active card clears it. Map + table live in one panel now, so
+   we just scroll the table into view rather than switching panels. */
+function v2SelectSector(name){
+  const cur = document.body.getAttribute('data-active-sector');
+  if (cur && cur.toLowerCase() === (name || '').toLowerCase()){
+    v2ClearSectorFilter();
+    return;
+  }
+  v2SetSectorFilter(name);
+  const toolbar = document.querySelector('#panel-fund .fd-toolbar');
+  if (toolbar) toolbar.scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
+/* Collapse / expand the sector heat-map band inside the Universe panel. */
+function v2ToggleSectorMap(){
+  const map = document.getElementById('uni-map');
+  const btn = document.getElementById('uni-map-toggle');
+  if (!map) return;
+  const collapsed = map.classList.toggle('uni-map-collapsed');
+  if (btn){
+    btn.textContent = collapsed ? 'Show map ▼' : 'Hide map ▲';
+    btn.setAttribute('aria-expanded', String(!collapsed));
+  }
 }
 /* Click-handler used by sector cells on the dashboard + Sector Map.
    Switches to the Universe panel and applies the sector filter in one go. */
@@ -12631,10 +12686,11 @@ function renderSectors(tickers) {
     const visibleTickers = topTickers.slice(0, 8);
     const remainCount    = topTickers.length - visibleTickers.length;
 
+    const subAttr = sub.replace(/"/g, '&quot;');
     return `
-    <div class="sm-card">
+    <div class="sm-card" data-sector="${subAttr}" onclick="v2SelectSector('${sub.replace(/'/g, "\\'")}')" title="Filter the universe to ${subAttr}">
       <div class="sm-header">
-        <div class="sm-title">${sub}</div>
+        <div class="sm-title">${sub}<span class="sm-drill">Drill in →</span></div>
         <div class="sm-badges">
           <span class="sm-sector-badge">${sectorLabel}</span>
           ${growthTier ? `<span class="sm-tier ${tierClass}">${growthTier}</span>` : ''}
@@ -12653,7 +12709,7 @@ function renderSectors(tickers) {
             ${visibleTickers.map(tk => {
               const t = stocks.find(s => s.ticker === tk);
               const cls = t && t.grade === 'A' ? 'chip-hot' : '';
-              return `<span class="sm-chip ${cls}" title="${t ? t.name || '' : ''}">${tk}</span>`;
+              return `<span class="sm-chip chip-link ${cls}" title="${t ? t.name || '' : ''}" onclick="event.stopPropagation();openStockModal('${tk}')">${tk}</span>`;
             }).join('')}
             ${remainCount > 0 ? `<span class="sm-chip chip-more">+${remainCount}</span>` : ''}
           </div>
@@ -13083,6 +13139,8 @@ function openBlogArticle(articleId) {
 }
 
 function showTab(id, btn) {
+  // Sector Map merged into the Universe panel — route legacy 'sectors' there.
+  if (id === 'sectors') id = 'fund';
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   btn.classList.add('active');
@@ -14644,8 +14702,7 @@ const _CMDK_TABS = [
   {kind:'tab', icon:'🔥', label:'Hot List',     sub:'Top picks right now',      run:()=>document.querySelector('[onclick*="showTab(\'hot\'"]')?.click()},
   {kind:'tab', icon:'🎯', label:'Top Hunts',    sub:'Tracked top-10 picks',     run:()=>document.querySelector('[onclick*="showTab(\'model\'"]')?.click()},
   {kind:'tab', icon:'⭐', label:'Watchlist',    sub:'Your saved stocks',        run:()=>document.querySelector('[onclick*="showTab(\'watch\'"]')?.click()},
-  {kind:'tab', icon:'🌐', label:'Universe',     sub:'All 200 stocks + filters', run:()=>document.querySelector('[onclick*="showTab(\'fund\'"]')?.click()},
-  {kind:'tab', icon:'🗺',  label:'Sectors',     sub:'Sub-sector heat map',      run:()=>document.querySelector('[onclick*="showTab(\'sectors\'"]')?.click()},
+  {kind:'tab', icon:'🌐', label:'Universe',     sub:'Sector heat map + all stocks', run:()=>document.querySelector('[onclick*="v2Show(\'fund\'"]')?.click()},
   {kind:'tab', icon:'📊', label:'Reports',      sub:'Tear sheets & infographics', run:()=>document.querySelector('[onclick*="showTab(\'blog\'"]')?.click()},
 ];
 const _CMDK_ACTIONS = [
