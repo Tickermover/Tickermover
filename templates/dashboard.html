@@ -5342,6 +5342,12 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 #ts-drawer .premkt .pm-v{font-weight:800;color:#0f172a}
 #ts-drawer .premkt .pos{color:#16a34a;font-weight:800}
 #ts-drawer .premkt .neg{color:#dc2626;font-weight:800}
+/* Analyst consensus chip */
+#ts-drawer .cons-chip{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:700;border-radius:9px;padding:7px 13px;margin:0 8px 10px 0}
+#ts-drawer .cons-chip.cons-buy{background:#e6f5ec;color:#0a7d33;border:1px solid #b7e2c6}
+#ts-drawer .cons-chip.cons-sell{background:#fdecea;color:#c0392b;border:1px solid #f3c5c0}
+#ts-drawer .cons-chip.cons-hold{background:#fff7e6;color:#b7791f;border:1px solid #f3e2bf}
+#ts-drawer .cons-chip .cons-n{font-weight:600;opacity:.75}
 @keyframes ncwDrift{0%{transform:translate(-50%,-50%)}50%{transform:translate(-50%,calc(-50% - 11px))}100%{transform:translate(-50%,-50%)}}
 @media(prefers-reduced-motion:reduce){#dr-news-cloud .ncw{animation:none}}
 #ts-drawer .peers-card .peer-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f1f5f9;cursor:pointer}
@@ -17086,6 +17092,18 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     const cstr=(chg==null)?'':' <span class="'+(chg>=0?'pos':'neg')+'">'+(chg>=0?'+':'')+chg.toFixed(2)+'%</span>';
     return '<div class="premkt"><span class="pm-k">'+lbl+'</span><span class="pm-v">$'+px.toFixed(2)+'</span>'+cstr+'</div>';
   }
+  /* Analyst consensus chip (Buy/Hold/Sell) — the broker recommendation, shown
+     up-front on the Overview so the call is visible without opening Estimates. */
+  function _consensusChip(t){
+    const rm=_fpNum(t,['recommendation_mean']), rk=(t.analyst_recommendation||'').toLowerCase();
+    const KEYLBL={strong_buy:'Strong Buy',buy:'Buy',outperform:'Buy',hold:'Hold',neutral:'Hold',underperform:'Sell',sell:'Sell',strong_sell:'Strong Sell'};
+    let label=null;
+    if(rm!=null&&rm>0) label=KEYLBL[rk]||(rm<=1.5?'Strong Buy':rm<=2.5?'Buy':rm<=3.5?'Hold':rm<=4.5?'Sell':'Strong Sell');
+    if(!label) return '';
+    const na=_fpNum(t,['total_analysts','analyst_count']);
+    const cl=/Buy/.test(label)?'cons-buy':/Sell/.test(label)?'cons-sell':'cons-hold';
+    return '<div class="cons-chip '+cl+'">📊 Analyst consensus: <b>'+label+'</b>'+(na!=null?'<span class="cons-n"> · '+Math.round(na)+' analysts</span>':'')+'</div>';
+  }
   function paneOverview(t,S,full,candles){
     const g=(full.grade||'').toUpperCase(), TI=_tierOf(g);
     const pop=Math.round(parseFloat(full.smart_score!=null?full.smart_score:(full.pop_score||0)));
@@ -17137,8 +17155,8 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     const rebound = S? _sec('Rebound potential','🔄',rebAccent,
       '<div class="reb-gauge">'+_ringSVG(S.rebound,rebColor)+
         '<div class="reb-sub" style="margin:0">'+((S.recoverDays!=null&&S.recoverN>=2)?'Historically reclaims a dip in ~<b>'+S.recoverDays+'</b> sessions <span class="muted">('+S.recoverN+' samples, 1&nbsp;yr)</span>':'Score blends RSI, trend, support proximity &amp; drawdown room into a single 0&ndash;100 read.')+'</div></div>') : '';
-    // pre/after-hours badge → verdict → six-pillar tiles → catalyst → chart → rest.
-    return _premktBadge(full)+verdict+_heroStats(t,S,full)+_catalystCard(full)+chart+_aiThesis(full)+setup+_windsCard(full)+rebound+_keyEvents(full);
+    // consensus + pre/after-hours badges → verdict → six-pillar tiles → catalyst → chart → rest.
+    return _consensusChip(full)+_premktBadge(full)+verdict+_heroStats(t,S,full)+_catalystCard(full)+chart+_aiThesis(full)+setup+_windsCard(full)+rebound+_keyEvents(full);
   }
   function paneTechnicals(t,S){
     const m1=_fpNum(t,['momentum_1m']),m3=_fpNum(t,['momentum_3m']),m6=_fpNum(t,['momentum_6m']);
