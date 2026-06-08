@@ -5291,6 +5291,8 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 #ts-drawer .doc-evt-btns{display:flex;gap:6px}
 #ts-drawer .doc-b{font-size:10.5px;font-weight:700;color:var(--primary);background:rgba(41,112,255,.08);border:1px solid rgba(41,112,255,.18);border-radius:7px;padding:3px 9px;text-decoration:none}
 #ts-drawer .doc-b:hover{background:rgba(41,112,255,.16)}
+#ts-drawer .doc-pdf{font-size:9px;font-weight:800;letter-spacing:.03em;color:#fff;background:linear-gradient(135deg,#15803d,#0f766e);border-radius:5px;padding:1px 6px;flex-shrink:0;margin-left:auto}
+#ts-drawer .doc-row .doc-ar{color:var(--grey-3,#94a3b8);font-size:13px;flex-shrink:0;margin-left:8px}
 @keyframes ncwDrift{0%{transform:translate(-50%,-50%)}50%{transform:translate(-50%,calc(-50% - 11px))}100%{transform:translate(-50%,-50%)}}
 @media(prefers-reduced-motion:reduce){#dr-news-cloud .ncw{animation:none}}
 #ts-drawer .peers-card .peer-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f1f5f9;cursor:pointer}
@@ -17214,21 +17216,39 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     const tk=root.getAttribute('data-tk'); if(!tk) return;
     root.dataset.loaded='1';
     const tkE=encodeURIComponent(tk);
-    const row=it=>'<a class="doc-row" href="'+it.url+'" target="_blank" rel="noopener"><span class="doc-row-l"><b>'+escHTML(it.label)+'</b>'+(it.date?'<small>'+escHTML(it.date)+'</small>':'')+'</span><span class="doc-ar">↗</span></a>';
+    const row=it=>{
+      const pdf = it.pdf ? '<span class="doc-pdf">PDF</span>' : '';
+      return '<a class="doc-row" href="'+it.url+'" target="_blank" rel="noopener"><span class="doc-row-l"><b>'+escHTML(it.label)+'</b>'+(it.date?'<small>'+escHTML(it.date)+'</small>':'')+'</span>'+pdf+'<span class="doc-ar">↗</span></a>';
+    };
+    const trow=x=>'<a class="doc-row" href="'+x.url+'" target="_blank" rel="noopener"><span class="doc-row-l"><b>'+escHTML(x.label)+'</b><small>Earnings call</small></span><span class="doc-ar">↗</span></a>';
     const actions='<div class="doc-list">'+
       '<a class="doc-link doc-link-pdf" href="/api/pdf/'+tkE+'" target="_blank" rel="noopener"><span class="doc-l"><b>⤓ Download PDF report</b><small>AlphaHunt tear sheet · one click</small></span></a>'+
       '<a class="doc-link" href="/report/'+tkE+'" target="_blank" rel="noopener"><span class="doc-l"><b>Full research report</b><small>Long-form deep dive</small></span><span class="doc-ar">↗</span></a>'+
       '<button class="doc-link" onclick="tsOpenAsk(\''+escHTML(tk)+'\')"><span class="doc-l"><b>✦ Ask AI</b><small>Chat about this stock</small></span><span class="doc-ar">→</span></button>'+
       '<a class="doc-link" href="https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&ticker='+tkE+'&type=&dateb=&owner=include&count=40" target="_blank" rel="noopener"><span class="doc-l"><b>All EDGAR filings</b><small>Full filing history</small></span><span class="doc-ar">↗</span></a>'+
     '</div>';
-    const build=(ann,qtr)=>{ root.innerHTML='<div class="dr-deep-grid">'+
-        _sec('Annual reports','📄','blue', ann||'<div class="muted small">None found.</div>')+
-        _sec('Last 4 quarters','📊','violet', qtr||'<div class="muted small">None found.</div>')+
-        _sec('Full detailed report','🧭','green', actions)+
+    const LOADING='<div class="muted small">Loading…</div>';
+    let evt=LOADING, ann=LOADING, qtr=LOADING, trx=LOADING;
+    const repaint=()=>{ root.innerHTML='<div class="dr-deep-grid">'+
+        _sec('Earnings releases & decks','🗞','blue',   evt)+
+        _sec('Earnings call transcripts','🎙','violet', trx)+
+        _sec('Annual reports','📄','blue',              ann)+
+        _sec('Last 4 quarters','📊','violet',           qtr)+
+        _sec('Full detailed report','🧭','green',        actions)+
       '</div>'; };
+    repaint();
     fetch('/api/documents/'+tkE).then(r=>r.json()).then(d=>{
-      build((d.annual||[]).map(row).join(''),(d.quarterly||[]).map(row).join(''));
-    }).catch(()=>{ build('',''); });
+      const none='<div class="muted small">None found.</div>';
+      evt=(d.events||[]).map(row).join('')||none;
+      ann=(d.annual||[]).map(row).join('')||none;
+      qtr=(d.quarterly||[]).map(row).join('')||none;
+      repaint();
+    }).catch(()=>{ evt=ann=qtr='<div class="muted small">Could not load filings.</div>'; repaint(); });
+    fetch('/api/transcripts/'+tkE).then(r=>r.json()).then(d=>{
+      const tr=(d.transcripts||[]);
+      trx = tr.length ? tr.map(trow).join('') : '<div class="muted small">No transcripts found.</div>';
+      repaint();
+    }).catch(()=>{ trx='<div class="muted small">Transcripts unavailable right now.</div>'; repaint(); });
   }
 
   /* Insights — Screener-style OPERATING KPIs (volumes, capacity, units …)

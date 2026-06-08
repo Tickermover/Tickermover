@@ -3397,6 +3397,88 @@ async def api_documents(ticker: str):
     return JSONResponse(_clean(data), headers={"Cache-Control": "public, max-age=3600"})
 
 
+@app.get("/api/transcripts/{ticker}")
+async def api_transcripts(ticker: str):
+    """Dated earnings-call transcripts list (last 8 quarters). Each row links to
+    the in-app reader page, which fetches the transcript on demand from Alpha
+    Vantage. We list quarters rather than probe each (AV is rate-limited); the
+    reader reports gracefully when a given quarter has no transcript."""
+    import event_intel as ei
+    tk = (ticker or "").upper()
+
+    def _label(q: str) -> str:          # '2026Q1' -> 'Q1 2026'
+        return f"{q[4:]} {q[:4]}" if len(q) >= 6 else q
+
+    rows = [{"quarter": q, "label": _label(q), "url": f"/transcript/{tk}?q={q}"}
+            for q in ei._recent_quarters(8)]
+    return JSONResponse({"ticker": tk, "transcripts": rows},
+                        headers={"Cache-Control": "public, max-age=3600"})
+
+
+@app.get("/transcript/{ticker}", response_class=HTMLResponse)
+async def transcript_page(ticker: str, q: str = ""):
+    """Reader page for a single earnings-call transcript (opens in a new tab
+    from the Documents list). Source: Alpha Vantage EARNINGS_CALL_TRANSCRIPT."""
+    import event_intel as ei
+    from html import escape as _esc
+    tk = (ticker or "").upper()
+    quarter = (q or "").upper().strip() or None
+    qlabel = (f"{quarter[4:]} {quarter[:4]}" if quarter and len(quarter) >= 6 else (quarter or ""))
+
+    try:
+        data = await ei._fetch_av_transcript(tk, quarter)
+    except Exception as exc:
+        logger.warning(f"transcript_page {tk} {quarter}: {exc}")
+        data = None
+
+    if isinstance(data, dict) and data.get("error") == "rate_limited":
+        body = ('<div class="note">The transcript feed is rate-limited right now. '
+                'Please try again later.</div>')
+    elif isinstance(data, dict) and data.get("transcript"):
+        turns = []
+        for seg in data.get("transcript", []):
+            if not isinstance(seg, dict):
+                continue
+            who = _esc((seg.get("speaker") or "").strip())
+            title = _esc((seg.get("title") or "").strip())
+            txt = _esc((seg.get("content") or "").strip())
+            if not txt:
+                continue
+            head = who + (f' <span class="ttl">· {title}</span>' if title else "")
+            turns.append(f'<div class="turn"><div class="sp">{head}</div><p>{txt}</p></div>')
+        body = "".join(turns) or '<div class="note">This transcript appears to be empty.</div>'
+    else:
+        body = ('<div class="note">No transcript is available for '
+                f'<b>{_esc(tk)}</b>{(" · " + _esc(qlabel)) if qlabel else ""} yet. '
+                'Transcripts post within a few days of the earnings call.</div>')
+
+    page = f"""<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{_esc(tk)} earnings call transcript{(' — ' + _esc(qlabel)) if qlabel else ''}</title>
+<style>
+:root{{color-scheme:light}}
+*{{box-sizing:border-box}}
+body{{margin:0;background:#f5f6f8;color:#0f172a;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Arial,sans-serif;line-height:1.6}}
+.wrap{{max-width:820px;margin:0 auto;padding:28px 20px 80px}}
+.eyebrow{{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#0040c1}}
+h1{{font-size:24px;margin:4px 0 2px}}
+.sub{{color:#64748b;font-size:13px;margin:0 0 22px}}
+.turn{{background:#fff;border:1px solid #e4e7eb;border-radius:12px;padding:14px 16px;margin:0 0 12px}}
+.sp{{font-weight:800;font-size:13.5px;color:#0040c1;margin-bottom:5px}}
+.sp .ttl{{font-weight:600;color:#64748b}}
+.turn p{{margin:0;color:#1f2937;font-size:14px}}
+.note{{background:#fff;border:1px dashed #cbd5e1;border-radius:12px;padding:18px;color:#475569;font-size:14px}}
+.foot{{margin-top:24px;font-size:12px;color:#94a3b8}}
+</style></head><body><div class="wrap">
+<div class="eyebrow">Earnings call transcript</div>
+<h1>{_esc(tk)}{(' · ' + _esc(qlabel)) if qlabel else ''}</h1>
+<p class="sub">Source: Alpha Vantage · informational only, verify against the company's official filing.</p>
+{body}
+<div class="foot">AlphaHunt · transcript reader</div>
+</div></body></html>"""
+    return HTMLResponse(content=page, headers={"Cache-Control": "public, max-age=86400"})
+
+
 @app.get("/api/operating-kpis/{ticker}")
 async def api_operating_kpis(ticker: str):
     """Beta: company-specific OPERATING KPIs (volumes, capacity, units …)
