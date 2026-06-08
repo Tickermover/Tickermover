@@ -40,7 +40,7 @@ async def _cik(ticker: str) -> str | None:
 
 
 async def list_documents(ticker: str, limit: int = 10) -> dict:
-    empty = {"annual": [], "quarterly": [], "events": [], "cik": None}
+    empty = {"annual": [], "quarterly": [], "events": [], "cik": None, "fiscal_year_end": None}
     cik = await _cik(ticker)
     if not cik:
         return empty
@@ -61,6 +61,8 @@ async def list_documents(ticker: str, limit: int = 10) -> dict:
     prim  = rec.get("primaryDocument", []) or []
     items = rec.get("items", []) or []
     descs = rec.get("primaryDocDescription", []) or []
+    reps  = rec.get("reportDate", []) or []          # fiscal period-of-report
+    fye   = sub.get("fiscalYearEnd")                 # 'MMDD', for fiscal-Q labels
 
     def doc_url(i):
         acc = (accs[i] if i < len(accs) else "").replace("-", "")
@@ -82,22 +84,26 @@ async def list_documents(ticker: str, limit: int = 10) -> dict:
     evt_idx = []                          # indices of earnings-related 8-Ks
     for i, f in enumerate(forms):
         d = dates[i] if i < len(dates) else ""
+        period = reps[i] if i < len(reps) else ""
         yr = d[:4] if d else ""
         if f in ("10-K", "20-F", "40-F") and len(annual) < ANN_CAP:
             annual.append({"label": f"FY {yr}" if yr else "Annual report",
-                           "date": d, "url": doc_url(i), "type": f})
+                           "date": d, "period": period, "url": doc_url(i), "type": f})
         elif f in ("10-Q", "6-K") and len(quarterly) < QTR_CAP:
-            quarterly.append({"label": f"Quarter ending {d}" if d else "Quarterly",
-                              "date": d, "url": doc_url(i), "type": f})
+            quarterly.append({"label": f"Quarter ending {period or d}",
+                              "date": d, "period": period, "url": doc_url(i), "type": f})
         elif f == "8-K" and len(evt_idx) < EVT_CAP:
-            # Item 2.02 = Results of Operations; 7.01 = Reg-FD (investor decks).
+            # Require item 2.02 (Results of Operations) so we only list real
+            # quarterly EARNINGS releases — not 7.01-only conference decks or
+            # other 8-K events that were polluting the list with wrong quarters.
             it = (items[i] if i < len(items) else "") or ""
-            if "2.02" in it or "7.01" in it:
+            if "2.02" in it:
                 evt_idx.append(i)
 
     events = await _build_events(cik_int, evt_idx, dates, accs, descs, items,
                                  idx_json_url, idx_url, doc_url)
-    return {"annual": annual, "quarterly": quarterly, "events": events, "cik": cik_int}
+    return {"annual": annual, "quarterly": quarterly, "events": events,
+            "cik": cik_int, "fiscal_year_end": fye}
 
 
 def _classify_row(blob: str, name: str) -> tuple[str, int, bool] | None:
