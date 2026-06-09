@@ -17672,6 +17672,87 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     const cl=/Buy/.test(label)?'cons-buy':/Sell/.test(label)?'cons-sell':'cons-hold';
     return '<div class="cons-chip '+cl+'" title="Third-party broker analyst consensus — informational only, not a recommendation by AlphaHunt to buy or sell">📊 Analyst consensus: <b>'+label+'</b>'+(na!=null?'<span class="cons-n"> · '+Math.round(na)+' analysts</span>':'')+'</div>';
   }
+  // ── Chart-pattern recognition (per the Fidelity/Kirkpatrick "Identifying Chart
+  //    Patterns" methodology). Finds swing pivots on the price history and matches
+  //    Head & Shoulders, Double Top/Bottom, Triangles, Wedges, Cup & Handle and
+  //    Flags. Returns {label,tone,note} or null (caller falls back to trend posture).
+  function _pivots(arr,isHigh,k){
+    const out=[];
+    for(let i=k;i<arr.length-k;i++){
+      let ok=true;
+      for(let j=1;j<=k&&ok;j++){
+        if(isHigh){ if(arr[i]<arr[i-j]||arr[i]<arr[i+j]) ok=false; }
+        else      { if(arr[i]>arr[i-j]||arr[i]>arr[i+j]) ok=false; }
+      }
+      if(ok){ out.push({i:i,v:arr[i]}); }
+    }
+    // collapse adjacent equal pivots
+    return out.filter((p,idx)=>idx===0||p.i-out[idx-1].i>=k);
+  }
+  function _slopeN(piv){
+    if(!piv||piv.length<2) return 0;
+    const xs=piv.map(p=>p.i),ys=piv.map(p=>p.v);
+    const mx=xs.reduce((a,b)=>a+b,0)/xs.length,my=ys.reduce((a,b)=>a+b,0)/ys.length;
+    let num=0,den=0; for(let i=0;i<xs.length;i++){ num+=(xs[i]-mx)*(ys[i]-my); den+=(xs[i]-mx)*(xs[i]-mx); }
+    return den?(num/den)/(my||1):0;
+  }
+  function _detectPattern(candles){
+    if(!candles||candles.length<55) return null;
+    const C=candles.slice(-170);
+    const hi=C.map(x=>parseFloat(x.h)), lo=C.map(x=>parseFloat(x.l)), cl=C.map(x=>parseFloat(x.c));
+    if(hi.some(isNaN)||lo.some(isNaN)||cl.some(isNaN)) return null;
+    const n=cl.length; if(n<55) return null;
+    const last=cl[n-1], k=Math.max(3,Math.round(n/30));
+    const PH=_pivots(hi,true,k), PL=_pivots(lo,false,k);
+    const near=(a,b,tol)=>Math.abs(a-b)/((Math.abs(a)+Math.abs(b))/2||1)<=tol;
+    const mk=(label,tone,note)=>({label:label,tone:tone,note:note});
+    // Head & Shoulders (bearish): 3 highs, taller middle, ~equal shoulders
+    if(PH.length>=3){ const a=PH[PH.length-3],h=PH[PH.length-2],b=PH[PH.length-1];
+      if(h.v>a.v*1.02&&h.v>b.v*1.02&&near(a.v,b.v,0.06)){
+        const neck=Math.min.apply(null,lo.slice(a.i,b.i+1)), broke=last<neck;
+        return mk('Head & Shoulders'+(broke?' — confirmed':''),'neg','Three peaks with a higher middle "head" — a classic top. '+(broke?'Neckline broken; downside in play.':'A close below the ~$'+neck.toFixed(0)+' neckline confirms it.')); } }
+    // Inverse Head & Shoulders (bullish)
+    if(PL.length>=3){ const a=PL[PL.length-3],h=PL[PL.length-2],b=PL[PL.length-1];
+      if(h.v<a.v*0.98&&h.v<b.v*0.98&&near(a.v,b.v,0.06)){
+        const neck=Math.max.apply(null,hi.slice(a.i,b.i+1)), broke=last>neck;
+        return mk('Inverse Head & Shoulders'+(broke?' — confirmed':''),'pos','Three troughs with a lower middle — a base. '+(broke?'Neckline broken; upside in play.':'A close above the ~$'+neck.toFixed(0)+' neckline confirms it.')); } }
+    // Double Top / Bottom — but defer to triangles when the OTHER boundary is
+    // trending (flat highs + rising lows = ascending triangle, not a double top).
+    const _slPH=_slopeN(PH.filter(p=>p.i>=n-95)), _slPL=_slopeN(PL.filter(p=>p.i>=n-95));
+    if(PH.length>=2&&_slPL<=0.0009){ const a=PH[PH.length-2],b=PH[PH.length-1];
+      if(near(a.v,b.v,0.04)){ const trough=Math.min.apply(null,lo.slice(a.i,b.i+1));
+        if(b.v>trough*1.04){ const broke=last<trough;
+          return mk('Double Top'+(broke?' — confirmed':''),'neg','Two peaks near $'+((a.v+b.v)/2).toFixed(0)+' (resistance). '+(broke?'Broke the middle low — reversal.':'A close below ~$'+trough.toFixed(0)+' confirms a top.')); } } }
+    if(PL.length>=2&&_slPH>=-0.0009&&_slPL<=0.0009){ const a=PL[PL.length-2],b=PL[PL.length-1];
+      if(near(a.v,b.v,0.04)){ const peak=Math.max.apply(null,hi.slice(a.i,b.i+1));
+        if(b.v<peak*0.96){ const broke=last>peak;
+          return mk('Double Bottom'+(broke?' — confirmed':''),'pos','Two troughs near $'+((a.v+b.v)/2).toFixed(0)+' (support). '+(broke?'Broke the middle peak — breakout.':'A close above ~$'+peak.toFixed(0)+' confirms a bottom.')); } } }
+    // Cup & Handle (bullish)
+    { const third=Math.floor(n/3), tail=Math.max(6,Math.floor(n/6));
+      const leftHigh=Math.max.apply(null,cl.slice(0,third)), midSlice=cl.slice(third,n-tail);
+      const midLow=Math.min.apply(null,midSlice), midHigh=Math.max.apply(null,midSlice);
+      const depth=leftHigh>0?(leftHigh-midLow)/leftHigh:0, recentMax=Math.max.apply(null,cl.slice(-tail)), handle=recentMax>0?(recentMax-last)/recentMax:0;
+      // midHigh<=leftHigh*0.96 → the bowl stayed below the rim (not an oscillating triangle that keeps tagging resistance)
+      if(depth>=0.12&&depth<=0.5&&midHigh<=leftHigh*0.96&&last>=leftHigh*0.92&&handle>=0.008&&handle<=0.1)
+        return mk('Cup & Handle','pos','Rounded base back to its prior high with a shallow pullback (the handle) — bullish; a push above ~$'+recentMax.toFixed(0)+' triggers it.'); }
+    // Flag / Pennant (continuation)
+    { const pole=Math.min(25,Math.floor(n/4)), con=Math.min(15,Math.floor(n/6)), s=n-pole-con;
+      if(s>=0){ const move=(cl[n-con-1]-cl[s])/(cl[s]||1), cs=cl.slice(-con), rng=(Math.max.apply(null,cs)-Math.min.apply(null,cs))/(last||1);
+        if(Math.abs(move)>=0.15&&rng<=0.09) return move>0
+          ? mk('Bull Flag','pos','A sharp rally then a tight, calm pause — a continuation that usually resolves higher.')
+          : mk('Bear Flag','neg','A sharp drop then a tight pause — a continuation that usually resolves lower.'); } }
+    // Triangles · Rectangle · Wedges (recent converging/parallel boundaries)
+    const rH=PH.filter(p=>p.i>=n-95), rL=PL.filter(p=>p.i>=n-95);
+    if(rH.length>=2&&rL.length>=2){ const sh=_slopeN(rH), sl=_slopeN(rL);
+      const flat=v=>Math.abs(v)<0.0009, up=v=>v>0.0009, dn=v=>v<-0.0009;
+      if(flat(sh)&&up(sl))   return mk('Ascending Triangle','pos','Flat resistance with rising lows — buyers stepping up; usually resolves higher.');
+      if(flat(sl)&&dn(sh))   return mk('Descending Triangle','neg','Flat support with falling highs — sellers pressing; usually resolves lower.');
+      if(dn(sh)&&up(sl))     return mk('Symmetrical Triangle','neu','Lower highs and higher lows coil toward an apex — a breakout is brewing either way.');
+      if(flat(sh)&&flat(sl)) return mk('Rectangle (range)','neu','Bouncing between flat support and resistance — range-bound until it breaks.');
+      if(dn(sh)&&dn(sl))     return mk('Falling Wedge','pos','Both boundaries slope down but lows fall slower — often resolves up.');
+      if(up(sh)&&up(sl))     return mk('Rising Wedge','neg','Both boundaries slope up but highs rise slower — often resolves down.'); }
+    return null;
+  }
   function paneOverview(t,S,full,candles){
     const g=(full.grade||'').toUpperCase(), TI=_tierOf(g);
     const pop=Math.round(parseFloat(full.smart_score!=null?full.smart_score:(full.pop_score||0)));
@@ -17714,9 +17795,10 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
         '<canvas id="drChart" class="dr-chart"></canvas>', true)
       : _sec('Price action','📈','blue','<div class="muted small">Live chart unavailable for this ticker.</div>', true);
     const setupAccent = S?({pos:'green',neg:'red',warn:'amber',blue:'blue',neu:'slate'}[S.tone]||'slate'):'slate';
-    // Current chart pattern — derived from price vs the 50/200-day averages, the
-    // 52-week position and RSI. Honest "posture" reads rather than fuzzy named patterns.
-    const _pat=(function(){
+    // Current chart pattern — first try real pattern recognition on the price
+    // history (Head & Shoulders, Double Top/Bottom, Triangles, Wedges, Cup &
+    // Handle, Flags). If none is clear, fall back to a plain trend posture.
+    const _pat=_detectPattern(candles)||(function(){
       if(!S) return null;
       const p=parseFloat(full.price!=null?full.price:t.price); if(!p||isNaN(p)) return null;
       const s50=S.sma50, s200=S.sma200, hi=S.hi52, rsi=S.rsi;
