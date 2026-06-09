@@ -5379,6 +5379,11 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 #ts-drawer .cat-t{font-size:13.5px;font-weight:800;color:var(--ink);letter-spacing:-.01em;margin-top:1px}
 /* bull vs bear */
 #ts-drawer .bb-verdict{margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid #e6edf6}
+#ts-drawer .bb-thesis-h{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#6d28d9;margin-bottom:8px}
+#ts-drawer .bb-thesis{margin:0 0 6px;padding-left:18px;list-style:disc}
+#ts-drawer .bb-thesis li{font-size:13px;line-height:1.5;color:var(--ink);font-weight:500;margin-bottom:6px}
+#ts-drawer .bb-thesis li:last-child{margin-bottom:0}
+#ts-drawer .bb-thesis li::marker{color:#7c3aed}
 #ts-drawer .winds-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 16px}
 @media(max-width:640px){#ts-drawer .winds-grid{grid-template-columns:1fr}}
 #ts-drawer .winds-h{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:800;letter-spacing:.05em;margin-bottom:6px}
@@ -17591,11 +17596,21 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     if(!rows.length) return '';
     return _sec('Quarterly trend','📊','slate',rows.join(''));
   }
+  // Split a free-text thesis into sentence bullets. Guards against splitting
+  // inside decimals/percentages (e.g. "VIX 23.18", "1.8%") and abbreviations —
+  // only breaks on ". " that is followed by a capital letter.
+  function _thesisBulletsHTML(txt){
+    const t=(''+(txt||'')).trim(); if(!t) return '';
+    const parts=t.replace(/([a-z0-9%)])\.\s+(?=[A-Z])/g,function(m,c){return c+'.|||';}).split('|||').map(function(s){return s.trim();}).filter(Boolean);
+    return '<ul class="bb-thesis">'+parts.map(s=>'<li>'+escHTML(s)+'</li>').join('')+'</ul>';
+  }
   function _bullBear(t){
-    // ── AI verdict (leads the card) ──
+    // ── AI thesis (leads the card) ──
     const bl=(t.bottom_line||'').trim(), th=(t.thesis||t.rationale||'').trim();
     const verdict=(bl||th)?
-      '<div class="bb-verdict"><div class="ai-read" id="aiThesisBody">'+(bl?escHTML(bl):'')+(bl?' <span class="ai-tag" id="aiThesisTag">live read loading…</span>':'')+'</div>'+
+      '<div class="bb-verdict">'+
+      (bl?'<div class="bb-thesis-h">AI Thesis</div>':'')+
+      '<div class="ai-read" id="aiThesisBody">'+(bl?_thesisBulletsHTML(bl)+'<span class="ai-tag" id="aiThesisTag">live read loading…</span>':'')+'</div>'+
       (th&&th.toLowerCase()!==bl.toLowerCase()?'<div class="ai-biz"><span class="ai-biz-k">Business</span> '+escHTML(th)+'</div>':'')+'</div>'
       :'';
     // ── Bull / bear evidence (formerly tailwinds & headwinds) ──
@@ -18523,7 +18538,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     fetch('/api/thesis/'+encodeURIComponent(tk)).then(r=>r.ok?r.json():null).then(d=>{
       const e=drawer.querySelector('#aiThesisBody'); if(!e) return;
       const txt=d&&(d.explanation||d.headline);
-      if(txt){ e.innerHTML=escHTML(txt)+' <span class="ai-tag ok">✦ AI · live</span>'; }
+      if(txt){ e.innerHTML=_thesisBulletsHTML(txt)+'<span class="ai-tag ok">✦ AI · live</span>'; }
       else { const tag=drawer.querySelector('#aiThesisTag'); if(tag) tag.remove(); }
     }).catch(()=>{ const tag=drawer.querySelector('#aiThesisTag'); if(tag) tag.remove(); });
   }
