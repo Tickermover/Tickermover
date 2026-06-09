@@ -5377,7 +5377,8 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 #ts-drawer .cat-ico{font-size:22px;flex:none}
 #ts-drawer .cat-k{font-family:'JetBrains Mono',monospace;font-size:8.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#7c3aed}
 #ts-drawer .cat-t{font-size:13.5px;font-weight:800;color:var(--ink);letter-spacing:-.01em;margin-top:1px}
-/* tailwinds & headwinds */
+/* bull vs bear */
+#ts-drawer .bb-verdict{margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid #e6edf6}
 #ts-drawer .winds-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px 16px}
 @media(max-width:640px){#ts-drawer .winds-grid{grid-template-columns:1fr}}
 #ts-drawer .winds-h{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:800;letter-spacing:.05em;margin-bottom:6px}
@@ -17328,7 +17329,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
   function _smaSeries(a,p){ const o=Array(a.length).fill(null); let s=0; for(let i=0;i<a.length;i++){ s+=a[i]; if(i>=p)s-=a[i-p]; if(i>=p-1)o[i]=s/p; } return o; }
   function _recoveryStats(cl){ const recs=[]; let pk=cl[0],pi=0,inDip=false; for(let i=1;i<cl.length;i++){ const c=cl[i]; if(c>=pk){ if(inDip){recs.push(i-pi);inDip=false;} pk=c;pi=i; } else if((pk-c)/pk>=0.08){ inDip=true; } } if(!recs.length)return null; recs.sort((a,b)=>a-b); return {n:recs.length, median:recs[Math.floor(recs.length/2)]}; }
   /* infographic report section wrapper */
-  const _SECMETA=[['Profitability','💰','green'],['Quarterly revenue','📊','blue'],['Quarterly','📊','blue'],['Valuation multiples','⚖️','amber'],['Valuation verdict','💎','amber'],['Analyst targets','🏦','blue'],['EPS surprise','📊','violet'],['Earnings summary','🎯','green'],['Momentum','⚡','blue'],['Volatility','🛡️','amber'],['Setup','📐','blue'],['Quote','💧','slate'],['Six pillars','📶','teal'],['Signals','✨','teal'],['Recent headlines','📰','slate'],['News','📰','slate'],['Peers','👥','violet']];
+  const _SECMETA=[['Profitability','💰','green'],['Quarterly revenue','📊','blue'],['Quarterly','📊','blue'],['Valuation multiples','⚖️','amber'],['Valuation verdict','💎','amber'],['Analyst targets','🏦','blue'],['EPS surprise','📊','violet'],['Earnings summary','🎯','green'],['Momentum','⚡','blue'],['Volatility','🛡️','amber'],['Setup','📐','blue'],['Quote','💧','slate'],['Six pillars','📶','teal'],['Signals','✨','teal'],['Bull vs bear','⚖️','teal'],['Recent headlines','📰','slate'],['News','📰','slate'],['Peers','👥','violet']];
   function _secMeta(title){ for(const m of _SECMETA){ if(title.indexOf(m[0])>=0) return m; } return [title,'•','slate']; }
   function _sec(title,icon,accent,body,span){ if(body==null||body==='') return ''; return '<div class="rep-sec rep-'+accent+(span?' rep-span':'')+'"><div class="rep-rib"><span class="rep-num"></span><span class="rep-ico">'+icon+'</span><span class="rep-title">'+title+'</span><span class="rep-wm">'+icon+'</span></div><div class="rep-body">'+body+'</div></div>'; }
   function _card(title,rows){ const r=(rows||[]).filter(Boolean); if(!r.length) return ''; const m=_secMeta(title); return _sec(title,m[1],m[2],r.join('')); }
@@ -17583,22 +17584,14 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     if(!rows.length) return '';
     return _sec('Quarterly trend','📊','slate',rows.join(''));
   }
-  function _aiThesis(t){
+  function _bullBear(t){
+    // ── AI verdict (leads the card) ──
     const bl=(t.bottom_line||'').trim(), th=(t.thesis||t.rationale||'').trim();
-    if(!bl&&!th) return '';
-    const body='<div class="ai-read" id="aiThesisBody">'+(bl?escHTML(bl):'')+(bl?' <span class="ai-tag" id="aiThesisTag">live read loading…</span>':'')+'</div>'+
-      (th&&th.toLowerCase()!==bl.toLowerCase()?'<div class="ai-biz"><span class="ai-biz-k">Business</span> '+escHTML(th)+'</div>':'');
-    return _sec('AI thesis','✦','violet',body);
-  }
-  function _catalystCard(t){
-    const kt=(typeof keyTrigger==='function')?keyTrigger(t):null;
-    const days=parseInt(t.days_to_earnings);
-    const item=(kt&&kt.text&&!/no major catalyst|within tracking|steady state/i.test(kt.text))?kt
-      :((!isNaN(days)&&days>=0&&days<=21)?{icon:'📅',text:'Earnings in '+days+' day'+(days==1?'':'s')+' — potential catalyst'}:null);
-    if(!item) return '';
-    return '<div class="dr-catalyst"><span class="cat-ico">'+item.icon+'</span><div class="cat-body"><div class="cat-k">Primary catalyst</div><div class="cat-t">'+escHTML(item.text)+'</div></div></div>';
-  }
-  function _windsCard(t){
+    const verdict=(bl||th)?
+      '<div class="bb-verdict"><div class="ai-read" id="aiThesisBody">'+(bl?escHTML(bl):'')+(bl?' <span class="ai-tag" id="aiThesisTag">live read loading…</span>':'')+'</div>'+
+      (th&&th.toLowerCase()!==bl.toLowerCase()?'<div class="ai-biz"><span class="ai-biz-k">Business</span> '+escHTML(th)+'</div>':'')+'</div>'
+      :'';
+    // ── Bull / bear evidence (formerly tailwinds & headwinds) ──
     const tw=[], hw=[], sigs=(t.signals||[]);
     sigs.forEach(s=>{ if(!/overbought|oversold|short interest|caution|risk|below|fell|miss|warn|contract/i.test(s)) tw.push(s); });
     const beat=parseInt(t.eps_beat_streak)||0; if(beat>=3) tw.push('Beat EPS '+beat+'/4 recent quarters');
@@ -17613,9 +17606,18 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     const px=parseFloat(t.price), tm=parseFloat(t.target_mean); if(px&&tm&&px>tm) hw.push('Trades above analyst mean target');
     const uniq=a=>[...new Set(a.map(x=>(''+x).trim()).filter(Boolean))].slice(0,5);
     const T=uniq(tw), H=uniq(hw);
-    if(!T.length&&!H.length) return '';
     const col=(title,arr,cls,ico)=>'<div class="winds-col"><div class="winds-h '+cls+'">'+ico+' '+title+'</div>'+(arr.length?arr.map(x=>'<div class="wind-row '+cls+'">'+escHTML(x)+'</div>').join(''):'<div class="wind-row muted">None flagged</div>')+'</div>';
-    return _sec('Tailwinds & headwinds','⚖️','teal','<div class="winds-grid">'+col('Tailwinds',T,'tw','▲')+col('Headwinds',H,'hw','▼')+'</div>');
+    const grid=(T.length||H.length)?'<div class="winds-grid">'+col('Bull case',T,'tw','▲')+col('Bear case',H,'hw','▼')+'</div>':'';
+    if(!verdict&&!grid) return '';
+    return _sec('Bull vs bear','⚖️','teal',verdict+grid);
+  }
+  function _catalystCard(t){
+    const kt=(typeof keyTrigger==='function')?keyTrigger(t):null;
+    const days=parseInt(t.days_to_earnings);
+    const item=(kt&&kt.text&&!/no major catalyst|within tracking|steady state/i.test(kt.text))?kt
+      :((!isNaN(days)&&days>=0&&days<=21)?{icon:'📅',text:'Earnings in '+days+' day'+(days==1?'':'s')+' — potential catalyst'}:null);
+    if(!item) return '';
+    return '<div class="dr-catalyst"><span class="cat-ico">'+item.icon+'</span><div class="cat-body"><div class="cat-k">Primary catalyst</div><div class="cat-t">'+escHTML(item.text)+'</div></div></div>';
   }
   function _keyEvents(t){
     const rows=[]; const days=parseInt(t.days_to_earnings), rev=t.eps_revisions_30d, beat=parseInt(t.eps_beat_streak)||0;
@@ -17857,7 +17859,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     '</div>';
     const edgeCard=(_rs!=null||_blue||_confPct!=null)?_sec('The AlphaHunt edge','⚡','violet',_edgeBody):'';
     // consensus + pre/after-hours badges → verdict → six-pillar tiles → catalyst → chart → rest.
-    return _consensusChip(full)+_premktBadge(full)+verdict+_heroStats(t,S,full)+_catalystCard(full)+chart+_aiThesis(full)+setup+_windsCard(full)+rebound+edgeCard+_keyEvents(full);
+    return _consensusChip(full)+_premktBadge(full)+verdict+_heroStats(t,S,full)+_catalystCard(full)+chart+_bullBear(full)+setup+rebound+edgeCard+_keyEvents(full);
   }
   function paneTechnicals(t,S){
     const m1=_fpNum(t,['momentum_1m']),m3=_fpNum(t,['momentum_3m']),m6=_fpNum(t,['momentum_6m']);
