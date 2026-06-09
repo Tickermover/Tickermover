@@ -4904,7 +4904,7 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 #panel-hot .dm-row[data-row]{animation:tsah-deal .45s ease both}
 @media(prefers-reduced-motion:reduce){#panel-hot .wrap>*,
 #panel-hot .dm-row[data-row]{animation:none!important}}
-#panel-hot .wrap{padding:26px 26px 70px;max-width:1320px;width:100%;margin:0 auto;display:flex;flex-direction:column;gap:26px}
+#panel-hot .wrap{padding:26px 0 70px;max-width:1320px;width:100%;margin:0 auto;display:flex;flex-direction:column;gap:26px}
 #panel-hot .pg-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap}
 #panel-hot .pg-title{font-size:27px;font-weight:700;letter-spacing:-.02em;color:var(--ink)}
 #panel-hot .pg-title .em{background:var(--blue-grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
@@ -5942,6 +5942,9 @@ body.v2 .v2-content .panel.active:not(#panel-market){
   max-width:1268px;
   margin:8px auto 26px;
 }
+/* Radar panel: zero the side padding so its card boxes line up flush with the
+   floating topbar's box edges (the topbar already sits at this same width). */
+body.v2 .v2-content #panel-hot.panel.active{padding-left:0;padding-right:0}
 /* 4 · Cards are near-solid white panes floating on the atmosphere (no frosted backing now) */
 body.v2 .card, body.v2 .hot-card, body.v2 .alloc-card, body.v2 .risk-card,
 body.v2 .news-card, body.v2 .sm-card, body.v2 .fund-list-wrap, body.v2 .v2-track,
