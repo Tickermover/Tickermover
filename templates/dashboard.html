@@ -24,7 +24,7 @@
 <!-- Premium typography: Inter for UI, JetBrains Mono for tabular numbers -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,500;1,600&family=Plus+Jakarta+Sans:ital,wght@0,500;0,600;0,700;0,800;1,600;1,700;1,800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,500;1,600&family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500;1,9..144,600;1,9..144,700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <!-- Auth gate: synchronously detect signup-flow URL param BEFORE any rendering
      so the dashboard never flashes behind the auth modal on the way in from
      the landing page. The class is removed by the auth code once resolved. -->
@@ -77,10 +77,10 @@
      maximum readability. Body background flips to pure black with subtle
      amber light-rays. Every accent collapses to the amber/gold family. */
   /* ── Type system ──────────────────────────────────────────────────────
-     Headings: Plus Jakarta Sans (geometric, premium). Body / UI: Inter
-     (data-product legibility). Numbers: JetBrains Mono (tabular). One voice
-     per role — change a font here and it updates everywhere via var(). */
-  --font-head:'Plus Jakarta Sans','Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+     Headings: Fraunces (editorial serif). Body / UI: Inter (data-product
+     legibility). Numbers: JetBrains Mono (tabular). One voice per role —
+     change a font here and it updates everywhere via var(). */
+  --font-head:'Fraunces',Georgia,'Times New Roman',serif;
   --font-body:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
   --font-mono:'JetBrains Mono','Inter',ui-monospace,SFMono-Regular,Menlo,monospace;
   --bg:#0A0A0A;
@@ -211,10 +211,10 @@ table,th,td{
 .main{padding:24px 32px;max-width:1800px;margin:0 auto}
 .panel{display:none}.panel.active{display:block}
 
-/* Reusable page header for in-app panels — Plus Jakarta Sans (var(--font-head))
+/* Reusable page header for in-app panels — Fraunces serif (var(--font-head))
    with an italic gradient accent on the emphasised word. */
 .panel-header{margin:0 0 22px;display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap}
-.panel-h-title{font-family:var(--font-head);font-weight:700;font-size:30px;color:#0A0A0A;letter-spacing:-.025em;line-height:1.1}
+.panel-h-title{font-family:var(--font-head);font-weight:500;font-size:30px;color:#0A0A0A;letter-spacing:-.025em;line-height:1.1}
 .panel-h-title em{font-style:italic;background:linear-gradient(120deg,#2970ff 0%,#0042c5 60%,#00359e 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
 .panel-h-sub{font-family:var(--font-body);font-size:13.5px;color:#475569;margin-top:6px;font-weight:500}
 .panel-h-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
@@ -539,8 +539,8 @@ tr:hover td{background:rgba(245,166,35,.06)}
 .fd-card{background:var(--surf);border:1px solid var(--bdr);border-radius:14px;padding:16px}
 .fd-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
 /* Ticker symbol — used in fund cards AND the stock detail modal head.
-   Heading treatment in Plus Jakarta Sans (var(--font-head)). */
-.fd-tic{font-family:var(--font-head);font-size:32px;font-weight:700;color:#0A0A0A;letter-spacing:-.02em;line-height:1}
+   Heading treatment in Fraunces serif (var(--font-head)). */
+.fd-tic{font-family:var(--font-head);font-size:32px;font-weight:500;color:#0A0A0A;letter-spacing:-.02em;line-height:1}
 .fd-co{font-size:12px;color:#374151;margin-top:3px;margin-bottom:8px}
 .fd-price{font-size:20px;font-weight:800;text-align:right}
 .fd-price.fd-price-xl{font-size:30px;font-weight:900;letter-spacing:-.01em;line-height:1.1}
@@ -2076,7 +2076,7 @@ body.v2 .v2ov-card.sectors .v2ov-sector-cell{
   min-height:60px;
 }
 .v2ov-card-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px;gap:12px;flex-wrap:wrap}
-/* Card titles — Plus Jakarta Sans heading voice, same as the landing
+/* Card titles — Fraunces serif heading voice, same as the landing
    page section titles and /report headlines. The whole site speaks
    one language now. */
 .v2ov-title{font-family:var(--font-head);font-weight:500;font-size:20px;color:#0A0A0A;letter-spacing:-.015em;line-height:1.15}
