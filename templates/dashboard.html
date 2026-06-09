@@ -15623,6 +15623,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
   // Authed user — make sure the gate class isn't hanging around
   document.documentElement.classList.remove('auth-gating');
+  // First-time registration → welcome animation + name + risk profile.
+  try { maybeRunOnboarding(); } catch(e){}
 });
 
 
@@ -16069,12 +16071,73 @@ async function signupFinish() {
     _AUTH.user = { id: userObj.id || null, email: userObj.email || email, name };
     _authUpdateUI(_AUTH.user);
     _scheduleTokenRefresh();
-    // Show success screen
-    _switchAuthView('success');
+    // First-time registration → welcome animation + name, then risk profile.
+    startOnboarding(name);
   } catch(e) {
     err.textContent = 'Network error — try again';
     btn.disabled=false; btn.textContent='Create My Account 🎉';
   }
+}
+
+// ── First-time onboarding (registration only) ─────────────────────────────
+// Welcome animation → ask the user's name → open the risk-profile quiz.
+// Reached ONLY from signupFinish(), and guarded by a localStorage flag so it
+// never shows again (returning logins skip it entirely).
+function startOnboarding(name) {
+  try { if (localStorage.getItem('ah_onboarding_completed') === '1') { closeAuthModal(); return; } } catch(e){}
+  _switchAuthView('onboard');
+  const input = document.getElementById('ah-ob-name');
+  if (input) { input.value = (name || '').trim(); setTimeout(() => { try { input.focus(); } catch(e){} }, 700); }
+  _obTypewrite(document.getElementById('ah-ob-type'), 'Welcome to AlphaHunt');
+}
+// Lightweight typewriter for the welcome headline (respects reduced-motion).
+function _obTypewrite(el, text) {
+  if (!el) return;
+  const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (reduce) { el.textContent = text; return; }
+  el.textContent = '';
+  let i = 0;
+  (function tick(){
+    if (i > text.length) return;
+    el.textContent = text.slice(0, i++);
+    setTimeout(tick, 55);
+  })();
+}
+function onboardNameNext() {
+  const input = document.getElementById('ah-ob-name');
+  const err   = document.getElementById('ah-ob-error');
+  const name  = (input && input.value.trim()) || '';
+  if (!name) { if (err) err.textContent = 'Please enter your name to continue.'; if (input) { try { input.focus(); } catch(e){} } return; }
+  if (err) err.textContent = '';
+  // Persist the name and reflect it in the UI.
+  try { localStorage.setItem('ah_name', name); } catch(e){}
+  if (typeof _AUTH === 'object' && _AUTH && _AUTH.user) { _AUTH.user.name = name; try { _authUpdateUI(_AUTH.user); } catch(e){} }
+  // Mark onboarding done so the welcome step never reappears.
+  try { localStorage.setItem('ah_onboarding_completed', '1'); } catch(e){}
+  // Reveal the dashboard (drop the load-time gate), then prompt for the risk profile.
+  try { document.documentElement.classList.remove('auth-gating'); } catch(e){}
+  closeAuthModal();
+  if (typeof v2OpenRiskQuiz === 'function') setTimeout(v2OpenRiskQuiz, 120);
+}
+// On /app load: if the user just registered (flagged on /login) and hasn't been
+// onboarded, surface the welcome + name step over the dashboard, then the quiz.
+function maybeRunOnboarding() {
+  try {
+    if (!_AUTH || !_AUTH.token) return;
+    if (localStorage.getItem('ah_onboarding_completed') === '1') return;
+    if (localStorage.getItem('ah_just_registered') !== '1') return;
+    localStorage.removeItem('ah_just_registered');
+  } catch(e){ return; }
+  const m = document.getElementById('auth-modal');
+  if (m) {                       // reveal the modal shell (matches openAuthModal)
+    m.style.display = 'flex';
+    document.documentElement.style.overflow = 'hidden';
+    document.body.style.overflow = 'hidden';
+  }
+  try { if (typeof _ahLoadHotStrip === 'function') _ahLoadHotStrip(); } catch(e){}
+  let pre = '';
+  try { pre = localStorage.getItem('ah_name') || ''; } catch(e){}
+  startOnboarding(pre);
 }
 
 // ── Forgot-password flow ──
@@ -16912,6 +16975,33 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
       <div class="ah-form-title" style="color:#FFC75F;margin-bottom:10px">You're in!</div>
       <div class="ah-form-sub" style="margin-bottom:28px">Welcome to AlphaHunt. Start hunting alpha right now.</div>
       <button class="ah-submit" onclick="closeAuthModal()">Open Dashboard →</button>
+    </div>
+
+    <!-- ── FIRST-TIME ONBOARDING: welcome animation + name ── -->
+    <style>
+      #ah-view-onboard{text-align:center;padding:8px 0 4px}
+      #ah-view-onboard .ah-ob-wave{font-size:46px;display:inline-block;transform-origin:70% 70%;animation:ahObPop .45s ease both,ahObWave 1.7s ease-in-out .45s 3}
+      @keyframes ahObPop{from{opacity:0;transform:scale(.5)}to{opacity:1;transform:scale(1)}}
+      @keyframes ahObWave{0%,100%{transform:rotate(0)}15%{transform:rotate(16deg)}30%{transform:rotate(-10deg)}45%{transform:rotate(14deg)}60%{transform:rotate(-6deg)}75%{transform:rotate(8deg)}}
+      #ah-view-onboard .ah-ob-title{font-family:var(--font-head,'Fraunces',serif);font-weight:500;font-size:27px;color:#0A0A0A;letter-spacing:-.02em;line-height:1.15;min-height:34px;margin:12px 0 4px}
+      #ah-view-onboard .ah-ob-caret{display:inline-block;width:2px;height:.95em;background:#2970ff;margin-left:2px;vertical-align:-2px;animation:ahObCaret 1s step-end infinite}
+      @keyframes ahObCaret{50%{opacity:0}}
+      #ah-view-onboard .ah-ob-sub{color:#5d6c7b;font-size:14px;margin-bottom:22px;opacity:0;animation:ahObUp .5s ease .55s both}
+      #ah-view-onboard .ah-ob-q{display:block;text-align:left;font-weight:700;font-size:13px;color:#0A0A0A;margin-bottom:8px;opacity:0;animation:ahObUp .5s ease .75s both}
+      #ah-view-onboard .ah-ob-input{width:100%;box-sizing:border-box;padding:13px 15px;font-size:15px;font-family:var(--font-body,'Inter',sans-serif);border:1px solid #d7dee8;border-radius:12px;background:#fff;color:#0A0A0A;margin-bottom:10px;outline:none;opacity:0;animation:ahObUp .5s ease .85s both;transition:border-color .15s,box-shadow .15s}
+      #ah-view-onboard .ah-ob-input:focus{border-color:#2970ff;box-shadow:0 0 0 3px rgba(41,112,255,.14)}
+      #ah-view-onboard .ah-submit{opacity:0;animation:ahObUp .5s ease 1s both}
+      @keyframes ahObUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+    </style>
+    <div id="ah-view-onboard" class="ah-view">
+      <span class="ah-ob-wave" aria-hidden="true">👋</span>
+      <div class="ah-ob-title"><span id="ah-ob-type"></span><span class="ah-ob-caret"></span></div>
+      <div class="ah-ob-sub">Let's get you set up — it takes 20 seconds.</div>
+      <label class="ah-ob-q" for="ah-ob-name">What should we call you?</label>
+      <input id="ah-ob-name" class="ah-ob-input" type="text" maxlength="40" autocomplete="given-name"
+             placeholder="Your first name" onkeydown="if(event.key==='Enter'){event.preventDefault();onboardNameNext();}">
+      <div id="ah-ob-error" class="ah-err" style="text-align:center;margin-bottom:6px"></div>
+      <button class="ah-submit" onclick="onboardNameNext()">Continue →</button>
     </div>
 
     <!-- Terms (real links + first-time disclosure)

@@ -351,6 +351,8 @@ async function authSubmit(){
       if(newUser){
         res=await hit('/api/auth/signup');
         if(!res.ok){ showMsg(res.data.detail||'Could not create account — try again','err'); reset(); return; }
+        // First-time registration → let /app run the welcome + risk-profile onboarding.
+        try{ localStorage.setItem('ah_just_registered','1'); }catch(e){}
       } else { showMsg(res.data.detail||'Authentication failed','err'); reset(); return; }
     }
     const d=res.data;
