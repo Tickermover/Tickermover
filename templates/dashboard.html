@@ -5226,7 +5226,8 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 #ts-drawer .hs::before{content:'';position:absolute;left:0;right:0;top:0;height:3px}
 #ts-drawer .hs-l{font-size:9px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#94a3b8}
 #ts-drawer .hs-v{font-family:'JetBrains Mono',monospace;font-size:25px;font-weight:800;line-height:1.02;color:#0f172a;font-variant-numeric:tabular-nums;margin-top:2px}
-#ts-drawer .hs-sub{font-size:10.5px;font-weight:700;color:#64748b;margin-top:1px}
+#ts-drawer .hs-sub{font-size:11px;font-weight:700;color:#475569;margin-top:2px;line-height:1.25}
+#ts-drawer .hs-cap{display:block;font-size:9px;font-weight:600;color:#94a3b8;margin-top:2px;line-height:1.3}
 #ts-drawer .hs-pos::before{background:linear-gradient(90deg,#16a34a,#22c55e)} #ts-drawer .hs-pos .hs-sub{color:#15803d}
 #ts-drawer .hs-neg::before{background:linear-gradient(90deg,#e11d48,#fb7185)} #ts-drawer .hs-neg .hs-sub{color:#be123c}
 #ts-drawer .hs-warn::before{background:linear-gradient(90deg,#e08600,#f59e0b)} #ts-drawer .hs-warn .hs-sub{color:#b4780a}
@@ -5242,9 +5243,12 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 #ts-drawer .dv-tags{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:12px}
 #ts-drawer .dv-tg-k{font-size:9px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#94a3b8;margin-right:1px}
 #ts-drawer .dv-tg-k:not(:first-child){margin-left:8px}
-#ts-drawer .dv-tg{font-size:11.5px;font-weight:700;border-radius:8px;padding:4px 11px;display:inline-flex;align-items:center;border:1px solid transparent;white-space:nowrap}
-#ts-drawer .dv-tg-idx{background:rgba(41,112,255,.10);color:#0040c1;border-color:rgba(41,112,255,.2)}
-#ts-drawer .dv-tg-th{background:rgba(124,58,237,.10);color:#6d28d9;border-color:rgba(124,58,237,.2)}
+#ts-drawer .dv-tg{font-size:11.5px;font-weight:800;border-radius:8px;padding:4px 11px;display:inline-flex;align-items:center;background:#fff;border:1px solid #e2e8f0;color:#334155;white-space:nowrap;box-shadow:0 1px 2px rgba(20,40,90,.05)}
+#ts-drawer .dv-tg-idx{color:#0040c1;border-color:rgba(41,112,255,.38)}
+#ts-drawer .dv-tg-th{color:#6d28d9;border-color:rgba(124,58,237,.38)}
+#ts-drawer .dv-style-conservative{color:#15803d;border-color:rgba(21,128,61,.42)}
+#ts-drawer .dv-style-balanced{color:#0040c1;border-color:rgba(0,64,193,.42)}
+#ts-drawer .dv-style-aggressive{color:#c2410c;border-color:rgba(194,65,12,.42)}
 /* valuation gauge (still used by the analyst-consensus card) */
 #ts-drawer .gauge-wrap{display:flex;justify-content:center;padding:2px 0}
 #ts-drawer .gauge-svg{width:210px;height:122px;max-width:100%}
@@ -17527,15 +17531,28 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
   function _sparkSVG(vals,color){ if(!vals||vals.length<2)return ''; const W=120,H=30,mn=Math.min.apply(null,vals),mx=Math.max.apply(null,vals),rng=(mx-mn)||1; const pts=vals.map((v,i)=>[(i/(vals.length-1))*W,H-((v-mn)/rng)*(H-4)-2]); return '<svg viewBox="0 0 '+W+' '+H+'" class="spark-svg" preserveAspectRatio="none"><polyline points="'+pts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ')+'" fill="none" stroke="'+color+'" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="'+pts[pts.length-1][0].toFixed(1)+'" cy="'+pts[pts.length-1][1].toFixed(1)+'" r="2.6" fill="'+color+'"/></svg>'; }
   function _barSVG(vals,color){ if(!vals||!vals.length)return ''; const W=120,H=34,n=vals.length,mn=Math.min(0,Math.min.apply(null,vals)),mx=Math.max.apply(null,vals)||1,rng=(mx-mn)||1,step=W/n,bw=Math.max(3,step-3); let bars=''; for(let i=0;i<n;i++){ const v=vals[i],h=Math.max(1.5,((v-mn)/rng)*(H-3)),xx=i*step+(step-bw)/2,yy=H-h,last=i===n-1; bars+='<rect x="'+xx.toFixed(1)+'" y="'+yy.toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+h.toFixed(1)+'" rx="1.4" fill="'+color+'" fill-opacity="'+(last?'1':'.42')+'"/>'; } return '<svg viewBox="0 0 '+W+' '+H+'" class="bar-svg" preserveAspectRatio="none">'+bars+'</svg>'; }
   function _heroStats(t,S,full){
-    /* The six pillars as modern at-a-glance tiles (replaces the radar). Each:
-       label · score · qualitative read · a mini 0-100 bar. */
+    /* Six pillars as at-a-glance tiles. Each: label · score · a PLAIN-ENGLISH
+       read of what that score means for the user · a tiny what-it-measures
+       caption · a 0-100 bar. */
     const pl=computePillars(t);
     if(!pl || pl.filter(v=>v!=null).length<3) return '';
-    const word=v=> v>=70?'Strong':v>=50?'Solid':v>=35?'Soft':'Weak';
     const tone=v=> v>=65?'pos':v>=45?'neu':'warn';
+    // [<35, 35-49, 50-69, 70+] plain reads, tuned per pillar (Risk: high score = low risk)
+    const READS={
+      Momentum:['In a downtrend','Losing steam','Drifting higher','Trending up strong'],
+      Growth:['Barely growing','Slow growth','Growing steadily','Fast-growing'],
+      Quality:['Shaky books','Some weak spots','Solid fundamentals','High quality'],
+      Valuation:['Expensive','Getting pricey','Fairly priced','Looks cheap'],
+      Sentiment:['Out of favour','Mixed views','Positive mood','Market favourite'],
+      Risk:['High risk','Above-avg risk','Moderate risk','Low risk']
+    };
+    const CAP={Momentum:'price trend',Growth:'sales & profit growth',Quality:'profitability & balance sheet',
+      Valuation:'is the price fair?',Sentiment:'analyst & crowd mood',Risk:'volatility & downside'};
+    const read=(lab,v)=>{ const a=READS[lab]||['Weak','Soft','Solid','Strong']; return a[v>=70?3:v>=50?2:v>=35?1:0]; };
     return '<div class="hero-stats pillar-stats">'+pl.map((v,i)=> v==null?'' :
       '<div class="hs hs-'+tone(v)+'"><span class="hs-l">'+PILLAR_LABELS[i]+'</span>'+
-      '<span class="hs-v">'+v+'</span><span class="hs-sub">'+word(v)+'</span>'+
+      '<span class="hs-v">'+v+'</span><span class="hs-sub">'+read(PILLAR_LABELS[i],v)+'</span>'+
+      '<span class="hs-cap">'+(CAP[PILLAR_LABELS[i]]||'')+'</span>'+
       '<span class="hs-bar"><span class="hs-bar-f" style="width:'+Math.max(3,v)+'%"></span></span></div>').join('')+'</div>';
   }
   function _trendCard(t){
@@ -17645,14 +17662,23 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     const tm=_fpNum(full,['target_mean','street_target']); const upside=(price&&tm)?((tm-price)/price*100):null;
     // Key context for the verdict card
     const _kt=keyTrigger(full); const thesis=(full.rationale?String(full.rationale).replace(/^💡\s*/,''):((_kt&&_kt.text)||''));
-    const sector=full.sub_sector||full.subsector||full.sector||'';
-    // Index membership + theme (replaces the old target/mkt-cap/RS/52w chip row)
+    // Index membership · theme · style — read from the universe row (t) first,
+    // since the detail object (full) doesn't always carry indices/profiles.
+    const _arr=(o,k)=> (o && Array.isArray(o[k]) && o[k].length) ? o[k] : null;
+    const sector=full.sub_sector||full.subsector||full.sector||t.sub_sector||t.subsector||t.sector||'';
     const _idxName=i=>({DJI:'Dow 30',NDX:'Nasdaq 100',SPX:'S&P 500',RUT:'Russell 2000'}[i]||i);
-    const indices=Array.isArray(full.indices)?full.indices:[];
+    const _profName={conservative:'Conservative',balanced:'Balanced',aggressive:'Aggressive'};
+    const indices = _arr(t,'indices') || _arr(full,'indices') || [];
+    const profiles = _arr(t,'profiles') || _arr(full,'profiles') || [];
     const idxTags=indices.slice(0,4).map(i=>'<span class="dv-tg dv-tg-idx">'+escHTML(_idxName(String(i)))+'</span>').join('');
     const themeTag=sector?'<span class="dv-tg dv-tg-th">'+escHTML(sector)+'</span>':'';
-    const tagsRow=(idxTags||themeTag)
-      ? '<div class="dv-tags">'+(idxTags?'<span class="dv-tg-k">Index</span>'+idxTags:'')+(themeTag?'<span class="dv-tg-k">Theme</span>'+themeTag:'')+'</div>'
+    const profTags=profiles.map(p=>'<span class="dv-tg dv-tg-style dv-style-'+escHTML(String(p))+'">'+escHTML(_profName[p]||p)+'</span>').join('');
+    const tagsRow=(idxTags||themeTag||profTags)
+      ? '<div class="dv-tags">'
+        +(idxTags ?'<span class="dv-tg-k">Index</span>'+idxTags:'')
+        +(themeTag?'<span class="dv-tg-k">Theme</span>'+themeTag:'')
+        +(profTags?'<span class="dv-tg-k">Style</span>'+profTags:'')
+        +'</div>'
       : '';
     const verdict=
       '<div class="dr-call dr-call-'+TI[2]+' dv-strip"><div class="dr-call-top">'+
