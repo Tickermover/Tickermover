@@ -579,7 +579,7 @@ tr:hover td{background:rgba(245,166,35,.06)}
 .dd-sources a:hover{text-decoration:underline}
 
 /* ════════ FULL STOCK SHEET (light · brand-blue · tabbed, full-screen) ════════ */
-.ssx-overlay{position:fixed;inset:0;z-index:10000;display:none;background:#fcece2 url('/static/desk-bg.jpg') center center / cover no-repeat fixed;overflow-y:auto;
+.ssx-overlay{position:fixed;inset:0;z-index:10000;display:none;background:#cfeae8 url('/static/app-bg.jpg') center center / cover no-repeat fixed;overflow-y:auto;
   --blue:#0040c1;--blue-2:#2970ff;--blue-grad:linear-gradient(120deg,#2970ff 0%,#0042c5 55%,#00359e 100%);
   --up:#16a34a;--down:#ea384c;--ink:#0f172a;--ink-2:#1e293b;--muted:#5d6c7b;--muted-2:#94a3b8;
   --hair:rgba(9,9,9,.07);--hair-2:rgba(9,9,9,.10);
@@ -594,9 +594,9 @@ tr:hover td{background:rgba(245,166,35,.06)}
   backdrop-filter:blur(30px) saturate(160%);
   border:1px solid rgba(255,255,255,.55);
   box-shadow:0 40px 90px -30px rgba(50,35,90,.5)}
-@supports (background-image: image-set(url('/static/desk-bg.webp') type('image/webp'))){
-  .ssx-overlay{background-image:image-set(url('/static/desk-bg.webp') type('image/webp'),
-                                          url('/static/desk-bg.jpg')  type('image/jpeg'))}
+@supports (background-image: image-set(url('/static/app-bg.webp') type('image/webp'))){
+  .ssx-overlay{background-image:image-set(url('/static/app-bg.webp') type('image/webp'),
+                                          url('/static/app-bg.jpg')  type('image/jpeg'))}
 }
 .ssx-mono{font-family:'JetBrains Mono',monospace;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
 .ssx-up{color:var(--up)} .ssx-dn{color:var(--down)}
@@ -4970,9 +4970,9 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
    by the scrolling content container; matched selectors below. */
 /* Scrim carries the pastel wave (the main-app backdrop) so the frosted drawer
    frosts a PASTEL surface, not a dark scrim. */
-#ts-scrim{position:fixed;inset:0;background:#fcece2 url('/static/desk-bg.jpg') center center / cover no-repeat fixed;opacity:0;pointer-events:none;transition:opacity .22s;z-index:600}
-@supports (background-image: image-set(url('/static/desk-bg.webp') type('image/webp'))){
-  #ts-scrim{background-image:image-set(url('/static/desk-bg.webp') type('image/webp'),url('/static/desk-bg.jpg') type('image/jpeg'))}
+#ts-scrim{position:fixed;inset:0;background:#cfeae8 url('/static/app-bg.jpg') center center / cover no-repeat fixed;opacity:0;pointer-events:none;transition:opacity .22s;z-index:600}
+@supports (background-image: image-set(url('/static/app-bg.webp') type('image/webp'))){
+  #ts-scrim{background-image:image-set(url('/static/app-bg.webp') type('image/webp'),url('/static/app-bg.jpg') type('image/jpeg'))}
 }
 #ts-scrim.open{opacity:1;pointer-events:auto}
 #ts-drawer{position:fixed;top:0;right:0;height:100vh;width:min(460px,92vw);background:rgba(255,255,255,.42);-webkit-backdrop-filter:blur(34px) saturate(160%);backdrop-filter:blur(34px) saturate(160%);z-index:601;font-family:'Instrument Sans',system-ui,sans-serif;
@@ -5868,7 +5868,7 @@ html.v2-dark body.v2 .v2-content:has(#panel-hot.active),
 html.v2-dark body.v2.ts-active .v2-content,
 html.v2-dark body.v2 .v2-content,
 body.v2 .v2-content{
-  background:#2bbcc4 url('/static/app-bg.jpg') center center / cover no-repeat fixed !important;
+  background:#cfeae8 url('/static/app-bg.jpg') center center / cover no-repeat fixed !important;
 }
 @supports (background-image: image-set(url('/static/app-bg.webp') type('image/webp'))){
   html.v2-dark body.v2 .v2-content:has(#panel-hot.active),
