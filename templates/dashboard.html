@@ -5399,6 +5399,13 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 #ts-drawer .bb-list.tw li{color:#15803d} #ts-drawer .bb-list.tw li::marker{color:#16a34a}
 #ts-drawer .bb-list.hw li{color:#b91c1c} #ts-drawer .bb-list.hw li::marker{color:#e11d48}
 #ts-drawer .bb-aitag{font-family:'JetBrains Mono',monospace;font-size:8.5px;font-weight:800;letter-spacing:.04em;color:#6d28d9;background:rgba(124,58,237,.1);border:1px solid rgba(124,58,237,.22);border-radius:5px;padding:1px 5px;margin-left:5px;vertical-align:middle}
+/* Compact by default: clamp each case column to the first 3 bullets; the
+   Show-more toggle adds .bb-open to reveal the rest (kept more specific so it
+   wins over the clamp rule). */
+#ts-drawer .bb-list.bb-clamp li:nth-child(n+4){display:none}
+#ts-drawer .bb-list.bb-clamp.bb-open li:nth-child(n+4){display:list-item}
+#ts-drawer .bb-more{margin:3px 0 0;padding:0;background:none;border:0;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:800;letter-spacing:.04em;color:#6d28d9}
+#ts-drawer .bb-more:hover{text-decoration:underline}
 /* key events */
 #ts-drawer .events-card .ev-row{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid #f1f5f9}
 #ts-drawer .events-card .ev-row:last-child{border:0}
@@ -17664,7 +17671,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     const px=parseFloat(t.price), tm=parseFloat(t.target_mean); if(px&&tm&&px>tm) hw.push('Trades above analyst mean target');
     const uniq=a=>[...new Set(a.map(x=>(''+x).trim()).filter(Boolean))].slice(0,5);
     const T=uniq(tw), H=uniq(hw);
-    const col=(title,arr,cls,ico,id)=>'<div class="winds-col"><div class="winds-h '+cls+'">'+ico+' '+title+'</div><ul class="bb-list '+cls+'" id="'+id+'">'+(arr.length?arr.map(x=>'<li>'+escHTML(x)+'</li>').join(''):'<li class="muted">None flagged</li>')+'</ul></div>';
+    const col=(title,arr,cls,ico,id)=>'<div class="winds-col"><div class="winds-h '+cls+'">'+ico+' '+title+'</div><ul class="bb-list bb-clamp '+cls+'" id="'+id+'">'+(arr.length?arr.map(x=>'<li>'+escHTML(x)+'</li>').join(''):'<li class="muted">None flagged</li>')+'</ul><button class="bb-more" type="button" hidden onclick="_bbToggle(this)">Show more</button></div>';
     // Columns are seeded with quick heuristic points, then replaced with the
     // deep AI case-for/against once /api/thesis resolves (see tsLoadThesis).
     const grid='<div class="winds-grid">'+col('The case for',T,'tw','▲','bbForList')+col('The case against',H,'hw','▼','bbAgainstList')+'</div>';
@@ -18575,6 +18582,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     tsShowTab(_drState.tab||'Overview');
     try{ _drNavBuild(); }catch(e){}
     requestAnimationFrame(()=>requestAnimationFrame(()=>{ dd.querySelectorAll('.pf,.reb-fill').forEach(el=>{el.style.width=el.getAttribute('data-w')+'%';}); tsDrawChartEl(); }));
+    _bbSyncAll();
     tsLoadThesis(t.ticker);
   }
   // Replace a case-for/against column's bullets with the AI thesis output.
@@ -18586,6 +18594,24 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     const h=el.parentElement&&el.parentElement.querySelector('.winds-h');
     if(h&&!h.querySelector('.bb-aitag')) h.insertAdjacentHTML('beforeend',' <span class="bb-aitag">✦ AI</span>');
   }
+  // Keep each case column compact: show the top 3 bullets, reveal the rest via
+  // a "Show N more" toggle so the card matches the height of its neighbours.
+  const _BB_KEEP=3;
+  function _bbSync(id){
+    const ul=drawer.querySelector('#'+id); if(!ul) return;
+    const btn=ul.parentElement&&ul.parentElement.querySelector('.bb-more'); if(!btn) return;
+    const n=ul.querySelectorAll('li:not(.muted)').length;
+    if(n<=_BB_KEEP){ ul.classList.remove('bb-clamp','bb-open'); btn.hidden=true; return; }
+    ul.classList.add('bb-clamp'); btn.hidden=false;
+    btn.textContent=ul.classList.contains('bb-open')?'Show less':('Show '+(n-_BB_KEEP)+' more');
+  }
+  function _bbSyncAll(){ _bbSync('bbForList'); _bbSync('bbAgainstList'); }
+  window._bbToggle=function(btn){
+    const ul=btn.parentElement&&btn.parentElement.querySelector('.bb-list'); if(!ul) return;
+    const open=ul.classList.toggle('bb-open');
+    const n=ul.querySelectorAll('li:not(.muted)').length;
+    btn.textContent=open?'Show less':('Show '+Math.max(n-_BB_KEEP,0)+' more');
+  };
   function tsLoadThesis(tk){
     if(!drawer.querySelector('#aiThesisBody')&&!drawer.querySelector('#bbForList')) return;
     fetch('/api/thesis/'+encodeURIComponent(tk)).then(r=>r.ok?r.json():null).then(d=>{
@@ -18596,7 +18622,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
         else { const tag=drawer.querySelector('#aiThesisTag'); if(tag) tag.remove(); }
       }
       // Deepen the case-for / case-against columns with the AI bull/bear case.
-      if(d){ const ai=d.source==='llm'; _fillCase('#bbForList',d.bull_case,ai); _fillCase('#bbAgainstList',d.bear_case,ai); }
+      if(d){ const ai=d.source==='llm'; _fillCase('#bbForList',d.bull_case,ai); _fillCase('#bbAgainstList',d.bear_case,ai); _bbSyncAll(); }
     }).catch(()=>{ const tag=drawer.querySelector('#aiThesisTag'); if(tag) tag.remove(); });
   }
   function tsShowTab(name){
