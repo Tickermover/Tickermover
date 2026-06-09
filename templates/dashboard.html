@@ -579,13 +579,11 @@ tr:hover td{background:rgba(245,166,35,.06)}
 .dd-sources a:hover{text-decoration:underline}
 
 /* ════════ FULL STOCK SHEET (light · brand-blue · tabbed, full-screen) ════════ */
-/* App atmosphere — the landing page "Inside the dashboard" (.bg-alice) gradient,
-   reused everywhere so the app matches the marketing site. */
+/* App atmosphere — warm off-white "paper" with very faint vertical linen lines.
+   Reused everywhere (content, stock-drawer scrim, overlay). */
 :root{--app-atmos:
-  radial-gradient(70% 50% at 18% 12%, rgba(255,255,255,.75) 0%, transparent 55%),
-  radial-gradient(55% 50% at 88% 88%, rgba(93,179,241,.42) 0%, transparent 60%),
-  radial-gradient(50% 40% at 50% 50%, rgba(195,225,250,.35) 0%, transparent 65%),
-  #cdeef8;}
+  repeating-linear-gradient(90deg, rgba(120,108,84,.022) 0, rgba(120,108,84,.022) 1px, transparent 1px, transparent 96px),
+  linear-gradient(180deg, #f3f2ec 0%, #ecebe2 100%);}
 .ssx-overlay{position:fixed;inset:0;z-index:10000;display:none;background:var(--app-atmos);overflow-y:auto;
   --blue:#0040c1;--blue-2:#2970ff;--blue-grad:linear-gradient(120deg,#2970ff 0%,#0042c5 55%,#00359e 100%);
   --up:#16a34a;--down:#ea384c;--ink:#0f172a;--ink-2:#1e293b;--muted:#5d6c7b;--muted-2:#94a3b8;
