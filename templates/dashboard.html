@@ -582,8 +582,8 @@ tr:hover td{background:rgba(245,166,35,.06)}
 /* App atmosphere — warm off-white "paper" with very faint vertical linen lines.
    Reused everywhere (content, stock-drawer scrim, overlay). */
 :root{--app-atmos:
-  repeating-linear-gradient(90deg, rgba(120,108,84,.022) 0, rgba(120,108,84,.022) 1px, transparent 1px, transparent 96px),
-  linear-gradient(180deg, #f3f2ec 0%, #ecebe2 100%);}
+  repeating-linear-gradient(90deg, rgba(120,108,84,.02) 0, rgba(120,108,84,.02) 1px, transparent 1px, transparent 104px),
+  #f0efe8;}
 .ssx-overlay{position:fixed;inset:0;z-index:10000;display:none;background:var(--app-atmos);overflow-y:auto;
   --blue:#0040c1;--blue-2:#2970ff;--blue-grad:linear-gradient(120deg,#2970ff 0%,#0042c5 55%,#00359e 100%);
   --up:#16a34a;--down:#ea384c;--ink:#0f172a;--ink-2:#1e293b;--muted:#5d6c7b;--muted-2:#94a3b8;
@@ -5858,8 +5858,8 @@ html.v2-dark body.v2 #user-email{color:#0f172a!important}
 /* unify the panel frame so there's no extra light box around the content */
 html.v2-dark body.v2.ts-active .v2-app{background:transparent!important}
 /* reliable light theme on the On-the-Radar tab — body.ts-active is toggled by v2Show (no :has dependency) */
-html.v2-dark body.v2.ts-active{background:#eef6fe!important}
-html.v2-dark body.v2.ts-active .v2-app{background:#eef6fe!important}
+html.v2-dark body.v2.ts-active{background:#f0efe8!important}
+html.v2-dark body.v2.ts-active .v2-app{background:#f0efe8!important}
 html.v2-dark body.v2.ts-active .v2-content{background:linear-gradient(180deg,#eef6fe 0%,#e6eefb 45%,#dde8f9 100%)!important}
 html.v2-dark body.v2.ts-active .v2-scroll{background:transparent!important}
 html.v2-dark body.v2.ts-active .main{background:transparent!important;padding:0!important}   /* transparent + no padding so content aligns with the topbar and matches the preview */
@@ -5880,8 +5880,8 @@ html.v2-dark body.v2 .v2-content:has(#panel-hot.active){background:linear-gradie
    surfaces that still carried a dark-mode override, and restore dark
    text where the dark theme had forced it light.
    ════════════════════════════════════════════════════════════════ */
-html.v2-dark body.v2{background:#eef6fe!important}
-html.v2-dark body.v2 .v2-app{background:#eef6fe!important}
+html.v2-dark body.v2{background:#f0efe8!important}
+html.v2-dark body.v2 .v2-app{background:#f0efe8!important}
 html.v2-dark body.v2 .v2-content{background:linear-gradient(180deg,#eef6fe 0%,#e6eefb 45%,#dde8f9 100%)!important}
 html.v2-dark body.v2 .v2-scroll{background:transparent!important}
 html.v2-dark body.v2 .main{background:transparent!important}
