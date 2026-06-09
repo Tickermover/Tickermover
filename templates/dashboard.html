@@ -7912,6 +7912,8 @@ function v2SetProfile(p){
   if (typeof window.tsRerender === 'function') window.tsRerender();
   // Visible feedback so the user knows the switch took effect.
   try { v2ProfileToast(p); } catch(e){}
+  // Persist across devices (also marks the user onboarded once they've picked).
+  try { if (typeof savePrefs === 'function') savePrefs({ risk_profile: p, onboarded: true }); } catch(e){}
 }
 /* Floating confirmation toast + button pulse on a risk-profile switch. */
 function v2ProfileToast(p){
@@ -15623,7 +15625,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
   // Authed user — make sure the gate class isn't hanging around
   document.documentElement.classList.remove('auth-gating');
-  // First-time registration → welcome animation + name + risk profile.
+  // Pull saved name / risk profile / onboarded state across devices first,
+  // then decide whether to run first-time onboarding.
+  try { await syncUserPrefs(); } catch(e){}
   try { maybeRunOnboarding(); } catch(e){}
 });
 
@@ -16109,9 +16113,10 @@ function onboardNameNext() {
   const name  = (input && input.value.trim()) || '';
   if (!name) { if (err) err.textContent = 'Please enter your name to continue.'; if (input) { try { input.focus(); } catch(e){} } return; }
   if (err) err.textContent = '';
-  // Persist the name and reflect it in the UI.
+  // Persist the name (locally + backend) and reflect it in the UI.
   try { localStorage.setItem('ah_name', name); } catch(e){}
   if (typeof _AUTH === 'object' && _AUTH && _AUTH.user) { _AUTH.user.name = name; try { _authUpdateUI(_AUTH.user); } catch(e){} }
+  try { savePrefs({ name: name }); } catch(e){}
   // Mark onboarding done so the welcome step never reappears.
   try { localStorage.setItem('ah_onboarding_completed', '1'); } catch(e){}
   // Reveal the dashboard (drop the load-time gate), then prompt for the risk profile.
@@ -16138,6 +16143,42 @@ function maybeRunOnboarding() {
   let pre = '';
   try { pre = localStorage.getItem('ah_name') || ''; } catch(e){}
   startOnboarding(pre);
+}
+// Fire-and-forget: persist a prefs patch (name / risk_profile / onboarded) to
+// the user's Supabase metadata so it follows them across devices.
+function savePrefs(patch) {
+  try {
+    if (!_AUTH || !_AUTH.token || !patch) return;
+    fetch('/api/user/prefs', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + _AUTH.token },
+      body: JSON.stringify(patch),
+    }).catch(() => {});
+  } catch(e){}
+}
+// On load: pull saved name / risk profile / onboarded state from the backend
+// and mirror them into localStorage so a returning user on a NEW device keeps
+// their profile and is never re-onboarded.
+async function syncUserPrefs() {
+  if (!_AUTH || !_AUTH.token) return;
+  let d = null;
+  try {
+    const r = await fetch('/api/user/prefs', { headers: { Authorization: 'Bearer ' + _AUTH.token } });
+    if (r.ok) d = await r.json();
+  } catch(e){ return; }
+  if (!d) return;
+  try {
+    if (d.name) {
+      localStorage.setItem('ah_name', d.name);
+      if (_AUTH.user) { _AUTH.user.name = d.name; try { _authUpdateUI(_AUTH.user); } catch(e){} }
+    }
+    if (d.risk_profile) {
+      localStorage.setItem('v2_profile', d.risk_profile);
+      try { document.body.setAttribute('data-active-profile', d.risk_profile); } catch(e){}
+      try { if (typeof v2SyncProfileButton === 'function') v2SyncProfileButton(); } catch(e){}
+    }
+    if (d.onboarded) localStorage.setItem('ah_onboarding_completed', '1');
+  } catch(e){}
 }
 
 // ── Forgot-password flow ──

@@ -6402,19 +6402,27 @@ async def auth_callback():
       localStorage.setItem('ah_token', access);
       if (refresh) localStorage.setItem('ah_refresh', refresh);
     } catch(e) {}
-    // Fire-and-forget: ping our backend so it can detect first-time
-    // Google sign-ins (which skip Supabase's Confirm-signup email) and
-    // dispatch our branded welcome email via Resend. We don't await this
-    // — login proceeds immediately regardless of whether the email sends.
-    try {
-      fetch('/api/auth/on-signin', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({access_token: access}),
-        keepalive: true,
-      }).catch(() => {});
-    } catch(e) {}
-    window.location.replace('/app');
+    // Ask the backend whether this is a first-time sign-in (Google OAuth skips
+    // Supabase's Confirm-signup email, so this is also where the branded
+    // welcome email fires). If it's a new account, flag it so /app runs the
+    // welcome + risk-profile onboarding — same as the email-signup path.
+    // Capped so a slow/failed call never blocks the redirect for long.
+    (function(){
+      var done = false;
+      function go(){ if (done) return; done = true; window.location.replace('/app'); }
+      try {
+        fetch('/api/auth/on-signin', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({access_token: access}),
+        }).then(function(r){ return r.json(); }).then(function(d){
+          if (d && d.welcomed) { try { localStorage.setItem('ah_just_registered','1'); } catch(e){} }
+          go();
+        }).catch(go);
+      } catch(e) { go(); }
+      setTimeout(go, 3500);   // hard fallback so we never hang on the spinner
+    })();
+    return;
   } else {
     // No token — surface the error briefly then bounce home.
     const err = p.get('error_description') || p.get('error') || 'Sign-in failed';
@@ -6767,6 +6775,51 @@ async def api_user_me(user: Optional[dict] = Depends(_current_user),
         "status":  sub.get("status", "active"),
         "valid_until": sub.get("valid_until"),
     })
+
+
+# ── User preferences (display name + risk profile + onboarding) ──────────────
+# Stored in Supabase user_metadata so they follow the user across devices.
+
+class _UserPrefsBody(BaseModel):
+    name:         Optional[str]  = None
+    risk_profile: Optional[str]  = None
+    onboarded:    Optional[bool] = None
+
+
+@app.get("/api/user/prefs")
+async def api_user_prefs_get(user: Optional[dict] = Depends(_current_user),
+                             creds: Optional[HTTPAuthorizationCredentials] = Depends(_bearer)):
+    """Return the current user's saved name / risk profile / onboarding state."""
+    if not user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    md = await supabase.get_user_metadata(creds.credentials)
+    return JSONResponse({
+        "name":         md.get("name") or "",
+        "risk_profile": md.get("risk_profile") or "",
+        "onboarded":    bool(md.get("onboarded")),
+    })
+
+
+@app.put("/api/user/prefs")
+async def api_user_prefs_put(body: _UserPrefsBody,
+                             user: Optional[dict] = Depends(_current_user),
+                             creds: Optional[HTTPAuthorizationCredentials] = Depends(_bearer)):
+    """Persist name / risk profile / onboarding state to the user's metadata."""
+    if not user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    data: dict = {}
+    if body.name is not None:
+        data["name"] = body.name.strip()[:60]
+    if body.risk_profile is not None and body.risk_profile in ("conservative", "balanced", "aggressive"):
+        data["risk_profile"] = body.risk_profile
+    if body.onboarded is not None:
+        data["onboarded"] = bool(body.onboarded)
+    if not data:
+        return JSONResponse({"ok": True, "updated": {}})
+    md = await supabase.update_user_metadata(creds.credentials, data)
+    if isinstance(md, dict) and md.get("error"):
+        raise HTTPException(status_code=400, detail=md["error"])
+    return JSONResponse({"ok": True, "updated": data})
 
 
 # ── Watchlist endpoints ─────────────────────────────────────────────────────────

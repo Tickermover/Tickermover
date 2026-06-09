@@ -306,6 +306,38 @@ class SupabaseClient:
             "role":  resp.get("role", "authenticated"),
         }
 
+    async def get_user_metadata(self, access_token: str) -> dict:
+        """Return the user's Supabase user_metadata dict ({} on failure).
+        Used for cross-device prefs (display name, risk profile, onboarded)."""
+        if not self.enabled:
+            return {}
+        resp = await self._get("/auth/v1/user", token=access_token)
+        if not isinstance(resp, dict) or resp.get("error"):
+            return {}
+        md = resp.get("user_metadata")
+        return md if isinstance(md, dict) else {}
+
+    async def update_user_metadata(self, access_token: str, data: dict) -> dict:
+        """Shallow-merge `data` into the user's Supabase user_metadata.
+        Returns the updated metadata dict, or {'error': ...}."""
+        if not self.enabled:
+            return {"error": "Supabase not configured"}
+        async with httpx.AsyncClient(timeout=10) as c:
+            r = await c.put(
+                f"{self.url}/auth/v1/user",
+                json={"data": data},
+                headers=self._auth_headers(access_token),
+            )
+            try:
+                resp = r.json()
+            except Exception:
+                return {"error": r.text or "metadata update failed"}
+        if r.status_code >= 400 or resp.get("error") or resp.get("error_code"):
+            return {"error": resp.get("error_description") or resp.get("msg")
+                    or resp.get("error") or "metadata update failed"}
+        md = resp.get("user_metadata")
+        return md if isinstance(md, dict) else {}
+
     # ── JWT verification (local — no network call after JWKS cached) ──────────
 
     def verify_token(self, access_token: str) -> Optional[dict]:
