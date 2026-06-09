@@ -15680,6 +15680,30 @@ function _displayNameFromUser(user){
     .join(' ');
 }
 
+// Just the first name (the menu shows this instead of the full/truncated name).
+function _firstNameFromUser(user){
+  const full = _displayNameFromUser(user);
+  return full ? full.split(/\s+/)[0] : '';
+}
+// Up-to-2-letter initials for the avatar.
+function _initialsFromUser(user){
+  const full = _displayNameFromUser(user);
+  if (full){
+    const p = full.split(/\s+/);
+    return ((p[0][0] || '') + (p[1] ? p[1][0] : '')).toUpperCase();
+  }
+  const e = user && user.email ? user.email : '';
+  return (e ? e[0] : '✓').toUpperCase();
+}
+// Deterministic avatar gradient seeded from the user — same user → same colors.
+function _avatarGradient(seed){
+  seed = String(seed || 'guest').toLowerCase();
+  let h = 0;
+  for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
+  const hue = h % 360;
+  return 'linear-gradient(135deg, hsl(' + hue + ',68%,56%), hsl(' + ((hue + 38) % 360) + ',72%,44%))';
+}
+
 function _authUpdateUI(user) {
   const btn     = document.getElementById('auth-btn');
   const menu    = document.getElementById('user-menu');
@@ -15688,16 +15712,19 @@ function _authUpdateUI(user) {
   if (user && (user.email || user.id)) {
     btn.style.display  = 'none';
     menu.style.display = 'flex';
-    const display = _displayNameFromUser(user);
+    const first = _firstNameFromUser(user);
     // The element is still id="user-email" for legacy compat, but now shows
-    // the friendly name. Full email moved to the title attribute so it's
-    // accessible on hover for debugging.
+    // just the first name. Full email lives in the title attribute on hover.
     if (emailEl){
-      emailEl.textContent = display || user.email || '';
-      emailEl.setAttribute('title', user.email || display || '');
+      emailEl.textContent = first || user.email || '';
+      emailEl.setAttribute('title', user.email || first || '');
     }
-    if (avatar) avatar.textContent = display ? display[0].toUpperCase()
-                                  : (user.email ? user.email[0].toUpperCase() : '✓');
+    // Deterministic initials avatar, unique colour per user. setProperty with
+    // 'important' so it beats the static !important avatar rule in the stylesheet.
+    if (avatar){
+      avatar.textContent = _initialsFromUser(user);
+      avatar.style.setProperty('background', _avatarGradient(user.email || user.id || first), 'important');
+    }
     renderWatchlistPanel();
   } else {
     btn.style.display  = '';
