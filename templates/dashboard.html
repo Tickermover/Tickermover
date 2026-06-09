@@ -3258,6 +3258,13 @@ html.v2-dark .v2-mp-mini-lbl{color:#cbd5e1}
 /* nudge bounce when a view is clicked before a company is picked */
 .ce-nudge{animation:ceNudge .42s cubic-bezier(.36,.07,.19,.97)}
 @keyframes ceNudge{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(5px)}60%{transform:translateX(-3px)}80%{transform:translateX(2px)}}
+/* Global back-to-top button — purple to match the Ask-AI "Start" button */
+.scroll-top-btn{position:fixed;right:24px;bottom:24px;z-index:400;width:46px;height:46px;border-radius:50%;border:0;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#fff;background:linear-gradient(135deg,#7c3aed,#4f46e5);box-shadow:0 10px 26px -8px rgba(79,70,229,.6);opacity:0;transform:translateY(10px) scale(.9);pointer-events:none;transition:opacity .2s,transform .2s,box-shadow .15s}
+.scroll-top-btn svg{width:20px;height:20px}
+.scroll-top-btn.show{opacity:1;transform:translateY(0) scale(1);pointer-events:auto}
+.scroll-top-btn:hover{box-shadow:0 14px 30px -8px rgba(79,70,229,.75);transform:translateY(-2px) scale(1.04)}
+@media(max-width:768px){.scroll-top-btn{right:16px;bottom:16px;width:42px;height:42px}}
+@media(prefers-reduced-motion:reduce){.scroll-top-btn{transition:opacity .2s}}
 .ce-card-ic{font-size:20px;line-height:1.2;flex-shrink:0}
 .ce-card-t{display:block;font-weight:800;font-size:13.5px;color:#0f172a}
 .ce-card-d{display:block;font-size:11.5px;color:#64748b;margin-top:2px;line-height:1.45}
@@ -6528,6 +6535,35 @@ document.addEventListener('DOMContentLoaded', function(){
     </div><!-- /.v2-scroll -->
   </div><!-- /.v2-content -->
 </div><!-- /.v2-app -->
+
+<!-- Global scroll-to-top — appears on every panel once you scroll down -->
+<button id="scrollTopBtn" class="scroll-top-btn" aria-label="Back to top" title="Back to top" onclick="ceScrollTop()">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="M6 11l6-6 6 6"/></svg>
+</button>
+<script>
+(function(){
+  function scroller(){ return document.querySelector('.v2-content'); }
+  window.ceScrollTop = function(){
+    var c = scroller();
+    if (c && c.scrollHeight > c.clientHeight + 4) c.scrollTo({top:0,behavior:'smooth'});
+    try { window.scrollTo({top:0,behavior:'smooth'}); } catch(e){ window.scrollTo(0,0); }
+  };
+  function onScroll(){
+    var btn = document.getElementById('scrollTopBtn'); if (!btn) return;
+    var c = scroller();
+    var y = (c ? c.scrollTop : 0) || window.scrollY || document.documentElement.scrollTop || 0;
+    btn.classList.toggle('show', y > 320);
+  }
+  function bind(){
+    var c = scroller();
+    if (c) c.addEventListener('scroll', onScroll, {passive:true});
+    window.addEventListener('scroll', onScroll, {passive:true});
+    onScroll();
+  }
+  if (document.readyState !== 'loading') bind();
+  else document.addEventListener('DOMContentLoaded', bind);
+})();
+</script>
 
 <script>
 /* ── v2 shell wiring — collapsibles, nav switching, mobile drawer ── */
