@@ -478,7 +478,7 @@ tr:hover td{background:rgba(245,166,35,.06)}
 
 /* ====== WATCHLIST — news & catalysts feed (news-snapshot style) ====== */
 .wl-news-cap{font-size:12.5px;color:var(--muted);margin:0 0 10px;font-weight:600}
-.wl-feed{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.wl-feed{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .wl-item{background:#fff;border:1px solid rgba(10,10,10,.08);border-radius:12px;padding:13px 16px;transition:background .12s,box-shadow .12s;cursor:pointer}
 .wl-item:hover{background:#f6f9ff;box-shadow:0 6px 18px -10px rgba(0,40,120,.22)}
 @media(max-width:760px){.wl-feed{grid-template-columns:1fr}}
@@ -489,7 +489,6 @@ tr:hover td{background:rgba(245,166,35,.06)}
 .wl-x:hover{color:#dc2626;background:rgba(220,38,38,.08)}
 .wl-desc{margin:6px 0 0;color:#3a4048;font-size:13px;line-height:1.55}
 .wl-meta{margin-top:5px;font-size:11px;color:#94a3b8;font-weight:600;letter-spacing:.02em}
-.wl-alpha{font-size:11px;font-weight:700;color:#64748b;background:#f1f5f9;border-radius:5px;padding:1px 7px;flex-shrink:0}
 /* watchlist stats strip: date added · price now (today move) · since-added delta */
 .wl-stats{display:flex;gap:26px;margin-top:10px;flex-wrap:wrap}
 .wl-stat{display:flex;flex-direction:column;gap:1px;min-width:90px}
@@ -13799,7 +13798,6 @@ function renderWatchlist() {
       </div>`;
     }
     const c = watchCatalyst(t);
-    const score = (t.smart_score ?? t.pop_score ?? 0);
     const price = t.price;
     const chg   = t.change_pct;
     const headline = (t.name ? t.name.slice(0,40) : sym) + (c.read !== 'flat' ? ' — ' + c.text : '');
@@ -13818,7 +13816,6 @@ function renderWatchlist() {
       <div class="wl-item-head">
         <span class="wl-tk">${sym}</span>
         <b class="wl-title">${headline}</b>
-        <span class="wl-alpha">Alpha ${score.toFixed(0)}</span>
         <button class="wl-x" onclick="event.stopPropagation();toggleWatch('${sym}')" title="Remove from watchlist">✕</button>
       </div>
       <div class="wl-stats">
