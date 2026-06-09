@@ -61,25 +61,41 @@ def _ground_block(t: dict) -> str:
 
 def _prompt(ticker: str, t: dict) -> str:
     return (
-        f"You are a senior equity-research analyst writing a concise Deep-Dive "
-        f"brief on {ticker} ({t.get('name','')}).\n\n"
+        f"You are a senior equity-research analyst writing a sharp, decision-useful "
+        f"research note on {ticker} ({t.get('name','')}) for a sophisticated retail "
+        f"investor. Match the depth and specificity of a top sell-side note.\n\n"
         "GROUND TRUTH — use these exact figures for price/score/fundamentals; "
         "do NOT invent or override them:\n"
         f"{_ground_block(t)}\n\n"
-        "TASK: Use web search to find the LATEST (last few weeks) catalysts, "
-        "news, earnings, guidance, analyst moves and risks for this company, "
-        "then write the brief in GitHub-flavoured Markdown with this structure:\n"
-        "1. A one-sentence bold summary of where the company stands right now.\n"
-        "2. '## Catalysts' — 3-5 bullets of what's driving / could drive the "
-        "stock, each with a specific fact.\n"
-        "3. '## Risks' — 2-3 bullets.\n"
-        "4. '## Bottom line' — 2-3 sentences.\n"
-        "5. '## Sources' — numbered list of the web pages you actually used, "
-        "as markdown links.\n\n"
-        "RULES: Cite every external/quantitative claim inline with a markdown "
-        "link to the source you read. Never fabricate numbers, quotes, or "
-        "URLs. Keep it tight and specific — no filler. End with this exact "
-        f"line:\n{DISCLAIMER}"
+        "TASK: Use web search aggressively to find the LATEST (last few weeks/quarters) "
+        "earnings prints, guidance, segment detail, customer/revenue concentration, "
+        "analyst price targets (name the firms), valuation context (P/E, P/S, DCF / "
+        "fair-value if cited), insider activity, dilution, and risks. Then write the "
+        "note in GitHub-flavoured Markdown with EXACTLY this structure:\n"
+        "1. A one-sentence **bold verdict** of where the company stands right now — "
+        "the single most important tension.\n"
+        "2. '## What you're buying' — 2-4 sentences: what the company actually does / "
+        "how it makes money / its core engine(s) and any second growth engine.\n"
+        "3. '## The numbers' — the recent revenue & margin trajectory with SPECIFIC "
+        "figures (most recent quarter + full-year + guide), growth rates, and "
+        "beat/miss vs consensus.\n"
+        "4. '## Bull case' — 4-6 tight bullets, each anchored to a specific fact.\n"
+        "5. '## Bear case' — 4-6 tight bullets (valuation, concentration, dilution, "
+        "competition, profitability), each specific.\n"
+        "6. '## Where the price sits' — valuation read: the multiple, the spread of "
+        "analyst targets (low / average / high, with firms if available), and any "
+        "intrinsic / DCF fair-value range cited.\n"
+        "7. '## What moves it next' — 3-5 catalysts, each prefixed with a rough "
+        "timeframe in **bold** (e.g. **Next quarter**, **H2 2026**, **Ongoing**).\n"
+        "8. '## Bottom line' — 2-3 sentences ending in the one honest question an "
+        "investor should answer before buying.\n"
+        "9. '## Sources' — numbered list of the web pages you actually used, as "
+        "markdown links.\n\n"
+        "RULES: Cite every external/quantitative claim inline with a markdown link to "
+        "the source you read. Never fabricate numbers, quotes, or URLs — if you can't "
+        "verify something, omit it. Be specific and concrete; no filler or hedging "
+        "boilerplate. End with this exact line:\n"
+        f"{DISCLAIMER}"
     )
 
 
@@ -93,9 +109,9 @@ async def generate_research(ticker: str, ticker_data: dict | None) -> dict:
 
     body = {
         "model": _MODEL,
-        "max_tokens": 2600,
+        "max_tokens": 3800,
         "tools": [
-            {"type": "web_search_20250305", "name": "web_search", "max_uses": 6}
+            {"type": "web_search_20250305", "name": "web_search", "max_uses": 8}
         ],
         "messages": [{"role": "user", "content": _prompt(ticker, t)}],
     }

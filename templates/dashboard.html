@@ -18097,6 +18097,13 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     const note=(tm!=null)?('Analyst mean target '+fmtP(tm)+(up!=null?' ('+(up>=0?'+':'')+up.toFixed(0)+'% vs price)':'')+' against the 52-week trading band.'):'Range shown is the 52-week trading band.';
     return _ovSecHead('Where the price sits')+'<div class="dr-deep-card"><div class="ov-track">'+marks+'</div><div class="muted small">'+note+'</div></div>';
   }
+  function _ovDeepDive(full){
+    const tk=(full.ticker||'').toUpperCase(); if(!tk) return '';
+    // Container is filled by the existing web-grounded research pipeline
+    // (loadDeepDive → /api/research, polled). Rendered note = chat-quality.
+    return _ovSecHead('AI Deep-Dive · web-grounded research')+
+      '<div class="dr-deep-card" id="dd-body-'+tk+'"><div class="dd-loading"><span class="dr-spin"></span> Researching '+escHTML(tk)+' — reading the web &amp; writing the brief… (~15–30s)</div></div>';
+  }
   function _ovCatalysts(full){
     const items=[]; const days=parseInt(full.days_to_earnings); const rev=full.eps_revisions_30d;
     const kt=(typeof keyTrigger==='function')?keyTrigger(full):null;
@@ -18223,7 +18230,8 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
       + _ovBullBear(full)
       + _ovValuation(full,price,S)
       + _ovCatalysts(full)
-      + _ovSecHead('Bottom line') + _bullBear(full);
+      + _ovSecHead('Bottom line') + _bullBear(full)
+      + _ovDeepDive(full);
   }
   function paneTechnicals(t,S){
     const m1=_fpNum(t,['momentum_1m']),m3=_fpNum(t,['momentum_3m']),m6=_fpNum(t,['momentum_6m']);
@@ -18874,6 +18882,8 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     try{ _drNavBuild(); }catch(e){}
     requestAnimationFrame(()=>requestAnimationFrame(()=>{ dd.querySelectorAll('.pf,.reb-fill').forEach(el=>{el.style.width=el.getAttribute('data-w')+'%';}); tsDrawChartEl(); }));
     tsLoadThesis(t.ticker);
+    // Kick off the web-grounded AI Deep-Dive (reuses /api/research pipeline).
+    try{ if(typeof loadDeepDive==='function') loadDeepDive((t.ticker||'').toUpperCase()); }catch(e){}
   }
   function tsLoadThesis(tk){
     if(!drawer.querySelector('#aiThesisBody')&&!drawer.querySelector('#ovBullList')) return;
