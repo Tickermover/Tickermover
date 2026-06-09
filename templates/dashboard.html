@@ -5010,10 +5010,12 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 #ts-drawer .dr-sec-t{font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--grey);font-weight:700;margin-bottom:6px}
 /* ── THE CALL — premium verdict card ── */
 #ts-drawer .dr-call{border-radius:16px;padding:12px 15px}
-#ts-drawer .dr-call-pos{background:linear-gradient(125deg,rgba(22,163,74,.12),rgba(22,163,74,.025));border:1px solid rgba(22,163,74,.30)}
-#ts-drawer .dr-call-buy{background:linear-gradient(125deg,rgba(41,112,255,.11),rgba(41,112,255,.025));border:1px solid rgba(41,112,255,.28)}
+/* Solid (opaque) tints so the page atmosphere doesn't bleed through the hero */
+#ts-drawer .dr-call{box-shadow:0 10px 30px -18px rgba(20,40,90,.3)}
+#ts-drawer .dr-call-pos{background:linear-gradient(125deg,#e9f7ef,#f7fcf9);border:1px solid rgba(22,163,74,.3)}
+#ts-drawer .dr-call-buy{background:linear-gradient(125deg,#edf3ff,#f8fbff);border:1px solid rgba(41,112,255,.28)}
 #ts-drawer .dr-call-neu{background:linear-gradient(125deg,#FFF8E8,#fffdf7);border:1px solid #FFE2A8}
-#ts-drawer .dr-call-neg{background:linear-gradient(125deg,rgba(234,56,76,.10),rgba(234,56,76,.025));border:1px solid rgba(234,56,76,.30)}
+#ts-drawer .dr-call-neg{background:linear-gradient(125deg,#fdecef,#fff8f9);border:1px solid rgba(234,56,76,.3)}
 #ts-drawer .dr-call-top{display:flex;align-items:center;gap:13px}
 #ts-drawer .dr-call-badge{flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;width:54px;height:54px;border-radius:13px;background:#fff;border:1px solid var(--hair);box-shadow:0 5px 13px -6px rgba(0,40,120,.28)}
 #ts-drawer .dr-call-badge .n{font-family:'JetBrains Mono',monospace;font-weight:800;font-size:23px;line-height:1;color:#0040c1}
@@ -5217,22 +5219,21 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 #ts-drawer .rep-num{display:none}
 /* hero stat callouts */
 /* Modern at-a-glance metric tiles — light glass with a coloured accent edge */
-/* Six-pillar tiles — premium white cards with a colored top accent + gradient bar */
-#ts-drawer .hero-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(108px,1fr));gap:10px}
-#ts-drawer .hs{position:relative;border-radius:16px;padding:13px 14px 14px;display:flex;flex-direction:column;gap:1px;
-  background:#fff;border:1px solid rgba(12,26,52,.06);box-shadow:0 8px 22px -12px rgba(20,40,90,.22);overflow:hidden;
+/* Six-pillar tiles — clean white cards (no top strip), tone shows in the read + bar */
+#ts-drawer .hero-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(126px,1fr));gap:12px}
+#ts-drawer .hs{position:relative;border-radius:16px;padding:16px 17px 17px;display:flex;flex-direction:column;gap:1px;
+  background:#fff;border:1px solid rgba(12,26,52,.07);box-shadow:0 8px 22px -12px rgba(20,40,90,.2);
   transition:transform .15s ease,box-shadow .15s ease}
-#ts-drawer .hs:hover{transform:translateY(-3px);box-shadow:0 14px 32px -12px rgba(20,40,90,.32)}
-#ts-drawer .hs::before{content:'';position:absolute;left:0;right:0;top:0;height:3px}
-#ts-drawer .hs-l{font-size:9px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#94a3b8}
-#ts-drawer .hs-v{font-family:'JetBrains Mono',monospace;font-size:25px;font-weight:800;line-height:1.02;color:#0f172a;font-variant-numeric:tabular-nums;margin-top:2px}
-#ts-drawer .hs-sub{font-size:11px;font-weight:700;color:#475569;margin-top:2px;line-height:1.25}
-#ts-drawer .hs-cap{display:block;font-size:9px;font-weight:600;color:#94a3b8;margin-top:2px;line-height:1.3}
-#ts-drawer .hs-pos::before{background:linear-gradient(90deg,#16a34a,#22c55e)} #ts-drawer .hs-pos .hs-sub{color:#15803d}
-#ts-drawer .hs-neg::before{background:linear-gradient(90deg,#e11d48,#fb7185)} #ts-drawer .hs-neg .hs-sub{color:#be123c}
-#ts-drawer .hs-warn::before{background:linear-gradient(90deg,#e08600,#f59e0b)} #ts-drawer .hs-warn .hs-sub{color:#b4780a}
-#ts-drawer .hs-neu::before{background:linear-gradient(90deg,#2970ff,#60a5fa)} #ts-drawer .hs-neu .hs-sub{color:#0040c1}
-#ts-drawer .hs-bar{display:block;height:6px;border-radius:99px;background:rgba(15,23,42,.07);margin-top:9px;overflow:hidden}
+#ts-drawer .hs:hover{transform:translateY(-3px);box-shadow:0 14px 32px -12px rgba(20,40,90,.3)}
+#ts-drawer .hs-l{font-size:9.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#94a3b8}
+#ts-drawer .hs-v{font-family:'JetBrains Mono',monospace;font-size:29px;font-weight:800;line-height:1.02;color:#0f172a;font-variant-numeric:tabular-nums;margin-top:3px}
+#ts-drawer .hs-sub{font-size:11.5px;font-weight:800;color:#475569;margin-top:3px;line-height:1.25}
+#ts-drawer .hs-cap{display:block;font-size:9.5px;font-weight:600;color:#94a3b8;margin-top:2px;line-height:1.3}
+#ts-drawer .hs-pos .hs-sub{color:#15803d}
+#ts-drawer .hs-neg .hs-sub{color:#be123c}
+#ts-drawer .hs-warn .hs-sub{color:#b4780a}
+#ts-drawer .hs-neu .hs-sub{color:#0040c1}
+#ts-drawer .hs-bar{display:block;height:6px;border-radius:99px;background:rgba(15,23,42,.07);margin-top:11px;overflow:hidden}
 #ts-drawer .hs-bar-f{display:block;height:100%;border-radius:99px}
 #ts-drawer .hs-pos .hs-bar-f{background:linear-gradient(90deg,#16a34a,#22c55e)} #ts-drawer .hs-neu .hs-bar-f{background:linear-gradient(90deg,#2970ff,#60a5fa)} #ts-drawer .hs-warn .hs-bar-f{background:linear-gradient(90deg,#e08600,#f59e0b)} #ts-drawer .hs-neg .hs-bar-f{background:linear-gradient(90deg,#e11d48,#fb7185)}
 /* verdict meta chips */
@@ -5297,10 +5298,12 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 #ts-drawer .muted{color:var(--grey-3)} #ts-drawer .small{font-size:12px;line-height:1.5}
 /* verdict strip */
 #ts-drawer .dv-strip{margin:0}
-#ts-drawer .dv-up{margin-left:auto;text-align:right;flex:none}
+/* Upside as a defined stat card (was bare text floating on the right edge) */
+#ts-drawer .dv-up{margin-left:auto;flex:none;text-align:center;background:#fff;border:1px solid var(--hair);border-radius:12px;padding:7px 15px;box-shadow:0 5px 14px -8px rgba(0,40,120,.28)}
 #ts-drawer .dv-up .k{display:block;font-family:'JetBrains Mono',monospace;font-size:8.5px;letter-spacing:.1em;color:var(--grey);font-weight:800}
-#ts-drawer .dv-up .v{display:block;font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:800}
-#ts-drawer .dv-up.pos .v{color:var(--up)} #ts-drawer .dv-up.neg .v{color:var(--down)}
+#ts-drawer .dv-up .v{display:block;font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:800;margin-top:1px}
+#ts-drawer .dv-up.pos{border-color:rgba(22,163,74,.32)} #ts-drawer .dv-up.pos .v{color:var(--up)}
+#ts-drawer .dv-up.neg{border-color:rgba(234,56,76,.32)} #ts-drawer .dv-up.neg .v{color:var(--down)}
 /* price chart */
 #ts-drawer .chart-card{padding:14px 14px 8px}
 #ts-drawer .cc-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-wrap:wrap;gap:6px}
