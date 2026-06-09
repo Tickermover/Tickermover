@@ -94,8 +94,32 @@ def _prompt(ticker: str, t: dict) -> str:
         "RULES: Cite every external/quantitative claim inline with a markdown link to "
         "the source you read. Never fabricate numbers, quotes, or URLs — if you can't "
         "verify something, omit it. Be specific and concrete; no filler or hedging "
-        "boilerplate. End with this exact line:\n"
-        f"{DISCLAIMER}"
+        "boilerplate. Put this exact line right before the structured block:\n"
+        f"{DISCLAIMER}\n\n"
+        "STRUCTURED BLOCK — after the disclaimer line, output ONE fenced ```json code "
+        "block (and nothing after it) so the app can render visual sections. Use only "
+        "web-verified figures; omit any field you cannot verify. Exact shape:\n"
+        "```json\n"
+        "{\n"
+        '  "business": {\n'
+        '    "intro": "1-2 sentence plain-English summary of what the company does / how it makes money",\n'
+        '    "engines": [\n'
+        '      {"name":"<engine 1 name>","tag":"<short eyebrow, e.g. The AI story · ramping fast>","body":"2-3 sentences with specific figures","tone":"primary"},\n'
+        '      {"name":"<engine 2 name>","tag":"<short eyebrow>","body":"2-3 sentences","tone":"secondary"}\n'
+        "    ],\n"
+        '    "callout": {"title":"<short title, e.g. The expansion bet>","body":"the key strategic bet / pivot in 1-2 sentences with a figure"}\n'
+        "  },\n"
+        '  "revenue": [\n'
+        '    {"label":"FY24","sub":"baseline","display":"$249M","value":249},\n'
+        '    {"label":"FY25","sub":"+83%","display":"$456M","value":456},\n'
+        '    {"label":"FY26E","sub":"guide ~+140%","display":">$1.1B","value":1100}\n'
+        "  ]\n"
+        "}\n"
+        "```\n"
+        "For `revenue`, give 2-4 fiscal-year points (oldest→newest, last point may be a "
+        "guide/estimate); `value` is the revenue as a plain number in the SAME unit "
+        "across all points (millions preferred) so bars scale correctly; `display` is "
+        "the human label. Omit the whole `business` or `revenue` key if you can't verify it."
     )
 
 

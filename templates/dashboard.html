@@ -5458,6 +5458,29 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 #ts-drawer .ov-mtbl td.num{font-family:'JetBrains Mono',monospace;font-weight:700;text-align:right;color:#0A0A0A}
 #ts-drawer .ov-mtbl tr:last-child td{border-bottom:none}
 #ts-drawer .ov-mtbl .pos{color:var(--up)} #ts-drawer .ov-mtbl .neg{color:var(--down)}
+/* Business "what you'd actually be buying" — intro + two engine cards + callout */
+#ts-drawer .ov-biz-intro{font-size:13.5px;line-height:1.6;color:var(--ink-2);margin-bottom:12px}
+#ts-drawer .ov-biz-split{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:680px){#ts-drawer .ov-biz-split{grid-template-columns:1fr}}
+#ts-drawer .ov-biz-card{background:#fff;border:1px solid var(--hair);border-top-width:2px;border-radius:13px;padding:15px 16px}
+#ts-drawer .ov-biz-card.eng-1{border-top-color:#16a34a} #ts-drawer .ov-biz-card.eng-2{border-top-color:#e08600}
+#ts-drawer .ov-biz-tag{font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--grey-3)}
+#ts-drawer .ov-biz-name{font-family:var(--font-head);font-weight:600;font-size:15px;color:#0A0A0A;display:flex;align-items:center;gap:8px;margin:5px 0 7px}
+#ts-drawer .ov-biz-name .dot{width:9px;height:9px;border-radius:50%;flex:none}
+#ts-drawer .ov-biz-card.eng-1 .dot{background:#16a34a} #ts-drawer .ov-biz-card.eng-2 .dot{background:#e08600}
+#ts-drawer .ov-biz-body{font-size:13px;line-height:1.55;color:var(--ink-2)}
+#ts-drawer .ov-biz-callout{margin-top:12px;background:var(--surf-2);border:1px solid var(--hair);border-left:3px solid #b4780a;border-radius:0 11px 11px 0;padding:13px 16px}
+#ts-drawer .ov-biz-callout .ttl{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#b4780a;margin-bottom:6px}
+#ts-drawer .ov-biz-callout .body{font-size:13px;line-height:1.55;color:var(--ink-2)}
+/* revenue trajectory bar chart */
+#ts-drawer .ov-revcard{padding:18px 18px 14px}
+#ts-drawer .ov-revcard .ct{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--grey-3);margin-bottom:16px}
+#ts-drawer .ov-bars{display:flex;align-items:flex-end;gap:16px;height:180px}
+#ts-drawer .ov-barcol{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%}
+#ts-drawer .ov-barval{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:800;margin-bottom:8px;white-space:nowrap}
+#ts-drawer .ov-bar{width:100%;border-radius:7px 7px 0 0;min-height:6px}
+#ts-drawer .ov-barlbl{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--grey-2);margin-top:10px;text-align:center;font-weight:700}
+#ts-drawer .ov-barlbl span{display:block;font-size:9px;color:var(--grey-3);font-weight:600;margin-top:2px}
 /* key events */
 #ts-drawer .events-card .ev-row{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid #f1f5f9}
 #ts-drawer .events-card .ev-row:last-child{border:0}
@@ -12064,6 +12087,58 @@ function _basicMd(md){
   h = h.replace(/(<li>[\s\S]*?<\/li>)/g, m => '<ul>'+m+'</ul>');
   return h.split(/\n{2,}/).map(p => /^\s*<(h\d|ul|li)/.test(p) ? p : '<p>'+p.replace(/\n/g,'<br>')+'</p>').join('');
 }
+// ── Structured visual sections (Business engines + revenue bars) extracted
+//    from the web-grounded research note's trailing ```json block. Rendered
+//    into the Overview's #ovBiz / #ovRevBars placeholders in our light theme.
+function _ovEsc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function _ovExtractStructured(md){
+  if (!md) return { md: md||'', data: null };
+  const m = md.match(/```json\s*([\s\S]*?)```\s*$/);
+  if (!m) return { md: md, data: null };
+  let data = null;
+  try { data = JSON.parse(m[1].trim()); } catch(e){ data = null; }
+  return { md: md.slice(0, m.index).trim(), data };
+}
+function _ovRenderBusiness(biz){
+  const host = document.getElementById('ovBiz'); if (!host) return;
+  const sec = host.closest && host.closest('.ov-sec');
+  const engines = (biz && Array.isArray(biz.engines)) ? biz.engines.slice(0,2) : [];
+  if (!biz || (!biz.intro && !engines.length)){ if (sec) sec.style.display='none'; return; }
+  let html = '';
+  if (biz.intro) html += '<div class="ov-biz-intro">'+_ovEsc(biz.intro)+'</div>';
+  if (engines.length){
+    html += '<div class="ov-biz-split">'+engines.map((e,i)=>
+      '<div class="ov-biz-card eng-'+(i+1)+'">'+
+        (e.tag?'<div class="ov-biz-tag">'+_ovEsc(e.tag)+'</div>':'')+
+        '<div class="ov-biz-name"><span class="dot"></span>'+_ovEsc(e.name||'')+'</div>'+
+        '<div class="ov-biz-body">'+_ovEsc(e.body||'')+'</div>'+
+      '</div>').join('')+'</div>';
+  }
+  if (biz.callout && (biz.callout.title || biz.callout.body)){
+    html += '<div class="ov-biz-callout">'+
+      (biz.callout.title?'<div class="ttl">'+_ovEsc(biz.callout.title)+'</div>':'')+
+      '<div class="body">'+_ovEsc(biz.callout.body||'')+'</div></div>';
+  }
+  host.innerHTML = html; if (sec) sec.style.display='';
+}
+function _ovRenderRevenue(rev){
+  const host = document.getElementById('ovRevBars'); if (!host) return;
+  if (!Array.isArray(rev) || !rev.length){ host.innerHTML=''; return; }
+  const vals = rev.map(r=>parseFloat(r.value)).filter(v=>!isNaN(v));
+  const max = vals.length ? Math.max.apply(null, vals) : 1;
+  const grad = ['linear-gradient(180deg,#e2e8f0,#cbd5e1)','linear-gradient(180deg,#f5b942,#e08600)','linear-gradient(180deg,#34d399,#0d9488)'];
+  const txt  = ['#94a3b8','#b4780a','#0d9488'];
+  const n = rev.length;
+  const cols = rev.map((r,i)=>{
+    const v = parseFloat(r.value);
+    const h = (!isNaN(v) && max>0) ? Math.max(6, Math.round(v/max*100)) : 6;
+    const ci = (i===n-1) ? 2 : (i===n-2 ? 1 : 0);
+    return '<div class="ov-barcol"><div class="ov-barval" style="color:'+txt[ci]+'">'+_ovEsc(r.display||'')+'</div>'+
+      '<div class="ov-bar" style="height:'+h+'%;background:'+grad[ci]+'"></div>'+
+      '<div class="ov-barlbl">'+_ovEsc(r.label||'')+(r.sub?'<span>'+_ovEsc(r.sub)+'</span>':'')+'</div></div>';
+  }).join('');
+  host.innerHTML = '<div class="dr-deep-card ov-revcard"><div class="ct">Revenue trajectory</div><div class="ov-bars">'+cols+'</div></div>';
+}
 async function loadDeepDive(ticker){
   const body = document.getElementById('dd-body-'+ticker);
   if (!body) return;
@@ -12076,21 +12151,27 @@ async function loadDeepDive(ticker){
       const d = await r.json();
       if (d.status === 'ready') { await renderDeepDive(ticker, d); return; }
       if (d.status === 'unavailable') {
-        body.innerHTML = '<div class="dd-loading">'+(d.detail||'Deep Dive isn’t enabled.')+'</div>'; return;
+        body.innerHTML = '<div class="dd-loading">'+(d.detail||'Deep Dive isn’t enabled.')+'</div>';
+        _ovRenderBusiness(null); _ovRenderRevenue(null); return;
       }
       if (tries < 30) setTimeout(poll, 3000);
-      else body.innerHTML = '<div class="dd-loading">Still working — reopen in a moment to see the brief.</div>';
-    } catch(e){ body.innerHTML = '<div class="dd-loading">Couldn’t load the brief. Try again.</div>'; }
+      else { body.innerHTML = '<div class="dd-loading">Still working — reopen in a moment to see the brief.</div>'; _ovRenderBusiness(null); _ovRenderRevenue(null); }
+    } catch(e){ body.innerHTML = '<div class="dd-loading">Couldn’t load the brief. Try again.</div>'; _ovRenderBusiness(null); _ovRenderRevenue(null); }
   };
   poll();
 }
 async function renderDeepDive(ticker, d){
   const body = document.getElementById('dd-body-'+ticker);
+  // Pull the structured block out → render Business + revenue bars into the
+  // Overview; show the rest as the markdown brief (minus the json block).
+  const ex = _ovExtractStructured(d.markdown || '');
+  if (ex.data){ _ovRenderBusiness(ex.data.business); _ovRenderRevenue(ex.data.revenue); }
+  else { _ovRenderBusiness(null); _ovRenderRevenue(null); }
   if (!body) return;
   const marked = await _ensureMarked();
   let html;
-  try { html = (marked && marked.parse) ? marked.parse(d.markdown || '') : _basicMd(d.markdown || ''); }
-  catch(e){ html = _basicMd(d.markdown || ''); }
+  try { html = (marked && marked.parse) ? marked.parse(ex.md || '') : _basicMd(ex.md || ''); }
+  catch(e){ html = _basicMd(ex.md || ''); }
   let src = '';
   if (d.sources && d.sources.length){
     src = '<div class="dd-sources"><div class="dd-sources-h">Sources</div>' +
@@ -18069,8 +18150,8 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     if(avg!=null){ const a=Math.abs(avg)<=1?avg*100:avg; r('Avg surprise', (a>=0?'+':'')+a.toFixed(0)+'%', a>=0?'pos':'neg'); }
     if(!rows.length) return '';
     return _ovSecHead('The numbers',
-      '<div class="dr-deep-card"><table class="ov-mtbl"><thead><tr><th>Metric</th><th style="text-align:right">Value</th></tr></thead><tbody>'+rows.join('')+'</tbody></table></div>'+
-      _trendCard(full));
+      '<div id="ovRevBars"></div>'+
+      '<div class="dr-deep-card"><table class="ov-mtbl"><thead><tr><th>Metric</th><th style="text-align:right">Value</th></tr></thead><tbody>'+rows.join('')+'</tbody></table></div>');
   }
   function _ovBullBear(full){
     const tw=[],hw=[],sigs=(full.signals||[]);
@@ -18227,8 +18308,11 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     // scorecard → numbers → price action → edge → technical setup →
     // two-sided case → valuation → catalysts → bottom-line thesis.
     // One uniform editorial column — every block is an _ovSecHead section.
+    // Business + revenue-bars are filled by the web-grounded research note
+    // (renderDeepDive → #ovBiz / #ovRevBars); they hide if no data arrives.
     return _ovHeader(t,full,S)
       + _premktBadge(full)
+      + _ovSecHead("What you'd actually be buying", '<div id="ovBiz"><div class="dd-loading"><span class="dr-spin"></span> Compiling the business overview…</div></div>')
       + _ovSecHead('The six-pillar scorecard', _heroStats(t,S,full))
       + chart
       + _ovNumbers(full)
