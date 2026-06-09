@@ -596,7 +596,7 @@ tr:hover td{background:rgba(245,166,35,.06)}
   --hair:rgba(9,9,9,.07);--hair-2:rgba(9,9,9,.10);
   /* translucent surfaces so the frosted wave shows through, like the main app */
   --surf:rgba(255,255,255,.60);--surf-2:rgba(255,255,255,.46);--surf-3:rgba(255,255,255,.40);
-  --shadow-card:0 2px 14px rgba(50,35,90,.07)}
+  --shadow-card:0 1px 2px rgba(0,0,0,.05), 0 8px 22px -14px rgba(0,0,0,.16)}
 .ssx-overlay.open{display:block}
 .ssx-sheet{max-width:1240px;margin:18px auto;min-height:calc(100vh - 36px);border-radius:26px;overflow:hidden;color:var(--ink);
   font-family:var(--font-body);
@@ -4890,8 +4890,8 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
     --hair:rgba(9,9,9,.07); --hair-2:rgba(9,9,9,.10);
     --surf:#ffffff; --surf-2:#fafbff; --surf-3:#f6f9ff;
     --r-pill:6.25rem;
-    --shadow-card:0 1px 2px rgba(0,40,120,.08), 0 10px 24px -14px rgba(0,40,120,.26);
-    --shadow-card-lg:0 1px 3px rgba(0,40,120,.10), 0 22px 48px -22px rgba(0,40,120,.34); background:linear-gradient(180deg,#eef6fe 0%,#e6eefb 45%,#dde8f9 100%);color:var(--ink);font-family:var(--font-body)}
+    --shadow-card:0 1px 2px rgba(0,0,0,.05), 0 8px 22px -14px rgba(0,0,0,.16);
+    --shadow-card-lg:0 1px 3px rgba(0,0,0,.06), 0 18px 42px -22px rgba(0,0,0,.20); background:linear-gradient(180deg,#eef6fe 0%,#e6eefb 45%,#dde8f9 100%);color:var(--ink);font-family:var(--font-body)}
 #panel-hot .mono{font-family:'JetBrains Mono',monospace}
 #panel-hot .up{color:var(--up)}
 #panel-hot .dn{color:var(--down)}
@@ -5950,7 +5950,7 @@ body.v2 .news-card, body.v2 .sm-card, body.v2 .fund-list-wrap, body.v2 .v2-track
 body.v2 .v2-pick-card, body.v2 .dr-deep-card{
   background:rgba(255,255,255,.92) !important;
   border-color:rgba(255,255,255,.7) !important;
-  box-shadow:0 2px 14px rgba(72,52,110,.07) !important;
+  box-shadow:0 1px 2px rgba(0,0,0,.05), 0 8px 22px -14px rgba(0,0,0,.16) !important;
 }
 /* 5 · Uniform content width on EVERY tab. The radar tab already zeroed .main's
    padding; do it everywhere so all panels resolve to the same width as the
