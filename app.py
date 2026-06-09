@@ -3613,9 +3613,17 @@ async def api_thesis(symbol: str):
     if not target:
         raise HTTPException(status_code=404, detail=f"Ticker {sym} not found")
 
+    # Cache the (LLM-backed) thesis so opening a drawer repeatedly doesn't
+    # re-hit the model. Keyed by ticker; short TTL keeps it fresh intraday.
+    cache_key = f"thesis:{sym}"
+    cached = cache.get(cache_key)
+    if cached is not None:
+        return JSONResponse(cached)
+
     try:
-        thesis = await thesis_gen.build(target)
-        return JSONResponse(_clean(thesis))
+        thesis = _clean(await thesis_gen.build(target))
+        cache.set(cache_key, thesis, ttl=1800)
+        return JSONResponse(thesis)
     except Exception as exc:
         logger.error(f"Thesis generation failed for {sym}: {exc}", exc_info=True)
         raise HTTPException(status_code=500, detail="Thesis generation failed")

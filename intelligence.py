@@ -34,6 +34,7 @@ has no side effects.
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 import math
 import os
@@ -1273,14 +1274,17 @@ class ThesisGenerator:
     # ── Optional LLM refinement ──────────────────────────────────────
     async def _llm_upgrade(self, rule_based: dict, t: dict) -> Optional[dict]:
         """
-        If ANTHROPIC_API_KEY is set, ask Claude to rewrite the rule-based output
-        with tighter, more specific prose. Falls back silently on any error.
+        If ANTHROPIC_API_KEY is set, ask Claude to write a DEEP, macro-aware
+        investment case: a 3-sentence explanation plus the case-for (tailwinds)
+        and case-against (headwinds) as specific, grounded bullet points. The
+        structured figures are the ground truth — the model must not invent
+        numbers. Falls back silently to the rule-based output on any error.
         """
         if not _ANTHROPIC_KEY or not _HTTPX_AVAILABLE:
             return None
 
         prompt = self._build_llm_prompt(rule_based, t)
-        async with httpx.AsyncClient(timeout=_ANTHROPIC_TIMEOUT) as c:
+        async with httpx.AsyncClient(timeout=22.0) as c:
             r = await c.post(
                 "https://api.anthropic.com/v1/messages",
                 headers={
@@ -1290,7 +1294,7 @@ class ThesisGenerator:
                 },
                 json={
                     "model":      _ANTHROPIC_MODEL,
-                    "max_tokens": 600,
+                    "max_tokens": 1500,
                     "messages":   [{"role": "user", "content": prompt}],
                 },
             )
@@ -1304,25 +1308,93 @@ class ThesisGenerator:
         if not text:
             return None
 
-        # Drop the LLM text into the explanation slot; keep all structured fields
         upgraded = dict(rule_based)
-        upgraded["explanation"] = text
-        upgraded["source"]      = "llm"
+        parsed = _parse_json_obj(text)
+        if parsed:
+            expl = parsed.get("explanation")
+            if isinstance(expl, str) and expl.strip():
+                upgraded["explanation"] = expl.strip()
+            bull = _clean_bullets(parsed.get("bull_case"))
+            bear = _clean_bullets(parsed.get("bear_case"))
+            if bull:
+                upgraded["bull_case"] = bull
+            if bear:
+                upgraded["bear_case"] = bear
+        else:
+            # Couldn't parse JSON — treat the whole reply as the explanation
+            # (preserves the legacy prose-only behaviour).
+            upgraded["explanation"] = text
+        upgraded["source"] = "llm"
         return upgraded
 
     def _build_llm_prompt(self, rule_based: dict, t: dict) -> str:
+        regime = self.regime.get()
+        comps  = regime.get("components", {}) or {}
+        vix    = ((comps.get("^VIX") or {}).get("last"))
+        spy_m  = ((comps.get("SPY") or {}).get("pct_1m"))
+
+        def fmt(key, pattern, scale=1.0, suffix=""):
+            v = _safe(t, key)
+            if v is None:
+                return None
+            try:
+                return pattern.format(float(v) * scale) + suffix
+            except Exception:
+                return None
+
+        facts: list[str] = []
+        facts.append(f"Name / sector: {rule_based.get('name') or t.get('ticker')} · {rule_based.get('sector', '?')}")
+        facts.append(f"Alpha Score: {round(float(t.get('pop_score') or 0))}/100 (grade {t.get('grade', '?')})")
+        macro = f"Market regime: {regime.get('regime_label', 'Mixed')}"
+        if vix is not None:
+            macro += f", VIX ~{vix}"
+        if spy_m is not None:
+            macro += f", S&P 500 {spy_m:+.1f}% over 1 month"
+        facts.append(macro)
+        for label, key, pattern, scale, suffix in [
+            ("Revenue growth YoY",       "revenue_growth_yoy", "{:.0f}",  100, "%"),
+            ("Net margin",               "profit_margin",      "{:.1f}",  100, "%"),
+            ("P/E",                       "pe_ratio",           "{:.0f}",  1,   "x"),
+            ("PEG",                       "peg_ratio",          "{:.2f}",  1,   ""),
+            ("Beta",                      "beta",               "{:.2f}",  1,   ""),
+            ("1-month price momentum",   "momentum_1m",        "{:+.1f}", 1,   "%"),
+            ("Mean analyst upside",      "target_upside_pct",  "{:+.0f}", 1,   "%"),
+            ("Strong-buy analysts",      "strong_buy_pct",     "{:.0f}",  1,   "%"),
+            ("EPS beat streak (of 4)",   "eps_beat_streak",    "{:.0f}",  1,   ""),
+            ("Days to next earnings",    "days_to_earnings",   "{:.0f}",  1,   ""),
+            ("RSI (14)",                  "rsi_14",             "{:.0f}",  1,   ""),
+            ("Short interest",           "short_percent_float","{:.1f}",  100, "% of float"),
+        ]:
+            s = fmt(key, pattern, scale, suffix)
+            if s is not None:
+                facts.append(f"{label}: {s}")
+        gmt = _safe(t, "gross_margin_trend", "")
+        if gmt:
+            facts.append(f"Gross-margin trend: {gmt}")
+        facts_block = "\n".join("- " + x for x in facts if x)
+
         return (
-            "You are an equity research analyst. Rewrite the following stock "
-            "thesis explanation in 3 tight sentences. Be specific. No fluff. "
-            "Use the structured facts as ground truth — do NOT invent new numbers.\n\n"
-            f"Ticker: {rule_based['ticker']}\n"
-            f"Recommendation: {rule_based['recommendation']}\n"
-            f"Conviction: {rule_based['conviction']}\n"
-            f"Bull case: {' | '.join(rule_based['bull_case'])}\n"
-            f"Bear case: {' | '.join(rule_based['bear_case'])}\n"
-            f"Regime context: {rule_based['regime_context']}\n"
-            f"Current rule-based explanation: {rule_based['explanation']}\n\n"
-            "Rewritten explanation (3 sentences, plain English, no markdown):"
+            "You are a senior equity research analyst. Build a deep, decision-useful "
+            "investment case for THIS stock for an investor deciding whether to buy it "
+            "right now.\n\n"
+            "Ground truth — use ONLY these figures; do NOT invent any numbers:\n"
+            f"{facts_block}\n"
+            f"- Model recommendation: {rule_based['recommendation']} "
+            f"({rule_based['conviction']} conviction)\n"
+            f"- Bull seeds: {' | '.join(rule_based['bull_case'])}\n"
+            f"- Bear seeds: {' | '.join(rule_based['bear_case'])}\n\n"
+            "Produce:\n"
+            "1) explanation — 3 tight sentences: the thesis, the verdict, and what to do now.\n"
+            "2) bull_case — 4 to 6 bullets making the case FOR buying now (the tailwinds). "
+            "Each bullet ties a fact to an investment implication; AT LEAST ONE bullet must "
+            "address the macro / economic backdrop (rates, growth cycle, market regime, or "
+            "sector cycle).\n"
+            "3) bear_case — 4 to 6 bullets making the case AGAINST / what could go wrong "
+            "(the headwinds); AT LEAST ONE bullet must address a macro / economic risk.\n\n"
+            "Rules: one sentence per bullet, plain English, no markdown or bullet characters, "
+            "no fabricated numbers, max ~24 words each, framed around 'why act now vs wait'.\n\n"
+            'Return ONLY a JSON object of this exact shape:\n'
+            '{"explanation": "...", "bull_case": ["...", "..."], "bear_case": ["...", "..."]}'
         )
 
 
@@ -1338,6 +1410,38 @@ def _dedupe(seq: list[str]) -> list[str]:
             seen.add(k)
             out.append(s)
     return out
+
+
+def _parse_json_obj(text: str) -> Optional[dict]:
+    """Best-effort extraction of a JSON object from an LLM reply (tolerates
+    ```json fences and surrounding prose). Returns None if nothing parses."""
+    s = (text or "").strip()
+    if s.startswith("```"):
+        s = s.strip("`")
+        if s[:4].lower() == "json":
+            s = s[4:]
+    i, j = s.find("{"), s.rfind("}")
+    candidate = s[i:j + 1] if (i != -1 and j != -1 and j > i) else s
+    try:
+        obj = json.loads(candidate)
+        return obj if isinstance(obj, dict) else None
+    except Exception:
+        return None
+
+
+def _clean_bullets(v: Any, cap: int = 6, maxlen: int = 220) -> list[str]:
+    """Normalise an LLM bullet array: strip leading markers, cap count/length,
+    drop non-strings and duplicates."""
+    if not isinstance(v, list):
+        return []
+    out: list[str] = []
+    for x in v:
+        if not isinstance(x, str):
+            continue
+        s = x.strip().lstrip("•-–*").strip()
+        if s:
+            out.append(s[:maxlen])
+    return _dedupe(out)[:cap]
 
 
 def apply_regime_to_universe(universe: list[dict], regime: dict) -> None:
