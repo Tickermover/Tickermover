@@ -5395,6 +5395,66 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 #ts-drawer .bb-thesis li{font-size:13px;line-height:1.5;color:var(--ink);font-weight:500;margin-bottom:6px}
 #ts-drawer .bb-thesis li:last-child{margin-bottom:0}
 #ts-drawer .bb-thesis li::marker{color:#7c3aed}
+/* ════ Editorial research-note Overview (our light theme) ════════════════ */
+#ts-drawer .ov-head{padding:4px 2px 18px;border-bottom:1px solid var(--hair);margin-bottom:6px}
+#ts-drawer .ov-eyebrow{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--grey-3)}
+#ts-drawer .ov-tickrow{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;flex-wrap:wrap;margin-top:10px}
+#ts-drawer .ov-tick{font-family:var(--font-head);font-weight:600;font-size:clamp(34px,7vw,56px);line-height:.9;letter-spacing:-.02em;color:#0A0A0A}
+#ts-drawer .ov-co{font-size:13px;color:var(--grey-2);margin-top:9px;font-weight:500}
+#ts-drawer .ov-pricebox{text-align:right}
+#ts-drawer .ov-price{font-family:'JetBrains Mono',monospace;font-weight:800;font-size:30px;line-height:1;color:#0A0A0A}
+#ts-drawer .ov-chg{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;margin-top:5px}
+#ts-drawer .ov-chg.up{color:var(--up)} #ts-drawer .ov-chg.dn{color:var(--down)}
+#ts-drawer .ov-verdict{margin-top:18px;font-family:var(--font-head);font-weight:500;font-size:clamp(17px,2.4vw,21px);line-height:1.42;color:#1e293b;max-width:760px}
+#ts-drawer .ov-verdict b{color:#0040c1;font-weight:600}
+/* 6-stat strip */
+#ts-drawer .ov-strip{display:grid;grid-template-columns:repeat(6,1fr);gap:1px;background:var(--hair);border:1px solid var(--hair);border-radius:13px;overflow:hidden;margin-top:20px}
+@media(max-width:760px){#ts-drawer .ov-strip{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:430px){#ts-drawer .ov-strip{grid-template-columns:repeat(2,1fr)}}
+#ts-drawer .ov-stat{background:#fff;padding:13px 14px 11px}
+#ts-drawer .ov-stat .k{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--grey-3)}
+#ts-drawer .ov-stat .v{font-family:'JetBrains Mono',monospace;font-size:19px;font-weight:800;color:#0A0A0A;margin-top:6px;line-height:1}
+#ts-drawer .ov-stat .v.pos{color:var(--up)} #ts-drawer .ov-stat .v.neg{color:var(--down)} #ts-drawer .ov-stat .v.amb{color:#b4780a}
+#ts-drawer .ov-stat .sub{font-size:10.5px;color:var(--grey-2);margin-top:3px}
+/* numbered section divider */
+#ts-drawer .ov-sechead{display:flex;align-items:baseline;gap:12px;margin:8px 2px 0}
+/* Editorial Overview reads as a single centred column (override the 2-col grid). */
+#ts-drawer.expanded .dr-pane[data-pane="Overview"]:not([hidden]){display:flex;flex-direction:column;gap:14px;max-width:880px;margin:0 auto}
+#ts-drawer .ov-secnum{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:#b4780a}
+#ts-drawer .ov-sectitle{font-family:var(--font-head);font-weight:600;font-size:19px;letter-spacing:-.01em;color:#0A0A0A}
+/* valuation range bar */
+#ts-drawer .ov-track{position:relative;height:7px;border-radius:5px;margin:54px 14px 46px;
+  background:linear-gradient(90deg,#e11d48,#e0a000 48%,#16a34a)}
+#ts-drawer .ov-mark{position:absolute;top:50%;transform:translate(-50%,-50%);text-align:center}
+#ts-drawer .ov-mark .pin{width:2px;height:28px;background:#94a3b8;margin:0 auto}
+#ts-drawer .ov-mark.cur .pin{background:#0A0A0A;width:3px;height:40px}
+#ts-drawer .ov-mark .lab{position:absolute;left:50%;transform:translateX(-50%);white-space:nowrap;font-family:'JetBrains Mono',monospace}
+#ts-drawer .ov-mark .lab.top{bottom:34px} #ts-drawer .ov-mark .lab.bot{top:34px}
+#ts-drawer .ov-mark .lab .px{display:block;font-weight:800;font-size:12.5px;color:#0A0A0A}
+#ts-drawer .ov-mark.cur .lab .px{color:#0040c1} #ts-drawer .ov-mark.low .lab .px{color:#b91c1c} #ts-drawer .ov-mark.high .lab .px{color:#15803d}
+#ts-drawer .ov-mark .lab .nm{font-size:9px;text-transform:uppercase;letter-spacing:.07em;color:var(--grey-3)}
+/* catalysts timeline */
+#ts-drawer .ov-tl-item{display:grid;grid-template-columns:120px 1fr;gap:14px;padding:12px 0;border-bottom:1px solid var(--hair)}
+#ts-drawer .ov-tl-item:last-child{border-bottom:none}
+#ts-drawer .ov-tl-when{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:#0040c1;padding-top:1px}
+#ts-drawer .ov-tl-what{font-size:13px;line-height:1.5;color:var(--ink-2)} #ts-drawer .ov-tl-what b{color:#0A0A0A;font-weight:700}
+@media(max-width:560px){#ts-drawer .ov-tl-item{grid-template-columns:1fr;gap:3px}}
+/* bull / bear columns */
+#ts-drawer .ov-bb{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:680px){#ts-drawer .ov-bb{grid-template-columns:1fr}}
+#ts-drawer .ov-col{border:1px solid var(--hair);border-radius:13px;overflow:hidden;background:#fff}
+#ts-drawer .ov-colhd{padding:11px 15px;font-family:'JetBrains Mono',monospace;font-weight:800;font-size:11px;letter-spacing:.05em;text-transform:uppercase}
+#ts-drawer .ov-colhd.bull{background:rgba(22,163,74,.09);color:#15803d} #ts-drawer .ov-colhd.bear{background:rgba(225,29,72,.08);color:#b91c1c}
+#ts-drawer .ov-col ul{list-style:none;margin:0;padding:6px 15px 12px}
+#ts-drawer .ov-col li{padding:10px 0;border-bottom:1px solid var(--hair);font-size:12.5px;line-height:1.5;color:var(--ink-2)}
+#ts-drawer .ov-col li:last-child{border-bottom:none}
+/* metrics table */
+#ts-drawer .ov-mtbl{width:100%;border-collapse:collapse;font-size:13px}
+#ts-drawer .ov-mtbl th{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--grey-3);font-weight:600;text-align:left;padding:9px 12px;border-bottom:1px solid var(--hair)}
+#ts-drawer .ov-mtbl td{padding:10px 12px;border-bottom:1px solid var(--hair);color:var(--ink-2)}
+#ts-drawer .ov-mtbl td.num{font-family:'JetBrains Mono',monospace;font-weight:700;text-align:right;color:#0A0A0A}
+#ts-drawer .ov-mtbl tr:last-child td{border-bottom:none}
+#ts-drawer .ov-mtbl .pos{color:var(--up)} #ts-drawer .ov-mtbl .neg{color:var(--down)}
 /* key events */
 #ts-drawer .events-card .ev-row{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid #f1f5f9}
 #ts-drawer .events-card .ev-row:last-child{border:0}
@@ -17950,6 +18010,103 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
       if(up(sh)&&up(sl))     return mk('Rising Wedge','neg','Both boundaries slope up but highs rise slower — often resolves down.'); }
     return null;
   }
+  // ── Editorial research-note Overview helpers (our theme) ────────────────
+  function _ovSecHead(title){
+    return '<div class="ov-sechead"><span class="ov-secnum">●</span><span class="ov-sectitle">'+escHTML(title)+'</span></div>';
+  }
+  function _ovHeader(t,full,S){
+    const price=parseFloat(full.price||0), chg=parseFloat(full.change_pct||0);
+    const tk=(full.ticker||t.ticker||'').toUpperCase();
+    const name=full.name||t.name||tk;
+    const exch=full.exchange||t.exchange||'';
+    const sector=full.sub_sector||full.subsector||full.sector||t.sub_sector||t.sector||'';
+    const bl=(full.bottom_line||'').trim();
+    const mc=_fpNum(full,['market_cap']);
+    let pe=_fpNum(full,['pe_ratio']); if(pe==null)pe=_fpNum(full,['forward_pe']);
+    const beta=_fpNum(full,['beta']);
+    const tm=_fpNum(full,['target_mean','street_target']);
+    const upside=(price&&tm)?((tm-price)/price*100):null;
+    const lo=(S&&S.lo52!=null)?S.lo52:_fpNum(full,['low_52w','fifty_two_week_low','week52_low']);
+    const hi=(S&&S.hi52!=null)?S.hi52:_fpNum(full,['high_52w','fifty_two_week_high','week52_high']);
+    const rm=_fpNum(full,['recommendation_mean']); const rk=(full.analyst_recommendation||'').toLowerCase();
+    const RLBL={strong_buy:'Strong Buy',buy:'Buy',outperform:'Buy',hold:'Hold',neutral:'Hold',underperform:'Sell',sell:'Sell',strong_sell:'Strong Sell'};
+    let rating=null; if(rm!=null&&rm>0) rating=RLBL[rk]||(rm<=1.5?'Strong Buy':rm<=2.5?'Buy':rm<=3.5?'Hold':rm<=4.5?'Sell':'Strong Sell');
+    const na=_fpNum(full,['total_analysts','analyst_count','num_analysts']);
+    const stat=(k,v,sub,cls)=>'<div class="ov-stat"><div class="k">'+k+'</div><div class="v'+(cls?' '+cls:'')+'">'+v+'</div>'+(sub?'<div class="sub">'+sub+'</div>':'')+'</div>';
+    const strip='<div class="ov-strip">'+
+      stat('Mkt Cap', mc!=null?_money(mc):'—', mc!=null?(mc>=1e10?'large-cap':mc>=2e9?'mid-cap':'small-cap'):'')+
+      stat('P/E', pe!=null?pe.toFixed(0)+'×':'n/a', pe==null?'loss-making':'', pe==null?'neg':'')+
+      stat('52-wk', (lo!=null&&hi!=null)?(lo.toFixed(0)+'–'+hi.toFixed(0)):'—','')+
+      stat('Analyst Avg', tm!=null?fmtP(tm):'—', upside!=null?((upside>=0?'+':'')+upside.toFixed(0)+'% upside'):'', upside!=null?(upside>=0?'pos':'neg'):'')+
+      stat('Rating', rating||'—', na!=null?(Math.round(na)+' analysts'):'', rating?(/Buy/.test(rating)?'pos':/Sell/.test(rating)?'neg':'amb'):'')+
+      stat('Beta', beta!=null?beta.toFixed(2):'—', beta!=null?(beta>=1.5?'high vol':beta>=0.8?'market':'low vol'):'', beta!=null&&beta>=1.5?'amb':'')+
+    '</div>';
+    return '<div class="ov-head">'+
+      '<div class="ov-eyebrow">Equity Research · '+escHTML(sector||'US Equity')+'</div>'+
+      '<div class="ov-tickrow"><div><div class="ov-tick">'+escHTML(tk)+'</div>'+
+        '<div class="ov-co">'+escHTML(name)+(exch?' · '+escHTML(exch):'')+(sector?' · '+escHTML(sector):'')+'</div></div>'+
+        '<div class="ov-pricebox"><div class="ov-price">'+fmtP(price)+'</div><div class="ov-chg '+(chg>=0?'up':'dn')+'">'+(chg>=0?'▲ ':'▼ ')+fmtPct(chg)+'</div></div>'+
+      '</div>'+
+      (bl?'<div class="ov-verdict">'+escHTML(bl)+'</div>':'')+
+      strip+
+    '</div>';
+  }
+  function _ovNumbers(full){
+    const M=v=>v==null?null:(Math.abs(v)<=1?v*100:v);
+    const rg=M(_fpNum(full,['revenue_growth_yoy'])), gm=M(_fpNum(full,['gross_margin'])), nm=M(_fpNum(full,['profit_margin','net_margin']));
+    const beat=parseInt(full.eps_beat_streak); const avg=_fpNum(full,['avg_eps_surprise_pct']);
+    const rows=[];
+    const r=(k,v,cls)=>{ if(v==null||v==='')return; rows.push('<tr><td>'+k+'</td><td class="num'+(cls?' '+cls:'')+'">'+v+'</td></tr>'); };
+    r('Revenue growth · YoY', rg!=null?((rg>=0?'+':'')+rg.toFixed(0)+'%'):null, rg!=null?(rg>=0?'pos':'neg'):'');
+    r('Gross margin', gm!=null?gm.toFixed(0)+'%':null);
+    r('Net margin', nm!=null?nm.toFixed(0)+'%':null, nm!=null?(nm>=0?'pos':'neg'):'');
+    if(!isNaN(beat)) r('EPS beat streak', beat+' / 4 quarters');
+    if(avg!=null){ const a=Math.abs(avg)<=1?avg*100:avg; r('Avg surprise', (a>=0?'+':'')+a.toFixed(0)+'%', a>=0?'pos':'neg'); }
+    if(!rows.length) return '';
+    return _ovSecHead('The numbers')+
+      '<div class="dr-deep-card"><table class="ov-mtbl"><thead><tr><th>Metric</th><th style="text-align:right">Value</th></tr></thead><tbody>'+rows.join('')+'</tbody></table></div>'+
+      _trendCard(full);
+  }
+  function _ovBullBear(full){
+    const tw=[],hw=[],sigs=(full.signals||[]);
+    sigs.forEach(s=>{ if(!/overbought|oversold|short interest|caution|risk|below|fell|miss|warn|contract/i.test(s)) tw.push(s); });
+    const beat=parseInt(full.eps_beat_streak)||0; if(beat>=3) tw.push('Beat EPS '+beat+'/4 recent quarters');
+    const sbp=parseFloat(full.strong_buy_pct); if(!isNaN(sbp)&&sbp>=45) tw.push(Math.round(sbp)+'% of analysts rate Strong Buy');
+    (full.caution_reasons||[]).forEach(c=>hw.push(typeof c==='string'?c:(c&&c.label||'')));
+    if(typeof riskFlags==='function') riskFlags(full).forEach(f=>hw.push(f.label));
+    const px=parseFloat(full.price),tm=parseFloat(full.target_mean); if(px&&tm&&px>tm) hw.push('Trades above analyst mean target');
+    const uniq=a=>[...new Set(a.map(x=>(''+x).trim()).filter(Boolean))].slice(0,6);
+    const T=uniq(tw),H=uniq(hw);
+    const li=arr=>arr.length?arr.map(x=>'<li>'+escHTML(x)+'</li>').join(''):'<li class="muted">None flagged yet</li>';
+    return _ovSecHead('The two-sided case')+'<div class="ov-bb">'+
+      '<div class="ov-col"><div class="ov-colhd bull">▲ Why bulls own it</div><ul id="ovBullList">'+li(T)+'</ul></div>'+
+      '<div class="ov-col"><div class="ov-colhd bear">▼ Why bears stay out</div><ul id="ovBearList">'+li(H)+'</ul></div>'+
+    '</div>';
+  }
+  function _ovValuation(full,price,S){
+    const lo=(S&&S.lo52!=null)?S.lo52:_fpNum(full,['low_52w','fifty_two_week_low']);
+    const hi=(S&&S.hi52!=null)?S.hi52:_fpNum(full,['high_52w','fifty_two_week_high']);
+    const tm=_fpNum(full,['target_mean','street_target']);
+    if(!(price>0)||lo==null||hi==null||hi<=lo) return '';
+    const loB=Math.min(lo, tm!=null?tm:lo, price), hiB=Math.max(hi, tm!=null?tm:hi, price);
+    const span=hiB-loB||1; const pos=v=>Math.max(2,Math.min(98,(v-loB)/span*100));
+    const mark=(cls,v,nm,top)=>'<div class="ov-mark '+cls+'" style="left:'+pos(v).toFixed(1)+'%"><div class="lab '+(top?'top':'bot')+'"><span class="px">'+fmtP(v)+'</span><span class="nm">'+nm+'</span></div><div class="pin"></div></div>';
+    let marks=mark('low',lo,'52-wk low',true)+mark('cur',price,'current',false)+mark('high',hi,'52-wk high',true);
+    if(tm!=null) marks+=mark('',tm,'analyst avg', tm>price);
+    const up=(price&&tm)?((tm-price)/price*100):null;
+    const note=(tm!=null)?('Analyst mean target '+fmtP(tm)+(up!=null?' ('+(up>=0?'+':'')+up.toFixed(0)+'% vs price)':'')+' against the 52-week trading band.'):'Range shown is the 52-week trading band.';
+    return _ovSecHead('Where the price sits')+'<div class="dr-deep-card"><div class="ov-track">'+marks+'</div><div class="muted small">'+note+'</div></div>';
+  }
+  function _ovCatalysts(full){
+    const items=[]; const days=parseInt(full.days_to_earnings); const rev=full.eps_revisions_30d;
+    const kt=(typeof keyTrigger==='function')?keyTrigger(full):null;
+    if(kt&&kt.text&&!/no major|within tracking|steady state/i.test(kt.text)) items.push(['Now','<b>Primary catalyst.</b> '+escHTML(kt.text)]);
+    if(!isNaN(days)&&days>=0) items.push([(days<=1?'~1 day':'~'+days+' days'),'<b>Next earnings.</b> '+(days<=7?'Binary risk window — report imminent.':'Upcoming report; watch positioning into the print.')]);
+    if(rev&&(rev.ups||rev.downs)) items.push(['30 days','<b>Estimate revisions.</b> '+rev.ups+' up · '+rev.downs+' down — '+(rev.ups>rev.downs?'analysts trending positive.':(rev.downs>rev.ups?'analysts trimming estimates.':'mixed revisions.'))]);
+    if(full.eps_last_beat!=null) items.push(['Last qtr','<b>Track record.</b> Most recent quarter '+(full.eps_last_beat?'beat estimates.':'missed estimates.')]);
+    if(!items.length) return '';
+    return _ovSecHead('What moves it next')+'<div class="dr-deep-card">'+items.map(i=>'<div class="ov-tl-item"><div class="ov-tl-when">'+i[0]+'</div><div class="ov-tl-what">'+i[1]+'</div></div>').join('')+'</div>';
+  }
   function paneOverview(t,S,full,candles){
     const g=(full.grade||'').toUpperCase(), TI=_tierOf(g);
     const pop=Math.round(parseFloat(full.smart_score!=null?full.smart_score:(full.pop_score||0)));
@@ -18053,8 +18210,20 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
         '<span class="edge-sub">'+((S.recoverDays!=null&&S.recoverN>=2)?'Reclaims dips in ~<b>'+S.recoverDays+'</b> sessions ('+S.recoverN+' samples, 1&nbsp;yr)':'Blends RSI, trend, support &amp; drawdown room')+'</span></div>':'')+
     '</div>';
     const edgeCard=(_rs!=null||_blue||_confPct!=null||_hasReb)?_sec('The AlphaHunt edge','⚡','violet',_edgeBody):'';
-    // consensus + pre/after-hours badges → verdict → six-pillar tiles → catalyst → chart → rest.
-    return _consensusChip(full)+_premktBadge(full)+verdict+_heroStats(t,S,full)+_catalystCard(full)+chart+_bullBear(full)+edgeCard+_keyEvents(full)+setup;
+    // Editorial research-note flow (our theme): header + 6-stat strip →
+    // scorecard → numbers → price action → edge → technical setup →
+    // two-sided case → valuation → catalysts → bottom-line thesis.
+    return _ovHeader(t,full,S)
+      + _premktBadge(full)
+      + _ovSecHead('The six-pillar scorecard') + _heroStats(t,S,full)
+      + _ovNumbers(full)
+      + chart
+      + edgeCard
+      + setup
+      + _ovBullBear(full)
+      + _ovValuation(full,price,S)
+      + _ovCatalysts(full)
+      + _ovSecHead('Bottom line') + _bullBear(full);
   }
   function paneTechnicals(t,S){
     const m1=_fpNum(t,['momentum_1m']),m3=_fpNum(t,['momentum_3m']),m6=_fpNum(t,['momentum_6m']);
@@ -18707,12 +18876,17 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     tsLoadThesis(t.ticker);
   }
   function tsLoadThesis(tk){
-    if(!drawer.querySelector('#aiThesisBody')) return;
+    if(!drawer.querySelector('#aiThesisBody')&&!drawer.querySelector('#ovBullList')) return;
     fetch('/api/thesis/'+encodeURIComponent(tk)).then(r=>r.ok?r.json():null).then(d=>{
-      const e=drawer.querySelector('#aiThesisBody'); if(!e) return;
+      const e=drawer.querySelector('#aiThesisBody');
       const txt=d&&(d.explanation||d.headline);
-      if(txt){ e.innerHTML=_thesisBulletsHTML(txt)+'<span class="ai-tag ok">✦ AI · live</span>'; }
-      else { const tag=drawer.querySelector('#aiThesisTag'); if(tag) tag.remove(); }
+      if(e){
+        if(txt){ e.innerHTML=_thesisBulletsHTML(txt)+'<span class="ai-tag ok">✦ AI · live</span>'; }
+        else { const tag=drawer.querySelector('#aiThesisTag'); if(tag) tag.remove(); }
+      }
+      // Fill the two-sided case columns with the deep AI bull/bear case.
+      const fill=(sel,arr)=>{ if(!Array.isArray(arr)||!arr.length)return; const el=drawer.querySelector(sel); if(el) el.innerHTML=arr.slice(0,6).map(x=>'<li>'+escHTML(String(x))+'</li>').join(''); };
+      if(d){ fill('#ovBullList',d.bull_case); fill('#ovBearList',d.bear_case); }
     }).catch(()=>{ const tag=drawer.querySelector('#aiThesisTag'); if(tag) tag.remove(); });
   }
   function tsShowTab(name){
