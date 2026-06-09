@@ -5386,6 +5386,10 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 #ts-drawer .wind-row{font-size:12px;font-weight:600;padding:5px 9px;border-radius:8px;margin-bottom:5px;line-height:1.35}
 #ts-drawer .wind-row.tw{background:rgba(22,163,74,.08);color:#15803d} #ts-drawer .wind-row.hw{background:rgba(234,56,76,.07);color:#b91c1c}
 #ts-drawer .wind-row.muted{background:var(--surf-2);color:var(--grey-3)}
+#ts-drawer .bb-list{margin:2px 0 0;padding-left:17px}
+#ts-drawer .bb-list li{font-size:12px;font-weight:600;line-height:1.45;margin-bottom:5px;padding-left:2px}
+#ts-drawer .bb-list.tw li{color:#15803d} #ts-drawer .bb-list.tw li::marker{color:#16a34a}
+#ts-drawer .bb-list.hw li{color:#b91c1c} #ts-drawer .bb-list.hw li::marker{color:#e11d48}
 /* key events */
 #ts-drawer .events-card .ev-row{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid #f1f5f9}
 #ts-drawer .events-card .ev-row:last-child{border:0}
@@ -17329,7 +17333,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
   function _smaSeries(a,p){ const o=Array(a.length).fill(null); let s=0; for(let i=0;i<a.length;i++){ s+=a[i]; if(i>=p)s-=a[i-p]; if(i>=p-1)o[i]=s/p; } return o; }
   function _recoveryStats(cl){ const recs=[]; let pk=cl[0],pi=0,inDip=false; for(let i=1;i<cl.length;i++){ const c=cl[i]; if(c>=pk){ if(inDip){recs.push(i-pi);inDip=false;} pk=c;pi=i; } else if((pk-c)/pk>=0.08){ inDip=true; } } if(!recs.length)return null; recs.sort((a,b)=>a-b); return {n:recs.length, median:recs[Math.floor(recs.length/2)]}; }
   /* infographic report section wrapper */
-  const _SECMETA=[['Profitability','💰','green'],['Quarterly revenue','📊','blue'],['Quarterly','📊','blue'],['Valuation multiples','⚖️','amber'],['Valuation verdict','💎','amber'],['Analyst targets','🏦','blue'],['EPS surprise','📊','violet'],['Earnings summary','🎯','green'],['Momentum','⚡','blue'],['Volatility','🛡️','amber'],['Setup','📐','blue'],['Quote','💧','slate'],['Six pillars','📶','teal'],['Signals','✨','teal'],['Bull vs bear','⚖️','teal'],['Recent headlines','📰','slate'],['News','📰','slate'],['Peers','👥','violet']];
+  const _SECMETA=[['Profitability','💰','green'],['Quarterly revenue','📊','blue'],['Quarterly','📊','blue'],['Valuation multiples','⚖️','amber'],['Valuation verdict','💎','amber'],['Analyst targets','🏦','blue'],['EPS surprise','📊','violet'],['Earnings summary','🎯','green'],['Momentum','⚡','blue'],['Volatility','🛡️','amber'],['Setup','📐','blue'],['Quote','💧','slate'],['Six pillars','📶','teal'],['Signals','✨','teal'],['The case for','⚖️','teal'],['Recent headlines','📰','slate'],['News','📰','slate'],['Peers','👥','violet']];
   function _secMeta(title){ for(const m of _SECMETA){ if(title.indexOf(m[0])>=0) return m; } return [title,'•','slate']; }
   function _sec(title,icon,accent,body,span){ if(body==null||body==='') return ''; return '<div class="rep-sec rep-'+accent+(span?' rep-span':'')+'"><div class="rep-rib"><span class="rep-num"></span><span class="rep-ico">'+icon+'</span><span class="rep-title">'+title+'</span><span class="rep-wm">'+icon+'</span></div><div class="rep-body">'+body+'</div></div>'; }
   function _card(title,rows){ const r=(rows||[]).filter(Boolean); if(!r.length) return ''; const m=_secMeta(title); return _sec(title,m[1],m[2],r.join('')); }
@@ -17606,10 +17610,10 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     const px=parseFloat(t.price), tm=parseFloat(t.target_mean); if(px&&tm&&px>tm) hw.push('Trades above analyst mean target');
     const uniq=a=>[...new Set(a.map(x=>(''+x).trim()).filter(Boolean))].slice(0,5);
     const T=uniq(tw), H=uniq(hw);
-    const col=(title,arr,cls,ico)=>'<div class="winds-col"><div class="winds-h '+cls+'">'+ico+' '+title+'</div>'+(arr.length?arr.map(x=>'<div class="wind-row '+cls+'">'+escHTML(x)+'</div>').join(''):'<div class="wind-row muted">None flagged</div>')+'</div>';
-    const grid=(T.length||H.length)?'<div class="winds-grid">'+col('Bull case',T,'tw','▲')+col('Bear case',H,'hw','▼')+'</div>':'';
+    const col=(title,arr,cls,ico)=>'<div class="winds-col"><div class="winds-h '+cls+'">'+ico+' '+title+'</div>'+(arr.length?'<ul class="bb-list '+cls+'">'+arr.map(x=>'<li>'+escHTML(x)+'</li>').join('')+'</ul>':'<div class="wind-row muted">None flagged</div>')+'</div>';
+    const grid=(T.length||H.length)?'<div class="winds-grid">'+col('The case for',T,'tw','▲')+col('The case against',H,'hw','▼')+'</div>':'';
     if(!verdict&&!grid) return '';
-    return _sec('Bull vs bear','⚖️','teal',verdict+grid);
+    return _sec('The case for &amp; against','⚖️','teal',verdict+grid);
   }
   function _catalystCard(t){
     const kt=(typeof keyTrigger==='function')?keyTrigger(t):null;
@@ -17829,11 +17833,8 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
         _lvl('RSI (14)',S.rsi!=null?S.rsi.toFixed(0):'—',S.rsi!=null?(S.rsi>70?'neg':S.rsi<35?'pos':''):'')+
         _lvl('Volume',S.volR!=null?S.volR.toFixed(1)+'×':'—',S.volR!=null?(S.volR>=1.3?'pos':''):'')+
       '</div>') : '';
-    const rebAccent=S?(S.rebound>=66?'green':S.rebound>=40?'amber':'red'):'slate';
-    const rebColor=S?(S.rebound>=66?'#16a34a':S.rebound>=40?'#e08600':'#e11d48'):'#94a3b8';
-    const rebound = S? _sec('Rebound potential','🔄',rebAccent,
-      '<div class="reb-gauge">'+_ringSVG(S.rebound,rebColor)+
-        '<div class="reb-sub" style="margin:0">'+((S.recoverDays!=null&&S.recoverN>=2)?'Historically reclaims a dip in ~<b>'+S.recoverDays+'</b> sessions <span class="muted">('+S.recoverN+' samples, 1&nbsp;yr)</span>':'Score blends RSI, trend, support proximity &amp; drawdown room into a single 0&ndash;100 read.')+'</div></div>') : '';
+    const _hasReb = S && S.rebound!=null;
+    const rebColor=_hasReb?(S.rebound>=66?'#16a34a':S.rebound>=40?'#e08600':'#e11d48'):'#94a3b8';
     // ── The AlphaHunt edge — proprietary, trust-building reads:
     //    relative strength · institutional accumulation · model conviction & trajectory.
     const _rs=_rsMap[t.ticker]||_fpNum(full,['rs_rating','rs'])||_fpNum(t,['rs_rating','rs']);
@@ -17856,10 +17857,13 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
         (_confPct!=null
           ?'<span class="edge-val '+_confCls+'">'+_confPct+'%</span><span class="edge-sub">'+_confWord+(_trend?' · '+_trend:'')+'</span>'
           :'<span class="edge-val">—</span><span class="edge-sub">Conviction warming up</span>')+'</div>'+
+      (_hasReb?'<div class="edge-k"><span class="edge-lab">Rebound potential</span>'+
+        '<span class="edge-val" style="color:'+rebColor+'">'+Math.round(S.rebound)+'<small> / 100</small></span>'+
+        '<span class="edge-sub">'+((S.recoverDays!=null&&S.recoverN>=2)?'Reclaims dips in ~<b>'+S.recoverDays+'</b> sessions ('+S.recoverN+' samples, 1&nbsp;yr)':'Blends RSI, trend, support &amp; drawdown room')+'</span></div>':'')+
     '</div>';
-    const edgeCard=(_rs!=null||_blue||_confPct!=null)?_sec('The AlphaHunt edge','⚡','violet',_edgeBody):'';
+    const edgeCard=(_rs!=null||_blue||_confPct!=null||_hasReb)?_sec('The AlphaHunt edge','⚡','violet',_edgeBody):'';
     // consensus + pre/after-hours badges → verdict → six-pillar tiles → catalyst → chart → rest.
-    return _consensusChip(full)+_premktBadge(full)+verdict+_heroStats(t,S,full)+_catalystCard(full)+chart+_bullBear(full)+setup+rebound+edgeCard+_keyEvents(full);
+    return _consensusChip(full)+_premktBadge(full)+verdict+_heroStats(t,S,full)+_catalystCard(full)+chart+_bullBear(full)+setup+edgeCard+_keyEvents(full);
   }
   function paneTechnicals(t,S){
     const m1=_fpNum(t,['momentum_1m']),m3=_fpNum(t,['momentum_3m']),m6=_fpNum(t,['momentum_6m']);
