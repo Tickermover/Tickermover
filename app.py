@@ -6793,8 +6793,13 @@ async def api_user_prefs_get(user: Optional[dict] = Depends(_current_user),
     if not user:
         raise HTTPException(status_code=401, detail="Not authenticated")
     md = await supabase.get_user_metadata(creds.credentials)
+    # Fall back to the OAuth display name (Google populates full_name/name) so
+    # Google sign-ups see their name pre-filled in the welcome step.
+    name = md.get("name") or md.get("full_name") or md.get("display_name") or ""
+    # First name only — the welcome step asks "what should we call you?".
+    first = name.split(" ")[0] if isinstance(name, str) else ""
     return JSONResponse({
-        "name":         md.get("name") or "",
+        "name":         first or (name if isinstance(name, str) else ""),
         "risk_profile": md.get("risk_profile") or "",
         "onboarded":    bool(md.get("onboarded")),
     })

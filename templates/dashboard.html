@@ -43,17 +43,23 @@
     } catch(e){}
   })();
 
-  // Hide the dashboard until resolved, on either ?signup=1 or ?signin=1 deep links.
+  // Hide the dashboard until resolved: on ?signup=1 / ?signin=1 deep links, or
+  // when the user just registered (so the welcome overlay shows over a hidden
+  // dashboard instead of the app flashing first).
   (function(){
-    var _q = new URLSearchParams(window.location.search);
-    if (_q.get('signup') === '1' || _q.get('signin') === '1') {
-      document.documentElement.classList.add('auth-gating');
-    }
+    try {
+      var _q = new URLSearchParams(window.location.search);
+      var justReg = false;
+      try { justReg = localStorage.getItem('ah_just_registered') === '1'; } catch(e){}
+      if (_q.get('signup') === '1' || _q.get('signin') === '1' || justReg) {
+        document.documentElement.classList.add('auth-gating');
+      }
+    } catch(e){}
   })();
 </script>
 <style>
   /* Hide everything except the auth modal during the signup gate */
-  html.auth-gating body > *:not(#auth-modal):not(script):not(style){
+  html.auth-gating body > *:not(#auth-modal):not(#ah-onboard-overlay):not(script):not(style){
     visibility:hidden !important;
   }
   html.auth-gating{background:#0A0A0A;overflow:hidden}
@@ -15623,12 +15629,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.location.replace('/login');
     return;
   }
-  // Authed user — make sure the gate class isn't hanging around
-  document.documentElement.classList.remove('auth-gating');
-  // Pull saved name / risk profile / onboarded state across devices first,
-  // then decide whether to run first-time onboarding.
+  // Pull saved name / risk profile / onboarded state across devices first.
   try { await syncUserPrefs(); } catch(e){}
-  try { maybeRunOnboarding(); } catch(e){}
+  // First-time onboarding renders over a STILL-gated dashboard so the app
+  // never flashes behind the welcome. If it doesn't run, drop the gate now.
+  let _onboarding = false;
+  try { _onboarding = maybeRunOnboarding(); } catch(e){}
+  if (!_onboarding) document.documentElement.classList.remove('auth-gating');
 });
 
 
@@ -16075,7 +16082,8 @@ async function signupFinish() {
     _AUTH.user = { id: userObj.id || null, email: userObj.email || email, name };
     _authUpdateUI(_AUTH.user);
     _scheduleTokenRefresh();
-    // First-time registration → welcome animation + name, then risk profile.
+    // First-time registration → standalone welcome overlay, then risk profile.
+    try { closeAuthModal(); } catch(e){}
     startOnboarding(name);
   } catch(e) {
     err.textContent = 'Network error — try again';
@@ -16084,15 +16092,23 @@ async function signupFinish() {
 }
 
 // ── First-time onboarding (registration only) ─────────────────────────────
-// Welcome animation → ask the user's name → open the risk-profile quiz.
-// Reached ONLY from signupFinish(), and guarded by a localStorage flag so it
-// never shows again (returning logins skip it entirely).
+// A standalone welcome overlay (its own design — NOT the auth modal): a
+// typewriter welcome that asks the user's name, then opens the risk-profile
+// quiz. Shown once, guarded by a localStorage flag; returning logins skip it.
 function startOnboarding(name) {
-  try { if (localStorage.getItem('ah_onboarding_completed') === '1') { closeAuthModal(); return; } } catch(e){}
-  _switchAuthView('onboard');
-  const input = document.getElementById('ah-ob-name');
-  if (input) { input.value = (name || '').trim(); setTimeout(() => { try { input.focus(); } catch(e){} }, 700); }
-  _obTypewrite(document.getElementById('ah-ob-type'), 'Welcome to AlphaHunt');
+  const ov = document.getElementById('ah-onboard-overlay');
+  if (!ov) return;
+  const input = document.getElementById('aho-name');
+  const err   = document.getElementById('aho-error');
+  if (err) err.textContent = '';
+  if (input) {
+    input.value = (name || '').trim();
+    setTimeout(() => { try { input.focus(); input.select(); } catch(e){} }, 720);
+  }
+  document.documentElement.style.overflow = 'hidden';
+  document.body.style.overflow = 'hidden';
+  ov.classList.add('open');
+  _obTypewrite(document.getElementById('aho-type'), 'Welcome to AlphaHunt');
 }
 // Lightweight typewriter for the welcome headline (respects reduced-motion).
 function _obTypewrite(el, text) {
@@ -16107,9 +16123,17 @@ function _obTypewrite(el, text) {
     setTimeout(tick, 55);
   })();
 }
+// Dismiss the welcome overlay and reveal the dashboard (used by Continue + ✕).
+function _closeOnboardOverlay() {
+  const ov = document.getElementById('ah-onboard-overlay');
+  if (ov) ov.classList.remove('open');
+  document.documentElement.style.overflow = '';
+  document.body.style.overflow = '';
+  try { document.documentElement.classList.remove('auth-gating'); } catch(e){}
+}
 function onboardNameNext() {
-  const input = document.getElementById('ah-ob-name');
-  const err   = document.getElementById('ah-ob-error');
+  const input = document.getElementById('aho-name');
+  const err   = document.getElementById('aho-error');
   const name  = (input && input.value.trim()) || '';
   if (!name) { if (err) err.textContent = 'Please enter your name to continue.'; if (input) { try { input.focus(); } catch(e){} } return; }
   if (err) err.textContent = '';
@@ -16119,30 +16143,31 @@ function onboardNameNext() {
   try { savePrefs({ name: name }); } catch(e){}
   // Mark onboarding done so the welcome step never reappears.
   try { localStorage.setItem('ah_onboarding_completed', '1'); } catch(e){}
-  // Reveal the dashboard (drop the load-time gate), then prompt for the risk profile.
-  try { document.documentElement.classList.remove('auth-gating'); } catch(e){}
-  closeAuthModal();
-  if (typeof v2OpenRiskQuiz === 'function') setTimeout(v2OpenRiskQuiz, 120);
+  // Hide the welcome, reveal the dashboard, then prompt for the risk profile.
+  _closeOnboardOverlay();
+  if (typeof v2OpenRiskQuiz === 'function') setTimeout(v2OpenRiskQuiz, 160);
 }
-// On /app load: if the user just registered (flagged on /login) and hasn't been
-// onboarded, surface the welcome + name step over the dashboard, then the quiz.
+// ✕ / skip — leave the dashboard; don't force the quiz. Mark done so it won't
+// reappear; the profile can still be set later from the topbar pill.
+function closeOnboarding() {
+  try { localStorage.setItem('ah_onboarding_completed', '1'); } catch(e){}
+  _closeOnboardOverlay();
+}
+// On /app load: if the user just registered (flagged on /login or the OAuth
+// callback) and hasn't onboarded, show the welcome overlay. Returns true if
+// the overlay was shown (so the caller can keep the dashboard gated).
 function maybeRunOnboarding() {
   try {
-    if (!_AUTH || !_AUTH.token) return;
-    if (localStorage.getItem('ah_onboarding_completed') === '1') return;
-    if (localStorage.getItem('ah_just_registered') !== '1') return;
-    localStorage.removeItem('ah_just_registered');
-  } catch(e){ return; }
-  const m = document.getElementById('auth-modal');
-  if (m) {                       // reveal the modal shell (matches openAuthModal)
-    m.style.display = 'flex';
-    document.documentElement.style.overflow = 'hidden';
-    document.body.style.overflow = 'hidden';
-  }
-  try { if (typeof _ahLoadHotStrip === 'function') _ahLoadHotStrip(); } catch(e){}
+    if (!_AUTH || !_AUTH.token) return false;
+    var justReg = localStorage.getItem('ah_just_registered') === '1';
+    if (justReg) localStorage.removeItem('ah_just_registered');   // consume once
+    if (localStorage.getItem('ah_onboarding_completed') === '1') return false;
+    if (!justReg) return false;
+  } catch(e){ return false; }
   let pre = '';
   try { pre = localStorage.getItem('ah_name') || ''; } catch(e){}
   startOnboarding(pre);
+  return true;
 }
 // Fire-and-forget: persist a prefs patch (name / risk_profile / onboarded) to
 // the user's Supabase metadata so it follows them across devices.
@@ -17018,32 +17043,6 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
       <button class="ah-submit" onclick="closeAuthModal()">Open Dashboard →</button>
     </div>
 
-    <!-- ── FIRST-TIME ONBOARDING: welcome animation + name ── -->
-    <style>
-      #ah-view-onboard{text-align:center;padding:8px 0 4px}
-      #ah-view-onboard .ah-ob-wave{font-size:46px;display:inline-block;transform-origin:70% 70%;animation:ahObPop .45s ease both,ahObWave 1.7s ease-in-out .45s 3}
-      @keyframes ahObPop{from{opacity:0;transform:scale(.5)}to{opacity:1;transform:scale(1)}}
-      @keyframes ahObWave{0%,100%{transform:rotate(0)}15%{transform:rotate(16deg)}30%{transform:rotate(-10deg)}45%{transform:rotate(14deg)}60%{transform:rotate(-6deg)}75%{transform:rotate(8deg)}}
-      #ah-view-onboard .ah-ob-title{font-family:var(--font-head,'Fraunces',serif);font-weight:500;font-size:27px;color:#0A0A0A;letter-spacing:-.02em;line-height:1.15;min-height:34px;margin:12px 0 4px}
-      #ah-view-onboard .ah-ob-caret{display:inline-block;width:2px;height:.95em;background:#2970ff;margin-left:2px;vertical-align:-2px;animation:ahObCaret 1s step-end infinite}
-      @keyframes ahObCaret{50%{opacity:0}}
-      #ah-view-onboard .ah-ob-sub{color:#5d6c7b;font-size:14px;margin-bottom:22px;opacity:0;animation:ahObUp .5s ease .55s both}
-      #ah-view-onboard .ah-ob-q{display:block;text-align:left;font-weight:700;font-size:13px;color:#0A0A0A;margin-bottom:8px;opacity:0;animation:ahObUp .5s ease .75s both}
-      #ah-view-onboard .ah-ob-input{width:100%;box-sizing:border-box;padding:13px 15px;font-size:15px;font-family:var(--font-body,'Inter',sans-serif);border:1px solid #d7dee8;border-radius:12px;background:#fff;color:#0A0A0A;margin-bottom:10px;outline:none;opacity:0;animation:ahObUp .5s ease .85s both;transition:border-color .15s,box-shadow .15s}
-      #ah-view-onboard .ah-ob-input:focus{border-color:#2970ff;box-shadow:0 0 0 3px rgba(41,112,255,.14)}
-      #ah-view-onboard .ah-submit{opacity:0;animation:ahObUp .5s ease 1s both}
-      @keyframes ahObUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
-    </style>
-    <div id="ah-view-onboard" class="ah-view">
-      <span class="ah-ob-wave" aria-hidden="true">👋</span>
-      <div class="ah-ob-title"><span id="ah-ob-type"></span><span class="ah-ob-caret"></span></div>
-      <div class="ah-ob-sub">Let's get you set up — it takes 20 seconds.</div>
-      <label class="ah-ob-q" for="ah-ob-name">What should we call you?</label>
-      <input id="ah-ob-name" class="ah-ob-input" type="text" maxlength="40" autocomplete="given-name"
-             placeholder="Your first name" onkeydown="if(event.key==='Enter'){event.preventDefault();onboardNameNext();}">
-      <div id="ah-ob-error" class="ah-err" style="text-align:center;margin-bottom:6px"></div>
-      <button class="ah-submit" onclick="onboardNameNext()">Continue →</button>
-    </div>
 
     <!-- Terms (real links + first-time disclosure)
          The id="ah-tos-row" wrapper is hidden on signin/forgot/success views
@@ -17066,6 +17065,68 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
 </div>
 
 </div>
+</div>
+
+<!-- ─── FIRST-TIME ONBOARDING — standalone welcome (its own design, not the
+     auth modal). Step 1: welcome + name. Then opens the risk-profile quiz. ─── -->
+<style>
+  #ah-onboard-overlay{position:fixed;inset:0;z-index:10001;display:none;align-items:center;justify-content:center;padding:22px;
+    background:radial-gradient(120% 120% at 50% -10%,rgba(41,112,255,.22),transparent 55%),rgba(7,9,14,.78);
+    -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+  #ah-onboard-overlay.open{display:flex;animation:ahoFade .3s ease}
+  @keyframes ahoFade{from{opacity:0}to{opacity:1}}
+  .aho-card{position:relative;width:100%;max-width:460px;background:linear-gradient(180deg,#ffffff,#fbfcff);
+    border:1px solid rgba(255,255,255,.7);border-radius:24px;padding:40px 38px 30px;text-align:center;
+    box-shadow:0 1px 2px rgba(0,0,0,.05),0 30px 70px -30px rgba(0,0,0,.45);
+    animation:ahoPop .42s cubic-bezier(.22,.9,.32,1.2) both}
+  @keyframes ahoPop{from{opacity:0;transform:translateY(16px) scale(.97)}to{opacity:1;transform:none}}
+  .aho-close{position:absolute;top:16px;right:16px;width:32px;height:32px;border-radius:50%;border:1px solid #e6e9f0;
+    background:#fff;color:#94a3b8;font-size:15px;line-height:1;cursor:pointer;display:grid;place-items:center;transition:.15s}
+  .aho-close:hover{background:#f1f5f9;color:#475569}
+  .aho-brand{display:inline-flex;align-items:center;gap:8px;font-family:var(--font-head,'Fraunces',serif);font-size:17px;font-weight:600;color:#0A0A0A;margin-bottom:18px}
+  .aho-brand em{font-style:italic;color:#0A0A0A}
+  .aho-brand .aho-logo{display:grid;place-items:center;width:30px;height:30px;border-radius:9px;
+    background:linear-gradient(135deg,#FFE9B0,#F5A623);color:#3a2a05;font-weight:800;font-style:italic;font-size:16px;
+    font-family:var(--font-head,'Fraunces',serif)}
+  .aho-wave{font-size:50px;display:inline-block;transform-origin:70% 70%;animation:ahoPopIn .45s ease both,ahoWave 1.7s ease-in-out .5s 3}
+  @keyframes ahoPopIn{from{opacity:0;transform:scale(.5)}to{opacity:1;transform:scale(1)}}
+  @keyframes ahoWave{0%,100%{transform:rotate(0)}15%{transform:rotate(16deg)}30%{transform:rotate(-10deg)}45%{transform:rotate(14deg)}60%{transform:rotate(-6deg)}75%{transform:rotate(8deg)}}
+  .aho-title{font-family:var(--font-head,'Fraunces',serif);font-weight:500;font-size:30px;color:#0A0A0A;letter-spacing:-.02em;line-height:1.12;min-height:38px;margin:14px 0 6px}
+  .aho-caret{display:inline-block;width:2px;height:.9em;background:#2970ff;margin-left:3px;vertical-align:-2px;animation:ahoCaret 1s step-end infinite}
+  @keyframes ahoCaret{50%{opacity:0}}
+  .aho-sub{color:#64748b;font-size:14.5px;line-height:1.5;margin:0 auto 26px;max-width:330px;opacity:0;animation:ahoUp .5s ease .5s both}
+  .aho-q{display:block;text-align:left;font-weight:700;font-size:12.5px;letter-spacing:.01em;color:#0A0A0A;margin-bottom:8px;opacity:0;animation:ahoUp .5s ease .68s both}
+  .aho-input{width:100%;box-sizing:border-box;padding:14px 16px;font-size:16px;font-family:var(--font-body,'Inter',sans-serif);
+    border:1px solid #d7dee8;border-radius:13px;background:#fff;color:#0A0A0A;margin-bottom:10px;outline:none;
+    opacity:0;animation:ahoUp .5s ease .8s both;transition:border-color .15s,box-shadow .15s}
+  .aho-input:focus{border-color:#2970ff;box-shadow:0 0 0 3px rgba(41,112,255,.16)}
+  .aho-err{color:#dc2626;font-size:12.5px;font-weight:600;min-height:16px;text-align:left;margin-bottom:4px}
+  .aho-cta{width:100%;border:0;cursor:pointer;padding:15px;border-radius:13px;font-family:var(--font-body,'Inter',sans-serif);
+    font-size:15.5px;font-weight:800;color:#fff;letter-spacing:.01em;
+    background:linear-gradient(135deg,#2970ff,#0040c1);box-shadow:0 10px 24px -10px rgba(0,64,193,.5);
+    opacity:0;animation:ahoUp .5s ease .92s both;transition:transform .12s,box-shadow .15s}
+  .aho-cta:hover{transform:translateY(-1px);box-shadow:0 14px 28px -10px rgba(0,64,193,.6)}
+  .aho-step{margin-top:16px;font-size:11.5px;color:#94a3b8;font-weight:600;opacity:0;animation:ahoUp .5s ease 1.05s both}
+  .aho-dots{display:inline-flex;gap:5px;margin-right:7px;vertical-align:middle}
+  .aho-dots i{width:7px;height:7px;border-radius:50%;background:#dbe2ec;display:inline-block}
+  .aho-dots i.on{background:#2970ff}
+  @keyframes ahoUp{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:none}}
+  @media(max-width:520px){.aho-card{padding:34px 22px 26px;border-radius:20px}.aho-title{font-size:26px}}
+</style>
+<div id="ah-onboard-overlay" role="dialog" aria-modal="true" aria-label="Welcome">
+  <div class="aho-card">
+    <button class="aho-close" onclick="closeOnboarding()" aria-label="Skip for now" title="Skip for now">✕</button>
+    <div class="aho-brand"><span class="aho-logo">a</span> Alpha<em>Hunt</em></div>
+    <span class="aho-wave" aria-hidden="true">👋</span>
+    <h1 class="aho-title"><span id="aho-type"></span><span class="aho-caret"></span></h1>
+    <p class="aho-sub">Welcome aboard. Let's personalise your dashboard — it takes about 20 seconds.</p>
+    <label class="aho-q" for="aho-name">What should we call you?</label>
+    <input id="aho-name" class="aho-input" type="text" maxlength="40" autocomplete="given-name"
+           placeholder="Your first name" onkeydown="if(event.key==='Enter'){event.preventDefault();onboardNameNext();}">
+    <div id="aho-error" class="aho-err"></div>
+    <button class="aho-cta" onclick="onboardNameNext()">Continue →</button>
+    <div class="aho-step"><span class="aho-dots"><i class="on"></i><i></i></span>Step 1 of 2 · next: choose your risk profile</div>
+  </div>
 </div>
 
 <!-- Upgrade modal removed — all features free for now -->
