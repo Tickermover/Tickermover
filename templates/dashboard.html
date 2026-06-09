@@ -5899,24 +5899,20 @@ html.v2-dark body.v2 .v2-topbar::before, body.v2 .v2-topbar::before{
 /* 3 · Each active view becomes a frosted glass panel (only one is active at a
    time, so just one backdrop-filter surface). Market Analysis keeps its own. */
 body.v2 .v2-content .panel.active:not(#panel-market){
-  background:rgba(255,255,255,.40) !important;
-  -webkit-backdrop-filter:blur(26px) saturate(160%);
-  backdrop-filter:blur(26px) saturate(160%);
-  border:1px solid rgba(255,255,255,.55);
-  border-radius:22px;
-  box-shadow:0 26px 70px -32px rgba(72,52,110,.4);
-  padding:16px 12px 22px;            /* slimmer frame → inner boxes get wider */
-  /* align with the floating topbar (same width + centering) + a clear gap */
+  /* No frosted layer — content sits directly on the page atmosphere.
+     Keep only the centering + width so panels stay aligned with the topbar. */
+  background:transparent !important;
+  padding:6px 12px 22px;
   width:calc(100% - 52px);
   max-width:1268px;
-  margin:18px auto 26px;
+  margin:8px auto 26px;
 }
-/* 4 · Cards become lighter glass panes on the frosted panel (no per-card blur) */
+/* 4 · Cards are near-solid white panes floating on the atmosphere (no frosted backing now) */
 body.v2 .card, body.v2 .hot-card, body.v2 .alloc-card, body.v2 .risk-card,
 body.v2 .news-card, body.v2 .sm-card, body.v2 .fund-list-wrap, body.v2 .v2-track,
 body.v2 .v2-pick-card, body.v2 .dr-deep-card{
-  background:rgba(255,255,255,.62) !important;
-  border-color:rgba(255,255,255,.55) !important;
+  background:rgba(255,255,255,.92) !important;
+  border-color:rgba(255,255,255,.7) !important;
   box-shadow:0 2px 14px rgba(72,52,110,.07) !important;
 }
 /* 5 · Uniform content width on EVERY tab. The radar tab already zeroed .main's
