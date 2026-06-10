@@ -5433,7 +5433,9 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
    Overview's summary ribbon-card doesn't repeat it — it shows the verdict +
    live price + the stat strip. */
 /* Top row: Alpha Score (left) + live price (right); verdict reads full-width below. */
-#ts-drawer .ov-headtop{display:flex;align-items:center;gap:18px;flex-wrap:wrap;margin-bottom:13px}
+#ts-drawer .ov-headtop{display:flex;align-items:stretch;gap:14px;flex-wrap:wrap;margin-bottom:14px}
+/* Alpha Score + price as highlighted translucent "glass" chips. */
+#ts-drawer .ov-score,#ts-drawer .ov-pricebox{background:rgba(15,23,42,.04);border:1px solid rgba(15,23,42,.09);border-radius:14px;padding:10px 15px;box-shadow:inset 0 1px 0 rgba(255,255,255,.5)}
 #ts-drawer .ov-score{display:flex;align-items:center;gap:11px}
 #ts-drawer .ov-score-n{font-family:'JetBrains Mono',monospace;font-size:34px;font-weight:800;line-height:1;letter-spacing:-.02em}
 #ts-drawer .ov-score-meta{display:flex;flex-direction:column;gap:2px}
