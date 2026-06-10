@@ -243,6 +243,15 @@ a{color:inherit;text-decoration:none}
 .magic{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--primary);background:none;border:none;cursor:pointer;font-family:inherit;padding:6px}
 .magic:hover{color:var(--blue-light)}
 
+/* Email-confirmation view */
+#confirm-view{text-align:center}
+.cv-icon{width:62px;height:62px;margin:6px auto 16px;border-radius:17px;display:grid;place-items:center;font-size:29px;
+  background:linear-gradient(135deg,#e8f0ff,#d1e0ff);
+  box-shadow:0 10px 22px -10px rgba(41,112,255,.55),inset 0 0 0 1px rgba(41,112,255,.14)}
+#confirm-view .form-sub{max-width:340px;margin-left:auto;margin-right:auto}
+#confirm-view #cv-email{color:var(--primary);font-weight:700}
+#cv-back{color:var(--grey-2)}#cv-back:hover{color:var(--primary)}
+
 .foot{margin-top:22px;padding-top:18px;border-top:1px solid rgba(9,9,9,.08);text-align:center;font-size:13px;color:var(--grey-2)}
 .foot a{color:var(--primary);font-weight:700;margin-left:4px}
 .foot a:hover{color:var(--blue-light)}
@@ -280,6 +289,7 @@ a{color:inherit;text-decoration:none}
         <span class="left-brand-mark" role="img" aria-label="AlphaHunt"></span>
         <span class="brand-wordmark">AlphaHunt</span>
       </a>
+      <div id="signin-view">
       <h1 class="form-title">Welcome back</h1>
       <p class="form-sub">Sign in — your watchlist is waiting.</p>
 
@@ -309,6 +319,18 @@ a{color:inherit;text-decoration:none}
       <div class="alt"><button class="magic" type="button">Email me a one-tap sign-in link instead →</button></div>
 
       <div class="foot">New to AlphaHunt? Just enter your email and a password above —<a href="javascript:document.getElementById('login-email').focus()">we'll create your account.</a></div>
+      </div><!-- /signin-view -->
+
+      <!-- ═══ Email-confirmation view (shown after a new sign-up) ═══ -->
+      <div id="confirm-view" style="display:none">
+        <div class="cv-icon" aria-hidden="true">✉️</div>
+        <h1 class="form-title">Check your inbox</h1>
+        <p class="form-sub">We sent a confirmation link to <b id="cv-email"></b>. Click it to activate your account, then come back and sign in.</p>
+        <div id="cv-msg" class="msg"></div>
+        <button class="submit" id="cv-resend" type="button"><span>Resend confirmation email</span><span class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg></span></button>
+        <div class="alt"><button class="magic" type="button" id="cv-back">← Back to sign in</button></div>
+        <div class="foot">Didn't get it? Check spam, or wait a minute before resending.</div>
+      </div>
     </div>
   </div>
 
@@ -363,8 +385,7 @@ async function authSubmit(){
       // Existing account that hasn't confirmed its email yet — Supabase returns
       // "Email not confirmed". Don't try to re-create; tell them to confirm.
       if(m.includes('not confirmed')||m.includes('confirm your email')){
-        showMsg('Please confirm your email first — check '+email+' (and spam) for the link, then sign in.','ok');
-        reset(); return;
+        reset(); showConfirmView(email); return;
       }
       const newUser = res.status===400||res.status===401||res.status===404
                     || m.includes('invalid')||m.includes('not found')||m.includes('credentials')||m.includes('no user');
@@ -379,10 +400,7 @@ async function authSubmit(){
     // session until the user clicks the confirmation link. Redirecting to /app
     // here would just bounce back to /login (no token). Prompt to confirm.
     if(!d.access_token){
-      showMsg(createdNew
-        ? 'Account created! Check '+email+' to confirm your email, then come back and sign in.'
-        : 'Please confirm your email first — check '+email+' for the link, then sign in.','ok');
-      reset(); return;
+      reset(); showConfirmView(email); return;
     }
     // First-time registration → let /app run the welcome + risk-profile onboarding.
     if(createdNew){ try{ localStorage.setItem('ah_just_registered','1'); }catch(e){} }
@@ -429,6 +447,31 @@ async function authForgot(){
   }catch(e){ showMsg('Network error. Try again.','err'); }
 }
 
+/* ── Email-confirmation view (after a new sign-up) ── */
+function showConfirmView(email){
+  var em=$('cv-email'); if(em) em.textContent=email||'your email';
+  var cm=$('cv-msg'); if(cm){ cm.textContent=''; cm.className='msg'; }
+  var sv=$('signin-view'); if(sv) sv.style.display='none';
+  var cv=$('confirm-view'); if(cv) cv.style.display='';
+}
+function showSigninView(){
+  var cv=$('confirm-view'); if(cv) cv.style.display='none';
+  var sv=$('signin-view'); if(sv) sv.style.display='';
+}
+function cvMsg(text,kind){ var el=$('cv-msg'); if(!el) return; el.textContent=text||''; el.className='msg '+(kind||''); }
+async function authResend(){
+  var email=(($('cv-email')&&$('cv-email').textContent)||($('login-email').value||'')).trim();
+  if(!_validEmail(email)){ showSigninView(); $('login-email').focus(); return; }
+  var btn=$('cv-resend'); if(btn){ btn.disabled=true; btn.classList.add('loading'); }
+  var done=function(){ if(btn){ btn.disabled=false; btn.classList.remove('loading'); } };
+  try{
+    var r=await fetch('/api/auth/resend-confirmation',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email})});
+    var d=await r.json().catch(function(){return {};});
+    if(!r.ok){ cvMsg((d&&d.detail)||'Could not resend — wait a minute and try again.','err'); done(); return; }
+    cvMsg('Sent! A fresh confirmation link is on its way to '+email+'.','ok'); done();
+  }catch(e){ cvMsg('Network error — try again.','err'); done(); }
+}
+
 /* Wire up controls — every binding null-guarded so one missing element can
    never abort the script and leave Sign-in dead. Submit is wired FIRST. */
 var _sub=$('login-submit'); if(_sub) _sub.addEventListener('click', authSubmit);
@@ -437,6 +480,8 @@ var _mBtn=document.querySelector('.magic'); if(_mBtn) _mBtn.addEventListener('cl
 var _fBtn=document.querySelector('.flink'); if(_fBtn) _fBtn.addEventListener('click', authForgot);
 var _em=$('login-email'); if(_em) _em.addEventListener('keydown', e=>{ if(e.key==='Enter'){ var p=$('login-password'); if(p) p.focus(); } });
 var _pw=$('login-password'); if(_pw) _pw.addEventListener('keydown', e=>{ if(e.key==='Enter') authSubmit(); });
+var _cvR=$('cv-resend'); if(_cvR) _cvR.addEventListener('click', authResend);
+var _cvB=$('cv-back');   if(_cvB) _cvB.addEventListener('click', showSigninView);
 
 /* ── Live scoring wall — two columns drifting in opposite directions ── */
 (function loadWall(){

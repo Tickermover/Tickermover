@@ -6461,6 +6461,18 @@ async def api_magic_link(body: _MagicLinkBody, request: Request):
     return JSONResponse(result)
 
 
+@app.post("/api/auth/resend-confirmation")
+async def api_resend_confirmation(body: _MagicLinkBody, request: Request):
+    """Resend the sign-up confirmation email to an unconfirmed account."""
+    if not supabase.enabled:
+        raise HTTPException(status_code=503, detail="Auth not configured")
+    redirect_to = body.redirect_to or f"{request.url.scheme}://{request.url.netloc}/auth/callback"
+    result = await supabase.resend_confirmation(body.email, redirect_to)
+    if result.get("error"):
+        raise HTTPException(status_code=400, detail=result["error"])
+    return JSONResponse(result)
+
+
 @app.get("/auth/callback", response_class=HTMLResponse)
 async def auth_callback():
     """OAuth + magic-link return target. Supabase puts the access_token

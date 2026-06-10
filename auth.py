@@ -266,6 +266,19 @@ class SupabaseClient:
             return {"error": resp.get("error_description") or resp.get("msg") or "Magic link send failed"}
         return {"ok": True}
 
+    async def resend_confirmation(self, email: str, redirect_to: str | None = None) -> dict:
+        """Resend the sign-up confirmation email (Supabase POST /auth/v1/resend,
+        type=signup). Uses the dashboard-configured SMTP (Resend)."""
+        if not self.enabled:
+            return {"error": "Supabase not configured"}
+        body: dict = {"type": "signup", "email": email}
+        if redirect_to:
+            body["options"] = {"email_redirect_to": redirect_to}
+        resp = await self._post("/auth/v1/resend", body)
+        if resp.get("error") or resp.get("error_code"):
+            return {"error": resp.get("error_description") or resp.get("msg") or "Could not resend confirmation"}
+        return {"ok": True}
+
     async def update_password(self, access_token: str, new_password: str) -> dict:
         """
         Update the password for the user identified by access_token.
