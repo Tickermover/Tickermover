@@ -7,7 +7,9 @@ from __future__ import annotations
 import asyncio
 import logging
 import math
+import os
 import time
+from datetime import datetime, timezone
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any, Optional
@@ -102,6 +104,59 @@ async def _current_user(
     if not creds:
         return None
     return supabase.verify_token(creds.credentials)
+
+
+# ── AI cost gating ───────────────────────────────────────────────────────────
+# The web-grounded AI features (research Deep-Dive, peer-compare, Ask AI) are the
+# only ones that cost Anthropic credits, so they are gated to Pro subscribers.
+# Pro status is cached briefly in-memory to avoid a Supabase lookup on every poll.
+_pro_cache: dict = {}                       # user_id -> (is_pro, expiry_epoch)
+_PRO_CACHE_TTL = 300                        # seconds
+# Monthly Ask-AI cap per Pro user (Ask AI is per-user / uncached, so it's the one
+# AI cost that scales linearly with usage). Override via env.
+ASK_MONTHLY_CAP = int(os.environ.get("ASK_MONTHLY_CAP", "100"))
+# Comma-separated emails that get AI access without a paid subscription row —
+# for the dev's own account and any comped beta testers. e.g. AI_ALLOW_EMAILS=me@x.com,beta@y.com
+_AI_ALLOW = {e.strip().lower() for e in os.environ.get("AI_ALLOW_EMAILS", "").split(",") if e.strip()}
+
+
+async def _is_pro_user(user: Optional[dict],
+                       creds: Optional[HTTPAuthorizationCredentials]) -> bool:
+    """True iff the request carries an authenticated user with an active Pro
+    subscription (or an allow-listed email). Free/anonymous → False."""
+    if not user or not creds:
+        return False
+    if (user.get("email") or "").lower() in _AI_ALLOW:
+        return True
+    uid = user.get("user_id")
+    if not uid:
+        return False
+    now = time.time()
+    cached = _pro_cache.get(uid)
+    if cached and cached[1] > now:
+        return cached[0]
+    try:
+        sub = await supabase.get_subscription(creds.credentials, uid)
+        pro = is_pro(sub.get("plan", "free"), sub.get("status", "active"))
+    except Exception:
+        pro = False
+    _pro_cache[uid] = (pro, now + _PRO_CACHE_TTL)
+    return pro
+
+
+def _ask_period() -> str:
+    return datetime.now(timezone.utc).strftime("%Y%m")
+
+
+async def _ask_quota(creds: HTTPAuthorizationCredentials) -> tuple[str, int, int]:
+    """Return (metadata_key, used_this_month, cap) for the Ask-AI monthly cap."""
+    key = "ai_ask_" + _ask_period()
+    try:
+        md = await supabase.get_user_metadata(creds.credentials)
+        used = int((md or {}).get(key, 0) or 0)
+    except Exception:
+        used = 0
+    return key, used, ASK_MONTHLY_CAP
 
 _universe_data:     list[dict] = []
 _last_full_refresh: float      = 0.0
@@ -3359,16 +3414,32 @@ async def api_event_intel(symbol: str, refresh: int = 0):
 
 
 @app.post("/api/ask/{ticker}")
-async def api_ask(ticker: str, request: Request):
+async def api_ask(ticker: str, request: Request,
+                  user: Optional[dict] = Depends(_current_user),
+                  creds: Optional[HTTPAuthorizationCredentials] = Depends(_bearer)):
     """Per-stock AI assistant — RAG over SEC filings + transcript, grounded
-    with our own metrics. Degrades gracefully when keys aren't configured."""
+    with our own metrics. Pro-gated (paid AI) + metered to a monthly cap, since
+    Ask AI is per-user and uncached (the one AI cost that scales with usage)."""
     import stock_rag
+    tk = (ticker or "").upper()
+    # Pro gate: free/anonymous users can't use the paid assistant.
+    if not await _is_pro_user(user, creds):
+        return JSONResponse(
+            {"answer": None, "status": "locked",
+             "detail": "Ask AI is a Pro feature. Upgrade to unlock."},
+            headers={"Cache-Control": "no-store"})
+    # Monthly fair-use cap.
+    _quota_key, _used, _cap = await _ask_quota(creds)
+    if _used >= _cap:
+        return JSONResponse(
+            {"answer": None, "status": "limit", "used": _used, "cap": _cap,
+             "detail": f"You've reached this month's Ask AI limit ({_cap}). It resets next month."},
+            headers={"Cache-Control": "no-store"})
     try:
         body = await request.json()
     except Exception:
         body = {}
     question = (body.get("question") or "").strip()[:600]
-    tk = (ticker or "").upper()
     # Compact metrics block from the loaded universe (cheap, always available)
     t = next((x for x in (_universe_data or []) if (x.get("ticker", "").upper() == tk)), None)
     lines = []
@@ -3380,6 +3451,16 @@ async def api_ask(ticker: str, request: Request):
         lines.append(f"Rev growth YoY: {t.get('revenue_growth_yoy')} | EPS growth YoY: {t.get('eps_growth_yoy')}")
         lines.append(f"P/E: {t.get('pe_ratio') or t.get('forward_pe')} | PEG: {t.get('peg_ratio')} | Profit margin: {t.get('profit_margin')}")
     res = await stock_rag.ask(tk, question, "\n".join(lines))
+    # Count this question against the monthly cap only when it actually produced
+    # an answer (don't charge the user for errors / empty responses).
+    if isinstance(res, dict) and res.get("answer"):
+        try:
+            await supabase.update_user_metadata(creds.credentials, {_quota_key: _used + 1})
+        except Exception:
+            pass
+    if isinstance(res, dict):
+        res.setdefault("used", _used + 1)
+        res.setdefault("cap", _cap)
     return JSONResponse(res, headers={"Cache-Control": "no-store"})
 
 
@@ -3651,15 +3732,22 @@ async def _run_research_job(sym: str, target: dict | None):
 
 
 @app.get("/api/research/{ticker}")
-async def api_research(ticker: str, force: bool = False):
+async def api_research(ticker: str, force: bool = False,
+                      user: Optional[dict] = Depends(_current_user),
+                      creds: Optional[HTTPAuthorizationCredentials] = Depends(_bearer)):
     """Per-stock AI Deep-Dive brief. Served from cache and regenerated in the
     background when missing/stale (so page-load is never blocked). The brief is
-    web-grounded with citations; the ticker's own live data is the ground truth."""
+    web-grounded with citations; the ticker's own live data is the ground truth.
+    Pro-gated: only Pro subscribers can view/trigger the (paid) generation."""
     import asyncio
     import research_gen
     from research_store import store as _rstore
 
     sym = ticker.upper()
+    # Gate the paid AI feature: free/anonymous users never trigger generation.
+    if not await _is_pro_user(user, creds):
+        return JSONResponse({"ticker": sym, "status": "locked",
+                             "detail": "The AI Deep-Dive is a Pro feature. Upgrade to unlock."})
     doc = _rstore.get(sym)
 
     def _payload(d: dict, **extra) -> dict:
@@ -3719,16 +3807,21 @@ async def _run_compare_job(sym: str, target: dict | None):
 
 
 @app.get("/api/compare-card/{ticker}")
-async def api_compare_card(ticker: str, force: bool = False):
+async def api_compare_card(ticker: str, force: bool = False,
+                           user: Optional[dict] = Depends(_current_user),
+                           creds: Optional[HTTPAuthorizationCredentials] = Depends(_bearer)):
     """Per-stock structured comparison card (operational stage, revenue,
     backlog, execution risk, profitability path). Served from cache and
     regenerated in the background when missing/stale, so the Peers tab never
-    blocks. The ticker's own live data is the ground truth."""
+    blocks. The ticker's own live data is the ground truth. Pro-gated (paid AI)."""
     import asyncio
     import compare_gen
     from compare_store import store as _cstore
 
     sym = ticker.upper()
+    if not await _is_pro_user(user, creds):
+        return JSONResponse({"ticker": sym, "status": "locked",
+                             "detail": "AI peer-compare is a Pro feature. Upgrade to unlock."})
     doc = _cstore.get(sym)
 
     def _payload(d: dict, **extra) -> dict:

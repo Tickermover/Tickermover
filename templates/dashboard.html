@@ -573,6 +573,11 @@ tr:hover td{background:rgba(245,166,35,.06)}
   box-shadow:0 6px 16px -8px rgba(245,166,35,.5);transition:transform .15s,box-shadow .15s}
 .dd-btn:hover{transform:translateY(-1px);box-shadow:0 10px 24px -8px rgba(245,166,35,.6)}
 .dd-loading{font-size:12.5px;color:#64748b;padding:8px 0;line-height:1.5}
+/* Pro-gated AI: upgrade prompt shown to free users in place of the brief. */
+.dd-locked{font-size:13px;line-height:1.6;color:#334155}
+.dd-locked b{color:#0A0A0A}
+.dd-upsell{display:inline-block;margin-top:10px;border:0;border-radius:10px;cursor:pointer;font-family:inherit;font-weight:800;font-size:12.5px;color:#fff;padding:9px 16px;background:linear-gradient(135deg,#7c3aed,#4f46e5);box-shadow:0 6px 14px -6px rgba(79,70,229,.5)}
+.dd-upsell:hover{filter:brightness(1.06)}
 .dd-content{font-size:12.5px;line-height:1.6;color:#334155;margin-top:8px;display:flex;flex-direction:column;gap:11px}
 /* Each note section renders as its own card box (Catalysts / Risks / Bottom line…). */
 .dd-card{background:#fff;border:1px solid var(--hair);border-radius:14px;padding:13px 16px 14px;box-shadow:0 1px 2px rgba(0,0,0,.05)}
@@ -12253,9 +12258,21 @@ async function loadDeepDive(ticker){
   const poll = async () => {
     tries++;
     try {
-      const r = await fetch('/api/research/'+encodeURIComponent(ticker));
+      const r = await fetch('/api/research/'+encodeURIComponent(ticker), {headers:{Authorization:'Bearer '+(localStorage.getItem('ah_token')||'')}});
       const d = await r.json();
       if (d.status === 'ready') { await renderDeepDive(ticker, d); return; }
+      if (d.status === 'locked') {
+        // Pro feature: show an upgrade CTA in the business-overview slot and
+        // hide the other AI sections (no polling, no generation).
+        _ovRenderRevenue(null); _ovRenderNoteBoxes(null);
+        const biz = document.getElementById('ovBiz');
+        const cta = '<div class="dd-locked">🔒 <b>AI Deep-Dive is a Pro feature.</b> '+
+          'Web-grounded research, business engines, catalysts &amp; risks. '+
+          '<button class="dd-upsell" onclick="if(window.openUpgradeModal)openUpgradeModal()">Upgrade to Pro</button></div>';
+        if (biz){ const sec = biz.closest && biz.closest('.rep-sec'); biz.innerHTML = cta; if (sec) sec.style.display = ''; }
+        else if (body){ body.innerHTML = cta; }
+        return;
+      }
       if (d.status === 'unavailable') {
         if (body) body.innerHTML = '<div class="dd-loading">'+(d.detail||'Deep Dive isn’t enabled.')+'</div>';
         _ovRenderBusiness(null); _ovRenderRevenue(null); _ovRenderNoteBoxes(null); return;
@@ -12679,7 +12696,8 @@ function _ssxFetchCard(ticker){
     let tries=0;
     const poll=function(){
       tries++;
-      fetch('/api/compare-card/'+encodeURIComponent(ticker)).then(function(r){return r.json();}).then(function(d){
+      fetch('/api/compare-card/'+encodeURIComponent(ticker),{headers:{Authorization:'Bearer '+(localStorage.getItem('ah_token')||'')}}).then(function(r){return r.json();}).then(function(d){
+        if(d.status==='locked'){ resolve({status:'locked'}); return; }
         if(d.status==='ready'){ _ssxCardCache[ticker]=d; resolve(d); return; }
         if(d.status==='unavailable'){ resolve(d); return; }
         if(tries<20) setTimeout(poll,3000); else resolve(d);
@@ -19606,9 +19624,18 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     add('<span class="ai-q">'+esc(q)+'</span>','');
     var a=add('<span class="ai-load"><i></i><i></i><i></i></span>','ai-a-wrap');
     busy=true; el().querySelector('.ai-send').disabled=true;
-    fetch('/api/ask/'+encodeURIComponent(TICK),{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({question:q})})
+    fetch('/api/ask/'+encodeURIComponent(TICK),{method:'POST',headers:{'content-type':'application/json',Authorization:'Bearer '+(localStorage.getItem('ah_token')||'')},body:JSON.stringify({question:q})})
       .then(function(r){return r.json();})
       .then(function(d){
+        if(d&&d.status==='locked'){
+          a.innerHTML='<div class="ai-a">🔒 <b>Ask AI is a Pro feature.</b><br>'+esc(d.detail||'Upgrade to chat with the AI analyst.')+
+            '<br><button class="dd-upsell" onclick="if(window.openUpgradeModal)openUpgradeModal()">Upgrade to Pro</button></div>';
+          return;
+        }
+        if(d&&d.status==='limit'){
+          a.innerHTML='<div class="ai-a">'+esc(d.detail||'Monthly Ask AI limit reached.')+'</div>';
+          return;
+        }
         var src=(d.sources&&d.sources.length)?'<div class="ai-src">Sources: '+d.sources.map(esc).join(' · ')+'</div>':'';
         a.innerHTML='<div class="ai-a">'+fmt(d.answer||'No answer.')+'</div>'+src;
       })

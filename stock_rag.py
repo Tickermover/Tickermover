@@ -32,7 +32,7 @@ ANTHROPIC_KEY   = os.environ.get("ANTHROPIC_API_KEY", "").strip()
 ANTHROPIC_MODEL = os.environ.get("ANTHROPIC_MODEL", "claude-haiku-4-5-20251001")
 # The chat assistant uses a stronger model for best-in-class answers; the long
 # concall summary keeps ANTHROPIC_MODEL. Both are env-overridable.
-ASK_MODEL = os.environ.get("ASK_MODEL", "claude-sonnet-4-6")
+ASK_MODEL = os.environ.get("ASK_MODEL", "claude-haiku-4-5")
 
 _INDEX: dict[str, dict] = {}          # ticker -> {ts, chunks:[str], vecs: np.ndarray}
 _INDEX_TTL = 24 * 3600               # rebuild a ticker's index once a day
