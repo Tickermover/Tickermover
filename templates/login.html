@@ -399,11 +399,13 @@ async function authSubmit(){
     // Email confirmation is ON: sign-up creates the account but returns NO
     // session until the user clicks the confirmation link. Redirecting to /app
     // here would just bounce back to /login (no token). Prompt to confirm.
+    // Flag a brand-new account NOW (before the confirm-email return) so /app
+    // runs the welcome + risk-profile onboarding once they confirm and land —
+    // even when the session only arrives later via the email link.
+    if(createdNew){ try{ localStorage.setItem('ah_just_registered','1'); }catch(e){} }
     if(!d.access_token){
       reset(); showConfirmView(email); return;
     }
-    // First-time registration → let /app run the welcome + risk-profile onboarding.
-    if(createdNew){ try{ localStorage.setItem('ah_just_registered','1'); }catch(e){} }
     _AUTH.token=d.access_token; _AUTH.refresh=d.refresh_token;
     const u=d.user||{}; _AUTH.user={id:u.id||null, email:u.email||email};
     try{ localStorage.setItem('ah_tos_agreed','1'); }catch(e){}

@@ -6315,7 +6315,7 @@ class _WatchlistBody(BaseModel):
 
 
 @app.post("/api/auth/signup")
-async def api_signup(body: _AuthBody):
+async def api_signup(body: _AuthBody, request: Request):
     """Register a new user account.
 
     Supabase sends the confirmation email via custom SMTP (Resend), so the
@@ -6324,7 +6324,10 @@ async def api_signup(body: _AuthBody):
     AlphaHunt" message in one. Rate limit is Resend's (3k/month free),
     not Supabase's built-in 3/hour cap.
     """
-    result = await supabase.sign_up(body.email, body.password)
+    # Land the confirmation link on /auth/callback so the session is captured
+    # and first-time onboarding (welcome + risk profile) fires.
+    redirect_to = f"{request.url.scheme}://{request.url.netloc}/auth/callback"
+    result = await supabase.sign_up(body.email, body.password, redirect_to)
     if result.get("error"):
         raise HTTPException(status_code=400, detail=result["error"])
     return JSONResponse(result)

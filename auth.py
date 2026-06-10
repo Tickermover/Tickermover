@@ -169,11 +169,17 @@ class SupabaseClient:
 
     # ── Auth ───────────────────────────────────────────────────────────────────
 
-    async def sign_up(self, email: str, password: str) -> dict:
-        """Register a new user. Returns {access_token, refresh_token, user} or {error}."""
+    async def sign_up(self, email: str, password: str, redirect_to: str | None = None) -> dict:
+        """Register a new user. Returns {access_token, refresh_token, user} or {error}.
+        `redirect_to` sets where the confirmation-email link lands — pass our
+        /auth/callback so the session is captured and onboarding fires."""
         if not self.enabled:
             return {"error": "Supabase not configured"}
-        resp = await self._post("/auth/v1/signup", {"email": email, "password": password})
+        path = "/auth/v1/signup"
+        if redirect_to:
+            from urllib.parse import quote
+            path += f"?redirect_to={quote(redirect_to, safe='')}"
+        resp = await self._post(path, {"email": email, "password": password})
 
         # Check if the user was actually created (has an id / access_token).
         # Supabase can return an error for "confirmation email sending failed" even when
