@@ -5229,6 +5229,17 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 #ts-drawer .badge.bad{background:rgba(234,56,76,.12);color:#b91c1c;border-color:rgba(234,56,76,.32)}
 #ts-drawer .badge.info{background:rgba(41,112,255,.12);color:#0040c1;border-color:rgba(41,112,255,.32)}
 #ts-drawer .badge.neu{background:rgba(100,116,139,.15);color:#475569;border-color:rgba(100,116,139,.3)}
+/* Report tables (Financial health / Valuation vs sector / etc): fit the card so
+   the SIGNAL badge never overflows the clipped (overflow:hidden) card. Label
+   column wraps; numeric + signal columns stay tight and right-aligned. */
+#ts-drawer .rep-body table{width:100%;table-layout:auto;border-collapse:collapse}
+#ts-drawer .rep-body th{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.05em;text-transform:uppercase;color:var(--grey-3);font-weight:700;text-align:left;padding:6px 6px;border-bottom:1px solid var(--hair);white-space:normal;line-height:1.25}
+#ts-drawer .rep-body td{padding:8px 6px;border-bottom:1px solid #f1f5f9;color:var(--ink-2);font-size:12px;vertical-align:middle;line-height:1.3}
+#ts-drawer .rep-body tr:last-child td{border-bottom:0}
+#ts-drawer .rep-body th:first-child,#ts-drawer .rep-body td:first-child{white-space:normal;word-break:break-word;padding-left:0}
+#ts-drawer .rep-body th:not(:first-child),#ts-drawer .rep-body td:not(:first-child){text-align:right;white-space:nowrap}
+#ts-drawer .rep-body td:last-child,#ts-drawer .rep-body th:last-child{padding-right:0}
+#ts-drawer .rep-body td .badge{font-size:9.5px;padding:2px 7px;letter-spacing:0}
 /* SVG infographic primitives */
 #ts-drawer .radar-wrap{display:flex;justify-content:center;padding:6px 0 8px}
 #ts-drawer .radar-svg{width:min(340px,100%);height:auto;max-width:100%}
@@ -18683,7 +18694,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     const key=(t.sub_sector||t.subsector||t.sector||'').toLowerCase();
     const grp=(ALL||[]).filter(x=>((x.sub_sector||x.subsector||x.sector||'').toLowerCase()===key));
     const peers=grp.filter(x=>x.ticker!==t.ticker).sort((a,b)=>parseFloat(b.smart_score||b.pop_score||0)-parseFloat(a.smart_score||a.pop_score||0)).slice(0,5);
-    if(!peers.length) return _sec('Peers','👥','violet','<div class="muted small">No peers in the same group.</div>');
+    if(!peers.length) return _sec('Benchmark','👥','violet','<div class="muted small">No peers in the same group.</div>');
     const list=[t,...peers];
     const alpha=x=>Math.round(parseFloat(x.smart_score!=null?x.smart_score:(x.pop_score||0)));
     const pe=x=>{const v=parseFloat(x.pe_ratio||x.forward_pe);return isNaN(v)||v<=0?null:v;};
@@ -18704,7 +18715,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     const standing= rank<=1?_badge('LEADING','ok'): rank<=Math.ceil(list.length/2)?_badge('MID-PACK','warn'):_badge('LAGGING','bad');
     const tbl='<table class="peers-tbl"><thead><tr><th>Stock</th><th>Alpha</th><th>P/E</th><th>ROE</th><th>Rev YoY</th></tr></thead><tbody>'+body+'</tbody></table>'+
       '<div class="muted small" style="margin-top:8px;display:flex;align-items:center;gap:7px">Standing vs group: '+standing+' <span>· #'+rank+' of '+list.length+' on Alpha · best value highlighted</span></div>';
-    return _sec('Peers · '+escHTML(t.sub_sector||t.sector||''),'👥','violet',tbl);
+    return _sec('Benchmark · '+escHTML(t.sub_sector||t.sector||''),'👥','violet',tbl);
   }
   /* Documents hub — US-appropriate, real working links only. SEC filings deep-
      link to EDGAR (works for any US ticker); earnings/news link to features we
@@ -18866,7 +18877,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     });
   }
 
-  const DR_TABS=['Overview','Technicals','Financials','Valuation','Estimates','News','Peers','Documents'];
+  const DR_TABS=['Overview','Technicals','Financials','Valuation','Estimates','News','Benchmark','Documents'];
   let _drState=null;
   function tsExpandToFull(ticker){
     const t=_byTicker[(ticker||'').toUpperCase()]; if(!t) return;
@@ -19037,7 +19048,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     r.innerHTML='<div class="drk-actions">'+
         '<button class="qa'+watchOn+'" onclick="v2ToggleWatchlist(\''+tk+'\');var on=v2InWatchlist(\''+tk+'\');this.classList.toggle(\'on\',on);this.querySelector(\'.qa-ic\').textContent=on?\'★\':\'☆\';this.querySelector(\'.qa-t\').textContent=on?\'In watchlist\':\'Add to watchlist\';">'+
           '<span class="qa-ic">'+(inWl?'★':'☆')+'</span><span class="qa-t">'+(inWl?'In watchlist':'Add to watchlist')+'</span></button>'+
-        '<button class="qa" onclick="if(window.tsShowTab)tsShowTab(\'Peers\')"><span class="qa-ic">⇄</span><span class="qa-t">Compare peers</span></button>'+
+        '<button class="qa" onclick="if(window.tsShowTab)tsShowTab(\'Benchmark\')"><span class="qa-ic">⇄</span><span class="qa-t">Benchmark vs peers</span></button>'+
         '<button class="qa" onclick="window.open(\'/report/'+tk+'\',\'_blank\',\'noopener\')"><span class="qa-ic">⤢</span><span class="qa-t">Full report</span></button>'+
       '</div>'+
       '<div class="drk-nav" id="drkNav"></div>';
@@ -19123,7 +19134,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
       '<div class="dr-pane" data-pane="Valuation" hidden>'+paneValuation(full)+'</div>'+
       '<div class="dr-pane" data-pane="Estimates" hidden>'+paneEstimates(full)+'</div>'+
       '<div class="dr-pane" data-pane="News" hidden>'+paneNews(full)+'</div>'+
-      '<div class="dr-pane" data-pane="Peers" hidden>'+panePeers(t)+'</div>'+
+      '<div class="dr-pane" data-pane="Benchmark" hidden>'+panePeers(t)+'</div>'+
       '<div class="dr-pane" data-pane="Documents" hidden>'+paneDocuments(full)+'</div>'+
     '</div><div class="dr-scrollhint" id="drHint"></div>';
     tsShowTab(_drState.tab||'Overview');
