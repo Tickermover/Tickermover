@@ -18340,13 +18340,11 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     const m=M[String(title||'').toLowerCase().trim()]||['•','slate',true];
     return _sec(title,m[0],m[1],body,m[2]);
   }
-  function _ovHeader(t,full,S){
-    const price=parseFloat(full.price||0), chg=parseFloat(full.change_pct||0);
-    const tk=(full.ticker||t.ticker||'').toUpperCase();
-    const name=full.name||t.name||tk;
-    const exch=full.exchange||t.exchange||'';
-    const sector=full.sub_sector||full.subsector||full.sector||t.sub_sector||t.sector||'';
-    const bl=(full.bottom_line||'').trim();
+  // The Overview stat strip (Mkt Cap · P/E · 52-wk · Analyst Avg · Rating ·
+  // Beta). Extracted so tsLoadExtra can rebuild it in place once the on-demand
+  // FMP enrichment fills the gaps yfinance left on thin/new names.
+  function _ovStripHTML(t,full,S){
+    const price=parseFloat(full.price||0);
     const mc=_fpNum(full,['market_cap']);
     let pe=_fpNum(full,['pe_ratio']); if(pe==null)pe=_fpNum(full,['forward_pe']);
     const beta=_fpNum(full,['beta']);
@@ -18359,7 +18357,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     let rating=null; if(rm!=null&&rm>0) rating=RLBL[rk]||(rm<=1.5?'Strong Buy':rm<=2.5?'Buy':rm<=3.5?'Hold':rm<=4.5?'Sell':'Strong Sell');
     const na=_fpNum(full,['total_analysts','analyst_count','num_analysts']);
     const stat=(k,v,sub,cls)=>'<div class="ov-stat"><div class="k">'+k+'</div><div class="v'+(cls?' '+cls:'')+'">'+v+'</div>'+(sub?'<div class="sub">'+sub+'</div>':'')+'</div>';
-    const strip='<div class="ov-strip">'+
+    return '<div class="ov-strip">'+
       stat('Mkt Cap', mc!=null?_money(mc):'—', mc!=null?(mc>=1e10?'large-cap':mc>=2e9?'mid-cap':'small-cap'):'')+
       stat('P/E', pe!=null?pe.toFixed(0)+'×':'n/a', pe==null?'loss-making':'', pe==null?'neg':'')+
       stat('52-wk', (lo!=null&&hi!=null)?(lo.toFixed(0)+'–'+hi.toFixed(0)):'—','')+
@@ -18367,6 +18365,15 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
       stat('Rating', rating||'—', na!=null?(Math.round(na)+' analysts'):'', rating?(/Buy/.test(rating)?'pos':/Sell/.test(rating)?'neg':'amb'):'')+
       stat('Beta', beta!=null?beta.toFixed(2):'—', beta!=null?(beta>=1.5?'high vol':beta>=0.8?'market':'low vol'):'', beta!=null&&beta>=1.5?'amb':'')+
     '</div>';
+  }
+  function _ovHeader(t,full,S){
+    const price=parseFloat(full.price||0), chg=parseFloat(full.change_pct||0);
+    const tk=(full.ticker||t.ticker||'').toUpperCase();
+    const name=full.name||t.name||tk;
+    const exch=full.exchange||t.exchange||'';
+    const sector=full.sub_sector||full.subsector||full.sector||t.sub_sector||t.sector||'';
+    const bl=(full.bottom_line||'').trim();
+    const strip=_ovStripHTML(t,full,S);
     // AlphaHunt score — leads the header, colored by strength.
     const pop=Math.round(parseFloat(full.smart_score!=null?full.smart_score:(full.pop_score!=null?full.pop_score:(t.smart_score!=null?t.smart_score:(t.pop_score||0)))));
     const g=(full.grade||t.grade||'').toUpperCase();
@@ -19274,6 +19281,28 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
       try{ re('Financials',paneFinancials(full)); }catch(e){}
       try{ re('Valuation',paneValuation(full)); }catch(e){}
       try{ re('Estimates',paneEstimates(full)); }catch(e){}
+      // Overview — TARGETED refresh only (a full re-render would wipe the chart,
+      // AI thesis and deep-dive). Rebuild the stat strip, and once FMP has filled
+      // the core fundamentals, drop the now-stale "Provisional / 10% loaded" caveat.
+      try{
+        const ov=drawer.querySelector('.dr-pane[data-pane="Overview"]');
+        if(ov){
+          const strip=ov.querySelector('.ov-strip');
+          if(strip) strip.outerHTML=_ovStripHTML(t,full,_drState.setup);
+          const filledCore = (d.market_cap!=null && (d.beta!=null || d.target_mean!=null));
+          if(filledCore){
+            const sc=ov.querySelector('.ov-score.ov-score-prov');
+            if(sc){
+              sc.classList.remove('ov-score-prov');
+              const ast=sc.querySelector('.ov-score-ast'); if(ast) ast.remove();
+              const gg=sc.querySelector('.ov-score-g'); if(gg) gg.textContent=gg.textContent.replace(/\s*·\s*Provisional\s*$/,'');
+              sc.removeAttribute('title');
+            }
+            const hl=ov.querySelector('#ovHeadline');
+            if(hl){ const cut=hl.textContent.replace(/\s*Caveat:.*$/i,'').trim(); if(cut) hl.textContent=cut; }
+          }
+        }
+      }catch(e){}
       // animate any bars that were just (re)inserted into a visible pane
       requestAnimationFrame(()=>requestAnimationFrame(()=>{ drawer.querySelectorAll('.dr-pane:not([hidden]) .pf,.dr-pane:not([hidden]) .reb-fill').forEach(el=>{ el.style.width=el.getAttribute('data-w')+'%'; }); }));
     }).catch(()=>{});

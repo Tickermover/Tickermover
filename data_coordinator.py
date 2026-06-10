@@ -1041,11 +1041,30 @@ class DataCoordinator:
         out: dict = {}
         _today = date.today()
 
+        # ── Company profile — the Overview-strip basics yfinance often
+        #    misses on thin/new names (market cap, beta, sector). ───────
+        pf = await self._fmp_stable("profile", {"symbol": ticker})
+        if isinstance(pf, list) and pf:
+            p = pf[0]
+            out.update({
+                "name":       p.get("companyName") or None,
+                "sector":     p.get("sector") or None,
+                "industry":   p.get("industry") or None,
+                "market_cap": _safe_float(p.get("marketCap")),
+                "beta":       _safe_float(p.get("beta")),
+            })
+            _rng = str(p.get("range") or "")
+            if "-" in _rng:
+                lo, _, hi = _rng.partition("-")
+                out["low_52w"]  = _safe_float(lo)
+                out["high_52w"] = _safe_float(hi)
+
         # ── Valuation / profitability ratios (TTM) ──────────────────
         rt = await self._fmp_stable("ratios-ttm", {"symbol": ticker})
         if isinstance(rt, list) and rt:
             r = rt[0]
             out.update({
+                "pe_ratio":         _safe_float(r.get("priceToEarningsRatioTTM")),
                 "pb_ratio":         _safe_float(r.get("priceToBookRatioTTM")),
                 "ps_ratio":         _safe_float(r.get("priceToSalesRatioTTM")),
                 "peg_ratio":        _safe_float(r.get("priceToEarningsGrowthRatioTTM")),
