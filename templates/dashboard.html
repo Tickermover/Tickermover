@@ -5287,6 +5287,10 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 #ts-drawer .edge-val{font-size:21px;font-weight:800;color:#0f172a;line-height:1.08;margin-top:2px;font-variant-numeric:tabular-nums}
 #ts-drawer .edge-val small{font-size:11px;color:#94a3b8;font-weight:700}
 #ts-drawer .edge-val.pos{color:#15803d} #ts-drawer .edge-val.neu{color:#0040c1} #ts-drawer .edge-val.warn{color:#b4780a}
+/* Word-type values (e.g. "Accumulating") — smaller than the big numbers so
+   they sit on one line and align with the numeric cells instead of wrapping. */
+#ts-drawer .edge-val.word{font-size:15px;line-height:1.25;letter-spacing:-.01em;white-space:nowrap;display:flex;align-items:center;gap:6px}
+#ts-drawer .edge-val.word .dot{width:8px;height:8px;border-radius:50%;background:currentColor;flex:none}
 #ts-drawer .edge-sub{font-size:10px;font-weight:600;color:#64748b;line-height:1.3;margin-top:1px}
 /* current chart pattern in the Technical setup card */
 #ts-drawer .setup-pattern{display:flex;flex-wrap:wrap;align-items:baseline;gap:9px;margin:11px 0 6px;padding:11px 14px;border-radius:12px;background:#f6f9ff;border:1px solid rgba(41,112,255,.14)}
@@ -18551,7 +18555,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
         '<span class="edge-val '+(_rs!=null?_rsCls:'')+'">'+(_rs!=null?Math.round(_rs):'—')+(_rs!=null?'<small> / 99</small>':'')+'</span>'+
         '<span class="edge-sub">'+(_rs==null?'Not rated yet':_rs>=80?'Outperforming the market':_rs>=50?'In line with the market':'Lagging the market')+'</span></div>'+
       '<div class="edge-k"><span class="edge-lab">Institutions</span>'+
-        '<span class="edge-val '+(_blue?'pos':'')+'">'+(_blue?'● Accumulating':'Neutral')+'</span>'+
+        '<span class="edge-val word '+(_blue?'pos':'')+'">'+(_blue?'<span class="dot"></span>Accumulating':'Neutral')+'</span>'+
         '<span class="edge-sub">'+(_blue?'Smart-money buying detected':'No accumulation signal right now')+'</span></div>'+
       '<div class="edge-k"><span class="edge-lab" title="How strongly our six signals agree on this rating, and whether the score is improving">Conviction</span>'+
         (_confPct!=null
