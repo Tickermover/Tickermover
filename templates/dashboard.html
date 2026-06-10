@@ -5982,20 +5982,22 @@ html.v2-dark body.v2 .v2-sidebar .v2-nav-item,body.v2 .v2-sidebar .v2-nav-item{
   transition:background .16s,color .16s,transform .16s,box-shadow .16s;
 }
 html.v2-dark body.v2 .v2-sidebar .v2-nav-item svg,body.v2 .v2-sidebar .v2-nav-item svg{
-  width:28px!important;height:28px!important;padding:4px;flex:none;border-radius:9px;
-  background:#fff;box-shadow:0 1px 3px rgba(9,9,9,.12),inset 0 0 0 1px rgba(9,9,9,.05);
-  transition:box-shadow .16s,transform .16s;
+  /* No chip — the gradient icons sit directly on the white sidebar for a
+     cleaner, flatter look. Slightly larger since there's no padding box. */
+  width:24px!important;height:24px!important;flex:none;
+  background:none;box-shadow:none;border-radius:0;
+  transition:transform .16s,filter .16s;
 }
 html.v2-dark body.v2 .v2-sidebar .v2-nav-item:hover{transform:translateX(2px)}
-html.v2-dark body.v2 .v2-sidebar .v2-nav-item:hover svg{box-shadow:0 4px 10px -3px rgba(41,112,255,.30),inset 0 0 0 1px rgba(41,112,255,.16)}
-html.v2-dark body.v2 .v2-sidebar .v2-nav-item.active svg,body.v2 .v2-sidebar .v2-nav-item.active svg{background:#fff;box-shadow:0 3px 8px rgba(0,0,0,.22)}
+html.v2-dark body.v2 .v2-sidebar .v2-nav-item:hover svg{transform:scale(1.08)}
+html.v2-dark body.v2 .v2-sidebar .v2-nav-item.active svg,body.v2 .v2-sidebar .v2-nav-item.active svg{background:none;box-shadow:none}
 html.v2-dark body.v2 .v2-sidebar .v2-nav-item.active{
   box-shadow:0 10px 22px -8px rgba(0,64,193,.45), inset 0 1px 0 rgba(255,255,255,.32)!important;
 }
-/* brighter active icon tile so the current section pops */
+/* Active row is a blue pill — force the (often blue) gradient icon to solid
+   white so it reads on the blue without needing a chip behind it. */
 html.v2-dark body.v2 .v2-sidebar .v2-nav-item.active svg{
-  background:rgba(255,255,255,.30);color:#fff;
-  box-shadow:inset 0 0 0 1px rgba(255,255,255,.40), 0 2px 7px rgba(2,18,60,.16)}
+  filter:brightness(0) invert(1);-webkit-filter:brightness(0) invert(1)}
 html.v2-dark body.v2 .v2-sidebar .v2-nav-item.active:hover{transform:none}
 
 /* Logo — soft brand halo under the mark, refined divider */
