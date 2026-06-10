@@ -5009,7 +5009,7 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
    by the scrolling content container; matched selectors below. */
 /* Scrim carries the pastel wave (the main-app backdrop) so the frosted drawer
    frosts a PASTEL surface, not a dark scrim. */
-#ts-scrim{position:fixed;inset:0;background:var(--app-atmos);opacity:0;pointer-events:none;transition:opacity .22s;z-index:600}
+#ts-scrim{position:fixed;inset:0;background:rgba(15,23,42,.45);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);opacity:0;pointer-events:none;transition:opacity .22s;z-index:600}
 #ts-scrim.open{opacity:1;pointer-events:auto}
 #ts-drawer{position:fixed;top:0;right:0;height:100vh;width:min(460px,92vw);background:rgba(255,255,255,.42);-webkit-backdrop-filter:blur(34px) saturate(160%);backdrop-filter:blur(34px) saturate(160%);z-index:601;font-family:var(--font-body);
     --primary:#0040c1;--amber-2:#D4860A;--ink:#0f172a;--ink-2:#1e293b;--grey:#758696;--grey-2:#5d6c7b;--grey-3:#94a3b8;--up:#16a34a;--down:#ea384c;--hair:rgba(9,9,9,.07);
