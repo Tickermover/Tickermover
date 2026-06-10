@@ -577,7 +577,7 @@ app = FastAPI(title="AlphaHunt", lifespan=lifespan)
 from fastapi.middleware.gzip import GZipMiddleware
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 
-# Serve /static/ files (manifest.json, sw.js, icons)
+# Serve /static/ files (icons, images, css/js assets)
 _STATIC = BASE_DIR / "static"
 _STATIC.mkdir(exist_ok=True)
 app.mount("/static", StaticFiles(directory=str(_STATIC)), name="static")
