@@ -13407,7 +13407,6 @@ function renderFundamentals(tickers) {
       <td class="fd-price" id="fl-price-${t.ticker}" style="font-size:14px;font-weight:700">${fmtP(price)}</td>
       <td class="${pCls(chg)}">${fmtPct(chg)}</td>
       <td class="${pCls(mom3m)}" style="font-weight:700">${mom3m !== 0 ? fmtPct(mom3m) : '—'}</td>
-      <td><span class="fl-grade ${ratingClass(gradeToRating(grade))}">${gradeToRating(grade)}</span></td>
       <td class="${!isNaN(revG)?pCls(revG*100):''}">${!isNaN(revG)?fmtPct2(t.revenue_growth_yoy):'—'}</td>
       <td>${fmtM(t.market_cap)}</td>
       <td>${!isNaN(fwdPE)&&fwdPE>0&&fwdPE<999?fwdPE.toFixed(1)+'×':'—'}</td>
@@ -13426,7 +13425,6 @@ function renderFundamentals(tickers) {
         <th onclick="sortFundList('price')">Price</th>
         <th onclick="sortFundList('chg')">Today %</th>
         <th onclick="sortFundList('mom3m')">3M Chg</th>
-        <th>Ratings</th>
         <th onclick="sortFundList('rev')">Rev Growth</th>
         <th onclick="sortFundList('mcap')">Mkt Cap</th>
         <th onclick="sortFundList('pe')">P/E</th>
