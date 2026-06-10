@@ -106,9 +106,10 @@ a{color:inherit;text-decoration:none}
   letter-spacing:.10em;text-transform:uppercase;line-height:1;
 }
 .tchip::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
-.tchip.gold  {color:var(--blue-sky);background:rgba(93,179,241,.14);border:1px solid rgba(93,179,241,.34)}
-.tchip.silver{color:var(--silver);  background:rgba(200,205,217,.10);border:1px solid rgba(200,205,217,.26)}
-.tchip.bronze{color:var(--bronze);  background:rgba(126,150,191,.10);border:1px solid rgba(126,150,191,.28)}
+.tchip.grade-A{color:#86efac;         background:rgba(22,163,74,.16); border:1px solid rgba(22,163,74,.34)}
+.tchip.grade-B{color:var(--blue-sky); background:rgba(93,179,241,.14);border:1px solid rgba(93,179,241,.34)}
+.tchip.grade-C{color:#fbbf66;         background:rgba(245,166,35,.14);border:1px solid rgba(245,166,35,.32)}
+.tchip.grade-D,.tchip.grade-F{color:#fca5a5;background:rgba(220,38,38,.14);border:1px solid rgba(220,38,38,.30)}
 .sc-move{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:11.5px}
 .sc-move.up{color:#86efac} .sc-move.dn{color:#fca5a5}
 
@@ -521,15 +522,16 @@ try{ setMode((/signup/i.test(location.hash)||/signup/i.test(location.search))?'s
 /* ── Live scoring wall — two columns drifting in opposite directions ── */
 (function loadWall(){
   const colA=$('col-a'), colB=$('col-b'); if(!colA||!colB) return;
-  const tierOf = s => s>=80 ? 'gold' : s>=50 ? 'silver' : 'bronze';
-  const card = (sym,score,tier,chg) => {
+  // Alpha Score → letter grade, matching the app (no legacy gold/silver tiers).
+  const gradeOf = s => s>=68 ? 'A' : s>=60 ? 'B' : s>=50 ? 'C' : s>=40 ? 'D' : 'F';
+  const card = (sym,score,grade,chg) => {
     const dir = chg>=0?'up':'dn', sign = chg>=0?'+':'';
     const logo = 'https://assets.parqet.com/logos/symbol/'+encodeURIComponent(sym);
     const onerr = "this.outerHTML='"+(sym||'').slice(0,2)+"'";
     return '<div class="sc-card"><div class="sc-top"><div class="sc-sym-row">'
          + '<div class="sc-logo"><img src="'+logo+'" alt="" loading="lazy" onerror="'+onerr+'"></div>'
          + '<div class="sc-sym">'+sym+'</div></div><div class="sc-score">'+score+'</div></div>'
-         + '<div class="sc-bot"><span class="tchip '+tier+'">'+tier+'</span>'
+         + '<div class="sc-bot"><span class="tchip grade-'+grade+'">Grade '+grade+'</span>'
          + '<span class="sc-move '+dir+'">'+sign+chg.toFixed(1)+'%</span></div></div>';
   };
   const sample = [
@@ -538,7 +540,7 @@ try{ setMode((/signup/i.test(location.hash)||/signup/i.test(location.search))?'s
     ['URI',85,2.4],['TSLA',64,-3.1],['ANET',83,3.8],['UBER',74,0.9],
     ['DELL',83,7.8],['CIEN',82,-2.6],['GOOGL',83,-1.2],['APLD',82,1.5],
     ['SNOW',81,6.2],['MDB',81,4.5],['COHU',82,1.1],['WAT',85,-2.5],
-  ].map(([sym,score,chg])=>({sym,score,tier:tierOf(score),chg}));
+  ].map(([sym,score,chg])=>({sym,score,grade:gradeOf(score),chg}));
 
   /* shuffle so each column has a different deck */
   const shuffled = arr => arr.slice().sort(()=>Math.random()-.5);
@@ -546,8 +548,8 @@ try{ setMode((/signup/i.test(location.hash)||/signup/i.test(location.search))?'s
   const deckB = shuffled(sample);
 
   /* Each column gets its deck duplicated twice so translateY(-50%) loops seamlessly */
-  colA.innerHTML = deckA.concat(deckA).map(p=>card(p.sym,p.score,p.tier,p.chg)).join('');
-  colB.innerHTML = deckB.concat(deckB).map(p=>card(p.sym,p.score,p.tier,p.chg)).join('');
+  colA.innerHTML = deckA.concat(deckA).map(p=>card(p.sym,p.score,p.grade,p.chg)).join('');
+  colB.innerHTML = deckB.concat(deckB).map(p=>card(p.sym,p.score,p.grade,p.chg)).join('');
 })();
 </script>
 </body>
