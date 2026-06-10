@@ -5432,8 +5432,14 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
    hugs its content instead of floating midway on the pane's flex gap. */
 #ts-drawer .ov-sec{display:flex;flex-direction:column;gap:9px}
 #ts-drawer .ov-sechead{display:flex;align-items:baseline;gap:12px;margin:2px 2px 0}
-/* Editorial Overview reads as a single centred column (override the 2-col grid). */
-#ts-drawer.expanded .dr-pane[data-pane="Overview"]:not([hidden]){display:flex;flex-direction:column;gap:16px;max-width:820px;margin:0 auto}
+/* Overview is a wide two-column grid of ribbon cards; full-width sections carry
+   .rep-span (header, scorecard, chart, business, valuation, bottom line) while the
+   rest pair two-across (setup|edge, catalysts|risks). */
+#ts-drawer.expanded .dr-pane[data-pane="Overview"]:not([hidden]){display:grid;grid-template-columns:1fr 1fr;gap:14px;max-width:1160px;margin:0 auto;align-items:start}
+#ts-drawer.expanded .dr-pane[data-pane="Overview"] > .rep-span,
+#ts-drawer.expanded .dr-pane[data-pane="Overview"] > .premkt,
+#ts-drawer.expanded .dr-pane[data-pane="Overview"] > .dv-strip{grid-column:1/-1}
+@media(max-width:720px){#ts-drawer.expanded .dr-pane[data-pane="Overview"]:not([hidden]){grid-template-columns:1fr}}
 #ts-drawer .ov-secnum{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:#b4780a}
 #ts-drawer .ov-sectitle{font-family:var(--font-head);font-weight:600;font-size:19px;letter-spacing:-.01em;color:#0A0A0A}
 /* valuation range bar */
@@ -12142,7 +12148,7 @@ function _ovSalvageJson(frag){
 }
 function _ovRenderBusiness(biz){
   const host = document.getElementById('ovBiz'); if (!host) return;
-  const sec = host.closest && host.closest('.ov-sec');
+  const sec = host.closest && host.closest('.rep-sec');
   const engines = (biz && Array.isArray(biz.engines)) ? biz.engines.slice(0,2) : [];
   if (!biz || (!biz.intro && !engines.length)){ if (sec) sec.style.display='none'; return; }
   let html = '';
@@ -12185,6 +12191,15 @@ function _ovRenderRevenue(rev){
 // "Bottom line"). Each whole section hides if the note omits it or hasn't
 // loaded. Pass parts=null to hide all three (unavailable / failed / timed out).
 function _ovRenderNoteBoxes(parts, render){
+  // Promote the note's Claude-written verdict into the header, replacing the
+  // templated bottom_line, once the web-grounded note has loaded.
+  if (parts && parts.lead){
+    const h = document.getElementById('ovHeadline');
+    if (h){
+      const v = String(parts.lead).replace(/\*\*/g,'').replace(/^\s*(verdict|bottom line)\s*[:\-—]\s*/i,'').trim();
+      if (v) h.textContent = v;
+    }
+  }
   const TARGETS = [
     { id: 'ovNoteCat',    re: /what moves it next|catalyst/i },
     { id: 'ovNoteRisk',   re: /bear case|^\s*risk/i },
@@ -12192,7 +12207,7 @@ function _ovRenderNoteBoxes(parts, render){
   ];
   TARGETS.forEach(tg => {
     const host = document.getElementById(tg.id); if (!host) return;
-    const sec = host.closest && host.closest('.ov-sec');
+    const sec = host.closest && host.closest('.rep-sec');
     const s = (parts && parts.sections) ? parts.sections.find(x => tg.re.test(x.title)) : null;
     if (s && s.body){
       host.innerHTML = '<div class="dd-content">' + (render ? render(s.body) : _basicMd(s.body)) + '</div>';
@@ -18205,22 +18220,24 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
   // icon + accent; unknown titles fall back to a neutral slate card.
   function _ovSecHead(title,body){
     if(arguments.length>1 && !body) return '';   // empty body → drop the whole section
+    // [icon, accent, span] — span:true sections take the full grid width; the
+    // rest pair up two-across (setup|edge, catalysts|risks).
     const M={
-      "what you'd actually be buying":['🏢','blue'],
-      'the six-pillar scorecard':['📊','violet'],
-      'price action':['📈','blue'],
-      'technical setup':['🎯','teal'],
-      'the alphahunt edge':['✦','violet'],
-      'where the price sits':['💰','green'],
-      'catalysts':['🚀','blue'],
-      'risks':['🛡️','red'],
-      'bottom line':['📋','slate'],
-      'what moves it next':['🚀','blue'],
-      'the numbers':['🔢','blue'],
-      'the two-sided case':['⚖️','slate']
+      "what you'd actually be buying":['🏢','blue',true],
+      'the six-pillar scorecard':['📊','violet',true],
+      'price action':['📈','blue',true],
+      'technical setup':['🎯','teal',false],
+      'the alphahunt edge':['✦','violet',false],
+      'where the price sits':['💰','green',true],
+      'catalysts':['🚀','blue',false],
+      'risks':['🛡️','red',false],
+      'bottom line':['📋','slate',true],
+      'what moves it next':['🚀','blue',false],
+      'the numbers':['🔢','blue',true],
+      'the two-sided case':['⚖️','slate',true]
     };
-    const m=M[String(title||'').toLowerCase().trim()]||['•','slate'];
-    return _sec(title,m[0],m[1],body);
+    const m=M[String(title||'').toLowerCase().trim()]||['•','slate',true];
+    return _sec(title,m[0],m[1],body,m[2]);
   }
   function _ovHeader(t,full,S){
     const price=parseFloat(full.price||0), chg=parseFloat(full.change_pct||0);
@@ -18251,10 +18268,10 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     '</div>';
     return _sec('Equity Research · '+escHTML(sector||'US Equity'), '📈', 'blue',
       '<div class="ov-headrow">'+
-        '<div class="ov-headline">'+escHTML(bl||name)+'</div>'+
+        '<div class="ov-headline" id="ovHeadline">'+escHTML(bl||name)+'</div>'+
         '<div class="ov-pricebox"><div class="ov-price">'+fmtP(price)+'</div><div class="ov-chg '+(chg>=0?'up':'dn')+'">'+(chg>=0?'▲ ':'▼ ')+fmtPct(chg)+'</div></div>'+
       '</div>'+
-      strip);
+      strip, true);
   }
   function _ovNumbers(full){
     const M=v=>v==null?null:(Math.abs(v)<=1?v*100:v);
@@ -18848,7 +18865,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     let dd=drawer.querySelector('.dr-deep');
     if(!dd){ dd=document.createElement('div'); dd.className='dr-deep'; body.appendChild(dd); }
     dd.innerHTML='<div class="dr-loading"><span class="dr-spin"></span>Loading full analysis…</div>';
-    const w=Math.round(Math.min(window.innerWidth*0.9,1000));
+    const w=Math.round(Math.min(window.innerWidth*0.9,1200));
     drawer.style.width=w+'px'; drawer.style.left='50%'; drawer.style.right='auto'; drawer.style.marginLeft=(-w/2)+'px';
     drawer.classList.add('expanded'); drawer.scrollTop=0;
     _drState={t,candles:null,setup:null,full:t,tab:'Overview',tf:'6M'};
@@ -18874,9 +18891,9 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
         && _drRailAlpha(x)>cur)
       .sort((a,b)=>_drRailAlpha(b)-_drRailAlpha(a)).slice(0,3);
   }
-  function _drRailRoom(){ const w=Math.min(window.innerWidth*0.9,1000); return (window.innerWidth/2 - w/2) >= 200; }
+  function _drRailRoom(){ const w=Math.min(window.innerWidth*0.9,1200); return (window.innerWidth/2 - w/2) >= 200; }
   function _drRailPosition(){ const r=document.getElementById('dr-side-rail'); if(!r) return;
-    const w=Math.min(window.innerWidth*0.9,1000); const drawerLeft=window.innerWidth/2 - w/2;
+    const w=Math.min(window.innerWidth*0.9,1200); const drawerLeft=window.innerWidth/2 - w/2;
     r.style.left=Math.max(10,Math.round(drawerLeft - 14 - 184))+'px'; }
   /* Recently-viewed tickers — persisted, newest first, capped at 6. */
   let _recent=[]; try{ _recent=JSON.parse(localStorage.getItem('ah_recent')||'[]')||[]; }catch(e){ _recent=[]; }
@@ -18951,7 +18968,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     if(!drawer.classList.contains('expanded')||!_drRailRoom()){ layer.classList.remove('show'); return; }
     const words=_newsCloudWords(full); if(!words.length){ layer.classList.remove('show'); return; }
     const SENT={pos:'#15803d',neg:'#dc2626',neu:'#2970ff'};
-    const w=Math.min(window.innerWidth*0.9,1000); const margin=window.innerWidth/2 - w/2;
+    const w=Math.min(window.innerWidth*0.9,1200); const margin=window.innerWidth/2 - w/2;
     const max=words[0][1], min=words[words.length-1][1];
     const perSide=Math.ceil(words.length/2);
     words.forEach((wd,i)=>{
@@ -18988,7 +19005,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
   /* ── Right rail: sticky key-card (Alpha / verdict / price / upside) + a
      section navigator (scrollspy) for the current tab. Wide screens only. ── */
   function _drRightPosition(){ const r=document.getElementById('dr-right-rail'); if(!r) return;
-    const w=Math.min(window.innerWidth*0.9,1000); const margin=window.innerWidth/2 - w/2;
+    const w=Math.min(window.innerWidth*0.9,1200); const margin=window.innerWidth/2 - w/2;
     r.style.right=Math.max(10,Math.round(margin - 14 - 188))+'px'; }
   function tsBuildRightRail(t){
     let r=document.getElementById('dr-right-rail');
