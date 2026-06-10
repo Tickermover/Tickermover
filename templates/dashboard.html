@@ -18886,12 +18886,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
       _sec('Quarterly reports','📊','violet',qtrRows||none)+
       _sec('Annual reports','📄','green',    annRows||none)+
     '</div>';
-    const foot='<div class="doc-foot">'+
-      '<a class="doc-foot-link" onclick="openDocViewer(\'/api/pdf/'+tkE+'\',\'AlphaHunt tear sheet · '+escHTML(tk)+'\')">⤓ AlphaHunt tear sheet (PDF)</a>'+
-      '<button class="doc-foot-link" onclick="tsOpenAsk(\''+escHTML(tk)+'\')">✦ Ask AI</button>'+
-      '<a class="doc-foot-link" href="https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&ticker='+tkE+'&type=&dateb=&owner=include&count=40" target="_blank" rel="noopener">All SEC filings ↗</a>'+
-    '</div>';
-    root.innerHTML=grid+foot;
+    root.innerHTML=grid;
   }
 
   /* Insights — Screener-style OPERATING KPIs (volumes, capacity, units …)
