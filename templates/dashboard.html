@@ -12280,9 +12280,10 @@ function _ovRenderNoteBoxes(parts, render){
 function _ovLockTeaser(id, inner, big){
   const host = document.getElementById(id); if (!host) return;
   const sec = host.closest && host.closest('.rep-sec');
+  // One consistent Pro callout across every locked box (was a button on the
+  // big note but a plain text link on the smaller boxes — looked inconsistent).
   const overlay = '<div class="pro-overlay"><div class="pro-lk">🔒 Pro feature</div>'+
-    (big ? '<button class="dd-upsell" onclick="if(window.openUpgradeModal)openUpgradeModal()">Upgrade to Pro</button>'
-         : '<div class="pro-sub">Unlock with Pro</div>')+'</div>';
+    '<button class="dd-upsell" onclick="if(window.openUpgradeModal)openUpgradeModal()">Upgrade to Pro</button></div>';
   host.innerHTML = '<div class="pro-locked"><div class="pro-blur" aria-hidden="true">'+inner+'</div>'+overlay+'</div>';
   if (sec) sec.style.display = '';
 }
