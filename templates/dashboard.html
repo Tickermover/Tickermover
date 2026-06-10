@@ -18775,9 +18775,26 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     if(!isNaN(days)&&days>=0) esRows.push(['Next earnings','in ~'+days+'d', days<=14?_badge('SOON','warn'):_nb()]);
     const eq=t.eps_quarters, epsRows=[];
     if(Array.isArray(eq)) eq.slice(-4).forEach(q=>{ const s=q.surprise_pct; epsRows.push([q.date||q.quarter||'', s!=null?((s>=0?'+':'')+(Math.abs(s)<=1?s*100:s).toFixed(0)+'%'):'—', q.beat?_badge('BEAT','ok'):_badge('MISS','bad')]); });
+    // ── Analyst targets + forward estimates (from FMP enrichment) ──
+    const _tgt=_fpNum(t,['target_mean','street_target']), _px=_fpNum(t,['price']);
+    const _na=parseInt(t.total_analysts);
+    const anRows=[];
+    if(_tgt!=null){ const ups=(_px&&_tgt)?((_tgt-_px)/_px*100):null;
+      anRows.push(['Mean price target',fmtP(_tgt), ups!=null?_badge((ups>=0?'+':'')+ups.toFixed(0)+'% upside',ups>=0?'ok':'bad'):_nb()]); }
+    if(!isNaN(_na)&&_na>0) anRows.push(['Analyst coverage',_na+' analysts',_nb()]);
+    if(t.est_eps_next_fy!=null) anRows.push(['Est. EPS · '+(t.est_year||'next FY'),'$'+Number(t.est_eps_next_fy).toFixed(2),_nb()]);
+    if(t.est_rev_next_fy!=null) anRows.push(['Est. revenue · '+(t.est_year||'next FY'),_money(t.est_rev_next_fy),_nb()]);
+    // ── Recent rating changes (FMP grades) ──
+    const grd=Array.isArray(t.grades)?t.grades:[];
+    const grRows=grd.slice(0,6).map(g=>{ const act=(g.action||'').toLowerCase();
+      const sig=act.indexOf('up')>=0?_badge('UPGRADE','ok'):act.indexOf('down')>=0?_badge('DOWNGRADE','bad'):_badge('MAINTAIN','neu');
+      const lbl=(g.from&&g.to&&g.from!==g.to)?(g.from+' → '+g.to):(g.to||g.from||'');
+      return [escHTML(g.firm||''), escHTML(lbl), sig]; });
     return _forecastCard(t)+
     '<div class="dr-deep-grid">'+
+      (anRows.length?_sigTable('Analyst targets & estimates','🎯','blue',['Metric','Value','Signal'],anRows):'')+
       _sigTable('Earnings summary','🎯','green',['Metric','Value','Signal'],esRows)+
+      (grRows.length?_sigTable('Recent rating changes','🏛️','amber',['Firm','Change','Action'],grRows):'')+
       (epsRows.length?_sigTable('EPS surprise history','📊','violet',['Metric','Value','Signal'],epsRows):'')+
     '</div>';
   }
@@ -19241,8 +19258,34 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     try{ _drNavBuild(); }catch(e){}
     requestAnimationFrame(()=>requestAnimationFrame(()=>{ dd.querySelectorAll('.pf,.reb-fill').forEach(el=>{el.style.width=el.getAttribute('data-w')+'%';}); tsDrawChartEl(); }));
     tsLoadThesis(t.ticker);
+    // Pull FMP-enriched fundamentals (valuation multiples, returns, analyst
+    // targets/estimates, rating changes) and light up the relevant tabs.
+    try{ tsLoadExtra((t.ticker||'').toUpperCase()); }catch(e){}
     // Kick off the web-grounded AI Deep-Dive (reuses /api/research pipeline).
     try{ if(typeof loadDeepDive==='function') loadDeepDive((t.ticker||'').toUpperCase()); }catch(e){}
+  }
+  /* On-demand FMP enrichment for the drawer tabs. Fills valuation/financial
+     fields yfinance missed (fill-gaps only — never clobber a good live value)
+     and adds analyst estimates / rating grades, then re-renders the affected
+     panes in place. Best-effort: silent on failure, tabs just stay as-is. */
+  function tsLoadExtra(tk){
+    if(!tk||!_drState) return;
+    fetch('/api/stock-extra/'+encodeURIComponent(tk)).then(r=>r.ok?r.json():null).then(d=>{
+      if(!d||!_drState) return;
+      const full=_drState.full, t=_drState.t;
+      Object.keys(d).forEach(k=>{ if(k==='ticker')return; const v=d[k];
+        if(v==null||v==='') return;
+        if(Array.isArray(v)){ full[k]=v; t[k]=v; return; }          // grades/peers/filings → set
+        if(full[k]==null||full[k]==='') full[k]=v;                  // scalars → fill gaps only
+        if(t[k]==null||t[k]==='') t[k]=v;
+      });
+      const re=(pane,html)=>{ const el=drawer.querySelector('.dr-pane[data-pane="'+pane+'"]'); if(el) el.innerHTML=html; };
+      try{ re('Financials',paneFinancials(full)); }catch(e){}
+      try{ re('Valuation',paneValuation(full)); }catch(e){}
+      try{ re('Estimates',paneEstimates(full)); }catch(e){}
+      // animate any bars that were just (re)inserted into a visible pane
+      requestAnimationFrame(()=>requestAnimationFrame(()=>{ drawer.querySelectorAll('.dr-pane:not([hidden]) .pf,.dr-pane:not([hidden]) .reb-fill').forEach(el=>{ el.style.width=el.getAttribute('data-w')+'%'; }); }));
+    }).catch(()=>{});
   }
   function tsLoadThesis(tk){
     if(!drawer.querySelector('#aiThesisBody')&&!drawer.querySelector('#ovBullList')) return;
