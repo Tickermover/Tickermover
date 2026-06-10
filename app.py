@@ -6324,6 +6324,13 @@ async def api_signup(body: _AuthBody, request: Request):
     AlphaHunt" message in one. Rate limit is Resend's (3k/month free),
     not Supabase's built-in 3/hour cap.
     """
+    # Standard password policy for new accounts: 8+ chars, letters AND numbers.
+    pw = body.password or ""
+    if len(pw) < 8 or not (any(c.isalpha() for c in pw) and any(c.isdigit() for c in pw)):
+        raise HTTPException(
+            status_code=400,
+            detail="Password must be at least 8 characters and include both letters and numbers.",
+        )
     # Land the confirmation link on /auth/callback so the session is captured
     # and first-time onboarding (welcome + risk profile) fires.
     redirect_to = f"{request.url.scheme}://{request.url.netloc}/auth/callback"

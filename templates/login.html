@@ -383,7 +383,7 @@ function setMode(m){
   var su=$('form-sub');   if(su) su.textContent= si?'Sign in — your watchlist is waiting.':'Score 540+ US stocks every day. Free to start.';
   var sb=$('submit-label');if(sb) sb.textContent= si?'Sign in':'Create account';
   var fl=$('forgot-link');if(fl) fl.style.visibility= si?'visible':'hidden';
-  var pw=$('login-password'); if(pw){ pw.setAttribute('autocomplete', si?'current-password':'new-password'); pw.placeholder= si?'Your password':'At least 8 characters'; }
+  var pw=$('login-password'); if(pw){ pw.setAttribute('autocomplete', si?'current-password':'new-password'); pw.placeholder= si?'Your password':'8+ chars · letters & numbers'; }
   var ms=$('mode-switch');
   if(ms){
     ms.innerHTML= si
@@ -402,6 +402,11 @@ async function authSubmit(){
   if(!email || !pass){ showMsg('Email and password required','err'); return; }
   if(!_validEmail(email)){ showMsg('Enter a valid email address','err'); $('login-email').focus(); return; }
   if(pass.length<8){ showMsg('Password must be at least 8 characters','err'); $('login-password').focus(); return; }
+  // New accounts: require a standard alphanumeric password (letters + numbers).
+  // Not enforced on sign in, so existing passwords are never blocked.
+  if(_authMode==='signup' && !(/[A-Za-z]/.test(pass) && /[0-9]/.test(pass))){
+    showMsg('Password must be 8+ characters with both letters and numbers','err'); $('login-password').focus(); return;
+  }
   btn.disabled=true; btn.classList.add('loading');
   const reset=()=>{ btn.disabled=false; btn.classList.remove('loading'); };
   const hit = async url => {
