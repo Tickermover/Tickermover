@@ -5402,9 +5402,12 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 /* ════ Editorial research-note Overview (our light theme) ════════════════ */
 #ts-drawer .ov-head{padding:4px 2px 18px;border-bottom:1px solid var(--hair);margin-bottom:6px}
 #ts-drawer .ov-eyebrow{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--grey-3)}
-#ts-drawer .ov-tickrow{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;flex-wrap:wrap;margin-top:10px}
-#ts-drawer .ov-tick{font-family:var(--font-head);font-weight:600;font-size:clamp(34px,7vw,56px);line-height:.9;letter-spacing:-.02em;color:#0A0A0A}
-#ts-drawer .ov-co{font-size:13px;color:var(--grey-2);margin-top:9px;font-weight:500}
+/* Identity (ticker + company name) lives in the sticky drawer header; the
+   editorial header no longer repeats it. It leads with the research eyebrow +
+   live price, then the verdict as the hero headline. */
+#ts-drawer .ov-toprow{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;flex-wrap:wrap;margin-top:2px}
+#ts-drawer .ov-headline{font-family:var(--font-head);font-weight:600;font-size:clamp(23px,3.2vw,33px);line-height:1.2;letter-spacing:-.015em;color:#0A0A0A;margin-top:14px;max-width:900px}
+#ts-drawer .ov-headline b{color:#0040c1;font-weight:600}
 #ts-drawer .ov-pricebox{text-align:right}
 #ts-drawer .ov-price{font-family:'JetBrains Mono',monospace;font-weight:800;font-size:30px;line-height:1;color:#0A0A0A}
 #ts-drawer .ov-chg{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;margin-top:5px}
@@ -18198,12 +18201,11 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
       stat('Beta', beta!=null?beta.toFixed(2):'—', beta!=null?(beta>=1.5?'high vol':beta>=0.8?'market':'low vol'):'', beta!=null&&beta>=1.5?'amb':'')+
     '</div>';
     return '<div class="ov-head">'+
-      '<div class="ov-eyebrow">Equity Research · '+escHTML(sector||'US Equity')+'</div>'+
-      '<div class="ov-tickrow"><div><div class="ov-tick">'+escHTML(tk)+'</div>'+
-        '<div class="ov-co">'+escHTML(name)+(exch?' · '+escHTML(exch):'')+(sector?' · '+escHTML(sector):'')+'</div></div>'+
+      '<div class="ov-toprow">'+
+        '<div class="ov-eyebrow">Equity Research · '+escHTML(sector||'US Equity')+'</div>'+
         '<div class="ov-pricebox"><div class="ov-price">'+fmtP(price)+'</div><div class="ov-chg '+(chg>=0?'up':'dn')+'">'+(chg>=0?'▲ ':'▼ ')+fmtPct(chg)+'</div></div>'+
       '</div>'+
-      (bl?'<div class="ov-verdict">'+escHTML(bl)+'</div>':'')+
+      '<div class="ov-headline">'+escHTML(bl||name)+'</div>'+
       strip+
     '</div>';
   }
