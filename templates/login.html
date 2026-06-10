@@ -318,11 +318,13 @@ a{color:inherit;text-decoration:none}
 const $ = id => document.getElementById(id);
 function showMsg(text, kind){ const el=$('login-msg'); if(!el) return; el.textContent=text||''; el.className='msg '+(kind||''); }
 
-/* Password show/hide */
-$('eyeBtn').addEventListener('click', () => {
+/* Password show/hide — guarded so a missing element can't abort the script
+   (which would leave the Sign-in handler below unbound = "button does nothing"). */
+var _eyeBtn=$('eyeBtn');
+if(_eyeBtn) _eyeBtn.addEventListener('click', () => {
   const inp=$('login-password'); if(!inp) return;
   inp.type = inp.type==='password' ? 'text' : 'password';
-  $('eyeBtn').textContent = inp.type==='password' ? '👁' : '🙈';
+  _eyeBtn.textContent = inp.type==='password' ? '👁' : '🙈';
 });
 
 const _validEmail = e => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
@@ -410,13 +412,14 @@ async function authForgot(){
   }catch(e){ showMsg('Network error. Try again.','err'); }
 }
 
-/* Wire up controls */
-$('login-submit').addEventListener('click', authSubmit);
+/* Wire up controls — every binding null-guarded so one missing element can
+   never abort the script and leave Sign-in dead. Submit is wired FIRST. */
+var _sub=$('login-submit'); if(_sub) _sub.addEventListener('click', authSubmit);
 var _gBtn=$('google-btn'); if(_gBtn) _gBtn.addEventListener('click', function(){ authOAuth('google'); });
 var _mBtn=document.querySelector('.magic'); if(_mBtn) _mBtn.addEventListener('click', authMagicLink);
 var _fBtn=document.querySelector('.flink'); if(_fBtn) _fBtn.addEventListener('click', authForgot);
-$('login-email').addEventListener('keydown', e=>{ if(e.key==='Enter') $('login-password').focus(); });
-$('login-password').addEventListener('keydown', e=>{ if(e.key==='Enter') authSubmit(); });
+var _em=$('login-email'); if(_em) _em.addEventListener('keydown', e=>{ if(e.key==='Enter'){ var p=$('login-password'); if(p) p.focus(); } });
+var _pw=$('login-password'); if(_pw) _pw.addEventListener('keydown', e=>{ if(e.key==='Enter') authSubmit(); });
 
 /* ── Live scoring wall — two columns drifting in opposite directions ── */
 (function loadWall(){
