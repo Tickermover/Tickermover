@@ -251,9 +251,9 @@ a{color:inherit;text-decoration:none}
 
 /* Email-confirmation view */
 #confirm-view{text-align:center}
-.cv-icon{width:62px;height:62px;margin:6px auto 16px;border-radius:17px;display:grid;place-items:center;font-size:29px;
-  background:linear-gradient(135deg,#e8f0ff,#d1e0ff);
-  box-shadow:0 10px 22px -10px rgba(41,112,255,.55),inset 0 0 0 1px rgba(41,112,255,.14)}
+.cv-icon{width:68px;height:68px;margin:6px auto 18px;border-radius:19px;display:grid;place-items:center;
+  background:#fff;box-shadow:0 12px 26px -10px rgba(41,112,255,.45),inset 0 0 0 1px rgba(41,112,255,.12)}
+.cv-icon svg{width:40px;height:40px;display:block;filter:drop-shadow(0 4px 8px rgba(41,112,255,.30))}
 #confirm-view .form-sub{max-width:340px;margin-left:auto;margin-right:auto}
 #confirm-view #cv-email{color:var(--primary);font-weight:700}
 #cv-back{color:var(--grey-2)}#cv-back:hover{color:var(--primary)}
@@ -331,7 +331,13 @@ a{color:inherit;text-decoration:none}
 
       <!-- ═══ Email-confirmation view (shown after a new sign-up) ═══ -->
       <div id="confirm-view" style="display:none">
-        <div class="cv-icon" aria-hidden="true">✉️</div>
+        <div class="cv-icon" aria-hidden="true">
+          <svg viewBox="0 0 48 48" fill="none">
+            <defs><linearGradient id="cvEnv" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5DB3F1"/><stop offset="1" stop-color="#2970FF"/></linearGradient></defs>
+            <rect x="6" y="11" width="36" height="26" rx="6" fill="url(#cvEnv)"/>
+            <path d="M9 15l13.6 9.6a2.4 2.4 0 0 0 2.8 0L39 15" stroke="#fff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+          </svg>
+        </div>
         <h1 class="form-title">Check your inbox</h1>
         <p class="form-sub">We sent a confirmation link to <b id="cv-email"></b>. Click it to activate your account, then come back and sign in.</p>
         <div id="cv-msg" class="msg"></div>

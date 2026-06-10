@@ -17467,7 +17467,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
   #ah-onboard-overlay.open{display:flex;animation:ahoFade .3s ease}
   @keyframes ahoFade{from{opacity:0}to{opacity:1}}
-  .aho-card{position:relative;width:100%;max-width:460px;background:linear-gradient(180deg,#ffffff,#fbfcff);
+  .aho-card{position:relative;width:100%;max-width:460px;background:radial-gradient(120% 80% at 50% 0%,rgba(41,112,255,.08),transparent 60%),linear-gradient(180deg,#ffffff,#fbfcff);
     border:1px solid rgba(255,255,255,.7);border-radius:24px;padding:40px 38px 30px;text-align:center;
     box-shadow:0 1px 2px rgba(0,0,0,.05),0 30px 70px -30px rgba(0,0,0,.45);
     animation:ahoPop .42s cubic-bezier(.22,.9,.32,1.2) both}
@@ -17489,7 +17489,17 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
   .aho-title{font-family:var(--font-head,'Fraunces',serif);font-weight:500;font-size:30px;color:#0A0A0A;letter-spacing:-.02em;line-height:1.12;min-height:38px;margin:14px 0 6px}
   .aho-caret{display:inline-block;width:2px;height:.9em;background:#2970ff;margin-left:3px;vertical-align:-2px;animation:ahoCaret 1s step-end infinite}
   @keyframes ahoCaret{50%{opacity:0}}
-  .aho-sub{color:#64748b;font-size:14.5px;line-height:1.5;margin:0 auto 26px;max-width:330px;opacity:0;animation:ahoUp .5s ease .5s both}
+  .aho-sub{color:#64748b;font-size:14.5px;line-height:1.5;margin:0 auto 20px;max-width:330px;opacity:0;animation:ahoUp .5s ease .5s both}
+  .aho-sub b{color:#0040c1;font-weight:700}
+  .aho-word{display:inline-block}
+  .aho-perks{display:flex;justify-content:center;margin:0 auto 22px;max-width:330px;
+    background:rgba(41,112,255,.05);border:1px solid rgba(41,112,255,.10);border-radius:14px;padding:11px 6px;
+    opacity:0;animation:ahoUp .5s ease .6s both}
+  .aho-perk{flex:1;text-align:center;position:relative}
+  .aho-perk + .aho-perk::before{content:"";position:absolute;left:0;top:50%;transform:translateY(-50%);height:22px;width:1px;background:rgba(41,112,255,.14)}
+  .aho-perk b{display:block;font-family:'JetBrains Mono',monospace;font-weight:800;font-size:16px;
+    background:linear-gradient(135deg,#2970ff,#0040c1);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
+  .aho-perk span{display:block;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:#94a3b8;font-weight:700;margin-top:2px}
   .aho-q{display:block;text-align:left;font-weight:700;font-size:12.5px;letter-spacing:.01em;color:#0A0A0A;margin-bottom:8px;opacity:0;animation:ahoUp .5s ease .68s both}
   .aho-input{width:100%;box-sizing:border-box;padding:14px 16px;font-size:16px;font-family:var(--font-body,'Inter',sans-serif);
     border:1px solid #d7dee8;border-radius:13px;background:#fff;color:#0A0A0A;margin-bottom:10px;outline:none;
@@ -17511,10 +17521,15 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
 <div id="ah-onboard-overlay" role="dialog" aria-modal="true" aria-label="Welcome">
   <div class="aho-card">
     <button class="aho-close" onclick="closeOnboarding()" aria-label="Skip for now" title="Skip for now">✕</button>
-    <div class="aho-brand"><span class="aho-logo" role="img" aria-label="AlphaHunt"></span> Alpha<em>Hunt</em></div>
+    <div class="aho-brand"><span class="aho-logo" role="img" aria-label="AlphaHunt"></span> <span class="aho-word">Alpha<em>Hunt</em></span></div>
     <span class="aho-wave" aria-hidden="true">👋</span>
     <h1 class="aho-title"><span id="aho-type"></span><span class="aho-caret"></span></h1>
-    <p class="aho-sub">Welcome aboard. Let's personalise your dashboard — it takes about 20 seconds.</p>
+    <p class="aho-sub">You're in. Let's personalise your dashboard — <b>20 seconds</b>, then you're hunting alpha.</p>
+    <div class="aho-perks">
+      <div class="aho-perk"><b>540+</b><span>US stocks</span></div>
+      <div class="aho-perk"><b>6</b><span>pillars</span></div>
+      <div class="aho-perk"><b>5&nbsp;min</b><span>refresh</span></div>
+    </div>
     <label class="aho-q" for="aho-name">What should we call you?</label>
     <input id="aho-name" class="aho-input" type="text" maxlength="40" autocomplete="given-name"
            placeholder="Your first name" onkeydown="if(event.key==='Enter'){event.preventDefault();onboardNameNext();}">
