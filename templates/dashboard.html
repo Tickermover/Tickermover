@@ -5292,14 +5292,11 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 #ts-drawer .spark-svg{flex:1;height:30px}
 #ts-drawer .bar-svg{flex:1;height:34px}
 #ts-drawer .trend-v{font-family:'JetBrains Mono',monospace;font-weight:800;font-size:12px;min-width:62px;text-align:right;color:var(--ink)}
-/* poster: 2-column Overview on wide screens */
-@media(min-width:780px){
-  #ts-drawer.expanded .dr-pane[data-pane="Overview"]:not([hidden]){display:grid;grid-template-columns:1fr 1fr;gap:13px;align-items:start}
-  #ts-drawer.expanded .dr-pane[data-pane="Overview"]>.rep-span,
-  #ts-drawer.expanded .dr-pane[data-pane="Overview"]>.dv-strip,
-  #ts-drawer.expanded .dr-pane[data-pane="Overview"]>.hero-stats,
-  #ts-drawer.expanded .dr-pane[data-pane="Overview"]>.dr-catalyst{grid-column:1/-1}
-}
+/* The Overview pane is a single centred editorial column — see the rule below
+   (every block is wrapped in .ov-sec). The old 2-column "poster" grid that used
+   to live here was fully superseded by that redesign; its only lingering effect
+   was leaking align-items:start onto the flex column, which stopped sections
+   from stretching and collapsed the scorecard grid to one narrow column. */
 #ts-drawer .dr-back{align-self:flex-start;font-family:inherit;font-size:13px;font-weight:700;color:var(--grey-2);
   background:#fff;border:1px solid var(--hair);border-radius:11px;padding:10px 16px;cursor:pointer}
 #ts-drawer .dr-back:hover{background:var(--surf-3);color:var(--ink)}
