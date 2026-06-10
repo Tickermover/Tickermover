@@ -71,33 +71,12 @@ def _prompt(ticker: str, t: dict) -> str:
         "earnings prints, guidance, segment detail, customer/revenue concentration, "
         "analyst price targets (name the firms), valuation context (P/E, P/S, DCF / "
         "fair-value if cited), insider activity, dilution, and risks. Then write the "
-        "note in GitHub-flavoured Markdown with EXACTLY this structure:\n"
+        "note in GitHub-flavoured Markdown with EXACTLY this structure, in this order:\n"
         "1. A one-sentence **bold verdict** of where the company stands right now — "
         "the single most important tension.\n"
-        "2. '## What you're buying' — 2-4 sentences: what the company actually does / "
-        "how it makes money / its core engine(s) and any second growth engine.\n"
-        "3. '## The numbers' — the recent revenue & margin trajectory with SPECIFIC "
-        "figures (most recent quarter + full-year + guide), growth rates, and "
-        "beat/miss vs consensus.\n"
-        "4. '## Bull case' — 4-6 tight bullets, each anchored to a specific fact.\n"
-        "5. '## Bear case' — 4-6 tight bullets (valuation, concentration, dilution, "
-        "competition, profitability), each specific.\n"
-        "6. '## Where the price sits' — valuation read: the multiple, the spread of "
-        "analyst targets (low / average / high, with firms if available), and any "
-        "intrinsic / DCF fair-value range cited.\n"
-        "7. '## What moves it next' — 3-5 catalysts, each prefixed with a rough "
-        "timeframe in **bold** (e.g. **Next quarter**, **H2 2026**, **Ongoing**).\n"
-        "8. '## Bottom line' — 2-3 sentences ending in the one honest question an "
-        "investor should answer before buying.\n"
-        "9. '## Sources' — numbered list of the web pages you actually used, as "
-        "markdown links.\n\n"
-        "RULES: Cite every external/quantitative claim inline with a markdown link to "
-        "the source you read. Never fabricate numbers, quotes, or URLs — if you can't "
-        "verify something, omit it. Be specific and concrete; no filler or hedging "
-        "boilerplate. Put this exact line right before the structured block:\n"
-        f"{DISCLAIMER}\n\n"
-        "STRUCTURED BLOCK — after the disclaimer line, output ONE fenced ```json code "
-        "block (and nothing after it) so the app can render visual sections. Use only "
+        "2. THE STRUCTURED BLOCK — output it HERE, immediately after the verdict (do "
+        "NOT save it for the end of the note), as ONE fenced ```json code block so the "
+        "app can render its visual sections even when the note runs long. Use only "
         "web-verified figures; omit any field you cannot verify. Exact shape:\n"
         "```json\n"
         "{\n"
@@ -119,7 +98,30 @@ def _prompt(ticker: str, t: dict) -> str:
         "For `revenue`, give 2-4 fiscal-year points (oldest→newest, last point may be a "
         "guide/estimate); `value` is the revenue as a plain number in the SAME unit "
         "across all points (millions preferred) so bars scale correctly; `display` is "
-        "the human label. Omit the whole `business` or `revenue` key if you can't verify it."
+        "the human label. Omit the whole `business` or `revenue` key if you can't verify it.\n"
+        "3. '## What you're buying' — 2-4 sentences: what the company actually does / "
+        "how it makes money / its core engine(s) and any second growth engine.\n"
+        "4. '## The numbers' — the recent revenue & margin trajectory with SPECIFIC "
+        "figures (most recent quarter + full-year + guide), growth rates, and "
+        "beat/miss vs consensus.\n"
+        "5. '## Bull case' — 4-6 tight bullets, each anchored to a specific fact.\n"
+        "6. '## Bear case' — 4-6 tight bullets (valuation, concentration, dilution, "
+        "competition, profitability), each specific.\n"
+        "7. '## Where the price sits' — valuation read: the multiple, the spread of "
+        "analyst targets (low / average / high, with firms if available), and any "
+        "intrinsic / DCF fair-value range cited.\n"
+        "8. '## What moves it next' — 3-5 catalysts, each prefixed with a rough "
+        "timeframe in **bold** (e.g. **Next quarter**, **H2 2026**, **Ongoing**).\n"
+        "9. '## Bottom line' — 2-3 sentences ending in the one honest question an "
+        "investor should answer before buying.\n"
+        "10. '## Sources' — numbered list of the web pages you actually used, as "
+        "markdown links.\n\n"
+        "RULES: Cite every external/quantitative claim inline with a markdown link to "
+        "the source you read. Never fabricate numbers, quotes, or URLs — if you can't "
+        "verify something, omit it. Be specific and concrete; no filler or hedging "
+        "boilerplate. Do NOT narrate your search process. End the note with this exact "
+        "line:\n"
+        f"{DISCLAIMER}"
     )
 
 
@@ -133,7 +135,10 @@ async def generate_research(ticker: str, ticker_data: dict | None) -> dict:
 
     body = {
         "model": _MODEL,
-        "max_tokens": 3800,
+        # Headroom so the full note (8 prose sections + the structured JSON block,
+        # which now comes first) completes without truncation. 3800 cut notes off
+        # mid-prose, dropping the JSON block → empty Business/revenue sections.
+        "max_tokens": 6000,
         "tools": [
             {"type": "web_search_20250305", "name": "web_search", "max_uses": 8}
         ],

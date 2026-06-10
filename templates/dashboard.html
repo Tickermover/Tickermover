@@ -12092,16 +12092,18 @@ function _basicMd(md){
   return h.split(/\n{2,}/).map(p => /^\s*<(h\d|ul|li)/.test(p) ? p : '<p>'+p.replace(/\n/g,'<br>')+'</p>').join('');
 }
 // ── Structured visual sections (Business engines + revenue bars) extracted
-//    from the web-grounded research note's trailing ```json block. Rendered
-//    into the Overview's #ovBiz / #ovRevBars placeholders in our light theme.
+//    from the web-grounded research note's ```json block. The block now leads
+//    the note (so truncation can't drop it), so we splice it out from wherever
+//    it sits and render it into the Overview's #ovBiz / #ovRevBars placeholders.
 function _ovEsc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function _ovExtractStructured(md){
   if (!md) return { md: md||'', data: null };
-  const m = md.match(/```json\s*([\s\S]*?)```\s*$/);
+  const m = md.match(/```json\s*([\s\S]*?)```/);   // anywhere — leading or trailing
   if (!m) return { md: md, data: null };
   let data = null;
   try { data = JSON.parse(m[1].trim()); } catch(e){ data = null; }
-  return { md: md.slice(0, m.index).trim(), data };
+  const cleaned = (md.slice(0, m.index) + md.slice(m.index + m[0].length)).trim();
+  return { md: cleaned, data };
 }
 function _ovRenderBusiness(biz){
   const host = document.getElementById('ovBiz'); if (!host) return;
