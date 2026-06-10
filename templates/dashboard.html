@@ -5998,10 +5998,12 @@ html.v2-dark body.v2 .v2-sidebar .v2-nav-item.active svg,body.v2 .v2-sidebar .v2
 html.v2-dark body.v2 .v2-sidebar .v2-nav-item.active{
   box-shadow:0 10px 22px -8px rgba(0,64,193,.45), inset 0 1px 0 rgba(255,255,255,.32)!important;
 }
-/* Active row is a blue pill — force the (often blue) gradient icon to solid
-   white so it reads on the blue without needing a chip behind it. */
+/* Active row is a blue pill. Forcing the icon white turned detailed icons
+   (e.g. the Universe globe) into solid blobs — so keep the real gradient
+   colours and add a soft dark separation so the icon reads on the blue. */
 html.v2-dark body.v2 .v2-sidebar .v2-nav-item.active svg{
-  filter:brightness(0) invert(1);-webkit-filter:brightness(0) invert(1)}
+  filter:drop-shadow(0 1px 2px rgba(2,12,40,.50));
+  -webkit-filter:drop-shadow(0 1px 2px rgba(2,12,40,.50))}
 html.v2-dark body.v2 .v2-sidebar .v2-nav-item.active:hover{transform:none}
 
 /* Logo — soft brand halo under the mark, refined divider */
