@@ -850,6 +850,41 @@ class DataCoordinator:
             logger.warning(f"FMP {path} error: {e}")
             return None
 
+    async def _fmp_stable(self, endpoint: str, params: dict) -> Optional[Any]:
+        """FMP **stable**-API helper. New FMP accounts (incl. our paid Starter
+        key) MUST use https://financialmodelingprep.com/stable/{endpoint}?symbol=…
+        — the old /v3 + /v4 paths now return "Legacy Endpoint" for non-legacy
+        keys. Returns parsed JSON or None on failure / error payloads."""
+        if not config.FMP_API_KEY or self._fmp_remaining() <= 0:
+            return None
+        await self._fmp_limiter.wait()   # Starter = 300/min
+        try:
+            q = {**params, "apikey": config.FMP_API_KEY}
+            async with httpx.AsyncClient(timeout=12) as c:
+                r = await c.get(
+                    f"https://financialmodelingprep.com/stable/{endpoint}", params=q
+                )
+                r.raise_for_status()
+            data = r.json()
+            # The stable API returns an error OBJECT (dict) instead of a list when
+            # an endpoint is restricted / params are wrong / the key is legacy.
+            if isinstance(data, dict) and any(
+                k in data for k in ("Error Message", "error", "message")
+            ):
+                logger.warning(f"FMP stable {endpoint}: {str(data)[:140]}")
+                self.api_status["fmp"]["ok"] = False
+                return None
+            self._fmp_calls_today += 1
+            self.api_status["fmp"]["calls"]          += 1
+            self.api_status["fmp"]["ok"]              = True
+            self.api_status["fmp"]["remaining_today"] = self._fmp_remaining()
+            return data
+        except Exception as e:
+            self.api_status["fmp"]["errors"] += 1
+            self.api_status["fmp"]["ok"]      = False
+            logger.warning(f"FMP stable {endpoint} error: {e}")
+            return None
+
     async def get_fmp_quote(self, ticker: str) -> dict:
         """
         FMP real-time quote — used as fallback when Finnhub/yfinance returns
@@ -860,7 +895,7 @@ class DataCoordinator:
         if cached is not None:
             return cached
 
-        data = await self._fmp_get(f"/v3/quote/{ticker}", {})
+        data = await self._fmp_stable("quote", {"symbol": ticker})
         if not data or not isinstance(data, list) or not data:
             return {}
 
@@ -869,7 +904,7 @@ class DataCoordinator:
             "ticker":     ticker,
             "price":      _safe_float(q.get("price")),
             "change_abs": _safe_float(q.get("change")),
-            "change_pct": _safe_float(q.get("changesPercentage")),
+            "change_pct": _safe_float(q.get("changePercentage")),
             "high":       _safe_float(q.get("dayHigh")),
             "low":        _safe_float(q.get("dayLow")),
             "open":       _safe_float(q.get("open")),
@@ -897,7 +932,7 @@ class DataCoordinator:
         result: dict = {}
 
         # ── Company profile ────────────────────────────────────────
-        profile_data = await self._fmp_get(f"/v3/profile/{ticker}", {})
+        profile_data = await self._fmp_stable("profile", {"symbol": ticker})
         if profile_data and isinstance(profile_data, list) and profile_data:
             p = profile_data[0]
             result.update({
@@ -905,7 +940,7 @@ class DataCoordinator:
                 "sector":       p.get("sector", ""),
                 "industry":     p.get("industry", ""),
                 "exchange":     p.get("exchange", ""),
-                "market_cap":   _safe_float(p.get("mktCap")),
+                "market_cap":   _safe_float(p.get("marketCap")),
                 "beta":         _safe_float(p.get("beta")),
                 "description":  (p.get("description") or "")[:500],
                 "price":        _safe_float(p.get("price")),
@@ -914,9 +949,9 @@ class DataCoordinator:
             })
 
         # ── Quarterly income statement (revenue + gross margin) ────
-        inc_data = await self._fmp_get(
-            f"/v3/income-statement/{ticker}",
-            {"period": "quarter", "limit": 4}
+        inc_data = await self._fmp_stable(
+            "income-statement",
+            {"symbol": ticker, "period": "quarter", "limit": 4}
         )
         if inc_data and isinstance(inc_data, list):
             q_income = []
@@ -945,12 +980,15 @@ class DataCoordinator:
                     result["gross_margin_trend"] = "expanding" if trend > 0.02 else "contracting" if trend < -0.02 else "stable"
 
         # ── EPS surprise history ───────────────────────────────────
-        surp_data = await self._fmp_get(f"/v3/earnings-surprises/{ticker}", {})
+        surp_data = await self._fmp_stable("earnings", {"symbol": ticker, "limit": 12})
         if surp_data and isinstance(surp_data, list):
+            # stable /earnings includes upcoming quarters (epsActual=null) —
+            # keep only the reported ones, newest first.
+            reported = [r for r in surp_data if r.get("epsActual") is not None][:4]
             eps_quarters = []
-            for row in surp_data[:4]:
-                actual   = _safe_float(row.get("actualEarningResult"))
-                estimate = _safe_float(row.get("estimatedEarning"))
+            for row in reported:
+                actual   = _safe_float(row.get("epsActual"))
+                estimate = _safe_float(row.get("epsEstimated"))
                 surp_pct = None
                 if actual is not None and estimate is not None and estimate != 0:
                     surp_pct = round((actual - estimate) / abs(estimate) * 100, 2)
@@ -973,15 +1011,16 @@ class DataCoordinator:
                     result["eps_last_beat"]   = beats[0]
 
         # ── Key ratios ─────────────────────────────────────────────
-        ratio_data = await self._fmp_get(f"/v3/ratios-ttm/{ticker}", {})
+        ratio_data = await self._fmp_stable("ratios-ttm", {"symbol": ticker})
         if ratio_data and isinstance(ratio_data, list) and ratio_data:
             r = ratio_data[0]
             result.update({
-                "pe_ratio":      _safe_float(r.get("peRatioTTM")),
-                "peg_ratio":     _safe_float(r.get("pegRatioTTM")),
+                # stable renamed the TTM ratio fields (peRatioTTM →
+                # priceToEarningsRatioTTM, pegRatioTTM → priceToEarningsGrowthRatioTTM).
+                "pe_ratio":      _safe_float(r.get("priceToEarningsRatioTTM")),
+                "peg_ratio":     _safe_float(r.get("priceToEarningsGrowthRatioTTM")),
                 "gross_margin":  _safe_float(r.get("grossProfitMarginTTM")),
                 "profit_margin": _safe_float(r.get("netProfitMarginTTM")),
-                "revenue_growth_yoy": _safe_float(r.get("revenueGrowthTTM")),
             })
 
         if result:

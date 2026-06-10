@@ -3128,38 +3128,10 @@ async def api_pdf(symbol: str, debug: int = 0):
         if diag is not None:
             diag["layers"].append({"layer": "yfinance", "points": len(pts)})
 
-        # 4th-layer fallback: FMP historical-price-full when yfinance is
-        # blocked or rate-limited from this IP range.
-        fmp_v3_status = None
-        if not pts and config.FMP_API_KEY:
-            try:
-                async with httpx.AsyncClient(timeout=10) as _c:
-                    fmp_url = (
-                        "https://financialmodelingprep.com/api/v3/historical-price-full/"
-                        f"{sym}?serietype=line&timeseries=90&apikey={config.FMP_API_KEY}"
-                    )
-                    r = await _c.get(fmp_url)
-                    fmp_v3_status = r.status_code
-                    if r.status_code == 200:
-                        data = r.json() or {}
-                        hist = data.get("historical") or []
-                        pts = [
-                            {"date": h.get("date"), "close": round(float(h.get("close")), 2)}
-                            for h in reversed(hist)
-                            if h.get("close") is not None and h.get("date")
-                        ][-90:]
-                        logger.info(f"pdf build {sym}: FMP returned {len(pts)} points (HTTP {r.status_code})")
-                    else:
-                        logger.warning(f"pdf build {sym}: FMP HTTP {r.status_code}: {r.text[:200]}")
-            except Exception as exc:
-                logger.warning(f"pdf build {sym}: FMP fallback failed: {exc}")
-        if diag is not None and (not pts or fmp_v3_status is not None):
-            diag["layers"].append({"layer": "fmp_v3_historical",
-                                    "points": len(pts),
-                                    "http": fmp_v3_status})
-
-        # 5th-layer fallback: FMP stable endpoint (newer URL form, may be
-        # tier-included even when /api/v3/historical-price-full isn't).
+        # FMP fallback when yfinance is blocked/rate-limited. The old
+        # /api/v3/historical-price-full path is now legacy-only (returns
+        # "Legacy Endpoint" for new keys), so we go straight to the stable
+        # endpoint.
         if not pts and config.FMP_API_KEY:
             try:
                 async with httpx.AsyncClient(timeout=10) as _c:
@@ -3267,18 +3239,18 @@ async def api_pdf(symbol: str, debug: int = 0):
     if not own_cached and config.FMP_API_KEY:
         try:
             async with httpx.AsyncClient(timeout=10) as _c:
-                prof_url = f"https://financialmodelingprep.com/api/v3/profile/{sym}?apikey={config.FMP_API_KEY}"
+                prof_url = f"https://financialmodelingprep.com/stable/profile?symbol={sym}&apikey={config.FMP_API_KEY}"
                 r = await _c.get(prof_url)
                 if r.status_code == 200:
                     arr = r.json() or []
                     prof = arr[0] if isinstance(arr, list) and arr else {}
-                    # FMP returns insider/institutional as fractions on some plans,
-                    # absolute pcts on others. Caller normalises in pdf_render.
+                    # stable profile renamed volAvg→averageVolume, lastDiv→lastDividend.
+                    # Ownership %s aren't in profile (stay None — same as before).
                     own_cached = {
                         "insider_pct":        prof.get("insiderOwnership"),
                         "institutional_pct":  prof.get("institutionalOwnership"),
-                        "avg_volume_str":     _fmt_avg_volume(prof.get("volAvg") or prof.get("averageVolume")),
-                        "div_yield":          prof.get("lastDiv"),
+                        "avg_volume_str":     _fmt_avg_volume(prof.get("averageVolume") or prof.get("volAvg")),
+                        "div_yield":          prof.get("lastDividend") or prof.get("lastDiv"),
                     }
                     cache.set(own_ck, own_cached, 24 * 60 * 60)
                     logger.info(f"pdf build {sym}: FMP profile populated ownership fields")
