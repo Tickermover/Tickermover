@@ -5432,10 +5432,17 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 /* Identity (ticker + company name) lives in the sticky drawer header; the
    Overview's summary ribbon-card doesn't repeat it — it shows the verdict +
    live price + the stat strip. */
-#ts-drawer .ov-headrow{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;flex-wrap:wrap}
-#ts-drawer .ov-headline{font-family:var(--font-head);font-weight:600;font-size:clamp(16px,1.9vw,20px);line-height:1.3;letter-spacing:-.01em;color:#0A0A0A;flex:1;min-width:240px;max-width:760px}
+/* Top row: Alpha Score (left) + live price (right); verdict reads full-width below. */
+#ts-drawer .ov-headtop{display:flex;align-items:center;gap:18px;flex-wrap:wrap;margin-bottom:13px}
+#ts-drawer .ov-score{display:flex;align-items:center;gap:11px}
+#ts-drawer .ov-score-n{font-family:'JetBrains Mono',monospace;font-size:34px;font-weight:800;line-height:1;letter-spacing:-.02em}
+#ts-drawer .ov-score-meta{display:flex;flex-direction:column;gap:2px}
+#ts-drawer .ov-score-l{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--grey-3);font-weight:700}
+#ts-drawer .ov-score-g{font-size:11px;font-weight:800;color:#475569}
+#ts-drawer .ov-score-pos .ov-score-n{color:#15803d} #ts-drawer .ov-score-neu .ov-score-n{color:#2970ff} #ts-drawer .ov-score-amb .ov-score-n{color:#d97706} #ts-drawer .ov-score-neg .ov-score-n{color:#dc2626}
+#ts-drawer .ov-headline{font-family:var(--font-head);font-weight:600;font-size:clamp(16px,1.9vw,20px);line-height:1.3;letter-spacing:-.01em;color:#0A0A0A;max-width:780px}
 #ts-drawer .ov-headline b{color:#0040c1;font-weight:600}
-#ts-drawer .ov-pricebox{text-align:right;flex:none}
+#ts-drawer .ov-pricebox{margin-left:auto;text-align:right;flex:none}
 #ts-drawer .ov-price{font-family:'JetBrains Mono',monospace;font-weight:800;font-size:30px;line-height:1;color:#0A0A0A}
 #ts-drawer .ov-chg{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;margin-top:5px}
 #ts-drawer .ov-chg.up{color:var(--up)} #ts-drawer .ov-chg.dn{color:var(--down)}
@@ -18336,11 +18343,20 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
       stat('Rating', rating||'—', na!=null?(Math.round(na)+' analysts'):'', rating?(/Buy/.test(rating)?'pos':/Sell/.test(rating)?'neg':'amb'):'')+
       stat('Beta', beta!=null?beta.toFixed(2):'—', beta!=null?(beta>=1.5?'high vol':beta>=0.8?'market':'low vol'):'', beta!=null&&beta>=1.5?'amb':'')+
     '</div>';
+    // AlphaHunt score — leads the header, colored by strength.
+    const pop=Math.round(parseFloat(full.smart_score!=null?full.smart_score:(full.pop_score!=null?full.pop_score:(t.smart_score!=null?t.smart_score:(t.pop_score||0)))));
+    const g=(full.grade||t.grade||'').toUpperCase();
+    const popCls=pop>=80?'pos':pop>=65?'neu':pop>=50?'amb':'neg';
+    const scoreHtml = pop>0
+      ? '<div class="ov-score ov-score-'+popCls+'"><span class="ov-score-n">'+pop+'</span>'+
+          '<span class="ov-score-meta"><span class="ov-score-l">Alpha Score</span>'+(g?'<span class="ov-score-g">Grade '+escHTML(g)+'</span>':'')+'</span></div>'
+      : '';
     return _sec('Equity Research · '+escHTML(sector||'US Equity'), '📈', 'blue',
-      '<div class="ov-headrow">'+
-        '<div class="ov-headline" id="ovHeadline">'+escHTML(bl||name)+'</div>'+
+      '<div class="ov-headtop">'+
+        scoreHtml+
         '<div class="ov-pricebox"><div class="ov-price">'+fmtP(price)+'</div><div class="ov-chg '+(chg>=0?'up':'dn')+'">'+(chg>=0?'▲ ':'▼ ')+fmtPct(chg)+'</div></div>'+
       '</div>'+
+      '<div class="ov-headline" id="ovHeadline">'+escHTML(bl||name)+'</div>'+
       strip, true);
   }
   function _ovNumbers(full){
