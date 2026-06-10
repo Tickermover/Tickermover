@@ -18036,34 +18036,39 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
   function _healthCard(t){
     const de=_fpNum(t,['debt_to_equity']), cr=_fpNum(t,['current_ratio']), qr=_fpNum(t,['quick_ratio']),
           ocf=_fpNum(t,['operating_cashflow']), fcf=_fpNum(t,['free_cashflow']);
-    const rows=[];
-    if(de!=null) rows.push(['Debt / Equity', de.toFixed(2), de<1?_badge('SAFE','ok'):de<=2?_badge('MODERATE','warn'):_badge('LEVERAGED','bad')]);
-    if(cr!=null) rows.push(['Current ratio', cr.toFixed(2), cr>1.5?_badge('COMFORTABLE','ok'):cr>=1?_badge('WATCH','warn'):_badge('RISK','bad')]);
-    if(qr!=null) rows.push(['Quick ratio', qr.toFixed(2), qr>=1?_badge('COMFORTABLE','ok'):qr>=0.7?_badge('WATCH','warn'):_badge('RISK','bad')]);
-    if(ocf!=null) rows.push(['Operating cash flow', _money(ocf), ocf>0?_badge('POSITIVE','ok'):_badge('NEGATIVE','bad')]);
-    if(fcf!=null) rows.push(['Free cash flow', _money(fcf), fcf>0?_badge('POSITIVE','ok'):_badge('NEGATIVE','bad')]);
+    const rows=[
+      _mrow('Debt / Equity', de, v=>v.toFixed(2), v=> v<1?_badge('SAFE','ok'):v<=2?_badge('MODERATE','warn'):_badge('LEVERAGED','bad')),
+      _mrow('Current ratio', cr, v=>v.toFixed(2), v=> v>1.5?_badge('COMFORTABLE','ok'):v>=1?_badge('WATCH','warn'):_badge('RISK','bad')),
+      _mrow('Quick ratio', qr, v=>v.toFixed(2), v=> v>=1?_badge('COMFORTABLE','ok'):v>=0.7?_badge('WATCH','warn'):_badge('RISK','bad')),
+      _mrow('Operating cash flow', ocf, v=>_money(v), v=> v>0?_badge('POSITIVE','ok'):_badge('NEGATIVE','bad')),
+      _mrow('Free cash flow', fcf, v=>_money(v), v=> v>0?_badge('POSITIVE','ok'):_badge('NEGATIVE','bad')),
+    ];
     return _sigTable('Financial health','🛡️','teal',['Metric','Value','Signal'],rows);
   }
   function _pc(v){ return v==null?null:v*100; }   /* yfinance decimals → % */
   function _returnsCard(t){
     const roe=_pc(_fpNum(t,['roe'])), roa=_pc(_fpNum(t,['roa'])), po=_pc(_fpNum(t,['payout_ratio']));
     const dy=_fpNum(t,['dividend_yield']);   /* yfinance dividendYield is already a percentage */
-    const rows=[];
-    if(roe!=null) rows.push(['ROE', roe.toFixed(1)+'%', roe>15?_badge('GOOD','ok'):roe>=10?_badge('AVERAGE','warn'):_badge('WEAK','bad')]);
-    if(roa!=null) rows.push(['ROA', roa.toFixed(1)+'%', roa>8?_badge('GOOD','ok'):roa>=4?_badge('AVERAGE','warn'):_badge('WEAK','bad')]);
-    if(dy!=null&&dy>0&&dy<=20) rows.push(['Dividend yield', dy.toFixed(2)+'%', dy>=3?_badge('INCOME','ok'):_badge('PAYS','info')]);
-    if(po!=null&&po>0&&po<=100) rows.push(['Payout ratio', po.toFixed(0)+'%', po<80?_badge('SUSTAINABLE','ok'):_badge('HIGH','warn')]);
+    const rows=[
+      _mrow('ROE', roe, v=>v.toFixed(1)+'%', v=> v>15?_badge('GOOD','ok'):v>=10?_badge('AVERAGE','warn'):_badge('WEAK','bad')),
+      _mrow('ROA', roa, v=>v.toFixed(1)+'%', v=> v>8?_badge('GOOD','ok'):v>=4?_badge('AVERAGE','warn'):_badge('WEAK','bad')),
+      _mrow('Dividend yield', (dy!=null&&dy>0&&dy<=20)?dy:null, v=>v.toFixed(2)+'%', v=> v>=3?_badge('INCOME','ok'):_badge('PAYS','info')),
+      _mrow('Payout ratio', (po!=null&&po>0&&po<=100)?po:null, v=>v.toFixed(0)+'%', v=> v<80?_badge('SUSTAINABLE','ok'):_badge('HIGH','warn')),
+    ];
     return _sigTable('Return quality','🏆','amber',['Metric','Value','Signal'],rows);
   }
   function _ownershipCard(t){
     const inst=_pc(_fpNum(t,['held_pct_institutions'])), insd=_pc(_fpNum(t,['held_pct_insiders']));
     const ib=parseInt(t.insider_buys_90d), is=parseInt(t.insider_sells_90d), si=_pc(_fpNum(t,['short_percent_float']));
-    const rows=[];
-    if(inst!=null) rows.push(['Institutional', inst.toFixed(0)+'%', inst>=60?_badge('STRONG','ok'):inst>=30?_badge('MODERATE','warn'):_badge('LIGHT','neu')]);
-    if(insd!=null) rows.push(['Insiders', insd.toFixed(1)+'%', insd>=5?_badge('ALIGNED','ok'):insd>=1?_badge('SOME','neu'):_badge('LOW','neu')]);
-    if(!isNaN(ib)||!isNaN(is)){ const b=ib||0,s=is||0; rows.push(['Insider trades · 90d', b+' buys · '+s+' sells', b>=s?_badge('NET BUY','ok'):(s>b*3?_badge('NET SELL','bad'):_badge('NEUTRAL','neu'))]); }
-    if(si!=null) rows.push(['Short interest', si.toFixed(1)+'%', si<10?_badge('OK','ok'):si<20?_badge('ELEVATED','warn'):_badge('HIGH','bad')]);
-    if(!rows.length) return '';
+    const itRow=(!isNaN(ib)||!isNaN(is))
+      ? (function(){ const b=ib||0,s=is||0; return ['Insider trades · 90d', b+' buys · '+s+' sells', b>=s?_badge('NET BUY','ok'):(s>b*3?_badge('NET SELL','bad'):_badge('NEUTRAL','neu'))]; })()
+      : _mrow('Insider trades · 90d', null);
+    const rows=[
+      _mrow('Institutional', inst, v=>v.toFixed(0)+'%', v=> v>=60?_badge('STRONG','ok'):v>=30?_badge('MODERATE','warn'):_badge('LIGHT','neu')),
+      _mrow('Insiders', insd, v=>v.toFixed(1)+'%', v=> v>=5?_badge('ALIGNED','ok'):v>=1?_badge('SOME','neu'):_badge('LOW','neu')),
+      itRow,
+      _mrow('Short interest', si, v=>v.toFixed(1)+'%', v=> v<10?_badge('OK','ok'):v<20?_badge('ELEVATED','warn'):_badge('HIGH','bad')),
+    ];
     let donut='';
     if(inst!=null){
       const i=Math.max(0,Math.min(100,inst)), ins=Math.max(0,Math.min(100-i,insd||0)), pub=Math.max(0,100-i-ins);
