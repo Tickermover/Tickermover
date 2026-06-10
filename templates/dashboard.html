@@ -16554,6 +16554,14 @@ function maybeRunOnboarding() {
   } catch(e){ return false; }
   let pre = '';
   try { pre = localStorage.getItem('ah_name') || ''; } catch(e){}
+  // Pre-fill the name from the Google profile for OAuth signups (we already
+  // have it) so the welcome step is one tap. Use the EXPLICIT profile name only
+  // — never the email-derived guess.
+  if (!pre && _AUTH && _AUTH.user) {
+    var u = _AUTH.user;
+    var gname = (u.name || u.full_name || (u.user_metadata && (u.user_metadata.name || u.user_metadata.full_name)) || '').trim();
+    if (gname) pre = gname.split(/\s+/)[0];
+  }
   startOnboarding(pre);
   return true;
 }
