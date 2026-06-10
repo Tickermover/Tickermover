@@ -16112,12 +16112,15 @@ async function authInit() {
    When the signup wizard lands with a mandatory name field, the first
    branch starts firing and this helper continues to do the right thing. */
 function _displayNameFromUser(user){
-  if (!user) return '';
-  const explicit = user.name
+  const explicit = (user && (user.name
                  || user.full_name
-                 || (user.user_metadata && (user.user_metadata.name || user.user_metadata.full_name))
-                 || '';
+                 || (user.user_metadata && (user.user_metadata.name || user.user_metadata.full_name)))) || '';
   if (explicit && String(explicit).trim()) return String(explicit).trim();
+  // The onboarding-collected name persists in localStorage even when the
+  // session user object doesn't carry it (ah_user only stores id + email),
+  // so prefer it over the email-derived guess.
+  try { const n = localStorage.getItem('ah_name'); if (n && n.trim()) return n.trim(); } catch(e){}
+  if (!user) return '';
   const email = user.email || '';
   if (!email) return '';
   let local = email.split('@')[0] || '';
