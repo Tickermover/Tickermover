@@ -5202,6 +5202,10 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 #ts-drawer .rep-title{font-family:var(--font-head);font-weight:700;font-size:13.5px;letter-spacing:-.005em;text-shadow:0 1px 1px rgba(0,0,0,.1)}
 #ts-drawer .rep-wm{display:none}
 #ts-drawer .rep-body{padding:14px 15px}
+/* Overview section bodies often wrap content in their own .dr-deep-card; inside a
+   ribbon card that would double-card, so flatten the inner one (the rep card is
+   the surface). The tone-coloured technical-setup card keeps its own styling. */
+#ts-drawer .rep-body > .dr-deep-card:not(.dr-setup){border:0;box-shadow:none;background:transparent;border-radius:0;padding:0;margin:0}
 #ts-drawer .rep-body .kv:first-child{padding-top:0}
 #ts-drawer .rep-blue .rep-rib{background:linear-gradient(105deg,#3f86f7,#1e44c9)}
 #ts-drawer .rep-teal .rep-rib{background:linear-gradient(105deg,#16c2af,#0c8a82)}
@@ -5403,12 +5407,12 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 #ts-drawer .ov-head{padding:4px 2px 18px;border-bottom:1px solid var(--hair);margin-bottom:6px}
 #ts-drawer .ov-eyebrow{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--grey-3)}
 /* Identity (ticker + company name) lives in the sticky drawer header; the
-   editorial header no longer repeats it. It leads with the research eyebrow +
-   live price, then the verdict as the hero headline. */
-#ts-drawer .ov-toprow{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;flex-wrap:wrap;margin-top:2px}
-#ts-drawer .ov-headline{font-family:var(--font-head);font-weight:600;font-size:clamp(23px,3.2vw,33px);line-height:1.2;letter-spacing:-.015em;color:#0A0A0A;margin-top:14px;max-width:900px}
+   Overview's summary ribbon-card doesn't repeat it — it shows the verdict +
+   live price + the stat strip. */
+#ts-drawer .ov-headrow{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;flex-wrap:wrap}
+#ts-drawer .ov-headline{font-family:var(--font-head);font-weight:600;font-size:clamp(19px,2.6vw,26px);line-height:1.26;letter-spacing:-.012em;color:#0A0A0A;flex:1;min-width:240px;max-width:760px}
 #ts-drawer .ov-headline b{color:#0040c1;font-weight:600}
-#ts-drawer .ov-pricebox{text-align:right}
+#ts-drawer .ov-pricebox{text-align:right;flex:none}
 #ts-drawer .ov-price{font-family:'JetBrains Mono',monospace;font-weight:800;font-size:30px;line-height:1;color:#0A0A0A}
 #ts-drawer .ov-chg{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;margin-top:5px}
 #ts-drawer .ov-chg.up{color:var(--up)} #ts-drawer .ov-chg.dn{color:var(--down)}
@@ -18168,10 +18172,27 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     return null;
   }
   // ── Editorial research-note Overview helpers (our theme) ────────────────
+  // Overview sections now render in the SAME colored-ribbon card language as
+  // the other tabs (Technicals/Financials/…) via _sec(). Each section maps to an
+  // icon + accent; unknown titles fall back to a neutral slate card.
   function _ovSecHead(title,body){
     if(arguments.length>1 && !body) return '';   // empty body → drop the whole section
-    const head='<div class="ov-sechead"><span class="ov-secnum">●</span><span class="ov-sectitle">'+escHTML(title)+'</span></div>';
-    return (body!=null) ? ('<div class="ov-sec">'+head+body+'</div>') : head;
+    const M={
+      "what you'd actually be buying":['🏢','blue'],
+      'the six-pillar scorecard':['📊','violet'],
+      'price action':['📈','blue'],
+      'technical setup':['🎯','teal'],
+      'the alphahunt edge':['✦','violet'],
+      'where the price sits':['💰','green'],
+      'catalysts':['🚀','blue'],
+      'risks':['🛡️','red'],
+      'bottom line':['📋','slate'],
+      'what moves it next':['🚀','blue'],
+      'the numbers':['🔢','blue'],
+      'the two-sided case':['⚖️','slate']
+    };
+    const m=M[String(title||'').toLowerCase().trim()]||['•','slate'];
+    return _sec(title,m[0],m[1],body);
   }
   function _ovHeader(t,full,S){
     const price=parseFloat(full.price||0), chg=parseFloat(full.change_pct||0);
@@ -18200,14 +18221,12 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
       stat('Rating', rating||'—', na!=null?(Math.round(na)+' analysts'):'', rating?(/Buy/.test(rating)?'pos':/Sell/.test(rating)?'neg':'amb'):'')+
       stat('Beta', beta!=null?beta.toFixed(2):'—', beta!=null?(beta>=1.5?'high vol':beta>=0.8?'market':'low vol'):'', beta!=null&&beta>=1.5?'amb':'')+
     '</div>';
-    return '<div class="ov-head">'+
-      '<div class="ov-toprow">'+
-        '<div class="ov-eyebrow">Equity Research · '+escHTML(sector||'US Equity')+'</div>'+
+    return _sec('Equity Research · '+escHTML(sector||'US Equity'), '📈', 'blue',
+      '<div class="ov-headrow">'+
+        '<div class="ov-headline">'+escHTML(bl||name)+'</div>'+
         '<div class="ov-pricebox"><div class="ov-price">'+fmtP(price)+'</div><div class="ov-chg '+(chg>=0?'up':'dn')+'">'+(chg>=0?'▲ ':'▼ ')+fmtPct(chg)+'</div></div>'+
       '</div>'+
-      '<div class="ov-headline">'+escHTML(bl||name)+'</div>'+
-      strip+
-    '</div>';
+      strip);
   }
   function _ovNumbers(full){
     const M=v=>v==null?null:(Math.abs(v)<=1?v*100:v);
