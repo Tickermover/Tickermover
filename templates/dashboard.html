@@ -5236,6 +5236,8 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 #ts-drawer .badge.bad{background:rgba(234,56,76,.12);color:#b91c1c;border-color:rgba(234,56,76,.32)}
 #ts-drawer .badge.info{background:rgba(41,112,255,.12);color:#0040c1;border-color:rgba(41,112,255,.32)}
 #ts-drawer .badge.neu{background:rgba(100,116,139,.15);color:#475569;border-color:rgba(100,116,139,.3)}
+#ts-drawer .badge.na{background:rgba(148,163,184,.10);color:#94a3b8;border-color:rgba(148,163,184,.24);font-weight:700}
+#ts-drawer td .na-v{color:#b6c0cd;font-weight:600}
 /* Report tables (Financial health / Valuation vs sector / etc): fit the card so
    the SIGNAL badge never overflows the clipped (overflow:hidden) card. Label
    column wraps; numeric + signal columns stay tight and right-aligned. */
@@ -18019,6 +18021,15 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
   }
   function _badge(txt,cls){ return '<span class="badge '+cls+'">'+txt+'</span>'; }
   function _nb(){ return '<span class="badge neu">—</span>'; }
+  function _na(){ return '<span class="badge na">NA</span>'; }
+  // Always-present metric row. Renders an NA placeholder (value + signal) when
+  // the value is missing, so every stock shows the SAME schema in every tab
+  // regardless of data coverage. fmt/badge are only called for real values.
+  function _mrow(label,val,fmt,badge){
+    const missing=(val==null||val===''||(typeof val==='number'&&isNaN(val)));
+    if(missing) return [label,'<span class="na-v">NA</span>',_na()];
+    return [label, fmt?fmt(val):(''+val), badge?badge(val):_nb()];
+  }
   function _pctf(v){ return v==null?null:(Math.abs(v)<=1?v*100:v); }
   function _valSig(cur,med){ if(cur==null) return null; if(med==null||med<=0) return ['—','neu']; if(cur<med*0.9) return ['CHEAP','ok']; if(cur>med*1.1) return ['EXPENSIVE','bad']; return ['FAIR','neu']; }
   function _sigTable(title,icon,accent,cols,rows){ if(!rows.length)return ''; const b='<table><thead><tr>'+cols.map(c=>'<th>'+c+'</th>').join('')+'</tr></thead><tbody>'+rows.map(r=>'<tr>'+r.map(c=>'<td>'+(c==null?'<span class="muted">—</span>':c)+'</td>').join('')+'</tr>').join('')+'</tbody></table>'; return _sec(title,icon,accent,b); }
@@ -18590,18 +18601,23 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
   function paneTechnicals(t,S){
     const m1=_fpNum(t,['momentum_1m']),m3=_fpNum(t,['momentum_3m']),m6=_fpNum(t,['momentum_6m']);
     const rs=_rsMap[t.ticker]||_fpNum(t,['rs_rating','rs']);
-    const momRows=[];
-    if(rs!=null) momRows.push(['RS rating',Math.round(rs)+'', rs>=80?_badge('LEADER','ok'):rs>=50?_badge('AVERAGE','warn'):_badge('LAGGARD','bad')]);
-    const mrow=(lab,v)=>{ if(v==null)return; momRows.push([lab,(v>=0?'+':'')+v.toFixed(0)+'%', v>=10?_badge('STRONG','ok'):v>=0?_badge('UP','warn'):_badge('DOWN','bad')]); };
-    mrow('1-month',m1); mrow('3-month',m3); mrow('6-month',m6);
+    const _momMv=v=> v>=10?_badge('STRONG','ok'):v>=0?_badge('UP','warn'):_badge('DOWN','bad');
+    const _momPct=v=>(v>=0?'+':'')+v.toFixed(0)+'%';
+    const momRows=[
+      _mrow('RS rating', rs, v=>Math.round(v)+'', v=> v>=80?_badge('LEADER','ok'):v>=50?_badge('AVERAGE','warn'):_badge('LAGGARD','bad')),
+      _mrow('1-month', m1, _momPct, _momMv),
+      _mrow('3-month', m3, _momPct, _momMv),
+      _mrow('6-month', m6, _momPct, _momMv),
+    ];
     const rsi=(S&&S.rsi!=null)?S.rsi:_fpNum(t,['rsi_14']); const atr=_fpNum(t,['atr_14']); const beta=_fpNum(t,['beta']);
     const volR=(S&&S.volR!=null)?S.volR:_fpNum(t,['volume_ratio']); const sp=_fpNum(t,['short_percent_float']); const spP=sp!=null?(sp<=1?sp*100:sp):null;
-    const volRows=[];
-    if(rsi!=null) volRows.push(['RSI (14)',Math.round(rsi)+'', (rsi>=40&&rsi<=65)?_badge('HEALTHY','ok'):rsi>70?_badge('OVERBOUGHT','bad'):rsi<30?_badge('OVERSOLD','warn'):_badge('NEUTRAL','warn')]);
-    if(atr!=null) volRows.push(['ATR (14)','$'+atr.toFixed(2),_nb()]);
-    if(beta!=null) volRows.push(['Beta',beta.toFixed(2), beta>1.5?_badge('HIGH','bad'):beta>=0.8?_badge('MARKET','warn'):_badge('LOW','ok')]);
-    if(volR!=null) volRows.push(['Volume vs avg',volR.toFixed(1)+'×', volR>=1.3?_badge('ACTIVE','ok'):_badge('NORMAL','neu')]);
-    if(spP!=null) volRows.push(['Short % float',spP.toFixed(1)+'%', spP<5?_badge('LOW','ok'):spP<10?_badge('MODERATE','warn'):_badge('HIGH','bad')]);
+    const volRows=[
+      _mrow('RSI (14)', rsi, v=>Math.round(v)+'', v=> (v>=40&&v<=65)?_badge('HEALTHY','ok'):v>70?_badge('OVERBOUGHT','bad'):v<30?_badge('OVERSOLD','warn'):_badge('NEUTRAL','warn')),
+      _mrow('ATR (14)', atr, v=>'$'+v.toFixed(2), ()=>_nb()),
+      _mrow('Beta', beta, v=>v.toFixed(2), v=> v>1.5?_badge('HIGH','bad'):v>=0.8?_badge('MARKET','warn'):_badge('LOW','ok')),
+      _mrow('Volume vs avg', volR, v=>v.toFixed(1)+'×', v=> v>=1.3?_badge('ACTIVE','ok'):_badge('NORMAL','neu')),
+      _mrow('Short % float', spP, v=>v.toFixed(1)+'%', v=> v<5?_badge('LOW','ok'):v<10?_badge('MODERATE','warn'):_badge('HIGH','bad')),
+    ];
     return '<div class="dr-deep-grid">'+
       _sigTable('Momentum & strength','⚡','blue',['Metric','Value','Signal'],momRows)+
       _sigTable('Volatility & risk','🛡️','amber',['Metric','Value','Signal'],volRows)+
@@ -18614,14 +18630,19 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     const rg=_fpNum(t,['revenue_growth_yoy']), rgPct=rg!=null?(Math.abs(rg)<=2?rg*100:rg):null;
     const eg=_fpNum(t,['eps_growth_yoy']), egPct=eg!=null?(Math.abs(eg)<=2?eg*100:eg):null;
     const okM=v=>v!=null&&(gm==null||v<=gm+1);   /* margins can't exceed gross — guards bad feed data */
-    const profRows=[];
-    if(gm!=null) profRows.push(['Gross margin',gm.toFixed(0)+'%', gm>=50?_badge('STRONG','ok'):gm>=30?_badge('SOLID','warn'):_badge('THIN','bad')]);
-    if(okM(om)) profRows.push(['Operating margin',om.toFixed(0)+'%', om>=20?_badge('STRONG','ok'):om>=8?_badge('SOLID','warn'):om>=0?_badge('THIN','bad'):_badge('LOSS','bad')]);
-    if(okM(ebm)) profRows.push(['EBITDA margin',ebm.toFixed(0)+'%', ebm>=25?_badge('STRONG','ok'):ebm>=12?_badge('SOLID','warn'):ebm>=0?_badge('THIN','bad'):_badge('LOSS','bad')]);
-    if(okM(nm)) profRows.push(['Net margin',nm.toFixed(0)+'%', nm>=15?_badge('STRONG','ok'):nm>=5?_badge('SOLID','warn'):nm>=0?_badge('THIN','bad'):_badge('LOSS','bad')]);
-    if(okM(fm)) profRows.push(['FCF margin',fm.toFixed(0)+'%', fm>=10?_badge('STRONG','ok'):fm>=0?_badge('OK','warn'):_badge('BURN','bad')]);
-    if(rgPct!=null) profRows.push(['Revenue YoY',(rgPct>=0?'+':'')+rgPct.toFixed(0)+'%', rgPct>=20?_badge('FAST','ok'):rgPct>=5?_badge('STEADY','warn'):rgPct>=0?_badge('SLOW','bad'):_badge('DECLINE','bad')]);
-    if(egPct!=null) profRows.push(['EPS YoY',(egPct>=0?'+':'')+egPct.toFixed(0)+'%', egPct>=20?_badge('FAST','ok'):egPct>=5?_badge('STEADY','warn'):egPct>=0?_badge('SLOW','bad'):_badge('DECLINE','bad')]);
+    const _mgBadge=(v,hi,mid)=> v>=hi?_badge('STRONG','ok'):v>=mid?_badge('SOLID','warn'):v>=0?_badge('THIN','bad'):_badge('LOSS','bad');
+    const _grBadge=v=> v>=20?_badge('FAST','ok'):v>=5?_badge('STEADY','warn'):v>=0?_badge('SLOW','bad'):_badge('DECLINE','bad');
+    const _pctV=v=>(v>=0?'+':'')+v.toFixed(0)+'%';
+    // okM() nulls margins that exceed gross (bad-feed guard) → shown as NA.
+    const profRows=[
+      _mrow('Gross margin', gm, v=>v.toFixed(0)+'%', v=> v>=50?_badge('STRONG','ok'):v>=30?_badge('SOLID','warn'):_badge('THIN','bad')),
+      _mrow('Operating margin', okM(om)?om:null, v=>v.toFixed(0)+'%', v=>_mgBadge(v,20,8)),
+      _mrow('EBITDA margin', okM(ebm)?ebm:null, v=>v.toFixed(0)+'%', v=>_mgBadge(v,25,12)),
+      _mrow('Net margin', okM(nm)?nm:null, v=>v.toFixed(0)+'%', v=>_mgBadge(v,15,5)),
+      _mrow('FCF margin', okM(fm)?fm:null, v=>v.toFixed(0)+'%', v=> v>=10?_badge('STRONG','ok'):v>=0?_badge('OK','warn'):_badge('BURN','bad')),
+      _mrow('Revenue YoY', rgPct, _pctV, _grBadge),
+      _mrow('EPS YoY', egPct, _pctV, _grBadge),
+    ];
     const byDate=a=>a.slice().sort((x,y)=>String(x.date||x.quarter||'').localeCompare(String(y.date||y.quarter||'')));
     const qi=Array.isArray(t.quarterly_income)?byDate(t.quarterly_income).slice(-4):[];
     const qiRows=qi.map((q,i)=>{ const rev=parseFloat(q.revenue), prev=i>0?parseFloat(qi[i-1].revenue):null; let sig=_nb(); if(prev&&!isNaN(rev)){ const ch=(rev-prev)/prev*100; sig=ch>=0?_badge('▲ '+ch.toFixed(0)+'%','ok'):_badge('▼ '+Math.abs(ch).toFixed(0)+'%','bad'); } return [q.date||q.quarter||'', isNaN(rev)?'—':_money(rev), sig]; });
@@ -18636,11 +18657,13 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
   }
   function paneValuation(t){
     const defs=[['P/E','pe_ratio'],['P/B','pb_ratio'],['P/S','ps_ratio'],['EV/EBITDA','ev_ebitda'],['PEG','peg_ratio']];
+    // Always render every multiple — NA when missing — so the schema is
+    // identical across all stocks (no rows silently dropped).
     const rows=defs.map(([lbl,key])=>{
       let cur=_fpNum(t,[key]); if(cur==null&&key==='pe_ratio')cur=_fpNum(t,['forward_pe']);
       const med=_sectorMed(t,key), sig=_valSig(cur,med);
-      return [lbl, cur!=null?cur.toFixed(1)+'x':null, med!=null?med.toFixed(1)+'x':null, sig?_badge(sig[0],sig[1]):null];
-    }).filter(r=>r[1]!=null);
+      return [lbl, cur!=null?cur.toFixed(1)+'x':'<span class="na-v">NA</span>', med!=null?med.toFixed(1)+'x':null, cur!=null?(sig?_badge(sig[0],sig[1]):null):_na()];
+    });
     // P/FCF — computed (market cap ÷ trailing free cash flow), with a sector
     // median derived the same way. A core valuation multiple we otherwise miss.
     const _mc=_fpNum(t,['market_cap']), _fcf=_fpNum(t,['free_cashflow']);
@@ -18652,6 +18675,8 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
       if(pv.length<3&&sec)pv=calc(x=>(x.sector||'').toLowerCase()===sec);
       const med=pv.length>=3?_med(pv):null, sig=_valSig(pfcf,med);
       rows.push(['P/FCF', pfcf.toFixed(1)+'x', med!=null?med.toFixed(1)+'x':null, sig?_badge(sig[0],sig[1]):null]);
+    } else {
+      rows.push(['P/FCF', '<span class="na-v">NA</span>', null, _na()]);
     }
     const valTable = rows.length? _sec('Valuation vs sector','⚖️','blue',
       '<table><thead><tr><th>Metric</th><th>Current</th><th>Sector median</th><th>Signal</th></tr></thead><tbody>'+
@@ -18765,23 +18790,24 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
   }
   function paneEstimates(t){
     const beat=parseInt(t.eps_beat_streak),avg=_fpNum(t,['avg_eps_surprise_pct']),days=parseInt(t.days_to_earnings),rev=t.eps_revisions_30d;
-    const esRows=[];
-    if(!isNaN(beat)) esRows.push(['Beat streak',beat+' / 4', beat>=4?_badge('PERFECT','ok'):beat>=2?_badge('GOOD','warn'):_badge('MIXED','bad')]);
-    if(avg!=null){ const a=Math.abs(avg)<=1?avg*100:avg; esRows.push(['Avg surprise',(a>=0?'+':'')+a.toFixed(0)+'%', a>=5?_badge('STRONG','ok'):a>=0?_badge('INLINE','warn'):_badge('MISS','bad')]); }
-    if(t.eps_last_beat!=null) esRows.push(['Last quarter',t.eps_last_beat?'Beat':'Miss', t.eps_last_beat?_badge('BEAT','ok'):_badge('MISS','bad')]);
-    if(rev) esRows.push(['Revisions · 30d',rev.ups+'↑ '+rev.downs+'↓', rev.ups>rev.downs?_badge('RISING','ok'):rev.downs>rev.ups?_badge('FALLING','bad'):_badge('FLAT','neu')]);
-    if(!isNaN(days)&&days>=0) esRows.push(['Next earnings','in ~'+days+'d', days<=14?_badge('SOON','warn'):_nb()]);
+    const esRows=[
+      _mrow('Beat streak', isNaN(beat)?null:beat, v=>v+' / 4', v=> v>=4?_badge('PERFECT','ok'):v>=2?_badge('GOOD','warn'):_badge('MIXED','bad')),
+      _mrow('Avg surprise', avg, v=>{const a=Math.abs(v)<=1?v*100:v;return (a>=0?'+':'')+a.toFixed(0)+'%';}, v=>{const a=Math.abs(v)<=1?v*100:v;return a>=5?_badge('STRONG','ok'):a>=0?_badge('INLINE','warn'):_badge('MISS','bad');}),
+      _mrow('Last quarter', t.eps_last_beat==null?null:t.eps_last_beat, v=>v?'Beat':'Miss', v=>v?_badge('BEAT','ok'):_badge('MISS','bad')),
+      _mrow('Revisions · 30d', rev||null, v=>v.ups+'↑ '+v.downs+'↓', v=> v.ups>v.downs?_badge('RISING','ok'):v.downs>v.ups?_badge('FALLING','bad'):_badge('FLAT','neu')),
+      _mrow('Next earnings', (isNaN(days)||days<0)?null:days, v=>'in ~'+v+'d', v=> v<=14?_badge('SOON','warn'):_nb()),
+    ];
     const eq=t.eps_quarters, epsRows=[];
     if(Array.isArray(eq)) eq.slice(-4).forEach(q=>{ const s=q.surprise_pct; epsRows.push([q.date||q.quarter||'', s!=null?((s>=0?'+':'')+(Math.abs(s)<=1?s*100:s).toFixed(0)+'%'):'—', q.beat?_badge('BEAT','ok'):_badge('MISS','bad')]); });
     // ── Analyst targets + forward estimates (from FMP enrichment) ──
     const _tgt=_fpNum(t,['target_mean','street_target']), _px=_fpNum(t,['price']);
-    const _na=parseInt(t.total_analysts);
-    const anRows=[];
-    if(_tgt!=null){ const ups=(_px&&_tgt)?((_tgt-_px)/_px*100):null;
-      anRows.push(['Mean price target',fmtP(_tgt), ups!=null?_badge((ups>=0?'+':'')+ups.toFixed(0)+'% upside',ups>=0?'ok':'bad'):_nb()]); }
-    if(!isNaN(_na)&&_na>0) anRows.push(['Analyst coverage',_na+' analysts',_nb()]);
-    if(t.est_eps_next_fy!=null) anRows.push(['Est. EPS · '+(t.est_year||'next FY'),'$'+Number(t.est_eps_next_fy).toFixed(2),_nb()]);
-    if(t.est_rev_next_fy!=null) anRows.push(['Est. revenue · '+(t.est_year||'next FY'),_money(t.est_rev_next_fy),_nb()]);
+    const _nAn=parseInt(t.total_analysts);
+    const anRows=[
+      _mrow('Mean price target', _tgt, v=>fmtP(v), v=>{const ups=(_px&&v)?((v-_px)/_px*100):null; return ups!=null?_badge((ups>=0?'+':'')+ups.toFixed(0)+'% upside',ups>=0?'ok':'bad'):_nb();}),
+      _mrow('Analyst coverage', (isNaN(_nAn)||_nAn<=0)?null:_nAn, v=>v+' analysts', ()=>_nb()),
+      _mrow('Est. EPS · '+(t.est_year||'next FY'), t.est_eps_next_fy, v=>'$'+Number(v).toFixed(2), ()=>_nb()),
+      _mrow('Est. revenue · '+(t.est_year||'next FY'), t.est_rev_next_fy, v=>_money(v), ()=>_nb()),
+    ];
     // ── Recent rating changes (FMP grades) ──
     const grd=Array.isArray(t.grades)?t.grades:[];
     const grRows=grd.slice(0,6).map(g=>{ const act=(g.action||'').toLowerCase();
@@ -18790,7 +18816,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
       return [escHTML(g.firm||''), escHTML(lbl), sig]; });
     return _forecastCard(t)+
     '<div class="dr-deep-grid">'+
-      (anRows.length?_sigTable('Analyst targets & estimates','🎯','blue',['Metric','Value','Signal'],anRows):'')+
+      _sigTable('Analyst targets & estimates','🎯','blue',['Metric','Value','Signal'],anRows)+
       _sigTable('Earnings summary','🎯','green',['Metric','Value','Signal'],esRows)+
       (grRows.length?_sigTable('Recent rating changes','🏛️','amber',['Firm','Change','Action'],grRows):'')+
       (epsRows.length?_sigTable('EPS surprise history','📊','violet',['Metric','Value','Signal'],epsRows):'')+
