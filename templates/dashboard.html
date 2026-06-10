@@ -18302,7 +18302,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     const M={
       "what you'd actually be buying":['🏢','green',true],
       'the six-pillar scorecard':['📊','violet',true],
-      'price action':['📈','blue',true],
+      'price action':['📈','amber',true],
       'technical setup':['🎯','teal',false],
       'the alphahunt edge':['✦','violet',false],
       'where the price sits':['💰','green',true],
@@ -18536,10 +18536,9 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     // Business + revenue-bars are filled by the web-grounded research note
     // (renderDeepDive → #ovBiz / #ovRevBars); they hide if no data arrives.
     return _ovHeader(t,full,S)
-      + _premktBadge(full)
-      + _ovSecHead("What you'd actually be buying", '<div id="ovBiz"><div class="dd-loading"><span class="dr-spin"></span> Compiling the business overview…</div></div>')
-      + _ovSecHead('The six-pillar scorecard', _heroStats(t,S,full))
       + chart
+      + _ovSecHead('The six-pillar scorecard', _heroStats(t,S,full))
+      + _ovSecHead("What you'd actually be buying", '<div id="ovBiz"><div class="dd-loading"><span class="dr-spin"></span> Compiling the business overview…</div></div>')
       + setup
       + edgeCard
       + _ovNoteBoxes(full);
