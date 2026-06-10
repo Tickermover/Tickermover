@@ -418,9 +418,15 @@ class MarketRegime:
             try:
                 tk = yf.Ticker(sym)
                 hist = tk.history(period="3mo", interval="1d", auto_adjust=True)
-                if hist is None or hist.empty or len(hist) < 22:
+                if hist is None or hist.empty:
                     continue
-                closes = hist["Close"].tolist()
+                # Drop NaN closes BEFORE computing — yfinance often returns a
+                # trailing NaN bar for ETFs (e.g. today's forming/pre-market bar
+                # for SPY/QQQ/DIA), which otherwise made every %-change NaN→null
+                # and hid the index pills while ^VIX/^TNX (index symbols) showed.
+                closes = [c for c in hist["Close"].tolist() if c is not None and c == c]
+                if len(closes) < 22:
+                    continue
                 last   = closes[-1]
                 ref_1  = closes[-2]   if len(closes) >= 2  else last
                 ref_5  = closes[-5]   if len(closes) >= 5  else last
