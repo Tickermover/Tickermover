@@ -12143,6 +12143,28 @@ function _ovRenderRevenue(rev){
   }).join('');
   host.innerHTML = '<div class="dr-deep-card ov-revcard"><div class="ct">Revenue trajectory</div><div class="ov-bars">'+cols+'</div></div>';
 }
+// Overview: fill the Catalysts / Risks / Bottom line boxes from the note's
+// matching sections (the note labels them "What moves it next" / "Bear case" /
+// "Bottom line"). Each whole section hides if the note omits it or hasn't
+// loaded. Pass parts=null to hide all three (unavailable / failed / timed out).
+function _ovRenderNoteBoxes(parts, render){
+  const TARGETS = [
+    { id: 'ovNoteCat',    re: /what moves it next|catalyst/i },
+    { id: 'ovNoteRisk',   re: /bear case|^\s*risk/i },
+    { id: 'ovNoteBottom', re: /bottom\s*line/i },
+  ];
+  TARGETS.forEach(tg => {
+    const host = document.getElementById(tg.id); if (!host) return;
+    const sec = host.closest && host.closest('.ov-sec');
+    const s = (parts && parts.sections) ? parts.sections.find(x => tg.re.test(x.title)) : null;
+    if (s && s.body){
+      host.innerHTML = '<div class="dd-content">' + (render ? render(s.body) : _basicMd(s.body)) + '</div>';
+      if (sec) sec.style.display = '';
+    } else {
+      if (sec) sec.style.display = 'none';
+    }
+  });
+}
 // Split a research note into {lead, sections}. `lead` is the pre-heading bold
 // verdict (search narration is dropped); each ## / ### heading starts a section.
 // A trailing Sources/References section is dropped — we render a deduped one.
@@ -12184,11 +12206,11 @@ async function loadDeepDive(ticker){
       if (d.status === 'ready') { await renderDeepDive(ticker, d); return; }
       if (d.status === 'unavailable') {
         if (body) body.innerHTML = '<div class="dd-loading">'+(d.detail||'Deep Dive isn’t enabled.')+'</div>';
-        _ovRenderBusiness(null); _ovRenderRevenue(null); return;
+        _ovRenderBusiness(null); _ovRenderRevenue(null); _ovRenderNoteBoxes(null); return;
       }
       if (tries < 30) setTimeout(poll, 3000);
-      else { if (body) body.innerHTML = '<div class="dd-loading">Still working — reopen in a moment to see the brief.</div>'; _ovRenderBusiness(null); _ovRenderRevenue(null); }
-    } catch(e){ if (body) body.innerHTML = '<div class="dd-loading">Couldn’t load the brief. Try again.</div>'; _ovRenderBusiness(null); _ovRenderRevenue(null); }
+      else { if (body) body.innerHTML = '<div class="dd-loading">Still working — reopen in a moment to see the brief.</div>'; _ovRenderBusiness(null); _ovRenderRevenue(null); _ovRenderNoteBoxes(null); }
+    } catch(e){ if (body) body.innerHTML = '<div class="dd-loading">Couldn’t load the brief. Try again.</div>'; _ovRenderBusiness(null); _ovRenderRevenue(null); _ovRenderNoteBoxes(null); }
   };
   poll();
 }
@@ -12199,14 +12221,18 @@ async function renderDeepDive(ticker, d){
   const ex = _ovExtractStructured(d.markdown || '');
   if (ex.data){ _ovRenderBusiness(ex.data.business); _ovRenderRevenue(ex.data.revenue); }
   else { _ovRenderBusiness(null); _ovRenderRevenue(null); }
-  if (!body) return;
   const marked = await _ensureMarked();
   const render = (md) => { try { return (marked && marked.parse) ? marked.parse(md||'') : _basicMd(md||''); } catch(e){ return _basicMd(md||''); } };
-  // Box each ## / ### section of the note as its own card (Catalysts, Risks,
-  // Bottom line…). Strips the model's interstitial web-search narration (the
-  // leading non-bold "I'll search…/Let me compile…" prose) and the note's own
-  // Sources section, since we append a deduped Sources list below.
+  // Split the note into sections, stripping the model's interstitial web-search
+  // narration (leading non-bold "I'll search…/Let me compile…" prose) and the
+  // note's own Sources section (a deduped one is appended for the full note).
   const parts = _ddSplitSections(ex.md || '');
+  // Overview: fill the Catalysts / Risks / Bottom line boxes (hide if absent).
+  // Runs regardless of `body` so the boxes populate even on surfaces (e.g. the
+  // drawer Overview) that don't render the full note container.
+  _ovRenderNoteBoxes(parts, render);
+  if (!body) return;
+  // Full note (stock-sheet Deep-Dive tab): every section as its own .dd-card.
   let html;
   if (parts.sections.length){
     html = (parts.lead ? '<div class="dd-verdict">'+render(parts.lead)+'</div>' : '') +
@@ -18225,6 +18251,16 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     const note=(tm!=null)?('Analyst mean target '+fmtP(tm)+(up!=null?' ('+(up>=0?'+':'')+up.toFixed(0)+'% vs price)':'')+' against the 52-week trading band.'):'Range shown is the 52-week trading band.';
     return _ovSecHead('Where the price sits','<div class="dr-deep-card"><div class="ov-track">'+marks+'</div><div class="muted small">'+note+'</div></div>');
   }
+  function _ovNoteBoxes(full){
+    const tk=(full.ticker||'').toUpperCase(); if(!tk) return '';
+    // Catalysts / Risks / Bottom line, sourced from the web-grounded note. Each
+    // host is filled async by renderDeepDive → _ovRenderNoteBoxes, and its whole
+    // section hides if the note omits that part (or hasn't loaded / failed).
+    const box=(id)=>'<div class="dr-deep-card" id="'+id+'"><div class="dd-loading"><span class="dr-spin"></span> Reading the web…</div></div>';
+    return _ovSecHead('Catalysts',   box('ovNoteCat'))
+         + _ovSecHead('Risks',       box('ovNoteRisk'))
+         + _ovSecHead('Bottom line', box('ovNoteBottom'));
+  }
   function _ovCatalysts(full){
     const items=[]; const days=parseInt(full.days_to_earnings); const rev=full.eps_revisions_30d;
     const kt=(typeof keyTrigger==='function')?keyTrigger(full):null;
@@ -18350,18 +18386,16 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
       + _ovSecHead("What you'd actually be buying", '<div id="ovBiz"><div class="dd-loading"><span class="dr-spin"></span> Compiling the business overview…</div></div>')
       + _ovSecHead('The six-pillar scorecard', _heroStats(t,S,full))
       + chart
-      + _ovNumbers(full)
       + setup
       + edgeCard
-      + _ovSecHead('AI Thesis', _bullBear(full))
       + _ovValuation(full,price,S)
-      + _ovCatalysts(full);
-      // The web-grounded note is NOT re-rendered here: its sections (What you're
-      // buying / The numbers / Bull case / Bear case / Where the price sits /
-      // What moves it next / Bottom line) duplicate the native Overview sections
-      // above one-for-one. The pipeline still runs (loadDeepDive, below) to feed
-      // the structured Business engines + revenue bars into #ovBiz / #ovRevBars;
-      // the full prose note lives in the stock-sheet's Deep-Dive tab.
+      + _ovNoteBoxes(full);
+      // Catalysts / Risks / Bottom line are pulled from the web-grounded note
+      // (_ovNoteBoxes, filled async by renderDeepDive). The native 'The numbers'
+      // and 'AI Thesis' sections are intentionally dropped, and the native
+      // 'What moves it next' catalysts are dropped in favour of the note's
+      // richer Catalysts box (avoids two catalyst sections). Business engines +
+      // revenue bars still feed #ovBiz / #ovRevBars from the same pipeline.
   }
   function paneTechnicals(t,S){
     const m1=_fpNum(t,['momentum_1m']),m3=_fpNum(t,['momentum_3m']),m6=_fpNum(t,['momentum_6m']);
