@@ -1587,13 +1587,19 @@ class DataCoordinator:
                 logger.warning(f"yfinance enrichment error for {ticker}: {exc}")
                 return {}
 
-        try:
-            result = await asyncio.to_thread(_fetch)
-            if result:
-                self.cache.set(key, result, config.CACHE_TECH_TTL)
-                return result
-        except Exception as exc:
-            logger.warning(f"yfinance thread error for {ticker}: {exc}")
+        # Yahoo throttles intermittently (empty result on an otherwise-valid
+        # ticker). Retry a couple of times with a short backoff before giving
+        # up to FMP — most "empty" cards are transient, not genuinely uncovered.
+        for attempt in range(3):
+            try:
+                result = await asyncio.to_thread(_fetch)
+                if result:
+                    self.cache.set(key, result, config.CACHE_TECH_TTL)
+                    return result
+            except Exception as exc:
+                logger.warning(f"yfinance thread error for {ticker} (attempt {attempt+1}/3): {exc}")
+            if attempt < 2:
+                await asyncio.sleep(0.6 * (attempt + 1))   # 0.6s, then 1.2s
 
         # ── FMP fallback: if yfinance totally failed and FMP is enabled ──
         if config.FMP_API_KEY:
