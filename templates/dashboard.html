@@ -16520,10 +16520,13 @@ function closeOnboarding() {
 function maybeRunOnboarding() {
   try {
     if (!_AUTH || !_AUTH.token) return false;
-    var justReg = localStorage.getItem('ah_just_registered') === '1';
-    if (justReg) localStorage.removeItem('ah_just_registered');   // consume once
+    // Consume the just-registered hint but DON'T require it — the email-
+    // confirmation flow lands a brand-new user via /auth/callback without it.
+    try { localStorage.removeItem('ah_just_registered'); } catch(e){}
+    // Onboard anyone not yet onboarded. syncUserPrefs() keeps this flag per-USER
+    // (it clears it for accounts the backend reports as NOT onboarded), so a
+    // fresh account in a previously-used browser still gets the welcome.
     if (localStorage.getItem('ah_onboarding_completed') === '1') return false;
-    if (!justReg) return false;
   } catch(e){ return false; }
   let pre = '';
   try { pre = localStorage.getItem('ah_name') || ''; } catch(e){}
@@ -16563,7 +16566,11 @@ async function syncUserPrefs() {
       try { document.body.setAttribute('data-active-profile', d.risk_profile); } catch(e){}
       try { if (typeof v2SyncProfileButton === 'function') v2SyncProfileButton(); } catch(e){}
     }
+    // Onboarding state is per-USER (Supabase), mirrored to localStorage. Clear
+    // the stale per-browser flag when THIS user hasn't onboarded, so switching
+    // accounts in the same browser still triggers the welcome + risk profile.
     if (d.onboarded) localStorage.setItem('ah_onboarding_completed', '1');
+    else { try { localStorage.removeItem('ah_onboarding_completed'); } catch(e){} }
   } catch(e){}
 }
 
