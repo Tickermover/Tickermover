@@ -3647,6 +3647,22 @@ async def api_concall(ticker: str, q: str = ""):
     return JSONResponse(_clean(res), headers={"Cache-Control": "public, max-age=3600"})
 
 
+@app.get("/api/stock-extra/{ticker}")
+async def api_stock_extra(ticker: str):
+    """On-demand FMP-enriched data for the stock drawer's Financials / Valuation
+    / Estimates / Benchmark / Documents tabs: full valuation multiples, returns,
+    free cash flow, analyst estimates + price targets, recent rating changes,
+    peers and SEC filings. Cached server-side (24h). Returns {} fields on any
+    failure so the drawer degrades gracefully."""
+    sym = ticker.upper()
+    try:
+        data = await coordinator.get_fmp_enrichment(sym)
+        return JSONResponse({"ticker": sym, **(data or {})})
+    except Exception as exc:
+        logger.warning(f"stock-extra {sym}: {exc}")
+        return JSONResponse({"ticker": sym})
+
+
 @app.get("/api/thesis/{symbol}")
 async def api_thesis(symbol: str):
     """

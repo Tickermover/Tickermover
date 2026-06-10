@@ -1027,6 +1027,124 @@ class DataCoordinator:
             self.cache.set(key, result, config.CACHE_TECH_TTL)
         return result
 
+    async def get_fmp_enrichment(self, ticker: str) -> dict:
+        """On-demand FMP **stable** enrichment for the stock-detail drawer tabs.
+        Fills valuation/financial fields yfinance often misses AND adds analyst
+        estimates, rating-grade changes, peers and recent SEC filings. ~8 FMP
+        calls, only paid when a user actually opens a stock; cached 24h.
+        Returns a flat dict of pane-ready fields + structured blocks."""
+        key    = f"fmp_extra:{ticker}"
+        cached = self.cache.get(key)
+        if cached is not None:
+            return cached
+
+        out: dict = {}
+        _today = date.today()
+
+        # ── Valuation / profitability ratios (TTM) ──────────────────
+        rt = await self._fmp_stable("ratios-ttm", {"symbol": ticker})
+        if isinstance(rt, list) and rt:
+            r = rt[0]
+            out.update({
+                "pb_ratio":         _safe_float(r.get("priceToBookRatioTTM")),
+                "ps_ratio":         _safe_float(r.get("priceToSalesRatioTTM")),
+                "peg_ratio":        _safe_float(r.get("priceToEarningsGrowthRatioTTM")),
+                "operating_margin": _safe_float(r.get("operatingProfitMarginTTM")),
+                "ebitda_margin":    _safe_float(r.get("ebitdaMarginTTM")),
+                "gross_margin":     _safe_float(r.get("grossProfitMarginTTM")),
+                "profit_margin":    _safe_float(r.get("netProfitMarginTTM")),
+                "debt_to_equity":   _safe_float(r.get("debtToEquityRatioTTM")),
+                "current_ratio":    _safe_float(r.get("currentRatioTTM")),
+                "dividend_yield":   _safe_float(r.get("dividendYieldTTM")),
+            })
+
+        # ── Enterprise-value multiples + returns (TTM) ──────────────
+        km = await self._fmp_stable("key-metrics-ttm", {"symbol": ticker})
+        if isinstance(km, list) and km:
+            m = km[0]
+            out.update({
+                "ev_ebitda":        _safe_float(m.get("evToEBITDATTM")),
+                "ev_sales":         _safe_float(m.get("evToSalesTTM")),
+                "roe":              _safe_float(m.get("returnOnEquityTTM")),
+                "roa":              _safe_float(m.get("returnOnAssetsTTM")),
+                "roic":             _safe_float(m.get("returnOnInvestedCapitalTTM")),
+                "fcf_yield":        _safe_float(m.get("freeCashFlowYieldTTM")),
+                "enterprise_value": _safe_float(m.get("enterpriseValueTTM")),
+            })
+
+        # ── Free cash flow (latest annual) ──────────────────────────
+        cf = await self._fmp_stable("cash-flow-statement", {"symbol": ticker, "limit": 1})
+        if isinstance(cf, list) and cf:
+            c = cf[0]
+            out["free_cashflow"]      = _safe_float(c.get("freeCashFlow"))
+            out["operating_cashflow"] = _safe_float(c.get("operatingCashFlow"))
+
+        # ── Analyst price-target summary ────────────────────────────
+        pt = await self._fmp_stable("price-target-summary", {"symbol": ticker})
+        if isinstance(pt, list) and pt:
+            p = pt[0]
+            tgt = _safe_float(p.get("lastQuarterAvgPriceTarget")) or \
+                  _safe_float(p.get("allTimeAvgPriceTarget"))
+            if tgt:
+                out["target_mean"]    = tgt
+                out["total_analysts"] = p.get("lastQuarterCount") or p.get("allTimeCount")
+
+        # ── Forward analyst estimates (next FY) ─────────────────────
+        ae = await self._fmp_stable("analyst-estimates",
+                                    {"symbol": ticker, "period": "annual", "limit": 8})
+        if isinstance(ae, list) and ae:
+            # estimates aren't nearest-first — pick the nearest upcoming fiscal
+            # year (smallest date whose year >= this year), not the furthest.
+            future = sorted(
+                [e for e in ae if (e.get("date") or "")[:4].isdigit()
+                 and int((e["date"])[:4]) >= _today.year],
+                key=lambda e: e.get("date", ""),
+            )
+            fwd = future[0] if future else ae[0]
+            out["est_eps_next_fy"]  = _safe_float(fwd.get("epsAvg"))
+            out["est_rev_next_fy"]  = _safe_float(fwd.get("revenueAvg"))
+            out["est_num_analysts"] = fwd.get("numAnalystsEps")
+            out["est_year"]         = (fwd.get("date") or "")[:4]
+
+        # ── Recent rating changes (upgrades / downgrades) ───────────
+        gr = await self._fmp_stable("grades", {"symbol": ticker, "limit": 6})
+        if isinstance(gr, list) and gr:
+            out["grades"] = [{
+                "firm":   g.get("gradingCompany"),
+                "from":   g.get("previousGrade"),
+                "to":     g.get("newGrade"),
+                "action": g.get("action"),
+                "date":   g.get("date"),
+            } for g in gr[:6] if g.get("gradingCompany")]
+
+        # ── Peers (Benchmark tab) ───────────────────────────────────
+        pr = await self._fmp_stable("stock-peers", {"symbol": ticker})
+        if isinstance(pr, list) and pr:
+            out["peers"] = [{
+                "ticker":     x.get("symbol"),
+                "name":       x.get("companyName"),
+                "price":      _safe_float(x.get("price")),
+                "market_cap": _safe_float(x.get("mktCap")),
+            } for x in pr[:8] if x.get("symbol")]
+
+        # ── Recent SEC filings (Documents tab) ──────────────────────
+        sf = await self._fmp_stable("sec-filings-search/symbol", {
+            "symbol": ticker,
+            "from":   (_today - timedelta(days=365)).isoformat(),
+            "to":     _today.isoformat(),
+            "limit":  10,
+        })
+        if isinstance(sf, list) and sf:
+            out["filings"] = [{
+                "form": f.get("formType"),
+                "date": (f.get("filingDate") or "")[:10],
+                "link": f.get("link"),
+            } for f in sf[:10] if f.get("formType")]
+
+        if out:
+            self.cache.set(key, out, config.CACHE_FUND_TTL)
+        return out
+
     # ── APEWISDOM ─────────────────────────────────────────────────────
 
     async def get_social_all(self) -> dict[str, dict]:
