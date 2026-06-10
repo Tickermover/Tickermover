@@ -5000,7 +5000,7 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 #panel-hot .dm-btn:hover{background:rgba(41,112,255,.16)}
 #panel-hot .dm-empty,
 #panel-hot .dm-warm{padding:30px 20px;background:#fff;text-align:center;color:var(--grey)}
-#panel-hot .dm-warm .emoji{font-size:26px;margin-bottom:8px}
+#panel-hot .dm-warm .emoji,#panel-hot .dm-empty .emoji{font-size:26px;margin-bottom:8px}
 #panel-hot .lg{position:relative;width:30px;height:30px;border-radius:8px;flex:none;overflow:hidden;display:grid;place-items:center;color:#fff;font-weight:700;font-size:11px;font-family:var(--font-body)}
 #panel-hot .lg.sm{width:24px;height:24px;border-radius:6px;font-size:10px}
 #panel-hot .lg.lg{width:42px;height:42px;border-radius:11px;font-size:15px}
@@ -17755,11 +17755,17 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     return hot;
   }
   function renderPicks(tickers, data){
-    const hot=selectHot(tickers, PICKS_SHOWN);
+    const sel=selectHot(tickers, PICKS_SHOWN);
     const table=document.getElementById('picksTable'); if(!table) return;
     const headRow='<div class="dm-row dm-head-row"><span>Ticker</span><span>Alpha</span><span>Why it\'s here</span><span class="up-col">Upside</span><span class="today-col">Today</span><span class="act-col">Action</span></div>';
-    const pc=document.getElementById('picksCount'); if(pc) pc.textContent=hot.length+' picks';
-    if(!hot.length){ table.innerHTML=headRow+'<div class="dm-warm"><div class="emoji">⏳</div><div style="font-weight:700">Warming up — fetching prices for the universe…</div></div>'; return; }
+    const pc=document.getElementById('picksCount');
+    // Universe still loading → warming-up state.
+    if(!sel.length){ if(pc) pc.textContent='— picks'; table.innerHTML=headRow+'<div class="dm-warm"><div class="emoji">⏳</div><div style="font-weight:700">Warming up — fetching prices for the universe…</div></div>'; return; }
+    // Only surface genuinely high-conviction names — Alpha above 74.
+    const ALPHA_MIN=74;
+    const hot=sel.filter(t=>Math.round(parseFloat(t.smart_score!=null?t.smart_score:(t.pop_score||0)))>ALPHA_MIN);
+    if(pc) pc.textContent=hot.length+' pick'+(hot.length===1?'':'s');
+    if(!hot.length){ table.innerHTML=headRow+'<div class="dm-empty"><div class="emoji">🛡️</div><div style="font-weight:700">No high-conviction opportunities right now</div><div style="font-size:12.5px;margin-top:6px;max-width:440px;margin-left:auto;margin-right:auto;line-height:1.5">Nothing in the universe currently clears our Alpha&nbsp;74 bar. Cash is a position too — check back as scores refresh.</div></div>'; return; }
     const rows=hot.map((t,i)=>{
       const pop=Math.round(parseFloat(t.smart_score!=null?t.smart_score:(t.pop_score||0)));
       const chg=parseFloat(t.change_pct||0), chg3m=parseFloat(t.momentum_3m||t.momentum_1m||0);
