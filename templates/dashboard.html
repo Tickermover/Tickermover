@@ -578,6 +578,13 @@ tr:hover td{background:rgba(245,166,35,.06)}
 .dd-locked b{color:#0A0A0A}
 .dd-upsell{display:inline-block;margin-top:10px;border:0;border-radius:10px;cursor:pointer;font-family:inherit;font-weight:800;font-size:12.5px;color:#fff;padding:9px 16px;background:linear-gradient(135deg,#7c3aed,#4f46e5);box-shadow:0 6px 14px -6px rgba(79,70,229,.5)}
 .dd-upsell:hover{filter:brightness(1.06)}
+/* Pro lock teaser — real-looking dummy content, blurred behind an Upgrade overlay. */
+.pro-locked{position:relative}
+.pro-locked .pro-blur{filter:blur(5px);opacity:.92;pointer-events:none;user-select:none}
+.pro-locked .pro-overlay{position:absolute;inset:-2px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;text-align:center;background:linear-gradient(180deg,rgba(255,255,255,.30),rgba(255,255,255,.55));border-radius:10px}
+.pro-overlay .pro-lk{font-family:var(--font-head);font-size:14px;font-weight:700;color:#0A0A0A}
+.pro-overlay .pro-sub{font-size:11.5px;font-weight:800;letter-spacing:.02em;color:#6d28d9}
+.pro-overlay .dd-upsell{margin-top:0}
 .dd-content{font-size:12.5px;line-height:1.6;color:#334155;margin-top:8px;display:flex;flex-direction:column;gap:11px}
 /* Each note section renders as its own card box (Catalysts / Risks / Bottom line…). */
 .dd-card{background:#fff;border:1px solid var(--hair);border-radius:14px;padding:13px 16px 14px;box-shadow:0 1px 2px rgba(0,0,0,.05)}
@@ -12233,6 +12240,43 @@ function _ovRenderNoteBoxes(parts, render){
     }
   });
 }
+// Pro lock teasers: render realistic dummy content into the AI sections, blurred
+// behind an Upgrade overlay, so free users see the value without the real data.
+function _ovLockTeaser(id, inner, big){
+  const host = document.getElementById(id); if (!host) return;
+  const sec = host.closest && host.closest('.rep-sec');
+  const overlay = '<div class="pro-overlay"><div class="pro-lk">🔒 Pro feature</div>'+
+    (big ? '<button class="dd-upsell" onclick="if(window.openUpgradeModal)openUpgradeModal()">Upgrade to Pro</button>'
+         : '<div class="pro-sub">Unlock with Pro</div>')+'</div>';
+  host.innerHTML = '<div class="pro-locked"><div class="pro-blur" aria-hidden="true">'+inner+'</div>'+overlay+'</div>';
+  if (sec) sec.style.display = '';
+}
+function _ovLockTeasers(){
+  const biz =
+    '<div class="ov-biz-intro">The company runs two reinforcing growth engines with expanding margins and a clear path to scale across its largest end-markets over the next several years.</div>'+
+    '<div class="ov-biz-split">'+
+      '<div class="ov-biz-card eng-1"><div class="ov-biz-tag">The core story · ramping fast</div><div class="ov-biz-name"><span class="dot"></span>Primary revenue engine</div><div class="ov-biz-body">Grew roughly 60% year-over-year to about $1.2B, now ~70% of revenue, with gross margins expanding past 55% as utilization improves.</div></div>'+
+      '<div class="ov-biz-card eng-2"><div class="ov-biz-tag">The second act</div><div class="ov-biz-name"><span class="dot"></span>Emerging segment</div><div class="ov-biz-body">A newer line already signing multi-year contracts and on track to roughly double next year off a small base, broadening the moat.</div></div>'+
+    '</div>';
+  const cat =
+    '<div class="dd-content"><ul>'+
+      '<li><b>Next quarter:</b> Q2 print against a guide the Street already calls conservative — a beat would reset the multiple.</li>'+
+      '<li><b>H2 2026:</b> Capacity expansion comes online, unlocking a materially larger addressable market.</li>'+
+      '<li><b>Ongoing:</b> New flagship product cycle and a fresh hyperscaler relationship that could add a second growth leg.</li>'+
+    '</ul></div>';
+  const risk =
+    '<div class="dd-content"><ul>'+
+      '<li><b>Valuation prices in perfection</b> — at a rich forward multiple, any execution slip de-rates the stock fast.</li>'+
+      '<li><b>Customer concentration</b> — a handful of customers drive a large share of revenue.</li>'+
+      '<li><b>Competition &amp; supply</b> — well-capitalized rivals and supply constraints could compress margins.</li>'+
+    '</ul></div>';
+  const bottom =
+    '<div class="dd-content"><p>A genuine grower with real momentum, but the price already discounts a lot of that future. Before buying, ask honestly: are you confident the next two years of execution will clear an already-high bar — or are you paying tomorrow’s price for today’s results?</p></div>';
+  _ovLockTeaser('ovBiz', biz, true);
+  _ovLockTeaser('ovNoteCat', cat, false);
+  _ovLockTeaser('ovNoteRisk', risk, false);
+  _ovLockTeaser('ovNoteBottom', bottom, false);
+}
 // Split a research note into {lead, sections}. `lead` is the pre-heading bold
 // verdict (search narration is dropped); each ## / ### heading starts a section.
 // A trailing Sources/References section is dropped — we render a deduped one.
@@ -12273,15 +12317,12 @@ async function loadDeepDive(ticker){
       const d = await r.json();
       if (d.status === 'ready') { await renderDeepDive(ticker, d); return; }
       if (d.status === 'locked') {
-        // Pro feature: show an upgrade CTA in the business-overview slot and
-        // hide the other AI sections (no polling, no generation).
-        _ovRenderRevenue(null); _ovRenderNoteBoxes(null);
-        const biz = document.getElementById('ovBiz');
-        const cta = '<div class="dd-locked">🔒 <b>AI Deep-Dive is a Pro feature.</b> '+
-          'Web-grounded research, business engines, catalysts &amp; risks. '+
-          '<button class="dd-upsell" onclick="if(window.openUpgradeModal)openUpgradeModal()">Upgrade to Pro</button></div>';
-        if (biz){ const sec = biz.closest && biz.closest('.rep-sec'); biz.innerHTML = cta; if (sec) sec.style.display = ''; }
-        else if (body){ body.innerHTML = cta; }
+        // Pro feature: render the sections as blurred dummy "teasers" behind an
+        // Upgrade overlay (no polling, no generation) — show the value, gate it.
+        _ovRenderRevenue(null);
+        _ovLockTeasers();
+        if (body){ body.innerHTML = '<div class="dd-locked">🔒 <b>AI Deep-Dive is a Pro feature.</b> '+
+          '<button class="dd-upsell" onclick="if(window.openUpgradeModal)openUpgradeModal()">Upgrade to Pro</button></div>'; }
         return;
       }
       if (d.status === 'unavailable') {
