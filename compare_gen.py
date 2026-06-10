@@ -117,7 +117,7 @@ async def generate_compare_card(ticker: str, ticker_data: dict | None) -> dict:
         "model": _MODEL,
         "max_tokens": 1200,
         "tools": [
-            {"type": "web_search_20250305", "name": "web_search", "max_uses": 5}
+            {"type": "web_search_20250305", "name": "web_search", "max_uses": 3}
         ],
         "messages": [{"role": "user", "content": _prompt(ticker, t)}],
     }

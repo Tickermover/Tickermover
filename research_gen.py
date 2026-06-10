@@ -144,7 +144,10 @@ async def generate_research(ticker: str, ticker_data: dict | None) -> dict:
         # mid-prose, dropping the JSON block → empty Business/revenue sections.
         "max_tokens": 6000,
         "tools": [
-            {"type": "web_search_20250305", "name": "web_search", "max_uses": 8}
+            # Each web search costs ~$0.01 regardless of model — cap tighter to
+            # keep the per-note cost down (was 8). 4 searches still cover
+            # earnings + guidance + targets + a risk/catalyst sweep.
+            {"type": "web_search_20250305", "name": "web_search", "max_uses": 4}
         ],
         "messages": [{"role": "user", "content": _prompt(ticker, t)}],
     }
