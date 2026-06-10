@@ -160,8 +160,11 @@ async def generate_research(ticker: str, ticker_data: dict | None) -> dict:
             json=body,
         )
         if r.status_code >= 400:
-            logger.error(f"research_gen {ticker} → {r.status_code}: {r.text[:300]}")
-        r.raise_for_status()
+            detail = r.text[:600]
+            logger.error(f"research_gen {ticker} → {r.status_code} (model={_MODEL}): {detail}")
+            # Raise with the API body so the failure reason propagates to the
+            # caller (and out through /api/research) instead of a generic 4xx.
+            raise RuntimeError(f"Anthropic {r.status_code} (model={_MODEL}): {detail}")
         data = r.json()
 
     # Assemble the note from the assistant text blocks. The model emits

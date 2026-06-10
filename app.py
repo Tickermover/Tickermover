@@ -3631,6 +3631,9 @@ async def api_thesis(symbol: str):
 
 # ── AI Deep-Dive research (cached; web-grounded via Anthropic) ─────────────
 _research_generating: set = set()
+# Last generation error per ticker, surfaced via /api/research so a silent
+# Anthropic-API failure is diagnosable without server logs.
+_research_errors: dict = {}
 
 
 async def _run_research_job(sym: str, target: dict | None):
@@ -3639,7 +3642,9 @@ async def _run_research_job(sym: str, target: dict | None):
     try:
         out = await research_gen.generate_research(sym, target)
         _rstore.save(sym, out)
+        _research_errors.pop(sym, None)
     except Exception as exc:
+        _research_errors[sym] = str(exc)[:600]
         logger.error(f"Deep-Dive research generation failed for {sym}: {exc}")
     finally:
         _research_generating.discard(sym)
@@ -3688,10 +3693,13 @@ async def api_research(ticker: str, force: bool = False):
         except RuntimeError:
             _research_generating.discard(sym)
 
-    # Serve a stale brief immediately while the fresh one regenerates.
+    # Serve a stale brief immediately while the fresh one regenerates. Surface
+    # the last generation error (if any) so a silently-failing Anthropic call is
+    # visible in the API response.
+    last_err = _research_errors.get(sym)
     if doc:
-        return JSONResponse(_payload(doc, regenerating=True))
-    return JSONResponse({"ticker": sym, "status": "generating"})
+        return JSONResponse(_payload(doc, regenerating=True, last_error=last_err))
+    return JSONResponse({"ticker": sym, "status": "generating", "last_error": last_err})
 
 
 # ── AI head-to-head comparison cards (cached; web-grounded) ────────────────
