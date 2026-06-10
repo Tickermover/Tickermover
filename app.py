@@ -6487,10 +6487,10 @@ async def auth_callback():
 <html><head><meta charset="utf-8"><title>Signing you in…</title>
 <style>
   body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,sans-serif;
-       background:#050505;color:#e2e8f0;
+       background:radial-gradient(120% 120% at 50% -10%,rgba(41,112,255,.22),transparent 55%),#0a0e22;color:#cbd5e1;
        display:flex;align-items:center;justify-content:center;height:100vh;flex-direction:column;gap:24px}
   .ring{width:42px;height:42px;border-radius:50%;
-        border:3px solid rgba(255,255,255,.12);border-top-color:#FFC75F;
+        border:3px solid rgba(255,255,255,.14);border-top-color:#2970ff;
         animation:spin 1s linear infinite}
   @keyframes spin{to{transform:rotate(360deg)}}
   .msg{font-size:14px;color:#94a3b8;letter-spacing:.02em}
