@@ -28,7 +28,11 @@ _MODEL = (
     or os.environ.get("ANTHROPIC_MODEL")
     or "claude-haiku-4-5-20251001"
 ).strip()
-_TIMEOUT = float(os.environ.get("RESEARCH_TIMEOUT", "60"))
+# Generous default: generation runs as a fire-and-forget background job (not
+# request-bound), and a web-grounded Opus note with up to 8 searches + a 6000-
+# token budget routinely needs well over 60s. Too low → the httpx call times out,
+# the job fails, and the cached note never refreshes.
+_TIMEOUT = float(os.environ.get("RESEARCH_TIMEOUT", "180"))
 
 DISCLAIMER = "_Research tool, not financial advice. Figures are point-in-time and may be stale._"
 
