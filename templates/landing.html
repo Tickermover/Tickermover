@@ -452,25 +452,25 @@ h1,h2,h3,h4,h5{font-family:'Instrument Sans',sans-serif;font-weight:600;letter-s
 /* mock content preview (replaces stock photos) */
 .post-mock{padding:18px 18px;display:flex;flex-direction:column;justify-content:space-between;gap:12px;
   background:linear-gradient(135deg,#ecfaff 0%,#d1e0ff 100%)}
-.post-mock.pre{background:linear-gradient(135deg,#fef3c7 0%,#ecfaff 65%,#d1e0ff 100%)}
-.post-mock.post{background:linear-gradient(135deg,#0a0e22 0%,#1a2036 60%,#2453ff 100%);color:#fff}
+.post-mock.pre{background:#0A0A0A;color:#fff}
+.post-mock.post{background:#0A0A0A;color:#fff}
 .post-mock.feat{background:linear-gradient(135deg,#2970ff 0%,#0042c5 100%);color:#fff}
 .pm-badge{display:inline-flex;align-items:center;gap:7px;align-self:flex-start;font-family:'Instrument Sans',sans-serif;font-weight:700;font-size:11px;letter-spacing:.08em;text-transform:uppercase;padding:6px 12px;border-radius:var(--r-pill);background:rgba(255,255,255,.85);color:var(--text-dark);box-shadow:0 4px 10px rgba(9,20,60,.10)}
-.post-mock.post .pm-badge,.post-mock.feat .pm-badge{background:rgba(255,255,255,.18);color:#fff;backdrop-filter:blur(8px)}
+.post-mock.post .pm-badge,.post-mock.pre .pm-badge,.post-mock.feat .pm-badge{background:rgba(255,255,255,.18);color:#fff;backdrop-filter:blur(8px)}
 .pm-badge.feat{color:#FFD24A}
 .pm-dot{width:6px;height:6px;border-radius:50%;background:var(--up);flex:none}
 .pm-dot.live{background:var(--up);animation:pulse 2s infinite;box-shadow:0 0 0 0 rgba(22,163,74,.5)}
 .mock-rows{display:flex;flex-direction:column;gap:8px;width:100%}
 .mock-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 12px;border-radius:10px;background:rgba(255,255,255,.78);font-family:'Instrument Sans',sans-serif;font-size:13px;backdrop-filter:blur(6px)}
-.post-mock.post .mock-row{background:rgba(255,255,255,.10);color:#fff}
+.post-mock.post .mock-row,.post-mock.pre .mock-row{background:rgba(255,255,255,.10);color:#fff}
 .mock-row b{font-family:'Instrument Sans',sans-serif;font-weight:700;color:var(--text-dark)}
-.post-mock.post .mock-row b{color:#fff}
+.post-mock.post .mock-row b,.post-mock.pre .mock-row b{color:#fff}
 .mr-tag{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;padding:3px 9px;border-radius:var(--r-pill);background:var(--alice-blue);color:var(--primary);letter-spacing:.02em;white-space:nowrap}
 .mr-tag.up{background:rgba(22,163,74,.16);color:#0F7D40}
 .mr-tag.dn{background:rgba(234,56,76,.16);color:#C13345}
-.post-mock.post .mr-tag{background:rgba(255,255,255,.15);color:#C2E0FF}
-.post-mock.post .mr-tag.up{background:rgba(134,239,172,.20);color:#86efac}
-.post-mock.post .mr-tag.dn{background:rgba(252,165,165,.25);color:#fca5a5}
+.post-mock.post .mr-tag,.post-mock.pre .mr-tag{background:rgba(255,255,255,.15);color:#C2E0FF}
+.post-mock.post .mr-tag.up,.post-mock.pre .mr-tag.up{background:rgba(134,239,172,.20);color:#86efac}
+.post-mock.post .mr-tag.dn,.post-mock.pre .mr-tag.dn{background:rgba(252,165,165,.25);color:#fca5a5}
 .mock-feat{display:flex;flex-direction:column;gap:8px;align-self:center;text-align:center;max-width:90%}
 .mock-feat-quote{font-family:'Fraunces','Instrument Sans',serif;font-style:italic;font-weight:500;font-size:18px;line-height:1.3;color:#fff;letter-spacing:-.01em}
 .mock-feat-auth{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:rgba(255,255,255,.7);letter-spacing:.1em;text-transform:uppercase}
