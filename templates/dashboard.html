@@ -15816,21 +15816,12 @@ function renderCmdK(){
       // race; previously re-rendering on hover destroyed the click target
       // mid-event and clicks silently dropped. We update _cmdkActive on
       // hover via classList only — no DOM rebuild.
-      const tk = (i.ticker || i.label || '').replace(/'/g, "\\'");
       return `<div class="cmdk-item ${isActive?'active':''}" data-idx="${myIdx}"
                    onmouseenter="_cmdkSetActive(${myIdx})">
         <div class="cmdk-item-icon ticker" onmousedown="_cmdkRun(${myIdx})">${i.icon}</div>
         <div class="cmdk-item-main" onmousedown="_cmdkRun(${myIdx})">
           <div class="cmdk-item-title">${i.label}</div>
           <div class="cmdk-item-sub">${i.sub || ''}</div>
-        </div>
-        <div class="cmdk-actions">
-          <button class="cmdk-action-chip" onmousedown="event.stopPropagation();_cmdkOpenBriefing('${tk}')" title="Open earnings brief">
-            <span class="cmdk-chip-icon">📊</span><span>Brief</span>
-          </button>
-          <button class="cmdk-action-chip primary" onmousedown="event.stopPropagation();_cmdkDownloadPDF('${tk}')" title="Download research report PDF">
-            <span class="cmdk-chip-icon">⬇</span><span>PDF</span>
-          </button>
         </div>
       </div>`;
     }).join('');
