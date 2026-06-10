@@ -5434,9 +5434,16 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
    live price + the stat strip. */
 /* Top row: Alpha Score (left) + live price (right); verdict reads full-width below. */
 #ts-drawer .ov-headtop{display:flex;align-items:stretch;gap:14px;flex-wrap:wrap;margin-bottom:14px}
-/* Alpha Score + price as highlighted translucent "glass" chips. */
-#ts-drawer .ov-score,#ts-drawer .ov-pricebox{background:rgba(15,23,42,.04);border:1px solid rgba(15,23,42,.09);border-radius:14px;padding:10px 15px;box-shadow:inset 0 1px 0 rgba(255,255,255,.5)}
+/* Alpha Score + price as color-tinted pills: score tinted by strength, price by
+   change direction. Soft fill + matching border. */
+#ts-drawer .ov-score,#ts-drawer .ov-pricebox{border:1px solid rgba(15,23,42,.06);border-radius:14px;padding:10px 15px;background:rgba(15,23,42,.03)}
 #ts-drawer .ov-score{display:flex;align-items:center;gap:11px}
+#ts-drawer .ov-score.ov-score-pos{background:rgba(22,163,74,.09);border-color:rgba(22,163,74,.28)}
+#ts-drawer .ov-score.ov-score-neu{background:rgba(41,112,255,.09);border-color:rgba(41,112,255,.28)}
+#ts-drawer .ov-score.ov-score-amb{background:rgba(217,119,6,.11);border-color:rgba(217,119,6,.30)}
+#ts-drawer .ov-score.ov-score-neg{background:rgba(220,38,38,.08);border-color:rgba(220,38,38,.26)}
+#ts-drawer .ov-pricebox.pb-up{background:rgba(22,163,74,.09);border-color:rgba(22,163,74,.26)}
+#ts-drawer .ov-pricebox.pb-dn{background:rgba(220,38,38,.08);border-color:rgba(220,38,38,.24)}
 #ts-drawer .ov-score-n{font-family:'JetBrains Mono',monospace;font-size:34px;font-weight:800;line-height:1;letter-spacing:-.02em}
 #ts-drawer .ov-score-meta{display:flex;flex-direction:column;gap:2px}
 #ts-drawer .ov-score-l{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--grey-3);font-weight:700}
@@ -18360,7 +18367,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     return _sec('Equity Research · '+escHTML(sector||'US Equity'), '📈', 'blue',
       '<div class="ov-headtop">'+
         scoreHtml+
-        '<div class="ov-pricebox"><div class="ov-price">'+fmtP(price)+'</div><div class="ov-chg '+(chg>=0?'up':'dn')+'">'+(chg>=0?'▲ ':'▼ ')+fmtPct(chg)+'</div></div>'+
+        '<div class="ov-pricebox '+(chg>=0?'pb-up':'pb-dn')+'"><div class="ov-price">'+fmtP(price)+'</div><div class="ov-chg '+(chg>=0?'up':'dn')+'">'+(chg>=0?'▲ ':'▼ ')+fmtPct(chg)+'</div></div>'+
       '</div>'+
       '<div class="ov-headline" id="ovHeadline">'+escHTML(bl||name)+'</div>'+
       strip, true);
