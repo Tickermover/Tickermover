@@ -114,16 +114,26 @@ a{color:inherit;text-decoration:none}
 
 .login-left::before,.login-left::after{content:"";position:absolute;left:0;right:0;height:30%;z-index:2;pointer-events:none}
 .login-left::before{top:0;background:linear-gradient(180deg,#0a0e22 10%,transparent)}
-.login-left::after{bottom:0;background:linear-gradient(0deg,#0a0e22 10%,transparent)}
+.login-left::after{bottom:0;height:38%;background:linear-gradient(0deg,#0a0e22 6%,rgba(11,17,42,.55) 42%,transparent)}
 
-/* Solid panel for the brand/headline/stats so NO cards bleed through */
+/* Opaque panel for the brand/headline/stats — colored so it reads as brand,
+   not a dead black block. Solid base layer keeps cards from bleeding through. */
 .left-overlay{
-  position:absolute;left:0;right:0;bottom:0;z-index:3;padding:22px 48px 28px;
-  background:#0a0e22;
+  position:absolute;left:0;right:0;bottom:0;z-index:3;padding:26px 48px 30px;
+  background:
+    radial-gradient(120% 130% at 0% 100%, rgba(41,112,255,.26), transparent 58%),
+    radial-gradient(90% 120% at 100% 100%, rgba(93,179,241,.16), transparent 55%),
+    linear-gradient(180deg, #0e1734 0%, #0a0e22 78%),
+    #0a0e22;
 }
 .left-overlay::before{
-  content:"";position:absolute;left:0;right:0;top:-52px;height:52px;
-  background:linear-gradient(0deg,#0a0e22 0%,rgba(10,10,10,.55) 55%,transparent);
+  content:"";position:absolute;left:0;right:0;top:-72px;height:72px;
+  background:linear-gradient(0deg,#0e1734 0%,rgba(13,20,46,.62) 45%,transparent);
+  pointer-events:none;
+}
+.left-overlay::after{
+  content:"";position:absolute;left:0;right:0;top:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(93,179,241,.45),transparent);
   pointer-events:none;
 }
 .left-brand{
