@@ -357,18 +357,35 @@ async function authSubmit(){
   };
   try{
     let res=await hit('/api/auth/signin');
+    let createdNew=false;
     if(!res.ok){
       const m=(res.data.detail||'').toLowerCase();
+      // Existing account that hasn't confirmed its email yet — Supabase returns
+      // "Email not confirmed". Don't try to re-create; tell them to confirm.
+      if(m.includes('not confirmed')||m.includes('confirm your email')){
+        showMsg('Please confirm your email first — check '+email+' (and spam) for the link, then sign in.','ok');
+        reset(); return;
+      }
       const newUser = res.status===400||res.status===401||res.status===404
                     || m.includes('invalid')||m.includes('not found')||m.includes('credentials')||m.includes('no user');
       if(newUser){
         res=await hit('/api/auth/signup');
         if(!res.ok){ showMsg(res.data.detail||'Could not create account — try again','err'); reset(); return; }
-        // First-time registration → let /app run the welcome + risk-profile onboarding.
-        try{ localStorage.setItem('ah_just_registered','1'); }catch(e){}
+        createdNew=true;
       } else { showMsg(res.data.detail||'Authentication failed','err'); reset(); return; }
     }
     const d=res.data;
+    // Email confirmation is ON: sign-up creates the account but returns NO
+    // session until the user clicks the confirmation link. Redirecting to /app
+    // here would just bounce back to /login (no token). Prompt to confirm.
+    if(!d.access_token){
+      showMsg(createdNew
+        ? 'Account created! Check '+email+' to confirm your email, then come back and sign in.'
+        : 'Please confirm your email first — check '+email+' for the link, then sign in.','ok');
+      reset(); return;
+    }
+    // First-time registration → let /app run the welcome + risk-profile onboarding.
+    if(createdNew){ try{ localStorage.setItem('ah_just_registered','1'); }catch(e){} }
     _AUTH.token=d.access_token; _AUTH.refresh=d.refresh_token;
     const u=d.user||{}; _AUTH.user={id:u.id||null, email:u.email||email};
     try{ localStorage.setItem('ah_tos_agreed','1'); }catch(e){}
