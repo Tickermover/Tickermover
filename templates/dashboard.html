@@ -6140,26 +6140,9 @@ html.v2-dark body.v2 .main, body.v2 .main{padding:0 0 30px !important;max-width:
      who want to install can use the browser's native menu (Chrome ⋮ → Install app,
      Safari Share → Add to Home Screen, etc.). -->
 
-<!-- First-visit disclaimer banner — shows once, then sets a cookie to hide -->
-<div id="ah-first-visit-banner" style="display:none;position:fixed;bottom:14px;left:14px;right:14px;max-width:540px;margin:0 auto;background:#FFF8E5;border:1px solid #F5A623;border-radius:10px;padding:12px 14px 12px 14px;box-shadow:0 4px 14px rgba(10,10,10,.12);z-index:9999;font-family:'Inter',-apple-system,sans-serif;font-size:13px;color:#0f172a;line-height:1.5">
-  <div style="display:flex;align-items:flex-start;gap:10px">
-    <div style="font-size:16px;flex-shrink:0">⚠️</div>
-    <div style="flex:1">
-      <strong style="color:#9E6308">Research tool — not financial advice.</strong>
-      AlphaHunt scores public US stocks for research and educational purposes. We are not a SEBI-registered adviser. Always do your own research.
-      <a href="/disclaimer" style="color:#15803d;font-weight:700">Read the full disclaimer</a>.
-    </div>
-    <button onclick="document.getElementById('ah-first-visit-banner').style.display='none';document.cookie='ah_disclaimer_seen=1;max-age='+(60*60*24*365)+';path=/';" style="background:#fff;border:1px solid #FFC75F;border-radius:6px;padding:4px 10px;font-size:12px;font-weight:700;color:#9E6308;cursor:pointer;flex-shrink:0">Got it</button>
-  </div>
-</div>
-<script>
-(function() {
-  if (document.cookie.indexOf('ah_disclaimer_seen=1') === -1) {
-    var b = document.getElementById('ah-first-visit-banner');
-    if (b) b.style.display = 'block';
-  }
-})();
-</script>
+<!-- First-visit disclaimer popup removed. Compliance framing is still
+     carried by the always-visible footer disclaimer band, the /disclaimer
+     page, and the required signup agreement. -->
 
 
 <!-- ─── LIVE TICKER TAPE ─── continuous scrolling marquee of top movers,
