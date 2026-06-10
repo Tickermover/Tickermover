@@ -259,6 +259,7 @@ class DataCoordinator:
     def __init__(self) -> None:
         self.cache           = SmartCache(disk_path=config.CACHE_DISK_FILE)
         self._fh_limiter     = RateLimiter(config.FINNHUB_CALLS_PER_MIN)
+        self._fmp_limiter    = RateLimiter(config.FMP_CALLS_PER_MIN)
         self._av_calls_today = 0
         self._av_reset_day   = date.today()
         self._fmp_calls_today= 0
@@ -831,6 +832,7 @@ class DataCoordinator:
         """Shared FMP HTTP helper. Returns parsed JSON or None on failure."""
         if not config.FMP_API_KEY or self._fmp_remaining() <= 0:
             return None
+        await self._fmp_limiter.wait()   # Starter = 300/min; throttle per-minute, not per-day
         try:
             params = {**params, "apikey": config.FMP_API_KEY}
             async with httpx.AsyncClient(timeout=12) as c:

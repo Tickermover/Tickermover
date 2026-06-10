@@ -21,9 +21,13 @@ POLYGON_API_KEY = _env("POLYGON_API_KEY", "")
 POLYGON_PLAN    = _env("POLYGON_PLAN",    "free")  # "free" | "starter" | "realtime"
 
 # ── Financial Modeling Prep — fundamentals + earnings calendar ────────────────
-# Free: https://financialmodelingprep.com/developer/docs  |  250 req/day free
+# Starter plan ($19/mo annual): 300 calls/MINUTE, no daily cap, US coverage.
+# Free tier was 250/day — too small for a 540-name universe (couldn't cover it
+# once/day). Starter is rate-limited per-minute instead, so we throttle on
+# FMP_CALLS_PER_MIN and keep FMP_CALLS_PER_DAY only as a high runaway backstop.
 FMP_API_KEY       = _env("FMP_API_KEY",       "DMv41skS17GzmwsBb0GZRaG1jgk6MXLY")
-FMP_CALLS_PER_DAY = int(_env("FMP_CALLS_PER_DAY", "240"))
+FMP_CALLS_PER_MIN = int(_env("FMP_CALLS_PER_MIN", "280"))      # Starter = 300/min; 280 leaves headroom
+FMP_CALLS_PER_DAY = int(_env("FMP_CALLS_PER_DAY", "200000"))   # backstop only — Starter has no daily cap
 
 # ── Finnhub — news + recommendations (supplemental) ──────────────────────────
 FINNHUB_KEY = _env("FINNHUB_KEY", "d7hrsapr01qu8vfmdcugd7hrsapr01qu8vfmdcv0")

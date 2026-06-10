@@ -356,7 +356,7 @@ async def _tech_refresh() -> None:
                         await coordinator.get_candles(sym)
 
                     # ── Alpha Vantage (25/day — fallback only if yf data missing) ─
-                    yf_data = cache.get(f"yf:{sym}:v2") or {}
+                    yf_data = cache.get(f"yf:{sym}:v5") or {}
                     if (av_used < av_budget
                             and cache.get(f"fund:{sym}") is None
                             and not yf_data.get("market_cap")):
@@ -372,7 +372,7 @@ async def _tech_refresh() -> None:
                     # returned price/etc. but no sector field. Trigger FMP
                     # whenever YF cache is empty OR YF returned no sector —
                     # FMP profile reliably carries sector for SP500/Nasdaq names.
-                    _yf_cached = cache.get(f"yf:{sym}:v2") or {}
+                    _yf_cached = cache.get(f"yf:{sym}:v5") or {}
                     _yf_has_sector = bool((_yf_cached.get("sector") or "").strip())
                     if (not _yf_cached or not _yf_has_sector) and config.FMP_API_KEY:
                         if cache.get(f"fmp_fund:{sym}") is None:
