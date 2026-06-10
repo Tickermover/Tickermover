@@ -12105,12 +12105,40 @@ function _basicMd(md){
 function _ovEsc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function _ovExtractStructured(md){
   if (!md) return { md: md||'', data: null };
-  const m = md.match(/```json\s*([\s\S]*?)```/);   // anywhere — leading or trailing
+  // Match the ```json block whether it's properly closed OR truncated at the end
+  // of the note. A cut-off note leaves an UNCLOSED fence; without `(?:```|$)` the
+  // raw JSON would render as text in the last section (the bug). Always strip it.
+  const m = md.match(/```json\s*([\s\S]*?)(?:```|$)/);
   if (!m) return { md: md, data: null };
   let data = null;
-  try { data = JSON.parse(m[1].trim()); } catch(e){ data = null; }
-  const cleaned = (md.slice(0, m.index) + md.slice(m.index + m[0].length)).trim();
+  try { data = JSON.parse(m[1].trim()); } catch(e){ data = _ovSalvageJson(m[1]); }
+  let cleaned = (md.slice(0, m.index) + md.slice(m.index + m[0].length)).trim();
+  // Drop a trailing point-in-time disclaimer line if it landed in the prose.
+  cleaned = cleaned.replace(/\n*_?\s*Research tool,? not financial advice[^\n]*$/i, '').trim();
   return { md: cleaned, data };
+}
+// Best-effort recovery of a truncated JSON object: close any open strings and
+// balance brackets so a cut-off note can still show the business card. Returns
+// null on any failure (→ the section simply hides). Never throws.
+function _ovSalvageJson(frag){
+  let s = String(frag||'').trim();
+  if (!s || s[0] !== '{') return null;
+  try { return JSON.parse(s); } catch(e){}
+  // Drop a dangling partial token after the last comma (e.g. `,{"name":"`).
+  s = s.replace(/,\s*[^,{}\[\]]*$/, '');
+  let depthC=0, depthB=0, inStr=false, esc=false;
+  for (const ch of s){
+    if (esc){ esc=false; continue; }
+    if (ch==='\\'){ esc=true; continue; }
+    if (ch==='"'){ inStr=!inStr; continue; }
+    if (inStr) continue;
+    if (ch==='{') depthC++; else if (ch==='}') depthC--;
+    else if (ch==='[') depthB++; else if (ch===']') depthB--;
+  }
+  if (inStr) s += '"';
+  s = s.replace(/[\s,]+$/, '');
+  s += ']'.repeat(Math.max(0,depthB)) + '}'.repeat(Math.max(0,depthC));
+  try { return JSON.parse(s); } catch(e){ return null; }
 }
 function _ovRenderBusiness(biz){
   const host = document.getElementById('ovBiz'); if (!host) return;
