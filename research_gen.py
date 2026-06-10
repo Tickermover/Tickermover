@@ -155,15 +155,23 @@ async def generate_research(ticker: str, ticker_data: dict | None) -> dict:
         r.raise_for_status()
         data = r.json()
 
-    # Concatenate the assistant text blocks → markdown. Collect every URL the
-    # web_search tool surfaced so we have a structured sources list even if the
-    # model's own '## Sources' section is thin.
+    # Assemble the note from the assistant text blocks. The model emits
+    # conversational narration between web searches ("I'll search for…", "Let me
+    # compile the brief…") as its own text blocks; only the text AFTER the last
+    # search result is the actual note, so we drop everything up to that point.
+    # Sources are still collected from EVERY search result regardless of order.
+    content = data.get("content", [])
+    last_search_idx = -1
+    for i, block in enumerate(content):
+        if block.get("type") == "web_search_tool_result":
+            last_search_idx = i
+
     markdown_parts: list[str] = []
     sources: list[dict] = []
     seen: set[str] = set()
-    for block in data.get("content", []):
+    for i, block in enumerate(content):
         bt = block.get("type")
-        if bt == "text":
+        if bt == "text" and i > last_search_idx:
             markdown_parts.append(block.get("text", ""))
         elif bt == "web_search_tool_result":
             for res in block.get("content", []) or []:

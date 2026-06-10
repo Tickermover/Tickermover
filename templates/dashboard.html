@@ -573,7 +573,14 @@ tr:hover td{background:rgba(245,166,35,.06)}
   box-shadow:0 6px 16px -8px rgba(245,166,35,.5);transition:transform .15s,box-shadow .15s}
 .dd-btn:hover{transform:translateY(-1px);box-shadow:0 10px 24px -8px rgba(245,166,35,.6)}
 .dd-loading{font-size:12.5px;color:#64748b;padding:8px 0;line-height:1.5}
-.dd-content{font-size:12.5px;line-height:1.6;color:#334155;margin-top:8px}
+.dd-content{font-size:12.5px;line-height:1.6;color:#334155;margin-top:8px;display:flex;flex-direction:column;gap:11px}
+/* Each note section renders as its own card box (Catalysts / Risks / Bottom line…). */
+.dd-card{background:#fff;border:1px solid var(--hair);border-radius:14px;padding:13px 16px 14px;box-shadow:0 1px 2px rgba(0,0,0,.05)}
+.dd-card>*:last-child{margin-bottom:0}
+.dd-card-h{font-family:var(--font-head);font-size:15px;font-weight:600;color:#0A0A0A;margin:0 0 7px;letter-spacing:-.01em}
+.dd-verdict{font-family:var(--font-head);font-size:14.5px;font-weight:500;line-height:1.5;color:#1e293b}
+.dd-verdict strong{color:#0040c1;font-weight:700}
+.dd-verdict p{margin:0}
 .dd-content h2{font-family:var(--font-head);font-size:15px;color:#0A0A0A;margin:14px 0 6px;font-weight:600}
 .dd-content h3{font-size:13px;color:#0f172a;margin:10px 0 4px;font-weight:800}
 .dd-content p{margin:7px 0}
@@ -12136,11 +12143,36 @@ function _ovRenderRevenue(rev){
   }).join('');
   host.innerHTML = '<div class="dr-deep-card ov-revcard"><div class="ct">Revenue trajectory</div><div class="ov-bars">'+cols+'</div></div>';
 }
+// Split a research note into {lead, sections}. `lead` is the pre-heading bold
+// verdict (search narration is dropped); each ## / ### heading starts a section.
+// A trailing Sources/References section is dropped — we render a deduped one.
+function _ddSplitSections(md){
+  md = String(md||'').replace(/\r/g,'');
+  const lines = md.split('\n');
+  const lead = []; const secs = []; let cur = null;
+  for (const ln of lines){
+    const m = ln.match(/^#{1,3}\s+(.+?)\s*$/);
+    if (m){ cur = { title: m[1].trim(), body: [] }; secs.push(cur); }
+    else if (cur){ cur.body.push(ln); }
+    else lead.push(ln);
+  }
+  // Keep only bold verdict paragraph(s) from the lead; drop the model's
+  // conversational web-search narration ("I'll search…", "Let me compile…").
+  const leadKeep = lead.join('\n').trim().split(/\n{2,}/)
+    .map(p => p.trim())
+    .filter(p => /\*\*/.test(p) && !/^(i['’]?ll|i will|let me|now i|now that|perfect|i['’]?ve|i have|i now|first,|next,|i'?m going|let['’]s)/i.test(p));
+  const sections = secs
+    .filter(s => !/^(sources|references|citations|footnotes)\b/i.test(s.title))
+    .map(s => ({ title: s.title, body: s.body.join('\n').trim() }))
+    .filter(s => s.body);
+  return { lead: leadKeep.join('\n\n'), sections };
+}
 async function loadDeepDive(ticker){
-  // `body` is the optional note container (#dd-body-…). The drawer Overview no
-  // longer renders the raw note section, so it may be absent — but we still run
-  // the pipeline to populate the structured Business engines + revenue bars
-  // (#ovBiz / #ovRevBars). Every note-only status message is guarded on `body`.
+  // `body` is the note container (#dd-body-…). It's present on surfaces that
+  // render the boxed note (the Overview, the stock-sheet tab) but may be absent
+  // elsewhere — the pipeline still runs to populate the structured Business
+  // engines + revenue bars (#ovBiz / #ovRevBars), so every note-only status
+  // message is guarded on `body`.
   const body = document.getElementById('dd-body-'+ticker);
   if (body) body.innerHTML = '<div class="dd-loading">🔎 Researching '+ticker+' — searching the web &amp; writing the brief… (~15–30s)</div>';
   let tries = 0;
@@ -12169,9 +12201,19 @@ async function renderDeepDive(ticker, d){
   else { _ovRenderBusiness(null); _ovRenderRevenue(null); }
   if (!body) return;
   const marked = await _ensureMarked();
+  const render = (md) => { try { return (marked && marked.parse) ? marked.parse(md||'') : _basicMd(md||''); } catch(e){ return _basicMd(md||''); } };
+  // Box each ## / ### section of the note as its own card (Catalysts, Risks,
+  // Bottom line…). Strips the model's interstitial web-search narration (the
+  // leading non-bold "I'll search…/Let me compile…" prose) and the note's own
+  // Sources section, since we append a deduped Sources list below.
+  const parts = _ddSplitSections(ex.md || '');
   let html;
-  try { html = (marked && marked.parse) ? marked.parse(ex.md || '') : _basicMd(ex.md || ''); }
-  catch(e){ html = _basicMd(ex.md || ''); }
+  if (parts.sections.length){
+    html = (parts.lead ? '<div class="dd-verdict">'+render(parts.lead)+'</div>' : '') +
+      parts.sections.map(s => '<section class="dd-card"><h3 class="dd-card-h">'+_ovEsc(s.title)+'</h3>'+render(s.body)+'</section>').join('');
+  } else {
+    html = render(ex.md || '');   // no headings to split on → render as-is
+  }
   let src = '';
   if (d.sources && d.sources.length){
     src = '<div class="dd-sources"><div class="dd-sources-h">Sources</div>' +
@@ -18183,6 +18225,14 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     const note=(tm!=null)?('Analyst mean target '+fmtP(tm)+(up!=null?' ('+(up>=0?'+':'')+up.toFixed(0)+'% vs price)':'')+' against the 52-week trading band.'):'Range shown is the 52-week trading band.';
     return _ovSecHead('Where the price sits','<div class="dr-deep-card"><div class="ov-track">'+marks+'</div><div class="muted small">'+note+'</div></div>');
   }
+  function _ovDeepDive(full){
+    const tk=(full.ticker||'').toUpperCase(); if(!tk) return '';
+    // Host filled by the web-grounded pipeline (loadDeepDive → renderDeepDive),
+    // which renders each note section (Catalysts / Risks / Bottom line…) as its
+    // own .dd-card box. Plain host — the boxes carry their own surfaces.
+    return _ovSecHead('AI Deep-Dive · web-grounded research',
+      '<div id="dd-body-'+tk+'" class="dd-host"><div class="dd-loading"><span class="dr-spin"></span> Researching '+escHTML(tk)+' — reading the web &amp; writing the brief… (~15–30s)</div></div>');
+  }
   function _ovCatalysts(full){
     const items=[]; const days=parseInt(full.days_to_earnings); const rev=full.eps_revisions_30d;
     const kt=(typeof keyTrigger==='function')?keyTrigger(full):null;
@@ -18313,14 +18363,8 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
       + edgeCard
       + _ovSecHead('AI Thesis', _bullBear(full))
       + _ovValuation(full,price,S)
-      + _ovCatalysts(full);
-      // The raw web-grounded research note used to render here as its own
-      // "AI Deep-Dive" section, but it leaked the model's tool-use narration
-      // ("I'll search for…/Let me compile the brief") and duplicated the
-      // Sources list. The useful, structured output of that same pipeline —
-      // the "What you'd actually be buying" business engines + revenue bars —
-      // still renders above via #ovBiz / #ovRevBars (loadDeepDive →
-      // renderDeepDive), so dropping the note section loses nothing.
+      + _ovCatalysts(full)
+      + _ovDeepDive(full);
   }
   function paneTechnicals(t,S){
     const m1=_fpNum(t,['momentum_1m']),m3=_fpNum(t,['momentum_3m']),m6=_fpNum(t,['momentum_6m']);
