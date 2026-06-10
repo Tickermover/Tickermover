@@ -18866,7 +18866,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     });
   }
 
-  const DR_TABS=['Overview','Technicals','Financials','Insights','Valuation','Estimates','News','Peers','Documents'];
+  const DR_TABS=['Overview','Technicals','Financials','Valuation','Estimates','News','Peers','Documents'];
   let _drState=null;
   function tsExpandToFull(ticker){
     const t=_byTicker[(ticker||'').toUpperCase()]; if(!t) return;
@@ -19120,7 +19120,6 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
       '<div class="dr-pane" data-pane="Overview">'+paneOverview(t,S,full,candles)+'</div>'+
       '<div class="dr-pane" data-pane="Technicals" hidden>'+paneTechnicals(full,S)+'</div>'+
       '<div class="dr-pane" data-pane="Financials" hidden>'+paneFinancials(full)+'</div>'+
-      '<div class="dr-pane" data-pane="Insights" hidden>'+paneInsights(full)+'</div>'+
       '<div class="dr-pane" data-pane="Valuation" hidden>'+paneValuation(full)+'</div>'+
       '<div class="dr-pane" data-pane="Estimates" hidden>'+paneEstimates(full)+'</div>'+
       '<div class="dr-pane" data-pane="News" hidden>'+paneNews(full)+'</div>'+

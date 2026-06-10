@@ -3639,10 +3639,15 @@ h1{{font-size:24px;margin:4px 0 2px}}
 
 
 @app.get("/api/operating-kpis/{ticker}")
-async def api_operating_kpis(ticker: str):
-    """Beta: company-specific OPERATING KPIs (volumes, capacity, units …)
-    extracted by AI from the last few annual SEC filings, as a per-fiscal-year
-    grid. Lazily computed on first open, then served from a 30-day disk cache."""
+async def api_operating_kpis(ticker: str,
+                             user: Optional[dict] = Depends(_current_user),
+                             creds: Optional[HTTPAuthorizationCredentials] = Depends(_bearer)):
+    """Retired from the UI (the Insights tab was removed). Kept as a Pro-gated
+    endpoint so nothing can trigger the (paid) AI extraction for free users."""
+    if not await _is_pro_user(user, creds):
+        return JSONResponse({"ticker": (ticker or "").upper(), "status": "locked",
+                             "detail": "Operating KPIs are a Pro feature."},
+                            headers={"Cache-Control": "no-store"})
     import operating_kpis
     data = await operating_kpis.get_operating_kpis((ticker or "").upper())
     return JSONResponse(_clean(data), headers={"Cache-Control": "no-store"})
