@@ -12216,6 +12216,27 @@ function _ovRenderKeyPoints(pts){
   host.style.display='';
   host.innerHTML=arr.map(p=>'<li>'+_ovEsc(String(p))+'</li>').join('');
 }
+// AI edge KPIs (Setup read / Thesis confidence / The catch) — fill the AI cards
+// in "The AlphaHunt edge" box from the overview snapshot. Hides any card the
+// snapshot didn't produce.
+function _ovRenderEdge(edge){
+  edge=edge||{};
+  const card=(id,lab,obj,color)=>{
+    const host=document.getElementById(id); if(!host) return;
+    const v=obj&&obj.label?String(obj.label).trim():'';
+    if(!v){ host.style.display='none'; return; }
+    host.style.display='';
+    const d=obj&&obj.detail?String(obj.detail).trim():'';
+    host.innerHTML='<span class="edge-lab">'+_ovEsc(lab)+'</span>'+
+      '<span class="edge-val word" style="color:'+color+'">'+_ovEsc(v)+'</span>'+
+      (d?'<span class="edge-sub">'+_ovEsc(d)+'</span>':'');
+  };
+  const tl=String((edge.thesis_confidence||{}).label||'').toLowerCase();
+  const tcol=/strong/.test(tl)?'#15803d':/spec/.test(tl)?'#dc2626':'#b4780a';
+  card('ovEdgeSetup','AI · Setup read', edge.setup_read, '#2970ff');
+  card('ovEdgeThesis','AI · Thesis confidence', edge.thesis_confidence, tcol);
+  card('ovEdgeCatch','AI · The catch', edge.the_catch, '#dc2626');
+}
 function _ovRenderBusiness(biz){
   const host = document.getElementById('ovBiz'); if (!host) return;
   const sec = host.closest && host.closest('.rep-sec');
@@ -12360,7 +12381,7 @@ async function loadOverview(ticker){
     if (d.status === 'locked'){ _ovRenderRevenue(null); _ovLockTeasers(); return; }
     if (d.status !== 'ready' || !d.markdown){ _ovRenderBusiness(null); _ovRenderRevenue(null); _ovRenderNoteBoxes(null); return; }
     const ex = _ovExtractStructured(d.markdown || '');
-    if (ex.data){ _ovRenderBusiness(ex.data.business); _ovRenderRevenue(ex.data.revenue); _ovRenderKeyPoints(ex.data.key_points); }
+    if (ex.data){ _ovRenderBusiness(ex.data.business); _ovRenderRevenue(ex.data.revenue); _ovRenderKeyPoints(ex.data.key_points); _ovRenderEdge(ex.data.edge); }
     else { _ovRenderBusiness(null); _ovRenderRevenue(null); }
     const marked = await _ensureMarked();
     const render = (md) => { try { return (marked && marked.parse) ? marked.parse(md||'') : _basicMd(md||''); } catch(e){ return _basicMd(md||''); } };
@@ -12407,7 +12428,7 @@ async function renderDeepDive(ticker, d){
   // Pull the structured block out → render Business + revenue bars into the
   // Overview; show the rest as the markdown brief (minus the json block).
   const ex = _ovExtractStructured(d.markdown || '');
-  if (ex.data){ _ovRenderBusiness(ex.data.business); _ovRenderRevenue(ex.data.revenue); _ovRenderKeyPoints(ex.data.key_points); }
+  if (ex.data){ _ovRenderBusiness(ex.data.business); _ovRenderRevenue(ex.data.revenue); _ovRenderKeyPoints(ex.data.key_points); _ovRenderEdge(ex.data.edge); }
   else { _ovRenderBusiness(null); _ovRenderRevenue(null); }
   const marked = await _ensureMarked();
   const render = (md) => { try { return (marked && marked.parse) ? marked.parse(md||'') : _basicMd(md||''); } catch(e){ return _basicMd(md||''); } };
@@ -18657,6 +18678,9 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
       (_hasReb?'<div class="edge-k"><span class="edge-lab">Rebound potential</span>'+
         '<span class="edge-val" style="color:'+rebColor+'">'+Math.round(S.rebound)+'<small> / 100</small></span>'+
         '<span class="edge-sub">'+((S.recoverDays!=null&&S.recoverN>=2)?'Reclaims dips in ~<b>'+S.recoverDays+'</b> sessions ('+S.recoverN+' samples, 1&nbsp;yr)':'Blends RSI, trend, support &amp; drawdown room')+'</span></div>':'')+
+      '<div class="edge-k edge-ai" id="ovEdgeSetup"><span class="edge-lab">AI · Setup read</span><span class="edge-val word edge-ai-pend">—</span><span class="edge-sub">Reading…</span></div>'+
+      '<div class="edge-k edge-ai" id="ovEdgeThesis"><span class="edge-lab">AI · Thesis confidence</span><span class="edge-val word edge-ai-pend">—</span><span class="edge-sub">Reading…</span></div>'+
+      '<div class="edge-k edge-ai" id="ovEdgeCatch"><span class="edge-lab">AI · The catch</span><span class="edge-val word edge-ai-pend">—</span><span class="edge-sub">Reading…</span></div>'+
     '</div>';
     const edgeCard=(_rs!=null||_blue||_confPct!=null||_hasReb)?_ovSecHead('The AlphaHunt edge',_edgeBody):'';
     // Editorial research-note flow (our theme): header + 6-stat strip →
