@@ -3996,7 +3996,7 @@ async def api_overview(ticker: str, force: bool = False,
         if (doc and doc.get("status") == "ready" and doc.get("markdown")
                 and not _ovstore.is_stale(doc)):
             out = _from_doc(doc)
-            cache.set(ck, out, ttl=86400)
+            cache.set(ck, out, ttl=604800)   # L1 mirrors the 7-day durable TTL
             return JSONResponse(out)
 
     # Need to (re)generate — dedupe concurrent opens of the same ticker so only
@@ -4011,7 +4011,7 @@ async def api_overview(ticker: str, force: bool = False,
             out = await research_gen.generate_overview(sym, target, premium=_is_premium_overview(sym))
             out.setdefault("status", "ready")
             _ovstore.save(sym, out)          # durable (Supabase + disk)
-            cache.set(ck, out, ttl=86400)    # warm L1
+            cache.set(ck, out, ttl=604800)   # warm L1 (7 days, mirrors durable TTL)
             return out
         task = asyncio.ensure_future(_gen())
         _overview_inflight[sym] = task
