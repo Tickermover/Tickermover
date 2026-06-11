@@ -2599,6 +2599,9 @@ body.v2-featured-only #fund-tbody tr.fund-row:not([data-featured]){display:none!
   border-radius:999px;padding:1px 8px}
 .uni-screen .scn-dsc{font-size:10.5px;color:#64748b;line-height:1.3;font-weight:600}
 .fund-row.scn-hide{display:none!important}
+/* Slim toolbar — dropdowns removed (Smart Screens drive filtering); just the tally. */
+.fd-toolbar-slim{background:transparent!important;border:0!important;padding:0 2px!important;
+  margin-bottom:10px!important;min-height:0!important;justify-content:flex-end!important;gap:0!important}
 @media(max-width:560px){.uni-screen .scn-dsc{display:none}.uni-screen{min-width:0;padding:9px 12px}}
 
 /* Clear-filter pill above the Universe table */
@@ -6516,36 +6519,16 @@ document.addEventListener('DOMContentLoaded', function(){
   <!-- ── SMART SCREENS — one-click investing lenses (filled by v2RenderScreens) ── -->
   <div class="uni-screens" id="uni-screens"></div>
 
-  <div class="fd-toolbar">
-    <!-- Per-table ticker search removed — global Cmd+K palette handles that.
-         Hide Mega Caps checkbox removed too; profile picker now controls
-         what's visible. Hidden inputs preserved so filterFund() and
-         renderFundamentals() still resolve them without throwing. -->
+  <!-- Filter dropdowns removed — the Smart Screens (lenses) + sector heat chips
+       above now drive all filtering, and each screen auto-sorts. The controls are
+       kept as HIDDEN inputs so filterFund()/sortFund()/v2SelectSector() and the
+       sector-pill injection still resolve. This slim bar just carries the tally. -->
+  <div class="fd-toolbar fd-toolbar-slim">
     <input type="hidden" id="fd-search" value="">
-    <select id="fd-sector" onchange="v2OnSectorDropdown(this.value)" title="Filter by GICS sector / sub-sector">
-      <option value="">All Sectors</option>
-    </select>
-    <select id="fd-rs" onchange="filterFund()" title="Relative Strength — how a stock is performing vs the market (0-100). Higher = stronger.">
-      <option value="">All Relative Strength</option>
-      <option value="70">Relative Strength 70+</option>
-      <option value="80">Relative Strength 80+</option>
-      <option value="90">Relative Strength 90+ 🔥</option>
-    </select>
-    <select id="fd-grade" onchange="filterFund()">
-      <option value="">All ratings</option>
-      <option value="A">★★★★★ Strong Outperform</option>
-      <option value="B">★★★★ Outperform</option>
-      <option value="C">★★★ Neutral</option>
-      <option value="D">★★ Lagging</option>
-      <option value="F">★ Avoid</option>
-    </select>
-    <select id="fd-sort" onchange="sortFund()">
-      <option value="pop">Sort: Alpha Score</option>
-      <option value="upside">Sort: Upside %</option>
-      <option value="rev">Sort: Rev Growth</option>
-      <option value="margin">Sort: Margin</option>
-      <option value="mcap">Sort: Mkt Cap</option>
-    </select>
+    <input type="hidden" id="fd-sector" value="">
+    <input type="hidden" id="fd-rs" value="">
+    <input type="hidden" id="fd-grade" value="">
+    <input type="hidden" id="fd-sort" value="pop">
     <input type="hidden" id="fd-hide-mega" value="">
     <span class="tally" id="tally-fund"></span>
   </div>
