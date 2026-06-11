@@ -5302,6 +5302,10 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 #ts-drawer .edge-val.word{font-size:15px;line-height:1.25;letter-spacing:-.01em;white-space:nowrap;display:flex;align-items:center;gap:6px}
 #ts-drawer .edge-val.word .dot{width:8px;height:8px;border-radius:50%;background:currentColor;flex:none}
 #ts-drawer .edge-sub{font-size:10px;font-weight:600;color:#64748b;line-height:1.3;margin-top:1px}
+/* AI edge cards (The Setup / Conviction / Key Risk) — roomier so the read fills
+   the card instead of cramping in a narrow block with empty space below. */
+#ts-drawer .edge-ai{gap:5px;padding:14px 16px}
+#ts-drawer .edge-ai .edge-sub{font-size:12px;line-height:1.45;color:#475569;margin-top:4px}
 /* current chart pattern in the Technical setup card */
 #ts-drawer .setup-pattern{display:flex;flex-wrap:wrap;align-items:baseline;gap:9px;margin:11px 0 6px;padding:11px 14px;border-radius:12px;background:#f6f9ff;border:1px solid rgba(41,112,255,.14)}
 #ts-drawer .setup-pattern .sp-k{font-size:9.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#94a3b8}
@@ -12227,16 +12231,17 @@ function _ovRenderEdge(edge){
     if(!v){ host.style.display='none'; return; }
     host.style.display='';
     const d=obj&&obj.detail?String(obj.detail).trim():'';
-    // Inline wrap + smaller font so a longer AI value never truncates.
+    // Inline wrap + roomier font so a longer AI value reads cleanly and fills
+    // the card instead of cramping at the top.
     host.innerHTML='<span class="edge-lab">'+_ovEsc(lab)+'</span>'+
-      '<span class="edge-val" style="color:'+color+';display:block;white-space:normal;font-size:14px;line-height:1.25;font-weight:800">'+_ovEsc(v)+'</span>'+
+      '<span class="edge-val" style="color:'+color+';display:block;white-space:normal;font-size:16.5px;line-height:1.28;font-weight:800">'+_ovEsc(v)+'</span>'+
       (d?'<span class="edge-sub">'+_ovEsc(d)+'</span>':'');
   };
   const tl=String((edge.thesis_confidence||{}).label||'').toLowerCase();
   const tcol=/strong/.test(tl)?'#15803d':/spec/.test(tl)?'#dc2626':'#b4780a';
-  card('ovEdgeSetup','AI · Setup read', edge.setup_read, '#2970ff');
-  card('ovEdgeThesis','AI · Thesis confidence', edge.thesis_confidence, tcol);
-  card('ovEdgeCatch','AI · The catch', edge.the_catch, '#dc2626');
+  card('ovEdgeSetup','The Setup', edge.setup_read, '#2970ff');
+  card('ovEdgeThesis','Conviction', edge.thesis_confidence, tcol);
+  card('ovEdgeCatch','Key Risk', edge.the_catch, '#dc2626');
 }
 function _ovRenderBusiness(biz){
   const host = document.getElementById('ovBiz'); if (!host) return;
@@ -18669,9 +18674,9 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
       (_hasReb?'<div class="edge-k"><span class="edge-lab">Rebound potential</span>'+
         '<span class="edge-val" style="color:'+rebColor+'">'+Math.round(S.rebound)+'<small> / 100</small></span>'+
         '<span class="edge-sub">'+((S.recoverDays!=null&&S.recoverN>=2)?'Reclaims dips in ~<b>'+S.recoverDays+'</b> sessions ('+S.recoverN+' samples, 1&nbsp;yr)':'Blends RSI, trend, support &amp; drawdown room')+'</span></div>':'')+
-      '<div class="edge-k edge-ai" id="ovEdgeSetup"><span class="edge-lab">AI · Setup read</span><span class="edge-val word edge-ai-pend">—</span><span class="edge-sub">Reading…</span></div>'+
-      '<div class="edge-k edge-ai" id="ovEdgeThesis"><span class="edge-lab">AI · Thesis confidence</span><span class="edge-val word edge-ai-pend">—</span><span class="edge-sub">Reading…</span></div>'+
-      '<div class="edge-k edge-ai" id="ovEdgeCatch"><span class="edge-lab">AI · The catch</span><span class="edge-val word edge-ai-pend">—</span><span class="edge-sub">Reading…</span></div>'+
+      '<div class="edge-k edge-ai" id="ovEdgeSetup"><span class="edge-lab">The Setup</span><span class="edge-val word edge-ai-pend">—</span><span class="edge-sub">Reading…</span></div>'+
+      '<div class="edge-k edge-ai" id="ovEdgeThesis"><span class="edge-lab">Conviction</span><span class="edge-val word edge-ai-pend">—</span><span class="edge-sub">Reading…</span></div>'+
+      '<div class="edge-k edge-ai" id="ovEdgeCatch"><span class="edge-lab">Key Risk</span><span class="edge-val word edge-ai-pend">—</span><span class="edge-sub">Reading…</span></div>'+
     '</div>';
     const edgeCard=_ovSecHead('The AlphaHunt edge',_edgeBody);   // 3 quant + 3 AI cards always present
     // Editorial research-note flow (our theme): header + 6-stat strip →
