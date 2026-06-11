@@ -385,20 +385,26 @@ tr:hover td{background:rgba(245,166,35,.06)}
 
 /* ====== SECTORS — rich sector map ====== */
 .sec-grid-map{display:grid;grid-template-columns:repeat(auto-fill,minmax(238px,1fr));gap:8px}
-/* ── Sector heat chips (compact navigator, Smart-Screens language) ── */
-.sm-heat{display:flex;align-items:center;gap:10px;text-align:left;cursor:pointer;background:#fff;
-  border:1px solid rgba(10,10,10,.09);border-left:3px solid var(--heat,#94a3b8);border-radius:11px;
-  padding:8px 11px;font-family:inherit;transition:transform .12s,box-shadow .15s,border-color .15s}
-.sm-heat:hover{transform:translateY(-1px);box-shadow:0 8px 20px -12px rgba(10,10,10,.32)}
-.sm-heat.sm-active{box-shadow:0 0 0 2px var(--heat,#2970ff)}
-.smh-score{flex:none;width:34px;height:34px;border-radius:9px;background:var(--heat,#94a3b8);color:#fff;
-  font-family:'JetBrains Mono',monospace;font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center}
+/* ── Sector heat chips (compact navigator, light to match every other card) ── */
+.sm-heat,
+body.v2 #sectors-grid .sm-heat{display:flex;align-items:center;gap:10px;text-align:left;cursor:pointer;
+  background:#fff!important;border:1px solid rgba(10,10,10,.08)!important;border-radius:12px;
+  padding:9px 12px;font-family:inherit;box-shadow:0 1px 2px rgba(0,0,0,.05),0 8px 20px -16px rgba(0,0,0,.22);
+  transition:transform .12s,box-shadow .15s,border-color .15s}
+.sm-heat:hover,
+body.v2 #sectors-grid .sm-heat:hover{transform:translateY(-2px)!important;
+  border-color:rgba(41,112,255,.28)!important;box-shadow:0 10px 24px -14px rgba(0,0,0,.28)!important}
+.sm-heat.sm-active,
+body.v2 #sectors-grid .sm-heat.sm-active{border-color:var(--heat,#2970ff)!important;
+  box-shadow:0 0 0 2px var(--heat,#2970ff)!important}
+.smh-score{flex:none;width:36px;height:36px;border-radius:10px;background:var(--heat,#94a3b8);color:#fff;
+  font-family:'JetBrains Mono',monospace;font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center;
+  box-shadow:0 4px 10px -4px color-mix(in srgb,var(--heat,#94a3b8) 55%,transparent)}
 .smh-body{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}
-.smh-name{font-weight:800;font-size:12.5px;color:#0f172a;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.smh-name,
+body.v2 #sectors-grid .smh-name{font-weight:800;font-size:12.5px;color:#0f172a!important;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .smh-meta{font-size:10.5px;color:#64748b;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .smh-meta b{color:#ef4444}
-html.v2-dark .sm-heat{background:#0f1629;border-color:rgba(255,255,255,.08)}
-html.v2-dark .smh-name{color:#e8edf6}
 /* Legacy sec-card kept for compat */
 .sec-card{background:var(--surf);border:1px solid var(--bdr);border-radius:14px;padding:18px}
 .sec-card h3{font-size:14px;font-weight:700;color:var(--acc2);margin-bottom:4px}
