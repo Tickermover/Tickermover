@@ -9150,7 +9150,10 @@ function ceInit(){
   ceBack();                     // make sure the hub is showing, detail cleared
   if (_ceBuilt) return;
   _ceBuilt = true;
-  ceBuildCloud();
+  // Load the shared curated pool first so the marquee backdrop rotates through
+  // featured names; ceBuildCloud still runs (with a score-based fallback) if it fails.
+  if (typeof ensureFeatured === 'function') ensureFeatured().then(ceBuildCloud).catch(ceBuildCloud);
+  else ceBuildCloud();
 }
 
 let _ceResizeBound = false;
@@ -9184,9 +9187,13 @@ function ceBuildCloud(){
   const rep  = all.filter(isRep).sort((a, b) => (dse(a) == null ? 99 : dse(a)) - (dse(b) == null ? 99 : dse(b)));
   const soon = all.filter(isSoon).sort((a, b) => d2e(a) - d2e(b));
   const flagged = new Set([...rep, ...soon].map(t => t.ticker));
-  // backdrop: most-notable names first (by smart_score) lead the strip
+  // backdrop: the rotating curated pool (same featured set the screener +
+  // scroll wall use) so fresh featured names surface here too. Falls back to
+  // top-by-smart_score if the pool hasn't loaded yet.
   const score = t => { const s = parseFloat(t.smart_score); return isNaN(s) ? 0 : s; };
-  const backdrop = all.filter(t => !flagged.has(t.ticker)).sort((a, b) => score(b) - score(a)).slice(0, CE_BACKDROP_MAX);
+  let backdrop = (typeof featuredRotate === 'function' ? featuredRotate(CE_BACKDROP_MAX) : [])
+    .filter(t => t && t.ticker && !flagged.has(t.ticker));
+  if (!backdrop.length) backdrop = all.filter(t => !flagged.has(t.ticker)).sort((a, b) => score(b) - score(a)).slice(0, CE_BACKDROP_MAX);
 
   // Display order: actionable event names first, then the strongest names.
   const display = [...rep, ...soon, ...backdrop];
@@ -13593,21 +13600,50 @@ function renderFundamentals(tickers) {
    triggers) on a small, mostly-cached pool. Search (ceSearch) is
    independent and still reaches the full universe.
    ---------------------------------------------------------- */
-window._featuredSet = window._featuredSet || new Set();
+window._featuredSet  = window._featuredSet || new Set();
+window._featuredArr  = window._featuredArr || [];   // ordered featured ticker objects
+window._featuredTotal = window._featuredTotal || 0;
 let _featuredLoaded = false;
+
+/* Single source of truth for the curated pool. Fetched once, cached as a
+   promise so every showcase surface (screener, scroll wall, events marquee)
+   shares ONE /api/featured call and the SAME pool. */
+function ensureFeatured(){
+  if (window._featuredPromise) return window._featuredPromise;
+  window._featuredPromise = fetch('/api/featured', {headers:{Authorization:'Bearer '+(localStorage.getItem('ah_token')||'')}})
+    .then(r => { if (!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+    .then(d => {
+      window._featuredArr   = (d.featured || []).filter(t => t && t.ticker);
+      window._featuredSet   = new Set(window._featuredArr.map(t => t.ticker));
+      window._featuredTotal = d.universe_total || 0;
+      return window._featuredArr;
+    })
+    .catch(e => { window._featuredPromise = null; console.warn('[PD] featured load failed:', e.message); return []; });
+  return window._featuredPromise;
+}
+
+/* Rotate a window of `n` names through the pool, advancing each time bucket so
+   fresh featured names surface over time. Cost-neutral: same cached pool, just a
+   different slice. bucketMs default 5 min. */
+function featuredRotate(n, bucketMs){
+  const arr = window._featuredArr || [];
+  if (!arr.length) return [];
+  bucketMs = bucketMs || 300000;
+  const off = Math.floor(Date.now() / bucketMs) % arr.length;
+  const out = [];
+  const take = Math.min(n || arr.length, arr.length);
+  for (let i = 0; i < take; i++) out.push(arr[(off + i) % arr.length]);
+  return out;
+}
 
 async function loadFeaturedSet(){
   try {
-    const r = await fetch('/api/featured', {headers:{Authorization:'Bearer '+(localStorage.getItem('ah_token')||'')}});
-    if (!r.ok) throw new Error('HTTP '+r.status);
-    const d = await r.json();
-    const syms = (d.featured || []).map(t => t && t.ticker).filter(Boolean);
-    if (!syms.length) throw new Error('empty featured set');
-    window._featuredSet = new Set(syms);
+    const arr = await ensureFeatured();
+    if (!arr.length) throw new Error('empty featured set');
     _applyFeaturedTags();                         // tag rows first…
     if (!_featuredLoaded) document.body.classList.add('v2-featured-only');  // …then narrow the view (no empty flash)
     _featuredLoaded = true;
-    _ensureFeaturedToggle(d.universe_total || 0, syms.length);
+    _ensureFeaturedToggle(window._featuredTotal || 0, arr.length);
     if (typeof v2SyncUniverseTally === 'function') v2SyncUniverseTally();
   } catch(e) {
     // If the featured set can't load, don't trap the user on an empty table.
@@ -16470,17 +16506,17 @@ async function _ahLoadHotStrip(){
   ].map(([sym,score,chg]) => ({sym, score, tier:tierOf(score), chg}));
 
   try {
-    const r = await fetch('/api/hot?n=14', {cache:'no-store'});
-    if (r.ok){
-      const d = await r.json();
-      const picks = (d.hot || []);
-      if (picks.length){
-        rows = picks.map(p => {
-          const score = Math.round(p.smart_score || p.pop_score || 0);
-          const chg = p.change_pct != null ? parseFloat(p.change_pct) : 0;
-          return {sym:p.ticker||'—', score, tier:tierOf(score), chg};
-        });
-      }
+    // Rotating window of the shared curated pool — fresh featured names surface
+    // each time bucket, but always from the small cached set (same pool the
+    // screener + events marquee use).
+    await ensureFeatured();
+    const picks = featuredRotate(14);
+    if (picks.length){
+      rows = picks.map(p => {
+        const score = Math.round(p.smart_score || p.pop_score || 0);
+        const chg = p.change_pct != null ? parseFloat(p.change_pct) : 0;
+        return {sym:p.ticker||'—', score, tier:tierOf(score), chg};
+      });
     }
   } catch(e){ /* keep sample fallback */ }
 

@@ -969,13 +969,24 @@ def _render_morning_brief() -> str:
     # ── Universe slice ───────────────────────────────────────────────
     universe = [x for x in (_universe_data or []) if x.get("ticker")]
 
-    # Top 3 picks — highest Alpha Score with a positive day move
+    # Top picks — drawn from the curated featured pool and ROTATED on a time
+    # bucket so fresh featured names surface through the day (but always from the
+    # small, mostly-cached pool, never random). Falls back to plain top-by-score
+    # if the featured pool is too small.
     def _score(t): return float(t.get("smart_score") or t.get("pop_score") or 0)
     def _chg(t):
         v = t.get("change_pct")
         return float(v) if isinstance(v, (int, float)) else 0.0
     ranked = sorted(universe, key=_score, reverse=True)
-    top3 = ranked[:3]
+    _pool = [t for t in ranked if _is_featured_eligible(t)]
+    if len(_pool) < 3:
+        _pool = ranked
+    if _pool:
+        _bucket = int(time.time() // 900)          # rotate every 15 minutes
+        _off = _bucket % len(_pool)
+        top3 = [_pool[(_off + i) % len(_pool)] for i in range(min(3, len(_pool)))]
+    else:
+        top3 = ranked[:3]
 
     # Notable movers (top 3 up, top 3 down by change_pct)
     movers_up   = sorted([t for t in universe if _chg(t) >  0.5], key=_chg, reverse=True)[:3]
