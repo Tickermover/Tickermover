@@ -37,6 +37,13 @@ _OVERVIEW_MODEL = (
     os.environ.get("ANTHROPIC_OVERVIEW_MODEL")
     or "claude-sonnet-4-6"
 ).strip()
+# Premium model used for the curated/featured set only — those ~35 names are
+# cached and concentrate user attention, so upgrading just them is a bounded cost
+# (~+$0.02/gen) that doesn't scale with users. Override via env.
+_OVERVIEW_PREMIUM_MODEL = (
+    os.environ.get("ANTHROPIC_OVERVIEW_PREMIUM_MODEL")
+    or "claude-opus-4-8"
+).strip()
 # Generous default: generation runs as a fire-and-forget background job (not
 # request-bound), and a web-grounded Opus note with up to 8 searches + a 6000-
 # token budget routinely needs well over 60s. Too low → the httpx call times out,
@@ -323,16 +330,19 @@ def _overview_user(ticker: str, t: dict) -> str:
     )
 
 
-async def generate_overview(ticker: str, ticker_data: dict | None) -> dict:
-    """Cheap, fast (~3-8s) overview snapshot — Haiku, no web search. Powers the
-    stock page's default Overview boxes. Raises on hard failure."""
+async def generate_overview(ticker: str, ticker_data: dict | None,
+                            premium: bool = False) -> dict:
+    """Overview snapshot (no web search) — powers the stock page's default
+    Overview boxes. `premium=True` uses the Opus tier (for the curated/featured
+    set); everything else uses the standard Sonnet tier. Raises on hard failure."""
     ticker = ticker.upper()
     t = ticker_data or {"ticker": ticker}
     if not available():
         raise RuntimeError("ANTHROPIC_API_KEY not configured")
 
+    model = _OVERVIEW_PREMIUM_MODEL if premium else _OVERVIEW_MODEL
     body = {
-        "model": _OVERVIEW_MODEL,
+        "model": model,
         "max_tokens": 1800,
         # Cache the static instruction/schema block; back-to-back snapshots
         # (e.g. a universe pre-warm) then pay ~0.1× on it.
@@ -356,8 +366,8 @@ async def generate_overview(ticker: str, ticker_data: dict | None) -> dict:
         data = r.json()
 
     _u = data.get("usage") or {}
-    logger.info("overview_gen %s (%s): in=%s cache_write=%s cache_read=%s out=%s",
-                ticker, _OVERVIEW_MODEL, _u.get("input_tokens"),
+    logger.info("overview_gen %s (%s%s): in=%s cache_write=%s cache_read=%s out=%s",
+                ticker, model, " ★premium" if premium else "", _u.get("input_tokens"),
                 _u.get("cache_creation_input_tokens"), _u.get("cache_read_input_tokens"),
                 _u.get("output_tokens"))
     markdown = "".join(
@@ -369,7 +379,7 @@ async def generate_overview(ticker: str, ticker_data: dict | None) -> dict:
         "ticker": ticker,
         "markdown": markdown,
         "sources": [],
-        "model": _OVERVIEW_MODEL,
+        "model": model,
         "kind": "overview",
         "status": "ready",
     }

@@ -4005,7 +4005,9 @@ async def api_overview(ticker: str, force: bool = False,
     if task is None or task.done():
         async def _gen() -> dict:
             target = next((t for t in _universe_data if t.get("ticker") == sym), None)
-            out = await research_gen.generate_overview(sym, target)
+            # Curated/featured ~35 get the premium (Opus) tier — bounded cost,
+            # cached, and the names users actually see most. Long tail stays Sonnet.
+            out = await research_gen.generate_overview(sym, target, premium=_is_curated(sym))
             out.setdefault("status", "ready")
             _ovstore.save(sym, out)          # durable (Supabase + disk)
             cache.set(ck, out, ttl=86400)    # warm L1
@@ -6498,53 +6500,64 @@ async def api_hot(n: int = None):
 # featured-eligible pool by score. Rebuilt daily (cheap, in-memory) like the hot list.
 _daily_featured: list = []
 _daily_featured_date: str = ""
+_curated_syms_cache: set = set()
+
+
+def _ensure_featured() -> list:
+    """Build/refresh the curated featured list (daily, in-memory) and return it.
+    Shared by /api/featured and the per-stock model decision so 'curated' means
+    the same set everywhere."""
+    global _daily_featured, _daily_featured_date, _curated_syms_cache
+    from datetime import date as _date
+    today_str = str(_date.today())
+    limit = config.FEATURED_N
+    if _daily_featured_date == today_str and _daily_featured:
+        return _daily_featured
+
+    def _score(t):
+        return float(t.get("smart_score") or t.get("pop_score") or 0)
+
+    def _cap_ok(t):
+        mc = t.get("market_cap"); tier = t.get("market_cap_tier", "")
+        if mc is not None and mc >= MEGA_CAP_CUTOFF:
+            return False
+        if tier == "Mega Cap":
+            return False
+        if mc is not None:
+            floor = 250e6 if tier in ("Small Cap", "Micro Cap") else MIN_MCAP_FILTER
+            if mc < floor:
+                return False
+        return True
+
+    ranked   = sorted([t for t in _universe_data if t.get("ticker")], key=_score, reverse=True)
+    eligible = [t for t in ranked if _is_featured_eligible(t)]
+    hot_syms = {t.get("ticker") for t in eligible if _is_hot_eligible(t)}
+    leaders  = [t for t in eligible if t.get("ticker") in hot_syms]
+    rest     = [t for t in eligible if t.get("ticker") not in hot_syms]
+    pool     = leaders + rest
+    if len(pool) < limit:
+        have = {t.get("ticker") for t in pool}
+        pool += [t for t in ranked if t.get("ticker") not in have and _cap_ok(t)]
+    _daily_featured      = pool[:limit]
+    _daily_featured_date = today_str
+    _curated_syms_cache  = {t.get("ticker") for t in _daily_featured}
+    logger.info(f"⭐ Featured set: {len(_daily_featured)} curated names for {today_str} "
+                f"({len(hot_syms)} strict hot + {len(eligible)} eligible, backfilled to {limit})")
+    return _daily_featured
+
+
+def _is_curated(sym: str) -> bool:
+    """True if the ticker is in today's curated featured set (gets premium AI)."""
+    try:
+        _ensure_featured()
+        return (sym or "").upper() in _curated_syms_cache
+    except Exception:
+        return False
 
 
 @app.get("/api/featured")
 async def api_featured(n: int = None):
-    global _daily_featured, _daily_featured_date
-    from datetime import date as _date
-    today_str = str(_date.today())
-    limit = n or config.FEATURED_N
-
-    if _daily_featured_date != today_str or len(_daily_featured) == 0:
-        def _score(t):
-            return float(t.get("smart_score") or t.get("pop_score") or 0)
-
-        def _cap_ok(t):
-            # Same cap guardrails as the featured/hot bar: no Mega Cap, above the
-            # small-cap floor — but no grade/score/confidence requirement.
-            mc = t.get("market_cap"); tier = t.get("market_cap_tier", "")
-            if mc is not None and mc >= MEGA_CAP_CUTOFF:
-                return False
-            if tier == "Mega Cap":
-                return False
-            if mc is not None:
-                floor = 250e6 if tier in ("Small Cap", "Micro Cap") else MIN_MCAP_FILTER
-                if mc < floor:
-                    return False
-            return True
-
-        ranked   = sorted([t for t in _universe_data if t.get("ticker")], key=_score, reverse=True)
-        eligible = [t for t in ranked if _is_featured_eligible(t)]
-        # Strict Hot-List names lead (high conviction), then the rest of the
-        # featured-eligible pool, both already in score order.
-        hot_syms = {t.get("ticker") for t in eligible if _is_hot_eligible(t)}
-        leaders  = [t for t in eligible if t.get("ticker") in hot_syms]
-        rest     = [t for t in eligible if t.get("ticker") not in hot_syms]
-        pool     = leaders + rest
-        # Backfill to FEATURED_N with the next-best quality names (cap guardrails
-        # only) so the curated surface is reliably ~limit even on days when few
-        # names clear the strict Grade A/B + confidence bar — avoids the sparse,
-        # duplicate-looking marquee.
-        if len(pool) < limit:
-            have = {t.get("ticker") for t in pool}
-            pool += [t for t in ranked if t.get("ticker") not in have and _cap_ok(t)]
-        _daily_featured      = pool[:limit]
-        _daily_featured_date = today_str
-        logger.info(f"⭐ Featured set: {len(_daily_featured)} curated names for {today_str} "
-                    f"({len(hot_syms)} strict hot + {len(eligible)} eligible, backfilled to {limit})")
-
+    _ensure_featured()
     # "Prime Opportunities" — the strict high-conviction subset of the pool
     # (same bar as the Hot List). Surfaced with a badge among the featured names.
     prime_syms = [t.get("ticker") for t in _daily_featured if _is_hot_eligible(t)]
