@@ -256,6 +256,7 @@ def _overview_prompt(ticker: str, t: dict) -> str:
         "facts); omit any field you can't support. Exact shape:\n"
         "```json\n"
         "{\n"
+        '  "key_points": ["3 punchy, decision-relevant takeaways, max ~13 words each — the things that matter most about this stock right now"],\n'
         '  "business": {\n'
         '    "intro": "1-2 sentence plain-English summary of what the company does / how it makes money",\n'
         '    "engines": [\n'
