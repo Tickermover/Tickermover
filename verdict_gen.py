@@ -118,9 +118,12 @@ async def generate_verdict(ticker: str, ticker_data: dict | None) -> dict:
 
     body = {
         "model": _MODEL,
-        # Tight output to keep the premium per-note cost down; the structured
-        # block + 5 short sections fit comfortably.
-        "max_tokens": 2200,
+        # Opus writes verbose, URL-heavy web citations + tool-use blocks all draw
+        # from the output budget, so 2200 truncated the note mid-"Street" section
+        # (dropping What-would-change-our-mind / Bottom line / disclaimer). 4500
+        # comfortably fits the full 6-section note. Adds ~$0.05/note — fine for an
+        # on-demand premium box.
+        "max_tokens": 4500,
         # Stable web search (NOT the 20260209 dynamic-filter version, which timed
         # out the long web-grounded note). 3 searches cover earnings + analyst
         # actions + a risk/news sweep.
@@ -173,6 +176,10 @@ async def generate_verdict(ticker: str, ticker_data: dict | None) -> dict:
     markdown = "".join(parts).strip()
     if not markdown:
         raise RuntimeError("Empty verdict response")
+    # Compliance guarantee: the disclaimer must always be present, even if the
+    # model omitted it or the note was truncated before the final line.
+    if "SEBI-registered" not in markdown:
+        markdown = markdown.rstrip() + "\n\n" + DISCLAIMER
     return {
         "ticker": ticker,
         "markdown": markdown,
