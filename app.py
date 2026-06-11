@@ -115,6 +115,10 @@ _PRO_CACHE_TTL = 300                        # seconds
 # Monthly Ask-AI cap per Pro user (Ask AI is per-user / uncached, so it's the one
 # AI cost that scales linearly with usage). Override via env.
 ASK_MONTHLY_CAP = int(os.environ.get("ASK_MONTHLY_CAP", "100"))
+# Daily inner bound on top of the monthly cap: smooths bursts (a power user can't
+# blow the whole month — or hammer the API — in one sitting) and keeps a heavy
+# user's worst-case day cheap (~12 Haiku questions ≈ $0.15/day). Override via env.
+ASK_DAILY_CAP = int(os.environ.get("ASK_DAILY_CAP", "12"))
 # Comma-separated emails that get AI access without a paid subscription row —
 # for the dev's own account and any comped beta testers. e.g. AI_ALLOW_EMAILS=me@x.com,beta@y.com
 _AI_ALLOW = {e.strip().lower() for e in os.environ.get("AI_ALLOW_EMAILS", "").split(",") if e.strip()}
@@ -148,15 +152,26 @@ def _ask_period() -> str:
     return datetime.now(timezone.utc).strftime("%Y%m")
 
 
-async def _ask_quota(creds: HTTPAuthorizationCredentials) -> tuple[str, int, int]:
-    """Return (metadata_key, used_this_month, cap) for the Ask-AI monthly cap."""
-    key = "ai_ask_" + _ask_period()
+def _ask_period_day() -> str:
+    return datetime.now(timezone.utc).strftime("%Y%m%d")
+
+
+async def _ask_quota(creds: HTTPAuthorizationCredentials) -> dict:
+    """Return both the monthly and daily Ask-AI usage/caps for this Pro user.
+
+    The daily counter rolls over via a single key pair (`ai_ask_day_date` /
+    `ai_ask_day_n`) that resets when the stored date isn't today — this avoids
+    accumulating one metadata key per calendar day."""
+    mkey = "ai_ask_" + _ask_period()
+    today = _ask_period_day()
     try:
-        md = await supabase.get_user_metadata(creds.credentials)
-        used = int((md or {}).get(key, 0) or 0)
+        md = await supabase.get_user_metadata(creds.credentials) or {}
+        used_m = int(md.get(mkey, 0) or 0)
+        used_d = int(md.get("ai_ask_day_n", 0) or 0) if md.get("ai_ask_day_date") == today else 0
     except Exception:
-        used = 0
-    return key, used, ASK_MONTHLY_CAP
+        used_m = used_d = 0
+    return {"mkey": mkey, "used_m": used_m, "cap_m": ASK_MONTHLY_CAP,
+            "today": today, "used_d": used_d, "cap_d": ASK_DAILY_CAP}
 
 _universe_data:     list[dict] = []
 _last_full_refresh: float      = 0.0
@@ -3399,12 +3414,20 @@ async def api_ask(ticker: str, request: Request,
             {"answer": None, "status": "locked",
              "detail": "Ask AI is a Pro feature. Upgrade to unlock."},
             headers={"Cache-Control": "no-store"})
-    # Monthly fair-use cap.
-    _quota_key, _used, _cap = await _ask_quota(creds)
-    if _used >= _cap:
+    # Fair-use caps: a daily inner bound (burst protection) plus the monthly cap.
+    q = await _ask_quota(creds)
+    if q["used_d"] >= q["cap_d"]:
         return JSONResponse(
-            {"answer": None, "status": "limit", "used": _used, "cap": _cap,
-             "detail": f"You've reached this month's Ask AI limit ({_cap}). It resets next month."},
+            {"answer": None, "status": "limit", "scope": "day",
+             "used": q["used_d"], "cap": q["cap_d"],
+             "used_month": q["used_m"], "cap_month": q["cap_m"],
+             "detail": f"You've reached today's Ask AI limit ({q['cap_d']}). It resets tomorrow."},
+            headers={"Cache-Control": "no-store"})
+    if q["used_m"] >= q["cap_m"]:
+        return JSONResponse(
+            {"answer": None, "status": "limit", "scope": "month",
+             "used": q["used_m"], "cap": q["cap_m"],
+             "detail": f"You've reached this month's Ask AI limit ({q['cap_m']}). It resets next month."},
             headers={"Cache-Control": "no-store"})
     try:
         body = await request.json()
@@ -3422,16 +3445,22 @@ async def api_ask(ticker: str, request: Request,
         lines.append(f"Rev growth YoY: {t.get('revenue_growth_yoy')} | EPS growth YoY: {t.get('eps_growth_yoy')}")
         lines.append(f"P/E: {t.get('pe_ratio') or t.get('forward_pe')} | PEG: {t.get('peg_ratio')} | Profit margin: {t.get('profit_margin')}")
     res = await stock_rag.ask(tk, question, "\n".join(lines))
-    # Count this question against the monthly cap only when it actually produced
-    # an answer (don't charge the user for errors / empty responses).
+    # Count this question against BOTH caps only when it actually produced an
+    # answer (don't charge the user for errors / empty responses).
     if isinstance(res, dict) and res.get("answer"):
         try:
-            await supabase.update_user_metadata(creds.credentials, {_quota_key: _used + 1})
+            await supabase.update_user_metadata(creds.credentials, {
+                q["mkey"]:          q["used_m"] + 1,
+                "ai_ask_day_date":  q["today"],
+                "ai_ask_day_n":     q["used_d"] + 1,
+            })
         except Exception:
             pass
     if isinstance(res, dict):
-        res.setdefault("used", _used + 1)
-        res.setdefault("cap", _cap)
+        res.setdefault("used", q["used_m"] + 1)
+        res.setdefault("cap", q["cap_m"])
+        res.setdefault("used_today", q["used_d"] + 1)
+        res.setdefault("cap_today", q["cap_d"])
     return JSONResponse(res, headers={"Cache-Control": "no-store"})
 
 
