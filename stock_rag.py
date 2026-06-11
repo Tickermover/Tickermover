@@ -166,7 +166,14 @@ async def _claude_answer(ticker, question, context_blocks, profile_data) -> str 
     if not ANTHROPIC_KEY:
         return None
     ctx = "\n\n".join(context_blocks[:8])[:60000]
-    prompt = (
+    # Prompt-caching split: everything that's stable for a given ticker (the
+    # instructions + our metrics + the retrieved document context) goes in one
+    # cached block; only the user's question varies between calls. When a user
+    # asks several questions about the SAME ticker within the 5-min cache TTL,
+    # the large context (up to ~15K tokens) is served from cache at ~0.1× cost
+    # instead of re-sent at full price. The question sits AFTER the breakpoint
+    # so it never invalidates the cached prefix.
+    prefix = (
         f"You are AlphaHunt's senior equity-research assistant for the US-listed "
         f"stock {ticker}. Give a best-in-class, investor-grade answer.\n"
         "Ground your answer FIRST in the context below (SEC filings, an earnings "
@@ -182,11 +189,15 @@ async def _claude_answer(ticker, question, context_blocks, profile_data) -> str 
         "IMPORTANT: You are NOT a financial advisor. Describe and explain; never "
         "tell the user to buy, sell, or hold.\n\n"
         f"=== ALPHAHUNT METRICS ===\n{profile_data or '(none provided)'}\n\n"
-        f"=== DOCUMENT CONTEXT ===\n{ctx or '(no documents retrieved)'}\n\n"
-        f"=== QUESTION ===\n{question}\n\nAnswer:"
+        f"=== DOCUMENT CONTEXT ===\n{ctx or '(no documents retrieved)'}"
     )
+    suffix = f"\n\n=== QUESTION ===\n{question}\n\nAnswer:"
     payload = {"model": ASK_MODEL, "max_tokens": 1500,
-               "messages": [{"role": "user", "content": prompt}]}
+               "messages": [{"role": "user", "content": [
+                   {"type": "text", "text": prefix,
+                    "cache_control": {"type": "ephemeral"}},
+                   {"type": "text", "text": suffix},
+               ]}]}
     headers = {"x-api-key": ANTHROPIC_KEY, "anthropic-version": "2023-06-01",
                "content-type": "application/json"}
     try:
@@ -196,7 +207,17 @@ async def _claude_answer(ticker, question, context_blocks, profile_data) -> str 
             if r.status_code != 200:
                 logger.warning(f"stock_rag: Anthropic HTTP {r.status_code}: {r.text[:200]}")
                 return None
-            return (r.json().get("content") or [{}])[0].get("text", "").strip()
+            data = r.json()
+            # Surface prompt-cache effectiveness: cache_read>0 means the per-ticker
+            # context prefix was served from cache (~0.1× cost). If this stays 0
+            # across repeat questions on one ticker, a silent invalidator is at work.
+            u = data.get("usage") or {}
+            logger.info(
+                "stock_rag ask %s: in=%s cache_write=%s cache_read=%s",
+                ticker, u.get("input_tokens"),
+                u.get("cache_creation_input_tokens"), u.get("cache_read_input_tokens"),
+            )
+            return (data.get("content") or [{}])[0].get("text", "").strip()
     except Exception as exc:
         logger.warning(f"stock_rag: Anthropic {ticker}: {exc}")
         return None
