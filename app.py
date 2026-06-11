@@ -3844,6 +3844,59 @@ async def api_overview(ticker: str, force: bool = False,
         return JSONResponse({"ticker": sym, "status": "error", "detail": str(exc)[:200]})
 
 
+# ── The Verdict — flagship web-grounded Opus decision read (Pro, on-demand) ─
+# The one premium box: Opus 4.8 + live web search. Generated in the background
+# (web-grounded notes take 20-40s) and cached 12h per ticker so the expensive
+# call is paid once per ticker and shared across all users.
+_verdict_generating: set = set()
+_verdict_errors: dict = {}
+
+
+async def _run_verdict_job(sym: str, target: dict | None):
+    import verdict_gen
+    try:
+        out = await verdict_gen.generate_verdict(sym, target)
+        cache.set("verdict:" + sym, out, ttl=43200)   # 12h
+        _verdict_errors.pop(sym, None)
+    except Exception as exc:
+        _verdict_errors[sym] = str(exc)[:300]
+        logger.error(f"Verdict generation failed for {sym}: {exc}")
+    finally:
+        _verdict_generating.discard(sym)
+
+
+@app.get("/api/verdict/{ticker}")
+async def api_verdict(ticker: str, force: bool = False,
+                      user: Optional[dict] = Depends(_current_user),
+                      creds: Optional[HTTPAuthorizationCredentials] = Depends(_bearer)):
+    """AlphaHunt's web-checked decision read (Opus + web). Pro-gated, on-demand.
+    Served from a 12h cache; regenerated in the background when missing/stale so
+    the page never blocks. Compliant: AlphaHunt's stance is Outperform/Neutral/
+    Avoid — 'buy/sell' appears only as attributed analyst consensus."""
+    import asyncio
+    import verdict_gen
+    sym = ticker.upper()
+    if not await _is_pro_user(user, creds):
+        return JSONResponse({"ticker": sym, "status": "locked",
+                             "detail": "The Verdict is a Pro feature. Upgrade to unlock."})
+    if not verdict_gen.available():
+        return JSONResponse({"ticker": sym, "status": "unavailable",
+                             "detail": "The Verdict is not enabled (set ANTHROPIC_API_KEY)."})
+    ck = "verdict:" + sym
+    cached = cache.get(ck)
+    if cached is not None and not force:
+        return JSONResponse(cached)
+    if sym not in _verdict_generating:
+        _verdict_generating.add(sym)
+        target = next((t for t in _universe_data if t.get("ticker") == sym), None)
+        try:
+            asyncio.create_task(_run_verdict_job(sym, target))
+        except RuntimeError:
+            _verdict_generating.discard(sym)
+    return JSONResponse({"ticker": sym, "status": "generating",
+                         "last_error": _verdict_errors.get(sym)})
+
+
 # ── AI head-to-head comparison cards (cached; web-grounded) ────────────────
 _compare_generating: set = set()
 
