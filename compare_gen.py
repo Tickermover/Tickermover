@@ -117,7 +117,11 @@ async def generate_compare_card(ticker: str, ticker_data: dict | None) -> dict:
         "model": _MODEL,
         "max_tokens": 1200,
         "tools": [
-            {"type": "web_search_20250305", "name": "web_search", "max_uses": 3}
+            # web_search_20260209 adds dynamic filtering on Opus 4.x / Sonnet 4.6
+            # (this card runs on the premium ANTHROPIC_RESEARCH_MODEL): search
+            # results are code-filtered before entering context, cutting premium
+            # input-token cost. Auto-activates, no beta header.
+            {"type": "web_search_20260209", "name": "web_search", "max_uses": 3}
         ],
         "messages": [{"role": "user", "content": _prompt(ticker, t)}],
     }
@@ -136,6 +140,10 @@ async def generate_compare_card(ticker: str, ticker_data: dict | None) -> dict:
             logger.error(f"compare_gen {ticker} → {r.status_code}: {r.text[:300]}")
         r.raise_for_status()
         data = r.json()
+
+    _u = data.get("usage") or {}
+    logger.info("compare_gen %s (%s): in=%s out=%s",
+                ticker, _MODEL, _u.get("input_tokens"), _u.get("output_tokens"))
 
     text_parts: list[str] = []
     sources: list[dict] = []

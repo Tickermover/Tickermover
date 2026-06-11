@@ -147,7 +147,14 @@ async def generate_research(ticker: str, ticker_data: dict | None) -> dict:
             # Each web search costs ~$0.01 regardless of model — cap tighter to
             # keep the per-note cost down (was 8). 4 searches still cover
             # earnings + guidance + targets + a risk/catalyst sweep.
-            {"type": "web_search_20250305", "name": "web_search", "max_uses": 4}
+            #
+            # web_search_20260209 adds DYNAMIC FILTERING on Opus 4.x / Sonnet 4.6
+            # (the models this path runs on via ANTHROPIC_RESEARCH_MODEL): Claude
+            # filters raw search results with code BEFORE they enter the context
+            # window, so we stop paying premium input rates on pages of unfiltered
+            # HTML. Auto-activates, no beta header. This was the single biggest
+            # driver of the Opus/Sonnet input-token bill.
+            {"type": "web_search_20260209", "name": "web_search", "max_uses": 4}
         ],
         "messages": [{"role": "user", "content": _prompt(ticker, t)}],
     }
@@ -169,6 +176,13 @@ async def generate_research(ticker: str, ticker_data: dict | None) -> dict:
             # caller (and out through /api/research) instead of a generic 4xx.
             raise RuntimeError(f"Anthropic {r.status_code} (model={_MODEL}): {detail}")
         data = r.json()
+
+    _u = data.get("usage") or {}
+    logger.info(
+        "research_gen %s (%s): in=%s cache_read=%s out=%s",
+        ticker, _MODEL, _u.get("input_tokens"),
+        _u.get("cache_read_input_tokens"), _u.get("output_tokens"),
+    )
 
     # Assemble the note from the assistant text blocks. The model emits
     # conversational narration between web searches ("I'll search for…", "Let me
