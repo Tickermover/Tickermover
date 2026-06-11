@@ -2569,6 +2569,23 @@ body.v2-featured-only #fund-tbody tr.fund-row:not([data-featured]){display:none!
   border:1px solid rgba(245,166,35,.32);border-radius:999px;padding:5px 13px;cursor:pointer;
   white-space:nowrap;transition:background .14s}
 .v2-featured-toggle:hover{background:rgba(245,166,35,.18)}
+/* ── Smart Screens — one-click investing lenses over the Universe table ── */
+.uni-screens{display:flex;gap:8px;max-width:1268px;margin:0 auto 14px;overflow-x:auto;padding:2px 2px 4px;scrollbar-width:none}
+.uni-screens::-webkit-scrollbar{display:none}
+.uni-screen{flex:0 0 auto;display:flex;flex-direction:column;gap:3px;align-items:flex-start;cursor:pointer;
+  background:#fff;border:1.5px solid rgba(10,10,10,.10);border-radius:13px;padding:10px 14px;min-width:118px;
+  font-family:inherit;transition:border-color .15s,box-shadow .15s,transform .12s}
+.uni-screen:hover{transform:translateY(-2px);box-shadow:0 8px 20px -12px rgba(10,10,10,.3)}
+.uni-screen.on{border-color:var(--scn,#2970ff);box-shadow:0 0 0 3px color-mix(in srgb,var(--scn,#2970ff) 14%,transparent)}
+.uni-screen .scn-top{display:flex;align-items:center;gap:7px;width:100%}
+.uni-screen .scn-ic{font-size:15px;line-height:1}
+.uni-screen .scn-nm{font-weight:800;font-size:12.5px;color:#0f172a;letter-spacing:-.01em}
+.uni-screen .scn-ct{margin-left:auto;font-family:'JetBrains Mono',monospace;font-weight:800;font-size:11px;
+  color:var(--scn,#2970ff);background:color-mix(in srgb,var(--scn,#2970ff) 12%,transparent);
+  border-radius:999px;padding:1px 8px}
+.uni-screen .scn-dsc{font-size:10.5px;color:#64748b;line-height:1.3;font-weight:600}
+.fund-row.scn-hide{display:none!important}
+@media(max-width:560px){.uni-screen .scn-dsc{display:none}.uni-screen{min-width:0;padding:9px 12px}}
 
 /* Clear-filter pill above the Universe table */
 .v2-uni-sector-pill{
@@ -6482,6 +6499,9 @@ document.addEventListener('DOMContentLoaded', function(){
     <div class="sec-grid-map" id="sectors-grid"><div class="loading">Loading…</div></div>
   </div>
 
+  <!-- ── SMART SCREENS — one-click investing lenses (filled by v2RenderScreens) ── -->
+  <div class="uni-screens" id="uni-screens"></div>
+
   <div class="fd-toolbar">
     <!-- Per-table ticker search removed — global Cmd+K palette handles that.
          Hide Mega Caps checkbox removed too; profile picker now controls
@@ -8710,14 +8730,16 @@ function v2SyncUniverseTally(){
     const profOk  = !profSet.length || profSet.includes(prof);
     const sectorOk = !r.classList.contains('sector-hide');
     const featOk   = !featOnly || r.hasAttribute('data-featured');
-    if (profOk && sectorOk && featOk) visible += 1;
+    const scnOk    = !r.classList.contains('scn-hide');
+    if (profOk && sectorOk && featOk && scnOk) visible += 1;
   });
   // When no sector/featured filter is active and the backend exposed
   // profile_counts, prefer THAT number so this tally agrees with the picker
   // dropdown. With a sector or featured filter on, the universe-wide
   // profile_counts no longer applies — use the DOM-counted value.
   const counts = (window.__AH_DATA__ && window.__AH_DATA__.profile_counts) || null;
-  if (!sector && !featOnly && counts && counts[prof] != null) visible = counts[prof];
+  const scnActive = (typeof _uniScreen !== 'undefined') && _uniScreen !== 'all' && _uniScreen !== 'featured';
+  if (!sector && !featOnly && !scnActive && counts && counts[prof] != null) visible = counts[prof];
   const profLbl = prof === 'aggressive' ? 'aggressive view'
                 : prof === 'balanced'   ? 'balanced view'
                 : prof === 'conservative' ? 'conservative view' : prof;
@@ -13661,7 +13683,7 @@ async function loadFeaturedSet(){
     _applyFeaturedTags();                         // tag rows first…
     if (!_featuredLoaded) document.body.classList.add('v2-featured-only');  // …then narrow the view (no empty flash)
     _featuredLoaded = true;
-    _ensureFeaturedToggle(window._featuredTotal || 0, arr.length);
+    if (typeof v2RenderScreens === 'function') v2RenderScreens();   // Smart Screens bar (Featured default)
     if (typeof v2SyncUniverseTally === 'function') v2SyncUniverseTally();
   } catch(e) {
     // If the featured set can't load, don't trap the user on an empty table.
@@ -13705,6 +13727,73 @@ function _toggleFeaturedOnly(){
   document.body.classList.toggle('v2-featured-only');
   _updateFeaturedToggleLabel();
   if (typeof v2SyncUniverseTally === 'function') v2SyncUniverseTally();
+}
+
+/* ----------------------------------------------------------
+   SMART SCREENS — one-click investing lenses over the Universe table.
+   Each screen is a predicate over the row data-* attributes; applied via the
+   .scn-hide class so it composes (AND) with the profile + sector filters.
+   'featured' reuses the curated featured-only filter; 'all' clears everything.
+   ---------------------------------------------------------- */
+const _UNI_SCREENS = [
+  {id:'featured',  ic:'⭐', nm:'Featured',      dsc:'The curated shortlist',  scn:'#e0a000', sort:'pop'},
+  {id:'momentum',  ic:'🔥', nm:'Momentum',      dsc:'Strong & rising',        scn:'#ef4444', sort:'pop'},
+  {id:'quality',   ic:'💎', nm:'Quality',       dsc:'Grade A + real margins', scn:'#0ea5e9', sort:'pop'},
+  {id:'breakouts', ic:'🚀', nm:'Breakouts',     dsc:'Top RS + top Alpha',     scn:'#8b5cf6', sort:'pop'},
+  {id:'value',     ic:'💰', nm:'Value + Growth',dsc:'Sane P/E, still growing',scn:'#16a34a', sort:'rev'},
+  {id:'earnings',  ic:'📅', nm:'Earnings soon', dsc:'Reports in ≤2 weeks',    scn:'#0040c1', sort:'pop'},
+  {id:'all',       ic:'🌐', nm:'All',           dsc:'Full universe',          scn:'#64748b', sort:'pop'},
+];
+let _uniScreen = 'featured';
+
+function _screenMatch(id, ds){
+  const pop=parseFloat(ds.pop)||0, rs=parseFloat(ds.rs)||0, m3=parseFloat(ds.mom3m);
+  const rev=parseFloat(ds.rev), fcf=parseFloat(ds.fcf), pe=parseFloat(ds.pe), dte=parseInt(ds.dte);
+  const g=(ds.grade||'').toUpperCase();
+  switch(id){
+    case 'momentum':  return rs>=80 && !isNaN(m3) && m3>5;
+    case 'quality':   return g==='A' && !isNaN(rev) && rev>=15 && !isNaN(fcf) && fcf>=5;
+    case 'breakouts': return rs>=85 && pop>=70;
+    case 'value':     return !isNaN(pe) && pe>0 && pe<=25 && !isNaN(rev) && rev>=10 && (g==='A'||g==='B');
+    case 'earnings':  return !isNaN(dte) && dte>=0 && dte<=14;
+    default:          return true;   // 'all' (featured counted separately)
+  }
+}
+
+function v2RenderScreens(){
+  const wrap=document.getElementById('uni-screens'); if(!wrap) return;
+  const rows=[...document.querySelectorAll('#fund-tbody tr.fund-row')];
+  const count=id=> id==='featured' ? rows.filter(r=>r.hasAttribute('data-featured')).length
+               : id==='all'        ? rows.length
+               : rows.filter(r=>_screenMatch(id, r.dataset)).length;
+  wrap.innerHTML=_UNI_SCREENS.map(s=>
+    '<button class="uni-screen'+(s.id===_uniScreen?' on':'')+'" style="--scn:'+s.scn+'" '+
+      'data-screen="'+s.id+'" onclick="v2ApplyScreen(\''+s.id+'\')">'+
+      '<span class="scn-top"><span class="scn-ic">'+s.ic+'</span><span class="scn-nm">'+s.nm+'</span>'+
+        '<span class="scn-ct">'+count(s.id)+'</span></span>'+
+      '<span class="scn-dsc">'+s.dsc+'</span></button>'
+  ).join('');
+}
+
+function v2ApplyScreen(id){
+  _uniScreen=id;
+  const def=_UNI_SCREENS.find(s=>s.id===id)||_UNI_SCREENS[0];
+  document.querySelectorAll('#uni-screens .uni-screen').forEach(b=>b.classList.toggle('on', b.dataset.screen===id));
+  // Reset advanced dropdowns so the screen is the single lens, and clear any
+  // inline display filterFund() left behind so the CSS layers govern again.
+  ['fd-rs','fd-grade'].forEach(x=>{const el=document.getElementById(x); if(el) el.value='';});
+  const rows=document.querySelectorAll('#fund-tbody tr.fund-row');
+  rows.forEach(r=>{ r.style.display=''; });
+  if(id==='featured'){
+    document.body.classList.add('v2-featured-only');
+    rows.forEach(r=>r.classList.remove('scn-hide'));
+  }else{
+    document.body.classList.remove('v2-featured-only');
+    rows.forEach(r=>r.classList.toggle('scn-hide', id!=='all' && !_screenMatch(id, r.dataset)));
+  }
+  const sortEl=document.getElementById('fd-sort');
+  if(sortEl){ sortEl.value=def.sort; if(typeof sortFund==='function') sortFund(); }
+  if(typeof v2SyncUniverseTally==='function') v2SyncUniverseTally();
 }
 
 function sortFundList(key) {
