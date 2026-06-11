@@ -509,6 +509,66 @@ async def _bg_scheduler() -> None:
         await _full_refresh()
 
 
+# ── Durable AI-cache health check ─────────────────────────────────────
+_CACHE_TABLE_SQL = {
+    "stock_overview": (
+        "create table stock_overview (env_id int not null, ticker text not null, "
+        "generated_at timestamptz not null default now(), model text, markdown text, "
+        "sources jsonb default '[]'::jsonb, status text default 'ready', "
+        "primary key (env_id, ticker));"
+    ),
+    "stock_research": (
+        "create table stock_research (env_id int not null, ticker text not null, "
+        "generated_at timestamptz not null default now(), model text, markdown text, "
+        "sources jsonb default '[]'::jsonb, status text default 'ready', "
+        "primary key (env_id, ticker));"
+    ),
+    "stock_compare": (
+        "create table stock_compare (env_id int not null, ticker text not null, "
+        "generated_at timestamptz not null default now(), model text, card jsonb default '{}'::jsonb, "
+        "sources jsonb default '[]'::jsonb, status text default 'ready', "
+        "primary key (env_id, ticker));"
+    ),
+}
+
+
+def _check_research_caches() -> None:
+    """Probe each durable AI-cache table once at startup. If Supabase isn't
+    configured, or a table is missing/unreachable, log a loud warning with the
+    fix — otherwise these caches silently degrade to ephemeral disk and the same
+    stock is re-billed after every redeploy."""
+    import httpx
+    from config import SUPABASE_URL, SUPABASE_SERVICE_KEY, SUPABASE_ANON_KEY
+    url = (SUPABASE_URL or "").rstrip("/")
+    key = SUPABASE_SERVICE_KEY or SUPABASE_ANON_KEY or ""
+    if not (url and key):
+        logger.warning(
+            "⚠️  AI caches: Supabase NOT configured — Overview/Deep-Dive/Compare "
+            "fall back to ephemeral output/*.json, wiped on every redeploy. The "
+            "same stock will re-bill after each deploy until SUPABASE_URL + key "
+            "are set and a Volume backs CACHE_DISK_FILE."
+        )
+        return
+    headers = {"apikey": key, "Authorization": f"Bearer {key}"}
+    for table, ddl in _CACHE_TABLE_SQL.items():
+        try:
+            with httpx.Client(timeout=6) as c:
+                r = c.get(f"{url}/rest/v1/{table}",
+                          headers={**headers, "Prefer": "count=none"},
+                          params={"select": "ticker", "limit": "1"})
+            if r.status_code == 200:
+                logger.info(f"✅ AI cache table '{table}' reachable (durable across redeploys).")
+            elif r.status_code in (404, 400) or "does not exist" in r.text.lower():
+                logger.warning(
+                    f"⚠️  AI cache table '{table}' MISSING ({r.status_code}) — this cache "
+                    f"is NOT durable and will re-bill after every redeploy. Create it once:\n    {ddl}"
+                )
+            else:
+                logger.warning(f"⚠️  AI cache table '{table}' probe → {r.status_code}: {r.text[:160]}")
+        except Exception as e:
+            logger.warning(f"⚠️  AI cache table '{table}' probe failed: {e}")
+
+
 # ── Lifespan ──────────────────────────────────────────────────────────
 
 @asynccontextmanager
@@ -517,6 +577,14 @@ async def lifespan(app: FastAPI):
     _refresh_lock = asyncio.Lock()
 
     logger.info("AlphaHunt starting …")
+
+    # ── Durable-cache health check ─────────────────────────────────────
+    # The AI snapshot/deep-dive/compare caches only survive a Railway redeploy
+    # if their Supabase tables exist. When a table is missing the stores silently
+    # fall back to ephemeral output/*.json (wiped on every deploy) → the same
+    # stock gets re-billed after each push. Probe loudly at startup so that
+    # failure mode is never invisible again.
+    _check_research_caches()
 
     # ── Instant startup restore from disk cache ────────────────────────
     # If Railway just redeployed, this makes the dashboard show data
@@ -3811,17 +3879,29 @@ async def api_research(ticker: str, force: bool = False,
     return JSONResponse({"ticker": sym, "status": "generating", "last_error": last_err})
 
 
-# ── Cheap AI overview snapshot (Haiku, no web) — powers the default Overview
-#    business/risk boxes. The full web-grounded note lives on /api/research and
-#    is generated lazily only when the user opens the Deep-Dive tab. ──────────
+# ── AI overview snapshot (no web) — powers the default Overview business/risk/
+#    edge boxes. The full web-grounded note lives on /api/research and is
+#    generated lazily only when the user opens the Deep-Dive tab. ─────────────
+#
+# Two-tier cache so the same stock is NOT re-billed on every open or redeploy:
+#   L1 = in-memory SmartCache (instant, but wiped on restart/Railway redeploy)
+#   L2 = overview_store → Supabase (durable, survives deploys; disk fallback)
+# Plus an in-flight dedupe so N simultaneous opens of one ticker share a single
+# paid generation instead of firing N model calls.
+_overview_inflight: dict = {}   # sym -> asyncio.Task[dict]
+
+
 @app.get("/api/overview/{ticker}")
 async def api_overview(ticker: str, force: bool = False,
                        user: Optional[dict] = Depends(_current_user),
                        creds: Optional[HTTPAuthorizationCredentials] = Depends(_bearer)):
-    """Cheap Haiku business/risk snapshot for the stock page's default Overview
-    boxes. Pro-gated. Generated synchronously (~3-8s, no web search) and cached
-    so it's instant after the first viewer."""
+    """Business/risk/edge snapshot for the stock page's default Overview boxes.
+    Pro-gated. Served from a durable per-ticker cache (Supabase, survives
+    redeploys) and only regenerated when missing/stale — so repeatedly opening
+    the same stock costs nothing after the first view."""
+    import asyncio
     import research_gen
+    from overview_store import store as _ovstore
     sym = ticker.upper()
     if not await _is_pro_user(user, creds):
         return JSONResponse({"ticker": sym, "status": "locked",
@@ -3829,19 +3909,61 @@ async def api_overview(ticker: str, force: bool = False,
     if not research_gen.available():
         return JSONResponse({"ticker": sym, "status": "unavailable",
                              "detail": "AI overview is not enabled (set ANTHROPIC_API_KEY)."})
+
     ck = "overview:" + sym
+
+    def _from_doc(d: dict) -> dict:
+        return {
+            "ticker":   sym,
+            "status":   d.get("status", "ready"),
+            "markdown": d.get("markdown", ""),
+            "sources":  d.get("sources", []) or [],
+            "model":    d.get("model", ""),
+            "kind":     "overview",
+        }
+
+    # `force` is server-controlled only (no client passes it); honouring it still
+    # respects the dedupe below so a manual refresh can't fan out into N calls.
     if not force:
+        # L1 — in-memory (fast path within this process)
         cached = cache.get(ck)
         if cached is not None:
             return JSONResponse(cached)
-    target = next((t for t in _universe_data if t.get("ticker") == sym), None)
+        # L2 — durable store (survives redeploys); re-warm L1 on hit
+        doc = _ovstore.get(sym)
+        if (doc and doc.get("status") == "ready" and doc.get("markdown")
+                and not _ovstore.is_stale(doc)):
+            out = _from_doc(doc)
+            cache.set(ck, out, ttl=86400)
+            return JSONResponse(out)
+
+    # Need to (re)generate — dedupe concurrent opens of the same ticker so only
+    # ONE paid call runs; every other waiter awaits the same task.
+    task = _overview_inflight.get(sym)
+    if task is None or task.done():
+        async def _gen() -> dict:
+            target = next((t for t in _universe_data if t.get("ticker") == sym), None)
+            out = await research_gen.generate_overview(sym, target)
+            out.setdefault("status", "ready")
+            _ovstore.save(sym, out)          # durable (Supabase + disk)
+            cache.set(ck, out, ttl=86400)    # warm L1
+            return out
+        task = asyncio.ensure_future(_gen())
+        _overview_inflight[sym] = task
+
     try:
-        out = await research_gen.generate_overview(sym, target)
-        cache.set(ck, out, ttl=86400)   # cheap to regen; cache for a day
+        out = await task
         return JSONResponse(out)
     except Exception as exc:
         logger.error(f"Overview generation failed for {sym}: {exc}")
+        # Serve a stale snapshot rather than nothing if we have one.
+        doc = _ovstore.get(sym)
+        if doc and doc.get("markdown"):
+            return JSONResponse(_from_doc(doc))
         return JSONResponse({"ticker": sym, "status": "error", "detail": str(exc)[:200]})
+    finally:
+        if _overview_inflight.get(sym) is task:
+            _overview_inflight.pop(sym, None)
 
 
 # ── AI head-to-head comparison cards (cached; web-grounded) ────────────────
