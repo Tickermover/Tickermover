@@ -648,6 +648,38 @@ async def _overview_prewarm() -> None:
         await asyncio.sleep(6 * 3600)      # every 6h
 
 
+async def _data_prewarm() -> None:
+    """Pre-warm the FREE on-demand data — the FMP-enriched 'stock-extra'
+    (valuation multiples, FCF, estimates, targets, ratings, peers, filings) — for
+    the WHOLE universe so any stock's Financials/Valuation/Estimates tabs load
+    instantly. $0 in fees (FMP is a flat plan; the limiter self-paces it).
+
+    Self-limiting: only tickers whose cache is cold actually fetch, so steady
+    state it's near-free. NOTE: most valuable once the disk volume persists —
+    without it the cache is wiped each deploy and this re-warms the universe
+    every build (free, but heavy background HTTP). Candles are already kept warm
+    by _tech_refresh, so this only fills the stock-extra gap."""
+    await asyncio.sleep(300)               # after universe load + tech_refresh's first sweep
+    while True:
+        try:
+            warmed = 0
+            for t in list(_universe_data):
+                sym = t.get("ticker")
+                if not sym or cache.get(f"fmp_extra:{sym}") is not None:
+                    continue                # already warm — skip (no fetch)
+                try:
+                    await coordinator.get_fmp_enrichment(sym)
+                    warmed += 1
+                except Exception:
+                    pass
+                await asyncio.sleep(1.5)    # gentle — yield to live requests + FMP budget
+            if warmed:
+                logger.info(f"🗄️  Data pre-warm: filled stock-extra for {warmed} tickers (free/FMP)")
+        except Exception as exc:
+            logger.warning(f"data pre-warm cycle failed: {exc}")
+        await asyncio.sleep(12 * 3600)     # twice a day
+
+
 # ── Lifespan ──────────────────────────────────────────────────────────
 
 @asynccontextmanager
@@ -729,6 +761,7 @@ async def lifespan(app: FastAPI):
         asyncio.create_task(_tech_refresh()),
         asyncio.create_task(_desk_publisher()),     # freeze pre/post editions
         asyncio.create_task(_overview_prewarm()),   # keep curated Overviews warm
+        asyncio.create_task(_data_prewarm()),        # keep all stocks' free data (stock-extra) warm
     ]
     yield
     for t in tasks:
