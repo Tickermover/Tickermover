@@ -28,6 +28,15 @@ _MODEL = (
     or os.environ.get("ANTHROPIC_MODEL")
     or "claude-haiku-4-5-20251001"
 ).strip()
+# Cheap model for the OVERVIEW snapshot that fills the stock page's default
+# "what you'd actually be buying" + risk/catalyst boxes. No web search, small
+# output → ~$0.01/stock on Haiku, vs ~$0.25 for the full web-grounded note.
+# Deliberately NOT the premium research model.
+_OVERVIEW_MODEL = (
+    os.environ.get("ANTHROPIC_OVERVIEW_MODEL")
+    or os.environ.get("ANTHROPIC_MODEL")
+    or "claude-haiku-4-5-20251001"
+).strip()
 # Generous default: generation runs as a fire-and-forget background job (not
 # request-bound), and a web-grounded Opus note with up to 8 searches + a 6000-
 # token budget routinely needs well over 60s. Too low → the httpx call times out,
@@ -221,5 +230,100 @@ async def generate_research(ticker: str, ticker_data: dict | None) -> dict:
         "markdown": markdown,
         "sources": sources,
         "model": _MODEL,
+        "status": "ready",
+    }
+
+
+# ── Cheap OVERVIEW snapshot (Haiku, no web search) ────────────────────────
+# Fills the stock page's default Overview boxes (#ovBiz business engines,
+# #ovRevBars revenue, ovNoteCat/Risk/Bottom note boxes) without paying for the
+# premium web-grounded note. Output format is byte-compatible with the full
+# note's parser: a leading bold verdict, one ```json block (business+revenue),
+# then `## What moves it next`, `## Bear case`, `## Bottom line` sections.
+def _overview_prompt(ticker: str, t: dict) -> str:
+    return (
+        f"You are an equity-research analyst writing a COMPACT business snapshot for "
+        f"{ticker} ({t.get('name','')}) for a retail investor. Work from the ground-truth "
+        f"data below PLUS your own training knowledge of the company. This is a quick "
+        f"overview — do NOT claim live/breaking figures, do NOT web-search, do NOT add "
+        f"source links.\n\n"
+        "GROUND TRUTH — use these exact figures; do not invent live data:\n"
+        f"{_ground_block(t)}\n\n"
+        "Output GitHub-flavoured Markdown in EXACTLY this order:\n"
+        "1. A one-sentence **bold verdict** of where the company stands.\n"
+        "2. THE STRUCTURED BLOCK — immediately after the verdict, as ONE fenced ```json "
+        "code block. Use only figures you're confident about (ground truth or well-known "
+        "facts); omit any field you can't support. Exact shape:\n"
+        "```json\n"
+        "{\n"
+        '  "business": {\n'
+        '    "intro": "1-2 sentence plain-English summary of what the company does / how it makes money",\n'
+        '    "engines": [\n'
+        '      {"name":"<engine 1 name>","tag":"<short eyebrow>","body":"2-3 sentences with figures","tone":"primary"},\n'
+        '      {"name":"<engine 2 name>","tag":"<short eyebrow>","body":"2-3 sentences","tone":"secondary"}\n'
+        "    ],\n"
+        '    "callout": {"title":"<short title>","body":"the key strategic bet in 1-2 sentences"}\n'
+        "  },\n"
+        '  "revenue": [\n'
+        '    {"label":"FY24","sub":"baseline","display":"$249M","value":249},\n'
+        '    {"label":"FY25","sub":"+83%","display":"$456M","value":456},\n'
+        '    {"label":"FY26E","sub":"guide ~+140%","display":">$1.1B","value":1100}\n'
+        "  ]\n"
+        "}\n"
+        "```\n"
+        "For `revenue`: 2-4 fiscal-year points oldest→newest (last may be an estimate); "
+        "`value` is a plain number in the SAME unit across points (millions preferred); "
+        "`display` is the human label. Omit the whole `business` or `revenue` key if you "
+        "can't support it.\n"
+        "3. '## What moves it next' — 3-4 catalysts, each prefixed with a **bold** rough "
+        "timeframe (e.g. **Next quarter**, **H2 2026**, **Ongoing**).\n"
+        "4. '## Bear case' — 3-5 specific risk bullets (valuation, concentration, "
+        "competition, dilution, execution).\n"
+        "5. '## Bottom line' — 2-3 sentences ending in the one honest question to answer "
+        "before buying.\n"
+        "No '## Sources' section, no inline links. Be specific and concrete; no filler."
+    )
+
+
+async def generate_overview(ticker: str, ticker_data: dict | None) -> dict:
+    """Cheap, fast (~3-8s) overview snapshot — Haiku, no web search. Powers the
+    stock page's default Overview boxes. Raises on hard failure."""
+    ticker = ticker.upper()
+    t = ticker_data or {"ticker": ticker}
+    if not available():
+        raise RuntimeError("ANTHROPIC_API_KEY not configured")
+
+    body = {
+        "model": _OVERVIEW_MODEL,
+        "max_tokens": 1800,
+        "messages": [{"role": "user", "content": _overview_prompt(ticker, t)}],
+    }
+    async with httpx.AsyncClient(timeout=60) as c:
+        r = await c.post(
+            "https://api.anthropic.com/v1/messages",
+            headers={"x-api-key": _KEY, "anthropic-version": "2023-06-01",
+                     "content-type": "application/json"},
+            json=body,
+        )
+        if r.status_code >= 400:
+            detail = r.text[:400]
+            logger.error(f"overview_gen {ticker} → {r.status_code}: {detail}")
+            raise RuntimeError(f"Anthropic {r.status_code}: {detail}")
+        data = r.json()
+
+    _u = data.get("usage") or {}
+    logger.info("overview_gen %s (%s): in=%s out=%s",
+                ticker, _OVERVIEW_MODEL, _u.get("input_tokens"), _u.get("output_tokens"))
+    markdown = "".join(
+        b.get("text", "") for b in data.get("content", []) if b.get("type") == "text"
+    ).strip()
+    if not markdown:
+        raise RuntimeError("Empty overview response")
+    return {
+        "ticker": ticker,
+        "markdown": markdown,
+        "sources": [],
+        "model": _OVERVIEW_MODEL,
+        "kind": "overview",
         "status": "ready",
     }

@@ -3811,6 +3811,39 @@ async def api_research(ticker: str, force: bool = False,
     return JSONResponse({"ticker": sym, "status": "generating", "last_error": last_err})
 
 
+# ── Cheap AI overview snapshot (Haiku, no web) — powers the default Overview
+#    business/risk boxes. The full web-grounded note lives on /api/research and
+#    is generated lazily only when the user opens the Deep-Dive tab. ──────────
+@app.get("/api/overview/{ticker}")
+async def api_overview(ticker: str, force: bool = False,
+                       user: Optional[dict] = Depends(_current_user),
+                       creds: Optional[HTTPAuthorizationCredentials] = Depends(_bearer)):
+    """Cheap Haiku business/risk snapshot for the stock page's default Overview
+    boxes. Pro-gated. Generated synchronously (~3-8s, no web search) and cached
+    so it's instant after the first viewer."""
+    import research_gen
+    sym = ticker.upper()
+    if not await _is_pro_user(user, creds):
+        return JSONResponse({"ticker": sym, "status": "locked",
+                             "detail": "The AI overview is a Pro feature. Upgrade to unlock."})
+    if not research_gen.available():
+        return JSONResponse({"ticker": sym, "status": "unavailable",
+                             "detail": "AI overview is not enabled (set ANTHROPIC_API_KEY)."})
+    ck = "overview:" + sym
+    if not force:
+        cached = cache.get(ck)
+        if cached is not None:
+            return JSONResponse(cached)
+    target = next((t for t in _universe_data if t.get("ticker") == sym), None)
+    try:
+        out = await research_gen.generate_overview(sym, target)
+        cache.set(ck, out, ttl=86400)   # cheap to regen; cache for a day
+        return JSONResponse(out)
+    except Exception as exc:
+        logger.error(f"Overview generation failed for {sym}: {exc}")
+        return JSONResponse({"ticker": sym, "status": "error", "detail": str(exc)[:200]})
+
+
 # ── AI head-to-head comparison cards (cached; web-grounded) ────────────────
 _compare_generating: set = set()
 
