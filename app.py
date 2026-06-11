@@ -581,6 +581,73 @@ def _check_research_caches() -> None:
             logger.warning(f"⚠️  AI cache table '{table}' probe failed: {e}")
 
 
+# ── Curated Overview pre-warm ──────────────────────────────────────────
+# Keeps the curated set's Overviews fresh in the durable store so heavy users
+# never trigger a cold (slow + paid) model generation on first view. Cheap: only
+# regenerates names that are aging out (refresh-ahead 1 day before the 7-day TTL).
+_OVERVIEW_PREWARM_AGE = 6 * 24 * 3600     # refresh when older than 6 days
+
+
+def _overview_age_s(doc: dict | None) -> float:
+    if not doc:
+        return 1e12
+    ep = doc.get("generated_epoch")
+    if ep is None:
+        ga = doc.get("generated_at")
+        if not ga:
+            return 1e12
+        try:
+            from datetime import datetime
+            ep = datetime.fromisoformat(str(ga).replace("Z", "+00:00")).timestamp()
+        except Exception:
+            return 1e12
+    return time.time() - float(ep)
+
+
+async def _prewarm_one_overview(sym: str) -> bool:
+    """(Re)generate `sym`'s Overview if the durable copy is missing or aging out.
+    Returns True if it generated. Premium-tier aware."""
+    import research_gen
+    from overview_store import store as _ovstore
+    doc = _ovstore.get(sym)
+    if (doc and doc.get("status") == "ready" and doc.get("markdown")
+            and _overview_age_s(doc) < _OVERVIEW_PREWARM_AGE):
+        return False                       # still fresh — nothing to do
+    target = next((t for t in _universe_data if t.get("ticker") == sym), None)
+    try:
+        out = await research_gen.generate_overview(sym, target, premium=_is_premium_overview(sym))
+        out.setdefault("status", "ready")
+        _ovstore.save(sym, out)
+        cache.set("overview:" + sym, out, ttl=604800)
+        return True
+    except Exception as exc:
+        logger.warning(f"overview pre-warm {sym} failed: {exc}")
+        return False
+
+
+async def _overview_prewarm() -> None:
+    """Background loop: keep the curated ~35 Overviews warm. Runs ~every 6h; most
+    cycles do nothing because the 7-day cache is still fresh."""
+    import research_gen
+    await asyncio.sleep(150)               # let the universe + featured set load first
+    while True:
+        try:
+            if research_gen.available() and _universe_data:
+                warmed = 0
+                for t in _ensure_featured():
+                    sym = t.get("ticker")
+                    if not sym:
+                        continue
+                    if await _prewarm_one_overview(sym):
+                        warmed += 1
+                        await asyncio.sleep(3)   # gentle pacing — no burst
+                if warmed:
+                    logger.info(f"🔥 Overview pre-warm: refreshed {warmed} curated overviews")
+        except Exception as exc:
+            logger.warning(f"overview pre-warm cycle failed: {exc}")
+        await asyncio.sleep(6 * 3600)      # every 6h
+
+
 # ── Lifespan ──────────────────────────────────────────────────────────
 
 @asynccontextmanager
@@ -661,6 +728,7 @@ async def lifespan(app: FastAPI):
         asyncio.create_task(_yf_concurrent_load()),
         asyncio.create_task(_tech_refresh()),
         asyncio.create_task(_desk_publisher()),     # freeze pre/post editions
+        asyncio.create_task(_overview_prewarm()),   # keep curated Overviews warm
     ]
     yield
     for t in tasks:
