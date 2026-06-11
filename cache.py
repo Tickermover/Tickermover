@@ -67,15 +67,28 @@ class SmartCache:
                 if v.get("expires_at", 0) > now + 60   # at least 60s left
             }
             p.write_text(json.dumps(to_save, default=str), encoding="utf-8")
-            logger.debug(f"Cache saved {len(to_save)} entries → {p}")
+            try:
+                _sz = p.stat().st_size
+            except Exception:
+                _sz = -1
+            logger.info(f"💾 Cache saved {len(to_save)} entries ({_sz} bytes) → {p}")
         except Exception as e:
-            logger.warning(f"Cache disk-save failed: {e}")
+            logger.warning(f"Cache disk-save failed ({self._disk_path}): {e}")
 
     def _load_disk(self) -> None:
         try:
             p = Path(self._disk_path)
             if not p.exists():
+                # Explicit so a deploy log shows WHERE we looked — distinguishes
+                # "volume not mounted / wrong path" from "file exists but stale".
+                logger.warning(f"📂 Cache disk file NOT FOUND at {p} (cold start; "
+                               f"will be written on first save — if it never appears, "
+                               f"the volume isn't mounted/writable at that path)")
                 return
+            try:
+                _sz = p.stat().st_size
+            except Exception:
+                _sz = -1
             raw = json.loads(p.read_text(encoding="utf-8"))
             now = time.time()
             loaded = 0
@@ -83,9 +96,10 @@ class SmartCache:
                 if isinstance(v, dict) and v.get("expires_at", 0) > now:
                     self._store[k] = v
                     loaded += 1
-            logger.info(f"Cache loaded {loaded} valid entries from {p}")
+            logger.info(f"📂 Cache loaded {loaded}/{len(raw)} valid entries "
+                        f"({_sz} bytes) from {p}")
         except Exception as e:
-            logger.warning(f"Cache disk-load failed: {e}")
+            logger.warning(f"Cache disk-load failed ({self._disk_path}): {e}")
 
     # ── Stats ────────────────────────────────────────────────────────
 
