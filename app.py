@@ -563,9 +563,11 @@ def _check_research_caches() -> None:
     for table, ddl in _CACHE_TABLE_SQL.items():
         try:
             with httpx.Client(timeout=6) as c:
+                # select=* (not a hardcoded column) so the probe works regardless
+                # of each table's schema — desk_report/app_kv have no `ticker`.
                 r = c.get(f"{url}/rest/v1/{table}",
                           headers={**headers, "Prefer": "count=none"},
-                          params={"select": "ticker", "limit": "1"})
+                          params={"select": "*", "limit": "1"})
             if r.status_code == 200:
                 logger.info(f"✅ AI cache table '{table}' reachable (durable across redeploys).")
             elif r.status_code in (404, 400) or "does not exist" in r.text.lower():
