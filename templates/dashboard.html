@@ -5447,10 +5447,10 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
    Overview's summary ribbon-card doesn't repeat it — it shows the verdict +
    live price + the stat strip. */
 /* Top row: Alpha Score (left) + live price (right); verdict reads full-width below. */
-#ts-drawer .ov-headtop{display:flex;align-items:stretch;gap:14px;flex-wrap:wrap;margin-bottom:14px}
+#ts-drawer .ov-headtop{display:flex;align-items:stretch;gap:10px;flex-wrap:wrap;margin-bottom:9px}
 /* Alpha Score + price as color-tinted pills: score tinted by strength, price by
    change direction. Soft fill + matching border. */
-#ts-drawer .ov-score,#ts-drawer .ov-pricebox{border:1px solid rgba(15,23,42,.06);border-radius:14px;padding:10px 15px;background:rgba(15,23,42,.03)}
+#ts-drawer .ov-score,#ts-drawer .ov-pricebox{border:1px solid rgba(15,23,42,.06);border-radius:12px;padding:7px 13px;background:rgba(15,23,42,.03)}
 #ts-drawer .ov-score{display:flex;align-items:center;gap:11px}
 #ts-drawer .ov-score.ov-score-pos{background:rgba(22,163,74,.09);border-color:rgba(22,163,74,.28)}
 #ts-drawer .ov-score.ov-score-neu{background:rgba(41,112,255,.09);border-color:rgba(41,112,255,.28)}
@@ -5458,7 +5458,7 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 #ts-drawer .ov-score.ov-score-neg{background:rgba(220,38,38,.08);border-color:rgba(220,38,38,.26)}
 #ts-drawer .ov-pricebox.pb-up{background:rgba(22,163,74,.09);border-color:rgba(22,163,74,.26)}
 #ts-drawer .ov-pricebox.pb-dn{background:rgba(220,38,38,.08);border-color:rgba(220,38,38,.24)}
-#ts-drawer .ov-score-n{font-family:'JetBrains Mono',monospace;font-size:34px;font-weight:800;line-height:1;letter-spacing:-.02em}
+#ts-drawer .ov-score-n{font-family:'JetBrains Mono',monospace;font-size:25px;font-weight:800;line-height:1;letter-spacing:-.02em}
 #ts-drawer .ov-score-meta{display:flex;flex-direction:column;gap:2px}
 #ts-drawer .ov-score-l{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--grey-3);font-weight:700}
 #ts-drawer .ov-score-g{font-size:11px;font-weight:800;color:#475569}
@@ -5469,21 +5469,21 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 #ts-drawer .ov-score-prov .ov-score-n{color:#b45309!important}
 #ts-drawer .ov-score-ast{font-size:16px;font-weight:800;color:#d97706;vertical-align:super;margin-left:1px}
 #ts-drawer .ov-score-prov .ov-score-g{color:#b45309;font-weight:700}
-#ts-drawer .ov-headline{font-family:var(--font-head);font-weight:600;font-size:clamp(16px,1.9vw,20px);line-height:1.3;letter-spacing:-.01em;color:#0A0A0A;max-width:780px}
+#ts-drawer .ov-headline{font-family:var(--font-head);font-weight:600;font-size:clamp(14px,1.5vw,16px);line-height:1.25;letter-spacing:-.01em;color:#0A0A0A;max-width:780px}
 #ts-drawer .ov-headline b{color:#0040c1;font-weight:600}
 #ts-drawer .ov-pricebox{margin-left:auto;text-align:right;flex:none}
-#ts-drawer .ov-price{font-family:'JetBrains Mono',monospace;font-weight:800;font-size:30px;line-height:1;color:#0A0A0A}
-#ts-drawer .ov-chg{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;margin-top:5px}
+#ts-drawer .ov-price{font-family:'JetBrains Mono',monospace;font-weight:800;font-size:23px;line-height:1;color:#0A0A0A}
+#ts-drawer .ov-chg{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;margin-top:3px}
 #ts-drawer .ov-chg.up{color:var(--up)} #ts-drawer .ov-chg.dn{color:var(--down)}
 #ts-drawer .ov-verdict{margin-top:18px;font-family:var(--font-head);font-weight:500;font-size:clamp(17px,2.4vw,21px);line-height:1.42;color:#1e293b;max-width:760px}
 #ts-drawer .ov-verdict b{color:#0040c1;font-weight:600}
 /* 6-stat strip */
-#ts-drawer .ov-strip{display:grid;grid-template-columns:repeat(6,1fr);gap:1px;background:var(--hair);border:1px solid var(--hair);border-radius:13px;overflow:hidden;margin-top:20px}
+#ts-drawer .ov-strip{display:grid;grid-template-columns:repeat(6,1fr);gap:1px;background:var(--hair);border:1px solid var(--hair);border-radius:13px;overflow:hidden;margin-top:11px}
 @media(max-width:760px){#ts-drawer .ov-strip{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:430px){#ts-drawer .ov-strip{grid-template-columns:repeat(2,1fr)}}
-#ts-drawer .ov-stat{background:#fff;padding:13px 14px 11px}
+#ts-drawer .ov-stat{background:#fff;padding:9px 12px 8px}
 #ts-drawer .ov-stat .k{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--grey-3)}
-#ts-drawer .ov-stat .v{font-family:'JetBrains Mono',monospace;font-size:19px;font-weight:800;color:#0A0A0A;margin-top:6px;line-height:1}
+#ts-drawer .ov-stat .v{font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:800;color:#0A0A0A;margin-top:4px;line-height:1}
 #ts-drawer .ov-stat .v.pos{color:var(--up)} #ts-drawer .ov-stat .v.neg{color:var(--down)} #ts-drawer .ov-stat .v.amb{color:#b4780a}
 #ts-drawer .ov-stat .sub{font-size:10.5px;color:var(--grey-2);margin-top:3px}
 /* numbered section divider */
