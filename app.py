@@ -6494,9 +6494,14 @@ async def api_featured(n: int = None):
         logger.info(f"⭐ Featured set: {len(_daily_featured)} curated names for {today_str} "
                     f"({len(hot_syms)} strict hot + {len(eligible)} eligible, backfilled to {limit})")
 
+    # "Prime Opportunities" — the strict high-conviction subset of the pool
+    # (same bar as the Hot List). Surfaced with a badge among the featured names.
+    prime_syms = [t.get("ticker") for t in _daily_featured if _is_hot_eligible(t)]
     return JSONResponse(_clean({
         "featured": _daily_featured,
+        "prime":    prime_syms,
         "count":    len(_daily_featured),
+        "prime_count": len(prime_syms),
         "universe_total": len(_universe_data),
     }))
 

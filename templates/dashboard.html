@@ -3388,6 +3388,10 @@ html.v2-dark .v2-mp-mini-lbl{color:#cbd5e1}
 .ce-mq-chip.rep{color:#0a7d33}.ce-mq-chip.soon{color:#0040c1}
 .ce-mq-chip.rep:hover,.ce-mq-chip.soon:hover,.ce-mq-chip.sel{filter:none;opacity:1}
 .ce-mq-chip.sel{color:#0040c1}
+/* Prime Opportunities — strict high-conviction subset; gold ★ before the logo. */
+.ce-mq-chip.prime{color:#0f172a}
+.ce-mq-chip.prime::before{content:"\2605";color:#e0a000;font-size:.82em;margin-right:.1em;
+  filter:drop-shadow(0 1px 2px rgba(224,160,0,.35))}
 .ce-mq-cap{text-align:center;font-size:12.5px;font-weight:600;color:#94a3b8;margin-top:6px;padding:0 12px}
 @media(prefers-reduced-motion:reduce){.ce-mq-track{animation:none}}
 .ce-cloud::-webkit-scrollbar{width:8px}.ce-cloud::-webkit-scrollbar-thumb{background:rgba(10,10,10,.15);border-radius:8px}
@@ -9195,12 +9199,17 @@ function ceBuildCloud(){
     .filter(t => t && t.ticker && !flagged.has(t.ticker));
   if (!backdrop.length) backdrop = all.filter(t => !flagged.has(t.ticker)).sort((a, b) => score(b) - score(a)).slice(0, CE_BACKDROP_MAX);
 
-  // Display order: actionable event names first, then the strongest names.
-  const display = [...rep, ...soon, ...backdrop];
+  // Prime Opportunities = the strict high-conviction subset of the pool. Lead
+  // with them (after event names) and badge with a ★ so they stand out.
+  const isPrime = t => window._featuredPrime && window._featuredPrime.has(t.ticker);
+  const primeNames = backdrop.filter(isPrime);
+  const others     = backdrop.filter(t => !isPrime(t));
+  // Display order: event names → prime opportunities → the rest of the pool.
+  const display = [...rep, ...soon, ...primeNames, ...others];
 
-  const chip = t => '<button class="ce-mq-chip ' + evCls(t) + '" data-tic="' + t.ticker +
+  const chip = t => '<button class="ce-mq-chip ' + evCls(t) + (isPrime(t) ? ' prime' : '') + '" data-tic="' + t.ticker +
     '" data-nm="' + v2EscHTML((t.name || '').toLowerCase()) + '" onclick="ceSelectTicker(\'' + t.ticker + '\')" title="' +
-    v2EscHTML(t.name || t.ticker) + (hint(t) ? ' · ' + hint(t) : '') + '">' +
+    v2EscHTML(t.name || t.ticker) + (isPrime(t) ? ' · Prime Opportunity' : '') + (hint(t) ? ' · ' + hint(t) : '') + '">' +
     logoBox(t.ticker) + '<span class="ce-pill-t">' + t.ticker + '</span>' + (hint(t) ? '<i>' + hint(t) + '</i>' : '') + '</button>';
 
   // Two rows drifting opposite directions; split alternately so both stay full.
@@ -13615,6 +13624,7 @@ function ensureFeatured(){
     .then(d => {
       window._featuredArr   = (d.featured || []).filter(t => t && t.ticker);
       window._featuredSet   = new Set(window._featuredArr.map(t => t.ticker));
+      window._featuredPrime = new Set(d.prime || []);   // strict high-conviction subset
       window._featuredTotal = d.universe_total || 0;
       return window._featuredArr;
     })
