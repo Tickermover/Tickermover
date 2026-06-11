@@ -279,9 +279,8 @@ def _overview_prompt(ticker: str, t: dict) -> str:
         "timeframe (e.g. **Next quarter**, **H2 2026**, **Ongoing**).\n"
         "4. '## Bear case' — 3-5 specific risk bullets (valuation, concentration, "
         "competition, dilution, execution).\n"
-        "5. '## Bottom line' — 2-3 sentences ending in the one honest question to answer "
-        "before buying.\n"
-        "No '## Sources' section, no inline links. Be specific and concrete; no filler."
+        "No '## Sources' or '## Bottom line' section, no inline links. Be specific "
+        "and concrete; no filler."
     )
 
 
