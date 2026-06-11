@@ -5995,11 +5995,12 @@ html.v2-dark body.v2 .v2-topbar .v2-search,body.v2 .v2-topbar .v2-search{backgro
 html.v2-dark body.v2 .v2-topbar .v2-search-ph,body.v2 .v2-topbar .v2-search-ph{color:#94a3b8}
 html.v2-dark body.v2 .v2-topbar .v2-burger,body.v2 .v2-topbar .v2-burger{color:#5d6c7b}
 /* index pills in the market-pulse slot */
-body.v2 #v2-mp-topbar-slot{display:flex;gap:5px;align-items:center;min-width:0}
-body.v2 #v2-mp-topbar-slot .idx{display:inline-flex;align-items:center;gap:5px;padding:5px 5px 5px 9px;border-radius:10px;border:1px solid transparent;color:#fff;font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:700;white-space:nowrap;box-shadow:0 5px 13px -6px rgba(0,0,0,.30)}
-body.v2 #v2-mp-topbar-slot .idx .nm{color:rgba(255,255,255,.78);letter-spacing:.02em}
-body.v2 #v2-mp-topbar-slot .idx .px{color:#fff;font-weight:800;font-variant-numeric:tabular-nums}
-body.v2 #v2-mp-topbar-slot .idx .v{background:rgba(255,255,255,.16);border-radius:6px;padding:2px 5px;font-weight:800}
+body.v2 #v2-mp-topbar-slot{display:flex;gap:6px;align-items:stretch;min-width:0}
+body.v2 #v2-mp-topbar-slot .idx{display:inline-flex;flex-direction:column;justify-content:center;gap:2px;padding:5px 11px;border-radius:11px;border:1px solid transparent;color:#fff;font-family:'JetBrains Mono',monospace;white-space:nowrap;box-shadow:0 5px 13px -6px rgba(0,0,0,.30)}
+body.v2 #v2-mp-topbar-slot .idx .nm{font-size:8.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:rgba(255,255,255,.72);line-height:1}
+body.v2 #v2-mp-topbar-slot .idx .rt{display:flex;align-items:center;gap:6px;line-height:1}
+body.v2 #v2-mp-topbar-slot .idx .px{color:#fff;font-weight:800;font-size:13.5px;font-variant-numeric:tabular-nums}
+body.v2 #v2-mp-topbar-slot .idx .v{background:rgba(255,255,255,.18);border-radius:5px;padding:1.5px 5px;font-size:9.5px;font-weight:800}
 body.v2 #v2-mp-topbar-slot .idx .v.up{color:#7be6a0}
 body.v2 #v2-mp-topbar-slot .idx .v.dn{color:#ff8b90}
 body.v2 #v2-mp-topbar-slot .idx.sp{background:linear-gradient(135deg,#2970ff,#0040c1)}
@@ -19896,8 +19897,8 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
       // Compact: whole numbers for the big indices, 2 decimals for small (VIX).
       const pxStr=isFinite(px)?(px>=100?Math.round(px).toLocaleString():px.toFixed(2)):'';
       return '<span class="idx '+tint+'"><span class="nm">'+label+'</span>'+
-        (pxStr?'<span class="px">'+pxStr+'</span>':'')+
-        '<span class="v '+cls+'">'+(v>=0?'+':'')+v.toFixed(2)+'%</span></span>';
+        '<span class="rt">'+(pxStr?'<span class="px">'+pxStr+'</span>':'')+
+        '<span class="v '+cls+'">'+(v>=0?'+':'')+v.toFixed(2)+'%</span></span></span>';
     }).join('');
     const el=document.getElementById('v2-mp-topbar-slot'); if(el) el.innerHTML=html;
   }
