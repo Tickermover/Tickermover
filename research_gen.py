@@ -148,13 +148,12 @@ async def generate_research(ticker: str, ticker_data: dict | None) -> dict:
             # keep the per-note cost down (was 8). 4 searches still cover
             # earnings + guidance + targets + a risk/catalyst sweep.
             #
-            # web_search_20260209 adds DYNAMIC FILTERING on Opus 4.x / Sonnet 4.6
-            # (the models this path runs on via ANTHROPIC_RESEARCH_MODEL): Claude
-            # filters raw search results with code BEFORE they enter the context
-            # window, so we stop paying premium input rates on pages of unfiltered
-            # HTML. Auto-activates, no beta header. This was the single biggest
-            # driver of the Opus/Sonnet input-token bill.
-            {"type": "web_search_20260209", "name": "web_search", "max_uses": 4}
+            # NOTE: web_search_20260209 (dynamic filtering) was tried here to cut
+            # premium input tokens, but its server-side code-filtering step pushed
+            # the web-grounded Opus note past the 180s timeout → notes never
+            # completed. Reverted to the stable 20250305 search. Cost is bounded
+            # instead via max_uses + per-ticker caching in research_store.
+            {"type": "web_search_20250305", "name": "web_search", "max_uses": 4}
         ],
         "messages": [{"role": "user", "content": _prompt(ticker, t)}],
     }

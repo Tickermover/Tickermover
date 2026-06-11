@@ -117,11 +117,10 @@ async def generate_compare_card(ticker: str, ticker_data: dict | None) -> dict:
         "model": _MODEL,
         "max_tokens": 1200,
         "tools": [
-            # web_search_20260209 adds dynamic filtering on Opus 4.x / Sonnet 4.6
-            # (this card runs on the premium ANTHROPIC_RESEARCH_MODEL): search
-            # results are code-filtered before entering context, cutting premium
-            # input-token cost. Auto-activates, no beta header.
-            {"type": "web_search_20260209", "name": "web_search", "max_uses": 3}
+            # Reverted from web_search_20260209 (dynamic filtering): its code-
+            # filtering step risked the same timeout that broke research_gen.
+            # Stable 20250305; cost bounded via max_uses + per-ticker caching.
+            {"type": "web_search_20250305", "name": "web_search", "max_uses": 3}
         ],
         "messages": [{"role": "user", "content": _prompt(ticker, t)}],
     }
