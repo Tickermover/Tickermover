@@ -2559,6 +2559,16 @@ body[data-active-profile="balanced"]     .fund-row:not([data-profiles~="balanced
 body[data-active-profile="conservative"] .fund-row:not([data-profiles~="conservative"]) { display:none; }
 /* Sector filter layered on top of profile filter — both must pass */
 .fund-row.sector-hide{display:none}
+/* Curated featured filter — default view shows only the ~35 featured names so
+   browsing (and the paid AI generation a stock-open triggers) stays on a small,
+   mostly-cached pool. Toggle off to see all; search reaches the full universe
+   regardless. Composes (AND) with the profile + sector filters above. */
+body.v2-featured-only #fund-tbody tr.fund-row:not([data-featured]){display:none!important}
+.v2-featured-toggle{margin-left:auto;font:inherit;font-size:11.5px;font-weight:700;
+  letter-spacing:.01em;color:#b4780a;background:rgba(245,166,35,.10);
+  border:1px solid rgba(245,166,35,.32);border-radius:999px;padding:5px 13px;cursor:pointer;
+  white-space:nowrap;transition:background .14s}
+.v2-featured-toggle:hover{background:rgba(245,166,35,.18)}
 
 /* Clear-filter pill above the Universe table */
 .v2-uni-sector-pill{
@@ -8653,20 +8663,22 @@ function v2SyncUniverseTally(){
   // Cyclical' when there were actually 2 matching rows.
   const prof = (typeof v2CurrentProfile === 'function') ? v2CurrentProfile() : 'aggressive';
   const sector = document.body.getAttribute('data-active-sector');
+  const featOnly = document.body.classList.contains('v2-featured-only');
   let visible = 0, total = 0;
   tbody.querySelectorAll('.fund-row').forEach(r => {
     total += 1;
     const profSet = (r.dataset.profiles || '').split(' ').filter(Boolean);
     const profOk  = !profSet.length || profSet.includes(prof);
     const sectorOk = !r.classList.contains('sector-hide');
-    if (profOk && sectorOk) visible += 1;
+    const featOk   = !featOnly || r.hasAttribute('data-featured');
+    if (profOk && sectorOk && featOk) visible += 1;
   });
-  // When no sector filter is active and the backend exposed profile_counts,
-  // prefer THAT number so this tally agrees with the picker dropdown
-  // (the 118 vs 153 mismatch the user reported). With a sector filter on,
-  // we must use the DOM-counted value (profile_counts is universe-wide).
+  // When no sector/featured filter is active and the backend exposed
+  // profile_counts, prefer THAT number so this tally agrees with the picker
+  // dropdown. With a sector or featured filter on, the universe-wide
+  // profile_counts no longer applies — use the DOM-counted value.
   const counts = (window.__AH_DATA__ && window.__AH_DATA__.profile_counts) || null;
-  if (!sector && counts && counts[prof] != null) visible = counts[prof];
+  if (!sector && !featOnly && counts && counts[prof] != null) visible = counts[prof];
   const profLbl = prof === 'aggressive' ? 'aggressive view'
                 : prof === 'balanced'   ? 'balanced view'
                 : prof === 'conservative' ? 'conservative view' : prof;
@@ -13456,7 +13468,7 @@ function renderFundamentals(tickers) {
     const tgtMean2 = parseFloat(t.target_mean || t.street_target || 0);
     const upsidePct = price > 0 && tgtMean2 > 0 ? ((tgtMean2 - price)/price*100) : null;
     const _profiles = Array.isArray(t.profiles) ? t.profiles.join(' ') : '';
-    return `<tr class="fund-row"
+    return `<tr class="fund-row"${(window._featuredSet && window._featuredSet.has(t.ticker)) ? ' data-featured' : ''}
          data-ticker="${t.ticker}"
          data-name="${(t.name || '').replace(/"/g, '')}"
          data-sector="${sector}"
@@ -13537,9 +13549,78 @@ function renderFundamentals(tickers) {
       tallyEl.textContent = `${cards.length} stocks${_profLabel}`;
       window._fundChunkRaf = null;
       try { initColResizers(document.querySelector('#fd-grid .fund-list')); } catch(e){}
+      // Curated featured view: load the ~35-name set (once) and tag rows so the
+      // default browse universe is small + cached. Idempotent on refreshes.
+      try { if (typeof loadFeaturedSet === 'function') loadFeaturedSet(); } catch(e){}
     }
   }
   _renderChunk();
+}
+
+/* ----------------------------------------------------------
+   CURATED FEATURED VIEW — default the screener to ~35 names
+   Concentrates browsing (and the paid AI generation a stock-open
+   triggers) on a small, mostly-cached pool. Search (ceSearch) is
+   independent and still reaches the full universe.
+   ---------------------------------------------------------- */
+window._featuredSet = window._featuredSet || new Set();
+let _featuredLoaded = false;
+
+async function loadFeaturedSet(){
+  try {
+    const r = await fetch('/api/featured', {headers:{Authorization:'Bearer '+(localStorage.getItem('ah_token')||'')}});
+    if (!r.ok) throw new Error('HTTP '+r.status);
+    const d = await r.json();
+    const syms = (d.featured || []).map(t => t && t.ticker).filter(Boolean);
+    if (!syms.length) throw new Error('empty featured set');
+    window._featuredSet = new Set(syms);
+    _applyFeaturedTags();                         // tag rows first…
+    if (!_featuredLoaded) document.body.classList.add('v2-featured-only');  // …then narrow the view (no empty flash)
+    _featuredLoaded = true;
+    _ensureFeaturedToggle(d.universe_total || 0, syms.length);
+    if (typeof v2SyncUniverseTally === 'function') v2SyncUniverseTally();
+  } catch(e) {
+    // If the featured set can't load, don't trap the user on an empty table.
+    console.warn('[PD] featured set load failed:', e.message);
+    document.body.classList.remove('v2-featured-only');
+  }
+}
+
+function _applyFeaturedTags(){
+  document.querySelectorAll('#fund-tbody tr.fund-row').forEach(r => {
+    if (window._featuredSet.has(r.dataset.ticker)) r.setAttribute('data-featured','');
+    else r.removeAttribute('data-featured');
+  });
+  if (typeof v2SyncUniverseTally === 'function') v2SyncUniverseTally();
+}
+
+function _ensureFeaturedToggle(total, n){
+  let btn = document.getElementById('v2-featured-toggle');
+  if (!btn){
+    const toolbar = document.querySelector('#panel-fund .fd-toolbar');
+    if (!toolbar) return;
+    btn = document.createElement('button');
+    btn.id = 'v2-featured-toggle';
+    btn.className = 'v2-featured-toggle';
+    btn.onclick = _toggleFeaturedOnly;
+    toolbar.appendChild(btn);
+  }
+  btn.dataset.total = total; btn.dataset.n = n;
+  _updateFeaturedToggleLabel();
+}
+
+function _updateFeaturedToggleLabel(){
+  const btn = document.getElementById('v2-featured-toggle'); if (!btn) return;
+  const on = document.body.classList.contains('v2-featured-only');
+  const n = btn.dataset.n || '', total = btn.dataset.total || '';
+  btn.textContent = on ? ('★ Featured ' + n + '  ·  Show all ' + total)
+                       : ('Showing all ' + total + '  ·  ★ Featured only');
+}
+
+function _toggleFeaturedOnly(){
+  document.body.classList.toggle('v2-featured-only');
+  _updateFeaturedToggleLabel();
+  if (typeof v2SyncUniverseTally === 'function') v2SyncUniverseTally();
 }
 
 function sortFundList(key) {
