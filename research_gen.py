@@ -28,14 +28,14 @@ _MODEL = (
     or os.environ.get("ANTHROPIC_MODEL")
     or "claude-haiku-4-5-20251001"
 ).strip()
-# Cheap model for the OVERVIEW snapshot that fills the stock page's default
-# "what you'd actually be buying" + risk/catalyst boxes. No web search, small
-# output → ~$0.01/stock on Haiku, vs ~$0.25 for the full web-grounded note.
-# Deliberately NOT the premium research model.
+# Model for the OVERVIEW snapshot that fills the stock page's default boxes:
+# the heading verdict, "what you'd actually be buying" (business), catalysts and
+# risks. Sonnet (not the much pricier Opus, and a step up from Haiku) gives the
+# marquee, user-facing boxes sharper prose. No web search, small output → ~$0.02
+# (₹1.9)/stock, vs ~$0.30 for an Opus web-grounded note. Override via env.
 _OVERVIEW_MODEL = (
     os.environ.get("ANTHROPIC_OVERVIEW_MODEL")
-    or os.environ.get("ANTHROPIC_MODEL")
-    or "claude-haiku-4-5-20251001"
+    or "claude-sonnet-4-6"
 ).strip()
 # Generous default: generation runs as a fire-and-forget background job (not
 # request-bound), and a web-grounded Opus note with up to 8 searches + a 6000-

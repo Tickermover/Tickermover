@@ -12357,59 +12357,6 @@ async function loadOverview(ticker){
     _ovRenderNoteBoxes(parts, render);
   } catch(e){ _ovRenderBusiness(null); _ovRenderRevenue(null); _ovRenderNoteBoxes(null); }
 }
-// ── The Verdict — flagship web-grounded Opus decision read (Pro, on-demand) ──
-// The ONE premium box: pulls live web + Opus to weigh bull vs bear, surface the
-// latest analyst actions, and take a compliant stance (Outperform/Neutral/Avoid).
-// On-demand (button) so the expensive call only fires for stocks the user is
-// seriously evaluating; cached 12h per ticker server-side.
-function _verdictTeaser(tk){
-  tk=(tk||'').toUpperCase();
-  return '<div id="ovVerdict" style="border:1px solid #dbe6fb;border-radius:12px;padding:16px 16px 14px;background:linear-gradient(135deg,#f8fbff,#eef4ff)">'+
-    '<div style="font-size:13px;color:#334155;line-height:1.5;margin-bottom:12px">A <b>web-checked, Opus-grade</b> read on <b>'+_ovEsc(tk)+'</b> — the bull, the bear, what the Street just did, and the one question that decides it.</div>'+
-    '<button onclick="loadVerdict(\''+tk+'\')" style="background:linear-gradient(135deg,#2970ff,#0042c5);color:#fff;border:none;border-radius:10px;padding:10px 16px;font-size:13px;font-weight:800;cursor:pointer">⚡ Get The Verdict — web-checked</button>'+
-    '<div style="font-size:11px;color:#94a3b8;margin-top:8px">Pulls live web sources · ~20–40s</div>'+
-  '</div>';
-}
-async function loadVerdict(ticker){
-  ticker=(ticker||'').toUpperCase();
-  const host=document.getElementById('ovVerdict'); if(!host) return;
-  host.innerHTML='<div class="dd-loading"><span class="dr-spin"></span> Checking the latest web on '+_ovEsc(ticker)+' — earnings, analyst moves, news… (~20–40s)</div>';
-  let tries=0;
-  const poll=async()=>{
-    tries++;
-    try{
-      const r=await fetch('/api/verdict/'+encodeURIComponent(ticker),{headers:{Authorization:'Bearer '+(localStorage.getItem('ah_token')||'')}});
-      const d=await r.json();
-      if(d.status==='ready'){ await renderVerdict(ticker,d); return; }
-      if(d.status==='locked'){ host.innerHTML='<div class="dd-locked">🔒 <b>The Verdict is a Pro feature.</b> <button class="dd-upsell" onclick="if(window.openUpgradeModal)openUpgradeModal()">Upgrade to Pro</button></div>'; return; }
-      if(d.status==='unavailable'){ host.innerHTML='<div class="dd-loading">'+_ovEsc(d.detail||'The Verdict isn’t enabled.')+'</div>'; return; }
-      if(d.last_error){ host.innerHTML='<div class="dd-loading">Couldn’t complete The Verdict — '+_ovEsc(String(d.last_error).slice(0,160))+'</div>'; return; }
-      if(tries<25) setTimeout(poll,3000); else host.innerHTML='<div class="dd-loading">Still working — tap “Get The Verdict” again in a moment.</div>';
-    }catch(e){ host.innerHTML='<div class="dd-loading">Couldn’t load The Verdict. Try again.</div>'; }
-  };
-  poll();
-}
-async function renderVerdict(ticker,d){
-  const host=document.getElementById('ovVerdict'); if(!host) return;
-  const ex=_ovExtractStructured(d.markdown||'');
-  const v=ex.data||{};
-  const stance=String(v.stance||'').trim();
-  const col=/outperform/i.test(stance)?'#0f7d40':/avoid/i.test(stance)?'#c1121f':'#b4780a';
-  const conv=(v.conviction!=null&&!isNaN(parseFloat(v.conviction)))?Math.round(parseFloat(v.conviction)):null;
-  const marked=await _ensureMarked();
-  const render=(md)=>{try{return (marked&&marked.parse)?marked.parse(md||''):_basicMd(md||'');}catch(e){return _basicMd(md||'');}};
-  const parts=_ddSplitSections(ex.md||'');
-  const secHtml=parts.sections.map(s=>'<section class="dd-card" style="margin-top:10px"><h4 style="margin:0 0 6px;font-size:13px;font-weight:800;color:#0f172a">'+_ovEsc(s.title)+'</h4><div class="dd-content">'+render(s.body)+'</div></section>').join('');
-  let html='<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px">'+
-    (stance?'<span style="padding:4px 13px;border-radius:999px;font-weight:800;font-size:12px;letter-spacing:.04em;color:#fff;background:'+col+'">'+_ovEsc(stance)+'</span>':'')+
-    (conv!=null?'<span style="font-size:12px;font-weight:700;color:#475569">'+conv+'% conviction</span>':'')+
-    '<span style="margin-left:auto;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#2970ff">⚡ The Verdict · web-checked</span></div>';
-  if(v.one_liner) html+='<div style="font-size:15px;font-weight:700;color:#0f172a;line-height:1.4;margin-bottom:8px">'+_ovEsc(v.one_liner)+'</div>';
-  html+=secHtml;
-  if(v.decisive_question) html+='<div style="margin-top:12px;border-left:3px solid #2970ff;background:#f3f7ff;border-radius:0 8px 8px 0;padding:10px 14px"><div style="font-size:10.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#2970ff;margin-bottom:4px">The question to answer for yourself</div><div style="font-size:13.5px;color:#0f172a;line-height:1.5">'+_ovEsc(v.decisive_question)+'</div></div>';
-  if(Array.isArray(d.sources)&&d.sources.length){ html+='<div style="margin-top:12px;font-size:11.5px"><b>Sources</b><ol style="margin:6px 0 0;padding-left:18px;color:#475569">'+d.sources.slice(0,12).map(s=>'<li style="margin-bottom:3px"><a href="'+_ovEsc(s.url)+'" target="_blank" rel="noopener" style="color:#2970ff">'+_ovEsc(s.title||s.url)+'</a></li>').join('')+'</ol></div>'; }
-  host.innerHTML=html;
-}
 async function loadDeepDive(ticker){
   // `body` is the note container (#dd-body-…). It's present on surfaces that
   // render the boxed note (the Overview, the stock-sheet tab) but may be absent
@@ -18706,7 +18653,6 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     return _ovHeader(t,full,S)
       + chart
       + _ovSecHead('The six-pillar scorecard', _heroStats(t,S,full))
-      + _ovSecHead('⚡ The Verdict — web-checked decision read', _verdictTeaser(t.ticker))
       + _ovSecHead("What you'd actually be buying", '<div id="ovBiz"><div class="dd-loading"><span class="dr-spin"></span> Compiling the business overview…</div></div>')
       + setup
       + edgeCard
