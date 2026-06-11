@@ -316,11 +316,10 @@ class DataCoordinator:
     # ── AV daily-limit guard ──────────────────────────────────────────
 
     def _av_remaining(self) -> int:
-        today = date.today()
-        if today != self._av_reset_day:
-            self._av_calls_today = 0
-            self._av_reset_day   = today
-        return config.AV_CALLS_PER_DAY - self._av_calls_today
+        # Shared across ALL Alpha Vantage consumers (fundamentals + transcript +
+        # PDF fallback) so the 25/day pool can't be silently overspent.
+        import av_budget
+        return av_budget.remaining()
 
     # ── FINNHUB ───────────────────────────────────────────────────────
 
@@ -772,6 +771,8 @@ class DataCoordinator:
             if not data.get("Symbol"):
                 return {}
 
+            import av_budget
+            av_budget.spend(1)
             self._av_calls_today += 1
             self.api_status["alpha_vantage"]["calls"]          += 1
             self.api_status["alpha_vantage"]["remaining_today"]  = self._av_remaining()

@@ -301,6 +301,18 @@ async def concall_summary(ticker: str, profile_data: str = "", quarter: str | No
     cached = _CONCALL_CACHE.get(ck)
     if cached is not None:
         return cached
+    _kv_key = ck[0] + ":" + ck[1]
+    # Durable L2 (survives redeploys) — concall summaries are built from filings
+    # and rarely change, so a 30-day durable cache avoids re-paying Claude after
+    # every build. Re-warm the in-process cache on a hit.
+    try:
+        from kv_store import store as _kv
+        durable = _kv.get("concall", _kv_key, max_age_s=30 * 24 * 3600)
+        if isinstance(durable, dict):
+            _CONCALL_CACHE[ck] = durable
+            return durable
+    except Exception:
+        pass
     if not ANTHROPIC_KEY:
         return {"available": False, "reason": "disabled",
                 "note": "The AI summary isn't enabled yet (set ANTHROPIC_API_KEY)."}
@@ -351,6 +363,11 @@ async def concall_summary(ticker: str, profile_data: str = "", quarter: str | No
     if src_url:
         parsed["source_url"] = src_url
     _CONCALL_CACHE[ck] = parsed
+    try:
+        from kv_store import store as _kv
+        _kv.set("concall", _kv_key, parsed)   # persist so the next deploy reuses it
+    except Exception:
+        pass
     return parsed
 
 

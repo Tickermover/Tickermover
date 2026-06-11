@@ -534,6 +534,11 @@ _CACHE_TABLE_SQL = {
         "edition_date text, report jsonb default '{}'::jsonb, "
         "updated_at timestamptz not null default now(), primary key (env_id, kind));"
     ),
+    "app_kv": (
+        "create table app_kv (env_id int not null, ns text not null, k text not null, "
+        "v jsonb default '{}'::jsonb, updated_at timestamptz not null default now(), "
+        "primary key (env_id, ns, k));"
+    ),
 }
 
 
@@ -590,6 +595,20 @@ async def lifespan(app: FastAPI):
     # stock gets re-billed after each push. Probe loudly at startup so that
     # failure mode is never invisible again.
     _check_research_caches()
+
+    # ── Unrotated-secret warning ───────────────────────────────────────
+    # Flag any sensitive API key still served from the committed fallback in
+    # config.py (env var not set) — those keys are live-in-repo and should be
+    # rotated on the provider dashboard + set as Railway env vars.
+    _SENSITIVE_KEYS = {"FMP_API_KEY", "ALPACA_KEY_ID", "ALPACA_SECRET_KEY",
+                       "FINNHUB_KEY", "ALPHA_VANTAGE_KEY", "SEC_API_KEY", "APEWISDOM_KEY"}
+    _unrotated = sorted(_SENSITIVE_KEYS.intersection(getattr(config, "KEYS_ON_FALLBACK", [])))
+    if _unrotated:
+        logger.warning(
+            "🔑 SECURITY: %d API key(s) using the committed fallback (set these as env "
+            "vars and rotate them on the provider dashboard — they are exposed in git): %s",
+            len(_unrotated), ", ".join(_unrotated),
+        )
 
     # ── Instant startup restore from disk cache ────────────────────────
     # If Railway just redeployed, this makes the dashboard show data
@@ -3251,6 +3270,8 @@ async def api_pdf(symbol: str, debug: int = 0):
         # endpoint.
         if not pts and config.FMP_API_KEY:
             try:
+                try: await coordinator._fmp_limiter.wait()   # respect the 280/min FMP budget
+                except Exception: pass
                 async with httpx.AsyncClient(timeout=10) as _c:
                     stable_url = (
                         "https://financialmodelingprep.com/stable/historical-price-eod/light"
@@ -3313,7 +3334,9 @@ async def api_pdf(symbol: str, debug: int = 0):
         # 6th-layer fallback: Alpha Vantage TIME_SERIES_DAILY using the key
         # we already have for Briefings. Free tier 25 calls/day total — so
         # only triggers on the rare ticker where every other source failed.
-        if not pts and config.ALPHA_VANTAGE_KEY:
+        # Shares the 25/day pool with fundamentals + transcripts via av_budget.
+        import av_budget as _avb
+        if not pts and config.ALPHA_VANTAGE_KEY and _avb.try_spend(1):
             try:
                 async with httpx.AsyncClient(timeout=15) as _c:
                     av_url = (
@@ -3355,6 +3378,8 @@ async def api_pdf(symbol: str, debug: int = 0):
     own_cached = cache.get(own_ck)
     if not own_cached and config.FMP_API_KEY:
         try:
+            try: await coordinator._fmp_limiter.wait()   # respect the 280/min FMP budget
+            except Exception: pass
             async with httpx.AsyncClient(timeout=10) as _c:
                 prof_url = f"https://financialmodelingprep.com/stable/profile?symbol={sym}&apikey={config.FMP_API_KEY}"
                 r = await _c.get(prof_url)

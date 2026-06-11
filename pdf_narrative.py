@@ -406,6 +406,16 @@ async def build_narrative(ticker: str, t: dict, event_row: dict | None) -> dict 
     cached = _CACHE.get(sym)
     if cached and now - cached[0] < _CACHE_TTL:
         return cached[1]
+    # Durable L2 (survives redeploys) — avoids re-paying 4 Haiku calls/ticker on
+    # every build. Re-warm the in-process cache on a hit.
+    try:
+        from kv_store import store as _kv
+        durable = _kv.get("pdf_narrative", sym, max_age_s=_CACHE_TTL)
+        if durable:
+            _CACHE[sym] = (now, durable)
+            return durable
+    except Exception:
+        pass
 
     metrics_block = _format_metrics(t)
     event_block   = _format_event(event_row)
@@ -489,4 +499,9 @@ async def build_narrative(ticker: str, t: dict, event_row: dict | None) -> dict 
     if len(_CACHE) > 200:
         oldest_key = min(_CACHE, key=lambda k: _CACHE[k][0])
         _CACHE.pop(oldest_key, None)
+    try:
+        from kv_store import store as _kv
+        _kv.set("pdf_narrative", sym, out)   # persist so the next deploy reuses it
+    except Exception:
+        pass
     return out

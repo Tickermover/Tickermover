@@ -6,8 +6,16 @@ Locally: edit the fallback strings below, or create a .env file.
 """
 import os
 
+# Tracks which keys fell back to a committed default (env var not set) so the app
+# can warn at startup that those secrets are unrotated / live-in-repo.
+KEYS_ON_FALLBACK: list[str] = []
+
 def _env(key: str, default: str = "") -> str:
-    return os.environ.get(key, default).strip()
+    val = os.environ.get(key)
+    if val is None and default:
+        KEYS_ON_FALLBACK.append(key)
+        return default.strip()
+    return (val if val is not None else default).strip()
 
 # ── Alpaca Markets — FREE primary price + candle source ──────────────────────
 # Free real-time IEX data + unlimited REST calls — no credit card needed.

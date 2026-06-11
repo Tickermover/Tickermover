@@ -96,7 +96,12 @@ async def _fetch_av_transcript(ticker: str, quarter: str | None = None) -> dict 
         return None
     quarters_to_try = [quarter] if quarter else _recent_quarters(4)
     last_info = None
+    import av_budget
     for q in quarters_to_try:
+        # Share the 25/day Alpha Vantage pool with fundamentals + PDF fallback.
+        if not av_budget.try_spend(1):
+            logger.warning(f"event_intel: AV daily budget exhausted — skipping transcript {ticker} {q}")
+            break
         params = {
             "function": "EARNINGS_CALL_TRANSCRIPT",
             "symbol":   ticker.upper(),
