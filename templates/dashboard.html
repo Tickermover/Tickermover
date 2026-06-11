@@ -18032,15 +18032,12 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     const pc=document.getElementById('picksCount');
     // Universe still loading → warming-up state.
     if(!sel.length){ if(pc) pc.textContent='— picks'; table.innerHTML=headRow+'<div class="dm-warm"><div class="emoji">⏳</div><div style="font-weight:700">Warming up — fetching prices for the universe…</div></div>'; return; }
-    // Prefer genuinely high-conviction names (Alpha above 74). When none clear
-    // that bar, don't show a barren panel — fall back to the strongest names in
-    // the field with an honest note, so Prime Opportunities is always useful.
-    const ALPHA_MIN=74;
-    let hot=sel.filter(t=>Math.round(parseFloat(t.smart_score!=null?t.smart_score:(t.pop_score||0)))>ALPHA_MIN);
-    let softFallback=false;
-    if(!hot.length){ hot=sel.slice(0, PICKS_SHOWN); softFallback=true; }
-    if(pc) pc.textContent=hot.length+' pick'+(hot.length===1?'':'s')+(softFallback?' · watch':'');
-    if(!hot.length){ table.innerHTML=headRow+'<div class="dm-empty"><div class="emoji">🛡️</div><div style="font-weight:700">No opportunities to show yet</div><div style="font-size:12.5px;margin-top:6px;max-width:440px;margin-left:auto;margin-right:auto;line-height:1.5">Scores are still refreshing — check back in a moment.</div></div>'; return; }
+    // No conviction threshold — always surface the strongest names in the field
+    // (selectHot already returns the top PICKS_SHOWN by Alpha). The only empty
+    // state is while the universe is still loading.
+    const hot=sel;
+    if(pc) pc.textContent=hot.length+' pick'+(hot.length===1?'':'s');
+    if(!hot.length){ table.innerHTML=headRow+'<div class="dm-empty"><div class="emoji">⏳</div><div style="font-weight:700">Loading opportunities…</div><div style="font-size:12.5px;margin-top:6px;max-width:440px;margin-left:auto;margin-right:auto;line-height:1.5">Scores are still refreshing — check back in a moment.</div></div>'; return; }
     const rows=hot.map((t,i)=>{
       const pop=Math.round(parseFloat(t.smart_score!=null?t.smart_score:(t.pop_score||0)));
       const chg=parseFloat(t.change_pct||0), chg3m=parseFloat(t.momentum_3m||t.momentum_1m||0);
@@ -18062,10 +18059,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
         '<span class="act-col"><button class="dm-btn">Open →</button></span>'+
       '</div>';
     }).join('');
-    const softNote = softFallback
-      ? '<div class="dm-softnote">🛡️ Nothing clears our Alpha&nbsp;74 conviction bar right now — these are the <strong>strongest names in the field</strong> as scores refresh. Cash is a position too.</div>'
-      : '';
-    table.innerHTML=headRow+softNote+rows;
+    table.innerHTML=headRow+rows;
   }
 
   /* ── drawer ── */
