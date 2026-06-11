@@ -258,7 +258,9 @@ def _overview_prompt(ticker: str, t: dict) -> str:
         "{\n"
         '  "key_points": ["3 punchy, decision-relevant takeaways, max ~13 words each — the things that matter most about this stock right now"],\n'
         '  "edge": {\n'
-        '    "the_catch": {"label": "the single biggest risk to the investment in 2-5 words", "detail": "one short sentence (max ~18 words) on why it matters"}\n'
+        '    "setup_read": {"label": "characterize the setup in 2-3 words MAX, ~20 chars (e.g. Asymmetric bet / Priced for perfection / Quiet compounder)", "detail": "one short sentence (max ~16 words) on why"},\n'
+        '    "thesis_confidence": {"label": "exactly one of: Strong | Moderate | Speculative", "detail": "one short sentence on why the bull case is/ isn\'t solid"},\n'
+        '    "the_catch": {"label": "the single biggest risk in 2-4 words", "detail": "one short sentence (max ~18 words) on why it matters"}\n'
         '  },\n'
         '  "business": {\n'
         '    "intro": "1-2 sentence plain-English summary of what the company does / how it makes money",\n'
