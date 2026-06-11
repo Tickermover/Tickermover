@@ -529,6 +529,11 @@ _CACHE_TABLE_SQL = {
         "sources jsonb default '[]'::jsonb, status text default 'ready', "
         "primary key (env_id, ticker));"
     ),
+    "desk_report": (
+        "create table desk_report (env_id int not null, kind text not null, "
+        "edition_date text, report jsonb default '{}'::jsonb, "
+        "updated_at timestamptz not null default now(), primary key (env_id, kind));"
+    ),
 }
 
 
@@ -3094,17 +3099,36 @@ async def _build_desk_report(kind: str, edition_date) -> dict:
     return data
 
 
+def _desk_is_current(doc, ed) -> bool:
+    return bool(doc and isinstance(doc, dict)
+                and doc.get("edition", {}).get("date") == ed.isoformat())
+
+
 async def _publish_desk(kind: str, force: bool = False) -> dict:
     """Return the current edition for `kind`, freezing a fresh snapshot when the
-    stored edition is stale (i.e., a new edition has just come due)."""
+    stored edition is stale (i.e., a new edition has just come due).
+
+    Durability: editions are persisted in Supabase (desk_store) so a Railway
+    redeploy reuses the current edition instead of paying to regenerate the AI
+    narrative on every build. L1 = in-memory cache, L2 = desk_store."""
+    from desk_store import store as _dstore
     ed  = _edition_date_for(kind)
     key = _desk_key(kind)
     cur = cache.get(key)
-    if (not force and cur and isinstance(cur, dict)
-            and cur.get("edition", {}).get("date") == ed.isoformat()):
+    if not force and _desk_is_current(cur, ed):
         return cur
+    # L1 missed (e.g. just redeployed) — try the durable store before paying for AI.
+    if not force:
+        durable = _dstore.get(kind)
+        if _desk_is_current(durable, ed):
+            cache.set(key, durable, _DESK_TTL)    # re-warm L1
+            return durable
     report = await _build_desk_report(kind, ed)
     cache.set(key, report, _DESK_TTL)
+    try:
+        _dstore.save(kind, report)                # persist so the next deploy reuses it
+    except Exception as exc:
+        logger.warning(f"desk {kind} durable save failed: {exc}")
     logger.info("🗞️  Published %s desk edition for %s", kind, ed.isoformat())
     return report
 
