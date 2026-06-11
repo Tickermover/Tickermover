@@ -6459,18 +6459,40 @@ async def api_featured(n: int = None):
     if _daily_featured_date != today_str or len(_daily_featured) == 0:
         def _score(t):
             return float(t.get("smart_score") or t.get("pop_score") or 0)
-        eligible = [t for t in _universe_data if _is_featured_eligible(t)]
-        # Strict Hot-List names first (high conviction), then the rest by score —
-        # deduped, so the curated surface leads with our best signal.
+
+        def _cap_ok(t):
+            # Same cap guardrails as the featured/hot bar: no Mega Cap, above the
+            # small-cap floor — but no grade/score/confidence requirement.
+            mc = t.get("market_cap"); tier = t.get("market_cap_tier", "")
+            if mc is not None and mc >= MEGA_CAP_CUTOFF:
+                return False
+            if tier == "Mega Cap":
+                return False
+            if mc is not None:
+                floor = 250e6 if tier in ("Small Cap", "Micro Cap") else MIN_MCAP_FILTER
+                if mc < floor:
+                    return False
+            return True
+
+        ranked   = sorted([t for t in _universe_data if t.get("ticker")], key=_score, reverse=True)
+        eligible = [t for t in ranked if _is_featured_eligible(t)]
+        # Strict Hot-List names lead (high conviction), then the rest of the
+        # featured-eligible pool, both already in score order.
         hot_syms = {t.get("ticker") for t in eligible if _is_hot_eligible(t)}
-        leaders  = sorted([t for t in eligible if t.get("ticker") in hot_syms],
-                          key=_score, reverse=True)
-        rest     = sorted([t for t in eligible if t.get("ticker") not in hot_syms],
-                          key=_score, reverse=True)
-        _daily_featured      = (leaders + rest)[:limit]
+        leaders  = [t for t in eligible if t.get("ticker") in hot_syms]
+        rest     = [t for t in eligible if t.get("ticker") not in hot_syms]
+        pool     = leaders + rest
+        # Backfill to FEATURED_N with the next-best quality names (cap guardrails
+        # only) so the curated surface is reliably ~limit even on days when few
+        # names clear the strict Grade A/B + confidence bar — avoids the sparse,
+        # duplicate-looking marquee.
+        if len(pool) < limit:
+            have = {t.get("ticker") for t in pool}
+            pool += [t for t in ranked if t.get("ticker") not in have and _cap_ok(t)]
+        _daily_featured      = pool[:limit]
         _daily_featured_date = today_str
         logger.info(f"⭐ Featured set: {len(_daily_featured)} curated names for {today_str} "
-                    f"({len(hot_syms)} strict hot + backfill)")
+                    f"({len(hot_syms)} strict hot + {len(eligible)} eligible, backfilled to {limit})")
 
     return JSONResponse(_clean({
         "featured": _daily_featured,
