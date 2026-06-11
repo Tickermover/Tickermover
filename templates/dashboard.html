@@ -384,7 +384,21 @@ tr:hover td{background:rgba(245,166,35,.06)}
 .sizer-sub{font-size:10px;color:var(--muted);margin-top:2px}
 
 /* ====== SECTORS — rich sector map ====== */
-.sec-grid-map{display:grid;grid-template-columns:repeat(auto-fill,minmax(380px,1fr));gap:16px}
+.sec-grid-map{display:grid;grid-template-columns:repeat(auto-fill,minmax(238px,1fr));gap:8px}
+/* ── Sector heat chips (compact navigator, Smart-Screens language) ── */
+.sm-heat{display:flex;align-items:center;gap:10px;text-align:left;cursor:pointer;background:#fff;
+  border:1px solid rgba(10,10,10,.09);border-left:3px solid var(--heat,#94a3b8);border-radius:11px;
+  padding:8px 11px;font-family:inherit;transition:transform .12s,box-shadow .15s,border-color .15s}
+.sm-heat:hover{transform:translateY(-1px);box-shadow:0 8px 20px -12px rgba(10,10,10,.32)}
+.sm-heat.sm-active{box-shadow:0 0 0 2px var(--heat,#2970ff)}
+.smh-score{flex:none;width:34px;height:34px;border-radius:9px;background:var(--heat,#94a3b8);color:#fff;
+  font-family:'JetBrains Mono',monospace;font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center}
+.smh-body{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}
+.smh-name{font-weight:800;font-size:12.5px;color:#0f172a;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.smh-meta{font-size:10.5px;color:#64748b;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.smh-meta b{color:#ef4444}
+html.v2-dark .sm-heat{background:#0f1629;border-color:rgba(255,255,255,.08)}
+html.v2-dark .smh-name{color:#e8edf6}
 /* Legacy sec-card kept for compat */
 .sec-card{background:var(--surf);border:1px solid var(--bdr);border-radius:14px;padding:18px}
 .sec-card h3{font-size:14px;font-weight:700;color:var(--acc2);margin-bottom:4px}
@@ -8654,7 +8668,7 @@ function v2SetSectorFilter(sectorName){
     pill.style.display = '';
   }
   // Highlight the matching sector-map card (sync map ↔ dropdown ↔ table).
-  document.querySelectorAll('#sectors-grid .sm-card').forEach(c => {
+  document.querySelectorAll('#sectors-grid [data-sector]').forEach(c => {
     c.classList.toggle('sm-active', (c.dataset.sector || '').toLowerCase() === nameLower);
   });
   if (typeof v2SyncUniverseTally === 'function') v2SyncUniverseTally();
@@ -8668,7 +8682,7 @@ function v2ClearSectorFilter(){
   const sel = document.getElementById('fd-sector');
   if (sel) sel.value = '';
   // De-highlight every sector-map card.
-  document.querySelectorAll('#sectors-grid .sm-card.sm-active').forEach(c => c.classList.remove('sm-active'));
+  document.querySelectorAll('#sectors-grid [data-sector].sm-active').forEach(c => c.classList.remove('sm-active'));
   if (typeof v2SyncUniverseTally === 'function') v2SyncUniverseTally();
 }
 
@@ -13948,49 +13962,29 @@ function renderSectors(tickers) {
                     : growthTier.includes('High')       ? 'tier-high'
                     : growthTier.includes('Moderate')   ? 'tier-mod' : 'tier-high';
 
-    // Hot-score bar (0-100 → width 0-100%)
     const barW = Math.min(100, Math.round(avgPop));
+    // Heat colour by avg α-Score: green (hot) → lime → amber → slate (cool).
+    const heat = barW >= 68 ? '#16a34a' : barW >= 60 ? '#84cc16' : barW >= 52 ? '#e0a000' : '#94a3b8';
 
-    // Ticker chips — top 8 by pop, rest shown as count
-    const visibleTickers = topTickers.slice(0, 8);
-    const remainCount    = topTickers.length - visibleTickers.length;
-
+    // Thesis + CAGR + leaders move to the hover tooltip — keeps the value
+    // without the bulk. Compact chip leads with the heat score.
+    const leaders = topTickers.slice(0, 6).join(', ');
+    const tipBits = [desc];
+    const facts = [sectorLabel, growthTier, cagr ? 'CAGR ' + cagr : '', mkt].filter(Boolean).join(' · ');
+    if (facts)   tipBits.push(facts);
+    if (leaders) tipBits.push('Leaders: ' + leaders);
+    const tip = tipBits.join('\n\n').replace(/"/g, '&quot;');
     const subAttr = sub.replace(/"/g, '&quot;');
+
     return `
-    <div class="sm-card" data-sector="${subAttr}" onclick="v2SelectSector('${sub.replace(/'/g, "\\'")}')" title="Filter the universe to ${subAttr}">
-      <div class="sm-header">
-        <div class="sm-title">${sub}<span class="sm-drill">Drill in →</span></div>
-        <div class="sm-badges">
-          <span class="sm-sector-badge">${sectorLabel}</span>
-          ${growthTier ? `<span class="sm-tier ${tierClass}">${growthTier}</span>` : ''}
-          ${cagr ? `<span class="sm-cagr">CAGR ${cagr}</span>` : ''}
-          ${mkt  ? `<span class="sm-mkt">${mkt}</span>` : ''}
-        </div>
-      </div>
-
-      <div class="sm-desc">${desc}</div>
-
-      ${tags.length ? `<div class="sm-tags">⚡ ${tags.map(g => `<span class="sm-tag">${g}</span>`).join('')}</div>` : ''}
-
-      <div class="sm-live">
-        <div class="sm-live-row">
-          <div class="sm-chips">
-            ${visibleTickers.map(tk => {
-              const t = stocks.find(s => s.ticker === tk);
-              const cls = t && t.grade === 'A' ? 'chip-hot' : '';
-              return `<span class="sm-chip chip-link ${cls}" title="${t ? t.name || '' : ''}" onclick="event.stopPropagation();openStockModal('${tk}')">${tk}</span>`;
-            }).join('')}
-            ${remainCount > 0 ? `<span class="sm-chip chip-more">+${remainCount}</span>` : ''}
-          </div>
-          <div class="sm-stats">
-            <span class="sm-stat"><b>${stocks.length}</b> stocks</span>
-            ${hotCount ? `<span class="sm-stat hot-stat"><b>${hotCount}</b> 🔥 hot</span>` : ''}
-            <span class="sm-stat">Score avg <b>${barW}</b></span>
-          </div>
-        </div>
-        <div class="sm-bar-wrap"><div class="sm-bar" style="width:${barW}%"></div></div>
-      </div>
-    </div>`;
+    <button class="sm-heat" data-sector="${subAttr}" style="--heat:${heat}"
+            onclick="v2SelectSector('${sub.replace(/'/g, "\\'")}')" title="${tip}">
+      <span class="smh-score">${barW}</span>
+      <span class="smh-body">
+        <span class="smh-name">${sub}</span>
+        <span class="smh-meta">${stocks.length} stocks${hotCount ? ` · <b>${hotCount}</b>🔥` : ''}${cagr ? ` · ${cagr} CAGR` : ''}</span>
+      </span>
+    </button>`;
   }).join('');
 }
 
