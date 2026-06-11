@@ -1228,6 +1228,18 @@ class DataCoordinator:
         cached = self.cache.get(key)
         if cached is not None:
             return cached
+        # Durable L2 (Supabase) — SEC-API.io is PAID, and insider Form-4 data
+        # changes slowly, so a 7-day durable cache means a cold start / redeploy
+        # reuses it instead of re-paying for the whole universe. Decoupled from
+        # the disk volume so it works on every environment.
+        try:
+            from kv_store import store as _kv
+            durable = await asyncio.to_thread(_kv.get, "insider", ticker, 7 * 24 * 3600)
+            if isinstance(durable, dict):
+                self.cache.set(key, durable, config.CACHE_INSIDER_TTL)
+                return durable
+        except Exception:
+            pass
 
         try:
             query = {
@@ -1291,6 +1303,11 @@ class DataCoordinator:
                 if yf_fb["insider_buys_90d"] > 0 or yf_fb["insider_sells_90d"] > 0:
                     result = yf_fb
             self.cache.set(key, result, config.CACHE_INSIDER_TTL)
+            try:
+                from kv_store import store as _kv
+                await asyncio.to_thread(_kv.set, "insider", ticker, result)   # durable — survives redeploys
+            except Exception:
+                pass
             self.api_status["sec_api"]["calls"]  += 1
             self.api_status["sec_api"]["ok"]      = True
             self.api_status["sec_api"]["last_ok"] = datetime.now().isoformat()
