@@ -77,6 +77,10 @@ HOT_LIST_N               = int(_env("HOT_LIST_N",                 "20"))
 # on a small, mostly-cached set instead of scattering across all 547 tickers.
 # Broader bar than the strict Hot List; full universe still reachable via search.
 FEATURED_N               = int(_env("FEATURED_N",                 "35"))
+# How many of the curated names (prime-first, then top score) get the premium
+# (Opus) Overview. The elite top slice is what users scrutinise most; the rest of
+# the featured set + long tail stay on Sonnet. 0 = nobody premium, >=FEATURED_N = all.
+OVERVIEW_PREMIUM_N       = int(_env("OVERVIEW_PREMIUM_N",          "12"))
 MIN_CONFIDENCE           = float(_env("MIN_CONFIDENCE",           "0.70"))
 
 # ── Cache TTLs (seconds) ──────────────────────────────────────────────────────

@@ -4005,9 +4005,10 @@ async def api_overview(ticker: str, force: bool = False,
     if task is None or task.done():
         async def _gen() -> dict:
             target = next((t for t in _universe_data if t.get("ticker") == sym), None)
-            # Curated/featured ~35 get the premium (Opus) tier — bounded cost,
-            # cached, and the names users actually see most. Long tail stays Sonnet.
-            out = await research_gen.generate_overview(sym, target, premium=_is_curated(sym))
+            # Elite top slice of the curated set (prime + top scorers) gets the
+            # premium Opus tier — the names users scrutinise most. Rest of the 35
+            # and the long tail stay on Sonnet. Bounded, cached, tunable.
+            out = await research_gen.generate_overview(sym, target, premium=_is_premium_overview(sym))
             out.setdefault("status", "ready")
             _ovstore.save(sym, out)          # durable (Supabase + disk)
             cache.set(ck, out, ttl=86400)    # warm L1
@@ -6547,10 +6548,25 @@ def _ensure_featured() -> list:
 
 
 def _is_curated(sym: str) -> bool:
-    """True if the ticker is in today's curated featured set (gets premium AI)."""
+    """True if the ticker is in today's curated featured set (~35)."""
     try:
         _ensure_featured()
         return (sym or "").upper() in _curated_syms_cache
+    except Exception:
+        return False
+
+
+def _is_premium_overview(sym: str) -> bool:
+    """True if the ticker is in the elite top slice of the curated set (prime
+    names first, then top score) that gets the premium Opus Overview. Stable ~N
+    even on days with few strict-prime names. Tune via OVERVIEW_PREMIUM_N."""
+    try:
+        n = int(getattr(config, "OVERVIEW_PREMIUM_N", 12))
+        if n <= 0:
+            return False
+        feat = _ensure_featured()   # already ordered prime-first, then by score
+        top = {t.get("ticker") for t in feat[:n]}
+        return (sym or "").upper() in top
     except Exception:
         return False
 
