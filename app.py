@@ -5417,6 +5417,38 @@ def _is_hot_eligible(t: dict) -> bool:
     return True
 
 
+def _is_featured_eligible(t: dict) -> bool:
+    """Broader quality bar for the CURATED FEATURED set (the default browse
+    universe). Same cap guardrails as the Hot List, but Grade A or B and a
+    softer score/confidence floor — so it reliably fills ~35 names worth
+    surfacing. Strict Hot-List names are a high-conviction subset of this.
+
+    This is deliberately wider than `_is_hot_eligible`: the Hot List is a
+    'prime opportunities' signal; the featured set is 'the names we put in front
+    of users so attention (and paid AI generation) stays on a small, cached
+    pool' instead of scattering across all 547 tickers."""
+    mc   = t.get("market_cap")
+    tier = t.get("market_cap_tier", "")
+
+    if mc is not None and mc >= MEGA_CAP_CUTOFF:
+        return False
+    if tier == "Mega Cap":
+        return False
+    if mc is not None:
+        floor = 250e6 if tier in ("Small Cap", "Micro Cap") else MIN_MCAP_FILTER
+        if mc < floor:
+            return False
+
+    if t.get("pop_score", 0) < 60:
+        return False
+    if t.get("confidence", 0) < 0.55:
+        return False
+    if (t.get("grade", "") or "").upper() not in ("A", "B"):
+        return False
+
+    return True
+
+
 # ── MODEL PORTFOLIO helpers ───────────────────────────────────────────────────
 
 def _build_model_portfolio(existing: dict | None = None) -> dict:
@@ -6395,6 +6427,45 @@ async def api_hot(n: int = None):
         logger.info(f"📋 Hot list: {len(picks)} strict picks for {today_str} (no tier-2 backfill)")
 
     return JSONResponse(_clean({"hot": _daily_hot, "total_eligible": len(_daily_hot)}))
+
+
+# ── Curated FEATURED set — the default browse universe ────────────────────────
+# Surfaces the top ~FEATURED_N quality names (Alpha-Score-ranked) so user
+# attention concentrates on a small, mostly-cached pool. Full 547-ticker universe
+# stays reachable via search. Strict Hot-List names lead, then the rest of the
+# featured-eligible pool by score. Rebuilt daily (cheap, in-memory) like the hot list.
+_daily_featured: list = []
+_daily_featured_date: str = ""
+
+
+@app.get("/api/featured")
+async def api_featured(n: int = None):
+    global _daily_featured, _daily_featured_date
+    from datetime import date as _date
+    today_str = str(_date.today())
+    limit = n or config.FEATURED_N
+
+    if _daily_featured_date != today_str or len(_daily_featured) == 0:
+        def _score(t):
+            return float(t.get("smart_score") or t.get("pop_score") or 0)
+        eligible = [t for t in _universe_data if _is_featured_eligible(t)]
+        # Strict Hot-List names first (high conviction), then the rest by score —
+        # deduped, so the curated surface leads with our best signal.
+        hot_syms = {t.get("ticker") for t in eligible if _is_hot_eligible(t)}
+        leaders  = sorted([t for t in eligible if t.get("ticker") in hot_syms],
+                          key=_score, reverse=True)
+        rest     = sorted([t for t in eligible if t.get("ticker") not in hot_syms],
+                          key=_score, reverse=True)
+        _daily_featured      = (leaders + rest)[:limit]
+        _daily_featured_date = today_str
+        logger.info(f"⭐ Featured set: {len(_daily_featured)} curated names for {today_str} "
+                    f"({len(hot_syms)} strict hot + backfill)")
+
+    return JSONResponse(_clean({
+        "featured": _daily_featured,
+        "count":    len(_daily_featured),
+        "universe_total": len(_universe_data),
+    }))
 
 
 @app.get("/api/setups")

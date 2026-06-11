@@ -64,6 +64,11 @@ RISK_PER_TRADE_PCT       = float(_env("RISK_PER_TRADE_PCT",       "1.0"))
 TOTAL_PORTFOLIO_RISK_PCT = float(_env("TOTAL_PORTFOLIO_RISK_PCT", "6.0"))
 MAX_OPEN_POSITIONS       = int(_env("MAX_OPEN_POSITIONS",         "8"))
 HOT_LIST_N               = int(_env("HOT_LIST_N",                 "20"))
+# Curated "featured" set — the ~35 names we surface as the default browse
+# universe so user attention (and the paid AI generation it triggers) concentrates
+# on a small, mostly-cached set instead of scattering across all 547 tickers.
+# Broader bar than the strict Hot List; full universe still reachable via search.
+FEATURED_N               = int(_env("FEATURED_N",                 "35"))
 MIN_CONFIDENCE           = float(_env("MIN_CONFIDENCE",           "0.70"))
 
 # ── Cache TTLs (seconds) ──────────────────────────────────────────────────────
