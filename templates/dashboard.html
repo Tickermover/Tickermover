@@ -3366,6 +3366,31 @@ html.v2-dark .v2-mp-mini-lbl{color:#cbd5e1}
 .ce-cloud.searching{overflow:auto;max-height:58vh;height:auto!important;display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-items:flex-start;padding:8px 2px}
 .ce-cloud.searching .ce-word{position:static;transform:none;animation:none;opacity:1!important;z-index:auto}
 .ce-cloud.searching .ce-back{padding:5px 12px;border:1px solid rgba(10,10,10,.1);border-radius:999px;background:#fff;font-size:12px;color:#475569}
+/* ── Moving logo marquee (replaces the scatter cloud): two rows drift in
+   opposite directions; muted greyscale → full colour on hover; edge fade. ── */
+.ce-mq{position:relative;display:flex;flex-direction:column;gap:16px;padding:30px 0 8px;overflow:hidden;
+  -webkit-mask-image:linear-gradient(90deg,transparent,#000 7%,#000 93%,transparent);
+          mask-image:linear-gradient(90deg,transparent,#000 7%,#000 93%,transparent)}
+.ce-mq-row{display:flex;overflow:hidden}
+.ce-mq-track{display:flex;flex-shrink:0;align-items:center;
+  animation:ceMq 64s linear infinite;will-change:transform}
+.ce-mq-track.ce-mq-rev{animation-direction:reverse}
+.ce-mq:hover .ce-mq-track{animation-play-state:paused}
+/* -50% lands exactly on the duplicated half because every chip (incl. the last)
+   carries an equal margin-right — no track gap/padding to throw the loop off. */
+@keyframes ceMq{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.ce-mq-chip{display:inline-flex;align-items:center;gap:.5em;white-space:nowrap;cursor:pointer;border:0;
+  background:transparent;font-family:inherit;font-weight:800;font-size:15px;color:#9aa6b6;line-height:1;
+  margin-right:38px;flex-shrink:0;
+  filter:grayscale(1);opacity:.72;transition:opacity .18s,filter .18s,color .18s}
+.ce-mq-chip:hover{opacity:1;filter:none;color:#0f172a}
+.ce-mq-chip .ce-lg-img{width:1.5em;height:1.5em}
+.ce-mq-chip i{font-style:normal;font-size:.6em;font-weight:700;margin-left:.1em;opacity:.9}
+.ce-mq-chip.rep{color:#0a7d33}.ce-mq-chip.soon{color:#0040c1}
+.ce-mq-chip.rep:hover,.ce-mq-chip.soon:hover,.ce-mq-chip.sel{filter:none;opacity:1}
+.ce-mq-chip.sel{color:#0040c1}
+.ce-mq-cap{text-align:center;font-size:12.5px;font-weight:600;color:#94a3b8;margin-top:6px;padding:0 12px}
+@media(prefers-reduced-motion:reduce){.ce-mq-track{animation:none}}
 .ce-cloud::-webkit-scrollbar{width:8px}.ce-cloud::-webkit-scrollbar-thumb{background:rgba(10,10,10,.15);border-radius:8px}
 .v2-brf-head{max-width:1268px;margin:0 auto 18px;padding:0 4px}
 /* Briefings eyebrow → violet to match the meta-label color rhythm
@@ -9148,39 +9173,37 @@ function ceBuildCloud(){
   const logo   = sym => 'https://images.financialmodelingprep.com/symbol/' + encodeURIComponent(sym) + '.png';
   const logoBox = sym => '<span class="ce-lg-img"><span class="fb">' + ((sym || '?').charAt(0)) + '</span>' +
     '<img src="' + logo(sym) + '" loading="lazy" onerror="this.style.display=\'none\'" onload="this.previousElementSibling.style.display=\'none\'"></span>';
-  const motion = i => 'style="--t:' + (7.5 + (i % 9) * 0.7).toFixed(2) + 's;--d:' + ((i % 17) * 0.22).toFixed(2) + 's;';
+  const evCls = t => isRep(t) ? 'rep' : (isSoon(t) ? 'soon' : '');
 
   const rep  = all.filter(isRep).sort((a, b) => (dse(a) == null ? 99 : dse(a)) - (dse(b) == null ? 99 : dse(b)));
   const soon = all.filter(isSoon).sort((a, b) => d2e(a) - d2e(b));
   const flagged = new Set([...rep, ...soon].map(t => t.ticker));
-  // backdrop: most-notable names first (by smart_score) make a nicer faint cloud
+  // backdrop: most-notable names first (by smart_score) lead the strip
   const score = t => { const s = parseFloat(t.smart_score); return isNaN(s) ? 0 : s; };
-  const restAll = all.filter(t => !flagged.has(t.ticker)).sort((a, b) => score(b) - score(a));
-  const backdrop = restAll.slice(0, CE_BACKDROP_MAX);   // the rest are reachable via the search dropdown
+  const backdrop = all.filter(t => !flagged.has(t.ticker)).sort((a, b) => score(b) - score(a)).slice(0, CE_BACKDROP_MAX);
 
-  const open = t => 'data-tic="' + t.ticker + '" data-nm="' + v2EscHTML((t.name || '').toLowerCase()) +
-    '" onclick="ceSelectTicker(\'' + t.ticker + '\')" title="' + v2EscHTML(t.name || t.ticker) + (hint(t) ? ' · ' + hint(t) : '') + '"';
+  // Display order: actionable event names first, then the strongest names.
+  const display = [...rep, ...soon, ...backdrop];
 
-  let html = '';
-  // bold near-event chips (drawn last → on top); horizontal, with logo
-  [...rep, ...soon].forEach((t, i) => {
-    html += '<button class="ce-word ce-fresh ' + tier(t) + ' ' + cls(t) + '" ' + motion(i) + '" ' + open(t) + '>' +
-      logoBox(t.ticker) + '<span class="ce-pill-t">' + t.ticker + '</span>' + (hint(t) ? '<i>' + hint(t) + '</i>' : '') + '</button>';
-  });
-  // backdrop chips — no event date, so all the same small size (size encodes
-  // event proximity only); solid dark, full opacity. Horizontal.
-  backdrop.forEach((t, i) => {
-    const fs = 14;
-    html += '<button class="ce-word ce-back" ' + motion(i + 3) + 'font-size:' + fs + 'px" ' + open(t) + '>' +
-      logoBox(t.ticker) + '<span class="ce-pill-t">' + t.ticker + '</span></button>';
-  });
-  cloud.innerHTML = html;
-  ceLayoutCloud();
+  const chip = t => '<button class="ce-mq-chip ' + evCls(t) + '" data-tic="' + t.ticker +
+    '" data-nm="' + v2EscHTML((t.name || '').toLowerCase()) + '" onclick="ceSelectTicker(\'' + t.ticker + '\')" title="' +
+    v2EscHTML(t.name || t.ticker) + (hint(t) ? ' · ' + hint(t) : '') + '">' +
+    logoBox(t.ticker) + '<span class="ce-pill-t">' + t.ticker + '</span>' + (hint(t) ? '<i>' + hint(t) + '</i>' : '') + '</button>';
 
-  if (!_ceResizeBound){
-    _ceResizeBound = true;
-    let to; window.addEventListener('resize', () => { clearTimeout(to); to = setTimeout(ceLayoutCloud, 180); });
-  }
+  // Two rows drifting opposite directions; split alternately so both stay full.
+  // Chips are duplicated within each track so the translateX(-50%) loop is seamless.
+  const track = (rows, rev) => {
+    const chips = rows.map(chip).join('');
+    return '<div class="ce-mq-row"><div class="ce-mq-track' + (rev ? ' ce-mq-rev' : '') + '">' + chips + chips + '</div></div>';
+  };
+  const rowA = display.filter((_, i) => i % 2 === 0);
+  const rowB = display.filter((_, i) => i % 2 === 1);
+
+  cloud.classList.remove('searching');
+  cloud.style.height = 'auto';
+  cloud.innerHTML = '<div class="ce-mq">' + track(rowA, false) + track(rowB, true) +
+    '<div class="ce-mq-cap">Tap a company for its dividends, splits, buybacks &amp; filings — or search any of ' +
+    all.length + ' names above</div></div>';
 }
 
 // AABB overlap test with padding
@@ -9196,6 +9219,7 @@ const CE_DRIFT = 4;   // must match the max translate in @keyframes ceDrift
 function ceLayoutCloud(){
   const cloud = document.getElementById('ce-cloud');
   if (!cloud || cloud.classList.contains('searching')) return;
+  if (cloud.querySelector('.ce-mq')) return;   // marquee layout → nothing to scatter
   const W = cloud.clientWidth;
   if (!W){ setTimeout(ceLayoutCloud, 150); return; }   // panel not visible yet → retry
   const H = Math.max(380, Math.min(680, Math.round(W * 0.5)));
@@ -9324,7 +9348,7 @@ function ceSelectTicker(sym){
   const si = document.getElementById('ce-search-input');
   if (si) si.value = '';
   ceCloseDD();
-  document.querySelectorAll('#ce-cloud .ce-word').forEach(function(p){ p.classList.toggle('sel', (p.getAttribute('data-tic') || '') === ceTicker); });
+  document.querySelectorAll('#ce-cloud [data-tic]').forEach(function(p){ p.classList.toggle('sel', (p.getAttribute('data-tic') || '') === ceTicker); });
   _ceHighlightCard(null);              // clear any prior view highlight
   const cards = _ceCards(); if (cards) cards.classList.add('armed');   // invite the user to pick a view
   ceSyncStatus();
@@ -9343,7 +9367,7 @@ function ceSetMode(m){
 // Explicit "see the whole universe" escape hatch (from inside a ticker's actions).
 function ceAllActions(){
   ceTicker = null; ceMode = 'actions';
-  document.querySelectorAll('#ce-cloud .ce-word').forEach(function(p){ p.classList.remove('sel'); });
+  document.querySelectorAll('#ce-cloud [data-tic]').forEach(function(p){ p.classList.remove('sel'); });
   _ceHighlightCard('actions');
   const cards = _ceCards(); if (cards) cards.classList.remove('armed');
   ceSyncStatus();
