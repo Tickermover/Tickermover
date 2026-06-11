@@ -72,14 +72,18 @@ def _ground_block(t: dict) -> str:
     return "\n".join(lines)
 
 
-def _prompt(ticker: str, t: dict) -> str:
+# ── Prompt split for caching ──────────────────────────────────────────────
+# The large instruction + JSON-schema block is IDENTICAL for every ticker, so
+# it lives in a cached `system` prefix (marked cache_control: ephemeral in the
+# request). Only the per-ticker ground-truth goes in the user message. This cuts
+# repeated input cost — especially across the web_search tool loop, where the
+# server re-processes this block on every internal turn within one request.
+def _research_system() -> str:
     return (
-        f"You are a senior equity-research analyst writing a sharp, decision-useful "
-        f"research note on {ticker} ({t.get('name','')}) for a sophisticated retail "
-        f"investor. Match the depth and specificity of a top sell-side note.\n\n"
-        "GROUND TRUTH — use these exact figures for price/score/fundamentals; "
-        "do NOT invent or override them:\n"
-        f"{_ground_block(t)}\n\n"
+        "You are a senior equity-research analyst writing a sharp, decision-useful "
+        "research note on the US-listed company given in the next message, for a "
+        "sophisticated retail investor. Match the depth and specificity of a top "
+        "sell-side note.\n\n"
         "TASK: Use web search aggressively to find the LATEST (last few weeks/quarters) "
         "earnings prints, guidance, segment detail, customer/revenue concentration, "
         "analyst price targets (name the firms), valuation context (P/E, P/S, DCF / "
@@ -138,6 +142,17 @@ def _prompt(ticker: str, t: dict) -> str:
     )
 
 
+def _research_user(ticker: str, t: dict) -> str:
+    """Per-ticker, NON-cached portion: the company + our ground-truth figures."""
+    return (
+        f"Company: {ticker} ({t.get('name','')}).\n\n"
+        "GROUND TRUTH — use these exact figures for price/score/fundamentals; "
+        "do NOT invent or override them:\n"
+        f"{_ground_block(t)}\n\n"
+        "Write the research note now, following the required structure exactly."
+    )
+
+
 async def generate_research(ticker: str, ticker_data: dict | None) -> dict:
     """Generate a grounded brief. Raises on hard failure so the caller can
     persist a 'failed' status if desired."""
@@ -152,6 +167,13 @@ async def generate_research(ticker: str, ticker_data: dict | None) -> dict:
         # which now comes first) completes without truncation. 3800 cut notes off
         # mid-prose, dropping the JSON block → empty Business/revenue sections.
         "max_tokens": 6000,
+        # Cache the big static instruction/schema block so the web_search tool
+        # loop (which re-processes the prompt on every internal turn) and any
+        # back-to-back generations pay ~0.1× on it instead of full input price.
+        "system": [
+            {"type": "text", "text": _research_system(),
+             "cache_control": {"type": "ephemeral"}}
+        ],
         "tools": [
             # Each web search costs ~$0.01 regardless of model — cap tighter to
             # keep the per-note cost down (was 8). 4 searches still cover
@@ -164,7 +186,7 @@ async def generate_research(ticker: str, ticker_data: dict | None) -> dict:
             # instead via max_uses + per-ticker caching in research_store.
             {"type": "web_search_20250305", "name": "web_search", "max_uses": 4}
         ],
-        "messages": [{"role": "user", "content": _prompt(ticker, t)}],
+        "messages": [{"role": "user", "content": _research_user(ticker, t)}],
     }
 
     async with httpx.AsyncClient(timeout=_TIMEOUT) as c:
@@ -187,9 +209,10 @@ async def generate_research(ticker: str, ticker_data: dict | None) -> dict:
 
     _u = data.get("usage") or {}
     logger.info(
-        "research_gen %s (%s): in=%s cache_read=%s out=%s",
+        "research_gen %s (%s): in=%s cache_write=%s cache_read=%s out=%s",
         ticker, _MODEL, _u.get("input_tokens"),
-        _u.get("cache_read_input_tokens"), _u.get("output_tokens"),
+        _u.get("cache_creation_input_tokens"), _u.get("cache_read_input_tokens"),
+        _u.get("output_tokens"),
     )
 
     # Assemble the note from the assistant text blocks. The model emits
@@ -240,15 +263,15 @@ async def generate_research(ticker: str, ticker_data: dict | None) -> dict:
 # premium web-grounded note. Output format is byte-compatible with the full
 # note's parser: a leading bold verdict, one ```json block (business+revenue),
 # then `## What moves it next`, `## Bear case`, `## Bottom line` sections.
-def _overview_prompt(ticker: str, t: dict) -> str:
+def _overview_system() -> str:
+    """Static (cacheable) instruction + schema block — identical for every
+    ticker, so it's sent as a cached system prefix."""
     return (
-        f"You are an equity-research analyst writing a COMPACT business snapshot for "
-        f"{ticker} ({t.get('name','')}) for a retail investor. Work from the ground-truth "
-        f"data below PLUS your own training knowledge of the company. This is a quick "
-        f"overview — do NOT claim live/breaking figures, do NOT web-search, do NOT add "
-        f"source links.\n\n"
-        "GROUND TRUTH — use these exact figures; do not invent live data:\n"
-        f"{_ground_block(t)}\n\n"
+        "You are an equity-research analyst writing a COMPACT business snapshot for "
+        "the company given in the next message, for a retail investor. Work from the "
+        "ground-truth data provided PLUS your own training knowledge of the company. "
+        "This is a quick overview — do NOT claim live/breaking figures, do NOT "
+        "web-search, do NOT add source links.\n\n"
         "Output GitHub-flavoured Markdown in EXACTLY this order:\n"
         "1. A one-sentence **bold verdict** of where the company stands.\n"
         "2. THE STRUCTURED BLOCK — immediately after the verdict, as ONE fenced ```json "
@@ -290,6 +313,16 @@ def _overview_prompt(ticker: str, t: dict) -> str:
     )
 
 
+def _overview_user(ticker: str, t: dict) -> str:
+    """Per-ticker, NON-cached portion: the company + our ground-truth figures."""
+    return (
+        f"Company: {ticker} ({t.get('name','')}).\n\n"
+        "GROUND TRUTH — use these exact figures; do not invent live data:\n"
+        f"{_ground_block(t)}\n\n"
+        "Write the snapshot now, following the required order exactly."
+    )
+
+
 async def generate_overview(ticker: str, ticker_data: dict | None) -> dict:
     """Cheap, fast (~3-8s) overview snapshot — Haiku, no web search. Powers the
     stock page's default Overview boxes. Raises on hard failure."""
@@ -301,7 +334,13 @@ async def generate_overview(ticker: str, ticker_data: dict | None) -> dict:
     body = {
         "model": _OVERVIEW_MODEL,
         "max_tokens": 1800,
-        "messages": [{"role": "user", "content": _overview_prompt(ticker, t)}],
+        # Cache the static instruction/schema block; back-to-back snapshots
+        # (e.g. a universe pre-warm) then pay ~0.1× on it.
+        "system": [
+            {"type": "text", "text": _overview_system(),
+             "cache_control": {"type": "ephemeral"}}
+        ],
+        "messages": [{"role": "user", "content": _overview_user(ticker, t)}],
     }
     async with httpx.AsyncClient(timeout=60) as c:
         r = await c.post(
@@ -317,8 +356,10 @@ async def generate_overview(ticker: str, ticker_data: dict | None) -> dict:
         data = r.json()
 
     _u = data.get("usage") or {}
-    logger.info("overview_gen %s (%s): in=%s out=%s",
-                ticker, _OVERVIEW_MODEL, _u.get("input_tokens"), _u.get("output_tokens"))
+    logger.info("overview_gen %s (%s): in=%s cache_write=%s cache_read=%s out=%s",
+                ticker, _OVERVIEW_MODEL, _u.get("input_tokens"),
+                _u.get("cache_creation_input_tokens"), _u.get("cache_read_input_tokens"),
+                _u.get("output_tokens"))
     markdown = "".join(
         b.get("text", "") for b in data.get("content", []) if b.get("type") == "text"
     ).strip()

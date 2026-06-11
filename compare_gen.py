@@ -60,12 +60,11 @@ def _ground_block(t: dict) -> str:
     return "\n".join(f"- {k}: {v}" for k, v in fields if v not in (None, "", []))
 
 
-def _prompt(ticker: str, t: dict) -> str:
+# Static (cacheable) instruction block — identical for every ticker.
+def _compare_system() -> str:
     return (
-        f"You are an equity-research analyst building a head-to-head comparison "
-        f"card for {ticker} ({t.get('name','')}).\n\n"
-        "GROUND TRUTH — our own data; do not contradict these figures:\n"
-        f"{_ground_block(t)}\n\n"
+        "You are an equity-research analyst building a head-to-head comparison "
+        "card for the company given in the next message.\n\n"
         "TASK: Use web search to find the most recent facts, then fill these "
         "five fields. Each value is a SHORT phrase (max ~12 words), specific "
         "and comparison-ready:\n"
@@ -84,6 +83,16 @@ def _prompt(ticker: str, t: dict) -> str:
         "keys: operational_stage, revenue_latest, contract_backlog, "
         "execution_risk, path_to_profitability. No markdown, no prose, no code "
         "fences. Use null for any field you genuinely cannot determine."
+    )
+
+
+def _compare_user(ticker: str, t: dict) -> str:
+    """Per-ticker, NON-cached portion."""
+    return (
+        f"Company: {ticker} ({t.get('name','')}).\n\n"
+        "GROUND TRUTH — our own data; do not contradict these figures:\n"
+        f"{_ground_block(t)}\n\n"
+        "Build the comparison card now."
     )
 
 
@@ -116,13 +125,19 @@ async def generate_compare_card(ticker: str, ticker_data: dict | None) -> dict:
     body = {
         "model": _MODEL,
         "max_tokens": 1200,
+        # Cache the static instruction block across the web_search tool loop and
+        # back-to-back card generations.
+        "system": [
+            {"type": "text", "text": _compare_system(),
+             "cache_control": {"type": "ephemeral"}}
+        ],
         "tools": [
             # Reverted from web_search_20260209 (dynamic filtering): its code-
             # filtering step risked the same timeout that broke research_gen.
             # Stable 20250305; cost bounded via max_uses + per-ticker caching.
             {"type": "web_search_20250305", "name": "web_search", "max_uses": 3}
         ],
-        "messages": [{"role": "user", "content": _prompt(ticker, t)}],
+        "messages": [{"role": "user", "content": _compare_user(ticker, t)}],
     }
 
     async with httpx.AsyncClient(timeout=_TIMEOUT) as c:
@@ -141,8 +156,10 @@ async def generate_compare_card(ticker: str, ticker_data: dict | None) -> dict:
         data = r.json()
 
     _u = data.get("usage") or {}
-    logger.info("compare_gen %s (%s): in=%s out=%s",
-                ticker, _MODEL, _u.get("input_tokens"), _u.get("output_tokens"))
+    logger.info("compare_gen %s (%s): in=%s cache_write=%s cache_read=%s out=%s",
+                ticker, _MODEL, _u.get("input_tokens"),
+                _u.get("cache_creation_input_tokens"), _u.get("cache_read_input_tokens"),
+                _u.get("output_tokens"))
 
     text_parts: list[str] = []
     sources: list[dict] = []
