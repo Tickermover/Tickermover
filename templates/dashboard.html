@@ -5448,6 +5448,10 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
    live price + the stat strip. */
 /* Top row: Alpha Score (left) + live price (right); verdict reads full-width below. */
 #ts-drawer .ov-headtop{display:flex;align-items:stretch;gap:10px;flex-wrap:wrap;margin-bottom:9px}
+/* Summary header: sentence on the left, score + price stacked on the right */
+#ts-drawer .ov-headrow{display:flex;gap:18px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap}
+#ts-drawer .ov-headboxes{display:flex;flex-direction:column;gap:8px;flex:none;min-width:180px}
+#ts-drawer .ov-headboxes>.ov-score,#ts-drawer .ov-headboxes>.ov-pricebox{width:100%;margin-left:0;text-align:left}
 /* Alpha Score + price as color-tinted pills: score tinted by strength, price by
    change direction. Soft fill + matching border. */
 #ts-drawer .ov-score,#ts-drawer .ov-pricebox{border:1px solid rgba(15,23,42,.06);border-radius:12px;padding:7px 13px;background:rgba(15,23,42,.03)}
@@ -5469,7 +5473,7 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 #ts-drawer .ov-score-prov .ov-score-n{color:#b45309!important}
 #ts-drawer .ov-score-ast{font-size:16px;font-weight:800;color:#d97706;vertical-align:super;margin-left:1px}
 #ts-drawer .ov-score-prov .ov-score-g{color:#b45309;font-weight:700}
-#ts-drawer .ov-headline{font-family:var(--font-head);font-weight:600;font-size:clamp(14px,1.5vw,16px);line-height:1.25;letter-spacing:-.01em;color:#0A0A0A;max-width:780px}
+#ts-drawer .ov-headline{font-family:var(--font-head);font-weight:600;font-size:clamp(13px,1.4vw,15px);line-height:1.25;letter-spacing:-.01em;color:#0A0A0A;flex:1;min-width:240px}
 #ts-drawer .ov-headline b{color:#0040c1;font-weight:600}
 #ts-drawer .ov-pricebox{margin-left:auto;text-align:right;flex:none}
 #ts-drawer .ov-price{font-family:'JetBrains Mono',monospace;font-weight:800;font-size:23px;line-height:1;color:#0A0A0A}
@@ -18460,12 +18464,14 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
       ? '<div class="ov-score ov-score-'+popCls+(_prov?' ov-score-prov':'')+'"'+(_prov?' title="'+_provTip+'"':'')+'><span class="ov-score-n">'+pop+(_prov?'<span class="ov-score-ast">*</span>':'')+'</span>'+
           '<span class="ov-score-meta"><span class="ov-score-l">Alpha Score</span>'+(g?'<span class="ov-score-g">Grade '+escHTML(g)+(_prov?' · Provisional':'')+'</span>':'')+'</span></div>'
       : '';
-    return _sec('Equity Research · '+escHTML(sector||'US Equity'), '📈', 'blue',
-      '<div class="ov-headtop">'+
-        scoreHtml+
-        '<div class="ov-pricebox '+(chg>=0?'pb-up':'pb-dn')+'"><div class="ov-price">'+fmtP(price)+'</div><div class="ov-chg '+(chg>=0?'up':'dn')+'">'+(chg>=0?'▲ ':'▼ ')+fmtPct(chg)+'</div></div>'+
+    return _sec('Summary', '📈', 'blue',
+      '<div class="ov-headrow">'+
+        '<div class="ov-headline" id="ovHeadline">'+escHTML(bl||name)+'</div>'+
+        '<div class="ov-headboxes">'+
+          scoreHtml+
+          '<div class="ov-pricebox '+(chg>=0?'pb-up':'pb-dn')+'"><div class="ov-price">'+fmtP(price)+'</div><div class="ov-chg '+(chg>=0?'up':'dn')+'">'+(chg>=0?'▲ ':'▼ ')+fmtPct(chg)+'</div></div>'+
+        '</div>'+
       '</div>'+
-      '<div class="ov-headline" id="ovHeadline">'+escHTML(bl||name)+'</div>'+
       strip, true);
   }
   function _ovNumbers(full){
