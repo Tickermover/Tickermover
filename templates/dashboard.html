@@ -5945,6 +5945,9 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 
 /* ===== Shell relight — dark ticker tape (UNSCOPED, lives above the topbar) ===== */
 .ts-tape{height:36px;display:flex;align-items:center;overflow:hidden;background:#0a0e22;border-top-left-radius:16px}
+/* On the Company Events tab the logo marquee is the moving element — hide the
+   price tape so two scrolling strips don't compete. */
+body.ce-active .ts-tape{display:none!important}
 .ts-tape-track{display:flex;white-space:nowrap;animation:ts-tape 70s linear infinite;will-change:transform}
 @keyframes ts-tape{from{transform:translateX(0)}to{transform:translateX(-50%)}}
 .ts-tape:hover .ts-tape-track{animation-play-state:paused}
@@ -8805,6 +8808,10 @@ function v2Show(panelId, item){
     ".v2-sub[onclick*=\"'" + panelId + "'\"], .v2-nav-item[onclick*=\"'" + panelId + "'\"]"
   );
   if (target) target.classList.add('active');
+
+  // Company Events has its own moving logo marquee — hide the dark price tape
+  // on this panel so two scrolling strips don't compete for attention.
+  document.body.classList.toggle('ce-active', panelId === 'events');
 
   // Hand off to existing tab switcher. showTab() expects a btn whose
   // .active class it sets — we pass a throwaway since we've already
@@ -14264,6 +14271,9 @@ function showTab(id, btn) {
   let _evSub = null;
   if (id === 'briefings') { _evSub = 'brief';   id = 'events'; }
   if (id === 'concall')   { _evSub = 'concall'; id = 'events'; }
+  // Events hub has its own moving logo marquee — hide the dark price tape there
+  // so two scrolling strips don't compete (authoritative, post-remap).
+  document.body.classList.toggle('ce-active', id === 'events');
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   btn.classList.add('active');
