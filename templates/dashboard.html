@@ -781,27 +781,29 @@ body.v2 #sectors-grid .smh-name{font-weight:800;font-size:12.5px;color:#0f172a!i
 .dep-leg-bar{height:6px;background:rgba(100,116,139,.16);border-radius:4px;overflow:hidden}
 .dep-leg-fill{display:block;height:100%;border-radius:4px}
 .dep-leg-pct{font-family:'JetBrains Mono',monospace;font-weight:800;color:var(--ink);text-align:right;font-size:12px}
-/* Grouped dependency cards — rows flow in 2 columns, group headers span both */
-.dep-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;align-items:start}
-@media(max-width:680px){.dep-grid{grid-template-columns:1fr}}
-.dep-group-h{font-size:11px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:7px}
-.dep-group-h.span{grid-column:1/-1;margin-top:8px}
-.dep-grid > .dep-group-h.span:first-child{margin-top:0}
-.dep-group-ct{background:rgba(100,116,139,.14);color:var(--muted);border-radius:6px;padding:0 7px;font-size:10.5px}
-.dep-row{position:relative;background:#fff;border:1px solid var(--hair);border-left:3px solid #94a3b8;border-radius:11px;padding:11px 14px;transition:box-shadow .15s,transform .12s}
-.dep-row:hover{box-shadow:0 8px 22px -12px rgba(15,23,42,.28);transform:translateY(-1px)}
-.dep-row.dep-cus{border-left-color:#16a34a}
-.dep-row.dep-sup{border-left-color:#2970ff}
-.dep-row.dep-inp{border-left-color:#e0a000}
-.dep-row.dep-par{border-left-color:#94a3b8}
-.dep-row-top{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
-.dep-nm{font-weight:800;font-size:14px;color:var(--ink)}
+/* Key dependencies — SWOT-style quadrants, one coloured block per type */
+.dep-swot{display:grid;grid-template-columns:1fr 1fr;gap:13px;align-items:start}
+@media(max-width:680px){.dep-swot{grid-template-columns:1fr}}
+.swot-q{display:flex;background:#fff;border:1px solid var(--hair);border-radius:14px;overflow:hidden;box-shadow:0 6px 18px -11px rgba(15,23,42,.24)}
+.swot-side{flex:0 0 76px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:#fff;padding:12px 6px;text-align:center}
+.swot-letter{font-size:32px;font-weight:900;line-height:1;text-shadow:0 1px 4px rgba(0,0,0,.25)}
+.swot-side-lbl{font-size:8.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;opacity:.96;line-height:1.25}
+.swot-side-ct{margin-top:3px;font-size:10px;font-weight:800;background:rgba(255,255,255,.24);border:1px solid rgba(255,255,255,.4);border-radius:999px;min-width:18px;padding:0 5px;line-height:16px}
+.swot-main{flex:1;min-width:0;padding:4px 14px}
+.swot-cus .swot-side{background:linear-gradient(150deg,#2dd4bf,#0d9488)}
+.swot-sup .swot-side{background:linear-gradient(150deg,#3b82f6,#1d4ed8)}
+.swot-inp .swot-side{background:linear-gradient(150deg,#f59e0b,#b45309)}
+.swot-par .swot-side{background:linear-gradient(150deg,#a855f7,#6d28d9)}
+.swot-item{padding:9px 0;border-top:1px solid #eef2f7}
+.swot-item:first-child{border-top:0}
+.swot-it-top{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.swot-it-nm{font-weight:800;font-size:13.5px;color:var(--ink)}
+.swot-it-what{font-size:11.5px;color:var(--muted);font-weight:600;margin-top:2px}
+.swot-it-rip{font-size:11.5px;color:#b42318;margin-top:4px;padding-left:16px;position:relative;line-height:1.45}
+.swot-it-rip::before{content:'⚡';position:absolute;left:0;top:0;font-size:11px}
 .dep-tic{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:800;color:#64748b;background:rgba(100,116,139,.1);border:0;border-radius:6px;padding:2px 8px}
 .dep-tic.link{color:#0040c1;background:rgba(41,112,255,.1);cursor:pointer;transition:background .15s}
 .dep-tic.link:hover{background:rgba(41,112,255,.2)}
-.dep-what{font-size:12px;color:var(--muted);font-weight:600}
-.dep-ripple{font-size:12px;color:#b42318;margin-top:7px;padding-left:19px;position:relative;line-height:1.5}
-.dep-ripple::before{content:'⚡';position:absolute;left:0;top:0;font-size:12px}
 .dep-foot{padding:2px 4px}
 .dep-src{font-size:11.5px;color:var(--muted)}
 .dep-src a{color:#0040c1;text-decoration:none;font-weight:700;margin-right:7px}
@@ -12914,22 +12916,27 @@ function _ssxDepsHTML(ticker,d){
   // Group dependencies by relationship type so the list is scannable.
   const groups={};
   (d.dependencies||[]).forEach(function(x){ const ty=META[x.type]?x.type:'partner'; (groups[ty]=groups[ty]||[]).push(x); });
-  const depItems=ORDER.filter(function(ty){return groups[ty];}).map(function(ty){
-    const meta=META[ty];
-    const cards=groups[ty].map(function(x){
+  // SWOT-style quadrants: one coloured block per relationship type, its
+  // companies listed beside the big initial.
+  const SWOT={customer:{ltr:'C',cls:'swot-cus',lbl:'Customers'},supplier:{ltr:'S',cls:'swot-sup',lbl:'Suppliers'},
+              input:{ltr:'I',cls:'swot-inp',lbl:'Key inputs'},partner:{ltr:'P',cls:'swot-par',lbl:'Partners'}};
+  const quads=ORDER.filter(function(ty){return groups[ty];}).map(function(ty){
+    const m=SWOT[ty];
+    const items=groups[ty].map(function(x){
       const tk=(x.ticker||'').toUpperCase();
       const badge=tk?(inUni(tk)
         ? '<button class="dep-tic link" onclick="openStockModal(\''+tk+'\')" title="Open '+tk+'">'+tk+' ↗</button>'
         : '<span class="dep-tic">'+tk+'</span>'):'';
-      return '<div class="dep-row '+meta.cls+'">'+
-        '<div class="dep-row-top"><span class="dep-nm">'+v2EscHTML(x.name)+'</span>'+badge+
-          (x.what?'<span class="dep-what">'+v2EscHTML(x.what)+'</span>':'')+'</div>'+
-        (x.ripple?'<div class="dep-ripple">'+v2EscHTML(x.ripple)+'</div>':'')+
-      '</div>';
+      return '<div class="swot-item"><div class="swot-it-top"><span class="swot-it-nm">'+v2EscHTML(x.name)+'</span>'+badge+'</div>'+
+        (x.what?'<div class="swot-it-what">'+v2EscHTML(x.what)+'</div>':'')+
+        (x.ripple?'<div class="swot-it-rip">'+v2EscHTML(x.ripple)+'</div>':'')+'</div>';
     }).join('');
-    return '<div class="dep-group-h span">'+meta.lbl+'s<span class="dep-group-ct">'+groups[ty].length+'</span></div>'+cards;
+    return '<div class="swot-q '+m.cls+'">'+
+      '<div class="swot-side"><span class="swot-letter">'+m.ltr+'</span><span class="swot-side-lbl">'+m.lbl+'</span>'+
+        '<span class="swot-side-ct">'+groups[ty].length+'</span></div>'+
+      '<div class="swot-main">'+items+'</div></div>';
   }).join('');
-  const depHTML=depItems?'<div class="dep-grid">'+depItems+'</div>':'';
+  const depHTML=quads?'<div class="dep-swot">'+quads+'</div>':'';
   const legend=segs.map(function(s,i){
     const c=_DEP_PALETTE[i%_DEP_PALETTE.length];
     return '<div class="dep-leg"><span class="dep-leg-dot" style="background:'+c+'"></span>'+
