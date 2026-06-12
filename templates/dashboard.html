@@ -3492,6 +3492,16 @@ html.v2-dark .v2-mp-mini-lbl{color:#cbd5e1}
 .v2-brf-quartr{max-width:1268px;margin:0 auto}
 .v2-brf-topbar{display:flex;justify-content:flex-end;margin-bottom:14px}
 .v2-brf-topbar .v2-brf-back{margin:0}
+/* In-place view switcher at the top of every Company-Events detail — flip
+   Brief/Concall/Corporate Actions without bouncing back to a separate screen. */
+.v2-brf-topbar.ce-detailbar{justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.ce-vsw{display:inline-flex;background:#eef2f7;border:1px solid #e2e8f0;border-radius:11px;padding:3px;gap:2px}
+.ce-vsw-seg{appearance:none;border:0;background:transparent;cursor:pointer;font-family:inherit;
+  font-size:13px;font-weight:700;color:#64748b;padding:7px 14px;border-radius:8px;white-space:nowrap;
+  transition:background .15s,color .15s,box-shadow .15s}
+.ce-vsw-seg:hover{color:#0f172a}
+.ce-vsw-seg.on{background:#fff;color:#0040c1;box-shadow:0 1px 3px rgba(15,23,42,.12)}
+@media (max-width:560px){.ce-vsw-seg{padding:7px 10px;font-size:12px}}
 .v2-brf-q-grid{display:grid;grid-template-columns:1fr 320px;gap:24px;align-items:start}
 @media (max-width:900px){
   .v2-brf-q-grid{grid-template-columns:1fr}
@@ -6706,8 +6716,8 @@ document.addEventListener('DOMContentLoaded', function(){
   <div id="ce-hub">
     <div class="v2-brf-head">
       <div class="v2-brf-eyebrow">Company Events</div>
-      <div class="v2-brf-title">Pick a company, then pick the view</div>
-      <div class="v2-brf-sub">Companies that <b>just reported</b> or <b>report soon</b> float bold up front, sized by how fresh the event is; the rest of the universe drifts faintly behind. Tap any ticker, then choose what to read — or <b>search</b> for one.</div>
+      <div class="v2-brf-title">Search a company — read its event</div>
+      <div class="v2-brf-sub">Companies that <b>just reported</b> or <b>report soon</b> float bold up front, sized by how fresh the event is; the rest of the universe drifts faintly behind. <b>Search</b> or tap any ticker to open its <b>Earnings Brief</b> — then switch to <b>Concall</b> or <b>Corporate Actions</b> right there.</div>
     </div>
 
     <div class="ce-search-wrap">
@@ -9157,15 +9167,15 @@ async function v2OpenDetail(ticker, cfg){
   if (!det) return;
   if (grid) grid.style.display = 'none';
   det.style.display = '';
-  det.innerHTML = '<button class="v2-brf-back" onclick="' + cfg.opts.backFn + '()">← Back to all tickers</button>' +
-                  '<div class="v2-brf-loading">' + cfg.loading.replace('{sym}', sym) + '</div>';
+  const bar = cfg.opts.topbar || ('<div class="v2-brf-topbar"><button class="v2-brf-back" onclick="' + cfg.opts.backFn + '()">← Back to all tickers</button></div>');
+  det.innerHTML = bar + '<div class="v2-brf-loading">' + cfg.loading.replace('{sym}', sym) + '</div>';
   try {
     const r = await fetch(cfg.endpoint + encodeURIComponent(sym), { cache: 'no-store' });
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const d = await r.json();
     det.innerHTML = v2RenderBriefingHTML(sym, d, cfg.opts);
   } catch (e) {
-    det.innerHTML = '<button class="v2-brf-back" onclick="' + cfg.opts.backFn + '()">← Back to all tickers</button>' +
+    det.innerHTML = bar +
                     '<div class="v2-brf-empty-state"><strong>Couldn\'t load ' + cfg.what + '</strong>' +
                     '<span>' + v2EscHTML(e && e.message || 'error') + '</span></div>';
   }
@@ -9395,18 +9405,33 @@ function _ceHighlightCard(m){
   document.querySelectorAll('#ce-cards .ce-card').forEach(function(c){ c.classList.toggle('on', c.getAttribute('data-mode') === m); });
 }
 
-// Step 1 of the flow: pick a company. This only ARMS the ticker — it does not
-// open a view. The user then clicks one of the three cards (step 2).
+// Pick a company → open it straight away on the default Earnings Brief (the
+// headline view). No more "armed but nothing happens" dead-end — the three
+// views live as an in-place switcher at the top of the detail, so flipping to
+// Concall or Corporate Actions is one tap (see ceDetailBar).
 function ceSelectTicker(sym){
   ceTicker = String(sym || '').toUpperCase();
-  ceMode = null;                       // no view chosen yet — wait for the user to pick a box
   const si = document.getElementById('ce-search-input');
   if (si) si.value = '';
   ceCloseDD();
   document.querySelectorAll('#ce-cloud [data-tic]').forEach(function(p){ p.classList.toggle('sel', (p.getAttribute('data-tic') || '') === ceTicker); });
-  _ceHighlightCard(null);              // clear any prior view highlight
-  const cards = _ceCards(); if (cards) cards.classList.add('armed');   // invite the user to pick a view
+  ceMode = 'brief';                    // default view — open it immediately
+  _ceHighlightCard('brief');
+  const cards = _ceCards(); if (cards) cards.classList.remove('armed');
   ceSyncStatus();
+  ceLoad();
+}
+
+// Segmented view switcher + back, pinned to the top of every Company-Events
+// detail. `active` highlights the current view. Tapping a segment re-routes
+// through ceSetMode (cached, so re-opening is instant).
+function ceDetailBar(active){
+  const segs = [['brief', 'Earnings Brief'], ['concall', 'Concall'], ['actions', 'Corporate Actions']];
+  const pills = segs.map(function(s){
+    return '<button class="ce-vsw-seg' + (s[0] === active ? ' on' : '') + '" onclick="ceSetMode(\'' + s[0] + '\')">' + s[1] + '</button>';
+  }).join('');
+  return '<div class="v2-brf-topbar ce-detailbar"><div class="ce-vsw" role="tablist">' + pills + '</div>' +
+         '<button class="v2-brf-back" onclick="ceBack()">← All companies</button></div>';
 }
 
 // Step 2: pick a view. Requires a ticker first (ticker-first flow).
@@ -9459,7 +9484,7 @@ function ceLoad(){
   return v2OpenDetail(ceTicker, {
     gridId: 'ce-hub', detailId: 'ce-detail',
     endpoint: cfg.endpoint, what: cfg.what, loading: cfg.loading,
-    opts: { eyebrow: cfg.eyebrow, backFn: 'ceBack' },
+    opts: { eyebrow: cfg.eyebrow, backFn: 'ceBack', topbar: ceDetailBar(ceMode) },
   });
 }
 
@@ -9477,7 +9502,7 @@ async function ceLoadActions(sym){
   ceSyncStatus();
   if (hub) hub.style.display = 'none';
   det.style.display = '';
-  const back = '<div class="v2-brf-topbar"><button class="v2-brf-back" onclick="ceBack()">← Back to companies</button></div>';
+  const back = ceDetailBar('actions');
   det.innerHTML = back + '<div class="v2-brf-loading">Loading corporate actions…</div>';
   try {
     if (!_ceFeed){
@@ -9496,7 +9521,7 @@ async function ceLoadActions(sym){
 function ceRenderActions(sym, feed){
   const all  = (feed && feed.actions) || [];
   const acts = sym ? all.filter(a => a.symbol === sym) : all;
-  const back = '<div class="v2-brf-topbar"><button class="v2-brf-back" onclick="ceBack()">← Back to companies</button></div>';
+  const back = ceDetailBar('actions');
   const fmtDate = function(iso){ const dt = new Date(iso + 'T00:00:00'); return isNaN(dt.getTime()) ? iso : dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); };
   const head = '<div class="v2-brf-head"><div class="v2-brf-eyebrow">Corporate Actions</div>' +
     '<div class="v2-brf-title">' + (sym ? v2EscHTML(sym) + ' — dividends &amp; splits' : 'Dividends &amp; splits across your universe') + '</div>' +
@@ -9723,11 +9748,11 @@ function v2RenderBriefingHTML(sym, d, opts){
   opts = opts || {};
   const eyebrow = opts.eyebrow || 'EARNINGS BRIEF';
   const backFn  = opts.backFn  || 'v2CloseBriefing';
-  // 'Back to all tickers' button — positioned in a top-right strip so
-  // it doesn't sit alone on the left above the hero (user feedback).
-  const back = '<div class="v2-brf-topbar">' +
+  // Topbar — Company Events supplies an in-place view switcher (opts.topbar);
+  // other callers fall back to a lone 'Back to all tickers' button.
+  const back = opts.topbar || ('<div class="v2-brf-topbar">' +
     '<button class="v2-brf-back" onclick="' + backFn + '()">← Back to all tickers</button>' +
-    '</div>';
+    '</div>');
   if (!d || d.available === false){
     if (d && d.reason === 'rate_limited'){
       return back + '<div class="v2-brf-empty-state">' +
