@@ -765,32 +765,49 @@ body.v2 #sectors-grid .smh-name{font-weight:800;font-size:12.5px;color:#0f172a!i
 .ssx-stub{padding:46px 20px;text-align:center;color:var(--muted);font-size:13px;border:1px dashed var(--hair-2);border-radius:14px}
 .ssx-stub .si{font-size:30px;display:block;margin-bottom:10px}
 /* ── Supply Chain tab — dependency / ripple-risk map ── */
-.dep-summary{font-size:13.5px;line-height:1.6;color:var(--ink);margin-bottom:16px}
-.dep-donut-wrap{margin-bottom:6px}
-.dep-donut{display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+.dep-wrap{max-width:880px;margin:0 auto}
+.dep-head{display:flex;align-items:center;gap:9px;font-family:var(--font-head);font-weight:600;font-size:18px;color:var(--ink);margin-bottom:14px}
+.dep-head-ic{font-size:17px}
+.dep-takeaway{position:relative;background:linear-gradient(135deg,#fff7ed,#fef2f2);border:1px solid #fbd9c4;
+  border-radius:13px;padding:14px 16px 14px 18px;font-size:13.5px;line-height:1.62;color:#7c2d12;margin-bottom:22px}
+.dep-takeaway::before{content:'';position:absolute;left:0;top:10px;bottom:10px;width:3px;border-radius:3px;background:#f59e0b}
+.dep-takeaway-lbl{display:block;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#c2410c;margin-bottom:5px}
+.dep-section{margin-bottom:22px}
+.dep-sec-h{font-family:var(--font-head);font-weight:600;font-size:15px;color:var(--ink);margin-bottom:12px;display:flex;align-items:baseline;gap:9px;flex-wrap:wrap}
+.dep-sec-sub{font-family:var(--font-body,inherit);font-weight:600;font-size:12px;color:var(--muted)}
+/* Donut + legend */
+.dep-donut{display:flex;align-items:center;gap:26px;flex-wrap:wrap;background:#fff;border:1px solid var(--hair);border-radius:14px;padding:18px 22px}
 .ssx-donut{flex-shrink:0}
-.dep-legend{display:flex;flex-direction:column;gap:7px;min-width:200px;flex:1}
-.dep-leg{display:flex;align-items:center;gap:9px;font-size:12.5px}
-.dep-leg-dot{width:11px;height:11px;border-radius:3px;flex-shrink:0}
-.dep-leg-nm{color:var(--ink);font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.dep-leg-pct{font-family:'JetBrains Mono',monospace;font-weight:800;color:var(--muted)}
-.dep-list{display:flex;flex-direction:column;gap:8px;margin-top:10px}
-.dep-row{border:1px solid var(--hair);border-radius:11px;padding:10px 13px;background:var(--surf)}
-.dep-main{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.dep-type{font-size:10px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;padding:2px 8px;border-radius:6px;white-space:nowrap}
-.dep-sup{background:rgba(41,112,255,.12);color:#2970ff}
-.dep-cus{background:rgba(22,163,74,.12);color:#16a34a}
-.dep-inp{background:rgba(224,160,0,.14);color:#b9810a}
-.dep-par{background:rgba(100,116,139,.14);color:#64748b}
-.dep-nm{font-weight:800;font-size:13.5px;color:var(--ink)}
-.dep-tic{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:800;color:#64748b;background:rgba(100,116,139,.1);border:0;border-radius:6px;padding:2px 7px}
+.dep-donut-ctr{font-family:'JetBrains Mono',monospace;font-size:20px;font-weight:800;fill:var(--ink)}
+.dep-donut-ctrl{font-size:8.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;fill:var(--muted)}
+.dep-legend{display:flex;flex-direction:column;gap:10px;flex:1;min-width:240px}
+.dep-leg{display:grid;grid-template-columns:13px minmax(0,1fr) 64px 42px;align-items:center;gap:10px;font-size:12.5px}
+.dep-leg-dot{width:12px;height:12px;border-radius:4px}
+.dep-leg-nm{color:var(--ink);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dep-leg-bar{height:6px;background:rgba(100,116,139,.16);border-radius:4px;overflow:hidden}
+.dep-leg-fill{display:block;height:100%;border-radius:4px}
+.dep-leg-pct{font-family:'JetBrains Mono',monospace;font-weight:800;color:var(--ink);text-align:right;font-size:12px}
+/* Grouped dependency cards */
+.dep-group{margin-bottom:14px}
+.dep-group-h{font-size:11px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;display:flex;align-items:center;gap:7px}
+.dep-group-ct{background:rgba(100,116,139,.14);color:var(--muted);border-radius:6px;padding:0 7px;font-size:10.5px}
+.dep-row{position:relative;background:#fff;border:1px solid var(--hair);border-left:3px solid #94a3b8;border-radius:11px;padding:11px 14px;margin-bottom:8px;transition:box-shadow .15s,transform .12s}
+.dep-row:hover{box-shadow:0 8px 22px -12px rgba(15,23,42,.28);transform:translateY(-1px)}
+.dep-row.dep-cus{border-left-color:#16a34a}
+.dep-row.dep-sup{border-left-color:#2970ff}
+.dep-row.dep-inp{border-left-color:#e0a000}
+.dep-row.dep-par{border-left-color:#94a3b8}
+.dep-row-top{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.dep-nm{font-weight:800;font-size:14px;color:var(--ink)}
+.dep-tic{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:800;color:#64748b;background:rgba(100,116,139,.1);border:0;border-radius:6px;padding:2px 8px}
 .dep-tic.link{color:#0040c1;background:rgba(41,112,255,.1);cursor:pointer;transition:background .15s}
 .dep-tic.link:hover{background:rgba(41,112,255,.2)}
 .dep-what{font-size:12px;color:var(--muted);font-weight:600}
-.dep-ripple{font-size:12px;color:#b91c1c;margin-top:5px;line-height:1.45}
-.dep-src{font-size:11.5px;color:var(--muted);margin-top:14px}
-.dep-src a{color:#0040c1;text-decoration:none;font-weight:700;margin-right:3px}
-.dep-disc{font-size:11px;color:var(--muted);margin-top:10px;padding-top:10px;border-top:1px solid var(--hair);line-height:1.5}
+.dep-ripple{font-size:12px;color:#b42318;margin-top:7px;padding-left:19px;position:relative;line-height:1.5}
+.dep-ripple::before{content:'⚡';position:absolute;left:0;top:0;font-size:12px}
+.dep-src{font-size:11.5px;color:var(--muted);margin-top:8px}
+.dep-src a{color:#0040c1;text-decoration:none;font-weight:700;margin-right:7px}
+.dep-disc{font-size:11px;color:var(--muted);margin-top:16px;padding-top:12px;border-top:1px solid var(--hair);line-height:1.55}
 table.ssx-fin{width:100%;border-collapse:collapse;font-size:12.5px}
 table.ssx-fin th,table.ssx-fin td{padding:9px 10px;text-align:right;border-bottom:1px solid var(--hair)}
 table.ssx-fin th:first-child,table.ssx-fin td:first-child{text-align:left;color:var(--ink-2)}
@@ -12869,12 +12886,15 @@ async function _ssxDetail(ticker){
 const _DEP_PALETTE=['#2970ff','#f5a623','#0a2540','#dc4e41','#16a34a','#5dc8e6','#8b5cf6','#e0a000','#94a3b8','#0ea5e9'];
 const _DEP_DISC='AI-estimated from public sources — directional, not a verified financial disclosure. Verify against filings before relying on it.';
 function _ssxDonut(segs){
-  const R=52,W=22,C=2*Math.PI*R,cx=70,cy=70; let acc=0;
+  const R=54,W=20,C=2*Math.PI*R,cx=70,cy=70; let acc=0;
   const rings=segs.map(function(s,i){
     const f=Math.max(0,s.pct)/100, arc=f*C, off=-acc*C; acc+=f;
-    return '<circle cx="'+cx+'" cy="'+cy+'" r="'+R+'" fill="none" stroke="'+_DEP_PALETTE[i%_DEP_PALETTE.length]+'" stroke-width="'+W+'" stroke-dasharray="'+arc.toFixed(2)+' '+(C-arc).toFixed(2)+'" stroke-dashoffset="'+off.toFixed(2)+'" transform="rotate(-90 '+cx+' '+cy+')"></circle>';
+    return '<circle cx="'+cx+'" cy="'+cy+'" r="'+R+'" fill="none" stroke="'+_DEP_PALETTE[i%_DEP_PALETTE.length]+'" stroke-width="'+W+'" stroke-dasharray="'+arc.toFixed(2)+' '+(C-arc).toFixed(2)+'" stroke-dashoffset="'+off.toFixed(2)+'" stroke-linecap="butt" transform="rotate(-90 '+cx+' '+cy+')"></circle>';
   }).join('');
-  return '<svg class="ssx-donut" viewBox="0 0 140 140" width="150" height="150">'+rings+'</svg>';
+  const top=segs.reduce(function(a,b){return b.pct>a.pct?b:a;},segs[0]||{pct:0});
+  const ctr='<text x="70" y="67" text-anchor="middle" class="dep-donut-ctr">'+(top.pct||0)+'%</text>'+
+            '<text x="70" y="82" text-anchor="middle" class="dep-donut-ctrl">top market</text>';
+  return '<svg class="ssx-donut" viewBox="0 0 140 140" width="156" height="156">'+rings+ctr+'</svg>';
 }
 function ssxDependencies(ticker){
   const panel=_ssxPanel('deps'); if(!panel) return;
@@ -12888,31 +12908,42 @@ function ssxDependencies(ticker){
 }
 function _ssxDepsHTML(ticker,d){
   const segs=(d.exposure||[]).filter(function(s){return s&&s.name&&s.pct>0;});
-  const typeLbl={supplier:'Supplier',customer:'Customer',input:'Key input',partner:'Partner'};
-  const typeCls={supplier:'dep-sup',customer:'dep-cus',input:'dep-inp',partner:'dep-par'};
+  const maxPct=segs.reduce(function(m,s){return Math.max(m,s.pct);},0)||100;
+  const META={supplier:{lbl:'Supplier',cls:'dep-sup'},customer:{lbl:'Customer',cls:'dep-cus'},
+              input:{lbl:'Key input',cls:'dep-inp'},partner:{lbl:'Partner',cls:'dep-par'}};
+  const ORDER=['customer','supplier','input','partner'];
   const inUni=function(tk){ return tk && typeof _allTickerData==='object' && _allTickerData[tk]; };
-  const donut=segs.length
-    ? '<div class="dep-donut-wrap"><div class="ssx-card-h">Revenue exposure</div><div class="dep-donut">'+_ssxDonut(segs)+
-        '<div class="dep-legend">'+segs.map(function(s,i){return '<div class="dep-leg"><span class="dep-leg-dot" style="background:'+_DEP_PALETTE[i%_DEP_PALETTE.length]+'"></span><span class="dep-leg-nm">'+v2EscHTML(s.name)+'</span><span class="dep-leg-pct">'+s.pct+'%</span></div>';}).join('')+'</div></div></div>'
-    : '';
-  const rows=(d.dependencies||[]).map(function(x){
-    const tk=(x.ticker||'').toUpperCase();
-    const badge=tk?(inUni(tk)
+  // Group dependencies by relationship type so the list is scannable.
+  const groups={};
+  (d.dependencies||[]).forEach(function(x){ const ty=META[x.type]?x.type:'partner'; (groups[ty]=groups[ty]||[]).push(x); });
+  const depHTML=ORDER.filter(function(ty){return groups[ty];}).map(function(ty){
+    const meta=META[ty];
+    const cards=groups[ty].map(function(x){
+      const tk=(x.ticker||'').toUpperCase();
+      const badge=tk?(inUni(tk)
         ? '<button class="dep-tic link" onclick="openStockModal(\''+tk+'\')" title="Open '+tk+'">'+tk+' ↗</button>'
         : '<span class="dep-tic">'+tk+'</span>'):'';
-    return '<div class="dep-row">'+
-      '<div class="dep-main"><span class="dep-type '+(typeCls[x.type]||'dep-par')+'">'+(typeLbl[x.type]||'Partner')+'</span>'+
-        '<span class="dep-nm">'+v2EscHTML(x.name)+'</span>'+badge+
-        (x.what?'<span class="dep-what">'+v2EscHTML(x.what)+'</span>':'')+'</div>'+
-      (x.ripple?'<div class="dep-ripple">⚡ '+v2EscHTML(x.ripple)+'</div>':'')+
-    '</div>';
+      return '<div class="dep-row '+meta.cls+'">'+
+        '<div class="dep-row-top"><span class="dep-nm">'+v2EscHTML(x.name)+'</span>'+badge+
+          (x.what?'<span class="dep-what">'+v2EscHTML(x.what)+'</span>':'')+'</div>'+
+        (x.ripple?'<div class="dep-ripple">'+v2EscHTML(x.ripple)+'</div>':'')+
+      '</div>';
+    }).join('');
+    return '<div class="dep-group"><div class="dep-group-h">'+meta.lbl+'s<span class="dep-group-ct">'+groups[ty].length+'</span></div>'+cards+'</div>';
   }).join('');
-  const src=(d.sources||[]).slice(0,8).map(function(s){return '<a href="'+v2EscHTML(s.url)+'" target="_blank" rel="noopener">'+s.n+'</a>';}).join(' ');
-  return '<div class="ssx-card dep-card">'+
-    '<div class="ssx-card-h">🔗 Supply chain &amp; ripple risk</div>'+
-    (d.summary?'<div class="dep-summary">'+v2EscHTML(d.summary)+'</div>':'')+
-    donut+
-    (rows?'<div class="ssx-card-h" style="margin-top:14px">Key dependencies — a shock to any of these can ripple into '+v2EscHTML(ticker)+'</div><div class="dep-list">'+rows+'</div>':'')+
+  const legend=segs.map(function(s,i){
+    const c=_DEP_PALETTE[i%_DEP_PALETTE.length];
+    return '<div class="dep-leg"><span class="dep-leg-dot" style="background:'+c+'"></span>'+
+      '<span class="dep-leg-nm" title="'+v2EscHTML(s.name)+'">'+v2EscHTML(s.name)+'</span>'+
+      '<span class="dep-leg-bar"><span class="dep-leg-fill" style="width:'+(s.pct/maxPct*100).toFixed(0)+'%;background:'+c+'"></span></span>'+
+      '<span class="dep-leg-pct">'+s.pct+'%</span></div>';
+  }).join('');
+  const src=(d.sources||[]).slice(0,8).map(function(s){return '<a href="'+v2EscHTML(s.url)+'" target="_blank" rel="noopener">'+s.n+'</a>';}).join('');
+  return '<div class="dep-wrap">'+
+    '<div class="dep-head"><span class="dep-head-ic">🔗</span>Supply chain &amp; ripple risk</div>'+
+    (d.summary?'<div class="dep-takeaway"><span class="dep-takeaway-lbl">The takeaway</span>'+v2EscHTML(d.summary)+'</div>':'')+
+    (segs.length?'<div class="dep-section"><div class="dep-sec-h">Revenue exposure</div><div class="dep-donut">'+_ssxDonut(segs)+'<div class="dep-legend">'+legend+'</div></div></div>':'')+
+    (depHTML?'<div class="dep-section"><div class="dep-sec-h">Key dependencies<span class="dep-sec-sub">a shock to any can ripple into '+v2EscHTML(ticker)+'</span></div>'+depHTML+'</div>':'')+
     (src?'<div class="dep-src">Sources: '+src+'</div>':'')+
     '<div class="dep-disc">⚠ '+_DEP_DISC+'</div>'+
   '</div>';
