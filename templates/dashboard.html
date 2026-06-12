@@ -12879,7 +12879,7 @@ function _ssxDonut(segs){
 function ssxDependencies(ticker){
   const panel=_ssxPanel('deps'); if(!panel) return;
   panel.innerHTML='<div class="ssx-stub"><span class="si">🔗</span>Mapping suppliers, customers &amp; ripple risk… (first load ~10s — web-grounded)</div>';
-  fetch('/api/dependencies/'+encodeURIComponent(ticker)).then(function(r){return r.json();}).then(function(d){
+  fetch('/api/dependencies/'+encodeURIComponent(ticker),{headers:{Authorization:'Bearer '+(localStorage.getItem('ah_token')||'')}}).then(function(r){return r.json();}).then(function(d){
     if(!d){ _ssxEmpty(panel,'⚠️','Could not load dependencies.'); return; }
     if(d.status==='locked'){ _ssxEmpty(panel,'🔒',d.detail||'Pro feature — upgrade to unlock dependency mapping.'); return; }
     if(d.status==='unavailable'||d.status==='error'){ _ssxEmpty(panel,'⚠️',d.detail||'Could not map dependencies right now.'); return; }
@@ -20359,7 +20359,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     if(host.getAttribute('data-tk')===tk) return;          // already loaded for this stock
     host.setAttribute('data-tk',tk);
     host.innerHTML='<div class="dd-loading">🔗 Mapping suppliers, customers &amp; ripple risk for '+tk+'… (first load ~10s — web-grounded)</div>';
-    fetch('/api/dependencies/'+encodeURIComponent(tk)).then(function(r){return r.json();}).then(function(d){
+    fetch('/api/dependencies/'+encodeURIComponent(tk),{headers:{Authorization:'Bearer '+(localStorage.getItem('ah_token')||'')}}).then(function(r){return r.json();}).then(function(d){
       if(host.getAttribute('data-tk')!==tk) return;         // user switched stocks mid-flight
       if(!d){ host.innerHTML='<div class="dd-loading">Could not load dependencies.</div>'; return; }
       if(d.status==='locked'){ host.innerHTML='<div class="dd-loading">🔒 '+(d.detail||'Pro feature — upgrade to unlock dependency mapping.')+'</div>'; return; }
