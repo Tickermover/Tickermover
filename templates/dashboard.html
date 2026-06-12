@@ -1513,7 +1513,7 @@ table.ssx-h2h tbody td.self{color:var(--ink);font-weight:600}
   box-shadow:0 8px 32px rgba(0,0,0,.12),0 2px 8px rgba(0,0,0,.08);padding:6px}
 /* min-width forces the table wider than its container so the wrapper's
    overflow-x:auto actually produces a horizontal scrollbar on desktop. */
-.fund-list{width:100%;min-width:980px;border-collapse:collapse;font-size:13px}
+.fund-list{width:100%;min-width:1040px;border-collapse:collapse;font-size:13px}
 .fund-list th{background:rgba(255,255,255,.9);padding:10px 12px;text-align:left;font-weight:700;color:#374151;
   font-size:11px;text-transform:uppercase;letter-spacing:.5px;cursor:pointer;white-space:nowrap;
   border-bottom:2px solid #e2e8f0;position:sticky;top:0;position:relative;user-select:none}
@@ -13653,10 +13653,11 @@ function renderFundamentals(tickers) {
       <td><span class="fl-stock"><span class="fl-tic">${t.ticker}</span><span class="fl-name">${t.name || ''}</span></span></td>
       <td class="num fd-price" id="fl-price-${t.ticker}" style="font-size:14px;font-weight:700">${fmtP(price)}</td>
       <td class="num ${pCls(chg)}">${fmtPct(chg)}</td>
+      <td class="num" style="font-weight:800;color:${_rs>=80?'#16a34a':_rs>=50?'#0f172a':'#94a3b8'}">${_rs>0?_rs:'—'}</td>
       <td class="num ${pCls(mom3m)}" style="font-weight:700">${mom3m !== 0 ? fmtPct(mom3m) : '—'}</td>
       <td class="num ${!isNaN(revG)?pCls(revG*100):''}">${!isNaN(revG)?fmtPct2(t.revenue_growth_yoy):'—'}</td>
+      <td class="num ${!isNaN(fcfM)?pCls(fcfM):''}">${!isNaN(fcfM)?fmtPct2(t.fcf_margin):'—'}</td>
       <td class="num">${fmtM(t.market_cap)}</td>
-      <td class="num">${!isNaN(fwdPE)&&fwdPE>0&&fwdPE<999?fwdPE.toFixed(1)+'×':'—'}</td>
       <td class="num ${upsidePct!=null?pCls(upsidePct):''}">${upsidePct!=null?fmtPct(upsidePct):'—'}</td>
     </tr>`;
   }
@@ -13670,10 +13671,11 @@ function renderFundamentals(tickers) {
         <th>Stock</th>
         <th class="num" onclick="sortFundList('price')">Price</th>
         <th class="num" onclick="sortFundList('chg')">Today %</th>
+        <th class="num" onclick="sortFundList('rs')" title="Relative Strength (1–99) — price performance vs the market. 80+ is leadership.">RS</th>
         <th class="num" onclick="sortFundList('mom3m')">3M Chg</th>
         <th class="num" onclick="sortFundList('rev')">Rev Growth</th>
+        <th class="num" onclick="sortFundList('fcf')" title="Free-cash-flow margin — profitable growth vs cash burn.">FCF Margin</th>
         <th class="num" onclick="sortFundList('mcap')">Mkt Cap</th>
-        <th class="num" onclick="sortFundList('pe')">P/E</th>
         <th class="num" onclick="sortFundList('upside')">Upside</th>
       </tr>
     </thead>
