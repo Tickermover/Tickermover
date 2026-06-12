@@ -1513,7 +1513,7 @@ table.ssx-h2h tbody td.self{color:var(--ink);font-weight:600}
   box-shadow:0 8px 32px rgba(0,0,0,.12),0 2px 8px rgba(0,0,0,.08);padding:6px}
 /* min-width forces the table wider than its container so the wrapper's
    overflow-x:auto actually produces a horizontal scrollbar on desktop. */
-.fund-list{width:100%;min-width:1100px;border-collapse:collapse;font-size:13px}
+.fund-list{width:100%;min-width:980px;border-collapse:collapse;font-size:13px}
 .fund-list th{background:rgba(255,255,255,.9);padding:10px 12px;text-align:left;font-weight:700;color:#374151;
   font-size:11px;text-transform:uppercase;letter-spacing:.5px;cursor:pointer;white-space:nowrap;
   border-bottom:2px solid #e2e8f0;position:sticky;top:0;position:relative;user-select:none}
@@ -1528,13 +1528,18 @@ table.ssx-h2h tbody td.self{color:var(--ink);font-weight:600}
 .fund-list tr.fund-row{cursor:pointer;transition:all .15s}
 .fund-list tr.fund-row:hover td{background:#f6f9ff;border-color:#e2e8f0}
 .fund-list tr.fund-row:hover .fl-tic{color:#0040c1}
-.fl-tic{font-weight:900;color:#0f172a;font-size:14px;text-shadow:none}
-/* Tighten the Name column so we recover ~80px for the right-side columns
-   (Mkt Cap / P/E / Upside) that were getting cut off. */
-.fund-list td:nth-child(3){max-width:200px;width:200px;overflow:hidden;text-overflow:ellipsis}
-.fl-name{color:#374151;font-size:12px;max-width:200px;overflow:hidden;text-overflow:ellipsis;
-  white-space:nowrap;display:inline-block;vertical-align:middle}
+.fl-tic{font-weight:900;color:#0f172a;font-size:14px;text-shadow:none;line-height:1.1}
+/* Numeric columns: right-aligned with tabular figures so values line up. */
+.fund-list th.num,.fund-list td.num{text-align:right;font-variant-numeric:tabular-nums}
+/* Merged Stock column — ticker (bold) over a muted, truncated company name;
+   reclaims the width the old standalone Name column wasted. */
+.fund-list td:nth-child(2){max-width:210px}
+.fl-stock{display:flex;flex-direction:column;gap:1px;min-width:0;max-width:200px}
+.fl-name{color:#64748b;font-size:11px;max-width:200px;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;display:block;line-height:1.15}
 .fl-pop{font-size:15px;font-weight:900;color:#0040c1}
+/* Tally removed per design — the sidebar already carries the universe count. */
+#tally-fund{display:none}
 .fl-grade{display:inline-block;padding:3px 8px;border-radius:8px;font-size:10px;font-weight:800}
 .fl-open-btn{display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:3px 9px;
   border-radius:7px;background:rgba(41,112,255,.10);border:1px solid rgba(41,112,255,.30);
@@ -13645,15 +13650,14 @@ function renderFundamentals(tickers) {
          data-upside="${upsidePct!=null?upsidePct.toFixed(1):''}"
          onclick="openStockModal('${t.ticker}')">
       <td><span class="fl-pop">${Math.round(pop)}</span></td>
-      <td><span class="fl-tic">${t.ticker}</span></td>
-      <td><span class="fl-name">${t.name || ''}</span></td>
-      <td class="fd-price" id="fl-price-${t.ticker}" style="font-size:14px;font-weight:700">${fmtP(price)}</td>
-      <td class="${pCls(chg)}">${fmtPct(chg)}</td>
-      <td class="${pCls(mom3m)}" style="font-weight:700">${mom3m !== 0 ? fmtPct(mom3m) : '—'}</td>
-      <td class="${!isNaN(revG)?pCls(revG*100):''}">${!isNaN(revG)?fmtPct2(t.revenue_growth_yoy):'—'}</td>
-      <td>${fmtM(t.market_cap)}</td>
-      <td>${!isNaN(fwdPE)&&fwdPE>0&&fwdPE<999?fwdPE.toFixed(1)+'×':'—'}</td>
-      <td class="${upsidePct!=null?pCls(upsidePct):''}">${upsidePct!=null?fmtPct(upsidePct):'—'}</td>
+      <td><span class="fl-stock"><span class="fl-tic">${t.ticker}</span><span class="fl-name">${t.name || ''}</span></span></td>
+      <td class="num fd-price" id="fl-price-${t.ticker}" style="font-size:14px;font-weight:700">${fmtP(price)}</td>
+      <td class="num ${pCls(chg)}">${fmtPct(chg)}</td>
+      <td class="num ${pCls(mom3m)}" style="font-weight:700">${mom3m !== 0 ? fmtPct(mom3m) : '—'}</td>
+      <td class="num ${!isNaN(revG)?pCls(revG*100):''}">${!isNaN(revG)?fmtPct2(t.revenue_growth_yoy):'—'}</td>
+      <td class="num">${fmtM(t.market_cap)}</td>
+      <td class="num">${!isNaN(fwdPE)&&fwdPE>0&&fwdPE<999?fwdPE.toFixed(1)+'×':'—'}</td>
+      <td class="num ${upsidePct!=null?pCls(upsidePct):''}">${upsidePct!=null?fmtPct(upsidePct):'—'}</td>
     </tr>`;
   }
 
@@ -13663,15 +13667,14 @@ function renderFundamentals(tickers) {
     <thead>
       <tr>
         <th onclick="sortFundList('pop')">Score ▾</th>
-        <th>Ticker</th>
-        <th>Name</th>
-        <th onclick="sortFundList('price')">Price</th>
-        <th onclick="sortFundList('chg')">Today %</th>
-        <th onclick="sortFundList('mom3m')">3M Chg</th>
-        <th onclick="sortFundList('rev')">Rev Growth</th>
-        <th onclick="sortFundList('mcap')">Mkt Cap</th>
-        <th onclick="sortFundList('pe')">P/E</th>
-        <th onclick="sortFundList('upside')">Upside</th>
+        <th>Stock</th>
+        <th class="num" onclick="sortFundList('price')">Price</th>
+        <th class="num" onclick="sortFundList('chg')">Today %</th>
+        <th class="num" onclick="sortFundList('mom3m')">3M Chg</th>
+        <th class="num" onclick="sortFundList('rev')">Rev Growth</th>
+        <th class="num" onclick="sortFundList('mcap')">Mkt Cap</th>
+        <th class="num" onclick="sortFundList('pe')">P/E</th>
+        <th class="num" onclick="sortFundList('upside')">Upside</th>
       </tr>
     </thead>
     <tbody id="fund-tbody"></tbody>
