@@ -2873,47 +2873,47 @@ body.v2-featured-only #fund-tbody tr.fund-row:not([data-featured]){display:none!
    thin grid, hero line with heavy gaussian-blur glow, side stat panel.
    ──────────────────────────────────────────────────────────────────────── */
 .v2-tc-wrap{
-  padding:24px 26px 20px;font-size:11.5px;color:#475569;
-  display:grid;grid-template-columns:1fr 184px;grid-template-rows:auto 1fr;gap:16px 22px;
-  position:relative;border-radius:20px;
+  padding:24px 26px 20px;font-size:11.5px;color:rgba(219,234,254,.75);
+  display:grid;grid-template-columns:1fr 176px;grid-template-rows:auto 1fr;gap:16px 22px;
+  position:relative;border-radius:20px;overflow:hidden;
   background:
-    radial-gradient(ellipse 80% 70% at 15% 115%, rgba(41,112,255,.13), transparent 60%),
-    radial-gradient(ellipse 65% 60% at 96% -15%, rgba(124,58,237,.09), transparent 60%),
-    linear-gradient(180deg, #ffffff 0%, #f4f8ff 100%);
-  box-shadow:0 2px 6px rgba(15,40,100,.06), 0 26px 52px -26px rgba(15,40,100,.4), 0 0 0 1px rgba(9,9,9,.05) inset;
+    radial-gradient(ellipse 75% 80% at 12% 120%, rgba(56,189,248,.18), transparent 60%),
+    radial-gradient(ellipse 65% 70% at 98% -20%, rgba(129,140,248,.20), transparent 60%),
+    linear-gradient(160deg,#0a1430 0%,#0f1f47 52%,#13265a 100%);
+  box-shadow:0 2px 8px rgba(5,15,45,.4), 0 34px 62px -30px rgba(5,15,45,.7), 0 0 0 1px rgba(255,255,255,.06) inset;
 }
 @media (max-width:760px){
   .v2-tc-wrap{grid-template-columns:1fr;grid-template-rows:auto auto auto}
 }
 .v2-tc-headline{grid-column:1;grid-row:1;display:flex;align-items:center;justify-content:space-between;gap:12px}
 .v2-tc-hl-l{display:flex;flex-direction:column;gap:4px;min-width:0}
-.v2-tc-hl-eyebrow{font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#0040c1}
-.v2-tc-hl-val{font-size:42px;font-weight:900;letter-spacing:-.025em;line-height:1;color:#0f172a;font-variant-numeric:tabular-nums}
-.v2-tc-hl-val.neg{color:#dc2626}
-.v2-tc-hl-sub{font-size:12px;color:#64748b;font-weight:600;letter-spacing:-.005em;display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:2px}
-.v2-tc-hl-sub .beat{color:#15803d;font-weight:800;font-variant-numeric:tabular-nums}
-.v2-tc-hl-sub .miss{color:#dc2626;font-weight:800;font-variant-numeric:tabular-nums}
+.v2-tc-hl-eyebrow{font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#93c5fd}
+.v2-tc-hl-val{font-size:42px;font-weight:900;letter-spacing:-.025em;line-height:1;color:#fff;font-variant-numeric:tabular-nums;text-shadow:0 2px 18px rgba(96,165,250,.35)}
+.v2-tc-hl-val.neg{color:#fca5a5}
+.v2-tc-hl-sub{font-size:12px;color:rgba(219,234,254,.72);font-weight:600;letter-spacing:-.005em;display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:4px}
+.v2-tc-hl-sub .beat{color:#6ee7b7;font-weight:800;font-variant-numeric:tabular-nums}
+.v2-tc-hl-sub .miss{color:#fca5a5;font-weight:800;font-variant-numeric:tabular-nums}
 .v2-tc-hl-r{display:flex;gap:4px;align-items:center;flex-shrink:0}
-.v2-tc-chip{padding:5px 11px;border-radius:7px;font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#64748b;background:transparent;border:1px solid transparent;cursor:pointer;transition:all .15s;font-family:inherit;font-variant-numeric:tabular-nums}
-.v2-tc-chip:hover{color:#0f172a;background:#eef4ff}
-.v2-tc-chip.on{color:#fff;background:linear-gradient(135deg,#2970ff,#0040c1);border-color:transparent;box-shadow:0 4px 12px -4px rgba(0,64,193,.55)}
+.v2-tc-chip{padding:5px 11px;border-radius:7px;font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:rgba(191,219,254,.8);background:transparent;border:1px solid transparent;cursor:pointer;transition:all .15s;font-family:inherit;font-variant-numeric:tabular-nums}
+.v2-tc-chip:hover{color:#fff;background:rgba(255,255,255,.12)}
+.v2-tc-chip.on{color:#fff;background:linear-gradient(135deg,#38bdf8,#3b82f6);border-color:transparent;box-shadow:0 4px 14px -4px rgba(56,189,248,.6)}
 
 /* ── Side stat panel (right of chart on desktop) ──────────────────── */
-.v2-tc-side{grid-column:2;grid-row:1 / span 2;display:flex;flex-direction:column;justify-content:center;gap:14px;padding-left:14px;border-left:1px solid rgba(9,9,9,.08)}
+.v2-tc-side{grid-column:2;grid-row:1 / span 2;display:flex;flex-direction:column;justify-content:center;gap:16px;padding-left:16px;border-left:1px solid rgba(255,255,255,.12)}
 @media (max-width:760px){
-  .v2-tc-side{grid-column:1;grid-row:3;border-left:none;border-top:1px solid rgba(9,9,9,.08);padding:14px 0 0;flex-direction:row;justify-content:space-around}
+  .v2-tc-side{grid-column:1;grid-row:3;border-left:none;border-top:1px solid rgba(255,255,255,.12);padding:14px 0 0;flex-direction:row;justify-content:space-around}
 }
 .v2-tc-s-item{display:flex;flex-direction:column;gap:1px;min-width:0}
-.v2-tc-s-label{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#64748b;display:flex;align-items:center;gap:6px}
+.v2-tc-s-label{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:rgba(191,219,254,.75);display:flex;align-items:center;gap:6px}
 .v2-tc-s-label i{display:inline-block;width:8px;height:8px;border-radius:2px;flex-shrink:0}
-.v2-tc-s-item.hero .v2-tc-s-label i{background:linear-gradient(135deg,#2970ff,#0040c1);box-shadow:0 0 8px rgba(41,112,255,.55)}
+.v2-tc-s-item.hero .v2-tc-s-label i{background:linear-gradient(135deg,#67e8f9,#60a5fa);box-shadow:0 0 10px rgba(96,165,250,.7)}
 .v2-tc-s-item.bench-spy .v2-tc-s-label i{background:#94a3b8}
-.v2-tc-s-item.bench-qqq .v2-tc-s-label i{background:#8b5cf6}
-.v2-tc-s-val{font-size:22px;font-weight:900;letter-spacing:-.02em;line-height:1.1;color:#0f172a;font-variant-numeric:tabular-nums}
-.v2-tc-s-item.hero .v2-tc-s-val{font-size:24px;background:linear-gradient(135deg,#2970ff 0%,#0040c1 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
-.v2-tc-s-delta{font-size:11px;font-weight:700;color:#64748b;font-variant-numeric:tabular-nums}
-.v2-tc-s-delta.up{color:#15803d}
-.v2-tc-s-delta.dn{color:#dc2626}
+.v2-tc-s-item.bench-qqq .v2-tc-s-label i{background:#a78bfa}
+.v2-tc-s-val{font-size:22px;font-weight:900;letter-spacing:-.02em;line-height:1.1;color:#fff;font-variant-numeric:tabular-nums}
+.v2-tc-s-item.hero .v2-tc-s-val{font-size:25px;background:linear-gradient(135deg,#67e8f9 0%,#818cf8 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
+.v2-tc-s-delta{font-size:11px;font-weight:700;color:rgba(191,219,254,.7);font-variant-numeric:tabular-nums}
+.v2-tc-s-delta.up{color:#6ee7b7}
+.v2-tc-s-delta.dn{color:#fca5a5}
 
 /* ── Hover scrubber tooltip (broker-style daily readout) ───────── */
 .v2-tc-tip{
@@ -2937,23 +2937,23 @@ body.v2-featured-only #fund-tbody tr.fund-row:not([data-featured]){display:none!
 .v2-tc-tip-row strong.dn{color:#dc2626}
 
 /* ── Audit drill-down (under chart, lazy-loaded) ─────────────────── */
-.v2-tc-audit{grid-column:1 / span 2;margin-top:6px;border-top:1px solid rgba(9,9,9,.08);padding-top:10px}
+.v2-tc-audit{grid-column:1 / span 2;margin-top:6px;border-top:1px solid rgba(255,255,255,.12);padding-top:10px}
 @media (max-width:760px){.v2-tc-audit{grid-column:1}}
 .v2-tc-audit-toggle{
   display:flex;align-items:center;gap:10px;width:100%;
   background:transparent;border:none;cursor:pointer;
-  padding:6px 4px;font-family:inherit;color:#475569;font-size:12px;
+  padding:6px 4px;font-family:inherit;color:rgba(219,234,254,.72);font-size:12px;
   transition:color .15s;
 }
-.v2-tc-audit-toggle:hover{color:#0f172a}
-.v2-tc-audit-toggle strong{color:#0f172a;font-weight:800;font-variant-numeric:tabular-nums}
+.v2-tc-audit-toggle:hover{color:#fff}
+.v2-tc-audit-toggle strong{color:#fff;font-weight:800;font-variant-numeric:tabular-nums}
 .v2-tc-audit-count{font-weight:600;letter-spacing:-.005em}
 .v2-tc-audit-cta{
-  margin-left:auto;color:#0040c1;font-weight:700;font-size:11.5px;
+  margin-left:auto;color:#93c5fd;font-weight:700;font-size:11.5px;
   letter-spacing:.02em;
 }
 .v2-tc-audit-caret{
-  color:#0040c1;flex-shrink:0;transition:transform .2s;
+  color:#93c5fd;flex-shrink:0;transition:transform .2s;
 }
 .v2-tc-audit-toggle.on .v2-tc-audit-caret{transform:rotate(180deg)}
 .v2-tc-audit-panel{margin-top:8px;animation:v2-tc-audit-in .2s ease}
@@ -16072,7 +16072,7 @@ function v2RenderTrackerChartHTML(d){
     const y = yAt(v).toFixed(1);
     // Position labels in the right gutter (outside the plot area) so they
     // never sit on top of the hero line near the latest data point.
-    return `<text x="${padL + innerW + 8}" y="${(parseFloat(y) + 3.5).toFixed(1)}" text-anchor="start" font-size="10" fill="#64748b" font-weight="600" font-variant-numeric="tabular-nums" letter-spacing=".02em">${(v >= 0 ? '+' : '') + v.toFixed(0)}%</text>`;
+    return `<text x="${padL + innerW + 8}" y="${(parseFloat(y) + 3.5).toFixed(1)}" text-anchor="start" font-size="10" fill="rgba(148,163,184,.9)" font-weight="600" font-variant-numeric="tabular-nums" letter-spacing=".02em">${(v >= 0 ? '+' : '') + v.toFixed(0)}%</text>`;
   }).join('');
 
   // X-axis labels — first / last only, premium charts don't clutter the axis
@@ -16081,8 +16081,8 @@ function v2RenderTrackerChartHTML(d){
     catch(e){ return s; }
   };
   const xLabelsHTML =
-    `<text x="${padL}" y="${H - 4}" text-anchor="start" font-size="10" fill="#475569" font-weight="700">${fmtDate(dates[0])}</text>` +
-    `<text x="${padL + innerW}" y="${H - 4}" text-anchor="end" font-size="10" fill="#475569" font-weight="700">${fmtDate(dates[dates.length - 1])}</text>`;
+    `<text x="${padL}" y="${H - 4}" text-anchor="start" font-size="10" fill="rgba(191,219,254,.85)" font-weight="700">${fmtDate(dates[0])}</text>` +
+    `<text x="${padL + innerW}" y="${H - 4}" text-anchor="end" font-size="10" fill="rgba(191,219,254,.85)" font-weight="700">${fmtDate(dates[dates.length - 1])}</text>`;
 
   const endVal = (a) => a.length ? a[a.length - 1] : 0;
   const tEnd = endVal(tracker), sEnd = endVal(spy), qEnd = endVal(qqq);
@@ -16141,20 +16141,20 @@ function v2RenderTrackerChartHTML(d){
         '<defs>' +
           // Hero stroke: brand-blue gradient
           '<linearGradient id="v2-tc-grad-stroke" x1="0" y1="0" x2="1" y2="0">' +
-            '<stop offset="0%"   stop-color="#2970ff"/>' +
-            '<stop offset="50%"  stop-color="#0042c5"/>' +
-            '<stop offset="100%" stop-color="#0040c1"/>' +
+            '<stop offset="0%"   stop-color="#67e8f9"/>' +
+            '<stop offset="55%"  stop-color="#60a5fa"/>' +
+            '<stop offset="100%" stop-color="#818cf8"/>' +
           '</linearGradient>' +
-          // Area fill: brand blue → transparent (vertical)
+          // Area fill: glow blue → transparent (vertical) — richer on the dark card
           '<linearGradient id="v2-tc-grad-fill" x1="0" y1="0" x2="0" y2="1">' +
-            '<stop offset="0%"  stop-color="#2970ff" stop-opacity="0.28"/>' +
-            '<stop offset="60%" stop-color="#2970ff" stop-opacity="0.08"/>' +
-            '<stop offset="100%" stop-color="#2970ff" stop-opacity="0"/>' +
+            '<stop offset="0%"  stop-color="#60a5fa" stop-opacity="0.42"/>' +
+            '<stop offset="55%" stop-color="#60a5fa" stop-opacity="0.12"/>' +
+            '<stop offset="100%" stop-color="#60a5fa" stop-opacity="0"/>' +
           '</linearGradient>' +
           // Soft glow for the hero line — subtle, not neon (a faint blurred
           // copy behind the crisp stroke gives depth without the fuzzy look)
           '<filter id="v2-tc-line-glow" x="-20%" y="-60%" width="140%" height="220%">' +
-            '<feGaussianBlur stdDeviation="2.5" result="blur"/>' +
+            '<feGaussianBlur stdDeviation="3.6" result="blur"/>' +
             '<feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>' +
           '</filter>' +
           // Tighter glow for endpoint dot
@@ -16164,32 +16164,31 @@ function v2RenderTrackerChartHTML(d){
           '</filter>' +
         '</defs>' +
         // Subtle baseline 0% (light grid line)
-        `<line x1="${padL}" x2="${padL + innerW}" y1="${baselineY}" y2="${baselineY}" stroke="rgba(9,9,9,.10)" stroke-width="1"/>` +
+        `<line x1="${padL}" x2="${padL + innerW}" y1="${baselineY}" y2="${baselineY}" stroke="rgba(255,255,255,.14)" stroke-width="1"/>` +
         // Right-edge reference labels (dim)
         refHTML +
         // Bottom-edge date labels (dim)
         xLabelsHTML +
         // Area fill under hero
         '<path d="' + tArea + '" fill="url(#v2-tc-grad-fill)" stroke="none"/>' +
-        // Benchmark lines — slate-grey dashed for S&P 500, violet for NASDAQ,
-        // both thin and pushed back via opacity so the hero line stays dominant.
-        '<path d="' + sLine + '" fill="none" stroke="#94a3b8" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="3,3" opacity="0.9"/>' +
-        '<path d="' + qLine + '" fill="none" stroke="#8b5cf6" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round" opacity="0.7"/>' +
-        // Hero line — brand-blue gradient stroke with soft glow
-        '<path d="' + tLine + '" fill="none" stroke="url(#v2-tc-grad-stroke)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" filter="url(#v2-tc-line-glow)"/>' +
-        // Benchmark endpoints — colored to match their lines (slate + violet)
-        `<circle cx="${sEndX}" cy="${sEndY}" r="3"   fill="#94a3b8" stroke="#fff" stroke-width="1.5" opacity="0.95"/>` +
-        `<circle cx="${qEndX}" cy="${qEndY}" r="3"   fill="#8b5cf6" stroke="#fff" stroke-width="1.5" opacity="0.95"/>` +
-        // Hero endpoint — brand blue with soft halo
-        `<circle cx="${tEndX}" cy="${tEndY}" r="11" fill="#2970ff" opacity="0.30" filter="url(#v2-tc-dot-glow)"/>` +
-        `<circle cx="${tEndX}" cy="${tEndY}" r="5"  fill="#0040c1" stroke="#fff" stroke-width="2"/>` +
+        // Benchmark lines — faint whisper lines so the glowing hero stays dominant.
+        '<path d="' + sLine + '" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="3,3" opacity="0.45"/>' +
+        '<path d="' + qLine + '" fill="none" stroke="#a78bfa" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" opacity="0.55"/>' +
+        // Hero line — glowing cyan-blue gradient stroke
+        '<path d="' + tLine + '" fill="none" stroke="url(#v2-tc-grad-stroke)" stroke-width="3.2" stroke-linejoin="round" stroke-linecap="round" filter="url(#v2-tc-line-glow)"/>' +
+        // Benchmark endpoints — colored to match their (faint) lines
+        `<circle cx="${sEndX}" cy="${sEndY}" r="3"   fill="#94a3b8" stroke="#0b1635" stroke-width="1.5" opacity="0.8"/>` +
+        `<circle cx="${qEndX}" cy="${qEndY}" r="3"   fill="#a78bfa" stroke="#0b1635" stroke-width="1.5" opacity="0.85"/>` +
+        // Hero endpoint — bright glow halo
+        `<circle cx="${tEndX}" cy="${tEndY}" r="12" fill="#60a5fa" opacity="0.35" filter="url(#v2-tc-dot-glow)"/>` +
+        `<circle cx="${tEndX}" cy="${tEndY}" r="5.5" fill="#60a5fa" stroke="#fff" stroke-width="2"/>` +
         // Hover scrubber — vertical guide + 3 dots (one per series).
         // Hidden by default (display:none on the group), shown by JS on
         // mousemove. dots are the size of normal series endpoints so the
         // hover state feels continuous with the static endpoint markers.
         '<g class="v2-tc-cursor" style="display:none;pointer-events:none">' +
-          `<line class="v2-tc-cursor-line" x1="0" x2="0" y1="${padT}" y2="${padT + innerH}" stroke="rgba(9,9,9,.28)" stroke-width="1" stroke-dasharray="3,3"/>` +
-          '<circle class="v2-tc-cursor-dot v2-tc-cursor-dot-t" r="6" fill="#0040c1" stroke="#fff" stroke-width="2"/>' +
+          `<line class="v2-tc-cursor-line" x1="0" x2="0" y1="${padT}" y2="${padT + innerH}" stroke="rgba(255,255,255,.35)" stroke-width="1" stroke-dasharray="3,3"/>` +
+          '<circle class="v2-tc-cursor-dot v2-tc-cursor-dot-t" r="6" fill="#60a5fa" stroke="#fff" stroke-width="2"/>' +
           '<circle class="v2-tc-cursor-dot v2-tc-cursor-dot-s" r="3.5" fill="#94a3b8" stroke="#fff" stroke-width="1.5"/>' +
           '<circle class="v2-tc-cursor-dot v2-tc-cursor-dot-q" r="3.5" fill="#8b5cf6" stroke="#fff" stroke-width="1.5"/>' +
         '</g>' +
