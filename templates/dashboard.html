@@ -781,26 +781,28 @@ body.v2 #sectors-grid .smh-name{font-weight:800;font-size:12.5px;color:#0f172a!i
 .dep-leg-bar{height:6px;background:rgba(100,116,139,.16);border-radius:4px;overflow:hidden}
 .dep-leg-fill{display:block;height:100%;border-radius:4px}
 .dep-leg-pct{font-family:'JetBrains Mono',monospace;font-weight:800;color:var(--ink);text-align:right;font-size:12px}
-/* Key dependencies — SWOT-style quadrants, one coloured block per type */
-.dep-swot{display:grid;grid-template-columns:1fr 1fr;gap:13px;align-items:start}
-@media(max-width:680px){.dep-swot{grid-template-columns:1fr}}
-.swot-q{display:flex;background:#fff;border:1px solid var(--hair);border-radius:14px;overflow:hidden;box-shadow:0 6px 18px -11px rgba(15,23,42,.24)}
-.swot-side{flex:0 0 76px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:#fff;padding:12px 6px;text-align:center}
-.swot-letter{font-size:32px;font-weight:900;line-height:1;text-shadow:0 1px 4px rgba(0,0,0,.25)}
-.swot-side-lbl{font-size:8.5px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;opacity:.96;line-height:1.25}
-.swot-side-ct{margin-top:3px;font-size:10px;font-weight:800;background:rgba(255,255,255,.24);border:1px solid rgba(255,255,255,.4);border-radius:999px;min-width:18px;padding:0 5px;line-height:16px}
-.swot-main{flex:1;min-width:0;padding:4px 14px}
+/* Key dependencies — compact SWOT boxes that FLOW into balanced columns
+   (masonry) so a 4-company box and a 1-company box pack neatly side by side. */
+.dep-swot{column-count:2;column-gap:12px}
+@media(max-width:680px){.dep-swot{column-count:1}}
+.swot-q{break-inside:avoid;display:flex;background:#fff;border:1px solid var(--hair);border-radius:13px;
+  overflow:hidden;box-shadow:0 5px 15px -11px rgba(15,23,42,.22);margin-bottom:12px}
+.swot-side{flex:0 0 58px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:#fff;padding:9px 5px;text-align:center}
+.swot-letter{font-size:25px;font-weight:900;line-height:1;text-shadow:0 1px 3px rgba(0,0,0,.25)}
+.swot-side-lbl{font-size:8px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;opacity:.96;line-height:1.2}
+.swot-side-ct{margin-top:2px;font-size:9.5px;font-weight:800;background:rgba(255,255,255,.24);border:1px solid rgba(255,255,255,.4);border-radius:999px;min-width:17px;padding:0 5px;line-height:15px}
+.swot-main{flex:1;min-width:0;padding:3px 12px}
 .swot-cus .swot-side{background:linear-gradient(150deg,#2dd4bf,#0d9488)}
 .swot-sup .swot-side{background:linear-gradient(150deg,#3b82f6,#1d4ed8)}
 .swot-inp .swot-side{background:linear-gradient(150deg,#f59e0b,#b45309)}
 .swot-par .swot-side{background:linear-gradient(150deg,#a855f7,#6d28d9)}
-.swot-item{padding:9px 0;border-top:1px solid #eef2f7}
+.swot-item{padding:7px 0;border-top:1px solid #eef2f7}
 .swot-item:first-child{border-top:0}
-.swot-it-top{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
-.swot-it-nm{font-weight:800;font-size:13.5px;color:var(--ink)}
-.swot-it-what{font-size:11.5px;color:var(--muted);font-weight:600;margin-top:2px}
-.swot-it-rip{font-size:11.5px;color:#b42318;margin-top:4px;padding-left:16px;position:relative;line-height:1.45}
-.swot-it-rip::before{content:'⚡';position:absolute;left:0;top:0;font-size:11px}
+.swot-it-top{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.swot-it-nm{font-weight:800;font-size:12.5px;color:var(--ink)}
+.swot-it-what{font-size:11px;color:var(--muted);font-weight:600;margin-top:1px}
+.swot-it-rip{font-size:11px;color:#b42318;margin-top:3px;padding-left:15px;position:relative;line-height:1.4}
+.swot-it-rip::before{content:'⚡';position:absolute;left:0;top:0;font-size:10px}
 .dep-tic{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:800;color:#64748b;background:rgba(100,116,139,.1);border:0;border-radius:6px;padding:2px 8px}
 .dep-tic.link{color:#0040c1;background:rgba(41,112,255,.1);cursor:pointer;transition:background .15s}
 .dep-tic.link:hover{background:rgba(41,112,255,.2)}
