@@ -474,16 +474,16 @@ body.v2 #sectors-grid .smh-name{font-weight:800;font-size:12.5px;color:#0f172a!i
 /* Nodes */
 .secg-node{cursor:pointer}
 .secg-node .secg-dot{stroke:#fff;stroke-width:2;filter:drop-shadow(0 2px 4px rgba(15,23,42,.14));transition:r .2s,stroke-width .2s,filter .2s}
-.secg-node .secg-label{font-size:11px;font-weight:800;fill:#0f172a;paint-order:stroke;text-anchor:middle;
+.secg-node .secg-label{font-size:12px;font-weight:800;fill:#0f172a;paint-order:stroke;text-anchor:middle;
   stroke:#fff;stroke-width:3px;stroke-linejoin:round;pointer-events:none;letter-spacing:-.01em;transition:opacity .2s}
 .secg-node.lblhide .secg-label{opacity:0}
-.secg-node .secg-score{font-size:10px;font-weight:800;fill:#fff;pointer-events:none;text-anchor:middle;dominant-baseline:central}
+.secg-node .secg-score{font-size:13px;font-weight:800;fill:#fff;pointer-events:none;text-anchor:middle;dominant-baseline:central}
 .secg-node:hover .secg-dot{filter:drop-shadow(0 3px 8px rgba(15,23,42,.28))}
 .secg-node:hover .secg-label{opacity:1}
 /* Drill-down: a sector's member tickers as logo discs (Events-tab style) */
 .secg-stock-bg{stroke-width:2.5}
 .secg-stock-logo{clip-path:circle(50%)}
-.secg-stk-tic{font-size:10px;font-weight:800;fill:#0f172a}
+.secg-stk-tic{font-size:11px;font-weight:800;fill:#0f172a}
 .secg-stk-name{font-size:8px;font-weight:600;fill:#64748b;text-anchor:middle;paint-order:stroke;
   stroke:#fff;stroke-width:2.5px;stroke-linejoin:round;pointer-events:none}
 .secg-stock:hover .secg-stock-bg{filter:drop-shadow(0 3px 8px rgba(15,23,42,.30))}
@@ -14137,7 +14137,7 @@ function _secgRefresh(){
 function _secgReduceMotion(){
   return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
 }
-function secgRadius(count){ return Math.max(11, Math.min(27, 10 + (count || 1) * 0.55)); }
+function secgRadius(count){ return Math.max(15, Math.min(36, 13 + (count || 1) * 0.62)); }
 
 /* Fetch the AI wiring once per distinct sub-sector set; re-render when it lands. */
 function secgEnsureTopology(sectors){
@@ -14300,7 +14300,7 @@ function _secgStep(){
   const pad = 48, W = _secgW, H = _secgH;
   // Looser, more spread-out field + a touch of Brownian jitter so the web keeps
   // gently breathing (never freezes) without flying apart.
-  const K_REP = 8200, K_SPR = 0.016, SPR_LEN = 165, K_CEN = 0.009, DAMP = 0.9, JITTER = 0.6;
+  const K_REP = 9600, K_SPR = 0.016, SPR_LEN = 186, K_CEN = 0.009, DAMP = 0.9, JITTER = 0.6;
   for (let i = 0; i < N; i++){
     const a = _secgNodes[names[i]];
     for (let j = i + 1; j < N; j++){
@@ -14379,9 +14379,9 @@ function secgPaint(){
 function secgTap(name){
   if (_secgFocus === name){ _secgFocus = null; secgCollapseStocks(); v2ClearSectorFilter(); }
   else {
+    // Bloom + filter the table, but DON'T scroll away — the user wants to read
+    // the expanded map; the filtered table is waiting below when they scroll.
     _secgFocus = name; v2SetSectorFilter(name); secgBloom(name);
-    const tb = document.querySelector('#panel-fund .fd-toolbar');
-    if (tb) tb.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
   secgApplyFocus(); secgRelabel();
 }
@@ -14394,13 +14394,13 @@ function secgBloom(sub){
   const st = _secgStats[sub], parent = _secgNodes[sub];
   if (!st || !st.top || !st.top.length || !parent) return;
   _secgBloom = sub;
-  const len = (parent.r || 14) + 52;
+  const len = (parent.r || 14) + 70;
   st.top.forEach((s, i) => {
     const id = 'stk:' + s.t;
     const ang = (i / st.top.length) * Math.PI * 2;
     _secgNodes[id] = {
       x: parent.x + (len) * Math.cos(ang), y: parent.y + (len) * Math.sin(ang),
-      vx: 0, vy: 0, r: 15, isStock: true, parent: sub, ticker: s.t, score: s.s, name: s.n || '',
+      vx: 0, vy: 0, r: 20, isStock: true, parent: sub, ticker: s.t, score: s.s, name: s.n || '',
     };
     _secgStockEdges.push({ source: sub, target: id, type: 'member', len: len, el: null });
   });
