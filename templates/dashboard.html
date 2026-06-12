@@ -14002,6 +14002,14 @@ const SECTOR_MAP_META = {
    "Sector connections" relationship graph (which overlays AI-generated wiring).
    The α-Score / size / colour stay 100% live; only the edges are AI-authored. */
 function renderSectors(tickers) {
+  // Honour the active risk profile so the graph shows EXACTLY the sectors/stocks
+  // the table shows. Some callers pass the full universe (initial load); without
+  // this, a sector with 0 stocks in the active profile (e.g. Healthcare under
+  // "aggressive") still appeared as a node and bloomed stocks that aren't in the
+  // filtered table. Idempotent when the caller already passed a filtered set.
+  if (typeof v2FilterByProfile === 'function') {
+    try { tickers = v2FilterByProfile(tickers); } catch (e) {}
+  }
   const subGroups = {};
   tickers.forEach(t => {
     const sub = t.sub_sector || t.subsector || t.sector || 'Other';
@@ -14344,14 +14352,7 @@ function secgBuildStockDOM(){
     const tic = document.createElementNS(NS, 'text');
     tic.setAttribute('class', 'secg-label secg-stk-tic'); tic.setAttribute('x', 0); tic.setAttribute('y', R + 12);
     tic.textContent = nd.ticker;
-    const g2 = g;
-    g2.appendChild(bg); g2.appendChild(img); g2.appendChild(tic);
-    if (nd.name){
-      const nm = document.createElementNS(NS, 'text');
-      nm.setAttribute('class', 'secg-stk-name'); nm.setAttribute('x', 0); nm.setAttribute('y', R + 23);
-      nm.textContent = nd.name.length > 18 ? nd.name.slice(0, 17) + '…' : nd.name;
-      g2.appendChild(nm);
-    }
+    g.appendChild(bg); g.appendChild(img); g.appendChild(tic);   // logo + ticker only (no full name)
     g.addEventListener('click', e => { e.stopPropagation(); if (_secgMoved){ _secgMoved = false; return; } if (typeof openStockModal === 'function') openStockModal(nd.ticker); });
     nG.appendChild(g); nd.el = g;
   });
