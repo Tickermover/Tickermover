@@ -2766,84 +2766,111 @@ body.v2-featured-only #fund-tbody tr.fund-row:not([data-featured]){display:none!
 .ct-table tbody tr{transition:background .12s}
 .ct-table tbody tr:hover td{background:#f6f9ff}
 .ct-table tbody tr:not(:last-child) td{border-bottom:1px solid #f1f5f9}
-/* ───── Top Hunts pick card (redesigned May 21) ───── */
+/* ───── Top Hunts pick card · premium layout (redesigned Jun 12) ───── */
 .v2-mp-card{
-  background:linear-gradient(180deg,#ffffff 0%,#fbfcfe 100%);border:1px solid #e7ecf3;border-radius:16px;
-  padding:15px;cursor:pointer;transition:transform .15s, box-shadow .15s, border-color .15s;
-  display:flex;flex-direction:column;gap:10px;
-  box-shadow:0 1px 2px rgba(15,40,100,.05),0 8px 22px -16px rgba(15,40,100,.18);
+  position:relative;
+  background:
+    radial-gradient(120% 80% at 50% -10%, rgba(41,112,255,.05), transparent 60%),
+    linear-gradient(180deg,#ffffff 0%,#f9fbff 100%);
+  border:1px solid #e6ecf5;border-radius:20px;
+  padding:17px 17px 16px;cursor:pointer;
+  transition:transform .2s cubic-bezier(.2,.7,.2,1), box-shadow .2s, border-color .2s;
+  display:flex;flex-direction:column;gap:13px;
+  box-shadow:0 1px 1px rgba(15,40,100,.04),0 10px 30px -20px rgba(15,40,100,.30);
 }
-.v2-mp-card:hover{transform:translateY(-3px);border-color:rgba(41,112,255,.30);
-  box-shadow:0 16px 34px -16px rgba(15,40,120,.32),0 2px 6px rgba(15,40,120,.1)!important}
-.v2-mp-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
-.v2-mp-head-l{display:flex;align-items:center;gap:10px;min-width:0;flex:1}
-.v2-mp-head-text{min-width:0;flex:1;line-height:1.25}
-.v2-mp-tic-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
-.v2-mp-tic{font-size:18px;font-weight:900;letter-spacing:.01em}
-.v2-mp-name{font-size:11.5px;color:#64748b;
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px}
-.v2-mp-since{font-size:10px;color:#94a3b8;margin-top:3px;letter-spacing:.01em;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.v2-mp-since strong{color:#475569;font-weight:700}
-.v2-mp-price{text-align:right;flex-shrink:0}
-.v2-mp-px{font-size:17px;font-weight:900;color:#0f172a;font-variant-numeric:tabular-nums}
-.v2-mp-todo{font-size:11px;font-weight:800;margin-top:2px;font-variant-numeric:tabular-nums}
+/* premium top hairline — subtle brand glow across the card crown */
+.v2-mp-card::before{
+  content:"";position:absolute;left:18px;right:18px;top:0;height:1px;border-radius:1px;
+  background:linear-gradient(90deg,transparent,rgba(41,112,255,.45),rgba(0,64,193,.25),transparent);
+  opacity:.6;transition:opacity .2s;
+}
+.v2-mp-card:hover{transform:translateY(-4px);border-color:rgba(41,112,255,.34);
+  box-shadow:0 24px 46px -22px rgba(15,40,120,.40),0 3px 8px rgba(15,40,120,.10)!important}
+.v2-mp-card:hover::before{opacity:1}
 
-/* Just-added pill (replaces the giant +0.0% block for day-0 picks) */
+/* ── Header ── */
+.v2-mp-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.v2-mp-head-l{display:flex;align-items:center;gap:11px;min-width:0;flex:1}
+.v2-mp-head-text{min-width:0;flex:1;line-height:1.22}
+.v2-mp-tic-row{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.v2-mp-tic{font-size:19px;font-weight:900;letter-spacing:-.01em;color:#0b1220}
+.v2-mp-name{font-size:11.5px;color:#6b7787;font-weight:500;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px}
+.v2-mp-since{font-size:10px;color:#9aa6b6;margin-top:4px;letter-spacing:.01em;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.v2-mp-since strong{color:#56657a;font-weight:700}
+.v2-mp-price{text-align:right;flex-shrink:0}
+.v2-mp-px{font-size:18px;font-weight:900;color:#0b1220;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.v2-mp-todo{display:inline-block;margin-top:4px;padding:1px 7px;border-radius:999px;
+  font-size:10.5px;font-weight:800;font-variant-numeric:tabular-nums;
+  background:rgba(15,23,42,.05)}
+
+/* ── Just-added pill (day-0 picks) ── */
 .v2-mp-fresh{
-  display:flex;align-items:center;gap:8px;
-  padding:8px 12px;border-radius:8px;
-  background:#FFF8E5;border:1px solid #FFE9B0;
+  display:flex;align-items:center;gap:9px;
+  padding:11px 14px;border-radius:13px;
+  background:linear-gradient(180deg,#fffdf6,#fff7e6);border:1px solid #ffe6a8;
   font-size:11.5px;color:#15803d;font-weight:600;line-height:1.4;
 }
-.v2-mp-fresh-dot{color:#15803d;font-size:10px;line-height:1}
+.v2-mp-fresh-dot{color:#f5a623;font-size:10px;line-height:1}
 .v2-mp-fresh strong{color:#1A1A1A;font-weight:800}
 
-/* Performance block — only for picks with non-zero return */
+/* ── Performance hero — the visual anchor of the card ── */
 .v2-mp-perf{
-  display:flex;align-items:center;justify-content:space-between;gap:10px;
-  padding:10px 14px;border-radius:10px;border:1px solid;
+  position:relative;overflow:hidden;
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:13px 16px;border-radius:14px;border:1px solid;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.6);
 }
-.v2-mp-perf-lbl{font-size:9.5px;color:#64748b;text-transform:uppercase;
-  letter-spacing:.06em;font-weight:800;margin-bottom:2px}
-.v2-mp-perf-big{font-size:24px;font-weight:900;line-height:1.05;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
-.v2-mp-perf-r{text-align:right;font-size:10.5px;color:#64748b;line-height:1.45}
+.v2-mp-perf-lbl{font-size:9px;color:#64748b;text-transform:uppercase;
+  letter-spacing:.08em;font-weight:800;margin-bottom:3px}
+.v2-mp-perf-big{font-size:28px;font-weight:900;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-.03em}
+.v2-mp-perf-r{text-align:right;font-size:10.5px;color:#64748b;line-height:1.5}
 .v2-mp-perf-r strong{color:#0f172a;font-weight:800;font-variant-numeric:tabular-nums}
 
-/* Meta strip — score badge + grade pill + sector + upside */
-.v2-mp-meta-row{display:flex;gap:5px;flex-wrap:wrap;align-items:center}
+/* ── Meta strip — Alpha score + sector + upside ── */
+.v2-mp-meta-row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
 .v2-mp-score{
-  display:inline-flex;align-items:center;justify-content:center;
-  min-width:32px;height:22px;padding:0 7px;border-radius:6px;
-  background:linear-gradient(135deg,#2970ff,#0040c1);color:#fff;
-  font-size:12px;font-weight:900;letter-spacing:.01em;font-variant-numeric:tabular-nums;
-  box-shadow:0 1px 2px rgba(0,64,193,.25);
+  display:inline-flex;align-items:stretch;height:23px;border-radius:7px;overflow:hidden;
+  background:linear-gradient(135deg,#2f78ff,#0040c1);color:#fff;
+  box-shadow:0 2px 6px -1px rgba(0,64,193,.40),inset 0 1px 0 rgba(255,255,255,.25);
 }
-.v2-mp-grade{font-size:10px!important;font-weight:800!important;padding:3px 8px!important;border-radius:6px!important}
-.v2-mp-meta{font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px;letter-spacing:.01em}
+.v2-mp-score-lbl{
+  display:inline-flex;align-items:center;padding:0 7px;
+  background:rgba(255,255,255,.18);
+  font-size:9px;font-weight:800;letter-spacing:.08em;
+}
+.v2-mp-score-val{
+  display:inline-flex;align-items:center;justify-content:center;min-width:27px;padding:0 8px;
+  font-size:13px;font-weight:900;letter-spacing:.01em;font-variant-numeric:tabular-nums;
+}
+.v2-mp-meta{display:inline-flex;align-items:center;height:23px;
+  font-size:10px;font-weight:700;padding:0 9px;border-radius:7px;letter-spacing:.01em}
 .v2-mp-meta-sec{background:#eef4ff;color:#0040c1}
-.v2-mp-meta-up{background:#FFF3D9;color:#15803d}
+.v2-mp-meta-up{background:linear-gradient(180deg,#f3fbf4,#e7f6ea);color:#15803d;border:1px solid rgba(21,128,61,.22)}
 .v2-mp-meta-above{background:#f1f5f9;color:#475569;border:1px solid #cbd5e1}
 
-/* Compact 3-col pillar heatmap (replaces 6 stacked rows) */
+/* ── 3-col pillar heatmap ── */
 .v2-mp-pillars{
-  background:#fafbfc;border:1px solid rgba(0,0,0,.06);border-radius:8px;
-  padding:8px 10px;
+  background:linear-gradient(180deg,#fbfcff,#f6f8fc);
+  border:1px solid #eaeef6;border-radius:13px;
+  padding:11px 12px 12px;
 }
 .v2-mp-pillars-head{
-  display:flex;align-items:center;gap:5px;
-  font-size:10.5px;color:#475569;font-weight:800;
-  text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;
+  display:flex;align-items:center;gap:6px;
+  font-size:10px;color:#475569;font-weight:800;
+  text-transform:uppercase;letter-spacing:.06em;margin-bottom:9px;
 }
 .v2-mp-pillars-grid{
-  display:grid;grid-template-columns:repeat(3,1fr);gap:8px 12px;
+  display:grid;grid-template-columns:repeat(3,1fr);gap:10px 14px;
 }
 .v2-mp-pillar{cursor:help;line-height:1.2}
 .v2-mp-pillar-top{display:flex;align-items:baseline;justify-content:space-between;gap:5px}
-.v2-mp-pillar-name{font-size:9.5px;color:#64748b;font-weight:700;letter-spacing:.01em;text-transform:uppercase}
-.v2-mp-pillar-val{font-size:12.5px;font-weight:900;font-variant-numeric:tabular-nums}
-.v2-mp-pillar-bar{height:5px;background:rgba(100,116,139,.16);border-radius:4px;overflow:hidden;margin-top:3px}
-.v2-mp-pillar-bar span{display:block;height:100%;border-radius:4px;transition:width .4s ease}
+.v2-mp-pillar-name{font-size:9px;color:#7a8699;font-weight:700;letter-spacing:.02em;text-transform:uppercase}
+.v2-mp-pillar-val{font-size:13px;font-weight:900;font-variant-numeric:tabular-nums}
+.v2-mp-pillar-bar{height:5px;background:rgba(100,116,139,.14);border-radius:99px;overflow:hidden;margin-top:4px}
+.v2-mp-pillar-bar span{display:block;height:100%;border-radius:99px;transition:width .5s cubic-bezier(.2,.7,.2,1);
+  box-shadow:0 0 6px -1px currentColor}
 
 /* Profit-take warning — appears when pillars are weak but the pick is
    up significantly. Tells the user to consider booking rather than
@@ -15685,7 +15712,7 @@ function renderModelPortfolio(data) {
           const w = Math.max(4, Math.min(100, v));
           return `<div class="v2-mp-pillar" title="${tip}">
             <div class="v2-mp-pillar-top"><span class="v2-mp-pillar-name">${name}</span><span class="v2-mp-pillar-val" style="color:${numColor}">${v}</span></div>
-            <div class="v2-mp-pillar-bar"><span style="width:${w}%;background:${barCol}"></span></div>
+            <div class="v2-mp-pillar-bar"><span style="width:${w}%;background:${barCol};color:${barCol}"></span></div>
           </div>`;
         }).join('');
         // Profit-take warning — if the stock has run hard but fundamentals
@@ -15772,8 +15799,10 @@ function renderModelPortfolio(data) {
         ${perfBlock}
 
         <div class="v2-mp-meta-row">
-          <span class="v2-mp-score" title="Alpha Score · model conviction">${Math.round(curPop)}</span>
-          <span class="v2-mp-grade rating ${ratingClass(curRating)}">${curRating}</span>
+          <span class="v2-mp-score" title="Alpha Score · model conviction (0–100)">
+            <span class="v2-mp-score-lbl">ALPHA</span>
+            <span class="v2-mp-score-val">${Math.round(curPop)}</span>
+          </span>
           ${p.sub_sector ? `<span class="v2-mp-meta v2-mp-meta-sec">${p.sub_sector}</span>` : ''}
           ${upChip}
         </div>
