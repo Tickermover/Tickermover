@@ -2873,22 +2873,22 @@ body.v2-featured-only #fund-tbody tr.fund-row:not([data-featured]){display:none!
    thin grid, hero line with heavy gaussian-blur glow, side stat panel.
    ──────────────────────────────────────────────────────────────────────── */
 .v2-tc-wrap{
-  padding:18px 18px 16px;font-size:11.5px;color:#475569;
-  display:grid;grid-template-columns:1fr 168px;grid-template-rows:auto 1fr;gap:14px 18px;
-  position:relative;border-radius:16px;
+  padding:24px 26px 20px;font-size:11.5px;color:#475569;
+  display:grid;grid-template-columns:1fr 184px;grid-template-rows:auto 1fr;gap:16px 22px;
+  position:relative;border-radius:20px;
   background:
-    radial-gradient(ellipse 80% 70% at 20% 110%, rgba(41,112,255,.10), transparent 60%),
-    radial-gradient(ellipse 60% 60% at 90% -10%, rgba(41,112,255,.06), transparent 60%),
-    linear-gradient(180deg, #ffffff 0%, #f6f9ff 100%);
-  box-shadow:0 1px 2px rgba(0,0,0,.08), 0 14px 32px -18px rgba(0,0,0,.30), 0 0 0 1px rgba(9,9,9,.06) inset;
+    radial-gradient(ellipse 80% 70% at 15% 115%, rgba(41,112,255,.13), transparent 60%),
+    radial-gradient(ellipse 65% 60% at 96% -15%, rgba(124,58,237,.09), transparent 60%),
+    linear-gradient(180deg, #ffffff 0%, #f4f8ff 100%);
+  box-shadow:0 2px 6px rgba(15,40,100,.06), 0 26px 52px -26px rgba(15,40,100,.4), 0 0 0 1px rgba(9,9,9,.05) inset;
 }
 @media (max-width:760px){
   .v2-tc-wrap{grid-template-columns:1fr;grid-template-rows:auto auto auto}
 }
 .v2-tc-headline{grid-column:1;grid-row:1;display:flex;align-items:center;justify-content:space-between;gap:12px}
 .v2-tc-hl-l{display:flex;flex-direction:column;gap:4px;min-width:0}
-.v2-tc-hl-eyebrow{font-size:11px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:#0040c1}
-.v2-tc-hl-val{font-size:34px;font-weight:900;letter-spacing:-.025em;line-height:1;color:#0f172a;font-variant-numeric:tabular-nums}
+.v2-tc-hl-eyebrow{font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#0040c1}
+.v2-tc-hl-val{font-size:42px;font-weight:900;letter-spacing:-.025em;line-height:1;color:#0f172a;font-variant-numeric:tabular-nums}
 .v2-tc-hl-val.neg{color:#dc2626}
 .v2-tc-hl-sub{font-size:12px;color:#64748b;font-weight:600;letter-spacing:-.005em;display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:2px}
 .v2-tc-hl-sub .beat{color:#15803d;font-weight:800;font-variant-numeric:tabular-nums}
@@ -15526,34 +15526,12 @@ function renderModelPortfolio(data) {
   const returnLabel = 'Tracker performance';
   const returnSub   = 'since inception';
 
-  // ── PREMIUM HERO + TRACKER CHART ────────────────────────────────────
-  const winRate = stats.total_picks ? Math.round(stats.winners / stats.total_picks * 100) : 0;
-  const _sg = v => (v >= 0 ? '+' : '') + v.toFixed(1) + '%';
+  // ── TRACKER CHART is the premium hero of the page (the stats box was
+  //    redundant with the chart, esp. with few holdings — removed). ──
   const headerHTML = `
-  <div class="th-hero">
-    <div class="th-hero-glow"></div>
-    <div class="th-hero-top">
-      <div class="th-hero-id">
-        <div class="th-eyebrow">🎯 Live model portfolio</div>
-        <div class="th-title">Top Hunts</div>
-        <div class="th-sub">AlphaHunt's tracked conviction picks · since ${createdDate} · ${daysRunning}d running</div>
-      </div>
-      <div class="th-hero-perf ${avgCls}">
-        <div class="th-perf-lbl">${returnLabel}</div>
-        <div class="th-perf-val">${_sg(avgPct)}</div>
-        <div class="th-perf-sub">avg across ${stats.total_picks} pick${stats.total_picks===1?'':'s'}</div>
-      </div>
-    </div>
-    <div class="th-tiles">
-      <div class="th-tile"><div class="tt-k">Win rate</div><div class="tt-v">${winRate}%</div><div class="tt-s">${stats.winners}/${stats.total_picks} green</div></div>
-      <div class="th-tile"><div class="tt-k">Best pick</div><div class="tt-v pos">${_sg(stats.best)}</div></div>
-      <div class="th-tile"><div class="tt-k">Worst pick</div><div class="tt-v ${stats.worst>=0?'pos':'neg'}">${_sg(stats.worst)}</div></div>
-      <div class="th-tile"><div class="tt-k">Holdings</div><div class="tt-v">${stats.total_picks}</div><div class="tt-s">since ${createdDate}</div></div>
-    </div>
-  </div>
   <div style="margin-bottom:14px">
     ${concentrationWarning}
-    <div id="v2-tracker-chart-slot" style="min-height:210px"></div>
+    <div id="v2-tracker-chart-slot" style="min-height:260px"></div>
   </div>`;
 
   const barHTML = '';
@@ -16139,7 +16117,7 @@ function v2RenderTrackerChartHTML(d){
       // ── Headline: eyebrow + big value + subtitle + period chips ──
       '<div class="v2-tc-headline">' +
         '<div class="v2-tc-hl-l">' +
-          '<div class="v2-tc-hl-eyebrow">Tracker performance</div>' +
+          '<div class="v2-tc-hl-eyebrow">🎯 Top Hunts · live model portfolio</div>' +
           '<div class="v2-tc-hl-val ' + valClass + '">' + fmtPct(tEnd) + '</div>' +
           '<div class="v2-tc-hl-sub">Since ' + fmtDate(dates[0]) + ' · ' + beatHTML + '</div>' +
         '</div>' +
