@@ -20001,7 +20001,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     });
   }
 
-  const DR_TABS=['Overview','Technicals','Financials','Valuation','Estimates','News','Benchmark','Documents'];
+  const DR_TABS=['Overview','Technicals','Financials','Valuation','Estimates','News','Benchmark','Supply Chain','Documents'];
   let _drState=null;
   function tsExpandToFull(ticker){
     const t=_byTicker[(ticker||'').toUpperCase()]; if(!t) return;
@@ -20259,6 +20259,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
       '<div class="dr-pane" data-pane="Estimates" hidden>'+paneEstimates(full)+'</div>'+
       '<div class="dr-pane" data-pane="News" hidden>'+paneNews(full)+'</div>'+
       '<div class="dr-pane" data-pane="Benchmark" hidden>'+panePeers(t)+'</div>'+
+      '<div class="dr-pane" data-pane="Supply Chain" hidden>'+paneSupplyChain(full)+'</div>'+
       '<div class="dr-pane" data-pane="Documents" hidden>'+paneDocuments(full)+'</div>'+
     '</div><div class="dr-scrollhint" id="drHint"></div>';
     tsShowTab(_drState.tab||'Overview');
@@ -20342,7 +20343,29 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     if(name==='Overview') requestAnimationFrame(()=>tsDrawChartEl());
     if(name==='Documents') try{ _loadDocuments(); }catch(e){}
     if(name==='Insights') try{ _loadInsights(); }catch(e){}
+    if(name==='Supply Chain') try{ _loadSupplyChain(); }catch(e){}
     try{ _drNavBuild(); }catch(e){}
+  }
+  /* Supply Chain tab — web-grounded dependency / ripple-risk map (lazy, cached
+     30d server-side). Reuses the global _ssxDepsHTML renderer (donut + list). */
+  function paneSupplyChain(t){
+    return '<div class="dr-deps"><div class="dd-loading">Open this tab to map suppliers, customers &amp; ripple risk…</div></div>';
+  }
+  function _loadSupplyChain(){
+    if(!_drState) return;
+    const pane=drawer.querySelector('.dr-pane[data-pane="Supply Chain"]'); if(!pane) return;
+    const host=pane.querySelector('.dr-deps')||pane;
+    const tk=((_drState.t&&_drState.t.ticker)||'').toUpperCase(); if(!tk) return;
+    if(host.getAttribute('data-tk')===tk) return;          // already loaded for this stock
+    host.setAttribute('data-tk',tk);
+    host.innerHTML='<div class="dd-loading">🔗 Mapping suppliers, customers &amp; ripple risk for '+tk+'… (first load ~10s — web-grounded)</div>';
+    fetch('/api/dependencies/'+encodeURIComponent(tk)).then(function(r){return r.json();}).then(function(d){
+      if(host.getAttribute('data-tk')!==tk) return;         // user switched stocks mid-flight
+      if(!d){ host.innerHTML='<div class="dd-loading">Could not load dependencies.</div>'; return; }
+      if(d.status==='locked'){ host.innerHTML='<div class="dd-loading">🔒 '+(d.detail||'Pro feature — upgrade to unlock dependency mapping.')+'</div>'; return; }
+      if(d.status==='unavailable'||d.status==='error'){ host.innerHTML='<div class="dd-loading">'+(d.detail||'Could not map dependencies right now.')+'</div>'; return; }
+      host.innerHTML=(typeof _ssxDepsHTML==='function')?_ssxDepsHTML(tk,d):'<div class="dd-loading">Renderer unavailable.</div>';
+    }).catch(function(){ if(host.getAttribute('data-tk')===tk) host.innerHTML='<div class="dd-loading">Could not load dependencies.</div>'; });
   }
   function tsDrawChartEl(){
     const cv=drawer.querySelector('#drChart'); if(!cv||!_drState||!_drState.candles) return;
