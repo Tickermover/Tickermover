@@ -2873,8 +2873,8 @@ body.v2-featured-only #fund-tbody tr.fund-row:not([data-featured]){display:none!
    thin grid, hero line with heavy gaussian-blur glow, side stat panel.
    ──────────────────────────────────────────────────────────────────────── */
 .v2-tc-wrap{
-  padding:24px 26px 20px;font-size:11.5px;color:rgba(219,234,254,.75);
-  display:grid;grid-template-columns:1fr 176px;grid-template-rows:auto 1fr;gap:16px 22px;
+  padding:24px 26px 22px;font-size:11.5px;color:rgba(219,234,254,.75);
+  display:flex;flex-direction:column;gap:20px;
   position:relative;border-radius:20px;overflow:hidden;
   background:
     radial-gradient(ellipse 75% 80% at 12% 120%, rgba(56,189,248,.18), transparent 60%),
@@ -2897,6 +2897,23 @@ body.v2-featured-only #fund-tbody tr.fund-row:not([data-featured]){display:none!
 .v2-tc-chip{padding:5px 11px;border-radius:7px;font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:rgba(191,219,254,.8);background:transparent;border:1px solid transparent;cursor:pointer;transition:all .15s;font-family:inherit;font-variant-numeric:tabular-nums}
 .v2-tc-chip:hover{color:#fff;background:rgba(255,255,255,.12)}
 .v2-tc-chip.on{color:#fff;background:linear-gradient(135deg,#38bdf8,#3b82f6);border-color:transparent;box-shadow:0 4px 14px -4px rgba(56,189,248,.6)}
+/* Comparison bars — 'who won' ranking on the dark card */
+.v2-tc-bars{display:flex;flex-direction:column;gap:15px;padding:4px 2px 2px}
+.v2-tc-bar-row{display:grid;grid-template-columns:118px 1fr 74px;align-items:center;gap:16px}
+@media(max-width:560px){.v2-tc-bar-row{grid-template-columns:84px 1fr 58px;gap:10px}}
+.v2-tc-bar-label{display:flex;align-items:center;gap:9px;font-size:12px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:rgba(219,234,254,.82);white-space:nowrap}
+.v2-tc-bar-label i{width:11px;height:11px;border-radius:3px;flex-shrink:0;background:#94a3b8}
+.v2-tc-bar-row.hero .v2-tc-bar-label{color:#fff}
+.v2-tc-bar-row.hero .v2-tc-bar-label i{background:linear-gradient(135deg,#67e8f9,#60a5fa);box-shadow:0 0 12px rgba(96,165,250,.75)}
+.v2-tc-bar-row.bench-qqq .v2-tc-bar-label i{background:#a78bfa}
+.v2-tc-bar-track{height:20px;background:rgba(255,255,255,.08);border-radius:11px;overflow:hidden}
+.v2-tc-bar-fill{display:block;height:100%;border-radius:11px;background:rgba(148,163,184,.5);transition:width .7s cubic-bezier(.22,.61,.36,1)}
+.v2-tc-bar-row.hero .v2-tc-bar-fill{background:linear-gradient(90deg,#38bdf8,#60a5fa 55%,#818cf8);box-shadow:0 0 18px rgba(96,165,250,.6)}
+.v2-tc-bar-row.bench-qqq .v2-tc-bar-fill{background:rgba(167,139,250,.62)}
+.v2-tc-bar-row.neg .v2-tc-bar-fill{background:rgba(252,165,165,.6)}
+.v2-tc-bar-val{font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:900;text-align:right;color:#fff;font-variant-numeric:tabular-nums}
+.v2-tc-bar-row.hero .v2-tc-bar-val{font-size:21px;color:#67e8f9}
+.v2-tc-bar-row.neg .v2-tc-bar-val{color:#fca5a5}
 
 /* ── Side stat panel (right of chart on desktop) ──────────────────── */
 .v2-tc-side{grid-column:2;grid-row:1 / span 2;display:flex;flex-direction:column;justify-content:center;gap:16px;padding-left:16px;border-left:1px solid rgba(255,255,255,.12)}
@@ -7688,6 +7705,7 @@ function v2RenderWhatChanged(tickers){
   // 'pts' suffix and the heading still reads correctly.
   const climbHead   = climbers.length  && climbers[0].unit  === '%' ? '📈 Top movers · 1M'    : '📈 Score climbing';
   const declineHead = decliners.length && decliners[0].unit === '%' ? '📉 Lagging · 1M'       : '📉 Score declining';
+
   return '' +
     '<div class="v2-changed">' +
       '<div class="v2-changed-head">📊 What changed</div>' +
@@ -16112,6 +16130,23 @@ function v2RenderTrackerChartHTML(d){
   // NASDAQ is BEHIND, which makes the .dn red color render correctly.
   const beatQqqPts = qEnd - tEnd;
 
+  // ── Comparison bars (who won) — ranked by return, hero glows ──
+  const _barRows = [
+    { label: 'Top Hunts', val: tEnd, cls: 'hero' },
+    { label: 'NASDAQ',    val: qEnd, cls: 'bench-qqq' },
+    { label: 'S&P 500',   val: sEnd, cls: 'bench-spy' },
+  ].sort((a, b) => b.val - a.val);
+  const _barMax = Math.max(1, ..._barRows.map(b => Math.abs(b.val)));
+  const barsHTML = '<div class="v2-tc-bars">' + _barRows.map(function(b){
+    const w = (Math.abs(b.val) / _barMax * 100).toFixed(1);
+    const sign = b.val >= 0 ? 'pos' : 'neg';
+    return '<div class="v2-tc-bar-row ' + b.cls + ' ' + sign + '">' +
+      '<div class="v2-tc-bar-label"><i></i>' + b.label + '</div>' +
+      '<div class="v2-tc-bar-track"><span class="v2-tc-bar-fill" style="width:' + w + '%"></span></div>' +
+      '<div class="v2-tc-bar-val">' + fmtPct(b.val) + '</div>' +
+    '</div>';
+  }).join('') + '</div>';
+
   return '' +
     '<div class="v2-tc-wrap">' +
       // ── Headline: eyebrow + big value + subtitle + period chips ──
@@ -16127,101 +16162,7 @@ function v2RenderTrackerChartHTML(d){
           '<button class="v2-tc-chip' + ((!window._v2TrackerPeriod || window._v2TrackerPeriod === 'all') ? ' on' : '') + '" onclick="v2SetTrackerPeriod(\'all\')">All</button>' +
         '</div>' +
       '</div>' +
-      // ── SVG chart ───────────────────────────────────────────────────
-      // data-tc carries the series so _v2WireScrubber can hit-test on
-      // mousemove without re-parsing the DOM. JSON-encoded to keep
-      // multi-line stringification simple.
-      '<svg class="v2-tc-svg" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="xMidYMid meet" ' +
-        'data-tc=\'' + JSON.stringify({
-          dates: dates, tracker: tracker, spy: spy, qqq: qqq,
-          padL: padL, padR: padR, padT: padT, padB: padB,
-          innerW: innerW, innerH: innerH, W: W, H: H,
-          min: min, max: max, range: range,
-        }).replace(/'/g, "&#39;") + '\'>' +
-        '<defs>' +
-          // Hero stroke: brand-blue gradient
-          '<linearGradient id="v2-tc-grad-stroke" x1="0" y1="0" x2="1" y2="0">' +
-            '<stop offset="0%"   stop-color="#67e8f9"/>' +
-            '<stop offset="55%"  stop-color="#60a5fa"/>' +
-            '<stop offset="100%" stop-color="#818cf8"/>' +
-          '</linearGradient>' +
-          // Area fill: glow blue → transparent (vertical) — richer on the dark card
-          '<linearGradient id="v2-tc-grad-fill" x1="0" y1="0" x2="0" y2="1">' +
-            '<stop offset="0%"  stop-color="#60a5fa" stop-opacity="0.42"/>' +
-            '<stop offset="55%" stop-color="#60a5fa" stop-opacity="0.12"/>' +
-            '<stop offset="100%" stop-color="#60a5fa" stop-opacity="0"/>' +
-          '</linearGradient>' +
-          // Soft glow for the hero line — subtle, not neon (a faint blurred
-          // copy behind the crisp stroke gives depth without the fuzzy look)
-          '<filter id="v2-tc-line-glow" x="-20%" y="-60%" width="140%" height="220%">' +
-            '<feGaussianBlur stdDeviation="3.6" result="blur"/>' +
-            '<feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>' +
-          '</filter>' +
-          // Tighter glow for endpoint dot
-          '<filter id="v2-tc-dot-glow" x="-100%" y="-100%" width="300%" height="300%">' +
-            '<feGaussianBlur stdDeviation="6" result="blur"/>' +
-            '<feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>' +
-          '</filter>' +
-        '</defs>' +
-        // Subtle baseline 0% (light grid line)
-        `<line x1="${padL}" x2="${padL + innerW}" y1="${baselineY}" y2="${baselineY}" stroke="rgba(255,255,255,.14)" stroke-width="1"/>` +
-        // Right-edge reference labels (dim)
-        refHTML +
-        // Bottom-edge date labels (dim)
-        xLabelsHTML +
-        // Area fill under hero
-        '<path d="' + tArea + '" fill="url(#v2-tc-grad-fill)" stroke="none"/>' +
-        // Benchmark lines — faint whisper lines so the glowing hero stays dominant.
-        '<path d="' + sLine + '" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" stroke-dasharray="3,3" opacity="0.45"/>' +
-        '<path d="' + qLine + '" fill="none" stroke="#a78bfa" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round" opacity="0.55"/>' +
-        // Hero line — glowing cyan-blue gradient stroke
-        '<path d="' + tLine + '" fill="none" stroke="url(#v2-tc-grad-stroke)" stroke-width="3.2" stroke-linejoin="round" stroke-linecap="round" filter="url(#v2-tc-line-glow)"/>' +
-        // Benchmark endpoints — colored to match their (faint) lines
-        `<circle cx="${sEndX}" cy="${sEndY}" r="3"   fill="#94a3b8" stroke="#0b1635" stroke-width="1.5" opacity="0.8"/>` +
-        `<circle cx="${qEndX}" cy="${qEndY}" r="3"   fill="#a78bfa" stroke="#0b1635" stroke-width="1.5" opacity="0.85"/>` +
-        // Hero endpoint — bright glow halo
-        `<circle cx="${tEndX}" cy="${tEndY}" r="12" fill="#60a5fa" opacity="0.35" filter="url(#v2-tc-dot-glow)"/>` +
-        `<circle cx="${tEndX}" cy="${tEndY}" r="5.5" fill="#60a5fa" stroke="#fff" stroke-width="2"/>` +
-        // Hover scrubber — vertical guide + 3 dots (one per series).
-        // Hidden by default (display:none on the group), shown by JS on
-        // mousemove. dots are the size of normal series endpoints so the
-        // hover state feels continuous with the static endpoint markers.
-        '<g class="v2-tc-cursor" style="display:none;pointer-events:none">' +
-          `<line class="v2-tc-cursor-line" x1="0" x2="0" y1="${padT}" y2="${padT + innerH}" stroke="rgba(255,255,255,.35)" stroke-width="1" stroke-dasharray="3,3"/>` +
-          '<circle class="v2-tc-cursor-dot v2-tc-cursor-dot-t" r="6" fill="#60a5fa" stroke="#fff" stroke-width="2"/>' +
-          '<circle class="v2-tc-cursor-dot v2-tc-cursor-dot-s" r="3.5" fill="#94a3b8" stroke="#fff" stroke-width="1.5"/>' +
-          '<circle class="v2-tc-cursor-dot v2-tc-cursor-dot-q" r="3.5" fill="#8b5cf6" stroke="#fff" stroke-width="1.5"/>' +
-        '</g>' +
-        // Invisible overlay catches mouse moves across the whole plot.
-        // Without this, mousemove only fires when directly over a stroke.
-        `<rect class="v2-tc-overlay" x="${padL}" y="${padT}" width="${innerW}" height="${innerH}" fill="transparent" style="cursor:crosshair"/>` +
-      '</svg>' +
-      // Floating tooltip lives outside the SVG so we can use HTML/CSS for
-      // typography. Positioned absolutely against .v2-tc-wrap which is
-      // position:relative.
-      '<div class="v2-tc-tip" style="display:none">' +
-        '<div class="v2-tc-tip-date"></div>' +
-        '<div class="v2-tc-tip-row"><span class="dot t"></span>Top Hunts<strong class="v2-tc-tip-t">—</strong></div>' +
-        '<div class="v2-tc-tip-row"><span class="dot s"></span>S&amp;P 500<strong class="v2-tc-tip-s">—</strong></div>' +
-        '<div class="v2-tc-tip-row"><span class="dot q"></span>NASDAQ<strong class="v2-tc-tip-q">—</strong></div>' +
-      '</div>' +
-      // ── Side stat panel: scenario-style values (hero + 2 benchmarks) ──
-      '<div class="v2-tc-side">' +
-        '<div class="v2-tc-s-item hero">' +
-          '<div class="v2-tc-s-label"><i></i> Top Hunts</div>' +
-          '<div class="v2-tc-s-val">' + fmtPct(tEnd) + '</div>' +
-          '<div class="v2-tc-s-delta ' + deltaCls(beatSpy) + '">' + fmtDelta(beatSpy) + ' vs S&amp;P</div>' +
-        '</div>' +
-        '<div class="v2-tc-s-item bench-spy">' +
-          '<div class="v2-tc-s-label"><i></i> S&amp;P 500</div>' +
-          '<div class="v2-tc-s-val">' + fmtPct(sEnd) + '</div>' +
-        '</div>' +
-        '<div class="v2-tc-s-item bench-qqq">' +
-          '<div class="v2-tc-s-label"><i></i> NASDAQ</div>' +
-          '<div class="v2-tc-s-val">' + fmtPct(qEnd) + '</div>' +
-          '<div class="v2-tc-s-delta ' + deltaCls(beatQqqPts) + '">' + fmtDelta(beatQqqPts) + ' vs Top Hunts</div>' +
-        '</div>' +
-      '</div>' +
+      barsHTML +
       // ── Audit footer: 'Built from N picks · See breakdown' ──
       // Lazy-loads two API calls on first expand so the chart paints fast.
       '<div class="v2-tc-audit">' +
