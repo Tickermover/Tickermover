@@ -2657,22 +2657,6 @@ body.v2-featured-only #fund-tbody tr.fund-row:not([data-featured]){display:none!
   color:var(--scn,#2970ff);background:color-mix(in srgb,var(--scn,#2970ff) 12%,transparent);
   border-radius:999px;padding:1px 8px}
 .uni-screen .scn-dsc{font-size:10.5px;color:#64748b;line-height:1.3;font-weight:600}
-/* Risk profile — demoted from a top-level gate to the LEAD lens in this bar.
-   A labelled segmented control (WHO), separated from the strategy screens (WHAT)
-   by a divider. Selecting one updates the GLOBAL profile (On the Radar too). */
-.uni-risk{flex:0 0 auto;display:flex;flex-direction:column;gap:5px;justify-content:center;
-  background:#fff;border:1.5px solid rgba(10,10,10,.10);border-radius:13px;padding:8px 10px}
-.uni-risk-lbl{font-size:9.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#94a3b8;padding-left:2px}
-.uni-risk-seg{display:flex;gap:3px;background:#f1f5f9;border-radius:9px;padding:3px}
-.uni-risk-chip{display:inline-flex;align-items:center;gap:5px;border:0;background:transparent;cursor:pointer;
-  font-family:inherit;font-size:12px;font-weight:700;color:#475569;padding:5px 9px;border-radius:7px;
-  white-space:nowrap;transition:background .15s,color .15s,box-shadow .15s}
-.uni-risk-chip:hover{color:#0f172a}
-.uni-risk-chip.on{background:#fff;color:#0040c1;box-shadow:0 1px 3px rgba(15,23,42,.14)}
-.uni-risk-chip .urc-em{font-size:13px}
-.uni-risk-chip .urc-ct{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:800;color:#94a3b8}
-.uni-risk-chip.on .urc-ct{color:#0040c1}
-.uni-screens-div{flex:0 0 auto;width:1px;align-self:stretch;background:#e2e8f0;margin:2px 4px}
 .fund-row.scn-hide{display:none!important}
 /* Slim toolbar — dropdowns removed (Smart Screens drive filtering); just the tally. */
 .fd-toolbar-slim{background:transparent!important;border:0!important;padding:0 2px!important;
@@ -13845,15 +13829,15 @@ function _toggleFeaturedOnly(){
    'featured' reuses the curated featured-only filter; 'all' clears everything.
    ---------------------------------------------------------- */
 const _UNI_SCREENS = [
+  {id:'all',       ic:'🌐', nm:'All',           dsc:'Everything in your profile', scn:'#64748b', sort:'pop'},
   {id:'featured',  ic:'⭐', nm:'Featured',      dsc:'The curated shortlist',  scn:'#e0a000', sort:'pop'},
   {id:'momentum',  ic:'🔥', nm:'Momentum',      dsc:'Strong & rising',        scn:'#ef4444', sort:'pop'},
   {id:'quality',   ic:'💎', nm:'Quality',       dsc:'Grade A + real margins', scn:'#0ea5e9', sort:'pop'},
   {id:'breakouts', ic:'🚀', nm:'Breakouts',     dsc:'Top RS + top Alpha',     scn:'#8b5cf6', sort:'pop'},
   {id:'value',     ic:'💰', nm:'Value + Growth',dsc:'Sane P/E, still growing',scn:'#16a34a', sort:'rev'},
   {id:'earnings',  ic:'📅', nm:'Earnings soon', dsc:'Reports in ≤2 weeks',    scn:'#0040c1', sort:'pop'},
-  {id:'all',       ic:'🌐', nm:'All',           dsc:'Full universe',          scn:'#64748b', sort:'pop'},
 ];
-let _uniScreen = 'all';   // no Smart Screen auto-applied — the user opts into a lens
+let _uniScreen = 'all';   // 'All' leads the bar and is selected by default — no lens pre-applied
 
 function _screenMatch(id, ds){
   const pop=parseFloat(ds.pop)||0, rs=parseFloat(ds.rs)||0, m3=parseFloat(ds.mom3m);
@@ -13879,20 +13863,7 @@ function v2RenderScreens(){
   const count=id=> id==='all'      ? rows.filter(inProfile).length
                : id==='featured'   ? rows.filter(r=>inProfile(r)&&r.hasAttribute('data-featured')).length
                : rows.filter(r=>inProfile(r)&&_screenMatch(id, r.dataset)).length;
-  // ── Risk lens (the demoted profile) — leads the bar. Selecting one calls the
-  //    global v2SetProfile, so On the Radar + the account stay in sync. ──
-  const pc=(window.__AH_DATA__&&window.__AH_DATA__.profile_counts)||{};
-  const risk='<div class="uni-risk" role="group" aria-label="Risk profile">'+
-      '<span class="uni-risk-lbl">Risk profile</span><div class="uni-risk-seg">'+
-      ['conservative','balanced','aggressive'].map(function(p){
-        const info=(typeof V2_PROFILES==='object'&&V2_PROFILES[p])||{label:p,emoji:'•'};
-        const c=pc[p];
-        return '<button class="uni-risk-chip'+(p===prof?' on':'')+'" data-risk="'+p+'" '+
-          'onclick="v2SetProfile(\''+p+'\')" title="'+String(info.sub||'').replace(/"/g,'&quot;')+'">'+
-          '<span class="urc-em">'+info.emoji+'</span><span class="urc-nm">'+info.label+'</span>'+
-          (c!=null?'<span class="urc-ct">'+c+'</span>':'')+'</button>';
-      }).join('')+'</div></div><div class="uni-screens-div"></div>';
-  wrap.innerHTML=risk+_UNI_SCREENS.map(s=>
+  wrap.innerHTML=_UNI_SCREENS.map(s=>
     '<button class="uni-screen'+(s.id===_uniScreen?' on':'')+'" style="--scn:'+s.scn+'" '+
       'data-screen="'+s.id+'" onclick="v2ApplyScreen(\''+s.id+'\')">'+
       '<span class="scn-top"><span class="scn-ic">'+s.ic+'</span><span class="scn-nm">'+s.nm+'</span>'+
