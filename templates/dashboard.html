@@ -12956,7 +12956,6 @@ function _ssxDepsHTML(ticker,d){
     (segs.length?card('blue','📊','Revenue exposure','<div class="dep-donut">'+_ssxDonut(segs)+'<div class="dep-legend">'+legend+'</div></div>'):'')+
     (depHTML?card('amber','⚡','Key dependencies',
       '<div class="dep-sec-note">A shock to any of these can ripple into '+v2EscHTML(ticker)+'.</div>'+depHTML, true):'')+
-    '<div class="rep-span dep-foot">'+(src?'<div class="dep-src">Sources: '+src+'</div>':'')+'<div class="dep-disc">⚠ '+_DEP_DISC+'</div></div>'+
   '</div>';
 }
 
