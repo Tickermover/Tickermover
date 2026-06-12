@@ -475,9 +475,13 @@ body.v2 #sectors-grid .smh-name{font-weight:800;font-size:12.5px;color:#0f172a!i
 .secg-node .secg-score{font-size:10px;font-weight:800;fill:#fff;pointer-events:none;text-anchor:middle;dominant-baseline:central}
 .secg-node:hover .secg-dot{filter:drop-shadow(0 3px 8px rgba(15,23,42,.28))}
 .secg-node:hover .secg-label{opacity:1}
-/* Drill-down: a sector's member tickers, plus the thin membership links */
-.secg-stock .secg-dot{stroke-width:1.5}
-.secg-stock .secg-label{font-size:9.5px;font-weight:800;fill:#334155}
+/* Drill-down: a sector's member tickers as logo discs (Events-tab style) */
+.secg-stock-bg{stroke-width:2.5}
+.secg-stock-logo{clip-path:circle(50%)}
+.secg-stk-tic{font-size:10px;font-weight:800;fill:#0f172a}
+.secg-stk-name{font-size:8px;font-weight:600;fill:#64748b;text-anchor:middle;paint-order:stroke;
+  stroke:#fff;stroke-width:2.5px;stroke-linejoin:round;pointer-events:none}
+.secg-stock:hover .secg-stock-bg{filter:drop-shadow(0 3px 8px rgba(15,23,42,.30))}
 .secg-edge.t-member{stroke:#94a3b8;stroke-width:1.4px;stroke-dasharray:2 4;opacity:.7}
 .secg-svg.is-focus .secg-edge.t-member.on{opacity:.85;stroke-width:1.4px}
 /* Focus / dim states (driven by JS: .is-focus on svg, classes on nodes/edges) */
@@ -14020,14 +14024,17 @@ function renderSectors(tickers) {
         sector: meta.sector || (stocks[0] && stocks[0].sector) || 'Technology',
         desc: meta.desc || (TAILWINDS[sub] || 'Emerging high-growth sub-sector with strong structural tailwinds.'),
         leaders: topT.slice(0, 6).join(', '),
-        // Top tickers (with their own α-Score) for the tap-to-expand drill-down.
+        // Top tickers (α-Score + name) for the tap-to-expand drill-down.
         top: [...stocks].sort((a, b) => _ss(b) - _ss(a)).slice(0, 12)
-          .map(t => ({ t: t.ticker, s: Math.min(100, Math.round(_ss(t))) })),
+          .map(t => ({ t: t.ticker, s: Math.min(100, Math.round(_ss(t))), n: t.name || '' })),
       };
       order.push(sub);
     });
   _secgStats = stats; _secgOrder = order;
-  secgEnsureTopology(order);
+  // Wiring is fetched for the WHOLE universe (stable → one cached generation);
+  // the visible nodes are this profile's subset, edges filtered client-side.
+  const full = _secgFullSectorList();
+  secgEnsureTopology(full.length ? full : order);
   secgRender();
 }
 
@@ -14047,6 +14054,18 @@ let _secgStockEdges = [], _secgBloom = null;   // member edges + currently expan
 let _secgFocus = null, _secgRAF = 0, _secgAlpha = 0, _secgW = 0, _secgH = 0;
 let _secgDragging = null, _secgMoved = false;
 function _secgHeat(score){ return score >= 68 ? '#16a34a' : score >= 60 ? '#84cc16' : score >= 52 ? '#e0a000' : '#94a3b8'; }
+/* Full-universe sub-sector list (NOT the profile-filtered set). The AI wiring is
+   generated once against this stable list and cached; each risk profile just
+   shows a subset of nodes and the edges are filtered client-side — so changing
+   profile costs $0 and the map never needs the whole 540-stock universe. */
+function _secgFullSectorList(){
+  const uni = (typeof _allTickerData === 'object' && _allTickerData)
+    ? Object.values(_allTickerData)
+    : ((window.__AH_DATA__ && window.__AH_DATA__.tickers) || []);
+  const set = new Set();
+  uni.forEach(t => { const s = t.sub_sector || t.subsector || t.sector || 'Other'; if (s) set.add(s); });
+  return [...set];
+}
 
 function _secgReduceMotion(){
   return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
@@ -14176,9 +14195,9 @@ function secgBuildDOM(svg, names, edges){
     const sc = document.createElementNS(NS, 'text'); sc.setAttribute('class', 'secg-score'); sc.textContent = st.score;
     const lbl = document.createElementNS(NS, 'text'); lbl.setAttribute('class', 'secg-label');
     lbl.setAttribute('x', 0); lbl.setAttribute('y', r + 14); lbl.textContent = n;
-    const ti = document.createElementNS(NS, 'title');
-    ti.textContent = n + ' · α ' + st.score + ' · ' + st.count + ' stocks' + (st.cagr ? ' · ' + st.cagr + ' CAGR' : '') + (st.leaders ? '\n' + st.leaders : '');
-    g.appendChild(dot); g.appendChild(sc); g.appendChild(lbl); g.appendChild(ti);
+    // No native <title> box — the α-Score is on the node, hover highlights the
+    // relations, and tapping expands the detail. Keeps the canvas uncluttered.
+    g.appendChild(dot); g.appendChild(sc); g.appendChild(lbl);
     g.addEventListener('click', () => { if (_secgMoved){ _secgMoved = false; return; } secgTap(n); });
     g.addEventListener('mouseenter', () => secgHover(n));
     g.addEventListener('mouseleave', () => secgHover(null));
@@ -14283,7 +14302,7 @@ function secgBloom(sub){
     const ang = (i / st.top.length) * Math.PI * 2;
     _secgNodes[id] = {
       x: parent.x + (len) * Math.cos(ang), y: parent.y + (len) * Math.sin(ang),
-      vx: 0, vy: 0, r: 8, isStock: true, parent: sub, ticker: s.t, score: s.s,
+      vx: 0, vy: 0, r: 15, isStock: true, parent: sub, ticker: s.t, score: s.s, name: s.n || '',
     };
     _secgStockEdges.push({ source: sub, target: id, type: 'member', len: len, el: null });
   });
@@ -14303,15 +14322,31 @@ function secgBuildStockDOM(){
   });
   Object.keys(_secgNodes).forEach(id => {
     const nd = _secgNodes[id]; if (!nd.isStock || nd.el) return;
+    const R = nd.r, heat = _secgHeat(nd.score);
     const g = document.createElementNS(NS, 'g');
     g.setAttribute('class', 'secg-node secg-stock on'); g.setAttribute('data-ticker', nd.ticker);
-    const dot = document.createElementNS(NS, 'circle');
-    dot.setAttribute('class', 'secg-dot'); dot.setAttribute('r', nd.r); dot.setAttribute('fill', _secgHeat(nd.score));
-    const lbl = document.createElementNS(NS, 'text');
-    lbl.setAttribute('class', 'secg-label'); lbl.setAttribute('x', 0); lbl.setAttribute('y', nd.r + 12);
-    lbl.textContent = nd.ticker;
-    const ti = document.createElementNS(NS, 'title'); ti.textContent = nd.ticker + ' · α ' + nd.score;
-    g.appendChild(dot); g.appendChild(lbl); g.appendChild(ti);
+    // White disc + α-Score-tinted ring (also the fallback if the logo 404s).
+    const bg = document.createElementNS(NS, 'circle');
+    bg.setAttribute('class', 'secg-stock-bg'); bg.setAttribute('r', R); bg.setAttribute('fill', '#fff'); bg.setAttribute('stroke', heat);
+    // Company logo, same source as the Events tab, clipped to the disc.
+    const img = document.createElementNS(NS, 'image');
+    img.setAttribute('class', 'secg-stock-logo');
+    img.setAttribute('href', 'https://images.financialmodelingprep.com/symbol/' + encodeURIComponent(nd.ticker) + '.png');
+    img.setAttribute('x', -(R - 2)); img.setAttribute('y', -(R - 2));
+    img.setAttribute('width', 2 * (R - 2)); img.setAttribute('height', 2 * (R - 2));
+    img.setAttribute('preserveAspectRatio', 'xMidYMid slice');
+    img.addEventListener('error', () => { img.style.display = 'none'; });   // fall back to disc + ticker
+    const tic = document.createElementNS(NS, 'text');
+    tic.setAttribute('class', 'secg-label secg-stk-tic'); tic.setAttribute('x', 0); tic.setAttribute('y', R + 12);
+    tic.textContent = nd.ticker;
+    const g2 = g;
+    g2.appendChild(bg); g2.appendChild(img); g2.appendChild(tic);
+    if (nd.name){
+      const nm = document.createElementNS(NS, 'text');
+      nm.setAttribute('class', 'secg-stk-name'); nm.setAttribute('x', 0); nm.setAttribute('y', R + 23);
+      nm.textContent = nd.name.length > 18 ? nd.name.slice(0, 17) + '…' : nd.name;
+      g2.appendChild(nm);
+    }
     g.addEventListener('click', e => { e.stopPropagation(); if (_secgMoved){ _secgMoved = false; return; } if (typeof openStockModal === 'function') openStockModal(nd.ticker); });
     nG.appendChild(g); nd.el = g;
   });
@@ -14352,6 +14387,7 @@ function secgHover(name){
     svg.classList.remove('is-focus');
     svg.querySelectorAll('.secg-node.on,.secg-node.focus,.secg-node.dim').forEach(n => n.classList.remove('on','focus','dim'));
     svg.querySelectorAll('.secg-edge.on').forEach(e => e.classList.remove('on'));
+    secgRelabel();                 // restore the decluttered default labels
     return;
   }
   svg.classList.add('is-focus');
@@ -14359,6 +14395,7 @@ function secgHover(name){
   _secgOrder.forEach(n => { const p = _secgNodes[n]; if (!p || !p.el) return;
     const on = (n === name || nb.has(n));
     p.el.classList.toggle('on', on); p.el.classList.toggle('focus', n === name); p.el.classList.toggle('dim', !on);
+    p.el.classList.toggle('lblhide', !on);   // reveal the ego-network's labels, hide the rest
   });
   _secgEdges.forEach(e => { if (e.el) e.el.classList.toggle('on', e.source === name || e.target === name); });
 }
