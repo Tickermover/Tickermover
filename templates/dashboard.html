@@ -2736,13 +2736,41 @@ body.v2-featured-only #fund-tbody tr.fund-row:not([data-featured]){display:none!
 }
 .v2-usp-clear:hover{background:#FFF8E5}
 
+/* ───── Top Hunts — premium hero header ───── */
+.th-hero{position:relative;overflow:hidden;border-radius:20px;padding:24px 26px;margin-bottom:16px;
+  background:linear-gradient(135deg,#0b1f4d 0%,#15307a 45%,#1e44c9 100%);color:#fff;
+  box-shadow:0 20px 48px -22px rgba(15,40,120,.6),0 2px 6px rgba(15,40,120,.25)}
+.th-hero-glow{position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(60% 120% at 100% 0%,rgba(96,165,250,.4),transparent 60%),
+            radial-gradient(50% 100% at 0% 100%,rgba(124,58,237,.35),transparent 55%)}
+.th-hero-top{position:relative;display:flex;justify-content:space-between;align-items:flex-start;gap:18px;flex-wrap:wrap}
+.th-eyebrow{font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:rgba(191,219,254,.92)}
+.th-title{font-family:var(--font-head,inherit);font-size:30px;font-weight:900;letter-spacing:-.02em;line-height:1.05;margin-top:5px}
+.th-sub{font-size:12.5px;color:rgba(219,234,254,.8);margin-top:6px;font-weight:500}
+.th-hero-perf{text-align:right;flex-shrink:0}
+.th-perf-lbl{font-size:10.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:rgba(191,219,254,.85)}
+.th-perf-val{font-family:'JetBrains Mono',monospace;font-size:40px;font-weight:800;line-height:1;margin-top:3px;
+  text-shadow:0 2px 14px rgba(0,0,0,.25)}
+.th-hero-perf.pos .th-perf-val{color:#6ee7b7}
+.th-hero-perf.neg .th-perf-val{color:#fca5a5}
+.th-perf-sub{font-size:11px;color:rgba(219,234,254,.72);margin-top:5px;font-weight:600}
+.th-tiles{position:relative;display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin-top:20px}
+@media(max-width:620px){.th-tiles{grid-template-columns:repeat(2,1fr)}}
+.th-tile{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.16);border-radius:13px;padding:12px 14px;
+  -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+.tt-k{font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:rgba(191,219,254,.85)}
+.tt-v{font-family:'JetBrains Mono',monospace;font-size:21px;font-weight:800;margin-top:4px;color:#fff}
+.tt-v.pos{color:#6ee7b7}.tt-v.neg{color:#fca5a5}
+.tt-s{font-size:10.5px;color:rgba(219,234,254,.72);margin-top:3px;font-weight:600}
 /* ───── Top Hunts pick card (redesigned May 21) ───── */
 .v2-mp-card{
-  background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:14px;
-  padding:14px;cursor:pointer;transition:transform .15s, box-shadow .15s;
+  background:linear-gradient(180deg,#ffffff 0%,#fbfcfe 100%);border:1px solid #e7ecf3;border-radius:16px;
+  padding:15px;cursor:pointer;transition:transform .15s, box-shadow .15s, border-color .15s;
   display:flex;flex-direction:column;gap:10px;
+  box-shadow:0 1px 2px rgba(15,40,100,.05),0 8px 22px -16px rgba(15,40,100,.18);
 }
-.v2-mp-card:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(10,10,10,.1)!important}
+.v2-mp-card:hover{transform:translateY(-3px);border-color:rgba(41,112,255,.30);
+  box-shadow:0 16px 34px -16px rgba(15,40,120,.32),0 2px 6px rgba(15,40,120,.1)!important}
 .v2-mp-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
 .v2-mp-head-l{display:flex;align-items:center;gap:10px;min-width:0;flex:1}
 .v2-mp-head-text{min-width:0;flex:1;line-height:1.25}
@@ -15501,8 +15529,31 @@ function renderModelPortfolio(data) {
   const returnLabel = 'Tracker performance';
   const returnSub   = 'since inception';
 
-  // ── HEADER STATS ────────────────────────────────────────────────────
+  // ── PREMIUM HERO + TRACKER CHART ────────────────────────────────────
+  const winRate = stats.total_picks ? Math.round(stats.winners / stats.total_picks * 100) : 0;
+  const _sg = v => (v >= 0 ? '+' : '') + v.toFixed(1) + '%';
   const headerHTML = `
+  <div class="th-hero">
+    <div class="th-hero-glow"></div>
+    <div class="th-hero-top">
+      <div class="th-hero-id">
+        <div class="th-eyebrow">🎯 Live model portfolio</div>
+        <div class="th-title">Top Hunts</div>
+        <div class="th-sub">AlphaHunt's tracked conviction picks · since ${createdDate} · ${daysRunning}d running</div>
+      </div>
+      <div class="th-hero-perf ${avgCls}">
+        <div class="th-perf-lbl">${returnLabel}</div>
+        <div class="th-perf-val">${_sg(avgPct)}</div>
+        <div class="th-perf-sub">avg across ${stats.total_picks} pick${stats.total_picks===1?'':'s'}</div>
+      </div>
+    </div>
+    <div class="th-tiles">
+      <div class="th-tile"><div class="tt-k">Win rate</div><div class="tt-v">${winRate}%</div><div class="tt-s">${stats.winners}/${stats.total_picks} green</div></div>
+      <div class="th-tile"><div class="tt-k">Best pick</div><div class="tt-v pos">${_sg(stats.best)}</div></div>
+      <div class="th-tile"><div class="tt-k">Worst pick</div><div class="tt-v ${stats.worst>=0?'pos':'neg'}">${_sg(stats.worst)}</div></div>
+      <div class="th-tile"><div class="tt-k">Holdings</div><div class="tt-v">${stats.total_picks}</div><div class="tt-s">since ${createdDate}</div></div>
+    </div>
+  </div>
   <div style="margin-bottom:14px">
     ${concentrationWarning}
     <div id="v2-tracker-chart-slot" style="min-height:210px"></div>
