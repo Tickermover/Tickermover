@@ -1538,8 +1538,9 @@ table.ssx-h2h tbody td.self{color:var(--ink);font-weight:600}
 .fl-name{color:#64748b;font-size:11px;max-width:200px;overflow:hidden;text-overflow:ellipsis;
   white-space:nowrap;display:block;line-height:1.15}
 .fl-pop{font-size:15px;font-weight:900;color:#0040c1}
-/* Tally removed per design — the sidebar already carries the universe count. */
-#tally-fund{display:none}
+/* Displayed-count chip — sits top-right above the table. */
+#tally-fund{display:inline-block;font-size:12px;font-weight:700;color:#475569;
+  background:rgba(41,112,255,.08);border:1px solid rgba(41,112,255,.16);border-radius:999px;padding:3px 11px}
 .fl-grade{display:inline-block;padding:3px 8px;border-radius:8px;font-size:10px;font-weight:800}
 .fl-open-btn{display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:3px 9px;
   border-radius:7px;background:rgba(41,112,255,.10);border:1px solid rgba(41,112,255,.30);
@@ -8814,8 +8815,9 @@ function v2SyncUniverseTally(){
   const profLbl = prof === 'aggressive' ? 'aggressive view'
                 : prof === 'balanced'   ? 'balanced view'
                 : prof === 'conservative' ? 'conservative view' : prof;
-  const sectorLbl = sector ? ' · ' + sector : '';
-  tally.textContent = total ? `${visible} stocks · ${profLbl}${sectorLbl}` : '';
+  // Just the displayed count — the profile lives in the picker and the sector in
+  // the "Filtered to …" pill, so repeating them here only added noise.
+  tally.textContent = total ? `${visible} stock${visible === 1 ? '' : 's'} shown` : '';
 }
 
 /* On the Radar rebuild: the overview is now rendered by window.tsRender (see
@@ -13708,7 +13710,8 @@ function renderFundamentals(tickers) {
       tallyEl.textContent = `${idx} / ${cards.length} stocks${_profLabel} (rendering…)`;
       window._fundChunkRaf = requestAnimationFrame(_renderChunk);
     } else {
-      tallyEl.textContent = `${cards.length} stocks${_profLabel}`;
+      if (typeof v2SyncUniverseTally === 'function') v2SyncUniverseTally();
+      else tallyEl.textContent = `${cards.length} stocks shown`;
       window._fundChunkRaf = null;
       try { initColResizers(document.querySelector('#fd-grid .fund-list')); } catch(e){}
       // Curated featured view: load the ~35-name set (once) and tag rows so the
@@ -13766,10 +13769,9 @@ async function loadFeaturedSet(){
   try {
     const arr = await ensureFeatured();
     if (!arr.length) throw new Error('empty featured set');
-    _applyFeaturedTags();                         // tag rows first…
-    if (!_featuredLoaded) document.body.classList.add('v2-featured-only');  // …then narrow the view (no empty flash)
+    _applyFeaturedTags();                         // tag rows (powers the Featured chip/count) — but DON'T auto-narrow
     _featuredLoaded = true;
-    if (typeof v2RenderScreens === 'function') v2RenderScreens();   // Smart Screens bar (Featured default)
+    if (typeof v2RenderScreens === 'function') v2RenderScreens();   // Smart Screens bar ("All" selected by default)
     if (typeof v2SyncUniverseTally === 'function') v2SyncUniverseTally();
     if (typeof _secgRefresh === 'function') _secgRefresh();          // sync the connections map to the Featured lens
   } catch(e) {
@@ -13832,7 +13834,7 @@ const _UNI_SCREENS = [
   {id:'earnings',  ic:'📅', nm:'Earnings soon', dsc:'Reports in ≤2 weeks',    scn:'#0040c1', sort:'pop'},
   {id:'all',       ic:'🌐', nm:'All',           dsc:'Full universe',          scn:'#64748b', sort:'pop'},
 ];
-let _uniScreen = 'featured';
+let _uniScreen = 'all';   // no Smart Screen auto-applied — the user opts into a lens
 
 function _screenMatch(id, ds){
   const pop=parseFloat(ds.pop)||0, rs=parseFloat(ds.rs)||0, m3=parseFloat(ds.mom3m);
