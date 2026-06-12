@@ -2898,16 +2898,12 @@ body.v2-featured-only #fund-tbody tr.fund-row:not([data-featured]){display:none!
 
 /* ── "Why we bought it today" — AI infographic block ──
    Echoes the drawer's soft blue verdict card (.dr-call-buy). */
-.v2-mp-why{
-  border-radius:13px;padding:11px 13px 12px;margin-bottom:14px;
-  background:linear-gradient(125deg,#eef4ff,#f8fbff);
-  border:1px solid rgba(41,112,255,.22);
-}
+.v2-mp-why{margin-bottom:15px}
 .v2-mp-why-head{
   display:flex;align-items:center;gap:6px;
-  font-size:9px;font-weight:800;text-transform:uppercase;color:#0040c1;margin-bottom:7px}
+  font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.09em;color:#2970ff;margin-bottom:9px}
 .v2-mp-why-spark{font-size:11px;line-height:1;color:#2970ff}
-.v2-mp-why-body{font-size:12.5px;line-height:1.5;color:#243244;font-weight:500}
+.v2-mp-why-body{font-size:14px;line-height:1.6;color:#1e293b;font-weight:500;letter-spacing:-.003em}
 .v2-mp-why-body em{font-style:normal;color:#0040c1;font-weight:700}
 /* loading shimmer */
 .v2-mp-why-skel{display:block;height:11px;border-radius:6px;margin:5px 0;
@@ -15856,13 +15852,7 @@ function renderModelPortfolio(data) {
           ${upChip}
         </div>
 
-        <div class="v2-mp-rule"></div>
-
-        ${pillarBars}
-
         ${decisionBlock}
-
-        ${p.rationale ? `<div class="v2-mp-rule"></div><div class="v2-mp-rationale">💡 ${p.rationale.replace(/^💡\s*/,'')}</div>` : ''}
       </div>`;
     }).join('')}
   </div>`;
