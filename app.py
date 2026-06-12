@@ -4132,6 +4132,72 @@ async def api_overview(ticker: str, force: bool = False,
             _overview_inflight.pop(sym, None)
 
 
+# ── "Why we bought it today" — one AI sentence per Top Hunts pick ──────────
+# Grounded entirely in our own factor profile (Alpha Score, grade, 6 pillars,
+# analyst upside) so nothing is invented. Cheap Haiku tier, cached durably in
+# app_kv keyed by ticker → one paid call per pick, ever. Lazy-loaded per card
+# so it never blocks the main /api/model-portfolio payload.
+_why_inflight: dict = {}   # sym -> asyncio.Task[dict]
+
+
+@app.get("/api/model-portfolio/why/{ticker}")
+async def api_why_today(ticker: str, force: bool = False):
+    """Return {ticker, why, status}. Observational (what the scan flagged),
+    not advice. Served from a durable per-ticker cache; only (re)generated when
+    missing, so it costs nothing after the first view."""
+    import asyncio
+    import why_today as _why
+    sym = ticker.upper()
+
+    # Fast path: durable cache hit (no key needed to serve an existing note).
+    if not force:
+        cached = _why._kv.get(_why._NS, sym)
+        if cached and cached.get("why"):
+            return JSONResponse({"ticker": sym, "why": cached["why"], "status": "ready"})
+
+    if not _why.available():
+        return JSONResponse({"ticker": sym, "why": "", "status": "unavailable"})
+
+    # Build grounding from the live universe row (+ derived pillars / upside).
+    live = next((t for t in _universe_data if t.get("ticker") == sym), None)
+    ground = {"ticker": sym}
+    if live:
+        try:
+            price = float(live.get("price") or 0)
+            tgt = float(live.get("target_mean") or live.get("street_target") or 0)
+        except (TypeError, ValueError):
+            price = tgt = 0
+        ground.update({
+            "name":        live.get("name"),
+            "sub_sector":  live.get("sub_sector") or live.get("sector"),
+            "smart_score": live.get("smart_score"),
+            "pop_score":   live.get("pop_score"),
+            "grade":       live.get("grade"),
+            "pillars":     _compute_pillars(live),
+            "rationale":   live.get("rationale"),
+            "signals":     live.get("signals"),
+        })
+        if price > 0 and tgt > 0:
+            up = (tgt - price) / price * 100
+            ground["_target_upside"] = f"{'+' if up >= 0 else ''}{round(up, 1)}%"
+
+    # Dedupe concurrent first-views of the same ticker → one paid call only.
+    task = _why_inflight.get(sym)
+    if task is None or task.done():
+        task = asyncio.ensure_future(_why.generate(sym, ground, force=force))
+        _why_inflight[sym] = task
+    try:
+        out = await task
+        return JSONResponse({"ticker": sym, "why": out.get("why", ""),
+                             "status": out.get("status", "ready")})
+    except Exception as exc:
+        logger.error(f"why_today endpoint {sym} failed: {exc}")
+        return JSONResponse({"ticker": sym, "why": "", "status": "error"})
+    finally:
+        if _why_inflight.get(sym) is task:
+            _why_inflight.pop(sym, None)
+
+
 # ── Sector relationship graph (topology only; generated once, cached) ──────
 # The Universe "Sector connections" web. Node values (α-Score, size) stay live
 # on the client; only the wiring is AI-generated, so this is a one-time Haiku

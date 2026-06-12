@@ -2887,6 +2887,37 @@ body.v2-featured-only #fund-tbody tr.fund-row:not([data-featured]){display:none!
 /* rationale — plain muted note, no box */
 .v2-mp-rationale{font-size:11.5px;color:#6b7787;line-height:1.55;font-weight:500}
 
+/* ── Infographic alignment (matches the stock drawer) ──
+   Numbers in JetBrains Mono; section eyebrows in mono uppercase. */
+.v2-mp-px,.v2-mp-todo,.v2-mp-perf-big,.v2-mp-perf-sub,.v2-mp-perf-sub strong,
+.v2-mp-alpha b,.v2-mp-pillar-val{font-family:'JetBrains Mono','SFMono-Regular',ui-monospace,monospace}
+.v2-mp-perf-meta,.v2-mp-pillars-head,.v2-mp-why-head{
+  font-family:'JetBrains Mono','SFMono-Regular',ui-monospace,monospace;letter-spacing:.09em}
+/* drawer-style pillar bars: blue when strong, amber when weak */
+.v2-mp-pillar-bar{height:5px;background:#e7edf5;border-radius:99px;overflow:hidden;margin-top:6px}
+
+/* ── "Why we bought it today" — AI infographic block ──
+   Echoes the drawer's soft blue verdict card (.dr-call-buy). */
+.v2-mp-why{
+  border-radius:13px;padding:11px 13px 12px;margin-bottom:14px;
+  background:linear-gradient(125deg,#eef4ff,#f8fbff);
+  border:1px solid rgba(41,112,255,.22);
+}
+.v2-mp-why-head{
+  display:flex;align-items:center;gap:6px;
+  font-size:9px;font-weight:800;text-transform:uppercase;color:#0040c1;margin-bottom:7px}
+.v2-mp-why-spark{font-size:11px;line-height:1;color:#2970ff}
+.v2-mp-why-body{font-size:12.5px;line-height:1.5;color:#243244;font-weight:500}
+.v2-mp-why-body em{font-style:normal;color:#0040c1;font-weight:700}
+/* loading shimmer */
+.v2-mp-why-skel{display:block;height:11px;border-radius:6px;margin:5px 0;
+  background:linear-gradient(90deg,rgba(41,112,255,.10) 25%,rgba(41,112,255,.20) 37%,rgba(41,112,255,.10) 63%);
+  background-size:400% 100%;animation:v2mpShimmer 1.3s ease infinite}
+.v2-mp-why-skel.s2{width:82%}
+.v2-mp-why-skel.s3{width:60%}
+@keyframes v2mpShimmer{0%{background-position:100% 0}100%{background-position:0 0}}
+.v2-mp-why.is-hidden{display:none}
+
 /* ───── Tracker chart (Top Hunts vs SPY vs QQQ) ───── */
 /* ── Premium tracker chart (May 22 2026 — dark hero card with glowing line) ──
    Reference: Stripe / Linear / forecast-chart aesthetic. Dark navy canvas,
@@ -15700,12 +15731,15 @@ function renderModelPortfolio(data) {
         // Compact 3-col heatmap — pillar identity (border + bg tint) +
         // value-based number color (green if strong, amber mid, red weak)
         const cells = pn.map(([name, v, tip]) => {
-          const numColor = v >= 65 ? '#15803d' : v >= 35 ? '#475569' : '#b91c1c';
-          const barCol   = v >= 65 ? '#16a34a' : v >= 35 ? '#f5a623' : '#ef4444';
+          // Drawer-aligned: strong pillars read brand-blue, weak (<65) amber.
+          const weak     = v < 65;
+          const numColor = weak ? '#b4780a' : '#0f172a';
+          const barCss   = weak ? 'linear-gradient(90deg,#f7b733,#e08600)'
+                                : 'linear-gradient(90deg,#2970ff,#0040c1)';
           const w = Math.max(4, Math.min(100, v));
           return `<div class="v2-mp-pillar" title="${tip}">
             <div class="v2-mp-pillar-top"><span class="v2-mp-pillar-name">${name}</span><span class="v2-mp-pillar-val" style="color:${numColor}">${v}</span></div>
-            <div class="v2-mp-pillar-bar"><span style="width:${w}%;background:${barCol};color:${barCol}"></span></div>
+            <div class="v2-mp-pillar-bar"><span style="width:${w}%;background:${barCss}"></span></div>
           </div>`;
         }).join('');
         // Profit-take warning — if the stock has run hard but fundamentals
@@ -15809,6 +15843,13 @@ function renderModelPortfolio(data) {
 
         <div class="v2-mp-rule"></div>
 
+        <div class="v2-mp-why is-hidden" data-why-ticker="${p.ticker}">
+          <div class="v2-mp-why-head"><span class="v2-mp-why-spark">✦</span> Why we bought it · ${addedFmt}</div>
+          <div class="v2-mp-why-body">
+            <span class="v2-mp-why-skel"></span><span class="v2-mp-why-skel s2"></span><span class="v2-mp-why-skel s3"></span>
+          </div>
+        </div>
+
         ${perfBlock}
 
         <div class="v2-mp-rule"></div>
@@ -15854,6 +15895,40 @@ function renderModelPortfolio(data) {
   if (picks.length) {
     const _idle = window.requestIdleCallback || ((cb) => setTimeout(cb, 16));
     _idle(() => { try { v2LoadTrackerChart(); } catch(e){ console.error(e); } });
+    _idle(() => { try { v2LoadWhyToday(); } catch(e){ console.error(e); } });
+  }
+}
+
+/* Lazy-load the AI "Why we bought it today" sentence per pick card.
+   Each ticker is fetched from /api/model-portfolio/why/{ticker} (durably
+   cached server-side → one Haiku call per pick, ever). Sequential with a
+   tiny gap so we never burst the API on first paint; the block reveals
+   with a shimmer, then fills — or quietly removes itself if no AI text. */
+async function v2LoadWhyToday(){
+  const blocks = Array.from(document.querySelectorAll('.v2-mp-why[data-why-ticker]'));
+  if (!blocks.length) return;
+  const esc = (s) => String(s == null ? '' : s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  for (const el of blocks){
+    const tic = el.getAttribute('data-why-ticker');
+    if (!tic || el.dataset.whyLoaded) continue;
+    el.dataset.whyLoaded = '1';
+    el.classList.remove('is-hidden');          // reveal with shimmer
+    try {
+      const r = await fetch('/api/model-portfolio/why/' + encodeURIComponent(tic));
+      const j = await r.json();
+      const why = (j && j.why || '').trim();
+      const body = el.querySelector('.v2-mp-why-body');
+      if (why && body){
+        body.innerHTML = esc(why);
+      } else {
+        el.remove();                           // no AI text → drop the block cleanly
+      }
+    } catch(e){
+      el.remove();
+    }
+    // gentle pacing between first-view (uncached) tickers
+    await new Promise(res => setTimeout(res, 120));
   }
 }
 
