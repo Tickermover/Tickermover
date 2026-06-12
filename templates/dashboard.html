@@ -13771,6 +13771,7 @@ async function loadFeaturedSet(){
     _featuredLoaded = true;
     if (typeof v2RenderScreens === 'function') v2RenderScreens();   // Smart Screens bar (Featured default)
     if (typeof v2SyncUniverseTally === 'function') v2SyncUniverseTally();
+    if (typeof _secgRefresh === 'function') _secgRefresh();          // sync the connections map to the Featured lens
   } catch(e) {
     // If the featured set can't load, don't trap the user on an empty table.
     console.warn('[PD] featured set load failed:', e.message);
@@ -13813,6 +13814,7 @@ function _toggleFeaturedOnly(){
   document.body.classList.toggle('v2-featured-only');
   _updateFeaturedToggleLabel();
   if (typeof v2SyncUniverseTally === 'function') v2SyncUniverseTally();
+  if (typeof _secgRefresh === 'function') _secgRefresh();
 }
 
 /* ----------------------------------------------------------
@@ -13880,6 +13882,7 @@ function v2ApplyScreen(id){
   const sortEl=document.getElementById('fd-sort');
   if(sortEl){ sortEl.value=def.sort; if(typeof sortFund==='function') sortFund(); }
   if(typeof v2SyncUniverseTally==='function') v2SyncUniverseTally();
+  if(typeof _secgRefresh==='function') _secgRefresh();   // keep the connections map in sync with the lens
 }
 
 function sortFundList(key) {
@@ -14010,6 +14013,11 @@ function renderSectors(tickers) {
   if (typeof v2FilterByProfile === 'function') {
     try { tickers = v2FilterByProfile(tickers); } catch (e) {}
   }
+  // …and the active Smart Screen (Featured/Momentum/…): intersect with the rows
+  // actually visible in the table, so a sector with 0 stocks under the current
+  // lens (e.g. Healthcare under "Featured") never appears as a node.
+  const _vis = _secgVisibleTickerSet();
+  if (_vis) tickers = tickers.filter(t => _vis.has(t.ticker));
   const subGroups = {};
   tickers.forEach(t => {
     const sub = t.sub_sector || t.subsector || t.sector || 'Other';
@@ -14078,6 +14086,38 @@ function _secgFullSectorList(){
   const set = new Set();
   uni.forEach(t => { const s = t.sub_sector || t.subsector || t.sector || 'Other'; if (s) set.add(s); });
   return [...set];
+}
+/* The set of tickers CURRENTLY visible in the table — i.e. passing the profile
+   AND the active Smart Screen (Featured / Momentum / Quality / …). Read straight
+   off the rows' filter classes so the graph mirrors the table exactly. We
+   deliberately ignore `.sector-hide` (that's the graph's OWN tap-to-filter, not
+   a table lens). Returns null when the table isn't built yet → caller falls back
+   to the profile-only filter. */
+function _secgVisibleTickerSet(){
+  const rows = document.querySelectorAll('#fund-tbody tr.fund-row');
+  if (!rows.length) return null;
+  const prof = document.body.getAttribute('data-active-profile') || '';
+  const featOnly = document.body.classList.contains('v2-featured-only');
+  const set = new Set();
+  rows.forEach(r => {
+    if (prof && (' ' + (r.dataset.profiles || '') + ' ').indexOf(' ' + prof + ' ') < 0) return;
+    if (featOnly && !r.hasAttribute('data-featured')) return;
+    if (r.classList.contains('scn-hide')) return;
+    set.add(r.dataset.ticker);
+  });
+  return set;
+}
+/* Re-render the graph from the full universe (renderSectors re-applies the
+   profile + Smart-Screen filters). Called when a Screen / Featured toggle
+   changes the table so the map stays in lockstep. */
+function _secgRefresh(){
+  try {
+    if (typeof renderSectors !== 'function') return;
+    const uni = (typeof _allTickerData === 'object' && _allTickerData)
+      ? Object.values(_allTickerData)
+      : ((window.__AH_DATA__ && window.__AH_DATA__.tickers) || []);
+    if (uni.length) renderSectors(uni);
+  } catch (e) {}
 }
 
 function _secgReduceMotion(){
@@ -14162,6 +14202,7 @@ function secgRender(){
 
   // Reconcile node set (drop departed, seed new ones in a spiral near centre).
   const present = new Set(names);
+  if (_secgFocus && !present.has(_secgFocus)) _secgFocus = null;   // focused sector filtered out
   Object.keys(_secgNodes).forEach(n => { if (!present.has(n)) delete _secgNodes[n]; });
   names.forEach((n, i) => {
     if (!_secgNodes[n]){
