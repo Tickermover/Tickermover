@@ -456,19 +456,24 @@ body.v2 #sectors-grid .smh-name{font-weight:800;font-size:12.5px;color:#0f172a!i
 /* ── Sector connections — animated relationship graph ──────────────────── */
 .secg-wrap{position:relative;grid-column:1/-1;border:1px solid #e6ebf2;border-radius:14px;
   background:radial-gradient(120% 120% at 50% 0%,#fbfdff 0%,#f4f7fb 100%);overflow:hidden}
-.secg-svg{display:block;width:100%;height:clamp(420px,58vh,640px);touch-action:manipulation;cursor:grab}
+.secg-svg{display:block;width:100%;height:clamp(460px,64vh,720px);touch-action:manipulation;cursor:grab}
 .secg-svg:active{cursor:grabbing}
-/* Edges — colour by relationship type; draw-in animated via stroke-dashoffset */
-.secg-edge{fill:none;stroke-linecap:round;transition:opacity .25s,stroke-width .2s}
+/* Edges — calm, thin, colour by relationship type */
+.secg-edge{fill:none;stroke-linecap:round;stroke-width:1.5px;opacity:.4;transition:opacity .25s,stroke-width .2s}
 .secg-edge.t-raw_material{stroke:#e0a000}
 .secg-edge.t-supply{stroke:#2970ff}
 .secg-edge.t-infrastructure{stroke:#16a34a}
 .secg-edge.t-adjacent{stroke:#94a3b8}
 .secg-arrow-raw_material{fill:#e0a000}.secg-arrow-supply{fill:#2970ff}
 .secg-arrow-infrastructure{fill:#16a34a}.secg-arrow-adjacent{fill:#94a3b8}
+/* Flowing dots that travel downstream along each edge */
+.secg-flow{pointer-events:none;opacity:.92;filter:drop-shadow(0 0 2.5px rgba(15,23,42,.18))}
+.secg-flow.t-raw_material{fill:#e0a000}.secg-flow.t-supply{fill:#2970ff}
+.secg-flow.t-infrastructure{fill:#16a34a}.secg-flow.t-adjacent{fill:#94a3b8}
+.secg-svg.is-focus .secg-flow{opacity:0}
 /* Nodes */
 .secg-node{cursor:pointer}
-.secg-node .secg-dot{stroke:#fff;stroke-width:2;transition:r .2s,stroke-width .2s,filter .2s}
+.secg-node .secg-dot{stroke:#fff;stroke-width:2;filter:drop-shadow(0 2px 4px rgba(15,23,42,.14));transition:r .2s,stroke-width .2s,filter .2s}
 .secg-node .secg-label{font-size:11px;font-weight:800;fill:#0f172a;paint-order:stroke;text-anchor:middle;
   stroke:#fff;stroke-width:3px;stroke-linejoin:round;pointer-events:none;letter-spacing:-.01em;transition:opacity .2s}
 .secg-node.lblhide .secg-label{opacity:0}
@@ -14082,7 +14087,7 @@ const _secgNodes = {};                 // id -> {x,y,vx,vy,el,r,isStock?,parent?
 let _secgEdges = [], _secgAdj = {};
 let _secgStockEdges = [], _secgBloom = null;   // member edges + currently expanded sector
 let _secgFocus = null, _secgRAF = 0, _secgAlpha = 0, _secgW = 0, _secgH = 0;
-let _secgDragging = null, _secgMoved = false;
+let _secgDragging = null, _secgMoved = false, _secgVisible = true, _secgFrame = 0;
 function _secgHeat(score){ return score >= 68 ? '#16a34a' : score >= 60 ? '#84cc16' : score >= 52 ? '#e0a000' : '#94a3b8'; }
 /* Full-universe sub-sector list (NOT the profile-filtered set). The AI wiring is
    generated once against this stable list and cached; each risk profile just
@@ -14160,7 +14165,7 @@ function secgLegendHTML(){
     '<span class="secg-lg"><i style="background:#2970ff"></i>Components / supply</span>' +
     '<span class="secg-lg"><i style="background:#16a34a"></i>Infrastructure / platform</span>' +
     '<span class="secg-lg"><i style="background:#94a3b8"></i>Adjacent</span>' +
-    '<span class="secg-lg dir">Arrow points <b>downstream</b> · node colour = α-Score · size = # stocks</span>' +
+    '<span class="secg-lg dir">Dots flow <b>downstream</b> · node colour = α-Score · size = # stocks</span>' +
     '<span class="secg-hint">Tap a sector to expand its stocks &amp; filter the table</span>' +
     '</div>';
 }
@@ -14200,6 +14205,16 @@ function secgRender(){
     window.addEventListener('pointerup', secgPointerUp);
     window.addEventListener('resize', () => { const s = grid.querySelector('.secg-svg'); if (s){ secgMeasure(s); secgKick(); } });
     document.addEventListener('visibilitychange', () => { if (!document.hidden) secgKick(); });
+    // Run the perpetual drift ONLY while the graph is actually on screen (handles
+    // tab-switch via display:none, collapse, and scroll-away) — no wasted CPU.
+    if ('IntersectionObserver' in window){
+      const io = new IntersectionObserver(en => {
+        _secgVisible = !!(en[0] && en[0].isIntersecting);
+        if (_secgVisible) secgKick();
+        else if (_secgRAF){ cancelAnimationFrame(_secgRAF); _secgRAF = 0; }
+      }, { threshold: 0.01 });
+      io.observe(svg);
+    }
   }
   secgMeasure(svg);
 
@@ -14241,12 +14256,20 @@ function secgBuildDOM(svg, names, edges){
   const NS = 'http://www.w3.org/2000/svg';
   const eG = svg.querySelector('.secg-edges'), nG = svg.querySelector('.secg-nodes');
   eG.innerHTML = ''; nG.innerHTML = '';
+  const reduce = _secgReduceMotion();
   edges.forEach(e => {
     const p = document.createElementNS(NS, 'path');
     p.setAttribute('class', 'secg-edge t-' + e.type);
-    p.setAttribute('marker-end', 'url(#secg-arrow-' + e.type + ')');
+    if (reduce) p.setAttribute('marker-end', 'url(#secg-arrow-' + e.type + ')');  // static arrow only when motion is off
     if (e.note){ const ti = document.createElementNS(NS, 'title'); ti.textContent = e.source + ' → ' + e.target + ' · ' + e.note; p.appendChild(ti); }
     eG.appendChild(p); e.el = p;
+    // A small dot flows source→target (downstream) — the "connecting dots" motion
+    // that also shows direction, replacing the static arrowhead.
+    if (!reduce){
+      const fd = document.createElementNS(NS, 'circle');
+      fd.setAttribute('class', 'secg-flow t-' + e.type); fd.setAttribute('r', '2.4');
+      eG.appendChild(fd); e.flow = fd; e._t = Math.random();
+    } else { e.flow = null; }
   });
   names.forEach(n => {
     const st = _secgStats[n] || { score: 50, count: 1, heat: '#94a3b8' };
@@ -14274,8 +14297,10 @@ function secgBuildDOM(svg, names, edges){
 function _secgStep(){
   const names = Object.keys(_secgNodes);
   const N = names.length; if (!N) return;
-  const pad = 46, W = _secgW, H = _secgH;
-  const K_REP = 7000, K_SPR = 0.018, SPR_LEN = 150, K_CEN = 0.011, DAMP = 0.85;
+  const pad = 48, W = _secgW, H = _secgH;
+  // Looser, more spread-out field + a touch of Brownian jitter so the web keeps
+  // gently breathing (never freezes) without flying apart.
+  const K_REP = 8200, K_SPR = 0.016, SPR_LEN = 165, K_CEN = 0.009, DAMP = 0.9, JITTER = 0.6;
   for (let i = 0; i < N; i++){
     const a = _secgNodes[names[i]];
     for (let j = i + 1; j < N; j++){
@@ -14295,7 +14320,8 @@ function _secgStep(){
   });
   names.forEach(n => {
     const p = _secgNodes[n];
-    p.vx += (W / 2 - p.x) * K_CEN; p.vy += (H / 2 - p.y) * K_CEN;
+    p.vx += (W / 2 - p.x) * K_CEN + (Math.random() - 0.5) * JITTER;
+    p.vy += (H / 2 - p.y) * K_CEN + (Math.random() - 0.5) * JITTER;
     p.vx *= DAMP; p.vy *= DAMP;
     if (p !== _secgDragging){ p.x += p.vx * _secgAlpha; p.y += p.vy * _secgAlpha; }
     p.x = Math.max(pad, Math.min(W - pad, p.x)); p.y = Math.max(pad, Math.min(H - pad, p.y));
@@ -14303,15 +14329,17 @@ function _secgStep(){
 }
 function secgTick(){
   _secgStep();
-  _secgAlpha *= 0.984;
+  // Decay toward a low floor instead of zero → perpetual gentle Brownian drift
+  // (a fresh render/drag kicks it higher, then it eases back to the float).
+  _secgAlpha = Math.max(0.085, _secgAlpha * 0.985);
   secgPaint();
-  if (_secgAlpha < 0.16) secgRelabel();     // resolve label collisions as it slows
-  if (_secgAlpha > 0.02 && !document.hidden) _secgRAF = requestAnimationFrame(secgTick);
-  else { _secgRAF = 0; secgRelabel(); }
+  if ((_secgFrame++ % 24) === 0) secgRelabel();   // throttle the label de-clutter
+  if (_secgVisible && !document.hidden) _secgRAF = requestAnimationFrame(secgTick);
+  else _secgRAF = 0;
 }
 function secgKick(){
-  if (_secgReduceMotion() || document.hidden) return;
-  if (_secgAlpha < 0.5) _secgAlpha = 0.6;
+  if (_secgReduceMotion() || document.hidden || !_secgVisible) return;
+  if (_secgAlpha < 0.45) _secgAlpha = 0.55;
   if (!_secgRAF) _secgRAF = requestAnimationFrame(secgTick);
 }
 function secgSettle(names){            // synchronous layout for reduced-motion
@@ -14337,6 +14365,13 @@ function secgPaint(){
     const arc = Math.min(16, len * 0.12);                 // gentle arc; subtle for short member links
     const cx = mx + nx * arc, cy = my + ny * arc;
     e.el.setAttribute('d', 'M' + ax.toFixed(1) + ' ' + ay.toFixed(1) + ' Q' + cx.toFixed(1) + ' ' + cy.toFixed(1) + ' ' + bx.toFixed(1) + ' ' + by.toFixed(1));
+    if (e.flow){                                          // slide the dot along the curve at ~constant visual speed
+      e._t = (e._t + 1.1 / Math.max(60, len)) % 1;
+      const t = e._t, mt = 1 - t;
+      const fx = mt * mt * ax + 2 * mt * t * cx + t * t * bx;
+      const fy = mt * mt * ay + 2 * mt * t * cy + t * t * by;
+      e.flow.setAttribute('cx', fx.toFixed(1)); e.flow.setAttribute('cy', fy.toFixed(1));
+    }
   });
 }
 
