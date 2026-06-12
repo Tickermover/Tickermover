@@ -764,6 +764,33 @@ body.v2 #sectors-grid .smh-name{font-weight:800;font-size:12.5px;color:#0f172a!i
 .ssx-range-ends{display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--muted)}
 .ssx-stub{padding:46px 20px;text-align:center;color:var(--muted);font-size:13px;border:1px dashed var(--hair-2);border-radius:14px}
 .ssx-stub .si{font-size:30px;display:block;margin-bottom:10px}
+/* ── Supply Chain tab — dependency / ripple-risk map ── */
+.dep-summary{font-size:13.5px;line-height:1.6;color:var(--ink);margin-bottom:16px}
+.dep-donut-wrap{margin-bottom:6px}
+.dep-donut{display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+.ssx-donut{flex-shrink:0}
+.dep-legend{display:flex;flex-direction:column;gap:7px;min-width:200px;flex:1}
+.dep-leg{display:flex;align-items:center;gap:9px;font-size:12.5px}
+.dep-leg-dot{width:11px;height:11px;border-radius:3px;flex-shrink:0}
+.dep-leg-nm{color:var(--ink);font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dep-leg-pct{font-family:'JetBrains Mono',monospace;font-weight:800;color:var(--muted)}
+.dep-list{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.dep-row{border:1px solid var(--hair);border-radius:11px;padding:10px 13px;background:var(--surf)}
+.dep-main{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.dep-type{font-size:10px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;padding:2px 8px;border-radius:6px;white-space:nowrap}
+.dep-sup{background:rgba(41,112,255,.12);color:#2970ff}
+.dep-cus{background:rgba(22,163,74,.12);color:#16a34a}
+.dep-inp{background:rgba(224,160,0,.14);color:#b9810a}
+.dep-par{background:rgba(100,116,139,.14);color:#64748b}
+.dep-nm{font-weight:800;font-size:13.5px;color:var(--ink)}
+.dep-tic{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:800;color:#64748b;background:rgba(100,116,139,.1);border:0;border-radius:6px;padding:2px 7px}
+.dep-tic.link{color:#0040c1;background:rgba(41,112,255,.1);cursor:pointer;transition:background .15s}
+.dep-tic.link:hover{background:rgba(41,112,255,.2)}
+.dep-what{font-size:12px;color:var(--muted);font-weight:600}
+.dep-ripple{font-size:12px;color:#b91c1c;margin-top:5px;line-height:1.45}
+.dep-src{font-size:11.5px;color:var(--muted);margin-top:14px}
+.dep-src a{color:#0040c1;text-decoration:none;font-weight:700;margin-right:3px}
+.dep-disc{font-size:11px;color:var(--muted);margin-top:10px;padding-top:10px;border-top:1px solid var(--hair);line-height:1.5}
 table.ssx-fin{width:100%;border-collapse:collapse;font-size:12.5px}
 table.ssx-fin th,table.ssx-fin td{padding:9px 10px;text-align:right;border-bottom:1px solid var(--hair)}
 table.ssx-fin th:first-child,table.ssx-fin td:first-child{text-align:left;color:var(--ink-2)}
@@ -12720,7 +12747,7 @@ function openStockSheet(ticker){
     kv('Beta', beta!=null?beta.toFixed(2):null)+kv('Div yield', divY!=null?divY.toFixed(2)+'%':null)+
     kv('Next earnings', dte!=null?(dte+'d'):null);
 
-  const tabs=[['overview','Overview'],['financials','Financials'],['valuation','Valuation'],['health','Health'],['technicals','Technicals'],['estimates','Estimates'],['earnings','Earnings'],['ownership','Ownership'],['news','News'],['deepdive','AI Deep Dive'],['peers','Peers']];
+  const tabs=[['overview','Overview'],['financials','Financials'],['valuation','Valuation'],['health','Health'],['technicals','Technicals'],['estimates','Estimates'],['earnings','Earnings'],['ownership','Ownership'],['news','News'],['deepdive','AI Deep Dive'],['peers','Peers'],['deps','Supply Chain']];
   const logoImg='<img src="https://assets.parqet.com/logos/symbol/'+ticker+'" alt="" onerror="this.outerHTML=\''+ticker.slice(0,2)+'\'">';
 
   document.getElementById('ssx-sheet').innerHTML =
@@ -12749,7 +12776,7 @@ function openStockSheet(ticker){
       '<div class="ssx-panel" data-panel="financials"><div class="ssx-stub"><span class="si">📊</span>Loading financials…</div></div>'+
       '<div class="ssx-panel" data-panel="news"><div class="ssx-stub"><span class="si">📰</span>Loading news…</div></div>'+
       '<div class="ssx-panel" data-panel="deepdive"><div class="ssx-card"><div class="ssx-card-h">🔬 AI Deep Dive</div><div id="dd-body-'+ticker+'"><div class="dd-loading">Open this tab to generate the brief…</div></div></div></div>'+
-      ['valuation','health','technicals','estimates','earnings','ownership','peers'].map(function(p){return '<div class="ssx-panel" data-panel="'+p+'"><div class="ssx-stub"><span class="si">⏳</span>Loading…</div></div>';}).join('')+
+      ['valuation','health','technicals','estimates','earnings','ownership','peers','deps'].map(function(p){return '<div class="ssx-panel" data-panel="'+p+'"><div class="ssx-stub"><span class="si">⏳</span>Loading…</div></div>';}).join('')+
     '</div>'+
     '<aside class="ssx-rail"><div class="ssx-card"><div class="ssx-card-h" style="font-size:14px">Key statistics</div>'+railHtml+rangeHtml+'</div></aside>'+
     '</div>';
@@ -12817,7 +12844,7 @@ function ssxLoadTab(ticker,id){
   window._ssxLoaded[id]=1;
   const map={financials:ssxFinancials,news:ssxNews,valuation:ssxValuation,health:ssxHealth,
     technicals:ssxTechnicals,estimates:ssxEstimates,earnings:ssxEarnings,ownership:ssxOwnership,peers:ssxPeers,
-    deepdive:loadDeepDive};
+    deepdive:loadDeepDive,deps:ssxDependencies};
   const fn=map[id]; if(typeof fn==='function'){ try{ fn(ticker); }catch(e){ console.error('ssx tab',id,e); } }
 }
 
@@ -12836,6 +12863,59 @@ async function _ssxDetail(ticker){
   if(window._ssxDetailCache[ticker]) return window._ssxDetailCache[ticker];
   try{ const r=await fetch('/api/ticker/'+encodeURIComponent(ticker)); const d=await r.json(); window._ssxDetailCache[ticker]=(d&&typeof d==='object')?d:{}; return window._ssxDetailCache[ticker]; }
   catch(e){ return {}; }
+}
+
+/* ── Supply Chain tab — web-grounded dependency / ripple-risk map ── */
+const _DEP_PALETTE=['#2970ff','#f5a623','#0a2540','#dc4e41','#16a34a','#5dc8e6','#8b5cf6','#e0a000','#94a3b8','#0ea5e9'];
+const _DEP_DISC='AI-estimated from public sources — directional, not a verified financial disclosure. Verify against filings before relying on it.';
+function _ssxDonut(segs){
+  const R=52,W=22,C=2*Math.PI*R,cx=70,cy=70; let acc=0;
+  const rings=segs.map(function(s,i){
+    const f=Math.max(0,s.pct)/100, arc=f*C, off=-acc*C; acc+=f;
+    return '<circle cx="'+cx+'" cy="'+cy+'" r="'+R+'" fill="none" stroke="'+_DEP_PALETTE[i%_DEP_PALETTE.length]+'" stroke-width="'+W+'" stroke-dasharray="'+arc.toFixed(2)+' '+(C-arc).toFixed(2)+'" stroke-dashoffset="'+off.toFixed(2)+'" transform="rotate(-90 '+cx+' '+cy+')"></circle>';
+  }).join('');
+  return '<svg class="ssx-donut" viewBox="0 0 140 140" width="150" height="150">'+rings+'</svg>';
+}
+function ssxDependencies(ticker){
+  const panel=_ssxPanel('deps'); if(!panel) return;
+  panel.innerHTML='<div class="ssx-stub"><span class="si">🔗</span>Mapping suppliers, customers &amp; ripple risk… (first load ~10s — web-grounded)</div>';
+  fetch('/api/dependencies/'+encodeURIComponent(ticker)).then(function(r){return r.json();}).then(function(d){
+    if(!d){ _ssxEmpty(panel,'⚠️','Could not load dependencies.'); return; }
+    if(d.status==='locked'){ _ssxEmpty(panel,'🔒',d.detail||'Pro feature — upgrade to unlock dependency mapping.'); return; }
+    if(d.status==='unavailable'||d.status==='error'){ _ssxEmpty(panel,'⚠️',d.detail||'Could not map dependencies right now.'); return; }
+    panel.innerHTML=_ssxDepsHTML(ticker,d);
+  }).catch(function(){ _ssxEmpty(panel,'⚠️','Could not load dependencies.'); });
+}
+function _ssxDepsHTML(ticker,d){
+  const segs=(d.exposure||[]).filter(function(s){return s&&s.name&&s.pct>0;});
+  const typeLbl={supplier:'Supplier',customer:'Customer',input:'Key input',partner:'Partner'};
+  const typeCls={supplier:'dep-sup',customer:'dep-cus',input:'dep-inp',partner:'dep-par'};
+  const inUni=function(tk){ return tk && typeof _allTickerData==='object' && _allTickerData[tk]; };
+  const donut=segs.length
+    ? '<div class="dep-donut-wrap"><div class="ssx-card-h">Revenue exposure</div><div class="dep-donut">'+_ssxDonut(segs)+
+        '<div class="dep-legend">'+segs.map(function(s,i){return '<div class="dep-leg"><span class="dep-leg-dot" style="background:'+_DEP_PALETTE[i%_DEP_PALETTE.length]+'"></span><span class="dep-leg-nm">'+v2EscHTML(s.name)+'</span><span class="dep-leg-pct">'+s.pct+'%</span></div>';}).join('')+'</div></div></div>'
+    : '';
+  const rows=(d.dependencies||[]).map(function(x){
+    const tk=(x.ticker||'').toUpperCase();
+    const badge=tk?(inUni(tk)
+        ? '<button class="dep-tic link" onclick="openStockModal(\''+tk+'\')" title="Open '+tk+'">'+tk+' ↗</button>'
+        : '<span class="dep-tic">'+tk+'</span>'):'';
+    return '<div class="dep-row">'+
+      '<div class="dep-main"><span class="dep-type '+(typeCls[x.type]||'dep-par')+'">'+(typeLbl[x.type]||'Partner')+'</span>'+
+        '<span class="dep-nm">'+v2EscHTML(x.name)+'</span>'+badge+
+        (x.what?'<span class="dep-what">'+v2EscHTML(x.what)+'</span>':'')+'</div>'+
+      (x.ripple?'<div class="dep-ripple">⚡ '+v2EscHTML(x.ripple)+'</div>':'')+
+    '</div>';
+  }).join('');
+  const src=(d.sources||[]).slice(0,8).map(function(s){return '<a href="'+v2EscHTML(s.url)+'" target="_blank" rel="noopener">'+s.n+'</a>';}).join(' ');
+  return '<div class="ssx-card dep-card">'+
+    '<div class="ssx-card-h">🔗 Supply chain &amp; ripple risk</div>'+
+    (d.summary?'<div class="dep-summary">'+v2EscHTML(d.summary)+'</div>':'')+
+    donut+
+    (rows?'<div class="ssx-card-h" style="margin-top:14px">Key dependencies — a shock to any of these can ripple into '+v2EscHTML(ticker)+'</div><div class="dep-list">'+rows+'</div>':'')+
+    (src?'<div class="dep-src">Sources: '+src+'</div>':'')+
+    '<div class="dep-disc">⚠ '+_DEP_DISC+'</div>'+
+  '</div>';
 }
 
 function ssxValuation(ticker){

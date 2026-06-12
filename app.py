@@ -4211,6 +4211,61 @@ async def api_sector_graph(request: Request, force: bool = False):
             _sector_graph_inflight.pop(key, None)
 
 
+# ── Dependencies & ripple-risk (web-grounded; cached 30 days) ──────────────
+_deps_inflight: dict = {}   # sym -> asyncio.Task[dict]
+
+
+@app.get("/api/dependencies/{ticker}")
+async def api_dependencies(ticker: str, force: bool = False,
+                           user: Optional[dict] = Depends(_current_user),
+                           creds: Optional[HTTPAuthorizationCredentials] = Depends(_bearer)):
+    """Structured supply-chain / dependency map for the stock detail view:
+    exposure donut + the companies it depends on (with ripple-risk). Pro-gated,
+    web-grounded, generated once and cached 30 days in app_kv."""
+    import asyncio
+    import dependencies_gen
+    from kv_store import store as _kv
+    sym = ticker.upper()
+    if not await _is_pro_user(user, creds):
+        return JSONResponse({"ticker": sym, "status": "locked",
+                             "detail": "Dependency mapping is a Pro feature. Upgrade to unlock."})
+    if not dependencies_gen.available():
+        return JSONResponse({"ticker": sym, "status": "unavailable",
+                             "detail": "Not enabled (set ANTHROPIC_API_KEY)."})
+
+    ck = "deps:" + sym
+    if not force:
+        cached = cache.get(ck)
+        if cached is not None:
+            return JSONResponse(cached)
+        doc = _kv.get("dependencies", sym, max_age_s=30 * 86400)
+        if isinstance(doc, dict) and (doc.get("dependencies") or doc.get("exposure")):
+            cache.set(ck, doc, ttl=30 * 86400)
+            return JSONResponse(doc)
+
+    task = _deps_inflight.get(sym)
+    if task is None or task.done():
+        async def _gen() -> dict:
+            target = next((t for t in _universe_data if t.get("ticker") == sym), None)
+            out = await dependencies_gen.generate_dependencies(sym, target)
+            out.setdefault("status", "ready")
+            _kv.set("dependencies", sym, out)
+            cache.set(ck, out, ttl=30 * 86400)
+            return out
+        task = asyncio.ensure_future(_gen())
+        _deps_inflight[sym] = task
+
+    try:
+        out = await task
+        return JSONResponse(out)
+    except Exception as exc:
+        logger.error(f"Dependencies generation failed for {sym}: {exc}")
+        return JSONResponse({"ticker": sym, "status": "error", "detail": str(exc)[:200]})
+    finally:
+        if _deps_inflight.get(sym) is task:
+            _deps_inflight.pop(sym, None)
+
+
 # ── AI head-to-head comparison cards (cached; web-grounded) ────────────────
 _compare_generating: set = set()
 
