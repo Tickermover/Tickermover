@@ -766,7 +766,7 @@ body.v2 #sectors-grid .smh-name{font-weight:800;font-size:12.5px;color:#0f172a!i
 .ssx-stub .si{font-size:30px;display:block;margin-bottom:10px}
 /* ── Supply Chain tab — dependency / ripple-risk map (uses the drawer's
    .rep-sec ribboned cards so it matches the Overview / Financials panes) ── */
-.dep-wrap{display:flex;flex-direction:column;gap:12px;max-width:900px;margin:0 auto}
+.dep-wrap{max-width:1100px;margin:0 auto}
 .dep-takeaway-text{font-size:13.5px;line-height:1.62;color:var(--ink)}
 .dep-sec-note{font-size:12px;color:var(--muted);font-weight:600;margin-bottom:12px}
 /* Donut + legend */
@@ -781,11 +781,14 @@ body.v2 #sectors-grid .smh-name{font-weight:800;font-size:12.5px;color:#0f172a!i
 .dep-leg-bar{height:6px;background:rgba(100,116,139,.16);border-radius:4px;overflow:hidden}
 .dep-leg-fill{display:block;height:100%;border-radius:4px}
 .dep-leg-pct{font-family:'JetBrains Mono',monospace;font-weight:800;color:var(--ink);text-align:right;font-size:12px}
-/* Grouped dependency cards */
-.dep-group{margin-bottom:14px}
-.dep-group-h{font-size:11px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;display:flex;align-items:center;gap:7px}
+/* Grouped dependency cards — rows flow in 2 columns, group headers span both */
+.dep-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;align-items:start}
+@media(max-width:680px){.dep-grid{grid-template-columns:1fr}}
+.dep-group-h{font-size:11px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:7px}
+.dep-group-h.span{grid-column:1/-1;margin-top:8px}
+.dep-grid > .dep-group-h.span:first-child{margin-top:0}
 .dep-group-ct{background:rgba(100,116,139,.14);color:var(--muted);border-radius:6px;padding:0 7px;font-size:10.5px}
-.dep-row{position:relative;background:#fff;border:1px solid var(--hair);border-left:3px solid #94a3b8;border-radius:11px;padding:11px 14px;margin-bottom:8px;transition:box-shadow .15s,transform .12s}
+.dep-row{position:relative;background:#fff;border:1px solid var(--hair);border-left:3px solid #94a3b8;border-radius:11px;padding:11px 14px;transition:box-shadow .15s,transform .12s}
 .dep-row:hover{box-shadow:0 8px 22px -12px rgba(15,23,42,.28);transform:translateY(-1px)}
 .dep-row.dep-cus{border-left-color:#16a34a}
 .dep-row.dep-sup{border-left-color:#2970ff}
@@ -12911,7 +12914,7 @@ function _ssxDepsHTML(ticker,d){
   // Group dependencies by relationship type so the list is scannable.
   const groups={};
   (d.dependencies||[]).forEach(function(x){ const ty=META[x.type]?x.type:'partner'; (groups[ty]=groups[ty]||[]).push(x); });
-  const depHTML=ORDER.filter(function(ty){return groups[ty];}).map(function(ty){
+  const depItems=ORDER.filter(function(ty){return groups[ty];}).map(function(ty){
     const meta=META[ty];
     const cards=groups[ty].map(function(x){
       const tk=(x.ticker||'').toUpperCase();
@@ -12924,8 +12927,9 @@ function _ssxDepsHTML(ticker,d){
         (x.ripple?'<div class="dep-ripple">'+v2EscHTML(x.ripple)+'</div>':'')+
       '</div>';
     }).join('');
-    return '<div class="dep-group"><div class="dep-group-h">'+meta.lbl+'s<span class="dep-group-ct">'+groups[ty].length+'</span></div>'+cards+'</div>';
+    return '<div class="dep-group-h span">'+meta.lbl+'s<span class="dep-group-ct">'+groups[ty].length+'</span></div>'+cards;
   }).join('');
+  const depHTML=depItems?'<div class="dep-grid">'+depItems+'</div>':'';
   const legend=segs.map(function(s,i){
     const c=_DEP_PALETTE[i%_DEP_PALETTE.length];
     return '<div class="dep-leg"><span class="dep-leg-dot" style="background:'+c+'"></span>'+
@@ -12936,14 +12940,16 @@ function _ssxDepsHTML(ticker,d){
   const src=(d.sources||[]).slice(0,8).map(function(s){return '<a href="'+v2EscHTML(s.url)+'" target="_blank" rel="noopener">'+s.n+'</a>';}).join('');
   // Wrap each section in the drawer's ribboned .rep-sec card so the tab matches
   // the Overview / Financials panes exactly.
-  const card=function(accent,icon,title,body){ return body?('<div class="rep-sec rep-'+accent+'"><div class="rep-rib"><span class="rep-ico">'+icon+'</span><span class="rep-title">'+title+'</span></div><div class="rep-body">'+body+'</div></div>'):''; };
-  return '<div class="dep-wrap">'+
+  const card=function(accent,icon,title,body,span){ return body?('<div class="rep-sec rep-'+accent+(span?' rep-span':'')+'"><div class="rep-rib"><span class="rep-ico">'+icon+'</span><span class="rep-title">'+title+'</span></div><div class="rep-body">'+body+'</div></div>'):''; };
+  // Two-column layout (matches the Overview pane): takeaway + exposure side by
+  // side, the longer dependency list spans full width with its rows in 2 cols.
+  return '<div class="dr-deep-grid two dep-wrap">'+
     card('red','🔗','Supply chain &amp; ripple risk',
       (d.summary?'<div class="dep-takeaway-text">'+v2EscHTML(d.summary)+'</div>':'<div class="muted small">No summary available.</div>'))+
     (segs.length?card('blue','📊','Revenue exposure','<div class="dep-donut">'+_ssxDonut(segs)+'<div class="dep-legend">'+legend+'</div></div>'):'')+
     (depHTML?card('amber','⚡','Key dependencies',
-      '<div class="dep-sec-note">A shock to any of these can ripple into '+v2EscHTML(ticker)+'.</div>'+depHTML):'')+
-    '<div class="dep-foot">'+(src?'<div class="dep-src">Sources: '+src+'</div>':'')+'<div class="dep-disc">⚠ '+_DEP_DISC+'</div></div>'+
+      '<div class="dep-sec-note">A shock to any of these can ripple into '+v2EscHTML(ticker)+'.</div>'+depHTML, true):'')+
+    '<div class="rep-span dep-foot">'+(src?'<div class="dep-src">Sources: '+src+'</div>':'')+'<div class="dep-disc">⚠ '+_DEP_DISC+'</div></div>'+
   '</div>';
 }
 
