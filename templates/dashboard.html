@@ -2740,6 +2740,7 @@ body.v2-featured-only #fund-tbody tr.fund-row:not([data-featured]){display:none!
 .th-hero{position:relative;overflow:hidden;border-radius:20px;padding:24px 26px;margin-bottom:16px;
   background:linear-gradient(135deg,#0b1f4d 0%,#15307a 45%,#1e44c9 100%);color:#fff;
   box-shadow:0 20px 48px -22px rgba(15,40,120,.6),0 2px 6px rgba(15,40,120,.25)}
+.th-hero-dark{background:linear-gradient(135deg,#0f172a 0%,#1e293b 50%,#334155 100%)}
 .th-hero-glow{position:absolute;inset:0;pointer-events:none;
   background:radial-gradient(60% 120% at 100% 0%,rgba(96,165,250,.4),transparent 60%),
             radial-gradient(50% 100% at 0% 100%,rgba(124,58,237,.35),transparent 55%)}
@@ -2762,6 +2763,9 @@ body.v2-featured-only #fund-tbody tr.fund-row:not([data-featured]){display:none!
 .tt-v{font-family:'JetBrains Mono',monospace;font-size:21px;font-weight:800;margin-top:4px;color:#fff}
 .tt-v.pos{color:#6ee7b7}.tt-v.neg{color:#fca5a5}
 .tt-s{font-size:10.5px;color:rgba(219,234,254,.72);margin-top:3px;font-weight:600}
+.ct-table tbody tr{transition:background .12s}
+.ct-table tbody tr:hover td{background:#f6f9ff}
+.ct-table tbody tr:not(:last-child) td{border-bottom:1px solid #f1f5f9}
 /* ───── Top Hunts pick card (redesigned May 21) ───── */
 .v2-mp-card{
   background:linear-gradient(180deg,#ffffff 0%,#fbfcfe 100%);border:1px solid #e7ecf3;border-radius:16px;
@@ -2832,14 +2836,14 @@ body.v2-featured-only #fund-tbody tr.fund-row:not([data-featured]){display:none!
   text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px;
 }
 .v2-mp-pillars-grid{
-  display:grid;grid-template-columns:repeat(3,1fr);gap:5px;
+  display:grid;grid-template-columns:repeat(3,1fr);gap:8px 12px;
 }
-.v2-mp-pillar{
-  border:1px solid;border-radius:6px;padding:5px 7px;
-  text-align:center;cursor:help;line-height:1.2;
-}
-.v2-mp-pillar-name{font-size:9.5px;color:#475569;font-weight:700;letter-spacing:.01em}
-.v2-mp-pillar-val{font-size:14px;font-weight:900;margin-top:1px;font-variant-numeric:tabular-nums}
+.v2-mp-pillar{cursor:help;line-height:1.2}
+.v2-mp-pillar-top{display:flex;align-items:baseline;justify-content:space-between;gap:5px}
+.v2-mp-pillar-name{font-size:9.5px;color:#64748b;font-weight:700;letter-spacing:.01em;text-transform:uppercase}
+.v2-mp-pillar-val{font-size:12.5px;font-weight:900;font-variant-numeric:tabular-nums}
+.v2-mp-pillar-bar{height:5px;background:rgba(100,116,139,.16);border-radius:4px;overflow:hidden;margin-top:3px}
+.v2-mp-pillar-bar span{display:block;height:100%;border-radius:4px;transition:width .4s ease}
 
 /* Profit-take warning — appears when pillars are weak but the pick is
    up significantly. Tells the user to consider booking rather than
@@ -15389,34 +15393,27 @@ function renderClosedTrades(data) {
     if (!n) return '';
     return `<span style="font-size:11px;font-weight:700;padding:3px 9px;border-radius:6px;background:${color}1a;color:${color};border:1px solid ${color}40">${label} · ${n}</span>`;
   };
+  const _sg = v => ((v >= 0 ? '+' : '') + (v || 0).toFixed(1) + '%');
   const headerHTML = `
-    <div style="background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:16px;padding:20px 24px;margin-bottom:14px;box-shadow:0 2px 12px rgba(0,0,0,.06)">
-      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:14px">
-        <div>
-          <div style="font-size:18px;font-weight:800;color:var(--txt)">📕 Past Tracker Entries · All-Time</div>
-          <div style="font-size:12px;color:var(--muted);margin-top:2px">Stocks the tracker previously held, with the rule that ended each entry</div>
+    <div class="th-hero th-hero-dark">
+      <div class="th-hero-glow"></div>
+      <div class="th-hero-top">
+        <div class="th-hero-id">
+          <div class="th-eyebrow">📕 Closed trades · all-time</div>
+          <div class="th-title">Track record</div>
+          <div class="th-sub">Stocks the tracker previously held, with the rule that ended each entry.</div>
         </div>
-        <div style="display:flex;gap:6px;flex-wrap:wrap">
-          ${reasonChip('target', '🎯 Target', '#15803d')}
-          ${reasonChip('stop',   '⚠ Stop',   '#dc2626')}
-          ${reasonChip('time',   '⏰ Time',  '#d97706')}
-          ${reasonChip('signal', '🚨 Signal','#FFC75F')}
+        <div class="th-hero-perf ${winCls}">
+          <div class="th-perf-lbl">Hit rate</div>
+          <div class="th-perf-val">${(stats.hit_rate||0).toFixed(0)}%</div>
+          <div class="th-perf-sub">${stats.wins||0}W · ${stats.losses||0}L · ${stats.total||0} trades</div>
         </div>
       </div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px">
-        ${[
-          ['Total Trades', `<span style="font-size:22px;font-weight:900;color:#0f172a">${stats.total||0}</span>`, 'lifetime'],
-          ['Hit Rate',     `<span class="${winCls}" style="font-size:22px;font-weight:900">${(stats.hit_rate||0).toFixed(0)}%</span>`, `${stats.wins||0}W · ${stats.losses||0}L`],
-          ['Avg Trade',    `<span class="${avgCls}" style="font-size:22px;font-weight:900">${(stats.avg_pct||0)>=0?'+':''}${(stats.avg_pct||0).toFixed(1)}%</span>`, 'all closed'],
-          ['Avg Winner',   `<span style="font-size:22px;font-weight:900;color:#15803d">+${(stats.avg_win||0).toFixed(1)}%</span>`, 'when right'],
-          ['Avg Loser',    `<span style="font-size:22px;font-weight:900;color:#dc2626">${(stats.avg_loss||0).toFixed(1)}%</span>`, 'when wrong'],
-          ['Best Trade',   `<span style="font-size:22px;font-weight:900;color:#15803d">+${(stats.best||0).toFixed(1)}%</span>`, 'top closed'],
-        ].map(([label, val, sub]) => `
-          <div style="background:#f8fafc;border-radius:10px;padding:12px;text-align:center;border:1px solid rgba(0,0,0,.05)">
-            <div style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:.5px;font-weight:700;margin-bottom:4px">${label}</div>
-            <div>${val}</div>
-            <div style="font-size:10px;color:#94a3b8;margin-top:2px">${sub}</div>
-          </div>`).join('')}
+      <div class="th-tiles">
+        <div class="th-tile"><div class="tt-k">Avg trade</div><div class="tt-v ${avgCls}">${_sg(stats.avg_pct)}</div><div class="tt-s">all closed</div></div>
+        <div class="th-tile"><div class="tt-k">Avg winner</div><div class="tt-v pos">${_sg(stats.avg_win)}</div><div class="tt-s">when right</div></div>
+        <div class="th-tile"><div class="tt-k">Avg loser</div><div class="tt-v neg">${_sg(stats.avg_loss)}</div><div class="tt-s">when wrong</div></div>
+        <div class="th-tile"><div class="tt-k">Best trade</div><div class="tt-v pos">${_sg(stats.best)}</div><div class="tt-s">top closed</div></div>
       </div>
     </div>`;
 
@@ -15460,9 +15457,9 @@ function renderClosedTrades(data) {
   }).join('');
 
   const tableHTML = `
-    <div style="background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:14px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.06)">
+    <div style="background:#fff;border:1px solid #e7ecf3;border-radius:16px;overflow:hidden;box-shadow:0 1px 2px rgba(15,40,100,.05),0 12px 30px -20px rgba(15,40,100,.25)">
       <div style="overflow-x:auto">
-        <table style="width:100%;border-collapse:collapse;font-size:13px">
+        <table class="ct-table" style="width:100%;border-collapse:collapse;font-size:13px">
           <thead>
             <tr style="background:#f8fafc;border-bottom:1px solid #e2e8f0">
               <th style="padding:10px 12px;text-align:left;font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:.06em;font-weight:800">Ticker</th>
@@ -15686,11 +15683,13 @@ function renderModelPortfolio(data) {
         const dot = passCount >= 5 ? '#16a34a' : passCount >= 4 ? '#f5a623' : '#dc2626';
         // Compact 3-col heatmap — pillar identity (border + bg tint) +
         // value-based number color (green if strong, amber mid, red weak)
-        const cells = pn.map(([name, v, tip, idColor, idBg]) => {
+        const cells = pn.map(([name, v, tip]) => {
           const numColor = v >= 65 ? '#15803d' : v >= 35 ? '#475569' : '#b91c1c';
-          return `<div class="v2-mp-pillar" style="background:${idBg};border-color:${idColor}55" title="${tip}">
-            <div class="v2-mp-pillar-name" style="color:${idColor}">${name}</div>
-            <div class="v2-mp-pillar-val" style="color:${numColor}">${v}</div>
+          const barCol   = v >= 65 ? '#16a34a' : v >= 35 ? '#f5a623' : '#ef4444';
+          const w = Math.max(4, Math.min(100, v));
+          return `<div class="v2-mp-pillar" title="${tip}">
+            <div class="v2-mp-pillar-top"><span class="v2-mp-pillar-name">${name}</span><span class="v2-mp-pillar-val" style="color:${numColor}">${v}</span></div>
+            <div class="v2-mp-pillar-bar"><span style="width:${w}%;background:${barCol}"></span></div>
           </div>`;
         }).join('');
         // Profit-take warning — if the stock has run hard but fundamentals
