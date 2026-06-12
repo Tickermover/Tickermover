@@ -453,6 +453,42 @@ body.v2 #sectors-grid .smh-name{font-weight:800;font-size:12.5px;color:#0f172a!i
   border:1px solid rgba(41,112,255,.18);border-radius:8px;padding:6px 12px;cursor:pointer;white-space:nowrap;transition:background .15s,border-color .15s}
 .uni-map-toggle:hover{background:rgba(41,112,255,.14);border-color:rgba(41,112,255,.32)}
 .uni-map-collapsed .sec-grid-map{display:none}
+/* ── Sector connections — animated relationship graph ──────────────────── */
+.secg-wrap{position:relative;grid-column:1/-1;border:1px solid #e6ebf2;border-radius:14px;
+  background:radial-gradient(120% 120% at 50% 0%,#fbfdff 0%,#f4f7fb 100%);overflow:hidden}
+.secg-svg{display:block;width:100%;height:clamp(420px,58vh,640px);touch-action:manipulation;cursor:grab}
+.secg-svg:active{cursor:grabbing}
+/* Edges — colour by relationship type; draw-in animated via stroke-dashoffset */
+.secg-edge{fill:none;stroke-linecap:round;transition:opacity .25s,stroke-width .2s}
+.secg-edge.t-raw_material{stroke:#e0a000}
+.secg-edge.t-supply{stroke:#2970ff}
+.secg-edge.t-infrastructure{stroke:#16a34a}
+.secg-edge.t-adjacent{stroke:#94a3b8}
+.secg-arrow-raw_material{fill:#e0a000}.secg-arrow-supply{fill:#2970ff}
+.secg-arrow-infrastructure{fill:#16a34a}.secg-arrow-adjacent{fill:#94a3b8}
+/* Nodes */
+.secg-node{cursor:pointer}
+.secg-node .secg-dot{stroke:#fff;stroke-width:2;transition:r .2s,stroke-width .2s,filter .2s}
+.secg-node .secg-label{font-size:11px;font-weight:800;fill:#0f172a;paint-order:stroke;
+  stroke:#fff;stroke-width:3px;stroke-linejoin:round;pointer-events:none;letter-spacing:-.01em}
+.secg-node .secg-score{font-size:10px;font-weight:800;fill:#fff;pointer-events:none;text-anchor:middle;dominant-baseline:central}
+.secg-node:hover .secg-dot{filter:drop-shadow(0 3px 8px rgba(15,23,42,.28))}
+/* Focus / dim states (driven by JS: .is-focus on svg, classes on nodes/edges) */
+.secg-svg.is-focus .secg-edge{opacity:.06}
+.secg-svg.is-focus .secg-node{opacity:.28;transition:opacity .25s}
+.secg-svg.is-focus .secg-edge.on{opacity:.95;stroke-width:2.4px}
+.secg-svg.is-focus .secg-node.on{opacity:1}
+.secg-node.focus .secg-dot{stroke:#0040c1;stroke-width:3.5}
+.secg-node.dim .secg-label{opacity:.5}
+/* Legend */
+.secg-legend{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;
+  padding:10px 14px;border-top:1px solid #eef2f7;background:#fff;font-size:11px;color:#475569;font-weight:600}
+.secg-lg{display:inline-flex;align-items:center;gap:6px}
+.secg-lg i{width:14px;height:3px;border-radius:2px;display:inline-block}
+.secg-lg.dir b{font-weight:800;color:#0f172a}
+.secg-hint{margin-left:auto;color:#94a3b8;font-weight:600}
+@media(max-width:560px){.secg-hint{display:none}.secg-node .secg-label{font-size:10px}}
+@media(prefers-reduced-motion:reduce){.secg-edge,.secg-node .secg-dot{transition:none}}
 /* Sector card — interactive (clicks filter the table below) */
 .sm-card{cursor:pointer}
 .sm-drill{font-size:10px;font-weight:700;color:#0040c1;background:rgba(41,112,255,.10);border-radius:6px;
@@ -6524,8 +6560,8 @@ document.addEventListener('DOMContentLoaded', function(){
   <div class="uni-map" id="uni-map">
     <div class="uni-map-head">
       <div class="uni-map-titles">
-        <div class="uni-map-title">🗺 Sector heat map</div>
-        <div class="uni-map-sub">Every sub-sector ranked by average α-Score · tap one to filter the table below</div>
+        <div class="uni-map-title">🕸 Sector connections</div>
+        <div class="uni-map-sub">How sub-sectors feed each other — raw materials → components → infrastructure → platforms → apps · tap a node to trace its chain and filter the table below</div>
       </div>
       <button class="uni-map-toggle" id="uni-map-toggle" onclick="v2ToggleSectorMap()" aria-expanded="true">Hide map ▲</button>
     </div>
@@ -8708,6 +8744,12 @@ function v2ToggleSectorMap(){
   if (btn){
     btn.textContent = collapsed ? 'Show map ▼' : 'Hide map ▲';
     btn.setAttribute('aria-expanded', String(!collapsed));
+  }
+  // Re-measure + relax the connections graph on expand (it had no size while
+  // collapsed, so positions were laid out against a fallback canvas).
+  if (!collapsed && typeof secgRender === 'function'){
+    const svg = document.querySelector('#sectors-grid .secg-svg');
+    if (svg && typeof secgMeasure === 'function'){ secgMeasure(svg); secgPaint(); secgKick(); }
   }
 }
 /* Click-handler used by sector cells on the dashboard + Sector Map.
@@ -13939,68 +13981,331 @@ const SECTOR_MAP_META = {
 /* ----------------------------------------------------------
    RENDER — SECTORS
    ---------------------------------------------------------- */
+/* renderSectors — entry point kept for all existing callers. Computes the same
+   per-sub-sector live stats as the old heat map, then hands them to the
+   "Sector connections" relationship graph (which overlays AI-generated wiring).
+   The α-Score / size / colour stay 100% live; only the edges are AI-authored. */
 function renderSectors(tickers) {
-  // Build dynamic sub-sector groups from live tickers
   const subGroups = {};
   tickers.forEach(t => {
     const sub = t.sub_sector || t.subsector || t.sector || 'Other';
     if (!subGroups[sub]) subGroups[sub] = [];
     subGroups[sub].push(t);
   });
-
-  // Sort sub-sectors by avg Alpha Score (smart_score, regime-adjusted) descending
   const _ss = t => parseFloat(t.smart_score != null ? t.smart_score : (t.pop_score || 0));
-  const sortedSubs = Object.entries(subGroups)
+  const stats = {}; const order = [];
+  Object.entries(subGroups)
     .map(([sub, stocks]) => {
-      const avgPop  = stocks.reduce((s, t) => s + _ss(t), 0) / stocks.length;
-      const hotCount= stocks.filter(t => t.grade === 'A').length;
-      const topTickers = [...stocks].sort((a,b) => _ss(b) - _ss(a)).map(t => t.ticker);
-      return { sub, stocks, avgPop, hotCount, topTickers };
+      const avgPop = stocks.reduce((s, t) => s + _ss(t), 0) / stocks.length;
+      const hotCount = stocks.filter(t => t.grade === 'A').length;
+      const topT = [...stocks].sort((a, b) => _ss(b) - _ss(a)).map(t => t.ticker);
+      return { sub, stocks, avgPop, hotCount, topT };
     })
-    .sort((a, b) => b.avgPop - a.avgPop);
-
-  const totalSubs = sortedSubs.length;
-  // sec-heading removed — no DOM update needed
-
-  document.getElementById('sectors-grid').innerHTML = sortedSubs.map(({ sub, stocks, avgPop, hotCount, topTickers }) => {
-    const meta  = SECTOR_MAP_META[sub] || {};
-    const sectorLabel = meta.sector || (stocks[0] && stocks[0].sector) || 'Technology';
-    const growthTier  = (stocks[0] && (stocks[0].growth_tier)) || '';
-    const cagr  = meta.cagr  || '';
-    const mkt   = meta.mkt   || '';
-    const desc  = meta.desc  || (TAILWINDS[sub] || 'Emerging high-growth sub-sector with strong structural tailwinds.');
-    const tags  = meta.tags  || (TAILWINDS[sub] || '').split(' · ').filter(Boolean);
-
-    // Growth tier badge colour
-    const tierClass = growthTier.includes('Very High') ? 'tier-very-high'
-                    : growthTier.includes('High')       ? 'tier-high'
-                    : growthTier.includes('Moderate')   ? 'tier-mod' : 'tier-high';
-
-    const barW = Math.min(100, Math.round(avgPop));
-    // Heat colour by avg α-Score: green (hot) → lime → amber → slate (cool).
-    const heat = barW >= 68 ? '#16a34a' : barW >= 60 ? '#84cc16' : barW >= 52 ? '#e0a000' : '#94a3b8';
-
-    // Thesis + CAGR + leaders move to the hover tooltip — keeps the value
-    // without the bulk. Compact chip leads with the heat score.
-    const leaders = topTickers.slice(0, 6).join(', ');
-    const tipBits = [desc];
-    const facts = [sectorLabel, growthTier, cagr ? 'CAGR ' + cagr : '', mkt].filter(Boolean).join(' · ');
-    if (facts)   tipBits.push(facts);
-    if (leaders) tipBits.push('Leaders: ' + leaders);
-    const tip = tipBits.join('\n\n').replace(/"/g, '&quot;');
-    const subAttr = sub.replace(/"/g, '&quot;');
-
-    return `
-    <button class="sm-heat" data-sector="${subAttr}" style="--heat:${heat}"
-            onclick="v2SelectSector('${sub.replace(/'/g, "\\'")}')" title="${tip}">
-      <span class="smh-score">${barW}</span>
-      <span class="smh-body">
-        <span class="smh-name">${sub}</span>
-        <span class="smh-meta">${stocks.length} stocks${hotCount ? ` · <b>${hotCount}</b>🔥` : ''}${cagr ? ` · ${cagr} CAGR` : ''}</span>
-      </span>
-    </button>`;
-  }).join('');
+    .sort((a, b) => b.avgPop - a.avgPop)
+    .forEach(({ sub, stocks, avgPop, hotCount, topT }) => {
+      const meta = SECTOR_MAP_META[sub] || {};
+      const score = Math.min(100, Math.round(avgPop));
+      // Same 4-stop heat scale as the old chips: green → lime → amber → slate.
+      const heat = score >= 68 ? '#16a34a' : score >= 60 ? '#84cc16' : score >= 52 ? '#e0a000' : '#94a3b8';
+      stats[sub] = {
+        score, count: stocks.length, hotCount, heat,
+        cagr: meta.cagr || '',
+        sector: meta.sector || (stocks[0] && stocks[0].sector) || 'Technology',
+        desc: meta.desc || (TAILWINDS[sub] || 'Emerging high-growth sub-sector with strong structural tailwinds.'),
+        leaders: topT.slice(0, 6).join(', '),
+      };
+      order.push(sub);
+    });
+  _secgStats = stats; _secgOrder = order;
+  secgEnsureTopology(order);
+  secgRender();
 }
+
+/* ====================================================================
+   SECTOR CONNECTIONS — animated relationship graph (replaces heat map)
+   Force-directed SVG web of sub-sectors. AI authors the directed wiring
+   (source → target = "source feeds/enables target"); we overlay live
+   α-Score (node colour) + stock count (node size). Tap a node to focus
+   its chain (upstream = incoming, downstream = outgoing) AND filter the
+   universe table via the existing v2SetSectorFilter contract.
+   ==================================================================== */
+let _secgStats = {}, _secgOrder = [];
+let _secgTopo = null, _secgTopoKey = '', _secgFetching = false;
+const _secgNodes = {};                 // name -> {x,y,vx,vy,el,dot}  (positions persist across re-renders)
+let _secgEdges = [], _secgAdj = {};
+let _secgFocus = null, _secgRAF = 0, _secgAlpha = 0, _secgW = 0, _secgH = 0;
+let _secgDragging = null, _secgMoved = false;
+
+function _secgReduceMotion(){
+  return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+}
+function secgRadius(count){ return Math.max(11, Math.min(27, 10 + (count || 1) * 0.55)); }
+
+/* Fetch the AI wiring once per distinct sub-sector set; re-render when it lands. */
+function secgEnsureTopology(sectors){
+  const key = sectors.slice().sort().join('|').toLowerCase();
+  if (key === _secgTopoKey && _secgTopo) return;
+  if (_secgFetching && key === _secgTopoKey) return;
+  _secgTopoKey = key; _secgFetching = true;
+  fetch('/api/sector-graph', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ sectors }),
+  }).then(r => r.ok ? r.json() : null).then(d => {
+    _secgFetching = false;
+    if (d && Array.isArray(d.edges)) { _secgTopo = d; secgRender(); }
+  }).catch(() => { _secgFetching = false; });
+}
+
+function secgArrowDefs(){
+  return ['raw_material','supply','infrastructure','adjacent'].map(t =>
+    '<marker id="secg-arrow-' + t + '" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto">' +
+    '<path d="M0 0 L10 5 L0 10 z" class="secg-arrow-' + t + '"/></marker>').join('');
+}
+function secgLegendHTML(){
+  return '<div class="secg-legend">' +
+    '<span class="secg-lg"><i style="background:#e0a000"></i>Raw material</span>' +
+    '<span class="secg-lg"><i style="background:#2970ff"></i>Components / supply</span>' +
+    '<span class="secg-lg"><i style="background:#16a34a"></i>Infrastructure / platform</span>' +
+    '<span class="secg-lg"><i style="background:#94a3b8"></i>Adjacent</span>' +
+    '<span class="secg-lg dir">Arrow points <b>downstream</b> · node colour = α-Score · size = # stocks</span>' +
+    '<span class="secg-hint">Tap a node to trace its chain &amp; filter the table</span>' +
+    '</div>';
+}
+
+function secgMeasure(svg){
+  const r = svg.getBoundingClientRect();
+  _secgW = Math.max(320, r.width || 800);
+  _secgH = Math.max(360, r.height || 480);
+}
+function secgClientToSvg(svg, cx, cy){
+  const r = svg.getBoundingClientRect();
+  return { x: cx - r.left, y: cy - r.top };
+}
+
+function secgRender(){
+  const grid = document.getElementById('sectors-grid');
+  if (!grid) return;
+  const names = _secgOrder.slice();
+  if (!names.length){ return; }
+
+  let svg = grid.querySelector('.secg-svg');
+  if (!svg){
+    grid.innerHTML =
+      '<div class="secg-wrap">' +
+        '<svg class="secg-svg" xmlns="http://www.w3.org/2000/svg"><defs>' + secgArrowDefs() + '</defs>' +
+          '<g class="secg-edges"></g><g class="secg-nodes"></g>' +
+        '</svg>' + secgLegendHTML() +
+      '</div>';
+    svg = grid.querySelector('.secg-svg');
+    // Background tap clears focus (taps on a node are handled per-node).
+    svg.addEventListener('click', e => {
+      if (e.target.closest('.secg-node')) return;
+      if (_secgFocus){ _secgFocus = null; v2ClearSectorFilter(); secgApplyFocus(); }
+    });
+    svg.addEventListener('pointerdown', secgPointerDown);
+    window.addEventListener('pointermove', secgPointerMove);
+    window.addEventListener('pointerup', secgPointerUp);
+    window.addEventListener('resize', () => { const s = grid.querySelector('.secg-svg'); if (s){ secgMeasure(s); secgKick(); } });
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) secgKick(); });
+  }
+  secgMeasure(svg);
+
+  // Reconcile node set (drop departed, seed new ones in a spiral near centre).
+  const present = new Set(names);
+  Object.keys(_secgNodes).forEach(n => { if (!present.has(n)) delete _secgNodes[n]; });
+  names.forEach((n, i) => {
+    if (!_secgNodes[n]){
+      const ang = i * 2.399963, rad = 36 + 13 * Math.sqrt(i);
+      _secgNodes[n] = { x: _secgW / 2 + rad * Math.cos(ang), y: _secgH / 2 + rad * Math.sin(ang), vx: 0, vy: 0 };
+    }
+  });
+
+  _secgEdges = ((_secgTopo && _secgTopo.edges) || []).filter(e => present.has(e.source) && present.has(e.target));
+  secgComputeAdjacency(names, _secgEdges);
+  secgBuildDOM(svg, names, _secgEdges);
+
+  if (_secgReduceMotion()){ secgSettle(names); secgPaint(); }
+  else { _secgAlpha = 1; secgKick(); }
+  secgApplyFocus();
+}
+
+function secgComputeAdjacency(names, edges){
+  _secgAdj = {};
+  names.forEach(n => { _secgAdj[n] = new Set(); });
+  edges.forEach(e => { _secgAdj[e.source] && _secgAdj[e.source].add(e.target); _secgAdj[e.target] && _secgAdj[e.target].add(e.source); });
+}
+
+function secgBuildDOM(svg, names, edges){
+  const NS = 'http://www.w3.org/2000/svg';
+  const eG = svg.querySelector('.secg-edges'), nG = svg.querySelector('.secg-nodes');
+  eG.innerHTML = ''; nG.innerHTML = '';
+  edges.forEach(e => {
+    const p = document.createElementNS(NS, 'path');
+    p.setAttribute('class', 'secg-edge t-' + e.type);
+    p.setAttribute('marker-end', 'url(#secg-arrow-' + e.type + ')');
+    if (e.note){ const ti = document.createElementNS(NS, 'title'); ti.textContent = e.source + ' → ' + e.target + ' · ' + e.note; p.appendChild(ti); }
+    eG.appendChild(p); e.el = p;
+  });
+  names.forEach(n => {
+    const st = _secgStats[n] || { score: 50, count: 1, heat: '#94a3b8' };
+    const r = secgRadius(st.count);
+    const g = document.createElementNS(NS, 'g');
+    g.setAttribute('class', 'secg-node'); g.setAttribute('data-sector', n);
+    const dot = document.createElementNS(NS, 'circle');
+    dot.setAttribute('class', 'secg-dot'); dot.setAttribute('r', r); dot.setAttribute('fill', st.heat);
+    const sc = document.createElementNS(NS, 'text'); sc.setAttribute('class', 'secg-score'); sc.textContent = st.score;
+    const lbl = document.createElementNS(NS, 'text'); lbl.setAttribute('class', 'secg-label');
+    lbl.setAttribute('x', r + 6); lbl.setAttribute('y', 4); lbl.textContent = n;
+    const ti = document.createElementNS(NS, 'title');
+    ti.textContent = n + ' · α ' + st.score + ' · ' + st.count + ' stocks' + (st.cagr ? ' · ' + st.cagr + ' CAGR' : '') + (st.leaders ? '\n' + st.leaders : '');
+    g.appendChild(dot); g.appendChild(sc); g.appendChild(lbl); g.appendChild(ti);
+    g.addEventListener('click', () => { if (_secgMoved){ _secgMoved = false; return; } secgTap(n); });
+    g.addEventListener('mouseenter', () => secgHover(n));
+    g.addEventListener('mouseleave', () => secgHover(null));
+    nG.appendChild(g);
+    _secgNodes[n].el = g; _secgNodes[n].r = r;
+  });
+}
+
+/* ── Physics ── repulsion + edge springs + centre gravity; alpha decays so it
+   settles to rest (no perpetual CPU). Re-kicked on render / drag / resize. */
+function _secgStep(){
+  const names = _secgOrder.filter(n => _secgNodes[n]);
+  const N = names.length; if (!N) return;
+  const pad = 50, W = _secgW, H = _secgH;
+  const K_REP = 5600, K_SPR = 0.016, SPR_LEN = 124, K_CEN = 0.012, DAMP = 0.85;
+  for (let i = 0; i < N; i++){
+    const a = _secgNodes[names[i]];
+    for (let j = i + 1; j < N; j++){
+      const b = _secgNodes[names[j]];
+      let dx = a.x - b.x, dy = a.y - b.y, d2 = dx * dx + dy * dy || 0.01, d = Math.sqrt(d2);
+      const f = K_REP / d2, fx = dx / d * f, fy = dy / d * f;
+      a.vx += fx; a.vy += fy; b.vx -= fx; b.vy -= fy;
+    }
+  }
+  _secgEdges.forEach(e => {
+    const a = _secgNodes[e.source], b = _secgNodes[e.target]; if (!a || !b) return;
+    let dx = b.x - a.x, dy = b.y - a.y, d = Math.sqrt(dx * dx + dy * dy) || 0.01;
+    const f = (d - SPR_LEN) * K_SPR, fx = dx / d * f, fy = dy / d * f;
+    a.vx += fx; a.vy += fy; b.vx -= fx; b.vy -= fy;
+  });
+  names.forEach(n => {
+    const p = _secgNodes[n];
+    p.vx += (W / 2 - p.x) * K_CEN; p.vy += (H / 2 - p.y) * K_CEN;
+    p.vx *= DAMP; p.vy *= DAMP;
+    if (p !== _secgDragging){ p.x += p.vx * _secgAlpha; p.y += p.vy * _secgAlpha; }
+    p.x = Math.max(pad, Math.min(W - pad, p.x)); p.y = Math.max(pad, Math.min(H - pad, p.y));
+  });
+}
+function secgTick(){
+  _secgStep();
+  _secgAlpha *= 0.984;
+  secgPaint();
+  if (_secgAlpha > 0.02 && !document.hidden) _secgRAF = requestAnimationFrame(secgTick);
+  else _secgRAF = 0;
+}
+function secgKick(){
+  if (_secgReduceMotion() || document.hidden) return;
+  if (_secgAlpha < 0.5) _secgAlpha = 0.6;
+  if (!_secgRAF) _secgRAF = requestAnimationFrame(secgTick);
+}
+function secgSettle(names){            // synchronous layout for reduced-motion
+  _secgAlpha = 1;
+  for (let k = 0; k < 420; k++){ _secgStep(); _secgAlpha *= 0.99; }
+  _secgAlpha = 0;
+}
+
+function secgPaint(){
+  _secgOrder.forEach(n => {
+    const p = _secgNodes[n]; if (!p || !p.el) return;
+    p.el.setAttribute('transform', 'translate(' + p.x.toFixed(1) + ',' + p.y.toFixed(1) + ')');
+  });
+  _secgEdges.forEach(e => {
+    const a = _secgNodes[e.source], b = _secgNodes[e.target]; if (!a || !b || !e.el) return;
+    const dx = b.x - a.x, dy = b.y - a.y, len = Math.sqrt(dx * dx + dy * dy) || 1;
+    const ux = dx / len, uy = dy / len;
+    const rA = (a.r || 12) + 2, rB = (b.r || 12) + 7;     // start past source, stop before target (room for arrow)
+    const ax = a.x + ux * rA, ay = a.y + uy * rA, bx = b.x - ux * rB, by = b.y - uy * rB;
+    const mx = (ax + bx) / 2, my = (ay + by) / 2, nx = -uy, ny = ux;
+    const cx = mx + nx * 16, cy = my + ny * 16;            // gentle arc so opposing edges don't overlap
+    e.el.setAttribute('d', 'M' + ax.toFixed(1) + ' ' + ay.toFixed(1) + ' Q' + cx.toFixed(1) + ' ' + cy.toFixed(1) + ' ' + bx.toFixed(1) + ' ' + by.toFixed(1));
+  });
+}
+
+/* ── Interaction ── */
+function secgTap(name){
+  if (_secgFocus === name){ _secgFocus = null; v2ClearSectorFilter(); }
+  else {
+    _secgFocus = name; v2SetSectorFilter(name);
+    const tb = document.querySelector('#panel-fund .fd-toolbar');
+    if (tb) tb.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  secgApplyFocus();
+}
+function secgHover(name){
+  if (_secgFocus) return;                 // focus wins; ignore hover while focused
+  const svg = document.querySelector('#sectors-grid .secg-svg'); if (!svg) return;
+  if (!name){
+    svg.classList.remove('is-focus');
+    svg.querySelectorAll('.secg-node.on,.secg-node.focus,.secg-node.dim').forEach(n => n.classList.remove('on','focus','dim'));
+    svg.querySelectorAll('.secg-edge.on').forEach(e => e.classList.remove('on'));
+    return;
+  }
+  svg.classList.add('is-focus');
+  const nb = _secgAdj[name] || new Set();
+  _secgOrder.forEach(n => { const p = _secgNodes[n]; if (!p || !p.el) return;
+    const on = (n === name || nb.has(n));
+    p.el.classList.toggle('on', on); p.el.classList.toggle('focus', n === name); p.el.classList.toggle('dim', !on);
+  });
+  _secgEdges.forEach(e => { if (e.el) e.el.classList.toggle('on', e.source === name || e.target === name); });
+}
+function secgAnimateEdge(el){
+  if (_secgReduceMotion()) return;
+  try {
+    const L = el.getTotalLength();
+    el.style.transition = 'none'; el.style.strokeDasharray = L; el.style.strokeDashoffset = L;
+    el.getBoundingClientRect();      // force reflow
+    el.style.transition = 'stroke-dashoffset .5s ease, opacity .25s';
+    el.style.strokeDashoffset = 0;
+  } catch (e) {}
+}
+function secgApplyFocus(){
+  const svg = document.querySelector('#sectors-grid .secg-svg'); if (!svg) return;
+  if (!_secgFocus){
+    svg.classList.remove('is-focus');
+    svg.querySelectorAll('.secg-node.on,.secg-node.focus,.secg-node.dim').forEach(n => n.classList.remove('on','focus','dim'));
+    svg.querySelectorAll('.secg-edge.on').forEach(e => { e.classList.remove('on'); e.style.strokeDasharray = ''; e.style.strokeDashoffset = ''; });
+    return;
+  }
+  svg.classList.add('is-focus');
+  const nb = _secgAdj[_secgFocus] || new Set();
+  _secgOrder.forEach(n => { const p = _secgNodes[n]; if (!p || !p.el) return;
+    const on = (n === _secgFocus || nb.has(n));
+    p.el.classList.toggle('on', on); p.el.classList.toggle('focus', n === _secgFocus); p.el.classList.toggle('dim', !on);
+  });
+  _secgEdges.forEach(e => { if (!e.el) return;
+    const on = (e.source === _secgFocus || e.target === _secgFocus);
+    e.el.classList.toggle('on', on);
+    if (on) secgAnimateEdge(e.el); else { e.el.style.strokeDasharray = ''; e.el.style.strokeDashoffset = ''; }
+  });
+}
+
+/* ── Drag (rearrange) ── distinguishes a drag from a tap via _secgMoved. */
+function secgPointerDown(e){
+  const g = e.target.closest('.secg-node'); if (!g) return;
+  const name = g.getAttribute('data-sector');
+  _secgDragging = _secgNodes[name] || null; _secgMoved = false;
+}
+function secgPointerMove(e){
+  if (!_secgDragging) return;
+  const svg = document.querySelector('#sectors-grid .secg-svg'); if (!svg) return;
+  const pt = secgClientToSvg(svg, e.clientX, e.clientY);
+  _secgDragging.x = pt.x; _secgDragging.y = pt.y; _secgDragging.vx = 0; _secgDragging.vy = 0;
+  _secgMoved = true; _secgAlpha = Math.max(_secgAlpha, 0.45);
+  if (!_secgRAF && !_secgReduceMotion() && !document.hidden) _secgRAF = requestAnimationFrame(secgTick);
+  secgPaint();
+}
+function secgPointerUp(){ _secgDragging = null; }
 
 /* ----------------------------------------------------------
    TAB NAVIGATION

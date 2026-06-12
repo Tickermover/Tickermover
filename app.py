@@ -4132,6 +4132,85 @@ async def api_overview(ticker: str, force: bool = False,
             _overview_inflight.pop(sym, None)
 
 
+# ── Sector relationship graph (topology only; generated once, cached) ──────
+# The Universe "Sector connections" web. Node values (α-Score, size) stay live
+# on the client; only the wiring is AI-generated, so this is a one-time Haiku
+# cost cached durably in app_kv. Keyed by a hash of the sub-sector list, so a
+# taxonomy change auto-regenerates while a stable universe is a permanent hit.
+_sector_graph_inflight: dict = {}   # cache-key -> asyncio.Task[dict]
+
+
+@app.post("/api/sector-graph")
+async def api_sector_graph(request: Request, force: bool = False):
+    """Return {nodes, edges, model, status} wiring the live sub-sectors into a
+    value chain. Body: {"sectors": [...]} — the client's current sub-sector
+    names, so edge endpoints line up exactly with the table's data-subsector.
+    Never errors to the UI: falls back to the curated seed wiring."""
+    import asyncio
+    import hashlib
+    import sector_graph
+    from kv_store import store as _kv
+
+    try:
+        body = await request.json()
+    except Exception:
+        body = {}
+    sectors = body.get("sectors") if isinstance(body, dict) else None
+    if not isinstance(sectors, list):
+        sectors = []
+    # Normalise: strip, drop blanks, dedupe (preserve order), cap.
+    seen: set = set()
+    clean: list = []
+    for s in sectors:
+        s = str(s or "").strip()
+        if s and s.lower() not in seen:
+            seen.add(s.lower())
+            clean.append(s)
+        if len(clean) >= 80:
+            break
+    if not clean:
+        return JSONResponse({"nodes": [], "edges": [], "model": "seed", "status": "ready"})
+
+    key = hashlib.sha1("\n".join(sorted(s.lower() for s in clean)).encode("utf-8")).hexdigest()[:16]
+    ck = "sectorgraph:" + key
+
+    if not force:
+        # L1 — in-memory
+        cached = cache.get(ck)
+        if cached is not None:
+            return JSONResponse(cached)
+        # L2 — durable KV (survives redeploys); re-warm L1 on hit
+        doc = _kv.get("sector_graph", key, max_age_s=45 * 86400)
+        if isinstance(doc, dict) and doc.get("edges") is not None:
+            cache.set(ck, doc, ttl=604800)
+            return JSONResponse(doc)
+
+    # Generate — dedupe so concurrent first-loads share ONE paid call.
+    task = _sector_graph_inflight.get(key)
+    if task is None or task.done():
+        async def _gen() -> dict:
+            out = await sector_graph.generate_sector_graph(clean)
+            out.setdefault("status", "ready")
+            # Only the AI result is worth persisting; the pure-seed fallback is
+            # cheap to recompute and shouldn't poison the durable cache.
+            if out.get("model") not in (None, "", "seed"):
+                _kv.set("sector_graph", key, out)
+            cache.set(ck, out, ttl=604800)
+            return out
+        task = asyncio.ensure_future(_gen())
+        _sector_graph_inflight[key] = task
+
+    try:
+        out = await task
+        return JSONResponse(out)
+    except Exception as exc:
+        logger.error(f"Sector graph generation failed: {exc}")
+        return JSONResponse(sector_graph.seed_graph(clean))
+    finally:
+        if _sector_graph_inflight.get(key) is task:
+            _sector_graph_inflight.pop(key, None)
+
+
 # ── AI head-to-head comparison cards (cached; web-grounded) ────────────────
 _compare_generating: set = set()
 
