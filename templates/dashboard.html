@@ -2357,13 +2357,19 @@ body.v2 .v2ov-card.sectors .v2ov-sector-cell{
 /* ───── Risk Profile picker (topbar) ───── */
 .v2-profile-picker{position:relative}
 .v2-profile-btn{
-  display:inline-flex;align-items:center;gap:6px;
-  padding:6px 12px;border-radius:8px;
-  background:linear-gradient(135deg,#f6f9ff 0%,#eef4ff 100%);
-  border:1px solid rgba(41,112,255,.25);color:#0040c1;font-weight:800;font-size:12px;
-  cursor:pointer;transition:all .15s;
+  display:inline-flex;align-items:center;gap:7px;
+  padding:7px 14px;border-radius:10px;
+  background:linear-gradient(135deg,#3b82f6,#1d4ed8);
+  border:1px solid rgba(255,255,255,.28);color:#fff;font-weight:800;font-size:12.5px;letter-spacing:.01em;
+  box-shadow:0 5px 14px -5px rgba(0,0,0,.28);
+  cursor:pointer;transition:filter .15s,transform .12s,box-shadow .15s;
 }
-.v2-profile-btn:hover{background:linear-gradient(135deg,#eef4ff 0%,#e6eefb 100%);border-color:rgba(41,112,255,.40)}
+.v2-profile-btn svg{stroke:#fff}
+.v2-profile-btn:hover{filter:brightness(1.07);transform:translateY(-1px);box-shadow:0 8px 18px -6px rgba(0,0,0,.32)}
+/* Colour the pill by the active risk profile (set via data-prof in JS). */
+.v2-profile-btn[data-prof="aggressive"]{background:linear-gradient(135deg,#f59e0b,#d97706)}
+.v2-profile-btn[data-prof="balanced"]{background:linear-gradient(135deg,#3b82f6,#1d4ed8)}
+.v2-profile-btn[data-prof="conservative"]{background:linear-gradient(135deg,#10b981,#059669)}
 /* ── Risk-profile switch feedback: button pulse + floating toast + a soft
       content fade so the re-rendered picks read as a deliberate change ── */
 .v2-profile-btn.switched{animation:v2ProfilePulse .6s ease}
@@ -6160,7 +6166,7 @@ body.v2 #v2-mp-topbar-slot .idx .v.dn{color:#ff9ea3}
 body.v2 #v2-mp-topbar-slot .idx.sp{background:linear-gradient(135deg,#2970ff,#0040c1)}
 body.v2 #v2-mp-topbar-slot .idx.nas{background:linear-gradient(135deg,#8b5cf6,#6d28d9)}
 body.v2 #v2-mp-topbar-slot .idx.dow{background:linear-gradient(135deg,#14b8a6,#0f766e)}
-body.v2 #v2-mp-topbar-slot .idx.vix{background:linear-gradient(135deg,#F5A623,#c9790a)}
+body.v2 #v2-mp-topbar-slot .idx.vix{background:linear-gradient(135deg,#64748b,#334155)}
 @media(max-width:980px){body.v2 #v2-mp-topbar-slot{display:none}}
 /* ── remove legacy dark remnants on the On-the-Radar (Today's Signals) view ── */
 html.v2-dark body.v2 #ticker-tape{display:none!important}              /* drop the duplicate legacy tape; keep .ts-tape */
@@ -8397,6 +8403,8 @@ function v2SyncProfileButton(){
   const l = document.getElementById('v2-profile-label');
   if (e) e.textContent = info.emoji;
   if (l) l.textContent = info.label;
+  const btn = document.querySelector('.v2-profile-btn');
+  if (btn) btn.setAttribute('data-prof', v2CurrentProfile());
   // Annotate each option with its current profile_count from backend
   const counts = (window.__AH_DATA__ && window.__AH_DATA__.profile_counts) || {};
   document.querySelectorAll('.v2-profile-opt').forEach(b => {
