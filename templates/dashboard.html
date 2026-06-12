@@ -787,10 +787,9 @@ body.v2 #sectors-grid .smh-name{font-weight:800;font-size:12.5px;color:#0f172a!i
 @media(max-width:680px){.dep-swot{column-count:1}}
 .swot-q{break-inside:avoid;display:flex;background:#fff;border:1px solid var(--hair);border-radius:13px;
   overflow:hidden;box-shadow:0 5px 15px -11px rgba(15,23,42,.22);margin-bottom:12px}
-.swot-side{flex:0 0 58px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:#fff;padding:9px 5px;text-align:center}
-.swot-letter{font-size:25px;font-weight:900;line-height:1;text-shadow:0 1px 3px rgba(0,0,0,.25)}
-.swot-side-lbl{font-size:8px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;opacity:.96;line-height:1.2}
-.swot-side-ct{margin-top:2px;font-size:9.5px;font-weight:800;background:rgba(255,255,255,.24);border:1px solid rgba(255,255,255,.4);border-radius:999px;min-width:17px;padding:0 5px;line-height:15px}
+.swot-side{flex:0 0 52px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;color:#fff;padding:11px 4px;text-align:center}
+.swot-letter{font-size:24px;font-weight:900;line-height:1;text-shadow:0 1px 3px rgba(0,0,0,.25)}
+.swot-side-lbl{writing-mode:vertical-rl;text-orientation:mixed;font-size:9px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;opacity:.96;line-height:1}
 .swot-main{flex:1;min-width:0;padding:3px 12px}
 .swot-cus .swot-side{background:linear-gradient(150deg,#2dd4bf,#0d9488)}
 .swot-sup .swot-side{background:linear-gradient(150deg,#3b82f6,#1d4ed8)}
@@ -12934,8 +12933,7 @@ function _ssxDepsHTML(ticker,d){
         (x.ripple?'<div class="swot-it-rip">'+v2EscHTML(x.ripple)+'</div>':'')+'</div>';
     }).join('');
     return '<div class="swot-q '+m.cls+'">'+
-      '<div class="swot-side"><span class="swot-letter">'+m.ltr+'</span><span class="swot-side-lbl">'+m.lbl+'</span>'+
-        '<span class="swot-side-ct">'+groups[ty].length+'</span></div>'+
+      '<div class="swot-side"><span class="swot-letter">'+m.ltr+'</span><span class="swot-side-lbl">'+m.lbl+'</span></div>'+
       '<div class="swot-main">'+items+'</div></div>';
   }).join('');
   const depHTML=quads?'<div class="dep-swot">'+quads+'</div>':'';
