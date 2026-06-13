@@ -33,9 +33,9 @@ _MODEL = (
     os.environ.get("ANTHROPIC_WHY_MODEL")
     or "claude-opus-4-8"
 ).strip()
-# v3 namespace: structured 3-reason web-grounded report (was a single
-# sentence) — busts the older cache so every pick regenerates once.
-_NS = "why_today_v3"
+# v4 namespace: tighter ~18-word reasons (cards were too tall) — busts the v3
+# cache so every pick regenerates once with the shorter copy.
+_NS = "why_today_v4"
 
 _PILLAR_LABELS = {
     "momentum": "Momentum",
@@ -55,14 +55,14 @@ _SYSTEM = (
     "Return ONLY a JSON object (no prose, no code fences) with exactly these "
     "three string keys:\n"
     "{\n"
-    '  "macro":    "1 sentence — the sector / industry tailwind this name rides right now (what is happening in its space, demand cycle, spending trend).",\n'
-    '  "quant":    "1 sentence — the single strongest signal from OUR FACTOR PROFILE, citing the actual numbers we give (the Alpha Score and the standout pillar(s)).",\n'
-    '  "catalyst": "1 sentence — the most compelling company-specific driver you can VERIFY via search: a recent earnings beat, guidance raise, product / customer / order win, partnership, or analyst upgrade. Prefer a specific, recent, real event; if none is verifiable, state the strongest structural demand driver instead."\n'
+    '  "macro":    "the sector / industry tailwind this name rides right now (demand cycle or spending trend).",\n'
+    '  "quant":    "the single strongest signal from OUR FACTOR PROFILE, citing the actual numbers we give (Alpha Score + the standout pillar).",\n'
+    '  "catalyst": "the most compelling company-specific driver you can VERIFY via search: a recent earnings beat, guidance raise, product / customer / order win, partnership, or analyst upgrade. Prefer a specific, recent, real event; if none is verifiable, state the strongest structural demand driver instead."\n'
     "}\n"
     "RULES:\n"
     "- macro + catalyst: ground in web-search results (recent, real). quant: ground STRICTLY in the numbers we provide.\n"
     "- Do NOT invent figures, customers, dates, or events. If you cannot verify a catalyst, do not fabricate one — fall back to the structural driver.\n"
-    "- Each value is ONE tight sentence (max ~28 words): confident, plain English, no hype words, no emoji, no markdown.\n"
+    "- Keep each value SHORT — ONE tight sentence, max ~18 words. Lead with the point; cut filler. Confident, plain English, no hype, no emoji, no markdown.\n"
     "- Research signal, NOT advice: never promise or imply returns, never name a timeframe for gains, never write 'buy', 'sell', 'must own', or a price target.\n"
     "- Output ONLY the JSON object."
 )

@@ -2875,8 +2875,8 @@ body.v2-featured-only #fund-tbody tr.fund-row:not([data-featured]){display:none!
    rules and typography carries the hierarchy. */
 .v2-mp-card{
   position:relative;background:#fff;
-  border:1px solid #e9edf3;border-radius:20px;
-  padding:21px 22px 19px;cursor:pointer;
+  border:1px solid #e9edf3;border-radius:18px;
+  padding:16px 18px 15px;cursor:pointer;
   transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease;
   display:flex;flex-direction:column;
   box-shadow:0 1px 2px rgba(15,40,100,.04);
@@ -2999,7 +2999,7 @@ body.v2-featured-only #fund-tbody tr.fund-row:not([data-featured]){display:none!
 .v2-mp-why.is-hidden{display:none}
 
 /* ── Combined analytics card: metric pairs + gauge + spark + AI footer ── */
-.v2-mp-grid{display:flex;gap:16px;align-items:center;margin-top:16px}
+.v2-mp-grid{display:flex;gap:14px;align-items:center;margin-top:13px}
 .v2-mp-metrics{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:13px 14px;min-width:0}
 .v2-mp-metric{display:flex;flex-direction:column;gap:3px;min-width:0}
 .v2-mp-mk{font-size:8.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#9aa6b6;
@@ -3015,30 +3015,30 @@ body.v2-featured-only #fund-tbody tr.fund-row:not([data-featured]){display:none!
 .v2-mp-gauge-k{font-size:8px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#9aa6b6;
   font-family:'JetBrains Mono','SFMono-Regular',ui-monospace,monospace}
 .v2-mp-gauge-w{font-size:12px;font-weight:800;letter-spacing:-.01em}
-.v2-mp-spark{margin-top:15px;height:34px}
-.v2-mp-spark-svg{width:100%;height:34px;display:block}
+.v2-mp-spark{margin-top:12px;height:28px}
+.v2-mp-spark-svg{width:100%;height:28px;display:block}
 /* 'Why we bought it' — ribboned report section (green header bar) with three
    tagged reasons (Macro / Quant / Catalyst). Analyst reasoning, not flagged AI. */
-.v2-mp-why3{margin-top:16px;border:1px solid #e6ecf5;border-radius:13px;overflow:hidden;
+.v2-mp-why3{margin-top:13px;border:1px solid #e6ecf5;border-radius:12px;overflow:hidden;
   box-shadow:0 1px 2px rgba(15,40,100,.04)}
 .v2-mp-why3.is-hidden{display:none}
-.v2-mp-why3-rib{display:flex;align-items:center;gap:7px;padding:9px 13px;
+.v2-mp-why3-rib{display:flex;align-items:center;gap:7px;padding:7px 12px;
   background:linear-gradient(105deg,#5fc24a,#398f3c);color:#fff;
   font-size:9px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;
   font-family:'JetBrains Mono','SFMono-Regular',ui-monospace,monospace;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.22),inset 0 -1px 0 rgba(0,0,0,.08)}
 .v2-mp-why3-ico{font-size:12px;line-height:1}
-.v2-mp-why3-body{padding:6px 13px 8px}
-.v2-mp-pt{display:flex;gap:10px;align-items:flex-start;padding:8px 0}
+.v2-mp-why3-body{padding:3px 12px 5px}
+.v2-mp-pt{display:flex;gap:10px;align-items:flex-start;padding:6px 0}
 .v2-mp-pt + .v2-mp-pt{border-top:1px solid #f1f5f9}
-.v2-mp-pt-tag{flex-shrink:0;width:60px;text-align:center;line-height:1.3;
+.v2-mp-pt-tag{flex-shrink:0;width:58px;text-align:center;line-height:1.3;
   font-size:8px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;
-  padding:3px 0;border-radius:6px;margin-top:1px;
+  padding:2px 0;border-radius:6px;margin-top:1px;
   font-family:'JetBrains Mono','SFMono-Regular',ui-monospace,monospace}
 .v2-mp-pt-macro    .v2-mp-pt-tag{background:#eef4ff;color:#0040c1}
 .v2-mp-pt-quant    .v2-mp-pt-tag{background:#f3eefe;color:#6d3fd4}
 .v2-mp-pt-catalyst .v2-mp-pt-tag{background:#eaf7ee;color:#15803d}
-.v2-mp-pt-tx{font-size:12px;line-height:1.5;color:#243244;font-weight:500;min-width:0}
+.v2-mp-pt-tx{font-size:11.5px;line-height:1.45;color:#243244;font-weight:500;min-width:0}
 
 /* ───── Tracker chart (Top Hunts vs SPY vs QQQ) ───── */
 /* ── Premium tracker chart (May 22 2026 — dark hero card with glowing line) ──
@@ -16060,7 +16060,7 @@ function renderModelPortfolio(data) {
         <div class="v2-mp-spark" data-spark-ticker="${p.ticker}" data-pos="${pos?1:0}">${sparkInner}</div>
 
         <div class="v2-mp-why3 is-hidden" data-why-ticker="${p.ticker}">
-          <div class="v2-mp-why3-rib"><span class="v2-mp-why3-ico">📈</span> Why we bought it · ${addedFmt}</div>
+          <div class="v2-mp-why3-rib"><span class="v2-mp-why3-ico">📈</span> Why it made the cut · ${addedFmt}</div>
           <div class="v2-mp-why3-body v2-mp-why-body">
             <div class="v2-mp-why-skel"></div><div class="v2-mp-why-skel s2"></div><div class="v2-mp-why-skel s3"></div>
           </div>
