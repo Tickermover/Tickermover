@@ -21223,16 +21223,20 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
       const tag=s.name===heatingName?'🔥':(s.score<55?'🥶':'');
       const momCls=s.mom>=0?'up':'dn', momStr=(s.mom>=0?'+':'')+s.mom.toFixed(1)+'%';
       const lead=s.leaders[0];
-      return '<div class="sm-row" onclick="tsOpenDrawer(\''+escHTML(lead.ticker)+'\')" title="'+escHTML(s.name)+' · '+s.count+' stocks · led by '+escHTML(s.leaders.map(t=>t.ticker).join(', '))+'">'+
+      // Row opens the whole sub-sector basket (all names + breadth) in the
+      // Universe panel — that's the "theme" view, distinct from Prime
+      // Opportunities (which opens a single stock). The Top chip still jumps
+      // straight to the leader for anyone who just wants the best name.
+      return '<div class="sm-row" onclick="v2OpenSectorInUniverse(\''+escHTML(s.name)+'\')" title="See all '+s.count+' '+escHTML(s.name)+' names · led by '+escHTML(s.leaders.map(t=>t.ticker).join(', '))+'">'+
         '<span class="sm-tag">'+tag+'</span>'+
         '<span class="sm-main"><span class="sm-name">'+escHTML(s.name)+'</span><span class="sm-sub">'+s.count+' stocks</span></span>'+
         '<span class="sm-score" style="color:'+scoreColor(s.score)+'">'+s.score+'</span>'+
         '<span class="sm-mom '+momCls+'">'+momStr+'</span>'+
-        '<span class="sm-lead" onclick="event.stopPropagation();tsOpenDrawer(\''+escHTML(lead.ticker)+'\')" title="Top name in this sector">'+escHTML(lead.ticker)+'</span>'+
+        '<span class="sm-lead" onclick="event.stopPropagation();tsOpenDrawer(\''+escHTML(lead.ticker)+'\')" title="Open '+escHTML(lead.ticker)+' — top name in this sector">'+escHTML(lead.ticker)+'</span>'+
       '</div>';
     }).join('');
     const moreCount=sectors.length-6;
-    slot.innerHTML='<div class="ts-card"><div class="ts-card-head"><div class="ts-card-title">🗺 Sector Map</div><div class="ts-card-sub">Strongest sub-sectors right now · tap to open the leader</div></div>'+
+    slot.innerHTML='<div class="ts-card"><div class="ts-card-head"><div class="ts-card-title">🗺 Sector Map</div><div class="ts-card-sub">Strongest sub-sectors right now · tap a row for the basket, the ticker for its leader</div></div>'+
       '<div class="sm-header"><span></span><span>Sector</span><span style="text-align:right">Score</span><span style="text-align:right">Today</span><span style="text-align:right">Top</span></div>'+
       rows+(moreCount>0?'<div class="sm-more">+ '+moreCount+' more sub-sectors</div>':'')+'</div>';
   }
