@@ -7509,16 +7509,26 @@ const V2_WHITE_LOGO_TICKERS = new Set([
   // Add tickers here as we spot them; everything else uses the default
   // light container which reads cleanly for coloured / dark marks.
 ]);
+// Shared logo fallback: on error OR a blank/tiny image, advance to the next
+// source (data-next); when sources are exhausted, hide the <img> so the letter
+// monogram behind it shows. Fixes empty circles from missing / blank logos.
+window._logoStep = window._logoStep || function(img){
+  var n = img.getAttribute('data-next');
+  if (n){ img.removeAttribute('data-next'); img.src = n; return; }
+  img.style.display = 'none';
+  var fb = img.previousElementSibling; if (fb) fb.style.display = '';
+};
 function v2LogoHTML(ticker, size){
   const t = (ticker || '').toUpperCase();
   let cls = size === 'sm' ? 'v2ov-tic-logo sm' : size === 'lg' ? 'v2ov-tic-logo lg' : 'v2ov-tic-logo';
   if (V2_WHITE_LOGO_TICKERS.has(t)) cls += ' dark-bg';
-  const url = 'https://images.financialmodelingprep.com/symbol/' + encodeURIComponent(t) + '.png';
+  const p = 'https://assets.parqet.com/logos/symbol/' + encodeURIComponent(t);
+  const f = 'https://images.financialmodelingprep.com/symbol/' + encodeURIComponent(t) + '.png';
   return '<div class="' + cls + '">' +
            '<span class="fb">' + (t.charAt(0) || '?') + '</span>' +
-           '<img src="' + url + '" alt="" loading="lazy"' +
-              ' onerror="this.style.display=\'none\'"' +
-              ' onload="this.previousElementSibling.style.display=\'none\'">' +
+           '<img src="' + p + '" data-next="' + f + '" alt="" loading="lazy"' +
+              ' onerror="window._logoStep(this)"' +
+              ' onload="if(this.naturalWidth>=16){this.previousElementSibling.style.display=\'none\'}else{window._logoStep(this)}">' +
          '</div>';
 }
 
@@ -19315,10 +19325,13 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
   function logoHTML(ticker,size){
     const t=(ticker||'').toUpperCase();
     const cls='lg'+(size==='sm'?' sm':size==='lg'?' lg':'');
-    const url='https://images.financialmodelingprep.com/symbol/'+encodeURIComponent(t)+'.png';
+    const p='https://assets.parqet.com/logos/symbol/'+encodeURIComponent(t);
+    const f='https://images.financialmodelingprep.com/symbol/'+encodeURIComponent(t)+'.png';
     return '<div class="'+cls+'" style="background:'+tickerColor(t)+'">'+
       '<span>'+escHTML(t.slice(0,2))+'</span>'+
-      '<img src="'+url+'" alt="" loading="lazy" onerror="this.style.display=\'none\'">'+
+      '<img src="'+p+'" data-next="'+f+'" alt="" loading="lazy"'+
+        ' onerror="window._logoStep&&window._logoStep(this)"'+
+        ' onload="if(this.naturalWidth<16)window._logoStep&&window._logoStep(this)">'+
     '</div>';
   }
 
