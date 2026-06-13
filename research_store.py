@@ -54,9 +54,11 @@ _BASE_DIR = Path(__file__).resolve().parent
 _DISK_DIR = _BASE_DIR / "output" / "research"
 
 # How long a brief stays "fresh" before /api/research treats it as stale and
-# kicks off a regeneration. Research moves slower than price, but a stale
-# "FCC approved" line is misleading — so keep it tight-ish.
-TTL_SECONDS = int(os.environ.get("RESEARCH_TTL_SECONDS", str(20 * 60 * 60)))  # ~20h
+# kicks off a regeneration. Bumped 20h → 30 days (2026-06-13) to fit the
+# flat-cost model: first Pro open of a stock generates the web-grounded
+# Deep-Dive once, then it's free for everyone for the month. Trade-off: a
+# catalyst/news line can lag up to ~30 days (user-accepted). Override via env.
+TTL_SECONDS = int(os.environ.get("RESEARCH_TTL_SECONDS", str(30 * 24 * 60 * 60)))  # 30 days
 
 
 class ResearchStore:
