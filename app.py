@@ -4152,11 +4152,11 @@ async def api_why_today(ticker: str, force: bool = False):
     # Fast path: durable cache hit (no key needed to serve an existing note).
     if not force:
         cached = _why._kv.get(_why._NS, sym)
-        if cached and cached.get("why"):
-            return JSONResponse({"ticker": sym, "why": cached["why"], "status": "ready"})
+        if cached and cached.get("points"):
+            return JSONResponse({"ticker": sym, "points": cached["points"], "status": "ready"})
 
     if not _why.available():
-        return JSONResponse({"ticker": sym, "why": "", "status": "unavailable"})
+        return JSONResponse({"ticker": sym, "points": None, "status": "unavailable"})
 
     # Build grounding from the live universe row (+ derived pillars / upside).
     live = next((t for t in _universe_data if t.get("ticker") == sym), None)
@@ -4188,11 +4188,11 @@ async def api_why_today(ticker: str, force: bool = False):
         _why_inflight[sym] = task
     try:
         out = await task
-        return JSONResponse({"ticker": sym, "why": out.get("why", ""),
+        return JSONResponse({"ticker": sym, "points": out.get("points"),
                              "status": out.get("status", "ready")})
     except Exception as exc:
         logger.error(f"why_today endpoint {sym} failed: {exc}")
-        return JSONResponse({"ticker": sym, "why": "", "status": "error"})
+        return JSONResponse({"ticker": sym, "points": None, "status": "error"})
     finally:
         if _why_inflight.get(sym) is task:
             _why_inflight.pop(sym, None)
