@@ -710,8 +710,8 @@ body.v2 #sectors-grid .smh-name{font-weight:800;font-size:12.5px;color:#0f172a!i
 .ssx-mono{font-family:'JetBrains Mono',monospace;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
 .ssx-up{color:var(--up)} .ssx-dn{color:var(--down)}
 .ssx-head{position:sticky;top:0;z-index:20;-webkit-backdrop-filter:blur(16px) saturate(150%);backdrop-filter:blur(16px) saturate(150%);background:rgba(255,255,255,.5);border-bottom:1px solid rgba(255,255,255,.5);display:flex;align-items:center;gap:16px;padding:14px 24px}
-.ssx-logo{width:46px;height:46px;border-radius:12px;background:#fff;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;box-shadow:0 4px 12px rgba(0,0,0,.14);border:1px solid var(--hair);font-weight:800;color:#334155}
-.ssx-logo img{width:100%;height:100%;object-fit:contain;padding:6px}
+.ssx-logo{position:relative;width:46px;height:46px;border-radius:12px;background:#fff;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;box-shadow:0 4px 12px rgba(0,0,0,.14);border:1px solid var(--hair);font-weight:800;color:#334155}
+.ssx-logo img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;padding:6px}
 .ssx-id{min-width:0;flex:1}
 .ssx-tic-row{display:flex;align-items:center;gap:10px}
 .ssx-tic{font-size:23px;font-weight:800;letter-spacing:-.02em;color:var(--ink)}
@@ -3749,8 +3749,9 @@ html.v2-dark .v2-mp-mini-lbl{color:#cbd5e1}
 .ce-dd-row{display:flex;align-items:center;gap:11px;padding:9px 14px;cursor:pointer;border-bottom:1px solid rgba(10,10,10,.05)}
 .ce-dd-row:last-child{border-bottom:none}
 .ce-dd-row.on{background:#eff5ff}
-.ce-dd-logo{width:24px;height:24px;border-radius:6px;overflow:hidden;flex-shrink:0;background:#f1f5f9;display:flex;align-items:center;justify-content:center}
-.ce-dd-logo img{width:100%;height:100%;object-fit:contain;background:#fff}
+.ce-dd-logo{position:relative;width:24px;height:24px;border-radius:6px;overflow:hidden;flex-shrink:0;background:#f1f5f9;display:flex;align-items:center;justify-content:center}
+.ce-dd-logo .fb{font-size:11px;font-weight:800;color:#64748b}
+.ce-dd-logo img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#fff}
 .ce-dd-tic{font-weight:800;font-size:13px;color:#0040c1;flex-shrink:0;min-width:56px}
 .ce-dd-nm{font-size:12.5px;color:#475569;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
 .ce-dd-hint{font-size:10.5px;font-weight:700;color:#0a7d33;flex-shrink:0}
@@ -7512,11 +7513,51 @@ const V2_WHITE_LOGO_TICKERS = new Set([
 // Shared logo fallback: on error OR a blank/tiny image, advance to the next
 // source (data-next); when sources are exhausted, hide the <img> so the letter
 // monogram behind it shows. Fixes empty circles from missing / blank logos.
-window._logoStep = window._logoStep || function(img){
+// When advancing to the FMP fallback we also flip on crossOrigin so the loaded
+// pixels are canvas-readable (FMP sends Access-Control-Allow-Origin:*) — needed
+// because FMP serves a FULL-SIZE near-blank placeholder for symbols it lacks
+// (e.g. MRVL), which slips past the naturalWidth>=16 guard.
+window._logoStep = function(img){
   var n = img.getAttribute('data-next');
-  if (n){ img.removeAttribute('data-next'); img.src = n; return; }
+  if (n){ img.removeAttribute('data-next'); try{ img.crossOrigin = 'anonymous'; }catch(e){} img.src = n; return; }
   img.style.display = 'none';
   var fb = img.previousElementSibling; if (fb) fb.style.display = '';
+};
+// Pixel-sample a loaded logo and report whether it is effectively blank (fully
+// transparent or near-white everywhere). Returns false if the canvas is tainted
+// (cross-origin without CORS, e.g. a real Parqet logo) — those are trusted as-is,
+// since Parqet 404s rather than serving blanks.
+window._logoBlank = function(img){
+  try{
+    var w = img.naturalWidth, h = img.naturalHeight; if (!w || !h) return true;
+    var S = 32, c = document.createElement('canvas'); c.width = S; c.height = S;
+    var ctx = c.getContext('2d'); ctx.drawImage(img, 0, 0, S, S);
+    var d = ctx.getImageData(0, 0, S, S).data, ink = 0;
+    for (var i = 0; i < d.length; i += 4){
+      if (d[i+3] < 24) continue;                                   // transparent
+      if (d[i] > 243 && d[i+1] > 243 && d[i+2] > 243) continue;    // near-white
+      ink++;
+    }
+    return ink < 12;                                               // <12 of 1024 px => blank
+  }catch(e){ return false; }                                       // tainted => trust it
+};
+// Unified onload handler: drop blank/tiny logos to the next source (or the
+// monogram), otherwise reveal the logo and hide the monogram behind it.
+window._logoOnload = function(img){
+  if (img.naturalWidth < 16 || window._logoBlank(img)){ window._logoStep(img); return; }
+  var fb = img.previousElementSibling; if (fb) fb.style.display = 'none';
+};
+// Variant for call sites whose monogram fallback is a CSS rule on the PARENT
+// (data-tic + a fallback class) rather than a sibling <span>. Same chain +
+// blank-guard; on exhaustion it hides the <img> and arms the parent fallback.
+window._logoStepCss = function(img){
+  var n = img.getAttribute('data-next');
+  if (n){ img.removeAttribute('data-next'); try{ img.crossOrigin = 'anonymous'; }catch(e){} img.src = n; return; }
+  img.style.display = 'none';
+  var p = img.parentNode; if (p){ p.dataset.tic = img.getAttribute('data-tic') || ''; var c = img.getAttribute('data-fbcls'); if (c) p.classList.add(c); }
+};
+window._logoOnloadCss = function(img){
+  if (img.naturalWidth < 16 || window._logoBlank(img)) window._logoStepCss(img);
 };
 function v2LogoHTML(ticker, size){
   const t = (ticker || '').toUpperCase();
@@ -7528,7 +7569,7 @@ function v2LogoHTML(ticker, size){
            '<span class="fb">' + (t.charAt(0) || '?') + '</span>' +
            '<img src="' + p + '" data-next="' + f + '" alt="" loading="lazy"' +
               ' onerror="window._logoStep(this)"' +
-              ' onload="if(this.naturalWidth>=16){this.previousElementSibling.style.display=\'none\'}else{window._logoStep(this)}">' +
+              ' onload="window._logoOnload(this)">' +
          '</div>';
 }
 
@@ -9736,9 +9777,11 @@ function ceBuildCloud(){
     if (isRep(t))  { const s = dse(t); return (s != null && s <= 1) ? 'ce-xl' : (s != null && s <= 4) ? 'ce-lg' : 'ce-md'; }
     const d = d2e(t); return (d != null && d <= 2) ? 'ce-xl' : (d != null && d <= 7) ? 'ce-lg' : 'ce-md';
   };
-  const logo   = sym => 'https://images.financialmodelingprep.com/symbol/' + encodeURIComponent(sym) + '.png';
+  const pq   = sym => 'https://assets.parqet.com/logos/symbol/' + encodeURIComponent(sym);
+  const fmp  = sym => 'https://images.financialmodelingprep.com/symbol/' + encodeURIComponent(sym) + '.png';
   const logoBox = sym => '<span class="ce-lg-img"><span class="fb">' + ((sym || '?').charAt(0)) + '</span>' +
-    '<img src="' + logo(sym) + '" loading="lazy" onerror="this.style.display=\'none\'" onload="this.previousElementSibling.style.display=\'none\'"></span>';
+    '<img src="' + pq(sym) + '" data-next="' + fmp(sym) + '" loading="lazy"' +
+    ' onerror="window._logoStep(this)" onload="window._logoOnload(this)"></span>';
   const evCls = t => isRep(t) ? 'rep' : (isSoon(t) ? 'soon' : '');
 
   const rep  = all.filter(isRep).sort((a, b) => (dse(a) == null ? 99 : dse(a)) - (dse(b) == null ? 99 : dse(b)));
@@ -9865,7 +9908,8 @@ function ceRenderDD(){
     dd.style.display = 'block';
     return;
   }
-  const logo = sym => 'https://images.financialmodelingprep.com/symbol/' + encodeURIComponent(sym) + '.png';
+  const pq  = sym => 'https://assets.parqet.com/logos/symbol/' + encodeURIComponent(sym);
+  const fmp = sym => 'https://images.financialmodelingprep.com/symbol/' + encodeURIComponent(sym) + '.png';
   const d2e = t => { const d = parseInt(t.days_to_earnings); return isNaN(d) ? null : d; };
   const tag = t => {
     const d = d2e(t);
@@ -9876,7 +9920,7 @@ function ceRenderDD(){
   dd.innerHTML = _ceSearchList.map((t, i) =>
     '<div class="ce-dd-row' + (i === _ceSearchIdx ? ' on' : '') + '" data-tic="' + t.ticker +
       '" onmousedown="event.preventDefault();ceSearchPick(\'' + t.ticker + '\')" onmousemove="ceSearchHover(' + i + ')">' +
-      '<span class="ce-dd-logo"><img src="' + logo(t.ticker) + '" loading="lazy" onerror="this.style.visibility=\'hidden\'"></span>' +
+      '<span class="ce-dd-logo"><span class="fb">' + ((t.ticker || '?').charAt(0)) + '</span><img src="' + pq(t.ticker) + '" data-next="' + fmp(t.ticker) + '" loading="lazy" onerror="window._logoStep(this)" onload="window._logoOnload(this)"></span>' +
       '<span class="ce-dd-tic">' + v2EscHTML(t.ticker) + '</span>' +
       '<span class="ce-dd-nm">' + v2EscHTML((t.name || '').slice(0, 52)) + '</span>' + tag(t) +
     '</div>').join('');
@@ -10278,7 +10322,8 @@ function v2RenderBriefingHTML(sym, d, opts){
   const live = (window._allTickerData && window._allTickerData[sym]) || {};
   const coName = live.name || '';
   const sector = live.sector || live.sub_sector || '';
-  const logoUrl = 'https://images.financialmodelingprep.com/symbol/' + encodeURIComponent(sym) + '.png';
+  const logoUrl  = 'https://assets.parqet.com/logos/symbol/' + encodeURIComponent(sym);
+  const logoNext = 'https://images.financialmodelingprep.com/symbol/' + encodeURIComponent(sym) + '.png';
 
   // Normalise sections (legacy 4-bucket or new dynamic-sections shape)
   let sections = Array.isArray(d.sections) ? d.sections : null;
@@ -10330,8 +10375,8 @@ function v2RenderBriefingHTML(sym, d, opts){
         '<div class="v2-brf-q-main">' +
           '<div class="v2-brf-q-hero">' +
             '<div class="v2-brf-q-hero-logo">' +
-              '<img src="' + logoUrl + '" alt="" loading="lazy" ' +
-              'onerror="this.style.display=\'none\';this.parentNode.dataset.tic=\'' + v2EscHTML(sym) + '\';this.parentNode.classList.add(\'v2-brf-q-logo-fallback\')"/>' +
+              '<img src="' + logoUrl + '" data-next="' + logoNext + '" data-tic="' + v2EscHTML(sym) + '" data-fbcls="v2-brf-q-logo-fallback" alt="" loading="lazy" ' +
+              'onerror="window._logoStepCss(this)" onload="window._logoOnloadCss(this)"/>' +
             '</div>' +
             '<div class="v2-brf-q-hero-text">' +
               '<div class="v2-brf-q-hero-eye">' + v2EscHTML(sym) + ' · ' + v2EscHTML(eyebrow) + '</div>' +
@@ -13163,7 +13208,10 @@ function openStockSheet(ticker){
     kv('Next earnings', dte!=null?(dte+'d'):null);
 
   const tabs=[['overview','Overview'],['financials','Financials'],['valuation','Valuation'],['health','Health'],['technicals','Technicals'],['estimates','Estimates'],['earnings','Earnings'],['ownership','Ownership'],['news','News'],['deepdive','AI Deep Dive'],['peers','Peers'],['deps','Supply Chain']];
-  const logoImg='<img src="https://assets.parqet.com/logos/symbol/'+ticker+'" alt="" onerror="this.outerHTML=\''+ticker.slice(0,2)+'\'">';
+  const logoImg='<span class="fb">'+ticker.slice(0,2)+'</span>'+
+    '<img src="https://assets.parqet.com/logos/symbol/'+ticker+'"'+
+    ' data-next="https://images.financialmodelingprep.com/symbol/'+ticker+'.png" alt=""'+
+    ' onerror="window._logoStep(this)" onload="window._logoOnload(this)">';
 
   document.getElementById('ssx-sheet').innerHTML =
     '<div class="ssx-head">'+
@@ -13892,9 +13940,11 @@ function openStockModal(ticker) {
       <span class="v2-ts-cta-strip"></span>
       <div class="v2-ts-cta-body">
         <div class="v2-ts-cta-tic">
-          <img src="https://images.financialmodelingprep.com/symbol/${t.ticker}.png"
+          <img src="https://assets.parqet.com/logos/symbol/${t.ticker}"
+               data-next="https://images.financialmodelingprep.com/symbol/${t.ticker}.png"
+               data-tic="${t.ticker}" data-fbcls="v2-ts-cta-tic-fallback"
                alt="${t.ticker}" loading="lazy"
-               onerror="this.style.display='none';this.parentNode.classList.add('v2-ts-cta-tic-fallback');this.parentNode.dataset.tic='${t.ticker}'"/>
+               onerror="window._logoStepCss(this)" onload="window._logoOnloadCss(this)"/>
         </div>
         <div>
           <div class="v2-ts-cta-title">Analyst research report</div>
@@ -14939,12 +14989,15 @@ function secgLoadLogo(img, ticker){
   let i = 0;
   (function tryNext(){
     if (i >= sources.length) return;                    // exhausted -> stays hidden
-    const url = sources[i++];
+    const url = sources[i++], cors = /financialmodelingprep/.test(url);
     const probe = new Image();
+    if (cors) { try{ probe.crossOrigin = 'anonymous'; }catch(e){} }  // FMP allows CORS -> readable pixels
     probe.onload = function(){
-      if (probe.naturalWidth >= 16 && probe.naturalHeight >= 16){
-        img.setAttribute('href', url); img.style.display = '';
-      } else { tryNext(); }                             // blank/tiny -> next source
+      const tiny = probe.naturalWidth < 16 || probe.naturalHeight < 16;
+      // Only the CORS-readable FMP probe can be pixel-checked; Parqet stays trusted.
+      const blank = tiny || (cors && window._logoBlank && window._logoBlank(probe));
+      if (!blank){ img.setAttribute('href', url); img.style.display = ''; }
+      else { tryNext(); }                               // blank/tiny -> next source
     };
     probe.onerror = tryNext;                            // 404/blocked -> next source
     probe.src = url;
@@ -17920,13 +17973,13 @@ async function _ahLoadHotStrip(){
   const cardHTML = (sym, score, tier, chg) => {
     const dir  = chg >= 0 ? 'up' : 'dn';
     const sign = chg >= 0 ? '+' : '';
-    // Real company logo from Parqet's free CDN; on 404 the <img> is
-    // swapped for the ticker's first 2 letters so the tile is never empty.
-    const logoUrl = `https://assets.parqet.com/logos/symbol/${encodeURIComponent(sym)}`;
-    const onerr = `this.outerHTML='${(sym||'').slice(0,2)}'`;
+    // Real company logo: Parqet -> FMP -> 2-letter monogram (blank-guarded),
+    // so the tile is never empty and never a blank FMP placeholder.
+    const logoUrl  = `https://assets.parqet.com/logos/symbol/${encodeURIComponent(sym)}`;
+    const logoNext = `https://images.financialmodelingprep.com/symbol/${encodeURIComponent(sym)}.png`;
     return `<div class="ah-sc-card">
       <div class="ah-sc-top">
-        <div class="ah-sc-symrow"><div class="ah-sc-logo"><img src="${logoUrl}" alt="" loading="lazy" onerror="${onerr}"></div><div class="ah-sc-sym">${sym}</div></div>
+        <div class="ah-sc-symrow"><div class="ah-sc-logo"><span class="fb">${(sym||'').slice(0,2)}</span><img src="${logoUrl}" data-next="${logoNext}" alt="" loading="lazy" onerror="window._logoStep(this)" onload="window._logoOnload(this)"></div><div class="ah-sc-sym">${sym}</div></div>
         <div class="ah-sc-score">${score}</div>
       </div>
       <div class="ah-sc-bot">
@@ -18686,8 +18739,8 @@ function showUpgradeSuccess() {
 .ah-sc-symrow{display:flex;align-items:center;gap:8px}
 /* Dark-glass logo tile (no stark white). Colored brand logos read on it;
    on 404 the img is swapped for the ticker initials. */
-.ah-sc-logo{width:26px;height:26px;border-radius:7px;flex-shrink:0;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;overflow:hidden;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:800;color:#E0E0E0}
-.ah-sc-logo img{width:100%;height:100%;object-fit:contain;padding:3px}
+.ah-sc-logo{position:relative;width:26px;height:26px;border-radius:7px;flex-shrink:0;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;overflow:hidden;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:800;color:#E0E0E0}
+.ah-sc-logo img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;padding:3px}
 .ah-sc-sym{font-weight:800;font-size:13px;color:#fff;letter-spacing:-.01em}
 .ah-sc-score{font-family:'JetBrains Mono',monospace;font-weight:800;font-size:18px;line-height:1;background:linear-gradient(135deg,#2970ff,#0040c1);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
 .ah-sc-bot{display:flex;align-items:center;justify-content:space-between;gap:8px}
@@ -19358,7 +19411,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
       '<span>'+escHTML(t.slice(0,2))+'</span>'+
       '<img src="'+p+'" data-next="'+f+'" alt="" loading="lazy"'+
         ' onerror="window._logoStep&&window._logoStep(this)"'+
-        ' onload="if(this.naturalWidth<16)window._logoStep&&window._logoStep(this)">'+
+        ' onload="window._logoOnload&&window._logoOnload(this)">'+
     '</div>';
   }
 
