@@ -212,7 +212,13 @@ async def _extract_one(ticker: str, filing: dict) -> dict | None:
                 logger.warning(f"operating_kpis: Anthropic {ticker} {filing['year']} "
                                f"HTTP {r.status_code}: {r.text[:160]}")
                 return None
-            out = (r.json().get("content") or [{}])[0].get("text", "").strip()
+            _data = r.json()
+            try:
+                import usage_log
+                usage_log.record("kpis", _ANTHROPIC_MODEL, _data.get("usage"), ticker=ticker)
+            except Exception:
+                pass
+            out = (_data.get("content") or [{}])[0].get("text", "").strip()
     except Exception as exc:
         logger.warning(f"operating_kpis: Anthropic {ticker} {filing['year']}: {exc}")
         return None

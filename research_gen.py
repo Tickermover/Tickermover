@@ -18,6 +18,8 @@ import os
 
 import httpx
 
+import usage_log
+
 logger = logging.getLogger(__name__)
 
 _KEY = os.environ.get("ANTHROPIC_API_KEY", "").strip()
@@ -215,6 +217,7 @@ async def generate_research(ticker: str, ticker_data: dict | None) -> dict:
         data = r.json()
 
     _u = data.get("usage") or {}
+    usage_log.record("research", _MODEL, _u, ticker=ticker)
     logger.info(
         "research_gen %s (%s): in=%s cache_write=%s cache_read=%s out=%s",
         ticker, _MODEL, _u.get("input_tokens"),
@@ -366,6 +369,7 @@ async def generate_overview(ticker: str, ticker_data: dict | None,
         data = r.json()
 
     _u = data.get("usage") or {}
+    usage_log.record("overview", model, _u, ticker=ticker)
     logger.info("overview_gen %s (%s%s): in=%s cache_write=%s cache_read=%s out=%s",
                 ticker, model, " ★premium" if premium else "", _u.get("input_tokens"),
                 _u.get("cache_creation_input_tokens"), _u.get("cache_read_input_tokens"),

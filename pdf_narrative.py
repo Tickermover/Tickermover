@@ -227,6 +227,11 @@ async def _haiku_call(prompt: str) -> dict | None:
     except Exception as exc:
         logger.warning(f"pdf_narrative: Haiku call failed: {exc}")
         return None
+    try:
+        import usage_log
+        usage_log.record("pdf_narrative", _ANTHROPIC_MODEL, resp.get("usage"))
+    except Exception:
+        pass
     text = (resp.get("content") or [{}])[0].get("text", "").strip()
     if text.startswith("```"):
         text = text.strip("`")

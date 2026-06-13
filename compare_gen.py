@@ -21,6 +21,8 @@ import re
 
 import httpx
 
+import usage_log
+
 logger = logging.getLogger(__name__)
 
 _KEY = os.environ.get("ANTHROPIC_API_KEY", "").strip()
@@ -156,6 +158,7 @@ async def generate_compare_card(ticker: str, ticker_data: dict | None) -> dict:
         data = r.json()
 
     _u = data.get("usage") or {}
+    usage_log.record("compare", _MODEL, _u, ticker=ticker)
     logger.info("compare_gen %s (%s): in=%s cache_write=%s cache_read=%s out=%s",
                 ticker, _MODEL, _u.get("input_tokens"),
                 _u.get("cache_creation_input_tokens"), _u.get("cache_read_input_tokens"),

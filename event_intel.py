@@ -387,6 +387,11 @@ async def _summarize_with_haiku(ticker: str, quarter: str, transcript_text: str,
     except Exception as exc:
         logger.warning(f"event_intel: Anthropic {ticker} failed: {exc}")
         return None
+    try:
+        import usage_log
+        usage_log.record("concall", _ANTHROPIC_MODEL, resp.get("usage"), ticker=ticker)
+    except Exception:
+        pass
     text = (resp.get("content") or [{}])[0].get("text", "").strip()
     # Strip code fences if Haiku added any
     if text.startswith("```"):

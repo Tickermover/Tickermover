@@ -823,6 +823,11 @@ class MarketAnalysis:
                 )
                 r.raise_for_status()
                 payload = r.json()
+            try:
+                import usage_log
+                usage_log.record("desk", _ANTHROPIC_MODEL, payload.get("usage"))
+            except Exception:
+                pass
             text = "".join(
                 b.get("text", "") for b in payload.get("content", [])
                 if b.get("type") == "text"
@@ -1306,6 +1311,11 @@ class ThesisGenerator:
             )
             r.raise_for_status()
             data = r.json()
+        try:
+            import usage_log
+            usage_log.record("thesis", _ANTHROPIC_MODEL, data.get("usage"))
+        except Exception:
+            pass
         text = ""
         for block in data.get("content", []):
             if block.get("type") == "text":

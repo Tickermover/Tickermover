@@ -29,6 +29,8 @@ import re
 
 import httpx
 
+import usage_log
+
 logger = logging.getLogger(__name__)
 
 _KEY = os.environ.get("ANTHROPIC_API_KEY", "").strip()
@@ -230,6 +232,7 @@ async def generate_sector_graph(sectors: list[str]) -> dict:
         return seed_graph(sectors)
 
     _u = data.get("usage") or {}
+    usage_log.record("sector_graph", _MODEL, _u)
     logger.info(
         "sector_graph (%s): nodes=%s in=%s cache_write=%s cache_read=%s out=%s",
         _MODEL, len(sectors), _u.get("input_tokens"),

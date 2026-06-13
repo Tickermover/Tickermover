@@ -3675,7 +3675,8 @@ async def api_ask(ticker: str, request: Request,
         lines.append(f"Price: {t.get('price')} | Target upside %: {t.get('target_upside_pct')}")
         lines.append(f"Rev growth YoY: {t.get('revenue_growth_yoy')} | EPS growth YoY: {t.get('eps_growth_yoy')}")
         lines.append(f"P/E: {t.get('pe_ratio') or t.get('forward_pe')} | PEG: {t.get('peg_ratio')} | Profit margin: {t.get('profit_margin')}")
-    res = await stock_rag.ask(tk, question, "\n".join(lines))
+    res = await stock_rag.ask(tk, question, "\n".join(lines),
+                              user_id=(user or {}).get("user_id"))
     # Count this question against BOTH caps only when it actually produced an
     # answer (don't charge the user for errors / empty responses).
     if isinstance(res, dict) and res.get("answer"):
@@ -7655,6 +7656,19 @@ async def api_user_change_password(body: _ChangePwBody,
     if not isinstance(res, dict) or res.get("error"):
         raise HTTPException(status_code=400, detail=(res or {}).get("error", "Could not update password."))
     return JSONResponse({"ok": True})
+
+
+# ── Admin: measured AI usage / cost attribution ─────────────────────────────
+@app.get("/api/admin/usage")
+async def api_admin_usage(limit: int = 20000,
+                          user: Optional[dict] = Depends(_current_user),
+                          creds: Optional[HTTPAuthorizationCredentials] = Depends(_bearer)):
+    """Aggregated per-call AI cost — by feature, by model, by user. Gated to
+    allow-listed (AI_ALLOW_EMAILS) accounts. Powers the monthly cost report."""
+    if not user or (user.get("email") or "").lower() not in _AI_ALLOW:
+        raise HTTPException(status_code=403, detail="Admin only.")
+    import usage_log
+    return JSONResponse(usage_log.store.summary(limit=limit))
 
 
 # ── In-app feedback (idle prompt) ───────────────────────────────────────────

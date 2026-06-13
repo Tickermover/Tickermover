@@ -26,6 +26,8 @@ import re
 
 import httpx
 
+import usage_log
+
 logger = logging.getLogger(__name__)
 
 _KEY = os.environ.get("ANTHROPIC_API_KEY", "").strip()
@@ -172,6 +174,7 @@ async def generate_dependencies(ticker: str, ticker_data: dict | None) -> dict:
         data = r.json()
 
     _u = data.get("usage") or {}
+    usage_log.record("dependencies", _MODEL, _u, ticker=ticker)
     logger.info(
         "dependencies_gen %s (%s): in=%s out=%s searches~%s",
         ticker, _MODEL, _u.get("input_tokens"), _u.get("output_tokens"),

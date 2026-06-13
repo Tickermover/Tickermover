@@ -162,7 +162,7 @@ async def _retrieve(ticker: str, question: str, k: int = _TOP_K) -> list[str]:
     return [idx["chunks"][int(i)] for i in top]
 
 
-async def _claude_answer(ticker, question, context_blocks, profile_data) -> str | None:
+async def _claude_answer(ticker, question, context_blocks, profile_data, user_id=None) -> str | None:
     if not ANTHROPIC_KEY:
         return None
     ctx = "\n\n".join(context_blocks[:8])[:60000]
@@ -212,6 +212,11 @@ async def _claude_answer(ticker, question, context_blocks, profile_data) -> str 
             # context prefix was served from cache (~0.1× cost). If this stays 0
             # across repeat questions on one ticker, a silent invalidator is at work.
             u = data.get("usage") or {}
+            try:
+                import usage_log
+                usage_log.record("ask", ASK_MODEL, u, ticker=ticker, user_id=user_id)
+            except Exception:
+                pass
             logger.info(
                 "stock_rag ask %s: in=%s cache_write=%s cache_read=%s",
                 ticker, u.get("input_tokens"),
@@ -371,7 +376,7 @@ async def concall_summary(ticker: str, profile_data: str = "", quarter: str | No
     return parsed
 
 
-async def ask(ticker: str, question: str, profile_data: str = "") -> dict:
+async def ask(ticker: str, question: str, profile_data: str = "", user_id=None) -> dict:
     """Main entry: returns {ok, answer, sources[]}."""
     question = (question or "").strip()
     if not question:
@@ -384,7 +389,7 @@ async def ask(ticker: str, question: str, profile_data: str = "") -> dict:
                 "answer": "The AI assistant isn't enabled yet. Set ANTHROPIC_API_KEY "
                           "to turn it on (add VOYAGE_API_KEY for filing-grounded RAG)."}
     blocks = await _retrieve(ticker, question) if VOYAGE_KEY else []
-    answer = await _claude_answer(ticker, question, blocks, profile_data)
+    answer = await _claude_answer(ticker, question, blocks, profile_data, user_id=user_id)
     if not answer:
         return {"ok": False, "sources": [],
                 "answer": "The assistant is having trouble responding right now. "

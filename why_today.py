@@ -21,6 +21,7 @@ import os
 
 import httpx
 
+import usage_log
 from kv_store import store as _kv
 
 logger = logging.getLogger(__name__)
@@ -169,6 +170,7 @@ async def _call(ticker: str, t: dict) -> dict:
             raise RuntimeError(f"Anthropic {r.status_code}: {r.text[:200]}")
         data = r.json()
     _u = data.get("usage") or {}
+    usage_log.record("why_today", _MODEL, _u, ticker=ticker)
     logger.info("why_today %s (%s): in=%s out=%s", ticker, _MODEL,
                 _u.get("input_tokens"), _u.get("output_tokens"))
     return _parse_points(data.get("content", []))
