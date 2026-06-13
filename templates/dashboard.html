@@ -6308,22 +6308,27 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 #panel-hot .mv-grp{font-family:'JetBrains Mono',monospace;font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--grey-3);font-weight:700;margin:14px 0 4px;padding-top:11px;border-top:1px solid var(--hair)}
 #panel-hot .mv-grp.first{border-top:none;padding-top:0;margin-top:2px}
 #panel-hot .sm-header,
-#panel-hot .sm-row{display:grid;grid-template-columns:16px 1.7fr 42px 58px 62px;gap:9px;align-items:center}
-#panel-hot .sm-header{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.05em;text-transform:uppercase;color:var(--grey-3);font-weight:700;padding:4px 0 8px}
-#panel-hot .sm-row{padding:6px 0;cursor:pointer;border-radius:8px}
-#panel-hot .sm-row:hover{background:var(--surf-3)}
-#panel-hot .sm-name{font-weight:600;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#panel-hot .sm-row{display:grid;grid-template-columns:18px 1.7fr 46px 60px 66px;gap:11px;align-items:center}
+#panel-hot .sm-header{font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:.06em;text-transform:uppercase;color:var(--grey-3);font-weight:700;padding:2px 0 9px;border-bottom:1px solid var(--hair);margin-bottom:2px}
+#panel-hot .sm-row{position:relative;padding:11px 9px;margin:0 -9px;cursor:pointer;border-radius:11px;transition:background .15s ease, box-shadow .15s ease, transform .15s ease}
+#panel-hot .sm-row + .sm-row{box-shadow:inset 0 1px 0 var(--hair)}
+#panel-hot .sm-row:hover{background:var(--surf-3);box-shadow:0 8px 22px -14px rgba(15,23,42,.4);transform:translateY(-1px)}
+#panel-hot .sm-row:hover + .sm-row{box-shadow:none}
+#panel-hot .sm-name{font-weight:650;font-size:13px;letter-spacing:-.01em;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #panel-hot .sm-track{height:7px;border-radius:99px;background:rgba(9,9,9,.06);overflow:hidden}
 #panel-hot .sm-fill{display:block;height:100%;border-radius:99px;background:var(--blue-grad)}
-#panel-hot .sm-score{font-family:'JetBrains Mono',monospace;font-weight:800;font-size:13px;text-align:right}
-#panel-hot .sm-mom{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:11.5px;text-align:right}
+#panel-hot .sm-score{font-family:'JetBrains Mono',monospace;font-weight:800;font-size:14.5px;text-align:right;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+#panel-hot .sm-mom{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:11.5px;text-align:right;font-variant-numeric:tabular-nums}
 #panel-hot .sm-count{font-size:10.5px;color:var(--grey);text-align:right}
-#panel-hot .sm-main{min-width:0;display:flex;flex-direction:column;line-height:1.2}
-#panel-hot .sm-sub{font-size:9.5px;color:var(--grey-3);font-weight:600;margin-top:1px}
-#panel-hot .sm-lead{font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:700;color:var(--primary);background:rgba(41,112,255,.09);border-radius:6px;padding:3px 0;text-align:center;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#panel-hot .sm-lead:hover{background:rgba(41,112,255,.18)}
-#panel-hot .sm-tag{text-align:center;font-size:11px}
-#panel-hot .sm-more{margin-top:8px;font-size:11.5px;color:var(--primary);font-weight:600;cursor:pointer;text-align:center}
+#panel-hot .sm-main{min-width:0;display:flex;flex-direction:column;line-height:1.25}
+#panel-hot .sm-sub{font-size:9.5px;color:var(--grey-3);font-weight:600;margin-top:2px;letter-spacing:.01em}
+#panel-hot .sm-tag{display:flex;align-items:center;justify-content:center;background:none;border:0;padding:0}
+#panel-hot .sm-dot{width:9px;height:9px;border-radius:99px;box-shadow:0 0 0 3px rgba(15,23,42,.05)}
+#panel-hot .sm-emoji{font-size:12px;line-height:1}
+#panel-hot .sm-lead{font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:800;letter-spacing:.02em;color:var(--primary);background:linear-gradient(180deg,rgba(41,112,255,.13),rgba(41,112,255,.06));border:1px solid rgba(41,112,255,.16);border-radius:7px;padding:4px 0;text-align:center;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:background .15s ease, color .15s ease, box-shadow .15s ease, transform .15s ease}
+#panel-hot .sm-lead:hover{background:var(--blue-grad);color:#fff;border-color:transparent;box-shadow:0 6px 14px -5px rgba(41,112,255,.55);transform:translateY(-1px)}
+#panel-hot .sm-more{margin-top:12px;font-size:11.5px;color:var(--primary);font-weight:700;cursor:pointer;text-align:center;padding:9px;border-radius:10px;background:var(--surf-2);border:1px solid var(--hair);transition:background .15s ease}
+#panel-hot .sm-more:hover{background:var(--surf-3)}
 #panel-hot .sm-mom-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:8px}
 #panel-hot .sm-mom-name{font-weight:700;font-size:13.5px}
 #panel-hot .sm-mom-avg{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:12px}
@@ -9262,15 +9267,42 @@ function v2ToggleSectorMap(){
   }
 }
 /* Click-handler used by sector cells on the dashboard + Sector Map.
-   Switches to the Universe panel and applies the sector filter in one go. */
+   Switches to the Universe panel, applies the sector filter, AND focuses the
+   matching node in the connections graph so the relationship web lights up. */
 function v2OpenSectorInUniverse(sectorName){
   v2SetSectorFilter(sectorName);
   if (typeof v2Show === 'function') v2Show('fund', null);
-  // Scroll to top of universe table for clarity
+  // Scroll to top + focus the sector node once the panel has laid out.
   setTimeout(() => {
     const wrap = document.querySelector('#panel-fund .fund-list-wrap');
     if (wrap) wrap.scrollTop = 0;
-  }, 100);
+    if (typeof secgSelectSector === 'function') secgSelectSector(sectorName);
+  }, 120);
+}
+
+/* Focus a sub-sector node in the connections graph by display/raw name
+   (case-insensitive — the Sector Map title-cases names while the graph keys on
+   the raw sub_sector). Expands + remeasures the map band if it was collapsed so
+   the highlight is actually visible. No-op if the sector isn't a node under the
+   current profile lens. */
+function secgSelectSector(name){
+  const want = (name || '').trim().toLowerCase(); if (!want) return;
+  const key = Object.keys(_secgStats || {}).find(k => (k || '').toLowerCase() === want);
+  if (!key) return;
+  const map = document.getElementById('uni-map');
+  if (map && map.classList.contains('uni-map-collapsed')){
+    map.classList.remove('uni-map-collapsed');
+    const btn = document.getElementById('uni-map-toggle');
+    if (btn){ btn.textContent = 'Hide map ▲'; btn.setAttribute('aria-expanded', 'true'); }
+    const svg = document.querySelector('#sectors-grid .secg-svg');
+    if (svg && typeof secgMeasure === 'function') secgMeasure(svg);
+  }
+  _secgFocus = key;
+  if (typeof secgBloom === 'function')      secgBloom(key);
+  if (typeof secgApplyFocus === 'function') secgApplyFocus();
+  if (typeof secgRelabel === 'function')    secgRelabel();
+  if (typeof secgPaint === 'function')      secgPaint();
+  if (typeof secgKick === 'function')       secgKick();
 }
 
 function v2SyncUniverseTally(){
@@ -21219,8 +21251,11 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     if(!sectors.length){ slot.innerHTML=''; return; }
     const heatingName=sectors[0]&&sectors[0].score>=75?sectors[0].name:null;
     const scoreColor=sc=>sc>=70?'#0040c1':sc>=55?'#2970ff':'#94a3b8';
+    const heatColor=sc=>sc>=68?'#16a34a':sc>=60?'#84cc16':sc>=52?'#e0a000':'#94a3b8';
     const rows=sectors.slice(0,6).map(s=>{
       const tag=s.name===heatingName?'🔥':(s.score<55?'🥶':'');
+      // Heat dot (or 🔥/🥶 for the standouts) replaces the old empty grey pill.
+      const mark=tag?'<span class="sm-emoji">'+tag+'</span>':'<span class="sm-dot" style="background:'+heatColor(s.score)+'"></span>';
       const momCls=s.mom>=0?'up':'dn', momStr=(s.mom>=0?'+':'')+s.mom.toFixed(1)+'%';
       const lead=s.leaders[0];
       // Row opens the whole sub-sector basket (all names + breadth) in the
@@ -21228,7 +21263,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
       // Opportunities (which opens a single stock). The Top chip still jumps
       // straight to the leader for anyone who just wants the best name.
       return '<div class="sm-row" onclick="v2OpenSectorInUniverse(\''+escHTML(s.name)+'\')" title="See all '+s.count+' '+escHTML(s.name)+' names · led by '+escHTML(s.leaders.map(t=>t.ticker).join(', '))+'">'+
-        '<span class="sm-tag">'+tag+'</span>'+
+        '<span class="sm-tag">'+mark+'</span>'+
         '<span class="sm-main"><span class="sm-name">'+escHTML(s.name)+'</span><span class="sm-sub">'+s.count+' stocks</span></span>'+
         '<span class="sm-score" style="color:'+scoreColor(s.score)+'">'+s.score+'</span>'+
         '<span class="sm-mom '+momCls+'">'+momStr+'</span>'+
