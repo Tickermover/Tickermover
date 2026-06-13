@@ -1875,6 +1875,12 @@ body.sb-collapsed .v2-sb-collapse svg{transform:rotate(180deg)}
   border-radius:8px;flex-shrink:0;
 }
 .v2-sb-bottom #user-menu button:hover{color:#fca5a5!important;background:rgba(220,38,38,.12)!important}
+/* Align the user card to the same full width as the Investing-style pill:
+   float the sign-out arrow inside the card's right edge instead of stealing
+   a column beside it. */
+.v2-sb-bottom #user-menu{position:relative}
+.v2-sb-bottom #user-menu > div:first-child{padding-right:40px!important}
+.v2-sb-bottom #user-menu button{position:absolute;right:8px;top:50%;transform:translateY(-50%)}
 
 /* ── Content area — owns the desktop scroll; sidebar stays pinned ── */
 .v2-content{
@@ -6441,7 +6447,7 @@ html.v2-dark body.v2 .v2-sb-logo,body.v2 .v2-sb-logo{border-bottom:1px solid rgb
 html.v2-dark body.v2 .v2-sb-logo::before,body.v2 .v2-sb-logo::before{filter:drop-shadow(0 5px 14px rgba(41,112,255,.34))!important}
 
 /* Bottom user — premium card, pinned to the foot so it never clips */
-html.v2-dark body.v2 .v2-sb-bottom,body.v2 .v2-sb-bottom{border-top:1px solid rgba(9,9,9,.06);margin-top:auto;flex:none}
+html.v2-dark body.v2 .v2-sb-bottom,body.v2 .v2-sb-bottom{border-top:1px solid rgba(9,9,9,.06);margin-top:22px;flex:none}
 html.v2-dark body.v2 .v2-sb-bottom #user-menu > div:first-child,body.v2 .v2-sb-bottom #user-menu > div:first-child{
   background:linear-gradient(180deg,#ffffff,#f4f8ff)!important;border:1px solid rgba(9,9,9,.06)!important;border-radius:13px!important;
   box-shadow:0 1px 2px rgba(0,0,0,.05);transition:box-shadow .16s,border-color .16s}
