@@ -6338,8 +6338,11 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 #panel-hot .sm-lead-t{overflow:hidden;text-overflow:ellipsis}
 #panel-hot .sm-lead:hover{background:var(--blue-grad);color:#fff;border-color:transparent;box-shadow:0 6px 14px -5px rgba(41,112,255,.55);transform:translateY(-1px)}
 #panel-hot .sm-row.sm-hidden{display:none}
-#panel-hot .sm-more{margin-top:12px;font-size:11.5px;color:var(--primary);font-weight:700;cursor:pointer;text-align:center;padding:9px;border-radius:10px;background:var(--surf-2);border:1px solid var(--hair);transition:background .15s ease}
+#panel-hot .sm-foot{display:flex;align-items:center;gap:10px;margin-top:12px}
+#panel-hot .sm-more{flex:1;font-size:11.5px;color:var(--primary);font-weight:700;cursor:pointer;text-align:center;padding:9px;border-radius:10px;background:var(--surf-2);border:1px solid var(--hair);transition:background .15s ease}
 #panel-hot .sm-more:hover{background:var(--surf-3)}
+#panel-hot .sm-back{font-size:11.5px;color:var(--grey-2);font-weight:700;cursor:pointer;text-align:center;padding:9px 14px;border-radius:10px;background:var(--surf-2);border:1px solid var(--hair);white-space:nowrap;transition:background .15s ease}
+#panel-hot .sm-back:hover{background:var(--surf-3)}
 #panel-hot .sm-mom-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:8px}
 #panel-hot .sm-mom-name{font-weight:700;font-size:13.5px}
 #panel-hot .sm-mom-avg{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:12px}
@@ -15638,6 +15641,8 @@ function showTab(id, btn) {
   if (id === 'blog')  loadBlog();
   if (id === 'market') loadMarketAnalysis();
   if (id === 'events' && typeof eventsTab === 'function') eventsTab(_evSub || window._evTab || 'brief');
+  // Revert the Sector Map to its top 6 whenever tabs change.
+  if (typeof window._smResetWindow === 'function') window._smResetWindow();
 }
 
 /* ----------------------------------------------------------
@@ -21267,22 +21272,24 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeDrawer(); });
   })();
 
-  // Sector Map footer: reveal the next 6 sub-sectors per click; once all are
-  // shown, flip to "Show fewer" which collapses back to the top 6.
-  window._smShowMore=function(btn){
-    const card=btn.closest('.ts-card'); if(!card) return;
-    const hidden=Array.from(card.querySelectorAll('.sm-row.sm-hidden'));
-    if(hidden.length){
-      hidden.slice(0,6).forEach(r=>r.classList.remove('sm-hidden'));
-      const left=card.querySelectorAll('.sm-row.sm-hidden').length;
-      if(left>0){ btn.textContent='+ '+left+' more sub-sectors'; }
-      else { btn.textContent='Show fewer'; btn.classList.add('sm-less'); }
-    } else {
-      const rows=Array.from(card.querySelectorAll('.sm-row'));
-      rows.forEach((r,i)=>r.classList.toggle('sm-hidden', i>=6));
-      btn.textContent='+ '+(rows.length-6)+' more sub-sectors'; btn.classList.remove('sm-less');
-      const hdr=card.querySelector('.sm-header'); if(hdr) hdr.scrollIntoView({behavior:'smooth',block:'nearest'});
-    }
+  // Sector Map footer: a sliding window of 6 — paging swaps the visible 6 for
+  // the next/previous 6 (the box never grows). "Back to top" returns to page 0.
+  window._smPageTo=function(card,page){
+    if(!card) return;
+    const rows=Array.from(card.querySelectorAll('.sm-row'));
+    const total=rows.length, PAGE=6, pages=Math.max(1,Math.ceil(total/PAGE));
+    page=Math.max(0,Math.min(page,pages-1));
+    rows.forEach((r,i)=>r.classList.toggle('sm-hidden', !(i>=page*PAGE && i<page*PAGE+PAGE)));
+    card.dataset.smPage=page;
+    const more=card.querySelector('.sm-more'), back=card.querySelector('.sm-back');
+    const left=total-(page+1)*PAGE;
+    if(more){ more.style.display=left>0?'':'none'; if(left>0) more.textContent='+ '+left+' more sub-sectors'; }
+    if(back) back.style.display=page>0?'':'none';
+    const hdr=card.querySelector('.sm-header'); if(hdr) hdr.scrollIntoView({behavior:'smooth',block:'nearest'});
+  };
+  // Revert the Sector Map to its top window — called on every tab switch.
+  window._smResetWindow=function(){
+    const card=document.querySelector('#sectorsSlot .ts-card'); if(card) window._smPageTo(card,0);
   };
   /* ── sectors ── */
   function renderSectors(tickers){
@@ -21306,8 +21313,8 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     const heatingName=sectors[0]&&sectors[0].score>=75?sectors[0].name:null;
     const scoreColor=sc=>sc>=70?'#0040c1':sc>=55?'#2970ff':'#94a3b8';
     const heatColor=sc=>sc>=68?'#16a34a':sc>=60?'#84cc16':sc>=52?'#e0a000':'#94a3b8';
-    // Render every sector but keep all past the first 6 collapsed (sm-hidden);
-    // the footer button reveals the next 6 per click and flips to "Show fewer".
+    // Render every sector but show only a sliding window of 6 (sm-hidden hides
+    // the rest); the footer pages the window forward/back without growing the box.
     const PAGE=6;
     const rows=sectors.map((s,i)=>{
       const tag=s.name===heatingName?'🔥':(s.score<55?'🥶':'');
@@ -21327,10 +21334,16 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
         '<span class="sm-lead" onclick="event.stopPropagation();tsOpenDrawer(\''+escHTML(lead.ticker)+'\')" title="Open '+escHTML(lead.ticker)+' — top name in this sector">'+logoHTML(lead.ticker,'sm')+'<span class="sm-lead-t">'+escHTML(lead.ticker)+'</span></span>'+
       '</div>';
     }).join('');
-    const moreCount=sectors.length-PAGE;
-    slot.innerHTML='<div class="ts-card"><div class="ts-card-head"><div class="ts-card-title">🗺 Sector Map</div><div class="ts-card-sub">Strongest sub-sectors right now · tap a row for the basket, the ticker for its leader</div></div>'+
+    const total=sectors.length;
+    const footer = total>PAGE
+      ? '<div class="sm-foot">'+
+          '<span class="sm-back" style="display:none" onclick="window._smPageTo(this.closest(\'.ts-card\'),0)">↑ Back to top</span>'+
+          '<span class="sm-more" onclick="var c=this.closest(\'.ts-card\');window._smPageTo(c,(+c.dataset.smPage||0)+1)">+ '+(total-PAGE)+' more sub-sectors</span>'+
+        '</div>'
+      : '';
+    slot.innerHTML='<div class="ts-card" data-sm-page="0"><div class="ts-card-head"><div class="ts-card-title">🗺 Sector Map</div><div class="ts-card-sub">Strongest sub-sectors right now · tap a row for the basket, the ticker for its leader</div></div>'+
       '<div class="sm-header"><span></span><span>Sector</span><span style="text-align:right">Score</span><span style="text-align:right">Today</span><span style="text-align:right">Top</span></div>'+
-      rows+(moreCount>0?'<div class="sm-more" onclick="window._smShowMore(this)">+ '+moreCount+' more sub-sectors</div>':'')+'</div>';
+      rows+footer+'</div>';
   }
 
   function renderMovers(tickers){
