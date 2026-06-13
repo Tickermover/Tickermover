@@ -131,7 +131,7 @@ async def generate_compare_card(ticker: str, ticker_data: dict | None) -> dict:
         # back-to-back card generations.
         "system": [
             {"type": "text", "text": _compare_system(),
-             "cache_control": {"type": "ephemeral"}}
+             "cache_control": {"type": "ephemeral", "ttl": "1h"}}
         ],
         "tools": [
             # Reverted from web_search_20260209 (dynamic filtering): its code-

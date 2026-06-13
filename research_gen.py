@@ -181,7 +181,7 @@ async def generate_research(ticker: str, ticker_data: dict | None) -> dict:
         # back-to-back generations pay ~0.1× on it instead of full input price.
         "system": [
             {"type": "text", "text": _research_system(),
-             "cache_control": {"type": "ephemeral"}}
+             "cache_control": {"type": "ephemeral", "ttl": "1h"}}
         ],
         "tools": [
             # Each web search costs ~$0.01 regardless of model — cap tighter to
@@ -351,7 +351,7 @@ async def generate_overview(ticker: str, ticker_data: dict | None,
         # (e.g. a universe pre-warm) then pay ~0.1× on it.
         "system": [
             {"type": "text", "text": _overview_system(),
-             "cache_control": {"type": "ephemeral"}}
+             "cache_control": {"type": "ephemeral", "ttl": "1h"}}
         ],
         "messages": [{"role": "user", "content": _overview_user(ticker, t)}],
     }

@@ -195,7 +195,7 @@ async def _claude_answer(ticker, question, context_blocks, profile_data, user_id
     payload = {"model": ASK_MODEL, "max_tokens": 1500,
                "messages": [{"role": "user", "content": [
                    {"type": "text", "text": prefix,
-                    "cache_control": {"type": "ephemeral"}},
+                    "cache_control": {"type": "ephemeral", "ttl": "1h"}},
                    {"type": "text", "text": suffix},
                ]}]}
     headers = {"x-api-key": ANTHROPIC_KEY, "anthropic-version": "2023-06-01",

@@ -207,7 +207,7 @@ async def generate_sector_graph(sectors: list[str]) -> dict:
         "model": _MODEL,
         "max_tokens": 4000,
         "system": [
-            {"type": "text", "text": _system(), "cache_control": {"type": "ephemeral"}}
+            {"type": "text", "text": _system(), "cache_control": {"type": "ephemeral", "ttl": "1h"}}
         ],
         "messages": [{"role": "user", "content": _user(sectors)}],
     }

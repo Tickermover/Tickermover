@@ -141,7 +141,7 @@ async def _call(ticker: str, t: dict) -> dict:
         "model": _MODEL,
         "max_tokens": 900,
         "system": [
-            {"type": "text", "text": _SYSTEM, "cache_control": {"type": "ephemeral"}}
+            {"type": "text", "text": _SYSTEM, "cache_control": {"type": "ephemeral", "ttl": "1h"}}
         ],
         # Web search grounds the macro + catalyst reasons in real, recent info.
         # Capped to keep per-pick cost bounded (each search ~$0.01); cached
