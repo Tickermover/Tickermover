@@ -7657,6 +7657,46 @@ async def api_user_change_password(body: _ChangePwBody,
     return JSONResponse({"ok": True})
 
 
+# ── In-app feedback (idle prompt) ───────────────────────────────────────────
+class _FeedbackBody(BaseModel):
+    rating:  Optional[int] = None        # 1–5 emoji rating
+    topic:   Optional[str] = None        # chip: Picks / Speed / Pricing / …
+    message: Optional[str] = None
+    page:    Optional[str] = None        # document.title at submit time
+    path:    Optional[str] = None        # location.pathname + hash
+
+
+@app.post("/api/feedback")
+async def api_feedback(body: _FeedbackBody, request: Request,
+                       user: Optional[dict] = Depends(_current_user)):
+    """Record a piece of in-app feedback. Anonymous-friendly. Stored append-only
+    in the durable KV (app_kv, ns='feedback') under a unique per-submission key,
+    so it survives redeploys without needing a dedicated table."""
+    import time as _t
+    from kv_store import store as _kv
+    msg = (body.message or "").strip()
+    rating = body.rating if isinstance(body.rating, int) and 1 <= body.rating <= 5 else None
+    if not msg and rating is None:
+        raise HTTPException(status_code=400, detail="Feedback is empty.")
+    uid = (user or {}).get("user_id")
+    row = {
+        "rating":  rating,
+        "topic":   (body.topic or "")[:60],
+        "message": msg[:2000],
+        "page":    (body.page or "")[:120],
+        "path":    (body.path or "")[:200],
+        "user_id": uid,
+        "email":   (user or {}).get("email"),
+        "ua":      (request.headers.get("user-agent") or "")[:200],
+        "ts":      int(_t.time()),
+    }
+    try:
+        _kv.set("feedback", f"{uid or 'anon'}:{int(_t.time() * 1000)}", row)
+    except Exception as e:
+        logger.error(f"feedback save failed: {e}")
+    return JSONResponse({"ok": True})
+
+
 # ── Watchlist endpoints ─────────────────────────────────────────────────────────
 
 @app.get("/api/watchlist")
