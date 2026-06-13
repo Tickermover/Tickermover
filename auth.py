@@ -325,6 +325,22 @@ class SupabaseClient:
             "role":  resp.get("role", "authenticated"),
         }
 
+    async def get_user_full(self, access_token: str) -> Optional[dict]:
+        """One call to /auth/v1/user returning the fields the account panel
+        needs: email, email-verification status, and display name."""
+        if not self.enabled:
+            return None
+        resp = await self._get("/auth/v1/user", token=access_token)
+        if not isinstance(resp, dict) or resp.get("error") or not resp.get("id"):
+            return None
+        md = resp.get("user_metadata") if isinstance(resp.get("user_metadata"), dict) else {}
+        return {
+            "id":             resp["id"],
+            "email":          resp.get("email"),
+            "email_verified": bool(resp.get("email_confirmed_at") or resp.get("confirmed_at")),
+            "name":           md.get("name") or md.get("full_name") or md.get("display_name") or "",
+        }
+
     async def get_user_metadata(self, access_token: str) -> dict:
         """Return the user's Supabase user_metadata dict ({} on failure).
         Used for cross-device prefs (display name, risk profile, onboarded)."""

@@ -7616,6 +7616,47 @@ async def api_user_prefs_put(body: _UserPrefsBody,
     return JSONResponse({"ok": True, "updated": data})
 
 
+# ── Account panel: aggregate profile + change password ──────────────────────
+@app.get("/api/user/account")
+async def api_user_account(user: Optional[dict] = Depends(_current_user),
+                           creds: Optional[HTTPAuthorizationCredentials] = Depends(_bearer)):
+    """Everything the account/profile panel needs in one call: email +
+    verification status, display name, and plan/subscription."""
+    if not user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    full = await supabase.get_user_full(creds.credentials) or {}
+    sub = await supabase.get_subscription(creds.credentials, user["user_id"])
+    return JSONResponse({
+        "email":          full.get("email") or user.get("email"),
+        "email_verified": bool(full.get("email_verified")),
+        "name":           full.get("name", ""),
+        "plan":           sub.get("plan", "free"),
+        "status":         sub.get("status", "active"),
+        "valid_until":    sub.get("valid_until"),
+    })
+
+
+class _ChangePwBody(BaseModel):
+    new_password: str
+
+
+@app.post("/api/user/change-password")
+async def api_user_change_password(body: _ChangePwBody,
+                                   user: Optional[dict] = Depends(_current_user),
+                                   creds: Optional[HTTPAuthorizationCredentials] = Depends(_bearer)):
+    """Set a new password for the signed-in user (session-authenticated —
+    no email round-trip). Supabase PUT /auth/v1/user with the live token."""
+    if not user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    pw = body.new_password or ""
+    if len(pw) < 8:
+        raise HTTPException(status_code=400, detail="Password must be at least 8 characters.")
+    res = await supabase.update_password(creds.credentials, pw)
+    if not isinstance(res, dict) or res.get("error"):
+        raise HTTPException(status_code=400, detail=(res or {}).get("error", "Could not update password."))
+    return JSONResponse({"ok": True})
+
+
 # ── Watchlist endpoints ─────────────────────────────────────────────────────────
 
 @app.get("/api/watchlist")
