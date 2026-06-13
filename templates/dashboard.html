@@ -21015,12 +21015,19 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
   /* Supply Chain tab — web-grounded dependency / ripple-risk map (lazy, cached
      30d server-side). Reuses the global _ssxDepsHTML renderer (donut + list). */
   function paneSupplyChain(t){
-    const tk=((t&&t.ticker)||'this stock');
-    return '<div class="dr-deps"><div style="text-align:center;padding:32px 20px">'
-      +'<div style="font-size:28px;margin-bottom:10px">🔗</div>'
-      +'<div style="font-size:15px;font-weight:800;color:#0b1220;margin-bottom:6px">Supply chain &amp; ripple-risk map</div>'
-      +'<div style="font-size:12.5px;color:#6b7787;line-height:1.5;max-width:380px;margin:0 auto 16px">Web-grounded map of '+tk+'’s suppliers, customers &amp; concentration risk. First run ~10s, then cached 30 days (free for everyone after).</div>'
-      +'<button onclick="window._drRunSupplyChain&&window._drRunSupplyChain()" style="padding:10px 20px;border:none;border-radius:11px;background:linear-gradient(135deg,#2970ff,#0040c1);color:#fff;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 6px 16px -4px rgba(0,64,193,.45)">Run analysis →</button>'
+    // Blurred dummy skeleton of the map behind a "Run analysis" button — so the
+    // tab looks populated (not empty grey) without firing the paid web call.
+    const row=(w)=>'<div style="display:flex;align-items:center;gap:10px"><span style="width:8px;height:8px;border-radius:50%;background:#bcd0f5;flex:none"></span><span style="height:11px;border-radius:6px;background:#dde4ee;flex:1;max-width:'+w+'%"></span><span style="width:34px;height:11px;border-radius:6px;background:#e7ecf4;flex:none"></span></div>';
+    const skel='<div style="filter:blur(2.5px);opacity:.6;pointer-events:none;padding:20px 18px 4px">'
+      +'<div style="display:flex;gap:22px;align-items:center;margin-bottom:18px">'
+        +'<div style="width:128px;height:128px;border-radius:50%;background:conic-gradient(#cbd8ef 0 38%,#dde6f3 38% 66%,#e9eef7 66% 100%);flex:none;position:relative"><div style="position:absolute;inset:30px;border-radius:50%;background:#f3f6fb"></div></div>'
+        +'<div style="flex:1;min-width:170px;display:flex;flex-direction:column;gap:14px">'+row(85)+row(70)+row(78)+row(60)+'</div>'
+      +'</div>'
+      +'<div style="display:flex;flex-direction:column;gap:13px">'+row(90)+row(72)+row(80)+row(64)+row(76)+'</div>'
+    +'</div>';
+    return '<div class="dr-deps" style="position:relative;min-height:330px">'+skel
+      +'<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center">'
+      +'<button onclick="window._drRunSupplyChain&&window._drRunSupplyChain()" style="padding:11px 22px;border:none;border-radius:12px;background:linear-gradient(135deg,#2970ff,#0040c1);color:#fff;font-size:13.5px;font-weight:700;cursor:pointer;box-shadow:0 8px 22px -6px rgba(0,64,193,.55)">Run analysis →</button>'
       +'</div></div>';
   }
   function _loadSupplyChain(){
