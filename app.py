@@ -177,6 +177,7 @@ _universe_data:     list[dict] = []
 _last_full_refresh: float      = 0.0
 _daily_hot: list = []
 _daily_hot_date: str = ""
+_LIVE_NEWS_CACHE: dict = {"ts": 0.0, "payload": None}   # short TTL cache for /api/news/live
 _model_portfolio:   dict = {}   # persisted model watchlist with entry prices
 _refresh_lock:      asyncio.Lock | None = None   # created inside lifespan
 
@@ -4482,11 +4483,24 @@ async def api_candles(symbol: str, days: int = 130):
 # otherwise FastAPI matches "live" as a ticker symbol parameter.
 @app.get("/api/news/live")
 async def api_news_live():
-    """Fetch live news from Alpaca — called when AI Catalysts tab opens.
-    Strategy: try hot-list tickers first, fall back to general market news if empty.
+    """Fetch live news for the Hot-News panel.
+
+    Merges two providers so the feed spans more than one wire service:
+      • Alpaca  — Benzinga-sourced breaking headlines.
+      • FMP     — aggregated publishers incl. Seeking Alpha, Zacks, Motley Fool.
+    Results are de-duplicated by URL/headline, sorted newest-first, and cached
+    in-process for a few minutes so panel re-renders don't burn provider quota.
     """
+    import time as _time
     import httpx
-    from datetime import datetime as _dt
+    from datetime import datetime as _dt, timezone as _tz
+
+    # ── short TTL cache (panel re-renders on every dashboard render) ──
+    global _LIVE_NEWS_CACHE
+    now = _time.time()
+    cached = _LIVE_NEWS_CACHE.get("payload")
+    if cached and (now - _LIVE_NEWS_CACHE.get("ts", 0)) < 180:
+        return JSONResponse(cached)
 
     # Prefer hot-list tickers (most relevant), fall back to top universe tickers
     hot_tickers  = [t["ticker"] for t in _daily_hot if t.get("ticker")]
@@ -4498,13 +4512,13 @@ async def api_news_live():
         "APCA-API-SECRET-KEY": config.ALPACA_SECRET_KEY,
     }
 
-    async def _fetch(params: dict):
+    # ── Alpaca (Benzinga) ───────────────────────────────────────────
+    async def _fetch_alpaca(params: dict):
         async with httpx.AsyncClient(timeout=15) as client:
-            r = await client.get("https://data.alpaca.markets/v1beta1/news",
-                                 headers=headers, params=params)
-        return r
+            return await client.get("https://data.alpaca.markets/v1beta1/news",
+                                    headers=headers, params=params)
 
-    def _parse(raw_list):
+    def _parse_alpaca(raw_list):
         out = []
         for item in raw_list:
             syms = item.get("symbols") or []
@@ -4517,7 +4531,7 @@ async def api_news_live():
                 "headline": item.get("headline", ""),
                 "summary":  item.get("summary",  ""),
                 "url":      item.get("url", "#"),
-                "source":   item.get("source", ""),
+                "source":   item.get("source", "") or "Benzinga",
                 "author":   item.get("author", ""),
                 "ticker":   syms[0] if syms else "",
                 "symbols":  syms,
@@ -4526,25 +4540,75 @@ async def api_news_live():
             })
         return out
 
-    try:
-        # Pass 1: specific tickers
-        if ticker_batch:
-            resp = await _fetch({"symbols": ",".join(ticker_batch), "limit": 50, "sort": "desc"})
+    async def _gather_alpaca():
+        try:
+            if ticker_batch:
+                resp = await _fetch_alpaca({"symbols": ",".join(ticker_batch), "limit": 50, "sort": "desc"})
+                if resp.status_code == 200 and resp.json().get("news"):
+                    return _parse_alpaca(resp.json()["news"])
+            resp = await _fetch_alpaca({"limit": 50, "sort": "desc"})
             if resp.status_code == 200:
-                raw = resp.json().get("news", [])
-                if raw:
-                    news = _parse(raw)
-                    return JSONResponse({"news": news, "count": len(news), "source": "alpaca_tickers"})
+                return _parse_alpaca(resp.json().get("news", []))
+            logger.warning(f"Alpaca news returned {resp.status_code}: {resp.text[:160]}")
+        except Exception as exc:
+            logger.warning(f"Alpaca news fetch failed: {exc}")
+        return []
 
-        # Pass 2: general market news (no symbol filter)
-        resp = await _fetch({"limit": 50, "sort": "desc"})
-        if resp.status_code != 200:
-            logger.warning(f"Alpaca news (general) returned {resp.status_code}: {resp.text[:200]}")
-            return JSONResponse({"news": [], "source": "alpaca_error", "status": resp.status_code})
+    # ── FMP (Seeking Alpha, Zacks, Motley Fool, …) ──────────────────
+    async def _gather_fmp():
+        if not (config.FMP_API_KEY and ticker_batch):
+            return []
+        try:
+            params = {"symbols": ",".join(ticker_batch), "limit": 50, "apikey": config.FMP_API_KEY}
+            async with httpx.AsyncClient(timeout=15) as client:
+                r = await client.get("https://financialmodelingprep.com/stable/news/stock", params=params)
+            if r.status_code != 200:
+                logger.warning(f"FMP news returned {r.status_code}: {r.text[:160]}")
+                return []
+            out = []
+            for item in (r.json() or []):
+                sym = (item.get("symbol") or "").upper()
+                ts = 0
+                pub = item.get("publishedDate") or ""
+                try:
+                    # FMP timestamps are naive ("YYYY-MM-DD HH:MM:SS"); treat as UTC
+                    # so a slight offset can only age an item, never push it future.
+                    ts = int(_dt.fromisoformat(pub).replace(tzinfo=_tz.utc).timestamp())
+                except Exception:
+                    pass
+                out.append({
+                    "headline": item.get("title", ""),
+                    "summary":  (item.get("text") or "")[:280],
+                    "url":      item.get("url", "#"),
+                    "source":   item.get("publisher", "") or item.get("site", ""),
+                    "author":   "",
+                    "ticker":   sym,
+                    "symbols":  [sym] if sym else [],
+                    "datetime": ts,
+                    "sentiment": "neutral",
+                })
+            return out
+        except Exception as exc:
+            logger.warning(f"FMP news fetch failed: {exc}")
+            return []
 
-        raw  = resp.json().get("news", [])
-        news = _parse(raw)
-        return JSONResponse({"news": news, "count": len(news), "source": "alpaca_general"})
+    try:
+        alpaca_news, fmp_news = await asyncio.gather(_gather_alpaca(), _gather_fmp())
+
+        # Merge + de-dupe (same Benzinga story can arrive via both providers).
+        merged, seen = [], set()
+        for n in (alpaca_news + fmp_news):
+            url = (n.get("url") or "").strip().lower()
+            key = url if (url and url != "#") else (n.get("headline") or "").strip().lower()[:80]
+            if not key or key in seen:
+                continue
+            seen.add(key)
+            merged.append(n)
+        merged.sort(key=lambda n: n.get("datetime", 0), reverse=True)
+
+        payload = {"news": merged, "count": len(merged), "source": "alpaca+fmp"}
+        _LIVE_NEWS_CACHE = {"ts": now, "payload": payload}
+        return JSONResponse(payload)
     except Exception as exc:
         logger.error(f"Live news fetch failed: {exc}")
         return JSONResponse({"news": [], "source": "error", "error": str(exc)})

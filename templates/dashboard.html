@@ -6357,6 +6357,7 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 #panel-hot .news-item{display:flex;align-items:center;gap:10px;padding:8px 6px;border-radius:9px;cursor:pointer}
 #panel-hot .tl-item:hover,
 #panel-hot .news-item:hover{background:var(--surf-3)}
+#panel-hot .news-link:hover .news-head{text-decoration:underline;text-decoration-color:#cbd5e1;text-underline-offset:2px}
 #panel-hot .tl-date{font-family:'JetBrains Mono',monospace;text-align:center;font-size:9.5px;color:var(--grey);min-width:30px;line-height:1.15}
 #panel-hot .tl-date strong{display:block;font-size:14px;color:var(--ink)}
 #panel-hot .tl-body{min-width:0}
@@ -21376,6 +21377,8 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     }));
   }
 
+  // Open a Hot-News card's source article in a new tab (noopener for safety).
+  window._tsOpenNews=function(el){ const u=el&&el.getAttribute('data-url'); if(u&&u!=='#') window.open(u,'_blank','noopener'); };
   function renderNews(){
     const slot=document.getElementById('newsSlot'); if(!slot) return;
     slot.innerHTML='<div class="ts-card"><div class="ts-card-head"><div class="ts-card-title">📰 Hot News today</div><div class="ts-card-sub">Headlines moving names on our radar</div></div><div id="tsNewsInner"><div class="news-loading">Loading headlines…</div></div></div>';
@@ -21393,8 +21396,11 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
       filtered.sort((a,b)=>(b.datetime||0)-(a.datetime||0)); const items=filtered.slice(0,4);
       if(!items.length){ inner.innerHTML='<div class="news-loading">No headlines for tracked names in the last few hours.</div>'; return; }
       const ago=ts=>{ if(!ts)return''; const s=Math.max(0,Math.floor(Date.now()/1000-ts)); return s<60?s+'s ago':s<3600?Math.floor(s/60)+'m ago':s<86400?Math.floor(s/3600)+'h ago':Math.floor(s/86400)+'d ago'; };
-      inner.innerHTML=items.map(n=>{ const tic=(n.ticker||'').toUpperCase(), head=(n.headline||'').slice(0,130), src=(n.source||'').slice(0,24), a=ago(n.datetime);
-        return '<div class="news-item" onclick="event.stopPropagation();tsOpenDrawer(\''+escHTML(tic)+'\')">'+(tic?logoHTML(tic,'sm'):'')+
+      // Whole card opens the source article in a new tab; the logo still opens
+      // the stock drawer (stopPropagation) for anyone who wants the name instead.
+      inner.innerHTML=items.map(n=>{ const tic=(n.ticker||'').toUpperCase(), head=(n.headline||'').slice(0,130), src=(n.source||'').slice(0,24), a=ago(n.datetime), url=(n.url||'').trim();
+        const logo=tic?'<span onclick="event.stopPropagation();tsOpenDrawer(\''+escHTML(tic)+'\')" style="cursor:pointer">'+logoHTML(tic,'sm')+'</span>':'';
+        return '<div class="news-item'+(url&&url!=='#'?' news-link':'')+'" data-url="'+escHTML(url)+'" onclick="window._tsOpenNews(this)">'+logo+
           '<div class="news-body">'+(tic?'<span class="news-tic">'+escHTML(tic)+'</span>':'')+'<div class="news-head">'+escHTML(head)+'</div><div class="news-meta">'+escHTML(src)+(src&&a?' · ':'')+escHTML(a)+'</div></div></div>';
       }).join('');
     } catch(e){ inner.innerHTML='<div class="news-loading">News feed unavailable in this run (needs server keys).</div>'; }
