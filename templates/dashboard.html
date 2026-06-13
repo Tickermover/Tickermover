@@ -1167,7 +1167,8 @@ table.ssx-h2h tbody td.self{color:var(--ink);font-weight:600}
   #model-portfolio-root [style*="repeat(auto-fit,minmax(120px,1fr))"]{
     grid-template-columns:repeat(2,1fr)!important;gap:8px!important}
   #model-portfolio-root [style*="repeat(auto-fill,minmax(280px,1fr))"],
-  #model-portfolio-root [style*="repeat(auto-fill,minmax(260px,1fr))"]{
+  #model-portfolio-root [style*="repeat(auto-fill,minmax(260px,1fr))"],
+  #model-portfolio-root [style*="repeat(2,minmax(0,1fr))"]{
     grid-template-columns:1fr!important}
 
   /* ── PRICE-TARGET-ROW ── wrap to 2-up on phone (was 4-up cramped) ── */
@@ -15794,7 +15795,7 @@ function renderModelPortfolio(data) {
   // ── STOCK CARDS ────────────────────────────────────────────────────
   // auto-fill: 4-up on desktop, 3-up on laptop, 2-up on tablet, 1-up on phone (forced via mobile CSS)
   const cardsHTML = `
-  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px">
+  <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px">
     ${picks.map(p => {
       // ── Always pull LIVE data for consistency with all other modules ──
       const live      = _allTickerData[p.ticker] || {};
