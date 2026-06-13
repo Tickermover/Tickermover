@@ -7671,6 +7671,70 @@ async def api_admin_usage(limit: int = 20000,
     return JSONResponse(usage_log.store.summary(limit=limit))
 
 
+@app.get("/api/admin/cache-health")
+async def api_cache_health(user: Optional[dict] = Depends(_current_user),
+                           creds: Optional[HTTPAuthorizationCredentials] = Depends(_bearer)):
+    """Live 'is the flat-cost guarantee intact?' check. Probes every durable
+    cache table for reachability + how many tickers are cached, and reports
+    whether the data-layer Volume is persistent. Allow-list gated."""
+    if not user or (user.get("email") or "").lower() not in _AI_ALLOW:
+        raise HTTPException(status_code=403, detail="Admin only.")
+    import httpx
+    from config import SUPABASE_URL, SUPABASE_SERVICE_KEY, SUPABASE_ANON_KEY, CACHE_DISK_FILE
+    url = (SUPABASE_URL or "").rstrip("/")
+    key = SUPABASE_SERVICE_KEY or SUPABASE_ANON_KEY or ""
+    supa = bool(url and key)
+    hdr = {"apikey": key, "Authorization": f"Bearer {key}"}
+
+    def _probe(table: str, extra: dict | None = None) -> dict:
+        out: dict = {"reachable": False, "count": None}
+        if not supa:
+            return out
+        params = {"select": "*", "limit": "1"}
+        if extra:
+            params.update(extra)
+        try:
+            with httpx.Client(timeout=6) as c:
+                r = c.get(f"{url}/rest/v1/{table}",
+                          headers={**hdr, "Prefer": "count=exact"}, params=params)
+            if r.status_code in (200, 206):
+                out["reachable"] = True
+                cr = r.headers.get("content-range", "")
+                tail = cr.split("/")[-1] if "/" in cr else ""
+                out["count"] = int(tail) if tail.isdigit() else None
+            else:
+                out["status"] = r.status_code
+        except Exception as e:
+            out["error"] = str(e)[:120]
+        return out
+
+    tables = {t: _probe(t) for t in
+              ("stock_overview", "stock_research", "stock_compare", "desk_report", "app_kv", "usage")}
+    ns_counts = {ns: _probe("app_kv", {"ns": f"eq.{ns}"}).get("count")
+                 for ns in ("why_today_v4", "sector_graph", "dependencies", "feedback", "insider", "pdf_narrative")}
+
+    disk = CACHE_DISK_FILE or ""
+    volume_persistent = bool(disk) and not disk.startswith("output")
+    overview_ok = tables["stock_overview"]["reachable"]
+    intact = bool(supa and overview_ok and volume_persistent)
+
+    return JSONResponse({
+        "flat_cost_guarantee_intact": intact,
+        "supabase_configured": supa,
+        "overview_cached_tickers": tables["stock_overview"]["count"],
+        "tables": tables,
+        "app_kv_namespaces": ns_counts,
+        "data_cache_disk_file": disk,
+        "data_volume_persistent": volume_persistent,
+        "notes": [
+            "intact = Supabase configured AND stock_overview reachable AND data volume persistent.",
+            "A table with reachable=false re-bills its cache (the same stock) after every redeploy — create it (see _CACHE_TABLE_SQL / store docstrings).",
+            "data_volume_persistent=false → the FREE FMP/SEC/candles layer re-fetches the universe on each deploy (no AI cost, but heavy HTTP). Mount a Railway Volume at /data and set CACHE_DISK_FILE=/data/cache_v5.json.",
+            "overview_cached_tickers is your fixed-cost ledger: distinct stocks already paid-for this 30-day window (served free to everyone).",
+        ],
+    })
+
+
 # ── In-app feedback (idle prompt) ───────────────────────────────────────────
 class _FeedbackBody(BaseModel):
     rating:  Optional[int] = None        # 1–5 emoji rating
