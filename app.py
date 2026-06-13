@@ -7735,6 +7735,44 @@ async def api_cache_health(user: Optional[dict] = Depends(_current_user),
     })
 
 
+@app.get("/api/admin/overview-list")
+async def api_overview_list(user: Optional[dict] = Depends(_current_user),
+                            creds: Optional[HTTPAuthorizationCredentials] = Depends(_bearer)):
+    """The actual list of stocks whose AI Overview is currently cached (the
+    'fixed-cost ledger'), newest first, with when it was generated and which
+    model paid for it. Allow-list gated."""
+    if not user or (user.get("email") or "").lower() not in _AI_ALLOW:
+        raise HTTPException(status_code=403, detail="Admin only.")
+    import httpx
+    from overview_store import store as _ov
+    from config import SUPABASE_URL, SUPABASE_SERVICE_KEY, SUPABASE_ANON_KEY
+    url = (SUPABASE_URL or "").rstrip("/")
+    key = SUPABASE_SERVICE_KEY or SUPABASE_ANON_KEY or ""
+    if not (url and key):
+        return JSONResponse({"count": 0, "tickers": [], "detail": "Supabase not configured"})
+    rows = []
+    try:
+        with httpx.Client(timeout=8) as c:
+            r = c.get(f"{url}/rest/v1/stock_overview",
+                      headers={"apikey": key, "Authorization": f"Bearer {key}"},
+                      params={"env_id": f"eq.{_ov.env_id}",
+                              "select": "ticker,generated_at,model,status",
+                              "order": "generated_at.desc", "limit": "1000"})
+            if r.status_code == 200:
+                rows = r.json()
+    except Exception as e:
+        return JSONResponse({"count": 0, "tickers": [], "error": str(e)[:120]})
+    tickers = [x.get("ticker") for x in rows if x.get("ticker")]
+    premium = sum(1 for x in rows if "opus" in (x.get("model") or "").lower())
+    return JSONResponse({
+        "count": len(tickers),
+        "premium_opus": premium,
+        "standard_sonnet": len(tickers) - premium,
+        "tickers": tickers,
+        "rows": rows,
+    })
+
+
 # ── In-app feedback (idle prompt) ───────────────────────────────────────────
 class _FeedbackBody(BaseModel):
     rating:  Optional[int] = None        # 1–5 emoji rating
