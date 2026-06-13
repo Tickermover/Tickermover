@@ -2810,17 +2810,36 @@ body.v2-featured-only #fund-tbody tr.fund-row:not([data-featured]){display:none!
    rules and typography carries the hierarchy. */
 .v2-mp-card{
   position:relative;background:#fff;
-  border:1px solid #ebeef3;border-radius:16px;
-  padding:18px 19px 17px;cursor:pointer;
+  border:1px solid #e9edf3;border-radius:20px;
+  padding:21px 22px 19px;cursor:pointer;
   transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease;
   display:flex;flex-direction:column;
   box-shadow:0 1px 2px rgba(15,40,100,.04);
 }
-.v2-mp-card:hover{transform:translateY(-2px);border-color:#d6deea;
-  box-shadow:0 14px 32px -20px rgba(15,40,100,.28)!important}
+.v2-mp-card:hover{transform:translateY(-3px);border-color:#d6deea;
+  box-shadow:0 22px 44px -24px rgba(15,40,100,.32)!important}
 
 /* hairline section divider */
-.v2-mp-rule{height:1px;background:#eef1f5;margin:14px 0}
+.v2-mp-rule{height:1px;background:#eef1f5;margin:15px 0}
+
+/* sector sub-line under the company name (replaces the duplicate date —
+   the date now lives in the 'Why we bought it' eyebrow) */
+.v2-mp-sub{font-size:11px;color:#6b7787;font-weight:600;margin-top:3px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* footer metric strip — aligned label/value columns, thin dividers */
+.v2-mp-stats{display:flex;margin-top:16px;padding-top:15px;border-top:1px solid #eef1f5}
+.v2-mp-stat{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px;
+  padding-left:15px;border-left:1px solid #eef1f5}
+.v2-mp-stat:first-child{padding-left:0;border-left:none}
+.v2-mp-stat-k{font-size:8.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;
+  color:#9aa6b6;font-family:'JetBrains Mono','SFMono-Regular',ui-monospace,monospace;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.v2-mp-stat-v{font-size:16px;font-weight:800;color:#0b1220;letter-spacing:-.01em;
+  font-variant-numeric:tabular-nums;font-family:'JetBrains Mono','SFMono-Regular',ui-monospace,monospace}
+.v2-mp-stat-v.up{color:#15803d}
+.v2-mp-stat-v.down{color:#dc2626}
+.v2-mp-stat-v.txt{font-family:inherit;font-size:13.5px;font-weight:700;color:#0040c1}
 
 /* ── Header ── */
 .v2-mp-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
@@ -15783,14 +15802,21 @@ function renderModelPortfolio(data) {
              <div class="v2-mp-perf-sub">Entry <strong>${fmtP(entryPrc)}</strong> <span class="v2-mp-arrow">→</span> Now <strong class="v2-mp-perf-now">${fmtP(curPrice)}</strong></div>
            </div>`;
 
-      // Upside — inline text (no pill), only when populated and meaningful.
-      const upChip = (() => {
+      // Footer metric strip — Alpha score · analyst upside · entry tier.
+      // Aligned mini-metrics (label over value) instead of a scattered
+      // dot-separated line; degrades gracefully when a field is missing.
+      const statsHTML = (() => {
+        const items = [['Alpha score', String(Math.round(curPop)), '']];
         const up = targetUpside != null ? +targetUpside : null;
-        if (up == null) return '';
-        if (up > 0) {
-          return `<span class="v2-mp-sep"></span><span class="v2-mp-up" title="Wall St analyst 12-month consensus target — sourced from FMP. NOT AlphaHunt's forecast.">+${up.toFixed(1)}% target</span>`;
+        if (up != null) {
+          items.push(['Analyst upside', (up >= 0 ? '+' : '') + up.toFixed(1) + '%',
+                      up >= 0 ? 'up' : 'down']);
         }
-        return `<span class="v2-mp-sep"></span><span class="v2-mp-up" title="Stock has rallied past Wall St's consensus target.">Above target</span>`;
+        const tierName = {1:'Premium', 2:'Strong', 3:'Eligible'}[p.entry_tier];
+        if (tierName) items.push(['Tier', tierName, 'txt']);
+        return items.map(([k, v, c]) =>
+          `<div class="v2-mp-stat"><span class="v2-mp-stat-k">${k}</span><span class="v2-mp-stat-v ${c}">${v}</span></div>`
+        ).join('');
       })();
 
       // Decision line — only when it carries actionable info (exit
@@ -15824,7 +15850,7 @@ function renderModelPortfolio(data) {
                 ${newBadge}
               </div>
               <div class="v2-mp-name">${p.name}</div>
-              <div class="v2-mp-since" title="${heldStr ? heldStr : ''}">${sinceLabel} <strong>${addedFmt}</strong></div>
+              ${p.sub_sector ? `<div class="v2-mp-sub">${p.sub_sector}</div>` : ''}
             </div>
           </div>
           <div class="v2-mp-price">
@@ -15844,13 +15870,7 @@ function renderModelPortfolio(data) {
 
         ${perfBlock}
 
-        <div class="v2-mp-rule"></div>
-
-        <div class="v2-mp-meta-row">
-          <span class="v2-mp-alpha" title="Alpha Score · model conviction (0–100)">ALPHA <b>${Math.round(curPop)}</b></span>
-          ${p.sub_sector ? `<span class="v2-mp-sep"></span><span class="v2-mp-sector">${p.sub_sector}</span>` : ''}
-          ${upChip}
-        </div>
+        <div class="v2-mp-stats">${statsHTML}</div>
 
         ${decisionBlock}
       </div>`;
