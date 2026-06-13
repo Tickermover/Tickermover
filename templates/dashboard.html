@@ -950,13 +950,24 @@ table.ssx-h2h tbody td.self{color:var(--ink);font-weight:600}
 .empty{text-align:center;padding:60px 20px;color:var(--muted)}
 .empty .emoji{font-size:48px;margin-bottom:12px}
 .loading{text-align:center;padding:40px 20px;color:var(--muted);font-size:14px}
-/* Count-up timer loader — used wherever AI work runs, instead of "(first load ~10s)" copy. */
-.tl-load{display:flex;align-items:center;justify-content:center;gap:13px;padding:26px 16px}
-.tl-load .tl-spin{width:22px;height:22px;border-radius:50%;flex:none;border:2.5px solid rgba(41,112,255,.18);border-top-color:var(--primary,#2970ff);animation:tl-spin .8s linear infinite}
-.tl-load .tl-text{display:flex;flex-direction:column;gap:3px;line-height:1.3;text-align:left}
-.tl-load .tl-label{font-size:13px;font-weight:600;color:#334155}
-.tl-load .tl-time{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:var(--primary,#2970ff);font-variant-numeric:tabular-nums;letter-spacing:.02em}
-@keyframes tl-spin{to{transform:rotate(360deg)}}
+/* Modern animated loader — used wherever AI work runs (no time estimates). */
+.ldr{display:flex;flex-direction:column;gap:13px;padding:26px 18px;max-width:430px;margin:0 auto}
+.ldr-row{display:flex;align-items:center;gap:11px}
+.ldr-orb{position:relative;width:20px;height:20px;border-radius:50%;flex:none;
+  background:conic-gradient(from 0deg,#2970ff,#7c5cff,#22c55e,#2970ff);animation:ldr-spin 1s linear infinite}
+.ldr-orb::after{content:'';position:absolute;inset:3px;border-radius:50%;background:#fff}
+.ldr-label{font-size:13px;font-weight:600;color:#334155;line-height:1.35;display:inline-flex;align-items:baseline}
+.ldr-dots{display:inline-flex;gap:3px;margin-left:3px}
+.ldr-dots i{width:3px;height:3px;border-radius:50%;background:currentColor;opacity:.25;animation:ldr-dot 1.05s infinite}
+.ldr-dots i:nth-child(2){animation-delay:.15s}
+.ldr-dots i:nth-child(3){animation-delay:.3s}
+.ldr-bar{position:relative;height:4px;border-radius:99px;background:rgba(41,112,255,.12);overflow:hidden}
+.ldr-bar span{position:absolute;top:0;left:0;height:100%;width:38%;border-radius:99px;
+  background:linear-gradient(90deg,rgba(41,112,255,0),#2970ff 35%,#7c5cff 70%,rgba(124,92,255,0));animation:ldr-slide 1.25s cubic-bezier(.4,0,.2,1) infinite}
+@keyframes ldr-spin{to{transform:rotate(360deg)}}
+@keyframes ldr-dot{0%,100%{opacity:.25;transform:translateY(0)}50%{opacity:1;transform:translateY(-2px)}}
+@keyframes ldr-slide{0%{left:-38%}100%{left:100%}}
+@media(prefers-reduced-motion:reduce){.ldr-orb,.ldr-dots i,.ldr-bar span{animation-duration:2.4s}}
 
 ::-webkit-scrollbar{width:5px;height:5px}
 ::-webkit-scrollbar-track{background:var(--bg)}
@@ -9757,30 +9768,26 @@ document.addEventListener('keydown', (e) => {
 
 // Shared detail loader — fetch a structured summary and render it in the
 // premium shell. `endpoint` + `opts` (eyebrow/back handler) pick the feature.
-/* Count-up loading indicator. Replaces hardcoded "(first load ~10s)" copy with
-   a live timer so the wait feels measured. Renders into `host` (element or
-   selector) and self-clears its interval once the node leaves the DOM — i.e.
-   when results replace the loader. */
-window.startTimerLoader = function(host, label){
+/* Modern animated loader for AI/web-grounded waits — a spinning gradient orb, an
+   animated ellipsis, and an indeterminate gradient progress bar. No time copy.
+   Renders into `host` (element or selector); CSS animations need no JS upkeep,
+   so it simply vanishes when results replace the node. */
+window.showLoader = function(host, label){
   const el = (typeof host === 'string') ? document.querySelector(host) : host;
   if (!el) return;
+  // Strip any trailing ellipsis — the animated dots supply the motion.
+  const text = String(label || 'Working').replace(/[…\.]+\s*$/, '');
   el.innerHTML =
-    '<div class="tl-load">' +
-      '<span class="tl-spin"></span>' +
-      '<div class="tl-text">' +
-        '<span class="tl-label">' + (label || 'Working…') + '</span>' +
-        '<span class="tl-time">0.0s</span>' +
+    '<div class="ldr">' +
+      '<div class="ldr-row">' +
+        '<span class="ldr-orb"></span>' +
+        '<span class="ldr-label">' + text + '<span class="ldr-dots"><i></i><i></i><i></i></span></span>' +
       '</div>' +
+      '<div class="ldr-bar"><span></span></div>' +
     '</div>';
-  const timeEl = el.querySelector('.tl-time');
-  const t0 = performance.now();
-  const tick = () => {
-    if (!timeEl || !timeEl.isConnected){ clearInterval(iv); return; }
-    timeEl.textContent = ((performance.now() - t0) / 1000).toFixed(1) + 's';
-  };
-  const iv = setInterval(tick, 100);
-  tick();
 };
+// Back-compat alias for older call sites.
+window.startTimerLoader = window.showLoader;
 
 async function v2OpenDetail(ticker, cfg){
   if (!ticker) return;
