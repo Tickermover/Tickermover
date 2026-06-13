@@ -25,12 +25,16 @@ from kv_store import store as _kv
 logger = logging.getLogger(__name__)
 
 _KEY = os.environ.get("ANTHROPIC_API_KEY", "").strip()
-# Cheapest tier — this is one short sentence grounded in numbers we supply.
+# Top Hunts is the best-of-the-best shortlist, so the selection rationale gets
+# the premium Opus tier (not Haiku). Bounded + cached: one Opus call per pick,
+# ever (durable app_kv), so cost stays ~one-time per name.
 _MODEL = (
     os.environ.get("ANTHROPIC_WHY_MODEL")
-    or "claude-haiku-4-5-20251001"
+    or "claude-opus-4-8"
 ).strip()
-_NS = "why_today"
+# v2 namespace: abandons the older Haiku-generated cache so every pick
+# regenerates once on the upgraded Opus prompt.
+_NS = "why_today_v2"
 
 _PILLAR_LABELS = {
     "momentum": "Momentum",
@@ -42,17 +46,22 @@ _PILLAR_LABELS = {
 }
 
 _SYSTEM = (
-    "You are the analyst voice of AlphaHunt, a quantitative US-stock research tool. "
-    "Write ONE sentence (18–34 words) explaining WHY a stock was added to our "
-    "'Top Hunts' tracker today, for a retail investor skimming a card.\n"
+    "You are the lead analyst voice of AlphaHunt's 'Top Hunts' — our shortlist of "
+    "the strongest stock setups our quantitative scan surfaces right now (the "
+    "best-of-the-best, screened for the highest-conviction near-term opportunities). "
+    "For ONE stock, write 1–2 sentences (max ~44 words) explaining WHY it earned a "
+    "place on this list today, for a retail investor skimming a card.\n"
     "RULES:\n"
     "- Ground every claim in the FACTOR PROFILE provided. Do NOT invent prices, "
     "targets, dates, or figures not given.\n"
-    "- Lead with the single strongest reason (the standout pillar(s) or the edge).\n"
-    "- Plain English, confident but factual. No hype words ('skyrocket', 'explode').\n"
-    "- OBSERVATIONAL, not advice: describe what the scan flagged. Never write "
+    "- Lead with the single strongest edge — what sets this name apart from the "
+    "rest of the universe (the standout pillar(s), the catalyst, the quality).\n"
+    "- Confident, premium, plain English. No hype words ('skyrocket', 'explode'); "
+    "no emoji; no markdown.\n"
+    "- This is a research signal, NOT advice: describe what the scan sees. Never "
+    "promise or imply returns, never name a timeframe for gains, and never write "
     "'buy', 'sell', 'must own', or a price target.\n"
-    "- No preamble, no quotes, no markdown. Output only the sentence."
+    "- No preamble, no quotes. Output only the sentence(s)."
 )
 
 
@@ -99,7 +108,7 @@ def _profile_block(t: dict) -> str:
 async def _call(ticker: str, t: dict) -> str:
     body = {
         "model": _MODEL,
-        "max_tokens": 160,
+        "max_tokens": 220,
         "system": [
             {"type": "text", "text": _SYSTEM, "cache_control": {"type": "ephemeral"}}
         ],

@@ -3010,15 +3010,13 @@ body.v2-featured-only #fund-tbody tr.fund-row:not([data-featured]){display:none!
 .v2-mp-gauge-w{font-size:12px;font-weight:800;letter-spacing:-.01em}
 .v2-mp-spark{margin-top:15px;height:34px}
 .v2-mp-spark-svg{width:100%;height:34px;display:block}
-/* AI 'why' forecast footer (gradient icon tile + label + sentence) */
-.v2-mp-ai{display:flex;gap:11px;align-items:flex-start;margin-top:15px;padding-top:15px;border-top:1px solid #eef1f5}
+/* 'Why we bought it' — editorial callout (left accent rail, clean eyebrow).
+   Presented as analyst reasoning, NOT flagged as AI output. */
+.v2-mp-ai{margin-top:16px;padding:2px 0 2px 14px;border-left:3px solid rgba(41,112,255,.55)}
 .v2-mp-ai.is-hidden{display:none}
-.v2-mp-ai-ico{width:25px;height:25px;border-radius:8px;background:linear-gradient(135deg,#2970ff,#0040c1);color:#fff;
-  display:grid;place-items:center;font-size:12px;line-height:1;flex-shrink:0;box-shadow:0 3px 8px -2px rgba(0,64,193,.4)}
-.v2-mp-ai-txt{flex:1;min-width:0}
-.v2-mp-ai-k{font-size:8.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#2970ff;margin-bottom:5px;
+.v2-mp-ai-k{font-size:8.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#94a3b8;margin-bottom:7px;
   font-family:'JetBrains Mono','SFMono-Regular',ui-monospace,monospace}
-.v2-mp-ai .v2-mp-why-body{font-size:12.5px;line-height:1.5;color:#3f4a5a;font-weight:500}
+.v2-mp-ai .v2-mp-why-body{font-size:13px;line-height:1.55;color:#243244;font-weight:500}
 
 /* ───── Tracker chart (Top Hunts vs SPY vs QQQ) ───── */
 /* ── Premium tracker chart (May 22 2026 — dark hero card with glowing line) ──
@@ -15765,7 +15763,7 @@ function renderModelPortfolio(data) {
   // ── TRACKER CHART is the premium hero of the page (the stats box was
   //    redundant with the chart, esp. with few holdings — removed). ──
   const headerHTML = `
-  <div style="margin-bottom:14px">
+  <div style="margin-bottom:30px">
     ${concentrationWarning}
     <div id="v2-tracker-chart-slot" style="min-height:260px"></div>
   </div>`;
@@ -16040,11 +16038,8 @@ function renderModelPortfolio(data) {
         <div class="v2-mp-spark" data-spark-ticker="${p.ticker}" data-pos="${pos?1:0}">${sparkInner}</div>
 
         <div class="v2-mp-ai is-hidden" data-why-ticker="${p.ticker}">
-          <div class="v2-mp-ai-ico">✦</div>
-          <div class="v2-mp-ai-txt">
-            <div class="v2-mp-ai-k">AI · Why we bought it · ${addedFmt}</div>
-            <div class="v2-mp-why-body"><span class="v2-mp-why-skel"></span><span class="v2-mp-why-skel s2"></span></div>
-          </div>
+          <div class="v2-mp-ai-k">Why we bought it · ${addedFmt}</div>
+          <div class="v2-mp-why-body"><span class="v2-mp-why-skel"></span><span class="v2-mp-why-skel s2"></span></div>
         </div>
 
         ${decisionBlock}
