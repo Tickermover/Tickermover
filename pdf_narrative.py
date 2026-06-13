@@ -13,7 +13,7 @@ Input sources combined:
       from SEC EDGAR — see event_intel.py)
 
 The output gets rendered as page 2 of the PDF tear sheet. Cached
-in-process for 7 days per ticker so repeat downloads stay instant.
+in-process for 30 days per ticker so repeat downloads stay instant.
 
 Cost: ~$0.003 / call (Haiku 4.5 — 8k input, 700 output).
 """
@@ -37,7 +37,7 @@ _ANTHROPIC_TIMEOUT = 22.0
 # event_summaries Supabase row (re-fetched by the caller), which gates
 # what we send to Haiku.
 _CACHE: dict[str, tuple[float, dict]] = {}
-_CACHE_TTL = 7 * 24 * 3600   # 7 days
+_CACHE_TTL = 30 * 24 * 3600   # 30 days
 
 
 _PROMPT = """You are an equity analyst writing the narrative section of an analyst

@@ -584,8 +584,8 @@ def _check_research_caches() -> None:
 # ── Curated Overview pre-warm ──────────────────────────────────────────
 # Keeps the curated set's Overviews fresh in the durable store so heavy users
 # never trigger a cold (slow + paid) model generation on first view. Cheap: only
-# regenerates names that are aging out (refresh-ahead 1 day before the 7-day TTL).
-_OVERVIEW_PREWARM_AGE = 6 * 24 * 3600     # refresh when older than 6 days
+# regenerates names that are aging out (refresh-ahead 1 day before the 30-day TTL).
+_OVERVIEW_PREWARM_AGE = 29 * 24 * 3600    # refresh when older than 29 days
 
 
 def _overview_age_s(doc: dict | None) -> float:
@@ -618,7 +618,7 @@ async def _prewarm_one_overview(sym: str) -> bool:
         out = await research_gen.generate_overview(sym, target, premium=_is_premium_overview(sym))
         out.setdefault("status", "ready")
         _ovstore.save(sym, out)
-        cache.set("overview:" + sym, out, ttl=604800)
+        cache.set("overview:" + sym, out, ttl=2592000)   # 30 days
         return True
     except Exception as exc:
         logger.warning(f"overview pre-warm {sym} failed: {exc}")
@@ -627,7 +627,7 @@ async def _prewarm_one_overview(sym: str) -> bool:
 
 async def _overview_prewarm() -> None:
     """Background loop: keep the curated ~35 Overviews warm. Runs ~every 6h; most
-    cycles do nothing because the 7-day cache is still fresh."""
+    cycles do nothing because the 30-day cache is still fresh."""
     import research_gen
     await asyncio.sleep(150)               # let the universe + featured set load first
     while True:
@@ -4097,7 +4097,7 @@ async def api_overview(ticker: str, force: bool = False,
         if (doc and doc.get("status") == "ready" and doc.get("markdown")
                 and not _ovstore.is_stale(doc)):
             out = _from_doc(doc)
-            cache.set(ck, out, ttl=604800)   # L1 mirrors the 7-day durable TTL
+            cache.set(ck, out, ttl=2592000)   # L1 mirrors the 30-day durable TTL
             return JSONResponse(out)
 
     # Need to (re)generate — dedupe concurrent opens of the same ticker so only
@@ -4112,7 +4112,7 @@ async def api_overview(ticker: str, force: bool = False,
             out = await research_gen.generate_overview(sym, target, premium=_is_premium_overview(sym))
             out.setdefault("status", "ready")
             _ovstore.save(sym, out)          # durable (Supabase + disk)
-            cache.set(ck, out, ttl=604800)   # warm L1 (7 days, mirrors durable TTL)
+            cache.set(ck, out, ttl=2592000)   # warm L1 (30 days, mirrors durable TTL)
             return out
         task = asyncio.ensure_future(_gen())
         _overview_inflight[sym] = task
@@ -4248,7 +4248,7 @@ async def api_sector_graph(request: Request, force: bool = False):
         # L2 — durable KV (survives redeploys); re-warm L1 on hit
         doc = _kv.get("sector_graph", key, max_age_s=45 * 86400)
         if isinstance(doc, dict) and doc.get("edges") is not None:
-            cache.set(ck, doc, ttl=604800)
+            cache.set(ck, doc, ttl=2592000)   # 30 days
             return JSONResponse(doc)
 
     # Generate — dedupe so concurrent first-loads share ONE paid call.
@@ -4261,7 +4261,7 @@ async def api_sector_graph(request: Request, force: bool = False):
             # cheap to recompute and shouldn't poison the durable cache.
             if out.get("model") not in (None, "", "seed"):
                 _kv.set("sector_graph", key, out)
-            cache.set(ck, out, ttl=604800)
+            cache.set(ck, out, ttl=2592000)   # 30 days
             return out
         task = asyncio.ensure_future(_gen())
         _sector_graph_inflight[key] = task

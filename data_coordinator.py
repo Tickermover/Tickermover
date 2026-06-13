@@ -1229,12 +1229,12 @@ class DataCoordinator:
         if cached is not None:
             return cached
         # Durable L2 (Supabase) — SEC-API.io is PAID, and insider Form-4 data
-        # changes slowly, so a 7-day durable cache means a cold start / redeploy
+        # changes slowly, so a 30-day durable cache means a cold start / redeploy
         # reuses it instead of re-paying for the whole universe. Decoupled from
         # the disk volume so it works on every environment.
         try:
             from kv_store import store as _kv
-            durable = await asyncio.to_thread(_kv.get, "insider", ticker, 7 * 24 * 3600)
+            durable = await asyncio.to_thread(_kv.get, "insider", ticker, 30 * 24 * 3600)
             if isinstance(durable, dict):
                 self.cache.set(key, durable, config.CACHE_INSIDER_TTL)
                 return durable

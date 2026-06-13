@@ -57,8 +57,8 @@ _DISK_DIR = _BASE_DIR / "output" / "overview"
 
 # The snapshot is built from our own ground-truth data + the model's training
 # knowledge (no live web). The business summary / catalysts / risks barely change
-# day to day, so a 7-day window cuts regenerations sharply. Override via env.
-TTL_SECONDS = int(os.environ.get("OVERVIEW_TTL_SECONDS", str(7 * 24 * 60 * 60)))  # ~7 days
+# day to day, so a 30-day window cuts regenerations sharply. Override via env.
+TTL_SECONDS = int(os.environ.get("OVERVIEW_TTL_SECONDS", str(30 * 24 * 60 * 60)))  # ~30 days
 
 
 class OverviewStore:
