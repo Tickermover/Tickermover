@@ -14926,6 +14926,30 @@ function secgBloom(sub){
   secgPaint();                              // place satellites now (no first-frame flash; works under reduced-motion)
   _secgAlpha = Math.max(_secgAlpha, 0.7); secgKick();
 }
+// Probe the Parqet -> FMP chain off-DOM and only attach the first source that
+// yields a real (non-blank) logo to the SVG <image>; otherwise leave it hidden so
+// the white disc + ticker monogram shows. Mirrors the naturalWidth>=16 guard used
+// by v2LogoHTML/logoHTML, which SVG <image> can't run inline.
+function secgLoadLogo(img, ticker){
+  const t = encodeURIComponent((ticker || '').toUpperCase());
+  const sources = [
+    'https://assets.parqet.com/logos/symbol/' + t,
+    'https://images.financialmodelingprep.com/symbol/' + t + '.png'
+  ];
+  let i = 0;
+  (function tryNext(){
+    if (i >= sources.length) return;                    // exhausted -> stays hidden
+    const url = sources[i++];
+    const probe = new Image();
+    probe.onload = function(){
+      if (probe.naturalWidth >= 16 && probe.naturalHeight >= 16){
+        img.setAttribute('href', url); img.style.display = '';
+      } else { tryNext(); }                             // blank/tiny -> next source
+    };
+    probe.onerror = tryNext;                            // 404/blocked -> next source
+    probe.src = url;
+  })();
+}
 function secgBuildStockDOM(){
   const NS = 'http://www.w3.org/2000/svg';
   const svg = document.querySelector('#sectors-grid .secg-svg'); if (!svg) return;
@@ -14944,14 +14968,17 @@ function secgBuildStockDOM(){
     // White disc + α-Score-tinted ring (also the fallback if the logo 404s).
     const bg = document.createElementNS(NS, 'circle');
     bg.setAttribute('class', 'secg-stock-bg'); bg.setAttribute('r', R); bg.setAttribute('fill', '#fff'); bg.setAttribute('stroke', heat);
-    // Company logo, same source as the Events tab, clipped to the disc.
+    // Company logo: Parqet -> FMP -> disc+ticker, same fallback chain as the rest
+    // of the app. SVG <image> can't run the inline naturalWidth guard, so we probe
+    // each source with an HTML Image() and only set the href once a real (>=16px,
+    // non-blank) logo loads — this catches FMP's blank-but-200 PNGs (ANET, ADTN...).
     const img = document.createElementNS(NS, 'image');
     img.setAttribute('class', 'secg-stock-logo');
-    img.setAttribute('href', 'https://images.financialmodelingprep.com/symbol/' + encodeURIComponent(nd.ticker) + '.png');
+    img.style.display = 'none';                          // hidden until a good logo loads
     img.setAttribute('x', -(R - 2)); img.setAttribute('y', -(R - 2));
     img.setAttribute('width', 2 * (R - 2)); img.setAttribute('height', 2 * (R - 2));
     img.setAttribute('preserveAspectRatio', 'xMidYMid slice');
-    img.addEventListener('error', () => { img.style.display = 'none'; });   // fall back to disc + ticker
+    secgLoadLogo(img, nd.ticker);
     const tic = document.createElementNS(NS, 'text');
     tic.setAttribute('class', 'secg-label secg-stk-tic'); tic.setAttribute('x', 0); tic.setAttribute('y', R + 12);
     tic.textContent = nd.ticker;
