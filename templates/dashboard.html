@@ -950,13 +950,14 @@ table.ssx-h2h tbody td.self{color:var(--ink);font-weight:600}
 .empty{text-align:center;padding:60px 20px;color:var(--muted)}
 .empty .emoji{font-size:48px;margin-bottom:12px}
 .loading{text-align:center;padding:40px 20px;color:var(--muted);font-size:14px}
-/* Full-page loading overlay — covers the viewport with a large brand-blue ring
-   that fills as the percent eases to ~90% and holds until the data lands. */
-.ldr-overlay{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;padding:24px;
+/* Page loading overlay — fills the current page region (the stock sheet or the
+   active panel), NOT the whole viewport, with a large brand-blue ring that fills
+   as the percent eases to ~90% and holds until the data lands. */
+.ldr-overlay{position:absolute;inset:0;z-index:40;display:flex;align-items:center;justify-content:center;padding:24px;
   background:radial-gradient(120% 100% at 50% 40%,#f6f9ff 0%,#e7eefe 80%);animation:ldr-fade .25s ease}
 .ldr-overlay.ldr-out{opacity:0;transition:opacity .3s ease}
-.ldr{display:flex;flex-direction:column;align-items:center;gap:34px;text-align:center;max-width:600px}
-.ldr-ring{position:relative;width:240px;height:240px}
+.ldr{display:flex;flex-direction:column;align-items:center;gap:28px;text-align:center;max-width:600px}
+.ldr-ring{position:relative;width:230px;height:230px}
 .ldr-halo{position:absolute;inset:0;border-radius:50%;
   background:conic-gradient(from 0deg,transparent 8%,#7aa6ff 30%,#2970ff 55%,transparent 92%);
   -webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 16px),#000 calc(100% - 15px));
@@ -971,6 +972,16 @@ table.ssx-h2h tbody td.self{color:var(--ink);font-weight:600}
 .ldr-text{display:flex;flex-direction:column;align-items:center;gap:8px}
 .ldr-label{font-size:21px;font-weight:600;color:#334155;line-height:1.4;max-width:500px}
 .ldr-sub{font-size:14px;font-weight:600;color:#94a3b8;min-height:18px;transition:opacity .2s ease}
+.ldr-pills{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-width:440px;margin-top:2px}
+.ldr-pill{font-size:12.5px;font-weight:600;color:#2970ff;background:#eaf1ff;border:1px solid rgba(41,112,255,.16);
+  border-radius:999px;padding:5px 13px;display:inline-flex;align-items:center;gap:6px;opacity:.5;
+  animation:ldr-pillpop .4s ease both}
+.ldr-pill::before{content:'';width:6px;height:6px;border-radius:50%;background:#2970ff;flex:none;animation:ldr-pilldot 1.4s ease-in-out infinite}
+.ldr-pill:nth-child(2){animation-delay:.12s}.ldr-pill:nth-child(2)::before{animation-delay:.2s}
+.ldr-pill:nth-child(3){animation-delay:.24s}.ldr-pill:nth-child(3)::before{animation-delay:.4s}
+.ldr-pill:nth-child(4){animation-delay:.36s}.ldr-pill:nth-child(4)::before{animation-delay:.6s}
+@keyframes ldr-pillpop{from{opacity:0;transform:translateY(4px)}to{opacity:.95;transform:none}}
+@keyframes ldr-pilldot{0%,100%{opacity:.35;transform:scale(.85)}50%{opacity:1;transform:scale(1.15)}}
 @keyframes ldr-spin{to{transform:rotate(360deg)}}
 @keyframes ldr-fade{from{opacity:0}to{opacity:1}}
 @media(prefers-reduced-motion:reduce){.ldr-halo{animation-duration:5.5s}}
@@ -9780,15 +9791,21 @@ document.addEventListener('keydown', (e) => {
    container the results will land in; we watch it (poll) and tear the overlay
    down the instant it's filled OR removed — works whether the caller replaces
    host.innerHTML or the host's parent. A 90s failsafe guarantees no stuck overlay. */
-window.showLoader = function(host, label){
+window.showLoader = function(host, label, opts){
   const el = (typeof host === 'string') ? document.querySelector(host) : host;
   if (!el) return;
-  // Tear down any previous overlay (only one full-page loader at a time).
+  // Tear down any previous overlay (only one page loader at a time).
   if (window._ldrActive){ try { window._ldrActive(); } catch(e){} window._ldrActive = null; }
   const text = String(label || 'Working').replace(/[…\.]+\s*$/, '');
+  const pills = (opts && Array.isArray(opts.pills)) ? opts.pills : null;
   el.innerHTML = '';                                       // host empties; overlay shows the visuals
   const token = 'ldr' + Math.round(performance.now());
   el.setAttribute('data-ldr', token);
+  // Mount into the page region — the open stock sheet or the active panel — so
+  // the loader fills the PAGE, not the whole app (nav/sidebar stay visible).
+  const page = el.closest('.ssx-sheet, .drawer, .panel') || el.parentElement || document.body;
+  const needRel = getComputedStyle(page).position === 'static';
+  if (needRel) page.style.position = 'relative';
   const ov = document.createElement('div');
   ov.className = 'ldr-overlay';
   ov.innerHTML =
@@ -9809,8 +9826,9 @@ window.showLoader = function(host, label){
         '<span class="ldr-label">' + text + '</span>' +
         '<span class="ldr-sub"></span>' +
       '</div>' +
+      (pills ? '<div class="ldr-pills">' + pills.map(p => '<span class="ldr-pill">' + p + '</span>').join('') + '</div>' : '') +
     '</div>';
-  document.body.appendChild(ov);
+  page.appendChild(ov);
   const arc = ov.querySelector('.ldr-arc'), tip = ov.querySelector('.ldr-tip'),
         pctEl = ov.querySelector('.ldr-pct'), sub = ov.querySelector('.ldr-sub');
   // Rotate a short, friendly reassurance line so longer waits don't feel dead.
@@ -9842,7 +9860,7 @@ window.showLoader = function(host, label){
   const cleanup = () => {
     if (done) return; done = true;
     clearInterval(ci); clearInterval(poll); clearTimeout(failsafe);
-    ov.classList.add('ldr-out'); setTimeout(() => ov.remove(), 320);
+    ov.classList.add('ldr-out'); setTimeout(() => { ov.remove(); if (needRel) page.style.position = ''; }, 320);
     if (el.getAttribute('data-ldr') === token) el.removeAttribute('data-ldr');
     if (window._ldrActive === cleanup) window._ldrActive = null;
   };
@@ -9867,7 +9885,7 @@ async function v2OpenDetail(ticker, cfg){
   det.style.display = '';
   const bar = cfg.opts.topbar || ('<div class="v2-brf-topbar"><button class="v2-brf-back" onclick="' + cfg.opts.backFn + '()">← Back to all tickers</button></div>');
   det.innerHTML = bar + '<div class="v2-brf-loading" id="v2od-load"></div>';
-  window.startTimerLoader(document.getElementById('v2od-load'), cfg.loading.replace('{sym}', sym));
+  window.startTimerLoader(document.getElementById('v2od-load'), cfg.loading.replace('{sym}', sym), {pills:['Key updates','Guidance','Risks','Outlook']});
   try {
     const r = await fetch(cfg.endpoint + encodeURIComponent(sym), { cache: 'no-store' });
     if (!r.ok) throw new Error('HTTP ' + r.status);
@@ -13222,7 +13240,7 @@ async function loadDeepDive(ticker){
   // engines + revenue bars (#ovBiz / #ovRevBars), so every note-only status
   // message is guarded on `body`.
   const body = document.getElementById('dd-body-'+ticker);
-  if (body) window.startTimerLoader(body, '🔎 Researching '+ticker+' — searching the web & writing the brief…');
+  if (body) window.startTimerLoader(body, '🔎 Researching '+ticker+' — searching the web & writing the brief…', {pills:['Business','Catalysts','Risks','Sources']});
   let tries = 0;
   const poll = async () => {
     tries++;
@@ -13493,7 +13511,7 @@ function _ssxDonut(segs){
 }
 function ssxDependencies(ticker){
   const panel=_ssxPanel('deps'); if(!panel) return;
-  window.startTimerLoader(panel, '🔗 Mapping suppliers, customers & ripple risk…');
+  window.startTimerLoader(panel, '🔗 Mapping suppliers, customers & ripple risk…', {pills:['Suppliers','Customers','Ripple risk','Concentration']});
   fetch('/api/dependencies/'+encodeURIComponent(ticker),{headers:{Authorization:'Bearer '+(localStorage.getItem('ah_token')||'')}}).then(function(r){return r.json();}).then(function(d){
     if(!d){ _ssxEmpty(panel,'⚠️','Could not load dependencies.'); return; }
     if(d.status==='locked'){ _ssxEmpty(panel,'🔒',d.detail||'Pro feature — upgrade to unlock dependency mapping.'); return; }
@@ -13759,7 +13777,7 @@ let _ssxH2HSeq=0;
 async function ssxRenderH2H(selfT, peerT){
   const body=document.getElementById('ssx-h2h-body'); if(!body) return;
   const seq=++_ssxH2HSeq;
-  window.startTimerLoader(body, '🔬 Building AI comparison — '+selfT+' vs '+peerT+'…');
+  window.startTimerLoader(body, '🔬 Building AI comparison — '+selfT+' vs '+peerT+'…', {pills:['Stage','Backlog','Execution','Valuation']});
   const A=_allTickerData[selfT]||{}, B=_allTickerData[peerT]||{};
   const res=await Promise.all([_ssxFetchCard(selfT), _ssxFetchCard(peerT)]);
   if(seq!==_ssxH2HSeq) return;  // a newer selection superseded this render
@@ -20881,7 +20899,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     const root=drawer.querySelector('#kpi-root'); if(!root||root.dataset.loaded==='1') return;
     const tk=root.getAttribute('data-tk'); if(!tk) return;
     root.dataset.loaded='1';
-    if(window.startTimerLoader) window.startTimerLoader(root,'Extracting operating KPIs from annual filings…');
+    if(window.startTimerLoader) window.startTimerLoader(root,'Extracting operating KPIs from annual filings…',{pills:['Volumes','Capacity','Units sold','Per-year']});
     fetch('/api/operating-kpis/'+encodeURIComponent(tk)).then(r=>r.json()).then(d=>{
       const years=(d&&d.years)||[], metrics=(d&&d.metrics)||[];
       if(!metrics.length){
@@ -20923,7 +20941,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     const body=drawer.querySelector('.dr-body');
     let dd=drawer.querySelector('.dr-deep');
     if(!dd){ dd=document.createElement('div'); dd.className='dr-deep'; body.appendChild(dd); }
-    window.showLoader(dd, 'Loading the full analysis');
+    window.showLoader(dd, 'Loading the full analysis', {pills:['Thesis','Bull case','Bear case','Verdict']});
     const w=Math.round(Math.min(window.innerWidth*0.9,1200));
     drawer.style.width=w+'px'; drawer.style.left='50%'; drawer.style.right='auto'; drawer.style.marginLeft=(-w/2)+'px';
     drawer.classList.add('expanded'); drawer.scrollTop=0;
@@ -21279,7 +21297,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     const tk=((_drState.t&&_drState.t.ticker)||'').toUpperCase(); if(!tk) return;
     if(host.getAttribute('data-tk')===tk) return;          // already loaded for this stock
     host.setAttribute('data-tk',tk);
-    window.startTimerLoader(host, '🔗 Mapping suppliers, customers & ripple risk for '+tk+'…');
+    window.startTimerLoader(host, '🔗 Mapping suppliers, customers & ripple risk for '+tk+'…', {pills:['Suppliers','Customers','Ripple risk','Concentration']});
     fetch('/api/dependencies/'+encodeURIComponent(tk),{headers:{Authorization:'Bearer '+(localStorage.getItem('ah_token')||'')}}).then(function(r){return r.json();}).then(function(d){
       if(host.getAttribute('data-tk')!==tk) return;         // user switched stocks mid-flight
       if(!d){ host.innerHTML='<div class="dd-loading">Could not load dependencies.</div>'; return; }
