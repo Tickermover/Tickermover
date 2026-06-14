@@ -958,6 +958,10 @@ table.ssx-h2h tbody td.self{color:var(--ink);font-weight:600}
 .ldr-overlay.ldr-out{opacity:0;transition:opacity .3s ease}
 /* Inline variant — fills just the host widget (chart card / table), not the page. */
 .ldr-overlay.ldr-inline{position:relative;inset:auto;width:100%;min-height:340px;border-radius:16px}
+/* Mini spinner — for a sub-component loading inside an already-rendered page
+   (e.g. the tracker chart), so it doesn't stack a SECOND big ring. */
+.ldr-mini-wrap{display:flex;align-items:center;justify-content:center;gap:10px;min-height:200px;color:#94a3b8;font-size:12.5px;font-weight:600}
+.ldr-mini{width:18px;height:18px;border-radius:50%;flex:none;border:2.5px solid rgba(41,112,255,.2);border-top-color:#2970ff;animation:ldr-spin .7s linear infinite}
 .ldr{display:flex;flex-direction:column;align-items:center;gap:28px;text-align:center;max-width:600px}
 .ldr-ring{position:relative;width:230px;height:230px}
 .ldr-halo{position:absolute;inset:0;border-radius:50%;
@@ -13236,19 +13240,39 @@ function _ddSplitSections(md){
 // so merely browsing stocks no longer triggers the premium Sonnet+web call.
 async function loadOverview(ticker){
   ticker = (ticker||'').toUpperCase();
-  try {
-    const r = await fetch('/api/overview/'+encodeURIComponent(ticker), {headers:{Authorization:'Bearer '+(localStorage.getItem('ah_token')||'')}});
-    const d = await r.json();
-    if (d.status === 'locked'){ _ovRenderRevenue(null); _ovLockTeasers(); return; }
-    if (d.status !== 'ready' || !d.markdown){ _ovRenderBusiness(null); _ovRenderRevenue(null); _ovRenderNoteBoxes(null); return; }
-    const ex = _ovExtractStructured(d.markdown || '');
-    if (ex.data){ _ovRenderBusiness(ex.data.business); _ovRenderRevenue(ex.data.revenue); _ovRenderKeyPoints(ex.data.key_points); _ovRenderEdge(ex.data.edge); }
-    else { _ovRenderBusiness(null); _ovRenderRevenue(null); }
-    const marked = await _ensureMarked();
-    const render = (md) => { try { return (marked && marked.parse) ? marked.parse(md||'') : _basicMd(md||''); } catch(e){ return _basicMd(md||''); } };
-    const parts = _ddSplitSections(ex.md || '');
-    _ovRenderNoteBoxes(parts, render);
-  } catch(e){ _ovRenderBusiness(null); _ovRenderRevenue(null); _ovRenderNoteBoxes(null); }
+  window._ovTicker = ticker;                       // newest-open wins (guards stale fills)
+  // Resolve EVERY AI placeholder — including the edge cards' "Reading…" — so a
+  // not-ready / error / no-data path can never leave a section stuck loading.
+  // _ovRender*(null) hides the section when there's no data.
+  const clearAll = () => { _ovRenderBusiness(null); _ovRenderRevenue(null);
+    _ovRenderNoteBoxes(null); _ovRenderEdge(null); _ovRenderKeyPoints(null); };
+  let tries = 0;
+  const poll = async () => {
+    if (window._ovTicker !== ticker) return;       // a newer stock opened — abandon
+    tries++;
+    try {
+      const r = await fetch('/api/overview/'+encodeURIComponent(ticker), {headers:{Authorization:'Bearer '+(localStorage.getItem('ah_token')||'')}});
+      const d = await r.json();
+      if (window._ovTicker !== ticker) return;
+      if (d.status === 'locked'){ _ovRenderRevenue(null); _ovRenderEdge(null); _ovLockTeasers(); return; }
+      if (d.status === 'ready' && d.markdown){
+        const ex = _ovExtractStructured(d.markdown || '');
+        if (ex.data){ _ovRenderBusiness(ex.data.business); _ovRenderRevenue(ex.data.revenue); _ovRenderKeyPoints(ex.data.key_points); _ovRenderEdge(ex.data.edge); }
+        else { _ovRenderBusiness(null); _ovRenderRevenue(null); _ovRenderEdge(null); }
+        const marked = await _ensureMarked();
+        const render = (md) => { try { return (marked && marked.parse) ? marked.parse(md||'') : _basicMd(md||''); } catch(e){ return _basicMd(md||''); } };
+        const parts = _ddSplitSections(ex.md || '');
+        _ovRenderNoteBoxes(parts, render);
+        return;
+      }
+      // Still generating server-side — keep the placeholders and retry so the
+      // sections fill in once the AI finishes (was: one try, then the edge cards
+      // hung on "Reading…" forever).
+      if (tries < 20){ setTimeout(poll, 3000); return; }
+      clearAll();                                  // ~60s with no result → resolve, don't hang
+    } catch(e){ if (window._ovTicker === ticker) clearAll(); }
+  };
+  poll();
 }
 async function loadDeepDive(ticker){
   // `body` is the note container (#dd-body-…). It's present on surfaces that
@@ -16763,7 +16787,9 @@ window._v2TrackerPeriod = window._v2TrackerPeriod || 'all';
 async function v2LoadTrackerChart(){
   const slot = document.getElementById('v2-tracker-chart-slot');
   if (!slot) return;
-  window.showLoader(slot, 'Crunching the 90-day comparison');
+  // Small spinner (NOT the big ring) — this paints into an already-rendered
+  // portfolio page, so a second full ring read as a "double loader".
+  slot.innerHTML = '<div class="ldr-mini-wrap"><span class="ldr-mini"></span>Crunching the 90-day comparison…</div>';
   try {
     const r = await fetch('/api/tracker-chart');
     if (!r.ok) throw new Error('HTTP ' + r.status);
