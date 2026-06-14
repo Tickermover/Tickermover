@@ -950,33 +950,28 @@ table.ssx-h2h tbody td.self{color:var(--ink);font-weight:600}
 .empty{text-align:center;padding:60px 20px;color:var(--muted)}
 .empty .emoji{font-size:48px;margin-bottom:12px}
 .loading{text-align:center;padding:40px 20px;color:var(--muted);font-size:14px}
-/* Glowing energy-ring loader — used wherever AI work runs (no time estimates).
-   Same rotating-arc + glow-halo style, in the brand blue family on a soft light
-   stage so it sits naturally inside the dashboard's white cards. */
-.ldr{display:flex;flex-direction:column;align-items:center;gap:18px;padding:32px 20px;max-width:430px;margin:6px auto;border-radius:18px;
-  background:radial-gradient(135% 120% at 50% 36%,#f5f8ff 0%,#e9f0fe 78%);
-  box-shadow:inset 0 0 0 1px rgba(41,112,255,.08)}
-.ldr-ring{position:relative;width:108px;height:108px;border-radius:50%}
-.ldr-ring::before,.ldr-ring::after{content:'';position:absolute;inset:0;border-radius:50%;
-  background:conic-gradient(from 0deg,transparent 6%,#7aa6ff 26%,#2970ff 50%,#0040c1 72%,transparent 94%);
-  -webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 9px),#000 calc(100% - 8px));
-          mask:radial-gradient(farthest-side,transparent calc(100% - 9px),#000 calc(100% - 8px));
-  animation:ldr-spin 1.5s linear infinite}
-.ldr-ring::before{filter:blur(9px);opacity:.6}                  /* soft glow halo (behind) */
-.ldr-core{position:absolute;inset:0;margin:auto;width:7px;height:7px;border-radius:50%;background:#2970ff;
-  box-shadow:0 0 13px 3px rgba(41,112,255,.5);animation:ldr-pulse 1.5s ease-in-out infinite}
-.ldr-text{display:flex;flex-direction:column;align-items:center;gap:5px}
-.ldr-label{font-size:13px;font-weight:600;color:#334155;text-align:center;line-height:1.45;max-width:320px;
-  display:inline-flex;flex-wrap:wrap;justify-content:center;align-items:baseline;letter-spacing:.01em}
-.ldr-sub{font-size:11px;font-weight:600;color:#94a3b8;letter-spacing:.01em;min-height:14px;transition:opacity .2s ease}
-.ldr-dots{display:inline-flex;gap:3px;margin-left:4px}
-.ldr-dots i{width:3px;height:3px;border-radius:50%;background:#2970ff;opacity:.25;animation:ldr-dot 1.05s infinite}
-.ldr-dots i:nth-child(2){animation-delay:.15s}
-.ldr-dots i:nth-child(3){animation-delay:.3s}
+/* Full-page percentage loader — a large brand-blue ring that fills as the
+   percent eases up (holds near 90% until data lands), with a spinning glow halo,
+   a glowing tip that tracks the arc, and a rotating caption. */
+.ldr{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;padding:44px 20px;min-height:380px;width:100%;
+  border-radius:18px;background:radial-gradient(120% 100% at 50% 38%,#f6f9ff 0%,#e7eefe 80%)}
+.ldr-ring{position:relative;width:184px;height:184px}
+.ldr-halo{position:absolute;inset:0;border-radius:50%;
+  background:conic-gradient(from 0deg,transparent 8%,#7aa6ff 30%,#2970ff 55%,transparent 92%);
+  -webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 14px),#000 calc(100% - 13px));
+          mask:radial-gradient(farthest-side,transparent calc(100% - 14px),#000 calc(100% - 13px));
+  filter:blur(12px);opacity:.45;animation:ldr-spin 2.4s linear infinite}
+.ldr-svg{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg)}
+.ldr-arc{filter:drop-shadow(0 0 5px rgba(41,112,255,.55))}
+.ldr-tip{filter:drop-shadow(0 0 7px rgba(41,112,255,.9))}
+.ldr-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}
+.ldr-pct{font-size:42px;font-weight:600;color:#0f2a5e;letter-spacing:-.02em;line-height:1;font-variant-numeric:tabular-nums}
+.ldr-pct-lbl{font-size:11px;font-weight:700;color:#94a3b8;letter-spacing:.08em;text-transform:uppercase}
+.ldr-text{display:flex;flex-direction:column;align-items:center;gap:6px}
+.ldr-label{font-size:14px;font-weight:600;color:#334155;text-align:center;line-height:1.45;max-width:340px}
+.ldr-sub{font-size:11.5px;font-weight:600;color:#94a3b8;min-height:15px;transition:opacity .2s ease}
 @keyframes ldr-spin{to{transform:rotate(360deg)}}
-@keyframes ldr-pulse{0%,100%{transform:scale(.8);opacity:.65}50%{transform:scale(1.25);opacity:1}}
-@keyframes ldr-dot{0%,100%{opacity:.25;transform:translateY(0)}50%{opacity:1;transform:translateY(-2px)}}
-@media(prefers-reduced-motion:reduce){.ldr-ring::before,.ldr-ring::after,.ldr-core,.ldr-dots i{animation-duration:3.4s}}
+@media(prefers-reduced-motion:reduce){.ldr-halo{animation-duration:5.5s}}
 
 ::-webkit-scrollbar{width:5px;height:5px}
 ::-webkit-scrollbar-track{background:var(--bg)}
@@ -9777,36 +9772,64 @@ document.addEventListener('keydown', (e) => {
 
 // Shared detail loader — fetch a structured summary and render it in the
 // premium shell. `endpoint` + `opts` (eyebrow/back handler) pick the feature.
-/* Glowing energy-ring loader for AI/web-grounded waits — a rotating brand-blue
-   conic arc with a blurred glow halo on a soft light stage, plus an animated
-   ellipsis. No time copy. Renders into `host` (element or selector); CSS
-   animations need no JS upkeep, so it simply vanishes when results replace it. */
+/* Full-page percentage loader — a large brand-blue ring whose arc + glowing tip
+   fill as the percent eases toward ~90% (never fabricates 100%; the loader is
+   replaced when data lands), with a spinning glow halo and a rotating caption.
+   Renders into `host` (element or selector); the rAF loop self-stops once it
+   settles, and the caption interval self-clears when the node leaves the DOM. */
 window.showLoader = function(host, label){
   const el = (typeof host === 'string') ? document.querySelector(host) : host;
   if (!el) return;
-  // Strip any trailing ellipsis — the animated dots supply the motion.
   const text = String(label || 'Working').replace(/[…\.]+\s*$/, '');
   el.innerHTML =
     '<div class="ldr">' +
-      '<div class="ldr-ring"><span class="ldr-core"></span></div>' +
+      '<div class="ldr-ring">' +
+        '<div class="ldr-halo"></div>' +
+        '<svg class="ldr-svg" viewBox="0 0 230 230" aria-hidden="true">' +
+          '<defs><linearGradient id="ldrGrad" x1="0" y1="0" x2="1" y2="1">' +
+            '<stop offset="0" stop-color="#7aa6ff"/><stop offset=".55" stop-color="#2970ff"/><stop offset="1" stop-color="#0040c1"/>' +
+          '</linearGradient></defs>' +
+          '<circle cx="115" cy="115" r="96" fill="none" stroke="#d4e2fb" stroke-width="9"/>' +
+          '<circle class="ldr-arc" cx="115" cy="115" r="96" fill="none" stroke="url(#ldrGrad)" stroke-width="9" stroke-linecap="round" stroke-dasharray="603.2" stroke-dashoffset="603.2"/>' +
+          '<circle class="ldr-tip" cx="115" cy="19" r="6" fill="#eaf2ff" style="opacity:0"/>' +
+        '</svg>' +
+        '<div class="ldr-center"><div class="ldr-pct">0%</div><div class="ldr-pct-lbl">Loading</div></div>' +
+      '</div>' +
       '<div class="ldr-text">' +
-        '<span class="ldr-label">' + text + '<span class="ldr-dots"><i></i><i></i><i></i></span></span>' +
+        '<span class="ldr-label">' + text + '</span>' +
         '<span class="ldr-sub"></span>' +
       '</div>' +
     '</div>';
+  const arc = el.querySelector('.ldr-arc'), tip = el.querySelector('.ldr-tip'),
+        pctEl = el.querySelector('.ldr-pct'), sub = el.querySelector('.ldr-sub');
   // Rotate a short, friendly reassurance line so longer waits don't feel dead.
-  const sub = el.querySelector('.ldr-sub');
   const lines = window._ldrLines || ['Hang tight','Crunching the numbers','Connecting the dots',
     'Reading the fine print','Tuning the signal','Almost there'];
-  let i = 0;
-  const cycle = () => {
-    if (!sub || !sub.isConnected){ clearInterval(iv); return; }
+  let li = 0;
+  const cap = () => {
+    if (!sub || !sub.isConnected){ clearInterval(ci); return; }
     sub.style.opacity = '0';
-    setTimeout(() => { if (sub.isConnected){ sub.textContent = lines[i % lines.length] + '…'; sub.style.opacity = ''; } }, 200);
-    i++;
+    setTimeout(() => { if (sub.isConnected){ sub.textContent = lines[li % lines.length] + '…'; sub.style.opacity = ''; } }, 200);
+    li++;
   };
-  cycle();
-  const iv = setInterval(cycle, 2600);
+  cap();
+  const ci = setInterval(cap, 2600);
+  // Honest percentage: ease toward ~90% over ~6s and hold there. We never know
+  // real server progress, so we never fabricate 100% — when the data lands the
+  // loader is simply replaced by the results.
+  const C = 603.2, R = 96, cx = 115, cy = 115, t0 = performance.now(), DUR = 6000, CAPP = 90;
+  const step = () => {
+    if (!arc || !arc.isConnected) return;                 // node gone -> stop the rAF loop
+    const k = Math.min(1, (performance.now() - t0) / DUR);
+    const p = CAPP * (1 - Math.pow(1 - k, 3));             // easeOutCubic to ~90%
+    pctEl.textContent = Math.round(p) + '%';
+    arc.setAttribute('stroke-dashoffset', C * (1 - p / 100));
+    const ang = (p / 100) * 2 * Math.PI - Math.PI / 2;
+    tip.setAttribute('cx', cx + R * Math.cos(ang)); tip.setAttribute('cy', cy + R * Math.sin(ang));
+    tip.style.opacity = p > 1 ? '1' : '0';
+    if (k < 1) requestAnimationFrame(step);               // settle at ~90% then idle
+  };
+  requestAnimationFrame(step);
 };
 // Back-compat alias for older call sites.
 window.startTimerLoader = window.showLoader;
