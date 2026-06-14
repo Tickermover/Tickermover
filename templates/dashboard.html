@@ -15977,9 +15977,16 @@ async function loadModelPortfolio() {
   _modelView = 'active';
   window.showLoader(root, 'Assembling your model portfolio');
   try {
-    const resp = await fetch('/api/model-portfolio');
+    // Fetch the portfolio AND the 90-day tracker chart together so the chart is
+    // already in hand when the page renders — it paints under the SINGLE page
+    // ring instead of triggering a second loader after the page is up.
+    const [resp, tRes] = await Promise.all([
+      fetch('/api/model-portfolio'),
+      fetch('/api/tracker-chart').then(r => r.ok ? r.json() : null).catch(() => null),
+    ]);
     if (!resp.ok) throw new Error('HTTP ' + resp.status);
     const data = await resp.json();
+    if (tRes) window._v2TrackerData = tRes;
     if (data.warming_up) {
       root.innerHTML = `<div class="empty"><div class="emoji">⏳</div><div>Data still warming up — check back shortly.</div></div>`;
       return;
@@ -16480,8 +16487,20 @@ function renderModelPortfolio(data) {
   // slot we reserved inside headerHTML. Idle-deferred so the rest of
   // the panel renders first.
   if (picks.length) {
+    // Chart data was prefetched by loadModelPortfolio → paint it right now, in
+    // the same frame as the page, so there's no second loader. Only fall back to
+    // the lazy fetch (small spinner) if the prefetch wasn't available.
+    if (window._v2TrackerData) {
+      const cSlot = document.getElementById('v2-tracker-chart-slot');
+      if (cSlot) {
+        cSlot.innerHTML = v2RenderTrackerChartHTML(_v2SlicePeriod(window._v2TrackerData, window._v2TrackerPeriod));
+        _v2WireTrackerScrubber(cSlot);
+      }
+    } else {
+      const _idle0 = window.requestIdleCallback || ((cb) => setTimeout(cb, 16));
+      _idle0(() => { try { v2LoadTrackerChart(); } catch(e){ console.error(e); } });
+    }
     const _idle = window.requestIdleCallback || ((cb) => setTimeout(cb, 16));
-    _idle(() => { try { v2LoadTrackerChart(); } catch(e){ console.error(e); } });
     _idle(() => { try { v2LoadWhyToday(); } catch(e){ console.error(e); } });
     _idle(() => { try { v2LoadPickSparks(); } catch(e){ console.error(e); } });
   }
