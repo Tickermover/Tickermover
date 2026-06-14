@@ -178,6 +178,7 @@ _last_full_refresh: float      = 0.0
 _daily_hot: list = []
 _daily_hot_date: str = ""
 _LIVE_NEWS_CACHE: dict = {"ts": 0.0, "payload": None}   # short TTL cache for /api/news/live
+_quote_pending: dict = {}   # sym -> suspect price awaiting a second-tick confirmation (bad-tick guard)
 _model_portfolio:   dict = {}   # persisted model watchlist with entry prices
 _refresh_lock:      asyncio.Lock | None = None   # created inside lifespan
 
@@ -461,8 +462,37 @@ async def _quote_refresh() -> None:
                     continue
                 q = batch[sym]
                 if q.get("price"):
-                    item["price"]      = q["price"]
-                    item["change_pct"] = q.get("change_pct")
+                    new_price = q["price"]
+                    old_price = item.get("price")
+                    new_chg   = q.get("change_pct")
+                    try:
+                        chg_abs = abs(float(new_chg)) if new_chg is not None else 0.0
+                    except (TypeError, ValueError):
+                        chg_abs = 0.0
+                    # Bad-tick guard. A >40% price jump from the last good tick, or
+                    # a |change_pct| over 90%, is almost always a feed glitch / bad
+                    # symbol — real moves halt long before that and trickle in small
+                    # 30s steps. We DON'T apply such a tick immediately (that's what
+                    # poisoned the universe: e.g. KLAC $2410 → $253 / -89%, which the
+                    # radar then cached). Instead we hold it as "pending" and only
+                    # apply it if the NEXT refresh confirms a similar price — so a
+                    # single glitch is dropped while a genuine large move lands a
+                    # beat later. Keeps both the radar and Market Analysis clean.
+                    suspect = (old_price and old_price > 0
+                               and abs(new_price / old_price - 1) > 0.40) or chg_abs > 90
+                    if suspect:
+                        pend = _quote_pending.get(sym)
+                        confirmed = pend and pend > 0 and abs(new_price / pend - 1) <= 0.10
+                        if not confirmed:
+                            _quote_pending[sym] = new_price
+                            logger.warning(
+                                f"⚠️  Rejected implausible quote for {sym}: "
+                                f"{old_price} → {new_price} ({new_chg}%) — awaiting confirmation"
+                            )
+                            continue
+                    _quote_pending.pop(sym, None)
+                    item["price"]      = new_price
+                    item["change_pct"] = new_chg
                     item["change_abs"] = q.get("change_abs")
                     item["high"]       = q.get("high")
                     item["low"]        = q.get("low")
