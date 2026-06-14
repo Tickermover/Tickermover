@@ -9797,18 +9797,23 @@ document.addEventListener('keydown', (e) => {
 window.showLoader = function(host, label, opts){
   const el = (typeof host === 'string') ? document.querySelector(host) : host;
   if (!el) return;
-  // Tear down any previous overlay (only one page loader at a time).
-  if (window._ldrActive){ try { window._ldrActive(); } catch(e){} window._ldrActive = null; }
+  // Idempotent: if a loader is already running on this host, don't stack a second
+  // (fixes the "double loading circle" from a render path that fires twice).
+  if (el.getAttribute('data-ldr')) return;
+  // opts.full → a page-filling overlay (the stock sheet / drawer / panel) for
+  // whole-tab loads. Default is INLINE — the loader fills just this host widget,
+  // so a section loader (e.g. the AI deep-dive note) never covers the basic data
+  // already on the page. Only ONE full-page overlay at a time; inline loaders are
+  // independent, so several sections can load side-by-side without killing each
+  // other (fixes the "AI section stuck loading" when a later loader tore it down).
+  const full = !!(opts && opts.full);
+  if (full && window._ldrFull){ try { window._ldrFull(); } catch(e){} window._ldrFull = null; }
   const text = String(label || 'Working').replace(/[…\.]+\s*$/, '');
   const pills = (opts && Array.isArray(opts.pills)) ? opts.pills : null;
   el.innerHTML = '';                                       // host empties; overlay shows the visuals
   const token = 'ldr' + Math.round(performance.now());
   el.setAttribute('data-ldr', token);
-  // Inside the open stock sheet / drawer the loader fills that whole page (an
-  // absolute overlay). Everywhere else it fills just the HOST widget (the chart
-  // card, table, etc.) as an inline block — so it never blows out to the whole
-  // panel. The app nav/sidebar always stay visible.
-  const sheet = el.closest('.ssx-sheet, .drawer');
+  const sheet = full ? el.closest('.ssx-sheet, .drawer, .panel') : null;
   const ov = document.createElement('div');
   ov.className = sheet ? 'ldr-overlay' : 'ldr-overlay ldr-inline';
   let needRel = false;
@@ -9870,7 +9875,7 @@ window.showLoader = function(host, label, opts){
     clearInterval(ci); clearInterval(poll); clearTimeout(failsafe);
     ov.classList.add('ldr-out'); setTimeout(() => { ov.remove(); if (needRel && sheet) sheet.style.position = ''; }, 320);
     if (el.getAttribute('data-ldr') === token) el.removeAttribute('data-ldr');
-    if (window._ldrActive === cleanup) window._ldrActive = null;
+    if (window._ldrFull === cleanup) window._ldrFull = null;
   };
   const poll = setInterval(() => {
     // Done when results land: host filled with anything other than our inline
@@ -9881,7 +9886,7 @@ window.showLoader = function(host, label, opts){
     if (!ours) cleanup();
   }, 200);
   const failsafe = setTimeout(cleanup, 90000);
-  window._ldrActive = cleanup;
+  if (full) window._ldrFull = cleanup;
   requestAnimationFrame(step);
 };
 // Back-compat alias for older call sites.
@@ -9897,7 +9902,7 @@ async function v2OpenDetail(ticker, cfg){
   det.style.display = '';
   const bar = cfg.opts.topbar || ('<div class="v2-brf-topbar"><button class="v2-brf-back" onclick="' + cfg.opts.backFn + '()">← Back to all tickers</button></div>');
   det.innerHTML = bar + '<div class="v2-brf-loading" id="v2od-load"></div>';
-  window.startTimerLoader(document.getElementById('v2od-load'), cfg.loading.replace('{sym}', sym), {pills:['Key updates','Guidance','Risks','Outlook']});
+  window.startTimerLoader(document.getElementById('v2od-load'), cfg.loading.replace('{sym}', sym), {pills:['Key updates','Guidance','Risks','Outlook'], full:true});
   try {
     const r = await fetch(cfg.endpoint + encodeURIComponent(sym), { cache: 'no-store' });
     if (!r.ok) throw new Error('HTTP ' + r.status);
@@ -13523,7 +13528,7 @@ function _ssxDonut(segs){
 }
 function ssxDependencies(ticker){
   const panel=_ssxPanel('deps'); if(!panel) return;
-  window.startTimerLoader(panel, '🔗 Mapping suppliers, customers & ripple risk…', {pills:['Suppliers','Customers','Ripple risk','Concentration']});
+  window.startTimerLoader(panel, '🔗 Mapping suppliers, customers & ripple risk…', {pills:['Suppliers','Customers','Ripple risk','Concentration'], full:true});
   fetch('/api/dependencies/'+encodeURIComponent(ticker),{headers:{Authorization:'Bearer '+(localStorage.getItem('ah_token')||'')}}).then(function(r){return r.json();}).then(function(d){
     if(!d){ _ssxEmpty(panel,'⚠️','Could not load dependencies.'); return; }
     if(d.status==='locked'){ _ssxEmpty(panel,'🔒',d.detail||'Pro feature — upgrade to unlock dependency mapping.'); return; }
@@ -20911,7 +20916,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     const root=drawer.querySelector('#kpi-root'); if(!root||root.dataset.loaded==='1') return;
     const tk=root.getAttribute('data-tk'); if(!tk) return;
     root.dataset.loaded='1';
-    if(window.startTimerLoader) window.startTimerLoader(root,'Extracting operating KPIs from annual filings…',{pills:['Volumes','Capacity','Units sold','Per-year']});
+    if(window.startTimerLoader) window.startTimerLoader(root,'Extracting operating KPIs from annual filings…',{pills:['Volumes','Capacity','Units sold','Per-year'], full:true});
     fetch('/api/operating-kpis/'+encodeURIComponent(tk)).then(r=>r.json()).then(d=>{
       const years=(d&&d.years)||[], metrics=(d&&d.metrics)||[];
       if(!metrics.length){
@@ -21309,7 +21314,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     const tk=((_drState.t&&_drState.t.ticker)||'').toUpperCase(); if(!tk) return;
     if(host.getAttribute('data-tk')===tk) return;          // already loaded for this stock
     host.setAttribute('data-tk',tk);
-    window.startTimerLoader(host, '🔗 Mapping suppliers, customers & ripple risk for '+tk+'…', {pills:['Suppliers','Customers','Ripple risk','Concentration']});
+    window.startTimerLoader(host, '🔗 Mapping suppliers, customers & ripple risk for '+tk+'…', {pills:['Suppliers','Customers','Ripple risk','Concentration'], full:true});
     fetch('/api/dependencies/'+encodeURIComponent(tk),{headers:{Authorization:'Bearer '+(localStorage.getItem('ah_token')||'')}}).then(function(r){return r.json();}).then(function(d){
       if(host.getAttribute('data-tk')!==tk) return;         // user switched stocks mid-flight
       if(!d){ host.innerHTML='<div class="dd-loading">Could not load dependencies.</div>'; return; }
