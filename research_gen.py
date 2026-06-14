@@ -181,7 +181,7 @@ async def generate_research(ticker: str, ticker_data: dict | None) -> dict:
         # back-to-back generations pay ~0.1× on it instead of full input price.
         "system": [
             {"type": "text", "text": _research_system(),
-             "cache_control": {"type": "ephemeral", "ttl": "1h"}}
+             "cache_control": {"type": "ephemeral"}}
         ],
         "tools": [
             # Each web search costs ~$0.01 regardless of model — cap tighter to
@@ -193,7 +193,7 @@ async def generate_research(ticker: str, ticker_data: dict | None) -> dict:
             # the web-grounded Opus note past the 180s timeout → notes never
             # completed. Reverted to the stable 20250305 search. Cost is bounded
             # instead via max_uses + per-ticker caching in research_store.
-            {"type": "web_search_20250305", "name": "web_search", "max_uses": 4}
+            {"type": "web_search_20250305", "name": "web_search", "max_uses": 2}
         ],
         "messages": [{"role": "user", "content": _research_user(ticker, t)}],
     }
@@ -351,7 +351,7 @@ async def generate_overview(ticker: str, ticker_data: dict | None,
         # (e.g. a universe pre-warm) then pay ~0.1× on it.
         "system": [
             {"type": "text", "text": _overview_system(),
-             "cache_control": {"type": "ephemeral", "ttl": "1h"}}
+             "cache_control": {"type": "ephemeral"}}
         ],
         "messages": [{"role": "user", "content": _overview_user(ticker, t)}],
     }

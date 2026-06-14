@@ -293,6 +293,17 @@ async def get_operating_kpis(ticker: str, force: bool = False) -> dict:
         hit = _cache.get(ck)
         if hit is not None:
             return hit
+        # L2: durable Supabase KV. The on-disk cache does NOT survive a Railway
+        # redeploy, so without this we'd re-pay ~5 Haiku extractions (each up to
+        # 110K chars of 10-K text) per ticker on every deploy. Survives restarts.
+        try:
+            from kv_store import store as _kv
+            durable = _kv.get("operating_kpis", sym, max_age_s=_CACHE_TTL)
+            if durable is not None:
+                _cache.set(ck, durable, _CACHE_TTL)
+                return durable
+        except Exception:
+            pass
 
     filings = await _annual_filings(sym)
     if not filings:
@@ -321,6 +332,12 @@ async def get_operating_kpis(ticker: str, force: bool = False) -> dict:
     _cache.set(ck, res, _CACHE_TTL)
     try:
         _cache.save_disk()
+    except Exception:
+        pass
+    # Persist to the durable KV too so a redeploy never re-pays the extraction.
+    try:
+        from kv_store import store as _kv
+        _kv.set("operating_kpis", sym, res)
     except Exception:
         pass
     return res

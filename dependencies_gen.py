@@ -149,10 +149,10 @@ async def generate_dependencies(ticker: str, ticker_data: dict | None) -> dict:
         "model": _MODEL,
         "max_tokens": 2600,
         "system": [
-            {"type": "text", "text": _system(), "cache_control": {"type": "ephemeral", "ttl": "1h"}}
+            {"type": "text", "text": _system(), "cache_control": {"type": "ephemeral"}}
         ],
         "tools": [
-            {"type": "web_search_20250305", "name": "web_search", "max_uses": 3}
+            {"type": "web_search_20250305", "name": "web_search", "max_uses": 2}
         ],
         "messages": [{"role": "user", "content": _user(ticker, t)}],
     }
