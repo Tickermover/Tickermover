@@ -21655,7 +21655,10 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     renderPicks(filtered && filtered.length ? filtered : ALL, data);
     renderSectors(filtered);
     renderSectorMomentum(filtered);
-    renderMovers(filtered);
+    // Biggest Movers is a market-wide stat ("Largest moves across the universe"),
+    // so it must use the FULL universe — not the risk-profile subset — to match
+    // the Market Analysis Movers tab (which reads the same full _universe_data).
+    renderMovers(ALL);
     renderEarnings(filtered);
     renderNews();
     renderTape();
