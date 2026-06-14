@@ -950,24 +950,30 @@ table.ssx-h2h tbody td.self{color:var(--ink);font-weight:600}
 .empty{text-align:center;padding:60px 20px;color:var(--muted)}
 .empty .emoji{font-size:48px;margin-bottom:12px}
 .loading{text-align:center;padding:40px 20px;color:var(--muted);font-size:14px}
-/* Modern animated loader — used wherever AI work runs (no time estimates). */
-.ldr{display:flex;flex-direction:column;gap:13px;padding:26px 18px;max-width:430px;margin:0 auto}
-.ldr-row{display:flex;align-items:center;gap:11px}
-.ldr-orb{position:relative;width:20px;height:20px;border-radius:50%;flex:none;
-  background:conic-gradient(from 0deg,#2970ff,#7c5cff,#22c55e,#2970ff);animation:ldr-spin 1s linear infinite}
-.ldr-orb::after{content:'';position:absolute;inset:3px;border-radius:50%;background:#fff}
-.ldr-label{font-size:13px;font-weight:600;color:#334155;line-height:1.35;display:inline-flex;align-items:baseline}
-.ldr-dots{display:inline-flex;gap:3px;margin-left:3px}
-.ldr-dots i{width:3px;height:3px;border-radius:50%;background:currentColor;opacity:.25;animation:ldr-dot 1.05s infinite}
+/* Glowing energy-ring loader — used wherever AI work runs (no time estimates).
+   A teal/cyan conic arc rotates with a blurred glow halo over a dark stage. */
+.ldr{display:flex;flex-direction:column;align-items:center;gap:18px;padding:32px 20px;max-width:430px;margin:6px auto;border-radius:18px;
+  background:radial-gradient(135% 120% at 50% 36%,#101a31 0%,#080d18 72%);
+  box-shadow:0 14px 36px -18px rgba(0,0,0,.55),inset 0 0 0 1px rgba(255,255,255,.04)}
+.ldr-ring{position:relative;width:108px;height:108px;border-radius:50%}
+.ldr-ring::before,.ldr-ring::after{content:'';position:absolute;inset:0;border-radius:50%;
+  background:conic-gradient(from 0deg,transparent 6%,#06b6d4 28%,#22d3ee 50%,#10e0a0 72%,transparent 94%);
+  -webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 9px),#000 calc(100% - 8px));
+          mask:radial-gradient(farthest-side,transparent calc(100% - 9px),#000 calc(100% - 8px));
+  animation:ldr-spin 1.5s linear infinite}
+.ldr-ring::before{filter:blur(10px);opacity:.9}                 /* glow halo (behind) */
+.ldr-core{position:absolute;inset:0;margin:auto;width:7px;height:7px;border-radius:50%;background:#8af5e6;
+  box-shadow:0 0 14px 3px rgba(34,211,238,.7);animation:ldr-pulse 1.5s ease-in-out infinite}
+.ldr-label{font-size:13px;font-weight:600;color:#d4eefc;text-align:center;line-height:1.45;max-width:320px;
+  display:inline-flex;flex-wrap:wrap;justify-content:center;align-items:baseline;letter-spacing:.01em}
+.ldr-dots{display:inline-flex;gap:3px;margin-left:4px}
+.ldr-dots i{width:3px;height:3px;border-radius:50%;background:#8fd9ff;opacity:.25;animation:ldr-dot 1.05s infinite}
 .ldr-dots i:nth-child(2){animation-delay:.15s}
 .ldr-dots i:nth-child(3){animation-delay:.3s}
-.ldr-bar{position:relative;height:4px;border-radius:99px;background:rgba(41,112,255,.12);overflow:hidden}
-.ldr-bar span{position:absolute;top:0;left:0;height:100%;width:38%;border-radius:99px;
-  background:linear-gradient(90deg,rgba(41,112,255,0),#2970ff 35%,#7c5cff 70%,rgba(124,92,255,0));animation:ldr-slide 1.25s cubic-bezier(.4,0,.2,1) infinite}
 @keyframes ldr-spin{to{transform:rotate(360deg)}}
+@keyframes ldr-pulse{0%,100%{transform:scale(.8);opacity:.65}50%{transform:scale(1.25);opacity:1}}
 @keyframes ldr-dot{0%,100%{opacity:.25;transform:translateY(0)}50%{opacity:1;transform:translateY(-2px)}}
-@keyframes ldr-slide{0%{left:-38%}100%{left:100%}}
-@media(prefers-reduced-motion:reduce){.ldr-orb,.ldr-dots i,.ldr-bar span{animation-duration:2.4s}}
+@media(prefers-reduced-motion:reduce){.ldr-ring::before,.ldr-ring::after,.ldr-core,.ldr-dots i{animation-duration:3.4s}}
 
 ::-webkit-scrollbar{width:5px;height:5px}
 ::-webkit-scrollbar-track{background:var(--bg)}
@@ -9768,10 +9774,10 @@ document.addEventListener('keydown', (e) => {
 
 // Shared detail loader — fetch a structured summary and render it in the
 // premium shell. `endpoint` + `opts` (eyebrow/back handler) pick the feature.
-/* Modern animated loader for AI/web-grounded waits — a spinning gradient orb, an
-   animated ellipsis, and an indeterminate gradient progress bar. No time copy.
-   Renders into `host` (element or selector); CSS animations need no JS upkeep,
-   so it simply vanishes when results replace the node. */
+/* Glowing energy-ring loader for AI/web-grounded waits — a rotating teal/cyan
+   conic arc with a blurred glow halo over a dark stage, plus an animated
+   ellipsis. No time copy. Renders into `host` (element or selector); CSS
+   animations need no JS upkeep, so it simply vanishes when results replace it. */
 window.showLoader = function(host, label){
   const el = (typeof host === 'string') ? document.querySelector(host) : host;
   if (!el) return;
@@ -9779,11 +9785,8 @@ window.showLoader = function(host, label){
   const text = String(label || 'Working').replace(/[…\.]+\s*$/, '');
   el.innerHTML =
     '<div class="ldr">' +
-      '<div class="ldr-row">' +
-        '<span class="ldr-orb"></span>' +
-        '<span class="ldr-label">' + text + '<span class="ldr-dots"><i></i><i></i><i></i></span></span>' +
-      '</div>' +
-      '<div class="ldr-bar"><span></span></div>' +
+      '<div class="ldr-ring"><span class="ldr-core"></span></div>' +
+      '<span class="ldr-label">' + text + '<span class="ldr-dots"><i></i><i></i><i></i></span></span>' +
     '</div>';
 };
 // Back-compat alias for older call sites.
