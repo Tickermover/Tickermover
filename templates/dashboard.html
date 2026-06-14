@@ -13238,23 +13238,52 @@ function _ddSplitSections(md){
 // on stock open via /api/overview. The full web-grounded Deep-Dive note is
 // generated lazily only when the user opens the Deep Dive tab (loadDeepDive),
 // so merely browsing stocks no longer triggers the premium Sonnet+web call.
+// Hold a loading ring over the Overview pane while its AI sections fill in
+// underneath — so the user never sees the "Reading…/Compiling…" placeholders;
+// they see one ring, then the complete overview. Caps the pane height + hides
+// overflow so the ring stays in view even on a tall pane. Returns a dismiss fn.
+function _ovHoldStart(){
+  const biz = document.getElementById('ovBiz');
+  const pane = (biz && biz.closest) ? biz.closest('.dr-pane') : null;
+  if (!pane) return null;
+  const prev = { pos: pane.style.position, mh: pane.style.maxHeight, ov: pane.style.overflow };
+  pane.style.position = 'relative';
+  pane.style.maxHeight = '72vh';
+  pane.style.overflow = 'hidden';
+  const ov = document.createElement('div');
+  ov.className = 'ldr-overlay';
+  ov.innerHTML =
+    '<div class="ldr"><div class="ldr-ring"><div class="ldr-halo"></div>' +
+      '<svg class="ldr-svg" viewBox="0 0 230 230" aria-hidden="true">' +
+        '<circle cx="115" cy="115" r="100" fill="none" stroke="#d4e2fb" stroke-width="9"/>' +
+        '<circle cx="115" cy="115" r="100" fill="none" stroke="#2970ff" stroke-width="9" stroke-linecap="round" stroke-dasharray="430 628" style="filter:drop-shadow(0 0 6px rgba(41,112,255,.55))">' +
+          '<animateTransform attributeName="transform" type="rotate" from="0 115 115" to="360 115 115" dur="1.1s" repeatCount="indefinite"/></circle>' +
+      '</svg></div>' +
+      '<div class="ldr-text"><span class="ldr-label">Loading the overview…</span></div></div>';
+  pane.appendChild(ov);
+  return () => {
+    pane.style.position = prev.pos; pane.style.maxHeight = prev.mh; pane.style.overflow = prev.ov;
+    ov.classList.add('ldr-out'); setTimeout(() => ov.remove(), 300);
+  };
+}
 async function loadOverview(ticker){
   ticker = (ticker||'').toUpperCase();
   window._ovTicker = ticker;                       // newest-open wins (guards stale fills)
-  // Resolve EVERY AI placeholder — including the edge cards' "Reading…" — so a
-  // not-ready / error / no-data path can never leave a section stuck loading.
-  // _ovRender*(null) hides the section when there's no data.
+  const hold = _ovHoldStart();                     // ring over the pane until everything's ready
+  const done = () => { if (hold) hold(); };
+  // Resolve EVERY AI placeholder so a not-ready / error / no-data path can never
+  // leave a section stuck. _ovRender*(null) hides the section when there's no data.
   const clearAll = () => { _ovRenderBusiness(null); _ovRenderRevenue(null);
     _ovRenderNoteBoxes(null); _ovRenderEdge(null); _ovRenderKeyPoints(null); };
   let tries = 0;
   const poll = async () => {
-    if (window._ovTicker !== ticker) return;       // a newer stock opened — abandon
+    if (window._ovTicker !== ticker){ done(); return; }   // a newer stock opened — abandon
     tries++;
     try {
       const r = await fetch('/api/overview/'+encodeURIComponent(ticker), {headers:{Authorization:'Bearer '+(localStorage.getItem('ah_token')||'')}});
       const d = await r.json();
-      if (window._ovTicker !== ticker) return;
-      if (d.status === 'locked'){ _ovRenderRevenue(null); _ovRenderEdge(null); _ovLockTeasers(); return; }
+      if (window._ovTicker !== ticker){ done(); return; }
+      if (d.status === 'locked'){ _ovRenderRevenue(null); _ovRenderEdge(null); _ovLockTeasers(); done(); return; }
       if (d.status === 'ready' && d.markdown){
         const ex = _ovExtractStructured(d.markdown || '');
         if (ex.data){ _ovRenderBusiness(ex.data.business); _ovRenderRevenue(ex.data.revenue); _ovRenderKeyPoints(ex.data.key_points); _ovRenderEdge(ex.data.edge); }
@@ -13263,14 +13292,13 @@ async function loadOverview(ticker){
         const render = (md) => { try { return (marked && marked.parse) ? marked.parse(md||'') : _basicMd(md||''); } catch(e){ return _basicMd(md||''); } };
         const parts = _ddSplitSections(ex.md || '');
         _ovRenderNoteBoxes(parts, render);
-        return;
+        done(); return;                            // reveal the complete overview
       }
-      // Still generating server-side — keep the placeholders and retry so the
-      // sections fill in once the AI finishes (was: one try, then the edge cards
-      // hung on "Reading…" forever).
-      if (tries < 20){ setTimeout(poll, 3000); return; }
-      clearAll();                                  // ~60s with no result → resolve, don't hang
-    } catch(e){ if (window._ovTicker === ticker) clearAll(); }
+      // Still generating server-side — keep the ring up and retry so the whole
+      // overview reveals at once when the AI finishes.
+      if (tries < 8){ setTimeout(poll, 3000); return; }
+      clearAll(); done();                          // ~24s ceiling → reveal without the AI sections
+    } catch(e){ if (window._ovTicker === ticker) clearAll(); done(); }
   };
   poll();
 }
