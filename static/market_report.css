@@ -140,23 +140,25 @@
    .ma-report (the report host on the app, the floating box on /desk).
    ========================================================================== */
 .ma-glass{
-  background:rgba(255,255,255,.40);
-  -webkit-backdrop-filter:blur(26px) saturate(160%);
-  backdrop-filter:blur(26px) saturate(160%);
-  border:1px solid rgba(255,255,255,.55);
+  /* Smoked cool-slate glass — a slight dark tint vs the old near-white, kept
+     light enough that the dark report text + white inner cards stay readable. */
+  background:linear-gradient(165deg, rgba(202,211,226,.78) 0%, rgba(184,195,214,.74) 100%);
+  -webkit-backdrop-filter:blur(26px) saturate(150%);
+  backdrop-filter:blur(26px) saturate(150%);
+  border:1px solid rgba(255,255,255,.45);
   border-radius:28px;
-  box-shadow:0 1px 2px rgba(0,0,0,.04), 0 14px 36px -24px rgba(0,0,0,.12), inset 0 1px 0 rgba(255,255,255,.55);
+  box-shadow:0 1px 2px rgba(15,23,42,.05), 0 18px 44px -26px rgba(15,23,42,.32), inset 0 1px 0 rgba(255,255,255,.6);
   padding:24px 26px 28px;
 }
 /* Inner panels become lighter glass panes (no nested backdrop-filter). */
 .ma-glass .ma-card,.ma-glass .ma-stat,.ma-glass .ma-tbl,.ma-glass .ma-ev,
 .ma-glass .ma-edition,.ma-glass .ma-verdict,.ma-glass .ma-note,.ma-glass .ma-watch-note,
 .ma-glass .ma-news-item,.ma-glass .ma-session{
-  background:rgba(255,255,255,.58)!important;
-  border-color:rgba(255,255,255,.5)!important;
-  box-shadow:0 1px 6px rgba(0,0,0,.05)!important;
+  background:rgba(255,255,255,.74)!important;
+  border-color:rgba(255,255,255,.6)!important;
+  box-shadow:0 2px 10px rgba(15,23,42,.08)!important;
 }
-.ma-glass .ma-hero{background:linear-gradient(135deg,rgba(255,255,255,.66),rgba(255,255,255,.5))!important;border-color:rgba(255,255,255,.55)!important}
+.ma-glass .ma-hero{background:linear-gradient(135deg,rgba(255,255,255,.82),rgba(255,255,255,.66))!important;border-color:rgba(255,255,255,.6)!important}
 .ma-glass .ma-tabs{background:rgba(255,255,255,.34)!important;border-color:rgba(255,255,255,.45)!important}
 .ma-glass .ma-tab.on{background:rgba(255,255,255,.9)!important}
 .ma-glass .ma-bar-track{background:rgba(255,255,255,.45)!important}
