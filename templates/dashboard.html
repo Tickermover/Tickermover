@@ -951,23 +951,24 @@ table.ssx-h2h tbody td.self{color:var(--ink);font-weight:600}
 .empty .emoji{font-size:48px;margin-bottom:12px}
 .loading{text-align:center;padding:40px 20px;color:var(--muted);font-size:14px}
 /* Glowing energy-ring loader — used wherever AI work runs (no time estimates).
-   A teal/cyan conic arc rotates with a blurred glow halo over a dark stage. */
+   Same rotating-arc + glow-halo style, in the brand blue family on a soft light
+   stage so it sits naturally inside the dashboard's white cards. */
 .ldr{display:flex;flex-direction:column;align-items:center;gap:18px;padding:32px 20px;max-width:430px;margin:6px auto;border-radius:18px;
-  background:radial-gradient(135% 120% at 50% 36%,#101a31 0%,#080d18 72%);
-  box-shadow:0 14px 36px -18px rgba(0,0,0,.55),inset 0 0 0 1px rgba(255,255,255,.04)}
+  background:radial-gradient(135% 120% at 50% 36%,#f5f8ff 0%,#e9f0fe 78%);
+  box-shadow:inset 0 0 0 1px rgba(41,112,255,.08)}
 .ldr-ring{position:relative;width:108px;height:108px;border-radius:50%}
 .ldr-ring::before,.ldr-ring::after{content:'';position:absolute;inset:0;border-radius:50%;
-  background:conic-gradient(from 0deg,transparent 6%,#06b6d4 28%,#22d3ee 50%,#10e0a0 72%,transparent 94%);
+  background:conic-gradient(from 0deg,transparent 6%,#7aa6ff 26%,#2970ff 50%,#0040c1 72%,transparent 94%);
   -webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 9px),#000 calc(100% - 8px));
           mask:radial-gradient(farthest-side,transparent calc(100% - 9px),#000 calc(100% - 8px));
   animation:ldr-spin 1.5s linear infinite}
-.ldr-ring::before{filter:blur(10px);opacity:.9}                 /* glow halo (behind) */
-.ldr-core{position:absolute;inset:0;margin:auto;width:7px;height:7px;border-radius:50%;background:#8af5e6;
-  box-shadow:0 0 14px 3px rgba(34,211,238,.7);animation:ldr-pulse 1.5s ease-in-out infinite}
-.ldr-label{font-size:13px;font-weight:600;color:#d4eefc;text-align:center;line-height:1.45;max-width:320px;
+.ldr-ring::before{filter:blur(9px);opacity:.6}                  /* soft glow halo (behind) */
+.ldr-core{position:absolute;inset:0;margin:auto;width:7px;height:7px;border-radius:50%;background:#2970ff;
+  box-shadow:0 0 13px 3px rgba(41,112,255,.5);animation:ldr-pulse 1.5s ease-in-out infinite}
+.ldr-label{font-size:13px;font-weight:600;color:#334155;text-align:center;line-height:1.45;max-width:320px;
   display:inline-flex;flex-wrap:wrap;justify-content:center;align-items:baseline;letter-spacing:.01em}
 .ldr-dots{display:inline-flex;gap:3px;margin-left:4px}
-.ldr-dots i{width:3px;height:3px;border-radius:50%;background:#8fd9ff;opacity:.25;animation:ldr-dot 1.05s infinite}
+.ldr-dots i{width:3px;height:3px;border-radius:50%;background:#2970ff;opacity:.25;animation:ldr-dot 1.05s infinite}
 .ldr-dots i:nth-child(2){animation-delay:.15s}
 .ldr-dots i:nth-child(3){animation-delay:.3s}
 @keyframes ldr-spin{to{transform:rotate(360deg)}}
@@ -9774,8 +9775,8 @@ document.addEventListener('keydown', (e) => {
 
 // Shared detail loader — fetch a structured summary and render it in the
 // premium shell. `endpoint` + `opts` (eyebrow/back handler) pick the feature.
-/* Glowing energy-ring loader for AI/web-grounded waits — a rotating teal/cyan
-   conic arc with a blurred glow halo over a dark stage, plus an animated
+/* Glowing energy-ring loader for AI/web-grounded waits — a rotating brand-blue
+   conic arc with a blurred glow halo on a soft light stage, plus an animated
    ellipsis. No time copy. Renders into `host` (element or selector); CSS
    animations need no JS upkeep, so it simply vanishes when results replace it. */
 window.showLoader = function(host, label){
