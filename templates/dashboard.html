@@ -956,6 +956,8 @@ table.ssx-h2h tbody td.self{color:var(--ink);font-weight:600}
 .ldr-overlay{position:absolute;inset:0;z-index:40;display:flex;align-items:center;justify-content:center;padding:24px;
   background:radial-gradient(120% 100% at 50% 40%,#f6f9ff 0%,#e7eefe 80%);animation:ldr-fade .25s ease}
 .ldr-overlay.ldr-out{opacity:0;transition:opacity .3s ease}
+/* Inline variant — fills just the host widget (chart card / table), not the page. */
+.ldr-overlay.ldr-inline{position:relative;inset:auto;width:100%;min-height:340px;border-radius:16px}
 .ldr{display:flex;flex-direction:column;align-items:center;gap:28px;text-align:center;max-width:600px}
 .ldr-ring{position:relative;width:230px;height:230px}
 .ldr-halo{position:absolute;inset:0;border-radius:50%;
@@ -9785,12 +9787,13 @@ document.addEventListener('keydown', (e) => {
 
 // Shared detail loader — fetch a structured summary and render it in the
 // premium shell. `endpoint` + `opts` (eyebrow/back handler) pick the feature.
-/* Full-page loading overlay — covers the whole viewport with a large brand-blue
-   ring whose arc + glowing tip fill as the percent eases toward ~90% (never
-   fabricates 100%), a spinning glow halo, and a rotating caption. `host` is the
-   container the results will land in; we watch it (poll) and tear the overlay
-   down the instant it's filled OR removed — works whether the caller replaces
-   host.innerHTML or the host's parent. A 90s failsafe guarantees no stuck overlay. */
+/* Loading overlay with a large brand-blue ring whose arc + glowing tip fill as
+   the percent eases toward ~90% (never fabricates 100%), a spinning glow halo,
+   and a rotating caption. Inside the stock sheet/drawer it fills that whole page;
+   elsewhere it fills just the host widget (the chart card / table) as an inline
+   block. `host` is the container the results land in; we poll it and tear the
+   overlay down the instant it's filled OR removed. A 90s failsafe guards against
+   a stuck overlay. opts.pills renders a chip row of what's being produced. */
 window.showLoader = function(host, label, opts){
   const el = (typeof host === 'string') ? document.querySelector(host) : host;
   if (!el) return;
@@ -9801,13 +9804,18 @@ window.showLoader = function(host, label, opts){
   el.innerHTML = '';                                       // host empties; overlay shows the visuals
   const token = 'ldr' + Math.round(performance.now());
   el.setAttribute('data-ldr', token);
-  // Mount into the page region — the open stock sheet or the active panel — so
-  // the loader fills the PAGE, not the whole app (nav/sidebar stay visible).
-  const page = el.closest('.ssx-sheet, .drawer, .panel') || el.parentElement || document.body;
-  const needRel = getComputedStyle(page).position === 'static';
-  if (needRel) page.style.position = 'relative';
+  // Inside the open stock sheet / drawer the loader fills that whole page (an
+  // absolute overlay). Everywhere else it fills just the HOST widget (the chart
+  // card, table, etc.) as an inline block — so it never blows out to the whole
+  // panel. The app nav/sidebar always stay visible.
+  const sheet = el.closest('.ssx-sheet, .drawer');
   const ov = document.createElement('div');
-  ov.className = 'ldr-overlay';
+  ov.className = sheet ? 'ldr-overlay' : 'ldr-overlay ldr-inline';
+  let needRel = false;
+  if (sheet){
+    needRel = getComputedStyle(sheet).position === 'static';
+    if (needRel) sheet.style.position = 'relative';
+  }
   ov.innerHTML =
     '<div class="ldr">' +
       '<div class="ldr-ring">' +
@@ -9828,7 +9836,7 @@ window.showLoader = function(host, label, opts){
       '</div>' +
       (pills ? '<div class="ldr-pills">' + pills.map(p => '<span class="ldr-pill">' + p + '</span>').join('') + '</div>' : '') +
     '</div>';
-  page.appendChild(ov);
+  (sheet || el).appendChild(ov);                          // sheet overlay, or inline inside the host
   const arc = ov.querySelector('.ldr-arc'), tip = ov.querySelector('.ldr-tip'),
         pctEl = ov.querySelector('.ldr-pct'), sub = ov.querySelector('.ldr-sub');
   // Rotate a short, friendly reassurance line so longer waits don't feel dead.
@@ -9860,12 +9868,16 @@ window.showLoader = function(host, label, opts){
   const cleanup = () => {
     if (done) return; done = true;
     clearInterval(ci); clearInterval(poll); clearTimeout(failsafe);
-    ov.classList.add('ldr-out'); setTimeout(() => { ov.remove(); if (needRel) page.style.position = ''; }, 320);
+    ov.classList.add('ldr-out'); setTimeout(() => { ov.remove(); if (needRel && sheet) sheet.style.position = ''; }, 320);
     if (el.getAttribute('data-ldr') === token) el.removeAttribute('data-ldr');
     if (window._ldrActive === cleanup) window._ldrActive = null;
   };
   const poll = setInterval(() => {
-    const ours = el.isConnected && el.getAttribute('data-ldr') === token && el.childElementCount === 0;
+    // Done when results land: host filled with anything other than our inline
+    // overlay (covers both the sheet-overlay case, where ov isn't a child of el,
+    // and the inline case, where ov is el's only child), or host detached.
+    const filled = Array.from(el.children).some(c => c !== ov);
+    const ours = el.isConnected && el.getAttribute('data-ldr') === token && !filled;
     if (!ours) cleanup();
   }, 200);
   const failsafe = setTimeout(cleanup, 90000);
