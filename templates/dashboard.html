@@ -965,8 +965,10 @@ table.ssx-h2h tbody td.self{color:var(--ink);font-weight:600}
 .ldr-ring::before{filter:blur(9px);opacity:.6}                  /* soft glow halo (behind) */
 .ldr-core{position:absolute;inset:0;margin:auto;width:7px;height:7px;border-radius:50%;background:#2970ff;
   box-shadow:0 0 13px 3px rgba(41,112,255,.5);animation:ldr-pulse 1.5s ease-in-out infinite}
+.ldr-text{display:flex;flex-direction:column;align-items:center;gap:5px}
 .ldr-label{font-size:13px;font-weight:600;color:#334155;text-align:center;line-height:1.45;max-width:320px;
   display:inline-flex;flex-wrap:wrap;justify-content:center;align-items:baseline;letter-spacing:.01em}
+.ldr-sub{font-size:11px;font-weight:600;color:#94a3b8;letter-spacing:.01em;min-height:14px;transition:opacity .2s ease}
 .ldr-dots{display:inline-flex;gap:3px;margin-left:4px}
 .ldr-dots i{width:3px;height:3px;border-radius:50%;background:#2970ff;opacity:.25;animation:ldr-dot 1.05s infinite}
 .ldr-dots i:nth-child(2){animation-delay:.15s}
@@ -9787,8 +9789,24 @@ window.showLoader = function(host, label){
   el.innerHTML =
     '<div class="ldr">' +
       '<div class="ldr-ring"><span class="ldr-core"></span></div>' +
-      '<span class="ldr-label">' + text + '<span class="ldr-dots"><i></i><i></i><i></i></span></span>' +
+      '<div class="ldr-text">' +
+        '<span class="ldr-label">' + text + '<span class="ldr-dots"><i></i><i></i><i></i></span></span>' +
+        '<span class="ldr-sub"></span>' +
+      '</div>' +
     '</div>';
+  // Rotate a short, friendly reassurance line so longer waits don't feel dead.
+  const sub = el.querySelector('.ldr-sub');
+  const lines = window._ldrLines || ['Hang tight','Crunching the numbers','Connecting the dots',
+    'Reading the fine print','Tuning the signal','Almost there'];
+  let i = 0;
+  const cycle = () => {
+    if (!sub || !sub.isConnected){ clearInterval(iv); return; }
+    sub.style.opacity = '0';
+    setTimeout(() => { if (sub.isConnected){ sub.textContent = lines[i % lines.length] + '…'; sub.style.opacity = ''; } }, 200);
+    i++;
+  };
+  cycle();
+  const iv = setInterval(cycle, 2600);
 };
 // Back-compat alias for older call sites.
 window.startTimerLoader = window.showLoader;
@@ -10141,7 +10159,8 @@ async function ceLoadActions(sym){
   if (hub) hub.style.display = 'none';
   det.style.display = '';
   const back = ceDetailBar('actions');
-  det.innerHTML = back + '<div class="v2-brf-loading">Loading corporate actions…</div>';
+  det.innerHTML = back + '<div id="ce-act-load"></div>';
+  window.showLoader(document.getElementById('ce-act-load'), 'Pulling corporate actions');
   try {
     if (!_ceFeed){
       const r = await fetch('/api/corporate-actions', { cache: 'no-store' });
@@ -15238,7 +15257,7 @@ async function loadBlog() {
 async function loadReports() {
   const root = document.getElementById('blog-root');
   if (!root) return;
-  root.innerHTML = `<div class="loading" style="padding:40px 20px">📊 Loading reports…</div>`;
+  window.showLoader(root, 'Pulling the latest research');
   try {
     const uniR = await fetch('/api/universe').then(r => r.json());
     const tickers = uniR.tickers || [];
@@ -15565,7 +15584,7 @@ function renderRichReport(a) {
 function openBlogArticle(articleId) {
   const root = document.getElementById('blog-root');
   const prev = root.innerHTML;
-  root.innerHTML = '<div class="loading" style="padding:40px">Loading article…</div>';
+  window.showLoader(root, 'Opening the article');
 
   fetch(`/api/blog/${articleId}`)
     .then(r => r.json())
@@ -15851,9 +15870,7 @@ async function loadModelPortfolio() {
   const root = document.getElementById('model-portfolio-root');
   if (!root) return;
   _modelView = 'active';
-  root.innerHTML = `<div class="loading" style="padding:40px 20px">
-    <div style="font-size:28px;margin-bottom:10px">📊</div><div>Loading model portfolio…</div>
-  </div>`;
+  window.showLoader(root, 'Assembling your model portfolio');
   try {
     const resp = await fetch('/api/model-portfolio');
     if (!resp.ok) throw new Error('HTTP ' + resp.status);
@@ -15876,9 +15893,7 @@ async function loadClosedTrades() {
   const root = document.getElementById('model-portfolio-root');
   if (!root) return;
   _modelView = 'history';
-  root.innerHTML = `<div class="loading" style="padding:40px 20px">
-    <div style="font-size:28px;margin-bottom:10px">📕</div><div>Loading closed trades…</div>
-  </div>`;
+  window.showLoader(root, 'Pulling your closed trades');
   try {
     const resp = await fetch('/api/model-portfolio/history');
     if (!resp.ok) throw new Error('HTTP ' + resp.status);
@@ -16667,7 +16682,7 @@ window._v2TrackerPeriod = window._v2TrackerPeriod || 'all';
 async function v2LoadTrackerChart(){
   const slot = document.getElementById('v2-tracker-chart-slot');
   if (!slot) return;
-  slot.innerHTML = '<div style="padding:40px 0;text-align:center;color:#94a3b8;font-size:12px">Loading 90-day comparison…</div>';
+  window.showLoader(slot, 'Crunching the 90-day comparison');
   try {
     const r = await fetch('/api/tracker-chart');
     if (!r.ok) throw new Error('HTTP ' + r.status);
@@ -17024,7 +17039,7 @@ async function v2ToggleAudit(btn){
   btn.setAttribute('aria-expanded', 'true');
   btn.classList.add('on');
   if (panel.dataset.loaded === '1') return;
-  panel.innerHTML = '<div class="v2-tc-audit-loading">Loading pick-by-pick breakdown…</div>';
+  window.showLoader(panel, 'Breaking down every pick');
   try {
     const [pRes, hRes] = await Promise.all([
       fetch('/api/model-portfolio',          { cache: 'no-store' }).then(r => r.json()),
@@ -17147,10 +17162,7 @@ async function loadLiveNews() {
   if (!grid) return;
   if (_newsLoading) return;
   _newsLoading = true;
-  grid.innerHTML = `<div class="loading" style="padding:40px 20px">
-    <div style="font-size:28px;margin-bottom:10px">📡</div>
-    <div>Fetching live news…</div>
-  </div>`;
+  window.showLoader(grid, 'Catching the latest headlines');
 
   try {
     const resp = await fetch('/api/news/live');
@@ -19602,7 +19614,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     // state is while the universe is still loading.
     const hot=sel;
     if(pc) pc.textContent=hot.length+' pick'+(hot.length===1?'':'s');
-    if(!hot.length){ table.innerHTML=headRow+'<div class="dm-empty"><div class="emoji">⏳</div><div style="font-weight:700">Loading opportunities…</div><div style="font-size:12.5px;margin-top:6px;max-width:440px;margin-left:auto;margin-right:auto;line-height:1.5">Scores are still refreshing — check back in a moment.</div></div>'; return; }
+    if(!hot.length){ table.innerHTML=headRow+'<div id="dm-load"></div>'; window.showLoader('#dm-load','Scanning the market for opportunities'); return; }
     const rows=hot.map((t,i)=>{
       const pop=Math.round(parseFloat(t.smart_score!=null?t.smart_score:(t.pop_score||0)));
       const chg=parseFloat(t.change_pct||0), chg3m=parseFloat(t.momentum_3m||t.momentum_1m||0);
@@ -20742,7 +20754,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     const tk=root.getAttribute('data-tk'); if(!tk) return;
     root.dataset.loaded='1';
     const tkE=encodeURIComponent(tk);
-    root.innerHTML='<div class="muted small" style="padding:14px 2px">Loading documents…</div>';
+    window.showLoader(root, 'Pulling filings from SEC EDGAR');
     fetch('/api/documents/'+tkE).then(function(r){return r.json();})
      .then(function(d){ _renderDocBoxes(root, tk, d||{}); })
      .catch(function(){ root.innerHTML='<div class="muted small" style="padding:14px 2px">Could not load documents.</div>'; });
@@ -20865,7 +20877,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     const body=drawer.querySelector('.dr-body');
     let dd=drawer.querySelector('.dr-deep');
     if(!dd){ dd=document.createElement('div'); dd.className='dr-deep'; body.appendChild(dd); }
-    dd.innerHTML='<div class="dr-loading"><span class="dr-spin"></span>Loading full analysis…</div>';
+    window.showLoader(dd, 'Loading the full analysis');
     const w=Math.round(Math.min(window.innerWidth*0.9,1200));
     drawer.style.width=w+'px'; drawer.style.left='50%'; drawer.style.right='auto'; drawer.style.marginLeft=(-w/2)+'px';
     drawer.classList.add('expanded'); drawer.scrollTop=0;
@@ -21501,7 +21513,8 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
   window._tsOpenNews=function(el){ const u=el&&el.getAttribute('data-url'); if(u&&u!=='#') window.open(u,'_blank','noopener'); };
   function renderNews(){
     const slot=document.getElementById('newsSlot'); if(!slot) return;
-    slot.innerHTML='<div class="ts-card"><div class="ts-card-head"><div class="ts-card-title">📰 Hot News today</div><div class="ts-card-sub">Headlines moving names on our radar</div></div><div id="tsNewsInner"><div class="news-loading">Loading headlines…</div></div></div>';
+    slot.innerHTML='<div class="ts-card"><div class="ts-card-head"><div class="ts-card-title">📰 Hot News today</div><div class="ts-card-sub">Headlines moving names on our radar</div></div><div id="tsNewsInner"></div></div>';
+    window.showLoader(document.getElementById('tsNewsInner'), 'Catching the latest headlines');
     loadHotNews();
   }
   async function loadHotNews(){
