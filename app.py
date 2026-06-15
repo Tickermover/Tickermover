@@ -1898,7 +1898,7 @@ def _render_report_page(t: dict) -> str:
 
     <h2>What we're <em>watching</em>.</h2>
 
-    <p>Every pick that enters our Top Hunts list comes with an entry, a trail stop, and a take-profit target — recorded to a public ledger the moment it fires. For {sym}, the next two earnings cycles + any major analyst-revision day will move the score most. We'll surface meaningful changes in the daily morning brief.</p>
+    <p>Every pick that enters our Top Hunts list comes with an entry and a stair-stepped trailing stop that locks in profit as the move proves itself while letting winners run — every exit recorded to a public ledger the moment it fires. For {sym}, the next two earnings cycles + any major analyst-revision day will move the score most. We'll surface meaningful changes in the daily morning brief.</p>
 
     <p>For real-time score updates and the full data view, <a href="/app">open the dashboard</a>.</p>
 
@@ -5912,6 +5912,92 @@ def _is_featured_eligible(t: dict) -> bool:
 
 # ── MODEL PORTFOLIO helpers ───────────────────────────────────────────────────
 
+# ── Top Hunts construction constants ──────────────────────────────────────
+# Hoisted to module level so the initial build (_build_model_portfolio) and
+# the daily refill (_replenish_portfolio) share ONE definition of the entry
+# bar, size, and diversification cap. They used to each hard-code these
+# numbers, which is exactly how two selection paths silently drift apart.
+PORTFOLIO_SIZE     = 12   # target number of active Top Hunts picks
+MIN_ALPHA_SCORE    = 75   # base entry bar (Bullish / Mixed regimes)
+MIN_ALPHA_BEARISH  = 80   # book-level defense: raise the bar in a risk-off tape
+MAX_PER_THEME      = 3    # max names from any one THEME (sub-sector) across the book
+
+
+def _entry_min_score(regime: dict | None = None) -> int:
+    """Regime-aware entry floor.
+
+    A world-class long book does not admit names on the same bar in every
+    tape — it demands more proof when the macro backdrop is hostile. In a
+    Bearish regime we raise the Alpha Score floor to MIN_ALPHA_BEARISH; in
+    Bullish / Mixed regimes we use the base MIN_ALPHA_SCORE. This is the
+    book-level analogue of the per-ticker regime multiplier already baked
+    into smart_score — defense applied at the gate, not just the score.
+    """
+    try:
+        label = (regime or market_regime.get() or {}).get("regime_label", "Mixed")
+    except Exception:
+        label = "Mixed"
+    return MIN_ALPHA_BEARISH if label == "Bearish" else MIN_ALPHA_SCORE
+
+
+def _theme_of(item: dict) -> str:
+    """Concentration key for diversification — the THEME (sub-sector), not the
+    coarse sector. This matters: in our universe the `sector` field is only a
+    handful of mega-buckets (Technology covers ~140 names), so capping on it
+    would be both far too blunt (only 3 of 140 tech names!) AND useless against
+    the real risk — 8 'AI Semiconductors' names are all 'Technology'. The
+    `sub_sector` taxonomy (AI Semiconductors, Cybersecurity, Data Center REITs,
+    …) is the level at which names actually move together, so it's the level we
+    diversify across. Falls back to sector, then 'Unknown' (each unknown counts
+    on its own — we'd rather under-fill than silently stack unclassified names).
+    """
+    return (
+        (item.get("sub_sector") or item.get("subsector") or item.get("sector") or "")
+        .strip()
+        or "Unknown"
+    )
+
+
+def _select_with_theme_cap(
+    ranked: list[dict],
+    size: int,
+    max_per_theme: int = MAX_PER_THEME,
+    seed_counts: dict[str, int] | None = None,
+) -> list[dict]:
+    """Greedily take the highest-ranked names while enforcing a per-THEME cap
+    — the single biggest gap between a score-ranked list and a real portfolio.
+    Without it, 12 momentum names in a semis-led tape become 8 AI-semiconductor
+    names, and one theme drawdown trips every stop at once.
+
+    `ranked` MUST already be sorted best-first. `seed_counts` pre-loads theme
+    exposure from names already held, so the replenish path enforces the cap
+    across the WHOLE book, not just the slice added this cycle.
+
+    Returns up to `size` picks. If theme diversity runs out at the bar it
+    returns fewer — we never breach the cap to fill a slot, mirroring the
+    'never lower the score bar' discipline elsewhere in this module.
+    """
+    counts: dict[str, int] = dict(seed_counts or {})
+    chosen: list[dict] = []
+    skipped_for_cap: list[str] = []
+    for t in ranked:
+        if len(chosen) >= size:
+            break
+        theme = _theme_of(t)
+        if counts.get(theme, 0) >= max_per_theme:
+            skipped_for_cap.append(t.get("ticker", "?"))
+            continue
+        chosen.append(t)
+        counts[theme] = counts.get(theme, 0) + 1
+    if skipped_for_cap:
+        logger.info(
+            f"🛡️  Theme cap (max {max_per_theme}/theme) passed over "
+            f"{len(skipped_for_cap)} higher-scored name(s): "
+            f"{skipped_for_cap[:8]}"
+        )
+    return chosen
+
+
 def _build_model_portfolio(existing: dict | None = None) -> dict:
     """
     Select top 20 Grade-A stocks by Alpha Score.
@@ -5942,8 +6028,10 @@ def _build_model_portfolio(existing: dict | None = None) -> dict:
     # names at any moment, so 12 slots give room for the strongest picks AND
     # enough rotation that fresh names appear as the leaderboard evolves.
     # At threshold 80 only 4 names qualified (May 2026), starving the tracker.
-    PORTFOLIO_SIZE  = 12
-    MIN_ALPHA_SCORE = 75   # top tier within Grade A — yields 20-25 candidates
+    # PORTFOLIO_SIZE / MIN_ALPHA_SCORE now live as module constants so the
+    # replenish path shares them. The active bar is regime-aware: it rises to
+    # MIN_ALPHA_BEARISH in a risk-off tape (book-level defense).
+    min_score = _entry_min_score()
 
     def _alpha(t: dict) -> float:
         """The displayed Alpha Score — smart_score with pop_score fallback."""
@@ -5961,7 +6049,7 @@ def _build_model_portfolio(existing: dict | None = None) -> dict:
         return (tgt - price) / price
 
     grade_a_pool = [t for t in _universe_data if t.get("grade") == "A"]
-    score_qualified = [t for t in grade_a_pool if _alpha(t) >= MIN_ALPHA_SCORE]
+    score_qualified = [t for t in grade_a_pool if _alpha(t) >= min_score]
     # ── Soft 6-pillar veto ────────────────────────────────────────────
     # A stock must hit >= 50 on AT LEAST 4 of the 6 pillars (momentum,
     # growth, quality, valuation, sentiment, growth_potential). This
@@ -5976,7 +6064,10 @@ def _build_model_portfolio(existing: dict | None = None) -> dict:
     pool = qualified
     # Sort by alpha desc, upside desc as tiebreaker
     pool.sort(key=lambda t: (_alpha(t), _upside(t)), reverse=True)
-    top20 = pool[:PORTFOLIO_SIZE]   # variable name kept for downstream code
+    # Diversify: take the strongest names subject to MAX_PER_THEME. A pure
+    # score-rank slice can return 8 names from one hot theme (e.g. AI
+    # Semiconductors); the cap keeps the book from becoming a single-theme bet.
+    top20 = _select_with_theme_cap(pool, PORTFOLIO_SIZE)   # name kept for downstream code
     for t in top20:
         t["_entry_tier"] = 1   # all qualified picks are Tier 1 Premium
 
@@ -5985,8 +6076,8 @@ def _build_model_portfolio(existing: dict | None = None) -> dict:
     logger.info(
         f"📊 Model Portfolio: universe={len(_universe_data)} → "
         f"grade A={len(grade_a_pool)} → "
-        f"qualified(score≥{MIN_ALPHA_SCORE})={len(qualified)} → "
-        f"selected={len(top20)}/{PORTFOLIO_SIZE}"
+        f"qualified(score≥{min_score})={len(qualified)} → "
+        f"theme-capped selected={len(top20)}/{PORTFOLIO_SIZE}"
         + (" (holding cash on remaining slots)" if len(top20) < PORTFOLIO_SIZE else "")
     )
 
@@ -6104,26 +6195,36 @@ def _enrich_model_portfolio(portfolio: dict) -> dict:
     """Add live prices, performance, and the Minervini-style stair-stepped
     trailing-stop exit ruleset.
 
-    EXIT RULES (no fixed take-profit cap — winners run):
+    EXIT RULES (no fixed take-profit cap — winners run; profit side is the
+    trail alone):
 
       1. Hard stop      → price ≤ entry × 0.92  (-8% from entry, never overridden)
       2. Stair-stepped trailing stop: floor ratchets up as PEAK gain rises.
-         Peak ≥ +10%  → floor = entry × 1.00  (break-even, can't lose)
-         Peak ≥ +25%  → floor = entry × 1.10  (locks +10%)
-         Peak ≥ +50%  → floor = entry × 1.25  (locks +25%)
-         Peak ≥ +100% → floor = entry × 1.50  (locks +50%)
+         Peak ≥ +10%   → floor = entry × 1.00  (break-even, can't lose)
+         Peak ≥ +25%   → floor = entry × 1.10  (locks +10%)
+         Peak ≥ +50%   → floor = entry × 1.25  (locks +25%)
+         Peak ≥ +100%  → floor = entry × 1.50  (locks +50%)
+         Peak ≥ +200%  → floor = entry × 2.00  (locks +100%)
+         Peak ≥ +300%  → floor = entry × 2.50  (locks +150%)
+         Peak ≥ +500%  → floor = entry × 3.50  (locks +250%)
          Floor never falls (peak is monotonic). If `now ≤ floor` → exit.
-      3. Signal stop   → grade falls below B  OR  Alpha Score < 60.
+      3. Stretched valuation → price > 25% above analyst target AND
+         (PEG > 4 OR P/E > 80) — no analyst headroom left.
+      4. Signal stop    → grade falls below B  OR  Alpha Score < 60.
 
-    Why stair-stepping beats a fixed +20% take-profit: a rigid +20% rule
-    systematically caps winners. NVDA's 2023 run (+1300%) would have been
-    sold at +20% under the old rule — missing 99% of the upside. Stair-
-    stepping locks more profit as the stock proves itself, but never sells
-    just because it hit an arbitrary number.
+    Why no take-profit cap: a fixed ceiling (the old +100% rule, and the +20%
+    rule before it) systematically sells the fat-tail winners that make
+    trend-following profitable. NVDA's 2023 run (+1300%) booked at +100%
+    forfeits 92% of the move. Stair-stepping locks progressively more profit
+    as the stock proves itself but never sells on an arbitrary round number;
+    the -8% hard stop keeps the downside small and fixed. That asymmetry
+    (small capped loss, uncapped-then-ratcheted gain) is the entire edge.
 
-    Real 5-year hit rate of this ruleset on US growth stocks: 55-65% — but
-    average winner is now 5-10× average loser (vs 2:1 with fixed cap),
-    producing materially better CAGR.
+    NOTE ON EXPECTED STATS: a 55-65% hit rate with winners 5-10× losers is the
+    DESIGN TARGET for this exit shape on US growth names, not a measured result
+    for THIS universe. Validate with backtest.py (IC + live-sim) before
+    treating those numbers as fact — the fundamental half of the score cannot
+    be reconstructed point-in-time, so the backtest is a lower bound.
 
     The active rule (the one closest to firing) is exposed as `decision_point`
     so the UI can show ONE chip per card instead of a multi-row plan.
@@ -6244,44 +6345,37 @@ def _enrich_model_portfolio(portfolio: dict) -> dict:
                     + (f" · PEG {peg:.1f}" if peg > 4 else f" · P/E {pe:.0f}")
                 )
 
-        # ── +100% TAKE-PROFIT CEILING (May 21 product call) ──────────────
-        # Philosophy: deliver FAST returns by rotating capital. A 100%
-        # gain in any timeframe is the marker of a successful pick —
-        # book it, surface a fresh hot name in the freed slot. Avoids
-        # the 'one stock takes a year to double' scenario the user
-        # explicitly does not want in this tracker.
-        # Only triggers on a real live price (has_live_price guard
-        # already established above prevents phantom fires on partial data).
-        take_profit_hit = (
-            has_live_price
-            and entry > 0
-            and now >= entry * 2.0
-        )
-
+        # ── NO FIXED TAKE-PROFIT CAP (reversed Jun 15) ───────────────────
+        # The old +100% ceiling booked every double and rotated capital. It
+        # was removed because it directly contradicts the stair-stepped trail
+        # below — the whole point of which is to let fat-tail winners run while
+        # ratcheting a floor underneath them. A hard 2× cap sells exactly the
+        # NVDA-type compounders that make trend-following profitable (a +1300%
+        # run booked at +100% forfeits 92% of the move). Profit-side exits are
+        # now governed solely by the stair-step trail, which locks +50% / +100%
+        # / +150% / +250% as the peak proves itself but never sells on an
+        # arbitrary round number.
+        #
         # NOTE: The "bar_failed" re-vet rule was tried on May 21 and removed
         # the same day. It used pop_score against a 75 threshold, but the
         # SELECTION path uses smart_score — different fields, so picks that
         # cleanly passed entry got evicted on noise. The result was an
         # 11-stock churn storm in a single refresh, which destroyed user
-        # confidence in the tracker. Once a pick is in, it stays until
-        # one of the original 5 exit rules fires: hard stop, +100% target,
-        # trail stop, valuation stretched, or signal exit (grade<B or
-        # score<60). Those are loose enough to let healthy picks run and
-        # tight enough to catch genuinely broken ones.
+        # confidence in the tracker. Once a pick is in, it stays until one of
+        # the four exit rules fires: hard stop, trail stop, valuation
+        # stretched, or signal exit (grade<B or score<60). Those are loose
+        # enough to let healthy picks run and tight enough to catch genuinely
+        # broken ones.
         bar_failed = False
         bar_reason = None
 
         # ── Determine the EXIT ALERT (priority: protect capital first,
-        #    then book big wins, then trail / valuation / signal) ──────
+        #    then trail / valuation / signal — winners run via the trail) ──
         exit_alert = None
         if hard_stop_hit:
             exit_alert = {"type": "stop",
                           "label": "STOP HIT",
                           "reason": f"Price ${now:.2f} ≤ -8% stop ${hard_stop_price:.2f}"}
-        elif take_profit_hit:
-            exit_alert = {"type": "target",
-                          "label": "+100% TARGET HIT",
-                          "reason": f"Price ${now:.2f} ≥ 2× entry ${entry:.2f} — booked, rotating to next hot pick"}
         elif trail_stop_hit:
             exit_alert = {"type": "trail",
                           "label": "TRAIL STOP HIT",
@@ -6505,14 +6599,16 @@ def _replenish_portfolio(portfolio: dict) -> dict:
 
     Rule: existing healthy picks NEVER move. We only fill slots opened by
     exit triggers. New picks pulled from the universe must meet the same
-    bar as the initial build (Grade A + smart_score >= 75). Each new pick
-    gets today's date so the UI can flag it as NEW for a week.
+    bar as the initial build (Grade A + regime-aware Alpha Score floor +
+    4-of-6 pillars) AND respect the per-theme cap across the WHOLE book.
+    Each new pick gets today's date so the UI can flag it as NEW for a week.
 
-    If fewer than target_size stocks meet the criteria today, the portfolio
-    stays below target — we never lower the bar to fill slots.
+    If fewer than PORTFOLIO_SIZE stocks meet the criteria today, the portfolio
+    stays below target — we never lower the bar (or breach the theme cap) to
+    fill slots.
     """
     from datetime import date as _date
-    target_size = 12   # matches PORTFOLIO_SIZE in _build_model_portfolio
+    target_size = PORTFOLIO_SIZE   # single source of truth (module constant)
     cur_picks = portfolio.get("picks", [])
     if len(cur_picks) >= target_size:
         return portfolio
@@ -6541,11 +6637,13 @@ def _replenish_portfolio(portfolio: dict) -> dict:
         return (tgt - price) / price
 
     # Same filter as _build_model_portfolio: score discipline only, no
-    # upside floor. Upside is the tiebreaker for equal-score stocks.
+    # upside floor. Upside is the tiebreaker for equal-score stocks. The bar
+    # is regime-aware (raised in a risk-off tape) — identical to the build.
+    min_score = _entry_min_score()
     score_qualified = [
         t for t in _universe_data
         if t.get("grade") == "A"
-        and _alpha(t) >= 75   # matches MIN_ALPHA_SCORE in _build_model_portfolio
+        and _alpha(t) >= min_score
         and t.get("ticker") not in blocked
     ]
     # MANDATORY pillar veto — must hit >= 4 of 6 pillars. No fallback;
@@ -6572,8 +6670,17 @@ def _replenish_portfolio(portfolio: dict) -> dict:
         return portfolio
 
     needed = min(target_size - len(cur_picks), remaining_today)
+    # Enforce the per-theme cap ACROSS THE WHOLE BOOK: seed the counter with
+    # themes already held so a refill can't push any theme past MAX_PER_THEME.
+    # A refill that would breach it is skipped, not downgraded.
+    seed_counts: dict[str, int] = {}
+    for p in cur_picks:
+        theme = _theme_of(p)
+        seed_counts[theme] = seed_counts.get(theme, 0) + 1
+    to_add = _select_with_theme_cap(qualified, needed, seed_counts=seed_counts)
+
     added = 0
-    for t in qualified[:needed]:
+    for t in to_add:
         price = float(t.get("price") or 0)
         cur_picks.append({
             "ticker":         t.get("ticker", ""),
@@ -6638,7 +6745,7 @@ async def api_model_portfolio():
         # only the FIRST call after market opens or score changes will find
         # newly-qualifying stocks.
         before_n = len(_model_portfolio.get("picks", []))
-        if before_n < 12:   # matches PORTFOLIO_SIZE
+        if before_n < PORTFOLIO_SIZE:
             _model_portfolio = _replenish_portfolio(_model_portfolio)
             after_n = len(_model_portfolio.get("picks", []))
             if after_n != before_n or state_changed:

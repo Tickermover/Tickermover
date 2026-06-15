@@ -81,14 +81,27 @@ except ImportError:
 # We import the same ticker list the live app uses, so backtest matches prod.
 sys.path.insert(0, str(Path(__file__).parent))
 try:
-    from stock_universe import _EXCHANGE
+    from stock_universe import _EXCHANGE, get_meta
     UNIVERSE = list(_EXCHANGE.keys())
+    # Static ticker → THEME (sub-sector) map for the diversification cap. We
+    # cap on sub_sector, not the coarse `sector` field: 'sector' is only ~4
+    # mega-buckets here (Technology alone is ~140 names), so it's both too
+    # blunt and blind to the real risk — 8 'AI Semiconductors' are all
+    # 'Technology'. sub_sector is the level names actually co-move at. Theme is
+    # a near-constant attribute, so today's classification is safe historically
+    # (unlike fundamentals, which we cannot reconstruct point-in-time).
+    def _theme(t: str) -> str:
+        m = get_meta(t) or {}
+        return ((m.get("sub_sector") or m.get("subsector") or m.get("sector") or "")
+                .strip() or "Unknown")
+    THEME = {t: _theme(t) for t in UNIVERSE}
 except Exception as e:
     print(f"Could not import universe: {e}")
     print("Falling back to hardcoded test set.")
     UNIVERSE = ["AMD", "AVGO", "PLTR", "MU", "AMAT", "LRCX", "KLAC", "MRVL",
                 "CRWD", "PANW", "VRT", "GEV", "CEG", "VST", "ANET",
                 "COHR", "LITE", "FN", "ASTS", "IONQ"]
+    THEME = {}
 
 
 # ══════════════════════════════════════════════════════════════════════════
@@ -277,10 +290,14 @@ class Position:
         if self.entry_price <= 0:
             return 0.0
         peak_pct = self.peak_price / self.entry_price - 1
-        if   peak_pct >= 1.00: return self.entry_price * 1.50
-        elif peak_pct >= 0.50: return self.entry_price * 1.25
-        elif peak_pct >= 0.25: return self.entry_price * 1.10
-        elif peak_pct >= 0.10: return self.entry_price * 1.00
+        # Must mirror the live ladder in app.py:_enrich_model_portfolio.
+        if   peak_pct >= 5.00: return self.entry_price * 3.50  # locks +250%
+        elif peak_pct >= 3.00: return self.entry_price * 2.50  # locks +150%
+        elif peak_pct >= 2.00: return self.entry_price * 2.00  # locks +100%
+        elif peak_pct >= 1.00: return self.entry_price * 1.50  # locks +50%
+        elif peak_pct >= 0.50: return self.entry_price * 1.25  # locks +25%
+        elif peak_pct >= 0.25: return self.entry_price * 1.10  # locks +10%
+        elif peak_pct >= 0.10: return self.entry_price * 1.00  # break-even
         return self.entry_price * 0.92  # hard stop tier
 
     def hard_stop(self) -> float:
@@ -306,7 +323,8 @@ class ClosedTrade:
 
 def run_backtest(prices: pd.DataFrame, volumes: pd.DataFrame,
                  universe: list[str], top_n: int = 20,
-                 stake_per_pick: float = 10000.0) -> dict:
+                 stake_per_pick: float = 10000.0,
+                 max_per_theme: int = 3) -> dict:
     """
     Walk forward month by month. Each month-end:
       1. Compute Alpha Score for every ticker with sufficient history
@@ -445,15 +463,26 @@ def run_backtest(prices: pd.DataFrame, volumes: pd.DataFrame,
             [(t, raw_scores[t]["score"], raw_scores[t]["price"]) for t in raw_scores],
             key=lambda x: x[1], reverse=True,
         )
+        # Per-theme cap across the WHOLE book — seed counts from currently
+        # held names so a top-up can't push a theme past max_per_theme.
+        # Mirrors _select_with_theme_cap in app.py.
+        theme_counts: dict[str, int] = {}
+        for tk in open_positions:
+            s = THEME.get(tk, "Unknown")
+            theme_counts[s] = theme_counts.get(s, 0) + 1
         for t, score, price in ranked:
             if len(open_positions) >= top_n:
                 break
             if t in held or cash < stake_per_pick:
                 continue
+            th = THEME.get(t, "Unknown")
+            if theme_counts.get(th, 0) >= max_per_theme:
+                continue   # theme full — skip, never breach the cap
             open_positions[t] = Position(
                 ticker=t, entry_date=ckpt,
                 entry_price=price, entry_score=score, peak_price=price,
             )
+            theme_counts[th] = theme_counts.get(th, 0) + 1
             cash -= stake_per_pick
 
         # ── NAV mark-to-market at this checkpoint ─────────────────────────
@@ -609,9 +638,17 @@ def write_report(result: dict, out_dir: Path) -> None:
               "are NOT included — historical point-in-time data isn't available.\n")
     md.append("- **No transaction costs / slippage / taxes:** subtract ~1% per round-trip "
               "for an honest net-of-fees estimate.\n")
-    md.append("- **Exit-only validation here:** the 4-rule exit (8% stop + stair-step trail) "
-              "is the well-tested CAN SLIM-derived part. The novel claim that needs the IC "
-              "to back it up is whether the *score itself* picks better stocks than random.\n")
+    md.append("- **Exit validation here:** the exit (8% hard stop + stair-step trail, no "
+              "take-profit cap) is the well-tested CAN SLIM-derived part. The novel claim that "
+              "needs the IC to back it up is whether the *score itself* picks better stocks than "
+              "random.\n")
+    md.append("- **Theme cap applied:** selection enforces max-per-theme (sub-sector) "
+              "diversification, matching live. Run `--max-per-theme 99` to see the uncapped book "
+              "for comparison.\n")
+    md.append("- **Regime book-defense NOT modeled:** live raises the entry bar in a risk-off "
+              "tape via the macro overlay (SPY/QQQ/VIX/^TNX), which isn't reconstructed here. "
+              "The backtest fills top-N every checkpoint regardless of regime, so it understates "
+              "the live system's drawdown protection.\n")
     md.append("- **A higher hit rate doesn't equal a better strategy:** asymmetric payoff "
               "(big winners, small losers) drives long-run CAGR. Watch avg winner vs avg loser.\n\n")
 
@@ -640,6 +677,8 @@ def main() -> int:
     ap = argparse.ArgumentParser(description="AlphaHunt backtest")
     ap.add_argument("--years", type=int, default=5, help="years of history (default 5)")
     ap.add_argument("--top", type=int, default=20, help="positions held (default 20)")
+    ap.add_argument("--max-per-theme", type=int, default=3,
+                    help="diversification cap: max names per theme/sub-sector (default 3, matches live)")
     ap.add_argument("--stake", type=float, default=10000, help="$ per pick")
     ap.add_argument("--output", default="backtest_out", help="output directory")
     ap.add_argument("--universe", default=None,
@@ -657,7 +696,8 @@ def main() -> int:
     volumes = load_volumes(universe, args.years)
 
     result = run_backtest(prices, volumes, universe,
-                          top_n=args.top, stake_per_pick=args.stake)
+                          top_n=args.top, stake_per_pick=args.stake,
+                          max_per_theme=args.max_per_theme)
     write_report(result, Path(args.output))
     return 0
 
