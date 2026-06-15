@@ -1077,14 +1077,18 @@ table.ssx-h2h tbody td.self{color:var(--ink);font-weight:600}
   .hdr-stats{gap:8px;margin-left:auto;flex-wrap:nowrap;flex-shrink:0;align-items:center}
   .hdr-stats .stat{display:none}
   #regime-pill{padding:5px 10px!important;font-size:11px!important;white-space:nowrap}
-  /* Compact user pill: avatar circle only, tiny outline Out button */
-  #auth-btn-wrap{margin-left:6px!important;flex-shrink:0}
+  /* Compact user pill — LEGACY topbar avatar styling. The user menu now lives
+     in the sidebar footer (.v2-sb-bottom), which has its own full styling, so
+     these must be scoped to .v2-topbar only. Unscoped, the `> div:last-child`
+     rule hid the entire avatar+name block, leaving an empty box with just the
+     sign-out arrow — the user profile "disappeared" on mobile. */
   #auth-btn{padding:7px 14px;font-size:12px}
-  #user-menu{gap:6px!important}
-  #user-menu > div:first-child{padding:0!important;border:none!important;background:transparent!important;border-radius:50%!important}
-  #user-menu > div:first-child > div:last-child{display:none!important}    /* hide email + member label */
-  #user-avatar{width:36px!important;height:36px!important;font-size:15px!important}
-  #user-menu button{padding:6px 9px!important;font-size:11px!important}
+  .v2-topbar #auth-btn-wrap{margin-left:6px!important;flex-shrink:0}
+  .v2-topbar #user-menu{gap:6px!important}
+  .v2-topbar #user-menu > div:first-child{padding:0!important;border:none!important;background:transparent!important;border-radius:50%!important}
+  .v2-topbar #user-menu > div:first-child > div:last-child{display:none!important}
+  .v2-topbar #user-avatar{width:36px!important;height:36px!important;font-size:15px!important}
+  .v2-topbar #user-menu button{padding:6px 9px!important;font-size:11px!important}
 
   /* ── TABS ── horizontal scroll with snap + a fade-edge hint so
      users see that Sector Map and Reports are reachable by swiping.
