@@ -6232,6 +6232,14 @@ def _build_model_portfolio(existing: dict | None = None) -> dict:
             pop_at_entry   = round(_alpha(t), 1)
             grade_at_entry = t.get("grade", "A")
 
+        # Freeze the AI judge's conviction at entry: retained picks keep their
+        # original value; new picks capture today's. Lets the closed-trades
+        # view later measure conviction-vs-outcome. None when AI hasn't scored.
+        if prev and prev.get("conviction_at_entry") is not None:
+            conviction_at_entry = prev.get("conviction_at_entry")
+        else:
+            conviction_at_entry = (cmap.get(ticker.upper()) or {}).get("conviction")
+
         picks.append({
             "ticker":         ticker,
             "name":           t.get("name", ""),
@@ -6239,6 +6247,7 @@ def _build_model_portfolio(existing: dict | None = None) -> dict:
             "entry_price":    entry,
             "pop_at_entry":   pop_at_entry,
             "grade_at_entry": grade_at_entry,
+            "conviction_at_entry": conviction_at_entry,
             "entry_tier":     prev.get("entry_tier") if prev else t.get("_entry_tier", 3),
             "is_simulated_entry": is_simulated_entry,
             "sector":         t.get("sector", ""),
@@ -6283,6 +6292,7 @@ def _build_model_portfolio(existing: dict | None = None) -> dict:
                     "entry_price":     entry,
                     "pop_at_entry":    prev.get("pop_at_entry"),
                     "grade_at_entry": prev.get("grade_at_entry"),
+                    "conviction_at_entry": prev.get("conviction_at_entry"),
                     "rationale":       prev.get("rationale", ""),
                     "sub_sector":      prev.get("sub_sector", ""),
                     "exit_date":       today_str,
@@ -6697,6 +6707,7 @@ def _close_triggered_picks(portfolio: dict, enriched_picks: list) -> tuple[dict,
             "entry_price":     entry,
             "pop_at_entry":    raw.get("pop_at_entry"),
             "grade_at_entry":  raw.get("grade_at_entry"),
+            "conviction_at_entry": raw.get("conviction_at_entry"),
             "rationale":       raw.get("rationale", ""),
             "sub_sector":      raw.get("sub_sector", ""),
             "exit_date":       today_str,
@@ -6817,6 +6828,7 @@ def _replenish_portfolio(portfolio: dict) -> dict:
             "entry_price":    round(price, 2),
             "pop_at_entry":   round(_alpha(t), 1),
             "grade_at_entry": t.get("grade", "A"),
+            "conviction_at_entry": (cmap.get((t.get("ticker") or "").upper()) or {}).get("conviction"),
             "entry_tier":     1,
             "is_simulated_entry": False,   # real-time addition, not back-dated
             "sector":         t.get("sector", ""),
@@ -6910,6 +6922,43 @@ async def api_model_portfolio_history():
     for t in trades:
         r = t.get("exit_reason") or "unknown"
         by_reason[r] = by_reason.get(r, 0) + 1
+
+    # ── AI conviction vs. realized outcome ────────────────────────────────
+    # The legitimate, forward-looking validation of the AI re-rank: bucket
+    # closed trades by the conviction the judge assigned AT ENTRY, then show
+    # hit-rate + avg return per bucket. Over time this answers "did high-
+    # conviction picks actually outperform?" — something a historical backtest
+    # of the judge cannot (it can't be reconstructed point-in-time).
+    def _bucket(c):
+        if c is None:
+            return None
+        try:
+            c = float(c)
+        except (TypeError, ValueError):
+            return None
+        if c >= 80:  return "high (80-100)"
+        if c >= 60:  return "solid (60-79)"
+        return "neutral (<60)"
+
+    conv_buckets: dict[str, dict] = {}
+    for t in trades:
+        b = _bucket(t.get("conviction_at_entry"))
+        if b is None:
+            continue
+        d = conv_buckets.setdefault(b, {"n": 0, "wins": 0, "sum_pct": 0.0})
+        d["n"] += 1
+        d["wins"] += 1 if t.get("won") else 0
+        d["sum_pct"] += float(t.get("final_pct") or 0)
+    by_conviction = {
+        b: {
+            "trades":   d["n"],
+            "hit_rate": round(d["wins"] / d["n"] * 100, 1) if d["n"] else 0,
+            "avg_pct":  round(d["sum_pct"] / d["n"], 2) if d["n"] else 0,
+        }
+        for b, d in conv_buckets.items()
+    }
+    scored_n = sum(d["n"] for d in conv_buckets.values())
+
     stats = {
         "total":      len(trades),
         "wins":       len(wins),
@@ -6921,6 +6970,9 @@ async def api_model_portfolio_history():
         "best":       round(max(pcts), 2) if pcts else 0,
         "worst":      round(min(pcts), 2) if pcts else 0,
         "by_reason":  by_reason,
+        # AI-conviction analytic (empty until conviction-tagged picks close)
+        "by_conviction":      by_conviction,
+        "conviction_scored":  scored_n,
     }
     return JSONResponse({"trades": trades, "stats": stats})
 

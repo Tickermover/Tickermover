@@ -262,6 +262,12 @@ class PortfolioStore:
                     "entry_price":     t.get("entry_price"),
                     "pop_at_entry":    t.get("pop_at_entry"),
                     "grade_at_entry":  t.get("grade_at_entry"),
+                    # AI analyst-judge conviction at entry (0-100). Lets the
+                    # closed-trades view measure whether high-conviction picks
+                    # actually outperformed. Column added 2026-06-15 — if it
+                    # isn't present yet the insert below retries without it so
+                    # the audit ledger never breaks.
+                    "conviction_at_entry": t.get("conviction_at_entry"),
                     "rationale":       (t.get("rationale") or "")[:1000],
                     "sub_sector":      t.get("sub_sector"),
                     "exit_date":       t.get("exit_date"),
@@ -280,8 +286,23 @@ class PortfolioStore:
                 inserted = len(resp) if isinstance(resp, list) else len(new_trades)
                 logger.info(f"📕 PortfolioStore.append_trades: inserted {inserted} trade(s) into Supabase")
             except Exception as e:
-                logger.error(f"PortfolioStore.append_trades Supabase insert FAILED: {e}")
-                inserted = 0
+                # Most likely cause on first deploy: the conviction_at_entry
+                # column doesn't exist yet. Retry once without it so the ledger
+                # is never blocked on a pending migration.
+                logger.warning(
+                    f"PortfolioStore.append_trades insert failed ({e}); "
+                    f"retrying without conviction_at_entry (apply "
+                    f"db/2026-06-15-conviction-on-trades.sql to fix)"
+                )
+                for r in rows:
+                    r.pop("conviction_at_entry", None)
+                try:
+                    resp = self._post("/rest/v1/closed_trades", body=rows)
+                    inserted = len(resp) if isinstance(resp, list) else len(new_trades)
+                    logger.info(f"📕 PortfolioStore.append_trades: inserted {inserted} trade(s) (no conviction col)")
+                except Exception as e2:
+                    logger.error(f"PortfolioStore.append_trades Supabase insert FAILED: {e2}")
+                    inserted = 0
         # Disk mirror — append to existing JSON file so disk + DB stay aligned.
         try:
             _HISTORY_PATH.parent.mkdir(parents=True, exist_ok=True)

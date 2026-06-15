@@ -16095,6 +16095,38 @@ function renderClosedTrades(data) {
       </div>
     </div>`;
 
+  // ── AI CONVICTION vs OUTCOME ─────────────────────────────────────────
+  // Forward validation of the AI re-rank: closed trades bucketed by the
+  // judge's conviction at entry. Appears once conviction-tagged picks have
+  // closed (empty before that — a historical backtest of the judge isn't
+  // possible, so this accumulates real evidence over time).
+  const convPanel = (() => {
+    const bc = stats.by_conviction || {};
+    const order = ['high (80-100)', 'solid (60-79)', 'neutral (<60)'];
+    const present = order.filter(k => bc[k]);
+    if (!stats.conviction_scored || !present.length) return '';
+    const cells = present.map(k => {
+      const d = bc[k];
+      const pos = (d.avg_pct || 0) >= 0;
+      return `<div class="th-tile">
+        <div class="tt-k">${k}</div>
+        <div class="tt-v ${pos?'pos':'neg'}">${_sg(d.avg_pct)}</div>
+        <div class="tt-s">${(d.hit_rate||0).toFixed(0)}% hit · ${d.trades} trade${d.trades===1?'':'s'}</div>
+      </div>`;
+    }).join('');
+    return `
+      <div class="th-hero th-hero-dark" style="margin-top:14px">
+        <div class="th-hero-top">
+          <div class="th-hero-id">
+            <div class="th-eyebrow">🧠 AI conviction vs outcome</div>
+            <div class="th-title" style="font-size:18px">Did higher conviction win more?</div>
+            <div class="th-sub">Closed trades grouped by the AI analyst's conviction at entry. Builds as conviction-tagged picks close — forward evidence on live picks, not a backtest.</div>
+          </div>
+        </div>
+        <div class="th-tiles">${cells}</div>
+      </div>`;
+  })();
+
   // ── TRADES TABLE ────────────────────────────────────────────────────
   const reasonStyle = {
     target:     {cls:'booked',   label:'Booked'},
@@ -16118,6 +16150,12 @@ function renderClosedTrades(data) {
     const won  = !!t.won;
     const pct  = parseFloat(t.final_pct || 0);
     const pctStr = (pct >= 0 ? '+' : '') + pct.toFixed(1) + '%';
+    // AI conviction at entry (frozen when the pick was added). '—' for picks
+    // that predate the AI layer.
+    const conv = t.conviction_at_entry;
+    const convCell = (conv == null || conv === '')
+      ? '<span style="color:#94a3b8">—</span>'
+      : `<span style="font-weight:800;color:${conv>=80?'#15803d':conv>=60?'#0040c1':'#9E6308'}">${conv}</span>`;
     return `
       <tr onclick="openStockModal('${t.ticker}')" style="cursor:pointer">
         <td class="ct-tic">${t.ticker}</td>
@@ -16128,6 +16166,7 @@ function renderClosedTrades(data) {
         <td>$${(+t.entry_price||0).toFixed(2)}</td>
         <td>$${(+t.exit_price||0).toFixed(2)}</td>
         <td class="ct-final ${won?'win':'loss'}">${pctStr}</td>
+        <td style="text-align:right">${convCell}</td>
         <td style="text-align:right">
           <span class="ct-chip ct-chip--${r.cls}"><span class="ct-dot"></span>${r.label}</span>
         </td>
@@ -16148,6 +16187,7 @@ function renderClosedTrades(data) {
               <th>Entry $</th>
               <th>Exit $</th>
               <th class="ct-r">Final</th>
+              <th class="ct-r">AI conv</th>
               <th class="ct-r">Reason</th>
             </tr>
           </thead>
@@ -16156,7 +16196,7 @@ function renderClosedTrades(data) {
       </div>
     </div>`;
 
-  root.innerHTML = _modelViewToggle('history') + headerHTML + tableHTML;
+  root.innerHTML = _modelViewToggle('history') + headerHTML + convPanel + tableHTML;
 }
 
 function renderModelPortfolio(data) {
