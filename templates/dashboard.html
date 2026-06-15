@@ -511,8 +511,10 @@ body.v2 #sectors-grid .smh-name{font-weight:800;font-size:12.5px;color:#0f172a!i
 .secg-lg.dir b{font-weight:800;color:#0f172a}
 .secg-hint{margin-left:auto;color:#94a3b8;font-weight:600}
 @media(max-width:560px){.secg-hint{display:none}.secg-node .secg-label{font-size:10px}}
-/* Hide the whole "Sector connections" map on mobile — too dense to be useful on a narrow screen */
-@media(max-width:560px){#uni-map{display:none}}
+/* Hide the whole "Sector connections" map on mobile — too dense to be useful on
+   a narrow screen. Uses 768px (the app's mobile-shell breakpoint, where the
+   sidebar becomes a drawer) so the whole phone+small-tablet range is covered. */
+@media(max-width:768px){#uni-map{display:none}}
 @media(prefers-reduced-motion:reduce){.secg-edge,.secg-node .secg-dot{transition:none}}
 /* Sector card — interactive (clicks filter the table below) */
 .sm-card{cursor:pointer}
@@ -1645,8 +1647,9 @@ table.ssx-h2h tbody td.self{color:var(--ink);font-weight:600}
 /* Universe screener on phones: show ALL 10 columns but let the table scroll
    sideways. Keep the table wider than the viewport, force the wrapper to own a
    real touch-scroll region, and SHOW a thin scrollbar so it's obviously
-   swipeable (the hidden scrollbar made it read as "not scrollable"). */
-@media(max-width:560px){
+   swipeable (the hidden scrollbar made it read as "not scrollable"). 768px =
+   the app's mobile-shell breakpoint, covering phones + small tablets. */
+@media(max-width:768px){
   #panel-fund .fund-list{min-width:640px}
   #panel-fund .fund-list-wrap{
     overflow-x:auto;-webkit-overflow-scrolling:touch;
@@ -2895,10 +2898,11 @@ body.v2-featured-only #fund-tbody tr.fund-row:not([data-featured]){display:none!
 .fd-toolbar-slim{background:transparent!important;border:0!important;padding:0 2px!important;
   margin-bottom:10px!important;min-height:0!important;justify-content:flex-end!important;gap:0!important}
 @media(max-width:560px){.uni-screen .scn-dsc{display:none}.uni-screen{min-width:0;padding:9px 12px}}
-/* On phones the Smart-filter pills run wider than the viewport — make the
-   overflow an obvious touch-scroll region with a visible thin scrollbar
-   (it was hidden, so the row read as "not scrollable to the right"). */
-@media(max-width:560px){
+/* On phones/small tablets the Smart-filter pills run wider than the viewport —
+   make the overflow an obvious touch-scroll region with a visible thin scrollbar
+   (it was hidden, so the row read as "not scrollable to the right"). 768px =
+   the app's mobile-shell breakpoint. */
+@media(max-width:768px){
   .uni-screens{-webkit-overflow-scrolling:touch;scrollbar-width:thin}
   .uni-screens::-webkit-scrollbar{display:block;height:5px}
   .uni-screens::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:3px}
@@ -2967,10 +2971,10 @@ body.v2-featured-only #fund-tbody tr.fund-row:not([data-featured]){display:none!
 .ct-name{color:#6b7787;font-weight:500}
 /* Closed-trades table on phones: a 10-column table can't fit, and a
    horizontal-swipe table is poor mobile UX (hidden scrollbar, gesture fights
-   the page scroll). Below 560px we restack each row as a CARD — ticker + name
-   header, then one labelled line per field — so everything is reachable by
-   scrolling DOWN. No horizontal scroll needed. Mobile-only. */
-@media(max-width:560px){
+   the page scroll). At/below the mobile-shell breakpoint (768px) we restack
+   each row as a CARD — ticker + name header, then one labelled line per field —
+   so everything is reachable by scrolling DOWN. No horizontal scroll needed. */
+@media(max-width:768px){
   .ct-scroll{overflow-x:visible}
   .ct-table{min-width:0;display:block}
   .ct-table thead{display:none}
