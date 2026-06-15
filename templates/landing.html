@@ -1039,6 +1039,22 @@ h1,h2,h3,h4,h5{font-family:'Instrument Sans',sans-serif;font-weight:600;letter-s
   @keyframes orbit-inner-180{from{transform:translate(-50%,-50%) rotate(180deg) translateY(-110px) rotate(-180deg)} to{transform:translate(-50%,-50%) rotate(-180deg) translateY(-110px) rotate(180deg)}}
   @keyframes orbit-inner-300{from{transform:translate(-50%,-50%) rotate(300deg) translateY(-110px) rotate(-300deg)} to{transform:translate(-50%,-50%) rotate(-60deg)  translateY(-110px) rotate(60deg)}}
 }
+/* Small phones: the OUTER orbit (160px radius) + wide 153px chips pushed past the
+   viewport edge, where orbit-wrap's overflow:hidden clipped "Momentum"/"Quality".
+   Shrink the chips AND pull the outer radius in to 110px (matching the inner ring
+   → a clean hexagon) so all six stay inside the frame. Placed after the <=760px
+   block so it wins on phones (both queries match). */
+@media(max-width:480px){
+  .o-chip{font-size:10.5px;padding:3px 8px 3px 3px;gap:5px;box-shadow:0 10px 24px rgba(9,20,60,.12)}
+  .chip-ico{width:18px;height:18px}.chip-ico svg{width:10px;height:10px}
+  .chip-pct{font-size:9px;padding:2px 5px}
+  @keyframes orbit-outer-0  {from{transform:translate(-50%,-50%) rotate(0deg)   translateY(-100px) rotate(0deg)}    to{transform:translate(-50%,-50%) rotate(360deg) translateY(-100px) rotate(-360deg)}}
+  @keyframes orbit-outer-120{from{transform:translate(-50%,-50%) rotate(120deg) translateY(-100px) rotate(-120deg)} to{transform:translate(-50%,-50%) rotate(480deg) translateY(-100px) rotate(-480deg)}}
+  @keyframes orbit-outer-240{from{transform:translate(-50%,-50%) rotate(240deg) translateY(-100px) rotate(-240deg)} to{transform:translate(-50%,-50%) rotate(600deg) translateY(-100px) rotate(-600deg)}}
+  @keyframes orbit-inner-60 {from{transform:translate(-50%,-50%) rotate(60deg)  translateY(-100px) rotate(-60deg)}  to{transform:translate(-50%,-50%) rotate(-300deg) translateY(-100px) rotate(300deg)}}
+  @keyframes orbit-inner-180{from{transform:translate(-50%,-50%) rotate(180deg) translateY(-100px) rotate(-180deg)} to{transform:translate(-50%,-50%) rotate(-180deg) translateY(-100px) rotate(180deg)}}
+  @keyframes orbit-inner-300{from{transform:translate(-50%,-50%) rotate(300deg) translateY(-100px) rotate(-300deg)} to{transform:translate(-50%,-50%) rotate(-60deg)  translateY(-100px) rotate(60deg)}}
+}
 
 /* ───────── reveal ───────── */
 .has-js .reveal{opacity:0;transform:translateY(30px);transition:opacity .8s var(--ease),transform .8s var(--ease)}
@@ -1145,6 +1161,10 @@ h1,h2,h3,h4,h5{font-family:'Instrument Sans',sans-serif;font-weight:600;letter-s
 .dd-flag-dot{width:6px;height:6px;border-radius:50%;background:#F59E0B;margin-top:5px;flex:none;animation:pulse 2s infinite}
 @media(max-width:1080px){.dash-body{grid-template-columns:180px 1fr}}
 @media(max-width:820px){.dash-body{grid-template-columns:1fr}.dash-side{display:none}.dm-row{grid-template-columns:1fr 50px 50px;gap:8px}.dm-mini-bars,.dm-pillars-h,.dm-btn{display:none}.dm-table .dm-row span:last-child{display:none}}
+/* Phones: the browser-chrome row can't fit the URL pill AND the "Live · time ET"
+   badge — the badge spilled past the mock's rounded edge and got clipped. Drop
+   the badge on narrow screens; the live picks table below still conveys liveness. */
+@media(max-width:560px){.dc-live{display:none}}
 
 /* ── Dashboard mock: On the Radar — Top Picks table (mirrors the app's #panel-hot) ── */
 .radar-mock .picks-card{background:#fff;border:1px solid rgba(9,9,9,.07);border-radius:16px;overflow:hidden;box-shadow:0 10px 30px rgba(9,20,60,.06)}
