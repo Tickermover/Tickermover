@@ -2503,9 +2503,16 @@ body.v2 .v2ov-card.sectors .v2ov-sector-cell{
 .v2-sb-profile #v2-profile-label{font-size:13px;font-weight:800;color:#fff}
 .v2-sb-profile #v2-profile-emoji{font-size:17px;line-height:1}
 .v2-sb-profile .v2-profile-btn svg{margin-left:auto}
-body.sb-collapsed .v2-sb-profile .v2-sb-profile-txt,
-body.sb-collapsed .v2-sb-profile .v2-profile-btn svg{display:none}
-body.sb-collapsed .v2-sb-profile .v2-profile-btn{justify-content:center;padding:9px}
+/* Only collapse the profile pill to an icon on DESKTOP, where the sidebar
+   actually becomes a 64px rail. On mobile the sidebar is a full-width drawer, so
+   sb-collapsed (restored from a prior desktop collapse via localStorage) must NOT
+   hide the "Investing style / Aggressive" label — that left just a bare emoji on
+   the orange button. Matches the min-width:769px gating used by the rail rules. */
+@media(min-width:769px){
+  body.sb-collapsed .v2-sb-profile .v2-sb-profile-txt,
+  body.sb-collapsed .v2-sb-profile .v2-profile-btn svg{display:none}
+  body.sb-collapsed .v2-sb-profile .v2-profile-btn{justify-content:center;padding:9px}
+}
 
 /* ── Account / profile panel ── */
 .v2-acct-overlay{position:fixed;inset:0;z-index:1200;display:none;align-items:center;justify-content:center;
