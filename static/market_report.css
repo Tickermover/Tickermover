@@ -103,7 +103,7 @@
 .ma-report .ma-note{background:#f8fafc;border:1px solid rgba(15,23,42,.07);border-left:3px solid #2970ff;border-radius:9px;padding:11px 13px;font-size:12.5px;color:#475569;line-height:1.55;margin-bottom:12px}
 /* ── Movers (stock-level) tables ─────────────────────────────────────────── */
 .ma-report .ma-two{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px}
-@media(max-width:680px){.ma-report .ma-two{grid-template-columns:1fr}}
+@media(max-width:768px){.ma-report .ma-two{grid-template-columns:1fr}}
 .ma-report .ma-tbl{width:100%;border-collapse:collapse;background:#fff;border:1px solid rgba(15,23,42,.08);border-radius:12px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.04)}
 .ma-report .ma-tbl th{font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#94a3b8;text-align:left;padding:9px 12px;border-bottom:1px solid rgba(15,23,42,.06)}
 .ma-report .ma-tbl th.r,.ma-report .ma-tbl td.r{text-align:right}
@@ -114,14 +114,15 @@
 .ma-report .ma-tk{font-weight:800;color:#0f172a}
 .ma-report .ma-nm{font-size:11px;color:#94a3b8;font-weight:600}
 .ma-report .ma-px{font-variant-numeric:tabular-nums;font-weight:700;color:#334155}
-/* Phones/narrow tablets: the 5-column movers/score/volume tables (Name, Price,
-   Chg, Gr, Score/…) overflowed the card so the last column was cut off and
-   couldn't be scrolled to. This must kick in at the SAME width where .ma-two
-   drops to a single column (680px) — otherwise 561–680px shows a full-width
-   5-column table that still overflows. Hide the Grade column (always
-   secondary), drop the name onto its own line, let it wrap, and tighten
-   padding — everything fits with no horizontal scroll. */
-@media(max-width:680px){
+/* Phones/tablets: the 5-column movers/score/volume tables (Name, Price, Chg,
+   Gr, Score/…) overflowed the card so the last column was cut off and couldn't
+   be scrolled to. This MUST use the SAME width where .ma-two drops to a single
+   column (now 768px, the app's mobile-shell breakpoint) — otherwise the band
+   below it renders a too-wide table (single-col full-width, or 2-col that spills
+   past the viewport) and clips the Score column. Hide the Grade column (always
+   secondary), drop the name onto its own line, let it wrap, and tighten padding
+   — everything fits with no horizontal scroll. */
+@media(max-width:768px){
   .ma-report .ma-tbl th:nth-child(4),
   .ma-report .ma-tbl td:nth-child(4){display:none}
   .ma-report .ma-tbl th,.ma-report .ma-tbl td{padding:8px 8px}
