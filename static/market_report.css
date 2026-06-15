@@ -30,6 +30,14 @@
 .ma-report .ma-tab{flex:1 0 auto;white-space:nowrap;font-size:12.5px;font-weight:700;color:#64748b;background:none;border:0;border-radius:9px;padding:8px 14px;cursor:pointer;transition:color .12s,background .12s}
 .ma-report .ma-tab:hover{color:#0f172a}
 .ma-report .ma-tab.on{background:#fff;color:#2970ff;box-shadow:0 2px 6px rgba(0,0,0,.12)}
+/* Phones: there are 7 tabs (Opening Brief … News). They overflowed the strip
+   and the hidden-scrollbar horizontal swipe didn't work, so 4 tabs were
+   unreachable. Wrap them onto multiple rows so every tab is visible/tappable —
+   no horizontal scroll needed. Mobile-only. */
+@media(max-width:560px){
+  .ma-report .ma-tabs{flex-wrap:wrap;overflow-x:visible}
+  .ma-report .ma-tab{flex:1 1 auto;padding:7px 10px;font-size:12px;text-align:center}
+}
 .ma-report .ma-loading{padding:46px 20px;text-align:center;color:#64748b;font-size:14px}
 .ma-report .ma-sec-h{font-size:12px;font-weight:800;letter-spacing:.06em;color:#94a3b8;text-transform:uppercase;margin:8px 0 11px}
 .ma-report .ma-lead{font-size:14px;line-height:1.65;color:#334155;margin-bottom:16px}
