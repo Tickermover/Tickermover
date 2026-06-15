@@ -1636,6 +1636,20 @@ table.ssx-h2h tbody td.self{color:var(--ink);font-weight:600}
   color:#0040c1;cursor:pointer;transition:all .15s;white-space:nowrap}
 .fl-open-btn:hover{background:rgba(41,112,255,.18);border-color:#2970ff;color:#0040c1}
 
+/* Universe screener on phones: 10 columns can't fit and the horizontal-swipe
+   scroll doesn't work reliably on mobile (the wide table left the list looking
+   "not scrollable"). Below 560px keep the essentials — Score, Stock, Price,
+   Today % — and hide the secondary metrics (RS, 3M, Rev, FCF, Mkt Cap, Upside);
+   they're all still available by tapping a row to open the stock. No horizontal
+   scroll needed. Mobile-only. */
+@media(max-width:560px){
+  #panel-fund .fund-list{min-width:0!important}
+  #panel-fund .fund-list-wrap{overflow-x:hidden!important;box-shadow:none!important}
+  #panel-fund .fund-list th:nth-child(n+5),
+  #panel-fund .fund-list td:nth-child(n+5){display:none}
+  #panel-fund .fl-name{max-width:none}
+}
+
 /* ====== STOCK DETAIL MODAL — center popup ====== */
 .stock-modal-overlay{
   display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);
