@@ -458,6 +458,13 @@ body.v2 #sectors-grid .smh-name{font-weight:800;font-size:12.5px;color:#0f172a!i
   background:radial-gradient(120% 120% at 50% 0%,#fbfdff 0%,#f4f7fb 100%);overflow:hidden}
 .secg-svg{display:block;width:100%;height:clamp(460px,64vh,720px);touch-action:manipulation;cursor:grab}
 .secg-svg:active{cursor:grabbing}
+/* Phones: the network graph crams ~24 nodes into 390px and labels collide.
+   Render it wider inside a horizontally-scrollable card so nodes have room and
+   the user can pan sideways to read the whole chain. Mobile-only. */
+@media(max-width:560px){
+  .secg-wrap{overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch}
+  .secg-svg{min-width:680px;height:clamp(420px,58vh,560px);cursor:default}
+}
 /* Edges — calm, thin, colour by relationship type */
 .secg-edge{fill:none;stroke-linecap:round;stroke-width:1.5px;opacity:.4;transition:opacity .25s,stroke-width .2s}
 .secg-edge.t-raw_material{stroke:#e0a000}
@@ -15845,7 +15852,7 @@ function showTab(id, btn) {
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   btn.classList.add('active');
   document.getElementById('panel-' + id).classList.add('active');
-  if (id === 'watch') renderWatchlist();
+  if (id === 'watch') { renderWatchlist(); syncWatchlistFromServer().then(changed => { if (changed) renderWatchlist(); }); }
   if (id === 'model') loadModelPortfolio();
   if (id === 'blog')  loadBlog();
   if (id === 'market') loadMarketAnalysis();
@@ -15884,8 +15891,58 @@ function getWatchlist() {
 }
 function saveWatchlist(list) {
   try { localStorage.setItem(WATCH_KEY, JSON.stringify(list)); } catch(e) {}
+  _pushWatchlistToServer();   // account sync (no-op when signed out)
 }
 function watchSymbols() { return getWatchlist().map(e => e.t); }
+
+/* ── Account-synced watchlist (cross-device) ──────────────────────────────
+   The list lives in localStorage (instant + offline) AND, when signed in, in
+   the user's Supabase metadata via /api/watchlist — so it follows the login
+   across devices instead of being stuck on one browser. Writes push (debounced);
+   on load we merge server↔local so neither device loses entries. */
+let _wlPushTimer = null;
+function _wlToken(){ return localStorage.getItem('ah_token') || ''; }
+function _pushWatchlistToServer(){
+  if (!_wlToken()) return;                       // signed out → local only
+  clearTimeout(_wlPushTimer);
+  _wlPushTimer = setTimeout(() => {
+    fetch('/api/watchlist', {
+      method:'PUT',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+_wlToken()},
+      body: JSON.stringify({ entries: getWatchlist() })
+    }).catch(()=>{});
+  }, 600);
+}
+async function syncWatchlistFromServer(){
+  if (!_wlToken()) return;
+  try {
+    const r = await fetch('/api/watchlist', {headers:{Authorization:'Bearer '+_wlToken()}});
+    if (!r.ok) return;
+    const d = await r.json();
+    const server = Array.isArray(d.entries) ? d.entries : [];
+    // Union by ticker; keep the earliest add-time and any known price.
+    const map = new Map();
+    for (const e of server.concat(getWatchlist())) {
+      const t = ((e && (e.t || e.ticker)) || '').toString().toUpperCase().trim();
+      if (!t || !WATCH_RE.test(t)) continue;
+      const at = (e && e.at != null) ? e.at : null;
+      const p  = (e && e.p  != null) ? e.p  : null;
+      if (map.has(t)) {
+        const ex = map.get(t);
+        if (at != null && (ex.at == null || at < ex.at)) ex.at = at;
+        if (ex.p == null && p != null) ex.p = p;
+      } else { map.set(t, { t, at, p }); }
+    }
+    const merged = [...map.values()];
+    const before = JSON.stringify(getWatchlist().map(e=>e.t).sort());
+    saveWatchlist(merged);   // writes local + pushes merged union back to server
+    const panel = document.getElementById('panel-watch');
+    if (panel && panel.classList.contains('active')) renderWatchlist();
+    return before !== JSON.stringify(merged.map(e=>e.t).sort());
+  } catch(e){ return false; }
+}
+// Sync once on load (after auth token is present), and again when the panel opens.
+document.addEventListener('DOMContentLoaded', () => { setTimeout(syncWatchlistFromServer, 800); });
 // Best-known live price for a ticker (from the universe feed), or null.
 function _watchPrice(sym) {
   const t = (typeof _allTickerData !== 'undefined' && _allTickerData[sym]) || null;

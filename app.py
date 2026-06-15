@@ -8004,6 +8004,70 @@ async def api_user_prefs_put(body: _UserPrefsBody,
     return JSONResponse({"ok": True, "updated": data})
 
 
+# ── Account-synced watchlist ────────────────────────────────────────────────
+# Stored in the user's Supabase user_metadata (shallow-merged, so it sits
+# alongside name/risk_profile without disturbing them). This makes the watchlist
+# follow the LOGIN across devices/browsers, instead of the old localStorage-only
+# behaviour where a phone started empty. The client keeps a localStorage copy
+# too (offline + instant), and merges with the server on load.
+class _WatchlistBody(BaseModel):
+    entries: list = []
+
+
+def _valid_ticker(t: str) -> bool:
+    t = (t or "").upper().strip()
+    return (1 <= len(t) <= 8 and t[0].isalpha()
+            and all(c.isalnum() or c in ".-" for c in t))
+
+
+def _sanitize_watch_entries(raw: list) -> list:
+    """Normalise to [{t, at, p}], valid tickers only, deduped, capped at 200."""
+    out, seen = [], set()
+    for e in (raw or []):
+        if isinstance(e, str):
+            t, at, p = e, None, None
+        elif isinstance(e, dict):
+            t = e.get("t") or e.get("ticker") or ""
+            at = e.get("at") if isinstance(e.get("at"), (int, float)) else None
+            p = e.get("p") if isinstance(e.get("p"), (int, float)) else None
+        else:
+            continue
+        t = str(t).upper().strip()
+        if not _valid_ticker(t) or t in seen:
+            continue
+        seen.add(t)
+        out.append({"t": t, "at": at, "p": p})
+        if len(out) >= 200:
+            break
+    return out
+
+
+@app.get("/api/watchlist")
+async def api_watchlist_get(user: Optional[dict] = Depends(_current_user),
+                            creds: Optional[HTTPAuthorizationCredentials] = Depends(_bearer)):
+    """Return the signed-in user's account-synced watchlist as {entries:[{t,at,p}]}.
+    Empty list when not authenticated (client falls back to its local copy)."""
+    if not user:
+        return JSONResponse({"entries": []})
+    md = await supabase.get_user_metadata(creds.credentials) or {}
+    entries = md.get("watchlist")
+    return JSONResponse({"entries": entries if isinstance(entries, list) else []})
+
+
+@app.put("/api/watchlist")
+async def api_watchlist_put(body: _WatchlistBody,
+                            user: Optional[dict] = Depends(_current_user),
+                            creds: Optional[HTTPAuthorizationCredentials] = Depends(_bearer)):
+    """Replace the signed-in user's watchlist (sanitized). 401 if not authed."""
+    if not user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    clean = _sanitize_watch_entries(body.entries)
+    md = await supabase.update_user_metadata(creds.credentials, {"watchlist": clean})
+    if isinstance(md, dict) and md.get("error"):
+        raise HTTPException(status_code=400, detail=md["error"])
+    return JSONResponse({"ok": True, "count": len(clean)})
+
+
 # ── Account panel: aggregate profile + change password ──────────────────────
 @app.get("/api/user/account")
 async def api_user_account(user: Optional[dict] = Depends(_current_user),
