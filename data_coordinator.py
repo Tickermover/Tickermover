@@ -61,6 +61,42 @@ def _safe_float(v: Any, default: Optional[float] = None) -> Optional[float]:
         return default
 
 
+def _sanitize_change_pct(price: Any, prev_close: Any, change_pct: Any) -> Optional[float]:
+    """Cross-check a quote's day-change % against price & prev_close.
+
+    Provider day-change fields (Finnhub `dp`, FMP `changePercentage`) sometimes
+    go stale or reflect an unhandled split, producing impossible values like
+    KLAC −89.5%. price and prev_close are two independent fields, so the true
+    change is (price/prev_close − 1)×100. We use that to validate:
+
+      • price & prev_close present and the reported pct diverges from the
+        computed one by > 3 points → reported field is untrustworthy, use the
+        computed value.
+      • even the computed move is wild (> 75%) → price OR prev_close itself is
+        corrupt → drop the day-change (None) rather than publish a wrong number
+        everywhere (movers, tape, stock card, scoring).
+      • can't cross-check (no usable prev_close) → drop a lone reported move
+        that is implausibly large (> 60%); otherwise pass it through.
+
+    Returns the trustworthy change_pct, or None when it can't be trusted.
+    """
+    p  = _safe_float(price)
+    pc = _safe_float(prev_close)
+    cp = _safe_float(change_pct)
+
+    if p is not None and pc is not None and pc != 0:
+        computed = (p - pc) / pc * 100.0
+        if abs(computed) > 75:          # price or prev_close is corrupt
+            return None
+        if cp is None or abs(cp - computed) > 3:
+            cp = computed
+        return round(cp, 2)
+
+    if cp is not None and abs(cp) > 60:  # uncorroborated + implausible
+        return None
+    return cp
+
+
 def _yf_ts(v: Any) -> Optional[str]:
     """yfinance unix-seconds timestamp → 'YYYY-MM-DD' (or None)."""
     try:
@@ -1878,14 +1914,26 @@ class DataCoordinator:
                     or fund.get("revenue_ttm"))   # AV RevenueTTM fallback
 
         # ── Merge ──────────────────────────────────────────────────────
+        # Validate the day-change against price/prev_close so a stale or
+        # split-broken provider quote (e.g. KLAC −89.5%) can't poison the
+        # universe (movers, tape, stock card, scoring). When the % is dropped,
+        # drop the matching absolute change too so the two never disagree.
+        _clean_pct = _sanitize_change_pct(price, quote.get("prev_close"), quote.get("change_pct"))
+        if _clean_pct is None:
+            _clean_abs = None
+        else:
+            _pc = _safe_float(quote.get("prev_close"))
+            _px = _safe_float(price)
+            _clean_abs = round(_px - _pc, 2) if (_px is not None and _pc is not None) else quote.get("change_abs")
+
         merged = {
             **meta,
             "ticker":     ticker,
 
             # Live price fields (always from quote)
             "price":      price,
-            "change_abs": quote.get("change_abs"),
-            "change_pct": quote.get("change_pct"),
+            "change_abs": _clean_abs,
+            "change_pct": _clean_pct,
             "high":       quote.get("high"),
             "low":        quote.get("low"),
             "open":       quote.get("open"),
