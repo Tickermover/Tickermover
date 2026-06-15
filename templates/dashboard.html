@@ -997,20 +997,6 @@ table.ssx-h2h tbody td.self{color:var(--ink);font-weight:600}
 ::-webkit-scrollbar-thumb{background:linear-gradient(180deg,#D4860A,#F5A623);border-radius:3px}
 ::-webkit-scrollbar-thumb:hover{background:linear-gradient(180deg,#F5A623,#F5A623)}
 
-/* ── Go-to-top button ── */
-#go-top-btn{
-  position:fixed;bottom:28px;right:28px;z-index:9000;
-  width:42px;height:42px;border-radius:12px;border:none;
-  background:#ffffff;
-  color:#15803d;font-size:13px;font-weight:900;cursor:pointer;
-  box-shadow:0 4px 16px rgba(0,0,0,.15),0 0 0 1px rgba(245,166,35,.25);
-  display:none;flex-direction:column;align-items:center;justify-content:center;gap:1px;
-  transition:all .2s;letter-spacing:.01em;
-}
-#go-top-btn::before{content:'↑';font-size:18px;line-height:1;font-weight:900;color:#15803d}
-#go-top-btn:hover{background:linear-gradient(135deg,#15803d,#F5A623);color:#fff;box-shadow:0 6px 20px rgba(245,166,35,.4);transform:translateY(-2px)}
-#go-top-btn:hover::before{color:#fff}
-
 /* ── Sticky back bar ── */
 .blog-back-bar{
   position:sticky;top:0;z-index:100;
@@ -19550,17 +19536,10 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
 
 <!-- Upgrade modal removed — all features free for now -->
 
-<!-- Go-to-top button -->
-<button id="go-top-btn" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="Back to top"></button>
-
-<script>
-(function(){
-  const btn = document.getElementById('go-top-btn');
-  window.addEventListener('scroll', () => {
-    btn.style.display = window.scrollY > 320 ? 'flex' : 'none';
-  }, {passive:true});
-})();
-</script>
+<!-- Legacy go-to-top button removed (Jun 2026): it duplicated the global
+     #scrollTopBtn FAB and stacked on top of it in the bottom-right corner —
+     most visible on mobile (two buttons overlapping). #scrollTopBtn is the
+     single canonical back-to-top control. -->
 
 <!-- ─── TEAR SHEET POPOVER (compact Download / Share modal — no inline render) ─── -->
 <div id="v2-ts-backdrop" class="v2-ts-backdrop" onclick="v2CloseTearsheet()" aria-hidden="true"></div>
