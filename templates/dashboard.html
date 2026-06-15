@@ -511,6 +511,8 @@ body.v2 #sectors-grid .smh-name{font-weight:800;font-size:12.5px;color:#0f172a!i
 .secg-lg.dir b{font-weight:800;color:#0f172a}
 .secg-hint{margin-left:auto;color:#94a3b8;font-weight:600}
 @media(max-width:560px){.secg-hint{display:none}.secg-node .secg-label{font-size:10px}}
+/* Hide the whole "Sector connections" map on mobile — too dense to be useful on a narrow screen */
+@media(max-width:560px){#uni-map{display:none}}
 @media(prefers-reduced-motion:reduce){.secg-edge,.secg-node .secg-dot{transition:none}}
 /* Sector card — interactive (clicks filter the table below) */
 .sm-card{cursor:pointer}
