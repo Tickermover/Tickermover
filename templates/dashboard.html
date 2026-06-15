@@ -6439,6 +6439,30 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 #panel-hot .today-col,
 #panel-hot .dm-row>.dm-chg{display:none}}
 
+/* ── Prime Opportunities table → stacked rows on phones (mobile-only) ──
+   The 4-column grid can't fit a phone: the Alpha cell (score + verdict word)
+   overflowed its track and overlapped the Ticker/Why columns. Below 560px we
+   restack each row so ticker · score · upside sit on the top line and the
+   "why it's here" reason spans the line below — all info kept, no overlap.
+   Scoped to max-width:560px so tablet/desktop are untouched. */
+@media(max-width:560px){
+  #panel-hot .dm-table{gap:0}
+  #panel-hot .dm-head-row{display:none}              /* labels don't map to stacked rows */
+  #panel-hot .dm-row{
+    grid-template-columns:minmax(0,1fr) auto auto;
+    grid-template-areas:"tic alpha up" "why why why";
+    gap:4px 12px; padding:12px 14px; font-size:13px; align-items:center;
+  }
+  #panel-hot .dm-tick{grid-area:tic; min-width:0; gap:8px}
+  #panel-hot .dm-tick small{font-size:10.5px}
+  #panel-hot .alpha-cell{grid-area:alpha; display:flex; flex-direction:column; align-items:flex-end; line-height:1.05; white-space:nowrap}
+  #panel-hot .alpha-cell .dm-alpha{font-size:16px}
+  #panel-hot .alpha-cell .vd{font-size:9.5px}
+  #panel-hot .up-cell{grid-area:up; justify-self:end; text-align:right; white-space:nowrap}
+  #panel-hot .dm-cell-why{grid-area:why; min-width:0; padding-top:2px; opacity:.92}
+  #panel-hot .dm-cell-why .why-tx{white-space:normal}
+}
+
 /* ===== Shell relight — dark ticker tape (UNSCOPED, lives above the topbar) ===== */
 .ts-tape{height:36px;display:flex;align-items:center;overflow:hidden;background:#0a0e22;border-top-left-radius:16px}
 /* On the Company Events tab the logo marquee is the moving element — hide the

@@ -1295,6 +1295,19 @@ h1,h2,h3,h4,h5{font-family:'Instrument Sans',sans-serif;font-weight:600;letter-s
   .head-row{margin-bottom:26px}
   .cta{margin:0 16px;padding:52px 22px}
 }
+/* Phone header (mobile-only) — compact the bar so brand + Sign in + Start free
+   fit on one line. Without this, nav-right is squeezed and "Sign in" wraps to
+   two lines and overlaps the wordmark. Scoped to phones (≤560px). */
+@media(max-width:560px){
+  .nav{padding:12px 14px}
+  .nav-inner{padding:8px 8px 8px 16px}
+  .brand{font-size:17px;gap:8px}
+  .brand .mark{width:30px;height:30px}
+  .nav-right{gap:10px;flex:none}
+  .nav-signin{font-size:14px;white-space:nowrap}
+  .nav .btn{padding:9px 7px 9px 15px;font-size:13px;white-space:nowrap}
+  .nav .btn .arrow{width:26px;height:26px;flex-basis:26px}
+}
 </style>
 </head>
 <body>
