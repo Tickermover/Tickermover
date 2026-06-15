@@ -6840,6 +6840,13 @@ document.body.classList.add('v2');
 // Restore collapsed-sidebar preference before paint (no flash).
 try { if (localStorage.getItem('ah_sb_collapsed') === '1') document.body.classList.add('sb-collapsed'); } catch(e){}
 function toggleSidebar(){
+  // On mobile the sidebar is a slide-in drawer, not a collapsible rail —
+  // the desktop "sb-collapsed" 64px rail only exists at >=769px. So on a
+  // narrow screen this same chevron should just close the drawer.
+  if (window.matchMedia('(max-width:768px)').matches){
+    document.body.classList.remove('v2-drawer-open');
+    return;
+  }
   var c = document.body.classList.toggle('sb-collapsed');
   try { localStorage.setItem('ah_sb_collapsed', c ? '1' : '0'); } catch(e){}
 }
