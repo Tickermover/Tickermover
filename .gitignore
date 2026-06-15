@@ -4,6 +4,7 @@ config_local.py
 
 # Cache & output
 output/
+.backtest_cache/
 __pycache__/
 *.pyc
 *.pyo
