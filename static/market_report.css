@@ -113,6 +113,20 @@
 .ma-report .ma-tk{font-weight:800;color:#0f172a}
 .ma-report .ma-nm{font-size:11px;color:#94a3b8;font-weight:600}
 .ma-report .ma-px{font-variant-numeric:tabular-nums;font-weight:700;color:#334155}
+/* Phones/narrow tablets: the 5-column movers/score/volume tables (Name, Price,
+   Chg, Gr, Score/…) overflowed the card so the last column was cut off and
+   couldn't be scrolled to. This must kick in at the SAME width where .ma-two
+   drops to a single column (680px) — otherwise 561–680px shows a full-width
+   5-column table that still overflows. Hide the Grade column (always
+   secondary), drop the name onto its own line, let it wrap, and tighten
+   padding — everything fits with no horizontal scroll. */
+@media(max-width:680px){
+  .ma-report .ma-tbl th:nth-child(4),
+  .ma-report .ma-tbl td:nth-child(4){display:none}
+  .ma-report .ma-tbl th,.ma-report .ma-tbl td{padding:8px 8px}
+  .ma-report .ma-tbl .ma-nm{display:block;font-size:10.5px;margin-top:1px;white-space:normal}
+  .ma-report .ma-tbl td:first-child{max-width:0;width:99%}
+}
 .ma-report .ma-gd{display:inline-block;font-size:10px;font-weight:800;width:18px;text-align:center;border-radius:5px;padding:1px 0}
 .ma-report .ma-gd.A{background:rgba(22,163,74,.14);color:#15803d}
 .ma-report .ma-gd.B{background:rgba(41,112,255,.12);color:#1d4ed8}
