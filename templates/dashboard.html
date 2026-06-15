@@ -17873,7 +17873,8 @@ function renderTickerTape(tickers) {
   const scoped = (typeof v2FilterByProfile === 'function')
     ? v2FilterByProfile(tickers) : tickers;
   const valid = (scoped.length ? scoped : tickers)
-    .filter(t => isFinite(parseFloat(t.change_pct)) && parseFloat(t.price) > 0);
+    .filter(t => isFinite(parseFloat(t.change_pct)) && parseFloat(t.price) > 0
+                 && Math.abs(parseFloat(t.change_pct)) <= 50);  // drop junk quotes (e.g. -89.5% glitch)
   const byChg = [...valid].sort((a,b) => parseFloat(b.change_pct) - parseFloat(a.change_pct));
   const topGain  = byChg.slice(0, 12);
   const topLose  = byChg.slice(-8).reverse();
@@ -21565,7 +21566,12 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
   }
 
   function renderMovers(tickers){
-    const withChg=tickers.filter(t=>t.change_pct!=null&&!isNaN(parseFloat(t.change_pct))).filter(t=>Math.abs(parseFloat(t.change_pct))>=0.3);
+    // Floor 0.3% (ignore noise) and ceiling 50% (a real single-day move that
+    // large is virtually unheard-of in this large/mid-cap universe — a −89.5%
+    // is a bad provider quote / stale prev-close / unhandled split, not a real
+    // move, so it must not headline "Biggest Movers").
+    const withChg=tickers.filter(t=>t.change_pct!=null&&!isNaN(parseFloat(t.change_pct)))
+      .filter(t=>{const c=Math.abs(parseFloat(t.change_pct));return c>=0.3&&c<=50;});
     const sorted=[...withChg].sort((a,b)=>parseFloat(b.change_pct)-parseFloat(a.change_pct));
     const gainers=sorted.filter(t=>parseFloat(t.change_pct)>0).slice(0,5);
     const losers=sorted.filter(t=>parseFloat(t.change_pct)<0).slice(-5).reverse();
@@ -21721,11 +21727,24 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
       for(const n of all){ const syms=[].concat(n.ticker?[n.ticker]:[]).concat(Array.isArray(n.symbols)?n.symbols:[]).map(s=>(s||'').toUpperCase()).filter(Boolean);
         const m=syms.find(s=>uni.has(s)); if(!m)continue; filtered.push({...n,ticker:m}); }
       filtered.sort((a,b)=>(b.datetime||0)-(a.datetime||0));
-      // One headline per stock: keep only the freshest story per ticker so the
-      // radar panel surfaces distinct names, never three stories about the same
-      // one (the list is already newest-first, so first-seen = best/freshest).
-      const _seenTic=new Set(), _deduped=[];
-      for(const n of filtered){ const tk=(n.ticker||'').toUpperCase(); if(tk&&_seenTic.has(tk))continue; if(tk)_seenTic.add(tk); _deduped.push(n); }
+      // Distinct stories only (list is newest-first, so first-seen = freshest):
+      //  1) one headline per stock (matched ticker), AND
+      //  2) drop same-EVENT repeats — a story tagged to multiple symbols (e.g.
+      //     a Fox/Roku acquisition tagged FOX, FOXA, ROKU) otherwise shows up
+      //     under each ticker. If a story shares ≥2 symbols with one we already
+      //     kept, it's the same event → skip it.
+      const _seenTic=new Set(), _keptSets=[], _deduped=[];
+      for(const n of filtered){
+        const tk=(n.ticker||'').toUpperCase();
+        if(tk&&_seenTic.has(tk))continue;
+        const syms=new Set([].concat(Array.isArray(n.symbols)?n.symbols:[],[tk]).map(s=>(s||'').toUpperCase()).filter(Boolean));
+        let dup=false;
+        for(const ks of _keptSets){ let o=0; for(const s of syms){ if(ks.has(s)&&(++o)>=2){dup=true;break;} } if(dup)break; }
+        if(dup)continue;
+        if(tk)_seenTic.add(tk);
+        _keptSets.push(syms);
+        _deduped.push(n);
+      }
       const items=_deduped.slice(0,4);
       if(!items.length){ inner.innerHTML='<div class="news-loading">No headlines for tracked names in the last few hours.</div>'; return; }
       const ago=ts=>{ if(!ts)return''; const s=Math.max(0,Math.floor(Date.now()/1000-ts)); return s<60?s+'s ago':s<3600?Math.floor(s/60)+'m ago':s<86400?Math.floor(s/3600)+'h ago':Math.floor(s/86400)+'d ago'; };
@@ -21757,7 +21776,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     const el=document.getElementById('v2-mp-topbar-slot'); if(el) el.innerHTML=html;
   }
   function renderTape(){
-    const arr=(ALL||[]).filter(t=>t.price!=null&&t.change_pct!=null&&!isNaN(parseFloat(t.change_pct)));
+    const arr=(ALL||[]).filter(t=>t.price!=null&&t.change_pct!=null&&!isNaN(parseFloat(t.change_pct))&&Math.abs(parseFloat(t.change_pct))<=50);
     const items=[...arr].sort((a,b)=>Math.abs(parseFloat(b.change_pct))-Math.abs(parseFloat(a.change_pct))).slice(0,26);
     if(!items.length) return;
     const cell=t=>{const c=parseFloat(t.change_pct),u=c>=0;
