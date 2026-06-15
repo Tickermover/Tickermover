@@ -26,6 +26,8 @@ from billing import RazorpayClient, is_pro
 from email_sender import send_welcome_email
 from data_coordinator import DataCoordinator
 from ai_scorer import score_and_rank, compute_pop_score
+import ai_selector
+from selection_store import store as _selstore
 from stock_universe import get_universe, get_meta
 from intelligence import (
     MarketRegime,
@@ -569,6 +571,12 @@ _CACHE_TABLE_SQL = {
         "create table app_kv (env_id int not null, ns text not null, k text not null, "
         "v jsonb default '{}'::jsonb, updated_at timestamptz not null default now(), "
         "primary key (env_id, ns, k));"
+    ),
+    "selection_judgments": (
+        "create table selection_judgments (env_id int not null, ticker text not null, "
+        "generated_at timestamptz not null default now(), model text, conviction int, "
+        "thesis text, red_flags jsonb default '[]'::jsonb, lean text, "
+        "primary key (env_id, ticker));"
     ),
 }
 
@@ -5998,6 +6006,102 @@ def _select_with_theme_cap(
     return chosen
 
 
+# ── AI analyst-judge (advisory re-rank) ───────────────────────────────────
+# An Opus 4.8 analyst scores conviction for the quant-qualified candidates;
+# selection uses it as a tiebreaker WITHIN the shortlist — never to change
+# eligibility. Scores are read from the durable cache (selection_store) and
+# refreshed ~nightly by _refresh_selection_judgments() (fire-and-forget). When
+# the cache is cold (AI off / first run) every conviction is absent and
+# selection falls back to the pure quant ordering, unchanged.
+
+_selection_refreshing = False   # single-flight guard for the nightly refresh
+# In-process memo so the hot /api/model-portfolio path doesn't hit Supabase on
+# every poll — conviction changes only ~nightly, so a short TTL is plenty.
+_conv_memo: dict = {"key": None, "at": 0.0, "val": {}}
+_CONV_MEMO_TTL = 300   # seconds
+
+
+def _conviction_map(tickers: list[str]) -> dict[str, dict]:
+    """Cached AI judgments for these tickers, keyed by UPPER ticker. Memoised
+    for _CONV_MEMO_TTL per ticker-set. Any store error returns {} so selection
+    degrades cleanly to quant-only ordering."""
+    key = tuple(sorted({(t or "").upper() for t in tickers if t}))
+    if not key:
+        return {}
+    now = time.time()
+    if _conv_memo["key"] == key and (now - _conv_memo["at"]) < _CONV_MEMO_TTL:
+        return _conv_memo["val"]
+    try:
+        val = _selstore.get_many(list(key))
+    except Exception as e:
+        logger.debug(f"_conviction_map error (ignored): {e}")
+        val = {}
+    _conv_memo.update(key=key, at=now, val=val)
+    return val
+
+
+def _conv_score(ticker: str | None, cmap: dict) -> int:
+    """AI conviction (0-100) for a ticker, or -1 when not yet scored. -1 sorts a
+    not-yet-scored name to the bottom of its Alpha-Score band — scored names
+    lead within the band, but eligibility is never affected."""
+    j = cmap.get((ticker or "").upper())
+    c = j.get("conviction") if j else None
+    return int(c) if isinstance(c, (int, float)) else -1
+
+
+def _qualified_pool() -> list[dict]:
+    """The current quant-eligible candidate set (Grade A + regime-aware Alpha
+    Score floor + 4-of-6 pillars), sorted best-first. Shared with the AI refresh
+    so the judge scores exactly the names that can actually be selected."""
+    def _alpha(t: dict) -> float:
+        ss = t.get("smart_score")
+        if ss is None:
+            ss = t.get("pop_score") or 0
+        return float(ss or 0)
+    min_score = _entry_min_score()
+    pool = [
+        t for t in _universe_data
+        if t.get("grade") == "A"
+        and _alpha(t) >= min_score
+        and _pillar_pass_count(t) >= 4
+    ]
+    pool.sort(key=_alpha, reverse=True)
+    return pool
+
+
+async def _refresh_selection_judgments(force: bool = False) -> None:
+    """Fire-and-forget: re-score the qualified pool with the Opus 4.8 judge and
+    persist to the cache. Triggered lazily from the portfolio endpoint when the
+    cache is stale (≈ daily). Single-flight; never raises into callers."""
+    global _selection_refreshing
+    if _selection_refreshing:
+        return
+    if not ai_selector.available() or not _universe_data:
+        return
+    pool = _qualified_pool()
+    if not pool:
+        return
+    tickers = [t.get("ticker") for t in pool if t.get("ticker")]
+    if not force:
+        cached = _conviction_map(tickers)
+        missing = any((tk or "").upper() not in cached for tk in tickers)
+        stale = any(_selstore.is_stale(cached.get((tk or "").upper())) for tk in tickers)
+        if not missing and not stale:
+            return
+    _selection_refreshing = True
+    try:
+        logger.info(f"🧠 AI selection-judge: scoring {len(pool)} qualified candidates…")
+        judgments = await ai_selector.score_candidates(pool)
+        if judgments:
+            _selstore.save_many(judgments)
+            _conv_memo["key"] = None   # invalidate memo so fresh scores show now
+            logger.info(f"🧠 AI selection-judge: cached {len(judgments)} conviction scores")
+    except Exception as e:
+        logger.error(f"_refresh_selection_judgments failed: {e}")
+    finally:
+        _selection_refreshing = False
+
+
 def _build_model_portfolio(existing: dict | None = None) -> dict:
     """
     Select top 20 Grade-A stocks by Alpha Score.
@@ -6062,8 +6166,16 @@ def _build_model_portfolio(existing: dict | None = None) -> dict:
     # high-conviction setups today, not an excuse to lower the bar.
     qualified = [t for t in score_qualified if _pillar_pass_count(t) >= 4]
     pool = qualified
-    # Sort by alpha desc, upside desc as tiebreaker
-    pool.sort(key=lambda t: (_alpha(t), _upside(t)), reverse=True)
+    # AI advisory re-rank: within an Alpha-Score band (rounded to the nearest
+    # point) order by the analyst-judge's conviction; exact alpha + analyst
+    # upside break any remaining ties. When the AI cache is cold every conviction
+    # is -1, collapsing this back to the pure quant ordering (alpha, upside).
+    cmap = _conviction_map([t.get("ticker") for t in pool])
+    pool.sort(
+        key=lambda t: (round(_alpha(t)), _conv_score(t.get("ticker"), cmap),
+                       _alpha(t), _upside(t)),
+        reverse=True,
+    )
     # Diversify: take the strongest names subject to MAX_PER_THEME. A pure
     # score-rank slice can return 8 names from one hot theme (e.g. AI
     # Semiconductors); the cap keeps the book from becoming a single-theme bet.
@@ -6233,6 +6345,11 @@ def _enrich_model_portfolio(portfolio: dict) -> dict:
     lookup = {t["ticker"]: t for t in _universe_data}
     enriched, perfs = [], []
     GRADE_RANK = {"A": 4, "B": 3, "C": 2, "D": 1, "F": 0}
+
+    # AI analyst-judge conviction + thesis for the held picks (cached, read-only
+    # here; refreshed nightly elsewhere). Surfaced on each card so the user sees
+    # WHY the AI rates a name, not just the quant score.
+    _cmap = _conviction_map([p.get("ticker") for p in picks_raw])
 
     # Tickers that won't ever appear in _universe_data — surface a clear
     # "no live data" state rather than fabricating +0.0% / Score 0 cards.
@@ -6474,6 +6591,12 @@ def _enrich_model_portfolio(portfolio: dict) -> dict:
             # The two fields the UI actually consumes:
             "exit_alert":            exit_alert,
             "decision_point":        decision,
+            # AI analyst-judge (advisory): conviction 0-100, one-line thesis,
+            # red flags, and the pillar it leans on. None when not yet scored.
+            "ai_conviction":  (_aj := _cmap.get((p.get("ticker") or "").upper()) or {}).get("conviction"),
+            "ai_thesis":      _aj.get("thesis"),
+            "ai_red_flags":   _aj.get("red_flags") or [],
+            "ai_lean":        _aj.get("lean"),
         })
     # Sort: gainers first
     enriched.sort(key=lambda x: x["performance_pct"], reverse=True)
@@ -6650,9 +6773,14 @@ def _replenish_portfolio(portfolio: dict) -> dict:
     # if no eligible candidates exist, the portfolio stays below target
     # rather than admit weaker names.
     vetoed = [t for t in score_qualified if _pillar_pass_count(t) >= 4]
+    # Same AI advisory re-rank as the initial build: conviction breaks ties
+    # within an Alpha-Score band; falls back to (alpha, upside) when the cache
+    # is cold.
+    cmap = _conviction_map([t.get("ticker") for t in vetoed])
     qualified = sorted(
         vetoed,
-        key=lambda t: (_alpha(t), _upside(t)),
+        key=lambda t: (round(_alpha(t)), _conv_score(t.get("ticker"), cmap),
+                       _alpha(t), _upside(t)),
         reverse=True,
     )
 
@@ -6756,6 +6884,12 @@ async def api_model_portfolio():
             # peak/trail values bumped — persist quietly.
             _save_portfolio_to_disk(_model_portfolio)
             cache.save_disk()
+
+    # Keep AI conviction scores fresh (≈ daily). Fire-and-forget + single-flight
+    # + staleness-gated, so calling it on every request is cheap and only does
+    # real work when the cache has expired.
+    if ai_selector.available():
+        asyncio.create_task(_refresh_selection_judgments())
 
     return JSONResponse(_clean(enriched))
 

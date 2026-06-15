@@ -16435,6 +16435,33 @@ function renderModelPortfolio(data) {
         </div>`;
       })();
 
+      // ── AI analyst conviction (advisory) — the Opus 4.8 judge's read on the
+      //    name. Conviction 0-100 on an Outperform/Avoid basis (research view,
+      //    not advice). Used as the in-band selection tiebreaker; shown here so
+      //    the user sees WHY the AI rates it. Model text is HTML-escaped.
+      const aiBlock = (() => {
+        const conv = p.ai_conviction;
+        const esc = s => String(s == null ? '' : s).replace(/[<>&]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]));
+        const thesis = esc(p.ai_thesis);
+        if (conv == null && !thesis) return '';
+        const band = conv == null ? '#475569'
+          : (conv >= 80 ? '#15803d' : conv >= 60 ? '#0040c1' : conv >= 40 ? '#9E6308' : '#991b1b');
+        const lean = p.ai_lean ? esc(p.ai_lean.replace(/_/g, ' ')) : '';
+        const flags = (Array.isArray(p.ai_red_flags) ? p.ai_red_flags : []).map(esc).filter(Boolean);
+        return `
+        <div class="v2-mp-rule"></div>
+        <div style="margin-top:8px;padding:9px 11px;background:rgba(41,112,255,.05);border:1px solid rgba(41,112,255,.14);border-radius:9px">
+          <div style="display:flex;align-items:center;gap:8px;font-size:11px;font-weight:800;color:#0f172a;letter-spacing:.02em">
+            <span>🧠 AI conviction</span>
+            ${conv != null ? `<span style="color:${band};font-weight:900">${conv}/100</span>` : ''}
+            ${lean ? `<span style="margin-left:auto;font-weight:700;color:#64748b;text-transform:capitalize">leans ${lean}</span>` : ''}
+          </div>
+          ${thesis ? `<div style="margin-top:5px;font-size:12px;line-height:1.5;color:#334155">${thesis}</div>` : ''}
+          ${flags.length ? `<div style="margin-top:5px;font-size:11px;color:#9E6308">⚠ ${flags.join(' · ')}</div>` : ''}
+          <div style="margin-top:6px;font-size:9.5px;color:#94a3b8;letter-spacing:.03em">Opus 4.8 analyst · research view, not advice</div>
+        </div>`;
+      })();
+
       // Combined analytics card: metric pairs + Alpha-score gauge +
       // since-entry sparkline + AI 'why' forecast footer.
       const upPos = targetUpside != null && +targetUpside >= 0;
@@ -16488,6 +16515,7 @@ function renderModelPortfolio(data) {
           </div>
         </div>
 
+        ${aiBlock}
         ${decisionBlock}
       </div>`;
     }).join('')}
