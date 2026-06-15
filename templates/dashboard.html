@@ -6423,6 +6423,15 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 #panel-hot .bn-facts{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
 #panel-hot .bn-fact{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;padding:3px 8px;border-radius:6px;background:var(--surf-2);border:1px solid var(--hair);color:var(--grey-2)}
 #panel-hot .bn-chips{display:flex;flex-wrap:wrap;gap:6px}
+/* Phones: the momentum chips are content-sized, so flex-wrap packed them
+   raggedly (2 on row 1, then one per row) leaving big empty gaps. A 2-column
+   grid lays all 6 out evenly with no wasted space. Mobile-only. */
+@media(max-width:560px){
+  #panel-hot .bn-chips{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  #panel-hot .bn-chip{justify-content:flex-start;min-width:0;padding:5px 9px 5px 5px}
+  #panel-hot .bn-chip>span:not(.pct){overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  #panel-hot .bn-chip .pct{margin-left:auto}
+}
 #panel-hot .bn-chip{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:3px 8px 3px 4px;border-radius:8px;background:var(--surf-2);border:1px solid var(--hair);cursor:pointer}
 #panel-hot .bn-chip .pct{font-family:'JetBrains Mono',monospace}
 #panel-hot .banner.hot .bn-chip .pct{color:var(--up)}
