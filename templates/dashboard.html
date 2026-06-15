@@ -1196,14 +1196,18 @@ table.ssx-h2h tbody td.self{color:var(--ink);font-weight:600}
      instead of staying right-aligned after wrap (looked detached on phone) */
   .earnings-reported-date{margin-left:0!important;flex-basis:100%;font-size:10.5px!important}
 
-  /* ── MODEL PORTFOLIO ── force 1-up cards, 2-up stats grid ── */
-  #model-portfolio-root [style*="repeat(4,1fr)"]{grid-template-columns:1fr!important}
+  /* ── MODEL PORTFOLIO ── force 1-up cards, 2-up stats grid ──
+     Use minmax(0,1fr) (NOT 1fr): a 1fr track has implicit min-width:auto, so it
+     expands to a card's min-content and the card overflows the viewport (the
+     right edge — price, gauge, "why" text — got clipped). minmax(0,1fr) caps
+     each track at the container width, forcing card content to wrap/shrink. */
+  #model-portfolio-root [style*="repeat(4,1fr)"]{grid-template-columns:minmax(0,1fr)!important}
   #model-portfolio-root [style*="repeat(auto-fit,minmax(120px,1fr))"]{
-    grid-template-columns:repeat(2,1fr)!important;gap:8px!important}
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px!important}
   #model-portfolio-root [style*="repeat(auto-fill,minmax(280px,1fr))"],
   #model-portfolio-root [style*="repeat(auto-fill,minmax(260px,1fr))"],
   #model-portfolio-root [style*="repeat(2,minmax(0,1fr))"]{
-    grid-template-columns:1fr!important}
+    grid-template-columns:minmax(0,1fr)!important}
 
   /* ── PRICE-TARGET-ROW ── wrap to 2-up on phone (was 4-up cramped) ── */
   .price-target-row{flex-wrap:wrap;padding:10px 12px;gap:8px}
