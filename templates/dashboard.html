@@ -2008,8 +2008,12 @@ body.v2-drawer-open .v2-drawer-backdrop{display:block}
     overflow:visible;
   }
   .v2-sidebar{
-    position:fixed;left:-260px;top:0;width:240px;height:100vh;
+    position:fixed;left:-260px;top:0;width:240px;height:100vh;height:100dvh;
     border-radius:0;transition:left .25s cubic-bezier(.22,.61,.36,1);z-index:50;
+    /* Scroll + iOS safe-area so the menu's bottom (Investing Style / Sign in)
+       is never cut off behind the Safari toolbar on a phone. */
+    overflow-y:auto;-webkit-overflow-scrolling:touch;
+    padding-bottom:calc(18px + env(safe-area-inset-bottom));
   }
   body.v2-drawer-open .v2-sidebar{left:0;box-shadow:0 16px 40px rgba(0,0,0,.4)}
   .v2-burger{display:flex}
@@ -3135,6 +3139,13 @@ body.v2-featured-only #fund-tbody tr.fund-row:not([data-featured]){display:none!
 }
 @media (max-width:760px){
   .v2-tc-wrap{grid-template-columns:1fr;grid-template-rows:auto auto auto}
+}
+/* Phone: the big return + period chips share one flex row and collided.
+   Wrap the chips (1W/1M/All) onto their own line below the value. */
+@media (max-width:560px){
+  .v2-tc-wrap{padding:18px 16px 16px;gap:16px}
+  .v2-tc-headline{flex-wrap:wrap}
+  .v2-tc-hl-r{width:100%;justify-content:flex-start;gap:8px}
 }
 .v2-tc-headline{grid-column:1;grid-row:1;display:flex;align-items:center;justify-content:space-between;gap:12px}
 .v2-tc-hl-l{display:flex;flex-direction:column;gap:4px;min-width:0}
@@ -6358,6 +6369,23 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 #panel-hot .sm-lead-t{overflow:hidden;text-overflow:ellipsis}
 #panel-hot .sm-lead:hover{background:var(--blue-grad);color:#fff;border-color:transparent;box-shadow:0 6px 14px -5px rgba(41,112,255,.55);transform:translateY(-1px)}
 #panel-hot .sm-row.sm-hidden{display:none}
+/* Sector Map → stacked rows on phones (mobile-only). The 5-column grid
+   crushed the sector name to "S.." etc. Below 560px the name (in .sm-main)
+   takes a full flexible column with the score beside it, and the today-% +
+   leader chip drop to a second line — so full sub-sector names show. */
+@media(max-width:560px){
+  #panel-hot .sm-header{display:none}
+  #panel-hot .sm-row{
+    grid-template-columns:16px minmax(0,1fr) auto;
+    grid-template-areas:"tag main score" "tag mom lead";
+    gap:3px 10px; align-items:center; padding:11px 8px;
+  }
+  #panel-hot .sm-tag{grid-area:tag; align-self:center}
+  #panel-hot .sm-main{grid-area:main; min-width:0}
+  #panel-hot .sm-score{grid-area:score; text-align:right; align-self:center}
+  #panel-hot .sm-mom{grid-area:mom; justify-self:start; text-align:left}
+  #panel-hot .sm-lead{grid-area:lead; justify-self:end; max-width:100%}
+}
 #panel-hot .sm-foot{display:flex;align-items:center;gap:10px;margin-top:12px}
 #panel-hot .sm-more{flex:1;font-size:11.5px;color:var(--primary);font-weight:700;cursor:pointer;text-align:center;padding:9px;border-radius:10px;background:var(--surf-2);border:1px solid var(--hair);transition:background .15s ease}
 #panel-hot .sm-more:hover{background:var(--surf-3)}
