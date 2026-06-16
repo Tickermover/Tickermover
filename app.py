@@ -2885,6 +2885,22 @@ async def api_universe():
         row["indices"]  = _idx_for(row.get("ticker", ""))
         row["profiles"] = _assign_profile(row)
         slim.append(row)
+    # Attach the Opus analyst-judge's one-line thesis (cached, ~nightly) to the
+    # names that have one — the dashboard surfaces it as a real, specific "why
+    # it's here" in place of the templated reason. Only the qualified pool is
+    # judged, so most rows fall back cleanly to the rule-based signal.
+    try:
+        _cmap = _conviction_map([r.get("ticker", "") for r in slim])
+        if _cmap:
+            for r in slim:
+                _aj = _cmap.get((r.get("ticker") or "").upper())
+                if _aj and (_aj.get("thesis") or "").strip():
+                    row_thesis = _aj["thesis"].strip()
+                    r["ai_thesis"] = row_thesis
+                    if _aj.get("lean"):
+                        r["ai_lean"] = _aj["lean"]
+    except Exception as _e:
+        logger.debug(f"ai_thesis attach skipped: {_e}")
     # ── CDN caching ──────────────────────────────────────────────────
     # Universe refreshes every 5 min server-side, so a 30-second public
     # cache at the Cloudflare edge dramatically reduces origin load

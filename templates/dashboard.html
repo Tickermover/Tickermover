@@ -5595,6 +5595,7 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 #panel-hot .why{display:flex;gap:8px;align-items:flex-start}
 #panel-hot .why-ico{font-size:14px;line-height:1.3;flex:none}
 #panel-hot .why-tx{font-size:12.5px;color:var(--ink-2);font-weight:600;line-height:1.35}
+#panel-hot .why-ai{display:inline-block;font-size:9.5px;font-weight:800;letter-spacing:.03em;color:#7c3aed;background:rgba(124,58,237,.10);border:1px solid rgba(124,58,237,.22);border-radius:5px;padding:1px 5px;vertical-align:1px;margin-right:1px}
 #panel-hot .why-risk{margin-top:5px;font-size:10px;font-weight:700;color:#b45309;background:rgba(245,158,11,.13);display:inline-flex;gap:3px;align-items:center;padding:2px 7px;border-radius:6px}
 #panel-hot .up-cell{display:flex;flex-direction:column;font-family:'JetBrains Mono',monospace;font-weight:800;font-size:15px}
 #panel-hot .up-cell.pos{color:var(--up)}
@@ -20003,6 +20004,11 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     return null;
   }
   function pickSignal(t){
+    // Prefer the AI analyst-judge's one-line thesis (specific to this name) over
+    // the rule-based templates when it's available.
+    if(t.ai_thesis && String(t.ai_thesis).trim()){
+      return {icon:'✦', text:String(t.ai_thesis).trim(), ai:true};
+    }
     const _f=v=>{const x=parseFloat(v);return isNaN(x)?null:x;};
     const dist=_f(t.dist_52w_high), beats=parseInt(t.eps_beat_streak)||0, dte=parseInt(t.days_to_earnings);
     const m1=_f(t.momentum_1m), m3=_f(t.momentum_3m), pm=_f(t.profit_margin);
@@ -20083,7 +20089,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
       return '<div class="dm-row" data-row data-tic="'+escHTML(t.ticker)+'" style="animation-delay:'+(0.08+i*0.05).toFixed(2)+'s">'+
         '<span class="dm-tick">'+logoHTML(t.ticker)+'<span style="min-width:0">'+escHTML(t.ticker)+(g?'<span class="dm-grade '+g+'">'+g+'</span>':'')+'<br><small>'+escHTML((t.name||'').slice(0,26))+'</small></span></span>'+
         '<span class="alpha-cell"><span class="dm-alpha">'+pop+'</span><span class="vd '+vd.cls+'">'+vd.w+'</span></span>'+
-        '<span class="dm-cell-why"><span class="why"><span class="why-ico">'+sig.icon+'</span><span class="why-tx">'+escHTML(sig.text)+'</span></span>'+(risk?'<div class="why-risk">⚠ '+escHTML(risk)+'</div>':'')+'</span>'+
+        '<span class="dm-cell-why"><span class="why"><span class="why-ico">'+sig.icon+'</span><span class="why-tx">'+(sig.ai?'<span class="why-ai">✦ AI</span> ':'')+escHTML(sig.text)+'</span></span>'+(risk?'<div class="why-risk">⚠ '+escHTML(risk)+'</div>':'')+'</span>'+
         upCell+
         '<span class="dm-chg today-col '+(chg>=0?'up':'dn')+'">'+fmtPct(chg)+trend+'</span>'+
         '<span class="act-col"><button class="dm-btn">Open →</button></span>'+
