@@ -5603,12 +5603,16 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 #panel-hot .up-cell small{font-family:var(--font-body);font-size:9px;color:var(--grey-3);font-weight:600;margin-top:1px;letter-spacing:.02em}
 /* Honest framing under the Prime Opportunities title — it's a research shortlist,
    not a buy call, and a high score often means the stock has already run. */
-.picks-card .pk-note{margin:2px 0 14px;font-size:12.5px;line-height:1.55;color:#475569;max-width:80ch}
+/* Aligns with the header + table rows (20px gutter); 0 top margin since .pk-head
+   already carries 12px padding-bottom, then a clean 16px gap before the table. */
+.picks-card .pk-note{margin:0;padding:0 20px 16px;font-size:12.5px;line-height:1.55;color:#475569;max-width:84ch}
 .picks-card .pk-note b{color:#0f172a;font-weight:700}
 .picks-card .pk-note .pk-note-fine{display:inline;color:#94a3b8;font-size:11px;font-weight:500}
-@media(max-width:560px){.picks-card .pk-note{font-size:12px;max-width:none}}
-/* Track-record strip — honest summary of how closed picks actually did. */
-.picks-track{margin-top:14px;border-top:1px solid rgba(9,9,9,.07);padding-top:14px}
+@media(max-width:560px){.picks-card .pk-note{padding:0 16px 14px;font-size:12px;max-width:none}}
+/* Track-record strip — honest summary of how closed picks actually did.
+   Same 20px gutter as the header + rows so it aligns with the rest of the card. */
+.picks-track{margin:0;border-top:1px solid rgba(9,9,9,.07);padding:16px 20px 18px}
+@media(max-width:560px){.picks-track{padding:16px 16px 18px}}
 .picks-track .pt-inner{display:flex;flex-wrap:wrap;align-items:center;gap:14px 26px;justify-content:space-between}
 .picks-track .pt-stats{display:flex;gap:24px;flex-wrap:wrap}
 .picks-track .pt-stat{display:flex;flex-direction:column;line-height:1.05}

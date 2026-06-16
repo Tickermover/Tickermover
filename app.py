@@ -7211,6 +7211,53 @@ _daily_featured_date: str = ""
 _curated_syms_cache: set = set()
 
 
+def _run_room_rank(t: dict) -> float:
+    """Order picks by 'room to run from HERE', not just raw strength: start from
+    the Alpha Score, reward upside-to-target + a near-term earnings catalyst, and
+    demote names already trading above target or that have gone parabolic (they've
+    mostly had their move). Mirrors _runRoomRank in dashboard.html so the client
+    headline and the server-curated list agree."""
+    s = float(t.get("smart_score") or t.get("pop_score") or 0)
+
+    up = t.get("target_upside_pct")
+    if up is None:
+        try:
+            tm, p = float(t.get("target_mean") or 0), float(t.get("price") or 0)
+            up = (tm - p) / p * 100 if tm > 0 and p > 0 else None
+        except (TypeError, ValueError):
+            up = None
+    try:
+        if up is not None:
+            up = float(up)
+            if   up >= 20:  s += 10
+            elif up >= 10:  s += 6
+            elif up >= 3:   s += 2
+            elif up >= -2:  s += 0
+            elif up >= -10: s -= 8
+            else:           s -= 16   # trading above target → demote
+    except (TypeError, ValueError):
+        pass
+
+    try:
+        m3 = t.get("momentum_3m")
+        if m3 is not None:
+            m3 = float(m3)
+            if   m3 >= 120: s -= 14
+            elif m3 >= 70:  s -= 8
+            elif m3 >= 40:  s -= 3    # already ran
+    except (TypeError, ValueError):
+        pass
+
+    try:
+        dte = t.get("days_to_earnings")
+        if dte is not None and 0 <= int(dte) <= 21:
+            s += 3                    # near-term catalyst = a spark
+    except (TypeError, ValueError):
+        pass
+
+    return s
+
+
 def _ensure_featured() -> list:
     """Build/refresh the curated featured list (daily, in-memory) and return it.
     Shared by /api/featured and the per-stock model decision so 'curated' means
@@ -7223,7 +7270,7 @@ def _ensure_featured() -> list:
         return _daily_featured
 
     def _score(t):
-        return float(t.get("smart_score") or t.get("pop_score") or 0)
+        return _run_room_rank(t)   # rank for room-to-run, matching the client headline
 
     def _cap_ok(t):
         mc = t.get("market_cap"); tier = t.get("market_cap_tier", "")
