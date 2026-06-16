@@ -680,9 +680,12 @@ h1,h2,h3,h4,h5{font-family:'Instrument Sans',sans-serif;font-weight:600;letter-s
 .fs-icon{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);color:rgba(255,255,255,.65);transition:background .25s,color .25s,border-color .25s,transform .25s}
 .fs-icon svg{width:14px;height:14px}
 .fs-icon:hover{background:rgba(93,179,241,.18);border-color:rgba(93,179,241,.45);color:#fff;transform:translateY(-2px)}
-.foot-bottom{display:flex;justify-content:space-between;align-items:center;gap:14px;padding-top:18px;border-top:1px solid rgba(255,255,255,.10);flex-wrap:wrap}
+.foot-bottom{display:flex;justify-content:space-between;align-items:center;gap:10px 22px;padding-top:18px;border-top:1px solid rgba(255,255,255,.10);flex-wrap:wrap}
 .foot-bottom span{color:rgba(255,255,255,.42);font-size:12.5px}
-.foot-bottom .disc{max-width:58ch;font-size:11.5px;color:rgba(255,255,255,.36)}
+.foot-legal{display:flex;gap:20px;flex-wrap:wrap}
+.foot-legal a{color:rgba(255,255,255,.55);font-family:'Instrument Sans',sans-serif;font-weight:500;font-size:12.5px;transition:color .25s}
+.foot-legal a:hover{color:#fff}
+.foot-bottom .disc{flex:0 0 100%;order:3;font-size:11.5px;color:rgba(255,255,255,.36)}
 @media(max-width:760px){
   .foot-top{grid-template-columns:1fr;gap:24px}
   .foot-right{align-items:flex-start;gap:14px}
@@ -2192,9 +2195,6 @@ h1,h2,h3,h4,h5{font-family:'Instrument Sans',sans-serif;font-weight:600;letter-s
           <a href="#ai-engine">How it works</a>
           <a href="#insights">Daily desk</a>
           <a href="#pricing">Pricing</a>
-          <a href="/privacy">Privacy</a>
-          <a href="/terms">Terms</a>
-          <a href="/disclaimer">Disclaimer</a>
         </nav>
         <div class="foot-meta">
           <a class="foot-email" href="mailto:support@alphahunt.in">support@alphahunt.in</a>
@@ -2206,6 +2206,11 @@ h1,h2,h3,h4,h5{font-family:'Instrument Sans',sans-serif;font-weight:600;letter-s
     </div>
     <div class="foot-bottom">
       <span>© 2026 AlphaHunt. All rights reserved.</span>
+      <nav class="foot-legal">
+        <a href="/privacy">Privacy</a>
+        <a href="/terms">Terms</a>
+        <a href="/disclaimer">Disclaimer</a>
+      </nav>
       <span class="disc">Not investment advice. AlphaHunt is a research tool; do your own due diligence before any trade.</span>
     </div>
   </div>
