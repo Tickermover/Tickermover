@@ -20034,6 +20034,16 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     const f=riskFlags(t); if(!f.length) return null;
     return (f.find(x=>x.level==='HIGH')||f[0]).label;
   }
+  // US regular session check (Mon-Fri 9:30-16:00 ET) — used to label the daily
+  // change column "Today" (live) vs "Last close" (when the session is shut).
+  function _marketIsOpen(){
+    try{
+      const et=new Date(new Date().toLocaleString('en-US',{timeZone:'America/New_York'}));
+      const d=et.getDay(); if(d<1||d>5) return false;            // weekend
+      const m=et.getHours()*60+et.getMinutes();
+      return m>=9*60+30 && m<16*60;                               // 9:30–16:00 ET
+    }catch(e){ return true; }                                     // fail open → "Today"
+  }
   // Headline picks are ranked for "room to run from HERE", not just raw strength.
   // Start from the Alpha Score (keeps the quality core), then: reward genuine
   // upside-to-target + a near-term catalyst, and push DOWN names already trading
@@ -20064,7 +20074,10 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
   function renderPicks(tickers, data){
     const sel=selectHot(tickers, PICKS_SHOWN);
     const table=document.getElementById('picksTable'); if(!table) return;
-    const headRow='<div class="dm-row dm-head-row"><span>Ticker</span><span>Alpha</span><span>Why it\'s here</span><span class="up-col">Analyst upside</span><span class="today-col">Today</span><span class="act-col">Action</span></div>';
+    // When the session is closed the move shown is the LAST close, not "today" —
+    // label it honestly so a user looking pre-open / overnight isn't confused.
+    const todayLbl=(typeof _marketIsOpen==='function' && !_marketIsOpen())?'Last close':'Today';
+    const headRow='<div class="dm-row dm-head-row"><span>Ticker</span><span>Alpha</span><span>Why it\'s here</span><span class="up-col">Analyst upside</span><span class="today-col">'+todayLbl+'</span><span class="act-col">Action</span></div>';
     const pc=document.getElementById('picksCount');
     // Universe still loading → warming-up state.
     if(!sel.length){ if(pc) pc.textContent='— picks'; table.innerHTML=headRow+'<div class="dm-warm"><div class="emoji">⏳</div><div style="font-weight:700">Warming up — fetching prices for the universe…</div></div>'; return; }
