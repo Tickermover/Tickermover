@@ -126,12 +126,30 @@ ASK_DAILY_CAP = int(os.environ.get("ASK_DAILY_CAP", "12"))
 _AI_ALLOW = {e.strip().lower() for e in os.environ.get("AI_ALLOW_EMAILS", "").split(",") if e.strip()}
 
 
+def _beta_pro_active() -> bool:
+    """During the public beta (config.BETA_PRO_UNTIL, UTC) every signed-in user
+    gets Pro for free. Auto-expires at launch — no code change needed."""
+    raw = (getattr(config, "BETA_PRO_UNTIL", "") or "").strip()
+    if not raw:
+        return False
+    try:
+        end = datetime.fromisoformat(raw)
+        if end.tzinfo is None:
+            end = end.replace(tzinfo=timezone.utc)
+        return datetime.now(timezone.utc) < end
+    except Exception:
+        return False
+
+
 async def _is_pro_user(user: Optional[dict],
                        creds: Optional[HTTPAuthorizationCredentials]) -> bool:
     """True iff the request carries an authenticated user with an active Pro
-    subscription (or an allow-listed email). Free/anonymous → False."""
+    subscription (or an allow-listed email). Free/anonymous → False.
+    During the beta window, every authenticated user counts as Pro."""
     if not user or not creds:
         return False
+    if _beta_pro_active():
+        return True
     if (user.get("email") or "").lower() in _AI_ALLOW:
         return True
     uid = user.get("user_id")
@@ -7945,12 +7963,14 @@ async def api_user_me(user: Optional[dict] = Depends(_current_user),
     if not user:
         raise HTTPException(status_code=401, detail="Not authenticated")
     sub = await supabase.get_subscription(creds.credentials, user["user_id"])
+    beta = _beta_pro_active()
     return JSONResponse({
         "user_id": user["user_id"],
         "email":   user["email"],
-        "plan":    sub.get("plan", "free"),
-        "status":  sub.get("status", "active"),
-        "valid_until": sub.get("valid_until"),
+        "plan":    "pro" if beta else sub.get("plan", "free"),
+        "status":  "active" if beta else sub.get("status", "active"),
+        "valid_until": config.BETA_PRO_UNTIL if beta else sub.get("valid_until"),
+        "beta_pro": beta,
     })
 
 
@@ -8078,13 +8098,15 @@ async def api_user_account(user: Optional[dict] = Depends(_current_user),
         raise HTTPException(status_code=401, detail="Not authenticated")
     full = await supabase.get_user_full(creds.credentials) or {}
     sub = await supabase.get_subscription(creds.credentials, user["user_id"])
+    beta = _beta_pro_active()
     return JSONResponse({
         "email":          full.get("email") or user.get("email"),
         "email_verified": bool(full.get("email_verified")),
         "name":           full.get("name", ""),
-        "plan":           sub.get("plan", "free"),
-        "status":         sub.get("status", "active"),
-        "valid_until":    sub.get("valid_until"),
+        "plan":           "pro" if beta else sub.get("plan", "free"),
+        "status":         "active" if beta else sub.get("status", "active"),
+        "valid_until":    config.BETA_PRO_UNTIL if beta else sub.get("valid_until"),
+        "beta_pro":       beta,
     })
 
 

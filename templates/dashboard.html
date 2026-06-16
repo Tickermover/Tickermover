@@ -16884,10 +16884,14 @@ function _acctRenderPlan(j){
   const btn  = document.getElementById('v2-acct-planbtn');
   if (pill){ pill.textContent = isPro ? 'PRO' : 'FREE'; pill.className = 'v2-acct-plan' + (isPro ? ' pro' : ''); }
   if (isPro){
-    let until = '';
-    try { if (j.valid_until) until = ' · renews ' + new Date(j.valid_until).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); } catch(e){}
-    if (line) line.textContent = 'AlphaHunt Pro' + until;
-    if (btn){ btn.textContent = 'Manage'; btn.classList.remove('v2-acct-btn-pri'); }
+    let sub = '';
+    if (j.beta_pro){
+      try { sub = ' · free until ' + new Date(j.valid_until).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); } catch(e){ sub = ' · free during beta'; }
+    } else {
+      try { if (j.valid_until) sub = ' · renews ' + new Date(j.valid_until).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); } catch(e){}
+    }
+    if (line) line.textContent = 'AlphaHunt Pro' + sub;
+    if (btn){ btn.textContent = j.beta_pro ? 'Beta access' : 'Manage'; btn.classList.remove('v2-acct-btn-pri'); }
   } else {
     if (line) line.textContent = 'Free plan';
     if (btn){ btn.textContent = 'Upgrade to Pro'; btn.classList.add('v2-acct-btn-pri'); }
