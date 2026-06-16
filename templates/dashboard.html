@@ -5959,6 +5959,10 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 #ts-drawer .dr-pane[hidden]{display:none}
 @keyframes drFade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
 #ts-drawer .dr-deep-grid.two{grid-template-columns:1fr 1fr}
+/* On mobile the forced 2-up crushes each card (e.g. Supply Chain's takeaway +
+   the donut/legend) so names truncate and the donut clips. Stack to one column,
+   matching the other two-up drawer grids (.ov-bb, .doc-grid). */
+@media(max-width:768px){#ts-drawer .dr-deep-grid.two{grid-template-columns:1fr}}
 /* A section flagged span=true drops to its own full-width row below the grid
    (e.g. the Reverse DCF card, which is too cramped in a narrow column). */
 #ts-drawer .dr-deep-grid > .rep-span{grid-column:1/-1}
