@@ -20063,9 +20063,12 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     if(!isNaN(dte)&&dte>=0&&dte<=21) s+=3;   // near-term catalyst = a spark
     return s;
   }
+  const PICKS_MIN_ALPHA=70;   // headline picks must clear a 70 Alpha-Score floor
   function selectHot(tickers, target){
     const base=t=>parseFloat(t.smart_score!=null?t.smart_score:(t.pop_score||0));
-    const eligible=tickers.filter(t=>(t.market_cap==null||t.market_cap>=MIN_MCAP)&&base(t)>0).sort((a,b)=>_runRoomRank(b)-_runRoomRank(a));
+    // Floor on the RAW Alpha Score (not the room-to-run rank) so a big-upside
+    // name can't sneak in below 70 just from its ranking bonus.
+    const eligible=tickers.filter(t=>(t.market_cap==null||t.market_cap>=MIN_MCAP)&&base(t)>=PICKS_MIN_ALPHA).sort((a,b)=>_runRoomRank(b)-_runRoomRank(a));
     const withReason=[], without=[];
     for(const t of eligible){ (pickSignal(t)?withReason:without).push(t); }
     let hot=withReason.slice(0,target);
