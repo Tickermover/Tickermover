@@ -21601,12 +21601,31 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
       +'<div style="display:flex;flex-direction:column;gap:13px">'+row(90)+row(72)+row(80)+row(64)+row(76)+'</div>'
     +'</div>';
   }
+  // Effective Pro = active 'pro' plan (mirrors billing.is_pro on the server).
+  // _AUTH.user is populated from /api/user/me on load and carries plan + status.
+  function _drIsPro(){
+    try{
+      const u=_AUTH && _AUTH.user;   // _AUTH is a page-level const (not on window)
+      if(u&&u.plan) return String(u.plan).toLowerCase()==='pro' && String(u.status||'active').toLowerCase()==='active';
+    }catch(e){}
+    const pill=document.getElementById('v2-acct-planpill');   // fallback if account panel was opened
+    return !!(pill && pill.textContent==='PRO');
+  }
+  // Pro-locked teaser: blurred map behind the centred Upgrade overlay.
+  function _drDepsLockedTeaser(){
+    return '<div class="pro-locked" style="min-height:62vh;background:#f0efe8">'+_drDepsSkel()
+      +'<div class="pro-overlay"><div class="pro-lk">🔒 Pro feature</div>'
+      +'<div class="pro-sub">Supply chain &amp; ripple-risk mapping</div>'
+      +'<button class="dd-upsell" onclick="if(window.openUpgradeModal)openUpgradeModal()">Upgrade to Pro</button></div></div>';
+  }
   function paneSupplyChain(t){
-    // Blurred dummy skeleton of the map behind a "Run analysis" button — so the
-    // tab looks populated (not empty grey) without firing the paid web call.
+    // Non-Pro: skip the run button entirely — show the Upgrade teaser directly.
+    if(!_drIsPro()) return '<div class="dr-deps" style="position:relative;background:#f0efe8">'+_drDepsLockedTeaser()+'</div>';
+    // Pro: blurred skeleton behind a "Run analysis" button so navigating to the
+    // tab never fires the paid web call until they ask for it.
     return '<div class="dr-deps" style="position:relative;min-height:62vh;background:#f0efe8">'+_drDepsSkel()
       +'<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center">'
-      +'<button onclick="window._drRunSupplyChain&&window._drRunSupplyChain()" style="padding:15px 34px;border:none;border-radius:14px;background:linear-gradient(135deg,#2970ff,#0040c1);color:#fff;font-size:16px;font-weight:800;letter-spacing:.01em;cursor:pointer;box-shadow:0 12px 30px -8px rgba(0,64,193,.6)">Map the supply chain →</button>'
+      +'<button onclick="window._drRunSupplyChain&&window._drRunSupplyChain()" style="padding:15px 34px;border:none;border-radius:14px;background:linear-gradient(135deg,#2970ff,#0040c1);color:#fff;font-size:16px;font-weight:800;letter-spacing:.01em;cursor:pointer;box-shadow:0 12px 30px -8px rgba(0,64,193,.6)">Unfold the mapping →</button>'
       +'</div></div>';
   }
   function _loadSupplyChain(){
@@ -21620,15 +21639,9 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     fetch('/api/dependencies/'+encodeURIComponent(tk),{headers:{Authorization:'Bearer '+(localStorage.getItem('ah_token')||'')}}).then(function(r){return r.json();}).then(function(d){
       if(host.getAttribute('data-tk')!==tk) return;         // user switched stocks mid-flight
       if(!d){ host.innerHTML='<div class="dd-loading">Could not load dependencies.</div>'; return; }
-      if(d.status==='locked'){
-        // Blurred map teaser behind a centred Pro overlay (matches the Overview /
-        // AI Deep-Dive locked sections) instead of a bare text line.
-        host.innerHTML='<div class="pro-locked" style="min-height:62vh;background:#f0efe8">'+_drDepsSkel()
-          +'<div class="pro-overlay"><div class="pro-lk">🔒 Pro feature</div>'
-          +'<div class="pro-sub">Supply chain &amp; ripple-risk mapping</div>'
-          +'<button class="dd-upsell" onclick="if(window.openUpgradeModal)openUpgradeModal()">Upgrade to Pro</button></div></div>';
-        return;
-      }
+      // Safety net: if the server still reports locked (e.g. an expired Pro),
+      // show the same Upgrade teaser rather than a bare text line.
+      if(d.status==='locked'){ host.innerHTML=_drDepsLockedTeaser(); return; }
       if(d.status==='unavailable'||d.status==='error'){ host.innerHTML='<div class="dd-loading">'+(d.detail||'Could not map dependencies right now.')+'</div>'; return; }
       host.innerHTML=(typeof _ssxDepsHTML==='function')?_ssxDepsHTML(tk,d):'<div class="dd-loading">Renderer unavailable.</div>';
     }).catch(function(){ if(host.getAttribute('data-tk')===tk) host.innerHTML='<div class="dd-loading">Could not load dependencies.</div>'; });
