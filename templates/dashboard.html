@@ -14669,7 +14669,7 @@ function renderFundamentals(tickers) {
         <th onclick="sortFundList('pop')">Score ▾</th>
         <th>Stock</th>
         <th class="num" onclick="sortFundList('price')">Price</th>
-        <th class="num" onclick="sortFundList('chg')">Today %</th>
+        <th class="num" onclick="sortFundList('chg')">${(window._ahMarketOpen && !window._ahMarketOpen()) ? 'Last close' : 'Today %'}</th>
         <th class="num" onclick="sortFundList('rs')" title="Relative Strength (1–99) — price performance vs the market. 80+ is leadership.">RS</th>
         <th class="num" onclick="sortFundList('mom3m')">3M Chg</th>
         <th class="num" onclick="sortFundList('rev')">Rev Growth</th>
@@ -20044,6 +20044,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
       return m>=9*60+30 && m<16*60;                               // 9:30–16:00 ET
     }catch(e){ return true; }                                     // fail open → "Today"
   }
+  try{ window._ahMarketOpen = _marketIsOpen; }catch(e){}          // shared with the Universe table header
   // Headline picks are ranked for "room to run from HERE", not just raw strength.
   // Start from the Alpha Score (keeps the quality core), then: reward genuine
   // upside-to-target + a near-term catalyst, and push DOWN names already trading
