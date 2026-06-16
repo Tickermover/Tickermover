@@ -1338,8 +1338,9 @@ h1,h2,h3,h4,h5{font-family:'Instrument Sans',sans-serif;font-weight:600;letter-s
     <a class="brand" href="#top"><span class="mark" role="img" aria-label="AlphaHunt"></span> <span class="brand-wordmark">AlphaHunt</span></a>
     <div class="nav-links">
       <a href="#engine">Engine</a>
+      <a href="#research">Research</a>
+      <a href="#ask-ai">Ask AI</a>
       <a href="#dashboard">Dashboard</a>
-      <a href="#ai-engine">How it works</a>
       <a href="#insights">Insights</a>
       <a href="#pricing">Pricing</a>
     </div>
@@ -1665,6 +1666,125 @@ h1,h2,h3,h4,h5{font-family:'Instrument Sans',sans-serif;font-weight:600;letter-s
   </div>
 </section>
 
+<!-- ═════════ NEW SECTIONS (deep research · Ask AI · sector map · events) ═════════ -->
+<style>
+/* shared card grid */
+.ah-grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+@media(max-width:900px){.ah-grid3{grid-template-columns:1fr 1fr}}
+@media(max-width:600px){.ah-grid3{grid-template-columns:1fr}}
+.ah-cap{position:relative;border-radius:var(--r-xl);padding:26px 24px;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.04);transition:transform .35s var(--ease),border-color .35s,background .35s}
+.ah-cap:hover{transform:translateY(-4px);border-color:rgba(86,136,238,.45);background:rgba(255,255,255,.06)}
+.ah-cap-ico{width:46px;height:46px;border-radius:12px;display:grid;place-items:center;font-size:22px;background:rgba(86,136,238,.14);margin-bottom:14px}
+.ah-cap h3{font-size:18px;color:#fff;margin-bottom:7px;font-weight:600}
+.ah-cap p{font-size:13.5px;color:rgba(255,255,255,.62);line-height:1.5}
+.ah-pro-tag{position:absolute;top:18px;right:18px;font-family:'Instrument Sans';font-size:10px;font-weight:800;letter-spacing:.07em;color:#FFD79A;background:rgba(245,166,35,.14);border:1px solid rgba(245,166,35,.35);padding:3px 8px;border-radius:999px}
+/* Ask AI chat mock (light section) */
+.ah-chat{max-width:640px;margin:6px auto 0;display:flex;flex-direction:column;gap:14px}
+.ah-bubble{max-width:88%;padding:14px 18px;border-radius:18px;font-size:15px;line-height:1.55}
+.ah-bubble.user{align-self:flex-end;background:var(--primary);color:#fff;border-bottom-right-radius:6px;box-shadow:0 10px 24px rgba(0,64,193,.20)}
+.ah-bubble.ai{align-self:flex-start;background:var(--white);color:var(--text-dark);border:1px solid rgba(9,9,9,.06);border-bottom-left-radius:6px;box-shadow:0 14px 34px rgba(9,20,60,.08)}
+.ah-bubble.ai b{color:var(--primary)}
+.ah-ai-tag{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:800;letter-spacing:.04em;color:#7c3aed;margin-bottom:7px;text-transform:uppercase}
+.ah-chips{display:flex;flex-wrap:wrap;gap:9px;justify-content:center;margin-top:28px}
+.ah-chip{font-size:13px;font-weight:600;color:var(--primary);background:var(--white);border:1px solid var(--azureish);padding:8px 14px;border-radius:999px;transition:transform .25s var(--ease),box-shadow .25s}
+.ah-chip:hover{transform:translateY(-2px);box-shadow:0 10px 22px rgba(9,20,60,.10)}
+/* Sector map illustration (light section) */
+.ah-map-wrap{position:relative;max-width:680px;margin:8px auto 0;border:1px solid rgba(9,9,9,.06);border-radius:var(--r-xxl);background:radial-gradient(120% 120% at 50% 0%,#fbfdff,#eef4fb);overflow:hidden;box-shadow:0 24px 60px rgba(9,20,60,.08)}
+.ah-map-wrap svg{display:block;width:100%;height:auto}
+.ah-map-legend{display:flex;flex-wrap:wrap;gap:10px 20px;justify-content:center;padding:4px 16px 16px;font-size:12.5px;color:var(--grey-2);font-weight:600}
+.ah-map-legend i{display:inline-block;width:16px;height:3px;border-radius:2px;margin-right:7px;vertical-align:middle}
+/* Events timeline (dark section) */
+.ah-tl{max-width:640px;margin:6px auto 0;position:relative;padding-left:4px}
+.ah-tl::before{content:"";position:absolute;left:7px;top:8px;bottom:8px;width:2px;background:rgba(255,255,255,.14)}
+.ah-tl-item{position:relative;padding:0 0 26px 34px}
+.ah-tl-item:last-child{padding-bottom:0}
+.ah-tl-dot{position:absolute;left:0;top:2px;width:16px;height:16px;border-radius:50%;border:3px solid #0a0e22}
+.ah-tl-dot.earn{background:#22c55e}.ah-tl-dot.file{background:#5688EE}.ah-tl-dot.deck{background:#f59e0b}
+.ah-tl-when{font-family:'Instrument Sans';font-size:12px;font-weight:700;letter-spacing:.03em;color:#7CC0EE;text-transform:uppercase}
+.ah-tl-item h4{font-size:16.5px;color:#fff;margin:3px 0 5px;font-weight:600}
+.ah-tl-item p{font-size:13.5px;color:rgba(255,255,255,.6);line-height:1.55}
+.ah-tl-tag{display:inline-block;margin-top:9px;font-size:11px;font-weight:700;color:#cfe0ff;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);padding:3px 10px;border-radius:999px}
+</style>
+
+<!-- ───────── DEEP RESEARCH (dark) — the per-stock drawer ───────── -->
+<section class="section bg-dark" id="research">
+  <div class="wrap">
+    <div class="sec-head center reveal">
+      <span class="eyebrow">Every ticker, x-rayed</span>
+      <h2 class="sec-title">Go deep on <span class="amber-grad-text">any stock.</span></h2>
+      <p class="sec-sub">Tap any name for a full workup — no more stitching together ten browser tabs. Fundamentals, technicals, valuation, peers, supply-chain risk and the filings behind them, all in one panel.</p>
+    </div>
+    <div class="ah-grid3 stagger reveal">
+      <div class="ah-cap"><div class="ah-cap-ico">📊</div><h3>Financials &amp; health</h3><p>Revenue and margin trends, free-cash-flow, balance-sheet strength — graded, not just listed.</p></div>
+      <div class="ah-cap"><div class="ah-cap-ico">📈</div><h3>Technicals &amp; setup</h3><p>Trend, relative strength, and the entry, target and stop levels the engine is watching.</p></div>
+      <div class="ah-cap"><div class="ah-cap-ico">🎯</div><h3>Valuation</h3><p>Upside to street targets plus a reverse-DCF that shows what growth the price already assumes.</p></div>
+      <div class="ah-cap"><span class="ah-pro-tag">PRO</span><div class="ah-cap-ico">🔗</div><h3>Supply chain &amp; ripple risk</h3><p>Who a company depends on and who depends on it — so you can trace a shock before it hits.</p></div>
+      <div class="ah-cap"><div class="ah-cap-ico">⚖️</div><h3>Peers &amp; benchmark</h3><p>Head-to-head against the cohort on every pillar — see exactly where a name leads or lags.</p></div>
+      <div class="ah-cap"><div class="ah-cap-ico">📄</div><h3>Filings &amp; decks</h3><p>10-K / 8-K filings and investor decks, summarized to the signal so you skip the 80-page read.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ───────── ASK AI (light) — conversational analyst ───────── -->
+<section class="section bg-alice" id="ask-ai">
+  <div class="wrap">
+    <div class="sec-head center reveal">
+      <span class="eyebrow">✦ Ask AI · New</span>
+      <h2 class="sec-title">Ask the analyst. <span class="blue-grad-text">Any question.</span></h2>
+      <p class="sec-sub">Chat with an AI analyst grounded in AlphaHunt's live data — not the open web. Ask why a score moved, compare two names, or stress-test your thesis in plain English.</p>
+    </div>
+    <div class="ah-chat reveal">
+      <div class="ah-bubble user">Why is NVDA scoring 94?</div>
+      <div class="ah-bubble ai"><span class="ah-ai-tag">✦ AlphaHunt AI</span>Momentum (<b>92</b>) and Growth (<b>91</b>) lead — datacenter-AI demand is intact and analyst revisions are still climbing. The only drag is Valuation (<b>71</b>): the price already assumes years of hyperscaler capex. Risk (78) stays healthy on a fortress balance sheet.</div>
+      <div class="ah-bubble user">How does it compare to AMD?</div>
+    </div>
+    <div class="ah-chips reveal">
+      <span class="ah-chip">"Is the dip in MU a buy?"</span>
+      <span class="ah-chip">"Summarize TSLA's last earnings"</span>
+      <span class="ah-chip">"Who are CRDO's biggest customers?"</span>
+      <span class="ah-chip">"Safest semiconductor name right now?"</span>
+    </div>
+  </div>
+</section>
+
+<!-- ───────── SECTOR MAP (light) — the universe as a graph ───────── -->
+<section class="section bg-alice" id="map">
+  <div class="wrap">
+    <div class="sec-head center reveal">
+      <span class="eyebrow">The Universe, connected</span>
+      <h2 class="sec-title">See how it all <span class="blue-grad-text">links together.</span></h2>
+      <p class="sec-sub">AlphaHunt maps the whole investable universe as a living graph — raw materials → components → infrastructure → platforms → apps. Tap a node to trace a shock to the names it ripples into.</p>
+    </div>
+    <div class="ah-map-wrap reveal">
+      <svg viewBox="0 0 680 360" role="img" aria-label="Sector relationship graph">
+        <g stroke-linecap="round" fill="none">
+          <path d="M120 95 C 220 110, 250 140, 330 165" stroke="#2970ff" stroke-width="2.5" opacity=".55"/>
+          <path d="M150 270 C 240 250, 260 200, 330 175" stroke="#2970ff" stroke-width="2.5" opacity=".55"/>
+          <path d="M330 165 C 430 130, 470 110, 545 100" stroke="#15803d" stroke-width="2.5" opacity=".5"/>
+          <path d="M345 190 C 380 250, 410 280, 360 300" stroke="#94a3b8" stroke-width="2.5" opacity=".5"/>
+          <path d="M380 300 C 470 295, 510 290, 548 275" stroke="#2970ff" stroke-width="2.5" opacity=".55"/>
+          <path d="M360 165 C 470 175, 510 210, 548 258" stroke="#F5A623" stroke-width="2.5" opacity=".5"/>
+        </g>
+        <g font-family="'Instrument Sans',sans-serif" text-anchor="middle">
+          <!-- node: cx,cy,r,fill,score,label -->
+          <g><circle cx="120" cy="95" r="26" fill="#16a34a"/><text x="120" y="102" fill="#fff" font-size="19" font-weight="700">74</text><text x="120" y="142" fill="#0f172a" font-size="13.5" font-weight="700">Test Equipment</text></g>
+          <g><circle cx="150" cy="270" r="24" fill="#16a34a"/><text x="150" y="277" fill="#fff" font-size="18" font-weight="700">65</text><text x="150" y="312" fill="#0f172a" font-size="13.5" font-weight="700">Photonics</text></g>
+          <g><circle cx="338" cy="170" r="36" fill="#15803d"/><text x="338" y="178" fill="#fff" font-size="24" font-weight="800">70</text><text x="338" y="222" fill="#0f172a" font-size="14" font-weight="800">AI Semiconductors</text></g>
+          <g><circle cx="545" cy="100" r="26" fill="#16a34a"/><text x="545" y="107" fill="#fff" font-size="19" font-weight="700">64</text><text x="545" y="147" fill="#0f172a" font-size="13.5" font-weight="700">Edge AI</text></g>
+          <g><circle cx="360" cy="300" r="25" fill="#65a30d"/><text x="360" y="307" fill="#fff" font-size="18" font-weight="700">62</text><text x="360" y="343" fill="#0f172a" font-size="13.5" font-weight="700">Automation</text></g>
+          <g><circle cx="560" cy="270" r="24" fill="#d97706"/><text x="560" y="277" fill="#fff" font-size="18" font-weight="700">53</text><text x="560" y="311" fill="#0f172a" font-size="13.5" font-weight="700">AI Power</text></g>
+        </g>
+      </svg>
+      <div class="ah-map-legend">
+        <span><i style="background:#F5A623"></i>Raw material</span>
+        <span><i style="background:#2970ff"></i>Components / supply</span>
+        <span><i style="background:#15803d"></i>Infrastructure / platform</span>
+        <span><i style="background:#94a3b8"></i>Adjacent</span>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- ───────── PROFILES (dark, three curated universes from dev landing) ───────── -->
 <section class="section bg-dark" id="profiles">
   <div class="wrap">
@@ -1760,6 +1880,22 @@ h1,h2,h3,h4,h5{font-family:'Instrument Sans',sans-serif;font-weight:600;letter-s
   </div>
 </section>
 
+<!-- ───────── COMPANY EVENTS (dark) — per-stock catalyst timeline ───────── -->
+<section class="section bg-dark" id="events">
+  <div class="wrap">
+    <div class="sec-head center reveal">
+      <span class="eyebrow">Never miss a catalyst</span>
+      <h2 class="sec-title">Earnings. Filings. <span class="amber-grad-text">Every catalyst.</span></h2>
+      <p class="sec-sub">A per-company timeline of what's coming and what just dropped — earnings dates, SEC 8-K filings and investor-deck slides, summarized so you read the signal, not 80 pages.</p>
+    </div>
+    <div class="ah-tl reveal">
+      <div class="ah-tl-item"><span class="ah-tl-dot earn"></span><span class="ah-tl-when">Upcoming · Aug 28</span><h4>Q2 earnings call</h4><p>Street models a conservative guide — consensus EPS $0.74 on revenue of $1.2B. A beat would reset the multiple.</p><span class="ah-tl-tag">Earnings</span></div>
+      <div class="ah-tl-item"><span class="ah-tl-dot file"></span><span class="ah-tl-when">Filed · 2 days ago</span><h4>8-K — material agreement</h4><p>New multi-year supply contract with a top-3 hyperscaler. Broadens the customer base and de-risks the second growth leg.</p><span class="ah-tl-tag">SEC filing</span></div>
+      <div class="ah-tl-item"><span class="ah-tl-dot deck"></span><span class="ah-tl-when">Posted · last week</span><h4>Investor deck — Q2 summary</h4><p>Capacity expansion comes online in H2, unlocking a materially larger addressable market. Key slides pulled and summarized.</p><span class="ah-tl-tag">Investor deck</span></div>
+    </div>
+  </div>
+</section>
+
 <!-- ───────── DAILY DESK — pre-market, post-market, article of the week ───────── -->
 <section class="section bg-alice" id="insights">
   <div class="wrap">
@@ -1826,7 +1962,7 @@ h1,h2,h3,h4,h5{font-family:'Instrument Sans',sans-serif;font-weight:600;letter-s
     <div class="sec-head center reveal">
       <span class="eyebrow" style="margin-left:auto;margin-right:auto">Pricing</span>
       <h2 class="sec-title">Two ways to hunt.</h2>
-      <p class="sec-sub">Research on <b>US-listed stocks</b> (S&amp;P 500 · Nasdaq-100 · Dow), priced in ₹ for Indian investors. The full research engine — real-time scores, <b>Market Analysis</b>, the whole Universe — is free, forever. Pro adds the desk's high-conviction Top Hunts tracker, briefings and weekly editorial.</p>
+      <p class="sec-sub">Research on <b>US-listed stocks</b> (S&amp;P 500 · Nasdaq-100 · Dow), priced in ₹ for Indian investors. The full research engine — real-time scores, deep per-stock research, <b>Market Analysis</b>, the whole Universe &amp; sector map — is free, forever. Pro adds the <b>Ask AI</b> analyst, supply-chain risk mapping, the high-conviction Top Hunts tracker, briefings and weekly editorial.</p>
     </div>
     <div class="price-duo reveal">
 
@@ -1867,6 +2003,8 @@ h1,h2,h3,h4,h5{font-family:'Instrument Sans',sans-serif;font-weight:600;letter-s
         <ul class="pc-card-feats">
           <li><span class="pc-plus">Everything in Free, plus</span></li>
           <li><span class="pc-chk">✓</span><span class="pc-ft"><b>Top Hunts</b><span>Live tracker of every open &amp; closed pick — entry, exit, %</span></span></li>
+          <li><span class="pc-chk">✓</span><span class="pc-ft"><b>Ask AI analyst</b><span>Chat with an AI grounded in AlphaHunt's live data</span></span></li>
+          <li><span class="pc-chk">✓</span><span class="pc-ft"><b>Supply chain &amp; ripple risk</b><span>Per-stock dependency &amp; shock mapping</span></span></li>
           <li><span class="pc-chk">✓</span><span class="pc-ft"><b>Briefings</b><span>AI event &amp; earnings-call summaries, every ticker</span></span></li>
           <li><span class="pc-chk">✓</span><span class="pc-ft"><b>Weekly editorial</b><span>One long-form pick of the week, members-only</span></span></li>
         </ul>
