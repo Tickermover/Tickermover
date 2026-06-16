@@ -12445,6 +12445,12 @@ function riskFlags(t) {
   const short = parseFloat(t.short_percent_float || t.short_interest);
   const vol   = parseFloat(t.volume_ratio);
   if (!isNaN(days)  && days >= 0  && days <= 5)   flags.push({level:'HIGH', label:'Earnings Imminent',   desc:`Reports in ${days}d — elevated event risk`});
+  // Trading past the analyst mean target — the name has already run beyond where
+  // the street sees fair value, so the risk/reward is stretched. Computed inline
+  // (riskFlags is out of upsidePct's closure scope).
+  let _up = parseFloat(t.target_upside_pct);
+  if (isNaN(_up)) { const _tm = parseFloat(t.target_mean), _p = parseFloat(t.price); _up = (_tm > 0 && _p > 0) ? (_tm - _p) / _p * 100 : NaN; }
+  if (!isNaN(_up)   && _up < -2)                  flags.push({level:'HIGH', label:'Above Target',         desc:`Trades ${Math.abs(_up).toFixed(0)}% past the analyst mean target — limited headroom`});
   if (!isNaN(rsi)   && rsi > 75)                  flags.push({level:'HIGH', label:'Overbought',          desc:`RSI ${rsi.toFixed(0)} — extended momentum`});
   if (!isNaN(rsi)   && rsi < 30)                  flags.push({level:'MED',  label:'Oversold',            desc:`RSI ${rsi.toFixed(0)} — sharp drawdown`});
   if (!isNaN(short) && short > 0.15)              flags.push({level:'HIGH', label:'High Short Interest', desc:`${(short*100).toFixed(1)}% float short — high volatility risk`});
