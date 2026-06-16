@@ -14815,6 +14815,7 @@ const _UNI_SCREENS = [
   {id:'momentum',  ic:'🔥', nm:'Momentum',      dsc:'Strong & rising',        scn:'#ef4444', sort:'pop'},
   {id:'quality',   ic:'💎', nm:'Quality',       dsc:'Grade A + real margins', scn:'#0ea5e9', sort:'pop'},
   {id:'breakouts', ic:'🚀', nm:'Breakouts',     dsc:'Top RS + top Alpha',     scn:'#8b5cf6', sort:'pop'},
+  {id:'early',     ic:'🌱', nm:'Early movers',  dsc:'Headroom + rising, not yet extended', scn:'#0d9488', sort:'upside'},
   {id:'value',     ic:'💰', nm:'Value + Growth',dsc:'Sane P/E, still growing',scn:'#16a34a', sort:'rev'},
   {id:'earnings',  ic:'📅', nm:'Earnings soon', dsc:'Reports in ≤2 weeks',    scn:'#0040c1', sort:'pop'},
 ];
@@ -14824,10 +14825,17 @@ function _screenMatch(id, ds){
   const pop=parseFloat(ds.pop)||0, rs=parseFloat(ds.rs)||0, m3=parseFloat(ds.mom3m);
   const rev=parseFloat(ds.rev), fcf=parseFloat(ds.fcf), pe=parseFloat(ds.pe), dte=parseInt(ds.dte);
   const g=(ds.grade||'').toUpperCase();
+  const up=parseFloat(ds.upside);
   switch(id){
     case 'momentum':  return rs>=80 && !isNaN(m3) && m3>5;
     case 'quality':   return g==='A' && !isNaN(rev) && rev>=15 && !isNaN(fcf) && fcf>=5;
     case 'breakouts': return rs>=85 && pop>=70;
+    // Early movers — the inverse of an extended leader: real headroom to the
+    // analyst target, strength building (RS rising but not maxed-out near highs),
+    // growth intact, and not already parabolic. These are setups, not chases.
+    case 'early':     return (g==='A'||g==='B') && !isNaN(up) && up>=12 &&
+                             rs>=55 && rs<=88 && !isNaN(rev) && rev>=8 &&
+                             (isNaN(m3) || (m3>=-5 && m3<=25));
     case 'value':     return !isNaN(pe) && pe>0 && pe<=25 && !isNaN(rev) && rev>=10 && (g==='A'||g==='B');
     case 'earnings':  return !isNaN(dte) && dte>=0 && dte<=14;
     default:          return true;   // 'all' (featured counted separately)
