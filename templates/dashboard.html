@@ -20077,14 +20077,23 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
       if(n<5){ el.style.display='none'; return; }   // too few closed picks to be meaningful yet
       _picksTrackDone=true;
       const sg=v=>((v>=0?'+':'')+(Number(v)||0).toFixed(0)+'%');
+      // Note adapts to the actual numbers so it never contradicts the stats:
+      //  • high hit rate  → say so honestly (don't dismiss the hit rate)
+      //  • low hit rate   → the momentum profile (judge by the averages)
+      //  • in between      → asymmetric-payoff framing
+      const hr=Number(s.hit_rate)||0;
+      let note;
+      if(hr>=55)      note='Most picks close green, and winners outrun losers — a healthy, asymmetric edge.';
+      else if(hr<=45) note='Momentum profile — most picks are small losers, a few are big winners, so judge by the averages, not the hit rate.';
+      else            note='Winners outrun losers — the payoff, not how often it’s right, is what drives the result.';
       el.innerHTML=
         '<div class="pt-inner"><div class="pt-stats">'
-        +'<div class="pt-stat"><b>'+(s.hit_rate||0).toFixed(0)+'%</b><span>hit rate</span></div>'
+        +'<div class="pt-stat"><b>'+hr.toFixed(0)+'%</b><span>hit rate</span></div>'
         +'<div class="pt-stat"><b class="pos">'+sg(s.avg_win)+'</b><span>avg winner</span></div>'
         +'<div class="pt-stat"><b class="neg">'+sg(s.avg_loss)+'</b><span>avg loser</span></div>'
         +'<div class="pt-stat"><b>'+n+'</b><span>closed picks</span></div>'
         +'</div>'
-        +'<div class="pt-note">Momentum profile — most picks are small losers, a few are big winners, so judge by the averages, not the hit rate. <span class="pt-link" onclick="_openTrackRecord()">Full ledger →</span></div>'
+        +'<div class="pt-note">'+note+' <span class="pt-link" onclick="_openTrackRecord()">Full ledger →</span></div>'
         +'</div>';
       el.style.display='';
     }catch(e){ el.style.display='none'; }
