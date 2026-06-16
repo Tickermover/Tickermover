@@ -17044,8 +17044,10 @@ function acctPlanAction(){
    Slides in from the right after the user goes idle, at most once per
    session. If they submit, we suppress it for ~3 months (localStorage). */
 const _FB_AT = 'ah_fb_at', _FB_SEEN = 'ah_fb_seen';
-const _FB_3MO = 1000 * 60 * 60 * 24 * 92, _FB_IDLE_MS = 70000;
-let _fbTimer = null, _fbRating = null, _fbTopic = '';
+const _FB_3MO = 1000 * 60 * 60 * 24 * 92;
+const _FB_ACTIVE_MS = 5 * 60 * 1000;   // pop after 5 min of ACTIVE use (not 5 min idle)
+const _FB_ACT_WINDOW = 30000;          // "active" = some interaction within the last 30s
+let _fbTimer = null, _fbRating = null, _fbTopic = '', _fbActiveMs = 0, _fbLastAct = 0;
 const _FB_PLACEHOLDERS = {
   'Picks & ideas':    'Are the picks useful? What would make them more actionable?',
   'Speed':            'Where does the app feel slow or laggy?',
@@ -17063,10 +17065,21 @@ function _fbEligible(){
 }
 function _fbArm(){
   if (!_fbEligible()) return;
-  const reset = () => { if (!_fbEligible()) return; clearTimeout(_fbTimer); _fbTimer = setTimeout(fbShow, _FB_IDLE_MS); };
+  _fbLastAct = Date.now();
+  const mark = () => { _fbLastAct = Date.now(); };
   ['mousemove','mousedown','keydown','scroll','touchstart','wheel'].forEach(ev =>
-    window.addEventListener(ev, reset, { passive:true }));
-  reset();
+    window.addEventListener(ev, mark, { passive:true }));
+  // Accrue ACTIVE time in 5s steps — only while the tab is visible AND the user
+  // has interacted recently. Idle stretches pause the clock, so the panel pops
+  // after 5 min of genuine use rather than after 5 min of sitting idle.
+  const STEP = 5000;
+  clearInterval(_fbTimer);
+  _fbTimer = setInterval(() => {
+    if (!_fbEligible()) { clearInterval(_fbTimer); return; }
+    const active = document.visibilityState !== 'hidden' && (Date.now() - _fbLastAct) <= _FB_ACT_WINDOW;
+    if (active) _fbActiveMs += STEP;
+    if (_fbActiveMs >= _FB_ACTIVE_MS) { clearInterval(_fbTimer); fbShow(); }
+  }, STEP);
 }
 function fbShow(){
   if (!_fbEligible()) return;
@@ -17074,7 +17087,7 @@ function fbShow(){
   try { sessionStorage.setItem(_FB_SEEN, '1'); } catch(e){}
   el.classList.add('open');
 }
-function fbClose(){ const el = document.getElementById('v2-fb'); if (el) el.classList.remove('open'); clearTimeout(_fbTimer); }
+function fbClose(){ const el = document.getElementById('v2-fb'); if (el) el.classList.remove('open'); clearInterval(_fbTimer); }
 function fbRate(btn, r){
   _fbRating = r;
   document.querySelectorAll('#v2-fb-rate button').forEach(b => b.classList.toggle('sel', b === btn));
