@@ -673,6 +673,18 @@ body.v2 #sectors-grid .smh-name{font-weight:800;font-size:12.5px;color:#0f172a!i
 .pro-overlay .pro-lk{font-family:var(--font-head);font-size:14px;font-weight:700;color:#0A0A0A}
 .pro-overlay .pro-sub{font-size:11.5px;font-weight:800;letter-spacing:.02em;color:#6d28d9}
 .pro-overlay .dd-upsell{margin-top:0}
+/* Supply-Chain run CTA (Pro) — a contained card over the blurred map so the
+   action reads as intentional, not a button stranded in empty space. */
+.dr-cta{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:20px}
+.dr-cta-card{max-width:340px;text-align:center;background:rgba(255,255,255,.92);-webkit-backdrop-filter:blur(7px);backdrop-filter:blur(7px);border:1px solid rgba(9,9,9,.06);border-radius:18px;padding:30px 28px;box-shadow:0 26px 64px rgba(9,20,60,.22),0 2px 8px rgba(9,20,60,.08)}
+.dr-cta-ico{width:54px;height:54px;border-radius:15px;display:grid;place-items:center;font-size:25px;margin:0 auto 14px;background:linear-gradient(135deg,#eaf1ff,#d7e6ff);box-shadow:inset 0 0 0 1px rgba(41,112,255,.12)}
+.dr-cta-card h4{font-size:18px;font-weight:800;color:#0f172a;letter-spacing:-.01em;margin-bottom:7px}
+.dr-cta-card p{font-size:13px;color:#64748b;line-height:1.55;margin:0 0 20px}
+.dr-cta-card p b{color:#0040c1;font-weight:800}
+.dr-cta-btn{display:inline-flex;align-items:center;gap:9px;padding:13px 28px;border:0;border-radius:12px;font-family:inherit;background:linear-gradient(135deg,#2970ff,#0040c1);color:#fff;font-size:15px;font-weight:800;letter-spacing:.01em;cursor:pointer;box-shadow:0 12px 28px -8px rgba(0,64,193,.55);transition:transform .15s,box-shadow .15s,filter .15s}
+.dr-cta-btn:hover{transform:translateY(-2px);filter:brightness(1.05);box-shadow:0 16px 36px -8px rgba(0,64,193,.62)}
+.dr-cta-btn span{transition:transform .15s}
+.dr-cta-btn:hover span{transform:translateX(3px)}
 .dd-content{font-size:12.5px;line-height:1.6;color:#334155;margin-top:8px;display:flex;flex-direction:column;gap:11px}
 /* Each note section renders as its own card box (Catalysts / Risks / Bottom line…). */
 .dd-card{background:#fff;border:1px solid var(--hair);border-radius:14px;padding:13px 16px 14px;box-shadow:0 1px 2px rgba(0,0,0,.05)}
@@ -21627,10 +21639,16 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     if(!_drIsPro()) return '<div class="dr-deps" style="position:relative;background:#f0efe8">'+_drDepsLockedTeaser()+'</div>';
     // Pro: blurred skeleton behind a "Run analysis" button so navigating to the
     // tab never fires the paid web call until they ask for it.
+    const tk=((t&&t.ticker)||'this company').toString().toUpperCase();
+    const who=(t&&t.ticker)?('Trace who <b>'+tk+'</b> depends on — and who depends on it.'):'Trace who this company depends on — and who depends on it.';
     return '<div class="dr-deps" style="position:relative;min-height:62vh;background:#f0efe8">'+_drDepsSkel()
-      +'<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center">'
-      +'<button onclick="window._drRunSupplyChain&&window._drRunSupplyChain()" style="padding:15px 34px;border:none;border-radius:14px;background:linear-gradient(135deg,#2970ff,#0040c1);color:#fff;font-size:16px;font-weight:800;letter-spacing:.01em;cursor:pointer;box-shadow:0 12px 30px -8px rgba(0,64,193,.6)">Unfold the mapping →</button>'
-      +'</div></div>';
+      +'<div class="dr-cta">'
+      +'<div class="dr-cta-card">'
+      +'<div class="dr-cta-ico">🔗</div>'
+      +'<h4>Supply chain &amp; ripple risk</h4>'
+      +'<p>'+who+' One tap maps suppliers, customers and concentration.</p>'
+      +'<button class="dr-cta-btn" onclick="window._drRunSupplyChain&&window._drRunSupplyChain()">Unfold the mapping <span aria-hidden="true">→</span></button>'
+      +'</div></div></div>';
   }
   function _loadSupplyChain(){
     if(!_drState) return;
