@@ -164,9 +164,10 @@
    .ma-report (the report host on the app, the floating box on /desk).
    ========================================================================== */
 .ma-glass{
-  /* Smoked cool-slate glass — a slight dark tint vs the old near-white, kept
-     light enough that the dark report text + white inner cards stay readable. */
-  background:linear-gradient(165deg, rgba(202,211,226,.78) 0%, rgba(184,195,214,.74) 100%);
+  /* Warm "smoked sand" glass — tuned to sit on the cream page background (was a
+     cool slate that fought the warm bg). Mid-tone enough that the dark report
+     text + white inner cards still pop. */
+  background:linear-gradient(165deg, rgba(233,224,206,.82) 0%, rgba(222,210,188,.78) 100%);
   -webkit-backdrop-filter:blur(26px) saturate(150%);
   backdrop-filter:blur(26px) saturate(150%);
   border:1px solid rgba(255,255,255,.45);
