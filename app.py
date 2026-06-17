@@ -857,11 +857,11 @@ app.mount("/static", StaticFiles(directory=str(_STATIC)), name="static")
 # is invisible to crawlers — see 2026-04 SEO foundation work.
 
 # Public-facing canonical origin used for sitemap + schema URLs.
-# Configurable via env so staging vs prod don't conflict.
-SITE_ORIGIN = _env("SITE_ORIGIN", "https://tickermover.com") if (_env := getattr(__import__("os").environ, "get", None)) else "https://tickermover.com"
-# (Robust origin lookup — falls back to tickermover.com if env not present)
+# Configurable via env so staging vs prod don't conflict. Default is the
+# www host because the GoDaddy apex (tickermover.com) 301-forwards to www
+# (apex can't be a CNAME to Railway), so www is the real canonical host.
 import os as _os
-SITE_ORIGIN = _os.environ.get("SITE_ORIGIN", "https://tickermover.com").rstrip("/")
+SITE_ORIGIN = _os.environ.get("SITE_ORIGIN", "https://www.tickermover.com").rstrip("/")
 
 
 @app.get("/favicon.ico")
