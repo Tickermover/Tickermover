@@ -1,5 +1,5 @@
 """
-AlphaHunt — Polygon.io Data Client
+TickerMover — Polygon.io Data Client
 Replaces yfinance + Finnhub for price/candle/ticker data.
 
 REST endpoints used:

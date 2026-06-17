@@ -1,5 +1,5 @@
 """
-AlphaHunt — DataCoordinator
+TickerMover — DataCoordinator
 Orchestrates data sources with smart caching and rate limiting.
 Primary: Yahoo Finance (free, no key) for candles + fundamentals.
 Supplemental: Finnhub (news, recs, quotes), ApeWisdom (social), SEC-API (insider).

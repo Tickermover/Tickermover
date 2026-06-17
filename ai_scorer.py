@@ -1,5 +1,5 @@
 """
-AlphaHunt - AI Alpha Score Engine
+TickerMover - AI Alpha Score Engine
 Curated-universe aware: uses growth_tier metadata as a prior when live
 financial data is unavailable, so scores reflect quality from day one.
 Neutral baseline = 0.60 (optimistic for hand-picked high-growth stocks).
@@ -522,7 +522,7 @@ def compute_pop_score(
 
 def _caution_observation(kind: str, t: dict) -> str:
     """Observational note about a caution flag.  Describes the data condition,
-    NOT what the user should do.  AlphaHunt is not a SEBI-registered advisor;
+    NOT what the user should do.  TickerMover is not a SEBI-registered advisor;
     it surfaces signals, the user decides what (if anything) to do."""
     if kind == "analyst":
         mean = _safe(t, "target_mean") or _safe(t, "target_price")

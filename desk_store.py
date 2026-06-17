@@ -1,5 +1,5 @@
 """
-AlphaHunt — durable Desk-Report store.
+TickerMover — durable Desk-Report store.
 
 The pre/post-market desk editions carry an AI-written narrative (paid). They were
 cached only in the in-memory SmartCache, so every Railway redeploy wiped them and

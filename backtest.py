@@ -1,5 +1,5 @@
 """
-AlphaHunt — Backtest Harness (Phase 1+2 of validation roadmap)
+TickerMover — Backtest Harness (Phase 1+2 of validation roadmap)
 
 Goal: replace simulation with evidence. This script answers:
 
@@ -594,7 +594,7 @@ def write_report(result: dict, out_dir: Path) -> None:
 
     # Markdown report
     md = []
-    md.append("# AlphaHunt — Backtest Summary\n")
+    md.append("# TickerMover — Backtest Summary\n")
     md.append(f"_Generated {datetime.now().isoformat(timespec='seconds')}_\n\n")
     md.append("## Headline numbers\n\n")
     md.append("| Metric | Value | Interpretation |\n")
@@ -674,7 +674,7 @@ def write_report(result: dict, out_dir: Path) -> None:
 # ══════════════════════════════════════════════════════════════════════════
 
 def main() -> int:
-    ap = argparse.ArgumentParser(description="AlphaHunt backtest")
+    ap = argparse.ArgumentParser(description="TickerMover backtest")
     ap.add_argument("--years", type=int, default=5, help="years of history (default 5)")
     ap.add_argument("--top", type=int, default=20, help="positions held (default 20)")
     ap.add_argument("--max-per-theme", type=int, default=3,

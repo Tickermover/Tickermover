@@ -1,5 +1,5 @@
 """
-AlphaHunt — shared Alpha Vantage daily-call budget.
+TickerMover — shared Alpha Vantage daily-call budget.
 
 Alpha Vantage's free tier is ~25 calls/day across the WHOLE key. Three code
 paths spend from that one pool: fundamentals (data_coordinator.get_fundamentals),

@@ -1,5 +1,5 @@
 """
-AlphaHunt — durable store for the AI analyst-judge's Top Hunts conviction scores.
+TickerMover — durable store for the AI analyst-judge's Top Hunts conviction scores.
 
 Mirrors overview_store / research_store: Supabase-backed so judgments survive
 Railway redeploys, with a local-JSON fallback for dev. env_id 1=prod, 2=dev.

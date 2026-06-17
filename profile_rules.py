@@ -1,5 +1,5 @@
 """
-AlphaHunt — Risk profile assignment rules.
+TickerMover — Risk profile assignment rules.
 
 Maps a ticker (with its loaded fundamentals/risk metrics) to a single
 profile membership: {"aggressive", "balanced", "conservative"}.

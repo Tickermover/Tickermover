@@ -1,5 +1,5 @@
 """
-AlphaHunt — AI Deep-Dive research generator.
+TickerMover — AI Deep-Dive research generator.
 
 Produces a web-grounded research brief (markdown + sources) for a single
 ticker, using the Anthropic Messages API with the server-side `web_search`

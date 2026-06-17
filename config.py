@@ -1,5 +1,5 @@
 """
-AlphaHunt — Configuration  |  alphahunt.in
+TickerMover — Configuration  |  tickermover.com
 Keys are read from environment variables first, falling back to hardcoded defaults.
 On Railway: set each key in the Variables tab — never commit real keys to git.
 Locally: edit the fallback strings below, or create a .env file.
@@ -9,6 +9,14 @@ import os
 # Tracks which keys fell back to a committed default (env var not set) so the app
 # can warn at startup that those secrets are unrotated / live-in-repo.
 KEYS_ON_FALLBACK: list[str] = []
+
+# ── Brand identity (canonical source) ─────────────────────────────────────────
+# Single place to change the product name / domain. New code should reference
+# these instead of hardcoding the string, so the next rename is a one-line edit.
+APP_NAME      = os.environ.get("APP_NAME", "TickerMover")
+APP_DOMAIN    = os.environ.get("APP_DOMAIN", "tickermover.com")
+APP_ORIGIN    = os.environ.get("APP_ORIGIN", "https://tickermover.com")
+SUPPORT_EMAIL = os.environ.get("SUPPORT_EMAIL", "support@tickermover.com")
 
 def _env(key: str, default: str = "") -> str:
     val = os.environ.get(key)

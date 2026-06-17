@@ -1,5 +1,5 @@
 """
-AlphaHunt — Index constituent registry.
+TickerMover — Index constituent registry.
 
 Static snapshot (Nov 2024) of S&P 500, NASDAQ-100, and Dow Jones
 Industrial Average constituents. Used by:

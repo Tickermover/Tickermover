@@ -1,5 +1,5 @@
 """
-AlphaHunt — per-stock AI Overview-snapshot store.
+TickerMover — per-stock AI Overview-snapshot store.
 
 The Overview snapshot (cheap, no-web business/risk/edge boxes that auto-load on
 every stock open) used to live ONLY in the in-memory SmartCache, so it was lost

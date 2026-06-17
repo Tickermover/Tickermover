@@ -1,5 +1,5 @@
 """
-AlphaHunt — sector relationship graph generator.
+TickerMover — sector relationship graph generator.
 
 Produces the *topology* for the Universe "Sector connections" graph: a directed
 edge list among the live sub-sectors, where each edge `source → target` means

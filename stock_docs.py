@@ -26,7 +26,7 @@ from bs4 import BeautifulSoup
 
 logger = logging.getLogger(__name__)
 
-_UA = os.environ.get("SEC_EDGAR_UA", "AlphaHunt research alphahunt@example.com")
+_UA = os.environ.get("SEC_EDGAR_UA", "TickerMover research alphahunt@example.com")
 _HEADERS = {"User-Agent": _UA, "Accept-Encoding": "gzip, deflate"}
 
 

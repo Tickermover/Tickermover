@@ -1,5 +1,5 @@
 """
-AlphaHunt — AI analyst-judge for Top Hunts selection.
+TickerMover — AI analyst-judge for Top Hunts selection.
 
 Role: an ADVISORY re-ranker. The quant gate (Grade A + Alpha Score floor +
 4-of-6 pillars + theme cap in app.py) decides which names are *eligible*. This
@@ -54,7 +54,7 @@ def available() -> bool:
 
 
 _SYSTEM = """\
-You are the lead analyst for AlphaHunt's "Top Hunts" — a curated shortlist of US \
+You are the lead analyst for TickerMover's "Top Hunts" — a curated shortlist of US \
 growth equities. Every candidate you are shown has ALREADY passed a quantitative \
 gate (Grade A, a high composite Alpha Score, and at least four of six investment \
 pillars). Your job is NOT to re-check eligibility — it is to adjudicate AMONG these \

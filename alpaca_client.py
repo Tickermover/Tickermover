@@ -1,5 +1,5 @@
 """
-AlphaHunt — Alpaca Markets Data Client  |  alphahunt.in
+TickerMover — Alpaca Markets Data Client  |  tickermover.com
 FREE replacement for Polygon.io Starter ($29/mo).
 
 REST endpoints used:

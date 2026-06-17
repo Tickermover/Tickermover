@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>AlphaHunt — Stock Tear Sheet</title>
+<title>TickerMover — Stock Tear Sheet</title>
 <meta name="description" content="One-page A4 stock tear sheet — share to Twitter / Reddit / LinkedIn or print as PDF.">
 <link rel="icon" href="/static/icons/favicon-32.png" type="image/png">
 <style>
@@ -453,7 +453,7 @@
 
   <div class="page-head">
     <div style="display:flex;align-items:center;gap:12px">
-      <img src="/static/icons/alpha-logo-64.png" alt="AlphaHunt" style="width:34px;height:34px;flex-shrink:0">
+      <img src="/static/icons/alpha-logo-64.png" alt="TickerMover" style="width:34px;height:34px;flex-shrink:0">
       <div>
         <div class="title">Stock <em>Tear Sheet</em></div>
         <div class="sub">A shareable one-page summary of any US stock in our universe.</div>
@@ -491,7 +491,7 @@
         <!-- HEADER -->
         <div class="ts-head">
           <div class="ts-brand">
-            <div class="ts-logo"><img src="/static/icons/alpha-logo-64.png" alt="AlphaHunt"></div>
+            <div class="ts-logo"><img src="/static/icons/alpha-logo-64.png" alt="TickerMover"></div>
             <div class="ts-brand-text">
               <div class="ts-brand-name">Alpha<span>Hunt</span></div>
               <div class="ts-brand-tag">US Stock Tear Sheet</div>
@@ -796,10 +796,10 @@
         <!-- FOOTER -->
         <div class="ts-foot">
           <div class="ts-foot-disclaimer">
-            <strong>Educational use only.</strong> AlphaHunt is not a SEBI-registered advisor and does not provide buy/sell recommendations. The Alpha Score is a quantitative composite for screening; it is not investment advice. Past performance and analyst targets do not guarantee future results. Data: SEC EDGAR, Yahoo Finance, FMP. Always do your own research and consult a registered financial advisor.
+            <strong>Educational use only.</strong> TickerMover is not a SEBI-registered advisor and does not provide buy/sell recommendations. The Alpha Score is a quantitative composite for screening; it is not investment advice. Past performance and analyst targets do not guarantee future results. Data: SEC EDGAR, Yahoo Finance, FMP. Always do your own research and consult a registered financial advisor.
           </div>
           <div class="ts-foot-url">
-            alphahunt.in
+            tickermover.com
             <span class="small">Hunt for Alpha</span>
           </div>
         </div>
@@ -1413,9 +1413,9 @@ function render() {
     gm != null ? 'Gross margin: ' + (gm*100).toFixed(1) + '%' : '',
     (tgtMean != null && price) ? 'Implied upside: ' + fmtPct(((tgtMean/price)-1)*100, 0) : '',
     '',
-    '📊 alphahunt.in · Quality descriptors only — not buy/sell advice',
+    '📊 tickermover.com · Quality descriptors only — not buy/sell advice',
     '',
-    '#' + stock.ticker + ' #USStocks #AlphaHunt',
+    '#' + stock.ticker + ' #USStocks #TickerMover',
   ].filter(Boolean).join('\n');
   document.getElementById('caption-body').textContent = captionParts;
 

@@ -1,5 +1,5 @@
 """
-AlphaHunt — Portfolio + closed-trades persistence layer.
+TickerMover — Portfolio + closed-trades persistence layer.
 
 Why this exists
 ---------------
@@ -18,7 +18,7 @@ Env-id convention
 A single Supabase project may back both prod and dev deploys. We tag every
 write with an ``env_id``::
 
-    1 = prod   (alphahunt.in)
+    1 = prod   (tickermover.com)
     2 = dev    (web-production-17a78.up.railway.app + local)
 
 The env is auto-detected from the ``RAILWAY_ENVIRONMENT`` env var if present,

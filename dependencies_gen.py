@@ -1,5 +1,5 @@
 """
-AlphaHunt — Dependencies & ripple-risk generator.
+TickerMover — Dependencies & ripple-risk generator.
 
 For a single stock, produces a STRUCTURED, web-grounded map of what the company
 depends on, so the user can see how a shock to a supplier / customer / end-market

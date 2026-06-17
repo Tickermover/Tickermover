@@ -1,5 +1,5 @@
 """
-AlphaHunt — Supabase Auth Layer  |  alphahunt.in
+TickerMover — Supabase Auth Layer  |  tickermover.com
 Handles JWT verification, user lookups, and watchlist CRUD via Supabase REST API.
 
 Endpoints consumed:

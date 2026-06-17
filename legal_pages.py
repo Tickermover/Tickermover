@@ -1,21 +1,28 @@
 """
-AlphaHunt - Legal pages (Terms, Privacy, Disclaimer)
+TickerMover - Legal pages (Terms, Privacy, Disclaimer)
 
-Three plain-English legal documents tailored for AlphaHunt's specific posture:
+Three plain-English legal documents. The business is relocating to the UK,
+so the REGULATORY DISCLAIMER has been converted to FCA framing (generic
+research / not a personal recommendation under FSMA + the FCA Handbook).
 
-  * India-incorporated + Indian customer base (Razorpay payments, Mumbai
-    arbitration, DPDP Act 2023 disclosures)
-  * SEBI research-exemption framing — AlphaHunt is a research/educational
-    tool, not a SEBI-registered Investment Adviser. We never recommend
-    specific actions to specific users.
-  * Razorpay + Supabase + Resend + Groq + various data-feed providers
-    (Polygon, FMP, Alpha Vantage, Finnhub, Alpaca, yfinance, SEC EDGAR)
-    in the data-flow disclosure.
+⚠️  MIXED LEGAL STATE — NEEDS A UK SOLICITOR BEFORE PAID LAUNCH:
+  The Terms (governing law, arbitration venue) and the Privacy section are
+  STILL drafted for the OLD India posture — Indian law, Mumbai arbitration,
+  DPDP Act 2023, Razorpay, Indian tax retention. These have NOT been
+  rewritten for the UK (England & Wales law, UK GDPR / Data Protection
+  Act 2018, Stripe, ICO). A UK solicitor must convert these before going
+  live for UK paid users.
+
+  * FCA generic-research framing — TickerMover is a research/educational
+    tool, NOT authorised or regulated by the FCA, and gives no personal
+    recommendation to any specific user.
+  * Data-feed providers (Polygon, FMP, Alpha Vantage, Finnhub, Alpaca,
+    yfinance, SEC EDGAR) in the data-flow disclosure.
   * Limitation of liability sized for a low-cost SaaS (cap = 12 months
     of fees paid).
 
-Drafted by AlphaHunt; reviewed by no lawyer yet. Have a junior corporate
-lawyer review before going live in prod for paid users.
+Drafted in-house; reviewed by no lawyer yet. Do NOT rely on this as legal
+advice — a UK solicitor must review before prod launch for paid users.
 """
 from __future__ import annotations
 
@@ -28,10 +35,13 @@ _EFFECTIVE_DATE = os.environ.get(
     "LEGAL_EFFECTIVE_DATE",
     datetime.utcnow().strftime("%B %d, %Y"),
 )
-_COMPANY = os.environ.get("LEGAL_COMPANY_NAME", "AlphaHunt")
-_DOMAIN  = os.environ.get("LEGAL_DOMAIN", "alphahunt.in")
-_CONTACT = os.environ.get("LEGAL_CONTACT_EMAIL", "support@alphahunt.in")
-_JURIS   = os.environ.get("LEGAL_JURISDICTION", "Mumbai, Maharashtra, India")
+_COMPANY = os.environ.get("LEGAL_COMPANY_NAME", "TickerMover")
+_DOMAIN  = os.environ.get("LEGAL_DOMAIN", "tickermover.com")
+_CONTACT = os.environ.get("LEGAL_CONTACT_EMAIL", "support@tickermover.com")
+# NOTE: the governing-law / arbitration body text further down STILL references
+# India and must be rewritten by a UK solicitor. This default reflects the
+# INTENDED UK posture only.
+_JURIS   = os.environ.get("LEGAL_JURISDICTION", "England and Wales")
 
 
 # ── Shared styling + header / footer ────────────────────────────────
@@ -130,8 +140,9 @@ def render_terms() -> str:
     body = f"""
 <div class="callout callout-green">
   <strong>TL;DR.</strong> {_COMPANY} is a research tool that scores publicly-listed
-  US stocks using public data and AI. It is <strong>NOT a SEBI-registered Investment
-  Adviser</strong> and does not give personalised investment advice. You make your
+  US stocks using public data and AI. It is <strong>not authorised or regulated by
+  the Financial Conduct Authority (FCA)</strong> and provides generic research only —
+  not a personal recommendation or personalised investment advice. You make your
   own decisions; we provide information to help you make them.
 </div>
 
@@ -154,7 +165,7 @@ by these Terms.</p>
 <h3>What it is NOT</h3>
 <ul>
   <li><strong>Not personalised investment advice.</strong> We do not know your age, risk tolerance, financial situation, time horizon, or tax status. Nothing on the Service should be interpreted as a recommendation tailored to your circumstances.</li>
-  <li><strong>Not a SEBI-registered Investment Adviser or Research Analyst.</strong> The Service is provided as commercial research / journalism / commentary on publicly-traded securities. We do not solicit funds, manage portfolios, place orders, or hold securities on your behalf.</li>
+  <li><strong>Not FCA-authorised; not a personal recommendation.</strong> {_COMPANY} is not authorised or regulated by the Financial Conduct Authority (FCA). The Service provides generic research / journalism / commentary on publicly-traded securities and does not give a &ldquo;personal recommendation&rdquo; within the meaning of the FCA Handbook (COBS). We do not solicit funds, manage portfolios, place orders, or hold securities on your behalf.</li>
   <li><strong>Not a brokerage or trading platform.</strong> You cannot buy, sell, or hold securities through {_COMPANY}. To act on any insight, you must use a separate broker.</li>
   <li><strong>Not a guarantee of accuracy or future performance.</strong> Past results do not predict future outcomes. Markets carry risk. The data we display can be delayed, incomplete, or wrong &mdash; we make best-effort updates but offer no warranty.</li>
 </ul>
@@ -177,7 +188,7 @@ the information you provide is accurate and that you understand the
 <ul>
   <li>Scrape, mass-download, or republish our data, scores, or analysis without written permission.</li>
   <li>Reverse-engineer the scoring methodology to produce a competing service.</li>
-  <li>Use the Service to make recommendations to third parties for compensation, unless you yourself are a SEBI-registered adviser using {_COMPANY} purely as a research input (in which case our content is just one of many sources you would consider).</li>
+  <li>Use the Service to make recommendations to third parties for compensation, unless you yourself are an FCA-authorised adviser using {_COMPANY} purely as a research input (in which case our content is just one of many sources you would consider).</li>
   <li>Upload, share, or input information that violates intellectual property rights, third-party privacy, or applicable law.</li>
   <li>Use bots, headless browsers, or automation to interact with the Service in ways that mimic human use, beyond ordinary RSS / API access we explicitly enable.</li>
 </ul>
@@ -415,17 +426,20 @@ output reads like a recommendation (&ldquo;STRONG BUY&rdquo;, &ldquo;Avoid&rdquo
 it is a quantitative summary of public information, not advice meant for
 your specific circumstances.</p>
 
-<h2>2. Not a SEBI-registered Investment Adviser or Research Analyst</h2>
-<p>{_COMPANY} is not registered as an Investment Adviser under the SEBI
-(Investment Advisers) Regulations, 2013 or as a Research Analyst under the
-SEBI (Research Analysts) Regulations, 2014. The Service operates as
-commercial market commentary / journalism / educational content on publicly
-available information about US-listed securities &mdash; a category that does
-not require SEBI registration.</p>
+<h2>2. Not authorised by the FCA &mdash; no personal recommendation</h2>
+<p>{_COMPANY} is not authorised or regulated by the Financial Conduct
+Authority (FCA). The Service operates as generic market commentary /
+journalism / educational content on publicly available information about
+US-listed securities. Nothing on the Service is a &ldquo;personal
+recommendation&rdquo; or &ldquo;investment advice&rdquo; as defined under the
+Financial Services and Markets Act 2000 (FSMA) and the FCA Handbook (COBS) —
+it is not based on, and does not take account of, your individual
+circumstances.</p>
 
 <p>If you require <em>personalised</em> investment advice (advice tailored to
-your specific financial situation), you must consult a SEBI-registered
-Investment Adviser. {_COMPANY} cannot and does not provide such advice.</p>
+your specific financial situation), you must consult an independent financial
+adviser authorised and regulated by the FCA. {_COMPANY} cannot and does not
+provide such advice.</p>
 
 <h2>3. Our methodology has limits</h2>
 <p>The Alpha Score is a composite of multiple quantitative signals (momentum,
@@ -473,7 +487,7 @@ withdraw their own guidance.</p>
 
 <h2>8. No solicitation</h2>
 <p>Information on the Service is not an offer to sell or a solicitation to
-buy any security. Securities laws in India and the US restrict who may
+buy any security. Securities laws in the UK and the US restrict who may
 publicly recommend specific securities; we do not do so.</p>
 
 <h2>9. You bear all risk</h2>
@@ -484,7 +498,7 @@ in leveraged products, losses exceeding deposit. You should:</p>
   <li>Only trade with money you can afford to lose</li>
   <li>Diversify your holdings</li>
   <li>Understand the products you trade</li>
-  <li>Consult a SEBI-registered adviser for personalised guidance</li>
+  <li>Consult an FCA-authorised financial adviser for personalised guidance</li>
   <li>Read the offer documents and disclosures of any product before investing</li>
 </ul>
 

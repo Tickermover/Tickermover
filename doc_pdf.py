@@ -22,7 +22,7 @@ from bs4 import BeautifulSoup
 
 logger = logging.getLogger(__name__)
 
-_UA = "AlphaHunt research alphahunt@example.com"
+_UA = "TickerMover research alphahunt@example.com"
 _HEADERS = {"User-Agent": _UA, "Accept-Encoding": "gzip, deflate"}
 
 # SEC filings + reputable IR content CDNs that host investor decks/releases.

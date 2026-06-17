@@ -1,5 +1,5 @@
 """
-AlphaHunt — Stock Universe (201 stocks, April 2026)
+TickerMover — Stock Universe (201 stocks, April 2026)
 Source: US_Tech_Telecom_Infra_StockUniverse_v3.xlsx
 Sectors: Technology · Telecom · Infrastructure ONLY (no healthcare/biotech)
 Format: (ticker, name, sector, sub_sector, market_cap_tier, growth_tier, thesis)

@@ -1,5 +1,5 @@
 """
-AlphaHunt — per-call AI usage / cost logger.
+TickerMover — per-call AI usage / cost logger.
 
 Every paid Anthropic call records one row: feature + model + token breakdown +
 web searches + an estimated USD cost + (optional) user_id / ticker. This gives

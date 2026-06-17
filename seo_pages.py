@@ -1,5 +1,5 @@
 """
-seo_pages.py — SEO Phase 3 page renderers for AlphaHunt.
+seo_pages.py — SEO Phase 3 page renderers for TickerMover.
 
 Houses the long-form HTML renderers for:
   • /learn/{slug}              — evergreen educational pillar pages
@@ -160,7 +160,7 @@ def newsletter_block(source: str) -> str:
   </form>
   <div class="nl-msg" id="nl-msg-{safe}"></div>
   <div style="margin-top:14px;font-size:12.5px;color:#94a3b8">
-    Questions or feedback? Email <a href="mailto:support@alphahunt.in" style="color:#15803d">support@alphahunt.in</a>
+    Questions or feedback? Email <a href="mailto:support@tickermover.com" style="color:#15803d">support@tickermover.com</a>
   </div>
 </div>
 <script>
@@ -219,7 +219,7 @@ def page_shell(title: str, desc: str, canonical: str, body_html: str,
 <meta property="og:type" content="{og_type}">
 <meta property="og:url" content="{canonical}">
 {f'<meta property="og:image" content="{img}">' if img else ''}
-<meta property="og:site_name" content="AlphaHunt">
+<meta property="og:site_name" content="TickerMover">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="{title}">
 <meta name="twitter:description" content="{desc}">
@@ -238,8 +238,8 @@ def page_shell(title: str, desc: str, canonical: str, body_html: str,
 
 PILLARS: dict[str, dict] = {
     "pop-score": {
-        "title": "What is Alpha Score? AlphaHunt's 0-100 stock rating explained",
-        "desc": "Alpha Score is AlphaHunt's 0-100 composite rating that blends fundamentals, momentum, valuation, analyst signal, and macro regime into a single plain-English verdict.",
+        "title": "What is Alpha Score? TickerMover's 0-100 stock rating explained",
+        "desc": "Alpha Score is TickerMover's 0-100 composite rating that blends fundamentals, momentum, valuation, analyst signal, and macro regime into a single plain-English verdict.",
         "h1": "What is the Alpha Score?",
         "lede": "A 0-100 composite that turns five different stock signals into one number — so you can stop juggling P/E, EPS revisions, momentum charts, and analyst ratings in your head.",
     },
@@ -253,7 +253,7 @@ PILLARS: dict[str, dict] = {
         "title": "How to read US stock fundamentals — a beginner's checklist",
         "desc": "A practical 7-line checklist for reading a US stock the way a professional does: revenue growth, margins, free cash flow, valuation, balance sheet, momentum, and conviction.",
         "h1": "How to read US stock fundamentals (without a finance degree)",
-        "lede": "You don't need a CFA to spot a great business. You need seven numbers, in the right order, and a sense for what \"good\" looks like in each. Here's the checklist we use on AlphaHunt.",
+        "lede": "You don't need a CFA to spot a great business. You need seven numbers, in the right order, and a sense for what \"good\" looks like in each. Here's the checklist we use on TickerMover.",
     },
 }
 
@@ -281,7 +281,7 @@ def _pillar_body(slug: str, site_origin: str) -> str:
 <h2>How to read the number</h2>
 <blockquote>The Alpha Score isn't a buy signal. It's a "homework checklist completed" signal. It tells you the stock's quantitative story is good. The qualitative judgment — does the thesis make sense to <em>you</em>? — is still yours.</blockquote>
 <ul>
-  <li><strong>80-100 — ★★★★★ Top Tier zone.</strong> All five inputs are firing. These are the names AlphaHunt features in the Hot List.</li>
+  <li><strong>80-100 — ★★★★★ Top Tier zone.</strong> All five inputs are firing. These are the names TickerMover features in the Hot List.</li>
   <li><strong>65-79 — ★★★★ Quality.</strong> Solid composite with at least one minor concern (usually valuation or momentum).</li>
   <li><strong>50-64 — ★★★ Average.</strong> Mixed signals. Often a transition stock — improving fundamentals but lagging momentum, or vice versa.</li>
   <li><strong>35-49 — ★★ Below Average.</strong> Two or more components are weakening.</li>
@@ -292,14 +292,14 @@ def _pillar_body(slug: str, site_origin: str) -> str:
 <p>You'll sometimes see two numbers — a raw Alpha Score and a Smart Score. The Smart Score is the same composite, but adjusted for the current market regime. In a bullish regime, the Smart Score tilts toward growth and momentum. In a bearish regime, it tilts toward quality, balance-sheet strength, and valuation discipline. The raw Alpha Score is regime-blind; the Smart Score adapts.</p>
 
 <h2>The conflict flag</h2>
-<p>Numbers can lie when they're averaged. A stock can earn a 78 Alpha Score because four components are strong — but if the fifth is screaming "danger" (insider selling spike, EPS estimate crash, margin collapse), AlphaHunt flags it with a <code>caution</code> badge and rewrites the bottom-line verdict accordingly. <a href="/learn/how-to-read-fundamentals">More on how we read each signal here.</a></p>
+<p>Numbers can lie when they're averaged. A stock can earn a 78 Alpha Score because four components are strong — but if the fifth is screaming "danger" (insider selling spike, EPS estimate crash, margin collapse), TickerMover flags it with a <code>caution</code> badge and rewrites the bottom-line verdict accordingly. <a href="/learn/how-to-read-fundamentals">More on how we read each signal here.</a></p>
 
 <h2>What it doesn't capture</h2>
 <p>Alpha Score is a quantitative framework. It cannot price in: regulatory risk, executive turnover, accounting irregularities, fraud, geopolitical exposure, or anything that isn't in the public filings yet. Treat it as the starting point of your research, not the conclusion.</p>
 
 {cta_block("See live Alpha Scores")}
 {newsletter_block("learn-pop-score")}
-<div class="legal">AlphaHunt is a research tool, not financial advice. Alpha Score is a composite signal — always do your own research before investing.</div>
+<div class="legal">TickerMover is a research tool, not financial advice. Alpha Score is a composite signal — always do your own research before investing.</div>
 """
     elif slug == "reverse-dcf":
         body = f"""
@@ -314,7 +314,7 @@ def _pillar_body(slug: str, site_origin: str) -> str:
 <h2>Worked example</h2>
 <blockquote>If a stock trades at $100 with a market cap of $50B and the Reverse DCF spits out an implied 10-year revenue CAGR of <strong>+38%</strong>, the market is saying: "we believe this company will grow revenue 38% per year for a decade." For most companies, that's a bet, not a forecast. For some — say, an early-stage AI infrastructure leader — it might be conservative.</blockquote>
 
-<h2>How AlphaHunt categorizes the verdict</h2>
+<h2>How TickerMover categorizes the verdict</h2>
 <ul>
   <li><strong>Implied CAGR &lt; 8%</strong> — the market is pricing in mature-company growth. Often a value setup if you believe the business can re-accelerate.</li>
   <li><strong>8-15%</strong> — fair-to-modest growth assumptions. Most established large caps land here.</li>
@@ -331,14 +331,14 @@ def _pillar_body(slug: str, site_origin: str) -> str:
 
 {cta_block("See Reverse DCF on every stock")}
 {newsletter_block("learn-reverse-dcf")}
-<div class="legal">AlphaHunt is a research tool, not financial advice. Reverse DCF is one input among many — verify the assumptions on each company you analyse.</div>
+<div class="legal">TickerMover is a research tool, not financial advice. Reverse DCF is one input among many — verify the assumptions on each company you analyse.</div>
 """
     elif slug == "how-to-read-fundamentals":
         body = f"""
 {crumbs}
 <span class="tag">Beginner</span>
 <h1>How to read US stock fundamentals (without a finance degree)</h1>
-<p class="lede">You don't need a CFA to spot a great business. You need seven numbers, in the right order, and a sense for what "good" looks like in each. Here's the checklist we use on AlphaHunt.</p>
+<p class="lede">You don't need a CFA to spot a great business. You need seven numbers, in the right order, and a sense for what "good" looks like in each. Here's the checklist we use on TickerMover.</p>
 
 <h2>1 · Revenue growth (year over year)</h2>
 <p>The single most important question you can ask: <em>is the top line getting bigger?</em> Look at the most recent quarter's revenue versus the same quarter last year. For mature large-caps, anything above 10% is healthy. For high-growth names, you want to see 25% or more. A two-quarter deceleration is a yellow flag.</p>
@@ -361,12 +361,12 @@ def _pillar_body(slug: str, site_origin: str) -> str:
 <h2>7 · Conviction — does the thesis make sense?</h2>
 <p>Numbers tell you what's true. The thesis tells you whether it'll keep being true. Before you buy, write down in one sentence why this company will be bigger and more profitable in five years than it is today. If you can't, you're trading the chart, not the business.</p>
 
-<h2>How AlphaHunt does this for you</h2>
+<h2>How TickerMover does this for you</h2>
 <p>Every stock in our universe is run through this checklist every five minutes during market hours. The output is the <a href="/learn/pop-score">Alpha Score</a> — a single 0-100 composite that bakes in all seven signals plus a regime adjustment. You can drill into the underlying components on any stock's detail page.</p>
 
 {cta_block("Open the dashboard and try it")}
 {newsletter_block("learn-fundamentals")}
-<div class="legal">AlphaHunt is a research tool, not financial advice. The fundamentals checklist is a starting framework — adapt it to the specific industry and company you're studying.</div>
+<div class="legal">TickerMover is a research tool, not financial advice. The fundamentals checklist is a starting framework — adapt it to the specific industry and company you're studying.</div>
 """
     else:
         return ""
@@ -387,9 +387,9 @@ def render_pillar(slug: str, site_origin: str) -> Optional[str]:
         "description": meta["desc"],
         "url": canonical,
         "image": f"{site_origin}/static/icons/icon-512.png",
-        "author": {"@type": "Organization", "name": "AlphaHunt", "url": site_origin},
+        "author": {"@type": "Organization", "name": "TickerMover", "url": site_origin},
         "publisher": {
-            "@type": "Organization", "name": "AlphaHunt",
+            "@type": "Organization", "name": "TickerMover",
             "logo": {"@type": "ImageObject", "url": f"{site_origin}/static/icons/icon-512.png"},
         },
     }
@@ -426,15 +426,15 @@ def render_pillar_index(site_origin: str) -> str:
   {brand_header()}
   <div class="crumbs"><a href="/">Home</a> · Learn</div>
   <h1>Learn</h1>
-  <p class="lede">Plain-English guides to the methodology behind AlphaHunt — the Alpha Score, the Reverse DCF, and how to read US stock fundamentals.</p>
+  <p class="lede">Plain-English guides to the methodology behind TickerMover — the Alpha Score, the Reverse DCF, and how to read US stock fundamentals.</p>
   <div class="cards">{cards}</div>
   {newsletter_block("learn-index")}
-  <div class="legal">AlphaHunt — research, not advice.</div>
+  <div class="legal">TickerMover — research, not advice.</div>
 </div>"""
     canonical = f"{site_origin}/learn"
     return page_shell(
-        title="Learn — AlphaHunt methodology, Alpha Score, Reverse DCF",
-        desc="Plain-English guides to AlphaHunt's stock-research methodology — Alpha Score, Reverse DCF, and the seven-step fundamentals checklist.",
+        title="Learn — TickerMover methodology, Alpha Score, Reverse DCF",
+        desc="Plain-English guides to TickerMover's stock-research methodology — Alpha Score, Reverse DCF, and the seven-step fundamentals checklist.",
         canonical=canonical, body_html=body,
         og_image=f"{site_origin}/static/icons/icon-512.png",
     )
@@ -483,9 +483,9 @@ def render_sector(slug: str, universe: list[dict], site_origin: str) -> Optional
     table_html = "".join(_stock_row(t) for t in rows[:50])
     n = len(rows)
     canonical = f"{site_origin}/sectors/{slug}"
-    title = f"Best {label} stocks — live Alpha Scores | AlphaHunt"
+    title = f"Best {label} stocks — live Alpha Scores | TickerMover"
     desc = (
-        f"AlphaHunt's live ranking of {n} {label} stocks by Alpha Score. "
+        f"TickerMover's live ranking of {n} {label} stocks by Alpha Score. "
         f"Plain-English verdict, grade, and bottom line for each. Updated every 5 minutes."
     )[:160]
     schema = {
@@ -522,7 +522,7 @@ def render_sector(slug: str, universe: list[dict], site_origin: str) -> Optional
   {brand_header()}
   <div class="crumbs"><a href="/">Home</a> · <a href="/sectors">Sectors</a> · {label}</div>
   <h1>Best {label} stocks</h1>
-  <p class="lede">Live ranking of {n} {label} stocks by AlphaHunt Alpha Score — a 0-100 composite of fundamentals, valuation, momentum, analyst signal, and macro regime. Click any ticker for the full breakdown.</p>
+  <p class="lede">Live ranking of {n} {label} stocks by TickerMover Alpha Score — a 0-100 composite of fundamentals, valuation, momentum, analyst signal, and macro regime. Click any ticker for the full breakdown.</p>
   <table class="tbl">
     <thead><tr><th>Ticker</th><th>Grade</th><th>Score</th><th>Bottom line</th></tr></thead>
     <tbody>{table_html or '<tr><td colspan="4">No stocks scored in this sector yet — the universe is warming up.</td></tr>'}</tbody>
@@ -530,7 +530,7 @@ def render_sector(slug: str, universe: list[dict], site_origin: str) -> Optional
   <p style="font-size:13px;color:#64748b">Alpha Scores update every 5 minutes during US market hours. Grades: <strong>A</strong> Top Tier · <strong>B</strong> Quality · <strong>C</strong> Average · <strong>D</strong> Below Avg · <strong>F</strong> Weak. (Quality descriptors, not buy/sell recommendations.)</p>
   {cta_block("See the full live dashboard")}
   {newsletter_block("sector-" + slug)}
-  <div class="legal">AlphaHunt is a research tool, not financial advice. Always do your own research before investing.</div>
+  <div class="legal">TickerMover is a research tool, not financial advice. Always do your own research before investing.</div>
 </div>"""
     return page_shell(
         title=title, desc=desc, canonical=canonical, body_html=body,
@@ -555,12 +555,12 @@ def render_sector_index(universe: list[dict], site_origin: str) -> str:
   <p class="lede">{len(smap)} sub-sectors covered, all scored on the same 0-100 Alpha Score. Pick one to see a live ranking.</p>
   <div class="cards">{cards}</div>
   {newsletter_block("sectors-index")}
-  <div class="legal">AlphaHunt — research, not advice.</div>
+  <div class="legal">TickerMover — research, not advice.</div>
 </div>"""
     canonical = f"{site_origin}/sectors"
     return page_shell(
-        title="Stock sectors — live Alpha Scores by sub-sector | AlphaHunt",
-        desc="Browse AlphaHunt's stock universe by sub-sector — AI semiconductors, cybersecurity, quantum computing, photonics, and more. Live Alpha Scores updated every 5 minutes.",
+        title="Stock sectors — live Alpha Scores by sub-sector | TickerMover",
+        desc="Browse TickerMover's stock universe by sub-sector — AI semiconductors, cybersecurity, quantum computing, photonics, and more. Live Alpha Scores updated every 5 minutes.",
         canonical=canonical, body_html=body,
         og_image=f"{site_origin}/static/icons/icon-512.png",
     )
@@ -643,10 +643,10 @@ def render_comparison(a: str, b: str, universe: list[dict], site_origin: str) ->
     if abs(pa_f - pb_f) < 3:
         verdict = f"{a} and {b} score within 3 points of each other on Alpha Score — effectively tied. The right pick depends on which thesis you find more compelling."
     elif pa_f > pb_f:
-        verdict = f"{a} edges out {b} on AlphaHunt's composite Alpha Score ({round(pa_f)} vs {round(pb_f)}). The breakdown below shows where each stock leads."
+        verdict = f"{a} edges out {b} on TickerMover's composite Alpha Score ({round(pa_f)} vs {round(pb_f)}). The breakdown below shows where each stock leads."
     else:
-        verdict = f"{b} edges out {a} on AlphaHunt's composite Alpha Score ({round(pb_f)} vs {round(pa_f)}). The breakdown below shows where each stock leads."
-    title = f"{a} vs {b} — Alpha Score, valuation, growth compared | AlphaHunt"
+        verdict = f"{b} edges out {a} on TickerMover's composite Alpha Score ({round(pb_f)} vs {round(pa_f)}). The breakdown below shows where each stock leads."
+    title = f"{a} vs {b} — Alpha Score, valuation, growth compared | TickerMover"
     desc = (
         f"Side-by-side comparison of {a} ({name_a[:24]}) and {b} ({name_b[:24]}) — "
         f"Alpha Score, growth, valuation, momentum and analyst upside. Updated every 5 minutes."
@@ -666,7 +666,7 @@ def render_comparison(a: str, b: str, universe: list[dict], site_origin: str) ->
   <p>For deeper analysis on each name, open the live dashboard: <a href="/stocks/{a}">{a} full breakdown</a> · <a href="/stocks/{b}">{b} full breakdown</a>.</p>
   {cta_block("Open the live dashboard")}
   {newsletter_block(f"compare-{a}-{b}")}
-  <div class="legal">AlphaHunt is a research tool, not financial advice. Comparisons are computed from live universe data and refresh every 5 minutes during market hours.</div>
+  <div class="legal">TickerMover is a research tool, not financial advice. Comparisons are computed from live universe data and refresh every 5 minutes during market hours.</div>
 </div>"""
     schema = {
         "@context": "https://schema.org",
@@ -675,9 +675,9 @@ def render_comparison(a: str, b: str, universe: list[dict], site_origin: str) ->
         "description": desc,
         "url": canonical,
         "image": f"{site_origin}/static/icons/icon-512.png",
-        "author": {"@type": "Organization", "name": "AlphaHunt", "url": site_origin},
+        "author": {"@type": "Organization", "name": "TickerMover", "url": site_origin},
         "publisher": {
-            "@type": "Organization", "name": "AlphaHunt",
+            "@type": "Organization", "name": "TickerMover",
             "logo": {"@type": "ImageObject", "url": f"{site_origin}/static/icons/icon-512.png"},
         },
         "about": [
@@ -710,11 +710,11 @@ def render_compare_index(universe: list[dict], site_origin: str) -> str:
   <p class="lede">Curated head-to-head pages for the most-asked-about US stocks. Alpha Score, growth, valuation and analyst signal — all on one page. You can also build any comparison by visiting <code>/compare/&lt;TICKER1&gt;-vs-&lt;TICKER2&gt;</code>.</p>
   <div class="cards">{cards}</div>
   {newsletter_block("compare-index")}
-  <div class="legal">AlphaHunt — research, not advice.</div>
+  <div class="legal">TickerMover — research, not advice.</div>
 </div>"""
     canonical = f"{site_origin}/compare"
     return page_shell(
-        title="Stock comparisons — NVDA vs AMD, AAPL vs MSFT, and more | AlphaHunt",
+        title="Stock comparisons — NVDA vs AMD, AAPL vs MSFT, and more | TickerMover",
         desc="Side-by-side US stock comparisons — Alpha Score, growth, valuation, analyst upside. Curated head-to-head pages updated every 5 minutes.",
         canonical=canonical, body_html=body,
         og_image=f"{site_origin}/static/icons/icon-512.png",

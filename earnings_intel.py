@@ -1,5 +1,5 @@
 """
-AlphaHunt - Earnings Intelligence Layer
+TickerMover - Earnings Intelligence Layer
 
 Two functions that turn raw earnings data into UI-ready signals:
 

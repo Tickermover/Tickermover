@@ -1,5 +1,5 @@
 """
-AlphaHunt - Free Earnings Data Sources
+TickerMover - Free Earnings Data Sources
 
 One async fetcher that pull earnings-related text from a genuinely-free
 public source, so we can feed that text into Groq for analysis without
@@ -36,7 +36,7 @@ except ImportError:
 # Use a project-specific UA so they can contact us if we misbehave.
 _SEC_UA = os.environ.get(
     "SEC_USER_AGENT",
-    "AlphaHunt research-tool admin@alphahunt.in"
+    "TickerMover research-tool admin@tickermover.com"
 )
 _SEC_TIMEOUT = 12.0
 _SEC_BASE    = "https://www.sec.gov"

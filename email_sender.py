@@ -8,7 +8,7 @@ Supabase sends the email+password "Confirm signup" email automatically
 (via the custom SMTP we have configured = Resend). But Google OAuth
 sign-ups SKIP that flow entirely — Supabase trusts Google's email
 verification and never sends a confirmation. So a Google user joins
-AlphaHunt and never hears from us.
+TickerMover and never hears from us.
 
 This module fills that gap: when our /api/auth/on-signin endpoint sees
 a brand-new user (created less than 2 minutes ago), it calls
@@ -24,8 +24,8 @@ Environment variables
                     existing "Onboarding" key in the Resend dashboard
                     is a good candidate (no activity yet, sending-only
                     permission).
-  EMAIL_FROM        Sender. Default: "AlphaHunt <noreply@alphahunt.in>"
-                    (alphahunt.in is already verified in Resend).
+  EMAIL_FROM        Sender. Default: "TickerMover <noreply@tickermover.com>"
+                    (tickermover.com is already verified in Resend).
   SITE_ORIGIN       Used to build the "Get started" CTA link.
 
 Failure mode
@@ -49,7 +49,7 @@ _TEMPLATES_DIR = Path(__file__).parent / "templates"
 
 
 async def send_welcome_email(to_email: str) -> dict:
-    """Send the AlphaHunt welcome email to a freshly signed-up user.
+    """Send the TickerMover welcome email to a freshly signed-up user.
 
     Returns {"ok": bool, "id": "...", "error": "..."}.
     Never raises.
@@ -59,7 +59,7 @@ async def send_welcome_email(to_email: str) -> dict:
         return {"ok": False, "error": "Welcome template missing"}
     return await _send(
         to=to_email,
-        subject="Welcome to AlphaHunt 🎯",
+        subject="Welcome to TickerMover 🎯",
         html=html,
     )
 
@@ -83,14 +83,14 @@ def _render_welcome_html() -> Optional[str]:
         logger.error(f"Welcome email template not found at {path}")
         return None
 
-    dashboard_url = os.environ.get("SITE_ORIGIN", "https://alphahunt.in").rstrip("/") + "/app"
+    dashboard_url = os.environ.get("SITE_ORIGIN", "https://tickermover.com").rstrip("/") + "/app"
     return html.replace("{{ .ConfirmationURL }}", dashboard_url)
 
 
 async def _send(to: str, subject: str, html: str) -> dict:
     """Low-level Resend API call. Never raises."""
     api_key = os.environ.get("RESEND_API_KEY", "").strip()
-    sender  = os.environ.get("EMAIL_FROM", "AlphaHunt <noreply@alphahunt.in>").strip()
+    sender  = os.environ.get("EMAIL_FROM", "TickerMover <noreply@tickermover.com>").strip()
 
     if not api_key:
         logger.warning("RESEND_API_KEY not set — skipping welcome email.")

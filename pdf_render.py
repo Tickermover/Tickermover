@@ -1,11 +1,11 @@
 """
-AlphaHunt — Server-side PDF tear sheet generation (v2 — analyst-report style).
+TickerMover — Server-side PDF tear sheet generation (v2 — analyst-report style).
 
 Pure-Python A4 stock tear sheet using reportlab + matplotlib. No system
 deps (reportlab is pure Python; matplotlib already in the install set).
 
 Sections (A4 portrait):
-    1. Header band  — AlphaHunt brand mark + date + quarter
+    1. Header band  — TickerMover brand mark + date + quarter
     2. Hero row     — company logo + ticker + name + sector + price + Alpha Score
     3. 90-day price chart
     4. 12-card metrics grid (Market Cap / Rev Growth / Gross Margin / FCF Margin /
@@ -171,7 +171,7 @@ def _lerp(a: int, b: int, t: float) -> int:
 
 
 def _brand_gradient_color(t: float):
-    """Sample the AlphaHunt brand gradient at position t in [0,1].
+    """Sample the TickerMover brand gradient at position t in [0,1].
     indigo (#D4860A) → violet (#FFC75F) → magenta (#F5A623)."""
     t = max(0.0, min(1.0, t))
     if t < 0.5:
@@ -236,7 +236,7 @@ except Exception as _exc:
 
 def _draw_brand_mark(c: canvas.Canvas, x: float, y: float, size: float = 28,
                       use_gradient: bool = True):
-    """The AlphaHunt α-mark — uses the real brand PNG when available
+    """The TickerMover α-mark — uses the real brand PNG when available
     (brand/alphahunt-mark-transparent-512.png), falls back to a
     synthesised gradient α tile only if the asset is missing. The
     use_gradient flag is retained for back-compat but ignored when the
@@ -256,9 +256,9 @@ def _draw_brand_mark(c: canvas.Canvas, x: float, y: float, size: float = 28,
 
 
 def _draw_brand_lockup(c, x, y, height):
-    """Render the AlphaHunt brand lockup: production bare mark
+    """Render the TickerMover brand lockup: production bare mark
     (/static/icons/alpha-logo-bare-512.png — same file the dashboard
-    loads) + two-tone 'AlphaHunt' wordmark. Built compositionally from
+    loads) + two-tone 'TickerMover' wordmark. Built compositionally from
     the bare mark + drawn text rather than loading a separate lockup
     asset, so the PDF always picks up whatever bare-logo file is
     deployed alongside the dashboard. Returns the total width drawn."""
@@ -270,23 +270,23 @@ def _draw_brand_lockup(c, x, y, height):
     c.setFillColor(BRAND_INDIGO)
     a_w = c.stringWidth("Alpha", "Helvetica-Bold", height * 0.55)
     c.drawString(text_x + a_w, y + height * 0.30, "Hunt")
-    return height + 8 + c.stringWidth("AlphaHunt", "Helvetica-Bold", height * 0.55)
+    return height + 8 + c.stringWidth("TickerMover", "Helvetica-Bold", height * 0.55)
 
 
 def _draw_brand_frame(c):
-    """AlphaHunt page chrome — restored from v3.8 per user feedback.
+    """TickerMover page chrome — restored from v3.8 per user feedback.
     Combines a vivid brand-gradient strip at the very top with a soft
     light-gradient background fading through the page body:
 
       1. TOP brand strip (4pt full-bleed) — indigo→violet→magenta,
-         the dashboard hero gradient. Vivid, the 'AlphaHunt handshake'.
+         the dashboard hero gradient. Vivid, the 'TickerMover handshake'.
       2. Soft body gradient — cream-indigo (#FFFFFF) at top, fading to
          pure white by 20% down. Subtle warmth under the cards.
       3. Tissue-thin (0.3pt) cool-grey page border — anchors the layout
          like the site's bordered components.
       4. Branded watermark in bottom-right (real brand PNG at 8% alpha).
     """
-    # 1) Top brand gradient strip — the chrome bar that says 'AlphaHunt'
+    # 1) Top brand gradient strip — the chrome bar that says 'TickerMover'
     _draw_gradient_strip(c, 0, A4_H - 4, A4_W, 4, n_steps=80)
 
     # 2) Soft body gradient — starts JUST below the brand strip
@@ -392,7 +392,7 @@ def _wrap_paragraph(text, width, font_size=8.5, color=INK, leading=11.5, align=T
 # ── Section drawers ──────────────────────────────────────────────────
 
 def _draw_header(c, today_str, quarter_lbl, page_label=None):
-    """Branded header — real AlphaHunt lockup PNG on the left, generation
+    """Branded header — real TickerMover lockup PNG on the left, generation
     timestamp + quarter chip on the right, subtle thin divider. Sits
     on top of the soft light gradient drawn by _draw_brand_frame.
 
@@ -403,10 +403,10 @@ def _draw_header(c, today_str, quarter_lbl, page_label=None):
     _draw_brand_frame(c)
 
     y = A4_H - MARGIN_TOP - 26
-    # Real AlphaHunt brand lockup (mark + wordmark as one asset)
+    # Real TickerMover brand lockup (mark + wordmark as one asset)
     lockup_w = _draw_brand_lockup(c, MARGIN_X, y + 2, height=24)
 
-    # 'RESEARCH REPORT' positioned UNDER the 'AlphaHunt' wordmark
+    # 'RESEARCH REPORT' positioned UNDER the 'TickerMover' wordmark
     # text — not under the α icon — per user v3.13 feedback
     # ('Placed research report word middle of alpha hunt'). We offset
     # to MARGIN_X + 32 which is where the wordmark starts inside the
@@ -2662,7 +2662,7 @@ def _draw_exec_summary_para(c, top_y, paragraph_text):
 def _draw_page2_hero(c, ticker, t, subtitle=None):
     """No-op on pages 2+ per v3.13 user feedback: 'dont add any heading
     like stock name from second page onwards.' The ticker is already
-    obvious from page 1 and from the header AlphaHunt mark + page
+    obvious from page 1 and from the header TickerMover mark + page
     label. Returns the y-coordinate where content can start (just
     below the header divider)."""
     return A4_H - 90
@@ -2953,7 +2953,7 @@ def _draw_endnotes_page(c, today_str, quarter_lbl):
     y -= 16
 
     disclaimer_html = (
-        "<b>Educational use only.</b> AlphaHunt is not a SEBI-registered "
+        "<b>Educational use only.</b> TickerMover is not a SEBI-registered "
         "investment advisor and does not provide buy / sell recommendations. "
         "The Alpha Score is a quantitative composite for screening purposes; "
         "it is not investment advice. Past performance does not guarantee "
@@ -2967,7 +2967,7 @@ def _draw_endnotes_page(c, today_str, quarter_lbl):
         "of the report generation date."
         "<br/><br/>"
         "<b>Always conduct your own research</b> and consult a registered "
-        "financial advisor before making investment decisions. AlphaHunt "
+        "financial advisor before making investment decisions. TickerMover "
         "assumes no liability for investment outcomes based on this report."
     )
     p = _wrap_paragraph(disclaimer_html, CONTENT_W,
@@ -3049,7 +3049,7 @@ def _draw_footer(c, with_disclaimer=False):
     endnotes page (rendered as the absolute last page by
     _draw_endnotes_page). The with_disclaimer flag is kept for
     back-compat but is now ignored. Every page footer is the compact
-    brand-mark + alphahunt.in URL only. User v3.18: 'Add Disclaimer as
+    brand-mark + tickermover.com URL only. User v3.18: 'Add Disclaimer as
     last para instead of footer.'"""
     foot_y = MARGIN_BOTTOM
     # Thin grey divider — always shown
@@ -3062,7 +3062,7 @@ def _draw_footer(c, with_disclaimer=False):
     _draw_brand_mark(c, A4_W - MARGIN_X - 64, foot_y + 6, size=14)
     c.setFillColor(BRAND_INDIGO)
     c.setFont("Helvetica-Bold", 8.5)
-    c.drawString(A4_W - MARGIN_X - 46, foot_y + 12, "alphahunt.in")
+    c.drawString(A4_W - MARGIN_X - 46, foot_y + 12, "tickermover.com")
     c.setFillColor(INK_MUTED)
     c.setFont("Helvetica", 6.5)
     c.drawRightString(A4_W - MARGIN_X, foot_y + 2, "Hunt for Alpha")
@@ -3093,8 +3093,8 @@ def generate_pdf(ticker: str, t: dict, price_history: list[dict] | None = None,
 
     buf = io.BytesIO()
     c = canvas.Canvas(buf, pagesize=A4, pageCompression=1)
-    c.setTitle(f"AlphaHunt Tear Sheet — {ticker}")
-    c.setAuthor("AlphaHunt")
+    c.setTitle(f"TickerMover Tear Sheet — {ticker}")
+    c.setAuthor("TickerMover")
     c.setSubject(f"{ticker} stock tear sheet")
 
     # Header band

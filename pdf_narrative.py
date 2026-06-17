@@ -1,5 +1,5 @@
 """
-AlphaHunt — AI narrative builder for the tear-sheet PDF (v3).
+TickerMover — AI narrative builder for the tear-sheet PDF (v3).
 
 Pulls together everything the PDF needs for its analyst-narrative page:
     - 3-bullet bull case + 3-bullet bear case + 1-sentence verdict

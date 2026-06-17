@@ -174,7 +174,7 @@ async def _claude_answer(ticker, question, context_blocks, profile_data, user_id
     # instead of re-sent at full price. The question sits AFTER the breakpoint
     # so it never invalidates the cached prefix.
     prefix = (
-        f"You are AlphaHunt's senior equity-research assistant for the US-listed "
+        f"You are TickerMover's senior equity-research assistant for the US-listed "
         f"stock {ticker}. Give a best-in-class, investor-grade answer.\n"
         "Ground your answer FIRST in the context below (SEC filings, an earnings "
         "transcript, and our own metrics) and quote concrete figures from it where "
@@ -402,5 +402,5 @@ async def ask(ticker: str, question: str, profile_data: str = "", user_id=None) 
             if lbl and lbl not in srcs:
                 srcs.append(lbl)
     if not srcs:
-        srcs = ["AlphaHunt metrics + Claude analysis"]
+        srcs = ["TickerMover metrics + Claude analysis"]
     return {"ok": True, "answer": answer, "sources": srcs[:4]}

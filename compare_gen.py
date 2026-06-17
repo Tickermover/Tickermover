@@ -1,5 +1,5 @@
 """
-AlphaHunt — AI head-to-head comparison-card generator.
+TickerMover — AI head-to-head comparison-card generator.
 
 Produces a compact, structured set of qualitative comparison metrics for a
 single ticker (operational stage, latest revenue, contract backlog, core

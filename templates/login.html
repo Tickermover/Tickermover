@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sign in — AlphaHunt</title>
-<meta name="description" content="Sign in to AlphaHunt. 540+ stocks scored every day across six pillars.">
+<title>Sign in — TickerMover</title>
+<meta name="description" content="Sign in to TickerMover. 540+ stocks scored every day across six pillars.">
 <link rel="icon" type="image/png" sizes="32x32" href="/static/icons/favicon-32.png">
 <link rel="icon" type="image/png" sizes="192x192" href="/static/icons/icon-192.png">
 <link rel="apple-touch-icon" href="/static/icons/icon-192.png">
@@ -16,7 +16,7 @@
 
 <style>
 /* ════════════════════════════════════════════════════════════════
-   AlphaHunt — login page (1:1 with dev/Railway, blue theme only)
+   TickerMover — login page (1:1 with dev/Railway, blue theme only)
    Only color tokens differ:
      --gold family   →  --blue family (sky/primary/azure)
      --gold-grad     →  --blue-grad
@@ -278,8 +278,8 @@ a{color:inherit;text-decoration:none}
     </div>
     <div class="left-overlay">
       <div class="left-brand">
-        <span class="left-brand-mark" role="img" aria-label="AlphaHunt"></span>
-        <span class="brand-wordmark">AlphaHunt</span>
+        <span class="left-brand-mark" role="img" aria-label="TickerMover"></span>
+        <span class="brand-wordmark">TickerMover</span>
       </div>
       <div class="left-headline">540+ stocks, scored <em>every day</em>.</div>
       <p class="left-sub">Alpha Score, live signals, and an audited track record — the whole tape, in one dashboard.</p>
@@ -295,8 +295,8 @@ a{color:inherit;text-decoration:none}
   <div class="login-right">
     <div class="form-wrap">
       <a class="brand-sm" href="/">
-        <span class="left-brand-mark" role="img" aria-label="AlphaHunt"></span>
-        <span class="brand-wordmark">AlphaHunt</span>
+        <span class="left-brand-mark" role="img" aria-label="TickerMover"></span>
+        <span class="brand-wordmark">TickerMover</span>
       </a>
       <div id="signin-view">
       <div class="auth-tabs" role="tablist" aria-label="Sign in or create account">
@@ -329,7 +329,7 @@ a{color:inherit;text-decoration:none}
 
       <button class="submit" id="login-submit" type="button"><span id="submit-label">Sign in</span><span class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12 H19"/><path d="M13 6 L19 12 L13 18"/></svg></span></button>
 
-      <div class="foot" id="mode-switch">New to AlphaHunt? <a id="switch-link" href="javascript:void(0)">Create an account →</a></div>
+      <div class="foot" id="mode-switch">New to TickerMover? <a id="switch-link" href="javascript:void(0)">Create an account →</a></div>
       </div><!-- /signin-view -->
 
       <!-- ═══ Email-confirmation view (shown after a new sign-up) ═══ -->
@@ -396,7 +396,7 @@ function setMode(m){
   var ms=$('mode-switch');
   if(ms){
     ms.innerHTML= si
-      ? 'New to AlphaHunt? <a id="switch-link" href="javascript:void(0)">Create an account →</a>'
+      ? 'New to TickerMover? <a id="switch-link" href="javascript:void(0)">Create an account →</a>'
       : 'Already have an account? <a id="switch-link" href="javascript:void(0)">Sign in →</a>';
     var lk=$('switch-link'); if(lk) lk.addEventListener('click', function(){ setMode(si?'signup':'signin'); });
   }

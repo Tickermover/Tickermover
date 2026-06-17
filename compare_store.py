@@ -1,5 +1,5 @@
 """
-AlphaHunt — per-stock AI comparison-card store.
+TickerMover — per-stock AI comparison-card store.
 
 Caches the structured head-to-head comparison card for each ticker so the
 Peers tab never regenerates on view (slow + costly). Mirrors ResearchStore:

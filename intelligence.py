@@ -1,5 +1,5 @@
 """
-AlphaHunt — Intelligence Layer (v1)
+TickerMover — Intelligence Layer (v1)
 ====================================
 
 A self-contained "second brain" for the Alpha Score engine. Adds four classes of

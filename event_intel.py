@@ -1,5 +1,5 @@
 """
-AlphaHunt — Event intel (earnings call summarization)
+TickerMover — Event intel (earnings call summarization)
 =====================================================
 
 Quartr-style structured event summary for a ticker. Pulls the most recent
@@ -47,7 +47,7 @@ _AV_BASE           = "https://www.alphavantage.co/query"
 # the service (their robots.txt enforces this).
 _EDGAR_UA = os.environ.get(
     "SEC_EDGAR_UA",
-    "AlphaHunt Research alphahunt-bot@example.com",
+    "TickerMover Research alphahunt-bot@example.com",
 )
 _EDGAR_HEADERS = {"User-Agent": _EDGAR_UA, "Accept-Encoding": "gzip, deflate"}
 _EDGAR_TICKER_MAP: dict[str, str] | None = None   # ticker -> 10-digit CIK

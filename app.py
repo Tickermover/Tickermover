@@ -1,6 +1,6 @@
 """
-AlphaHunt — FastAPI Application
-alphahunt.in  |  Hunt for Alpha
+TickerMover — FastAPI Application
+tickermover.com  |  Hunt for Alpha
 Run:  uvicorn app:app --host 127.0.0.1 --port 8000
 """
 from __future__ import annotations
@@ -744,7 +744,7 @@ async def lifespan(app: FastAPI):
     global _refresh_lock, _universe_data, _last_full_refresh
     _refresh_lock = asyncio.Lock()
 
-    logger.info("AlphaHunt starting …")
+    logger.info("TickerMover starting …")
 
     # ── Durable-cache health check ─────────────────────────────────────
     # The AI snapshot/deep-dive/compare caches only survive a Railway redeploy
@@ -829,10 +829,10 @@ async def lifespan(app: FastAPI):
         coordinator.polygon.stop_ws()
     await asyncio.gather(*tasks, return_exceptions=True)
     cache.save_disk()
-    logger.info("AlphaHunt shut down — cache saved.")
+    logger.info("TickerMover shut down — cache saved.")
 
 
-app = FastAPI(title="AlphaHunt", lifespan=lifespan)
+app = FastAPI(title="TickerMover", lifespan=lifespan)
 
 # ── GZip compression ────────────────────────────────────────────────
 # /api/universe and /app both return ~1.6 MB of JSON/HTML. Gzipping
@@ -853,15 +853,15 @@ app.mount("/static", StaticFiles(directory=str(_STATIC)), name="static")
 # ── SEO INFRASTRUCTURE ───────────────────────────────────────────────
 # robots.txt, sitemap.xml, and per-stock SEO pages so search engines
 # (and AI search like Google AI Overviews / Perplexity / ChatGPT) can
-# discover and index AlphaHunt properly. Without these the dashboard SPA
+# discover and index TickerMover properly. Without these the dashboard SPA
 # is invisible to crawlers — see 2026-04 SEO foundation work.
 
 # Public-facing canonical origin used for sitemap + schema URLs.
 # Configurable via env so staging vs prod don't conflict.
-SITE_ORIGIN = _env("SITE_ORIGIN", "https://alphahunt.in") if (_env := getattr(__import__("os").environ, "get", None)) else "https://alphahunt.in"
-# (Robust origin lookup — falls back to alphahunt.in if env not present)
+SITE_ORIGIN = _env("SITE_ORIGIN", "https://tickermover.com") if (_env := getattr(__import__("os").environ, "get", None)) else "https://tickermover.com"
+# (Robust origin lookup — falls back to tickermover.com if env not present)
 import os as _os
-SITE_ORIGIN = _os.environ.get("SITE_ORIGIN", "https://alphahunt.in").rstrip("/")
+SITE_ORIGIN = _os.environ.get("SITE_ORIGIN", "https://tickermover.com").rstrip("/")
 
 
 @app.get("/favicon.ico")
@@ -1049,7 +1049,7 @@ async def api_ticker_strip():
 
 @app.get("/", response_class=HTMLResponse)
 async def landing():
-    """Landing page — alphahunt.in home.
+    """Landing page — tickermover.com home.
 
     The redesigned landing (May 21 2026) uses client-side fetches for the
     ticker tape, live picks preview, and track-record stats — so SSR
@@ -1079,23 +1079,23 @@ def _build_landing_schema() -> str:
     org = {
         "@context": "https://schema.org",
         "@type": "Organization",
-        "name": "AlphaHunt",
+        "name": "TickerMover",
         "url": SITE_ORIGIN,
         "logo": f"{SITE_ORIGIN}/static/icons/icon-512.png",
         "description": "We do the homework. You make the call. 200+ US stocks scored every 5 minutes with plain-English verdicts.",
-        "email": "support@alphahunt.in",
+        "email": "support@tickermover.com",
         # contactPoint feeds Google's knowledge panel + AI search citations
         "contactPoint": {
             "@type": "ContactPoint",
             "contactType": "customer support",
-            "email": "support@alphahunt.in",
+            "email": "support@tickermover.com",
             "availableLanguage": ["English"],
         },
     }
     app_schema = {
         "@context": "https://schema.org",
         "@type": "WebApplication",
-        "name": "AlphaHunt",
+        "name": "TickerMover",
         "url": SITE_ORIGIN,
         "applicationCategory": "FinanceApplication",
         "operatingSystem": "Web",
@@ -1281,7 +1281,7 @@ def _render_morning_brief() -> str:
 
     # ── Lede paragraph (templated; AI-narrated in Phase 2) ──────────
     lede = (
-        f"Good morning. Across the {total_n} US stocks AlphaHunt covers, the average "
+        f"Good morning. Across the {total_n} US stocks TickerMover covers, the average "
         f"α-Score sits at <strong>{avg_score:.0f}</strong> today — with "
         f"<strong>{a_grade}</strong> names holding A-grade status. "
     )
@@ -1296,8 +1296,8 @@ def _render_morning_brief() -> str:
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Morning Brief · {date_full} | AlphaHunt</title>
-<meta name="description" content="AlphaHunt's daily morning brief for {date_full}: top picks, sector spotlight, notable movers, and what's reporting today. 4-minute read.">
+<title>Morning Brief · {date_full} | TickerMover</title>
+<meta name="description" content="TickerMover's daily morning brief for {date_full}: top picks, sector spotlight, notable movers, and what's reporting today. 4-minute read.">
 <meta name="theme-color" content="#fafbf7">
 <link rel="canonical" href="{SITE_ORIGIN}/brief">
 <link rel="icon" type="image/png" sizes="32x32" href="/static/icons/favicon-32.png">
@@ -1518,8 +1518,8 @@ async def reports_index():
     return HTMLResponse(content=f"""<!DOCTYPE html>
 <html lang="en"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Reports — {total} US stocks scored & explained | AlphaHunt</title>
-<meta name="description" content="Every US stock in the AlphaHunt universe, scored across six investment pillars and explained in a long-form research report. Sorted by today's Alpha Score.">
+<title>Reports — {total} US stocks scored & explained | TickerMover</title>
+<meta name="description" content="Every US stock in the TickerMover universe, scored across six investment pillars and explained in a long-form research report. Sorted by today's Alpha Score.">
 <meta name="theme-color" content="#fafbf7">
 <link rel="canonical" href="{SITE_ORIGIN}/reports">
 <link rel="icon" type="image/png" sizes="32x32" href="/static/icons/favicon-32.png">
@@ -1714,7 +1714,7 @@ def _render_report_page(t: dict) -> str:
 
     # Story sections (templated for now; AI-narrated in Phase 2)
     lede = (
-        f"AlphaHunt's engine scores {sym} at <strong>{score}</strong> today across six "
+        f"TickerMover's engine scores {sym} at <strong>{score}</strong> today across six "
         f"investment pillars. {('That puts it in the top quintile of our universe.' if score >= 80 else 'That places it in the upper-middle of our coverage.' if score >= 60 else 'That keeps it on the watchlist but not in Top Hunts.') }"
     )
     sector_line = (
@@ -1731,7 +1731,7 @@ def _render_report_page(t: dict) -> str:
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>{sym} — {safe_name} · Alpha Score {score} | AlphaHunt</title>
+<title>{sym} — {safe_name} · Alpha Score {score} | TickerMover</title>
 <meta name="description" content="{safe_name} ({sym}) Alpha Score {score} · {verdict}. Six-pillar research report covering momentum, growth, quality, valuation, sentiment and growth potential. Updated today.">
 <meta name="theme-color" content="#fafbf7">
 <link rel="canonical" href="{SITE_ORIGIN}/report/{sym}">
@@ -1866,7 +1866,7 @@ def _render_report_page(t: dict) -> str:
   <div class="byline">
     <div class="avatar">α</div>
     <div>
-      <strong>AlphaHunt Research</strong>
+      <strong>TickerMover Research</strong>
       <span>AI-generated · Reviewed by editorial</span>
     </div>
     <div class="read-meta">
@@ -1962,7 +1962,7 @@ def _render_report_page(t: dict) -> str:
 </article>
 
 <footer>
-  AlphaHunt is a research and tracking tool. Nothing on this page is investment advice.
+  TickerMover is a research and tracking tool. Nothing on this page is investment advice.
   Past performance does not predict future results. Verify all data independently.
 </footer>
 
@@ -1997,15 +1997,15 @@ def _render_unknown_stock(sym: str) -> str:
     """Lightweight 'we don't cover this yet' page — still SEO-indexable."""
     return f"""<!DOCTYPE html><html lang="en"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>{sym} — Not in AlphaHunt's universe yet | AlphaHunt</title>
-<meta name="description" content="{sym} isn't in our 200+ stock research universe yet. AlphaHunt covers high-quality US stocks with $500M+ market cap — get the Hot List free.">
+<title>{sym} — Not in TickerMover's universe yet | TickerMover</title>
+<meta name="description" content="{sym} isn't in our 200+ stock research universe yet. TickerMover covers high-quality US stocks with $500M+ market cap — get the Hot List free.">
 <meta name="robots" content="noindex,follow">
 <link rel="canonical" href="{SITE_ORIGIN}/stocks/{sym}">
 <style>body{{font-family:system-ui,-apple-system,sans-serif;max-width:600px;margin:80px auto;padding:0 24px;color:#0a0a0a;text-align:center}}
 a{{color:#15803d;font-weight:600;text-decoration:none}}</style>
 </head><body>
 <h1>{sym}</h1>
-<p>This ticker isn't in AlphaHunt's universe yet. We focus on ~200 hand-curated US stocks with $500M+ market cap.</p>
+<p>This ticker isn't in TickerMover's universe yet. We focus on ~200 hand-curated US stocks with $500M+ market cap.</p>
 <p><a href="/">← See what we do cover</a></p>
 </body></html>"""
 
@@ -2256,7 +2256,7 @@ def _render_stock_page(t: dict) -> str:
     post_earnings_html = _render_post_earnings_card(t, name, sym)
 
     # ── SEO meta tags — these are the part Google ranks on ──
-    title = f"{sym} Stock Analysis · Alpha Score {round(pop)} · {rating} | AlphaHunt"
+    title = f"{sym} Stock Analysis · Alpha Score {round(pop)} · {rating} | TickerMover"
     desc  = (
         f"{name} ({sym}) — current Alpha Score {round(pop)}/100 ({rating}). "
         f"{bottom_line[:140]}"
@@ -2275,7 +2275,7 @@ def _render_stock_page(t: dict) -> str:
         "category": "Stock",
         "provider": {
             "@type": "Organization",
-            "name": "AlphaHunt",
+            "name": "TickerMover",
             "url": SITE_ORIGIN,
         },
     }
@@ -2287,10 +2287,10 @@ def _render_stock_page(t: dict) -> str:
         "description": desc,
         "url": f"{SITE_ORIGIN}/stocks/{sym}",
         "image": f"{SITE_ORIGIN}/static/icons/icon-512.png",
-        "author": {"@type": "Organization", "name": "AlphaHunt", "url": SITE_ORIGIN},
+        "author": {"@type": "Organization", "name": "TickerMover", "url": SITE_ORIGIN},
         "publisher": {
             "@type": "Organization",
-            "name": "AlphaHunt",
+            "name": "TickerMover",
             "logo": {"@type": "ImageObject", "url": f"{SITE_ORIGIN}/static/icons/icon-512.png"},
         },
         "about": {
@@ -2346,7 +2346,7 @@ def _render_stock_page(t: dict) -> str:
 <meta property="og:image" content="{SITE_ORIGIN}/og/{sym}.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
-<meta property="og:site_name" content="AlphaHunt">
+<meta property="og:site_name" content="TickerMover">
 <meta name="twitter:image" content="{SITE_ORIGIN}/og/{sym}.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="{title}">
@@ -2450,9 +2450,9 @@ h2{{font-size:21px;font-weight:800;letter-spacing:-.015em;margin:32px 0 12px;col
   </div>
 
   <div class="legal">
-    AlphaHunt is a research tool, not financial advice. Alpha Score is a composite signal — always do your own research before investing.
+    TickerMover is a research tool, not financial advice. Alpha Score is a composite signal — always do your own research before investing.
     <br>Last updated automatically every 5 minutes during US market hours.
-    <br>Questions? <a href="mailto:support@alphahunt.in" style="color:#15803d">support@alphahunt.in</a>
+    <br>Questions? <a href="mailto:support@tickermover.com" style="color:#15803d">support@tickermover.com</a>
   </div>
 
 </div>
@@ -2618,7 +2618,7 @@ def _render_og_png(t: dict) -> bytes:
     f_rate  = _font(38, bold=True)
     f_bl    = _font(26)
 
-    draw.text((60, 50), "AlphaHunt", font=f_brand, fill=(255, 255, 255))
+    draw.text((60, 50), "TickerMover", font=f_brand, fill=(255, 255, 255))
     draw.text((60, 90), "We do the homework. You make the call.", font=_font(20), fill=(148, 163, 184))
     draw.text((60, 200), sym, font=f_sym, fill=(132, 204, 22))
     draw.text((60, 350), name, font=f_name, fill=(226, 232, 240))
@@ -3482,7 +3482,7 @@ async def api_pdf(symbol: str, debug: int = 0):
                         "?range=3mo&interval=1d"
                     )
                     r = await _c.get(yq_url, headers={
-                        "User-Agent": "Mozilla/5.0 (compatible; AlphaHunt/1.0)",
+                        "User-Agent": "Mozilla/5.0 (compatible; TickerMover/1.0)",
                     })
                     if r.status_code == 200:
                         data = r.json() or {}
@@ -3938,7 +3938,7 @@ h1{{font-size:24px;margin:4px 0 2px}}
 <h1>{_esc(tk)}{(' · ' + _esc(qlabel)) if qlabel else ''}</h1>
 <p class="sub">Source: Alpha Vantage · informational only, verify against the company's official filing.</p>
 {body}
-<div class="foot">AlphaHunt · transcript reader</div>
+<div class="foot">TickerMover · transcript reader</div>
 </div></body></html>"""
     return HTMLResponse(content=page, headers={"Cache-Control": "public, max-age=86400"})
 
@@ -4812,7 +4812,7 @@ _BLOG_ARTICLES = [
 <h3>Risks</h3>
 <p>Capital intensity is the primary risk — APLD must continuously access debt and equity markets to fund construction. Any softening in AI capex spend by the hyperscalers, or a rise in data center financing costs, could materially slow the company's growth trajectory. Short interest stands at <strong>29.4%</strong>, making this a squeeze candidate in both directions.</p>
 
-<h3>AlphaHunt View</h3>
+<h3>TickerMover View</h3>
 <p>APLD earns a <strong>TOP TIER</strong> grade with 71% confidence. The combination of contracted hyperscaler revenue, explosive top-line growth, and infrastructure scarcity in the AI buildout makes this one of the highest-conviction names in our universe. Entry discipline matters here — the stock is volatile and position sizing should account for the elevated short interest.</p>"""
   },
   {
@@ -4884,7 +4884,7 @@ _BLOG_ARTICLES = [
 <h3>Risks</h3>
 <p>Vertiv is not immune to supply chain constraints — long lead times on custom cooling components can delay revenue recognition. Competition from Schneider Electric and Eaton is intensifying as the market grows. Any slowdown in hyperscaler capex would disproportionately affect Vertiv's order book.</p>
 
-<h3>AlphaHunt View</h3>
+<h3>TickerMover View</h3>
 <p>Vertiv earns a <strong>TOP TIER</strong> grade. As data center power density continues its upward march, Vertiv's liquid cooling business becomes increasingly mission-critical. This is a structural growth story, not a cyclical trade.</p>"""
   },
   {
@@ -4955,7 +4955,7 @@ _BLOG_ARTICLES = [
 <h3>Risks</h3>
 <p>AAOI is a small-cap ($3.5B market cap) with concentrated customer exposure — a single hyperscaler delaying orders can materially impact quarterly results. Gross margins, while improving, remain below peer levels. Competition from Coherent, Lumentum, and II-VI is intensifying.</p>
 
-<h3>AlphaHunt View</h3>
+<h3>TickerMover View</h3>
 <p>AAOI earns a <strong>TOP TIER</strong> grade with 75 Alpha Score. The 800G/1.6T upgrade cycle is a multi-year tailwind with AAOI positioned as a beneficiary. Analyst mean target implies <strong>+41.7% upside</strong> from current levels.</p>"""
   },
   {
@@ -5027,7 +5027,7 @@ _BLOG_ARTICLES = [
 <h3>Risks</h3>
 <p>Memory is a commodity industry with cyclical pricing dynamics. A slowdown in AI infrastructure investment or a resolution of HBM supply tightness could compress margins. Samsung's HBM qualification by NVIDIA would create additional competitive pressure. The stock trades at 76.9× forward earnings — expectations are high.</p>
 
-<h3>AlphaHunt View</h3>
+<h3>TickerMover View</h3>
 <p>MU earns a <strong>TOP TIER</strong> grade. The HBM supercycle is the most defensible structural growth story in semiconductors. Micron's position as the U.S. champion in a market dominated by Samsung and SK Hynix gives it strategic importance beyond pure financials.</p>"""
   },
   {
@@ -5091,12 +5091,12 @@ _BLOG_ARTICLES = [
 <p>The US Defense Advanced Research Projects Agency's US2QC program is accelerating error correction research, with multiple teams claiming fault-tolerant qubit demonstrations in controlled environments. DARPA has funded programs targeting practical quantum advantage by 2033 — but early commercial applications are emerging much sooner. QUBT's optimization products are already deployed at several enterprise customers.</p>
 
 <h3>Technical Setup</h3>
-<p>QUBT carries a Alpha Score of <strong>72</strong> with an RS Rating of 76 — indicating it is outperforming 76% of all stocks in the AlphaHunt universe over the past 12 months. The stock is within 22.4% of its 52-week high after consolidating a major prior breakout. EPS beat 4 of the last 4 quarters, and gross margin is expanding as the software mix grows. Short interest at <strong>28.6%</strong> makes this a high-volatility, high-conviction setup.</p>
+<p>QUBT carries a Alpha Score of <strong>72</strong> with an RS Rating of 76 — indicating it is outperforming 76% of all stocks in the TickerMover universe over the past 12 months. The stock is within 22.4% of its 52-week high after consolidating a major prior breakout. EPS beat 4 of the last 4 quarters, and gross margin is expanding as the software mix grows. Short interest at <strong>28.6%</strong> makes this a high-volatility, high-conviction setup.</p>
 
 <h3>The Risks</h3>
 <p>QUBT is a small-cap ($3.5B market cap) company in a nascent technology sector where timelines have historically slipped. Revenue is growing but from a small base, and profitability is still in the future. Any negative news about quantum hardware milestones could create significant stock volatility.</p>
 
-<h3>AlphaHunt View</h3>
+<h3>TickerMover View</h3>
 <p>QUBT earns a <strong>TOP TIER</strong> grade. The quantum computing sector is transitioning from research curiosity to real infrastructure investment. QUBT's software-first approach to monetization gives it a near-term revenue path that pure hardware plays lack. Analyst target of <strong>$17.40 (mean)</strong> implies +96.9% upside from current levels.</p>"""
   },
   {
@@ -5165,7 +5165,7 @@ _BLOG_ARTICLES = [
 <h3>Technical Setup</h3>
 <p>GSAT carries a Alpha Score of <strong>72</strong> with RS Rating 81 — the highest RS in this analysis. Breaking to a new 52-week high confirms institutional accumulation. The stock has gained +35.2% over the past month. EPS beat 4 consecutive quarters. Analyst mean target of <strong>$85 (+5.6% upside)</strong> is conservative given the optionality of the Apple partnership.</p>
 
-<h3>AlphaHunt View</h3>
+<h3>TickerMover View</h3>
 <p>GSAT earns a <strong>TOP TIER</strong> grade. The Apple partnership provides a floor, while direct-to-device 5G represents a potential ceiling that most analysts have yet to fully model.</p>"""
   },
   {
@@ -5232,9 +5232,9 @@ _BLOG_ARTICLES = [
 <p>Revenue grew <strong>+87.7% over the past month</strong> from the Model Portfolio's entry price perspective, with the stock up dramatically on positive earnings revisions and hyperscaler design win announcements. Analyst mean target of <strong>$200 (high: $390)</strong> implies 101.5% upside — one of the most bullish analyst setups in our universe. EPS has beaten estimates 3 of 4 last quarters with gross margins expanding.</p>
 
 <h3>Technical Setup</h3>
-<p>CRDO is the top performer in our Model Portfolio, with Alpha Score of <strong>71</strong> and one of the strongest momentum profiles in the AlphaHunt universe. RSI at 64 — ideal momentum zone — suggests room to run without overextension. High-speed SerDes is a winner-take-most market, and Credo has won.</p>
+<p>CRDO is the top performer in our Model Portfolio, with Alpha Score of <strong>71</strong> and one of the strongest momentum profiles in the TickerMover universe. RSI at 64 — ideal momentum zone — suggests room to run without overextension. High-speed SerDes is a winner-take-most market, and Credo has won.</p>
 
-<h3>AlphaHunt View</h3>
+<h3>TickerMover View</h3>
 <p>CRDO earns a <strong>TOP TIER</strong> grade. The SerDes and optical DSP market is growing at 40%+ annually driven purely by AI infrastructure demand. Credo's focused product line and hyperscaler relationships make it one of the highest-conviction plays in our universe.</p>"""
   },
   {
@@ -5304,7 +5304,7 @@ _BLOG_ARTICLES = [
 <h3>Technical Setup</h3>
 <p>SOUN carries a Alpha Score of <strong>75</strong> with RS Rating 72 and an analyst mean price target of <strong>$14.63 (+78.4% upside)</strong>. Revenue growing at +59.4% YoY. Short interest at 36.1% creates significant squeeze potential. EPS beat 4 consecutive quarters.</p>
 
-<h3>AlphaHunt View</h3>
+<h3>TickerMover View</h3>
 <p>SOUN earns a <strong>TOP TIER</strong> grade. The combination of automotive moat, restaurant expansion, and agentic AI tailwind makes SoundHound one of the most differentiated AI plays in the market. The stock's high short interest creates asymmetric upside on continued strong results.</p>"""
   },
   {
@@ -5372,7 +5372,7 @@ _BLOG_ARTICLES = [
 <h3>Technical Setup</h3>
 <p>NVT has a Alpha Score of <strong>75</strong> and RS Rating 67, within 1.3% of its 52-week high — a classic institutional accumulation pattern. EPS beat 4 of 4 last quarters. Gross margin expanding confirms operating leverage. No overbought RSI concern.</p>
 
-<h3>AlphaHunt View</h3>
+<h3>TickerMover View</h3>
 <p>NVT earns a <strong>TOP TIER</strong> grade. nVent's combination of industrial-grade reliability, data center focus, and diverse customer base makes it one of the lower-risk ways to play the AI infrastructure buildout.</p>"""
   },
   {
@@ -5440,7 +5440,7 @@ _BLOG_ARTICLES = [
 <h3>Technical Setup</h3>
 <p>IONQ carries a Alpha Score of <strong>72</strong> with analyst mean target of <strong>$17.83 (+96.9% upside)</strong>. Within 22.4% of 52-week high after consolidation. EPS beat 4 consecutive quarters with expanding margins. Social momentum building as quantum milestones approach.</p>
 
-<h3>AlphaHunt View</h3>
+<h3>TickerMover View</h3>
 <p>IONQ earns a <strong>TOP TIER</strong> grade. The combination of technology superiority, government contracts, and cloud accessibility makes IonQ the most investable pure-play quantum computing company available to public market investors.</p>"""
   },
   {
@@ -5508,7 +5508,7 @@ _BLOG_ARTICLES = [
 <h3>Technical Setup</h3>
 <p>WDC has a Alpha Score of <strong>74</strong> with momentum confirming from the HDD cycle bottom. EPS beat 4 of 4 last quarters with gross margin expansion. High-density PDUs and thermal management for AI DCs driving incremental demand.</p>
 
-<h3>AlphaHunt View</h3>
+<h3>TickerMover View</h3>
 <p>WDC earns a <strong>TOP TIER</strong> grade. The intersection of AI storage demand and HDD capacity constraints creates a favorable pricing environment. Western Digital's scale and diversification make it the most accessible way to play the storage supercycle.</p>"""
   },
   {
@@ -5576,7 +5576,7 @@ _BLOG_ARTICLES = [
 <h3>Technical Setup</h3>
 <p>UNIT carries a Alpha Score of <strong>71</strong> with RS Rating 71. The stock's consistent momentum and fiber demand tailwind make it one of the more stable high-Pop names in our universe. RSI at 52 — ample room to run.</p>
 
-<h3>AlphaHunt View</h3>
+<h3>TickerMover View</h3>
 <p>UNIT earns a <strong>TOP TIER</strong> grade. Fiber infrastructure REITs are under-owned and under-appreciated in the AI investment narrative. Uniti's 140,000 route-mile network is a hard asset with growing strategic value.</p>"""
   },
   {
@@ -5645,7 +5645,7 @@ _BLOG_ARTICLES = [
 <h3>Technical Setup</h3>
 <p>LSCC carries a Alpha Score of <strong>74</strong> with RS Rating 71 and revenue growing +24.2% YoY. EPS beat 4 consecutive quarters with gross margins expanding. P/E at 5779× is extreme — but reflects near-zero current earnings during an investment phase, not permanent multiple expansion. Analyst mean target: <strong>$143 (+22% upside)</strong>.</p>
 
-<h3>AlphaHunt View</h3>
+<h3>TickerMover View</h3>
 <p>LSCC earns a <strong>TOP TIER</strong> grade. Lattice is the dominant player in low-power FPGAs — a niche with massive secular tailwinds and limited competition. Edge AI is the next trillion-dollar opportunity after cloud AI.</p>"""
   },
   {
@@ -5653,7 +5653,7 @@ _BLOG_ARTICLES = [
     "ticker": "MU", "date": "2026-04-26",
     "category": "Market Analysis",
     "title": "AI Infrastructure Stocks: Weekly Scorecard and What to Watch",
-    "summary": "A weekly review of the AlphaHunt Model Portfolio performance, key catalyst events ahead, and the macro backdrop for AI infrastructure names.",
+    "summary": "A weekly review of the TickerMover Model Portfolio performance, key catalyst events ahead, and the macro backdrop for AI infrastructure names.",
     "featured": False,
     "report": {
       "rating": "Hold (portfolio review)", "conviction": "High",
@@ -5681,7 +5681,7 @@ _BLOG_ARTICLES = [
         "summary": "Stay the course. Trim extremes, rotate within the AI infrastructure universe. Use any sector pullback as accumulation opportunity.",
       },
     },
-    "content": """<p>The AlphaHunt Model Portfolio has delivered exceptional performance over its first 30 days, with the portfolio up <strong>+26.7% on an equal-weighted basis</strong> versus the S&P 500's modest single-digit gains over the same period. Here's our weekly scorecard and outlook.</p>
+    "content": """<p>The TickerMover Model Portfolio has delivered exceptional performance over its first 30 days, with the portfolio up <strong>+26.7% on an equal-weighted basis</strong> versus the S&P 500's modest single-digit gains over the same period. Here's our weekly scorecard and outlook.</p>
 
 <h3>Top Performers This Week</h3>
 <p><strong>CRDO (+87.7% since entry)</strong> — Credo Technology continues to be the standout performer, driven by hyperscaler design win announcements for its 800G SerDes platform. The stock remains the highest-upside name in our portfolio with analyst targets implying 101% additional upside from current levels.</p>
@@ -5700,7 +5700,7 @@ _BLOG_ARTICLES = [
 <h3>Portfolio Management Notes</h3>
 <p>With CRDO up 87.7% and UNIT up 52.2%, consider partial profit-taking to manage position sizing. The Model Portfolio's 30-day inception window suggests rebalancing in two weeks. Names with Alpha Scores that have declined since entry (check All Stocks tab for current scores) may be candidates for rotation.</p>
 
-<h3>AlphaHunt Macro View</h3>
+<h3>TickerMover Macro View</h3>
 <p>The AI infrastructure supercycle remains in its early innings. Hyperscaler capex guidance for 2026 has been raised repeatedly — Microsoft, Google, Meta, and Amazon have collectively committed over <strong>$400B in AI infrastructure spending</strong> for 2025-2026. This capital flows directly to our portfolio companies. Stay the course, manage position sizes, and use pullbacks as opportunities.</p>"""
   },
 ]
@@ -6551,7 +6551,7 @@ def _enrich_model_portfolio(portfolio: dict) -> dict:
                           "reason": signal_reason}
 
         # ── Build user-facing decision point — OBSERVATIONAL language ────
-        # AlphaHunt is a research/tracking tool, not a SEBI-registered advisor.
+        # TickerMover is a research/tracking tool, not a SEBI-registered advisor.
         # Labels describe what's happening to OUR SCORE, not what the user
         # should do. We deliberately do NOT publish a "tracker stop level" —
         # that reads as a sell-here instruction. The score's exit logic still
@@ -7463,7 +7463,7 @@ async def api_signup(body: _AuthBody, request: Request):
     Supabase sends the confirmation email via custom SMTP (Resend), so the
     branded email_welcome.html template configured in the Supabase
     dashboard becomes both the "confirm your email" and "welcome to
-    AlphaHunt" message in one. Rate limit is Resend's (3k/month free),
+    TickerMover" message in one. Rate limit is Resend's (3k/month free),
     not Supabase's built-in 3/hour cap.
     """
     # Standard password policy for new accounts: 8+ chars, letters AND numbers.
@@ -7527,7 +7527,7 @@ async def api_on_signin(body: _OnSigninBody):
     Confirm-signup email through custom SMTP (Resend). Google OAuth users
     bypass that path entirely — Supabase trusts Google's email verification
     and never sends a confirmation. Without this endpoint, Google users
-    would join AlphaHunt in silence and never see our welcome.
+    would join TickerMover in silence and never see our welcome.
 
     "First-time" heuristic
     ----------------------
@@ -7725,7 +7725,7 @@ async def api_forgot_password(body: _ForgotBody):
         # missing protocol). Once we confirm this works in production,
         # we can revert to the env-var pattern. The diagnostic log line
         # below will show in Railway logs exactly what we're sending.
-        reset_redirect = "https://alphahunt.in/reset-password"
+        reset_redirect = "https://tickermover.com/reset-password"
         logger.info(f"[FORGOT-PW] sending redirect_to={reset_redirect!r} for {body.email[:4]}*** (SITE_ORIGIN={SITE_ORIGIN!r})")
         async with httpx.AsyncClient(timeout=10) as c:
             r = await c.post(
@@ -7795,13 +7795,13 @@ async def reset_password_page():
 
 # Single-file HTML for the reset-password page. Kept inline so the route
 # has no external template dependency and renders instantly. Matches the
-# AlphaHunt brand (dark slate + lime accent + Inter typography).
+# TickerMover brand (dark slate + lime accent + Inter typography).
 _RESET_PASSWORD_HTML = """<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Reset your password · AlphaHunt</title>
+<title>Reset your password · TickerMover</title>
 <meta name="robots" content="noindex,nofollow">
 <link rel="icon" href="/favicon.ico">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -7905,7 +7905,7 @@ button.submit:disabled{opacity:.6;cursor:not-allowed}
 (function(){
   // ── Step 1: extract recovery access_token from URL hash ──
   // Supabase builds links like:
-  //   https://alphahunt.in/reset-password#access_token=eyJ...&refresh_token=...&type=recovery
+  //   https://tickermover.com/reset-password#access_token=eyJ...&refresh_token=...&type=recovery
   // The hash fragment is client-side only — never sent to our server,
   // which is why we have to parse it in JS and POST it explicitly.
   const hash = window.location.hash.substring(1);
@@ -8410,7 +8410,7 @@ async def api_payment_plan():
         "plan_id":    config.RAZORPAY_PLAN_ID,
         "amount":     49900,   # ₹499 in paise
         "currency":   "INR",
-        "plan_name":  "AlphaHunt Pro",
+        "plan_name":  "TickerMover Pro",
         "interval":   "monthly",
         "enabled":    razorpay.enabled,
     })
@@ -8432,7 +8432,7 @@ async def api_create_order(request: Request, user: Optional[dict] = Depends(_cur
     if geo and geo not in ("IN", "XX", "T1"):   # XX / T1 = CF unknown / Tor → allow
         raise HTTPException(status_code=403, detail=(
             "Paid plans are currently available to users in India only. "
-            "You can keep using AlphaHunt on the free plan."))
+            "You can keep using TickerMover on the free plan."))
     result = await razorpay.create_order(receipt=f"user_{user['user_id'][:8]}")
     if result.get("error"):
         raise HTTPException(status_code=400, detail=result["error"])

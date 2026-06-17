@@ -1,5 +1,5 @@
 """
-AlphaHunt — Smart Cache
+TickerMover — Smart Cache
 In-memory TTL cache with optional JSON disk persistence so data
 survives server restarts (critical for the 25-call/day AV limit).
 """

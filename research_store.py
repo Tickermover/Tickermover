@@ -1,5 +1,5 @@
 """
-AlphaHunt — per-stock AI Deep-Dive research store.
+TickerMover — per-stock AI Deep-Dive research store.
 
 Stores the generated research brief for each ticker so we never regenerate on
 page-load (slow + costly). Mirrors PortfolioStore: Supabase in prod, local JSON

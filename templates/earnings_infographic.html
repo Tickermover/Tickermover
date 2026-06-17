@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>AlphaHunt — Earnings Infographic</title>
+<title>TickerMover — Earnings Infographic</title>
 <meta name="description" content="Earnings-by-the-numbers infographic — share to Twitter / Reddit / LinkedIn.">
 <link rel="icon" href="/static/icons/favicon-32.png" type="image/png">
 <style>
@@ -170,7 +170,7 @@
       <img src="/static/icons/alpha-logo-64.png" alt="" style="width:34px;height:34px;flex-shrink:0">
       <div>
         <div class="title">📊 Earnings <em>by the Numbers</em></div>
-        <div class="sub">Auto-built from SEC 8-K filings + AlphaHunt scoring. Pick any ticker that's reported recently.</div>
+        <div class="sub">Auto-built from SEC 8-K filings + TickerMover scoring. Pick any ticker that's reported recently.</div>
       </div>
     </div>
     <div class="nav-links">
@@ -268,7 +268,7 @@
 
         <div class="ig-foot">
           <div class="ig-foot-disclaimer">📊 Data: SEC EDGAR 8-K + analyst estimates. Quality descriptors. Not buy/sell advice.</div>
-          <div class="ig-foot-url">alphahunt.in</div>
+          <div class="ig-foot-url">tickermover.com</div>
         </div>
 
       </div>
@@ -429,9 +429,9 @@ function render() {
     '',
     `${STAR_BY_GRADE[grade] || ''} ${TIER_BY_GRADE[grade] || ''} · Alpha Score ${score.toFixed(0)}`,
     '',
-    '📊 alphahunt.in · Quality descriptors only — not buy/sell advice',
+    '📊 tickermover.com · Quality descriptors only — not buy/sell advice',
     '',
-    `#${stock.ticker} #Earnings #USStocks #AlphaHunt`
+    `#${stock.ticker} #Earnings #USStocks #TickerMover`
   ].filter(Boolean).join('\n');
   document.getElementById('caption-body').textContent = captionParts;
 

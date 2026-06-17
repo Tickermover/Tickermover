@@ -1,5 +1,5 @@
 """
-AlphaHunt — Razorpay Billing  |  alphahunt.in
+TickerMover — Razorpay Billing  |  tickermover.com
 Handles order creation, subscription gating, and webhook verification.
 
 Plans:
@@ -84,7 +84,7 @@ class RazorpayClient:
 
     async def get_or_create_pro_plan(self) -> Optional[str]:
         """
-        Return the Razorpay plan_id for AlphaHunt Pro.
+        Return the Razorpay plan_id for TickerMover Pro.
         Creates it if it doesn't exist.
         Cache the result in config or env: RAZORPAY_PLAN_ID
         """
@@ -99,7 +99,7 @@ class RazorpayClient:
             "period":   PRO_PLAN_PERIOD,
             "interval": PRO_INTERVAL,
             "item": {
-                "name":     "AlphaHunt Pro",
+                "name":     "TickerMover Pro",
                 "amount":   PRO_AMOUNT_INR,
                 "currency": "INR",
                 "description": "Full access: Watchlist, Alerts, Real-time data",
@@ -126,7 +126,7 @@ class RazorpayClient:
             "customer_notify":  1,
             "notes": {
                 "email": customer_email,
-                "product": "AlphaHunt Pro",
+                "product": "TickerMover Pro",
             },
         })
 
@@ -152,7 +152,7 @@ class RazorpayClient:
             "amount":   amount_paise,
             "currency": "INR",
             "receipt":  receipt or "alphahunt_pro",
-            "notes":    {"product": "AlphaHunt Pro"},
+            "notes":    {"product": "TickerMover Pro"},
         })
 
     # ── Webhook verification ──────────────────────────────────────────────────────

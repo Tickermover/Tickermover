@@ -1,5 +1,5 @@
 """
-AlphaHunt — generic durable key/value store.
+TickerMover — generic durable key/value store.
 
 A small Supabase-backed KV for caches that must survive a Railway redeploy but
 don't warrant their own table — e.g. the PDF-narrative blocks and concall

@@ -1,5 +1,5 @@
 """
-AlphaHunt — "Why we bought it today" narrative for Top Hunts tracker picks.
+TickerMover — "Why we bought it today" narrative for Top Hunts tracker picks.
 
 A single punchy, plain-English sentence explaining what the quantitative scan
 flagged when a stock was added to the tracker — grounded ENTIRELY in our own
@@ -48,7 +48,7 @@ _PILLAR_LABELS = {
 }
 
 _SYSTEM = (
-    "You are the lead analyst of AlphaHunt's 'Top Hunts' — our shortlist of the "
+    "You are the lead analyst of TickerMover's 'Top Hunts' — our shortlist of the "
     "strongest stock setups our quantitative scan surfaces right now. For ONE "
     "stock, explain WHY it earned a place on this best-of-the-best list today, as "
     "THREE distinct, tagged reasons for a retail investor. Use web search to "

@@ -7,8 +7,8 @@
      crawlers. Allow them to crawl (avoids "Blocked by robots.txt" warnings
      in Bing/Google) but explicitly tell them not to index this page. -->
 <meta name="robots" content="noindex,follow">
-<title>AlphaHunt — Stock Intelligence Dashboard</title>
-<meta name="description" content="AlphaHunt — hunt for alpha with Alpha Score, IBD-style RS Rating, Blue Dot signals, Hot List picks and position sizing">
+<title>TickerMover — Stock Intelligence Dashboard</title>
+<meta name="description" content="TickerMover — hunt for alpha with Alpha Score, IBD-style RS Rating, Blue Dot signals, Hot List picks and position sizing">
 <!-- ── Browser chrome (favicons + status bar tint, no PWA install) ──
      PWA was removed at user's request — they didn't want "Install app"
      appearing in the browser menu, and didn't want forgot-password
@@ -73,7 +73,7 @@
 <!-- PWA removed: unregister any service worker that older versions of the
      page might have installed on this device. Without this, users who
      previously installed the PWA would keep getting served the cached
-     shell and would still see "AlphaHunt" as an installed app. -->
+     shell and would still see "TickerMover" as an installed app. -->
 <script>
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.getRegistrations().then(regs => {
@@ -196,7 +196,7 @@ table,th,td{
   padding:16px 32px;display:flex;align-items:center;gap:20px;flex-wrap:wrap;
   box-shadow:0 2px 16px rgba(0,0,0,.10);
   position:sticky;top:0;z-index:50}
-/* Canonical AlphaHunt wordmark: "Alpha" in default text color, "Hunt" in brand green. */
+/* Canonical TickerMover wordmark: "Alpha" in default text color, "Hunt" in brand green. */
 .logo{font-size:22px;font-weight:900;letter-spacing:-.5px;color:#0f172a;display:inline-flex;align-items:center}
 .logo span{color:#15803d}
 .badge{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:.5px;border:1px solid}
@@ -1812,7 +1812,7 @@ body.v2 .ticker-chip .px{color:#cbd5e1!important}
 /* Nav list fills the rail and spreads the labels evenly, so the slack becomes
    breathing room between items instead of dead space at the bottom. */
 .v2-sb-nav{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;justify-content:space-evenly;gap:2px}
-/* Blue light spilling from the top, focused around the AlphaHunt wordmark. */
+/* Blue light spilling from the top, focused around the TickerMover wordmark. */
 .v2-sidebar::before{
   content:'';position:absolute;left:0;right:0;top:0;height:230px;
   background:
@@ -1833,7 +1833,7 @@ body.v2 .ticker-chip .px{color:#cbd5e1!important}
   border:1px solid #1f2937;
   box-shadow:0 2px 12px rgba(245,166,35,.18);
 }
-/* AlphaHunt wordmark — Alpha in soft white, Hunt in brand-green gradient
+/* TickerMover wordmark — Alpha in soft white, Hunt in brand-green gradient
    (lime → bright → kelly) matching the landing page wordmark exactly so
    the dashboard reads as the same product. Soft green glow for that
    "lit-from-behind" premium feel. */
@@ -3628,7 +3628,7 @@ html.v2-dark .v2-mp-mini-lbl{color:#cbd5e1}
 }
 .v2-sm-fill{display:block;height:100%;border-radius:4px;transition:width .3s}
 /* Brand-gradient fill — flipped from indigo→violet→pink to the
-   AlphaHunt brand-green family so Sector Map bars match the rest of
+   TickerMover brand-green family so Sector Map bars match the rest of
    the site (Pillar cards, hero CTAs, brief callouts). */
 .v2-sm-fill-brand{
   background:linear-gradient(90deg,#15803d 0%,#F5A623 50%,#FFC75F 100%);
@@ -5922,7 +5922,7 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 #ts-drawer .hs-bar{display:block;height:6px;border-radius:99px;background:rgba(15,23,42,.07);margin-top:11px;overflow:hidden}
 #ts-drawer .hs-bar-f{display:block;height:100%;border-radius:99px}
 #ts-drawer .hs-pos .hs-bar-f{background:linear-gradient(90deg,#16a34a,#22c55e)} #ts-drawer .hs-neu .hs-bar-f{background:linear-gradient(90deg,#2970ff,#60a5fa)} #ts-drawer .hs-warn .hs-bar-f{background:linear-gradient(90deg,#e08600,#f59e0b)} #ts-drawer .hs-neg .hs-bar-f{background:linear-gradient(90deg,#e11d48,#fb7185)}
-/* The AlphaHunt edge — RS · institutions · universe rank */
+/* The TickerMover edge — RS · institutions · universe rank */
 #ts-drawer .edge-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:11px}
 #ts-drawer .edge-k{display:flex;flex-direction:column;gap:2px;padding:13px 14px;border-radius:13px;background:#fff;border:1px solid rgba(12,26,52,.07);box-shadow:0 6px 16px -10px rgba(0,0,0,.18)}
 #ts-drawer .edge-lab{font-size:9.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#94a3b8}
@@ -6927,7 +6927,7 @@ document.addEventListener('DOMContentLoaded', function(){
   <!-- ── SIDEBAR ── -->
   <aside class="v2-sidebar" id="v2-sidebar">
     <div class="v2-sb-logo">
-      <img src="/static/icons/alpha-logo-bare-64.png" alt="AlphaHunt" width="32" height="32">
+      <img src="/static/icons/alpha-logo-bare-64.png" alt="TickerMover" width="32" height="32">
       <div class="name">Alpha<span>Hunt</span></div>
       <button class="v2-sb-collapse" onclick="toggleSidebar()" aria-label="Collapse sidebar" title="Collapse menu">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="16" height="16"><path d="M15 6l-6 6 6 6"/></svg>
@@ -6983,7 +6983,7 @@ document.addEventListener('DOMContentLoaded', function(){
               <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#15803d,#F5A623);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;flex-shrink:0" id="user-avatar">U</div>
               <div style="line-height:1.2;min-width:0;flex:1">
                 <div id="user-email" style="font-size:12.5px;font-weight:700;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></div>
-                <div style="font-size:10px;font-weight:500">AlphaHunt Member</div>
+                <div style="font-size:10px;font-weight:500">TickerMover Member</div>
               </div>
             </div>
           </div>
@@ -7064,7 +7064,7 @@ document.addEventListener('DOMContentLoaded', function(){
     <button class="v2-fb-x" onclick="fbClose('dismiss')" aria-label="Close">✕</button>
     <div id="v2-fb-form">
       <div class="v2-fb-spark">✦</div>
-      <div class="v2-fb-h">How's AlphaHunt working for you?</div>
+      <div class="v2-fb-h">How's TickerMover working for you?</div>
       <div class="v2-fb-sub">A few seconds of feedback shapes what we build next — we'll only ask once.</div>
 
       <div class="v2-fb-rate" id="v2-fb-rate" role="radiogroup" aria-label="Overall rating">
@@ -7085,7 +7085,7 @@ document.addEventListener('DOMContentLoaded', function(){
       </div>
 
       <textarea id="v2-fb-msg" class="v2-fb-msg" rows="3" maxlength="2000"
-                placeholder="What would make AlphaHunt a daily habit for you?"></textarea>
+                placeholder="What would make TickerMover a daily habit for you?"></textarea>
 
       <button class="v2-fb-send" id="v2-fb-send" onclick="fbSubmit()">Send feedback</button>
       <button class="v2-fb-later" onclick="fbClose('later')">Maybe later</button>
@@ -7513,12 +7513,12 @@ document.addEventListener('DOMContentLoaded', function(){
 
 <!-- GUIDE -->
 <div id="panel-guide" class="panel">
-  <div class="sec-heading">📖 How to Use AlphaHunt</div>
+  <div class="sec-heading">📖 How to Use TickerMover</div>
   <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px">
     <div class="card"><h3 style="color:var(--acc2);margin-bottom:8px">📐 Alpha Score</h3>
       <p style="font-size:13px;line-height:1.6;color:var(--muted)">Composite 0–100 score combining momentum (40%), social velocity (20%), technical signals (20%), fundamentals (10%), and market cap fit (10%). Scores above 70 indicate strong setups. Only $1B+ market cap stocks qualify.</p></div>
     <div class="card"><h3 style="color:var(--acc2);margin-bottom:8px">🎯 Grades &amp; Ratings</h3>
-      <p style="font-size:13px;line-height:1.6;color:var(--muted)">A → ★★★★★ Strong Outperform · B → ★★★★ Outperform · C → ★★★ Neutral · D → ★★ Lagging · F → ★ Avoid. The Hot List shows only ★★★★★ Strong Outperform (grade A) with confidence ≥ 75%. Use All Stocks tab to browse all grades. <strong>Note:</strong> these are quality descriptors, not buy/sell recommendations — AlphaHunt is a research tool, not a SEBI-registered advisor.</p></div>
+      <p style="font-size:13px;line-height:1.6;color:var(--muted)">A → ★★★★★ Strong Outperform · B → ★★★★ Outperform · C → ★★★ Neutral · D → ★★ Lagging · F → ★ Avoid. The Hot List shows only ★★★★★ Strong Outperform (grade A) with confidence ≥ 75%. Use All Stocks tab to browse all grades. <strong>Note:</strong> these are quality descriptors, not buy/sell recommendations — TickerMover is a research tool, not a SEBI-registered advisor.</p></div>
     <div class="card"><h3 style="color:var(--acc2);margin-bottom:8px">⚡ Trade Setups</h3>
       <p style="font-size:13px;line-height:1.6;color:var(--muted)">ATR-based position sizing: Entry at current price, Stop = Entry − 1.5×ATR, Target = Entry + 3.0×ATR. Shares = (Account × Risk%) ÷ ATR. Default 1% risk per trade. Adjust using the sizer widget.</p></div>
     <div class="card"><h3 style="color:var(--acc2);margin-bottom:8px">🔄 Data Refresh</h3>
@@ -9750,7 +9750,7 @@ function v2Show(panelId, item){
 
 <script>
 /* ==========================================================
-   AlphaHunt — Dashboard JavaScript
+   TickerMover — Dashboard JavaScript
    API-driven: fetches from FastAPI backend at same origin
    ========================================================== */
 
@@ -9906,7 +9906,7 @@ function v2OpenTearsheet(ticker){
   if (head) head.textContent = sym;
   const live = (window._allTickerData && window._allTickerData[sym]) || null;
   if (nameEl) nameEl.textContent = (live && live.name) ? live.name : ' ';
-  if (subEl)  subEl.textContent  = 'alphahunt.in/tearsheet/' + sym;
+  if (subEl)  subEl.textContent  = 'tickermover.com/tearsheet/' + sym;
   if (statusEl){ statusEl.textContent = 'Preparing report…'; statusEl.className = 'v2-tsp-status busy'; }
   // Load the tearsheet in a HIDDEN iframe so the PDF generator (html2canvas
   // + jsPDF) lives in its own document. User never sees the iframe — they
@@ -10446,7 +10446,7 @@ function ceRenderActions(sym, feed){
   const fmtDate = function(iso){ const dt = new Date(iso + 'T00:00:00'); return isNaN(dt.getTime()) ? iso : dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); };
   const head = '<div class="v2-brf-head"><div class="v2-brf-eyebrow">Corporate Actions</div>' +
     '<div class="v2-brf-title">' + (sym ? v2EscHTML(sym) + ' — dividends &amp; splits' : 'Dividends &amp; splits across your universe') + '</div>' +
-    '<div class="v2-brf-sub">Ex-dividend dates and stock splits' + (sym ? ' on record for ' + v2EscHTML(sym) : ' for the stocks AlphaHunt tracks') + '. Tap a row to open the stock.' +
+    '<div class="v2-brf-sub">Ex-dividend dates and stock splits' + (sym ? ' on record for ' + v2EscHTML(sym) : ' for the stocks TickerMover tracks') + '. Tap a row to open the stock.' +
     (sym ? ' <a href="#" onclick="ceAllActions();return false;">See the whole universe →</a>' : '') + '</div></div>';
   if (!acts.length){
     return back + head + '<div class="ca-empty">' +
@@ -11139,7 +11139,7 @@ function v2RenderTearsheetHTML(sym, data){
 
   // ── 6. Disclaimer ────────────────────────────────────────────────
   const disc = '<div class="v2-ts-disclaimer">' +
-    '<strong>Educational research tool.</strong> AlphaHunt is a quantitative analysis platform — not a SEBI / SEC-registered investment advisor. Nothing in this tear sheet is a personalised recommendation to buy or sell. Past performance and quant ratings don\'t guarantee future results. Do your own research.' +
+    '<strong>Educational research tool.</strong> TickerMover is a quantitative analysis platform — not a SEBI / SEC-registered investment advisor. Nothing in this tear sheet is a personalised recommendation to buy or sell. Past performance and quant ratings don\'t guarantee future results. Do your own research.' +
   '</div>';
 
   return hero + thesisSec + pillarSec + chartSec + earningsSec + disc;
@@ -11534,7 +11534,7 @@ const pCls   = v => (!v || isNaN(parseFloat(v))) ? '' : parseFloat(v) >= 0 ? 'po
 
 // Grade-to-label mapping uses QUALITY DESCRIPTORS + visual star ratings,
 // not buy/sell verbs. "STRONG BUY" / "BUY" are SEBI/FINRA-restricted
-// recommendation language for registered analysts only. AlphaHunt is a
+// recommendation language for registered analysts only. TickerMover is a
 // research tool, not an advisor — these labels describe stock quality and
 // do NOT instruct an action.
 function gradeStars(g) {
@@ -11644,8 +11644,8 @@ function sectorRank(t) {
           avg: sectors[idx].avg};
 }
 
-/* AlphaHunt Composite percentile — where this stock's smart_score sits
-   relative to the rest of the loaded universe. Tagged as "AlphaHunt
+/* TickerMover Composite percentile — where this stock's smart_score sits
+   relative to the rest of the loaded universe. Tagged as "TickerMover
    Composite" so it's transparently OUR methodology (not IBD's IP), but
    uses the same factor blend (EPS growth, momentum, RS, fundamentals). */
 function compositePercentile(t) {
@@ -12630,7 +12630,7 @@ function _renderHotListLegacy(data) {
     const valBlock = (tgtMean > 0 || vv || hasGrowth) ? `
       <div style="background:#FFE9B0;border:1px solid #FFC75F;border-radius:10px;padding:8px 12px;margin:8px 0">
         ${(tgtMean > 0 || upside != null) ? `
-        <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-size:12px;flex-wrap:nowrap" title="Wall Street analyst 12-month consensus target — sourced from FMP. NOT AlphaHunt's forecast.">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-size:12px;flex-wrap:nowrap" title="Wall Street analyst 12-month consensus target — sourced from FMP. NOT TickerMover's forecast.">
           <span style="white-space:nowrap"><span style="color:#475569;font-weight:700">📊 Target:</span> <strong style="color:#0f172a">${tgtMean > 0 ? fmtP(tgtMean) : '—'}</strong></span>
           <span style="white-space:nowrap"><span style="color:#475569;font-weight:700">Upside:</span> <strong class="${pCls(upside)}">${upside != null ? fmtPct(upside) : '—'}</strong></span>
         </div>` : ''}
@@ -13265,7 +13265,7 @@ function _ovRenderKeyPoints(pts){
   host.innerHTML=arr.map(p=>'<li>'+_ovEsc(String(p))+'</li>').join('');
 }
 // AI edge KPIs (Setup read / Thesis confidence / The catch) — fill the AI cards
-// in "The AlphaHunt edge" box from the overview snapshot. Hides any card the
+// in "The TickerMover edge" box from the overview snapshot. Hides any card the
 // snapshot didn't produce.
 function _ovRenderEdge(edge){
   edge=edge||{};
@@ -14234,7 +14234,7 @@ function openStockModal(ticker) {
       if (wHi > 0)                 cells.push(`<div class="pt-cell-52w pt-cell-hi"><div class="t-lbl">52W High</div><div class="t-val" style="color:#475569">${fmtP(wHi)}</div></div>`);
       if (!cells.length) return '';
       const hasTarget = tgtMean > 0;
-      const _attr = 'Analyst target = Wall Street 12-month consensus (FMP). NOT a prediction by AlphaHunt.';
+      const _attr = 'Analyst target = Wall Street 12-month consensus (FMP). NOT a prediction by TickerMover.';
       // 52W range bar — visible only on mobile (CSS hides on desktop, where
       // the L/H cells already do this job). Shows current price as a dot
       // along the gradient from 52W low to 52W high.
@@ -14250,7 +14250,7 @@ function openStockModal(ticker) {
       return `<div class="price-target-row" style="margin-top:8px;grid-template-columns:repeat(${cells.length},1fr)"
                    title="${hasTarget ? _attr : ''}">
         ${cells.join('')}
-      </div>${w52Bar}${hasTarget ? '<div style="font-size:10px;color:#94a3b8;margin-top:4px;text-align:center;font-style:italic">📊 Analyst target = Wall Street 12-month consensus (FMP) · AlphaHunt does not provide price predictions or financial advice</div>' : ''}`;
+      </div>${w52Bar}${hasTarget ? '<div style="font-size:10px;color:#94a3b8;margin-top:4px;text-align:center;font-style:italic">📊 Analyst target = Wall Street 12-month consensus (FMP) · TickerMover does not provide price predictions or financial advice</div>' : ''}`;
     })()}
 
     <div id="modal-earnings-card-${ticker}" data-modal-earnings="${ticker}" style="margin-top:12px"></div>
@@ -15968,7 +15968,7 @@ function openBlogArticle(articleId) {
               style="background:linear-gradient(135deg,#15803d,#F5A623);color:#fff;border:none;padding:10px 20px;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer">
               View ${a.ticker} Full Analysis →
             </button>
-            <div style="font-size:12px;color:#94a3b8">AlphaHunt Research · Not financial advice</div>
+            <div style="font-size:12px;color:#94a3b8">TickerMover Research · Not financial advice</div>
           </div>
         </div>
       </div>`;
@@ -16117,7 +16117,7 @@ function addToWatchFromInput() {
    priority (most actionable); otherwise reuse the hot-list keyTrigger so the
    wording matches the rest of the app. Maps to a compact "read" tag. */
 function watchCatalyst(t) {
-  if (t.__unknown) return { icon:'•', text:'Not in the AlphaHunt universe — no catalyst data', read:'flat' };
+  if (t.__unknown) return { icon:'•', text:'Not in the TickerMover universe — no catalyst data', read:'flat' };
   const d = parseInt(t.days_to_earnings);
   if (!isNaN(d) && d >= 0 && d <= 21)
     return { icon:'📅', text:'Earnings in ' + d + ' day' + (d === 1 ? '' : 's'), read:'evt' };
@@ -16165,7 +16165,7 @@ function renderWatchlist() {
       return `<div class="wl-item" style="cursor:default">
         <div class="wl-item-head">
           <span class="wl-tk">${sym}</span>
-          <b class="wl-title">Not in the AlphaHunt universe</b>
+          <b class="wl-title">Not in the TickerMover universe</b>
           <button class="wl-x" onclick="event.stopPropagation();toggleWatch('${sym}')" title="Remove from watchlist">✕</button>
         </div>
         <p class="wl-desc">No price or catalyst is computed for this ticker — kept on your list as a reminder.</p>
@@ -16943,7 +16943,7 @@ function _acctRenderPlan(j){
     } else {
       try { if (j.valid_until) sub = ' · renews ' + new Date(j.valid_until).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); } catch(e){}
     }
-    if (line) line.textContent = 'AlphaHunt Pro' + sub;
+    if (line) line.textContent = 'TickerMover Pro' + sub;
     if (btn){ btn.textContent = j.beta_pro ? 'Beta access' : 'Manage'; btn.classList.remove('v2-acct-btn-pri'); }
   } else {
     if (line) line.textContent = 'Free plan';
@@ -17051,7 +17051,7 @@ let _fbTimer = null, _fbRating = null, _fbTopic = '', _fbActiveMs = 0, _fbLastAc
 const _FB_PLACEHOLDERS = {
   'Picks & ideas':    'Are the picks useful? What would make them more actionable?',
   'Speed':            'Where does the app feel slow or laggy?',
-  'Pricing':          'What would make AlphaHunt Pro worth it for you?',
+  'Pricing':          'What would make TickerMover Pro worth it for you?',
   'Missing a feature':"What's the one feature you wish we had?",
   'Found a bug':      'What broke, and on which screen?'
 };
@@ -17880,7 +17880,7 @@ function startPriceWS() {
   ws.onopen = () => {
     _wsConnected = true;
     _wsRetryCount = 0;   // reset backoff on successful connect
-    console.log('[AlphaHunt] WebSocket price stream connected');
+    console.log('[TickerMover] WebSocket price stream connected');
   };
 
   ws.onmessage = (evt) => {
@@ -17907,7 +17907,7 @@ function startPriceWS() {
     // 'dev site becomes unresponsive every ~10 seconds' user report).
     if (_wsRetryCount > 4){
       _wsGaveUp = true;
-      console.warn('[AlphaHunt] WebSocket price stream disabled after ' + _wsRetryCount + ' failures — falling back to 30s polling');
+      console.warn('[TickerMover] WebSocket price stream disabled after ' + _wsRetryCount + ' failures — falling back to 30s polling');
       return;
     }
     const delay = Math.min(60000, 5000 * Math.pow(2, _wsRetryCount - 1));  // 5s, 10s, 20s, 40s, 60s
@@ -18217,7 +18217,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderAll(window.__AH_DATA__);
     const lbs = document.getElementById('live-badge');
     if (lbs) { lbs.textContent = '● LIVE'; lbs.style.cssText = ''; }
-    console.log('[AlphaHunt] SSR instant load —', window.__AH_DATA__.tickers.length, 'tickers');
+    console.log('[TickerMover] SSR instant load —', window.__AH_DATA__.tickers.length, 'tickers');
 
   // ── PATH B: Cold start — server has no data yet, poll until ready ──────
   } else {
@@ -18723,7 +18723,7 @@ function startOnboarding(name) {
   document.documentElement.style.overflow = 'hidden';
   document.body.style.overflow = 'hidden';
   ov.classList.add('open');
-  _obTypewrite(document.getElementById('aho-type'), 'Welcome to AlphaHunt');
+  _obTypewrite(document.getElementById('aho-type'), 'Welcome to TickerMover');
 }
 // Lightweight typewriter for the welcome headline (respects reduced-motion).
 function _obTypewrite(el, text) {
@@ -19139,10 +19139,23 @@ function buildTickerCard(t, showRemove) {
    RAZORPAY BILLING
    ---------------------------------------------------------- */
 
-function openUpgradeModal() {
+async function openUpgradeModal() {
   if (!_AUTH.token) { openAuthModal('signin'); return; }
   document.getElementById('upgrade-modal').style.display = 'flex';
-  document.getElementById('upgrade-error').textContent = '';
+  const errEl = document.getElementById('upgrade-error');
+  const btn   = document.getElementById('upgrade-pay-btn');
+  if (errEl){ errEl.textContent = ''; errEl.style.color = ''; }
+  if (btn){ btn.disabled = false; btn.style.opacity = ''; btn.style.cursor = ''; btn.textContent = 'Pay ₹499 — Upgrade Now'; }
+  // Payments may not be live yet (e.g. Razorpay/KYC not set up). Don't surface a
+  // checkout that 400s — tell the user Pro is free during beta instead.
+  try {
+    const r = await fetch('/api/payment/plan');
+    const d = await r.json();
+    if (!d || !d.enabled) {
+      if (btn){ btn.disabled = true; btn.textContent = 'Free during beta'; btn.style.opacity = '.6'; btn.style.cursor = 'default'; }
+      if (errEl){ errEl.style.color = '#475569'; errEl.textContent = "Pro is free for everyone during our beta — paid plans open at launch, and we'll email you first. Nothing to pay right now."; }
+    }
+  } catch(e){}
 }
 
 function closeUpgradeModal() {
@@ -19171,7 +19184,7 @@ async function startRazorpayCheckout() {
       key:         d.key_id,
       amount:      d.amount,
       currency:    d.currency,
-      name:        'AlphaHunt',
+      name:        'TickerMover',
       description: 'Pro Plan — Monthly',
       image:       '/static/icons/icon-192.png',
       order_id:    d.order_id,
@@ -19224,7 +19237,7 @@ function showUpgradeSuccess() {
   // Show a quick success toast
   const t = document.createElement('div');
   t.style.cssText = 'position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:#10b981;color:#fff;padding:14px 28px;border-radius:10px;font-size:15px;font-weight:700;z-index:99999;box-shadow:0 4px 20px rgba(0,0,0,.4)';
-  t.textContent = '🎉 Welcome to AlphaHunt Pro!';
+  t.textContent = '🎉 Welcome to TickerMover Pro!';
   document.body.appendChild(t);
   setTimeout(() => t.remove(), 4000);
 }
@@ -19569,7 +19582,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
         <button class="ah-link-btn" onclick="authMagicLink()">Email me a one-tap sign-in link instead →</button>
       </div>
 
-      <!-- The "first time on AlphaHunt..." explainer was removed in May 22 2026
+      <!-- The "first time on TickerMover..." explainer was removed in May 22 2026
            polish pass — no modern auth UX shows that block. The auto-create
            behaviour is still in authSubmit; users just see a single Sign in
            button and the magic-link / Google options. -->
@@ -19676,7 +19689,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     <div id="ah-view-success" class="ah-view" style="text-align:center;padding:20px 0">
       <span class="ah-success-icon">🎉</span>
       <div class="ah-form-title" style="color:#FFC75F;margin-bottom:10px">You're in!</div>
-      <div class="ah-form-sub" style="margin-bottom:28px">Welcome to AlphaHunt. Start hunting alpha right now.</div>
+      <div class="ah-form-sub" style="margin-bottom:28px">Welcome to TickerMover. Start hunting alpha right now.</div>
       <button class="ah-submit" onclick="closeAuthModal()">Open Dashboard →</button>
     </div>
 
@@ -19693,7 +19706,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
           I have read and agree to the <a href="/terms" target="_blank">Terms</a>,
           <a href="/privacy" target="_blank">Privacy Policy</a>, and
           <a href="/disclaimer" target="_blank">Disclaimer</a>.
-          I understand AlphaHunt is a research tool, not personalised financial advice, and I am responsible for my own investment decisions.
+          I understand TickerMover is a research tool, not personalised financial advice, and I am responsible for my own investment decisions.
         </span>
       </label>
     </div>
@@ -19766,7 +19779,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
 <div id="ah-onboard-overlay" role="dialog" aria-modal="true" aria-label="Welcome">
   <div class="aho-card">
     <button class="aho-close" onclick="closeOnboarding()" aria-label="Skip for now" title="Skip for now">✕</button>
-    <div class="aho-brand"><span class="aho-logo" role="img" aria-label="AlphaHunt"></span> <span class="aho-word">Alpha<em>Hunt</em></span></div>
+    <div class="aho-brand"><span class="aho-logo" role="img" aria-label="TickerMover"></span> <span class="aho-word">Alpha<em>Hunt</em></span></div>
     <span class="aho-wave" aria-hidden="true">👋</span>
     <h1 class="aho-title"><span id="aho-type"></span><span class="aho-caret"></span></h1>
     <p class="aho-sub">You're in. Let's personalise your dashboard — <b>20 seconds</b>, then you're hunting alpha.</p>
@@ -20620,7 +20633,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     if(!label) return '';
     const na=_fpNum(t,['total_analysts','analyst_count']);
     const cl=/Buy/.test(label)?'cons-buy':/Sell/.test(label)?'cons-sell':'cons-hold';
-    return '<div class="cons-chip '+cl+'" title="Third-party broker analyst consensus — informational only, not a recommendation by AlphaHunt to buy or sell">📊 Analyst consensus: <b>'+label+'</b>'+(na!=null?'<span class="cons-n"> · '+Math.round(na)+' analysts</span>':'')+'</div>';
+    return '<div class="cons-chip '+cl+'" title="Third-party broker analyst consensus — informational only, not a recommendation by TickerMover to buy or sell">📊 Analyst consensus: <b>'+label+'</b>'+(na!=null?'<span class="cons-n"> · '+Math.round(na)+' analysts</span>':'')+'</div>';
   }
   // ── Chart-pattern recognition (per the Fidelity/Kirkpatrick "Identifying Chart
   //    Patterns" methodology). Finds swing pivots on the price history and matches
@@ -20716,7 +20729,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
       'the six-pillar scorecard':['📊','violet',true],
       'price action':['📈','amber',true],
       'technical setup':['🎯','teal',false],
-      'the alphahunt edge':['✦','violet',false],
+      'the tickermover edge':['✦','violet',false],
       'where the price sits':['💰','green',true],
       'catalysts':['🚀','blue',false],
       'risks':['🛡️','red',false],
@@ -20762,7 +20775,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     const sector=full.sub_sector||full.subsector||full.sector||t.sub_sector||t.sector||'';
     const bl=(full.bottom_line||'').trim();
     const strip=_ovStripHTML(t,full,S);
-    // AlphaHunt score — leads the header, colored by strength.
+    // TickerMover score — leads the header, colored by strength.
     const pop=Math.round(parseFloat(full.smart_score!=null?full.smart_score:(full.pop_score!=null?full.pop_score:(t.smart_score!=null?t.smart_score:(t.pop_score||0)))));
     const g=(full.grade||t.grade||'').toUpperCase();
     const popCls=pop>=80?'pos':pop>=65?'neu':pop>=50?'amb':'neg';
@@ -20932,7 +20945,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
       '</div></div>') : '';
     const _hasReb = S && S.rebound!=null;
     const rebColor=_hasReb?(S.rebound>=66?'#16a34a':S.rebound>=40?'#e08600':'#e11d48'):'#94a3b8';
-    // ── The AlphaHunt edge — proprietary, trust-building reads:
+    // ── The TickerMover edge — proprietary, trust-building reads:
     //    relative strength · institutional accumulation · model conviction & trajectory.
     const _rs=_rsMap[t.ticker]||_fpNum(full,['rs_rating','rs'])||_fpNum(t,['rs_rating','rs']);
     const _blue=isBlueDot(full)||isBlueDot(t);
@@ -20951,7 +20964,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
       '<div class="edge-k edge-ai" id="ovEdgeThesis"><span class="edge-lab">Conviction</span><span class="edge-val word edge-ai-pend">—</span><span class="edge-sub">Reading…</span></div>'+
       '<div class="edge-k edge-ai" id="ovEdgeCatch"><span class="edge-lab">Key Risk</span><span class="edge-val word edge-ai-pend">—</span><span class="edge-sub">Reading…</span></div>'+
     '</div>';
-    const edgeCard=_ovSecHead('The AlphaHunt edge',_edgeBody);   // 3 quant + 3 AI cards always present
+    const edgeCard=_ovSecHead('The TickerMover edge',_edgeBody);   // 3 quant + 3 AI cards always present
     // Editorial research-note flow (our theme): header + 6-stat strip →
     // scorecard → numbers → price action → edge → technical setup →
     // two-sided case → valuation → catalysts → bottom-line thesis.
@@ -21160,7 +21173,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
           '<div class="gauge-wrap">'+_consensusGauge(pos,'')+'</div>'+cons+'</div>'+
         '<div class="fc-col-r">'+(chart?'<div class="fc-chartbox">'+chart+'</div>':'')+tbl+'</div>'+
       '</div>'+
-      '<div class="fc-disc">Analyst price targets &amp; consensus are third-party estimates (public broker data via Yahoo Finance / S&amp;P Global), shown for information only — <b>not a recommendation by AlphaHunt to buy or sell</b>. AlphaHunt is a research tool, not a SEBI-registered adviser. <a href="/disclaimer" target="_blank" rel="noopener">Full disclaimer ↗</a></div>');
+      '<div class="fc-disc">Analyst price targets &amp; consensus are third-party estimates (public broker data via Yahoo Finance / S&amp;P Global), shown for information only — <b>not a recommendation by TickerMover to buy or sell</b>. TickerMover is a research tool, not a SEBI-registered adviser. <a href="/disclaimer" target="_blank" rel="noopener">Full disclaimer ↗</a></div>');
   }
   function paneEstimates(t){
     const beat=parseInt(t.eps_beat_streak),avg=_fpNum(t,['avg_eps_surprise_pct']),days=parseInt(t.days_to_earnings),rev=t.eps_revisions_30d;
@@ -22174,7 +22187,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     renderIndexPills();
     const dis=document.getElementById('disclaimer');
     if(dis) dis.innerHTML=
-      '<b>Educational research tool.</b> AlphaHunt is a quantitative analysis platform — not a SEC/SEBI-registered investment advisor. '+
+      '<b>Educational research tool.</b> TickerMover is a quantitative analysis platform — not a SEC/SEBI-registered investment advisor. '+
       'The Alpha Score, pillars, and signals on this page are descriptive observations, not personalized advice. '+
       'Past performance and quantitative ratings do not guarantee future results. Always do your own research.';
   };
@@ -22301,7 +22314,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     if(el()) return;
     var o=document.createElement('div'); o.id='askai-overlay';
     o.innerHTML='<div id="askai-modal">'+
-      '<div class="ai-head"><span class="ai-title"></span><span class="ai-badge">✦ AlphaHunt AI</span><button class="ai-x" aria-label="Close">×</button></div>'+
+      '<div class="ai-head"><span class="ai-title"></span><span class="ai-badge">✦ TickerMover AI</span><button class="ai-x" aria-label="Close">×</button></div>'+
       '<div class="ai-scroll"></div>'+
       '<div class="ai-input"><textarea rows="1" placeholder="Ask anything about this stock…"></textarea><button class="ai-send">↑</button></div>'+
       '<div class="ai-disc">Educational research only · not investment advice · AI can be wrong — verify against the filings.</div>'+
@@ -22320,7 +22333,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     if(!TICK){   // opened globally (sidebar) — pick a stock first
       s.innerHTML='<div class="ai-hello">Ask AI about a stock</div>'+
         '<div class="ai-pick"><input id="ai-pick-tk" placeholder="Enter a ticker — e.g. NVDA"><button class="ai-pick-go">Start →</button></div>'+
-        '<div class="ai-ground">Powered by Claude — grounded in SEC filings, earnings transcript &amp; AlphaHunt metrics, enriched with broader market knowledge</div>';
+        '<div class="ai-ground">Powered by Claude — grounded in SEC filings, earnings transcript &amp; TickerMover metrics, enriched with broader market knowledge</div>';
       var go=function(){ var v=((s.querySelector('#ai-pick-tk')||{}).value||'').trim().toUpperCase(); if(v){ TICK=v; NAME=v; el().querySelector('.ai-title').textContent=v; welcome(); var ta=el().querySelector('textarea'); if(ta) ta.focus(); } };
       s.querySelector('.ai-pick-go').addEventListener('click',go);
       s.querySelector('#ai-pick-tk').addEventListener('keydown',function(e){ if(e.key==='Enter') go(); });
@@ -22329,7 +22342,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     }
     s.innerHTML='<div class="ai-hello"><span class="ai-sub">Hello,</span>How can I help you with <b>'+esc(NAME||TICK)+'</b>?</div>'+
       '<div class="ai-suggest">'+SUGGEST.map(function(q){return '<button class="ai-sug" data-q="'+esc(q)+'">'+esc(q)+'<span class="ar">→</span></button>';}).join('')+'</div>'+
-      '<div class="ai-ground">Powered by Claude — grounded in SEC filings, earnings transcript &amp; AlphaHunt metrics, enriched with broader market knowledge</div>';
+      '<div class="ai-ground">Powered by Claude — grounded in SEC filings, earnings transcript &amp; TickerMover metrics, enriched with broader market knowledge</div>';
     s.querySelectorAll('.ai-sug').forEach(function(b){ b.addEventListener('click',function(){ send(b.getAttribute('data-q')); }); });
   }
   function add(html,cls){ var s=el().querySelector('.ai-scroll'); var d=document.createElement('div'); d.className='ai-msg '+(cls||''); d.innerHTML=html; s.appendChild(d); s.scrollTop=s.scrollHeight; return d; }
