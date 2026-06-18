@@ -61,64 +61,63 @@
                    style="background:#EAF2FF;border-radius:14px;">
               <tr>
                 <td align="center" style="padding:28px 16px 24px;">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="260" height="170" viewBox="0 0 260 170" fill="none" aria-hidden="true">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="280" height="180" viewBox="0 0 280 180" fill="none" aria-hidden="true">
 
-                    <!-- bunting string (curved, droops in middle) -->
-                    <path d="M18 22 Q130 70 242 22" stroke="#2970FF" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+                    <defs>
+                      <linearGradient id="wl-b1" x1="0" y1="1" x2="0" y2="0"><stop offset="0%" stop-color="#1E40AF"/><stop offset="100%" stop-color="#3B82F6"/></linearGradient>
+                      <linearGradient id="wl-b2" x1="0" y1="1" x2="0" y2="0"><stop offset="0%" stop-color="#2563EB"/><stop offset="100%" stop-color="#38BDF8"/></linearGradient>
+                      <linearGradient id="wl-b3" x1="0" y1="1" x2="0" y2="0"><stop offset="0%" stop-color="#0EA5E9"/><stop offset="100%" stop-color="#22D3EE"/></linearGradient>
+                      <linearGradient id="wl-b4" x1="0" y1="1" x2="0" y2="0"><stop offset="0%" stop-color="#06B6D4"/><stop offset="100%" stop-color="#2DD4BF"/></linearGradient>
+                      <linearGradient id="wl-b5" x1="0" y1="1" x2="0" y2="0"><stop offset="0%" stop-color="#10B981"/><stop offset="100%" stop-color="#34D399"/></linearGradient>
+                      <linearGradient id="wl-ring" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#2970FF"/><stop offset="100%" stop-color="#22C55E"/></linearGradient>
+                      <radialGradient id="wl-glow" cx="0.5" cy="0.5" r="0.5"><stop offset="0%" stop-color="#C2E0FF"/><stop offset="100%" stop-color="#EAF2FF" stop-opacity="0"/></radialGradient>
+                    </defs>
 
-                    <!-- WELCOME pennant flags (triangles hanging point-down) -->
-                    <!-- positions follow the curve of the string -->
-                    <g font-family="'Helvetica Neue',Arial,sans-serif" font-size="11" font-weight="800" fill="#ffffff">
-                      <!-- W -->
-                      <g><polygon points="22,22 50,22 36,52" fill="#2970FF"/><text x="36" y="38" text-anchor="middle">W</text></g>
-                      <!-- E -->
-                      <g><polygon points="54,32 82,32 68,62" fill="#5DB3F1"/><text x="68" y="48" text-anchor="middle">E</text></g>
-                      <!-- L -->
-                      <g><polygon points="86,42 114,42 100,72" fill="#0040c1"/><text x="100" y="58" text-anchor="middle">L</text></g>
-                      <!-- C -->
-                      <g><polygon points="118,46 146,46 132,76" fill="#2970FF"/><text x="132" y="62" text-anchor="middle">C</text></g>
-                      <!-- O -->
-                      <g><polygon points="150,42 178,42 164,72" fill="#5DB3F1"/><text x="164" y="58" text-anchor="middle">O</text></g>
-                      <!-- M -->
-                      <g><polygon points="182,32 210,32 196,62" fill="#0040c1"/><text x="196" y="48" text-anchor="middle">M</text></g>
-                      <!-- E -->
-                      <g><polygon points="214,22 242,22 228,52" fill="#2970FF"/><text x="228" y="38" text-anchor="middle">E</text></g>
+                    <!-- soft glow -->
+                    <ellipse cx="120" cy="100" rx="105" ry="74" fill="url(#wl-glow)" opacity="0.6"/>
+
+                    <!-- dashboard panel behind the chart -->
+                    <rect x="20" y="38" width="176" height="120" rx="14" fill="#ffffff"/>
+                    <!-- baseline + faint gridlines -->
+                    <g stroke="#E2ECFF" stroke-width="1.5">
+                      <line x1="36" y1="140" x2="182" y2="140"/>
+                      <line x1="36" y1="112" x2="182" y2="112" opacity="0.6"/>
+                      <line x1="36" y1="84"  x2="182" y2="84"  opacity="0.6"/>
                     </g>
 
-                    <!-- radiating celebration lines above head -->
-                    <g stroke="#2970FF" stroke-width="2" stroke-linecap="round">
-                      <line x1="130" y1="86"  x2="130" y2="76"/>
-                      <line x1="110" y1="92"  x2="102" y2="84"/>
-                      <line x1="150" y1="92"  x2="158" y2="84"/>
-                      <line x1="96"  y1="104" x2="86"  y2="100"/>
-                      <line x1="164" y1="104" x2="174" y2="100"/>
-                    </g>
+                    <!-- rising, multi-color bars -->
+                    <rect x="40"  y="104" width="20" height="36" rx="5" fill="url(#wl-b1)"/>
+                    <rect x="70"  y="86"  width="20" height="54" rx="5" fill="url(#wl-b2)"/>
+                    <rect x="100" y="92"  width="20" height="48" rx="5" fill="url(#wl-b3)"/>
+                    <rect x="130" y="68"  width="20" height="72" rx="5" fill="url(#wl-b4)"/>
+                    <rect x="160" y="54"  width="20" height="86" rx="5" fill="url(#wl-b5)"/>
 
-                    <!-- celebrating person (outline / hand-drawn style) -->
-                    <g stroke="#0f172a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none">
-                      <!-- head -->
-                      <circle cx="130" cy="106" r="11" fill="#ffffff"/>
-                      <!-- hair (short, top sweep) -->
-                      <path d="M120 102 Q124 94 130 95 Q137 96 140 102" fill="#0f172a"/>
-                      <!-- face: smile + eyes (closed/happy) -->
-                      <path d="M126 108 q1 -2 2 0" fill="none"/>
-                      <path d="M132 108 q1 -2 2 0" fill="none"/>
-                      <path d="M127 112 q3 3 6 0" fill="none"/>
-                      <!-- neck -->
-                      <line x1="130" y1="117" x2="130" y2="122"/>
-                      <!-- torso (a-line dress / shirt) -->
-                      <path d="M118 148 L130 122 L142 148 Z" fill="#ffffff"/>
-                      <!-- left arm raised -->
-                      <path d="M122 126 L108 108 L104 100" />
-                      <!-- right arm raised -->
-                      <path d="M138 126 L152 108 L156 100" />
-                      <!-- hands (small circles) -->
-                      <circle cx="104" cy="100" r="2.5" fill="#0f172a"/>
-                      <circle cx="156" cy="100" r="2.5" fill="#0f172a"/>
+                    <!-- upward trend line over the bars -->
+                    <polyline points="50,100 80,82 110,88 140,64 170,50" fill="none" stroke="#FB923C" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                    <g fill="#ffffff" stroke="#FB923C" stroke-width="2.5">
+                      <circle cx="50" cy="100" r="3"/><circle cx="80" cy="82" r="3"/><circle cx="110" cy="88" r="3"/><circle cx="140" cy="64" r="3"/>
                     </g>
+                    <!-- arrow tip -->
+                    <circle cx="170" cy="50" r="4" fill="#FB923C"/>
+                    <path d="M170 50 L182 41 M182 41 L181 53 M182 41 L170 40" stroke="#FB923C" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+
+                    <!-- Alpha Score gauge badge -->
+                    <circle cx="232" cy="64" r="34" fill="#ffffff"/>
+                    <circle cx="232" cy="64" r="27" fill="none" stroke="#E6EEFF" stroke-width="7"/>
+                    <circle cx="232" cy="64" r="27" fill="none" stroke="url(#wl-ring)" stroke-width="7" stroke-linecap="round"
+                            stroke-dasharray="170 170" stroke-dashoffset="44" transform="rotate(-90 232 64)"/>
+                    <text x="232" y="62" text-anchor="middle" font-family="'Helvetica Neue',Arial,sans-serif" font-size="20" font-weight="800" fill="#0a0a0a">A+</text>
+                    <text x="232" y="77" text-anchor="middle" font-family="'Helvetica Neue',Arial,sans-serif" font-size="7" font-weight="700" fill="#64748b" letter-spacing="0.6">ALPHA</text>
+
+                    <!-- colorful sparkles -->
+                    <path d="M210 16 l1.6 4.2 l4.2 1.6 l-4.2 1.6 l-1.6 4.2 l-1.6 -4.2 l-4.2 -1.6 l4.2 -1.6 z" fill="#FBBF24"/>
+                    <path d="M28 150 l1.3 3.4 l3.4 1.3 l-3.4 1.3 l-1.3 3.4 l-1.3 -3.4 l-3.4 -1.3 l3.4 -1.3 z" fill="#22D3EE"/>
+                    <circle cx="206" cy="112" r="2.6" fill="#A78BFA"/>
+                    <circle cx="16"  cy="58"  r="2.4" fill="#34D399"/>
+                    <circle cx="262" cy="104" r="2.2" fill="#FB7185"/>
 
                     <!-- ground shadow -->
-                    <ellipse cx="130" cy="152" rx="22" ry="2.5" fill="#C2E0FF" opacity="0.6"/>
+                    <ellipse cx="120" cy="168" rx="84" ry="4" fill="#C2E0FF" opacity="0.5"/>
                   </svg>
                 </td>
               </tr>
