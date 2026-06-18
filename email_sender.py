@@ -83,7 +83,7 @@ def _render_welcome_html() -> Optional[str]:
         logger.error(f"Welcome email template not found at {path}")
         return None
 
-    dashboard_url = os.environ.get("SITE_ORIGIN", "https://tickermover.com").rstrip("/") + "/app"
+    dashboard_url = os.environ.get("SITE_ORIGIN", "https://www.tickermover.com").rstrip("/") + "/app"
     return html.replace("{{ .ConfirmationURL }}", dashboard_url)
 
 

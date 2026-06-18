@@ -7762,12 +7762,11 @@ async def api_forgot_password(body: _ForgotBody):
         raise HTTPException(status_code=503, detail="Auth not configured")
     try:
         import httpx
-        # Hardcoded redirect URL — bypassing SITE_ORIGIN env var to rule
-        # out env-var misconfiguration (e.g. www prefix, trailing slash,
-        # missing protocol). Once we confirm this works in production,
-        # we can revert to the env-var pattern. The diagnostic log line
-        # below will show in Railway logs exactly what we're sending.
-        reset_redirect = "https://tickermover.com/reset-password"
+        # Use SITE_ORIGIN (already normalized to the www host that actually
+        # serves the app — the apex tickermover.com 404s on app routes).
+        # Must also be in Supabase's Redirect URLs allow-list, or Supabase
+        # ignores redirect_to and falls back to the Site URL.
+        reset_redirect = f"{SITE_ORIGIN}/reset-password"
         logger.info(f"[FORGOT-PW] sending redirect_to={reset_redirect!r} for {body.email[:4]}*** (SITE_ORIGIN={SITE_ORIGIN!r})")
         async with httpx.AsyncClient(timeout=10) as c:
             r = await c.post(

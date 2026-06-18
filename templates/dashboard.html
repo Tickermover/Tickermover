@@ -16920,7 +16920,7 @@ async function v2LoadPickSparks(){
    /api/user/change-password, /api/auth/resend-confirmation,
    /api/auth/forgot-password. */
 function _acctAuthHdr(){
-  const t = (window._AUTH && _AUTH.token) || '';
+  const t = (typeof _AUTH !== 'undefined' && _AUTH.token) || '';
   const h = {'Content-Type':'application/json'};
   if (t) h['Authorization'] = 'Bearer ' + t;
   return h;
@@ -16954,7 +16954,7 @@ async function openAccountPanel(){
   const ov = document.getElementById('v2-acct-overlay');
   if (!ov) return;
   ov.classList.add('open');
-  const u = (window._AUTH && _AUTH.user) || {};
+  const u = (typeof _AUTH !== 'undefined' && _AUTH.user) || {};
   const email0 = u.email || '';
   _acctSet('v2-acct-hmail', email0);
   _acctSet('v2-acct-email', email0);
@@ -16990,7 +16990,7 @@ async function acctSaveName(){
     if (!r.ok) throw 0;
     _acctNote('v2-acct-namenote', 'Saved.', 'ok');
     _acctSet('v2-acct-hname', name || 'Your account');
-    try { if (window._AUTH && _AUTH.user){ const uu = _AUTH.user; uu.name = name; _AUTH.user = uu; } localStorage.setItem('ah_name', name); } catch(e){}
+    try { if (typeof _AUTH !== 'undefined' && _AUTH.user){ const uu = _AUTH.user; uu.name = name; _AUTH.user = uu; } localStorage.setItem('ah_name', name); } catch(e){}
     if (typeof _authUpdateUI === 'function') _authUpdateUI();
   } catch(e){ _acctNote('v2-acct-namenote', 'Could not save name.', 'err'); }
   finally { if (btn) btn.disabled = false; }
