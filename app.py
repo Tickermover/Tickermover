@@ -2266,6 +2266,24 @@ def _spgrid(cards):
     cards = [c for c in cards if c]
     return f'<div class="metrics">{"".join(cards)}</div>' if cards else ""
 
+def _sp_score_gauge(score, color: str) -> str:
+    """Colorful donut gauge for the Alpha Score — server-rendered SVG, no JS."""
+    import math
+    s = max(0.0, min(100.0, float(score or 0)))
+    r = 46.0
+    circ = 2 * math.pi * r
+    prog = circ * s / 100.0
+    return (
+        '<svg width="118" height="118" viewBox="0 0 120 120" class="sp-gauge" aria-hidden="true">'
+        '<circle cx="60" cy="60" r="46" fill="none" stroke="#eef2f7" stroke-width="12"/>'
+        f'<circle cx="60" cy="60" r="46" fill="none" stroke="{color}" stroke-width="12" '
+        f'stroke-linecap="round" stroke-dasharray="{prog:.1f} {circ:.1f}" transform="rotate(-90 60 60)"/>'
+        f'<text x="60" y="58" text-anchor="middle" font-size="31" font-weight="800" fill="#0a0a0a" '
+        'font-family="JetBrains Mono,monospace">' + str(round(s)) + '</text>'
+        '<text x="60" y="78" text-anchor="middle" font-size="9" font-weight="700" fill="#94a3b8" '
+        'letter-spacing="1.5">ALPHA</text></svg>'
+    )
+
 def _sp_pro_section(sym: str) -> str:
     items = [
         ("🔬 AI Deep-Dive", "Web-grounded research brief — catalysts, risks and the bull/bear case, with sources."),
@@ -2292,17 +2310,21 @@ def _sp_data_sections(t: dict, sym: str, price: float):
         nav.append(f'<a href="#{anchor}">{title}</a>')
         secs.append(f'<section id="{anchor}"><h2>{title}</h2>{inner}</section>')
 
-    # Score breakdown (six pillars)
+    # Score breakdown (six pillars) — each its own vivid colour, infographic-style
     rows = []
-    for lbl, k in (("Momentum", "momentum_score"), ("Growth", "growth_score"),
-                   ("Quality", "quality_score"), ("Valuation", "valuation_score"),
-                   ("Sentiment", "sentiment_score"), ("Potential", "potential_score")):
+    for lbl, k, c1, c2 in (
+        ("Momentum",  "momentum_score",  "#2970FF", "#5DB3F1"),
+        ("Growth",    "growth_score",    "#10B981", "#34D399"),
+        ("Quality",   "quality_score",   "#06B6D4", "#22D3EE"),
+        ("Valuation", "valuation_score", "#F59E0B", "#FBBF24"),
+        ("Sentiment", "sentiment_score", "#8B5CF6", "#A78BFA"),
+        ("Potential", "potential_score", "#EC4899", "#F472B6"),
+    ):
         v = _spf(t.get(k))
         if v is None: continue
         w = max(0, min(100, v))
-        band = "pos" if v >= 66 else "neg" if v < 45 else "mid"
         rows.append(f'<div class="sp-bar-row"><span class="nm">{lbl}</span>'
-                    f'<div class="sp-bar"><i class="{band}" style="width:{w:.0f}%"></i></div>'
+                    f'<div class="sp-bar"><i style="width:{w:.0f}%;background:linear-gradient(90deg,{c1},{c2})"></i></div>'
                     f'<span class="pv mono">{v:.0f}</span></div>')
     add("scores", "Score breakdown", f'<div class="sp-bars">{"".join(rows)}</div>' if rows else "")
 
@@ -2407,7 +2429,7 @@ def _render_stock_page(t: dict) -> str:
     pop    = _f(t.get("smart_score") if t.get("smart_score") is not None else t.get("pop_score"))
     grade  = t.get("grade") or "—"
     rating = {"A":"★★★★★ Top Tier","B":"★★★★ Quality","C":"★★★ Average","D":"★★ Below Avg","F":"★ Weak"}.get(grade, "Under Review")
-    verdict_color = {"A":"#15803d","B":"#D4860A","C":"#D4860A","D":"#dc2626","F":"#991b1b"}.get(grade, "#475569")
+    verdict_color = {"A":"#10B981","B":"#2970FF","C":"#F59E0B","D":"#F97316","F":"#EF4444"}.get(grade, "#64748b")
     bottom_line = t.get("bottom_line") or f"{name} is currently scored {round(pop)}/100 on Alpha Score."
     chg = _f(t.get("change_pct"))
     chg_sign = "+" if chg >= 0 else ""
@@ -2431,6 +2453,7 @@ def _render_stock_page(t: dict) -> str:
     # earnings, ownership, score breakdown) + a sticky in-page nav. Mirrors
     # the in-app stock sheet; Pro AI tabs surface as upgrade CTAs.
     sp_nav_html, sp_sections_html = _sp_data_sections(t, sym, price)
+    score_gauge_html = _sp_score_gauge(pop, verdict_color)
 
     # ── SEO meta tags — these are the part Google ranks on ──
     import datetime as _dt
@@ -2586,9 +2609,13 @@ a:hover{{text-decoration:underline}}
 @media(max-width:640px){{.report-card{{padding:24px 20px;border-radius:16px}}.wrap{{padding:20px 12px 48px}}}}
 .crumbs{{font-size:12.5px;color:#94a3b8;margin-bottom:8px;letter-spacing:.04em;text-transform:uppercase;font-weight:600}}
 h1{{font-size:38px;font-weight:900;letter-spacing:-.03em;margin-bottom:6px;color:#0a0a0a}}
-h1 .sym{{font-family:'JetBrains Mono',monospace;color:#15803d}}
+h1 .sym{{font-family:'JetBrains Mono',monospace;background:linear-gradient(135deg,#2970FF,#06B6D4);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:#2970FF}}
 .subhead{{font-size:15px;color:#475569;margin-bottom:24px}}
-.verdict-box{{background:#f8fafc;border:1px solid #eef1f5;border-left:4px solid {verdict_color};border-radius:12px;padding:20px 24px;margin-bottom:24px}}
+.verdict-box{{display:flex;align-items:center;gap:22px;background:#f8fafc;border:1px solid #eef1f5;border-left:4px solid {verdict_color};border-radius:14px;padding:20px 24px;margin-bottom:24px}}
+.vb-gauge{{flex:0 0 auto}}
+.sp-gauge{{display:block}}
+.vb-body{{flex:1;min-width:0}}
+@media(max-width:520px){{.verdict-box{{flex-direction:column;align-items:flex-start;gap:14px}}}}
 .verdict-head{{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px}}
 .verdict-tag{{background:{verdict_color};color:#fff;padding:5px 12px;border-radius:7px;font-weight:800;font-size:13px;letter-spacing:.04em}}
 .verdict-score{{font-family:'JetBrains Mono',monospace;font-size:24px;font-weight:800;color:#0a0a0a}}
@@ -2670,11 +2697,11 @@ section{{scroll-margin-top:60px;margin-bottom:8px}}
   <p class="subhead">{name} · current price <span class="mono">{price_str}</span> ({chg_str} today)</p>
 
   <div class="verdict-box" id="overview">
-    <div class="verdict-head">
-      <span class="verdict-tag">{rating}</span>
-      <span class="verdict-score">{round(pop)}<span class="lbl">/ Alpha Score</span></span>
+    <div class="vb-gauge">{score_gauge_html}</div>
+    <div class="vb-body">
+      <div class="verdict-head"><span class="verdict-tag">{rating}</span></div>
+      <div class="verdict-text">{bottom_line}</div>
     </div>
-    <div class="verdict-text">{bottom_line}</div>
   </div>
 
   {sp_nav_html}
