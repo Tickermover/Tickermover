@@ -6940,7 +6940,7 @@ document.addEventListener('DOMContentLoaded', function(){
       <svg viewBox="0 0 24 24"><defs><linearGradient id="ahg-radar" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5DB3F1"/><stop offset="1" stop-color="#2970FF"/></linearGradient></defs><g fill="url(#ahg-radar)"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="5" rx="2"/><rect x="13" y="10" width="8" height="11" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/></g></svg><span>On the Radar</span>
     </div>
     <div class="v2-nav-item" onclick="v2Show('model',this)">
-      <svg viewBox="0 0 24 24"><defs><linearGradient id="ahg-hunts" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FBBF24"/><stop offset="1" stop-color="#F97316"/></linearGradient></defs><path fill="url(#ahg-hunts)" d="M12 2.3l2.8 5.7 6.3.9-4.5 4.4 1.1 6.3L12 20.6l-5.6 3 1.1-6.3L3 12.9l6.3-.9z"/></svg><span>Top Hunts</span><span class="v2-nav-tag v2-tag-pro">PRO</span>
+      <svg viewBox="0 0 24 24"><defs><linearGradient id="ahg-hunts" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FBBF24"/><stop offset="1" stop-color="#F97316"/></linearGradient></defs><path fill="url(#ahg-hunts)" d="M12 2.3l2.8 5.7 6.3.9-4.5 4.4 1.1 6.3L12 20.6l-5.6 3 1.1-6.3L3 12.9l6.3-.9z"/></svg><span>Prime Tickers</span><span class="v2-nav-tag v2-tag-pro">PRO</span>
     </div>
     <div class="v2-nav-item" onclick="v2Show('fund',this)">
       <svg viewBox="0 0 24 24"><defs><linearGradient id="ahg-uni" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#34D399"/><stop offset="1" stop-color="#06B6D4"/></linearGradient></defs><circle cx="12" cy="12" r="9.3" fill="url(#ahg-uni)"/><path d="M12 2.7c2.6 2.4 2.6 16.2 0 18.6M12 2.7c-2.6 2.4-2.6 16.2 0 18.6M2.9 12h18.2" stroke="#fff" stroke-opacity=".85" stroke-width="1.25" fill="none"/></svg><span>Universe</span><span class="v2-nav-tag v2-tag-universe" id="v2-nav-universe-count">545</span>
@@ -17432,7 +17432,7 @@ function v2RenderTrackerChartHTML(d){
 
   // ── Comparison bars (who won) — ranked by return, hero glows ──
   const _barRows = [
-    { label: 'Top Hunts', val: tEnd, cls: 'hero' },
+    { label: 'Prime Tickers', val: tEnd, cls: 'hero' },
     { label: 'NASDAQ',    val: qEnd, cls: 'bench-qqq' },
     { label: 'S&P 500',   val: sEnd, cls: 'bench-spy' },
   ].sort((a, b) => b.val - a.val);
@@ -17452,7 +17452,7 @@ function v2RenderTrackerChartHTML(d){
       // ── Headline: eyebrow + big value + subtitle + period chips ──
       '<div class="v2-tc-headline">' +
         '<div class="v2-tc-hl-l">' +
-          '<div class="v2-tc-hl-eyebrow">🎯 Top Hunts · live model portfolio</div>' +
+          '<div class="v2-tc-hl-eyebrow">🎯 Prime Tickers · live model portfolio</div>' +
           '<div class="v2-tc-hl-val ' + valClass + '">' + fmtPct(tEnd) + '</div>' +
           '<div class="v2-tc-hl-sub">Since ' + fmtDate(dates[0]) + ' · ' + beatHTML + '</div>' +
         '</div>' +
@@ -17970,7 +17970,7 @@ function renderAll(data) {
 let _cmdkActive = 0;
 const _CMDK_TABS = [
   {kind:'tab', icon:'🔥', label:'On the Radar',  sub:'Prime opportunities right now', run:()=>document.querySelector('[onclick*="showTab(\'hot\'"]')?.click()},
-  {kind:'tab', icon:'🎯', label:'Top Hunts',    sub:'Tracked top-10 picks',     run:()=>document.querySelector('[onclick*="showTab(\'model\'"]')?.click()},
+  {kind:'tab', icon:'🎯', label:'Prime Tickers',    sub:'Tracked top-10 picks',     run:()=>document.querySelector('[onclick*="showTab(\'model\'"]')?.click()},
   {kind:'tab', icon:'⭐', label:'Watchlist',    sub:'Your saved stocks',        run:()=>document.querySelector('[onclick*="showTab(\'watch\'"]')?.click()},
   {kind:'tab', icon:'🌐', label:'Universe',     sub:'Sector heat map + all stocks', run:()=>document.querySelector('[onclick*="v2Show(\'fund\'"]')?.click()},
   {kind:'tab', icon:'📊', label:'Reports',      sub:'Tear sheets & infographics', run:()=>document.querySelector('[onclick*="showTab(\'blog\'"]')?.click()},
@@ -19780,7 +19780,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
 <div id="ah-onboard-overlay" role="dialog" aria-modal="true" aria-label="Welcome">
   <div class="aho-card">
     <button class="aho-close" onclick="closeOnboarding()" aria-label="Skip for now" title="Skip for now">✕</button>
-    <div class="aho-brand"><span class="aho-logo" role="img" aria-label="TickerMover"></span> <span class="aho-word">Alpha<em>Hunt</em></span></div>
+    <div class="aho-brand"><span class="aho-logo" role="img" aria-label="TickerMover"></span> <span class="aho-word">Ticker<em>Mover</em></span></div>
     <span class="aho-wave" aria-hidden="true">👋</span>
     <h1 class="aho-title"><span id="aho-type"></span><span class="aho-caret"></span></h1>
     <p class="aho-sub">You're in. Let's personalise your dashboard — <b>20 seconds</b>, then you're hunting alpha.</p>
