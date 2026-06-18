@@ -23,7 +23,7 @@ from pydantic import BaseModel
 import config
 from auth import SupabaseClient
 from billing import RazorpayClient, is_pro
-from email_sender import send_welcome_email
+from email_sender import send_welcome_email, send_password_changed_email
 from data_coordinator import DataCoordinator
 from ai_scorer import score_and_rank, compute_pop_score
 import ai_selector
@@ -1067,8 +1067,18 @@ async def landing():
     try:
         html = LANDING_HTML.read_text(encoding="utf-8")
         schema = _build_landing_schema()
+        # Safety-net: if Supabase drops redirect_to and lands a password
+        # recovery (or signup/magic) link on the home page, forward it to
+        # the right page with the URL hash intact. Runs before render.
+        recovery_forward = (
+            "<script>(function(){try{var h=location.hash||'';"
+            "if(h.indexOf('access_token=')>-1){"
+            "if(h.indexOf('type=recovery')>-1){location.replace('/reset-password'+h);return;}"
+            "if(/type=(signup|magiclink|invite)/.test(h)){location.replace('/app'+h);return;}"
+            "}}catch(e){}})();</script>"
+        )
         if "</head>" in html:
-            html = html.replace("</head>", schema + "\n</head>", 1)
+            html = html.replace("</head>", recovery_forward + "\n" + schema + "\n</head>", 1)
         return HTMLResponse(
             content=html,
             headers={"Cache-Control": "public, max-age=30, s-maxage=60"},
@@ -7823,6 +7833,9 @@ async def api_reset_password(body: _ResetPasswordBody):
             raise HTTPException(status_code=400, detail="Reset link expired or already used. Request a new one.")
         raise HTTPException(status_code=400, detail=err)
     logger.info(f"Password reset succeeded for user {result.get('user', {}).get('id', 'unknown')}")
+    _email = (result.get("user") or {}).get("email")
+    if _email:
+        asyncio.create_task(send_password_changed_email(_email))
     return {"ok": True, "message": "Password updated. You can now sign in."}
 
 
@@ -8232,6 +8245,9 @@ async def api_user_change_password(body: _ChangePwBody,
     res = await supabase.update_password(creds.credentials, pw)
     if not isinstance(res, dict) or res.get("error"):
         raise HTTPException(status_code=400, detail=(res or {}).get("error", "Could not update password."))
+    _email = (res.get("user") or {}).get("email") or user.get("email")
+    if _email:
+        asyncio.create_task(send_password_changed_email(_email))
     return JSONResponse({"ok": True})
 
 

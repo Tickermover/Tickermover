@@ -64,6 +64,27 @@ async def send_welcome_email(to_email: str) -> dict:
     )
 
 
+async def send_password_changed_email(to_email: str) -> dict:
+    """Send the "your password was changed" security notification.
+
+    Fired after a successful password change (in-app or reset-link flow).
+    Best-effort — never raises, never blocks the password update.
+    """
+    if not to_email:
+        return {"ok": False, "error": "No recipient"}
+    path = _TEMPLATES_DIR / "email_password_changed.html"
+    try:
+        html = path.read_text(encoding="utf-8")
+    except FileNotFoundError:
+        logger.error(f"Password-changed template not found at {path}")
+        return {"ok": False, "error": "Template missing"}
+    return await _send(
+        to=to_email,
+        subject="Your TickerMover password was changed",
+        html=html,
+    )
+
+
 # ── Internals ─────────────────────────────────────────────────────────────
 
 def _render_welcome_html() -> Optional[str]:
