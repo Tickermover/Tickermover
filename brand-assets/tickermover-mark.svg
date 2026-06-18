@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100" role="img" aria-label="TickerMover">
+  <defs>
+    <linearGradient id="tmGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#5DB3F1"/>
+      <stop offset="0.5" stop-color="#2970FF"/>
+      <stop offset="1" stop-color="#0040C1"/>
+    </linearGradient>
+  </defs>
+  <rect width="100" height="100" rx="24" fill="url(#tmGrad)"/>
+  <polyline points="22,74 42,52 56,62 80,34" fill="none" stroke="#ffffff" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+  <polyline points="66,34 80,34 80,48" fill="none" stroke="#ffffff" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
