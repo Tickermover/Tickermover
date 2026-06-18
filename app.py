@@ -960,6 +960,8 @@ async def sitemap_xml():
         '<?xml version="1.0" encoding="UTF-8"?>',
         '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
         f'  <url><loc>{SITE_ORIGIN}/</loc><changefreq>daily</changefreq><priority>1.0</priority><lastmod>{today}</lastmod></url>',
+        f'  <url><loc>{SITE_ORIGIN}/reports</loc><changefreq>daily</changefreq><priority>0.9</priority><lastmod>{today}</lastmod></url>',
+        f'  <url><loc>{SITE_ORIGIN}/brief</loc><changefreq>daily</changefreq><priority>0.85</priority><lastmod>{today}</lastmod></url>',
     ]
 
     # ── Phase 3 SEO landing pages — pillar/sector/compare hubs ───────
