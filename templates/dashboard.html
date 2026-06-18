@@ -9680,6 +9680,15 @@ function v2Show(panelId, item){
     showTab(panelId, ghost);
   }
 
+  // Reset scroll to the top so a freshly-opened section starts at its header
+  // — otherwise it inherits the previous page's scroll offset (e.g. landing
+  // mid-list when you click "On the Radar" from a scrolled-down page).
+  try {
+    const sc = document.querySelector('.v2-content');
+    if (sc) sc.scrollTo({ top: 0, behavior: 'auto' });
+    window.scrollTo(0, 0);
+  } catch (e) {}
+
   // Close the mobile drawer after navigating
   document.body.classList.remove('v2-drawer-open');
 }
