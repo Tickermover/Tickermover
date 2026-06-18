@@ -522,7 +522,7 @@ def compute_pop_score(
 
 def _caution_observation(kind: str, t: dict) -> str:
     """Observational note about a caution flag.  Describes the data condition,
-    NOT what the user should do.  TickerMover is not a SEBI-registered advisor;
+    NOT what the user should do.  TickerMover is not an FCA-authorised adviser;
     it surfaces signals, the user decides what (if anything) to do."""
     if kind == "analyst":
         mean = _safe(t, "target_mean") or _safe(t, "target_price")

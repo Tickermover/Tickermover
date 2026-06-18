@@ -7519,7 +7519,7 @@ document.addEventListener('DOMContentLoaded', function(){
     <div class="card"><h3 style="color:var(--acc2);margin-bottom:8px">📐 Alpha Score</h3>
       <p style="font-size:13px;line-height:1.6;color:var(--muted)">Composite 0–100 score combining momentum (40%), social velocity (20%), technical signals (20%), fundamentals (10%), and market cap fit (10%). Scores above 70 indicate strong setups. Only $1B+ market cap stocks qualify.</p></div>
     <div class="card"><h3 style="color:var(--acc2);margin-bottom:8px">🎯 Grades &amp; Ratings</h3>
-      <p style="font-size:13px;line-height:1.6;color:var(--muted)">A → ★★★★★ Strong Outperform · B → ★★★★ Outperform · C → ★★★ Neutral · D → ★★ Lagging · F → ★ Avoid. The Hot List shows only ★★★★★ Strong Outperform (grade A) with confidence ≥ 75%. Use All Stocks tab to browse all grades. <strong>Note:</strong> these are quality descriptors, not buy/sell recommendations — TickerMover is a research tool, not a SEBI-registered advisor.</p></div>
+      <p style="font-size:13px;line-height:1.6;color:var(--muted)">A → ★★★★★ Strong Outperform · B → ★★★★ Outperform · C → ★★★ Neutral · D → ★★ Lagging · F → ★ Avoid. The Hot List shows only ★★★★★ Strong Outperform (grade A) with confidence ≥ 75%. Use All Stocks tab to browse all grades. <strong>Note:</strong> these are quality descriptors, not buy/sell recommendations — TickerMover is a research tool, not an FCA-authorised adviser.</p></div>
     <div class="card"><h3 style="color:var(--acc2);margin-bottom:8px">⚡ Trade Setups</h3>
       <p style="font-size:13px;line-height:1.6;color:var(--muted)">ATR-based position sizing: Entry at current price, Stop = Entry − 1.5×ATR, Target = Entry + 3.0×ATR. Shares = (Account × Risk%) ÷ ATR. Default 1% risk per trade. Adjust using the sizer widget.</p></div>
     <div class="card"><h3 style="color:var(--acc2);margin-bottom:8px">🔄 Data Refresh</h3>
@@ -11140,7 +11140,7 @@ function v2RenderTearsheetHTML(sym, data){
 
   // ── 6. Disclaimer ────────────────────────────────────────────────
   const disc = '<div class="v2-ts-disclaimer">' +
-    '<strong>Educational research tool.</strong> TickerMover is a quantitative analysis platform — not a SEBI / SEC-registered investment advisor. Nothing in this tear sheet is a personalised recommendation to buy or sell. Past performance and quant ratings don\'t guarantee future results. Do your own research.' +
+    '<strong>Educational research tool.</strong> TickerMover is a quantitative analysis platform — not an FCA-authorised investment adviser. Nothing in this tear sheet is a personalised recommendation to buy or sell. Past performance and quant ratings don\'t guarantee future results. Do your own research.' +
   '</div>';
 
   return hero + thesisSec + pillarSec + chartSec + earningsSec + disc;
@@ -11534,7 +11534,7 @@ const fmtM   = v => { if (!v || isNaN(v)) return '—'; const b = v/1e9; return 
 const pCls   = v => (!v || isNaN(parseFloat(v))) ? '' : parseFloat(v) >= 0 ? 'pos' : 'neg';
 
 // Grade-to-label mapping uses QUALITY DESCRIPTORS + visual star ratings,
-// not buy/sell verbs. "STRONG BUY" / "BUY" are SEBI/FINRA-restricted
+// not buy/sell verbs. "STRONG BUY" / "BUY" are FCA/FINRA-restricted
 // recommendation language for registered analysts only. TickerMover is a
 // research tool, not an advisor — these labels describe stock quality and
 // do NOT instruct an action.
@@ -14152,7 +14152,7 @@ function openStockModal(ticker) {
   const metric = (k, v, cls='') => `<div class="fd-metric"><span class="k">${k}</span><span class="v ${cls}">${v}</span></div>`;
 
   // Quality verdict — describes the stock's ranking, not an action.
-  // Avoids SEBI/FINRA-restricted "BUY/SELL" recommendation language.
+  // Avoids FCA/FINRA-restricted "BUY/SELL" recommendation language.
   // Stars provide instant visual hierarchy (5★ = best, 1★ = weakest).
   const _verdictHead = (() => {
     const g = t.grade;
@@ -21174,7 +21174,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
           '<div class="gauge-wrap">'+_consensusGauge(pos,'')+'</div>'+cons+'</div>'+
         '<div class="fc-col-r">'+(chart?'<div class="fc-chartbox">'+chart+'</div>':'')+tbl+'</div>'+
       '</div>'+
-      '<div class="fc-disc">Analyst price targets &amp; consensus are third-party estimates (public broker data via Yahoo Finance / S&amp;P Global), shown for information only — <b>not a recommendation by TickerMover to buy or sell</b>. TickerMover is a research tool, not a SEBI-registered adviser. <a href="/disclaimer" target="_blank" rel="noopener">Full disclaimer ↗</a></div>');
+      '<div class="fc-disc">Analyst price targets &amp; consensus are third-party estimates (public broker data via Yahoo Finance / S&amp;P Global), shown for information only — <b>not a recommendation by TickerMover to buy or sell</b>. TickerMover is a research tool, not an FCA-authorised adviser. <a href="/disclaimer" target="_blank" rel="noopener">Full disclaimer ↗</a></div>');
   }
   function paneEstimates(t){
     const beat=parseInt(t.eps_beat_streak),avg=_fpNum(t,['avg_eps_surprise_pct']),days=parseInt(t.days_to_earnings),rev=t.eps_revisions_30d;
@@ -22188,7 +22188,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     renderIndexPills();
     const dis=document.getElementById('disclaimer');
     if(dis) dis.innerHTML=
-      '<b>Educational research tool.</b> TickerMover is a quantitative analysis platform — not a SEC/SEBI-registered investment advisor. '+
+      '<b>Educational research tool.</b> TickerMover is a quantitative analysis platform — not an FCA-authorised investment adviser. '+
       'The Alpha Score, pillars, and signals on this page are descriptive observations, not personalized advice. '+
       'Past performance and quantitative ratings do not guarantee future results. Always do your own research.';
   };

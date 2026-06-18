@@ -6551,7 +6551,7 @@ def _enrich_model_portfolio(portfolio: dict) -> dict:
                           "reason": signal_reason}
 
         # ── Build user-facing decision point — OBSERVATIONAL language ────
-        # TickerMover is a research/tracking tool, not a SEBI-registered advisor.
+        # TickerMover is a research/tracking tool, not an FCA-authorised adviser.
         # Labels describe what's happening to OUR SCORE, not what the user
         # should do. We deliberately do NOT publish a "tracker stop level" —
         # that reads as a sell-here instruction. The score's exit logic still

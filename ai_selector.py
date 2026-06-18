@@ -15,7 +15,7 @@ immaterial. Adaptive thinking at effort=high is the right setting for the task.
 Output is forced to a JSON schema (structured outputs) so the result drops
 straight into the selection sort with no parsing fragility.
 
-Compliance (SEBI / India research tool): the model rates conviction on our own
+Compliance (FCA / UK research tool): the model rates conviction on our own
 Outperform/Avoid scale — it must NOT emit "Buy"/"Sell" instructions. Provided
 data is ground truth; the model may not invent figures.
 

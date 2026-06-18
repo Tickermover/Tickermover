@@ -2953,8 +2953,8 @@ def _draw_endnotes_page(c, today_str, quarter_lbl):
     y -= 16
 
     disclaimer_html = (
-        "<b>Educational use only.</b> TickerMover is not a SEBI-registered "
-        "investment advisor and does not provide buy / sell recommendations. "
+        "<b>Educational use only.</b> TickerMover is not an FCA-authorised "
+        "investment adviser and does not provide buy / sell recommendations. "
         "The Alpha Score is a quantitative composite for screening purposes; "
         "it is not investment advice. Past performance does not guarantee "
         "future results. Forward-looking statements in this report reflect "
