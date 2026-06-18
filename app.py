@@ -1,6 +1,6 @@
 """
 TickerMover — FastAPI Application
-tickermover.com  |  Hunt for Alpha
+tickermover.com  |  From market noise to one clear number
 Run:  uvicorn app:app --host 127.0.0.1 --port 8000
 """
 from __future__ import annotations

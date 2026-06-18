@@ -3065,7 +3065,7 @@ def _draw_footer(c, with_disclaimer=False):
     c.drawString(A4_W - MARGIN_X - 46, foot_y + 12, "tickermover.com")
     c.setFillColor(INK_MUTED)
     c.setFont("Helvetica", 6.5)
-    c.drawRightString(A4_W - MARGIN_X, foot_y + 2, "Hunt for Alpha")
+    c.drawRightString(A4_W - MARGIN_X, foot_y + 2, "tickermover.com")
 
 
 # ── Public entry ─────────────────────────────────────────────────────
