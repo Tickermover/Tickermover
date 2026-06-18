@@ -2266,6 +2266,21 @@ def _spgrid(cards):
     cards = [c for c in cards if c]
     return f'<div class="metrics">{"".join(cards)}</div>' if cards else ""
 
+_REP_ACCENT = {"rep-blue":"#2970FF","rep-teal":"#0c8a82","rep-green":"#398f3c",
+               "rep-violet":"#7c3aed","rep-amber":"#db880b","rep-red":"#c11d33","rep-slate":"#4a5568"}
+
+def _sp_ribbon(anchor: str, title: str, inner: str, rib: str = "rep-slate", ico: str = "•") -> str:
+    """A premium 'ribbon card' — white rounded box, colored gradient header
+    bar + icon, and a matching colored left-accent. Mirrors the in-app drawer."""
+    if not inner:
+        return ""
+    acc = _REP_ACCENT.get(rib, "#4a5568")
+    aid = f' id="{anchor}"' if anchor else ""
+    return (f'<section{aid} class="rep-sec" style="border-left:4px solid {acc}">'
+            f'<div class="rep-rib {rib}"><span class="rep-ico">{ico}</span>'
+            f'<span class="rep-title">{title}</span></div>'
+            f'<div class="rep-body">{inner}</div></section>')
+
 def _sp_score_gauge(score, color: str) -> str:
     """Colorful donut gauge for the Alpha Score — server-rendered SVG, no JS."""
     import math
@@ -2295,16 +2310,12 @@ def _sp_pro_section(sym: str) -> str:
         f'<div class="pro-card"><div class="pc-h">{n}</div><div class="pc-d">{d}</div></div>'
         for n, d in items
     )
-    return (
-        '<section id="more" class="rep-sec">'
-        '<div class="rep-rib rep-red"><span class="rep-ico">🔓</span>'
-        '<span class="rep-title">Go deeper with Pro</span></div>'
-        '<div class="rep-body">'
+    inner = (
         f'<p class="sp-lead">AI research tabs for {sym}, unlocked with TickerMover Pro — free during beta.</p>'
         f'<div class="pro-grid">{cards}</div>'
         f'<a href="/app?signup=1" class="cta-btn cta-btn-pri">Unlock {sym} with Pro →</a>'
-        '</div></section>'
     )
+    return _sp_ribbon("more", "Go deeper with Pro", inner, "rep-red", "🔓")
 
 def _sp_data_sections(t: dict, sym: str, price: float):
     """Build (nav_html, sections_html) for all public data tabs."""
@@ -2321,12 +2332,7 @@ def _sp_data_sections(t: dict, sym: str, price: float):
         if not inner: return
         nav.append(f'<a href="#{anchor}">{title}</a>')
         rib, ico = _RIB.get(anchor, ("rep-slate", "•"))
-        secs.append(
-            f'<section id="{anchor}" class="rep-sec">'
-            f'<div class="rep-rib {rib}"><span class="rep-ico">{ico}</span>'
-            f'<span class="rep-title">{title}</span></div>'
-            f'<div class="rep-body">{inner}</div></section>'
-        )
+        secs.append(_sp_ribbon(anchor, title, inner, rib, ico))
 
     # Score breakdown (six pillars) — each its own vivid colour, infographic-style
     rows = []
@@ -2473,6 +2479,40 @@ def _render_stock_page(t: dict) -> str:
     sp_nav_html, sp_sections_html = _sp_data_sections(t, sym, price)
     score_gauge_html = _sp_score_gauge(pop, verdict_color)
 
+    # Verdict stars + tier + signal chips (drawer-style)
+    _rparts = (rating or "").split(" ", 1)
+    stars_txt = _rparts[0] if (_rparts and "★" in _rparts[0]) else ""
+    tier_txt = _rparts[1] if len(_rparts) > 1 else rating
+    stars_html = f'<div class="vb-stars" style="color:{verdict_color}">{stars_txt}</div>' if stars_txt else ""
+    _chips = []
+    for _clbl, _ck, _ccls in (("MOMENTUM", "momentum_score", "cc-blue"), ("GROWTH", "growth_score", "cc-up"),
+                              ("QUALITY", "quality_score", "cc-up"), ("VALUE", "valuation_score", "cc-val"),
+                              ("SENTIMENT", "sentiment_score", "cc-blue")):
+        _cv = _spf(t.get(_ck))
+        if _cv is not None and _cv >= 66:
+            _chips.append(f'<span class="dr-cc {_ccls}">{_clbl}</span>')
+    verdict_chips_html = f'<div class="dr-call-chips">{"".join(_chips)}</div>' if _chips else ""
+
+    # Key metrics → ribbon card
+    _km = [
+        f'<div class="metric"><div class="lbl">Alpha Score</div><div class="val">{round(pop)}/100</div></div>',
+        f'<div class="metric"><div class="lbl">Grade</div><div class="val">{grade}</div></div>',
+    ]
+    if rev_g is not None:
+        _km.append(f'<div class="metric"><div class="lbl">Rev Growth YoY</div><div class="val {_spcls(rev_g)}">{rev_g*100:+.1f}%</div></div>')
+    if mom is not None:
+        _km.append(f'<div class="metric"><div class="lbl">30-day Momentum</div><div class="val {_spcls(mom)}">{mom:+.1f}%</div></div>')
+    if pe and pe > 0:
+        _km.append(f'<div class="metric"><div class="lbl">Forward P/E</div><div class="val">{pe:.1f}×</div></div>')
+    if tgt and tgt > 0:
+        _km.append(f'<div class="metric"><div class="lbl">Analyst Target</div><div class="val">${tgt:.2f}</div></div>')
+    if upside is not None:
+        _km.append(f'<div class="metric"><div class="lbl">Implied Upside</div><div class="val {_spcls(upside)}">{upside:+.1f}%</div></div>')
+    key_metrics_html = _sp_ribbon("metrics", "Key metrics", f'<div class="metrics">{"".join(_km)}</div>', "rep-blue", "📋")
+
+    # Latest earnings → ribbon card (post-earnings card nested + neutralized via CSS)
+    latest_earnings_html = _sp_ribbon("latest-earnings", "Latest earnings", post_earnings_html, "rep-violet", "🗓️") if post_earnings_html else ""
+
     # ── SEO meta tags — these are the part Google ranks on ──
     import datetime as _dt
     _today = _dt.date.today().isoformat()
@@ -2540,9 +2580,9 @@ def _render_stock_page(t: dict) -> str:
             for _q, _a in _faqs
         ],
     }
-    faq_html = "<h2>" + sym + " — frequently asked</h2>" + "".join(
+    faq_html = _sp_ribbon("faq", "Frequently asked", "".join(
         f'<div class="faq-q"><h3>{_q}</h3><p>{_a}</p></div>' for _q, _a in _faqs
-    )
+    ), "rep-slate", "❓")
 
     # ── Build news list HTML ──
     news_html = ""
@@ -2555,7 +2595,7 @@ def _render_stock_page(t: dict) -> str:
             if headline:
                 items.append(f'<li><a href="{url}" target="_blank" rel="noopener">{headline}</a> <span class="src">· {src}</span></li>')
         if items:
-            news_html = f'<h2>Latest news on {sym}</h2><ul class="news">{"".join(items)}</ul>'
+            news_html = _sp_ribbon("news", f"Latest news on {sym}", f'<ul class="news">{"".join(items)}</ul>', "rep-blue", "📰")
 
     # ── Peer links — internal-link graph helps Google understand the cluster ──
     peers_html = ""
@@ -2570,7 +2610,7 @@ def _render_stock_page(t: dict) -> str:
             )
             _ssl = _seo.slugify(sub) if sub else ""
             _sector_link = f'<p style="margin-top:10px"><a href="/sectors/{_ssl}">View all {sub} stocks &rarr;</a></p>' if _ssl else ""
-            peers_html = f'<h2>Similar stocks in {sub or "this sub-sector"}</h2><div class="peers">{chips}</div>{_sector_link}'
+            peers_html = _sp_ribbon("peers", f"Similar stocks in {sub or 'this sub-sector'}", f'<div class="peers">{chips}</div>{_sector_link}', "rep-slate", "🔗")
     except Exception:
         pass
     # Always append the FAQ block (renders even when there are no peers)
@@ -2715,7 +2755,21 @@ section{{scroll-margin-top:60px;margin-bottom:8px}}
 .metric .val{{font-size:20px}}
 .metric .lbl{{font-size:9.5px}}
 h2{{font-size:18px;margin:30px 0 12px}}
-.sp-nav{{background:transparent;border-bottom:none;padding:4px 0 12px}}
+.sp-nav{{background:rgba(240,239,232,.82);-webkit-backdrop-filter:blur(12px) saturate(150%);backdrop-filter:blur(12px) saturate(150%);border-bottom:none;padding:8px 0 10px}}
+/* glassy sheen on ribbon headers */
+.rep-rib{{position:relative}}
+.rep-rib::after{{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.22),rgba(255,255,255,0) 62%);pointer-events:none}}
+.rep-rib>*{{position:relative;z-index:1}}
+/* verdict stars + signal chips */
+.vb-stars{{font-size:17px;letter-spacing:2px;line-height:1;margin-bottom:5px}}
+.dr-call-chips{{display:flex;flex-wrap:wrap;gap:6px;margin-top:11px}}
+.dr-cc{{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:800;padding:4px 9px;border-radius:7px;letter-spacing:.03em;background:#fff;border:1px solid #e2e8f0}}
+.dr-cc.cc-up{{color:#15803d;border-color:rgba(22,163,74,.32);background:rgba(22,163,74,.07)}}
+.dr-cc.cc-blue{{color:#0040c1;border-color:rgba(41,112,255,.32);background:rgba(41,112,255,.07)}}
+.dr-cc.cc-val{{color:#b4780a;border-color:rgba(180,120,10,.32);background:rgba(245,166,35,.10)}}
+/* neutralize the nested 'Latest earnings' card so it sits flush in its ribbon */
+.rep-body [data-earnings-card]{{background:transparent!important;border:0!important;box-shadow:none!important;padding:0!important;margin:0!important}}
+.rep-body [data-earnings-card] h3{{display:none}}
 @media(max-width:640px){{h1{{font-size:30px}}.rep-body{{padding:14px}}}}
 </style>
 </head>
@@ -2735,25 +2789,18 @@ h2{{font-size:18px;margin:30px 0 12px}}
   <div class="verdict-box" id="overview">
     <div class="vb-gauge">{score_gauge_html}</div>
     <div class="vb-body">
-      <div class="verdict-head"><span class="verdict-tag">{rating}</span></div>
+      {stars_html}
+      <div class="verdict-head"><span class="verdict-tag">{tier_txt}</span></div>
       <div class="verdict-text">{bottom_line}</div>
+      {verdict_chips_html}
     </div>
   </div>
 
   {sp_nav_html}
 
-  {post_earnings_html}
+  {key_metrics_html}
 
-  <h2>Key metrics</h2>
-  <div class="metrics">
-    <div class="metric"><div class="lbl">Alpha Score</div><div class="val">{round(pop)}/100</div></div>
-    <div class="metric"><div class="lbl">Grade</div><div class="val">{grade}</div></div>
-    {f'<div class="metric"><div class="lbl">Rev Growth YoY</div><div class="val {"pos" if rev_g and rev_g > 0 else "neg" if rev_g and rev_g < 0 else ""}">{rev_g*100:+.1f}%</div></div>' if rev_g is not None else ''}
-    {f'<div class="metric"><div class="lbl">30-day Momentum</div><div class="val {"pos" if mom and mom > 0 else "neg" if mom and mom < 0 else ""}">{mom:+.1f}%</div></div>' if mom is not None else ''}
-    {f'<div class="metric"><div class="lbl">Forward P/E</div><div class="val">{pe:.1f}×</div></div>' if pe and pe > 0 else ''}
-    {f'<div class="metric"><div class="lbl">Analyst Target</div><div class="val">${tgt:.2f}</div></div>' if tgt and tgt > 0 else ''}
-    {f'<div class="metric"><div class="lbl">Implied Upside</div><div class="val {"pos" if upside and upside > 0 else "neg"}">{upside:+.1f}%</div></div>' if upside is not None else ''}
-  </div>
+  {latest_earnings_html}
 
   {sp_sections_html}
 
