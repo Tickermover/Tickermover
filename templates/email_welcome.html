@@ -61,63 +61,84 @@
                    style="background:#EAF2FF;border-radius:14px;">
               <tr>
                 <td align="center" style="padding:28px 16px 24px;">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="280" height="180" viewBox="0 0 280 180" fill="none" aria-hidden="true">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="292" height="176" viewBox="0 0 292 176" fill="none" aria-hidden="true">
 
                     <defs>
-                      <linearGradient id="wl-b1" x1="0" y1="1" x2="0" y2="0"><stop offset="0%" stop-color="#1E40AF"/><stop offset="100%" stop-color="#3B82F6"/></linearGradient>
-                      <linearGradient id="wl-b2" x1="0" y1="1" x2="0" y2="0"><stop offset="0%" stop-color="#2563EB"/><stop offset="100%" stop-color="#38BDF8"/></linearGradient>
-                      <linearGradient id="wl-b3" x1="0" y1="1" x2="0" y2="0"><stop offset="0%" stop-color="#0EA5E9"/><stop offset="100%" stop-color="#22D3EE"/></linearGradient>
-                      <linearGradient id="wl-b4" x1="0" y1="1" x2="0" y2="0"><stop offset="0%" stop-color="#06B6D4"/><stop offset="100%" stop-color="#2DD4BF"/></linearGradient>
-                      <linearGradient id="wl-b5" x1="0" y1="1" x2="0" y2="0"><stop offset="0%" stop-color="#10B981"/><stop offset="100%" stop-color="#34D399"/></linearGradient>
-                      <linearGradient id="wl-ring" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#2970FF"/><stop offset="100%" stop-color="#22C55E"/></linearGradient>
-                      <radialGradient id="wl-glow" cx="0.5" cy="0.5" r="0.5"><stop offset="0%" stop-color="#C2E0FF"/><stop offset="100%" stop-color="#EAF2FF" stop-opacity="0"/></radialGradient>
+                      <linearGradient id="wt1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#6366F1"/><stop offset="100%" stop-color="#818CF8"/></linearGradient>
+                      <linearGradient id="wt2" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#2970FF"/><stop offset="100%" stop-color="#5DB3F1"/></linearGradient>
+                      <linearGradient id="wt3" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#06B6D4"/><stop offset="100%" stop-color="#22D3EE"/></linearGradient>
+                      <linearGradient id="wt4" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#10B981"/><stop offset="100%" stop-color="#34D399"/></linearGradient>
+                      <linearGradient id="wt5" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#F59E0B"/><stop offset="100%" stop-color="#FBBF24"/></linearGradient>
+                      <linearGradient id="wt6" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#F97316"/><stop offset="100%" stop-color="#FB923C"/></linearGradient>
+                      <linearGradient id="wt7" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#EC4899"/><stop offset="100%" stop-color="#F472B6"/></linearGradient>
+                      <radialGradient id="wt-glow" cx="0.5" cy="0.5" r="0.5"><stop offset="0%" stop-color="#C2E0FF"/><stop offset="100%" stop-color="#EAF2FF" stop-opacity="0"/></radialGradient>
                     </defs>
 
                     <!-- soft glow -->
-                    <ellipse cx="120" cy="100" rx="105" ry="74" fill="url(#wl-glow)" opacity="0.6"/>
+                    <ellipse cx="146" cy="92" rx="120" ry="66" fill="url(#wt-glow)" opacity="0.65"/>
 
-                    <!-- dashboard panel behind the chart -->
-                    <rect x="20" y="38" width="176" height="120" rx="14" fill="#ffffff"/>
-                    <!-- baseline + faint gridlines -->
-                    <g stroke="#E2ECFF" stroke-width="1.5">
-                      <line x1="36" y1="140" x2="182" y2="140"/>
-                      <line x1="36" y1="112" x2="182" y2="112" opacity="0.6"/>
-                      <line x1="36" y1="84"  x2="182" y2="84"  opacity="0.6"/>
+                    <!-- confetti burst -->
+                    <g>
+                      <rect x="40"  y="20" width="7" height="7" rx="1.5" transform="rotate(20 43 23)"  fill="#6366F1"/>
+                      <rect x="248" y="24" width="7" height="7" rx="1.5" transform="rotate(-25 251 27)" fill="#EC4899"/>
+                      <rect x="120" y="10" width="6" height="6" rx="1.5" transform="rotate(35 123 13)"  fill="#F59E0B"/>
+                      <rect x="200" y="14" width="6" height="6" rx="1.5" transform="rotate(-15 203 17)" fill="#10B981"/>
+                      <circle cx="74"  cy="14" r="3.4" fill="#22D3EE"/>
+                      <circle cx="164" cy="18" r="3"   fill="#FB923C"/>
+                      <circle cx="226" cy="46" r="3"   fill="#818CF8"/>
+                      <circle cx="58"  cy="44" r="2.6" fill="#34D399"/>
+                      <!-- streamers -->
+                      <path d="M96 16 q4 8 -1 16"  stroke="#F472B6" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+                      <path d="M188 40 q5 7 0 15"  stroke="#2970FF" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+                      <path d="M268 56 q-6 6 -2 14" stroke="#FBBF24" stroke-width="2.4" fill="none" stroke-linecap="round"/>
                     </g>
 
-                    <!-- rising, multi-color bars -->
-                    <rect x="40"  y="104" width="20" height="36" rx="5" fill="url(#wl-b1)"/>
-                    <rect x="70"  y="86"  width="20" height="54" rx="5" fill="url(#wl-b2)"/>
-                    <rect x="100" y="92"  width="20" height="48" rx="5" fill="url(#wl-b3)"/>
-                    <rect x="130" y="68"  width="20" height="72" rx="5" fill="url(#wl-b4)"/>
-                    <rect x="160" y="54"  width="20" height="86" rx="5" fill="url(#wl-b5)"/>
-
-                    <!-- upward trend line over the bars -->
-                    <polyline points="50,100 80,82 110,88 140,64 170,50" fill="none" stroke="#FB923C" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-                    <g fill="#ffffff" stroke="#FB923C" stroke-width="2.5">
-                      <circle cx="50" cy="100" r="3"/><circle cx="80" cy="82" r="3"/><circle cx="110" cy="88" r="3"/><circle cx="140" cy="64" r="3"/>
+                    <!-- WELCOME letter tiles (rainbow, playful wave) -->
+                    <g font-family="'Helvetica Neue',Arial,sans-serif" font-size="19" font-weight="800" fill="#ffffff" text-anchor="middle">
+                      <g transform="rotate(-7 38 82)">
+                        <rect x="22" y="66" width="32" height="32" rx="9" fill="url(#wt1)"/>
+                        <rect x="25" y="69" width="26" height="11" rx="6" fill="#ffffff" opacity="0.18"/>
+                        <text x="38" y="89">W</text>
+                      </g>
+                      <g transform="rotate(5 74 74)">
+                        <rect x="58" y="58" width="32" height="32" rx="9" fill="url(#wt2)"/>
+                        <rect x="61" y="61" width="26" height="11" rx="6" fill="#ffffff" opacity="0.18"/>
+                        <text x="74" y="81">E</text>
+                      </g>
+                      <g transform="rotate(-4 110 78)">
+                        <rect x="94" y="62" width="32" height="32" rx="9" fill="url(#wt3)"/>
+                        <rect x="97" y="65" width="26" height="11" rx="6" fill="#ffffff" opacity="0.18"/>
+                        <text x="110" y="85">L</text>
+                      </g>
+                      <g transform="rotate(4 146 72)">
+                        <rect x="130" y="56" width="32" height="32" rx="9" fill="url(#wt4)"/>
+                        <rect x="133" y="59" width="26" height="11" rx="6" fill="#ffffff" opacity="0.18"/>
+                        <text x="146" y="79">C</text>
+                      </g>
+                      <g transform="rotate(-5 182 76)">
+                        <rect x="166" y="60" width="32" height="32" rx="9" fill="url(#wt5)"/>
+                        <rect x="169" y="63" width="26" height="11" rx="6" fill="#ffffff" opacity="0.18"/>
+                        <text x="182" y="83">O</text>
+                      </g>
+                      <g transform="rotate(6 218 74)">
+                        <rect x="202" y="58" width="32" height="32" rx="9" fill="url(#wt6)"/>
+                        <rect x="205" y="61" width="26" height="11" rx="6" fill="#ffffff" opacity="0.18"/>
+                        <text x="218" y="81">M</text>
+                      </g>
+                      <g transform="rotate(-6 254 80)">
+                        <rect x="238" y="64" width="32" height="32" rx="9" fill="url(#wt7)"/>
+                        <rect x="241" y="67" width="26" height="11" rx="6" fill="#ffffff" opacity="0.18"/>
+                        <text x="254" y="87">E</text>
+                      </g>
                     </g>
-                    <!-- arrow tip -->
-                    <circle cx="170" cy="50" r="4" fill="#FB923C"/>
-                    <path d="M170 50 L182 41 M182 41 L181 53 M182 41 L170 40" stroke="#FB923C" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
 
-                    <!-- Alpha Score gauge badge -->
-                    <circle cx="232" cy="64" r="34" fill="#ffffff"/>
-                    <circle cx="232" cy="64" r="27" fill="none" stroke="#E6EEFF" stroke-width="7"/>
-                    <circle cx="232" cy="64" r="27" fill="none" stroke="url(#wl-ring)" stroke-width="7" stroke-linecap="round"
-                            stroke-dasharray="170 170" stroke-dashoffset="44" transform="rotate(-90 232 64)"/>
-                    <text x="232" y="62" text-anchor="middle" font-family="'Helvetica Neue',Arial,sans-serif" font-size="20" font-weight="800" fill="#0a0a0a">A+</text>
-                    <text x="232" y="77" text-anchor="middle" font-family="'Helvetica Neue',Arial,sans-serif" font-size="7" font-weight="700" fill="#64748b" letter-spacing="0.6">ALPHA</text>
-
-                    <!-- colorful sparkles -->
-                    <path d="M210 16 l1.6 4.2 l4.2 1.6 l-4.2 1.6 l-1.6 4.2 l-1.6 -4.2 l-4.2 -1.6 l4.2 -1.6 z" fill="#FBBF24"/>
-                    <path d="M28 150 l1.3 3.4 l3.4 1.3 l-3.4 1.3 l-1.3 3.4 l-1.3 -3.4 l-3.4 -1.3 l3.4 -1.3 z" fill="#22D3EE"/>
-                    <circle cx="206" cy="112" r="2.6" fill="#A78BFA"/>
-                    <circle cx="16"  cy="58"  r="2.4" fill="#34D399"/>
-                    <circle cx="262" cy="104" r="2.2" fill="#FB7185"/>
+                    <!-- sparkles -->
+                    <path d="M150 116 l2 5.2 l5.2 2 l-5.2 2 l-2 5.2 l-2 -5.2 l-5.2 -2 l5.2 -2 z" fill="#FBBF24"/>
+                    <path d="M52 120 l1.4 3.6 l3.6 1.4 l-3.6 1.4 l-1.4 3.6 l-1.4 -3.6 l-3.6 -1.4 l3.6 -1.4 z" fill="#22D3EE"/>
+                    <path d="M242 122 l1.4 3.6 l3.6 1.4 l-3.6 1.4 l-1.4 3.6 l-1.4 -3.6 l-3.6 -1.4 l3.6 -1.4 z" fill="#EC4899"/>
 
                     <!-- ground shadow -->
-                    <ellipse cx="120" cy="168" rx="84" ry="4" fill="#C2E0FF" opacity="0.5"/>
+                    <ellipse cx="146" cy="150" rx="96" ry="5" fill="#C2E0FF" opacity="0.5"/>
                   </svg>
                 </td>
               </tr>
