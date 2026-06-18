@@ -7508,6 +7508,24 @@ class _WatchlistBody(BaseModel):
     ticker: str
 
 
+def _password_rule_error(pw: str) -> Optional[str]:
+    """Full password policy — matches the "Password tips" shown in the UI
+    (sign-up modal + reset page): 8+ chars, uppercase, lowercase, number,
+    and a symbol. Returns a user-facing error string, or None if OK."""
+    pw = pw or ""
+    if len(pw) < 8:
+        return "Password must be at least 8 characters."
+    if not any(c.isupper() for c in pw):
+        return "Password must include an uppercase letter."
+    if not any(c.islower() for c in pw):
+        return "Password must include a lowercase letter."
+    if not any(c.isdigit() for c in pw):
+        return "Password must include a number."
+    if not any((not c.isalnum()) for c in pw):
+        return "Password must include a symbol."
+    return None
+
+
 @app.post("/api/auth/signup")
 async def api_signup(body: _AuthBody, request: Request):
     """Register a new user account.
@@ -7518,13 +7536,10 @@ async def api_signup(body: _AuthBody, request: Request):
     TickerMover" message in one. Rate limit is Resend's (3k/month free),
     not Supabase's built-in 3/hour cap.
     """
-    # Standard password policy for new accounts: 8+ chars, letters AND numbers.
-    pw = body.password or ""
-    if len(pw) < 8 or not (any(c.isalpha() for c in pw) and any(c.isdigit() for c in pw)):
-        raise HTTPException(
-            status_code=400,
-            detail="Password must be at least 8 characters and include both letters and numbers.",
-        )
+    # Full password policy for new accounts (matches the UI "Password tips").
+    _pw_err = _password_rule_error(body.password)
+    if _pw_err:
+        raise HTTPException(status_code=400, detail=_pw_err)
     # Land the confirmation link on /auth/callback so the session is captured
     # and first-time onboarding (welcome + risk profile) fires.
     redirect_to = f"{request.url.scheme}://{request.url.netloc}/auth/callback"
@@ -7821,8 +7836,9 @@ class _ResetPasswordBody(BaseModel):
 async def api_reset_password(body: _ResetPasswordBody):
     """Update password using a Supabase recovery access_token from the
     URL hash of the email click. Returns {ok: True} on success."""
-    if len(body.new_password) < 8:
-        raise HTTPException(status_code=400, detail="Password must be at least 8 characters")
+    _pw_err = _password_rule_error(body.new_password)
+    if _pw_err:
+        raise HTTPException(status_code=400, detail=_pw_err)
     if not body.access_token or len(body.access_token) < 20:
         raise HTTPException(status_code=400, detail="Invalid or missing reset token. Try requesting a new reset email.")
     result = await supabase.update_password(body.access_token, body.new_password)
@@ -8022,9 +8038,15 @@ button.submit:disabled{opacity:.6;cursor:not-allowed}
     const confirm = document.getElementById('confirm-pass').value;
     msg.className = 'msg'; msg.textContent = '';
 
-    if (newPass.length < 8) {
+    var _pwErr = (newPass.length < 8) ? 'Password must be at least 8 characters.'
+      : !/[A-Z]/.test(newPass) ? 'Add at least one uppercase letter.'
+      : !/[a-z]/.test(newPass) ? 'Add at least one lowercase letter.'
+      : !/[0-9]/.test(newPass) ? 'Add at least one number.'
+      : !/[^A-Za-z0-9]/.test(newPass) ? 'Add at least one symbol.'
+      : '';
+    if (_pwErr) {
       msg.className = 'msg err show';
-      msg.textContent = 'Password must be at least 8 characters.';
+      msg.textContent = _pwErr;
       return;
     }
     if (newPass !== confirm) {
@@ -8032,12 +8054,6 @@ button.submit:disabled{opacity:.6;cursor:not-allowed}
       msg.textContent = 'Passwords don\\'t match.';
       return;
     }
-    if (scorePassword(newPass) < 2) {
-      msg.className = 'msg err show';
-      msg.textContent = 'Password is too weak — add length, mixed case, and symbols.';
-      return;
-    }
-
     btn.disabled = true;
     btn.textContent = 'Updating…';
     try {
@@ -8245,8 +8261,9 @@ async def api_user_change_password(body: _ChangePwBody,
     if not user:
         raise HTTPException(status_code=401, detail="Not authenticated")
     pw = body.new_password or ""
-    if len(pw) < 8:
-        raise HTTPException(status_code=400, detail="Password must be at least 8 characters.")
+    _pw_err = _password_rule_error(pw)
+    if _pw_err:
+        raise HTTPException(status_code=400, detail=_pw_err)
     res = await supabase.update_password(creds.credentials, pw)
     if not isinstance(res, dict) or res.get("error"):
         raise HTTPException(status_code=400, detail=(res or {}).get("error", "Could not update password."))

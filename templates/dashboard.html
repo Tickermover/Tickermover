@@ -17008,7 +17008,8 @@ async function acctResendVerify(){
 async function acctChangePw(){
   const a = (document.getElementById('v2-acct-pw1') || {}).value || '';
   const b = (document.getElementById('v2-acct-pw2') || {}).value || '';
-  if (a.length < 8){ _acctNote('v2-acct-pwnote', 'Password must be at least 8 characters.', 'err'); return; }
+  const _pwErr = (typeof _passwordRuleError === 'function') ? _passwordRuleError(a) : (a.length < 8 ? 'Password must be at least 8 characters.' : '');
+  if (_pwErr){ _acctNote('v2-acct-pwnote', _pwErr, 'err'); return; }
   if (a !== b){ _acctNote('v2-acct-pwnote', 'Passwords do not match.', 'err'); return; }
   const btn = document.getElementById('v2-acct-pwsave'); if (btn) btn.disabled = true;
   _acctNote('v2-acct-pwnote', 'Updating…');
@@ -18903,6 +18904,19 @@ async function fpSubmit() {
   }
 }
 
+// Full password policy — matches the "Password tips" shown under the field
+// and the server-side rule in _password_rule_error(). Returns an error
+// string or '' when the password is acceptable.
+function _passwordRuleError(p) {
+  p = p || '';
+  if (p.length < 8)            return 'Password must be at least 8 characters.';
+  if (!/[A-Z]/.test(p))        return 'Add at least one uppercase letter.';
+  if (!/[a-z]/.test(p))        return 'Add at least one lowercase letter.';
+  if (!/[0-9]/.test(p))        return 'Add at least one number.';
+  if (!/[^A-Za-z0-9]/.test(p)) return 'Add at least one symbol.';
+  return '';
+}
+
 async function authSubmit() {
   // UNIFIED sign-in flow (modern auth pattern, Univest-style):
   //   1. Try /api/auth/signin first
@@ -18968,6 +18982,15 @@ async function authSubmit() {
                             || msg.includes('invalid') || msg.includes('not found')
                             || msg.includes('credentials') || msg.includes('no user');
       if (looksLikeNewUser) {
+        // New account — enforce the full password rule here. Existing
+        // sign-ins (handled above) are never subject to this, so users
+        // with older/simpler passwords are never locked out.
+        const _pwErr = _passwordRuleError(pass);
+        if (_pwErr) {
+          errEl.textContent = _pwErr;
+          document.getElementById('auth-password').focus();
+          return;
+        }
         // 2) Fall through to silent auto-signup with the same creds
         res = await _hit('/api/auth/signup');
         if (!res.ok) {
