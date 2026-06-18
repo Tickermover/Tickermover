@@ -3330,18 +3330,15 @@ async def _build_desk_report(kind: str, edition_date) -> dict:
     except Exception as exc:
         logger.warning(f"desk {kind} AI narrative failed: {exc}")
         data["ai"] = None
-    now = _et_now()
-    h, m = _DESK_PUBLISH.get(kind, (9, 0))
-    nxt = _next_publish_date(kind, now)
-    next_when = "today" if nxt == now.date() else nxt.strftime("%a %d %b")
+    # LIVE mode: the report tracks the market intraday (no frozen daily edition).
+    # Label it with the live "as of" time so users see it's current, not a 4 AM snapshot.
+    ses = data.get("session", {}) if isinstance(data, dict) else {}
     data["edition"] = {
-        "kind":         kind,
-        "date":         edition_date.isoformat(),
-        "date_label":   edition_date.strftime("%a %d %b %Y"),
-        "published_at": _clock(h, m),                 # scheduled drop time, not build time
-        "is_today":     edition_date == now.date(),
-        "next_label":   f"{next_when} {_clock(h, m)}",
-        "title":        "Pre-Market Report" if kind == "pre" else "Post-Market Report",
+        "kind":          kind,
+        "live":          True,
+        "title":         "Pre-Market Report" if kind == "pre" else "Post-Market Report",
+        "as_of":         ses.get("et_time"),
+        "session_label": ses.get("label"),
     }
     return data
 
@@ -3351,32 +3348,19 @@ def _desk_is_current(doc, ed) -> bool:
                 and doc.get("edition", {}).get("date") == ed.isoformat())
 
 
-async def _publish_desk(kind: str, force: bool = False) -> dict:
-    """Return the current edition for `kind`, freezing a fresh snapshot when the
-    stored edition is stale (i.e., a new edition has just come due).
+_DESK_LIVE_TTL = 300   # 5 min — desk report now tracks the market live
 
-    Durability: editions are persisted in Supabase (desk_store) so a Railway
-    redeploy reuses the current edition instead of paying to regenerate the AI
-    narrative on every build. L1 = in-memory cache, L2 = desk_store."""
-    from desk_store import store as _dstore
-    ed  = _edition_date_for(kind)
-    key = _desk_key(kind)
+async def _publish_desk(kind: str, force: bool = False) -> dict:
+    """Return the LIVE pre/post report for `kind`. Tracks the market intraday:
+    macro data comes from the live 5-min market_analysis feed, movers from the
+    30-second universe loop, and the kind-framed AI narrative is regenerated
+    each rebuild. Cached ~5 min so we don't re-run the AI on every request."""
+    key = f"desk:report:live:{kind}"
     cur = cache.get(key)
-    if not force and _desk_is_current(cur, ed):
+    if cur and not force:
         return cur
-    # L1 missed (e.g. just redeployed) — try the durable store before paying for AI.
-    if not force:
-        durable = _dstore.get(kind)
-        if _desk_is_current(durable, ed):
-            cache.set(key, durable, _DESK_TTL)    # re-warm L1
-            return durable
-    report = await _build_desk_report(kind, ed)
-    cache.set(key, report, _DESK_TTL)
-    try:
-        _dstore.save(kind, report)                # persist so the next deploy reuses it
-    except Exception as exc:
-        logger.warning(f"desk {kind} durable save failed: {exc}")
-    logger.info("🗞️  Published %s desk edition for %s", kind, ed.isoformat())
+    report = await _build_desk_report(kind, _et_now().date())
+    cache.set(key, report, _DESK_LIVE_TTL)
     return report
 
 

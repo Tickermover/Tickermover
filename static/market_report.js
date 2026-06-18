@@ -121,7 +121,14 @@ window.MarketReport = (function () {
     }
     const ed = host.querySelector('[data-ma-edition]');
     if (ed) {
-      if (d.edition) {
+      if (d.edition && d.edition.live) {
+        // Live mode — tracks the market intraday, labelled with the "as of" time.
+        const e = d.edition;
+        ed.hidden = false;
+        ed.innerHTML = `<span class="ma-ed-cal">🗓️</span><b>${e.title || 'Report'}</b>` +
+          (e.as_of ? `<span class="ma-ed-date">${e.as_of}</span>` : '') +
+          `<span class="ma-ed-tag today">● Live</span>`;
+      } else if (d.edition) {
         const e = d.edition;
         const tag = e.is_today
           ? `<span class="ma-ed-tag today">Today's edition</span>`
