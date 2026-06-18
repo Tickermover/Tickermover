@@ -2575,25 +2575,27 @@ def _render_stock_page(t: dict) -> str:
 
 <style>
 *{{margin:0;padding:0;box-sizing:border-box}}
-body{{font-family:'Instrument Sans',-apple-system,sans-serif;color:#0a0a0a;background:#fafbfc;line-height:1.6;font-size:15.5px;-webkit-font-smoothing:antialiased}}
+body{{font-family:'Instrument Sans',-apple-system,sans-serif;color:#0a0a0a;background:#f0efe8;background-image:radial-gradient(1100px 460px at 50% -120px,#eef6fe 0%,rgba(238,246,254,0) 70%);background-attachment:fixed;line-height:1.6;font-size:15.5px;-webkit-font-smoothing:antialiased}}
 a{{color:#2970FF;text-decoration:none;font-weight:600}}
 a:hover{{text-decoration:underline}}
 .mono{{font-family:'JetBrains Mono',monospace;font-feature-settings:'tnum' 1}}
-.wrap{{max-width:780px;margin:0 auto;padding:32px 24px 64px}}
-.brand{{display:inline-flex;align-items:center;gap:8px;font-size:16px;font-weight:800;color:#0a0a0a;margin-bottom:32px}}
-.brand em{{font-style:normal;color:#2970FF}}
+.wrap{{max-width:820px;margin:0 auto;padding:32px 20px 64px}}
+.brand{{display:inline-flex;align-items:center;gap:8px;font-size:16px;font-weight:800;color:#0a0a0a;margin-bottom:22px}}
+.brand em{{font-style:normal;background:linear-gradient(135deg,#2970FF 0%,#0040c1 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:#0040c1}}
+.report-card{{background:#fff;border:1px solid rgba(10,20,60,.05);border-radius:22px;padding:34px 38px;box-shadow:0 1px 3px rgba(10,20,60,.05),0 30px 60px -30px rgba(10,20,60,.32)}}
+@media(max-width:640px){{.report-card{{padding:24px 20px;border-radius:16px}}.wrap{{padding:20px 12px 48px}}}}
 .crumbs{{font-size:12.5px;color:#94a3b8;margin-bottom:8px;letter-spacing:.04em;text-transform:uppercase;font-weight:600}}
 h1{{font-size:38px;font-weight:900;letter-spacing:-.03em;margin-bottom:6px;color:#0a0a0a}}
 h1 .sym{{font-family:'JetBrains Mono',monospace;color:#15803d}}
 .subhead{{font-size:15px;color:#475569;margin-bottom:24px}}
-.verdict-box{{background:#fff;border:1px solid #e2e8f0;border-left:4px solid {verdict_color};border-radius:12px;padding:20px 24px;margin-bottom:28px;box-shadow:0 1px 3px rgba(10,10,10,.04)}}
+.verdict-box{{background:#f8fafc;border:1px solid #eef1f5;border-left:4px solid {verdict_color};border-radius:12px;padding:20px 24px;margin-bottom:24px}}
 .verdict-head{{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px}}
 .verdict-tag{{background:{verdict_color};color:#fff;padding:5px 12px;border-radius:7px;font-weight:800;font-size:13px;letter-spacing:.04em}}
 .verdict-score{{font-family:'JetBrains Mono',monospace;font-size:24px;font-weight:800;color:#0a0a0a}}
 .verdict-score .lbl{{font-size:11px;color:#94a3b8;font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin-left:6px}}
 .verdict-text{{font-size:14.5px;line-height:1.6;color:#0f172a}}
 .metrics{{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:28px}}
-.metric{{background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:12px 14px}}
+.metric{{background:#f8fafc;border:1px solid #eef1f5;border-radius:10px;padding:12px 14px}}
 .metric .lbl{{font-size:10.5px;color:#64748b;font-weight:700;letter-spacing:.05em;text-transform:uppercase;margin-bottom:3px}}
 .metric .val{{font-family:'JetBrains Mono',monospace;font-size:17px;font-weight:800;color:#0a0a0a}}
 .metric .val.pos{{color:#15803d}}
@@ -2604,7 +2606,7 @@ h2{{font-size:21px;font-weight:800;letter-spacing:-.015em;margin:32px 0 12px;col
 .news li:last-child{{border-bottom:none}}
 .news .src{{color:#94a3b8;font-size:12px;font-weight:500}}
 .peers{{display:flex;flex-wrap:wrap;gap:8px}}
-.peer{{display:inline-block;padding:7px 12px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:13px;color:#0a0a0a;font-weight:700;transition:all .15s}}
+.peer{{display:inline-block;padding:7px 12px;background:#f8fafc;border:1px solid #eef1f5;border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:13px;color:#0a0a0a;font-weight:700;transition:all .15s}}
 .peer:hover{{border-color:#2970FF;color:#2970FF;text-decoration:none}}
 .faq-q{{margin:14px 0}}
 .faq-q h3{{font-size:16px;font-weight:700;margin-bottom:4px;color:#0a0a0a}}
@@ -2617,7 +2619,8 @@ h2{{font-size:21px;font-weight:800;letter-spacing:-.015em;margin:32px 0 12px;col
 .legal{{margin-top:32px;font-size:11.5px;color:#94a3b8;text-align:center;line-height:1.6}}
 .val.pos{{color:#15803d}}.val.neg{{color:#b91c1c}}
 /* ── full-data sections ── */
-.sp-nav{{position:sticky;top:0;z-index:5;display:flex;gap:6px;overflow-x:auto;padding:10px 0;margin:0 0 8px;background:#fafbfc;border-bottom:1px solid #eef0f3;-ms-overflow-style:none;scrollbar-width:none}}
+.sp-nav{{position:sticky;top:0;z-index:5;display:flex;gap:6px;overflow-x:auto;padding:10px 0;margin:0 0 8px;background:#fff;border-bottom:1px solid #eef0f3;-ms-overflow-style:none;scrollbar-width:none}}
+.sp-nav a{{background:#f8fafc}}
 .sp-nav::-webkit-scrollbar{{display:none}}
 .sp-nav a{{flex:0 0 auto;font-size:12.5px;font-weight:700;color:#475569;padding:6px 12px;border-radius:999px;background:#fff;border:1px solid #e2e8f0}}
 .sp-nav a:hover{{color:#2970FF;border-color:#2970FF;text-decoration:none}}
@@ -2645,7 +2648,7 @@ section{{scroll-margin-top:60px;margin-bottom:8px}}
 .sp-note{{font-size:12.5px;color:#64748b;margin-top:8px}}
 .sp-lead{{font-size:14px;color:#475569;margin-bottom:14px}}
 .pro-grid{{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-bottom:14px}}
-.pro-card{{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:14px 16px;position:relative}}
+.pro-card{{background:#f8fafc;border:1px solid #eef1f5;border-radius:12px;padding:14px 16px;position:relative}}
 .pro-card .pc-h{{font-weight:800;font-size:14px;color:#0a0a0a;margin-bottom:4px}}
 .pro-card .pc-d{{font-size:12.5px;color:#64748b;line-height:1.5}}
 .cta-btn-pri{{background:linear-gradient(135deg,#2970FF,#0040c1);color:#fff;border-radius:10px;padding:12px 22px;font-weight:700}}
@@ -2661,6 +2664,7 @@ section{{scroll-margin-top:60px;margin-bottom:8px}}
     Ticker<em>Mover</em>
   </a>
 
+  <div class="report-card">
   <div class="crumbs">{sub or sector or "Stock Analysis"}</div>
   <h1><span class="sym">{sym}</span> Stock Analysis</h1>
   <p class="subhead">{name} · current price <span class="mono">{price_str}</span> ({chg_str} today)</p>
@@ -2692,6 +2696,7 @@ section{{scroll-margin-top:60px;margin-bottom:8px}}
 
   {news_html}
   {peers_html}
+  </div><!-- /report-card -->
 
   <div class="cta">
     <h3>Get the full live dashboard</h3>
