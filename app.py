@@ -7849,7 +7849,7 @@ async def reset_password_page():
 
 # Single-file HTML for the reset-password page. Kept inline so the route
 # has no external template dependency and renders instantly. Matches the
-# TickerMover brand (dark slate + lime accent + Inter typography).
+# TickerMover brand (white card + blue gradient accent + Inter typography).
 _RESET_PASSWORD_HTML = """<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7863,16 +7863,18 @@ _RESET_PASSWORD_HTML = """<!DOCTYPE html>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'Inter',-apple-system,sans-serif;color:#0a0a0a;background:#0A0A0A;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;-webkit-font-smoothing:antialiased;
-  background-image:radial-gradient(ellipse at top,#1a2e1a 0%,#0A0A0A 60%);}
-.card{background:#fff;border-radius:18px;padding:40px 36px;max-width:440px;width:100%;box-shadow:0 24px 60px rgba(0,0,0,.35),0 8px 20px rgba(0,0,0,.2)}
+  background-image:radial-gradient(ellipse at top,#0a1a33 0%,#0A0A0A 60%);}
+.card{background:#fff;border-radius:18px;padding:0 0 40px;max-width:440px;width:100%;box-shadow:0 24px 60px rgba(0,0,0,.35),0 8px 20px rgba(0,0,0,.2);overflow:hidden}
+.accent{height:5px;background:linear-gradient(90deg,#2970FF 0%,#5DB3F1 50%,#0040c1 100%)}
+.cardbody{padding:36px 36px 0}
 .brand{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:800;color:#0a0a0a;margin-bottom:28px;justify-content:center}
-.brand em{font-style:normal;color:#15803d}
+.brand em{font-style:normal;background:linear-gradient(135deg,#2970FF,#0040c1);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:#0040c1}
 h1{font-size:24px;font-weight:800;letter-spacing:-.02em;margin-bottom:6px;text-align:center}
 .sub{color:#64748b;font-size:14.5px;text-align:center;margin-bottom:28px;line-height:1.5}
 label{display:block;font-size:12.5px;font-weight:700;color:#475569;letter-spacing:.04em;text-transform:uppercase;margin-bottom:6px;margin-top:14px}
 .input-wrap{position:relative}
 input[type=password],input[type=text]{width:100%;padding:13px 44px 13px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:15px;font-family:inherit;background:#fff;transition:border-color .15s,box-shadow .15s}
-input[type=password]:focus,input[type=text]:focus{outline:none;border-color:#15803d;box-shadow:0 0 0 3px rgba(21,128,61,.12)}
+input[type=password]:focus,input[type=text]:focus{outline:none;border-color:#2970FF;box-shadow:0 0 0 3px rgba(41,112,255,.14)}
 .toggle{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:#94a3b8;font-size:12px;font-weight:600;cursor:pointer;padding:6px 8px;border-radius:6px}
 .toggle:hover{color:#0a0a0a;background:#f1f5f9}
 .strength{display:flex;gap:4px;margin-top:8px;height:4px}
@@ -7883,8 +7885,8 @@ input[type=password]:focus,input[type=text]:focus{outline:none;border-color:#158
 .strength.s4 span{background:#15803d}
 .strength-label{font-size:11.5px;color:#64748b;font-weight:600;margin-top:6px;letter-spacing:.02em;height:14px}
 .strength-label.s1{color:#dc2626}.strength-label.s2{color:#D4860A}.strength-label.s3{color:#9E6308}.strength-label.s4{color:#15803d}
-button.submit{width:100%;margin-top:24px;padding:14px;background:#0a0a0a;color:#fff;border:none;border-radius:10px;font-weight:700;font-size:15px;cursor:pointer;font-family:inherit;transition:background .15s}
-button.submit:hover{background:#15803d}
+button.submit{width:100%;margin-top:24px;padding:14px;background:linear-gradient(135deg,#2970FF 0%,#0040c1 100%);color:#fff;border:none;border-radius:10px;font-weight:700;font-size:15px;cursor:pointer;font-family:inherit;transition:filter .15s,box-shadow .15s;box-shadow:0 10px 24px rgba(41,112,255,.35)}
+button.submit:hover{filter:brightness(1.06)}
 button.submit:disabled{opacity:.6;cursor:not-allowed}
 .msg{margin-top:18px;padding:11px 14px;border-radius:9px;font-size:13.5px;font-weight:600;line-height:1.45;display:none}
 .msg.show{display:block}
@@ -7893,7 +7895,7 @@ button.submit:disabled{opacity:.6;cursor:not-allowed}
 .tips{margin-top:18px;font-size:12px;color:#64748b;line-height:1.6;background:#f8fafc;border-radius:9px;padding:12px 14px}
 .tips strong{color:#0a0a0a;font-weight:700}
 .foot{margin-top:24px;font-size:13px;color:#64748b;text-align:center}
-.foot a{color:#15803d;font-weight:600;text-decoration:none}
+.foot a{color:#2970FF;font-weight:600;text-decoration:none}
 .foot a:hover{text-decoration:underline}
 .success-icon{width:64px;height:64px;background:#15803d;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:32px;margin:0 auto 16px;font-weight:700}
 .no-token{display:none}
@@ -7903,10 +7905,12 @@ button.submit:disabled{opacity:.6;cursor:not-allowed}
 </head>
 <body>
 <div class="card">
+  <div class="accent"></div>
+  <div class="cardbody">
 
   <div class="brand">
-    <svg width="22" height="22" viewBox="0 0 28 28"><defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#D4860A"/><stop offset=".55" stop-color="#F5A623"/><stop offset="1" stop-color="#FFE9B0"/></linearGradient></defs><rect width="28" height="28" rx="7" fill="#0f172a"/><polyline points="4,21 9,13 15,17 20,7 24,12" stroke="url(#lg)" stroke-width="2.3" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="20" cy="7" r="2.5" fill="#FFE9B0"/></svg>
-    Alpha<em>Hunt</em>
+    <img src="https://www.tickermover.com/static/icons/alpha-logo-bare-64.png" alt="" width="24" height="24" style="display:block;border-radius:6px">
+    Ticker<em>Mover</em>
   </div>
 
   <!-- Default form view -->
@@ -7943,7 +7947,7 @@ button.submit:disabled{opacity:.6;cursor:not-allowed}
   <div class="no-token" id="no-token">
     <h1>Reset link is invalid</h1>
     <p class="sub">This page needs to be opened from the link in the password-reset email Supabase sent you. The link may have expired (links are valid for 1 hour) or was already used.</p>
-    <a href="/app?signin=1" class="submit" style="display:block;text-align:center;text-decoration:none;color:#fff;background:#0a0a0a;border-radius:10px;padding:14px;font-weight:700;margin-top:18px">Back to sign in</a>
+    <a href="/app?signin=1" class="submit" style="display:block;text-align:center;text-decoration:none;color:#fff;background:linear-gradient(135deg,#2970FF 0%,#0040c1 100%);border-radius:10px;padding:14px;font-weight:700;margin-top:18px">Back to sign in</a>
     <div class="foot" style="margin-top:18px">Need a new reset link? <a href="/app?signin=1">Go to sign in</a> and click "Forgot password" again.</div>
   </div>
 
@@ -7952,6 +7956,7 @@ button.submit:disabled{opacity:.6;cursor:not-allowed}
     <div class="success-icon">✓</div>
     <h1 style="color:#15803d">Password updated</h1>
     <p class="sub">Your new password is set. Redirecting you to the dashboard…</p>
+  </div>
   </div>
 </div>
 
