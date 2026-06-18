@@ -26,6 +26,12 @@
 </style>
 </head>
 <body style="margin:0;padding:0;background:#EEF3FB;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+
+<!-- Preheader (hidden preview text) -->
+<div style="display:none;max-height:0;overflow:hidden;mso-hide:all;font-size:1px;line-height:1px;color:#EEF3FB;opacity:0;">
+  Your one-tap sign-in link for TickerMover — expires in 60 minutes.
+</div>
+
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"
        style="background:#EEF3FB;padding:48px 16px;">
   <tr>
@@ -35,9 +41,14 @@
       <table role="presentation" class="card" width="480" cellpadding="0" cellspacing="0" border="0"
              style="background:#ffffff;border-radius:18px;box-shadow:0 24px 64px rgba(10,10,10,.25);overflow:hidden;">
 
+        <!-- Gradient accent strip -->
+        <tr>
+          <td style="height:5px;line-height:5px;font-size:5px;background:linear-gradient(90deg,#2970FF 0%,#5DB3F1 50%,#0040c1 100%);">&nbsp;</td>
+        </tr>
+
         <!-- Logo / wordmark -->
         <tr>
-          <td class="card-pad" align="center" style="padding:40px 48px 8px;">
+          <td class="card-pad" align="center" style="padding:36px 48px 4px;">
             <table role="presentation" cellpadding="0" cellspacing="0" border="0">
               <tr>
                 <td style="vertical-align:middle;padding-right:8px;">
@@ -60,82 +71,51 @@
                    style="background:#EAF2FF;border-radius:14px;">
               <tr>
                 <td align="center" style="padding:30px 16px 26px;">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="220" height="140" viewBox="0 0 220 140" fill="none" aria-hidden="true">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="240" height="160" viewBox="0 0 240 160" fill="none" aria-hidden="true">
 
-                    <!-- sparkle stars (magic) -->
-                    <g fill="#5DB3F1">
-                      <path d="M28 26 l2 5 l5 2 l-5 2 l-2 5 l-2 -5 l-5 -2 l5 -2 z"/>
-                    </g>
-                    <g fill="#2970FF">
-                      <path d="M192 22 l1.5 4 l4 1.5 l-4 1.5 l-1.5 4 l-1.5 -4 l-4 -1.5 l4 -1.5 z"/>
-                    </g>
-                    <g fill="#2970FF">
-                      <path d="M16 80 l1.2 3 l3 1.2 l-3 1.2 l-1.2 3 l-1.2 -3 l-3 -1.2 l3 -1.2 z"/>
-                    </g>
-                    <g fill="#2970FF">
-                      <path d="M198 96 l1.2 3 l3 1.2 l-3 1.2 l-1.2 3 l-1.2 -3 l-3 -1.2 l3 -1.2 z"/>
-                    </g>
+                    <defs>
+                      <linearGradient id="ml-env" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#2970FF"/><stop offset="100%" stop-color="#22D3EE"/></linearGradient>
+                      <linearGradient id="ml-envdark" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#1E40AF"/><stop offset="100%" stop-color="#0EA5E9"/></linearGradient>
+                      <linearGradient id="ml-key" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#F59E0B"/><stop offset="100%" stop-color="#FBBF24"/></linearGradient>
+                      <radialGradient id="ml-glow" cx="0.5" cy="0.5" r="0.5"><stop offset="0%" stop-color="#C2E0FF"/><stop offset="100%" stop-color="#EAF2FF" stop-opacity="0"/></radialGradient>
+                      <radialGradient id="ml-keyglow" cx="0.5" cy="0.5" r="0.5"><stop offset="0%" stop-color="#FDE68A"/><stop offset="100%" stop-color="#EAF2FF" stop-opacity="0"/></radialGradient>
+                    </defs>
 
-                    <!-- person/character holding envelope (simple line art) -->
-                    <g stroke="#0f172a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none">
-                      <!-- head -->
-                      <circle cx="62" cy="58" r="11" fill="#ffffff"/>
-                      <!-- hair -->
-                      <path d="M52 54 Q56 46 62 47 Q69 48 72 54" fill="#0f172a"/>
-                      <!-- eyes -->
-                      <circle cx="58" cy="60" r="1.2" fill="#0f172a" stroke="none"/>
-                      <circle cx="66" cy="60" r="1.2" fill="#0f172a" stroke="none"/>
-                      <!-- smile -->
-                      <path d="M58 64 q4 3 8 0"/>
-                      <!-- neck / torso -->
-                      <line x1="62" y1="69" x2="62" y2="76"/>
-                      <path d="M48 110 L62 76 L76 110 Z" fill="#ffffff"/>
-                      <!-- left arm down -->
-                      <path d="M52 82 L46 102"/>
-                      <!-- right arm holding envelope (reaching out) -->
-                      <path d="M72 82 L96 78"/>
-                    </g>
+                    <!-- soft glow -->
+                    <ellipse cx="118" cy="86" rx="100" ry="62" fill="url(#ml-glow)" opacity="0.65"/>
 
-                    <!-- envelope with golden key (the magic link) -->
-                    <g>
-                      <!-- envelope body -->
-                      <rect x="96" y="62" width="64" height="42" rx="4" fill="#ffffff" stroke="#2970FF" stroke-width="2"/>
-                      <!-- envelope flap -->
-                      <path d="M96 64 L128 86 L160 64" stroke="#2970FF" stroke-width="2" fill="none" stroke-linejoin="round"/>
-                      <!-- gradient seal/sticker -->
-                      <circle cx="128" cy="88" r="9" fill="url(#magic-grad)"/>
-                      <!-- key icon on seal -->
-                      <g stroke="#ffffff" stroke-width="1.6" fill="none" stroke-linecap="round">
-                        <circle cx="125" cy="88" r="2.2" fill="#ffffff"/>
-                        <line x1="127" y1="88" x2="132" y2="88"/>
-                        <line x1="131" y1="88" x2="131" y2="90.5"/>
-                      </g>
-                    </g>
+                    <!-- confetti / sparkle dots -->
+                    <circle cx="40"  cy="30" r="3.2" fill="#6366F1"/>
+                    <circle cx="206" cy="36" r="3"   fill="#EC4899"/>
+                    <circle cx="30"  cy="96" r="2.6" fill="#34D399"/>
+                    <circle cx="214" cy="104" r="2.6" fill="#22D3EE"/>
+                    <path d="M70 18 l1.4 3.6 l3.6 1.4 l-3.6 1.4 l-1.4 3.6 l-1.4 -3.6 l-3.6 -1.4 l3.6 -1.4 z" fill="#FBBF24"/>
+                    <path d="M176 16 l1.3 3.4 l3.4 1.3 l-3.4 1.3 l-1.3 3.4 l-1.3 -3.4 l-3.4 -1.3 l3.4 -1.3 z" fill="#2970FF"/>
 
-                    <!-- magic wand with trailing sparkles, pointing toward envelope -->
-                    <g>
-                      <!-- wand stick -->
-                      <line x1="180" y1="40" x2="160" y2="64" stroke="#0f172a" stroke-width="2.4" stroke-linecap="round"/>
-                      <!-- wand star tip -->
-                      <path d="M183 32 l3 7 l7 3 l-7 3 l-3 7 l-3 -7 l-7 -3 l7 -3 z" fill="url(#magic-grad)"/>
-                      <!-- trailing sparkle dots -->
-                      <circle cx="172" cy="52" r="1.8" fill="#2970FF"/>
-                      <circle cx="166" cy="58" r="1.4" fill="#5DB3F1"/>
-                      <circle cx="158" cy="60" r="1.1" fill="#2970FF"/>
+                    <!-- envelope -->
+                    <rect x="48" y="56" width="124" height="80" rx="13" fill="url(#ml-env)"/>
+                    <!-- glossy highlight -->
+                    <rect x="55" y="62" width="110" height="14" rx="7" fill="#ffffff" opacity="0.16"/>
+                    <!-- envelope flap (open V) -->
+                    <path d="M48 64 L110 110 L172 64" fill="none" stroke="#ffffff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <!-- lower fold lines -->
+                    <path d="M48 130 L92 98 M172 130 L128 98" stroke="#ffffff" stroke-width="2.4" stroke-linecap="round" opacity="0.55"/>
+
+                    <!-- glowing golden key rising from the envelope -->
+                    <circle cx="186" cy="92" r="34" fill="url(#ml-keyglow)"/>
+                    <g transform="rotate(18 186 92)">
+                      <!-- bow -->
+                      <circle cx="186" cy="70" r="14" fill="none" stroke="url(#ml-key)" stroke-width="6.5"/>
+                      <circle cx="186" cy="70" r="4.5" fill="#EAF2FF"/>
+                      <!-- shaft -->
+                      <rect x="182.6" y="82" width="6.8" height="36" rx="3.4" fill="url(#ml-key)"/>
+                      <!-- teeth -->
+                      <rect x="189.4" y="100" width="9" height="5.5" rx="1.5" fill="url(#ml-key)"/>
+                      <rect x="189.4" y="110" width="6.5" height="5.5" rx="1.5" fill="url(#ml-key)"/>
                     </g>
 
                     <!-- ground shadow -->
-                    <ellipse cx="62" cy="118" rx="20" ry="2.5" fill="#C2E0FF" opacity="0.6"/>
-                    <ellipse cx="128" cy="118" rx="34" ry="3" fill="#C2E0FF" opacity="0.4"/>
-
-                    <!-- gradients -->
-                    <defs>
-                      <linearGradient id="magic-grad" x1="0" y1="0" x2="1" y2="1">
-                        <stop offset="0%"   stop-color="#2970FF"/>
-                        <stop offset="50%"  stop-color="#5DB3F1"/>
-                        <stop offset="100%" stop-color="#2970FF"/>
-                      </linearGradient>
-                    </defs>
+                    <ellipse cx="112" cy="148" rx="74" ry="4.5" fill="#C2E0FF" opacity="0.5"/>
                   </svg>
                 </td>
               </tr>
