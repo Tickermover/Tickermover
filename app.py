@@ -2258,6 +2258,8 @@ def _render_stock_page(t: dict) -> str:
     post_earnings_html = _render_post_earnings_card(t, name, sym)
 
     # ── SEO meta tags — these are the part Google ranks on ──
+    import datetime as _dt
+    _today = _dt.date.today().isoformat()
     title = f"{sym} Stock Analysis · Alpha Score {round(pop)} · {rating} | TickerMover"
     desc  = (
         f"{name} ({sym}) — current Alpha Score {round(pop)}/100 ({rating}). "
@@ -2288,6 +2290,8 @@ def _render_stock_page(t: dict) -> str:
         "headline": title[:110],
         "description": desc,
         "url": f"{SITE_ORIGIN}/stocks/{sym}",
+        "datePublished": _today,
+        "dateModified": _today,
         "image": f"{SITE_ORIGIN}/static/icons/icon-512.png",
         "author": {"@type": "Organization", "name": "TickerMover", "url": SITE_ORIGIN},
         "publisher": {
@@ -2301,6 +2305,28 @@ def _render_stock_page(t: dict) -> str:
             "tickerSymbol": sym,
         },
     }
+
+    # ── FAQ — visible Q&A (targets "is X a buy" / "X alpha score" long-tail) + FAQPage schema ──
+    _faqs = [
+        (f"What is {sym}'s Alpha Score?",
+         f"{name} ({sym}) currently has a TickerMover Alpha Score of {round(pop)}/100, rated {rating}. The Alpha Score is a quantitative composite across six research pillars — momentum, quality, growth, valuation, sentiment and risk. It is research information, not investment advice."),
+        (f"Is {name} ({sym}) a buy?",
+         f"TickerMover does not give buy or sell recommendations. {sym} scores {round(pop)}/100 ({rating}) on our quantitative research model — a screening signal, not a personal recommendation. Do your own research, and consider an FCA-authorised adviser before investing."),
+        (f"How often is {sym}'s score updated?",
+         f"{sym}'s Alpha Score and underlying data refresh through US market hours (about every five minutes), using public market and fundamental data."),
+    ]
+    faq_schema = {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+            {"@type": "Question", "name": _q,
+             "acceptedAnswer": {"@type": "Answer", "text": _a}}
+            for _q, _a in _faqs
+        ],
+    }
+    faq_html = "<h2>" + sym + " — frequently asked</h2>" + "".join(
+        f'<div class="faq-q"><h3>{_q}</h3><p>{_a}</p></div>' for _q, _a in _faqs
+    )
 
     # ── Build news list HTML ──
     news_html = ""
@@ -2326,9 +2352,13 @@ def _render_stock_page(t: dict) -> str:
                 f'<a href="/stocks/{(p.get("ticker") or "").upper()}" class="peer">{(p.get("ticker") or "").upper()}</a>'
                 for p in peers
             )
-            peers_html = f'<h2>Similar stocks in {sub or "this sub-sector"}</h2><div class="peers">{chips}</div>'
+            _ssl = _seo.slugify(sub) if sub else ""
+            _sector_link = f'<p style="margin-top:10px"><a href="/sectors/{_ssl}">View all {sub} stocks &rarr;</a></p>' if _ssl else ""
+            peers_html = f'<h2>Similar stocks in {sub or "this sub-sector"}</h2><div class="peers">{chips}</div>{_sector_link}'
     except Exception:
         pass
+    # Always append the FAQ block (renders even when there are no peers)
+    peers_html = (peers_html or "") + faq_html
 
     # ── Final HTML — no JS needed, fully crawlable ──
     return f"""<!DOCTYPE html>
@@ -2366,6 +2396,7 @@ def _render_stock_page(t: dict) -> str:
      (the editorial analysis on the page). Google validates each separately. -->
 <script type="application/ld+json">{_json.dumps(schema, separators=(',',':'))}</script>
 <script type="application/ld+json">{_json.dumps(article_schema, separators=(',',':'))}</script>
+<script type="application/ld+json">{_json.dumps(faq_schema, separators=(',',':'))}</script>
 
 <style>
 *{{margin:0;padding:0;box-sizing:border-box}}
@@ -2400,6 +2431,9 @@ h2{{font-size:21px;font-weight:800;letter-spacing:-.015em;margin:32px 0 12px;col
 .peers{{display:flex;flex-wrap:wrap;gap:8px}}
 .peer{{display:inline-block;padding:7px 12px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:13px;color:#0a0a0a;font-weight:700;transition:all .15s}}
 .peer:hover{{border-color:#15803d;color:#15803d;text-decoration:none}}
+.faq-q{{margin:14px 0}}
+.faq-q h3{{font-size:16px;font-weight:700;margin-bottom:4px;color:#0a0a0a}}
+.faq-q p{{font-size:14px;color:#334155;line-height:1.6}}
 .cta{{margin-top:40px;padding:28px 32px;background:linear-gradient(135deg,#0A0A0A 0%,#1a2e1a 100%);border-radius:16px;text-align:center;color:#fff}}
 .cta h3{{font-size:22px;font-weight:800;letter-spacing:-.02em;margin-bottom:8px;color:#fff}}
 .cta p{{color:rgba(255,255,255,.7);margin-bottom:18px}}

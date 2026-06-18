@@ -255,6 +255,12 @@ PILLARS: dict[str, dict] = {
         "h1": "How to read US stock fundamentals (without a finance degree)",
         "lede": "You don't need a CFA to spot a great business. You need seven numbers, in the right order, and a sense for what \"good\" looks like in each. Here's the checklist we use on TickerMover.",
     },
+    "how-to-find-breakout-stocks": {
+        "title": "How to find breakout stocks — a 6-point research checklist (2026)",
+        "desc": "Breakout stocks pair momentum, relative strength, volume and room to run. Here's the 6-point research checklist TickerMover uses to surface them — and the fakeout traps to avoid.",
+        "h1": "How to find breakout stocks",
+        "lede": "A breakout is a stock clearing resistance with conviction — but most \"breakouts\" fail. Here's how to separate the real ones from the fakeouts, using signals you can actually check.",
+    },
 }
 
 
@@ -300,6 +306,36 @@ def _pillar_body(slug: str, site_origin: str) -> str:
 {cta_block("See live Alpha Scores")}
 {newsletter_block("learn-pop-score")}
 <div class="legal">TickerMover is a research tool, not financial advice. Alpha Score is a composite signal — always do your own research before investing.</div>
+"""
+    elif slug == "how-to-find-breakout-stocks":
+        body = f"""
+{crumbs}
+<span class="tag">Strategy</span>
+<h1>How to find breakout stocks</h1>
+<p class="lede">A breakout is a stock clearing resistance with conviction — but most "breakouts" fail. Here's how to separate the real ones from the fakeouts, using signals you can actually check.</p>
+
+<h2>What a breakout actually is</h2>
+<p>A breakout happens when a stock pushes through a level that previously capped it — a prior high, a consolidation range, or a chart base — on rising participation. The thesis is simple: once the overhead supply is gone, the path of least resistance is up. The catch is that price clearing a line is necessary but not sufficient. Without the right supporting signals, you're buying a fakeout.</p>
+
+<h2>The 6-point breakout checklist</h2>
+<ul>
+  <li><strong>Relative strength.</strong> Is the stock outperforming the S&amp;P 500 over the last 1&ndash;3 months? Real breakouts come from leaders, not laggards. A stock making a new high while the index chops is a strong tell.</li>
+  <li><strong>Volume confirmation.</strong> The breakout bar should show above-average volume. Price up on light volume is a shrug; price up on heavy volume is conviction.</li>
+  <li><strong>A proper base.</strong> The best breakouts emerge from weeks of tight consolidation, not a vertical spike. Tight, orderly bases mean supply and demand are balanced, so the break resolves cleanly.</li>
+  <li><strong>Room to run.</strong> Check the distance to the analyst consensus target and the prior high. A stock breaking out with 20%+ of headroom has somewhere to go; one already above its target is extended.</li>
+  <li><strong>Fundamental support.</strong> Momentum without earnings is a candle in the wind. The most durable breakouts pair the chart with accelerating revenue or an EPS surprise — the news that justifies the re-rating.</li>
+  <li><strong>Not already parabolic.</strong> A stock up 120% in three months "breaking out" again is usually late, not early. The best entries are early in the move, not after the crowd has piled in.</li>
+</ul>
+
+<h2>The three traps</h2>
+<p><strong>The fakeout</strong> — price clears the line, then snaps back below it within days, usually on weak volume. <strong>The exhaustion gap</strong> — a breakout so late and so vertical it marks the top, not the start. <strong>Chasing</strong> — buying 15% above the breakout level, where your risk is huge and your edge is gone. The discipline is to act early, on confirmation, with a level where you know you're wrong.</p>
+
+<h2>How TickerMover surfaces breakouts</h2>
+<p>Rather than scan charts by hand, TickerMover scores all 540+ US large-caps across six research pillars — momentum, quality, growth, valuation, sentiment and risk — and the <a href="/learn/pop-score">Alpha Score</a> blends them into one 0&ndash;100 number. The Breakout Picks lens then ranks for exactly the combination above: a strong score, real upside left to the target, and momentum still building, while pushing already-parabolic, above-target names down. It's a research starting point, not a recommendation.</p>
+
+{cta_block("See today's Breakout Picks")}
+{newsletter_block("learn-breakouts")}
+<div class="legal">TickerMover is a research tool, not financial advice, and is not authorised or regulated by the FCA. Breakout signals can and do fail — always do your own research before investing.</div>
 """
     elif slug == "reverse-dcf":
         body = f"""
