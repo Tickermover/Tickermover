@@ -2508,10 +2508,10 @@ def _render_stock_page(t: dict) -> str:
         _km.append(f'<div class="metric"><div class="lbl">Analyst Target</div><div class="val">${tgt:.2f}</div></div>')
     if upside is not None:
         _km.append(f'<div class="metric"><div class="lbl">Implied Upside</div><div class="val {_spcls(upside)}">{upside:+.1f}%</div></div>')
-    key_metrics_html = _sp_ribbon("metrics", "Key metrics", f'<div class="metrics">{"".join(_km)}</div>', "rep-blue", "📋")
+    key_metrics_html = _sp_ribbon("metrics", "Key metrics", f'<div class="metrics">{"".join(_km)}</div>', "rep-violet", "📋")
 
     # Latest earnings → ribbon card (post-earnings card nested + neutralized via CSS)
-    latest_earnings_html = _sp_ribbon("latest-earnings", "Latest earnings", post_earnings_html, "rep-violet", "🗓️") if post_earnings_html else ""
+    latest_earnings_html = _sp_ribbon("latest-earnings", "Latest earnings", post_earnings_html, "rep-amber", "📣") if post_earnings_html else ""
 
     # ── SEO meta tags — these are the part Google ranks on ──
     import datetime as _dt
@@ -2582,7 +2582,7 @@ def _render_stock_page(t: dict) -> str:
     }
     faq_html = _sp_ribbon("faq", "Frequently asked", "".join(
         f'<div class="faq-q"><h3>{_q}</h3><p>{_a}</p></div>' for _q, _a in _faqs
-    ), "rep-slate", "❓")
+    ), "rep-green", "❓")
 
     # ── Build news list HTML ──
     news_html = ""
@@ -2610,7 +2610,7 @@ def _render_stock_page(t: dict) -> str:
             )
             _ssl = _seo.slugify(sub) if sub else ""
             _sector_link = f'<p style="margin-top:10px"><a href="/sectors/{_ssl}">View all {sub} stocks &rarr;</a></p>' if _ssl else ""
-            peers_html = _sp_ribbon("peers", f"Similar stocks in {sub or 'this sub-sector'}", f'<div class="peers">{chips}</div>{_sector_link}', "rep-slate", "🔗")
+            peers_html = _sp_ribbon("peers", f"Similar stocks in {sub or 'this sub-sector'}", f'<div class="peers">{chips}</div>{_sector_link}', "rep-teal", "🔗")
     except Exception:
         pass
     # Always append the FAQ block (renders even when there are no peers)
