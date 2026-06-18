@@ -19145,7 +19145,7 @@ async function openUpgradeModal() {
   const errEl = document.getElementById('upgrade-error');
   const btn   = document.getElementById('upgrade-pay-btn');
   if (errEl){ errEl.textContent = ''; errEl.style.color = ''; }
-  if (btn){ btn.disabled = false; btn.style.opacity = ''; btn.style.cursor = ''; btn.textContent = 'Pay ₹499 — Upgrade Now'; }
+  if (btn){ btn.disabled = false; btn.style.opacity = ''; btn.style.cursor = ''; btn.textContent = 'Pay £19.99 — Upgrade Now'; }
   // Payments may not be live yet (e.g. Razorpay/KYC not set up). Don't surface a
   // checkout that 400s — tell the user Pro is free during beta instead.
   try {
@@ -19177,7 +19177,7 @@ async function startRazorpayCheckout() {
       headers: { Authorization: `Bearer ${_AUTH.token}` },
     });
     const d = await r.json();
-    if (!r.ok) { errEl.textContent = d.detail || 'Failed to create order'; btn.disabled=false; btn.textContent='Pay ₹499 — Upgrade Now'; return; }
+    if (!r.ok) { errEl.textContent = d.detail || 'Failed to create order'; btn.disabled=false; btn.textContent='Pay £19.99 — Upgrade Now'; return; }
 
     // Open Razorpay checkout
     const options = {
@@ -19219,7 +19219,7 @@ async function startRazorpayCheckout() {
       modal: {
         ondismiss: () => {
           btn.disabled = false;
-          btn.textContent = 'Pay ₹499 — Upgrade Now';
+          btn.textContent = 'Pay £19.99 — Upgrade Now';
         }
       }
     };
@@ -19229,7 +19229,7 @@ async function startRazorpayCheckout() {
     errEl.textContent = 'Network error — try again';
   } finally {
     btn.disabled = false;
-    btn.textContent = 'Pay ₹499 — Upgrade Now';
+    btn.textContent = 'Pay £19.99 — Upgrade Now';
   }
 }
 
