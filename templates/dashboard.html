@@ -7187,7 +7187,7 @@ document.addEventListener('DOMContentLoaded', function(){
         <p class="pk-note">The engine's <b>highest-conviction setups with the most room to run</b> from here — strong scores, real <b>upside left to target</b>, and momentum still building. <span class="pk-note-fine">Ranked for opportunity · research, not investment advice — do your own diligence.</span></p>
         <div class="dm-table" id="picksTable">
           <div class="dm-row dm-head-row">
-            <span>Ticker</span><span>Alpha</span><span>Why it's here</span><span class="up-col">Analyst upside</span><span class="today-col">Today</span><span class="act-col">Action</span>
+            <span>Ticker</span><span>Alpha</span><span>Why it's here</span><span class="up-col">Analyst upside</span><span class="today-col">Today</span><span class="act-col">View</span>
           </div>
           <div class="dm-warm"><div class="emoji">⏳</div><div style="font-weight:700">Loading the universe…</div></div>
         </div>
@@ -20108,7 +20108,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     // When the session is closed the move shown is the LAST close, not "today" —
     // label it honestly so a user looking pre-open / overnight isn't confused.
     const todayLbl=(typeof _marketIsOpen==='function' && !_marketIsOpen())?'Last close':'Today';
-    const headRow='<div class="dm-row dm-head-row"><span>Ticker</span><span>Alpha</span><span>Why it\'s here</span><span class="up-col">Analyst upside</span><span class="today-col">'+todayLbl+'</span><span class="act-col">Action</span></div>';
+    const headRow='<div class="dm-row dm-head-row"><span>Ticker</span><span>Alpha</span><span>Why it\'s here</span><span class="up-col">Analyst upside</span><span class="today-col">'+todayLbl+'</span><span class="act-col">View</span></div>';
     const pc=document.getElementById('picksCount');
     // Universe still loading → warming-up state.
     if(!sel.length){ if(pc) pc.textContent='— picks'; table.innerHTML=headRow+'<div class="dm-warm"><div class="emoji">⏳</div><div style="font-weight:700">Warming up — fetching prices for the universe…</div></div>'; return; }
@@ -20136,7 +20136,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
         '<span class="dm-cell-why"><span class="why"><span class="why-ico">'+sig.icon+'</span><span class="why-tx">'+(sig.ai?'<span class="why-ai">✦ AI</span> ':'')+escHTML(sig.text)+'</span></span>'+(risk?'<div class="why-risk">⚠ '+escHTML(risk)+'</div>':'')+'</span>'+
         upCell+
         '<span class="dm-chg today-col '+(chg>=0?'up':'dn')+'">'+fmtPct(chg)+trend+'</span>'+
-        '<span class="act-col"><button class="dm-btn">Open →</button></span>'+
+        '<span class="act-col"><button class="dm-btn">View →</button></span>'+
       '</div>';
     }).join('');
     table.innerHTML=headRow+rows;
