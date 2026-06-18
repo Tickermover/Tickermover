@@ -860,8 +860,14 @@ app.mount("/static", StaticFiles(directory=str(_STATIC)), name="static")
 # Configurable via env so staging vs prod don't conflict. Default is the
 # www host because the GoDaddy apex (tickermover.com) 301-forwards to www
 # (apex can't be a CNAME to Railway), so www is the real canonical host.
-import os as _os
-SITE_ORIGIN = _os.environ.get("SITE_ORIGIN", "https://www.tickermover.com").rstrip("/")
+import os as _os, re as _re_origin
+SITE_ORIGIN = _os.environ.get("SITE_ORIGIN", "https://www.tickermover.com").strip().rstrip("/")
+# Self-repair a malformed origin from a bad env var (e.g. "https:tickermover.com"
+# missing the // or the www) so sitemap / canonical / og: URLs are never broken.
+SITE_ORIGIN = _re_origin.sub(r'^\s*https?:/*', 'https://', SITE_ORIGIN) or "https://www.tickermover.com"
+# Canonical host is www (the GoDaddy apex 301-redirects to www).
+if SITE_ORIGIN.startswith("https://tickermover.com"):
+    SITE_ORIGIN = SITE_ORIGIN.replace("https://tickermover.com", "https://www.tickermover.com", 1)
 
 
 @app.get("/favicon.ico")
