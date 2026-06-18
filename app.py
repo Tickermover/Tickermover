@@ -2233,6 +2233,160 @@ def _render_post_earnings_card(t: dict, name: str, sym: str) -> str:
 """
 
 
+# ── Server-rendered data sections for the public /stocks report ──────────────
+# Render every PUBLIC tab's data (valuation, health, technicals, earnings,
+# ownership, score breakdown) into crawlable HTML straight from the enriched
+# universe row, so the page mirrors the in-app stock sheet. Pro-only AI tabs
+# are surfaced as upgrade CTAs (_sp_pro_section). All formatters return "—"
+# (never crash) when a field is missing.
+def _spf(v):
+    try: return float(v) if v is not None else None
+    except (TypeError, ValueError): return None
+def _spnum(v, dec=1, suffix=""):
+    f = _spf(v); return "—" if f is None else f"{f:.{dec}f}{suffix}"
+def _spmoney(v):
+    f = _spf(v); return "—" if (f is None or f <= 0) else f"${f:,.2f}"
+def _sppct_frac(v, signed=False):
+    """Margins/growth/ratios stored as fractions (0.38) → 38.0%. Tolerates
+    values already given as percents."""
+    f = _spf(v)
+    if f is None: return "—"
+    if abs(f) <= 2: f *= 100.0
+    return f"{f:+.1f}%" if signed else f"{f:.1f}%"
+def _sppct_raw(v, signed=False):
+    """Already-percent values (momentum, upside, surprise)."""
+    f = _spf(v)
+    if f is None: return "—"
+    return f"{f:+.1f}%" if signed else f"{f:.1f}%"
+def _spcls(v):
+    f = _spf(v); return "" if (f is None or f == 0) else ("pos" if f > 0 else "neg")
+def _spmetric(lbl, val, cls=""):
+    return "" if val in (None, "—", "") else f'<div class="metric"><div class="lbl">{lbl}</div><div class="val {cls}">{val}</div></div>'
+def _spgrid(cards):
+    cards = [c for c in cards if c]
+    return f'<div class="metrics">{"".join(cards)}</div>' if cards else ""
+
+def _sp_pro_section(sym: str) -> str:
+    items = [
+        ("🔬 AI Deep-Dive", "Web-grounded research brief — catalysts, risks and the bull/bear case, with sources."),
+        ("🔗 Supply Chain", "Suppliers, customers and revenue-exposure map with ripple-risk scoring."),
+        ("🧭 Business Overview", "Plain-English what they do, how they make money, and where the edge is."),
+        ("⚖️ Peer Comparison", "Side-by-side execution, profitability path and stage vs the closest comparables."),
+    ]
+    cards = "".join(
+        f'<div class="pro-card"><div class="pc-h">{n}</div><div class="pc-d">{d}</div></div>'
+        for n, d in items
+    )
+    return (
+        '<section id="more"><h2>Go deeper with Pro</h2>'
+        f'<p class="sp-lead">AI research tabs for {sym}, unlocked with TickerMover Pro — free during beta.</p>'
+        f'<div class="pro-grid">{cards}</div>'
+        f'<a href="/app?signup=1" class="cta-btn cta-btn-pri">Unlock {sym} with Pro →</a></section>'
+    )
+
+def _sp_data_sections(t: dict, sym: str, price: float):
+    """Build (nav_html, sections_html) for all public data tabs."""
+    nav, secs = [], []
+    def add(anchor, title, inner):
+        if not inner: return
+        nav.append(f'<a href="#{anchor}">{title}</a>')
+        secs.append(f'<section id="{anchor}"><h2>{title}</h2>{inner}</section>')
+
+    # Score breakdown (six pillars)
+    rows = []
+    for lbl, k in (("Momentum", "momentum_score"), ("Growth", "growth_score"),
+                   ("Quality", "quality_score"), ("Valuation", "valuation_score"),
+                   ("Sentiment", "sentiment_score"), ("Potential", "potential_score")):
+        v = _spf(t.get(k))
+        if v is None: continue
+        w = max(0, min(100, v))
+        band = "pos" if v >= 66 else "neg" if v < 45 else "mid"
+        rows.append(f'<div class="sp-bar-row"><span class="nm">{lbl}</span>'
+                    f'<div class="sp-bar"><i class="{band}" style="width:{w:.0f}%"></i></div>'
+                    f'<span class="pv mono">{v:.0f}</span></div>')
+    add("scores", "Score breakdown", f'<div class="sp-bars">{"".join(rows)}</div>' if rows else "")
+
+    # Valuation
+    tl, th = t.get("target_low"), t.get("target_high")
+    add("valuation", "Valuation", _spgrid([
+        _spmetric("P/E", _spnum(t.get("pe_ratio"), 1, "×")),
+        _spmetric("Forward P/E", _spnum(t.get("forward_pe"), 1, "×")),
+        _spmetric("PEG", _spnum(t.get("peg_ratio"), 2)),
+        _spmetric("Price / Sales", _spnum(t.get("ps_ratio"), 1, "×")),
+        _spmetric("Price / Book", _spnum(t.get("pb_ratio"), 1, "×")),
+        _spmetric("EV / EBITDA", _spnum(t.get("ev_ebitda"), 1, "×")),
+        _spmetric("Analyst target", _spmoney(t.get("target_mean") or t.get("target_price"))),
+        _spmetric("Target range", f'{_spmoney(tl)} – {_spmoney(th)}' if (tl and th) else ""),
+        _spmetric("Implied upside", _sppct_raw(t.get("target_upside_pct"), True), _spcls(t.get("target_upside_pct"))),
+    ]))
+
+    # Financial health
+    add("health", "Financial health", _spgrid([
+        _spmetric("Gross margin", _sppct_frac(t.get("gross_margin"))),
+        _spmetric("Operating margin", _sppct_frac(t.get("operating_margin"))),
+        _spmetric("Net margin", _sppct_frac(t.get("profit_margin"))),
+        _spmetric("FCF margin", _sppct_frac(t.get("fcf_margin"))),
+        _spmetric("Return on equity", _sppct_frac(t.get("roe"))),
+        _spmetric("Return on invested capital", _sppct_frac(t.get("roic"))),
+        _spmetric("Debt / equity", _spnum(t.get("debt_to_equity"), 2)),
+        _spmetric("Revenue growth YoY", _sppct_frac(t.get("revenue_growth_yoy"), True), _spcls(t.get("revenue_growth_yoy"))),
+        _spmetric("EPS growth YoY", _sppct_frac(t.get("eps_growth_yoy"), True), _spcls(t.get("eps_growth_yoy"))),
+    ]))
+
+    # Technicals + 52-week range
+    tech = _spgrid([
+        _spmetric("RSI (14)", _spnum(t.get("rsi_14"), 0)),
+        _spmetric("50-day MA", _spmoney(t.get("sma_50"))),
+        _spmetric("200-day MA", _spmoney(t.get("sma_200"))),
+        _spmetric("ATR (14)", _spnum(t.get("atr_14"), 2)),
+        _spmetric("Beta", _spnum(t.get("beta"), 2)),
+        _spmetric("1-month return", _sppct_raw(t.get("momentum_1m"), True), _spcls(t.get("momentum_1m"))),
+    ])
+    lo, hi = _spf(t.get("week_52_low")), _spf(t.get("week_52_high"))
+    rng = ""
+    if lo and hi and hi > lo and price:
+        pos = max(0, min(100, (price - lo) / (hi - lo) * 100))
+        rng = ('<div class="sp-range"><div class="sp-range-track">'
+               f'<i style="left:{pos:.1f}%"></i></div><div class="sp-range-lbls">'
+               f'<span class="mono">{_spmoney(lo)}</span><span>52-week range</span>'
+               f'<span class="mono">{_spmoney(hi)}</span></div></div>')
+    add("technicals", "Technicals", (rng + tech) if (rng or tech) else "")
+
+    # Earnings history
+    eps = t.get("eps_quarters") or []
+    if isinstance(eps, list) and eps:
+        trs = []
+        for q in eps[:6]:
+            if not isinstance(q, dict): continue
+            a, e = _spf(q.get("actual")), _spf(q.get("estimate"))
+            sp, beat = q.get("surprise_pct"), q.get("beat")
+            per = q.get("period") or q.get("date") or q.get("quarter") or "—"
+            tag = ("<span class='tag beat'>Beat</span>" if beat else "<span class='tag miss'>Miss</span>") if beat is not None else ""
+            trs.append(f'<tr><td>{per}</td>'
+                       f'<td class="r mono">{("$%.2f" % a) if a is not None else "—"}</td>'
+                       f'<td class="r mono">{("$%.2f" % e) if e is not None else "—"}</td>'
+                       f'<td class="r {_spcls(sp)}">{_sppct_raw(sp, True)}</td>'
+                       f'<td class="r">{tag}</td></tr>')
+        if trs:
+            streak = t.get("eps_beat_streak")
+            cap = f'<div class="sp-note">Beat {streak} of the last 4 quarters.</div>' if streak else ""
+            add("earnings", "Earnings",
+                '<table class="sp-tbl"><thead><tr><th>Quarter</th><th class="r">EPS</th>'
+                '<th class="r">Est.</th><th class="r">Surprise</th><th class="r">Result</th></tr></thead>'
+                f'<tbody>{"".join(trs)}</tbody></table>{cap}')
+
+    # Ownership & risk
+    add("ownership", "Ownership & risk", _spgrid([
+        _spmetric("Short % of float", _sppct_frac(t.get("short_percent_float"))),
+        _spmetric("Dividend yield", _sppct_frac(t.get("dividend_yield"))),
+        _spmetric("Beta", _spnum(t.get("beta"), 2)),
+    ]))
+
+    nav_html = ('<nav class="sp-nav"><a href="#overview">Overview</a>'
+                + "".join(nav) + '<a href="#more">Pro</a></nav>') if nav else ""
+    return nav_html, "".join(secs) + _sp_pro_section(sym)
+
+
 def _render_stock_page(t: dict) -> str:
     """
     Render the SEO-optimized HTML page for a single ticker.
@@ -2272,6 +2426,11 @@ def _render_stock_page(t: dict) -> str:
     # above Key Metrics with EPS actual vs estimate, revenue, and beat
     # streak. Empty string when no recent earnings — keeps the layout clean.
     post_earnings_html = _render_post_earnings_card(t, name, sym)
+
+    # Full server-rendered data sections (valuation, health, technicals,
+    # earnings, ownership, score breakdown) + a sticky in-page nav. Mirrors
+    # the in-app stock sheet; Pro AI tabs surface as upgrade CTAs.
+    sp_nav_html, sp_sections_html = _sp_data_sections(t, sym, price)
 
     # ── SEO meta tags — these are the part Google ranks on ──
     import datetime as _dt
@@ -2405,7 +2564,7 @@ def _render_stock_page(t: dict) -> str:
 <link rel="icon" type="image/png" sizes="512x512" href="/static/icons/icon-512.png">
 <link rel="apple-touch-icon" sizes="192x192" href="/static/icons/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 
 <!-- Schema.org structured data — powers Google rich snippets + AI search.
      We emit two: FinancialProduct (the stock entity) + AnalysisNewsArticle
@@ -2416,13 +2575,13 @@ def _render_stock_page(t: dict) -> str:
 
 <style>
 *{{margin:0;padding:0;box-sizing:border-box}}
-body{{font-family:'Inter',-apple-system,sans-serif;color:#0a0a0a;background:#fafbfc;line-height:1.6;font-size:15.5px;-webkit-font-smoothing:antialiased}}
-a{{color:#15803d;text-decoration:none;font-weight:600}}
+body{{font-family:'Instrument Sans',-apple-system,sans-serif;color:#0a0a0a;background:#fafbfc;line-height:1.6;font-size:15.5px;-webkit-font-smoothing:antialiased}}
+a{{color:#2970FF;text-decoration:none;font-weight:600}}
 a:hover{{text-decoration:underline}}
 .mono{{font-family:'JetBrains Mono',monospace;font-feature-settings:'tnum' 1}}
 .wrap{{max-width:780px;margin:0 auto;padding:32px 24px 64px}}
 .brand{{display:inline-flex;align-items:center;gap:8px;font-size:16px;font-weight:800;color:#0a0a0a;margin-bottom:32px}}
-.brand em{{font-style:normal;color:#15803d}}
+.brand em{{font-style:normal;color:#2970FF}}
 .crumbs{{font-size:12.5px;color:#94a3b8;margin-bottom:8px;letter-spacing:.04em;text-transform:uppercase;font-weight:600}}
 h1{{font-size:38px;font-weight:900;letter-spacing:-.03em;margin-bottom:6px;color:#0a0a0a}}
 h1 .sym{{font-family:'JetBrains Mono',monospace;color:#15803d}}
@@ -2446,16 +2605,51 @@ h2{{font-size:21px;font-weight:800;letter-spacing:-.015em;margin:32px 0 12px;col
 .news .src{{color:#94a3b8;font-size:12px;font-weight:500}}
 .peers{{display:flex;flex-wrap:wrap;gap:8px}}
 .peer{{display:inline-block;padding:7px 12px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:13px;color:#0a0a0a;font-weight:700;transition:all .15s}}
-.peer:hover{{border-color:#15803d;color:#15803d;text-decoration:none}}
+.peer:hover{{border-color:#2970FF;color:#2970FF;text-decoration:none}}
 .faq-q{{margin:14px 0}}
 .faq-q h3{{font-size:16px;font-weight:700;margin-bottom:4px;color:#0a0a0a}}
 .faq-q p{{font-size:14px;color:#334155;line-height:1.6}}
-.cta{{margin-top:40px;padding:28px 32px;background:linear-gradient(135deg,#0A0A0A 0%,#1a2e1a 100%);border-radius:16px;text-align:center;color:#fff}}
+.cta{{margin-top:40px;padding:28px 32px;background:linear-gradient(135deg,#0A0A0A 0%,#0a1a33 100%);border-radius:16px;text-align:center;color:#fff}}
 .cta h3{{font-size:22px;font-weight:800;letter-spacing:-.02em;margin-bottom:8px;color:#fff}}
 .cta p{{color:rgba(255,255,255,.7);margin-bottom:18px}}
 .cta-btn{{display:inline-block;background:#fff;color:#0a0a0a;padding:13px 26px;border-radius:10px;font-weight:700;font-size:14.5px}}
 .cta-btn:hover{{background:#f1f5f9;text-decoration:none}}
 .legal{{margin-top:32px;font-size:11.5px;color:#94a3b8;text-align:center;line-height:1.6}}
+.val.pos{{color:#15803d}}.val.neg{{color:#b91c1c}}
+/* ── full-data sections ── */
+.sp-nav{{position:sticky;top:0;z-index:5;display:flex;gap:6px;overflow-x:auto;padding:10px 0;margin:0 0 8px;background:#fafbfc;border-bottom:1px solid #eef0f3;-ms-overflow-style:none;scrollbar-width:none}}
+.sp-nav::-webkit-scrollbar{{display:none}}
+.sp-nav a{{flex:0 0 auto;font-size:12.5px;font-weight:700;color:#475569;padding:6px 12px;border-radius:999px;background:#fff;border:1px solid #e2e8f0}}
+.sp-nav a:hover{{color:#2970FF;border-color:#2970FF;text-decoration:none}}
+section{{scroll-margin-top:60px;margin-bottom:8px}}
+.sp-bars{{display:flex;flex-direction:column;gap:9px;margin-bottom:6px}}
+.sp-bar-row{{display:flex;align-items:center;gap:12px}}
+.sp-bar-row .nm{{flex:0 0 90px;font-size:13px;font-weight:600;color:#334155}}
+.sp-bar{{flex:1;height:9px;background:#eef2f7;border-radius:999px;overflow:hidden}}
+.sp-bar i{{display:block;height:100%;border-radius:999px;background:#D4860A}}
+.sp-bar i.pos{{background:linear-gradient(90deg,#34D399,#15803d)}}
+.sp-bar i.neg{{background:linear-gradient(90deg,#fb7185,#b91c1c)}}
+.sp-bar i.mid{{background:linear-gradient(90deg,#5DB3F1,#2970FF)}}
+.sp-bar-row .pv{{flex:0 0 30px;text-align:right;font-size:13px;font-weight:800;color:#0a0a0a}}
+.sp-range{{margin:4px 0 16px}}
+.sp-range-track{{position:relative;height:8px;background:linear-gradient(90deg,#fde68a,#86efac);border-radius:999px}}
+.sp-range-track i{{position:absolute;top:50%;width:14px;height:14px;border-radius:50%;background:#0a0a0a;border:2px solid #fff;transform:translate(-50%,-50%);box-shadow:0 1px 4px rgba(0,0,0,.3)}}
+.sp-range-lbls{{display:flex;justify-content:space-between;font-size:11.5px;color:#64748b;margin-top:6px}}
+.sp-tbl{{width:100%;border-collapse:collapse;font-size:13.5px}}
+.sp-tbl th{{text-align:left;font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;color:#94a3b8;padding:6px 8px;border-bottom:1px solid #e2e8f0}}
+.sp-tbl td{{padding:9px 8px;border-bottom:1px solid #f1f5f9}}
+.sp-tbl .r{{text-align:right}}
+.sp-tbl .pos{{color:#15803d;font-weight:700}}.sp-tbl .neg{{color:#b91c1c;font-weight:700}}
+.sp-tbl .tag{{font-size:10.5px;font-weight:800;padding:2px 8px;border-radius:999px;letter-spacing:.04em}}
+.sp-tbl .tag.beat{{background:#eaf7ee;color:#15803d}}.sp-tbl .tag.miss{{background:#fdecec;color:#b91c1c}}
+.sp-note{{font-size:12.5px;color:#64748b;margin-top:8px}}
+.sp-lead{{font-size:14px;color:#475569;margin-bottom:14px}}
+.pro-grid{{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-bottom:14px}}
+.pro-card{{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:14px 16px;position:relative}}
+.pro-card .pc-h{{font-weight:800;font-size:14px;color:#0a0a0a;margin-bottom:4px}}
+.pro-card .pc-d{{font-size:12.5px;color:#64748b;line-height:1.5}}
+.cta-btn-pri{{background:linear-gradient(135deg,#2970FF,#0040c1);color:#fff;border-radius:10px;padding:12px 22px;font-weight:700}}
+.cta-btn-pri:hover{{filter:brightness(1.06);text-decoration:none;background:linear-gradient(135deg,#2970FF,#0040c1)}}
 @media(max-width:640px){{h1{{font-size:30px}}}}
 </style>
 </head>
@@ -2463,21 +2657,23 @@ h2{{font-size:21px;font-weight:800;letter-spacing:-.015em;margin:32px 0 12px;col
 <div class="wrap">
 
   <a href="/" class="brand">
-    <svg width="22" height="22" viewBox="0 0 28 28"><defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#D4860A"/><stop offset=".55" stop-color="#F5A623"/><stop offset="1" stop-color="#FFE9B0"/></linearGradient></defs><rect width="28" height="28" rx="7" fill="#0f172a"/><polyline points="4,21 9,13 15,17 20,7 24,12" stroke="url(#lg)" stroke-width="2.3" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="20" cy="7" r="2.5" fill="#FFE9B0"/></svg>
-    Alpha<em>Hunt</em>
+    <img src="{SITE_ORIGIN}/static/icons/alpha-logo-bare-64.png" alt="" width="22" height="22" style="display:block;border-radius:6px">
+    Ticker<em>Mover</em>
   </a>
 
   <div class="crumbs">{sub or sector or "Stock Analysis"}</div>
   <h1><span class="sym">{sym}</span> Stock Analysis</h1>
   <p class="subhead">{name} · current price <span class="mono">{price_str}</span> ({chg_str} today)</p>
 
-  <div class="verdict-box">
+  <div class="verdict-box" id="overview">
     <div class="verdict-head">
       <span class="verdict-tag">{rating}</span>
       <span class="verdict-score">{round(pop)}<span class="lbl">/ Alpha Score</span></span>
     </div>
     <div class="verdict-text">{bottom_line}</div>
   </div>
+
+  {sp_nav_html}
 
   {post_earnings_html}
 
@@ -2491,6 +2687,8 @@ h2{{font-size:21px;font-weight:800;letter-spacing:-.015em;margin:32px 0 12px;col
     {f'<div class="metric"><div class="lbl">Analyst Target</div><div class="val">${tgt:.2f}</div></div>' if tgt and tgt > 0 else ''}
     {f'<div class="metric"><div class="lbl">Implied Upside</div><div class="val {"pos" if upside and upside > 0 else "neg"}">{upside:+.1f}%</div></div>' if upside is not None else ''}
   </div>
+
+  {sp_sections_html}
 
   {news_html}
   {peers_html}
@@ -7859,7 +8057,7 @@ _RESET_PASSWORD_HTML = """<!DOCTYPE html>
 <meta name="robots" content="noindex,nofollow">
 <link rel="icon" href="/favicon.ico">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'Inter',-apple-system,sans-serif;color:#0a0a0a;background:#0A0A0A;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;-webkit-font-smoothing:antialiased;
