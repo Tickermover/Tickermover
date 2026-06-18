@@ -396,6 +396,21 @@ class MarketRegime:
             # Multiplier: linear map 0..100 → 0.85..1.15, clipped
             mult = round(_clamp(0.85 + (score / 100) * 0.30, 0.85, 1.15), 3)
 
+            # Overlay LIVE session quotes onto the DISPLAYED indices so the
+            # header pills agree with the Pre-Market Report cards (which use
+            # fast_info). The regime SCORE above intentionally stays on the
+            # stable daily-history view — only the surfaced last/pct_1d change.
+            try:
+                disp = [s for s in ("SPY", "QQQ", "DIA", "^VIX") if s in comps]
+                live = await asyncio.to_thread(self._live_quotes, disp)
+                for sym, qd in live.items():
+                    if qd.get("last") is not None:
+                        comps[sym]["last"] = qd["last"]
+                        if qd.get("pct_1d") is not None:
+                            comps[sym]["pct_1d"] = qd["pct_1d"]
+            except Exception as exc:
+                logger.debug(f"regime live-quote overlay failed: {exc}")
+
             payload = {
                 "regime_score":      round(score, 1),
                 "regime_label":      label,
@@ -443,6 +458,40 @@ class MarketRegime:
                 }
             except Exception as exc:
                 logger.debug(f"regime fetch {sym} failed: {exc}")
+        return out
+
+    @staticmethod
+    def _fi_val(fi, *keys):
+        for k in keys:
+            try:
+                v = fi[k]
+            except Exception:
+                v = getattr(fi, k, None)
+            if v is not None and isinstance(v, (int, float)) and not math.isnan(v):
+                return float(v)
+        return None
+
+    def _live_quotes(self, syms: list) -> dict:
+        """Live session quote (last + 1d% vs previous close) per symbol via
+        fast_info — the SAME source the Pre-Market Report uses. This picks up
+        pre-/post-market prices, which daily history bars do not. Used to
+        overlay the *displayed* pill values so they match the report.
+        Blocking — call via asyncio.to_thread."""
+        out: dict = {}
+        from concurrent.futures import ThreadPoolExecutor
+        def q(sym):
+            try:
+                fi = yf.Ticker(sym).fast_info
+                last = self._fi_val(fi, "last_price", "lastPrice")
+                prev = self._fi_val(fi, "previous_close", "previousClose")
+                pct  = round((last / prev - 1) * 100, 2) if (last and prev) else None
+                return sym, (round(last, 2) if last is not None else None), pct
+            except Exception as exc:
+                logger.debug(f"regime live quote {sym} failed: {exc}")
+                return sym, None, None
+        with ThreadPoolExecutor(max_workers=6) as ex:
+            for sym, last, pct in ex.map(q, syms):
+                out[sym] = {"last": last, "pct_1d": pct}
         return out
 
     def _score_components(self, c: dict) -> float:
