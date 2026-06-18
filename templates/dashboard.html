@@ -25,7 +25,7 @@
 <!-- Premium typography: Inter for UI, JetBrains Mono for tabular numbers -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,500;1,600&family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500;1,9..144,600;1,9..144,700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600&family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500;1,9..144,600;1,9..144,700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <!-- Auth gate: synchronously detect signup-flow URL param BEFORE any rendering
      so the dashboard never flashes behind the auth modal on the way in from
      the landing page. The class is removed by the auth code once resolved. -->
@@ -93,8 +93,8 @@
      legibility). Numbers: JetBrains Mono (tabular). One voice per role —
      change a font here and it updates everywhere via var(). */
   --font-head:'Fraunces',Georgia,'Times New Roman',serif;
-  --font-body:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
-  --font-mono:'JetBrains Mono','Inter',ui-monospace,SFMono-Regular,Menlo,monospace;
+  --font-body:'Instrument Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --font-mono:'JetBrains Mono','Instrument Sans',ui-monospace,SFMono-Regular,Menlo,monospace;
   --bg:#0A0A0A;
   --surf:#ffffff;
   --surf2:#fafaf7;
@@ -184,7 +184,7 @@ table,th,td{
 
 /* Mono for raw price tickers — gives that Bloomberg terminal feel */
 .fd-price,.hot-price,.score-big{
-  font-family:'JetBrains Mono','Inter',ui-monospace,SFMono-Regular,Menlo,monospace;
+  font-family:'JetBrains Mono','Instrument Sans',ui-monospace,SFMono-Regular,Menlo,monospace;
   font-feature-settings:'tnum' 1,'cv02' 1,'cv11' 1;
   font-variant-numeric:tabular-nums;
   letter-spacing:-0.02em;
@@ -1488,16 +1488,16 @@ table.ssx-h2h tbody td.self{color:var(--ink);font-weight:600}
 }
 .ticker-chip:hover{background:rgba(255,255,255,.06)}
 .ticker-sym{
-  font-family:'JetBrains Mono','Inter',monospace;
+  font-family:'JetBrains Mono','Instrument Sans',monospace;
   font-size:12.5px;font-weight:800;color:#e2e8f0;letter-spacing:.02em;
 }
 .ticker-px{
-  font-family:'JetBrains Mono','Inter',monospace;
+  font-family:'JetBrains Mono','Instrument Sans',monospace;
   font-size:12px;font-weight:600;color:#cbd5e1;
   font-feature-settings:'tnum' 1;
 }
 .ticker-chg{
-  font-family:'JetBrains Mono','Inter',monospace;
+  font-family:'JetBrains Mono','Instrument Sans',monospace;
   font-size:11.5px;font-weight:700;
   padding:2px 7px;border-radius:5px;
   font-feature-settings:'tnum' 1;
@@ -1525,7 +1525,7 @@ table.ssx-h2h tbody td.self{color:var(--ink);font-weight:600}
   background:#fff;border-radius:14px;
   border:1px solid #e2e8f0;
   box-shadow:0 20px 50px rgba(10,10,10,.25),0 8px 16px rgba(10,10,10,.12);
-  overflow:hidden;font-family:'Inter',-apple-system,sans-serif;
+  overflow:hidden;font-family:'Instrument Sans',-apple-system,sans-serif;
   animation:cmdk-pop .22s cubic-bezier(.22,.61,.36,1);
 }
 @keyframes cmdk-pop{
@@ -1572,7 +1572,7 @@ table.ssx-h2h tbody td.self{color:var(--ink);font-weight:600}
   width:30px;height:30px;border-radius:7px;
   display:flex;align-items:center;justify-content:center;
   background:#f1f5f9;font-size:13px;flex-shrink:0;
-  font-family:'JetBrains Mono','Inter',monospace;font-weight:700;color:#475569;
+  font-family:'JetBrains Mono','Instrument Sans',monospace;font-weight:700;color:#475569;
 }
 .cmdk-item-icon.tab{background:#eef4ff;color:#0040c1}
 .cmdk-item-icon.action{background:#eef4ff;color:#0040c1}
@@ -3503,7 +3503,7 @@ body.v2-featured-only #fund-tbody tr.fund-row:not([data-featured]){display:none!
 .v2-focus-cta{
   display:inline-block;align-self:flex-end;margin-top:10px;
   padding:6px 12px;border-radius:8px;
-  font-family:'JetBrains Mono','Inter',monospace;
+  font-family:'JetBrains Mono','Instrument Sans',monospace;
   font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
   color:#8A93A6;background:transparent;border:1px solid rgba(255,255,255,.12);
   text-decoration:none;
@@ -4171,7 +4171,7 @@ html.v2-dark .v2-mp-mini-lbl{color:#cbd5e1}
   background:#fff;color:#0f172a;
   border-radius:16px;
   box-shadow:0 32px 80px -20px rgba(10,10,10,.55), 0 0 0 1px rgba(10,10,10,.06);
-  font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+  font-family:'Instrument Sans',-apple-system,BlinkMacSystemFont,sans-serif;
   transition:opacity .18s ease, transform .22s cubic-bezier(.22,.61,.36,1);
   overflow:hidden;
 }
@@ -5050,7 +5050,7 @@ html.v2-dark body.v2 .v2-topbar{
 .v2ov-kpi-name{font-size:13.5px;font-weight:800;color:#0f172a;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .v2ov-kpi-tic{font-size:11px;color:#64748b;font-weight:600;letter-spacing:.04em;margin-top:1px}
 .v2ov-kpi-row{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
-.v2ov-kpi-price{font-size:22px;font-weight:800;letter-spacing:-.02em;font-family:'JetBrains Mono','Inter',monospace;color:#0f172a}
+.v2ov-kpi-price{font-size:22px;font-weight:800;letter-spacing:-.02em;font-family:'JetBrains Mono','Instrument Sans',monospace;color:#0f172a}
 .v2ov-kpi-chg{font-size:12px;font-weight:700;padding:3px 8px;border-radius:6px;white-space:nowrap}
 .v2ov-kpi-chg.up{background:rgba(212,134,10,.12);color:#15803d}
 .v2ov-kpi-chg.dn{background:rgba(220,38,38,.10);color:#dc2626}
@@ -7219,7 +7219,7 @@ document.addEventListener('DOMContentLoaded', function(){
       <div class="panel-h-sub">Star any stock to save it here. Persists on this browser.</div>
     </div>
     <div class="panel-h-actions">
-      <input id="watch-add-input" type="text" placeholder="Add ticker (e.g., NVDA)" maxlength="6" oninput="this.value=this.value.toUpperCase()" onkeydown="if(event.key==='Enter')addToWatchFromInput()" style="padding:8px 12px;border:1px solid rgba(10,10,10,.12);border-radius:7px;font-size:13px;font-weight:700;width:170px;text-transform:uppercase;font-family:'JetBrains Mono','Inter',monospace">
+      <input id="watch-add-input" type="text" placeholder="Add ticker (e.g., NVDA)" maxlength="6" oninput="this.value=this.value.toUpperCase()" onkeydown="if(event.key==='Enter')addToWatchFromInput()" style="padding:8px 12px;border:1px solid rgba(10,10,10,.12);border-radius:7px;font-size:13px;font-weight:700;width:170px;text-transform:uppercase;font-family:'JetBrains Mono','Instrument Sans',monospace">
       <button class="cta-pill compact" onclick="addToWatchFromInput()">+ Add</button>
     </div>
   </div>
@@ -10964,7 +10964,7 @@ function _v2ShowDLToast(sym, state, errMsg){
   if (!toast){
     toast = document.createElement('div');
     toast.id = 'v2-dl-toast';
-    toast.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:10000;padding:12px 18px;border-radius:11px;background:#0f172a;color:#fff;font-family:Inter,sans-serif;font-size:13px;font-weight:600;letter-spacing:-.005em;box-shadow:0 18px 40px -12px rgba(0,0,0,.5),0 0 0 1px rgba(255,255,255,.06) inset;display:flex;align-items:center;gap:10px;opacity:0;transform:translateY(8px);transition:opacity .2s,transform .25s cubic-bezier(.22,.61,.36,1);';
+    toast.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:10000;padding:12px 18px;border-radius:11px;background:#0f172a;color:#fff;font-family:'Instrument Sans',sans-serif;font-size:13px;font-weight:600;letter-spacing:-.005em;box-shadow:0 18px 40px -12px rgba(0,0,0,.5),0 0 0 1px rgba(255,255,255,.06) inset;display:flex;align-items:center;gap:10px;opacity:0;transform:translateY(8px);transition:opacity .2s,transform .25s cubic-bezier(.22,.61,.36,1);';
     document.body.appendChild(toast);
   }
   let html = '';
@@ -11730,12 +11730,12 @@ function popGauge(score, grade, label, options) {
       <circle cx="${cx}" cy="${cy}" r="7" fill="#0f172a" stroke="#fff" stroke-width="2" />
       <!-- Score number sits high inside the arch -->
       <text x="${cx}" y="${cy - 22}" text-anchor="middle"
-            font-family="'JetBrains Mono','Inter',monospace"
+            font-family="'JetBrains Mono','Instrument Sans',monospace"
             font-size="32" font-weight="800" fill="#0f172a"
             font-feature-settings="'tnum' 1">${Math.round(s)}</text>
       <!-- Verdict label sits BELOW the hub, in the extended viewBox area -->
       ${lbl ? `<text x="${cx}" y="${cy + 28}" text-anchor="middle"
-            font-family="'Inter',sans-serif" font-size="13"
+            font-family="'Instrument Sans',sans-serif" font-size="13"
             font-weight="900" letter-spacing="0.8"
             fill="${labelColor}">${lbl.toUpperCase()}</text>` : ''}
     </svg>`;
@@ -14281,7 +14281,7 @@ function openStockModal(ticker) {
               Reverse DCF · Expectations: ${dcf.verdict}
             </div>
             <div title="The 10-year revenue CAGR the market is currently pricing into the share price. Calculated using a Gordon-growth terminal value with 10% discount rate, 3% perpetual growth, and a ${dcf.termFcfM.toFixed(0)}% terminal FCF margin assumption."
-                 style="font-size:13px;font-weight:800;color:${dcf.color};font-family:'JetBrains Mono','Inter',monospace">
+                 style="font-size:13px;font-weight:800;color:${dcf.color};font-family:'JetBrains Mono','Instrument Sans',monospace">
               ${dcf.impliedGrowth.toFixed(0)}% growth/yr needed
             </div>
             <div style="margin-left:auto;font-size:10px;color:${dcf.color};font-weight:700;letter-spacing:.04em">${dcf.barLabel}</div>
@@ -15718,7 +15718,7 @@ function renderReports(tickers) {
         <input id="spotlight-input" type="text" placeholder="e.g., NVDA, MU, LITE" maxlength="6"
                oninput="this.value=this.value.toUpperCase()"
                onkeydown="if(event.key==='Enter')spotlightOpen()"
-               style="padding:10px 14px;border:1px solid rgba(0,0,0,.12);border-radius:8px;font-size:14px;font-weight:700;width:180px;text-transform:uppercase;font-family:'JetBrains Mono','Inter',monospace">
+               style="padding:10px 14px;border:1px solid rgba(0,0,0,.12);border-radius:8px;font-size:14px;font-weight:700;width:180px;text-transform:uppercase;font-family:'JetBrains Mono','Instrument Sans',monospace">
         <button onclick="spotlightOpen()"
                 style="padding:10px 18px;background:linear-gradient(135deg,#15803d,#F5A623);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:800;cursor:pointer;box-shadow:0 4px 12px rgba(245,166,35,.3)">
           Open tear sheet →
@@ -15960,7 +15960,7 @@ function openBlogArticle(articleId) {
               .rr-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
               .rr-cell{background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:10px 12px}
               .rr-cell .lbl{font-size:10.5px;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
-              .rr-cell .val{font-size:15px;font-weight:800;color:#0a0a0a;margin-top:3px;font-family:'JetBrains Mono','Inter',monospace;font-feature-settings:'tnum' 1}
+              .rr-cell .val{font-size:15px;font-weight:800;color:#0a0a0a;margin-top:3px;font-family:'JetBrains Mono','Instrument Sans',monospace;font-feature-settings:'tnum' 1}
               .rr-list{list-style:none;margin:0;padding:0}
               .rr-list li{padding:9px 0;border-bottom:1px solid #f1f5f9;font-size:14px;color:#1f2937;line-height:1.55;display:flex;gap:10px}
               .rr-list li:last-child{border-bottom:none}
@@ -19794,12 +19794,12 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     background:linear-gradient(135deg,#2970ff,#0040c1);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
   .aho-perk span{display:block;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:#94a3b8;font-weight:700;margin-top:2px}
   .aho-q{display:block;text-align:left;font-weight:700;font-size:12.5px;letter-spacing:.01em;color:#0A0A0A;margin-bottom:8px;opacity:0;animation:ahoUp .5s ease .68s both}
-  .aho-input{width:100%;box-sizing:border-box;padding:14px 16px;font-size:16px;font-family:var(--font-body,'Inter',sans-serif);
+  .aho-input{width:100%;box-sizing:border-box;padding:14px 16px;font-size:16px;font-family:var(--font-body,'Instrument Sans',sans-serif);
     border:1px solid #d7dee8;border-radius:13px;background:#fff;color:#0A0A0A;margin-bottom:10px;outline:none;
     opacity:0;animation:ahoUp .5s ease .8s both;transition:border-color .15s,box-shadow .15s}
   .aho-input:focus{border-color:#2970ff;box-shadow:0 0 0 3px rgba(41,112,255,.16)}
   .aho-err{color:#dc2626;font-size:12.5px;font-weight:600;min-height:16px;text-align:left;margin-bottom:4px}
-  .aho-cta{width:100%;border:0;cursor:pointer;padding:15px;border-radius:13px;font-family:var(--font-body,'Inter',sans-serif);
+  .aho-cta{width:100%;border:0;cursor:pointer;padding:15px;border-radius:13px;font-family:var(--font-body,'Instrument Sans',sans-serif);
     font-size:15.5px;font-weight:800;color:#fff;letter-spacing:.01em;
     background:linear-gradient(135deg,#2970ff,#0040c1);box-shadow:0 10px 24px -10px rgba(0,64,193,.5);
     opacity:0;animation:ahoUp .5s ease .92s both;transition:transform .12s,box-shadow .15s}
