@@ -2296,19 +2296,37 @@ def _sp_pro_section(sym: str) -> str:
         for n, d in items
     )
     return (
-        '<section id="more"><h2>Go deeper with Pro</h2>'
+        '<section id="more" class="rep-sec">'
+        '<div class="rep-rib rep-red"><span class="rep-ico">🔓</span>'
+        '<span class="rep-title">Go deeper with Pro</span></div>'
+        '<div class="rep-body">'
         f'<p class="sp-lead">AI research tabs for {sym}, unlocked with TickerMover Pro — free during beta.</p>'
         f'<div class="pro-grid">{cards}</div>'
-        f'<a href="/app?signup=1" class="cta-btn cta-btn-pri">Unlock {sym} with Pro →</a></section>'
+        f'<a href="/app?signup=1" class="cta-btn cta-btn-pri">Unlock {sym} with Pro →</a>'
+        '</div></section>'
     )
 
 def _sp_data_sections(t: dict, sym: str, price: float):
     """Build (nav_html, sections_html) for all public data tabs."""
     nav, secs = [], []
+    _RIB = {
+        "scores":     ("rep-blue",   "📊"),
+        "valuation":  ("rep-amber",  "💰"),
+        "health":     ("rep-green",  "🩺"),
+        "technicals": ("rep-teal",   "📈"),
+        "earnings":   ("rep-violet", "🗓️"),
+        "ownership":  ("rep-slate",  "🏛️"),
+    }
     def add(anchor, title, inner):
         if not inner: return
         nav.append(f'<a href="#{anchor}">{title}</a>')
-        secs.append(f'<section id="{anchor}"><h2>{title}</h2>{inner}</section>')
+        rib, ico = _RIB.get(anchor, ("rep-slate", "•"))
+        secs.append(
+            f'<section id="{anchor}" class="rep-sec">'
+            f'<div class="rep-rib {rib}"><span class="rep-ico">{ico}</span>'
+            f'<span class="rep-title">{title}</span></div>'
+            f'<div class="rep-body">{inner}</div></section>'
+        )
 
     # Score breakdown (six pillars) — each its own vivid colour, infographic-style
     rows = []
@@ -2587,7 +2605,7 @@ def _render_stock_page(t: dict) -> str:
 <link rel="icon" type="image/png" sizes="512x512" href="/static/icons/icon-512.png">
 <link rel="apple-touch-icon" sizes="192x192" href="/static/icons/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,600;9..144,700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 
 <!-- Schema.org structured data — powers Google rich snippets + AI search.
      We emit two: FinancialProduct (the stock entity) + AnalysisNewsArticle
@@ -2605,13 +2623,13 @@ a:hover{{text-decoration:underline}}
 .wrap{{max-width:820px;margin:0 auto;padding:32px 20px 64px}}
 .brand{{display:inline-flex;align-items:center;gap:8px;font-size:16px;font-weight:800;color:#0a0a0a;margin-bottom:22px}}
 .brand em{{font-style:normal;background:linear-gradient(135deg,#2970FF 0%,#0040c1 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:#0040c1}}
-.report-card{{background:#fff;border:1px solid rgba(10,20,60,.05);border-radius:22px;padding:34px 38px;box-shadow:0 1px 3px rgba(10,20,60,.05),0 30px 60px -30px rgba(10,20,60,.32)}}
+.report-card{{background:transparent;border:0;border-radius:0;padding:0;box-shadow:none}}
 @media(max-width:640px){{.report-card{{padding:24px 20px;border-radius:16px}}.wrap{{padding:20px 12px 48px}}}}
 .crumbs{{font-size:12.5px;color:#94a3b8;margin-bottom:8px;letter-spacing:.04em;text-transform:uppercase;font-weight:600}}
 h1{{font-size:38px;font-weight:900;letter-spacing:-.03em;margin-bottom:6px;color:#0a0a0a}}
 h1 .sym{{font-family:'JetBrains Mono',monospace;background:linear-gradient(135deg,#2970FF,#06B6D4);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:#2970FF}}
 .subhead{{font-size:15px;color:#475569;margin-bottom:24px}}
-.verdict-box{{display:flex;align-items:center;gap:22px;background:#f8fafc;border:1px solid #eef1f5;border-left:4px solid {verdict_color};border-radius:14px;padding:20px 24px;margin-bottom:24px}}
+.verdict-box{{display:flex;align-items:center;gap:22px;background:linear-gradient(125deg,#eef4ff 0%,#ffffff 62%);border:1px solid rgba(41,112,255,.16);border-left:5px solid {verdict_color};border-radius:18px;padding:22px 26px;margin:6px 0 18px;box-shadow:0 14px 34px -18px rgba(15,40,100,.34)}}
 .vb-gauge{{flex:0 0 auto}}
 .sp-gauge{{display:block}}
 .vb-body{{flex:1;min-width:0}}
@@ -2622,7 +2640,7 @@ h1 .sym{{font-family:'JetBrains Mono',monospace;background:linear-gradient(135de
 .verdict-score .lbl{{font-size:11px;color:#94a3b8;font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin-left:6px}}
 .verdict-text{{font-size:14.5px;line-height:1.6;color:#0f172a}}
 .metrics{{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:28px}}
-.metric{{background:#f8fafc;border:1px solid #eef1f5;border-radius:10px;padding:12px 14px}}
+.metric{{background:linear-gradient(180deg,#ffffff,#f7f9fc);border:1px solid #eef1f5;border-radius:13px;padding:13px 15px;box-shadow:0 4px 14px -10px rgba(15,40,100,.22)}}
 .metric .lbl{{font-size:10.5px;color:#64748b;font-weight:700;letter-spacing:.05em;text-transform:uppercase;margin-bottom:3px}}
 .metric .val{{font-family:'JetBrains Mono',monospace;font-size:17px;font-weight:800;color:#0a0a0a}}
 .metric .val.pos{{color:#15803d}}
@@ -2680,7 +2698,25 @@ section{{scroll-margin-top:60px;margin-bottom:8px}}
 .pro-card .pc-d{{font-size:12.5px;color:#64748b;line-height:1.5}}
 .cta-btn-pri{{background:linear-gradient(135deg,#2970FF,#0040c1);color:#fff;border-radius:10px;padding:12px 22px;font-weight:700}}
 .cta-btn-pri:hover{{filter:brightness(1.06);text-decoration:none;background:linear-gradient(135deg,#2970FF,#0040c1)}}
-@media(max-width:640px){{h1{{font-size:30px}}}}
+/* ── drawer-style premium ribbon cards ── */
+.rep-sec{{background:#fff;border:1px solid rgba(9,9,9,.07);border-radius:16px;overflow:hidden;box-shadow:0 10px 28px -16px rgba(15,40,100,.30),0 1px 2px rgba(15,40,100,.05);margin:16px 0;scroll-margin-top:66px}}
+.rep-rib{{display:flex;align-items:center;gap:10px;padding:11px 16px}}
+.rep-ico{{width:27px;height:27px;border-radius:9px;background:rgba(255,255,255,.2);display:grid;place-items:center;font-size:14px;flex:0 0 auto}}
+.rep-title{{font-family:'Fraunces',Georgia,serif;font-weight:700;font-size:15px;letter-spacing:-.005em;color:#fff;text-shadow:0 1px 1px rgba(0,0,0,.12)}}
+.rep-blue{{background:linear-gradient(105deg,#3f86f7,#1e44c9)}}
+.rep-teal{{background:linear-gradient(105deg,#16c2af,#0c8a82)}}
+.rep-green{{background:linear-gradient(105deg,#5fc24a,#398f3c)}}
+.rep-violet{{background:linear-gradient(105deg,#8b5cf6,#5b21b6)}}
+.rep-amber{{background:linear-gradient(105deg,#f9b234,#db880b)}}
+.rep-red{{background:linear-gradient(105deg,#f5576c,#c11d33)}}
+.rep-slate{{background:linear-gradient(105deg,#7c8aa0,#4a5568)}}
+.rep-body{{padding:18px}}
+.rep-body .metrics{{margin-bottom:0}}
+.metric .val{{font-size:20px}}
+.metric .lbl{{font-size:9.5px}}
+h2{{font-size:18px;margin:30px 0 12px}}
+.sp-nav{{background:transparent;border-bottom:none;padding:4px 0 12px}}
+@media(max-width:640px){{h1{{font-size:30px}}.rep-body{{padding:14px}}}}
 </style>
 </head>
 <body>
@@ -8089,7 +8125,7 @@ _RESET_PASSWORD_HTML = """<!DOCTYPE html>
 <meta name="robots" content="noindex,nofollow">
 <link rel="icon" href="/favicon.ico">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,600;9..144,700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'Inter',-apple-system,sans-serif;color:#0a0a0a;background:#0A0A0A;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;-webkit-font-smoothing:antialiased;
