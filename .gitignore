@@ -40,3 +40,6 @@ Thumbs.db
 data/model_portfolio.json
 data/model_portfolio_history.json
 data/.write_test
+
+# Claude Code local (machine-specific) settings — never commit
+.claude/settings.local.json
