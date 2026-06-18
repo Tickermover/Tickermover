@@ -1334,7 +1334,7 @@ def _render_morning_brief() -> str:
   .brand{{display:flex;align-items:center;gap:10px;font-family:'Manrope','Inter',sans-serif;font-weight:900;font-size:17px;color:#0A0A0A}}
   .brand-mark{{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,#fff,#f1f5f9);display:flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:0 0 0 1px rgba(245,166,35,.4)}}
   .brand-mark img{{width:80%;height:80%;object-fit:contain;filter:drop-shadow(0 0 5px rgba(245,166,35,.45))}}
-  .brand .h{{background:linear-gradient(135deg,#FFE9B0 0%,#FFC75F 50%,#F5A623 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}}
+  .brand .h{{background:linear-gradient(135deg,#2970FF 0%,#0040c1 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}}
   .top-nav{{display:flex;gap:24px;font-family:'Manrope','Inter',sans-serif;font-size:13.5px;font-weight:600;color:#475569}}
   .top-nav a.active{{color:#15803d}}
   .top-cta{{padding:8px 18px;border-radius:999px;background:#0A0A0A;color:#fff;font-family:'Manrope','Inter',sans-serif;font-size:13px;font-weight:700}}
@@ -1420,7 +1420,7 @@ def _render_morning_brief() -> str:
   <div class="top-inner">
     <a class="brand" href="/">
       <span class="brand-mark"><img src="/static/icons/alpha-logo-bare-64.png" alt=""></span>
-      Alpha<span class="h">Hunt</span>
+      <span class="bw">Ticker<span class="h">Mover</span></span>
     </a>
     <div class="top-nav">
       <a href="/brief" class="active">Daily Brief</a>
@@ -1553,7 +1553,7 @@ async def reports_index():
   .brand{{display:flex;align-items:center;gap:10px;font-weight:900;font-size:17px;letter-spacing:-.02em;color:#0A0A0A}}
   .brand-mark{{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,#fff,#f1f5f9);display:flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:0 0 0 1px rgba(245,166,35,.4),0 6px 16px -6px rgba(245,166,35,.3)}}
   .brand-mark img{{width:80%;height:80%;object-fit:contain;filter:drop-shadow(0 0 5px rgba(245,166,35,.45))}}
-  .brand .h{{background:linear-gradient(135deg,#FFE9B0 0%,#FFC75F 50%,#F5A623 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;filter:drop-shadow(0 0 6px rgba(245,166,35,.25))}}
+  .brand .h{{background:linear-gradient(135deg,#2970FF 0%,#0040c1 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;filter:drop-shadow(0 0 6px rgba(245,166,35,.25))}}
   .top-nav{{display:flex;gap:24px;font-size:13.5px;font-weight:600;color:#475569}}
   .top-nav a.active{{color:#15803d}}
   .top-cta{{padding:8px 18px;border-radius:999px;background:#0A0A0A;color:#fff;font-size:13px;font-weight:700}}
@@ -1595,7 +1595,7 @@ async def reports_index():
   <div class="top-inner">
     <a class="brand" href="/">
       <span class="brand-mark"><img src="/static/icons/alpha-logo-bare-64.png" alt=""></span>
-      Alpha<span class="h">Hunt</span>
+      <span class="bw">Ticker<span class="h">Mover</span></span>
     </a>
     <div class="top-nav">
       <a href="/reports" class="active">Reports</a>
@@ -1781,7 +1781,7 @@ def _render_report_page(t: dict) -> str:
   .brand{{display:flex;align-items:center;gap:10px;font-family:'Manrope','Inter',sans-serif;font-weight:900;font-size:17px;letter-spacing:-.02em;color:#0A0A0A;text-decoration:none}}
   .brand-mark{{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,#fff,#f1f5f9);display:flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:0 0 0 1px rgba(245,166,35,.4),0 6px 16px -6px rgba(245,166,35,.3)}}
   .brand-mark img{{width:80%;height:80%;object-fit:contain;filter:drop-shadow(0 0 5px rgba(245,166,35,.45))}}
-  .brand .h{{background:linear-gradient(135deg,#FFE9B0 0%,#FFC75F 50%,#F5A623 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;filter:drop-shadow(0 0 6px rgba(245,166,35,.25))}}
+  .brand .h{{background:linear-gradient(135deg,#2970FF 0%,#0040c1 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;filter:drop-shadow(0 0 6px rgba(245,166,35,.25))}}
   .top-nav{{display:flex;gap:24px;font-family:'Manrope','Inter',sans-serif;font-size:13.5px;font-weight:600;color:#475569}}
   .top-nav a{{text-decoration:none;color:inherit;transition:color .15s}}
   .top-nav a:hover{{color:#0A0A0A}}
@@ -1864,7 +1864,7 @@ def _render_report_page(t: dict) -> str:
   <div class="top-inner">
     <a class="brand" href="/">
       <span class="brand-mark"><img src="/static/icons/alpha-logo-bare-64.png" alt=""></span>
-      Alpha<span class="h">Hunt</span>
+      <span class="bw">Ticker<span class="h">Mover</span></span>
     </a>
     <div class="top-nav">
       <a href="/">Briefings</a>
@@ -2778,7 +2778,7 @@ h2{{font-size:18px;margin:30px 0 12px}}
 
   <a href="/" class="brand">
     <img src="{SITE_ORIGIN}/static/icons/alpha-logo-bare-64.png" alt="" width="22" height="22" style="display:block;border-radius:6px">
-    Ticker<em>Mover</em>
+    <span class="bw">Ticker<em>Mover</em></span>
   </a>
 
   <div class="report-card">
@@ -8223,7 +8223,7 @@ button.submit:disabled{opacity:.6;cursor:not-allowed}
 
   <div class="brand">
     <img src="https://www.tickermover.com/static/icons/alpha-logo-bare-64.png" alt="" width="24" height="24" style="display:block;border-radius:6px">
-    Ticker<em>Mover</em>
+    <span class="bw">Ticker<em>Mover</em></span>
   </div>
 
   <!-- Default form view -->
