@@ -7128,7 +7128,7 @@ document.addEventListener('DOMContentLoaded', function(){
             <div id="v2-risk-quiz">
               <div class="v2-risk-eyebrow">RISK CHECK</div>
               <div class="v2-risk-title">Find your <em>risk profile</em></div>
-              <div class="v2-risk-subt">Three quick questions — we’ll tune your Prime Opportunities to match how you invest.</div>
+              <div class="v2-risk-subt">Three quick questions — we’ll tune your Breakout Picks to match how you invest.</div>
               <div class="v2-risk-qs" id="v2-risk-qs"></div>
               <div class="v2-risk-foot">
                 <span class="v2-risk-hint" id="v2-risk-hint">Answer all three to continue</span>
@@ -7177,7 +7177,7 @@ document.addEventListener('DOMContentLoaded', function(){
     <div>
       <div class="picks-card">
         <div class="pk-head">
-          <h3>🔥 Prime Opportunities</h3>
+          <h3>🔥 Breakout Picks</h3>
           <div class="pk-meta">
             <span class="meta-pill">High Alpha</span>
             <span class="meta-pill">+ a live signal</span>
@@ -8803,7 +8803,7 @@ function v2RenderTopPicks(tickers){
   return '' +
     '<div class="v2-pick-section">' +
       '<div class="v2-pick-section-head">' +
-        '<div class="v2ov-title">🔥 Prime Opportunities · Top 6</div>' +
+        '<div class="v2ov-title">🔥 Breakout Picks · Top 6</div>' +
         '<div class="v2ov-sub">Highest Alpha Score across the universe · click any card for the full tear sheet</div>' +
       '</div>' +
       '<div class="v2-pick-grid">' + cards + '</div>' +
@@ -9037,7 +9037,7 @@ function v2ProfileTransition(profile){
   setTimeout(() => {
     try { v2SetProfile(profile); } catch(e){}
     if (lbl) lbl.textContent = info.label + ' applied';
-    if (sub) sub.textContent = 'Your Prime Opportunities are tuned';
+    if (sub) sub.textContent = 'Your Breakout Picks are tuned';
     setTimeout(() => {
       if (ov) ov.classList.remove('open');
       if (typeof _revealAppAfterOnboarding === 'function') _revealAppAfterOnboarding();
@@ -17969,7 +17969,7 @@ function renderAll(data) {
    Vercel/Linear-style fast navigation. Indexes tabs, quick actions, tickers. */
 let _cmdkActive = 0;
 const _CMDK_TABS = [
-  {kind:'tab', icon:'🔥', label:'On the Radar',  sub:'Prime opportunities right now', run:()=>document.querySelector('[onclick*="showTab(\'hot\'"]')?.click()},
+  {kind:'tab', icon:'🔥', label:'On the Radar',  sub:'Breakout picks right now', run:()=>document.querySelector('[onclick*="showTab(\'hot\'"]')?.click()},
   {kind:'tab', icon:'🎯', label:'Prime Tickers',    sub:'Tracked top-10 picks',     run:()=>document.querySelector('[onclick*="showTab(\'model\'"]')?.click()},
   {kind:'tab', icon:'⭐', label:'Watchlist',    sub:'Your saved stocks',        run:()=>document.querySelector('[onclick*="showTab(\'watch\'"]')?.click()},
   {kind:'tab', icon:'🌐', label:'Universe',     sub:'Sector heat map + all stocks', run:()=>document.querySelector('[onclick*="v2Show(\'fund\'"]')?.click()},
@@ -18060,7 +18060,7 @@ function renderCmdK(){
       : `<div class="cmdk-empty">Type a ticker symbol or company name.</div>`;
     return;
   }
-  const sectionTitle = q ? 'Stocks' : 'Prime opportunities';
+  const sectionTitle = q ? 'Stocks' : 'Breakout picks';
   list.innerHTML =
     `<div class="cmdk-group">${sectionTitle}</div>` +
     tickers.map((i, myIdx) => {
