@@ -2330,8 +2330,9 @@ def _sp_data_sections(t: dict, sym: str, price: float):
     }
     def add(anchor, title, inner):
         if not inner: return
-        nav.append(f'<a href="#{anchor}">{title}</a>')
         rib, ico = _RIB.get(anchor, ("rep-slate", "•"))
+        acc = _REP_ACCENT.get(rib, "#4a5568")
+        nav.append(f'<a href="#{anchor}" class="sp-np" style="color:{acc};border-color:{acc}66;background:{acc}12">{title}</a>')
         secs.append(_sp_ribbon(anchor, title, inner, rib, ico))
 
     # Score breakdown (six pillars) — each its own vivid colour, infographic-style
@@ -2428,8 +2429,10 @@ def _sp_data_sections(t: dict, sym: str, price: float):
         _spmetric("Beta", _spnum(t.get("beta"), 2)),
     ]))
 
-    nav_html = ('<nav class="sp-nav"><a href="#overview">Overview</a>'
-                + "".join(nav) + '<a href="#more">Pro</a></nav>') if nav else ""
+    nav_html = ('<nav class="sp-nav">'
+                '<a href="#overview" class="sp-np" style="color:#2970FF;border-color:#2970FF66;background:#2970FF12">Overview</a>'
+                + "".join(nav)
+                + '<a href="#more" class="sp-np" style="color:#c11d33;border-color:#c11d3366;background:#c11d3312">Pro</a></nav>') if nav else ""
     return nav_html, "".join(secs) + _sp_pro_section(sym)
 
 
@@ -2511,7 +2514,7 @@ def _render_stock_page(t: dict) -> str:
     key_metrics_html = _sp_ribbon("metrics", "Key metrics", f'<div class="metrics">{"".join(_km)}</div>', "rep-violet", "📋")
 
     # Latest earnings → ribbon card (post-earnings card nested + neutralized via CSS)
-    latest_earnings_html = _sp_ribbon("latest-earnings", "Latest earnings", post_earnings_html, "rep-amber", "📣") if post_earnings_html else ""
+    latest_earnings_html = _sp_ribbon("latest-earnings", "Latest earnings", post_earnings_html, "rep-teal", "📣") if post_earnings_html else ""
 
     # ── SEO meta tags — these are the part Google ranks on ──
     import datetime as _dt
