@@ -857,17 +857,17 @@ app.mount("/static", StaticFiles(directory=str(_STATIC)), name="static")
 # is invisible to crawlers — see 2026-04 SEO foundation work.
 
 # Public-facing canonical origin used for sitemap + schema URLs.
-# Configurable via env so staging vs prod don't conflict. Default is the
-# www host because the GoDaddy apex (tickermover.com) 301-forwards to www
-# (apex can't be a CNAME to Railway), so www is the real canonical host.
+# Configurable via the SITE_ORIGIN env var. The intended canonical is the
+# BARE APEX (https://tickermover.com) — set that env var on Railway once the
+# apex actually serves the app (DNS pointed at the origin + www 301-redirecting
+# to apex). Default stays on www until then, because pointing canonical/og/
+# sitemap URLs at an apex that 404s or redirect-loops is worse than www.
+# (Do NOT re-add an apex->www rewrite here — it blocks the apex canonical.)
 import os as _os, re as _re_origin
 SITE_ORIGIN = _os.environ.get("SITE_ORIGIN", "https://www.tickermover.com").strip().rstrip("/")
 # Self-repair a malformed origin from a bad env var (e.g. "https:tickermover.com"
-# missing the // or the www) so sitemap / canonical / og: URLs are never broken.
+# missing the //) so sitemap / canonical / og: URLs are never broken.
 SITE_ORIGIN = _re_origin.sub(r'^\s*https?:/*', 'https://', SITE_ORIGIN) or "https://www.tickermover.com"
-# Canonical host is www (the GoDaddy apex 301-redirects to www).
-if SITE_ORIGIN.startswith("https://tickermover.com"):
-    SITE_ORIGIN = SITE_ORIGIN.replace("https://tickermover.com", "https://www.tickermover.com", 1)
 
 
 @app.get("/favicon.ico")
