@@ -26,6 +26,7 @@ from billing import RazorpayClient, is_pro
 from email_sender import send_welcome_email, send_password_changed_email
 from data_coordinator import DataCoordinator
 from ai_scorer import score_and_rank, compute_pop_score
+import bottom_line_ai
 import ai_selector
 from selection_store import store as _selstore
 from stock_universe import get_universe, get_meta
@@ -292,6 +293,8 @@ async def _full_refresh() -> None:
             # 2) Score with current regime → emits smart_score + grade
             regime_now = market_regime.get()
             _universe_data = score_and_rank(new_universe, regime=regime_now)
+            # 2b) Overlay any cached Haiku-polished bottom_lines (pure memory, no I/O)
+            bottom_line_ai.apply_cached(_universe_data)
             # 3) Persist this round's pop_scores so velocity is computable
             #    on the next refresh (only writes if ≥5 min since last point).
             score_history.record_batch(_universe_data)
@@ -346,6 +349,7 @@ async def _yf_concurrent_load() -> None:
             _universe_data[:] = score_and_rank(
                 _universe_data[:], regime=market_regime.get()
             )
+            bottom_line_ai.apply_cached(_universe_data)
             score_history.record_batch(_universe_data)
     cache.save_disk()
     logger.info(f"YF concurrent load done in {time.time()-t0:.1f}s — {len(_universe_data)} tickers scored")
@@ -443,6 +447,7 @@ async def _tech_refresh() -> None:
                 _universe_data[:] = score_and_rank(
                     _universe_data[:], regime=market_regime.get()
                 )
+                bottom_line_ai.apply_cached(_universe_data)
                 score_history.record_batch(_universe_data)
                 cache.save_disk()
             logger.info(
@@ -737,6 +742,33 @@ async def _data_prewarm() -> None:
         await asyncio.sleep(12 * 3600)     # twice a day
 
 
+async def _bottom_line_prewarm() -> None:
+    """Background loop: rewrite each stock's deterministic bottom_line into
+    natural Haiku prose, cached 15 days in the durable KV store. Cache-first and
+    self-throttling — only stocks whose template sentence changed (drivers moved)
+    or whose entry is >15 days old call Haiku, capped per cycle so cost/latency
+    never spikes. Pure enhancement: the template always remains as the fallback.
+
+    Decoupled from the 5-min scoring loop (which only does the free, in-memory
+    apply_cached overlay). Steady state this loop is near-$0 — most cycles are
+    all cache hits."""
+    await asyncio.sleep(200)               # let the universe load + first score settle
+    while True:
+        try:
+            if bottom_line_ai.available() and _universe_data:
+                stats = await bottom_line_ai.prewarm(
+                    _universe_data, throttle_s=2.0, max_gen=60,
+                )
+                if stats.get("generated"):
+                    logger.info(
+                        "✍️  Bottom-line pre-warm: %d generated, %d cache hits (%s)",
+                        stats["generated"], stats["cache_hits"], stats.get("model"),
+                    )
+        except Exception as exc:
+            logger.warning(f"bottom-line pre-warm cycle failed: {exc}")
+        await asyncio.sleep(3 * 3600)      # every 3h
+
+
 # ── Lifespan ──────────────────────────────────────────────────────────
 
 @asynccontextmanager
@@ -819,6 +851,7 @@ async def lifespan(app: FastAPI):
         asyncio.create_task(_desk_publisher()),     # freeze pre/post editions
         asyncio.create_task(_overview_prewarm()),   # keep curated Overviews warm
         asyncio.create_task(_data_prewarm()),        # keep all stocks' free data (stock-extra) warm
+        asyncio.create_task(_bottom_line_prewarm()), # Haiku-polish bottom_lines (cache-first, 15d)
     ]
     yield
     for t in tasks:
@@ -2469,7 +2502,7 @@ def _render_stock_page(t: dict) -> str:
     grade  = t.get("grade") or "—"
     rating = {"A":"★★★★★ Top Tier","B":"★★★★ Quality","C":"★★★ Average","D":"★★ Below Avg","F":"★ Weak"}.get(grade, "Under Review")
     verdict_color = {"A":"#10B981","B":"#2970FF","C":"#F59E0B","D":"#F97316","F":"#EF4444"}.get(grade, "#64748b")
-    bottom_line = t.get("bottom_line") or f"{name} is currently scored {round(pop)}/100 on Alpha Score."
+    bottom_line = t.get("bottom_line_ai") or t.get("bottom_line") or f"{name} is currently scored {round(pop)}/100 on Alpha Score."
     chg = _f(t.get("change_pct"))
     chg_sign = "+" if chg >= 0 else ""
     rev_g = t.get("revenue_growth_yoy")
@@ -2957,7 +2990,7 @@ def _render_og_png(t: dict) -> bytes:
     except (TypeError, ValueError): pop_n = 0
     grade  = t.get("grade") or "—"
     rating = {"A":"★★★★★ TOP TIER","B":"★★★★ QUALITY","C":"★★★ AVERAGE","D":"★★ BELOW AVG","F":"★ WEAK"}.get(grade, "UNDER REVIEW")
-    bl = (t.get("bottom_line") or f"{name} scored {pop_n}/100 on Alpha Score.")[:120]
+    bl = (t.get("bottom_line_ai") or t.get("bottom_line") or f"{name} scored {pop_n}/100 on Alpha Score.")[:120]
 
     W, H = 1200, 630
     score_color = (

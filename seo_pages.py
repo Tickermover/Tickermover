@@ -518,7 +518,7 @@ def _stock_row(t: dict) -> str:
         pop_n = round(float(pop)) if pop is not None else "—"
     except (TypeError, ValueError):
         pop_n = "—"
-    bl = (t.get("bottom_line") or "")[:130]
+    bl = (t.get("bottom_line_ai") or t.get("bottom_line") or "")[:130]
     grade_class = grade if grade in ("A", "B", "C", "D", "F") else ""
     return (
         f'<tr><td><a href="/stocks/{sym}" class="tk">{sym}</a><br>'
@@ -670,7 +670,7 @@ def _cmp_card(t: dict) -> str:
     mom_str = f"{float(mom):+.1f}%" if mom is not None else "—"
     upside = t.get("target_upside_pct")
     upside_str = f"{float(upside):+.1f}%" if upside is not None else "—"
-    bl = (t.get("bottom_line") or "")[:200]
+    bl = (t.get("bottom_line_ai") or t.get("bottom_line") or "")[:200]
     return f"""
 <div class="cmp-card">
   <a href="/stocks/{sym}" style="text-decoration:none">
