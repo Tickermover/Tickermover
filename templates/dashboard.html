@@ -6638,6 +6638,7 @@ html.v2-dark body.v2 .v2-sb-logo,body.v2 .v2-sb-logo{border-bottom:1px solid rgb
 /* official brand mark + wordmark (mirrors signals_preview .rail-mark/.rail-name) */
 body.v2 .v2-sb-logo img{display:none}
 html.v2-dark body.v2 .v2-sb-logo .name,body.v2 .v2-sb-logo .name{font-family:'Space Grotesk',var(--font-body),sans-serif;font-weight:700;font-size:18px;letter-spacing:-.02em;color:#0a0e22;background:none;-webkit-text-fill-color:unset;display:inline-flex;align-items:baseline}
+html.v2-dark body.v2 .v2-sb-logo .name .brand-m,body.v2 .v2-sb-logo .name .brand-m{height:1.6em;width:auto;flex:none;align-self:baseline;margin:0 .03em}
 html.v2-dark body.v2 .v2-sb-logo .name span,body.v2 .v2-sb-logo .name span{-webkit-text-fill-color:unset;background:none;color:inherit}
 html.v2-dark body.v2 .v2-topbar,body.v2 .v2-topbar{background:#fff!important;color:#1e293b;border:1px solid rgba(9,9,9,.07)!important;border-image:none!important;border-radius:14px!important;height:auto!important;width:calc(100% - 52px)!important;max-width:1268px!important;margin:14px auto 4px!important;padding:11px 16px!important;box-shadow:0 1px 2px rgba(0,0,0,.08),0 10px 24px -14px rgba(0,0,0,.26)!important}
 html.v2-dark body.v2 .v2-topbar .v2-search,body.v2 .v2-topbar .v2-search{background:#fff;border:1px solid rgba(9,9,9,.07)}
@@ -6920,8 +6921,7 @@ document.addEventListener('DOMContentLoaded', function(){
   <!-- ── SIDEBAR ── -->
   <aside class="v2-sidebar" id="v2-sidebar">
     <div class="v2-sb-logo">
-      <svg width="32" height="32" viewBox="0 0 64 64" fill="none" aria-hidden="true"><defs><linearGradient id="tmg-sb" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4d96ff"/><stop offset="1" stop-color="#0040c1"/></linearGradient></defs><rect width="64" height="64" rx="14" fill="url(#tmg-sb)"/><polyline points="10,52 21,26 32,40 44,10 54,52" stroke="white" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="44" cy="10" r="5" fill="white"/></svg>
-      <div class="name">TickerMover</div>
+      <div class="name">Ticker<svg class="brand-m" viewBox="0 0 100 118" fill="none" aria-hidden="true"><polyline points="7,110 25,42 47,67 69,28 87,110" stroke="#2970ff" stroke-width="9" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="69" cy="10" r="7" fill="#2970ff"/></svg>over</div>
       <button class="v2-sb-collapse" onclick="toggleSidebar()" aria-label="Collapse sidebar" title="Collapse menu">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="16" height="16"><path d="M15 6l-6 6 6 6"/></svg>
       </button>

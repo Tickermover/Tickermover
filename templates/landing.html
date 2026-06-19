@@ -149,7 +149,7 @@ h1,h2,h3,h4,h5{font-family:'Instrument Sans',sans-serif;font-weight:600;letter-s
 .nav.scrolled .nav-inner{box-shadow:0 14px 44px rgba(9,20,60,.18),inset 0 1px 0 rgba(255,255,255,.6);background:rgba(255,255,255,.97)}
 .brand{display:flex;align-items:center;gap:11px;font-family:'Space Grotesk','Instrument Sans',sans-serif;font-weight:700;font-size:20px;letter-spacing:-.02em;color:#0a0e22}
 .brand-wordmark{display:inline-flex;align-items:baseline;color:#0a0e22}
-.brand-m{display:block;flex:none;margin:0 1px}
+.brand-m{height:1.6em;width:auto;flex:none;align-self:baseline;margin:0 .03em}
 .foot-brand .brand-wordmark{color:#fff}
 .nav-links{display:flex;gap:30px;align-items:center}
 .nav-links a{font-size:15px;color:var(--raisin);font-weight:500;position:relative;font-family:'Instrument Sans',sans-serif}
@@ -1317,7 +1317,7 @@ h1,h2,h3,h4,h5{font-family:'Instrument Sans',sans-serif;font-weight:600;letter-s
 <!-- ───────── NAV ───────── -->
 <nav class="nav" id="nav">
   <div class="nav-inner">
-    <a class="brand" href="#top"><svg width="36" height="36" viewBox="0 0 64 64" fill="none" aria-hidden="true"><defs><linearGradient id="tmg-nav" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4d96ff"/><stop offset="1" stop-color="#0040c1"/></linearGradient></defs><rect width="64" height="64" rx="14" fill="url(#tmg-nav)"/><polyline points="10,52 21,26 32,40 44,10 54,52" stroke="white" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="44" cy="10" r="5" fill="white"/></svg><span class="brand-wordmark">TickerMover</span></a>
+    <a class="brand" href="#top"><span class="brand-wordmark">Ticker<svg class="brand-m" viewBox="0 0 100 118" fill="none" aria-hidden="true"><polyline points="7,110 25,42 47,67 69,28 87,110" stroke="#2970ff" stroke-width="9" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="69" cy="10" r="7" fill="#2970ff"/></svg>over</span></a>
     <div class="nav-links">
       <a href="#engine">Engine</a>
       <a href="#research">Research</a>
@@ -1575,7 +1575,7 @@ h1,h2,h3,h4,h5{font-family:'Instrument Sans',sans-serif;font-weight:600;letter-s
       <div class="dash-body">
         <!-- sidebar -->
         <aside class="dash-side">
-          <div class="ds-brand"><span class="ds-mark" aria-hidden="true"><svg width="28" height="28" viewBox="0 0 64 64" fill="none"><defs><linearGradient id="tmg-ds" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4d96ff"/><stop offset="1" stop-color="#0040c1"/></linearGradient></defs><rect width="64" height="64" rx="14" fill="url(#tmg-ds)"/><polyline points="10,52 21,26 32,40 44,10 54,52" stroke="white" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="44" cy="10" r="5" fill="white"/></svg></span><span class="ds-name">Ticker<svg width="20" height="26" viewBox="0 0 80 100" fill="none" style="display:block;flex:none;margin:0 1px" aria-hidden="true"><polyline points="0,100 18,26 38,56 62,0 80,100" stroke="#2970ff" stroke-width="9" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="62" cy="0" r="9" fill="#2970ff"/></svg>over</span></div>
+          <div class="ds-brand"><span class="ds-name">Ticker<svg class="brand-m" viewBox="0 0 100 118" fill="none" aria-hidden="true"><polyline points="7,110 25,42 47,67 69,28 87,110" stroke="#2970ff" stroke-width="9" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="69" cy="10" r="7" fill="#2970ff"/></svg>over</span></div>
           <nav class="ds-nav">
             <div class="ds-sec">Discover</div>
             <a class="ds-link active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg> On the Radar</a>
@@ -2122,7 +2122,7 @@ h1,h2,h3,h4,h5{font-family:'Instrument Sans',sans-serif;font-weight:600;letter-s
   <div class="wrap" style="padding-top:48px">
     <div class="foot-top">
       <div class="foot-brand">
-        <a class="brand" href="#top"><span class="brand-wordmark">Ticker<svg class="brand-m" width="29" height="36" viewBox="0 0 80 100" fill="none" aria-hidden="true"><polyline points="0,100 18,26 38,56 62,0 80,100" stroke="#6aabff" stroke-width="9" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="62" cy="0" r="9" fill="#6aabff"/></svg>over</span></a>
+        <a class="brand" href="#top"><span class="brand-wordmark">Ticker<svg class="brand-m" viewBox="0 0 100 118" fill="none" aria-hidden="true"><polyline points="7,110 25,42 47,67 69,28 87,110" stroke="#6aabff" stroke-width="9" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="69" cy="10" r="7" fill="#6aabff"/></svg>over</span></a>
         <p>An AI research studio for the US market.</p>
       </div>
       <div class="foot-right">
