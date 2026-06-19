@@ -296,6 +296,10 @@ class DataCoordinator:
         self.cache           = SmartCache(disk_path=config.CACHE_DISK_FILE)
         self._fh_limiter     = RateLimiter(config.FINNHUB_CALLS_PER_MIN)
         self._fmp_limiter    = RateLimiter(config.FMP_CALLS_PER_MIN)
+        # Endpoints that returned 402/403/redirect (not on this API plan). We
+        # disable them for the process lifetime so we stop wasting calls + log
+        # noise on them. Keys are namespaced (fh:/fmp:/fmps:) to avoid collisions.
+        self._dead_endpoints: set[str] = set()
         self._av_calls_today = 0
         self._av_reset_day   = date.today()
         self._fmp_calls_today= 0
@@ -360,13 +364,28 @@ class DataCoordinator:
     # ── FINNHUB ───────────────────────────────────────────────────────
 
     async def _fh_get(self, path: str, params: dict) -> Optional[dict]:
+        dead_key = f"fh:{path}"
+        if dead_key in self._dead_endpoints:
+            return None
         await self._fh_limiter.wait()
         params = {**params, "token": config.FINNHUB_KEY}
         try:
             async with httpx.AsyncClient(timeout=12, follow_redirects=False) as c:
                 r = await c.get(f"https://finnhub.io/api/v1{path}", params=params)
-                # 302 → endpoint not available on this tier; return silently
+                # 30x / 403 → endpoint not on this plan; disable for the process
+                # lifetime so we never call it again (e.g. /stock/candle on free).
                 if r.is_redirect or r.status_code in (301, 302, 303, 307, 308):
+                    self._dead_endpoints.add(dead_key)
+                    return None
+                if r.status_code == 403:
+                    self._dead_endpoints.add(dead_key)
+                    logger.info(f"Finnhub {path} not on this plan (403) — disabling for this run")
+                    return None
+                # 429 → throttled but the endpoint works; caller falls back to
+                # yfinance/Alpaca. Count it but stay quiet (no per-call log spam).
+                if r.status_code == 429:
+                    self.api_status["finnhub"]["errors"] += 1
+                    self.api_status["finnhub"]["ok"]      = False
                     return None
                 r.raise_for_status()
             data = r.json()
@@ -869,11 +888,19 @@ class DataCoordinator:
         """Shared FMP HTTP helper. Returns parsed JSON or None on failure."""
         if not config.FMP_API_KEY or self._fmp_remaining() <= 0:
             return None
+        dead_key = f"fmp:{path}"
+        if dead_key in self._dead_endpoints:
+            return None
         await self._fmp_limiter.wait()   # Starter = 300/min; throttle per-minute, not per-day
         try:
             params = {**params, "apikey": config.FMP_API_KEY}
             async with httpx.AsyncClient(timeout=12) as c:
                 r = await c.get(f"https://financialmodelingprep.com/api{path}", params=params)
+                # 402 → endpoint not included in this plan; disable for this run.
+                if r.status_code == 402:
+                    self._dead_endpoints.add(dead_key)
+                    logger.info(f"FMP {path} not in plan (402) — disabling for this run")
+                    return None
                 r.raise_for_status()
             data = r.json()
             self._fmp_calls_today += 1
@@ -894,6 +921,9 @@ class DataCoordinator:
         keys. Returns parsed JSON or None on failure / error payloads."""
         if not config.FMP_API_KEY or self._fmp_remaining() <= 0:
             return None
+        dead_key = f"fmps:{endpoint}"
+        if dead_key in self._dead_endpoints:
+            return None
         await self._fmp_limiter.wait()   # Starter = 300/min
         try:
             q = {**params, "apikey": config.FMP_API_KEY}
@@ -901,6 +931,11 @@ class DataCoordinator:
                 r = await c.get(
                     f"https://financialmodelingprep.com/stable/{endpoint}", params=q
                 )
+                # 402 → endpoint not in this plan (Starter); disable for this run.
+                if r.status_code == 402:
+                    self._dead_endpoints.add(dead_key)
+                    logger.info(f"FMP stable {endpoint} not in plan (402) — disabling for this run")
+                    return None
                 r.raise_for_status()
             data = r.json()
             # The stable API returns an error OBJECT (dict) instead of a list when

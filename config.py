@@ -110,7 +110,11 @@ _raw_cache_path = _env("CACHE_DISK_FILE", "")
 CACHE_DISK_FILE  = _raw_cache_path if _raw_cache_path else "output/cache_v5.json"
 
 # ── Rate Limits ───────────────────────────────────────────────────────────────
-FINNHUB_CALLS_PER_MIN = 55
+# Free tier nominally allows 60/min, but /company-news + /calendar/earnings get
+# throttled (429) well below that when fired across the whole universe. 30/min
+# keeps us under the real ceiling; news/earnings are slow-moving so the slower
+# cadence is invisible to users. Override via env if the plan changes.
+FINNHUB_CALLS_PER_MIN = int(_env("FINNHUB_CALLS_PER_MIN", "30"))
 AV_CALLS_PER_DAY      = 23
 
 # ── Universe ──────────────────────────────────────────────────────────────────
