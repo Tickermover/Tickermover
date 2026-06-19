@@ -45,46 +45,10 @@ _JURIS   = os.environ.get("LEGAL_JURISDICTION", "England and Wales")
 
 
 # ── Shared styling + header / footer ────────────────────────────────
-_BASE_STYLE = """
-<style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{font-family:'Inter',-apple-system,sans-serif;color:#0f172a;background:#fafbfc;line-height:1.65;font-size:15.5px;-webkit-font-smoothing:antialiased}
-.wrap{max-width:780px;margin:0 auto;padding:32px 24px 80px}
-.crumbs{font-size:12.5px;color:#94a3b8;margin-bottom:8px;letter-spacing:.04em;text-transform:uppercase;font-weight:600}
-h1{font-size:36px;font-weight:900;letter-spacing:-.02em;margin-bottom:6px;color:#0a0a0a}
-.subhead{font-size:14px;color:#64748b;margin-bottom:32px}
-h2{font-size:20px;font-weight:800;margin:32px 0 10px;color:#0a0a0a;padding-top:12px;border-top:1px solid #e2e8f0}
-h2:first-of-type{border-top:none;padding-top:0;margin-top:0}
-h3{font-size:15.5px;font-weight:700;margin:18px 0 6px;color:#15803d}
-p{margin-bottom:12px;color:#0f172a}
-ul,ol{margin:8px 0 14px 22px;color:#0f172a}
-li{margin-bottom:6px}
-strong{font-weight:700;color:#0a0a0a}
-.callout{background:#FFF8E5;border-left:4px solid #F5A623;padding:14px 18px;border-radius:8px;margin:16px 0;font-size:14.5px}
-.callout-green{background:#FFF8E5;border-left-color:#15803d}
-a{color:#15803d;font-weight:600;text-decoration:none}
-a:hover{text-decoration:underline}
-.legal-meta{font-size:12.5px;color:#64748b;margin-top:48px;padding-top:20px;border-top:1px solid #e2e8f0}
-nav.legal-nav{margin-bottom:24px;padding:10px 14px;background:#fff;border:1px solid #e2e8f0;border-radius:10px;font-size:13.5px}
-nav.legal-nav a{margin-right:18px;color:#475569}
-nav.legal-nav a.active{color:#15803d}
-.brand-bar{display:inline-flex;align-items:center;gap:8px;font-size:16px;font-weight:800;color:#0a0a0a;margin-bottom:24px}
-.brand-bar em{font-style:normal;color:#15803d}
-</style>
-"""
-
 
 def _shell(title: str, slug: str, body_html: str) -> str:
-    """Wrap body content with shared header, nav, and footer."""
-    nav_items = [
-        ("terms",      "Terms"),
-        ("privacy",    "Privacy"),
-        ("disclaimer", "Disclaimer"),
-    ]
-    nav_html = "".join(
-        f'<a href="/{s}"' + (' class="active"' if s == slug else "") + f'>{label}</a>'
-        for s, label in nav_items
-    )
+    """Wrap body content with the real TickerMover nav + footer."""
+    active = {s: ' aria-current="page"' for s in ("terms", "privacy", "disclaimer")}
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -93,42 +57,174 @@ def _shell(title: str, slug: str, body_html: str) -> str:
 <title>{title} | {_COMPANY}</title>
 <meta name="description" content="{title} for {_COMPANY} — research tool, not financial advice.">
 <meta name="robots" content="index, follow">
+<meta property="og:site_name" content="{_COMPANY}">
+<link rel="icon" type="image/svg+xml" href="/static/brand/tickermover-mark.svg">
 <link rel="icon" type="image/png" sizes="32x32" href="/static/icons/favicon-32.png">
-{_BASE_STYLE}
+<link rel="icon" type="image/png" sizes="192x192" href="/static/icons/icon-192.png">
+<link rel="apple-touch-icon" href="/static/icons/icon-192.png">
+<meta name="theme-color" content="#0040c1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{{
+  --primary:#0040c1;--blue-light:#2970ff;--blue-grad:linear-gradient(120deg,#2970ff 0%,#0042c5 55%,#00359e 100%);
+  --alice-blue:#cdeef8;--text-dark:#090909;--eerie:#111827;--raisin:#212121;--grey:#758696;
+  --r-pill:6.25rem;--wrap:1240px;--ease:cubic-bezier(.2,.7,.2,1);
+}}
+*{{box-sizing:border-box;margin:0;padding:0}}
+html{{scroll-behavior:smooth}}
+body{{background:var(--alice-blue);color:var(--text-dark);font-family:'Instrument Sans',system-ui,-apple-system,sans-serif;font-weight:400;line-height:1.6;-webkit-font-smoothing:antialiased;overflow-x:hidden}}
+a{{color:inherit;text-decoration:none}}
+img,svg{{display:block;max-width:100%}}
+
+/* ── nav ── */
+@property --btn-fill{{syntax:'<percentage>';inherits:false;initial-value:0%}}
+.site-nav{{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:center;justify-content:space-between;padding:20px 28px;max-width:1400px;margin:0 auto;transition:padding .4s var(--ease)}}
+.nav-inner{{display:flex;align-items:center;justify-content:space-between;width:100%;background:rgba(255,255,255,.94);backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%);border:1px solid rgba(255,255,255,.7);border-radius:var(--r-pill);padding:10px 10px 10px 22px;box-shadow:0 10px 34px rgba(9,20,60,.16),inset 0 1px 0 rgba(255,255,255,.6);transition:box-shadow .4s,background .4s}}
+.site-nav.scrolled .nav-inner{{box-shadow:0 14px 44px rgba(9,20,60,.18),inset 0 1px 0 rgba(255,255,255,.6);background:rgba(255,255,255,.97)}}
+.brand{{display:flex;align-items:center;gap:11px;font-family:'Instrument Sans',sans-serif;font-weight:600;font-size:20px;letter-spacing:-.022em}}
+.brand .mark{{width:36px;height:36px;flex:none;display:block;background:linear-gradient(135deg,#5DB3F1 0%,#2970FF 50%,#0040c1 100%);-webkit-mask:url('/static/brand/tickermover-mark-mask.svg') center/contain no-repeat;mask:url('/static/brand/tickermover-mark-mask.svg') center/contain no-repeat;filter:drop-shadow(0 4px 12px rgba(41,112,255,.34))}}
+.brand .brand-wordmark{{background:linear-gradient(90deg,#090909 0%,#090909 38%,#2970FF 60%,#0040c1 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}}
+.foot-brand .brand .brand-wordmark{{background:linear-gradient(90deg,#ffffff 0%,#ffffff 42%,#7CC0EE 62%,#2970FF 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}}
+.nav-links{{display:flex;gap:30px;align-items:center}}
+.nav-links a{{font-size:15px;color:var(--raisin);font-weight:500;font-family:'Instrument Sans',sans-serif}}
+.nav-links a:hover,.nav-links a[aria-current]{{color:var(--primary)}}
+.nav-right{{display:flex;align-items:center;gap:14px}}
+.nav-signin{{font-family:'Instrument Sans',sans-serif;font-weight:600;font-size:15px;color:var(--raisin)}}
+.nav-signin:hover{{color:var(--primary)}}
+.btn{{display:inline-flex;align-items:center;gap:10px;cursor:pointer;border:none;font-family:'Instrument Sans',sans-serif;font-weight:600;font-size:14px;padding:10px 8px 10px 20px;border-radius:var(--r-pill);white-space:nowrap}}
+.btn .arrow{{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;flex:0 0 30px}}
+.btn .arrow svg{{width:14px;height:14px}}
+.btn-primary{{--btn-fill:0%;color:#fff;background:radial-gradient(circle at calc(100% - 24px) 50%,#0a0e22 var(--btn-fill),#2453ff calc(var(--btn-fill) + 1%));box-shadow:0 0 0 2px #2453ff,0 8px 20px rgba(36,83,255,.28);transition:--btn-fill .85s cubic-bezier(.19,1,.22,1),box-shadow .55s}}
+.btn-primary .arrow{{background:#0a0e22;color:#fff}}
+.btn-primary:hover{{--btn-fill:135%}}
+@media(max-width:768px){{.nav-links{{display:none}}.site-nav{{padding:12px 14px}}}}
+
+/* ── page body ── */
+.legal-page{{max-width:780px;margin:0 auto;padding:108px 24px 80px}}
+.legal-crumbs{{font-size:12px;color:#94a3b8;margin-bottom:8px;letter-spacing:.05em;text-transform:uppercase;font-weight:600}}
+h1{{font-size:34px;font-weight:700;letter-spacing:-.02em;margin-bottom:6px;color:var(--text-dark);font-family:'Instrument Sans',sans-serif}}
+.legal-sub{{font-size:14px;color:#64748b;margin-bottom:32px}}
+.legal-tab-nav{{display:flex;gap:4px;margin-bottom:32px;padding:4px;background:#fff;border:1px solid rgba(9,20,60,.08);border-radius:10px;width:fit-content;box-shadow:0 2px 8px rgba(9,20,60,.06)}}
+.legal-tab-nav a{{font-size:13.5px;font-weight:600;color:#475569;padding:7px 18px;border-radius:7px;font-family:'Instrument Sans',sans-serif;transition:background .2s,color .2s}}
+.legal-tab-nav a:hover{{color:var(--primary)}}
+.legal-tab-nav a[aria-current]{{background:var(--primary);color:#fff}}
+h2{{font-size:18px;font-weight:700;margin:32px 0 10px;color:var(--text-dark);padding-top:14px;border-top:1px solid rgba(9,20,60,.08);font-family:'Instrument Sans',sans-serif}}
+h2:first-of-type{{border-top:none;padding-top:0;margin-top:0}}
+h3{{font-size:15px;font-weight:600;margin:18px 0 6px;color:var(--primary);font-family:'Instrument Sans',sans-serif}}
+p{{margin-bottom:12px;color:#1e293b;font-size:15px}}
+ul,ol{{margin:8px 0 14px 22px;color:#1e293b;font-size:15px}}
+li{{margin-bottom:6px}}
+strong{{font-weight:700;color:var(--text-dark)}}
+.callout{{background:#eff6ff;border-left:4px solid var(--primary);padding:14px 18px;border-radius:8px;margin:16px 0;font-size:14.5px}}
+.callout-amber{{background:#fffbeb;border-left-color:#f59e0b}}
+a.body-link{{color:var(--primary);font-weight:600}}
+a.body-link:hover{{text-decoration:underline}}
+table{{width:100%;border-collapse:collapse;margin:12px 0;font-size:14px}}
+th{{padding:8px;border:1px solid rgba(9,20,60,.1);text-align:left;background:#f8fafc;font-weight:600}}
+td{{padding:8px;border:1px solid rgba(9,20,60,.1)}}
+
+/* ── footer ── */
+.site-footer{{background:var(--text-dark);color:#fff;padding:0 0 28px;margin-top:64px}}
+.foot-wrap{{max-width:var(--wrap);margin:0 auto;padding:0 28px}}
+.foot-top{{display:flex;justify-content:space-between;align-items:flex-start;padding:48px 0 32px;gap:32px;flex-wrap:wrap}}
+.foot-brand p{{font-size:14px;color:#94a3b8;margin-top:8px}}
+.foot-right{{display:flex;gap:48px;align-items:flex-start;flex-wrap:wrap}}
+.foot-nav{{display:flex;gap:24px;align-items:center;flex-wrap:wrap}}
+.foot-nav a{{font-size:14px;color:#94a3b8;font-weight:500;transition:color .2s}}
+.foot-nav a:hover{{color:#fff}}
+.foot-meta{{display:flex;flex-direction:column;gap:8px;align-items:flex-end}}
+.foot-email{{font-size:14px;color:#94a3b8;font-weight:500}}
+.foot-email:hover{{color:#fff}}
+.foot-risk{{border-top:1px solid rgba(255,255,255,.08);padding:16px 0 4px}}
+.foot-risk p{{font-size:12px;line-height:1.6;color:#94a3b8;margin:0}}
+.foot-bottom{{display:flex;justify-content:space-between;align-items:center;padding-top:20px;flex-wrap:wrap;gap:12px}}
+.foot-bottom span{{font-size:12.5px;color:#64748b}}
+.foot-legal{{display:flex;gap:20px}}
+.foot-legal a{{font-size:13px;color:#64748b;font-weight:500;transition:color .2s}}
+.foot-legal a:hover,.foot-legal a[aria-current]{{color:#fff}}
+.disc{{font-size:12px;color:#475569}}
+</style>
 </head>
 <body>
-<div class="wrap">
 
-<a href="/" class="brand-bar">
-  <svg viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg" style="width:20px;height:20px">
-    <defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#D4860A"/>
-      <stop offset=".55" stop-color="#F5A623"/>
-      <stop offset="1" stop-color="#FFE9B0"/>
-    </linearGradient></defs>
-    <rect width="28" height="28" rx="7" fill="#0f172a"/>
-    <polyline points="4,21 9,13 15,17 20,7 24,12" stroke="url(#lg)" stroke-width="2.3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-    <circle cx="20" cy="7" r="2.5" fill="#FFE9B0"/>
-  </svg>
-  Ticker<em>Mover</em>
-</a>
+<!-- ── NAV ── -->
+<nav class="site-nav" id="site-nav">
+  <div class="nav-inner">
+    <a class="brand" href="/"><span class="mark" role="img" aria-label="{_COMPANY}"></span><span class="brand-wordmark">{_COMPANY}</span></a>
+    <div class="nav-links">
+      <a href="/#engine">The engine</a>
+      <a href="/app">Dashboard</a>
+      <a href="/#ai-engine">How it works</a>
+      <a href="/#insights">Daily desk</a>
+      <a href="/#pricing">Pricing</a>
+    </div>
+    <div class="nav-right">
+      <a class="nav-signin" href="/login">Sign in</a>
+      <a class="btn btn-primary" href="/login?signup">Start free <span class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span></a>
+    </div>
+  </div>
+</nav>
 
-<nav class="legal-nav">{nav_html}</nav>
+<!-- ── CONTENT ── -->
+<div class="legal-page">
+  <nav class="legal-tab-nav">
+    <a href="/terms"{active['terms'] if slug == 'terms' else ''}>Terms</a>
+    <a href="/privacy"{active['privacy'] if slug == 'privacy' else ''}>Privacy</a>
+    <a href="/disclaimer"{active['disclaimer'] if slug == 'disclaimer' else ''}>Disclaimer</a>
+  </nav>
+  <div class="legal-crumbs">Legal · {title}</div>
+  <h1>{title}</h1>
+  <p class="legal-sub">Effective {_EFFECTIVE_DATE} · Last updated {_EFFECTIVE_DATE}</p>
 
-<div class="crumbs">Legal · {title}</div>
-<h1>{title}</h1>
-<div class="subhead">Effective {_EFFECTIVE_DATE} · Last updated {_EFFECTIVE_DATE}</div>
+  {body_html}
 
-{body_html}
-
-<div class="legal-meta">
-  © {datetime.utcnow().year} {_COMPANY} · Questions? <a href="mailto:{_CONTACT}">{_CONTACT}</a><br>
-  This document is provided in good faith and was reviewed by the {_COMPANY} team.
-  It does not constitute legal advice. {_COMPANY} reserves the right to amend
-  these terms; material changes will be notified to active users by email.
+  <p style="font-size:12.5px;color:#94a3b8;margin-top:48px;padding-top:20px;border-top:1px solid rgba(9,20,60,.08)">
+    © {datetime.utcnow().year} {_COMPANY} · Questions? <a href="mailto:{_CONTACT}" class="body-link">{_CONTACT}</a>
+  </p>
 </div>
 
-</div>
+<!-- ── FOOTER ── -->
+<footer class="site-footer">
+  <div class="foot-wrap">
+    <div class="foot-top">
+      <div class="foot-brand">
+        <a class="brand" href="/"><span class="mark" role="img" aria-label="{_COMPANY}"></span><span class="brand-wordmark">{_COMPANY}</span></a>
+        <p>An AI research studio for the US market.</p>
+      </div>
+      <div class="foot-right">
+        <nav class="foot-nav">
+          <a href="/#engine">The engine</a>
+          <a href="/app">Dashboard</a>
+          <a href="/#ai-engine">How it works</a>
+          <a href="/#insights">Daily desk</a>
+          <a href="/#pricing">Pricing</a>
+        </nav>
+        <div class="foot-meta">
+          <a class="foot-email" href="mailto:{_CONTACT}">{_CONTACT}</a>
+        </div>
+      </div>
+    </div>
+    <div class="foot-risk">
+      <p><strong style="color:#cbd5e1">Capital at risk.</strong> {_COMPANY} is a research and data tool. It does not provide investment advice, recommendations, or any personal recommendation to buy or sell. Scores, signals and reference levels are information only. The value of investments can go down as well as up, and you may get back less than you invest. Past performance and historical scores are not a reliable indicator of future results. {_COMPANY} is not authorised or regulated by the Financial Conduct Authority. Do your own research, and consider advice from an FCA-authorised adviser before investing.</p>
+    </div>
+    <div class="foot-bottom">
+      <span>© {datetime.utcnow().year} {_COMPANY}. All rights reserved.</span>
+      <nav class="foot-legal">
+        <a href="/privacy"{active['privacy'] if slug == 'privacy' else ''}>Privacy</a>
+        <a href="/terms"{active['terms'] if slug == 'terms' else ''}>Terms</a>
+        <a href="/disclaimer"{active['disclaimer'] if slug == 'disclaimer' else ''}>Disclaimer</a>
+      </nav>
+      <span class="disc">Not investment advice. {_COMPANY} is a research tool; do your own due diligence before any trade.</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+const n=document.getElementById('site-nav');
+addEventListener('scroll',()=>n.classList.toggle('scrolled',scrollY>20),{{passive:true}});
+</script>
 </body>
 </html>"""
 
