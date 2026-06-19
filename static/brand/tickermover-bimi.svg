@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg version="1.2" baseProfile="tiny-ps" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <title>TickerMover</title>
+  <defs>
+    <linearGradient id="tmbimi" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#5DB3F1"/>
+      <stop offset="0.5" stop-color="#2970FF"/>
+      <stop offset="1" stop-color="#0040C1"/>
+    </linearGradient>
+  </defs>
+  <rect x="0" y="0" width="512" height="512" fill="url(#tmbimi)"/>
+  <polyline points="112,378 215,266 286,318 410,174" fill="none" stroke="#ffffff" stroke-width="40" stroke-linecap="round" stroke-linejoin="round"/>
+  <polyline points="338,174 410,174 410,246" fill="none" stroke="#ffffff" stroke-width="40" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
