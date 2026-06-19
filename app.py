@@ -8945,19 +8945,22 @@ async def api_earnings_intel(ticker: str, force: int = 0):
 import legal_pages as _legal
 
 
+_LEGAL_HEADERS = {"Cache-Control": "no-store"}
+
+
 @app.get("/terms", response_class=HTMLResponse)
 async def terms_page():
-    return HTMLResponse(_legal.render_terms())
+    return HTMLResponse(_legal.render_terms(), headers=_LEGAL_HEADERS)
 
 
 @app.get("/privacy", response_class=HTMLResponse)
 async def privacy_page():
-    return HTMLResponse(_legal.render_privacy())
+    return HTMLResponse(_legal.render_privacy(), headers=_LEGAL_HEADERS)
 
 
 @app.get("/disclaimer", response_class=HTMLResponse)
 async def disclaimer_page():
-    return HTMLResponse(_legal.render_disclaimer())
+    return HTMLResponse(_legal.render_disclaimer(), headers=_LEGAL_HEADERS)
 
 
 @app.get("/infographics", response_class=HTMLResponse)
