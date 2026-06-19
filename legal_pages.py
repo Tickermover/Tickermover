@@ -84,7 +84,7 @@ img,svg{{display:block;max-width:100%}}
 .nav-inner{{display:flex;align-items:center;justify-content:space-between;width:100%;background:rgba(255,255,255,.94);backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%);border:1px solid rgba(255,255,255,.7);border-radius:var(--r-pill);padding:10px 10px 10px 22px;box-shadow:0 10px 34px rgba(9,20,60,.16),inset 0 1px 0 rgba(255,255,255,.6);transition:box-shadow .4s,background .4s}}
 .site-nav.scrolled .nav-inner{{box-shadow:0 14px 44px rgba(9,20,60,.18),inset 0 1px 0 rgba(255,255,255,.6);background:rgba(255,255,255,.97)}}
 .brand{{display:flex;align-items:center;gap:11px;font-family:'Space Grotesk','Instrument Sans',sans-serif;font-weight:700;font-size:20px;letter-spacing:-.02em;color:#0a0e22}}
-.brand-wordmark{{display:inline-block;color:#0a0e22}}
+.brand-wordmark{{display:inline-block;white-space:nowrap;color:#0a0e22}}
 .brand-m{{height:1.6em;width:auto;vertical-align:baseline;margin:0 .02em}}
 .foot-brand .brand-wordmark{{color:#fff}}
 .nav-links{{display:flex;gap:30px;align-items:center}}
