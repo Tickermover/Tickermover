@@ -1128,7 +1128,16 @@ def _build_landing_schema() -> str:
     }
     # Drop None fields for clean JSON
     app_schema = {k: v for k, v in app_schema.items() if v is not None}
+    # WebSite schema — this is the signal Google uses for the "site name" shown
+    # in search results (so it reads "TickerMover", not "tickermover.com").
+    site_schema = {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "TickerMover",
+        "url": SITE_ORIGIN,
+    }
     return (
+        f'<script type="application/ld+json">{_json.dumps(site_schema, separators=(",",":"))}</script>\n'
         f'<script type="application/ld+json">{_json.dumps(org, separators=(",",":"))}</script>\n'
         f'<script type="application/ld+json">{_json.dumps(app_schema, separators=(",",":"))}</script>'
     )
