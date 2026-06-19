@@ -19164,12 +19164,8 @@ function buildTickerCard(t, showRemove) {
 </script>
 
 
-<!-- Razorpay checkout SDK -->
-<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <script>
-/* ----------------------------------------------------------
-   RAZORPAY BILLING
-   ---------------------------------------------------------- */
+/* BILLING — Stripe integration coming soon */
 
 async function openUpgradeModal() {
   if (!_AUTH.token) { openAuthModal('signin'); return; }
@@ -19177,96 +19173,15 @@ async function openUpgradeModal() {
   const errEl = document.getElementById('upgrade-error');
   const btn   = document.getElementById('upgrade-pay-btn');
   if (errEl){ errEl.textContent = ''; errEl.style.color = ''; }
-  if (btn){ btn.disabled = false; btn.style.opacity = ''; btn.style.cursor = ''; btn.textContent = 'Pay £19.99 — Upgrade Now'; }
-  // Payments may not be live yet (e.g. Razorpay/KYC not set up). Don't surface a
-  // checkout that 400s — tell the user Pro is free during beta instead.
-  try {
-    const r = await fetch('/api/payment/plan');
-    const d = await r.json();
-    if (!d || !d.enabled) {
-      if (btn){ btn.disabled = true; btn.textContent = 'Free during beta'; btn.style.opacity = '.6'; btn.style.cursor = 'default'; }
-      if (errEl){ errEl.style.color = '#475569'; errEl.textContent = "Pro is free for everyone during our beta — paid plans open at launch, and we'll email you first. Nothing to pay right now."; }
-    }
-  } catch(e){}
+  if (btn){ btn.disabled = true; btn.style.opacity = '.6'; btn.style.cursor = 'default'; btn.textContent = 'Free during beta'; }
+  if (errEl){ errEl.style.color = '#475569'; errEl.textContent = "Pro is free for everyone during our beta — paid plans open at launch, and we'll email you first. Nothing to pay right now."; }
 }
 
 function closeUpgradeModal() {
   document.getElementById('upgrade-modal').style.display = 'none';
 }
 
-async function startRazorpayCheckout() {
-  const btn   = document.getElementById('upgrade-pay-btn');
-  const errEl = document.getElementById('upgrade-error');
-  if (!_AUTH.token || !_AUTH.user) { openAuthModal('signin'); return; }
-  btn.disabled    = true;
-  btn.textContent = '…';
-  errEl.textContent = '';
-
-  try {
-    // Create order on backend
-    const r = await fetch('/api/payment/create-order', {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${_AUTH.token}` },
-    });
-    const d = await r.json();
-    if (!r.ok) { errEl.textContent = d.detail || 'Failed to create order'; btn.disabled=false; btn.textContent='Pay £19.99 — Upgrade Now'; return; }
-
-    // Open Razorpay checkout
-    const options = {
-      key:         d.key_id,
-      amount:      d.amount,
-      currency:    d.currency,
-      name:        'TickerMover',
-      description: 'Pro Plan — Monthly',
-      image:       '/static/icons/icon-192.png',
-      order_id:    d.order_id,
-      prefill: {
-        email: _AUTH.user?.email || '',
-      },
-      theme: { color: '#F5A623' },
-      handler: async function(response) {
-        // Verify payment on backend
-        const vr = await fetch('/api/payment/verify', {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${_AUTH.token}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            razorpay_payment_id: response.razorpay_payment_id,
-            razorpay_order_id:   response.razorpay_order_id,
-            razorpay_signature:  response.razorpay_signature,
-          }),
-        });
-        const vd = await vr.json();
-        if (vr.ok && vd.plan === 'pro') {
-          // Update local user state
-          const u = _AUTH.user || {};
-          u.plan = 'pro';
-          _AUTH.user = u;
-          _authUpdateUI(u);
-          closeUpgradeModal();
-          showUpgradeSuccess();
-        } else {
-          errEl.textContent = vd.detail || 'Payment verification failed — contact support';
-        }
-      },
-      modal: {
-        ondismiss: () => {
-          btn.disabled = false;
-          btn.textContent = 'Pay £19.99 — Upgrade Now';
-        }
-      }
-    };
-    const rzp = new Razorpay(options);
-    rzp.open();
-  } catch (e) {
-    errEl.textContent = 'Network error — try again';
-  } finally {
-    btn.disabled = false;
-    btn.textContent = 'Pay £19.99 — Upgrade Now';
-  }
-}
-
 function showUpgradeSuccess() {
-  // Show a quick success toast
   const t = document.createElement('div');
   t.style.cssText = 'position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:#10b981;color:#fff;padding:14px 28px;border-radius:10px;font-size:15px;font-weight:700;z-index:99999;box-shadow:0 4px 20px rgba(0,0,0,.4)';
   t.textContent = '🎉 Welcome to TickerMover Pro!';

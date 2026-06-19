@@ -292,10 +292,10 @@ the information you provide is accurate and that you understand the
 <h2>6. Free and paid plans</h2>
 <p>The Service offers a free tier with reasonable usage limits and may, from time
 to time, offer a paid &ldquo;Pro&rdquo; tier with enhanced features. Pricing for paid
-features is displayed before purchase and processed by Razorpay (our payment
-processor). Refunds for paid plans are governed by the Refund Policy linked from
+features is displayed before purchase and processed by our payment processor.
+Refunds for paid plans are governed by the Refund Policy linked from
 the checkout page; in the absence of a separate Refund Policy, paid subscriptions
-are non-refundable except where required by Indian consumer law.</p>
+are non-refundable except where required by applicable consumer law.</p>
 
 <h2>7. Intellectual property</h2>
 <p>All software, scoring algorithms, editorial commentary, screenshots, branding,
@@ -308,7 +308,7 @@ respective exchanges and data providers.</p>
 <h2>8. Third-party services</h2>
 <p>The Service depends on third-party providers including (but not limited to):
 Polygon.io, Financial Modeling Prep, Alpha Vantage, Finnhub, Alpaca, Yahoo
-Finance, SEC EDGAR, Razorpay, Supabase, Resend, Cloudflare, Railway, and Groq /
+Finance, SEC EDGAR, Supabase, Resend, Cloudflare, Railway, and Groq /
 Anthropic for language-model output. Outages or data errors at these providers
 may affect the Service. {_COMPANY} is not responsible for losses caused by
 third-party failures.</p>
@@ -379,16 +379,14 @@ def render_privacy() -> str:
     body = f"""
 <div class="callout callout-green">
   <strong>TL;DR.</strong> We collect the minimum needed to run the Service:
-  your email + auth credentials, your watchlist, payment metadata (handled by
-  Razorpay), and standard server logs. We do not sell your data. We do not run
-  ads. {_COMPANY} is a Data Fiduciary under India's Digital Personal Data
-  Protection Act 2023.
+  your email + auth credentials, your watchlist, payment metadata, and standard
+  server logs. We do not sell your data. We do not run ads.
 </div>
 
-<h2>1. Who we are (as a Data Fiduciary)</h2>
-<p>For the purposes of the Digital Personal Data Protection Act, 2023
-(&ldquo;DPDP Act&rdquo;), {_COMPANY} is the Data Fiduciary. The Data Protection
-Officer can be contacted at <a href="mailto:{_CONTACT}">{_CONTACT}</a>.</p>
+<h2>1. Who we are</h2>
+<p>{_COMPANY} operates the website <strong>{_DOMAIN}</strong>. Questions about
+this Privacy Policy or requests to exercise your rights should be directed to
+<a href="mailto:{_CONTACT}" class="body-link">{_CONTACT}</a>.</p>
 
 <h2>2. What we collect</h2>
 
@@ -397,7 +395,7 @@ Officer can be contacted at <a href="mailto:{_CONTACT}">{_CONTACT}</a>.</p>
   <li><strong>Email address</strong> &mdash; for account creation, password reset, and product updates.</li>
   <li><strong>Authentication credentials</strong> &mdash; password (hashed and salted by Supabase, never visible to us in plain text), or third-party OAuth tokens if you sign in via Google etc.</li>
   <li><strong>Watchlist</strong> &mdash; the tickers you save.</li>
-  <li><strong>Subscription metadata</strong> &mdash; if you upgrade to a paid plan: subscription ID, plan, status (active/cancelled). Card details are handled directly by Razorpay; we never see or store full card numbers.</li>
+  <li><strong>Subscription metadata</strong> &mdash; if you upgrade to a paid plan: subscription ID, plan, status (active/cancelled). Card details are handled directly by our payment processor; we never see or store full card numbers.</li>
   <li><strong>Optional profile fields</strong> &mdash; name, trading experience, primary goal &mdash; collected during onboarding to tailor what we show you. You can leave these blank.</li>
   <li><strong>Support correspondence</strong> &mdash; emails you send to us for assistance.</li>
 </ul>
@@ -414,21 +412,19 @@ Officer can be contacted at <a href="mailto:{_CONTACT}">{_CONTACT}</a>.</p>
   <li>Your trading account, brokerage credentials, or trade history. (We are not a broker; we have no way to access these.)</li>
   <li>Bank account or full credit card numbers.</li>
   <li>Physical address (unless required for a future invoiced enterprise plan, with your consent).</li>
-  <li>PAN, Aadhaar, or other government identifiers.</li>
+  <li>Government identifiers (national insurance number, passport, etc.).</li>
 </ul>
 
 <h2>3. Why we collect it (Purpose &amp; Legal Basis)</h2>
-<table style="width:100%;border-collapse:collapse;margin:12px 0;font-size:14px">
-<thead><tr style="background:#f8fafc">
-  <th style="padding:8px;border:1px solid #e2e8f0;text-align:left">What</th>
-  <th style="padding:8px;border:1px solid #e2e8f0;text-align:left">Why</th>
-  <th style="padding:8px;border:1px solid #e2e8f0;text-align:left">Legal basis (DPDP Act)</th>
+<table>
+<thead><tr>
+  <th>What</th><th>Why</th><th>Legal basis</th>
 </tr></thead><tbody>
-<tr><td style="padding:8px;border:1px solid #e2e8f0">Email + password</td><td style="padding:8px;border:1px solid #e2e8f0">Authenticate you; recover lost access</td><td style="padding:8px;border:1px solid #e2e8f0">Necessary for the contract you have with us</td></tr>
-<tr><td style="padding:8px;border:1px solid #e2e8f0">Watchlist</td><td style="padding:8px;border:1px solid #e2e8f0">Show you stocks you care about</td><td style="padding:8px;border:1px solid #e2e8f0">Necessary for the contract</td></tr>
-<tr><td style="padding:8px;border:1px solid #e2e8f0">Server logs</td><td style="padding:8px;border:1px solid #e2e8f0">Detect abuse, fix bugs, plan capacity</td><td style="padding:8px;border:1px solid #e2e8f0">Legitimate use under DPDP Act §17</td></tr>
-<tr><td style="padding:8px;border:1px solid #e2e8f0">Payment metadata</td><td style="padding:8px;border:1px solid #e2e8f0">Process subscriptions; comply with tax</td><td style="padding:8px;border:1px solid #e2e8f0">Legal obligation + contract</td></tr>
-<tr><td style="padding:8px;border:1px solid #e2e8f0">Product update emails</td><td style="padding:8px;border:1px solid #e2e8f0">Tell you about new features</td><td style="padding:8px;border:1px solid #e2e8f0">Your consent (you can opt out anytime)</td></tr>
+<tr><td>Email + password</td><td>Authenticate you; recover lost access</td><td>Necessary for the contract you have with us</td></tr>
+<tr><td>Watchlist</td><td>Show you stocks you care about</td><td>Necessary for the contract</td></tr>
+<tr><td>Server logs</td><td>Detect abuse, fix bugs, plan capacity</td><td>Legitimate interest</td></tr>
+<tr><td>Payment metadata</td><td>Process subscriptions; comply with tax</td><td>Legal obligation + contract</td></tr>
+<tr><td>Product update emails</td><td>Tell you about new features</td><td>Your consent (opt out anytime)</td></tr>
 </tbody></table>
 
 <h2>4. Who we share it with (Data Processors)</h2>
@@ -439,7 +435,7 @@ only for the agreed purpose:</p>
   <li><strong>Supabase</strong> (database + auth) &mdash; stores your email, password hash, watchlist. Servers in Asia/Singapore.</li>
   <li><strong>Railway</strong> (hosting) &mdash; runs our application servers; sees IP addresses in logs.</li>
   <li><strong>Cloudflare</strong> (CDN + WAF) &mdash; sees IP and request metadata; provides DDoS protection.</li>
-  <li><strong>Razorpay</strong> (payments) &mdash; receives payment info directly from you when you upgrade. They are a separately regulated Indian PCI-DSS compliant processor.</li>
+  <li><strong>Stripe</strong> (payments) &mdash; receives payment info directly from you when you upgrade. Card details go directly to Stripe; we never see or store them. Stripe is a PCI-DSS Level 1 certified processor.</li>
   <li><strong>Resend</strong> (email delivery) &mdash; delivers transactional emails; sees your email and the message body.</li>
   <li><strong>Groq</strong> &mdash; processes text from public press releases through their language model. We do <em>not</em> send your personal data to Groq, only public earnings text.</li>
   <li><strong>Anthropic / OpenAI</strong> (optional, for editorial features) &mdash; same as above; only public market commentary, never your personal data.</li>
@@ -449,39 +445,40 @@ only for the agreed purpose:</p>
 advertisers, data brokers, or third-party marketers.</p>
 
 <h2>5. Cross-border transfers</h2>
-<p>Some of our processors (Cloudflare, Resend, Groq, Anthropic) operate servers
-outside India. Where this happens, transfers are made under standard contractual
-clauses or equivalent safeguards as required by the DPDP Act.</p>
+<p>Some of our processors (Cloudflare, Stripe, Resend, Groq, Anthropic) operate
+servers outside the UK. Where this happens, transfers are made under standard
+contractual clauses or equivalent safeguards as required by UK GDPR and the
+Data Protection Act 2018.</p>
 
 <h2>6. How long we keep it</h2>
 <ul>
   <li><strong>Account data</strong>: as long as your account is active, plus 90 days after deletion (to handle disputes).</li>
   <li><strong>Server logs</strong>: 30&ndash;90 days, then deleted.</li>
-  <li><strong>Payment metadata</strong>: 8 years (required by Indian tax law for businesses with paid customers).</li>
+  <li><strong>Payment metadata</strong>: 7 years (required by HMRC record-keeping rules).</li>
   <li><strong>Email correspondence</strong>: 2 years from last reply, then archived.</li>
 </ul>
 
-<h2>7. Your rights under the DPDP Act</h2>
-<p>You have the following rights:</p>
+<h2>7. Your rights</h2>
+<p>Under UK GDPR you have the right to:</p>
 <ul>
-  <li><strong>Access</strong> &mdash; ask us what data we hold about you.</li>
+  <li><strong>Access</strong> &mdash; request a copy of the data we hold about you.</li>
   <li><strong>Correction</strong> &mdash; ask us to fix inaccurate data.</li>
-  <li><strong>Erasure</strong> &mdash; delete your account and all associated personal data (subject to retention obligations above for billing records).</li>
+  <li><strong>Erasure</strong> &mdash; delete your account and associated personal data (subject to retention obligations above for billing records).</li>
   <li><strong>Withdraw consent</strong> &mdash; opt out of product update emails anytime via the unsubscribe link.</li>
-  <li><strong>Grievance redressal</strong> &mdash; if you are unhappy with how we handle your data, contact our Grievance Officer first; if unresolved, you may approach the Data Protection Board of India.</li>
+  <li><strong>Complaint</strong> &mdash; if you are unhappy with how we handle your data you may lodge a complaint with the ICO (ico.org.uk).</li>
 </ul>
 
 <p>To exercise any of these rights, email
-<a href="mailto:{_CONTACT}">{_CONTACT}</a> from the email associated with your
-account. We will respond within 30 days as required by the DPDP Act.</p>
+<a href="mailto:{_CONTACT}" class="body-link">{_CONTACT}</a> from the address
+associated with your account. We will respond within 30 days.</p>
 
 <h2>8. Security</h2>
 <p>We use industry-standard practices: HTTPS everywhere, password hashing
 (bcrypt via Supabase), database row-level security so users can only see their
 own data, environment-isolated production credentials, and rate limiting on
 authentication endpoints. No system is bullet-proof; if we discover a personal
-data breach, we will notify affected users and the Data Protection Board within
-the timelines required by the DPDP Act.</p>
+data breach we will notify affected users and the ICO within the timelines
+required by UK GDPR.</p>
 
 <h2>9. Children</h2>
 <p>The Service is not intended for users under 18. We do not knowingly collect
@@ -494,8 +491,8 @@ collect, add new processors, change retention periods), we will notify
 registered users by email at least 14 days before the change takes effect.</p>
 
 <h2>11. Contact</h2>
-<p>Privacy questions, access requests, or grievances:
-<a href="mailto:{_CONTACT}">{_CONTACT}</a>.</p>
+<p>Privacy questions or access requests:
+<a href="mailto:{_CONTACT}" class="body-link">{_CONTACT}</a>.</p>
 """
     return _shell("Privacy Policy", "privacy", body)
 
