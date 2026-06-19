@@ -17,7 +17,7 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@1,500;1,600&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@1,500;1,600&family=Instrument+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
 
 <style>
 /* ═══════════════════════════════════════════════════════════════════════
@@ -147,31 +147,10 @@ h1,h2,h3,h4,h5{font-family:'Instrument Sans',sans-serif;font-weight:600;letter-s
   transition:box-shadow .4s,background .4s;
 }
 .nav.scrolled .nav-inner{box-shadow:0 14px 44px rgba(9,20,60,.18),inset 0 1px 0 rgba(255,255,255,.6);background:rgba(255,255,255,.97)}
-/* Brand mark — premium dark "embossed" square with italic Fraunces α glyph
-   in a glossy blue gradient, paired with italic Fraunces "Hunt" wordmark.
-   "Hunt" uses a context-aware gradient: dark blue on light bg (nav),
-   bright sky-blue on dark bg (footer). */
-.brand{display:flex;align-items:center;gap:11px;font-family:'Instrument Sans',sans-serif;font-weight:600;font-size:20px;letter-spacing:-.022em}
-/* Brand mark — Royal Blue gradient (sky → primary → deep brand blue)
-   filling the official logo shape via mask-image. Page's existing palette. */
-.brand .mark{
-  width:36px;height:36px;flex:none;display:block;
-  background:linear-gradient(135deg, #5DB3F1 0%, #2970FF 50%, #0040c1 100%);
-  -webkit-mask:url('/static/brand/tickermover-mark-mask.svg') center/contain no-repeat;
-          mask:url('/static/brand/tickermover-mark-mask.svg') center/contain no-repeat;
-  filter:drop-shadow(0 4px 12px rgba(41,112,255,.34));
-}
-/* "TickerMover" — single wordmark with a smooth horizontal gradient.
-   Stays dark across "Alpha", transitions through the middle, ends blue at "Hunt".
-   No hard color boundary → reads as one continuous word with a tone shift. */
-.brand .brand-wordmark{
-  background:linear-gradient(90deg,#090909 0%,#090909 38%,#2970FF 60%,#0040c1 100%);
-  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;
-}
-.foot-brand .brand .brand-wordmark{
-  background:linear-gradient(90deg,#ffffff 0%,#ffffff 42%,#7CC0EE 62%,#2970FF 100%);
-  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;
-}
+.brand{display:flex;align-items:center;gap:11px;font-family:'Space Grotesk','Instrument Sans',sans-serif;font-weight:700;font-size:20px;letter-spacing:-.02em;color:#0a0e22}
+.brand-wordmark{display:inline-flex;align-items:center;color:#0a0e22}
+.brand-m{display:inline-block;vertical-align:middle;margin:-3px 2px 0;flex:none}
+.foot-brand .brand-wordmark{color:#fff}
 .nav-links{display:flex;gap:30px;align-items:center}
 .nav-links a{font-size:15px;color:var(--raisin);font-weight:500;position:relative;font-family:'Instrument Sans',sans-serif}
 .nav-links a:hover{color:var(--primary)}
@@ -1094,11 +1073,7 @@ h1,h2,h3,h4,h5{font-family:'Instrument Sans',sans-serif;font-weight:600;letter-s
 .dash-body{display:grid;grid-template-columns:200px 1fr;gap:0;min-height:440px}
 .dash-side{background:#fafbff;border-right:1px solid rgba(9,9,9,.06);padding:22px 14px;display:flex;flex-direction:column;gap:14px}
 .ds-brand{display:flex;align-items:center;gap:9px;padding:0 6px 10px;border-bottom:1px solid rgba(9,9,9,.06)}
-.ds-mark{width:30px;height:30px;display:inline-block;flex:none;
-  background:linear-gradient(135deg, #5DB3F1 0%, #2970FF 50%, #0040c1 100%);
-  -webkit-mask:url('/static/brand/tickermover-mark-mask.svg') center/contain no-repeat;
-          mask:url('/static/brand/tickermover-mark-mask.svg') center/contain no-repeat;
-  font-size:0;color:transparent}
+.ds-mark{width:30px;height:30px;display:inline-flex;flex:none;align-items:center;justify-content:center}
 .ds-name{font-family:'Instrument Sans',sans-serif;font-weight:700;font-size:15px;letter-spacing:-.01em}
 .ds-nav{display:flex;flex-direction:column;gap:2px}
 .ds-sec{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:9.5px;letter-spacing:.14em;color:var(--grey);text-transform:uppercase;padding:14px 12px 5px}
@@ -1342,7 +1317,7 @@ h1,h2,h3,h4,h5{font-family:'Instrument Sans',sans-serif;font-weight:600;letter-s
 <!-- ───────── NAV ───────── -->
 <nav class="nav" id="nav">
   <div class="nav-inner">
-    <a class="brand" href="#top"><span class="mark" role="img" aria-label="TickerMover"></span> <span class="brand-wordmark">TickerMover</span></a>
+    <a class="brand" href="#top"><svg width="36" height="36" viewBox="0 0 64 64" fill="none" aria-hidden="true"><defs><linearGradient id="tmg-nav" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4d96ff"/><stop offset="1" stop-color="#0040c1"/></linearGradient></defs><rect width="64" height="64" rx="14" fill="url(#tmg-nav)"/><polyline points="10,52 21,26 32,40 44,10 54,52" stroke="white" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="44" cy="10" r="5" fill="white"/></svg><span class="brand-wordmark">Ticker<svg class="brand-m" width="20" height="21" viewBox="0 0 80 100" fill="none" aria-hidden="true"><polyline points="0,100 18,26 38,56 62,0 80,100" stroke="#2970ff" stroke-width="9" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="62" cy="0" r="9" fill="#2970ff"/></svg>over</span></a>
     <div class="nav-links">
       <a href="#engine">Engine</a>
       <a href="#research">Research</a>
@@ -1600,7 +1575,7 @@ h1,h2,h3,h4,h5{font-family:'Instrument Sans',sans-serif;font-weight:600;letter-s
       <div class="dash-body">
         <!-- sidebar -->
         <aside class="dash-side">
-          <div class="ds-brand"><span class="ds-mark" role="img" aria-label="TickerMover"></span><span class="ds-name">TickerMover</span></div>
+          <div class="ds-brand"><span class="ds-mark" aria-hidden="true"><svg width="28" height="28" viewBox="0 0 64 64" fill="none"><defs><linearGradient id="tmg-ds" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4d96ff"/><stop offset="1" stop-color="#0040c1"/></linearGradient></defs><rect width="64" height="64" rx="14" fill="url(#tmg-ds)"/><polyline points="10,52 21,26 32,40 44,10 54,52" stroke="white" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="44" cy="10" r="5" fill="white"/></svg></span><span class="ds-name">Ticker<svg width="13" height="14" viewBox="0 0 80 100" fill="none" style="display:inline-block;vertical-align:middle;margin:-2px 1px 0" aria-hidden="true"><polyline points="0,100 18,26 38,56 62,0 80,100" stroke="#2970ff" stroke-width="9" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="62" cy="0" r="9" fill="#2970ff"/></svg>over</span></div>
           <nav class="ds-nav">
             <div class="ds-sec">Discover</div>
             <a class="ds-link active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg> On the Radar</a>
@@ -2147,7 +2122,7 @@ h1,h2,h3,h4,h5{font-family:'Instrument Sans',sans-serif;font-weight:600;letter-s
   <div class="wrap" style="padding-top:48px">
     <div class="foot-top">
       <div class="foot-brand">
-        <a class="brand" href="#top"><span class="mark" role="img" aria-label="TickerMover"></span> <span class="brand-wordmark">TickerMover</span></a>
+        <a class="brand" href="#top"><svg width="36" height="36" viewBox="0 0 64 64" fill="none" aria-hidden="true"><defs><linearGradient id="tmg-foot" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4d96ff"/><stop offset="1" stop-color="#0040c1"/></linearGradient></defs><rect width="64" height="64" rx="14" fill="url(#tmg-foot)"/><polyline points="10,52 21,26 32,40 44,10 54,52" stroke="white" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="44" cy="10" r="5" fill="white"/></svg><span class="brand-wordmark">Ticker<svg class="brand-m" width="20" height="21" viewBox="0 0 80 100" fill="none" aria-hidden="true"><polyline points="0,100 18,26 38,56 62,0 80,100" stroke="#6aabff" stroke-width="9" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="62" cy="0" r="9" fill="#6aabff"/></svg>over</span></a>
         <p>An AI research studio for the US market.</p>
       </div>
       <div class="foot-right">

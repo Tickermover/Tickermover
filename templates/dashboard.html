@@ -25,7 +25,7 @@
 <!-- Premium typography: Inter for UI, JetBrains Mono for tabular numbers -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600&family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500;1,9..144,600;1,9..144,700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600&family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500;1,9..144,600;1,9..144,700&family=JetBrains+Mono:wght@500;700&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
 <!-- Auth gate: synchronously detect signup-flow URL param BEFORE any rendering
      so the dashboard never flashes behind the auth modal on the way in from
      the landing page. The class is removed by the auth code once resolved. -->
@@ -6637,15 +6637,8 @@ html.v2-dark body.v2 .v2-sidebar .v2-nav-item svg{width:16px;height:16px;flex:no
 html.v2-dark body.v2 .v2-sb-logo,body.v2 .v2-sb-logo{border-bottom:1px solid rgba(9,9,9,.07)}
 /* official brand mark + wordmark (mirrors signals_preview .rail-mark/.rail-name) */
 body.v2 .v2-sb-logo img{display:none}
-body.v2 .v2-sb-logo::before{content:"";width:32px;height:32px;flex:none;display:block;
-    background:linear-gradient(135deg,#5DB3F1 0%,#2970FF 50%,#0040c1 100%);
-    -webkit-mask:url('/static/brand/tickermover-mark-mask.svg') center/contain no-repeat;
-            mask:url('/static/brand/tickermover-mark-mask.svg') center/contain no-repeat;
-    filter:drop-shadow(0 4px 12px rgba(41,112,255,.30))}
-html.v2-dark body.v2 .v2-sb-logo .name,body.v2 .v2-sb-logo .name{font-family:var(--font-body);font-weight:700;font-size:18px;letter-spacing:-.032em;
-    background:linear-gradient(90deg,#090909 0%,#090909 42%,#1c43a3 62%,#0040c1 100%);
-    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
-html.v2-dark body.v2 .v2-sb-logo .name span,body.v2 .v2-sb-logo .name span{-webkit-text-fill-color:transparent}
+html.v2-dark body.v2 .v2-sb-logo .name,body.v2 .v2-sb-logo .name{font-family:'Space Grotesk',var(--font-body),sans-serif;font-weight:700;font-size:18px;letter-spacing:-.02em;color:#0a0e22;background:none;-webkit-text-fill-color:unset;display:inline-flex;align-items:center}
+html.v2-dark body.v2 .v2-sb-logo .name span,body.v2 .v2-sb-logo .name span{-webkit-text-fill-color:unset;background:none;color:inherit}
 html.v2-dark body.v2 .v2-topbar,body.v2 .v2-topbar{background:#fff!important;color:#1e293b;border:1px solid rgba(9,9,9,.07)!important;border-image:none!important;border-radius:14px!important;height:auto!important;width:calc(100% - 52px)!important;max-width:1268px!important;margin:14px auto 4px!important;padding:11px 16px!important;box-shadow:0 1px 2px rgba(0,0,0,.08),0 10px 24px -14px rgba(0,0,0,.26)!important}
 html.v2-dark body.v2 .v2-topbar .v2-search,body.v2 .v2-topbar .v2-search{background:#fff;border:1px solid rgba(9,9,9,.07)}
 html.v2-dark body.v2 .v2-topbar .v2-search-ph,body.v2 .v2-topbar .v2-search-ph{color:#94a3b8}
@@ -6927,8 +6920,8 @@ document.addEventListener('DOMContentLoaded', function(){
   <!-- ── SIDEBAR ── -->
   <aside class="v2-sidebar" id="v2-sidebar">
     <div class="v2-sb-logo">
-      <img src="/static/brand/tickermover-mark.svg" alt="TickerMover" width="32" height="32">
-      <div class="name">Ticker<span>Mover</span></div>
+      <svg width="32" height="32" viewBox="0 0 64 64" fill="none" aria-hidden="true"><defs><linearGradient id="tmg-sb" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4d96ff"/><stop offset="1" stop-color="#0040c1"/></linearGradient></defs><rect width="64" height="64" rx="14" fill="url(#tmg-sb)"/><polyline points="10,52 21,26 32,40 44,10 54,52" stroke="white" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="44" cy="10" r="5" fill="white"/></svg>
+      <div class="name">Ticker<svg width="14" height="15" viewBox="0 0 80 100" fill="none" style="display:inline-block;vertical-align:middle;margin:-2px 1px 0" aria-hidden="true"><polyline points="0,100 18,26 38,56 62,0 80,100" stroke="#2970ff" stroke-width="9" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="62" cy="0" r="9" fill="#2970ff"/></svg>over</div>
       <button class="v2-sb-collapse" onclick="toggleSidebar()" aria-label="Collapse sidebar" title="Collapse menu">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" width="16" height="16"><path d="M15 6l-6 6 6 6"/></svg>
       </button>

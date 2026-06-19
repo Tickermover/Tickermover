@@ -65,7 +65,7 @@ def _shell(title: str, slug: str, body_html: str) -> str:
 <meta name="theme-color" content="#0040c1">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
 <style>
 :root{{
   --primary:#0040c1;--blue-light:#2970ff;--blue-grad:linear-gradient(120deg,#2970ff 0%,#0042c5 55%,#00359e 100%);
@@ -83,10 +83,10 @@ img,svg{{display:block;max-width:100%}}
 .site-nav{{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:center;justify-content:space-between;padding:20px 28px;max-width:1400px;margin:0 auto;transition:padding .4s var(--ease)}}
 .nav-inner{{display:flex;align-items:center;justify-content:space-between;width:100%;background:rgba(255,255,255,.94);backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%);border:1px solid rgba(255,255,255,.7);border-radius:var(--r-pill);padding:10px 10px 10px 22px;box-shadow:0 10px 34px rgba(9,20,60,.16),inset 0 1px 0 rgba(255,255,255,.6);transition:box-shadow .4s,background .4s}}
 .site-nav.scrolled .nav-inner{{box-shadow:0 14px 44px rgba(9,20,60,.18),inset 0 1px 0 rgba(255,255,255,.6);background:rgba(255,255,255,.97)}}
-.brand{{display:flex;align-items:center;gap:11px;font-family:'Instrument Sans',sans-serif;font-weight:600;font-size:20px;letter-spacing:-.022em}}
-.brand .mark{{width:36px;height:36px;flex:none;display:block;background:linear-gradient(135deg,#5DB3F1 0%,#2970FF 50%,#0040c1 100%);-webkit-mask:url('/static/brand/tickermover-mark-mask.svg') center/contain no-repeat;mask:url('/static/brand/tickermover-mark-mask.svg') center/contain no-repeat;filter:drop-shadow(0 4px 12px rgba(41,112,255,.34))}}
-.brand .brand-wordmark{{background:linear-gradient(90deg,#090909 0%,#090909 38%,#2970FF 60%,#0040c1 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}}
-.foot-brand .brand .brand-wordmark{{background:linear-gradient(90deg,#ffffff 0%,#ffffff 42%,#7CC0EE 62%,#2970FF 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}}
+.brand{{display:flex;align-items:center;gap:11px;font-family:'Space Grotesk','Instrument Sans',sans-serif;font-weight:700;font-size:20px;letter-spacing:-.02em;color:#0a0e22}}
+.brand-wordmark{{display:inline-flex;align-items:center;color:#0a0e22}}
+.brand-m{{display:inline-block;vertical-align:middle;margin:-3px 2px 0;flex:none}}
+.foot-brand .brand-wordmark{{color:#fff}}
 .nav-links{{display:flex;gap:30px;align-items:center}}
 .nav-links a{{font-size:15px;color:var(--raisin);font-weight:500;font-family:'Instrument Sans',sans-serif}}
 .nav-links a:hover,.nav-links a[aria-current]{{color:var(--primary)}}
@@ -152,7 +152,7 @@ td{{padding:8px;border:1px solid rgba(9,20,60,.1)}}
 <!-- ── NAV ── -->
 <nav class="site-nav" id="site-nav">
   <div class="nav-inner">
-    <a class="brand" href="/"><span class="mark" role="img" aria-label="{_COMPANY}"></span><span class="brand-wordmark">{_COMPANY}</span></a>
+    <a class="brand" href="/"><svg width="36" height="36" viewBox="0 0 64 64" fill="none" aria-hidden="true"><defs><linearGradient id="tmg-ln" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4d96ff"/><stop offset="1" stop-color="#0040c1"/></linearGradient></defs><rect width="64" height="64" rx="14" fill="url(#tmg-ln)"/><polyline points="10,52 21,26 32,40 44,10 54,52" stroke="white" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="44" cy="10" r="5" fill="white"/></svg><span class="brand-wordmark">Ticker<svg class="brand-m" width="20" height="21" viewBox="0 0 80 100" fill="none" aria-hidden="true"><polyline points="0,100 18,26 38,56 62,0 80,100" stroke="#2970ff" stroke-width="9" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="62" cy="0" r="9" fill="#2970ff"/></svg>over</span></a>
     <div class="nav-links">
       <a href="/#engine">The engine</a>
       <a href="/app">Dashboard</a>
@@ -190,7 +190,7 @@ td{{padding:8px;border:1px solid rgba(9,20,60,.1)}}
   <div class="foot-wrap">
     <div class="foot-top">
       <div class="foot-brand">
-        <a class="brand" href="/"><span class="mark" role="img" aria-label="{_COMPANY}"></span><span class="brand-wordmark">{_COMPANY}</span></a>
+        <a class="brand" href="/"><svg width="36" height="36" viewBox="0 0 64 64" fill="none" aria-hidden="true"><defs><linearGradient id="tmg-lf" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4d96ff"/><stop offset="1" stop-color="#0040c1"/></linearGradient></defs><rect width="64" height="64" rx="14" fill="url(#tmg-lf)"/><polyline points="10,52 21,26 32,40 44,10 54,52" stroke="white" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="44" cy="10" r="5" fill="white"/></svg><span class="brand-wordmark">Ticker<svg class="brand-m" width="20" height="21" viewBox="0 0 80 100" fill="none" aria-hidden="true"><polyline points="0,100 18,26 38,56 62,0 80,100" stroke="#6aabff" stroke-width="9" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="62" cy="0" r="9" fill="#6aabff"/></svg>over</span></a>
         <p>An AI research studio for the US market.</p>
       </div>
       <div class="foot-right">
