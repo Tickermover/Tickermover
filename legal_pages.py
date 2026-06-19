@@ -110,7 +110,7 @@ def _shell(title: str, slug: str, body_html: str) -> str:
     <polyline points="4,21 9,13 15,17 20,7 24,12" stroke="url(#lg)" stroke-width="2.3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
     <circle cx="20" cy="7" r="2.5" fill="#FFE9B0"/>
   </svg>
-  Alpha<em>Hunt</em>
+  Ticker<em>Mover</em>
 </a>
 
 <nav class="legal-nav">{nav_html}</nav>
