@@ -1676,7 +1676,7 @@ async function downloadPng() {
   });
   const a = document.createElement('a');
   a.href = c.toDataURL('image/png');
-  a.download = 'alphahunt-tearsheet-' + _data.stock.ticker + '-' + new Date().toISOString().slice(0,10) + '.png';
+  a.download = 'tickermover-tearsheet-' + _data.stock.ticker + '-' + new Date().toISOString().slice(0,10) + '.png';
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
   flash('✓ PNG downloaded');
 }
@@ -1712,7 +1712,7 @@ async function downloadPdf() {
     const { jsPDF } = window.jspdf;
     const pdf = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
     pdf.addImage(imgData, 'PNG', 0, 0, 210, 297, undefined, 'FAST');
-    pdf.save('alphahunt-tearsheet-' + _data.stock.ticker + '-' + new Date().toISOString().slice(0,10) + '.pdf');
+    pdf.save('tickermover-tearsheet-' + _data.stock.ticker + '-' + new Date().toISOString().slice(0,10) + '.pdf');
     flash('✓ PDF downloaded');
   } finally {
     document.body.classList.remove('exporting-pdf');

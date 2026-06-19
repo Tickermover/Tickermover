@@ -55,8 +55,9 @@ a:hover{text-decoration:underline}
 .mono{font-family:'JetBrains Mono',ui-monospace,monospace;font-feature-settings:'tnum' 1}
 .wrap{max-width:820px;margin:0 auto;padding:24px 24px 64px}
 .wrap-wide{max-width:1100px;margin:0 auto;padding:24px 24px 64px}
-.brand{display:inline-flex;align-items:center;gap:8px;font-size:16px;font-weight:800;color:#0a0a0a;margin-bottom:24px}
-.brand em{font-style:normal;color:#15803d}
+.brand{display:inline-flex;align-items:baseline;font-size:16px;font-weight:800;color:#0a0a0a;margin-bottom:24px}
+.brand-wordmark{display:inline-flex;align-items:baseline;flex-wrap:nowrap;white-space:nowrap;color:#0a0e22}
+.brand-m{height:1.6em;width:auto;flex:none;align-self:baseline;margin:0 .02em}
 .crumbs{font-size:12.5px;color:#94a3b8;margin-bottom:8px;letter-spacing:.04em;text-transform:uppercase;font-weight:700}
 .crumbs a{color:#94a3b8;font-weight:600}
 .crumbs a:hover{color:#15803d}
@@ -128,21 +129,16 @@ _FONTS_LINK = (
     '&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">'
 )
 
-_BRAND_SVG = (
-    '<svg width="22" height="22" viewBox="0 0 28 28">'
-    '<defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1">'
-    '<stop offset="0" stop-color="#D4860A"/>'
-    '<stop offset=".55" stop-color="#F5A623"/>'
-    '<stop offset="1" stop-color="#FFE9B0"/></linearGradient></defs>'
-    '<rect width="28" height="28" rx="7" fill="#0f172a"/>'
-    '<polyline points="4,21 9,13 15,17 20,7 24,12" stroke="url(#lg)" '
-    'stroke-width="2.3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>'
-    '<circle cx="20" cy="7" r="2.5" fill="#FFE9B0"/></svg>'
-)
-
-
 def brand_header() -> str:
-    return f'<a href="/" class="brand">{_BRAND_SVG} Alpha<em>Hunt</em></a>'
+    # Canonical TickerMover wordmark — kept byte-for-byte in sync with the
+    # landing page (.brand-wordmark): "Ticker" + blue chart-arrow "M" + "over".
+    return (
+        '<a href="/" class="brand"><span class="brand-wordmark">Ticker'
+        '<svg class="brand-m" viewBox="0 0 90 105" fill="none" aria-hidden="true">'
+        '<polyline points="5,100 23,42 45,66 67,26 85,100" stroke="#2970ff" '
+        'stroke-width="9" fill="none" stroke-linecap="round" stroke-linejoin="round"/>'
+        '<circle cx="67" cy="8" r="7" fill="#2970ff"/></svg>over</span></a>'
+    )
 
 
 def newsletter_block(source: str) -> str:

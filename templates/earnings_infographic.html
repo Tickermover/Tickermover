@@ -450,7 +450,7 @@ async function downloadPng() {
   });
   const a = document.createElement('a');
   a.href = c.toDataURL('image/png');
-  a.download = `alphahunt-earnings-${_data.stock.ticker}-${_data.ei.filing_date}.png`;
+  a.download = `tickermover-earnings-${_data.stock.ticker}-${_data.ei.filing_date}.png`;
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
   flash('✓ Downloaded');
 }

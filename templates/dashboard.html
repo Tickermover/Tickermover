@@ -10904,7 +10904,7 @@ async function v2DownloadTearsheetPDF(ticker){
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'alphahunt-tearsheet-' + sym + '-' + new Date().toISOString().slice(0,10) + '.pdf';
+    a.download = 'tickermover-tearsheet-' + sym + '-' + new Date().toISOString().slice(0,10) + '.pdf';
     document.body.appendChild(a);
     a.click();
     a.remove();

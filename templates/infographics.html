@@ -357,7 +357,7 @@ async function downloadPng() {
   const dateStamp = new Date().toISOString().slice(0, 10);
   const a = document.createElement('a');
   a.href = c.toDataURL('image/png');
-  a.download = `alphahunt-top5-${dateStamp}.png`;
+  a.download = `tickermover-top5-${dateStamp}.png`;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
