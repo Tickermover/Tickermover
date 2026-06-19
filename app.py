@@ -1134,6 +1134,9 @@ def _build_landing_schema() -> str:
         "@context": "https://schema.org",
         "@type": "WebSite",
         "name": "TickerMover",
+        # alternateName reinforces the brand for Google's site-name picker and
+        # covers the spaced/legacy variants users might type or link with.
+        "alternateName": ["TickerMover.com", "Ticker Mover"],
         "url": SITE_ORIGIN,
     }
     return (
