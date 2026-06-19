@@ -50,7 +50,7 @@ _BASE_CSS = """
 *{margin:0;padding:0;box-sizing:border-box}
 html{scroll-behavior:smooth}
 body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;color:#0a0a0a;background:#fafbfc;line-height:1.65;font-size:16px;-webkit-font-smoothing:antialiased}
-a{color:#15803d;text-decoration:none;font-weight:600}
+a{color:#2970ff;text-decoration:none;font-weight:600}
 a:hover{text-decoration:underline}
 .mono{font-family:'JetBrains Mono',ui-monospace,monospace;font-feature-settings:'tnum' 1}
 .wrap{max-width:820px;margin:0 auto;padding:24px 24px 64px}
@@ -60,19 +60,19 @@ a:hover{text-decoration:underline}
 .brand-m{height:1.6em;width:auto;flex:none;align-self:baseline;margin:0 .02em}
 .crumbs{font-size:12.5px;color:#94a3b8;margin-bottom:8px;letter-spacing:.04em;text-transform:uppercase;font-weight:700}
 .crumbs a{color:#94a3b8;font-weight:600}
-.crumbs a:hover{color:#15803d}
+.crumbs a:hover{color:#2970ff}
 h1{font-size:42px;font-weight:900;letter-spacing:-.03em;margin-bottom:10px;color:#0a0a0a;line-height:1.1}
-h1 .sym{font-family:'JetBrains Mono',monospace;color:#15803d}
+h1 .sym{font-family:'JetBrains Mono',monospace;color:#2970ff}
 .lede{font-size:19px;line-height:1.55;color:#475569;margin-bottom:32px;font-weight:500}
 h2{font-size:26px;font-weight:800;letter-spacing:-.02em;margin:48px 0 14px;color:#0a0a0a}
 h3{font-size:19px;font-weight:800;letter-spacing:-.012em;margin:28px 0 10px;color:#0a0a0a}
 p{margin-bottom:16px;color:#1e293b}
 ul,ol{margin:8px 0 20px 22px}
 li{margin-bottom:8px;color:#1e293b}
-.tag{display:inline-block;background:#FFF8E5;color:#15803d;padding:4px 10px;border-radius:5px;font-size:11.5px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;margin-bottom:14px}
-blockquote{border-left:3px solid #15803d;background:#FFF8E5;padding:14px 20px;margin:20px 0;border-radius:0 8px 8px 0;color:#14532d;font-style:italic;font-size:15.5px}
+.tag{display:inline-block;background:#EAF1FF;color:#1d4ed8;padding:4px 10px;border-radius:5px;font-size:11.5px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;margin-bottom:14px}
+blockquote{border-left:3px solid #2970ff;background:#EAF1FF;padding:14px 20px;margin:20px 0;border-radius:0 8px 8px 0;color:#0c2b6b;font-style:italic;font-size:15.5px}
 code{background:#f1f5f9;padding:2px 6px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:14px;color:#0f172a}
-.cta{margin-top:48px;padding:30px 32px;background:linear-gradient(135deg,#0A0A0A 0%,#1a2e1a 100%);border-radius:16px;text-align:center;color:#fff}
+.cta{margin-top:48px;padding:30px 32px;background:linear-gradient(135deg,#0a0e22 0%,#0a2f8f 55%,#2970ff 100%);border-radius:16px;text-align:center;color:#fff}
 .cta h3{font-size:22px;font-weight:800;letter-spacing:-.02em;margin-bottom:8px;color:#fff}
 .cta p{color:rgba(255,255,255,.7);margin-bottom:18px}
 .cta-btn{display:inline-block;background:#fff;color:#0a0a0a;padding:13px 26px;border-radius:10px;font-weight:700;font-size:14.5px}
@@ -84,9 +84,9 @@ code{background:#f1f5f9;padding:2px 6px;border-radius:4px;font-family:'JetBrains
 .nl p{margin:0 0 14px;color:#475569;font-size:14.5px}
 .nl form{display:flex;gap:8px;flex-wrap:wrap}
 .nl input[type=email]{flex:1;min-width:220px;padding:12px 14px;border:1px solid #cbd5e1;border-radius:8px;font-size:14.5px;font-family:inherit;background:#fff}
-.nl input[type=email]:focus{outline:none;border-color:#15803d;box-shadow:0 0 0 3px rgba(21,128,61,.15)}
-.nl button{padding:12px 22px;background:#0a0a0a;color:#fff;border:none;border-radius:8px;font-weight:700;font-size:14.5px;cursor:pointer;font-family:inherit}
-.nl button:hover{background:#15803d}
+.nl input[type=email]:focus{outline:none;border-color:#2970ff;box-shadow:0 0 0 3px rgba(41,112,255,.15)}
+.nl button{padding:12px 22px;background:#2970ff;color:#fff;border:none;border-radius:8px;font-weight:700;font-size:14.5px;cursor:pointer;font-family:inherit}
+.nl button:hover{background:#0042c5}
 .nl .nl-msg{margin-top:10px;font-size:13.5px;font-weight:600;min-height:18px}
 .nl .nl-msg.ok{color:#15803d}
 .nl .nl-msg.err{color:#b91c1c}
@@ -94,7 +94,7 @@ code{background:#f1f5f9;padding:2px 6px;border-radius:4px;font-family:'JetBrains
 /* Sector / pillar / compare cards */
 .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin:18px 0 28px}
 .card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:18px 20px;transition:all .15s}
-.card:hover{border-color:#15803d;box-shadow:0 4px 12px rgba(10,10,10,.06);text-decoration:none}
+.card:hover{border-color:#2970ff;box-shadow:0 6px 16px rgba(41,112,255,.10);text-decoration:none}
 .card a{color:inherit;text-decoration:none;display:block}
 .card .ttl{font-size:15.5px;font-weight:800;color:#0a0a0a;margin-bottom:4px}
 .card .sub{font-size:13px;color:#64748b;line-height:1.5}
@@ -104,7 +104,7 @@ code{background:#f1f5f9;padding:2px 6px;border-radius:4px;font-family:'JetBrains
 .tbl td{padding:11px 14px;border-bottom:1px solid #eef0f3;vertical-align:top}
 .tbl tr:last-child td{border-bottom:none}
 .tbl tr:hover{background:#f8fafc}
-.tbl .tk{font-family:'JetBrains Mono',monospace;font-weight:800;color:#15803d}
+.tbl .tk{font-family:'JetBrains Mono',monospace;font-weight:800;color:#2970ff}
 .tbl .pop{font-family:'JetBrains Mono',monospace;font-weight:800}
 .tbl .grade{display:inline-block;width:24px;text-align:center;padding:3px 0;border-radius:5px;font-weight:800;font-size:12.5px;color:#fff}
 .tbl .grade.A{background:#15803d}.tbl .grade.B{background:#D4860A}.tbl .grade.C{background:#D4860A}.tbl .grade.D{background:#dc2626}.tbl .grade.F{background:#991b1b}
@@ -113,7 +113,7 @@ code{background:#f1f5f9;padding:2px 6px;border-radius:4px;font-family:'JetBrains
 /* Compare layout */
 .cmp-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:18px 0 30px}
 .cmp-card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:20px}
-.cmp-card .tk{font-family:'JetBrains Mono',monospace;font-size:24px;font-weight:900;color:#15803d}
+.cmp-card .tk{font-family:'JetBrains Mono',monospace;font-size:24px;font-weight:900;color:#2970ff}
 .cmp-card .nm{font-size:14px;color:#64748b;margin-bottom:14px}
 .cmp-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:14px}
 .cmp-row:last-child{border-bottom:none}
@@ -156,7 +156,7 @@ def newsletter_block(source: str) -> str:
   </form>
   <div class="nl-msg" id="nl-msg-{safe}"></div>
   <div style="margin-top:14px;font-size:12.5px;color:#94a3b8">
-    Questions or feedback? Email <a href="mailto:support@tickermover.com" style="color:#15803d">support@tickermover.com</a>
+    Questions or feedback? Email <a href="mailto:support@tickermover.com" style="color:#2970ff">support@tickermover.com</a>
   </div>
 </div>
 <script>
