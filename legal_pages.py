@@ -84,8 +84,8 @@ img,svg{{display:block;max-width:100%}}
 .nav-inner{{display:flex;align-items:center;justify-content:space-between;width:100%;background:rgba(255,255,255,.94);backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%);border:1px solid rgba(255,255,255,.7);border-radius:var(--r-pill);padding:10px 10px 10px 22px;box-shadow:0 10px 34px rgba(9,20,60,.16),inset 0 1px 0 rgba(255,255,255,.6);transition:box-shadow .4s,background .4s}}
 .site-nav.scrolled .nav-inner{{box-shadow:0 14px 44px rgba(9,20,60,.18),inset 0 1px 0 rgba(255,255,255,.6);background:rgba(255,255,255,.97)}}
 .brand{{display:flex;align-items:center;gap:11px;font-family:'Space Grotesk','Instrument Sans',sans-serif;font-weight:700;font-size:20px;letter-spacing:-.02em;color:#0a0e22}}
-.brand-wordmark{{display:inline-flex;align-items:baseline;color:#0a0e22}}
-.brand-m{{height:1.6em;width:auto;flex:none;align-self:baseline;margin:0 .03em}}
+.brand-wordmark{{display:inline-block;color:#0a0e22}}
+.brand-m{{height:1.6em;width:auto;vertical-align:baseline;margin:0 .02em}}
 .foot-brand .brand-wordmark{{color:#fff}}
 .nav-links{{display:flex;gap:30px;align-items:center}}
 .nav-links a{{font-size:15px;color:var(--raisin);font-weight:500;font-family:'Instrument Sans',sans-serif}}
@@ -152,7 +152,7 @@ td{{padding:8px;border:1px solid rgba(9,20,60,.1)}}
 <!-- ── NAV ── -->
 <nav class="site-nav" id="site-nav">
   <div class="nav-inner">
-    <a class="brand" href="/"><span class="brand-wordmark">Ticker<svg class="brand-m" viewBox="0 0 100 118" fill="none" aria-hidden="true"><polyline points="7,110 25,42 47,67 69,28 87,110" stroke="#2970ff" stroke-width="9" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="69" cy="10" r="7" fill="#2970ff"/></svg>over</span></a>
+    <a class="brand" href="/"><span class="brand-wordmark">Ticker<svg class="brand-m" viewBox="0 0 90 105" fill="none" aria-hidden="true"><polyline points="5,100 23,42 45,66 67,26 85,100" stroke="#2970ff" stroke-width="9" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="67" cy="8" r="7" fill="#2970ff"/></svg>over</span></a>
     <div class="nav-links">
       <a href="/#engine">The engine</a>
       <a href="/app">Dashboard</a>
@@ -190,7 +190,7 @@ td{{padding:8px;border:1px solid rgba(9,20,60,.1)}}
   <div class="foot-wrap">
     <div class="foot-top">
       <div class="foot-brand">
-        <a class="brand" href="/"><span class="brand-wordmark">Ticker<svg class="brand-m" viewBox="0 0 100 118" fill="none" aria-hidden="true"><polyline points="7,110 25,42 47,67 69,28 87,110" stroke="#6aabff" stroke-width="9" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="69" cy="10" r="7" fill="#6aabff"/></svg>over</span></a>
+        <a class="brand" href="/"><span class="brand-wordmark">Ticker<svg class="brand-m" viewBox="0 0 90 105" fill="none" aria-hidden="true"><polyline points="5,100 23,42 45,66 67,26 85,100" stroke="#6aabff" stroke-width="9" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="67" cy="8" r="7" fill="#6aabff"/></svg>over</span></a>
         <p>An AI research studio for the US market.</p>
       </div>
       <div class="foot-right">
