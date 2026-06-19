@@ -190,7 +190,7 @@ td{{padding:8px;border:1px solid rgba(9,20,60,.1)}}
   <div class="foot-wrap">
     <div class="foot-top">
       <div class="foot-brand">
-        <a class="brand" href="/"><svg width="36" height="36" viewBox="0 0 64 64" fill="none" aria-hidden="true"><defs><linearGradient id="tmg-lf" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#4d96ff"/><stop offset="1" stop-color="#0040c1"/></linearGradient></defs><rect width="64" height="64" rx="14" fill="url(#tmg-lf)"/><polyline points="10,52 21,26 32,40 44,10 54,52" stroke="white" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="44" cy="10" r="5" fill="white"/></svg><span class="brand-wordmark">Ticker<svg class="brand-m" width="29" height="36" viewBox="0 0 80 100" fill="none" aria-hidden="true"><polyline points="0,100 18,26 38,56 62,0 80,100" stroke="#6aabff" stroke-width="9" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="62" cy="0" r="9" fill="#6aabff"/></svg>over</span></a>
+        <a class="brand" href="/"><span class="brand-wordmark">Ticker<svg class="brand-m" width="29" height="36" viewBox="0 0 80 100" fill="none" aria-hidden="true"><polyline points="0,100 18,26 38,56 62,0 80,100" stroke="#6aabff" stroke-width="9" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="62" cy="0" r="9" fill="#6aabff"/></svg>over</span></a>
         <p>An AI research studio for the US market.</p>
       </div>
       <div class="foot-right">
