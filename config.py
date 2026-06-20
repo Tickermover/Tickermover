@@ -74,6 +74,12 @@ RAZORPAY_KEY_SECRET   = _env("RAZORPAY_KEY_SECRET",   "")
 RAZORPAY_WEBHOOK_SECRET = _env("RAZORPAY_WEBHOOK_SECRET", "")
 RAZORPAY_PLAN_ID      = _env("RAZORPAY_PLAN_ID",      "")   # set after first create_plan call
 
+# Stripe — primary gateway for the UK/global launch (hosted Checkout + webhooks).
+STRIPE_SECRET_KEY      = _env("STRIPE_SECRET_KEY",      "")   # sk_live_… / sk_test_…
+STRIPE_PUBLISHABLE_KEY = _env("STRIPE_PUBLISHABLE_KEY", "")   # pk_live_… (not needed for hosted Checkout)
+STRIPE_PRICE_ID        = _env("STRIPE_PRICE_ID",        "")   # price_… of the recurring Pro plan
+STRIPE_WEBHOOK_SECRET  = _env("STRIPE_WEBHOOK_SECRET",  "")   # whsec_… from the webhook endpoint
+
 # ── Beta: Pro free for everyone until launch ──────────────────────────────────
 # During the public beta every signed-in user gets Pro features for free. This
 # flips OFF automatically once the date passes (UTC), so paid Pro takes over at

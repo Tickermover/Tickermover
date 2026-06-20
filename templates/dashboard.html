@@ -19209,9 +19209,40 @@ async function openUpgradeModal() {
   const errEl = document.getElementById('upgrade-error');
   const btn   = document.getElementById('upgrade-pay-btn');
   if (errEl){ errEl.textContent = ''; errEl.style.color = ''; }
-  if (btn){ btn.disabled = true; btn.style.opacity = '.6'; btn.style.cursor = 'default'; btn.textContent = 'Free during beta'; }
-  if (errEl){ errEl.style.color = '#475569'; errEl.textContent = "Pro is free for everyone during our beta — paid plans open at launch, and we'll email you first. Nothing to pay right now."; }
+  // Stripe-aware: if billing is configured (live keys + price set), start real
+  // hosted checkout. Until then (e.g. during the free beta), keep the message.
+  let cfg = {};
+  try { cfg = await (await fetch('/api/billing/config')).json(); } catch(e){}
+  if (cfg && cfg.enabled) {
+    if (btn){ btn.disabled = false; btn.style.opacity = '1'; btn.style.cursor = 'pointer'; btn.textContent = 'Upgrade to Pro'; btn.onclick = startStripeCheckout; }
+    if (errEl){ errEl.style.color = '#475569'; errEl.textContent = "You'll be taken to Stripe's secure checkout. Cancel anytime."; }
+  } else {
+    if (btn){ btn.disabled = true; btn.style.opacity = '.6'; btn.style.cursor = 'default'; btn.textContent = 'Free during beta'; btn.onclick = null; }
+    if (errEl){ errEl.style.color = '#475569'; errEl.textContent = "Pro is free for everyone during our beta — paid plans open at launch, and we'll email you first. Nothing to pay right now."; }
+  }
 }
+
+async function startStripeCheckout() {
+  const btn = document.getElementById('upgrade-pay-btn');
+  const errEl = document.getElementById('upgrade-error');
+  if (btn){ btn.disabled = true; btn.textContent = 'Starting checkout…'; }
+  try {
+    const r = await fetch('/api/billing/checkout', { method:'POST', headers:{ 'Authorization':'Bearer '+_AUTH.token } });
+    const j = await r.json().catch(()=>({}));
+    if (r.ok && j.url){ window.location.href = j.url; return; }
+    if (errEl){ errEl.style.color = '#dc2626'; errEl.textContent = j.detail || 'Could not start checkout. Please try again.'; }
+  } catch(e){ if (errEl){ errEl.style.color = '#dc2626'; errEl.textContent = 'Network error. Please try again.'; } }
+  if (btn){ btn.disabled = false; btn.textContent = 'Upgrade to Pro'; }
+}
+
+// Returning from Stripe Checkout success → celebrate + refresh plan state.
+try {
+  if (new URLSearchParams(location.search).get('upgraded') === '1') {
+    setTimeout(function(){ try{ if (typeof showUpgradeSuccess==='function') showUpgradeSuccess(); }catch(e){} }, 300);
+    try { history.replaceState(null, '', '/app'); } catch(e){}
+    setTimeout(function(){ try{ location.replace('/app'); }catch(e){} }, 2200);  // reload picks up Pro from the webhook
+  }
+} catch(e){}
 
 function closeUpgradeModal() {
   document.getElementById('upgrade-modal').style.display = 'none';

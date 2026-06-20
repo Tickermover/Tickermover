@@ -181,6 +181,92 @@ class RazorpayClient:
             return {}
 
 
+# ── Stripe (primary gateway for the UK/global launch) ─────────────────────────
+# Hosted Stripe Checkout (subscription mode) + webhooks. With Stripe's Managed
+# Payments / merchant-of-record enabled on the account, tax is handled by Stripe
+# (automatic_tax). The app never touches card data — Checkout is hosted, the
+# client just redirects to the returned URL.
+
+_STRIPE_BASE = "https://api.stripe.com/v1"
+
+
+class StripeClient:
+    """Async Stripe client — hosted Checkout, Billing Portal, webhook verify."""
+
+    def __init__(self, secret_key: str, webhook_secret: str = "", price_id: str = ""):
+        self.secret_key     = secret_key
+        self.webhook_secret = webhook_secret
+        self.price_id       = price_id
+        self.enabled        = bool(secret_key and price_id)
+
+    async def _post(self, path: str, data: dict) -> dict:
+        """Stripe's API is form-encoded; auth is HTTP-Basic with the secret key."""
+        if not self.secret_key:
+            return {"error": "Stripe not configured"}
+        try:
+            async with httpx.AsyncClient(timeout=20) as c:
+                r = await c.post(f"{_STRIPE_BASE}{path}", data=data, auth=(self.secret_key, ""))
+                j = r.json()
+                if r.status_code >= 400:
+                    return {"error": (j.get("error") or {}).get("message") or f"HTTP {r.status_code}"}
+                return j
+        except Exception as e:
+            logger.error(f"Stripe {path}: {e}")
+            return {"error": str(e)}
+
+    async def create_checkout_session(self, *, user_id: str, email: str,
+                                      success_url: str, cancel_url: str) -> dict:
+        """Hosted subscription Checkout. user_id is threaded through so the
+        webhook can map the payment back to the account. Returns {id, url} or
+        {error}."""
+        data = {
+            "mode":                              "subscription",
+            "line_items[0][price]":              self.price_id,
+            "line_items[0][quantity]":           "1",
+            "success_url":                       success_url,
+            "cancel_url":                        cancel_url,
+            "client_reference_id":               user_id,
+            "metadata[user_id]":                 user_id,
+            "subscription_data[metadata][user_id]": user_id,
+            "allow_promotion_codes":             "true",
+            "automatic_tax[enabled]":            "true",
+            "billing_address_collection":        "auto",
+        }
+        if email:
+            data["customer_email"] = email
+        return await self._post("/checkout/sessions", data)
+
+    async def create_portal_session(self, customer_id: str, return_url: str) -> dict:
+        """Stripe Billing Portal so a user can manage / cancel their plan."""
+        return await self._post("/billing_portal/sessions",
+                                {"customer": customer_id, "return_url": return_url})
+
+    def verify_webhook(self, payload: bytes, sig_header: str) -> Optional[dict]:
+        """Verify the Stripe-Signature header (t=…,v1=…) and return the parsed
+        event, or None if invalid. Falls back to unverified parse only when no
+        webhook secret is configured (dev)."""
+        if not self.webhook_secret:
+            logger.warning("STRIPE_WEBHOOK_SECRET not set — skipping signature check")
+            try:
+                return json.loads(payload)
+            except Exception:
+                return None
+        try:
+            parts = dict(p.split("=", 1) for p in sig_header.split(",") if "=" in p)
+            t, v1 = parts.get("t"), parts.get("v1")
+            if not t or not v1:
+                return None
+            signed = t.encode() + b"." + payload
+            expected = hmac.new(self.webhook_secret.encode(), signed, hashlib.sha256).hexdigest()
+            if not hmac.compare_digest(expected, v1):
+                logger.error("Stripe webhook signature mismatch")
+                return None
+            return json.loads(payload)
+        except Exception as e:
+            logger.error(f"Stripe webhook verify error: {e}")
+            return None
+
+
 # ── Plan gating helpers ───────────────────────────────────────────────────────
 
 def is_pro(plan: str, status: str) -> bool:

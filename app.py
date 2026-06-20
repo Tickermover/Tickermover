@@ -22,7 +22,7 @@ from pydantic import BaseModel
 
 import config
 from auth import SupabaseClient
-from billing import RazorpayClient, is_pro
+from billing import RazorpayClient, StripeClient, is_pro
 from email_sender import send_welcome_email, send_password_changed_email, send_prime_review_email
 import secrets as _secrets
 from data_coordinator import DataCoordinator
@@ -89,6 +89,12 @@ razorpay    = RazorpayClient(
     key_id         = config.RAZORPAY_KEY_ID,
     key_secret     = config.RAZORPAY_KEY_SECRET,
     webhook_secret = config.RAZORPAY_WEBHOOK_SECRET,
+)
+# Stripe — primary gateway for the UK/global launch.
+stripe_client = StripeClient(
+    secret_key     = config.STRIPE_SECRET_KEY,
+    webhook_secret = config.STRIPE_WEBHOOK_SECRET,
+    price_id       = config.STRIPE_PRICE_ID,
 )
 
 # Cached Razorpay plan_id (fetched once at startup)
@@ -9731,6 +9737,121 @@ async def api_payment_webhook(request: Request):
     else:
         logger.debug(f"Webhook: unhandled event {evt}")
 
+    return JSONResponse({"received": True})
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+#  STRIPE — primary payment gateway (hosted Checkout + webhooks)
+# ═══════════════════════════════════════════════════════════════════════════
+async def _set_user_pro(user_id: str, *, active: bool, customer_id: str = "",
+                        subscription_id: str = "", period_end: int | None = None) -> None:
+    """Write a user's Pro state from a Stripe webhook (no user token → use the
+    service key to bypass RLS). Stripe customer/subscription ids are stashed in
+    the durable kv_store so the Billing Portal can find them — no schema change."""
+    import datetime as _dt
+    if period_end:
+        valid_until = _dt.datetime.utcfromtimestamp(int(period_end)).isoformat() + "Z"
+    else:
+        days = 35 if active else 0
+        valid_until = (_dt.datetime.utcnow() + _dt.timedelta(days=days)).isoformat() + "Z"
+    ok = await supabase.upsert_subscription(config.SUPABASE_SERVICE_KEY, {
+        "user_id":     user_id,
+        "plan":        "pro" if active else "free",
+        "status":      "active" if active else "canceled",
+        "valid_until": valid_until,
+    })
+    if customer_id:
+        try:
+            from kv_store import store as _kv
+            _kv.set("stripe_customer", user_id, {"customer_id": customer_id, "subscription_id": subscription_id})
+        except Exception:
+            pass
+    logger.info(f"💳 Stripe → user {user_id[:8]}… plan={'pro' if active else 'free'} ok={ok}")
+
+
+@app.get("/api/billing/config")
+async def api_billing_config():
+    """What the client needs to start checkout. Hosted Checkout → just enabled."""
+    return JSONResponse({
+        "provider":        "stripe",
+        "enabled":         stripe_client.enabled,
+        "publishable_key": config.STRIPE_PUBLISHABLE_KEY,
+    })
+
+
+@app.post("/api/billing/checkout")
+async def api_billing_checkout(user: Optional[dict] = Depends(_current_user),
+                               creds: Optional[HTTPAuthorizationCredentials] = Depends(_bearer)):
+    """Create a hosted Stripe Checkout session for Pro and return its URL."""
+    if not user:
+        raise HTTPException(status_code=401, detail="Sign in to upgrade.")
+    if not stripe_client.enabled:
+        raise HTTPException(status_code=503, detail="Billing isn't configured yet.")
+    sess = await stripe_client.create_checkout_session(
+        user_id=user["user_id"],
+        email=user.get("email", ""),
+        success_url=f"{SITE_ORIGIN}/app?upgraded=1",
+        cancel_url=f"{SITE_ORIGIN}/app?checkout=cancelled",
+    )
+    if sess.get("error") or not sess.get("url"):
+        raise HTTPException(status_code=502, detail=sess.get("error") or "Could not start checkout.")
+    return JSONResponse({"url": sess["url"]})
+
+
+@app.post("/api/billing/portal")
+async def api_billing_portal(user: Optional[dict] = Depends(_current_user),
+                             creds: Optional[HTTPAuthorizationCredentials] = Depends(_bearer)):
+    """Open the Stripe Billing Portal so the user can manage / cancel Pro."""
+    if not user:
+        raise HTTPException(status_code=401, detail="Sign in first.")
+    from kv_store import store as _kv
+    rec = _kv.get("stripe_customer", user["user_id"]) or {}
+    cust = rec.get("customer_id")
+    if not cust:
+        raise HTTPException(status_code=404, detail="No Stripe customer on file.")
+    sess = await stripe_client.create_portal_session(cust, return_url=f"{SITE_ORIGIN}/app")
+    if sess.get("error") or not sess.get("url"):
+        raise HTTPException(status_code=502, detail=sess.get("error") or "Could not open portal.")
+    return JSONResponse({"url": sess["url"]})
+
+
+@app.post("/api/billing/stripe/webhook")
+async def api_stripe_webhook(request: Request):
+    """Stripe webhook — source of truth for Pro state. Set the endpoint to
+    {SITE_ORIGIN}/api/billing/stripe/webhook in the Stripe dashboard and put the
+    signing secret in STRIPE_WEBHOOK_SECRET."""
+    raw = await request.body()
+    event = stripe_client.verify_webhook(raw, request.headers.get("Stripe-Signature", ""))
+    if event is None:
+        raise HTTPException(status_code=400, detail="Invalid signature")
+    typ = event.get("type", "")
+    obj = (event.get("data") or {}).get("object") or {}
+    uid = (obj.get("client_reference_id")
+           or (obj.get("metadata") or {}).get("user_id"))
+    try:
+        if typ == "checkout.session.completed":
+            if uid:
+                await _set_user_pro(uid, active=True,
+                                    customer_id=obj.get("customer") or "",
+                                    subscription_id=obj.get("subscription") or "")
+        elif typ in ("customer.subscription.created", "customer.subscription.updated"):
+            uid = uid or (obj.get("metadata") or {}).get("user_id")
+            active = obj.get("status") in ("active", "trialing")
+            if uid:
+                await _set_user_pro(uid, active=active,
+                                    customer_id=obj.get("customer") or "",
+                                    subscription_id=obj.get("id") or "",
+                                    period_end=obj.get("current_period_end"))
+        elif typ == "customer.subscription.deleted":
+            uid = uid or (obj.get("metadata") or {}).get("user_id")
+            if uid:
+                await _set_user_pro(uid, active=False,
+                                    customer_id=obj.get("customer") or "",
+                                    subscription_id=obj.get("id") or "")
+        else:
+            logger.debug(f"Stripe webhook: unhandled {typ}")
+    except Exception as exc:
+        logger.error(f"Stripe webhook handler error ({typ}): {exc}")
     return JSONResponse({"received": True})
 
 
