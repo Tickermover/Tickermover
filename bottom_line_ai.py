@@ -64,6 +64,29 @@ def _hash(text: str) -> str:
     return hashlib.sha1((text or "").encode("utf-8")).hexdigest()[:16]
 
 
+def _sig(t: dict) -> str:
+    """STABLE cache signature for a stock's bottom-line prose.
+
+    COST FIX (2026-06-20): the cache used to key on _hash(template_text), but the
+    template embeds live numbers (momentum %, score) that drift every day — so the
+    key changed daily for most of the universe and Haiku re-billed the whole book
+    every day (the '15-day TTL' never got to hit). Key instead on a coarse,
+    *material* signature: grade, caution set, a 5-point score bucket, and growth
+    tier. A 14%→15% momentum wiggle no longer invalidates; a grade change or a real
+    score move does. Cuts steady-state regeneration ~10x back to baseline."""
+    g = (t.get("grade") or "")
+    cr = t.get("caution_reasons") or []
+    crk = "|".join(sorted(str(c[0] if isinstance(c, (list, tuple)) else c) for c in cr))
+    try:
+        score = float(t.get("smart_score") if t.get("smart_score") is not None
+                      else (t.get("pop_score") or 0))
+    except (TypeError, ValueError):
+        score = 0.0
+    sbucket = int(score // 5)
+    gt = str(t.get("growth_tier") or "")
+    return _hash(f"{g}|{crk}|{sbucket}|{gt}")
+
+
 # ── Static instruction block (prompt-cached across the batch) ──────────
 def _system() -> str:
     return (
@@ -147,7 +170,7 @@ def apply_cached(universe: list[dict]) -> int:
         if not sym or not tpl:
             continue
         hit = _MEM.get(sym)
-        if hit and hit[0] == _hash(tpl):
+        if hit and hit[0] == _sig(t):
             t["bottom_line_ai"] = hit[1]
             n += 1
         else:
@@ -168,7 +191,7 @@ async def prewarm(universe: list[dict], throttle_s: float = 2.0,
         tpl = t.get("bottom_line") or ""
         if not sym or not tpl:
             continue
-        h = _hash(tpl)
+        h = _sig(t)
         mem = _MEM.get(sym)
         if mem and mem[0] == h:
             t["bottom_line_ai"] = mem[1]
