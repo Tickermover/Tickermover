@@ -7679,6 +7679,29 @@ def _run_room_rank(t: dict) -> float:
         if   streak >= 4: s += 3
         elif streak >= 3: s += 1
 
+    # --- Forward-looking 'poised to grow' signals (OUR fundamentals, NOT price targets) ---
+    # What separates 'set up to keep growing' from 'already ran': the Street RAISING
+    # its own earnings estimates, growth accelerating, margins widening, real cash.
+    rev = t.get("eps_revisions_30d")
+    if isinstance(rev, dict):
+        ups, downs = (rev.get("ups") or 0), (rev.get("downs") or 0)
+        tot = ups + downs
+        if tot >= 3:
+            net = (ups - downs) / tot
+            if   net >= 0.6:  s += 5    # estimates being raised hard = forward tailwind
+            elif net >= 0.2:  s += 2
+            elif net <= -0.4: s -= 4    # estimates being cut = deteriorating story
+    qy, yy = _f("rev_growth_qyoy"), _f("revenue_growth_yoy")
+    if qy is not None and yy is not None and qy > yy + 0.03:
+        s += 3                          # latest quarter growing faster than the year = accelerating
+    gmt = str(t.get("gross_margin_trend") or "")
+    if   gmt == "expanding":   s += 2
+    elif gmt == "contracting": s -= 2
+    fcf = _f("fcf_margin")
+    if fcf is not None:
+        if   fcf >= 0.15: s += 2        # real free cash flow = a sound business
+        elif fcf <= -0.10: s -= 2       # burning cash = less 'sound', size the risk
+
     # --- Analyst upside: BONUS ONLY, never a penalty (analysts lag our winners) ---
     up = _f("target_upside_pct")
     if up is None:

@@ -7169,14 +7169,14 @@ document.addEventListener('DOMContentLoaded', function(){
     <div>
       <div class="picks-card">
         <div class="pk-head">
-          <h3>🔥 Breakout Picks</h3>
+          <h3>🔭 Our House View</h3>
           <div class="pk-meta">
-            <span class="meta-pill">High Alpha</span>
-            <span class="meta-pill">+ a live signal</span>
-            <span class="meta-pill green" id="picksCount">— picks</span>
+            <span class="meta-pill">High conviction</span>
+            <span class="meta-pill">Poised to grow</span>
+            <span class="meta-pill green" id="picksCount">— names</span>
           </div>
         </div>
-        <p class="pk-note">The engine's <b>highest-conviction setups with the most room to run</b> from here — strong scores, real <b>upside left to target</b>, and momentum still building. <span class="pk-note-fine">Ranked for opportunity · research, not investment advice — do your own diligence.</span></p>
+        <p class="pk-note">Our <b>highest-conviction names — sound businesses we judge poised to keep growing</b>: strong Alpha Scores, the Street <b>raising estimates</b>, growth accelerating and momentum still building. <span class="pk-note-fine">Our research opinion — not personal financial advice, not FCA-authorised, capital at risk. Do your own diligence.</span></p>
         <div class="dm-table" id="picksTable">
           <div class="dm-row dm-head-row">
             <span>Ticker</span><span>Alpha</span><span>Why it's here</span><span class="up-col">Analyst upside</span><span class="today-col">Today</span><span class="act-col">View</span>
@@ -20048,6 +20048,20 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     if(gt.indexOf('Very High')>=0) s+=3; else if(gt.indexOf('High')>=0) s+=1;
     const streak=num(t.eps_beat_streak);
     if(streak!=null){ if(streak>=4) s+=3; else if(streak>=3) s+=1; }
+
+    // Forward-looking "poised to grow" signals (OUR fundamentals, NOT price targets):
+    // rising estimates, accelerating growth, widening margins, real cash flow.
+    const rev=t.eps_revisions_30d;
+    if(rev&&typeof rev==='object'){
+      const ups=rev.ups||0, downs=rev.downs||0, tot=ups+downs;
+      if(tot>=3){ const net=(ups-downs)/tot; if(net>=0.6) s+=5; else if(net>=0.2) s+=2; else if(net<=-0.4) s-=4; }
+    }
+    const qy=num(t.rev_growth_qyoy), yy=num(t.revenue_growth_yoy);
+    if(qy!=null&&yy!=null&&qy>yy+0.03) s+=3;
+    const gmt=String(t.gross_margin_trend||'');
+    if(gmt==='expanding') s+=2; else if(gmt==='contracting') s-=2;
+    const fcf=num(t.fcf_margin);
+    if(fcf!=null){ if(fcf>=0.15) s+=2; else if(fcf<=-0.10) s-=2; }
 
     const up=upsidePct(t);   // analyst upside — BONUS ONLY, never a penalty
     if(up!=null){ if(up>=20) s+=4; else if(up>=8) s+=2; }
