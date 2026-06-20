@@ -16377,12 +16377,40 @@ function renderClosedTrades(data) {
       </div>`;
   })();
 
+  // ── Factor attribution (the feedback loop) — which entry signals actually
+  // predicted the winners. Auto-appears once ≥8 snapshot-tagged picks close. ──
+  const factorPanel = (() => {
+    const fe = stats.factor_edge || {};
+    const keys = Object.keys(fe);
+    if (!keys.length) return '';
+    const LABEL = {momentum_1m:'1-mo momentum',momentum_3m:'3-mo momentum',score_velocity:'Score velocity',dist_52w_high:'Near 52w high',rsi_14:'RSI at entry',rev_growth_yoy:'Revenue growth',rev_growth_qyoy:'Qtr growth',eps_rev_net:'Estimate revisions',fcf_margin:'FCF margin',target_upside_pct:'Analyst upside'};
+    keys.sort((a,b)=>(fe[b].edge_hit||0)-(fe[a].edge_hit||0));
+    const rows = keys.slice(0,8).map(k=>{
+      const d=fe[k], eh=d.edge_hit||0, ea=d.edge_alpha||0, pos=eh>=0;
+      return `<div class="th-tile">
+        <div class="tt-k">${LABEL[k]||k}</div>
+        <div class="tt-v ${pos?'pos':'neg'}">${eh>=0?'+':''}${eh.toFixed(0)}pt</div>
+        <div class="tt-s">${ea>=0?'+':''}${ea.toFixed(1)}% alpha edge · n=${(d.high.n||0)+(d.low.n||0)}</div>
+      </div>`;
+    }).join('');
+    return `
+      <div class="th-hero th-hero-dark" style="margin-top:14px">
+        <div class="th-hero-top"><div class="th-hero-id">
+          <div class="th-eyebrow">🔬 Factor attribution · what's actually working</div>
+          <div class="th-title" style="font-size:18px">Which entry signals predicted the winners?</div>
+          <div class="th-sub">Each entry factor split at its median — the hit-rate edge of the high half vs the low half. The rank gets re-weighted by this evidence as it accrues (${stats.factor_tagged_n||0} tagged trades so far).</div>
+        </div></div>
+        <div class="th-tiles">${rows}</div>
+      </div>`;
+  })();
+
   // ── TRADES TABLE ────────────────────────────────────────────────────
   const reasonStyle = {
     target:     {cls:'booked',   label:'Booked'},
     stop:       {cls:'stop',     label:'Stop Hit'},
     trail:      {cls:'trail',    label:'Trail Stop'},
     stretched:  {cls:'stretch',  label:'Valuation Stretched'},
+    thesis:     {cls:'signal',   label:'Thesis Weakening'},
     bar_failed: {cls:'signal',   label:'Signal Exit'},
     signal:     {cls:'signal',   label:'Signal Exit'},
     rebuild:    {cls:'replaced', label:'Replaced'},
@@ -16446,7 +16474,7 @@ function renderClosedTrades(data) {
       </div>
     </div>`;
 
-  root.innerHTML = _modelViewToggle('history') + headerHTML + convPanel + tableHTML;
+  root.innerHTML = _modelViewToggle('history') + headerHTML + convPanel + factorPanel + tableHTML;
 }
 
 function renderModelPortfolio(data) {
@@ -16570,6 +16598,16 @@ function renderModelPortfolio(data) {
       // in the previous light-green gradient).
       const newBadge = isRecentAdd
         ? `<span style="display:inline-flex;align-items:center;gap:3px;padding:3px 10px;border-radius:5px;background:#0040c1;color:#fff;font-size:11px;font-weight:900;letter-spacing:.1em;line-height:1.2">✨ NEW</span>`
+        : '';
+
+      // ── Conviction-weighted size tier (research sizing guidance, not advice) ──
+      const sizeTier = p.size_tier || null;
+      const sizeBadge = (sizeTier && sizeTier !== 'Standard')
+        ? `<span title="Conviction-weighted size — higher AI conviction earns a larger notional weight in the tracker" style="font-size:9px;font-weight:800;letter-spacing:.05em;padding:2px 6px;border-radius:5px;background:rgba(124,58,237,.10);color:#7c3aed;border:1px solid rgba(124,58,237,.22)">${escHTML(sizeTier.toUpperCase())}</span>`
+        : '';
+      // ── Earnings-event flag — a binary event ahead; manage exposure around it ──
+      const eventBadge = p.event_risk
+        ? `<span title="${escHTML(p.event_risk)}" style="font-size:9px;font-weight:800;letter-spacing:.05em;padding:2px 6px;border-radius:5px;background:rgba(245,158,11,.12);color:#b45309;border:1px solid rgba(245,158,11,.28)">📅 EARNINGS</span>`
         : '';
 
       // ── Tier badge: shows which strictness tier this pick passed ─────────
@@ -16748,7 +16786,7 @@ function renderModelPortfolio(data) {
             <div class="v2-mp-head-text">
               <div class="v2-mp-tic-row">
                 <span class="v2-mp-tic">${p.ticker}</span>
-                ${newBadge}
+                ${newBadge}${sizeBadge}${eventBadge}
               </div>
               <div class="v2-mp-name">${p.name}</div>
               ${p.sub_sector ? `<div class="v2-mp-sub">${p.sub_sector}</div>` : ''}

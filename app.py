@@ -6582,6 +6582,33 @@ def _factor_snapshot(t: dict) -> dict:
     }
 
 
+def _weight_factor(conv) -> float:
+    """AI conviction → relative position-size factor. Higher conviction earns a
+    bigger notional weight (the track record shows high-conviction picks hit
+    more), unscored names get a starter weight. Research sizing guidance — used
+    to conviction-weight the tracker NAV — not personal advice."""
+    try:
+        c = float(conv)
+    except (TypeError, ValueError):
+        return 1.0
+    if c >= 80: return 1.6
+    if c >= 65: return 1.2
+    if c >= 50: return 1.0
+    return 0.7
+
+
+def _size_tier(conv) -> str:
+    """Human label for the conviction-weighted size."""
+    try:
+        c = float(conv)
+    except (TypeError, ValueError):
+        return "Standard"
+    if c >= 80: return "High conviction"
+    if c >= 65: return "Above average"
+    if c >= 50: return "Standard"
+    return "Starter"
+
+
 def _return_velocity(t: dict) -> float:
     """Rank Top Hunts / Prime Tickers for the BIGGEST + FASTEST move — owner
     directive (2026-06-20): best return, quick return, NO sector cap, no
@@ -7045,8 +7072,50 @@ def _enrich_model_portfolio(portfolio: dict) -> dict:
         bar_failed = False
         bar_reason = None
 
-        # ── Determine the EXIT ALERT (priority: protect capital first,
-        #    then trail / valuation / signal — winners run via the trail) ──
+        # ── Rule 6: Leading thesis-break (NEW 2026-06-20) ─────────────────
+        # Exit on the EARLY, LEADING signs of deterioration rather than waiting
+        # for the whole composite to fall under grade B (a lagging trigger — by
+        # then the damage is done). DELIBERATELY CONSERVATIVE: needs TWO
+        # independent confirmations so noise can't churn the book (the May-21
+        # lesson above) — a real net estimate CUT *and* momentum rolling over (or
+        # margins contracting). Catches losers earlier → tightens the loss tail.
+        thesis_break = False
+        thesis_reason = None
+        if has_live_price and bool(live_grade):
+            rev = live.get("eps_revisions_30d")
+            est_cut = False
+            if isinstance(rev, dict):
+                ups, downs = (rev.get("ups") or 0), (rev.get("downs") or 0)
+                tot = ups + downs
+                est_cut = tot >= 3 and (downs - ups) / tot >= 0.4   # ≥40% net cuts
+            try:
+                m1 = float(live.get("momentum_1m")) if live.get("momentum_1m") is not None else None
+            except (TypeError, ValueError):
+                m1 = None
+            mom_roll = m1 is not None and m1 < -8
+            gmt = (live.get("gross_margin_trend") or "")
+            if est_cut and mom_roll:
+                thesis_break = True
+                thesis_reason = "Analysts cutting estimates + momentum rolling over"
+            elif est_cut and gmt == "contracting":
+                thesis_break = True
+                thesis_reason = "Analysts cutting estimates + margins contracting"
+
+        # ── Earnings-event risk (NEW) — a binary event ahead. NOT an exit (the
+        # thesis may BE the earnings); a flag so the card shows elevated,
+        # event-driven variance and a user can manage exposure around it. ──
+        event_risk = None
+        try:
+            dte_live = live.get("days_to_earnings")
+            if dte_live is not None and 0 <= int(dte_live) <= 7:
+                d = int(dte_live)
+                _when = "today" if d == 0 else "tomorrow" if d == 1 else f"in {d}d"
+                event_risk = f"Reports {_when} — binary event, elevated risk"
+        except (TypeError, ValueError):
+            pass
+
+        # ── Determine the EXIT ALERT (priority: protect capital first, then
+        #    trail / thesis-break / valuation / signal — winners run via trail) ──
         exit_alert = None
         if hard_stop_hit:
             exit_alert = {"type": "stop",
@@ -7056,6 +7125,10 @@ def _enrich_model_portfolio(portfolio: dict) -> dict:
             exit_alert = {"type": "trail",
                           "label": "TRAIL STOP HIT",
                           "reason": f"Price ${now:.2f} ≤ trail ${trail_floor:.2f} ({trail_label})"}
+        elif thesis_break:
+            exit_alert = {"type": "thesis",
+                          "label": "THESIS WEAKENING",
+                          "reason": thesis_reason}
         elif valuation_stretched:
             exit_alert = {"type": "stretched",
                           "label": "VALUATION STRETCHED",
@@ -7156,6 +7229,12 @@ def _enrich_model_portfolio(portfolio: dict) -> dict:
             "ai_thesis":      _aj.get("thesis"),
             "ai_red_flags":   _aj.get("red_flags") or [],
             "ai_lean":        _aj.get("lean"),
+            # Conviction-weighted sizing (research guidance — weights the NAV):
+            "size_tier":      _size_tier(_aj.get("conviction")),
+            "weight_factor":  _weight_factor(_aj.get("conviction")),
+            # Earnings-event flag + leading thesis-break state:
+            "event_risk":     event_risk,
+            "exit_thesis_break": thesis_break,
         })
     # Sort: gainers first
     enriched.sort(key=lambda x: x["performance_pct"], reverse=True)
@@ -7566,6 +7645,46 @@ async def api_model_portfolio_history():
     }
     scored_n = sum(d["n"] for d in conv_buckets.values())
 
+    # ── Factor attribution — the feedback loop ────────────────────────────
+    # For trades carrying a factor snapshot at entry, split each numeric factor
+    # at its median and compare the win-rate + avg alpha of the high vs low
+    # halves. Answers "which signals actually predicted the winners?" so the
+    # rank can be re-weighted by EVIDENCE, not judgment. Empty until enough
+    # snapshot-tagged picks close (factors_at_entry added 2026-06-20); the
+    # min-sample gate stops us over-fitting a handful of trades.
+    FACTOR_KEYS = ["momentum_1m", "momentum_3m", "score_velocity", "dist_52w_high",
+                   "rsi_14", "rev_growth_yoy", "rev_growth_qyoy", "eps_rev_net",
+                   "fcf_margin", "target_upside_pct"]
+    MIN_FACTOR_N = 8
+    tagged = [t for t in trades if isinstance(t.get("factors_at_entry"), dict)]
+    factor_edge: dict = {}
+    if len(tagged) >= MIN_FACTOR_N:
+        import statistics as _stats
+        for fk in FACTOR_KEYS:
+            pairs = [(t, t["factors_at_entry"].get(fk)) for t in tagged]
+            pairs = [(t, float(v)) for t, v in pairs if isinstance(v, (int, float))]
+            if len(pairs) < MIN_FACTOR_N:
+                continue
+            med = _stats.median([v for _, v in pairs])
+            hi = [t for t, v in pairs if v >= med]
+            lo = [t for t, v in pairs if v < med]
+            if len(hi) < 3 or len(lo) < 3:
+                continue
+            def _grp(g):
+                return {
+                    "n":         len(g),
+                    "hit_rate":  round(sum(1 for t in g if t.get("won")) / len(g) * 100, 1),
+                    "avg_alpha": round(sum(float(t.get("alpha_spy") or 0) for t in g) / len(g), 2),
+                }
+            ghi, glo = _grp(hi), _grp(lo)
+            factor_edge[fk] = {
+                "high":       ghi,
+                "low":        glo,
+                "edge_hit":   round(ghi["hit_rate"] - glo["hit_rate"], 1),
+                "edge_alpha": round(ghi["avg_alpha"] - glo["avg_alpha"], 2),
+                "median":     round(med, 3),
+            }
+
     stats = {
         "total":      len(trades),
         "wins":       len(wins),
@@ -7585,6 +7704,10 @@ async def api_model_portfolio_history():
         "beat_spy_rate":  round(beat_spy / rel_n * 100, 1) if rel_n else None,
         "avg_alpha_spy":  round(alpha_sum / rel_n, 2) if rel_n else None,
         "benchmark_n":    rel_n,
+        # Factor attribution (feedback loop) — empty until ≥8 snapshot-tagged
+        # trades close; then shows each entry-factor's high-vs-low edge.
+        "factor_edge":    factor_edge,
+        "factor_tagged_n": len(tagged),
     }
     return JSONResponse({"trades": trades, "stats": stats})
 
