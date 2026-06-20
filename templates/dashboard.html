@@ -16603,11 +16603,11 @@ function renderModelPortfolio(data) {
       // ── Conviction-weighted size tier (research sizing guidance, not advice) ──
       const sizeTier = p.size_tier || null;
       const sizeBadge = (sizeTier && sizeTier !== 'Standard')
-        ? `<span title="Conviction-weighted size — higher AI conviction earns a larger notional weight in the tracker" style="font-size:9px;font-weight:800;letter-spacing:.05em;padding:2px 6px;border-radius:5px;background:rgba(124,58,237,.10);color:#7c3aed;border:1px solid rgba(124,58,237,.22)">${escHTML(sizeTier.toUpperCase())}</span>`
+        ? `<span title="Conviction-weighted size — higher AI conviction earns a larger notional weight in the tracker" style="font-size:9px;font-weight:800;letter-spacing:.05em;padding:2px 6px;border-radius:5px;background:rgba(124,58,237,.10);color:#7c3aed;border:1px solid rgba(124,58,237,.22)">${String(sizeTier).toUpperCase()}</span>`
         : '';
       // ── Earnings-event flag — a binary event ahead; manage exposure around it ──
       const eventBadge = p.event_risk
-        ? `<span title="${escHTML(p.event_risk)}" style="font-size:9px;font-weight:800;letter-spacing:.05em;padding:2px 6px;border-radius:5px;background:rgba(245,158,11,.12);color:#b45309;border:1px solid rgba(245,158,11,.28)">📅 EARNINGS</span>`
+        ? `<span title="${String(p.event_risk).replace(/"/g,'&quot;')}" style="font-size:9px;font-weight:800;letter-spacing:.05em;padding:2px 6px;border-radius:5px;background:rgba(245,158,11,.12);color:#b45309;border:1px solid rgba(245,158,11,.28)">📅 EARNINGS</span>`
         : '';
 
       // ── Tier badge: shows which strictness tier this pick passed ─────────
