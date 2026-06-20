@@ -5597,6 +5597,8 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 #panel-hot .why-tx{font-size:12.5px;color:var(--ink-2);font-weight:600;line-height:1.35}
 #panel-hot .why-ai{display:inline-block;font-size:9.5px;font-weight:800;letter-spacing:.03em;color:#7c3aed;background:rgba(124,58,237,.10);border:1px solid rgba(124,58,237,.22);border-radius:5px;padding:1px 5px;vertical-align:1px;margin-right:1px}
 #panel-hot .why-risk{margin-top:5px;font-size:10px;font-weight:700;color:#b45309;background:rgba(245,158,11,.13);display:inline-flex;gap:3px;align-items:center;padding:2px 7px;border-radius:6px}
+#panel-hot .pg-chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+#panel-hot .pg-chip{font-size:9.5px;font-weight:700;color:#0040c1;background:rgba(41,112,255,.09);border:1px solid rgba(41,112,255,.18);border-radius:5px;padding:1px 6px;white-space:nowrap}
 #panel-hot .up-cell{display:flex;flex-direction:column;font-family:'JetBrains Mono',monospace;font-weight:800;font-size:15px}
 #panel-hot .up-cell.pos{color:var(--up)}
 #panel-hot .up-cell.neg{color:var(--down)}
@@ -5615,6 +5617,7 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 .picks-track{margin:0;border-top:1px solid rgba(41,112,255,.12);padding:16px 20px 18px;
   background:linear-gradient(180deg,#f7faff 0%,#eef4fe 100%)}
 @media(max-width:560px){.picks-track{padding:16px 16px 18px}}
+.picks-track .pt-eyebrow{font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#0040c1;margin-bottom:12px}
 .picks-track .pt-inner{display:flex;flex-wrap:wrap;align-items:center;gap:14px 26px;justify-content:space-between}
 .picks-track .pt-stats{display:flex;gap:24px;flex-wrap:wrap}
 .picks-track .pt-stat{display:flex;flex-direction:column;line-height:1.05}
@@ -19961,9 +19964,32 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     // right beside the pill, so the rank is already clear. Full tier names
     // (Strong Outperform / Outperform / …) live in the roomier pills elsewhere.
     if(t.caution) return {w:'Watch', cls:'vd-watch'};
+    // Prefer the AI analyst-judge's conviction when present — our sharpest 'house
+    // view' on the name. Falls back to grade/score when the judge hasn't scored it.
+    const conv=parseFloat(t.ai_conviction);
+    if(!isNaN(conv)){
+      if(conv>=80) return {w:'Strong', cls:'vd-top'};
+      if(conv>=65) return {w:'Outperform', cls:'vd-strong'};
+      return {w:'Neutral', cls:'vd-solid'};
+    }
     if(g==='A'||sc>=85) return {w:'Strong', cls:'vd-top'};
     if(g==='B'||sc>=78) return {w:'Outperform', cls:'vd-strong'};
     return {w:'Neutral', cls:'vd-solid'};
+  }
+  function forwardChips(t){
+    // The 'poised to grow' tells — our own forward fundamentals, not price targets.
+    const out=[];
+    const rev=t.eps_revisions_30d;
+    if(rev&&typeof rev==='object'){
+      const ups=rev.ups||0, downs=rev.downs||0, tot=ups+downs;
+      if(tot>=3 && (ups-downs)/tot>=0.4) out.push('Estimates rising');
+    }
+    const qy=parseFloat(t.rev_growth_qyoy), yy=parseFloat(t.revenue_growth_yoy);
+    if(!isNaN(qy)&&!isNaN(yy)&&qy>yy+0.03) out.push('Growth accelerating');
+    if(String(t.gross_margin_trend||'')==='expanding') out.push('Margins expanding');
+    const fcf=parseFloat(t.fcf_margin);
+    if(!isNaN(fcf)&&fcf>=0.15) out.push('Strong cash flow');
+    return out.slice(0,2);   // keep the dense table calm — max two
   }
   function upsidePct(t){
     let u=parseFloat(t.target_upside_pct);
@@ -20109,6 +20135,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
       const sig=pickSignal(t)||{icon:'⭐',text:'Top-tier composite score'};
       let risk=rowRisk(t);
       if(risk && /report|earnings/i.test(sig.text) && /earnings/i.test(risk)) risk=null;
+      const fchips=forwardChips(t);
       const trend=(chg3m!==0&&!isNaN(chg3m))?'<small>'+(chg3m>=0?'▲':'▼')+' '+Math.abs(chg3m).toFixed(0)+'% · 3M</small>':'';
       const up=upsidePct(t);
       const upCell=up==null?'<span class="up-cell up-col muted">—</span>'
@@ -20116,7 +20143,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
       return '<div class="dm-row" data-row data-tic="'+escHTML(t.ticker)+'" style="animation-delay:'+(0.08+i*0.05).toFixed(2)+'s">'+
         '<span class="dm-tick">'+logoHTML(t.ticker)+'<span style="min-width:0">'+escHTML(t.ticker)+(g?'<span class="dm-grade '+g+'">'+g+'</span>':'')+'<br><small>'+escHTML((t.name||'').slice(0,26))+'</small></span></span>'+
         '<span class="alpha-cell"><span class="dm-alpha">'+pop+'</span><span class="vd '+vd.cls+'">'+vd.w+'</span></span>'+
-        '<span class="dm-cell-why"><span class="why"><span class="why-ico">'+sig.icon+'</span><span class="why-tx">'+(sig.ai?'<span class="why-ai">✦ AI</span> ':'')+escHTML(sig.text)+'</span></span>'+(risk?'<div class="why-risk">⚠ '+escHTML(risk)+'</div>':'')+'</span>'+
+        '<span class="dm-cell-why"><span class="why"><span class="why-ico">'+sig.icon+'</span><span class="why-tx">'+(sig.ai?'<span class="why-ai">✦ AI</span> ':'')+escHTML(sig.text)+'</span></span>'+(fchips.length?'<div class="pg-chips">'+fchips.map(c=>'<span class="pg-chip">'+escHTML(c)+'</span>').join('')+'</div>':'')+(risk?'<div class="why-risk">⚠ '+escHTML(risk)+'</div>':'')+'</span>'+
         upCell+
         '<span class="dm-chg today-col '+(chg>=0?'up':'dn')+'">'+fmtPct(chg)+trend+'</span>'+
         '<span class="act-col"><button class="dm-btn">View →</button></span>'+
@@ -20149,11 +20176,15 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
       if(hr>=55)      note='Most picks close green, and winners outrun losers — a healthy, asymmetric edge.';
       else if(hr<=45) note='Momentum profile — most picks are small losers, a few are big winners, so judge by the averages, not the hit rate.';
       else            note='Winners outrun losers — the payoff, not how often it’s right, is what drives the result.';
+      const hc=(s.by_conviction&&(s.by_conviction['high (80-100)']||s.by_conviction['high']))||null;
+      const hcHit=(hc&&hc.hit_rate!=null)?Math.round(hc.hit_rate):null;
       el.innerHTML=
-        '<div class="pt-inner"><div class="pt-stats">'
+        '<div class="pt-eyebrow">📊 Our track record · closed picks, audited</div>'
+        +'<div class="pt-inner"><div class="pt-stats">'
         +'<div class="pt-stat"><b>'+hr.toFixed(0)+'%</b><span>hit rate</span></div>'
         +'<div class="pt-stat"><b class="pos">'+sg(s.avg_win)+'</b><span>avg winner</span></div>'
         +'<div class="pt-stat"><b class="neg">'+sg(s.avg_loss)+'</b><span>avg loser</span></div>'
+        +(hcHit!=null?'<div class="pt-stat"><b>'+hcHit+'%</b><span>high-conviction hit</span></div>':'')
         +'<div class="pt-stat"><b>'+n+'</b><span>closed picks</span></div>'
         +'</div>'
         +'<div class="pt-note">'+note+' <span class="pt-link" onclick="_openTrackRecord()">Full ledger →</span></div>'

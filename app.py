@@ -769,6 +769,21 @@ async def _bottom_line_prewarm() -> None:
         await asyncio.sleep(3 * 3600)      # every 3h
 
 
+async def _selection_prewarm() -> None:
+    """Keep the AI analyst-judge conviction/thesis cache warm so the House View
+    (/api/hot, /api/featured) and the model portfolio always have a bespoke 'why'
+    ready — without waiting for a user to open the portfolio tab. The single-flight
+    guard and ~20h staleness gate live inside _refresh_selection_judgments, so most
+    cycles are a no-op (≈ one Opus judge run per day over the qualified pool)."""
+    await asyncio.sleep(220)              # let the universe load + first score settle
+    while True:
+        try:
+            await _refresh_selection_judgments()
+        except Exception as exc:
+            logger.warning(f"selection pre-warm cycle failed: {exc}")
+        await asyncio.sleep(6 * 3600)     # check every 6h; refreshes only when stale
+
+
 # ── Lifespan ──────────────────────────────────────────────────────────
 
 @asynccontextmanager
@@ -852,6 +867,7 @@ async def lifespan(app: FastAPI):
         asyncio.create_task(_overview_prewarm()),   # keep curated Overviews warm
         asyncio.create_task(_data_prewarm()),        # keep all stocks' free data (stock-extra) warm
         asyncio.create_task(_bottom_line_prewarm()), # Haiku-polish bottom_lines (cache-first, 15d)
+        asyncio.create_task(_selection_prewarm()),   # keep AI conviction/thesis warm for House View
     ]
     yield
     for t in tasks:
@@ -7592,6 +7608,30 @@ async def api_model_portfolio_reset():
     return JSONResponse({"ok": True, "picks": len(_model_portfolio["picks"]), "date": _model_portfolio["created_at"]})
 
 
+def _attach_ai_thesis(rows: list[dict]) -> None:
+    """Overlay the AI analyst-judge's thesis / conviction / lean onto these rows so
+    the House View headline picks carry the same bespoke 'why' as the model
+    portfolio. Pure cache read (memoised _conviction_map) — no generation on the
+    request path; the _selection_prewarm task keeps the cache warm."""
+    try:
+        cmap = _conviction_map([r.get("ticker") for r in rows if r.get("ticker")])
+    except Exception:
+        return
+    if not cmap:
+        return
+    for r in rows:
+        aj = cmap.get((r.get("ticker") or "").upper())
+        if not aj:
+            continue
+        th = (aj.get("thesis") or "").strip()
+        if th:
+            r["ai_thesis"] = th
+        if aj.get("conviction") is not None:
+            r["ai_conviction"] = aj.get("conviction")
+        if aj.get("lean"):
+            r["ai_lean"] = aj.get("lean")
+
+
 @app.get("/api/hot")
 async def api_hot(n: int = None):
     global _daily_hot, _daily_hot_date
@@ -7611,6 +7651,7 @@ async def api_hot(n: int = None):
         _daily_hot_date = today_str
         logger.info(f"📋 Hot list: {len(picks)} strict picks for {today_str} (no tier-2 backfill)")
 
+    _attach_ai_thesis(_daily_hot)
     return JSONResponse(_clean({"hot": _daily_hot, "total_eligible": len(_daily_hot)}))
 
 
@@ -7798,6 +7839,7 @@ def _is_premium_overview(sym: str) -> bool:
 @app.get("/api/featured")
 async def api_featured(n: int = None):
     _ensure_featured()
+    _attach_ai_thesis(_daily_featured)
     # "Prime Opportunities" — the strict high-conviction subset of the pool
     # (same bar as the Hot List). Surfaced with a badge among the featured names.
     prime_syms = [t.get("ticker") for t in _daily_featured if _is_hot_eligible(t)]
