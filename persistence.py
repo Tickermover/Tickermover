@@ -268,6 +268,11 @@ class PortfolioStore:
                     # isn't present yet the insert below retries without it so
                     # the audit ledger never breaks.
                     "conviction_at_entry": t.get("conviction_at_entry"),
+                    # Factor snapshot at entry (JSONB) — lets the closed-trades
+                    # view attribute which signals predicted the winners. Column
+                    # added 2026-06-20; the retry below drops it if not present
+                    # yet so the audit ledger never breaks on a pending migration.
+                    "factors_at_entry": t.get("factors_at_entry"),
                     "rationale":       (t.get("rationale") or "")[:1000],
                     "sub_sector":      t.get("sub_sector"),
                     "exit_date":       t.get("exit_date"),
@@ -291,11 +296,13 @@ class PortfolioStore:
                 # is never blocked on a pending migration.
                 logger.warning(
                     f"PortfolioStore.append_trades insert failed ({e}); "
-                    f"retrying without conviction_at_entry (apply "
-                    f"db/2026-06-15-conviction-on-trades.sql to fix)"
+                    f"retrying without conviction_at_entry / factors_at_entry "
+                    f"(apply db/2026-06-15-conviction-on-trades.sql + "
+                    f"db/2026-06-20-factors-at-entry.sql to fix)"
                 )
                 for r in rows:
                     r.pop("conviction_at_entry", None)
+                    r.pop("factors_at_entry", None)
                 try:
                     resp = self._post("/rest/v1/closed_trades", body=rows)
                     inserted = len(resp) if isinstance(resp, list) else len(new_trades)

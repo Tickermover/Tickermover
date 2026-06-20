@@ -6549,6 +6549,39 @@ async def _refresh_selection_judgments(force: bool = False) -> None:
         _selection_refreshing = False
 
 
+def _factor_snapshot(t: dict) -> dict:
+    """Freeze the ranking-relevant factors AT ENTRY so closed trades can later be
+    attributed — i.e. which signals actually predicted the winners. Forward-looking
+    by nature: only picks added 2026-06-20+ carry this, so attribution accrues as
+    new picks close. Kept compact (the values the conviction rank actually uses)."""
+    def _n(k):
+        try:
+            v = t.get(k)
+            return round(float(v), 4) if v is not None else None
+        except (TypeError, ValueError):
+            return None
+    rev = t.get("eps_revisions_30d")
+    rev_net = None
+    if isinstance(rev, dict):
+        ups, downs = (rev.get("ups") or 0), (rev.get("downs") or 0)
+        tot = ups + downs
+        rev_net = round((ups - downs) / tot, 3) if tot else None
+    return {
+        "smart_score":        _n("smart_score"),
+        "momentum_1m":        _n("momentum_1m"),
+        "momentum_3m":        _n("momentum_3m"),
+        "score_velocity":     _n("score_velocity"),
+        "dist_52w_high":      _n("dist_52w_high"),
+        "rsi_14":             _n("rsi_14"),
+        "rev_growth_yoy":     _n("revenue_growth_yoy"),
+        "rev_growth_qyoy":    _n("rev_growth_qyoy"),
+        "eps_rev_net":        rev_net,
+        "gross_margin_trend": t.get("gross_margin_trend"),
+        "fcf_margin":         _n("fcf_margin"),
+        "target_upside_pct":  _n("target_upside_pct"),
+    }
+
+
 def _build_model_portfolio(existing: dict | None = None) -> dict:
     """
     Select top 20 Grade-A stocks by Alpha Score.
@@ -6702,6 +6735,7 @@ def _build_model_portfolio(existing: dict | None = None) -> dict:
             "rationale":      (t.get("rationale") or "")[:120],
             "signals":        (t.get("signals") or [])[:3],
             "target_mean":    float(t.get("target_mean") or 0),
+            "factors_at_entry": (prev.get("factors_at_entry") if prev and prev.get("factors_at_entry") else _factor_snapshot(t)),
         })
 
     # ── Audit trail: every dropped pick MUST be recorded to closed trades ──
@@ -7155,6 +7189,7 @@ def _close_triggered_picks(portfolio: dict, enriched_picks: list) -> tuple[dict,
             "pop_at_entry":    raw.get("pop_at_entry"),
             "grade_at_entry":  raw.get("grade_at_entry"),
             "conviction_at_entry": raw.get("conviction_at_entry"),
+            "factors_at_entry": raw.get("factors_at_entry"),
             "rationale":       raw.get("rationale", ""),
             "sub_sector":      raw.get("sub_sector", ""),
             "exit_date":       today_str,
@@ -7283,6 +7318,7 @@ def _replenish_portfolio(portfolio: dict) -> dict:
             "rationale":      (t.get("rationale") or "")[:120],
             "signals":        (t.get("signals") or [])[:3],
             "target_mean":    float(t.get("target_mean") or 0),
+            "factors_at_entry": _factor_snapshot(t),
         })
         added += 1
     if added:
@@ -7353,14 +7389,71 @@ async def api_model_portfolio():
     return JSONResponse(_clean(enriched))
 
 
+def _bench_history_1y(sym: str) -> dict[str, float]:
+    """{date_str -> close} for the last year, reusing the price-history cache.
+    Used to measure each closed trade against the benchmark over its OWN window."""
+    ck = f"price-history:{sym}:1y"
+    c = cache.get(ck)
+    pts = (c or {}).get("points") or []
+    if not pts:
+        try:
+            import yfinance as yf  # type: ignore
+            h = yf.Ticker(sym).history(period="1y", interval="1d", auto_adjust=True)
+            if h is None or h.empty:
+                return {}
+            pts = []
+            for idx, row in h.iterrows():
+                d = idx.strftime("%Y-%m-%d") if hasattr(idx, "strftime") else str(idx)
+                close = float(row["Close"]) if row.get("Close") is not None else None
+                if close is not None and not (math.isnan(close) or math.isinf(close)):
+                    pts.append({"date": d, "close": round(close, 2)})
+            cache.set(ck, {"ticker": sym, "period": "1y", "points": pts}, 60 * 60 * 6)
+        except Exception as exc:
+            logger.warning(f"bench history {sym} failed: {exc}")
+            return {}
+    return {p["date"]: p["close"] for p in pts}
+
+
+def _close_on_or_before(sorted_dates: list, hist: dict, date_str: str):
+    """Benchmark close on date_str, or the nearest prior trading day."""
+    import bisect
+    if not sorted_dates or not date_str:
+        return None
+    i = bisect.bisect_right(sorted_dates, date_str) - 1
+    return hist.get(sorted_dates[i]) if i >= 0 else None
+
+
 @app.get("/api/model-portfolio/history")
 async def api_model_portfolio_history():
     """Return the closed-trades log. Adds derived stats so the UI can render
-    a leaderboard-style summary (hit rate, avg gain/loss, exit-reason mix)."""
+    a leaderboard-style summary (hit rate, avg gain/loss, exit-reason mix,
+    and benchmark-relative alpha vs SPY over each trade's own window)."""
     history = _load_trade_history()
     trades = history.get("trades", [])
     if not trades:
         return JSONResponse({"trades": [], "stats": {"total": 0}})
+
+    # ── Benchmark-relative alpha ──────────────────────────────────────────
+    # Hit rate alone isn't credible — a 60% hit rate is worthless if SPY beat
+    # us. For each closed trade, measure its return against SPY over the SAME
+    # holding window (entry_date → exit_date), so the headline becomes "X% of
+    # our picks beat the market", not just "X% closed green".
+    spy_hist = await asyncio.to_thread(_bench_history_1y, "SPY")
+    spy_dates = sorted(spy_hist.keys())
+    beat_spy = 0
+    alpha_sum = 0.0
+    rel_n = 0
+    for t in trades:
+        e = _close_on_or_before(spy_dates, spy_hist, str(t.get("entry_date") or ""))
+        x = _close_on_or_before(spy_dates, spy_hist, str(t.get("exit_date") or ""))
+        if e and x and e > 0:
+            spy_ret = (x / e - 1) * 100
+            alpha = float(t.get("final_pct") or 0) - spy_ret
+            t["spy_ret"] = round(spy_ret, 2)
+            t["alpha_spy"] = round(alpha, 2)
+            alpha_sum += alpha
+            beat_spy += 1 if alpha > 0 else 0
+            rel_n += 1
 
     wins = [t for t in trades if t.get("won")]
     losses = [t for t in trades if not t.get("won")]
@@ -7392,15 +7485,17 @@ async def api_model_portfolio_history():
         b = _bucket(t.get("conviction_at_entry"))
         if b is None:
             continue
-        d = conv_buckets.setdefault(b, {"n": 0, "wins": 0, "sum_pct": 0.0})
+        d = conv_buckets.setdefault(b, {"n": 0, "wins": 0, "sum_pct": 0.0, "sum_alpha": 0.0})
         d["n"] += 1
         d["wins"] += 1 if t.get("won") else 0
         d["sum_pct"] += float(t.get("final_pct") or 0)
+        d["sum_alpha"] += float(t.get("alpha_spy") or 0)
     by_conviction = {
         b: {
             "trades":   d["n"],
             "hit_rate": round(d["wins"] / d["n"] * 100, 1) if d["n"] else 0,
             "avg_pct":  round(d["sum_pct"] / d["n"], 2) if d["n"] else 0,
+            "avg_alpha": round(d["sum_alpha"] / d["n"], 2) if d["n"] else 0,
         }
         for b, d in conv_buckets.items()
     }
@@ -7420,6 +7515,11 @@ async def api_model_portfolio_history():
         # AI-conviction analytic (empty until conviction-tagged picks close)
         "by_conviction":      by_conviction,
         "conviction_scored":  scored_n,
+        # Benchmark-relative: did we actually beat the market? (None until SPY
+        # history covers the trade windows.)
+        "beat_spy_rate":  round(beat_spy / rel_n * 100, 1) if rel_n else None,
+        "avg_alpha_spy":  round(alpha_sum / rel_n, 2) if rel_n else None,
+        "benchmark_n":    rel_n,
     }
     return JSONResponse({"trades": trades, "stats": stats})
 
