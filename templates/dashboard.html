@@ -19981,19 +19981,26 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     const _f=v=>{const x=parseFloat(v);return isNaN(x)?null:x;};
     const dist=_f(t.dist_52w_high), beats=parseInt(t.eps_beat_streak)||0, dte=parseInt(t.days_to_earnings);
     const m1=_f(t.momentum_1m), m3=_f(t.momentum_3m), pm=_f(t.profit_margin);
+    const rg=_f(t.revenue_growth_yoy), sv=_f(t.score_velocity);
     const tier=String(t.growth_tier||''), analysts=parseInt(t.total_analysts)||0, sbp=_f(t.strong_buy_pct);
     const insiders=parseInt(t.insider_buys_90d)||0;
-    if(!isNaN(dte)&&dte>=0&&dte<=7&&beats>=4) return {icon:'📅',text:'Reports '+(dte===0?'today':dte===1?'tomorrow':'in '+dte+'d')+' — beaten earnings 4 quarters straight'};
-    if(dist!=null&&dist>=-0.5) return {icon:'🚀',text:'Trading at a new 52-week high'};
-    if(dist!=null&&dist>=-3)   return {icon:'🚀',text:'Within '+Math.abs(dist).toFixed(1)+'% of its 52-week high'};
+    // Lead with the single most DISTINCTIVE, quantified signal for THIS name — most
+    // specific first — so the column reads uniquely per row instead of repeating one
+    // generic "high-growth · 4 beats" bucket. Specific numbers (a real momentum %,
+    // margin %, growth %) beat category labels every time.
+    if(dist!=null&&dist>=-0.5) return {icon:'🚀',text:'Just broke to a new 52-week high'};
+    if(!isNaN(dte)&&dte>=0&&dte<=7) return {icon:'📅',text:'Reports '+(dte===0?'today':dte===1?'tomorrow':'in '+dte+'d')+(beats>=4?' — 4 straight earnings beats':'')};
+    if(m3!=null&&m3>=40) return {icon:'⚡',text:'Up '+Math.round(m3)+'% over three months — strong uptrend'};
     if(pm!=null&&pm>=0.40) return {icon:'💎',text:Math.round(pm*100)+'% net margins — exceptional profitability'};
-    if(pm!=null&&pm>=0.25) return {icon:'💎',text:Math.round(pm*100)+'% net margins — highly profitable & cash-generative'};
-    if(/high/i.test(tier)&&beats>=4) return {icon:'📈',text:'High-growth name · beaten earnings 4 quarters straight'};
-    if(/high/i.test(tier))           return {icon:'📈',text:'High-growth name — 25%+ annual revenue growth'};
-    if(beats>=4) return {icon:'🎯',text:'Beaten earnings 4 quarters in a row'};
     if(m1!=null&&m1>=15) return {icon:'⚡',text:'Up '+Math.round(m1)+'% in the past month'};
+    if(pm!=null&&pm>=0.25) return {icon:'💎',text:Math.round(pm*100)+'% net margins — highly profitable & cash-generative'};
+    if(sv!=null&&sv>=4) return {icon:'📈',text:'Alpha Score climbing fast — the story is improving'};
+    if(dist!=null&&dist>=-5) return {icon:'🚀',text:'Within '+Math.abs(dist).toFixed(1)+'% of its 52-week high'};
+    if(rg!=null&&rg>=0.25) return {icon:'📈',text:'Revenue growing '+Math.round(rg*100)+'% a year'};
+    if(analysts>=10&&sbp!=null&&sbp>=40) return {icon:'🏦',text:Math.round(sbp)+'% of '+analysts+' analysts rate it a top Buy'};
+    if(beats>=4) return {icon:'🎯',text:'Beaten earnings four quarters in a row'};
     if(m3!=null&&m3>=25) return {icon:'⚡',text:'Up '+Math.round(m3)+'% over the last three months'};
-    if(analysts>=10&&sbp!=null&&sbp>=30) return {icon:'🏦',text:Math.round(sbp)+'% of '+analysts+' analysts rate it a top Buy'};
+    if(/high/i.test(tier)) return {icon:'📈',text:'High-growth name — 25%+ annual revenue growth'};
     if(insiders>=1) return {icon:'🏛',text:'Insiders bought shares in the last 90 days'};
     const s=(t.signals||[]).find(x=>!/alpha score|score climb|days.to|eps.in/i.test(x));
     if(s) return {icon:'✨',text:s};
