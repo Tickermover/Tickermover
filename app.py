@@ -694,6 +694,24 @@ async def _prewarm_one_overview(sym: str) -> bool:
         return False
 
 
+def _ai_over_budget() -> bool:
+    """Daily AI-spend circuit breaker. True once today's (UTC) recorded AI cost
+    crosses config.AI_DAILY_USD_CAP — at which point background prewarms and the
+    expensive web-search generators STOP generating (serve cached/template) so a
+    runaway loop can never bleed past the ceiling. Fail-open (never blocks on its
+    own error)."""
+    try:
+        import usage_log
+        if usage_log.today_cost_usd() >= config.AI_DAILY_USD_CAP:
+            logger.warning(
+                "🛑 AI daily cap ${:.2f} reached (spent ${:.2f}) — pausing background generation".format(
+                    config.AI_DAILY_USD_CAP, usage_log.today_cost_usd()))
+            return True
+    except Exception:
+        return False
+    return False
+
+
 async def _overview_prewarm() -> None:
     """Background loop: keep the curated ~35 Overviews warm. Runs ~every 6h; most
     cycles do nothing because the 30-day cache is still fresh."""
@@ -701,7 +719,7 @@ async def _overview_prewarm() -> None:
     await asyncio.sleep(150)               # let the universe + featured set load first
     while True:
         try:
-            if research_gen.available() and _universe_data:
+            if research_gen.available() and _universe_data and not _ai_over_budget():
                 warmed = 0
                 for t in _ensure_featured():
                     sym = t.get("ticker")
@@ -762,7 +780,7 @@ async def _bottom_line_prewarm() -> None:
     await asyncio.sleep(200)               # let the universe load + first score settle
     while True:
         try:
-            if bottom_line_ai.available() and _universe_data:
+            if bottom_line_ai.available() and _universe_data and not _ai_over_budget():
                 stats = await bottom_line_ai.prewarm(
                     _universe_data, throttle_s=2.0, max_gen=60,
                 )
@@ -785,7 +803,8 @@ async def _selection_prewarm() -> None:
     await asyncio.sleep(220)              # let the universe load + first score settle
     while True:
         try:
-            await _refresh_selection_judgments()
+            if not _ai_over_budget():
+                await _refresh_selection_judgments()
         except Exception as exc:
             logger.warning(f"selection pre-warm cycle failed: {exc}")
         await asyncio.sleep(6 * 3600)     # check every 6h; refreshes only when stale
@@ -4466,6 +4485,9 @@ _research_errors: dict = {}
 async def _run_research_job(sym: str, target: dict | None):
     import research_gen
     from research_store import store as _rstore
+    if _ai_over_budget():
+        _research_errors[sym] = "Daily AI budget reached — research paused; cached results still serve."
+        return
     try:
         out = await research_gen.generate_research(sym, target)
         _rstore.save(sym, out)
@@ -4594,6 +4616,15 @@ async def api_overview(ticker: str, force: bool = False,
             cache.set(ck, out, ttl=2592000)   # L1 mirrors the 30-day durable TTL
             return JSONResponse(out)
 
+    # Circuit breaker — if today's AI spend hit the cap, never start a new paid
+    # generation. Serve any (even stale) cached doc, else a soft 'paused' note.
+    if _ai_over_budget():
+        doc = _ovstore.get(sym)
+        if doc and doc.get("markdown"):
+            return JSONResponse(_from_doc(doc))
+        return JSONResponse({"status": "unavailable", "markdown": "", "kind": "overview",
+                             "note": "AI is paused for today's budget — please check back shortly."})
+
     # Need to (re)generate — dedupe concurrent opens of the same ticker so only
     # ONE paid call runs; every other waiter awaits the same task.
     task = _overview_inflight.get(sym)
@@ -4649,7 +4680,7 @@ async def api_why_today(ticker: str, force: bool = False):
         if cached and cached.get("points"):
             return JSONResponse({"ticker": sym, "points": cached["points"], "status": "ready"})
 
-    if not _why.available():
+    if not _why.available() or _ai_over_budget():
         return JSONResponse({"ticker": sym, "points": None, "status": "unavailable"})
 
     # Build grounding from the live universe row (+ derived pillars / upside).
@@ -4833,6 +4864,8 @@ _compare_generating: set = set()
 async def _run_compare_job(sym: str, target: dict | None):
     import compare_gen
     from compare_store import store as _cstore
+    if _ai_over_budget():
+        return
     try:
         out = await compare_gen.generate_compare_card(sym, target)
         _cstore.save(sym, out)
@@ -9482,9 +9515,14 @@ async def api_cache_health(user: Optional[dict] = Depends(_current_user),
     overview_ok = tables["stock_overview"]["reachable"]
     intact = bool(supa and overview_ok and volume_persistent)
 
+    import usage_log as _ul
+    spent_today = round(_ul.today_cost_usd(), 4)
     return JSONResponse({
         "flat_cost_guarantee_intact": intact,
         "supabase_configured": supa,
+        "ai_spend_today_usd": spent_today,
+        "ai_daily_cap_usd": config.AI_DAILY_USD_CAP,
+        "ai_breaker_tripped": spent_today >= config.AI_DAILY_USD_CAP,
         "overview_cached_tickers": tables["stock_overview"]["count"],
         "tables": tables,
         "app_kv_namespaces": ns_counts,

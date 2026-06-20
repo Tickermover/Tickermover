@@ -88,10 +88,29 @@ class UsageLog:
         self.url = (config.SUPABASE_URL or "").rstrip("/")
         self.key = config.SUPABASE_SERVICE_KEY or config.SUPABASE_ANON_KEY or ""
         self.enabled = bool(self.url and self.key)
+        # In-memory running tally of TODAY's AI spend (UTC) — the input to the
+        # daily spend circuit breaker. Resets at midnight UTC and on restart
+        # (a restart simply gives the cap a fresh budget; the breaker's real job
+        # is to halt a runaway loop within a running process).
+        self._day: str | None = None
+        self._day_cost: float = 0.0
         try:
             _DISK.mkdir(parents=True, exist_ok=True)
         except Exception:
             pass
+
+    def _bump_day(self, cost: float) -> None:
+        import datetime as _dt
+        d = _dt.datetime.utcnow().strftime("%Y-%m-%d")
+        if d != self._day:
+            self._day, self._day_cost = d, 0.0
+        self._day_cost += float(cost or 0)
+
+    def today_cost_usd(self) -> float:
+        import datetime as _dt
+        if _dt.datetime.utcnow().strftime("%Y-%m-%d") != self._day:
+            return 0.0
+        return self._day_cost
 
     def record(self, feature: str, model: str, usage: dict | None, *,
                user_id: str | None = None, ticker: str | None = None,
@@ -122,6 +141,11 @@ class UsageLog:
         except Exception as e:
             logger.debug(f"usage_log build failed: {e}")
             return
+
+        try:
+            self._bump_day(row["est_cost_usd"])
+        except Exception:
+            pass
 
         if self.enabled:
             try:
@@ -197,3 +221,8 @@ store = UsageLog()
 def record(feature: str, model: str, usage: dict | None, **kw) -> None:
     """Module-level convenience: usage_log.record(feature, model, usage, ...)."""
     store.record(feature, model, usage, **kw)
+
+
+def today_cost_usd() -> float:
+    """Today's (UTC) running AI spend in USD — input to the daily circuit breaker."""
+    return store.today_cost_usd()

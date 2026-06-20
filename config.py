@@ -80,6 +80,13 @@ STRIPE_PUBLISHABLE_KEY = _env("STRIPE_PUBLISHABLE_KEY", "")   # pk_live_… (not
 STRIPE_PRICE_ID        = _env("STRIPE_PRICE_ID",        "")   # price_… of the recurring Pro plan
 STRIPE_WEBHOOK_SECRET  = _env("STRIPE_WEBHOOK_SECRET",  "")   # whsec_… from the webhook endpoint
 
+# ── AI spend circuit breaker ──────────────────────────────────────────────────
+# Hard daily (UTC) ceiling on AI cost. Once today's recorded spend crosses this,
+# the background prewarms + the expensive web-search generators STOP generating
+# (serve cached/template) so a runaway loop can never bleed past it. Normal days
+# run ~$1-3; default $12 leaves headroom for a busy day but stops a 10x leak.
+AI_DAILY_USD_CAP = float(_env("AI_DAILY_USD_CAP", "12") or "12")
+
 # ── Beta: Pro free for everyone until launch ──────────────────────────────────
 # During the public beta every signed-in user gets Pro features for free. This
 # flips OFF automatically once the date passes (UTC), so paid Pro takes over at
