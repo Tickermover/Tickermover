@@ -20020,16 +20020,36 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
   // above target or that have gone parabolic — they've mostly had their move.
   // Changes the ORDER only; the eligibility/quality gate is unchanged.
   function _runRoomRank(t){
+    // Best-of-the-best conviction rank — OUR own expert verdict, not analyst-gated.
+    // Mirrors _run_room_rank in app.py EXACTLY (changed 2026-06-20). Lead with our
+    // Smart/Alpha Score, reward strength (momentum, climbing score, leadership near
+    // highs, growth, beats); analyst upside is a bonus only (never penalises a name
+    // that outran the Street); one narrow blow-off guard (parabolic AND overbought).
     let s=parseFloat(t.smart_score!=null?t.smart_score:(t.pop_score||0))||0;
-    const up=upsidePct(t);
-    if(up!=null){
-      if(up>=20) s+=10; else if(up>=10) s+=6; else if(up>=3) s+=2;
-      else if(up>=-2) s+=0; else if(up>=-10) s-=8; else s-=16;   // above target → demote
-    }
-    const m3=parseFloat(t.momentum_3m);
-    if(!isNaN(m3)){ if(m3>=120) s-=14; else if(m3>=70) s-=8; else if(m3>=40) s-=3; }  // already ran
+    const num=v=>{const x=parseFloat(v);return isNaN(x)?null:x;};
+
+    const m3=num(t.momentum_3m);
+    if(m3!=null){ if(m3>=50) s+=8; else if(m3>=25) s+=5; else if(m3>=10) s+=2; else if(m3<=-15) s-=5; }
+    const m1=num(t.momentum_1m);
+    if(m1!=null){ if(m1>=10) s+=3; else if(m1>=4) s+=1; else if(m1<=-10) s-=3; }
+
+    const sv=num(t.score_velocity);
+    if(sv!=null){ if(sv>=4) s+=4; else if(sv>=1.5) s+=2; else if(sv<=-3) s-=3; }
+    const d52=num(t.dist_52w_high);
+    if(d52!=null){ if(d52>=-3) s+=3; else if(d52>=-10) s+=1; }
+    const gt=String(t.growth_tier||'');
+    if(gt.indexOf('Very High')>=0) s+=3; else if(gt.indexOf('High')>=0) s+=1;
+    const streak=num(t.eps_beat_streak);
+    if(streak!=null){ if(streak>=4) s+=3; else if(streak>=3) s+=1; }
+
+    const up=upsidePct(t);   // analyst upside — BONUS ONLY, never a penalty
+    if(up!=null){ if(up>=20) s+=4; else if(up>=8) s+=2; }
+
+    const rsi=num(t.rsi_14); // blow-off guard: only parabolic AND overbought
+    if(m3!=null&&rsi!=null){ if(m3>=100&&rsi>=82) s-=8; else if(m3>=70&&rsi>=80) s-=4; }
+
     const dte=parseInt(t.days_to_earnings);
-    if(!isNaN(dte)&&dte>=0&&dte<=21) s+=3;   // near-term catalyst = a spark
+    if(!isNaN(dte)&&dte>=0&&dte<=21) s+=3;   // near-term catalyst
     return s;
   }
   const PICKS_MIN_ALPHA=70;   // headline picks must clear a 70 Alpha-Score floor

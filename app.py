@@ -7625,48 +7625,82 @@ _curated_syms_cache: set = set()
 
 
 def _run_room_rank(t: dict) -> float:
-    """Order picks by 'room to run from HERE', not just raw strength: start from
-    the Alpha Score, reward upside-to-target + a near-term earnings catalyst, and
-    demote names already trading above target or that have gone parabolic (they've
-    mostly had their move). Mirrors _runRoomRank in dashboard.html so the client
-    headline and the server-curated list agree."""
+    """Best-of-the-best conviction rank — OUR OWN expert verdict, not analyst-gated.
+
+    Philosophy (changed 2026-06-20): the old logic ranked for 'room to the analyst
+    mean target' and demoted anything trading above target or with strong momentum
+    ('already ran'). That structurally BURIED our best performers — names that blew
+    past stale analyst targets and kept ripping never surfaced. Analysts lag; we
+    don't defer to them. So now we lead with our Smart/Alpha Score and STACK our own
+    strength signals: sustained momentum (winners keep winning), a climbing Alpha
+    Score, leadership near 52-week highs, growth tier and earnings beats. Analyst
+    upside is a BONUS ONLY — it can lift a name with room left, but never penalises
+    one that's outrun the Street. The single guard we keep is a narrow blow-off
+    check: demote only names that are BOTH parabolic AND overbought, so we still
+    don't headline the literal top. Mirrors _runRoomRank in dashboard.html exactly —
+    keep the two in sync."""
+    def _f(key):
+        try:
+            v = t.get(key)
+            return float(v) if v is not None else None
+        except (TypeError, ValueError):
+            return None
+
     s = float(t.get("smart_score") or t.get("pop_score") or 0)
 
-    up = t.get("target_upside_pct")
+    # --- Momentum: reward strength; winners keep winning ---
+    m3 = _f("momentum_3m")
+    if m3 is not None:
+        if   m3 >= 50:  s += 8
+        elif m3 >= 25:  s += 5
+        elif m3 >= 10:  s += 2
+        elif m3 <= -15: s -= 5    # falling knife
+    m1 = _f("momentum_1m")
+    if m1 is not None:
+        if   m1 >= 10:  s += 3
+        elif m1 >= 4:   s += 1
+        elif m1 <= -10: s -= 3
+
+    # --- Our own improving-story signals ---
+    sv = _f("score_velocity")          # Alpha Score climbing = the story is getting better
+    if sv is not None:
+        if   sv >= 4:   s += 4
+        elif sv >= 1.5: s += 2
+        elif sv <= -3:  s -= 3
+    d52 = _f("dist_52w_high")           # near highs = leadership (−x% from high)
+    if d52 is not None:
+        if   d52 >= -3:  s += 3
+        elif d52 >= -10: s += 1
+    gt = str(t.get("growth_tier") or "")
+    if   "Very High" in gt: s += 3
+    elif "High" in gt:      s += 1
+    streak = _f("eps_beat_streak")
+    if streak is not None:
+        if   streak >= 4: s += 3
+        elif streak >= 3: s += 1
+
+    # --- Analyst upside: BONUS ONLY, never a penalty (analysts lag our winners) ---
+    up = _f("target_upside_pct")
     if up is None:
         try:
             tm, p = float(t.get("target_mean") or 0), float(t.get("price") or 0)
             up = (tm - p) / p * 100 if tm > 0 and p > 0 else None
         except (TypeError, ValueError):
             up = None
-    try:
-        if up is not None:
-            up = float(up)
-            if   up >= 20:  s += 10
-            elif up >= 10:  s += 6
-            elif up >= 3:   s += 2
-            elif up >= -2:  s += 0
-            elif up >= -10: s -= 8
-            else:           s -= 16   # trading above target → demote
-    except (TypeError, ValueError):
-        pass
+    if up is not None:
+        if   up >= 20: s += 4
+        elif up >= 8:  s += 2
 
-    try:
-        m3 = t.get("momentum_3m")
-        if m3 is not None:
-            m3 = float(m3)
-            if   m3 >= 120: s -= 14
-            elif m3 >= 70:  s -= 8
-            elif m3 >= 40:  s -= 3    # already ran
-    except (TypeError, ValueError):
-        pass
+    # --- Blow-off guard: only TRUE parabolic AND overbought (don't buy the top) ---
+    rsi = _f("rsi_14")
+    if m3 is not None and rsi is not None:
+        if   m3 >= 100 and rsi >= 82: s -= 8
+        elif m3 >= 70  and rsi >= 80: s -= 4
 
-    try:
-        dte = t.get("days_to_earnings")
-        if dte is not None and 0 <= int(dte) <= 21:
-            s += 3                    # near-term catalyst = a spark
-    except (TypeError, ValueError):
-        pass
+    # --- Near-term catalyst ---
+    dte = _f("days_to_earnings")
+    if dte is not None and 0 <= dte <= 21:
+        s += 3
 
     return s
 
