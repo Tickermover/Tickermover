@@ -9,7 +9,7 @@ import logging
 import math
 import os
 import time
-from datetime import datetime, timezone
+from datetime import datetime, timezone, date
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any, Optional
@@ -23,7 +23,8 @@ from pydantic import BaseModel
 import config
 from auth import SupabaseClient
 from billing import RazorpayClient, is_pro
-from email_sender import send_welcome_email, send_password_changed_email
+from email_sender import send_welcome_email, send_password_changed_email, send_prime_review_email
+import secrets as _secrets
 from data_coordinator import DataCoordinator
 from ai_scorer import score_and_rank, compute_pop_score
 import bottom_line_ai
@@ -7360,6 +7361,229 @@ def _close_triggered_picks(portfolio: dict, enriched_picks: list) -> tuple[dict,
     return portfolio, closed
 
 
+# ═══════════════════════════════════════════════════════════════════════════
+#  PRIME-TRACKER APPROVAL GATE — nothing new publishes without owner sign-off
+# ═══════════════════════════════════════════════════════════════════════════
+# New daily-replenish candidates are held in portfolio["pending"] (NOT added to
+# "picks") and a "marq sheet" + checklist email is sent to the owner. Only an
+# approve click publishes the name. Existing book + full rebuilds are unaffected.
+_PRIME_REVIEW_EMAIL = (
+    os.environ.get("PRIME_REVIEW_EMAIL", "").strip()
+    or (sorted(_AI_ALLOW)[0] if _AI_ALLOW else "")
+    or "digitalquery.ai@gmail.com"
+)
+
+
+def _pick_checklist(t: dict) -> list[dict]:
+    """The verification checklist on the marq sheet — gates cleared + advisory
+    flags to eyeball before publishing. status ∈ {pass, warn, info}."""
+    def n(k):
+        try:
+            v = t.get(k); return float(v) if v is not None else None
+        except (TypeError, ValueError):
+            return None
+    out: list[dict] = []
+    grade = (t.get("grade") or "").upper()
+    out.append({"label": "Grade A quality", "status": "pass" if grade == "A" else "warn", "detail": f"Grade {grade or '—'}"})
+    alpha = n("smart_score") or n("pop_score") or 0
+    bar = _entry_min_score()
+    out.append({"label": f"Alpha Score ≥ {bar}", "status": "pass" if alpha >= bar else "warn", "detail": f"{alpha:.0f}/100"})
+    pil = _pillar_pass_count(t)
+    out.append({"label": "≥4 of 6 pillars firing", "status": "pass" if pil >= 4 else "warn", "detail": f"{pil}/6 pillars"})
+    out.append({"label": "Return-velocity rank", "status": "info", "detail": f"score {_return_velocity(t):.0f}"})
+    conv = n("ai_conviction")
+    if conv is not None:
+        out.append({"label": "AI conviction", "status": "pass" if conv >= 65 else "info", "detail": f"{conv:.0f}/100 · {_size_tier(conv)}"})
+    m3 = n("momentum_3m")
+    if m3 is not None:
+        out.append({"label": "Momentum positive", "status": "pass" if m3 > 0 else "warn", "detail": f"{m3:+.0f}% 3M"})
+    rev = t.get("eps_revisions_30d")
+    if isinstance(rev, dict):
+        ups, downs = (rev.get("ups") or 0), (rev.get("downs") or 0)
+        st = "pass" if ups > downs else "warn" if downs > ups else "info"
+        out.append({"label": "Estimate revisions", "status": st, "detail": f"{ups} up / {downs} down"})
+    dte = n("days_to_earnings")
+    if dte is not None and 0 <= dte <= 7:
+        out.append({"label": "Earnings event ahead", "status": "warn", "detail": f"reports in {int(dte)}d — binary event"})
+    ps = n("ps_ratio")
+    if ps is not None and ps >= 30:
+        out.append({"label": "Rich valuation", "status": "warn", "detail": f"P/S {ps:.0f}×"})
+    rsi = n("rsi_14")
+    if rsi is not None and rsi >= 80:
+        out.append({"label": "Overbought", "status": "warn", "detail": f"RSI {rsi:.0f}"})
+    return out
+
+
+def _marqsheet_html(pick: dict, checklist: list[dict], approve_url: str, reject_url: str, view_url: str) -> str:
+    """The branded review email ('marq sheet') for one candidate."""
+    f = pick.get("factors_at_entry") or {}
+    def fnum(k, suf="", sign=False):
+        v = f.get(k)
+        if v is None:
+            return "—"
+        try:
+            x = float(v)
+            return (f"{x:+.0f}{suf}" if sign else f"{x:.0f}{suf}")
+        except (TypeError, ValueError):
+            return str(v)
+    def fpct(k):
+        # For fields stored as FRACTIONS (rev growth, FCF margin) → show as %.
+        v = f.get(k)
+        if v is None:
+            return "—"
+        try:
+            return f"{float(v) * 100:+.0f}%"
+        except (TypeError, ValueError):
+            return str(v)
+    sym = pick.get("ticker", "?")
+    name = pick.get("name", "")
+    sub = pick.get("sub_sector", "") or pick.get("sector", "")
+    entry = pick.get("entry_price")
+    alpha = pick.get("pop_at_entry")
+    conv = pick.get("conviction_at_entry")
+    stats = [
+        ("Alpha Score", f"{alpha:.0f}/100" if isinstance(alpha, (int, float)) else "—"),
+        ("AI conviction", f"{conv:.0f}/100" if isinstance(conv, (int, float)) else "not scored"),
+        ("Price at queue", f"${entry:.2f}" if isinstance(entry, (int, float)) else "—"),
+        ("1-mo momentum", fnum("momentum_1m", "%", sign=True)),
+        ("3-mo momentum", fnum("momentum_3m", "%", sign=True)),
+        ("Revenue growth", fpct("rev_growth_yoy")),
+        ("FCF margin", fpct("fcf_margin")),
+        ("Analyst upside", fnum("target_upside_pct", "%", sign=True)),
+    ]
+    stat_rows = "".join(
+        f'<td style="padding:8px 12px;border:1px solid #e2e8f0"><div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:.04em">{k}</div>'
+        f'<div style="font-size:16px;font-weight:800;color:#0a0e22;font-family:monospace">{v}</div></td>'
+        + ("</tr><tr>" if (i % 2 == 1) else "")
+        for i, (k, v) in enumerate(stats)
+    )
+    icon = {"pass": "✅", "warn": "⚠️", "info": "•"}
+    chk_rows = "".join(
+        f'<tr><td style="padding:7px 10px;font-size:14px;width:26px">{icon.get(c["status"], "•")}</td>'
+        f'<td style="padding:7px 10px;font-size:14px;font-weight:600;color:#0a0e22">{c["label"]}</td>'
+        f'<td style="padding:7px 10px;font-size:13px;color:#64748b;text-align:right;font-family:monospace">{c["detail"]}</td></tr>'
+        for c in checklist
+    )
+    return f"""<!DOCTYPE html><html><body style="margin:0;background:#eef4ff;font-family:Inter,Arial,sans-serif">
+<div style="max-width:600px;margin:0 auto;padding:24px">
+  <div style="background:#0a0e22;border-radius:14px 14px 0 0;padding:22px 24px;color:#fff">
+    <div style="font-size:11px;font-weight:800;letter-spacing:.12em;color:#5DB3F1;text-transform:uppercase">Prime Tracker · review &amp; approve</div>
+    <div style="font-size:26px;font-weight:900;margin-top:6px">{sym} <span style="font-size:15px;font-weight:600;color:#C2E0FF">{name}</span></div>
+    <div style="font-size:13px;color:#A9D1F9;margin-top:2px">{sub}</div>
+  </div>
+  <div style="background:#fff;padding:22px 24px;border:1px solid #d6e3ff;border-top:none">
+    <p style="font-size:14px;color:#334155;margin:0 0 16px">This candidate cleared the selection gate but <b>has not been published</b>. Review the sheet, then approve to publish it to the Prime Tracker — or reject to discard.</p>
+    <table style="border-collapse:collapse;width:100%;margin-bottom:18px"><tr>{stat_rows}</tr></table>
+    <div style="font-size:12px;font-weight:800;letter-spacing:.06em;color:#0040c1;text-transform:uppercase;margin-bottom:6px">Checklist</div>
+    <table style="border-collapse:collapse;width:100%;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;margin-bottom:22px">{chk_rows}</table>
+    <table style="border-collapse:collapse;width:100%"><tr>
+      <td style="padding-right:6px;width:50%"><a href="{approve_url}" style="display:block;text-align:center;background:#2970ff;color:#fff;font-weight:800;font-size:15px;padding:14px;border-radius:10px;text-decoration:none">✓ Approve &amp; publish</a></td>
+      <td style="padding-left:6px;width:50%"><a href="{reject_url}" style="display:block;text-align:center;background:#f1f5f9;color:#475569;font-weight:800;font-size:15px;padding:14px;border-radius:10px;text-decoration:none;border:1px solid #cbd5e1">✕ Reject</a></td>
+    </tr></table>
+    <p style="font-size:12px;color:#94a3b8;margin:16px 0 0;text-align:center"><a href="{view_url}" style="color:#2970ff">Open the full sheet in your browser</a> · It will NOT appear in the public tracker until you approve.</p>
+  </div>
+  <div style="font-size:11px;color:#94a3b8;text-align:center;padding:14px">TickerMover internal · research opinion, not advice</div>
+</div></body></html>"""
+
+
+def _queue_prime_review(portfolio: dict, pick: dict, t: dict) -> bool:
+    """Hold a candidate in the pending-review queue instead of publishing.
+    Dedups on ticker so the per-call replenish can't re-queue/re-email a name."""
+    sym = (pick.get("ticker") or "")
+    if not sym:
+        return False
+    pending = portfolio.setdefault("pending", [])
+    if any((e.get("pick") or {}).get("ticker", "") == sym and e.get("status") == "pending" for e in pending):
+        return False
+    pending.append({
+        "token":      _secrets.token_urlsafe(20),
+        "queued_at":  str(date.today()),
+        "status":     "pending",
+        "email_sent": False,
+        "pick":       pick,
+        "checklist":  _pick_checklist(t),
+    })
+    logger.info(f"🔒 Prime review: queued {sym} for approval (not yet published)")
+    return True
+
+
+async def _send_pending_review_emails(portfolio: dict) -> None:
+    """Send the marq sheet for any pending entry that hasn't been emailed yet.
+    One email per candidate. Best-effort; marks email_sent + persists on success."""
+    if not _PRIME_REVIEW_EMAIL:
+        return
+    pending = portfolio.get("pending") or []
+    sent_any = False
+    for entry in pending:
+        if entry.get("status") != "pending" or entry.get("email_sent"):
+            continue
+        pick = entry.get("pick") or {}
+        sym = pick.get("ticker", "?")
+        base = f"{SITE_ORIGIN}/prime/review/{entry.get('token')}"
+        html = _marqsheet_html(pick, entry.get("checklist") or [], f"{base}/approve", f"{base}/reject", base)
+        res = await send_prime_review_email(_PRIME_REVIEW_EMAIL, f"Prime review: {sym} awaiting approval", html)
+        if res.get("ok"):
+            entry["email_sent"] = True
+            sent_any = True
+        else:
+            logger.warning(f"Prime review email for {sym} failed: {res.get('error')}")
+    if sent_any:
+        _save_portfolio_to_disk(portfolio)
+
+
+def _find_pending(token: str) -> Optional[dict]:
+    for e in (_model_portfolio.get("pending") or []):
+        if e.get("token") == token and e.get("status") == "pending":
+            return e
+    return None
+
+
+def _approve_pending(token: str) -> Optional[dict]:
+    """Publish a pending pick to the live tracker (re-priced to now)."""
+    entry = _find_pending(token)
+    if not entry:
+        return None
+    pick = dict(entry.get("pick") or {})
+    sym = (pick.get("ticker") or "")
+    live = next((x for x in (_universe_data or []) if (x.get("ticker") or "") == sym), None)
+    if live and live.get("price"):
+        try:
+            pick["entry_price"] = round(float(live["price"]), 2)
+        except (TypeError, ValueError):
+            pass
+    pick["added_date"] = str(date.today())
+    _model_portfolio.setdefault("picks", []).append(pick)
+    entry["status"] = "approved"
+    entry["actioned_at"] = str(date.today())
+    _save_portfolio_to_disk(_model_portfolio)
+    logger.info(f"✅ Prime review: APPROVED {sym} → published to tracker")
+    return pick
+
+
+def _reject_pending(token: str) -> Optional[dict]:
+    entry = _find_pending(token)
+    if not entry:
+        return None
+    entry["status"] = "rejected"
+    entry["actioned_at"] = str(date.today())
+    _save_portfolio_to_disk(_model_portfolio)
+    logger.info(f"🚫 Prime review: REJECTED {(entry.get('pick') or {}).get('ticker','?')}")
+    return entry
+
+
+def _review_result_page(title: str, msg: str, ok: bool = True) -> str:
+    bar = "#15803d" if ok else "#94a3b8"
+    return f"""<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><title>{title}</title></head>
+<body style="margin:0;background:#eef4ff;font-family:Inter,Arial,sans-serif">
+<div style="max-width:480px;margin:60px auto;background:#fff;border:1px solid #d6e3ff;border-radius:14px;overflow:hidden">
+  <div style="height:6px;background:{bar}"></div>
+  <div style="padding:32px 28px;text-align:center">
+    <div style="font-size:22px;font-weight:900;color:#0a0e22">{title}</div>
+    <p style="font-size:15px;color:#475569;margin:12px 0 0">{msg}</p>
+  </div>
+</div></body></html>"""
+
+
 def _replenish_portfolio(portfolio: dict) -> dict:
     """Refill the portfolio back to target size AFTER exits have fired.
 
@@ -7385,7 +7609,11 @@ def _replenish_portfolio(portfolio: dict) -> dict:
     # Block re-adding tickers we just closed today (no immediate flapping)
     history = _load_trade_history()
     just_closed = {tr["ticker"] for tr in history.get("trades", []) if tr.get("exit_date") == today_str}
-    blocked = held | just_closed
+    # Also exclude names already awaiting approval in the review queue, so the
+    # per-call replenish doesn't re-queue / re-email the same candidate.
+    pending_syms = {(e.get("pick") or {}).get("ticker", "")
+                    for e in (portfolio.get("pending") or []) if e.get("status") == "pending"}
+    blocked = held | just_closed | pending_syms
 
     # Strict-only replenish — match _build_model_portfolio's bar exactly.
     # No fallback to lower tiers; if quality candidates aren't there, the
@@ -7447,10 +7675,10 @@ def _replenish_portfolio(portfolio: dict) -> dict:
     # so just take the top return-velocity names outright, theme be damned.
     to_add = qualified[:needed]
 
-    added = 0
+    queued = 0
     for t in to_add:
         price = float(t.get("price") or 0)
-        cur_picks.append({
+        newpick = {
             "ticker":         t.get("ticker", ""),
             "name":           t.get("name", ""),
             "added_date":     today_str,
@@ -7466,10 +7694,13 @@ def _replenish_portfolio(portfolio: dict) -> dict:
             "signals":        (t.get("signals") or [])[:3],
             "target_mean":    float(t.get("target_mean") or 0),
             "factors_at_entry": _factor_snapshot(t),
-        })
-        added += 1
-    if added:
-        logger.info(f"📗 Replenished portfolio: +{added} pick(s), now {len(cur_picks)}/{target_size}")
+        }
+        # APPROVAL GATE: don't publish — hold for owner review + email the sheet.
+        # The pick only enters "picks" when /prime/review/<token>/approve is hit.
+        if _queue_prime_review(portfolio, newpick, t):
+            queued += 1
+    if queued:
+        logger.info(f"🔒 Prime review: queued {queued} candidate(s) — awaiting email approval to publish")
     portfolio["picks"] = cur_picks
     return portfolio
 
@@ -7502,9 +7733,11 @@ async def api_model_portfolio():
 
     if has_fired:
         _model_portfolio, _ = _close_triggered_picks(_model_portfolio, enriched_picks)
-        # Refill slots opened by exits with next-best names
+        # Refill slots opened by exits — candidates are QUEUED for owner review
+        # (approval gate), not published, so picks may stay below target.
         _model_portfolio = _replenish_portfolio(_model_portfolio)
-        _save_portfolio_to_disk(_model_portfolio)
+        _save_portfolio_to_disk(_model_portfolio)   # persist the pending queue
+        await _send_pending_review_emails(_model_portfolio)
         # Re-enrich AFTER close+replenish so the response reflects the new picks
         enriched = _enrich_model_portfolio(_model_portfolio)
     else:
@@ -7515,9 +7748,15 @@ async def api_model_portfolio():
         # only the FIRST call after market opens or score changes will find
         # newly-qualifying stocks.
         before_n = len(_model_portfolio.get("picks", []))
+        before_pending = len(_model_portfolio.get("pending", []))
         if before_n < PORTFOLIO_SIZE:
             _model_portfolio = _replenish_portfolio(_model_portfolio)
             after_n = len(_model_portfolio.get("picks", []))
+            # Replenish now QUEUES candidates (approval gate) rather than adding
+            # to picks, so also persist + email when the pending queue grew.
+            if len(_model_portfolio.get("pending", [])) != before_pending:
+                _save_portfolio_to_disk(_model_portfolio)
+                await _send_pending_review_emails(_model_portfolio)
             if after_n != before_n or state_changed:
                 _save_portfolio_to_disk(_model_portfolio)
                 cache.save_disk()
@@ -7534,6 +7773,35 @@ async def api_model_portfolio():
         asyncio.create_task(_refresh_selection_judgments())
 
     return JSONResponse(_clean(enriched))
+
+
+# ── Prime-tracker review endpoints (tokenised — links live only in the email) ──
+@app.get("/prime/review/{token}", response_class=HTMLResponse)
+async def prime_review_view(token: str):
+    entry = _find_pending(token)
+    if not entry:
+        return HTMLResponse(_review_result_page("Link expired", "This review link is invalid or the pick was already actioned.", ok=False))
+    pick = entry.get("pick") or {}
+    base = f"{SITE_ORIGIN}/prime/review/{token}"
+    return HTMLResponse(_marqsheet_html(pick, entry.get("checklist") or [], f"{base}/approve", f"{base}/reject", base))
+
+
+@app.get("/prime/review/{token}/approve", response_class=HTMLResponse)
+async def prime_review_approve(token: str):
+    pick = _approve_pending(token)
+    if not pick:
+        return HTMLResponse(_review_result_page("Already actioned", "This pick was already approved or rejected.", ok=False))
+    return HTMLResponse(_review_result_page("✅ Approved &amp; published",
+        f"<b>{pick.get('ticker','')}</b> is now live in the Prime Tracker, entered at today's price."))
+
+
+@app.get("/prime/review/{token}/reject", response_class=HTMLResponse)
+async def prime_review_reject(token: str):
+    entry = _reject_pending(token)
+    if not entry:
+        return HTMLResponse(_review_result_page("Already actioned", "This pick was already approved or rejected.", ok=False))
+    return HTMLResponse(_review_result_page("Rejected",
+        f"<b>{(entry.get('pick') or {}).get('ticker','')}</b> was discarded and will not be published.", ok=False))
 
 
 def _bench_history_1y(sym: str) -> dict[str, float]:

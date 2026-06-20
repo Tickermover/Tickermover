@@ -85,6 +85,14 @@ async def send_password_changed_email(to_email: str) -> dict:
     )
 
 
+async def send_prime_review_email(to_email: str, subject: str, html: str) -> dict:
+    """Send an internal Prime-Tracker review 'marq sheet' to the owner/admin.
+    Best-effort — never raises; returns {"ok": bool, ...}."""
+    if not to_email or not html:
+        return {"ok": False, "error": "Missing recipient or body"}
+    return await _send(to=to_email, subject=subject, html=html)
+
+
 # ── Internals ─────────────────────────────────────────────────────────────
 
 def _render_welcome_html() -> Optional[str]:
