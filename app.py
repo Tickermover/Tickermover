@@ -7804,6 +7804,146 @@ async def prime_review_reject(token: str):
         f"<b>{(entry.get('pick') or {}).get('ticker','')}</b> was discarded and will not be published.", ok=False))
 
 
+# ── Admin-only review console (reuses the normal login; gated to AI_ALLOW_EMAILS) ──
+class _PrimeActionBody(BaseModel):
+    token: str
+    action: str
+
+
+@app.get("/api/admin/prime-pending")
+async def api_admin_prime_pending(user: Optional[dict] = Depends(_current_user),
+                                  creds: Optional[HTTPAuthorizationCredentials] = Depends(_bearer)):
+    if not user or (user.get("email") or "").lower() not in _AI_ALLOW:
+        raise HTTPException(status_code=403, detail="Admin only.")
+    out = []
+    for e in (_model_portfolio.get("pending") or []):
+        if e.get("status") != "pending":
+            continue
+        p = e.get("pick") or {}
+        f = p.get("factors_at_entry") or {}
+        out.append({
+            "token": e.get("token"), "queued_at": e.get("queued_at"),
+            "ticker": p.get("ticker"), "name": p.get("name"), "sub_sector": p.get("sub_sector"),
+            "alpha": p.get("pop_at_entry"), "conviction": p.get("conviction_at_entry"),
+            "entry_price": p.get("entry_price"),
+            "momentum_1m": f.get("momentum_1m"), "momentum_3m": f.get("momentum_3m"),
+            "rev_growth_yoy": f.get("rev_growth_yoy"), "target_upside_pct": f.get("target_upside_pct"),
+            "checklist": e.get("checklist") or [],
+        })
+    return JSONResponse({"pending": out, "count": len(out), "email": _PRIME_REVIEW_EMAIL})
+
+
+@app.post("/api/admin/prime-action")
+async def api_admin_prime_action(body: _PrimeActionBody,
+                                 user: Optional[dict] = Depends(_current_user),
+                                 creds: Optional[HTTPAuthorizationCredentials] = Depends(_bearer)):
+    if not user or (user.get("email") or "").lower() not in _AI_ALLOW:
+        raise HTTPException(status_code=403, detail="Admin only.")
+    token, action = (body.token or "").strip(), (body.action or "").strip().lower()
+    if action == "approve":
+        pick = _approve_pending(token)
+        if not pick:
+            raise HTTPException(status_code=404, detail="Not found or already actioned")
+        return JSONResponse({"ok": True, "published": pick.get("ticker")})
+    if action == "reject":
+        entry = _reject_pending(token)
+        if not entry:
+            raise HTTPException(status_code=404, detail="Not found or already actioned")
+        return JSONResponse({"ok": True, "rejected": (entry.get("pick") or {}).get("ticker")})
+    raise HTTPException(status_code=400, detail="action must be approve or reject")
+
+
+@app.get("/admin/prime-review", response_class=HTMLResponse)
+async def admin_prime_review_page():
+    return HTMLResponse(_ADMIN_PRIME_HTML)
+
+
+_ADMIN_PRIME_HTML = """<!DOCTYPE html><html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow"><title>Prime review · admin</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:Inter,-apple-system,Arial,sans-serif;background:#eef4ff;color:#0a0e22;padding:24px}
+.wrap{max-width:760px;margin:0 auto}
+h1{font-size:24px;font-weight:900;margin-bottom:4px}
+h1 b{color:#2970ff}
+.lead{font-size:13px;color:#64748b;margin-bottom:20px}
+.card{background:#fff;border:1px solid #d6e3ff;border-radius:14px;padding:18px 20px;margin-bottom:16px}
+.hd{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.tic{font-size:20px;font-weight:900;font-family:'JetBrains Mono',monospace;color:#0a0e22}
+.nm{font-size:14px;color:#475569;font-weight:600}
+.sub{font-size:12px;color:#94a3b8;margin-top:2px}
+.px{font-size:18px;font-weight:800;font-family:monospace;color:#0a0e22;white-space:nowrap}
+.stats{display:flex;flex-wrap:wrap;gap:18px;margin:14px 0}
+.stats>div{display:flex;flex-direction:column}
+.stats b{font-size:16px;font-weight:800;font-family:monospace}
+.stats span{font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:.04em;margin-top:2px}
+.chks{border-top:1px solid #eef0f3;padding-top:10px;margin-bottom:14px}
+.chk{display:flex;gap:8px;align-items:center;padding:4px 0;font-size:13px}
+.chk .cl{flex:1;font-weight:600}
+.chk .cd{color:#64748b;font-family:monospace;font-size:12px}
+.acts{display:flex;gap:10px}
+.acts button{flex:1;padding:12px;border-radius:10px;font-weight:800;font-size:14px;cursor:pointer;border:none}
+.ap{background:#2970ff;color:#fff}.ap:hover{background:#0042c5}
+.rj{background:#f1f5f9;color:#475569;border:1px solid #cbd5e1!important}.rj:hover{background:#e2e8f0}
+.acts button:disabled{opacity:.5;cursor:default}
+.done{text-align:center;font-weight:800;color:#15803d;padding:8px}
+.empty{background:#fff;border:1px solid #d6e3ff;border-radius:14px;padding:40px 24px;text-align:center;color:#475569}
+.empty .et{font-size:18px;font-weight:800;color:#0a0e22;margin-bottom:8px}
+.lk{display:inline-block;margin-top:12px;color:#2970ff;font-weight:700}
+</style></head><body><div class="wrap">
+<h1>Prime <b>review</b> · admin</h1>
+<div class="lead">Candidates the engine selected but held for your sign-off. Approve to publish to the Prime Tracker, or reject to discard.</div>
+<div id="root"><div class="empty">Loading…</div></div>
+</div><script>
+var TOKEN=null; try{TOKEN=localStorage.getItem('ah_token');}catch(e){}
+var root=document.getElementById('root');
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+function pct(v,frac){if(v==null||isNaN(Number(v)))return '—';var x=Number(v)*(frac?100:1);return (x>=0?'+':'')+x.toFixed(0)+'%';}
+function msg(t,m,link){return '<div class="empty"><div class="et">'+esc(t)+'</div><p>'+esc(m)+'</p>'+(link?'<a class="lk" href="'+link+'">Go to login →</a>':'')+'</div>';}
+function card(p){
+  var chk=(p.checklist||[]).map(function(c){var ic=c.status==='pass'?'✅':c.status==='warn'?'⚠️':'•';
+    return '<div class="chk"><span>'+ic+'</span><span class="cl">'+esc(c.label)+'</span><span class="cd">'+esc(c.detail)+'</span></div>';}).join('');
+  return '<div class="card" id="c_'+esc(p.token)+'">'+
+    '<div class="hd"><div><span class="tic">'+esc(p.ticker)+'</span> <span class="nm">'+esc(p.name)+'</span><div class="sub">'+esc(p.sub_sector)+'</div></div>'+
+    '<div class="px">'+(p.entry_price!=null?'$'+Number(p.entry_price).toFixed(2):'—')+'</div></div>'+
+    '<div class="stats">'+
+      '<div><b>'+(p.alpha!=null?Math.round(p.alpha):'—')+'</b><span>Alpha</span></div>'+
+      '<div><b>'+(p.conviction!=null?Math.round(p.conviction):'—')+'</b><span>Conviction</span></div>'+
+      '<div><b>'+pct(p.momentum_3m)+'</b><span>3M mom</span></div>'+
+      '<div><b>'+pct(p.rev_growth_yoy,true)+'</b><span>Rev growth</span></div>'+
+      '<div><b>'+pct(p.target_upside_pct)+'</b><span>Upside</span></div>'+
+    '</div>'+
+    '<div class="chks">'+chk+'</div>'+
+    '<div class="acts"><button class="ap" onclick="act(\\''+esc(p.token)+'\\',\\'approve\\',this)">✓ Approve &amp; publish</button>'+
+    '<button class="rj" onclick="act(\\''+esc(p.token)+'\\',\\'reject\\',this)">✕ Reject</button></div></div>';
+}
+function render(items,email){
+  if(!items.length){root.innerHTML='<div class="empty"><div class="et">✅ Nothing awaiting review</div><p>New candidates will appear here and be emailed to '+esc(email||'')+'.</p></div>';return;}
+  root.innerHTML=items.map(card).join('');
+}
+async function act(token,action,btn){
+  btn.disabled=true;var orig=btn.textContent;btn.textContent='…';
+  try{
+    var r=await fetch('/api/admin/prime-action',{method:'POST',headers:{'Authorization':'Bearer '+TOKEN,'Content-Type':'application/json'},body:JSON.stringify({token:token,action:action})});
+    if(r.ok){var el=document.getElementById('c_'+token);if(el){el.innerHTML='<div class="done">'+(action==='approve'?'✅ Approved & published':'✕ Rejected')+'</div>';}}
+    else{var j=await r.json().catch(function(){return{};});btn.disabled=false;btn.textContent=orig;alert('Failed: '+(j.detail||('HTTP '+r.status)));}
+  }catch(e){btn.disabled=false;btn.textContent=orig;alert('Error: '+e);}
+}
+async function load(){
+  if(!TOKEN){root.innerHTML=msg('Not logged in','Log in with your admin account first, then reopen this page.','/login');return;}
+  var r;
+  try{r=await fetch('/api/admin/prime-pending',{headers:{'Authorization':'Bearer '+TOKEN}});}
+  catch(e){root.innerHTML=msg('Network error',String(e));return;}
+  if(r.status===403){root.innerHTML=msg('Not authorized','This account is not on the admin allowlist.');return;}
+  if(r.status===401){root.innerHTML=msg('Session expired','Please log in again.','/login');return;}
+  if(!r.ok){root.innerHTML=msg('Error','HTTP '+r.status);return;}
+  var d=await r.json();render(d.pending||[],d.email);
+}
+load();
+</script></body></html>"""
+
+
 def _bench_history_1y(sym: str) -> dict[str, float]:
     """{date_str -> close} for the last year, reusing the price-history cache.
     Used to measure each closed trade against the benchmark over its OWN window."""
