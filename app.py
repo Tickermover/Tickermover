@@ -6582,6 +6582,71 @@ def _factor_snapshot(t: dict) -> dict:
     }
 
 
+def _return_velocity(t: dict) -> float:
+    """Rank Top Hunts / Prime Tickers for the BIGGEST + FASTEST move — owner
+    directive (2026-06-20): best return, quick return, NO sector cap, no
+    analyst-headroom gating. Eligibility (grade A / score≥bar / ≥4 pillars) still
+    sets the quality floor; this only ORDERS the qualified names, leaning into
+    recent momentum, acceleration, breakout-readiness and volume conviction —
+    the signals that precede a quick, large move."""
+    def n(k):
+        try:
+            v = t.get(k)
+            return float(v) if v is not None else None
+        except (TypeError, ValueError):
+            return None
+    bd = t.get("breakdown") or {}
+    def b(k):
+        try:
+            v = bd.get(k)
+            return float(v) if v is not None else 0.0
+        except (TypeError, ValueError):
+            return 0.0
+
+    s = 0.0
+    # --- Speed: recent momentum weighted heaviest (quick return) ---
+    m1 = n("momentum_1m")
+    if m1 is not None: s += min(max(m1, 0.0), 60) * 0.30     # up to +18 for a red-hot month
+    m3 = n("momentum_3m")
+    if m3 is not None: s += min(max(m3, 0.0), 120) * 0.06    # up to +7 sustained
+    # --- Acceleration: the move is speeding up ---
+    sv = n("score_velocity")
+    if sv is not None and sv > 0: s += min(sv * 1.5, 9)
+    s += b("earnings_acceleration") * 5                       # growth rate accelerating
+    # --- Poised to pop NOW: breakout-ready + trending + at leadership highs ---
+    s += b("breakout_proximity") * 7
+    s += b("trend_strength") * 5
+    d52 = n("dist_52w_high")
+    if d52 is not None and d52 >= -5: s += 5
+    # --- Conviction behind the move: volume ---
+    vr = n("volume_ratio")
+    if vr is not None:
+        if vr >= 2.5: s += 5
+        elif vr >= 1.5: s += 3
+    s += b("volume_spike") * 3
+    # --- Fundamental fuel for a sustained run ---
+    rev = t.get("eps_revisions_30d")
+    if isinstance(rev, dict):
+        ups, downs = (rev.get("ups") or 0), (rev.get("downs") or 0)
+        tot = ups + downs
+        if tot >= 3 and (ups - downs) / tot >= 0.4: s += 4
+    qy, yy = n("rev_growth_qyoy"), n("revenue_growth_yoy")
+    if qy is not None and yy is not None and qy > yy + 0.03: s += 3
+    # --- Near-term catalyst = a spark for a quick move ---
+    dte = n("days_to_earnings")
+    if dte is not None and 0 <= dte <= 14: s += 5
+    elif dte is not None and 0 <= dte <= 30: s += 2
+    # --- Room for a BIG return (analyst upside — bonus only, never a penalty) ---
+    up = _upside(t)
+    if up is not None:
+        if up >= 30: s += 5
+        elif up >= 15: s += 3
+    # --- Blow-off guard: don't chase a parabolic, overbought name into a reversal ---
+    rsi = n("rsi_14")
+    if m3 is not None and rsi is not None and m3 >= 100 and rsi >= 85: s -= 6
+    return s
+
+
 def _build_model_portfolio(existing: dict | None = None) -> dict:
     """
     Select top 20 Grade-A stocks by Alpha Score.
@@ -6651,15 +6716,18 @@ def _build_model_portfolio(existing: dict | None = None) -> dict:
     # upside break any remaining ties. When the AI cache is cold every conviction
     # is -1, collapsing this back to the pure quant ordering (alpha, upside).
     cmap = _conviction_map([t.get("ticker") for t in pool])
+    # Rank for the biggest + fastest move (owner directive 2026-06-20: best
+    # return, quick return). AI conviction + raw Alpha break ties so quality
+    # still matters within equal return-velocity.
     pool.sort(
-        key=lambda t: (round(_alpha(t)), _conv_score(t.get("ticker"), cmap),
-                       _alpha(t), _upside(t)),
+        key=lambda t: (_return_velocity(t), _conv_score(t.get("ticker"), cmap),
+                       _alpha(t)),
         reverse=True,
     )
-    # Diversify: take the strongest names subject to MAX_PER_THEME. A pure
-    # score-rank slice can return 8 names from one hot theme (e.g. AI
-    # Semiconductors); the cap keeps the book from becoming a single-theme bet.
-    top20 = _select_with_theme_cap(pool, PORTFOLIO_SIZE)   # name kept for downstream code
+    # NO sector cap — intentionally removed 2026-06-20. Prime Tickers is the
+    # aggressive return tracker, not a diversified book; take the top names
+    # outright even if several share a hot theme.
+    top20 = pool[:PORTFOLIO_SIZE]   # name kept for downstream code
     for t in top20:
         t["_entry_tier"] = 1   # all qualified picks are Tier 1 Premium
 
@@ -7270,10 +7338,11 @@ def _replenish_portfolio(portfolio: dict) -> dict:
     # within an Alpha-Score band; falls back to (alpha, upside) when the cache
     # is cold.
     cmap = _conviction_map([t.get("ticker") for t in vetoed])
+    # Same return-velocity rank as the initial build (best + quickest move).
     qualified = sorted(
         vetoed,
-        key=lambda t: (round(_alpha(t)), _conv_score(t.get("ticker"), cmap),
-                       _alpha(t), _upside(t)),
+        key=lambda t: (_return_velocity(t), _conv_score(t.get("ticker"), cmap),
+                       _alpha(t)),
         reverse=True,
     )
 
@@ -7291,14 +7360,10 @@ def _replenish_portfolio(portfolio: dict) -> dict:
         return portfolio
 
     needed = min(target_size - len(cur_picks), remaining_today)
-    # Enforce the per-theme cap ACROSS THE WHOLE BOOK: seed the counter with
-    # themes already held so a refill can't push any theme past MAX_PER_THEME.
-    # A refill that would breach it is skipped, not downgraded.
-    seed_counts: dict[str, int] = {}
-    for p in cur_picks:
-        theme = _theme_of(p)
-        seed_counts[theme] = seed_counts.get(theme, 0) + 1
-    to_add = _select_with_theme_cap(qualified, needed, seed_counts=seed_counts)
+    # NO sector cap — intentionally removed 2026-06-20 (best/quick return focus).
+    # `qualified` already excludes held + just-closed names (blocked filter above),
+    # so just take the top return-velocity names outright, theme be damned.
+    to_add = qualified[:needed]
 
     added = 0
     for t in to_add:
