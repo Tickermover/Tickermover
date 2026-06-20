@@ -6664,7 +6664,10 @@ def _return_velocity(t: dict) -> float:
     if dte is not None and 0 <= dte <= 14: s += 5
     elif dte is not None and 0 <= dte <= 30: s += 2
     # --- Room for a BIG return (analyst upside — bonus only, never a penalty) ---
-    up = _upside(t)
+    up = n("target_upside_pct")
+    if up is None:
+        tm, px = n("target_mean"), n("price")
+        up = (tm - px) / px * 100 if (tm and px and px > 0) else None
     if up is not None:
         if up >= 30: s += 5
         elif up >= 15: s += 3
