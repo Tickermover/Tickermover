@@ -1377,7 +1377,7 @@ h1,h2,h3,h4,h5{font-family:'Instrument Sans',sans-serif;font-weight:600;letter-s
   <div class="wrap">
     <span class="hero-badge reveal"><span class="live-dot"></span> AI-driven research · US large-caps · 540+ tickers · Live</span>
     <h1 class="reveal">From market noise to <span class="blue-grad-text">one clear number.</span></h1>
-    <p class="hero-sub reveal">540+ <b>S&amp;P 500, Nasdaq-100 &amp; Dow</b> large-caps, scored 0–100 every morning across six research pillars — momentum, quality, growth, valuation, sentiment and risk — with the data and reasoning behind every number. A research lens, not a tip sheet.</p>
+    <p class="hero-sub reveal">For investors who hold US large-caps for <b>weeks, not seconds.</b> 540+ <b>S&amp;P 500, Nasdaq-100 &amp; Dow</b> names scored 0–100 every morning across six research pillars — with the data and reasoning behind every number, and every call we make logged to a public ledger. A research lens, not a tip sheet.</p>
     <div class="hero-ctas reveal">
       <a class="btn btn-primary" href="/login?signup">Start free <span class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span></a>
       <a class="btn btn-ghost" href="#engine">See the engine <span class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span></a>
@@ -1397,6 +1397,51 @@ h1,h2,h3,h4,h5{font-family:'Instrument Sans',sans-serif;font-weight:600;letter-s
 <div style="background:#f1f5f9;color:#475569;font-size:12px;line-height:1.55;text-align:center;padding:9px 16px;border-bottom:1px solid #e2e8f0">
   <strong style="color:#334155">Capital at risk.</strong> Research, not advice. Investments can fall as well as rise — you may get back less than you invest. TickerMover is not FCA-authorised. Past performance isn&rsquo;t a guide to the future.
 </div>
+
+<!-- ───────── LIVE SCORECARD (the ledger = the proof) ───────── -->
+<style>
+.scorecard{background:#fff;border-bottom:1px solid #e2e8f0;padding:clamp(28px,4vw,52px) 20px}
+.sc-wrap{max-width:1080px;margin:0 auto;text-align:center}
+.sc-eyebrow{font-size:12px;font-weight:800;letter-spacing:.12em;color:var(--primary);text-transform:uppercase;margin-bottom:6px}
+.sc-title{font-size:clamp(22px,2.6vw,30px);font-weight:800;color:var(--text-dark);letter-spacing:-.02em;margin-bottom:24px}
+.sc-stats{display:flex;flex-wrap:wrap;justify-content:center;gap:clamp(24px,5vw,64px);margin-bottom:20px}
+.sc-stat{display:flex;flex-direction:column;align-items:center;min-width:120px}
+.sc-stat b{font-family:'Space Grotesk','Instrument Sans',sans-serif;font-size:clamp(34px,5vw,52px);font-weight:700;color:var(--text-dark);line-height:1}
+.sc-stat b.pos{color:var(--up)}
+.sc-stat span{font-size:13px;color:var(--grey);font-weight:600;margin-top:8px;max-width:16ch}
+.sc-note{font-size:13.5px;color:var(--grey-2);max-width:62ch;margin:0 auto 18px;line-height:1.6}
+.sc-cta{display:inline-flex;align-items:center;gap:6px;color:var(--primary);font-weight:700;font-size:15px}
+.sc-cta:hover{gap:9px}
+</style>
+<section class="scorecard" id="scorecard" style="display:none">
+  <div class="sc-wrap">
+    <div class="sc-eyebrow">📋 Our public scorecard · every closed call, timestamped</div>
+    <div class="sc-title">We grade ourselves in the open.</div>
+    <div class="sc-stats" id="sc-stats"></div>
+    <p class="sc-note" id="sc-note"></p>
+    <a class="sc-cta" href="/app">See the full ledger — every entry, exit and result <span aria-hidden="true">→</span></a>
+  </div>
+</section>
+<script>
+(async function(){
+  var box=document.getElementById('scorecard');
+  try{
+    var r=await fetch('/api/model-portfolio/history'); if(!r.ok) return;
+    var s=((await r.json())||{}).stats||{};
+    var n=s.total||0;
+    if(n<5) return;                              // too few closed picks to be meaningful
+    var stat=function(v,l,pos){return '<div class="sc-stat"><b'+(pos?' class="pos"':'')+'>'+v+'</b><span>'+l+'</span></div>';};
+    var html='';
+    if(s.beat_spy_rate!=null) html+=stat(Math.round(s.beat_spy_rate)+'%','of our picks beat the S&P 500',true);
+    html+=stat(Math.round(s.hit_rate||0)+'%','closed in profit');
+    if(s.avg_alpha_spy!=null) html+=stat((s.avg_alpha_spy>=0?'+':'')+(Number(s.avg_alpha_spy)).toFixed(1)+'%','avg return vs the S&P',s.avg_alpha_spy>=0);
+    html+=stat(n,'closed picks · all public');
+    document.getElementById('sc-stats').innerHTML=html;
+    document.getElementById('sc-note').textContent='Honest and early — a small sample, measured against the S&P 500 over each pick’s own holding window. We log every entry, exit and result the moment it happens. No cherry-picking, no hindsight edits.';
+    box.style.display='';
+  }catch(e){}
+})();
+</script>
 
 <!-- ───────── TRUST STRIP (dark band, from dev landing) ───────── -->
 <section class="trust">

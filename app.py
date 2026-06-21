@@ -894,6 +894,7 @@ async def lifespan(app: FastAPI):
         asyncio.create_task(_data_prewarm()),        # keep all stocks' free data (stock-extra) warm
         asyncio.create_task(_bottom_line_prewarm()), # Haiku-polish bottom_lines (cache-first, 15d)
         asyncio.create_task(_selection_prewarm()),   # keep AI conviction/thesis warm for House View
+        asyncio.create_task(_daily_brief_email_task()),  # free daily-brief email (acquisition channel)
     ]
     yield
     for t in tasks:
@@ -3041,7 +3042,152 @@ async def newsletter_subscribe(body: _NewsletterBody):
             f.write(_json.dumps(rec, separators=(",", ":")) + "\n")
     except Exception as e:
         logger.warning("newsletter write failed: %s", e)
-    return {"ok": True, "message": "You're in! First digest hits your inbox Sunday."}
+    return {"ok": True, "message": "You're in! Your first daily brief lands before the next US open."}
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+#  FREE DAILY-BRIEF EMAIL — the acquisition + retention channel
+# ═══════════════════════════════════════════════════════════════════════════
+# Captures emails (newsletter_subscribe above) and emails the day's highest-
+# conviction names before the US open, weekdays. No AI cost — pure live data.
+_NEWSLETTER_UNSUB_FILE = BASE_DIR / "data" / "newsletter_unsub.jsonl"
+_BRIEF_SENT_MARKER     = BASE_DIR / "data" / "brief_email_sent.txt"
+
+
+def _unsub_secret() -> str:
+    return (config.SUPABASE_SERVICE_KEY or config.STRIPE_SECRET_KEY or SITE_ORIGIN or "tm-unsub")[:64]
+
+
+def _unsub_token(email: str) -> str:
+    import hmac as _h, hashlib as _hl
+    return _h.new(_unsub_secret().encode(), (email or "").lower().encode(), _hl.sha256).hexdigest()[:24]
+
+
+def _newsletter_subscribers() -> list[str]:
+    """Unique, non-suppressed subscriber emails (dedup + unsubscribe list)."""
+    import json as _json
+    supp = set()
+    try:
+        if _NEWSLETTER_UNSUB_FILE.exists():
+            for ln in _NEWSLETTER_UNSUB_FILE.read_text(encoding="utf-8").splitlines():
+                try: supp.add((_json.loads(ln).get("email") or "").lower())
+                except Exception: pass
+    except Exception: pass
+    seen, out = set(), []
+    try:
+        if _NEWSLETTER_FILE.exists():
+            for ln in _NEWSLETTER_FILE.read_text(encoding="utf-8").splitlines():
+                try:
+                    e = (_json.loads(ln).get("email") or "").lower().strip()
+                    if e and e not in seen and e not in supp:
+                        seen.add(e); out.append(e)
+                except Exception: pass
+    except Exception: pass
+    return out
+
+
+@app.get("/unsubscribe", response_class=HTMLResponse)
+async def newsletter_unsubscribe(e: str = "", t: str = ""):
+    email = (e or "").strip().lower()
+    ok = bool(email) and _unsub_token(email) == t
+    if ok:
+        try:
+            import json as _json
+            from datetime import datetime as _dt
+            with open(_NEWSLETTER_UNSUB_FILE, "a", encoding="utf-8") as f:
+                f.write(_json.dumps({"email": email, "ts": _dt.utcnow().isoformat() + "Z"}) + "\n")
+        except Exception:
+            pass
+    title = "Unsubscribed" if ok else "Link invalid"
+    msg = ("You're unsubscribed — no more daily briefs. You can re-subscribe any time."
+           if ok else "This unsubscribe link is invalid or expired.")
+    return HTMLResponse(f"""<!doctype html><html><head><meta charset="utf-8"><title>{title}</title></head>
+<body style="font-family:Inter,Arial,sans-serif;background:#eef4ff;margin:0">
+<div style="max-width:440px;margin:80px auto;background:#fff;border:1px solid #d6e3ff;border-radius:14px;padding:32px;text-align:center">
+<div style="font-size:19px;font-weight:800;color:#0a0e22">{title}</div>
+<p style="color:#475569;font-size:15px">{msg}</p>
+<a href="{SITE_ORIGIN}" style="color:#2970ff;font-weight:700">← Back to TickerMover</a></div></body></html>""")
+
+
+def _brief_top_picks(n: int = 5) -> list[dict]:
+    picks = [t for t in (_universe_data or []) if _is_hot_eligible(t)]
+    picks.sort(key=_run_room_rank, reverse=True)
+    return picks[:n]
+
+
+def _render_brief_email(unsub_url: str) -> str:
+    from datetime import datetime as _dt
+    today = _dt.utcnow().strftime("%A, %d %B %Y")
+    rows = ""
+    for t in _brief_top_picks(5):
+        sym = (t.get("ticker") or "").upper()
+        name = (t.get("name") or sym)[:30]
+        sc = t.get("smart_score") if t.get("smart_score") is not None else t.get("pop_score")
+        try: sc = round(float(sc))
+        except (TypeError, ValueError): sc = "—"
+        grade = t.get("grade") or "—"
+        bl = (t.get("bottom_line_ai") or t.get("bottom_line") or "")[:130]
+        rows += (
+            '<tr><td style="padding:13px 14px;border-bottom:1px solid #eef0f3;vertical-align:top">'
+            f'<div style="font-family:monospace;font-weight:800;color:#2970ff;font-size:15px">{sym} '
+            f'<span style="font-weight:600;color:#64748b;font-size:12px">{name}</span></div>'
+            f'<div style="font-size:13px;color:#475569;margin-top:3px;line-height:1.5">{bl}</div></td>'
+            '<td style="padding:13px 14px;border-bottom:1px solid #eef0f3;text-align:right;white-space:nowrap">'
+            f'<div style="font-family:monospace;font-size:21px;font-weight:800;color:#0a0e22">{sc}</div>'
+            f'<div style="font-size:11px;color:#94a3b8">Grade {grade}</div></td></tr>'
+        )
+    return f"""<!DOCTYPE html><html><body style="margin:0;background:#eef4ff;font-family:Inter,Arial,sans-serif">
+<div style="max-width:600px;margin:0 auto;padding:24px">
+  <div style="background:#0a0e22;border-radius:14px 14px 0 0;padding:22px 24px">
+    <div style="font-size:11px;font-weight:800;letter-spacing:.1em;color:#5DB3F1;text-transform:uppercase">TickerMover · Daily Brief</div>
+    <div style="font-size:18px;font-weight:800;color:#fff;margin-top:4px">{today}</div>
+  </div>
+  <div style="background:#fff;padding:20px 24px;border:1px solid #d6e3ff;border-top:none">
+    <p style="font-size:14px;color:#334155;margin:0 0 14px">Today's highest-conviction US large-caps on our model — strong Alpha Scores, the Street raising estimates, momentum building. <b>Research, not advice.</b></p>
+    <table style="border-collapse:collapse;width:100%">{rows or '<tr><td style="padding:14px;color:#64748b">Universe is warming up — open the dashboard for the latest.</td></tr>'}</table>
+    <div style="text-align:center;margin-top:20px">
+      <a href="{SITE_ORIGIN}/app" style="display:inline-block;background:#2970ff;color:#fff;font-weight:800;font-size:14px;padding:12px 28px;border-radius:10px;text-decoration:none">Open the live dashboard →</a>
+    </div>
+  </div>
+  <div style="font-size:11px;color:#94a3b8;text-align:center;padding:16px 24px;line-height:1.7">
+    Research and information only — not investment advice, not FCA-authorised. Capital at risk; past scores aren't a guide to future results.<br>
+    <a href="{unsub_url}" style="color:#94a3b8;text-decoration:underline">Unsubscribe</a> &nbsp;·&nbsp; tickermover.com
+  </div>
+</div></body></html>"""
+
+
+async def _daily_brief_email_task() -> None:
+    """Email the free daily brief to subscribers ~07:30 ET (11:xx UTC) on
+    weekdays — once per day (disk marker survives restarts). Pure live-data, no
+    AI cost. Resend free tier is ~100/day; large lists need a paid plan."""
+    import email_sender
+    await asyncio.sleep(260)
+    while True:
+        try:
+            from datetime import datetime as _dt
+            now = _dt.utcnow()
+            today = now.strftime("%Y-%m-%d")
+            sent_marker = ""
+            try: sent_marker = _BRIEF_SENT_MARKER.read_text(encoding="utf-8").strip()
+            except Exception: pass
+            due = now.weekday() < 5 and now.hour == 11 and sent_marker != today
+            if due and _universe_data:
+                subs = _newsletter_subscribers()
+                sent = 0
+                for em in subs[:300]:                       # safety cap vs the free tier
+                    unsub = f"{SITE_ORIGIN}/unsubscribe?e={em}&t={_unsub_token(em)}"
+                    res = await email_sender.send_newsletter_email(
+                        em, "Your TickerMover daily brief", _render_brief_email(unsub))
+                    if res.get("ok"):
+                        sent += 1
+                    await asyncio.sleep(1.2)                 # gentle pacing for Resend
+                try: _BRIEF_SENT_MARKER.write_text(today, encoding="utf-8")
+                except Exception: pass
+                if subs:
+                    logger.info(f"📧 Daily brief: sent {sent}/{len(subs)} subscribers")
+        except Exception as exc:
+            logger.warning(f"daily-brief email task failed: {exc}")
+        await asyncio.sleep(20 * 60)                         # re-check every 20 min
 
 
 # ── OG image generator (P3) ──────────────────────────────────────────

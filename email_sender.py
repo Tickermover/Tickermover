@@ -93,6 +93,13 @@ async def send_prime_review_email(to_email: str, subject: str, html: str) -> dic
     return await _send(to=to_email, subject=subject, html=html)
 
 
+async def send_newsletter_email(to_email: str, subject: str, html: str) -> dict:
+    """Send the free daily-brief newsletter to a subscriber. Best-effort."""
+    if not to_email or not html:
+        return {"ok": False, "error": "Missing recipient or body"}
+    return await _send(to=to_email, subject=subject, html=html)
+
+
 # ── Internals ─────────────────────────────────────────────────────────────
 
 def _render_welcome_html() -> Optional[str]:
