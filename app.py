@@ -1188,23 +1188,30 @@ def _build_landing_schema() -> str:
             "availableLanguage": ["English"],
         },
     }
-    # FAQPage — eligible for FAQ rich results + heavily cited by AI search. Every
-    # answer matches the on-site messaging and the compliance posture (research,
-    # not advice).
+    # FAQPage — MUST mirror the visible FAQ section on the landing page (Google
+    # only shows FAQ rich results when schema matches on-page content). These are
+    # the exact 7 Q&As rendered in <section id="faq">.
+    def _q(name: str, text: str) -> dict:
+        return {"@type": "Question", "name": name,
+                "acceptedAnswer": {"@type": "Answer", "text": text}}
     faq = {
         "@context": "https://schema.org",
         "@type": "FAQPage",
         "mainEntity": [
-            {"@type": "Question", "name": "What is TickerMover?",
-             "acceptedAnswer": {"@type": "Answer", "text": "TickerMover is a US-stock research and data tool. It scores 540+ US-listed stocks daily across six pillars into a single 0–100 Alpha Score, with plain-English verdicts and an auditable track record. It is research and information only — not investment advice."}},
-            {"@type": "Question", "name": "What is the Alpha Score?",
-             "acceptedAnswer": {"@type": "Answer", "text": "The Alpha Score is a 0–100 composite rating that blends fundamentals, valuation, momentum, growth, sentiment and risk into one plain-English number, refreshed through US market hours."}},
-            {"@type": "Question", "name": "Is TickerMover free?",
-             "acceptedAnswer": {"@type": "Answer", "text": "Yes — TickerMover is free to start, and Pro features are free for everyone during the current beta."}},
-            {"@type": "Question", "name": "Does TickerMover give buy or sell recommendations?",
-             "acceptedAnswer": {"@type": "Answer", "text": "No. TickerMover is a research tool and does not provide investment advice or any personal recommendation to buy or sell. It rates quality and opportunity to support your own research. It is not authorised or regulated by the FCA."}},
-            {"@type": "Question", "name": "Which stocks does TickerMover cover?",
-             "acceptedAnswer": {"@type": "Answer", "text": "540+ US-listed stocks across all major sectors, scored and refreshed daily through US market hours."}},
+            _q("What exactly is the Alpha Score?",
+               "A single 0–100 number fusing six pillars — momentum, growth, quality, valuation, sentiment and risk — refreshed every trading day. Stocks scoring 75+ with four strong pillars qualify for the Hot List."),
+            _q("Is this investment advice?",
+               "No. TickerMover is a research tool. It surfaces and explains signals; every trade decision and its consequences are yours. Always do your own due diligence."),
+            _q("How often is the data refreshed?",
+               "Scores recompute every 5 minutes during market hours across 540+ US large-caps, fusing 14 underlying data signals into one number."),
+            _q("What is the open ledger?",
+               "Every closed pick — its entry, exit reason and result — is timestamped to a public record. No cherry-picking; the whole tape is auditable."),
+            _q("What does it cost?",
+               "Free during beta, no card required. When Pro launches, early hunters lock in 50% off for life."),
+            _q("How is this different from TradingView, Koyfin or Bloomberg?",
+               "Those are charting and data terminals — you bring the thesis. TickerMover is the opposite: it brings the thesis (one number, six pillars, a closed trade ledger), and leaves the charting to your terminal. Use both."),
+            _q("Who should NOT use TickerMover?",
+               "Day traders chasing intraday scalps, options-only strategies, and anyone outside US large-caps. The engine is calibrated for 1–60 day holds on S&P / Nasdaq-100 / Dow names. If you trade futures, crypto, or sub-$1B caps, this isn't built for you yet."),
         ],
     }
     app_schema = {
