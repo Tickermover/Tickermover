@@ -1443,6 +1443,52 @@ h1,h2,h3,h4,h5{font-family:'Instrument Sans',sans-serif;font-weight:600;letter-s
 })();
 </script>
 
+<!-- ───────── FREE DAILY BRIEF — email capture (acquisition) ───────── -->
+<style>
+.capture{background:var(--blue-grad);padding:clamp(32px,5vw,56px) 20px;text-align:center;color:#fff}
+.cap-wrap{max-width:640px;margin:0 auto}
+.cap-eyebrow{font-size:12px;font-weight:800;letter-spacing:.12em;color:#c2e0ff;text-transform:uppercase;margin-bottom:8px}
+.cap-title{font-size:clamp(24px,3.2vw,34px);font-weight:800;letter-spacing:-.02em;margin:0 0 10px;color:#fff}
+.cap-sub{font-size:15px;color:rgba(255,255,255,.85);max-width:52ch;margin:0 auto 22px;line-height:1.6}
+.cap-form{display:flex;gap:10px;max-width:480px;margin:0 auto;flex-wrap:wrap}
+.cap-form input[type=email]{flex:1;min-width:220px;padding:14px 16px;border:none;border-radius:11px;font-size:15px;font-family:inherit;outline:none}
+.cap-form button{padding:14px 24px;border:none;border-radius:11px;background:#0a0e22;color:#fff;font-weight:800;font-size:15px;cursor:pointer;white-space:nowrap}
+.cap-form button:hover{background:#060912}
+.cap-msg{margin-top:12px;font-size:14px;font-weight:600;min-height:20px;color:#fff}
+.cap-fine{margin-top:10px;font-size:12px;color:rgba(255,255,255,.65)}
+</style>
+<section class="capture" id="capture">
+  <div class="cap-wrap">
+    <div class="cap-eyebrow">📬 Free · No card · Unsubscribe anytime</div>
+    <h2 class="cap-title">The daily brief — before the US open.</h2>
+    <p class="cap-sub">Every weekday morning: the day's highest-conviction US large-caps, scored and explained in plain English. Research, not advice.</p>
+    <form class="cap-form" id="cap-form" autocomplete="off">
+      <input type="email" name="email" placeholder="you@email.com" required aria-label="Email address">
+      <input type="text" name="company" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0">
+      <button type="submit">Get the free brief</button>
+    </form>
+    <div class="cap-msg" id="cap-msg"></div>
+  </div>
+</section>
+<script>
+(function(){
+  var f=document.getElementById('cap-form'), m=document.getElementById('cap-msg');
+  if(!f) return;
+  f.addEventListener('submit', async function(ev){
+    ev.preventDefault();
+    var fd=new FormData(f);
+    if(fd.get('company')){ return; }
+    m.style.color='#fff'; m.textContent='Subscribing…';
+    try{
+      var r=await fetch('/api/newsletter/subscribe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:fd.get('email'),source:'landing'})});
+      var j=await r.json().catch(function(){return{};});
+      if(r.ok){ m.style.color='#eaffea'; m.textContent=j.message||"You're in!"; f.reset(); }
+      else { m.style.color='#ffe1e1'; m.textContent=(j&&j.detail)||'Please enter a valid email.'; }
+    }catch(_){ m.style.color='#ffe1e1'; m.textContent='Network error — please try again.'; }
+  });
+})();
+</script>
+
 <!-- ───────── TRUST STRIP (dark band, from dev landing) ───────── -->
 <section class="trust">
   <div class="trust-inner">
