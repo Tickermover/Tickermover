@@ -8754,7 +8754,7 @@ async def api_signup(body: _AuthBody, request: Request):
         raise HTTPException(status_code=400, detail=_pw_err)
     # Land the confirmation link on /auth/callback so the session is captured
     # and first-time onboarding (welcome + risk profile) fires.
-    redirect_to = f"{request.url.scheme}://{request.url.netloc}/auth/callback"
+    redirect_to = f"{SITE_ORIGIN}/auth/callback"
     result = await supabase.sign_up(body.email, body.password, redirect_to)
     if result.get("error"):
         raise HTTPException(status_code=400, detail=result["error"])
@@ -8783,7 +8783,7 @@ async def api_oauth_start(provider: str, request: Request, body: _OAuthBody | No
         raise HTTPException(status_code=400, detail=f"Unsupported provider: {provider}")
     if not supabase.enabled:
         raise HTTPException(status_code=503, detail="Auth not configured")
-    redirect_to = (body.redirect_to if body else None) or f"{request.url.scheme}://{request.url.netloc}/auth/callback"
+    redirect_to = (body.redirect_to if body else None) or f"{SITE_ORIGIN}/auth/callback"
     url = supabase.oauth_authorize_url(provider, redirect_to)
     if not url:
         raise HTTPException(status_code=503, detail="OAuth URL build failed")
@@ -8885,7 +8885,7 @@ async def api_magic_link(body: _MagicLinkBody, request: Request):
     OTP + your configured SMTP (Resend free tier recommended)."""
     if not supabase.enabled:
         raise HTTPException(status_code=503, detail="Auth not configured")
-    redirect_to = body.redirect_to or f"{request.url.scheme}://{request.url.netloc}/auth/callback"
+    redirect_to = body.redirect_to or f"{SITE_ORIGIN}/auth/callback"
     result = await supabase.send_magic_link(body.email, redirect_to)
     if result.get("error"):
         raise HTTPException(status_code=400, detail=result["error"])
@@ -8897,7 +8897,7 @@ async def api_resend_confirmation(body: _MagicLinkBody, request: Request):
     """Resend the sign-up confirmation email to an unconfirmed account."""
     if not supabase.enabled:
         raise HTTPException(status_code=503, detail="Auth not configured")
-    redirect_to = body.redirect_to or f"{request.url.scheme}://{request.url.netloc}/auth/callback"
+    redirect_to = body.redirect_to or f"{SITE_ORIGIN}/auth/callback"
     result = await supabase.resend_confirmation(body.email, redirect_to)
     if result.get("error"):
         raise HTTPException(status_code=400, detail=result["error"])
