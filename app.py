@@ -1173,9 +1173,12 @@ def _build_landing_schema() -> str:
         "@context": "https://schema.org",
         "@type": "Organization",
         "name": "TickerMover",
+        "alternateName": ["TickerMover.com", "Ticker Mover"],
         "url": SITE_ORIGIN,
         "logo": f"{SITE_ORIGIN}/static/icons/icon-512.png",
-        "description": "We do the homework. You make the call. 200+ US stocks scored every 5 minutes with plain-English verdicts.",
+        "image": f"{SITE_ORIGIN}/static/icons/icon-512.png",
+        "slogan": "We do the homework. You make the call.",
+        "description": "TickerMover scores 540+ US-listed stocks daily across six pillars into one plain-English Alpha Score. Research and data only — not investment advice.",
         "email": "support@tickermover.com",
         # contactPoint feeds Google's knowledge panel + AI search citations
         "contactPoint": {
@@ -1184,6 +1187,25 @@ def _build_landing_schema() -> str:
             "email": "support@tickermover.com",
             "availableLanguage": ["English"],
         },
+    }
+    # FAQPage — eligible for FAQ rich results + heavily cited by AI search. Every
+    # answer matches the on-site messaging and the compliance posture (research,
+    # not advice).
+    faq = {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+            {"@type": "Question", "name": "What is TickerMover?",
+             "acceptedAnswer": {"@type": "Answer", "text": "TickerMover is a US-stock research and data tool. It scores 540+ US-listed stocks daily across six pillars into a single 0–100 Alpha Score, with plain-English verdicts and an auditable track record. It is research and information only — not investment advice."}},
+            {"@type": "Question", "name": "What is the Alpha Score?",
+             "acceptedAnswer": {"@type": "Answer", "text": "The Alpha Score is a 0–100 composite rating that blends fundamentals, valuation, momentum, growth, sentiment and risk into one plain-English number, refreshed through US market hours."}},
+            {"@type": "Question", "name": "Is TickerMover free?",
+             "acceptedAnswer": {"@type": "Answer", "text": "Yes — TickerMover is free to start, and Pro features are free for everyone during the current beta."}},
+            {"@type": "Question", "name": "Does TickerMover give buy or sell recommendations?",
+             "acceptedAnswer": {"@type": "Answer", "text": "No. TickerMover is a research tool and does not provide investment advice or any personal recommendation to buy or sell. It rates quality and opportunity to support your own research. It is not authorised or regulated by the FCA."}},
+            {"@type": "Question", "name": "Which stocks does TickerMover cover?",
+             "acceptedAnswer": {"@type": "Answer", "text": "540+ US-listed stocks across all major sectors, scored and refreshed daily through US market hours."}},
+        ],
     }
     app_schema = {
         "@context": "https://schema.org",
@@ -1217,7 +1239,8 @@ def _build_landing_schema() -> str:
     return (
         f'<script type="application/ld+json">{_json.dumps(site_schema, separators=(",",":"))}</script>\n'
         f'<script type="application/ld+json">{_json.dumps(org, separators=(",",":"))}</script>\n'
-        f'<script type="application/ld+json">{_json.dumps(app_schema, separators=(",",":"))}</script>'
+        f'<script type="application/ld+json">{_json.dumps(app_schema, separators=(",",":"))}</script>\n'
+        f'<script type="application/ld+json">{_json.dumps(faq, separators=(",",":"))}</script>'
     )
 
 
