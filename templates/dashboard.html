@@ -12691,7 +12691,7 @@ function _renderHotListLegacy(data) {
     return `
     <div class="card hot-card ${gc} ${conf>=0.80?'conf-hi':conf>=0.70?'conf-med':'conf-lo'}" data-ticker="${t.ticker}" onclick="openStockModal('${t.ticker}')" style="cursor:pointer">
       <div class="hot-head">
-        <div><div class="hot-tic">${t.ticker}</div><div class="hot-name">${t.name || ''}</div></div>
+        <div><div class="hot-tic">${t.ticker}</div><div class="hot-name">${v2EscHTML(t.name || '')}</div></div>
         <div>
           <div class="hot-price">${fmtP(price)}</div>
           <div class="hot-change ${pCls(chg)}">${fmtPct(chg)} · Today</div>
@@ -12758,7 +12758,7 @@ function renderRisk(tickers) {
     <div class="risk-card ${sev}">
       <h4>
         <span><span class="tic">${t.ticker}</span>
-          <span class="muted" style="font-size:11px;margin-left:8px">${t.name || ''}</span></span>
+          <span class="muted" style="font-size:11px;margin-left:8px">${v2EscHTML(t.name || '')}</span></span>
       </h4>
       <div style="display:flex;gap:6px;margin-top:4px;flex-wrap:wrap">
         <span class="rating ${ratingClass(rating)}" style="font-size:10px">${rating}</span>
@@ -14183,7 +14183,7 @@ function openStockModal(ticker) {
         ${(typeof v2LogoHTML === 'function') ? v2LogoHTML(t.ticker, 'lg') : ''}
         <div style="min-width:0;flex:1">
           <div class="fd-tic" style="display:inline-flex;align-items:center;gap:8px">${t.ticker}${(typeof v2StarBtnHTML === 'function') ? v2StarBtnHTML(t.ticker) : ''}</div>
-          <div class="fd-co">${t.name || ''} · ${sub || sector}</div>
+          <div class="fd-co">${v2EscHTML(t.name || '')} · ${v2EscHTML(sub || sector || '')}</div>
           ${(typeof v2UniverseChipsHTML === 'function') ? v2UniverseChipsHTML(t) : ''}
         </div>
       </div>
@@ -14518,7 +14518,7 @@ async function loadModalNews(ticker) {
     }
     body.innerHTML = html;
   } catch (e) {
-    body.innerHTML = `<div style="color:#94a3b8;font-size:11.5px">Couldn't load news (${e.message}).</div>`;
+    body.innerHTML = `<div style="color:#94a3b8;font-size:11.5px">Couldn't load news (${v2EscHTML(e.message)}).</div>`;
   }
 }
 
@@ -14656,7 +14656,7 @@ function renderFundamentals(tickers) {
          data-upside="${upsidePct!=null?upsidePct.toFixed(1):''}"
          onclick="openStockModal('${t.ticker}')">
       <td><span class="fl-pop">${Math.round(pop)}</span></td>
-      <td><span class="fl-stock"><span class="fl-tic">${t.ticker}</span><span class="fl-name">${t.name || ''}</span></span></td>
+      <td><span class="fl-stock"><span class="fl-tic">${t.ticker}</span><span class="fl-name">${v2EscHTML(t.name || '')}</span></span></td>
       <td class="num fd-price" id="fl-price-${t.ticker}" style="font-size:14px;font-weight:700">${fmtP(price)}</td>
       <td class="num ${pCls(chg)}">${fmtPct(chg)}</td>
       <td class="num" style="font-weight:800;color:${_rs>=80?'#16a34a':_rs>=50?'#0f172a':'#94a3b8'}">${_rs>0?_rs:'—'}</td>
@@ -15597,7 +15597,7 @@ async function loadReports() {
     renderReports(tickers);
     _blogLoaded = true;
   } catch(e) {
-    root.innerHTML = `<div class="empty"><div class="emoji">⚠️</div><div>Could not load — ${e.message}</div></div>`;
+    root.innerHTML = `<div class="empty"><div class="emoji">⚠️</div><div>Could not load — ${v2EscHTML(e.message)}</div></div>`;
   }
 }
 
@@ -16272,7 +16272,7 @@ async function loadModelPortfolio() {
     renderModelPortfolio(data);
     _modelLoaded = true;
   } catch(e) {
-    root.innerHTML = `<div class="empty"><div class="emoji">⚠️</div><div>Could not load portfolio — ${e.message}</div>
+    root.innerHTML = `<div class="empty"><div class="emoji">⚠️</div><div>Could not load portfolio — ${v2EscHTML(e.message)}</div>
       <button onclick="loadModelPortfolio()" style="margin-top:12px;padding:8px 18px;background:var(--acc);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">↻ Retry</button></div>`;
   }
 }
@@ -16291,7 +16291,7 @@ async function loadClosedTrades() {
     renderClosedTrades(data);
   } catch(e) {
     root.innerHTML = `${_modelViewToggle('history')}
-      <div class="empty"><div class="emoji">⚠️</div><div>Could not load history — ${e.message}</div></div>`;
+      <div class="empty"><div class="emoji">⚠️</div><div>Could not load history — ${v2EscHTML(e.message)}</div></div>`;
   }
 }
 
@@ -17647,7 +17647,7 @@ async function resetModelPortfolio() {
     if (!r.ok) throw new Error('HTTP ' + r.status);
     await loadModelPortfolio();
   } catch(e) {
-    root.innerHTML = `<div class="empty"><div class="emoji">⚠️</div><div>Reset failed — ${e.message}</div></div>`;
+    root.innerHTML = `<div class="empty"><div class="emoji">⚠️</div><div>Reset failed — ${v2EscHTML(e.message)}</div></div>`;
   }
 }
 
@@ -17709,7 +17709,7 @@ async function loadLiveNews() {
   } catch (e) {
     grid.innerHTML = `<div class="empty">
       <div class="emoji">⚠️</div>
-      <div style="margin-bottom:8px">Could not load news — ${e.message}</div>
+      <div style="margin-bottom:8px">Could not load news — ${v2EscHTML(e.message)}</div>
       <button onclick="loadLiveNews()" style="margin-top:12px;padding:8px 18px;background:var(--acc);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">↻ Try Again</button>
     </div>`;
   } finally {

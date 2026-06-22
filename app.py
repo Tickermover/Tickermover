@@ -170,6 +170,12 @@ def _rate_limit(request: "Request", bucket: str, max_calls: int, window_s: float
         return  # never block legitimate traffic on a limiter bug
 
 
+def _urlquote(s: str) -> str:
+    """Percent-encode a value for safe inclusion in a URL query string."""
+    from urllib.parse import quote
+    return quote(s or "", safe="")
+
+
 def _safe_redirect(redirect_to: str | None) -> str:
     """Open-redirect guard for auth flows. A client-supplied redirect_to lands
     the access/refresh tokens in its URL fragment, so it MUST stay on our own
@@ -1093,25 +1099,32 @@ async def favicon():
 @app.get("/static/icons/{filename}")
 async def static_icon_fallback(filename: str):
     """
-    Fallback for the icon files referenced in manifest.json + og:image meta.
-    The /static/icons/ directory doesn't exist on disk, so without this any
-    crawler / browser request for icon-192.png / icon-512.png gets a 404.
-    We serve the same brand SVG with image/png content-type — works for
-    crawlers (Bing/Google accept SVG for og:image) and avoids the 4xx.
+    Serve brand icons referenced by manifest.json + og:image meta. The real
+    PNGs (icon-192/256/512.png, favicon-32.png, …) DO ship on disk, so serve
+    them directly — earlier this route shadowed them with an off-brand GOLD SVG,
+    so social cards and favicons showed a stale logo and Twitter/FB rejected the
+    SVG-as-PNG. Only fall back to an inline (brand-blue) SVG if the file is
+    genuinely missing, so we still never 404 a crawler.
     """
-    from fastapi.responses import Response
+    from fastapi.responses import FileResponse, Response
+    # Guard against path traversal — only a bare filename, no separators.
+    safe = (filename or "").strip()
+    if safe and "/" not in safe and "\\" not in safe and ".." not in safe:
+        real = _STATIC / "icons" / safe
+        if real.exists() and real.is_file():
+            media = "image/png" if safe.lower().endswith(".png") else "image/svg+xml"
+            return FileResponse(real, media_type=media,
+                                headers={"Cache-Control": "public, max-age=86400"})
     svg = (
         '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">'
         '<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">'
-        '<stop offset="0" stop-color="#D4860A"/>'
-        '<stop offset="0.55" stop-color="#F5A623"/>'
-        '<stop offset="1" stop-color="#FFE9B0"/></linearGradient></defs>'
-        '<rect width="512" height="512" rx="112" fill="#0f172a"/>'
+        '<stop offset="0" stop-color="#2970ff"/>'
+        '<stop offset="1" stop-color="#0040c1"/></linearGradient></defs>'
+        '<rect width="512" height="512" rx="112" fill="#0a0e22"/>'
         '<polyline points="72,360 160,232 256,290 352,128 432,210" stroke="url(#g)" '
         'stroke-width="38" fill="none" stroke-linecap="round" stroke-linejoin="round"/>'
-        '<circle cx="352" cy="128" r="42" fill="#FFE9B0"/></svg>'
+        '<circle cx="352" cy="128" r="42" fill="#6aabff"/></svg>'
     )
-    # Crawlers care most about getting 200 + valid image data; SVG is fine
     return Response(content=svg, media_type="image/svg+xml",
                     headers={"Cache-Control": "public, max-age=86400"})
 
@@ -2232,6 +2245,11 @@ async def stock_page(ticker: str):
       - Big CTA to open the live dashboard for that ticker
     """
     sym = ticker.upper().strip()
+    # SECURITY (reflected XSS): `sym` is interpolated raw into <title>, meta, and
+    # OG tags below. A real US ticker is only A-Z/0-9/./-, ≤8 chars — reject
+    # anything else (incl. markup payloads) with a hard 404 before rendering.
+    if not sym or len(sym) > 8 or not all(c.isalnum() or c in ".-" for c in sym):
+        raise HTTPException(status_code=404, detail="Not found")
     # Look up the ticker in the universe; reject if unknown
     t = next((x for x in (_universe_data or []) if (x.get("ticker") or "").upper() == sym), None)
     if not t:
@@ -3287,7 +3305,10 @@ async def _daily_brief_email_task() -> None:
                 subs = _newsletter_subscribers()
                 sent = 0
                 for em in subs[:300]:                       # safety cap vs the free tier
-                    unsub = f"{SITE_ORIGIN}/unsubscribe?e={em}&t={_unsub_token(em)}"
+                    # URL-encode the email: a `+`-tagged address (a+tag@x.com)
+                    # would otherwise decode `+` as space on the /unsubscribe side
+                    # and the token check would fail (unsubscribe silently broken).
+                    unsub = f"{SITE_ORIGIN}/unsubscribe?e={_urlquote(em)}&t={_unsub_token(em)}"
                     res = await email_sender.send_newsletter_email(
                         em, "Your TickerMover daily brief", _render_brief_email(unsub))
                     if res.get("ok"):
@@ -4966,13 +4987,18 @@ _why_inflight: dict = {}   # sym -> asyncio.Task[dict]
 
 
 @app.get("/api/model-portfolio/why/{ticker}")
-async def api_why_today(ticker: str, force: bool = False):
+async def api_why_today(ticker: str, force: bool = False,
+                        user: Optional[dict] = Depends(_current_user)):
     """Return {ticker, why, status}. Observational (what the scan flagged),
     not advice. Served from a durable per-ticker cache; only (re)generated when
     missing, so it costs nothing after the first view."""
     import asyncio
     import why_today as _why
     sym = ticker.upper()
+    # `force` triggers a fresh (paid, Opus + web-search) regen. Honor it only for
+    # admins — otherwise an anonymous caller could loop force=true across tickers
+    # to burn the AI budget until the breaker trips.
+    force = bool(force) and bool(user) and (user.get("email") or "").lower() in _AI_ALLOW
 
     # Fast path: durable cache hit (no key needed to serve an existing note).
     if not force:
@@ -6500,7 +6526,11 @@ async def api_status():
 
 
 @app.post("/api/refresh")
-async def api_refresh():
+async def api_refresh(user: Optional[dict] = Depends(_current_user)):
+    """Trigger a full universe refresh. Admin-only — a public trigger lets anyone
+    spawn heavy upstream fan-outs on demand (DoS / cost amplification)."""
+    if not user or (user.get("email") or "").lower() not in _AI_ALLOW:
+        raise HTTPException(status_code=403, detail="Admin only.")
     asyncio.create_task(_full_refresh())
     return JSONResponse({"status": "refresh_started"})
 

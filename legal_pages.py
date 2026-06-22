@@ -119,6 +119,7 @@ li{{margin-bottom:6px}}
 strong{{font-weight:700;color:var(--text-dark)}}
 .callout{{background:#eff6ff;border-left:4px solid var(--primary);padding:14px 18px;border-radius:8px;margin:16px 0;font-size:14.5px}}
 .callout-amber{{background:#fffbeb;border-left-color:#f59e0b}}
+.callout-green{{background:#ecfdf5;border-left-color:#15803d}}
 a.body-link{{color:var(--primary);font-weight:600}}
 a.body-link:hover{{text-decoration:underline}}
 table{{width:100%;border-collapse:collapse;margin:12px 0;font-size:14px}}
