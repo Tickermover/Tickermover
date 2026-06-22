@@ -981,6 +981,23 @@ _BRAND_ALTNAMES = [
     "Tickermove", "Tickermovers", "Ticket Mover", "Tickermover stocks",
 ]
 
+# Free search-engine verification (Google Search Console + Bing Webmaster Tools).
+# Both are free and are the gateway to sitemap submission, index coverage, and the
+# brand "did you mean" handling that captures misspelling traffic. Set the token
+# from each tool's HTML-tag verification method as an env var — no code change.
+GOOGLE_SITE_VERIFICATION = _os.environ.get("GOOGLE_SITE_VERIFICATION", "").strip()
+BING_SITE_VERIFICATION = _os.environ.get("BING_SITE_VERIFICATION", "").strip()
+
+
+def _verification_meta() -> str:
+    """HTML <meta> verification tags, emitted only when the token env var is set."""
+    out = []
+    if GOOGLE_SITE_VERIFICATION:
+        out.append(f'<meta name="google-site-verification" content="{GOOGLE_SITE_VERIFICATION}">')
+    if BING_SITE_VERIFICATION:
+        out.append(f'<meta name="msvalidate.01" content="{BING_SITE_VERIFICATION}">')
+    return "\n".join(out)
+
 
 @app.get("/favicon.ico")
 async def favicon():
@@ -1190,7 +1207,9 @@ async def landing():
             "}}catch(e){}})();</script>"
         )
         if "</head>" in html:
-            html = html.replace("</head>", recovery_forward + "\n" + schema + "\n</head>", 1)
+            verify = _verification_meta()
+            inject = recovery_forward + "\n" + (verify + "\n" if verify else "") + schema + "\n</head>"
+            html = html.replace("</head>", inject, 1)
         return HTMLResponse(
             content=html,
             headers={"Cache-Control": "public, max-age=30, s-maxage=60"},
