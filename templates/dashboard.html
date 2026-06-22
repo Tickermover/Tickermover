@@ -6937,6 +6937,28 @@ document.addEventListener('DOMContentLoaded', function(){
     }
   });
 });
+
+/* a11y: focus trap for open modals. Keyboard users could Tab out of an open
+   dialog and into the page behind the scrim. This keeps Tab/Shift+Tab cycling
+   WITHIN the top-most visible [aria-modal="true"] element. Purely additive — it
+   only acts on Tab while such a modal is visible, so it can't affect any other
+   flow. (Auto-focus-on-open + focus restore is intentionally left out until it
+   can be verified live, to avoid disrupting existing modal behaviour.) */
+document.addEventListener('keydown', function(e){
+  if (e.key !== 'Tab') return;
+  var modals = document.querySelectorAll('[aria-modal="true"]');
+  var modal = null;
+  for (var i = modals.length - 1; i >= 0; i--){      // top-most visible one
+    if (modals[i].offsetParent !== null){ modal = modals[i]; break; }
+  }
+  if (!modal) return;
+  var sel = 'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
+  var f = Array.prototype.filter.call(modal.querySelectorAll(sel), function(el){ return el.offsetParent !== null; });
+  if (!f.length) return;
+  var first = f[0], last = f[f.length - 1];
+  if (e.shiftKey && document.activeElement === first){ e.preventDefault(); last.focus(); }
+  else if (!e.shiftKey && document.activeElement === last){ e.preventDefault(); first.focus(); }
+}, true);
 </script>
 
 <div class="v2-drawer-backdrop" onclick="document.body.classList.remove('v2-drawer-open')"></div>
