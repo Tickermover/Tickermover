@@ -48,6 +48,7 @@ def sector_slugs(universe: list[dict]) -> dict[str, str]:
 
 _BASE_CSS = """
 *{margin:0;padding:0;box-sizing:border-box}
+button,input,select,textarea{font-family:inherit;font-size:inherit;line-height:inherit}
 html{scroll-behavior:smooth}
 body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;color:#0a0a0a;background:#fafbfc;line-height:1.65;font-size:16px;-webkit-font-smoothing:antialiased}
 a{color:#2970ff;text-decoration:none;font-weight:600}
