@@ -4712,7 +4712,8 @@ async def api_concall(ticker: str, q: str = ""):
     import stock_rag
     tk = (ticker or "").upper()
     quarter = (q or "").upper().strip() or None
-    res = await stock_rag.concall_summary(tk, _ticker_metrics_block(tk), quarter=quarter)
+    res = await stock_rag.concall_summary(tk, _ticker_metrics_block(tk), quarter=quarter,
+                                          allow_generate=not _ai_over_budget())
     return JSONResponse(_clean(res), headers={"Cache-Control": "public, max-age=3600"})
 
 
@@ -4764,7 +4765,9 @@ async def api_thesis(symbol: str):
         return JSONResponse(cached)
 
     try:
-        thesis = _clean(await thesis_gen.build(target))
+        # Respect the AI cost breaker (daily + monthly): when tripped, serve the
+        # deterministic rule-based thesis instead of paying for the LLM upgrade.
+        thesis = _clean(await thesis_gen.build(target, allow_llm=not _ai_over_budget()))
         cache.set(cache_key, thesis, ttl=1800)
         return JSONResponse(thesis)
     except Exception as exc:

@@ -295,7 +295,8 @@ def _parse_json_block(text: str) -> dict | None:
 _CONCALL_CACHE: dict = {}   # (ticker, quarter) -> result, avoids repeat Claude calls
 
 
-async def concall_summary(ticker: str, profile_data: str = "", quarter: str | None = None) -> dict:
+async def concall_summary(ticker: str, profile_data: str = "", quarter: str | None = None,
+                          allow_generate: bool = True) -> dict:
     """Deep, narrative earnings-call summary as STRUCTURED sections — the same
     shape /api/event-intel returns, so the premium briefing UI renders both.
     Returns {available, event_title, event_date, sections[], raw_excerpt,
@@ -318,6 +319,11 @@ async def concall_summary(ticker: str, profile_data: str = "", quarter: str | No
             return durable
     except Exception:
         pass
+    # Cost breaker: when over budget the caller passes allow_generate=False, so a
+    # cache miss returns a "paused" notice instead of paying for a fresh summary.
+    if not allow_generate:
+        return {"available": False, "reason": "paused",
+                "note": "AI summaries are paused for now — please check back later."}
     if not ANTHROPIC_KEY:
         return {"available": False, "reason": "disabled",
                 "note": "The AI summary isn't enabled yet (set ANTHROPIC_API_KEY)."}

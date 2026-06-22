@@ -1020,7 +1020,7 @@ class ThesisGenerator:
     Output schema:
         {
             "ticker":            str,
-            "recommendation":    "Strong Buy" | "Buy" | "Hold" | "Reduce" | "Avoid",
+            "recommendation":    "Strong Outperform" | "Outperform" | "Neutral" | "Lagging" | "Avoid",
             "conviction":        "High" | "Medium" | "Low",
             "headline":          short one-liner,
             "explanation":       2-3 sentences in plain English,
@@ -1037,9 +1037,11 @@ class ThesisGenerator:
         self.history = history
 
     # ── Public entry point ───────────────────────────────────────────
-    async def build(self, ticker_data: dict) -> dict:
+    async def build(self, ticker_data: dict, allow_llm: bool = True) -> dict:
+        # allow_llm=False (e.g. the AI cost breaker is tripped) serves the
+        # deterministic rule-based thesis with no paid model call.
         rule_based = self._build_rule_based(ticker_data)
-        if not _ANTHROPIC_KEY or not _HTTPX_AVAILABLE:
+        if not allow_llm or not _ANTHROPIC_KEY or not _HTTPX_AVAILABLE:
             return rule_based
         try:
             upgraded = await self._llm_upgrade(rule_based, ticker_data)
@@ -1114,8 +1116,8 @@ class ThesisGenerator:
         Always returns at most 3 lines.
         """
         out: list[str] = []
-        rec_pos = rec in ("Strong Buy", "Buy")
-        rec_neg = rec in ("Reduce", "Avoid")
+        rec_pos = rec in ("Strong Outperform", "Outperform")
+        rec_neg = rec in ("Lagging", "Avoid")
 
         # 1. Top pick from bull or bear, depending on recommendation direction
         if rec_pos and bull:
@@ -1216,23 +1218,28 @@ class ThesisGenerator:
         return _dedupe(out)[:4]
 
     def _recommendation(self, grade: str, pop: float, regime: dict, vel: Optional[float]) -> str:
+        # COMPLIANCE (B6): these are TickerMover's OWN quality ratings, so they use
+        # the house research scale (Strong Outperform / Outperform / Neutral /
+        # Lagging / Avoid) — NEVER buy/sell/hold language. Buy/Sell wording is
+        # reserved for attributed third-party analyst ratings only. Matches the
+        # grade legend shown in the UI. Not an FCA-authorised personal recommendation.
         rl = regime.get("regime_label", "Mixed")
         # Base tier from grade
         base = {
-            "A": "Strong Buy",
-            "B": "Buy",
-            "C": "Hold",
-            "D": "Reduce",
+            "A": "Strong Outperform",
+            "B": "Outperform",
+            "C": "Neutral",
+            "D": "Lagging",
             "F": "Avoid",
-        }.get(grade, "Hold")
+        }.get(grade, "Neutral")
 
         # Regime + velocity nudges
-        if rl == "Bearish" and base == "Strong Buy":
-            return "Buy"            # downgrade one notch in tough macro
-        if rl == "Bullish" and base == "Buy" and (vel or 0) >= 2:
-            return "Strong Buy"     # upgrade if score is also climbing
-        if rl == "Bearish" and (vel or 0) <= -3 and base in ("Buy", "Hold"):
-            return "Reduce"
+        if rl == "Bearish" and base == "Strong Outperform":
+            return "Outperform"        # temper one notch in tough macro
+        if rl == "Bullish" and base == "Outperform" and (vel or 0) >= 2:
+            return "Strong Outperform" # firmer if score is also climbing
+        if rl == "Bearish" and (vel or 0) <= -3 and base in ("Outperform", "Neutral"):
+            return "Lagging"
         return base
 
     def _headline(self, t: dict, rec: str, regime: dict) -> str:
@@ -1271,7 +1278,7 @@ class ThesisGenerator:
             arrow = "rising" if vel > 0.5 else "falling" if vel < -0.5 else "steady"
             sentence_b = (
                 f"The score is {arrow} ({vel:+.1f} pts in the last 24 h), which "
-                f"{'reinforces' if (vel > 0 and rec in ('Strong Buy','Buy')) or (vel < 0 and rec in ('Reduce','Avoid')) else 'modestly conflicts with'} "
+                f"{'reinforces' if (vel > 0 and rec in ('Strong Outperform','Outperform')) or (vel < 0 and rec in ('Lagging','Avoid')) else 'modestly conflicts with'} "
                 f"the {rec} rating."
             )
         else:
@@ -1281,13 +1288,13 @@ class ThesisGenerator:
         return " ".join([sentence_a, sentence_b, sentence_c]).strip()
 
     def _closer(self, t: dict, rec: str) -> str:
-        if rec in ("Strong Buy", "Buy"):
-            return ("Position sizing should respect the suggested ATR-based stop — "
-                    "the model finds the setup; risk control protects the account.")
-        if rec == "Hold":
-            return "Wait for either a fundamental catalyst or a clear technical setup before adding."
-        return ("Capital is better deployed elsewhere until the score profile improves — "
-                "the model is flagging more risk than reward here.")
+        if rec in ("Strong Outperform", "Outperform"):
+            return ("Any position should respect an ATR-based risk level — the model "
+                    "highlights the setup; risk control is the reader's own decision.")
+        if rec == "Neutral":
+            return "The profile is balanced — no clear quality edge either way at the moment."
+        return ("The score profile flags more risk than reward here until the "
+                "fundamentals or momentum improve.")
 
     def _trade_plan(self, t: dict) -> dict:
         price = float(t.get("price") or 0)
@@ -1445,25 +1452,28 @@ class ThesisGenerator:
         facts_block = "\n".join("- " + x for x in facts if x)
 
         return (
-            "You are a senior equity research analyst. Build a deep, decision-useful "
-            "investment case for THIS stock for an investor deciding whether to buy it "
-            "right now.\n\n"
+            "You are a senior equity research analyst writing an objective research "
+            "note on THIS stock. This is educational research, NOT a personal "
+            "recommendation. Assess how the investment case stands on the evidence — "
+            "do NOT tell the reader to buy, sell, or hold, and never use those words.\n\n"
             "Ground truth — use ONLY these figures; do NOT invent any numbers:\n"
             f"{facts_block}\n"
-            f"- Model recommendation: {rule_based['recommendation']} "
+            f"- House quality rating: {rule_based['recommendation']} "
             f"({rule_based['conviction']} conviction)\n"
             f"- Bull seeds: {' | '.join(rule_based['bull_case'])}\n"
             f"- Bear seeds: {' | '.join(rule_based['bear_case'])}\n\n"
             "Produce:\n"
-            "1) explanation — 3 tight sentences: the thesis, the verdict, and what to do now.\n"
-            "2) bull_case — 4 to 6 bullets making the case FOR buying now (the tailwinds). "
+            "1) explanation — 3 tight sentences: the thesis, the evidence balance, and "
+            "what would change it. Observational, not directive.\n"
+            "2) bull_case — 4 to 6 bullets on the tailwinds / what is working. "
             "Each bullet ties a fact to an investment implication; AT LEAST ONE bullet must "
             "address the macro / economic backdrop (rates, growth cycle, market regime, or "
             "sector cycle).\n"
-            "3) bear_case — 4 to 6 bullets making the case AGAINST / what could go wrong "
-            "(the headwinds); AT LEAST ONE bullet must address a macro / economic risk.\n\n"
+            "3) bear_case — 4 to 6 bullets on the headwinds / what could go wrong; "
+            "AT LEAST ONE bullet must address a macro / economic risk.\n\n"
             "Rules: one sentence per bullet, plain English, no markdown or bullet characters, "
-            "no fabricated numbers, max ~24 words each, framed around 'why act now vs wait'.\n\n"
+            "no fabricated numbers, max ~24 words each. Describe the setup; never instruct "
+            "the reader to act, and never write buy/sell/hold or a price target.\n\n"
             'Return ONLY a JSON object of this exact shape:\n'
             '{"explanation": "...", "bull_case": ["...", "..."], "bear_case": ["...", "..."]}'
         )
