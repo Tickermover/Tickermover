@@ -122,10 +122,13 @@ Confirmed correct from prior work: bottom-line AI disabled by default ✅, convi
 - **M1** conviction-map async on the request path · **M2** NaN/inf scoring screen · **M3** JWT alg-confusion + non-user-token rejection · **M4** change-password requires + re-verifies current password (UI field added) · **M5** `_dead_endpoints` TTL self-heal · **M6** dead `%s` strftime removed.
 - **Automated test suite** — 24 unit tests, zero-dependency runner (`python tests/run_all.py`).
 
-### ⏳ Still deferred — blocked on you, or a dedicated UX pass
+### ✅ Fixed & shipped — wave 3 (2026-06-22)
+- **H4 Canonical → apex** — `SITE_ORIGIN` defaults to `https://tickermover.com`; all hardcoded www stragglers (emails, APP_ORIGIN, footer) aligned; redirect allowlist still accepts both. **INFRA TODO (you):** apex must serve all routes or www→apex 301, else set `SITE_ORIGIN=https://www.tickermover.com` interim.
+- **UX/a11y pass** — global `:focus-visible` rings (dashboard + landing), 44px nav tap targets, keyboard-operable sidebar, `/sectors` grade colours aligned to the app, stale brand comment removed.
+
+### ⏳ Still deferred
 - **Legal `/terms` India→UK** (HIGH) — UK solicitor rewrite (blocked on you).
-- **Canonical apex-vs-www** (HIGH) — product decision: which host is canonical (apex must be live first).
-- **Dashboard palette unification + full a11y** (MEDIUM/UX) — 2,328 inline hex, tap targets, focus traps; needs a dedicated UX pass + live-browser verification.
+- **Full palette unification + modal focus-trap** (UX) — ~2,300 inline hex, amber-shell vs blue-detail; needs a dedicated session with live-browser verification.
 - **Conviction map sync background callers** (LOW) — only the request path was made async; background portfolio build still uses the sync path (acceptable, memoised).
 
 _Generated from a 7-agent parallel audit, 2026-06-22. Remediation waves 1–4 shipped same day._
