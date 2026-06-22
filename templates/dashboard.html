@@ -1874,10 +1874,19 @@ body.sb-collapsed .v2-sb-collapse svg{transform:rotate(180deg)}
 .v2-nav-item{
   display:flex;align-items:center;gap:10px;white-space:nowrap;
   padding:9px 10px;border-radius:10px;
+  min-height:44px;box-sizing:border-box;            /* a11y: 44px touch target */
   font-size:13.5px;font-weight:600;color:#94a3b8;
   cursor:pointer;user-select:none;position:relative;
   transition:background .15s,color .15s;margin-bottom:2px;
   text-decoration:none;
+}
+/* ── Accessibility: visible keyboard focus (mouse users unaffected) ──────────
+   Many interactive controls only defined :hover, so keyboard users got no focus
+   indicator. This adds one ring everywhere, without touching the visual design. */
+a:focus-visible,button:focus-visible,[role="button"]:focus-visible,
+.v2-nav-item:focus-visible,input:focus-visible,select:focus-visible,
+textarea:focus-visible,[tabindex]:focus-visible{
+  outline:2px solid #2970ff;outline-offset:2px;border-radius:8px;
 }
 .v2-nav-item > span:not(.v2-nav-tag){flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis}
 .v2-nav-item:hover{background:rgba(255,255,255,.04);color:#e2e8f0}
@@ -6910,11 +6919,22 @@ function toggleSidebar(){
   try { localStorage.setItem('ah_sb_collapsed', c ? '1' : '0'); } catch(e){}
 }
 // Give each nav item a tooltip = its label, so the collapsed icon-only rail is still legible.
+// a11y: the nav items are <div onclick> — make them keyboard-operable (focusable +
+// Enter/Space activates) so the focus ring is reachable and the sidebar is usable
+// without a mouse. <a> nav items are already focusable, so skip those.
 document.addEventListener('DOMContentLoaded', function(){
   document.querySelectorAll('.v2-sidebar .v2-nav-item').forEach(function(it){
-    if (it.title) return;
-    var s = it.querySelector('span:not(.v2-nav-tag)');
-    if (s) it.title = s.textContent.trim();
+    if (!it.title){
+      var s = it.querySelector('span:not(.v2-nav-tag)');
+      if (s) it.title = s.textContent.trim();
+    }
+    if (it.tagName !== 'A'){
+      if (!it.hasAttribute('tabindex')) it.setAttribute('tabindex','0');
+      if (!it.hasAttribute('role')) it.setAttribute('role','button');
+      it.addEventListener('keydown', function(e){
+        if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); it.click(); }
+      });
+    }
   });
 });
 </script>

@@ -108,7 +108,7 @@ code{background:#f1f5f9;padding:2px 6px;border-radius:4px;font-family:'JetBrains
 .tbl .tk{font-family:'JetBrains Mono',monospace;font-weight:800;color:#2970ff}
 .tbl .pop{font-family:'JetBrains Mono',monospace;font-weight:800}
 .tbl .grade{display:inline-block;width:24px;text-align:center;padding:3px 0;border-radius:5px;font-weight:800;font-size:12.5px;color:#fff}
-.tbl .grade.A{background:#15803d}.tbl .grade.B{background:#D4860A}.tbl .grade.C{background:#D4860A}.tbl .grade.D{background:#dc2626}.tbl .grade.F{background:#991b1b}
+.tbl .grade.A{background:#15803d}.tbl .grade.B{background:#2970ff}.tbl .grade.C{background:#D4860A}.tbl .grade.D{background:#ea7317}.tbl .grade.F{background:#dc2626}
 .tbl .vd{color:#475569;font-size:13.5px;line-height:1.5}
 @media(max-width:640px){h1{font-size:32px}.lede{font-size:17px}.tbl{font-size:13px}.tbl td,.tbl th{padding:9px 8px}}
 /* Compare layout */

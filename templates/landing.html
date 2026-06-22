@@ -39,9 +39,8 @@
 
 <style>
 /* ═══════════════════════════════════════════════════════════════════════
-   ALPHAHUNT — built on the AROOTH theme (faithful clone)
-   Design tokens lifted from arooth.webflow.io:
-     title font  Instrument Sans   ·   body font  Poppins
+   TickerMover — landing page design tokens
+     fonts       Fraunces (display) · Instrument Sans (body) · Space Grotesk
      primary     #0040c1           ·   blue grad   #2970ff→#0042c5→#00359e
      alice-blue  #eff4ff (page bg) ·   azureish    #d1e0ff   diamond #c2e0ff
      text-dark   #090909           ·   eerie       #111827   grey #758696
@@ -110,6 +109,12 @@ h1,h2,h3,h4,h5{font-family:'Instrument Sans',sans-serif;font-weight:600;letter-s
   font-family:'Instrument Sans',sans-serif;font-weight:600;font-size:15px;
   padding:14px 12px 14px 24px;border-radius:var(--r-pill);white-space:nowrap;
   transition:--btn-fill .85s cubic-bezier(.19,1,.22,1),background-color .45s cubic-bezier(.19,1,.22,1),color .45s,box-shadow .55s,border-color .45s;
+}
+/* a11y: visible keyboard focus on CTAs, nav links and form controls (the design
+   previously defined only :hover, leaving keyboard users with no indicator). */
+.btn:focus-visible,a:focus-visible,input:focus-visible,
+button:focus-visible,[tabindex]:focus-visible{
+  outline:3px solid #2970ff;outline-offset:3px;
 }
 .btn .arrow{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;flex:0 0 34px}
 .btn .arrow svg{width:16px;height:16px}
