@@ -97,11 +97,13 @@ def _decode_jwt_via_jwks(token: str, supabase_url: str) -> Optional[dict]:
         if signing_key is None:
             logger.debug(f"No JWKS key matches kid={kid!r} — try refreshing")
             return None
-        # Algorithms list covers all the formats Supabase uses
+        # Asymmetric keys ONLY here — never list HS256 alongside an asymmetric
+        # signing key (classic alg-confusion: a token forged with HS256 using the
+        # public key as the secret would otherwise verify). HS256 has its own path.
         return pyjwt.decode(
             token,
             signing_key,
-            algorithms=["ES256", "RS256", "HS256"],
+            algorithms=["ES256", "RS256"],
             options={"verify_aud": False},
         )
     except Exception as e:
@@ -405,10 +407,19 @@ class SupabaseClient:
         if not payload:
             return None
 
+        # Reject anything that isn't a real end-user token: a verified signature
+        # alone isn't enough — the anon and service_role keys are also signed by
+        # the project. Require a subject and refuse privileged/non-user roles.
+        sub = payload.get("sub")
+        role = payload.get("role")
+        if not sub or role in ("anon", "service_role"):
+            logger.debug(f"Rejecting non-user token (sub={bool(sub)}, role={role!r})")
+            return None
+
         return {
-            "user_id": payload.get("sub"),
+            "user_id": sub,
             "email":   payload.get("email"),
-            "role":    payload.get("role", "authenticated"),
+            "role":    role or "authenticated",
         }
 
     # ── Subscription ──────────────────────────────────────────────────────────

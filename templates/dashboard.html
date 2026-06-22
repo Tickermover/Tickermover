@@ -7030,6 +7030,9 @@ document.addEventListener('DOMContentLoaded', function(){
         <div class="v2-acct-sec">
           <div class="v2-acct-k">Change password</div>
           <div class="v2-acct-row">
+            <input id="v2-acct-pw0" class="v2-acct-input" type="password" placeholder="Current password" autocomplete="current-password">
+          </div>
+          <div class="v2-acct-row" style="margin-top:8px">
             <input id="v2-acct-pw1" class="v2-acct-input" type="password" minlength="8" placeholder="New password (min 8 chars)" autocomplete="new-password">
           </div>
           <div class="v2-acct-row" style="margin-top:8px">
@@ -17051,20 +17054,22 @@ async function acctResendVerify(){
   } catch(e){ _acctNote('v2-acct-mailnote', 'Could not send verification email.', 'err'); }
 }
 async function acctChangePw(){
+  const cur = (document.getElementById('v2-acct-pw0') || {}).value || '';
   const a = (document.getElementById('v2-acct-pw1') || {}).value || '';
   const b = (document.getElementById('v2-acct-pw2') || {}).value || '';
+  if (!cur){ _acctNote('v2-acct-pwnote', 'Enter your current password.', 'err'); return; }
   const _pwErr = (typeof _passwordRuleError === 'function') ? _passwordRuleError(a) : (a.length < 8 ? 'Password must be at least 8 characters.' : '');
   if (_pwErr){ _acctNote('v2-acct-pwnote', _pwErr, 'err'); return; }
   if (a !== b){ _acctNote('v2-acct-pwnote', 'Passwords do not match.', 'err'); return; }
   const btn = document.getElementById('v2-acct-pwsave'); if (btn) btn.disabled = true;
   _acctNote('v2-acct-pwnote', 'Updating…');
   try {
-    const r = await fetch('/api/user/change-password', { method:'POST', headers:_acctAuthHdr(), body:JSON.stringify({new_password:a}) });
+    const r = await fetch('/api/user/change-password', { method:'POST', headers:_acctAuthHdr(), body:JSON.stringify({current_password:cur, new_password:a}) });
     const j = await r.json().catch(() => ({}));
     if (!r.ok) throw (j && j.detail) || 0;
     _acctNote('v2-acct-pwnote', 'Password updated.', 'ok');
-    const p1 = document.getElementById('v2-acct-pw1'), p2 = document.getElementById('v2-acct-pw2');
-    if (p1) p1.value = ''; if (p2) p2.value = '';
+    const p0 = document.getElementById('v2-acct-pw0'), p1 = document.getElementById('v2-acct-pw1'), p2 = document.getElementById('v2-acct-pw2');
+    if (p0) p0.value = ''; if (p1) p1.value = ''; if (p2) p2.value = '';
   } catch(e){ _acctNote('v2-acct-pwnote', (typeof e === 'string' && e) || 'Could not update password.', 'err'); }
   finally { if (btn) btn.disabled = false; }
 }

@@ -3654,7 +3654,7 @@ async def api_universe():
     # it's here" in place of the templated reason. Only the qualified pool is
     # judged, so most rows fall back cleanly to the rule-based signal.
     try:
-        _cmap = _conviction_map([r.get("ticker", "") for r in slim])
+        _cmap = await _conviction_map_async([r.get("ticker", "") for r in slim])
         if _cmap:
             for r in slim:
                 _aj = _cmap.get((r.get("ticker") or "").upper())
@@ -6859,6 +6859,26 @@ def _conviction_map(tickers: list[str]) -> dict[str, dict]:
     return val
 
 
+async def _conviction_map_async(tickers: list[str]) -> dict[str, dict]:
+    """Async sibling of _conviction_map for the request path (M1). Same shared
+    memo, but a memo MISS offloads the sync store read to a thread so it never
+    stalls the event loop. Sync callers (background portfolio build) keep using
+    _conviction_map."""
+    key = tuple(sorted({(t or "").upper() for t in tickers if t}))
+    if not key:
+        return {}
+    now = time.time()
+    if _conv_memo["key"] == key and (now - _conv_memo["at"]) < _CONV_MEMO_TTL:
+        return _conv_memo["val"]
+    try:
+        val = await asyncio.to_thread(_selstore.get_many, list(key))
+    except Exception as e:
+        logger.debug(f"_conviction_map_async error (ignored): {e}")
+        val = {}
+    _conv_memo.update(key=key, at=now, val=val)
+    return val
+
+
 def _conv_score(ticker: str | None, cmap: dict) -> int:
     """AI conviction (0-100) for a ticker, or -1 when not yet scored. -1 sorts a
     not-yet-scored name to the bottom of its Alpha-Score band — scored names
@@ -9792,6 +9812,7 @@ async def api_user_account(user: Optional[dict] = Depends(_current_user),
 
 class _ChangePwBody(BaseModel):
     new_password: str
+    current_password: str = ""
 
 
 @app.post("/api/user/change-password")
@@ -9806,6 +9827,15 @@ async def api_user_change_password(body: _ChangePwBody,
     _pw_err = _password_rule_error(pw)
     if _pw_err:
         raise HTTPException(status_code=400, detail=_pw_err)
+    # M4: re-verify the CURRENT password before changing it, so a stolen/forwarded
+    # access token alone can't take over the account. We confirm by attempting a
+    # fresh sign-in with the user's email + supplied current password.
+    email = (user.get("email") or "").strip()
+    if not body.current_password or not email:
+        raise HTTPException(status_code=400, detail="Enter your current password to change it.")
+    check = await supabase.sign_in(email, body.current_password)
+    if not isinstance(check, dict) or check.get("error") or not check.get("access_token"):
+        raise HTTPException(status_code=400, detail="Current password is incorrect.")
     res = await supabase.update_password(creds.credentials, pw)
     if not isinstance(res, dict) or res.get("error"):
         raise HTTPException(status_code=400, detail=(res or {}).get("error", "Could not update password."))

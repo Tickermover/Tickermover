@@ -297,9 +297,12 @@ class DataCoordinator:
         self._fh_limiter     = RateLimiter(config.FINNHUB_CALLS_PER_MIN)
         self._fmp_limiter    = RateLimiter(config.FMP_CALLS_PER_MIN)
         # Endpoints that returned 402/403/redirect (not on this API plan). We
-        # disable them for the process lifetime so we stop wasting calls + log
-        # noise on them. Keys are namespaced (fh:/fmp:/fmps:) to avoid collisions.
-        self._dead_endpoints: set[str] = set()
+        # disable them TEMPORARILY so we stop wasting calls + log noise. Keys are
+        # namespaced (fh:/fmp:/fmps:). M5: map key -> expiry epoch so a transient
+        # 403/redirect (a brief plan/billing blip or upstream 5xx) self-heals after
+        # _DEAD_TTL_S rather than staying disabled until the next redeploy.
+        self._dead_endpoints: dict[str, float] = {}
+        self._DEAD_TTL_S = 1800.0   # 30 min
         self._av_calls_today = 0
         self._av_reset_day   = date.today()
         self._fmp_calls_today= 0
@@ -361,11 +364,26 @@ class DataCoordinator:
         import av_budget
         return av_budget.remaining()
 
+    def _is_dead(self, key: str) -> bool:
+        """True if `key` is currently disabled. Self-heals: an expired entry is
+        dropped and treated as live again (M5 — no permanent disable)."""
+        exp = self._dead_endpoints.get(key)
+        if exp is None:
+            return False
+        if time.time() >= exp:
+            self._dead_endpoints.pop(key, None)
+            return False
+        return True
+
+    def _mark_dead(self, key: str) -> None:
+        """Disable `key` for _DEAD_TTL_S so a transient failure self-recovers."""
+        self._dead_endpoints[key] = time.time() + self._DEAD_TTL_S
+
     # ── FINNHUB ───────────────────────────────────────────────────────
 
     async def _fh_get(self, path: str, params: dict) -> Optional[dict]:
         dead_key = f"fh:{path}"
-        if dead_key in self._dead_endpoints:
+        if self._is_dead(dead_key):
             return None
         await self._fh_limiter.wait()
         params = {**params, "token": config.FINNHUB_KEY}
@@ -375,10 +393,10 @@ class DataCoordinator:
                 # 30x / 403 → endpoint not on this plan; disable for the process
                 # lifetime so we never call it again (e.g. /stock/candle on free).
                 if r.is_redirect or r.status_code in (301, 302, 303, 307, 308):
-                    self._dead_endpoints.add(dead_key)
+                    self._mark_dead(dead_key)
                     return None
                 if r.status_code == 403:
-                    self._dead_endpoints.add(dead_key)
+                    self._mark_dead(dead_key)
                     logger.info(f"Finnhub {path} not on this plan (403) — disabling for this run")
                     return None
                 # 429 → throttled but the endpoint works; caller falls back to
@@ -611,7 +629,8 @@ class DataCoordinator:
                 yf_news = await asyncio.to_thread(
                     lambda: _yf.Ticker(ticker).news or []
                 )
-                cutoff_ts = int((to_d - timedelta(days=days)).strftime("%s")) if hasattr(to_d, 'strftime') else 0
+                # (M6: removed a dead `cutoff_ts` that used the non-portable %s
+                # strftime token — it was computed but never used to filter.)
                 for n in yf_news[:15]:
                     # yfinance v0.2+ wraps each item under "content"
                     c = n.get("content") if isinstance(n.get("content"), dict) else n
@@ -889,7 +908,7 @@ class DataCoordinator:
         if not config.FMP_API_KEY or self._fmp_remaining() <= 0:
             return None
         dead_key = f"fmp:{path}"
-        if dead_key in self._dead_endpoints:
+        if self._is_dead(dead_key):
             return None
         await self._fmp_limiter.wait()   # Starter = 300/min; throttle per-minute, not per-day
         try:
@@ -898,7 +917,7 @@ class DataCoordinator:
                 r = await c.get(f"https://financialmodelingprep.com/api{path}", params=params)
                 # 402 → endpoint not included in this plan; disable for this run.
                 if r.status_code == 402:
-                    self._dead_endpoints.add(dead_key)
+                    self._mark_dead(dead_key)
                     logger.info(f"FMP {path} not in plan (402) — disabling for this run")
                     return None
                 r.raise_for_status()
@@ -922,7 +941,7 @@ class DataCoordinator:
         if not config.FMP_API_KEY or self._fmp_remaining() <= 0:
             return None
         dead_key = f"fmps:{endpoint}"
-        if dead_key in self._dead_endpoints:
+        if self._is_dead(dead_key):
             return None
         await self._fmp_limiter.wait()   # Starter = 300/min
         try:
@@ -933,7 +952,7 @@ class DataCoordinator:
                 )
                 # 402 → endpoint not in this plan (Starter); disable for this run.
                 if r.status_code == 402:
-                    self._dead_endpoints.add(dead_key)
+                    self._mark_dead(dead_key)
                     logger.info(f"FMP stable {endpoint} not in plan (402) — disabling for this run")
                     return None
                 r.raise_for_status()

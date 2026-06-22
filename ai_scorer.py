@@ -405,6 +405,14 @@ def compute_pop_score(
     regime: Optional[dict] = None,
 ) -> dict[str, Any]:
     t = ticker_data
+    # M2: a NaN/inf numeric field (e.g. a bad upstream quote) makes every pillar
+    # comparison silently False, routing the stock to a WRONG bucket rather than
+    # the neutral fallback. Coerce NaN/inf -> None up front so the pillars' existing
+    # missing-data handling (-> neutral) kicks in instead.
+    import math as _math
+    for _k, _v in list(t.items()):
+        if isinstance(_v, float) and (_math.isnan(_v) or _math.isinf(_v)):
+            t[_k] = None
     component_fns: dict[str, callable] = {
         "growth_tier":            _score_growth_tier,
         "momentum_1m":            _score_momentum_1m,
