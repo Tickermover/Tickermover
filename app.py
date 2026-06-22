@@ -740,7 +740,7 @@ async def _prewarm_one_overview(sym: str) -> bool:
     Returns True if it generated. Premium-tier aware."""
     import research_gen
     from overview_store import store as _ovstore
-    doc = _ovstore.get(sym)
+    doc = await asyncio.to_thread(_ovstore.get, sym)
     if (doc and doc.get("status") == "ready" and doc.get("markdown")
             and _overview_age_s(doc) < _OVERVIEW_PREWARM_AGE):
         return False                       # still fresh — nothing to do
@@ -748,7 +748,7 @@ async def _prewarm_one_overview(sym: str) -> bool:
     try:
         out = await research_gen.generate_overview(sym, target, premium=_is_premium_overview(sym))
         out.setdefault("status", "ready")
-        _ovstore.save(sym, out)
+        await asyncio.to_thread(_ovstore.save, sym, out)
         cache.set("overview:" + sym, out, ttl=2592000)   # 30 days
         return True
     except Exception as exc:
@@ -4811,7 +4811,7 @@ async def _run_research_job(sym: str, target: dict | None):
         return
     try:
         out = await research_gen.generate_research(sym, target)
-        _rstore.save(sym, out)
+        await asyncio.to_thread(_rstore.save, sym, out)
         _research_errors.pop(sym, None)
     except Exception as exc:
         _research_errors[sym] = str(exc)[:600]
@@ -4837,7 +4837,7 @@ async def api_research(ticker: str, force: bool = False,
     if not await _is_pro_user(user, creds):
         return JSONResponse({"ticker": sym, "status": "locked",
                              "detail": "The AI Deep-Dive is a Pro feature. Upgrade to unlock."})
-    doc = _rstore.get(sym)
+    doc = await asyncio.to_thread(_rstore.get, sym)
 
     def _payload(d: dict, **extra) -> dict:
         out = {
@@ -4929,8 +4929,10 @@ async def api_overview(ticker: str, force: bool = False,
         cached = cache.get(ck)
         if cached is not None:
             return JSONResponse(cached)
-        # L2 — durable store (survives redeploys); re-warm L1 on hit
-        doc = _ovstore.get(sym)
+        # L2 — durable store (survives redeploys); re-warm L1 on hit.
+        # to_thread: the store uses a SYNC httpx client, so awaiting it off-loop
+        # keeps a slow Supabase read from stalling every other request.
+        doc = await asyncio.to_thread(_ovstore.get, sym)
         if (doc and doc.get("status") == "ready" and doc.get("markdown")
                 and not _ovstore.is_stale(doc)):
             out = _from_doc(doc)
@@ -4940,7 +4942,7 @@ async def api_overview(ticker: str, force: bool = False,
     # Circuit breaker — if today's AI spend hit the cap, never start a new paid
     # generation. Serve any (even stale) cached doc, else a soft 'paused' note.
     if _ai_over_budget():
-        doc = _ovstore.get(sym)
+        doc = await asyncio.to_thread(_ovstore.get, sym)
         if doc and doc.get("markdown"):
             return JSONResponse(_from_doc(doc))
         return JSONResponse({"status": "unavailable", "markdown": "", "kind": "overview",
@@ -4957,7 +4959,7 @@ async def api_overview(ticker: str, force: bool = False,
             # and the long tail stay on Sonnet. Bounded, cached, tunable.
             out = await research_gen.generate_overview(sym, target, premium=_is_premium_overview(sym))
             out.setdefault("status", "ready")
-            _ovstore.save(sym, out)          # durable (Supabase + disk)
+            await asyncio.to_thread(_ovstore.save, sym, out)   # durable (Supabase + disk), off-loop
             cache.set(ck, out, ttl=2592000)   # warm L1 (30 days, mirrors durable TTL)
             return out
         task = asyncio.ensure_future(_gen())
@@ -4969,7 +4971,7 @@ async def api_overview(ticker: str, force: bool = False,
     except Exception as exc:
         logger.error(f"Overview generation failed for {sym}: {exc}")
         # Serve a stale snapshot rather than nothing if we have one.
-        doc = _ovstore.get(sym)
+        doc = await asyncio.to_thread(_ovstore.get, sym)
         if doc and doc.get("markdown"):
             return JSONResponse(_from_doc(doc))
         return JSONResponse({"ticker": sym, "status": "error", "detail": str(exc)[:200]})
@@ -5002,7 +5004,7 @@ async def api_why_today(ticker: str, force: bool = False,
 
     # Fast path: durable cache hit (no key needed to serve an existing note).
     if not force:
-        cached = _why._kv.get(_why._NS, sym)
+        cached = await asyncio.to_thread(_why._kv.get, _why._NS, sym)
         if cached and cached.get("points"):
             return JSONResponse({"ticker": sym, "points": cached["points"], "status": "ready"})
 
@@ -5097,7 +5099,7 @@ async def api_sector_graph(request: Request, force: bool = False):
         if cached is not None:
             return JSONResponse(cached)
         # L2 — durable KV (survives redeploys); re-warm L1 on hit
-        doc = _kv.get("sector_graph", key, max_age_s=45 * 86400)
+        doc = await asyncio.to_thread(_kv.get, "sector_graph", key, 45 * 86400)
         if isinstance(doc, dict) and doc.get("edges") is not None:
             cache.set(ck, doc, ttl=2592000)   # 30 days
             return JSONResponse(doc)
@@ -5111,7 +5113,7 @@ async def api_sector_graph(request: Request, force: bool = False):
             # Only the AI result is worth persisting; the pure-seed fallback is
             # cheap to recompute and shouldn't poison the durable cache.
             if out.get("model") not in (None, "", "seed"):
-                _kv.set("sector_graph", key, out)
+                await asyncio.to_thread(_kv.set, "sector_graph", key, out)
             cache.set(ck, out, ttl=2592000)   # 30 days
             return out
         task = asyncio.ensure_future(_gen())
@@ -5155,7 +5157,7 @@ async def api_dependencies(ticker: str, force: bool = False,
         cached = cache.get(ck)
         if cached is not None:
             return JSONResponse(cached)
-        doc = _kv.get("dependencies", sym, max_age_s=30 * 86400)
+        doc = await asyncio.to_thread(_kv.get, "dependencies", sym, 30 * 86400)
         if isinstance(doc, dict) and (doc.get("dependencies") or doc.get("exposure")):
             cache.set(ck, doc, ttl=30 * 86400)
             return JSONResponse(doc)
@@ -5166,7 +5168,7 @@ async def api_dependencies(ticker: str, force: bool = False,
             target = next((t for t in _universe_data if t.get("ticker") == sym), None)
             out = await dependencies_gen.generate_dependencies(sym, target)
             out.setdefault("status", "ready")
-            _kv.set("dependencies", sym, out)
+            await asyncio.to_thread(_kv.set, "dependencies", sym, out)
             cache.set(ck, out, ttl=30 * 86400)
             return out
         task = asyncio.ensure_future(_gen())
@@ -5194,7 +5196,7 @@ async def _run_compare_job(sym: str, target: dict | None):
         return
     try:
         out = await compare_gen.generate_compare_card(sym, target)
-        _cstore.save(sym, out)
+        await asyncio.to_thread(_cstore.save, sym, out)
     except Exception as exc:
         logger.error(f"Comparison card generation failed for {sym}: {exc}")
     finally:
@@ -5217,7 +5219,7 @@ async def api_compare_card(ticker: str, force: bool = False,
     if not await _is_pro_user(user, creds):
         return JSONResponse({"ticker": sym, "status": "locked",
                              "detail": "AI peer-compare is a Pro feature. Upgrade to unlock."})
-    doc = _cstore.get(sym)
+    doc = await asyncio.to_thread(_cstore.get, sym)
 
     def _payload(d: dict, **extra) -> dict:
         out = {
@@ -6910,7 +6912,7 @@ async def _refresh_selection_judgments(force: bool = False) -> None:
         logger.info(f"🧠 AI selection-judge: scoring {len(pool)} qualified candidates…")
         judgments = await ai_selector.score_candidates(pool)
         if judgments:
-            _selstore.save_many(judgments)
+            await asyncio.to_thread(_selstore.save_many, judgments)
             _conv_memo["key"] = None   # invalidate memo so fresh scores show now
             logger.info(f"🧠 AI selection-judge: cached {len(judgments)} conviction scores")
     except Exception as e:
@@ -9958,7 +9960,7 @@ async def api_feedback(body: _FeedbackBody, request: Request,
         "ts":      int(_t.time()),
     }
     try:
-        _kv.set("feedback", f"{uid or 'anon'}:{int(_t.time() * 1000)}", row)
+        await asyncio.to_thread(_kv.set, "feedback", f"{uid or 'anon'}:{int(_t.time() * 1000)}", row)
     except Exception as e:
         logger.error(f"feedback save failed: {e}")
     return JSONResponse({"ok": True})
@@ -10171,7 +10173,8 @@ async def _set_user_pro(user_id: str, *, active: bool, customer_id: str = "",
     if customer_id:
         try:
             from kv_store import store as _kv
-            _kv.set("stripe_customer", user_id, {"customer_id": customer_id, "subscription_id": subscription_id})
+            await asyncio.to_thread(_kv.set, "stripe_customer", user_id,
+                                    {"customer_id": customer_id, "subscription_id": subscription_id})
         except Exception:
             pass
     logger.info(f"💳 Stripe → user {user_id[:8]}… plan={'pro' if active else 'free'} ok={ok}")
@@ -10213,7 +10216,7 @@ async def api_billing_portal(user: Optional[dict] = Depends(_current_user),
     if not user:
         raise HTTPException(status_code=401, detail="Sign in first.")
     from kv_store import store as _kv
-    rec = _kv.get("stripe_customer", user["user_id"]) or {}
+    rec = await asyncio.to_thread(_kv.get, "stripe_customer", user["user_id"]) or {}
     cust = rec.get("customer_id")
     if not cust:
         raise HTTPException(status_code=404, detail="No Stripe customer on file.")
