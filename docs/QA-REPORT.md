@@ -126,9 +126,12 @@ Confirmed correct from prior work: bottom-line AI disabled by default ✅, convi
 - **H4 Canonical → apex** — `SITE_ORIGIN` defaults to `https://tickermover.com`; all hardcoded www stragglers (emails, APP_ORIGIN, footer) aligned; redirect allowlist still accepts both. **INFRA TODO (you):** apex must serve all routes or www→apex 301, else set `SITE_ORIGIN=https://www.tickermover.com` interim.
 - **UX/a11y pass** — global `:focus-visible` rings (dashboard + landing), 44px nav tap targets, keyboard-operable sidebar, `/sectors` grade colours aligned to the app, stale brand comment removed.
 
+### ✅ Resolved — wave 4 (2026-06-22, live-verified on prod)
+- **Modal focus-trap** — shipped (Tab cycles within open dialogs).
+- **Full palette unification — VERIFIED & CLOSED, no change.** Live screenshots of prod (On the Radar + MU tearsheet) showed the rendered product is already coherent blue-led: the dashboard runs the `v2-dark` theme (blue nav/logo/badges), and the residual amber is either semantic (warnings, BETA high-vol, "Watch", "Aggressive" risk profile, VIX, "Earnings Imminent") or intentional design (`_ovSecHead` per-section colour wayfinding where only 'price action' is amber; gold "prime" star; multicolour nav icons; chart MA-line colours). The static audit's ~900 amber hex were mostly inactive-theme CSS or semantic. A blanket conversion would DEGRADE the UI (flatten wayfinding, turn warnings blue) — left as-is by decision.
+
 ### ⏳ Still deferred
 - **Legal `/terms` India→UK** (HIGH) — UK solicitor rewrite (blocked on you).
-- **Full palette unification + modal focus-trap** (UX) — ~2,300 inline hex, amber-shell vs blue-detail; needs a dedicated session with live-browser verification.
 - **Conviction map sync background callers** (LOW) — only the request path was made async; background portfolio build still uses the sync path (acceptable, memoised).
 
 _Generated from a 7-agent parallel audit, 2026-06-22. Remediation waves 1–4 shipped same day._
