@@ -9732,13 +9732,26 @@ def _sanitize_watch_entries(raw: list) -> list:
 @app.get("/api/watchlist")
 async def api_watchlist_get(user: Optional[dict] = Depends(_current_user),
                             creds: Optional[HTTPAuthorizationCredentials] = Depends(_bearer)):
-    """Return the signed-in user's account-synced watchlist as {entries:[{t,at,p}]}.
-    Empty list when not authenticated (client falls back to its local copy)."""
+    """Return the signed-in user's account-synced watchlist.
+
+    Single source of truth = Supabase user_metadata `watchlist` ([{t,at,p}]).
+    Serves BOTH shapes so every client renders correctly (H1 fix — the old
+    table-backed duplicate route is removed):
+      • `entries`   — raw [{t,at,p}] for the sync/replace (PUT) UI
+      • `watchlist` — universe-enriched [{ticker,…}] for the star/panel UI
+    Empty lists when not authenticated (client falls back to its local copy)."""
     if not user:
-        return JSONResponse({"entries": []})
+        return JSONResponse({"entries": [], "watchlist": []})
     md = await supabase.get_user_metadata(creds.credentials) or {}
-    entries = md.get("watchlist")
-    return JSONResponse({"entries": entries if isinstance(entries, list) else []})
+    raw = md.get("watchlist")
+    entries = raw if isinstance(raw, list) else []
+    universe_map = {t["ticker"]: t for t in _universe_data if t.get("ticker")}
+    enriched = []
+    for e in entries:
+        sym = (e.get("t") if isinstance(e, dict) else str(e or "")).upper()
+        if sym:
+            enriched.append(universe_map.get(sym) or {"ticker": sym})
+    return JSONResponse({"entries": entries, "watchlist": enriched})
 
 
 @app.put("/api/watchlist")
@@ -9968,44 +9981,52 @@ async def api_feedback(body: _FeedbackBody, request: Request,
 
 # ── Watchlist endpoints ─────────────────────────────────────────────────────────
 
-@app.get("/api/watchlist")
-async def api_watchlist_get(user: Optional[dict] = Depends(_current_user),
-                             creds: Optional[HTTPAuthorizationCredentials] = Depends(_bearer)):
-    """Return the authenticated user's watchlist tickers."""
-    if not user:
-        raise HTTPException(status_code=401, detail="Not authenticated")
-    tickers = await supabase.get_watchlist(creds.credentials, user["user_id"])
-    # Enrich with current universe data
-    universe_map = {t["ticker"]: t for t in _universe_data if t.get("ticker")}
-    enriched = [universe_map[sym] for sym in tickers if sym in universe_map]
-    missing  = [{"ticker": sym} for sym in tickers if sym not in universe_map]
-    return JSONResponse({"watchlist": enriched + missing})
+# NOTE (H1): the GET /api/watchlist route lives above (single source of truth =
+# user_metadata, serves both `entries` and enriched `watchlist`). The earlier
+# duplicate GET here (table-backed) was unreachable (FastAPI keeps the first
+# match) AND returned a shape the live GET didn't, so the star/panel UI read an
+# always-empty list. POST/DELETE below now mutate the SAME metadata store so adds
+# show up in GET.
+
+async def _watchlist_current(creds) -> list:
+    md = await supabase.get_user_metadata(creds.credentials) or {}
+    raw = md.get("watchlist")
+    return _sanitize_watch_entries(raw if isinstance(raw, list) else [])
 
 
 @app.post("/api/watchlist")
 async def api_watchlist_add(body: _WatchlistBody,
                              user: Optional[dict] = Depends(_current_user),
                              creds: Optional[HTTPAuthorizationCredentials] = Depends(_bearer)):
-    """Add a ticker to the watchlist."""
+    """Add one ticker to the metadata-backed watchlist (read-modify-write)."""
     if not user:
         raise HTTPException(status_code=401, detail="Not authenticated")
-    ok = await supabase.add_to_watchlist(creds.credentials, user["user_id"], body.ticker)
-    if not ok:
-        raise HTTPException(status_code=400, detail="Failed to add ticker")
-    return JSONResponse({"status": "added", "ticker": body.ticker.upper()})
+    sym = (body.ticker or "").upper().strip()
+    if not _valid_ticker(sym):
+        raise HTTPException(status_code=400, detail="Invalid ticker")
+    clean = await _watchlist_current(creds)
+    if not any(e["t"] == sym for e in clean):
+        clean.append({"t": sym, "at": int(time.time()), "p": None})
+        clean = _sanitize_watch_entries(clean)   # re-dedupe + 200 cap
+        res = await supabase.update_user_metadata(creds.credentials, {"watchlist": clean})
+        if isinstance(res, dict) and res.get("error"):
+            raise HTTPException(status_code=400, detail=res["error"])
+    return JSONResponse({"status": "added", "ticker": sym, "count": len(clean)})
 
 
 @app.delete("/api/watchlist/{ticker}")
 async def api_watchlist_remove(ticker: str,
                                 user: Optional[dict] = Depends(_current_user),
                                 creds: Optional[HTTPAuthorizationCredentials] = Depends(_bearer)):
-    """Remove a ticker from the watchlist."""
+    """Remove one ticker from the metadata-backed watchlist."""
     if not user:
         raise HTTPException(status_code=401, detail="Not authenticated")
-    ok = await supabase.remove_from_watchlist(creds.credentials, user["user_id"], ticker)
-    if not ok:
-        raise HTTPException(status_code=400, detail="Failed to remove ticker")
-    return JSONResponse({"status": "removed", "ticker": ticker.upper()})
+    sym = (ticker or "").upper().strip()
+    clean = [e for e in await _watchlist_current(creds) if e["t"] != sym]
+    res = await supabase.update_user_metadata(creds.credentials, {"watchlist": clean})
+    if isinstance(res, dict) and res.get("error"):
+        raise HTTPException(status_code=400, detail=res["error"])
+    return JSONResponse({"status": "removed", "ticker": sym, "count": len(clean)})
 
 
 # ── Payment / billing endpoints ───────────────────────────────────────────────
