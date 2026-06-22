@@ -87,6 +87,15 @@ STRIPE_WEBHOOK_SECRET  = _env("STRIPE_WEBHOOK_SECRET",  "")   # whsec_… from t
 # run ~$1-3; default $12 leaves headroom for a busy day but stops a 10x leak.
 AI_DAILY_USD_CAP = float(_env("AI_DAILY_USD_CAP", "12") or "12")
 
+# Hard MONTHLY (UTC) ceiling on total AI cost — the real "≤ $X/month no matter
+# how many users" guarantee. The daily cap stops a runaway loop; this stops the
+# slow user-linear creep (Ask AI is uncached and scales with signups). Once the
+# calendar month's recorded spend crosses this, ALL paid AI degrades gracefully
+# (Ask returns a capacity notice, prewarms/web-search generators serve cached) —
+# unlike the daily cap, this counter is seeded from the usage table so it survives
+# redeploys. Resets on the 1st (UTC).
+AI_MONTHLY_USD_CAP = float(_env("AI_MONTHLY_USD_CAP", "50") or "50")
+
 # ── Beta: Pro free for everyone until launch ──────────────────────────────────
 # During the public beta every signed-in user gets Pro features for free. This
 # flips OFF automatically once the date passes (UTC), so paid Pro takes over at

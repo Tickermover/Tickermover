@@ -94,6 +94,15 @@ class UsageLog:
         # is to halt a runaway loop within a running process).
         self._day: str | None = None
         self._day_cost: float = 0.0
+        # MONTHLY tally for the hard monthly cap. Unlike the daily one this must
+        # survive redeploys, so it's a DB-seeded baseline + this process's local
+        # delta: `_month_seed` is the usage-table total for the month (refreshed
+        # every _MONTH_TTL s), `_month_local` is what we've recorded since seeding.
+        self._month: str | None = None
+        self._month_seed: float = 0.0
+        self._month_seed_ts: float = 0.0
+        self._month_local: float = 0.0
+        self._MONTH_TTL: float = 600.0  # re-seed from DB at most every 10 min
         try:
             _DISK.mkdir(parents=True, exist_ok=True)
         except Exception:
@@ -111,6 +120,62 @@ class UsageLog:
         if _dt.datetime.utcnow().strftime("%Y-%m-%d") != self._day:
             return 0.0
         return self._day_cost
+
+    def _bump_month(self, cost: float) -> None:
+        import datetime as _dt
+        m = _dt.datetime.utcnow().strftime("%Y-%m")
+        if m != self._month:
+            self._month, self._month_seed, self._month_local, self._month_seed_ts = m, 0.0, 0.0, 0.0
+        self._month_local += float(cost or 0)
+
+    def _month_total_from_db(self) -> float:
+        """Sum est_cost_usd for the current UTC month, from Supabase (or the disk
+        JSONL fallback). Best-effort — caller keeps the old seed on error."""
+        import datetime as _dt
+        now = _dt.datetime.utcnow()
+        start = now.strftime("%Y-%m-01T00:00:00")
+        if self.enabled:
+            with httpx.Client(timeout=10) as c:
+                r = c.get(
+                    f"{self.url}/rest/v1/usage",
+                    headers={"apikey": self.key, "Authorization": f"Bearer {self.key}"},
+                    params={"env_id": f"eq.{_ENV_ID}", "ts": f"gte.{start}",
+                            "select": "est_cost_usd", "limit": "100000"},
+                )
+                r.raise_for_status()
+                return round(sum(float(x.get("est_cost_usd") or 0) for x in r.json()), 6)
+        # Disk fallback: rows carry an int epoch `ts`.
+        month_start = _dt.datetime(now.year, now.month, 1).timestamp()
+        total = 0.0
+        p = _DISK / "usage.jsonl"
+        if p.exists():
+            for line in p.read_text(encoding="utf-8").splitlines():
+                try:
+                    row = json.loads(line)
+                    if float(row.get("ts") or 0) >= month_start:
+                        total += float(row.get("est_cost_usd") or 0)
+                except Exception:
+                    pass
+        return round(total, 6)
+
+    def month_cost_usd(self) -> float:
+        """Month-to-date (UTC) AI spend in USD — input to the monthly cap. Seeded
+        from the usage table (survives redeploys), refreshed every _MONTH_TTL s,
+        plus this process's spend since the last seed. Fail-soft: on a DB error we
+        keep the previous seed rather than resetting to zero (so the cap can't be
+        silently defeated by a transient outage)."""
+        import datetime as _dt, time as _t
+        m = _dt.datetime.utcnow().strftime("%Y-%m")
+        now = _t.time()
+        if m != self._month or (now - self._month_seed_ts) > self._MONTH_TTL:
+            try:
+                self._month_seed = self._month_total_from_db()
+                self._month_local = 0.0
+            except Exception as e:
+                logger.debug(f"month seed fetch failed, keeping prior seed: {e}")
+            self._month = m
+            self._month_seed_ts = now
+        return round(self._month_seed + self._month_local, 6)
 
     def record(self, feature: str, model: str, usage: dict | None, *,
                user_id: str | None = None, ticker: str | None = None,
@@ -144,6 +209,7 @@ class UsageLog:
 
         try:
             self._bump_day(row["est_cost_usd"])
+            self._bump_month(row["est_cost_usd"])
         except Exception:
             pass
 
@@ -226,3 +292,8 @@ def record(feature: str, model: str, usage: dict | None, **kw) -> None:
 def today_cost_usd() -> float:
     """Today's (UTC) running AI spend in USD — input to the daily circuit breaker."""
     return store.today_cost_usd()
+
+
+def month_cost_usd() -> float:
+    """Month-to-date (UTC) AI spend in USD — input to the monthly cap (durable)."""
+    return store.month_cost_usd()

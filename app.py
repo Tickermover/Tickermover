@@ -694,12 +694,29 @@ async def _prewarm_one_overview(sym: str) -> bool:
         return False
 
 
+def _ai_over_monthly_budget() -> bool:
+    """Monthly AI-spend cap — the durable '≤ $X/month for any number of users'
+    guarantee. True once this calendar month's (UTC) recorded spend crosses
+    config.AI_MONTHLY_USD_CAP. Unlike the daily breaker this seeds from the usage
+    table so it survives redeploys. Fail-open on its own error."""
+    try:
+        import usage_log
+        if usage_log.month_cost_usd() >= config.AI_MONTHLY_USD_CAP:
+            logger.warning(
+                "🛑 AI monthly cap ${:.2f} reached (spent ${:.2f}) — degrading paid AI".format(
+                    config.AI_MONTHLY_USD_CAP, usage_log.month_cost_usd()))
+            return True
+    except Exception:
+        return False
+    return False
+
+
 def _ai_over_budget() -> bool:
-    """Daily AI-spend circuit breaker. True once today's (UTC) recorded AI cost
-    crosses config.AI_DAILY_USD_CAP — at which point background prewarms and the
-    expensive web-search generators STOP generating (serve cached/template) so a
-    runaway loop can never bleed past the ceiling. Fail-open (never blocks on its
-    own error)."""
+    """Combined AI-spend circuit breaker — True if EITHER the daily cap
+    (config.AI_DAILY_USD_CAP, runaway-loop guard) OR the monthly cap
+    (config.AI_MONTHLY_USD_CAP, user-linear-creep guard) is crossed. Every gated
+    path (background prewarms, web-search generators, why-today, research/compare)
+    stops generating and serves cached/template instead. Fail-open."""
     try:
         import usage_log
         if usage_log.today_cost_usd() >= config.AI_DAILY_USD_CAP:
@@ -709,7 +726,7 @@ def _ai_over_budget() -> bool:
             return True
     except Exception:
         return False
-    return False
+    return _ai_over_monthly_budget()
 
 
 async def _overview_prewarm() -> None:
@@ -4332,6 +4349,15 @@ async def api_ask(ticker: str, request: Request,
         return JSONResponse(
             {"answer": None, "status": "locked",
              "detail": "Ask AI is a Pro feature. Upgrade to unlock."},
+            headers={"Cache-Control": "no-store"})
+    # Global monthly budget guard: Ask is the one uncached, user-linear AI cost,
+    # so it must also respect the system-wide monthly ceiling (not just per-user
+    # caps). When the month's pool is spent, degrade gracefully rather than bill on.
+    if _ai_over_monthly_budget():
+        return JSONResponse(
+            {"answer": None, "status": "capacity",
+             "detail": "Ask AI is at capacity for this month and will be back next month. "
+                       "Everything else on the page is live as usual."},
             headers={"Cache-Control": "no-store"})
     # Fair-use caps: a daily inner bound (burst protection) plus the monthly cap.
     q = await _ask_quota(creds)
@@ -9693,12 +9719,16 @@ async def api_cache_health(user: Optional[dict] = Depends(_current_user),
 
     import usage_log as _ul
     spent_today = round(_ul.today_cost_usd(), 4)
+    spent_month = round(_ul.month_cost_usd(), 4)
     return JSONResponse({
         "flat_cost_guarantee_intact": intact,
         "supabase_configured": supa,
         "ai_spend_today_usd": spent_today,
         "ai_daily_cap_usd": config.AI_DAILY_USD_CAP,
         "ai_breaker_tripped": spent_today >= config.AI_DAILY_USD_CAP,
+        "ai_spend_month_usd": spent_month,
+        "ai_monthly_cap_usd": config.AI_MONTHLY_USD_CAP,
+        "ai_monthly_cap_tripped": spent_month >= config.AI_MONTHLY_USD_CAP,
         "overview_cached_tickers": tables["stock_overview"]["count"],
         "tables": tables,
         "app_kv_namespaces": ns_counts,
