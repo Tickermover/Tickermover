@@ -5,8 +5,9 @@ Mirrors overview_store / research_store: Supabase-backed so judgments survive
 Railway redeploys, with a local-JSON fallback for dev. env_id 1=prod, 2=dev.
 
 The judge (ai_selector.py) is advisory — its conviction score is a re-rank
-tiebreaker within the quant-qualified shortlist. We refresh it ~nightly, so a
-~20h TTL means one regeneration per day and intraday refreshes reuse the cache.
+tiebreaker within the quant-qualified shortlist. It moves slowly, so we refresh
+it at most ~monthly: a 29-day TTL means one regeneration per stock per month and
+all intraday/same-month refreshes reuse the cache.
 
 Supabase table (create once — see db/2026-06-15-selection-judgments.sql)::
 
@@ -56,8 +57,10 @@ _ENV_ID = _detect_env_id()
 _BASE_DIR = Path(__file__).resolve().parent
 _DISK_DIR = _BASE_DIR / "output" / "selection"
 
-# ~20h: one regen per day; intraday portfolio refreshes reuse the cache.
-TTL_SECONDS = int(os.environ.get("SELECTION_TTL_SECONDS", str(20 * 60 * 60)))
+# 29 days: conviction/thesis is a slow-moving re-rank tiebreaker, so regenerate
+# at most ~monthly (matches the 29-day Overview cadence). Intraday refreshes and
+# every same-month visit reuse the cache. Overridable via SELECTION_TTL_SECONDS.
+TTL_SECONDS = int(os.environ.get("SELECTION_TTL_SECONDS", str(29 * 24 * 60 * 60)))
 
 
 class SelectionStore:

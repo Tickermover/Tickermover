@@ -41,6 +41,11 @@ import usage_log
 logger = logging.getLogger(__name__)
 
 _KEY = os.environ.get("ANTHROPIC_API_KEY", "").strip()
+# DROPPED 2026-06-22: the AI rewrite was the single biggest Haiku line (whole
+# universe ×545). The deterministic `bottom_line` template is always present and
+# reads fine on its own, so the polish layer is off by default. Flip
+# BOTTOM_LINE_AI_ENABLED=1 to bring it back (no other change needed).
+_ENABLED = os.environ.get("BOTTOM_LINE_AI_ENABLED", "0").strip().lower() in ("1", "true", "yes", "on")
 # Cheapest current tier — this is a pure rephrasing task, no reasoning needed.
 _MODEL = (
     os.environ.get("ANTHROPIC_BOTTOM_LINE_MODEL")
@@ -57,7 +62,7 @@ _MEM: dict[str, tuple[str, str]] = {}
 
 
 def available() -> bool:
-    return bool(_KEY)
+    return bool(_KEY) and _ENABLED
 
 
 def _hash(text: str) -> str:
@@ -163,6 +168,8 @@ def apply_cached(universe: list[dict]) -> int:
     """Pure in-memory overlay — no network. Sets `bottom_line_ai` on each stock
     whose cached prose still matches its current template sentence. Safe to call
     after every re-score; stale entries are cleared so the template shows."""
+    if not _ENABLED:
+        return 0
     n = 0
     for t in universe or []:
         sym = (t.get("ticker") or "").upper()
@@ -184,6 +191,8 @@ async def prewarm(universe: list[dict], throttle_s: float = 2.0,
     snapshot. Only stocks whose template changed or whose cache is >15 days old
     actually call Haiku; everything else is a free cache hit. `max_gen` caps the
     number of live generations per cycle so cost/latency never spikes."""
+    if not _ENABLED:
+        return {"generated": 0, "cache_hits": 0, "model": _MODEL, "disabled": True}
     gen = hits = 0
     import asyncio
     for t in list(universe or []):
