@@ -115,14 +115,17 @@ Confirmed correct from prior work: bottom-line AI disabled by default ✅, convi
 - **HIGH** — cost breaker now covers `/api/thesis` + `/api/concall` (2 of 3 bypass paths).
 - **MEDIUM** — `/api/refresh` admin-only; `/api/why` force admin-only; unsubscribe URL-encoded; gold favicon fallback → real PNGs; `.callout-green` CSS.
 
-### ⏳ Deferred — needs a decision, live verification, or a dedicated refactor
-- **Watchlist dual-storage** (HIGH) — needs deciding which backend is canonical before removing the dead route; touches frontend contract.
-- **Event-loop blocking / single-flight / cache-table probe** (HIGH) — data-layer refactor across 6 stores; do as one focused PR with load testing.
-- **Webhook idempotency + Stripe out-of-order guard** (MEDIUM) — needs a processed-events table.
-- **Legal `/terms` India→UK** (HIGH) — requires the UK solicitor rewrite (already tracked).
-- **Canonical apex-vs-www** (HIGH) — product decision (apex needs to be live first); don't flip `SITE_ORIGIN` blindly.
-- **Dashboard palette unification + a11y** (MEDIUM) — 2,328 inline hex, tap targets, focus traps; dedicated UX pass + live browser verification.
-- **NaN scoring screen, `%s` strftime dead code, `_dead_endpoints` TTL** (MEDIUM/LOW).
-- **Automated test suite** (foundational) — start with pure functions.
+### ✅ Fixed & shipped — wave 2 (2026-06-22)
+- **Data-layer event-loop blocking** (HIGH) — store I/O moved off-loop; verified non-blocking; single-flight already present; table probe already existed (#3 false positive).
+- **H1 Watchlist dual-storage** — unified on user_metadata; GET serves both shapes; POST/DELETE mutate the same store; dead route removed.
+- **H2 Webhook idempotency + out-of-order guard** — dedupe by event id + per-user high-water mark (kv_store backed).
+- **M1** conviction-map async on the request path · **M2** NaN/inf scoring screen · **M3** JWT alg-confusion + non-user-token rejection · **M4** change-password requires + re-verifies current password (UI field added) · **M5** `_dead_endpoints` TTL self-heal · **M6** dead `%s` strftime removed.
+- **Automated test suite** — 24 unit tests, zero-dependency runner (`python tests/run_all.py`).
+
+### ⏳ Still deferred — blocked on you, or a dedicated UX pass
+- **Legal `/terms` India→UK** (HIGH) — UK solicitor rewrite (blocked on you).
+- **Canonical apex-vs-www** (HIGH) — product decision: which host is canonical (apex must be live first).
+- **Dashboard palette unification + full a11y** (MEDIUM/UX) — 2,328 inline hex, tap targets, focus traps; needs a dedicated UX pass + live-browser verification.
+- **Conviction map sync background callers** (LOW) — only the request path was made async; background portfolio build still uses the sync path (acceptable, memoised).
 
 _Generated from a 7-agent parallel audit, 2026-06-22. Remediation waves 1–4 shipped same day._
