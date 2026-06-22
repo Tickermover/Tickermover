@@ -20,6 +20,7 @@ import hashlib
 import hmac
 import json
 import logging
+import os
 from typing import Optional
 
 import httpx
@@ -27,6 +28,12 @@ import httpx
 logger = logging.getLogger(__name__)
 
 _BASE = "https://api.razorpay.com/v1"
+
+# SECURITY: webhook signature verification fails CLOSED by default. An unsigned
+# webhook (no secret configured) is REJECTED — a forged event must never be able
+# to grant Pro. For local dev where you replay events without a secret, set
+# ALLOW_UNSIGNED_WEBHOOKS=1 explicitly. Never set it in production.
+_ALLOW_UNSIGNED_WEBHOOKS = os.environ.get("ALLOW_UNSIGNED_WEBHOOKS", "").strip().lower() in ("1", "true", "yes", "on")
 
 # Monthly plan amounts (paise = INR × 100)
 PRO_AMOUNT_INR   = 499_00   # ₹499 in paise
@@ -141,6 +148,13 @@ class RazorpayClient:
         """Fetch subscription details."""
         return await self._get(f"/subscriptions/{subscription_id}")
 
+    async def fetch_order(self, order_id: str) -> dict:
+        """Fetch a server-created order so /verify can confirm the REAL paid
+        amount/currency/status server-side (never trust the client). Returns the
+        order entity {amount, amount_paid, currency, status, receipt, ...} or
+        {error}."""
+        return await self._get(f"/orders/{order_id}")
+
     # ── One-time orders (alternative to subscriptions) ────────────────────────────
 
     async def create_order(self, amount_paise: int = PRO_AMOUNT_INR, receipt: str = "") -> dict:
@@ -164,8 +178,11 @@ class RazorpayClient:
         Returns True if valid.
         """
         if not self.webhook_secret:
-            logger.warning("RAZORPAY_WEBHOOK_SECRET not set — skipping signature check")
-            return True   # allow in dev; always set in prod
+            if _ALLOW_UNSIGNED_WEBHOOKS:
+                logger.warning("RAZORPAY_WEBHOOK_SECRET not set — accepting UNSIGNED webhook (dev opt-in)")
+                return True
+            logger.error("RAZORPAY_WEBHOOK_SECRET not set — REJECTING webhook (fail-closed)")
+            return False   # fail closed: never trust an unsigned webhook in prod
         expected = hmac.new(
             self.webhook_secret.encode(),
             raw_body,
@@ -246,15 +263,26 @@ class StripeClient:
         event, or None if invalid. Falls back to unverified parse only when no
         webhook secret is configured (dev)."""
         if not self.webhook_secret:
-            logger.warning("STRIPE_WEBHOOK_SECRET not set — skipping signature check")
-            try:
-                return json.loads(payload)
-            except Exception:
-                return None
+            if _ALLOW_UNSIGNED_WEBHOOKS:
+                logger.warning("STRIPE_WEBHOOK_SECRET not set — accepting UNSIGNED webhook (dev opt-in)")
+                try:
+                    return json.loads(payload)
+                except Exception:
+                    return None
+            logger.error("STRIPE_WEBHOOK_SECRET not set — REJECTING webhook (fail-closed)")
+            return None   # fail closed: never trust an unsigned webhook in prod
         try:
             parts = dict(p.split("=", 1) for p in sig_header.split(",") if "=" in p)
             t, v1 = parts.get("t"), parts.get("v1")
             if not t or not v1:
+                return None
+            # Replay guard: reject events whose timestamp is outside a 5-minute
+            # tolerance (matches Stripe's own libraries), bounding signature replay.
+            try:
+                if abs(int(__import__("time").time()) - int(t)) > 300:
+                    logger.error("Stripe webhook timestamp outside tolerance — rejecting")
+                    return None
+            except (TypeError, ValueError):
                 return None
             signed = t.encode() + b"." + payload
             expected = hmac.new(self.webhook_secret.encode(), signed, hashlib.sha256).hexdigest()

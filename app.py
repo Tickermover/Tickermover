@@ -22,7 +22,7 @@ from pydantic import BaseModel
 
 import config
 from auth import SupabaseClient
-from billing import RazorpayClient, StripeClient, is_pro
+from billing import RazorpayClient, StripeClient, is_pro, PRO_AMOUNT_INR
 from email_sender import send_welcome_email, send_password_changed_email, send_prime_review_email
 import secrets as _secrets
 from data_coordinator import DataCoordinator
@@ -132,6 +132,62 @@ ASK_DAILY_CAP = int(os.environ.get("ASK_DAILY_CAP", "12"))
 # Comma-separated emails that get AI access without a paid subscription row —
 # for the dev's own account and any comped beta testers. e.g. AI_ALLOW_EMAILS=me@x.com,beta@y.com
 _AI_ALLOW = {e.strip().lower() for e in os.environ.get("AI_ALLOW_EMAILS", "").split(",") if e.strip()}
+
+# ── Lightweight in-process rate limiter (B7) ──────────────────────────────────
+# First-layer brute-force / mail-bomb guard for the auth endpoints. In-process
+# (per worker, resets on redeploy) — a deliberate first layer, not a substitute
+# for an edge/WAF limit, but it stops trivial credential-stuffing and the
+# forgot-password / magic-link email floods that the custom Resend SMTP would
+# otherwise pass straight through (Supabase's 3/hr cap is bypassed). Sliding
+# window keyed by client IP + bucket name. Fail-open on its own error.
+import collections as _collections
+_RL_BUCKETS: dict = _collections.defaultdict(list)
+
+def _client_ip(request: "Request") -> str:
+    xff = (request.headers.get("x-forwarded-for") or "").split(",")[0].strip()
+    if xff:
+        return xff
+    return (request.client.host if request.client else "?")
+
+def _rate_limit(request: "Request", bucket: str, max_calls: int, window_s: float) -> None:
+    """Raise HTTP 429 if (ip, bucket) exceeds max_calls within window_s seconds."""
+    try:
+        now = time.time()
+        if len(_RL_BUCKETS) > 50000:          # crude memory backstop
+            _RL_BUCKETS.clear()
+        key = f"{bucket}:{_client_ip(request)}"
+        hits = _RL_BUCKETS[key]
+        cutoff = now - window_s
+        while hits and hits[0] < cutoff:
+            hits.pop(0)
+        if len(hits) >= max_calls:
+            raise HTTPException(status_code=429, detail=(
+                "Too many attempts. Please wait a minute and try again."))
+        hits.append(now)
+    except HTTPException:
+        raise
+    except Exception:
+        return  # never block legitimate traffic on a limiter bug
+
+
+def _safe_redirect(redirect_to: str | None) -> str:
+    """Open-redirect guard for auth flows. A client-supplied redirect_to lands
+    the access/refresh tokens in its URL fragment, so it MUST stay on our own
+    origin — otherwise tokens leak to an attacker host. Accept only same-origin
+    (www or apex tickermover.com) absolute URLs or site-relative paths; anything
+    else falls back to the canonical callback. We don't rely on Supabase's
+    dashboard allowlist alone."""
+    default = f"{SITE_ORIGIN}/auth/callback"
+    rt = (redirect_to or "").strip()
+    if not rt:
+        return default
+    if rt.startswith("/") and not rt.startswith("//"):
+        return f"{SITE_ORIGIN}{rt}"
+    allowed = (SITE_ORIGIN, "https://tickermover.com", "https://www.tickermover.com")
+    if any(rt == a or rt.startswith(a + "/") for a in allowed):
+        return rt
+    logger.warning(f"Rejected off-origin auth redirect_to={rt[:120]!r}")
+    return default
 
 
 def _beta_pro_active() -> bool:
@@ -8404,7 +8460,8 @@ async def api_model_portfolio_history():
 
 
 @app.post("/api/admin/reprice-closed-trades")
-async def api_admin_reprice_closed_trades(env_id: int = None):
+async def api_admin_reprice_closed_trades(env_id: int = None,
+                                          user: Optional[dict] = Depends(_current_user)):
     """One-shot maintenance: re-price every closed_trade row using the actual
     yfinance close on its entry_date and exit_date. Fixes the rows that were
     backfilled with synthetic entry prices (back-calculated from momentum_1m)
@@ -8413,9 +8470,11 @@ async def api_admin_reprice_closed_trades(env_id: int = None):
     Idempotent — running twice is a no-op once prices are already real.
     Returns a summary of which rows changed and by how much.
 
-    Auth: open admin endpoint. Lives behind the same trust model as
-    /api/model-portfolio/reset (single-user product, no real admin auth).
+    Auth (B5 fix): admin-only — this rewrites the closed_trades audit log via the
+    service key, so it must be gated to AI_ALLOW_EMAILS accounts.
     """
+    if not user or (user.get("email") or "").lower() not in _AI_ALLOW:
+        raise HTTPException(status_code=403, detail="Admin only.")
     import httpx
     if not supabase.enabled or not config.SUPABASE_SERVICE_KEY:
         raise HTTPException(status_code=503, detail="Supabase service key not configured")
@@ -8571,9 +8630,15 @@ async def api_admin_reprice_closed_trades(env_id: int = None):
 
 
 @app.post("/api/model-portfolio/reset")
-async def api_model_portfolio_reset():
-    """Rebuild model portfolio with today's top stocks (admin action)."""
+async def api_model_portfolio_reset(user: Optional[dict] = Depends(_current_user)):
+    """Rebuild model portfolio with today's top stocks (admin action).
+
+    Auth (B4 fix): admin-only — a reset force-closes every open pick into the
+    public closed-trades ledger, so it must never be anonymously triggerable.
+    """
     global _model_portfolio
+    if not user or (user.get("email") or "").lower() not in _AI_ALLOW:
+        raise HTTPException(status_code=403, detail="Admin only.")
     if not _universe_data:
         raise HTTPException(status_code=503, detail="Universe not loaded yet")
     # Pass the current portfolio as `existing` so any picks dropped during
@@ -8959,6 +9024,7 @@ async def api_signup(body: _AuthBody, request: Request):
     TickerMover" message in one. Rate limit is Resend's (3k/month free),
     not Supabase's built-in 3/hour cap.
     """
+    _rate_limit(request, "signup", max_calls=5, window_s=300)
     # Full password policy for new accounts (matches the UI "Password tips").
     _pw_err = _password_rule_error(body.password)
     if _pw_err:
@@ -8973,8 +9039,9 @@ async def api_signup(body: _AuthBody, request: Request):
 
 
 @app.post("/api/auth/signin")
-async def api_signin(body: _AuthBody):
+async def api_signin(body: _AuthBody, request: Request):
     """Sign in with email + password. Returns JWT access + refresh tokens."""
+    _rate_limit(request, "signin", max_calls=8, window_s=60)
     result = await supabase.sign_in(body.email, body.password)
     if result.get("error"):
         raise HTTPException(status_code=401, detail=result["error"])
@@ -8994,7 +9061,7 @@ async def api_oauth_start(provider: str, request: Request, body: _OAuthBody | No
         raise HTTPException(status_code=400, detail=f"Unsupported provider: {provider}")
     if not supabase.enabled:
         raise HTTPException(status_code=503, detail="Auth not configured")
-    redirect_to = (body.redirect_to if body else None) or f"{SITE_ORIGIN}/auth/callback"
+    redirect_to = _safe_redirect(body.redirect_to if body else None)
     url = supabase.oauth_authorize_url(provider, redirect_to)
     if not url:
         raise HTTPException(status_code=503, detail="OAuth URL build failed")
@@ -9096,7 +9163,8 @@ async def api_magic_link(body: _MagicLinkBody, request: Request):
     OTP + your configured SMTP (Resend free tier recommended)."""
     if not supabase.enabled:
         raise HTTPException(status_code=503, detail="Auth not configured")
-    redirect_to = body.redirect_to or f"{SITE_ORIGIN}/auth/callback"
+    _rate_limit(request, "email-auth", max_calls=4, window_s=900)
+    redirect_to = _safe_redirect(body.redirect_to)
     result = await supabase.send_magic_link(body.email, redirect_to)
     if result.get("error"):
         raise HTTPException(status_code=400, detail=result["error"])
@@ -9108,7 +9176,8 @@ async def api_resend_confirmation(body: _MagicLinkBody, request: Request):
     """Resend the sign-up confirmation email to an unconfirmed account."""
     if not supabase.enabled:
         raise HTTPException(status_code=503, detail="Auth not configured")
-    redirect_to = body.redirect_to or f"{SITE_ORIGIN}/auth/callback"
+    _rate_limit(request, "email-auth", max_calls=4, window_s=900)
+    redirect_to = _safe_redirect(body.redirect_to)
     result = await supabase.resend_confirmation(body.email, redirect_to)
     if result.get("error"):
         raise HTTPException(status_code=400, detail=result["error"])
@@ -9204,10 +9273,11 @@ class _ForgotBody(BaseModel):
     email: str
 
 @app.post("/api/auth/forgot-password")
-async def api_forgot_password(body: _ForgotBody):
+async def api_forgot_password(body: _ForgotBody, request: Request):
     """Send a password reset email via Supabase."""
     if not supabase.enabled:
         raise HTTPException(status_code=503, detail="Auth not configured")
+    _rate_limit(request, "email-auth", max_calls=4, window_s=900)
     try:
         import httpx
         # Use SITE_ORIGIN (already normalized to the www host that actually
@@ -9256,9 +9326,10 @@ class _ResetPasswordBody(BaseModel):
 
 
 @app.post("/api/auth/reset-password")
-async def api_reset_password(body: _ResetPasswordBody):
+async def api_reset_password(body: _ResetPasswordBody, request: Request):
     """Update password using a Supabase recovery access_token from the
     URL hash of the email click. Returns {ok: True} on success."""
+    _rate_limit(request, "reset-password", max_calls=10, window_s=900)
     _pw_err = _password_rule_error(body.new_password)
     if _pw_err:
         raise HTTPException(status_code=400, detail=_pw_err)
@@ -9973,6 +10044,27 @@ async def api_verify_payment(
     expected = _hmac.new(config.RAZORPAY_KEY_SECRET.encode(), msg, _hl.sha256).hexdigest()
     if not _hmac.compare_digest(expected, body.razorpay_signature):
         raise HTTPException(status_code=400, detail="Payment signature invalid")
+
+    # SECURITY (B3): a valid signature only proves the order/payment pair wasn't
+    # tampered — it does NOT prove the right amount was paid, nor that THIS order
+    # belongs to THIS user. Fetch the order server-side and assert paid amount,
+    # currency, status, and receipt-binding before granting Pro. Without this, a
+    # user could pay ₹1 (or replay another user's order) and get Pro.
+    order = await razorpay.fetch_order(body.razorpay_order_id)
+    if not order or order.get("error"):
+        raise HTTPException(status_code=400, detail="Could not verify order with Razorpay")
+    paid = int(order.get("amount_paid") or 0)
+    amt  = int(order.get("amount") or 0)
+    if order.get("status") != "paid" or paid < PRO_AMOUNT_INR or amt < PRO_AMOUNT_INR:
+        raise HTTPException(status_code=400, detail="Payment amount/status does not match the Pro plan")
+    if (order.get("currency") or "").upper() != "INR":
+        raise HTTPException(status_code=400, detail="Unexpected payment currency")
+    expected_receipt = f"user_{user['user_id'][:8]}"
+    if (order.get("receipt") or "") != expected_receipt:
+        # The order was not created for this account → reject (cross-order replay).
+        logger.warning(f"Payment verify receipt mismatch: order={body.razorpay_order_id} "
+                       f"receipt={order.get('receipt')!r} expected={expected_receipt!r}")
+        raise HTTPException(status_code=400, detail="Order does not belong to this account")
 
     import datetime
     valid_until = (datetime.datetime.utcnow() + datetime.timedelta(days=32)).isoformat() + "Z"
