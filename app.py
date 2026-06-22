@@ -962,6 +962,25 @@ SITE_ORIGIN = _os.environ.get("SITE_ORIGIN", "https://www.tickermover.com").stri
 # missing the //) so sitemap / canonical / og: URLs are never broken.
 SITE_ORIGIN = _re_origin.sub(r'^\s*https?:/*', 'https://', SITE_ORIGIN) or "https://www.tickermover.com"
 
+# ── Brand-variant targeting ───────────────────────────────────────────────────
+# Two distinct jobs, two lists (do NOT merge them):
+#  • _BRAND_SITENAMES → WebSite.alternateName. Google's *site-name picker* reads
+#    this to choose what label shows in results — keep it to clean, real variants
+#    only. Putting typos here risks Google displaying a misspelled site name.
+#  • _BRAND_ALTNAMES → Organization.alternateName. This feeds entity association
+#    (knowledge graph / "did you mean"), so it's the penalty-free home for the
+#    spaced/no-space forms AND common misspellings. This is the ONLY safe place
+#    to list typos — never stuff them into visible body text (hidden-text /
+#    keyword-stuffing penalty). Curated to high-probability typos, not spam.
+_BRAND_SITENAMES = ["TickerMover.com", "Tickermover", "Ticker Mover"]
+_BRAND_ALTNAMES = [
+    "TickerMover.com", "tickermover.com", "Tickermover", "tickermover",
+    "Ticker Mover", "Ticker Mover.com", "Ticker-Mover",
+    # high-probability misspellings (transpositions / dropped letters / plural)
+    "Tikcermover", "Tikermover", "Tickrmover", "Tickermovr",
+    "Tickermove", "Tickermovers", "Ticket Mover", "Tickermover stocks",
+]
+
 
 @app.get("/favicon.ico")
 async def favicon():
@@ -1191,7 +1210,7 @@ def _build_landing_schema() -> str:
         "@context": "https://schema.org",
         "@type": "Organization",
         "name": "TickerMover",
-        "alternateName": ["TickerMover.com", "Ticker Mover"],
+        "alternateName": _BRAND_ALTNAMES,
         "url": SITE_ORIGIN,
         "logo": f"{SITE_ORIGIN}/static/icons/icon-512.png",
         "image": f"{SITE_ORIGIN}/static/icons/icon-512.png",
@@ -1257,8 +1276,9 @@ def _build_landing_schema() -> str:
         "@type": "WebSite",
         "name": "TickerMover",
         # alternateName reinforces the brand for Google's site-name picker and
-        # covers the spaced/legacy variants users might type or link with.
-        "alternateName": ["TickerMover.com", "Ticker Mover"],
+        # covers the spaced/no-space variants users might type or link with.
+        # Clean variants ONLY here (typos live in the Organization schema).
+        "alternateName": _BRAND_SITENAMES,
         "url": SITE_ORIGIN,
     }
     return (
