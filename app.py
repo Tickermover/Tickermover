@@ -10277,6 +10277,41 @@ async def api_billing_portal(user: Optional[dict] = Depends(_current_user),
     return JSONResponse({"url": sess["url"]})
 
 
+async def _stripe_already_processed(evt_id: str) -> bool:
+    """H2 idempotency: True if this Stripe event id was already handled (Stripe
+    may redeliver). Records unseen ids in kv_store with a 7-day TTL (> Stripe's
+    retry window)."""
+    if not evt_id:
+        return False
+    from kv_store import store as _kv
+    try:
+        if await asyncio.to_thread(_kv.get, "stripe_evt", evt_id, 7 * 86400):
+            return True
+        await asyncio.to_thread(_kv.set, "stripe_evt", evt_id, {"at": int(time.time())})
+    except Exception:
+        pass
+    return False
+
+
+async def _stripe_event_is_stale(uid: str, evt_created) -> bool:
+    """H2 out-of-order guard: True if a NEWER event for this user was already
+    applied, so this (older) one must be ignored — otherwise a late
+    subscription.updated(active) delivered after subscription.deleted would
+    resurrect a cancelled account. Tracks a per-user high-water mark."""
+    if not uid or not isinstance(evt_created, (int, float)):
+        return False
+    from kv_store import store as _kv
+    try:
+        rec = await asyncio.to_thread(_kv.get, "stripe_state_ts", uid)
+        last = rec.get("ts", 0) if isinstance(rec, dict) else 0
+        if evt_created < last:
+            return True
+        await asyncio.to_thread(_kv.set, "stripe_state_ts", uid, {"ts": int(evt_created)})
+    except Exception:
+        pass
+    return False
+
+
 @app.post("/api/billing/stripe/webhook")
 async def api_stripe_webhook(request: Request):
     """Stripe webhook — source of truth for Pro state. Set the endpoint to
@@ -10286,10 +10321,18 @@ async def api_stripe_webhook(request: Request):
     event = stripe_client.verify_webhook(raw, request.headers.get("Stripe-Signature", ""))
     if event is None:
         raise HTTPException(status_code=400, detail="Invalid signature")
+    # Idempotency: skip a redelivered event (Stripe retries until it gets a 2xx).
+    if await _stripe_already_processed(event.get("id")):
+        return JSONResponse({"received": True, "duplicate": True})
     typ = event.get("type", "")
     obj = (event.get("data") or {}).get("object") or {}
     uid = (obj.get("client_reference_id")
            or (obj.get("metadata") or {}).get("user_id"))
+    # Out-of-order guard: ignore an event older than the last one applied for this
+    # user, so a late 'updated' can't undo a newer 'deleted' (and vice-versa).
+    if uid and await _stripe_event_is_stale(uid, event.get("created")):
+        logger.info(f"Stripe webhook: ignoring out-of-order {typ} for {uid}")
+        return JSONResponse({"received": True, "stale": True})
     try:
         if typ == "checkout.session.completed":
             if uid:
