@@ -1011,18 +1011,19 @@ app.mount("/static", StaticFiles(directory=str(_STATIC)), name="static")
 # discover and index TickerMover properly. Without these the dashboard SPA
 # is invisible to crawlers — see 2026-04 SEO foundation work.
 
-# Public-facing canonical origin used for sitemap + schema URLs.
-# Configurable via the SITE_ORIGIN env var. The intended canonical is the
-# BARE APEX (https://tickermover.com) — set that env var on Railway once the
-# apex actually serves the app (DNS pointed at the origin + www 301-redirecting
-# to apex). Default stays on www until then, because pointing canonical/og/
-# sitemap URLs at an apex that 404s or redirect-loops is worse than www.
-# (Do NOT re-add an apex->www rewrite here — it blocks the apex canonical.)
+# Public-facing canonical origin used for sitemap + schema + canonical/og URLs.
+# CANONICAL = the BARE APEX (https://tickermover.com) — chosen 2026-06-22. This is
+# now the default so every URL (landing canonical, sitemap, OG, schema, auth
+# redirect_to) agrees on one host and Google sees a single canonical signal.
+# INFRA PREREQUISITE: the apex MUST serve all routes (DNS at the origin) OR www
+# must 301-redirect to apex — otherwise auth callbacks / og images 404. Until that
+# is live, set SITE_ORIGIN=https://www.tickermover.com on Railway as an interim.
+# (Do NOT add an apex->www rewrite here — it would defeat the apex canonical.)
 import os as _os, re as _re_origin
-SITE_ORIGIN = _os.environ.get("SITE_ORIGIN", "https://www.tickermover.com").strip().rstrip("/")
+SITE_ORIGIN = _os.environ.get("SITE_ORIGIN", "https://tickermover.com").strip().rstrip("/")
 # Self-repair a malformed origin from a bad env var (e.g. "https:tickermover.com"
 # missing the //) so sitemap / canonical / og: URLs are never broken.
-SITE_ORIGIN = _re_origin.sub(r'^\s*https?:/*', 'https://', SITE_ORIGIN) or "https://www.tickermover.com"
+SITE_ORIGIN = _re_origin.sub(r'^\s*https?:/*', 'https://', SITE_ORIGIN) or "https://tickermover.com"
 
 # ── Brand-variant targeting ───────────────────────────────────────────────────
 # Two distinct jobs, two lists (do NOT merge them):
@@ -9474,7 +9475,7 @@ button.submit:disabled{opacity:.6;cursor:not-allowed}
   <div class="cardbody">
 
   <div class="brand">
-    <img src="https://www.tickermover.com/static/icons/alpha-logo-bare-64.png" alt="" width="24" height="24" style="display:block;border-radius:6px">
+    <img src="https://tickermover.com/static/icons/alpha-logo-bare-64.png" alt="" width="24" height="24" style="display:block;border-radius:6px">
     <span class="bw">Ticker<em>Mover</em></span>
   </div>
 

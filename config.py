@@ -15,7 +15,7 @@ KEYS_ON_FALLBACK: list[str] = []
 # these instead of hardcoding the string, so the next rename is a one-line edit.
 APP_NAME      = os.environ.get("APP_NAME", "TickerMover")
 APP_DOMAIN    = os.environ.get("APP_DOMAIN", "tickermover.com")
-APP_ORIGIN    = os.environ.get("APP_ORIGIN", "https://www.tickermover.com")
+APP_ORIGIN    = os.environ.get("APP_ORIGIN", "https://tickermover.com")  # canonical = apex
 SUPPORT_EMAIL = os.environ.get("SUPPORT_EMAIL", "support@tickermover.com")
 
 def _env(key: str, default: str = "") -> str:
