@@ -99,4 +99,30 @@ Confirmed correct from prior work: bottom-line AI disabled by default ✅, convi
 4. **Polish:** unify palette to 2 token accents, fix canonical host, swap gold favicon fallback, a11y (tap targets, focus traps).
 5. **Foundational:** stand up `tests/` — start with pure functions (scoring, cost estimate, cache signatures, JWT verify, webhook signature).
 
-_Generated from a 7-agent parallel audit, 2026-06-22._
+---
+
+## Remediation status (2026-06-22)
+
+### ✅ Fixed & shipped (dev + prod)
+- **B1/B2** — webhooks fail CLOSED (unsigned rejected); Stripe 5-min replay window. `ALLOW_UNSIGNED_WEBHOOKS=1` for dev only.
+- **B3** — `/api/payment/verify` fetches the order from Razorpay and asserts amount/currency/status/receipt-binding.
+- **B4/B5** — `/api/model-portfolio/reset` and `/api/admin/reprice-closed-trades` now admin-gated.
+- **B6** — thesis uses the house research scale (Strong Outperform/Outperform/Neutral/Lagging/Avoid); LLM prompt reframed; no buy/sell/price-target language.
+- **B7** — in-process per-IP rate limiter on all auth endpoints (signin/signup/forgot/magic-link/resend/reset).
+- **HIGH** — open-redirect guard (`_safe_redirect`) on OAuth/magic-link/resend.
+- **HIGH** — reflected XSS on `/stocks/{ticker}` (strict ticker format → 404).
+- **HIGH** — stored XSS in dashboard (company-name + error-message innerHTML sinks escaped).
+- **HIGH** — cost breaker now covers `/api/thesis` + `/api/concall` (2 of 3 bypass paths).
+- **MEDIUM** — `/api/refresh` admin-only; `/api/why` force admin-only; unsubscribe URL-encoded; gold favicon fallback → real PNGs; `.callout-green` CSS.
+
+### ⏳ Deferred — needs a decision, live verification, or a dedicated refactor
+- **Watchlist dual-storage** (HIGH) — needs deciding which backend is canonical before removing the dead route; touches frontend contract.
+- **Event-loop blocking / single-flight / cache-table probe** (HIGH) — data-layer refactor across 6 stores; do as one focused PR with load testing.
+- **Webhook idempotency + Stripe out-of-order guard** (MEDIUM) — needs a processed-events table.
+- **Legal `/terms` India→UK** (HIGH) — requires the UK solicitor rewrite (already tracked).
+- **Canonical apex-vs-www** (HIGH) — product decision (apex needs to be live first); don't flip `SITE_ORIGIN` blindly.
+- **Dashboard palette unification + a11y** (MEDIUM) — 2,328 inline hex, tap targets, focus traps; dedicated UX pass + live browser verification.
+- **NaN scoring screen, `%s` strftime dead code, `_dead_endpoints` TTL** (MEDIUM/LOW).
+- **Automated test suite** (foundational) — start with pure functions.
+
+_Generated from a 7-agent parallel audit, 2026-06-22. Remediation waves 1–4 shipped same day._
