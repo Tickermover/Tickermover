@@ -7544,12 +7544,6 @@ document.addEventListener('keydown', function(e){
   #ma-inapp-switch button.on{background:#fff;color:#2970ff;box-shadow:0 2px 8px rgba(0,0,0,.12)}
 </style>
 <div id="panel-market" class="panel">
-  <div class="ma-inapp-top">
-    <div class="ma-inapp-switch" id="ma-inapp-switch">
-      <button data-kind="pre"  onclick="maShow('pre',this)">Pre-Market<span class="d">Before the bell</span></button>
-      <button data-kind="post" onclick="maShow('post',this)">Post-Market<span class="d">After the close</span></button>
-    </div>
-  </div>
   <div id="ma-host" class="ma-glass"></div>
   <div class="ma-disc-line">This report is for education and market awareness only — not investment advice.<br>Consult a licensed financial advisor before acting on anything shown here.</div>
 </div>
@@ -9740,35 +9734,21 @@ function v2Show(panelId, item){
 <!-- ── MARKET ANALYSIS — mounts the shared report renderer (pre/post editions,
      mirroring the public /desk page) ─────────────────────────────────────── -->
 <script>
-  function maShow(kind, btn){
-    document.querySelectorAll('#ma-inapp-switch button').forEach(function(b){
-      b.classList.toggle('on', b===btn || b.getAttribute('data-kind')===kind);
-    });
-    var host=document.getElementById('ma-host'); if(!host||!window.MarketReport) return;
+  // Single daily report (post-market framing: close summary + indicative next-day
+  // read). The old pre/post toggle was dropped — one edition, published once after
+  // the close and frozen for the day.
+  window.loadMarketAnalysis = function(){
+    if(!window.MarketReport) return;
+    var host=document.getElementById('ma-host'); if(!host) return;
+    if(host.__mr){ host.__mr.reload(); return; }   // already mounted → refresh
     host.__mr = window.MarketReport.mount(host, {
-      kind:kind,
-      endpoint:'/api/desk-report?type='+kind,
+      kind:'post',
+      endpoint:'/api/desk-report',
       onTicker:function(tk){
         if(typeof tsOpenDrawer==='function') tsOpenDrawer(tk);
         else if(typeof openStockModal==='function') openStockModal(tk);
       }
     });
-  }
-  window.loadMarketAnalysis = function(){
-    if(!window.MarketReport) return;
-    var host=document.getElementById('ma-host');
-    var on=document.querySelector('#ma-inapp-switch button.on');
-    if(on && host && host.__mr){ host.__mr.reload(); return; }   // already mounted → refresh
-    // Default to the edition most relevant now: post-market after ~4:15 PM ET,
-    // otherwise pre-market. (ET via the runtime's locale offset.)
-    var initial='pre';
-    try{
-      var et=new Date(new Date().toLocaleString('en-US',{timeZone:'America/New_York'}));
-      var mins=et.getHours()*60+et.getMinutes();
-      if(et.getDay()>=1 && et.getDay()<=5 && mins>=16*60+15) initial='post';
-    }catch(e){}
-    var btn=document.querySelector('#ma-inapp-switch button[data-kind="'+initial+'"]');
-    maShow(initial, btn);
   };
 </script>
 

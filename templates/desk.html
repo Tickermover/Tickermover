@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Pre &amp; Post-Market Reports — TickerMover</title>
-  <meta name="description" content="TickerMover's daily US pre-market and post-market reports — index futures, sector rotation, rates, commodities, top movers across 540+ stocks, and an AI-written read of the tape.">
+  <title>Daily Market Report — TickerMover</title>
+  <meta name="description" content="TickerMover's daily US market report, published after the close — index moves, sector rotation, rates, commodities, top movers across 540+ stocks, an AI-written read of the tape, and an indicative next-day forecast.">
   <link rel="icon" type="image/svg+xml" href="/static/brand/tickermover-mark.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -86,12 +86,8 @@
     <div class="desk-glass ma-glass">
       <section class="desk-hero">
         <div class="eyebrow">From the desk</div>
-        <h1>The US <em>market</em> reports</h1>
-        <p>Two daily editions — read the <b>Pre-Market</b> report before the bell and the <b>Post-Market</b> report after the close. Index futures, sector rotation, rates &amp; commodities, the day's biggest movers across 540+ stocks, and an AI-written take on the tape.</p>
-        <div class="desk-switch" id="desk-switch">
-          <button data-kind="pre"  onclick="deskShow('pre',this)">Pre-Market<span class="d">Before the bell</span></button>
-          <button data-kind="post" onclick="deskShow('post',this)">Post-Market<span class="d">After the close</span></button>
-        </div>
+        <h1>The daily <em>market</em> report</h1>
+        <p>One read, published after the close: how the day's tape played out and an indicative look at the next session. Index moves, sector rotation, rates &amp; commodities, the day's biggest movers across 540+ stocks, and an AI-written take.</p>
       </section>
 
       <main class="desk-main">
@@ -103,26 +99,18 @@
 
   <script src="/static/market_report.js"></script>
   <script>
-    var _deskCtrl=null;
-    function deskShow(kind, btn){
-      document.querySelectorAll('#desk-switch button').forEach(function(b){ b.classList.toggle('on', b===btn || b.getAttribute('data-kind')===kind); });
-      try{ history.replaceState(null,'','/desk/'+kind); }catch(e){}
-      var host=document.getElementById('desk-report');
-      _deskCtrl=window.MarketReport.mount(host, {
-        compact:true,
-        kind:kind,
-        endpoint:'/api/desk-report?type='+kind,
-        onTicker:function(tk){ window.location.href='/stocks/'+encodeURIComponent(tk); }
-      });
-    }
+    // Single daily report — uses the post-market framing (close summary + an
+    // indicative next-day read). No pre/post toggle, no live polling: the report
+    // is published once after the close and frozen for the day.
     (function start(){
       if(!window.MarketReport){ return setTimeout(start,60); }
-      var initial='__DESK_INITIAL__';
-      if(initial!=='pre' && initial!=='post') initial='pre';
-      var btn=document.querySelector('#desk-switch button[data-kind="'+initial+'"]');
-      deskShow(initial, btn);
-      // Refresh the live edition every 2 minutes while the tab stays open.
-      setInterval(function(){ if(!document.hidden && _deskCtrl) _deskCtrl.reload(); }, 120000);
+      var host=document.getElementById('desk-report');
+      window.MarketReport.mount(host, {
+        compact:true,
+        kind:'post',
+        endpoint:'/api/desk-report',
+        onTicker:function(tk){ window.location.href='/stocks/'+encodeURIComponent(tk); }
+      });
     })();
   </script>
 </body>

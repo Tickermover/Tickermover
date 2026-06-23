@@ -3473,33 +3473,22 @@ async def login_page():
         return HTMLResponse(content="<h2>templates/login.html not found</h2>", status_code=500)
 
 
-def _render_desk(initial_kind: str) -> HTMLResponse:
-    """Serve the public desk page, seeding the initial report (pre/post/auto)."""
-    try:
-        html = DESK_HTML.read_text(encoding="utf-8")
-    except FileNotFoundError:
-        return HTMLResponse(content="<h2>templates/desk.html not found</h2>", status_code=500)
-    html = html.replace("__DESK_INITIAL__", initial_kind, 1)
-    return HTMLResponse(content=html)
-
-
 @app.get("/desk", response_class=HTMLResponse)
 async def desk_report():
-    """Public pre/post-market report hub. Defaults to whichever edition is most
-    relevant right now (post-market after ~16:15 ET, otherwise pre-market)."""
-    now = _et_now()
-    initial = "post" if (now.weekday() < 5 and (now.hour, now.minute) >= (16, 15)) else "pre"
-    return _render_desk(initial)
+    """Public daily market report — one edition, published once after the close
+    with an indicative next-day read (replaces the old pre/post split)."""
+    try:
+        return HTMLResponse(content=DESK_HTML.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return HTMLResponse(content="<h2>templates/desk.html not found</h2>", status_code=500)
 
 
-@app.get("/desk/pre", response_class=HTMLResponse)
-async def desk_report_pre():
-    return _render_desk("pre")
-
-
-@app.get("/desk/post", response_class=HTMLResponse)
-async def desk_report_post():
-    return _render_desk("post")
+@app.get("/desk/pre")
+@app.get("/desk/post")
+async def desk_report_legacy():
+    """The pre/post editions were merged into one daily report — redirect old links."""
+    from fastapi.responses import RedirectResponse
+    return RedirectResponse(url="/desk", status_code=301)
 
 
 @app.get("/app", response_class=HTMLResponse)
@@ -4086,42 +4075,67 @@ _DESK_LIVE_TTL = 1800  # 30 min. Was 5 min, which (with the 10-min publisher loo
                        # every cycle all day — the real Haiku cost bleed. 30 min
                        # keeps it live-ish; the breaker below is the hard backstop.
 
-async def _publish_desk(kind: str, force: bool = False) -> dict:
-    """Return the LIVE pre/post report for `kind`. Tracks the market intraday:
-    macro data comes from the live 5-min market_analysis feed, movers from the
-    30-second universe loop, and the kind-framed AI narrative is regenerated
-    each rebuild. Cached ~5 min so we don't re-run the AI on every request."""
-    key = f"desk:report:live:{kind}"
+_DESK_DAILY_TTL = 26 * 3600   # hold the daily report ~26h (regen is date-gated)
+
+
+def _desk_edition_date(now_et) -> str:
+    """The trading day the single daily report represents: today after the 16:15
+    ET close on a weekday, otherwise the most recent prior weekday (rolls back
+    over the weekend)."""
+    from datetime import timedelta as _td
+    d = now_et.date()
+    after_close = now_et.weekday() < 5 and (now_et.hour, now_et.minute) >= (16, 15)
+    if not after_close:
+        d = d - _td(days=1)
+    while d.weekday() >= 5:        # Sat=5, Sun=6 → roll back to Friday
+        d = d - _td(days=1)
+    return d.isoformat()
+
+
+async def _publish_desk_daily(force: bool = False) -> dict:
+    """ONE daily market report — generated once per trading day after the close
+    (~16:15 ET) and then frozen until the next close. Uses the post-market framing
+    (the day's tape + an indicative next-day read). Once-daily = minimal AI cost;
+    the AI narrative also respects the budget breaker inside _build_desk_report."""
+    key = "desk:report:daily"
+    ed = _desk_edition_date(_et_now())
     cur = cache.get(key)
-    if cur and not force:
-        return cur
-    report = await _build_desk_report(kind, _et_now().date())
-    cache.set(key, report, _DESK_LIVE_TTL)
+    if cur and not force and (cur.get("edition") or {}).get("date") == ed:
+        return cur                              # today's frozen edition already built
+    report = await _build_desk_report("post", _et_now().date())
+    ses = report.get("session", {}) if isinstance(report, dict) else {}
+    report["edition"] = {
+        "kind":  "daily",
+        "live":  False,
+        "date":  ed,
+        "title": "Daily Market Report",
+        "as_of": ses.get("et_time"),
+        "session_label": ses.get("label"),
+    }
+    cache.set(key, report, _DESK_DAILY_TTL)
     return report
 
 
 async def _desk_publisher() -> None:
-    """Background heartbeat — re-publishes each edition as soon as its publish
-    time rolls past, so snapshots freeze near 09:00 / 16:15 ET rather than at a
-    random first-visit time. Idempotent: skips when the edition is already current."""
+    """Generate the single daily report once per trading day after the close,
+    then serve it frozen. Checks every 10 min, but the date gate means it actually
+    rebuilds (and pays for AI) at most once a day."""
     while True:
-        for kind in ("pre", "post"):
-            try:
-                await _publish_desk(kind)
-            except Exception as exc:
-                logger.warning(f"desk publisher ({kind}) failed: {exc}")
+        try:
+            await _publish_desk_daily()
+        except Exception as exc:
+            logger.warning(f"desk publisher failed: {exc}")
         await asyncio.sleep(600)            # 10 min
 
 
 @app.get("/api/desk-report")
-async def api_desk_report(type: str = "pre"):
-    """Current pre- or post-market edition. Serves the frozen snapshot for the
-    edition that's due now; before today's publish time that's yesterday's."""
-    kind = "post" if str(type).startswith("post") else "pre"
-    report = await _publish_desk(kind)
+async def api_desk_report(type: str = ""):
+    """The single daily market report (close summary + indicative next-day read).
+    `type` is accepted but ignored — kept so old /api/desk-report?type=… links work."""
+    report = await _publish_desk_daily()
     return JSONResponse(
         _clean(report),
-        headers={"Cache-Control": "public, max-age=60, s-maxage=90"},
+        headers={"Cache-Control": "public, max-age=300, s-maxage=600"},
     )
 
 

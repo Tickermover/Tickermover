@@ -51,9 +51,10 @@ window.MarketReport = (function () {
 
   // ── skeleton + mount ────────────────────────────────────────────────────
   function titleFor(kind) {
+    // 'post' is now the single daily edition (close summary + next-day read).
     return kind === 'pre' ? 'Pre-Market Report'
-      : kind === 'post' ? 'Post-Market Report'
-      : 'US pre &amp; post-market report';
+      : kind === 'post' ? 'Daily Market Report'
+      : 'Daily Market Report';
   }
 
   function skeleton(compact, kind) {
