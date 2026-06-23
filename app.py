@@ -4092,6 +4092,9 @@ def _desk_edition_date(now_et) -> str:
     return d.isoformat()
 
 
+_DESK_REPORT_VERSION = 2   # bump to force a one-time rebuild when the report changes
+
+
 async def _publish_desk_daily(force: bool = False) -> dict:
     """ONE daily market report — generated once per trading day after the close
     (~16:15 ET) and then frozen until the next close. Uses the post-market framing
@@ -4100,7 +4103,10 @@ async def _publish_desk_daily(force: bool = False) -> dict:
     key = "desk:report:daily"
     ed = _desk_edition_date(_et_now())
     cur = cache.get(key)
-    if cur and not force and (cur.get("edition") or {}).get("date") == ed:
+    _ce = (cur.get("edition") or {}) if isinstance(cur, dict) else {}
+    fresh = (cur and not force and _ce.get("date") == ed
+             and _ce.get("v") == _DESK_REPORT_VERSION)
+    if fresh:
         return cur                              # today's frozen edition already built
     report = await _build_desk_report("post", _et_now().date())
     ses = report.get("session", {}) if isinstance(report, dict) else {}
@@ -4114,6 +4120,7 @@ async def _publish_desk_daily(force: bool = False) -> dict:
     published_at = gen.strftime("%I:%M %p ET").lstrip("0") + " · " + gen.strftime("%d %b")
     report["edition"] = {
         "kind":         "daily",
+        "v":            _DESK_REPORT_VERSION,
         "live":         False,
         "date":         ed,
         "date_label":   date_label,        # the trading day this report covers
