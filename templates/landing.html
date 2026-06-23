@@ -1352,7 +1352,6 @@ button:focus-visible,[tabindex]:focus-visible{
       <a href="#research">Research</a>
       <a href="#ask-ai">Ask AI</a>
       <a href="#dashboard">Dashboard</a>
-      <a href="#insights">Insights</a>
       <a href="#pricing">Pricing</a>
     </div>
     <div class="nav-right">
@@ -1956,65 +1955,6 @@ button:focus-visible,[tabindex]:focus-visible{
   </div>
 </section>
 
-<!-- ───────── DAILY DESK — pre-market, post-market, article of the week ───────── -->
-<section class="section bg-alice" id="insights">
-  <div class="wrap">
-    <div class="head-row">
-      <div class="sec-head reveal">
-        <span class="eyebrow">From the desk</span>
-        <h2 class="sec-title">Before the bell. After the close.</h2>
-        <p class="sec-sub">Two daily briefs and one long-form pick of the week — so you walk into every session with the desk's read.</p>
-      </div>
-      <a class="btn btn-ghost reveal" href="/desk"><span>All reports</span><span class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span></a>
-    </div>
-    <div class="posts stagger reveal">
-      <a class="post" href="/desk/pre" style="text-decoration:none;color:inherit;cursor:pointer">
-        <div class="post-img post-mock pre">
-          <div class="pm-badge"><span class="pm-dot live"></span> Live</div>
-          <div class="mock-rows" id="lp-premkt-rows">
-            <div class="mock-row"><b>NVDA</b><span class="mr-tag up">+2.3%</span></div>
-            <div class="mock-row"><b>AMD</b><span class="mr-tag up">+1.6%</span></div>
-            <div class="mock-row"><b>SHOP</b><span class="mr-tag up">+1.1%</span></div>
-          </div>
-        </div>
-        <div class="post-body">
-          <span class="post-cat">Pre-market</span>
-          <h3>What's moving before the bell</h3>
-          <p class="date">Live movers · updated continuously</p>
-        </div>
-      </a>
-      <a class="post" href="/desk/post" style="text-decoration:none;color:inherit;cursor:pointer">
-        <div class="post-img post-mock post">
-          <div class="pm-badge"><span class="pm-dot live"></span> Live</div>
-          <div class="mock-rows" id="lp-postmkt-rows">
-            <div class="mock-row"><b>Top gainer</b><span class="mr-tag up">PLTR +5.4%</span></div>
-            <div class="mock-row"><b>Top loser</b><span class="mr-tag dn">NVDA −2.1%</span></div>
-            <div class="mock-row"><b>Runner-up</b><span class="mr-tag up">URI +3.0%</span></div>
-          </div>
-        </div>
-        <div class="post-body">
-          <span class="post-cat">Post-market</span>
-          <h3>Today's tape, decoded</h3>
-          <p class="date">Live movers · updated continuously</p>
-        </div>
-      </a>
-      <article class="post">
-        <div class="post-img post-mock feat">
-          <div class="pm-badge feat"><svg viewBox="0 0 24 24" fill="currentColor" width="11" height="11"><path d="M12 2l2.4 7.4H22l-6 4.4 2.3 7.2L12 16.4 3.7 21l2.3-7.2-6-4.4H9.6z"/></svg> Featured this week</div>
-          <div class="mock-feat">
-            <div class="mock-feat-quote">"The win isn't picking faster. It's exiting on rule."</div>
-            <div class="mock-feat-auth">— The desk</div>
-          </div>
-        </div>
-        <div class="post-body">
-          <span class="post-cat">Article of the week</span>
-          <h3>Why discipline beats discovery</h3>
-          <p class="date">Featured · 12 min read</p>
-        </div>
-      </article>
-    </div>
-  </div>
-</section>
 
 <!-- ───────── FAQ (Arooth horizontal accordion) ───────── -->
 <section class="section bg-dark" id="faq">
@@ -2250,7 +2190,6 @@ button:focus-visible,[tabindex]:focus-visible{
           <a href="#engine">The engine</a>
           <a href="#dashboard">Dashboard</a>
           <a href="#ai-engine">How it works</a>
-          <a href="#insights">Daily desk</a>
           <a href="#pricing">Pricing</a>
         </nav>
         <div class="foot-meta">
@@ -2480,36 +2419,6 @@ setTimeout(()=>{revealEls.forEach(e=>e.classList.add('in'));countEls.forEach(run
     tri.map(function(p){return p[0].toFixed(1)+','+p[1].toFixed(1);}).join(' '));
 })();
 
-/* ── From the desk — populate the pre/post-market cards with live movers ── */
-(function(){
-  function row(label, sym, pct){
-    var up = pct >= 0;
-    var tag = (up?'+':'−') + Math.abs(pct).toFixed(1) + '%';
-    return '<div class="mock-row"><b>'+label+'</b><span class="mr-tag '+(up?'up':'dn')+'">'+
-           (sym?(sym+' '):'')+tag+'</span></div>';
-  }
-  fetch('/api/ticker-strip').then(function(r){return r.json();}).then(function(j){
-    var items=(j&&j.items)||[];
-    if(!items.length) return;
-    var byChg=items.slice().sort(function(a,b){return (b.change_pct||0)-(a.change_pct||0);});
-    var gain=byChg.filter(function(x){return (x.change_pct||0)>0;});
-    var lose=byChg.filter(function(x){return (x.change_pct||0)<0;});
-    var pre=document.getElementById('lp-premkt-rows');
-    if(pre && gain.length>=3){
-      pre.innerHTML = gain.slice(0,3).map(function(x){
-        return '<div class="mock-row"><b>'+x.symbol+'</b><span class="mr-tag up">+'+Math.abs(x.change_pct).toFixed(1)+'%</span></div>';
-      }).join('');
-    }
-    var post=document.getElementById('lp-postmkt-rows');
-    if(post){
-      var html='';
-      if(gain[0]) html+=row('Top gainer', gain[0].symbol, gain[0].change_pct);
-      if(lose.length) html+=row('Top loser', lose[lose.length-1].symbol, lose[lose.length-1].change_pct);
-      if(gain[1]) html+=row('Runner-up', gain[1].symbol, gain[1].change_pct);
-      if(html) post.innerHTML=html;
-    }
-  }).catch(function(){ /* keep the static teaser rows on failure */ });
-})();
 
 </script>
 </body>
