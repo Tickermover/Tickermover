@@ -620,7 +620,7 @@ async def _regime_refresh() -> None:
         # Keep the Market Analysis snapshot warm on the same cadence so the
         # first panel opener rides the cache instead of paying the yfinance fetch.
         try:
-            await market_analysis.refresh()
+            await market_analysis.refresh(allow_ai=not _ai_over_budget())
         except Exception as exc:
             logger.warning(f"Market analysis refresh failed: {exc}")
         await asyncio.sleep(1800)   # 30 min
@@ -3826,7 +3826,7 @@ async def api_market_analysis():
     """
     data = market_analysis.get()
     if not data or not data.get("available"):
-        data = await market_analysis.refresh()
+        data = await market_analysis.refresh(allow_ai=not _ai_over_budget())
     if isinstance(data, dict) and data.get("available"):
         data = dict(data)                  # shallow copy — never mutate the cache
         data["stocks"] = _market_movers()
@@ -4048,14 +4048,18 @@ async def _build_desk_report(kind: str, edition_date) -> dict:
     """Assemble a full report payload (macro + stocks + kind-framed AI) and
     stamp it with the edition date it represents."""
     macro = market_analysis.get()
+    # Respect the AI cost breaker for BOTH paid Haiku calls here (the market-
+    # analysis refresh narrative and the desk-framed narrative). When tripped,
+    # refresh data only and serve the deterministic fallback prose.
+    over = _ai_over_budget()
     if not macro or not macro.get("available"):
-        macro = await market_analysis.refresh()
+        macro = await market_analysis.refresh(allow_ai=not over)
     data = dict(macro) if isinstance(macro, dict) else {"available": False}
     data["kind"]   = kind
     data["stocks"] = _market_movers()
     data["events"] = await _key_events()
     try:
-        data["ai"] = await market_analysis.ai_narrative(data, kind)
+        data["ai"] = None if over else await market_analysis.ai_narrative(data, kind)
     except Exception as exc:
         logger.warning(f"desk {kind} AI narrative failed: {exc}")
         data["ai"] = None
@@ -4077,7 +4081,10 @@ def _desk_is_current(doc, ed) -> bool:
                 and doc.get("edition", {}).get("date") == ed.isoformat())
 
 
-_DESK_LIVE_TTL = 300   # 5 min — desk report now tracks the market live
+_DESK_LIVE_TTL = 1800  # 30 min. Was 5 min, which (with the 10-min publisher loop)
+                       # regenerated the Haiku desk + market-analysis narratives
+                       # every cycle all day — the real Haiku cost bleed. 30 min
+                       # keeps it live-ish; the breaker below is the hard backstop.
 
 async def _publish_desk(kind: str, force: bool = False) -> dict:
     """Return the LIVE pre/post report for `kind`. Tracks the market intraday:

@@ -616,7 +616,12 @@ class MarketAnalysis:
     """
 
     CACHE_KEY = "intel:market_analysis"
-    TTL       = 300   # 5 minutes
+    # 30 min. Was 5 min, which — combined with the 10-min desk publisher loop —
+    # regenerated the Haiku AI narrative every cycle all day (a major cost bleed,
+    # ~Jun 18 onward). Pre/post-market macro readings drift slowly; the AI prose
+    # does NOT need to rewrite every 5 minutes. Live stock movers are layered on
+    # separately by the 30-second quote loop, so freshness is unaffected.
+    TTL       = 1800   # 30 minutes
 
     INDEX_ETFS = {
         "SPY": "S&P 500",
@@ -661,8 +666,11 @@ class MarketAnalysis:
     def get(self) -> Optional[dict]:
         return self.cache.get(self.CACHE_KEY)
 
-    async def refresh(self) -> dict:
-        """Fetch the macro basket and rebuild the snapshot. Cached on success."""
+    async def refresh(self, allow_ai: bool = True) -> dict:
+        """Fetch the macro basket and rebuild the snapshot. Cached on success.
+        allow_ai=False (caller passes the AI cost breaker state) skips the paid
+        Haiku narrative — the data is still refreshed and cached, the frontend
+        renders its deterministic fallback prose."""
         if not _YF_AVAILABLE:
             return {"available": False, "reason": "Market data feed unavailable.",
                     "ts": datetime.now(tz=timezone.utc).isoformat()}
@@ -670,9 +678,9 @@ class MarketAnalysis:
             payload = await asyncio.to_thread(self._build)
             if payload and payload.get("available"):
                 # AI narrative — Claude writes the report from the live numbers.
-                # Best-effort: on no-key/timeout/parse-failure we cache the data
-                # alone and the frontend renders its deterministic fallback prose.
-                payload["ai"] = await self._ai_narrative(payload)
+                # Best-effort: on no-key/timeout/parse-failure (or over budget) we
+                # cache the data alone and the frontend renders its fallback prose.
+                payload["ai"] = await self._ai_narrative(payload) if allow_ai else None
                 self.cache.set(self.CACHE_KEY, payload, self.TTL)
                 return payload
         except Exception as exc:
