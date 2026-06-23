@@ -3168,12 +3168,28 @@ async def newsletter_subscribe(body: _NewsletterBody):
         "source": (body.source or "unknown")[:60],
         "ts": _dt.utcnow().isoformat() + "Z",
     }
+    # Was this email already on the list BEFORE this request? (Decides whether to
+    # fire the one-time welcome brief below — must be read before we append.)
+    already = email in set(_newsletter_subscribers())
     try:
         with open(_NEWSLETTER_FILE, "a", encoding="utf-8") as f:
             f.write(_json.dumps(rec, separators=(",", ":")) + "\n")
     except Exception as e:
         logger.warning("newsletter write failed: %s", e)
-    return {"ok": True, "message": "You're in! Your first daily brief lands before the next US open."}
+    # Send the brief IMMEDIATELY (fire-and-forget) so a new subscriber gets real
+    # value + proof-of-working now, instead of waiting for the next weekday 11:00
+    # UTC batch. Best-effort: if RESEND_API_KEY isn't configured this no-ops and
+    # logs — the subscription is still saved.
+    if not already:
+        try:
+            import email_sender
+            unsub = f"{SITE_ORIGIN}/unsubscribe?e={_urlquote(email)}&t={_unsub_token(email)}"
+            asyncio.create_task(email_sender.send_newsletter_email(
+                email, "Welcome — your first TickerMover daily brief",
+                _render_brief_email(unsub)))
+        except Exception as e:
+            logger.warning("newsletter welcome send failed: %s", e)
+    return {"ok": True, "message": "You're in! Check your inbox — your first daily brief is on its way."}
 
 
 # ═══════════════════════════════════════════════════════════════════════════
