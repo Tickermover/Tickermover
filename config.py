@@ -84,8 +84,9 @@ STRIPE_WEBHOOK_SECRET  = _env("STRIPE_WEBHOOK_SECRET",  "")   # whsec_… from t
 # Hard daily (UTC) ceiling on AI cost. Once today's recorded spend crosses this,
 # the background prewarms + the expensive web-search generators STOP generating
 # (serve cached/template) so a runaway loop can never bleed past it. Normal days
-# run ~$1-3; default $12 leaves headroom for a busy day but stops a 10x leak.
-AI_DAILY_USD_CAP = float(_env("AI_DAILY_USD_CAP", "12") or "12")
+# now run well under $1; default lowered 12 -> $5 (2026-06-23) as a tight daily
+# guard under the $50/month cap. Override with the AI_DAILY_USD_CAP env var.
+AI_DAILY_USD_CAP = float(_env("AI_DAILY_USD_CAP", "5") or "5")
 
 # Hard MONTHLY (UTC) ceiling on total AI cost — the real "≤ $X/month no matter
 # how many users" guarantee. The daily cap stops a runaway loop; this stops the
