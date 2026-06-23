@@ -4104,12 +4104,23 @@ async def _publish_desk_daily(force: bool = False) -> dict:
         return cur                              # today's frozen edition already built
     report = await _build_desk_report("post", _et_now().date())
     ses = report.get("session", {}) if isinstance(report, dict) else {}
+    gen = _et_now()
+    from datetime import date as _date
+    try:
+        _y, _m, _d = (int(x) for x in ed.split("-"))
+        date_label = _date(_y, _m, _d).strftime("%a, %d %b %Y")
+    except Exception:
+        date_label = ed
+    published_at = gen.strftime("%I:%M %p ET").lstrip("0") + " · " + gen.strftime("%d %b")
     report["edition"] = {
-        "kind":  "daily",
-        "live":  False,
-        "date":  ed,
-        "title": "Daily Market Report",
-        "as_of": ses.get("et_time"),
+        "kind":         "daily",
+        "live":         False,
+        "date":         ed,
+        "date_label":   date_label,        # the trading day this report covers
+        "published_at": published_at,      # when this edition was published
+        "is_today":     ed == gen.date().isoformat(),
+        "title":        "Daily Market Report",
+        "as_of":        ses.get("et_time"),
         "session_label": ses.get("label"),
     }
     cache.set(key, report, _DESK_DAILY_TTL)

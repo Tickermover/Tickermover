@@ -66,10 +66,9 @@ window.MarketReport = (function () {
           `<div class="ma-title">${titleFor(kind)}</div></div>` +
         sessionBadge + `</div>`;
     const edition = `<div class="ma-edition" data-ma-edition hidden></div>`;
-    const tabs = `<div class="ma-tabs" data-ma-tabs>` +
-      tabsFor(kind).map((t, i) => `<button class="ma-tab${i === 0 ? ' on' : ''}" data-ma="${t[0]}">${t[1]}</button>`).join('') +
-      `</div>`;
-    return head + edition + tabs +
+    // No tabs — the report is now one editorial scroll (masthead → infographics →
+    // technicals → commodities/rates → what's watching → the verdict).
+    return head + edition +
       `<div class="ma-content" data-ma-content><div class="ma-loading">📈 Fetching live market data…</div></div>` +
       `<div class="ma-foot" data-ma-foot></div>`;
   }
@@ -83,7 +82,8 @@ window.MarketReport = (function () {
       kind: opts.kind || null, endpoint: opts.endpoint || '/api/market-analysis', loading: false,
     };
 
-    host.querySelector('[data-ma-tabs]').addEventListener('click', e => {
+    const tabsEl = host.querySelector('[data-ma-tabs]');
+    if (tabsEl) tabsEl.addEventListener('click', e => {
       const b = e.target.closest('.ma-tab'); if (!b) return;
       st.tab = b.getAttribute('data-ma');
       host.querySelectorAll('.ma-tab').forEach(x => x.classList.toggle('on', x === b));
@@ -156,9 +156,7 @@ window.MarketReport = (function () {
       c.innerHTML = '<div class="ma-loading">' + ((d && d.reason) || 'Market data is unavailable right now.') + '</div>';
       return;
     }
-    if (st.tab === 'news') return renderNews(host, st, c);
-    const fn = { brief, indices, tech, sectors, movers, macro }[st.tab];
-    c.innerHTML = fn ? fn(d) : '';
+    c.innerHTML = brief(d);   // single editorial report — no tabs
   }
 
   // ── Opening / Closing Brief — the editorial front page ───────────────────
@@ -304,8 +302,13 @@ window.MarketReport = (function () {
       `<div class="ed-sec-h">📈 The tape, in words</div><div class="ed-dek">${narrative}</div>` +
       sectorChart(d) +
       moversChart(d) +
+      `<div class="ed-sec-h">📐 Technicals · S&amp;P 500</div>` + tech(d) +
+      `<div class="ed-sec-h">💵 Rates, volatility &amp; the dollar</div>` +
+      `<div class="ma-grid">${(d.rates_fx || []).map(r => card(r)).join('')}</div>` +
+      `<div class="ed-sec-h">🛢️ Commodities</div>` +
+      `<div class="ma-grid">${(d.commodities || []).map(r => card(r)).join('')}</div>` +
       events(d) +
-      `<div class="ed-sec-h">${d.kind === 'post' ? 'The verdict · into tomorrow' : 'The verdict · the day ahead'}</div>` +
+      `<div class="ed-sec-h">${d.kind === 'post' ? '⚖️ The verdict · into tomorrow' : '⚖️ The verdict · the day ahead'}</div>` +
       tomorrowBox(d) +
       verdict(d);
   }
