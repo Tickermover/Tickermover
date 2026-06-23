@@ -215,7 +215,22 @@ window.MarketReport = (function () {
       ".ed-vix .read .w{font-size:11.5px;font-weight:600;color:#64748b;margin-top:2px}" +
       ".ed-tom{background:rgba(41,112,255,.06);border:1px solid rgba(41,112,255,.18);border-radius:14px;padding:15px 18px;margin:4px 0 2px}" +
       ".ed-tom .h{font-size:15.5px;font-weight:700;color:#0f172a;margin-bottom:6px}" +
-      ".ed-tom .t{font-size:14.5px;line-height:1.6;color:#334155}";
+      ".ed-tom .t{font-size:14.5px;line-height:1.6;color:#334155}" +
+      ".ed-regime{background:linear-gradient(180deg,rgba(41,112,255,.05),rgba(41,112,255,.02));border:1px solid rgba(41,112,255,.16);border-radius:14px;padding:16px 18px;margin:2px 0}" +
+      ".ed-rg-top{display:flex;align-items:baseline;justify-content:space-between;gap:12px}" +
+      ".ed-rg-lab{font-family:'Fraunces',Georgia,serif;font-size:22px;font-weight:600;color:#0f172a}" +
+      ".ed-rg-score{font-size:22px;font-weight:800;color:#2970ff}.ed-rg-score span{font-size:13px;font-weight:600;color:#94a3b8}" +
+      ".ed-rg-bar{display:flex;align-items:center;gap:9px;margin:10px 0 4px}" +
+      ".ed-rg-bar .lo,.ed-rg-bar .hi{font-size:11px;font-weight:600;color:#64748b;white-space:nowrap}" +
+      ".ed-rg-track{position:relative;flex:1;height:12px;border-radius:7px;background:linear-gradient(90deg,#dc2626,#f5a623 50%,#15803d)}" +
+      ".ed-rg-track .pin{position:absolute;top:-4px;width:3px;height:20px;background:#0f172a;border-radius:2px;transform:translateX(-50%);box-shadow:0 0 0 2px #fff}" +
+      ".ed-rg-read{font-size:14.5px;line-height:1.55;color:#334155;margin:10px 0 4px}" +
+      ".ed-tf-h,.ed-tf{display:grid;grid-template-columns:96px 1fr 1fr 1fr;gap:6px;align-items:center}" +
+      ".ed-tf-h{font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#94a3b8;margin-top:8px;padding-bottom:4px;border-bottom:1px solid rgba(15,23,42,.07)}" +
+      ".ed-tf-h span,.ed-tf span:not(.nm){text-align:right}" +
+      ".ed-tf{font-size:13px;padding:5px 0;border-bottom:1px solid rgba(15,23,42,.05)}" +
+      ".ed-tf .nm{font-weight:600;color:#334155}" +
+      ".ed-track-stat{font-size:13.5px;line-height:1.5;color:#334155;background:rgba(21,128,61,.07);border:1px solid rgba(21,128,61,.18);border-radius:11px;padding:11px 14px;margin-top:10px}";
     document.head.appendChild(s);
   }
 
@@ -280,6 +295,35 @@ window.MarketReport = (function () {
     return `<div class="ed-tom"><div class="h">📅 The setup into tomorrow</div><div class="t">${aiTag()}${t}</div></div>`;
   }
 
+  // 📡 The Big Picture — our proprietary regime gauge (the IBD-style market pulse).
+  function regimeSection(d) {
+    const r = d.regime || {}, rc = r.components || {};
+    if (r.regime_label == null || r.regime_score == null) return '';
+    const pin = Math.max(2, Math.min(98, r.regime_score));
+    const read = (d.ai && d.ai.regime_read) ? `<div class="ed-rg-read">${aiTag()}${d.ai.regime_read}</div>` : '';
+    const cell = v => `<span class="${cls(v)}" style="font-weight:800">${pctTxt(v)}</span>`;
+    const tf = (sym, nm) => { const c = rc[sym]; return c ? `<div class="ed-tf"><span class="nm">${nm}</span>${cell(c.pct_1d)}${cell(c.pct_5d)}${cell(c.pct_1m)}</div>` : ''; };
+    const rows = [tf('SPY', 'S&P 500'), tf('QQQ', 'Nasdaq 100'), tf('DIA', 'Dow'), tf('^VIX', 'VIX'), tf('^TNX', '10-yr yield')].filter(Boolean).join('');
+    return `<div class="ed-sec-h">📡 The Big Picture · our regime model</div>` +
+      `<div class="ed-regime">` +
+        `<div class="ed-rg-top"><div class="ed-rg-lab">${r.regime_label}</div><div class="ed-rg-score">${N(r.regime_score, 0)}<span>/100</span></div></div>` +
+        `<div class="ed-rg-bar"><span class="lo">Defensive</span><div class="ed-rg-track"><div class="pin" style="left:${pin}%"></div></div><span class="hi">Risk-on</span></div>` +
+        read +
+        (rows ? `<div class="ed-tf-h"><span class="nm"></span><span>1-day</span><span>5-day</span><span>1-month</span></div>${rows}` : '') +
+      `</div>`;
+  }
+
+  // 🎯 Through our lens — what today did to our top-rated names + the track record.
+  function houseSection(d) {
+    const hv = (d.ai && d.ai.house_view) ? `<div class="ed-dek">${aiTag()}${d.ai.house_view}</div>` : '';
+    const top = ((d.stocks || {}).top_score || []).slice(0, 5);
+    const tr = (d.house && d.house.track) || {};
+    if (!hv && !top.length) return '';
+    const bars = top.length ? diverBars(top.map(x => ({ label: x.ticker, pct: x.change_pct }))) : '';
+    const stat = (tr && tr.n) ? `<div class="ed-track-stat"><b>Our track record:</b> ${tr.hit_rate}% hit rate across ${tr.n} closed picks · avg move ${pctTxt(tr.avg)} · avg winner ${pctTxt(tr.avg_win)}.</div>` : '';
+    return `<div class="ed-sec-h">🎯 Through our lens · top-rated names today</div>` + hv + bars + stat;
+  }
+
   function brief(d) {
     injectStyles();
     const v = (d.ai && d.ai.verdict) || {};
@@ -298,10 +342,12 @@ window.MarketReport = (function () {
         (dek ? `<div class="ed-dek">${dek}</div>` : '') +
       `</div>` +
       indexChart(d) +
+      regimeSection(d) +
       execSummary(d) +
       `<div class="ed-sec-h">📈 The tape, in words</div><div class="ed-dek">${narrative}</div>` +
       sectorChart(d) +
       moversChart(d) +
+      houseSection(d) +
       `<div class="ed-sec-h">📐 Technicals · S&amp;P 500</div>` + tech(d) +
       `<div class="ed-sec-h">💵 Rates, volatility &amp; the dollar</div>` +
       `<div class="ma-grid">${(d.rates_fx || []).map(r => card(r)).join('')}</div>` +

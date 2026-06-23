@@ -941,6 +941,28 @@ class MarketAnalysis:
             for e in evs[:8]
         ) or "n/a"
 
+        # ── House lens — our proprietary engine (this is what makes it editorial) ──
+        reg = d.get("regime") or {}
+        rc = reg.get("components") or {}
+        def _tf(sym, nm):
+            c = rc.get(sym) or {}
+            if not c:
+                return ""
+            return (f"{nm} 1d {c.get('pct_1d')}% / 5d {c.get('pct_5d')}% / "
+                    f"1m {c.get('pct_1m')}% (dist 3m-high {c.get('dist_3m_high')}%)")
+        regime_line = (f"label '{reg.get('regime_label')}', score "
+                       f"{reg.get('regime_score')}/100 (50=neutral, higher=risk-on)"
+                       if reg else "n/a")
+        regime_tf = " | ".join(x for x in (_tf('SPY', 'S&P'), _tf('QQQ', 'Nasdaq'),
+                                           _tf('^VIX', 'VIX'), _tf('^TNX', '10-yr')) if x) or "n/a"
+        top_rated_line = stk((st.get('top_score') or [])[:6])
+        house = d.get("house") or {}
+        tr = house.get("track") or {}
+        track_line = (f"{tr.get('n')} closed model trades — hit rate {tr.get('hit_rate')}%, "
+                      f"avg move {tr.get('avg')}%, avg winner {tr.get('avg_win')}%"
+                      if tr.get('n') else "track record still building")
+        book_open = (house.get("book") or {}).get("open")
+
         if kind == "pre":
             frame = ("This is a PRE-MARKET report, written before the 9:30 ET open. "
                      "Frame everything around the expected open and the day ahead: "
@@ -984,13 +1006,32 @@ class MarketAnalysis:
             f"Top losers: {stk(st.get('losers'))}\n"
             f"Earnings on deck: {stk(st.get('earnings'))}\n"
             f"Just reported: {stk(st.get('just_reported'))}\n"
-            f"Upcoming macro events: {ev_line}\n\n"
-            "You are the markets editor writing the desk's daily report. Voice: "
-            "sharp, plain-English, data-driven — every claim tied to a number "
-            "above. Educational market context only; never a buy/sell call and "
-            "never invent a figure. Return ONLY a JSON object (no markdown, no "
-            "commentary) with exactly these keys:\n"
+            f"Upcoming macro events: {ev_line}\n"
+            "--- OUR PROPRIETARY ENGINE (write the editorial THROUGH this lens) ---\n"
+            f"OUR REGIME MODEL ('Big Picture' market gauge): {regime_line}.\n"
+            f"  Multi-timeframe trend: {regime_tf}.\n"
+            f"OUR HIGHEST ALPHA-SCORE NAMES today: {top_rated_line}\n"
+            f"OUR MODEL BOOK: {book_open if book_open is not None else 'n/a'} open positions; "
+            f"track record — {track_line}.\n\n"
+            "You are the TickerMover markets editor writing the desk's signed daily "
+            "editorial — to the standard a Zacks / IBD / Morningstar analyst would "
+            "publish. Voice: sharp, plain-English, data-driven, with a clear point "
+            "of view. THE EDGE: anchor the read in OUR regime gauge (state it as a "
+            "Big-Picture market-direction call, like IBD's market pulse) and OUR "
+            "Alpha-Score lens (what today did to our top-rated names; what it means "
+            "for our book, citing the track record). That house view is what makes "
+            "this OURS, not a generic wrap. Every claim ties to a number above; "
+            "educational context only, never a buy/sell call, never invent a figure. "
+            "Return ONLY a JSON object (no markdown, no commentary) with exactly "
+            "these keys:\n"
             "{\n"
+            '  "regime_read": "2-3 sentences: our Big-Picture market-direction call '
+            'straight from the regime gauge — name the label and score, cite the '
+            'multi-timeframe trend, and state the stance (risk-on / cautious / '
+            'defensive) with the reason. This is our IBD-style market pulse.",\n'
+            '  "house_view": "2-3 sentences through our Alpha-Score lens: how today '
+            'treated our highest-rated names, and the read for our model book — '
+            'reference the track record. Observational, never a trade call.",\n'
             '  "headline": "One punchy editorial headline (<= 12 words) capturing '
             'the day\'s single most important story.",\n'
             '  "dek": "One sentence standfirst that expands the headline.",\n'

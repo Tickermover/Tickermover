@@ -4033,6 +4033,32 @@ def _desk_key(kind: str) -> str:
     return f"desk:report:v3:{kind}"
 
 
+async def _desk_house_lens() -> dict:
+    """The proprietary 'house' data for the editorial: the model book's track
+    record (closed-trade hit rate + average move) and the open-book size. Cheap,
+    best-effort — built once/day with the report."""
+    out: dict = {}
+    try:
+        trades = await asyncio.to_thread(_store.load_trades, 500) or []
+        real = [t for t in trades if t.get("exit_reason") != "rebuild"]
+        pcts = [float(t.get("final_pct") or 0) for t in real]
+        wins = [p for p in pcts if p > 0]
+        n = len(pcts)
+        out["track"] = {
+            "n":        n,
+            "hit_rate": round(len(wins) / n * 100, 1) if n else None,
+            "avg":      round(sum(pcts) / n, 2) if n else None,
+            "avg_win":  round(sum(wins) / len(wins), 2) if wins else None,
+        }
+    except Exception:
+        out["track"] = {}
+    try:
+        out["book"] = {"open": len((_model_portfolio or {}).get("picks") or [])}
+    except Exception:
+        out["book"] = {}
+    return out
+
+
 async def _build_desk_report(kind: str, edition_date) -> dict:
     """Assemble a full report payload (macro + stocks + kind-framed AI) and
     stamp it with the edition date it represents."""
@@ -4047,6 +4073,11 @@ async def _build_desk_report(kind: str, edition_date) -> dict:
     data["kind"]   = kind
     data["stocks"] = _market_movers()
     data["events"] = await _key_events()
+    # ── House lens — the proprietary edge that makes this an EDITORIAL, not a
+    # generic wrap: our regime "Big Picture" call + the model book's track record.
+    # Added BEFORE the AI call so the narrative can be written through our lens.
+    data["regime"] = market_regime.get() or {}
+    data["house"]  = await _desk_house_lens()
     try:
         data["ai"] = None if over else await market_analysis.ai_narrative(data, kind)
     except Exception as exc:
@@ -4092,7 +4123,7 @@ def _desk_edition_date(now_et) -> str:
     return d.isoformat()
 
 
-_DESK_REPORT_VERSION = 2   # bump to force a one-time rebuild when the report changes
+_DESK_REPORT_VERSION = 3   # bump to force a one-time rebuild when the report changes
 
 
 async def _publish_desk_daily(force: bool = False) -> dict:
