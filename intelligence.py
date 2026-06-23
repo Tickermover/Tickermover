@@ -874,7 +874,7 @@ class MarketAnalysis:
                     },
                     json={
                         "model":      _ANTHROPIC_MODEL,
-                        "max_tokens": 900,
+                        "max_tokens": 1500,   # once/day now — room for the editorial bullets
                         "messages":   [{"role": "user", "content": prompt}],
                     },
                 )
@@ -985,9 +985,18 @@ class MarketAnalysis:
             f"Earnings on deck: {stk(st.get('earnings'))}\n"
             f"Just reported: {stk(st.get('just_reported'))}\n"
             f"Upcoming macro events: {ev_line}\n\n"
-            "Return ONLY a JSON object (no markdown, no commentary) with exactly "
-            "these keys:\n"
+            "You are the markets editor writing the desk's daily report. Voice: "
+            "sharp, plain-English, data-driven — every claim tied to a number "
+            "above. Educational market context only; never a buy/sell call and "
+            "never invent a figure. Return ONLY a JSON object (no markdown, no "
+            "commentary) with exactly these keys:\n"
             "{\n"
+            '  "headline": "One punchy editorial headline (<= 12 words) capturing '
+            'the day\'s single most important story.",\n'
+            '  "dek": "One sentence standfirst that expands the headline.",\n'
+            '  "executive_summary": ["4 to 5 crisp, self-contained bullets — the '
+            'key takeaways a busy reader needs. Each bullet leads with the hard '
+            'number (e.g. \'Nasdaq -3.1%: growth led the selloff\'). No filler."],\n'
             '  "brief": "3-4 short sentences on the session, the futures gap, the '
             'broad-market move, the VIX mood, and one notable stock move.",\n'
             '  "technicals_note": "1-2 short sentences on where SPY sits vs its '
@@ -998,6 +1007,8 @@ class MarketAnalysis:
             '  "watching": "1 short sentence on the key macro event(s) the market '
             'is waiting on for direction, by name and day. If none, say markets '
             'have a light data calendar.",\n'
+            '  "tomorrow": "2-3 sentences on the set-up into the next session: what '
+            'futures imply, the key level/catalyst, and what would change the read.",\n'
             '  "verdict": {\n'
             f'    "headline": "{verdict_head}",\n'
             '    "what_it_means": "2-3 short lines of plain context. No trade calls.",\n'

@@ -186,39 +186,127 @@ window.MarketReport = (function () {
     const c = dir === 'flat' ? 'ma-flat' : dir === 'up' ? 'ma-pos' : 'ma-neg';
     return `<div class="ma-gapchip ${c}"><span class="g-k">S&P FUTURES</span><span class="g-v">${word}</span><span class="g-n">${pctTxt(gap)}</span></div>`;
   }
-  function brief(d) {
-    const gap = d.gap_pct, spy = find(d.indices, 'SPY'), vix = find(d.rates_fx, '^VIX');
-    const gapTxt = gap == null ? 'Equity futures data is unavailable right now.'
-      : Math.abs(gap) < 0.15 ? 'S&P 500 futures are <b>roughly flat</b> — a quiet open is likely.'
-      : `S&P 500 futures point to a <b>${gap > 0 ? 'higher' : 'lower'} open</b>, about ${Math.abs(gap).toFixed(2)}%.`;
-    const moodTxt = spy.chg_pct == null ? 'Broad-market reading pending.'
-      : `The S&P 500 (SPY) is <b class="${cls(spy.chg_pct)}">${spy.chg_pct >= 0 ? 'up' : 'down'} ${Math.abs(spy.chg_pct).toFixed(2)}%</b> versus its prior close.`;
-    let vixTxt = '';
-    if (vix.last != null) {
-      const v = vix.last, w = v < 15 ? 'calm' : v < 20 ? 'a little nervous' : v < 25 ? 'anxious' : 'fearful';
-      vixTxt = `Volatility (VIX) is <b>${v.toFixed(2)}</b> — the market looks <b>${w}</b>.`;
-    }
-    let body;
-    if (d.kind === 'post') {
-      const ah = (gap != null && Math.abs(gap) >= 0.15)
-        ? ` Futures already point <b>${gap > 0 ? 'higher' : 'lower'}</b> for tomorrow.` : '';
-      body = `After the close. ${moodTxt} ${vixTxt}${ah}`;
-    } else {
-      const intro = d.kind === 'pre' ? 'Heading into the open. ' : 'For the current session. ';
-      body = `${intro}${gapTxt} ${moodTxt} ${vixTxt}`;
-    }
-    const eyebrow = d.kind === 'post' ? 'THE CLOSE' : 'BEFORE THE BELL';
-    const accent = spy.chg_pct == null ? 'flat' : spy.chg_pct > 0.05 ? 'pos' : spy.chg_pct < -0.05 ? 'neg' : 'flat';
-    const narrative = (d.ai && d.ai.brief) ? `${aiTag()}${d.ai.brief}` : body;
+  // ── Editorial / infographic front page ──────────────────────────────────
+  function injectStyles() {
+    if (document.getElementById('mr-ed-styles')) return;
+    const s = document.createElement('style');
+    s.id = 'mr-ed-styles';
+    s.textContent =
+      ".ed-mast{margin:2px 0 8px}" +
+      ".ed-kicker{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#2970ff}" +
+      ".ed-headline{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:clamp(22px,3.3vw,31px);line-height:1.13;letter-spacing:-.01em;color:#0f172a;margin:7px 0 7px}" +
+      ".ed-dek{font-size:15px;line-height:1.55;color:#475569;max-width:780px}" +
+      ".ed-sec-h{display:flex;align-items:center;gap:8px;font-size:11.5px;font-weight:700;letter-spacing:.11em;text-transform:uppercase;color:#64748b;margin:24px 0 11px;padding-top:15px;border-top:1px solid rgba(15,23,42,.08)}" +
+      ".ed-bullets{display:grid;gap:9px;margin:4px 0 2px}" +
+      ".ed-bullet{display:flex;gap:11px;font-size:14.5px;line-height:1.5;color:#1e293b}" +
+      ".ed-bullet::before{content:'';flex:none;width:7px;height:7px;border-radius:50%;background:#2970ff;margin-top:7px}" +
+      ".ed-chart{display:grid;gap:7px;margin:4px 0 2px}" +
+      ".ed-row{display:grid;grid-template-columns:104px 1fr 62px;align-items:center;gap:11px}" +
+      ".ed-row .lbl{font-size:13px;font-weight:600;color:#334155;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}" +
+      ".ed-track{position:relative;height:18px;border-radius:6px;background:rgba(15,23,42,.05)}" +
+      ".ed-track .mid{position:absolute;left:50%;top:0;bottom:0;width:1px;background:rgba(15,23,42,.18)}" +
+      ".ed-fill{position:absolute;top:2px;bottom:2px;border-radius:5px;min-width:2px}" +
+      ".ed-fill.pos{background:linear-gradient(90deg,#34d399,#15803d)}" +
+      ".ed-fill.neg{background:linear-gradient(90deg,#f87171,#dc2626)}" +
+      ".ed-row .v{font-size:13px;font-weight:800;text-align:right}" +
+      ".ed-vix{display:flex;align-items:center;gap:16px;margin:8px 0 2px}" +
+      ".ed-gauge{position:relative;flex:1;height:14px;border-radius:8px;background:linear-gradient(90deg,#15803d 0%,#16a34a 22%,#f5a623 50%,#ea7317 72%,#dc2626 100%)}" +
+      ".ed-gauge .pin{position:absolute;top:-5px;width:3px;height:24px;background:#0f172a;border-radius:2px;transform:translateX(-50%);box-shadow:0 0 0 2px #fff}" +
+      ".ed-vix .read{flex:none;text-align:right;min-width:120px}" +
+      ".ed-vix .read .n{font-size:23px;font-weight:800;color:#0f172a;line-height:1}" +
+      ".ed-vix .read .w{font-size:11.5px;font-weight:600;color:#64748b;margin-top:2px}" +
+      ".ed-tom{background:rgba(41,112,255,.06);border:1px solid rgba(41,112,255,.18);border-radius:14px;padding:15px 18px;margin:4px 0 2px}" +
+      ".ed-tom .h{font-size:15.5px;font-weight:700;color:#0f172a;margin-bottom:6px}" +
+      ".ed-tom .t{font-size:14.5px;line-height:1.6;color:#334155}";
+    document.head.appendChild(s);
+  }
 
-    return `<div class="ma-hero ${accent}">` +
-        `<div class="ma-hero-eyebrow">${eyebrow}</div>` +
-        `<div class="ma-hero-text">${narrative}</div>` +
-        gapChip(d) +
+  // Diverging horizontal bar chart from [{label, pct}].
+  function diverBars(items) {
+    items = (items || []).filter(i => i.pct != null);
+    if (!items.length) return '';
+    const maxAbs = Math.max(0.5, ...items.map(i => Math.abs(i.pct)));
+    return '<div class="ed-chart">' + items.map(i => {
+      const pos = i.pct >= 0, w = Math.min(49, Math.abs(i.pct) / maxAbs * 49);
+      const fill = pos ? `left:50%;width:${w}%` : `right:50%;width:${w}%`;
+      return `<div class="ed-row"><div class="lbl">${i.label}</div>` +
+        `<div class="ed-track"><div class="mid"></div><div class="ed-fill ${pos ? 'pos' : 'neg'}" style="${fill}"></div></div>` +
+        `<div class="v ${cls(i.pct)}">${pctTxt(i.pct)}</div></div>`;
+    }).join('') + '</div>';
+  }
+
+  function vixGauge(d) {
+    const vix = find(d.rates_fx, '^VIX'); if (vix.last == null) return '';
+    const v = vix.last;
+    const w = v < 15 ? 'Calm' : v < 20 ? 'A little nervous' : v < 25 ? 'Anxious' : v < 30 ? 'Fearful' : 'Panic';
+    const pos = Math.max(2, Math.min(98, (v - 10) / 30 * 100)); // 10–40 scale
+    return `<div class="ed-vix"><div class="ed-gauge"><div class="pin" style="left:${pos}%"></div></div>` +
+      `<div class="read"><div class="n">${N(v, 2)}</div><div class="w">VIX · ${w} (${pctTxt(vix.chg_pct)})</div></div></div>`;
+  }
+
+  function execSummary(d) {
+    const bl = (d.ai && d.ai.executive_summary) || [];
+    if (!Array.isArray(bl) || !bl.length) return '';
+    return `<div class="ed-sec-h">📋 Executive summary</div><div class="ed-bullets">` +
+      bl.slice(0, 6).map(b => `<div class="ed-bullet">${b}</div>`).join('') + `</div>`;
+  }
+
+  function indexChart(d) {
+    const items = [];
+    ['SPY', 'QQQ', 'DIA', 'IWM'].forEach(s => { const r = find(d.indices, s); if (r.chg_pct != null) items.push({ label: r.label, pct: r.chg_pct }); });
+    if (!items.length) return '';
+    return `<div class="ed-sec-h">📊 Markets at a glance</div>` + diverBars(items) + vixGauge(d);
+  }
+
+  function sectorChart(d) {
+    const secs = (d.sectors || []).slice();
+    if (!secs.length) return '';
+    secs.sort((a, b) => (b.chg_1d || 0) - (a.chg_1d || 0));
+    const note = (d.ai && d.ai.sectors_note) ? `<div class="ma-note">${aiTag()}${d.ai.sectors_note}</div>` : '';
+    return `<div class="ed-sec-h">🔁 Sector rotation — today</div>` + note +
+      diverBars(secs.map(s => ({ label: s.name, pct: s.chg_1d })));
+  }
+
+  function moversChart(d) {
+    const s = d.stocks; if (!s) return '';
+    const g = (s.gainers || []).slice(0, 5).map(x => ({ label: x.ticker, pct: x.change_pct }));
+    const l = (s.losers || []).slice(0, 5).map(x => ({ label: x.ticker, pct: x.change_pct }));
+    const items = g.concat(l); if (!items.length) return '';
+    const note = (d.ai && d.ai.movers_note) ? `<div class="ma-note">${aiTag()}${d.ai.movers_note}</div>` : '';
+    return `<div class="ed-sec-h">🚀 Biggest movers</div>` + note + diverBars(items);
+  }
+
+  function tomorrowBox(d) {
+    const t = (d.ai && d.ai.tomorrow) || '';
+    if (!t) return '';
+    return `<div class="ed-tom"><div class="h">📅 The setup into tomorrow</div><div class="t">${aiTag()}${t}</div></div>`;
+  }
+
+  function brief(d) {
+    injectStyles();
+    const v = (d.ai && d.ai.verdict) || {};
+    const headline = (d.ai && d.ai.headline) || v.headline ||
+      (d.kind === 'post' ? 'The day on Wall Street' : 'Where the market stands');
+    const dek = (d.ai && d.ai.dek) || '';
+    // Fallback narrative when the AI hasn't run yet — keep it data-true.
+    const spy = find(d.indices, 'SPY');
+    const fallback = spy.chg_pct == null ? 'Broad-market reading pending.'
+      : `The S&P 500 closed <b class="${cls(spy.chg_pct)}">${spy.chg_pct >= 0 ? 'up' : 'down'} ${Math.abs(spy.chg_pct).toFixed(2)}%</b> versus the prior session.`;
+    const narrative = (d.ai && d.ai.brief) ? `${aiTag()}${d.ai.brief}` : fallback;
+
+    return `<div class="ed-mast">` +
+        `<div class="ed-kicker">From the desk · Daily market report</div>` +
+        `<div class="ed-headline">${headline}</div>` +
+        (dek ? `<div class="ed-dek">${dek}</div>` : '') +
       `</div>` +
-      scorecard(d) +
+      indexChart(d) +
+      execSummary(d) +
+      `<div class="ed-sec-h">📈 The tape, in words</div><div class="ed-dek">${narrative}</div>` +
+      sectorChart(d) +
+      moversChart(d) +
       events(d) +
-      `<div class="ma-sec-h">${d.kind === 'post' ? 'The verdict · into tomorrow' : 'The verdict · the day ahead'}</div>` +
+      `<div class="ed-sec-h">${d.kind === 'post' ? 'The verdict · into tomorrow' : 'The verdict · the day ahead'}</div>` +
+      tomorrowBox(d) +
       verdict(d);
   }
 
