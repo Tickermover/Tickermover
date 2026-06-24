@@ -4086,6 +4086,13 @@ async def _build_desk_report(kind: str, edition_date) -> dict:
         from intelligence import _ANTHROPIC_EDITORIAL_MODEL
         data["ai"] = None if over else await market_analysis.ai_narrative(
             data, kind, model=_ANTHROPIC_EDITORIAL_MODEL)
+        # Resilience: this report is FROZEN for the day, so a single Sonnet hiccup
+        # would otherwise leave the whole edition on deterministic fallback copy.
+        # Fall back to the default (Haiku) — which is fast and reliable — so the
+        # edition still ships AI prose. (Caught live 2026-06-24: editorial was None.)
+        if data["ai"] is None and not over:
+            logger.warning(f"desk {kind}: editorial model returned no narrative — falling back to default model")
+            data["ai"] = await market_analysis.ai_narrative(data, kind)
     except Exception as exc:
         logger.warning(f"desk {kind} AI narrative failed: {exc}")
         data["ai"] = None
@@ -10479,7 +10486,7 @@ async def api_cache_health(user: Optional[dict] = Depends(_current_user),
     # score on each redeploy (caught 2026-06-24) because it wasn't probed here.
     tables = {t: _probe(t) for t in
               ("stock_overview", "stock_research", "stock_compare", "desk_report",
-               "app_kv", "usage", "selection_judgments", "closed_trades", "model_portfolio")}
+               "app_kv", "usage", "selection_judgments", "closed_trades", "model_portfolio_state")}
     ns_counts = {ns: _probe("app_kv", {"ns": f"eq.{ns}"}).get("count")
                  for ns in ("why_today_v4", "sector_graph", "dependencies", "feedback", "insider", "pdf_narrative")}
     # Tables present-but-unreachable (configured Supabase but the relation is
