@@ -72,8 +72,12 @@
       s = s.replace(/(^|[^*])\*([^*]+)\*(?!\*)/g,'$1<em>$2</em>');
       return s;
     }
+    // Web-grounded Opus output wraps cited claims in <cite index="..">..</cite>
+    // tags. Strip the tags (keep the cited text) so they don't render as raw
+    // markup; attribution lives in the Sources list below.
+    function stripCites(s){ return (s||'').replace(/<\/?cite[^>]*>/gi,''); }
     function md(text){
-      const lines = (text||'').replace(/\r/g,'').split('\n');
+      const lines = stripCites(text||'').replace(/\r/g,'').split('\n');
       let html='', para=[], list=null;
       const flushP=()=>{ if(para.length){ html+='<p>'+inline(para.join(' '))+'</p>'; para=[]; } };
       const flushL=()=>{ if(list){ html+='</'+list+'>'; list=null; } };
@@ -109,11 +113,11 @@
         '<div class="eyebrow">From the desk · The Weekly Editorial</div>'+
         '<div class="byline"><span class="av">TM</span><b>'+esc(d.byline||'TickerMover Desk')+'</b> · '+when+'</div>'+
         '<h1 class="title">'+esc(d.title||'')+'</h1>'+
-        (d.standfirst?'<p class="standfirst">'+esc(d.standfirst)+'</p>':'')+
+        (d.standfirst?'<p class="standfirst">'+esc(stripCites(d.standfirst))+'</p>':'')+
         (tickers?'<div class="chips">'+tickers+'</div>':'')+
         '<div class="article">'+md(d.body_markdown||'')+'</div>'+
-        (d.pull_quote?'<div class="pull">“'+esc(d.pull_quote)+'”</div>':'')+
-        (d.house_view?'<div class="houseview"><div class="h">⚖️ Our house view</div><div class="t">'+esc(d.house_view)+'</div></div>':'')+
+        (d.pull_quote?'<div class="pull">“'+esc(stripCites(d.pull_quote))+'”</div>':'')+
+        (d.house_view?'<div class="houseview"><div class="h">⚖️ Our house view</div><div class="t">'+esc(stripCites(d.house_view))+'</div></div>':'')+
         (sources?'<div class="sources"><div class="h">Sources</div>'+sources+'</div>':'')+
         '<div class="disc">TickerMover\'s research opinion on our own Outperform/Avoid basis — education and market awareness only, not investment advice, not FCA-authorised. Figures from our models and cited sources; capital at risk. Do your own diligence.</div>';
       if(d.title) document.title=d.title+' — TickerMover';

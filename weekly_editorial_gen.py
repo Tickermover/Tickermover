@@ -23,10 +23,18 @@ from __future__ import annotations
 import json
 import logging
 import os
+import re
 
 import httpx
 
 import usage_log
+
+# Web-grounded output wraps cited claims in <cite index="..">..</cite> tags. Strip
+# the tags (keep the text) so they don't leak as raw markup into the page OR the
+# weekly email (which renders these fields directly, not via the page renderer).
+_CITE_RE = re.compile(r"</?cite[^>]*>", re.IGNORECASE)
+def _nc(s: str) -> str:
+    return _CITE_RE.sub("", s or "")
 
 logger = logging.getLogger(__name__)
 
@@ -187,11 +195,11 @@ async def generate(angle: dict, ground: dict) -> dict | None:
         return None
 
     return {
-        "title":         title[:160],
-        "standfirst":    (obj.get("standfirst") or "").strip()[:300],
-        "body_markdown": body_md,
-        "pull_quote":    (obj.get("pull_quote") or "").strip()[:300],
-        "house_view":    (obj.get("house_view") or "").strip()[:800],
+        "title":         _nc(title)[:160],
+        "standfirst":    _nc((obj.get("standfirst") or "").strip())[:300],
+        "body_markdown": _nc(body_md),
+        "pull_quote":    _nc((obj.get("pull_quote") or "").strip())[:300],
+        "house_view":    _nc((obj.get("house_view") or "").strip())[:800],
         "tickers":       [str(x).strip().upper() for x in (obj.get("tickers") or [])][:8],
         "subject":       (obj.get("subject") or angle.get("label") or "").strip()[:120],
         "subject_type":  angle.get("type"),
