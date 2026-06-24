@@ -16570,7 +16570,7 @@ function renderRecentExits(exits) {
       </div>`;
   }).join('');
   return `
-    <div style="background:linear-gradient(180deg,#fff7ed,#fff);border:1px solid #fed7aa;border-radius:14px;padding:15px 16px;margin-bottom:14px">
+    <div style="background:linear-gradient(180deg,#fff7ed,#fff);border:1px solid #fed7aa;border-radius:14px;padding:15px 16px;margin:26px 0 14px">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:11px">
         <div>
           <div style="font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:#c2410c">📤 Recently exited</div>
@@ -16951,7 +16951,14 @@ function renderModelPortfolio(data) {
     </div>` : '';
 
   const recentExitsHTML = renderRecentExits(data.recent_exits);
-  root.innerHTML = _modelViewToggle('active') + recentExitsHTML + (picks.length === 0 ? emptyStateHTML : (headerHTML + barHTML + cardsHTML));
+  // Lead with the live holdings — the primary content of "Currently tracked".
+  // Recently-exited moves BELOW the picks (a footer) so users see their actual
+  // stocks immediately instead of scrolling past it; it stays on this tab so a
+  // holder scrolling their positions still sees what we stepped out of. When the
+  // book is empty, surface exits up top (there are no picks to lead with).
+  root.innerHTML = _modelViewToggle('active') + (picks.length === 0
+      ? (recentExitsHTML + emptyStateHTML)
+      : (headerHTML + barHTML + cardsHTML + recentExitsHTML));
   // Kick the tracker-chart fetch + render so the chart paints into the
   // slot we reserved inside headerHTML. Idle-deferred so the rest of
   // the panel renders first.
