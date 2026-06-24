@@ -1469,15 +1469,16 @@ button:focus-visible,[tabindex]:focus-visible{
 </style>
 <section class="capture" id="capture">
   <div class="cap-wrap">
-    <div class="cap-eyebrow">📬 Free · No card · Unsubscribe anytime</div>
-    <h2 class="cap-title">The daily brief — before the US open.</h2>
-    <p class="cap-sub">Every weekday morning: the day's highest-conviction US large-caps, scored and explained in plain English. Research, not advice.</p>
+    <div class="cap-eyebrow">📝 Free · Every Sunday · Unsubscribe anytime</div>
+    <h2 class="cap-title">The Weekly Editorial — one big idea, every Sunday.</h2>
+    <p class="cap-sub">Each week our desk picks the market's most important sector or stock and breaks it down — the bull case, the bear case, and our house view. Written by our Opus engine, grounded in our own data. Research, not advice.</p>
     <form class="cap-form" id="cap-form" autocomplete="off">
       <input type="email" name="email" placeholder="you@email.com" required aria-label="Email address">
       <input type="text" name="company" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0">
-      <button type="submit">Get the free brief</button>
+      <button type="submit">Get the weekly editorial</button>
     </form>
     <div class="cap-msg" id="cap-msg"></div>
+    <div class="cap-fine">Want a preview? <a href="/weekly" style="color:#fff;font-weight:700">Read this week's edition →</a></div>
   </div>
 </section>
 <script>
@@ -1490,7 +1491,7 @@ button:focus-visible,[tabindex]:focus-visible{
     if(fd.get('company')){ return; }
     m.style.color='#fff'; m.textContent='Subscribing…';
     try{
-      var r=await fetch('/api/newsletter/subscribe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:fd.get('email'),source:'landing'})});
+      var r=await fetch('/api/newsletter/subscribe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:fd.get('email'),source:'landing-weekly'})});
       var j=await r.json().catch(function(){return{};});
       if(r.ok){ m.style.color='#eaffea'; m.textContent=j.message||"You're in!"; f.reset(); }
       else { m.style.color='#ffe1e1'; m.textContent=(j&&j.detail)||'Please enter a valid email.'; }
