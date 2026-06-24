@@ -7001,20 +7001,85 @@ def _qualified_pool() -> list[dict]:
     return pool
 
 
+def _selection_targets() -> list[dict]:
+    """Every ticker CURRENTLY SELECTED / DISPLAYED anywhere — the union of the
+    Prime tracker (held + pending), the Best Ideas (Hot) list, the Featured set,
+    and the strict entry pool. Returns full universe rows, deduped and priority-
+    ordered (held first). Scoring THIS — not just the strict entry pool — is what
+    makes "every selected ticker is AI-verified" actually true: Best Ideas /
+    Featured surface names looser than the entry pool, so the old prewarm left
+    most displayed names unscored (conviction -1)."""
+    by_t = {(t.get("ticker") or "").upper(): t for t in _universe_data if t.get("ticker")}
+    out: list[dict] = []
+    seen: set = set()
+
+    def _add(tkr):
+        tk = (tkr or "").upper()
+        if not tk or tk in seen:
+            return
+        row = by_t.get(tk)
+        if row:                       # only scorable names (mega-caps aren't in-universe)
+            seen.add(tk)
+            out.append(row)
+
+    pf = _model_portfolio or {}
+    for p in pf.get("picks", []):
+        _add(p.get("ticker"))
+    for e in pf.get("pending", []):
+        _add((e.get("pick") or {}).get("ticker"))
+    hot = _daily_hot or [t for t in _universe_data if _is_hot_eligible(t)][:config.HOT_LIST_N]
+    for t in hot:
+        _add(t.get("ticker"))
+    feat = _daily_featured or [t for t in _universe_data if _is_featured_eligible(t)][:config.FEATURED_N]
+    for t in feat:
+        _add(t.get("ticker"))
+    for t in _qualified_pool():
+        _add(t.get("ticker"))
+    return out
+
+
+async def _score_targets(targets: list[dict], force: bool = False) -> int:
+    """Score `targets` through the Opus judge in batches of the selector cap
+    (the judge truncates above it, so we MUST chunk or the tail is silently
+    dropped), persisting each batch. Returns judgments cached. Availability-gated;
+    skips batches already fresh in cache unless force."""
+    if not ai_selector.available() or not targets:
+        return 0
+    MAX = getattr(ai_selector, "_MAX_CANDIDATES", 40)
+    total = 0
+    for i in range(0, len(targets), MAX):
+        batch = targets[i:i + MAX]
+        if not force:
+            tks = [t.get("ticker") for t in batch]
+            cached = _conviction_map(tks)
+            if all((tk or "").upper() in cached
+                   and not _selstore.is_stale(cached.get((tk or "").upper()))
+                   for tk in tks):
+                continue
+        judgments = await ai_selector.score_candidates(batch)
+        if judgments:
+            await asyncio.to_thread(_selstore.save_many, judgments)
+            total += len(judgments)
+    if total:
+        _conv_memo["key"] = None   # invalidate memo so fresh scores show now
+    return total
+
+
 async def _refresh_selection_judgments(force: bool = False) -> None:
-    """Fire-and-forget: re-score the qualified pool with the Opus 4.8 judge and
-    persist to the cache. Triggered lazily from the portfolio endpoint when the
-    cache is stale (≈ daily). Single-flight; never raises into callers."""
+    """Fire-and-forget: re-score every CURRENTLY-SELECTED name (Prime held/pending
+    + Best Ideas + Featured + entry pool) with the Opus 4.8 judge and persist to
+    the cache. Triggered lazily from the portfolio endpoint when the cache is
+    stale (≈ daily). Single-flight; never raises into callers."""
     global _selection_refreshing
     if _selection_refreshing:
         return
     if not ai_selector.available() or not _universe_data:
         return
-    pool = _qualified_pool()
-    if not pool:
+    targets = _selection_targets()
+    if not targets:
         return
-    tickers = [t.get("ticker") for t in pool if t.get("ticker")]
     if not force:
+        tickers = [t.get("ticker") for t in targets]
         cached = _conviction_map(tickers)
         missing = any((tk or "").upper() not in cached for tk in tickers)
         stale = any(_selstore.is_stale(cached.get((tk or "").upper())) for tk in tickers)
@@ -7022,12 +7087,10 @@ async def _refresh_selection_judgments(force: bool = False) -> None:
             return
     _selection_refreshing = True
     try:
-        logger.info(f"🧠 AI selection-judge: scoring {len(pool)} qualified candidates…")
-        judgments = await ai_selector.score_candidates(pool)
-        if judgments:
-            await asyncio.to_thread(_selstore.save_many, judgments)
-            _conv_memo["key"] = None   # invalidate memo so fresh scores show now
-            logger.info(f"🧠 AI selection-judge: cached {len(judgments)} conviction scores")
+        logger.info(f"🧠 AI selection-judge: verifying {len(targets)} selected names…")
+        n = await _score_targets(targets, force=force)
+        if n:
+            logger.info(f"🧠 AI selection-judge: cached {n} conviction scores")
     except Exception as e:
         logger.error(f"_refresh_selection_judgments failed: {e}")
     finally:
@@ -8617,6 +8680,92 @@ async def api_admin_prime_action(body: _PrimeActionBody,
             raise HTTPException(status_code=404, detail="Not found or already actioned")
         return JSONResponse({"ok": True, "rejected": (entry.get("pick") or {}).get("ticker")})
     raise HTTPException(status_code=400, detail="action must be approve or reject")
+
+
+def _verification_report() -> dict:
+    """Per-surface AI-verification status of the CURRENT selections: how many
+    carry a valid Opus conviction at/above the gate, how many Opus would AVOID
+    (below the gate), and how many are still unscored. Pure cache read."""
+    floor = config.AI_SELECT_MIN_CONVICTION
+    pf = _model_portfolio or {}
+    hot = _daily_hot or [t for t in _universe_data if _is_hot_eligible(t)][:config.HOT_LIST_N]
+    feat = _daily_featured or [t for t in _universe_data if _is_featured_eligible(t)][:config.FEATURED_N]
+    surfaces = {
+        "prime_held":    [p.get("ticker") for p in pf.get("picks", [])],
+        "prime_pending": [(e.get("pick") or {}).get("ticker") for e in pf.get("pending", [])],
+        "best_ideas":    [t.get("ticker") for t in hot],
+        "featured":      [t.get("ticker") for t in feat],
+    }
+    all_tk = [tk for v in surfaces.values() for tk in v if tk]
+    cmap = _conviction_map(all_tk)
+
+    def _status(tk):
+        aj = cmap.get((tk or "").upper())
+        c = aj.get("conviction") if aj else None
+        if c is None or c < 0:
+            return "unscored", None
+        return ("below_gate" if c < floor else "verified"), c
+
+    out = {"floor": floor, "surfaces": {}}
+    for name, tks in surfaces.items():
+        tks = [t for t in tks if t]
+        verified, below, unscored = [], [], []
+        for tk in tks:
+            s, c = _status(tk)
+            if s == "verified":
+                verified.append(tk)
+            elif s == "below_gate":
+                below.append({"ticker": tk, "conviction": c})
+            else:
+                unscored.append(tk)
+        out["surfaces"][name] = {
+            "total": len(tks), "verified": len(verified),
+            "below_gate": below, "unscored": unscored,
+        }
+    distinct = set(all_tk)
+    ver = sum(1 for tk in distinct if _status(tk)[0] == "verified")
+    out["overall"] = {"distinct_tickers": len(distinct), "verified": ver,
+                      "fully_verified": ver == len(distinct) and bool(distinct)}
+    return out
+
+
+@app.post("/api/admin/verify-selections")
+async def api_admin_verify_selections(
+    force: bool = True,
+    user: Optional[dict] = Depends(_current_user),
+    creds: Optional[HTTPAuthorizationCredentials] = Depends(_bearer),
+):
+    """Admin: verify EVERY currently-selected ticker (Prime held + pending, Best
+    Ideas, Featured) carries a fresh Opus conviction — force-scoring any that are
+    missing or stale — then return a per-surface verification report. Idempotent;
+    safe to re-run. Honours the AI budget cap (the scoring is the only paid step;
+    rescoring the full set is one batched Opus call per ~40 names)."""
+    if not user or (user.get("email") or "").lower() not in _AI_ALLOW:
+        raise HTTPException(status_code=403, detail="Admin only.")
+    if not ai_selector.available():
+        return JSONResponse({"error": "ANTHROPIC_API_KEY not configured — cannot score."},
+                            status_code=503)
+    if _ai_over_budget():
+        return JSONResponse({"error": "AI budget cap reached — try again later.",
+                             "report": _verification_report()}, status_code=429)
+    targets = _selection_targets()
+    scored = await _score_targets(targets, force=force)
+    report = _verification_report()
+    report["targets"] = len(targets)
+    report["newly_scored"] = scored
+    return JSONResponse(_clean(report))
+
+
+@app.get("/api/admin/verify-selections")
+async def api_admin_verify_selections_status(
+    user: Optional[dict] = Depends(_current_user),
+    creds: Optional[HTTPAuthorizationCredentials] = Depends(_bearer),
+):
+    """Read-only: the current AI-verification report WITHOUT triggering any
+    scoring (free). Use to check coverage; POST the same path to force a sweep."""
+    if not user or (user.get("email") or "").lower() not in _AI_ALLOW:
+        raise HTTPException(status_code=403, detail="Admin only.")
+    return JSONResponse(_clean(_verification_report()))
 
 
 @app.get("/admin/prime-review", response_class=HTMLResponse)
