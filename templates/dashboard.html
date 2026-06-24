@@ -16502,6 +16502,42 @@ function renderClosedTrades(data) {
   root.innerHTML = _modelViewToggle('history') + headerHTML + convPanel + factorPanel + tableHTML;
 }
 
+/* Recently exited — closes the "entry loud, exit silent" gap that erodes trust.
+   Surfaces the positions the tracker just stepped out of, with the plain-English
+   reason, framed as disciplined risk management (not a flip-flop). */
+function renderRecentExits(exits) {
+  if (!Array.isArray(exits) || !exits.length) return '';
+  const fmtD = s => { try { return new Date(s+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'}); } catch(e){ return s||''; } };
+  const chip = { stop:'#dc2626', trail:'#0040c1', thesis:'#9E6308', stretched:'#9E6308',
+                 signal:'#64748b', bar_failed:'#64748b', target:'#15803d', time:'#64748b' };
+  const cards = exits.map(e => {
+    const c = chip[e.reason_type] || '#64748b';
+    const pct = (e.final_pct>=0?'+':'') + (e.final_pct||0).toFixed(1) + '%';
+    return `
+      <div onclick="openStockModal('${e.ticker}')" style="cursor:pointer;background:#fff;border:1px solid rgba(0,0,0,.08);border-left:3px solid ${c};border-radius:10px;padding:11px 13px;display:flex;flex-direction:column;gap:5px">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+          <div style="font-weight:800;font-size:14px;color:#0f172a">${e.ticker}</div>
+          <div style="font-weight:800;font-size:13px;color:${e.won?'#15803d':'#dc2626'}">${pct}</div>
+        </div>
+        <div style="font-size:11px;color:#64748b;line-height:1.35">${v2EscHTML((e.name||'').slice(0,26))}</div>
+        <div style="align-self:flex-start;font-size:10.5px;font-weight:700;color:${c};background:${c}14;border:1px solid ${c}33;border-radius:5px;padding:2px 7px">${v2EscHTML(e.reason_label||'')}</div>
+        <div style="font-size:11px;color:#475569;line-height:1.45">${v2EscHTML(e.reason_plain||'')}</div>
+        <div style="font-size:10.5px;color:#94a3b8">Exited ${fmtD(e.exit_date)} · held ${e.days_held}d</div>
+      </div>`;
+  }).join('');
+  return `
+    <div style="background:linear-gradient(180deg,#fff7ed,#fff);border:1px solid #fed7aa;border-radius:14px;padding:15px 16px;margin-bottom:14px">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:11px">
+        <div>
+          <div style="font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:#c2410c">📤 Recently exited</div>
+          <div style="font-size:13px;color:#475569;line-height:1.5;margin-top:3px;max-width:640px">We tell you when we step <em>out</em>, not just when we step in. When our score breaks, we remove the name from the tracker — here's what we recently exited and why. This is the discipline working, not a reversal.</div>
+        </div>
+        <button onclick="showModelView('history')" style="flex:none;font-size:11px;font-weight:700;color:#0040c1;background:#eff6ff;border:1px solid #bfdbfe;border-radius:7px;padding:6px 11px;cursor:pointer">Full track record →</button>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:9px">${cards}</div>
+    </div>`;
+}
+
 function renderModelPortfolio(data) {
   const root  = document.getElementById('model-portfolio-root');
   const picks = data.picks || [];
@@ -16864,7 +16900,8 @@ function renderModelPortfolio(data) {
       <button onclick="if(confirm('Reset rebuilds the portfolio with today\\'s top picks. Continue?'))resetModelPortfolio()" style="padding:9px 20px;background:#f1f5f9;color:#374151;border:1px solid rgba(0,0,0,.1);border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">🔄 Force Reset</button>
     </div>` : '';
 
-  root.innerHTML = _modelViewToggle('active') + (picks.length === 0 ? emptyStateHTML : (headerHTML + barHTML + cardsHTML));
+  const recentExitsHTML = renderRecentExits(data.recent_exits);
+  root.innerHTML = _modelViewToggle('active') + recentExitsHTML + (picks.length === 0 ? emptyStateHTML : (headerHTML + barHTML + cardsHTML));
   // Kick the tracker-chart fetch + render so the chart paints into the
   // slot we reserved inside headerHTML. Idle-deferred so the rest of
   // the panel renders first.

@@ -7764,10 +7764,90 @@ def _save_portfolio_to_disk(portfolio: dict) -> None:
     _store.save_portfolio(portfolio)
 
 
+# ── Plain-English exit framing (the transparency reframe) ────────────────────
+# Users see the BUY loudly; the SELL must read just as clearly — and as
+# disciplined risk management, not a flip-flop. These describe what OUR SCORE
+# did (observational), never a "you should sell" instruction (FCA-safe).
+_EXIT_REASON_LABEL = {
+    "stop":       "Protective stop",
+    "trail":      "Trailing stop",
+    "thesis":     "Thesis weakening",
+    "stretched":  "Valuation stretched",
+    "signal":     "Score break",
+    "bar_failed": "Score break",
+    "target":     "Target booked",
+    "time":       "Time exit",
+}
+_EXIT_REASON_PLAIN = {
+    "stop":       "Price hit our -8% protective stop — we step out to cap the downside.",
+    "trail":      "Our trailing stop tripped after the run — the gain is locked, the trend has rolled over.",
+    "thesis":     "Early deterioration showed up (estimates cut while momentum or margins rolled over) — we exit before the score fully breaks.",
+    "stretched":  "Valuation stretched past our comfort zone — the risk/reward no longer favours holding.",
+    "signal":     "Our composite score dropped below the keep bar (grade fell under B, or score under 60).",
+    "bar_failed": "Our composite score dropped below the keep bar.",
+    "target":     "Reached our objective — booked the win.",
+    "time":       "Held to our time limit without the thesis playing out.",
+}
+
+
+def _dedup_trades(trades: list) -> list:
+    """Collapse duplicate closed-trade rows. The ledger is append-only with no
+    DB unique constraint, so a position closed twice (concurrent enrichment or a
+    retry) can write two identical rows — which BOTH shows a doubled row in the
+    ledger AND double-counts every stat (hit rate, avg move). Keep the FIRST
+    occurrence per (ticker, entry_date, exit_date); load order is newest-first
+    so the survivor is the canonical one."""
+    seen: set = set()
+    out: list = []
+    for t in trades or []:
+        key = (t.get("ticker"),
+               str(t.get("entry_date") or ""),
+               str(t.get("exit_date") or ""))
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(t)
+    return out
+
+
+def _recent_exits(limit: int = 6, within_days: int = 21) -> list:
+    """User-facing feed of positions the tracker recently closed, so a holder who
+    bought on our signal sees when we stepped out — and why — instead of finding
+    out by accident. Observational language only (what our score did, not advice).
+    Excludes 'rebuild' rows (admin housekeeping, not a real signal exit)."""
+    from datetime import date as _date, timedelta as _td
+    trades = _dedup_trades(_store.load_trades(limit=60))
+    cutoff = (_date.today() - _td(days=within_days)).isoformat()
+    out: list = []
+    for t in trades:
+        rt = t.get("exit_reason")
+        if rt == "rebuild":
+            continue
+        xd = str(t.get("exit_date") or "")
+        if xd < cutoff:
+            continue
+        out.append({
+            "ticker":       t.get("ticker"),
+            "name":         t.get("name", ""),
+            "exit_date":    xd,
+            "days_held":    t.get("days_held"),
+            "final_pct":    round(float(t.get("final_pct") or 0), 1),
+            "won":          bool(t.get("won")),
+            "reason_type":  rt,
+            "reason_label": _EXIT_REASON_LABEL.get(rt, "Removed from tracker"),
+            "reason_plain": _EXIT_REASON_PLAIN.get(rt, "Our score no longer supported keeping it."),
+        })
+        if len(out) >= limit:
+            break
+    return out
+
+
 def _load_trade_history() -> dict:
     """Read closed-trades log. Returns {version, trades:[...]} for backward
-    compatibility with the existing call-sites that iterate ``history['trades']``."""
-    trades = _store.load_trades()
+    compatibility with the existing call-sites that iterate ``history['trades']``.
+    De-duplicated on read so a double-written row never inflates the ledger or
+    the derived stats (see _dedup_trades)."""
+    trades = _dedup_trades(_store.load_trades())
     return {"version": 2, "trades": trades}
 
 
@@ -7809,6 +7889,11 @@ def _close_triggered_picks(portfolio: dict, enriched_picks: list) -> tuple[dict,
         alert = ep.get("exit_alert")
         if not alert:
             keep.append(raw)
+            continue
+        if ticker in closed_tickers:
+            # A duplicate active pick for the same ticker — close it once and
+            # drop the dup. Guards the append-only ledger against the doubled-row
+            # bug at the source (the read-side _dedup_trades is the safety net).
             continue
         # ── Build the historical trade record ────────────────────────────
         entry = float(raw.get("entry_price") or 0)
@@ -8254,6 +8339,14 @@ async def api_model_portfolio():
     # real work when the cache has expired.
     if ai_selector.available():
         asyncio.create_task(_refresh_selection_judgments())
+
+    # Recently-exited feed — surfaced in the active view so a holder sees the
+    # positions we just stepped out of (and why), closing the entry-loud /
+    # exit-silent asymmetry that erodes trust.
+    try:
+        enriched["recent_exits"] = _recent_exits()
+    except Exception as _re:
+        logger.debug(f"recent_exits attach skipped: {_re}")
 
     return JSONResponse(_clean(enriched))
 
