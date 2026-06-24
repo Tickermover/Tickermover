@@ -4079,7 +4079,12 @@ async def _build_desk_report(kind: str, edition_date) -> dict:
     data["regime"] = market_regime.get() or {}
     data["house"]  = await _desk_house_lens()
     try:
-        data["ai"] = None if over else await market_analysis.ai_narrative(data, kind)
+        # The daily editorial is generated once/day, so it runs on the sharper
+        # editorial model (Sonnet) for connective, opinionated prose; the intraday
+        # in-app refresh keeps the cheap Haiku default. Both honour the cost breaker.
+        from intelligence import _ANTHROPIC_EDITORIAL_MODEL
+        data["ai"] = None if over else await market_analysis.ai_narrative(
+            data, kind, model=_ANTHROPIC_EDITORIAL_MODEL)
     except Exception as exc:
         logger.warning(f"desk {kind} AI narrative failed: {exc}")
         data["ai"] = None
@@ -4123,7 +4128,7 @@ def _desk_edition_date(now_et) -> str:
     return d.isoformat()
 
 
-_DESK_REPORT_VERSION = 3   # bump to force a one-time rebuild when the report changes
+_DESK_REPORT_VERSION = 4   # bump to force a one-time rebuild when the report changes
 
 
 async def _publish_desk_daily(force: bool = False) -> dict:

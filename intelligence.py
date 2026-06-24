@@ -850,11 +850,15 @@ class MarketAnalysis:
         }
 
     # ── AI narrative — Claude writes the report from the live numbers ─────
-    async def ai_narrative(self, data: dict, kind: Optional[str] = None) -> Optional[dict]:
-        """Public entry: generate a (optionally pre/post-framed) AI narrative."""
-        return await self._ai_narrative(data, kind)
+    async def ai_narrative(self, data: dict, kind: Optional[str] = None,
+                           model: Optional[str] = None) -> Optional[dict]:
+        """Public entry: generate a (optionally pre/post-framed) AI narrative.
+        `model` overrides the default (the daily editorial passes the sharper
+        editorial model; the intraday refresh uses the cheap default)."""
+        return await self._ai_narrative(data, kind, model)
 
-    async def _ai_narrative(self, data: dict, kind: Optional[str] = None) -> Optional[dict]:
+    async def _ai_narrative(self, data: dict, kind: Optional[str] = None,
+                            model: Optional[str] = None) -> Optional[dict]:
         """Ask Claude to turn the fetched market data into a plain-English
         briefing. The numbers are passed as ground truth — the model only
         writes prose, never invents figures. `kind` ('pre'/'post') frames the
@@ -862,9 +866,10 @@ class MarketAnalysis:
         parse error → frontend uses its own deterministic fallback copy)."""
         if not _ANTHROPIC_KEY or not _HTTPX_AVAILABLE:
             return None
+        use_model = model or _ANTHROPIC_MODEL
         try:
             prompt = self._build_ai_prompt(data, kind)
-            async with httpx.AsyncClient(timeout=18.0) as c:
+            async with httpx.AsyncClient(timeout=30.0) as c:
                 r = await c.post(
                     "https://api.anthropic.com/v1/messages",
                     headers={
@@ -873,7 +878,7 @@ class MarketAnalysis:
                         "content-type":      "application/json",
                     },
                     json={
-                        "model":      _ANTHROPIC_MODEL,
+                        "model":      use_model,
                         "max_tokens": 1500,   # once/day now — room for the editorial bullets
                         "messages":   [{"role": "user", "content": prompt}],
                     },
@@ -882,7 +887,7 @@ class MarketAnalysis:
                 payload = r.json()
             try:
                 import usage_log
-                usage_log.record("desk", _ANTHROPIC_MODEL, payload.get("usage"))
+                usage_log.record("desk", use_model, payload.get("usage"))
             except Exception:
                 pass
             text = "".join(
@@ -898,7 +903,7 @@ class MarketAnalysis:
             import json as _json
             obj = _json.loads(text[i:j + 1])
             obj["generated"] = True
-            obj["model"] = _ANTHROPIC_MODEL
+            obj["model"] = use_model
             return obj
         except Exception as exc:
             logger.warning(f"market-analysis AI narrative failed: {exc}")
@@ -987,6 +992,12 @@ class MarketAnalysis:
             "truth — never invent or alter any number. Keep every sentence short "
             "and simple. No jargon without a plain gloss. Do NOT give "
             "buy/sell/hold advice or price targets — this is market context only.\n"
+            "EDITORIAL RULE (what makes this a 10/10 analyst editorial, not a wrap): "
+            "do not just state WHAT moved — explain WHY it moved and WHAT IT IMPLIES "
+            "next. Every section should carry an interpretive read, not a number "
+            "readout. Connect the dots: tie the index move to the sector rotation, "
+            "the VIX to positioning, the regime score to the stance. A reader should "
+            "come away with a point of view they could agree or disagree with.\n"
             "ACCURACY RULE (critical): every claim must match the data EXACTLY. "
             "Before writing any magnitude (e.g. 'down more than 1%') or grouping "
             "several names together, verify each named item INDIVIDUALLY meets it "
@@ -1032,9 +1043,15 @@ class MarketAnalysis:
             '  "house_view": "2-3 sentences through our Alpha-Score lens: how today '
             'treated our highest-rated names, and the read for our model book — '
             'reference the track record. Observational, never a trade call.",\n'
-            '  "headline": "One punchy editorial headline (<= 12 words) capturing '
-            'the day\'s single most important story.",\n'
-            '  "dek": "One sentence standfirst that expands the headline.",\n'
+            '  "headline": "One punchy editorial headline (<= 12 words) that states '
+            'a THESIS — the meaning of the day, not the tape. It must make an '
+            'interpretive claim a reader could agree or disagree with. Do NOT lead '
+            'with an index name + a percentage (e.g. NOT \'Nasdaq Slumps 3.06% as '
+            'VIX Spikes\'); instead name the FORCE and its implication (e.g. '
+            '\'Earnings Cracks Surface Just as the Fed Window Narrows\'). No number-'
+            'stuffing; at most one figure, only if it IS the story.",\n'
+            '  "dek": "One sentence standfirst that sharpens the thesis and hints at '
+            'the stakes into the next session — not a restatement of the headline.",\n'
             '  "executive_summary": ["4 to 5 crisp, self-contained bullets — the '
             'key takeaways a busy reader needs. Each bullet leads with the hard '
             'number (e.g. \'Nasdaq -3.1%: growth led the selloff\'). No filler."],\n'
@@ -1052,7 +1069,13 @@ class MarketAnalysis:
             'futures imply, the key level/catalyst, and what would change the read.",\n'
             '  "verdict": {\n'
             f'    "headline": "{verdict_head}",\n'
-            '    "what_it_means": "2-3 short lines of plain context. No trade calls.",\n'
+            '    "what_it_means": "2-3 short lines that explain the CAUSE behind the '
+            'tone (why the tape did what it did) and the second-order read for the '
+            'next session — not a restatement of the move. No trade calls.",\n'
+            '    "what_changes_view": "1 short, falsifiable line naming the specific '
+            'trigger that would flip this read — a level, a catalyst, or a data '
+            'print (e.g. \'A close back above the 20-day line, or a soft PCE print, '
+            'would reset the tone to constructive\').",\n'
             '    "confidence": "High | Medium | Low"\n'
             "  }\n"
             "}"
@@ -1069,6 +1092,12 @@ class MarketAnalysis:
 _ANTHROPIC_KEY     = os.environ.get("ANTHROPIC_API_KEY", "").strip()
 _ANTHROPIC_MODEL   = os.environ.get(
     "ANTHROPIC_MODEL", "claude-haiku-4-5-20251001"
+)
+# The signed daily editorial is generated ONCE per trading day, so it can afford a
+# sharper model than the intraday Haiku refresh. Haiku writes clean but flat; the
+# editorial needs connective, opinionated prose. One call/day keeps the cost trivial.
+_ANTHROPIC_EDITORIAL_MODEL = os.environ.get(
+    "ANTHROPIC_EDITORIAL_MODEL", "claude-sonnet-4-6"
 )
 _ANTHROPIC_TIMEOUT = 12.0
 
