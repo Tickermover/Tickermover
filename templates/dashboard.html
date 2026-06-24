@@ -3231,14 +3231,14 @@ body.v2-featured-only #fund-tbody tr.fund-row:not([data-featured]){display:none!
    thin grid, hero line with heavy gaussian-blur glow, side stat panel.
    ──────────────────────────────────────────────────────────────────────── */
 .v2-tc-wrap{
-  padding:24px 26px 22px;font-size:11.5px;color:rgba(219,234,254,.75);
-  display:flex;flex-direction:column;gap:20px;
-  position:relative;border-radius:20px;overflow:hidden;
+  padding:15px 18px 13px;font-size:11.5px;color:rgba(219,234,254,.75);
+  display:flex;flex-direction:column;gap:12px;
+  position:relative;border-radius:14px;overflow:hidden;
   background:
     radial-gradient(ellipse 75% 80% at 12% 120%, rgba(56,189,248,.18), transparent 60%),
     radial-gradient(ellipse 65% 70% at 98% -20%, rgba(129,140,248,.20), transparent 60%),
     linear-gradient(160deg,#0a1430 0%,#0f1f47 52%,#13265a 100%);
-  box-shadow:0 2px 8px rgba(5,15,45,.4), 0 34px 62px -30px rgba(5,15,45,.7), 0 0 0 1px rgba(255,255,255,.06) inset;
+  box-shadow:0 1px 6px rgba(5,15,45,.28), 0 12px 26px -18px rgba(5,15,45,.5), 0 0 0 1px rgba(255,255,255,.06) inset;
 }
 @media (max-width:760px){
   .v2-tc-wrap{grid-template-columns:1fr;grid-template-rows:auto auto auto}
@@ -3253,7 +3253,7 @@ body.v2-featured-only #fund-tbody tr.fund-row:not([data-featured]){display:none!
 .v2-tc-headline{grid-column:1;grid-row:1;display:flex;align-items:center;justify-content:space-between;gap:12px}
 .v2-tc-hl-l{display:flex;flex-direction:column;gap:4px;min-width:0}
 .v2-tc-hl-eyebrow{font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#93c5fd}
-.v2-tc-hl-val{font-size:42px;font-weight:900;letter-spacing:-.025em;line-height:1;color:#fff;font-variant-numeric:tabular-nums;text-shadow:0 2px 18px rgba(96,165,250,.35)}
+.v2-tc-hl-val{font-size:26px;font-weight:900;letter-spacing:-.025em;line-height:1;color:#fff;font-variant-numeric:tabular-nums}
 .v2-tc-hl-val.neg{color:#fca5a5}
 .v2-tc-hl-sub{font-size:12px;color:rgba(219,234,254,.72);font-weight:600;letter-spacing:-.005em;display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:4px}
 .v2-tc-hl-sub .beat{color:#6ee7b7;font-weight:800;font-variant-numeric:tabular-nums}
@@ -3263,21 +3263,21 @@ body.v2-featured-only #fund-tbody tr.fund-row:not([data-featured]){display:none!
 .v2-tc-chip:hover{color:#fff;background:rgba(255,255,255,.12)}
 .v2-tc-chip.on{color:#fff;background:linear-gradient(135deg,#38bdf8,#3b82f6);border-color:transparent;box-shadow:0 4px 14px -4px rgba(56,189,248,.6)}
 /* Comparison bars — 'who won' ranking on the dark card */
-.v2-tc-bars{display:flex;flex-direction:column;gap:15px;padding:4px 2px 2px}
-.v2-tc-bar-row{display:grid;grid-template-columns:118px 1fr 74px;align-items:center;gap:16px}
+.v2-tc-bars{display:flex;flex-direction:column;gap:7px;padding:2px 2px 0}
+.v2-tc-bar-row{display:grid;grid-template-columns:104px 1fr 64px;align-items:center;gap:12px}
 @media(max-width:560px){.v2-tc-bar-row{grid-template-columns:84px 1fr 58px;gap:10px}}
-.v2-tc-bar-label{display:flex;align-items:center;gap:9px;font-size:12px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:rgba(219,234,254,.82);white-space:nowrap}
+.v2-tc-bar-label{display:flex;align-items:center;gap:8px;font-size:10.5px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:rgba(219,234,254,.82);white-space:nowrap}
 .v2-tc-bar-label i{width:11px;height:11px;border-radius:3px;flex-shrink:0;background:#94a3b8}
 .v2-tc-bar-row.hero .v2-tc-bar-label{color:#fff}
 .v2-tc-bar-row.hero .v2-tc-bar-label i{background:linear-gradient(135deg,#67e8f9,#60a5fa);box-shadow:0 0 12px rgba(96,165,250,.75)}
 .v2-tc-bar-row.bench-qqq .v2-tc-bar-label i{background:#a78bfa}
-.v2-tc-bar-track{height:20px;background:rgba(255,255,255,.08);border-radius:11px;overflow:hidden}
+.v2-tc-bar-track{height:9px;background:rgba(255,255,255,.08);border-radius:6px;overflow:hidden}
 .v2-tc-bar-fill{display:block;height:100%;border-radius:11px;background:rgba(148,163,184,.5);transition:width .7s cubic-bezier(.22,.61,.36,1)}
-.v2-tc-bar-row.hero .v2-tc-bar-fill{background:linear-gradient(90deg,#38bdf8,#60a5fa 55%,#818cf8);box-shadow:0 0 18px rgba(96,165,250,.6)}
+.v2-tc-bar-row.hero .v2-tc-bar-fill{background:linear-gradient(90deg,#38bdf8,#60a5fa 55%,#818cf8);box-shadow:0 0 8px rgba(96,165,250,.4)}
 .v2-tc-bar-row.bench-qqq .v2-tc-bar-fill{background:rgba(167,139,250,.62)}
 .v2-tc-bar-row.neg .v2-tc-bar-fill{background:rgba(252,165,165,.6)}
-.v2-tc-bar-val{font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:900;text-align:right;color:#fff;font-variant-numeric:tabular-nums}
-.v2-tc-bar-row.hero .v2-tc-bar-val{font-size:21px;color:#67e8f9}
+.v2-tc-bar-val{font-family:'JetBrains Mono',monospace;font-size:13.5px;font-weight:900;text-align:right;color:#fff;font-variant-numeric:tabular-nums}
+.v2-tc-bar-row.hero .v2-tc-bar-val{font-size:15px;color:#67e8f9}
 .v2-tc-bar-row.neg .v2-tc-bar-val{color:#fca5a5}
 
 /* ── Side stat panel (right of chart on desktop) ──────────────────── */
@@ -16630,9 +16630,9 @@ function renderModelPortfolio(data) {
   // ── TRACKER CHART is the premium hero of the page (the stats box was
   //    redundant with the chart, esp. with few holdings — removed). ──
   const headerHTML = `
-  <div style="margin-bottom:30px">
+  <div style="margin-bottom:16px">
     ${concentrationWarning}
-    <div id="v2-tracker-chart-slot" style="min-height:260px"></div>
+    <div id="v2-tracker-chart-slot" style="min-height:120px"></div>
   </div>`;
 
   const barHTML = '';
