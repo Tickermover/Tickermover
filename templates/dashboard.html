@@ -10247,6 +10247,21 @@ function ceBuildCloud(){
   cloud.innerHTML = '<div class="ce-mq">' + track(rowA, false) + track(rowB, true) +
     '<div class="ce-mq-cap">Tap a company for its dividends, splits, buybacks &amp; filings — or search any of ' +
     all.length + ' names above</div></div>';
+
+  // ── Constant drift SPEED (fixes inconsistent marquee pace) ──────────────
+  // The CSS animates each track to translateX(-50%) over a FIXED duration, so a
+  // track's px/sec = (its width / 2) / duration — which differs between the two
+  // rows (they hold different tickers) and changes every load. Override the
+  // duration per-track from its measured width so every row moves at the SAME
+  // gentle pixels-per-second, every time. rAF lets layout settle (logos are a
+  // fixed 1.5em, so width is stable before images finish loading).
+  requestAnimationFrame(function(){
+    var SPEED = 38;   // px/sec — gentle and consistent
+    cloud.querySelectorAll('.ce-mq-track').forEach(function(tr){
+      var loop = tr.scrollWidth / 2;   // one copy = the seamless -50% loop distance
+      if (loop > 0) tr.style.animationDuration = Math.max(30, loop / SPEED).toFixed(1) + 's';
+    });
+  });
 }
 
 // AABB overlap test with padding
