@@ -54,6 +54,7 @@ DASHBOARD_HTML = BASE_DIR / "templates" / "dashboard.html"
 LANDING_HTML   = BASE_DIR / "templates" / "landing.html"
 LOGIN_HTML     = BASE_DIR / "templates" / "login.html"
 DESK_HTML      = BASE_DIR / "templates" / "desk.html"
+WEEKLY_HTML    = BASE_DIR / "templates" / "weekly.html"
 
 
 # ── NaN/Inf sanitiser — Python json.dumps crashes on NaN/Infinity ─────
@@ -970,6 +971,7 @@ async def lifespan(app: FastAPI):
         asyncio.create_task(_yf_concurrent_load()),
         asyncio.create_task(_tech_refresh()),
         asyncio.create_task(_desk_publisher()),     # freeze pre/post editions
+        asyncio.create_task(_weekly_publisher()),   # Opus weekly editorial (Sunday eve ET)
         asyncio.create_task(_overview_prewarm()),   # keep curated Overviews warm
         asyncio.create_task(_data_prewarm()),        # keep all stocks' free data (stock-extra) warm
         asyncio.create_task(_bottom_line_prewarm()), # Haiku-polish bottom_lines (cache-first, 15d)
@@ -3341,6 +3343,46 @@ async def _daily_brief_email_task() -> None:
         await asyncio.sleep(20 * 60)                         # re-check every 20 min
 
 
+def _render_weekly_email(article: dict, unsub_url: str) -> str:
+    """HTML for the weekly-editorial email — title, standfirst, house view, and a
+    button to the full piece. Kept simple/inline so it renders everywhere."""
+    import html as _html
+    title = _html.escape(article.get("title") or "TickerMover Weekly")
+    stand = _html.escape(article.get("standfirst") or "")
+    hv    = _html.escape(article.get("house_view") or "")
+    url   = f"{SITE_ORIGIN}/weekly"
+    return (
+        f'<div style="font-family:-apple-system,Segoe UI,Arial,sans-serif;max-width:560px;margin:0 auto;color:#0f172a">'
+        f'<div style="font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#2970ff">TickerMover · Weekly editorial</div>'
+        f'<h1 style="font-size:23px;line-height:1.2;margin:8px 0 6px">{title}</h1>'
+        f'<p style="font-size:15px;line-height:1.55;color:#475569;margin:0 0 16px">{stand}</p>'
+        + (f'<div style="border-left:3px solid #2970ff;background:#f1f6ff;padding:12px 14px;border-radius:8px;font-size:14px;line-height:1.55;margin:0 0 18px"><b>Our house view:</b> {hv}</div>' if hv else '')
+        + f'<a href="{url}" style="display:inline-block;background:#2970ff;color:#fff;text-decoration:none;font-weight:700;font-size:14px;padding:11px 22px;border-radius:10px">Read the full editorial →</a>'
+        f'<p style="font-size:11px;color:#94a3b8;margin:22px 0 0;line-height:1.5">Education and market awareness only — not investment advice. '
+        f'<a href="{unsub_url}" style="color:#94a3b8">Unsubscribe</a>.</p></div>'
+    )
+
+
+async def _send_weekly_email(article: dict) -> None:
+    """Send the weekly editorial to newsletter subscribers. OFF by default —
+    only runs when WEEKLY_EMAIL_ENABLED is set, so it never blasts the list until
+    you flip the switch. Reuses the daily-brief Resend path + unsubscribe tokens."""
+    if not _WEEKLY_EMAIL_ENABLED or not article:
+        return
+    import email_sender
+    subs = _newsletter_subscribers()
+    sent = 0
+    subj = f"TickerMover Weekly — {(article.get('title') or '')[:80]}"
+    for em in subs[:300]:                                    # safety cap vs the free tier
+        unsub = f"{SITE_ORIGIN}/unsubscribe?e={_urlquote(em)}&t={_unsub_token(em)}"
+        res = await email_sender.send_newsletter_email(em, subj, _render_weekly_email(article, unsub))
+        if res.get("ok"):
+            sent += 1
+        await asyncio.sleep(1.2)                             # gentle pacing for Resend
+    if subs:
+        logger.info(f"📧 Weekly editorial: sent {sent}/{len(subs)} subscribers")
+
+
 # ── OG image generator (P3) ──────────────────────────────────────────
 # Renders a 1200×630 branded card per ticker so social shares of stock
 # pages get a rich, on-brand preview. Caches per-ticker for 10 min.
@@ -4199,6 +4241,239 @@ async def api_desk_report(type: str = ""):
         _clean(report),
         headers={"Cache-Control": "public, max-age=300, s-maxage=600"},
     )
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+#  WEEKLY EDITORIAL — Opus 4.8 long-form deep-dive, one frozen edition per week
+# ═══════════════════════════════════════════════════════════════════════════
+# Auto-picks the most compelling angle each week (a heating-up / under-pressure
+# SECTOR, or a marquee STOCK from Best Ideas / Prime), then Opus writes a signed
+# ~2000-word editorial grounded in OUR data. Published Sunday evening ET for the
+# week ahead, frozen for the week, durable (weekly_editorial_store). One Opus
+# call/week, budget-gated + fail-safe (serves the prior edition on any failure).
+from weekly_editorial_store import store as _weekly_store
+import weekly_editorial_gen
+
+_WEEKLY_VERSION = 1   # bump to force a one-time rebuild when the format changes
+_WEEKLY_EMAIL_ENABLED = (os.environ.get("WEEKLY_EMAIL_ENABLED", "").lower()
+                         in ("1", "true", "yes"))
+
+
+def _week_start(now_et=None) -> str:
+    """ISO date of the Monday for the current week — the edition key."""
+    from datetime import timedelta as _td
+    d = (now_et or _et_now()).date()
+    return (d - _td(days=d.weekday())).isoformat()
+
+
+def _pct_upside(t: dict):
+    try:
+        p = float(t.get("price") or 0); tg = float(t.get("target_mean") or 0)
+        return round((tg - p) / p * 100, 1) if p > 0 and tg > 0 else None
+    except (TypeError, ValueError):
+        return None
+
+
+def _sector_constituents(sector_name: str, limit: int = 8) -> list[dict]:
+    """Top names (by Alpha) in a sector, for the editorial's ground truth."""
+    if not sector_name:
+        return []
+    key = sector_name.lower().split()[0]
+    def _a(t): return float(t.get("smart_score") or t.get("pop_score") or 0)
+    rows = [t for t in (_universe_data or [])
+            if key in (t.get("sector") or "").lower()
+            or key in (t.get("sub_sector") or "").lower()]
+    rows.sort(key=_a, reverse=True)
+    return [{
+        "ticker": t.get("ticker"), "name": t.get("name"),
+        "alpha": round(_a(t), 1), "grade": t.get("grade"),
+        "change_pct": t.get("change_pct"),
+        "rev_growth_yoy": t.get("revenue_growth_yoy") or t.get("rev_growth_qyoy"),
+        "target_upside_pct": _pct_upside(t),
+    } for t in rows[:limit]]
+
+
+def _weekly_candidates() -> list[dict]:
+    """Assemble this week's candidate angles from our live signals — heating-up /
+    under-pressure sectors, the top Best Idea, and the top Prime held name — each
+    scored by a rough 'newsworthiness' heat so the selector can auto-pick."""
+    cands: list[dict] = []
+    snap = market_analysis.get() or {}
+    secs = [s for s in (snap.get("sectors") or []) if s.get("chg_5d") is not None]
+    if secs:
+        by5 = sorted(secs, key=lambda s: s["chg_5d"])
+        worst, best = by5[0], by5[-1]
+        cands.append({"type": "sector", "direction": "heating_up", "label": best["name"],
+                      "symbol": best.get("symbol"), "chg_1d": best.get("chg_1d"),
+                      "chg_5d": best.get("chg_5d"), "heat": abs(best.get("chg_5d") or 0) * 1.4})
+        cands.append({"type": "sector", "direction": "under_pressure", "label": worst["name"],
+                      "symbol": worst.get("symbol"), "chg_1d": worst.get("chg_1d"),
+                      "chg_5d": worst.get("chg_5d"), "heat": abs(worst.get("chg_5d") or 0) * 1.4})
+    hot = _daily_hot or [t for t in (_universe_data or []) if _is_hot_eligible(t)]
+    if hot:
+        cmap = _conviction_map([t.get("ticker") for t in hot[:12]])
+        top = hot[0]
+        conv = (cmap.get((top.get("ticker") or "").upper()) or {}).get("conviction")
+        alpha = float(top.get("smart_score") or top.get("pop_score") or 0)
+        cands.append({"type": "stock", "source": "best_ideas", "label": top.get("ticker"),
+                      "name": top.get("name"), "alpha": round(alpha, 1), "conviction": conv,
+                      "heat": alpha / 12 + (conv or 0) / 20})
+    picks = (_model_portfolio or {}).get("picks") or []
+    if picks:
+        pmap = _conviction_map([p.get("ticker") for p in picks])
+        def _pc(p): return (pmap.get((p.get("ticker") or "").upper()) or {}).get("conviction") or 0
+        bp = max(picks, key=_pc)
+        cands.append({"type": "stock", "source": "prime", "label": bp.get("ticker"),
+                      "name": bp.get("name"), "conviction": _pc(bp), "heat": _pc(bp) / 14})
+    return cands
+
+
+def _pick_weekly_angle(cands: list[dict], prior_subject: str | None = None) -> dict | None:
+    """Auto-pick the most compelling angle; avoid repeating last week's subject."""
+    pool = [c for c in cands if c.get("label") and c.get("label") != prior_subject] or cands
+    return max(pool, key=lambda c: c.get("heat") or 0) if pool else None
+
+
+def _weekly_ground_truth(angle: dict) -> dict:
+    """The authoritative data block the editorial must not contradict."""
+    regime = market_regime.get() or {}
+    snap = market_analysis.get() or {}
+    ground = {
+        "as_of": _et_now().strftime("%d %b %Y"),
+        "market_regime": {"label": regime.get("regime_label"), "score": regime.get("regime_score")},
+        "sector_table": [{"name": s.get("name"), "chg_1d": s.get("chg_1d"), "chg_5d": s.get("chg_5d")}
+                         for s in (snap.get("sectors") or [])],
+    }
+    if angle.get("type") == "sector":
+        ground["sector"] = {**angle, "constituents": _sector_constituents(angle.get("label"))}
+    else:
+        tkr = (angle.get("label") or "").upper()
+        row = next((t for t in (_universe_data or []) if (t.get("ticker") or "").upper() == tkr), {})
+        aj = _conviction_map([tkr]).get(tkr) or {}
+        ground["stock"] = {
+            "ticker": tkr, "name": row.get("name"), "sector": row.get("sector"),
+            "alpha": round(float(row.get("smart_score") or row.get("pop_score") or 0), 1),
+            "grade": row.get("grade"), "price": row.get("price"), "change_pct": row.get("change_pct"),
+            "rev_growth_yoy": row.get("revenue_growth_yoy") or row.get("rev_growth_qyoy"),
+            "eps_growth_yoy": row.get("eps_growth_yoy"), "pe_ratio": row.get("pe_ratio"),
+            "peg_ratio": row.get("peg_ratio"), "gross_margin": row.get("gross_margin"),
+            "fcf_margin": row.get("fcf_margin"), "target_upside_pct": _pct_upside(row),
+            "ai_conviction": aj.get("conviction"), "ai_thesis": aj.get("thesis"),
+            "ai_red_flags": aj.get("red_flags"),
+        }
+    return ground
+
+
+async def _build_weekly_editorial(week_start: str) -> dict | None:
+    """Pick the angle, gather ground truth, and ask Opus to write the editorial."""
+    if not weekly_editorial_gen.available() or _ai_over_budget():
+        return None
+    cands = _weekly_candidates()
+    if not cands:
+        return None
+    prior = _weekly_store.latest()
+    prior_subject = ((prior or {}).get("article") or {}).get("subject")
+    angle = _pick_weekly_angle(cands, prior_subject)
+    if not angle:
+        return None
+    ground = _weekly_ground_truth(angle)
+    try:
+        ground["house_track"] = (await _desk_house_lens()).get("track")
+    except Exception:
+        pass
+    article = await weekly_editorial_gen.generate(angle, ground)
+    if not article:
+        return None
+    from datetime import date as _date
+    try:
+        y, m, d = (int(x) for x in week_start.split("-"))
+        wk_label = _date(y, m, d).strftime("%d %b %Y").lstrip("0")
+    except Exception:
+        wk_label = week_start
+    gen = _et_now()
+    article["week_start"] = week_start
+    article["week_label"] = wk_label
+    article["published_at"] = gen.strftime("%I:%M %p ET · %d %b").lstrip("0")
+    article["byline"] = "TickerMover Desk"
+    article["v"] = _WEEKLY_VERSION
+    return article
+
+
+async def _generate_and_save_weekly(week_start: str) -> dict | None:
+    article = await _build_weekly_editorial(week_start)
+    if not article:
+        return None
+    _weekly_store.save(week_start, article, model=article.get("model"))
+    logger.info(f"📝 Weekly editorial published {week_start}: {article.get('title')}")
+    if _WEEKLY_EMAIL_ENABLED:
+        try:
+            await _send_weekly_email(article)
+        except Exception as e:
+            logger.warning(f"weekly email send failed: {e}")
+    return article
+
+
+async def _weekly_publisher() -> None:
+    """Generate the weekly editorial once per week — Sunday evening ET (>=17:00)
+    for the week ahead — then serve it frozen. Checks hourly; the day/version gate
+    means it actually generates (and pays Opus) at most once a week."""
+    await asyncio.sleep(320)   # let the universe + sector table load first
+    while True:
+        try:
+            now = _et_now()
+            wk = _week_start(now)
+            cur = _weekly_store.get(wk)
+            need = (not cur) or ((cur.get("article") or {}).get("v") != _WEEKLY_VERSION)
+            if need and now.weekday() == 6 and now.hour >= 17 and not _ai_over_budget():
+                await _generate_and_save_weekly(wk)
+        except Exception as exc:
+            logger.warning(f"weekly publisher failed: {exc}")
+        await asyncio.sleep(3600)   # hourly
+
+
+@app.get("/api/weekly-editorial")
+async def api_weekly_editorial():
+    """The current weekly editorial (frozen for the week). Read-only — never
+    generates on the request path; the publisher loop owns generation. Falls back
+    to the most recent prior edition until this week's is published."""
+    row = _weekly_store.get(_week_start()) or _weekly_store.latest()
+    art = (row or {}).get("article")
+    if not art:
+        return JSONResponse({"available": False,
+                             "reason": "The first weekly edition hasn't been published yet."})
+    return JSONResponse(_clean({"available": True, **art}),
+                        headers={"Cache-Control": "public, max-age=600, s-maxage=1800"})
+
+
+@app.get("/weekly", response_class=HTMLResponse)
+async def weekly_page():
+    """Public weekly editorial page."""
+    try:
+        return HTMLResponse(content=WEEKLY_HTML.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return HTMLResponse(content="<h2>templates/weekly.html not found</h2>", status_code=500)
+
+
+@app.post("/api/admin/publish-weekly")
+async def api_admin_publish_weekly(user: Optional[dict] = Depends(_current_user),
+                                   creds: Optional[HTTPAuthorizationCredentials] = Depends(_bearer)):
+    """Admin: generate THIS week's editorial now (force) — for the first edition or
+    an on-demand refresh, without waiting for the Sunday publisher. Budget-gated."""
+    if not user or (user.get("email") or "").lower() not in _AI_ALLOW:
+        raise HTTPException(status_code=403, detail="Admin only.")
+    if not weekly_editorial_gen.available():
+        return JSONResponse({"error": "ANTHROPIC_API_KEY not configured."}, status_code=503)
+    if _ai_over_budget():
+        return JSONResponse({"error": "AI budget cap reached — try again later."}, status_code=429)
+    wk = _week_start()
+    art = await _generate_and_save_weekly(wk)
+    if not art:
+        return JSONResponse({"ok": False,
+                             "error": "generation failed (no candidates or model error)"}, status_code=502)
+    return JSONResponse({"ok": True, "week_start": wk, "title": art.get("title"),
+                         "subject": art.get("subject"), "subject_type": art.get("subject_type"),
+                         "tickers": art.get("tickers"),
+                         "words": len((art.get("body_markdown") or "").split())})
 
 
 @app.get("/api/pdf/{symbol}")

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>The Weekly Editorial — TickerMover</title>
+  <meta name="description" content="TickerMover's signed weekly editorial — a long-form, data-grounded deep-dive into the week's most important sector or stock, written by our desk.">
+  <link rel="icon" type="image/svg+xml" href="/static/brand/tickermover-mark.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500;1,9..144,600&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{--blue:#2970ff;--ink:#0f172a;--muted:#475569}
+    *{box-sizing:border-box}
+    body{margin:0;background:#fcfbf9;color:var(--ink);
+      font-family:'Instrument Sans',system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased;line-height:1.6}
+    a{color:var(--blue)}
+    .top{position:sticky;top:0;z-index:20;background:rgba(252,251,249,.86);backdrop-filter:saturate(180%) blur(12px);border-bottom:1px solid rgba(15,23,42,.07)}
+    .top-in{max-width:760px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 20px}
+    .brand{display:flex;align-items:center;gap:10px;text-decoration:none;font-weight:600;font-size:19px;letter-spacing:-.022em;color:#0a0a0a}
+    .brand .mark{width:30px;height:30px;flex:none;background:linear-gradient(135deg,#5DB3F1 0%,#2970FF 50%,#0040c1 100%);
+      -webkit-mask:url('/static/brand/tickermover-mark-mask.svg') center/contain no-repeat;mask:url('/static/brand/tickermover-mark-mask.svg') center/contain no-repeat}
+    .cta{display:inline-flex;align-items:center;gap:6px;background:var(--blue);color:#fff;text-decoration:none;font-size:13px;font-weight:600;padding:8px 15px;border-radius:9px}
+    .wrap{max-width:720px;margin:0 auto;padding:30px 20px 70px}
+    .eyebrow{font-size:11.5px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--blue)}
+    .byline{display:flex;align-items:center;gap:9px;margin:14px 0 4px;font-size:13.5px;color:var(--muted)}
+    .byline .av{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#2970ff,#0040c1);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex:none}
+    .byline b{color:var(--ink);font-weight:600}
+    h1.title{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:clamp(28px,5vw,42px);line-height:1.1;letter-spacing:-.015em;margin:14px 0 12px}
+    .standfirst{font-size:18px;line-height:1.5;color:#334155;font-weight:400;margin:0 0 22px}
+    .chips{display:flex;flex-wrap:wrap;gap:7px;margin:0 0 26px}
+    .chip{font-size:12px;font-weight:700;color:#0040c1;background:#eef4ff;border:1px solid #cfe0ff;border-radius:7px;padding:4px 10px;text-decoration:none}
+    .chip:hover{background:#e0ecff}
+    .article{font-size:17px;line-height:1.72;color:#1e293b}
+    .article h2{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:25px;line-height:1.2;margin:38px 0 12px;letter-spacing:-.01em}
+    .article h3{font-size:18px;font-weight:700;margin:26px 0 8px}
+    .article p{margin:0 0 18px}
+    .article ul,.article ol{margin:0 0 18px;padding-left:22px}
+    .article li{margin:0 0 7px}
+    .article strong{font-weight:700;color:#0f172a}
+    .article em{font-style:italic}
+    .pull{font-family:'Fraunces',Georgia,serif;font-style:italic;font-weight:500;font-size:24px;line-height:1.35;color:#0040c1;border-left:4px solid var(--blue);padding:6px 0 6px 20px;margin:30px 0}
+    .houseview{background:linear-gradient(180deg,#eef4ff,#f8fbff);border:1px solid #cfe0ff;border-radius:16px;padding:20px 22px;margin:34px 0 10px}
+    .houseview .h{font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#0040c1;margin-bottom:7px}
+    .houseview .t{font-size:16.5px;line-height:1.6;color:#1e293b}
+    .sources{margin-top:34px;padding-top:18px;border-top:1px solid rgba(15,23,42,.1)}
+    .sources .h{font-size:11.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#94a3b8;margin-bottom:8px}
+    .sources a{display:block;font-size:13px;color:var(--muted);margin-bottom:5px;text-decoration:none}
+    .sources a:hover{color:var(--blue)}
+    .disc{font-size:12.5px;color:#94a3b8;line-height:1.55;margin-top:30px;border-top:1px solid rgba(15,23,42,.08);padding-top:16px}
+    .loading,.empty{text-align:center;color:#64748b;padding:80px 20px;font-size:15px}
+    @media(max-width:560px){ .wrap{padding:22px 17px 60px} .article{font-size:16px} }
+  </style>
+</head>
+<body>
+  <header class="top">
+    <div class="top-in">
+      <a class="brand" href="/"><span class="mark"></span><span>TickerMover</span></a>
+      <a class="cta" href="/app">Open the dashboard →</a>
+    </div>
+  </header>
+  <main class="wrap"><div id="article"><div class="loading">📝 Loading this week's editorial…</div></div></main>
+
+  <script>
+  (function(){
+    // ── Minimal, safe Markdown → HTML (headings, lists, bold/italic, links) ──
+    function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+    function inline(s){
+      s = esc(s);
+      s = s.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>');
+      s = s.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>');
+      s = s.replace(/(^|[^*])\*([^*]+)\*(?!\*)/g,'$1<em>$2</em>');
+      return s;
+    }
+    function md(text){
+      const lines = (text||'').replace(/\r/g,'').split('\n');
+      let html='', para=[], list=null;
+      const flushP=()=>{ if(para.length){ html+='<p>'+inline(para.join(' '))+'</p>'; para=[]; } };
+      const flushL=()=>{ if(list){ html+='</'+list+'>'; list=null; } };
+      for(let raw of lines){
+        const line=raw.trimEnd();
+        if(/^###\s+/.test(line)){ flushP(); flushL(); html+='<h3>'+inline(line.replace(/^###\s+/,''))+'</h3>'; continue; }
+        if(/^##\s+/.test(line)){ flushP(); flushL(); html+='<h2>'+inline(line.replace(/^##\s+/,''))+'</h2>'; continue; }
+        if(/^#\s+/.test(line)){ flushP(); flushL(); html+='<h2>'+inline(line.replace(/^#\s+/,''))+'</h2>'; continue; }
+        if(/^[-*]\s+/.test(line)){ flushP(); if(list!=='ul'){flushL();html+='<ul>';list='ul';} html+='<li>'+inline(line.replace(/^[-*]\s+/,''))+'</li>'; continue; }
+        if(/^\d+\.\s+/.test(line)){ flushP(); if(list!=='ol'){flushL();html+='<ol>';list='ol';} html+='<li>'+inline(line.replace(/^\d+\.\s+/,''))+'</li>'; continue; }
+        if(line===''){ flushP(); flushL(); continue; }
+        if(list) flushL();
+        para.push(line);
+      }
+      flushP(); flushL();
+      return html;
+    }
+
+    function render(d){
+      var root=document.getElementById('article');
+      if(!d || d.available===false){
+        root.innerHTML='<div class="empty">'+( (d&&d.reason) || 'The weekly editorial is being prepared. Check back shortly.')+'</div>';
+        return;
+      }
+      var tickers=(d.tickers||[]).map(function(t){
+        return '<a class="chip" href="/stocks/'+encodeURIComponent(t)+'">'+esc(t)+'</a>';
+      }).join('');
+      var sources=(d.sources||[]).map(function(s){
+        return '<a href="'+esc(s.url)+'" target="_blank" rel="noopener">'+esc(s.title||s.url)+' ↗</a>';
+      }).join('');
+      var when=[d.week_label?('Week of '+esc(d.week_label)):'', d.published_at?('· '+esc(d.published_at)):''].filter(Boolean).join(' ');
+      root.innerHTML =
+        '<div class="eyebrow">From the desk · The Weekly Editorial</div>'+
+        '<div class="byline"><span class="av">TM</span><b>'+esc(d.byline||'TickerMover Desk')+'</b> · '+when+'</div>'+
+        '<h1 class="title">'+esc(d.title||'')+'</h1>'+
+        (d.standfirst?'<p class="standfirst">'+esc(d.standfirst)+'</p>':'')+
+        (tickers?'<div class="chips">'+tickers+'</div>':'')+
+        '<div class="article">'+md(d.body_markdown||'')+'</div>'+
+        (d.pull_quote?'<div class="pull">“'+esc(d.pull_quote)+'”</div>':'')+
+        (d.house_view?'<div class="houseview"><div class="h">⚖️ Our house view</div><div class="t">'+esc(d.house_view)+'</div></div>':'')+
+        (sources?'<div class="sources"><div class="h">Sources</div>'+sources+'</div>':'')+
+        '<div class="disc">TickerMover\'s research opinion on our own Outperform/Avoid basis — education and market awareness only, not investment advice, not FCA-authorised. Figures from our models and cited sources; capital at risk. Do your own diligence.</div>';
+      if(d.title) document.title=d.title+' — TickerMover';
+    }
+
+    fetch('/api/weekly-editorial').then(function(r){return r.json();}).then(render).catch(function(){
+      document.getElementById('article').innerHTML='<div class="empty">Could not load the editorial. Please try again shortly.</div>';
+    });
+  })();
+  </script>
+</body>
+</html>
