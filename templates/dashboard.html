@@ -20328,7 +20328,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
       return '<div class="dm-row" data-row data-tic="'+escHTML(t.ticker)+'" style="animation-delay:'+(0.08+i*0.05).toFixed(2)+'s">'+
         '<span class="dm-tick">'+logoHTML(t.ticker)+'<span style="min-width:0">'+escHTML(t.ticker)+(g?'<span class="dm-grade '+g+'">'+g+'</span>':'')+'<br><small>'+escHTML((t.name||'').slice(0,26))+'</small></span></span>'+
         '<span class="alpha-cell"><span class="dm-alpha">'+pop+'</span><span class="vd '+vd.cls+'">'+vd.w+'</span></span>'+
-        '<span class="dm-cell-why"><span class="why"><span class="why-ico">'+sig.icon+'</span><span class="why-tx">'+(sig.ai?'<span class="why-ai">✦ AI</span> ':'')+escHTML(sig.text)+'</span></span>'+(fchips.length?'<div class="pg-chips">'+fchips.map(c=>'<span class="pg-chip">'+escHTML(c)+'</span>').join('')+'</div>':'')+(risk?'<div class="why-risk">⚠ '+escHTML(risk)+'</div>':'')+'</span>'+
+        '<span class="dm-cell-why"><span class="why"><span class="why-ico">'+sig.icon+'</span><span class="why-tx">'+(sig.ai?'<span class="why-ai">✦</span> ':'')+escHTML(sig.text)+'</span></span>'+(fchips.length?'<div class="pg-chips">'+fchips.map(c=>'<span class="pg-chip">'+escHTML(c)+'</span>').join('')+'</div>':'')+(risk?'<div class="why-risk">⚠ '+escHTML(risk)+'</div>':'')+'</span>'+
         upCell+
         '<span class="dm-chg today-col '+(chg>=0?'up':'dn')+'">'+fmtPct(chg)+trend+'</span>'+
         '<span class="act-col"><button class="dm-btn">View →</button></span>'+
