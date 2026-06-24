@@ -4258,7 +4258,7 @@ async def api_desk_report(type: str = ""):
 from weekly_editorial_store import store as _weekly_store
 import weekly_editorial_gen
 
-_WEEKLY_VERSION = 1   # bump to force a one-time rebuild when the format changes
+_WEEKLY_VERSION = 2   # bump to force a one-time rebuild when the format changes
 _WEEKLY_EMAIL_ENABLED = (os.environ.get("WEEKLY_EMAIL_ENABLED", "").lower()
                          in ("1", "true", "yes"))
 
@@ -4297,45 +4297,126 @@ def _sector_constituents(sector_name: str, limit: int = 8) -> list[dict]:
     } for t in rows[:limit]]
 
 
+# ── Aggressive/growth theme — the editorial leads with momentum/growth names,
+# never defensive ones (custody banks, utilities, staples). Sectors are judged
+# through the same growth lens. (Owner choice 2026-06-24: growth-only + rotation.)
+_DEFENSIVE_SECTOR_KEYS = ("utilit", "staple", "real estate", "health", "financ")
+_GROWTH_SECTOR_KEYS = ("technolog", "communication", "consumer discretion", "semiconduct")
+
+
+def _is_defensive_sector(name: str) -> bool:
+    n = (name or "").lower()
+    return any(k in n for k in _DEFENSIVE_SECTOR_KEYS)
+
+
+def _is_growth_sector(name: str) -> bool:
+    n = (name or "").lower()
+    return any(k in n for k in _GROWTH_SECTOR_KEYS)
+
+
+def _num(t: dict, *keys):
+    for k in keys:
+        v = t.get(k)
+        try:
+            if v is not None:
+                return float(v)
+        except (TypeError, ValueError):
+            pass
+    return None
+
+
+def _aggressive_fit(t: dict) -> float:
+    """Higher = more aggressive/growth: momentum + revenue/EPS growth. Lets a
+    fast-growing momentum name beat a slow one; defensive-sector names are
+    excluded upstream so a high-EPS custody bank can't sneak through on growth."""
+    mom = _num(t, "momentum_3m", "momentum_1m") or 0.0
+    rev = _num(t, "revenue_growth_yoy", "rev_growth_qyoy")   # fraction (0.42 = 42%)
+    eps = _num(t, "eps_growth_yoy")                          # percent
+    score = mom
+    if rev is not None:
+        score += min(rev, 2.0) * 100 * 0.5
+    if eps is not None:
+        score += min(eps, 200) * 0.3
+    return score
+
+
 def _weekly_candidates() -> list[dict]:
-    """Assemble this week's candidate angles from our live signals — heating-up /
-    under-pressure sectors, the top Best Idea, and the top Prime held name — each
-    scored by a rough 'newsworthiness' heat so the selector can auto-pick."""
+    """This week's candidate angles, GROWTH-FILTERED: heating-up / under-pressure
+    GROWTH sectors, the most aggressive Best Idea, and the most aggressive Prime
+    held name. Defensive sectors (custody banks, utilities, staples, healthcare)
+    are excluded from leading, so the editorial always reads aggressive."""
     cands: list[dict] = []
     snap = market_analysis.get() or {}
     secs = [s for s in (snap.get("sectors") or []) if s.get("chg_5d") is not None]
-    if secs:
-        by5 = sorted(secs, key=lambda s: s["chg_5d"])
+    # Sectors through a growth lens — a defensive sector move isn't an aggressive
+    # story, so only growth-oriented sectors qualify (fallback to non-defensive).
+    gsecs = [s for s in secs if _is_growth_sector(s.get("name"))] \
+        or [s for s in secs if not _is_defensive_sector(s.get("name"))]
+    if gsecs:
+        by5 = sorted(gsecs, key=lambda s: s["chg_5d"])
         worst, best = by5[0], by5[-1]
         cands.append({"type": "sector", "direction": "heating_up", "label": best["name"],
                       "symbol": best.get("symbol"), "chg_1d": best.get("chg_1d"),
                       "chg_5d": best.get("chg_5d"), "heat": abs(best.get("chg_5d") or 0) * 1.4})
-        cands.append({"type": "sector", "direction": "under_pressure", "label": worst["name"],
-                      "symbol": worst.get("symbol"), "chg_1d": worst.get("chg_1d"),
-                      "chg_5d": worst.get("chg_5d"), "heat": abs(worst.get("chg_5d") or 0) * 1.4})
+        if worst is not best:
+            cands.append({"type": "sector", "direction": "under_pressure", "label": worst["name"],
+                          "symbol": worst.get("symbol"), "chg_1d": worst.get("chg_1d"),
+                          "chg_5d": worst.get("chg_5d"), "heat": abs(worst.get("chg_5d") or 0) * 1.4})
+    # Best Ideas — scan the top of the hot list, drop defensive names, take the
+    # highest aggressive-fit growth name.
     hot = _daily_hot or [t for t in (_universe_data or []) if _is_hot_eligible(t)]
-    if hot:
-        cmap = _conviction_map([t.get("ticker") for t in hot[:12]])
-        top = hot[0]
-        conv = (cmap.get((top.get("ticker") or "").upper()) or {}).get("conviction")
-        alpha = float(top.get("smart_score") or top.get("pop_score") or 0)
+    hot_growth = [t for t in hot[:14] if t.get("ticker") and not _is_defensive_sector(t.get("sector"))]
+    if hot_growth:
+        top = max(hot_growth, key=_aggressive_fit)
+        conv = (_conviction_map([top.get("ticker")]).get((top.get("ticker") or "").upper()) or {}).get("conviction")
         cands.append({"type": "stock", "source": "best_ideas", "label": top.get("ticker"),
-                      "name": top.get("name"), "alpha": round(alpha, 1), "conviction": conv,
-                      "heat": alpha / 12 + (conv or 0) / 20})
-    picks = (_model_portfolio or {}).get("picks") or []
-    if picks:
-        pmap = _conviction_map([p.get("ticker") for p in picks])
-        def _pc(p): return (pmap.get((p.get("ticker") or "").upper()) or {}).get("conviction") or 0
-        bp = max(picks, key=_pc)
+                      "name": top.get("name"),
+                      "alpha": round(float(top.get("smart_score") or top.get("pop_score") or 0), 1),
+                      "conviction": conv, "fit": round(_aggressive_fit(top), 1),
+                      "heat": _aggressive_fit(top)})
+    # Prime — same growth filter on held names (looked up in the universe for
+    # sector + momentum/growth).
+    by_t = {(t.get("ticker") or "").upper(): t for t in (_universe_data or []) if t.get("ticker")}
+    prime_growth = [by_t.get((p.get("ticker") or "").upper()) for p in ((_model_portfolio or {}).get("picks") or [])]
+    prime_growth = [r for r in prime_growth if r and not _is_defensive_sector(r.get("sector"))]
+    if prime_growth:
+        bp = max(prime_growth, key=_aggressive_fit)
+        conv = (_conviction_map([bp.get("ticker")]).get((bp.get("ticker") or "").upper()) or {}).get("conviction")
         cands.append({"type": "stock", "source": "prime", "label": bp.get("ticker"),
-                      "name": bp.get("name"), "conviction": _pc(bp), "heat": _pc(bp) / 14})
+                      "name": bp.get("name"), "conviction": conv,
+                      "fit": round(_aggressive_fit(bp), 1), "heat": _aggressive_fit(bp)})
     return cands
 
 
-def _pick_weekly_angle(cands: list[dict], prior_subject: str | None = None) -> dict | None:
-    """Auto-pick the most compelling angle; avoid repeating last week's subject."""
-    pool = [c for c in cands if c.get("label") and c.get("label") != prior_subject] or cands
-    return max(pool, key=lambda c: c.get("heat") or 0) if pool else None
+# Rotate which SOURCE leads, week to week, so all four get airtime (not just Best
+# Ideas). Indexed by ISO week number; falls through to the next available slot.
+_WEEKLY_ROTATION = ("best_ideas", "heating_up", "prime", "under_pressure")
+
+
+def _pick_weekly_angle(cands: list[dict], week_start: str | None = None,
+                       prior_subject: str | None = None) -> dict | None:
+    """Pick the week's angle: rotate the featured source for variety, never repeat
+    last week's subject. All candidates are already growth-filtered, so whichever
+    wins is an aggressive pick."""
+    avail = [c for c in cands if c.get("label") and c.get("label") != prior_subject] or cands
+    if not avail:
+        return None
+    wk = 0
+    try:
+        from datetime import date as _date
+        y, m, d = (int(x) for x in (week_start or _week_start()).split("-"))
+        wk = _date(y, m, d).isocalendar()[1]
+    except Exception:
+        pass
+    cat = lambda c: c.get("source") or c.get("direction")
+    n = len(_WEEKLY_ROTATION)
+    start = wk % n
+    for i in range(n):
+        want = _WEEKLY_ROTATION[(start + i) % n]
+        match = [c for c in avail if cat(c) == want]
+        if match:
+            return max(match, key=lambda c: c.get("heat") or 0)
+    return max(avail, key=lambda c: c.get("heat") or 0)
 
 
 def _weekly_ground_truth(angle: dict) -> dict:
@@ -4377,7 +4458,7 @@ async def _build_weekly_editorial(week_start: str) -> dict | None:
         return None
     prior = _weekly_store.latest()
     prior_subject = ((prior or {}).get("article") or {}).get("subject")
-    angle = _pick_weekly_angle(cands, prior_subject)
+    angle = _pick_weekly_angle(cands, week_start, prior_subject)
     if not angle:
         return None
     ground = _weekly_ground_truth(angle)
