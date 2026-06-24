@@ -113,6 +113,12 @@ AI_OVERRIDE_FLOOR_PCT = float(_env("AI_OVERRIDE_FLOOR_PCT", "-15") or "-15")
 # (the human approval gate still applies). 0-100 scale; set 0 to disable the veto.
 AI_SELECT_MIN_CONVICTION = int(_env("AI_SELECT_MIN_CONVICTION", "45") or "45")
 
+# ── Newsletter cadence ────────────────────────────────────────────────────────
+# The weekday daily-brief email. PAUSED 2026-06-24 in favour of the weekly
+# editorial (the homepage capture now promotes the weekly). The task no-ops while
+# this is false; flip DAILY_BRIEF_ENABLED=true to bring the daily brief back.
+DAILY_BRIEF_ENABLED = (_env("DAILY_BRIEF_ENABLED", "false") or "false").lower() in ("1", "true", "yes")
+
 # ── Beta: Pro free for everyone until launch ──────────────────────────────────
 # During the public beta every signed-in user gets Pro features for free. This
 # flips OFF automatically once the date passes (UTC), so paid Pro takes over at

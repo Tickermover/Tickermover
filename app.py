@@ -3311,6 +3311,10 @@ async def _daily_brief_email_task() -> None:
     weekdays — once per day (disk marker survives restarts). Pure live-data, no
     AI cost. Resend free tier is ~100/day; large lists need a paid plan."""
     import email_sender
+    if not config.DAILY_BRIEF_ENABLED:
+        logger.info("📧 Daily brief email PAUSED (config.DAILY_BRIEF_ENABLED=false) "
+                    "— weekly editorial is the active newsletter.")
+        return
     await asyncio.sleep(260)
     while True:
         try:
@@ -4399,13 +4403,15 @@ async def _build_weekly_editorial(week_start: str) -> dict | None:
     return article
 
 
-async def _generate_and_save_weekly(week_start: str) -> dict | None:
+async def _generate_and_save_weekly(week_start: str, send_email: bool = True) -> dict | None:
     article = await _build_weekly_editorial(week_start)
     if not article:
         return None
     _weekly_store.save(week_start, article, model=article.get("model"))
     logger.info(f"📝 Weekly editorial published {week_start}: {article.get('title')}")
-    if _WEEKLY_EMAIL_ENABLED:
+    # send_email gates the actual blast: the Sunday publisher sends; an admin
+    # force-generate defaults to NOT sending (preview-safe), opt-in via ?send_email=1.
+    if send_email and _WEEKLY_EMAIL_ENABLED:
         try:
             await _send_weekly_email(article)
         except Exception as e:
@@ -4455,10 +4461,12 @@ async def weekly_page():
 
 
 @app.post("/api/admin/publish-weekly")
-async def api_admin_publish_weekly(user: Optional[dict] = Depends(_current_user),
+async def api_admin_publish_weekly(send_email: bool = False,
+                                   user: Optional[dict] = Depends(_current_user),
                                    creds: Optional[HTTPAuthorizationCredentials] = Depends(_bearer)):
     """Admin: generate THIS week's editorial now (force) — for the first edition or
-    an on-demand refresh, without waiting for the Sunday publisher. Budget-gated."""
+    an on-demand refresh, without waiting for the Sunday publisher. Budget-gated.
+    Does NOT email the list unless send_email=1 (so previewing can't blast)."""
     if not user or (user.get("email") or "").lower() not in _AI_ALLOW:
         raise HTTPException(status_code=403, detail="Admin only.")
     if not weekly_editorial_gen.available():
@@ -4466,14 +4474,15 @@ async def api_admin_publish_weekly(user: Optional[dict] = Depends(_current_user)
     if _ai_over_budget():
         return JSONResponse({"error": "AI budget cap reached — try again later."}, status_code=429)
     wk = _week_start()
-    art = await _generate_and_save_weekly(wk)
+    art = await _generate_and_save_weekly(wk, send_email=send_email)
     if not art:
         return JSONResponse({"ok": False,
                              "error": "generation failed (no candidates or model error)"}, status_code=502)
     return JSONResponse({"ok": True, "week_start": wk, "title": art.get("title"),
                          "subject": art.get("subject"), "subject_type": art.get("subject_type"),
                          "tickers": art.get("tickers"),
-                         "words": len((art.get("body_markdown") or "").split())})
+                         "words": len((art.get("body_markdown") or "").split()),
+                         "emailed": bool(send_email and _WEEKLY_EMAIL_ENABLED)})
 
 
 @app.get("/api/pdf/{symbol}")
