@@ -8326,11 +8326,39 @@ def _find_pending(token: str) -> Optional[dict]:
     return None
 
 
-def _approve_pending(token: str) -> Optional[dict]:
-    """Publish a pending pick to the live tracker (re-priced to now)."""
+def _pending_below_gate(entry: dict) -> Optional[dict]:
+    """If the pending pick's CURRENT Opus conviction is below the selection floor,
+    return {ticker, conviction, floor}; else None. The replenish-time gate only
+    screens candidates that were already scored when queued — this is the second
+    gate at APPROVE time, so an AI-flagged 'Avoid' can't be published by a stray
+    click (e.g. CRWV @44 vs the 45 floor). Unscored names don't block (no opinion
+    yet); the floor==0 setting disables the gate entirely."""
+    floor = config.AI_SELECT_MIN_CONVICTION
+    if floor <= 0:
+        return None
+    tkr = ((entry.get("pick") or {}).get("ticker") or "")
+    if not tkr:
+        return None
+    aj = _conviction_map([tkr]).get(tkr.upper()) or {}
+    conv = aj.get("conviction")
+    if conv is None or conv < 0 or conv >= floor:
+        return None
+    return {"ticker": tkr, "conviction": conv, "floor": floor}
+
+
+def _approve_pending(token: str, override: bool = False) -> Optional[dict]:
+    """Publish a pending pick to the live tracker (re-priced to now). Blocked when
+    the pick's Opus conviction is below the floor unless `override` — returns a
+    {"_blocked": True, ...} marker in that case (None only = not found/actioned)."""
     entry = _find_pending(token)
     if not entry:
         return None
+    if not override:
+        block = _pending_below_gate(entry)
+        if block:
+            logger.info(f"🚧 Prime approve BLOCKED: {block['ticker']} conviction "
+                        f"{block['conviction']} < {block['floor']} gate (override to publish)")
+            return {"_blocked": True, **block}
     pick = dict(entry.get("pick") or {})
     sym = (pick.get("ticker") or "")
     live = next((x for x in (_universe_data or []) if (x.get("ticker") or "") == sym), None)
@@ -8616,10 +8644,20 @@ async def prime_review_view(token: str):
 
 
 @app.get("/prime/review/{token}/approve", response_class=HTMLResponse)
-async def prime_review_approve(token: str):
-    pick = _approve_pending(token)
+async def prime_review_approve(token: str, override: bool = False):
+    pick = _approve_pending(token, override=override)
     if not pick:
         return HTMLResponse(_review_result_page("Already actioned", "This pick was already approved or rejected.", ok=False))
+    if pick.get("_blocked"):
+        # AI-flagged below the conviction gate — don't publish on the click; show
+        # the verdict and an explicit "approve anyway" path so it's a conscious call.
+        anyway = f"{SITE_ORIGIN}/prime/review/{token}/approve?override=1"
+        return HTMLResponse(_review_result_page(
+            "⚠️ Below the AI conviction bar",
+            f"<b>{pick['ticker']}</b> scored Opus conviction <b>{pick['conviction']}</b>, "
+            f"below your <b>{pick['floor']}</b> gate — our exit-risk brain would Avoid it.<br><br>"
+            f"<a href=\"{anyway}\" style=\"color:#b45309;font-weight:700\">Approve anyway →</a>",
+            ok=False))
     return HTMLResponse(_review_result_page("✅ Approved &amp; published",
         f"<b>{pick.get('ticker','')}</b> is now live in the Prime Tracker, entered at today's price."))
 
@@ -8637,6 +8675,7 @@ async def prime_review_reject(token: str):
 class _PrimeActionBody(BaseModel):
     token: str
     action: str
+    override: bool = False   # force-approve a pick Opus rated below the conviction gate
 
 
 @app.get("/api/admin/prime-pending")
@@ -8650,10 +8689,17 @@ async def api_admin_prime_pending(user: Optional[dict] = Depends(_current_user),
             continue
         p = e.get("pick") or {}
         f = p.get("factors_at_entry") or {}
+        block = _pending_below_gate(e)   # current Opus verdict vs the approve gate
         out.append({
             "token": e.get("token"), "queued_at": e.get("queued_at"),
             "ticker": p.get("ticker"), "name": p.get("name"), "sub_sector": p.get("sub_sector"),
             "alpha": p.get("pop_at_entry"), "conviction": p.get("conviction_at_entry"),
+            # Live Opus conviction + whether it's below the approve gate (the second
+            # gate — a stray approve on a below-gate name is blocked unless overridden).
+            "conviction_now": (block or {}).get("conviction") if block else (
+                (_conviction_map([p.get("ticker")]).get((p.get("ticker") or "").upper()) or {}).get("conviction")),
+            "below_gate": bool(block),
+            "gate_floor": config.AI_SELECT_MIN_CONVICTION,
             "entry_price": p.get("entry_price"),
             "momentum_1m": f.get("momentum_1m"), "momentum_3m": f.get("momentum_3m"),
             "rev_growth_yoy": f.get("rev_growth_yoy"), "target_upside_pct": f.get("target_upside_pct"),
@@ -8670,9 +8716,17 @@ async def api_admin_prime_action(body: _PrimeActionBody,
         raise HTTPException(status_code=403, detail="Admin only.")
     token, action = (body.token or "").strip(), (body.action or "").strip().lower()
     if action == "approve":
-        pick = _approve_pending(token)
+        pick = _approve_pending(token, override=bool(body.override))
         if not pick:
             raise HTTPException(status_code=404, detail="Not found or already actioned")
+        if pick.get("_blocked"):
+            return JSONResponse({
+                "ok": False, "blocked": True, "ticker": pick["ticker"],
+                "conviction": pick["conviction"], "floor": pick["floor"],
+                "reason": (f"Opus conviction {pick['conviction']} is below the "
+                           f"{pick['floor']} gate — it would Avoid this name."),
+                "hint": "Re-send with \"override\": true to publish anyway.",
+            }, status_code=409)
         return JSONResponse({"ok": True, "published": pick.get("ticker")})
     if action == "reject":
         entry = _reject_pending(token)
@@ -10419,15 +10473,23 @@ async def api_cache_health(user: Optional[dict] = Depends(_current_user),
             out["error"] = str(e)[:120]
         return out
 
+    # Every durable table the flat-cost guarantee + the AI-verification layer
+    # depend on. selection_judgments / closed_trades / model_portfolio were the
+    # blind spot: a missing selection_judgments silently wiped every conviction
+    # score on each redeploy (caught 2026-06-24) because it wasn't probed here.
     tables = {t: _probe(t) for t in
-              ("stock_overview", "stock_research", "stock_compare", "desk_report", "app_kv", "usage")}
+              ("stock_overview", "stock_research", "stock_compare", "desk_report",
+               "app_kv", "usage", "selection_judgments", "closed_trades", "model_portfolio")}
     ns_counts = {ns: _probe("app_kv", {"ns": f"eq.{ns}"}).get("count")
                  for ns in ("why_today_v4", "sector_graph", "dependencies", "feedback", "insider", "pdf_narrative")}
+    # Tables present-but-unreachable (configured Supabase but the relation is
+    # missing) — these re-bill / lose state on every redeploy. Surfaced loudly.
+    unreachable = [t for t, p in tables.items() if supa and not p.get("reachable")]
 
     disk = CACHE_DISK_FILE or ""
     volume_persistent = bool(disk) and not disk.startswith("output")
     overview_ok = tables["stock_overview"]["reachable"]
-    intact = bool(supa and overview_ok and volume_persistent)
+    intact = bool(supa and overview_ok and volume_persistent and not unreachable)
 
     import usage_log as _ul
     spent_today = round(_ul.today_cost_usd(), 4)
@@ -10443,11 +10505,13 @@ async def api_cache_health(user: Optional[dict] = Depends(_current_user),
         "ai_monthly_cap_tripped": spent_month >= config.AI_MONTHLY_USD_CAP,
         "overview_cached_tickers": tables["stock_overview"]["count"],
         "tables": tables,
+        "unreachable_tables": unreachable,
         "app_kv_namespaces": ns_counts,
         "data_cache_disk_file": disk,
         "data_volume_persistent": volume_persistent,
         "notes": [
-            "intact = Supabase configured AND stock_overview reachable AND data volume persistent.",
+            "intact = Supabase configured AND stock_overview reachable AND data volume persistent AND no unreachable_tables.",
+            "unreachable_tables is the alarm: any table here is MISSING in Supabase → it re-bills / loses state every redeploy. Apply its db/*.sql migration.",
             "A table with reachable=false re-bills its cache (the same stock) after every redeploy — create it (see _CACHE_TABLE_SQL / store docstrings).",
             "data_volume_persistent=false → the FREE FMP/SEC/candles layer re-fetches the universe on each deploy (no AI cost, but heavy HTTP). Mount a Railway Volume at /data and set CACHE_DISK_FILE=/data/cache_v5.json.",
             "overview_cached_tickers is your fixed-cost ledger: distinct stocks already paid-for this 30-day window (served free to everyone).",
