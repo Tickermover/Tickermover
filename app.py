@@ -29,6 +29,7 @@ from data_coordinator import DataCoordinator
 from ai_scorer import score_and_rank, compute_pop_score
 import bottom_line_ai
 import ai_selector
+import ai_verifier
 from selection_store import store as _selstore
 from stock_universe import get_universe, get_meta
 from intelligence import (
@@ -7777,6 +7778,7 @@ _EXIT_REASON_LABEL = {
     "bar_failed": "Score break",
     "target":     "Target booked",
     "time":       "Time exit",
+    "ai_exit":    "AI early exit",
 }
 _EXIT_REASON_PLAIN = {
     "stop":       "Price hit our -8% protective stop — we step out to cap the downside.",
@@ -7787,6 +7789,7 @@ _EXIT_REASON_PLAIN = {
     "bar_failed": "Our composite score dropped below the keep bar.",
     "target":     "Reached our objective — booked the win.",
     "time":       "Held to our time limit without the thesis playing out.",
+    "ai_exit":    "Our Opus exit-risk review caught early deterioration the mechanical rules hadn't flagged yet — we step out before it shows up in the score.",
 }
 
 
@@ -7927,6 +7930,160 @@ def _close_triggered_picks(portfolio: dict, enriched_picks: list) -> tuple[dict,
         portfolio["picks"] = keep
         logger.info(f"📕 Closed {len(closed)} trade(s): {sorted(closed_tickers)}")
     return portfolio, closed
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+#  OPUS EXIT-RISK BRAIN — AI verification on every exit + early-loser radar
+# ═══════════════════════════════════════════════════════════════════════════
+# The mechanical exit ladder is fast and deterministic; Opus is the second brain
+# layered on top so we (a) don't dump a real winner on a transient soft signal and
+# (b) catch a quietly-breaking loser the rules haven't flagged yet. Two safety
+# rails the AI can never defeat: a catastrophic capital floor (config) forces the
+# exit no matter what the model says, and ANY model failure / over-budget falls
+# back to the deterministic mechanical decision (fail-safe — AI never silently
+# disables a stop). Per owner config, a confident HOLD may override any exit ABOVE
+# the floor (incl. the -8% stop). Mechanical triggers Opus is allowed to weigh in
+# on; the floor and a missing live price are not negotiable.
+_AI_MECH_TRIGGERS = {"stop", "trail", "thesis", "stretched", "signal", "bar_failed"}
+
+
+def _src_pick(portfolio: dict, ticker: str) -> Optional[dict]:
+    """The live source pick in the active portfolio (so AI-verdict caches persist
+    across calls and get saved), matched by ticker."""
+    for raw in portfolio.get("picks", []):
+        if raw.get("ticker") == ticker:
+            return raw
+    return None
+
+
+async def _ai_verify_exits(portfolio: dict, enriched_picks: list) -> bool:
+    """Second-opinion every FIRED mechanical exit through Opus. A confident HOLD
+    above the catastrophic floor clears the alert (override → keep the winner);
+    EXIT is confirmed and annotated. Verdicts are cached per-pick per-day so a
+    persistent trigger doesn't re-bill Opus on every 30s poll. Returns True if any
+    source pick was mutated (caller persists). Fail-safe: on any AI failure the
+    mechanical alert is left intact and the exit proceeds."""
+    from datetime import date as _date
+    today = str(_date.today())
+    floor = config.AI_OVERRIDE_FLOOR_PCT
+    mutated = False
+
+    async def _one(ep: dict):
+        nonlocal mutated
+        alert = ep.get("exit_alert")
+        if not alert or alert.get("type") not in _AI_MECH_TRIGGERS:
+            return
+        ticker = ep.get("ticker")
+        perf = ep.get("performance_pct")
+        # Catastrophic floor — AI may NOT override this. Force the mechanical exit.
+        if perf is not None and perf <= floor:
+            return
+        src = _src_pick(portfolio, ticker)
+        # Per-day cache so a standing trigger doesn't re-call Opus each poll.
+        cached = (src or {}).get("ai_exit_check") if src else None
+        if cached and cached.get("date") == today and cached.get("trigger") == alert.get("type"):
+            verdict = cached
+        else:
+            verdict = await ai_verifier.verify_exit(ep, alert)
+            if verdict is None:
+                return   # fail-safe: trust the mechanical exit
+            verdict = {**verdict, "date": today, "trigger": alert.get("type")}
+            if src is not None:
+                src["ai_exit_check"] = verdict
+                mutated = True
+        if verdict.get("verdict") == "hold":
+            # Override → keep the position. Mark it so the early-loser radar this
+            # cycle doesn't immediately re-exit a name we just chose to hold.
+            ep["exit_alert"] = None
+            ep["ai_hold"] = {"reason": verdict.get("reason"), "confidence": verdict.get("confidence"),
+                             "trigger": alert.get("type")}
+            if src is not None:
+                src["ai_hold_date"] = today
+            logger.info(f"🧠 Opus HELD {ticker} over '{alert.get('type')}' exit: {verdict.get('reason')}")
+        else:
+            # Confirm the exit — annotate the reason so the ledger shows it was AI-vetted.
+            ep["exit_alert"] = {**alert,
+                                "reason": f"{alert.get('reason','')} · Opus-confirmed",
+                                "ai_confirmed": True}
+            logger.info(f"🧠 Opus CONFIRMED {ticker} '{alert.get('type')}' exit")
+
+    fired = [ep for ep in enriched_picks
+             if (ep.get("exit_alert") or {}).get("type") in _AI_MECH_TRIGGERS]
+    if fired:
+        await asyncio.gather(*[_one(ep) for ep in fired])
+    return mutated
+
+
+def _apply_ai_exit_flags(portfolio: dict, enriched_picks: list) -> bool:
+    """Materialise any pending early-loser flag (set by the background radar) into
+    an exit_alert on the enriched pick — unless a mechanical alert already fired
+    (that one wins; the flag stays for next time). Free: no model call. Returns
+    True if any alert was attached."""
+    changed = False
+    for ep in enriched_picks:
+        if ep.get("exit_alert"):
+            continue
+        src = _src_pick(portfolio, ep.get("ticker"))
+        flag = (src or {}).get("ai_exit_flag")
+        if not flag:
+            continue
+        ep["exit_alert"] = {"type": "ai_exit", "label": "AI EARLY EXIT",
+                            "reason": flag.get("reason") or "Opus flagged early deterioration",
+                            "ai_confidence": flag.get("confidence")}
+        changed = True
+    return changed
+
+
+_ai_scan_running = False
+
+
+async def _ai_scan_holds_bg(force: bool = False) -> None:
+    """Early-loser radar — runs OUT of the request path (fire-and-forget) so the
+    daily batched Opus call adds no user latency. Once per day it scans every held
+    name with no mechanical alert through Opus; an 'exit' verdict writes an
+    ai_exit_flag onto the source pick, which _apply_ai_exit_flags turns into a real
+    exit on the next cycle (auto-exit, per owner config). Single-flight + day-gated
+    + budget-gated, so calling it on every request is cheap and bills once/day."""
+    global _ai_scan_running
+    from datetime import date as _date
+    today = str(_date.today())
+    pf = _model_portfolio
+    if (not ai_verifier.available() or _ai_over_budget() or _ai_scan_running
+            or not pf or not pf.get("picks")):
+        return
+    if pf.get("ai_scan_date") == today and not force:
+        return
+    _ai_scan_running = True
+    try:
+        enr = _enrich_model_portfolio(pf)
+        cands = [ep for ep in enr.get("picks", [])
+                 if not ep.get("exit_alert") and ep.get("in_universe")
+                 and ep.get("performance_pct") is not None
+                 and not (_src_pick(pf, ep.get("ticker")) or {}).get("ai_exit_flag")]
+        if not cands:
+            pf["ai_scan_date"] = today
+            return
+        verdicts = await ai_verifier.scan_holds(cands)
+        if not verdicts:
+            return   # transient failure → retry next cycle (don't stamp the day)
+        pf["ai_scan_date"] = today
+        flagged = []
+        for tkr, v in verdicts.items():
+            if v.get("verdict") != "exit":
+                continue
+            src = _src_pick(pf, tkr)
+            if not src:
+                continue
+            src["ai_exit_flag"] = {"reason": v.get("reason"),
+                                   "confidence": v.get("confidence"), "date": today}
+            flagged.append(tkr)
+        _save_portfolio_to_disk(pf)
+        if flagged:
+            logger.info(f"🧠 Opus early-loser radar flagged for exit: {flagged}")
+    except Exception as exc:
+        logger.warning(f"AI hold-scan failed: {exc}")
+    finally:
+        _ai_scan_running = False
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -8224,6 +8381,23 @@ def _replenish_portfolio(portfolio: dict) -> dict:
         reverse=True,
     )
 
+    # ── AI-verified selection gate ────────────────────────────────────────
+    # Opus already scored these names (conviction). Veto any it rated an explicit
+    # "Avoid" (below the floor) so a quant-qualified-but-AI-flagged name never
+    # reaches the owner approval email. Unscored names (conviction None) pass —
+    # the human approval gate still applies. Disabled when floor == 0.
+    floor = config.AI_SELECT_MIN_CONVICTION
+    if floor > 0:
+        kept = []
+        for t in qualified:
+            conv = (cmap.get((t.get("ticker") or "").upper()) or {}).get("conviction")
+            if conv is not None and conv < floor:
+                logger.info(f"🧠 AI-verified selection vetoed {t.get('ticker')} "
+                            f"(Opus conviction {conv} < {floor})")
+                continue
+            kept.append(t)
+        qualified = kept
+
     # ── Daily add cap (May 21 stability fix) ─────────────────────────────
     # Cap how many NEW picks can enter on any single day. Without this, a
     # mass-eviction event (e.g. multiple exits firing at once) refills all
@@ -8294,6 +8468,22 @@ async def api_model_portfolio():
 
     enriched = _enrich_model_portfolio(_model_portfolio)
     enriched_picks = enriched.get("picks", [])
+
+    # ── Opus exit-risk brain ──────────────────────────────────────────────
+    # Verify fired exits (override a premature winner-dump / confirm a real
+    # break) and apply any early-loser flags the daily background radar raised.
+    # Budget-gated + fail-safe: on any failure the mechanical decision stands.
+    if ai_verifier.available() and not _ai_over_budget():
+        try:
+            applied = _apply_ai_exit_flags(_model_portfolio, enriched_picks)
+            verified = await _ai_verify_exits(_model_portfolio, enriched_picks)
+            if applied or verified:
+                _save_portfolio_to_disk(_model_portfolio)
+        except Exception as _ve:
+            logger.warning(f"AI exit verification skipped: {_ve}")
+        # Kick the daily early-loser radar out of the request path (no latency).
+        asyncio.create_task(_ai_scan_holds_bg())
+
     has_fired = any(p.get("exit_alert") for p in enriched_picks)
 
     post_state = [(p.get("peak_price"), p.get("trail_active")) for p in _model_portfolio.get("picks", [])]

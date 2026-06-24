@@ -97,6 +97,22 @@ AI_DAILY_USD_CAP = float(_env("AI_DAILY_USD_CAP", "5") or "5")
 # redeploys. Resets on the 1st (UTC).
 AI_MONTHLY_USD_CAP = float(_env("AI_MONTHLY_USD_CAP", "50") or "50")
 
+# ── AI exit-verification: catastrophic capital floor ──────────────────────────
+# The Opus exit brain may override a mechanical exit (incl. the -8% stop) and HOLD
+# a position. This floor is the one thing it can NEVER override: once a position is
+# at or below this loss, the exit is forced regardless of the AI's verdict, so a
+# single bad call or hallucination can't let a loss run to ruin. Expressed as a
+# negative percent. Set to a very low number (e.g. -100) to effectively disable.
+AI_OVERRIDE_FLOOR_PCT = float(_env("AI_OVERRIDE_FLOOR_PCT", "-15") or "-15")
+
+# ── AI-verified selection gate ────────────────────────────────────────────────
+# A candidate that already cleared the quant bar (Grade A + Alpha floor + pillars)
+# is ALSO checked against the Opus conviction it was scored with: if Opus rated it
+# below this floor (an explicit "Avoid" despite passing the screen), it is vetoed
+# before it ever reaches the owner approval email. None/unscored names pass through
+# (the human approval gate still applies). 0-100 scale; set 0 to disable the veto.
+AI_SELECT_MIN_CONVICTION = int(_env("AI_SELECT_MIN_CONVICTION", "45") or "45")
+
 # ── Beta: Pro free for everyone until launch ──────────────────────────────────
 # During the public beta every signed-in user gets Pro features for free. This
 # flips OFF automatically once the date passes (UTC), so paid Pro takes over at

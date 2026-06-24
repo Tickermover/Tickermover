@@ -16440,6 +16440,7 @@ function renderClosedTrades(data) {
     signal:     {cls:'signal',   label:'Signal Exit'},
     rebuild:    {cls:'replaced', label:'Replaced'},
     time:       {cls:'time',     label:'Time Exit'},
+    ai_exit:    {cls:'signal',   label:'AI Early Exit'},
   };
 
   const fmtDate = s => {
@@ -16509,7 +16510,8 @@ function renderRecentExits(exits) {
   if (!Array.isArray(exits) || !exits.length) return '';
   const fmtD = s => { try { return new Date(s+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'}); } catch(e){ return s||''; } };
   const chip = { stop:'#dc2626', trail:'#0040c1', thesis:'#9E6308', stretched:'#9E6308',
-                 signal:'#64748b', bar_failed:'#64748b', target:'#15803d', time:'#64748b' };
+                 signal:'#64748b', bar_failed:'#64748b', target:'#15803d', time:'#64748b',
+                 ai_exit:'#7c3aed' };
   const cards = exits.map(e => {
     const c = chip[e.reason_type] || '#64748b';
     const pct = (e.final_pct>=0?'+':'') + (e.final_pct||0).toFixed(1) + '%';
@@ -16669,6 +16671,12 @@ function renderModelPortfolio(data) {
       // ── Earnings-event flag — a binary event ahead; manage exposure around it ──
       const eventBadge = p.event_risk
         ? `<span title="${String(p.event_risk).replace(/"/g,'&quot;')}" style="font-size:9px;font-weight:800;letter-spacing:.05em;padding:2px 6px;border-radius:5px;background:rgba(245,158,11,.12);color:#b45309;border:1px solid rgba(245,158,11,.28)">📅 EARNINGS</span>`
+        : '';
+      // ── Opus HOLD — the exit-risk brain overrode a mechanical exit to let a
+      //    winner keep running. Visible proof the AI is protecting growth. ──
+      const aiHold = p.ai_hold || null;
+      const aiHoldBadge = aiHold
+        ? `<span title="Opus exit-risk review held this through a '${String(aiHold.trigger||'').replace(/"/g,'&quot;')}' signal: ${String(aiHold.reason||'').replace(/"/g,'&quot;')}" style="font-size:9px;font-weight:800;letter-spacing:.05em;padding:2px 6px;border-radius:5px;background:rgba(124,58,237,.12);color:#7c3aed;border:1px solid rgba(124,58,237,.28)">🧠 OPUS HOLD</span>`
         : '';
 
       // ── Tier badge: shows which strictness tier this pick passed ─────────
@@ -16847,7 +16855,7 @@ function renderModelPortfolio(data) {
             <div class="v2-mp-head-text">
               <div class="v2-mp-tic-row">
                 <span class="v2-mp-tic">${p.ticker}</span>
-                ${newBadge}${sizeBadge}${eventBadge}
+                ${newBadge}${sizeBadge}${eventBadge}${aiHoldBadge}
               </div>
               <div class="v2-mp-name">${p.name}</div>
               ${p.sub_sector ? `<div class="v2-mp-sub">${p.sub_sector}</div>` : ''}
