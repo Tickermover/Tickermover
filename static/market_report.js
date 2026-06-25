@@ -296,13 +296,13 @@ window.MarketReport = (function () {
         `<div class="ed-headline">${headline}</div>` +
         (dek ? `<div class="ed-dek">${dek}</div>` : '') +
       `</div>` +
+      `<div class="ed-sec-h">${d.kind === 'post' ? '⚖️ The verdict · into tomorrow' : '⚖️ The verdict · the day ahead'}</div>` +
+      verdict(d) +
+      events(d) +
       regimeSection(d) +
       sectorChart(d) +
       houseSection(d) +
-      `<div class="ed-sec-h">📐 Technicals · S&amp;P 500</div>` + tech(d) +
-      events(d) +
-      `<div class="ed-sec-h">${d.kind === 'post' ? '⚖️ The verdict · into tomorrow' : '⚖️ The verdict · the day ahead'}</div>` +
-      verdict(d);
+      `<div class="ed-sec-h">📐 Technicals · S&amp;P 500</div>` + tech(d);
   }
 
   // Key macro events — a compact "what the market is waiting for" grid
@@ -370,7 +370,49 @@ window.MarketReport = (function () {
           `<div class="val">${t.macd == null ? '—' : N(t.macd, 2)}</div>` +
           `<div class="chg ${t.hist == null ? 'ma-na' : (macdPos ? 'ma-pos' : 'ma-neg')}">${macdNote}</div>` +
           `<div class="sub">Signal ${t.signal == null ? '—' : N(t.signal, 2)} · Histogram ${t.hist == null ? '—' : N(t.hist, 2)}.</div></div>` +
+        dist52Card(t) + ret1mCard(t) + volCard(t) +
       `</div>`;
+  }
+
+  // ── extra technical KPIs (52-wk positioning, momentum, realised vol) ──────
+  function dist52Card(t) {
+    const d = t.dist_52w_high;
+    const note = d == null ? 'Not available.'
+      : d >= -0.05 ? 'At / near the 52-week high.'
+      : d >= -5 ? 'Just shy of the yearly high.'
+      : d >= -10 ? 'In a mild pullback from the high.'
+      : 'Well off the yearly high.';
+    const c = d == null ? 'ma-na' : d >= -3 ? 'ma-pos' : d <= -10 ? 'ma-neg' : 'ma-flat';
+    const sub = (t.hi_52w != null && t.lo_52w != null)
+      ? `52-wk range $${N(t.lo_52w, 2)} – $${N(t.hi_52w, 2)}.` : '52-week positioning.';
+    return `<div class="ma-card"><div class="lbl"><span>From 52-wk high</span><span class="sym">SPY</span></div>` +
+      `<div class="val">${d == null ? '—' : pctTxt(d)}</div>` +
+      `<div class="chg ${c}">${note}</div><div class="sub">${sub}</div></div>`;
+  }
+  function ret1mCard(t) {
+    const r = t.ret_1m;
+    const note = r == null ? 'Not available.'
+      : r >= 2 ? 'Solid one-month uptrend.'
+      : r >= 0 ? 'Modestly higher over the month.'
+      : r >= -2 ? 'Slightly lower over the month.'
+      : 'Down over the past month.';
+    return `<div class="ma-card"><div class="lbl"><span>1-month return</span><span class="sym">SPY</span></div>` +
+      `<div class="val">${r == null ? '—' : pctTxt(r)}</div>` +
+      `<div class="chg ${cls(r)}">${note}</div>` +
+      `<div class="sub">Price vs ~21 trading days ago.</div></div>`;
+  }
+  function volCard(t) {
+    const v = t.vol_20d;
+    let note = 'Not available.', c = 'ma-na';
+    if (v != null) {
+      if (v < 12) { note = 'Calm — low realised volatility.'; c = 'ma-pos'; }
+      else if (v < 20) { note = 'Normal volatility regime.'; c = 'ma-flat'; }
+      else { note = 'Elevated — choppier tape.'; c = 'ma-neg'; }
+    }
+    return `<div class="ma-card"><div class="lbl"><span>Volatility (20d)</span><span class="sym">SPY</span></div>` +
+      `<div class="val">${v == null ? '—' : N(v, 1) + '%'}</div>` +
+      `<div class="chg ${c}">${note}</div>` +
+      `<div class="sub">Annualised, from 20-day daily returns.</div></div>`;
   }
 
   function sectors(d) {

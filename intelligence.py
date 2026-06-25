@@ -762,6 +762,19 @@ class MarketAnalysis:
             price = round(closes[-1], 2)
             def sma(n):
                 return round(sum(closes[-n:]) / n, 2) if len(closes) >= n else None
+            # 52-week range positioning (drawdown from the yearly high).
+            hi_52w = round(max(closes), 2)
+            lo_52w = round(min(closes), 2)
+            dist_high = round((price / hi_52w - 1) * 100, 2) if hi_52w else None
+            # Intermediate momentum — ~21 trading days back.
+            ret_1m = round((price / closes[-22] - 1) * 100, 2) if len(closes) >= 22 else None
+            # Annualised realised volatility from the last 20 daily returns.
+            vol_20d = None
+            if len(closes) >= 21:
+                rets = [closes[i] / closes[i - 1] - 1 for i in range(-20, 0)]
+                mean = sum(rets) / len(rets)
+                var = sum((r - mean) ** 2 for r in rets) / len(rets)
+                vol_20d = round((var ** 0.5) * (252 ** 0.5) * 100, 1)
             return {
                 "price":  price,
                 "sma20":  sma(20),
@@ -769,6 +782,11 @@ class MarketAnalysis:
                 "sma200": sma(200),
                 "rsi14":  _rsi(closes, 14),
                 **_macd(closes),
+                "hi_52w": hi_52w,
+                "lo_52w": lo_52w,
+                "dist_52w_high": dist_high,
+                "ret_1m": ret_1m,
+                "vol_20d": vol_20d,
             }
         except Exception as exc:
             logger.debug(f"market-analysis SPY technicals failed: {exc}")
