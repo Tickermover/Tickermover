@@ -230,7 +230,13 @@ window.MarketReport = (function () {
       ".ed-tf-h span,.ed-tf span:not(.nm){text-align:right}" +
       ".ed-tf{font-size:13px;padding:5px 0;border-bottom:1px solid rgba(15,23,42,.05)}" +
       ".ed-tf .nm{font-weight:600;color:#334155}" +
-      ".ed-track-stat{font-size:13.5px;line-height:1.5;color:#334155;background:rgba(21,128,61,.07);border:1px solid rgba(21,128,61,.18);border-radius:11px;padding:11px 14px;margin-top:10px}";
+      ".ed-track-stat{font-size:13.5px;line-height:1.5;color:#334155;background:rgba(21,128,61,.07);border:1px solid rgba(21,128,61,.18);border-radius:11px;padding:11px 14px;margin-top:10px}" +
+      // White floating-card wrapper for the chart/narrative sections so they
+      // read as panels instead of sitting loose on the panel background.
+      ".ed-card{background:#fff;border:1px solid rgba(15,23,42,.07);border-radius:16px;padding:2px 20px 18px;margin:14px 0;box-shadow:0 2px 14px rgba(15,23,42,.06)}" +
+      ".ed-card>.ed-sec-h:first-child{border-top:0;margin-top:14px;padding-top:0}" +
+      // Inside a white card the regime gauge drops its own tinted box (no card-in-card).
+      ".ed-card .ed-regime{background:none;border:0;padding:0;margin:6px 0 0}";
     document.head.appendChild(s);
   }
 
@@ -284,6 +290,9 @@ window.MarketReport = (function () {
     return `<div class="ed-sec-h">🎯 Through our lens · top-rated names today</div>` + hv + bars + stat;
   }
 
+  // Wrap a section's HTML in a white floating card (skips empty sections).
+  const sect = h => h ? `<div class="ed-card">${h}</div>` : '';
+
   function brief(d) {
     injectStyles();
     const v = (d.ai && d.ai.verdict) || {};
@@ -299,9 +308,9 @@ window.MarketReport = (function () {
       `<div class="ed-sec-h">${d.kind === 'post' ? '⚖️ The verdict · into tomorrow' : '⚖️ The verdict · the day ahead'}</div>` +
       verdict(d) +
       events(d) +
-      regimeSection(d) +
-      sectorChart(d) +
-      houseSection(d) +
+      sect(regimeSection(d)) +
+      sect(sectorChart(d)) +
+      sect(houseSection(d)) +
       `<div class="ed-sec-h">📐 Technicals · S&amp;P 500</div>` + tech(d);
   }
 

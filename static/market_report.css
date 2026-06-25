@@ -178,7 +178,7 @@
 /* Inner panels become lighter glass panes (no nested backdrop-filter). */
 .ma-glass .ma-card,.ma-glass .ma-stat,.ma-glass .ma-tbl,.ma-glass .ma-ev,
 .ma-glass .ma-edition,.ma-glass .ma-verdict,.ma-glass .ma-note,.ma-glass .ma-watch-note,
-.ma-glass .ma-news-item,.ma-glass .ma-session{
+.ma-glass .ma-news-item,.ma-glass .ma-session,.ma-glass .ed-card{
   background:rgba(255,255,255,.74)!important;
   border-color:rgba(255,255,255,.6)!important;
   box-shadow:0 2px 10px rgba(15,23,42,.08)!important;
