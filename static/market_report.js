@@ -248,22 +248,6 @@ window.MarketReport = (function () {
     }).join('') + '</div>';
   }
 
-  function vixGauge(d) {
-    const vix = find(d.rates_fx, '^VIX'); if (vix.last == null) return '';
-    const v = vix.last;
-    const w = v < 15 ? 'Calm' : v < 20 ? 'A little nervous' : v < 25 ? 'Anxious' : v < 30 ? 'Fearful' : 'Panic';
-    const pos = Math.max(2, Math.min(98, (v - 10) / 30 * 100)); // 10–40 scale
-    return `<div class="ed-vix"><div class="ed-gauge"><div class="pin" style="left:${pos}%"></div></div>` +
-      `<div class="read"><div class="n">${N(v, 2)}</div><div class="w">VIX · ${w} (${pctTxt(vix.chg_pct)})</div></div></div>`;
-  }
-
-  function indexChart(d) {
-    const items = [];
-    ['SPY', 'QQQ', 'DIA', 'IWM'].forEach(s => { const r = find(d.indices, s); if (r.chg_pct != null) items.push({ label: r.label, pct: r.chg_pct }); });
-    if (!items.length) return '';
-    return `<div class="ed-sec-h">📊 Markets at a glance</div>` + diverBars(items) + vixGauge(d);
-  }
-
   function sectorChart(d) {
     const secs = (d.sectors || []).slice();
     if (!secs.length) return '';
@@ -306,27 +290,16 @@ window.MarketReport = (function () {
     const headline = (d.ai && d.ai.headline) || v.headline ||
       (d.kind === 'post' ? 'The day on Wall Street' : 'Where the market stands');
     const dek = (d.ai && d.ai.dek) || '';
-    // Fallback narrative when the AI hasn't run yet — keep it data-true.
-    const spy = find(d.indices, 'SPY');
-    const fallback = spy.chg_pct == null ? 'Broad-market reading pending.'
-      : `The S&P 500 closed <b class="${cls(spy.chg_pct)}">${spy.chg_pct >= 0 ? 'up' : 'down'} ${Math.abs(spy.chg_pct).toFixed(2)}%</b> versus the prior session.`;
-    const narrative = (d.ai && d.ai.brief) ? `${aiTag()}${d.ai.brief}` : fallback;
 
     return `<div class="ed-mast">` +
         `<div class="ed-kicker">From the desk · Daily market report</div>` +
         `<div class="ed-headline">${headline}</div>` +
         (dek ? `<div class="ed-dek">${dek}</div>` : '') +
       `</div>` +
-      indexChart(d) +
       regimeSection(d) +
-      `<div class="ed-sec-h">📈 The tape, in words</div><div class="ed-dek">${narrative}</div>` +
       sectorChart(d) +
       houseSection(d) +
       `<div class="ed-sec-h">📐 Technicals · S&amp;P 500</div>` + tech(d) +
-      `<div class="ed-sec-h">💵 Rates, volatility &amp; the dollar</div>` +
-      `<div class="ma-grid">${(d.rates_fx || []).map(r => card(r)).join('')}</div>` +
-      `<div class="ed-sec-h">🛢️ Commodities</div>` +
-      `<div class="ma-grid">${(d.commodities || []).map(r => card(r)).join('')}</div>` +
       events(d) +
       `<div class="ed-sec-h">${d.kind === 'post' ? '⚖️ The verdict · into tomorrow' : '⚖️ The verdict · the day ahead'}</div>` +
       verdict(d);
