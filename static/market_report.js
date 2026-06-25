@@ -257,13 +257,6 @@ window.MarketReport = (function () {
       `<div class="read"><div class="n">${N(v, 2)}</div><div class="w">VIX · ${w} (${pctTxt(vix.chg_pct)})</div></div></div>`;
   }
 
-  function execSummary(d) {
-    const bl = (d.ai && d.ai.executive_summary) || [];
-    if (!Array.isArray(bl) || !bl.length) return '';
-    return `<div class="ed-sec-h">📋 Executive summary</div><div class="ed-bullets">` +
-      bl.slice(0, 6).map(b => `<div class="ed-bullet">${b}</div>`).join('') + `</div>`;
-  }
-
   function indexChart(d) {
     const items = [];
     ['SPY', 'QQQ', 'DIA', 'IWM'].forEach(s => { const r = find(d.indices, s); if (r.chg_pct != null) items.push({ label: r.label, pct: r.chg_pct }); });
@@ -280,36 +273,19 @@ window.MarketReport = (function () {
       diverBars(secs.map(s => ({ label: s.name, pct: s.chg_1d })));
   }
 
-  function moversChart(d) {
-    const s = d.stocks; if (!s) return '';
-    const g = (s.gainers || []).slice(0, 5).map(x => ({ label: x.ticker, pct: x.change_pct }));
-    const l = (s.losers || []).slice(0, 5).map(x => ({ label: x.ticker, pct: x.change_pct }));
-    const items = g.concat(l); if (!items.length) return '';
-    const note = (d.ai && d.ai.movers_note) ? `<div class="ma-note">${aiTag()}${d.ai.movers_note}</div>` : '';
-    return `<div class="ed-sec-h">🚀 Biggest movers</div>` + note + diverBars(items);
-  }
-
-  function tomorrowBox(d) {
-    const t = (d.ai && d.ai.tomorrow) || '';
-    if (!t) return '';
-    return `<div class="ed-tom"><div class="h">📅 The setup into tomorrow</div><div class="t">${aiTag()}${t}</div></div>`;
-  }
-
   // 📡 The Big Picture — our proprietary regime gauge (the IBD-style market pulse).
+  // The per-index table was removed: its 1-day column duplicated "Markets at a
+  // glance" and the multi-timeframe context now lives in the AI regime read.
   function regimeSection(d) {
-    const r = d.regime || {}, rc = r.components || {};
+    const r = d.regime || {};
     if (r.regime_label == null || r.regime_score == null) return '';
     const pin = Math.max(2, Math.min(98, r.regime_score));
     const read = (d.ai && d.ai.regime_read) ? `<div class="ed-rg-read">${aiTag()}${d.ai.regime_read}</div>` : '';
-    const cell = v => `<span class="${cls(v)}" style="font-weight:800">${pctTxt(v)}</span>`;
-    const tf = (sym, nm) => { const c = rc[sym]; return c ? `<div class="ed-tf"><span class="nm">${nm}</span>${cell(c.pct_1d)}${cell(c.pct_5d)}${cell(c.pct_1m)}</div>` : ''; };
-    const rows = [tf('SPY', 'S&P 500'), tf('QQQ', 'Nasdaq 100'), tf('DIA', 'Dow'), tf('^VIX', 'VIX'), tf('^TNX', '10-yr yield')].filter(Boolean).join('');
     return `<div class="ed-sec-h">📡 The Big Picture · our regime model</div>` +
       `<div class="ed-regime">` +
         `<div class="ed-rg-top"><div class="ed-rg-lab">${r.regime_label}</div><div class="ed-rg-score">${N(r.regime_score, 0)}<span>/100</span></div></div>` +
         `<div class="ed-rg-bar"><span class="lo">Defensive</span><div class="ed-rg-track"><div class="pin" style="left:${pin}%"></div></div><span class="hi">Risk-on</span></div>` +
         read +
-        (rows ? `<div class="ed-tf-h"><span class="nm"></span><span>1-day</span><span>5-day</span><span>1-month</span></div>${rows}` : '') +
       `</div>`;
   }
 
@@ -343,10 +319,8 @@ window.MarketReport = (function () {
       `</div>` +
       indexChart(d) +
       regimeSection(d) +
-      execSummary(d) +
       `<div class="ed-sec-h">📈 The tape, in words</div><div class="ed-dek">${narrative}</div>` +
       sectorChart(d) +
-      moversChart(d) +
       houseSection(d) +
       `<div class="ed-sec-h">📐 Technicals · S&amp;P 500</div>` + tech(d) +
       `<div class="ed-sec-h">💵 Rates, volatility &amp; the dollar</div>` +
@@ -355,7 +329,6 @@ window.MarketReport = (function () {
       `<div class="ma-grid">${(d.commodities || []).map(r => card(r)).join('')}</div>` +
       events(d) +
       `<div class="ed-sec-h">${d.kind === 'post' ? '⚖️ The verdict · into tomorrow' : '⚖️ The verdict · the day ahead'}</div>` +
-      tomorrowBox(d) +
       verdict(d);
   }
 
