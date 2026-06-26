@@ -143,23 +143,27 @@ def _candidate_line(t: dict) -> dict:
     }
 
 
-async def score_candidates(candidates: list[dict]) -> dict[str, dict]:
+async def score_candidates(candidates: list[dict], model: str | None = None) -> dict[str, dict]:
     """Score a list of quant-qualified candidates. Returns {ticker: judgment}.
 
     Pure read of the model — caller is responsible for caching the result
     (see selection_store). Returns {} on any failure so selection can fall
     back cleanly to the quant-only ordering.
+
+    `model` overrides the default selector model for one call (used by the
+    Opus-vs-Sonnet A/B diagnostic); falls back to _MODEL when None.
     """
     if not available() or not candidates:
         return {}
 
+    use_model = (model or _MODEL).strip()
     pool = candidates[:_MAX_CANDIDATES]
     payload = [_candidate_line(t) for t in pool if t.get("ticker")]
     if not payload:
         return {}
 
     body = {
-        "model": _MODEL,
+        "model": use_model,
         "max_tokens": 8000,
         "thinking": {"type": "adaptive"},
         # effort lives inside output_config alongside the format constraint.
@@ -194,7 +198,7 @@ async def score_candidates(candidates: list[dict]) -> dict[str, dict]:
                 json=body,
             )
         if r.status_code >= 400:
-            logger.error(f"ai_selector → {r.status_code} (model={_MODEL}): {r.text[:400]}")
+            logger.error(f"ai_selector → {r.status_code} (model={use_model}): {r.text[:400]}")
             return {}
         data = r.json()
     except Exception as e:
@@ -203,12 +207,12 @@ async def score_candidates(candidates: list[dict]) -> dict[str, dict]:
 
     _u = data.get("usage") or {}
     try:
-        usage_log.record("selection", _MODEL, _u)
+        usage_log.record("selection", use_model, _u)
     except Exception:
         pass
     logger.info(
         "ai_selector scored %d candidates (%s): in=%s cache_read=%s out=%s",
-        len(payload), _MODEL, _u.get("input_tokens"),
+        len(payload), use_model, _u.get("input_tokens"),
         _u.get("cache_read_input_tokens"), _u.get("output_tokens"),
     )
 
@@ -243,6 +247,6 @@ async def score_candidates(candidates: list[dict]) -> dict[str, dict]:
             "thesis":     (j.get("thesis") or "").strip()[:240],
             "red_flags":  [str(x).strip()[:160] for x in (j.get("red_flags") or [])][:4],
             "lean":       (j.get("lean") or "").strip(),
-            "model":      _MODEL,
+            "model":      use_model,
         }
     return out

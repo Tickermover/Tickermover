@@ -10808,6 +10808,83 @@ async def api_admin_usage(limit: int = 20000,
     return JSONResponse(usage_log.store.summary(limit=limit))
 
 
+@app.get("/api/admin/selection-ab")
+async def api_admin_selection_ab(n: int = 40,
+                                 model_a: str = "claude-opus-4-8",
+                                 model_b: str = "claude-sonnet-4-6",
+                                 user: Optional[dict] = Depends(_current_user),
+                                 creds: Optional[HTTPAuthorizationCredentials] = Depends(_bearer)):
+    """Opus-vs-Sonnet A/B for the Top Hunts selection judge. Scores the CURRENT
+    live selection pool on BOTH models and returns a side-by-side conviction /
+    thesis diff, so downgrading the selector can be evaluated on real names.
+    READ-ONLY: does NOT write selection_judgments (the live conviction cache is
+    untouched). Costs ~$0.20 per run (one pass each model). Allow-list gated."""
+    if not user or (user.get("email") or "").lower() not in _AI_ALLOW:
+        raise HTTPException(status_code=403, detail="Admin only.")
+    if not ai_selector.available():
+        return JSONResponse({"error": "ANTHROPIC_API_KEY not set."}, status_code=503)
+    targets = _selection_targets()[:max(1, min(n, 40))]
+    if not targets:
+        return JSONResponse(
+            {"error": "No live selection pool yet (universe not scored)."}, status_code=503)
+
+    # Score both models concurrently to halve wall time (adaptive thinking is slow).
+    a, b = await asyncio.gather(
+        ai_selector.score_candidates(targets, model=model_a),
+        ai_selector.score_candidates(targets, model=model_b),
+    )
+    floor = config.AI_SELECT_MIN_CONVICTION
+
+    def _tier(c):
+        if not isinstance(c, (int, float)):
+            return "n/a"
+        if c >= 80: return "High"
+        if c >= 65: return "Above"
+        if c >= 50: return "Standard"
+        return "Starter"
+
+    rows, deltas, veto_flips, tier_flips = [], [], 0, 0
+    for t in targets:
+        tk = (t.get("ticker") or "").upper()
+        ja, jb = a.get(tk) or {}, b.get(tk) or {}
+        ca, cb = ja.get("conviction"), jb.get("conviction")
+        both_num = isinstance(ca, (int, float)) and isinstance(cb, (int, float))
+        d = (ca - cb) if both_num else None
+        if d is not None:
+            deltas.append(abs(d))
+        va = isinstance(ca, (int, float)) and ca < floor
+        vb = isinstance(cb, (int, float)) and cb < floor
+        veto_flip = va != vb
+        if veto_flip:
+            veto_flips += 1
+        if _tier(ca) != _tier(cb):
+            tier_flips += 1
+        rows.append({
+            "ticker": tk,
+            "opus_conv": ca, "sonnet_conv": cb, "delta": d,
+            "opus_tier": _tier(ca), "sonnet_tier": _tier(cb),
+            "veto_flip": veto_flip,
+            "opus_lean": ja.get("lean"), "sonnet_lean": jb.get("lean"),
+            "opus_thesis": ja.get("thesis"), "sonnet_thesis": jb.get("thesis"),
+            "opus_flags": ja.get("red_flags"), "sonnet_flags": jb.get("red_flags"),
+        })
+    rows.sort(key=lambda r: abs(r["delta"]) if isinstance(r["delta"], (int, float)) else -1,
+              reverse=True)
+    mean_abs = round(sum(deltas) / len(deltas), 1) if deltas else None
+    return JSONResponse({
+        "model_a": model_a, "model_b": model_b,
+        "veto_floor": floor,
+        "scored": len(rows),
+        "mean_abs_conviction_delta": mean_abs,
+        "veto_flips": veto_flips,
+        "size_tier_flips": tier_flips,
+        "note": (f"veto_flip = models disagree on whether the name is below the {floor} "
+                 "entry-veto floor (the highest-stakes disagreement). size_tier flip = "
+                 "different position-size bucket. READ-ONLY; live cache untouched."),
+        "rows": rows,
+    })
+
+
 @app.get("/api/admin/cache-health")
 async def api_cache_health(user: Optional[dict] = Depends(_current_user),
                            creds: Optional[HTTPAuthorizationCredentials] = Depends(_bearer)):
