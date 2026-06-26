@@ -164,10 +164,14 @@ class ResearchStore:
             pass
 
     @staticmethod
-    def is_stale(doc: dict | None) -> bool:
-        """True if missing or older than TTL. Uses disk epoch when present;
-        Supabase rows carry generated_at (ISO) which we treat as fresh enough
-        within the process — disk mirror is the authoritative freshness clock."""
+    def is_stale(doc: dict | None, last_earnings_epoch: float | None = None) -> bool:
+        """True if missing, older than the 30-day TTL, OR an earnings report was
+        released AFTER the brief was generated. The earnings trigger refreshes the
+        catalysts/risks the moment a new quarter lands (whichever comes first —
+        the 30-day clock or the next report); the regenerated brief then restarts
+        the 30-day clock. `last_earnings_epoch` is the most recent PAST release
+        (epoch seconds); None disables the earnings trigger. Uses disk epoch when
+        present; otherwise parses the Supabase row's generated_at (ISO)."""
         if not doc:
             return True
         epoch = doc.get("generated_epoch")
@@ -183,7 +187,10 @@ class ResearchStore:
                 epoch = ts.timestamp()
             except Exception:
                 return True
-        return (time.time() - float(epoch)) > TTL_SECONDS
+        epoch = float(epoch)
+        if last_earnings_epoch is not None and last_earnings_epoch > epoch:
+            return True
+        return (time.time() - epoch) > TTL_SECONDS
 
 
 # Module-level singleton (mirrors persistence.store).

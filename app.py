@@ -5268,6 +5268,51 @@ _research_generating: set = set()
 _research_errors: dict = {}
 
 
+def _last_earnings_epoch(target: dict | None) -> float | None:
+    """Epoch (UTC seconds) of a ticker's most recent PAST earnings release, used
+    to invalidate the cached AI Deep-Dive / Overview right after a report so the
+    catalysts/risks reflect the new quarter (then the 30-day clock restarts on
+    the regenerated brief). Returns None when no past release is known — a FUTURE
+    `earnings_date` is intentionally ignored (the report hasn't happened yet), so
+    the cache only refreshes once earnings actually land."""
+    if not target:
+        return None
+    raw = target.get("last_earnings_date") or target.get("earnings_date")
+    if not raw:
+        return None
+    try:
+        from datetime import datetime, timezone
+        dt = datetime.fromisoformat(str(raw).replace("Z", "+00:00"))
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        ep = dt.timestamp()
+        return ep if ep <= time.time() else None
+    except Exception:
+        return None
+
+
+def _doc_gen_epoch(doc: dict | None) -> float | None:
+    """Epoch a cached AI doc was generated at (disk epoch, else parsed ISO
+    `generated_at`). Lets the in-memory L1 overview mirror honour the same
+    earnings-aware invalidation the durable store uses."""
+    if not doc:
+        return None
+    ep = doc.get("generated_epoch")
+    if ep is not None:
+        try:
+            return float(ep)
+        except (TypeError, ValueError):
+            return None
+    ga = doc.get("generated_at")
+    if ga:
+        try:
+            from datetime import datetime
+            return datetime.fromisoformat(str(ga).replace("Z", "+00:00")).timestamp()
+        except Exception:
+            return None
+    return None
+
+
 async def _run_research_job(sym: str, target: dict | None):
     import research_gen
     from research_store import store as _rstore
@@ -5303,6 +5348,10 @@ async def api_research(ticker: str, force: bool = False,
         return JSONResponse({"ticker": sym, "status": "locked",
                              "detail": "The AI Deep-Dive is a Pro feature. Upgrade to unlock."})
     doc = await asyncio.to_thread(_rstore.get, sym)
+    # Resolve the live row once: it drives both the earnings-aware freshness
+    # check and the regeneration payload below.
+    target = next((t for t in _universe_data if t.get("ticker") == sym), None)
+    earn_ep = _last_earnings_epoch(target)
 
     def _payload(d: dict, **extra) -> dict:
         out = {
@@ -5316,7 +5365,7 @@ async def api_research(ticker: str, force: bool = False,
         out.update(extra)
         return out
 
-    fresh = bool(doc) and doc.get("status") == "ready" and not _rstore.is_stale(doc) and not force
+    fresh = bool(doc) and doc.get("status") == "ready" and not _rstore.is_stale(doc, earn_ep) and not force
     if fresh:
         return JSONResponse(_payload(doc))
 
@@ -5329,7 +5378,6 @@ async def api_research(ticker: str, force: bool = False,
     # Kick off a single background generation per ticker.
     if sym not in _research_generating:
         _research_generating.add(sym)
-        target = next((t for t in _universe_data if t.get("ticker") == sym), None)
         try:
             asyncio.create_task(_run_research_job(sym, target))
         except RuntimeError:
@@ -5390,17 +5438,26 @@ async def api_overview(ticker: str, force: bool = False,
     # `force` is server-controlled only (no client passes it); honouring it still
     # respects the dedupe below so a manual refresh can't fan out into N calls.
     if not force:
-        # L1 — in-memory (fast path within this process)
+        # Earnings-aware freshness: a report since generation invalidates the
+        # snapshot even within the 30-day window (then regen resets the clock).
+        # Resolve the live row once; both cache tiers reuse it.
+        _ov_target = next((t for t in _universe_data if t.get("ticker") == sym), None)
+        _ov_earn = _last_earnings_epoch(_ov_target)
+        # L1 — in-memory (fast path within this process). Skip a hit that predates
+        # the latest earnings so the L1 mirror can't outlive a fresh report.
         cached = cache.get(ck)
         if cached is not None:
-            return JSONResponse(cached)
+            _ge = cached.get("_gen_epoch")
+            if not (_ov_earn and _ge and _ov_earn > _ge):
+                return JSONResponse(cached)
         # L2 — durable store (survives redeploys); re-warm L1 on hit.
         # to_thread: the store uses a SYNC httpx client, so awaiting it off-loop
         # keeps a slow Supabase read from stalling every other request.
         doc = await asyncio.to_thread(_ovstore.get, sym)
         if (doc and doc.get("status") == "ready" and doc.get("markdown")
-                and not _ovstore.is_stale(doc)):
+                and not _ovstore.is_stale(doc, _ov_earn)):
             out = _from_doc(doc)
+            out["_gen_epoch"] = _doc_gen_epoch(doc)
             cache.set(ck, out, ttl=2592000)   # L1 mirrors the 30-day durable TTL
             return JSONResponse(out)
 
@@ -5425,6 +5482,7 @@ async def api_overview(ticker: str, force: bool = False,
             out = await research_gen.generate_overview(sym, target, premium=_is_premium_overview(sym))
             out.setdefault("status", "ready")
             await asyncio.to_thread(_ovstore.save, sym, out)   # durable (Supabase + disk), off-loop
+            out["_gen_epoch"] = time.time()   # just generated → reflects latest earnings
             cache.set(ck, out, ttl=2592000)   # warm L1 (30 days, mirrors durable TTL)
             return out
         task = asyncio.ensure_future(_gen())

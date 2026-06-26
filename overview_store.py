@@ -158,7 +158,12 @@ class OverviewStore:
             pass
 
     @staticmethod
-    def is_stale(doc: dict | None) -> bool:
+    def is_stale(doc: dict | None, last_earnings_epoch: float | None = None) -> bool:
+        """True if missing, older than the 30-day TTL, OR an earnings report
+        landed AFTER the snapshot was generated (post-earnings the business/risk
+        view is stale → regenerate, which restarts the 30-day clock). Whichever
+        comes first wins. `last_earnings_epoch` is the most recent PAST release
+        (epoch seconds); None disables the earnings trigger."""
         if not doc:
             return True
         epoch = doc.get("generated_epoch")
@@ -173,7 +178,10 @@ class OverviewStore:
                 epoch = ts.timestamp()
             except Exception:
                 return True
-        return (time.time() - float(epoch)) > TTL_SECONDS
+        epoch = float(epoch)
+        if last_earnings_epoch is not None and last_earnings_epoch > epoch:
+            return True
+        return (time.time() - epoch) > TTL_SECONDS
 
 
 # Module-level singleton (mirrors research_store.store).
