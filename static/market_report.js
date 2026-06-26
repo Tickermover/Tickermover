@@ -532,28 +532,72 @@ window.MarketReport = (function () {
         `<div class="kv" style="margin-top:12px;color:#64748b">AI-written from live data — context only, no buy or sell calls.</div>` +
       `</div>`;
     }
-    let bull = 0, bear = 0;
-    if (gap != null) { if (gap > 0.1) bull++; else if (gap < -0.1) bear++; }
-    if (spy.chg_pct != null) { if (spy.chg_pct > 0) bull++; else if (spy.chg_pct < 0) bear++; }
-    if (t.price != null && t.sma50 != null) { t.price >= t.sma50 ? bull++ : bear++; }
-    if (t.price != null && t.sma200 != null) { t.price >= t.sma200 ? bull++ : bear++; }
-    if (t.rsi14 != null) { if (t.rsi14 > 60) bull++; else if (t.rsi14 < 40) bear++; }
-    if (vix.last != null) { if (vix.last < 16) bull++; else if (vix.last > 24) bear++; }
+    // ── Deterministic fallback: a labelled read of the live signals (no AI). ──
+    // Each signal carries a direction (+1 bull / -1 bear / 0 neutral) so the
+    // "Read" line can NAME what leans which way instead of a bare tally, and an
+    // interpretive line is derived from the trend-vs-momentum configuration.
+    const sigs = [];
+    const push = (label, state) => { if (state !== null) sigs.push({ label, state }); };
+    push('the futures setup', gap == null ? null : gap > 0.1 ? 1 : gap < -0.1 ? -1 : 0);
+    push('the cash close', spy.chg_pct == null ? null : spy.chg_pct > 0 ? 1 : spy.chg_pct < 0 ? -1 : 0);
+    push('the short-term trend', (t.price != null && t.sma50 != null) ? (t.price >= t.sma50 ? 1 : -1) : null);
+    push('the long-term trend', (t.price != null && t.sma200 != null) ? (t.price >= t.sma200 ? 1 : -1) : null);
+    push('momentum', t.rsi14 == null ? null : t.rsi14 > 60 ? 1 : t.rsi14 < 40 ? -1 : 0);
+    push('volatility', vix.last == null ? null : vix.last < 16 ? 1 : vix.last > 24 ? -1 : 0);
+
+    const bull = sigs.filter(s => s.state > 0).length;
+    const bear = sigs.filter(s => s.state < 0).length;
     const diff = bull - bear;
     const bias = diff >= 2 ? 'bullish' : diff <= -2 ? 'bearish' : 'neutral';
     const conf = Math.abs(diff) >= 4 ? ['high', 'High'] : Math.abs(diff) >= 2 ? ['med', 'Medium'] : ['low', 'Low'];
     const keyLvl = t.sma20 != null ? t.sma20 : (t.sma50 != null ? t.sma50 : null);
     const biasCls = bias === 'bullish' ? 'ma-pos' : bias === 'bearish' ? 'ma-neg' : 'ma-flat';
-    const openExp = gap == null ? 'open near flat' : gap > 0.15 ? 'open higher' : gap < -0.15 ? 'open lower' : 'open near flat';
     const spyChg = spy.chg_pct;
+    const openExp = gap == null ? 'open near flat' : gap > 0.15 ? 'open higher' : gap < -0.15 ? 'open lower' : 'open near flat';
     const closeExp = spyChg == null ? 'finished mixed' : spyChg > 0.15 ? 'closed higher' : spyChg < -0.15 ? 'closed lower' : 'closed near flat';
     const headline = d.kind === 'post'
       ? `The US market <span class="${spyChg > 0.15 ? 'ma-pos' : spyChg < -0.15 ? 'ma-neg' : 'ma-flat'}">${closeExp}</span>, with a <span class="${biasCls}">${bias}</span> tone into tomorrow.`
       : `US market is set to <span class="${gap > 0.15 ? 'ma-pos' : gap < -0.15 ? 'ma-neg' : 'ma-flat'}">${openExp}</span>, with an overall <span class="${biasCls}">${bias}</span> bias.`;
+
+    // Name the signals on each side instead of a bare count.
+    const nameList = arr => arr.length <= 1 ? (arr[0] || '')
+      : arr.slice(0, -1).join(', ') + ' and ' + arr[arr.length - 1];
+    const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+    const bulls = sigs.filter(s => s.state > 0).map(s => s.label);
+    const bears = sigs.filter(s => s.state < 0).map(s => s.label);
+    let read;
+    if (bulls.length && bears.length) read = `${cap(nameList(bulls))} lean constructive, while ${nameList(bears)} lean cautious.`;
+    else if (bulls.length) read = `${cap(nameList(bulls))} lean constructive, with nothing flashing a clear warning.`;
+    else if (bears.length) read = `${cap(nameList(bears))} lean cautious, with nothing offering a clear all-clear.`;
+    else read = `The signals we track are sitting on the fence — no clear edge either way.`;
+
+    // One interpretive line from the trend-vs-momentum configuration.
+    const trendBull = (t.price != null && t.sma200 != null) ? t.price >= t.sma200 : null;
+    const momoBull = t.rsi14 == null ? null : t.rsi14 > 60;
+    const momoBear = t.rsi14 == null ? null : t.rsi14 < 40;
+    let means;
+    if (trendBull === true && momoBear === true) means = 'The primary uptrend is intact, but short-term momentum is cooling — a pause within a larger advance rather than a reversal.';
+    else if (trendBull === true && momoBull === true) means = 'Trend and momentum are aligned higher — buyers have been stepping in on dips.';
+    else if (trendBull === false && momoBear === true) means = 'Both trend and momentum have rolled over — the burden of proof is on the bulls until the tape stabilises.';
+    else if (trendBull === false) means = 'Price is working below its long-term average — a market on the back foot until it can reclaim its trend.';
+    else means = 'Trend and momentum are pulling in different directions — a market in balance, waiting on its next catalyst.';
+
+    // Price-aware key level: how far SPY sits from its 20-day line, and what each side means.
+    let kvLine = '';
+    if (keyLvl != null && t.price != null) {
+      const distPct = (t.price - keyLvl) / keyLvl * 100, above = distPct >= 0;
+      kvLine = `SPY sits <b>${Math.abs(distPct).toFixed(1)}% ${above ? 'above' : 'below'}</b> its 20-day line ($${N(keyLvl, 2)}). ` +
+        (above ? 'Holding above it keeps the short-term uptrend intact; a daily close below would open the door to more two-way chop.'
+               : 'Reclaiming it would steady the tape; until then, expect more two-way chop.');
+    } else if (keyLvl != null) {
+      kvLine = `SPY $${N(keyLvl, 2)} (20-day line). If it holds, the up-trend stays intact; if it breaks, expect more two-way chop.`;
+    }
+
     return `<div class="ma-verdict">` +
       `<div class="big">${headline}</div>` +
-      `<div class="kv"><b>Read:</b> ${bull} bullish vs ${bear} bearish signals across futures, trend, RSI and volatility.</div>` +
-      (keyLvl != null ? `<div class="kv"><b>Key level to watch:</b> SPY $${N(keyLvl, 2)} (20-day line).<br>If it holds, the up-trend stays intact. If it breaks, expect more two-way chop.</div>` : '') +
+      `<div class="kv"><b>Read:</b> ${read}</div>` +
+      `<div class="kv" style="margin-top:8px"><b>What it means:</b> ${means}</div>` +
+      (kvLine ? `<div class="kv" style="margin-top:8px"><b>Key level to watch:</b> ${kvLine}</div>` : '') +
       `<div class="ma-conf ${conf[0]}">Confidence: ${conf[1]}</div>` +
       `<div class="kv" style="margin-top:12px;color:#64748b">For context only — no buy or sell calls. Levels are indicative and based on delayed data.</div>` +
     `</div>`;
