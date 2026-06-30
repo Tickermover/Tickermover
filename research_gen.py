@@ -54,6 +54,37 @@ _TIMEOUT = float(os.environ.get("RESEARCH_TIMEOUT", "180"))
 
 DISCLAIMER = "_Research tool, not financial advice. Figures are point-in-time and may be stale._"
 
+# ── Shared anti-drift rule ─────────────────────────────────────────────────
+# Every AI brief (overview snapshot + web-grounded deep-dive) is CACHED for up
+# to 30 days and rendered right beside a LIVE data strip. Any specific price /
+# target / multiple / date baked into the prose drifts within days and then
+# visibly contradicts the strip ("Price ($350)… target ($245)" sitting next to
+# a live $489 / $272). One identical, hard rule for both prompts keeps every
+# drifting number OUT of the cached text and pushes the model to judge those
+# things qualitatively instead. Durable fundamentals (revenue, growth, margins)
+# are explicitly still allowed — those don't drift between cache refreshes.
+_FRESHNESS_RULE = (
+    "FRESHNESS RULE — CRITICAL, APPLIES TO EVERY WORD YOU WRITE. This text is "
+    "CACHED for up to 30 days and shown right next to a LIVE data strip (current "
+    "price, analyst mean target, upside %, forward P/E, market cap, 52-week range, "
+    "rating, beta). Any specific number you bake in WILL drift within days and then "
+    "CONTRADICT that strip — making the whole note look stale and wrong. So ANYWHERE "
+    "in your output (verdict, key points, edge, business, catalysts, risks — every "
+    "sentence and bullet), you must NEVER state as a specific figure: the current "
+    "share price (e.g. 'Price ($350)', 'trading at $489'); an analyst price target in "
+    "dollars (e.g. 'mean target $245'); any %/dollar premium or discount to target "
+    "(e.g. '21% above target', '$100 below target'); a precise current valuation "
+    "multiple (e.g. 'Forward P/E ~235', '12x sales'); current market cap as a precise "
+    "number; or any near-term calendar date or day-countdown (e.g. 'Next 13 days', "
+    "'reports July 25'). INSTEAD judge them QUALITATIVELY / directionally: 'trades well "
+    "above analyst consensus', 'priced for near-flawless execution', 'nosebleed / "
+    "triple-digit multiple', 'richly valued vs its own history and peers', 'crowded "
+    "long', 'cheap vs peers', 'near its next earnings'. ALWAYS FINE (durable — these "
+    "do NOT drift between refreshes, use them freely and specifically): revenue, "
+    "revenue growth %, gross/operating margins, beat streak, segment mix, customer "
+    "concentration, unit/volume figures, and multi-year historical trends."
+)
+
 
 def available() -> bool:
     return bool(_KEY)
@@ -149,13 +180,9 @@ def _research_system() -> str:
         "RULES: Cite every external/quantitative claim inline with a markdown link to "
         "the source you read. Never fabricate numbers, quotes, or URLs — if you can't "
         "verify something, omit it. Be specific and concrete; no filler or hedging "
-        "boilerplate. Do NOT narrate your search process. FRESHNESS: this note is CACHED "
-        "and shown beside a live price/target strip — do NOT anchor the verdict, key "
-        "points, or risks to the current share price or a specific analyst-target dollar "
-        "(or a precise % premium/discount to it); those drift daily and would soon "
-        "contradict the live data. Speak about valuation qualitatively/directionally "
-        "(rich vs history, above/below consensus) instead. End the note with this exact "
-        "line:\n"
+        "boilerplate. Do NOT narrate your search process.\n\n"
+        f"{_FRESHNESS_RULE}\n\n"
+        "End the note with this exact line:\n"
         f"{DISCLAIMER}"
     )
 
@@ -291,14 +318,7 @@ def _overview_system() -> str:
         "ground-truth data provided PLUS your own training knowledge of the company. "
         "This is a quick overview — do NOT claim live/breaking figures, do NOT "
         "web-search, do NOT add source links.\n\n"
-        "FRESHNESS RULE: This snapshot is CACHED and shown next to a live data strip "
-        "(current price, analyst mean target, upside %). Use the ground-truth price / "
-        "analyst target only to JUDGE valuation — never QUOTE the current share price, "
-        "the analyst-target dollar figure, or a precise % premium/discount to target in "
-        "your prose or key points. Those drift daily and a baked-in number would soon "
-        "contradict the live strip. Describe valuation QUALITATIVELY instead (e.g. "
-        "'trades above analyst consensus', 'richly valued', 'crowded long', 'cheap vs "
-        "peers'). Durable figures (revenue, margins, growth rates, beat streak) are fine.\n\n"
+        f"{_FRESHNESS_RULE}\n\n"
         "Output GitHub-flavoured Markdown in EXACTLY this order:\n"
         "1. A one-sentence **bold verdict** of where the company stands.\n"
         "2. THE STRUCTURED BLOCK — immediately after the verdict, as ONE fenced ```json "
