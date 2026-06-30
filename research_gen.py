@@ -75,7 +75,6 @@ def _ground_block(t: dict) -> str:
         ("Forward P/E", g("pe_ratio") or g("forward_pe")),
         ("RSI(14)", g("rsi_14")),
         ("Analyst mean target", g("target_mean") or g("street_target")),
-        ("Days to earnings", g("days_to_earnings")),
     ]
     lines = [f"- {k}: {v}" for k, v in fields if v not in (None, "", [])]
     return "\n".join(lines)
@@ -139,7 +138,10 @@ def _research_system() -> str:
         "any DCF/fair-value view) — described directionally, WITHOUT anchoring to a "
         "specific current price or analyst-target dollar that will drift.\n"
         "8. '## What moves it next' — 3-5 catalysts, each prefixed with a rough "
-        "timeframe in **bold** (e.g. **Next quarter**, **H2 2026**, **Ongoing**).\n"
+        "timeframe in **bold**. Use ONLY qualitative buckets — e.g. **Next quarter**, "
+        "**Next earnings**, **H2 2026**, **Ongoing**. NEVER use a literal day/week "
+        "countdown (e.g. not **Next 13 days**, not **In 3 weeks**): this note is cached "
+        "for weeks, so any countdown would be wrong by the time it is read.\n"
         "9. '## Bottom line' — 2-3 sentences ending in the one honest question an "
         "investor should answer before buying.\n"
         "10. '## Sources' — numbered list of the web pages you actually used, as "
@@ -330,7 +332,10 @@ def _overview_system() -> str:
         "`display` is the human label. Omit the whole `business` or `revenue` key if you "
         "can't support it.\n"
         "3. '## What moves it next' — 3-4 catalysts, each prefixed with a **bold** rough "
-        "timeframe (e.g. **Next quarter**, **H2 2026**, **Ongoing**).\n"
+        "timeframe. Use ONLY qualitative buckets — e.g. **Next quarter**, **Next earnings**, "
+        "**H2 2026**, **Ongoing**. NEVER use a literal day/week countdown (e.g. not "
+        "**Next 13 days**): this snapshot is cached for weeks, so a countdown would be "
+        "stale by the time it is read.\n"
         "4. '## Bear case' — 3-5 specific risk bullets (valuation, concentration, "
         "competition, dilution, execution).\n"
         "No '## Sources' or '## Bottom line' section, no inline links. Be specific "

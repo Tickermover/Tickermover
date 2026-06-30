@@ -5274,21 +5274,44 @@ def _last_earnings_epoch(target: dict | None) -> float | None:
     catalysts/risks reflect the new quarter (then the 30-day clock restarts on
     the regenerated brief). Returns None when no past release is known — a FUTURE
     `earnings_date` is intentionally ignored (the report hasn't happened yet), so
-    the cache only refreshes once earnings actually land."""
+    the cache only refreshes once earnings actually land.
+
+    `last_earnings_date` is only carried on the live row for ~2-3 weeks after a
+    report (the post-earnings detection window), so on its own it would stop
+    triggering once that window closes. We therefore also consult
+    `eps_quarters[0].date` — FMP's most-recent reported-quarter date, which is
+    ALWAYS present and always in the past — so a stale pre-earnings brief still
+    refreshes even if the user opens the page weeks after the print. Once the
+    brief regenerates, its generation epoch moves past this date and the trigger
+    goes quiet until the NEXT quarter reports."""
     if not target:
         return None
-    raw = target.get("last_earnings_date") or target.get("earnings_date")
-    if not raw:
-        return None
-    try:
-        from datetime import datetime, timezone
-        dt = datetime.fromisoformat(str(raw).replace("Z", "+00:00"))
-        if dt.tzinfo is None:
-            dt = dt.replace(tzinfo=timezone.utc)
-        ep = dt.timestamp()
-        return ep if ep <= time.time() else None
-    except Exception:
-        return None
+
+    def _to_epoch(raw) -> float | None:
+        if not raw:
+            return None
+        s = str(raw).strip()
+        # FMP gives "YYYY-MM" for reported quarters; treat as mid-month.
+        if len(s) == 7 and s[4] == "-":
+            s = s + "-15"
+        try:
+            from datetime import datetime, timezone
+            dt = datetime.fromisoformat(s[:19].replace("Z", "+00:00"))
+            if dt.tzinfo is None:
+                dt = dt.replace(tzinfo=timezone.utc)
+            ep = dt.timestamp()
+            return ep if ep <= time.time() else None
+        except Exception:
+            return None
+
+    candidates = [
+        _to_epoch(target.get("last_earnings_date") or target.get("earnings_date")),
+    ]
+    eps_q = target.get("eps_quarters") or []
+    if eps_q and isinstance(eps_q[0], dict):
+        candidates.append(_to_epoch(eps_q[0].get("date")))
+    valid = [c for c in candidates if c is not None]
+    return max(valid) if valid else None
 
 
 def _doc_gen_epoch(doc: dict | None) -> float | None:
@@ -5347,6 +5370,10 @@ async def api_research(ticker: str, force: bool = False,
     if not await _is_pro_user(user, creds):
         return JSONResponse({"ticker": sym, "status": "locked",
                              "detail": "The AI Deep-Dive is a Pro feature. Upgrade to unlock."})
+    # A forced (paid) regen is admin-only — otherwise a caller could loop
+    # ?force=true across tickers to burn the AI budget. Normal staleness
+    # (30-day TTL + post-earnings trigger) still refreshes for everyone.
+    force = bool(force) and bool(user) and (user.get("email") or "").lower() in _AI_ALLOW
     doc = await asyncio.to_thread(_rstore.get, sym)
     # Resolve the live row once: it drives both the earnings-aware freshness
     # check and the regeneration payload below.
@@ -5422,6 +5449,9 @@ async def api_overview(ticker: str, force: bool = False,
     if not research_gen.available():
         return JSONResponse({"ticker": sym, "status": "unavailable",
                              "detail": "AI overview is not enabled (set ANTHROPIC_API_KEY)."})
+    # Forced (paid) regen is admin-only; everyone else relies on normal staleness
+    # (30-day TTL + post-earnings trigger). Prevents ?force=true budget abuse.
+    force = bool(force) and bool(user) and (user.get("email") or "").lower() in _AI_ALLOW
 
     ck = "overview:" + sym
 
@@ -5435,8 +5465,8 @@ async def api_overview(ticker: str, force: bool = False,
             "kind":     "overview",
         }
 
-    # `force` is server-controlled only (no client passes it); honouring it still
-    # respects the dedupe below so a manual refresh can't fan out into N calls.
+    # `force` is admin-only (gated above); honouring it still respects the dedupe
+    # below so a manual refresh can't fan out into N calls.
     if not force:
         # Earnings-aware freshness: a report since generation invalidates the
         # snapshot even within the 30-day window (then regen resets the clock).
