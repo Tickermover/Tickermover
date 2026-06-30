@@ -11094,6 +11094,150 @@ async def api_overview_list(user: Optional[dict] = Depends(_current_user),
     })
 
 
+# ── Admin: force-refresh cached AI briefs ───────────────────────────────────
+# The Overview/Deep-Dive caches only regenerate lazily when a doc trips the
+# 30-day TTL or a post-earnings trigger. When the prompt/template changes (or
+# the earnings dates the trigger relies on are missing), already-cached briefs
+# keep serving the OLD prose until they individually age out. This endpoint
+# force-regenerates them NOW under the current prompt — bypassing the freshness
+# check but still honouring the AI budget breaker (the sweep stops the moment a
+# cap trips, so it can never blow past the monthly ceiling).
+_ai_sweep_state: dict = {
+    "running": False, "scope": None, "total": 0, "done": 0,
+    "refreshed": 0, "failed": 0, "started_at": None, "stopped": None,
+    "last_error": None,
+}
+
+
+def _cached_overview_tickers() -> list:
+    """The distinct tickers whose Overview is already cached in Supabase (the
+    fixed-cost ledger) — the natural target set for a refresh sweep."""
+    import httpx
+    from overview_store import store as _ov
+    url = (config.SUPABASE_URL or "").rstrip("/")
+    key = config.SUPABASE_SERVICE_KEY or config.SUPABASE_ANON_KEY or ""
+    if not (url and key):
+        return []
+    try:
+        with httpx.Client(timeout=8) as c:
+            r = c.get(f"{url}/rest/v1/stock_overview",
+                      headers={"apikey": key, "Authorization": f"Bearer {key}"},
+                      params={"env_id": f"eq.{_ov.env_id}",
+                              "select": "ticker", "order": "generated_at.desc",
+                              "limit": "2000"})
+            if r.status_code == 200:
+                return [x.get("ticker") for x in r.json() if x.get("ticker")]
+    except Exception as e:
+        logger.warning(f"_cached_overview_tickers failed: {e}")
+    return []
+
+
+async def _force_overview(sym: str) -> None:
+    import research_gen
+    from overview_store import store as _ovstore
+    target = next((t for t in _universe_data if t.get("ticker") == sym), None)
+    out = await research_gen.generate_overview(sym, target, premium=_is_premium_overview(sym))
+    out.setdefault("status", "ready")
+    await asyncio.to_thread(_ovstore.save, sym, out)
+    out["_gen_epoch"] = time.time()
+    cache.set("overview:" + sym, out, ttl=2592000)
+
+
+async def _force_research(sym: str) -> None:
+    import research_gen
+    from research_store import store as _rstore
+    target = next((t for t in _universe_data if t.get("ticker") == sym), None)
+    out = await research_gen.generate_research(sym, target)
+    await asyncio.to_thread(_rstore.save, sym, out)
+
+
+async def _ai_refresh_sweep(syms: list, scope: str) -> None:
+    """Background sweep: force-regenerate `scope` for each ticker, paced, and
+    stop early if the AI budget breaker trips."""
+    _ai_sweep_state.update(running=True, scope=scope, total=len(syms), done=0,
+                           refreshed=0, failed=0, stopped=None, last_error=None,
+                           started_at=time.time())
+    try:
+        for sym in syms:
+            if _ai_over_budget():
+                _ai_sweep_state["stopped"] = "ai_budget_cap"
+                break
+            try:
+                if scope in ("overview", "all"):
+                    await _force_overview(sym)
+                if scope in ("research", "all"):
+                    await _force_research(sym)
+                _ai_sweep_state["refreshed"] += 1
+            except Exception as exc:
+                _ai_sweep_state["failed"] += 1
+                _ai_sweep_state["last_error"] = f"{sym}: {str(exc)[:160]}"
+                logger.warning(f"ai-refresh-sweep {sym} failed: {exc}")
+            _ai_sweep_state["done"] += 1
+            await asyncio.sleep(2)          # gentle pacing — no burst
+    finally:
+        _ai_sweep_state["running"] = False
+
+
+@app.post("/api/admin/refresh-ai")
+async def api_admin_refresh_ai(scope: str = "overview", tickers: str = "",
+                               user: Optional[dict] = Depends(_current_user),
+                               creds: Optional[HTTPAuthorizationCredentials] = Depends(_bearer)):
+    """Force-regenerate cached AI briefs under the CURRENT prompt. Admin-only.
+
+    `scope` = overview | research | all. `tickers` = optional comma list (else
+    every ticker with a cached Overview). Small lists (≤8) run inline and return
+    results; larger sets run as a background sweep — poll GET for progress.
+    Honours the budget breaker (stops cleanly if a cap trips)."""
+    if not user or (user.get("email") or "").lower() not in _AI_ALLOW:
+        raise HTTPException(status_code=403, detail="Admin only.")
+    scope = (scope or "overview").lower().strip()
+    if scope not in ("overview", "research", "all"):
+        raise HTTPException(status_code=400, detail="scope must be overview|research|all")
+    if _ai_over_budget():
+        return JSONResponse({"status": "blocked", "reason": "ai_budget_cap",
+                             "detail": "AI spend cap reached — sweep not started."})
+    if _ai_sweep_state.get("running"):
+        return JSONResponse({"status": "already_running", **_ai_sweep_state})
+
+    syms = [s.strip().upper() for s in tickers.split(",") if s.strip()]
+    if not syms:
+        syms = _cached_overview_tickers()
+    if not syms:
+        return JSONResponse({"status": "nothing_to_do",
+                             "detail": "No cached tickers found (and none supplied)."})
+
+    # Small, explicit list → run inline so the caller sees the result immediately.
+    if len(syms) <= 8:
+        results = []
+        for sym in syms:
+            if _ai_over_budget():
+                results.append({"ticker": sym, "ok": False, "skipped": "ai_budget_cap"})
+                continue
+            try:
+                if scope in ("overview", "all"):
+                    await _force_overview(sym)
+                if scope in ("research", "all"):
+                    await _force_research(sym)
+                results.append({"ticker": sym, "ok": True})
+            except Exception as exc:
+                results.append({"ticker": sym, "ok": False, "error": str(exc)[:160]})
+        return JSONResponse({"status": "done", "scope": scope, "results": results})
+
+    # Larger set → background sweep; client polls GET /api/admin/refresh-ai.
+    asyncio.ensure_future(_ai_refresh_sweep(syms, scope))
+    return JSONResponse({"status": "started", "scope": scope, "queued": len(syms),
+                         "poll": "GET /api/admin/refresh-ai"})
+
+
+@app.get("/api/admin/refresh-ai")
+async def api_admin_refresh_ai_status(user: Optional[dict] = Depends(_current_user),
+                                      creds: Optional[HTTPAuthorizationCredentials] = Depends(_bearer)):
+    """Progress of the running/last force-refresh sweep. Admin-only."""
+    if not user or (user.get("email") or "").lower() not in _AI_ALLOW:
+        raise HTTPException(status_code=403, detail="Admin only.")
+    return JSONResponse(dict(_ai_sweep_state))
+
+
 # ── In-app feedback (idle prompt) ───────────────────────────────────────────
 class _FeedbackBody(BaseModel):
     rating:  Optional[int] = None        # 1–5 emoji rating
