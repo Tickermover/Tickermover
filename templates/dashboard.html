@@ -17996,6 +17996,11 @@ async function liveQuoteRefresh() {
     // Fundamentals list rows (compact table)
     _patchFundListPrices(qmap);
 
+    // Sector Map "Today" column — keep it on the same 30s cadence as the rest
+    // (it otherwise only refreshed on the 5-min tsRender path, so it visibly
+    // lagged the live hot cards / fundamentals next to it).
+    if (window.tsPatchSectorMoves) window.tsPatchSectorMoves(qmap);
+
     const ts = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
     const lb = document.getElementById('live-badge');
     if (lb) { lb.textContent = `● LIVE · ${ts}`; lb.style.cssText = ''; }
@@ -22123,6 +22128,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     });
     const sectors=Object.entries(groups)
       .map(([k,v])=>({name:k,score:v.n?Math.round(v.scoreSum/v.n):0,mom:v.items.length?(v.chg/v.items.length):0,count:v.items.length,
+        tickers:v.items.map(t=>t.ticker).filter(Boolean),
         leaders:[...v.items].sort((a,b)=>ss(b)-ss(a)).slice(0,2)}))
       .filter(s=>s.count>=2)
       .sort((a,b)=>b.score-a.score);
@@ -22144,7 +22150,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
       // Universe panel — that's the "theme" view, distinct from Prime
       // Opportunities (which opens a single stock). The Top chip still jumps
       // straight to the leader for anyone who just wants the best name.
-      return '<div class="sm-row'+(i>=PAGE?' sm-hidden':'')+'" onclick="v2OpenSectorInUniverse(\''+escHTML(s.name)+'\')" title="See all '+s.count+' '+escHTML(s.name)+' names · led by '+escHTML(s.leaders.map(t=>t.ticker).join(', '))+'">'+
+      return '<div class="sm-row'+(i>=PAGE?' sm-hidden':'')+'" data-sm-tk="'+escHTML((s.tickers||[]).join(','))+'" onclick="v2OpenSectorInUniverse(\''+escHTML(s.name)+'\')" title="See all '+s.count+' '+escHTML(s.name)+' names · led by '+escHTML(s.leaders.map(t=>t.ticker).join(', '))+'">'+
         '<span class="sm-tag">'+mark+'</span>'+
         '<span class="sm-main"><span class="sm-name">'+escHTML(s.name)+'</span><span class="sm-sub">'+s.count+' stocks</span></span>'+
         '<span class="sm-score" style="color:'+scoreColor(s.score)+'">'+s.score+'</span>'+
@@ -22414,6 +22420,30 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
   };
   // Re-run with the last-loaded snapshot (used on profile switches).
   window.tsRerender = function(){ if(DATA) window.tsRender(DATA); };
+  // Live patch for the Sector Map "Today" column: recompute each sector's
+  // average daily change from the 30s batch-quote feed (qmap: ticker→quote) so
+  // it stays in lockstep with the hot cards / fundamentals rather than lagging
+  // on the 5-min tsRender cadence. Rows are sorted by Score, not by move, so we
+  // only repaint the cell in place — no re-sort. Falls back to the last-known
+  // change_pct (_byTicker) for any constituent the batch didn't return.
+  window.tsPatchSectorMoves = function(qmap){
+    if(!qmap) return;
+    document.querySelectorAll('#sectorsSlot .sm-row[data-sm-tk]').forEach(row=>{
+      const tks=(row.getAttribute('data-sm-tk')||'').split(',').filter(Boolean);
+      if(!tks.length) return;
+      let sum=0,n=0;
+      tks.forEach(tk=>{
+        const u=tk.toUpperCase();
+        const q=qmap[u]||qmap[tk];
+        let ch = (q&&q.change_pct!=null) ? parseFloat(q.change_pct)
+               : (_byTicker[u]&&_byTicker[u].change_pct!=null) ? parseFloat(_byTicker[u].change_pct) : NaN;
+        if(!isNaN(ch)){ sum+=ch; n++; }
+      });
+      if(!n) return;
+      const mom=sum/n, cell=row.querySelector('.sm-mom');
+      if(cell){ cell.textContent=(mom>=0?'+':'')+mom.toFixed(1)+'%'; cell.className='sm-mom '+(mom>=0?'up':'dn'); }
+    });
+  };
   window.tsIndexPills = renderIndexPills;   // exposed so the topbar slot uses the deep colored pills
 })();
 </script>
