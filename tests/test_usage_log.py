@@ -10,7 +10,7 @@ from usage_log import estimate_cost
 
 def test_tier_mapping():
     assert usage_log._tier("claude-opus-4-8") == "opus"
-    assert usage_log._tier("claude-sonnet-4-6") == "sonnet"
+    assert usage_log._tier("claude-sonnet-5") == "sonnet"
     assert usage_log._tier("claude-haiku-4-5-20251001") == "haiku"
     assert usage_log._tier("") == "haiku"          # default to cheapest tier name
     assert usage_log._tier(None) == "haiku"
@@ -25,7 +25,7 @@ def test_haiku_pricing_per_million():
 def test_sonnet_and_opus_more_expensive_than_haiku():
     args = (1_000_000, 0, 0, 1_000_000, 0)
     h = estimate_cost("claude-haiku-4-5", *args)
-    s = estimate_cost("claude-sonnet-4-6", *args)
+    s = estimate_cost("claude-sonnet-5", *args)
     o = estimate_cost("claude-opus-4-8", *args)
     assert h < s < o
 

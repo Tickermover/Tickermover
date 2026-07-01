@@ -10899,7 +10899,7 @@ async def api_admin_usage(limit: int = 20000,
 @app.get("/api/admin/selection-ab")
 async def api_admin_selection_ab(n: int = 40,
                                  model_a: str = "claude-opus-4-8",
-                                 model_b: str = "claude-sonnet-4-6",
+                                 model_b: str = "claude-sonnet-5",
                                  user: Optional[dict] = Depends(_current_user),
                                  creds: Optional[HTTPAuthorizationCredentials] = Depends(_bearer)):
     """Opus-vs-Sonnet A/B for the Top Hunts selection judge. Scores the CURRENT

@@ -37,7 +37,7 @@ _MODEL = (
 # (₹1.9)/stock, vs ~$0.30 for an Opus web-grounded note. Override via env.
 _OVERVIEW_MODEL = (
     os.environ.get("ANTHROPIC_OVERVIEW_MODEL")
-    or "claude-sonnet-4-6"
+    or "claude-sonnet-5"
 ).strip()
 # Premium model used for the curated/featured set only — those ~35 names are
 # cached and concentrate user attention, so upgrading just them is a bounded cost

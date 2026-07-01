@@ -35,7 +35,7 @@ _KEY = os.environ.get("ANTHROPIC_API_KEY", "").strip()
 # Haiku via ANTHROPIC_DEPS_MODEL for an even cheaper run.
 _MODEL = (
     os.environ.get("ANTHROPIC_DEPS_MODEL")
-    or "claude-sonnet-4-6"
+    or "claude-sonnet-5"
 ).strip()
 _TIMEOUT = float(os.environ.get("DEPS_TIMEOUT", "150"))
 _TYPES = {"supplier", "customer", "input", "partner"}

@@ -1115,7 +1115,7 @@ _ANTHROPIC_MODEL   = os.environ.get(
 # sharper model than the intraday Haiku refresh. Haiku writes clean but flat; the
 # editorial needs connective, opinionated prose. One call/day keeps the cost trivial.
 _ANTHROPIC_EDITORIAL_MODEL = os.environ.get(
-    "ANTHROPIC_EDITORIAL_MODEL", "claude-sonnet-4-6"
+    "ANTHROPIC_EDITORIAL_MODEL", "claude-sonnet-5"
 )
 _ANTHROPIC_TIMEOUT = 12.0
 
