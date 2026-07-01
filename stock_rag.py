@@ -12,7 +12,9 @@ Env:
   VOYAGE_API_KEY      — embeddings (https://www.voyageai.com)
   VOYAGE_MODEL        — default "voyage-3-lite"
   ANTHROPIC_API_KEY   — answer generation (shared with the rest of the app)
-  ANTHROPIC_MODEL     — default "claude-haiku-4-5-20251001"
+  ANTHROPIC_MODEL     — cheap default for misc raw calls, "claude-haiku-4-5-20251001"
+  ASK_MODEL           — interactive assistant, default "claude-sonnet-5"
+  CONCALL_MODEL       — deep earnings-call summary, default "claude-sonnet-5"
 """
 from __future__ import annotations
 
@@ -30,9 +32,13 @@ VOYAGE_KEY      = os.environ.get("VOYAGE_API_KEY", "").strip()
 VOYAGE_MODEL    = os.environ.get("VOYAGE_MODEL", "voyage-3-lite")
 ANTHROPIC_KEY   = os.environ.get("ANTHROPIC_API_KEY", "").strip()
 ANTHROPIC_MODEL = os.environ.get("ANTHROPIC_MODEL", "claude-haiku-4-5-20251001")
-# The chat assistant uses a stronger model for best-in-class answers; the long
-# concall summary keeps ANTHROPIC_MODEL. Both are env-overridable.
-ASK_MODEL = os.environ.get("ASK_MODEL", "claude-haiku-4-5")
+# Both the interactive assistant (ASK) and the deep, narrative concall summary run
+# on Sonnet 5 for best-in-class prose — a deliberate quality upgrade from Haiku.
+# Ask is per-user capped (12/day) and concall is 30-day durably cached, so the
+# stronger tier stays inside the monthly AI budget. Both env-overridable;
+# ANTHROPIC_MODEL stays the cheap default for any other raw call.
+ASK_MODEL = os.environ.get("ASK_MODEL", "claude-sonnet-5")
+CONCALL_MODEL = os.environ.get("CONCALL_MODEL", "claude-sonnet-5")
 
 _INDEX: dict[str, dict] = {}          # ticker -> {ts, chunks:[str], vecs: np.ndarray}
 _INDEX_TTL = 24 * 3600               # rebuild a ticker's index once a day
@@ -228,10 +234,12 @@ async def _claude_answer(ticker, question, context_blocks, profile_data, user_id
         return None
 
 
-async def _claude_raw(prompt: str, max_tokens: int = 2500) -> str | None:
+async def _claude_raw(prompt: str, max_tokens: int = 2500, model: str | None = None,
+                      feature: str = "concall", ticker: str | None = None) -> str | None:
     if not ANTHROPIC_KEY:
         return None
-    payload = {"model": ANTHROPIC_MODEL, "max_tokens": max_tokens,
+    model = model or ANTHROPIC_MODEL
+    payload = {"model": model, "max_tokens": max_tokens,
                "messages": [{"role": "user", "content": prompt}]}
     headers = {"x-api-key": ANTHROPIC_KEY, "anthropic-version": "2023-06-01",
                "content-type": "application/json"}
@@ -242,7 +250,15 @@ async def _claude_raw(prompt: str, max_tokens: int = 2500) -> str | None:
             if r.status_code != 200:
                 logger.warning(f"stock_rag: Anthropic HTTP {r.status_code}: {r.text[:200]}")
                 return None
-            return (r.json().get("content") or [{}])[0].get("text", "").strip()
+            data = r.json()
+            # Meter it: concall now runs on the pricier Sonnet tier, so its spend
+            # must count against the monthly AI budget/report (was untracked).
+            try:
+                import usage_log
+                usage_log.record(feature, model, data.get("usage"), ticker=ticker)
+            except Exception:
+                pass
+            return (data.get("content") or [{}])[0].get("text", "").strip()
     except Exception as exc:
         logger.warning(f"stock_rag: Anthropic raw: {exc}")
         return None
@@ -293,6 +309,7 @@ def _parse_json_block(text: str) -> dict | None:
 
 
 _CONCALL_CACHE: dict = {}   # (ticker, quarter) -> result, avoids repeat Claude calls
+_CONCALL_NS = "concall_v2"  # v2: upgraded Haiku→Sonnet 5; busts the old cached summaries
 
 
 async def concall_summary(ticker: str, profile_data: str = "", quarter: str | None = None,
@@ -313,7 +330,7 @@ async def concall_summary(ticker: str, profile_data: str = "", quarter: str | No
     # every build. Re-warm the in-process cache on a hit.
     try:
         from kv_store import store as _kv
-        durable = _kv.get("concall", _kv_key, max_age_s=30 * 24 * 3600)
+        durable = _kv.get(_CONCALL_NS, _kv_key, max_age_s=30 * 24 * 3600)
         if isinstance(durable, dict):
             _CONCALL_CACHE[ck] = durable
             return durable
@@ -364,7 +381,7 @@ async def concall_summary(ticker: str, profile_data: str = "", quarter: str | No
 
     prompt = _CONCALL_PROMPT.format(ticker=ticker, src=src, text=text[:45000],
                                     metrics=profile_data or "(none)")
-    ans = await _claude_raw(prompt, max_tokens=2600)
+    ans = await _claude_raw(prompt, max_tokens=2600, model=CONCALL_MODEL, ticker=ticker)
     parsed = _parse_json_block(ans)
     if not parsed or not isinstance(parsed.get("sections"), list):
         return {"available": False, "reason": "generation_failed"}
@@ -376,7 +393,7 @@ async def concall_summary(ticker: str, profile_data: str = "", quarter: str | No
     _CONCALL_CACHE[ck] = parsed
     try:
         from kv_store import store as _kv
-        _kv.set("concall", _kv_key, parsed)   # persist so the next deploy reuses it
+        _kv.set(_CONCALL_NS, _kv_key, parsed)   # persist so the next deploy reuses it
     except Exception:
         pass
     return parsed
