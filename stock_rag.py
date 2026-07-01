@@ -309,7 +309,7 @@ def _parse_json_block(text: str) -> dict | None:
 
 
 _CONCALL_CACHE: dict = {}   # (ticker, quarter) -> result, avoids repeat Claude calls
-_CONCALL_NS = "concall_v2"  # v2: upgraded Haiku→Sonnet 5; busts the old cached summaries
+_CONCALL_NS = "concall"     # stable: the Sonnet 5 upgrade fills in as entries age out (30d TTL) — no forced cache bust
 
 
 async def concall_summary(ticker: str, profile_data: str = "", quarter: str | None = None,
