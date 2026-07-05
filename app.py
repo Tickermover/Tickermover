@@ -1349,12 +1349,35 @@ async def landing():
             inject = recovery_forward + "\n" + (verify + "\n" if verify else "") + schema + "\n</head>"
             html = html.replace("</head>", inject, 1)
         return HTMLResponse(
-            content=html,
+            content=_with_analytics(html),
             headers={"Cache-Control": "public, max-age=30, s-maxage=60"},
         )
     except FileNotFoundError:
         from fastapi.responses import RedirectResponse
         return RedirectResponse(url="/app")
+
+
+def _analytics_snippet() -> str:
+    """Cookieless web analytics for PUBLIC pages (Plausible-compatible).
+
+    Marketing is blind without traffic/conversion data — but GA-style cookie
+    analytics would force a consent banner under UK GDPR/PECR. Plausible sets
+    no cookies, so no banner. Renders NOTHING until PLAUSIBLE_DOMAIN is set
+    (create the site at plausible.io, then set the env var on Railway)."""
+    d = (config.PLAUSIBLE_DOMAIN or "").strip()
+    if not d:
+        return ""
+    return (f'<script defer data-domain="{d}" '
+            f'src="{config.PLAUSIBLE_SRC}"></script>')
+
+
+def _with_analytics(html: str) -> str:
+    """Inject the analytics snippet before </head> on a public page (no-op
+    when analytics is unconfigured or the page has no head)."""
+    snip = _analytics_snippet()
+    if not snip or "</head>" not in html:
+        return html
+    return html.replace("</head>", snip + "\n</head>", 1)
 
 
 def _build_landing_schema() -> str:
@@ -2324,8 +2347,8 @@ async def stock_page(ticker: str):
     if not t:
         # Friendly "not in universe" page rather than 404 — still indexable,
         # tells the user the ticker isn't covered yet.
-        return HTMLResponse(content=_render_unknown_stock(sym), status_code=200)
-    return HTMLResponse(content=_render_stock_page(t))
+        return HTMLResponse(content=_with_analytics(_render_unknown_stock(sym)), status_code=200)
+    return HTMLResponse(content=_with_analytics(_render_stock_page(t)))
 
 
 def _render_unknown_stock(sym: str) -> str:
@@ -3580,7 +3603,7 @@ async def login_page():
     session already exists the page redirects itself to /app. The scoring
     wall is hydrated live from /api/hot."""
     try:
-        return HTMLResponse(content=LOGIN_HTML.read_text(encoding="utf-8"))
+        return HTMLResponse(content=_with_analytics(LOGIN_HTML.read_text(encoding="utf-8")))
     except FileNotFoundError:
         return HTMLResponse(content="<h2>templates/login.html not found</h2>", status_code=500)
 
@@ -3590,7 +3613,7 @@ async def desk_report():
     """Public daily market report — one edition, published once after the close
     with an indicative next-day read (replaces the old pre/post split)."""
     try:
-        return HTMLResponse(content=DESK_HTML.read_text(encoding="utf-8"))
+        return HTMLResponse(content=_with_analytics(DESK_HTML.read_text(encoding="utf-8")))
     except FileNotFoundError:
         return HTMLResponse(content="<h2>templates/desk.html not found</h2>", status_code=500)
 
@@ -4605,7 +4628,7 @@ async def api_weekly_editorial():
 async def weekly_page():
     """Public weekly editorial page."""
     try:
-        return HTMLResponse(content=WEEKLY_HTML.read_text(encoding="utf-8"))
+        return HTMLResponse(content=_with_analytics(WEEKLY_HTML.read_text(encoding="utf-8")))
     except FileNotFoundError:
         return HTMLResponse(content="<h2>templates/weekly.html not found</h2>", status_code=500)
 

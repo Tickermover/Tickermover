@@ -202,6 +202,13 @@ def page_shell(title: str, desc: str, canonical: str, body_html: str,
     """Wrap body content in a complete HTML doc with SEO head."""
     img = og_image or ""
     schema_tag = f'<script type="application/ld+json">{schema_json}</script>' if schema_json else ""
+    # Cookieless analytics on the SEO pages too — these are the organic-search
+    # front door, so channel attribution starts here. Renders nothing until
+    # PLAUSIBLE_DOMAIN is configured (see config.py).
+    import config as _cfg
+    _pd = (getattr(_cfg, "PLAUSIBLE_DOMAIN", "") or "").strip()
+    analytics_tag = (f'<script defer data-domain="{_pd}" '
+                     f'src="{_cfg.PLAUSIBLE_SRC}"></script>') if _pd else ""
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -223,6 +230,7 @@ def page_shell(title: str, desc: str, canonical: str, body_html: str,
 <link rel="icon" href="/favicon.ico">
 {_FONTS_LINK}
 {schema_tag}
+{analytics_tag}
 <style>{_BASE_CSS}</style>
 </head>
 <body>

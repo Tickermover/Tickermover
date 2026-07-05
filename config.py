@@ -105,6 +105,15 @@ AI_MONTHLY_USD_CAP = float(_env("AI_MONTHLY_USD_CAP", "50") or "50")
 # negative percent. Set to a very low number (e.g. -100) to effectively disable.
 AI_OVERRIDE_FLOOR_PCT = float(_env("AI_OVERRIDE_FLOOR_PCT", "-15") or "-15")
 
+# ── Analytics (cookieless, env-gated) ─────────────────────────────────────────
+# Plausible-compatible analytics on all PUBLIC pages (landing, login, weekly,
+# desk, /stocks/* SEO pages). Cookieless → no consent banner required under UK
+# GDPR/PECR. OFF until PLAUSIBLE_DOMAIN is set (normally "tickermover.com" —
+# create the site at plausible.io first, then set the env var on Railway).
+# PLAUSIBLE_SRC lets a self-hosted or proxied script be used instead.
+PLAUSIBLE_DOMAIN = _env("PLAUSIBLE_DOMAIN", "")
+PLAUSIBLE_SRC    = _env("PLAUSIBLE_SRC", "https://plausible.io/js/script.outbound-links.js")
+
 # ── Tracker entry: volatility risk gate ───────────────────────────────────────
 # Backtest evidence (2026-07): the catastrophic loss tail (QMCO -58%, QUBT -37%,
 # SOUN -29%) came exclusively from hyper-volatile names whose daily ATR was so
