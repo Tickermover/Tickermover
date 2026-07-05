@@ -203,12 +203,17 @@ def page_shell(title: str, desc: str, canonical: str, body_html: str,
     img = og_image or ""
     schema_tag = f'<script type="application/ld+json">{schema_json}</script>' if schema_json else ""
     # Cookieless analytics on the SEO pages too — these are the organic-search
-    # front door, so channel attribution starts here. Renders nothing until
-    # PLAUSIBLE_DOMAIN is configured (see config.py).
+    # front door, so channel attribution starts here. Same per-site Plausible
+    # script as app.py:_analytics_snippet (see config.PLAUSIBLE_SCRIPT_ID;
+    # set it to "off" to disable).
     import config as _cfg
-    _pd = (getattr(_cfg, "PLAUSIBLE_DOMAIN", "") or "").strip()
-    analytics_tag = (f'<script defer data-domain="{_pd}" '
-                     f'src="{_cfg.PLAUSIBLE_SRC}"></script>') if _pd else ""
+    _sid = (getattr(_cfg, "PLAUSIBLE_SCRIPT_ID", "") or "").strip()
+    analytics_tag = "" if (not _sid or _sid.lower() == "off") else (
+        f'<script async src="https://plausible.io/js/{_sid}.js"></script>\n'
+        '<script>window.plausible=window.plausible||function(){(plausible.q='
+        'plausible.q||[]).push(arguments)},plausible.init=plausible.init||'
+        'function(i){plausible.o=i||{}};plausible.init()</script>'
+    )
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>

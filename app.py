@@ -1358,17 +1358,22 @@ async def landing():
 
 
 def _analytics_snippet() -> str:
-    """Cookieless web analytics for PUBLIC pages (Plausible-compatible).
+    """Cookieless web analytics for PUBLIC pages (Plausible).
 
     Marketing is blind without traffic/conversion data — but GA-style cookie
     analytics would force a consent banner under UK GDPR/PECR. Plausible sets
-    no cookies, so no banner. Renders NOTHING until PLAUSIBLE_DOMAIN is set
-    (create the site at plausible.io, then set the env var on Railway)."""
-    d = (config.PLAUSIBLE_DOMAIN or "").strip()
-    if not d:
+    no cookies, so no banner. Uses Plausible's per-site script (the ID is
+    bound to the tickermover.com site in the owner's Plausible account);
+    set PLAUSIBLE_SCRIPT_ID=off to disable."""
+    sid = (config.PLAUSIBLE_SCRIPT_ID or "").strip()
+    if not sid or sid.lower() == "off":
         return ""
-    return (f'<script defer data-domain="{d}" '
-            f'src="{config.PLAUSIBLE_SRC}"></script>')
+    return (
+        f'<script async src="https://plausible.io/js/{sid}.js"></script>\n'
+        '<script>window.plausible=window.plausible||function(){(plausible.q='
+        'plausible.q||[]).push(arguments)},plausible.init=plausible.init||'
+        'function(i){plausible.o=i||{}};plausible.init()</script>'
+    )
 
 
 def _with_analytics(html: str) -> str:

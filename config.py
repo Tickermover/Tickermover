@@ -105,14 +105,13 @@ AI_MONTHLY_USD_CAP = float(_env("AI_MONTHLY_USD_CAP", "50") or "50")
 # negative percent. Set to a very low number (e.g. -100) to effectively disable.
 AI_OVERRIDE_FLOOR_PCT = float(_env("AI_OVERRIDE_FLOOR_PCT", "-15") or "-15")
 
-# ── Analytics (cookieless, env-gated) ─────────────────────────────────────────
-# Plausible-compatible analytics on all PUBLIC pages (landing, login, weekly,
-# desk, /stocks/* SEO pages). Cookieless → no consent banner required under UK
-# GDPR/PECR. OFF until PLAUSIBLE_DOMAIN is set (normally "tickermover.com" —
-# create the site at plausible.io first, then set the env var on Railway).
-# PLAUSIBLE_SRC lets a self-hosted or proxied script be used instead.
-PLAUSIBLE_DOMAIN = _env("PLAUSIBLE_DOMAIN", "")
-PLAUSIBLE_SRC    = _env("PLAUSIBLE_SRC", "https://plausible.io/js/script.outbound-links.js")
+# ── Analytics (cookieless) ────────────────────────────────────────────────────
+# Plausible analytics on all PUBLIC pages (landing, login, weekly, desk,
+# /stocks/* SEO pages). Cookieless → no consent banner required under UK
+# GDPR/PECR. Uses Plausible's new per-site script: the ID below is the
+# tickermover.com site created by the owner 2026-07-05. Override with the
+# PLAUSIBLE_SCRIPT_ID env var; set it to "off" to disable analytics entirely.
+PLAUSIBLE_SCRIPT_ID = _env("PLAUSIBLE_SCRIPT_ID", "pa-1hJ6BJn9EK-7p7O9xNWjJ")
 
 # ── Tracker entry: volatility risk gate ───────────────────────────────────────
 # Backtest evidence (2026-07): the catastrophic loss tail (QMCO -58%, QUBT -37%,
