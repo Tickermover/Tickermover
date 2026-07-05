@@ -1002,6 +1002,71 @@ app = FastAPI(title="TickerMover", lifespan=lifespan)
 from fastapi.middleware.gzip import GZipMiddleware
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 
+
+# ── Security headers (pre-launch hardening, 2026-07-05) ─────────────
+# The live site served NO security headers at all. These are the
+# baseline any production review expects. Note: no CSP yet — the
+# dashboard uses large inline <script>/<style> blocks, so a strict CSP
+# would break it; introduce one with nonces as a separate project.
+@app.middleware("http")
+async def _security_headers(request, call_next):
+    resp = await call_next(request)
+    h = resp.headers
+    # Force HTTPS for a year (Cloudflare already redirects; this pins it)
+    h.setdefault("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
+    # Never render inside a third-party iframe (clickjacking)
+    h.setdefault("X-Frame-Options", "DENY")
+    # Never MIME-sniff responses into executable types
+    h.setdefault("X-Content-Type-Options", "nosniff")
+    # Don't leak full URLs (ticker paths, tokens in query) to third parties
+    h.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+    # We use none of these browser features — say so explicitly
+    h.setdefault("Permissions-Policy", "camera=(), microphone=(), geolocation=(), payment=()")
+    return resp
+
+
+# ── Branded 404 (pre-launch polish, 2026-07-05) ─────────────────────
+# A raw {"detail":"Not Found"} JSON blob is fine for /api/* consumers but
+# reads as broken to a human who mistypes a URL or follows a dead link.
+# Browsers (Accept: text/html) on non-API paths get a small branded page
+# that routes them back to the site; API paths keep the JSON contract.
+_404_HTML = """<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Page not found — TickerMover</title>
+<style>
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+       background:#0b1220;color:#e2e8f0;display:flex;align-items:center;justify-content:center;
+       min-height:100vh;text-align:center;padding:24px}
+  .card{max-width:440px}
+  .code{font-size:64px;font-weight:800;letter-spacing:-2px;
+        background:linear-gradient(135deg,#38bdf8,#818cf8);-webkit-background-clip:text;
+        background-clip:text;color:transparent;margin-bottom:8px}
+  h1{font-size:20px;margin:0 0 10px}
+  p{font-size:14px;color:#94a3b8;line-height:1.6;margin:0 0 24px}
+  a.btn{display:inline-block;padding:11px 22px;border-radius:10px;font-weight:700;
+        font-size:14px;text-decoration:none;color:#fff;
+        background:linear-gradient(135deg,#0ea5e9,#6366f1)}
+  a.alt{display:inline-block;margin-left:12px;padding:11px 4px;font-size:14px;
+        color:#94a3b8;text-decoration:none}
+</style></head><body><div class="card">
+  <div class="code">404</div>
+  <h1>This page doesn't exist</h1>
+  <p>The link may be old, or the ticker isn't in our tracked universe.
+     Everything we cover is one search away on the dashboard.</p>
+  <a class="btn" href="/">Back to TickerMover</a><a class="alt" href="/app">Open dashboard →</a>
+</div></body></html>"""
+
+
+@app.exception_handler(404)
+async def _not_found(request, exc):
+    wants_html = "text/html" in (request.headers.get("accept") or "")
+    is_api = request.url.path.startswith("/api/")
+    if wants_html and not is_api:
+        return HTMLResponse(content=_404_HTML, status_code=404)
+    return JSONResponse({"detail": "Not Found"}, status_code=404)
+
 # Serve /static/ files (icons, images, css/js assets)
 _STATIC = BASE_DIR / "static"
 _STATIC.mkdir(exist_ok=True)
@@ -3774,8 +3839,12 @@ async def api_regime():
 
 
 @app.post("/api/regime/refresh")
-async def api_regime_refresh():
-    """Force a regime refresh (admin / debug)."""
+async def api_regime_refresh(user: Optional[dict] = Depends(_current_user)):
+    """Force a regime refresh (admin only — was unauthenticated until the
+    2026-07-05 pre-launch security audit; anyone could hammer the upstream
+    macro APIs through it)."""
+    if not user or (user.get("email") or "").lower() not in _AI_ALLOW:
+        raise HTTPException(status_code=403, detail="Admin only.")
     payload = await market_regime.refresh()
     return JSONResponse(_clean(payload))
 
@@ -4904,7 +4973,9 @@ async def api_event_intel(symbol: str, refresh: int = 0):
         summary = await _ei_mod.get_event_summary(sym, force_refresh=bool(refresh))
     except Exception as exc:
         logger.error(f"event-intel {sym}: {exc}", exc_info=True)
-        raise HTTPException(status_code=500, detail=str(exc))
+        # Generic message only — raw exception text can leak internals
+        # (API hosts, file paths) to the client; the full trace is logged.
+        raise HTTPException(status_code=500, detail="Event intel temporarily unavailable")
     if not summary:
         return JSONResponse({"ticker": sym, "available": False})
     # Rate-limit signal passes through with a structured reason
