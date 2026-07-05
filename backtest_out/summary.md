@@ -1,37 +1,41 @@
-# AlphaHunt — Backtest Summary
-_Generated 2026-05-09T16:46:47_
+# TickerMover — Backtest Summary
+_Generated 2026-07-05T19:31:41_
 
 ## Headline numbers
 
 | Metric | Value | Interpretation |
 |---|---|---|
-| **Information Coefficient (avg)** | +0.0836 | real edge |
-| IC consistency (% checkpoints positive) | 72.0% | consistent |
-| Total return | +127.9% | over backtest window |
-| SPY benchmark | +87.1% | same window |
-| **Excess vs SPY** | +40.8% | the only number that really matters |
-| Max drawdown | -31.5% | worst peak-to-trough |
-| Total closed trades | 59 | sample size |
-| Hit rate | 33.9% | trades that ended profitable |
-| Avg winner | +88.62% | when right |
-| Avg loser  | -12.65% | when wrong |
-| Best trade | +546.4% | top winner |
-| Worst trade| -58.5% | top loser |
+| **Information Coefficient (avg)** | +0.0324 | weak / noise — re-tune weights |
+| IC consistency (% checkpoints positive) | 61.2% | consistent |
+| Total return | +134.3% | over backtest window |
+| SPY benchmark | +89.4% | same window |
+| **Excess vs SPY** | +44.9% | the only number that really matters |
+| Max drawdown | -21.9% | worst peak-to-trough |
+| Total closed trades | 209 | sample size |
+| Hit rate | 31.6% | trades that ended profitable |
+| Avg winner | +61.11% | when right |
+| Avg loser  | -9.42% | when wrong |
+| Best trade | +586.8% | top winner |
+| Worst trade| -38.8% | top loser |
 
 ## Per-year performance
 
 | Year | Trades | Hit Rate | Avg Trade |
 |---|---|---|---|
-| 2024 | 16 | 31.2% | -5.19% |
-| 2025 | 29 | 20.7% | -5.77% |
-| 2026 | 14 | 64.3% | +109.23% |
+| 2022 | 36 | 11.1% | -7.39% |
+| 2023 | 44 | 20.5% | -4.20% |
+| 2024 | 31 | 45.2% | +2.16% |
+| 2025 | 56 | 26.8% | +1.23% |
+| 2026 | 42 | 57.1% | +71.45% |
 
 ## Caveats — read carefully
 
 - **Universe survivorship bias:** the 187 tickers are today's curated list. Some weren't public 5 years ago and we skip dates with no price. Results are biased upward because we know which IPOs survived.
 - **Score reconstruction is partial:** only price-derived components (momentum, RS, RSI, 52w distance, volume spike, trend strength, breakout proximity). Fundamental + analyst + insider + social signals (9 of 19 weights in live app) are NOT included — historical point-in-time data isn't available.
 - **No transaction costs / slippage / taxes:** subtract ~1% per round-trip for an honest net-of-fees estimate.
-- **Exit-only validation here:** the 4-rule exit (8% stop + stair-step trail) is the well-tested CAN SLIM-derived part. The novel claim that needs the IC to back it up is whether the *score itself* picks better stocks than random.
+- **Exit validation here:** the exit (8% hard stop + stair-step trail, no take-profit cap) is the well-tested CAN SLIM-derived part. The novel claim that needs the IC to back it up is whether the *score itself* picks better stocks than random.
+- **Theme cap applied:** selection enforces max-per-theme (sub-sector) diversification, matching live. Run `--max-per-theme 99` to see the uncapped book for comparison.
+- **Regime book-defense NOT modeled:** live raises the entry bar in a risk-off tape via the macro overlay (SPY/QQQ/VIX/^TNX), which isn't reconstructed here. The backtest fills top-N every checkpoint regardless of regime, so it understates the live system's drawdown protection.
 - **A higher hit rate doesn't equal a better strategy:** asymmetric payoff (big winners, small losers) drives long-run CAGR. Watch avg winner vs avg loser.
 
 ## How to read these results

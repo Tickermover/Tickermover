@@ -7441,10 +7441,33 @@ def _conv_score(ticker: str | None, cmap: dict) -> int:
     return int(c) if isinstance(c, (int, float)) else -1
 
 
+def _tradeable_volatility(t: dict) -> bool:
+    """Volatility risk gate for PRIME TRACKER ENTRY (not Featured/Best Ideas).
+
+    The -8% protective stop only protects when a stock's normal daily range is
+    well inside it. Backtest post-mortem (2026-07): every catastrophic loss
+    (QMCO -58%, QUBT -37%, SOUN -29%) was a name whose ATR(14) was 8-15% of
+    price at entry — a single AVERAGE day gaps through the stop, so the loss
+    tail is unbounded no matter how disciplined the exit rules are. Momentum
+    scoring loves exactly these names, so the gate has to be explicit.
+
+    Passes when ATR data is missing — a data gap must not starve the tracker,
+    and ATR(14) is computed from core candles so it's rarely absent."""
+    try:
+        atr = float(t.get("atr_14") or 0)
+        price = float(t.get("price") or 0)
+        if atr <= 0 or price <= 0:
+            return True   # no data → don't block
+        return (atr / price) <= config.TRACKER_MAX_ATR_PCT
+    except (TypeError, ValueError):
+        return True
+
+
 def _qualified_pool() -> list[dict]:
     """The current quant-eligible candidate set (Grade A + regime-aware Alpha
-    Score floor + 4-of-6 pillars), sorted best-first. Shared with the AI refresh
-    so the judge scores exactly the names that can actually be selected."""
+    Score floor + 4-of-6 pillars + tradeable volatility), sorted best-first.
+    Shared with the AI refresh so the judge scores exactly the names that can
+    actually be selected."""
     def _alpha(t: dict) -> float:
         ss = t.get("smart_score")
         if ss is None:
@@ -7456,6 +7479,7 @@ def _qualified_pool() -> list[dict]:
         if t.get("grade") == "A"
         and _alpha(t) >= min_score
         and _pillar_pass_count(t) >= 4
+        and _tradeable_volatility(t)
     ]
     pool.sort(key=_alpha, reverse=True)
     return pool
@@ -7748,6 +7772,9 @@ def _build_model_portfolio(existing: dict | None = None) -> dict:
     # empty slot is a signal that the market isn't offering enough
     # high-conviction setups today, not an excuse to lower the bar.
     qualified = [t for t in score_qualified if _pillar_pass_count(t) >= 4]
+    # Volatility risk gate — the -8% stop is fiction on names with 8%+ daily
+    # ATR (they gap through it); the whole backtest loss tail was these.
+    qualified = [t for t in qualified if _tradeable_volatility(t)]
     pool = qualified
     # AI advisory re-rank: within an Alpha-Score band (rounded to the nearest
     # point) order by the analyst-judge's conviction; exact alpha + analyst
@@ -7917,9 +7944,14 @@ def _enrich_model_portfolio(portfolio: dict) -> dict:
          Peak ≥ +300%  → floor = entry × 2.50  (locks +150%)
          Peak ≥ +500%  → floor = entry × 3.50  (locks +250%)
          Floor never falls (peak is monotonic). If `now ≤ floor` → exit.
+         (A tighter gain-retention floor was backtested 2026-07-05 and
+         REJECTED — it sold the compounders; see note at the ladder.)
       3. Stretched valuation → price > 25% above analyst target AND
          (PEG > 4 OR P/E > 80) — no analyst headroom left.
       4. Signal stop    → grade falls below B  OR  Alpha Score < 60.
+      5. Event-risk stop → already ≥4% underwater AND earnings ≤2 days out —
+         a losing thesis into a binary event is how -20% tails happen.
+         Opus-verifiable (the thesis may BE the earnings), floor still rules.
 
     Why no take-profit cap: a fixed ceiling (the old +100% rule, and the +20%
     rule before it) systematically sells the fat-tail winners that make
@@ -8003,6 +8035,13 @@ def _enrich_model_portfolio(portfolio: dict) -> dict:
         # always the HIGHEST tier the peak has unlocked — never falls.
         # Extended rungs at +200/+300/+500 to better discipline extreme
         # winners (a +400% gain on $50 entry locks $200, not just $75).
+        # NOTE (2026-07-05): a tighter "gain-retention" trail (lock 60% of the
+        # peak gain above a +150% peak) was implemented and BACKTESTED — it cut
+        # total return from +124.6% to +53.4% on identical data by selling the
+        # fat-tail compounders during normal 25-35% consolidations (avg winner
+        # collapsed +266% → +93%). The wide rungs are load-bearing: the room to
+        # give back IS what lets 5-10x winners happen. Do not re-tighten this
+        # ladder without a backtest that beats the control.
         if   peak_perf_frac >= 5.00: trail_mult, trail_label = 3.50, "locks +250%"
         elif peak_perf_frac >= 3.00: trail_mult, trail_label = 2.50, "locks +150%"
         elif peak_perf_frac >= 2.00: trail_mult, trail_label = 2.00, "locks +100%"
@@ -8112,18 +8151,29 @@ def _enrich_model_portfolio(portfolio: dict) -> dict:
                 thesis_break = True
                 thesis_reason = "Analysts cutting estimates + margins contracting"
 
-        # ── Earnings-event risk (NEW) — a binary event ahead. NOT an exit (the
-        # thesis may BE the earnings); a flag so the card shows elevated,
-        # event-driven variance and a user can manage exposure around it. ──
+        # ── Earnings-event risk — a binary event ahead. A WINNER holds through
+        # it (the thesis may BE the earnings — flag only); a LOSER does not:
+        # a position already ≥4% underwater 0-2 days before the print is a
+        # broken thesis facing a coin flip with a -20% tail (the backtest's
+        # worst exits were exactly this shape). Two conditions, so healthy
+        # picks never churn; Opus can still override above the floor. ──
         event_risk = None
+        event_exit = False
+        event_reason = None
         try:
             dte_live = live.get("days_to_earnings")
-            if dte_live is not None and 0 <= int(dte_live) <= 7:
-                d = int(dte_live)
-                _when = "today" if d == 0 else "tomorrow" if d == 1 else f"in {d}d"
-                event_risk = f"Reports {_when} — binary event, elevated risk"
+            dte_i = int(dte_live) if dte_live is not None else None
         except (TypeError, ValueError):
-            pass
+            dte_i = None
+        if dte_i is not None and 0 <= dte_i <= 7:
+            _when = "today" if dte_i == 0 else "tomorrow" if dte_i == 1 else f"in {dte_i}d"
+            event_risk = f"Reports {_when} — binary event, elevated risk"
+        if (has_live_price and in_universe and entry > 0 and perf <= -4
+                and dte_i is not None and 0 <= dte_i <= 2):
+            event_exit = True
+            _when = "today" if dte_i == 0 else "tomorrow" if dte_i == 1 else f"in {dte_i}d"
+            event_reason = (f"Down {perf:.1f}% with earnings {_when} — "
+                            f"losing position into a binary event")
 
         # ── Determine the EXIT ALERT (priority: protect capital first, then
         #    trail / thesis-break / valuation / signal — winners run via trail) ──
@@ -8136,6 +8186,10 @@ def _enrich_model_portfolio(portfolio: dict) -> dict:
             exit_alert = {"type": "trail",
                           "label": "TRAIL STOP HIT",
                           "reason": f"Price ${now:.2f} ≤ trail ${trail_floor:.2f} ({trail_label})"}
+        elif event_exit:
+            exit_alert = {"type": "event",
+                          "label": "EVENT RISK EXIT",
+                          "reason": event_reason}
         elif thesis_break:
             exit_alert = {"type": "thesis",
                           "label": "THESIS WEAKENING",
@@ -8302,6 +8356,7 @@ _EXIT_REASON_LABEL = {
     "target":     "Target booked",
     "time":       "Time exit",
     "ai_exit":    "AI early exit",
+    "event":      "Event-risk exit",
 }
 _EXIT_REASON_PLAIN = {
     "stop":       "Price hit our -8% protective stop — we step out to cap the downside.",
@@ -8313,6 +8368,7 @@ _EXIT_REASON_PLAIN = {
     "target":     "Reached our objective — booked the win.",
     "time":       "Held to our time limit without the thesis playing out.",
     "ai_exit":    "Our Opus exit-risk review caught early deterioration the mechanical rules hadn't flagged yet — we step out before it shows up in the score.",
+    "event":      "The position was already underwater going into earnings — we step aside rather than hold a losing thesis through a binary event.",
 }
 
 
@@ -8467,7 +8523,7 @@ def _close_triggered_picks(portfolio: dict, enriched_picks: list) -> tuple[dict,
 # disables a stop). Per owner config, a confident HOLD may override any exit ABOVE
 # the floor (incl. the -8% stop). Mechanical triggers Opus is allowed to weigh in
 # on; the floor and a missing live price are not negotiable.
-_AI_MECH_TRIGGERS = {"stop", "trail", "thesis", "stretched", "signal", "bar_failed"}
+_AI_MECH_TRIGGERS = {"stop", "trail", "thesis", "stretched", "signal", "bar_failed", "event"}
 
 
 def _src_pick(portfolio: dict, ticker: str) -> Optional[dict]:
@@ -8919,7 +8975,8 @@ def _replenish_portfolio(portfolio: dict) -> dict:
     # MANDATORY pillar veto — must hit >= 4 of 6 pillars. No fallback;
     # if no eligible candidates exist, the portfolio stays below target
     # rather than admit weaker names.
-    vetoed = [t for t in score_qualified if _pillar_pass_count(t) >= 4]
+    vetoed = [t for t in score_qualified
+              if _pillar_pass_count(t) >= 4 and _tradeable_volatility(t)]
     # Same AI advisory re-rank as the initial build: conviction breaks ties
     # within an Alpha-Score band; falls back to (alpha, upside) when the cache
     # is cold.

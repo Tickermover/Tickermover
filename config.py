@@ -105,6 +105,17 @@ AI_MONTHLY_USD_CAP = float(_env("AI_MONTHLY_USD_CAP", "50") or "50")
 # negative percent. Set to a very low number (e.g. -100) to effectively disable.
 AI_OVERRIDE_FLOOR_PCT = float(_env("AI_OVERRIDE_FLOOR_PCT", "-15") or "-15")
 
+# ── Tracker entry: volatility risk gate ───────────────────────────────────────
+# Backtest evidence (2026-07): the catastrophic loss tail (QMCO -58%, QUBT -37%,
+# SOUN -29%) came exclusively from hyper-volatile names whose daily ATR was so
+# large the -8% protective stop was fiction — one average day gaps straight
+# through it. Names whose ATR(14) exceeds this fraction of price are excluded
+# from PRIME TRACKER ENTRY only (Featured/Best Ideas lists are unaffected —
+# they're research surfaces, not tracked positions). A normal growth name runs
+# 2-4%/day; 7%+ is lottery-ticket territory where no stop can do its job.
+# Missing ATR data does NOT block entry (a data gap must not starve the tracker).
+TRACKER_MAX_ATR_PCT = float(_env("TRACKER_MAX_ATR_PCT", "0.07") or "0.07")
+
 # ── AI-verified selection gate ────────────────────────────────────────────────
 # A candidate that already cleared the quant bar (Grade A + Alpha floor + pillars)
 # is ALSO checked against the Opus conviction it was scored with: if Opus rated it

@@ -291,6 +291,8 @@ class Position:
             return 0.0
         peak_pct = self.peak_price / self.entry_price - 1
         # Must mirror the live ladder in app.py:_enrich_model_portfolio.
+        # (A tighter gain-retention floor was tested 2026-07-05 and REJECTED:
+        # it cut total return +124.6% → +53.4% by selling the compounders.)
         if   peak_pct >= 5.00: return self.entry_price * 3.50  # locks +250%
         elif peak_pct >= 3.00: return self.entry_price * 2.50  # locks +150%
         elif peak_pct >= 2.00: return self.entry_price * 2.00  # locks +100%
@@ -478,6 +480,20 @@ def run_backtest(prices: pd.DataFrame, volumes: pd.DataFrame,
             th = THEME.get(t, "Unknown")
             if theme_counts.get(th, 0) >= max_per_theme:
                 continue   # theme full — skip, never breach the cap
+            # ── Volatility risk gate (mirrors app.py:_tradeable_volatility) ──
+            # Names whose normal daily range gaps through the -8% stop are
+            # untradeable — the entire catastrophic loss tail (QMCO -58%,
+            # QUBT -37%, SOUN -29%) was these. Close-only proxy: 14d daily
+            # return σ; σ 0.05 ≈ ATR(14) ~7% of price. Sweepable via the
+            # BACKTEST_VOL_GATE env var (set 0 to disable).
+            try:
+                _vg = float(os.environ.get("BACKTEST_VOL_GATE", "0.05"))
+                if _vg > 0:
+                    recent = prices[t].loc[:ckpt].tail(15).pct_change().std()
+                    if not pd.isna(recent) and float(recent) >= _vg:
+                        continue
+            except (KeyError, TypeError, ValueError):
+                pass
             open_positions[t] = Position(
                 ticker=t, entry_date=ckpt,
                 entry_price=price, entry_score=score, peak_price=price,
