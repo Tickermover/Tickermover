@@ -665,12 +665,105 @@ class DataCoordinator:
         self.cache.set(key, result, ttl)
         return result
 
+    async def get_fmp_earnings_map(self) -> dict:
+        """Universe-wide earnings dates from the FMP stable earnings-calendar.
+
+        Chunked bulk calls cover EVERY listed symbol for [today-45, today+120]
+        (chunks of ~33 days so a per-request row cap can never silently drop
+        symbols); cached 12h. This is the missing fallback for prod, where the
+        yfinance earnings parse fails on the Railway IP and left earnings_date
+        EMPTY on every ticker — which silently disabled BOTH the event-risk
+        exit (needs days_to_earnings) and the post-earnings AI auto-refresh
+        (needs last_earnings_date).
+
+        Returns {SYMBOL: {"next_date": iso|None, "last_date": iso|None}} —
+        next_date is the soonest upcoming report, last_date the most recent
+        past one within the window.
+        """
+        key = "fmp_earnings_map"
+        cached = self.cache.get(key)
+        if cached is not None:
+            return cached
+
+        today = date.today()
+        result: dict = {}
+        start = today - timedelta(days=45)
+        end   = today + timedelta(days=120)
+        chunk = start
+        while chunk < end:
+            chunk_end = min(chunk + timedelta(days=33), end)
+            rows = await self._fmp_stable("earnings-calendar", {
+                "from": str(chunk), "to": str(chunk_end),
+            })
+            if isinstance(rows, list):
+                for row in rows:
+                    try:
+                        sym = (row.get("symbol") or "").upper()
+                        d = date.fromisoformat(str(row.get("date"))[:10])
+                    except (TypeError, ValueError, AttributeError):
+                        continue
+                    if not sym:
+                        continue
+                    slot = result.setdefault(sym, {"next_date": None, "last_date": None})
+                    if d >= today:
+                        if slot["next_date"] is None or d.isoformat() < slot["next_date"]:
+                            slot["next_date"] = d.isoformat()
+                    else:
+                        if slot["last_date"] is None or d.isoformat() > slot["last_date"]:
+                            slot["last_date"] = d.isoformat()
+            chunk = chunk_end + timedelta(days=1)
+
+        # 12h on success; 30 min on empty so an API hiccup recovers fast
+        # instead of pinning "no earnings data" for half a day.
+        self.cache.set(key, result, 12 * 3600 if result else 1800)
+        return result
+
+    async def get_fmp_earnings_for(self, ticker: str) -> dict:
+        """Earnings dates for ONE ticker: bulk map first (1 API sweep / 12h for
+        the whole universe), per-symbol `stable/earnings` top-up when the bulk
+        map lacks the symbol. The top-up is NOT optional: the bulk calendar is
+        verifiably incomplete (2026-07-05: PLTR 08-03 and IONQ 08-05 were in
+        the per-symbol feed but absent from the bulk window) — treating
+        "absent" as "no earnings scheduled" would silently disable the
+        event-risk exit for exactly some of the names that need it. Per-ticker
+        result cached 12h. Returns {"next_date", "last_date"} (either may be
+        None)."""
+        m = await self.get_fmp_earnings_map()
+        slot = m.get((ticker or "").upper()) if m else None
+        if slot and (slot.get("next_date") or slot.get("last_date")):
+            return slot
+
+        key = f"fmp_earnings:{ticker}"
+        cached = self.cache.get(key)
+        if cached is not None:
+            return cached
+        out = {"next_date": None, "last_date": None}
+        rows = await self._fmp_stable("earnings", {"symbol": ticker})
+        if isinstance(rows, list):
+            today = date.today()
+            for row in rows:
+                try:
+                    d = date.fromisoformat(str(row.get("date"))[:10])
+                except (TypeError, ValueError, AttributeError):
+                    continue
+                if d >= today:
+                    if out["next_date"] is None or d.isoformat() < out["next_date"]:
+                        out["next_date"] = d.isoformat()
+                elif (today - d).days <= 120:
+                    if out["last_date"] is None or d.isoformat() > out["last_date"]:
+                        out["last_date"] = d.isoformat()
+        self.cache.set(key, out,
+                       12 * 3600 if (out["next_date"] or out["last_date"]) else 3600)
+        return out
+
     async def get_earnings_date(self, ticker: str) -> Optional[int]:
         """
         Get days to next earnings. Priority:
         1. Already extracted from yfinance info (in candles cache)
         2. Direct yfinance calendar fetch
-        3. Finnhub earnings calendar (fallback)
+        3. FMP stable earnings calendar (paid Starter — reliable on prod,
+           where yfinance is blocked/unparseable on the Railway IP)
+        4. Finnhub earnings calendar (last resort)
         """
         key    = f"earnings:{ticker}"
         cached = self.cache.get(key)
@@ -713,6 +806,17 @@ class DataCoordinator:
                     return days
         except Exception as exc:
             logger.debug(f"yfinance calendar failed for {ticker}: {exc}")
+
+        # ── Fallback: FMP stable earnings calendar ───────────────────────
+        try:
+            fmp_e = await self.get_fmp_earnings_for(ticker)
+            nd = fmp_e.get("next_date")
+            if nd:
+                days = (date.fromisoformat(nd) - today).days
+                self.cache.set(key, days, config.CACHE_TECH_TTL)
+                return days
+        except Exception as exc:
+            logger.debug(f"FMP earnings fallback failed for {ticker}: {exc}")
 
         # ── Fallback: Finnhub earnings calendar ──────────────────────────
         to_d = today + timedelta(days=90)
@@ -2121,6 +2225,32 @@ class DataCoordinator:
             merged["dist_52w_high"] = round((price - high_52w) / high_52w * 100, 2)
         else:
             merged["dist_52w_high"] = None
+
+        # ── Fallback: FMP stable earnings calendar (2026-07-05) ─────────────
+        # On prod the yfinance earnings parse fails on the Railway IP, leaving
+        # earnings_date/days_to_earnings EMPTY on every ticker — which silently
+        # disabled the event-risk exit AND the post-earnings AI auto-refresh.
+        # The bulk FMP map (1 sweep / 12h, paid Starter key) fills the gap.
+        if merged.get("days_to_earnings") is None or not merged.get("earnings_date") \
+                or not merged.get("last_earnings_date"):
+            try:
+                from datetime import date as _dfe
+                fmp_e = await self.get_fmp_earnings_for(ticker)
+                _today = _dfe.today()
+                nd, ld = fmp_e.get("next_date"), fmp_e.get("last_date")
+                if nd:
+                    if merged.get("days_to_earnings") is None:
+                        merged["days_to_earnings"] = (_dfe.fromisoformat(nd) - _today).days
+                    if not merged.get("earnings_date"):
+                        merged["earnings_date"] = nd
+                if ld and not merged.get("last_earnings_date"):
+                    _since = (_today - _dfe.fromisoformat(ld)).days
+                    merged["last_earnings_date"]  = ld
+                    merged["days_since_earnings"] = _since
+                    if _since <= 14:
+                        merged["earnings_just_reported"] = True
+            except Exception as exc:
+                logger.debug(f"FMP earnings merge fallback failed for {ticker}: {exc}")
 
         # ── Fallback: detect "just reported" from FMP eps_quarters[0] date ──
         # yfinance often returns ONLY the next earnings date, not the most recent.
