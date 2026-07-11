@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Future Heroes — the private giants headed for a ticker | TickerMover</title>
+  <meta name="description" content="TickerMover's exclusive watchlist of the world's most valuable private companies — Anthropic, OpenAI, Stripe, Databricks and more — ranked by valuation, so you're first in line when they list.">
+  <link rel="icon" type="image/svg+xml" href="/static/brand/tickermover-mark.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500;1,9..144,600&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{--blue:#2970ff;--ink:#0f172a;--muted:#475569}
+    *{box-sizing:border-box}
+    body{margin:0;background:#fcfbf9;color:var(--ink);
+      font-family:'Instrument Sans',system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased;line-height:1.6}
+    a{color:var(--blue)}
+    .top{position:sticky;top:0;z-index:20;background:rgba(252,251,249,.86);backdrop-filter:saturate(180%) blur(12px);border-bottom:1px solid rgba(15,23,42,.07)}
+    .top-in{max-width:980px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 20px}
+    .brand{display:flex;align-items:center;gap:10px;text-decoration:none;font-weight:600;font-size:19px;letter-spacing:-.022em;color:#0a0a0a}
+    .brand .mark{width:30px;height:30px;flex:none;background:linear-gradient(135deg,#5DB3F1 0%,#2970FF 50%,#0040c1 100%);
+      -webkit-mask:url('/static/brand/tickermover-mark-mask.svg') center/contain no-repeat;mask:url('/static/brand/tickermover-mark-mask.svg') center/contain no-repeat}
+    .cta{display:inline-flex;align-items:center;gap:6px;background:var(--blue);color:#fff;text-decoration:none;font-size:13px;font-weight:600;padding:8px 15px;border-radius:9px}
+    .wrap{max-width:940px;margin:0 auto;padding:34px 20px 70px}
+    .eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:11.5px;font-weight:800;letter-spacing:.15em;text-transform:uppercase;color:#0040c1;
+      background:linear-gradient(135deg,#eef4ff,#f5f9ff);border:1px solid #cfe0ff;border-radius:999px;padding:6px 14px}
+    h1.title{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:clamp(32px,6vw,52px);line-height:1.06;letter-spacing:-.018em;margin:16px 0 12px}
+    h1.title em{font-style:italic;color:#0040c1}
+    .standfirst{font-size:18px;line-height:1.55;color:#334155;max-width:64ch;margin:0 0 24px}
+    .stats{display:flex;flex-wrap:wrap;gap:10px;margin:0 0 34px}
+    .stat{background:#fff;border:1px solid rgba(15,23,42,.09);border-radius:13px;padding:12px 18px;box-shadow:0 1px 2px rgba(15,23,42,.04)}
+    .stat .n{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:24px;line-height:1.1;color:#0f172a}
+    .stat .l{font-size:11.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#94a3b8;margin-top:3px}
+    .sec-h{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:24px;letter-spacing:-.01em;margin:8px 0 4px}
+    .sec-sub{font-size:14px;color:var(--muted);margin:0 0 18px}
+    /* ── spotlight cards (top 10) ── */
+    .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;margin:0 0 42px}
+    .card{position:relative;background:#fff;border:1px solid rgba(15,23,42,.09);border-radius:16px;padding:18px 18px 16px;box-shadow:0 1px 3px rgba(15,23,42,.05);overflow:hidden}
+    .card.podium{background:linear-gradient(180deg,#f4f8ff,#fff 55%);border-color:#cfe0ff}
+    .card .rk{position:absolute;top:10px;right:14px;font-family:'Fraunces',Georgia,serif;font-weight:600;font-style:italic;font-size:30px;color:rgba(41,112,255,.16)}
+    .card .nm{font-size:17.5px;font-weight:700;letter-spacing:-.01em;display:flex;align-items:center;gap:8px;padding-right:40px}
+    .card .val{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:29px;color:#0040c1;margin:6px 0 2px}
+    .card .rev{font-size:12.5px;color:var(--muted);margin-bottom:9px}
+    .card .rev b{color:#0f172a}
+    .card .pill{display:inline-block;font-size:11px;font-weight:700;border-radius:7px;padding:3px 9px;margin-bottom:10px}
+    .card .take{font-size:13.5px;line-height:1.55;color:#334155;border-top:1px dashed rgba(15,23,42,.1);padding-top:10px;margin:0}
+    /* ── table (11–50) ── */
+    .tbl-wrap{position:relative;background:#fff;border:1px solid rgba(15,23,42,.09);border-radius:16px;overflow:hidden;box-shadow:0 1px 3px rgba(15,23,42,.05)}
+    .tbl-scroll{overflow-x:auto}
+    table{width:100%;border-collapse:collapse;font-size:14px;min-width:640px}
+    th{font-size:11px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#94a3b8;text-align:left;padding:12px 14px;border-bottom:1px solid rgba(15,23,42,.09);background:#fafaf8}
+    td{padding:11px 14px;border-bottom:1px solid rgba(15,23,42,.055);vertical-align:middle;white-space:nowrap}
+    tr:last-child td{border-bottom:none}
+    td.rk{color:#94a3b8;font-weight:600;width:44px}
+    td.nm{font-weight:700;letter-spacing:-.01em}
+    td.val{font-weight:700;color:#0040c1}
+    td.rev{color:var(--muted)}
+    .pill{display:inline-block;font-size:10.5px;font-weight:700;border-radius:6px;padding:2px 8px}
+    .flag{font-size:15px;margin-right:2px}
+    tbody.locked tr{filter:blur(5px);user-select:none;pointer-events:none}
+    .gate{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:24px;
+      background:linear-gradient(180deg,rgba(252,251,249,.25),rgba(252,251,249,.88) 60%,rgba(252,251,249,.96))}
+    .gate-card{text-align:center;max-width:420px;background:#fff;border:1px solid #cfe0ff;border-radius:18px;padding:26px 26px 24px;box-shadow:0 18px 50px rgba(9,20,60,.16)}
+    .gate-card .lock{font-size:26px}
+    .gate-card h3{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:21px;margin:8px 0 6px;letter-spacing:-.01em}
+    .gate-card p{font-size:13.5px;color:var(--muted);margin:0 0 16px;line-height:1.55}
+    .gate-card a.go{display:inline-flex;align-items:center;gap:7px;background:var(--blue);color:#fff;text-decoration:none;font-size:14px;font-weight:700;padding:11px 20px;border-radius:11px}
+    .gate-card .tiny{display:block;margin-top:10px;font-size:12px;color:#94a3b8}
+    .method{font-size:13px;color:var(--muted);line-height:1.6;margin-top:26px;background:#f6f6f2;border:1px solid rgba(15,23,42,.06);border-radius:12px;padding:14px 16px}
+    .disc{font-size:12.5px;color:#94a3b8;line-height:1.55;margin-top:22px;border-top:1px solid rgba(15,23,42,.08);padding-top:16px}
+    .loading,.empty{text-align:center;color:#64748b;padding:80px 20px;font-size:15px}
+    @media(max-width:560px){ .wrap{padding:24px 16px 60px} .cards{grid-template-columns:1fr} }
+  </style>
+</head>
+<body>
+  <header class="top">
+    <div class="top-in">
+      <a class="brand" href="/"><span class="mark"></span><span>TickerMover</span></a>
+      <a class="cta" href="/app">Open the dashboard →</a>
+    </div>
+  </header>
+  <main class="wrap"><div id="heroes"><div class="loading">🛰️ Scanning the private markets…</div></div></main>
+
+  <script>
+  (function(){
+    function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+    var FLAGS = {'United States':'🇺🇸','China':'🇨🇳','United Kingdom':'🇬🇧','Singapore':'🇸🇬','Australia':'🇦🇺',
+                 'United Arab Emirates':'🇦🇪','Germany':'🇩🇪','France':'🇫🇷','India':'🇮🇳','Sweden':'🇸🇪','Japan':'🇯🇵'};
+    // category → pill colours (bg / text)
+    var CAT = {
+      'Artificial Intelligence':          ['#eef2ff','#4338ca'],
+      'FinTech':                          ['#ecfdf5','#047857'],
+      'Enterprise Software':              ['#eff6ff','#1d4ed8'],
+      'Social Media':                     ['#fdf2f8','#be185d'],
+      'E-Commerce & Marketplaces':        ['#fff7ed','#c2410c'],
+      'Space & Aerospace':                ['#f5f3ff','#6d28d9'],
+      'Self-Driving Cars':                ['#f0fdfa','#0f766e'],
+      'Defense':                          ['#f8fafc','#334155'],
+      'Robotics':                         ['#fefce8','#a16207'],
+      'Crypto & Blockchain':              ['#fff1f2','#be123c'],
+      'Video Games':                      ['#faf5ff','#7e22ce'],
+      'Food & Beverage':                  ['#f7fee7','#4d7c0f'],
+      'Energy & Climate':                 ['#ecfeff','#0e7490'],
+      'Consumer & Lifestyle':             ['#fdf4ff','#a21caf'],
+      'Developer Tools & Infrastructure': ['#f1f5f9','#475569']
+    };
+    function pill(cat){
+      var c = CAT[cat] || ['#f1f5f9','#475569'];
+      return '<span class="pill" style="background:'+c[0]+';color:'+c[1]+'">'+esc(cat)+'</span>';
+    }
+    function flag(country){ return '<span class="flag" title="'+esc(country)+'">'+(FLAGS[country]||'🌍')+'</span>'; }
+    function fmtVal(b){
+      if(b>=1000) return '$'+(b/1000).toFixed(2).replace(/\.?0+$/,'')+'T';
+      return '$'+(b%1?b.toFixed(1).replace(/\.0$/,''):b)+'B';
+    }
+    var authed=false; try{ authed=!!localStorage.getItem('ah_token'); }catch(_){}
+
+    function render(d){
+      var root=document.getElementById('heroes');
+      var list=(d&&d.companies)||[];
+      if(!list.length){ root.innerHTML='<div class="empty">The Future Heroes list is being prepared. Check back shortly.</div>'; return; }
+      list=list.slice().sort(function(a,b){return a.rank-b.rank;});
+      var total=list.reduce(function(s,c){return s+(c.valuation_b||0);},0);
+      var spotlight=list.filter(function(c){return c.rank<=10;});
+      var rest=list.filter(function(c){return c.rank>10;});
+      var aiCount=list.filter(function(c){return c.category==='Artificial Intelligence';}).length;
+
+      var cards=spotlight.map(function(c){
+        return '<div class="card'+(c.rank<=3?' podium':'')+'">'+
+          '<div class="rk">№'+c.rank+'</div>'+
+          '<div class="nm">'+flag(c.country)+esc(c.name)+'</div>'+
+          '<div class="val">'+fmtVal(c.valuation_b)+'</div>'+
+          '<div class="rev">Revenue <b>'+esc(c.revenue||'n/a')+'</b></div>'+
+          pill(c.category)+
+          (c.take?'<p class="take">'+esc(c.take)+'</p>':'')+
+        '</div>';
+      }).join('');
+
+      var rows=rest.map(function(c){
+        return '<tr>'+
+          '<td class="rk">'+c.rank+'</td>'+
+          '<td class="nm">'+flag(c.country)+' '+esc(c.name)+'</td>'+
+          '<td class="val">'+fmtVal(c.valuation_b)+'</td>'+
+          '<td class="rev">'+esc(c.revenue||'n/a')+'</td>'+
+          '<td>'+pill(c.category)+'</td>'+
+        '</tr>';
+      }).join('');
+
+      var gate = authed ? '' :
+        '<div class="gate"><div class="gate-card">'+
+          '<div class="lock">🔒</div>'+
+          '<h3>Unlock all 50 Future Heroes</h3>'+
+          '<p>Ranks 11–50 — the defense primes, robotics labs and fintech giants queuing up behind the top ten — are free for TickerMover members.</p>'+
+          '<a class="go" href="/login?signup">Create a free account →</a>'+
+          '<span class="tiny">Already a member? <a href="/login">Sign in</a> and this page unlocks.</span>'+
+        '</div></div>';
+
+      root.innerHTML =
+        '<span class="eyebrow">⭐ TickerMover Exclusive · Future Heroes</span>'+
+        '<h1 class="title">The private giants<br>headed for a <em>ticker</em>.</h1>'+
+        '<p class="standfirst">Today\'s biggest IPOs are being built in private. Future Heroes is our curated watch on the world\'s most valuable private companies — ranked by their latest funding-round and secondary-market valuations — so the day one of them files to list, you already know the story.</p>'+
+        '<div class="stats">'+
+          '<div class="stat"><div class="n">'+list.length+'</div><div class="l">Heroes tracked</div></div>'+
+          '<div class="stat"><div class="n">'+fmtVal(total)+'</div><div class="l">Combined valuation</div></div>'+
+          '<div class="stat"><div class="n">'+aiCount+'</div><div class="l">AI companies</div></div>'+
+          '<div class="stat"><div class="n">'+esc(d.as_of||'')+'</div><div class="l">As of</div></div>'+
+        '</div>'+
+        '<h2 class="sec-h">The top ten</h2>'+
+        '<p class="sec-sub">The desk\'s read on each of the ten most valuable private companies in the world.</p>'+
+        '<div class="cards">'+cards+'</div>'+
+        '<h2 class="sec-h">The next forty</h2>'+
+        '<p class="sec-sub">Ranks 11–50 by latest private-market valuation.</p>'+
+        '<div class="tbl-wrap">'+
+          '<div class="tbl-scroll"><table>'+
+            '<thead><tr><th>#</th><th>Company</th><th>Valuation</th><th>Revenue</th><th>Category</th></tr></thead>'+
+            '<tbody'+(authed?'':' class="locked"')+'>'+rows+'</tbody>'+
+          '</table></div>'+gate+
+        '</div>'+
+        (d.method?'<div class="method"><b>How this list is built.</b> '+esc(d.method)+' When a Future Hero files to go public, it moves straight onto our IPO radar.</div>':'')+
+        '<div class="disc">These are private companies — their shares don\'t trade on public exchanges and nothing here is an offer or a recommendation to buy anything. Education and market awareness only, not investment advice, not FCA-authorised. Valuations are third-party funding-round marks and can be stale or wrong; capital at risk. Do your own diligence.</div>';
+    }
+
+    fetch('/api/future-heroes').then(function(r){return r.json();}).then(render).catch(function(){
+      document.getElementById('heroes').innerHTML='<div class="empty">Could not load the Future Heroes list. Please try again shortly.</div>';
+    });
+  })();
+  </script>
+</body>
+</html>

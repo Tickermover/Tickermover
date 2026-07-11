@@ -55,6 +55,8 @@ LANDING_HTML   = BASE_DIR / "templates" / "landing.html"
 LOGIN_HTML     = BASE_DIR / "templates" / "login.html"
 DESK_HTML      = BASE_DIR / "templates" / "desk.html"
 WEEKLY_HTML    = BASE_DIR / "templates" / "weekly.html"
+HEROES_HTML    = BASE_DIR / "templates" / "heroes.html"
+HEROES_JSON    = BASE_DIR / "data" / "future_heroes.json"
 
 
 # ── NaN/Inf sanitiser — Python json.dumps crashes on NaN/Infinity ─────
@@ -1249,6 +1251,7 @@ async def sitemap_xml():
         )
     parts.append(f'  <url><loc>{SITE_ORIGIN}/sectors</loc><changefreq>daily</changefreq><priority>0.85</priority><lastmod>{today}</lastmod></url>')
     parts.append(f'  <url><loc>{SITE_ORIGIN}/compare</loc><changefreq>weekly</changefreq><priority>0.8</priority><lastmod>{today}</lastmod></url>')
+    parts.append(f'  <url><loc>{SITE_ORIGIN}/future-heroes</loc><changefreq>weekly</changefreq><priority>0.8</priority><lastmod>{today}</lastmod></url>')
     try:
         for _slug, _label in _seo.sector_slugs(_universe_data or []).items():
             parts.append(
@@ -4636,6 +4639,39 @@ async def weekly_page():
         return HTMLResponse(content=_with_analytics(WEEKLY_HTML.read_text(encoding="utf-8")))
     except FileNotFoundError:
         return HTMLResponse(content="<h2>templates/weekly.html not found</h2>", status_code=500)
+
+
+# ── Future Heroes — curated private-company (pre-IPO) valuation list ──
+# Static curated dataset (data/future_heroes.json), refreshed by the desk.
+# Cached in-process; mtime-checked so a redeploy/edit picks it up.
+_heroes_cache: dict = {"mtime": None, "data": None}
+
+def _load_future_heroes() -> dict:
+    try:
+        mtime = HEROES_JSON.stat().st_mtime
+        if _heroes_cache["data"] is None or _heroes_cache["mtime"] != mtime:
+            _heroes_cache["data"] = json.loads(HEROES_JSON.read_text(encoding="utf-8"))
+            _heroes_cache["mtime"] = mtime
+        return _heroes_cache["data"]
+    except Exception as exc:
+        logger.warning(f"future_heroes load failed: {exc}")
+        return {"companies": []}
+
+
+@app.get("/api/future-heroes")
+async def api_future_heroes():
+    """Curated list of the most valuable private companies (Future Heroes)."""
+    return JSONResponse(_clean(_load_future_heroes()),
+                        headers={"Cache-Control": "public, max-age=3600, s-maxage=21600"})
+
+
+@app.get("/future-heroes", response_class=HTMLResponse)
+async def future_heroes_page():
+    """Public Future Heroes page — top 10 open, ranks 11-50 unlock on free sign-up."""
+    try:
+        return HTMLResponse(content=_with_analytics(HEROES_HTML.read_text(encoding="utf-8")))
+    except FileNotFoundError:
+        return HTMLResponse(content="<h2>templates/heroes.html not found</h2>", status_code=500)
 
 
 @app.post("/api/admin/publish-weekly")
