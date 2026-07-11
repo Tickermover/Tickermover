@@ -35,7 +35,9 @@
     .sec-sub{font-size:14px;color:var(--muted);margin:0 0 18px}
     /* ── spotlight cards (top 10) ── */
     .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;margin:0 0 42px}
-    .card{position:relative;background:#fff;border:1px solid rgba(15,23,42,.09);border-radius:16px;padding:18px 18px 16px;box-shadow:0 1px 3px rgba(15,23,42,.05);overflow:hidden}
+    .card{position:relative;background:#fff;border:1px solid rgba(15,23,42,.09);border-radius:16px;padding:18px 18px 16px;box-shadow:0 1px 3px rgba(15,23,42,.05);overflow:hidden;
+      cursor:pointer;transition:transform .18s,box-shadow .18s,border-color .18s}
+    .card:hover{transform:translateY(-2px);box-shadow:0 10px 26px rgba(9,20,60,.10);border-color:#b9d2ff}
     .card.podium{background:linear-gradient(180deg,#f4f8ff,#fff 55%);border-color:#cfe0ff}
     .card .rk{position:absolute;top:10px;right:14px;font-family:'Fraunces',Georgia,serif;font-weight:600;font-style:italic;font-size:30px;color:rgba(41,112,255,.16)}
     .card .nm{font-size:17.5px;font-weight:700;letter-spacing:-.01em;display:flex;align-items:center;gap:8px;padding-right:40px}
@@ -44,6 +46,7 @@
     .card .rev b{color:#0f172a}
     .card .pill{display:inline-block;font-size:11px;font-weight:700;border-radius:7px;padding:3px 9px;margin-bottom:10px}
     .card .take{font-size:13.5px;line-height:1.55;color:#334155;border-top:1px dashed rgba(15,23,42,.1);padding-top:10px;margin:0}
+    .card .more{font-size:12px;font-weight:700;color:var(--blue);margin-top:9px}
     /* ── table (11–50) ── */
     .tbl-wrap{position:relative;background:#fff;border:1px solid rgba(15,23,42,.09);border-radius:16px;overflow:hidden;box-shadow:0 1px 3px rgba(15,23,42,.05)}
     .tbl-scroll{overflow-x:auto}
@@ -51,6 +54,8 @@
     th{font-size:11px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#94a3b8;text-align:left;padding:12px 14px;border-bottom:1px solid rgba(15,23,42,.09);background:#fafaf8}
     td{padding:11px 14px;border-bottom:1px solid rgba(15,23,42,.055);vertical-align:middle;white-space:nowrap}
     tr:last-child td{border-bottom:none}
+    tbody tr.go{cursor:pointer}
+    tbody tr.go:hover td{background:#f4f8ff}
     td.rk{color:#94a3b8;font-weight:600;width:44px}
     td.nm{font-weight:700;letter-spacing:-.01em}
     td.val{font-weight:700;color:#0040c1}
@@ -69,7 +74,50 @@
     .method{font-size:13px;color:var(--muted);line-height:1.6;margin-top:26px;background:#f6f6f2;border:1px solid rgba(15,23,42,.06);border-radius:12px;padding:14px 16px}
     .disc{font-size:12.5px;color:#94a3b8;line-height:1.55;margin-top:22px;border-top:1px solid rgba(15,23,42,.08);padding-top:16px}
     .loading,.empty{text-align:center;color:#64748b;padding:80px 20px;font-size:15px}
-    @media(max-width:560px){ .wrap{padding:24px 16px 60px} .cards{grid-template-columns:1fr} }
+    /* ── in-page company detail sheet ── */
+    .ov{position:fixed;inset:0;background:rgba(10,14,34,.44);backdrop-filter:blur(3px);z-index:50;opacity:0;pointer-events:none;transition:opacity .22s}
+    .ov.on{opacity:1;pointer-events:auto}
+    .sheet{position:fixed;top:0;right:0;bottom:0;width:min(480px,100%);background:#fcfbf9;z-index:51;box-shadow:-24px 0 70px rgba(9,20,60,.25);
+      transform:translateX(103%);transition:transform .26s cubic-bezier(.32,.72,.31,1);display:flex;flex-direction:column}
+    .sheet.on{transform:translateX(0)}
+    .sh-top{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:16px 20px 12px;border-bottom:1px solid rgba(15,23,42,.08);flex:none}
+    .sh-eyebrow{font-size:10.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#0040c1}
+    .sh-x{border:none;background:#eef2f7;color:#334155;width:32px;height:32px;border-radius:10px;font-size:15px;cursor:pointer;font-weight:700}
+    .sh-x:hover{background:#e2e8f0}
+    .sh-body{overflow-y:auto;padding:18px 20px 26px}
+    .sh-name{display:flex;align-items:center;gap:9px;font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:27px;letter-spacing:-.015em;line-height:1.15}
+    .sh-name .flag{font-size:21px}
+    .sh-tags{display:flex;flex-wrap:wrap;gap:7px;margin:9px 0 0}
+    .sh-tags .rkb{font-size:10.5px;font-weight:800;letter-spacing:.06em;background:#0f172a;color:#fff;border-radius:6px;padding:2px 8px}
+    .ipo-flag{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:800;color:#166534;background:#dcfce7;border:1px solid #bbf7d0;border-radius:6px;padding:2px 8px}
+    .sh-price-card{margin:16px 0 0;background:#fff;border:1px solid rgba(15,23,42,.09);border-radius:14px;padding:15px 16px 14px;box-shadow:0 1px 2px rgba(15,23,42,.04)}
+    .sh-price-l{font-size:10.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#94a3b8}
+    .sh-price{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:34px;line-height:1.1;margin-top:3px}
+    .sh-price small{font-size:15px;font-weight:600;margin-left:7px;font-family:'Instrument Sans',sans-serif}
+    .up{color:#0e9f5c}.dn{color:#dc2626}.fl{color:#64748b}
+    .sh-asof{font-size:11.5px;color:#94a3b8;margin-top:2px}
+    .range{margin-top:13px}
+    .range .bar{position:relative;height:6px;border-radius:99px;background:linear-gradient(90deg,#dbe6ff,#2970ff)}
+    .range .dot{position:absolute;top:50%;transform:translate(-50%,-50%);width:13px;height:13px;border-radius:50%;background:#0040c1;border:2.5px solid #fff;box-shadow:0 1px 4px rgba(9,20,60,.4)}
+    .range .lbl{display:flex;justify-content:space-between;font-size:11px;color:#94a3b8;margin-top:5px}
+    .range .lbl b{color:#334155}
+    .rets{display:flex;gap:8px;margin:14px 0 0;flex-wrap:wrap}
+    .ret{flex:1;min-width:90px;background:#fff;border:1px solid rgba(15,23,42,.09);border-radius:12px;padding:9px 12px;text-align:center}
+    .ret .v{font-weight:800;font-size:15.5px}
+    .ret .k{font-size:10px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:#94a3b8;margin-top:1px}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:16px}
+    .kv{background:#fff;border:1px solid rgba(15,23,42,.08);border-radius:12px;padding:10px 12px}
+    .kv .k{font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#94a3b8}
+    .kv .v{font-size:14.5px;font-weight:700;margin-top:2px;color:#0f172a}
+    .kv .v small{font-weight:600;color:#64748b;font-size:11.5px}
+    .sh-about{margin-top:18px;font-size:14px;line-height:1.65;color:#334155;background:#f6f6f2;border:1px solid rgba(15,23,42,.06);border-radius:12px;padding:13px 15px}
+    .sh-about b{display:block;font-size:10.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#94a3b8;margin-bottom:5px}
+    .sh-note{font-size:11.5px;color:#94a3b8;line-height:1.55;margin-top:14px}
+    @media(max-width:560px){
+      .wrap{padding:24px 16px 60px} .cards{grid-template-columns:1fr}
+      .sheet{top:auto;height:88%;width:100%;border-radius:18px 18px 0 0;transform:translateY(103%)}
+      .sheet.on{transform:translateY(0)}
+    }
   </style>
 </head>
 <body>
@@ -81,12 +129,20 @@
   </header>
   <main class="wrap"><div id="heroes"><div class="loading">🛰️ Scanning the private markets…</div></div></main>
 
+  <div class="ov" id="sh-ov"></div>
+  <aside class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="Company details">
+    <div class="sh-top">
+      <span class="sh-eyebrow">⭐ Future Hero · Company profile</span>
+      <button class="sh-x" id="sh-x" aria-label="Close">✕</button>
+    </div>
+    <div class="sh-body" id="sh-body"></div>
+  </aside>
+
   <script>
   (function(){
-    function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+    function esc(s){ return (s==null?'':String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
     var FLAGS = {'United States':'🇺🇸','China':'🇨🇳','United Kingdom':'🇬🇧','Singapore':'🇸🇬','Australia':'🇦🇺',
                  'United Arab Emirates':'🇦🇪','Germany':'🇩🇪','France':'🇫🇷','India':'🇮🇳','Sweden':'🇸🇪','Japan':'🇯🇵'};
-    // category → pill colours (bg / text)
     var CAT = {
       'Artificial Intelligence':          ['#eef2ff','#4338ca'],
       'FinTech':                          ['#ecfdf5','#047857'],
@@ -110,16 +166,91 @@
     }
     function flag(country){ return '<span class="flag" title="'+esc(country)+'">'+(FLAGS[country]||'🌍')+'</span>'; }
     function fmtVal(b){
+      if(b==null) return '—';
       if(b>=1000) return '$'+(b/1000).toFixed(2).replace(/\.?0+$/,'')+'T';
-      return '$'+(b%1?b.toFixed(1).replace(/\.0$/,''):b)+'B';
+      if(b>=1)    return '$'+(b%1?(+b.toFixed(2)):b)+'B';
+      return '$'+Math.round(b*1000)+'M';
+    }
+    function fmtPrice(p){
+      if(p==null) return null;
+      return '$'+p.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+    }
+    function fmtPct(p){
+      if(p==null) return null;
+      var cls = p>0.001?'up':(p<-0.001?'dn':'fl');
+      var sign = p>0?'+':'';
+      return '<span class="'+cls+'">'+sign+p.toLocaleString('en-US',{maximumFractionDigits:2})+'%</span>';
     }
     var token=null; try{ token=localStorage.getItem('ah_token'); }catch(_){}
+    var LIST=[], BYRANK={}, ASOF='';
+    function ipoBadge(c,label){
+      var s=(c.detail&&c.detail.ipo_status)||'';
+      if(!/filed/i.test(s)) return '';
+      return ' <span class="ipo-flag">📄 '+(label||'IPO filed')+'</span>';
+    }
+
+    // ── in-page detail sheet (no navigation — everything stays on this page) ──
+    var ov=document.getElementById('sh-ov'), sheet=document.getElementById('sheet');
+    function closeSheet(){ ov.classList.remove('on'); sheet.classList.remove('on'); document.body.style.overflow=''; }
+    ov.addEventListener('click', closeSheet);
+    document.getElementById('sh-x').addEventListener('click', closeSheet);
+    document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeSheet(); });
+
+    function kv(k,v,sub){
+      if(v==null||v==='') return '';
+      return '<div class="kv"><div class="k">'+k+'</div><div class="v">'+v+(sub?' <small>'+esc(sub)+'</small>':'')+'</div></div>';
+    }
+    function openHero(rank){
+      var c=BYRANK[rank]; if(!c) return;
+      var d=c.detail||{};
+      var h='';
+      h+='<div class="sh-name">'+flag(c.country)+'<span>'+esc(c.name)+'</span></div>';
+      h+='<div class="sh-tags"><span class="rkb">RANK #'+c.rank+'</span>'+pill(c.category)+
+         ((d.ipo_status&&/filed/i.test(d.ipo_status))?'<span class="ipo-flag">📄 IPO filed'+(d.expected_ipo?' · expected '+esc(d.expected_ipo):'')+'</span>':'')+
+         '</div>';
+      if(d.price!=null){
+        h+='<div class="sh-price-card">'+
+          '<div class="sh-price-l">Secondary-market share price</div>'+
+          '<div class="sh-price">'+fmtPrice(d.price)+(d.price_change_pct!=null?'<small>'+fmtPct(d.price_change_pct)+'</small>':'')+'</div>'+
+          '<div class="sh-asof">As of '+esc(d.price_asof||ASOF||'the latest secondary-market mark')+'</div>';
+        if(d.wk52_high!=null&&d.wk52_low!=null&&d.wk52_high>d.wk52_low){
+          var pos=Math.max(2,Math.min(98,(d.price-d.wk52_low)/(d.wk52_high-d.wk52_low)*100));
+          h+='<div class="range"><div class="bar"><div class="dot" style="left:'+pos+'%"></div></div>'+
+             '<div class="lbl"><span>52w low <b>'+fmtPrice(d.wk52_low)+'</b></span><span>52w high <b>'+fmtPrice(d.wk52_high)+'</b></span></div></div>';
+        }
+        h+='</div>';
+      }
+      var rets=[['YTD',d.ytd_pct],['1 Year',d.y1_pct],['3 Years',d.y3_pct]].filter(function(r){return r[1]!=null;});
+      if(rets.length){
+        h+='<div class="rets">'+rets.map(function(r){
+          return '<div class="ret"><div class="v">'+fmtPct(r[1])+'</div><div class="k">'+r[0]+'</div></div>';
+        }).join('')+'</div>';
+      }
+      h+='<div class="grid">'+
+        kv('Valuation', fmtVal(c.valuation_b), d.valuation_date?('as of '+d.valuation_date):null)+
+        kv('Implied valuation', d.implied_valuation_b!=null?fmtVal(d.implied_valuation_b):null)+
+        kv('Revenue', (c.revenue&&c.revenue!=='n/a')?esc(c.revenue):null, d.revenue_type)+
+        kv('P/S ratio', d.ps_ratio!=null?d.ps_ratio:null)+
+        kv('Total funding', d.total_funding_b!=null?fmtVal(d.total_funding_b):null)+
+        kv('Latest round', d.latest_round?esc(d.latest_round):null, d.latest_round_amt_b!=null?fmtVal(d.latest_round_amt_b):null)+
+        kv('Funding rounds', d.funding_rounds!=null?d.funding_rounds:null)+
+        kv('IPO status', d.ipo_status?esc(d.ipo_status):null, d.expected_ipo)+
+      '</div>';
+      if(c.take) h+='<div class="sh-about"><b>Our take</b>'+esc(c.take)+'</div>';
+      if(c.about) h+='<div class="sh-about"><b>About</b>'+esc(c.about)+'</div>';
+      h+='<div class="sh-note">Private company — shares don\'t trade on public exchanges. Prices are third-party secondary-market marks, not live quotes; they can be stale, thin or wrong. Education and market awareness only, not investment advice.</div>';
+      document.getElementById('sh-body').innerHTML=h;
+      document.getElementById('sh-body').scrollTop=0;
+      ov.classList.add('on'); sheet.classList.add('on'); document.body.style.overflow='hidden';
+    }
 
     function render(d){
       var root=document.getElementById('heroes');
       var list=(d&&d.companies)||[];
       if(!list.length){ root.innerHTML='<div class="empty">The Future Heroes list is being prepared. Check back shortly.</div>'; return; }
       list=list.slice().sort(function(a,b){return a.rank-b.rank;});
+      LIST=list; BYRANK={}; list.forEach(function(c){BYRANK[c.rank]=c;});
+      ASOF=d.as_of||'';
       var locked=!!(d&&d.locked);
       var count=d.total||list.length;
       var total=(d.combined_b!=null)?d.combined_b:list.reduce(function(s,c){return s+(c.valuation_b||0);},0);
@@ -128,13 +259,14 @@
       var aiCount=(d.ai_count!=null)?d.ai_count:list.filter(function(c){return c.category==='Artificial Intelligence';}).length;
 
       var cards=spotlight.map(function(c){
-        return '<div class="card'+(c.rank<=3?' podium':'')+'">'+
+        return '<div class="card'+(c.rank<=3?' podium':'')+'" data-rank="'+c.rank+'">'+
           '<div class="rk">№'+c.rank+'</div>'+
           '<div class="nm">'+flag(c.country)+esc(c.name)+'</div>'+
           '<div class="val">'+fmtVal(c.valuation_b)+'</div>'+
           '<div class="rev">Revenue <b>'+esc(c.revenue||'n/a')+'</b></div>'+
-          pill(c.category)+
+          pill(c.category)+ipoBadge(c)+
           (c.take?'<p class="take">'+esc(c.take)+'</p>':'')+
+          '<div class="more">View profile →</div>'+
         '</div>';
       }).join('');
 
@@ -153,9 +285,9 @@
         }
       }else{
         rows=rest.map(function(c){
-          return '<tr>'+
+          return '<tr class="go" data-rank="'+c.rank+'">'+
             '<td class="rk">'+c.rank+'</td>'+
-            '<td class="nm">'+flag(c.country)+' '+esc(c.name)+'</td>'+
+            '<td class="nm">'+flag(c.country)+' '+esc(c.name)+ipoBadge(c,'IPO')+'</td>'+
             '<td class="val">'+fmtVal(c.valuation_b)+'</td>'+
             '<td class="rev">'+esc(c.revenue||'n/a')+'</td>'+
             '<td>'+pill(c.category)+'</td>'+
@@ -176,7 +308,7 @@
       root.innerHTML =
         '<span class="eyebrow">⭐ TickerMover Pro Exclusive · Future Heroes</span>'+
         '<h1 class="title">The private giants<br>headed for a <em>ticker</em>.</h1>'+
-        '<p class="standfirst">Today\'s biggest IPOs are being built in private. Future Heroes is our curated watch on the world\'s most valuable private companies — ranked by their latest funding-round and secondary-market valuations — so the day one of them files to list, you already know the story.</p>'+
+        '<p class="standfirst">Today\'s biggest IPOs are being built in private. Future Heroes is our curated watch on the world\'s most valuable private companies — ranked by their latest funding-round and secondary-market valuations — so the day one of them files to list, you already know the story. Tap any company for its full profile.</p>'+
         '<div class="stats">'+
           '<div class="stat"><div class="n">'+count+'</div><div class="l">Heroes tracked</div></div>'+
           '<div class="stat"><div class="n">'+fmtVal(total)+'</div><div class="l">Combined valuation</div></div>'+
@@ -184,10 +316,10 @@
           '<div class="stat"><div class="n">'+esc(d.as_of||'')+'</div><div class="l">As of</div></div>'+
         '</div>'+
         '<h2 class="sec-h">The top ten</h2>'+
-        '<p class="sec-sub">The desk\'s read on each of the ten most valuable private companies in the world.</p>'+
+        '<p class="sec-sub">The desk\'s read on each of the ten most valuable private companies in the world. Click a card for the full profile — price, funding history and IPO status.</p>'+
         '<div class="cards">'+cards+'</div>'+
         '<h2 class="sec-h">The next forty</h2>'+
-        '<p class="sec-sub">Ranks 11–50 by latest private-market valuation.</p>'+
+        '<p class="sec-sub">Ranks 11–'+count+' by latest private-market valuation.</p>'+
         '<div class="tbl-wrap">'+
           '<div class="tbl-scroll"><table>'+
             '<thead><tr><th>#</th><th>Company</th><th>Valuation</th><th>Revenue</th><th>Category</th></tr></thead>'+
@@ -196,6 +328,11 @@
         '</div>'+
         (d.method?'<div class="method"><b>How this list is built.</b> '+esc(d.method)+' When a Future Hero files to go public, it moves straight onto our IPO radar.</div>':'')+
         '<div class="disc">These are private companies — their shares don\'t trade on public exchanges and nothing here is an offer or a recommendation to buy anything. Education and market awareness only, not investment advice, not FCA-authorised. Valuations are third-party funding-round marks and can be stale or wrong; capital at risk. Do your own diligence.</div>';
+
+      root.addEventListener('click', function(e){
+        var el=e.target.closest('[data-rank]');
+        if(el) openHero(+el.getAttribute('data-rank'));
+      });
     }
 
     fetch('/api/future-heroes', token?{headers:{'Authorization':'Bearer '+token}}:{})
