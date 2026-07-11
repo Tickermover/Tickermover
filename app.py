@@ -4647,10 +4647,11 @@ async def weekly_page():
 _heroes_cache: dict = {"mtime": None, "data": None}
 
 def _load_future_heroes() -> dict:
+    import json as _json
     try:
         mtime = HEROES_JSON.stat().st_mtime
         if _heroes_cache["data"] is None or _heroes_cache["mtime"] != mtime:
-            _heroes_cache["data"] = json.loads(HEROES_JSON.read_text(encoding="utf-8"))
+            _heroes_cache["data"] = _json.loads(HEROES_JSON.read_text(encoding="utf-8"))
             _heroes_cache["mtime"] = mtime
         return _heroes_cache["data"]
     except Exception as exc:
@@ -4659,10 +4660,27 @@ def _load_future_heroes() -> dict:
 
 
 @app.get("/api/future-heroes")
-async def api_future_heroes():
-    """Curated list of the most valuable private companies (Future Heroes)."""
-    return JSONResponse(_clean(_load_future_heroes()),
-                        headers={"Cache-Control": "public, max-age=3600, s-maxage=21600"})
+async def api_future_heroes(user: Optional[dict] = Depends(_current_user),
+                            creds: Optional[HTTPAuthorizationCredentials] = Depends(_bearer)):
+    """Future Heroes — most valuable private companies. Top 10 is the public
+    teaser; ranks 11-50 are Pro-only (every signed-in user is Pro during the
+    beta), enforced server-side so the full list never leaves the API free."""
+    d = _load_future_heroes()
+    cos = d.get("companies") or []
+    pro = await _is_pro_user(user, creds)
+    out = {
+        "as_of": d.get("as_of"),
+        "method": d.get("method"),
+        "total": len(cos),
+        "combined_b": round(sum(c.get("valuation_b") or 0 for c in cos), 2),
+        "ai_count": sum(1 for c in cos if c.get("category") == "Artificial Intelligence"),
+        "locked": not pro,
+        "companies": cos if pro else [c for c in cos if (c.get("rank") or 999) <= 10],
+    }
+    # private: the payload varies by subscription — must not be CDN/shared-cached.
+    return JSONResponse(_clean(out),
+                        headers={"Cache-Control": "private, max-age=600",
+                                 "Vary": "Authorization"})
 
 
 @app.get("/future-heroes", response_class=HTMLResponse)

@@ -113,17 +113,19 @@
       if(b>=1000) return '$'+(b/1000).toFixed(2).replace(/\.?0+$/,'')+'T';
       return '$'+(b%1?b.toFixed(1).replace(/\.0$/,''):b)+'B';
     }
-    var authed=false; try{ authed=!!localStorage.getItem('ah_token'); }catch(_){}
+    var token=null; try{ token=localStorage.getItem('ah_token'); }catch(_){}
 
     function render(d){
       var root=document.getElementById('heroes');
       var list=(d&&d.companies)||[];
       if(!list.length){ root.innerHTML='<div class="empty">The Future Heroes list is being prepared. Check back shortly.</div>'; return; }
       list=list.slice().sort(function(a,b){return a.rank-b.rank;});
-      var total=list.reduce(function(s,c){return s+(c.valuation_b||0);},0);
+      var locked=!!(d&&d.locked);
+      var count=d.total||list.length;
+      var total=(d.combined_b!=null)?d.combined_b:list.reduce(function(s,c){return s+(c.valuation_b||0);},0);
       var spotlight=list.filter(function(c){return c.rank<=10;});
       var rest=list.filter(function(c){return c.rank>10;});
-      var aiCount=list.filter(function(c){return c.category==='Artificial Intelligence';}).length;
+      var aiCount=(d.ai_count!=null)?d.ai_count:list.filter(function(c){return c.category==='Artificial Intelligence';}).length;
 
       var cards=spotlight.map(function(c){
         return '<div class="card'+(c.rank<=3?' podium':'')+'">'+
@@ -136,31 +138,47 @@
         '</div>';
       }).join('');
 
-      var rows=rest.map(function(c){
-        return '<tr>'+
-          '<td class="rk">'+c.rank+'</td>'+
-          '<td class="nm">'+flag(c.country)+' '+esc(c.name)+'</td>'+
-          '<td class="val">'+fmtVal(c.valuation_b)+'</td>'+
-          '<td class="rev">'+esc(c.revenue||'n/a')+'</td>'+
-          '<td>'+pill(c.category)+'</td>'+
-        '</tr>';
-      }).join('');
+      var rows;
+      if(locked){
+        // Pro-locked: the server only sends the top 10 — render decoy rows to blur.
+        rows='';
+        for(var r=11;r<=count;r++){
+          rows+='<tr>'+
+            '<td class="rk">'+r+'</td>'+
+            '<td class="nm">🌍 ●●●●●●●●</td>'+
+            '<td class="val">$••B</td>'+
+            '<td class="rev">$•••M</td>'+
+            '<td><span class="pill" style="background:#f1f5f9;color:#475569">••••••••</span></td>'+
+          '</tr>';
+        }
+      }else{
+        rows=rest.map(function(c){
+          return '<tr>'+
+            '<td class="rk">'+c.rank+'</td>'+
+            '<td class="nm">'+flag(c.country)+' '+esc(c.name)+'</td>'+
+            '<td class="val">'+fmtVal(c.valuation_b)+'</td>'+
+            '<td class="rev">'+esc(c.revenue||'n/a')+'</td>'+
+            '<td>'+pill(c.category)+'</td>'+
+          '</tr>';
+        }).join('');
+      }
 
-      var gate = authed ? '' :
+      var gate = !locked ? '' :
         '<div class="gate"><div class="gate-card">'+
           '<div class="lock">🔒</div>'+
-          '<h3>Unlock all 50 Future Heroes</h3>'+
-          '<p>Ranks 11–50 — the defense primes, robotics labs and fintech giants queuing up behind the top ten — are free for TickerMover members.</p>'+
-          '<a class="go" href="/login?signup">Create a free account →</a>'+
-          '<span class="tiny">Already a member? <a href="/login">Sign in</a> and this page unlocks.</span>'+
+          '<h3>Unlock all '+count+' Future Heroes</h3>'+
+          '<p>Ranks 11–'+count+' — the defense primes, robotics labs and fintech giants queuing up behind the top ten — are a <b>Pro</b> feature. During the beta, Pro is included free with every account.</p>'+
+          (token
+            ? '<a class="go" href="/#pricing">Upgrade to Pro →</a><span class="tiny">Signed in on another device? Re-<a href="/login">sign in</a> here to refresh your access.</span>'
+            : '<a class="go" href="/login?signup">Create a free account →</a><span class="tiny">Already a member? <a href="/login">Sign in</a> and this page unlocks.</span>')+
         '</div></div>';
 
       root.innerHTML =
-        '<span class="eyebrow">⭐ TickerMover Exclusive · Future Heroes</span>'+
+        '<span class="eyebrow">⭐ TickerMover Pro Exclusive · Future Heroes</span>'+
         '<h1 class="title">The private giants<br>headed for a <em>ticker</em>.</h1>'+
         '<p class="standfirst">Today\'s biggest IPOs are being built in private. Future Heroes is our curated watch on the world\'s most valuable private companies — ranked by their latest funding-round and secondary-market valuations — so the day one of them files to list, you already know the story.</p>'+
         '<div class="stats">'+
-          '<div class="stat"><div class="n">'+list.length+'</div><div class="l">Heroes tracked</div></div>'+
+          '<div class="stat"><div class="n">'+count+'</div><div class="l">Heroes tracked</div></div>'+
           '<div class="stat"><div class="n">'+fmtVal(total)+'</div><div class="l">Combined valuation</div></div>'+
           '<div class="stat"><div class="n">'+aiCount+'</div><div class="l">AI companies</div></div>'+
           '<div class="stat"><div class="n">'+esc(d.as_of||'')+'</div><div class="l">As of</div></div>'+
@@ -173,14 +191,15 @@
         '<div class="tbl-wrap">'+
           '<div class="tbl-scroll"><table>'+
             '<thead><tr><th>#</th><th>Company</th><th>Valuation</th><th>Revenue</th><th>Category</th></tr></thead>'+
-            '<tbody'+(authed?'':' class="locked"')+'>'+rows+'</tbody>'+
+            '<tbody'+(locked?' class="locked"':'')+'>'+rows+'</tbody>'+
           '</table></div>'+gate+
         '</div>'+
         (d.method?'<div class="method"><b>How this list is built.</b> '+esc(d.method)+' When a Future Hero files to go public, it moves straight onto our IPO radar.</div>':'')+
         '<div class="disc">These are private companies — their shares don\'t trade on public exchanges and nothing here is an offer or a recommendation to buy anything. Education and market awareness only, not investment advice, not FCA-authorised. Valuations are third-party funding-round marks and can be stale or wrong; capital at risk. Do your own diligence.</div>';
     }
 
-    fetch('/api/future-heroes').then(function(r){return r.json();}).then(render).catch(function(){
+    fetch('/api/future-heroes', token?{headers:{'Authorization':'Bearer '+token}}:{})
+      .then(function(r){return r.json();}).then(render).catch(function(){
       document.getElementById('heroes').innerHTML='<div class="empty">Could not load the Future Heroes list. Please try again shortly.</div>';
     });
   })();
