@@ -598,6 +598,17 @@ body.v2 #sectors-grid .smh-name{font-weight:800;font-size:12.5px;color:#0f172a!i
 .wl-sub{font-size:11px;font-weight:600;color:#94a3b8;font-variant-numeric:tabular-nums}
 .wl-v.delta.up,.wl-sub.up{color:#0a7d33}
 .wl-v.delta.down,.wl-sub.down{color:#dc2626}
+/* Prime-overlap flags: a watched name that Prime also tracks/exited. The exit
+   banner is the alert — "we've stepped out of a position you're watching". */
+.wl-prime-exit{margin:10px 0 2px;background:linear-gradient(180deg,#fff5f5,#fff);border:1px solid #f6cccc;
+  border-left:3px solid #dc2626;border-radius:9px;padding:9px 12px;font-size:12.5px;color:#7f1d1d;line-height:1.5}
+.wl-prime-exit b{color:#b91c1c;font-weight:800}
+.wl-prime-exit .up{color:#0a7d33;font-weight:800}
+.wl-prime-exit .down{color:#dc2626;font-weight:800}
+.wl-prime-sub{margin-top:3px;font-size:11px;color:#a06a6a;font-weight:500}
+.wl-prime-held{margin:10px 0 2px;background:linear-gradient(180deg,#f0f7ff,#fff);border:1px solid #cfe0ff;
+  border-left:3px solid #2970ff;border-radius:9px;padding:8px 12px;font-size:12px;color:#0040c1;line-height:1.45}
+.wl-prime-held b{font-weight:800}
 
 /* ====== THESIS COLUMN ====== */
 .thesis-box{max-width:360px;font-size:11.5px;line-height:1.5;color:var(--txt)}
@@ -16205,11 +16216,68 @@ function watchCatalyst(t) {
   return { icon:kt.icon, text:kt.text, read };
 }
 
+/* ── Prime overlap: when a watched name is ALSO a Prime (Top Hunts) pick, tell
+   the user — and, crucially, alert them once WE'VE EXITED it. The watchlist is
+   browser-local (no server push possible), so this is an in-app flag shown
+   whenever the watchlist renders. Data: current holds from /api/model-portfolio
+   (picks[]) + the full exit ledger from /api/model-portfolio/history (trades[]).
+   Cached ~5 min in window._primeOverlap so re-renders don't refetch. ── */
+const _WL_EXIT_LABEL = {stop:'Protective stop',trail:'Trailing stop',thesis:'Thesis weakening',
+  stretched:'Valuation stretched',signal:'Score break',bar_failed:'Score break',target:'Target booked',
+  time:'Time exit',ai_exit:'AI early exit',event:'Event-risk exit'};
+async function loadPrimeOverlap(force) {
+  const o = window._primeOverlap;
+  if (!force && o && (Date.now() - o.ts < 300000)) return o;
+  try {
+    const [mp, hist] = await Promise.all([
+      fetch('/api/model-portfolio').then(r => r.ok ? r.json() : null).catch(() => null),
+      fetch('/api/model-portfolio/history').then(r => r.ok ? r.json() : null).catch(() => null),
+    ]);
+    const held = new Set();
+    ((mp && mp.picks) || []).forEach(p => { const t = (p.ticker || '').toUpperCase(); if (t) held.add(t); });
+    const exits = new Map();   // ticker → most-recent exit {date, pct, won, label}
+    ((hist && hist.trades) || []).forEach(t => {
+      const tk = (t.ticker || '').toUpperCase();
+      if (!tk || t.exit_reason === 'rebuild') return;   // 'rebuild' = admin housekeeping, not a signal exit
+      const xd = String(t.exit_date || '');
+      const prev = exits.get(tk);
+      if (!prev || xd > prev.date) {
+        exits.set(tk, { date: xd, pct: Math.round((+t.final_pct || 0) * 10) / 10,
+                        won: !!t.won, label: _WL_EXIT_LABEL[t.exit_reason] || 'Removed from tracker' });
+      }
+    });
+    window._primeOverlap = { held, exits, ts: Date.now() };
+  } catch (e) {
+    window._primeOverlap = { held: new Set(), exits: new Map(), ts: Date.now() };
+  }
+  return window._primeOverlap;
+}
+function wlPrimeFlag(ticker) {
+  const o = window._primeOverlap;
+  if (!o) return '';
+  const tk = (ticker || '').toUpperCase();
+  if (o.exits.has(tk)) {
+    const x = o.exits.get(tk);
+    let dt = x.date;
+    try { dt = new Date(x.date + 'T00:00:00').toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' }); } catch (e) {}
+    const sign = (x.pct >= 0 ? '+' : '') + x.pct + '%';
+    return `<div class="wl-prime-exit">🔴 <b>Prime has exited this position.</b> Closed ${dt} · ${x.label} · `
+      + `<span class="${x.won ? 'up' : 'down'}">${sign}</span>`
+      + `<div class="wl-prime-sub">This was one of our Prime picks and we've stepped out — shown here because it's on your watchlist. Context, not advice.</div></div>`;
+  }
+  if (o.held.has(tk)) {
+    return `<div class="wl-prime-held">✓ <b>Prime is currently tracking this.</b> You'll get an exit alert here if we step out.</div>`;
+  }
+  return '';
+}
+
 function renderWatchlist() {
   const grid  = document.getElementById('watch-grid');
   const empty = document.getElementById('watch-empty');
   const news  = document.getElementById('watch-news');
   if (!grid && !news) return;
+  // Lazy-load Prime overlap once, then re-render so the exit alerts paint in.
+  if (!window._primeOverlap) { loadPrimeOverlap().then(() => renderWatchlist()); }
   const list = getWatchlist();
   // Stamp added-date / add-price on legacy or just-added rows once data exists,
   // then persist (also scrubs any old empty entries).
@@ -16271,6 +16339,7 @@ function renderWatchlist() {
         <b class="wl-title">${headline}</b>
         <button class="wl-x" onclick="event.stopPropagation();toggleWatch('${sym}')" title="Remove from watchlist">✕</button>
       </div>
+      ${wlPrimeFlag(sym)}
       <div class="wl-stats">
         <div class="wl-stat"><span class="wl-k">Added</span><span class="wl-v">${addedDate}</span>${addedSub?`<span class="wl-sub">${addedSub}</span>`:''}</div>
         <div class="wl-stat"><span class="wl-k">Price now</span><span class="wl-v">${price != null ? money(price) : '—'}</span><span class="wl-sub ${todayCls}">${todayStr}</span></div>
