@@ -126,6 +126,16 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 .detail p.note{font-size:13.5px;color:#334155;margin:13px 0 0;line-height:1.5}
 .detail .watch{margin:11px 0 0;font-size:13px;color:#334155;background:#eef4ff;border:1px solid #cfe0ff;border-radius:10px;padding:9px 12px;line-height:1.45}
 .detail .watch b{display:block;font-size:9.5px;font-weight:800;letter-spacing:.11em;text-transform:uppercase;color:var(--blue);margin-bottom:3px}
+.detail .live{margin:12px 0 0;background:#f0fdf4;border:1px solid #bfe6cb;border-radius:11px;padding:11px 13px}
+.detail .live-h{display:flex;align-items:center;gap:7px;font-size:9.5px;font-weight:800;letter-spacing:.11em;text-transform:uppercase;color:#0a7d33;margin-bottom:9px}
+.detail .live-dot{width:7px;height:7px;border-radius:50%;background:#0a7d33;box-shadow:0 0 0 3px rgba(10,125,51,.15);animation:lpulse 1.8s infinite}
+@keyframes lpulse{0%,100%{opacity:1}50%{opacity:.35}}
+.detail .live-load{font-size:12.5px;color:var(--muted)}
+.detail .live-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));gap:10px}
+.detail .live-grid .lk,.detail .live-line .lk{display:block;font-size:9px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#78a389;margin-bottom:2px}
+.detail .live-grid .lv{font-size:13.5px;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums}
+.detail .live-line{font-size:13px;color:#334155;line-height:1.45;margin-top:9px;border-top:1px solid #d4eddb;padding-top:8px}
+.detail .live-line:first-of-type{border-top:0;padding-top:0}
 .detail .open{display:inline-block;margin-top:12px;font-size:12.5px;font-weight:700;color:var(--blue);text-decoration:none}
 .detail .open:hover{text-decoration:underline}
 /* foot */
@@ -192,6 +202,34 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
   function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
   function signed(v){ return (v>0?"+":"") + v.toFixed(0) + "%"; }
   function toneClass(v){ return v>0.5?"pos":(v<-0.5?"neg":"zero"); }
+  function fmtP(v){ return v==null?"—":"$"+Number(v).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2}); }
+  function pctSp(v,suf){ if(v==null) return ""; var cls=v>=0?"pos-t":"neg-t"; return '<span class="'+cls+'">'+(v>=0?"+":"")+Number(v).toFixed(1)+"% "+suf+'</span>'; }
+  function fmtDate(s){ if(!s) return ""; try{ var d=new Date(String(s).slice(0,10)+"T00:00:00"); if(isNaN(d)) return esc(s); return "~"+d.toLocaleDateString("en-US",{month:"short",day:"numeric"}); }catch(e){ return esc(s); } }
+
+  // Live catalyst/order-book pulled from the app's DETERMINISTIC per-ticker scan
+  // (/api/catalyst — no AI cost). Injected into the open detail panel; on any
+  // miss or off-universe name it silently removes itself and the stock-page link
+  // remains the fallback.
+  function loadLive(tk, el){
+    var box=document.createElement("div");
+    box.className="live";
+    box.innerHTML='<div class="live-h"><span class="live-dot"></span>Live now</div><div class="live-load">Fetching current read…</div>';
+    var link=el.querySelector(".open");
+    if(link) el.insertBefore(box, link); else el.appendChild(box);
+    fetch("/api/catalyst/"+encodeURIComponent(tk)).then(function(r){return r.json();}).then(function(d){
+      if(!d || d.available===false){ box.remove(); return; }
+      var grid='<div class="live-grid">'+
+        '<div><span class="lk">Live price</span><span class="lv">'+fmtP(d.price)+' '+pctSp(d.change_pct,"today")+
+          (d.momentum_1m!=null?' · '+pctSp(d.momentum_1m,"1mo"):'')+'</span></div>'+
+        (d.next_earnings?'<div><span class="lk">Earnings due</span><span class="lv">'+fmtDate(d.next_earnings)+'</span></div>':'')+
+        (d.read?'<div><span class="lk">Our read</span><span class="lv">'+esc(d.read)+(d.alpha!=null?' · Alpha '+d.alpha:'')+'</span></div>':'')+
+      '</div>';
+      var lines='';
+      if(d.backlog)  lines+='<div class="live-line"><span class="lk">Order book / backlog</span>'+esc(d.backlog)+'</div>';
+      if(d.catalyst) lines+='<div class="live-line"><span class="lk">Latest catalyst</span>'+esc(d.catalyst)+'</div>';
+      box.innerHTML='<div class="live-h"><span class="live-dot"></span>Live now · from our scan</div>'+grid+lines;
+    }).catch(function(){ box.remove(); });
+  }
 
   function build(d){
     document.getElementById("crumb").textContent = d.eyebrow || "Chain Map";
@@ -336,8 +374,9 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
       '</div>'+
       '<p class="note">'+esc(c.note)+'</p>'+
       (c.watch?'<p class="watch"><b>Signal to watch</b>'+esc(c.watch)+'</p>':'')+
-      '<a class="open" href="/stocks/'+encodeURIComponent(c.t)+'">See '+esc(c.t)+'’s live order book &amp; latest catalyst →</a>';
+      '<a class="open" href="/stocks/'+encodeURIComponent(c.t)+'">See '+esc(c.t)+'’s full page on TickerMover →</a>';
     cos.parentElement.appendChild(d);
+    loadLive(c.t, d);
   });
 
   document.getElementById("presets").addEventListener("click", function(e){

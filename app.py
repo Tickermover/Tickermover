@@ -6086,6 +6086,59 @@ async def api_ticker(symbol: str):
     raise HTTPException(status_code=404, detail=f"Ticker {sym} not found")
 
 
+@app.get("/api/catalyst/{ticker}")
+async def api_catalyst(ticker: str):
+    """Lightweight per-ticker catalyst / order-book snapshot for the Thesis Map
+    detail panel. DETERMINISTIC — reads the already-computed universe signals /
+    rationale (NO AI call, no cost, no external fetch). Returns available:false
+    for names outside the live universe, so the map's detail keeps its stock-page
+    link as the fallback."""
+    import re as _re
+    sym = (ticker or "").upper()
+    t = next((x for x in _universe_data if x.get("ticker") == sym), None)
+    if not t:
+        return JSONResponse({"ticker": sym, "available": False},
+                            headers={"Cache-Control": "public, max-age=300"})
+    signals = [s for s in (t.get("signals") or []) if isinstance(s, str)]
+    rationale = t.get("rationale") or ""
+
+    def _find(pat):
+        for s in signals:
+            if _re.search(pat, s, _re.I):
+                return s
+        return None
+
+    backlog = _find(r"backlog|pipeline|contract|award|\bwin\b|deal|order.?book|bookings|design.?win")
+    if not backlog and rationale:
+        for sent in _re.split(r"(?<=[.!])\s+", rationale):
+            if len(sent) > 20 and _re.search(r"backlog|pipeline|contract|order|bookings|design.?win|demand", sent, _re.I):
+                backlog = sent.strip()[:150]
+                break
+    # Latest catalyst: only a genuine catalyst-flavoured signal (don't mislabel
+    # the deterministic bottom-line as a 'catalyst').
+    catalyst = _find(r"guidance|raised|reiterate|upgrade|price target|\bbeat\b|record|upside|analyst")
+
+    score = t.get("smart_score")
+    if score is None:
+        score = t.get("pop_score")
+    try:
+        score = round(float(score))
+    except (TypeError, ValueError):
+        score = None
+    read = None
+    if score is not None:
+        read = "Bullish" if score >= 70 else ("Mixed" if score >= 50 else "Cautious")
+
+    return JSONResponse(_clean({
+        "ticker": sym, "available": True, "name": t.get("name"),
+        "price": t.get("price"), "change_pct": t.get("change_pct"),
+        "momentum_1m": t.get("momentum_1m"),
+        "grade": t.get("grade"), "alpha": score, "read": read,
+        "next_earnings": t.get("next_earnings_date") or t.get("earnings_date"),
+        "backlog": backlog, "catalyst": catalyst,
+    }), headers={"Cache-Control": "public, max-age=300, s-maxage=600"})
+
+
 @app.get("/api/candles/{symbol}")
 async def api_candles(symbol: str, days: int = 130):
     """Daily OHLCV candles for client-side charting + price-action analysis.
