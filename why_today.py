@@ -4,9 +4,11 @@ TickerMover — "Why we bought it today" narrative for Top Hunts tracker picks.
 A single punchy, plain-English sentence explaining what the quantitative scan
 flagged when a stock was added to the tracker — grounded ENTIRELY in our own
 factor profile (Alpha Score, grade, the six pillars, analyst upside) so the
-model never invents live figures. Uses the cheap Haiku tier and is cached
-durably (app_kv) keyed by ticker, so each pick is generated once and reused
-forever (until the pick is replaced). ~one Haiku call per pick, ever.
+model never invents live figures. Cached durably (app_kv) keyed by ticker, so
+each pick is generated once and reused forever (until the pick is replaced):
+~one call per pick, ever. Uses the Sonnet tier — this is a short, cached,
+cosmetic rationale blurb, so the premium Opus tier isn't warranted (override
+with ANTHROPIC_WHY_MODEL if you want it back).
 
 Compliance: the text is OBSERVATIONAL (what the scan saw), not advice. No
 literal buy/sell, no invented price targets.
@@ -27,12 +29,14 @@ from kv_store import store as _kv
 logger = logging.getLogger(__name__)
 
 _KEY = os.environ.get("ANTHROPIC_API_KEY", "").strip()
-# Top Hunts is the best-of-the-best shortlist, so the selection rationale gets
-# the premium Opus tier (not Haiku). Bounded + cached: one Opus call per pick,
-# ever (durable app_kv), so cost stays ~one-time per name.
+# Top Hunts is the best-of-the-best shortlist, but this blurb is a short,
+# cached, one-time-per-pick rationale (not a high-stakes decision), so it runs
+# on the Sonnet tier — ~5x cheaper than Opus for indistinguishable copy here.
+# Bounded + cached: one call per pick, ever (durable app_kv). Set
+# ANTHROPIC_WHY_MODEL=claude-opus-4-8 to restore the premium tier with no code change.
 _MODEL = (
     os.environ.get("ANTHROPIC_WHY_MODEL")
-    or "claude-opus-4-8"
+    or "claude-sonnet-5"
 ).strip()
 # v4 namespace: tighter ~18-word reasons (cards were too tall) — busts the v3
 # cache so every pick regenerates once with the shorter copy.

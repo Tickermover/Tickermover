@@ -11106,6 +11106,54 @@ async def api_admin_usage(limit: int = 20000,
     return JSONResponse(usage_log.store.summary(limit=limit))
 
 
+@app.get("/api/admin/ai-spend")
+async def api_admin_ai_spend(user: Optional[dict] = Depends(_current_user),
+                             creds: Optional[HTTPAuthorizationCredentials] = Depends(_bearer)):
+    """The single 'is the cap real?' number: what THIS app has actually billed to
+    the Anthropic key this month, vs the caps, with a per-feature/per-model split.
+    Compare `app_recorded.month_to_date_usd` to the Console billing total for the
+    key — the gap is spend from everything else sharing the key (Claude Code,
+    manual API tests, scripts), which the app-level cap can neither see nor stop.
+    Allow-list gated."""
+    if not user or (user.get("email") or "").lower() not in _AI_ALLOW:
+        raise HTTPException(status_code=403, detail="Admin only.")
+    import usage_log, datetime as _dt, calendar as _cal
+    now = _dt.datetime.utcnow()
+    mtd = usage_log.month_cost_usd()
+    today = usage_log.today_cost_usd()
+    dim = _cal.monthrange(now.year, now.month)[1]
+    projected = round(mtd / now.day * dim, 2) if now.day else round(mtd, 2)
+    rep = usage_log.store.month_report()
+    return JSONResponse({
+        "env": usage_log.env_name(),
+        "as_of_utc": now.strftime("%Y-%m-%d %H:%M"),
+        "app_recorded": {
+            "month_to_date_usd": round(mtd, 2),
+            "today_usd": round(today, 2),
+            "projected_month_end_usd": projected,
+            "counter_source": rep["source"],   # 'supabase' = durable; 'disk' = resets on deploy
+            "rows_this_month": rep["rows"],
+            "by_model": rep["by_model"],
+            "by_feature": rep["by_feature"],
+        },
+        "caps": {
+            "monthly_usd": config.AI_MONTHLY_USD_CAP,
+            "daily_usd": config.AI_DAILY_USD_CAP,
+            "monthly_remaining_usd": round(max(0.0, config.AI_MONTHLY_USD_CAP - mtd), 2),
+            "over_monthly": _ai_over_monthly_budget(),
+            "over_daily_this_process": today >= config.AI_DAILY_USD_CAP,
+        },
+        "interpretation": (
+            "app_recorded.month_to_date_usd is what THIS app ({}) has billed to the shared "
+            "Anthropic key this month. Subtract it from the Console billing total for the key: "
+            "the remainder is spend from everything else on the same key (Claude Code / manual "
+            "API tests / scripts) — the app cap cannot govern that. If counter_source=='disk', "
+            "the durable monthly counter is NOT persisting (no Supabase 'usage' table), so the "
+            "cap under-counts across redeploys and should be treated as broken until fixed."
+        ).format(usage_log.env_name()),
+    })
+
+
 @app.get("/api/admin/selection-ab")
 async def api_admin_selection_ab(n: int = 40,
                                  model_a: str = "claude-opus-4-8",

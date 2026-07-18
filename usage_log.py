@@ -260,6 +260,55 @@ class UsageLog:
                         pass
         return rows
 
+    def month_report(self) -> dict:
+        """Cost report for the CURRENT UTC month only: total + by-model +
+        by-feature, plus which store answered (``supabase`` | ``disk``) and the
+        row count, so the durable monthly-cap plumbing can be verified at a
+        glance. If source=='disk' the monthly counter is NOT persisting across
+        redeploys (no Supabase `usage` table) and the cap will under-count.
+        Best-effort — never raises."""
+        import datetime as _dt
+        now = _dt.datetime.utcnow()
+        start_iso = now.strftime("%Y-%m-01T00:00:00")
+        month_start_epoch = _dt.datetime(now.year, now.month, 1).timestamp()
+        rows: list = []
+        source = "disk"
+        if self.enabled:
+            try:
+                with httpx.Client(timeout=15) as c:
+                    r = c.get(
+                        f"{self.url}/rest/v1/usage",
+                        headers={"apikey": self.key, "Authorization": f"Bearer {self.key}"},
+                        params={"env_id": f"eq.{_ENV_ID}", "ts": f"gte.{start_iso}",
+                                "select": "feature,model,est_cost_usd", "limit": "100000"},
+                    )
+                    if r.status_code < 400:
+                        rows = r.json()
+                        source = "supabase"
+            except Exception as e:
+                logger.debug(f"month_report supabase error: {e}")
+        if source != "supabase":
+            p = _DISK / "usage.jsonl"
+            if p.exists():
+                for line in p.read_text(encoding="utf-8").splitlines():
+                    try:
+                        row = json.loads(line)
+                        if float(row.get("ts") or 0) >= month_start_epoch:
+                            rows.append(row)
+                    except Exception:
+                        pass
+        bf: dict = {}; bm: dict = {}; total = 0.0
+        for r in rows:
+            c = float(r.get("est_cost_usd") or 0)
+            total += c
+            for d, k in ((bf, r.get("feature") or "?"), (bm, r.get("model") or "?")):
+                e = d.setdefault(k, {"cost": 0.0, "calls": 0})
+                e["cost"] += c; e["calls"] += 1
+        rnd = lambda d: {k: {"cost": round(v["cost"], 4), "calls": v["calls"]}
+                         for k, v in sorted(d.items(), key=lambda x: -x[1]["cost"])}
+        return {"month": now.strftime("%Y-%m"), "source": source, "rows": len(rows),
+                "total_cost_usd": round(total, 4), "by_model": rnd(bm), "by_feature": rnd(bf)}
+
     def summary(self, limit: int = 20000) -> dict:
         """Aggregate logged usage by feature / model / user for the cost report."""
         rows = self._fetch(limit)
@@ -297,3 +346,8 @@ def today_cost_usd() -> float:
 def month_cost_usd() -> float:
     """Month-to-date (UTC) AI spend in USD — input to the monthly cap (durable)."""
     return store.month_cost_usd()
+
+
+def env_name() -> str:
+    """'prod' or 'dev' — which environment's spend this process records."""
+    return "prod" if _ENV_ID == 1 else "dev"
