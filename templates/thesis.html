@@ -226,7 +226,8 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
       '</div>';
       var lines='';
       if(d.backlog)  lines+='<div class="live-line"><span class="lk">Order book / backlog</span>'+esc(d.backlog)+'</div>';
-      if(d.catalyst) lines+='<div class="live-line"><span class="lk">Latest catalyst</span>'+esc(d.catalyst)+'</div>';
+      if(d.catalyst) lines+='<div class="live-line"><span class="lk">Latest signal</span>'+esc(d.catalyst)+'</div>';
+      if(d.take)     lines+='<div class="live-line"><span class="lk">Our quick take</span>'+esc(d.take)+'</div>';
       box.innerHTML='<div class="live-h"><span class="live-dot"></span>Live now · from our scan</div>'+grid+lines;
     }).catch(function(){ box.remove(); });
   }

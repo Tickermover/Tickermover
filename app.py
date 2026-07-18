@@ -6136,6 +6136,9 @@ async def api_catalyst(ticker: str):
         "grade": t.get("grade"), "alpha": score, "read": read,
         "next_earnings": t.get("next_earnings_date") or t.get("earnings_date"),
         "backlog": backlog, "catalyst": catalyst,
+        # The deterministic score summary — a reliable, always-present "quick take"
+        # (live fundamentals, updates with the scan; NOT a baked-in figure).
+        "take": (t.get("bottom_line_ai") or t.get("bottom_line") or None),
     }), headers={"Cache-Control": "public, max-age=300, s-maxage=600"})
 
 
