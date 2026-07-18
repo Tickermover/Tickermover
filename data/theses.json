@@ -1,0 +1,130 @@
+{
+  "as_of": "2026-07-18",
+  "theses": [
+    {
+      "slug": "ai-capex-chain",
+      "status": "live",
+      "kind": "chain",
+      "eyebrow": "Chain Map",
+      "title": "Where hyperscaler capex actually lands",
+      "accent": "actually lands",
+      "standfirst": "Every AI datacenter dollar moves down a chain, layer by layer, with a lag. Move the slider to a capex growth rate and watch it propagate. Dot brightness marks how much of a company's revenue is estimated to depend on that spend.",
+      "control": { "label": "Hyperscaler capex growth, year over year", "min": -30, "max": 70, "value": 25, "step": 5 },
+      "layers": [
+        { "id": "L1", "name": "Compute silicon", "lag": 0, "color": "var(--l1)",
+          "lagText": "Guide-quarter. Moves first, prices the whole chain.",
+          "names": [
+            { "t": "NVDA", "n": "Nvidia",            "exposure": "hi",  "stage": "Mature ramp", "concen": "High — few hyperscalers", "note": "Sets the pace for every layer below." },
+            { "t": "AMD",  "n": "AMD",               "exposure": "mid", "stage": "Ramping",     "concen": "Moderate",                "note": "Accelerator share is the swing factor." },
+            { "t": "AVGO", "n": "Broadcom",          "exposure": "hi",  "stage": "Mature ramp", "concen": "High — custom ASIC",      "note": "Custom silicon plus networking. Sits in two layers." },
+            { "t": "MRVL", "n": "Marvell",           "exposure": "hi",  "stage": "Ramping",     "concen": "High",                    "note": "Custom ASIC and optical DSP. Straddles L1 and L4." },
+            { "t": "TSM",  "n": "TSMC",              "exposure": "mid", "stage": "Mature ramp", "concen": "Moderate",                "note": "Capacity is the true upstream constraint." }
+          ] },
+        { "id": "L2", "name": "Memory & HBM", "lag": 1, "color": "var(--l2)",
+          "lagText": "About one quarter behind. Contract-priced, so cyclical.",
+          "names": [
+            { "t": "MU",   "n": "Micron",            "exposure": "mid", "stage": "Ramping", "concen": "Moderate", "note": "HBM sold out forward is the signal to watch." },
+            { "t": "SNDK", "n": "Sandisk",           "exposure": "lo",  "stage": "Early",   "concen": "Low",      "note": "Storage tier, later in the build order." }
+          ] },
+        { "id": "L3", "name": "Optical interconnect", "lag": 2, "color": "var(--l3)",
+          "lagText": "Two quarters. Bandwidth demand converts to module orders.",
+          "names": [
+            { "t": "COHR", "n": "Coherent",          "exposure": "mid", "stage": "Ramping",     "concen": "Moderate",                 "note": "Lasers and modules. Broad end-market mix dilutes the read." },
+            { "t": "FN",   "n": "Fabrinet",          "exposure": "hi",  "stage": "Mature ramp", "concen": "Very high — top customers", "note": "Contract manufacturer. Concentration is the whole risk." },
+            { "t": "AAOI", "n": "Applied Optoelec.", "exposure": "hi",  "stage": "Early",       "concen": "Very high",                "note": "Small, volatile, single-customer sensitive." },
+            { "t": "LITE", "n": "Lumentum",          "exposure": "mid", "stage": "Ramping",     "concen": "High",                     "note": "Laser supply into module makers." }
+          ] },
+        { "id": "L4", "name": "DSP, retimers & signal integrity", "lag": 2, "color": "var(--l4)",
+          "lagText": "Two quarters. Design wins lock in years of revenue.",
+          "names": [
+            { "t": "CRDO", "n": "Credo",             "exposure": "hi", "stage": "Early ramp", "concen": "Very high — top 2 buyers", "note": "Concentration is the single most important fact here." },
+            { "t": "ALAB", "n": "Astera Labs",       "exposure": "hi", "stage": "Early ramp", "concen": "High",                     "note": "Connectivity silicon, rack-scale." }
+          ] },
+        { "id": "L5", "name": "Switching & networking", "lag": 3, "color": "var(--l5)",
+          "lagText": "Three quarters. Follows rack deployment, not order books.",
+          "names": [
+            { "t": "ANET", "n": "Arista",            "exposure": "hi",  "stage": "Mature ramp", "concen": "High — two large buyers", "note": "Cleanest listed read on datacenter fabric." },
+            { "t": "CIEN", "n": "Ciena",             "exposure": "mid", "stage": "Ramping",     "concen": "Moderate",                "note": "DCI and long-haul. Telco mix slows the read-through." }
+          ] },
+        { "id": "L6", "name": "Power, cooling & capacity", "lag": 4, "color": "var(--l6)",
+          "lagText": "Four quarters. Physical buildout. Slowest and stickiest.",
+          "names": [
+            { "t": "VRT",  "n": "Vertiv",            "exposure": "hi", "stage": "Mature ramp", "concen": "Moderate",   "note": "Thermal and power. Backlog is the leading indicator." },
+            { "t": "ETN",  "n": "Eaton",             "exposure": "lo", "stage": "Ramping",     "concen": "Low",        "note": "Broad industrial base dilutes AI exposure." },
+            { "t": "APLD", "n": "Applied Digital",   "exposure": "hi", "stage": "Early",       "concen": "Very high",  "note": "Neocloud capacity. Financing risk, not just demand risk." },
+            { "t": "NBIS", "n": "Nebius",            "exposure": "hi", "stage": "Early",       "concen": "High",       "note": "Capacity reseller. Contract length is everything." }
+          ] }
+      ],
+      "how": "Layers are ordered by where money arrives, not by company size. The lag is the typical delay between a hyperscaler raising its capex guide and that spend showing up in a supplier's reported revenue. Exposure and cycle stage are qualitative bands, not precise figures — they are judgements from filings and earnings calls, and they are the part most worth arguing with.",
+      "disclaimer": "This is a factual map of supply chain relationships. It is not investment advice, not a recommendation to buy or sell any security, and nothing here accounts for your circumstances. Company classifications change; verify against primary filings before acting."
+    },
+
+    {
+      "slug": "power-buildout",
+      "status": "live",
+      "kind": "chain",
+      "eyebrow": "Chain Map",
+      "title": "The power build-out behind the AI boom",
+      "accent": "power build-out",
+      "standfirst": "AI datacenters and electrification are colliding with a grid that took decades to build. Drag the US power-demand growth slider and watch it work back up the physical chain — from the electrons to the contractors who install the copper. Dot brightness marks estimated revenue dependence on this build-out.",
+      "control": { "label": "US electricity / power-capex growth, year over year", "min": -10, "max": 40, "value": 12, "step": 2 },
+      "layers": [
+        { "id": "L1", "name": "Generation — turbines & nuclear", "lag": 0, "color": "var(--l1)",
+          "lagText": "First to feel it. Long-lead equipment and firm-power contracts.",
+          "names": [
+            { "t": "GEV", "n": "GE Vernova",         "exposure": "hi", "stage": "Mature ramp", "concen": "Moderate",              "note": "Gas turbines booked years out — the cleanest pick-and-shovel on power demand." },
+            { "t": "CEG", "n": "Constellation",      "exposure": "hi", "stage": "Ramping",     "concen": "Moderate",              "note": "Largest US nuclear fleet; direct power deals with hyperscalers re-rate it." },
+            { "t": "VST", "n": "Vistra",             "exposure": "hi", "stage": "Ramping",     "concen": "Moderate",              "note": "Merchant generation; load growth lifts the whole fleet's economics." }
+          ] },
+        { "id": "L2", "name": "Grid — transformers & switchgear", "lag": 1, "color": "var(--l2)",
+          "lagText": "About one quarter behind. Backlogs stretched, lead times long.",
+          "names": [
+            { "t": "ETN",  "n": "Eaton",             "exposure": "hi",  "stage": "Mature ramp", "concen": "Low",   "note": "Electrical backbone for datacenters and the grid. Also appears in the AI Capex chain." },
+            { "t": "HUBB", "n": "Hubbell",           "exposure": "hi",  "stage": "Ramping",     "concen": "Low",   "note": "Utility transmission & distribution gear — grid capex flows straight through." },
+            { "t": "POWL", "n": "Powell Industries", "exposure": "mid", "stage": "Ramping",     "concen": "Moderate", "note": "Switchgear with very long lead times; backlog is the tell." }
+          ] },
+        { "id": "L3", "name": "Components, conduit & cable", "lag": 2, "color": "var(--l3)",
+          "lagText": "Two quarters. Commoditised, so price and volume both matter.",
+          "names": [
+            { "t": "NVT",  "n": "nVent Electric",    "exposure": "mid", "stage": "Ramping", "concen": "Low", "note": "Enclosures, connections and liquid-cooling plumbing." },
+            { "t": "ATKR", "n": "Atkore",            "exposure": "mid", "stage": "Ramping", "concen": "Low", "note": "Electrical conduit — high volume, but price-cyclical." }
+          ] },
+        { "id": "L4", "name": "EPC & grid construction", "lag": 2, "color": "var(--l4)",
+          "lagText": "Two quarters. Multi-year backlogs convert slowly but stick.",
+          "names": [
+            { "t": "PWR",  "n": "Quanta Services",   "exposure": "hi",  "stage": "Mature ramp", "concen": "Moderate", "note": "The grid's contractor. Multi-year backlog is the leading indicator." },
+            { "t": "MYRG", "n": "MYR Group",         "exposure": "hi",  "stage": "Ramping",     "concen": "Moderate", "note": "Transmission & distribution construction — a purer grid read than the diversifieds." },
+            { "t": "PRIM", "n": "Primoris",          "exposure": "mid", "stage": "Ramping",     "concen": "Moderate", "note": "Energy and utility EPC; mixed end-markets dilute the signal." },
+            { "t": "MTZ",  "n": "MasTec",            "exposure": "mid", "stage": "Ramping",     "concen": "Moderate", "note": "Broad infrastructure base; power is a growing but not sole driver." }
+          ] },
+        { "id": "L5", "name": "Cooling & rack thermal", "lag": 3, "color": "var(--l5)",
+          "lagText": "Three quarters. The last mile of the electron — and the AI chain's L6.",
+          "names": [
+            { "t": "VRT", "n": "Vertiv",             "exposure": "hi",  "stage": "Mature ramp", "concen": "Moderate", "note": "Thermal and power management at the rack. Cross-listed in the AI Capex chain." },
+            { "t": "GNRC","n": "Generac",            "exposure": "lo",  "stage": "Early",       "concen": "Low",      "note": "Backup power; datacenter is a small but growing slice of a consumer-heavy base." }
+          ] }
+      ],
+      "how": "Layers are ordered by where the money arrives first. The lag is the typical delay between power demand firming up and that spend landing in a supplier's revenue. Some names — Eaton, Vertiv — sit in both this map and the AI Capex chain, because AI is the loudest single driver of the power build-out. Exposure bands are qualitative judgements from filings and calls, and they are the part most worth arguing with.",
+      "disclaimer": "This is a factual map of supply chain relationships. It is not investment advice, not a recommendation to buy or sell any security, and nothing here accounts for your circumstances. Company classifications change; verify against primary filings before acting."
+    },
+
+    {
+      "slug": "defense-outlays",
+      "status": "soon",
+      "kind": "chain",
+      "eyebrow": "Chain Map",
+      "title": "Where the defense budget flows",
+      "accent": "defense budget",
+      "standfirst": "From appropriations to primes to the sub-tier suppliers who actually build the hardware — a spend chain with a long, sticky lag."
+    },
+    {
+      "slug": "reshoring-buildout",
+      "status": "soon",
+      "kind": "chain",
+      "eyebrow": "Chain Map",
+      "title": "The reshoring factory build-out",
+      "accent": "reshoring",
+      "standfirst": "Incentives to equipment to automation to the electricians — how the money to rebuild US manufacturing moves down the chain."
+    }
+  ]
+}

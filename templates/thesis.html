@@ -1,0 +1,246 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Thesis Map — TickerMover</title>
+<meta name="description" content="Interactive thesis maps from TickerMover — trace how a macro driver propagates down a supply chain, company by company.">
+<link rel="icon" type="image/svg+xml" href="/static/brand/tickermover-mark.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ground:#0E1420;--panel:#161E2D;--panel-2:#1D2739;--line:#2A3547;
+  --ink:#E8EDF5;--muted:#7A8AA3;--accent:#F0A93B;
+  --l1:#5B4FD1;--l2:#4A6FD4;--l3:#3A8FD0;--l4:#2BA9C4;--l5:#22BEAE;--l6:#2ECFA0;
+  --display:"IBM Plex Sans Condensed",system-ui,sans-serif;
+  --body:"IBM Plex Sans",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--ground);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased;}
+a{color:var(--accent)}
+.wrap{max-width:1040px;margin:0 auto;padding:0 22px}
+.backbar{border-bottom:1px solid var(--line)}
+.backbar .wrap{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 22px}
+.backlink{font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:var(--muted);text-decoration:none}
+.backlink:hover{color:var(--ink)}
+.brandmini{font-family:var(--display);font-weight:700;font-size:16px;color:var(--ink);text-decoration:none}
+.brandmini em{font-style:normal;color:var(--accent)}
+/* masthead */
+.masthead{padding:52px 0 30px;border-bottom:1px solid var(--line)}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:0 0 20px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+.eyebrow b{color:var(--accent);font-weight:500}
+.eyebrow span{color:var(--line)}
+h1{font-family:var(--display);font-weight:700;font-size:clamp(34px,6.2vw,62px);line-height:1.02;letter-spacing:-.02em;margin:0 0 18px;max-width:16ch;}
+h1 em{font-style:normal;color:var(--accent)}
+.standfirst{max-width:60ch;color:#B4C0D2;font-size:17px;margin:0 0 8px;}
+/* control */
+.control{margin:34px 0 0;padding:20px 22px;background:var(--panel);border:1px solid var(--line);border-radius:3px;}
+.control-head{display:flex;justify-content:space-between;align-items:baseline;gap:16px;flex-wrap:wrap;margin-bottom:14px;}
+.control-label{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);}
+.readout{font-family:var(--display);font-size:36px;font-weight:700;color:var(--accent);line-height:1}
+.readout small{font-size:15px;color:var(--muted);font-weight:600;margin-left:4px}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:3px;background:var(--line);border-radius:2px;outline:none;margin:6px 0 0;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:var(--accent);cursor:pointer;border:3px solid var(--ground);}
+input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:var(--accent);cursor:pointer;border:3px solid var(--ground);}
+input[type=range]:focus-visible{box-shadow:0 0 0 3px rgba(240,169,59,.35)}
+.scale{display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:8px;}
+/* waterfall */
+.chain{margin:12px 0 0;padding:0 0 8px}
+.layer{display:grid;grid-template-columns:170px 1fr;gap:22px;padding:22px 0;border-bottom:1px solid var(--line);position:relative;}
+.layer:last-child{border-bottom:none}
+.layer-meta{position:relative;padding-left:16px}
+.layer-meta::before{content:"";position:absolute;left:0;top:4px;bottom:-22px;width:2px;background:var(--lc);opacity:.45;}
+.layer:last-child .layer-meta::before{bottom:4px}
+.layer-idx{font-family:var(--mono);font-size:11px;color:var(--lc);letter-spacing:.1em;display:block;margin-bottom:3px;}
+.layer-name{font-family:var(--display);font-weight:700;font-size:19px;line-height:1.15;letter-spacing:-.01em;margin:0 0 6px;}
+.layer-lag{font-family:var(--mono);font-size:11.5px;color:var(--muted);line-height:1.5}
+.pulse{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--accent);margin-right:7px;vertical-align:middle;opacity:0;transform:scale(.4);}
+.layer.lit .pulse{animation:ping .9s ease-out}
+@keyframes ping{0%{opacity:0;transform:scale(.4)}30%{opacity:1;transform:scale(1)}100%{opacity:.25;transform:scale(1)}}
+.chips{display:flex;flex-wrap:wrap;gap:7px;align-content:flex-start}
+.chip{font-family:var(--mono);font-size:12.5px;font-weight:500;background:var(--panel);border:1px solid var(--line);color:var(--ink);padding:6px 11px;border-radius:2px;cursor:pointer;transition:border-color .15s,background .15s,transform .15s;position:relative;}
+.chip:hover,.chip:focus-visible{border-color:var(--lc);background:var(--panel-2);outline:none;transform:translateY(-1px);}
+.chip[aria-expanded=true]{border-color:var(--accent);background:var(--panel-2)}
+.chip .est{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--lc);margin-left:7px;vertical-align:middle;}
+.chip.lo .est{opacity:.3}.chip.mid .est{opacity:.62}.chip.hi .est{opacity:1;box-shadow:0 0 0 3px rgba(255,255,255,.06)}
+.flow{font-family:var(--mono);font-size:11.5px;color:var(--muted);margin-top:12px;letter-spacing:.02em;}
+.flow b{color:var(--accent);font-weight:500}
+/* detail */
+.detail{margin-top:12px;background:var(--panel);border:1px solid var(--line);border-left:2px solid var(--accent);border-radius:2px;padding:16px 18px;}
+.detail h4{font-family:var(--display);font-size:17px;margin:0 0 2px;font-weight:700;}
+.detail .sub{font-family:var(--mono);font-size:11.5px;color:var(--muted);margin-bottom:12px}
+.rows{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px}
+.row-k{font-family:var(--mono);font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--muted);margin-bottom:3px;}
+.row-v{font-size:14px;line-height:1.4}
+.detail p.note{font-size:13.5px;color:#B4C0D2;margin:14px 0 0;line-height:1.5}
+.detail .openlink{display:inline-block;margin-top:12px;font-family:var(--mono);font-size:12px;color:var(--accent);text-decoration:none}
+.detail .openlink:hover{text-decoration:underline}
+/* foot */
+.foot{margin:44px 0 0;padding:26px 0 60px;border-top:1px solid var(--line);font-size:13px;color:var(--muted);line-height:1.6;}
+.foot h5{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink);margin:0 0 8px;font-weight:500;}
+.foot p{margin:0 0 14px;max-width:74ch}
+.cta{display:inline-block;margin-top:6px;font-family:var(--mono);font-size:13px;color:var(--ground);background:var(--accent);padding:11px 18px;border-radius:2px;text-decoration:none;font-weight:600;}
+.cta:hover{filter:brightness(1.08)}
+.loading,.err{padding:80px 22px;text-align:center;color:var(--muted);font-family:var(--mono);font-size:13px}
+@media (max-width:660px){
+  .masthead{padding:34px 0 24px}
+  .layer{grid-template-columns:1fr;gap:14px}
+  .layer-meta::before{bottom:4px}
+  .readout{font-size:30px}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="backbar"><div class="wrap">
+  <a class="backlink" href="/theses">← All thesis maps</a>
+  <a class="brandmini" href="/">Ticker<em>Mover</em></a>
+</div></div>
+
+<div class="wrap">
+  <header class="masthead">
+    <p class="eyebrow"><b>TickerMover</b><span>/</span><span id="crumb">Chain Map</span><span>/</span><span id="stamp"></span></p>
+    <h1 id="title">Loading…</h1>
+    <p class="standfirst" id="standfirst"></p>
+  </header>
+
+  <div class="control" id="control" style="display:none">
+    <div class="control-head">
+      <span class="control-label" id="control-label"></span>
+      <span class="readout" id="readout"></span>
+    </div>
+    <input type="range" id="slider" aria-label="Driver">
+    <div class="scale"><span id="scale-lo"></span><span>0%</span><span id="scale-hi"></span></div>
+  </div>
+
+  <div class="chain" id="chain"></div>
+
+  <footer class="foot" id="foot" style="display:none">
+    <h5>How to read this</h5>
+    <p id="how"></p>
+    <h5>Not advice</h5>
+    <p id="disclaimer"></p>
+    <a class="cta" href="/theses">← Explore more thesis maps</a>
+  </footer>
+</div>
+
+<script>
+(function(){
+  var slug = location.pathname.split("/").filter(Boolean).pop();
+  var chain = document.getElementById("chain");
+  var slider = document.getElementById("slider");
+  var readout = document.getElementById("readout");
+  var LAYERS = [];
+  document.getElementById("stamp").textContent =
+    new Date().toLocaleDateString("en-GB",{month:"short",year:"numeric"});
+
+  function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];}); }
+
+  function build(d){
+    document.getElementById("crumb").textContent = d.eyebrow || "Chain Map";
+    var title = d.title || "";
+    if (d.accent && title.indexOf(d.accent) >= 0) {
+      title = esc(title).replace(esc(d.accent), "<em>"+esc(d.accent)+"</em>");
+    } else { title = esc(title); }
+    document.getElementById("title").innerHTML = title;
+    document.getElementById("standfirst").textContent = d.standfirst || "";
+    document.title = (d.title || "Thesis Map") + " — TickerMover";
+
+    var ctl = d.control || {};
+    document.getElementById("control-label").textContent = ctl.label || "Driver, year over year";
+    slider.min = (ctl.min!=null?ctl.min:-30);
+    slider.max = (ctl.max!=null?ctl.max:70);
+    slider.step = (ctl.step!=null?ctl.step:5);
+    slider.value = (ctl.value!=null?ctl.value:25);
+    document.getElementById("scale-lo").textContent = slider.min + "%";
+    document.getElementById("scale-hi").textContent = "+" + slider.max + "%";
+    document.getElementById("control").style.display = "";
+
+    LAYERS = d.layers || [];
+    chain.innerHTML = "";
+    LAYERS.forEach(function(L,i){
+      var el = document.createElement("section");
+      el.className = "layer";
+      el.style.setProperty("--lc", L.color || "var(--accent)");
+      el.innerHTML =
+        '<div class="layer-meta">'+
+          '<span class="layer-idx">'+esc(L.id)+' · lag '+L.lag+'Q</span>'+
+          '<h3 class="layer-name"><span class="pulse"></span>'+esc(L.name)+'</h3>'+
+          '<p class="layer-lag">'+esc(L.lagText)+'</p>'+
+        '</div>'+
+        '<div>'+
+          '<div class="chips">'+ (L.names||[]).map(function(c,j){
+            return '<button class="chip '+esc(c.exposure)+'" data-l="'+i+'" data-c="'+j+'" aria-expanded="false">'+esc(c.t)+'<span class="est"></span></button>';
+          }).join("") +'</div>'+
+          '<p class="flow" data-flow="'+i+'"></p>'+
+        '</div>';
+      chain.appendChild(el);
+    });
+
+    document.getElementById("how").textContent = d.how || "";
+    document.getElementById("disclaimer").textContent = d.disclaimer || "";
+    document.getElementById("foot").style.display = "";
+    render();
+  }
+
+  function render(){
+    var g = +slider.value;
+    readout.textContent = (g>0?"+":"") + g;
+    readout.insertAdjacentHTML("beforeend","<small>%</small>");
+    LAYERS.forEach(function(L,i){
+      var damp = 1 - (L.lag * 0.07);
+      var eff = g * damp;
+      var p = document.querySelector('[data-flow="'+i+'"]');
+      if(!p) return;
+      var when = L.lag===0 ? "same quarter" : ("~"+L.lag+" quarter"+(L.lag>1?"s":"")+" later");
+      var dir = eff>=0 ? "tailwind" : "headwind";
+      p.innerHTML = "Arrives "+when+" · <b>"+(eff>0?"+":"")+eff.toFixed(0)+"%</b> implied "+dir+" at full exposure";
+      var layerEl = p.closest(".layer");
+      layerEl.classList.remove("lit");
+      void layerEl.offsetWidth;
+      setTimeout(function(){ layerEl.classList.add("lit"); }, L.lag*130);
+    });
+  }
+
+  chain.addEventListener("click", function(e){
+    var chip = e.target.closest(".chip");
+    if(!chip) return;
+    var L = LAYERS[+chip.dataset.l], c = L.names[+chip.dataset.c];
+    var holder = chip.closest("div").parentElement;
+    var open = holder.querySelector(".detail");
+    var wasSame = open && open.dataset.key === chip.dataset.l+"-"+chip.dataset.c;
+    holder.querySelectorAll(".chip").forEach(function(x){ x.setAttribute("aria-expanded","false"); });
+    if(open) open.remove();
+    if(wasSame) return;
+    chip.setAttribute("aria-expanded","true");
+    var d = document.createElement("div");
+    d.className = "detail";
+    d.dataset.key = chip.dataset.l+"-"+chip.dataset.c;
+    var expLabel = {hi:"High",mid:"Moderate",lo:"Low"}[c.exposure] || "—";
+    d.innerHTML =
+      '<h4>'+esc(c.n)+'</h4>'+
+      '<p class="sub">'+esc(c.t)+' · '+esc(L.id)+' '+esc(L.name)+' · lag '+L.lag+'Q</p>'+
+      '<div class="rows">'+
+        '<div><div class="row-k">Capex exposure</div><div class="row-v">'+expLabel+'</div></div>'+
+        '<div><div class="row-k">Cycle stage</div><div class="row-v">'+esc(c.stage)+'</div></div>'+
+        '<div><div class="row-k">Customer concentration</div><div class="row-v">'+esc(c.concen)+'</div></div>'+
+      '</div>'+
+      '<p class="note">'+esc(c.note)+'</p>'+
+      '<a class="openlink" href="/stocks/'+encodeURIComponent(c.t)+'">Open '+esc(c.t)+' on TickerMover →</a>';
+    holder.appendChild(d);
+  });
+
+  slider.addEventListener("input", render);
+
+  fetch("/api/thesis-map/"+encodeURIComponent(slug))
+    .then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); })
+    .then(function(d){
+      if(!d || d.available===false || !d.layers){ throw new Error("unavailable"); }
+      build(d);
+    })
+    .catch(function(){
+      document.getElementById("title").textContent = "This thesis map isn't available";
+      document.getElementById("standfirst").innerHTML = 'It may still be in preparation. <a href="/theses">Browse all thesis maps →</a>';
+    });
+})();
+</script>

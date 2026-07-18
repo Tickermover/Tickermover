@@ -57,6 +57,9 @@ DESK_HTML      = BASE_DIR / "templates" / "desk.html"
 WEEKLY_HTML    = BASE_DIR / "templates" / "weekly.html"
 HEROES_HTML    = BASE_DIR / "templates" / "heroes.html"
 HEROES_JSON    = BASE_DIR / "data" / "future_heroes.json"
+THESES_HTML    = BASE_DIR / "templates" / "theses.html"
+THESIS_HTML    = BASE_DIR / "templates" / "thesis.html"
+THESES_JSON    = BASE_DIR / "data" / "theses.json"
 
 
 # ── NaN/Inf sanitiser — Python json.dumps crashes on NaN/Infinity ─────
@@ -1252,6 +1255,16 @@ async def sitemap_xml():
     parts.append(f'  <url><loc>{SITE_ORIGIN}/sectors</loc><changefreq>daily</changefreq><priority>0.85</priority><lastmod>{today}</lastmod></url>')
     parts.append(f'  <url><loc>{SITE_ORIGIN}/compare</loc><changefreq>weekly</changefreq><priority>0.8</priority><lastmod>{today}</lastmod></url>')
     parts.append(f'  <url><loc>{SITE_ORIGIN}/future-heroes</loc><changefreq>weekly</changefreq><priority>0.8</priority><lastmod>{today}</lastmod></url>')
+    parts.append(f'  <url><loc>{SITE_ORIGIN}/theses</loc><changefreq>weekly</changefreq><priority>0.8</priority><lastmod>{today}</lastmod></url>')
+    try:
+        for _t in (_load_theses().get("theses") or []):
+            if _t.get("status") == "live" and _t.get("slug"):
+                parts.append(
+                    f'  <url><loc>{SITE_ORIGIN}/theses/{_t["slug"]}</loc>'
+                    f'<changefreq>weekly</changefreq><priority>0.75</priority><lastmod>{today}</lastmod></url>'
+                )
+    except Exception:
+        pass
     try:
         for _slug, _label in _seo.sector_slugs(_universe_data or []).items():
             parts.append(
@@ -4690,6 +4703,71 @@ async def future_heroes_page():
         return HTMLResponse(content=_with_analytics(HEROES_HTML.read_text(encoding="utf-8")))
     except FileNotFoundError:
         return HTMLResponse(content="<h2>templates/heroes.html not found</h2>", status_code=500)
+
+
+# ── Thesis Maps — interactive editorial supply-chain explorers ───────
+# Static curated datasets (data/theses.json), a data-driven "chain" engine
+# renders each one. Adding a thesis = adding a dataset. Cached in-process,
+# mtime-checked so an edit/redeploy picks it up.
+_theses_cache: dict = {"mtime": None, "data": None}
+
+def _load_theses() -> dict:
+    import json as _json
+    try:
+        mtime = THESES_JSON.stat().st_mtime
+        if _theses_cache["data"] is None or _theses_cache["mtime"] != mtime:
+            _theses_cache["data"] = _json.loads(THESES_JSON.read_text(encoding="utf-8"))
+            _theses_cache["mtime"] = mtime
+        return _theses_cache["data"]
+    except Exception as exc:
+        logger.warning(f"theses load failed: {exc}")
+        return {"theses": []}
+
+
+@app.get("/api/theses")
+async def api_theses():
+    """List of thesis maps (metadata only — no per-company payload) for the hub."""
+    d = _load_theses()
+    meta = [
+        {k: t.get(k) for k in ("slug", "status", "kind", "eyebrow", "title", "accent", "standfirst")}
+        for t in (d.get("theses") or [])
+    ]
+    return JSONResponse(_clean({"as_of": d.get("as_of"), "theses": meta}),
+                        headers={"Cache-Control": "public, max-age=3600, s-maxage=21600"})
+
+
+@app.get("/api/thesis-map/{slug}")
+async def api_thesis_map(slug: str):
+    """Full dataset for one thesis map (only 'live' ones carry layer data).
+    NOTE: path is /api/thesis-map/ (NOT /api/thesis/) — the latter is the
+    pre-existing per-STOCK investment-thesis endpoint; do not collide with it."""
+    slug = (slug or "").lower().strip()
+    for t in (_load_theses().get("theses") or []):
+        if (t.get("slug") or "").lower() == slug:
+            if t.get("status") != "live" or not t.get("layers"):
+                return JSONResponse({"available": False, "slug": slug,
+                                     "reason": "This thesis map is still in preparation."})
+            return JSONResponse(_clean(t),
+                                headers={"Cache-Control": "public, max-age=3600, s-maxage=21600"})
+    return JSONResponse({"available": False, "slug": slug, "reason": "Not found."}, status_code=404)
+
+
+@app.get("/theses", response_class=HTMLResponse)
+async def theses_hub_page():
+    """Thesis Maps hub — gallery of interactive supply-chain explorers."""
+    try:
+        return HTMLResponse(content=_with_analytics(THESES_HTML.read_text(encoding="utf-8")))
+    except FileNotFoundError:
+        return HTMLResponse(content="<h2>templates/theses.html not found</h2>", status_code=500)
+
+
+@app.get("/theses/{slug}", response_class=HTMLResponse)
+async def thesis_page(slug: str):
+    """One thesis map — the data-driven chain engine (fetches /api/thesis/{slug})."""
+    try:
+        return HTMLResponse(content=_with_analytics(THESIS_HTML.read_text(encoding="utf-8")))
+    except FileNotFoundError:
+        return HTMLResponse(content="<h2>templates/thesis.html not found</h2>", status_code=500)
 
 
 @app.post("/api/admin/publish-weekly")
