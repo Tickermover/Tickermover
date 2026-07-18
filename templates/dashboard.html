@@ -5914,6 +5914,14 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 #ts-drawer .rep-body th:not(:first-child),#ts-drawer .rep-body td:not(:first-child){text-align:right;white-space:nowrap}
 #ts-drawer .rep-body td:last-child,#ts-drawer .rep-body th:last-child{padding-right:0}
 #ts-drawer .rep-body td .badge{font-size:9.5px;padding:2px 7px;letter-spacing:0}
+/* Recent rating changes: the middle column is PROSE ("Equal Weight → Overweight"),
+   not a short value, so the generic nowrap-value rule (14) hands it all the width
+   and the generic word-break:break-word (13) collapses the Firm column to one
+   char — firm names then stack letter-by-letter. Scope an override to this table:
+   keep the firm name whole (wrap at spaces, never per-char), let the change text
+   wrap, and leave the action badge tight/right. */
+#ts-drawer .rep-body table.rep-ratings th:first-child,#ts-drawer .rep-body table.rep-ratings td:first-child{word-break:normal;overflow-wrap:normal;white-space:normal}
+#ts-drawer .rep-body table.rep-ratings th:nth-child(2),#ts-drawer .rep-body table.rep-ratings td:nth-child(2){white-space:normal;text-align:left}
 /* SVG infographic primitives */
 #ts-drawer .radar-wrap{display:flex;justify-content:center;padding:6px 0 8px}
 #ts-drawer .radar-svg{width:min(340px,100%);height:auto;max-width:100%}
@@ -20716,7 +20724,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
   }
   function _pctf(v){ return v==null?null:(Math.abs(v)<=1?v*100:v); }
   function _valSig(cur,med){ if(cur==null) return null; if(med==null||med<=0) return ['—','neu']; if(cur<med*0.9) return ['CHEAP','ok']; if(cur>med*1.1) return ['EXPENSIVE','bad']; return ['FAIR','neu']; }
-  function _sigTable(title,icon,accent,cols,rows){ if(!rows.length)return ''; const b='<table><thead><tr>'+cols.map(c=>'<th>'+c+'</th>').join('')+'</tr></thead><tbody>'+rows.map(r=>'<tr>'+r.map(c=>'<td>'+(c==null?'<span class="muted">—</span>':c)+'</td>').join('')+'</tr>').join('')+'</tbody></table>'; return _sec(title,icon,accent,b); }
+  function _sigTable(title,icon,accent,cols,rows,tcls){ if(!rows.length)return ''; const b='<table'+(tcls?' class="'+tcls+'"':'')+'><thead><tr>'+cols.map(c=>'<th>'+c+'</th>').join('')+'</tr></thead><tbody>'+rows.map(r=>'<tr>'+r.map(c=>'<td>'+(c==null?'<span class="muted">—</span>':c)+'</td>').join('')+'</tr>').join('')+'</tbody></table>'; return _sec(title,icon,accent,b); }
   function _healthCard(t){
     const de=_fpNum(t,['debt_to_equity']), cr=_fpNum(t,['current_ratio']), qr=_fpNum(t,['quick_ratio']),
           ocf=_fpNum(t,['operating_cashflow']), fcf=_fpNum(t,['free_cashflow']);
@@ -21504,7 +21512,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     '<div class="dr-deep-grid">'+
       _sigTable('Analyst targets & estimates','🎯','blue',['Metric','Value','Signal'],anRows)+
       _sigTable('Earnings summary','🎯','green',['Metric','Value','Signal'],esRows)+
-      (grRows.length?_sigTable('Recent rating changes','🏛️','amber',['Firm','Change','Action'],grRows):'')+
+      (grRows.length?_sigTable('Recent rating changes','🏛️','amber',['Firm','Change','Action'],grRows,'rep-ratings'):'')+
       (epsRows.length?_sigTable('EPS surprise history','📊','violet',['Metric','Value','Signal'],epsRows):'')+
     '</div>';
   }
