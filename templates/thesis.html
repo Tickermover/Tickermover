@@ -83,6 +83,13 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 .layer-idx{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;color:var(--faint);display:block;margin-bottom:2px}
 .layer-name{font-family:var(--serif);font-weight:600;font-size:18px;line-height:1.12;letter-spacing:-.01em;margin:0 0 6px}
 .layer-lag{font-size:12px;color:var(--muted);line-height:1.45}
+.layer-sum{margin-top:10px;display:flex;flex-direction:column;gap:5px}
+.layer-sum .ls-row{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--muted)}
+.layer-sum .ls-k{font-size:9.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);min-width:66px}
+.layer-sum .ls-mix{display:flex;gap:2px}
+.layer-sum .ls-seg{width:16px;height:5px;border-radius:2px}
+.layer-sum .ls-seg.hi{background:var(--e-hi)}.layer-sum .ls-seg.mid{background:var(--e-mid)}.layer-sum .ls-seg.lo{background:var(--e-lo)}
+.layer-sum .ls-lead{font-family:var(--mono);font-weight:600;color:var(--ink)}
 /* per-layer impact meter (diverging) */
 .impact{margin:0 0 14px}
 .impact-track{position:relative;height:14px;background:#f1f4f8;border-radius:4px}
@@ -216,11 +223,28 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
       '<h2 class="sec-h">The chain</h2>'+
       '<p class="sec-sub">Ordered by where the money arrives first. Each company shows its estimated capex exposure and its implied move at the current setting — tap for the full read.</p>'+
       LAYERS.map(function(L,i){
+        var nm = L.names || [];
+        var hiN = nm.filter(function(c){return c.exposure==="hi";}).length;
+        var midN = nm.filter(function(c){return c.exposure==="mid";}).length;
+        var loN = nm.filter(function(c){return c.exposure==="lo";}).length;
+        var mix = "";
+        for(var h=0;h<hiN;h++) mix+='<span class="ls-seg hi"></span>';
+        for(var m=0;m<midN;m++) mix+='<span class="ls-seg mid"></span>';
+        for(var l=0;l<loN;l++) mix+='<span class="ls-seg lo"></span>';
+        // "lead" = the highest-exposure name in the layer (its purest read)
+        var lead = (nm.filter(function(c){return c.exposure==="hi";})[0] || nm[0] || {}).t || "";
+        var sum =
+          '<div class="layer-sum">'+
+            '<div class="ls-row"><span class="ls-k">Exposure</span><span class="ls-mix">'+mix+'</span>'+
+              '<span>'+nm.length+' name'+(nm.length!==1?"s":"")+'</span></div>'+
+            (lead?'<div class="ls-row"><span class="ls-k">Purest read</span><span class="ls-lead">'+esc(lead)+'</span></div>':'')+
+          '</div>';
         return '<section class="layer" style="--lc:'+esc(L.color||"var(--blue)")+'">'+
           '<div class="layer-meta"><span class="spine"></span><span class="node"></span>'+
             '<span class="layer-idx">'+esc(L.id)+' · lag '+L.lag+'Q</span>'+
             '<h3 class="layer-name">'+esc(L.name)+'</h3>'+
             '<p class="layer-lag">'+esc(L.lagText)+'</p>'+
+            sum+
           '</div>'+
           '<div>'+
             '<div class="impact"><div class="impact-track"><div class="impact-fill" data-fill="'+i+'"></div></div>'+
@@ -312,7 +336,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
       '</div>'+
       '<p class="note">'+esc(c.note)+'</p>'+
       (c.watch?'<p class="watch"><b>Signal to watch</b>'+esc(c.watch)+'</p>':'')+
-      '<a class="open" href="/stocks/'+encodeURIComponent(c.t)+'">Open '+esc(c.t)+' on TickerMover →</a>';
+      '<a class="open" href="/stocks/'+encodeURIComponent(c.t)+'">See '+esc(c.t)+'’s live order book &amp; latest catalyst →</a>';
     cos.parentElement.appendChild(d);
   });
 
