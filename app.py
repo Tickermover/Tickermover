@@ -9497,6 +9497,103 @@ async def admin_prime_review_page():
     return HTMLResponse(_ADMIN_PRIME_HTML)
 
 
+@app.get("/admin/ai-spend", response_class=HTMLResponse)
+async def admin_ai_spend_page():
+    """Rendered by-FEATURE AI-spend breakdown (the app's own usage table — the
+    Anthropic Console only has by-model). Reads /api/admin/ai-spend; allow-list
+    gated at the API layer."""
+    return HTMLResponse(_ADMIN_AISPEND_HTML)
+
+
+_ADMIN_AISPEND_HTML = """<!DOCTYPE html><html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow"><title>AI spend · admin</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:Inter,-apple-system,Arial,sans-serif;background:#eef4ff;color:#0a0e22;padding:24px}
+.wrap{max-width:820px;margin:0 auto}
+h1{font-size:24px;font-weight:900;margin-bottom:4px}h1 b{color:#2970ff}
+.lead{font-size:13px;color:#64748b;margin-bottom:18px}
+.kpis{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:16px}
+.kpi{flex:1;min-width:150px;background:#fff;border:1px solid #d6e3ff;border-radius:13px;padding:13px 16px}
+.kpi b{font-size:23px;font-weight:900;font-family:'JetBrains Mono',monospace;display:block;line-height:1.15}
+.kpi span{font-size:10.5px;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;font-weight:700}
+.kpi.warn{border-color:#fca5a5;background:#fff5f5}.kpi.warn b{color:#b91c1c}
+.card{background:#fff;border:1px solid #d6e3ff;border-radius:14px;padding:18px 20px;margin-bottom:16px}
+.card h2{font-size:14px;font-weight:800;margin-bottom:12px;display:flex;justify-content:space-between}
+.card h2 span{color:#94a3b8;font-weight:600;font-size:12px}
+table{width:100%;border-collapse:collapse}
+td{padding:7px 6px;border-bottom:1px solid #f1f5f9;font-size:13px;vertical-align:middle}
+tr:last-child td{border-bottom:0}
+td.f{font-weight:700}td.c{font-family:monospace;font-weight:800;white-space:nowrap;text-align:right}
+td.p{font-family:monospace;color:#64748b;text-align:right;white-space:nowrap;width:52px}
+td.n{color:#94a3b8;text-align:right;white-space:nowrap;width:64px;font-size:12px}
+td.b{width:38%}
+.bar{background:#eef2f7;border-radius:5px;height:9px;overflow:hidden}
+.bar i{display:block;height:100%;border-radius:5px}
+.muted{color:#94a3b8;font-size:13px;padding:6px 0}
+.note{background:#fffdf5;border:1px solid #f5e6b8;border-radius:12px;padding:14px 16px;font-size:12.5px;color:#7c6a2e;line-height:1.6;margin-bottom:16px}
+.note b{color:#5a4d1e}
+.empty{background:#fff;border:1px solid #d6e3ff;border-radius:14px;padding:40px 24px;text-align:center;color:#475569}
+.empty .et{font-size:18px;font-weight:800;color:#0a0e22;margin-bottom:8px}
+.lk{display:inline-block;margin-top:12px;color:#2970ff;font-weight:700}
+.reload{float:right;font-size:12px;color:#2970ff;cursor:pointer;font-weight:700}
+</style></head><body><div class="wrap">
+<h1>AI <b>spend</b> · admin <span class="reload" onclick="load()">↻ reload</span></h1>
+<div class="lead">Your APP's own recorded spend, split by FEATURE (the Console only has by-model). Not Claude Code.</div>
+<div id="root"><div class="empty">Loading…</div></div>
+</div><script>
+var TOKEN=null; try{TOKEN=localStorage.getItem('ah_token');}catch(e){}
+var root=document.getElementById('root');
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+function money(v){return '$'+Number(v||0).toFixed(2);}
+function msg(t,m,link){return '<div class="empty"><div class="et">'+esc(t)+'</div><p>'+esc(m)+'</p>'+(link?'<a class="lk" href="'+link+'">Go to login →</a>':'')+'</div>';}
+function tbl(obj,total,color){
+  var keys=Object.keys(obj||{});
+  if(!keys.length) return '<div class="muted">No recorded calls this month.</div>';
+  var max=0; keys.forEach(function(k){if(obj[k].cost>max)max=obj[k].cost;});
+  return '<table>'+keys.map(function(k){var e=obj[k];var p=total>0?(e.cost/total*100):0;var w=max>0?Math.max(3,Math.round(e.cost/max*100)):0;
+    return '<tr><td class="f">'+esc(k)+'</td><td class="c">'+money(e.cost)+'</td><td class="p">'+p.toFixed(1)+'%</td><td class="n">'+e.calls+' calls</td>'+
+      '<td class="b"><div class="bar"><i style="width:'+w+'%;background:'+color+'"></i></div></td></tr>';}).join('')+'</table>';
+}
+function render(d){
+  var a=d.app_recorded||{}, caps=d.caps||{};
+  var src=a.counter_source==='supabase';
+  var html='<div class="kpis">'+
+    '<div class="kpi"><b>'+money(a.month_to_date_usd)+'</b><span>App spend · month to date</span></div>'+
+    '<div class="kpi"><b>'+money(a.today_usd)+'</b><span>App spend · today</span></div>'+
+    '<div class="kpi"><b>'+money(a.projected_month_end_usd)+'</b><span>Projected month-end</span></div>'+
+    '<div class="kpi"><b>'+money(caps.monthly_remaining_usd)+'</b><span>Left under $'+Number(caps.monthly_usd||0).toFixed(0)+' cap</span></div>'+
+    (src?'':'<div class="kpi warn"><b>disk</b><span>Counter not durable — cap under-counts</span></div>')+
+  '</div>';
+  html+='<div class="note"><b>Read this first.</b> These numbers are your APP\\'s recorded calls only. '+
+    'Claude Code sessions, manual API tests and scripts on the same key are <b>NOT here</b> — the Anthropic Console '+
+    'has no idea what your app-features are. To find non-app spend: take your Console month-to-date total and subtract '+
+    'the '+money(a.month_to_date_usd)+' above; the difference is Claude Code / dev traffic. So a sudden "$4 burn" that '+
+    'is NOT in the feature table below almost certainly came from a coding session, not a product feature.</div>';
+  html+='<div class="card"><h2>By feature <span>'+(a.rows_this_month||0)+' calls this month · '+esc(a.env||'')+'</span></h2>'+
+    tbl(a.by_feature,a.month_to_date_usd,'#2970ff')+'</div>';
+  html+='<div class="card"><h2>By model <span>same spend, grouped by model</span></h2>'+
+    tbl(a.by_model,a.month_to_date_usd,'#7c3aed')+'</div>';
+  root.innerHTML=html;
+}
+async function load(){
+  root.innerHTML='<div class="empty">Loading…</div>';
+  if(!TOKEN){root.innerHTML=msg('Not logged in','Log in with your admin account first, then reopen this page.','/login');return;}
+  var r;
+  try{r=await fetch('/api/admin/ai-spend',{headers:{'Authorization':'Bearer '+TOKEN}});}
+  catch(e){root.innerHTML=msg('Network error',String(e));return;}
+  if(r.status===403){root.innerHTML=msg('Not authorized','This account is not on the admin allowlist.');return;}
+  if(r.status===401){root.innerHTML=msg('Session expired','Please log in again.','/login');return;}
+  if(!r.ok){root.innerHTML=msg('Error','HTTP '+r.status);return;}
+  var d=await r.json().catch(function(){return null;});
+  if(!d){root.innerHTML=msg('Error','Malformed response');return;}
+  render(d);
+}
+load();
+</script></body></html>"""
+
+
 _ADMIN_PRIME_HTML = """<!DOCTYPE html><html lang="en"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow"><title>Prime review · admin</title>
