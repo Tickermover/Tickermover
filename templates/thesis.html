@@ -88,6 +88,9 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 .chain{margin:26px 0 0;position:relative}
 .sec-h{font-family:var(--serif);font-weight:600;font-size:20px;margin:0 0 2px}
 .sec-sub{font-size:13.5px;color:var(--muted);margin:0 0 8px}
+.sec-asof{display:inline-flex;align-items:center;gap:7px;font-size:12px;color:var(--muted);background:var(--pos-soft);border:1px solid #bfe6cb;border-radius:8px;padding:5px 11px;margin:0 0 14px}
+.sec-asof b{color:var(--pos);font-weight:700}
+.sec-asof .asof-dot{width:7px;height:7px;border-radius:50%;flex:none;background:#0a7d33;box-shadow:0 0 0 3px rgba(10,125,51,.15)}
 .layer{display:grid;grid-template-columns:210px 1fr;gap:24px;padding:22px 0;border-bottom:1px solid var(--line);position:relative}
 .layer:last-child{border-bottom:none}
 .layer-meta{position:relative;padding-left:26px}
@@ -245,6 +248,9 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
   function fmtP(v){ return v==null?"—":"$"+Number(v).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2}); }
   function pctSp(v,suf){ if(v==null) return ""; var cls=v>=0?"pos-t":"neg-t"; return '<span class="'+cls+'">'+(v>=0?"+":"")+Number(v).toFixed(1)+"% "+suf+'</span>'; }
   function fmtDate(s){ if(!s) return ""; try{ var d=new Date(String(s).slice(0,10)+"T00:00:00"); if(isNaN(d)) return esc(s); return "~"+d.toLocaleDateString("en-US",{month:"short",day:"numeric"}); }catch(e){ return esc(s); } }
+  // Freshness helpers — so a reader can trust how current the numbers are.
+  function fmtAsOf(s){ if(!s) return ""; try{ var d=new Date(String(s).slice(0,10)+"T00:00:00"); if(isNaN(d)) return esc(s); return d.toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"}); }catch(e){ return esc(s); } }
+  function fmtAge(sec){ if(sec==null) return ""; sec=+sec; if(sec<90) return "just now"; if(sec<3600) return Math.round(sec/60)+"m ago"; if(sec<86400) return Math.round(sec/3600)+"h ago"; return Math.round(sec/86400)+"d ago"; }
 
   // Live catalyst/order-book pulled from the app's DETERMINISTIC per-ticker scan
   // (/api/catalyst — no AI cost). Injected into the open detail panel; on any
@@ -270,7 +276,8 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
       var lines='';
       if(backlog)  lines+='<div class="live-line"><span class="lk">Order book / backlog</span>'+esc(backlog)+'</div>';
       if(catalyst) lines+='<div class="live-line"><span class="lk">'+(d.ai_catalyst?'Latest catalyst':'Latest signal')+'</span>'+esc(catalyst)+'</div>';
-      box.innerHTML='<div class="live-h"><span class="live-dot"></span>Live now · from our scan'+aiTag+'</div>'+grid+lines;
+      var age = d.scanned_age_sec!=null ? ' · updated '+fmtAge(d.scanned_age_sec) : '';
+      box.innerHTML='<div class="live-h"><span class="live-dot"></span>Live now · from our scan'+aiTag+age+'</div>'+grid+lines;
     }).catch(function(){ box.remove(); });
   }
 
@@ -303,6 +310,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
     chain.innerHTML =
       '<h2 class="sec-h">The chain</h2>'+
       '<p class="sec-sub">The money doesn\'t hit every layer at once — it arrives in waves. Each layer is tagged with <b>when</b> the spend actually shows up, from <b>Now</b> at the top to quarters out below. That lag is the edge: the later layers haven\'t been priced yet. Tap any company for the full read.</p>'+
+      (d.as_of?'<p class="sec-asof"><span class="asof-dot"></span>Lag &amp; exposure are our estimates <b>as of '+fmtAsOf(d.as_of)+'</b> — the forward layers haven\'t been paid out yet. Each company\'s price and read update live below.</p>':'')+
       LAYERS.map(function(L,i){
         var nm = L.names || [];
         var hiN = nm.filter(function(c){return c.exposure==="hi";}).length;

@@ -4742,12 +4742,17 @@ async def api_thesis_map(slug: str):
     NOTE: path is /api/thesis-map/ (NOT /api/thesis/) — the latter is the
     pre-existing per-STOCK investment-thesis endpoint; do not collide with it."""
     slug = (slug or "").lower().strip()
-    for t in (_load_theses().get("theses") or []):
+    _data = _load_theses()
+    _as_of = _data.get("as_of")            # dataset date — lets the map show how current the estimates are
+    for t in (_data.get("theses") or []):
         if (t.get("slug") or "").lower() == slug:
             if t.get("status") != "live" or not t.get("layers"):
                 return JSONResponse({"available": False, "slug": slug,
                                      "reason": "This thesis map is still in preparation."})
-            return JSONResponse(_clean(t),
+            _out = _clean(t)
+            if isinstance(_out, dict):
+                _out["as_of"] = t.get("as_of") or _as_of
+            return JSONResponse(_out,
                                 headers={"Cache-Control": "public, max-age=300, s-maxage=600"})
     return JSONResponse({"available": False, "slug": slug, "reason": "Not found."}, status_code=404)
 
@@ -6199,12 +6204,22 @@ async def api_catalyst(ticker: str):
     except Exception as _e:
         logger.debug(f"catalyst AI-note enrich {sym}: {_e}")
 
+    # Freshness: age (seconds) of the live universe scan these numbers came from,
+    # so the detail panel can show "updated Xm ago" and the read stays trustworthy.
+    _scan_age = None
+    try:
+        if _last_full_refresh:
+            _scan_age = max(0, int(time.time() - _last_full_refresh))
+    except Exception:
+        _scan_age = None
+
     return JSONResponse(_clean({
         "ticker": sym, "available": True, "name": t.get("name"),
         "price": t.get("price"), "change_pct": t.get("change_pct"),
         "momentum_1m": t.get("momentum_1m"),
         "grade": t.get("grade"), "alpha": score, "read": read,
         "next_earnings": t.get("next_earnings_date") or t.get("earnings_date"),
+        "scanned_age_sec": _scan_age,
         "backlog": backlog, "catalyst": catalyst,
         # Richer sentences lifted from the CACHED AI note when present (no cost).
         "ai_backlog": ai_backlog, "ai_catalyst": ai_catalyst,

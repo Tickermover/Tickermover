@@ -27,7 +27,7 @@
         { "id": "L2", "name": "Memory & HBM", "lag": 1, "color": "var(--l2)",
           "lagText": "About one quarter behind. Contract-priced, so cyclical.",
           "names": [
-            { "t": "MU",   "n": "Micron",            "exposure": "mid", "stage": "Ramping", "concen": "Moderate", "note": "HBM sold out forward is the signal to watch.", "watch": "HBM bit-share and whether it's sold out forward." },
+            { "t": "MU",   "n": "Micron",            "exposure": "mid", "stage": "Ramping", "concen": "Moderate", "note": "The listed HBM/DRAM proxy — datacenter memory demand drives the cycle.", "watch": "HBM bit-share and whether it's sold out forward." },
             { "t": "SNDK", "n": "Sandisk",           "exposure": "lo",  "stage": "Early",   "concen": "Low",      "note": "Storage tier, later in the build order.", "watch": "Enterprise SSD pricing and datacenter storage demand." }
           ] },
         { "id": "L3", "name": "Optical interconnect", "lag": 2, "color": "var(--l3)",
@@ -53,10 +53,10 @@
         { "id": "L6", "name": "Power, cooling & capacity", "lag": 4, "color": "var(--l6)",
           "lagText": "Four quarters. Physical buildout. Slowest and stickiest.",
           "names": [
-            { "t": "VRT",  "n": "Vertiv",            "exposure": "hi", "stage": "Mature ramp", "concen": "Moderate",   "note": "Thermal and power. Backlog is the leading indicator.", "watch": "Order book and backlog — the leading indicator." },
+            { "t": "VRT",  "n": "Vertiv",            "exposure": "hi", "stage": "Mature ramp", "concen": "Moderate",   "note": "Datacenter thermal and power systems — a direct AI-buildout beneficiary.", "watch": "Order book and backlog — the leading indicator." },
             { "t": "ETN",  "n": "Eaton",             "exposure": "lo", "stage": "Ramping",     "concen": "Low",        "note": "Broad industrial base dilutes AI exposure.", "watch": "Datacenter electrical backlog vs the broad industrial mix." },
-            { "t": "APLD", "n": "Applied Digital",   "exposure": "hi", "stage": "Early",       "concen": "Very high",  "note": "Neocloud capacity. Financing risk, not just demand risk.", "watch": "Financing terms and contracted capacity — not just demand." },
-            { "t": "NBIS", "n": "Nebius",            "exposure": "hi", "stage": "Early",       "concen": "High",       "note": "Capacity reseller. Contract length is everything.", "watch": "Contract length and GPU-capacity utilization." }
+            { "t": "APLD", "n": "Applied Digital",   "exposure": "hi", "stage": "Early",       "concen": "Very high",  "note": "Neocloud HPC-datacenter operator — a capacity play, not a chipmaker.", "watch": "Financing terms and contracted capacity — not just demand." },
+            { "t": "NBIS", "n": "Nebius",            "exposure": "hi", "stage": "Early",       "concen": "High",       "note": "GPU-capacity reseller — effectively an AI-compute landlord.", "watch": "Contract length and GPU-capacity utilization." }
           ] }
       ],
       "how": "Layers are ordered by where money arrives, not by company size. The lag is the typical delay between a hyperscaler raising its capex guide and that spend showing up in a supplier's reported revenue. Exposure and cycle stage are qualitative bands, not precise figures — they are judgements from filings and earnings calls, and they are the part most worth arguing with. The 'signal to watch' is the single leading indicator we'd track for each name.",
