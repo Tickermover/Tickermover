@@ -2,7 +2,7 @@
 REM ════════════════════════════════════════════════════════════════
 REM  promote-to-prod.bat — merge dev into main and push
 REM ════════════════════════════════════════════════════════════════
-REM  Use this AFTER you've tested your changes on dev.alphahunt.in
+REM  Use this AFTER you've tested your changes on web-production-17a78.up.railway.app
 REM  and you're confident they're ready for production.
 REM
 REM  What it does:
@@ -10,7 +10,7 @@ REM    1. Verifies you're on 'dev' and the working tree is clean
 REM    2. Pulls latest origin/main and origin/dev
 REM    3. Checks out main, merges dev (no fast-forward, so the merge
 REM       is visible in history)
-REM    4. Pushes main → Railway prod auto-deploys to alphahunt.in
+REM    4. Pushes main → Railway prod auto-deploys to tickermover.com
 REM    5. Switches you back to dev
 REM
 REM  Requires: GH_TOKEN env var (same as push.bat)
@@ -21,7 +21,7 @@ set "PROJ=%~dp0.."
 pushd "%PROJ%" || (echo [ERROR] cannot cd to project root & exit /b 1)
 
 echo.
-echo === AlphaHunt - Promote dev to prod ===
+echo === TickerMover - Promote dev to prod ===
 echo.
 
 if "%GH_TOKEN%"=="" (
@@ -67,7 +67,7 @@ echo.
 echo === Commits about to be merged into main ===
 git log --oneline origin/main..dev
 echo.
-set /p "CONFIRM=Type YES to merge dev -> main and deploy to alphahunt.in: "
+set /p "CONFIRM=Type YES to merge dev -> main and deploy to tickermover.com: "
 if /i not "!CONFIRM!"=="YES" (
     echo Cancelled.
     git remote set-url origin %CLEAN_URL%
@@ -108,7 +108,7 @@ if !PUSH_RC! EQU 0 (
     echo ================================================
     echo  PROMOTED. main is now updated on GitHub.
     echo  Railway prod should auto-deploy.
-    echo  Verify at: https://alphahunt.in
+    echo  Verify at: https://tickermover.com
     echo  You're back on 'dev'.
     echo ================================================
 ) else (

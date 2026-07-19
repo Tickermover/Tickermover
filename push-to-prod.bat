@@ -3,7 +3,7 @@ REM ═════════════════════════�
 REM  push-to-prod.bat  (v2 — safe, never switches branches)
 REM
 REM  Pushes the current dev branch directly to origin/main on GitHub.
-REM  Railway prod auto-deploys to https://alphahunt.in within ~90s.
+REM  Railway prod auto-deploys to https://tickermover.com within ~90s.
 REM
 REM  Why this is safe:
 REM    - You stay on the 'dev' branch the whole time
@@ -22,7 +22,7 @@ cd /d "%~dp0"
 
 echo.
 echo ============================================
-echo   AlphaHunt - Promote DEV to PROD
+echo   TickerMover - Promote DEV to PROD
 echo ============================================
 echo.
 
@@ -91,7 +91,7 @@ echo.
 
 REM ── 8. Confirm ────────────────────────────────────────────────────
 echo This will REPLACE origin/main with dev's current commit.
-echo Railway prod will then auto-deploy to https://alphahunt.in
+echo Railway prod will then auto-deploy to https://tickermover.com
 echo.
 set /p "CONFIRM=Type YES to proceed: "
 if /i not "!CONFIRM!"=="YES" (
@@ -121,7 +121,7 @@ echo ============================================
 echo   SUCCESS
 echo   origin/main now matches dev.
 echo   Railway prod will redeploy in about 90 seconds.
-echo   Verify: https://alphahunt.in
+echo   Verify: https://tickermover.com
 echo   You are still on the dev branch. Working tree unchanged.
 echo ============================================
 goto :end

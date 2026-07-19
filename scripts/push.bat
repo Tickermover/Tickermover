@@ -21,7 +21,7 @@ set "PROJ=%~dp0.."
 pushd "%PROJ%" || (echo [ERROR] cannot cd to project root & exit /b 1)
 
 echo.
-echo === AlphaHunt - Push to GitHub ===
+echo === TickerMover - Push to GitHub ===
 echo Folder: %CD%
 echo.
 
@@ -47,7 +47,7 @@ echo Current branch: %BRANCH%
 if /i "%BRANCH%"=="main" (
     echo.
     echo [ERROR] You're on 'main'. This script refuses direct pushes to main
-    echo         because it would deploy to alphahunt.in immediately.
+    echo         because it would deploy to tickermover.com immediately.
     echo         Switch to dev:    git checkout dev
     echo         Or to promote:    scripts\promote-to-prod.bat
     git remote set-url origin %CLEAN_URL%

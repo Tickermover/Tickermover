@@ -1,4 +1,4 @@
-# 🎯 AlphaHunt — US Stock Intelligence Dashboard
+# 🎯 TickerMover — US Stock Intelligence Dashboard
 
 > **Hunt for Alpha in the US Stock Market**  
 > AI-powered Pop Score · IBD-style RS Rating · Blue Dot signals · Real-time Hot List
@@ -9,9 +9,9 @@
 
 ---
 
-## What is AlphaHunt?
+## What is TickerMover?
 
-AlphaHunt is a real-time US stock intelligence platform that aggregates 14 data signals every 5 minutes and compresses them into a single actionable **Pop Score** (0–100). Stocks scoring 68+ (Grade A) surface in the Hot List as strong buy candidates.
+TickerMover is a real-time US stock intelligence platform that aggregates 14 data signals every 5 minutes and compresses them into a single actionable **Pop Score** (0–100). Stocks scoring 68+ (Grade A) surface in the Hot List as strong buy candidates.
 
 ### Key Features
 
@@ -46,7 +46,7 @@ pip install -r requirements.txt
 # 4. Run
 uvicorn app:app --host 127.0.0.1 --port 8000
 
-# Or on Windows: double-click AlphaHunt.pyw
+# Or on Windows: double-click TickerMover.pyw
 ```
 
 Open **http://localhost:8000** for the landing page, or **http://localhost:8000/app** for the dashboard.
@@ -55,7 +55,7 @@ Open **http://localhost:8000** for the landing page, or **http://localhost:8000/
 
 ## Windows One-Click Launcher
 
-Double-click **`AlphaHunt.pyw`** — it installs dependencies automatically and opens the dashboard in your browser.  
+Double-click **`TickerMover.pyw`** — it installs dependencies automatically and opens the dashboard in your browser.  
 Requires Python 3.10+ ([python.org](https://python.org) — tick "Add to PATH").
 
 ---
@@ -77,7 +77,7 @@ Copy `.env.example` to `.env` and fill in your keys.
 ## Architecture
 
 ```
-alphahunt.in
+tickermover.com
 ├── templates/landing.html    ← Marketing landing page (/)
 ├── templates/dashboard.html  ← Main SPA (/app)
 ├── app.py                    ← FastAPI routes + background refresh
@@ -134,11 +134,11 @@ This creates:
 
 ## License
 
-Private — all rights reserved. Contact support@alphahunt.in for licensing.
+Private — all rights reserved. Contact support@tickermover.com for licensing.
 
 ---
 
-*Not financial advice. AlphaHunt is a data intelligence tool — always do your own research.*
+*Not financial advice. TickerMover is a data intelligence tool — always do your own research.*
 
 <!-- deploy survival test 2026-05-22 -->
 

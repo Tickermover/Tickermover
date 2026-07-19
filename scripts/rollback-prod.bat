@@ -15,7 +15,7 @@ set "PROJ=%~dp0.."
 pushd "%PROJ%" || (echo [ERROR] cannot cd to project root & exit /b 1)
 
 echo.
-echo === AlphaHunt - PROD ROLLBACK ===
+echo === TickerMover - PROD ROLLBACK ===
 echo.
 
 if "%GH_TOKEN%"=="" (
@@ -59,7 +59,7 @@ echo.
 if !PUSH_RC! EQU 0 (
     echo ================================================
     echo  ROLLED BACK. Railway prod will redeploy in ~2min.
-    echo  Verify at https://alphahunt.in
+    echo  Verify at https://tickermover.com
     echo ================================================
 ) else (
     echo [ERROR] Push failed. Revert is local only.

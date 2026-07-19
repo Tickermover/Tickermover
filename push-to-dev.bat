@@ -5,7 +5,7 @@ REM  Commits everything and pushes it to the 'dev' branch.
 REM  Railway dev project auto-deploys to:
 REM     https://web-production-17a78.up.railway.app
 REM
-REM  Prod (alphahunt.in) is NOT touched by this script.
+REM  Prod (tickermover.com) is NOT touched by this script.
 REM  Use push-to-prod.bat to promote dev -> prod.
 REM ════════════════════════════════════════════════════════════════
 
@@ -14,7 +14,7 @@ cd /d "%~dp0"
 
 echo.
 echo ============================================
-echo   AlphaHunt - Push to DEV
+echo   TickerMover - Push to DEV
 echo ============================================
 echo.
 

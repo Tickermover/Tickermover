@@ -12,7 +12,7 @@ set "PROJ=%~dp0.."
 pushd "%PROJ%" || (echo [ERROR] cannot cd to project root & exit /b 1)
 
 echo.
-echo === AlphaHunt - Git Repair ===
+echo === TickerMover - Git Repair ===
 echo Folder: %CD%
 echo.
 
