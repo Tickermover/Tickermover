@@ -4733,7 +4733,7 @@ async def api_theses():
         for t in (d.get("theses") or [])
     ]
     return JSONResponse(_clean({"as_of": d.get("as_of"), "theses": meta}),
-                        headers={"Cache-Control": "public, max-age=3600, s-maxage=21600"})
+                        headers={"Cache-Control": "public, max-age=300, s-maxage=600"})
 
 
 @app.get("/api/thesis-map/{slug}")
@@ -4748,7 +4748,7 @@ async def api_thesis_map(slug: str):
                 return JSONResponse({"available": False, "slug": slug,
                                      "reason": "This thesis map is still in preparation."})
             return JSONResponse(_clean(t),
-                                headers={"Cache-Control": "public, max-age=3600, s-maxage=21600"})
+                                headers={"Cache-Control": "public, max-age=300, s-maxage=600"})
     return JSONResponse({"available": False, "slug": slug, "reason": "Not found."}, status_code=404)
 
 

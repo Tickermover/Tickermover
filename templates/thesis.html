@@ -444,7 +444,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
   });
   slider.addEventListener("input", render);
 
-  fetch("/api/thesis-map/"+encodeURIComponent(slug))
+  fetch("/api/thesis-map/"+encodeURIComponent(slug)+"?v=2")
     .then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); })
     .then(function(d){ if(!d || d.available===false || !d.layers) throw new Error("unavailable"); build(d); })
     .catch(function(){
