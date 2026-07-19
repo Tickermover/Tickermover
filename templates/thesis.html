@@ -67,6 +67,23 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 .mv-val{font-family:var(--mono);font-weight:700;font-size:12.5px;text-align:right}
 .pos-t{color:var(--pos)}.neg-t{color:var(--neg)}.zero-t{color:var(--faint)}
 
+/* follow the money — thesis market size */
+.money{margin:14px 0 0;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px 20px 18px;box-shadow:0 1px 3px rgba(15,23,42,.05)}
+.money-h{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.money-h b{font-family:var(--serif);font-weight:600;font-size:18px}
+.money-h span{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
+.money-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:16px}
+.money-stat .mo-v{font-family:var(--serif);font-weight:600;font-size:27px;color:var(--blue-d);line-height:1.05}
+.money-stat .mo-k{font-size:11.5px;font-weight:700;color:var(--muted);margin-top:3px}
+.money-stat .mo-bar{margin-top:8px;height:6px;background:#eef2f7;border-radius:3px;overflow:hidden}
+.money-stat .mo-bar i{display:block;height:100%;background:linear-gradient(90deg,#5DB3F1,var(--blue));border-radius:3px}
+.money-note{font-size:11.5px;color:var(--faint);line-height:1.5;margin-top:13px}
+/* who's gained — real returns */
+.winners{margin:14px 0 0;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px 20px 18px;box-shadow:0 1px 3px rgba(15,23,42,.05)}
+.winners-h{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.winners-h b{font-family:var(--serif);font-weight:600;font-size:18px}
+.winners-h span{font-size:12px;color:var(--faint)}
+
 /* chain */
 .chain{margin:26px 0 0;position:relative}
 .sec-h{font-family:var(--serif);font-weight:600;font-size:20px;margin:0 0 2px}
@@ -176,10 +193,14 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
     <div class="scale"><span id="scale-lo"></span><span>0%</span><span id="scale-hi"></span></div>
   </div>
 
+  <div class="money" id="money" style="display:none"></div>
+
   <div class="movers" id="movers" style="display:none">
     <div class="movers-h"><b>Biggest implied movers</b><span id="movers-sub"></span></div>
     <div id="movers-list"></div>
   </div>
+
+  <div class="winners" id="winners" style="display:none"></div>
 
   <div class="chain" id="chain"><div class="loading">Loading map…</div></div>
 
@@ -300,10 +321,47 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
         '</section>';
       }).join("");
 
+    // "Follow the money" — curated market size for the thesis
+    var mk = d.market;
+    if(mk && mk.stats && mk.stats.length){
+      var mEl = document.getElementById("money");
+      mEl.innerHTML =
+        '<div class="money-h"><b>Follow the money</b><span>the size of the prize</span></div>'+
+        '<div class="money-stats">'+ mk.stats.map(function(s){
+          return '<div class="money-stat"><div class="mo-v">'+esc(s.v)+'</div><div class="mo-k">'+esc(s.k)+'</div>'+
+            (s.bar!=null?'<div class="mo-bar"><i style="width:'+Math.max(3,Math.min(100,s.bar))+'%"></i></div>':'')+'</div>';
+        }).join("") +'</div>'+
+        (mk.note?'<div class="money-note">'+esc(mk.note)+'</div>':'');
+      mEl.style.display = "";
+    }
+
     document.getElementById("how").textContent = d.how || "";
     document.getElementById("disclaimer").textContent = d.disclaimer || "";
     document.getElementById("foot").style.display = "";
     render();
+    loadPerf();
+  }
+
+  // "Who's gained so far" — REAL returns from the deterministic universe scan.
+  function loadPerf(){
+    var el = document.getElementById("winners");
+    fetch("/api/thesis-perf/"+encodeURIComponent(slug)).then(function(r){return r.json();}).then(function(d){
+      var cos = ((d && d.companies) || []).filter(function(c){return c.ret_3m!=null;});
+      if(cos.length < 2){ el.style.display="none"; return; }
+      cos.sort(function(a,b){ return (b.ret_3m||0)-(a.ret_3m||0); });
+      var top = cos.slice(0,6);
+      var maxAbs = Math.max.apply(null, cos.map(function(c){return Math.abs(c.ret_3m||0);}).concat([1]));
+      var up = cos.filter(function(c){return (c.ret_3m||0) > 0;}).length;
+      var rows = top.map(function(c){
+        var v = c.ret_3m||0, pos = v>=0, w = Math.max(2, Math.abs(v)/maxAbs*100);
+        return '<div class="mv"><span class="mv-tk">'+esc(c.t)+'<small>'+esc(c.n)+'</small></span>'+
+          '<span class="mv-track"><span class="mv-fill '+(pos?"pos":"neg")+'" style="width:'+w.toFixed(1)+'%"></span></span>'+
+          '<span class="mv-val '+(pos?"pos-t":"neg-t")+'">'+(pos?"+":"")+v.toFixed(1)+'%</span></div>';
+      }).join("");
+      el.innerHTML =
+        '<div class="winners-h"><b>Who’s gained so far</b><span>'+up+' of '+cos.length+' names up · 3-month return, live</span></div>'+ rows;
+      el.style.display = "";
+    }).catch(function(){ el.style.display="none"; });
   }
 
   function render(){

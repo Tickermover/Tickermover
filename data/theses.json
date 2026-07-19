@@ -10,6 +10,10 @@
       "accent": "actually lands",
       "standfirst": "Every AI datacenter dollar moves down a chain, layer by layer, with a lag. Move the slider to a capex growth rate and watch it propagate. Dot brightness marks how much of a company's revenue is estimated to depend on that spend.",
       "control": { "label": "Hyperscaler capex growth, year over year", "min": -30, "max": 70, "value": 25, "step": 5 },
+      "market": { "note": "Round estimates of combined hyperscaler (Microsoft, Alphabet, Amazon, Meta + others) AI-datacenter capex, as of mid-2026 — our read, meant to be argued with, not a precise figure.", "stats": [
+        { "k": "Annual capex run-rate", "v": "~$500B/yr" },
+        { "k": "Pledged 2024–27E", "v": "~$2T" },
+        { "k": "Deployed so far", "v": "~30%", "bar": 30 } ] },
       "layers": [
         { "id": "L1", "name": "Compute silicon", "lag": 0, "color": "var(--l1)",
           "lagText": "Guide-quarter. Moves first, prices the whole chain.",
@@ -68,6 +72,10 @@
       "accent": "power build-out",
       "standfirst": "AI datacenters and electrification are colliding with a grid that took decades to build. Drag the US power-demand growth slider and watch it work back up the physical chain — from the electrons to the contractors who install the copper. Dot brightness marks estimated revenue dependence on this build-out.",
       "control": { "label": "US electricity / power-capex growth, year over year", "min": -10, "max": 40, "value": 12, "step": 2 },
+      "market": { "note": "Rough estimates of US power-system investment (grid, generation, interconnection) driven by AI + electrification — our read as of mid-2026, not a precise figure.", "stats": [
+        { "k": "US grid + generation capex", "v": "~$200B/yr" },
+        { "k": "Investment need to 2030E", "v": "~$2T+" },
+        { "k": "Into the build", "v": "~15%", "bar": 15 } ] },
       "layers": [
         { "id": "L1", "name": "Generation — turbines & nuclear", "lag": 0, "color": "var(--l1)",
           "lagText": "First to feel it. Long-lead equipment and firm-power contracts.",
@@ -117,6 +125,10 @@
       "accent": "defense budget",
       "standfirst": "From appropriations to the primes to the sub-tier suppliers who actually build the hardware — defense spend is a chain with a long, sticky lag and famously lumpy orders. Drag the budget-growth slider and trace where an outlay increase lands, and when. Dot brightness marks estimated revenue dependence on US defense spend.",
       "control": { "label": "US defense outlays growth, year over year", "min": -8, "max": 20, "value": 6, "step": 1 },
+      "market": { "note": "Round figures for the US defense budget and its investment (procurement + R&D) slice — recurring annual outlays, not a one-time prize. Our read, mid-2026.", "stats": [
+        { "k": "US defense budget (annual)", "v": "~$900B" },
+        { "k": "Procurement + RDT&E", "v": "~$400B/yr" },
+        { "k": "Cumulative 2025–29E", "v": "~$4T+" } ] },
       "layers": [
         { "id": "L1", "name": "Prime contractors", "lag": 0, "color": "var(--l1)",
           "lagText": "Booked first as programs of record. Backlog is deep and slow.",
@@ -166,6 +178,10 @@
       "accent": "reshoring",
       "standfirst": "Incentives to equipment to automation to the electricians — the money to rebuild US manufacturing moves down a chain with a lag, from the fab tools that arrive first to the aggregates trucked to the site. Drag the factory-capex slider and watch it propagate. Dot brightness marks estimated revenue dependence on the US build-out.",
       "control": { "label": "US manufacturing-construction growth, year over year", "min": -15, "max": 45, "value": 15, "step": 5 },
+      "market": { "note": "Rough estimates of the US reshoring build-out — federal incentives plus announced private manufacturing investment. Our read, mid-2026, not a precise figure.", "stats": [
+        { "k": "US factory construction", "v": "~$230B/yr" },
+        { "k": "IRA + CHIPS incentives", "v": "~$400B" },
+        { "k": "Announced private plants", "v": "~$1T+" } ] },
       "layers": [
         { "id": "L1", "name": "Semicap & fab tools", "lag": 0, "color": "var(--l1)",
           "lagText": "First in the door. CHIPS-funded fabs order tools before they pour concrete's dry.",

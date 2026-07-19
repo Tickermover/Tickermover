@@ -4752,6 +4752,35 @@ async def api_thesis_map(slug: str):
     return JSONResponse({"available": False, "slug": slug, "reason": "Not found."}, status_code=404)
 
 
+@app.get("/api/thesis-perf/{slug}")
+async def api_thesis_perf(slug: str):
+    """Live performance of a thesis map's companies — the REAL 'who gained so far'.
+    DETERMINISTIC (in-memory universe returns; no AI, no external fetch). Returns
+    each in-universe name's 3-month / 1-month return + price + distance from its
+    52w high. Off-universe names are omitted (they simply won't appear in the
+    winners board)."""
+    slug = (slug or "").lower().strip()
+    thesis = next((t for t in (_load_theses().get("theses") or [])
+                   if (t.get("slug") or "").lower() == slug and t.get("status") == "live"), None)
+    if not thesis:
+        return JSONResponse({"available": False, "slug": slug}, status_code=404)
+    uni = {x.get("ticker"): x for x in _universe_data}
+    rows = []
+    for L in (thesis.get("layers") or []):
+        for c in (L.get("names") or []):
+            u = uni.get(c.get("t"))
+            if not u:
+                continue
+            rows.append({
+                "t": c.get("t"), "n": c.get("n"), "layer": L.get("id"),
+                "exposure": c.get("exposure"),
+                "ret_3m": u.get("momentum_3m"), "ret_1m": u.get("momentum_1m"),
+                "price": u.get("price"), "dist_52w_high": u.get("dist_52w_high"),
+            })
+    return JSONResponse(_clean({"slug": slug, "covered": len(rows), "companies": rows}),
+                        headers={"Cache-Control": "public, max-age=300, s-maxage=600"})
+
+
 @app.get("/theses", response_class=HTMLResponse)
 async def theses_hub_page():
     """Thesis Maps hub — gallery of interactive supply-chain explorers."""
