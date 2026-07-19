@@ -6181,14 +6181,21 @@ async def api_catalyst(ticker: str):
             clean = _re.sub(r"[#*`>_]|\]\([^)]*\)|[\[\]]", " ", clean)
             clean = _re.sub(r"\s+", " ", clean).strip()
             sents = [s.strip() for s in _re.split(r"(?<=[.!?])\s+", clean) if len(s.strip()) > 30]
+            def _tidy(s):
+                # strip leading bullets / section-header run-ons, trim on a word
+                s = s.lstrip("-•*·— \t").strip()
+                s = _re.sub(r"^(What moves it next|Ongoing|Next quarter|Bottom line)\b[:\s—-]*", "", s, flags=_re.I).strip()
+                if len(s) > 190:
+                    s = s[:190].rsplit(" ", 1)[0].rstrip(",;:") + "…"
+                return s
             ai_backlog = next((s for s in sents if _re.search(
                 r"backlog|booking|order|design.?win|pipeline|contract|\bwon\b|award|\bdeal\b", s, _re.I)), None)
             _cat = next((s for s in sents if _re.search(
                 r"guidance|raised|analyst|price target|upgrade|\bbeat\b|record|launch|partnership|expansion|catalyst", s, _re.I)), None)
             if ai_backlog:
-                ai_backlog = ai_backlog[:210]
+                ai_backlog = _tidy(ai_backlog)
             if _cat and _cat != ai_backlog:
-                ai_catalyst = _cat[:210]
+                ai_catalyst = _tidy(_cat)
     except Exception as _e:
         logger.debug(f"catalyst AI-note enrich {sym}: {_e}")
 
