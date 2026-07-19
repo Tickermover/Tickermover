@@ -41,7 +41,7 @@ Full-isolation setup. Dev environment is a complete mirror of production with it
 On your Windows machine:
 
 ```bash
-cd "C:\Users\SOURA\Documents\Claude\Projects\USA Stock Market\PopDetector_v5"
+cd "C:\Users\SOURA\Documents\Claude\Projects\USA Stock Market\TickerMover"
 
 # Make sure main is up to date
 git checkout main
@@ -251,7 +251,7 @@ Once everything is set up, here's how every code change goes from idea to produc
 ### Step 1 — Make the change locally
 
 ```bash
-cd "C:\Users\SOURA\Documents\Claude\Projects\USA Stock Market\PopDetector_v5"
+cd "C:\Users\SOURA\Documents\Claude\Projects\USA Stock Market\TickerMover"
 git checkout dev          # always start on dev
 git pull origin dev       # get any teammates' changes (just you for now, but good habit)
 
