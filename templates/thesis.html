@@ -26,16 +26,16 @@ body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16p
 a{color:var(--blue)}
 .num{font-family:var(--mono);font-variant-numeric:tabular-nums}
 .top{position:sticky;top:0;z-index:20;background:rgba(252,251,249,.86);backdrop-filter:saturate(180%) blur(12px);border-bottom:1px solid var(--line)}
-.top-in{max-width:960px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 20px}
+.top-in{max-width:1120px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 20px}
 .back{font-size:13px;font-weight:600;color:var(--muted);text-decoration:none}
 .back:hover{color:var(--ink)}
 .brand{display:flex;align-items:center;gap:9px;text-decoration:none;font-weight:600;font-size:18px;letter-spacing:-.022em;color:#0a0a0a}
 .brand .mark{width:26px;height:26px;flex:none;background:linear-gradient(135deg,#5DB3F1,#2970FF 50%,#0040c1);-webkit-mask:url('/static/brand/tickermover-mark-mask.svg') center/contain no-repeat;mask:url('/static/brand/tickermover-mark-mask.svg') center/contain no-repeat}
-.wrap{max-width:960px;margin:0 auto;padding:30px 20px 70px}
+.wrap{max-width:1120px;margin:0 auto;padding:30px 20px 70px}
 .eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:11px;font-weight:800;letter-spacing:.15em;text-transform:uppercase;color:var(--blue-d);background:linear-gradient(135deg,#eef4ff,#f5f9ff);border:1px solid #cfe0ff;border-radius:999px;padding:6px 13px}
-h1.title{font-family:var(--serif);font-weight:600;font-size:clamp(30px,5.4vw,50px);line-height:1.05;letter-spacing:-.018em;margin:16px 0 12px;max-width:17ch}
+h1.title{font-family:var(--serif);font-weight:600;font-size:clamp(30px,5.4vw,50px);line-height:1.05;letter-spacing:-.018em;margin:16px 0 12px;max-width:26ch}
 h1.title em{font-style:italic;color:var(--blue-d)}
-.standfirst{font-size:17.5px;line-height:1.5;color:#334155;max-width:64ch;margin:0 0 6px}
+.standfirst{font-size:17.5px;line-height:1.5;color:#334155;max-width:72ch;margin:0 0 6px}
 
 /* driver control */
 .control{margin:30px 0 0;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px 22px 18px;box-shadow:0 1px 3px rgba(15,23,42,.05)}
@@ -100,6 +100,14 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 .layer-idx{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;color:var(--faint);display:block;margin-bottom:2px}
 .layer-name{font-family:var(--serif);font-weight:600;font-size:18px;line-height:1.12;letter-spacing:-.01em;margin:0 0 6px}
 .layer-lag{font-size:12px;color:var(--muted);line-height:1.45}
+/* money-arrival badge — the hook: when the spend actually reaches this layer */
+.layer-when-badge{display:inline-flex;flex-direction:column;gap:1px;margin:2px 0 10px;padding:7px 13px 8px;border-radius:11px;background:#eef4ff;border:1px solid #cfe0ff;line-height:1.14}
+.layer-when-badge .lw-k{font-size:8.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--blue-d);opacity:.72}
+.layer-when-badge .lw-v{font-family:var(--serif);font-weight:600;font-size:20px;color:var(--blue-d);letter-spacing:-.01em}
+.layer-when-badge .lw-h{font-size:11px;font-weight:600;color:var(--muted)}
+.layer-when-badge.first{background:var(--pos-soft);border-color:#bfe6cb}
+.layer-when-badge.first .lw-k{color:var(--pos)}
+.layer-when-badge.first .lw-v{color:var(--pos)}
 .layer-sum{margin-top:10px;display:flex;flex-direction:column;gap:5px}
 .layer-sum .ls-row{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--muted)}
 .layer-sum .ls-k{font-size:9.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);min-width:66px}
@@ -116,7 +124,6 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 .impact-fill.neg{right:50%;background:linear-gradient(270deg,#f87171,var(--neg));border-radius:4px 0 0 4px}
 .impact-cap{display:flex;justify-content:space-between;align-items:baseline;margin-top:7px;gap:10px}
 .impact-val{font-family:var(--mono);font-weight:700;font-size:14px}
-.impact-when{font-size:11.5px;color:var(--faint)}
 /* company cards */
 .cos{display:flex;flex-wrap:wrap;gap:8px}
 .co{display:flex;flex-direction:column;gap:6px;background:#fff;border:1px solid var(--line);border-radius:11px;padding:9px 11px 8px;cursor:pointer;transition:border-color .14s,transform .14s,box-shadow .14s;min-width:132px;text-align:left;font-family:var(--body)}
@@ -223,6 +230,18 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
   function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
   function signed(v){ return (v>0?"+":"") + v.toFixed(0) + "%"; }
   function toneClass(v){ return v>0.5?"pos":(v<-0.5?"neg":"zero"); }
+  // Rank-shaded bar fill: a leaderboard should read as a ranking, not one flat
+  // block. Deepest / most-saturated = top of the list, fading down. Hue stays
+  // green for gains / red for losses so direction is never ambiguous.
+  function barCss(rank, total, pos){
+    var f = total>1 ? rank/(total-1) : 0;   // 0 at the top of the list
+    if(pos){ var l = 30 + f*25; return "linear-gradient(90deg,hsl(150 52% "+(l+15)+"%),hsl(150 60% "+l+"%))"; }
+    var r = 44 + f*18; return "linear-gradient(90deg,hsl(3 70% "+(r+13)+"%),hsl(3 74% "+r+"%))";
+  }
+  // Turn a per-layer lag (quarters from the driver) into a plain-language
+  // arrival time, so "when does the money get here" is impossible to miss.
+  function whenBig(lag){ return lag===0 ? "Now" : "+"+lag+"Q"; }
+  function whenHorizon(lag){ return lag===0 ? "lands here first, this quarter" : "≈ "+(lag*3)+" months after the spend"; }
   function fmtP(v){ return v==null?"—":"$"+Number(v).toLocaleString("en-US",{minimumFractionDigits:2,maximumFractionDigits:2}); }
   function pctSp(v,suf){ if(v==null) return ""; var cls=v>=0?"pos-t":"neg-t"; return '<span class="'+cls+'">'+(v>=0?"+":"")+Number(v).toFixed(1)+"% "+suf+'</span>'; }
   function fmtDate(s){ if(!s) return ""; try{ var d=new Date(String(s).slice(0,10)+"T00:00:00"); if(isNaN(d)) return esc(s); return "~"+d.toLocaleDateString("en-US",{month:"short",day:"numeric"}); }catch(e){ return esc(s); } }
@@ -240,10 +259,8 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
     fetch("/api/catalyst/"+encodeURIComponent(tk)).then(function(r){return r.json();}).then(function(d){
       if(!d || d.available===false){ box.remove(); return; }
       var grid='<div class="live-grid">'+
-        '<div><span class="lk">Live price</span><span class="lv">'+fmtP(d.price)+' '+pctSp(d.change_pct,"today")+
-          (d.momentum_1m!=null?' · '+pctSp(d.momentum_1m,"1mo"):'')+'</span></div>'+
         (d.next_earnings?'<div><span class="lk">Earnings due</span><span class="lv">'+fmtDate(d.next_earnings)+'</span></div>':'')+
-        (d.read?'<div><span class="lk">Our read</span><span class="lv">'+esc(d.read)+(d.alpha!=null?' · Alpha '+d.alpha:'')+'</span></div>':'')+
+        (d.read?'<div><span class="lk">Our read</span><span class="lv">'+esc(d.read)+'</span></div>':'')+
       '</div>';
       // Prefer the richer sentence lifted from our cached AI note; fall back to
       // the deterministic scan signal.
@@ -253,7 +270,6 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
       var lines='';
       if(backlog)  lines+='<div class="live-line"><span class="lk">Order book / backlog</span>'+esc(backlog)+'</div>';
       if(catalyst) lines+='<div class="live-line"><span class="lk">'+(d.ai_catalyst?'Latest catalyst':'Latest signal')+'</span>'+esc(catalyst)+'</div>';
-      if(d.take)   lines+='<div class="live-line"><span class="lk">Our quick take</span>'+esc(d.take)+'</div>';
       box.innerHTML='<div class="live-h"><span class="live-dot"></span>Live now · from our scan'+aiTag+'</div>'+grid+lines;
     }).catch(function(){ box.remove(); });
   }
@@ -286,7 +302,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
     LAYERS = d.layers || [];
     chain.innerHTML =
       '<h2 class="sec-h">The chain</h2>'+
-      '<p class="sec-sub">Ordered by where the money arrives first. Each company shows its estimated capex exposure and its implied move at the current setting — tap for the full read.</p>'+
+      '<p class="sec-sub">The money doesn\'t hit every layer at once — it arrives in waves. Each layer is tagged with <b>when</b> the spend actually shows up, from <b>Now</b> at the top to quarters out below. That lag is the edge: the later layers haven\'t been priced yet. Tap any company for the full read.</p>'+
       LAYERS.map(function(L,i){
         var nm = L.names || [];
         var hiN = nm.filter(function(c){return c.exposure==="hi";}).length;
@@ -308,12 +324,13 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
           '<div class="layer-meta"><span class="spine"></span><span class="node"></span>'+
             '<span class="layer-idx">'+esc(L.id)+' · lag '+L.lag+'Q</span>'+
             '<h3 class="layer-name">'+esc(L.name)+'</h3>'+
+            '<div class="layer-when-badge '+(L.lag===0?"first":"")+'"><span class="lw-k">Money arrives</span><span class="lw-v">'+whenBig(L.lag)+'</span><span class="lw-h">'+whenHorizon(L.lag)+'</span></div>'+
             '<p class="layer-lag">'+esc(L.lagText)+'</p>'+
             sum+
           '</div>'+
           '<div>'+
             '<div class="impact"><div class="impact-track"><div class="impact-fill" data-fill="'+i+'"></div></div>'+
-              '<div class="impact-cap"><span class="impact-val" data-lval="'+i+'"></span><span class="impact-when" data-when="'+i+'"></span></div></div>'+
+              '<div class="impact-cap"><span class="impact-val" data-lval="'+i+'"></span></div></div>'+
             '<div class="cos">'+ (L.names||[]).map(function(c,j){
               return '<button class="co '+esc(c.exposure)+'" data-l="'+i+'" data-c="'+j+'" aria-expanded="false">'+
                 '<span class="co-top"><span class="co-tk">'+esc(c.t)+'</span><span class="co-imp" data-imp="'+i+'-'+j+'"></span></span>'+
@@ -357,10 +374,10 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
       var top = cos.slice(0,6);
       var maxAbs = Math.max.apply(null, cos.map(function(c){return Math.abs(c.ret_3m||0);}).concat([1]));
       var up = cos.filter(function(c){return (c.ret_3m||0) > 0;}).length;
-      var rows = top.map(function(c){
+      var rows = top.map(function(c,i){
         var v = c.ret_3m||0, pos = v>=0, w = Math.max(2, Math.abs(v)/maxAbs*100);
         return '<div class="mv"><span class="mv-tk">'+esc(c.t)+'<small>'+esc(c.n)+'</small></span>'+
-          '<span class="mv-track"><span class="mv-fill '+(pos?"pos":"neg")+'" style="width:'+w.toFixed(1)+'%"></span></span>'+
+          '<span class="mv-track"><span class="mv-fill '+(pos?"pos":"neg")+'" style="width:'+w.toFixed(1)+'%;background:'+barCss(i,top.length,pos)+'"></span></span>'+
           '<span class="mv-val '+(pos?"pos-t":"neg-t")+'">'+(pos?"+":"")+v.toFixed(1)+'%</span></div>';
       }).join("");
       el.innerHTML =
@@ -385,8 +402,6 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
       var lv = document.querySelector('[data-lval="'+i+'"]');
       lv.textContent = signed(eff);
       lv.className = "impact-val " + toneClass(eff) + "-t";
-      var when = L.lag===0 ? "same quarter" : ("~"+L.lag+" quarter"+(L.lag>1?"s":"")+" later");
-      document.querySelector('[data-when="'+i+'"]').textContent = "arrives " + when;
       // per-company implied + collect for leaderboard
       (L.names||[]).forEach(function(c,j){
         var imp = eff * (EXP_W[c.exposure]||0.3);
@@ -406,10 +421,10 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
     movers.sort(function(a,b){ return Math.abs(b.imp)-Math.abs(a.imp); });
     var top = movers.slice(0,6);
     var maxAbs = Math.max.apply(null, top.map(function(m){return Math.abs(m.imp);}).concat([1]));
-    document.getElementById("movers-list").innerHTML = top.map(function(m){
+    document.getElementById("movers-list").innerHTML = top.map(function(m,i){
       var pos = m.imp>=0, w = Math.max(2, Math.abs(m.imp)/maxAbs*100);
       return '<div class="mv"><span class="mv-tk">'+esc(m.t)+'<small>'+esc(m.n)+'</small></span>'+
-        '<span class="mv-track"><span class="mv-fill '+(pos?"pos":"neg")+'" style="width:'+w.toFixed(1)+'%"></span></span>'+
+        '<span class="mv-track"><span class="mv-fill '+(pos?"pos":"neg")+'" style="width:'+w.toFixed(1)+'%;background:'+barCss(i,top.length,pos)+'"></span></span>'+
         '<span class="mv-val '+(pos?"pos-t":"neg-t")+'">'+signed(m.imp)+'</span></div>';
     }).join("");
   }
