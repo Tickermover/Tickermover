@@ -6158,6 +6158,40 @@ async def api_catalyst(ticker: str):
     if score is not None:
         read = "Bullish" if score >= 70 else ("Mixed" if score >= 50 else "Cautious")
 
+    # ── Best-effort enrichment from the CACHED AI note (research / overview) ──
+    # PURE CACHE READ — research_store/overview_store .get() only look up an
+    # existing durable snapshot and return None if absent; they NEVER generate.
+    # So this adds ZERO AI cost: uncached names simply return no ai_* fields.
+    # Prefer the richer web-grounded research note; fall back to the overview.
+    def _read_ai_note(_sym):
+        try:
+            from research_store import store as _rs
+            from overview_store import store as _ov
+            return _rs.get(_sym) or _ov.get(_sym)
+        except Exception:
+            return None
+
+    ai_backlog = ai_catalyst = None
+    try:
+        doc = await asyncio.to_thread(_read_ai_note, sym)
+        md = (doc or {}).get("markdown") or ""
+        if md:
+            clean = _re.sub(r"</?cite[^>]*>", "", md)
+            clean = _re.sub(r"```[\s\S]*?```", " ", clean)          # drop code/JSON fences
+            clean = _re.sub(r"[#*`>_]|\]\([^)]*\)|[\[\]]", " ", clean)
+            clean = _re.sub(r"\s+", " ", clean).strip()
+            sents = [s.strip() for s in _re.split(r"(?<=[.!?])\s+", clean) if len(s.strip()) > 30]
+            ai_backlog = next((s for s in sents if _re.search(
+                r"backlog|booking|order|design.?win|pipeline|contract|\bwon\b|award|\bdeal\b", s, _re.I)), None)
+            _cat = next((s for s in sents if _re.search(
+                r"guidance|raised|analyst|price target|upgrade|\bbeat\b|record|launch|partnership|expansion|catalyst", s, _re.I)), None)
+            if ai_backlog:
+                ai_backlog = ai_backlog[:210]
+            if _cat and _cat != ai_backlog:
+                ai_catalyst = _cat[:210]
+    except Exception as _e:
+        logger.debug(f"catalyst AI-note enrich {sym}: {_e}")
+
     return JSONResponse(_clean({
         "ticker": sym, "available": True, "name": t.get("name"),
         "price": t.get("price"), "change_pct": t.get("change_pct"),
@@ -6165,6 +6199,8 @@ async def api_catalyst(ticker: str):
         "grade": t.get("grade"), "alpha": score, "read": read,
         "next_earnings": t.get("next_earnings_date") or t.get("earnings_date"),
         "backlog": backlog, "catalyst": catalyst,
+        # Richer sentences lifted from the CACHED AI note when present (no cost).
+        "ai_backlog": ai_backlog, "ai_catalyst": ai_catalyst,
         # The deterministic score summary — a reliable, always-present "quick take"
         # (live fundamentals, updates with the scan; NOT a baked-in figure).
         "take": (t.get("bottom_line_ai") or t.get("bottom_line") or None),

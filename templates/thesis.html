@@ -245,11 +245,16 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
         (d.next_earnings?'<div><span class="lk">Earnings due</span><span class="lv">'+fmtDate(d.next_earnings)+'</span></div>':'')+
         (d.read?'<div><span class="lk">Our read</span><span class="lv">'+esc(d.read)+(d.alpha!=null?' · Alpha '+d.alpha:'')+'</span></div>':'')+
       '</div>';
+      // Prefer the richer sentence lifted from our cached AI note; fall back to
+      // the deterministic scan signal.
+      var backlog = d.ai_backlog || d.backlog;
+      var catalyst = d.ai_catalyst || d.catalyst;
+      var aiTag = (d.ai_backlog || d.ai_catalyst) ? ' + AI note' : '';
       var lines='';
-      if(d.backlog)  lines+='<div class="live-line"><span class="lk">Order book / backlog</span>'+esc(d.backlog)+'</div>';
-      if(d.catalyst) lines+='<div class="live-line"><span class="lk">Latest signal</span>'+esc(d.catalyst)+'</div>';
-      if(d.take)     lines+='<div class="live-line"><span class="lk">Our quick take</span>'+esc(d.take)+'</div>';
-      box.innerHTML='<div class="live-h"><span class="live-dot"></span>Live now · from our scan</div>'+grid+lines;
+      if(backlog)  lines+='<div class="live-line"><span class="lk">Order book / backlog</span>'+esc(backlog)+'</div>';
+      if(catalyst) lines+='<div class="live-line"><span class="lk">'+(d.ai_catalyst?'Latest catalyst':'Latest signal')+'</span>'+esc(catalyst)+'</div>';
+      if(d.take)   lines+='<div class="live-line"><span class="lk">Our quick take</span>'+esc(d.take)+'</div>';
+      box.innerHTML='<div class="live-h"><span class="live-dot"></span>Live now · from our scan'+aiTag+'</div>'+grid+lines;
     }).catch(function(){ box.remove(); });
   }
 
