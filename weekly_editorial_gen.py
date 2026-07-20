@@ -61,13 +61,22 @@ company), chosen from our live signals, plus a GROUND-TRUTH data block (our Alph
 Scores, grades, prices, weekly sector moves, fundamentals, analyst context, and our \
 own conviction/track-record). Build the whole piece around that subject.
 
-STRUCTURE (use Markdown in body_markdown):
-- Open with the stakes — why this subject matters RIGHT NOW.
-- 4-6 sections with `##` headings: the drivers/segments, the data and what it says, \
-the bull case, the bear case, and what would change the view.
-- Weave in OUR house lens: cite our Alpha Scores / grades / conviction and what our \
-model is doing here — this is what makes it OURS, not a generic wrap.
-- End on a crisp HOUSE VIEW: our verdict on an Outperform/Avoid basis.
+STRUCTURE — consulting-grade, ANSWER-FIRST (use Markdown in body_markdown):
+- Do NOT repeat the bottom-line verdict at the top of body_markdown (it is carried \
+separately in `house_view` and shown above the article). Open body_markdown directly \
+with the stakes — why this subject matters RIGHT NOW.
+- 4-6 sections, each a `##` heading written ANSWER-FIRST: the heading STATES the \
+section's conclusion as a claim, not a vague label (e.g. \
+"## Demand is structural, not a discount mirage" — never "## Demand"). Under each, \
+3-5 tight bullets or a short evidence paragraph.
+- Cover, MECE: what is driving it, what the data says, the bull case, the bear case, \
+and what would change our mind.
+- Include AT LEAST ONE Markdown data table that turns our numbers into a clear read \
+— columns like Metric | Figure | What it means — built only from the GROUND-TRUTH block.
+- Weave in OUR house lens throughout: cite our Alpha Scores / grades / conviction and \
+what our model is doing here — this is what makes it OURS, not a generic wrap.
+- Close with a final `## What to watch — our positioning` section: the crisp HOUSE \
+VIEW on an Outperform/Avoid basis, then 2-4 concrete signals the reader should track next.
 
 HARD RULES:
 - The GROUND-TRUTH block is authoritative for OUR numbers (scores, prices, sector \
@@ -85,7 +94,7 @@ fences, no preamble) with exactly these keys:
   "standfirst":   "one-sentence standfirst that sets the stakes (<= 200 chars)",
   "body_markdown":"the full article body in Markdown with ## section headings",
   "pull_quote":   "one sharp sentence to feature as a pull-quote",
-  "house_view":   "2-3 sentences: our verdict on the subject, Outperform/Avoid basis",
+  "house_view":   "ANSWER-FIRST verdict, 2-3 sentences (Outperform/Avoid basis) — this LEADS the piece as the bottom-line box, so state the call and the single biggest reason up front",
   "tickers":      ["the 3-8 tickers most central to the piece, uppercase"],
   "subject":      "the subject label you wrote about"
 }\

@@ -50,6 +50,28 @@
     .disc{font-size:12.5px;color:#94a3b8;line-height:1.55;margin-top:30px;border-top:1px solid rgba(15,23,42,.08);padding-top:16px}
     .loading,.empty{text-align:center;color:#64748b;padding:80px 20px;font-size:15px}
     @media(max-width:560px){ .wrap{padding:22px 17px 60px} .article{font-size:16px} }
+    /* consulting-report additions: action bar, bottom-line, data tables, print */
+    .actionbar{display:flex;gap:8px;margin:2px 0 20px}
+    .abtn{display:inline-flex;align-items:center;gap:6px;font-family:inherit;font-size:12.5px;font-weight:600;color:#0040c1;background:#fff;border:1px solid #cfe0ff;border-radius:9px;padding:7px 13px;cursor:pointer;transition:background .14s}
+    .abtn:hover{background:#eef4ff}
+    .bottomline{background:linear-gradient(180deg,#eef4ff,#f8fbff);border:1px solid #cfe0ff;border-radius:16px;padding:18px 20px;margin:0 0 22px}
+    .bottomline .h{font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#0040c1;margin-bottom:7px}
+    .bottomline .t{font-size:17px;line-height:1.6;color:#1e293b;font-weight:500}
+    .tablewrap{overflow-x:auto;margin:0 0 22px}
+    .article table{border-collapse:collapse;width:100%;font-size:14.5px;line-height:1.45}
+    .article th,.article td{text-align:left;padding:9px 12px;border-bottom:1px solid #e2e8f0;vertical-align:top}
+    .article thead th{font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:#475569;background:#f1f5f9;border-bottom:2px solid #cbd5e1}
+    .article tbody tr:last-child td{border-bottom:none}
+    @media print{
+      .top,.actionbar,.cta{display:none!important}
+      body{background:#fff}
+      .wrap{max-width:100%;padding:0 8px}
+      .article{font-size:12.5px;line-height:1.55}
+      .article h2{font-size:17px;margin:20px 0 8px}
+      a{color:#0f172a;text-decoration:none}
+      .bottomline{break-inside:avoid}
+      .article table{font-size:11px}
+    }
   </style>
 </head>
 <body>
@@ -84,8 +106,21 @@
       let html='', para=[], list=null;
       const flushP=()=>{ if(para.length){ html+='<p>'+inline(para.join(' '))+'</p>'; para=[]; } };
       const flushL=()=>{ if(list){ html+='</'+list+'>'; list=null; } };
-      for(let raw of lines){
-        const line=raw.trimEnd();
+      const isSep=(s)=>/^\s*\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)+\|?\s*$/.test(s||'');
+      const cells=(s)=>{ s=s.trim().replace(/^\|/,'').replace(/\|$/,''); return s.split('|').map(c=>c.trim()); };
+      for(let i=0;i<lines.length;i++){
+        const raw=lines[i], line=raw.trimEnd();
+        // GFM pipe table: a header row with pipes, immediately followed by a --- separator
+        if(/\|/.test(line) && isSep(lines[i+1])){
+          flushP(); flushL();
+          const head=cells(line); i+=2; let rows='';
+          while(i<lines.length && lines[i].indexOf('|')>=0 && lines[i].trim()!==''){
+            rows+='<tr>'+cells(lines[i]).map(x=>'<td>'+inline(x)+'</td>').join('')+'</tr>'; i++;
+          }
+          i--;
+          html+='<div class="tablewrap"><table><thead><tr>'+head.map(x=>'<th>'+inline(x)+'</th>').join('')+'</tr></thead><tbody>'+rows+'</tbody></table></div>';
+          continue;
+        }
         if(/^###\s+/.test(line)){ flushP(); flushL(); html+='<h3>'+inline(line.replace(/^###\s+/,''))+'</h3>'; continue; }
         if(/^##\s+/.test(line)){ flushP(); flushL(); html+='<h2>'+inline(line.replace(/^##\s+/,''))+'</h2>'; continue; }
         if(/^#\s+/.test(line)){ flushP(); flushL(); html+='<h2>'+inline(line.replace(/^#\s+/,''))+'</h2>'; continue; }
@@ -117,12 +152,21 @@
         '<div class="byline">'+TM_COIN+'<b>'+esc(d.byline||'TickerMover Desk')+'</b> · '+when+'</div>'+
         '<h1 class="title">'+esc(d.title||'')+'</h1>'+
         (d.standfirst?'<p class="standfirst">'+esc(stripCites(d.standfirst))+'</p>':'')+
+        (d.house_view?'<div class="bottomline"><div class="h">⚖️ Bottom line</div><div class="t">'+esc(stripCites(d.house_view))+'</div></div>':'')+
+        '<div class="actionbar"><button id="btnShare" class="abtn" type="button">🔗 Copy link</button><button id="btnPdf" class="abtn" type="button">⬇ Download PDF</button></div>'+
         (tickers?'<div class="chips">'+tickers+'</div>':'')+
         '<div class="article">'+md(d.body_markdown||'')+'</div>'+
         (d.pull_quote?'<div class="pull">“'+esc(stripCites(d.pull_quote))+'”</div>':'')+
-        (d.house_view?'<div class="houseview"><div class="h">⚖️ Our house view</div><div class="t">'+esc(stripCites(d.house_view))+'</div></div>':'')+
         (sources?'<div class="sources"><div class="h">Sources</div>'+sources+'</div>':'')+
         '<div class="disc">TickerMover\'s research opinion on our own Outperform/Avoid basis — education and market awareness only, not investment advice, not FCA-authorised. Figures from our models and cited sources; capital at risk. Do your own diligence.</div>';
+      var bs=document.getElementById('btnShare');
+      if(bs) bs.onclick=function(){
+        var done=function(){ bs.textContent='✓ Link copied'; setTimeout(function(){bs.textContent='🔗 Copy link';},1800); };
+        if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(location.href).then(done).catch(function(){ prompt('Copy this link:', location.href); }); }
+        else { prompt('Copy this link:', location.href); }
+      };
+      var bp=document.getElementById('btnPdf');
+      if(bp) bp.onclick=function(){ window.print(); };
       if(d.title) document.title=d.title+' — TickerMover';
     }
 
