@@ -151,6 +151,48 @@ class WeeklyEditorialStore:
             pass
         return None
 
+    def list_editions(self, limit: int = 52) -> list[dict]:
+        """Lightweight index of all stored editions, newest first — for the
+        public archive. Returns week_start + a few display fields per edition."""
+        def _row(week_start, generated_at, art):
+            art = art or {}
+            return {
+                "week_start":   week_start,
+                "generated_at": generated_at,
+                "week_label":   art.get("week_label"),
+                "title":        art.get("title"),
+                "standfirst":   art.get("standfirst"),
+                "subject":      art.get("subject"),
+            }
+        if self.enabled:
+            try:
+                with httpx.Client(timeout=8) as c:
+                    r = c.get(
+                        f"{self.url}/rest/v1/weekly_editorial",
+                        headers=self._headers(),
+                        params={
+                            "env_id": f"eq.{self.env_id}",
+                            "select": "week_start,generated_at,article",
+                            "order": "week_start.desc",
+                            "limit": str(limit),
+                        },
+                    )
+                    r.raise_for_status()
+                    return [_row(x.get("week_start"), x.get("generated_at"), x.get("article"))
+                            for x in r.json()]
+            except Exception as e:
+                logger.error(f"WeeklyEditorialStore.list_editions Supabase error: {e}")
+        try:
+            files = sorted(_DISK_DIR.glob("*.json"), reverse=True)[:limit]
+            out = []
+            for f in files:
+                doc = json.loads(f.read_text(encoding="utf-8"))
+                out.append(_row(doc.get("week_start") or f.stem,
+                                doc.get("generated_at"), doc.get("article")))
+            return out
+        except Exception:
+            return []
+
     def save(self, week_start: str, article: dict, model: str = "") -> None:
         """Persist one edition (upsert on env_id+week_start)."""
         if not week_start or not article:

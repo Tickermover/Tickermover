@@ -4632,16 +4632,27 @@ async def _weekly_publisher() -> None:
 
 
 @app.get("/api/weekly-editorial")
-async def api_weekly_editorial():
-    """The current weekly editorial (frozen for the week). Read-only — never
-    generates on the request path; the publisher loop owns generation. Falls back
-    to the most recent prior edition until this week's is published."""
-    row = _weekly_store.get(_week_start()) or _weekly_store.latest()
+async def api_weekly_editorial(week: str = ""):
+    """A weekly editorial (frozen). Default = current week (or the latest prior
+    edition until this week's is published). Pass ?week=YYYY-MM-DD to read a
+    specific past edition from the archive. Read-only — never generates."""
+    week = (week or "").strip()
+    row = _weekly_store.get(week) if week else (_weekly_store.get(_week_start()) or _weekly_store.latest())
     art = (row or {}).get("article")
     if not art:
         return JSONResponse({"available": False,
-                             "reason": "The first weekly edition hasn't been published yet."})
+                             "reason": "That edition isn't available." if week
+                                       else "The first weekly edition hasn't been published yet."})
     return JSONResponse(_clean({"available": True, **art}),
+                        headers={"Cache-Control": "public, max-age=600, s-maxage=1800"})
+
+
+@app.get("/api/weekly-editorials")
+async def api_weekly_editorials(limit: int = 52):
+    """Archive index — every past weekly edition, newest first (lightweight:
+    week_start + title/standfirst/subject). Powers the 'all editions' list."""
+    eds = _weekly_store.list_editions(limit=max(1, min(200, int(limit or 52))))
+    return JSONResponse(_clean({"count": len(eds), "editions": eds}),
                         headers={"Cache-Control": "public, max-age=600, s-maxage=1800"})
 
 
@@ -4805,19 +4816,20 @@ async def thesis_page(slug: str):
 
 
 @app.post("/api/admin/publish-weekly")
-async def api_admin_publish_weekly(send_email: bool = False,
+async def api_admin_publish_weekly(send_email: bool = False, week_start: str = "",
                                    user: Optional[dict] = Depends(_current_user),
                                    creds: Optional[HTTPAuthorizationCredentials] = Depends(_bearer)):
-    """Admin: generate THIS week's editorial now (force) — for the first edition or
-    an on-demand refresh, without waiting for the Sunday publisher. Budget-gated.
-    Does NOT email the list unless send_email=1 (so previewing can't blast)."""
+    """Admin: generate an editorial now (force), without waiting for the Sunday
+    publisher. Defaults to THIS week; pass ?week_start=YYYY-MM-DD (an ISO Monday)
+    to file a BACKDATED edition into the archive. Budget-gated. Does NOT email the
+    list unless send_email=1 (so previewing/backfilling can't blast)."""
     if not user or (user.get("email") or "").lower() not in _AI_ALLOW:
         raise HTTPException(status_code=403, detail="Admin only.")
     if not weekly_editorial_gen.available():
         return JSONResponse({"error": "ANTHROPIC_API_KEY not configured."}, status_code=503)
     if _ai_over_budget():
         return JSONResponse({"error": "AI budget cap reached — try again later."}, status_code=429)
-    wk = _week_start()
+    wk = (week_start or "").strip() or _week_start()
     art = await _generate_and_save_weekly(wk, send_email=send_email)
     if not art:
         return JSONResponse({"ok": False,
