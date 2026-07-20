@@ -86,7 +86,7 @@ STRIPE_WEBHOOK_SECRET  = _env("STRIPE_WEBHOOK_SECRET",  "")   # whsec_… from t
 # (serve cached/template) so a runaway loop can never bleed past it. Normal days
 # now run well under $1; default lowered 12 -> $5 (2026-06-23) as a tight daily
 # guard under the $50/month cap. Override with the AI_DAILY_USD_CAP env var.
-AI_DAILY_USD_CAP = float(_env("AI_DAILY_USD_CAP", "5") or "5")
+AI_DAILY_USD_CAP = float(_env("AI_DAILY_USD_CAP", "3") or "3")
 
 # Hard MONTHLY (UTC) ceiling on total AI cost — the real "≤ $X/month no matter
 # how many users" guarantee. The daily cap stops a runaway loop; this stops the
@@ -158,7 +158,7 @@ FEATURED_N               = int(_env("FEATURED_N",                 "35"))
 # How many of the curated names (prime-first, then top score) get the premium
 # (Opus) Overview. The elite top slice is what users scrutinise most; the rest of
 # the featured set + long tail stay on Sonnet. 0 = nobody premium, >=FEATURED_N = all.
-OVERVIEW_PREMIUM_N       = int(_env("OVERVIEW_PREMIUM_N",          "12"))
+OVERVIEW_PREMIUM_N       = int(_env("OVERVIEW_PREMIUM_N",          "0"))
 MIN_CONFIDENCE           = float(_env("MIN_CONFIDENCE",           "0.70"))
 
 # ── Cache TTLs (seconds) ──────────────────────────────────────────────────────
