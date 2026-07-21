@@ -71,17 +71,30 @@
       a{color:#0f172a;text-decoration:none}
       .bottomline{break-inside:avoid}
       .article table{font-size:11px}
-      .archive{display:none!important}
+      .covers,.news-h,.backlink{display:none!important}
     }
-    .archive{margin:46px 0 0;border-top:1px solid rgba(15,23,42,.1);padding-top:24px}
-    .arch-h{font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#94a3b8;margin-bottom:14px}
-    .arch-latest{display:inline-block;font-size:13px;font-weight:600;color:var(--blue);text-decoration:none;margin:0 0 14px}
-    .arch-list{display:flex;flex-direction:column;gap:2px}
-    .arch-item{display:flex;flex-direction:column;gap:2px;text-decoration:none;color:inherit;padding:12px 14px;border:1px solid transparent;border-radius:11px;transition:background .14s,border-color .14s}
-    .arch-item:hover{background:#f1f5f9}
-    .arch-item.on{background:#eef4ff;border-color:#cfe0ff}
-    .arch-date{font-size:11.5px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:#94a3b8}
-    .arch-title{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:17px;line-height:1.25;color:#0f172a}
+    /* newsstand gallery — magazine covers */
+    body.gallery .wrap{max-width:1040px}
+    .news-h{margin:6px 0 26px}
+    .news-title{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:clamp(30px,5.4vw,46px);line-height:1.05;letter-spacing:-.015em;margin:8px 0 8px}
+    .news-sub{font-size:16px;color:var(--muted);max-width:60ch;margin:0}
+    .covers{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:20px}
+    .cover{position:relative;display:flex;flex-direction:column;aspect-ratio:3/4;border-radius:16px;overflow:hidden;padding:18px 18px 16px;color:#fff;text-decoration:none;box-shadow:0 10px 30px -14px rgba(9,20,60,.5);transition:transform .16s,box-shadow .16s}
+    .cover:hover{transform:translateY(-3px);box-shadow:0 18px 42px -14px rgba(9,20,60,.6)}
+    .cover::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.02),rgba(0,0,0,.30));z-index:0}
+    .cover>*{position:relative;z-index:1}
+    .cover.featured{grid-column:span 2}
+    .cov-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+    .cov-mast{font-size:10px;font-weight:800;letter-spacing:.15em;text-transform:uppercase;opacity:.9}
+    .cov-badge{font-size:9px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;background:rgba(255,255,255,.22);border:1px solid rgba(255,255,255,.4);border-radius:999px;padding:3px 9px;white-space:nowrap}
+    .cov-subj{align-self:flex-start;margin-top:14px;font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;background:rgba(255,255,255,.18);border-radius:6px;padding:4px 9px}
+    .cov-title{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:20px;line-height:1.16;margin-top:auto;letter-spacing:-.01em;display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;overflow:hidden}
+    .cover.featured .cov-title{font-size:28px;-webkit-line-clamp:4}
+    .cov-foot{margin-top:12px;padding-top:11px;border-top:1px solid rgba(255,255,255,.25);display:flex;flex-direction:column;gap:3px}
+    .cov-date{font-size:12px;font-weight:700}
+    .cov-tix{font-size:11px;font-weight:600;opacity:.85}
+    .backlink{display:inline-block;font-size:13px;font-weight:600;color:var(--blue);text-decoration:none;margin:0 0 16px}
+    @media(max-width:560px){ .covers{grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:13px} .cov-title{font-size:16px} .cover.featured .cov-title{font-size:20px} }
   </style>
 </head>
 <body>
@@ -91,7 +104,7 @@
       <a class="cta" href="/app">Open the dashboard →</a>
     </div>
   </header>
-  <main class="wrap"><div id="article"><div class="loading">📝 Loading this week's editorial…</div></div><section id="archive" class="archive"></section></main>
+  <main class="wrap"><div id="article"><div class="loading">📰 Loading the newsstand…</div></div></main>
 
   <script>
   (function(){
@@ -157,7 +170,9 @@
         return '<a href="'+esc(s.url)+'" target="_blank" rel="noopener">'+esc(s.title||s.url)+' ↗</a>';
       }).join('');
       var when=[d.week_label?('Week of '+esc(d.week_label)):'', d.published_at?('· '+esc(d.published_at)):''].filter(Boolean).join(' ');
+      var _rwk=(new URLSearchParams(location.search).get('week')||'').trim();
       root.innerHTML =
+        (_rwk?'<a class="backlink" href="/weekly">← All issues</a>':'')+
         '<div class="eyebrow">From the desk · The Weekly Editorial</div>'+
         '<div class="byline">'+TM_COIN+'<b>'+esc(d.byline||'TickerMover Desk')+'</b> · '+when+'</div>'+
         '<h1 class="title">'+esc(d.title||'')+'</h1>'+
@@ -180,31 +195,50 @@
       if(d.title) document.title=d.title+' — TickerMover';
     }
 
-    function renderArchive(d){
-      var el=document.getElementById('archive'); if(!el) return;
+    // Deterministic magazine-cover gradient per issue (no images, no AI cost).
+    function coverGrad(seed){
+      var pals=[['#0b3d91','#2970ff'],['#0b5d5a','#12b3a6'],['#4c2a86','#9b5de5'],['#1f3a24','#3f9d55'],['#3a2f22','#a8743a'],['#1e293b','#51607a'],['#5c1a2b','#b23a52'],['#123a52','#2b8cbe']];
+      var h=0, s=String(seed||''); for(var i=0;i<s.length;i++){ h=((h*31)+s.charCodeAt(i))>>>0; }
+      return pals[h%pals.length];
+    }
+    function coverCard(e,i,featured){
+      var g=coverGrad(e.week_start||e.title||('i'+i));
+      var href='/weekly?week='+encodeURIComponent(e.week_start||'');
+      var tix=(e.tickers||[]).slice(0,4).map(esc).join(' · ');
+      return '<a class="cover'+(featured?' featured':'')+'" href="'+href+'" style="background:linear-gradient(150deg,'+g[0]+' 0%,'+g[1]+' 100%)">'+
+        '<div class="cov-top"><span class="cov-mast">TickerMover · Weekly</span>'+(i===0?'<span class="cov-badge">Current issue</span>':'')+'</div>'+
+        (e.subject?'<span class="cov-subj">'+esc(e.subject)+'</span>':'')+
+        '<div class="cov-title">'+esc(stripCites(e.title||e.subject||'Untitled issue'))+'</div>'+
+        '<div class="cov-foot"><span class="cov-date">'+esc(e.week_label||e.week_start||'')+'</span>'+(tix?'<span class="cov-tix">'+tix+'</span>':'')+'</div>'+
+      '</a>';
+    }
+    function renderGallery(d){
+      var root=document.getElementById('article');
       var eds=(d&&d.editions)||[];
-      var cur=(new URLSearchParams(location.search).get('week')||'').trim();
-      // Only surface the browser once there's more than one edition (or you're
-      // already deep-linked into a past one).
-      if(eds.length<=1 && !cur){ el.innerHTML=''; return; }
-      var items=eds.map(function(e,i){
-        var on=(cur? e.week_start===cur : i===0);
-        var href='/weekly'+(i===0?'':'?week='+encodeURIComponent(e.week_start||''));
-        return '<a class="arch-item'+(on?' on':'')+'" href="'+href+'">'+
-          '<span class="arch-date">'+esc(e.week_label||e.week_start||'')+(i===0?' · latest':'')+'</span>'+
-          '<span class="arch-title">'+esc(stripCites(e.title||e.subject||'Untitled edition'))+'</span></a>';
-      }).join('');
-      el.innerHTML='<div class="arch-h">📚 All editions</div>'+
-        (cur?'<a class="arch-latest" href="/weekly">← Back to the latest edition</a>':'')+
-        '<div class="arch-list">'+items+'</div>';
+      document.body.classList.add('gallery');
+      if(!eds.length){ root.innerHTML='<div class="empty">📰 The first weekly issue is on its way. Check back soon.</div>'; return; }
+      var head='<div class="news-h"><div class="eyebrow">From the desk</div>'+
+        '<h1 class="news-title">The Weekly</h1>'+
+        '<p class="news-sub">TickerMover\'s signed magazine — one deep, data-grounded issue a week. Choose an issue to read.</p></div>';
+      var covers=eds.map(function(e,i){ return coverCard(e,i, i===0 && eds.length>1); }).join('');
+      root.innerHTML=head+'<div class="covers">'+covers+'</div>';
+      document.title='The Weekly — TickerMover';
     }
 
     var _wk=(new URLSearchParams(location.search).get('week')||'').trim();
-    fetch('/api/weekly-editorial'+(_wk?('?week='+encodeURIComponent(_wk)):''))
-      .then(function(r){return r.json();}).then(render).catch(function(){
-        document.getElementById('article').innerHTML='<div class="empty">Could not load the editorial. Please try again shortly.</div>';
+    if(_wk){
+      fetch('/api/weekly-editorial?week='+encodeURIComponent(_wk))
+        .then(function(r){return r.json();}).then(render).catch(function(){
+          document.getElementById('article').innerHTML='<div class="empty">Could not load this issue. Please try again shortly.</div>';
+        });
+    } else {
+      fetch('/api/weekly-editorials').then(function(r){return r.json();}).then(renderGallery).catch(function(){
+        // fallback: if the index fails, drop back to the latest article
+        fetch('/api/weekly-editorial').then(function(r){return r.json();}).then(render).catch(function(){
+          document.getElementById('article').innerHTML='<div class="empty">Could not load the newsstand. Please try again shortly.</div>';
+        });
       });
-    fetch('/api/weekly-editorials').then(function(r){return r.json();}).then(renderArchive).catch(function(){});
+    }
   })();
   </script>
 </body>

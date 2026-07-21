@@ -163,6 +163,7 @@ class WeeklyEditorialStore:
                 "title":        art.get("title"),
                 "standfirst":   art.get("standfirst"),
                 "subject":      art.get("subject"),
+                "tickers":      art.get("tickers") or [],
             }
         if self.enabled:
             try:
