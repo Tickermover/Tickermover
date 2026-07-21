@@ -62,6 +62,51 @@
     .article th,.article td{text-align:left;padding:9px 12px;border-bottom:1px solid #e2e8f0;vertical-align:top}
     .article thead th{font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:#475569;background:#f1f5f9;border-bottom:2px solid #cbd5e1}
     .article tbody tr:last-child td{border-bottom:none}
+    /* data charts — pure-CSS horizontal bars built from ground-truth numbers */
+    .charts{margin:26px 0 6px}
+    .chart{background:#fff;border:1px solid #e6edf7;border-radius:14px;padding:16px 18px 14px;margin:0 0 16px}
+    .chart .ch-h{font-size:14px;font-weight:800;color:#0f172a;letter-spacing:-.01em;margin:0 0 12px;display:flex;align-items:baseline;gap:8px}
+    .chart .ch-unit{font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#94a3b8}
+    .ch-row{display:grid;grid-template-columns:88px 1fr auto;align-items:center;gap:10px;margin:0 0 8px}
+    .ch-row:last-of-type{margin-bottom:0}
+    .ch-lab{font-size:12.5px;font-weight:700;color:#334155;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .ch-track{position:relative;height:15px;background:#eef2f8;border-radius:8px;overflow:hidden}
+    .ch-fill{position:absolute;inset:0 auto 0 0;border-radius:8px;background:linear-gradient(90deg,#5DB3F1,#2970FF);min-width:3px}
+    .ch-fill.neg{background:linear-gradient(90deg,#fca5a5,#ef4444)}
+    .ch-fill.hi{background:linear-gradient(90deg,#2970FF,#0040c1);box-shadow:0 0 0 1.5px rgba(41,112,255,.35)}
+    .ch-val{font-size:12.5px;font-weight:800;color:#0f172a;font-variant-numeric:tabular-nums;min-width:44px;text-align:right}
+    .ch-note{font-size:12.5px;color:#64748b;margin:11px 0 0;line-height:1.5}
+    @media(max-width:560px){ .ch-row{grid-template-columns:64px 1fr auto;gap:8px} .ch-lab{font-size:11.5px} }
+    /* donut chart — share of a whole */
+    .dn-wrap{display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+    .dn-svg{flex:none}
+    .dn-leg{display:flex;flex-direction:column;gap:8px;min-width:150px;flex:1}
+    .dn-li{display:flex;align-items:center;gap:9px;font-size:13px;color:#334155}
+    .dn-dot{width:11px;height:11px;border-radius:3px;flex:none}
+    .dn-li b{margin-left:auto;font-weight:800;color:#0f172a;font-variant-numeric:tabular-nums}
+    /* Blinkit-style hero stat tiles */
+    .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:0 0 24px}
+    .stat{background:#fff;border:1px solid #e6edf7;border-radius:14px;padding:15px 16px;position:relative;overflow:hidden}
+    .stat::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--sc,#2970ff)}
+    .stat-v{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:30px;line-height:1;letter-spacing:-.02em;color:#0f172a;display:flex;align-items:center;gap:6px}
+    .stat-v .ar{font-size:16px;font-weight:900}
+    .stat-v .up{color:#16a34a}.stat-v .down{color:#dc2626}.stat-v .flat{color:#94a3b8}
+    .stat-l{font-size:12.5px;font-weight:700;color:#334155;margin-top:7px}
+    .stat-s{font-size:11.5px;color:#94a3b8;margin-top:2px;line-height:1.35}
+    /* scenario cards — Bear / Base / Bull */
+    .scen-h{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:22px;letter-spacing:-.01em;margin:36px 0 14px}
+    .scen{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin:0 0 8px}
+    .scenc{background:#fff;border:1px solid #e6edf7;border-radius:14px;padding:0 17px 16px;border-top:4px solid var(--sccol,#94a3b8);overflow:hidden}
+    .scen-top{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin:15px 0 9px}
+    .scen-case{font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--sccol,#475569)}
+    .scen-prob{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:23px;line-height:1;color:#0f172a}
+    .scen-thesis{font-size:14px;line-height:1.5;color:#1e293b;font-weight:500;margin:0 0 10px}
+    .scen-trig{font-size:12px;color:#64748b;line-height:1.45;border-top:1px dashed #e2e8f0;padding-top:9px}
+    .scen-trig b{color:#475569;font-weight:700}
+    /* editorial section dividers + drop cap */
+    .article h2::before{content:"";display:block;width:34px;height:3px;background:var(--blue);border-radius:2px;margin:0 0 13px}
+    .article>p:first-of-type::first-letter{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:3.3em;line-height:.82;float:left;margin:6px 10px 0 0;color:var(--blue)}
+    @media print{ .stat,.scenc,.chart{break-inside:avoid} .stat::before,.stat-v .up,.stat-v .down,.dn-dot{-webkit-print-color-adjust:exact;print-color-adjust:exact} }
     @media print{
       .top,.actionbar,.cta{display:none!important}
       body{background:#fff}
@@ -71,6 +116,8 @@
       a{color:#0f172a;text-decoration:none}
       .bottomline{break-inside:avoid}
       .article table{font-size:11px}
+      .chart{break-inside:avoid;border-color:#cbd5e1}
+      .ch-fill{-webkit-print-color-adjust:exact;print-color-adjust:exact}
       .covers,.news-h,.backlink{display:none!important}
     }
     /* newsstand gallery — magazine covers */
@@ -78,23 +125,51 @@
     .news-h{margin:6px 0 26px}
     .news-title{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:clamp(30px,5.4vw,46px);line-height:1.05;letter-spacing:-.015em;margin:8px 0 8px}
     .news-sub{font-size:16px;color:var(--muted);max-width:60ch;margin:0}
-    .covers{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:20px}
-    .cover{position:relative;display:flex;flex-direction:column;aspect-ratio:3/4;border-radius:16px;overflow:hidden;padding:18px 18px 16px;color:#fff;text-decoration:none;box-shadow:0 10px 30px -14px rgba(9,20,60,.5);transition:transform .16s,box-shadow .16s}
-    .cover:hover{transform:translateY(-3px);box-shadow:0 18px 42px -14px rgba(9,20,60,.6)}
-    .cover::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.02),rgba(0,0,0,.30));z-index:0}
-    .cover>*{position:relative;z-index:1}
-    .cover.featured{grid-column:span 2}
-    .cov-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
-    .cov-mast{font-size:10px;font-weight:800;letter-spacing:.15em;text-transform:uppercase;opacity:.9}
-    .cov-badge{font-size:9px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;background:rgba(255,255,255,.22);border:1px solid rgba(255,255,255,.4);border-radius:999px;padding:3px 9px;white-space:nowrap}
-    .cov-subj{align-self:flex-start;margin-top:14px;font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;background:rgba(255,255,255,.18);border-radius:6px;padding:4px 9px}
-    .cov-title{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:20px;line-height:1.16;margin-top:auto;letter-spacing:-.01em;display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;overflow:hidden}
-    .cover.featured .cov-title{font-size:28px;-webkit-line-clamp:4}
-    .cov-foot{margin-top:12px;padding-top:11px;border-top:1px solid rgba(255,255,255,.25);display:flex;flex-direction:column;gap:3px}
-    .cov-date{font-size:12px;font-weight:700}
-    .cov-tix{font-size:11px;font-weight:600;opacity:.85}
+    .covers{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:26px}
+    .cover{position:relative;display:block;aspect-ratio:3/4.05;border-radius:7px;overflow:hidden;color:#fff;text-decoration:none;box-shadow:0 14px 34px -16px rgba(9,20,60,.6);transition:transform .18s,box-shadow .18s;isolation:isolate}
+    .cover:hover{transform:translateY(-4px);box-shadow:0 24px 50px -18px rgba(9,20,60,.72)}
+    .cov-art{position:absolute;inset:0;width:100%;height:100%;z-index:0}
+    .cover::before{content:"";position:absolute;inset:0;z-index:1;background:linear-gradient(180deg,rgba(0,0,0,.44) 0%,rgba(0,0,0,.04) 28%,rgba(0,0,0,.12) 58%,rgba(0,0,0,.74) 100%)}
+    .cover.featured{box-shadow:0 18px 44px -16px rgba(9,20,60,.62),0 0 0 2px rgba(255,255,255,.72)}
+    .cov-in{position:absolute;inset:0;z-index:2;display:flex;flex-direction:column;padding:15px 15px 13px}
+    /* masthead */
+    .cov-mast{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:30px;line-height:.9;letter-spacing:-.022em;text-shadow:0 2px 12px rgba(0,0,0,.4);display:flex;justify-content:space-between;align-items:flex-end;gap:8px}
+    .cov-mast .no{font-family:'Instrument Sans',sans-serif;font-size:9.5px;font-weight:800;letter-spacing:.09em;opacity:.92;white-space:nowrap;text-shadow:0 1px 5px rgba(0,0,0,.5)}
+    .cov-rule{height:2px;background:rgba(255,255,255,.9);margin:7px 0 5px;box-shadow:0 1px 4px rgba(0,0,0,.3)}
+    .cov-strip{font-size:8px;font-weight:800;letter-spacing:.2em;text-transform:uppercase;opacity:.92;text-shadow:0 1px 4px rgba(0,0,0,.5)}
+    /* cover-line callouts */
+    .cov-lines{list-style:none;margin:16px 0 0;padding:0;display:flex;flex-direction:column;gap:11px;max-width:72%}
+    .cov-lines li{position:relative;padding-left:9px}
+    .cov-lines li::before{content:"";position:absolute;left:0;top:1px;bottom:1px;width:3px;border-radius:2px;background:var(--kick,#ffd166)}
+    .cov-kick{display:block;font-size:8px;font-weight:800;letter-spacing:.13em;text-transform:uppercase;color:var(--kick,#ffd166);text-shadow:0 1px 3px rgba(0,0,0,.6)}
+    .cov-line{display:-webkit-box;font-size:12px;font-weight:700;line-height:1.18;margin-top:2px;text-shadow:0 1px 7px rgba(0,0,0,.6);-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+    /* feature headline */
+    .cov-feat{margin-top:auto}
+    .cov-subj{display:inline-block;font-size:9.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.34);border-radius:4px;padding:3px 8px;margin-bottom:9px}
+    .cov-title{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:23px;line-height:1.06;letter-spacing:-.012em;text-shadow:0 2px 16px rgba(0,0,0,.55);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+    .cover.featured .cov-title{font-size:26px}
+    /* foot — barcode + site */
+    .cov-foot{margin-top:11px;padding-top:9px;border-top:1px solid rgba(255,255,255,.36);display:flex;justify-content:space-between;align-items:flex-end;gap:10px}
+    .cov-site{display:flex;flex-direction:column;gap:2px;min-width:0}
+    .cov-date{font-size:11px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .cov-url{font-size:8.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;opacity:.82}
+    .cov-code{flex:none}
+    /* splash flash badge */
+    .cov-splash{position:absolute;z-index:3;top:70px;right:13px;width:74px;height:74px;transform:rotate(7deg);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:#0b1220;filter:drop-shadow(0 3px 9px rgba(0,0,0,.4))}
+    .cov-splash svg{position:absolute;inset:0;width:100%;height:100%;z-index:0}
+    .cov-splash>span{position:relative;z-index:1}
+    .sp-verd{font-size:7.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;margin-bottom:1px}
+    .sp-tix{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:15px;line-height:1}
+    .sp-sc{font-size:9px;font-weight:800;margin-top:1px}
     .backlink{display:inline-block;font-size:13px;font-weight:600;color:var(--blue);text-decoration:none;margin:0 0 16px}
-    @media(max-width:560px){ .covers{grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:13px} .cov-title{font-size:16px} .cover.featured .cov-title{font-size:20px} }
+    @media(max-width:560px){
+      .covers{grid-template-columns:repeat(auto-fill,minmax(158px,1fr));gap:15px}
+      .cov-in{padding:11px 11px 10px}
+      .cov-mast{font-size:21px}.cov-mast .no{font-size:8px}
+      .cov-lines{gap:8px;margin-top:11px;max-width:74%}.cov-line{font-size:10.5px}
+      .cov-title{font-size:16px}.cover.featured .cov-title{font-size:18px}
+      .cov-splash{width:56px;height:56px;top:52px;right:9px}.sp-tix{font-size:12px}.sp-sc{font-size:8px}.sp-verd{font-size:6.5px}
+    }
   </style>
 </head>
 <body>
@@ -157,6 +232,91 @@
       return html;
     }
 
+    // A donut for share-of-a-whole data. Categorical hues in FIXED order (never
+    // cycled beyond the ramp); legend labels carry identity so it is never
+    // colour-alone. Center shows the largest slice.
+    var DN_PAL=['#2970ff','#12b3a6','#f59e0b','#9b5de5','#64748b','#0ea5e9'];
+    function donutHtml(ch){
+      var segs=(ch.bars||[]).filter(function(b){return b&&isFinite(+b.value)&&+b.value>0;});
+      if(!segs.length) return '';
+      var total=0,i; for(i=0;i<segs.length;i++) total+=+segs[i].value; if(total<=0) return '';
+      var cx=70,cy=70,r=54,C=2*Math.PI*r, cum=0, ring='', leg='', big={v:-1,pct:0,label:''};
+      for(i=0;i<segs.length;i++){
+        var v=+segs[i].value, frac=v/total, col=DN_PAL[i%DN_PAL.length], pct=Math.round(frac*100);
+        var dash=Math.max(0,frac*C-2);
+        ring+='<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="none" stroke="'+col+'" stroke-width="26" '+
+              'stroke-dasharray="'+dash.toFixed(2)+' '+(C-dash).toFixed(2)+'" stroke-dashoffset="'+(-cum*C).toFixed(2)+'"/>';
+        leg+='<div class="dn-li"><span class="dn-dot" style="background:'+col+'"></span>'+esc(String(segs[i].label||''))+'<b>'+pct+'%</b></div>';
+        if(v>big.v){ big={v:v,pct:pct,label:String(segs[i].label||'')}; }
+        cum+=frac;
+      }
+      var svg='<svg class="dn-svg" width="140" height="140" viewBox="0 0 140 140" xmlns="http://www.w3.org/2000/svg" role="img">'+
+        '<g transform="rotate(-90 70 70)">'+ring+'</g>'+
+        '<text x="70" y="67" text-anchor="middle" font-family="Fraunces,Georgia,serif" font-weight="600" font-size="27" fill="#0f172a">'+big.pct+'%</text>'+
+        '<text x="70" y="85" text-anchor="middle" font-size="9.5" font-weight="700" letter-spacing=".04em" fill="#64748b">'+esc(big.label.slice(0,11).toUpperCase())+'</text></svg>';
+      return '<div class="chart"><div class="ch-h">'+esc(ch.title||'Share of the whole')+'</div>'+
+        '<div class="dn-wrap">'+svg+'<div class="dn-leg">'+leg+'</div></div>'+
+        (ch.note?'<p class="ch-note">'+esc(stripCites(ch.note))+'</p>':'')+'</div>';
+    }
+    // Render the `charts` array: horizontal bars (magnitude / signed moves; scaled
+    // to max ABS value so negatives read red) or a donut (type:"donut").
+    function chartsHtml(charts){
+      if(!Array.isArray(charts) || !charts.length) return '';
+      var out='';
+      for(var c=0;c<charts.length;c++){
+        var ch=charts[c]||{};
+        if((ch.type||'')==='donut'){ out+=donutHtml(ch); continue; }
+        var bars=Array.isArray(ch.bars)?ch.bars.filter(function(b){return b&&isFinite(+b.value);}):[];
+        if(!bars.length) continue;
+        var unit=(ch.unit||'').trim(), max=0;
+        for(var j=0;j<bars.length;j++){ var a=Math.abs(+bars[j].value); if(a>max) max=a; }
+        if(max<=0) max=1;
+        var rows='';
+        for(var k=0;k<bars.length;k++){
+          var b=bars[k], v=+b.value, w=Math.max(3,Math.round(Math.abs(v)/max*100));
+          var cls='ch-fill'+(b.hi?' hi':'')+(v<0?' neg':'');
+          var disp=(unit==='%')?( (v>0?'+':'')+v+'%' ):(unit==='$')?('$'+v):String(v);
+          rows+='<div class="ch-row"><span class="ch-lab">'+esc(String(b.label||''))+'</span>'+
+                '<span class="ch-track"><span class="'+cls+'" style="width:'+w+'%"></span></span>'+
+                '<span class="ch-val">'+esc(disp)+'</span></div>';
+        }
+        out+='<div class="chart"><div class="ch-h">'+esc(ch.title||'By the numbers')+
+             (unit?'<span class="ch-unit">'+esc(unit==='%'?'% change':unit==='$'?'USD':unit)+'</span>':'')+'</div>'+
+             rows+(ch.note?'<p class="ch-note">'+esc(stripCites(ch.note))+'</p>':'')+'</div>';
+      }
+      return out?'<div class="charts">'+out+'</div>':'';
+    }
+    // Blinkit-style hero numbers under the standfirst — the headline figures.
+    function statTiles(tiles){
+      if(!Array.isArray(tiles)||!tiles.length) return '';
+      var AR={up:'▲',down:'▼',flat:'—'};
+      var out=tiles.slice(0,4).map(function(t){
+        var dir=String(t.dir||'flat').toLowerCase(); if(!AR[dir]) dir='flat';
+        return '<div class="stat"><div class="stat-v">'+esc(String(t.value||''))+
+          '<span class="ar '+dir+'">'+AR[dir]+'</span></div>'+
+          '<div class="stat-l">'+esc(String(t.label||''))+'</div>'+
+          (t.sub?'<div class="stat-s">'+esc(stripCites(t.sub))+'</div>':'')+'</div>';
+      }).join('');
+      return '<div class="stats">'+out+'</div>';
+    }
+    // Bear / Base / Bull scenario cards — status colours WITH a labelled case, never colour-alone.
+    function scenarioCards(sc){
+      if(!Array.isArray(sc)||!sc.length) return '';
+      var COL={bear:'#dc2626',base:'#64748b',bull:'#16a34a'}, ORD={bear:0,base:1,bull:2};
+      var arr=sc.slice(0,3).slice().sort(function(a,b){
+        return (ORD[String(a.case||'').toLowerCase()]==null?9:ORD[String(a.case||'').toLowerCase()])
+             - (ORD[String(b.case||'').toLowerCase()]==null?9:ORD[String(b.case||'').toLowerCase()]); });
+      var cards=arr.map(function(s){
+        var col=COL[String(s.case||'').toLowerCase()]||'#94a3b8';
+        return '<div class="scenc" style="--sccol:'+col+'">'+
+          '<div class="scen-top"><span class="scen-case">'+esc(String(s.case||''))+'</span>'+
+          (s.prob?'<span class="scen-prob">'+esc(String(s.prob))+'</span>':'')+'</div>'+
+          (s.thesis?'<p class="scen-thesis">'+esc(stripCites(s.thesis))+'</p>':'')+
+          (s.trigger?'<div class="scen-trig"><b>Trigger:</b> '+esc(stripCites(s.trigger))+'</div>':'')+'</div>';
+      }).join('');
+      return '<div class="scen-h">Bear · Base · Bull — our scenario map</div><div class="scen">'+cards+'</div>';
+    }
+
     function render(d){
       var root=document.getElementById('article');
       if(!d || d.available===false){
@@ -180,7 +340,10 @@
         (d.house_view?'<div class="bottomline"><div class="h">⚖️ Bottom line</div><div class="t">'+esc(stripCites(d.house_view))+'</div></div>':'')+
         '<div class="actionbar"><button id="btnShare" class="abtn" type="button">🔗 Copy link</button><button id="btnPdf" class="abtn" type="button">⬇ Download PDF</button></div>'+
         (tickers?'<div class="chips">'+tickers+'</div>':'')+
+        statTiles(d.stat_tiles)+
         '<div class="article">'+md(d.body_markdown||'')+'</div>'+
+        chartsHtml(d.charts)+
+        scenarioCards(d.scenarios)+
         (d.pull_quote?'<div class="pull">“'+esc(stripCites(d.pull_quote))+'”</div>':'')+
         (sources?'<div class="sources"><div class="h">Sources</div>'+sources+'</div>':'')+
         '<div class="disc">TickerMover\'s research opinion on our own Outperform/Avoid basis — education and market awareness only, not investment advice, not FCA-authorised. Figures from our models and cited sources; capital at risk. Do your own diligence.</div>';
@@ -201,15 +364,80 @@
       var h=0, s=String(seed||''); for(var i=0;i<s.length;i++){ h=((h*31)+s.charCodeAt(i))>>>0; }
       return pals[h%pals.length];
     }
+    // Seeded PRNG so each issue's cover art is stable but distinct.
+    function seededRand(seed){
+      var h=1779033703 ^ seed.length;
+      for(var i=0;i<seed.length;i++){ h=Math.imul(h ^ seed.charCodeAt(i),3432918353); h=(h<<13)|(h>>>19); }
+      return function(){ h=Math.imul(h ^ (h>>>16),2246822507); h=Math.imul(h ^ (h>>>13),3266489909); h^=h>>>16; return (h>>>0)/4294967296; };
+    }
+    // Market-themed cover art: faint grid + volume bars + a rising price path
+    // with area fill and node dots — vector, colored by the cover gradient.
+    function coverArt(seed,glyph){
+      var rnd=seededRand(String(seed||'x')), W=300,H=405,n=7,step=W/(n-1),pts=[],y=H*0.66,i;
+      for(i=0;i<n;i++){ y+=(rnd()-0.5)*H*0.13; y-=(i/(n-1))*H*0.20; y=Math.max(H*0.34,Math.min(H*0.74,y)); pts.push([Math.round(i*step),Math.round(y)]); }
+      var line='M '+pts.map(function(p){return p[0]+' '+p[1];}).join(' L ');
+      var area=line+' L '+W+' '+H+' L 0 '+H+' Z';
+      var dots=pts.map(function(p){return '<circle cx="'+p[0]+'" cy="'+p[1]+'" r="2.6" fill="#fff" fill-opacity=".85"/>';}).join('');
+      var grid=''; for(var g=1;g<7;g++){ var gy=Math.round(H*g/7); grid+='<line x1="0" y1="'+gy+'" x2="'+W+'" y2="'+gy+'" stroke="#fff" stroke-opacity=".06"/>'; }
+      var bars=''; for(var b=0;b<6;b++){ var bh=24+Math.round(rnd()*70); bars+='<rect x="'+(16+b*48)+'" y="'+(H-bh-4)+'" width="18" height="'+bh+'" fill="#fff" fill-opacity=".05"/>'; }
+      var mono = glyph? '<text x="'+(W-6)+'" y="'+Math.round(H*0.40)+'" text-anchor="end" font-family="Fraunces,Georgia,serif" font-weight="600" font-size="200" fill="#fff" fill-opacity=".06">'+esc(glyph)+'</text>':'';
+      return '<svg class="cov-art" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">'+
+        grid+mono+bars+'<path d="'+area+'" fill="#fff" fill-opacity=".07"/>'+
+        '<path d="'+line+'" fill="none" stroke="#fff" stroke-opacity=".8" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>'+dots+'</svg>';
+    }
+    // A real-looking barcode strip for the cover foot (seeded → stable per issue).
+    function barcodeSvg(seed){
+      var rnd=seededRand('bc'+String(seed||'x')), W=58,H=26,x=4,r='';
+      while(x<W-4){ var w=1+Math.round(rnd()*2); if(rnd()>0.34) r+='<rect x="'+x+'" y="4" width="'+w+'" height="'+(H-9)+'" fill="#0b1220"/>'; x+=w+1; }
+      return '<svg class="cov-code" width="'+W+'" height="'+H+'" viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect width="'+W+'" height="'+H+'" rx="3" fill="#fff"/>'+r+'</svg>';
+    }
+    // Magazine "flash" seal for the marquee ticker + its house verdict.
+    function starburst(fill){
+      var cx=37,cy=37,n=15,ro=36,ri=29.5,pts='';
+      for(var i=0;i<n*2;i++){ var rr=(i%2?ri:ro), a=Math.PI*i/n - Math.PI/2; pts+=(cx+rr*Math.cos(a)).toFixed(1)+','+(cy+rr*Math.sin(a)).toFixed(1)+' '; }
+      return '<svg viewBox="0 0 74 74" xmlns="http://www.w3.org/2000/svg"><polygon points="'+pts+'" fill="'+fill+'" stroke="#fff" stroke-width="2" stroke-linejoin="round"/></svg>';
+    }
+    function splashBadge(sp){
+      if(!sp||!sp.ticker) return '';
+      var v=String(sp.verdict||'Watch'), key=v.toLowerCase();
+      var fill=key.indexOf('out')>=0?'#16a34a':key.indexOf('avoid')>=0?'#dc2626':'#d97706';
+      var ink=(key.indexOf('avoid')>=0)?'#fff':'#0b1220';
+      return '<div class="cov-splash" style="color:'+ink+'">'+starburst(fill)+
+        '<span class="sp-verd">'+esc(v)+'</span><span class="sp-tix">'+esc(sp.ticker)+'</span>'+
+        (sp.score!=null&&sp.score!==''?'<span class="sp-sc">Alpha '+esc(String(sp.score))+'</span>':'')+'</div>';
+    }
+    // Stable, increasing issue number from the ISO Monday (weeks since 29 Dec 2025).
+    function issueNo(ws){
+      try{ var d=new Date(String(ws)+'T00:00:00Z'); if(isNaN(d)) return null;
+        var n=Math.round((d.getTime()-Date.UTC(2025,11,29))/6048e5); return n>0?n:null; }
+      catch(e){ return null; }
+    }
+    var COV_KICK=['#ffd166','#7dd3fc','#fca5a5'], COV_KLAB=['Inside','The Data','Our Call'];
     function coverCard(e,i,featured){
-      var g=coverGrad(e.week_start||e.title||('i'+i));
+      var seed=e.week_start||e.title||('i'+i);
+      var g=coverGrad(seed);
       var href='/weekly?week='+encodeURIComponent(e.week_start||'');
-      var tix=(e.tickers||[]).slice(0,4).map(esc).join(' · ');
-      return '<a class="cover'+(featured?' featured':'')+'" href="'+href+'" style="background:linear-gradient(150deg,'+g[0]+' 0%,'+g[1]+' 100%)">'+
-        '<div class="cov-top"><span class="cov-mast">TickerMover · Weekly</span>'+(i===0?'<span class="cov-badge">Current issue</span>':'')+'</div>'+
-        (e.subject?'<span class="cov-subj">'+esc(e.subject)+'</span>':'')+
-        '<div class="cov-title">'+esc(stripCites(e.title||e.subject||'Untitled issue'))+'</div>'+
-        '<div class="cov-foot"><span class="cov-date">'+esc(e.week_label||e.week_start||'')+'</span>'+(tix?'<span class="cov-tix">'+tix+'</span>':'')+'</div>'+
+      var subj=e.subject||'';
+      var glyph=(subj||e.title||'T').trim().charAt(0).toUpperCase();
+      var no=issueNo(e.week_start);
+      var lines=(e.cover_lines||[]).slice(0,3).map(function(t,k){
+        return '<li style="--kick:'+COV_KICK[k%3]+'"><span class="cov-kick">'+COV_KLAB[k%3]+'</span>'+
+               '<span class="cov-line">'+esc(stripCites(t))+'</span></li>'; }).join('');
+      return '<a class="cover'+(featured?' featured':'')+'" href="'+href+'" style="background:linear-gradient(155deg,'+g[0]+' 0%,'+g[1]+' 100%)">'+
+        coverArt(seed,glyph)+
+        splashBadge(e.cover_splash)+
+        '<div class="cov-in">'+
+          '<div class="cov-mast"><span>The Weekly</span><span class="no">'+(no?'No. '+no:'')+(i===0?' · LATEST':'')+'</span></div>'+
+          '<div class="cov-rule"></div>'+
+          '<div class="cov-strip">TickerMover · Finance &amp; Markets Intelligence</div>'+
+          (lines?'<ul class="cov-lines">'+lines+'</ul>':'')+
+          '<div class="cov-feat">'+
+            (subj?'<span class="cov-subj">'+esc(subj)+'</span>':'')+
+            '<div class="cov-title">'+esc(stripCites(e.title||subj||'Untitled issue'))+'</div>'+
+          '</div>'+
+          '<div class="cov-foot"><div class="cov-site"><span class="cov-date">'+esc(e.week_label||e.week_start||'')+'</span>'+
+            '<span class="cov-url">tickermover.com</span></div>'+barcodeSvg(seed)+'</div>'+
+        '</div>'+
       '</a>';
     }
     function renderGallery(d){
@@ -220,7 +448,7 @@
       var head='<div class="news-h"><div class="eyebrow">From the desk</div>'+
         '<h1 class="news-title">The Weekly</h1>'+
         '<p class="news-sub">TickerMover\'s signed magazine — one deep, data-grounded issue a week. Choose an issue to read.</p></div>';
-      var covers=eds.map(function(e,i){ return coverCard(e,i, i===0 && eds.length>1); }).join('');
+      var covers=eds.map(function(e,i){ return coverCard(e,i, i===0); }).join('');
       root.innerHTML=head+'<div class="covers">'+covers+'</div>';
       document.title='The Weekly — TickerMover';
     }

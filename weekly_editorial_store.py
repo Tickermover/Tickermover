@@ -164,6 +164,8 @@ class WeeklyEditorialStore:
                 "standfirst":   art.get("standfirst"),
                 "subject":      art.get("subject"),
                 "tickers":      art.get("tickers") or [],
+                "cover_lines":  art.get("cover_lines") or [],
+                "cover_splash": art.get("cover_splash") or None,
             }
         if self.enabled:
             try:
