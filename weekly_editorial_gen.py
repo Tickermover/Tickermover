@@ -104,6 +104,10 @@ preamble) with EXACTLY these keys:
   "stat_tiles":   [ {"value":"+3.4%","label":"short metric name","sub":"tiny context <= 32 chars","dir":"up|down|flat"} ],
   "body_markdown":"the full report body in Markdown: ## answer-first sections plus 2-4 data tables (include a Bear/Base/Bull scenario table)",
   "charts": [ {"title":"chart title","type":"bar|donut","unit":"%|score|$","note":"one-line takeaway","bars":[ {"label":"TICKER or item","value":<number>,"hi":<true for the standout>} ]} ],
+  "week_updates": {
+    "engine": [ {"kind":"entry|exit|book","ticker":"TICKER or empty","headline":"<= 60 chars","detail":"one sentence of plain-English context","metric":"e.g. +12.4% or Alpha 82 (optional)"} ],
+    "market": [ {"tag":"Macro|Sector|Earnings|Policy","headline":"<= 60 chars","detail":"one sentence, attributed to a real source"} ]
+  },
   "scenarios":    [ {"case":"Bear|Base|Bull","prob":"25%","thesis":"one crisp sentence","trigger":"the condition that puts us here"} ],
   "pull_quote":   "one sharp sentence to feature as a pull-quote",
   "house_view":   "ANSWER-FIRST verdict, 2-3 sentences (Outperform/Avoid basis) — state the call and the single biggest reason up front",
@@ -116,7 +120,16 @@ growth rate). `value` is display-ready (keep the %, $, x). Blinkit-style: the nu
 - Provide 2-3 `charts` built ONLY from ground-truth numbers. Use "type":"bar" for magnitude/ \
 signed moves (a standout gets "hi":true; a negative value renders red), and "type":"donut" for \
 shares of a whole (e.g. revenue mix, index weight). Empty array if you have no defensible series.
-- Provide exactly 3 `scenarios` (Bear, Base, Bull) whose `prob` values sum to ~100%.\
+- Provide exactly 3 `scenarios` (Bear, Base, Bull) whose `prob` values sum to ~100%.
+- `week_updates` is the magazine's "The Week" spread and has TWO halves:
+  * `engine` (3-6 items) — built ONLY from the GROUND-TRUTH `engine_changes` block:
+    our new tracker entries (`new_entries`), our exits (`exits`, use `reason_label` /
+    `reason_plain` and `final_pct`), and book/track context. NEVER invent a ticker,
+    a date, or a return here — if `engine_changes` is empty, return an empty engine
+    array. Observational only: say what OUR score did, never "buy" or "sell".
+  * `market` (3-5 items) — the week's genuinely major market/macro/earnings events,
+    from web search, each attributed to a real source you also list in `sources`.
+  Together they answer "what changed this week?" before the main feature begins.\
 """
 
 

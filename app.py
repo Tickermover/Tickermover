@@ -4562,6 +4562,45 @@ def _weekly_ground_truth(angle: dict) -> dict:
     return ground
 
 
+def _weekly_engine_changes(week_start: str) -> dict:
+    """What OUR engine actually did this week — new tracker entries and exits.
+
+    This is the proprietary half of the magazine's 'major updates' spread: it
+    can't be copied from a news wire, because it's our own book moving. Purely
+    observational (what our score did), never advice. Best-effort: an empty
+    block just means the updates page leans on market context instead.
+    """
+    from datetime import date as _date, timedelta as _td
+    out: dict = {"new_entries": [], "exits": [], "book_open": 0}
+    try:
+        cutoff = _date.fromisoformat(week_start).isoformat()
+    except Exception:
+        cutoff = (_date.today() - _td(days=7)).isoformat()
+    try:
+        picks = (_model_portfolio or {}).get("picks") or []
+        out["book_open"] = len(picks)
+        for p in picks:
+            if str(p.get("added_date") or "") >= cutoff:
+                out["new_entries"].append({
+                    "ticker":     p.get("ticker"),
+                    "name":       p.get("name", ""),
+                    "added_date": p.get("added_date"),
+                    "sector":     p.get("sector", ""),
+                    "alpha_at_entry": p.get("pop_at_entry"),
+                    "grade_at_entry": p.get("grade_at_entry"),
+                    "conviction_at_entry": p.get("conviction_at_entry"),
+                    "rationale":  (p.get("rationale") or "")[:160],
+                })
+    except Exception as e:
+        logger.warning(f"weekly engine changes (entries) skipped: {e}")
+    try:
+        # 9 days covers the issue week plus the weekend either side.
+        out["exits"] = _recent_exits(limit=8, within_days=9)
+    except Exception as e:
+        logger.warning(f"weekly engine changes (exits) skipped: {e}")
+    return out
+
+
 async def _build_weekly_editorial(week_start: str) -> dict | None:
     """Pick the angle, gather ground truth, and ask Opus to write the editorial."""
     if not weekly_editorial_gen.available() or _ai_over_budget():
@@ -4579,6 +4618,8 @@ async def _build_weekly_editorial(week_start: str) -> dict | None:
         ground["house_track"] = (await _desk_house_lens()).get("track")
     except Exception:
         pass
+    # Proprietary "what our engine did this week" feed for the updates spread.
+    ground["engine_changes"] = _weekly_engine_changes(week_start)
     article = await weekly_editorial_gen.generate(angle, ground)
     if not article:
         return None

@@ -105,7 +105,8 @@
     .scen-trig b{color:#475569;font-weight:700}
     /* editorial section dividers + drop cap */
     .article h2::before{content:"";display:block;width:34px;height:3px;background:var(--blue);border-radius:2px;margin:0 0 13px}
-    .article>p:first-of-type::first-letter{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:3.3em;line-height:.82;float:left;margin:6px 10px 0 0;color:var(--blue)}
+    /* drop cap only on the feature's opening page, not every paged section */
+    .article.lead>p:first-of-type::first-letter{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:3.3em;line-height:.82;float:left;margin:6px 10px 0 0;color:var(--blue)}
     @media print{ .stat,.scenc,.chart{break-inside:avoid} .stat::before,.stat-v .up,.stat-v .down,.dn-dot{-webkit-print-color-adjust:exact;print-color-adjust:exact} }
     @media print{
       .top,.actionbar,.cta{display:none!important}
@@ -119,6 +120,61 @@
       .chart{break-inside:avoid;border-color:#cbd5e1}
       .ch-fill{-webkit-print-color-adjust:exact;print-color-adjust:exact}
       .covers,.news-h,.backlink{display:none!important}
+    }
+    /* ── paged book reader ─────────────────────────────────────────────
+       Native scroll-snap: swipe, keyboard and a11y come free, every page
+       stays in the DOM (so Google still indexes the whole issue), and there
+       is no carousel library to ship. */
+    body.book-mode .wrap{max-width:1180px}
+    .book{display:flex;gap:22px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-behavior:smooth;
+      padding:4px 2px 14px;margin:0 0 6px;scrollbar-width:none}
+    .book::-webkit-scrollbar{display:none}
+    .page{flex:0 0 100%;scroll-snap-align:start;background:#fff;border:1px solid #e6edf7;border-radius:16px;
+      padding:30px 32px;min-height:70vh;overflow-y:auto;box-shadow:0 8px 26px -20px rgba(9,20,60,.5)}
+    @media(min-width:900px){ .page{flex:0 0 calc(50% - 11px)} }   /* two-page spread */
+    .page>h2:first-child,.page>.pg-h:first-child{margin-top:0}
+    .pg-h{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:24px;letter-spacing:-.012em;margin:0 0 16px}
+    .pg-num{font-size:10.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#94a3b8;margin-bottom:14px}
+    /* page 1 — the cover, full bleed inside the page */
+    .page.cover-pg{position:relative;padding:0;overflow:hidden;color:#fff;border:none;display:flex}
+    .cover-pg .cp-photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0}
+    .cover-pg .cp-scrim{position:absolute;inset:0;z-index:1;background:linear-gradient(180deg,rgba(4,10,30,.45) 0%,rgba(4,10,30,.15) 40%,rgba(4,10,30,.88) 100%)}
+    .cover-pg .cp-in{position:relative;z-index:2;display:flex;flex-direction:column;padding:30px;width:100%}
+    .cover-pg .cp-title{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:clamp(26px,3.4vw,38px);line-height:1.06;letter-spacing:-.015em;margin:auto 0 12px;text-shadow:0 2px 18px rgba(0,0,0,.5)}
+    .cover-pg .cp-stand{font-size:15.5px;line-height:1.5;opacity:.94;margin:0 0 16px;max-width:52ch}
+    .cover-pg .cp-meta{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;opacity:.85}
+    /* nav */
+    .bk-bar{display:flex;align-items:center;gap:12px;margin:0 0 26px}
+    .bk-btn{width:38px;height:38px;flex:none;display:inline-flex;align-items:center;justify-content:center;font-size:17px;
+      color:#0040c1;background:#fff;border:1px solid #cfe0ff;border-radius:10px;cursor:pointer;transition:background .14s}
+    .bk-btn:hover:not(:disabled){background:#eef4ff}
+    .bk-btn:disabled{opacity:.35;cursor:default}
+    .bk-btn:focus-visible,.abtn:focus-visible,.cover:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+    .bk-ind{font-size:12.5px;font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums}
+    .bk-dots{display:flex;gap:5px;margin-left:auto}
+    .bk-dot{width:7px;height:7px;border-radius:50%;background:#cbd5e1;border:none;padding:0;cursor:pointer}
+    .bk-dot.on{background:var(--blue)}
+    .bk-toggle{margin-left:8px}
+    /* ── "The Week" updates spread ── */
+    .wk{display:flex;flex-direction:column;gap:11px}
+    .wk-item{border-left:3px solid var(--wkc,#2970ff);padding:2px 0 2px 12px}
+    .wk-top{display:flex;align-items:center;gap:8px;margin-bottom:3px;flex-wrap:wrap}
+    .wk-kind{font-size:9.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--wkc,#2970ff)}
+    .wk-tix{font-size:11.5px;font-weight:800;color:#0f172a}
+    .wk-metric{margin-left:auto;font-size:12px;font-weight:800;font-variant-numeric:tabular-nums;color:#0f172a}
+    .wk-head{font-size:14.5px;font-weight:700;line-height:1.32;color:#0f172a}
+    .wk-detail{font-size:13px;line-height:1.5;color:#64748b;margin-top:3px}
+    @media (prefers-reduced-motion: reduce){ .book{scroll-behavior:auto} }
+    /* continuous-scroll fallback — better for long reads, print and screen readers */
+    body.scroll-view .book{display:block;overflow:visible}
+    body.scroll-view .page{flex:none;min-height:0;overflow:visible;margin:0 0 18px}
+    body.scroll-view .bk-btn,body.scroll-view .bk-ind,body.scroll-view .bk-dots{display:none}
+    body.scroll-view .cover-pg{min-height:60vh}
+    @media print{
+      .book{display:block;overflow:visible}
+      .page{flex:none;min-height:0;overflow:visible;break-inside:avoid;box-shadow:none;border:none;padding:0 0 14px}
+      .bk-bar,.bk-dots{display:none!important}
+      .cover-pg .cp-scrim{-webkit-print-color-adjust:exact;print-color-adjust:exact}
     }
     /* newsstand gallery — magazine covers */
     body.gallery .wrap{max-width:1040px}
@@ -365,39 +421,144 @@
       if(bp) bp.onclick=function(){ window.print(); };
     }
 
+    // "The Week" spread: `engine` = our own book moving (proprietary),
+    // `market` = what happened out there. Rendered as two facing pages.
+    function weekUpdatesHtml(wu, which){
+      if(!wu) return '';
+      var items=(which==='engine'? wu.engine : wu.market)||[];
+      if(!Array.isArray(items)||!items.length) return '';
+      var KC={entry:'#16a34a',exit:'#dc2626',book:'#2970ff'};
+      var out=items.slice(0,6).map(function(it){
+        var kind=String(it.kind||'book').toLowerCase();
+        var col = which==='engine' ? (KC[kind]||'#2970ff') : '#0ea5e9';
+        var label = which==='engine'
+          ? (kind==='entry'?'New entry':kind==='exit'?'Exit':'Book')
+          : (it.tag||'Market');
+        return '<div class="wk-item" style="--wkc:'+col+'">'+
+          '<div class="wk-top"><span class="wk-kind">'+esc(label)+'</span>'+
+            (it.ticker?'<span class="wk-tix">'+esc(it.ticker)+'</span>':'')+
+            (it.metric?'<span class="wk-metric">'+esc(it.metric)+'</span>':'')+'</div>'+
+          '<div class="wk-head">'+esc(stripCites(it.headline||''))+'</div>'+
+          (it.detail?'<div class="wk-detail">'+esc(stripCites(it.detail))+'</div>':'')+
+        '</div>';
+      }).join('');
+      return '<div class="wk">'+out+'</div>';
+    }
+    // Paginate the feature on its ## headings — one section per page.
+    function splitSections(t){
+      return stripCites(t||'').replace(/\r/g,'').split(/\n(?=##\s)/).filter(function(p){return p.trim();});
+    }
+    function buildPages(d){
+      var pages=[], img=d.cover_image||null;
+      pages.push('<section class="page cover-pg">'+
+        (img&&img.url?'<img class="cp-photo" src="'+esc(img.url)+'" alt="'+esc(img.alt||'')+'">':'')+
+        '<div class="cp-scrim"></div><div class="cp-in">'+
+          '<div class="cp-meta">The Weekly · TickerMover</div>'+
+          '<h1 class="cp-title">'+esc(d.title||'')+'</h1>'+
+          (d.standfirst?'<p class="cp-stand">'+esc(stripCites(d.standfirst))+'</p>':'')+
+          '<div class="cp-meta">'+esc(d.week_label?('Week of '+d.week_label):'')+'</div>'+
+        '</div></section>');
+      pages.push('<section class="page"><div class="pg-num">The bottom line</div>'+
+        (d.house_view?'<div class="bottomline"><div class="h">⚖️ Bottom line</div><div class="t">'+esc(stripCites(d.house_view))+'</div></div>':'')+
+        statTiles(d.stat_tiles)+'</section>');
+      var eng=weekUpdatesHtml(d.week_updates,'engine'), mkt=weekUpdatesHtml(d.week_updates,'market');
+      if(eng) pages.push('<section class="page"><div class="pg-num">The week · from our desk</div>'+
+        '<div class="pg-h">What our engine did</div>'+eng+'</section>');
+      if(mkt) pages.push('<section class="page"><div class="pg-num">The week · in the market</div>'+
+        '<div class="pg-h">What moved</div>'+mkt+'</section>');
+      var secs=splitSections(d.body_markdown);
+      for(var i=0;i<secs.length;i++){
+        pages.push('<section class="page"><div class="pg-num">The feature'+(secs.length>1?' · '+(i+1)+'/'+secs.length:'')+'</div>'+
+          '<div class="article'+(i===0?' lead':'')+'">'+md(secs[i])+'</div></section>');
+      }
+      var ch=chartsHtml(d.charts);
+      if(ch) pages.push('<section class="page"><div class="pg-num">By the numbers</div>'+ch+'</section>');
+      var sc=scenarioCards(d.scenarios);
+      if(sc) pages.push('<section class="page"><div class="pg-num">Scenarios</div>'+sc+'</section>');
+      var sources=(d.sources||[]).map(function(s){
+        return '<a href="'+esc(s.url)+'" target="_blank" rel="noopener">'+esc(s.title||s.url)+' ↗</a>';
+      }).join('');
+      pages.push('<section class="page"><div class="pg-num">Endnotes</div>'+
+        (d.pull_quote?'<div class="pull">“'+esc(stripCites(d.pull_quote))+'”</div>':'')+
+        (sources?'<div class="sources"><div class="h">Sources</div>'+sources+'</div>':'')+
+        '<div class="disc">TickerMover\'s research opinion on our own Outperform/Avoid basis — education and market awareness only, not investment advice, not FCA-authorised. Figures from our models and cited sources; capital at risk. Do your own diligence.</div>'+
+      '</section>');
+      return pages;
+    }
+    function wireBook(){
+      var bk=document.getElementById('book'); if(!bk) return;
+      var pages=[].slice.call(bk.querySelectorAll('.page'));
+      var prev=document.getElementById('bkPrev'), next=document.getElementById('bkNext'),
+          ind=document.getElementById('bkInd'), dots=document.getElementById('bkDots'),
+          tog=document.getElementById('bkToggle');
+      var base=pages.length?pages[0].offsetLeft:0;
+      function perView(){ return bk.clientWidth>=900?2:1; }
+      function curIdx(){
+        var best=0,bd=Infinity;
+        pages.forEach(function(p,i){ var dd=Math.abs((p.offsetLeft-base)-bk.scrollLeft); if(dd<bd){bd=dd;best=i;} });
+        return best;
+      }
+      var RM = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)');
+      function go(i){
+        i=Math.max(0,Math.min(pages.length-1,i));
+        bk.scrollTo({left:pages[i].offsetLeft-base, behavior:(RM&&RM.matches)?'auto':'smooth'});
+      }
+      dots.innerHTML=pages.map(function(_,i){return '<button class="bk-dot" type="button" aria-label="Go to page '+(i+1)+'"></button>';}).join('');
+      [].forEach.call(dots.children,function(b,i){ b.onclick=function(){ go(i); }; });
+      function update(){
+        var i=curIdx();
+        ind.textContent=(i+1)+' / '+pages.length;
+        prev.disabled = bk.scrollLeft<=2;
+        next.disabled = bk.scrollLeft>=bk.scrollWidth-bk.clientWidth-2;
+        [].forEach.call(dots.children,function(b,k){ b.classList.toggle('on',k===i); });
+      }
+      prev.onclick=function(){ go(curIdx()-perView()); };
+      next.onclick=function(){ go(curIdx()+perView()); };
+      bk.addEventListener('scroll',function(){ clearTimeout(bk._t); bk._t=setTimeout(update,60); });
+      bk.addEventListener('keydown',function(e){
+        if(e.key==='ArrowRight'){ e.preventDefault(); go(curIdx()+perView()); }
+        else if(e.key==='ArrowLeft'){ e.preventDefault(); go(curIdx()-perView()); }
+      });
+      window.addEventListener('resize',function(){ base=pages.length?pages[0].offsetLeft:0; update(); });
+      tog.onclick=function(){
+        var lin=document.body.classList.toggle('scroll-view');
+        tog.textContent = lin ? '📖 Book view' : '📜 Scroll view';
+        if(!lin) update();
+      };
+      update();
+    }
+
     function render(d){
       var root=document.getElementById('article');
       if(!d || d.available===false){
         root.innerHTML='<div class="empty">'+( (d&&d.reason) || 'The weekly editorial is being prepared. Check back shortly.')+'</div>';
         return;
       }
+      document.body.classList.add('book-mode');
       var tickers=(d.tickers||[]).map(function(t){
         return '<a class="chip" href="/stocks/'+encodeURIComponent(t)+'">'+esc(t)+'</a>';
-      }).join('');
-      var sources=(d.sources||[]).map(function(s){
-        return '<a href="'+esc(s.url)+'" target="_blank" rel="noopener">'+esc(s.title||s.url)+' ↗</a>';
       }).join('');
       var when=[d.week_label?('Week of '+esc(d.week_label)):'', d.published_at?('· '+esc(d.published_at)):''].filter(Boolean).join(' ');
       var _rwk=(new URLSearchParams(location.search).get('week')||'').trim();
       root.innerHTML =
         (_rwk?'<a class="backlink" href="/weekly">← All issues</a>':'')+
-        '<div class="eyebrow">From the desk · The Weekly Editorial</div>'+
+        '<div class="eyebrow">From the desk · The Weekly</div>'+
         '<div class="byline">'+TM_COIN+'<b>'+esc(d.byline||'TickerMover Desk')+'</b> · '+when+'</div>'+
-        '<h1 class="title">'+esc(d.title||'')+'</h1>'+
-        (d.standfirst?'<p class="standfirst">'+esc(stripCites(d.standfirst))+'</p>':'')+
-        heroImage(d)+
-        (d.house_view?'<div class="bottomline"><div class="h">⚖️ Bottom line</div><div class="t">'+esc(stripCites(d.house_view))+'</div></div>':'')+
         shareBar()+
         (tickers?'<div class="chips">'+tickers+'</div>':'')+
-        statTiles(d.stat_tiles)+
-        '<div class="article">'+md(d.body_markdown||'')+'</div>'+
-        chartsHtml(d.charts)+
-        scenarioCards(d.scenarios)+
-        (d.pull_quote?'<div class="pull">“'+esc(stripCites(d.pull_quote))+'”</div>':'')+
-        (sources?'<div class="sources"><div class="h">Sources</div>'+sources+'</div>':'')+
-        '<div class="disc">TickerMover\'s research opinion on our own Outperform/Avoid basis — education and market awareness only, not investment advice, not FCA-authorised. Figures from our models and cited sources; capital at risk. Do your own diligence.</div>';
+        '<div class="bk-bar">'+
+          '<button class="bk-btn" id="bkPrev" type="button" aria-label="Previous page">‹</button>'+
+          '<button class="bk-btn" id="bkNext" type="button" aria-label="Next page">›</button>'+
+          '<span class="bk-ind" id="bkInd"></span>'+
+          '<button class="abtn bk-toggle" id="bkToggle" type="button">📜 Scroll view</button>'+
+          '<span class="bk-dots" id="bkDots"></span>'+
+        '</div>'+
+        '<div class="book" id="book" tabindex="0" role="region" aria-label="Issue pages — use arrow keys">'+
+          buildPages(d).join('')+
+        '</div>';
       if(d.title) document.title=d.title+' — TickerMover';
       wireShare(d.title||'');
+      wireBook();
     }
 
     // Deterministic magazine-cover gradient per issue (no images, no AI cost).
