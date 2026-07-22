@@ -51,8 +51,8 @@
     .loading,.empty{text-align:center;color:#64748b;padding:80px 20px;font-size:15px}
     @media(max-width:560px){ .wrap{padding:22px 17px 60px} .article{font-size:16px} }
     /* consulting-report additions: action bar, bottom-line, data tables, print */
-    .actionbar{display:flex;gap:8px;margin:2px 0 20px}
-    .abtn{display:inline-flex;align-items:center;gap:6px;font-family:inherit;font-size:12.5px;font-weight:600;color:#0040c1;background:#fff;border:1px solid #cfe0ff;border-radius:9px;padding:7px 13px;cursor:pointer;transition:background .14s}
+    .actionbar{display:flex;gap:8px;margin:2px 0 20px;flex-wrap:wrap}
+    .abtn{display:inline-flex;align-items:center;gap:6px;font-family:inherit;font-size:12.5px;font-weight:600;color:#0040c1;background:#fff;border:1px solid #cfe0ff;border-radius:9px;padding:7px 13px;cursor:pointer;transition:background .14s;text-decoration:none;white-space:nowrap}
     .abtn:hover{background:#eef4ff}
     .bottomline{background:linear-gradient(180deg,#eef4ff,#f8fbff);border:1px solid #cfe0ff;border-radius:16px;padding:18px 20px;margin:0 0 22px}
     .bottomline .h{font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#0040c1;margin-bottom:7px}
@@ -129,6 +129,16 @@
     .cover{position:relative;display:block;aspect-ratio:3/4.05;border-radius:7px;overflow:hidden;color:#fff;text-decoration:none;box-shadow:0 14px 34px -16px rgba(9,20,60,.6);transition:transform .18s,box-shadow .18s;isolation:isolate}
     .cover:hover{transform:translateY(-4px);box-shadow:0 24px 50px -18px rgba(9,20,60,.72)}
     .cov-art{position:absolute;inset:0;width:100%;height:100%;z-index:0}
+    /* photographic cover: image + a palette tint so the series stays coherent */
+    .cov-photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;display:block}
+    .cov-tint{position:absolute;inset:0;z-index:0;mix-blend-mode:multiply;opacity:.55}
+    .cov-credit{position:absolute;z-index:2;left:15px;bottom:74px;transform-origin:left bottom;transform:rotate(-90deg);
+      font-size:7.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;opacity:.55;white-space:nowrap;pointer-events:none}
+    /* article hero photo */
+    .hero-img{position:relative;width:100%;aspect-ratio:16/9;border-radius:14px;overflow:hidden;margin:0 0 9px;background:#eef2f8}
+    .hero-img img{width:100%;height:100%;object-fit:cover;display:block}
+    .hero-credit{font-size:11.5px;color:#94a3b8;margin:0 0 20px}
+    .hero-credit a{color:#94a3b8;text-decoration:underline}
     .cover::before{content:"";position:absolute;inset:0;z-index:1;background:linear-gradient(180deg,rgba(0,0,0,.44) 0%,rgba(0,0,0,.04) 28%,rgba(0,0,0,.12) 58%,rgba(0,0,0,.74) 100%)}
     .cover.featured{box-shadow:0 18px 44px -16px rgba(9,20,60,.62),0 0 0 2px rgba(255,255,255,.72)}
     .cov-in{position:absolute;inset:0;z-index:2;display:flex;flex-direction:column;padding:15px 15px 13px}
@@ -317,6 +327,44 @@
       return '<div class="scen-h">Bear · Base · Bull — our scenario map</div><div class="scen">'+cards+'</div>';
     }
 
+    // Hero photo for the issue, with the linked photographer credit the image
+    // providers' terms require.
+    function heroImage(d){
+      var img=d.cover_image;
+      if(!img||!img.url) return '';
+      var credit = img.credit_name
+        ? '<p class="hero-credit">Photo: <a href="'+esc(img.credit_url||'#')+'" target="_blank" rel="noopener nofollow">'+
+          esc(img.credit_name)+'</a>'+(img.source?' · '+esc(img.source):'')+'</p>'
+        : '';
+      return '<div class="hero-img"><img src="'+esc(img.url)+'" alt="'+esc(img.alt||d.subject||'')+'" loading="lazy"></div>'+credit;
+    }
+    function shareBar(){
+      return '<div class="actionbar">'+
+        (navigator.share?'<button id="btnNative" class="abtn" type="button">↗ Share</button>':'')+
+        '<button id="btnShare" class="abtn" type="button">🔗 Copy link</button>'+
+        '<a id="btnX"  class="abtn" target="_blank" rel="noopener">Post on X</a>'+
+        '<a id="btnLi" class="abtn" target="_blank" rel="noopener">LinkedIn</a>'+
+        '<a id="btnWa" class="abtn" target="_blank" rel="noopener">WhatsApp</a>'+
+        '<button id="btnPdf" class="abtn" type="button">⬇ PDF</button></div>';
+    }
+    function wireShare(title){
+      var url=location.href, u=encodeURIComponent(url), t=encodeURIComponent(title||'The Weekly — TickerMover');
+      var set=function(id,href){ var el=document.getElementById(id); if(el) el.href=href; };
+      set('btnX','https://twitter.com/intent/tweet?text='+t+'&url='+u);
+      set('btnLi','https://www.linkedin.com/sharing/share-offsite/?url='+u);
+      set('btnWa','https://api.whatsapp.com/send?text='+t+'%20'+u);
+      var bn=document.getElementById('btnNative');
+      if(bn) bn.onclick=function(){ navigator.share({title:title||document.title,url:url}).catch(function(){}); };
+      var bs=document.getElementById('btnShare');
+      if(bs) bs.onclick=function(){
+        var done=function(){ bs.textContent='✓ Link copied'; setTimeout(function(){bs.textContent='🔗 Copy link';},1800); };
+        if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(url).then(done).catch(function(){ prompt('Copy this link:', url); }); }
+        else { prompt('Copy this link:', url); }
+      };
+      var bp=document.getElementById('btnPdf');
+      if(bp) bp.onclick=function(){ window.print(); };
+    }
+
     function render(d){
       var root=document.getElementById('article');
       if(!d || d.available===false){
@@ -337,8 +385,9 @@
         '<div class="byline">'+TM_COIN+'<b>'+esc(d.byline||'TickerMover Desk')+'</b> · '+when+'</div>'+
         '<h1 class="title">'+esc(d.title||'')+'</h1>'+
         (d.standfirst?'<p class="standfirst">'+esc(stripCites(d.standfirst))+'</p>':'')+
+        heroImage(d)+
         (d.house_view?'<div class="bottomline"><div class="h">⚖️ Bottom line</div><div class="t">'+esc(stripCites(d.house_view))+'</div></div>':'')+
-        '<div class="actionbar"><button id="btnShare" class="abtn" type="button">🔗 Copy link</button><button id="btnPdf" class="abtn" type="button">⬇ Download PDF</button></div>'+
+        shareBar()+
         (tickers?'<div class="chips">'+tickers+'</div>':'')+
         statTiles(d.stat_tiles)+
         '<div class="article">'+md(d.body_markdown||'')+'</div>'+
@@ -347,15 +396,8 @@
         (d.pull_quote?'<div class="pull">“'+esc(stripCites(d.pull_quote))+'”</div>':'')+
         (sources?'<div class="sources"><div class="h">Sources</div>'+sources+'</div>':'')+
         '<div class="disc">TickerMover\'s research opinion on our own Outperform/Avoid basis — education and market awareness only, not investment advice, not FCA-authorised. Figures from our models and cited sources; capital at risk. Do your own diligence.</div>';
-      var bs=document.getElementById('btnShare');
-      if(bs) bs.onclick=function(){
-        var done=function(){ bs.textContent='✓ Link copied'; setTimeout(function(){bs.textContent='🔗 Copy link';},1800); };
-        if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(location.href).then(done).catch(function(){ prompt('Copy this link:', location.href); }); }
-        else { prompt('Copy this link:', location.href); }
-      };
-      var bp=document.getElementById('btnPdf');
-      if(bp) bp.onclick=function(){ window.print(); };
       if(d.title) document.title=d.title+' — TickerMover';
+      wireShare(d.title||'');
     }
 
     // Deterministic magazine-cover gradient per issue (no images, no AI cost).
@@ -423,8 +465,18 @@
       var lines=(e.cover_lines||[]).slice(0,3).map(function(t,k){
         return '<li style="--kick:'+COV_KICK[k%3]+'"><span class="cov-kick">'+COV_KLAB[k%3]+'</span>'+
                '<span class="cov-line">'+esc(stripCites(t))+'</span></li>'; }).join('');
-      return '<a class="cover'+(featured?' featured':'')+'" href="'+href+'" style="background:linear-gradient(155deg,'+g[0]+' 0%,'+g[1]+' 100%)">'+
-        coverArt(seed,glyph)+
+      // The generated vector cover is ALWAYS laid down first, so a photo that
+      // 404s or is blocked reveals a designed cover rather than a bare gradient.
+      // The photo (when present) paints over it, plus a palette tint.
+      var img=e.cover_image||null, grad='linear-gradient(155deg,'+g[0]+' 0%,'+g[1]+' 100%)';
+      var art = coverArt(seed,glyph) + ((img&&img.url)
+        ? '<img class="cov-photo" src="'+esc(img.url)+'" alt="'+esc(img.alt||subj||'')+'" loading="lazy">'+
+          '<div class="cov-tint" style="background:'+grad+'"></div>'
+        : '');
+      var credit = (img&&img.credit_name)
+        ? '<span class="cov-credit">Photo · '+esc(img.credit_name)+'</span>' : '';
+      return '<a class="cover'+(featured?' featured':'')+'" href="'+href+'" style="background:'+grad+'">'+
+        art+credit+
         splashBadge(e.cover_splash)+
         '<div class="cov-in">'+
           '<div class="cov-mast"><span>The Weekly</span><span class="no">'+(no?'No. '+no:'')+(i===0?' · LATEST':'')+'</span></div>'+
@@ -450,6 +502,18 @@
         '<p class="news-sub">TickerMover\'s signed magazine — one deep, data-grounded issue a week. Choose an issue to read.</p></div>';
       var covers=eds.map(function(e,i){ return coverCard(e,i, i===0); }).join('');
       root.innerHTML=head+'<div class="covers">'+covers+'</div>';
+      // If a cover photo fails (404, blocked, offline), drop it and its tint so
+      // the generated vector cover underneath shows through. Wired in JS rather
+      // than an inline onerror so a strict CSP can't disable it.
+      [].forEach.call(root.querySelectorAll('.cov-photo'),function(im){
+        im.addEventListener('error',function(){
+          var t=im.nextElementSibling;
+          if(t&&t.classList.contains('cov-tint')) t.remove();
+          var cr=im.parentNode&&im.parentNode.querySelector('.cov-credit');
+          if(cr) cr.remove();
+          im.remove();
+        });
+      });
       document.title='The Weekly — TickerMover';
     }
 

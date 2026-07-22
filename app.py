@@ -4582,6 +4582,18 @@ async def _build_weekly_editorial(week_start: str) -> dict | None:
     article = await weekly_editorial_gen.generate(angle, ground)
     if not article:
         return None
+    # Magazine cover photography — best-effort; falls back to the generated
+    # vector cover when no image-provider key is configured.
+    try:
+        import weekly_cover_image
+        cover = await weekly_cover_image.fetch(
+            article.get("subject") or angle.get("label") or "",
+            article.get("tickers") or [],
+        )
+        if cover:
+            article["cover_image"] = cover
+    except Exception as e:
+        logger.warning(f"weekly cover image skipped: {e}")
     from datetime import date as _date
     try:
         y, m, d = (int(x) for x in week_start.split("-"))
