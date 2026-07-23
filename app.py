@@ -4369,6 +4369,9 @@ async def api_desk_report(type: str = ""):
 # week ahead, frozen for the week, durable (weekly_editorial_store). One Opus
 # call/week, budget-gated + fail-safe (serves the prior edition on any failure).
 from weekly_editorial_store import store as _weekly_store
+
+# Strong refs to in-flight background publish jobs so the event loop doesn't GC them.
+_WEEKLY_BG_TASKS: set = set()
 import weekly_editorial_gen
 
 _WEEKLY_VERSION = 2   # bump to force a one-time rebuild when the format changes
@@ -4902,12 +4905,18 @@ async def thesis_page(slug: str):
 
 @app.post("/api/admin/publish-weekly")
 async def api_admin_publish_weekly(send_email: bool = False, week_start: str = "",
+                                   background: bool = True,
                                    user: Optional[dict] = Depends(_current_user),
                                    creds: Optional[HTTPAuthorizationCredentials] = Depends(_bearer)):
     """Admin: generate an editorial now (force), without waiting for the Sunday
     publisher. Defaults to THIS week; pass ?week_start=YYYY-MM-DD (an ISO Monday)
     to file a BACKDATED edition into the archive. Budget-gated. Does NOT email the
-    list unless send_email=1 (so previewing/backfilling can't blast)."""
+    list unless send_email=1 (so previewing/backfilling can't blast).
+
+    Runs in the BACKGROUND by default and returns 202 immediately: the full
+    generation takes 1-4 min (Opus + web search), which a synchronous request
+    can't hold open behind the edge proxy (it 502s). Poll /api/weekly-editorials
+    for the new edition. Pass ?background=0 to wait inline (may time out)."""
     if not user or (user.get("email") or "").lower() not in _AI_ALLOW:
         raise HTTPException(status_code=403, detail="Admin only.")
     if not weekly_editorial_gen.available():
@@ -4915,6 +4924,25 @@ async def api_admin_publish_weekly(send_email: bool = False, week_start: str = "
     if _ai_over_budget():
         return JSONResponse({"error": "AI budget cap reached — try again later."}, status_code=429)
     wk = (week_start or "").strip() or _week_start()
+
+    if background:
+        async def _job():
+            try:
+                art = await _generate_and_save_weekly(wk, send_email=send_email)
+                if art:
+                    logger.info(f"weekly publish (bg) done {wk}: {art.get('title')}")
+                else:
+                    logger.warning(f"weekly publish (bg) produced nothing for {wk} "
+                                   "(no candidates or model error)")
+            except Exception as e:
+                logger.exception(f"weekly publish (bg) failed for {wk}: {e}")
+        task = asyncio.create_task(_job())
+        _WEEKLY_BG_TASKS.add(task)                 # hold a ref so it isn't GC'd
+        task.add_done_callback(_WEEKLY_BG_TASKS.discard)
+        return JSONResponse({"ok": True, "status": "started", "week_start": wk,
+                             "background": True, "send_email": bool(send_email)},
+                            status_code=202)
+
     art = await _generate_and_save_weekly(wk, send_email=send_email)
     if not art:
         return JSONResponse({"ok": False,
