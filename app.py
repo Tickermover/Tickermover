@@ -4372,6 +4372,9 @@ from weekly_editorial_store import store as _weekly_store
 
 # Strong refs to in-flight background publish jobs so the event loop doesn't GC them.
 _WEEKLY_BG_TASKS: set = set()
+# Breadcrumb of the most recent background publish job, surfaced by ?dry=1 so a
+# failure inside the fire-and-forget task is diagnosable without server logs.
+_WEEKLY_LAST_JOB: dict = {}
 import weekly_editorial_gen
 
 _WEEKLY_VERSION = 2   # bump to force a one-time rebuild when the format changes
@@ -4931,7 +4934,8 @@ async def api_admin_publish_weekly(send_email: bool = False, week_start: str = "
         import traceback
         rep: dict = {"dry": True, "week_start": wk,
                      "available": weekly_editorial_gen.available(),
-                     "over_budget": _ai_over_budget()}
+                     "over_budget": _ai_over_budget(),
+                     "last_job": dict(_WEEKLY_LAST_JOB)}
         try:
             cands = _weekly_candidates()
             rep["candidates"] = len(cands)
@@ -4962,14 +4966,22 @@ async def api_admin_publish_weekly(send_email: bool = False, week_start: str = "
 
     if background:
         async def _job():
+            import traceback as _tb
+            _WEEKLY_LAST_JOB.clear()
+            _WEEKLY_LAST_JOB.update({"wk": wk, "phase": "started", "at": _et_now().isoformat()})
             try:
                 art = await _generate_and_save_weekly(wk, send_email=send_email)
                 if art:
+                    _WEEKLY_LAST_JOB.update({"phase": "done", "title": art.get("title"),
+                                            "has_cover": bool(art.get("cover_image"))})
                     logger.info(f"weekly publish (bg) done {wk}: {art.get('title')}")
                 else:
+                    _WEEKLY_LAST_JOB.update({"phase": "empty"})
                     logger.warning(f"weekly publish (bg) produced nothing for {wk} "
                                    "(no candidates or model error)")
             except Exception as e:
+                _WEEKLY_LAST_JOB.update({"phase": "error", "error": repr(e),
+                                        "tb": _tb.format_exc()[-700:]})
                 logger.exception(f"weekly publish (bg) failed for {wk}: {e}")
         task = asyncio.create_task(_job())
         _WEEKLY_BG_TASKS.add(task)                 # hold a ref so it isn't GC'd
