@@ -4562,6 +4562,19 @@ def _weekly_ground_truth(angle: dict) -> dict:
     return ground
 
 
+def _weekly_slug(title: str, week_start: str) -> str:
+    """A short, SEO-friendly slug from the issue headline, e.g.
+    'communication-services-quietest-sector-hiding-loudest-bets'. Stopwords and
+    punctuation stripped, capped at ~7 words so URLs stay tidy."""
+    import re as _re
+    stop = {"the","a","an","is","are","of","to","in","on","for","and","or","its",
+            "at","by","as","with","that","this","has","was","been","be","it","market","s"}
+    words = _re.sub(r"[^a-z0-9\s-]", "", (title or "").lower()).split()
+    kept = [w for w in words if w and w not in stop][:7]
+    slug = "-".join(kept) or "issue"
+    return slug[:80].strip("-")
+
+
 def _weekly_engine_changes(week_start: str) -> dict:
     """What OUR engine actually did this week — new tracker entries and exits.
 
@@ -4646,6 +4659,7 @@ async def _build_weekly_editorial(week_start: str) -> dict | None:
     article["week_label"] = wk_label
     article["published_at"] = gen.strftime("%I:%M %p ET · %d %b").lstrip("0")
     article["byline"] = "TickerMover Desk"
+    article["slug"] = _weekly_slug(article.get("title") or article.get("subject") or "", week_start)
     article["v"] = _WEEKLY_VERSION
     return article
 
@@ -4709,13 +4723,31 @@ async def api_weekly_editorials(limit: int = 52):
                         headers={"Cache-Control": "public, max-age=600, s-maxage=1800"})
 
 
-@app.get("/weekly", response_class=HTMLResponse)
-async def weekly_page():
-    """Public weekly editorial page."""
+def _weekly_html_response():
     try:
         return HTMLResponse(content=_with_analytics(WEEKLY_HTML.read_text(encoding="utf-8")))
     except FileNotFoundError:
         return HTMLResponse(content="<h2>templates/weekly.html not found</h2>", status_code=500)
+
+
+@app.get("/weekly", response_class=HTMLResponse)
+async def weekly_page():
+    """Public newsstand (all issues)."""
+    return _weekly_html_response()
+
+
+# SEO-friendly per-issue permalinks:  /weekly/2026-07-13/communication-services-...
+# The Monday date is the lookup key; the trailing slug is human/search-readable and
+# not validated (the client renders from ?week / the path). Both shapes serve the
+# same single-page app, which reads the week from the path.
+@app.get("/weekly/{week_start}", response_class=HTMLResponse)
+async def weekly_issue_short(week_start: str):
+    return _weekly_html_response()
+
+
+@app.get("/weekly/{week_start}/{slug}", response_class=HTMLResponse)
+async def weekly_issue(week_start: str, slug: str):
+    return _weekly_html_response()
 
 
 # ── Future Heroes — curated private-company (pre-IPO) valuation list ──

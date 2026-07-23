@@ -143,6 +143,21 @@
     .cover-pg .cp-title{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:clamp(26px,3.4vw,38px);line-height:1.06;letter-spacing:-.015em;margin:auto 0 12px;text-shadow:0 2px 18px rgba(0,0,0,.5)}
     .cover-pg .cp-stand{font-size:15.5px;line-height:1.5;opacity:.94;margin:0 0 16px;max-width:52ch}
     .cover-pg .cp-meta{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;opacity:.85}
+    /* full-page magazine cover (bookCover) — scale the shared cover parts up */
+    .cover-pg .cov-in.bookcov{padding:clamp(22px,3.2vw,40px)}
+    .cover-pg .cov-mast{font-size:clamp(30px,3.8vw,44px)}
+    .cover-pg .cov-mast .no{font-size:11px}
+    .cover-pg .cov-strip{font-size:9px}
+    .cover-pg .cov-lines{max-width:62%;gap:14px;margin-top:clamp(16px,2.6vw,30px)}
+    .cover-pg .cov-kick{font-size:9px}
+    .cover-pg .cov-line{font-size:clamp(12.5px,1.35vw,16px);-webkit-line-clamp:2}
+    .cover-pg .cov-subj{font-size:11px;padding:4px 10px;margin-bottom:12px}
+    .cover-pg .cov-title{font-size:clamp(28px,3.9vw,46px);-webkit-line-clamp:4;letter-spacing:-.018em}
+    .cover-pg .bookcov-stand{font-size:clamp(14px,1.45vw,17px);line-height:1.5;opacity:.93;margin:14px 0 0;max-width:46ch;text-shadow:0 1px 8px rgba(0,0,0,.55)}
+    .cover-pg .cov-splash{top:auto;bottom:118px;right:clamp(18px,3vw,34px);width:clamp(84px,9vw,104px);height:clamp(84px,9vw,104px)}
+    .cover-pg .sp-tix{font-size:clamp(17px,1.9vw,21px)} .cover-pg .sp-verd{font-size:9px} .cover-pg .sp-sc{font-size:10px}
+    .cover-pg .cov-date{font-size:12.5px}
+    .cover-pg .cov-credit{display:none}
     /* nav */
     .bk-bar{display:flex;align-items:center;gap:12px;margin:0 0 26px}
     .bk-btn{width:38px;height:38px;flex:none;display:inline-flex;align-items:center;justify-content:center;font-size:17px;
@@ -448,16 +463,36 @@
     function splitSections(t){
       return stripCites(t||'').replace(/\r/g,'').split(/\n(?=##\s)/).filter(function(p){return p.trim();});
     }
+    // Page 1 IS the magazine cover — the same designed cover as the newsstand,
+    // full-bleed. The vector art is ALWAYS the base layer, so the headline stays
+    // legible whether or not a photo is present (fixes the blank-cover case).
+    function bookCover(d){
+      var seed=d.week_start||d.title||'x', g=coverGrad(seed);
+      var subj=d.subject||'', glyph=(subj||d.title||'T').trim().charAt(0).toUpperCase();
+      var img=d.cover_image||null, grad='linear-gradient(155deg,'+g[0]+' 0%,'+g[1]+' 100%)';
+      var no=issueNo(d.week_start);
+      var art=coverArt(seed,glyph)+((img&&img.url)
+        ? '<img class="cov-photo" src="'+esc(img.url)+'" alt="'+esc(img.alt||subj||'')+'"><div class="cov-tint" style="background:'+grad+'"></div>' : '');
+      var lines=(d.cover_lines||[]).slice(0,3).map(function(t,k){
+        return '<li style="--kick:'+COV_KICK[k%3]+'"><span class="cov-kick">'+COV_KLAB[k%3]+'</span>'+
+               '<span class="cov-line">'+esc(stripCites(t))+'</span></li>'; }).join('');
+      return '<section class="page cover-pg" style="background:'+grad+'">'+art+splashBadge(d.cover_splash)+
+        '<div class="cov-in bookcov">'+
+          '<div class="cov-mast"><span>The Weekly</span><span class="no">'+(no?'No. '+no:'')+'</span></div>'+
+          '<div class="cov-rule"></div>'+
+          '<div class="cov-strip">TickerMover · Finance &amp; Markets Intelligence</div>'+
+          (lines?'<ul class="cov-lines">'+lines+'</ul>':'')+
+          '<div class="cov-feat">'+(subj?'<span class="cov-subj">'+esc(subj)+'</span>':'')+
+            '<div class="cov-title">'+esc(stripCites(d.title||''))+'</div>'+
+            (d.standfirst?'<p class="bookcov-stand">'+esc(stripCites(d.standfirst))+'</p>':'')+
+          '</div>'+
+          '<div class="cov-foot"><div class="cov-site"><span class="cov-date">'+esc(d.week_label?('Week of '+d.week_label):'')+'</span>'+
+            '<span class="cov-url">tickermover.com</span></div>'+barcodeSvg(seed)+'</div>'+
+        '</div></section>';
+    }
     function buildPages(d){
-      var pages=[], img=d.cover_image||null;
-      pages.push('<section class="page cover-pg">'+
-        (img&&img.url?'<img class="cp-photo" src="'+esc(img.url)+'" alt="'+esc(img.alt||'')+'">':'')+
-        '<div class="cp-scrim"></div><div class="cp-in">'+
-          '<div class="cp-meta">The Weekly · TickerMover</div>'+
-          '<h1 class="cp-title">'+esc(d.title||'')+'</h1>'+
-          (d.standfirst?'<p class="cp-stand">'+esc(stripCites(d.standfirst))+'</p>':'')+
-          '<div class="cp-meta">'+esc(d.week_label?('Week of '+d.week_label):'')+'</div>'+
-        '</div></section>');
+      var pages=[];
+      pages.push(bookCover(d));
       pages.push('<section class="page"><div class="pg-num">The bottom line</div>'+
         (d.house_view?'<div class="bottomline"><div class="h">⚖️ Bottom line</div><div class="t">'+esc(stripCites(d.house_view))+'</div></div>':'')+
         statTiles(d.stat_tiles)+'</section>');
@@ -539,7 +574,15 @@
         return '<a class="chip" href="/stocks/'+encodeURIComponent(t)+'">'+esc(t)+'</a>';
       }).join('');
       var when=[d.week_label?('Week of '+esc(d.week_label)):'', d.published_at?('· '+esc(d.published_at)):''].filter(Boolean).join(' ');
-      var _rwk=(new URLSearchParams(location.search).get('week')||'').trim();
+      var _rwk=parseWeek();
+      // Canonicalise ?week= (and bare paths) to the pretty permalink so shares/
+      // copy-link use the SEO URL. History-only; no network, no reload.
+      try{
+        if(d.week_start){
+          var pretty='/weekly/'+d.week_start+'/'+(d.slug||slugify(d.title||d.subject||'issue'));
+          if(location.pathname+location.search!==pretty) history.replaceState(null,'',pretty);
+        }
+      }catch(e){}
       root.innerHTML =
         (_rwk?'<a class="backlink" href="/weekly">← All issues</a>':'')+
         '<div class="eyebrow">From the desk · The Weekly</div>'+
@@ -561,6 +604,22 @@
       wireBook();
     }
 
+    // SEO-friendly issue URLs: /weekly/<YYYY-MM-DD>/<slug>. The date is the key;
+    // the slug is human/search-readable. Old ?week= links still resolve.
+    var _STOP={the:1,a:1,an:1,is:1,are:1,of:1,to:1,in:1,on:1,for:1,and:1,or:1,its:1,at:1,by:1,'as':1,'with':1,that:1,'this':1,has:1,was:1,market:1,s:1};
+    function slugify(t){
+      var words=String(t||'').toLowerCase().replace(/[^a-z0-9\s-]/g,' ').split(/[\s-]+/).filter(function(w){return w&&!_STOP[w];});
+      return (words.slice(0,7).join('-')||'issue').slice(0,80).replace(/^-+|-+$/g,'');
+    }
+    function weeklyHref(e){
+      var wk=(e&&e.week_start)||''; if(!wk) return '/weekly';
+      return '/weekly/'+encodeURIComponent(wk)+'/'+(e.slug||slugify(e.title||e.subject||'issue'));
+    }
+    function parseWeek(){
+      var m=location.pathname.match(/^\/weekly\/(\d{4}-\d{2}-\d{2})/);
+      if(m) return m[1];
+      return (new URLSearchParams(location.search).get('week')||'').trim();
+    }
     // Deterministic magazine-cover gradient per issue (no images, no AI cost).
     function coverGrad(seed){
       var pals=[['#0b3d91','#2970ff'],['#0b5d5a','#12b3a6'],['#4c2a86','#9b5de5'],['#1f3a24','#3f9d55'],['#3a2f22','#a8743a'],['#1e293b','#51607a'],['#5c1a2b','#b23a52'],['#123a52','#2b8cbe']];
@@ -619,7 +678,7 @@
     function coverCard(e,i,featured){
       var seed=e.week_start||e.title||('i'+i);
       var g=coverGrad(seed);
-      var href='/weekly?week='+encodeURIComponent(e.week_start||'');
+      var href=weeklyHref(e);
       var subj=e.subject||'';
       var glyph=(subj||e.title||'T').trim().charAt(0).toUpperCase();
       var no=issueNo(e.week_start);
@@ -678,7 +737,7 @@
       document.title='The Weekly — TickerMover';
     }
 
-    var _wk=(new URLSearchParams(location.search).get('week')||'').trim();
+    var _wk=parseWeek();
     if(_wk){
       fetch('/api/weekly-editorial?week='+encodeURIComponent(_wk))
         .then(function(r){return r.json();}).then(render).catch(function(){

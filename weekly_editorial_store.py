@@ -167,6 +167,7 @@ class WeeklyEditorialStore:
                 "cover_lines":  art.get("cover_lines") or [],
                 "cover_splash": art.get("cover_splash") or None,
                 "cover_image":  art.get("cover_image") or None,
+                "slug":         art.get("slug") or None,
             }
         if self.enabled:
             try:
