@@ -4905,7 +4905,7 @@ async def thesis_page(slug: str):
 
 @app.post("/api/admin/publish-weekly")
 async def api_admin_publish_weekly(send_email: bool = False, week_start: str = "",
-                                   background: bool = True,
+                                   background: bool = True, dry: bool = False,
                                    user: Optional[dict] = Depends(_current_user),
                                    creds: Optional[HTTPAuthorizationCredentials] = Depends(_bearer)):
     """Admin: generate an editorial now (force), without waiting for the Sunday
@@ -4924,6 +4924,41 @@ async def api_admin_publish_weekly(send_email: bool = False, week_start: str = "
     if _ai_over_budget():
         return JSONResponse({"error": "AI budget cap reached — try again later."}, status_code=429)
     wk = (week_start or "").strip() or _week_start()
+
+    if dry:
+        # Fast diagnostic: run the whole pre-AI pipeline and report where (if
+        # anywhere) it stops, WITHOUT calling Opus. No cost, no edge timeout.
+        import traceback
+        rep: dict = {"dry": True, "week_start": wk,
+                     "available": weekly_editorial_gen.available(),
+                     "over_budget": _ai_over_budget()}
+        try:
+            cands = _weekly_candidates()
+            rep["candidates"] = len(cands)
+            rep["cand_labels"] = [c.get("label") for c in cands]
+            prior = _weekly_store.latest()
+            prior_subject = ((prior or {}).get("article") or {}).get("subject")
+            angle = _pick_weekly_angle(cands, wk, prior_subject) if cands else None
+            rep["angle"] = ({"type": angle.get("type"), "label": angle.get("label")}
+                            if angle else None)
+            if angle:
+                try:
+                    ground = _weekly_ground_truth(angle)
+                    rep["ground_ok"] = True
+                    rep["ground_keys"] = list(ground.keys())
+                except Exception as e:
+                    rep["ground_error"] = repr(e)
+                    rep["ground_tb"] = traceback.format_exc()[-600:]
+                try:
+                    rep["engine_changes"] = _weekly_engine_changes(wk)
+                    rep["engine_changes_ok"] = True
+                except Exception as e:
+                    rep["engine_changes_error"] = repr(e)
+                    rep["engine_changes_tb"] = traceback.format_exc()[-600:]
+        except Exception as e:
+            rep["pipeline_error"] = repr(e)
+            rep["pipeline_tb"] = traceback.format_exc()[-800:]
+        return JSONResponse(rep)
 
     if background:
         async def _job():
