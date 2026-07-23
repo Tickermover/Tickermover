@@ -35,47 +35,57 @@ _UNSPLASH_KEY = (os.environ.get("UNSPLASH_ACCESS_KEY") or "").strip()
 _PEXELS_KEY = (os.environ.get("PEXELS_API_KEY") or "").strip()
 _TIMEOUT = float(os.environ.get("COVER_IMAGE_TIMEOUT", "12"))
 
-# Sector / theme → a concrete, photographable scene. Generic finance words
-# ("communication services") return stock-photo handshakes; concrete nouns
-# ("data centre servers") return real editorial imagery.
+# Sector / theme → ORDERED fallback queries (specific first, broad last). Each is
+# a hard, photographable BUSINESS/INDUSTRIAL noun. Generic finance words
+# ("communication services") return handshakes, and vague/short terms drift to
+# landscapes — so we anchor on concrete objects and keep a business-only fallback.
 _SUBJECT_SCENES = {
-    "semiconductor": "semiconductor wafer fab cleanroom",
-    "semis": "semiconductor wafer fab cleanroom",
-    "technology": "data centre server racks",
-    "information technology": "data centre server racks",
-    "communication services": "broadcast studio fibre network",
-    "energy": "oil refinery industrial pipeline",
-    "financials": "city financial district skyline",
-    "health": "modern laboratory research",
-    "healthcare": "modern laboratory research",
-    "industrials": "factory automation robotics",
-    "materials": "steel mill industrial production",
-    "utilities": "power transmission grid pylons",
-    "real estate": "city skyline construction cranes",
-    "consumer discretionary": "retail storefront shopping district",
-    "consumer staples": "supermarket shelves logistics",
-    "artificial intelligence": "data centre gpu server racks",
-    "ai": "data centre gpu server racks",
+    "semiconductor": ["semiconductor microchip", "computer chip circuit board"],
+    "semis":         ["semiconductor microchip", "computer chip circuit board"],
+    "technology":    ["data center server room", "computer server technology"],
+    "information technology": ["data center server room", "computer server technology"],
+    "communication services": ["fiber optic network cables", "television broadcast studio"],
+    "energy":        ["oil refinery plant", "oil and gas industry"],
+    "oil":           ["oil refinery plant", "oil and gas industry"],
+    "financials":    ["financial district skyscrapers", "stock exchange trading"],
+    "financial":     ["financial district skyscrapers", "stock exchange trading"],
+    "bank":          ["financial district skyscrapers", "stock exchange trading"],
+    "health":        ["pharmaceutical laboratory", "medical research lab"],
+    "healthcare":    ["pharmaceutical laboratory", "medical research lab"],
+    "pharma":        ["pharmaceutical laboratory", "medical research lab"],
+    "biotech":       ["biotech laboratory science", "medical research lab"],
+    "industrials":   ["factory assembly line", "industrial manufacturing robots"],
+    "materials":     ["steel factory industry", "industrial metal production"],
+    "utilities":     ["electricity transmission towers", "power plant industry"],
+    "real estate":   ["city skyscrapers construction", "urban office skyline"],
+    "consumer discretionary": ["modern retail store interior", "shopping mall retail"],
+    "consumer staples": ["supermarket grocery aisle", "grocery store shelves"],
+    "retail":        ["modern retail store interior", "shopping mall retail"],
+    "automotive":    ["car factory assembly line", "automobile manufacturing"],
+    "artificial intelligence": ["data center server room", "circuit board technology"],
+    "ai":            ["data center server room", "circuit board technology"],
 }
+# Business-only fallback for an unknown subject (usually a single company): we do
+# NOT search the company name — that returns logos and executive headshots — and
+# we deliberately avoid any term that lets the result drift to nature/landscape.
+_UNIVERSAL = ["stock market financial charts", "financial district skyscrapers", "modern corporate office"]
 
 # Anything person-centric is pushed out of the result set.
-_NEGATIVE = ("portrait", "businessman", "businesswoman", "model", "selfie")
+_NEGATIVE = ("portrait", "businessman", "businesswoman", "woman", "man ", "model", "selfie", "face")
 
 
 def available() -> bool:
     return bool(_UNSPLASH_KEY or _PEXELS_KEY)
 
 
-def _query_for(subject: str, tickers: list[str] | None = None) -> str:
-    """Map the week's subject onto a concrete, photographable scene."""
+def _queries_for(subject: str, tickers: list[str] | None = None) -> list[str]:
+    """Ordered candidate queries for the week's subject — specific scene(s) first,
+    then a business-only fallback so we never end up on generic/landscape filler."""
     s = (subject or "").strip().lower()
-    for key, scene in _SUBJECT_SCENES.items():
+    for key, scenes in _SUBJECT_SCENES.items():
         if key in s:
-            return scene
-    # Unknown subject (often a single company): fall back to a neutral,
-    # non-person business scene rather than searching the company name, which
-    # tends to return logos and executive headshots.
-    return (subject or "stock market trading floor").strip() or "stock market trading floor"
+            return list(scenes) + _UNIVERSAL
+    return list(_UNIVERSAL)
 
 
 def _looks_like_person(text: str) -> bool:
@@ -87,9 +97,11 @@ async def _from_unsplash(query: str) -> dict | None:
     url = "https://api.unsplash.com/search/photos"
     params = {
         "query": query,
-        "per_page": 12,
-        "orientation": "portrait",  # magazine covers are 3:4
+        "per_page": 15,
         "content_filter": "high",
+        # No orientation filter on purpose: forcing portrait starves niche
+        # industrial queries and pushes results toward generic filler. The cover
+        # uses object-fit:cover, so any orientation crops cleanly to 3:4.
     }
     headers = {"Authorization": f"Client-ID {_UNSPLASH_KEY}"}
     async with httpx.AsyncClient(timeout=_TIMEOUT) as c:
@@ -116,7 +128,7 @@ async def _from_unsplash(query: str) -> dict | None:
 
 async def _from_pexels(query: str) -> dict | None:
     url = "https://api.pexels.com/v1/search"
-    params = {"query": query, "per_page": 12, "orientation": "portrait"}
+    params = {"query": query, "per_page": 15}
     headers = {"Authorization": _PEXELS_KEY}
     async with httpx.AsyncClient(timeout=_TIMEOUT) as c:
         r = await c.get(url, params=params, headers=headers)
@@ -148,16 +160,17 @@ async def fetch(subject: str, tickers: list[str] | None = None) -> dict | None:
     """
     if not available():
         return None
-    query = _query_for(subject, tickers)
-    for name, fn, key in (("Unsplash", _from_unsplash, _UNSPLASH_KEY),
-                          ("Pexels", _from_pexels, _PEXELS_KEY)):
-        if not key:
-            continue
-        try:
-            hit = await fn(query)
-            if hit:
-                logger.info(f"weekly cover image from {name}: {query!r}")
-                return hit
-        except Exception as e:
-            logger.warning(f"weekly cover image {name} failed ({query!r}): {e}")
+    for query in _queries_for(subject, tickers):
+        for name, fn, key in (("Unsplash", _from_unsplash, _UNSPLASH_KEY),
+                              ("Pexels", _from_pexels, _PEXELS_KEY)):
+            if not key:
+                continue
+            try:
+                hit = await fn(query)
+                if hit:
+                    hit["query"] = query          # kept for relevance debugging
+                    logger.info(f"weekly cover image from {name}: {query!r}")
+                    return hit
+            except Exception as e:
+                logger.warning(f"weekly cover image {name} failed ({query!r}): {e}")
     return None
