@@ -4908,7 +4908,7 @@ async def thesis_page(slug: str):
 
 @app.post("/api/admin/publish-weekly")
 async def api_admin_publish_weekly(send_email: bool = False, week_start: str = "",
-                                   background: bool = True, dry: bool = False,
+                                   background: bool = True, dry: bool = False, probe: int = 0,
                                    user: Optional[dict] = Depends(_current_user),
                                    creds: Optional[HTTPAuthorizationCredentials] = Depends(_bearer)):
     """Admin: generate an editorial now (force), without waiting for the Sunday
@@ -4927,6 +4927,29 @@ async def api_admin_publish_weekly(send_email: bool = False, week_start: str = "
     if _ai_over_budget():
         return JSONResponse({"error": "AI budget cap reached — try again later."}, status_code=429)
     wk = (week_start or "").strip() or _week_start()
+
+    if probe:
+        # Isolate which part of the Opus request the API rejects. Fast (<2s), tiny
+        # token budget. probe=1 model+key only; 2 adds adaptive thinking; 3 adds
+        # the web_search tool. The first non-200 pinpoints the offending field.
+        import httpx as _hx
+        b = {"model": weekly_editorial_gen._MODEL, "max_tokens": 16,
+             "messages": [{"role": "user", "content": "ping"}]}
+        if probe >= 2:
+            b["thinking"] = {"type": "adaptive"}
+            b["max_tokens"] = 2048
+        if probe >= 3:
+            b["tools"] = [{"type": "web_search_20250305", "name": "web_search", "max_uses": 1}]
+        try:
+            async with _hx.AsyncClient(timeout=20) as c:
+                rr = await c.post("https://api.anthropic.com/v1/messages",
+                    headers={"x-api-key": weekly_editorial_gen._KEY,
+                             "anthropic-version": "2023-06-01",
+                             "content-type": "application/json"}, json=b)
+            return JSONResponse({"probe": probe, "model": weekly_editorial_gen._MODEL,
+                                 "status": rr.status_code, "body": rr.text[:500]})
+        except Exception as e:
+            return JSONResponse({"probe": probe, "error": repr(e)})
 
     if dry:
         # Fast diagnostic: run the whole pre-AI pipeline and report where (if
