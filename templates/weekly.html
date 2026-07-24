@@ -108,8 +108,12 @@
     /* drop cap only on the feature's opening page, not every paged section */
     .article.lead>p:first-of-type::first-letter{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:3.3em;line-height:.82;float:left;margin:6px 10px 0 0;color:var(--blue)}
     @media print{ .stat,.scenc,.chart{break-inside:avoid} .stat::before,.stat-v .up,.stat-v .down,.dn-dot{-webkit-print-color-adjust:exact;print-color-adjust:exact} }
+    /* report-grade PDF: sensible page margins so "⬇ PDF" (window.print) reads
+       as a document, not a screenshot of the page. */
+    @page{ margin:15mm 13mm 16mm; }
     @media print{
       .top,.actionbar,.cta{display:none!important}
+      html,body{-webkit-print-color-adjust:exact;print-color-adjust:exact}
       body{background:#fff}
       .wrap{max-width:100%;padding:0 8px}
       .article{font-size:12.5px;line-height:1.55}

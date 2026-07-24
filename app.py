@@ -1286,6 +1286,27 @@ async def sitemap_xml():
     except Exception:
         pass
 
+    # Weekly magazine — newsstand + every signed edition (permalinks)
+    parts.append(
+        f'  <url><loc>{SITE_ORIGIN}/weekly</loc>'
+        f'<changefreq>weekly</changefreq><priority>0.85</priority><lastmod>{today}</lastmod></url>'
+    )
+    try:
+        for _ed in (_weekly_store.list_editions(limit=200) or []):
+            _wk = (_ed.get("week_start") or "").strip()
+            if not _wk:
+                continue
+            _sl = ((_ed.get("slug") or "").strip()
+                   or _weekly_slug(_ed.get("title") or "", _wk))
+            _loc = f'{SITE_ORIGIN}/weekly/{_wk}' + (f'/{_sl}' if _sl else '')
+            parts.append(
+                f'  <url><loc>{_loc}</loc>'
+                f'<changefreq>monthly</changefreq><priority>0.75</priority>'
+                f'<lastmod>{_wk}</lastmod></url>'
+            )
+    except Exception:
+        pass
+
     # Research articles
     for art in _BLOG_ARTICLES:
         aid = art.get("id")
@@ -4729,11 +4750,99 @@ async def api_weekly_editorials(limit: int = 52):
                         headers={"Cache-Control": "public, max-age=600, s-maxage=1800"})
 
 
-def _weekly_html_response():
+def _weekly_inject_seo(html: str, week_start: str = "", slug: str = "") -> str:
+    """Server-side per-issue SEO for the weekly magazine.
+
+    The page is a client-rendered SPA, so without this every edition serves the
+    same generic <head> — invisible to crawlers and giving shared links no card.
+    Here we look the edition up server-side and (a) replace the generic
+    <title>/description with this issue's, and (b) inject canonical + Open Graph +
+    Twitter + Article JSON-LD. og:image is the issue's cover photo when present, so
+    fixing covers also fixes the share card. Falls back to newsstand-level tags for
+    /weekly (no week) or an unknown edition. Best-effort: any error → unchanged html.
+    """
+    import json as _json
+    import re as _re
+    from html import escape as _esc
     try:
-        return HTMLResponse(content=_with_analytics(WEEKLY_HTML.read_text(encoding="utf-8")))
+        default_img = f"{SITE_ORIGIN}/static/icons/icon-512.png"
+        art = None
+        if week_start:
+            try:
+                art = (_weekly_store.get(week_start) or {}).get("article")
+            except Exception:
+                art = None
+
+        if art:
+            title = (art.get("title") or "").strip() or "The Weekly Editorial"
+            desc = ((art.get("standfirst") or art.get("house_view") or "").strip()[:300]
+                    or "TickerMover's signed weekly editorial.")
+            aslug = (art.get("slug") or slug or "").strip()
+            canon = f"{SITE_ORIGIN}/weekly/{week_start}" + (f"/{aslug}" if aslug else "")
+            cover = art.get("cover_image") if isinstance(art.get("cover_image"), dict) else {}
+            img = (cover.get("url") or "").strip() or default_img
+            img_alt = (cover.get("alt") or "").strip() or title
+            subject = (art.get("subject") or "").strip()
+            page_title = f"{title} — The Weekly · TickerMover"
+            og_type = "article"
+            ld = {
+                "@context": "https://schema.org", "@type": "Article",
+                "headline": title[:110], "description": desc, "image": [img],
+                "datePublished": week_start, "dateModified": week_start,
+                "articleSection": subject or "Markets", "url": canon,
+                "mainEntityOfPage": {"@type": "WebPage", "@id": canon},
+                "author": {"@type": "Organization", "name": "TickerMover", "url": SITE_ORIGIN},
+                "publisher": {"@type": "Organization", "name": "TickerMover",
+                              "logo": {"@type": "ImageObject", "url": default_img}},
+            }
+        else:
+            title = "The Weekly — TickerMover"
+            desc = ("TickerMover's signed weekly editorial — a long-form, data-grounded "
+                    "deep-dive into the week's most important sector or stock.")
+            canon = f"{SITE_ORIGIN}/weekly"
+            img, img_alt = default_img, "TickerMover — The Weekly"
+            page_title, og_type = title, "website"
+            ld = {"@context": "https://schema.org", "@type": "CollectionPage",
+                  "name": title, "description": desc, "url": canon,
+                  "isPartOf": {"@type": "WebSite", "name": "TickerMover", "url": SITE_ORIGIN}}
+
+        e_title, e_desc = _esc(page_title, quote=True), _esc(desc, quote=True)
+        e_img, e_img_alt = _esc(img, quote=True), _esc(img_alt, quote=True)
+
+        html = _re.sub(r"<title>.*?</title>", f"<title>{e_title}</title>",
+                       html, count=1, flags=_re.S)
+        html = _re.sub(r'<meta\s+name="description"[^>]*>',
+                       f'<meta name="description" content="{e_desc}">', html, count=1)
+
+        tags = [
+            f'<link rel="canonical" href="{canon}">',
+            '<meta property="og:site_name" content="TickerMover">',
+            f'<meta property="og:type" content="{og_type}">',
+            f'<meta property="og:title" content="{e_title}">',
+            f'<meta property="og:description" content="{e_desc}">',
+            f'<meta property="og:url" content="{canon}">',
+            f'<meta property="og:image" content="{e_img}">',
+            f'<meta property="og:image:alt" content="{e_img_alt}">',
+            '<meta name="twitter:card" content="summary_large_image">',
+            f'<meta name="twitter:title" content="{e_title}">',
+            f'<meta name="twitter:description" content="{e_desc}">',
+            f'<meta name="twitter:image" content="{e_img}">',
+            f'<script type="application/ld+json">{_json.dumps(ld, ensure_ascii=False)}</script>',
+        ]
+        if "</head>" in html:
+            html = html.replace("</head>", "  " + "\n  ".join(tags) + "\n</head>", 1)
+        return html
+    except Exception as e:
+        logger.warning(f"weekly SEO injection skipped: {e}")
+        return html
+
+
+def _weekly_html_response(week_start: str = "", slug: str = ""):
+    try:
+        html = WEEKLY_HTML.read_text(encoding="utf-8")
     except FileNotFoundError:
         return HTMLResponse(content="<h2>templates/weekly.html not found</h2>", status_code=500)
+    return HTMLResponse(content=_with_analytics(_weekly_inject_seo(html, week_start, slug)))
 
 
 @app.get("/weekly", response_class=HTMLResponse)
@@ -4745,15 +4854,16 @@ async def weekly_page():
 # SEO-friendly per-issue permalinks:  /weekly/2026-07-13/communication-services-...
 # The Monday date is the lookup key; the trailing slug is human/search-readable and
 # not validated (the client renders from ?week / the path). Both shapes serve the
-# same single-page app, which reads the week from the path.
+# same single-page app, which reads the week from the path. The server injects
+# per-issue <head> SEO (see _weekly_inject_seo) so each edition is crawlable/shareable.
 @app.get("/weekly/{week_start}", response_class=HTMLResponse)
 async def weekly_issue_short(week_start: str):
-    return _weekly_html_response()
+    return _weekly_html_response(week_start)
 
 
 @app.get("/weekly/{week_start}/{slug}", response_class=HTMLResponse)
 async def weekly_issue(week_start: str, slug: str):
-    return _weekly_html_response()
+    return _weekly_html_response(week_start, slug)
 
 
 # ── Future Heroes — curated private-company (pre-IPO) valuation list ──

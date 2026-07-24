@@ -1,11 +1,15 @@
 """
 TickerMover — the signed WEEKLY EDITORIAL generator (Claude Opus 4.8).
 
-Writes one long-form (~1800-2400 word) buy-side-strategist deep-dive per week,
+Writes one long-form (~2500-3800 word) buy-side-strategist deep-dive per week,
 in the spirit of a top independent research editorial: a provocative title
 question, the stakes, segment-by-segment analysis, the bull case, the bear case,
 and OUR house view — all grounded in our own data (scores, prices, sector moves,
 fundamentals), with web search used ONLY for real-world context/news.
+
+Written to a McKinsey-style consulting method (answer-first / pyramid principle,
+MECE structure, action-title headings, and a "so what?" test on every section)
+so each issue reads as a decision-ready report, not a research summary.
 
 The subject (a heating-up / under-pressure SECTOR, or a marquee STOCK from Best
 Ideas / Prime) is chosen upstream by the deterministic selector in app.py; this
@@ -36,6 +40,117 @@ _CITE_RE = re.compile(r"</?cite[^>]*>", re.IGNORECASE)
 def _nc(s: str) -> str:
     return _CITE_RE.sub("", s or "")
 
+
+# ── Sanitizers for the illustrated-magazine fields ──────────────────────────
+# Opus is asked to emit cover_lines / cover_splash / stat_tiles / charts /
+# week_updates / scenarios and the template renders all of them, but the model
+# output is untrusted: coerce every field to the exact shape the template reads,
+# strip <cite> tags (these render directly), and clamp counts/lengths so a
+# malformed reply degrades to empty rather than corrupting a stored edition.
+def _s(v, n: int = 200) -> str:
+    return _nc(str(v if v is not None else "").strip())[:n]
+
+
+def _num(x):
+    try:
+        return float(x)
+    except (TypeError, ValueError):
+        return None
+
+
+def _clean_cover_lines(v) -> list[str]:
+    out = [s for s in (_s(x, 55) for x in (v or [])) if s]
+    return out[:4]
+
+
+def _clean_cover_splash(v):
+    if not isinstance(v, dict):
+        return None
+    ticker = _s(v.get("ticker"), 8).upper()
+    if not ticker:
+        return None
+    out = {"ticker": ticker, "verdict": _s(v.get("verdict"), 16)}  # keep verdict case
+    score = _num(v.get("score"))
+    if score is not None:
+        out["score"] = max(0, min(100, int(score)))
+    return out
+
+
+def _clean_stat_tiles(v) -> list[dict]:
+    out = []
+    for x in (v or []):
+        if not isinstance(x, dict):
+            continue
+        value, label = _s(x.get("value"), 24), _s(x.get("label"), 48)
+        if not value or not label:
+            continue
+        d = _s(x.get("dir"), 8).lower()
+        out.append({"value": value, "label": label, "sub": _s(x.get("sub"), 40),
+                    "dir": d if d in ("up", "down", "flat") else "flat"})
+    return out[:4]
+
+
+def _clean_charts(v) -> list[dict]:
+    out = []
+    for c in (v or []):
+        if not isinstance(c, dict):
+            continue
+        bars = []
+        for b in (c.get("bars") or []):
+            if not isinstance(b, dict):
+                continue
+            val, label = _num(b.get("value")), _s(b.get("label"), 32)
+            if val is None or not label:
+                continue
+            bars.append({"label": label, "value": val, "hi": bool(b.get("hi"))})
+        if not bars:
+            continue
+        t = _s(c.get("type"), 8).lower()
+        out.append({"title": _s(c.get("title"), 80),
+                    "type": t if t in ("bar", "donut") else "bar",
+                    "unit": _s(c.get("unit"), 8), "note": _s(c.get("note"), 120),
+                    "bars": bars[:12]})
+    return out[:4]
+
+
+def _clean_week_updates(v) -> dict:
+    if not isinstance(v, dict):
+        return {"engine": [], "market": []}
+    engine = []
+    for x in (v.get("engine") or []):
+        if not isinstance(x, dict):
+            continue
+        headline = _s(x.get("headline"), 60)
+        if not headline:
+            continue
+        engine.append({"kind": _s(x.get("kind"), 8).lower() or "book",
+                       "ticker": _s(x.get("ticker"), 8).upper(), "headline": headline,
+                       "detail": _s(x.get("detail"), 200), "metric": _s(x.get("metric"), 40)})
+    market = []
+    for x in (v.get("market") or []):
+        if not isinstance(x, dict):
+            continue
+        headline = _s(x.get("headline"), 60)
+        if not headline:
+            continue
+        market.append({"tag": _s(x.get("tag"), 16) or "Market", "headline": headline,
+                       "detail": _s(x.get("detail"), 200)})
+    return {"engine": engine[:6], "market": market[:5]}
+
+
+def _clean_scenarios(v) -> list[dict]:
+    out = []
+    for x in (v or []):
+        if not isinstance(x, dict):
+            continue
+        case, thesis = _s(x.get("case"), 8).title(), _s(x.get("thesis"), 200)
+        if case not in ("Bear", "Base", "Bull") or not thesis:
+            continue
+        out.append({"case": case, "prob": _s(x.get("prob"), 8), "thesis": thesis,
+                    "trigger": _s(x.get("trigger"), 200)})
+    return out[:3]
+
+
 logger = logging.getLogger(__name__)
 
 _KEY = os.environ.get("ANTHROPIC_API_KEY", "").strip()
@@ -62,17 +177,28 @@ chosen from our live signals, plus a GROUND-TRUTH data block (our Alpha Scores, 
 prices, weekly sector moves, fundamentals, analyst context, and our own conviction / \
 track-record). Build the whole report around that subject.
 
-STRUCTURE — ANSWER-FIRST, MECE, evidence-dense (Markdown in body_markdown):
-- Do NOT repeat the bottom-line verdict at the very top (it is carried in `house_view` \
-and shown as the answer-first box). Open with the stakes — why this matters NOW.
-- 5-7 sections, each a `##` heading written ANSWER-FIRST: the heading STATES the \
-section's conclusion as a claim (e.g. "## Demand is structural, not a discount mirage" \
-— never "## Demand"). Under each: a tight paragraph plus bullets of evidence.
+METHOD — write to the McKinsey consulting standard. Four principles govern the whole piece:
+- ANSWER FIRST (pyramid principle): state the take, THEN the evidence that supports it — \
+never make the reader earn the conclusion. Each section is a mini-pyramid: claim, then proof.
+- MECE: the sections partition the argument with no overlaps and no gaps.
+- ACTION-TITLE HEADINGS: every `##` heading — and every chart `note` — states the INSIGHT, \
+not the topic ("## Demand is structural, not a discount mirage", never "## Demand").
+- THE "SO WHAT?" TEST: every paragraph, table, and chart must answer "so what does this mean \
+for the investor's decision?" If it doesn't, cut it. Consulting-grade = dense with signal, \
+no filler, no hedging boilerplate.
+
+STRUCTURE (Markdown in body_markdown):
+- Open with an SCQA hook — Situation, Complication, the Question this issue answers — i.e. \
+the stakes and why this matters NOW. Do NOT repeat the bottom-line verdict at the very top \
+(it is carried in `house_view` and shown as the answer-first box).
+- 5-7 `##` sections, each an action-title claim with a tight paragraph plus bullets of evidence.
 - Be MECE across: the market/driver, the data and what it says, the bull case, the bear \
 case, a scenario view, and what would change our mind.
 - Include 2-4 Markdown DATA TABLES that turn numbers into a clear read (e.g. \
 Name | Alpha Score | Grade | What it means; PLUS a Bear/Base/Bull SCENARIO table listing \
 the conditions each case needs). Build tables ONLY from the GROUND-TRUTH block.
+- Be honest about the downside: name the bear case and the key risks plainly. An all-upside \
+piece reads as a pitch, not analysis — the balance is what earns trust.
 - Weave OUR house lens throughout: cite our Alpha Scores / grades / conviction and what \
 our model is doing — this is what makes it OURS.
 - Close with a final `## What to watch — our positioning` section: the crisp HOUSE VIEW \
@@ -244,6 +370,14 @@ async def generate(angle: dict, ground: dict) -> dict | None:
         "tickers":       [str(x).strip().upper() for x in (obj.get("tickers") or [])][:8],
         "subject":       (obj.get("subject") or angle.get("label") or "").strip()[:120],
         "subject_type":  angle.get("type"),
+        # Illustrated-magazine fields — asked for in _SYSTEM and rendered by the
+        # template; must be propagated here or the cover/report render bare.
+        "cover_lines":   _clean_cover_lines(obj.get("cover_lines")),
+        "cover_splash":  _clean_cover_splash(obj.get("cover_splash")),
+        "stat_tiles":    _clean_stat_tiles(obj.get("stat_tiles")),
+        "charts":        _clean_charts(obj.get("charts")),
+        "week_updates":  _clean_week_updates(obj.get("week_updates")),
+        "scenarios":     _clean_scenarios(obj.get("scenarios")),
         "sources":       sources,
         "model":         _MODEL,
         "status":        "ready",
