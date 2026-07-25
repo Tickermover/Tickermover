@@ -143,6 +143,9 @@
     .page.cover-pg{position:relative;padding:0;overflow:hidden;color:#fff;border:none;display:flex}
     .cover-pg .cp-photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0}
     .cover-pg .cp-scrim{position:absolute;inset:0;z-index:1;background:linear-gradient(180deg,rgba(4,10,30,.45) 0%,rgba(4,10,30,.15) 40%,rgba(4,10,30,.88) 100%)}
+    /* magazine-cover scrim (only added when there's a photo) — darkens a busy photo
+       behind the masthead/cover-lines/headline so the type always reads cleanly */
+    .cover-pg .cov-scrim{position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(180deg,rgba(6,11,28,.62) 0%,rgba(6,11,28,.30) 30%,rgba(6,11,28,.36) 56%,rgba(6,11,28,.90) 100%)}
     .cover-pg .cp-in{position:relative;z-index:2;display:flex;flex-direction:column;padding:30px;width:100%}
     .cover-pg .cp-title{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:clamp(26px,3.4vw,38px);line-height:1.06;letter-spacing:-.015em;margin:auto 0 12px;text-shadow:0 2px 18px rgba(0,0,0,.5)}
     .cover-pg .cp-stand{font-size:15.5px;line-height:1.5;opacity:.94;margin:0 0 16px;max-width:52ch}
@@ -214,7 +217,7 @@
     .hero-img img{width:100%;height:100%;object-fit:cover;display:block}
     .hero-credit{font-size:11.5px;color:#94a3b8;margin:0 0 20px}
     .hero-credit a{color:#94a3b8;text-decoration:underline}
-    .cover::before{content:"";position:absolute;inset:0;z-index:1;background:linear-gradient(180deg,rgba(0,0,0,.44) 0%,rgba(0,0,0,.04) 28%,rgba(0,0,0,.12) 58%,rgba(0,0,0,.74) 100%)}
+    .cover::before{content:"";position:absolute;inset:0;z-index:1;background:linear-gradient(180deg,rgba(0,0,0,.54) 0%,rgba(0,0,0,.12) 26%,rgba(0,0,0,.22) 56%,rgba(0,0,0,.82) 100%)}
     .cover.featured{box-shadow:0 18px 44px -16px rgba(9,20,60,.62),0 0 0 2px rgba(255,255,255,.72)}
     .cov-in{position:absolute;inset:0;z-index:2;display:flex;flex-direction:column;padding:15px 15px 13px}
     /* masthead */
@@ -476,7 +479,7 @@
       var img=d.cover_image||null, grad='linear-gradient(155deg,'+g[0]+' 0%,'+g[1]+' 100%)';
       var no=issueNo(d.week_start);
       var art=coverArt(seed,glyph)+((img&&img.url)
-        ? '<img class="cov-photo" src="'+esc(img.url)+'" alt="'+esc(img.alt||subj||'')+'"><div class="cov-tint" style="background:'+grad+'"></div>' : '');
+        ? '<img class="cov-photo" src="'+esc(img.url)+'" alt="'+esc(img.alt||subj||'')+'"><div class="cov-tint" style="background:'+grad+'"></div><div class="cov-scrim"></div>' : '');
       var lines=(d.cover_lines||[]).slice(0,3).map(function(t,k){
         return '<li style="--kick:'+COV_KICK[k%3]+'"><span class="cov-kick">'+COV_KLAB[k%3]+'</span>'+
                '<span class="cov-line">'+esc(stripCites(t))+'</span></li>'; }).join('');
