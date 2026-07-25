@@ -15358,15 +15358,17 @@ function secgComputeAdjacency(names, edges){
 // cycle-safe via an iteration cap. Nodes touched by no flow edge sit mid-canvas.
 function secgComputeDepth(names, edges){
   const flow = edges.filter(e => e.type !== 'adjacent');
-  const dep = {}; names.forEach(n => { dep[n] = 0; });
-  const iters = Math.min(names.length, 12);
-  for (let k = 0; k < iters; k++){
+  const CAP = 6;                                 // at most ~6 columns; also bounds cycles
+  let dep = {}; names.forEach(n => { dep[n] = 0; });
+  for (let k = 0; k < CAP; k++){
+    const nd = Object.assign({}, dep);           // read from the previous pass => one hop/iter (cycle-safe)
     let changed = false;
     flow.forEach(e => {
-      if (dep[e.source] != null && dep[e.target] != null && dep[e.target] < dep[e.source] + 1){
-        dep[e.target] = dep[e.source] + 1; changed = true;
+      if (dep[e.source] != null && nd[e.target] < dep[e.source] + 1){
+        nd[e.target] = Math.min(CAP, dep[e.source] + 1); changed = true;
       }
     });
+    dep = nd;
     if (!changed) break;
   }
   let maxD = 0; names.forEach(n => { if (dep[n] > maxD) maxD = dep[n]; });
