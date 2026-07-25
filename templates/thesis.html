@@ -206,7 +206,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
   <div class="money" id="money" style="display:none"></div>
 
   <div class="movers" id="movers" style="display:none">
-    <div class="movers-h"><b>Biggest implied movers</b><span id="movers-sub"></span></div>
+    <div class="movers-h"><b>Biggest share of landed value</b><span id="movers-sub"></span></div>
     <div id="movers-list"></div>
   </div>
 
@@ -228,7 +228,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
   var slider = document.getElementById("slider");
   var readout = document.getElementById("readout");
   var chain = document.getElementById("chain");
-  var LAYERS = [], EXP_W = {hi:1.0, mid:0.55, lo:0.22};
+  var LAYERS = [], SHARES = {}, COMP = {};
 
   function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
   function signed(v){ return (v>0?"+":"") + v.toFixed(0) + "%"; }
@@ -289,28 +289,14 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
     document.getElementById("standfirst").textContent = d.standfirst || "";
     document.title = (d.title || "Thesis Map") + " — TickerMover";
 
-    var ctl = d.control || {};
-    document.getElementById("control-label").textContent = ctl.label || "Driver, year over year";
-    slider.min = (ctl.min!=null?ctl.min:-30);
-    slider.max = (ctl.max!=null?ctl.max:70);
-    slider.step = (ctl.step!=null?ctl.step:5);
-    slider.value = (ctl.value!=null?ctl.value:20);
-    document.getElementById("scale-lo").textContent = slider.min + "%";
-    document.getElementById("scale-hi").textContent = "+" + slider.max + "%";
-    // scenario presets spanning the range
-    var lo=+slider.min, hi=+slider.max;
-    var scn=[["Downturn",Math.round(lo*0.6/5)*5],["Flat",0],["Base",Math.round(hi*0.35/5)*5],["Boom",Math.round(hi*0.8/5)*5]];
-    document.getElementById("presets").innerHTML = scn.map(function(s){
-      return '<button class="preset" data-v="'+s[1]+'">'+s[0]+' · '+(s[1]>0?"+":"")+s[1]+'%</button>';
-    }).join("");
-    document.getElementById("control").style.display = "";
+    // Share model — no capex-growth slider; this map shows REALIZED share, not a forecast.
     document.getElementById("movers").style.display = "";
 
     LAYERS = d.layers || [];
     chain.innerHTML =
-      '<h2 class="sec-h">The chain</h2>'+
-      '<p class="sec-sub">The money doesn\'t hit every layer at once — it reaches a supplier\'s <b>reported revenue</b> in waves, tagged here from <b>Now</b> at the top to quarters out below. One thing this map is <b>not</b> saying: that the later layers are un-priced bargains. Markets move on expectations, so many of these names have already run hard — see &ldquo;Who\'s gained so far&rdquo; below. The lag is about <b>when revenue lands, not when the stock moves</b>. Tap any company for the full read.</p>'+
-      (d.as_of?'<p class="sec-asof"><span class="asof-dot"></span>Lag &amp; exposure are our estimates <b>as of '+fmtAsOf(d.as_of)+'</b> — meaning the forward layers\' <b>revenue</b> hasn\'t landed yet, though the market may already be pricing it. Each company\'s price and live read update below.</p>':'')+
+      '<h2 class="sec-h">Where the value lands</h2>'+
+      '<p class="sec-sub">A map of <b>where the money has already landed</b> — each layer\'s and each company\'s <b>share of the AI-datacenter revenue</b> the chain captures today. Share = a company\'s trailing revenue weighted by how much of it depends on AI capex. It is <b>descriptive, not a forecast</b>: it shows who captures the spend <b>now</b>, and makes no claim about future upside — many of these names have already run hard (see &ldquo;Who\'s gained so far&rdquo; below). Tap any company for the full read.</p>'+
+      (d.as_of?'<p class="sec-asof"><span class="asof-dot"></span>Revenue is <b>live</b>; the exposure weights are our estimates <b>as of '+fmtAsOf(d.as_of)+'</b>, and a few names use a flagged revenue estimate where our universe doesn\'t cover them. Each company\'s price and read update live below.</p>':'')+
       LAYERS.map(function(L,i){
         var nm = L.names || [];
         var hiN = nm.filter(function(c){return c.exposure==="hi";}).length;
@@ -330,10 +316,9 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
           '</div>';
         return '<section class="layer" style="--lc:'+esc(L.color||"var(--blue)")+'">'+
           '<div class="layer-meta"><span class="spine"></span><span class="node"></span>'+
-            '<span class="layer-idx">'+esc(L.id)+' · lag '+L.lag+'Q</span>'+
+            '<span class="layer-idx">'+esc(L.id)+'</span>'+
             '<h3 class="layer-name">'+esc(L.name)+'</h3>'+
-            '<div class="layer-when-badge '+(L.lag===0?"first":"")+'"><span class="lw-k">Money arrives</span><span class="lw-v">'+whenBig(L.lag)+'</span><span class="lw-h">'+whenHorizon(L.lag)+'</span></div>'+
-            '<p class="layer-lag">'+esc(L.lagText)+'</p>'+
+            '<div class="layer-when-badge '+(i===0?"first":"")+'"><span class="lw-k">Share of landed value</span><span class="lw-v" data-lshare="'+i+'">—</span><span class="lw-h">of AI-revenue captured</span></div>'+
             sum+
           '</div>'+
           '<div>'+
@@ -368,7 +353,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
     document.getElementById("how").textContent = d.how || "";
     document.getElementById("disclaimer").textContent = d.disclaimer || "";
     document.getElementById("foot").style.display = "";
-    render();
+    loadShares();
     loadPerf();
   }
 
@@ -394,47 +379,47 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
     }).catch(function(){ el.style.display="none"; });
   }
 
-  function render(){
-    var g = +slider.value;
-    readout.innerHTML = (g>0?"+":"") + g + '<small>%</small>';
-    document.querySelectorAll(".preset").forEach(function(b){ b.classList.toggle("on", +b.dataset.v===g); });
+  // Percent formatter for shares: whole number at/above 1%, one decimal below.
+  function pctShare(s){ var v=s*100; return (v>=1? v.toFixed(0) : v.toFixed(1)) + "%"; }
 
-    var movers = [];
-    LAYERS.forEach(function(L,i){
-      var eff = g * (1 - L.lag*0.07);
-      var fill = document.querySelector('[data-fill="'+i+'"]');
-      var frac = Math.min(1, Math.abs(eff)/Math.max(1,Math.abs(+slider.max)));
-      fill.className = "impact-fill " + (eff>0.5?"pos":(eff<-0.5?"neg":"pos"));
-      fill.style.width = (frac*50).toFixed(1) + "%";
-      fill.style.opacity = Math.abs(eff)<0.5 ? "0" : "1";
-      var lv = document.querySelector('[data-lval="'+i+'"]');
-      lv.textContent = signed(eff);
-      lv.className = "impact-val " + toneClass(eff) + "-t";
-      // per-company implied + collect for leaderboard
-      (L.names||[]).forEach(function(c,j){
-        var imp = eff * (EXP_W[c.exposure]||0.3);
-        var chip = document.querySelector('[data-imp="'+i+'-'+j+'"]');
-        chip.textContent = signed(imp);
-        chip.className = "co-imp " + toneClass(imp) + "-t";
-        movers.push({t:c.t, n:c.n, imp:imp});
+  // Share of LANDED value — realized and descriptive. Fills the layer badges, the
+  // layer/company share bars, and the leaderboard from /api/thesis-shares. No slider,
+  // no forecast: every number is "who captures the spend today".
+  function loadShares(){
+    fetch("/api/thesis-shares/"+encodeURIComponent(slug)).then(function(r){return r.json();}).then(function(d){
+      if(!d || d.available===false){ return; }
+      (d.companies||[]).forEach(function(c){ SHARES[c.t]=c.share; COMP[c.t]=c; });
+      // layer badges + layer share bars
+      (d.layers||[]).forEach(function(L,i){
+        var lv = document.querySelector('[data-lshare="'+i+'"]');
+        if(lv) lv.textContent = pctShare(L.share);
+        var fill = document.querySelector('[data-fill="'+i+'"]');
+        if(fill){ fill.className="impact-fill pos"; fill.style.opacity="1";
+          fill.style.width = Math.max(2, L.share*100).toFixed(1)+"%"; }
+        var cap = document.querySelector('[data-lval="'+i+'"]');
+        if(cap){ cap.textContent = pctShare(L.share); cap.className="impact-val share-t"; }
       });
-      var layerEl = fill.closest(".layer");
-      layerEl.classList.remove("lit"); void layerEl.offsetWidth;
-      setTimeout(function(){ layerEl.classList.add("lit"); }, L.lag*120);
-    });
-
-    // leaderboard — biggest implied moves, by magnitude, colored by direction
-    document.getElementById("movers-sub").textContent =
-      "at " + (g>0?"+":"") + g + "% · exposure-weighted, illustrative";
-    movers.sort(function(a,b){ return Math.abs(b.imp)-Math.abs(a.imp); });
-    var top = movers.slice(0,6);
-    var maxAbs = Math.max.apply(null, top.map(function(m){return Math.abs(m.imp);}).concat([1]));
-    document.getElementById("movers-list").innerHTML = top.map(function(m,i){
-      var pos = m.imp>=0, w = Math.max(2, Math.abs(m.imp)/maxAbs*100);
-      return '<div class="mv"><span class="mv-tk">'+esc(m.t)+'<small>'+esc(m.n)+'</small></span>'+
-        '<span class="mv-track"><span class="mv-fill '+(pos?"pos":"neg")+'" style="width:'+w.toFixed(1)+'%;background:'+barCss(i,top.length,pos)+'"></span></span>'+
-        '<span class="mv-val '+(pos?"pos-t":"neg-t")+'">'+signed(m.imp)+'</span></div>';
-    }).join("");
+      // per-company share chips
+      LAYERS.forEach(function(L,i){ (L.names||[]).forEach(function(c,j){
+        var chip = document.querySelector('[data-imp="'+i+'-'+j+'"]');
+        if(!chip) return;
+        var s = SHARES[c.t];
+        chip.textContent = (s==null? "" : pctShare(s));
+        chip.className = "co-imp share-t";
+      }); });
+      // leaderboard — biggest share of landed value (real, always positive)
+      var subEl = document.getElementById("movers-sub");
+      if(subEl) subEl.textContent = "by AI-attributable revenue · exposure-weighted estimate";
+      var top = (d.companies||[]).slice(0,6);
+      var maxS = Math.max.apply(null, top.map(function(m){return m.share;}).concat([0.01]));
+      var listEl = document.getElementById("movers-list");
+      if(listEl) listEl.innerHTML = top.map(function(m,i){
+        var w = Math.max(2, m.share/maxS*100);
+        return '<div class="mv"><span class="mv-tk">'+esc(m.t)+'<small>'+esc(m.n)+(m.rev_est?' · est':'')+'</small></span>'+
+          '<span class="mv-track"><span class="mv-fill pos" style="width:'+w.toFixed(1)+'%;background:'+barCss(i,top.length,true)+'"></span></span>'+
+          '<span class="mv-val pos-t">'+pctShare(m.share)+'</span></div>';
+      }).join("");
+    }).catch(function(){});
   }
 
   chain.addEventListener("click", function(e){
@@ -453,8 +438,9 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
     d.className = "detail"; d.dataset.key = co.dataset.l+"-"+co.dataset.c;
     d.innerHTML =
       '<h4>'+esc(c.n)+'</h4>'+
-      '<p class="sub">'+esc(c.t)+' · '+esc(L.id)+' '+esc(L.name)+' · lag '+L.lag+'Q</p>'+
+      '<p class="sub">'+esc(c.t)+' · '+esc(L.id)+' '+esc(L.name)+(SHARES[c.t]!=null?' · '+pctShare(SHARES[c.t])+' of landed value':'')+'</p>'+
       '<div class="rows">'+
+        '<div><div class="row-k">Share of landed value</div><div class="row-v">'+(SHARES[c.t]!=null?(pctShare(SHARES[c.t])+((COMP[c.t]&&COMP[c.t].rev_est)?' · est':'')):'—')+'</div></div>'+
         '<div><div class="row-k">Capex exposure</div><div class="row-v">'+expLabel+'</div></div>'+
         '<div><div class="row-k">Cycle stage</div><div class="row-v">'+esc(c.stage)+'</div></div>'+
         '<div><div class="row-k">Customer concentration</div><div class="row-v">'+esc(c.concen)+'</div></div>'+
@@ -465,12 +451,6 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
     cos.parentElement.appendChild(d);
     loadLive(c.t, d);
   });
-
-  document.getElementById("presets").addEventListener("click", function(e){
-    var b = e.target.closest(".preset"); if(!b) return;
-    slider.value = b.dataset.v; render();
-  });
-  slider.addEventListener("input", render);
 
   fetch("/api/thesis-map/"+encodeURIComponent(slug)+"?v=2")
     .then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); })
