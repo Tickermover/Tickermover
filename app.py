@@ -5076,6 +5076,58 @@ async def api_thesis_perf(slug: str):
                         headers={"Cache-Control": "public, max-age=300, s-maxage=600"})
 
 
+@app.get("/api/thesis-shares/{slug}")
+async def api_thesis_shares(slug: str):
+    """Share of LANDED value across a chain thesis — descriptive, not predictive.
+
+    For each company: AI-attributable revenue = trailing revenue x its exposure-band
+    weight (share_weights in theses.json); share = that / the chain total, rolled up by
+    layer. Revenue is LIVE from the in-memory universe (revenue_ttm); the few names the
+    universe doesn't cover fall back to a flagged desk estimate (rev_ttm_est) or are
+    reported as excluded. No timing and no forecast — just who actually captures the
+    spend today, so the map can't be misread as 'money still coming downstream'."""
+    slug = (slug or "").lower().strip()
+    thesis = next((t for t in (_load_theses().get("theses") or [])
+                   if (t.get("slug") or "").lower() == slug and t.get("status") == "live"), None)
+    if not thesis:
+        return JSONResponse({"available": False, "slug": slug}, status_code=404)
+    weights = thesis.get("share_weights") or {"hi": 0.70, "mid": 0.35, "lo": 0.12}
+    uni = {x.get("ticker"): x for x in _universe_data}
+    comps, excluded = [], []
+    for L in (thesis.get("layers") or []):
+        for c in (L.get("names") or []):
+            tk = c.get("t")
+            rev = (uni.get(tk) or {}).get("revenue_ttm")
+            est = False
+            if not rev:
+                rev = c.get("rev_ttm_est")
+                est = bool(rev)
+            if not rev:
+                excluded.append(tk)
+                continue
+            w = float(weights.get(c.get("exposure"), 0.2) or 0.2)
+            comps.append({
+                "t": tk, "n": c.get("n"), "layer": L.get("id"), "layer_name": L.get("name"),
+                "exposure": c.get("exposure"), "revenue_ttm": float(rev), "rev_est": est,
+                "ai_rev": float(rev) * w,
+            })
+    total = sum(x["ai_rev"] for x in comps) or 0.0
+    for x in comps:
+        x["share"] = (x["ai_rev"] / total) if total else 0.0
+    order = [L.get("id") for L in (thesis.get("layers") or [])]
+    lname = {L.get("id"): L.get("name") for L in (thesis.get("layers") or [])}
+    lsh: dict = {}
+    for x in comps:
+        lsh[x["layer"]] = lsh.get(x["layer"], 0.0) + x["share"]
+    layers = [{"id": lid, "name": lname.get(lid), "share": lsh.get(lid, 0.0)} for lid in order]
+    top = sorted(comps, key=lambda x: x["share"], reverse=True)
+    return JSONResponse(_clean({
+        "available": True, "slug": slug, "as_of": _load_theses().get("as_of"),
+        "total_ai_rev": total, "weights": {k: weights.get(k) for k in ("hi", "mid", "lo")},
+        "layers": layers, "companies": top, "excluded": excluded,
+    }), headers={"Cache-Control": "public, max-age=300, s-maxage=600"})
+
+
 @app.get("/theses", response_class=HTMLResponse)
 async def theses_hub_page():
     """Thesis Maps hub — gallery of interactive supply-chain explorers."""

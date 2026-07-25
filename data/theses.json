@@ -10,6 +10,7 @@
       "accent": "actually lands",
       "standfirst": "Every AI datacenter dollar moves down a chain, layer by layer, with a lag. Move the slider to a capex growth rate and watch it propagate. Dot brightness marks how much of a company's revenue is estimated to depend on that spend.",
       "control": { "label": "Hyperscaler capex growth, year over year", "min": -30, "max": 70, "value": 25, "step": 5 },
+      "share_weights": { "hi": 0.70, "mid": 0.35, "lo": 0.12, "_note": "AI-attributable fraction of trailing revenue by exposure band — a desk estimate, meant to be argued with." },
       "market": { "note": "Round estimates of combined hyperscaler (Microsoft, Alphabet, Amazon, Meta + others) AI-datacenter capex, as of mid-2026 — our read, meant to be argued with, not a precise figure.", "stats": [
         { "k": "Annual capex run-rate", "v": "~$500B/yr" },
         { "k": "Pledged 2024–27E", "v": "~$2T" },
@@ -22,13 +23,13 @@
             { "t": "AMD",  "n": "AMD",               "exposure": "mid", "stage": "Ramping",     "concen": "Moderate",                "note": "Accelerator share is the swing factor.", "watch": "MI-series datacenter GPU run-rate vs guidance." },
             { "t": "AVGO", "n": "Broadcom",          "exposure": "hi",  "stage": "Mature ramp", "concen": "High — custom ASIC",      "note": "Custom silicon plus networking. Sits in two layers.", "watch": "AI/custom-ASIC revenue mix and hyperscaler bookings." },
             { "t": "MRVL", "n": "Marvell",           "exposure": "hi",  "stage": "Ramping",     "concen": "High",                    "note": "Custom ASIC and optical DSP. Straddles L1 and L4.", "watch": "Custom-silicon design-win commentary + optical DSP." },
-            { "t": "TSM",  "n": "TSMC",              "exposure": "mid", "stage": "Mature ramp", "concen": "Moderate",                "note": "Capacity is the true upstream constraint.", "watch": "CoWoS advanced-packaging capacity and HPC revenue share." }
+            { "t": "TSM",  "n": "TSMC",              "exposure": "mid", "stage": "Mature ramp", "concen": "Moderate",                "note": "Capacity is the true upstream constraint.", "watch": "CoWoS advanced-packaging capacity and HPC revenue share.", "rev_ttm_est": 122000000000 }
           ] },
         { "id": "L2", "name": "Memory & HBM", "lag": 1, "color": "var(--l2)",
           "lagText": "About one quarter behind. Contract-priced, so cyclical.",
           "names": [
             { "t": "MU",   "n": "Micron",            "exposure": "mid", "stage": "Ramping", "concen": "Moderate", "note": "The listed HBM/DRAM proxy — datacenter memory demand drives the cycle.", "watch": "HBM bit-share and whether it's sold out forward." },
-            { "t": "SNDK", "n": "Sandisk",           "exposure": "lo",  "stage": "Early",   "concen": "Low",      "note": "Storage tier, later in the build order.", "watch": "Enterprise SSD pricing and datacenter storage demand." }
+            { "t": "SNDK", "n": "Sandisk",           "exposure": "lo",  "stage": "Early",   "concen": "Low",      "note": "Storage tier, later in the build order.", "watch": "Enterprise SSD pricing and datacenter storage demand.", "rev_ttm_est": 7500000000 }
           ] },
         { "id": "L3", "name": "Optical interconnect", "lag": 2, "color": "var(--l3)",
           "lagText": "Two quarters. Bandwidth demand converts to module orders.",
@@ -56,7 +57,7 @@
             { "t": "VRT",  "n": "Vertiv",            "exposure": "hi", "stage": "Mature ramp", "concen": "Moderate",   "note": "Datacenter thermal and power systems — a direct AI-buildout beneficiary.", "watch": "Order book and backlog — the leading indicator." },
             { "t": "ETN",  "n": "Eaton",             "exposure": "lo", "stage": "Ramping",     "concen": "Low",        "note": "Broad industrial base dilutes AI exposure.", "watch": "Datacenter electrical backlog vs the broad industrial mix." },
             { "t": "APLD", "n": "Applied Digital",   "exposure": "hi", "stage": "Early",       "concen": "Very high",  "note": "Neocloud HPC-datacenter operator — a capacity play, not a chipmaker.", "watch": "Financing terms and contracted capacity — not just demand." },
-            { "t": "NBIS", "n": "Nebius",            "exposure": "hi", "stage": "Early",       "concen": "High",       "note": "GPU-capacity reseller — effectively an AI-compute landlord.", "watch": "Contract length and GPU-capacity utilization." }
+            { "t": "NBIS", "n": "Nebius",            "exposure": "hi", "stage": "Early",       "concen": "High",       "note": "GPU-capacity reseller — effectively an AI-compute landlord.", "watch": "Contract length and GPU-capacity utilization.", "rev_ttm_est": 500000000 }
           ] }
       ],
       "how": "Layers are ordered by where money arrives, not by company size. The lag is the typical delay between a hyperscaler raising its capex guide and that spend showing up in a supplier's reported revenue. Exposure and cycle stage are qualitative bands, not precise figures — they are judgements from filings and earnings calls, and they are the part most worth arguing with. The 'signal to watch' is the single leading indicator we'd track for each name.",
