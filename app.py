@@ -5098,19 +5098,26 @@ async def api_thesis_shares(slug: str):
         for c in (L.get("names") or []):
             tk = c.get("t")
             u = uni.get(tk) or {}
-            rev = u.get("revenue_ttm")
-            est = False
-            if not rev:
-                rev = c.get("rev_ttm_est")
-                est = bool(rev)
-            if not rev:
+            live_rev = u.get("revenue_ttm")
+            rev = live_rev or c.get("rev_ttm_est")      # for display
+            # theme_rev = direct theme-attributable revenue override, for diversified
+            # names where (total revenue x exposure band) would badly overstate the
+            # slice this theme actually captures (e.g. NVDA in robotics, GM in EV).
+            theme_rev = c.get("theme_rev")
+            w = float(weights.get(c.get("exposure"), 0.2) or 0.2)
+            if theme_rev is not None:
+                ai = float(theme_rev)
+            elif rev:
+                ai = float(rev) * w
+            else:
                 excluded.append(tk)
                 continue
-            w = float(weights.get(c.get("exposure"), 0.2) or 0.2)
+            # flag when the share rests on a desk estimate (theme override or est revenue)
+            est = bool(theme_rev is not None or (not live_rev and c.get("rev_ttm_est")))
             comps.append({
                 "t": tk, "n": c.get("n"), "layer": L.get("id"), "layer_name": L.get("name"),
-                "exposure": c.get("exposure"), "revenue_ttm": float(rev), "rev_est": est,
-                "ai_rev": float(rev) * w,
+                "exposure": c.get("exposure"), "revenue_ttm": (float(rev) if rev else None), "rev_est": est,
+                "ai_rev": ai,
                 # live financials for the richer detail cards (None for est-only names)
                 "rev_growth": u.get("revenue_growth_yoy"), "gross_margin": u.get("gross_margin"),
                 "pe": u.get("pe_ratio") or u.get("forward_pe"),

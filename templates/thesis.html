@@ -199,6 +199,10 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 .foot{margin:40px 0 0;padding:24px 0 10px;border-top:1px solid var(--line);font-size:13px;color:var(--muted);line-height:1.6}
 .foot h5{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--ink);margin:0 0 6px}
 .foot p{margin:0 0 14px;max-width:74ch}
+.foot-grid{display:grid;grid-template-columns:1fr 1fr;gap:44px;align-items:start}
+.foot-grid .foot-col p{max-width:none}
+.foot-grid .disc{border-top:none;margin-top:0;padding-top:0}
+@media(max-width:760px){.foot-grid{grid-template-columns:1fr;gap:18px}}
 .cta{display:inline-block;margin-top:4px;font-size:13px;font-weight:700;color:#fff;background:var(--blue);padding:11px 18px;border-radius:11px;text-decoration:none}
 .cta:hover{background:var(--blue-d)}
 .disc{font-size:12px;color:var(--faint);line-height:1.55;margin-top:18px;border-top:1px solid var(--line);padding-top:14px;max-width:78ch}
@@ -247,10 +251,17 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
   <div class="chain" id="chain"><div class="loading">Loading map…</div></div>
 
   <footer class="foot" id="foot" style="display:none">
-    <h5>How to read this</h5>
-    <p id="how"></p>
-    <a class="cta" href="/theses">← Explore more thesis maps</a>
-    <p class="disc" id="disclaimer"></p>
+    <div class="foot-grid">
+      <div class="foot-col">
+        <h5>How to read this</h5>
+        <p id="how"></p>
+        <a class="cta" href="/theses">← Explore more thesis maps</a>
+      </div>
+      <div class="foot-col">
+        <h5>Important</h5>
+        <p class="disc" id="disclaimer"></p>
+      </div>
+    </div>
   </footer>
 </main>
 

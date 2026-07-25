@@ -960,7 +960,8 @@
               "stage": "Ramping",
               "concen": "Low",
               "note": "Legacy OEM with a real EV portfolio (Ultium) but ICE still funds it.",
-              "watch": "EV unit mix and Ultium loss-narrowing."
+              "watch": "EV unit mix and Ultium loss-narrowing.",
+              "theme_rev": 8000000000.0
             },
             {
               "t": "F",
@@ -969,7 +970,8 @@
               "stage": "Ramping",
               "concen": "Low",
               "note": "EV (Model e) is a small, loss-making slice of a large truck business.",
-              "watch": "Model e losses and EV volume vs the F-150 franchise."
+              "watch": "Model e losses and EV volume vs the F-150 franchise.",
+              "theme_rev": 6000000000.0
             },
             {
               "t": "RIVN",
@@ -1051,7 +1053,8 @@
               "stage": "Ramping",
               "concen": "High",
               "note": "Rare-earth magnets for EV motors — a magnet-supply-chain play.",
-              "watch": "NdPr pricing and magnet-plant ramp."
+              "watch": "NdPr pricing and magnet-plant ramp.",
+              "rev_ttm_est": 250000000.0
             }
           ]
         },
@@ -1093,7 +1096,8 @@
               "stage": "Ramping",
               "concen": "Low",
               "note": "High-voltage architecture and wiring — content per EV rises.",
-              "watch": "High-voltage bookings and per-vehicle content."
+              "watch": "High-voltage bookings and per-vehicle content.",
+              "theme_rev": 3000000000.0
             },
             {
               "t": "ON",
@@ -1112,7 +1116,8 @@
               "concen": "Low",
               "note": "Contract vehicle + powertrain supplier; broad auto base dilutes it.",
               "watch": "e-powertrain bookings vs the broad auto mix.",
-              "rev_ttm_est": 42000000000
+              "rev_ttm_est": 42000000000,
+              "theme_rev": 3000000000.0
             }
           ]
         }
@@ -1173,7 +1178,8 @@
               "stage": "Ramping",
               "concen": "Moderate",
               "note": "Owns Universal Robots + MiR (cobots/AMRs) alongside chip test.",
-              "watch": "Robotics segment growth vs the semi-test cycle."
+              "watch": "Robotics segment growth vs the semi-test cycle.",
+              "theme_rev": 400000000.0
             },
             {
               "t": "ROK",
@@ -1207,7 +1213,8 @@
               "stage": "Mature ramp",
               "concen": "Low",
               "note": "Motion & control (hydraulics, pneumatics, actuation).",
-              "watch": "Industrial order trends and aerospace mix."
+              "watch": "Industrial order trends and aerospace mix.",
+              "theme_rev": 5000000000.0
             },
             {
               "t": "AME",
@@ -1216,7 +1223,8 @@
               "stage": "Ramping",
               "concen": "Low",
               "note": "Precision motion and instruments across automation.",
-              "watch": "Organic order growth in automation end-markets."
+              "watch": "Organic order growth in automation end-markets.",
+              "theme_rev": 3000000000.0
             }
           ]
         },
@@ -1233,7 +1241,8 @@
               "concen": "Moderate",
               "note": "Machine vision, scanning and RFID — the sensing layer of automation.",
               "watch": "Machine-vision and RFID attach in warehouses/factories.",
-              "rev_ttm_est": 4800000000
+              "rev_ttm_est": 4800000000,
+              "theme_rev": 2000000000.0
             },
             {
               "t": "CGNX",
@@ -1252,7 +1261,8 @@
               "stage": "Ramping",
               "concen": "Low",
               "note": "Test & measurement that underpins automation and robotics dev.",
-              "watch": "Test demand tied to automation and comms."
+              "watch": "Test demand tied to automation and comms.",
+              "theme_rev": 1500000000.0
             }
           ]
         },
@@ -1277,7 +1287,8 @@
               "stage": "Mature ramp",
               "concen": "Low",
               "note": "Design and make software; manufacturing is a slice.",
-              "watch": "Make-segment growth vs the broad design base."
+              "watch": "Make-segment growth vs the broad design base.",
+              "theme_rev": 1500000000.0
             }
           ]
         },
@@ -1293,7 +1304,8 @@
               "stage": "Mature ramp",
               "concen": "High",
               "note": "Isaac/Omniverse + edge compute for robotics — small vs datacenter.",
-              "watch": "Robotics/edge platform traction (a fraction of DC)."
+              "watch": "Robotics/edge platform traction (a fraction of DC).",
+              "theme_rev": 1000000000.0
             },
             {
               "t": "HON",
@@ -1302,7 +1314,8 @@
               "stage": "Mature ramp",
               "concen": "Low",
               "note": "Warehouse automation (Intelligrated) inside a broad conglomerate.",
-              "watch": "Warehouse-automation backlog vs the diversified base."
+              "watch": "Warehouse-automation backlog vs the diversified base.",
+              "theme_rev": 4000000000.0
             }
           ]
         }
@@ -1618,7 +1631,8 @@
               "stage": "Ramping",
               "concen": "Moderate",
               "note": "Privileged-access and machine-identity leader.",
-              "watch": "Subscription-ARR mix and identity-security expansion."
+              "watch": "Subscription-ARR mix and identity-security expansion.",
+              "rev_ttm_est": 1000000000.0
             }
           ]
         },
@@ -1731,7 +1745,8 @@
               "stage": "Mature ramp",
               "concen": "Low",
               "note": "Merchant acquiring (Clover) + bank processing at scale.",
-              "watch": "Clover GPV growth and merchant net-revenue."
+              "watch": "Clover GPV growth and merchant net-revenue.",
+              "rev_ttm_est": 20000000000.0
             },
             {
               "t": "FIS",
@@ -1892,7 +1907,8 @@
               "stage": "Early",
               "concen": "Moderate",
               "note": "MariTide — a later-stage challenger with monthly dosing.",
-              "watch": "MariTide Phase 3 data and dosing profile."
+              "watch": "MariTide Phase 3 data and dosing profile.",
+              "theme_rev": 0.0
             },
             {
               "t": "VKTX",
@@ -1971,7 +1987,8 @@
               "concen": "High",
               "note": "Telehealth distribution/compounding of weight-loss meds.",
               "watch": "Weight-loss subscriber growth and regulatory risk.",
-              "rev_ttm_est": 1900000000
+              "rev_ttm_est": 1900000000,
+              "theme_rev": 1200000000.0
             }
           ]
         }
