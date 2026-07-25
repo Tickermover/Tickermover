@@ -83,6 +83,26 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 .winners-h{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}
 .winners-h b{font-family:var(--serif);font-weight:600;font-size:18px}
 .winners-h span{font-size:12px;color:var(--faint)}
+/* insights strip — computed "what the split tells you" */
+.insights{margin:14px 0 0;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px 20px 18px;box-shadow:0 1px 3px rgba(15,23,42,.05)}
+.insights-h{font-family:var(--serif);font-weight:600;font-size:18px;margin-bottom:13px}
+.ins-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(205px,1fr));gap:14px}
+.ins{border:1px solid var(--line);border-radius:12px;padding:13px 15px;background:#fbfcfe}
+.ins-v{font-family:var(--serif);font-weight:600;font-size:24px;color:var(--blue-d);line-height:1.05}
+.ins-t{font-size:12.5px;color:var(--muted);line-height:1.46;margin-top:5px}
+.ins-t b{color:var(--ink);font-weight:700}
+/* aggregate landed vs still-to-deploy band */
+.landed{margin-top:15px;border-top:1px solid var(--line);padding-top:14px}
+.landed-h{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+.landed-h b{font-size:12.5px;font-weight:800;color:var(--ink)}
+.landed-h span{font-size:11px;color:var(--faint)}
+.landed-bar{display:flex;height:16px;border-radius:5px;overflow:hidden;border:1px solid var(--line)}
+.landed-bar .seg-in{background:linear-gradient(90deg,#34d17a,var(--pos))}
+.landed-bar .seg-out{background:repeating-linear-gradient(45deg,#e7edf5,#e7edf5 6px,#eff3f8 6px,#eff3f8 12px)}
+.landed-key{display:flex;gap:20px;margin-top:9px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.landed-key i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.landed-key .k-in i{background:var(--pos)}.landed-key .k-out i{background:#d7dfe9}
+.landed-key b{font-weight:700;color:var(--ink)}
 
 /* chain */
 .chain{margin:26px 0 0;position:relative}
@@ -211,6 +231,8 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 
   <div class="winners" id="winners" style="display:none"></div>
 
+  <div class="insights" id="insights" style="display:none"></div>
+
   <div class="chain" id="chain"><div class="loading">Loading map…</div></div>
 
   <footer class="foot" id="foot" style="display:none">
@@ -335,16 +357,31 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
         '</section>';
       }).join("");
 
-    // "Follow the money" — curated market size for the thesis
+    // "Follow the money" — curated market size + the landed-vs-still-to-deploy split
     var mk = d.market;
     if(mk && mk.stats && mk.stats.length){
       var mEl = document.getElementById("money");
+      var depStat = mk.stats.filter(function(s){return s.bar!=null;})[0];
+      var pledgeStat = mk.stats.filter(function(s){return /pledge/i.test(s.k||"");})[0];
+      var landedHtml = "";
+      if(depStat){
+        var dep = Math.max(0,Math.min(100, +depStat.bar||0)), rem = 100-dep;
+        var pledged=null, pm=pledgeStat&&/([\d.]+)\s*([TB])/i.exec(pledgeStat.v||"");
+        if(pm){ pledged = parseFloat(pm[1]) * (pm[2].toUpperCase()==="T"?1e12:1e9); }
+        landedHtml =
+          '<div class="landed"><div class="landed-h"><b>Landed vs still to deploy</b>'+
+            (pledgeStat?'<span>of '+esc(pledgeStat.v)+' pledged 2024–27E</span>':'')+'</div>'+
+          '<div class="landed-bar"><div class="seg-in" style="width:'+dep+'%"></div><div class="seg-out" style="width:'+rem+'%"></div></div>'+
+          '<div class="landed-key"><span class="k-in"><i></i><b>Landed ~'+dep+'%</b>'+(pledged?' · '+fmtB(pledged*dep/100):'')+' <small>— what the shares below measure</small></span>'+
+            '<span class="k-out"><i></i><b>Still to deploy ~'+rem+'%</b>'+(pledged?' · '+fmtB(pledged*rem/100):'')+' <small>— flows through the same chain; markets already price the expectation</small></span></div></div>';
+      }
       mEl.innerHTML =
         '<div class="money-h"><b>Follow the money</b><span>the size of the prize</span></div>'+
         '<div class="money-stats">'+ mk.stats.map(function(s){
           return '<div class="money-stat"><div class="mo-v">'+esc(s.v)+'</div><div class="mo-k">'+esc(s.k)+'</div>'+
             (s.bar!=null?'<div class="mo-bar"><i style="width:'+Math.max(3,Math.min(100,s.bar))+'%"></i></div>':'')+'</div>';
         }).join("") +'</div>'+
+        landedHtml +
         (mk.note?'<div class="money-note">'+esc(mk.note)+'</div>':'');
       mEl.style.display = "";
     }
@@ -420,6 +457,25 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
           '<span class="mv-track"><span class="mv-fill pos" style="width:'+w.toFixed(1)+'%;background:'+barCss(i,top.length,true)+'"></span></span>'+
           '<span class="mv-val pos-t">'+pctShare(m.share)+'</span></div>';
       }).join("");
+      // ── insights strip: computed "what the split tells you" ──
+      var cos = (d.companies||[]);
+      var top3 = cos.slice(0,3).reduce(function(s,c){return s+c.share;},0);
+      var lays = d.layers||[];
+      var compute = lays[0]?lays[0].share:0, memory = lays[1]?lays[1].share:0;
+      var tail = lays.slice(2).reduce(function(s,L){return s+L.share;},0);
+      var top3n = cos.slice(0,3).map(function(c){return c.t;}).join(", ");
+      var ins = [
+        {v:pctShare(top3), t:'The <b>top 3 ('+esc(top3n)+') capture '+pctShare(top3)+'</b> of landed value — a scale game, not a broad basket.'},
+        {v:pctShare(compute), t:'<b>Compute silicon alone is '+pctShare(compute)+'</b> ('+fmtB(TOTAL*compute)+'). The money lands overwhelmingly at the top of the chain.'},
+        {v:pctShare(memory), t:'<b>Memory &amp; HBM is '+pctShare(memory)+'</b> — contract-priced and cyclical, the swing factor when the memory cycle turns.'},
+        {v:pctShare(tail), t:'The <b>rest of the chain is '+pctShare(tail)+'</b> combined — higher-beta names on a much smaller revenue base.'}
+      ];
+      var insEl = document.getElementById("insights");
+      if(insEl){
+        insEl.innerHTML = '<div class="insights-h">What the split tells you</div><div class="ins-grid">'+
+          ins.map(function(x){ return '<div class="ins"><div class="ins-v">'+x.v+'</div><div class="ins-t">'+x.t+'</div></div>'; }).join("")+'</div>';
+        insEl.style.display = "";
+      }
     }).catch(function(){});
   }
 
@@ -435,6 +491,19 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
     if(wasSame) return;
     co.setAttribute("aria-expanded","true");
     var expLabel = {hi:"High",mid:"Moderate",lo:"Low"}[c.exposure] || "—";
+    // richer card: live financials from the shares payload (null for est-only names)
+    var F = COMP[c.t] || {};
+    var pf = function(x){ return x==null?null:((x*100>=10||x*100<=-10)?(x*100).toFixed(0):(x*100).toFixed(1))+'%'; };
+    function fcell(k,v){ return (v==null||v==="")?"":'<div><div class="row-k">'+k+'</div><div class="row-v">'+v+'</div></div>'; }
+    var finCells = [
+      fcell('Alpha score', F.alpha!=null?(Math.round(F.alpha)+(F.grade?' · '+esc(F.grade):'')):null),
+      fcell('Revenue growth', pf(F.rev_growth)),
+      fcell('Gross margin', pf(F.gross_margin)),
+      fcell('P/E', (F.pe!=null&&F.pe>0)?(+F.pe).toFixed(0)+'x':(F.pe!=null?'n/m':null)),
+      fcell('Analyst upside', F.upside!=null?((+F.upside>=0?'+':'')+(+F.upside).toFixed(0)+'%'):null)
+    ].join("");
+    var finRows = finCells ? '<div class="rows" style="margin-top:11px">'+finCells+'</div>'
+      : (F.rev_est ? '<p class="note" style="margin-top:10px;font-style:italic">Live financials aren\'t in our universe for this name — its share uses a flagged revenue estimate.</p>' : '');
     var d = document.createElement("div");
     d.className = "detail"; d.dataset.key = co.dataset.l+"-"+co.dataset.c;
     d.innerHTML =
@@ -446,6 +515,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
         '<div><div class="row-k">Cycle stage</div><div class="row-v">'+esc(c.stage)+'</div></div>'+
         '<div><div class="row-k">Customer concentration</div><div class="row-v">'+esc(c.concen)+'</div></div>'+
       '</div>'+
+      finRows +
       '<p class="note">'+esc(c.note)+'</p>'+
       (c.watch?'<p class="watch"><b>Signal to watch</b>'+esc(c.watch)+'</p>':'')+
       '<a class="open" href="/stocks/'+encodeURIComponent(c.t)+'">See '+esc(c.t)+'’s full page on TickerMover →</a>';

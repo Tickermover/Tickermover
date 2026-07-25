@@ -5097,7 +5097,8 @@ async def api_thesis_shares(slug: str):
     for L in (thesis.get("layers") or []):
         for c in (L.get("names") or []):
             tk = c.get("t")
-            rev = (uni.get(tk) or {}).get("revenue_ttm")
+            u = uni.get(tk) or {}
+            rev = u.get("revenue_ttm")
             est = False
             if not rev:
                 rev = c.get("rev_ttm_est")
@@ -5110,6 +5111,11 @@ async def api_thesis_shares(slug: str):
                 "t": tk, "n": c.get("n"), "layer": L.get("id"), "layer_name": L.get("name"),
                 "exposure": c.get("exposure"), "revenue_ttm": float(rev), "rev_est": est,
                 "ai_rev": float(rev) * w,
+                # live financials for the richer detail cards (None for est-only names)
+                "rev_growth": u.get("revenue_growth_yoy"), "gross_margin": u.get("gross_margin"),
+                "pe": u.get("pe_ratio") or u.get("forward_pe"),
+                "upside": u.get("target_upside_pct"), "grade": u.get("grade"),
+                "alpha": u.get("pop_score") or u.get("smart_score"), "price": u.get("price"),
             })
     total = sum(x["ai_rev"] for x in comps) or 0.0
     for x in comps:
