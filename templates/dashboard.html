@@ -15183,6 +15183,7 @@ let _secgStats = {}, _secgOrder = [];
 let _secgTopo = null, _secgTopoKey = '', _secgFetching = false;
 const _secgNodes = {};                 // id -> {x,y,vx,vy,el,r,isStock?,parent?,ticker?,score?}
 let _secgEdges = [], _secgAdj = {};
+let _secgDepth = {}, _secgMaxDepth = 1, _secgHasFlow = false;   // chain depth per node (raw materials 0 -> apps N) for the left->right flow layout; _secgHasFlow gates it until real flow edges load
 let _secgStockEdges = [], _secgBloom = null;   // member edges + currently expanded sector
 let _secgFocus = null, _secgRAF = 0, _secgAlpha = 0, _secgW = 0, _secgH = 0;
 let _secgDragging = null, _secgMoved = false, _secgVisible = true, _secgFrame = 0;
@@ -15335,6 +15336,7 @@ function secgRender(){
 
   _secgEdges = ((_secgTopo && _secgTopo.edges) || []).filter(e => present.has(e.source) && present.has(e.target));
   secgComputeAdjacency(names, _secgEdges);
+  secgComputeDepth(names, _secgEdges);
   secgBuildDOM(svg, names, _secgEdges);
 
   if (reBloom && _secgStats[reBloom]) secgBloom(reBloom);
@@ -15348,6 +15350,30 @@ function secgComputeAdjacency(names, edges){
   _secgAdj = {};
   names.forEach(n => { _secgAdj[n] = new Set(); });
   edges.forEach(e => { _secgAdj[e.source] && _secgAdj[e.source].add(e.target); _secgAdj[e.target] && _secgAdj[e.target].add(e.source); });
+}
+
+// Chain depth (column) per node for the left->right flow layout: raw materials /
+// sources on the left, downstream platforms & apps on the right. Longest-path
+// layering over the DIRECTED flow edges (ignore lateral "adjacent" links);
+// cycle-safe via an iteration cap. Nodes touched by no flow edge sit mid-canvas.
+function secgComputeDepth(names, edges){
+  const flow = edges.filter(e => e.type !== 'adjacent');
+  const dep = {}; names.forEach(n => { dep[n] = 0; });
+  const iters = Math.min(names.length, 12);
+  for (let k = 0; k < iters; k++){
+    let changed = false;
+    flow.forEach(e => {
+      if (dep[e.source] != null && dep[e.target] != null && dep[e.target] < dep[e.source] + 1){
+        dep[e.target] = dep[e.source] + 1; changed = true;
+      }
+    });
+    if (!changed) break;
+  }
+  let maxD = 0; names.forEach(n => { if (dep[n] > maxD) maxD = dep[n]; });
+  const touched = new Set(); flow.forEach(e => { touched.add(e.source); touched.add(e.target); });
+  names.forEach(n => { if (!touched.has(n)) dep[n] = maxD > 0 ? maxD / 2 : 0; });  // isolated -> mid-canvas
+  _secgDepth = dep; _secgMaxDepth = Math.max(1, maxD);
+  _secgHasFlow = maxD > 0;   // only drive the column layout once real directed edges exist
 }
 
 function secgBuildDOM(svg, names, edges){
@@ -15398,7 +15424,7 @@ function _secgStep(){
   const pad = 48, W = _secgW, H = _secgH;
   // Looser, more spread-out field + a touch of Brownian jitter so the web keeps
   // gently breathing (never freezes) without flying apart.
-  const K_REP = 9600, K_SPR = 0.016, SPR_LEN = 186, K_CEN = 0.009, DAMP = 0.9, JITTER = 0.6;
+  const K_REP = 9600, K_SPR = 0.016, SPR_LEN = 186, K_CEN = 0.009, DAMP = 0.9, JITTER = 0.6, K_COL = 0.045;
   for (let i = 0; i < N; i++){
     const a = _secgNodes[names[i]];
     for (let j = i + 1; j < N; j++){
@@ -15416,9 +15442,20 @@ function _secgStep(){
     const f = (d - L) * K_SPR, fx = dx / d * f, fy = dy / d * f;
     a.vx += fx; a.vy += fy; b.vx -= fx; b.vy -= fy;
   });
+  const colSpan = W - 2 * pad;
   names.forEach(n => {
     const p = _secgNodes[n];
-    p.vx += (W / 2 - p.x) * K_CEN + (Math.random() - 0.5) * JITTER;
+    if (p.isStock || !_secgHasFlow){
+      // bloomed stock nodes (spring to parent governs X), and the pre-topology state
+      // (no directed edges yet): a gentle centering keeps everything in frame.
+      p.vx += (W / 2 - p.x) * K_CEN + (Math.random() - 0.5) * JITTER;
+    } else {
+      // sector nodes: pull toward the column for their chain depth so the web reads
+      // left->right (raw materials -> components -> platforms -> apps) and fills the width.
+      const d = (_secgDepth && _secgDepth[n] != null) ? _secgDepth[n] : _secgMaxDepth / 2;
+      const tx = pad + (d / _secgMaxDepth) * colSpan;
+      p.vx += (tx - p.x) * K_COL + (Math.random() - 0.5) * JITTER;
+    }
     p.vy += (H / 2 - p.y) * K_CEN + (Math.random() - 0.5) * JITTER;
     p.vx *= DAMP; p.vy *= DAMP;
     if (p !== _secgDragging){ p.x += p.vx * _secgAlpha; p.y += p.vy * _secgAlpha; }
