@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>The Weekly Editorial — TickerMover</title>
+  <title>Market Movers — Weekly Stock Market Analysis &amp; Stocks to Watch | TickerMover</title>
   <meta name="description" content="TickerMover's signed weekly editorial — a long-form, data-grounded deep-dive into the week's most important sector or stock, written by our desk.">
   <link rel="icon" type="image/svg+xml" href="/static/brand/tickermover-mark.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -423,7 +423,7 @@
         '<button id="btnPdf" class="abtn" type="button">⬇ PDF</button></div>';
     }
     function wireShare(title){
-      var url=location.href, u=encodeURIComponent(url), t=encodeURIComponent(title||'The Weekly — TickerMover');
+      var url=location.href, u=encodeURIComponent(url), t=encodeURIComponent(title||'Market Movers — TickerMover');
       var set=function(id,href){ var el=document.getElementById(id); if(el) el.href=href; };
       set('btnX','https://twitter.com/intent/tweet?text='+t+'&url='+u);
       set('btnLi','https://www.linkedin.com/sharing/share-offsite/?url='+u);
@@ -482,7 +482,7 @@
                '<span class="cov-line">'+esc(stripCites(t))+'</span></li>'; }).join('');
       return '<section class="page cover-pg" style="background:'+grad+'">'+art+splashBadge(d.cover_splash)+
         '<div class="cov-in bookcov">'+
-          '<div class="cov-mast"><span>The Weekly</span><span class="no">'+(no?'No. '+no:'')+'</span></div>'+
+          '<div class="cov-mast"><span>Market Movers</span><span class="no">'+(no?'No. '+no:'')+'</span></div>'+
           '<div class="cov-rule"></div>'+
           '<div class="cov-strip">TickerMover · Finance &amp; Markets Intelligence</div>'+
           (lines?'<ul class="cov-lines">'+lines+'</ul>':'')+
@@ -573,7 +573,7 @@
         root.innerHTML='<div class="empty">'+( (d&&d.reason) || 'The weekly editorial is being prepared. Check back shortly.')+'</div>';
         return;
       }
-      document.body.classList.add('book-mode');
+      document.body.classList.add('scroll-view');
       var tickers=(d.tickers||[]).map(function(t){
         return '<a class="chip" href="/stocks/'+encodeURIComponent(t)+'">'+esc(t)+'</a>';
       }).join('');
@@ -589,23 +589,15 @@
       }catch(e){}
       root.innerHTML =
         (_rwk?'<a class="backlink" href="/weekly">← All issues</a>':'')+
-        '<div class="eyebrow">From the desk · The Weekly</div>'+
+        '<div class="eyebrow">From the desk · Market Movers</div>'+
         '<div class="byline">'+TM_COIN+'<b>'+esc(d.byline||'TickerMover Desk')+'</b> · '+when+'</div>'+
         shareBar()+
         (tickers?'<div class="chips">'+tickers+'</div>':'')+
-        '<div class="bk-bar">'+
-          '<button class="bk-btn" id="bkPrev" type="button" aria-label="Previous page">‹</button>'+
-          '<button class="bk-btn" id="bkNext" type="button" aria-label="Next page">›</button>'+
-          '<span class="bk-ind" id="bkInd"></span>'+
-          '<button class="abtn bk-toggle" id="bkToggle" type="button">📜 Scroll view</button>'+
-          '<span class="bk-dots" id="bkDots"></span>'+
-        '</div>'+
-        '<div class="book" id="book" tabindex="0" role="region" aria-label="Issue pages — use arrow keys">'+
+        '<div class="book" id="book">'+
           buildPages(d).join('')+
         '</div>';
       if(d.title) document.title=d.title+' — TickerMover';
       wireShare(d.title||'');
-      wireBook();
     }
 
     // SEO-friendly issue URLs: /weekly/<YYYY-MM-DD>/<slug>. The date is the key;
@@ -703,7 +695,7 @@
         art+credit+
         splashBadge(e.cover_splash)+
         '<div class="cov-in">'+
-          '<div class="cov-mast"><span>The Weekly</span><span class="no">'+(no?'No. '+no:'')+(i===0?' · LATEST':'')+'</span></div>'+
+          '<div class="cov-mast"><span>Market Movers</span><span class="no">'+(no?'No. '+no:'')+(i===0?' · LATEST':'')+'</span></div>'+
           '<div class="cov-rule"></div>'+
           '<div class="cov-strip">TickerMover · Finance &amp; Markets Intelligence</div>'+
           (lines?'<ul class="cov-lines">'+lines+'</ul>':'')+
@@ -722,8 +714,8 @@
       document.body.classList.add('gallery');
       if(!eds.length){ root.innerHTML='<div class="empty">📰 The first weekly issue is on its way. Check back soon.</div>'; return; }
       var head='<div class="news-h"><div class="eyebrow">From the desk</div>'+
-        '<h1 class="news-title">The Weekly</h1>'+
-        '<p class="news-sub">TickerMover\'s signed magazine — one deep, data-grounded issue a week. Choose an issue to read.</p></div>';
+        '<h1 class="news-title">Market Movers</h1>'+
+        '<p class="news-sub">TickerMover\'s signed weekly stock-market analysis — one deep, data-grounded issue a week on the sectors and stocks that are moving. Pick an issue to read.</p></div>';
       var covers=eds.map(function(e,i){ return coverCard(e,i, i===0); }).join('');
       root.innerHTML=head+'<div class="covers">'+covers+'</div>';
       // If a cover photo fails (404, blocked, offline), drop it and its tint so
@@ -738,7 +730,7 @@
           im.remove();
         });
       });
-      document.title='The Weekly — TickerMover';
+      document.title='Market Movers — Weekly Stock Market Analysis | TickerMover';
     }
 
     var _wk=parseWeek();

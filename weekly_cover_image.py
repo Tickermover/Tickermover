@@ -64,7 +64,57 @@ _SUBJECT_SCENES = {
     "automotive":    ["car factory assembly line", "automobile manufacturing"],
     "artificial intelligence": ["data center server room", "circuit board technology"],
     "ai":            ["data center server room", "circuit board technology"],
+    # AI / tech sub-themes (match the chain-map + weekly subjects specifically)
+    "cloud":         ["data center server room", "cloud computing servers"],
+    "software":      ["data center server room", "software code screen"],
+    "saas":          ["data center server room", "cloud computing servers"],
+    "cybersecurity": ["cybersecurity data protection", "network security server room"],
+    "security":      ["cybersecurity data protection", "network security server room"],
+    "networking":    ["fiber optic network cables", "network server cables"],
+    "network":       ["fiber optic network cables", "network server cables"],
+    "optical":       ["fiber optic cables light", "optical fiber network"],
+    "photonics":     ["fiber optic cables light", "optical fiber network"],
+    "memory":        ["computer memory chip module", "semiconductor memory"],
+    "hbm":           ["computer memory chip module", "semiconductor memory"],
+    "data center":   ["data center server room", "server racks technology"],
+    "payment":       ["credit card payment terminal", "digital payment technology"],
+    "fintech":       ["financial technology payment", "digital payment technology"],
+    "robot":         ["industrial robot arm factory", "robotics automation"],
+    "automation":    ["industrial robot arm factory", "factory automation"],
+    "defense":       ["military aircraft aerospace", "defense technology"],
+    "aerospace":     ["military aircraft aerospace", "jet aircraft"],
+    "electric vehicle": ["electric vehicle charging station", "electric car"],
+    "battery":       ["lithium battery cells", "battery manufacturing"],
+    "lithium":       ["lithium mine", "battery manufacturing"],
+    "media":         ["television broadcast studio", "streaming media screens"],
+    "streaming":     ["streaming media screens", "television broadcast studio"],
+    "telecom":       ["cellular tower telecom", "5g network tower"],
+    "obesity":       ["medical injection pen", "pharmaceutical laboratory"],
+    "glp":           ["medical injection pen", "pharmaceutical laboratory"],
+    "power":         ["power plant electricity", "electricity transmission towers"],
+    "grid":          ["electricity transmission towers", "power grid"],
 }
+# Marquee tickers -> concrete scene, used when the SUBJECT is a single company
+# (the subject string "NVIDIA Corporation (NVDA)" matches no sector keyword, so
+# without this it drifts to generic charts). Grouped by what the business does.
+def _grp(tks, scenes):
+    return {t: scenes for t in tks}
+_TICKER_SCENES: dict[str, list[str]] = {}
+_TICKER_SCENES.update(_grp(
+    ["NVDA","AMD","AVGO","MRVL","TSM","ARM","QCOM","INTC","SMCI","ASML","AMAT","LRCX","KLAC","TER","ON","TXN","ADI","ALAB","CRDO","LSCC","ENTG","MKSI","ACLS","ONTO"],
+    ["semiconductor microchip macro", "computer chip circuit board"]))
+_TICKER_SCENES.update(_grp(["MU","SNDK"], ["computer memory chip module", "semiconductor memory"]))
+_TICKER_SCENES.update(_grp(
+    ["SNOW","MSFT","GOOGL","GOOG","AMZN","ORCL","CRM","DDOG","MDB","NOW","PLTR"],
+    ["data center server room", "cloud computing servers"]))
+_TICKER_SCENES.update(_grp(["ANET","CIEN","COHR","FN","AAOI","LITE","NET"], ["fiber optic network cables", "network server cables"]))
+_TICKER_SCENES.update(_grp(["CRWD","PANW","FTNT","ZS","S","OKTA","CYBR","QLYS","TENB","RBRK","GEN"], ["cybersecurity data protection", "network security server room"]))
+_TICKER_SCENES.update(_grp(["V","MA","PYPL","FI","FIS","AXP","XYZ","AFRM","GPN","TOST","COF"], ["credit card payment terminal", "digital payment technology"]))
+_TICKER_SCENES.update(_grp(["TSLA","RIVN","LCID","GM","F","APTV","MGA"], ["electric vehicle charging station", "car factory assembly line"]))
+_TICKER_SCENES.update(_grp(["LLY","NVO","AMGN","VKTX","PFE","MRK","REGN","HIMS"], ["medical injection pen", "pharmaceutical laboratory"]))
+_TICKER_SCENES.update(_grp(["CEG","VST","GEV","NEE","TLN","NRG","VRT","ETN","HUBB"], ["power plant electricity", "electricity transmission towers"]))
+_TICKER_SCENES.update(_grp(["LMT","RTX","NOC","GD","LHX","BA"], ["military aircraft aerospace", "defense technology"]))
+_TICKER_SCENES.update(_grp(["ISRG","ROK","EMR","PH","ABB","TER"], ["industrial robot arm factory", "robotics automation"]))
 # Business-only fallback for an unknown subject (usually a single company): we do
 # NOT search the company name — that returns logos and executive headshots — and
 # we deliberately avoid any term that lets the result drift to nature/landscape.
@@ -80,12 +130,30 @@ def available() -> bool:
 
 def _queries_for(subject: str, tickers: list[str] | None = None) -> list[str]:
     """Ordered candidate queries for the week's subject — specific scene(s) first,
-    then a business-only fallback so we never end up on generic/landscape filler."""
+    then a business-only fallback so we never end up on generic/landscape filler.
+    For a SECTOR/theme subject the sector keyword leads; for a single COMPANY the
+    marquee-ticker scene leads (the company name matches no keyword, so without this
+    it drifts to generic charts)."""
     s = (subject or "").strip().lower()
+    subj_scenes: list[str] = []
     for key, scenes in _SUBJECT_SCENES.items():
         if key in s:
-            return list(scenes) + _UNIVERSAL
-    return list(_UNIVERSAL)
+            subj_scenes = list(scenes)
+            break
+    tick_scenes: list[str] = []
+    for t in (tickers or [])[:4]:
+        sc = _TICKER_SCENES.get(str(t).strip().upper())
+        if sc:
+            tick_scenes = list(sc)
+            break
+    is_sector = any(w in s for w in ("sector", "index", " etf"))
+    ordered = (subj_scenes + tick_scenes) if is_sector else (tick_scenes + subj_scenes)
+    out, seen = [], set()
+    for q in (ordered or []) + _UNIVERSAL:
+        if q not in seen:
+            seen.add(q)
+            out.append(q)
+    return out
 
 
 def _looks_like_person(text: str) -> bool:

@@ -4861,7 +4861,7 @@ def _weekly_inject_seo(html: str, week_start: str = "", slug: str = "") -> str:
             img = (cover.get("url") or "").strip() or default_img
             img_alt = (cover.get("alt") or "").strip() or title
             subject = (art.get("subject") or "").strip()
-            page_title = f"{title} — The Weekly · TickerMover"
+            page_title = f"{title} — Market Movers · TickerMover"
             og_type = "article"
             ld = {
                 "@context": "https://schema.org", "@type": "Article",
@@ -4874,11 +4874,11 @@ def _weekly_inject_seo(html: str, week_start: str = "", slug: str = "") -> str:
                               "logo": {"@type": "ImageObject", "url": default_img}},
             }
         else:
-            title = "The Weekly — TickerMover"
-            desc = ("TickerMover's signed weekly editorial — a long-form, data-grounded "
-                    "deep-dive into the week's most important sector or stock.")
+            title = "Market Movers — Weekly Stock Market Analysis & Stocks to Watch | TickerMover"
+            desc = ("Market Movers is TickerMover's signed weekly stock-market analysis — a "
+                    "long-form, data-grounded deep-dive into the sectors and stocks moving each week.")
             canon = f"{SITE_ORIGIN}/weekly"
-            img, img_alt = default_img, "TickerMover — The Weekly"
+            img, img_alt = default_img, "Market Movers — TickerMover"
             page_title, og_type = title, "website"
             ld = {"@context": "https://schema.org", "@type": "CollectionPage",
                   "name": title, "description": desc, "url": canon,
