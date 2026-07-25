@@ -8,7 +8,7 @@
       "eyebrow": "Chain Map",
       "title": "Where hyperscaler capex actually lands",
       "accent": "actually lands",
-      "standfirst": "Every AI datacenter dollar moves down a chain, layer by layer, with a lag. Move the slider to a capex growth rate and watch it propagate. Dot brightness marks how much of a company's revenue is estimated to depend on that spend.",
+      "standfirst": "Every AI-datacenter dollar the hyperscalers spend is captured somewhere along a chain of suppliers. This map shows the realized split — each layer's and each company's share of the AI-revenue landing today, weighted by how much of its business depends on that spend. Descriptive, not a forecast.",
       "control": { "label": "Hyperscaler capex growth, year over year", "min": -30, "max": 70, "value": 25, "step": 5 },
       "share_weights": { "hi": 0.70, "mid": 0.35, "lo": 0.12, "_note": "AI-attributable fraction of trailing revenue by exposure band — a desk estimate, meant to be argued with." },
       "market": { "note": "Round estimates of combined hyperscaler (Microsoft, Alphabet, Amazon, Meta + others) AI-datacenter capex, as of mid-2026 — our read, meant to be argued with, not a precise figure.", "stats": [
@@ -60,7 +60,7 @@
             { "t": "NBIS", "n": "Nebius",            "exposure": "hi", "stage": "Early",       "concen": "High",       "note": "GPU-capacity reseller — effectively an AI-compute landlord.", "watch": "Contract length and GPU-capacity utilization.", "rev_ttm_est": 500000000 }
           ] }
       ],
-      "how": "Layers are ordered by where money arrives, not by company size. The lag is the typical delay between a hyperscaler raising its capex guide and that spend showing up in a supplier's reported revenue. Exposure and cycle stage are qualitative bands, not precise figures — they are judgements from filings and earnings calls, and they are the part most worth arguing with. The 'signal to watch' is the single leading indicator we'd track for each name.",
+      "how": "Each company's share = its trailing revenue × an estimated 'AI-attributable' fraction (its exposure band: high / moderate / low), divided by the chain total. So it answers who actually captures the spend TODAY — not who might benefit next. Revenue is live from our scan; a few names our universe doesn't cover use a flagged revenue estimate. Exposure bands are qualitative judgements from filings and earnings calls, and they are the part most worth arguing with. This is a snapshot of realized share, not a prediction — later position in the chain does NOT imply un-captured upside; markets price expectations ahead, and many of these names have already run. The 'signal to watch' is the single leading indicator we'd track for each name.",
       "disclaimer": "This is a factual map of supply chain relationships. It is not investment advice, not a recommendation to buy or sell any security, and nothing here accounts for your circumstances. Company classifications change; verify against primary filings before acting."
     },
 
