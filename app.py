@@ -4750,6 +4750,84 @@ async def api_weekly_editorials(limit: int = 52):
                         headers={"Cache-Control": "public, max-age=600, s-maxage=1800"})
 
 
+@app.post("/api/admin/save-weekly")
+async def api_admin_save_weekly(request: Request,
+                                user: Optional[dict] = Depends(_current_user),
+                                creds: Optional[HTTPAuthorizationCredentials] = Depends(_bearer)):
+    """Admin: file a HAND-AUTHORED weekly edition straight into the store, bypassing
+    the paid Opus generator. Body: {"week_start":"YYYY-MM-DD", "article":{...}} where
+    `article` carries the same fields generate() returns (title, standfirst,
+    body_markdown, cover_lines, cover_splash, stat_tiles, charts, week_updates,
+    scenarios, pull_quote, house_view, tickers, sources, subject). The magazine fields
+    are re-sanitized here (same _clean_* as the generator) and edition metadata
+    (slug/week_label/published_at/byline/v) is stamped, mirroring _build_weekly_editorial.
+    Lets the desk seed or curate editions when the API generator is unavailable."""
+    if not user or (user.get("email") or "").lower() not in _AI_ALLOW:
+        raise HTTPException(status_code=403, detail="Admin only.")
+    try:
+        payload = await request.json()
+    except Exception:
+        return JSONResponse({"error": "Body must be JSON."}, status_code=400)
+    wk = str(payload.get("week_start") or "").strip()
+    src = payload.get("article")
+    if not wk or not isinstance(src, dict):
+        return JSONResponse({"error": "Need week_start (ISO Monday) and an article object."}, status_code=400)
+    _g = weekly_editorial_gen
+    title = _g._nc((src.get("title") or "").strip())[:160]
+    body_md = _g._nc((src.get("body_markdown") or "").strip())
+    if not title or not body_md:
+        return JSONResponse({"error": "article.title and article.body_markdown are required."}, status_code=400)
+    article = {
+        "title":         title,
+        "standfirst":    _g._nc((src.get("standfirst") or "").strip())[:300],
+        "body_markdown": body_md,
+        "pull_quote":    _g._nc((src.get("pull_quote") or "").strip())[:300],
+        "house_view":    _g._nc((src.get("house_view") or "").strip())[:800],
+        "tickers":       [str(x).strip().upper() for x in (src.get("tickers") or [])][:8],
+        "subject":       (src.get("subject") or "").strip()[:120],
+        "subject_type":  (src.get("subject_type") or "sector"),
+        "cover_lines":   _g._clean_cover_lines(src.get("cover_lines")),
+        "cover_splash":  _g._clean_cover_splash(src.get("cover_splash")),
+        "stat_tiles":    _g._clean_stat_tiles(src.get("stat_tiles")),
+        "charts":        _g._clean_charts(src.get("charts")),
+        "week_updates":  _g._clean_week_updates(src.get("week_updates")),
+        "scenarios":     _g._clean_scenarios(src.get("scenarios")),
+        "sources":       [s for s in (src.get("sources") or []) if isinstance(s, dict)][:12],
+        "model":         (src.get("model") or "desk-manual"),
+        "status":        "ready",
+    }
+    # Best-effort cover photo (silently skipped when no image-provider key is set).
+    try:
+        import weekly_cover_image
+        cover = await weekly_cover_image.fetch(article.get("subject") or "", article.get("tickers") or [])
+        if cover:
+            article["cover_image"] = cover
+    except Exception as e:
+        logger.warning(f"save-weekly cover image skipped: {e}")
+    from datetime import date as _date
+    try:
+        y, m, d = (int(x) for x in wk.split("-"))
+        wk_label = _date(y, m, d).strftime("%d %b %Y").lstrip("0")
+    except Exception:
+        wk_label = wk
+    gen = _et_now()
+    article["week_start"]   = wk
+    article["week_label"]   = wk_label
+    article["published_at"] = gen.strftime("%I:%M %p ET · %d %b").lstrip("0")
+    article["byline"]       = (src.get("byline") or "TickerMover Desk")
+    article["slug"]         = _weekly_slug(title, wk)
+    article["v"]            = _WEEKLY_VERSION
+    try:
+        _weekly_store.save(wk, article, model=article.get("model"))
+    except Exception as e:
+        logger.error(f"save-weekly store failed: {e}")
+        return JSONResponse({"error": f"save failed: {e}"}, status_code=500)
+    logger.info(f"📝 Weekly edition SAVED (manual) {wk}: {title}")
+    return JSONResponse({"saved": True, "week_start": wk, "slug": article["slug"],
+                         "title": title, "url": f"/weekly/{wk}/{article['slug']}",
+                         "has_cover_photo": bool(article.get("cover_image"))})
+
+
 def _weekly_inject_seo(html: str, week_start: str = "", slug: str = "") -> str:
     """Server-side per-issue SEO for the weekly magazine.
 
