@@ -120,13 +120,12 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 .layer-sum .ls-lead{font-family:var(--mono);font-weight:600;color:var(--ink)}
 /* per-layer impact meter (diverging) */
 .impact{margin:0 0 14px}
-.impact-track{position:relative;height:14px;background:#f1f4f8;border-radius:4px}
-.impact-track::before{content:"";position:absolute;left:50%;top:-3px;bottom:-3px;width:1px;background:#d3dbe6}
-.impact-fill{position:absolute;top:0;bottom:0;width:0;transition:all .55s cubic-bezier(.32,.72,.31,1)}
-.impact-fill.pos{left:50%;background:linear-gradient(90deg,#34d17a,var(--pos));border-radius:0 4px 4px 0}
-.impact-fill.neg{right:50%;background:linear-gradient(270deg,#f87171,var(--neg));border-radius:4px 0 0 4px}
+.impact-track{position:relative;height:14px;background:#f1f4f8;border-radius:4px;overflow:hidden}
+.impact-fill{position:absolute;top:0;bottom:0;left:0;width:0;border-radius:4px;transition:width .55s cubic-bezier(.32,.72,.31,1)}
+.impact-fill.pos{background:linear-gradient(90deg,#34d17a,var(--pos))}
 .impact-cap{display:flex;justify-content:space-between;align-items:baseline;margin-top:7px;gap:10px}
 .impact-val{font-family:var(--mono);font-weight:700;font-size:14px}
+.impact-val.cap-rev{font-size:12px;font-weight:600;color:var(--muted);letter-spacing:.01em}
 /* company cards */
 .cos{display:flex;flex-wrap:wrap;gap:8px}
 .co{display:flex;flex-direction:column;gap:6px;background:#fff;border:1px solid var(--line);border-radius:11px;padding:9px 11px 8px;cursor:pointer;transition:border-color .14s,transform .14s,box-shadow .14s;min-width:132px;text-align:left;font-family:var(--body)}
@@ -381,6 +380,8 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 
   // Percent formatter for shares: whole number at/above 1%, one decimal below.
   function pctShare(s){ var v=s*100; return (v>=1? v.toFixed(0) : v.toFixed(1)) + "%"; }
+  // Compact USD for AI-attributable revenue dollars.
+  function fmtB(n){ n=+n||0; if(n>=1e12) return "$"+(n/1e12).toFixed(1)+"T"; if(n>=1e9) return "$"+(n/1e9).toFixed(n>=1e10?0:1)+"B"; if(n>=1e6) return "$"+(n/1e6).toFixed(0)+"M"; return "$"+Math.round(n); }
 
   // Share of LANDED value — realized and descriptive. Fills the layer badges, the
   // layer/company share bars, and the leaderboard from /api/thesis-shares. No slider,
@@ -390,14 +391,14 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
       if(!d || d.available===false){ return; }
       (d.companies||[]).forEach(function(c){ SHARES[c.t]=c.share; COMP[c.t]=c; });
       // layer badges + layer share bars
+      var TOTAL = d.total_ai_rev || 0;
       (d.layers||[]).forEach(function(L,i){
         var lv = document.querySelector('[data-lshare="'+i+'"]');
         if(lv) lv.textContent = pctShare(L.share);
         var fill = document.querySelector('[data-fill="'+i+'"]');
-        if(fill){ fill.className="impact-fill pos"; fill.style.opacity="1";
-          fill.style.width = Math.max(2, L.share*100).toFixed(1)+"%"; }
+        if(fill){ fill.className="impact-fill pos"; fill.style.width = Math.max(1.5, L.share*100).toFixed(1)+"%"; }
         var cap = document.querySelector('[data-lval="'+i+'"]');
-        if(cap){ cap.textContent = pctShare(L.share); cap.className="impact-val share-t"; }
+        if(cap){ cap.textContent = "≈"+fmtB(TOTAL*L.share)+" AI-revenue captured"; cap.className="impact-val cap-rev"; }
       });
       // per-company share chips
       LAYERS.forEach(function(L,i){ (L.names||[]).forEach(function(c,j){
