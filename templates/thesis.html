@@ -182,6 +182,17 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 .detail .live-grid .lv{font-size:13.5px;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums}
 .detail .live-line{font-size:13px;color:#334155;line-height:1.45;margin-top:9px;border-top:1px solid #d4eddb;padding-top:8px}
 .detail .live-line:first-of-type{border-top:0;padding-top:0}
+/* News-snapshot-style catalyst story card */
+.detail .cat-chips{display:flex;flex-wrap:wrap;gap:7px;margin:2px 0 10px}
+.detail .cat-read{font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;padding:3px 9px;border-radius:999px}
+.detail .cat-read.rd-bull{background:#dcfce7;color:#0a7d33}
+.detail .cat-read.rd-mix{background:#fef3c7;color:#a16207}
+.detail .cat-read.rd-caut{background:#fee2e2;color:#b91c1c}
+.detail .cat-chip{font-size:11.5px;font-weight:600;color:#334155;background:#fff;border:1px solid #d4eddb;border-radius:999px;padding:3px 10px}
+.detail .cat-chip b.pos-t{color:var(--pos)}.detail .cat-chip b.neg-t{color:var(--neg)}
+.detail .cat-story{font-size:13px;line-height:1.55;color:#1e293b;margin:0}
+.detail .cat-line{font-size:12.5px;line-height:1.45;color:#475569;margin:9px 0 0;border-top:1px solid #d4eddb;padding-top:8px}
+.detail .cat-line .lk{display:block;font-size:9px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#78a389;margin-bottom:2px}
 .detail .open{display:inline-block;margin-top:12px;font-size:12.5px;font-weight:700;color:var(--blue);text-decoration:none}
 .detail .open:hover{text-decoration:underline}
 /* foot */
@@ -285,20 +296,22 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
     if(link) el.insertBefore(box, link); else el.appendChild(box);
     fetch("/api/catalyst/"+encodeURIComponent(tk)).then(function(r){return r.json();}).then(function(d){
       if(!d || d.available===false){ box.remove(); return; }
-      var grid='<div class="live-grid">'+
-        (d.next_earnings?'<div><span class="lk">Earnings due</span><span class="lv">'+fmtDate(d.next_earnings)+'</span></div>':'')+
-        (d.read?'<div><span class="lk">Our read</span><span class="lv">'+esc(d.read)+'</span></div>':'')+
+      // News-snapshot-style story card: read + earnings + live price chips, then the
+      // researched catalyst story, then order-book/backlog if it adds something new.
+      var read = d.read || "";
+      var readCls = read==="Bullish"?"rd-bull":(read==="Cautious"?"rd-caut":"rd-mix");
+      var chips = '<div class="cat-chips">'+
+        (read?'<span class="cat-read '+readCls+'">'+esc(read)+'</span>':'')+
+        (d.next_earnings?'<span class="cat-chip">Earnings '+fmtDate(d.next_earnings)+'</span>':'')+
+        (d.price?'<span class="cat-chip">'+fmtP(d.price)+(d.change_pct!=null?' <b class="'+(d.change_pct>=0?"pos-t":"neg-t")+'">'+(d.change_pct>=0?"+":"")+Number(d.change_pct).toFixed(1)+'%</b>':'')+'</span>':'')+
       '</div>';
-      // Prefer the richer sentence lifted from our cached AI note; fall back to
-      // the deterministic scan signal.
+      var story = d.story || d.ai_catalyst || d.catalyst || "";
       var backlog = d.ai_backlog || d.backlog;
-      var catalyst = d.ai_catalyst || d.catalyst;
-      var aiTag = (d.ai_backlog || d.ai_catalyst) ? ' + AI note' : '';
-      var lines='';
-      if(backlog)  lines+='<div class="live-line"><span class="lk">Order book / backlog</span>'+esc(backlog)+'</div>';
-      if(catalyst) lines+='<div class="live-line"><span class="lk">'+(d.ai_catalyst?'Latest catalyst':'Latest signal')+'</span>'+esc(catalyst)+'</div>';
+      var storyHtml = story ? '<p class="cat-story">'+esc(story)+'</p>' : '';
+      var dup = story && backlog && story.toLowerCase().indexOf(String(backlog).slice(0,26).toLowerCase())>=0;
+      var backHtml = (backlog && !dup) ? '<p class="cat-line"><span class="lk">Order book / backlog</span>'+esc(backlog)+'</p>' : '';
       var age = d.scanned_age_sec!=null ? ' · updated '+fmtAge(d.scanned_age_sec) : '';
-      box.innerHTML='<div class="live-h"><span class="live-dot"></span>Live now · from our scan'+aiTag+age+'</div>'+grid+lines;
+      box.innerHTML='<div class="live-h"><span class="live-dot"></span>Latest catalyst · our research'+age+'</div>'+chips+storyHtml+backHtml;
     }).catch(function(){ box.remove(); });
   }
 

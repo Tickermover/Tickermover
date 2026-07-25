@@ -6617,7 +6617,7 @@ async def api_catalyst(ticker: str):
         except Exception:
             return None
 
-    ai_backlog = ai_catalyst = None
+    ai_backlog = ai_catalyst = story = None
     try:
         doc = await asyncio.to_thread(_read_ai_note, sym)
         md = (doc or {}).get("markdown") or ""
@@ -6642,6 +6642,27 @@ async def api_catalyst(ticker: str):
                 ai_backlog = _tidy(ai_backlog)
             if _cat and _cat != ai_backlog:
                 ai_catalyst = _tidy(_cat)
+            # A richer, News-snapshot-style STORY: the highest-signal sentences from
+            # the cached note (concrete numbers, guidance, backlog, deals), kept in
+            # order, de-duplicated, and capped for the panel. Cheap — pure cache read.
+            def _sig(s):
+                sc = 0
+                if _re.search(r"\$\s?\d|\d+(\.\d+)?%|\d+\s?(bps|billion|million)\b", s, _re.I): sc += 3
+                if _re.search(r"guidance|rais|reiterat|upgrade|downgrade|price target|\bPT\b|\bbeat\b|record|backlog|booking|\border\b|design.?win|contract|\bwon\b|award|\bdeal\b|customer|expansion|launch|partnership|sold out|analyst|consensus|buyback", s, _re.I): sc += 2
+                if _re.search(r"\bQ[1-4]\b|\bFY\s?\d|\b20\d\d\b", s): sc += 1
+                return sc
+            def _tidy_light(s):
+                s = s.lstrip("-•*·— \t").strip()
+                return _re.sub(r"^(What moves it next|Ongoing|Next quarter|Bottom line|Bull case|Bear case|Key catalysts?)\b[:\s—-]*", "", s, flags=_re.I).strip()
+            _keep = [i for i in sorted(range(len(sents)), key=lambda i: (-_sig(sents[i]), i)) if _sig(sents[i]) >= 2][:4]
+            _parts, _seen = [], set()
+            for i in sorted(_keep):
+                s = _tidy_light(sents[i]); k = s[:26].lower()
+                if s and k not in _seen:
+                    _seen.add(k); _parts.append(s)
+            story = " ".join(_parts) or None
+            if story and len(story) > 540:
+                story = story[:540].rsplit(" ", 1)[0].rstrip(",;:") + "…"
     except Exception as _e:
         logger.debug(f"catalyst AI-note enrich {sym}: {_e}")
 
@@ -6664,6 +6685,8 @@ async def api_catalyst(ticker: str):
         "backlog": backlog, "catalyst": catalyst,
         # Richer sentences lifted from the CACHED AI note when present (no cost).
         "ai_backlog": ai_backlog, "ai_catalyst": ai_catalyst,
+        # A fuller News-snapshot-style catalyst story from the same cached note.
+        "story": story,
         # The deterministic score summary — a reliable, always-present "quick take"
         # (live fundamentals, updates with the scan; NOT a baked-in figure).
         "take": (t.get("bottom_line_ai") or t.get("bottom_line") or None),
