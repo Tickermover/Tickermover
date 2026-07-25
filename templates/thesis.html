@@ -26,12 +26,12 @@ body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16p
 a{color:var(--blue)}
 .num{font-family:var(--mono);font-variant-numeric:tabular-nums}
 .top{position:sticky;top:0;z-index:20;background:rgba(252,251,249,.86);backdrop-filter:saturate(180%) blur(12px);border-bottom:1px solid var(--line)}
-.top-in{max-width:1120px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 20px}
+.top-in{max-width:1360px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 28px}
 .back{font-size:13px;font-weight:600;color:var(--muted);text-decoration:none}
 .back:hover{color:var(--ink)}
 .brand{display:flex;align-items:center;gap:9px;text-decoration:none;font-weight:600;font-size:18px;letter-spacing:-.022em;color:#0a0a0a}
 .brand .mark{width:26px;height:26px;flex:none;background:linear-gradient(135deg,#5DB3F1,#2970FF 50%,#0040c1);-webkit-mask:url('/static/brand/tickermover-mark-mask.svg') center/contain no-repeat;mask:url('/static/brand/tickermover-mark-mask.svg') center/contain no-repeat}
-.wrap{max-width:1120px;margin:0 auto;padding:30px 20px 70px}
+.wrap{max-width:1360px;margin:0 auto;padding:30px 28px 70px}
 .eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:11px;font-weight:800;letter-spacing:.15em;text-transform:uppercase;color:var(--blue-d);background:linear-gradient(135deg,#eef4ff,#f5f9ff);border:1px solid #cfe0ff;border-radius:999px;padding:6px 13px}
 h1.title{font-family:var(--serif);font-weight:600;font-size:clamp(30px,5.4vw,50px);line-height:1.05;letter-spacing:-.018em;margin:16px 0 12px;max-width:26ch}
 h1.title em{font-style:italic;color:var(--blue-d)}
@@ -108,9 +108,9 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 .chain{margin:26px 0 0;position:relative}
 .sec-h{font-family:var(--serif);font-weight:600;font-size:20px;margin:0 0 2px}
 .sec-sub{font-size:13.5px;color:var(--muted);margin:0 0 8px}
-.sec-asof{display:inline-flex;align-items:center;gap:7px;font-size:12px;color:var(--muted);background:var(--pos-soft);border:1px solid #bfe6cb;border-radius:8px;padding:5px 11px;margin:0 0 14px}
+.sec-asof{display:block;font-size:12px;line-height:1.5;color:var(--muted);background:var(--pos-soft);border:1px solid #bfe6cb;border-radius:8px;padding:8px 12px;margin:0 0 14px}
 .sec-asof b{color:var(--pos);font-weight:700}
-.sec-asof .asof-dot{width:7px;height:7px;border-radius:50%;flex:none;background:#0a7d33;box-shadow:0 0 0 3px rgba(10,125,51,.15)}
+.sec-asof .asof-dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:8px;vertical-align:middle;background:#0a7d33;box-shadow:0 0 0 3px rgba(10,125,51,.15)}
 .layer{display:grid;grid-template-columns:210px 1fr;gap:24px;padding:22px 0;border-bottom:1px solid var(--line);position:relative}
 .layer:last-child{border-bottom:none}
 .layer-meta{position:relative;padding-left:26px}
@@ -337,9 +337,9 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
           '</div>';
         return '<section class="layer" style="--lc:'+esc(L.color||"var(--blue)")+'">'+
           '<div class="layer-meta"><span class="spine"></span><span class="node"></span>'+
-            '<span class="layer-idx">'+esc(L.id)+'</span>'+
+            '<span class="layer-idx">Layer '+(i+1)+' of '+LAYERS.length+'</span>'+
             '<h3 class="layer-name">'+esc(L.name)+'</h3>'+
-            '<div class="layer-when-badge '+(i===0?"first":"")+'"><span class="lw-k">Share of landed value</span><span class="lw-v" data-lshare="'+i+'">—</span><span class="lw-h">of AI-revenue captured</span></div>'+
+            '<div class="layer-when-badge '+(i===0?"first":"")+'"><span class="lw-k">Share of landed value</span><span class="lw-v" data-lshare="'+i+'">—</span><span class="lw-h">of AI-revenue already captured</span></div>'+
             sum+
           '</div>'+
           '<div>'+
@@ -435,7 +435,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
         var fill = document.querySelector('[data-fill="'+i+'"]');
         if(fill){ fill.className="impact-fill pos"; fill.style.width = Math.max(1.5, L.share*100).toFixed(1)+"%"; }
         var cap = document.querySelector('[data-lval="'+i+'"]');
-        if(cap){ cap.textContent = "≈"+fmtB(TOTAL*L.share)+" AI-revenue captured"; cap.className="impact-val cap-rev"; }
+        if(cap){ cap.textContent = "≈"+fmtB(TOTAL*L.share)+" AI-revenue captured so far"; cap.className="impact-val cap-rev"; }
       });
       // per-company share chips
       LAYERS.forEach(function(L,i){ (L.names||[]).forEach(function(c,j){
@@ -466,8 +466,8 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
       var top3n = cos.slice(0,3).map(function(c){return c.t;}).join(", ");
       var ins = [
         {v:pctShare(top3), t:'The <b>top 3 ('+esc(top3n)+') capture '+pctShare(top3)+'</b> of landed value — a scale game, not a broad basket.'},
-        {v:pctShare(compute), t:'<b>Compute silicon alone is '+pctShare(compute)+'</b> ('+fmtB(TOTAL*compute)+'). The money lands overwhelmingly at the top of the chain.'},
-        {v:pctShare(memory), t:'<b>Memory &amp; HBM is '+pctShare(memory)+'</b> — contract-priced and cyclical, the swing factor when the memory cycle turns.'},
+        {v:pctShare(compute), t:'<b>AI compute chips alone are '+pctShare(compute)+'</b> ('+fmtB(TOTAL*compute)+'). The money lands overwhelmingly at the top of the chain.'},
+        {v:pctShare(memory), t:'<b>AI memory is '+pctShare(memory)+'</b> — contract-priced and cyclical, the swing factor when the memory cycle turns.'},
         {v:pctShare(tail), t:'The <b>rest of the chain is '+pctShare(tail)+'</b> combined — higher-beta names on a much smaller revenue base.'}
       ];
       var insEl = document.getElementById("insights");

@@ -16,7 +16,7 @@
         { "k": "Pledged 2024–27E", "v": "~$2T" },
         { "k": "Deployed so far", "v": "~30%", "bar": 30 } ] },
       "layers": [
-        { "id": "L1", "name": "Compute silicon", "lag": 0, "color": "var(--l1)",
+        { "id": "L1", "name": "AI compute chips (GPUs & accelerators)", "lag": 0, "color": "var(--l1)",
           "lagText": "Guide-quarter. Moves first, prices the whole chain.",
           "names": [
             { "t": "NVDA", "n": "Nvidia",            "exposure": "hi",  "stage": "Mature ramp", "concen": "High — few hyperscalers", "note": "Sets the pace for every layer below.", "watch": "Data-center revenue guide and Blackwell-class lead times." },
@@ -25,7 +25,7 @@
             { "t": "MRVL", "n": "Marvell",           "exposure": "hi",  "stage": "Ramping",     "concen": "High",                    "note": "Custom ASIC and optical DSP. Straddles L1 and L4.", "watch": "Custom-silicon design-win commentary + optical DSP." },
             { "t": "TSM",  "n": "TSMC",              "exposure": "mid", "stage": "Mature ramp", "concen": "Moderate",                "note": "Capacity is the true upstream constraint.", "watch": "CoWoS advanced-packaging capacity and HPC revenue share.", "rev_ttm_est": 122000000000 }
           ] },
-        { "id": "L2", "name": "Memory & HBM", "lag": 1, "color": "var(--l2)",
+        { "id": "L2", "name": "AI memory (HBM & DRAM)", "lag": 1, "color": "var(--l2)",
           "lagText": "About one quarter behind. Contract-priced, so cyclical.",
           "names": [
             { "t": "MU",   "n": "Micron",            "exposure": "mid", "stage": "Ramping", "concen": "Moderate", "note": "The listed HBM/DRAM proxy — datacenter memory demand drives the cycle.", "watch": "HBM bit-share and whether it's sold out forward." },
@@ -39,7 +39,7 @@
             { "t": "AAOI", "n": "Applied Optoelec.", "exposure": "hi",  "stage": "Early",       "concen": "Very high",                "note": "Small, volatile, single-customer sensitive.", "watch": "Single-customer order timing — very lumpy." },
             { "t": "LITE", "n": "Lumentum",          "exposure": "mid", "stage": "Ramping",     "concen": "High",                     "note": "Laser supply into module makers.", "watch": "Cloud/datacenter laser bookings and channel inventory." }
           ] },
-        { "id": "L4", "name": "DSP, retimers & signal integrity", "lag": 2, "color": "var(--l4)",
+        { "id": "L4", "name": "Signal & connectivity chips", "lag": 2, "color": "var(--l4)",
           "lagText": "Two quarters. Design wins lock in years of revenue.",
           "names": [
             { "t": "CRDO", "n": "Credo",             "exposure": "hi", "stage": "Early ramp", "concen": "Very high — top 2 buyers", "note": "Concentration is the single most important fact here.", "watch": "Top-2 buyer concentration and AEC/DSP ramp." },
