@@ -51,13 +51,24 @@ _ALIASES = {
 }
 
 
+def _norm(s: str) -> str:
+    """Normalise an env var name for fuzzy matching: upper-case, and treat
+    spaces/dashes as underscores. Host dashboards happily accept names like
+    'Gemini API Key', which no exact os.environ lookup would ever find."""
+    return "".join(ch if ch.isalnum() else "_" for ch in (s or "").upper())
+
+
 def _key(name: str) -> str:
-    """Read a provider key, tolerating the common alias names people actually
-    set in their host's dashboard (GOOGLE_API_KEY vs GEMINI_API_KEY, etc.)."""
+    """Read a provider key, tolerating (a) common alias names and (b) loose
+    naming such as 'Gemini API Key' or 'gemini-api-key'."""
     for n in _ALIASES.get(name, [name]):
         v = (os.environ.get(n, "") or "").strip()
         if v:
             return v
+    wanted = {_norm(n) for n in _ALIASES.get(name, [name])}
+    for k, v in os.environ.items():
+        if _norm(k) in wanted and (v or "").strip():
+            return v.strip()
     return ""
 
 
