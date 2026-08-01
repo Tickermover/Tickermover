@@ -325,6 +325,25 @@ async def _fetch_edgar_recent(ticker: str) -> dict | None:
                 rq = await c.get(s_url)
             if rq.status_code == 200:
                 extra = _strip_html(rq.text, limit=120000)
+                # Hoist Risk Factors / MD&A to the FRONT of the appended text.
+                # Providers with a small context (Groq ≈24k chars) otherwise
+                # truncate before reaching them — which is exactly why "what is
+                # management worried about" kept coming back unanswered.
+                try:
+                    import re as _re2
+                    picks = []
+                    for pat in (r"Item\s*1A[.\s—-]*Risk\s*Factors",
+                                r"\bRisk\s*Factors\b",
+                                r"Management[’'`s]*\s*Discussion\s*and\s*Analysis"):
+                        m = _re2.search(pat, extra, _re2.I)
+                        if m:
+                            picks.append(extra[m.start():m.start() + 30000])
+                        if len(picks) >= 2:
+                            break
+                    if picks:
+                        extra = "\n\n".join(picks) + "\n\n" + extra[:30000]
+                except Exception:
+                    pass
                 if len(extra) > 500:
                     header = (
                         "\n\n=== From the most recent " + str(second_label)
