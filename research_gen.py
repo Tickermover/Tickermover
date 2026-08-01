@@ -85,6 +85,21 @@ _FRESHNESS_RULE = (
     "concentration, unit/volume figures, and multi-year historical trends."
 )
 
+# ── Shared FCA compliance rule ─────────────────────────────────────────────
+# Applies to every user-facing AI brief. Keeps the prose as generic research /
+# opinion for a UK audience and out of "personal recommendation" territory.
+_COMPLIANCE_RULE = (
+    "COMPLIANCE RULE — CRITICAL, APPLIES TO EVERY WORD. This is generic "
+    "research/commentary for a UK audience, NOT financial advice and NOT a "
+    "personal recommendation. Never instruct the reader to buy, sell, hold, or "
+    "trade. Do NOT use the words 'buy' or 'sell' as directives, and never say "
+    "'you should'. Express OUR stance only as opinion ('our view is bullish / "
+    "cautious', 'we lean constructive'). You may report a THIRD-PARTY analyst "
+    "rating only when it is clearly attributed to the firm that issued it. Do "
+    "NOT guarantee returns, promise a price move, or use hype ('will soar', "
+    "'guaranteed', 'can't-miss', 'to the moon')."
+)
+
 
 def available() -> bool:
     return bool(_KEY)
@@ -174,7 +189,7 @@ def _research_system() -> str:
         "countdown (e.g. not **Next 13 days**, not **In 3 weeks**): this note is cached "
         "for weeks, so any countdown would be wrong by the time it is read.\n"
         "9. '## Bottom line' — 2-3 sentences ending in the one honest question an "
-        "investor should answer before buying.\n"
+        "investor should weigh before taking a position.\n"
         "10. '## Sources' — numbered list of the web pages you actually used, as "
         "markdown links.\n\n"
         "RULES: Cite every external/quantitative claim inline with a markdown link to "
@@ -182,6 +197,7 @@ def _research_system() -> str:
         "verify something, omit it. Be specific and concrete; no filler or hedging "
         "boilerplate. Do NOT narrate your search process.\n\n"
         f"{_FRESHNESS_RULE}\n\n"
+        f"{_COMPLIANCE_RULE}\n\n"
         "End the note with this exact line:\n"
         f"{DISCLAIMER}"
     )
@@ -319,6 +335,7 @@ def _overview_system() -> str:
         "This is a quick overview — do NOT claim live/breaking figures, do NOT "
         "web-search, do NOT add source links.\n\n"
         f"{_FRESHNESS_RULE}\n\n"
+        f"{_COMPLIANCE_RULE}\n\n"
         "Output GitHub-flavoured Markdown in EXACTLY this order:\n"
         "1. A one-sentence **bold verdict** of where the company stands.\n"
         "2. THE STRUCTURED BLOCK — immediately after the verdict, as ONE fenced ```json "

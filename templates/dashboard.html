@@ -7611,13 +7611,13 @@ document.addEventListener('keydown', function(e){
     <div class="card"><h3 style="color:var(--acc2);margin-bottom:8px">🎯 Grades &amp; Ratings</h3>
       <p style="font-size:13px;line-height:1.6;color:var(--muted)">A → ★★★★★ Strong Outperform · B → ★★★★ Outperform · C → ★★★ Neutral · D → ★★ Lagging · F → ★ Avoid. The Hot List shows only ★★★★★ Strong Outperform (grade A) with confidence ≥ 75%. Use All Stocks tab to browse all grades. <strong>Note:</strong> these are quality descriptors, not buy/sell recommendations — TickerMover is a research tool, not an FCA-authorised adviser.</p></div>
     <div class="card"><h3 style="color:var(--acc2);margin-bottom:8px">⚡ Trade Setups</h3>
-      <p style="font-size:13px;line-height:1.6;color:var(--muted)">ATR-based position sizing: Entry at current price, Stop = Entry − 1.5×ATR, Target = Entry + 3.0×ATR. Shares = (Account × Risk%) ÷ ATR. Default 1% risk per trade. Adjust using the sizer widget.</p></div>
+      <p style="font-size:13px;line-height:1.6;color:var(--muted)">ATR-based position sizing: Entry at current price, Stop = Entry − 1.5×ATR, Target = Entry + 3.0×ATR. Shares = (Account × Risk%) ÷ ATR. Default 1% risk per trade. Adjust using the sizer widget. <strong>These are generic, illustrative risk-management calculations for education only — not a recommendation to buy, sell, or size any position, and not personal advice. Capital at risk.</strong></p></div>
     <div class="card"><h3 style="color:var(--acc2);margin-bottom:8px">🔄 Data Refresh</h3>
       <p style="font-size:13px;line-height:1.6;color:var(--muted)">Live prices update every 30s from /api/quotes/batch. Fast refresh (quotes + social) every 5 min. Slow refresh (candles, fundamentals, insider) every 60 min starting 90s after boot.</p></div>
     <div class="card"><h3 style="color:var(--acc2);margin-bottom:8px">⭐ Watchlist</h3>
       <p style="font-size:13px;line-height:1.6;color:var(--muted)">Save any ticker you want to keep an eye on. Saved on your browser via localStorage. Tap the ★ icon on any stock card to add or remove, or type a ticker directly in the Watchlist tab.</p></div>
     <div class="card"><h3 style="color:var(--acc2);margin-bottom:8px">💼 Allocator</h3>
-      <p style="font-size:13px;line-height:1.6;color:var(--muted)">Shows share count as primary metric, position value, % of account, entry/stop/target levels, and max risk per position. Based on ATR sizing. Max 8 open positions, 6% total portfolio risk.</p></div>
+      <p style="font-size:13px;line-height:1.6;color:var(--muted)">Shows share count as primary metric, position value, % of account, entry/stop/target levels, and max risk per position. Based on ATR sizing. Max 8 open positions, 6% total portfolio risk. <strong>An illustrative calculator for education only — not a recommendation or personal advice to trade. Capital at risk.</strong></p></div>
   </div>
 </div>
 
@@ -16039,7 +16039,7 @@ function renderRichReport(a) {
   const rec = r.recommendation || {};
   const recommendation = (rec.verdict || rec.summary) ? `
     <div class="rr-callout" style="margin-top:32px;background:#FFF8E5;border-left-color:${ratingColor}">
-      <div class="rr-eyebrow" style="color:${ratingColor}">Recommendation</div>
+      <div class="rr-eyebrow" style="color:${ratingColor}">Our research view</div>
       <div class="rr-h" style="color:${ratingColor}">${rec.verdict || r.rating || 'Outlook'}</div>
       ${rec.summary ? `<div class="rr-summary" style="font-size:14.5px;color:#0a0a0a;line-height:1.7">${rec.summary}</div>` : ''}
     </div>` : '';
@@ -17763,6 +17763,7 @@ function v2RenderTrackerChartHTML(d){
         '</button>' +
         '<div class="v2-tc-audit-panel" style="display:none"></div>' +
       '</div>' +
+      '<div class="v2-tc-foot" style="font-size:10.5px;color:#94a3b8;text-align:center;margin-top:10px;line-height:1.5">Our research opinion — not advice, not FCA-authorised. Illustrative, hypothetical research tracker — not a portfolio to copy. Past performance is not a guide to future results. Capital at risk.</div>' +
     '</div>';
 }
 
@@ -21499,17 +21500,26 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     // fall back to our internal grade only when the broker recommendation is absent.
     const rm=_fpNum(t,['recommendation_mean']), rk=(t.analyst_recommendation||'').toLowerCase();
     const KEYLBL={strong_buy:'Strong Buy',buy:'Buy',outperform:'Buy',hold:'Hold',neutral:'Hold',underperform:'Sell',sell:'Sell',strong_sell:'Strong Sell'};
-    let label,pos;
-    if(rm!=null&&rm>0){ pos=Math.max(0,Math.min(100,(5-rm)/4*100)); label=KEYLBL[rk]||(rm<=1.5?'Strong Buy':rm<=2.5?'Buy':rm<=3.5?'Hold':rm<=4.5?'Sell':'Strong Sell'); }
-    else { const RAT={A:['Strong Buy',90],B:['Buy',72],C:['Hold',50],D:['Sell',28],F:['Strong Sell',10]},r=RAT[t.grade]||['No rating',50]; label=r[0]; pos=r[1]; }
+    // Only show a Buy/Hold/Sell "consensus" when it is REAL third-party broker
+    // data (recommendation_mean). We deliberately do NOT synthesise an analyst
+    // rating from our own internal grade — that would be both directive and
+    // misleading. When broker coverage is absent, we show "no rating".
+    let label,pos,hasRating=(rm!=null&&rm>0);
+    if(hasRating){ pos=Math.max(0,Math.min(100,(5-rm)/4*100)); label=KEYLBL[rk]||(rm<=1.5?'Strong Buy':rm<=2.5?'Buy':rm<=3.5?'Hold':rm<=4.5?'Sell':'Strong Sell'); }
+    else { label='No analyst rating'; pos=50; }
     const chg=function(v){return (px&&v!=null)?((v-px)/px*100):null;};
     const fmt=function(v){return v==null?'—':'$'+v.toFixed(2);};
     const fpct=function(v){return v==null?'—':((v>=0?'+':'')+v.toFixed(2)+'%');};
     const cls=function(c){return c==null?'':(c>=0?'pos':'neg');};
     const upAvg=chg(mean);
-    const sent='According to '+(na!=null?(Math.round(na)+' analyst'+(Math.round(na)===1?'':'s')):'analysts')+', '+escHTML(t.name||t.ticker)+' has a consensus rating of <b>'+label+'</b>'+(mean!=null?(' and an average price target of <b>$'+mean.toFixed(2)+'</b>'):'')+'.'+(upAvg!=null?(' The 1-year forecast is <b class="'+cls(upAvg)+'">'+fpct(upAvg)+'</b> vs the current price'+((low!=null&&high!=null)?(' — low <b>$'+low.toFixed(0)+'</b> ('+fpct(chg(low))+'), high <b>$'+high.toFixed(0)+'</b> ('+fpct(chg(high))+')'):'')+'.'):'');
+    const _fc=(upAvg!=null?(' The 1-year forecast is <b class="'+cls(upAvg)+'">'+fpct(upAvg)+'</b> vs the current price'+((low!=null&&high!=null)?(' — low <b>$'+low.toFixed(0)+'</b> ('+fpct(chg(low))+'), high <b>$'+high.toFixed(0)+'</b> ('+fpct(chg(high))+')'):'')+'.'):'');
+    const sent = hasRating
+      ? ('According to '+(na!=null?(Math.round(na)+' analyst'+(Math.round(na)===1?'':'s')):'analysts')+', '+escHTML(t.name||t.ticker)+' has a consensus rating of <b>'+label+'</b>'+(mean!=null?(' and an average price target of <b>$'+mean.toFixed(2)+'</b>'):'')+'.'+_fc)
+      : (mean!=null?(escHTML(t.name||t.ticker)+' has an average third-party analyst price target of <b>$'+mean.toFixed(2)+'</b>.'+_fc):'');
     const ptline=(mean!=null)?('<div class="fc-pt">Price target<span class="fc-pt-v">$'+mean.toFixed(2)+'</span>'+(upAvg!=null?(' <span class="'+cls(upAvg)+'">('+fpct(upAvg)+')</span>'):'')+'</div>'):'';
-    const cons='<div class="fc-cons">Analyst consensus: <b class="'+(pos>=60?'pos':pos<=34?'neg':'')+'">'+label+'</b></div>';
+    const cons = hasRating
+      ? '<div class="fc-cons">Analyst consensus: <b class="'+(pos>=60?'pos':pos<=34?'neg':'')+'">'+label+'</b></div>'
+      : '<div class="fc-cons" style="color:var(--muted)">No third-party analyst rating available</div>';
     const cols=[['Low',low],['Average',mean],['Median',med],['High',high]].filter(function(c){return c[1]!=null;});
     const head='<th>Target</th>'+cols.map(function(c){return '<th>'+c[0]+'</th>';}).join('');
     const pr='<tr><td>Price</td>'+cols.map(function(c){return '<td>'+fmt(c[1])+'</td>';}).join('')+'</tr>';

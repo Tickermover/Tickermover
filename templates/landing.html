@@ -1449,7 +1449,7 @@ button:focus-visible,[tabindex]:focus-visible{
     if(s.avg_alpha_spy!=null) html+=stat((s.avg_alpha_spy>=0?'+':'')+(Number(s.avg_alpha_spy)).toFixed(1)+'%','avg return vs the S&P',s.avg_alpha_spy>=0);
     html+=stat(n,'closed picks · all public');
     document.getElementById('sc-stats').innerHTML=html;
-    document.getElementById('sc-note').textContent='Honest and early — a small sample, measured against the S&P 500 over each pick’s own holding window. We log every entry, exit and result the moment it happens. No cherry-picking, no hindsight edits.';
+    document.getElementById('sc-note').textContent='An illustrative research tracker, not a portfolio to copy — honest and early, a small sample measured against the S&P 500 over each pick’s own holding window. We log every entry, exit and result the moment it happens: no cherry-picking, no hindsight edits. Past performance is not a guide to future results; capital at risk.';
     box.style.display='';
   }catch(e){}
 })();
@@ -1868,7 +1868,7 @@ button:focus-visible,[tabindex]:focus-visible{
       <div class="profile">
         <span class="profile-tag">Conservative</span>
         <h3>Steady compounders</h3>
-        <p class="desc">Blue-chip names with low beta, real margins, and durable demand. For long-term wealth.</p>
+        <p class="desc">Blue-chip names with low beta, real margins, and durable demand. For patient, long-term investors.</p>
         <ul>
           <li>S&amp;P 500 / Dow members only</li>
           <li>Beta &lt; 1.0, profit-positive</li>

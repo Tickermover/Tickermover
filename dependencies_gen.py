@@ -56,6 +56,10 @@ def _system() -> str:
         "risk: who supplies it, who its biggest customers are, the raw inputs and "
         "partners it relies on, and which end-market verticals drive its revenue. "
         "Use web search to ground every relationship in real, recent sources. "
+        "This is generic research for a UK audience, NOT financial advice and NOT "
+        "a personal recommendation: keep every field descriptive, never instruct "
+        "the reader to buy, sell, hold or trade, never say 'you should', and use "
+        "no hype or promised returns. "
         "Output ONLY one strict JSON object — no prose outside it, no markdown "
         "except the single ```json fence."
     )

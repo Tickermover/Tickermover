@@ -1413,13 +1413,42 @@ def _analytics_snippet() -> str:
     )
 
 
-def _with_analytics(html: str) -> str:
-    """Inject the analytics snippet before </head> on a public page (no-op
-    when analytics is unconfigured or the page has no head)."""
-    snip = _analytics_snippet()
-    if not snip or "</head>" not in html:
+def _consent_snippet() -> str:
+    """Cookie-consent banner (UK GDPR / PECR), loaded on every public page.
+
+    Blocks advertising/analytics tags (Google Ads, Meta pixel, GA4) until the
+    visitor consents, and lets them change or withdraw that choice. Marketing
+    tags must be added GATED, e.g.:
+
+        <script type="text/plain" data-cc="marketing">...pixel code...</script>
+
+    and they auto-activate once consent is granted. See static/consent.js.
+    Set CONSENT_BANNER=off to disable injection."""
+    if (os.environ.get("CONSENT_BANNER", "") or "").strip().lower() == "off":
+        return ""
+    return '<script src="/static/consent.js" defer></script>'
+
+
+def _with_consent(html: str) -> str:
+    """Inject the cookie-consent loader (before </head>, else </body>)."""
+    snip = _consent_snippet()
+    if not snip:
         return html
-    return html.replace("</head>", snip + "\n</head>", 1)
+    if "</head>" in html:
+        return html.replace("</head>", snip + "\n</head>", 1)
+    if "</body>" in html:
+        return html.replace("</body>", snip + "\n</body>", 1)
+    return html
+
+
+def _with_analytics(html: str) -> str:
+    """Inject cookieless analytics + the cookie-consent banner on a public
+    page. Analytics is a no-op when unconfigured; the consent banner is always
+    injected (it is required before any ad/marketing tag can run)."""
+    snip = _analytics_snippet()
+    if snip and "</head>" in html:
+        html = html.replace("</head>", snip + "\n</head>", 1)
+    return _with_consent(html)
 
 
 def _build_landing_schema() -> str:
@@ -2062,17 +2091,19 @@ def _render_report_page(t: dict) -> str:
     p_sen  = _pillar("sentiment_score", "score_sentiment", default=score)
     p_pot  = _pillar("potential_score", "score_potential", "growth_potential_score", default=max(0, score - 6))
 
-    # Verdict pill — derived from score band
+    # Research-view pill — derived from score band. Deliberately NON-directive
+    # (opinion/sentiment words, not "buy"/"sell"/"avoid") to keep this as
+    # generic commentary rather than a personal recommendation under FSMA/COBS.
     if score >= 80:
-        verdict, vd_tone = "Strong Buy", "#15803d"
+        verdict, vd_tone = "Very Bullish", "#15803d"
     elif score >= 70:
-        verdict, vd_tone = "Buy", "#D4860A"
+        verdict, vd_tone = "Bullish", "#D4860A"
     elif score >= 60:
-        verdict, vd_tone = "Accumulate", "#D4860A"
+        verdict, vd_tone = "Constructive", "#D4860A"
     elif score >= 45:
-        verdict, vd_tone = "Hold", "#475569"
+        verdict, vd_tone = "Neutral", "#475569"
     else:
-        verdict, vd_tone = "Avoid", "#b91c1c"
+        verdict, vd_tone = "Cautious", "#b91c1c"
 
     # Price + change formatted
     px_str  = f"${price:.2f}" if isinstance(price, (int, float)) and price else "—"
@@ -2281,6 +2312,7 @@ def _render_report_page(t: dict) -> str:
       <div class="verdict-title">{safe_name}</div>
       <div class="verdict-meta">{px_str} · <span style="color:{chg_color};font-weight:700">{chg_str}</span>{mc_str}</div>
       <span class="verdict-tag">{verdict}</span>
+      <span style="display:block;margin-top:8px;font-family:'Manrope','Inter',sans-serif;font-size:11px;color:#94a3b8;line-height:1.5">Our research view from the Alpha Score — an opinion for information only, not a personal recommendation or advice to buy or sell. Not FCA-authorised. Capital at risk.</span>
     </div>
     <div class="verdict-score">
       <div class="num">{score}</div>
@@ -3717,7 +3749,7 @@ async def dashboard():
             injection = f'\n<script>window.__AH_DATA__={payload};</script>\n'
             html = html.replace("</head>", injection + "</head>", 1)
 
-        return HTMLResponse(content=html)
+        return HTMLResponse(content=_with_consent(html))
     except FileNotFoundError:
         return HTMLResponse(
             content="<h2>templates/dashboard.html not found</h2>", status_code=500

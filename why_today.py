@@ -68,7 +68,7 @@ _SYSTEM = (
     "- macro + catalyst: ground in web-search results (recent, real). quant: ground STRICTLY in the numbers we provide.\n"
     "- Do NOT invent figures, customers, dates, or events. If you cannot verify a catalyst, do not fabricate one — fall back to the structural driver.\n"
     "- Keep each value SHORT — ONE tight sentence, max ~18 words. Lead with the point; cut filler. Confident, plain English, no hype, no emoji, no markdown.\n"
-    "- Research signal, NOT advice: never promise or imply returns, never name a timeframe for gains, never write 'buy', 'sell', 'must own', or a price target.\n"
+    "- Research signal for a UK audience, NOT financial advice and NOT a personal recommendation: never instruct the reader to buy, sell, hold or trade, never use 'buy'/'sell' as directives, never say 'you should', never write 'must own', never promise or imply returns, never name a timeframe for gains, never give a price target, and use no hype ('will soar', 'guaranteed'). A third-party analyst rating may be cited only when clearly attributed. Frame OUR stance as opinion (bullish / cautious).\n"
     "- Output ONLY the JSON object."
 )
 

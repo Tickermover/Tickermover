@@ -5,13 +5,24 @@ Three plain-English legal documents. The business is relocating to the UK,
 so the REGULATORY DISCLAIMER has been converted to FCA framing (generic
 research / not a personal recommendation under FSMA + the FCA Handbook).
 
-⚠️  MIXED LEGAL STATE — NEEDS A UK SOLICITOR BEFORE PAID LAUNCH:
-  The Terms (governing law, arbitration venue) and the Privacy section are
-  STILL drafted for the OLD India posture — Indian law, Mumbai arbitration,
-  DPDP Act 2023, Razorpay, Indian tax retention. These have NOT been
-  rewritten for the UK (England & Wales law, UK GDPR / Data Protection
-  Act 2018, Stripe, ICO). A UK solicitor must convert these before going
-  live for UK paid users.
+⚠️  DRAFT — STILL NEEDS A UK SOLICITOR SIGN-OFF BEFORE PAID LAUNCH / ADS.
+  UK conversion pass (Aug 2026) done in-house:
+    * Terms §13 governing law: India/arbitration -> law & courts of England
+      and Wales.
+    * Terms §10 liability cap: INR -> GBP (£50 free-tier) + non-excludable
+      carve-outs.
+    * Terms §6: added UK Consumer Contracts Regs 2013 14-day cancellation.
+    * Terms §1: trading-entity identification block (env-driven; shows a
+      visible "pending" note until LEGAL_ENTITY_NAME / _COMPANY_NUMBER /
+      _ADDRESS are set — REQUIRED before ads).
+    * Privacy: rewritten cookie section (essential/analytics/advertising
+      categories + consent), removed the false "we do not run ads / no ad
+      cookies / never share with advertisers" absolutes, added Google/Meta
+      as consent-gated partners. Pairs with static/consent.js banner.
+  STILL OUTSTANDING for the solicitor: confirm the FCA financial-promotions
+  position (the model portfolio / Outperform-Avoid verdicts vs the Art.20
+  media exemption) BEFORE spending on ads; verify data-processor list and
+  cross-border transfer basis; fill the trading-entity details.
 
   * FCA generic-research framing — TickerMover is a research/educational
     tool, NOT authorised or regulated by the FCA, and gives no personal
@@ -42,6 +53,32 @@ _CONTACT = os.environ.get("LEGAL_CONTACT_EMAIL", "support@tickermover.com")
 # India and must be rewritten by a UK solicitor. This default reflects the
 # INTENDED UK posture only.
 _JURIS   = os.environ.get("LEGAL_JURISDICTION", "England and Wales")
+# UK e-commerce / consumer law requires you to identify the trading entity.
+# These MUST be set before paid launch / running ads — fill in the registered
+# company name, its Companies House number, and a geographic contact address.
+_ENTITY     = os.environ.get("LEGAL_ENTITY_NAME", "")     # e.g. "TickerMover Ltd"
+_COMPANY_NO = os.environ.get("LEGAL_COMPANY_NUMBER", "")  # Companies House number
+_ADDRESS    = os.environ.get("LEGAL_ADDRESS", "")         # registered/trading address
+
+
+def _business_details_html() -> str:
+    """Renders the trading-entity identification block (Companies Act / UK
+    e-commerce regs). Shows a visible 'to be completed' note until the env
+    vars are set, so it is never silently missing."""
+    if _ENTITY or _COMPANY_NO or _ADDRESS:
+        rows = [f"<strong>{_ENTITY or _COMPANY}</strong>"]
+        if _COMPANY_NO:
+            rows.append(f"Registered in {_JURIS}, company no. {_COMPANY_NO}")
+        if _ADDRESS:
+            rows.append(_ADDRESS)
+        rows.append(f'Contact: <a href="mailto:{_CONTACT}" class="body-link">{_CONTACT}</a>')
+        return "<p>" + "<br>".join(rows) + "</p>"
+    return (
+        '<div class="callout callout-amber"><strong>Business details pending.</strong> '
+        'The registered company name, Companies House number and contact address '
+        'must be published here before paid launch. Set <code>LEGAL_ENTITY_NAME</code>, '
+        '<code>LEGAL_COMPANY_NUMBER</code> and <code>LEGAL_ADDRESS</code>.</div>'
+    )
 
 
 # ── Shared styling + header / footer ────────────────────────────────
@@ -147,6 +184,7 @@ td{{padding:8px;border:1px solid rgba(9,20,60,.1)}}
 .foot-legal a:hover,.foot-legal a[aria-current]{{color:#fff}}
 .disc{{font-size:12px;color:#475569}}
 </style>
+<script src="/static/consent.js" defer></script>
 </head>
 <body>
 
@@ -216,6 +254,7 @@ td{{padding:8px;border:1px solid rgba(9,20,60,.1)}}
         <a href="/privacy"{active['privacy'] if slug == 'privacy' else ''}>Privacy</a>
         <a href="/terms"{active['terms'] if slug == 'terms' else ''}>Terms</a>
         <a href="/disclaimer"{active['disclaimer'] if slug == 'disclaimer' else ''}>Disclaimer</a>
+        <a href="#" data-cc-open>Cookie settings</a>
       </nav>
       <span class="disc">Not investment advice. {_COMPANY} is a research tool; do your own due diligence before any trade.</span>
     </div>
@@ -249,6 +288,7 @@ website <strong>{_DOMAIN}</strong> (&ldquo;Service&rdquo;), a research and educa
 platform that aggregates public market data, computes quantitative scores, and
 produces editorial commentary on US-listed equities. Use of the Service is governed
 by these Terms.</p>
+{_business_details_html()}
 
 <h2>2. What the Service is &mdash; and is not</h2>
 <h3>What it is</h3>
@@ -297,6 +337,13 @@ features is displayed before purchase and processed by our payment processor.
 Refunds for paid plans are governed by the Refund Policy linked from
 the checkout page; in the absence of a separate Refund Policy, paid subscriptions
 are non-refundable except where required by applicable consumer law.</p>
+<p>If you are a consumer in the UK, you have a statutory right under the Consumer
+Contracts (Information, Cancellation and Additional Charges) Regulations 2013 to
+cancel within 14 days of purchase. Because the Service is digital content
+supplied immediately, by starting to use a paid feature within that period you
+acknowledge that you consent to immediate supply and lose the 14-day right to
+cancel, to the extent permitted by law. This does not affect your other
+statutory rights.</p>
 
 <h2>7. Intellectual property</h2>
 <p>All software, scoring algorithms, editorial commentary, screenshots, branding,
@@ -326,10 +373,12 @@ complete.</p>
 <p>To the maximum extent permitted by applicable law, {_COMPANY}'s aggregate
 liability arising out of or related to your use of the Service shall not exceed
 the amount you have paid us in the twelve (12) months preceding the claim, or
-INR 1,000 if you are on the free tier. Under no circumstances will we be liable
+&pound;50 if you are on the free tier. Under no circumstances will we be liable
 for indirect, incidental, consequential, special, or punitive damages, including
 lost profits, lost trading opportunities, or losses arising from investment
-decisions you make.</p>
+decisions you make. Nothing in these Terms limits or excludes our liability for
+death or personal injury caused by our negligence, for fraud, or for anything
+that cannot be limited or excluded under applicable law.</p>
 
 <div class="callout">
   <strong>Critical:</strong> Trading and investing carry substantial risk, including
@@ -355,12 +404,13 @@ users with at least 14 days' notice. Continued use after such notice constitutes
 acceptance.</p>
 
 <h2>13. Governing law and disputes</h2>
-<p>These Terms are governed by the laws of India. Any dispute arising out of or
-in connection with the Service or these Terms shall first be attempted to be
-resolved by good-faith negotiation. If unresolved within thirty (30) days, the
-dispute shall be referred to binding arbitration under the Arbitration and
-Conciliation Act, 1996, conducted in English by a sole arbitrator appointed by
-mutual agreement, with seat at <strong>{_JURIS}</strong>.</p>
+<p>These Terms, and any dispute or claim arising out of or in connection with
+them or the Service (including non-contractual disputes), are governed by the
+law of <strong>{_JURIS}</strong>. We will first try to resolve any dispute with
+you by good-faith negotiation. If that fails, the courts of {_JURIS} shall have
+exclusive jurisdiction, except that if you are a consumer resident elsewhere in
+the UK you may also bring proceedings in the courts of your home nation. Nothing
+in this clause affects any mandatory statutory rights you have as a consumer.</p>
 
 <h2>14. Severability and entire agreement</h2>
 <p>If any provision of these Terms is held unenforceable, the remaining
@@ -381,7 +431,10 @@ def render_privacy() -> str:
 <div class="callout callout-green">
   <strong>TL;DR.</strong> We collect the minimum needed to run the Service:
   your email + auth credentials, your watchlist, payment metadata, and standard
-  server logs. We do not sell your data. We do not run ads.
+  server logs. We do not sell your data. We use essential cookies to run the
+  site, and &mdash; only with your consent &mdash; analytics and advertising
+  cookies, which you can accept, reject or change at any time via
+  <a href="#" data-cc-open class="body-link">Cookie settings</a>.
 </div>
 
 <h2>1. Who we are</h2>
@@ -404,9 +457,25 @@ this Privacy Policy or requests to exercise your rights should be directed to
 <h3>2.2 Information we collect automatically</h3>
 <ul>
   <li><strong>Server logs</strong> &mdash; IP address, browser user-agent, page URL, timestamp, response code. Used for debugging, abuse prevention, and aggregate analytics. Retained 30&ndash;90 days then deleted.</li>
-  <li><strong>Cookies</strong> &mdash; a session cookie (login state) and one preference cookie ("first-visit disclaimer dismissed"). We do <em>not</em> set advertising or cross-site tracking cookies.</li>
+  <li><strong>Cookies and similar technologies</strong> &mdash; see the dedicated section below. Essential cookies are always used; analytics and advertising cookies are used only if you consent.</li>
   <li><strong>Aggregate usage data</strong> &mdash; how many users hit which pages, used in anonymous form to improve the product.</li>
 </ul>
+
+<h3>2.4 Cookies and similar technologies</h3>
+<p>We ask for your consent before setting any non-essential cookie, using the
+banner shown on your first visit. You can change or withdraw your choice at any
+time via <a href="#" data-cc-open class="body-link">Cookie settings</a>. The
+categories we use:</p>
+<table>
+<thead><tr><th>Category</th><th>Purpose</th><th>Consent</th></tr></thead>
+<tbody>
+<tr><td><strong>Essential</strong></td><td>Sign-in/session, security, and remembering your cookie choice. The site cannot function without these.</td><td>Always on (no consent needed)</td></tr>
+<tr><td><strong>Analytics</strong></td><td>Understand how the site is used so we can improve it. Our default analytics (Plausible) is privacy-friendly and sets no cookies; any cookie-based analytics we add will sit in this category.</td><td>Only with your consent</td></tr>
+<tr><td><strong>Advertising</strong></td><td>Measure and target our advertising (for example Google Ads and the Meta/Facebook pixel), including conversion tracking. These set cookies and share limited event data with the ad platform.</td><td>Only with your consent</td></tr>
+</tbody></table>
+<p>Advertising and cookie-based analytics tags do not load at all until you opt
+in. If you reject them, they stay off. You can also block or delete cookies in
+your browser settings.</p>
 
 <h3>2.3 Information we do NOT collect</h3>
 <ul>
@@ -440,10 +509,16 @@ only for the agreed purpose:</p>
   <li><strong>Resend</strong> (email delivery) &mdash; delivers transactional emails; sees your email and the message body.</li>
   <li><strong>Groq</strong> &mdash; processes text from public press releases through their language model. We do <em>not</em> send your personal data to Groq, only public earnings text.</li>
   <li><strong>Anthropic / OpenAI</strong> (optional, for editorial features) &mdash; same as above; only public market commentary, never your personal data.</li>
+  <li><strong>Plausible Analytics</strong> &mdash; privacy-friendly, cookieless site analytics; does not identify you individually.</li>
+  <li><strong>Advertising &amp; measurement partners</strong> (only if you consent to advertising cookies) &mdash; e.g. Google (Google Ads / Google Analytics) and Meta Platforms (the Facebook/Instagram pixel). When enabled, these receive limited event data (such as page views and conversions) and identifiers to measure and target our ads. They act as independent controllers for that data under their own privacy policies. If you do not consent, none of these are loaded.</li>
 </ul>
 
-<p><strong>We do not sell your personal data.</strong> We do not share it with
-advertisers, data brokers, or third-party marketers.</p>
+<p><strong>We do not sell your personal data</strong> for money. We do not
+share your account data with data brokers. If you consent to advertising
+cookies, limited activity data is shared with our advertising partners (above)
+so we can measure and target our ads &mdash; you can withdraw that consent at
+any time via <a href="#" data-cc-open class="body-link">Cookie settings</a>,
+and it will stop.</p>
 
 <h2>5. Cross-border transfers</h2>
 <p>Some of our processors (Cloudflare, Stripe, Resend, Groq, Anthropic) operate

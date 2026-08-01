@@ -79,6 +79,9 @@ code{background:#f1f5f9;padding:2px 6px;border-radius:4px;font-family:'JetBrains
 .cta-btn{display:inline-block;background:#fff;color:#0a0a0a;padding:13px 26px;border-radius:10px;font-weight:700;font-size:14.5px}
 .cta-btn:hover{background:#f1f5f9;text-decoration:none}
 .legal{margin-top:36px;font-size:12px;color:#94a3b8;text-align:center;line-height:1.6}
+/* Global compliance footer — carried on every SEO page via page_shell() */
+.site-legal{margin-top:0;padding:22px 24px 40px;font-size:12px;color:#94a3b8;text-align:center;line-height:1.6;border-top:1px solid #e2e8f0;background:#fafbfc}
+.site-legal strong{color:#64748b;font-weight:700}
 /* Newsletter footer */
 .nl{margin-top:48px;padding:28px 24px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:14px}
 .nl h3{margin:0 0 6px;font-size:18px;font-weight:800}
@@ -240,6 +243,7 @@ def page_shell(title: str, desc: str, canonical: str, body_html: str,
 </head>
 <body>
 {body_html}
+<footer class="site-legal"><strong>Research &amp; opinion, not advice.</strong> Not FCA-authorised. Capital at risk. TickerMover provides generic research and commentary, not a personal recommendation — always do your own research.</footer>
 </body>
 </html>"""
 
@@ -440,7 +444,7 @@ def _pillar_body(slug: str, site_origin: str) -> str:
 <p>The market is forward-looking. A stock outperforming its sector for 3-6 months usually means analysts and institutional money are seeing something in the numbers that hasn't fully shown up in the public commentary yet. We treat 1-month and 3-month price action as a confirming signal — never the lead signal.</p>
 
 <h2>7 · Conviction — does the thesis make sense?</h2>
-<p>Numbers tell you what's true. The thesis tells you whether it'll keep being true. Before you buy, write down in one sentence why this company will be bigger and more profitable in five years than it is today. If you can't, you're trading the chart, not the business.</p>
+<p>Numbers tell you what's true. The thesis tells you whether it'll keep being true. Before taking a position, it's worth writing down in one sentence why this company might be bigger and more profitable in five years than it is today. If that sentence won't come, the case rests on the chart, not the business.</p>
 
 <h2>How TickerMover does this for you</h2>
 <p>Every stock in our universe is run through this checklist every five minutes during market hours. The output is the <a href="/learn/pop-score">Alpha Score</a> — a single 0-100 composite that bakes in all seven signals plus a regime adjustment. You can drill into the underlying components on any stock's detail page.</p>
