@@ -2040,14 +2040,17 @@ async def reports_index():
 #  Mode for deep research consumption (high time-on-site, premium feel),
 #  Data Mode for the dashboard (glance & scan).
 # ═════════════════════════════════════════════════════════════════════════
-@app.get("/report/{ticker}", response_class=HTMLResponse)
+@app.get("/report/{ticker}")
 async def report_page(ticker: str):
-    """Premium long-form research report for a single ticker."""
+    """Legacy report route — RETIRED 1 Aug 2026. The modern SEO stock page
+    /stocks/{ticker} is now the single canonical per-stock page (kills the
+    duplicate-content overlap and the legacy 'Reading Mode' theme). The
+    fundamentals fact-check card was moved onto /stocks. Permanent 301 so any
+    inbound links and accumulated search equity carry over. `_render_report_page`
+    is now unused (kept for reference)."""
+    from fastapi.responses import RedirectResponse
     sym = ticker.upper().strip()
-    t = next((x for x in (_universe_data or []) if (x.get("ticker") or "").upper() == sym), None)
-    if not t:
-        return HTMLResponse(content=_render_unknown_stock(sym), status_code=200)
-    return HTMLResponse(content=_render_report_page(t))
+    return RedirectResponse(url=f"/stocks/{sym}", status_code=301)
 
 
 def _render_report_page(t: dict) -> str:
@@ -3044,7 +3047,16 @@ def _render_stock_page(t: dict) -> str:
     # Always append the FAQ block (renders even when there are no peers)
     peers_html = (peers_html or "") + faq_html
 
-    # ── Final HTML — no JS needed, fully crawlable ──
+    # Fundamentals fact-check card (server-rendered checklist + business line +
+    # key catalyst; "what management said" loads client-side from
+    # /api/event-intel). Never let a card error break the page.
+    try:
+        import fact_check as _fc
+        fact_check_html = _fc.render_card(t, _universe_data)
+    except Exception as _fc_err:
+        logger.error(f"fact_check render {sym}: {_fc_err}", exc_info=True)
+        fact_check_html = ""
+    # ── Final HTML ──
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -3223,6 +3235,8 @@ h2{{font-size:18px;margin:30px 0 12px}}
       {verdict_chips_html}
     </div>
   </div>
+
+  {fact_check_html}
 
   {sp_nav_html}
 
