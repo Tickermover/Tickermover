@@ -21362,6 +21362,79 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
       _quoteCard(t)+
     '</div>';
   }
+  function paneFactCheck(t){
+    const esc=escHTML, num=k=>_fpNum(t,k), checks=[];
+    const push=(label,detail,state)=>checks.push({label,detail,state});
+    // Profitable
+    const nm=num(['profit_margin','net_margin']), ni=num(['net_income']), eps=num(['eps','eps_ttm']);
+    const pk=(nm!=null||ni!=null||eps!=null), prof=(nm!=null&&nm>0)||(ni!=null&&ni>0)||(eps!=null&&eps>0);
+    push('Profitable', pk?(prof?'Positive earnings on the latest reported data':'Not profitable on the latest reported earnings'):'Earnings data unavailable', pk?prof:null);
+    // Revenue growing
+    const rg=num(['revenue_growth_yoy','revenue_growth']), rgP=rg!=null?(Math.abs(rg)<=2?rg*100:rg):null;
+    push('Revenue growing', rgP!=null?((rgP>=0?'+':'')+rgP.toFixed(1)+'% YoY'):'Growth data unavailable', rgP!=null?rgP>0:null);
+    // Valuation vs sector
+    const pe=num(['forward_pe','pe_ratio']), med=(typeof _sectorMed==='function')?_sectorMed(t,'pe_ratio'):null;
+    if(pe!=null&&pe>0&&med!=null) push('Reasonably valued vs sector','P/E '+pe.toFixed(1)+' vs sector median '+med.toFixed(1), pe<=med);
+    else if(pe!=null&&pe>0) push('Valuation','P/E '+pe.toFixed(1)+' (no sector benchmark)', null);
+    else push('Valuation','P/E unavailable (often means no positive earnings)', null);
+    // Returns capital
+    const dy=num(['dividend_yield']), dyP=dy!=null?(dy<=1?dy*100:dy):null;
+    if(dyP!=null&&dyP>0) push('Returns capital to shareholders','Dividend yield '+dyP.toFixed(2)+'%', true);
+    else if(dyP!=null) push('Returns capital to shareholders','No dividend — may reinvest for growth', false);
+    else push('Returns capital to shareholders','Dividend data unavailable', null);
+    // Earnings schedule
+    const ed=t.earnings_date||t.next_earnings_date, days=num(['days_to_earnings']);
+    if(ed) push('Earnings schedule known','Next report around '+esc(String(ed)), true);
+    else if(days!=null&&days>=0) push('Earnings schedule known','Next report in ~'+Math.round(days)+' days', true);
+    else push('Earnings schedule known','Next report date to be confirmed', null);
+
+    const nPass=checks.filter(c=>c.state===true).length;
+    const li=c=>{ const st=c.state, cls=st===true?'fchk-on':(st===false?'fchk-off':'fchk-na'), mk=st===true?'✓':(st===false?'':'–'); return '<li class="fchk-item '+cls+'"><span class="fchk-box">'+mk+'</span><span class="fchk-txt"><b>'+esc(c.label)+'</b><span class="fchk-det">'+esc(c.detail)+'</span></span></li>'; };
+    const checklist=checks.map(li).join('');
+    const selfItems=['I can explain in one sentence why this business makes money','This position fits my own risk limits (e.g. a sector cap)','I have checked how it fits the rest of my holdings'];
+    const selfHtml=selfItems.map(s=>'<li class="fchk-item fchk-self"><span class="fchk-box"></span><span class="fchk-txt">'+esc(s)+'</span></li>').join('');
+    let desc=(t.description||t.long_business_summary||'').trim();
+    const biz=desc?(esc(desc.slice(0,360))+(desc.length>360?'…':'')):(esc(t.name||t.ticker||'This company')+' is a US-listed '+esc(t.sector||'')+' company.');
+    const cat=(t.catalyst||t.key_catalyst||'').trim()||(ed?('Next scheduled catalyst is the earnings report around '+esc(String(ed))+'.'):(days!=null&&days>=0?('Next scheduled catalyst is the earnings report in ~'+Math.round(days)+' days.'):'No dated near-term catalyst on file — watch the next earnings report and analyst revisions.'));
+    const style='<style>'+
+      '.fchk-list{list-style:none;margin:0;padding:0}'+
+      '.fchk-item{display:flex;gap:11px;align-items:flex-start;padding:8px 0;border-top:1px solid rgba(10,10,10,.06)}'+
+      '.fchk-item:first-child{border-top:none}'+
+      '.fchk-box{flex:0 0 19px;width:19px;height:19px;border-radius:6px;border:1.5px solid rgba(10,10,10,.2);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;margin-top:1px;color:transparent}'+
+      '.fchk-on .fchk-box{background:#15803d;border-color:#15803d;color:#fff}'+
+      '.fchk-na .fchk-box{border-style:dashed;color:#94a3b8}'+
+      '.fchk-txt{font-size:13.5px;color:var(--ink,#0A0A0A);display:flex;flex-direction:column;gap:2px}'+
+      '.fchk-det{font-size:12px;color:var(--grey-2,#64748b);font-weight:500}'+
+      '.fchk-self .fchk-txt{color:#475569}'+
+      '.fchk-biz{font-size:13.5px;line-height:1.55;color:var(--ink,#334155);margin:0 0 10px}'+
+      '.fchk-mrow{display:grid;grid-template-columns:130px 1fr;gap:12px;padding:9px 0;border-top:1px solid rgba(10,10,10,.06);font-size:13px}'+
+      '.fchk-mrow:first-child{border-top:none}.fchk-mrow .k{color:#64748b;font-weight:600}.fchk-mrow .v{color:#1e293b;line-height:1.5}'+
+      '.fchk-note{font-size:11.5px;line-height:1.55;color:#94a3b8;margin-top:10px}'+
+      '@media(max-width:520px){.fchk-mrow{grid-template-columns:1fr}}'+
+      '</style>';
+    return style+
+      _sec('Fundamentals fact-check','✅','green',
+        '<p class="fchk-biz"><b>The business.</b> '+biz+'</p>'+
+        '<div class="muted small" style="margin-bottom:8px">'+nPass+' / '+checks.length+' data checks met</div>'+
+        '<ul class="fchk-list">'+checklist+'</ul>')+
+      _sec('Your own checks','📝','violet','<ul class="fchk-list">'+selfHtml+'</ul>')+
+      _sec('What management said · latest call','🎙️','blue','<div id="fchkMgmt"><div class="fchk-mrow"><span class="k">Loading…</span><span class="v">Fetching the latest earnings-call summary.</span></div></div>')+
+      _sec('Key catalyst','⚡','green','<div style="font-size:13.5px;color:var(--ink,#334155)">'+cat+'</div>')+
+      '<p class="fchk-note">Data checks come from the latest reported fundamentals and can lag or have gaps. The management summary is AI-generated from the earnings call and may be wrong — verify against the filing. Research and opinion for information only — not advice, not a personal recommendation, not FCA-authorised. Capital at risk.</p>';
+  }
+  function _fchkLoadMgmt(){
+    var box=document.getElementById('fchkMgmt'); if(!box||box.getAttribute('data-loaded'))return;
+    var sym=(_drState&&_drState.full&&_drState.full.ticker)||''; if(!sym)return;
+    box.setAttribute('data-loaded','1');
+    var esc=escHTML;
+    function row(k,items){ if(!items||!items.length)return ''; return '<div class="fchk-mrow"><span class="k">'+esc(k)+'</span><span class="v">'+items.slice(0,3).map(esc).join(' ')+'</span></div>'; }
+    fetch('/api/event-intel/'+encodeURIComponent(sym)).then(function(r){return r.json();}).then(function(d){
+      if(!d||d.available===false){ box.innerHTML='<div class="fchk-mrow"><span class="k">Not available</span><span class="v">No summarised earnings call for '+esc(sym)+' yet — check the primary transcript.</span></div>'; return; }
+      var h=''; if(d.event_title||d.event_date)h+='<div class="fchk-mrow"><span class="k">Latest call</span><span class="v">'+esc(d.event_title||'')+(d.event_date?(' · '+esc(d.event_date)):'')+'</span></div>';
+      h+=row('Key updates',d.key_updates)+row('Operations',d.operations)+row('Outlook',d.outlook)+row('Risks flagged',d.risks);
+      box.innerHTML=h||'<div class="fchk-mrow"><span class="k">Summary</span><span class="v">No structured highlights returned for the latest call.</span></div>';
+    }).catch(function(){ box.innerHTML='<div class="fchk-mrow"><span class="k">Unavailable</span><span class="v">Could not load the earnings-call summary.</span></div>'; box.setAttribute('data-loaded',''); });
+  }
   function paneFinancials(t){
     const M=v=>v==null?null:(Math.abs(v)<=1?v*100:v);
     const gm=M(_fpNum(t,['gross_margin'])),nm=M(_fpNum(t,['profit_margin','net_margin'])),fm=M(_fpNum(t,['fcf_margin'])),om=M(_fpNum(t,['operating_margin'])),ebm=M(_fpNum(t,['ebitda_margin']));
@@ -21765,7 +21838,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     });
   }
 
-  const DR_TABS=['Overview','Technicals','Financials','Valuation','Estimates','News','Benchmark','Supply Chain','Documents'];
+  const DR_TABS=['Overview','Fact Check','Technicals','Financials','Valuation','Estimates','News','Benchmark','Supply Chain','Documents'];
   let _drState=null;
   function tsExpandToFull(ticker){
     const t=_byTicker[(ticker||'').toUpperCase()]; if(!t) return;
@@ -22017,6 +22090,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     const S=_drState.setup, full=_drState.full, t=_drState.t, candles=_drState.candles;
     dd.innerHTML='<div class="dr-panes">'+
       '<div class="dr-pane" data-pane="Overview">'+paneOverview(t,S,full,candles)+'</div>'+
+      '<div class="dr-pane" data-pane="Fact Check" hidden>'+paneFactCheck(full)+'</div>'+
       '<div class="dr-pane" data-pane="Technicals" hidden>'+paneTechnicals(full,S)+'</div>'+
       '<div class="dr-pane" data-pane="Financials" hidden>'+paneFinancials(full)+'</div>'+
       '<div class="dr-pane" data-pane="Valuation" hidden>'+paneValuation(full)+'</div>'+
@@ -22107,6 +22181,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     if(name==='Overview') requestAnimationFrame(()=>tsDrawChartEl());
     if(name==='Documents') try{ _loadDocuments(); }catch(e){}
     if(name==='Insights') try{ _loadInsights(); }catch(e){}
+    if(name==='Fact Check') try{ _fchkLoadMgmt(); }catch(e){}
     /* Supply Chain is web-grounded ($) — gated behind a "Run analysis" button
        (see paneSupplyChain) so merely navigating to the tab never bills. */
     try{ _drNavBuild(); }catch(e){}
