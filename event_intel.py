@@ -350,7 +350,12 @@ async def _fetch_edgar_recent(ticker: str) -> dict | None:
                         + " (filed " + str(dates[second_idx])
                         + ") — MD&A / Risk Factors ===\n"
                     )
-                    text += header + extra
+                    # Budget the two documents so BOTH survive a small-context
+                    # provider (Groq ≈24k chars). Without this the earnings
+                    # release fills the window and the Risk Factors — the only
+                    # place "what management is worried about" is disclosed —
+                    # get truncated away. Gemini (~1M context) ignores this cap.
+                    text = text[:9000] + header + extra[:13000] + "\n\n" + extra[13000:]
                     pick_form = f"{pick_form} + {second_label}"
         except Exception as exc:
             logger.warning(f"event_intel: EDGAR secondary doc {ticker} failed: {exc}")
