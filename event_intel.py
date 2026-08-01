@@ -199,24 +199,51 @@ async def _fetch_edgar_recent(ticker: str) -> dict | None:
 
     # Prefer 8-K with Item 2.02 (Results of Operations) — that's the
     # quarterly earnings release. Falls back to any 8-K, then 10-Q.
-    pick_idx = None
-    pick_form = None
-    for i, form in enumerate(forms[:40]):
-        if form == "8-K" and i < len(items) and "2.02" in (items[i] or ""):
-            pick_idx, pick_form = i, "8-K (earnings)"
-            break
+    # Scan a WIDE window: the recent-filings list is dominated by Form 3/4/5
+    # insider filings, so a 40-row window routinely misses the 10-Q entirely
+    # and falls through to whatever 8-K happens to be latest (e.g. a CEO
+    # compensation award), which answers none of the analyst questions.
+    WINDOW = 300
+    def _first(pred):
+        for i, form in enumerate(forms[:WINDOW]):
+            if pred(i, form):
+                return i
+        return None
+
+    def _is_earnings_8k(i, form):
+        return form == "8-K" and i < len(items) and "2.02" in (items[i] or "")
+
+    pick_idx, pick_form = None, None
+    idx = _first(_is_earnings_8k)
+    if idx is not None:
+        pick_idx, pick_form = idx, "8-K (earnings)"
     if pick_idx is None:
-        for i, form in enumerate(forms[:40]):
-            if form == "10-Q":
-                pick_idx, pick_form = i, "10-Q"
-                break
+        idx = _first(lambda i, f: f == "10-Q")
+        if idx is not None:
+            pick_idx, pick_form = idx, "10-Q"
     if pick_idx is None:
-        for i, form in enumerate(forms[:40]):
-            if form == "8-K":
-                pick_idx, pick_form = i, "8-K"
-                break
+        idx = _first(lambda i, f: f == "10-K")
+        if idx is not None:
+            pick_idx, pick_form = idx, "10-K"
+    if pick_idx is None:
+        idx = _first(lambda i, f: f == "8-K")
+        if idx is not None:
+            pick_idx, pick_form = idx, "8-K"
     if pick_idx is None:
         return None
+
+    # Secondary document: the latest periodic report. Its MD&A and Risk
+    # Factors are where "what is management worried about" and order-book /
+    # backlog commentary actually live — an 8-K press release rarely covers
+    # them. Skipped when the primary pick IS that report.
+    second_idx, second_label = None, None
+    if pick_form.startswith("8-K"):
+        j = _first(lambda i, f: f == "10-Q")
+        if j is None:
+            j = _first(lambda i, f: f == "10-K")
+        if j is not None:
+            second_idx = j
+            second_label = forms[j]
 
     acc       = accs[pick_idx].replace("-", "")
     primary   = primaries[pick_idx]
@@ -285,6 +312,30 @@ async def _fetch_edgar_recent(ticker: str) -> dict | None:
     if not html_blobs:
         return None
     text = " ".join(_strip_html(b, limit=40000) for b in html_blobs)[:90000]
+
+    # Append the periodic report (10-Q/10-K). MD&A and Risk Factors are where
+    # backlog/order-book commentary and "what management is worried about"
+    # are actually disclosed — an 8-K press release almost never covers them.
+    if second_idx is not None:
+        try:
+            s_acc  = accs[second_idx].replace("-", "")
+            s_prim = primaries[second_idx]
+            s_url  = f"https://www.sec.gov/Archives/edgar/data/{int(cik)}/{s_acc}/{s_prim}"
+            async with httpx.AsyncClient(timeout=25, headers=_EDGAR_HEADERS) as c:
+                rq = await c.get(s_url)
+            if rq.status_code == 200:
+                extra = _strip_html(rq.text, limit=120000)
+                if len(extra) > 500:
+                    header = (
+                        "\n\n=== From the most recent " + str(second_label)
+                        + " (filed " + str(dates[second_idx])
+                        + ") — MD&A / Risk Factors ===\n"
+                    )
+                    text += header + extra
+                    pick_form = f"{pick_form} + {second_label}"
+        except Exception as exc:
+            logger.warning(f"event_intel: EDGAR secondary doc {ticker} failed: {exc}")
+
     if len(text) < 500:
         return None
     return {
@@ -411,35 +462,23 @@ Source text:
 
 async def answer_questions(ticker: str, text: str, quarter: str = "",
                            source_label: str = "filing") -> list | None:
-    """Answer the fixed analyst question set from source text using Groq
-    (free tier). Returns a list of {q, answered, a} or None on failure."""
-    if not _GROQ_KEY:
-        _note_error("groq", "GROQ_API_KEY not set", ticker)
-        return None
+    """Answer the fixed analyst question set from source text using the FREE
+    provider chain (Groq / Gemini / Cerebras / OpenRouter — see llm_free).
+    Gemini is preferred when configured: its ~1M-token context reads a whole
+    10-Q/10-K without the truncation that makes questions look unanswerable.
+    Returns a list of {q, answered, a} or None when every provider fails."""
+    import llm_free
     prompt = _QA_PROMPT.format(
         ticker=ticker, quarter=quarter or "latest", source_label=source_label,
-        questions="\n".join(f"{i+1}. {q}" for i, q in enumerate(_QA_QUESTIONS)),
-        text=(text or "")[:24000],
+        questions=chr(10).join(f"{i+1}. {q}" for i, q in enumerate(_QA_QUESTIONS)),
+        text=(text or ""),
     )
-    payload = {
-        "model": _GROQ_MODEL, "max_tokens": 1400, "temperature": 0.1,
-        "response_format": {"type": "json_object"},
-        "messages": [{"role": "user", "content": prompt}],
-    }
-    try:
-        async with httpx.AsyncClient(timeout=30) as c:
-            r = await c.post(_GROQ_ENDPOINT, json=payload,
-                             headers={"Authorization": f"Bearer {_GROQ_KEY}",
-                                      "Content-Type": "application/json"})
-        if r.status_code != 200:
-            _note_error("groq", f"qa HTTP {r.status_code}: {r.text[:160]}", ticker)
-            return None
-        body = ((r.json().get("choices") or [{}])[0].get("message") or {}).get("content", "")
-    except Exception as exc:
-        _note_error("groq", f"qa exception: {exc}", ticker)
-        return None
-    parsed = _parse_summary_json(body, ticker)
+    parsed = await llm_free.chat_json(prompt, max_tokens=1600, timeout=45.0,
+                                      prefer="gemini")
     if not isinstance(parsed, dict):
+        errs = getattr(llm_free, "LAST_ERRORS", [])
+        _note_error((errs[0]["provider"] if errs else "llm_free"),
+                    (errs[0]["detail"] if errs else "no provider returned JSON"), ticker)
         return None
     out = []
     for item in (parsed.get("answers") or []):
@@ -588,8 +627,20 @@ async def _summarize_with_haiku(ticker: str, quarter: str, transcript_text: str,
     """Structured summary of the call. Tries Anthropic Haiku, then falls back
     to Groq so an exhausted Anthropic balance doesn't blank the feature.
     Returns dict on success, None when every provider fails."""
+    # Free providers first: the Anthropic balance is exhausted and every call
+    # to it costs a round-trip and returns a 400. Anthropic stays as a last
+    # resort so the path still works if the balance is topped up later.
+    import llm_free
+    if llm_free.available():
+        prompt_free = _SUMMARY_PROMPT.format(
+            ticker=ticker, quarter=quarter,
+            transcript_text=transcript_text, source_label=source_label,
+        )
+        parsed_free = await llm_free.chat_json(prompt_free, max_tokens=1500,
+                                               timeout=45.0, prefer="gemini")
+        if isinstance(parsed_free, dict):
+            return parsed_free
     if not _ANTHROPIC_KEY:
-        logger.warning("event_intel: ANTHROPIC_API_KEY not set, trying Groq")
         return await _summarize_with_groq(ticker, quarter, transcript_text, source_label)
     # Truncate the transcript so we stay under Haiku's context comfortably.
     # Haiku 4.5 supports 200k tokens but cost scales linearly. 30k chars ≈

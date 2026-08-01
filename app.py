@@ -5680,6 +5680,11 @@ async def api_event_intel_status(probe: str = ""):
     'not available')."""
     import event_intel as _ei_mod
     out = _ei_mod.diagnostics()
+    try:
+        import llm_free as _lf
+        out["free_providers"] = _lf.status()
+    except Exception:
+        pass
     if probe == "groq":
         out["probe_groq"] = await _ei_mod.probe_groq()
     return JSONResponse(out, headers={"Cache-Control": "no-store"})
