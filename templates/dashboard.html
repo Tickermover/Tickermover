@@ -21464,9 +21464,10 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     function row(k,items){ if(!items||!items.length)return ''; return '<div class="fchk-mrow"><span class="k">'+esc(k)+'</span><span class="v">'+items.slice(0,3).map(esc).join(' ')+'</span></div>'; }
     fetch('/api/event-intel/'+encodeURIComponent(sym)).then(function(r){return r.json();}).then(function(d){
       if(!d||d.available===false){ box.innerHTML='<div class="fchk-mrow"><span class="k">Not available</span><span class="v">No summarised earnings call for '+esc(sym)+' yet — check the primary transcript.</span></div>'; return; }
+      var bullets=row('Key updates',d.key_updates)+row('Operations',d.operations)+row('Outlook',d.outlook)+row('Risks flagged',d.risks);
+      if(!bullets){ box.innerHTML='<div class="fchk-mrow"><span class="k">Not available</span><span class="v">No summarised earnings call for '+esc(sym)+' yet'+((d.event_title)?(' — the most recent filing on file is “'+esc(d.event_title)+'”'):'')+'. Check the primary transcript.</span></div>'; return; }
       var h=''; if(d.event_title||d.event_date)h+='<div class="fchk-mrow"><span class="k">Latest call</span><span class="v">'+esc(d.event_title||'')+(d.event_date?(' · '+esc(d.event_date)):'')+'</span></div>';
-      h+=row('Key updates',d.key_updates)+row('Operations',d.operations)+row('Outlook',d.outlook)+row('Risks flagged',d.risks);
-      box.innerHTML=h||'<div class="fchk-mrow"><span class="k">Summary</span><span class="v">No structured highlights returned for the latest call.</span></div>';
+      box.innerHTML=h+bullets;
     }).catch(function(){ box.innerHTML='<div class="fchk-mrow"><span class="k">Unavailable</span><span class="v">Could not load the earnings-call summary.</span></div>'; box.setAttribute('data-loaded',''); });
   }
   function paneFinancials(t){

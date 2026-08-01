@@ -558,6 +558,18 @@ def _is_stale(row: dict) -> bool:
     return age_days > _CACHE_TTL_DAYS
 
 
+_CONTENT_FIELDS = ("key_updates", "operations", "outlook", "risks")
+
+
+def _has_content(row: dict | None) -> bool:
+    """True when a cached row actually carries summary content. Rows saved
+    after a failed summarization have every list field null/empty and must
+    not be treated as a usable cache hit."""
+    if not row:
+        return False
+    return any(row.get(f) for f in _CONTENT_FIELDS)
+
+
 async def get_event_summary(ticker: str, force_refresh: bool = False) -> dict | None:
     """Main entry. Returns the latest event summary for the ticker, falling
     back to cache when fresh. Returns None when nothing is available
@@ -566,7 +578,11 @@ async def get_event_summary(ticker: str, force_refresh: bool = False) -> dict | 
     sym = ticker.upper()
     if not force_refresh:
         cached = await _load_cached(sym)
-        if cached and not _is_stale(cached):
+        # A row whose summary fields are all empty is a FAILED summarization
+        # (e.g. cached while the Anthropic balance was exhausted), not a
+        # usable answer. Treat it as a miss so we retry — otherwise the empty
+        # row is served forever and the provider fallback never runs.
+        if cached and not _is_stale(cached) and _has_content(cached):
             return cached
 
     # ── Primary source: SEC EDGAR (free, unlimited) ───────────────────
