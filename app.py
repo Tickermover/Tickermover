@@ -5654,6 +5654,23 @@ async def api_pdf(symbol: str, debug: int = 0):
     )
 
 
+@app.get("/api/mgmt-qa/{symbol}")
+async def api_mgmt_qa(symbol: str, refresh: int = 0):
+    """Analyst question set answered from the company's own latest filing,
+    via Groq (free tier) so it keeps working without Anthropic credit.
+    Cached 14d. Always 200 — {available: false, reason} when unavailable."""
+    import event_intel as _ei_mod
+    sym = symbol.upper().strip()
+    if not sym or len(sym) > 8:
+        raise HTTPException(status_code=400, detail="Bad ticker")
+    try:
+        data = await _ei_mod.get_management_qa(sym, force=bool(refresh))
+    except Exception as exc:
+        logger.error(f"mgmt-qa {sym}: {exc}", exc_info=True)
+        return JSONResponse({"available": False, "reason": "error", "ticker": sym, "answers": []})
+    return JSONResponse(_clean(data), headers={"Cache-Control": "public, max-age=1800"})
+
+
 @app.get("/api/event-intel-status")
 async def api_event_intel_status(probe: str = ""):
     """Health view for the earnings-call summarizer: which providers are

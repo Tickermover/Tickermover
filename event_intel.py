@@ -369,6 +369,129 @@ def _note_error(provider: str, detail: str, ticker: str = "") -> None:
     return None
 
 
+# ── Management Q&A (Groq-powered, free tier) ─────────────────────────────
+# The five questions the numbers can't answer. Answered STRICTLY from the
+# filing/transcript text — the model is told to say so when the source is
+# silent rather than reason from general knowledge, because an invented
+# answer about a real company is worse than no answer.
+_QA_QUESTIONS = [
+    "Is demand actually improving?",
+    "Are margins sustainable or temporary?",
+    "Is the order book healthy?",
+    "What is management worried about that isn't visible in the P&L?",
+    "Are they confident, or just optimistic?",
+]
+
+_QA_PROMPT = """You are an equity analyst reading a company's own filing or earnings call.
+Answer ONLY from the source text below. This is for {ticker} ({source_label}, {quarter}).
+
+Rules — follow exactly:
+- Ground every answer in the source. Quote a number or a short phrase from it as evidence.
+- If the source does not address a question, set "answered": false and say
+  "The filing does not address this." Do NOT use outside knowledge, do NOT speculate.
+- Lead with a direct verdict word (Yes / No / Partly / Unclear), then one or two
+  sentences of specifics.
+- Be neutral and factual. Do NOT tell the reader to buy, sell or hold, and do not
+  give investment advice or price predictions.
+
+Return ONLY a JSON object:
+{{
+  "answers": [
+    {{"q": "<the question, copied verbatim>", "answered": true, "a": "<2 sentences max, with evidence>"}}
+  ]
+}}
+
+Questions, in order:
+{questions}
+
+Source text:
+{text}
+"""
+
+
+async def answer_questions(ticker: str, text: str, quarter: str = "",
+                           source_label: str = "filing") -> list | None:
+    """Answer the fixed analyst question set from source text using Groq
+    (free tier). Returns a list of {q, answered, a} or None on failure."""
+    if not _GROQ_KEY:
+        _note_error("groq", "GROQ_API_KEY not set", ticker)
+        return None
+    prompt = _QA_PROMPT.format(
+        ticker=ticker, quarter=quarter or "latest", source_label=source_label,
+        questions="\n".join(f"{i+1}. {q}" for i, q in enumerate(_QA_QUESTIONS)),
+        text=(text or "")[:24000],
+    )
+    payload = {
+        "model": _GROQ_MODEL, "max_tokens": 1400, "temperature": 0.1,
+        "response_format": {"type": "json_object"},
+        "messages": [{"role": "user", "content": prompt}],
+    }
+    try:
+        async with httpx.AsyncClient(timeout=30) as c:
+            r = await c.post(_GROQ_ENDPOINT, json=payload,
+                             headers={"Authorization": f"Bearer {_GROQ_KEY}",
+                                      "Content-Type": "application/json"})
+        if r.status_code != 200:
+            _note_error("groq", f"qa HTTP {r.status_code}: {r.text[:160]}", ticker)
+            return None
+        body = ((r.json().get("choices") or [{}])[0].get("message") or {}).get("content", "")
+    except Exception as exc:
+        _note_error("groq", f"qa exception: {exc}", ticker)
+        return None
+    parsed = _parse_summary_json(body, ticker)
+    if not isinstance(parsed, dict):
+        return None
+    out = []
+    for item in (parsed.get("answers") or []):
+        if not isinstance(item, dict):
+            continue
+        q = str(item.get("q") or "").strip()
+        a = str(item.get("a") or "").strip()
+        if not q:
+            continue
+        out.append({"q": q[:200], "a": a[:600],
+                    "answered": bool(item.get("answered")) and bool(a)})
+    return out or None
+
+
+async def get_management_qa(ticker: str, force: bool = False) -> dict:
+    """Cached management Q&A for a ticker. Uses the same EDGAR filing the
+    summary is built from, answered by Groq. Cached 14 days in the KV store
+    (no DB migration needed). Degrades to {available: false, reason}."""
+    sym = ticker.upper()
+    try:
+        import kv_store
+        cache = kv_store.store
+    except Exception:
+        cache = None
+    if cache and not force:
+        hit = cache.get("mgmt_qa", sym, max_age_s=_CACHE_TTL_DAYS * 86400)
+        if hit and hit.get("answers"):
+            return hit
+    edgar = await _fetch_edgar_recent(sym)
+    if not edgar or not edgar.get("text"):
+        return {"available": False, "reason": "no_source",
+                "ticker": sym, "answers": []}
+    answers = await answer_questions(sym, edgar["text"],
+                                     quarter=edgar.get("event_date", ""),
+                                     source_label=edgar.get("source_label", "filing"))
+    if not answers:
+        return {"available": False, "reason": "summarizer_failed",
+                "ticker": sym, "answers": [],
+                "last_error": LAST_ERROR or None}
+    out = {"available": True, "ticker": sym, "answers": answers,
+           "source": f"sec_edgar:{edgar.get('source_label','')}",
+           "source_url": edgar.get("source_url"),
+           "event_date": edgar.get("event_date"),
+           "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds")}
+    if cache:
+        try:
+            cache.set("mgmt_qa", sym, out)
+        except Exception:
+            pass
+    return out
+
+
 async def probe_groq() -> dict:
     """Make a tiny real Groq call and report exactly what comes back.
     Used to tell 'key missing' from 'model rejected' from 'call succeeded'

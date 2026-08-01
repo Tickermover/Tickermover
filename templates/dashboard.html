@@ -21543,6 +21543,8 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
       '.fchk-mrow{display:grid;grid-template-columns:130px 1fr;gap:12px;padding:9px 0;border-top:1px solid rgba(10,10,10,.06);font-size:13px}'+
       '.fchk-mrow:first-child{border-top:none}.fchk-mrow .k{color:#64748b;font-weight:600}.fchk-mrow .v{color:#1e293b;line-height:1.5}'+
       '.fchk-bul{margin:0;padding-left:16px}.fchk-bul li{margin-bottom:4px}'+
+      '.fchk-weak{color:#94a3b8}'+
+      '.fchk-src{font-size:11px;color:#94a3b8;margin-top:8px;padding-top:8px;border-top:1px solid rgba(10,10,10,.06)}.fchk-src a{color:#2970ff}'+
       '.fchk-sub2{font-size:10.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#94a3b8;margin:14px 0 2px;padding-top:10px;border-top:1px solid rgba(10,10,10,.07)}'+
       '.fchk-note{font-size:11.5px;line-height:1.55;color:#94a3b8;margin-top:10px}'+
       '@media(max-width:520px){.fchk-mrow{grid-template-columns:1fr}.fq-top{flex-direction:column;gap:4px}}'+
@@ -21556,16 +21558,23 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
       _sec('What management said · latest call','🎙️','blue','<div id="fchkMgmt"><div class="fchk-mrow"><span class="k">Loading…</span><span class="v">Fetching the latest earnings-call summary.</span></div></div>')+
       '<p class="fchk-note">Every answer above is computed from the latest reported fundamentals — figures can lag or have gaps, and the thresholds behind each verdict are our own research conventions, not standards. A page of "yes" answers is not a reason to buy. The management summary is AI-generated from the earnings call and may be wrong — verify against the filing. Research and opinion for information only — not advice, not a personal recommendation, not FCA-authorised. Capital at risk.</p>';
   }
+  /* Management box. Two independent loads:
+       1) /api/event-intel  → what the call/filing covered (sections + bullets)
+       2) /api/mgmt-qa      → the five analyst questions, answered from the
+                              filing by Groq (free tier, works without
+                              Anthropic credit). Falls back to a keyword match
+                              over the summary when that is unavailable. */
   function _fchkLoadMgmt(){
     var box=document.getElementById('fchkMgmt'); if(!box||box.getAttribute('data-loaded'))return;
     var sym=(_drState&&_drState.full&&_drState.full.ticker)||''; if(!sym)return;
     box.setAttribute('data-loaded','1');
     var esc=escHTML;
     function row(k,items){ if(!items||!items.length)return ''; return '<div class="fchk-mrow"><span class="k">'+esc(k)+'</span><span class="v">'+items.slice(0,3).map(esc).join(' ')+'</span></div>'; }
+    function qaRow(q,a,weak){ return '<div class="fchk-mrow"><span class="k">'+esc(q)+'</span><span class="v'+(weak?' fchk-weak':'')+'">'+a+'</span></div>'; }
+
     fetch('/api/event-intel/'+encodeURIComponent(sym)).then(function(r){return r.json();}).then(function(d){
-      if(!d||d.available===false){ box.innerHTML='<div class="fchk-mrow"><span class="k">Not available</span><span class="v">No summarised earnings call for '+esc(sym)+' yet — check the primary transcript.</span></div>'; return; }
-      // Current shape is `sections` [{heading,bullets[]}]; the four bucket
-      // fields are the legacy shape still present on older cached rows.
+      d=d||{};
+      // ── what was covered ──
       var bullets='';
       if(Array.isArray(d.sections)&&d.sections.length){
         bullets=d.sections.map(function(s){
@@ -21578,35 +21587,54 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
       if(!bullets) bullets=row('Key updates',d.key_updates)+row('Operations',d.operations)+row('Outlook',d.outlook)+row('Risks flagged',d.risks);
       if(!bullets&&d.raw_excerpt) bullets='<div class="fchk-mrow"><span class="k">In their words</span><span class="v">“'+esc(String(d.raw_excerpt).slice(0,400))+'”</span></div>';
 
-      /* The five questions the numbers can't answer. We match them against
-         what was actually said on the call by keyword, and say plainly when
-         the call didn't address one — never invent an answer. */
+      // ── interim keyword-matched answers (replaced by /api/mgmt-qa below) ──
       var pool=[];
       if(Array.isArray(d.sections)) d.sections.forEach(function(s){
-        var h=(s&&s.heading)||''; ((s&&s.bullets)||[]).forEach(function(b){ pool.push({h:h,b:String(b)}); });
+        var h=(s&&s.heading)||''; ((s&&s.bullets)||[]).forEach(function(b){ pool.push(String(b)); });
       });
       ['key_updates','operations','outlook','risks'].forEach(function(k){
-        if(Array.isArray(d[k])) d[k].forEach(function(b){ pool.push({h:k,b:String(b)}); });
+        if(Array.isArray(d[k])) d[k].forEach(function(b){ pool.push(String(b)); });
       });
       var MQ=[
-        ['Is demand actually improving?', /demand|order|booking|backlog|pipeline|volume|customer|adoption|revenue grew|record revenue|growth accelerat/i],
-        ['Are margins sustainable or temporary?', /margin|pricing|cost|mix|efficien|one-time|non-recurring|favorab|headwind/i],
-        ['Is the order book healthy?', /backlog|order|booking|rpo|remaining performance|deferred revenue|commitment|contract/i],
-        ["What is management worried about?", /risk|headwind|challeng|uncertain|caution|pressure|weak|slow|constrain|supply|competit|regulat/i],
-        ['Confident, or just optimistic?', /guidance|outlook|expect|forecast|confident|raise|reiterat|full[- ]year|next quarter/i]
+        ['Is demand actually improving?', /demand|order|booking|backlog|pipeline|volume|customer|adoption|record revenue|growth accelerat/i],
+        ['Are margins sustainable or temporary?', /margin|pricing|cost|mix|efficien|one-time|non-recurring|favorab/i],
+        ['Is the order book healthy?', /backlog|order|booking|rpo|remaining performance|deferred revenue|contract/i],
+        ['What is management worried about?', /risk|headwind|challeng|uncertain|caution|pressure|weak|slow|constrain|supply|competit|regulat/i],
+        ['Confident, or just optimistic?', /guidance|outlook|expect|forecast|confident|raise|reiterat|full[- ]year/i]
       ];
-      var qa=MQ.map(function(p){
-        var hit=pool.filter(function(x){return p[1].test(x.b)||p[1].test(x.h);}).slice(0,2);
-        var ans=hit.length? hit.map(function(x){return esc(x.b);}).join(' ')
-                          : '<span class="fq-w" style="font-style:normal">The latest call did not address this directly.</span>';
-        return '<div class="fchk-mrow"><span class="k">'+esc(p[0])+'</span><span class="v">'+ans+'</span></div>';
+      var interim=MQ.map(function(p){
+        var hit=pool.filter(function(b){return p[1].test(b);}).slice(0,2);
+        return qaRow(p[0], hit.length?hit.map(esc).join(' '):'Reading the filing…', !hit.length);
       }).join('');
-      bullets=qa+'<div class="fchk-sub2">Everything management covered</div>'+bullets;
-      if(!bullets){ box.innerHTML='<div class="fchk-mrow"><span class="k">Not available</span><span class="v">No summarised earnings call for '+esc(sym)+' yet'+((d.event_title)?(' — the most recent filing on file is “'+esc(d.event_title)+'”'):'')+'. Check the primary transcript.</span></div>'; return; }
-      var h=''; if(d.event_title||d.event_date)h+='<div class="fchk-mrow"><span class="k">Latest call</span><span class="v">'+esc(d.event_title||'')+(d.event_date?(' · '+esc(d.event_date)):'')+'</span></div>';
-      box.innerHTML=h+bullets;
-    }).catch(function(){ box.innerHTML='<div class="fchk-mrow"><span class="k">Unavailable</span><span class="v">Could not load the earnings-call summary.</span></div>'; box.setAttribute('data-loaded',''); });
+
+      var head='';
+      if(d.event_title||d.event_date) head='<div class="fchk-mrow"><span class="k">Latest filing</span><span class="v">'+esc(d.event_title||'')+(d.event_date?(' · '+esc(d.event_date)):'')+'</span></div>';
+      var covered = bullets? ('<div class="fchk-sub2">Everything management covered</div>'+bullets) : '';
+      box.innerHTML=head+'<div id="fchkQA">'+interim+'</div>'+covered;
+      _fchkLoadQA(sym);
+    }).catch(function(){
+      box.innerHTML='<div class="fchk-mrow"><span class="k">Unavailable</span><span class="v">Could not load the filing summary.</span></div>';
+      box.setAttribute('data-loaded','');
+    });
   }
+
+  /* Replaces the interim answers with real ones read out of the filing. */
+  function _fchkLoadQA(sym){
+    var slot=document.getElementById('fchkQA'); if(!slot)return;
+    var esc=escHTML;
+    fetch('/api/mgmt-qa/'+encodeURIComponent(sym)).then(function(r){return r.json();}).then(function(q){
+      if(!q||!q.available||!Array.isArray(q.answers)||!q.answers.length)return;   // keep interim
+      var html=q.answers.map(function(x){
+        var weak=!x.answered;
+        var a=weak? '<span class="fchk-weak">The filing does not address this.</span>' : esc(x.a||'');
+        return '<div class="fchk-mrow"><span class="k">'+esc(x.q||'')+'</span><span class="v">'+a+'</span></div>';
+      }).join('');
+      if(q.source_url) html+='<div class="fchk-src">Answered from the company’s own '+esc((q.source||'filing').replace('sec_edgar:',''))+
+        (q.event_date?(' dated '+esc(q.event_date)):'')+' · <a href="'+esc(q.source_url)+'" target="_blank" rel="noopener">read the source ↗</a> · AI-extracted, verify before relying on it</div>';
+      slot.innerHTML=html;
+    }).catch(function(){});
+  }
+
   function paneFinancials(t){
     const M=v=>v==null?null:(Math.abs(v)<=1?v*100:v);
     const gm=M(_fpNum(t,['gross_margin'])),nm=M(_fpNum(t,['profit_margin','net_margin'])),fm=M(_fpNum(t,['fcf_margin'])),om=M(_fpNum(t,['operating_margin'])),ebm=M(_fpNum(t,['ebitda_margin']));
