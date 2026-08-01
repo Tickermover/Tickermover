@@ -21465,7 +21465,47 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     else if(dyP!=null) ask('Does it pay you to wait?','no','No dividend — earnings are retained, presumably to reinvest for growth.','No income means the entire return has to come from the share price.');
     else ask('Does it pay you to wait?','unknown','Dividend data not available.','Income cushions the wait.');
 
-    // 11 — Next catalyst
+    // 11 — Returns on capital
+    const roe=M(num(['roe']));
+    if(roe!=null) ask('Does it earn a good return on capital?', roe>=15?'yes':(roe>=8?'mixed':'no'),
+      'Return on equity '+roe.toFixed(1)+'% — '+(roe>=15?'compounding capital efficiently':(roe>=8?'adequate but unremarkable':'weak; capital is not working hard'))+'.',
+      'A business that reinvests at high returns compounds; a low-return one destroys value as it grows.');
+
+    // 12 — Liquidity
+    const cr=num(['current_ratio']);
+    if(cr!=null) ask('Can it cover its short-term bills?', cr>=1.5?'yes':(cr>=1?'mixed':'no'),
+      'Current ratio '+cr.toFixed(2)+' — '+(cr>=1.5?'comfortable liquidity':(cr>=1?'covers obligations, with little slack':'current liabilities exceed current assets'))+'.',
+      'Liquidity problems bite long before solvency ones do.');
+
+    // 13 — Where in the range
+    const px=num(['price']), hi=num(['high_52w','fifty_two_week_high','week52_high']), lo=num(['low_52w','fifty_two_week_low','week52_low']);
+    if(px!=null&&hi!=null&&lo!=null&&hi>lo){
+      const pos=(px-lo)/(hi-lo)*100;
+      ask('Where is it in its 52-week range?', pos>=70?'mixed':(pos>=30?'yes':'mixed'),
+        'Trading at '+pos.toFixed(0)+'% of its 52-week range ('+lo.toFixed(2)+'–'+hi.toFixed(2)+') — '+
+        (pos>=85?'near the highs, so much of the good news may be priced in':(pos<=15?'near the lows, which is either an opportunity or a warning':'mid-range'))+'.',
+        'Entry point matters: the same business is a different investment at a different price.');
+    }
+
+    // 14 — Is the market betting against it?
+    const sf=M(num(['short_percent_float']));
+    if(sf!=null) ask('Is the market betting against it?', sf<5?'yes':(sf<10?'mixed':'no'),
+      sf.toFixed(1)+'% of the float is sold short — '+(sf<5?'little organised scepticism':(sf<10?'a moderate short base':'heavy short interest; someone with conviction disagrees'))+'.',
+      'High short interest is a warning worth understanding before you take the other side.');
+
+    // 15 — Who else owns it
+    const inst=M(num(['held_pct_institutions']));
+    if(inst!=null) ask('Do professional investors hold it?', inst>=50?'yes':(inst>=25?'mixed':'no'),
+      inst.toFixed(0)+'% held by institutions — '+(inst>=50?'widely held by professionals':(inst>=25?'moderate institutional backing':'thin institutional ownership'))+'.',
+      'Institutional ownership is a rough proxy for diligence already done — and for who sells in a panic.');
+
+    // 16 — Volatility
+    const beta=num(['beta']);
+    if(beta!=null) ask('What ride are you signing up for?', beta<=1.2?'yes':(beta<=1.8?'mixed':'no'),
+      'Beta '+beta.toFixed(2)+' — '+(beta<=1.2?'moves roughly with the market':(beta<=1.8?'noticeably more volatile than the market':'far more volatile than the market'))+'.',
+      'Volatility is not risk, but it is the drawdown you have to be able to sit through.');
+
+    // 17 — Next catalyst
     const ed=t.earnings_date||t.next_earnings_date, days=num(['days_to_earnings']);
     const when=ed?('around '+esc(String(ed))):(days!=null&&days>=0?('in about '+Math.round(days)+' days'):null);
     ask('What could move it next?', when?'yes':'unknown',
@@ -21502,6 +21542,8 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
       '.ft-m{color:#b45309;background:rgba(180,83,9,.1)}.ft-u{color:#64748b;background:rgba(100,116,139,.1)}'+
       '.fchk-mrow{display:grid;grid-template-columns:130px 1fr;gap:12px;padding:9px 0;border-top:1px solid rgba(10,10,10,.06);font-size:13px}'+
       '.fchk-mrow:first-child{border-top:none}.fchk-mrow .k{color:#64748b;font-weight:600}.fchk-mrow .v{color:#1e293b;line-height:1.5}'+
+      '.fchk-bul{margin:0;padding-left:16px}.fchk-bul li{margin-bottom:4px}'+
+      '.fchk-sub2{font-size:10.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#94a3b8;margin:14px 0 2px;padding-top:10px;border-top:1px solid rgba(10,10,10,.07)}'+
       '.fchk-note{font-size:11.5px;line-height:1.55;color:#94a3b8;margin-top:10px}'+
       '@media(max-width:520px){.fchk-mrow{grid-template-columns:1fr}.fq-top{flex-direction:column;gap:4px}}'+
       '</style>';
@@ -21522,7 +21564,44 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     function row(k,items){ if(!items||!items.length)return ''; return '<div class="fchk-mrow"><span class="k">'+esc(k)+'</span><span class="v">'+items.slice(0,3).map(esc).join(' ')+'</span></div>'; }
     fetch('/api/event-intel/'+encodeURIComponent(sym)).then(function(r){return r.json();}).then(function(d){
       if(!d||d.available===false){ box.innerHTML='<div class="fchk-mrow"><span class="k">Not available</span><span class="v">No summarised earnings call for '+esc(sym)+' yet — check the primary transcript.</span></div>'; return; }
-      var bullets=row('Key updates',d.key_updates)+row('Operations',d.operations)+row('Outlook',d.outlook)+row('Risks flagged',d.risks);
+      // Current shape is `sections` [{heading,bullets[]}]; the four bucket
+      // fields are the legacy shape still present on older cached rows.
+      var bullets='';
+      if(Array.isArray(d.sections)&&d.sections.length){
+        bullets=d.sections.map(function(s){
+          var bl=(s&&Array.isArray(s.bullets))?s.bullets:[];
+          if(!bl.length)return '';
+          return '<div class="fchk-mrow"><span class="k">'+esc(s.heading||'Highlights')+'</span><span class="v"><ul class="fchk-bul">'+
+            bl.map(function(b){return '<li>'+esc(b)+'</li>';}).join('')+'</ul></span></div>';
+        }).join('');
+      }
+      if(!bullets) bullets=row('Key updates',d.key_updates)+row('Operations',d.operations)+row('Outlook',d.outlook)+row('Risks flagged',d.risks);
+      if(!bullets&&d.raw_excerpt) bullets='<div class="fchk-mrow"><span class="k">In their words</span><span class="v">“'+esc(String(d.raw_excerpt).slice(0,400))+'”</span></div>';
+
+      /* The five questions the numbers can't answer. We match them against
+         what was actually said on the call by keyword, and say plainly when
+         the call didn't address one — never invent an answer. */
+      var pool=[];
+      if(Array.isArray(d.sections)) d.sections.forEach(function(s){
+        var h=(s&&s.heading)||''; ((s&&s.bullets)||[]).forEach(function(b){ pool.push({h:h,b:String(b)}); });
+      });
+      ['key_updates','operations','outlook','risks'].forEach(function(k){
+        if(Array.isArray(d[k])) d[k].forEach(function(b){ pool.push({h:k,b:String(b)}); });
+      });
+      var MQ=[
+        ['Is demand actually improving?', /demand|order|booking|backlog|pipeline|volume|customer|adoption|revenue grew|record revenue|growth accelerat/i],
+        ['Are margins sustainable or temporary?', /margin|pricing|cost|mix|efficien|one-time|non-recurring|favorab|headwind/i],
+        ['Is the order book healthy?', /backlog|order|booking|rpo|remaining performance|deferred revenue|commitment|contract/i],
+        ["What is management worried about?", /risk|headwind|challeng|uncertain|caution|pressure|weak|slow|constrain|supply|competit|regulat/i],
+        ['Confident, or just optimistic?', /guidance|outlook|expect|forecast|confident|raise|reiterat|full[- ]year|next quarter/i]
+      ];
+      var qa=MQ.map(function(p){
+        var hit=pool.filter(function(x){return p[1].test(x.b)||p[1].test(x.h);}).slice(0,2);
+        var ans=hit.length? hit.map(function(x){return esc(x.b);}).join(' ')
+                          : '<span class="fq-w" style="font-style:normal">The latest call did not address this directly.</span>';
+        return '<div class="fchk-mrow"><span class="k">'+esc(p[0])+'</span><span class="v">'+ans+'</span></div>';
+      }).join('');
+      bullets=qa+'<div class="fchk-sub2">Everything management covered</div>'+bullets;
       if(!bullets){ box.innerHTML='<div class="fchk-mrow"><span class="k">Not available</span><span class="v">No summarised earnings call for '+esc(sym)+' yet'+((d.event_title)?(' — the most recent filing on file is “'+esc(d.event_title)+'”'):'')+'. Check the primary transcript.</span></div>'; return; }
       var h=''; if(d.event_title||d.event_date)h+='<div class="fchk-mrow"><span class="k">Latest call</span><span class="v">'+esc(d.event_title||'')+(d.event_date?(' · '+esc(d.event_date)):'')+'</span></div>';
       box.innerHTML=h+bullets;

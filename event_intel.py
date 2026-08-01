@@ -611,7 +611,11 @@ def _is_stale(row: dict) -> bool:
     return age_days > _CACHE_TTL_DAYS
 
 
-_CONTENT_FIELDS = ("key_updates", "operations", "outlook", "risks")
+# "sections" is the current (May 23 v2) shape; the four bucket fields are the
+# legacy shape kept for older cached rows. A row is content-ful if EITHER is
+# populated — omitting "sections" here made every modern row look empty, which
+# forced a needless re-summarize on every request.
+_CONTENT_FIELDS = ("sections", "key_updates", "operations", "outlook", "risks")
 
 
 def _has_content(row: dict | None) -> bool:
