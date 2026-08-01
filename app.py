@@ -1495,7 +1495,7 @@ def _build_landing_schema() -> str:
             _q("What is the open ledger?",
                "Every closed pick — its entry, exit reason and result — is timestamped to a public record. No cherry-picking; the whole tape is auditable."),
             _q("What does it cost?",
-               "Free during beta, no card required. Pro is £19.99/mo, and new members get a welcome 50% off their first 3 months with code WELCOME50 (£9.99/mo, then £19.99/mo). Cancel anytime."),
+               "The Free plan is £0 forever, no card needed. Pro is £19.99/mo, and new members get a welcome 50% off their first 3 months with code WELCOME50 (£9.99/mo, then £19.99/mo). Cancel anytime."),
             _q("How is this different from TradingView, Koyfin or Bloomberg?",
                "Those are charting and data terminals — you bring the thesis. TickerMover is the opposite: it brings the thesis (one number, six pillars, a closed trade ledger), and leaves the charting to your terminal. Use both."),
             _q("Who should NOT use TickerMover?",
@@ -1509,7 +1509,7 @@ def _build_landing_schema() -> str:
         "url": SITE_ORIGIN,
         "applicationCategory": "FinanceApplication",
         "operatingSystem": "Web",
-        "description": "Real-time US stock research with Alpha Score, plain-English verdicts, conflict detection, Reverse DCF, and macro-aware scoring. Free during beta.",
+        "description": "Real-time US stock research with Alpha Score, plain-English verdicts, conflict detection, Reverse DCF, and macro-aware scoring. Free plan available.",
         "offers": {
             "@type": "Offer",
             "price": "0",
@@ -2725,7 +2725,7 @@ def _sp_pro_section(sym: str) -> str:
         for n, d in items
     )
     inner = (
-        f'<p class="sp-lead">AI research tabs for {sym}, unlocked with TickerMover Pro — free during beta.</p>'
+        f'<p class="sp-lead">AI research tabs for {sym}, unlocked with TickerMover Pro.</p>'
         f'<div class="pro-grid">{cards}</div>'
         f'<a href="/app?signup=1" class="cta-btn cta-btn-pri">Unlock {sym} with Pro →</a>'
     )
@@ -3227,7 +3227,7 @@ h2{{font-size:18px;margin:30px 0 12px}}
 
   <div class="cta">
     <h3>Get the full live dashboard</h3>
-    <p>Real-time scoring, conflict detection, Reverse DCF, peer comparison and more — free during beta.</p>
+    <p>Real-time scoring, conflict detection, Reverse DCF, peer comparison and more — with TickerMover Pro.</p>
     <a href="/app?signup=1" class="cta-btn">Open dashboard for {sym} →</a>
   </div>
 
