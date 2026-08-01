@@ -25,6 +25,7 @@ import httpx
 
 import usage_log
 from kv_store import store as _kv
+import anthropic_shim
 
 logger = logging.getLogger(__name__)
 
@@ -164,8 +165,7 @@ async def _call(ticker: str, t: dict) -> dict:
         }],
     }
     async with httpx.AsyncClient(timeout=120) as c:
-        r = await c.post(
-            "https://api.anthropic.com/v1/messages",
+        r = await anthropic_shim.post(
             headers={"x-api-key": _KEY, "anthropic-version": "2023-06-01",
                      "content-type": "application/json"},
             json=body,

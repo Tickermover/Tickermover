@@ -42,8 +42,23 @@ def _note(provider: str, detail: str) -> None:
     del LAST_ERRORS[_MAX_ERRORS:]
 
 
+_ALIASES = {
+    "GEMINI_API_KEY":     ["GEMINI_API_KEY", "GOOGLE_API_KEY", "GOOGLE_GENAI_API_KEY",
+                            "GOOGLE_AI_API_KEY", "GEMINI_KEY", "GOOGLE_GEMINI_API_KEY"],
+    "GROQ_API_KEY":       ["GROQ_API_KEY", "GROQ_KEY"],
+    "CEREBRAS_API_KEY":   ["CEREBRAS_API_KEY", "CEREBRAS_KEY"],
+    "OPENROUTER_API_KEY": ["OPENROUTER_API_KEY", "OPENROUTER_KEY", "OPEN_ROUTER_API_KEY"],
+}
+
+
 def _key(name: str) -> str:
-    return (os.environ.get(name, "") or "").strip()
+    """Read a provider key, tolerating the common alias names people actually
+    set in their host's dashboard (GOOGLE_API_KEY vs GEMINI_API_KEY, etc.)."""
+    for n in _ALIASES.get(name, [name]):
+        v = (os.environ.get(n, "") or "").strip()
+        if v:
+            return v
+    return ""
 
 
 # (name, env key, model env, default model, endpoint, max input chars)
@@ -171,4 +186,61 @@ async def chat_json(prompt: str, *, max_tokens: int = 1500, timeout: float = 30.
         return parsed
     if tried == 0:
         _note("none", "no free provider configured (set GROQ_API_KEY or GEMINI_API_KEY)")
+    return None
+
+
+async def _call_text(name, url, key, model, prompt, max_tokens, timeout, cap):
+    """Same providers, but plain-text output (no JSON response_format)."""
+    if name == "gemini":
+        u = f"{url}/{model}:generateContent"
+        payload = {"contents": [{"parts": [{"text": prompt[:cap]}]}],
+                   "generationConfig": {"temperature": 0.3, "maxOutputTokens": max_tokens}}
+        async with httpx.AsyncClient(timeout=timeout) as c:
+            r = await c.post(u, json=payload,
+                             headers={"Content-Type": "application/json",
+                                      "x-goog-api-key": key})
+        if r.status_code != 200:
+            return False, f"HTTP {r.status_code}: {r.text[:160]}"
+        parts = (((r.json().get("candidates") or [{}])[0].get("content") or {}).get("parts") or [{}])
+        return True, "".join(p.get("text", "") for p in parts)
+    payload = {"model": model, "max_tokens": max_tokens, "temperature": 0.3,
+               "messages": [{"role": "user", "content": prompt[:cap]}]}
+    async with httpx.AsyncClient(timeout=timeout) as c:
+        r = await c.post(url, json=payload,
+                         headers={"Authorization": f"Bearer {key}",
+                                  "Content-Type": "application/json"})
+    if r.status_code != 200:
+        return False, f"HTTP {r.status_code}: {r.text[:160]}"
+    body = ((r.json().get("choices") or [{}])[0].get("message") or {}).get("content", "")
+    return True, body
+
+
+async def chat_text(prompt: str, *, max_tokens: int = 1500, timeout: float = 45.0,
+                    prefer: str | None = None) -> str | None:
+    """Plain-text completion through the free chain. Returns None when every
+    configured provider fails (see LAST_ERRORS)."""
+    order = list(_PROVIDERS)
+    if prefer:
+        order.sort(key=lambda p: 0 if p[0] == prefer else 1)
+    tried = 0
+    for (name, envk, menv, dflt, url, cap) in order:
+        key = _key(envk)
+        if not key:
+            continue
+        tried += 1
+        model = _key(menv) or dflt
+        try:
+            ok, body = await _call_text(name, url, key, model, prompt, max_tokens, timeout, cap)
+        except Exception as exc:
+            _note(name, f"text exception: {exc}")
+            continue
+        if not ok:
+            _note(name, body)
+            continue
+        if body and body.strip():
+            logger.info(f"llm_free: text answered by {name} ({model})")
+            return body
+        _note(name, "empty text response")
+    if tried == 0:
+        _note("none", "no free provider configured")
     return None

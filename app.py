@@ -32,6 +32,7 @@ import ai_selector
 import ai_verifier
 from selection_store import store as _selstore
 from stock_universe import get_universe, get_meta
+import anthropic_shim
 from intelligence import (
     MarketRegime,
     MarketAnalysis,
@@ -5252,7 +5253,7 @@ async def api_admin_publish_weekly(send_email: bool = False, week_start: str = "
             b["tools"] = [{"type": "web_search_20250305", "name": "web_search", "max_uses": 1}]
         try:
             async with _hx.AsyncClient(timeout=20) as c:
-                rr = await c.post("https://api.anthropic.com/v1/messages",
+                rr = await anthropic_shim.post(
                     headers={"x-api-key": weekly_editorial_gen._KEY,
                              "anthropic-version": "2023-06-01",
                              "content-type": "application/json"}, json=b)

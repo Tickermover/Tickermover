@@ -30,6 +30,7 @@ import re
 import httpx
 
 import usage_log
+import anthropic_shim
 
 logger = logging.getLogger(__name__)
 
@@ -214,8 +215,7 @@ async def generate_sector_graph(sectors: list[str]) -> dict:
 
     try:
         async with httpx.AsyncClient(timeout=_TIMEOUT) as c:
-            r = await c.post(
-                "https://api.anthropic.com/v1/messages",
+            r = await anthropic_shim.post(
                 headers={
                     "x-api-key": _KEY,
                     "anthropic-version": "2023-06-01",

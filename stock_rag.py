@@ -25,6 +25,7 @@ import time
 import logging
 
 import httpx
+import anthropic_shim
 
 logger = logging.getLogger(__name__)
 
@@ -208,7 +209,7 @@ async def _claude_answer(ticker, question, context_blocks, profile_data, user_id
                "content-type": "application/json"}
     try:
         async with httpx.AsyncClient(timeout=45) as c:
-            r = await c.post("https://api.anthropic.com/v1/messages",
+            r = await anthropic_shim.post(
                              json=payload, headers=headers)
             if r.status_code != 200:
                 logger.warning(f"stock_rag: Anthropic HTTP {r.status_code}: {r.text[:200]}")
@@ -245,7 +246,7 @@ async def _claude_raw(prompt: str, max_tokens: int = 2500, model: str | None = N
                "content-type": "application/json"}
     try:
         async with httpx.AsyncClient(timeout=60) as c:
-            r = await c.post("https://api.anthropic.com/v1/messages",
+            r = await anthropic_shim.post(
                              json=payload, headers=headers)
             if r.status_code != 200:
                 logger.warning(f"stock_rag: Anthropic HTTP {r.status_code}: {r.text[:200]}")

@@ -34,6 +34,7 @@ from datetime import datetime, timezone
 import httpx
 
 import config
+import anthropic_shim
 
 logger = logging.getLogger(__name__)
 
@@ -686,7 +687,7 @@ async def _summarize_with_haiku(ticker: str, quarter: str, transcript_text: str,
     }
     try:
         async with httpx.AsyncClient(timeout=_ANTHROPIC_TIMEOUT) as c:
-            r = await c.post("https://api.anthropic.com/v1/messages",
+            r = await anthropic_shim.post(
                              json=payload, headers=headers)
             if r.status_code != 200:
                 # Covers the "credit balance too low" 400 as well as 429s —

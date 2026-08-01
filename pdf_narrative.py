@@ -26,6 +26,7 @@ import time
 from typing import Any
 
 import httpx
+import anthropic_shim
 
 logger = logging.getLogger(__name__)
 
@@ -218,7 +219,7 @@ async def _haiku_call(prompt: str) -> dict | None:
     }
     try:
         async with httpx.AsyncClient(timeout=_ANTHROPIC_TIMEOUT) as c:
-            r = await c.post("https://api.anthropic.com/v1/messages",
+            r = await anthropic_shim.post(
                              json=payload, headers=headers)
             if r.status_code != 200:
                 logger.warning(f"pdf_narrative: Haiku HTTP {r.status_code}: {r.text[:200]}")

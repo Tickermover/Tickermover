@@ -41,6 +41,7 @@ import os
 import time
 from datetime import datetime, timezone
 from typing import Any, Optional
+import anthropic_shim
 
 logger = logging.getLogger(__name__)
 
@@ -888,8 +889,7 @@ class MarketAnalysis:
         try:
             prompt = self._build_ai_prompt(data, kind)
             async with httpx.AsyncClient(timeout=30.0) as c:
-                r = await c.post(
-                    "https://api.anthropic.com/v1/messages",
+                r = await anthropic_shim.post(
                     headers={
                         "x-api-key":         _ANTHROPIC_KEY,
                         "anthropic-version": "2023-06-01",
@@ -1469,8 +1469,7 @@ class ThesisGenerator:
 
         prompt = self._build_llm_prompt(rule_based, t)
         async with httpx.AsyncClient(timeout=22.0) as c:
-            r = await c.post(
-                "https://api.anthropic.com/v1/messages",
+            r = await anthropic_shim.post(
                 headers={
                     "x-api-key":          _ANTHROPIC_KEY,
                     "anthropic-version":  "2023-06-01",

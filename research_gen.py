@@ -19,6 +19,7 @@ import os
 import httpx
 
 import usage_log
+import anthropic_shim
 
 logger = logging.getLogger(__name__)
 
@@ -251,8 +252,7 @@ async def generate_research(ticker: str, ticker_data: dict | None) -> dict:
     }
 
     async with httpx.AsyncClient(timeout=_TIMEOUT) as c:
-        r = await c.post(
-            "https://api.anthropic.com/v1/messages",
+        r = await anthropic_shim.post(
             headers={
                 "x-api-key": _KEY,
                 "anthropic-version": "2023-06-01",
@@ -413,8 +413,7 @@ async def generate_overview(ticker: str, ticker_data: dict | None,
         "messages": [{"role": "user", "content": _overview_user(ticker, t)}],
     }
     async with httpx.AsyncClient(timeout=60) as c:
-        r = await c.post(
-            "https://api.anthropic.com/v1/messages",
+        r = await anthropic_shim.post(
             headers={"x-api-key": _KEY, "anthropic-version": "2023-06-01",
                      "content-type": "application/json"},
             json=body,

@@ -37,6 +37,7 @@ import httpx
 
 import event_intel as ei  # reuse CIK resolver, EDGAR headers, HTML stripper
 from cache import SmartCache
+import anthropic_shim
 
 logger = logging.getLogger(__name__)
 
@@ -206,7 +207,7 @@ async def _extract_one(ticker: str, filing: dict) -> dict | None:
                "content-type": "application/json"}
     try:
         async with httpx.AsyncClient(timeout=40) as c:
-            r = await c.post("https://api.anthropic.com/v1/messages",
+            r = await anthropic_shim.post(
                              json=payload, headers=headers)
             if r.status_code != 200:
                 logger.warning(f"operating_kpis: Anthropic {ticker} {filing['year']} "

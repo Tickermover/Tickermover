@@ -32,6 +32,7 @@ import re
 import httpx
 
 import usage_log
+import anthropic_shim
 
 # Web-grounded output wraps cited claims in <cite index="..">..</cite> tags. Strip
 # the tags (keep the text) so they don't leak as raw markup into the page OR the
@@ -293,8 +294,7 @@ async def generate(angle: dict, ground: dict) -> dict | None:
     }
     try:
         async with httpx.AsyncClient(timeout=_TIMEOUT) as c:
-            r = await c.post(
-                "https://api.anthropic.com/v1/messages",
+            r = await anthropic_shim.post(
                 headers={
                     "x-api-key": _KEY,
                     "anthropic-version": "2023-06-01",

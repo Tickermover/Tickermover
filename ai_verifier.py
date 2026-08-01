@@ -34,6 +34,7 @@ import os
 import httpx
 
 import usage_log
+import anthropic_shim
 
 logger = logging.getLogger(__name__)
 
@@ -98,8 +99,7 @@ async def _call(body: dict, timeout: float, feature: str) -> dict | None:
     """POST to the Anthropic API, return parsed JSON dict or None on any failure."""
     try:
         async with httpx.AsyncClient(timeout=timeout) as c:
-            r = await c.post(
-                "https://api.anthropic.com/v1/messages",
+            r = await anthropic_shim.post(
                 headers={
                     "x-api-key": _KEY,
                     "anthropic-version": "2023-06-01",
