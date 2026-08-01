@@ -2152,6 +2152,15 @@ def _render_report_page(t: dict) -> str:
     safe_name = _html.escape(name)
     safe_sector = _html.escape(sector)
     safe_industry = _html.escape(industry or sector)
+    # Fundamentals fact-check card (data checklist + business line + key
+    # catalyst; the "what management said" section loads client-side from
+    # /api/event-intel). Never let a card error break the report page.
+    try:
+        import fact_check as _fc
+        fact_check_html = _fc.render_card(t, _universe_data)
+    except Exception as _fc_err:
+        logger.error(f"fact_check render {sym}: {_fc_err}", exc_info=True)
+        fact_check_html = ""
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -2319,6 +2328,8 @@ def _render_report_page(t: dict) -> str:
       <div class="lbl">α-Score</div>
     </div>
   </div>
+
+  {fact_check_html}
 
   <!-- Body -->
   <div class="body">
