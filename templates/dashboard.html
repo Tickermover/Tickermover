@@ -21388,11 +21388,40 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     else if(days!=null&&days>=0) push('Earnings schedule known','Next report in ~'+Math.round(days)+' days', true);
     else push('Earnings schedule known','Next report date to be confirmed', null);
 
+    // ── extra evidence rows, all from reported figures (no AI) ──
+    const M=v=>v==null?null:(Math.abs(v)<=1?v*100:v);
+    const gm=M(num(['gross_margin'])), om=M(num(['operating_margin'])), fm=M(num(['fcf_margin']));
+    if(gm!=null) push('Pricing power (gross margin)', gm.toFixed(0)+'% gross margin'+(gm>=50?' — high':gm>=30?' — moderate':' — thin'), gm>=40);
+    if(om!=null) push('Operating leverage', om.toFixed(0)+'% operating margin', om>=15);
+    const fcf=num(['free_cashflow']);
+    if(fcf!=null) push('Generates free cash flow', (fcf>0?'Positive':'Negative')+' free cash flow'+(fm!=null?(' ('+fm.toFixed(0)+'% margin)'):''), fcf>0);
+    const egr=num(['eps_growth_yoy']), egP=egr!=null?(Math.abs(egr)<=2?egr*100:egr):null;
+    if(egP!=null) push('Earnings growing', ((egP>=0?'+':'')+egP.toFixed(1)+'% EPS YoY'), egP>0);
+    const beat=parseInt(t.eps_beat_streak);
+    if(!isNaN(beat)) push('Delivers vs expectations', beat+' of last 4 quarters beat EPS estimates', beat>=3);
+    const rev=t.eps_revisions_30d;
+    if(rev&&(rev.ups!=null||rev.downs!=null)) push('Estimates being revised up', (rev.ups||0)+' up / '+(rev.downs||0)+' down in 30d', (rev.ups||0)>(rev.downs||0));
+    const de=num(['debt_to_equity','de_ratio']);
+    if(de!=null) push('Balance sheet not stretched', 'Debt/equity '+de.toFixed(2)+(de<1?' — conservative':de<=2?' — moderate':' — leveraged'), de<=2);
+    const peg=num(['peg_ratio']);
+    if(peg!=null&&peg>0) push('Growth priced reasonably (PEG)', 'PEG '+peg.toFixed(2)+(peg<=1?' — growth not fully priced':' — growth already priced in'), peg<=1.5);
+
     const nPass=checks.filter(c=>c.state===true).length;
-    const li=c=>{ const st=c.state, cls=st===true?'fchk-on':(st===false?'fchk-off':'fchk-na'), mk=st===true?'✓':(st===false?'':'–'); return '<li class="fchk-item '+cls+'"><span class="fchk-box">'+mk+'</span><span class="fchk-txt"><b>'+esc(c.label)+'</b><span class="fchk-det">'+esc(c.detail)+'</span></span></li>'; };
+    const nKnown=checks.filter(c=>c.state!==null).length;
+    const li=c=>{ const st=c.state, cls=st===true?'fchk-on':(st===false?'fchk-off':'fchk-na'), mk=st===true?'✓':(st===false?'✕':'–');
+      return '<li class="fchk-item '+cls+'"><span class="fchk-box">'+mk+'</span><span class="fchk-txt"><b>'+esc(c.label)+'</b><span class="fchk-det">'+esc(c.detail)+'</span></span></li>'; };
     const checklist=checks.map(li).join('');
-    const selfItems=['I can explain in one sentence why this business makes money','This position fits my own risk limits (e.g. a sector cap)','I have checked how it fits the rest of my holdings'];
-    const selfHtml=selfItems.map(s=>'<li class="fchk-item fchk-self"><span class="fchk-box"></span><span class="fchk-txt">'+esc(s)+'</span></li>').join('');
+    const strengths=checks.filter(c=>c.state===true).map(c=>c.label);
+    const concerns=checks.filter(c=>c.state===false).map(c=>c.label);
+    const unknowns=checks.filter(c=>c.state===null).length;
+    const caseHtml=
+      '<div class="fchk-case"><div class="fchk-case-h fchk-case-for">What the numbers support ('+strengths.length+')</div>'+
+        (strengths.length?('<div class="fchk-case-b">'+strengths.map(esc).join(' · ')+'</div>'):'<div class="fchk-case-b muted">Nothing in the reported data clears these thresholds.</div>')+
+      '</div>'+
+      '<div class="fchk-case"><div class="fchk-case-h fchk-case-against">What argues against ('+concerns.length+')</div>'+
+        (concerns.length?('<div class="fchk-case-b">'+concerns.map(esc).join(' · ')+'</div>'):'<div class="fchk-case-b muted">No reported metric fails these thresholds.</div>')+
+      '</div>'+
+      (unknowns?('<div class="fchk-case-note">'+unknowns+' check'+(unknowns===1?'':'s')+' could not be evaluated — data unavailable, shown as “–” below.</div>'):'');
     let desc=(t.description||t.long_business_summary||'').trim();
     const biz=desc?(esc(desc.slice(0,360))+(desc.length>360?'…':'')):(esc(t.name||t.ticker||'This company')+' is a US-listed '+esc(t.sector||'')+' company.');
     const cat=(t.catalyst||t.key_catalyst||'').trim()||(ed?('Next scheduled catalyst is the earnings report around '+esc(String(ed))+'.'):(days!=null&&days>=0?('Next scheduled catalyst is the earnings report in ~'+Math.round(days)+' days.'):'No dated near-term catalyst on file — watch the next earnings report and analyst revisions.'));
@@ -21405,22 +21434,27 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
       '.fchk-na .fchk-box{border-style:dashed;color:#94a3b8}'+
       '.fchk-txt{font-size:13.5px;color:var(--ink,#0A0A0A);display:flex;flex-direction:column;gap:2px}'+
       '.fchk-det{font-size:12px;color:var(--grey-2,#64748b);font-weight:500}'+
-      '.fchk-self .fchk-txt{color:#475569}'+
+      '.fchk-off .fchk-box{border-color:#b91c1c;color:#b91c1c}'+
       '.fchk-biz{font-size:13.5px;line-height:1.55;color:var(--ink,#334155);margin:0 0 10px}'+
+      '.fchk-case{margin-bottom:10px}'+
+      '.fchk-case-h{font-size:12px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;margin-bottom:4px}'+
+      '.fchk-case-for{color:#15803d}.fchk-case-against{color:#b91c1c}'+
+      '.fchk-case-b{font-size:13px;line-height:1.55;color:var(--ink,#334155)}'+
+      '.fchk-case-note{font-size:11.5px;color:#94a3b8;margin-top:6px}'+
+      '.fchk-cat{font-size:13.5px;color:var(--ink,#334155);line-height:1.55}'+
       '.fchk-mrow{display:grid;grid-template-columns:130px 1fr;gap:12px;padding:9px 0;border-top:1px solid rgba(10,10,10,.06);font-size:13px}'+
       '.fchk-mrow:first-child{border-top:none}.fchk-mrow .k{color:#64748b;font-weight:600}.fchk-mrow .v{color:#1e293b;line-height:1.5}'+
       '.fchk-note{font-size:11.5px;line-height:1.55;color:#94a3b8;margin-top:10px}'+
       '@media(max-width:520px){.fchk-mrow{grid-template-columns:1fr}}'+
       '</style>';
     return style+
-      _sec('Fundamentals fact-check','✅','green',
+      _sec('The case, on reported numbers','✅','green',
         '<p class="fchk-biz"><b>The business.</b> '+biz+'</p>'+
-        '<div class="muted small" style="margin-bottom:8px">'+nPass+' / '+checks.length+' data checks met</div>'+
+        caseHtml+
+        '<div class="muted small" style="margin:10px 0 6px">'+nPass+' of '+nKnown+' evaluated checks met · next catalyst: '+cat+'</div>'+
         '<ul class="fchk-list">'+checklist+'</ul>')+
-      _sec('Your own checks','📝','violet','<ul class="fchk-list">'+selfHtml+'</ul>')+
       _sec('What management said · latest call','🎙️','blue','<div id="fchkMgmt"><div class="fchk-mrow"><span class="k">Loading…</span><span class="v">Fetching the latest earnings-call summary.</span></div></div>')+
-      _sec('Key catalyst','⚡','green','<div style="font-size:13.5px;color:var(--ink,#334155)">'+cat+'</div>')+
-      '<p class="fchk-note">Data checks come from the latest reported fundamentals and can lag or have gaps. The management summary is AI-generated from the earnings call and may be wrong — verify against the filing. Research and opinion for information only — not advice, not a personal recommendation, not FCA-authorised. Capital at risk.</p>';
+      '<p class="fchk-note">Every check above is computed from the latest reported fundamentals — figures can lag or have gaps, and a met check is not a reason to buy. Thresholds are our own research conventions, not standards. The management summary is AI-generated from the earnings call and may be wrong — verify against the filing. Research and opinion for information only — not advice, not a personal recommendation, not FCA-authorised. Capital at risk.</p>';
   }
   function _fchkLoadMgmt(){
     var box=document.getElementById('fchkMgmt'); if(!box||box.getAttribute('data-loaded'))return;

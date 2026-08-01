@@ -351,13 +351,72 @@ Source ({source_label}, ticker: {ticker}, date: {quarter}):
 """
 
 
+_GROQ_KEY      = os.environ.get("GROQ_API_KEY", "").strip()
+_GROQ_MODEL    = os.environ.get("GROQ_MODEL", "llama-3.3-70b-versatile")
+_GROQ_ENDPOINT = "https://api.groq.com/openai/v1/chat/completions"
+
+
+def _parse_summary_json(text: str, ticker: str) -> dict | None:
+    """Shared JSON extraction for either provider (tolerates ``` fences)."""
+    text = (text or "").strip()
+    if text.startswith("```"):
+        text = text.strip("`")
+        if text.lower().startswith("json"):
+            text = text[4:].strip()
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError as exc:
+        logger.warning(f"event_intel: JSON decode failed for {ticker}: {exc}; head: {text[:200]}")
+        return None
+
+
+async def _summarize_with_groq(ticker: str, quarter: str, transcript_text: str,
+                               source_label: str = "earnings call transcript") -> dict | None:
+    """Groq (Llama) fallback for the structured call summary.
+
+    Used when Anthropic is unavailable — most commonly an exhausted credit
+    balance, which otherwise leaves the whole "what management said" surface
+    silently empty. Same prompt, same JSON shape, different provider/key."""
+    if not _GROQ_KEY:
+        return None
+    prompt = _SUMMARY_PROMPT.format(
+        ticker=ticker, quarter=quarter, transcript_text=transcript_text[:24000],
+        source_label=source_label,
+    )
+    payload = {
+        "model":           _GROQ_MODEL,
+        "max_tokens":      1500,
+        "temperature":     0.2,
+        "response_format": {"type": "json_object"},
+        "messages":        [{"role": "user", "content": prompt}],
+    }
+    try:
+        async with httpx.AsyncClient(timeout=_ANTHROPIC_TIMEOUT) as c:
+            r = await c.post(_GROQ_ENDPOINT, json=payload,
+                             headers={"Authorization": f"Bearer {_GROQ_KEY}",
+                                      "Content-Type": "application/json"})
+            if r.status_code != 200:
+                logger.warning(f"event_intel: Groq {ticker} HTTP {r.status_code}: {r.text[:200]}")
+                return None
+            resp = r.json()
+    except Exception as exc:
+        logger.warning(f"event_intel: Groq {ticker} failed: {exc}")
+        return None
+    text = ((resp.get("choices") or [{}])[0].get("message") or {}).get("content", "")
+    parsed = _parse_summary_json(text, ticker)
+    if parsed:
+        logger.info(f"event_intel: {ticker} summarized via Groq fallback")
+    return parsed
+
+
 async def _summarize_with_haiku(ticker: str, quarter: str, transcript_text: str,
                                 source_label: str = "earnings call transcript") -> dict | None:
-    """Call Anthropic Haiku to produce the structured summary. Returns dict
-    on success, None on failure (e.g. API key missing, rate-limited)."""
+    """Structured summary of the call. Tries Anthropic Haiku, then falls back
+    to Groq so an exhausted Anthropic balance doesn't blank the feature.
+    Returns dict on success, None when every provider fails."""
     if not _ANTHROPIC_KEY:
-        logger.warning("event_intel: ANTHROPIC_API_KEY not set, skipping summarization")
-        return None
+        logger.warning("event_intel: ANTHROPIC_API_KEY not set, trying Groq")
+        return await _summarize_with_groq(ticker, quarter, transcript_text, source_label)
     # Truncate the transcript so we stay under Haiku's context comfortably.
     # Haiku 4.5 supports 200k tokens but cost scales linearly. 30k chars ≈
     # 7-8k tokens — plenty of context, very cheap.
@@ -381,29 +440,23 @@ async def _summarize_with_haiku(ticker: str, quarter: str, transcript_text: str,
             r = await c.post("https://api.anthropic.com/v1/messages",
                              json=payload, headers=headers)
             if r.status_code != 200:
+                # Covers the "credit balance too low" 400 as well as 429s —
+                # fall through to Groq rather than returning nothing.
                 logger.warning(f"event_intel: Anthropic {ticker} HTTP {r.status_code}: {r.text[:200]}")
-                return None
+                return await _summarize_with_groq(ticker, quarter, transcript_text, source_label)
             resp = r.json()
     except Exception as exc:
         logger.warning(f"event_intel: Anthropic {ticker} failed: {exc}")
-        return None
+        return await _summarize_with_groq(ticker, quarter, transcript_text, source_label)
     try:
         import usage_log
         usage_log.record("concall", _ANTHROPIC_MODEL, resp.get("usage"), ticker=ticker)
     except Exception:
         pass
     text = (resp.get("content") or [{}])[0].get("text", "").strip()
-    # Strip code fences if Haiku added any
-    if text.startswith("```"):
-        text = text.strip("`")
-        # Drop leading 'json' tag if present
-        if text.lower().startswith("json"):
-            text = text[4:].strip()
-    try:
-        parsed = json.loads(text)
-    except json.JSONDecodeError as exc:
-        logger.warning(f"event_intel: JSON decode failed for {ticker}: {exc}; text head: {text[:200]}")
-        return None
+    parsed = _parse_summary_json(text, ticker)
+    if parsed is None:
+        return await _summarize_with_groq(ticker, quarter, transcript_text, source_label)
     return parsed
 
 
