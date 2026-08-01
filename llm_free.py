@@ -80,8 +80,25 @@ def available() -> list[str]:
     return [n for (n, envk, _m, _d, _u, _c) in _PROVIDERS if _key(envk)]
 
 
+def env_key_names() -> list[str]:
+    """NAMES ONLY (never values) of env vars that look like an AI provider key.
+    Lets you see what a key was actually named in the host dashboard when a
+    provider reports 'not configured' despite having been added."""
+    pat = ("API_KEY", "_KEY", "TOKEN")
+    skip = ("SUPABASE", "SERVICE", "ANON", "SECRET", "PASSWORD", "WEBHOOK",
+            "STRIPE", "RESEND", "POLYGON", "FMP", "ALPHA", "FINNHUB", "ALPACA",
+            "UNSPLASH", "PEXELS", "GH_", "GITHUB", "JWT", "SESSION")
+    out = []
+    for k in os.environ:
+        ku = k.upper()
+        if any(p in ku for p in pat) and not any(s in ku for s in skip):
+            out.append(k)
+    return sorted(out)
+
+
 def status() -> dict:
     return {
+        "env_key_names_present": env_key_names(),
         "providers": [
             {"name": n, "configured": bool(_key(envk)),
              "model": _key(menv) or dflt, "max_input_chars": cap}
