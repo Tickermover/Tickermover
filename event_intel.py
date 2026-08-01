@@ -369,6 +369,31 @@ def _note_error(provider: str, detail: str, ticker: str = "") -> None:
     return None
 
 
+async def probe_groq() -> dict:
+    """Make a tiny real Groq call and report exactly what comes back.
+    Used to tell 'key missing' from 'model rejected' from 'call succeeded'
+    without reading server logs."""
+    if not _GROQ_KEY:
+        return {"ok": False, "reason": "GROQ_API_KEY not set"}
+    payload = {
+        "model":           _GROQ_MODEL,
+        "max_tokens":      64,
+        "response_format": {"type": "json_object"},
+        "messages":        [{"role": "user",
+                             "content": 'Reply with this exact JSON: {"ok": true}'}],
+    }
+    try:
+        async with httpx.AsyncClient(timeout=15) as c:
+            r = await c.post(_GROQ_ENDPOINT, json=payload,
+                             headers={"Authorization": f"Bearer {_GROQ_KEY}",
+                                      "Content-Type": "application/json"})
+        body = r.text[:300]
+        return {"ok": r.status_code == 200, "status": r.status_code,
+                "model": _GROQ_MODEL, "body": body}
+    except Exception as exc:
+        return {"ok": False, "model": _GROQ_MODEL, "exception": str(exc)[:200]}
+
+
 def diagnostics() -> dict:
     """Non-secret health view: which providers are configured and why the last
     summarization failed. Booleans only — never the key values."""

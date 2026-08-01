@@ -5655,14 +5655,17 @@ async def api_pdf(symbol: str, debug: int = 0):
 
 
 @app.get("/api/event-intel-status")
-async def api_event_intel_status():
+async def api_event_intel_status(probe: str = ""):
     """Health view for the earnings-call summarizer: which providers are
     configured and why the last summarization failed. Booleans + a truncated
     error string only — no key material. Exists because a failing provider is
     otherwise invisible (the row caches empty and the UI just says
     'not available')."""
     import event_intel as _ei_mod
-    return JSONResponse(_ei_mod.diagnostics(), headers={"Cache-Control": "no-store"})
+    out = _ei_mod.diagnostics()
+    if probe == "groq":
+        out["probe_groq"] = await _ei_mod.probe_groq()
+    return JSONResponse(out, headers={"Cache-Control": "no-store"})
 
 
 @app.get("/api/event-intel/{symbol}")
