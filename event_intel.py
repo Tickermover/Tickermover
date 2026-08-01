@@ -355,6 +355,31 @@ _GROQ_KEY      = os.environ.get("GROQ_API_KEY", "").strip()
 _GROQ_MODEL    = os.environ.get("GROQ_MODEL", "llama-3.3-70b-versatile")
 _GROQ_ENDPOINT = "https://api.groq.com/openai/v1/chat/completions"
 
+# Breadcrumb of the last summarization failure, surfaced by /api/event-intel-status.
+# Without this, a failing provider is invisible: the row just caches empty and
+# the UI shows "not available" with no way to tell which provider broke or why.
+LAST_ERROR: dict = {}
+
+
+def _note_error(provider: str, detail: str, ticker: str = "") -> None:
+    LAST_ERROR.clear()
+    LAST_ERROR.update({"provider": provider, "detail": str(detail)[:200],
+                       "ticker": ticker,
+                       "at": datetime.now(timezone.utc).isoformat(timespec="seconds")})
+    return None
+
+
+def diagnostics() -> dict:
+    """Non-secret health view: which providers are configured and why the last
+    summarization failed. Booleans only — never the key values."""
+    return {
+        "anthropic_key_present": bool(_ANTHROPIC_KEY),
+        "anthropic_model": _ANTHROPIC_MODEL,
+        "groq_key_present": bool(_GROQ_KEY),
+        "groq_model": _GROQ_MODEL,
+        "last_error": LAST_ERROR or None,
+    }
+
 
 def _parse_summary_json(text: str, ticker: str) -> dict | None:
     """Shared JSON extraction for either provider (tolerates ``` fences)."""
@@ -367,7 +392,7 @@ def _parse_summary_json(text: str, ticker: str) -> dict | None:
         return json.loads(text)
     except json.JSONDecodeError as exc:
         logger.warning(f"event_intel: JSON decode failed for {ticker}: {exc}; head: {text[:200]}")
-        return None
+        return _note_error("parse", f"JSON decode failed: {text[:120]}", ticker)
 
 
 async def _summarize_with_groq(ticker: str, quarter: str, transcript_text: str,
@@ -378,6 +403,7 @@ async def _summarize_with_groq(ticker: str, quarter: str, transcript_text: str,
     balance, which otherwise leaves the whole "what management said" surface
     silently empty. Same prompt, same JSON shape, different provider/key."""
     if not _GROQ_KEY:
+        _note_error("groq", "GROQ_API_KEY not set", ticker)
         return None
     prompt = _SUMMARY_PROMPT.format(
         ticker=ticker, quarter=quarter, transcript_text=transcript_text[:24000],
@@ -397,11 +423,11 @@ async def _summarize_with_groq(ticker: str, quarter: str, transcript_text: str,
                                       "Content-Type": "application/json"})
             if r.status_code != 200:
                 logger.warning(f"event_intel: Groq {ticker} HTTP {r.status_code}: {r.text[:200]}")
-                return None
+                return _note_error("groq", f"HTTP {r.status_code}: {r.text[:160]}", ticker)
             resp = r.json()
     except Exception as exc:
         logger.warning(f"event_intel: Groq {ticker} failed: {exc}")
-        return None
+        return _note_error("groq", f"exception: {exc}", ticker)
     text = ((resp.get("choices") or [{}])[0].get("message") or {}).get("content", "")
     parsed = _parse_summary_json(text, ticker)
     if parsed:
@@ -443,10 +469,12 @@ async def _summarize_with_haiku(ticker: str, quarter: str, transcript_text: str,
                 # Covers the "credit balance too low" 400 as well as 429s —
                 # fall through to Groq rather than returning nothing.
                 logger.warning(f"event_intel: Anthropic {ticker} HTTP {r.status_code}: {r.text[:200]}")
+                _note_error("anthropic", f"HTTP {r.status_code}: {r.text[:160]}", ticker)
                 return await _summarize_with_groq(ticker, quarter, transcript_text, source_label)
             resp = r.json()
     except Exception as exc:
         logger.warning(f"event_intel: Anthropic {ticker} failed: {exc}")
+        _note_error("anthropic", f"exception: {exc}", ticker)
         return await _summarize_with_groq(ticker, quarter, transcript_text, source_label)
     try:
         import usage_log
