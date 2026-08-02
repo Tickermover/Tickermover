@@ -188,17 +188,11 @@
     .cover-pg .cov-in.bookcov{padding:clamp(22px,3.2vw,40px)}
     .cover-pg .cov-mast{font-size:clamp(30px,3.8vw,44px)}
     .cover-pg .cov-mast .no{font-size:11px}
-    .cover-pg .cov-strip{font-size:9px}
-    .cover-pg .cov-lines{max-width:62%;gap:14px;margin-top:clamp(16px,2.6vw,30px)}
-    .cover-pg .cov-kick{font-size:9px}
     .cover-pg .cov-line{font-size:clamp(12.5px,1.35vw,16px);-webkit-line-clamp:2}
     .cover-pg .cov-subj{font-size:11px;padding:4px 10px;margin-bottom:12px}
     .cover-pg .cov-title{font-size:clamp(28px,3.9vw,46px);-webkit-line-clamp:4;letter-spacing:-.018em}
     .cover-pg .bookcov-stand{font-size:clamp(14px,1.45vw,17px);line-height:1.5;opacity:.93;margin:14px 0 0;max-width:46ch;text-shadow:0 1px 8px rgba(0,0,0,.55)}
-    .cover-pg .cov-splash{top:auto;bottom:118px;right:clamp(18px,3vw,34px);width:clamp(84px,9vw,104px);height:clamp(84px,9vw,104px)}
-    .cover-pg .sp-tix{font-size:clamp(17px,1.9vw,21px)} .cover-pg .sp-verd{font-size:9px} .cover-pg .sp-sc{font-size:10px}
     .cover-pg .cov-date{font-size:12.5px}
-    .cover-pg .cov-credit{display:none}
     /* nav */
     .bk-bar{display:flex;align-items:center;gap:12px;margin:0 0 26px}
     .bk-btn{width:38px;height:38px;flex:none;display:inline-flex;align-items:center;justify-content:center;font-size:17px;
@@ -232,65 +226,79 @@
       .bk-bar,.bk-dots{display:none!important}
       .cover-pg .cp-scrim{-webkit-print-color-adjust:exact;print-color-adjust:exact}
     }
-    /* newsstand gallery — magazine covers */
+    /* ── Newsstand covers ──────────────────────────────────────────────
+       Designed, typographic covers — deliberately NOT photographic. The
+       stock-photo covers put the same yellow-cable data-centre shot on four
+       of five issues, so the shelf read as one article repeated; and a dark
+       photo under a dark scrim left the headline muddy. cover_image is still
+       stored and still used for og:image (a photo is right for a social
+       card), it just no longer paints the shelf.
+
+       Everything on the cover now earns its place: masthead, issue number,
+       one deck line, the verdict, the headline, the date. Dropped: the
+       starburst seal (its text clipped to "UTPERFOR"), the fake barcode, the
+       rotated photo credit up the spine, and two of the three cover-line
+       blocks that were competing with the headline. */
     body.gallery .wrap{max-width:1040px}
     .news-h{margin:6px 0 26px}
     .news-title{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:clamp(30px,5.4vw,46px);line-height:1.05;letter-spacing:-.015em;margin:8px 0 8px}
     .news-sub{font-size:16px;color:var(--muted);max-width:60ch;margin:0}
     .covers{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:26px}
-    .cover{position:relative;display:block;aspect-ratio:3/4.05;border-radius:7px;overflow:hidden;color:#fff;text-decoration:none;box-shadow:0 14px 34px -16px rgba(9,20,60,.6);transition:transform .18s,box-shadow .18s;isolation:isolate}
-    .cover:hover{transform:translateY(-4px);box-shadow:0 24px 50px -18px rgba(9,20,60,.72)}
+    .cover{position:relative;display:block;aspect-ratio:3/4.05;border-radius:6px;overflow:hidden;color:#fff;
+      text-decoration:none;box-shadow:0 14px 34px -18px rgba(9,20,60,.55);transition:transform .18s,box-shadow .18s;isolation:isolate}
+    .cover:hover{transform:translateY(-4px);box-shadow:0 26px 52px -20px rgba(9,20,60,.66)}
     .cov-art{position:absolute;inset:0;width:100%;height:100%;z-index:0}
-    /* photographic cover: image + a palette tint so the series stays coherent */
-    .cov-photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0;display:block}
-    .cov-tint{position:absolute;inset:0;z-index:0;mix-blend-mode:multiply;opacity:.55}
-    .cov-credit{position:absolute;z-index:2;left:15px;bottom:74px;transform-origin:left bottom;transform:rotate(-90deg);
-      font-size:7.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;opacity:.55;white-space:nowrap;pointer-events:none}
+    /* A single soft vignette from the foot, so the date/verdict row stays
+       legible over the plotted line without greying out the whole cover. */
+    .cover::before{content:"";position:absolute;inset:0;z-index:1;
+      background:linear-gradient(180deg,rgba(4,10,26,.10) 0%,rgba(4,10,26,0) 34%,rgba(4,10,26,.30) 72%,rgba(4,10,26,.72) 100%)}
+    .cover.featured{box-shadow:0 18px 44px -18px rgba(9,20,60,.6),0 0 0 2px rgba(41,112,255,.55)}
+    .cov-in{position:absolute;inset:0;z-index:2;display:flex;flex-direction:column;padding:17px 17px 15px}
+    /* Masthead — small caps, one line, never wrapping. It is the publication's
+       signature, not the loudest thing on the cover; the headline is. */
+    .cov-mast{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+    .cov-brand{font-size:11px;font-weight:800;letter-spacing:.22em;text-transform:uppercase;white-space:nowrap}
+    .cov-no{font-size:9px;font-weight:700;letter-spacing:.1em;opacity:.7;white-space:nowrap}
+    .cov-rule{height:1px;background:rgba(255,255,255,.34);margin:9px 0 0}
+    /* One deck line. Three stacked callouts with coloured kickers is a
+       supermarket-magazine device and it crowded the headline. */
+    .cov-deck{font-size:11.5px;font-weight:600;line-height:1.4;opacity:.9;margin-top:12px;max-width:88%;
+      display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+    .cov-feat{margin-top:auto}
+    .cov-subj{display:inline-block;font-size:9px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;
+      opacity:.78;margin-bottom:10px}
+    .cov-title{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:24px;line-height:1.1;letter-spacing:-.014em;
+      display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
+    .cover.featured .cov-title{font-size:27px}
+    /* Foot — date on the left, verdict as a flat pill on the right. */
+    .cov-foot{margin-top:14px;padding-top:11px;border-top:1px solid rgba(255,255,255,.28);
+      display:flex;justify-content:space-between;align-items:center;gap:10px}
+    .cov-date{font-size:10.5px;font-weight:700;letter-spacing:.04em;opacity:.85;white-space:nowrap}
+    .cov-verd{display:inline-flex;align-items:center;gap:6px;font-size:9.5px;font-weight:800;letter-spacing:.08em;
+      text-transform:uppercase;padding:4px 9px;border-radius:3px;white-space:nowrap;background:rgba(255,255,255,.14);
+      border:1px solid rgba(255,255,255,.3)}
+    .cov-verd .vd{width:6px;height:6px;border-radius:50%;flex:none}
+    .cov-verd .tix{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:12px;letter-spacing:0;text-transform:none}
+    @media(max-width:560px){
+      .covers{grid-template-columns:repeat(auto-fill,minmax(158px,1fr));gap:15px}
+      .cov-in{padding:12px 12px 11px}
+      .cov-brand{font-size:9px;letter-spacing:.18em}.cov-no{font-size:8px}
+      .cov-deck{display:none}
+      .cov-title{font-size:16px;-webkit-line-clamp:3}.cover.featured .cov-title{font-size:18px}
+      .cov-foot{margin-top:10px;padding-top:8px}
+      .cov-date{font-size:9px}.cov-verd{font-size:8px;padding:3px 7px}.cov-verd .tix{font-size:10px}
+    }
     /* article hero photo */
     .hero-img{position:relative;width:100%;aspect-ratio:16/9;border-radius:14px;overflow:hidden;margin:0 0 9px;background:#eef2f8}
     .hero-img img{width:100%;height:100%;object-fit:cover;display:block}
     .hero-credit{font-size:11.5px;color:#94a3b8;margin:0 0 20px}
     .hero-credit a{color:#94a3b8;text-decoration:underline}
-    .cover::before{content:"";position:absolute;inset:0;z-index:1;background:linear-gradient(180deg,rgba(0,0,0,.54) 0%,rgba(0,0,0,.12) 26%,rgba(0,0,0,.22) 56%,rgba(0,0,0,.82) 100%)}
-    .cover.featured{box-shadow:0 18px 44px -16px rgba(9,20,60,.62),0 0 0 2px rgba(255,255,255,.72)}
-    .cov-in{position:absolute;inset:0;z-index:2;display:flex;flex-direction:column;padding:15px 15px 13px}
-    /* masthead */
-    .cov-mast{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:30px;line-height:.9;letter-spacing:-.022em;text-shadow:0 2px 12px rgba(0,0,0,.4);display:flex;justify-content:space-between;align-items:flex-end;gap:8px}
-    .cov-mast .no{font-family:'Instrument Sans',sans-serif;font-size:9.5px;font-weight:800;letter-spacing:.09em;opacity:.92;white-space:nowrap;text-shadow:0 1px 5px rgba(0,0,0,.5)}
-    .cov-rule{height:2px;background:rgba(255,255,255,.9);margin:7px 0 5px;box-shadow:0 1px 4px rgba(0,0,0,.3)}
-    .cov-strip{font-size:8px;font-weight:800;letter-spacing:.2em;text-transform:uppercase;opacity:.92;text-shadow:0 1px 4px rgba(0,0,0,.5)}
-    /* cover-line callouts */
-    .cov-lines{list-style:none;margin:16px 0 0;padding:0;display:flex;flex-direction:column;gap:11px;max-width:72%}
-    .cov-lines li{position:relative;padding-left:9px}
-    .cov-lines li::before{content:"";position:absolute;left:0;top:1px;bottom:1px;width:3px;border-radius:2px;background:var(--kick,#ffd166)}
-    .cov-kick{display:block;font-size:8px;font-weight:800;letter-spacing:.13em;text-transform:uppercase;color:var(--kick,#ffd166);text-shadow:0 1px 3px rgba(0,0,0,.6)}
-    .cov-line{display:-webkit-box;font-size:12px;font-weight:700;line-height:1.18;margin-top:2px;text-shadow:0 1px 7px rgba(0,0,0,.6);-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-    /* feature headline */
-    .cov-feat{margin-top:auto}
-    .cov-subj{display:inline-block;font-size:9.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.34);border-radius:4px;padding:3px 8px;margin-bottom:9px}
-    .cov-title{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:23px;line-height:1.06;letter-spacing:-.012em;text-shadow:0 2px 16px rgba(0,0,0,.55);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
-    .cover.featured .cov-title{font-size:26px}
-    /* foot — barcode + site */
-    .cov-foot{margin-top:11px;padding-top:9px;border-top:1px solid rgba(255,255,255,.36);display:flex;justify-content:space-between;align-items:flex-end;gap:10px}
-    .cov-site{display:flex;flex-direction:column;gap:2px;min-width:0}
-    .cov-date{font-size:11px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .cov-url{font-size:8.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;opacity:.82}
-    .cov-code{flex:none}
-    /* splash flash badge */
-    .cov-splash{position:absolute;z-index:3;top:70px;right:13px;width:74px;height:74px;transform:rotate(7deg);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:#0b1220;filter:drop-shadow(0 3px 9px rgba(0,0,0,.4))}
-    .cov-splash svg{position:absolute;inset:0;width:100%;height:100%;z-index:0}
-    .cov-splash>span{position:relative;z-index:1}
-    .sp-verd{font-size:7.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;margin-bottom:1px}
-    .sp-tix{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:15px;line-height:1}
-    .sp-sc{font-size:9px;font-weight:800;margin-top:1px}
     .backlink{display:inline-block;font-size:13px;font-weight:600;color:var(--blue);text-decoration:none;margin:0 0 16px}
     @media(max-width:560px){
       .covers{grid-template-columns:repeat(auto-fill,minmax(158px,1fr));gap:15px}
       .cov-in{padding:11px 11px 10px}
       .cov-mast{font-size:21px}.cov-mast .no{font-size:8px}
-      .cov-lines{gap:8px;margin-top:11px;max-width:74%}.cov-line{font-size:10.5px}
       .cov-title{font-size:16px}.cover.featured .cov-title{font-size:18px}
-      .cov-splash{width:56px;height:56px;top:52px;right:9px}.sp-tix{font-size:12px}.sp-sc{font-size:8px}.sp-verd{font-size:6.5px}
     }
   </style>
 </head>
@@ -615,26 +623,23 @@
     // legible whether or not a photo is present (fixes the blank-cover case).
     function bookCover(d){
       var seed=d.week_start||d.title||'x', g=coverGrad(seed);
-      var subj=d.subject||'', glyph=(subj||d.title||'T').trim().charAt(0).toUpperCase();
-      var img=d.cover_image||null, grad='linear-gradient(155deg,'+g[0]+' 0%,'+g[1]+' 100%)';
+      var subj=d.subject||'';
       var no=issueNo(d.week_start);
-      var art=coverArt(seed,glyph)+((img&&img.url)
-        ? '<img class="cov-photo" src="'+esc(img.url)+'" alt="'+esc(img.alt||subj||'')+'"><div class="cov-tint" style="background:'+grad+'"></div><div class="cov-scrim"></div>' : '');
-      var lines=(d.cover_lines||[]).slice(0,3).map(function(t,k){
-        return '<li style="--kick:'+COV_KICK[k%3]+'"><span class="cov-kick">'+COV_KLAB[k%3]+'</span>'+
-               '<span class="cov-line">'+esc(stripCites(t))+'</span></li>'; }).join('');
-      return '<section class="page cover-pg" style="background:'+grad+'">'+art+splashBadge(d.cover_splash)+
+      // Same designed cover as the newsstand, full-bleed. No photo layer: the
+      // shelf and the issue must look like the same publication, and the
+      // stock photo was the reason the shelf looked repetitive.
+      return '<section class="page cover-pg" style="background:linear-gradient(155deg,'+g[0]+' 0%,'+g[1]+' 100%)">'+
+        coverArt(seed)+
         '<div class="cov-in bookcov">'+
-          '<div class="cov-mast"><span>Market Movers</span><span class="no">'+(no?'No. '+no:'')+'</span></div>'+
+          '<div class="cov-mast"><span class="cov-brand">Market Movers</span>'+
+            '<span class="cov-no">'+(no?'No. '+no:'')+'</span></div>'+
           '<div class="cov-rule"></div>'+
-          '<div class="cov-strip">TickerMover · Finance &amp; Markets Intelligence</div>'+
-          (lines?'<ul class="cov-lines">'+lines+'</ul>':'')+
-          '<div class="cov-feat">'+(subj?'<span class="cov-subj">'+esc(subj)+'</span>':'')+
+          '<div class="cov-feat">'+(subj?'<div class="cov-subj">'+esc(subj)+'</div>':'')+
             '<div class="cov-title">'+esc(stripCites(d.title||''))+'</div>'+
             (d.standfirst?'<p class="bookcov-stand">'+esc(stripCites(d.standfirst))+'</p>':'')+
           '</div>'+
-          '<div class="cov-foot"><div class="cov-site"><span class="cov-date">'+esc(d.week_label?('Week of '+d.week_label):'')+'</span>'+
-            '<span class="cov-url">tickermover.com</span></div>'+barcodeSvg(seed)+'</div>'+
+          '<div class="cov-foot"><span class="cov-date">'+esc(d.week_label?('Week of '+d.week_label):'')+'</span>'+
+            verdictPill(d.cover_splash)+'</div>'+
         '</div></section>';
     }
     function buildPages(d){
@@ -773,39 +778,43 @@
     }
     // Market-themed cover art: faint grid + volume bars + a rising price path
     // with area fill and node dots — vector, colored by the cover gradient.
-    function coverArt(seed,glyph){
-      var rnd=seededRand(String(seed||'x')), W=300,H=405,n=7,step=W/(n-1),pts=[],y=H*0.66,i;
-      for(i=0;i<n;i++){ y+=(rnd()-0.5)*H*0.13; y-=(i/(n-1))*H*0.20; y=Math.max(H*0.34,Math.min(H*0.74,y)); pts.push([Math.round(i*step),Math.round(y)]); }
+    // The cover motif: a plotted line over a faint grid. It is the only
+    // ornament left, and it is the one that actually says "research desk".
+    // Dropped from the old version: the 200px ghost initial and the random
+    // background bars, which fought the headline for the same space.
+    function coverArt(seed){
+      var rnd=seededRand(String(seed||'x')), W=300,H=405,n=9,step=W/(n-1),pts=[],y=H*0.62,i;
+      for(i=0;i<n;i++){
+        y+=(rnd()-0.5)*H*0.11; y-=(i/(n-1))*H*0.16;
+        y=Math.max(H*0.30,Math.min(H*0.70,y));
+        pts.push([Math.round(i*step),Math.round(y)]);
+      }
       var line='M '+pts.map(function(p){return p[0]+' '+p[1];}).join(' L ');
       var area=line+' L '+W+' '+H+' L 0 '+H+' Z';
-      var dots=pts.map(function(p){return '<circle cx="'+p[0]+'" cy="'+p[1]+'" r="2.6" fill="#fff" fill-opacity=".85"/>';}).join('');
-      var grid=''; for(var g=1;g<7;g++){ var gy=Math.round(H*g/7); grid+='<line x1="0" y1="'+gy+'" x2="'+W+'" y2="'+gy+'" stroke="#fff" stroke-opacity=".06"/>'; }
-      var bars=''; for(var b=0;b<6;b++){ var bh=24+Math.round(rnd()*70); bars+='<rect x="'+(16+b*48)+'" y="'+(H-bh-4)+'" width="18" height="'+bh+'" fill="#fff" fill-opacity=".05"/>'; }
-      var mono = glyph? '<text x="'+(W-6)+'" y="'+Math.round(H*0.40)+'" text-anchor="end" font-family="Fraunces,Georgia,serif" font-weight="600" font-size="200" fill="#fff" fill-opacity=".06">'+esc(glyph)+'</text>':'';
-      return '<svg class="cov-art" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">'+
-        grid+mono+bars+'<path d="'+area+'" fill="#fff" fill-opacity=".07"/>'+
-        '<path d="'+line+'" fill="none" stroke="#fff" stroke-opacity=".8" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>'+dots+'</svg>';
+      var dots=pts.map(function(p,k){
+        return k===n-1
+          ? '<circle cx="'+p[0]+'" cy="'+p[1]+'" r="4" fill="#fff" fill-opacity=".95"/>'
+          : '<circle cx="'+p[0]+'" cy="'+p[1]+'" r="2.2" fill="#fff" fill-opacity=".5"/>';
+      }).join('');
+      var grid='';
+      for(var g=1;g<8;g++){ var gy=Math.round(H*g/8);
+        grid+='<line x1="0" y1="'+gy+'" x2="'+W+'" y2="'+gy+'" stroke="#fff" stroke-opacity=".05"/>'; }
+      for(var v=1;v<6;v++){ var gx=Math.round(W*v/6);
+        grid+='<line x1="'+gx+'" y1="0" x2="'+gx+'" y2="'+H+'" stroke="#fff" stroke-opacity=".035"/>'; }
+      return '<svg class="cov-art" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">'+
+        grid+'<path d="'+area+'" fill="#fff" fill-opacity=".06"/>'+
+        '<path d="'+line+'" fill="none" stroke="#fff" stroke-opacity=".72" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>'+
+        dots+'</svg>';
     }
-    // A real-looking barcode strip for the cover foot (seeded → stable per issue).
-    function barcodeSvg(seed){
-      var rnd=seededRand('bc'+String(seed||'x')), W=58,H=26,x=4,r='';
-      while(x<W-4){ var w=1+Math.round(rnd()*2); if(rnd()>0.34) r+='<rect x="'+x+'" y="4" width="'+w+'" height="'+(H-9)+'" fill="#0b1220"/>'; x+=w+1; }
-      return '<svg class="cov-code" width="'+W+'" height="'+H+'" viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect width="'+W+'" height="'+H+'" rx="3" fill="#fff"/>'+r+'</svg>';
-    }
-    // Magazine "flash" seal for the marquee ticker + its house verdict.
-    function starburst(fill){
-      var cx=37,cy=37,n=15,ro=36,ri=29.5,pts='';
-      for(var i=0;i<n*2;i++){ var rr=(i%2?ri:ro), a=Math.PI*i/n - Math.PI/2; pts+=(cx+rr*Math.cos(a)).toFixed(1)+','+(cy+rr*Math.sin(a)).toFixed(1)+' '; }
-      return '<svg viewBox="0 0 74 74" xmlns="http://www.w3.org/2000/svg"><polygon points="'+pts+'" fill="'+fill+'" stroke="#fff" stroke-width="2" stroke-linejoin="round"/></svg>';
-    }
-    function splashBadge(sp){
+    // Verdict as a flat pill with a status dot — never colour alone, and never
+    // the old starburst seal, whose fixed 74px circle clipped "Outperform" to
+    // "UTPERFOR" on every cover that carried one.
+    function verdictPill(sp){
       if(!sp||!sp.ticker) return '';
-      var v=String(sp.verdict||'Watch'), key=v.toLowerCase();
-      var fill=key.indexOf('out')>=0?'#16a34a':key.indexOf('avoid')>=0?'#dc2626':'#d97706';
-      var ink=(key.indexOf('avoid')>=0)?'#fff':'#0b1220';
-      return '<div class="cov-splash" style="color:'+ink+'">'+starburst(fill)+
-        '<span class="sp-verd">'+esc(v)+'</span><span class="sp-tix">'+esc(sp.ticker)+'</span>'+
-        (sp.score!=null&&sp.score!==''?'<span class="sp-sc">Alpha '+esc(String(sp.score))+'</span>':'')+'</div>';
+      var v=String(sp.verdict||'Watch'), k=v.toLowerCase();
+      var dot=k.indexOf('out')>=0?'#4ade80':k.indexOf('avoid')>=0?'#f87171':'#fbbf24';
+      return '<span class="cov-verd"><span class="vd" style="background:'+dot+'"></span>'+
+             '<span class="tix">'+esc(sp.ticker)+'</span>'+esc(v)+'</span>';
     }
     // Stable, increasing issue number from the ISO Monday (weeks since 29 Dec 2025).
     function issueNo(ws){
@@ -813,41 +822,27 @@
         var n=Math.round((d.getTime()-Date.UTC(2025,11,29))/6048e5); return n>0?n:null; }
       catch(e){ return null; }
     }
-    var COV_KICK=['#ffd166','#7dd3fc','#fca5a5'], COV_KLAB=['Inside','The Data','Our Call'];
     function coverCard(e,i,featured){
       var seed=e.week_start||e.title||('i'+i);
       var g=coverGrad(seed);
-      var href=weeklyHref(e);
-      var subj=e.subject||'';
-      var glyph=(subj||e.title||'T').trim().charAt(0).toUpperCase();
       var no=issueNo(e.week_start);
-      var lines=(e.cover_lines||[]).slice(0,3).map(function(t,k){
-        return '<li style="--kick:'+COV_KICK[k%3]+'"><span class="cov-kick">'+COV_KLAB[k%3]+'</span>'+
-               '<span class="cov-line">'+esc(stripCites(t))+'</span></li>'; }).join('');
-      // The generated vector cover is ALWAYS laid down first, so a photo that
-      // 404s or is blocked reveals a designed cover rather than a bare gradient.
-      // The photo (when present) paints over it, plus a palette tint.
-      var img=e.cover_image||null, grad='linear-gradient(155deg,'+g[0]+' 0%,'+g[1]+' 100%)';
-      var art = coverArt(seed,glyph) + ((img&&img.url)
-        ? '<img class="cov-photo" src="'+esc(img.url)+'" alt="'+esc(img.alt||subj||'')+'" loading="lazy">'+
-          '<div class="cov-tint" style="background:'+grad+'"></div>'
-        : '');
-      var credit = (img&&img.credit_name)
-        ? '<span class="cov-credit">Photo · '+esc(img.credit_name)+'</span>' : '';
-      return '<a class="cover'+(featured?' featured':'')+'" href="'+href+'" style="background:'+grad+'">'+
-        art+credit+
-        splashBadge(e.cover_splash)+
+      var subj=e.subject||'';
+      // One deck line: the standfirst if we have it, else the first cover line.
+      var deck=stripCites(e.standfirst||(e.cover_lines||[])[0]||'');
+      return '<a class="cover'+(featured?' featured':'')+'" href="'+weeklyHref(e)+
+        '" style="background:linear-gradient(155deg,'+g[0]+' 0%,'+g[1]+' 100%)">'+
+        coverArt(seed)+
         '<div class="cov-in">'+
-          '<div class="cov-mast"><span>Market Movers</span><span class="no">'+(no?'No. '+no:'')+(i===0?' · LATEST':'')+'</span></div>'+
+          '<div class="cov-mast"><span class="cov-brand">Market Movers</span>'+
+            '<span class="cov-no">'+(no?'No. '+no:'')+(i===0?' · Latest':'')+'</span></div>'+
           '<div class="cov-rule"></div>'+
-          '<div class="cov-strip">TickerMover · Finance &amp; Markets Intelligence</div>'+
-          (lines?'<ul class="cov-lines">'+lines+'</ul>':'')+
+          (deck?'<div class="cov-deck">'+esc(deck)+'</div>':'')+
           '<div class="cov-feat">'+
-            (subj?'<span class="cov-subj">'+esc(subj)+'</span>':'')+
+            (subj?'<div class="cov-subj">'+esc(subj)+'</div>':'')+
             '<div class="cov-title">'+esc(stripCites(e.title||subj||'Untitled issue'))+'</div>'+
           '</div>'+
-          '<div class="cov-foot"><div class="cov-site"><span class="cov-date">'+esc(e.week_label||e.week_start||'')+'</span>'+
-            '<span class="cov-url">tickermover.com</span></div>'+barcodeSvg(seed)+'</div>'+
+          '<div class="cov-foot"><span class="cov-date">'+esc(e.week_label||e.week_start||'')+'</span>'+
+            verdictPill(e.cover_splash)+'</div>'+
         '</div>'+
       '</a>';
     }
@@ -861,18 +856,8 @@
         '<p class="news-sub">TickerMover\'s signed weekly stock-market analysis — one deep, data-grounded issue a week on the sectors and stocks that are moving. Pick an issue to read.</p></div>';
       var covers=eds.map(function(e,i){ return coverCard(e,i, i===0); }).join('');
       root.innerHTML=head+'<div class="covers">'+covers+'</div>';
-      // If a cover photo fails (404, blocked, offline), drop it and its tint so
-      // the generated vector cover underneath shows through. Wired in JS rather
-      // than an inline onerror so a strict CSP can't disable it.
-      [].forEach.call(root.querySelectorAll('.cov-photo'),function(im){
-        im.addEventListener('error',function(){
-          var t=im.nextElementSibling;
-          if(t&&t.classList.contains('cov-tint')) t.remove();
-          var cr=im.parentNode&&im.parentNode.querySelector('.cov-credit');
-          if(cr) cr.remove();
-          im.remove();
-        });
-      });
+      // The cover-photo error handler that lived here is gone with the photos
+      // themselves — covers are drawn now, so there is nothing left to fail.
       document.title='Market Movers — Weekly Stock Market Analysis | TickerMover';
     }
 
