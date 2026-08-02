@@ -20910,27 +20910,6 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
       '<span class="hs-bar"><span class="hs-bar-f" style="width:'+Math.max(3,v)+'%"></span></span></div>').join('')+'</div>';
   }
   function _trendCard(t){
-    // Cash flow quality — how much reported profit survives as real cash.
-    const ocf=_fpNum(t,['operating_cashflow']), fcf2=_fpNum(t,['free_cashflow']);
-    const capex=(ocf!=null&&fcf2!=null)?(ocf-fcf2):null;
-    const conv=(ocf!=null&&fcf2!=null&&ocf!==0)?(fcf2/ocf*100):null;
-    const cashRows=[
-      _mrow('Operating cash flow', ocf, v=>_money(v), v=> v>0?_badge('POSITIVE','ok'):_badge('NEGATIVE','bad')),
-      _mrow('Free cash flow', fcf2, v=>_money(v), v=> v>0?_badge('POSITIVE','ok'):_badge('BURN','bad')),
-      _mrow('Capex (implied)', capex, v=>_money(Math.abs(v)), ()=>_nb()),
-      _mrow('FCF conversion', conv, v=>v.toFixed(0)+'%', v=> v>=70?_badge('HIGH','ok'):v>=30?_badge('MODERATE','warn'):_badge('LOW','bad')),
-    ];
-    // Earnings quality — does the company land where the Street expects.
-    const bs=parseInt(t.eps_beat_streak);
-    const sp=_fpNum(t,['avg_eps_surprise_pct']), spP2=sp!=null?(Math.abs(sp)<=1?sp*100:sp):null;
-    const rv=t.eps_revisions_30d, dte=_fpNum(t,['days_to_earnings']);
-    const eqRows=[
-      _mrow('Beat streak', isNaN(bs)?null:bs, v=>v+' / 4', v=> v>=4?_badge('PERFECT','ok'):v>=2?_badge('GOOD','warn'):_badge('MIXED','bad')),
-      _mrow('Avg surprise', spP2, v=>(v>=0?'+':'')+v.toFixed(1)+'%', v=> v>=5?_badge('STRONG','ok'):v>=0?_badge('INLINE','warn'):_badge('MISS','bad')),
-      _mrow('Revisions \u00b7 30d', (rv&&(rv.ups!=null||rv.downs!=null))?rv:null, v=>(v.ups||0)+'\u2191 '+(v.downs||0)+'\u2193',
-            v=> (v.ups||0)>(v.downs||0)?_badge('RISING','ok'):((v.ups||0)===(v.downs||0)?_badge('FLAT','neu'):_badge('FALLING','bad'))),
-      _mrow('Next earnings', (dte!=null&&dte>=0)?dte:null, v=>'in ~'+Math.round(v)+'d', v=> v<=14?_badge('SOON','warn'):_nb()),
-    ];
     const byDate=a=>a.slice().sort((x,y)=>String(x.date||x.quarter||'').localeCompare(String(y.date||y.quarter||'')));
     const qi=Array.isArray(t.quarterly_income)?byDate(t.quarterly_income):[], eq=Array.isArray(t.eps_quarters)?byDate(t.eps_quarters):[];
     const rows=[];
@@ -21665,6 +21644,27 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
       _mrow('FCF margin', okM(fm)?fm:null, v=>v.toFixed(0)+'%', v=> v>=10?_badge('STRONG','ok'):v>=0?_badge('OK','warn'):_badge('BURN','bad')),
       _mrow('Revenue YoY', rgPct, _pctV, _grBadge),
       _mrow('EPS YoY', egPct, _pctV, _grBadge),
+    ];
+    // Cash flow quality — how much reported profit survives as real cash.
+    const ocf=_fpNum(t,['operating_cashflow']), fcf2=_fpNum(t,['free_cashflow']);
+    const capex=(ocf!=null&&fcf2!=null)?(ocf-fcf2):null;
+    const conv=(ocf!=null&&fcf2!=null&&ocf!==0)?(fcf2/ocf*100):null;
+    const cashRows=[
+      _mrow('Operating cash flow', ocf, v=>_money(v), v=> v>0?_badge('POSITIVE','ok'):_badge('NEGATIVE','bad')),
+      _mrow('Free cash flow', fcf2, v=>_money(v), v=> v>0?_badge('POSITIVE','ok'):_badge('BURN','bad')),
+      _mrow('Capex (implied)', capex, v=>_money(Math.abs(v)), ()=>_nb()),
+      _mrow('FCF conversion', conv, v=>v.toFixed(0)+'%', v=> v>=70?_badge('HIGH','ok'):v>=30?_badge('MODERATE','warn'):_badge('LOW','bad')),
+    ];
+    // Earnings quality — does the company land where the Street expects.
+    const bs=parseInt(t.eps_beat_streak);
+    const sp=_fpNum(t,['avg_eps_surprise_pct']), spP2=sp!=null?(Math.abs(sp)<=1?sp*100:sp):null;
+    const rv=t.eps_revisions_30d, dte=_fpNum(t,['days_to_earnings']);
+    const eqRows=[
+      _mrow('Beat streak', isNaN(bs)?null:bs, v=>v+' / 4', v=> v>=4?_badge('PERFECT','ok'):v>=2?_badge('GOOD','warn'):_badge('MIXED','bad')),
+      _mrow('Avg surprise', spP2, v=>(v>=0?'+':'')+v.toFixed(1)+'%', v=> v>=5?_badge('STRONG','ok'):v>=0?_badge('INLINE','warn'):_badge('MISS','bad')),
+      _mrow('Revisions \u00b7 30d', (rv&&(rv.ups!=null||rv.downs!=null))?rv:null, v=>(v.ups||0)+'\u2191 '+(v.downs||0)+'\u2193',
+            v=> (v.ups||0)>(v.downs||0)?_badge('RISING','ok'):((v.ups||0)===(v.downs||0)?_badge('FLAT','neu'):_badge('FALLING','bad'))),
+      _mrow('Next earnings', (dte!=null&&dte>=0)?dte:null, v=>'in ~'+Math.round(v)+'d', v=> v<=14?_badge('SOON','warn'):_nb()),
     ];
     const byDate=a=>a.slice().sort((x,y)=>String(x.date||x.quarter||'').localeCompare(String(y.date||y.quarter||'')));
     const qi=Array.isArray(t.quarterly_income)?byDate(t.quarterly_income).slice(-4):[];
