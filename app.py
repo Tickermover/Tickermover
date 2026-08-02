@@ -12042,14 +12042,21 @@ async def api_user_account(user: Optional[dict] = Depends(_current_user),
     full = await supabase.get_user_full(creds.credentials) or {}
     sub = await supabase.get_subscription(creds.credentials, user["user_id"])
     beta = _beta_pro_active()
+    # Allow-listed accounts (PRO_ALLOW_EMAILS / AI_ALLOW_EMAILS) are treated as
+    # Pro by the feature gates, so the panel must say so too — otherwise it
+    # reports "Free plan · Upgrade to Pro" while every Pro feature is unlocked.
+    _em = (full.get("email") or user.get("email") or "").lower()
+    comped = _em in _PRO_ALLOW or _em in _AI_ALLOW
+    pro = beta or comped or is_pro(sub.get("plan", "free"), sub.get("status", "active"))
     return JSONResponse({
         "email":          full.get("email") or user.get("email"),
         "email_verified": bool(full.get("email_verified")),
         "name":           full.get("name", ""),
-        "plan":           "pro" if beta else sub.get("plan", "free"),
-        "status":         "active" if beta else sub.get("status", "active"),
+        "plan":           "pro" if pro else sub.get("plan", "free"),
+        "status":         "active" if pro else sub.get("status", "active"),
         "valid_until":    config.BETA_PRO_UNTIL if beta else sub.get("valid_until"),
         "beta_pro":       beta,
+        "comped":         comped and not beta,
     })
 
 

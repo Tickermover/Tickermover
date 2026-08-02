@@ -2589,6 +2589,8 @@ body.v2 .v2ov-card.sectors .v2ov-sector-cell{
 .v2-acct-link{margin-top:9px;display:inline-block;background:none;border:none;padding:0;color:#2970ff;font-size:11.5px;font-weight:700;cursor:pointer}
 .v2-acct-link:hover{text-decoration:underline}
 .v2-acct-ft{padding:14px 22px 20px}
+.v2-acct-cookies{display:block;text-align:center;margin-top:10px;font-size:12px;color:#94a3b8;text-decoration:underline}
+.v2-acct-cookies:hover{color:#2970ff}
 .v2-acct-signout{width:100%;height:40px;border:1px solid #f0c8c8;border-radius:11px;background:#fff;color:#c2410c;font-size:13px;font-weight:700;cursor:pointer}
 .v2-acct-signout:hover{background:#fdecec}
 
@@ -7129,6 +7131,10 @@ document.addEventListener('keydown', function(e){
 
       <div class="v2-acct-ft">
         <button class="v2-acct-signout" onclick="authSignOut()">Sign out</button>
+        <!-- Consent must stay as easy to withdraw as it was to give (PECR).
+             Having this here also suppresses consent.js's floating pill, which
+             was overlapping the sidebar. -->
+        <a href="#" data-cc-open class="v2-acct-cookies">Cookie settings</a>
       </div>
     </div>
   </div>
@@ -17233,6 +17239,12 @@ function _acctRenderPlan(j){
     let sub = '';
     if (j.beta_pro){
       try { sub = ' · free until ' + new Date(j.valid_until).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); } catch(e){ sub = ' · free during beta'; }
+    } else if (j.comped){
+      // Allow-listed internal account: full Pro access with no subscription,
+      // so avoid offering a billing portal that has nothing to manage.
+      if (line) line.textContent = 'TickerMover Pro · team access';
+      if (btn){ btn.textContent = 'All features on'; btn.classList.remove('v2-acct-btn-pri'); btn.disabled = true; }
+      return;
     } else {
       try { if (j.valid_until) sub = ' · renews ' + new Date(j.valid_until).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); } catch(e){}
     }
