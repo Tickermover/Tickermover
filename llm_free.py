@@ -201,14 +201,15 @@ _GEMINI_FALLBACKS = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-2.0-flash-l
 
 
 async def _call_gemini(base: str, key: str, model: str, prompt: str,
-                       max_tokens: int, timeout: float) -> tuple[bool, str]:
+                       max_tokens: int, timeout: float,
+                       json_mode: bool = True) -> tuple[bool, str]:
     """Try the configured Gemini model, then cheaper tiers on quota errors.
     gemini-2.5-pro has a very small free allowance, so a single 429 there
     should not cost us the provider with the biggest context window."""
     tries = [model] + [m for m in _GEMINI_FALLBACKS if m != model]
     last = ""
     for i, m in enumerate(tries):
-        ok, body = await _call_gemini_once(base, key, m, prompt, max_tokens, timeout)
+        ok, body = await _call_gemini_once(base, key, m, prompt, max_tokens, timeout, json_mode)
         if ok:
             if i:
                 logger.info("llm_free: gemini fell back to %s", m)
@@ -220,12 +221,13 @@ async def _call_gemini(base: str, key: str, model: str, prompt: str,
 
 
 async def _call_gemini_once(base: str, key: str, model: str, prompt: str,
-                            max_tokens: int, timeout: float) -> tuple[bool, str]:
+                            max_tokens: int, timeout: float,
+                            json_mode: bool = True) -> tuple[bool, str]:
     url = f"{base}/{model}:generateContent"
     payload = {
         "contents": [{"parts": [{"text": prompt}]}],
-        "generationConfig": {"temperature": 0.1, "maxOutputTokens": max_tokens,
-                             "responseMimeType": "application/json"},
+        "generationConfig": dict({"temperature": 0.1, "maxOutputTokens": max_tokens},
+                                 **({"responseMimeType": "application/json"} if json_mode else {})),
     }
     async with httpx.AsyncClient(timeout=timeout) as c:
         r = await c.post(url, json=payload,
@@ -282,6 +284,9 @@ async def chat_json(prompt: str, *, max_tokens: int = 1500, timeout: float = 30.
 async def _call_text(name, url, key, model, prompt, max_tokens, timeout, cap):
     """Same providers, but plain-text output (no JSON response_format)."""
     if name == "gemini":
+        return await _call_gemini(url, key, model, prompt[:cap], max_tokens, timeout,
+                                  json_mode=False)
+    if False:
         u = f"{url}/{model}:generateContent"
         payload = {"contents": [{"parts": [{"text": prompt[:cap]}]}],
                    "generationConfig": {"temperature": 0.3, "maxOutputTokens": max_tokens}}
@@ -384,5 +389,43 @@ async def list_models(timeout: float = 15.0) -> list[dict]:
                 row["models"] = ids[:40]
         except Exception as exc:
             row["error"] = f"exception: {exc}"[:140]
+        out.append(row)
+    return out
+
+
+_CHAT_HINT = ("instruct", "chat", "gpt", "llama", "gemma", "qwen", "mistral",
+              "deepseek", "glm", "nemotron", "phi", "compound")
+_SKIP_HINT = ("whisper", "embed", "bge", "guard", "tts", "orpheus", "rerank",
+              "vision-ocr", "diffusion", "image", "safeguard")
+
+
+async def discover_working_models(max_try: int = 6, timeout: float = 20.0) -> list[dict]:
+    """For each configured provider, find a catalogue model that actually
+    answers. Free tiers differ per account (a model can exist but be 402
+    payment-required), so the only reliable way is to try them."""
+    out = []
+    cats = {c["provider"]: c for c in await list_models(timeout=timeout)}
+    for (name, envk, menv, dflt, url, cap) in _PROVIDERS:
+        key = _key(envk)
+        if not key:
+            continue
+        row = {"provider": name, "configured": _model_for(name, menv, dflt)}
+        cands = [row["configured"]]
+        for m in (cats.get(name, {}).get("models") or []):
+            ml = (m or "").lower()
+            if any(b in ml for b in _SKIP_HINT):
+                continue
+            if any(h in ml for h in _CHAT_HINT) and m not in cands:
+                cands.append(m)
+        row["tried"] = []
+        for m in cands[:max_try]:
+            try:
+                ok, body = await _call_text(name, url, key, m, "Reply: ok", 16, timeout, cap)
+            except Exception as exc:
+                ok, body = False, f"exception: {exc}"
+            row["tried"].append({"model": m, "ok": bool(ok), "msg": (body or "")[:90]})
+            if ok:
+                row["working"] = m
+                break
         out.append(row)
     return out
