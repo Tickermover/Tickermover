@@ -21635,6 +21635,21 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
       '.fchk-src{font-size:11px;color:#94a3b8;margin-top:10px;padding-top:8px;border-top:1px solid rgba(10,10,10,.06)}.fchk-src a{color:#2970ff}'+
       '.fchk-weak{color:#94a3b8}.fchk-load{color:#94a3b8;font-style:italic}'+
       '.fchk-note{font-size:11.5px;line-height:1.55;color:#94a3b8;margin-top:10px}'+
+      /* Thesis audit — area block, then its named checks. */
+      '.au-area{border-top:1px solid rgba(10,10,10,.07);padding:14px 0 12px}.au-area:first-child{border-top:none}'+
+      '.au-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:2px}'+
+      '.au-name{font-size:14.5px;font-weight:800;color:var(--ink,#0A0A0A);line-height:1.3}'+
+      '.au-v{flex:none;font-size:10.5px;font-weight:800;letter-spacing:.08em;padding:3px 9px;border-radius:999px;border:1px solid;white-space:nowrap}'+
+      '.au-pass .au-v,.au-pass .au-cv{color:#15803d;border-color:rgba(21,128,61,.35);background:rgba(21,128,61,.08)}'+
+      '.au-fail .au-v,.au-fail .au-cv{color:#b91c1c;border-color:rgba(185,28,28,.35);background:rgba(185,28,28,.07)}'+
+      '.au-mixed .au-v,.au-mixed .au-cv{color:#b45309;border-color:rgba(180,83,9,.35);background:rgba(180,83,9,.08)}'+
+      '.au-note{font-size:11.5px;color:#94a3b8;font-weight:600;margin-bottom:8px}'+
+      '.au-chk{display:flex;gap:9px;align-items:flex-start;padding:7px 0}'+
+      '.au-cv{flex:none;font-size:9.5px;font-weight:800;letter-spacing:.06em;padding:2px 7px;border-radius:5px;border:1px solid;margin-top:2px}'+
+      '.au-cn{font-weight:700;color:var(--ink,#0A0A0A)}'+
+      '.au-ct{font-size:13.5px;line-height:1.55;color:var(--ink,#1e293b)}'+
+      '.au-cite{font-size:10.5px;font-weight:700;color:#2970ff;text-decoration:none;vertical-align:super;margin-left:3px}'+
+      '.au-cite:hover{text-decoration:underline}'+
       '</style>';
     return style+
       _sec('Due-diligence scorecard','✅','green',
@@ -21643,10 +21658,13 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
           '<span class="ft-n">'+bad+' weak</span><span class="ft-u">'+na+' no data</span></div>'+
         '<div class="kpi-grid">'+tiles+'</div>'+
         (nextEarn?('<div class="kpi-foot">⚡ Next earnings <b>'+nextEarn+'</b> — when the thesis gets tested.</div>'):''))+
+      _sec('The audit','🔬','amber',
+        '<div id="fchkAudit"><div class="fchk-mrow"><span class="k">Working…</span>'+
+        '<span class="v fchk-load">Auditing the areas that decide this thesis.</span></div></div>')+
       _sec('The analyst questions','🧠','violet',
         '<div id="fchkDD"><div class="fchk-mrow"><span class="k">Working…</span>'+
         '<span class="v fchk-load">Reading the filing and recent coverage to answer the hard questions.</span></div></div>')+
-      '<p class="fchk-note">The scorecard is computed from the latest reported fundamentals — figures can lag or have gaps, and the thresholds are our own research conventions, not standards. The analyst questions are AI-generated from the filing and recent coverage and may be wrong — verify against the source. Research and opinion for information only — not advice, not a personal recommendation, not FCA-authorised. Capital at risk.</p>';
+      '<p class="fchk-note">The scorecard is computed from the latest reported fundamentals — figures can lag or have gaps, and the thresholds are our own research conventions, not standards. The audit and the analyst questions are AI-generated from the filing and recent coverage and may be wrong — a PASS is a reading of the cited evidence, not a verified fact and not a reason to buy; follow each citation to the source. Research and opinion for information only — not advice, not a personal recommendation, not FCA-authorised. Capital at risk.</p>';
   }
 
   /* Management tab — the earnings call in its own space. */
@@ -21664,6 +21682,42 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
         '<div id="fchkMgmt"><div class="fchk-mrow"><span class="k">Loading…</span>'+
         '<span class="v">Fetching the latest filing and earnings-call summary.</span></div></div>')+
       '<p class="fchk-note">AI-generated from the company\'s own filing and recent coverage — verify against the source before relying on it. Not advice, not FCA-authorised. Capital at risk.</p>';
+  }
+
+  /* Thesis audit (Fact Check tab) — 4 areas picked for this business, 2 cited
+     checks each. Its own endpoint/cache, so a slow or failed audit never holds
+     up the analyst questions below it (and vice versa). */
+  function _fchkLoadAudit(){
+    var host=document.getElementById('fchkAudit'); if(!host||host.getAttribute('data-loaded'))return;
+    var sym=(_drState&&_drState.full&&_drState.full.ticker)||''; if(!sym)return;
+    host.setAttribute('data-loaded','1');
+    var esc=escHTML, done=false;
+    setTimeout(function(){ if(!done) host.innerHTML='<div class="fchk-mrow"><span class="k">Still working</span><span class="v fchk-weak">Running the audit — reopen this tab in a moment.</span></div>'; }, 60000);
+    fetch('/api/thesis-audit/'+encodeURIComponent(sym)).then(function(r){return r.json();}).then(function(d){
+      done=true;
+      var areas=(d&&Array.isArray(d.audit))?d.audit:[];
+      if(!areas.length){ host.innerHTML='<div class="fchk-mrow"><span class="k">Not available</span><span class="v fchk-weak">No filing-based audit for '+esc(sym)+' yet.</span></div>'; return; }
+      var VC={pass:'au-pass',fail:'au-fail',mixed:'au-mixed'};
+      var VL={pass:'PASS',fail:'FAIL',mixed:'MIXED'};
+      host.innerHTML=areas.map(function(a){
+        var acls=VC[a.verdict]||'au-mixed';
+        var checks=(a.checks||[]).map(function(c){
+          var ccls=VC[c.verdict]||'au-mixed';
+          /* Footnotes are numbered per check, matching how the sources were
+             cited — the label is the page title, shown on hover. */
+          var cites=(c.sources||[]).map(function(s,i){
+            if(!s||!s.url) return '';
+            return '<a class="au-cite" href="'+esc(s.url)+'" target="_blank" rel="noopener nofollow" title="'+esc(s.label||s.url)+'">['+(i+1)+']</a>';
+          }).join('');
+          return '<div class="au-chk '+ccls+'"><span class="au-cv">'+(VL[c.verdict]||'MIXED')+'</span>'+
+                 '<span class="au-ct"><span class="au-cn">'+esc(c.name||'')+'.</span> '+esc(c.finding||'')+cites+'</span></div>';
+        }).join('');
+        return '<div class="au-area '+acls+'"><div class="au-head"><span class="au-name">'+esc(a.area||'')+
+               '</span><span class="au-v">'+(VL[a.verdict]||'MIXED')+'</span></div>'+
+               (a.verdict_note?'<div class="au-note">'+esc(a.verdict_note)+'</div>':'')+checks+'</div>';
+      }).join('')+'<div class="fchk-src">Audited from '+esc(d.source||'the filing')+
+        (d.web_grounded?' plus recent coverage':'')+' — AI-generated, verify each cited source before relying on it.</div>';
+    }).catch(function(){ done=true; host.innerHTML='<div class="fchk-mrow"><span class="k">Unavailable</span><span class="v fchk-weak">Could not load the audit.</span></div>'; });
   }
 
   /* Analyst questions (Fact Check tab) — the AI checkpoints. */
@@ -22771,7 +22825,9 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     if(name==='Overview') requestAnimationFrame(()=>tsDrawChartEl());
     if(name==='Documents') try{ _loadDocuments(); }catch(e){}
     if(name==='Insights') try{ _loadInsights(); }catch(e){}
-    if(name==='Fact Check') try{ _fchkLoadDD(); }catch(e){}
+    /* Separate try blocks: the audit and the analyst questions are independent
+       loads, so a throw in one must not skip the other. */
+    if(name==='Fact Check'){ try{ _fchkLoadAudit(); }catch(e){} try{ _fchkLoadDD(); }catch(e){} }
     if(name==='Financials') try{ _stmtInit(); }catch(e){}
     if(name==='Valuation') try{ _vhInit(); }catch(e){}
     if(name==='Estimates') try{ _estInit(); }catch(e){}

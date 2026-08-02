@@ -696,6 +696,203 @@ async def get_management_qa(ticker: str, force: bool = False,
     return out
 
 
+# ── Thesis audit ─────────────────────────────────────────────────────────
+# A structured pass/fail audit, designed for the business being audited rather
+# than run off a fixed template: the model first picks the four areas that
+# actually decide this company's thesis (a memory maker gets supply/capacity,
+# a bank gets credit quality), then runs two named checks inside each and cites
+# the source for every finding.
+_AUDIT_PROMPT = """You are a senior equity analyst running a structured
+due-diligence AUDIT on {ticker} ({company}), sector: {sector}.
+
+STEP 1 — pick exactly 4 audit areas that genuinely decide whether this
+company's thesis holds. Design them for THIS business; do not reuse a generic
+template. A memory maker is audited on supply/capacity and the pricing cycle,
+a bank on credit quality and reserve adequacy, a biotech on trial readouts and
+cash runway, a retailer on like-for-like sales and inventory, a software
+company on net retention and remaining performance obligation. The 4th area
+MUST cover valuation and market sentiment.
+
+STEP 2 — inside each area run exactly 2 named checks. For each check give:
+  - "name": the specific thing tested, 2-4 words ("HBM allocation",
+    "Customer concentration", "Reserve coverage").
+  - "verdict": "pass", "fail" or "mixed".
+  - "finding": 1-2 sentences of real analysis. Quote the number or phrase you
+    relied on. No filler, no restating the check name.
+  - "cites": the ids of the sources you used, e.g. ["F"] or ["W2","W5"].
+
+STEP 3 — give each area a "verdict" (pass / fail / mixed) and a
+"verdict_note" of at most 6 words qualifying it ("high geographic
+concentration", "cycle-dependent", "").
+
+Rules — follow exactly:
+- Ground EVERY finding in the REPORTED METRICS, the FILING or the WEB RESULTS
+  below, and quote that evidence.
+- Source ids: "F" is the company filing (also cite "F" for anything taken from
+  the reported metrics); "W1".."Wn" are the numbered web results. Cite only ids
+  that appear below. Never cite a source you did not use.
+- If the sources cannot settle a check, use "mixed" and say plainly what is
+  missing. NEVER invent a fact, a number, a contract or a counterparty.
+- Neutral and factual: no buy / sell / hold, no price targets, no
+  recommendation, no prediction of returns.
+
+Return ONLY a JSON object:
+{{"audit": [
+  {{"area": "<area name>", "verdict": "pass", "verdict_note": "<=6 words",
+    "checks": [
+      {{"name": "<check name>", "verdict": "pass",
+        "finding": "<1-2 sentences with quoted evidence>", "cites": ["F"]}}
+    ]}}
+]}}
+
+=== REPORTED METRICS ===
+{metrics}
+
+=== [F] COMPANY FILING ({source_label}, {quarter}) ===
+{text}
+
+=== WEB RESULTS ===
+{web}
+"""
+
+_AUDIT_VERDICTS = ("pass", "fail", "mixed")
+
+
+def _audit_sources(cites, srcmap: dict) -> list:
+    """Resolve the model's source ids into renderable links, dropping any id it
+    invented. Order is preserved and duplicates collapsed so a check that cites
+    the same page twice renders one footnote."""
+    out, seen = [], set()
+    for cid in (cites or []):
+        key = str(cid or "").strip().upper()
+        src = srcmap.get(key)
+        if not src or key in seen:
+            continue
+        seen.add(key)
+        out.append(src)
+    return out[:6]
+
+
+async def audit_thesis(ticker: str, text: str, metrics: str = "",
+                       quarter: str = "", source_label: str = "filing",
+                       web: str = "", srcmap: dict | None = None,
+                       company: str = "", sector: str = "") -> list | None:
+    """Run the structured audit. Returns a list of areas, each with its own
+    verdict and 2 cited checks, or None when every provider fails."""
+    import llm_free
+    prompt = _AUDIT_PROMPT.format(
+        ticker=ticker, company=company or ticker, sector=sector or "unknown",
+        quarter=quarter or "latest", source_label=source_label,
+        metrics=metrics or "(no metric summary supplied)",
+        text=(text or ""), web=(web or "(no web results available)"),
+    )
+    parsed = await llm_free.chat_json(prompt, max_tokens=2600, timeout=90.0,
+                                      prefer="gemini")
+    if not isinstance(parsed, dict):
+        errs = getattr(llm_free, "LAST_ERRORS", [])
+        _note_error((errs[0]["provider"] if errs else "llm_free"),
+                    (errs[0]["detail"] if errs else "no provider returned JSON"), ticker)
+        return None
+    srcmap = srcmap or {}
+    areas = []
+    for item in (parsed.get("audit") or []):
+        if not isinstance(item, dict):
+            continue
+        area = str(item.get("area") or "").strip()
+        if not area:
+            continue
+        checks = []
+        for c in (item.get("checks") or []):
+            if not isinstance(c, dict):
+                continue
+            name = str(c.get("name") or "").strip()
+            finding = str(c.get("finding") or "").strip()
+            if not name or not finding:
+                continue
+            cv = str(c.get("verdict") or "").strip().lower()
+            checks.append({
+                "name": name[:70],
+                "verdict": cv if cv in _AUDIT_VERDICTS else "mixed",
+                "finding": finding[:700],
+                "sources": _audit_sources(c.get("cites"), srcmap),
+            })
+        if not checks:
+            continue
+        av = str(item.get("verdict") or "").strip().lower()
+        if av not in _AUDIT_VERDICTS:
+            # Derive the area verdict from its checks rather than defaulting to
+            # a flat "mixed" — a model that omits the field still gets an
+            # honest roll-up: any fail -> fail, all pass -> pass.
+            vs = {c["verdict"] for c in checks}
+            av = "fail" if "fail" in vs else ("pass" if vs == {"pass"} else "mixed")
+        areas.append({"area": area[:80], "verdict": av,
+                      "verdict_note": str(item.get("verdict_note") or "").strip()[:60],
+                      "checks": checks[:3]})
+    return areas[:5] or None
+
+
+async def get_thesis_audit(ticker: str, force: bool = False, metrics: str = "",
+                           company: str = "", sector: str = "") -> dict:
+    """Cached thesis audit for a ticker, from the company's own latest filing
+    plus recent web coverage. Kept in its OWN cache row and behind its own
+    endpoint rather than folded into get_management_qa: it is a third LLM call,
+    and bundling it would add its latency to every Q&A load and let one
+    failure take the other down. Degrades to {available: false, reason}."""
+    sym = ticker.upper()
+    try:
+        import kv_store
+        cache = kv_store.store
+    except Exception:
+        cache = None
+    if cache and not force:
+        hit = cache.get("thesis_audit", sym, max_age_s=_CACHE_TTL_DAYS * 86400)
+        if hit and hit.get("audit"):
+            return hit
+    edgar = await _fetch_edgar_recent(sym)
+    if not edgar or not edgar.get("text"):
+        return {"available": False, "reason": "no_source", "ticker": sym, "audit": []}
+
+    # Web grounding + the citation map. The map is built from the SAME slice
+    # as_context renders, and with the same 1-based index, so "W3" in the
+    # model's answer resolves to the page it actually read.
+    web_ctx, srcmap = "", {"F": {"label": edgar.get("source_label") or "Company filing",
+                                 "url": edgar.get("source_url") or ""}}
+    try:
+        import web_search
+        if web_search.available():
+            hits = []
+            for q in (f"{sym} stock supply chain capacity customers demand risks",
+                      f"{sym} stock valuation short interest bear case analyst view"):
+                hits += await web_search.search(q, count=5)
+            web_ctx = web_search.as_context(hits, limit=10)
+            for i, r in enumerate(hits[:10], 1):
+                srcmap[f"W{i}"] = {"label": (r.get("title") or r.get("url") or "")[:90],
+                                   "url": r.get("url") or ""}
+    except Exception as exc:
+        logger.warning(f"event_intel: audit web grounding {sym} failed: {exc}")
+
+    areas = await audit_thesis(sym, edgar["text"], metrics=metrics,
+                               quarter=edgar.get("event_date", ""),
+                               source_label=edgar.get("source_label", "filing"),
+                               web=web_ctx, srcmap=srcmap,
+                               company=company, sector=sector)
+    if not areas:
+        return {"available": False, "reason": "summarizer_failed", "ticker": sym,
+                "audit": [], "last_error": LAST_ERROR or None}
+    out = {"available": True, "ticker": sym, "audit": areas,
+           "web_grounded": bool(web_ctx),
+           "source": f"sec_edgar:{edgar.get('source_label','')}",
+           "source_url": edgar.get("source_url"),
+           "event_date": edgar.get("event_date"),
+           "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds")}
+    if cache:
+        try:
+            cache.set("thesis_audit", sym, out)
+        except Exception:
+            pass
+    return out
+
+
 async def probe_groq() -> dict:
     """Make a tiny real Groq call and report exactly what comes back.
     Used to tell 'key missing' from 'model rejected' from 'call succeeded'

@@ -889,13 +889,21 @@ async def _mgmt_qa_prewarm() -> None:
             by_t = {(x.get("ticker") or "").upper(): x for x in (_universe_data or [])}
             done = 0
             for sym in syms[:12]:
+                row = by_t.get(sym)
                 try:
-                    res = await _ei.get_management_qa(sym, metrics=_metrics_blurb(by_t.get(sym)))
+                    res = await _ei.get_management_qa(sym, metrics=_metrics_blurb(row))
                     if res.get("available"):
                         done += 1
                 except Exception as exc:
                     logger.warning(f"mgmt-qa pre-warm {sym}: {exc}")
                 await asyncio.sleep(30)     # be gentle on EDGAR, the free LLM tiers and our own event loop
+                try:
+                    await _ei.get_thesis_audit(sym, metrics=_metrics_blurb(row),
+                                               company=((row or {}).get("name") or ""),
+                                               sector=((row or {}).get("sector") or ""))
+                except Exception as exc:
+                    logger.warning(f"thesis-audit pre-warm {sym}: {exc}")
+                await asyncio.sleep(30)
             if syms:
                 logger.info("🔎 Fact Check pre-warm: %d/%d ready", done, len(syms[:40]))
         except Exception as exc:
@@ -5766,6 +5774,29 @@ async def api_mgmt_qa(symbol: str, refresh: int = 0):
         return JSONResponse({"available": False, "reason": "error", "ticker": sym, "answers": []})
     # Short cache: a 30-min CDN cache made corrected answers invisible for
     # half an hour after a fix landed.
+    return JSONResponse(_clean(data), headers={"Cache-Control": "public, max-age=120"})
+
+
+@app.get("/api/thesis-audit/{symbol}")
+async def api_thesis_audit(symbol: str, refresh: int = 0):
+    """Structured pass/fail thesis audit — 4 areas chosen for THIS business,
+    2 cited checks each, from the company's own latest filing plus recent web
+    coverage. Free provider chain, cached 14d. Always 200 —
+    {available: false, reason} when unavailable."""
+    import event_intel as _ei_mod
+    sym = symbol.upper().strip()
+    if not sym or len(sym) > 8:
+        raise HTTPException(status_code=400, detail="Bad ticker")
+    try:
+        row = next((x for x in (_universe_data or [])
+                    if (x.get("ticker") or "").upper() == sym), None)
+        data = await _ei_mod.get_thesis_audit(
+            sym, force=bool(refresh), metrics=_metrics_blurb(row),
+            company=((row or {}).get("name") or ""),
+            sector=((row or {}).get("sector") or ""))
+    except Exception as exc:
+        logger.error(f"thesis-audit {sym}: {exc}", exc_info=True)
+        return JSONResponse({"available": False, "reason": "error", "ticker": sym, "audit": []})
     return JSONResponse(_clean(data), headers={"Cache-Control": "public, max-age=120"})
 
 

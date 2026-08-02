@@ -188,6 +188,22 @@ def render_card(t: dict, universe) -> str:
 .fchk-note{{font-size:12px;line-height:1.6;color:#94a3b8;margin:16px 0 0;border-top:1px solid rgba(10,10,10,.06);padding-top:12px}}
 .fchk-cat{{background:#f8fafc;border:1px solid rgba(10,10,10,.08);border-radius:10px;padding:12px 14px;margin-top:14px;font-size:13.5px;color:#334155}}
 .fchk-cat b{{color:#0A0A0A}}
+/* Thesis audit — four areas chosen for this business, two cited checks each. */
+.fca-area{{border-top:1px solid rgba(10,10,10,.07);padding:15px 0 13px}}
+.fca-area:first-child{{border-top:none}}
+.fca-head{{display:flex;justify-content:space-between;align-items:baseline;gap:12px}}
+.fca-name{{font-size:15px;font-weight:800;color:#0A0A0A;line-height:1.3}}
+.fca-v{{flex:none;font-family:'Manrope','Inter',sans-serif;font-size:10.5px;font-weight:800;letter-spacing:.08em;padding:3px 10px;border-radius:999px;border:1px solid;white-space:nowrap}}
+.fca-pass .fca-v,.fca-pass .fca-cv{{color:#15803d;border-color:rgba(21,128,61,.35);background:rgba(21,128,61,.08)}}
+.fca-fail .fca-v,.fca-fail .fca-cv{{color:#b91c1c;border-color:rgba(185,28,28,.35);background:rgba(185,28,28,.07)}}
+.fca-mixed .fca-v,.fca-mixed .fca-cv{{color:#b45309;border-color:rgba(180,83,9,.35);background:rgba(180,83,9,.08)}}
+.fca-note{{font-size:12px;color:#94a3b8;font-weight:600;margin-top:3px}}
+.fca-chk{{display:flex;gap:10px;align-items:flex-start;padding:8px 0}}
+.fca-cv{{flex:none;font-family:'Manrope','Inter',sans-serif;font-size:9.5px;font-weight:800;letter-spacing:.06em;padding:2px 7px;border-radius:5px;border:1px solid;margin-top:3px}}
+.fca-ct{{font-size:14px;line-height:1.6;color:#1e293b}}
+.fca-cn{{font-weight:700;color:#0A0A0A}}
+.fca-cite{{font-size:11px;font-weight:700;color:#2970ff;text-decoration:none;vertical-align:super;margin-left:3px}}
+.fca-cite:hover{{text-decoration:underline}}
 @media(max-width:560px){{.fchk-mgmt-row{{grid-template-columns:1fr}}}}
 </style>
 <section class="fchk" id="fchk" data-sym="{sym}">
@@ -199,17 +215,51 @@ def render_card(t: dict, universe) -> str:
   <ul class="fchk-list">{checklist_html}</ul>
   <div class="fchk-sub">Your own checks</div>
   <ul class="fchk-list">{self_html}</ul>
+  <div class="fchk-sub">The audit · what has to hold for this thesis</div>
+  <div id="fchk-audit"><div class="fchk-mgmt-row"><span class="k">Working…</span><span class="v">Auditing the areas that decide this thesis.</span></div></div>
   <div class="fchk-sub">What management said · latest earnings call</div>
   <div id="fchk-mgmt"><div class="fchk-mgmt-row"><span class="k">Loading…</span><span class="v">Fetching the latest earnings-call summary.</span></div></div>
   <div class="fchk-cat"><b>Key catalyst.</b> {catalyst}</div>
-  <p class="fchk-note">Data checks are computed from the latest reported fundamentals and can lag or contain gaps. The management summary is AI-generated from the earnings-call transcript and may be incomplete or wrong — verify against the company's filing. This card is research and opinion for information only — not investment advice, not a personal recommendation, and not FCA-authorised. Capital at risk.</p>
+  <p class="fchk-note">Data checks are computed from the latest reported fundamentals and can lag or contain gaps. The audit and the management summary are AI-generated from the company's filing and recent coverage and may be incomplete or wrong — a PASS is a reading of the cited evidence, not a verified fact and not a reason to buy; follow each citation to the source. This card is research and opinion for information only — not investment advice, not a personal recommendation, and not FCA-authorised. Capital at risk.</p>
 </section>
 <script>
 (function(){{
   var sym=document.getElementById('fchk').getAttribute('data-sym');
   var box=document.getElementById('fchk-mgmt');
   if(!sym||!box)return;
-  function esc(s){{return String(s==null?'':s).replace(/[&<>]/g,function(c){{return{{'&':'&amp;','<':'&lt;','>':'&gt;'}}[c];}});}}
+  function esc(s){{return String(s==null?'':s).replace(/[&<>"]/g,function(c){{return{{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}}[c];}});}}
+
+  /* Thesis audit — its own endpoint and cache, loaded independently so a slow
+     or failed audit never blocks the management summary below it. */
+  (function(){{
+    var abox=document.getElementById('fchk-audit');
+    if(!abox)return;
+    var VC={{pass:'fca-pass',fail:'fca-fail',mixed:'fca-mixed'}};
+    var VL={{pass:'PASS',fail:'FAIL',mixed:'MIXED'}};
+    fetch('/api/thesis-audit/'+encodeURIComponent(sym)).then(function(r){{return r.json();}}).then(function(d){{
+      var areas=(d&&Array.isArray(d.audit))?d.audit:[];
+      if(!areas.length){{
+        abox.innerHTML='<div class="fchk-mgmt-row"><span class="k">Not available yet</span><span class="v">We don\\'t have an audit for '+esc(sym)+' right now.</span></div>';
+        return;
+      }}
+      abox.innerHTML=areas.map(function(a){{
+        var checks=(a.checks||[]).map(function(c){{
+          /* Footnotes are numbered per check, matching how they were cited. */
+          var cites=(c.sources||[]).map(function(s,i){{
+            if(!s||!s.url)return '';
+            return '<a class="fca-cite" href="'+esc(s.url)+'" target="_blank" rel="noopener nofollow" title="'+esc(s.label||s.url)+'">['+(i+1)+']</a>';
+          }}).join('');
+          return '<div class="fca-chk '+(VC[c.verdict]||'fca-mixed')+'"><span class="fca-cv">'+(VL[c.verdict]||'MIXED')+
+                 '</span><span class="fca-ct"><span class="fca-cn">'+esc(c.name||'')+'.</span> '+esc(c.finding||'')+cites+'</span></div>';
+        }}).join('');
+        return '<div class="fca-area '+(VC[a.verdict]||'fca-mixed')+'"><div class="fca-head"><span class="fca-name">'+
+               esc(a.area||'')+'</span><span class="fca-v">'+(VL[a.verdict]||'MIXED')+'</span></div>'+
+               (a.verdict_note?'<div class="fca-note">'+esc(a.verdict_note)+'</div>':'')+checks+'</div>';
+      }}).join('');
+    }}).catch(function(){{
+      abox.innerHTML='<div class="fchk-mgmt-row"><span class="k">Unavailable</span><span class="v">Could not load the audit.</span></div>';
+    }});
+  }})();
   function row(k,items){{
     if(!items||!items.length)return '';
     var v=items.slice(0,3).map(esc).join(' ');
