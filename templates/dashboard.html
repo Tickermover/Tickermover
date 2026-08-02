@@ -21684,13 +21684,14 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
       _sec('The audit','🔬','amber',
         '<div id="fchkAudit"><div class="fchk-mrow"><span class="k">Working…</span>'+
         '<span class="v fchk-load">Auditing the areas that decide this thesis.</span></div></div>')+
-      /* Collapsed by default. The audit above answers several of these in a
-         tighter, cited form, so the tab reads numbers -> verdicts -> optional
-         depth instead of 16 AI blocks stacked on one screen. Nothing is
-         dropped, and it still loads on tab open so expanding is instant. */
+      /* OPEN by default (user's call) — the answers are the point of the
+         section, so they should be readable without a click. The <details>
+         wrapper stays so anyone who finds the tab long can fold it away; the
+         summary label is state-neutral because there is no script to reword it
+         (panes are innerHTML, inline <script> never runs). */
       _sec('The analyst questions','🧠','violet',
-        '<details class="fchk-more">'+
-        '<summary>Show the long-form analysis <span class="fchk-more-n">8 questions</span></summary>'+
+        '<details class="fchk-more" open>'+
+        '<summary>Long-form analysis <span class="fchk-more-n">8 questions</span></summary>'+
         '<div id="fchkDD"><div class="fchk-mrow"><span class="k">Working…</span>'+
         '<span class="v fchk-load">Reading the filing and recent coverage to answer the hard questions.</span></div></div>'+
         '</details>')+
