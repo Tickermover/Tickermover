@@ -458,35 +458,47 @@ _QA_QUESTIONS = [
     "Are they confident, or just optimistic?",
 ]
 
-_QA_PROMPT = """You are an equity analyst reading a company's own filing or earnings call.
-Answer ONLY from the source text below. This is for {ticker} ({source_label}, {quarter}).
+_QA_PROMPT = """You are an equity analyst answering questions about {ticker}.
+
+You have TWO sources:
+  (A) THE COMPANY FILING ({source_label}, {quarter}) — primary, most reliable.
+  (B) RECENT WEB RESULTS — secondary. Use ONLY for what the filing omits
+      (management commentary on the call, analyst reaction, order-book or
+      demand colour, concerns raised since the filing).
 
 Rules — follow exactly:
-- Ground every answer in the source. Quote a number or a short phrase from it as evidence.
-- If the source does not address a question, set "answered": false and say
-  "The filing does not address this." Do NOT use outside knowledge, do NOT speculate.
+- Prefer the filing. Fall back to the web results only when the filing is silent.
+- Quote a number or a short phrase as evidence in every answer.
+- Set "source" to "filing" or "web" depending on where the evidence came from.
+- Only if NEITHER source addresses a question, set "answered": false and say
+  "Neither the filing nor recent coverage addresses this." Never speculate and
+  never rely on your own background knowledge of the company.
 - Lead with a direct verdict word (Yes / No / Partly / Unclear), then one or two
   sentences of specifics.
-- Be neutral and factual. Do NOT tell the reader to buy, sell or hold, and do not
-  give investment advice or price predictions.
+- Be neutral and factual. Do NOT tell the reader to buy, sell or hold, do not
+  give investment advice, and do not predict prices.
 
 Return ONLY a JSON object:
 {{
   "answers": [
-    {{"q": "<the question, copied verbatim>", "answered": true, "a": "<2 sentences max, with evidence>"}}
+    {{"q": "<the question, copied verbatim>", "answered": true,
+      "source": "filing", "a": "<2 sentences max, with evidence>"}}
   ]
 }}
 
 Questions, in order:
 {questions}
 
-Source text:
+=== (A) COMPANY FILING ===
 {text}
+
+=== (B) RECENT WEB RESULTS ===
+{web}
 """
 
 
 async def answer_questions(ticker: str, text: str, quarter: str = "",
-                           source_label: str = "filing") -> list | None:
+                           source_label: str = "filing", web: str = "") -> list | None:
     """Answer the fixed analyst question set from source text using the FREE
     provider chain (Groq / Gemini / Cerebras / OpenRouter — see llm_free).
     Gemini is preferred when configured: its ~1M-token context reads a whole
@@ -497,6 +509,7 @@ async def answer_questions(ticker: str, text: str, quarter: str = "",
         ticker=ticker, quarter=quarter or "latest", source_label=source_label,
         questions=chr(10).join(f"{i+1}. {q}" for i, q in enumerate(_QA_QUESTIONS)),
         text=(text or ""),
+        web=(web or "(no web results available)"),
     )
     parsed = await llm_free.chat_json(prompt, max_tokens=1600, timeout=45.0,
                                       prefer="gemini")
@@ -513,7 +526,9 @@ async def answer_questions(ticker: str, text: str, quarter: str = "",
         a = str(item.get("a") or "").strip()
         if not q:
             continue
+        src = str(item.get("source") or "").strip().lower()
         out.append({"q": q[:200], "a": a[:600],
+                    "source": src if src in ("filing", "web") else "filing",
                     "answered": bool(item.get("answered")) and bool(a)})
     return out or None
 
@@ -536,14 +551,31 @@ async def get_management_qa(ticker: str, force: bool = False) -> dict:
     if not edgar or not edgar.get("text"):
         return {"available": False, "reason": "no_source",
                 "ticker": sym, "answers": []}
+    # Web grounding: fills the gaps a filing structurally cannot cover — the
+    # earnings-call Q&A, analyst reaction, demand/order-book colour. Free via
+    # Serper/Brave. Absent keys or failures just mean filing-only answers.
+    web_ctx = ""
+    try:
+        import web_search
+        if web_search.available():
+            hits = []
+            for q in (f"{sym} stock latest earnings call management commentary demand guidance",
+                      f"{sym} stock analyst reaction risks concerns outlook"):
+                hits += await web_search.search(q, count=5)
+            web_ctx = web_search.as_context(hits, limit=10)
+    except Exception as exc:
+        logger.warning(f"event_intel: web grounding {sym} failed: {exc}")
+
     answers = await answer_questions(sym, edgar["text"],
                                      quarter=edgar.get("event_date", ""),
-                                     source_label=edgar.get("source_label", "filing"))
+                                     source_label=edgar.get("source_label", "filing"),
+                                     web=web_ctx)
     if not answers:
         return {"available": False, "reason": "summarizer_failed",
                 "ticker": sym, "answers": [],
                 "last_error": LAST_ERROR or None}
     out = {"available": True, "ticker": sym, "answers": answers,
+           "web_grounded": bool(web_ctx),
            "source": f"sec_edgar:{edgar.get('source_label','')}",
            "source_url": edgar.get("source_url"),
            "event_date": edgar.get("event_date"),
@@ -817,6 +849,23 @@ def _is_stale(row: dict) -> bool:
 _CONTENT_FIELDS = ("sections", "key_updates", "operations", "outlook", "risks")
 
 
+def _good_source(row: dict | None) -> bool:
+    """False for rows summarised from a filing that cannot answer analyst
+    questions — e.g. a plain 8-K that turned out to be a CEO compensation
+    award or an annual-meeting notice. Those were cached before the source
+    picker was fixed; treating them as a miss lets them be rebuilt from the
+    earnings 8-K + 10-Q instead of being served forever."""
+    if not row:
+        return False
+    src = (row.get("source") or "").lower()
+    if "earnings" in src or "10-q" in src or "10-k" in src or "transcript" in src:
+        return True
+    title = (row.get("event_title") or "").lower()
+    junk = ("performance award", "compensation", "annual meeting", "stockholders",
+            "appointment", "resignation", "director", "bylaw", "equity incentive")
+    return not any(j in title for j in junk)
+
+
 def _has_content(row: dict | None) -> bool:
     """True when a cached row actually carries summary content. Rows saved
     after a failed summarization have every list field null/empty and must
@@ -838,7 +887,7 @@ async def get_event_summary(ticker: str, force_refresh: bool = False) -> dict | 
         # (e.g. cached while the Anthropic balance was exhausted), not a
         # usable answer. Treat it as a miss so we retry — otherwise the empty
         # row is served forever and the provider fallback never runs.
-        if cached and not _is_stale(cached) and _has_content(cached):
+        if cached and not _is_stale(cached) and _has_content(cached)                 and _good_source(cached):
             return cached
 
     # ── Primary source: SEC EDGAR (free, unlimited) ───────────────────

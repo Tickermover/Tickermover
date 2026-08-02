@@ -21544,6 +21544,8 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
       '.fchk-mrow:first-child{border-top:none}.fchk-mrow .k{color:#64748b;font-weight:600}.fchk-mrow .v{color:#1e293b;line-height:1.5}'+
       '.fchk-bul{margin:0;padding-left:16px}.fchk-bul li{margin-bottom:4px}'+
       '.fchk-weak{color:#94a3b8}'+
+      '.fchk-badge{display:inline-block;font-size:9.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:2px 6px;border-radius:5px;margin-left:4px;vertical-align:middle}'+
+      '.fchk-fil{background:rgba(21,128,61,.1);color:#15803d}.fchk-web{background:rgba(41,112,255,.1);color:#2970ff}'+
       '.fchk-src{font-size:11px;color:#94a3b8;margin-top:8px;padding-top:8px;border-top:1px solid rgba(10,10,10,.06)}.fchk-src a{color:#2970ff}'+
       '.fchk-sub2{font-size:10.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#94a3b8;margin:14px 0 2px;padding-top:10px;border-top:1px solid rgba(10,10,10,.07)}'+
       '.fchk-note{font-size:11.5px;line-height:1.55;color:#94a3b8;margin-top:10px}'+
@@ -21626,8 +21628,9 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
       if(!q||!q.available||!Array.isArray(q.answers)||!q.answers.length)return;   // keep interim
       var html=q.answers.map(function(x){
         var weak=!x.answered;
-        var a=weak? '<span class="fchk-weak">The filing does not address this.</span>' : esc(x.a||'');
-        return '<div class="fchk-mrow"><span class="k">'+esc(x.q||'')+'</span><span class="v">'+a+'</span></div>';
+        var a=weak? '<span class="fchk-weak">Neither the filing nor recent coverage addresses this.</span>' : esc(x.a||'');
+        var badge=(!weak&&x.source)?('<span class="fchk-badge fchk-'+(x.source==='web'?'web':'fil')+'">'+(x.source==='web'?'web':'filing')+'</span>'):'';
+        return '<div class="fchk-mrow"><span class="k">'+esc(x.q||'')+'</span><span class="v">'+a+' '+badge+'</span></div>';
       }).join('');
       if(q.source_url) html+='<div class="fchk-src">Answered from the company’s own '+esc((q.source||'filing').replace('sec_edgar:',''))+
         (q.event_date?(' dated '+esc(q.event_date)):'')+' · <a href="'+esc(q.source_url)+'" target="_blank" rel="noopener">read the source ↗</a> · AI-extracted, verify before relying on it</div>';

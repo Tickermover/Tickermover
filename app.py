@@ -5669,7 +5669,9 @@ async def api_mgmt_qa(symbol: str, refresh: int = 0):
     except Exception as exc:
         logger.error(f"mgmt-qa {sym}: {exc}", exc_info=True)
         return JSONResponse({"available": False, "reason": "error", "ticker": sym, "answers": []})
-    return JSONResponse(_clean(data), headers={"Cache-Control": "public, max-age=1800"})
+    # Short cache: a 30-min CDN cache made corrected answers invisible for
+    # half an hour after a fix landed.
+    return JSONResponse(_clean(data), headers={"Cache-Control": "public, max-age=120"})
 
 
 @app.get("/api/event-intel-status")
@@ -5684,6 +5686,9 @@ async def api_event_intel_status(probe: str = ""):
     try:
         import llm_free as _lf
         out["free_providers"] = _lf.status()
+        import web_search as _ws
+        out["web_search"] = {"available": _ws.available(),
+                             "last_error": _ws.LAST_ERROR or None}
     except Exception:
         pass
     if probe == "groq":
