@@ -1,23 +1,33 @@
 """llm_free.py — free-tier LLM chain (no Anthropic cost).
 
-One helper, `chat_json()`, that tries each configured FREE provider in order
-and returns the first parsed JSON object. Built so the site's AI features keep
-working without an Anthropic balance.
+`chat_json()` / `chat_text()` try each configured FREE provider in order and
+return the first good answer, so every AI feature keeps working on £0 spend.
 
-Provider order (first configured wins, then falls through on failure):
-  1. GROQ_API_KEY    — console.groq.com. Fast, generous free tier.
-                       Default model: llama-3.3-70b-versatile (~24k char input).
-  2. GEMINI_API_KEY  — aistudio.google.com. Free tier, ~1M token context, so it
-                       can read a whole 10-K without truncation. Best for long
-                       filings. Default model: gemini-2.0-flash.
-  3. CEREBRAS_API_KEY— cloud.cerebras.ai. Free tier, very fast Llama models.
-  4. OPENROUTER_API_KEY — openrouter.ai. Routes to assorted free models.
+Provider order is QUALITY FIRST (first configured wins, falls through on
+failure or rate limit). Set any subset — the chain adapts automatically:
 
-All are OpenAI-compatible chat endpoints except Gemini, which has its own
-REST shape — handled below.
+  1. GEMINI_API_KEY      aistudio.google.com   ~1M-token context. Best quality
+                         and the only one that reads a whole 10-K uncut.
+                         Upgrade with GEMINI_MODEL=gemini-2.5-pro.
+  2. NVIDIA_API_KEY      build.nvidia.com      NVIDIA NIM, OpenAI-compatible.
+                         Free credits, large open models. Try
+                         NVIDIA_MODEL=deepseek-ai/deepseek-r1 or
+                         nvidia/llama-3.1-nemotron-70b-instruct for reasoning.
+  3. GROQ_API_KEY        console.groq.com      Fastest; small context; the
+                         free tier hits token 429s under load.
+  4. CEREBRAS_API_KEY    cloud.cerebras.ai     Very fast, generous daily tokens.
+  5. MISTRAL_API_KEY     console.mistral.ai    Free tier, strong European model.
+  6. GITHUB_MODELS_TOKEN github.com/marketplace/models  Free with a GitHub
+                         account; reaches GPT-4o class models.
+  7. TOGETHER_API_KEY    api.together.xyz      Free Llama endpoints.
+  8. OPENROUTER_API_KEY  openrouter.ai         Free model pool; good backstop.
 
-Every provider failure is recorded in LAST_ERRORS so /api/event-intel-status
-can show why a call fell through instead of failing silently.
+Key lookup is forgiving: aliases (GOOGLE_API_KEY for Gemini) AND loose names
+("Gemini API Key" with spaces) both resolve — see `_key`/`_norm`.
+
+All providers are OpenAI-compatible except Gemini, which has its own REST
+shape. Failures are recorded in LAST_ERRORS and surfaced by
+/api/event-intel-status so a broken provider is visible, never silent.
 """
 from __future__ import annotations
 
@@ -48,6 +58,10 @@ _ALIASES = {
     "GROQ_API_KEY":       ["GROQ_API_KEY", "GROQ_KEY"],
     "CEREBRAS_API_KEY":   ["CEREBRAS_API_KEY", "CEREBRAS_KEY"],
     "OPENROUTER_API_KEY": ["OPENROUTER_API_KEY", "OPENROUTER_KEY", "OPEN_ROUTER_API_KEY"],
+    "NVIDIA_API_KEY":     ["NVIDIA_API_KEY", "NVIDIA_NIM_API_KEY", "NIM_API_KEY", "NVIDIA_KEY"],
+    "MISTRAL_API_KEY":    ["MISTRAL_API_KEY", "MISTRAL_KEY"],
+    "GITHUB_MODELS_TOKEN": ["GITHUB_MODELS_TOKEN", "GITHUB_MODELS_KEY", "GH_MODELS_TOKEN"],
+    "TOGETHER_API_KEY":   ["TOGETHER_API_KEY", "TOGETHERAI_API_KEY", "TOGETHER_KEY"],
 }
 
 
@@ -73,13 +87,25 @@ def _key(name: str) -> str:
 
 
 # (name, env key, model env, default model, endpoint, max input chars)
+# ORDER = quality first. Gemini leads: biggest context and the closest
+# free-tier answer quality to Claude. NVIDIA NIM follows (large open models,
+# free credits), then the fast small-context providers, then backstops.
 _PROVIDERS = [
-    ("groq", "GROQ_API_KEY", "GROQ_MODEL", "llama-3.3-70b-versatile",
-     "https://api.groq.com/openai/v1/chat/completions", 24000),
     ("gemini", "GEMINI_API_KEY", "GEMINI_MODEL", "gemini-2.0-flash",
      "https://generativelanguage.googleapis.com/v1beta/models", 700000),
+    ("nvidia", "NVIDIA_API_KEY", "NVIDIA_MODEL", "meta/llama-3.3-70b-instruct",
+     "https://integrate.api.nvidia.com/v1/chat/completions", 60000),
+    ("groq", "GROQ_API_KEY", "GROQ_MODEL", "llama-3.3-70b-versatile",
+     "https://api.groq.com/openai/v1/chat/completions", 24000),
     ("cerebras", "CEREBRAS_API_KEY", "CEREBRAS_MODEL", "llama-3.3-70b",
      "https://api.cerebras.ai/v1/chat/completions", 20000),
+    ("mistral", "MISTRAL_API_KEY", "MISTRAL_MODEL", "mistral-large-latest",
+     "https://api.mistral.ai/v1/chat/completions", 100000),
+    ("github", "GITHUB_MODELS_TOKEN", "GITHUB_MODEL", "openai/gpt-4o",
+     "https://models.github.ai/inference/chat/completions", 100000),
+    ("together", "TOGETHER_API_KEY", "TOGETHER_MODEL",
+     "meta-llama/Llama-3.3-70B-Instruct-Turbo-Free",
+     "https://api.together.xyz/v1/chat/completions", 100000),
     ("openrouter", "OPENROUTER_API_KEY", "OPENROUTER_MODEL",
      "meta-llama/llama-3.3-70b-instruct:free",
      "https://openrouter.ai/api/v1/chat/completions", 24000),
