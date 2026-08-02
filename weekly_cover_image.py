@@ -27,6 +27,8 @@ from __future__ import annotations
 import logging
 import os
 
+import zlib
+
 import httpx
 
 logger = logging.getLogger(__name__)
@@ -161,7 +163,22 @@ def _looks_like_person(text: str) -> bool:
     return any(w in t for w in _NEGATIVE)
 
 
-async def _from_unsplash(query: str) -> dict | None:
+def _pick(candidates: list, seed: str):
+    """Choose one candidate, varying by seed but STABLE for a given seed.
+
+    Taking candidates[0] meant an identical query always produced an identical
+    photo — and since the scene map sends every technology subject to the same
+    query, four of the five published issues carried the same data-centre shot
+    and the shelf read as one article repeated. Seeding on the issue's week
+    spreads them out while keeping a re-fetch of the same issue idempotent."""
+    if not candidates:
+        return None
+    if not seed:
+        return candidates[0]
+    return candidates[zlib.crc32(str(seed).encode("utf-8")) % len(candidates)]
+
+
+async def _from_unsplash(query: str, seed: str = "") -> dict | None:
     url = "https://api.unsplash.com/search/photos"
     params = {
         "query": query,
@@ -176,25 +193,25 @@ async def _from_unsplash(query: str) -> dict | None:
         r = await c.get(url, params=params, headers=headers)
         r.raise_for_status()
         results = (r.json() or {}).get("results") or []
-    for p in results:
-        alt = p.get("alt_description") or p.get("description") or ""
-        if _looks_like_person(alt):
-            continue
-        urls, user = p.get("urls") or {}, p.get("user") or {}
-        if not urls.get("regular"):
-            continue
-        return {
-            "url": urls.get("regular"),
-            "thumb": urls.get("small") or urls.get("regular"),
-            "alt": alt or query,
-            "credit_name": user.get("name") or "Unsplash",
-            "credit_url": (user.get("links") or {}).get("html") or "https://unsplash.com",
-            "source": "Unsplash",
-        }
-    return None
+    ok = [p for p in results
+          if not _looks_like_person(p.get("alt_description") or p.get("description") or "")
+          and (p.get("urls") or {}).get("regular")]
+    p = _pick(ok, seed)
+    if not p:
+        return None
+    alt = p.get("alt_description") or p.get("description") or ""
+    urls, user = p.get("urls") or {}, p.get("user") or {}
+    return {
+        "url": urls.get("regular"),
+        "thumb": urls.get("small") or urls.get("regular"),
+        "alt": alt or query,
+        "credit_name": user.get("name") or "Unsplash",
+        "credit_url": (user.get("links") or {}).get("html") or "https://unsplash.com",
+        "source": "Unsplash",
+    }
 
 
-async def _from_pexels(query: str) -> dict | None:
+async def _from_pexels(query: str, seed: str = "") -> dict | None:
     url = "https://api.pexels.com/v1/search"
     params = {"query": query, "per_page": 15}
     headers = {"Authorization": _PEXELS_KEY}
@@ -202,25 +219,24 @@ async def _from_pexels(query: str) -> dict | None:
         r = await c.get(url, params=params, headers=headers)
         r.raise_for_status()
         photos = (r.json() or {}).get("photos") or []
-    for p in photos:
-        alt = p.get("alt") or ""
-        if _looks_like_person(alt):
-            continue
-        src = p.get("src") or {}
-        if not src.get("large"):
-            continue
-        return {
-            "url": src.get("large"),
-            "thumb": src.get("medium") or src.get("large"),
-            "alt": alt or query,
-            "credit_name": p.get("photographer") or "Pexels",
-            "credit_url": p.get("photographer_url") or "https://pexels.com",
-            "source": "Pexels",
-        }
-    return None
+    ok = [p for p in photos
+          if not _looks_like_person(p.get("alt") or "") and (p.get("src") or {}).get("large")]
+    p = _pick(ok, seed)
+    if not p:
+        return None
+    src = p.get("src") or {}
+    return {
+        "url": src.get("large"),
+        "thumb": src.get("medium") or src.get("large"),
+        "alt": p.get("alt") or query,
+        "credit_name": p.get("photographer") or "Pexels",
+        "credit_url": p.get("photographer_url") or "https://pexels.com",
+        "source": "Pexels",
+    }
 
 
-async def fetch(subject: str, tickers: list[str] | None = None) -> dict | None:
+async def fetch(subject: str, tickers: list[str] | None = None,
+                seed: str = "") -> dict | None:
     """Return one cover photo for this week's subject, or None to fall back.
 
     Never raises — a cover image is a nice-to-have, and the weekly build must
@@ -234,7 +250,7 @@ async def fetch(subject: str, tickers: list[str] | None = None) -> dict | None:
             if not key:
                 continue
             try:
-                hit = await fn(query)
+                hit = await fn(query, seed)
                 if hit:
                     hit["query"] = query          # kept for relevance debugging
                     logger.info(f"weekly cover image from {name}: {query!r}")

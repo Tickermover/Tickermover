@@ -4786,6 +4786,9 @@ async def _build_weekly_editorial(week_start: str) -> dict | None:
         cover = await weekly_cover_image.fetch(
             article.get("subject") or angle.get("label") or "",
             article.get("tickers") or [],
+            # Seed on the issue's week so two issues on the same subject do not
+            # get the same photo — four of five carried one data-centre shot.
+            seed=week_start or "",
         )
         if cover:
             article["cover_image"] = cover
@@ -4966,7 +4969,8 @@ async def api_admin_save_weekly(request: Request,
     # Best-effort cover photo (silently skipped when no image-provider key is set).
     try:
         import weekly_cover_image
-        cover = await weekly_cover_image.fetch(article.get("subject") or "", article.get("tickers") or [])
+        cover = await weekly_cover_image.fetch(article.get("subject") or "",
+                                               article.get("tickers") or [], seed=wk or "")
         if cover:
             article["cover_image"] = cover
     except Exception as e:
