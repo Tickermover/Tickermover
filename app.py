@@ -5693,6 +5693,12 @@ async def api_event_intel_status(probe: str = ""):
         pass
     if probe == "groq":
         out["probe_groq"] = await _ei_mod.probe_groq()
+    elif probe == "models":
+        try:
+            import llm_free as _lf3
+            out["models"] = await _lf3.list_models()
+        except Exception as exc:
+            out["models"] = {"error": str(exc)[:200]}
     elif probe == "all":
         try:
             import llm_free as _lf2

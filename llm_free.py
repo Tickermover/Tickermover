@@ -324,3 +324,31 @@ async def probe_all(timeout: float = 20.0) -> list[dict]:
             row["result"] = f"exception: {exc}"[:180]
         out.append(row)
     return out
+
+
+async def list_models(timeout: float = 15.0) -> list[dict]:
+    """Ask each configured OpenAI-compatible provider which models it exposes.
+    Removes the guesswork when a provider returns model_not_found — the model
+    catalogues differ per account and change over time."""
+    out = []
+    for (name, envk, menv, dflt, url, cap) in _PROVIDERS:
+        key = _key(envk)
+        if not key or name == "gemini":
+            continue
+        base = url.rsplit("/chat/completions", 1)[0]
+        row = {"provider": name, "endpoint": base + "/models"}
+        try:
+            async with httpx.AsyncClient(timeout=timeout) as c:
+                r = await c.get(base + "/models",
+                                headers={"Authorization": f"Bearer {key}"})
+            if r.status_code != 200:
+                row["error"] = f"HTTP {r.status_code}: {r.text[:120]}"
+            else:
+                data = r.json()
+                ids = [m.get("id") for m in (data.get("data") or []) if m.get("id")]
+                row["count"] = len(ids)
+                row["models"] = ids[:40]
+        except Exception as exc:
+            row["error"] = f"exception: {exc}"[:140]
+        out.append(row)
+    return out
