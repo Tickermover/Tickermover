@@ -36,15 +36,37 @@ import logging
 import os
 from datetime import datetime, timezone
 
+import time
+
 import httpx
 
 logger = logging.getLogger(__name__)
 
 LAST_ERRORS: list[dict] = []
+# Providers that just told us they cannot serve us — skip them for a while
+# rather than paying the round-trip on every request. 429 = quota (retry
+# soon), 402/410 = billing required / retired (retry rarely).
+_COOLDOWN: dict[str, float] = {}
+
+
+def _cool(name: str, detail: str) -> None:
+    d = (detail or "")
+    secs = 0
+    if "429" in d or "quota" in d.lower() or "rate limit" in d.lower():
+        secs = 900          # 15 min — free quotas usually reset hourly/daily
+    elif "402" in d or "410" in d:
+        secs = 21600        # 6 h — needs billing, or the service is retiring
+    if secs:
+        _COOLDOWN[name] = time.time() + secs
+
+
+def _cooling(name: str) -> bool:
+    return _COOLDOWN.get(name, 0) > time.time()
 _MAX_ERRORS = 8
 
 
 def _note(provider: str, detail: str) -> None:
+    _cool(provider, detail)
     LAST_ERRORS.insert(0, {
         "provider": provider, "detail": str(detail)[:200],
         "at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
@@ -156,6 +178,8 @@ def status() -> dict:
             for (n, envk, menv, dflt, _u, cap) in _PROVIDERS
         ],
         "order": available(),
+        "cooling_off": {k: int(v - time.time()) for k, v in _COOLDOWN.items()
+                        if v > time.time()} or None,
         "recent_errors": LAST_ERRORS[:5] or None,
     }
 
@@ -252,7 +276,10 @@ async def chat_json(prompt: str, *, max_tokens: int = 1500, timeout: float = 30.
     if prefer:
         order.sort(key=lambda p: 0 if p[0] == prefer else 1)
     tried = 0
-    for (name, envk, menv, dflt, url, cap) in order:
+    usable = [p for p in order if _key(p[1]) and not _cooling(p[0])]
+    if not usable:                      # everything cooling — try anyway
+        usable = [p for p in order if _key(p[1])]
+    for (name, envk, menv, dflt, url, cap) in usable:
         key = _key(envk)
         if not key:
             continue
@@ -318,7 +345,10 @@ async def chat_text(prompt: str, *, max_tokens: int = 1500, timeout: float = 45.
     if prefer:
         order.sort(key=lambda p: 0 if p[0] == prefer else 1)
     tried = 0
-    for (name, envk, menv, dflt, url, cap) in order:
+    usable = [p for p in order if _key(p[1]) and not _cooling(p[0])]
+    if not usable:
+        usable = [p for p in order if _key(p[1])]
+    for (name, envk, menv, dflt, url, cap) in usable:
         key = _key(envk)
         if not key:
             continue
