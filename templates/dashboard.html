@@ -10203,15 +10203,31 @@ async function v2OpenDetail(ticker, cfg){
   const bar = cfg.opts.topbar || ('<div class="v2-brf-topbar"><button class="v2-brf-back" onclick="' + cfg.opts.backFn + '()">← Back to all tickers</button></div>');
   det.innerHTML = bar + '<div class="v2-brf-loading" id="v2od-load"></div>';
   window.startTimerLoader(document.getElementById('v2od-load'), cfg.loading.replace('{sym}', sym), {pills:['Key updates','Guidance','Risks','Outlook'], full:true});
+  // The first request for a ticker generates the briefing server-side (SEC
+  // filing fetch + web + model), which can take a while. Without a deadline
+  // the progress ring just stalls, which reads as a broken page.
+  const ctl = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+  const killer = setTimeout(function(){ try { ctl && ctl.abort(); } catch(_e){} }, 60000);
   try {
-    const r = await fetch(cfg.endpoint + encodeURIComponent(sym), { cache: 'no-store' });
+    const r = await fetch(cfg.endpoint + encodeURIComponent(sym),
+                          { cache: 'no-store', signal: ctl ? ctl.signal : undefined });
+    clearTimeout(killer);
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const d = await r.json();
     det.innerHTML = v2RenderBriefingHTML(sym, d, cfg.opts);
   } catch (e) {
-    det.innerHTML = bar +
-                    '<div class="v2-brf-empty-state"><strong>Couldn\'t load ' + cfg.what + '</strong>' +
-                    '<span>' + v2EscHTML(e && e.message || 'error') + '</span></div>';
+    clearTimeout(killer);
+    const aborted = !!(e && e.name === 'AbortError');
+    const retry = '<button class="v2-brf-back" style="margin-top:12px" onclick=\'v2OpenDetail(' +
+                  JSON.stringify(sym) + ', ' + JSON.stringify(cfg) + ')\'>Try again</button>';
+    det.innerHTML = bar + '<div class="v2-brf-empty-state">' +
+      (aborted
+        ? '<strong>Still preparing ' + v2EscHTML(sym) + '’s ' + cfg.what + '</strong>' +
+          '<span>We are reading the latest filing for the first time, which can take a minute. ' +
+          'It is cached once ready — try again shortly.</span>'
+        : '<strong>Couldn\'t load ' + cfg.what + '</strong>' +
+          '<span>' + v2EscHTML(e && e.message || 'error') + '</span>') +
+      retry + '</div>';
   }
 }
 
