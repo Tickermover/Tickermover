@@ -41,6 +41,7 @@ _ENDPOINTS = {
     "cashflow": "cash-flow-statement",
     "ratios":   "ratios",
     "metrics":  "key-metrics",
+    "estimates": "analyst-estimates",
 }
 
 
@@ -70,7 +71,11 @@ async def _fetch(coordinator, endpoint: str, ticker: str, period: str) -> list:
     if not config.FMP_API_KEY:
         return []
     params = {"symbol": ticker, "limit": _LIMIT, "apikey": config.FMP_API_KEY}
-    if period == "quarter":
+    if endpoint == "analyst-estimates":
+        # This endpoint REQUIRES an explicit period (400 "Invalid or missing
+        # query parameter - period" without one) and only annual is on Starter.
+        params["period"] = "annual"
+    elif period == "quarter":
         params["period"] = "quarter"
     skey = f"{endpoint}:{period}"
     try:
