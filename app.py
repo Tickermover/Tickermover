@@ -5769,6 +5769,23 @@ async def api_mgmt_qa(symbol: str, refresh: int = 0):
     return JSONResponse(_clean(data), headers={"Cache-Control": "public, max-age=120"})
 
 
+@app.get("/api/financials/{symbol}")
+async def api_financials(symbol: str, period: str = "annual", refresh: int = 0):
+    """Full income / balance-sheet / cash-flow statements plus per-period
+    ratios and key metrics, for the Financials & Valuation tabs. Cached 24h;
+    always 200 with {available:false} when the data cannot be fetched."""
+    import financials_store as _fs
+    sym = symbol.upper().strip()
+    if not sym or len(sym) > 8:
+        raise HTTPException(status_code=400, detail="Bad ticker")
+    try:
+        data = await _fs.get_financials(coordinator, sym, period=period, force=bool(refresh))
+    except Exception as exc:
+        logger.error(f"financials {sym}: {exc}", exc_info=True)
+        return JSONResponse({"available": False, "ticker": sym, "period": period})
+    return JSONResponse(_clean(data), headers={"Cache-Control": "public, max-age=1800"})
+
+
 @app.get("/api/event-intel-status")
 async def api_event_intel_status(probe: str = ""):
     """Health view for the earnings-call summarizer: which providers are
