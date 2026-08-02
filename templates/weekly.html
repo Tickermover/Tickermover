@@ -77,6 +77,40 @@
     .ch-val{font-size:12.5px;font-weight:800;color:#0f172a;font-variant-numeric:tabular-nums;min-width:44px;text-align:right}
     .ch-note{font-size:12.5px;color:#64748b;margin:11px 0 0;line-height:1.5}
     @media(max-width:560px){ .ch-row{grid-template-columns:64px 1fr auto;gap:8px} .ch-lab{font-size:11.5px} }
+    /* ── line — a trend through ordered periods ── */
+    .ch-line{width:100%;height:auto;aspect-ratio:600/172;display:block;overflow:visible}
+    .ch-line .ln-path{fill:none;stroke:#2970FF;stroke-width:2.5;stroke-linejoin:round;stroke-linecap:round}
+    .ch-line .ln-dot{fill:#fff;stroke:#2970FF;stroke-width:2.5}
+    .ch-line .ln-dot.hi{fill:#2970FF}
+    .ch-line .ln-zero{stroke:#cbd5e1;stroke-width:1;stroke-dasharray:3 3}
+    .ch-line .ln-lab{font-size:10px;font-weight:700;fill:#94a3b8}
+    .ch-line .ln-v{font-size:10.5px;font-weight:800;fill:#0f172a}
+    /* ── waterfall — one change decomposed into its contributions ── */
+    .ch-wf{display:flex;align-items:flex-end;gap:8px;height:152px;padding-top:6px}
+    .wf-col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;min-width:0}
+    .wf-bar{width:100%;max-width:52px;border-radius:5px;background:linear-gradient(180deg,#5DB3F1,#2970FF);min-height:3px}
+    .wf-bar.neg{background:linear-gradient(180deg,#fca5a5,#ef4444)}
+    .wf-bar.hi{background:linear-gradient(180deg,#334155,#0f172a)}
+    .wf-v{font-size:11px;font-weight:800;color:#0f172a;margin-bottom:4px;font-variant-numeric:tabular-nums;white-space:nowrap}
+    .wf-l{font-size:10.5px;font-weight:700;color:#64748b;margin-top:6px;text-align:center;line-height:1.25;
+      overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+    /* ── grouped — two comparable series per item ── */
+    .gr-t{position:relative;height:11px;background:#eef2f8;border-radius:6px;overflow:hidden;margin-bottom:3px}
+    .gr-t:last-child{margin-bottom:0}
+    .gr-f{position:absolute;inset:0 auto 0 0;border-radius:6px;background:linear-gradient(90deg,#5DB3F1,#2970FF);min-width:3px}
+    .gr-f.s2{background:linear-gradient(90deg,#cbd5e1,#94a3b8)}
+    .gr-f.neg{background:linear-gradient(90deg,#fca5a5,#ef4444)}
+    .ch-key{display:flex;gap:14px;margin:0 0 10px;font-size:11px;font-weight:700;color:#64748b}
+    .ch-key span{display:inline-flex;align-items:center;gap:5px}
+    .ch-key i{width:11px;height:11px;border-radius:3px;display:inline-block}
+    /* ── gauge — a single 0-100 reading ── */
+    .ch-gauge{display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+    .gg-svg{width:152px;height:90px;flex:none}
+    .gg-track{fill:none;stroke:#eef2f8;stroke-width:13;stroke-linecap:round}
+    .gg-fill{fill:none;stroke:#2970FF;stroke-width:13;stroke-linecap:round}
+    .gg-read{font-size:34px;font-weight:800;color:#0f172a;line-height:1;font-variant-numeric:tabular-nums}
+    .gg-lab{font-size:12.5px;font-weight:700;color:#64748b;margin-top:4px}
+    @media(max-width:560px){ .ch-wf{height:128px} .wf-l{font-size:9.5px} }
     /* donut chart — share of a whole */
     .dn-wrap{display:flex;align-items:center;gap:20px;flex-wrap:wrap}
     .dn-svg{flex:none}
@@ -348,12 +382,118 @@
     }
     // Render the `charts` array: horizontal bars (magnitude / signed moves; scaled
     // to max ABS value so negatives read red) or a donut (type:"donut").
+    // Shared: display a value with the chart's unit.
+    function chVal(v,unit){
+      return (unit==='%') ? ((v>0?'+':'')+v+'%') : (unit==='$') ? ('$'+v) : String(v);
+    }
+    function chShell(ch,inner){
+      var unit=(ch.unit||'').trim();
+      return '<div class="chart"><div class="ch-h">'+esc(ch.title||'By the numbers')+
+        (unit?'<span class="ch-unit">'+esc(unit==='%'?'% change':unit==='$'?'USD':unit)+'</span>':'')+'</div>'+
+        inner+(ch.note?'<p class="ch-note">'+esc(stripCites(ch.note))+'</p>':'')+'</div>';
+    }
+    // LINE — a trend through ordered periods. Drawn in a fixed 600x172 viewBox
+    // and scaled by CSS, so it stays crisp at any column width without a lib.
+    function lineHtml(ch,bars){
+      var n=bars.length; if(n<2) return '';
+      var unit=(ch.unit||'').trim();
+      var vals=bars.map(function(b){return +b.value;});
+      var lo=Math.min.apply(null,vals), hi=Math.max.apply(null,vals);
+      if(lo>0) lo=0; if(hi<0) hi=0;                 // always show the zero line
+      if(hi===lo) hi=lo+1;
+      var W=600,H=172,padX=34,padT=26,padB=34;
+      var x=function(i){ return padX+i*(W-2*padX)/(n-1); };
+      var y=function(v){ return padT+(hi-v)/(hi-lo)*(H-padT-padB); };
+      var pts=bars.map(function(b,i){ return x(i)+','+y(+b.value); });
+      var zero=y(0);
+      var dots='',labs='';
+      for(var i=0;i<n;i++){
+        var b=bars[i], v=+b.value;
+        dots+='<circle class="ln-dot'+(b.hi?' hi':'')+'" cx="'+x(i)+'" cy="'+y(v)+'" r="4"/>';
+        labs+='<text class="ln-lab" x="'+x(i)+'" y="'+(H-12)+'" text-anchor="middle">'+esc(String(b.label||''))+'</text>';
+        if(b.hi||i===n-1) labs+='<text class="ln-v" x="'+x(i)+'" y="'+(y(v)-11)+'" text-anchor="middle">'+esc(chVal(v,unit))+'</text>';
+      }
+      return chShell(ch,'<svg class="ch-line" viewBox="0 0 '+W+' '+H+'" role="img">'+
+        '<line class="ln-zero" x1="'+padX+'" y1="'+zero+'" x2="'+(W-padX)+'" y2="'+zero+'"/>'+
+        '<polyline class="ln-path" points="'+pts.join(' ')+'"/>'+dots+labs+'</svg>');
+    }
+    // WATERFALL — a change decomposed into contributions. Bars float: each one
+    // starts where the running total left off, so the reader sees it accumulate.
+    function waterfallHtml(ch,bars){
+      var unit=(ch.unit||'').trim(), cum=0, segs=[];
+      for(var i=0;i<bars.length;i++){
+        var d=+bars[i].value, a=cum, b2=cum+d; cum=b2;
+        segs.push({lab:bars[i].label,val:d,hi:!!bars[i].hi,lo:Math.min(a,b2),up:Math.max(a,b2)});
+      }
+      var minB=0,maxT=0;
+      for(var j=0;j<segs.length;j++){ if(segs[j].lo<minB) minB=segs[j].lo; if(segs[j].up>maxT) maxT=segs[j].up; }
+      var range=(maxT-minB)||1, cols='';
+      for(var k=0;k<segs.length;k++){
+        var s=segs[k];
+        var hPct=Math.max(2,(s.up-s.lo)/range*100), offPct=(s.lo-minB)/range*100;
+        cols+='<div class="wf-col"><span class="wf-v">'+esc(chVal(s.val,unit))+'</span>'+
+              '<span class="wf-bar'+(s.val<0?' neg':'')+(s.hi?' hi':'')+
+              '" style="height:'+hPct.toFixed(1)+'%;margin-bottom:'+offPct.toFixed(1)+'%"></span>'+
+              '<span class="wf-l">'+esc(String(s.lab||''))+'</span></div>';
+      }
+      return chShell(ch,'<div class="ch-wf">'+cols+'</div>');
+    }
+    // GROUPED — two comparable series per item (this week vs last, us vs index).
+    function groupedHtml(ch,bars){
+      var unit=(ch.unit||'').trim(), max=0;
+      for(var i=0;i<bars.length;i++){
+        var a=Math.abs(+bars[i].value); if(a>max) max=a;
+        var b2=Math.abs(+bars[i].value2); if(isFinite(b2)&&b2>max) max=b2;
+      }
+      if(max<=0) max=1;
+      var s1=(ch.series&&ch.series[0])||'Series 1', s2=(ch.series&&ch.series[1])||'Series 2';
+      var key='<div class="ch-key"><span><i style="background:#2970FF"></i>'+esc(s1)+'</span>'+
+              '<span><i style="background:#94a3b8"></i>'+esc(s2)+'</span></div>';
+      var rows='';
+      for(var k=0;k<bars.length;k++){
+        var b=bars[k], v1=+b.value, v2=+b.value2;
+        var w1=Math.max(3,Math.round(Math.abs(v1)/max*100));
+        var t='<span class="gr-t"><span class="gr-f'+(v1<0?' neg':'')+'" style="width:'+w1+'%"></span></span>';
+        if(isFinite(v2)){
+          var w2=Math.max(3,Math.round(Math.abs(v2)/max*100));
+          t+='<span class="gr-t"><span class="gr-f s2'+(v2<0?' neg':'')+'" style="width:'+w2+'%"></span></span>';
+        }
+        rows+='<div class="ch-row"><span class="ch-lab">'+esc(String(b.label||''))+'</span>'+
+              '<span>'+t+'</span><span class="ch-val">'+esc(chVal(v1,unit))+'</span></div>';
+      }
+      return chShell(ch,key+rows);
+    }
+    // GAUGE — one 0-100 reading as a half-dial (an Alpha Score).
+    function gaugeHtml(ch,bars){
+      var b=bars[0]||{}, v=Math.max(0,Math.min(100,+b.value||0));
+      var R=60,CX=76,CY=76, len=Math.PI*R;
+      var col = v>=70?'#16a34a' : v>=50?'#2970FF' : v>=35?'#f59e0b' : '#dc2626';
+      var svg='<svg class="gg-svg" viewBox="0 0 152 90" role="img">'+
+        '<path class="gg-track" d="M '+(CX-R)+' '+CY+' A '+R+' '+R+' 0 0 1 '+(CX+R)+' '+CY+'"/>'+
+        '<path class="gg-fill" d="M '+(CX-R)+' '+CY+' A '+R+' '+R+' 0 0 1 '+(CX+R)+' '+CY+'" stroke="'+col+'"'+
+        ' stroke-dasharray="'+len.toFixed(1)+'" stroke-dashoffset="'+(len*(1-v/100)).toFixed(1)+'"/></svg>';
+      return chShell(ch,'<div class="ch-gauge">'+svg+
+        '<div><div class="gg-read" style="color:'+col+'">'+esc(String(b.value))+'</div>'+
+        '<div class="gg-lab">'+esc(String(b.label||''))+'</div></div></div>');
+    }
     function chartsHtml(charts){
       if(!Array.isArray(charts) || !charts.length) return '';
       var out='';
       for(var c=0;c<charts.length;c++){
         var ch=charts[c]||{};
         if((ch.type||'')==='donut'){ out+=donutHtml(ch); continue; }
+        var _b=Array.isArray(ch.bars)?ch.bars.filter(function(b){return b&&isFinite(+b.value);}):[];
+        if(_b.length){
+          var _t=ch.type||'';
+          // Each renderer returns '' when the shape it needs isn't there, so a
+          // thin series falls through to the bar chart rather than vanishing.
+          var alt='';
+          if(_t==='line')           alt=lineHtml(ch,_b);
+          else if(_t==='waterfall') alt=waterfallHtml(ch,_b);
+          else if(_t==='grouped')   alt=groupedHtml(ch,_b);
+          else if(_t==='gauge')     alt=gaugeHtml(ch,_b);
+          if(alt){ out+=alt; continue; }
+        }
         var bars=Array.isArray(ch.bars)?ch.bars.filter(function(b){return b&&isFinite(+b.value);}):[];
         if(!bars.length) continue;
         var unit=(ch.unit||'').trim(), max=0;
