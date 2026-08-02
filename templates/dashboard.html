@@ -18714,7 +18714,10 @@ function _authUpdateUI(user) {
   const avatar  = document.getElementById('user-avatar');
   if (user && (user.email || user.id)) {
     // Resolve the real plan (beta / comped / paid) now that we have a session.
-    try { if (typeof _refreshPlan === 'function') _refreshPlan(); } catch(e){}
+    try {
+      if (typeof window._refreshPlan === 'function') window._refreshPlan();
+      else setTimeout(function(){ try{ if(window._refreshPlan) window._refreshPlan(); }catch(e){} }, 1200);
+    } catch(e){}
     btn.style.display  = 'none';
     menu.style.display = 'flex';
     const first = _firstNameFromUser(user);
@@ -22436,6 +22439,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
       if(pro && _drState && _drState.tab==='Supply Chain'){ try{ tsRenderDetail(); }catch(e){} }
     }catch(e){}
   }
+  window._refreshPlan = _refreshPlan;   // _authUpdateUI lives in another <script>
   function _drIsPro(){
     if(window.__PLAN && window.__PLAN.loaded) return !!window.__PLAN.pro;
     try{
