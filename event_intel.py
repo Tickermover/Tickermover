@@ -730,7 +730,14 @@ Rules — follow exactly:
   below, and quote that evidence.
 - Source ids: "F" is the company filing (also cite "F" for anything taken from
   the reported metrics); "W1".."Wn" are the numbered web results. Cite only ids
-  that appear below. Never cite a source you did not use.
+  that appear below. Never cite a source you did not use. "cites" must never be
+  empty — every check names where its evidence came from.
+- The filing is silent on how the market is positioned, so anything about
+  sentiment, short interest, the bear case, analyst reaction or a competitor's
+  actions MUST come from the web results and cite the "W" id it came from. Use
+  the web results for the valuation-and-sentiment area in particular; if they
+  genuinely say nothing on a point, mark that check "mixed" and say the recent
+  coverage does not settle it.
 - If the sources cannot settle a check, use "mixed" and say plainly what is
   missing. NEVER invent a fact, a number, a contract or a counterparty.
 - Neutral and factual: no buy / sell / hold, no price targets, no
