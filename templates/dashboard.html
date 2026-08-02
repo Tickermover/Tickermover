@@ -10123,10 +10123,22 @@ window.showLoader = function(host, label, opts){
   const sheet = full ? el.closest('.ssx-sheet, .drawer, .panel') : null;
   const ov = document.createElement('div');
   ov.className = sheet ? 'ldr-overlay' : 'ldr-overlay ldr-inline';
-  let needRel = false;
+  let needRel = false, prevMinH = null;
   if (sheet){
     needRel = getComputedStyle(sheet).position === 'static';
     if (needRel) sheet.style.position = 'relative';
+    // The overlay is absolute/inset:0, so it is only ever as tall as its host.
+    // On a fresh detail view the host is a stub — a back-bar plus an empty
+    // results div, ~280px — so the ring card came out squat and the pill row
+    // overflowed onto the page background below it. Grow the host to the
+    // visible content height for the duration of the load so the loader
+    // centres in the screen. GROW ONLY: hosts that are already tall (e.g.
+    // .ssx-sheet carries min-height:calc(100vh - 36px)) are left alone.
+    const want = Math.max(460, Math.round(window.innerHeight - 190));
+    if (sheet.getBoundingClientRect().height < want){
+      prevMinH = sheet.style.minHeight;
+      sheet.style.minHeight = want + 'px';
+    }
   }
   ov.innerHTML =
     '<div class="ldr">' +
@@ -10180,7 +10192,14 @@ window.showLoader = function(host, label, opts){
   const cleanup = () => {
     if (done) return; done = true;
     clearInterval(ci); clearInterval(poll); clearTimeout(failsafe);
-    ov.classList.add('ldr-out'); setTimeout(() => { ov.remove(); if (needRel && sheet) sheet.style.position = ''; }, 320);
+    ov.classList.add('ldr-out');
+    setTimeout(() => {
+      ov.remove();
+      if (sheet){
+        if (needRel) sheet.style.position = '';
+        if (prevMinH !== null) sheet.style.minHeight = prevMinH;   // '' when it had none
+      }
+    }, 320);
     if (el.getAttribute('data-ldr') === token) el.removeAttribute('data-ldr');
     if (window._ldrFull === cleanup) window._ldrFull = null;
   };
