@@ -562,6 +562,26 @@ body.v2 #sectors-grid .smh-name{font-weight:800;font-size:12.5px;color:#0f172a!i
 /* Earnings / event → dark violet */
 .sig-event{background:rgba(212,134,10,.1);color:#FFC75F;border:1px solid rgba(212,134,10,.25)}
 
+/* ====== FULL STATEMENTS (Financials tab) ====== */
+.stmt-host{margin-top:14px}
+.stmt-tabs{display:flex;gap:6px;margin:0 0 12px}
+.stmt-tb{font:600 12.5px/1 'Instrument Sans',system-ui,sans-serif;padding:8px 14px;border-radius:999px;
+  border:1px solid rgba(10,10,10,.12);background:#fff;color:#475569;cursor:pointer}
+.stmt-tb.on{background:linear-gradient(135deg,#2970ff,#0040c1);color:#fff;border-color:transparent}
+.stmt-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table.stmt{width:100%;border-collapse:collapse;font-size:12.5px;min-width:560px}
+table.stmt th,table.stmt td{padding:7px 10px;text-align:right;white-space:nowrap;
+  border-bottom:1px solid rgba(10,10,10,.05)}
+table.stmt thead th{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#94a3b8;
+  font-weight:700;border-bottom:1px solid rgba(10,10,10,.12)}
+table.stmt th.stmt-lbl,table.stmt td.stmt-lbl{text-align:left;font-weight:600;color:var(--ink,#0f172a);
+  position:sticky;left:0;background:#fff}
+table.stmt tbody tr:hover td{background:rgba(41,112,255,.04)}
+.stmt-g{font-size:10.5px;font-weight:700;margin-left:6px;padding:1px 5px;border-radius:4px}
+.stmt-g.up{color:#15803d;background:rgba(21,128,61,.1)}
+.stmt-g.dn{color:#b91c1c;background:rgba(185,28,28,.09)}
+.stmt-note{font-size:11.5px;color:#94a3b8;margin:10px 0 4px;line-height:1.5}
+@media(max-width:640px){table.stmt{font-size:11.5px}table.stmt th,table.stmt td{padding:6px 8px}}
 /* ====== KEY CATALYST BANNER ====== */
 .kt-banner{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:800;
   padding:4px 10px;border-radius:7px;margin:6px 0 2px;letter-spacing:.3px;width:100%}
@@ -21633,6 +21653,145 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     }).catch(function(){ done=true; slot.innerHTML='<div class="fchk-mrow"><span class="k">Unavailable</span><span class="v fchk-weak">Could not load.</span></div>'; });
   }
 
+  /* ── Full financial statements (FMP, via /api/financials) ──────────────
+     Multi-period Income / Balance / Cash-flow tables with an annual-quarterly
+     toggle, rendered under the existing Financials cards. Loaded lazily on
+     first view and cached per ticker+period so switching is instant. */
+  var _stmtCache = {};
+  var _stmtPeriod = 'annual';
+
+  function _stmtNum(v){
+    if(v==null||v==='') return '—';
+    var n=parseFloat(v); if(isNaN(n)) return '—';
+    var a=Math.abs(n), s=n<0?'-':'';
+    if(a>=1e12) return s+'$'+(a/1e12).toFixed(2)+'T';
+    if(a>=1e9)  return s+'$'+(a/1e9).toFixed(2)+'B';
+    if(a>=1e6)  return s+'$'+(a/1e6).toFixed(1)+'M';
+    if(a>=1e3)  return s+'$'+(a/1e3).toFixed(0)+'K';
+    return s+'$'+a.toFixed(2);
+  }
+  function _stmtPct(v){
+    if(v==null||v==='') return '—';
+    var n=parseFloat(v); if(isNaN(n)) return '—';
+    if(Math.abs(n)<=2) n*=100;
+    return (n>=0?'+':'')+n.toFixed(1)+'%';
+  }
+  function _stmtPlain(v){
+    if(v==null||v==='') return '—';
+    var n=parseFloat(v); if(isNaN(n)) return String(v);
+    return n.toFixed(2);
+  }
+  function _stmtHead(rows,label){
+    return '<tr><th class="stmt-lbl">'+escHTML(label)+'</th>'+
+      rows.map(function(p){ return '<th>'+escHTML(String(p.date||p.calendarYear||'').slice(0,10))+'</th>'; }).join('')+'</tr>';
+  }
+  /* One line item across every period, with an optional growth read on the
+     newest column so the trend is visible without mental arithmetic. */
+  function _stmtRow(rows,label,key,fmt,growth){
+    var f = fmt||_stmtNum;
+    var cells = rows.map(function(p){ return '<td>'+f(p[key])+'</td>'; }).join('');
+    var g='';
+    if(growth && rows.length>1){
+      var a=parseFloat(rows[0][key]), b=parseFloat(rows[1][key]);
+      if(!isNaN(a)&&!isNaN(b)&&b!==0){
+        var ch=(a-b)/Math.abs(b)*100;
+        g=' <span class="stmt-g '+(ch>=0?'up':'dn')+'">'+(ch>=0?'+':'')+ch.toFixed(0)+'%</span>';
+      }
+    }
+    return '<tr><td class="stmt-lbl">'+escHTML(label)+g+'</td>'+cells+'</tr>';
+  }
+  function _stmtTable(title,icon,accent,rows,spec){
+    if(!rows||!rows.length) return '';
+    var body='<div class="stmt-wrap"><table class="stmt"><thead>'+_stmtHead(rows,title)+'</thead><tbody>'+
+      spec.map(function(sp){ return _stmtRow(rows,sp[0],sp[1],sp[2],sp[3]); }).join('')+
+      '</tbody></table></div>';
+    return _sec(title,icon,accent,body);
+  }
+
+  function _stmtRender(sym){
+    var host=document.getElementById('stmtHost'); if(!host) return;
+    var d=_stmtCache[sym+':'+_stmtPeriod];
+    var toggle='<div class="stmt-tabs">'+
+      ['annual','quarter'].map(function(p){
+        return '<button class="stmt-tb'+(p===_stmtPeriod?' on':'')+'" data-p="'+p+'">'+
+               (p==='annual'?'Annual':'Quarterly')+'</button>';
+      }).join('')+'</div>';
+    if(!d){ host.innerHTML=toggle+'<div class="stmt-note">Loading statements…</div>'; return; }
+    if(!d.available){ host.innerHTML=toggle+'<div class="stmt-note">Statements are not available for '+escHTML(sym)+' on this period.</div>'; return; }
+    var inc=d.income||[], bal=d.balance||[], cf=d.cashflow||[];
+    var html=toggle;
+    html+=_stmtTable('Income statement','📄','green',inc,[
+      ['Revenue','revenue',_stmtNum,true],
+      ['Cost of revenue','costOfRevenue'],
+      ['Gross profit','grossProfit',_stmtNum,true],
+      ['R&D expense','researchAndDevelopmentExpenses'],
+      ['SG&A expense','sellingGeneralAndAdministrativeExpenses'],
+      ['Operating expenses','operatingExpenses'],
+      ['Operating income','operatingIncome',_stmtNum,true],
+      ['EBITDA','ebitda',_stmtNum,true],
+      ['Interest expense','interestExpense'],
+      ['Pre-tax income','incomeBeforeTax'],
+      ['Income tax','incomeTaxExpense'],
+      ['Net income','netIncome',_stmtNum,true],
+      ['EPS (diluted)','epsDiluted',_stmtPlain,true],
+      ['Shares (diluted)','weightedAverageShsOutDil',_stmtNum],
+    ]);
+    html+=_stmtTable('Balance sheet','🏛️','blue',bal,[
+      ['Cash & equivalents','cashAndCashEquivalents',_stmtNum,true],
+      ['Short-term investments','shortTermInvestments'],
+      ['Receivables','netReceivables'],
+      ['Inventory','inventory'],
+      ['Total current assets','totalCurrentAssets'],
+      ['Total assets','totalAssets',_stmtNum,true],
+      ['Total current liabilities','totalCurrentLiabilities'],
+      ['Short-term debt','shortTermDebt'],
+      ['Long-term debt','longTermDebt'],
+      ['Total debt','totalDebt',_stmtNum,true],
+      ['Total liabilities','totalLiabilities'],
+      ['Total equity','totalStockholdersEquity',_stmtNum,true],
+      ['Net debt','netDebt'],
+    ]);
+    html+=_stmtTable('Cash flow','💰','violet',cf,[
+      ['Net income','netIncome'],
+      ['Depreciation & amortisation','depreciationAndAmortization'],
+      ['Stock-based compensation','stockBasedCompensation'],
+      ['Change in working capital','changeInWorkingCapital'],
+      ['Operating cash flow','operatingCashFlow',_stmtNum,true],
+      ['Capital expenditure','capitalExpenditure'],
+      ['Free cash flow','freeCashFlow',_stmtNum,true],
+      ['Acquisitions','acquisitionsNet'],
+      ['Buybacks','commonStockRepurchased'],
+      ['Dividends paid','commonDividendsPaid'],
+      ['Net change in cash','netChangeInCash'],
+    ]);
+    html+='<div class="stmt-note">Source: Financial Modeling Prep company filings · '+
+          escHTML(_stmtPeriod==='annual'?'annual periods':'quarterly periods')+', newest first. '+
+          'Figures as reported; verify against the filing before relying on them.</div>';
+    host.innerHTML=html;
+  }
+
+  function _stmtLoad(sym,period){
+    var key=sym+':'+period;
+    if(_stmtCache[key]){ _stmtRender(sym); return; }
+    _stmtRender(sym);   // paint the toggle + loading line immediately
+    fetch('/api/financials/'+encodeURIComponent(sym)+'?period='+encodeURIComponent(period))
+      .then(function(r){return r.json();})
+      .then(function(j){ _stmtCache[key]=j||{available:false}; if(_stmtPeriod===period) _stmtRender(sym); })
+      .catch(function(){ _stmtCache[key]={available:false}; if(_stmtPeriod===period) _stmtRender(sym); });
+  }
+
+  function _stmtInit(){
+    var host=document.getElementById('stmtHost'); if(!host) return;
+    var sym=(_drState&&_drState.full&&_drState.full.ticker)||''; if(!sym) return;
+    if(host.getAttribute('data-sym')!==sym){ host.setAttribute('data-sym',sym); _stmtPeriod='annual'; }
+    host.onclick=function(e){
+      var b=e.target.closest&&e.target.closest('.stmt-tb'); if(!b) return;
+      var p=b.getAttribute('data-p'); if(!p||p===_stmtPeriod) return;
+      _stmtPeriod=p; _stmtLoad(sym,p);
+    };
+    _stmtLoad(sym,_stmtPeriod);
+  }
+
   function paneFinancials(t){
     const M=v=>v==null?null:(Math.abs(v)<=1?v*100:v);
     const gm=M(_fpNum(t,['gross_margin'])),nm=M(_fpNum(t,['profit_margin','net_margin'])),fm=M(_fpNum(t,['fcf_margin'])),om=M(_fpNum(t,['operating_margin'])),ebm=M(_fpNum(t,['ebitda_margin']));
@@ -21685,7 +21844,8 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
       _trendCard(t)+
       _sigTable('Cash flow quality','💵','green',['Metric','Value','Signal'],cashRows)+
       _sigTable('Earnings quality','🎯','violet',['Metric','Value','Signal'],eqRows)+
-    '</div>';
+    '</div>'+
+    '<div id="stmtHost" class="stmt-host"></div>';
   }
   function paneValuation(t){
     const defs=[['P/E','pe_ratio'],['P/B','pb_ratio'],['P/S','ps_ratio'],['EV/EBITDA','ev_ebitda'],['PEG','peg_ratio']];
@@ -22404,6 +22564,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     if(name==='Documents') try{ _loadDocuments(); }catch(e){}
     if(name==='Insights') try{ _loadInsights(); }catch(e){}
     if(name==='Fact Check') try{ _fchkLoadDD(); }catch(e){}
+    if(name==='Financials') try{ _stmtInit(); }catch(e){}
     if(name==='Management') try{ _fchkLoadMgmt(); }catch(e){}
     /* Supply Chain is web-grounded ($) — gated behind a "Run analysis" button
        (see paneSupplyChain) so merely navigating to the tab never bills. */

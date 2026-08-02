@@ -5770,7 +5770,7 @@ async def api_mgmt_qa(symbol: str, refresh: int = 0):
 
 
 @app.get("/api/financials/{symbol}")
-async def api_financials(symbol: str, period: str = "annual", refresh: int = 0):
+async def api_financials(symbol: str, period: str = "annual", refresh: int = 0, diag: int = 0):
     """Full income / balance-sheet / cash-flow statements plus per-period
     ratios and key metrics, for the Financials & Valuation tabs. Cached 24h;
     always 200 with {available:false} when the data cannot be fetched."""
@@ -5783,6 +5783,8 @@ async def api_financials(symbol: str, period: str = "annual", refresh: int = 0):
     except Exception as exc:
         logger.error(f"financials {sym}: {exc}", exc_info=True)
         return JSONResponse({"available": False, "ticker": sym, "period": period})
+    if diag:
+        data = {**data, "_status": _fs.LAST_STATUS}
     return JSONResponse(_clean(data), headers={"Cache-Control": "public, max-age=1800"})
 
 

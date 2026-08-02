@@ -52,19 +52,51 @@ def _cache():
         return None
 
 
+LAST_STATUS: dict = {}
+
+
 async def _fetch(coordinator, endpoint: str, ticker: str, period: str) -> list:
-    """One statement endpoint. Returns [] on any failure so a missing endpoint
-    never takes the whole payload down."""
+    """One statement endpoint, fetched directly.
+
+    Deliberately NOT via data_coordinator._fmp_stable: that helper marks an
+    endpoint dead process-wide on a single error, so one 402 on a quarterly
+    call also killed the annual fetch for every later ticker. We reuse its
+    rate limiter but keep our own failure handling, and record the HTTP
+    status in LAST_STATUS so a plan-gated endpoint is visible instead of
+    silently returning [].
+    """
+    import httpx
+    import config
+    if not config.FMP_API_KEY:
+        return []
+    params = {"symbol": ticker, "limit": _LIMIT, "apikey": config.FMP_API_KEY}
+    if period == "quarter":
+        params["period"] = "quarter"
+    skey = f"{endpoint}:{period}"
     try:
-        params = {"symbol": ticker, "limit": _LIMIT}
-        if period == "quarter":
-            params["period"] = "quarter"
-        data = await coordinator._fmp_stable(endpoint, params)
+        lim = getattr(coordinator, "_fmp_limiter", None)
+        if lim is not None:
+            await lim.wait()
+        async with httpx.AsyncClient(timeout=15) as c:
+            r = await c.get(
+                f"https://financialmodelingprep.com/stable/{endpoint}", params=params
+            )
+        LAST_STATUS[skey] = r.status_code
+        if r.status_code != 200:
+            LAST_STATUS[skey + ":body"] = r.text[:140]
+            logger.warning("financials: %s %s (%s) HTTP %s: %s",
+                           ticker, endpoint, period, r.status_code, r.text[:140])
+            return []
+        data = r.json()
         if isinstance(data, list):
             return data
         if isinstance(data, dict) and data.get("symbol"):
             return [data]
+        if isinstance(data, dict) and data.get("Error Message"):
+            LAST_STATUS[skey + ":body"] = str(data)[:140]
+        return []
     except Exception as exc:
+        LAST_STATUS[skey] = f"exception: {exc}"[:120]
         logger.warning("financials: %s %s (%s) failed: %s", ticker, endpoint, period, exc)
     return []
 
