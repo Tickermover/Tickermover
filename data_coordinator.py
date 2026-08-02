@@ -1044,7 +1044,14 @@ class DataCoordinator:
         keys. Returns parsed JSON or None on failure / error payloads."""
         if not config.FMP_API_KEY or self._fmp_remaining() <= 0:
             return None
-        dead_key = f"fmps:{endpoint}"
+        # Key the disable on endpoint + the plan-relevant params, not the
+        # endpoint alone. FMP returns 402 for a *parameter* the plan lacks
+        # ("this value set for 'period' is not available under your current
+        # subscription"), so an endpoint-only key let one quarterly call
+        # disable the annual one too — which silently zeroed income-statement,
+        # ratios and key-metrics for every caller for the next 30 minutes.
+        _pd = str(params.get("period") or "")
+        dead_key = f"fmps:{endpoint}:{_pd}" if _pd else f"fmps:{endpoint}"
         if self._is_dead(dead_key):
             return None
         await self._fmp_limiter.wait()   # Starter = 300/min
