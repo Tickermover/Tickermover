@@ -232,6 +232,39 @@ class WeeklyEditorialStore:
         except Exception:
             pass
 
+    def delete(self, week_start: str) -> bool:
+        """Remove one edition from BOTH backends (Supabase row + disk fallback).
+
+        Deleting only the Supabase row would let the local JSON resurrect the
+        edition on the next get(), because the disk copy is a fallback, not a
+        cache. Returns True if either backend reported a removal."""
+        if not week_start:
+            return False
+        gone = False
+        if self.enabled:
+            try:
+                with httpx.Client(timeout=12) as c:
+                    r = c.delete(
+                        f"{self.url}/rest/v1/weekly_editorial",
+                        headers=self._headers("return=minimal"),
+                        params={"env_id": f"eq.{self.env_id}",
+                                "week_start": f"eq.{week_start}"},
+                    )
+                    if r.status_code >= 400:
+                        logger.error(f"WeeklyEditorialStore.delete → {r.status_code}: {r.text[:200]}")
+                    else:
+                        gone = True
+            except Exception as e:
+                logger.error(f"WeeklyEditorialStore.delete Supabase error: {e}")
+        try:
+            p = self._disk_path(week_start)
+            if p.exists():
+                p.unlink()
+                gone = True
+        except Exception as e:
+            logger.error(f"WeeklyEditorialStore.delete disk error: {e}")
+        return gone
+
     @staticmethod
     def is_stale(row: dict | None) -> bool:
         if not row:

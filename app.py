@@ -4866,6 +4866,57 @@ async def api_weekly_editorials(limit: int = 52):
                         headers={"Cache-Control": "public, max-age=600, s-maxage=1800"})
 
 
+@app.post("/api/admin/delete-weekly")
+async def api_admin_delete_weekly(request: Request,
+                                  user: Optional[dict] = Depends(_current_user),
+                                  creds: Optional[HTTPAuthorizationCredentials] = Depends(_bearer)):
+    """Admin: remove weekly editions. Irreversible — there is no undo and the
+    permalinks 404 afterwards, so this is deliberately awkward to fire:
+
+      {"weeks": ["2026-07-20", ...], "confirm": "DELETE"}      # named weeks
+      {"all": true, "confirm": "DELETE ALL"}                   # the whole archive
+
+    `confirm` must match exactly. A dry run (omit `confirm`) reports what WOULD
+    go, so the caller can check the list before committing. Every deletion is
+    logged with the caller's email."""
+    if not user or (user.get("email") or "").lower() not in _AI_ALLOW:
+        raise HTTPException(status_code=403, detail="Admin only.")
+    try:
+        payload = await request.json()
+    except Exception:
+        return JSONResponse({"error": "Body must be JSON."}, status_code=400)
+
+    want_all = bool(payload.get("all"))
+    weeks = [str(w).strip() for w in (payload.get("weeks") or []) if str(w).strip()]
+    if want_all:
+        weeks = [str(e.get("week_start") or "").strip()
+                 for e in (_weekly_store.list_editions(limit=200) or [])]
+        weeks = [w for w in weeks if w]
+    if not weeks:
+        return JSONResponse({"error": "Nothing to delete. Send weeks[] or all:true."},
+                            status_code=400)
+
+    need = "DELETE ALL" if want_all else "DELETE"
+    if str(payload.get("confirm") or "") != need:
+        return JSONResponse({"dry_run": True, "would_delete": weeks,
+                             "count": len(weeks),
+                             "note": f'Re-send with "confirm":"{need}" to actually delete. '
+                                     "This cannot be undone and the permalinks will 404."})
+
+    email = (user.get("email") or "?")
+    deleted, missed = [], []
+    for w in weeks:
+        try:
+            (deleted if _weekly_store.delete(w) else missed).append(w)
+        except Exception as exc:
+            logger.error(f"delete-weekly {w}: {exc}")
+            missed.append(w)
+    logger.warning("🗑 delete-weekly by %s — removed %d/%d: %s",
+                   email, len(deleted), len(weeks), ",".join(deleted))
+    return JSONResponse({"deleted": deleted, "not_found": missed,
+                         "remaining": len(_weekly_store.list_editions(limit=200) or [])})
+
+
 @app.post("/api/admin/save-weekly")
 async def api_admin_save_weekly(request: Request,
                                 user: Optional[dict] = Depends(_current_user),
