@@ -13585,15 +13585,17 @@ function _ovHoldStart(){
   pane.style.overflow = 'hidden';
   const ov = document.createElement('div');
   ov.className = 'ldr-overlay';
-  ov.innerHTML =
-    '<div class="ldr"><div class="ldr-ring"><div class="ldr-halo"></div>' +
-      '<svg class="ldr-svg" viewBox="0 0 230 230" aria-hidden="true">' +
-        '<circle cx="115" cy="115" r="100" fill="none" stroke="#d4e2fb" stroke-width="9"/>' +
-        '<circle cx="115" cy="115" r="100" fill="none" stroke="#2970ff" stroke-width="9" stroke-linecap="round" stroke-dasharray="430 628" style="filter:drop-shadow(0 0 6px rgba(41,112,255,.55))">' +
-          '<animateTransform attributeName="transform" type="rotate" from="0 115 115" to="360 115 115" dur="1.1s" repeatCount="indefinite"/></circle>' +
-      '</svg></div>' +
-      '<div class="ldr-text"><span class="ldr-label">Loading the overview…</span></div></div>';
   pane.appendChild(ov);
+  // Use the shared percentage loader rather than a bare spinner, so the
+  // overview shows the same progress read as every other surface.
+  try {
+    window.showLoader(ov, 'Loading the overview', {
+      pills: ['Business', 'Scorecard', 'Signals', 'Verdict'],
+    });
+  } catch (e) {
+    ov.innerHTML = '<div class="ldr"><div class="ldr-text">' +
+                   '<span class="ldr-label">Loading the overview…</span></div></div>';
+  }
   return () => {
     pane.style.position = prev.pos; pane.style.maxHeight = prev.mh; pane.style.overflow = prev.ov;
     ov.classList.add('ldr-out'); setTimeout(() => ov.remove(), 300);
