@@ -21663,6 +21663,16 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
       '.au-ct{font-size:13.5px;line-height:1.55;color:var(--ink,#1e293b)}'+
       '.au-cite{font-size:10.5px;font-weight:700;color:#2970ff;text-decoration:none;vertical-align:super;margin-left:3px}'+
       '.au-cite:hover{text-decoration:underline}'+
+      /* Long-form analysis, collapsed. Native <details> on purpose: panes are
+         written with innerHTML, so an inline <script> would never run. */
+      '.fchk-more{border:1px solid rgba(10,10,10,.08);border-radius:10px;background:rgba(255,255,255,.45)}'+
+      '.fchk-more>summary{cursor:pointer;list-style:none;padding:11px 14px;font-size:13px;font-weight:700;color:#2970ff;display:flex;align-items:center;gap:8px}'+
+      '.fchk-more>summary::-webkit-details-marker{display:none}'+
+      '.fchk-more>summary::after{content:"\\25BE";margin-left:auto;color:#94a3b8;transition:transform .18s}'+
+      '.fchk-more[open]>summary::after{transform:rotate(180deg)}'+
+      '.fchk-more>summary:hover{color:#0040c1}'+
+      '.fchk-more-n{font-weight:600;color:#94a3b8;font-size:11.5px}'+
+      '.fchk-more>div{padding:0 14px 12px}'+
       '</style>';
     return style+
       _sec('Due-diligence scorecard','✅','green',
@@ -21674,9 +21684,16 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
       _sec('The audit','🔬','amber',
         '<div id="fchkAudit"><div class="fchk-mrow"><span class="k">Working…</span>'+
         '<span class="v fchk-load">Auditing the areas that decide this thesis.</span></div></div>')+
+      /* Collapsed by default. The audit above answers several of these in a
+         tighter, cited form, so the tab reads numbers -> verdicts -> optional
+         depth instead of 16 AI blocks stacked on one screen. Nothing is
+         dropped, and it still loads on tab open so expanding is instant. */
       _sec('The analyst questions','🧠','violet',
+        '<details class="fchk-more">'+
+        '<summary>Show the long-form analysis <span class="fchk-more-n">8 questions</span></summary>'+
         '<div id="fchkDD"><div class="fchk-mrow"><span class="k">Working…</span>'+
-        '<span class="v fchk-load">Reading the filing and recent coverage to answer the hard questions.</span></div></div>')+
+        '<span class="v fchk-load">Reading the filing and recent coverage to answer the hard questions.</span></div></div>'+
+        '</details>')+
       '<p class="fchk-note">The scorecard is computed from the latest reported fundamentals — figures can lag or have gaps, and the thresholds are our own research conventions, not standards. The audit and the analyst questions are AI-generated from the filing and recent coverage and may be wrong — a PASS is a reading of the cited evidence, not a verified fact and not a reason to buy; follow each citation to the source. Research and opinion for information only — not advice, not a personal recommendation, not FCA-authorised. Capital at risk.</p>';
   }
 
