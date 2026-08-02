@@ -97,15 +97,17 @@ _PROVIDERS = [
      "https://integrate.api.nvidia.com/v1/chat/completions", 60000),
     ("groq", "GROQ_API_KEY", "GROQ_MODEL", "llama-3.3-70b-versatile",
      "https://api.groq.com/openai/v1/chat/completions", 24000),
-    ("cerebras", "CEREBRAS_API_KEY", "CEREBRAS_MODEL", "llama-3.3-70b",
+    ("cerebras", "CEREBRAS_API_KEY", "CEREBRAS_MODEL", "llama3.3-70b",
      "https://api.cerebras.ai/v1/chat/completions", 20000),
     ("mistral", "MISTRAL_API_KEY", "MISTRAL_MODEL", "mistral-large-latest",
      "https://api.mistral.ai/v1/chat/completions", 100000),
-    ("github", "GITHUB_MODELS_TOKEN", "GITHUB_MODEL", "openai/gpt-4o",
-     "https://models.github.ai/inference/chat/completions", 100000),
     ("together", "TOGETHER_API_KEY", "TOGETHER_MODEL",
      "meta-llama/Llama-3.3-70B-Instruct-Turbo-Free",
      "https://api.together.xyz/v1/chat/completions", 100000),
+    # GitHub Models is mid-retirement (returns HTTP 410 brownout) — kept last
+    # so an existing token is still tried, but it is no longer worth adding.
+    ("github", "GITHUB_MODELS_TOKEN", "GITHUB_MODEL", "openai/gpt-4o",
+     "https://models.github.ai/inference/chat/completions", 100000),
     ("openrouter", "OPENROUTER_API_KEY", "OPENROUTER_MODEL",
      "meta-llama/llama-3.3-70b-instruct:free",
      "https://openrouter.ai/api/v1/chat/completions", 24000),
@@ -298,3 +300,27 @@ async def chat_text(prompt: str, *, max_tokens: int = 1500, timeout: float = 45.
     if tried == 0:
         _note("none", "no free provider configured")
     return None
+
+
+async def probe_all(timeout: float = 20.0) -> list[dict]:
+    """Call every CONFIGURED provider with a tiny prompt and report the raw
+    result. Turns 'the chain failed' into 'this provider, this status, this
+    message' without needing server logs."""
+    out = []
+    for (name, envk, menv, dflt, url, cap) in _PROVIDERS:
+        key = _key(envk)
+        if not key:
+            continue
+        model = _key(menv) or dflt
+        row = {"provider": name, "model": model}
+        try:
+            ok, body = await _call_text(name, url, key, model,
+                                        "Reply with the single word: ok",
+                                        16, timeout, cap)
+            row["ok"] = bool(ok)
+            row["result"] = (body or "")[:180]
+        except Exception as exc:
+            row["ok"] = False
+            row["result"] = f"exception: {exc}"[:180]
+        out.append(row)
+    return out

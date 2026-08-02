@@ -5693,6 +5693,12 @@ async def api_event_intel_status(probe: str = ""):
         pass
     if probe == "groq":
         out["probe_groq"] = await _ei_mod.probe_groq()
+    elif probe == "all":
+        try:
+            import llm_free as _lf2
+            out["probe_all"] = await _lf2.probe_all()
+        except Exception as exc:
+            out["probe_all"] = {"error": str(exc)[:200]}
     return JSONResponse(out, headers={"Cache-Control": "no-store"})
 
 
