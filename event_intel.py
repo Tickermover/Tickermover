@@ -527,9 +527,15 @@ async def answer_questions(ticker: str, text: str, quarter: str = "",
         if not q:
             continue
         src = str(item.get("source") or "").strip().lower()
+        # Models sometimes return answered=true while the text itself says the
+        # sources are silent. Trust the text — otherwise the "N of 5 answered"
+        # tally overstates what we actually know.
+        al = a.lower()
+        disclaimed = ("does not address" in al or "neither the filing" in al
+                      or "not addressed" in al or "no information" in al)
         out.append({"q": q[:200], "a": a[:600],
                     "source": src if src in ("filing", "web") else "filing",
-                    "answered": bool(item.get("answered")) and bool(a)})
+                    "answered": bool(item.get("answered")) and bool(a) and not disclaimed})
     return out or None
 
 
