@@ -186,6 +186,29 @@ def status() -> dict:
     }
 
 
+def strip_fence(text: str) -> str:
+    """Remove a wrapping markdown code fence.
+
+    The free providers (Llama, DeepSeek, Gemini) routinely answer with
+    ```markdown ... ``` even when asked for prose; Anthropic did not, so this
+    only started leaking into user-visible copy after the migration.
+    """
+    t = (text or "").strip()
+    if not t.startswith("```"):
+        return t
+    nl = t.find(chr(10))
+    if nl == -1:
+        return t.strip("`").strip()
+    first = t[3:nl].strip().lower()
+    # only treat it as a fence when the info-string is a language tag
+    if first and not first.isalpha():
+        return t
+    t = t[nl + 1:]
+    if t.rstrip().endswith("```"):
+        t = t.rstrip()[:-3]
+    return t.strip()
+
+
 def parse_json(text: str) -> dict | None:
     """Tolerant JSON extraction (models like to wrap output in fences)."""
     t = (text or "").strip()
@@ -364,6 +387,7 @@ async def chat_text(prompt: str, *, max_tokens: int = 1500, timeout: float = 75.
         if not ok:
             _note(name, body)
             continue
+        body = strip_fence(body)
         if body and body.strip():
             logger.info(f"llm_free: text answered by {name} ({model})")
             return body

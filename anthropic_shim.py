@@ -108,6 +108,10 @@ async def post(url: str | None = None, *, json: dict | None = None,
                                             timeout=timeout, prefer=prefer)
 
     if text:
+        try:
+            text = llm_free.strip_fence(text)
+        except Exception:
+            pass
         return ShimResponse(200, {
             "id": "shim", "type": "message", "role": "assistant",
             "model": "llm_free", "stop_reason": "end_turn",

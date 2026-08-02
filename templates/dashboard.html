@@ -22747,20 +22747,33 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
       +'<div class="pro-sub">Supply chain &amp; ripple-risk mapping</div>'
       +'<button class="dd-upsell" onclick="if(window.openUpgradeModal)openUpgradeModal()">Upgrade to Pro</button></div></div>';
   }
+  /* Cached AI copy generated before the server-side fence strip can still
+     start with ```markdown — the free providers wrap prose in fences where
+     Claude did not. Strip it at render time so old rows read cleanly too. */
+  function _deFence(s){
+    if(s==null) return s;
+    var t=String(s).trim();
+    if(t.indexOf('```')!==0) return t;
+    var nl=t.indexOf(String.fromCharCode(10));
+    if(nl===-1) return t.replace(/`/g,'').trim();
+    var tag=t.slice(3,nl).trim();
+    if(tag && !/^[a-z]+$/i.test(tag)) return t;
+    t=t.slice(nl+1);
+    if(/```\s*$/.test(t)) t=t.replace(/```\s*$/,'');
+    return t.trim();
+  }
   function paneSupplyChain(t){
     // Non-Pro: skip the run button entirely — show the Upgrade teaser directly.
     if(!_drIsPro()) return '<div class="dr-deps" style="position:relative;background:#f0efe8">'+_drDepsLockedTeaser()+'</div>';
-    // Pro: blurred skeleton behind a "Run analysis" button so navigating to the
-    // tab never fires the paid web call until they ask for it.
-    const tk=((t&&t.ticker)||'this company').toString().toUpperCase();
-    const who=(t&&t.ticker)?('Trace who <b>'+tk+'</b> depends on — and who depends on it.'):'Trace who this company depends on — and who depends on it.';
+    // Pro: map immediately. The old "Unfold the mapping" gate existed to avoid
+    // firing a paid web call on tab open; the analysis now runs on the free
+    // provider chain, so making the user click twice bought nothing.
+    setTimeout(function(){ try{ if(window._drRunSupplyChain) window._drRunSupplyChain(); }catch(e){} }, 60);
     return '<div class="dr-deps" style="position:relative;min-height:62vh;background:#f0efe8">'+_drDepsSkel()
-      +'<div class="dr-cta">'
-      +'<div class="dr-cta-card">'
-      +'<div class="dr-cta-ico">🔗</div>'
-      +'<h4>Supply chain &amp; ripple risk</h4>'
-      +'<p>'+who+' One tap maps suppliers, customers and concentration.</p>'
-      +'<button class="dr-cta-btn" onclick="window._drRunSupplyChain&&window._drRunSupplyChain()">Unfold the mapping <span aria-hidden="true">→</span></button>'
+      +'<div class="dr-cta"><div class="dr-cta-card">'
+      +'<div class="dr-cta-ico">&#128279;</div>'
+      +'<h4>Mapping the supply chain</h4>'
+      +'<p>Tracing who this company depends on, and who depends on it&hellip;</p>'
       +'</div></div></div>';
   }
   function _loadSupplyChain(){
