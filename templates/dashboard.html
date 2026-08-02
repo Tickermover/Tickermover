@@ -20898,6 +20898,11 @@ function scRun(id){
     });
   }).catch(function(){ body.innerHTML=pills+'<div class="sc-empty">Could not run that scan.</div>'; scWirePills(body); });
 }
+/* This block lives inside the drawer module's IIFE (it reuses escHTML and
+   tsOpen from that scope), so the entry point must be exported explicitly —
+   the sidebar calls scansInit() from an inline onclick, which only sees
+   globals. Same pattern as window._drRunSupplyChain above. */
+window.scansInit = scansInit;
 function scWirePills(body){
   [].forEach.call(body.querySelectorAll('.sc-pill'),function(b){
     b.addEventListener('click',function(){ scRun(b.getAttribute('data-scan')); });
