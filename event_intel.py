@@ -755,12 +755,18 @@ Return ONLY a JSON object:
 === REPORTED METRICS ===
 {metrics}
 
-=== [F] COMPANY FILING ({source_label}, {quarter}) ===
-{text}
-
 === WEB RESULTS ===
 {web}
+
+=== [F] COMPANY FILING ({source_label}, {quarter}) ===
+{text}
 """
+# NOTE ON BLOCK ORDER: llm_free truncates with prompt[:cap], i.e. from the TAIL.
+# The filing is the long block, so it goes LAST — with the web results last
+# instead, any provider with a smaller context window silently dropped the whole
+# web section, and the model then correctly reported that the web said nothing
+# about sentiment. Same reason _fetch_edgar_recent hoists Risk Factors/MD&A to
+# the front of the filing text. Keep the filing at the bottom.
 
 _AUDIT_VERDICTS = ("pass", "fail", "mixed")
 
@@ -888,6 +894,9 @@ async def get_thesis_audit(ticker: str, force: bool = False, metrics: str = "",
                 "audit": [], "last_error": LAST_ERROR or None}
     out = {"available": True, "ticker": sym, "audit": areas,
            "web_grounded": bool(web_ctx),
+           # What the audit was allowed to read, so "the coverage doesn't say"
+           # can be told apart from "we never gave it any coverage".
+           "web_sources": [v for k, v in srcmap.items() if k != "F" and v.get("url")][:10],
            "source": f"sec_edgar:{edgar.get('source_label','')}",
            "source_url": edgar.get("source_url"),
            "event_date": edgar.get("event_date"),
