@@ -144,8 +144,11 @@ _PROVIDERS = [
     # so an existing token is still tried, but it is no longer worth adding.
     ("github", "GITHUB_MODELS_TOKEN", "GITHUB_MODEL", "openai/gpt-4o",
      "https://models.github.ai/inference/chat/completions", 100000),
+    # The ":free" suffix was retired — openrouter now 404s it with
+    # "This model is unavailable for free ... use this slug instead:
+    # meta-llama/llama-3.3-70b-instruct", so the backstop was dead.
     ("openrouter", "OPENROUTER_API_KEY", "OPENROUTER_MODEL",
-     "meta-llama/llama-3.3-70b-instruct:free",
+     "meta-llama/llama-3.3-70b-instruct",
      "https://openrouter.ai/api/v1/chat/completions", 24000),
 ]
 
@@ -289,6 +292,30 @@ async def _call_gemini_once(base: str, key: str, model: str, prompt: str,
     return True, "".join(p.get("text", "") for p in parts)
 
 
+def _fit_first(usable: list, prompt: str) -> list:
+    """Put providers whose context actually FITS the prompt first.
+
+    Every call site sends `prompt[:cap]`, so a provider with a small window
+    does not fail on a long prompt — it silently answers a truncated one, and
+    because that is an HTTP 200 the chain stops there and never reaches a
+    provider that could have read the whole thing. That is not hypothetical:
+    the weekly generator's system prompt alone is ~9.3k chars against groq's
+    11k cap, so groq answered on a prompt with essentially none of the data
+    attached and mistral (100k) was never tried.
+
+    Order is otherwise preserved, and providers that would truncate stay in the
+    list as a last resort — a degraded answer still beats no answer."""
+    n = len(prompt or "")
+    fits = [p for p in usable if p[5] >= n]
+    short = [p for p in usable if p[5] < n]
+    if short and fits:
+        logger.info("llm_free: prompt %d chars — deferring %s (window too small)",
+                    n, ",".join(p[0] for p in short))
+    # Longest window first among those that would truncate, so the fallback
+    # loses as little of the prompt as possible.
+    return fits + sorted(short, key=lambda p: -p[5])
+
+
 async def chat_json(prompt: str, *, max_tokens: int = 1500, timeout: float = 75.0,
                     prefer: str | None = None) -> dict | None:
     """Run `prompt` through the free-provider chain; return parsed JSON.
@@ -304,6 +331,7 @@ async def chat_json(prompt: str, *, max_tokens: int = 1500, timeout: float = 75.
     usable = [p for p in order if _key(p[1]) and not _cooling(p[0])]
     if not usable:                      # everything cooling — try anyway
         usable = [p for p in order if _key(p[1])]
+    usable = _fit_first(usable, prompt)
     for (name, envk, menv, dflt, url, cap) in usable:
         key = _key(envk)
         if not key:
@@ -373,6 +401,7 @@ async def chat_text(prompt: str, *, max_tokens: int = 1500, timeout: float = 75.
     usable = [p for p in order if _key(p[1]) and not _cooling(p[0])]
     if not usable:
         usable = [p for p in order if _key(p[1])]
+    usable = _fit_first(usable, prompt)
     for (name, envk, menv, dflt, url, cap) in usable:
         key = _key(envk)
         if not key:
