@@ -159,6 +159,15 @@ async def _edgar_ticker_to_cik(ticker: str) -> str | None:
     return _EDGAR_TICKER_MAP.get(sym)
 
 
+async def _strip_html_async(html: str, limit: int = 60000) -> str:
+    """Thread-offloaded _strip_html. The regex pass over a 100k+ char filing is
+    CPU-bound and blocks the event loop long enough to time out concurrent
+    requests (the 3.4MB /app render started returning 502s while the Fact
+    Check pre-warm was chewing through filings)."""
+    import asyncio
+    return await asyncio.to_thread(_strip_html, html, limit)
+
+
 def _strip_html(html: str, limit: int = 60000) -> str:
     """Crude HTML-to-text strip. EDGAR filings are dense — we just need
     enough clean prose for Haiku. Drops <script>/<style>, collapses
@@ -312,7 +321,9 @@ async def _fetch_edgar_recent(ticker: str) -> dict | None:
         return None
     if not html_blobs:
         return None
-    text = " ".join(_strip_html(b, limit=40000) for b in html_blobs)[:90000]
+    import asyncio as _aio
+    _parts = await _aio.gather(*[_strip_html_async(b, 40000) for b in html_blobs]) if html_blobs else []
+    text = " ".join(_parts)[:90000]
 
     # Append the periodic report (10-Q/10-K). MD&A and Risk Factors are where
     # backlog/order-book commentary and "what management is worried about"
@@ -325,7 +336,7 @@ async def _fetch_edgar_recent(ticker: str) -> dict | None:
             async with httpx.AsyncClient(timeout=25, headers=_EDGAR_HEADERS) as c:
                 rq = await c.get(s_url)
             if rq.status_code == 200:
-                extra = _strip_html(rq.text, limit=120000)
+                extra = await _strip_html_async(rq.text, 120000)
                 # Hoist Risk Factors / MD&A to the FRONT of the appended text.
                 # Providers with a small context (Groq ≈24k chars) otherwise
                 # truncate before reaching them — which is exactly why "what is

@@ -867,7 +867,13 @@ async def _mgmt_qa_prewarm() -> None:
     best-ideas/hot list. First-time generation takes 30-90s (EDGAR + web +
     model), so without this the first visitor to each ticker eats that wait.
     Cached 14d in the KV store, so steady state is nearly all cache hits."""
-    await asyncio.sleep(300)               # let the universe + portfolio settle
+    # OFF by default: this loop pulls whole 10-Qs and runs LLM calls, which
+    # competed with the 3.4MB /app render and produced intermittent 502s.
+    # Enable deliberately with FACTCHECK_PREWARM=1 once load is understood.
+    if (os.environ.get("FACTCHECK_PREWARM", "") or "").strip() not in ("1", "true", "yes"):
+        logger.info("Fact Check pre-warm disabled (set FACTCHECK_PREWARM=1 to enable)")
+        return
+    await asyncio.sleep(900)               # let the universe + portfolio settle
     while True:
         try:
             import event_intel as _ei
@@ -882,14 +888,14 @@ async def _mgmt_qa_prewarm() -> None:
                     syms.append(sym)
             by_t = {(x.get("ticker") or "").upper(): x for x in (_universe_data or [])}
             done = 0
-            for sym in syms[:40]:
+            for sym in syms[:12]:
                 try:
                     res = await _ei.get_management_qa(sym, metrics=_metrics_blurb(by_t.get(sym)))
                     if res.get("available"):
                         done += 1
                 except Exception as exc:
                     logger.warning(f"mgmt-qa pre-warm {sym}: {exc}")
-                await asyncio.sleep(5)      # be gentle on EDGAR + free LLM tiers
+                await asyncio.sleep(30)     # be gentle on EDGAR, the free LLM tiers and our own event loop
             if syms:
                 logger.info("🔎 Fact Check pre-warm: %d/%d ready", done, len(syms[:40]))
         except Exception as exc:
