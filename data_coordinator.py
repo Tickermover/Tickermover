@@ -1747,10 +1747,25 @@ class DataCoordinator:
                                 "operating_cashflow": ocf,
                             })
                         result["quarterly_cashflow"] = q_cf
-                        # Surface latest FCF/OCF so scorer can use it
-                        if q_cf:
-                            result["free_cashflow"]      = q_cf[0].get("fcf")
-                            result["operating_cashflow"] = q_cf[0].get("operating_cashflow")
+                        # Surface TTM FCF/OCF — the SUM of the four quarters,
+                        # not the latest one. Everything downstream treats this
+                        # as trailing-twelve-month ("fcf_margin = FCF / revenue
+                        # TTM"), so publishing a single quarter divided the
+                        # wrong numerator by a 12-month denominator: it
+                        # understated FCF margin ~4x and branded any company
+                        # with one soft quarter a cash burner. AMBA read "-7% of
+                        # rev, cash burn" on quarters summing to +$18.2M.
+                        # Only when all four are present — a partial sum would
+                        # be a different, quieter version of the same error;
+                        # leaving the key unset falls through to the yfinance
+                        # TTM value in the merge below.
+                        _q_fcf = [q.get("fcf") for q in q_cf if q.get("fcf") is not None]
+                        _q_ocf = [q.get("operating_cashflow") for q in q_cf
+                                  if q.get("operating_cashflow") is not None]
+                        if len(_q_fcf) == 4:
+                            result["free_cashflow"] = sum(_q_fcf)
+                        if len(_q_ocf) == 4:
+                            result["operating_cashflow"] = sum(_q_ocf)
                 except Exception as e:
                     logger.debug(f"Quarterly CF error {ticker}: {e}")
 
@@ -1892,7 +1907,15 @@ class DataCoordinator:
                 roe         = _safe_float(info.get("returnOnEquity"))
                 roa         = _safe_float(info.get("returnOnAssets"))
                 de_raw      = _safe_float(info.get("debtToEquity"))
-                de          = (de_raw / 100.0) if (de_raw is not None and de_raw > 5) else de_raw
+                # yfinance ALWAYS reports debtToEquity as a PERCENTAGE (AAPL
+                # 78.4 = 0.78x, NET 230.9 = 2.31x, MU 6.33 = 0.06x). The old
+                # `if de_raw > 5` guard therefore inverted the metric for
+                # exactly the companies that deserved the best score: AMBA
+                # files 2.19% debt/equity, kept its raw percent, and the
+                # scorecard read it as a 2.19x ratio and flagged a debt-free
+                # chip designer "heavily levered". Verified against the filed
+                # balance sheets for AMBA / MU / AAPL / NET.
+                de          = (de_raw / 100.0) if de_raw is not None else None
                 curr_ratio  = _safe_float(info.get("currentRatio"))
                 quick_ratio = _safe_float(info.get("quickRatio"))
                 div_yield   = _safe_float(info.get("dividendYield"))
