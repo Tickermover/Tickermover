@@ -454,6 +454,46 @@ body.v2 #sectors-grid .smh-name{font-weight:800;font-size:12.5px;color:#0f172a!i
   border:1px solid rgba(41,112,255,.18);border-radius:8px;padding:6px 12px;cursor:pointer;white-space:nowrap;transition:background .15s,border-color .15s}
 .uni-map-toggle:hover{background:rgba(41,112,255,.14);border-color:rgba(41,112,255,.32)}
 .uni-map-collapsed .sec-grid-map{display:none}
+/* ── Stock Scans ────────────────────────────────────────────────────────── */
+.sc-head{margin:2px 0 18px}
+.sc-title{font-family:var(--font-head);font-size:27px;font-weight:600;letter-spacing:-.01em;margin:0 0 7px;color:var(--ink,#0f172a)}
+.sc-sub{font-size:13.5px;line-height:1.6;color:#64748b;margin:0;max-width:78ch}
+.sc-cats{display:grid;grid-template-columns:repeat(auto-fill,minmax(268px,1fr));gap:12px;margin-bottom:22px}
+.sc-cat{border:1px solid #e6ebf2;border-radius:13px;background:#fff;padding:14px 15px;cursor:pointer;
+  transition:border-color .15s,box-shadow .15s,transform .12s}
+.sc-cat:hover{border-color:#c7d7f5;box-shadow:0 8px 22px -14px rgba(9,20,60,.4);transform:translateY(-1px)}
+.sc-cat.on{border-color:#4F46E5;box-shadow:0 0 0 1px #4F46E5}
+.sc-cat-h{display:flex;align-items:center;gap:9px}
+.sc-cat-ico{width:30px;height:30px;border-radius:9px;background:#eef1ff;display:grid;place-items:center;font-size:15px;flex:none}
+.sc-cat-n{font-size:14px;font-weight:800;color:var(--ink,#0f172a)}
+.sc-cat-tag{font-size:9px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#4F46E5;
+  background:rgba(79,70,229,.12);border-radius:4px;padding:2px 6px;margin-left:auto}
+.sc-cat-b{font-size:12.5px;color:#64748b;margin-top:6px;line-height:1.5}
+.sc-cat-c{font-size:11px;font-weight:700;color:#94a3b8;margin-top:7px}
+.sc-list{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.sc-pill{font-size:12.5px;font-weight:700;padding:7px 13px;border-radius:999px;border:1px solid #e2e8f0;
+  background:#fff;color:#475569;cursor:pointer;transition:background .14s,color .14s,border-color .14s}
+.sc-pill:hover{border-color:#4F46E5;color:#4F46E5}
+.sc-pill.on{background:#4F46E5;border-color:#4F46E5;color:#fff}
+.sc-res-h{display:flex;align-items:baseline;gap:11px;flex-wrap:wrap;margin:0 0 4px}
+.sc-res-n{font-size:16.5px;font-weight:800;color:var(--ink,#0f172a)}
+.sc-res-c{font-size:12px;font-weight:700;color:#4F46E5;background:rgba(79,70,229,.1);border-radius:999px;padding:3px 10px}
+.sc-res-b{font-size:13px;color:#475569;margin:0 0 3px}
+.sc-res-note{font-size:11.5px;color:#94a3b8;margin:0 0 13px}
+.sc-wrap{overflow-x:auto;border:1px solid #e6ebf2;border-radius:12px;background:#fff}
+table.sc{width:100%;border-collapse:collapse;font-size:12.5px;min-width:560px}
+table.sc th,table.sc td{padding:9px 12px;text-align:right;white-space:nowrap;border-bottom:1px solid #f1f5f9}
+table.sc th{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#94a3b8;font-weight:800;
+  background:#fbfcfe;position:sticky;top:0}
+table.sc td:first-child,table.sc th:first-child,
+table.sc td:nth-child(2),table.sc th:nth-child(2){text-align:left}
+table.sc tbody tr:hover td{background:rgba(79,70,229,.04)}
+table.sc tbody tr{cursor:pointer}
+.sc-tix{font-weight:800;color:#2970ff}
+.sc-pos{color:#15803d;font-weight:700}.sc-neg{color:#b91c1c;font-weight:700}
+.sc-empty,.sc-load{padding:34px 12px;text-align:center;color:#94a3b8;font-size:13.5px}
+.sc-note{font-size:11.5px;line-height:1.55;color:#94a3b8;margin:16px 0 0}
+@media(max-width:640px){ .sc-cats{grid-template-columns:1fr} .sc-title{font-size:22px} }
 /* ── Sector connections — animated relationship graph ──────────────────── */
 .secg-wrap{position:relative;grid-column:1/-1;border:1px solid #e6ebf2;border-radius:14px;
   background:radial-gradient(120% 120% at 50% 0%,#fbfdff 0%,#f4f7fb 100%);overflow:hidden}
@@ -7049,6 +7089,10 @@ document.addEventListener('keydown', function(e){
       <svg viewBox="0 0 24 24"><defs><linearGradient id="ahg-mkt" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5FC24A"/><stop offset="1" stop-color="#0D9488"/></linearGradient></defs><rect x="2.5" y="2.5" width="19" height="19" rx="5.5" fill="url(#ahg-mkt)"/><path d="M6 15l3.5-4 3 2L18 7" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Market Analysis</span>
     </div>
 
+    <div class="v2-nav-item" onclick="v2Show('scans',this);scansInit()">
+      <svg viewBox="0 0 24 24"><defs><linearGradient id="ahg-scan" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#818CF8"/><stop offset="1" stop-color="#4F46E5"/></linearGradient></defs><rect x="2.5" y="2.5" width="19" height="19" rx="5.5" fill="url(#ahg-scan)"/><path d="M7 7h3M7 7v3M17 7h-3M17 7v3M7 17h3M7 17v-3M17 17h-3M17 17v-3" stroke="#fff" stroke-width="1.9" fill="none" stroke-linecap="round"/><circle cx="12" cy="12" r="2.4" fill="#fff"/></svg><span>Stock Scans</span><span class="v2-nav-tag" style="background:rgba(79,70,229,.16);color:#4F46E5">New</span>
+    </div>
+
     <a class="v2-nav-item" href="/weekly" style="text-decoration:none">
       <svg viewBox="0 0 24 24"><defs><linearGradient id="ahg-wk" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5DB3F1"/><stop offset="1" stop-color="#0040c1"/></linearGradient></defs><path fill="url(#ahg-wk)" d="M5 3.5h11l3 3v14a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-16a1 1 0 0 1 1-1z"/><path d="M7.5 9h9M7.5 12.5h9M7.5 16h6" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></svg><span>Weekly Editorial</span><span class="v2-nav-tag" style="background:linear-gradient(135deg,#2970ff,#0040c1);color:#fff">NEW</span>
     </a>
@@ -7648,6 +7692,18 @@ document.addEventListener('keydown', function(e){
   #ma-inapp-switch button .d{display:block;font-size:10.5px;font-weight:500;color:#7c93b4;margin-top:1px}
   #ma-inapp-switch button.on{background:#fff;color:#2970ff;box-shadow:0 2px 8px rgba(0,0,0,.12)}
 </style>
+<div id="panel-scans" class="panel">
+  <div class="main">
+    <div class="sc-head">
+      <h2 class="sc-title">Stock Scans</h2>
+      <p class="sc-sub">Pre-built screens over the whole universe — pick a question, get the names that answer it. Every scan states the line it uses, because the threshold is our convention, not a standard.</p>
+    </div>
+    <div class="sc-cats" id="scCats"></div>
+    <div class="sc-body" id="scBody"><div class="sc-empty">Pick a scan to run it.</div></div>
+    <p class="sc-note">Scans read the same reported figures as the rest of the dashboard and can lag or have gaps. A name appearing in a scan is a match on our stated criteria — it is not a recommendation, not advice, and not FCA-authorised. Capital at risk.</p>
+  </div>
+</div>
+
 <div id="panel-market" class="panel">
   <div id="ma-host" class="ma-glass"></div>
   <div class="ma-disc-line">This report is for education and market awareness only — not investment advice.<br>Consult a licensed financial advisor before acting on anything shown here.</div>
@@ -20779,6 +20835,116 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
   function _stageLabel(s){ return {pre:'PRE-BREAKOUT',breakout:'BREAKOUT',extended:'EXTENDED',false:'FALSE BREAKOUT',pullback:'PULLBACK',downtrend:'DOWNTREND',base:'BASING'}[s]||(s||'').toUpperCase(); }
   function _tierOf(g){ return ({A:['★★★★★','Strong Outperform','pos'],B:['★★★★','Outperform','buy'],C:['★★★','Neutral','neu'],D:['★★','Lagging','neg'],F:['★','Avoid','neg']})[g]||['','No call yet','neu']; }
   function _lvl(k,v,cls){ return '<div class="lvl"><span class="lvl-k">'+k+'</span><span class="lvl-v '+(cls||'')+'">'+v+'</span></div>'; }
+
+
+/* ── Stock Scans ────────────────────────────────────────────────────────
+   Catalogue is fetched once; each scan runs server-side over data already in
+   memory, so switching scans is a ~120ms call, not a screen rebuild. */
+var _scCat=null, _scActive=null, _scScan=null;
+function scansInit(){
+  var host=document.getElementById('scCats');
+  if(!host || _scCat) { if(_scCat) scRenderCats(); return; }
+  fetch('/api/scans').then(function(r){return r.json();}).then(function(d){
+    _scCat=(d&&d.categories)||[];
+    if(!_scCat.length){ host.innerHTML='<div class="sc-empty">No scans configured.</div>'; return; }
+    _scActive=_scCat[0].id;
+    scRenderCats();
+    scRunFirstOf(_scActive);
+  }).catch(function(){ host.innerHTML='<div class="sc-empty">Could not load the scan catalogue.</div>'; });
+}
+function scRenderCats(){
+  var host=document.getElementById('scCats'); if(!host||!_scCat) return;
+  host.innerHTML=_scCat.map(function(c){
+    return '<div class="sc-cat'+(c.id===_scActive?' on':'')+'" data-cat="'+escHTML(c.id)+'">'+
+      '<div class="sc-cat-h"><span class="sc-cat-ico">'+escHTML(c.icon||'')+'</span>'+
+        '<span class="sc-cat-n">'+escHTML(c.name)+'</span>'+
+        (c.tag?'<span class="sc-cat-tag">'+escHTML(c.tag)+'</span>':'')+'</div>'+
+      '<div class="sc-cat-b">'+escHTML(c.blurb||'')+'</div>'+
+      '<div class="sc-cat-c">'+c.count+' scan'+(c.count===1?'':'s')+'</div></div>';
+  }).join('');
+  [].forEach.call(host.querySelectorAll('.sc-cat'),function(el){
+    el.addEventListener('click',function(){
+      _scActive=el.getAttribute('data-cat'); scRenderCats(); scRunFirstOf(_scActive);
+    });
+  });
+}
+function scCatById(id){ return (_scCat||[]).filter(function(c){return c.id===id;})[0]; }
+function scRunFirstOf(catId){
+  var c=scCatById(catId);
+  if(!c||!c.scans.length){
+    document.getElementById('scBody').innerHTML='<div class="sc-empty">No scans in this category yet.</div>';
+    return;
+  }
+  scRun(c.scans[0].id);
+}
+function scRun(id){
+  _scScan=id;
+  var body=document.getElementById('scBody'); if(!body) return;
+  var c=scCatById(_scActive)||{scans:[]};
+  var pills='<div class="sc-list">'+c.scans.map(function(x){
+    return '<button class="sc-pill'+(x.id===id?' on':'')+'" data-scan="'+escHTML(x.id)+'">'+escHTML(x.name)+'</button>';
+  }).join('')+'</div>';
+  body.innerHTML=pills+'<div class="sc-load">Running the scan…</div>';
+  scWirePills(body);
+  fetch('/api/scans/'+encodeURIComponent(id)).then(function(r){return r.json();}).then(function(d){
+    if(!d||d.available===false){ body.innerHTML=pills+'<div class="sc-empty">That scan is unavailable.</div>'; scWirePills(body); return; }
+    body.innerHTML=pills+scResultHTML(d);
+    scWirePills(body);
+    [].forEach.call(body.querySelectorAll('tr[data-tix]'),function(tr){
+      tr.addEventListener('click',function(){
+        var t=tr.getAttribute('data-tix');
+        if(t && typeof tsOpen==='function'){ try{ tsOpen(t); }catch(e){} }
+      });
+    });
+  }).catch(function(){ body.innerHTML=pills+'<div class="sc-empty">Could not run that scan.</div>'; scWirePills(body); });
+}
+function scWirePills(body){
+  [].forEach.call(body.querySelectorAll('.sc-pill'),function(b){
+    b.addEventListener('click',function(){ scRun(b.getAttribute('data-scan')); });
+  });
+}
+function scFmt(v,fmt){
+  if(v==null||v==='') return '—';
+  var n=parseFloat(v);
+  switch(fmt){
+    case 'ticker': return '<span class="sc-tix">'+escHTML(String(v))+'</span>';
+    case 'text':   return escHTML(String(v));
+    case 'bool':   return v===true?'Yes':(v===false?'No':'—');
+    case 'int':    return isNaN(n)?escHTML(String(v)):String(Math.round(n));
+    case 'usd':    return isNaN(n)?'—':'$'+n.toFixed(2);
+    case 'x1':     return isNaN(n)?'—':n.toFixed(1)+'x';
+    case 'x2':     return isNaN(n)?'—':n.toFixed(2)+'x';
+    case 'pct':    return isNaN(n)?'—':n.toFixed(1)+'%';
+    case 'signed': return isNaN(n)?'—':'<span class="'+(n>=0?'sc-pos':'sc-neg')+'">'+(n>0?'+':'')+Math.round(n)+'</span>';
+    case 'pct_signed': return isNaN(n)?'—':'<span class="'+(n>=0?'sc-pos':'sc-neg')+'">'+(n>0?'+':'')+n.toFixed(1)+'%</span>';
+    case 'money':  if(isNaN(n)) return '—';
+                   var a=Math.abs(n);
+                   if(a>=1e12) return '$'+(n/1e12).toFixed(2)+'T';
+                   if(a>=1e9)  return '$'+(n/1e9).toFixed(2)+'B';
+                   if(a>=1e6)  return '$'+(n/1e6).toFixed(1)+'M';
+                   return '$'+n.toFixed(0);
+    default:       return escHTML(String(v));
+  }
+}
+function scResultHTML(d){
+  var cols=d.cols||[], rows=d.rows||[];
+  if(!rows.length){
+    return '<div class="sc-res-h"><span class="sc-res-n">'+escHTML(d.name||'')+'</span></div>'+
+           '<p class="sc-res-b">'+escHTML(d.blurb||'')+'</p>'+
+           '<div class="sc-empty">Nothing matched this scan right now. That is a result too.</div>';
+  }
+  var head='<tr>'+cols.map(function(c){return '<th>'+escHTML(c.label)+'</th>';}).join('')+'</tr>';
+  var body=rows.map(function(r){
+    return '<tr data-tix="'+escHTML(r.ticker||'')+'">'+
+      cols.map(function(c){ return '<td>'+scFmt(r[c.key],c.fmt)+'</td>'; }).join('')+'</tr>';
+  }).join('');
+  return '<div class="sc-res-h"><span class="sc-res-n">'+escHTML(d.name||'')+'</span>'+
+         '<span class="sc-res-c">'+d.matched+' match'+(d.matched===1?'':'es')+
+         (d.shown<d.matched?(' · showing '+d.shown):'')+'</span></div>'+
+    '<p class="sc-res-b">'+escHTML(d.blurb||'')+'</p>'+
+    (d.note?'<p class="sc-res-note">'+escHTML(d.note)+'</p>':'')+
+    '<div class="sc-wrap"><table class="sc"><thead>'+head+'</thead><tbody>'+body+'</tbody></table></div>';
+}
 
   /* ── Technical Setup + Rebound engine (real price-action from candles) ── */
   function tsAnalyzeSetup(candles,t){

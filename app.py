@@ -5832,6 +5832,42 @@ async def api_mgmt_qa(symbol: str, refresh: int = 0):
     return JSONResponse(_clean(data), headers={"Cache-Control": "public, max-age=120"})
 
 
+@app.get("/api/scans")
+async def api_scans():
+    """Scan catalogue — six categories and the screens inside each."""
+    import scans as _sc
+    return JSONResponse(_clean({"categories": _sc.catalogue()}),
+                        headers={"Cache-Control": "public, max-age=600"})
+
+
+@app.get("/api/scans/{scan_id}")
+async def api_scan_run(scan_id: str, limit: int = 50):
+    """Run one scan. Pure arithmetic over data already in memory — no provider
+    call, no AI spend — so this is cheap enough to hit on every tab click."""
+    import scans as _sc
+    src = _sc.source_for(scan_id)
+    if src == "actions":
+        try:
+            rows = (await api_corporate_actions()).body
+            import json as _j
+            rows = (_j.loads(rows) or {}).get("actions") or []
+        except Exception as exc:
+            logger.warning(f"scans: corporate actions unavailable: {exc}")
+            rows = []
+    elif src == "sectors":
+        rows = (market_analysis.get() or {}).get("sectors") or []
+    else:
+        rows = _universe_data or []
+    try:
+        out = _sc.run(scan_id, rows, limit=max(1, min(200, int(limit or 50))))
+    except Exception as exc:
+        logger.error(f"scans: {scan_id} failed: {exc}", exc_info=True)
+        return JSONResponse({"available": False, "reason": "error", "id": scan_id, "rows": []})
+    if not out.get("available"):
+        return JSONResponse(out, status_code=404)
+    return JSONResponse(_clean(out), headers={"Cache-Control": "public, max-age=120"})
+
+
 @app.get("/api/thesis-audit/{symbol}")
 async def api_thesis_audit(symbol: str, refresh: int = 0):
     """Structured pass/fail thesis audit — 4 areas chosen for THIS business,
