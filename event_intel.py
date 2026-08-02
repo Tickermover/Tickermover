@@ -29,7 +29,7 @@ from __future__ import annotations
 import json
 import logging
 import os
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 import httpx
 
@@ -213,9 +213,20 @@ async def _fetch_edgar_recent(ticker: str) -> dict | None:
     # insider filings, so a 40-row window routinely misses the 10-Q entirely
     # and falls through to whatever 8-K happens to be latest (e.g. a CEO
     # compensation award), which answers none of the analyst questions.
-    WINDOW = 300
+    # Bound the search by DATE, not by position. A positional window is fatal
+    # for the heaviest filers: JPM's 300 most recent filings are 280 structured
+    # -note prospectuses (424B2) and its 10-Q sits at index 6661, so every big
+    # bank silently returned "no source". The recent arrays are already parsed
+    # (25k entries for JPM) so a full scan costs nothing, and EDGAR returns
+    # them newest-first, which lets us stop at the first filing past the cutoff.
+    MAX_AGE_DAYS = 500          # a full annual cycle plus slack, so 10-Ks qualify
+    _cutoff = (datetime.now(timezone.utc).date() - timedelta(days=MAX_AGE_DAYS)).isoformat()
+
     def _first(pred):
-        for i, form in enumerate(forms[:WINDOW]):
+        for i, form in enumerate(forms):
+            d = dates[i] if i < len(dates) else ""
+            if d and d < _cutoff:
+                break           # newest-first: everything from here on is older still
             if pred(i, form):
                 return i
         return None
