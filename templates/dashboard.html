@@ -578,8 +578,21 @@ table.stmt th.stmt-lbl,table.stmt td.stmt-lbl{text-align:left;font-weight:600;co
   position:sticky;left:0;background:#fff}
 table.stmt tbody tr:hover td{background:rgba(41,112,255,.04)}
 .stmt-g{font-size:10.5px;font-weight:700;margin-left:6px;padding:1px 5px;border-radius:4px}
-.stmt-g.up{color:#15803d;background:rgba(21,128,61,.1)}
-.stmt-g.dn{color:#b91c1c;background:rgba(185,28,28,.09)}
+/* Chips are coloured by whether the move HELPED, not by its sign — falling debt
+   is green, falling cash is red. `flat` is for lines with no inherent good
+   direction (tax, capex, D&A): the size of the move still matters, so it's
+   shown, but grey so it doesn't read as a verdict. */
+.stmt-g.good{color:#15803d;background:rgba(21,128,61,.1)}
+.stmt-g.bad{color:#b91c1c;background:rgba(185,28,28,.09)}
+.stmt-g.flat{color:#64748b;background:rgba(100,116,139,.1)}
+/* Latest column only, and only where the SIGN itself is the story: a loss, a
+   cash burn, or a net-cash position. Everything else stays plain so these
+   actually stand out on a wall of numbers. */
+table.stmt td.stmt-alert{color:#b91c1c;font-weight:800;background:rgba(185,28,28,.06)}
+table.stmt td.stmt-note-pos{color:#15803d;font-weight:800;background:rgba(21,128,61,.06)}
+.stmt-legend{display:flex;flex-wrap:wrap;gap:14px;align-items:center;margin:10px 0 2px;font-size:11px;color:#64748b}
+.stmt-legend span{display:inline-flex;align-items:center;gap:5px}
+.stmt-legend i{width:10px;height:10px;border-radius:3px;display:inline-block}
 .stmt-note{font-size:11.5px;color:#94a3b8;margin:10px 0 4px;line-height:1.5}
 @media(max-width:640px){table.stmt{font-size:11.5px}table.stmt th,table.stmt td{padding:6px 8px}}
 /* ====== KEY CATALYST BANNER ====== */
@@ -21824,16 +21837,36 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
       rows.map(function(p){ return '<th>'+escHTML(String(p.date||p.calendarYear||'').slice(0,10))+'</th>'; }).join('')+'</tr>';
   }
   /* One line item across every period, with an optional growth read on the
-     newest column so the trend is visible without mental arithmetic. */
-  function _stmtRow(rows,label,key,fmt,growth){
+     newest column so the trend is visible without mental arithmetic.
+
+     `pol` is the direction that HELPS the investor: 'up' (revenue, cash flow,
+     equity), 'dn' (debt, interest expense, share count), or omitted for lines
+     with no inherent good direction (tax, capex, D&A). It drives two things:
+
+       1. The chip's colour. Sign alone is misleading — "Total debt -17%" used
+          to render red and "+37%" green, exactly backwards.
+       2. A highlight on the LATEST cell where the sign itself is the story: an
+          'up' line that has gone negative is a loss or a cash burn; a 'dn' line
+          that has gone negative is a net-cash position. Nothing else is tinted,
+          so on a table of ~100 numbers the few that matter actually stand out. */
+  function _stmtRow(rows,label,key,fmt,growth,pol){
     var f = fmt||_stmtNum;
-    var cells = rows.map(function(p){ return '<td>'+f(p[key])+'</td>'; }).join('');
+    var cells = rows.map(function(p,i){
+      var cls='';
+      if(i===0 && pol){
+        var v=parseFloat(p[key]);
+        if(!isNaN(v) && v<0) cls = (pol==='dn') ? ' class="stmt-note-pos"' : ' class="stmt-alert"';
+      }
+      return '<td'+cls+'>'+f(p[key])+'</td>';
+    }).join('');
     var g='';
     if(growth && rows.length>1){
       var a=parseFloat(rows[0][key]), b=parseFloat(rows[1][key]);
       if(!isNaN(a)&&!isNaN(b)&&b!==0){
         var ch=(a-b)/Math.abs(b)*100;
-        g=' <span class="stmt-g '+(ch>=0?'up':'dn')+'">'+(ch>=0?'+':'')+ch.toFixed(0)+'%</span>';
+        var helped = pol ? (pol==='up' ? ch>=0 : ch<0) : null;
+        var kls = helped===null ? 'flat' : (helped ? 'good' : 'bad');
+        g=' <span class="stmt-g '+kls+'">'+(ch>=0?'+':'')+ch.toFixed(0)+'%</span>';
       }
     }
     return '<tr><td class="stmt-lbl">'+escHTML(label)+g+'</td>'+cells+'</tr>';
@@ -21841,7 +21874,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
   function _stmtTable(title,icon,accent,rows,spec){
     if(!rows||!rows.length) return '';
     var body='<div class="stmt-wrap"><table class="stmt"><thead>'+_stmtHead(rows,title)+'</thead><tbody>'+
-      spec.map(function(sp){ return _stmtRow(rows,sp[0],sp[1],sp[2],sp[3]); }).join('')+
+      spec.map(function(sp){ return _stmtRow(rows,sp[0],sp[1],sp[2],sp[3],sp[4]); }).join('')+
       '</tbody></table></div>';
     return _sec(title,icon,accent,body);
   }
@@ -21858,52 +21891,63 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     if(!d.available){ host.innerHTML=toggle+'<div class="stmt-note">Statements are not available for '+escHTML(sym)+' on this period.</div>'; return; }
     var inc=d.income||[], bal=d.balance||[], cf=d.cashflow||[];
     var html=toggle;
+    /* 5th column = the direction that helps. Left off deliberately where there
+       is no good direction: more R&D or capex is neither good nor bad without
+       knowing the return on it, and a bigger balance sheet is not a better one. */
     html+=_stmtTable('Income statement','📄','green',inc,[
-      ['Revenue','revenue',_stmtNum,true],
+      ['Revenue','revenue',_stmtNum,true,'up'],
       ['Cost of revenue','costOfRevenue'],
-      ['Gross profit','grossProfit',_stmtNum,true],
+      ['Gross profit','grossProfit',_stmtNum,true,'up'],
       ['R&D expense','researchAndDevelopmentExpenses'],
       ['SG&A expense','sellingGeneralAndAdministrativeExpenses'],
       ['Operating expenses','operatingExpenses'],
-      ['Operating income','operatingIncome',_stmtNum,true],
-      ['EBITDA','ebitda',_stmtNum,true],
-      ['Interest expense','interestExpense'],
-      ['Pre-tax income','incomeBeforeTax'],
+      ['Operating income','operatingIncome',_stmtNum,true,'up'],
+      ['EBITDA','ebitda',_stmtNum,true,'up'],
+      ['Interest expense','interestExpense',_stmtNum,false,'dn'],
+      ['Pre-tax income','incomeBeforeTax',_stmtNum,false,'up'],
       ['Income tax','incomeTaxExpense'],
-      ['Net income','netIncome',_stmtNum,true],
-      ['EPS (diluted)','epsDiluted',_stmtPlain,true],
-      ['Shares (diluted)','weightedAverageShsOutDil',_stmtNum],
+      ['Net income','netIncome',_stmtNum,true,'up'],
+      ['EPS (diluted)','epsDiluted',_stmtPlain,true,'up'],
+      ['Shares (diluted)','weightedAverageShsOutDil',_stmtNum,true,'dn'],
     ]);
     html+=_stmtTable('Balance sheet','🏛️','blue',bal,[
-      ['Cash & equivalents','cashAndCashEquivalents',_stmtNum,true],
+      ['Cash & equivalents','cashAndCashEquivalents',_stmtNum,true,'up'],
       ['Short-term investments','shortTermInvestments'],
       ['Receivables','netReceivables'],
       ['Inventory','inventory'],
       ['Total current assets','totalCurrentAssets'],
       ['Total assets','totalAssets',_stmtNum,true],
       ['Total current liabilities','totalCurrentLiabilities'],
-      ['Short-term debt','shortTermDebt'],
-      ['Long-term debt','longTermDebt'],
-      ['Total debt','totalDebt',_stmtNum,true],
+      ['Short-term debt','shortTermDebt',_stmtNum,false,'dn'],
+      ['Long-term debt','longTermDebt',_stmtNum,false,'dn'],
+      ['Total debt','totalDebt',_stmtNum,true,'dn'],
       ['Total liabilities','totalLiabilities'],
-      ['Total equity','totalStockholdersEquity',_stmtNum,true],
-      ['Net debt','netDebt'],
+      ['Total equity','totalStockholdersEquity',_stmtNum,true,'up'],
+      ['Net debt','netDebt',_stmtNum,false,'dn'],
     ]);
     html+=_stmtTable('Cash flow','💰','violet',cf,[
-      ['Net income','netIncome'],
+      ['Net income','netIncome',_stmtNum,false,'up'],
       ['Depreciation & amortisation','depreciationAndAmortization'],
       ['Stock-based compensation','stockBasedCompensation'],
       ['Change in working capital','changeInWorkingCapital'],
-      ['Operating cash flow','operatingCashFlow',_stmtNum,true],
+      ['Operating cash flow','operatingCashFlow',_stmtNum,true,'up'],
       ['Capital expenditure','capitalExpenditure'],
-      ['Free cash flow','freeCashFlow',_stmtNum,true],
+      ['Free cash flow','freeCashFlow',_stmtNum,true,'up'],
       ['Acquisitions','acquisitionsNet'],
       ['Buybacks','commonStockRepurchased'],
       ['Dividends paid','commonDividendsPaid'],
-      ['Net change in cash','netChangeInCash'],
+      ['Net change in cash','netChangeInCash',_stmtNum,false,'up'],
     ]);
+    html+='<div class="stmt-legend">'+
+      '<span><i style="background:rgba(21,128,61,.35)"></i>moved in the company’s favour</span>'+
+      '<span><i style="background:rgba(185,28,28,.35)"></i>moved against it</span>'+
+      '<span><i style="background:rgba(100,116,139,.35)"></i>no inherent good direction</span>'+
+      '<span>Shaded cell = the latest figure is negative (a loss, a cash burn, or net cash)</span>'+
+      '</div>';
     html+='<div class="stmt-note">Source: Financial Modeling Prep company filings · '+
           escHTML(_stmtPeriod==='annual'?'annual periods':'quarterly periods')+', newest first. '+
+          'Chips compare the newest period with the one before it. Direction is our own '+
+          'research convention, not a standard, and a favourable move is not a reason to buy. '+
           'Figures as reported; verify against the filing before relying on them.</div>';
     host.innerHTML=html;
   }
