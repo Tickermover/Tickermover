@@ -54,6 +54,8 @@ def _cool(name: str, detail: str) -> None:
     secs = 0
     if "429" in d or "quota" in d.lower() or "rate limit" in d.lower():
         secs = 900          # 15 min — free quotas usually reset hourly/daily
+    elif "413" in d:
+        secs = 300          # payload/TPM ceiling — try again shortly
     elif "402" in d or "410" in d:
         secs = 21600        # 6 h — needs billing, or the service is retiring
     if secs:
@@ -128,9 +130,9 @@ _PROVIDERS = [
     ("gemini", "GEMINI_API_KEY", "GEMINI_MODEL", "gemini-2.0-flash",
      "https://generativelanguage.googleapis.com/v1beta/models", 700000),
     ("nvidia", "NVIDIA_API_KEY", "NVIDIA_MODEL", "deepseek-ai/deepseek-v4-pro",
-     "https://integrate.api.nvidia.com/v1/chat/completions", 60000),
+     "https://integrate.api.nvidia.com/v1/chat/completions", 45000),
     ("groq", "GROQ_API_KEY", "GROQ_MODEL", "openai/gpt-oss-120b",
-     "https://api.groq.com/openai/v1/chat/completions", 24000),
+     "https://api.groq.com/openai/v1/chat/completions", 11000),
     ("cerebras", "CEREBRAS_API_KEY", "CEREBRAS_MODEL", "gpt-oss-120b",
      "https://api.cerebras.ai/v1/chat/completions", 20000),
     ("mistral", "MISTRAL_API_KEY", "MISTRAL_MODEL", "mistral-large-latest",
@@ -264,7 +266,7 @@ async def _call_gemini_once(base: str, key: str, model: str, prompt: str,
     return True, "".join(p.get("text", "") for p in parts)
 
 
-async def chat_json(prompt: str, *, max_tokens: int = 1500, timeout: float = 30.0,
+async def chat_json(prompt: str, *, max_tokens: int = 1500, timeout: float = 75.0,
                     prefer: str | None = None) -> dict | None:
     """Run `prompt` through the free-provider chain; return parsed JSON.
 
@@ -337,7 +339,7 @@ async def _call_text(name, url, key, model, prompt, max_tokens, timeout, cap):
     return True, body
 
 
-async def chat_text(prompt: str, *, max_tokens: int = 1500, timeout: float = 45.0,
+async def chat_text(prompt: str, *, max_tokens: int = 1500, timeout: float = 75.0,
                     prefer: str | None = None) -> str | None:
     """Plain-text completion through the free chain. Returns None when every
     configured provider fails (see LAST_ERRORS)."""

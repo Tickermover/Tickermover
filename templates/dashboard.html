@@ -7262,7 +7262,12 @@ document.addEventListener('keydown', function(e){
       document.getElementById('weekly-teaser-title').textContent=d.title;
       document.getElementById('weekly-teaser-sub').textContent=d.standfirst||(d.subject?('This week: '+d.subject):'');
       el.style.display='block';
-    }).catch(function(){});
+    }).catch(function(){
+      done=true;
+      slot.querySelectorAll('.fchk-load').forEach(function(el){
+        el.outerHTML='<span class="fchk-weak">Could not load the filing read.</span>';
+      });
+    });
   })();
   </script>
   <div id="v2-overview" style="display:none"></div>
@@ -21544,6 +21549,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
       '.fchk-mrow:first-child{border-top:none}.fchk-mrow .k{color:#64748b;font-weight:600}.fchk-mrow .v{color:#1e293b;line-height:1.5}'+
       '.fchk-bul{margin:0;padding-left:16px}.fchk-bul li{margin-bottom:4px}'+
       '.fchk-weak{color:#94a3b8}'+
+      '.fchk-load{color:#94a3b8;font-style:italic}'+
       '.fchk-badge{display:inline-block;font-size:9.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:2px 6px;border-radius:5px;margin-left:4px;vertical-align:middle}'+
       '.fchk-fil{background:rgba(21,128,61,.1);color:#15803d}.fchk-web{background:rgba(41,112,255,.1);color:#2970ff}'+
       '.fchk-src{font-size:11px;color:#94a3b8;margin-top:8px;padding-top:8px;border-top:1px solid rgba(10,10,10,.06)}.fchk-src a{color:#2970ff}'+
@@ -21606,7 +21612,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
       ];
       var interim=MQ.map(function(p){
         var hit=pool.filter(function(b){return p[1].test(b);}).slice(0,2);
-        return qaRow(p[0], hit.length?hit.map(esc).join(' '):'Reading the filing…', !hit.length);
+        return qaRow(p[0], hit.length?hit.map(esc).join(' '):'<span class="fchk-load">Reading the filing…</span>', !hit.length);
       }).join('');
 
       var head='';
@@ -21624,8 +21630,23 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
   function _fchkLoadQA(sym){
     var slot=document.getElementById('fchkQA'); if(!slot)return;
     var esc=escHTML;
+    // First call for a ticker generates (EDGAR + web + model) and can take a
+    // while; leaving the placeholder up forever reads as a broken tab, so
+    // resolve it either way.
+    var done=false;
+    setTimeout(function(){ if(done)return;
+      slot.querySelectorAll('.fchk-load').forEach(function(el){
+        el.outerHTML='<span class="fchk-weak">Still reading the filing — reopen this tab in a moment.</span>';
+      });
+    }, 45000);
     fetch('/api/mgmt-qa/'+encodeURIComponent(sym)).then(function(r){return r.json();}).then(function(q){
-      if(!q||!q.available||!Array.isArray(q.answers)||!q.answers.length)return;   // keep interim
+      done=true;
+      if(!q||!q.available||!Array.isArray(q.answers)||!q.answers.length){
+        slot.querySelectorAll('.fchk-load').forEach(function(el){
+          el.outerHTML='<span class="fchk-weak">Not available for '+esc(sym)+' yet.</span>';
+        });
+        return;
+      }
       var html=q.answers.map(function(x){
         var weak=!x.answered;
         var a=weak? '<span class="fchk-weak">Neither the filing nor recent coverage addresses this.</span>' : esc(x.a||'');
