@@ -15241,7 +15241,11 @@ const _secgNodes = {};                 // id -> {x,y,vx,vy,el,r,isStock?,parent?
 let _secgEdges = [], _secgAdj = {};
 let _secgDepth = {}, _secgMaxDepth = 1, _secgHasFlow = false;   // chain depth per node (raw materials 0 -> apps N) for the left->right flow layout; _secgHasFlow gates it until real flow edges load
 let _secgStockEdges = [], _secgBloom = null;   // member edges + currently expanded sector
-let _secgFocus = null, _secgRAF = 0, _secgAlpha = 0, _secgW = 0, _secgH = 0;
+/* _secgW/_secgH seed a PLAUSIBLE box, not 0 — the first render can fire while the
+   Universe panel is display:none, and nodes are seeded around (_secgW/2,_secgH/2).
+   Seeding at the origin would bunch the whole web into the top-left corner, and
+   secgMeasure's rescale would faithfully preserve that. */
+let _secgFocus = null, _secgRAF = 0, _secgAlpha = 0, _secgW = 960, _secgH = 560;
 let _secgDragging = null, _secgMoved = false, _secgVisible = true, _secgFrame = 0;
 function _secgHeat(score){ return score >= 68 ? '#16a34a' : score >= 60 ? '#84cc16' : score >= 52 ? '#e0a000' : '#94a3b8'; }
 /* Full-universe sub-sector list (NOT the profile-filtered set). The AI wiring is
@@ -15325,10 +15329,38 @@ function secgLegendHTML(){
     '</div>';
 }
 
+/* Layout padding — the force sim clamps nodes to [PADX, W-PADX] x [PAD, H-PAD],
+   so secgMeasure has to rescale against the same insets. X is the wider of the
+   two because a node's LABEL is centred under it and runs well past the circle
+   ("Semiconductor Test Equipment"); at 48 the end-of-chain labels ran off the
+   rounded edge of .secg-wrap, which is overflow:hidden. */
+const SECG_PAD = 48, SECG_PADX = 78;
+/* Measure the drawing box and remap the existing web into it.
+   Two things this has to get right, both of which used to leave the graph
+   bunched into the top-left with dead space to the right and below:
+     1. A zero-size rect (the Universe panel is display:none when the first
+        render fires) must NOT be latched — it pinned the box to the 320x360
+        floor, and the node clamp with it. Keep the last good size instead.
+     2. When the box GROWS, node coordinates are still spread across the old,
+        smaller box. Nothing re-spreads them (the centering force only pulls
+        inward), so scale them proportionally into the new box.
+   Returns true when the box changed, so callers know to re-kick the sim. */
 function secgMeasure(svg){
   const r = svg.getBoundingClientRect();
-  _secgW = Math.max(320, r.width || 800);
-  _secgH = Math.max(360, r.height || 480);
+  if (!r.width || !r.height) return false;      // hidden/unlaid-out — keep the last good box
+  const W = Math.max(320, r.width), H = Math.max(360, r.height);
+  if (Math.abs(W - _secgW) < 1 && Math.abs(H - _secgH) < 1) return false;
+  if (_secgW > 2 * SECG_PADX && _secgH > 2 * SECG_PAD){
+    const sx = (W - 2 * SECG_PADX) / (_secgW - 2 * SECG_PADX);
+    const sy = (H - 2 * SECG_PAD)  / (_secgH - 2 * SECG_PAD);
+    for (const k in _secgNodes){
+      const p = _secgNodes[k];
+      p.x = SECG_PADX + (p.x - SECG_PADX) * sx;
+      p.y = SECG_PAD  + (p.y - SECG_PAD)  * sy;
+    }
+  }
+  _secgW = W; _secgH = H;
+  return true;
 }
 function secgClientToSvg(svg, cx, cy){
   const r = svg.getBoundingClientRect();
@@ -15358,7 +15390,15 @@ function secgRender(){
     svg.addEventListener('pointerdown', secgPointerDown);
     window.addEventListener('pointermove', secgPointerMove);
     window.addEventListener('pointerup', secgPointerUp);
-    window.addEventListener('resize', () => { const s = grid.querySelector('.secg-svg'); if (s){ secgMeasure(s); secgKick(); } });
+    window.addEventListener('resize', () => { const s = grid.querySelector('.secg-svg'); if (s && secgMeasure(s)) secgKick(); });
+    // window.resize alone misses the cases that actually matter: the SVG is 0x0
+    // while the Universe panel is hidden, and it gains its real size on tab
+    // switch / map expand / sidebar collapse — none of which fire a resize.
+    // Without this the web keeps the small box it was first measured in and
+    // sits bunched in the top-left. RO also fires once on observe.
+    if ('ResizeObserver' in window){
+      new ResizeObserver(() => { if (secgMeasure(svg)) secgKick(); }).observe(svg);
+    }
     document.addEventListener('visibilitychange', () => { if (!document.hidden) secgKick(); });
     // Run the perpetual drift ONLY while the graph is actually on screen (handles
     // tab-switch via display:none, collapse, and scroll-away) — no wasted CPU.
@@ -15479,7 +15519,7 @@ function secgBuildDOM(svg, names, edges){
 function _secgStep(){
   const names = Object.keys(_secgNodes);
   const N = names.length; if (!N) return;
-  const pad = 48, W = _secgW, H = _secgH;
+  const pad = SECG_PAD, padX = SECG_PADX, W = _secgW, H = _secgH;
   // Looser, more spread-out field + a touch of Brownian jitter so the web keeps
   // gently breathing (never freezes) without flying apart.
   const K_REP = 9600, K_SPR = 0.016, SPR_LEN = 186, K_CEN = 0.009, DAMP = 0.9, JITTER = 0.6, K_COL = 0.045;
@@ -15500,7 +15540,7 @@ function _secgStep(){
     const f = (d - L) * K_SPR, fx = dx / d * f, fy = dy / d * f;
     a.vx += fx; a.vy += fy; b.vx -= fx; b.vy -= fy;
   });
-  const colSpan = W - 2 * pad;
+  const colSpan = W - 2 * padX;
   names.forEach(n => {
     const p = _secgNodes[n];
     if (p.isStock || !_secgHasFlow){
@@ -15511,13 +15551,13 @@ function _secgStep(){
       // sector nodes: pull toward the column for their chain depth so the web reads
       // left->right (raw materials -> components -> platforms -> apps) and fills the width.
       const d = (_secgDepth && _secgDepth[n] != null) ? _secgDepth[n] : _secgMaxDepth / 2;
-      const tx = pad + (d / _secgMaxDepth) * colSpan;
+      const tx = padX + (d / _secgMaxDepth) * colSpan;
       p.vx += (tx - p.x) * K_COL + (Math.random() - 0.5) * JITTER;
     }
     p.vy += (H / 2 - p.y) * K_CEN + (Math.random() - 0.5) * JITTER;
     p.vx *= DAMP; p.vy *= DAMP;
     if (p !== _secgDragging){ p.x += p.vx * _secgAlpha; p.y += p.vy * _secgAlpha; }
-    p.x = Math.max(pad, Math.min(W - pad, p.x)); p.y = Math.max(pad, Math.min(H - pad, p.y));
+    p.x = Math.max(padX, Math.min(W - padX, p.x)); p.y = Math.max(pad, Math.min(H - pad, p.y));
   });
 }
 function secgTick(){
