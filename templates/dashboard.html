@@ -21372,165 +21372,125 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
      computed from the latest reported figures (no AI). Verdict is one of
      yes / no / mixed / unknown — "unknown" is shown honestly rather than
      being scored as a pass or a fail. */
+  /* Fact Check tab = KPI scorecard (instant, from reported figures) followed
+     by the AI analyst questions. The earnings-call material lives on its own
+     Management tab — together they made one very long scroll. */
   function paneFactCheck(t){
     const esc=escHTML, num=k=>_fpNum(t,k);
     const M=v=>v==null?null:(Math.abs(v)<=1?v*100:v);
-    const pct=v=>(v>=0?'+':'')+v.toFixed(1)+'%';
-    const Q=[];
-    // q: question, v: 'yes'|'no'|'mixed'|'unknown', a: answer (HTML-safe string), w: why it matters
-    const ask=(q,v,a,w)=>Q.push({q,v,a,w});
+    const K=[];
+    // k: label, v: value string, s: 'good'|'bad'|'warn'|'na', n: one-line note
+    const kpi=(k,v,s,n)=>K.push({k,v,s,n});
+    const pct1=v=>(v>=0?'+':'')+v.toFixed(1)+'%';
 
-    // 1 — Profitability
-    const nm=M(num(['profit_margin','net_margin'])), ni=num(['net_income']), eps=num(['eps','eps_ttm']);
-    if(nm!=null||ni!=null||eps!=null){
-      const good=(nm!=null&&nm>0)||(ni!=null&&ni>0)||(eps!=null&&eps>0);
-      ask('Does the business actually make money?', good?'yes':'no',
-        good?('Yes — profitable on the latest reported figures'+(nm!=null?', net margin '+nm.toFixed(1)+'%':'')+'.')
-            :('No — the latest reported figures show a loss'+(nm!=null?' (net margin '+nm.toFixed(1)+'%)':'')+'.'),
-        'Unprofitable companies depend on financing; profitable ones fund themselves.');
-    } else ask('Does the business actually make money?','unknown','Not enough reported earnings data to answer.','Unprofitable companies depend on financing; profitable ones fund themselves.');
+    const nm=M(num(['profit_margin','net_margin']));
+    kpi('Net margin', nm==null?'—':nm.toFixed(1)+'%', nm==null?'na':(nm>0?'good':'bad'),
+        nm==null?'not reported':(nm>0?'profitable':'loss-making'));
 
-    // 2 — Growth
     const rg=num(['revenue_growth_yoy','revenue_growth']), rgP=rg!=null?(Math.abs(rg)<=2?rg*100:rg):null;
-    if(rgP!=null){
-      const v=rgP>=15?'yes':(rgP>0?'mixed':'no');
-      ask('Is revenue still growing?', v,
-        (rgP>0?'Yes — ':'No — ')+'revenue '+pct(rgP)+' year over year'+(rgP>=15?', a fast rate':(rgP>0?', but modest':', it is shrinking'))+'.',
-        'Growth is the engine of most equity returns; decline changes the whole thesis.');
-    } else ask('Is revenue still growing?','unknown','Revenue growth not available in the latest reported data.','Growth is the engine of most equity returns.');
+    kpi('Revenue growth', rgP==null?'—':pct1(rgP), rgP==null?'na':(rgP>=15?'good':rgP>0?'warn':'bad'),
+        rgP==null?'not reported':(rgP>=15?'fast':rgP>0?'modest':'shrinking'));
 
-    // 3 — Operating leverage (earnings vs revenue)
     const eg=num(['eps_growth_yoy']), egP=eg!=null?(Math.abs(eg)<=2?eg*100:eg):null;
-    if(egP!=null&&rgP!=null){
-      const lev=egP>rgP;
-      ask('Are profits growing faster than sales?', lev?'yes':(egP>0?'mixed':'no'),
-        'EPS '+pct(egP)+' vs revenue '+pct(rgP)+' — '+(lev?'earnings are outpacing sales, so margins are widening':'earnings are lagging sales, so margins are under pressure')+'.',
-        'Operating leverage is what turns revenue growth into shareholder returns.');
-    } else if(egP!=null){
-      ask('Are profits growing?', egP>0?'yes':'no', 'EPS '+pct(egP)+' year over year.', 'Operating leverage turns revenue growth into shareholder returns.');
-    } else ask('Are profits growing faster than sales?','unknown','EPS growth not available in the latest reported data.','Operating leverage turns revenue growth into shareholder returns.');
+    kpi('EPS growth', egP==null?'—':pct1(egP), egP==null?'na':(egP>0?'good':'bad'),
+        (egP!=null&&rgP!=null)?(egP>rgP?'outpacing sales':'lagging sales'):'year over year');
 
-    // 4 — Cash conversion
-    const fcf=num(['free_cashflow']), fm=M(num(['fcf_margin']));
-    if(fcf!=null){
-      ask('Does profit turn into real cash?', fcf>0?'yes':'no',
-        (fcf>0?'Yes — positive free cash flow':'No — free cash flow is negative')+(fm!=null?' ('+fm.toFixed(0)+'% of revenue)':'')+'.',
-        'Cash flow is harder to massage than accounting profit — it is the cleaner signal.');
-    } else ask('Does profit turn into real cash?','unknown','Free cash flow not available.','Cash flow is harder to massage than accounting profit.');
-
-    // 5 — Pricing power
     const gm=M(num(['gross_margin']));
-    if(gm!=null){
-      ask('Does it have pricing power?', gm>=50?'yes':(gm>=30?'mixed':'no'),
-        'Gross margin '+gm.toFixed(0)+'% — '+(gm>=50?'high, which usually signals differentiation':(gm>=30?'moderate, typical of a competitive market':'thin, typical of a commodity or scale business'))+'.',
-        'High gross margin means customers pay up; thin margin leaves no room for error.');
-    } else ask('Does it have pricing power?','unknown','Gross margin not available.','High gross margin means customers pay up.');
+    kpi('Gross margin', gm==null?'—':gm.toFixed(0)+'%', gm==null?'na':(gm>=50?'good':gm>=30?'warn':'bad'),
+        gm==null?'not reported':(gm>=50?'pricing power':gm>=30?'competitive':'commodity-like'));
 
-    // 6 — Balance sheet
+    const om=M(num(['operating_margin']));
+    kpi('Operating margin', om==null?'—':om.toFixed(1)+'%', om==null?'na':(om>0?'good':'bad'),
+        om==null?'not reported':(om>0?'profitable at operating line':'burning at operating line'));
+
+    const fcf=num(['free_cashflow']), fm=M(num(['fcf_margin']));
+    kpi('Free cash flow', fcf==null?'—':(fm!=null?fm.toFixed(0)+'% of rev':(fcf>0?'positive':'negative')),
+        fcf==null?'na':(fcf>0?'good':'bad'), fcf==null?'not reported':(fcf>0?'self-funding':'cash burn'));
+
     const de=num(['debt_to_equity','de_ratio']);
-    if(de!=null){
-      ask('Could the balance sheet survive a downturn?', de<1?'yes':(de<=2?'mixed':'no'),
-        'Debt to equity '+de.toFixed(2)+' — '+(de<1?'conservatively financed':(de<=2?'moderately levered':'heavily levered, which amplifies any downturn'))+'.',
-        'Leverage decides who is forced to sell assets in a bad year.');
-    } else ask('Could the balance sheet survive a downturn?','unknown','Debt/equity not available.','Leverage decides who is forced to sell in a bad year.');
+    kpi('Debt / equity', de==null?'—':de.toFixed(2), de==null?'na':(de<1?'good':de<=2?'warn':'bad'),
+        de==null?'not reported':(de<1?'conservative':de<=2?'moderate':'heavily levered'));
 
-    // 7 — Execution vs expectations
-    const beat=parseInt(t.eps_beat_streak), surp=num(['avg_eps_surprise_pct']);
-    if(!isNaN(beat)){
-      const sP=surp!=null?(Math.abs(surp)<=1?surp*100:surp):null;
-      ask('Does management hit its numbers?', beat>=3?'yes':(beat>=2?'mixed':'no'),
-        beat+' of the last 4 quarters beat EPS estimates'+(sP!=null?', averaging '+pct(sP)+' surprise':'')+'.',
-        'A consistent record of hitting guidance is evidence management understands its own business.');
-    } else ask('Does management hit its numbers?','unknown','Earnings beat history not available.','A record of hitting guidance is evidence management knows its business.');
+    const cr=num(['current_ratio']);
+    kpi('Current ratio', cr==null?'—':cr.toFixed(2), cr==null?'na':(cr>=1.5?'good':cr>=1?'warn':'bad'),
+        cr==null?'not reported':(cr>=1.5?'comfortable':cr>=1?'tight':'short of cover'));
 
-    // 8 — Estimate revisions
+    const roe=M(num(['roe']));
+    kpi('Return on equity', roe==null?'—':roe.toFixed(1)+'%', roe==null?'na':(roe>=15?'good':roe>=8?'warn':'bad'),
+        roe==null?'not reported':(roe>=15?'compounding well':roe>=8?'adequate':'weak'));
+
+    const pe=num(['forward_pe','pe_ratio']), med=(typeof _sectorMed==='function')?_sectorMed(t,'pe_ratio'):null;
+    kpi('P/E vs sector', pe==null?'—':(pe.toFixed(1)+(med!=null?(' vs '+med.toFixed(1)):'')),
+        (pe==null||med==null)?'na':(pe<=med?'good':'warn'),
+        (pe==null)?'no positive earnings':(med==null?'no peer benchmark':(pe<=med?'discount to peers':'premium to peers')));
+
+    const peg=num(['peg_ratio']);
+    kpi('PEG', peg==null?'—':peg.toFixed(2), peg==null?'na':(peg>0&&peg<=1?'good':'warn'),
+        peg==null?'not reported':(peg<=1?'growth not fully priced':'growth already priced'));
+
+    const beat=parseInt(t.eps_beat_streak);
+    kpi('Earnings beats', isNaN(beat)?'—':(beat+' of 4'), isNaN(beat)?'na':(beat>=3?'good':beat>=2?'warn':'bad'),
+        isNaN(beat)?'no history':'last four quarters');
+
     const rev=t.eps_revisions_30d;
     if(rev&&(rev.ups!=null||rev.downs!=null)){
       const u=rev.ups||0,d=rev.downs||0;
-      ask('Is the Street revising up or down?', u>d?'yes':(u===d?'mixed':'no'),
-        u+' upward and '+d+' downward EPS revisions in the last 30 days — '+(u>d?'estimates are being raised':(u===d?'evenly split':'estimates are being cut'))+'.',
-        'Revision direction leads price more reliably than the level of estimates.');
-    } else ask('Is the Street revising up or down?','unknown','No revision data in the last 30 days.','Revision direction often leads price.');
+      kpi('Estimate revisions', u+'↑ '+d+'↓', u>d?'good':(u===d?'warn':'bad'),
+          u>d?'estimates rising':(u===d?'evenly split':'estimates falling'));
+    } else kpi('Estimate revisions','—','na','none in last 30d');
 
-    // 9 — Valuation
-    const pe=num(['forward_pe','pe_ratio']), med=(typeof _sectorMed==='function')?_sectorMed(t,'pe_ratio'):null, peg=num(['peg_ratio']);
-    if(pe!=null&&pe>0&&med!=null){
-      const cheap=pe<=med;
-      ask('What are you paying versus peers?', cheap?'yes':'no',
-        'P/E '+pe.toFixed(1)+' against a sector median of '+med.toFixed(1)+' — '+(cheap?'a discount to peers':'a premium to peers, so the growth must arrive to justify it')+
-        (peg!=null&&peg>0?('. PEG '+peg.toFixed(2)+(peg<=1?', growth not fully priced in':', growth already priced in')):'')+'.',
-        'Price paid sets the return: a good business bought expensively can still disappoint.');
-    } else if(pe!=null&&pe>0){
-      ask('What are you paying versus peers?','mixed','P/E '+pe.toFixed(1)+', but too few sector peers to benchmark against.','Price paid sets the return.');
-    } else ask('What are you paying versus peers?','unknown','No positive P/E available — common for loss-making companies.','Price paid sets the return.');
-
-    // 10 — Capital return
     const dy=num(['dividend_yield']), dyP=dy!=null?(dy<=1?dy*100:dy):null;
-    if(dyP!=null&&dyP>0) ask('Does it pay you to wait?','yes','Yes — dividend yield '+dyP.toFixed(2)+'%.','Income cushions the wait and signals confidence in future cash flow.');
-    else if(dyP!=null) ask('Does it pay you to wait?','no','No dividend — earnings are retained, presumably to reinvest for growth.','No income means the entire return has to come from the share price.');
-    else ask('Does it pay you to wait?','unknown','Dividend data not available.','Income cushions the wait.');
+    kpi('Dividend yield', (dyP==null||dyP<=0)?'—':dyP.toFixed(2)+'%', (dyP!=null&&dyP>0)?'good':'na',
+        (dyP!=null&&dyP>0)?'pays you to wait':'earnings retained');
 
-    // 11 — Returns on capital
-    const roe=M(num(['roe']));
-    if(roe!=null) ask('Does it earn a good return on capital?', roe>=15?'yes':(roe>=8?'mixed':'no'),
-      'Return on equity '+roe.toFixed(1)+'% — '+(roe>=15?'compounding capital efficiently':(roe>=8?'adequate but unremarkable':'weak; capital is not working hard'))+'.',
-      'A business that reinvests at high returns compounds; a low-return one destroys value as it grows.');
+    const sf=M(num(['short_percent_float']));
+    kpi('Short interest', sf==null?'—':sf.toFixed(1)+'%', sf==null?'na':(sf<5?'good':sf<10?'warn':'bad'),
+        sf==null?'not reported':(sf<5?'little scepticism':sf<10?'moderate':'heavy short base'));
 
-    // 12 — Liquidity
-    const cr=num(['current_ratio']);
-    if(cr!=null) ask('Can it cover its short-term bills?', cr>=1.5?'yes':(cr>=1?'mixed':'no'),
-      'Current ratio '+cr.toFixed(2)+' — '+(cr>=1.5?'comfortable liquidity':(cr>=1?'covers obligations, with little slack':'current liabilities exceed current assets'))+'.',
-      'Liquidity problems bite long before solvency ones do.');
+    const inst=M(num(['held_pct_institutions']));
+    kpi('Institutional held', inst==null?'—':inst.toFixed(0)+'%', inst==null?'na':(inst>=50?'good':inst>=25?'warn':'bad'),
+        inst==null?'not reported':(inst>=50?'widely held':inst>=25?'moderate':'thin'));
 
-    // 13 — Where in the range
+    const beta=num(['beta']);
+    kpi('Beta', beta==null?'—':beta.toFixed(2), beta==null?'na':(beta<=1.2?'good':beta<=1.8?'warn':'bad'),
+        beta==null?'not reported':(beta<=1.2?'market-like':beta<=1.8?'more volatile':'far more volatile'));
+
     const px=num(['price']), hi=num(['high_52w','fifty_two_week_high','week52_high']), lo=num(['low_52w','fifty_two_week_low','week52_low']);
     if(px!=null&&hi!=null&&lo!=null&&hi>lo){
       const pos=(px-lo)/(hi-lo)*100;
-      ask('Where is it in its 52-week range?', pos>=70?'mixed':(pos>=30?'yes':'mixed'),
-        'Trading at '+pos.toFixed(0)+'% of its 52-week range ('+lo.toFixed(2)+'–'+hi.toFixed(2)+') — '+
-        (pos>=85?'near the highs, so much of the good news may be priced in':(pos<=15?'near the lows, which is either an opportunity or a warning':'mid-range'))+'.',
-        'Entry point matters: the same business is a different investment at a different price.');
-    }
+      kpi('52-week range', pos.toFixed(0)+'%','warn',
+          pos>=85?'near the highs':(pos<=15?'near the lows':'mid-range'));
+    } else kpi('52-week range','—','na','not available');
 
-    // 14 — Is the market betting against it?
-    const sf=M(num(['short_percent_float']));
-    if(sf!=null) ask('Is the market betting against it?', sf<5?'yes':(sf<10?'mixed':'no'),
-      sf.toFixed(1)+'% of the float is sold short — '+(sf<5?'little organised scepticism':(sf<10?'a moderate short base':'heavy short interest; someone with conviction disagrees'))+'.',
-      'High short interest is a warning worth understanding before you take the other side.');
-
-    // 15 — Who else owns it
-    const inst=M(num(['held_pct_institutions']));
-    if(inst!=null) ask('Do professional investors hold it?', inst>=50?'yes':(inst>=25?'mixed':'no'),
-      inst.toFixed(0)+'% held by institutions — '+(inst>=50?'widely held by professionals':(inst>=25?'moderate institutional backing':'thin institutional ownership'))+'.',
-      'Institutional ownership is a rough proxy for diligence already done — and for who sells in a panic.');
-
-    // 16 — Volatility
-    const beta=num(['beta']);
-    if(beta!=null) ask('What ride are you signing up for?', beta<=1.2?'yes':(beta<=1.8?'mixed':'no'),
-      'Beta '+beta.toFixed(2)+' — '+(beta<=1.2?'moves roughly with the market':(beta<=1.8?'noticeably more volatile than the market':'far more volatile than the market'))+'.',
-      'Volatility is not risk, but it is the drawdown you have to be able to sit through.');
-
-    // 17 — Next catalyst
     const ed=t.earnings_date||t.next_earnings_date, days=num(['days_to_earnings']);
-    const when=ed?('around '+esc(String(ed))):(days!=null&&days>=0?('in about '+Math.round(days)+' days'):null);
-    ask('What could move it next?', when?'yes':'unknown',
-      when?('The next scheduled catalyst is the earnings report '+when+'.'):'No dated catalyst on file — watch the next earnings report and analyst revisions.',
-      'Knowing the next dated event tells you when the thesis gets tested.');
+    kpi('Next earnings', ed?esc(String(ed)):(days!=null&&days>=0?('~'+Math.round(days)+'d'):'—'),
+        (ed||days!=null)?'warn':'na','when the thesis gets tested');
 
-    const VLBL={yes:'YES',no:'NO',mixed:'MIXED',unknown:'NO DATA'};
-    const answered=Q.filter(x=>x.v!=='unknown');
-    const yes=Q.filter(x=>x.v==='yes').length, no=Q.filter(x=>x.v==='no').length, mixed=Q.filter(x=>x.v==='mixed').length;
-    const rows=Q.map(x=>
-      '<div class="fq fq-'+x.v+'">'+
-        '<div class="fq-top"><span class="fq-q">'+esc(x.q)+'</span><span class="fq-v">'+VLBL[x.v]+'</span></div>'+
-        '<div class="fq-a">'+x.a+'</div>'+
-        '<div class="fq-w">'+esc(x.w)+'</div>'+
-      '</div>').join('');
+    const good=K.filter(x=>x.s==='good').length, bad=K.filter(x=>x.s==='bad').length,
+          warn=K.filter(x=>x.s==='warn').length, na=K.filter(x=>x.s==='na').length;
+    const tiles=K.map(function(x){
+      return '<div class="kpi kpi-'+x.s+'"><div class="kpi-k">'+esc(x.k)+'</div>'+
+             '<div class="kpi-v">'+x.v+'</div><div class="kpi-n">'+esc(x.n)+'</div></div>';
+    }).join('');
     let desc=(t.description||t.long_business_summary||'').trim();
-    const biz=desc?(esc(desc.slice(0,340))+(desc.length>340?'…':'')):(esc(t.name||t.ticker||'This company')+' is a US-listed '+esc(t.sector||'')+' company.');
+    const biz=desc?(esc(desc.slice(0,300))+(desc.length>300?'…':'')):(esc(t.name||t.ticker||'This company')+' is a US-listed '+esc(t.sector||'')+' company.');
+
     const style='<style>'+
-      '.fq{border-top:1px solid rgba(10,10,10,.07);padding:13px 0 12px}'+
-      '.fq:first-child{border-top:none}'+
+      '.kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:4px}'+
+      '.kpi{border:1px solid rgba(10,10,10,.09);border-left-width:3px;border-radius:10px;padding:10px 12px;background:var(--surf-1,#fff)}'+
+      '.kpi-k{font-size:10.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#94a3b8}'+
+      '.kpi-v{font-size:19px;font-weight:700;color:var(--ink,#0A0A0A);margin:3px 0 2px;line-height:1.15}'+
+      '.kpi-n{font-size:11.5px;color:#64748b;line-height:1.35}'+
+      '.kpi-good{border-left-color:#15803d}.kpi-good .kpi-v{color:#15803d}'+
+      '.kpi-bad{border-left-color:#b91c1c}.kpi-bad .kpi-v{color:#b91c1c}'+
+      '.kpi-warn{border-left-color:#b45309}.kpi-warn .kpi-v{color:#b45309}'+
+      '.kpi-na{border-left-color:#cbd5e1}.kpi-na .kpi-v{color:#94a3b8}'+
+      '.fchk-biz{font-size:13.5px;line-height:1.55;color:var(--ink,#334155);margin:0 0 10px}'+
+      '.fchk-tally{display:flex;gap:8px;flex-wrap:wrap;margin:2px 0 10px}'+
+      '.fchk-tally span{font-size:11.5px;font-weight:700;padding:4px 10px;border-radius:999px}'+
+      '.ft-y{color:#15803d;background:rgba(21,128,61,.1)}.ft-n{color:#b91c1c;background:rgba(185,28,28,.09)}'+
+      '.ft-m{color:#b45309;background:rgba(180,83,9,.1)}.ft-u{color:#64748b;background:rgba(100,116,139,.1)}'+
+      '.fq{border-top:1px solid rgba(10,10,10,.07);padding:13px 0 12px}.fq:first-child{border-top:none}'+
       '.fq-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px}'+
       '.fq-q{font-size:14px;font-weight:700;color:var(--ink,#0A0A0A);line-height:1.35}'+
       '.fq-v{flex:none;font-size:10.5px;font-weight:800;letter-spacing:.08em;padding:3px 9px;border-radius:999px;border:1px solid}'+
@@ -21539,52 +21499,69 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
       '.fq-mixed .fq-v{color:#b45309;border-color:rgba(180,83,9,.35);background:rgba(180,83,9,.08)}'+
       '.fq-unknown .fq-v{color:#94a3b8;border-color:rgba(148,163,184,.4);background:rgba(148,163,184,.08)}'+
       '.fq-a{font-size:13.5px;line-height:1.55;color:var(--ink,#1e293b);margin-top:5px}'+
-      '.fq-w{font-size:11.5px;line-height:1.5;color:#94a3b8;margin-top:4px;font-style:italic}'+
-      '.fchk-biz{font-size:13.5px;line-height:1.55;color:var(--ink,#334155);margin:0 0 10px}'+
-      '.fchk-tally{display:flex;gap:8px;flex-wrap:wrap;margin:2px 0 4px}'+
-      '.fchk-tally span{font-size:11.5px;font-weight:700;padding:4px 10px;border-radius:999px}'+
-      '.ft-y{color:#15803d;background:rgba(21,128,61,.1)}.ft-n{color:#b91c1c;background:rgba(185,28,28,.09)}'+
-      '.ft-m{color:#b45309;background:rgba(180,83,9,.1)}.ft-u{color:#64748b;background:rgba(100,116,139,.1)}'+
-      '.fchk-mrow{display:grid;grid-template-columns:130px 1fr;gap:12px;padding:9px 0;border-top:1px solid rgba(10,10,10,.06);font-size:13px}'+
-      '.fchk-mrow:first-child{border-top:none}.fchk-mrow .k{color:#64748b;font-weight:600}.fchk-mrow .v{color:#1e293b;line-height:1.5}'+
-      '.fchk-bul{margin:0;padding-left:16px}.fchk-bul li{margin-bottom:4px}'+
-      '.fchk-weak{color:#94a3b8}'+
-      '.fchk-load{color:#94a3b8;font-style:italic}'+
-      '.fchk-badge{display:inline-block;font-size:9.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:2px 6px;border-radius:5px;margin-left:4px;vertical-align:middle}'+
-      '.fchk-fil{background:rgba(21,128,61,.1);color:#15803d}.fchk-web{background:rgba(41,112,255,.1);color:#2970ff}'+
-      '.fchk-src{font-size:11px;color:#94a3b8;margin-top:8px;padding-top:8px;border-top:1px solid rgba(10,10,10,.06)}.fchk-src a{color:#2970ff}'+
-      '.fchk-sub2{font-size:10.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#94a3b8;margin:14px 0 2px;padding-top:10px;border-top:1px solid rgba(10,10,10,.07)}'+
+      '.fchk-src{font-size:11px;color:#94a3b8;margin-top:10px;padding-top:8px;border-top:1px solid rgba(10,10,10,.06)}.fchk-src a{color:#2970ff}'+
+      '.fchk-weak{color:#94a3b8}.fchk-load{color:#94a3b8;font-style:italic}'+
       '.fchk-note{font-size:11.5px;line-height:1.55;color:#94a3b8;margin-top:10px}'+
-      '@media(max-width:520px){.fchk-mrow{grid-template-columns:1fr}.fq-top{flex-direction:column;gap:4px}}'+
       '</style>';
     return style+
-      _sec('The analyst questions','🧠','violet',
-        '<div id="fchkDD"><div class="fchk-mrow"><span class="k">Working…</span><span class="v fchk-load">Reading the filing and recent coverage to answer the hard questions.</span></div></div>')+
-      _sec('Due-diligence checkpoints','✅','green',
+      _sec('Due-diligence scorecard','✅','green',
         '<p class="fchk-biz"><b>The business.</b> '+biz+'</p>'+
-        '<div class="fchk-tally"><span class="ft-y">'+yes+' clear yes</span><span class="ft-m">'+mixed+' mixed</span>'+
-          '<span class="ft-n">'+no+' concern'+(no===1?'':'s')+'</span><span class="ft-u">'+(Q.length-answered.length)+' no data</span></div>'+
-        rows)+
-      _sec('What management said · latest call','🎙️','blue','<div id="fchkMgmt"><div class="fchk-mrow"><span class="k">Loading…</span><span class="v">Fetching the latest earnings-call summary.</span></div></div>')+
-      '<p class="fchk-note">Every answer above is computed from the latest reported fundamentals — figures can lag or have gaps, and the thresholds behind each verdict are our own research conventions, not standards. A page of "yes" answers is not a reason to buy. The management summary is AI-generated from the earnings call and may be wrong — verify against the filing. Research and opinion for information only — not advice, not a personal recommendation, not FCA-authorised. Capital at risk.</p>';
+        '<div class="fchk-tally"><span class="ft-y">'+good+' strong</span><span class="ft-m">'+warn+' watch</span>'+
+          '<span class="ft-n">'+bad+' weak</span><span class="ft-u">'+na+' no data</span></div>'+
+        '<div class="kpi-grid">'+tiles+'</div>')+
+      _sec('The analyst questions','🧠','violet',
+        '<div id="fchkDD"><div class="fchk-mrow"><span class="k">Working…</span>'+
+        '<span class="v fchk-load">Reading the filing and recent coverage to answer the hard questions.</span></div></div>')+
+      '<p class="fchk-note">The scorecard is computed from the latest reported fundamentals — figures can lag or have gaps, and the thresholds are our own research conventions, not standards. The analyst questions are AI-generated from the filing and recent coverage and may be wrong — verify against the source. Research and opinion for information only — not advice, not a personal recommendation, not FCA-authorised. Capital at risk.</p>';
   }
-  /* Management box. Two independent loads:
-       1) /api/event-intel  → what the call/filing covered (sections + bullets)
-       2) /api/mgmt-qa      → the five analyst questions, answered from the
-                              filing by Groq (free tier, works without
-                              Anthropic credit). Falls back to a keyword match
-                              over the summary when that is unavailable. */
+
+  /* Management tab — the earnings call in its own space. */
+  function paneManagement(t){
+    return '<style>'+
+      '.fchk-mrow{display:grid;grid-template-columns:150px 1fr;gap:12px;padding:9px 0;border-top:1px solid rgba(10,10,10,.06);font-size:13px}'+
+      '.fchk-mrow:first-child{border-top:none}.fchk-mrow .k{color:#64748b;font-weight:600}.fchk-mrow .v{color:#1e293b;line-height:1.5}'+
+      '.fchk-bul{margin:0;padding-left:16px}.fchk-bul li{margin-bottom:4px}'+
+      '.fchk-sub2{font-size:10.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#94a3b8;margin:14px 0 2px;padding-top:10px;border-top:1px solid rgba(10,10,10,.07)}'+
+      '.fchk-badge{display:inline-block;font-size:9.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:2px 6px;border-radius:5px;margin-left:4px;vertical-align:middle}'+
+      '.fchk-fil{background:rgba(21,128,61,.1);color:#15803d}.fchk-web{background:rgba(41,112,255,.1);color:#2970ff}'+
+      '@media(max-width:520px){.fchk-mrow{grid-template-columns:1fr}}'+
+      '</style>'+
+      _sec('What management said · latest call','🎙️','blue',
+        '<div id="fchkMgmt"><div class="fchk-mrow"><span class="k">Loading…</span>'+
+        '<span class="v">Fetching the latest filing and earnings-call summary.</span></div></div>')+
+      '<p class="fchk-note">AI-generated from the company\'s own filing and recent coverage — verify against the source before relying on it. Not advice, not FCA-authorised. Capital at risk.</p>';
+  }
+
+  /* Analyst questions (Fact Check tab) — the AI checkpoints. */
+  function _fchkLoadDD(){
+    var host=document.getElementById('fchkDD'); if(!host||host.getAttribute('data-loaded'))return;
+    var sym=(_drState&&_drState.full&&_drState.full.ticker)||''; if(!sym)return;
+    host.setAttribute('data-loaded','1');
+    var esc=escHTML, done=false;
+    setTimeout(function(){ if(!done) host.innerHTML='<div class="fchk-mrow"><span class="k">Still working</span><span class="v fchk-weak">Reading the filing — reopen this tab in a moment.</span></div>'; }, 60000);
+    fetch('/api/mgmt-qa/'+encodeURIComponent(sym)).then(function(r){return r.json();}).then(function(q){
+      done=true;
+      var cps=(q&&Array.isArray(q.checkpoints))?q.checkpoints:[];
+      if(!cps.length){ host.innerHTML='<div class="fchk-mrow"><span class="k">Not available</span><span class="v fchk-weak">No filing-based analysis for '+esc(sym)+' yet.</span></div>'; return; }
+      var VC={strength:'fq-yes',concern:'fq-no',mixed:'fq-mixed',unclear:'fq-unknown'};
+      var VL={strength:'STRENGTH',concern:'CONCERN',mixed:'MIXED',unclear:'UNCLEAR'};
+      host.innerHTML=cps.map(function(c){
+        var cls=VC[c.verdict]||'fq-mixed', lbl=VL[c.verdict]||'MIXED';
+        return '<div class="fq '+cls+'"><div class="fq-top"><span class="fq-q">'+esc(c.q||'')+
+               '</span><span class="fq-v">'+lbl+'</span></div><div class="fq-a">'+esc(c.a||'')+'</div></div>';
+      }).join('')+'<div class="fchk-src">Analysed from the filing, the reported metrics and recent coverage — AI-extracted, verify before relying on it.</div>';
+    }).catch(function(){ done=true; host.innerHTML='<div class="fchk-mrow"><span class="k">Unavailable</span><span class="v fchk-weak">Could not load the analysis.</span></div>'; });
+  }
+
+  /* Management tab loader — call summary + the five management questions. */
   function _fchkLoadMgmt(){
     var box=document.getElementById('fchkMgmt'); if(!box||box.getAttribute('data-loaded'))return;
     var sym=(_drState&&_drState.full&&_drState.full.ticker)||''; if(!sym)return;
     box.setAttribute('data-loaded','1');
     var esc=escHTML;
     function row(k,items){ if(!items||!items.length)return ''; return '<div class="fchk-mrow"><span class="k">'+esc(k)+'</span><span class="v">'+items.slice(0,3).map(esc).join(' ')+'</span></div>'; }
-    function qaRow(q,a,weak){ return '<div class="fchk-mrow"><span class="k">'+esc(q)+'</span><span class="v'+(weak?' fchk-weak':'')+'">'+a+'</span></div>'; }
-
     fetch('/api/event-intel/'+encodeURIComponent(sym)).then(function(r){return r.json();}).then(function(d){
       d=d||{};
-      // ── what was covered ──
       var bullets='';
       if(Array.isArray(d.sections)&&d.sections.length){
         bullets=d.sections.map(function(s){
@@ -21595,32 +21572,10 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
         }).join('');
       }
       if(!bullets) bullets=row('Key updates',d.key_updates)+row('Operations',d.operations)+row('Outlook',d.outlook)+row('Risks flagged',d.risks);
-      if(!bullets&&d.raw_excerpt) bullets='<div class="fchk-mrow"><span class="k">In their words</span><span class="v">“'+esc(String(d.raw_excerpt).slice(0,400))+'”</span></div>';
-
-      // ── interim keyword-matched answers (replaced by /api/mgmt-qa below) ──
-      var pool=[];
-      if(Array.isArray(d.sections)) d.sections.forEach(function(s){
-        var h=(s&&s.heading)||''; ((s&&s.bullets)||[]).forEach(function(b){ pool.push(String(b)); });
-      });
-      ['key_updates','operations','outlook','risks'].forEach(function(k){
-        if(Array.isArray(d[k])) d[k].forEach(function(b){ pool.push(String(b)); });
-      });
-      var MQ=[
-        ['Is demand actually improving?', /demand|order|booking|backlog|pipeline|volume|customer|adoption|record revenue|growth accelerat/i],
-        ['Are margins sustainable or temporary?', /margin|pricing|cost|mix|efficien|one-time|non-recurring|favorab/i],
-        ['Is the order book healthy?', /backlog|order|booking|rpo|remaining performance|deferred revenue|contract/i],
-        ['What is management worried about?', /risk|headwind|challeng|uncertain|caution|pressure|weak|slow|constrain|supply|competit|regulat/i],
-        ['Confident, or just optimistic?', /guidance|outlook|expect|forecast|confident|raise|reiterat|full[- ]year/i]
-      ];
-      var interim=MQ.map(function(p){
-        var hit=pool.filter(function(b){return p[1].test(b);}).slice(0,2);
-        return qaRow(p[0], hit.length?hit.map(esc).join(' '):'<span class="fchk-load">Reading the filing…</span>', !hit.length);
-      }).join('');
-
       var head='';
       if(d.event_title||d.event_date) head='<div class="fchk-mrow"><span class="k">Latest filing</span><span class="v">'+esc(d.event_title||'')+(d.event_date?(' · '+esc(d.event_date)):'')+'</span></div>';
-      var covered = bullets? ('<div class="fchk-sub2">Everything management covered</div>'+bullets) : '';
-      box.innerHTML=head+'<div id="fchkQA">'+interim+'</div>'+covered;
+      box.innerHTML=head+'<div id="fchkQA"><div class="fchk-mrow"><span class="k">Working…</span><span class="v fchk-load">Reading what management actually said.</span></div></div>'+
+                    (bullets?('<div class="fchk-sub2">Everything management covered</div>'+bullets):'');
       _fchkLoadQA(sym);
     }).catch(function(){
       box.innerHTML='<div class="fchk-mrow"><span class="k">Unavailable</span><span class="v">Could not load the filing summary.</span></div>';
@@ -21628,50 +21583,24 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     });
   }
 
-  /* Replaces the interim answers with real ones read out of the filing. */
   function _fchkLoadQA(sym){
     var slot=document.getElementById('fchkQA'); if(!slot)return;
-    var esc=escHTML;
-    // First call for a ticker generates (EDGAR + web + model) and can take a
-    // while; leaving the placeholder up forever reads as a broken tab, so
-    // resolve it either way.
-    var done=false;
-    setTimeout(function(){ if(done)return;
-      slot.querySelectorAll('.fchk-load').forEach(function(el){
-        el.outerHTML='<span class="fchk-weak">Still reading the filing — reopen this tab in a moment.</span>';
-      });
-    }, 45000);
+    var esc=escHTML, done=false;
+    setTimeout(function(){ if(!done) slot.innerHTML='<div class="fchk-mrow"><span class="k">Still reading</span><span class="v fchk-weak">Reopen this tab in a moment.</span></div>'; }, 60000);
     fetch('/api/mgmt-qa/'+encodeURIComponent(sym)).then(function(r){return r.json();}).then(function(q){
       done=true;
-      if(!q||!q.available||!Array.isArray(q.answers)||!q.answers.length){
-        slot.querySelectorAll('.fchk-load').forEach(function(el){
-          el.outerHTML='<span class="fchk-weak">Not available for '+esc(sym)+' yet.</span>';
-        });
-        return;
-      }
-      var html=q.answers.map(function(x){
+      var ans=(q&&Array.isArray(q.answers))?q.answers:[];
+      if(!ans.length){ slot.innerHTML='<div class="fchk-mrow"><span class="k">Not available</span><span class="v fchk-weak">No call summary for '+esc(sym)+' yet.</span></div>'; return; }
+      var html=ans.map(function(x){
         var weak=!x.answered;
         var a=weak? '<span class="fchk-weak">Neither the filing nor recent coverage addresses this.</span>' : esc(x.a||'');
         var badge=(!weak&&x.source)?('<span class="fchk-badge fchk-'+(x.source==='web'?'web':'fil')+'">'+(x.source==='web'?'web':'filing')+'</span>'):'';
         return '<div class="fchk-mrow"><span class="k">'+esc(x.q||'')+'</span><span class="v">'+a+' '+badge+'</span></div>';
       }).join('');
-      var cps=q.checkpoints;
-      if(Array.isArray(cps)&&cps.length){
-        var host=document.getElementById('fchkDD');
-        if(host){
-          var VC={strength:'fq-yes',concern:'fq-no',mixed:'fq-mixed',unclear:'fq-unknown'};
-          var VL={strength:'STRENGTH',concern:'CONCERN',mixed:'MIXED',unclear:'UNCLEAR'};
-          host.innerHTML=cps.map(function(c){
-            var cls=VC[c.verdict]||'fq-mixed', lbl=VL[c.verdict]||'MIXED';
-            return '<div class="fq '+cls+'"><div class="fq-top"><span class="fq-q">'+esc(c.q||'')+
-                   '</span><span class="fq-v">'+lbl+'</span></div><div class="fq-a">'+esc(c.a||'')+'</div></div>';
-          }).join('')+'<div class="fchk-src">Analysis generated from the filing, the reported metrics and recent coverage — AI-extracted, verify before relying on it.</div>';
-        }
-      }
-      if(q.source_url) html+='<div class="fchk-src">Answered from the company’s own '+esc((q.source||'filing').replace('sec_edgar:',''))+
+      if(q.source_url) html+='<div class="fchk-src">From the company’s own '+esc(String(q.source||'filing').replace('sec_edgar:',''))+
         (q.event_date?(' dated '+esc(q.event_date)):'')+' · <a href="'+esc(q.source_url)+'" target="_blank" rel="noopener">read the source ↗</a> · AI-extracted, verify before relying on it</div>';
       slot.innerHTML=html;
-    }).catch(function(){});
+    }).catch(function(){ done=true; slot.innerHTML='<div class="fchk-mrow"><span class="k">Unavailable</span><span class="v fchk-weak">Could not load.</span></div>'; });
   }
 
   function paneFinancials(t){
@@ -22077,7 +22006,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     });
   }
 
-  const DR_TABS=['Overview','Fact Check','Technicals','Financials','Valuation','Estimates','News','Benchmark','Supply Chain','Documents'];
+  const DR_TABS=['Overview','Fact Check','Management','Technicals','Financials','Valuation','Estimates','News','Benchmark','Supply Chain','Documents'];
   let _drState=null;
   function tsExpandToFull(ticker){
     const t=_byTicker[(ticker||'').toUpperCase()]; if(!t) return;
@@ -22330,6 +22259,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     dd.innerHTML='<div class="dr-panes">'+
       '<div class="dr-pane" data-pane="Overview">'+paneOverview(t,S,full,candles)+'</div>'+
       '<div class="dr-pane" data-pane="Fact Check" hidden>'+paneFactCheck(full)+'</div>'+
+      '<div class="dr-pane" data-pane="Management" hidden>'+paneManagement(full)+'</div>'+
       '<div class="dr-pane" data-pane="Technicals" hidden>'+paneTechnicals(full,S)+'</div>'+
       '<div class="dr-pane" data-pane="Financials" hidden>'+paneFinancials(full)+'</div>'+
       '<div class="dr-pane" data-pane="Valuation" hidden>'+paneValuation(full)+'</div>'+
@@ -22420,7 +22350,8 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     if(name==='Overview') requestAnimationFrame(()=>tsDrawChartEl());
     if(name==='Documents') try{ _loadDocuments(); }catch(e){}
     if(name==='Insights') try{ _loadInsights(); }catch(e){}
-    if(name==='Fact Check') try{ _fchkLoadMgmt(); }catch(e){}
+    if(name==='Fact Check') try{ _fchkLoadDD(); }catch(e){}
+    if(name==='Management') try{ _fchkLoadMgmt(); }catch(e){}
     /* Supply Chain is web-grounded ($) — gated behind a "Run analysis" button
        (see paneSupplyChain) so merely navigating to the tab never bills. */
     try{ _drNavBuild(); }catch(e){}
