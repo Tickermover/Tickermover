@@ -72,6 +72,18 @@ def _norm(s: str) -> str:
     return "".join(ch if ch.isalnum() else "_" for ch in (s or "").upper())
 
 
+def _model_for(name: str, menv: str, default: str) -> str:
+    """Configured model override, ignored when it is obviously malformed for
+    that provider — a bad override otherwise silently disables the provider."""
+    m = (_key(menv) or "").strip()
+    if not m:
+        return default
+    if name == "nvidia" and "/" not in m:
+        logger.warning("llm_free: ignoring NVIDIA_MODEL=%r (needs 'org/model'), using %s", m, default)
+        return default
+    return m
+
+
 def _key(name: str) -> str:
     """Read a provider key, tolerating (a) common alias names and (b) loose
     naming such as 'Gemini API Key' or 'gemini-api-key'."""
@@ -93,11 +105,11 @@ def _key(name: str) -> str:
 _PROVIDERS = [
     ("gemini", "GEMINI_API_KEY", "GEMINI_MODEL", "gemini-2.0-flash",
      "https://generativelanguage.googleapis.com/v1beta/models", 700000),
-    ("nvidia", "NVIDIA_API_KEY", "NVIDIA_MODEL", "meta/llama-3.3-70b-instruct",
+    ("nvidia", "NVIDIA_API_KEY", "NVIDIA_MODEL", "deepseek-ai/deepseek-v4-pro",
      "https://integrate.api.nvidia.com/v1/chat/completions", 60000),
-    ("groq", "GROQ_API_KEY", "GROQ_MODEL", "llama-3.3-70b-versatile",
+    ("groq", "GROQ_API_KEY", "GROQ_MODEL", "openai/gpt-oss-120b",
      "https://api.groq.com/openai/v1/chat/completions", 24000),
-    ("cerebras", "CEREBRAS_API_KEY", "CEREBRAS_MODEL", "llama3.3-70b",
+    ("cerebras", "CEREBRAS_API_KEY", "CEREBRAS_MODEL", "gpt-oss-120b",
      "https://api.cerebras.ai/v1/chat/completions", 20000),
     ("mistral", "MISTRAL_API_KEY", "MISTRAL_MODEL", "mistral-large-latest",
      "https://api.mistral.ai/v1/chat/completions", 100000),
@@ -140,7 +152,7 @@ def status() -> dict:
         "env_key_names_present": env_key_names(),
         "providers": [
             {"name": n, "configured": bool(_key(envk)),
-             "model": _key(menv) or dflt, "max_input_chars": cap}
+             "model": _model_for(n, menv, dflt), "max_input_chars": cap}
             for (n, envk, menv, dflt, _u, cap) in _PROVIDERS
         ],
         "order": available(),
@@ -185,8 +197,30 @@ async def _call_openai_compatible(url: str, key: str, model: str, prompt: str,
     return True, body
 
 
+_GEMINI_FALLBACKS = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-2.0-flash-lite"]
+
+
 async def _call_gemini(base: str, key: str, model: str, prompt: str,
                        max_tokens: int, timeout: float) -> tuple[bool, str]:
+    """Try the configured Gemini model, then cheaper tiers on quota errors.
+    gemini-2.5-pro has a very small free allowance, so a single 429 there
+    should not cost us the provider with the biggest context window."""
+    tries = [model] + [m for m in _GEMINI_FALLBACKS if m != model]
+    last = ""
+    for i, m in enumerate(tries):
+        ok, body = await _call_gemini_once(base, key, m, prompt, max_tokens, timeout)
+        if ok:
+            if i:
+                logger.info("llm_free: gemini fell back to %s", m)
+            return True, body
+        last = body
+        if "429" not in body and "404" not in body:
+            break
+    return False, last
+
+
+async def _call_gemini_once(base: str, key: str, model: str, prompt: str,
+                            max_tokens: int, timeout: float) -> tuple[bool, str]:
     url = f"{base}/{model}:generateContent"
     payload = {
         "contents": [{"parts": [{"text": prompt}]}],
@@ -221,7 +255,7 @@ async def chat_json(prompt: str, *, max_tokens: int = 1500, timeout: float = 30.
         if not key:
             continue
         tried += 1
-        model = _key(menv) or dflt
+        model = _model_for(name, menv, dflt)
         try:
             if name == "gemini":
                 ok, body = await _call_gemini(url, key, model, prompt[:cap], max_tokens, timeout)
@@ -284,7 +318,7 @@ async def chat_text(prompt: str, *, max_tokens: int = 1500, timeout: float = 45.
         if not key:
             continue
         tried += 1
-        model = _key(menv) or dflt
+        model = _model_for(name, menv, dflt)
         try:
             ok, body = await _call_text(name, url, key, model, prompt, max_tokens, timeout, cap)
         except Exception as exc:
@@ -311,7 +345,7 @@ async def probe_all(timeout: float = 20.0) -> list[dict]:
         key = _key(envk)
         if not key:
             continue
-        model = _key(menv) or dflt
+        model = _model_for(name, menv, dflt)
         row = {"provider": name, "model": model}
         try:
             ok, body = await _call_text(name, url, key, model,
