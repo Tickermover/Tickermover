@@ -333,8 +333,31 @@ shifted to HBM, which prices on capacity not commodity spot" beats "margins rose
 - Where a section's plan names a `table`, build that Markdown table there.
 - Apply the "so what?" test to every paragraph: if it does not change how the reader \
 sees the position, cut it.
-- Vary the rhythm — a short, blunt sentence after a dense one is what makes a desk note \
-readable rather than a data dump.
+
+FORMAT — this is a screen-read report, not an essay. Long grey paragraphs are \
+where readers leave:
+- HARD LIMIT: no paragraph longer than 3 sentences, or roughly 60 words. Break \
+anything longer in two. Two tight paragraphs always beat one dense one.
+- Every section carries at least one BULLETED list. The moment you find yourself \
+writing "first... second... and also", that is a list — set it as one. Bullets are \
+for the parallel things: the drivers, the risks, the numbers, the conditions.
+- Keep bullets to one line each where you can. Lead each with the concrete item in \
+bold, then the point: "- **Gross margin 84.6%** — up from 37.7%, and guided higher."
+- Vary the rhythm. A short, blunt sentence after a dense one is what makes a desk \
+note readable rather than a data dump.
+
+CALLOUT BOXES — use 2-4 across the piece, placed where a reader should stop. They \
+render as a bordered box with an icon, so they must hold something self-contained: a \
+worked example with real numbers, a risk worth isolating, or a definition the rest of \
+the argument depends on. Never use one to restate a paragraph you just wrote. Syntax, \
+on its own lines:
+
+:::note A short, specific title
+Body markdown — paragraphs and bullets both work in here.
+:::
+
+Use `:::note` for an example or an explainer, `:::warn` for a risk or a caveat, \
+`:::good` for what would confirm the thesis. Close every box with its own `:::` line.
 
 HARD RULES:
 - The GROUND-TRUTH block is authoritative for OUR numbers (scores, grades, prices, \
