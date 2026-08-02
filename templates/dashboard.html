@@ -742,11 +742,18 @@ table.stmt tbody tr:hover td{background:rgba(41,112,255,.04)}
 .dd-sources a:hover{text-decoration:underline}
 
 /* ════════ FULL STOCK SHEET (light · brand-blue · tabbed, full-screen) ════════ */
-/* App atmosphere — warm off-white "paper" with very faint vertical linen lines.
-   Reused everywhere (content, stock-drawer scrim, overlay). */
-:root{--app-atmos:
-  repeating-linear-gradient(90deg, rgba(120,108,84,.02) 0, rgba(120,108,84,.02) 1px, transparent 1px, transparent 104px),
-  #f0efe8;}
+/* App atmosphere — the LANDING PAGE surface (`.bg-alice` in landing.html):
+   alice-blue base with a white highlight top-left and a sky-blue glow
+   bottom-right, so the app reads as the same product as the marketing site.
+   Reused everywhere (content, stock-drawer, overlay). Keep the two in sync. */
+:root{
+  --app-paper:#cdeef8;                 /* = landing's --alice-blue */
+  --app-atmos:
+    radial-gradient(70% 50% at 18% 12%, rgba(255,255,255,.75) 0%, transparent 55%),
+    radial-gradient(55% 50% at 88% 88%, rgba(93,179,241,.42) 0%, transparent 60%),
+    radial-gradient(50% 40% at 50% 50%, rgba(195,225,250,.35) 0%, transparent 65%),
+    var(--app-paper);
+}
 .ssx-overlay{position:fixed;inset:0;z-index:10000;display:none;background:var(--app-atmos);overflow-y:auto;
   --blue:#0040c1;--blue-2:#2970ff;--blue-grad:linear-gradient(120deg,#2970ff 0%,#0042c5 55%,#00359e 100%);
   --up:#16a34a;--down:#ea384c;--ink:#0f172a;--ink-2:#1e293b;--muted:#5d6c7b;--muted-2:#94a3b8;
@@ -5698,7 +5705,7 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
    frosts a PASTEL surface, not a dark scrim. */
 #ts-scrim{position:fixed;inset:0;background:rgba(15,23,42,.45);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);opacity:0;pointer-events:none;transition:opacity .22s;z-index:600}
 #ts-scrim.open{opacity:1;pointer-events:auto}
-#ts-drawer{position:fixed;top:0;right:0;height:100vh;width:min(460px,92vw);background:#f0efe8;z-index:601;font-family:var(--font-body);
+#ts-drawer{position:fixed;top:0;right:0;height:100vh;width:min(460px,92vw);background:var(--app-paper,#cdeef8);z-index:601;font-family:var(--font-body);
     --primary:#0040c1;--amber-2:#D4860A;--ink:#0f172a;--ink-2:#1e293b;--grey:#758696;--grey-2:#5d6c7b;--grey-3:#94a3b8;--up:#16a34a;--down:#ea384c;--hair:rgba(9,9,9,.07);
     --surf:rgba(255,255,255,.60);--surf-2:rgba(255,255,255,.46);--surf-3:rgba(255,255,255,.40);--blue-grad:linear-gradient(120deg,#2970ff 0%,#0042c5 55%,#00359e 100%);
     box-shadow:-24px 0 60px rgba(0,0,0,.24);transform:translateX(100%);transition:transform .26s cubic-bezier(.4,0,.2,1);
@@ -6805,8 +6812,8 @@ html.v2-dark body.v2 #user-email{color:#0f172a!important}
 /* unify the panel frame so there's no extra light box around the content */
 html.v2-dark body.v2.ts-active .v2-app{background:transparent!important}
 /* reliable light theme on the On-the-Radar tab — body.ts-active is toggled by v2Show (no :has dependency) */
-html.v2-dark body.v2.ts-active{background:#f0efe8!important}
-html.v2-dark body.v2.ts-active .v2-app{background:#f0efe8!important}
+html.v2-dark body.v2.ts-active{background:var(--app-paper,#cdeef8)!important}
+html.v2-dark body.v2.ts-active .v2-app{background:var(--app-paper,#cdeef8)!important}
 html.v2-dark body.v2.ts-active .v2-content{background:linear-gradient(180deg,#eef6fe 0%,#e6eefb 45%,#dde8f9 100%)!important}
 html.v2-dark body.v2.ts-active .v2-scroll{background:transparent!important}
 html.v2-dark body.v2.ts-active .main{background:transparent!important;padding:0!important}   /* transparent + no padding so content aligns with the topbar and matches the preview */
@@ -6827,8 +6834,8 @@ html.v2-dark body.v2 .v2-content:has(#panel-hot.active){background:linear-gradie
    surfaces that still carried a dark-mode override, and restore dark
    text where the dark theme had forced it light.
    ════════════════════════════════════════════════════════════════ */
-html.v2-dark body.v2{background:#f0efe8!important}
-html.v2-dark body.v2 .v2-app{background:#f0efe8!important}
+html.v2-dark body.v2{background:var(--app-paper,#cdeef8)!important}
+html.v2-dark body.v2 .v2-app{background:var(--app-paper,#cdeef8)!important}
 html.v2-dark body.v2 .v2-content{background:linear-gradient(180deg,#eef6fe 0%,#e6eefb 45%,#dde8f9 100%)!important}
 html.v2-dark body.v2 .v2-scroll{background:transparent!important}
 html.v2-dark body.v2 .main{background:transparent!important}
@@ -22760,7 +22767,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
   }
   // Pro-locked teaser: blurred map behind the centred Upgrade overlay.
   function _drDepsLockedTeaser(){
-    return '<div class="pro-locked" style="min-height:62vh;background:#f0efe8">'+_drDepsSkel()
+    return '<div class="pro-locked" style="min-height:62vh;background:var(--app-paper,#cdeef8)">'+_drDepsSkel()
       +'<div class="pro-overlay"><div class="pro-lk">🔒 Pro feature</div>'
       +'<div class="pro-sub">Supply chain &amp; ripple-risk mapping</div>'
       +'<button class="dd-upsell" onclick="if(window.openUpgradeModal)openUpgradeModal()">Upgrade to Pro</button></div></div>';
@@ -22782,12 +22789,12 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
   }
   function paneSupplyChain(t){
     // Non-Pro: skip the run button entirely — show the Upgrade teaser directly.
-    if(!_drIsPro()) return '<div class="dr-deps" style="position:relative;background:#f0efe8">'+_drDepsLockedTeaser()+'</div>';
+    if(!_drIsPro()) return '<div class="dr-deps" style="position:relative;background:var(--app-paper,#cdeef8)">'+_drDepsLockedTeaser()+'</div>';
     // Pro: map immediately. The old "Unfold the mapping" gate existed to avoid
     // firing a paid web call on tab open; the analysis now runs on the free
     // provider chain, so making the user click twice bought nothing.
     setTimeout(function(){ try{ if(window._drRunSupplyChain) window._drRunSupplyChain(); }catch(e){} }, 60);
-    return '<div class="dr-deps" style="position:relative;min-height:62vh;background:#f0efe8">'+_drDepsSkel()
+    return '<div class="dr-deps" style="position:relative;min-height:62vh;background:var(--app-paper,#cdeef8)">'+_drDepsSkel()
       +'<div class="dr-cta"><div class="dr-cta-card">'
       +'<div class="dr-cta-ico">&#128279;</div>'
       +'<h4>Mapping the supply chain</h4>'
