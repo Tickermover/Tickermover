@@ -501,9 +501,15 @@ async def _call(system: str, user: str, max_tokens: int, label: str) -> str | No
         "messages": [{"role": "user", "content": user}],
     }
     try:
+        # The timeout MUST be passed explicitly: anthropic_shim.post defaults to
+        # 60s, and the old code only handed _TIMEOUT to an httpx client the shim
+        # never uses. A long-form write asks for thousands of tokens, so
+        # mistral-large was dying at 60s with an empty-message ReadTimeout —
+        # which surfaced in the logs as the uninformative "text exception: ".
         r = await anthropic_shim.post(
             headers={"x-api-key": _KEY, "anthropic-version": "2023-06-01",
                      "content-type": "application/json"},
+            timeout=_TIMEOUT,
             json=body,
         )
         if r.status_code >= 400:
@@ -623,7 +629,7 @@ async def generate(angle: dict, ground: dict) -> dict | None:
     # ── 2 · WRITE ───────────────────────────────────────────────────────
     body_md = _strip_fences(
         await _call(_WRITE_SYSTEM, _write_user(angle, ground, web_ctx, plan),
-                    16000, "write") or "")
+                    8000, "write") or "")
     if not body_md:
         logger.error("weekly_editorial_gen: writer returned nothing")
         return None
@@ -642,7 +648,7 @@ async def generate(angle: dict, ground: dict) -> dict | None:
               "do NOT repeat or re-summarise what is above, and do not open with a new "
               "introduction. Write the remaining planned sections in full, with the "
               "same evidence density, until the piece is complete.",
-            12000, "continue") or "")
+            6000, "continue") or "")
         if more and more not in body_md:
             body_md = body_md.rstrip() + "\n\n" + more
     logger.info("weekly_editorial_gen: body %d words, %d sections planned",

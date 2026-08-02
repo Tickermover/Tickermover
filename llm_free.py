@@ -345,7 +345,7 @@ async def chat_json(prompt: str, *, max_tokens: int = 1500, timeout: float = 75.
                 ok, body = await _call_openai_compatible(url, key, model, prompt[:cap],
                                                          max_tokens, timeout)
         except Exception as exc:
-            _note(name, f"exception: {exc}")
+            _note(name, f"exception: {type(exc).__name__}: {exc}".rstrip(": "))
             continue
         if not ok:
             _note(name, body)
@@ -411,7 +411,7 @@ async def chat_text(prompt: str, *, max_tokens: int = 1500, timeout: float = 75.
         try:
             ok, body = await _call_text(name, url, key, model, prompt, max_tokens, timeout, cap)
         except Exception as exc:
-            _note(name, f"text exception: {exc}")
+            _note(name, f"text exception: {type(exc).__name__}: {exc}".rstrip(": "))
             continue
         if not ok:
             _note(name, body)
