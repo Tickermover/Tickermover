@@ -22832,8 +22832,10 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     if(name==='Valuation') try{ _vhInit(); }catch(e){}
     if(name==='Estimates') try{ _estInit(); }catch(e){}
     if(name==='Management') try{ _fchkLoadMgmt(); }catch(e){}
-    /* Supply Chain is web-grounded ($) — gated behind a "Run analysis" button
-       (see paneSupplyChain) so merely navigating to the tab never bills. */
+    /* Supply Chain maps on tab open. The trigger MUST stay here rather than in
+       paneSupplyChain: that builds while the drawer renders every pane, so it
+       fired on every stock click and covered Overview with its loader. */
+    if(name==='Supply Chain') try{ if(window._drRunSupplyChain) window._drRunSupplyChain(); }catch(e){}
     try{ _drNavBuild(); }catch(e){}
   }
   /* Supply Chain tab — web-grounded dependency / ripple-risk map (lazy, cached
@@ -22905,10 +22907,13 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
   function paneSupplyChain(t){
     // Non-Pro: skip the run button entirely — show the Upgrade teaser directly.
     if(!_drIsPro()) return '<div class="dr-deps" style="position:relative;background:var(--app-paper,#cdeef8)">'+_drDepsLockedTeaser()+'</div>';
-    // Pro: map immediately. The old "Unfold the mapping" gate existed to avoid
-    // firing a paid web call on tab open; the analysis now runs on the free
-    // provider chain, so making the user click twice bought nothing.
-    setTimeout(function(){ try{ if(window._drRunSupplyChain) window._drRunSupplyChain(); }catch(e){} }, 60);
+    // Pro: map on TAB OPEN, not here. paneSupplyChain runs while the drawer
+    // builds every pane up-front, so this used to kick the mapping off on every
+    // stock click — for a hidden tab the user had not asked for. Fetch + loader
+    // then landed on top of Overview. The trigger now lives in tsShowTab, like
+    // every other lazy tab. (The old "Unfold the mapping" click-gate is still
+    // gone: the analysis runs on the free provider chain, so once you are
+    // actually on the tab, making you click twice buys nothing.)
     return '<div class="dr-deps" style="position:relative;min-height:62vh;background:var(--app-paper,#cdeef8)">'+_drDepsSkel()
       +'<div class="dr-cta"><div class="dr-cta-card">'
       +'<div class="dr-cta-ico">&#128279;</div>'
@@ -22923,7 +22928,10 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     const tk=((_drState.t&&_drState.t.ticker)||'').toUpperCase(); if(!tk) return;
     if(host.getAttribute('data-tk')===tk) return;          // already loaded for this stock
     host.setAttribute('data-tk',tk);
-    window.startTimerLoader(host, '🔗 Mapping suppliers, customers & ripple risk for '+tk+'…', {pills:['Suppliers','Customers','Ripple risk','Concentration'], full:true});
+    // INLINE, not full:true. A full-page overlay is absolute/inset:0 on the
+    // closest .drawer, so it covered the entire drawer — including whichever
+    // tab the user was actually looking at. This loader belongs to one pane.
+    window.startTimerLoader(host, '🔗 Mapping suppliers, customers & ripple risk for '+tk+'…', {pills:['Suppliers','Customers','Ripple risk','Concentration']});
     fetch('/api/dependencies/'+encodeURIComponent(tk),{headers:{Authorization:'Bearer '+(localStorage.getItem('ah_token')||'')}}).then(function(r){return r.json();}).then(function(d){
       if(host.getAttribute('data-tk')!==tk) return;         // user switched stocks mid-flight
       if(!d){ host.innerHTML='<div class="dd-loading">Could not load dependencies.</div>'; return; }
