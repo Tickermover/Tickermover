@@ -21558,6 +21558,8 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
       '@media(max-width:520px){.fchk-mrow{grid-template-columns:1fr}.fq-top{flex-direction:column;gap:4px}}'+
       '</style>';
     return style+
+      _sec('The analyst questions','🧠','violet',
+        '<div id="fchkDD"><div class="fchk-mrow"><span class="k">Working…</span><span class="v fchk-load">Reading the filing and recent coverage to answer the hard questions.</span></div></div>')+
       _sec('Due-diligence checkpoints','✅','green',
         '<p class="fchk-biz"><b>The business.</b> '+biz+'</p>'+
         '<div class="fchk-tally"><span class="ft-y">'+yes+' clear yes</span><span class="ft-m">'+mixed+' mixed</span>'+
@@ -21653,6 +21655,19 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
         var badge=(!weak&&x.source)?('<span class="fchk-badge fchk-'+(x.source==='web'?'web':'fil')+'">'+(x.source==='web'?'web':'filing')+'</span>'):'';
         return '<div class="fchk-mrow"><span class="k">'+esc(x.q||'')+'</span><span class="v">'+a+' '+badge+'</span></div>';
       }).join('');
+      var cps=q.checkpoints;
+      if(Array.isArray(cps)&&cps.length){
+        var host=document.getElementById('fchkDD');
+        if(host){
+          var VC={strength:'fq-yes',concern:'fq-no',mixed:'fq-mixed',unclear:'fq-unknown'};
+          var VL={strength:'STRENGTH',concern:'CONCERN',mixed:'MIXED',unclear:'UNCLEAR'};
+          host.innerHTML=cps.map(function(c){
+            var cls=VC[c.verdict]||'fq-mixed', lbl=VL[c.verdict]||'MIXED';
+            return '<div class="fq '+cls+'"><div class="fq-top"><span class="fq-q">'+esc(c.q||'')+
+                   '</span><span class="fq-v">'+lbl+'</span></div><div class="fq-a">'+esc(c.a||'')+'</div></div>';
+          }).join('')+'<div class="fchk-src">Analysis generated from the filing, the reported metrics and recent coverage — AI-extracted, verify before relying on it.</div>';
+        }
+      }
       if(q.source_url) html+='<div class="fchk-src">Answered from the company’s own '+esc((q.source||'filing').replace('sec_edgar:',''))+
         (q.event_date?(' dated '+esc(q.event_date)):'')+' · <a href="'+esc(q.source_url)+'" target="_blank" rel="noopener">read the source ↗</a> · AI-extracted, verify before relying on it</div>';
       slot.innerHTML=html;

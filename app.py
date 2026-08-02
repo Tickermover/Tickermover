@@ -140,6 +140,12 @@ ASK_DAILY_CAP = int(os.environ.get("ASK_DAILY_CAP", "12"))
 # Comma-separated emails that get AI access without a paid subscription row —
 # for the dev's own account and any comped beta testers. e.g. AI_ALLOW_EMAILS=me@x.com,beta@y.com
 _AI_ALLOW = {e.strip().lower() for e in os.environ.get("AI_ALLOW_EMAILS", "").split(",") if e.strip()}
+# Accounts always treated as Pro so every paid feature can be exercised in
+# production without a live subscription. Comma-separated; the support inbox
+# is included by default.
+_PRO_ALLOW = {e.strip().lower() for e in
+              os.environ.get("PRO_ALLOW_EMAILS", "support@tickermover.com").split(",")
+              if e.strip()}
 
 # ── Lightweight in-process rate limiter (B7) ──────────────────────────────────
 # First-layer brute-force / mail-bomb guard for the auth endpoints. In-process
@@ -228,7 +234,8 @@ async def _is_pro_user(user: Optional[dict],
         return False
     if _beta_pro_active():
         return True
-    if (user.get("email") or "").lower() in _AI_ALLOW:
+    _em = (user.get("email") or "").lower()
+    if _em in _AI_ALLOW or _em in _PRO_ALLOW:
         return True
     uid = user.get("user_id")
     if not uid:
@@ -854,6 +861,42 @@ async def _data_prewarm() -> None:
         await asyncio.sleep(12 * 3600)     # twice a day
 
 
+async def _mgmt_qa_prewarm() -> None:
+    """Background loop: pre-generate the Fact Check AI answers for the names
+    users actually open — Prime Tickers (the model portfolio) plus the current
+    best-ideas/hot list. First-time generation takes 30-90s (EDGAR + web +
+    model), so without this the first visitor to each ticker eats that wait.
+    Cached 14d in the KV store, so steady state is nearly all cache hits."""
+    await asyncio.sleep(300)               # let the universe + portfolio settle
+    while True:
+        try:
+            import event_intel as _ei
+            syms: list[str] = []
+            for p in ((_model_portfolio or {}).get("picks") or []):
+                t = (p.get("ticker") or "").upper()
+                if t and t not in syms:
+                    syms.append(t)
+            for t in (_brief_top_picks(12) or []):
+                sym = (t.get("ticker") or "").upper()
+                if sym and sym not in syms:
+                    syms.append(sym)
+            by_t = {(x.get("ticker") or "").upper(): x for x in (_universe_data or [])}
+            done = 0
+            for sym in syms[:40]:
+                try:
+                    res = await _ei.get_management_qa(sym, metrics=_metrics_blurb(by_t.get(sym)))
+                    if res.get("available"):
+                        done += 1
+                except Exception as exc:
+                    logger.warning(f"mgmt-qa pre-warm {sym}: {exc}")
+                await asyncio.sleep(5)      # be gentle on EDGAR + free LLM tiers
+            if syms:
+                logger.info("🔎 Fact Check pre-warm: %d/%d ready", done, len(syms[:40]))
+        except Exception as exc:
+            logger.warning(f"mgmt-qa pre-warm cycle failed: {exc}")
+        await asyncio.sleep(6 * 3600)      # twice a day
+
+
 async def _bottom_line_prewarm() -> None:
     """Background loop: rewrite each stock's deterministic bottom_line into
     natural Haiku prose, cached 15 days in the durable KV store. Cache-first and
@@ -982,6 +1025,7 @@ async def lifespan(app: FastAPI):
         asyncio.create_task(_data_prewarm()),        # keep all stocks' free data (stock-extra) warm
         asyncio.create_task(_bottom_line_prewarm()), # Haiku-polish bottom_lines (cache-first, 15d)
         asyncio.create_task(_selection_prewarm()),   # keep AI conviction/thesis warm for House View
+        asyncio.create_task(_mgmt_qa_prewarm()),     # Fact Check AI answers for prime + best-ideas names
         asyncio.create_task(_daily_brief_email_task()),  # free daily-brief email (acquisition channel)
     ]
     yield
@@ -5655,6 +5699,48 @@ async def api_pdf(symbol: str, debug: int = 0):
     )
 
 
+def _metrics_blurb(t: dict | None) -> str:
+    """Compact reported-metrics block for the AI due-diligence prompt, so the
+    model reasons over the actual numbers instead of prose alone."""
+    if not t:
+        return ""
+    def g(*keys):
+        for k in keys:
+            v = t.get(k)
+            if v is not None:
+                try:
+                    return float(v)
+                except (TypeError, ValueError):
+                    continue
+        return None
+    def pct(v):
+        if v is None:
+            return "n/a"
+        return f"{(v*100 if abs(v) <= 2 else v):.1f}%"
+    def num(v, s=""):
+        return "n/a" if v is None else f"{v:,.2f}{s}"
+    rows = [
+        f"price: {num(g('price'))}",
+        f"market cap: {num(g('market_cap'))}",
+        f"revenue growth YoY: {pct(g('revenue_growth_yoy','revenue_growth'))}",
+        f"EPS growth YoY: {pct(g('eps_growth_yoy'))}",
+        f"gross margin: {pct(g('gross_margin'))}",
+        f"operating margin: {pct(g('operating_margin'))}",
+        f"net margin: {pct(g('profit_margin','net_margin'))}",
+        f"free cash flow: {num(g('free_cashflow'))}",
+        f"debt/equity: {num(g('debt_to_equity','de_ratio'))}",
+        f"current ratio: {num(g('current_ratio'))}",
+        f"ROE: {pct(g('roe'))}",
+        f"P/E: {num(g('pe_ratio'))} (fwd {num(g('forward_pe'))})",
+        f"PEG: {num(g('peg_ratio'))}",
+        f"short % float: {pct(g('short_percent_float'))}",
+        f"institutional held: {pct(g('held_pct_institutions'))}",
+        f"beta: {num(g('beta'))}",
+        f"EPS beat streak: {t.get('eps_beat_streak', 'n/a')} of last 4",
+    ]
+    return " | ".join(rows)
+
+
 @app.get("/api/mgmt-qa/{symbol}")
 async def api_mgmt_qa(symbol: str, refresh: int = 0):
     """Analyst question set answered from the company's own latest filing,
@@ -5665,7 +5751,10 @@ async def api_mgmt_qa(symbol: str, refresh: int = 0):
     if not sym or len(sym) > 8:
         raise HTTPException(status_code=400, detail="Bad ticker")
     try:
-        data = await _ei_mod.get_management_qa(sym, force=bool(refresh))
+        row = next((x for x in (_universe_data or [])
+                    if (x.get("ticker") or "").upper() == sym), None)
+        data = await _ei_mod.get_management_qa(sym, force=bool(refresh),
+                                               metrics=_metrics_blurb(row))
     except Exception as exc:
         logger.error(f"mgmt-qa {sym}: {exc}", exc_info=True)
         return JSONResponse({"available": False, "reason": "error", "ticker": sym, "answers": []})

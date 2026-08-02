@@ -458,6 +458,58 @@ _QA_QUESTIONS = [
     "Are they confident, or just optimistic?",
 ]
 
+# The hard questions a professional actually has to answer before trusting a
+# stock. Deliberately the ones a metric alone cannot settle — each demands the
+# model reason across the filing, the numbers and recent coverage.
+_DD_QUESTIONS = [
+    "What has to be true for this investment to work from here?",
+    "Is growth accelerating or decelerating — and is it volume, price, or acquisition?",
+    "Is reported profit turning into real cash, or is it accounting?",
+    "Where does the competitive advantage come from, and is it widening or eroding?",
+    "How concentrated is the business — customers, products, or a single end-market?",
+    "Can it fund its own growth, or does it need more debt or equity?",
+    "What does today's valuation already assume?",
+    "What is the strongest bear case, and what would confirm it first?",
+]
+
+_DD_PROMPT = """You are a senior equity analyst writing the internal note a
+portfolio manager reads before committing capital to {ticker}.
+
+Answer each question below with genuine analysis — not a restatement of the
+metric. A useful answer connects two facts ("margins rose, but only because of
+a one-off tariff refund"), names the mechanism, and says what it implies.
+
+Rules:
+- Ground every answer in the DATA, the FILING or the WEB RESULTS below. Quote
+  the number or phrase you relied on.
+- Say "Insufficient evidence" when the sources genuinely do not support an
+  answer. Never invent, never fall back on general knowledge of the company.
+- 2-3 sentences each. No filler, no restating the question.
+- Set "verdict" to one of: strength, concern, mixed, unclear.
+- Be neutral: no buy/sell/hold advice, no price predictions, no recommendation.
+
+Return ONLY JSON:
+{{
+  "checkpoints": [
+    {{"q": "<question verbatim>", "verdict": "strength",
+      "a": "<2-3 sentences of real analysis with evidence>"}}
+  ]
+}}
+
+Questions:
+{questions}
+
+=== REPORTED METRICS ===
+{metrics}
+
+=== COMPANY FILING ({source_label}, {quarter}) ===
+{text}
+
+=== RECENT WEB RESULTS ===
+{web}
+"""
+
+
 _QA_PROMPT = """You are an equity analyst answering questions about {ticker}.
 
 You have TWO sources:
@@ -539,7 +591,41 @@ async def answer_questions(ticker: str, text: str, quarter: str = "",
     return out or None
 
 
-async def get_management_qa(ticker: str, force: bool = False) -> dict:
+async def answer_checkpoints(ticker: str, text: str, metrics: str = "",
+                             quarter: str = "", source_label: str = "filing",
+                             web: str = "") -> list | None:
+    """Answer the hard due-diligence questions with real analysis, grounded in
+    the filing + reported metrics + recent web coverage."""
+    import llm_free
+    prompt = _DD_PROMPT.format(
+        ticker=ticker, quarter=quarter or "latest", source_label=source_label,
+        questions=chr(10).join(f"{i+1}. {q}" for i, q in enumerate(_DD_QUESTIONS)),
+        metrics=metrics or "(no metric summary supplied)",
+        text=(text or ""), web=(web or "(no web results available)"),
+    )
+    parsed = await llm_free.chat_json(prompt, max_tokens=2200, timeout=90.0,
+                                      prefer="gemini")
+    if not isinstance(parsed, dict):
+        return None
+    out = []
+    for item in (parsed.get("checkpoints") or []):
+        if not isinstance(item, dict):
+            continue
+        q = str(item.get("q") or "").strip()
+        a = str(item.get("a") or "").strip()
+        if not q or not a:
+            continue
+        v = str(item.get("verdict") or "").strip().lower()
+        al = a.lower()
+        if "insufficient evidence" in al or "not enough" in al:
+            v = "unclear"
+        out.append({"q": q[:220], "a": a[:900],
+                    "verdict": v if v in ("strength", "concern", "mixed", "unclear") else "mixed"})
+    return out or None
+
+
+async def get_management_qa(ticker: str, force: bool = False,
+                            metrics: str = "") -> dict:
     """Cached management Q&A for a ticker. Uses the same EDGAR filing the
     summary is built from, answered by Groq. Cached 14 days in the KV store
     (no DB migration needed). Degrades to {available: false, reason}."""
@@ -551,7 +637,7 @@ async def get_management_qa(ticker: str, force: bool = False) -> dict:
         cache = None
     if cache and not force:
         hit = cache.get("mgmt_qa", sym, max_age_s=_CACHE_TTL_DAYS * 86400)
-        if hit and hit.get("answers"):
+        if hit and hit.get("answers") and hit.get("checkpoints"):
             return hit
     edgar = await _fetch_edgar_recent(sym)
     if not edgar or not edgar.get("text"):
@@ -580,7 +666,12 @@ async def get_management_qa(ticker: str, force: bool = False) -> dict:
         return {"available": False, "reason": "summarizer_failed",
                 "ticker": sym, "answers": [],
                 "last_error": LAST_ERROR or None}
+    checkpoints = await answer_checkpoints(
+        sym, edgar["text"], metrics=metrics,
+        quarter=edgar.get("event_date", ""),
+        source_label=edgar.get("source_label", "filing"), web=web_ctx)
     out = {"available": True, "ticker": sym, "answers": answers,
+           "checkpoints": checkpoints or [],
            "web_grounded": bool(web_ctx),
            "source": f"sec_edgar:{edgar.get('source_label','')}",
            "source_url": edgar.get("source_url"),
