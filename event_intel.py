@@ -770,6 +770,33 @@ Return ONLY a JSON object:
 
 _AUDIT_VERDICTS = ("pass", "fail", "mixed")
 
+# Domains that must never end up as a footnote on an audit finding. Search
+# results legitimately surface these, but "analyst sentiment is split [1]"
+# pointing at a Facebook post or a YouTube video reads as sourcing an
+# investment view to social media. The first live MU run cited both.
+_AUDIT_BLOCKED_DOMAINS = (
+    "youtube.com", "youtu.be", "facebook.com", "instagram.com", "tiktok.com",
+    "twitter.com", "x.com", "reddit.com", "pinterest.com", "quora.com",
+    "linkedin.com", "stocktwits.com",
+)
+
+
+def _audit_usable_hits(hits: list) -> list:
+    """Drop social/video results and de-duplicate by URL. Filtering BEFORE the
+    context and the citation map are built keeps the "W<n>" indices the model
+    sees aligned with the sources we can actually render."""
+    out, seen = [], set()
+    for h in (hits or []):
+        url = (h.get("url") or "").strip()
+        if not url or url in seen:
+            continue
+        host = url.split("//", 1)[-1].split("/", 1)[0].lower()
+        if any(host == d or host.endswith("." + d) for d in _AUDIT_BLOCKED_DOMAINS):
+            continue
+        seen.add(url)
+        out.append(h)
+    return out
+
 
 def _audit_sources(cites, srcmap: dict) -> list:
     """Resolve the model's source ids into renderable links, dropping any id it
@@ -877,6 +904,7 @@ async def get_thesis_audit(ticker: str, force: bool = False, metrics: str = "",
             for q in (f"{sym} stock supply chain capacity customers demand risks",
                       f"{sym} stock valuation short interest bear case analyst view"):
                 hits += await web_search.search(q, count=5)
+            hits = _audit_usable_hits(hits)
             web_ctx = web_search.as_context(hits, limit=10)
             for i, r in enumerate(hits[:10], 1):
                 srcmap[f"W{i}"] = {"label": (r.get("title") or r.get("url") or "")[:90],
