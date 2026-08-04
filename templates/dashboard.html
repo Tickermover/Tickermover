@@ -13580,7 +13580,7 @@ function _ovRenderNoteBoxes(parts, render){
   if (parts && parts.lead){
     const h = document.getElementById('ovHeadline');
     if (h){
-      const v = String(parts.lead).replace(/\*\*/g,'').replace(/^\s*(verdict|bottom line)\s*[:\-—]\s*/i,'').trim();
+      const v = _ddCleanLead(String(parts.lead)).replace(/\*\*/g,'').trim();
       if (v) h.textContent = v;
     }
   }
@@ -13637,6 +13637,21 @@ function _ovLockTeasers(){
   _ovLockTeaser('ovNoteCat', cat, false);
   _ovLockTeaser('ovNoteRisk', risk, false);
 }
+// The verdict sentence is asked for as a **bold** one-liner, and models keep
+// answering with the instruction's own words in front of it ("**Bold verdict:**
+// AEHR is …"). The label is not content — it is shown on its own as the
+// headline, so strip it here (once, for BOTH consumers: the Overview headline
+// and the Deep Dive verdict block). Also drops the stray ``` a model leaves
+// behind when it opens the JSON block on the verdict's line.
+function _ddCleanLead(p){
+  let s = String(p||'').replace(/```+[a-z]*/gi,'').replace(/`{2,}/g,'').trim();
+  const before = s;
+  s = s.replace(/^\**\s*(?:the\s+)?(?:bold\s+)?(?:verdict|bottom\s+line|summary|headline|takeaway)\s*[:\-–—]?\s*\**\s*[:\-–—]?\s*/i,'');
+  // Stripping a leading "**Label:**" can orphan the sentence's closing ** —
+  // an unmatched pair renders as literal asterisks, so drop them all.
+  if (s !== before && !/^\*\*/.test(s)) s = s.replace(/\*\*/g,'');
+  return s.trim();
+}
 // Split a research note into {lead, sections}. `lead` is the pre-heading bold
 // verdict (search narration is dropped); each ## / ### heading starts a section.
 // A trailing Sources/References section is dropped — we render a deduped one.
@@ -13654,7 +13669,9 @@ function _ddSplitSections(md){
   // conversational web-search narration ("I'll search…", "Let me compile…").
   const leadKeep = lead.join('\n').trim().split(/\n{2,}/)
     .map(p => p.trim())
-    .filter(p => /\*\*/.test(p) && !/^(i['’]?ll|i will|let me|now i|now that|perfect|i['’]?ve|i have|i now|first,|next,|i'?m going|let['’]s)/i.test(p));
+    .filter(p => /\*\*/.test(p) && !/^(i['’]?ll|i will|let me|now i|now that|perfect|i['’]?ve|i have|i now|first,|next,|i'?m going|let['’]s)/i.test(p))
+    .map(_ddCleanLead)
+    .filter(Boolean);
   const sections = secs
     .filter(s => !/^(sources|references|citations|footnotes)\b/i.test(s.title))
     .map(s => ({ title: s.title, body: s.body.join('\n').trim() }))
