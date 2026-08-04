@@ -7223,6 +7223,45 @@ document.addEventListener('keydown', function(e){
     </div>
   </div>
 
+  <!-- ── Upgrade modal ───────────────────────────────────────────────────
+       The step between "Upgrade to Pro" and Stripe's hosted checkout. Its
+       markup went missing at some point while every caller kept running, so
+       openUpgradeModal() threw on getElementById(...).style and EVERY upgrade
+       button in the app did nothing at all. Ids here are load-bearing:
+       #upgrade-modal, #upgrade-error and #upgrade-pay-btn are all driven from
+       openUpgradeModal() / startStripeCheckout(). -->
+  <div class="v2-acct-overlay" id="upgrade-modal" role="dialog" aria-modal="true"
+       aria-label="Upgrade to TickerMover Pro" style="display:none"
+       onclick="if(event.target===this)closeUpgradeModal()">
+    <div class="v2-acct" style="max-width:420px">
+      <div class="v2-acct-hd">
+        <div class="v2-acct-av" aria-hidden="true">★</div>
+        <div class="v2-acct-hd-txt">
+          <div class="v2-acct-hname">TickerMover Pro</div>
+          <div class="v2-acct-hmail">£19.99/mo · cancel anytime</div>
+        </div>
+        <button class="v2-acct-x" onclick="closeUpgradeModal()" aria-label="Close">✕</button>
+      </div>
+      <div class="v2-acct-bd">
+        <div class="v2-acct-sec">
+          <div class="v2-acct-k">What you unlock</div>
+          <ul style="margin:6px 0 0;padding-left:18px;font-size:13.5px;line-height:1.7;color:var(--muted)">
+            <li>Prime Tickers — every open and closed pick</li>
+            <li>Ask AI, grounded in TickerMover's live data</li>
+            <li>Fact Check, the audit and the analyst questions</li>
+            <li>Daily brief and your own watchlist</li>
+          </ul>
+        </div>
+        <div class="v2-acct-sec">
+          <button class="v2-acct-btn v2-acct-btn-pri" id="upgrade-pay-btn"
+                  style="width:100%;justify-content:center" disabled>Upgrade to Pro</button>
+          <div class="v2-acct-note" id="upgrade-error"></div>
+          <div class="v2-acct-note" style="margin-top:6px">Have a code? Enter it at checkout.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- ── Idle feedback panel (slides in from the right, once per session) ── -->
   <div class="v2-fb" id="v2-fb" role="dialog" aria-label="Quick feedback" aria-modal="false">
     <button class="v2-fb-x" onclick="fbClose('dismiss')" aria-label="Close">✕</button>
@@ -19670,7 +19709,12 @@ function buildTickerCard(t, showRemove) {
 
 async function openUpgradeModal() {
   if (!_AUTH.token) { openAuthModal('signin'); return; }
-  document.getElementById('upgrade-modal').style.display = 'flex';
+  // Never let a missing element swallow the whole upgrade path again: if the
+  // modal isn't in the page, go straight to Stripe rather than throwing on
+  // .style and leaving the button looking dead.
+  const modal = document.getElementById('upgrade-modal');
+  if (!modal) { startStripeCheckout(); return; }
+  modal.style.display = 'flex';
   const errEl = document.getElementById('upgrade-error');
   const btn   = document.getElementById('upgrade-pay-btn');
   if (errEl){ errEl.textContent = ''; errEl.style.color = ''; }
@@ -19710,7 +19754,8 @@ try {
 } catch(e){}
 
 function closeUpgradeModal() {
-  document.getElementById('upgrade-modal').style.display = 'none';
+  const m = document.getElementById('upgrade-modal');
+  if (m) m.style.display = 'none';
 }
 
 function showUpgradeSuccess() {
