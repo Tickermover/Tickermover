@@ -21735,13 +21735,23 @@ function scResultHTML(d){
     const kpi=(k,v,s,n)=>K.push({k,v,s,n});
     const pct1=v=>(v>=0?'+':'')+v.toFixed(1)+'%';
 
-    // Eight measures that actually move a decision: is it growing, does it
-    // keep what it earns, does that become cash, can it survive, what are you
-    // paying, and does management deliver. Everything else lives in the
+    // Twelve measures that actually move a decision: is it growing — sales AND
+    // profits — does it keep what it earns, does the capital earn a return,
+    // does profit become cash, can it survive a bad year, what are you paying
+    // for the growth, and does management deliver. Everything else lives in the
     // Financials / Valuation tabs rather than crowding the scorecard.
+    // Twelve also fills the grid cleanly at every breakpoint (6/4/3/2 columns).
     const rg=num(['revenue_growth_yoy','revenue_growth']), rgP=rg!=null?(Math.abs(rg)<=2?rg*100:rg):null;
     kpi('Revenue growth', rgP==null?'—':pct1(rgP), rgP==null?'na':(rgP>=15?'good':rgP>0?'warn':'bad'),
         rgP==null?'not reported':(rgP>=15?'fast':rgP>0?'modest':'shrinking'));
+
+    // eps_growth_yoy is ALWAYS a fraction from both feeds (yfinance
+    // earningsGrowth, AV QuarterlyEarningsGrowthYOY) — so always ×100. The
+    // <=2 guard used for revenue would render PLTR's 3.25 as "+3.3%".
+    const eg=num(['eps_growth_yoy']), egP=eg!=null?eg*100:null;
+    kpi('EPS growth', egP==null?'—':(Math.abs(egP)>=1000?((egP>0?'+':'−')+'999%+'):pct1(egP)),
+        egP==null?'na':(egP>=15?'good':egP>0?'warn':'bad'),
+        egP==null?'not reported':(egP>=15?'profits compounding':egP>0?'profits inching up':'profits falling'));
 
     const gm=M(num(['gross_margin']));
     kpi('Gross margin', gm==null?'—':gm.toFixed(0)+'%', gm==null?'na':(gm>=50?'good':gm>=30?'warn':'bad'),
@@ -21751,6 +21761,14 @@ function scResultHTML(d){
     kpi('Net margin', nm==null?'—':nm.toFixed(1)+'%', nm==null?'na':(nm>0?'good':'bad'),
         nm==null?'not reported':(nm>0?'profitable':'loss-making'));
 
+    // ROE is a fraction from every feed (yfinance returnOnEquity, FMP
+    // returnOnEquityTTM) — ×100 unconditionally, or a 150% ROE like AAPL's
+    // would read as 2%.
+    const roe=num(['roe']), roeP=roe!=null?roe*100:null;
+    kpi('Return on equity', roeP==null?'—':roeP.toFixed(0)+'%',
+        roeP==null?'na':(roeP>=15?'good':roeP>=8?'warn':'bad'),
+        roeP==null?'not reported':(roeP>=15?'compounds capital':roeP>=8?'adequate return':(roeP>=0?'low return on capital':'equity earning nothing')));
+
     const fcf=num(['free_cashflow']), fm=M(num(['fcf_margin']));
     kpi('Free cash flow', fcf==null?'—':(fm!=null?fm.toFixed(0)+'% of rev':(fcf>0?'positive':'negative')),
         fcf==null?'na':(fcf>0?'good':'bad'), fcf==null?'not reported':(fcf>0?'self-funding':'cash burn'));
@@ -21759,10 +21777,23 @@ function scResultHTML(d){
     kpi('Debt / equity', de==null?'—':de.toFixed(2), de==null?'na':(de<1?'good':de<=2?'warn':'bad'),
         de==null?'not reported':(de<1?'conservative':de<=2?'moderate':'heavily levered'));
 
+    // Leverage says what it owes; the current ratio says whether it can pay
+    // what falls due this year — the two together are the survival check.
+    const cr=num(['current_ratio']);
+    kpi('Current ratio', cr==null?'—':cr.toFixed(2)+'×', cr==null?'na':(cr>=1.5?'good':cr>=1?'warn':'bad'),
+        cr==null?'not reported':(cr>=1.5?'covers near-term bills':cr>=1?'only just covers bills':'short of near-term cover'));
+
     const pe=num(['forward_pe','pe_ratio']), med=(typeof _sectorMed==='function')?_sectorMed(t,'pe_ratio'):null;
     kpi('P/E vs sector', pe==null?'—':(pe.toFixed(1)+(med!=null?(' vs '+med.toFixed(1)):'')),
         (pe==null||med==null)?'na':(pe<=med?'good':'warn'),
         (pe==null)?'no positive earnings':(med==null?'no peer benchmark':(pe<=med?'discount to peers':'premium to peers')));
+
+    // P/E answers "dear or cheap against peers"; PEG answers "dear or cheap
+    // against its own growth" — a high P/E on fast growth is a different case
+    // from a high P/E on none. Non-positive PEG means no usable estimate.
+    const peg=num(['peg_ratio']), pegOk=(peg!=null&&peg>0);
+    kpi('PEG ratio', pegOk?peg.toFixed(2):'—', pegOk?(peg<=1?'good':peg<=2?'warn':'bad'):'na',
+        pegOk?(peg<=1?'growth not fully priced':peg<=2?'growth fairly priced':'growth richly priced'):'no clean growth estimate');
 
     const beat=parseInt(t.eps_beat_streak);
     kpi('Earnings beats', isNaN(beat)?'—':(beat+' of 4'), isNaN(beat)?'na':(beat>=3?'good':beat>=2?'warn':'bad'),
