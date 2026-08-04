@@ -35,6 +35,14 @@ _BASE = "https://api.razorpay.com/v1"
 # ALLOW_UNSIGNED_WEBHOOKS=1 explicitly. Never set it in production.
 _ALLOW_UNSIGNED_WEBHOOKS = os.environ.get("ALLOW_UNSIGNED_WEBHOOKS", "").strip().lower() in ("1", "true", "yes", "on")
 
+# Stripe Tax is OFF by default. It is a paid add-on (~0.5% per transaction) that
+# needs an active Tax setting and an origin address, and asking for automatic tax
+# while it is inactive makes EVERY checkout session creation fail — a hard launch
+# blocker for a seller who isn't VAT-registered and doesn't need it. Set
+# STRIPE_AUTOMATIC_TAX=1 once you are registered and have enabled Stripe Tax;
+# until then the listed price is what the customer pays.
+_AUTOMATIC_TAX = os.environ.get("STRIPE_AUTOMATIC_TAX", "").strip().lower() in ("1", "true", "yes", "on")
+
 # Monthly plan amounts (paise = INR × 100)
 PRO_AMOUNT_INR   = 499_00   # ₹499 in paise
 PRO_AMOUNT_USD   = 7_00     # $7 in cents (for Stripe fallback, not used here)
@@ -335,19 +343,23 @@ class StripeClient:
         else:
             blockers.append("Set STRIPE_PRICE_ID to the recurring Pro price (price_…).")
 
-        # 3. Checkout is created with automatic_tax[enabled]=true, so Stripe Tax
-        #    must be switched on with an origin address — otherwise every
-        #    session creation errors out.
+        # 3. Stripe Tax only has to be active when the app actually asks for
+        #    automatic tax. With STRIPE_AUTOMATIC_TAX unset the listed price is
+        #    what the customer pays, so Tax being off is not a blocker — it is
+        #    only reported so the state is visible when you do register.
         tax = await self._get("/tax/settings")
         if tax.get("error"):
-            out["tax"] = {"ok": False, "error": str(tax["error"])[:160]}
-            warnings.append("Could not read Stripe Tax settings — if Stripe Tax is off, checkout will fail because the app requests automatic tax.")
+            out["tax"] = {"requested_by_app": _AUTOMATIC_TAX, "ok": not _AUTOMATIC_TAX,
+                          "error": str(tax["error"])[:160]}
+            if _AUTOMATIC_TAX:
+                warnings.append("Could not read Stripe Tax settings — the app requests automatic tax, so checkout will fail if it is not active.")
         else:
             head = (tax.get("head_office") or {}).get("address") or {}
-            out["tax"] = {"ok": tax.get("status") == "active", "status": tax.get("status"),
-                          "origin_country": head.get("country")}
-            if tax.get("status") != "active":
-                blockers.append("Stripe Tax is not active — the app sends automatic_tax[enabled]=true, so Checkout will 502 until it is (set the origin address and enable it).")
+            active = tax.get("status") == "active"
+            out["tax"] = {"requested_by_app": _AUTOMATIC_TAX, "ok": active or not _AUTOMATIC_TAX,
+                          "status": tax.get("status"), "origin_country": head.get("country")}
+            if _AUTOMATIC_TAX and not active:
+                blockers.append("STRIPE_AUTOMATIC_TAX is on but Stripe Tax is not active — Checkout will 502 until you enable it and set the origin address (or unset the variable).")
 
         # 4. The Billing Portal needs a saved configuration or /portal 502s the
         #    moment a subscriber tries to cancel.
@@ -423,7 +435,7 @@ class StripeClient:
             "metadata[user_id]":                 user_id,
             "subscription_data[metadata][user_id]": user_id,
             "allow_promotion_codes":             "true",
-            "automatic_tax[enabled]":            "true",
+            "automatic_tax[enabled]":            "true" if _AUTOMATIC_TAX else "false",
             "billing_address_collection":        "auto",
         }
         if email:
