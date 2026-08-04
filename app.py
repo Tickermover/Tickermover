@@ -12917,6 +12917,33 @@ async def api_billing_config():
     })
 
 
+_BILLING_SELFTEST_CACHE: dict = {}
+
+
+@app.get("/api/billing/selftest")
+async def api_billing_selftest(request: Request, promo: str = "WELCOME50"):
+    """Onboarding check for the payment setup: asks Stripe itself which steps
+    are done (account activated, price recurring, tax on, portal saved, webhook
+    registered with the right events) and returns what is still blocking a
+    first live payment.
+
+    Booleans and short labels only — no keys, account ids or customer data.
+    Same spirit as /api/event-intel-status: a misconfigured gateway is
+    otherwise invisible until a real buyer hits a 502."""
+    _rate_limit(request, "billing_selftest", 12, 300)
+    ck = f"{promo}|{stripe_client.enabled}"
+    hit = _BILLING_SELFTEST_CACHE.get(ck)
+    if hit and (time.time() - hit[0]) < 60:
+        return JSONResponse(hit[1])
+    out = await stripe_client.preflight(
+        webhook_url=f"{SITE_ORIGIN}/api/billing/stripe/webhook",
+        promo_code=(promo or "").strip(),
+    )
+    out["site_origin"] = SITE_ORIGIN
+    _BILLING_SELFTEST_CACHE[ck] = (time.time(), out)
+    return JSONResponse(out)
+
+
 @app.post("/api/billing/checkout")
 async def api_billing_checkout(user: Optional[dict] = Depends(_current_user),
                                creds: Optional[HTTPAuthorizationCredentials] = Depends(_bearer)):

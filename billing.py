@@ -231,6 +231,183 @@ class StripeClient:
             logger.error(f"Stripe {path}: {e}")
             return {"error": str(e)}
 
+    async def _get(self, path: str, params: dict | None = None) -> dict:
+        if not self.secret_key:
+            return {"error": "Stripe not configured"}
+        try:
+            async with httpx.AsyncClient(timeout=20) as c:
+                r = await c.get(f"{_STRIPE_BASE}{path}", params=params or {},
+                                auth=(self.secret_key, ""))
+                j = r.json()
+                if r.status_code >= 400:
+                    return {"error": (j.get("error") or {}).get("message") or f"HTTP {r.status_code}"}
+                return j
+        except Exception as e:
+            logger.error(f"Stripe GET {path}: {e}")
+            return {"error": str(e)}
+
+    # Events the webhook handler acts on. A subscription that is created or
+    # cancelled outside Checkout (dunning, portal cancel, admin refund) only
+    # reaches us through these, so a missing one silently leaves users on the
+    # wrong plan.
+    REQUIRED_EVENTS = (
+        "checkout.session.completed",
+        "customer.subscription.created",
+        "customer.subscription.updated",
+        "customer.subscription.deleted",
+    )
+
+    async def preflight(self, *, webhook_url: str = "", promo_code: str = "") -> dict:
+        """Answer 'is Stripe actually ready to take money?' from Stripe's own
+        API, one check per onboarding step, so the remaining work is visible
+        without clicking through the dashboard.
+
+        Returns booleans and short labels ONLY — never key material, account
+        ids, customer data or business identifiers."""
+        sk = self.secret_key or ""
+        out: dict = {
+            "mode": "live" if sk.startswith("sk_live") else ("test" if sk.startswith("sk_test") else
+                    ("restricted" if sk.startswith("rk_") else "unset" if not sk else "unknown")),
+            "env": {
+                "STRIPE_SECRET_KEY":     bool(sk),
+                "STRIPE_PRICE_ID":       bool(self.price_id),
+                "STRIPE_WEBHOOK_SECRET": bool(self.webhook_secret),
+            },
+            "enabled": self.enabled,
+        }
+        blockers: list[str] = []
+        warnings: list[str] = []
+        if not sk:
+            out["blockers"] = ["Set STRIPE_SECRET_KEY (exact name) in Railway — nothing can be checked without it."]
+            out["warnings"] = []
+            out["ready"] = False
+            return out
+
+        # 1. Key works + is the account actually activated for charges?
+        acct = await self._get("/account")
+        key_ok = not acct.get("error")
+        if acct.get("error"):
+            out["account"] = {"ok": False, "error": str(acct["error"])[:160]}
+            blockers.append("The secret key was rejected by Stripe — check it was copied whole and matches live/test mode.")
+        else:
+            caps = acct.get("capabilities") or {}
+            out["account"] = {
+                "ok":                True,
+                "country":           acct.get("country"),
+                "default_currency":  (acct.get("default_currency") or "").upper() or None,
+                "details_submitted": bool(acct.get("details_submitted")),
+                "charges_enabled":   bool(acct.get("charges_enabled")),
+                "payouts_enabled":   bool(acct.get("payouts_enabled")),
+                "card_payments":     caps.get("card_payments"),
+            }
+            if not acct.get("details_submitted"):
+                blockers.append("Stripe account activation is unfinished — complete the business/identity form in the dashboard.")
+            if not acct.get("charges_enabled"):
+                blockers.append("Charges are not enabled on the account yet, so Checkout cannot take a payment.")
+            if not acct.get("payouts_enabled"):
+                warnings.append("Payouts are not enabled — you can charge, but Stripe will hold the money until a bank account is verified.")
+
+        # 2. The price the app checks out with must exist, be active, and recur
+        #    (Checkout is created in subscription mode).
+        if self.price_id:
+            pr = await self._get(f"/prices/{self.price_id}", {"expand[]": "product"})
+            if pr.get("error"):
+                out["price"] = {"ok": False, "error": str(pr["error"])[:160]}
+                if key_ok:
+                    blockers.append("STRIPE_PRICE_ID does not resolve — it must be a price_… id from the SAME mode as the secret key.")
+            else:
+                prod = pr.get("product") if isinstance(pr.get("product"), dict) else {}
+                rec = pr.get("recurring") or {}
+                amt = pr.get("unit_amount")
+                out["price"] = {
+                    "ok":        True,
+                    "active":    bool(pr.get("active")),
+                    "recurring": bool(rec),
+                    "interval":  rec.get("interval"),
+                    "currency":  (pr.get("currency") or "").upper() or None,
+                    "amount":    (amt / 100) if isinstance(amt, int) else None,
+                    "product":   prod.get("name"),
+                }
+                if not rec:
+                    blockers.append("The configured price is one-off, not recurring — Checkout runs in subscription mode and will fail.")
+                if not pr.get("active"):
+                    blockers.append("The configured price is archived in Stripe — activate it or point STRIPE_PRICE_ID at the live one.")
+        else:
+            blockers.append("Set STRIPE_PRICE_ID to the recurring Pro price (price_…).")
+
+        # 3. Checkout is created with automatic_tax[enabled]=true, so Stripe Tax
+        #    must be switched on with an origin address — otherwise every
+        #    session creation errors out.
+        tax = await self._get("/tax/settings")
+        if tax.get("error"):
+            out["tax"] = {"ok": False, "error": str(tax["error"])[:160]}
+            warnings.append("Could not read Stripe Tax settings — if Stripe Tax is off, checkout will fail because the app requests automatic tax.")
+        else:
+            head = (tax.get("head_office") or {}).get("address") or {}
+            out["tax"] = {"ok": tax.get("status") == "active", "status": tax.get("status"),
+                          "origin_country": head.get("country")}
+            if tax.get("status") != "active":
+                blockers.append("Stripe Tax is not active — the app sends automatic_tax[enabled]=true, so Checkout will 502 until it is (set the origin address and enable it).")
+
+        # 4. The Billing Portal needs a saved configuration or /portal 502s the
+        #    moment a subscriber tries to cancel.
+        portal = await self._get("/billing_portal/configurations", {"limit": "5", "is_default": "true"})
+        if portal.get("error"):
+            out["portal"] = {"ok": False, "error": str(portal["error"])[:160]}
+            warnings.append("Could not read the Billing Portal configuration.")
+        else:
+            cfgs = [c for c in (portal.get("data") or []) if c.get("active")]
+            out["portal"] = {"ok": bool(cfgs), "configurations": len(cfgs)}
+            if not cfgs:
+                warnings.append("No active Billing Portal configuration — subscribers will not be able to manage or cancel Pro until you save one.")
+
+        # 5. Webhook endpoint — our URL, enabled, carrying the four events the
+        #    handler acts on.
+        hooks = await self._get("/webhook_endpoints", {"limit": "50"})
+        if hooks.get("error"):
+            out["webhook"] = {"ok": False, "error": str(hooks["error"])[:160]}
+            warnings.append("Could not list webhook endpoints.")
+        else:
+            want = (webhook_url or "").rstrip("/")
+            mine = [h for h in (hooks.get("data") or [])
+                    if want and (h.get("url") or "").rstrip("/") == want]
+            if not mine:
+                out["webhook"] = {"ok": False, "registered": False, "expected_url": want,
+                                  "endpoints_on_account": len(hooks.get("data") or [])}
+                if key_ok:
+                    blockers.append(f"No webhook endpoint points at {want} — Pro would never switch on after payment.")
+            else:
+                h = mine[0]
+                evs = set(h.get("enabled_events") or [])
+                missing = [] if "*" in evs else [e for e in self.REQUIRED_EVENTS if e not in evs]
+                out["webhook"] = {"ok": (h.get("status") == "enabled" and not missing),
+                                  "registered": True, "status": h.get("status"),
+                                  "missing_events": missing}
+                if h.get("status") != "enabled":
+                    blockers.append("The webhook endpoint exists but is disabled in Stripe.")
+                if missing:
+                    blockers.append("Webhook endpoint is missing events: " + ", ".join(missing))
+                if not self.webhook_secret:
+                    blockers.append("STRIPE_WEBHOOK_SECRET is not set — the app rejects every webhook (fail-closed), so no one would ever get Pro.")
+
+        # 6. Checkout is created with allow_promotion_codes=true. If the
+        #    marketing copy names a code, it has to exist and be active.
+        if promo_code:
+            pc = await self._get("/promotion_codes", {"code": promo_code, "limit": "1"})
+            if pc.get("error"):
+                out["promo"] = {"code": promo_code, "ok": False, "error": str(pc["error"])[:160]}
+            else:
+                rows = pc.get("data") or []
+                live = [r for r in rows if r.get("active")]
+                out["promo"] = {"code": promo_code, "ok": bool(live), "found": len(rows)}
+                if not live:
+                    warnings.append(f"Promotion code {promo_code} is not active in Stripe — anyone typing it at checkout gets an error.")
+
+        out["blockers"] = blockers
+        out["warnings"] = warnings
+        out["ready"] = not blockers
+        return out
+
     async def create_checkout_session(self, *, user_id: str, email: str,
                                       success_url: str, cancel_url: str) -> dict:
         """Hosted subscription Checkout. user_id is threaded through so the
