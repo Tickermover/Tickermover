@@ -438,11 +438,39 @@ class SupabaseClient:
         return {"plan": "free", "status": "active"}
 
     async def upsert_subscription(self, access_token: str, data: dict) -> bool:
-        """Create or update a subscription record."""
+        """Create or update a subscription record.
+
+        Sends its own request instead of going through _post(), because two
+        details there silently broke every paid upgrade:
+
+        1. `on_conflict=user_id` alone does NOT make PostgREST upsert. Without
+           `Prefer: resolution=merge-duplicates` it is a plain INSERT, so a user
+           who already had a subscriptions row got a 409 duplicate-key and their
+           plan was never written — payment taken, webhook delivered, account
+           still Free.
+        2. PostgREST reports failures as {code,message,details,hint}; there is no
+           "error" key, so the old `resp.get("error")` check read that 409 as
+           success and the webhook logged ok=True over a write that never landed.
+           Trust the HTTP status instead.
+
+        scripts/create_test_user.py always sent the Prefer header; the app didn't.
+        """
         if not self.enabled:
             return False
-        resp = await self._post("/rest/v1/subscriptions?on_conflict=user_id", data, token=access_token)
-        return not (isinstance(resp, dict) and resp.get("error"))
+        headers = self._auth_headers(access_token)
+        headers["Prefer"] = "resolution=merge-duplicates,return=minimal"
+        try:
+            async with httpx.AsyncClient(timeout=10) as c:
+                r = await c.post(f"{self.url}/rest/v1/subscriptions?on_conflict=user_id",
+                                 json=data, headers=headers)
+            if r.status_code in (200, 201, 204):
+                return True
+            logger.error("Supabase subscription upsert → HTTP %s: %s",
+                         r.status_code, (r.text or "")[:300])
+            return False
+        except Exception as exc:
+            logger.error("Supabase subscription upsert failed: %s", exc)
+            return False
 
     # ── Watchlist ─────────────────────────────────────────────────────────────
 

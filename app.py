@@ -12881,7 +12881,7 @@ async def api_payment_webhook(request: Request):
 #  STRIPE — primary payment gateway (hosted Checkout + webhooks)
 # ═══════════════════════════════════════════════════════════════════════════
 async def _set_user_pro(user_id: str, *, active: bool, customer_id: str = "",
-                        subscription_id: str = "", period_end: int | None = None) -> None:
+                        subscription_id: str = "", period_end: int | None = None) -> bool:
     """Write a user's Pro state from a Stripe webhook (no user token → use the
     service key to bypass RLS). Stripe customer/subscription ids are stashed in
     the durable kv_store so the Billing Portal can find them — no schema change."""
@@ -12905,6 +12905,7 @@ async def _set_user_pro(user_id: str, *, active: bool, customer_id: str = "",
         except Exception:
             pass
     logger.info(f"💳 Stripe → user {user_id[:8]}… plan={'pro' if active else 'free'} ok={ok}")
+    return bool(ok)
 
 
 @app.get("/api/billing/config")
@@ -12982,18 +12983,28 @@ async def api_billing_portal(user: Optional[dict] = Depends(_current_user),
 
 async def _stripe_already_processed(evt_id: str) -> bool:
     """H2 idempotency: True if this Stripe event id was already handled (Stripe
-    may redeliver). Records unseen ids in kv_store with a 7-day TTL (> Stripe's
-    retry window)."""
+    may redeliver). CHECK ONLY — the id is recorded by _stripe_mark_processed
+    once the work actually succeeded. Marking on arrival meant a failed write
+    was remembered as done, so Stripe's retry was discarded as a duplicate and
+    the user stayed on the wrong plan forever."""
     if not evt_id:
         return False
     from kv_store import store as _kv
     try:
-        if await asyncio.to_thread(_kv.get, "stripe_evt", evt_id, 7 * 86400):
-            return True
+        return bool(await asyncio.to_thread(_kv.get, "stripe_evt", evt_id, 7 * 86400))
+    except Exception:
+        return False
+
+
+async def _stripe_mark_processed(evt_id: str) -> None:
+    """Record a successfully handled event id (7-day TTL > Stripe's retry window)."""
+    if not evt_id:
+        return
+    from kv_store import store as _kv
+    try:
         await asyncio.to_thread(_kv.set, "stripe_evt", evt_id, {"at": int(time.time())})
     except Exception:
         pass
-    return False
 
 
 async def _stripe_event_is_stale(uid: str, evt_created) -> bool:
@@ -13036,30 +13047,41 @@ async def api_stripe_webhook(request: Request):
     if uid and await _stripe_event_is_stale(uid, event.get("created")):
         logger.info(f"Stripe webhook: ignoring out-of-order {typ} for {uid}")
         return JSONResponse({"received": True, "stale": True})
+    # None = nothing to write for this event type; True/False = the write's fate.
+    wrote: bool | None = None
     try:
         if typ == "checkout.session.completed":
             if uid:
-                await _set_user_pro(uid, active=True,
-                                    customer_id=obj.get("customer") or "",
-                                    subscription_id=obj.get("subscription") or "")
+                wrote = await _set_user_pro(uid, active=True,
+                                            customer_id=obj.get("customer") or "",
+                                            subscription_id=obj.get("subscription") or "")
         elif typ in ("customer.subscription.created", "customer.subscription.updated"):
             uid = uid or (obj.get("metadata") or {}).get("user_id")
             active = obj.get("status") in ("active", "trialing")
             if uid:
-                await _set_user_pro(uid, active=active,
-                                    customer_id=obj.get("customer") or "",
-                                    subscription_id=obj.get("id") or "",
-                                    period_end=obj.get("current_period_end"))
+                wrote = await _set_user_pro(uid, active=active,
+                                            customer_id=obj.get("customer") or "",
+                                            subscription_id=obj.get("id") or "",
+                                            period_end=obj.get("current_period_end"))
         elif typ == "customer.subscription.deleted":
             uid = uid or (obj.get("metadata") or {}).get("user_id")
             if uid:
-                await _set_user_pro(uid, active=False,
-                                    customer_id=obj.get("customer") or "",
-                                    subscription_id=obj.get("id") or "")
+                wrote = await _set_user_pro(uid, active=False,
+                                            customer_id=obj.get("customer") or "",
+                                            subscription_id=obj.get("id") or "")
         else:
             logger.debug(f"Stripe webhook: unhandled {typ}")
     except Exception as exc:
         logger.error(f"Stripe webhook handler error ({typ}): {exc}")
+        wrote = False
+    # A plan write that failed must NOT be acknowledged: 200 tells Stripe the
+    # event is done and it never comes back, which is how a paid customer ends
+    # up on the free plan with a green webhook dashboard. 500 makes Stripe
+    # retry, and the event stays unmarked so the retry is actually processed.
+    if wrote is False:
+        logger.error(f"Stripe webhook: plan write FAILED for {typ} — returning 500 so Stripe retries")
+        raise HTTPException(status_code=500, detail="Could not persist plan change")
+    await _stripe_mark_processed(event.get("id"))
     return JSONResponse({"received": True})
 
 
