@@ -92,11 +92,23 @@ a.card:hover{border-color:#b9d2ff;transform:translateY(-2px);box-shadow:0 12px 2
       ? '<a class="card" href="/theses/'+encodeURIComponent(t.slug)+'">'+inner+'</a>'
       : '<div class="card dim">'+inner+'</div>';
   }
+  // A new map lands every Sunday, so name WHICH one. A dated promise of a
+  // specific idea brings people back; "more coming soon" does not.
+  function nextCard(n){
+    if(!n || !n.driver) return "";
+    var t = n.driver.charAt(0).toUpperCase() + n.driver.slice(1);
+    return '<div class="card dim next-card">'+
+      '<div class="c-eyebrow"><span>Next Sunday</span><span class="tag soon">In the works</span></div>'+
+      spark(3)+
+      '<h2>'+esc(t)+'</h2>'+
+      '<p>'+esc(n.angle||"")+'</p>'+
+      '<span class="go">Lands Sunday evening</span></div>';
+  }
   fetch("/api/theses").then(function(r){ return r.json(); }).then(function(d){
     var list = (d && d.theses) || [];
     if(!list.length){ grid.innerHTML = '<div class="loading">No thesis maps yet — check back shortly.</div>'; return; }
     list.sort(function(a,b){ return (a.status==="live"?0:1) - (b.status==="live"?0:1); });
-    grid.innerHTML = list.map(card).join("");
+    grid.innerHTML = list.map(card).join("") + nextCard(d && d.next_up);
   }).catch(function(){ grid.innerHTML = '<div class="loading">Could not load thesis maps. Please try again shortly.</div>'; });
 })();
 </script>

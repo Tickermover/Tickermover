@@ -434,7 +434,31 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
           '<span class="mv-track"><span class="mv-fill '+(pos?"pos":"neg")+'" style="width:'+w.toFixed(1)+'%;background:'+barCss(i,top.length,pos)+'"></span></span>'+
           '<span class="mv-val '+(pos?"pos-t":"neg-t")+'">'+(pos?"+":"")+v.toFixed(1)+'%</span></div>';
       }).join("");
-      el.innerHTML =
+      // Which STAGE of the chain the market is actually paying. The company
+      // leaderboard answers "who won"; this answers "where in the chain the
+      // money went" — the question a chain map exists to ask.
+      var byL = {};
+      cos.forEach(function(c){ (byL[c.layer] = byL[c.layer] || []).push(c.ret_3m||0); });
+      var lrows = (LAYERS||[]).map(function(L,i){
+        var vals = byL[L.id] || [];
+        if(!vals.length) return null;
+        var avg = vals.reduce(function(a,b){ return a+b; }, 0) / vals.length;
+        return {name:L.name, avg:avg, n:vals.length, color:"var(--l"+(i+1)+")"};
+      }).filter(Boolean);
+      var trend = "";
+      if(lrows.length >= 2){
+        var lmax = Math.max.apply(null, lrows.map(function(r){ return Math.abs(r.avg); }).concat([1]));
+        trend = '<div class="winners-h"><b>Which layer is winning</b>'+
+                '<span>average 3-month return by chain layer</span></div>' +
+          lrows.map(function(r){
+            var pos = r.avg >= 0, w = Math.max(2, Math.abs(r.avg)/lmax*100);
+            return '<div class="mv"><span class="mv-tk">'+esc(r.name)+'<small>'+r.n+' name'+(r.n>1?'s':'')+'</small></span>'+
+              '<span class="mv-track"><span class="mv-fill '+(pos?"pos":"neg")+'" style="width:'+w.toFixed(1)+
+              '%;background:'+r.color+'"></span></span>'+
+              '<span class="mv-val '+(pos?"pos-t":"neg-t")+'">'+(pos?"+":"")+r.avg.toFixed(1)+'%</span></div>';
+          }).join("") + '<div style="height:20px"></div>';
+      }
+      el.innerHTML = trend +
         '<div class="winners-h"><b>Who’s gained so far</b><span>'+up+' of '+cos.length+' names up · 3-month return, live</span></div>'+ rows;
       el.style.display = "";
     }).catch(function(){ el.style.display="none"; });

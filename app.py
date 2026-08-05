@@ -5357,7 +5357,19 @@ async def api_theses():
         {k: t.get(k) for k in ("slug", "status", "kind", "eyebrow", "title", "accent", "standfirst")}
         for t in (d.get("theses") or [])
     ]
-    return JSONResponse(_clean({"as_of": d.get("as_of"), "theses": meta}),
+    # What lands next Sunday. Comes straight from the driver pool — no model
+    # call — so the hub can promise a specific idea rather than "more soon".
+    nxt = None
+    try:
+        import thesis_map_gen as _tmg
+        used = {(m.get("driver_key") or "") for m in _gen_theses}
+        used |= {(t.get("slug") or "") for t in (d.get("theses") or [])}
+        drv = _tmg.pick_driver(used)
+        if drv:
+            nxt = {"driver": drv["driver"], "angle": drv["angle"]}
+    except Exception:
+        pass
+    return JSONResponse(_clean({"as_of": d.get("as_of"), "theses": meta, "next_up": nxt}),
                         headers={"Cache-Control": "public, max-age=300, s-maxage=600"})
 
 
@@ -5409,6 +5421,161 @@ async def api_thesis_perf(slug: str):
             })
     return JSONResponse(_clean({"slug": slug, "covered": len(rows), "companies": rows}),
                         headers={"Cache-Control": "public, max-age=300, s-maxage=600"})
+
+
+_THESIS_OG_CACHE: dict = {}
+
+
+def _render_thesis_og_png(t: dict) -> bytes:
+    """1200×630 share card for a chain map — the chain itself, drawn: one band
+    per layer, the layer name, and the tickers in it. A map is a picture, so the
+    social preview should be the picture and not a wall of words."""
+    from PIL import Image, ImageDraw, ImageFont
+
+    def _font(sz, bold=False):
+        for p in (("arialbd.ttf" if bold else "arial.ttf"),
+                  ("DejaVuSans-Bold.ttf" if bold else "DejaVuSans.ttf")):
+            try:
+                return ImageFont.truetype(p, sz)
+            except Exception:
+                continue
+        return ImageFont.load_default()
+
+    W, H = 1200, 630
+    BG = (10, 14, 26)
+    img = Image.new("RGB", (W, H), BG)
+    d = ImageDraw.Draw(img)
+    # Layer palette, upstream (hot) → downstream (cool), matching the map page.
+    PAL = [(96, 165, 250), (56, 189, 248), (45, 212, 191), (163, 230, 53),
+           (250, 204, 21), (251, 146, 60)]
+
+    d.rectangle([0, 0, W, 6], fill=(41, 112, 255))
+    d.text((60, 46), "TICKERMOVER · CHAIN MAP", font=_font(20, True), fill=(120, 155, 220))
+
+    title = (t.get("title") or "Chain map")[:58]
+    f_t = _font(46, True)
+    # Wrap the headline by width rather than character count so it never clips.
+    words, line, lines = title.split(), "", []
+    for w in words:
+        probe = (line + " " + w).strip()
+        if d.textlength(probe, font=f_t) > W - 120 and line:
+            lines.append(line)
+            line = w
+        else:
+            line = probe
+    lines.append(line)
+    y = 84
+    for ln in lines[:2]:
+        d.text((60, y), ln, font=f_t, fill=(255, 255, 255))
+        y += 56
+
+    layers = (t.get("layers") or [])[:6]
+    n = max(1, len(layers))
+    top, bottom = y + 24, H - 92
+    band = max(38, int((bottom - top) / n) - 12)
+    f_l, f_c = _font(23, True), _font(20)
+    for i, L in enumerate(layers):
+        col = PAL[i % len(PAL)]
+        yy = top + i * (band + 12)
+        d.rectangle([60, yy, 66, yy + band], fill=col)                     # layer rail
+        d.text((84, yy + 3), (L.get("name") or "")[:42], font=f_l, fill=(226, 232, 240))
+        tks = " · ".join((c.get("t") or "") for c in (L.get("names") or [])[:6])
+        d.text((84, yy + band - 26), tks[:74], font=f_c, fill=col)
+
+    n_co = sum(len(L.get("names") or []) for L in layers)
+    d.text((60, H - 54), f"{len(layers)} layers · {n_co} companies · live revenue shares",
+           font=_font(21), fill=(120, 155, 220))
+    d.text((W - 250, H - 54), "tickermover.com", font=_font(21, True), fill=(41, 112, 255))
+
+    from io import BytesIO
+    buf = BytesIO()
+    img.save(buf, format="PNG", optimize=True)
+    return buf.getvalue()
+
+
+@app.get("/og/thesis/{slug}.png")
+async def og_thesis_image(slug: str):
+    """Social-share infographic for one chain map."""
+    from fastapi.responses import Response
+    slug = (slug or "").lower().strip()
+    hit = _THESIS_OG_CACHE.get(slug)
+    if hit and (time.time() - hit[0]) < 3600:
+        return Response(content=hit[1], media_type="image/png",
+                        headers={"Cache-Control": "public, max-age=3600"})
+    t = next((x for x in (_load_theses().get("theses") or [])
+              if (x.get("slug") or "").lower() == slug and x.get("layers")), None)
+    if not t:
+        return await static_icon_fallback("og-fallback.png")
+    try:
+        png = _render_thesis_og_png(t)
+    except ImportError:
+        return await static_icon_fallback("og-fallback.png")
+    except Exception as exc:
+        logger.warning("thesis OG render failed for %s: %s", slug, exc)
+        return await static_icon_fallback("og-fallback.png")
+    _THESIS_OG_CACHE[slug] = (time.time(), png)
+    return Response(content=png, media_type="image/png",
+                    headers={"Cache-Control": "public, max-age=3600"})
+
+
+@app.get("/admin/thesis-map", response_class=HTMLResponse)
+async def admin_thesis_map_page():
+    """Admin console for the weekly map: see what's published, what's next, and
+    build one now. The page is harmless without a token — every button calls the
+    API, which is the thing that checks you're on the allow-list."""
+    return HTMLResponse(f"""<!doctype html><html><head><meta charset="utf-8">
+<title>Thesis map · admin</title><meta name="robots" content="noindex">
+<style>
+body{{margin:0;background:#0b0f1a;color:#e2e8f0;font:15px/1.6 system-ui,sans-serif;padding:40px 24px}}
+.wrap{{max-width:820px;margin:0 auto}} h1{{font-size:22px;margin:0 0 4px}}
+.sub{{color:#94a3b8;font-size:13.5px;margin-bottom:22px}}
+.card{{background:#121826;border:1px solid #1e293b;border-radius:14px;padding:18px 20px;margin-bottom:14px}}
+.k{{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:#64748b;margin-bottom:8px}}
+button{{background:linear-gradient(135deg,#2970ff,#0040c1);color:#fff;border:0;border-radius:10px;
+  padding:11px 18px;font-size:14px;font-weight:700;cursor:pointer;margin-right:9px}}
+button.ghost{{background:#1e293b}} button:disabled{{opacity:.5;cursor:default}}
+pre{{background:#0b1220;border:1px solid #1e293b;border-radius:10px;padding:14px;overflow:auto;
+  max-height:460px;font-size:12.5px;color:#a5f3fc;white-space:pre-wrap}}
+a{{color:#60a5fa}} .warn{{color:#fbbf24;font-size:13px}}
+</style></head><body><div class="wrap">
+<h1>Weekly thesis map</h1>
+<div class="sub">Publishes itself Sunday 17:00 ET. Use this to build one now.</div>
+<div class="card"><div class="k">Next idea in the queue</div><div id="next">…</div></div>
+<div class="card"><div class="k">Published maps</div><div id="list">…</div></div>
+<div class="card">
+  <div class="k">Build</div>
+  <button id="dry">Dry run — generate, don't publish</button>
+  <button id="pub" class="ghost">Publish now</button>
+  <p class="warn" id="note" style="margin:12px 0 0"></p>
+</div>
+<pre id="out" style="display:none"></pre>
+</div><script>
+var TOKEN = localStorage.getItem('ah_token') || '';
+function hdr(){{ return TOKEN ? {{Authorization:'Bearer '+TOKEN}} : {{}}; }}
+if(!TOKEN) document.getElementById('note').textContent =
+  'No session found — open /app in this browser and sign in first, then reload this page.';
+fetch('/api/theses').then(function(r){{return r.json()}}).then(function(d){{
+  var n = d.next_up;
+  document.getElementById('next').innerHTML = n
+    ? '<b>'+n.driver+'</b><br><span style="color:#94a3b8">'+n.angle+'</span>'
+    : 'Driver pool exhausted — add more to DRIVER_POOL in thesis_map_gen.py.';
+  document.getElementById('list').innerHTML = (d.theses||[]).slice(0,14).map(function(t){{
+    return '<div style="padding:3px 0">· <a href="/theses/'+t.slug+'" target="_blank">'+t.title+'</a></div>';
+  }}).join('') || 'none';
+}});
+function run(dry){{
+  var out=document.getElementById('out'); out.style.display=''; out.textContent='Working — 30-90s (research + model)…';
+  document.getElementById('dry').disabled=true; document.getElementById('pub').disabled=true;
+  fetch('/api/admin/publish-thesis-map'+(dry?'?dry=1':''),{{method:'POST',headers:hdr()}})
+    .then(function(r){{return r.json()}})
+    .then(function(d){{ out.textContent=JSON.stringify(d,null,1);
+      if(!dry && d.url) out.textContent += '\\n\\nOPEN: '+location.origin+d.url; }})
+    .catch(function(e){{ out.textContent='Failed: '+e; }})
+    .then(function(){{ document.getElementById('dry').disabled=false; document.getElementById('pub').disabled=false; }});
+}}
+document.getElementById('dry').onclick=function(){{run(1)}};
+document.getElementById('pub').onclick=function(){{run(0)}};
+</script></body></html>""")
 
 
 @app.get("/api/thesis-shares/{slug}")
