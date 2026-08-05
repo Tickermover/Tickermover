@@ -177,15 +177,19 @@ def main() -> None:
         missing = [e for e in EVENTS if e not in (mine.get("enabled_events") or [])
                    and "*" not in (mine.get("enabled_events") or [])]
         if missing:
+            # Repeated form keys go as a dict with a LIST value: httpx encodes
+            # {"k": [a, b]} as k=a&k=b. A list of (key, value) tuples is NOT a
+            # form body to httpx — it tries to send it as raw content and dies
+            # inside h11 with "expected a bytes-like object, tuple found".
             s.post(f"/webhook_endpoints/{mine['id']}",
-                   [("enabled_events[]", e) for e in EVENTS])
+                   {"enabled_events[]": list(EVENTS)})
             print(f"  Webhook   endpoint existed - added {len(missing)} missing event(s)")
         else:
             print("  Webhook   endpoint already registered with all four events")
     else:
         created = s.post("/webhook_endpoints",
-                         [("url", a.url), ("description", "TickerMover Pro")] +
-                         [("enabled_events[]", e) for e in EVENTS])
+                         {"url": a.url, "description": "TickerMover Pro",
+                          "enabled_events[]": list(EVENTS)})
         secret = created.get("secret")
         print("  Webhook   created")
 
