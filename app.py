@@ -1056,6 +1056,13 @@ async def lifespan(app: FastAPI):
         await coordinator.polygon.start_ws_stream(tickers_for_ws)
         logger.info("Polygon WebSocket stream started")
 
+    # Weekly-generated chain maps live in the KV store; pull them into memory
+    # before the first request so /theses shows this week's map immediately.
+    try:
+        _gen_theses_load()
+    except Exception as _gt_exc:
+        logger.warning(f"generated theses restore failed: {_gt_exc}")
+
     tasks = [
         asyncio.create_task(_regime_refresh()),     # macro overlay (30 min)
         asyncio.create_task(_bg_scheduler()),
@@ -1063,7 +1070,8 @@ async def lifespan(app: FastAPI):
         asyncio.create_task(_yf_concurrent_load()),
         asyncio.create_task(_tech_refresh()),
         asyncio.create_task(_desk_publisher()),     # freeze pre/post editions
-        asyncio.create_task(_weekly_publisher()),   # Opus weekly editorial (Sunday eve ET)
+        asyncio.create_task(_weekly_publisher()),   # legacy weekly editorial (WEEKLY_MODE=article|both)
+        asyncio.create_task(_thesis_map_publisher()),  # a new chain map every Sunday eve ET
         asyncio.create_task(_overview_prewarm()),   # keep curated Overviews warm
         asyncio.create_task(_data_prewarm()),        # keep all stocks' free data (stock-extra) warm
         asyncio.create_task(_bottom_line_prewarm()), # Haiku-polish bottom_lines (cache-first, 15d)
@@ -4544,6 +4552,10 @@ _WEEKLY_LAST_JOB: dict = {}
 import weekly_editorial_gen
 
 _WEEKLY_VERSION = 2   # bump to force a one-time rebuild when the format changes
+# What the week's publication IS: 'map' (a new chain map — the default), the
+# legacy 2,200-word 'article', or 'both'. The article pipeline is untouched, so
+# this is a one-variable decision, not a migration.
+_WEEKLY_MODE = (os.environ.get("WEEKLY_MODE", "map") or "map").strip().lower()
 _WEEKLY_EMAIL_ENABLED = (os.environ.get("WEEKLY_EMAIL_ENABLED", "").lower()
                          in ("1", "true", "yes"))
 
@@ -4866,11 +4878,84 @@ async def _weekly_publisher() -> None:
             wk = _week_start(now)
             cur = _weekly_store.get(wk)
             need = (not cur) or ((cur.get("article") or {}).get("v") != _WEEKLY_VERSION)
-            if need and now.weekday() == 6 and now.hour >= 17 and not _ai_over_budget():
+            if (_WEEKLY_MODE in ("article", "both") and need
+                    and now.weekday() == 6 and now.hour >= 17 and not _ai_over_budget()):
                 await _generate_and_save_weekly(wk)
         except Exception as exc:
             logger.warning(f"weekly publisher failed: {exc}")
         await asyncio.sleep(3600)   # hourly
+
+
+async def _build_weekly_map(seed: int = 0) -> dict | None:
+    """Generate this week's chain map: pick an unused driver, research it, build
+    it against the live universe, store it. Returns the map or None."""
+    import thesis_map_gen as _tmg
+    used = {(m.get("driver_key") or "") for m in _gen_theses}
+    # Curated slugs count as used too — no point mapping AI capex again.
+    used |= {(t.get("slug") or "") for t in (_load_theses().get("theses") or [])}
+    driver = _tmg.pick_driver(used, seed=seed)
+    if not driver:
+        logger.info("🧭 Thesis map: driver pool exhausted — nothing new to map")
+        return None
+    mp = await _tmg.generate(driver, list(_universe_data or []))
+    if not mp:
+        return None
+    mp["week_start"] = _week_start(_et_now())
+    _gen_theses_save(mp)
+    return mp
+
+
+async def _thesis_map_publisher() -> None:
+    """One new chain map a week — the weekly artifact, in place of the article.
+
+    Sunday >= 17:00 ET like the editorial, so the week opens with something new
+    to read. WEEKLY_MODE controls which runs: 'map' (default), 'article', or
+    'both'. Nothing about the article pipeline was deleted — flipping the env
+    var back brings it straight back."""
+    if _WEEKLY_MODE not in ("map", "both"):
+        logger.info("Thesis-map publisher off (WEEKLY_MODE=%s)", _WEEKLY_MODE)
+        return
+    await asyncio.sleep(380)   # after the universe is warm; staggered off the editorial
+    while True:
+        try:
+            now = _et_now()
+            wk = _week_start(now)
+            have_this_week = any((m.get("week_start") or "") == wk for m in _gen_theses)
+            if not have_this_week and now.weekday() == 6 and now.hour >= 17:
+                await _build_weekly_map()
+        except Exception as exc:
+            logger.warning(f"thesis map publisher failed: {exc}")
+        await asyncio.sleep(3600)   # hourly
+
+
+@app.post("/api/admin/publish-thesis-map")
+async def api_admin_publish_thesis_map(user: Optional[dict] = Depends(_current_user),
+                                       creds: Optional[HTTPAuthorizationCredentials] = Depends(_bearer),
+                                       seed: int = 0, dry: int = 0):
+    """Admin: build this week's chain map now instead of waiting for Sunday.
+    ?dry=1 generates and returns it WITHOUT storing, so a bad map can be thrown
+    away before anyone sees it. ?seed=N picks a different driver from the pool."""
+    if not user or (user.get("email") or "").lower() not in _AI_ALLOW:
+        raise HTTPException(status_code=403, detail="Admin only.")
+    if dry:
+        import thesis_map_gen as _tmg
+        used = {(m.get("driver_key") or "") for m in _gen_theses}
+        used |= {(t.get("slug") or "") for t in (_load_theses().get("theses") or [])}
+        driver = _tmg.pick_driver(used, seed=seed)
+        if not driver:
+            return JSONResponse({"ok": False, "reason": "driver pool exhausted"})
+        mp = await _tmg.generate(driver, list(_universe_data or []))
+        return JSONResponse(_clean({"ok": bool(mp), "dry_run": True, "map": mp}))
+    mp = await _build_weekly_map(seed=seed)
+    if not mp:
+        return JSONResponse({"ok": False, "reason": "generation failed or pool exhausted"},
+                            status_code=502)
+    return JSONResponse(_clean({
+        "ok": True, "slug": mp["slug"], "title": mp["title"],
+        "layers": len(mp["layers"]),
+        "companies": sum(len(L["names"]) for L in mp["layers"]),
+        "web_grounded": mp.get("web_grounded"), "url": f"/theses/{mp['slug']}",
+    }))
 
 
 @app.get("/api/weekly-editorial")
@@ -5201,6 +5286,47 @@ async def future_heroes_page():
 # mtime-checked so an edit/redeploy picks it up.
 _theses_cache: dict = {"mtime": None, "data": None}
 
+# Weekly-generated maps, newest first. Held in memory (loaded from kv_store at
+# startup) so /api/theses and /api/thesis-map stay pure reads with no DB hop.
+_gen_theses: list[dict] = []
+_GEN_NS = "thesis_map"
+
+
+def _gen_theses_load() -> None:
+    """Restore generated maps from the KV store into memory. Called at startup
+    and after each generation."""
+    global _gen_theses
+    try:
+        from kv_store import store as _kv
+        idx = _kv.get(_GEN_NS, "_index") or {}
+        out = []
+        for slug in (idx.get("slugs") or [])[:52]:
+            row = _kv.get(_GEN_NS, slug)
+            if row and row.get("layers"):
+                out.append(row)
+        _gen_theses = out
+        logger.info("🧭 Loaded %d generated thesis map(s)", len(out))
+    except Exception as exc:
+        logger.warning(f"generated theses load failed: {exc}")
+
+
+def _gen_theses_save(mp: dict) -> None:
+    """Persist one generated map and put it at the front of the index."""
+    global _gen_theses
+    try:
+        from kv_store import store as _kv
+        slug = mp.get("slug")
+        if not slug:
+            return
+        _kv.set(_GEN_NS, slug, mp)
+        idx = _kv.get(_GEN_NS, "_index") or {}
+        slugs = [s for s in (idx.get("slugs") or []) if s != slug]
+        _kv.set(_GEN_NS, "_index", {"slugs": [slug] + slugs})
+        _gen_theses = [mp] + [m for m in _gen_theses if m.get("slug") != slug]
+    except Exception as exc:
+        logger.warning(f"generated thesis save failed: {exc}")
+
+
 def _load_theses() -> dict:
     import json as _json
     try:
@@ -5208,10 +5334,19 @@ def _load_theses() -> dict:
         if _theses_cache["data"] is None or _theses_cache["mtime"] != mtime:
             _theses_cache["data"] = _json.loads(THESES_JSON.read_text(encoding="utf-8"))
             _theses_cache["mtime"] = mtime
-        return _theses_cache["data"]
+        base = _theses_cache["data"]
     except Exception as exc:
         logger.warning(f"theses load failed: {exc}")
-        return {"theses": []}
+        base = {"theses": []}
+    if not _gen_theses:
+        return base
+    # This week's map leads the hub; the curated ten follow. A generated slug
+    # always wins over a curated one of the same name, so a map can be
+    # regenerated in place.
+    gen_slugs = {(m.get("slug") or "").lower() for m in _gen_theses}
+    curated = [t for t in (base.get("theses") or [])
+               if (t.get("slug") or "").lower() not in gen_slugs]
+    return {"as_of": base.get("as_of"), "theses": list(_gen_theses) + curated}
 
 
 @app.get("/api/theses")
