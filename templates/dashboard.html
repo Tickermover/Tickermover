@@ -2657,7 +2657,10 @@ body.v2 .v2ov-card.sectors .v2ov-sector-cell{
 .v2-acct-btn:hover{background:#f8fafc;border-color:#cbd5e1}
 .v2-acct-btn:disabled{opacity:.55;cursor:default}
 .v2-acct-btn-pri{background:linear-gradient(135deg,#2970ff,#0040c1);border-color:transparent;color:#fff}
-.v2-acct-btn-pri:hover{filter:brightness(1.06)}
+/* Restate the fill: the primary button also carries .v2-acct-btn, whose :hover
+   sets a near-white background and beats the plain .v2-acct-btn-pri rule on
+   specificity — so hovering left white text on a white button. */
+.v2-acct-btn-pri:hover{background:linear-gradient(135deg,#2970ff,#0040c1);border-color:transparent;color:#fff;filter:brightness(1.06)}
 .v2-acct-email{flex:1;min-width:0;font-size:13px;font-weight:600;color:#0b1220;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .v2-acct-badge{font-size:10px;font-weight:800;padding:3px 9px;border-radius:999px;flex-shrink:0}
 .v2-acct-badge.ok{background:#eaf7ee;color:#15803d}
@@ -19743,6 +19746,25 @@ async function startStripeCheckout() {
   } catch(e){ if (errEl){ errEl.style.color = '#dc2626'; errEl.textContent = 'Network error. Please try again.'; } }
   if (btn){ btn.disabled = false; btn.textContent = 'Upgrade to Pro'; }
 }
+
+// Arriving from the landing page's "Get Pro" (login.html forwards ?upgrade=1,
+// and stashes ah_next so the Google OAuth round-trip keeps the intent too).
+// Without this, someone who clicked Get Pro signed up and was dropped into the
+// free app with no sign of the thing they came to buy.
+try {
+  const _q = new URLSearchParams(location.search);
+  let _wantUpgrade = _q.get('upgrade') === '1';
+  try { _wantUpgrade = _wantUpgrade || localStorage.getItem('ah_next') === 'upgrade'; } catch(e){}
+  if (_wantUpgrade) {
+    try { localStorage.removeItem('ah_next'); } catch(e){}
+    try { history.replaceState(null, '', '/app'); } catch(e){}
+    // Give the session a moment to restore — openUpgradeModal() bounces to the
+    // sign-in modal if _AUTH.token isn't populated yet.
+    setTimeout(function(){
+      try { if (typeof openUpgradeModal === 'function' && _AUTH.token) openUpgradeModal(); } catch(e){}
+    }, 900);
+  }
+} catch(e){}
 
 // Returning from Stripe Checkout success → celebrate + refresh plan state.
 try {

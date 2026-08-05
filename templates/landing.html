@@ -2153,7 +2153,9 @@ button:focus-visible,[tabindex]:focus-visible{
           <li><span class="pc-chk">✓</span><span class="pc-ft"><b>Weekly editorial</b><span>One long-form pick of the week, members-only</span></span></li>
         </ul>
         <div class="pc-foot-cell">
-          <a class="btn btn-primary pc-cta" href="/login?signup">Get Pro <span class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span></a>
+          <!-- next=upgrade carries the intent through sign-up: someone who clicked
+               "Get Pro" should land on checkout, not on the free app. -->
+          <a class="btn btn-primary pc-cta" href="/login?signup&amp;next=upgrade">Get Pro <span class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span></a>
           <div class="pc-tiny">Cancel anytime · secure Stripe checkout</div>
         </div>
       </div>

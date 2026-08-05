@@ -385,8 +385,22 @@ const _AUTH = {
   set user(v){ v ? localStorage.setItem('ah_user', JSON.stringify(v)) : localStorage.removeItem('ah_user'); },
 };
 
+/* Where to go once authenticated. ?next=upgrade means the visitor clicked
+   "Get Pro" on the landing page, so they should arrive at checkout rather than
+   at the free app. Stashed in localStorage as well as the query string because
+   the Google OAuth round-trip comes back on its own URL and would otherwise
+   drop the intent. */
+try{
+  var _nx=new URLSearchParams(location.search).get('next');
+  if(_nx) localStorage.setItem('ah_next', _nx);
+}catch(e){}
+function _afterAuthDest(){
+  try{ if(localStorage.getItem('ah_next')==='upgrade') return '/app?upgrade=1'; }catch(e){}
+  return '/app';
+}
+
 /* Already signed in? Go straight to the app. */
-try{ if(_AUTH.token) location.replace('/app'); }catch(e){}
+try{ if(_AUTH.token) location.replace(_afterAuthDest()); }catch(e){}
 
 /* ── Sign in / Create account mode toggle ── */
 var _authMode='signin';
@@ -450,7 +464,7 @@ async function authSubmit(){
       if(!d.access_token){ reset(); showConfirmView(email); return; }    // Confirm-email ON
       finishSession(d);
       showMsg('Account created — loading your dashboard…','ok');
-      window.location.href='/app'; return;
+      window.location.href=_afterAuthDest(); return;
     }
     // ── Sign in ──
     const res=await hit('/api/auth/signin');
@@ -463,7 +477,7 @@ async function authSubmit(){
     if(!d.access_token){ reset(); showConfirmView(email); return; }
     finishSession(d);
     showMsg('Signed in — loading your dashboard…','ok');
-    window.location.href='/app';
+    window.location.href=_afterAuthDest();
   }catch(e){ showMsg('Network error — try again','err'); reset(); }
 }
 
