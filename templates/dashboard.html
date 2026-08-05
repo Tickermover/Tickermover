@@ -7236,31 +7236,62 @@ document.addEventListener('keydown', function(e){
   <div class="v2-acct-overlay" id="upgrade-modal" role="dialog" aria-modal="true"
        aria-label="Upgrade to TickerMover Pro" style="display:none"
        onclick="if(event.target===this)closeUpgradeModal()">
-    <div class="v2-acct" style="max-width:420px">
-      <div class="v2-acct-hd">
-        <div class="v2-acct-av" aria-hidden="true">★</div>
-        <div class="v2-acct-hd-txt">
-          <div class="v2-acct-hname">TickerMover Pro</div>
-          <div class="v2-acct-hmail">£19.99/mo · cancel anytime</div>
+    <!-- Own styles rather than the account-panel classes: those are built for a
+         settings form, and reusing them put the section eyebrow on top of a
+         divider and left the price competing with the title. -->
+    <style>
+    #upgrade-modal .up-card{width:100%;max-width:392px;background:#fff;border-radius:18px;
+      box-shadow:0 24px 60px -20px rgba(9,12,24,.35);overflow:hidden;position:relative}
+    #upgrade-modal .up-x{position:absolute;top:14px;right:14px;width:30px;height:30px;border:none;
+      border-radius:9px;background:#f1f5f9;color:#64748b;font-size:14px;line-height:1;cursor:pointer}
+    #upgrade-modal .up-x:hover{background:#e2e8f0;color:#0f172a}
+    #upgrade-modal .up-hd{display:flex;align-items:center;gap:13px;padding:24px 24px 18px}
+    #upgrade-modal .up-badge{width:44px;height:44px;flex:none;border-radius:13px;display:flex;
+      align-items:center;justify-content:center;font-size:19px;color:#fff;
+      background:linear-gradient(135deg,#2970ff,#0040c1)}
+    #upgrade-modal .up-name{font-size:16.5px;font-weight:800;color:#0f172a;letter-spacing:-.01em}
+    #upgrade-modal .up-price{font-size:13px;color:#64748b;margin-top:3px}
+    #upgrade-modal .up-price b{color:#0f172a;font-weight:700}
+    #upgrade-modal .up-body{padding:0 24px 4px}
+    #upgrade-modal .up-k{font-size:10.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;
+      color:#94a3b8;padding-top:16px;border-top:1px solid #eef2f7}
+    #upgrade-modal .up-list{list-style:none;margin:12px 0 0;padding:0}
+    #upgrade-modal .up-list li{position:relative;padding:0 0 10px 26px;font-size:13.5px;
+      line-height:1.5;color:#334155}
+    #upgrade-modal .up-list li:before{content:"✓";position:absolute;left:0;top:0;width:17px;height:17px;
+      border-radius:50%;background:rgba(41,112,255,.1);color:#2970ff;font-size:10px;font-weight:800;
+      display:flex;align-items:center;justify-content:center}
+    #upgrade-modal .up-ft{padding:6px 24px 22px}
+    #upgrade-modal .up-cta{width:100%;height:46px;border:none;border-radius:12px;cursor:pointer;
+      font-size:14.5px;font-weight:700;color:#fff;background:linear-gradient(135deg,#2970ff,#0040c1);
+      box-shadow:0 10px 22px -12px rgba(41,112,255,.9)}
+    #upgrade-modal .up-cta:hover:not(:disabled){filter:brightness(1.07)}
+    #upgrade-modal .up-cta:disabled{opacity:.55;cursor:default;box-shadow:none}
+    #upgrade-modal .up-note{font-size:11.5px;line-height:1.5;color:#94a3b8;text-align:center;margin-top:10px}
+    #upgrade-modal .up-note:empty{display:none}
+    </style>
+    <div class="up-card">
+      <button class="up-x" onclick="closeUpgradeModal()" aria-label="Close">✕</button>
+      <div class="up-hd">
+        <div class="up-badge" aria-hidden="true">★</div>
+        <div>
+          <div class="up-name">TickerMover Pro</div>
+          <div class="up-price"><b>£19.99</b>/month · cancel anytime</div>
         </div>
-        <button class="v2-acct-x" onclick="closeUpgradeModal()" aria-label="Close">✕</button>
       </div>
-      <div class="v2-acct-bd">
-        <div class="v2-acct-sec">
-          <div class="v2-acct-k">What you unlock</div>
-          <ul style="margin:6px 0 0;padding-left:18px;font-size:13.5px;line-height:1.7;color:var(--muted)">
-            <li>Prime Tickers — every open and closed pick</li>
-            <li>Ask AI, grounded in TickerMover's live data</li>
-            <li>Fact Check, the audit and the analyst questions</li>
-            <li>Daily brief and your own watchlist</li>
-          </ul>
-        </div>
-        <div class="v2-acct-sec">
-          <button class="v2-acct-btn v2-acct-btn-pri" id="upgrade-pay-btn"
-                  style="width:100%;justify-content:center" disabled>Upgrade to Pro</button>
-          <div class="v2-acct-note" id="upgrade-error"></div>
-          <div class="v2-acct-note" style="margin-top:6px">Have a code? Enter it at checkout.</div>
-        </div>
+      <div class="up-body">
+        <div class="up-k">What you unlock</div>
+        <ul class="up-list">
+          <li>Prime Tickers — every open and closed pick</li>
+          <li>Ask AI, grounded in TickerMover's live data</li>
+          <li>Fact Check, the audit and the analyst questions</li>
+          <li>Daily brief and your own watchlist</li>
+        </ul>
+      </div>
+      <div class="up-ft">
+        <button class="up-cta" id="upgrade-pay-btn" disabled>Upgrade to Pro</button>
+        <div class="up-note" id="upgrade-error"></div>
+        <div class="up-note">Have a discount code? Enter it at checkout.</div>
       </div>
     </div>
   </div>
@@ -19727,7 +19758,8 @@ async function openUpgradeModal() {
   try { cfg = await (await fetch('/api/billing/config')).json(); } catch(e){}
   if (cfg && cfg.enabled) {
     if (btn){ btn.disabled = false; btn.style.opacity = '1'; btn.style.cursor = 'pointer'; btn.textContent = 'Upgrade to Pro'; btn.onclick = startStripeCheckout; }
-    if (errEl){ errEl.style.color = '#475569'; errEl.textContent = "You'll be taken to Stripe's secure checkout. Cancel anytime."; }
+    // "Cancel anytime" already sits under the price — don't say it twice.
+    if (errEl){ errEl.style.color = ''; errEl.textContent = "You'll be taken to Stripe's secure checkout."; }
   } else {
     if (btn){ btn.disabled = true; btn.style.opacity = '.6'; btn.style.cursor = 'default'; btn.textContent = 'Free during beta'; btn.onclick = null; }
     if (errEl){ errEl.style.color = '#475569'; errEl.textContent = "Pro is free for everyone during our beta — paid plans open at launch, and we'll email you first. Nothing to pay right now."; }
