@@ -6845,6 +6845,55 @@ html.v2-dark body.v2 .v2-sidebar .v2-nav-item.active svg{
   -webkit-filter:drop-shadow(0 1px 2px rgba(2,12,40,.50))}
 html.v2-dark body.v2 .v2-sidebar .v2-nav-item.active:hover{transform:none}
 
+/* ── Grouped rail ─────────────────────────────────────────────────────────
+   The nav used justify-content:space-evenly, which spread twelve rows to fill
+   the rail and made everything look equally important. With groups the spacing
+   has to be deliberate: rows sit tight, the air goes between sections. */
+html.v2-dark body.v2 .v2-sb-nav,body.v2 .v2-sb-nav{
+  justify-content:flex-start;gap:0;overflow-y:auto;overflow-x:hidden;
+  scrollbar-width:thin;padding-right:2px;
+}
+html.v2-dark body.v2 .v2-sb-nav::-webkit-scrollbar{width:5px}
+html.v2-dark body.v2 .v2-sb-nav::-webkit-scrollbar-thumb{background:rgba(9,9,9,.14);border-radius:3px}
+html.v2-dark body.v2 .v2-sidebar .v2-sb-section,body.v2 .v2-sidebar .v2-sb-section{
+  padding:15px 8px 5px;font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;color:#a6b0be;
+}
+html.v2-dark body.v2 .v2-sidebar .v2-sb-section:first-child,body.v2 .v2-sidebar .v2-sb-section:first-child{padding-top:6px}
+/* Icons at 20px, not 24: three labels ("Weekly Editorial", "Future Heroes",
+   "Thesis Maps") were being ellipsised because the icon + badge left too little
+   room for the text. */
+html.v2-dark body.v2 .v2-sidebar .v2-nav-item svg,body.v2 .v2-sidebar .v2-nav-item svg{
+  width:20px!important;height:20px!important;
+}
+html.v2-dark body.v2 .v2-sidebar .v2-nav-item,body.v2 .v2-sidebar .v2-nav-item{
+  padding:7px 9px;gap:10px;font-size:13.5px;margin-bottom:0;
+}
+/* Badges: one shape, one size. Four full-size "NEW" pills in different colours
+   meant none of them registered as news. */
+html.v2-dark body.v2 .v2-sidebar .v2-nav-tag,body.v2 .v2-sidebar .v2-nav-tag{
+  flex:none;font-size:8.5px;font-weight:800;letter-spacing:.06em;
+  padding:2px 6px;border-radius:5px;line-height:1.5;
+}
+html.v2-dark body.v2 .v2-nav-tag.v2-tag-new,body.v2 .v2-nav-tag.v2-tag-new{
+  background:rgba(41,112,255,.12);color:#2970ff;
+}
+html.v2-dark body.v2 .v2-nav-tag.v2-tag-pro,body.v2 .v2-nav-tag.v2-tag-pro{
+  background:rgba(245,166,35,.16);color:#a86a00;
+}
+html.v2-dark body.v2 .v2-nav-item.active .v2-nav-tag,body.v2 .v2-nav-item.active .v2-nav-tag{
+  background:rgba(255,255,255,.22);color:#fff;
+}
+/* Help sits with the account, not among the daily surfaces. */
+html.v2-dark body.v2 .v2-sb-help,body.v2 .v2-sb-help{
+  display:flex;align-items:center;gap:8px;padding:7px 9px;margin-bottom:8px;
+  font-size:12.5px;font-weight:600;color:#94a3b8;text-decoration:none;border-radius:9px;
+  transition:background .15s,color .15s;
+}
+html.v2-dark body.v2 .v2-sb-help:hover,body.v2 .v2-sb-help:hover{background:rgba(41,112,255,.07);color:#0040c1}
+body.sb-collapsed .v2-sb-section{display:none!important}
+body.sb-collapsed .v2-sb-help span{display:none}
+body.sb-collapsed .v2-sb-help{justify-content:center;padding-left:0;padding-right:0}
+
 /* Logo — soft brand halo under the mark, refined divider */
 html.v2-dark body.v2 .v2-sb-logo,body.v2 .v2-sb-logo{border-bottom:1px solid rgba(9,9,9,.06);padding-bottom:13px;margin-bottom:2px;flex:none}
 html.v2-dark body.v2 .v2-sb-logo::before,body.v2 .v2-sb-logo::before{filter:drop-shadow(0 5px 14px rgba(41,112,255,.34))!important}
@@ -7078,55 +7127,60 @@ document.addEventListener('keydown', function(e){
       </button>
     </div>
 
+    <!-- Grouped into DISCOVER / RESEARCH / YOURS. Twelve equally-weighted rows
+         gave no clue what to open first, and the badges pushed three labels
+         into ellipsis ("Weekly Ed…", "Future Her…", "Thesis Ma…"). Help moved
+         to the footer — it's a destination you want once, not a peer of the
+         daily surfaces. -->
     <nav class="v2-sb-nav">
+    <div class="v2-sb-section">Discover</div>
     <div class="v2-nav-item active" onclick="v2Show('hot',this)">
       <svg viewBox="0 0 24 24"><defs><linearGradient id="ahg-radar" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5DB3F1"/><stop offset="1" stop-color="#2970FF"/></linearGradient></defs><g fill="url(#ahg-radar)"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="5" rx="2"/><rect x="13" y="10" width="8" height="11" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/></g></svg><span>On the Radar</span>
     </div>
     <div class="v2-nav-item" onclick="v2Show('model',this)">
       <svg viewBox="0 0 24 24"><defs><linearGradient id="ahg-hunts" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FBBF24"/><stop offset="1" stop-color="#F97316"/></linearGradient></defs><path fill="url(#ahg-hunts)" d="M12 2.3l2.8 5.7 6.3.9-4.5 4.4 1.1 6.3L12 20.6l-5.6 3 1.1-6.3L3 12.9l6.3-.9z"/></svg><span>Prime Tickers</span>
     </div>
+    <div class="v2-nav-item" onclick="v2Show('scans',this);scansInit()">
+      <svg viewBox="0 0 24 24"><defs><linearGradient id="ahg-scan" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#818CF8"/><stop offset="1" stop-color="#4F46E5"/></linearGradient></defs><rect x="2.5" y="2.5" width="19" height="19" rx="5.5" fill="url(#ahg-scan)"/><path d="M7 7h3M7 7v3M17 7h-3M17 7v3M7 17h3M7 17v-3M17 17h-3M17 17v-3" stroke="#fff" stroke-width="1.9" fill="none" stroke-linecap="round"/><circle cx="12" cy="12" r="2.4" fill="#fff"/></svg><span>Stock Scans</span><span class="v2-nav-tag v2-tag-new">NEW</span>
+    </div>
+
+    <a class="v2-nav-item" href="/future-heroes" style="text-decoration:none">
+      <svg viewBox="0 0 24 24"><defs><linearGradient id="ahg-heroes" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFC75F"/><stop offset="1" stop-color="#F5A623"/></linearGradient></defs><path fill="url(#ahg-heroes)" d="M12 3.2l1.9 3.9 4.3.6-3.1 3 .7 4.3-3.8-2-3.8 2 .7-4.3-3.1-3 4.3-.6z"/><path d="M7.2 17.5h9.6M9 20.5h6" stroke="url(#ahg-heroes)" stroke-width="1.8" stroke-linecap="round"/></svg><span>Future Heroes</span><span class="v2-nav-tag v2-tag-pro">PRO</span>
+    </a>
+
+    <div class="v2-sb-section">Research</div>
     <div class="v2-nav-item" onclick="v2Show('fund',this)">
       <svg viewBox="0 0 24 24"><defs><linearGradient id="ahg-uni" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#34D399"/><stop offset="1" stop-color="#06B6D4"/></linearGradient></defs><circle cx="12" cy="12" r="9.3" fill="url(#ahg-uni)"/><path d="M12 2.7c2.6 2.4 2.6 16.2 0 18.6M12 2.7c-2.6 2.4-2.6 16.2 0 18.6M2.9 12h18.2" stroke="#fff" stroke-opacity=".85" stroke-width="1.25" fill="none"/></svg><span>Universe</span><span class="v2-nav-tag v2-tag-universe" id="v2-nav-universe-count">545</span>
     </div>
     <div class="v2-nav-item" onclick="v2Show('market',this)">
       <svg viewBox="0 0 24 24"><defs><linearGradient id="ahg-mkt" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5FC24A"/><stop offset="1" stop-color="#0D9488"/></linearGradient></defs><rect x="2.5" y="2.5" width="19" height="19" rx="5.5" fill="url(#ahg-mkt)"/><path d="M6 15l3.5-4 3 2L18 7" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Market Analysis</span>
     </div>
-
-    <div class="v2-nav-item" onclick="v2Show('scans',this);scansInit()">
-      <svg viewBox="0 0 24 24"><defs><linearGradient id="ahg-scan" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#818CF8"/><stop offset="1" stop-color="#4F46E5"/></linearGradient></defs><rect x="2.5" y="2.5" width="19" height="19" rx="5.5" fill="url(#ahg-scan)"/><path d="M7 7h3M7 7v3M17 7h-3M17 7v3M7 17h3M7 17v-3M17 17h-3M17 17v-3" stroke="#fff" stroke-width="1.9" fill="none" stroke-linecap="round"/><circle cx="12" cy="12" r="2.4" fill="#fff"/></svg><span>Stock Scans</span><span class="v2-nav-tag" style="background:rgba(79,70,229,.16);color:#4F46E5">New</span>
-    </div>
-
-    <a class="v2-nav-item" href="/weekly" style="text-decoration:none">
-      <svg viewBox="0 0 24 24"><defs><linearGradient id="ahg-wk" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5DB3F1"/><stop offset="1" stop-color="#0040c1"/></linearGradient></defs><path fill="url(#ahg-wk)" d="M5 3.5h11l3 3v14a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-16a1 1 0 0 1 1-1z"/><path d="M7.5 9h9M7.5 12.5h9M7.5 16h6" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></svg><span>Weekly Editorial</span><span class="v2-nav-tag" style="background:linear-gradient(135deg,#2970ff,#0040c1);color:#fff">NEW</span>
-    </a>
-
-    <a class="v2-nav-item" href="/future-heroes" style="text-decoration:none">
-      <svg viewBox="0 0 24 24"><defs><linearGradient id="ahg-heroes" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFC75F"/><stop offset="1" stop-color="#F5A623"/></linearGradient></defs><path fill="url(#ahg-heroes)" d="M12 3.2l1.9 3.9 4.3.6-3.1 3 .7 4.3-3.8-2-3.8 2 .7-4.3-3.1-3 4.3-.6z"/><path d="M7.2 17.5h9.6M9 20.5h6" stroke="url(#ahg-heroes)" stroke-width="1.8" stroke-linecap="round"/></svg><span>Future Heroes</span><span class="v2-nav-tag" style="background:linear-gradient(135deg,#FFC75F,#F5A623);color:#3b2a00">PRO</span>
-    </a>
-
     <a class="v2-nav-item" href="/theses" style="text-decoration:none">
-      <svg viewBox="0 0 24 24"><defs><linearGradient id="ahg-theses" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5DB3F1"/><stop offset="1" stop-color="#0040c1"/></linearGradient></defs><g fill="none" stroke="url(#ahg-theses)" stroke-width="2" stroke-linecap="round"><circle cx="6" cy="6" r="2.4"/><circle cx="6" cy="18" r="2.4"/><circle cx="18" cy="12" r="2.4"/><path d="M8.1 6.9l7.8 4.2M8.1 17.1l7.8-4.2"/></g></svg><span>Thesis Maps</span><span class="v2-nav-tag" style="background:linear-gradient(135deg,#2970ff,#0040c1);color:#fff">NEW</span>
+      <svg viewBox="0 0 24 24"><defs><linearGradient id="ahg-theses" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5DB3F1"/><stop offset="1" stop-color="#0040c1"/></linearGradient></defs><g fill="none" stroke="url(#ahg-theses)" stroke-width="2" stroke-linecap="round"><circle cx="6" cy="6" r="2.4"/><circle cx="6" cy="18" r="2.4"/><circle cx="18" cy="12" r="2.4"/><path d="M8.1 6.9l7.8 4.2M8.1 17.1l7.8-4.2"/></g></svg><span>Thesis Maps</span>
     </a>
-
-    <div class="v2-nav-item" onclick="v2Show('watch',this)">
-      <svg viewBox="0 0 24 24"><defs><linearGradient id="ahg-watch" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#A78BFA"/><stop offset="1" stop-color="#7C3AED"/></linearGradient></defs><path fill="url(#ahg-watch)" d="M6.2 3.2h11.6A1.6 1.6 0 0 1 19.4 4.8v15.6c0 .9-1 1.4-1.7.8L12 16.9l-5.7 4.3c-.7.6-1.7.1-1.7-.8V4.8a1.6 1.6 0 0 1 1.6-1.6z"/></svg><span>Watchlist</span>
-    </div>
-
-    <div class="v2-nav-item" onclick="if(window.tsOpenAsk)tsOpenAsk()">
-      <svg viewBox="0 0 24 24"><defs><linearGradient id="ahg-ask" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#E879F9"/><stop offset="1" stop-color="#7C3AED"/></linearGradient></defs><path fill="url(#ahg-ask)" d="M11 2.5l1.7 5.6 5.6 1.7-5.6 1.7L11 17.1l-1.7-5.6L3.7 9.8l5.6-1.7z"/><path fill="url(#ahg-ask)" d="M18.3 14.2l.8 2.6 2.6.8-2.6.8-.8 2.6-.8-2.6-2.6-.8 2.6-.8z"/></svg><span>Ask AI</span><span class="v2-nav-tag" style="background:linear-gradient(135deg,#7c3aed,#4f46e5);color:#fff">NEW</span>
-    </div>
     <div class="v2-nav-item" onclick="v2Show('events',this);eventsTab(window._evTab||'brief')">
       <svg viewBox="0 0 24 24"><defs><linearGradient id="ahg-evt" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FB7185"/><stop offset="1" stop-color="#E11D48"/></linearGradient></defs><rect x="3" y="4.5" width="18" height="16" rx="3.6" fill="url(#ahg-evt)"/><rect x="3" y="4.5" width="18" height="5" rx="3.6" fill="#fff" fill-opacity=".28"/><circle cx="8" cy="14" r="1.5" fill="#fff"/><circle cx="13" cy="14" r="1.5" fill="#fff" fill-opacity=".75"/><circle cx="8" cy="17.6" r="1.5" fill="#fff" fill-opacity=".75"/></svg><span>Company Events</span>
     </div>
+    <div class="v2-nav-item" onclick="if(window.tsOpenAsk)tsOpenAsk()">
+      <svg viewBox="0 0 24 24"><defs><linearGradient id="ahg-ask" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#E879F9"/><stop offset="1" stop-color="#7C3AED"/></linearGradient></defs><path fill="url(#ahg-ask)" d="M11 2.5l1.7 5.6 5.6 1.7-5.6 1.7L11 17.1l-1.7-5.6L3.7 9.8l5.6-1.7z"/><path fill="url(#ahg-ask)" d="M18.3 14.2l.8 2.6 2.6.8-2.6.8-.8 2.6-.8-2.6-2.6-.8 2.6-.8z"/></svg><span>Ask AI</span><span class="v2-nav-tag v2-tag-new">NEW</span>
+    </div>
 
-    <a class="v2-nav-item" href="/learn" target="_blank" rel="noopener">
-      <svg viewBox="0 0 24 24"><defs><linearGradient id="ahg-help" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#94A3B8"/><stop offset="1" stop-color="#2970FF"/></linearGradient></defs><circle cx="12" cy="12" r="9.3" fill="url(#ahg-help)"/><path d="M9.5 9.1a2.6 2.6 0 1 1 3.7 2.5c-.9.4-1.2.9-1.2 1.7" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round"/><circle cx="12" cy="16.6" r="1.15" fill="#fff"/></svg><span>Help &amp; FAQ</span>
+    <div class="v2-sb-section">Yours</div>
+    <div class="v2-nav-item" onclick="v2Show('watch',this)">
+      <svg viewBox="0 0 24 24"><defs><linearGradient id="ahg-watch" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#A78BFA"/><stop offset="1" stop-color="#7C3AED"/></linearGradient></defs><path fill="url(#ahg-watch)" d="M6.2 3.2h11.6A1.6 1.6 0 0 1 19.4 4.8v15.6c0 .9-1 1.4-1.7.8L12 16.9l-5.7 4.3c-.7.6-1.7.1-1.7-.8V4.8a1.6 1.6 0 0 1 1.6-1.6z"/></svg><span>Watchlist</span>
+    </div>
+    <a class="v2-nav-item" href="/weekly" style="text-decoration:none">
+      <svg viewBox="0 0 24 24"><defs><linearGradient id="ahg-wk" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5DB3F1"/><stop offset="1" stop-color="#0040c1"/></linearGradient></defs><path fill="url(#ahg-wk)" d="M5 3.5h11l3 3v14a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-16a1 1 0 0 1 1-1z"/><path d="M7.5 9h9M7.5 12.5h9M7.5 16h6" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></svg><span>The Weekly</span>
     </a>
     </nav>
 
     <!-- Bottom-pinned auth — hosts the existing #auth-btn-wrap so all
          existing JS that updates the sign-in/user state keeps working. -->
     <div class="v2-sb-bottom">
+      <a class="v2-sb-help" href="/learn" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.3a2.5 2.5 0 1 1 3.5 2.3c-.8.4-1.1.9-1.1 1.6" stroke-linecap="round"/><circle cx="12" cy="16.6" r="1" fill="currentColor" stroke="none"/></svg>
+        <span>Help &amp; FAQ</span>
+      </a>
       <!-- Risk-profile selector (personal lens — affects every view) -->
       <div class="v2-profile-picker v2-sb-profile" id="v2-profile-picker">
         <button class="v2-profile-btn" onclick="v2OpenRiskQuiz()" title="Investing style &amp; risk quiz">
