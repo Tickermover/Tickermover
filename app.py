@@ -13079,8 +13079,13 @@ async def api_stripe_webhook(request: Request):
     # up on the free plan with a green webhook dashboard. 500 makes Stripe
     # retry, and the event stays unmarked so the retry is actually processed.
     if wrote is False:
-        logger.error(f"Stripe webhook: plan write FAILED for {typ} — returning 500 so Stripe retries")
-        raise HTTPException(status_code=500, detail="Could not persist plan change")
+        # The reason travels in the 500 body on purpose: signature verification
+        # runs first, so only genuine Stripe deliveries ever see it, and the
+        # Stripe dashboard's delivery log is where you look when a payment
+        # didn't turn into access.
+        why = getattr(supabase, "last_subscription_error", "") or "unknown"
+        logger.error(f"Stripe webhook: plan write FAILED for {typ} ({why}) — 500 so Stripe retries")
+        raise HTTPException(status_code=500, detail=f"Could not persist plan change — {why}")
     await _stripe_mark_processed(event.get("id"))
     return JSONResponse({"received": True})
 

@@ -124,6 +124,9 @@ class SupabaseClient:
         self.anon_key   = anon_key
         self.jwt_secret = jwt_secret
         self.enabled    = bool(url and anon_key)
+        # Why the last subscription write failed. A plan that silently fails to
+        # save is invisible otherwise — the payment succeeds either way.
+        self.last_subscription_error = ""
 
     # ── helpers ────────────────────────────────────────────────────────────────
 
@@ -456,19 +459,33 @@ class SupabaseClient:
         scripts/create_test_user.py always sent the Prefer header; the app didn't.
         """
         if not self.enabled:
+            self.last_subscription_error = "supabase disabled"
             return False
-        headers = self._auth_headers(access_token)
-        headers["Prefer"] = "resolution=merge-duplicates,return=minimal"
+        # Send the SAME key in `apikey` and `Authorization`, which is what the
+        # service-key calls elsewhere in the app do. _auth_headers() always puts
+        # the ANON key in `apikey`, so a service-key write went out with a
+        # mismatched pair — anon apikey, service-role bearer.
+        headers = {
+            "apikey":        access_token or self.anon_key,
+            "Authorization": f"Bearer {access_token}" if access_token else "",
+            "Content-Type":  "application/json",
+            "Prefer":        "resolution=merge-duplicates,return=minimal",
+        }
+        headers = {k: v for k, v in headers.items() if v}
         try:
             async with httpx.AsyncClient(timeout=10) as c:
                 r = await c.post(f"{self.url}/rest/v1/subscriptions?on_conflict=user_id",
                                  json=data, headers=headers)
             if r.status_code in (200, 201, 204):
+                self.last_subscription_error = ""
                 return True
-            logger.error("Supabase subscription upsert → HTTP %s: %s",
-                         r.status_code, (r.text or "")[:300])
+            # Keep the reason: the caller reports it to Stripe in the 500 body,
+            # which is the only place this is visible when a live payment fails.
+            self.last_subscription_error = f"HTTP {r.status_code}: {(r.text or '')[:200]}"
+            logger.error("Supabase subscription upsert → %s", self.last_subscription_error)
             return False
         except Exception as exc:
+            self.last_subscription_error = f"{type(exc).__name__}: {exc}"[:200]
             logger.error("Supabase subscription upsert failed: %s", exc)
             return False
 
