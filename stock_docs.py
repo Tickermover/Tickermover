@@ -24,10 +24,23 @@ import logging
 import httpx
 from bs4 import BeautifulSoup
 
+from cache import SmartCache
+
 logger = logging.getLogger(__name__)
 
 _UA = os.environ.get("SEC_EDGAR_UA", "TickerMover research alphahunt@example.com")
 _HEADERS = {"User-Agent": _UA, "Accept-Encoding": "gzip, deflate"}
+
+# Filing lists were fetched live on EVERY view: the submissions feed plus one
+# index page per 8-K, so opening the Documents tab cost a handful of round-trips
+# to data.sec.gov and the user waited for all of them. Filings change a few
+# times a quarter, so a day-long cache costs nothing in freshness and keeps us
+# comfortably inside EDGAR's fair-use limits.
+_cache = SmartCache(disk_path="output/stock_docs_cache.json")
+_TTL_S       = 24 * 3600
+# A failed or empty fetch is cached only briefly — a transient EDGAR blip must
+# not blank the Documents tab for a whole day.
+_EMPTY_TTL_S = 600
 
 
 async def _cik(ticker: str) -> str | None:
@@ -39,8 +52,30 @@ async def _cik(ticker: str) -> str | None:
         return None
 
 
-async def list_documents(ticker: str, limit: int = 10) -> dict:
+async def list_documents(ticker: str, limit: int = 10, force: bool = False) -> dict:
     empty = {"annual": [], "quarterly": [], "events": [], "cik": None, "fiscal_year_end": None}
+    key = f"docs:{(ticker or '').upper()}:{limit}"
+    if not force:
+        hit = _cache.get(key)
+        if hit is not None:
+            return hit
+    result = await _fetch_documents(ticker, limit, empty)
+    has_rows = any(result.get(k) for k in ("annual", "quarterly", "events"))
+    _cache.set(key, result, _TTL_S if has_rows else _EMPTY_TTL_S)
+    if has_rows:
+        # SmartCache.set() is memory-only; persistence is an explicit call. Save
+        # on a real fill (rare — once per ticker per day) so the cache survives
+        # a redeploy instead of every user paying the cold read again.
+        try:
+            _cache.save_disk()
+        except Exception:
+            pass
+    return result
+
+
+async def _fetch_documents(ticker: str, limit: int, empty: dict) -> dict:
+    """The live EDGAR read. Split out so list_documents() is purely the cache
+    boundary — every return path below is a cache fill."""
     cik = await _cik(ticker)
     if not cik:
         return empty

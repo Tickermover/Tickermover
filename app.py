@@ -867,48 +867,77 @@ async def _mgmt_qa_prewarm() -> None:
     best-ideas/hot list. First-time generation takes 30-90s (EDGAR + web +
     model), so without this the first visitor to each ticker eats that wait.
     Cached 14d in the KV store, so steady state is nearly all cache hits."""
-    # OFF by default: this loop pulls whole 10-Qs and runs LLM calls, which
-    # competed with the 3.4MB /app render and produced intermittent 502s.
-    # Enable deliberately with FACTCHECK_PREWARM=1 once load is understood.
-    if (os.environ.get("FACTCHECK_PREWARM", "") or "").strip() not in ("1", "true", "yes"):
-        logger.info("Fact Check pre-warm disabled (set FACTCHECK_PREWARM=1 to enable)")
+    # ON by default now. It was disabled because pulling whole 10-Qs and running
+    # LLM calls competed with the 3.4MB /app render and caused intermittent 502s.
+    # What changed: the work is paced (one ticker at a time, _FC_SLEEP between
+    # model calls) and, crucially, already-cached names are SKIPPED without
+    # sleeping — so a steady-state pass is seconds of cache peeks, and only cold
+    # tickers cost real time. Set FACTCHECK_PREWARM=0 to turn it back off.
+    if (os.environ.get("FACTCHECK_PREWARM", "1") or "").strip().lower() in ("0", "false", "no", "off"):
+        logger.info("Fact Check pre-warm disabled (FACTCHECK_PREWARM=0)")
         return
+    # How many names to keep warm, and how hard to pace. Both env-tunable so the
+    # load can be dialled back without a deploy.
+    cap      = max(1, int(os.environ.get("FACTCHECK_PREWARM_N", "60") or 60))
+    pace_s   = max(2, int(os.environ.get("FACTCHECK_PREWARM_SLEEP", "20") or 20))
     await asyncio.sleep(900)               # let the universe + portfolio settle
     while True:
         try:
             import event_intel as _ei
             syms: list[str] = []
+
+            def _add(sym: str) -> None:
+                s = (sym or "").upper()
+                if s and s not in syms:
+                    syms.append(s)
+
+            # Order matters — the budget goes to what users actually open first:
+            # portfolio picks, then the featured names on the landing surfaces,
+            # then the rest of the best-ideas list.
             for p in ((_model_portfolio or {}).get("picks") or []):
-                t = (p.get("ticker") or "").upper()
-                if t and t not in syms:
-                    syms.append(t)
-            for t in (_brief_top_picks(12) or []):
-                sym = (t.get("ticker") or "").upper()
-                if sym and sym not in syms:
-                    syms.append(sym)
+                _add(p.get("ticker") or "")
+            try:
+                for s in (_ensure_featured() or []):
+                    _add(s if isinstance(s, str) else (s.get("ticker") or ""))
+            except Exception:
+                pass
+            for t in (_brief_top_picks(40) or []):
+                _add(t.get("ticker") or "")
+
             by_t = {(x.get("ticker") or "").upper(): x for x in (_universe_data or [])}
-            done = 0
-            for sym in syms[:12]:
+            targets = syms[:cap]
+            warm = generated = 0
+            for sym in targets:
+                # Cache peek first: skipping a warm ticker must not cost a sleep,
+                # or a full pass would idle for an hour doing nothing.
+                qa_warm, audit_warm = _ei.factcheck_warm(sym)
+                if qa_warm and audit_warm:
+                    warm += 1
+                    continue
                 row = by_t.get(sym)
-                try:
-                    res = await _ei.get_management_qa(sym, metrics=_metrics_blurb(row))
-                    if res.get("available"):
-                        done += 1
-                except Exception as exc:
-                    logger.warning(f"mgmt-qa pre-warm {sym}: {exc}")
-                await asyncio.sleep(30)     # be gentle on EDGAR, the free LLM tiers and our own event loop
-                try:
-                    await _ei.get_thesis_audit(sym, metrics=_metrics_blurb(row),
-                                               company=((row or {}).get("name") or ""),
-                                               sector=((row or {}).get("sector") or ""))
-                except Exception as exc:
-                    logger.warning(f"thesis-audit pre-warm {sym}: {exc}")
-                await asyncio.sleep(30)
-            if syms:
-                logger.info("🔎 Fact Check pre-warm: %d/%d ready", done, len(syms[:40]))
+                if not qa_warm:
+                    try:
+                        res = await _ei.get_management_qa(sym, metrics=_metrics_blurb(row))
+                        if res.get("available"):
+                            generated += 1
+                    except Exception as exc:
+                        logger.warning(f"mgmt-qa pre-warm {sym}: {exc}")
+                    await asyncio.sleep(pace_s)   # gentle on EDGAR, the free LLM tiers and our own event loop
+                if not audit_warm:
+                    try:
+                        await _ei.get_thesis_audit(sym, metrics=_metrics_blurb(row),
+                                                   company=((row or {}).get("name") or ""),
+                                                   sector=((row or {}).get("sector") or ""))
+                        generated += 1
+                    except Exception as exc:
+                        logger.warning(f"thesis-audit pre-warm {sym}: {exc}")
+                    await asyncio.sleep(pace_s)
+            if targets:
+                logger.info("🔎 Fact Check pre-warm: %d/%d already warm, %d generated",
+                            warm, len(targets), generated)
         except Exception as exc:
             logger.warning(f"mgmt-qa pre-warm cycle failed: {exc}")
-        await asyncio.sleep(6 * 3600)      # twice a day
+        await asyncio.sleep(6 * 3600)      # four passes a day
 
 
 async def _bottom_line_prewarm() -> None:

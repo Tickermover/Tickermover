@@ -1190,6 +1190,25 @@ async def _save_cache(ticker: str, summary: dict) -> bool:
 _CACHE_TTL_DAYS = 14
 
 
+def factcheck_warm(ticker: str) -> tuple[bool, bool]:
+    """(mgmt_qa_warm, thesis_audit_warm) — a cheap cache peek, no network and no
+    model call. The pre-warm loop uses it to skip names already cached, so a
+    steady-state pass costs seconds instead of sleeping through the whole list."""
+    sym = (ticker or "").upper()
+    try:
+        import kv_store
+        cache = kv_store.store
+    except Exception:
+        return (False, False)
+    max_age = _CACHE_TTL_DAYS * 86400
+    try:
+        qa = cache.get("mgmt_qa", sym, max_age_s=max_age) or {}
+        au = cache.get("thesis_audit", sym, max_age_s=max_age) or {}
+    except Exception:
+        return (False, False)
+    return (bool(qa.get("answers") and qa.get("checkpoints")), bool(au.get("audit")))
+
+
 def _is_stale(row: dict) -> bool:
     ts = row.get("summarized_at")
     if not ts:
