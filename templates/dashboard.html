@@ -7238,6 +7238,23 @@ document.addEventListener('keydown', function(e){
     }
     body.sb-collapsed .v2-sb-section:first-child{display:none!important}
     body.sb-collapsed .v2-nav-item{min-height:46px;border-radius:13px}
+
+    /* Wordmark must reduce to just the M in the rail. It didn't: the later
+       "body.v2 .v2-sb-logo .name{display:inline-flex}" (~line 6761) TIES on
+       specificity with the original "body.sb-collapsed ... .name{display:none}"
+       (~line 1950) and wins on order, so the full 113px wordmark rendered
+       centred inside a 45px box and was clipped on BOTH sides — "ckerMov".
+       Latent since the collapsed rail existed; only became visible to everyone
+       when the rail became the default. font-size:0 drops the bare "Ticker"
+       and "over" text nodes (they aren't wrapped in elements), and the mark
+       needs an explicit px height because its own rule is height:1.6em. */
+    body.v2.sb-collapsed .v2-sb-logo .name{
+      font-size:0!important;gap:0!important;
+      justify-content:center;width:100%;overflow:hidden;
+    }
+    body.v2.sb-collapsed .v2-sb-logo .name .brand-m{
+      height:26px!important;width:auto!important;margin:0!important;
+    }
     /* Row whose flyout is currently open — makes the panel's source obvious. */
     body.sb-collapsed .v2-nav-item.tm-peek:not(.active){background:rgba(41,112,255,.10)}
   }
