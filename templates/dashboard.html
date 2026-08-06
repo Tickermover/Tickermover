@@ -1875,10 +1875,7 @@ body.v2 .ticker-chip .px{color:#cbd5e1!important}
 
 .v2-app{
   display:grid;
-  /* 236, not 212: at 212 a badged row left ~75px for the label, so "Stock
-     Scanner" and "Pre IPO Stocks" both ellipsised next to their NEW/PRO pill.
-     Only affects the expanded sidebar — the rail is 72px regardless. */
-  grid-template-columns:236px 1fr;
+  grid-template-columns:212px 1fr;
   background:#F8FAFC;
   border-radius:20px;
   overflow:hidden;
@@ -7061,12 +7058,8 @@ html.v2-dark body.v2 .main, body.v2 .main{padding:0 0 30px !important;max-width:
      moved into the new shell below. ─────────────────────────────────── -->
 <script>
 document.body.classList.add('v2');
-// Restore sidebar preference before paint (no flash). The rail is now the
-// DEFAULT — groups live behind hover flyouts, so the labelled sidebar is the
-// opt-in. New key on purpose: the old ah_sb_collapsed='0' would have pinned
-// every existing user to the wide sidebar and hidden the new rail entirely.
-try { if (localStorage.getItem('ah_sb_rail') !== '0') document.body.classList.add('sb-collapsed'); }
-catch(e){ document.body.classList.add('sb-collapsed'); }
+// Restore collapsed-sidebar preference before paint (no flash).
+try { if (localStorage.getItem('ah_sb_collapsed') === '1') document.body.classList.add('sb-collapsed'); } catch(e){}
 function toggleSidebar(){
   // On mobile the sidebar is a slide-in drawer, not a collapsible rail —
   // the desktop "sb-collapsed" 64px rail only exists at >=769px. So on a
@@ -7076,8 +7069,7 @@ function toggleSidebar(){
     return;
   }
   var c = document.body.classList.toggle('sb-collapsed');
-  try { localStorage.setItem('ah_sb_rail', c ? '1' : '0'); } catch(e){}
-  if (window.tmFlyClose) tmFlyClose();
+  try { localStorage.setItem('ah_sb_collapsed', c ? '1' : '0'); } catch(e){}
 }
 // Give each nav item a tooltip = its label, so the collapsed icon-only rail is still legible.
 // a11y: the nav items are <div onclick> — make them keyboard-operable (focusable +
@@ -7149,11 +7141,11 @@ document.addEventListener('keydown', function(e){
       <svg viewBox="0 0 24 24"><defs><linearGradient id="ahg-hunts" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FBBF24"/><stop offset="1" stop-color="#F97316"/></linearGradient></defs><path fill="url(#ahg-hunts)" d="M12 2.3l2.8 5.7 6.3.9-4.5 4.4 1.1 6.3L12 20.6l-5.6 3 1.1-6.3L3 12.9l6.3-.9z"/></svg><span>Prime Tickers</span>
     </div>
     <div class="v2-nav-item" onclick="v2Show('scans',this);scansInit()">
-      <svg viewBox="0 0 24 24"><defs><linearGradient id="ahg-scan" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#818CF8"/><stop offset="1" stop-color="#4F46E5"/></linearGradient></defs><rect x="2.5" y="2.5" width="19" height="19" rx="5.5" fill="url(#ahg-scan)"/><path d="M7 7h3M7 7v3M17 7h-3M17 7v3M7 17h3M7 17v-3M17 17h-3M17 17v-3" stroke="#fff" stroke-width="1.9" fill="none" stroke-linecap="round"/><circle cx="12" cy="12" r="2.4" fill="#fff"/></svg><span>Stock Scanner</span><span class="v2-nav-tag v2-tag-new">NEW</span>
+      <svg viewBox="0 0 24 24"><defs><linearGradient id="ahg-scan" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#818CF8"/><stop offset="1" stop-color="#4F46E5"/></linearGradient></defs><rect x="2.5" y="2.5" width="19" height="19" rx="5.5" fill="url(#ahg-scan)"/><path d="M7 7h3M7 7v3M17 7h-3M17 7v3M7 17h3M7 17v-3M17 17h-3M17 17v-3" stroke="#fff" stroke-width="1.9" fill="none" stroke-linecap="round"/><circle cx="12" cy="12" r="2.4" fill="#fff"/></svg><span>Stock Scans</span><span class="v2-nav-tag v2-tag-new">NEW</span>
     </div>
 
     <a class="v2-nav-item" href="/future-heroes" style="text-decoration:none">
-      <svg viewBox="0 0 24 24"><defs><linearGradient id="ahg-heroes" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFC75F"/><stop offset="1" stop-color="#F5A623"/></linearGradient></defs><path fill="url(#ahg-heroes)" d="M12 3.2l1.9 3.9 4.3.6-3.1 3 .7 4.3-3.8-2-3.8 2 .7-4.3-3.1-3 4.3-.6z"/><path d="M7.2 17.5h9.6M9 20.5h6" stroke="url(#ahg-heroes)" stroke-width="1.8" stroke-linecap="round"/></svg><span>Pre IPO Stocks</span><span class="v2-nav-tag v2-tag-pro">PRO</span>
+      <svg viewBox="0 0 24 24"><defs><linearGradient id="ahg-heroes" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFC75F"/><stop offset="1" stop-color="#F5A623"/></linearGradient></defs><path fill="url(#ahg-heroes)" d="M12 3.2l1.9 3.9 4.3.6-3.1 3 .7 4.3-3.8-2-3.8 2 .7-4.3-3.1-3 4.3-.6z"/><path d="M7.2 17.5h9.6M9 20.5h6" stroke="url(#ahg-heroes)" stroke-width="1.8" stroke-linecap="round"/></svg><span>Future Heroes</span><span class="v2-nav-tag v2-tag-pro">PRO</span>
     </a>
 
     <div class="v2-sb-section">Research</div>
@@ -7177,9 +7169,9 @@ document.addEventListener('keydown', function(e){
     <div class="v2-nav-item" onclick="v2Show('watch',this)">
       <svg viewBox="0 0 24 24"><defs><linearGradient id="ahg-watch" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#A78BFA"/><stop offset="1" stop-color="#7C3AED"/></linearGradient></defs><path fill="url(#ahg-watch)" d="M6.2 3.2h11.6A1.6 1.6 0 0 1 19.4 4.8v15.6c0 .9-1 1.4-1.7.8L12 16.9l-5.7 4.3c-.7.6-1.7.1-1.7-.8V4.8a1.6 1.6 0 0 1 1.6-1.6z"/></svg><span>Watchlist</span>
     </div>
-    <!-- "The Weekly" removed from the rail 6 Aug 2026. The PAGE is untouched:
-         /weekly still serves, is still in sitemap.xml and still linked from the
-         landing page — this only drops it from the daily nav. -->
+    <a class="v2-nav-item" href="/weekly" style="text-decoration:none">
+      <svg viewBox="0 0 24 24"><defs><linearGradient id="ahg-wk" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5DB3F1"/><stop offset="1" stop-color="#0040c1"/></linearGradient></defs><path fill="url(#ahg-wk)" d="M5 3.5h11l3 3v14a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-16a1 1 0 0 1 1-1z"/><path d="M7.5 9h9M7.5 12.5h9M7.5 16h6" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></svg><span>The Weekly</span>
+    </a>
     </nav>
 
     <!-- Bottom-pinned auth — hosts the existing #auth-btn-wrap so all
@@ -7214,380 +7206,6 @@ document.addEventListener('keydown', function(e){
       </div>
     </div>
   </aside>
-
-  <!-- ══ RAIL + FLYOUT ═══════════════════════════════════════════════════
-       The sidebar now defaults to the 72px icon rail; hovering an icon flies
-       out its whole group with descriptions. Deliberately built ON TOP of the
-       existing markup — the flyout mirrors the live .v2-nav-item nodes and
-       re-fires their click, so every existing handler (v2Show, scansInit,
-       tsOpenAsk, plain hrefs) keeps working untouched.
-       Desktop only: at <=768px the sidebar is a drawer that already shows
-       labels, so none of this applies. ─────────────────────────────────── -->
-  <style>
-  @media(min-width:769px){
-    body.sb-collapsed .v2-app{grid-template-columns:72px 1fr}
-    /* Section eyebrows are unreadable at rail width — the label moves into the
-       flyout and the rail keeps just a hairline to show the grouping. */
-    body.sb-collapsed .v2-sb-section{
-      display:block!important;font-size:0!important;padding:9px 0 8px!important;
-    }
-    body.sb-collapsed .v2-sb-section::before{display:none!important}
-    body.sb-collapsed .v2-sb-section::after{
-      content:'';display:block;height:1px;margin:0 7px;
-      background:linear-gradient(90deg,rgba(9,9,9,.13),rgba(9,9,9,0));
-    }
-    body.sb-collapsed .v2-sb-section:first-child{display:none!important}
-    body.sb-collapsed .v2-nav-item{min-height:46px;border-radius:13px}
-
-    /* Wordmark in the rail. It was rendering the full 113px "TickerMover"
-       into a 45px box, centred, so it clipped on BOTH sides and read
-       "ckerMov". Cause: "body.v2 .v2-sb-logo .name{display:inline-flex}"
-       (~6761) TIES on specificity with "body.sb-collapsed ... .name
-       {display:none}" (~1950) and wins on document order. Latent since the
-       collapsed rail existed; visible to everyone once the rail became default.
-       The brand has to stay legible, so rather than hide it the wordmark
-       STACKS — "Ticker" over "Mover", the mark still doing duty as the M.
-       The two bare text nodes are wrapped into .tm-wm spans by script below,
-       because you cannot force a line break between naked text nodes in CSS.
-       Note the leading "html": html.v2-dark IS set on the root, so
-       "html.v2-dark body.v2 .v2-sb-logo .name" scores (0,4,2) and outranked a
-       plain "body.v2.sb-collapsed ..." at (0,4,1) — flex-wrap:nowrap and the
-       width kept winning and the brand stayed on one overflowing line. */
-    html body.v2.sb-collapsed .v2-sb-logo .name{
-      display:flex!important;flex-wrap:wrap!important;
-      justify-content:center!important;align-items:center!important;
-      width:100%!important;gap:0!important;
-      font-size:14px!important;line-height:1.05!important;letter-spacing:-.02em!important;
-    }
-    /* Forcing the first word to a full row is what creates the break. */
-    html body.v2.sb-collapsed .v2-sb-logo .name .tm-wm:first-child{
-      flex:0 0 100%!important;text-align:center!important;
-    }
-    html body.v2.sb-collapsed .v2-sb-logo .name .brand-m{
-      height:1.3em!important;width:auto!important;margin:0!important;align-self:center!important;
-    }
-    /* Row whose flyout is currently open — makes the panel's source obvious. */
-    body.sb-collapsed .v2-nav-item.tm-peek:not(.active){background:rgba(41,112,255,.10)}
-  }
-
-  /* Icon wrapper — the lock rides the ICON, not the row, so it stays put in
-     both the rail and the expanded sidebar. Needs !important: the generic
-     ".v2-nav-item > span:not(.v2-nav-tag)" rule would otherwise stretch it,
-     and the collapsed rule would display:none it along with the label. */
-  .v2-nav-item > span.tm-ico{
-    flex:0 0 auto!important;display:flex!important;align-items:center;
-    position:relative;overflow:visible!important;max-width:none!important;
-  }
-  .tm-lock{
-    position:absolute;right:-4px;bottom:-4px;width:13px;height:13px;border-radius:50%;
-    background:linear-gradient(135deg,#FFC75F,#F5A623);
-    border:1.5px solid #fff;display:none;align-items:center;justify-content:center;
-  }
-  .tm-lock svg{width:8px;height:8px;display:block}
-  /* Locks only appear once the plan is KNOWN to be free — otherwise a Pro user
-     sees a lock flash on every load while /api/me is still in flight. */
-  body.tm-free .tm-lock{display:flex}
-  /* Child combinator, not :not(descendant) — the latter is Selectors-4 and
-     would silently drop the whole rule in older engines. */
-  body.tm-free .v2-nav-item.tm-pro > .tm-ico > svg{filter:saturate(.45) opacity(.82)}
-  /* Amber, not the blue "go" colour: a locked row is an offer, not a destination. */
-  body.tm-free .v2-nav-item.tm-pro:hover{background:rgba(245,166,35,.12)}
-
-  /* ── Flyout ── */
-  .tm-fly{
-    position:fixed;z-index:60;width:286px;
-    background:#fff;border:1px solid rgba(9,9,9,.07);border-radius:18px;
-    box-shadow:0 30px 70px -24px rgba(9,12,24,.42),0 6px 18px -8px rgba(9,12,24,.16);
-    padding:13px 11px 11px;
-    opacity:0;transform:translateX(-8px) scale(.985);pointer-events:none;
-    transition:opacity .15s ease,transform .18s cubic-bezier(.2,.8,.3,1);
-  }
-  .tm-fly.open{opacity:1;transform:none;pointer-events:auto}
-  /* Invisible bridge so the pointer can cross the gap without it snapping shut */
-  .tm-fly::before{content:'';position:absolute;top:0;bottom:0;left:-16px;width:16px}
-  .tm-fly::after{
-    content:'';position:absolute;left:-5px;top:var(--tm-notch,30px);
-    width:10px;height:10px;background:#fff;
-    border-left:1px solid rgba(9,9,9,.07);border-bottom:1px solid rgba(9,9,9,.07);
-    transform:rotate(45deg);border-radius:0 0 0 3px;
-  }
-  .tm-fly-head{
-    display:flex;align-items:center;gap:9px;padding:2px 9px 9px;
-    font-size:9.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#a6b0be;
-  }
-  .tm-fly-head::before{
-    content:'';width:14px;height:2px;border-radius:2px;flex:none;
-    background:linear-gradient(90deg,#2970ff,rgba(41,112,255,0));
-  }
-  .tm-fly-item{
-    display:flex;align-items:flex-start;gap:11px;
-    padding:9px 10px;border-radius:12px;cursor:pointer;text-decoration:none;
-    transition:background .14s,transform .14s;
-  }
-  .tm-fly-item:hover,.tm-fly-item:focus-visible{background:rgba(41,112,255,.07);transform:translateX(2px)}
-  .tm-fly-item:focus-visible{outline:2px solid #2970ff;outline-offset:-2px}
-  .tm-fly-item.active{background:rgba(41,112,255,.10)}
-  .tm-fly-item svg{width:20px!important;height:20px!important;flex:none;margin-top:1px}
-  body.tm-free .tm-fly-item.tm-pro > svg{filter:saturate(.45) opacity(.82)}
-  .tm-fly-tx{min-width:0;flex:1 1 auto}
-  .tm-fly-t{display:flex;align-items:center;gap:7px;font-size:13.5px;font-weight:700;color:#0f172a;line-height:1.3}
-  .tm-fly-t .v2-nav-tag{display:inline-block;margin-left:0}
-  .tm-fly-d{font-size:11.5px;font-weight:500;color:#8b98aa;line-height:1.4;margin-top:2px}
-  .tm-fly-lock{
-    flex:none;align-self:center;font-size:9px;font-weight:800;letter-spacing:.06em;
-    color:#a86a00;background:rgba(245,166,35,.16);border-radius:5px;padding:3px 6px;
-    display:none;white-space:nowrap;
-  }
-  body.tm-free .tm-fly-item.tm-pro .tm-fly-lock{display:block}
-  body.tm-free .tm-fly-item.tm-pro:hover{background:rgba(245,166,35,.12)}
-  @media(prefers-reduced-motion:reduce){
-    .tm-fly{transition-duration:.01ms}
-    .tm-fly-item{transition:none}
-  }
-  </style>
-
-  <div class="tm-fly" id="tm-fly" role="menu" aria-label="Section"></div>
-
-  <script>
-  (function(){
-    /* One-liners for the flyout. Keyed by the rail label so a rename here and
-       a rename in the markup stay obviously coupled. */
-    var DESC = {
-      'On the Radar'   : "What's moving across your universe today",
-      'Prime Tickers'  : 'Our highest-conviction picks, tracked live',
-      'Stock Scanner'  : 'Run a screen across the whole universe',
-      'Pre IPO Stocks' : 'Private names heading for the public market',
-      'Universe'       : 'Every stock we track, filterable',
-      'Market Analysis': 'Sectors, breadth and where money is rotating',
-      'Thesis Maps'    : 'How a thesis flows down the supply chain',
-      'Company Events' : 'Earnings, filings and catalysts ahead',
-      'Ask AI'         : 'Ask anything about a stock or sector',
-      'Watchlist'      : 'Your saved tickers, alerts and notes'
-    };
-    /* Pro-gated rails (6 Aug 2026). Pre IPO Stocks was already PRO-badged;
-       Thesis Maps already gates its supply-chain content internally. */
-    var PRO = { 'Prime Tickers':1, 'Pre IPO Stocks':1, 'Thesis Maps':1 };
-
-    var LOCK = '<span class="tm-lock" aria-hidden="true"><svg viewBox="0 0 24 24">'
-      + '<rect x="5" y="10.5" width="14" height="10" rx="2.5" fill="#fff"/>'
-      + '<path d="M8.7 10.5V8a3.3 3.3 0 0 1 6.6 0v2.5" stroke="#fff" stroke-width="2.4" fill="none"/>'
-      + '</svg></span>';
-
-    /* Wrap the wordmark's bare text nodes ("Ticker" and "over") so the rail
-       can break the brand onto two lines. CSS alone can't put a line break
-       between naked text nodes, and the mark between them is the literal M. */
-    (function(){
-      var name = document.querySelector('.v2-sb-logo .name');
-      if (!name || name.dataset.tmWrapped) return;
-      Array.prototype.slice.call(name.childNodes).forEach(function(n){
-        if (n.nodeType === 3 && n.textContent.trim()){
-          var s = document.createElement('span');
-          s.className = 'tm-wm';
-          s.textContent = n.textContent;
-          name.replaceChild(s, n);
-        }
-      });
-      name.dataset.tmWrapped = '1';
-    })();
-
-    var nav = document.querySelector('.v2-sb-nav');
-    var fly = document.getElementById('tm-fly');
-    if (!nav || !fly) return;
-
-    /* ── Model, read straight off the live DOM ── */
-    var groups = [], cur = null, uid = 0;
-    Array.prototype.forEach.call(nav.children, function(el){
-      if (el.classList.contains('v2-sb-section')){
-        cur = { label: el.textContent.trim(), items: [] };
-        groups.push(cur);
-      } else if (el.classList.contains('v2-nav-item')){
-        if (!cur){ cur = { label:'', items:[] }; groups.push(cur); }
-        var lblEl = el.querySelector('span:not(.v2-nav-tag)');
-        var label = lblEl ? lblEl.textContent.trim() : '';
-        el.dataset.tmLabel = label;
-        el.dataset.tmGroup = String(groups.length - 1);
-        // Set the title now: once the icon is wrapped, the existing
-        // DOMContentLoaded tooltip pass would read the empty wrapper span
-        // instead of the label. Removed again on desktop, where the flyout
-        // replaces it.
-        if (!el.title && label) el.title = label;
-        if (PRO[label]){ el.classList.add('tm-pro'); el.dataset.tmPro = '1'; }
-        cur.items.push(el);
-      }
-    });
-
-    /* Wrap each icon so the lock badge can hang off it. Done after the label
-       was read, because the wrapper becomes a <span> child too. */
-    groups.forEach(function(g){
-      g.items.forEach(function(el){
-        var svg = el.querySelector('svg');
-        if (!svg || svg.parentNode !== el) return;
-        var w = document.createElement('span');
-        w.className = 'tm-ico';
-        el.insertBefore(w, svg);
-        w.appendChild(svg);
-        if (el.dataset.tmPro === '1') w.insertAdjacentHTML('beforeend', LOCK);
-      });
-    });
-
-    /* ── Plan ── window.__PLAN is set by _refreshPlan() in a later script. */
-    function planKnownFree(){
-      return !!(window.__PLAN && window.__PLAN.loaded && !window.__PLAN.pro);
-    }
-    function syncPlan(){ document.body.classList.toggle('tm-free', planKnownFree()); }
-    syncPlan();
-    var planTicks = 0;
-    var planPoll = setInterval(function(){
-      syncPlan();
-      if (++planTicks > 40 || (window.__PLAN && window.__PLAN.loaded)) clearInterval(planPoll);
-    }, 700);
-    window.tmSyncPlan = syncPlan;
-
-    function locked(el){ return el.dataset.tmPro === '1' && planKnownFree(); }
-    function upsell(){
-      if (typeof window.openUpgradeModal === 'function') window.openUpgradeModal();
-    }
-
-    /* A locked rail row never navigates. Capture phase so this runs before the
-       element's own inline onclick / the <a> default. */
-    groups.forEach(function(g){
-      g.items.forEach(function(el){
-        el.addEventListener('click', function(e){
-          if (!locked(el)) return;
-          e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-          tmFlyClose(); upsell();
-        }, true);
-      });
-    });
-
-    /* ── Flyout ── */
-    function railMode(){
-      return document.body.classList.contains('sb-collapsed')
-          && window.matchMedia('(min-width:769px)').matches;
-    }
-    function cloneIcon(el){
-      var svg = el.querySelector('svg');
-      if (!svg) return '';
-      var n = ++uid;
-      return svg.outerHTML
-        .replace(/id="([^"]+)"/g, 'id="$1-tf' + n + '"')
-        .replace(/url\(#([^)]+)\)/g, 'url(#$1-tf' + n + ')');
-    }
-    function esc(s){ return String(s).replace(/[&<>"]/g, function(c){
-      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
-
-    var openIdx = null, tOpen = null, tClose = null, overFly = false;
-
-    function render(g, activeEl){
-      var h = '<div class="tm-fly-head">' + esc(g.label) + '</div>';
-      g.items.forEach(function(el, i){
-        var label = el.dataset.tmLabel || '';
-        var tag = el.querySelector('.v2-nav-tag');
-        h += '<a class="tm-fly-item' + (el === activeEl ? ' active' : '')
-           + (el.dataset.tmPro === '1' ? ' tm-pro' : '') + '" href="#" role="menuitem"'
-           + ' data-i="' + i + '">'
-           + cloneIcon(el)
-           + '<span class="tm-fly-tx"><span class="tm-fly-t">' + esc(label)
-           + (tag ? tag.outerHTML : '')
-           + '</span><span class="tm-fly-d">' + esc(DESC[label] || '') + '</span></span>'
-           + (el.dataset.tmPro === '1' ? '<span class="tm-fly-lock">Unlock</span>' : '')
-           + '</a>';
-      });
-      fly.innerHTML = h;
-      fly._items = g.items;
-    }
-
-    function tmFlyOpen(el){
-      if (!railMode()) return;
-      var idx = +el.dataset.tmGroup;
-      var g = groups[idx];
-      if (!g) return;
-      render(g, el);
-      fly.classList.add('open');
-
-      var r  = el.getBoundingClientRect();
-      var rw = document.getElementById('v2-sidebar').getBoundingClientRect().right;
-      var fh = fly.offsetHeight, vh = window.innerHeight;
-      var top = Math.min(Math.max(r.top - 34, 12), Math.max(12, vh - fh - 12));
-      fly.style.left = (rw + 12) + 'px';
-      fly.style.top  = top + 'px';
-      fly.style.setProperty('--tm-notch',
-        Math.min(Math.max(r.top + r.height / 2 - top - 5, 14), fh - 24) + 'px');
-
-      openIdx = idx;
-      groups.forEach(function(gg, n){
-        gg.items.forEach(function(it){ it.classList.toggle('tm-peek', n === idx); });
-      });
-    }
-    function tmFlyClose(){
-      fly.classList.remove('open');
-      openIdx = null;
-      groups.forEach(function(g){ g.items.forEach(function(it){ it.classList.remove('tm-peek'); }); });
-    }
-    window.tmFlyClose = tmFlyClose;
-
-    function schedOpen(el){
-      clearTimeout(tClose); clearTimeout(tOpen);
-      if (openIdx === +el.dataset.tmGroup){ tmFlyOpen(el); return; }
-      tOpen = setTimeout(function(){ tmFlyOpen(el); }, 70);
-    }
-    function schedClose(){
-      clearTimeout(tOpen); clearTimeout(tClose);
-      tClose = setTimeout(function(){ if (!overFly) tmFlyClose(); }, 220);
-    }
-
-    var flat = [];
-    groups.forEach(function(g){ g.items.forEach(function(el){ flat.push(el); }); });
-    flat.forEach(function(el){
-      el.addEventListener('mouseenter', function(){ schedOpen(el); });
-      el.addEventListener('mouseleave', schedClose);
-      el.addEventListener('focus', function(){ schedOpen(el); });
-      el.addEventListener('keydown', function(e){
-        var i = flat.indexOf(el);
-        if (e.key === 'ArrowDown'){ e.preventDefault(); flat[(i+1) % flat.length].focus(); }
-        else if (e.key === 'ArrowUp'){ e.preventDefault(); flat[(i-1+flat.length) % flat.length].focus(); }
-        else if (e.key === 'ArrowRight'){
-          e.preventDefault(); tmFlyOpen(el);
-          var f = fly.querySelector('.tm-fly-item'); if (f) f.focus();
-        }
-      });
-    });
-
-    fly.addEventListener('mouseenter', function(){ overFly = true; clearTimeout(tClose); });
-    fly.addEventListener('mouseleave', function(){ overFly = false; schedClose(); });
-    fly.addEventListener('click', function(e){
-      var a = e.target.closest('.tm-fly-item');
-      if (!a) return;
-      e.preventDefault();
-      var el = (fly._items || [])[+a.dataset.i];
-      if (!el) return;
-      tmFlyClose();
-      if (locked(el)){ upsell(); return; }
-      el.click();                       // re-fire the real nav item
-    });
-    fly.addEventListener('keydown', function(e){
-      var items = Array.prototype.slice.call(fly.querySelectorAll('.tm-fly-item'));
-      var i = items.indexOf(document.activeElement);
-      if (e.key === 'ArrowDown'){ e.preventDefault(); items[(i+1) % items.length].focus(); }
-      else if (e.key === 'ArrowUp'){ e.preventDefault(); items[(i-1+items.length) % items.length].focus(); }
-      else if (e.key === 'ArrowLeft' || e.key === 'Escape'){
-        e.preventDefault();
-        var back = openIdx != null && groups[openIdx] ? groups[openIdx].items[0] : null;
-        tmFlyClose(); if (back) back.focus();
-      }
-    });
-    document.addEventListener('keydown', function(e){ if (e.key === 'Escape') tmFlyClose(); });
-    window.addEventListener('resize', tmFlyClose);
-    window.addEventListener('scroll', tmFlyClose, true);
-
-    /* The rail's native title="" tooltips would race the flyout and show a
-       second, worse label. The flyout replaces them on desktop. */
-    document.addEventListener('DOMContentLoaded', function(){
-      if (!window.matchMedia('(min-width:769px)').matches) return;
-      flat.forEach(function(el){ if (el.title) { el.dataset.tmTitle = el.title; el.removeAttribute('title'); } });
-    });
-  })();
-  </script>
 
   <!-- ── Account / profile panel ── -->
   <div class="v2-acct-overlay" id="v2-acct-overlay" onclick="if(event.target===this)closeAccountPanel()">
