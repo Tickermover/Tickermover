@@ -8,17 +8,17 @@
 <link rel="icon" type="image/svg+xml" href="/static/brand/tickermover-mark.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
-  --blue:#2970ff;--blue-d:#0040c1;--ink:#0f172a;--muted:#475569;--faint:#94a3b8;
+  --blue:#14587D;--blue-d:#0A2F46;--ink:#0A2F46;--muted:#475569;--faint:#94a3b8;
   --line:rgba(15,23,42,.09);--card:#ffffff;--bg:#fcfbf9;
   --pos:#0a7d33;--pos-soft:#e7f6ec;--neg:#dc2626;--neg-soft:#fdeceb;--zero:#cbd5e1;
-  --e-hi:#2970ff;--e-mid:#7aa8ff;--e-lo:#cfe0ff;
+  --e-hi:#14587D;--e-mid:#7aa8ff;--e-lo:#cfe0ff;
   /* layer identity = a single-hue blue depth ramp (sequential, not rainbow);
      green stays reserved for tailwind so the diverging impact encoding is unambiguous */
-  --l1:#1e40af;--l2:#1e5bd6;--l3:#2970ff;--l4:#4b8bf5;--l5:#6ba3f0;--l6:#8fbaea;
-  --serif:'Fraunces',Georgia,serif;--body:'Instrument Sans',system-ui,-apple-system,sans-serif;--mono:'JetBrains Mono',ui-monospace,monospace;
+  --l1:#1e40af;--l2:#1e5bd6;--l3:#14587D;--l4:#4b8bf5;--l5:#6ba3f0;--l6:#8fbaea;
+  --serif:'Inter',Georgia,serif;--body:'Inter',system-ui,-apple-system,sans-serif;--mono:'JetBrains Mono',ui-monospace,monospace;
 }
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
@@ -30,7 +30,7 @@ a{color:var(--blue)}
 .back{font-size:13px;font-weight:600;color:var(--muted);text-decoration:none}
 .back:hover{color:var(--ink)}
 .brand{display:flex;align-items:center;gap:9px;text-decoration:none;font-weight:600;font-size:18px;letter-spacing:-.022em;color:#0a0a0a}
-.brand .mark{width:26px;height:26px;flex:none;background:linear-gradient(135deg,#5DB3F1,#2970FF 50%,#0040c1);-webkit-mask:url('/static/brand/tickermover-mark-mask.svg') center/contain no-repeat;mask:url('/static/brand/tickermover-mark-mask.svg') center/contain no-repeat}
+.brand .mark{width:26px;height:26px;flex:none;background:linear-gradient(135deg,#8FBFDD,#14587D 50%,#0A2F46);-webkit-mask:url('/static/brand/tickermover-mark-mask.svg') center/contain no-repeat;mask:url('/static/brand/tickermover-mark-mask.svg') center/contain no-repeat}
 .wrap{max-width:1360px;margin:0 auto;padding:30px 28px 70px}
 .eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:11px;font-weight:800;letter-spacing:.15em;text-transform:uppercase;color:var(--blue-d);background:linear-gradient(135deg,#eef4ff,#f5f9ff);border:1px solid #cfe0ff;border-radius:999px;padding:6px 13px}
 h1.title{font-family:var(--serif);font-weight:600;font-size:clamp(30px,5.4vw,50px);line-height:1.05;letter-spacing:-.018em;margin:16px 0 12px;max-width:26ch}
@@ -76,7 +76,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 .money-stat .mo-v{font-family:var(--serif);font-weight:600;font-size:27px;color:var(--blue-d);line-height:1.05}
 .money-stat .mo-k{font-size:11.5px;font-weight:700;color:var(--muted);margin-top:3px}
 .money-stat .mo-bar{margin-top:8px;height:6px;background:#eef2f7;border-radius:3px;overflow:hidden}
-.money-stat .mo-bar i{display:block;height:100%;background:linear-gradient(90deg,#5DB3F1,var(--blue));border-radius:3px}
+.money-stat .mo-bar i{display:block;height:100%;background:linear-gradient(90deg,#8FBFDD,var(--blue));border-radius:3px}
 .money-note{font-size:11.5px;color:var(--faint);line-height:1.5;margin-top:13px}
 /* who's gained — real returns */
 .winners{margin:14px 0 0;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px 20px 18px;box-shadow:0 1px 3px rgba(15,23,42,.05)}
@@ -116,8 +116,8 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 .layer-meta{position:relative;padding-left:26px}
 .spine{position:absolute;left:6px;top:6px;bottom:-22px;width:2px;background:var(--line)}
 .layer:last-child .spine{bottom:6px}
-.node{position:absolute;left:0;top:4px;width:14px;height:14px;border-radius:50%;background:#fff;border:2.5px solid var(--lc,#2970ff);z-index:1}
-.node::after{content:"";position:absolute;inset:2px;border-radius:50%;background:var(--lc,#2970ff);opacity:0;transform:scale(.3)}
+.node{position:absolute;left:0;top:4px;width:14px;height:14px;border-radius:50%;background:#fff;border:2.5px solid var(--lc,#14587D);z-index:1}
+.node::after{content:"";position:absolute;inset:2px;border-radius:50%;background:var(--lc,#14587D);opacity:0;transform:scale(.3)}
 .layer.lit .node::after{animation:ping .9s ease-out}
 @keyframes ping{0%{opacity:0;transform:scale(.3)}30%{opacity:1;transform:scale(1)}100%{opacity:.35;transform:scale(1)}}
 .layer-idx{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;color:var(--faint);display:block;margin-bottom:2px}
@@ -150,7 +150,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 .cos{display:flex;flex-wrap:wrap;gap:8px}
 .co{display:flex;flex-direction:column;gap:6px;background:#fff;border:1px solid var(--line);border-radius:11px;padding:9px 11px 8px;cursor:pointer;transition:border-color .14s,transform .14s,box-shadow .14s;min-width:132px;text-align:left;font-family:var(--body)}
 .co:hover{border-color:#cfe0ff;transform:translateY(-1px);box-shadow:0 6px 16px -10px rgba(9,20,60,.3)}
-.co[aria-expanded=true]{border-color:var(--blue);box-shadow:0 0 0 3px rgba(41,112,255,.12)}
+.co[aria-expanded=true]{border-color:var(--blue);box-shadow:0 0 0 3px rgba(20,88,125,.12)}
 .co-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .co-tk{font-family:var(--mono);font-weight:700;font-size:13px;color:var(--ink)}
 .co-imp{font-family:var(--mono);font-weight:700;font-size:12.5px}

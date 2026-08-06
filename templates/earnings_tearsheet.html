@@ -8,29 +8,29 @@
 <link rel="icon" href="/static/icons/favicon-32.png" type="image/png">
 <style>
   *{box-sizing:border-box;margin:0;padding:0;font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif}
-  body{background:#e2e8f0;color:#0f172a;min-height:100vh;padding:24px 16px}
+  body{background:#e2e8f0;color:#0A2F46;min-height:100vh;padding:24px 16px}
   .page{max-width:1280px;margin:0 auto}
 
   /* ── Page chrome (controls + header — NOT printed/exported) ── */
   .page-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:12px}
   .page-head .title{font-size:22px;font-weight:900;letter-spacing:-.02em}
-  .page-head .title em{font-style:normal;color:#F5A623}
+  .page-head .title em{font-style:normal;color:#FF6100}
   .page-head .sub{font-size:13px;color:#475569;margin-top:2px}
-  .nav-links a{color:#F5A623;font-weight:700;text-decoration:none;font-size:13px;margin-left:14px}
+  .nav-links a{color:#FF6100;font-weight:700;text-decoration:none;font-size:13px;margin-left:14px}
   .nav-links a:hover{text-decoration:underline}
 
   .ticker-bar{display:flex;gap:10px;align-items:center;background:#fff;border:1px solid rgba(10,10,10,.1);border-radius:10px;padding:10px 14px;margin-bottom:14px;flex-wrap:wrap}
   .ticker-bar label{font-size:12.5px;color:#64748b;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
   .ticker-bar input{padding:7px 10px;border:1px solid rgba(10,10,10,.12);border-radius:7px;font-size:14px;font-weight:700;width:120px;text-transform:uppercase;font-family:'JetBrains Mono','Inter',monospace}
-  .ticker-bar input:focus{outline:none;border-color:#F5A623;box-shadow:0 0 0 3px rgba(245,166,35,.15)}
+  .ticker-bar input:focus{outline:none;border-color:#FF6100;box-shadow:0 0 0 3px rgba(245,166,35,.15)}
 
   .actions{display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap;align-items:center}
   .btn{padding:10px 18px;border-radius:9px;font-size:13.5px;font-weight:700;cursor:pointer;border:none;font-family:inherit;letter-spacing:.02em;transition:transform .12s}
   .btn:hover{transform:translateY(-1px)}
-  .btn-primary{background:linear-gradient(135deg,#F5A623 0%,#FFC75F 100%);color:#fff;box-shadow:0 4px 14px rgba(245,166,35,.35)}
-  .btn-secondary{background:#fff;color:#0f172a;border:1px solid rgba(10,10,10,.12)}
+  .btn-primary{background:linear-gradient(135deg,#FF6100 0%,#FFC75F 100%);color:#fff;box-shadow:0 4px 14px rgba(245,166,35,.35)}
+  .btn-secondary{background:#fff;color:#0A2F46;border:1px solid rgba(10,10,10,.12)}
   .btn-icon{display:inline-flex;align-items:center;gap:6px}
-  .feedback{font-size:12.5px;color:#F5A623;font-weight:700;margin-left:8px;opacity:0;transition:opacity .25s}
+  .feedback{font-size:12.5px;color:#FF6100;font-weight:700;margin-left:8px;opacity:0;transition:opacity .25s}
   .feedback.on{opacity:1}
 
   /* ── A4 PORTRAIT TEAR SHEET — 1240×1754 px ── */
@@ -38,7 +38,7 @@
   .sheet{
     width:1240px;min-height:1754px;
     background:#ffffff;
-    color:#0f172a;
+    color:#0A2F46;
     box-shadow:0 24px 60px rgba(10,10,10,.18);
     transform-origin:top left;
     border:1px solid rgba(10,10,10,.06);
@@ -64,9 +64,9 @@
   }
   .ts-logo img{width:56px;height:56px;object-fit:contain;display:block}
   .ts-brand-text .ts-brand-name{
-    font-size:22px;font-weight:900;letter-spacing:-.02em;color:#0f172a;
+    font-size:22px;font-weight:900;letter-spacing:-.02em;color:#0A2F46;
   }
-  .ts-brand-text .ts-brand-name span{background:linear-gradient(135deg,#2970FF,#0040c1);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
+  .ts-brand-text .ts-brand-name span{background:linear-gradient(135deg,#14587D,#0A2F46);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
   .ts-brand-text .ts-brand-tag{
     font-size:12px;color:#64748b;font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-top:3px;
   }
@@ -74,7 +74,7 @@
   .ts-meta{text-align:right}
   .ts-meta .ts-date{font-size:13px;color:#64748b;font-weight:700;letter-spacing:.04em;text-transform:uppercase}
   .ts-meta .ts-quarter{font-size:18px;color:#0A0A0A;font-weight:800;margin-top:4px;letter-spacing:.02em}
-  .ts-meta .ts-quarter strong{color:#F5A623}
+  .ts-meta .ts-quarter strong{color:#FF6100}
 
   /* ── HERO: LOGO + TICKER + PRICE + SCORE + STARS ── */
   .ts-hero{
@@ -95,7 +95,7 @@
   .ts-hero-logo .fb{
     position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
     font-family:'JetBrains Mono','Inter',monospace;font-size:24px;font-weight:900;letter-spacing:-.02em;
-    background:linear-gradient(135deg,#F5A623 0%,#FFC75F 50%,#F5A623 100%);
+    background:linear-gradient(135deg,#FF6100 0%,#FFC75F 50%,#FF6100 100%);
     color:#fff;
   }
   .ts-hero-l .ts-ticker{
@@ -107,7 +107,7 @@
   .ts-hero-l .ts-sector{
     font-size:13px;color:#64748b;font-weight:700;letter-spacing:.04em;text-transform:uppercase;margin-top:8px;
   }
-  .ts-hero-l .ts-sector span{color:#F5A623}
+  .ts-hero-l .ts-sector span{color:#FF6100}
 
   .ts-hero-c{text-align:right;border-right:1px solid rgba(10,10,10,.08);padding-right:32px}
   .ts-hero-c .ts-price{
@@ -124,7 +124,7 @@
   .ts-hero-r{text-align:right;min-width:200px}
   .ts-hero-r .ts-scorenum{
     font-size:64px;font-weight:900;line-height:.95;letter-spacing:-.04em;
-    background:linear-gradient(135deg,#F5A623 0%,#FFC75F 50%,#F5A623 100%);
+    background:linear-gradient(135deg,#FF6100 0%,#FFC75F 50%,#FF6100 100%);
     -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;
     font-variant-numeric:tabular-nums;
   }
@@ -135,19 +135,19 @@
      now readable in PDF; the on-screen gradient still applies normally. */
   body.exporting-pdf .ts-hero-r .ts-scorenum{
     background:none !important;
-    -webkit-text-fill-color:#F5A623 !important;
-    color:#F5A623 !important;
+    -webkit-text-fill-color:#FF6100 !important;
+    color:#FF6100 !important;
   }
   body.exporting-pdf .ts-hero-logo .fb{
     /* Initial-letter fallback uses the same gradient — same risk */
-    background:#F5A623 !important;
+    background:#FF6100 !important;
     color:#fff !important;
   }
   .ts-hero-r .ts-scorelbl{
     font-size:11.5px;color:#64748b;font-weight:800;letter-spacing:.12em;text-transform:uppercase;margin-top:6px;
   }
-  .ts-hero-r .ts-stars{font-size:22px;color:#F5A623;letter-spacing:.06em;margin-top:8px;line-height:1}
-  .ts-hero-r .ts-tier{font-size:14px;color:#F5A623;font-weight:800;margin-top:4px}
+  .ts-hero-r .ts-stars{font-size:22px;color:#FF6100;letter-spacing:.06em;margin-top:8px;line-height:1}
+  .ts-hero-r .ts-tier{font-size:14px;color:#FF6100;font-weight:800;margin-top:4px}
 
   /* ── CHARTS ROW: Price (left) + Score components (right) ── */
   .ts-charts{
@@ -164,7 +164,7 @@
     display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;
   }
   .ts-card-h .pill{
-    background:linear-gradient(135deg,#F5A623 0%,#FFC75F 100%);color:#fff;
+    background:linear-gradient(135deg,#FF6100 0%,#FFC75F 100%);color:#fff;
     font-size:10.5px;font-weight:800;letter-spacing:.06em;
     padding:3px 8px;border-radius:5px;text-transform:uppercase;
     box-shadow:0 2px 6px -2px rgba(18,33,66,.45);
@@ -211,13 +211,13 @@
   }
   .ts-card-flush .ts-card-h{
     display:flex;align-items:center;justify-content:space-between;gap:10px;
-    font-size:14px;font-weight:800;color:#0f172a;margin-bottom:2px;
+    font-size:14px;font-weight:800;color:#0A2F46;margin-bottom:2px;
   }
   .ts-card-flush .ts-card-h .pill{
     font-size:10px;font-weight:800;letter-spacing:.06em;
     padding:3px 8px;border-radius:5px;
     background:linear-gradient(135deg,rgba(245,166,35,.10),rgba(255,199,95,.10));
-    color:#F5A623;
+    color:#FF6100;
   }
   .ts-card-flush .ts-card-sub{font-size:11.5px;color:#64748b;font-weight:500;margin-bottom:12px;line-height:1.45}
 
@@ -231,20 +231,20 @@
 
   .ao-bar{display:flex;height:10px;border-radius:5px;overflow:hidden;background:#f1f5f9;margin-bottom:8px}
   .ao-bar-seg{height:100%;transition:flex .35s ease}
-  .ao-bar-seg.sb{background:linear-gradient(90deg,#D4860A,#F5A623)}
-  .ao-bar-seg.b {background:linear-gradient(90deg,#D4860A,#F5A623)}
-  .ao-bar-seg.h {background:linear-gradient(90deg,#d97706,#F5A623)}
-  .ao-bar-seg.s {background:linear-gradient(90deg,#F5A623,#FFC75F)}
+  .ao-bar-seg.sb{background:linear-gradient(90deg,#D4860A,#FF6100)}
+  .ao-bar-seg.b {background:linear-gradient(90deg,#D4860A,#FF6100)}
+  .ao-bar-seg.h {background:linear-gradient(90deg,#d97706,#FF6100)}
+  .ao-bar-seg.s {background:linear-gradient(90deg,#FF6100,#FFC75F)}
   .ao-bar-seg.ss{background:linear-gradient(90deg,#b91c1c,#dc2626)}
   .ao-leg{display:flex;flex-wrap:wrap;gap:8px 14px;font-size:11px;color:#475569;font-weight:600}
   .ao-leg span{display:inline-flex;align-items:center;gap:5px}
   .ao-leg i{display:inline-block;width:9px;height:9px;border-radius:2px}
   .ao-leg i.sb{background:#D4860A}
-  .ao-leg i.b {background:#F5A623}
-  .ao-leg i.h {background:#F5A623}
+  .ao-leg i.b {background:#FF6100}
+  .ao-leg i.h {background:#FF6100}
   .ao-leg i.s {background:#FFC75F}
   .ao-leg i.ss{background:#dc2626}
-  .ao-leg strong{color:#0f172a;font-weight:800}
+  .ao-leg strong{color:#0A2F46;font-weight:800}
 
   .or-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
   .or-cell{background:#f8fafc;border:1px solid rgba(10,10,10,.06);border-radius:8px;padding:10px 12px}
@@ -273,10 +273,10 @@
 
   .ts-bullets{margin-top:14px}
   .ts-bullets .b{
-    display:flex;gap:10px;align-items:flex-start;padding:7px 0;font-size:12.5px;color:#0f172a;line-height:1.45;
+    display:flex;gap:10px;align-items:flex-start;padding:7px 0;font-size:12.5px;color:#0A2F46;line-height:1.45;
   }
   .ts-bullets .b::before{
-    content:'';flex-shrink:0;width:6px;height:6px;border-radius:50%;background:#F5A623;margin-top:6px;
+    content:'';flex-shrink:0;width:6px;height:6px;border-radius:50%;background:#FF6100;margin-top:6px;
   }
 
   /* ── TAKEAWAY + DISCLAIMER FOOTER ── */
@@ -295,16 +295,16 @@
   .ts-event-icon{
     width:36px;height:36px;border-radius:9px;flex-shrink:0;
     display:flex;align-items:center;justify-content:center;
-    background:linear-gradient(135deg,#F5A623 0%,#FFC75F 100%);
+    background:linear-gradient(135deg,#FF6100 0%,#FFC75F 100%);
     color:#fff;font-size:17px;
   }
-  .ts-event-eyebrow{font-size:10.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#F5A623}
+  .ts-event-eyebrow{font-size:10.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#FF6100}
   .ts-event-name{font-size:16px;font-weight:800;color:#0A0A0A;letter-spacing:-.005em;line-height:1.25;margin-top:1px}
   .ts-event-meta{display:flex;flex-direction:column;align-items:flex-end;gap:5px;font-size:11px;color:#64748b;font-weight:700}
   .ts-event-pill{
     padding:3px 9px;border-radius:5px;font-size:9.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;
     background:linear-gradient(135deg,rgba(245,166,35,.10),rgba(255,199,95,.10));
-    color:#F5A623;border:1px solid rgba(18,33,66,.20);
+    color:#FF6100;border:1px solid rgba(18,33,66,.20);
   }
   .ts-event-grid{
     display:grid;grid-template-columns:1fr 1fr;gap:12px;
@@ -328,15 +328,15 @@
   .ts-event-bullets li::before{
     content:'';position:absolute;left:0;top:9px;
     width:5px;height:5px;border-radius:50%;
-    background:linear-gradient(135deg,#F5A623,#FFC75F);
+    background:linear-gradient(135deg,#FF6100,#FFC75F);
   }
   .ts-event-quote{
     margin-top:12px;padding:12px 16px;
-    background:#FFF8E5;border-left:3px solid #F5A623;border-radius:0 8px 8px 0;
+    background:#FFF8E5;border-left:3px solid #FF6100;border-radius:0 8px 8px 0;
     display:flex;gap:10px;
   }
   .ts-event-quote-mark{
-    font-family:Georgia, serif;font-size:38px;line-height:1;color:#F5A623;
+    font-family:Georgia, serif;font-size:38px;line-height:1;color:#FF6100;
     font-weight:900;flex-shrink:0;align-self:flex-start;margin-top:-4px;
   }
   .ts-event-quote-text{font-size:12.5px;color:#1e293b;line-height:1.6;font-style:italic;letter-spacing:-.003em}
@@ -346,7 +346,7 @@
   .ts-exec{
     background:linear-gradient(180deg,#FFF8E5 0%,#FFF8E5 100%);
     border:1px solid rgba(18,33,66,.22);
-    border-left:4px solid #F5A623;
+    border-left:4px solid #FF6100;
     border-radius:10px;
     padding:14px 18px;margin:18px 0 4px;
     display:flex;align-items:flex-start;gap:14px;
@@ -354,13 +354,13 @@
   .ts-exec-icon{
     width:32px;height:32px;border-radius:8px;flex-shrink:0;
     display:flex;align-items:center;justify-content:center;
-    background:linear-gradient(135deg,#F5A623 0%,#FFC75F 100%);
+    background:linear-gradient(135deg,#FF6100 0%,#FFC75F 100%);
     color:#fff;font-size:16px;
   }
   .ts-exec-body{flex:1}
-  .ts-exec-h{font-size:10.5px;color:#F5A623;font-weight:900;letter-spacing:.14em;text-transform:uppercase}
+  .ts-exec-h{font-size:10.5px;color:#FF6100;font-weight:900;letter-spacing:.14em;text-transform:uppercase}
   .ts-exec-text{font-size:13.5px;color:#0A0A0A;line-height:1.55;margin-top:3px;font-weight:500}
-  .ts-exec-text strong{color:#F5A623;font-weight:800}
+  .ts-exec-text strong{color:#FF6100;font-weight:800}
 
   .ts-takeaway{
     background:#FFF8E5;border:1px solid #FFE9B0;border-radius:12px;
@@ -369,12 +369,12 @@
   }
   .ts-takeaway-icon{
     width:54px;height:54px;border-radius:50%;flex-shrink:0;
-    background:linear-gradient(135deg,#F5A623 0%,#FFC75F 100%);
+    background:linear-gradient(135deg,#FF6100 0%,#FFC75F 100%);
     display:flex;align-items:center;justify-content:center;
     font-size:24px;color:#fff;font-weight:900;
   }
   .ts-takeaway-body{flex:1}
-  .ts-takeaway-h{font-size:11.5px;color:#F5A623;font-weight:900;letter-spacing:.12em;text-transform:uppercase}
+  .ts-takeaway-h{font-size:11.5px;color:#FF6100;font-weight:900;letter-spacing:.12em;text-transform:uppercase}
   .ts-takeaway-text{font-size:15.5px;color:#0A0A0A;line-height:1.45;margin-top:4px;font-weight:600}
 
   .ts-foot{
@@ -386,7 +386,7 @@
     font-size:10.5px;color:#475569;font-style:italic;line-height:1.5;flex:1;
   }
   .ts-foot-disclaimer strong{color:#0A0A0A;font-style:normal;font-weight:800}
-  .ts-foot-url{font-size:14px;font-weight:900;color:#F5A623;letter-spacing:.04em;text-align:right;flex-shrink:0}
+  .ts-foot-url{font-size:14px;font-weight:900;color:#FF6100;letter-spacing:.04em;text-align:right;flex-shrink:0}
   .ts-foot-url .small{font-size:10.5px;color:#64748b;font-weight:700;letter-spacing:.04em;display:block;margin-top:2px}
 
   /* Loading */
@@ -399,7 +399,7 @@
   .caption{margin-top:18px;background:#fff;border:1px solid rgba(10,10,10,.1);border-radius:10px;padding:14px 16px}
   .caption-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
   .caption-h{font-size:11.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#64748b}
-  .caption-body{font-family:'JetBrains Mono','Inter',monospace;font-size:12.5px;color:#0f172a;white-space:pre-wrap;line-height:1.55}
+  .caption-body{font-family:'JetBrains Mono','Inter',monospace;font-size:12.5px;color:#0A2F46;white-space:pre-wrap;line-height:1.55}
 
   @media(max-width:768px){
     body{padding:14px 8px}
@@ -469,7 +469,7 @@
     <label for="t-input">Ticker:</label>
     <input id="t-input" type="text" value="LITE" maxlength="6" oninput="this.value=this.value.toUpperCase()" onkeydown="if(event.key==='Enter')loadTicker()">
     <button class="btn btn-primary btn-icon" onclick="loadTicker()"><span>↻</span><span>Load</span></button>
-    <span style="color:#64748b;font-size:12px;margin-left:8px">Try: <a href="javascript:setT('LITE')" style="color:#F5A623;font-weight:700">LITE</a> · <a href="javascript:setT('NVDA')" style="color:#F5A623;font-weight:700">NVDA</a> · <a href="javascript:setT('AAOI')" style="color:#F5A623;font-weight:700">AAOI</a></span>
+    <span style="color:#64748b;font-size:12px;margin-left:8px">Try: <a href="javascript:setT('LITE')" style="color:#FF6100;font-weight:700">LITE</a> · <a href="javascript:setT('NVDA')" style="color:#FF6100;font-weight:700">NVDA</a> · <a href="javascript:setT('AAOI')" style="color:#FF6100;font-weight:700">AAOI</a></span>
   </div>
 
   <!-- Actions -->
@@ -1532,7 +1532,7 @@ function drawBreakdownChart(breakdown, weighted) {
           grid: { color: 'rgba(10,10,10,0.06)' },
         },
         y: {
-          ticks: { font: {size: 10.5, weight: '600'}, color: '#0f172a' },
+          ticks: { font: {size: 10.5, weight: '600'}, color: '#0A2F46' },
           grid: { display: false },
         }
       }

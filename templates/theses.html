@@ -8,10 +8,10 @@
 <link rel="icon" type="image/svg+xml" href="/static/brand/tickermover-mark.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-:root{--blue:#2970ff;--blue-d:#0040c1;--ink:#0f172a;--muted:#475569;--faint:#94a3b8;--line:rgba(15,23,42,.09);--bg:#fcfbf9;
-  --serif:'Fraunces',Georgia,serif;--body:'Instrument Sans',system-ui,-apple-system,sans-serif;--mono:'JetBrains Mono',ui-monospace,monospace;}
+:root{--blue:#14587D;--blue-d:#0A2F46;--ink:#0A2F46;--muted:#475569;--faint:#94a3b8;--line:rgba(15,23,42,.09);--bg:#fcfbf9;
+  --serif:'Inter',Georgia,serif;--body:'Inter',system-ui,-apple-system,sans-serif;--mono:'JetBrains Mono',ui-monospace,monospace;}
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
 body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased}
@@ -70,7 +70,7 @@ a.card:hover{border-color:#b9d2ff;transform:translateY(-2px);box-shadow:0 12px 2
 <script>
 (function(){
   var grid = document.getElementById("grid");
-  var RAMP = ["#1e40af","#1e5bd6","#2970ff","#4b8bf5","#6ba3f0","#8fbaea"];
+  var RAMP = ["#1e40af","#1e5bd6","#14587D","#4b8bf5","#6ba3f0","#8fbaea"];
   function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
   function titleHTML(t,d){ return (d.accent && t && t.indexOf(d.accent)>=0) ? esc(t).replace(esc(d.accent),"<em>"+esc(d.accent)+"</em>") : esc(t); }
   function spark(seed){
