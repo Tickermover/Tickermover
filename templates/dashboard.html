@@ -7239,21 +7239,32 @@ document.addEventListener('keydown', function(e){
     body.sb-collapsed .v2-sb-section:first-child{display:none!important}
     body.sb-collapsed .v2-nav-item{min-height:46px;border-radius:13px}
 
-    /* Wordmark must reduce to just the M in the rail. It didn't: the later
-       "body.v2 .v2-sb-logo .name{display:inline-flex}" (~line 6761) TIES on
-       specificity with the original "body.sb-collapsed ... .name{display:none}"
-       (~line 1950) and wins on order, so the full 113px wordmark rendered
-       centred inside a 45px box and was clipped on BOTH sides — "ckerMov".
-       Latent since the collapsed rail existed; only became visible to everyone
-       when the rail became the default. font-size:0 drops the bare "Ticker"
-       and "over" text nodes (they aren't wrapped in elements), and the mark
-       needs an explicit px height because its own rule is height:1.6em. */
-    body.v2.sb-collapsed .v2-sb-logo .name{
-      font-size:0!important;gap:0!important;
-      justify-content:center;width:100%;overflow:hidden;
+    /* Wordmark in the rail. It was rendering the full 113px "TickerMover"
+       into a 45px box, centred, so it clipped on BOTH sides and read
+       "ckerMov". Cause: "body.v2 .v2-sb-logo .name{display:inline-flex}"
+       (~6761) TIES on specificity with "body.sb-collapsed ... .name
+       {display:none}" (~1950) and wins on document order. Latent since the
+       collapsed rail existed; visible to everyone once the rail became default.
+       The brand has to stay legible, so rather than hide it the wordmark
+       STACKS — "Ticker" over "Mover", the mark still doing duty as the M.
+       The two bare text nodes are wrapped into .tm-wm spans by script below,
+       because you cannot force a line break between naked text nodes in CSS.
+       Note the leading "html": html.v2-dark IS set on the root, so
+       "html.v2-dark body.v2 .v2-sb-logo .name" scores (0,4,2) and outranked a
+       plain "body.v2.sb-collapsed ..." at (0,4,1) — flex-wrap:nowrap and the
+       width kept winning and the brand stayed on one overflowing line. */
+    html body.v2.sb-collapsed .v2-sb-logo .name{
+      display:flex!important;flex-wrap:wrap!important;
+      justify-content:center!important;align-items:center!important;
+      width:100%!important;gap:0!important;
+      font-size:14px!important;line-height:1.05!important;letter-spacing:-.02em!important;
     }
-    body.v2.sb-collapsed .v2-sb-logo .name .brand-m{
-      height:26px!important;width:auto!important;margin:0!important;
+    /* Forcing the first word to a full row is what creates the break. */
+    html body.v2.sb-collapsed .v2-sb-logo .name .tm-wm:first-child{
+      flex:0 0 100%!important;text-align:center!important;
+    }
+    html body.v2.sb-collapsed .v2-sb-logo .name .brand-m{
+      height:1.3em!important;width:auto!important;margin:0!important;align-self:center!important;
     }
     /* Row whose flyout is currently open — makes the panel's source obvious. */
     body.sb-collapsed .v2-nav-item.tm-peek:not(.active){background:rgba(41,112,255,.10)}
@@ -7361,6 +7372,23 @@ document.addEventListener('keydown', function(e){
       + '<rect x="5" y="10.5" width="14" height="10" rx="2.5" fill="#fff"/>'
       + '<path d="M8.7 10.5V8a3.3 3.3 0 0 1 6.6 0v2.5" stroke="#fff" stroke-width="2.4" fill="none"/>'
       + '</svg></span>';
+
+    /* Wrap the wordmark's bare text nodes ("Ticker" and "over") so the rail
+       can break the brand onto two lines. CSS alone can't put a line break
+       between naked text nodes, and the mark between them is the literal M. */
+    (function(){
+      var name = document.querySelector('.v2-sb-logo .name');
+      if (!name || name.dataset.tmWrapped) return;
+      Array.prototype.slice.call(name.childNodes).forEach(function(n){
+        if (n.nodeType === 3 && n.textContent.trim()){
+          var s = document.createElement('span');
+          s.className = 'tm-wm';
+          s.textContent = n.textContent;
+          name.replaceChild(s, n);
+        }
+      });
+      name.dataset.tmWrapped = '1';
+    })();
 
     var nav = document.querySelector('.v2-sb-nav');
     var fly = document.getElementById('tm-fly');
