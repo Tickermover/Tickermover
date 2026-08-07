@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0.1" x2="1" y2="0.7">
+      <stop offset="0" stop-color="#86dff1"/>
+      <stop offset="0.35" stop-color="#5db3f1"/>
+      <stop offset="1" stop-color="#5d83f2"/>
+    </linearGradient>
+    <linearGradient id="dA" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.46"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0.04"/>
+    </linearGradient>
+    <linearGradient id="dB" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.22"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0.02"/>
+    </linearGradient>
+    <linearGradient id="dC" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.34"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0.03"/>
+    </linearGradient>
+  </defs>
+  <rect width="1920" height="1080" fill="url(#bg)"/>
+  <!-- big diamond extending off the top-left -->
+  <g transform="translate(360 100) rotate(45)"><rect x="-380" y="-380" width="760" height="760" rx="26" fill="url(#dA)"/></g>
+  <!-- mid diamond upper -->
+  <g transform="translate(920 200) rotate(45)"><rect x="-290" y="-290" width="580" height="580" rx="22" fill="url(#dB)"/></g>
+  <!-- center diamond -->
+  <g transform="translate(720 560) rotate(45)"><rect x="-240" y="-240" width="480" height="480" rx="20" fill="url(#dC)"/></g>
+  <!-- distinct floating diamond on the right -->
+  <g transform="translate(1480 560) rotate(45)"><rect x="-200" y="-200" width="400" height="400" rx="20" fill="url(#dB)"/></g>
+  <!-- big bottom-left diamond -->
+  <g transform="translate(320 1040) rotate(45)"><rect x="-360" y="-360" width="720" height="720" rx="24" fill="url(#dA)"/></g>
+  <!-- bottom-center mid diamond -->
+  <g transform="translate(1020 1080) rotate(45)"><rect x="-300" y="-300" width="600" height="600" rx="22" fill="url(#dB)"/></g>
+</svg>

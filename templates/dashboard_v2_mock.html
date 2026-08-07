@@ -29,13 +29,13 @@
   --card:#ffffff;
   --bdr:#e5e7eb;
   --bdr-soft:#f1f5f9;
-  --txt:#0f172a;
+  --txt:#0A2F46;
   --muted:#64748b;
   --muted-2:#94a3b8;
   --green:#15803d;          /* kept ONLY for up-tick / beat semantics */
   --red:#dc2626;            /* kept ONLY for down-tick / miss */
-  --shadow-card:0 1px 3px rgba(15,23,42,.04),0 1px 2px rgba(15,23,42,.04);
-  --shadow-card-hover:0 8px 24px rgba(15,23,42,.08),0 2px 6px rgba(15,23,42,.05);
+  --shadow-card:0 1px 3px rgba(10,47,70,.04),0 1px 2px rgba(10,47,70,.04);
+  --shadow-card-hover:0 8px 24px rgba(10,47,70,.08),0 2px 6px rgba(10,47,70,.05);
 
   /* Outer gradient frame — 4-corner radial blend in the same colour
      family as the reference: cyan top-left, magenta top-right, coral
@@ -96,7 +96,7 @@ body{
   border-radius:20px;
   overflow:hidden;
   min-height:calc(100vh - 32px);
-  box-shadow:0 24px 60px rgba(15,23,42,.25),0 8px 20px rgba(15,23,42,.15);
+  box-shadow:0 24px 60px rgba(10,47,70,.25),0 8px 20px rgba(10,47,70,.15);
 }
 
 /* ══ SIDEBAR — dark in both themes (user request) ═════════════════ */
@@ -130,7 +130,7 @@ body{
   display:block;object-fit:contain;
   box-shadow:0 2px 12px rgba(0,0,0,.35);
 }
-.sb-logo .name span{background:linear-gradient(135deg,#5DB3F1,#2970FF,#0040c1);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
+.sb-logo .name span{background:linear-gradient(135deg,#8FBFDD,#14587D,#0A2F46);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
 
 .sb-group{margin-bottom:8px;position:relative}
 .sb-section-label{
@@ -446,7 +446,7 @@ html.dark .regime-chip.bearish{background:rgba(220,38,38,.15);border-color:rgba(
   transition:all .15s;
 }
 .period-tab:hover{color:var(--txt)}
-.period-tab.active{background:var(--card);color:var(--txt);box-shadow:0 1px 3px rgba(15,23,42,.06)}
+.period-tab.active{background:var(--card);color:var(--txt);box-shadow:0 1px 3px rgba(10,47,70,.06)}
 html.dark .period-tab.active{background:#1f2937}
 
 .chart-wrap{position:relative;height:280px}
@@ -497,10 +497,10 @@ html.dark .period-tab.active{background:#1f2937}
 .sector-cell{
   padding:14px 12px;border-radius:10px;cursor:pointer;
   transition:transform .15s,box-shadow .2s;
-  color:#0f172a;
+  color:#0A2F46;
   position:relative;overflow:hidden;
 }
-.sector-cell:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(15,23,42,.1)}
+.sector-cell:hover{transform:translateY(-2px);box-shadow:0 6px 16px rgba(10,47,70,.1)}
 .sector-cell .sn{font-size:11.5px;font-weight:800;line-height:1.2;letter-spacing:-.01em}
 .sector-cell .sv{font-size:18px;font-weight:900;margin-top:6px;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
 .sector-cell .sm{font-size:10px;font-weight:700;margin-top:2px;opacity:.8}
@@ -563,7 +563,7 @@ html.dark .period-tab.active{background:#1f2937}
 
 /* ── Mobile drawer ───────────────────────────────────────────── */
 .drawer-backdrop{
-  display:none;position:fixed;inset:0;background:rgba(15,23,42,.45);
+  display:none;position:fixed;inset:0;background:rgba(10,47,70,.45);
   z-index:40;animation:fadein .2s;
 }
 @keyframes fadein{from{opacity:0}to{opacity:1}}
@@ -604,7 +604,7 @@ html.dark .period-tab.active{background:#1f2937}
 /* Toast */
 .toast{
   position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
-  background:#0f172a;color:#fff;padding:10px 18px;border-radius:8px;
+  background:#0A2F46;color:#fff;padding:10px 18px;border-radius:8px;
   font-size:13px;font-weight:600;
   box-shadow:0 8px 24px rgba(0,0,0,.3);
   z-index:60;opacity:0;pointer-events:none;
@@ -951,7 +951,7 @@ function renderChart(){
     return d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
   });
   const dark = document.documentElement.classList.contains('dark');
-  const grid = dark ? 'rgba(255,255,255,.06)' : 'rgba(15,23,42,.06)';
+  const grid = dark ? 'rgba(255,255,255,.06)' : 'rgba(10,47,70,.06)';
   const tick = dark ? '#94a3b8' : '#64748b';
   const grad = ctx.getContext('2d').createLinearGradient(0,0,0,280);
   grad.addColorStop(0,'rgba(99,102,241,.28)');

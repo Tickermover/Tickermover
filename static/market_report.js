@@ -191,49 +191,49 @@ window.MarketReport = (function () {
     s.id = 'mr-ed-styles';
     s.textContent =
       ".ed-mast{margin:2px 0 8px}" +
-      ".ed-kicker{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#2970ff}" +
-      ".ed-headline{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:clamp(22px,3.3vw,31px);line-height:1.13;letter-spacing:-.01em;color:#0f172a;margin:7px 0 7px}" +
+      ".ed-kicker{font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#14587D}" +
+      ".ed-headline{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:clamp(22px,3.3vw,31px);line-height:1.13;letter-spacing:-.01em;color:#0A2F46;margin:7px 0 7px}" +
       ".ed-dek{font-size:15px;line-height:1.55;color:#475569;max-width:780px}" +
-      ".ed-sec-h{display:flex;align-items:center;gap:8px;font-size:11.5px;font-weight:700;letter-spacing:.11em;text-transform:uppercase;color:#64748b;margin:24px 0 11px;padding-top:15px;border-top:1px solid rgba(15,23,42,.08)}" +
+      ".ed-sec-h{display:flex;align-items:center;gap:8px;font-size:11.5px;font-weight:700;letter-spacing:.11em;text-transform:uppercase;color:#64748b;margin:24px 0 11px;padding-top:15px;border-top:1px solid rgba(10,47,70,.08)}" +
       ".ed-bullets{display:grid;gap:9px;margin:4px 0 2px}" +
       ".ed-bullet{display:flex;gap:11px;font-size:14.5px;line-height:1.5;color:#1e293b}" +
-      ".ed-bullet::before{content:'';flex:none;width:7px;height:7px;border-radius:50%;background:#2970ff;margin-top:7px}" +
+      ".ed-bullet::before{content:'';flex:none;width:7px;height:7px;border-radius:50%;background:#14587D;margin-top:7px}" +
       ".ed-chart{display:grid;gap:7px;margin:4px 0 2px}" +
       ".ed-row{display:grid;grid-template-columns:104px 1fr 62px;align-items:center;gap:11px}" +
       ".ed-row .lbl{font-size:13px;font-weight:600;color:#334155;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}" +
-      ".ed-track{position:relative;height:18px;border-radius:6px;background:rgba(15,23,42,.05)}" +
-      ".ed-track .mid{position:absolute;left:50%;top:0;bottom:0;width:1px;background:rgba(15,23,42,.18)}" +
+      ".ed-track{position:relative;height:18px;border-radius:6px;background:rgba(10,47,70,.05)}" +
+      ".ed-track .mid{position:absolute;left:50%;top:0;bottom:0;width:1px;background:rgba(10,47,70,.18)}" +
       ".ed-fill{position:absolute;top:2px;bottom:2px;border-radius:5px;min-width:2px}" +
       ".ed-fill.pos{background:linear-gradient(90deg,#34d399,#15803d)}" +
       ".ed-fill.neg{background:linear-gradient(90deg,#f87171,#dc2626)}" +
       ".ed-row .v{font-size:13px;font-weight:800;text-align:right}" +
       ".ed-vix{display:flex;align-items:center;gap:16px;margin:8px 0 2px}" +
-      ".ed-gauge{position:relative;flex:1;height:14px;border-radius:8px;background:linear-gradient(90deg,#15803d 0%,#16a34a 22%,#f5a623 50%,#ea7317 72%,#dc2626 100%)}" +
-      ".ed-gauge .pin{position:absolute;top:-5px;width:3px;height:24px;background:#0f172a;border-radius:2px;transform:translateX(-50%);box-shadow:0 0 0 2px #fff}" +
+      ".ed-gauge{position:relative;flex:1;height:14px;border-radius:8px;background:linear-gradient(90deg,#15803d 0%,#16a34a 22%,#FF6100 50%,#ea7317 72%,#dc2626 100%)}" +
+      ".ed-gauge .pin{position:absolute;top:-5px;width:3px;height:24px;background:#0A2F46;border-radius:2px;transform:translateX(-50%);box-shadow:0 0 0 2px #fff}" +
       ".ed-vix .read{flex:none;text-align:right;min-width:120px}" +
-      ".ed-vix .read .n{font-size:23px;font-weight:800;color:#0f172a;line-height:1}" +
+      ".ed-vix .read .n{font-size:23px;font-weight:800;color:#0A2F46;line-height:1}" +
       ".ed-vix .read .w{font-size:11.5px;font-weight:600;color:#64748b;margin-top:2px}" +
-      ".ed-tom{background:rgba(41,112,255,.06);border:1px solid rgba(41,112,255,.18);border-radius:14px;padding:15px 18px;margin:4px 0 2px}" +
-      ".ed-tom .h{font-size:15.5px;font-weight:700;color:#0f172a;margin-bottom:6px}" +
+      ".ed-tom{background:rgba(20,88,125,.06);border:1px solid rgba(20,88,125,.18);border-radius:14px;padding:15px 18px;margin:4px 0 2px}" +
+      ".ed-tom .h{font-size:15.5px;font-weight:700;color:#0A2F46;margin-bottom:6px}" +
       ".ed-tom .t{font-size:14.5px;line-height:1.6;color:#334155}" +
-      ".ed-regime{background:linear-gradient(180deg,rgba(41,112,255,.05),rgba(41,112,255,.02));border:1px solid rgba(41,112,255,.16);border-radius:14px;padding:16px 18px;margin:2px 0}" +
+      ".ed-regime{background:linear-gradient(180deg,rgba(20,88,125,.05),rgba(20,88,125,.02));border:1px solid rgba(20,88,125,.16);border-radius:14px;padding:16px 18px;margin:2px 0}" +
       ".ed-rg-top{display:flex;align-items:baseline;justify-content:space-between;gap:12px}" +
-      ".ed-rg-lab{font-family:'Fraunces',Georgia,serif;font-size:22px;font-weight:600;color:#0f172a}" +
-      ".ed-rg-score{font-size:22px;font-weight:800;color:#2970ff}.ed-rg-score span{font-size:13px;font-weight:600;color:#94a3b8}" +
+      ".ed-rg-lab{font-family:'Fraunces',Georgia,serif;font-size:22px;font-weight:600;color:#0A2F46}" +
+      ".ed-rg-score{font-size:22px;font-weight:800;color:#14587D}.ed-rg-score span{font-size:13px;font-weight:600;color:#94a3b8}" +
       ".ed-rg-bar{display:flex;align-items:center;gap:9px;margin:10px 0 4px}" +
       ".ed-rg-bar .lo,.ed-rg-bar .hi{font-size:11px;font-weight:600;color:#64748b;white-space:nowrap}" +
-      ".ed-rg-track{position:relative;flex:1;height:12px;border-radius:7px;background:linear-gradient(90deg,#dc2626,#f5a623 50%,#15803d)}" +
-      ".ed-rg-track .pin{position:absolute;top:-4px;width:3px;height:20px;background:#0f172a;border-radius:2px;transform:translateX(-50%);box-shadow:0 0 0 2px #fff}" +
+      ".ed-rg-track{position:relative;flex:1;height:12px;border-radius:7px;background:linear-gradient(90deg,#dc2626,#FF6100 50%,#15803d)}" +
+      ".ed-rg-track .pin{position:absolute;top:-4px;width:3px;height:20px;background:#0A2F46;border-radius:2px;transform:translateX(-50%);box-shadow:0 0 0 2px #fff}" +
       ".ed-rg-read{font-size:14.5px;line-height:1.55;color:#334155;margin:10px 0 4px}" +
       ".ed-tf-h,.ed-tf{display:grid;grid-template-columns:96px 1fr 1fr 1fr;gap:6px;align-items:center}" +
-      ".ed-tf-h{font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#94a3b8;margin-top:8px;padding-bottom:4px;border-bottom:1px solid rgba(15,23,42,.07)}" +
+      ".ed-tf-h{font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#94a3b8;margin-top:8px;padding-bottom:4px;border-bottom:1px solid rgba(10,47,70,.07)}" +
       ".ed-tf-h span,.ed-tf span:not(.nm){text-align:right}" +
-      ".ed-tf{font-size:13px;padding:5px 0;border-bottom:1px solid rgba(15,23,42,.05)}" +
+      ".ed-tf{font-size:13px;padding:5px 0;border-bottom:1px solid rgba(10,47,70,.05)}" +
       ".ed-tf .nm{font-weight:600;color:#334155}" +
       ".ed-track-stat{font-size:13.5px;line-height:1.5;color:#334155;background:rgba(21,128,61,.07);border:1px solid rgba(21,128,61,.18);border-radius:11px;padding:11px 14px;margin-top:10px}" +
       // White floating-card wrapper for the chart/narrative sections so they
       // read as panels instead of sitting loose on the panel background.
-      ".ed-card{background:#fff;border:1px solid rgba(15,23,42,.07);border-radius:16px;padding:2px 20px 18px;margin:14px 0;box-shadow:0 2px 14px rgba(15,23,42,.06)}" +
+      ".ed-card{background:#fff;border:1px solid rgba(10,47,70,.07);border-radius:16px;padding:2px 20px 18px;margin:14px 0;box-shadow:0 2px 14px rgba(10,47,70,.06)}" +
       ".ed-card>.ed-sec-h:first-child{border-top:0;margin-top:14px;padding-top:0}" +
       // Inside a white card the regime gauge drops its own tinted box (no card-in-card).
       ".ed-card .ed-regime{background:none;border:0;padding:0;margin:6px 0 0}";

@@ -152,15 +152,15 @@ button:focus-visible,[tabindex]:focus-visible{
   transition:background .55s ease,color .45s,border-color .45s,box-shadow .55s ease}
 .btn-ghost .arrow{background:#0A2F46;color:#fff;transition:transform .45s var(--ease)}
 .btn-ghost:hover{background:#fff;color:var(--text-dark);border-color:rgba(16,41,61,.10);
-  box-shadow:inset 0 0 0 3px rgba(255,255,255,.85),0 14px 30px rgba(9,20,60,.12)}
+  box-shadow:inset 0 0 0 3px rgba(255,255,255,.85),0 14px 30px rgba(0,28,49,.12)}
 .btn-ghost:hover .arrow{transform:translateX(2px)}
 
 .btn-white{background:#fff;color:var(--primary);
-  box-shadow:0 0 0 2px transparent,inset 0 0 0 0 var(--primary),0 10px 24px rgba(9,20,60,.10);
+  box-shadow:0 0 0 2px transparent,inset 0 0 0 0 var(--primary),0 10px 24px rgba(0,28,49,.10);
   transition:box-shadow .55s ease,color .45s,background-color .45s}
 .btn-white .arrow{background:#0A2F46;color:#fff;transition:transform .45s var(--ease)}
 .btn-white:hover{background:#fff;color:var(--primary);
-  box-shadow:0 0 0 2px var(--primary),inset 0 0 0 3px rgba(20,88,125,.18),0 14px 32px rgba(9,20,60,.14)}
+  box-shadow:0 0 0 2px var(--primary),inset 0 0 0 3px rgba(20,88,125,.18),0 14px 32px rgba(0,28,49,.14)}
 .btn-white:hover .arrow{transform:translateX(2px)}
 
 /* ───────── NAV ───────── */
@@ -174,10 +174,10 @@ button:focus-visible,[tabindex]:focus-visible{
   display:flex;align-items:center;justify-content:space-between;width:100%;
   background:rgba(255,255,255,.94);backdrop-filter:blur(20px) saturate(180%);-webkit-backdrop-filter:blur(20px) saturate(180%);
   border:1px solid rgba(255,255,255,.7);border-radius:var(--r-pill);
-  padding:10px 10px 10px 22px;box-shadow:0 10px 34px rgba(9,20,60,.16),inset 0 1px 0 rgba(255,255,255,.6);
+  padding:10px 10px 10px 22px;box-shadow:0 10px 34px rgba(0,28,49,.16),inset 0 1px 0 rgba(255,255,255,.6);
   transition:box-shadow .4s,background .4s;
 }
-.nav.scrolled .nav-inner{box-shadow:0 14px 44px rgba(9,20,60,.18),inset 0 1px 0 rgba(255,255,255,.6);background:rgba(255,255,255,.97)}
+.nav.scrolled .nav-inner{box-shadow:0 14px 44px rgba(0,28,49,.18),inset 0 1px 0 rgba(255,255,255,.6);background:rgba(255,255,255,.97)}
 .brand{display:flex;align-items:center;gap:11px;font-family:'Space Grotesk','Inter',sans-serif;font-weight:700;font-size:20px;letter-spacing:-.02em;color:#0A2F46}
 .brand-wordmark{display:inline-flex;align-items:baseline;flex-wrap:nowrap;white-space:nowrap;color:#0A2F46}
 .brand-m{height:1.6em;width:auto;flex:none;align-self:baseline;margin:0 .02em}
@@ -194,51 +194,52 @@ button:focus-visible,[tabindex]:focus-visible{
 /* ───────── HERO ───────── */
 .hero{padding:128px 0 120px;position:relative;overflow:hidden;
   background:
-    radial-gradient(60% 80% at 80% 16%, rgba(34,211,238,.12), transparent 60%),
-    radial-gradient(55% 72% at 12% 8%, rgba(20,88,125,.18), transparent 60%),
-    linear-gradient(180deg,#0D3A56 0%,#0A2F46 55%,#001C31 100%)}
+    radial-gradient(120% 116% at 6% 96%,  #FF9E5E 0%, rgba(255,179,138,.72) 24%, rgba(252,230,216,0) 58%),
+    radial-gradient(112% 108% at 96% 88%, #A8AFE8 0%, rgba(200,190,250,.66) 30%, rgba(235,240,255,0) 64%),
+    radial-gradient(86% 72% at 46% -6%,   #FFFFFF 0%, #FCE6D8 46%, rgba(252,230,216,0) 78%),
+    linear-gradient(132deg,#FCE6D8 0%,#EBF0FF 52%,#D1C9FF 100%)}
 /* ─── Dark "trading terminal" canvas: depth glows + faint data grid + a
    colourful candlestick chart (see .hero-chart svg). Pure CSS/SVG. ─── */
 .hero-photo{position:absolute;inset:0;z-index:0;
   background:
-    repeating-linear-gradient(to right, rgba(255,255,255,.04) 0 1px, transparent 1px 60px),
-    repeating-linear-gradient(to bottom, rgba(255,255,255,.04) 0 1px, transparent 1px 60px)}
+    repeating-linear-gradient(to right, rgba(10,47,70,.045) 0 1px, transparent 1px 60px),
+    repeating-linear-gradient(to bottom, rgba(10,47,70,.045) 0 1px, transparent 1px 60px)}
 .hero-photo::after{content:"";position:absolute;inset:0;
-  background:linear-gradient(180deg,rgba(13,58,86,.35) 0%,transparent 26%,transparent 66%,rgba(0,28,49,.60) 100%)}
+  background:linear-gradient(180deg,rgba(255,255,255,.30) 0%,transparent 24%,transparent 70%,rgba(252,230,216,.45) 100%)}
 /* Colourful candlestick chart anchored to the bottom — signals US-market
    technical analysis. Sits above the grid, below the hero content. */
 .hero-chart{position:absolute;left:0;right:0;bottom:0;width:100%;height:140px;z-index:0;pointer-events:none;overflow:visible}
 .hero .wrap{position:relative;z-index:1}
 .hero-badge{
   display:inline-flex;align-items:center;gap:10px;white-space:nowrap;
-  font-family:'Inter',sans-serif;font-weight:600;font-size:13px;letter-spacing:.04em;text-transform:uppercase;color:#cfe0ff;
+  font-family:'Inter',sans-serif;font-weight:600;font-size:13px;letter-spacing:.04em;text-transform:uppercase;color:#D9E6F2;
   background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.16);
   padding:9px 18px;border-radius:var(--r-pill);margin-bottom:22px;
   box-shadow:0 6px 18px rgba(0,0,0,.25);backdrop-filter:blur(8px);
 }
 .live-dot{width:8px;height:8px;border-radius:50%;background:var(--up);box-shadow:0 0 0 0 rgba(22,163,74,.5);animation:pulse 2s infinite}
 @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(22,163,74,.5)}70%{box-shadow:0 0 0 9px rgba(22,163,74,0)}100%{box-shadow:0 0 0 0 rgba(22,163,74,0)}}
-.hero h1{font-size:clamp(44px,7vw,92px);font-weight:600;letter-spacing:-.03em;line-height:1.02;max-width:16ch;margin-bottom:18px;color:#fff}
+.hero h1{font-size:clamp(44px,7vw,92px);font-weight:600;letter-spacing:-.03em;line-height:1.02;max-width:16ch;margin-bottom:18px;color:#0A2F46}
 /* Bright cyan→blue gradient on the hero accent so it glows against the dark bg */
-.hero h1 .blue-grad-text{background:linear-gradient(120deg,#7CC8FF 0%,#22d3ee 50%,#9CF6D8 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
-.hero-sub{font-size:clamp(17px,1.7vw,20px);color:rgba(255,255,255,.80);max-width:58ch;margin-bottom:26px}
-.hero-sub b{color:#fff;font-weight:700}
+.hero h1 .blue-grad-text{background:linear-gradient(120deg,#8FBFDD 0%,#22d3ee 50%,#BFE3D6 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.hero-sub{font-size:clamp(17px,1.7vw,20px);color:rgba(16,41,61,.88);max-width:58ch;margin-bottom:26px}
+.hero-sub b{color:#0A2F46;font-weight:700}
 .hero-ctas{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:18px}
 .hero-ctas .btn{min-width:230px;justify-content:space-between}
-.hero-kpis{display:flex;justify-content:center;align-items:center;gap:12px 18px;flex-wrap:wrap;color:rgba(255,255,255,.65);font-family:'Inter',sans-serif;font-weight:500;font-size:14px;margin-bottom:8px}
-.hero-kpis b{color:#fff;font-weight:700;margin-right:4px}
-.hero-kpi-sep{color:rgba(255,255,255,.30);font-weight:700}
+.hero-kpis{display:flex;justify-content:center;align-items:center;gap:12px 18px;flex-wrap:wrap;color:rgba(16,41,61,.74);font-family:'Inter',sans-serif;font-weight:500;font-size:14px;margin-bottom:8px}
+.hero-kpis b{color:#0A2F46;font-weight:700;margin-right:4px}
+.hero-kpi-sep{color:rgba(10,47,70,.30);font-weight:700}
 /* Hero sits on a dark canvas now — flip the ghost CTA to light. */
-.hero .btn-ghost{color:#fff;border-color:rgba(255,255,255,.22)}
-.hero .btn-ghost .arrow{background:rgba(255,255,255,.14);color:#fff}
-.hero .btn-ghost:hover{background:rgba(255,255,255,.10);color:#fff;border-color:rgba(255,255,255,.32);box-shadow:inset 0 0 0 3px rgba(255,255,255,.12),0 14px 30px rgba(0,0,0,.30)}
+.hero .btn-ghost{color:#0A2F46;border-color:rgba(10,47,70,.28)}
+.hero .btn-ghost .arrow{background:rgba(10,47,70,.10);color:#FF6100}
+.hero .btn-ghost:hover{background:rgba(10,47,70,.06);color:#0A2F46;border-color:rgba(10,47,70,.40);box-shadow:inset 0 0 0 3px rgba(10,47,70,.06),0 14px 30px rgba(10,31,54,.14)}
 .hero-cards{display:grid;grid-template-columns:1.3fr 1fr;gap:22px}
 @media(max-width:900px){.hero-cards{grid-template-columns:1fr}}
 
 /* hero feature card (dashboard preview, big rounded like Arooth media) */
 .hero-panel{
   background:var(--white);border-radius:var(--r-xxl);padding:26px;
-  border:1px solid rgba(16,41,61,.05);box-shadow:0 30px 70px rgba(9,20,60,.10);position:relative;overflow:hidden;
+  border:1px solid rgba(16,41,61,.05);box-shadow:0 30px 70px rgba(0,28,49,.10);position:relative;overflow:hidden;
 }
 .hp-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px}
 .hp-title{font-family:'Inter',sans-serif;font-weight:600;font-size:15px}
@@ -312,7 +313,7 @@ button:focus-visible,[tabindex]:focus-visible{
 .about-grid{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center}
 .about-grid p{color:var(--grey-2);font-size:17px;margin-bottom:18px}
 .stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
-.stat-card{background:var(--white);border:1px solid rgba(16,41,61,.05);border-radius:var(--r-xl);padding:30px 26px;box-shadow:0 14px 34px rgba(9,20,60,.05)}
+.stat-card{background:var(--white);border:1px solid rgba(16,41,61,.05);border-radius:var(--r-xl);padding:30px 26px;box-shadow:0 14px 34px rgba(0,28,49,.05)}
 .stat-card .v{font-family:'Inter';font-weight:700;font-size:clamp(38px,4vw,54px);line-height:1;color:var(--primary);letter-spacing:-.03em}
 .stat-card .l{color:var(--grey);font-size:14px;margin-top:10px;font-weight:500}
 @media(max-width:900px){.about-grid{grid-template-columns:1fr;gap:38px}}
@@ -324,7 +325,7 @@ button:focus-visible,[tabindex]:focus-visible{
   padding:38px 34px;display:flex;gap:24px;align-items:flex-start;
   transition:transform .4s var(--ease),box-shadow .4s,border-color .4s;position:relative;overflow:hidden;
 }
-.svc:hover{transform:translateY(-5px);box-shadow:0 26px 60px rgba(9,20,60,.10);border-color:var(--azureish)}
+.svc:hover{transform:translateY(-5px);box-shadow:0 26px 60px rgba(0,28,49,.10);border-color:var(--azureish)}
 .svc-ico{width:60px;height:60px;flex:0 0 60px;border-radius:var(--r-md);display:grid;place-items:center;background:var(--alice-blue);color:var(--primary);transition:background .4s,color .4s}
 .svc:hover .svc-ico{background:var(--primary);color:#fff}
 .svc-ico svg{width:28px;height:28px}
@@ -344,7 +345,7 @@ button:focus-visible,[tabindex]:focus-visible{
   background:var(--white);border:1px solid rgba(16,41,61,.06);
   transition:flex .65s cubic-bezier(.4,0,.2,1),box-shadow .4s var(--ease);
 }
-.proj.active{flex:3.5 1 0;box-shadow:0 36px 80px rgba(9,20,60,.14)}
+.proj.active{flex:3.5 1 0;box-shadow:0 36px 80px rgba(0,28,49,.14)}
 .proj-media{
   flex:0 0 100%;min-width:0;display:grid;place-items:center;
   position:relative;overflow:hidden;
@@ -356,7 +357,7 @@ button:focus-visible,[tabindex]:focus-visible{
 .pm-inner{position:relative;text-align:center;display:flex;flex-direction:column;align-items:center;gap:2px;
   background:linear-gradient(180deg,#ffffff 0%,#f6f9ff 100%);
   border:1px solid rgba(16,41,61,.06);border-radius:20px;
-  box-shadow:0 1px 0 rgba(255,255,255,.9) inset,0 18px 38px rgba(9,20,60,.20),0 3px 10px rgba(9,20,60,.08);
+  box-shadow:0 1px 0 rgba(255,255,255,.9) inset,0 18px 38px rgba(0,28,49,.20),0 3px 10px rgba(0,28,49,.08);
   padding:16px 18px 14px;max-width:240px;width:90%;margin:0 auto;overflow:hidden}
 .pm-logo{width:48px;height:48px;border-radius:13px;background:var(--blue-grad);color:#fff;display:grid;place-items:center;font-family:'Inter';font-weight:700;font-size:16px;margin:2px auto 6px;box-shadow:0 10px 22px rgba(10,47,70,.30),0 0 0 1px rgba(255,255,255,.5) inset}
 .pm-head{display:flex;flex-direction:column;align-items:center;gap:1px;margin:0 0 4px}
@@ -391,7 +392,7 @@ button:focus-visible,[tabindex]:focus-visible{
 .pm-logo-img{
   width:52px;height:52px;border-radius:14px;object-fit:contain;
   background:#fff;padding:6px;margin:2px auto 6px;
-  box-shadow:0 10px 22px rgba(9,20,60,.16),0 0 0 1px rgba(9,20,60,.06) inset;
+  box-shadow:0 10px 22px rgba(0,28,49,.16),0 0 0 1px rgba(0,28,49,.06) inset;
   display:block;
 }
 .proj-body{
@@ -425,14 +426,14 @@ button:focus-visible,[tabindex]:focus-visible{
 
 /* ───────── TESTIMONIALS ───────── */
 .quotes{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
-.quote{background:var(--white);border:1px solid rgba(16,41,61,.05);border-radius:var(--r-xl);padding:34px 30px;box-shadow:0 14px 34px rgba(9,20,60,.05)}
+.quote{background:var(--white);border:1px solid rgba(16,41,61,.05);border-radius:var(--r-xl);padding:34px 30px;box-shadow:0 14px 34px rgba(0,28,49,.05)}
 .q-stars{display:flex;gap:3px;color:#FF6100;margin-bottom:18px}
 .q-stars svg{width:17px;height:17px}
 .quote p{font-family:'Inter';font-weight:500;font-size:18px;line-height:1.5;color:var(--raisin);margin-bottom:24px;letter-spacing:-.01em}
 .quote p em{color:var(--primary);font-style:normal}
 .q-foot{display:flex;align-items:center;gap:12px}
 .q-av{width:46px;height:46px;border-radius:50%;background:var(--blue-grad);color:#fff;display:grid;place-items:center;font-family:'Inter';font-weight:700;font-size:15px;flex:none}
-.q-photo{width:46px;height:46px;border-radius:50%;object-fit:cover;flex:none;display:block;box-shadow:0 4px 12px rgba(9,20,60,.12),0 0 0 2px #fff,0 0 0 3px rgba(20,88,125,.25)}
+.q-photo{width:46px;height:46px;border-radius:50%;object-fit:cover;flex:none;display:block;box-shadow:0 4px 12px rgba(0,28,49,.12),0 0 0 2px #fff,0 0 0 3px rgba(20,88,125,.25)}
 .q-meta{flex:1;min-width:0}
 .q-verified{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;background:var(--primary);color:#fff;font-size:9px;font-weight:700;margin-left:2px;vertical-align:1px}
 .q-name{font-family:'Inter';font-weight:600;font-size:15px}
@@ -459,7 +460,7 @@ button:focus-visible,[tabindex]:focus-visible{
 /* ───────── INSIGHTS / BLOG ───────── */
 .posts{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
 .post{background:var(--white);border:1px solid rgba(16,41,61,.05);border-radius:var(--r-xl);overflow:hidden;transition:transform .4s var(--ease),box-shadow .4s}
-.post:hover{transform:translateY(-6px);box-shadow:0 26px 60px rgba(9,20,60,.12)}
+.post:hover{transform:translateY(-6px);box-shadow:0 26px 60px rgba(0,28,49,.12)}
 .post-img{height:172px;position:relative;overflow:hidden;background:var(--light-bg)}
 .post-img img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;transition:transform .6s var(--ease)}
 .post:hover .post-img img{transform:scale(1.04)}
@@ -469,7 +470,7 @@ button:focus-visible,[tabindex]:focus-visible{
 .post-mock.pre{background:#0A0A0A;color:#fff}
 .post-mock.post{background:#0A0A0A;color:#fff}
 .post-mock.feat{background:linear-gradient(135deg,#14587D 0%,#0D3A56 100%);color:#fff}
-.pm-badge{display:inline-flex;align-items:center;gap:7px;align-self:flex-start;font-family:'Inter',sans-serif;font-weight:700;font-size:11px;letter-spacing:.08em;text-transform:uppercase;padding:6px 12px;border-radius:var(--r-pill);background:rgba(255,255,255,.85);color:var(--text-dark);box-shadow:0 4px 10px rgba(9,20,60,.10)}
+.pm-badge{display:inline-flex;align-items:center;gap:7px;align-self:flex-start;font-family:'Inter',sans-serif;font-weight:700;font-size:11px;letter-spacing:.08em;text-transform:uppercase;padding:6px 12px;border-radius:var(--r-pill);background:rgba(255,255,255,.85);color:var(--text-dark);box-shadow:0 4px 10px rgba(0,28,49,.10)}
 .post-mock.post .pm-badge,.post-mock.pre .pm-badge,.post-mock.feat .pm-badge{background:rgba(255,255,255,.18);color:#fff;backdrop-filter:blur(8px)}
 .pm-badge.feat{color:#FFD24A}
 .pm-dot{width:6px;height:6px;border-radius:50%;background:var(--up);flex:none}
@@ -555,7 +556,7 @@ button:focus-visible,[tabindex]:focus-visible{
 .pricing{
   display:grid;grid-template-columns:1fr auto 1fr auto;gap:34px;align-items:center;
   background:var(--white);border:1px solid rgba(16,41,61,.06);border-radius:var(--r-xxl);
-  padding:42px 46px;box-shadow:0 24px 60px rgba(9,20,60,.08);
+  padding:42px 46px;box-shadow:0 24px 60px rgba(0,28,49,.08);
 }
 .pricing-lbl{font-family:'Inter';font-weight:600;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--grey);margin-bottom:12px}
 .pricing-now .pricing-lbl{color:var(--primary)}
@@ -587,7 +588,7 @@ button:focus-visible,[tabindex]:focus-visible{
     linear-gradient(160deg,#0A2F46 0%,#0f1530 68%,#15234d 100%);
   border:1px solid rgba(143,191,221,.40);border-radius:var(--r-xxl);
   padding:42px 38px 30px;display:flex;flex-direction:column;gap:20px;color:#fff;
-  box-shadow:0 0 0 1px rgba(143,191,221,.16),0 0 56px -12px rgba(20,88,125,.44),0 30px 72px rgba(9,20,60,.34)}
+  box-shadow:0 0 0 1px rgba(143,191,221,.16),0 0 56px -12px rgba(20,88,125,.44),0 30px 72px rgba(0,28,49,.34)}
 .ps-ribbon{position:absolute;top:-13px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#8FBFDD 0%,#14587D 50%,#0D3A56 100%);color:#fff;font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;padding:7px 16px;border-radius:var(--r-pill);box-shadow:0 8px 20px rgba(20,88,125,.5);white-space:nowrap}
 .ps-hero{display:flex;flex-direction:column;align-items:center;gap:6px}
 .ps-now-amt{font-family:'Inter',sans-serif;font-weight:800;font-size:64px;line-height:.95;letter-spacing:-.035em;background:linear-gradient(135deg,#A9C4D8 0%,#8FBFDD 45%,#14587D 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
@@ -611,12 +612,12 @@ button:focus-visible,[tabindex]:focus-visible{
 /* Two-tier pricing — Free (light) vs Pro (premium dark) */
 .price-duo{display:grid;grid-template-columns:1fr 1.08fr;gap:22px;max-width:940px;margin:0 auto;align-items:stretch}
 .price-card{position:relative;border-radius:var(--r-xxl);padding:38px 34px 30px;display:flex;flex-direction:column;gap:18px;text-align:left}
-.pc-free{background:#fff;border:1px solid rgba(16,41,61,.09);box-shadow:0 20px 50px rgba(9,20,60,.10)}
+.pc-free{background:#fff;border:1px solid rgba(16,41,61,.09);box-shadow:0 20px 50px rgba(0,28,49,.10)}
 .pc-pro{color:#fff;border:1px solid rgba(143,191,221,.40);
   background:
     radial-gradient(120% 80% at 50% -10%, rgba(20,88,125,.22), transparent 55%),
     linear-gradient(160deg,#0A2F46 0%,#0f1530 68%,#15234d 100%);
-  box-shadow:0 0 0 1px rgba(143,191,221,.16),0 0 56px -12px rgba(20,88,125,.44),0 30px 72px rgba(9,20,60,.34)}
+  box-shadow:0 0 0 1px rgba(143,191,221,.16),0 0 56px -12px rgba(20,88,125,.44),0 30px 72px rgba(0,28,49,.34)}
 .pc-name{font-family:'Inter',sans-serif;font-weight:700;font-size:12px;letter-spacing:.14em;text-transform:uppercase}
 .pc-free .pc-name{color:var(--grey)}
 .pc-pro .pc-name{color:#8FB6CC}
@@ -650,7 +651,7 @@ button:focus-visible,[tabindex]:focus-visible{
 .pc-free .pc-cta .arrow{background:#0A2F46;color:#fff}
 .pc-free .pc-cta:hover{--btn-fill:135%;color:#fff;border-color:#0A2F46;
   background:radial-gradient(circle at calc(100% - 28px) 50%,#0A2F46 var(--btn-fill),transparent calc(var(--btn-fill) + 1%));
-  box-shadow:0 14px 30px rgba(9,20,60,.16)}
+  box-shadow:0 14px 30px rgba(0,28,49,.16)}
 .pc-free .pc-cta:hover .arrow{transform:translateX(2px)}
 .pc-tiny{font-family:'Inter',sans-serif;font-size:12px;text-align:center}
 .pc-free .pc-tiny{color:var(--grey)}
@@ -719,7 +720,7 @@ button:focus-visible,[tabindex]:focus-visible{
 .single-mission.active .mission-name-bg{opacity:1}
 .mission-border{height:1px;width:100%;background:var(--azureish);margin-top:-.95rem;margin-bottom:1.6rem;position:relative;z-index:1}
 .mission-card{border-radius:var(--r-xxl);background:var(--alice-blue);padding:2rem;transition:transform .5s var(--ease),box-shadow .5s var(--ease)}
-.single-mission.active .mission-card{transform:translateY(-6px);box-shadow:0 30px 70px rgba(9,20,60,.10)}
+.single-mission.active .mission-card{transform:translateY(-6px);box-shadow:0 30px 70px rgba(0,28,49,.10)}
 .mission-icon-wrap{width:7.5rem;height:7.5rem;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,#6199ff 50%,#c0d7ff);margin-bottom:6rem;color:#fff;transition:box-shadow .5s var(--ease)}
 .single-mission.active .mission-icon-wrap{box-shadow:0 22px 50px rgba(10,47,70,.35)}
 .mission-icon-wrap svg{width:3.75rem;height:3.75rem}
@@ -749,7 +750,7 @@ button:focus-visible,[tabindex]:focus-visible{
 .bento-tile::before{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;border-radius:inherit;
   background:radial-gradient(260px circle at var(--mx) var(--my),rgba(20,88,125,.14),transparent 62%);
   opacity:0;transition:opacity .4s}
-.bento-tile:hover{transform:translateY(-5px);box-shadow:0 30px 70px rgba(9,20,60,.12);border-color:var(--azureish)}
+.bento-tile:hover{transform:translateY(-5px);box-shadow:0 30px 70px rgba(0,28,49,.12);border-color:var(--azureish)}
 .bento-tile:hover::before{opacity:1}
 .bento-tile>*{position:relative;z-index:1}
 .bento-a{grid-column:span 2;grid-row:span 2}
@@ -814,7 +815,7 @@ button:focus-visible,[tabindex]:focus-visible{
   background:linear-gradient(150deg,rgba(255,255,255,.55),transparent 42%)}
 .fan-card>*{position:relative;z-index:1}
 /* card ring positions are assigned by JS (full 360° fill → endless flow) */
-.fan-card:hover{box-shadow:0 46px 92px rgba(9,20,60,.34)}
+.fan-card:hover{box-shadow:0 46px 92px rgba(0,28,49,.34)}
 .fan-card.is-front{box-shadow:0 52px 104px rgba(10,47,70,.30);border-color:rgba(20,88,125,.5)}
 /* fan card inner bits */
 .fc-row{display:flex;align-items:center;justify-content:space-between}
@@ -890,7 +891,7 @@ button:focus-visible,[tabindex]:focus-visible{
    above it: lifted panel tone, a sapphire stage-light line across the top,
    an inset top highlight, and chips rendered as pill badges. */
 .trust{position:relative;border-bottom:1px solid rgba(255,255,255,.06);padding:20px 0;
-  background:linear-gradient(180deg,#0f1838 0%,#0b1126 100%);color:#fff;
+  background:linear-gradient(180deg,#0D3A56 0%,#001C31 100%);color:#fff;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}
 .trust::before{content:"";position:absolute;top:0;left:0;right:0;height:1px;pointer-events:none;
   background:linear-gradient(90deg,transparent 0%,rgba(143,191,221,.55) 50%,transparent 100%)}
@@ -917,7 +918,7 @@ button:focus-visible,[tabindex]:focus-visible{
 /* bold stats-band tiles: white card / orange card alternation */
 .statement-foot{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:64px;max-width:none}
 .statement-foot>div{padding:42px 22px;border-radius:18px;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;min-height:200px}
-.statement-foot>div:nth-child(odd){background:#fff;color:#0A2F46;border:1px solid rgba(16,41,61,.06);box-shadow:0 14px 34px rgba(9,20,60,.06)}
+.statement-foot>div:nth-child(odd){background:#fff;color:#0A2F46;border:1px solid rgba(16,41,61,.06);box-shadow:0 14px 34px rgba(0,28,49,.06)}
 .statement-foot>div:nth-child(even){background:#dc4318;color:#fff}
 .statement-foot .v{font-family:'Inter';font-weight:700;font-size:clamp(48px,5.5vw,80px);line-height:1;letter-spacing:-.03em;color:inherit}
 .statement-foot .l{font-size:12px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;color:inherit;opacity:.88;margin-top:16px}
@@ -945,10 +946,10 @@ button:focus-visible,[tabindex]:focus-visible{
 .orbit-wrap{position:relative;width:100%;max-width:720px;margin:8px auto 0;aspect-ratio:1.18/1;display:grid;place-items:center;overflow:hidden}
 .pillar-legend{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;max-width:980px;margin:20px auto 16px}
 .pl-tile{background:var(--white);border:1px solid rgba(143,191,221,.45);border-radius:var(--r-md);padding:18px 20px;display:flex;flex-direction:column;gap:6px;box-shadow:0 0 0 1px rgba(143,191,221,.16),0 0 26px -8px rgba(20,88,125,.30);transition:transform .25s,box-shadow .25s,border-color .25s}
-.pl-tile:hover{transform:translateY(-3px);border-color:rgba(143,191,221,.68);box-shadow:0 0 0 1px rgba(143,191,221,.26),0 0 34px -6px rgba(20,88,125,.42),0 14px 30px rgba(9,20,60,.10)}
+.pl-tile:hover{transform:translateY(-3px);border-color:rgba(143,191,221,.68);box-shadow:0 0 0 1px rgba(143,191,221,.26),0 0 34px -6px rgba(20,88,125,.42),0 14px 30px rgba(0,28,49,.10)}
 .pl-name{font-family:'Inter',sans-serif;font-weight:700;font-size:14px;color:var(--primary);letter-spacing:.01em}
 .pl-detail{color:var(--grey-2);font-size:13px;line-height:1.45}
-.pillar-sample{display:flex;align-items:center;justify-content:center;gap:10px;max-width:980px;margin:0 auto;padding:16px 22px;border-radius:var(--r-pill);background:var(--white);border:1px solid var(--azureish);box-shadow:0 8px 22px rgba(9,20,60,.05);font-family:'Inter',sans-serif;font-size:14px;color:var(--grey-2);flex-wrap:wrap}
+.pillar-sample{display:flex;align-items:center;justify-content:center;gap:10px;max-width:980px;margin:0 auto;padding:16px 22px;border-radius:var(--r-pill);background:var(--white);border:1px solid var(--azureish);box-shadow:0 8px 22px rgba(0,28,49,.05);font-family:'Inter',sans-serif;font-size:14px;color:var(--grey-2);flex-wrap:wrap}
 .pillar-sample b{color:var(--text-dark);font-weight:700}
 .pl-sample-dot{width:8px;height:8px;border-radius:50%;background:var(--up);box-shadow:0 0 0 0 rgba(22,163,74,.5);animation:pulse 2s infinite;flex:none}
 @media(max-width:760px){.pillar-legend{grid-template-columns:1fr 1fr}.pillar-sample{font-size:12.5px}}
@@ -1007,7 +1008,7 @@ button:focus-visible,[tabindex]:focus-visible{
   display:inline-flex;align-items:center;gap:10px;
   background:#fff;border:1px solid rgba(16,41,61,.06);border-radius:100px;
   padding:6px 14px 6px 6px;
-  box-shadow:0 18px 38px rgba(9,20,60,.12);
+  box-shadow:0 18px 38px rgba(0,28,49,.12);
   font-family:'Inter',sans-serif;font-weight:600;font-size:14px;color:var(--text-dark);
   white-space:nowrap;z-index:3;will-change:transform;
   animation-timing-function:linear;animation-iteration-count:infinite;
@@ -1062,7 +1063,7 @@ button:focus-visible,[tabindex]:focus-visible{
    → a clean hexagon) so all six stay inside the frame. Placed after the <=760px
    block so it wins on phones (both queries match). */
 @media(max-width:480px){
-  .o-chip{font-size:10.5px;padding:3px 8px 3px 3px;gap:5px;box-shadow:0 10px 24px rgba(9,20,60,.12)}
+  .o-chip{font-size:10.5px;padding:3px 8px 3px 3px;gap:5px;box-shadow:0 10px 24px rgba(0,28,49,.12)}
   .chip-ico{width:18px;height:18px}.chip-ico svg{width:10px;height:10px}
   .chip-pct{font-size:9px;padding:2px 5px}
   @keyframes orbit-outer-0  {from{transform:translate(-50%,-50%) rotate(0deg)   translateY(-100px) rotate(0deg)}    to{transform:translate(-50%,-50%) rotate(360deg) translateY(-100px) rotate(-360deg)}}
@@ -1086,15 +1087,15 @@ button:focus-visible,[tabindex]:focus-visible{
 @media(prefers-reduced-motion:reduce){.reveal,.stagger>*{opacity:1!important;transform:none!important}.marquee-track{animation:none!important}}
 
 /* ─── AI Engine block (dark section, neural-net viz + input/output lists) ─── */
-.section.bg-dark{background:#0A2F46;color:#fff}
-.section.bg-dark .sec-title{color:#fff}
-.section.bg-dark .sec-sub{color:rgba(255,255,255,.7)}
-.section.bg-dark .eyebrow{color:#8FBFDD;background:rgba(143,191,221,.10);border:1px solid rgba(143,191,221,.30)}
-.section.bg-dark .eyebrow::before{background:#8FBFDD}
+.section.bg-dark{background:#FFF2EC;color:#10293D}
+.section.bg-dark .sec-title{color:#0A2F46}
+.section.bg-dark .sec-sub{color:rgba(16,41,61,.76)}
+.section.bg-dark .eyebrow{color:#0A2F46;background:rgba(10,47,70,.06);border:1px solid rgba(10,47,70,.18)}
+.section.bg-dark .eyebrow::before{background:#FF6100}
 .amber-grad-text{background:linear-gradient(135deg,#E3DAFA 0%,#8FBFDD 40%,#14587D 75%,#E3DAFA 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
 
 /* ───────── DASHBOARD MOCKUP ───────── */
-.dash-mock{max-width:1180px;margin:0 auto;background:#fff;border-radius:var(--r-xxl);overflow:hidden;border:1px solid rgba(16,41,61,.06);box-shadow:0 30px 80px rgba(9,20,60,.18),0 6px 14px rgba(9,20,60,.08)}
+.dash-mock{max-width:1180px;margin:0 auto;background:#fff;border-radius:var(--r-xxl);overflow:hidden;border:1px solid rgba(16,41,61,.06);box-shadow:0 30px 80px rgba(0,28,49,.18),0 6px 14px rgba(0,28,49,.08)}
 .dash-chrome{display:flex;align-items:center;gap:10px;padding:14px 18px;background:linear-gradient(180deg,#f8fafc 0%,#eef4ff 100%);border-bottom:1px solid rgba(16,41,61,.07)}
 .dc-dot{width:11px;height:11px;border-radius:50%;flex:none}
 .dc-dot.r{background:#ff5f57}.dc-dot.y{background:#febc2e}.dc-dot.g{background:#28c840}
@@ -1180,7 +1181,7 @@ button:focus-visible,[tabindex]:focus-visible{
 @media(max-width:560px){.dc-live{display:none}}
 
 /* ── Dashboard mock: On the Radar — Top Picks table (mirrors the app's #panel-hot) ── */
-.radar-mock .picks-card{background:#fff;border:1px solid rgba(16,41,61,.07);border-radius:16px;overflow:hidden;box-shadow:0 10px 30px rgba(9,20,60,.06)}
+.radar-mock .picks-card{background:#fff;border:1px solid rgba(16,41,61,.07);border-radius:16px;overflow:hidden;box-shadow:0 10px 30px rgba(0,28,49,.06)}
 .radar-mock .pk-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:15px 18px 11px;flex-wrap:wrap}
 .radar-mock .pk-head h3{font-family:'Inter',sans-serif;font-size:16px;font-weight:700;letter-spacing:-.01em;color:var(--text-dark)}
 .radar-mock .pk-meta{display:flex;gap:6px;flex-wrap:wrap}
@@ -1377,13 +1378,13 @@ button:focus-visible,[tabindex]:focus-visible{
   <svg class="hero-chart" id="heroChart" aria-hidden="true" viewBox="0 0 1440 320" preserveAspectRatio="none">
     <defs>
       <linearGradient id="heroLineGrad" x1="0" y1="1" x2="1" y2="0">
-        <stop offset="0" stop-color="#14587D"/>
-        <stop offset=".55" stop-color="#22d3ee"/>
-        <stop offset="1" stop-color="#5BFF9E"/>
+        <stop offset="0" stop-color="#7C86D8"/>
+        <stop offset=".55" stop-color="#9B8CE0"/>
+        <stop offset="1" stop-color="#FF6100"/>
       </linearGradient>
       <linearGradient id="heroAreaGrad" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" stop-color="#22d3ee" stop-opacity=".30"/>
-        <stop offset="1" stop-color="#22d3ee" stop-opacity="0"/>
+        <stop offset="0" stop-color="#7C86D8" stop-opacity=".28"/>
+        <stop offset="1" stop-color="#7C86D8" stop-opacity="0"/>
       </linearGradient>
       <filter id="heroGlow" x="-30%" y="-30%" width="160%" height="160%">
         <feGaussianBlur stdDeviation="3.5" result="b"/>
@@ -1799,14 +1800,14 @@ button:focus-visible,[tabindex]:focus-visible{
 .ah-chat{max-width:640px;margin:6px auto 0;display:flex;flex-direction:column;gap:14px}
 .ah-bubble{max-width:88%;padding:14px 18px;border-radius:18px;font-size:15px;line-height:1.55}
 .ah-bubble.user{align-self:flex-end;background:var(--primary);color:#fff;border-bottom-right-radius:6px;box-shadow:0 10px 24px rgba(10,47,70,.20)}
-.ah-bubble.ai{align-self:flex-start;background:var(--white);color:var(--text-dark);border:1px solid rgba(16,41,61,.06);border-bottom-left-radius:6px;box-shadow:0 14px 34px rgba(9,20,60,.08)}
+.ah-bubble.ai{align-self:flex-start;background:var(--white);color:var(--text-dark);border:1px solid rgba(16,41,61,.06);border-bottom-left-radius:6px;box-shadow:0 14px 34px rgba(0,28,49,.08)}
 .ah-bubble.ai b{color:var(--primary)}
 .ah-ai-tag{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:800;letter-spacing:.04em;color:#7c3aed;margin-bottom:7px;text-transform:uppercase}
 .ah-chips{display:flex;flex-wrap:wrap;gap:9px;justify-content:center;margin-top:28px}
 .ah-chip{font-size:13px;font-weight:600;color:var(--primary);background:var(--white);border:1px solid var(--azureish);padding:8px 14px;border-radius:999px;transition:transform .25s var(--ease),box-shadow .25s}
-.ah-chip:hover{transform:translateY(-2px);box-shadow:0 10px 22px rgba(9,20,60,.10)}
+.ah-chip:hover{transform:translateY(-2px);box-shadow:0 10px 22px rgba(0,28,49,.10)}
 /* Sector map illustration (light section) */
-.ah-map-wrap{position:relative;max-width:680px;margin:8px auto 0;border:1px solid rgba(16,41,61,.06);border-radius:var(--r-xxl);background:radial-gradient(120% 120% at 50% 0%,#fbfdff,#eef4fb);overflow:hidden;box-shadow:0 24px 60px rgba(9,20,60,.08)}
+.ah-map-wrap{position:relative;max-width:680px;margin:8px auto 0;border:1px solid rgba(16,41,61,.06);border-radius:var(--r-xxl);background:radial-gradient(120% 120% at 50% 0%,#fbfdff,#eef4fb);overflow:hidden;box-shadow:0 24px 60px rgba(0,28,49,.08)}
 .ah-map-wrap svg{display:block;width:100%;height:auto}
 .ah-map-legend{display:flex;flex-wrap:wrap;gap:10px 20px;justify-content:center;padding:4px 16px 16px;font-size:12.5px;color:var(--grey-2);font-weight:600}
 .ah-map-legend i{display:inline-block;width:16px;height:3px;border-radius:2px;margin-right:7px;vertical-align:middle}
@@ -1817,10 +1818,774 @@ button:focus-visible,[tabindex]:focus-visible{
 .ah-tl-item:last-child{padding-bottom:0}
 .ah-tl-dot{position:absolute;left:0;top:2px;width:16px;height:16px;border-radius:50%;border:3px solid #0A2F46}
 .ah-tl-dot.earn{background:#22c55e}.ah-tl-dot.file{background:#3E6E92}.ah-tl-dot.deck{background:#f59e0b}
-.ah-tl-when{font-family:'Inter';font-size:12px;font-weight:700;letter-spacing:.03em;color:#7CC0EE;text-transform:uppercase}
+.ah-tl-when{font-family:'Inter';font-size:12px;font-weight:700;letter-spacing:.03em;color:#8FBFDD;text-transform:uppercase}
 .ah-tl-item h4{font-size:16.5px;color:#fff;margin:3px 0 5px;font-weight:600}
 .ah-tl-item p{font-size:13.5px;color:rgba(255,255,255,.6);line-height:1.55}
-.ah-tl-tag{display:inline-block;margin-top:9px;font-size:11px;font-weight:700;color:#cfe0ff;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);padding:3px 10px;border-radius:999px}
+.ah-tl-tag{display:inline-block;margin-top:9px;font-size:11px;font-weight:700;color:#D9E6F2;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);padding:3px 10px;border-radius:999px}
+
+/* ═══ .bg-dark sections are now a WARM LIGHT surface ══════════════════════
+   Those five full-height navy blocks made the page 53% dark; the reference is
+   light and airy, so they were flipped to #FFF2EC. Their CONTENTS were still
+   authored white-on-navy, which left ~75 elements of white text on cream.
+   Everything below re-points type, glass fills, borders and shadows for a
+   light surface. Scoped to .bg-dark on purpose: the same components are still
+   used on the .capture strip and the footer, which remain dark. */
+.bg-dark h3,.bg-dark h4,.bg-dark .faq-ans-title,.bg-dark .es-step,
+.bg-dark .profile-cta,.bg-dark .profile-cta span,
+.bg-dark b:not([class]),.bg-dark strong:not([class]){color:#0A2F46}
+.bg-dark p,.bg-dark li,.bg-dark .desc,.bg-dark .faq-details,
+.bg-dark .engine-volume{color:rgba(16,41,61,.80)}
+.bg-dark .ah-tl-when,.bg-dark .profile-tag{color:#14587D}
+.bg-dark .es-arrow{color:rgba(20,88,125,.55)}
+.bg-dark .es-step b{color:#0A2F46}
+/* the "worked example" block was also authored white-on-navy */
+.bg-dark .ew-lbl{color:#14587D}
+.bg-dark .ew-ticker{color:#0A2F46}
+.bg-dark .ew-pillars{color:rgba(16,41,61,.80)}
+.bg-dark .ew-arrow{color:rgba(20,88,125,.60)}
+.bg-dark .engine-worked{border-color:rgba(10,47,70,.13)}
+.bg-dark .faq-serial{color:#14587D!important}
+.bg-dark .ah-pro-tag{color:#8A5200;background:rgba(245,166,35,.18)}
+/* Some .profile-cta variants carry a solid brand fill, so the blanket navy
+   text override put navy on navy. Make them all proper navy buttons instead. */
+.bg-dark .profile-cta{background:#0A2F46!important;border-color:#0A2F46!important}
+.bg-dark .profile-cta,.bg-dark .profile-cta *{color:#fff!important}
+.bg-dark .ah-tl-tag{color:#0A2F46;background:rgba(10,47,70,.07)}
+/* "glass" fills that assumed a dark backdrop */
+.bg-dark li,.bg-dark .ah-cap,.bg-dark .es-step,.bg-dark .profile-cta{background:rgba(10,47,70,.035)}
+.bg-dark .faq-ans-divider{background:rgba(10,47,70,.14)}
+/* borders drawn in translucent white are invisible on cream */
+.bg-dark li,.bg-dark .single-faq,.bg-dark .ah-cap,
+.bg-dark .ah-tl-tag,.bg-dark .profile{border-color:rgba(10,47,70,.13)}
+.bg-dark .profile-cta,.bg-dark .profile-tag{box-shadow:none}
+
+/* ═══ Reference layout pass ═══════════════════════════════════════════════
+   Matching the approved theme preview rather than merely recolouring the old
+   hero: the mesh lives in an INSET ROUNDED CARD, the headline drops to weight
+   500 at a calmer size, CTAs carry an orange arrow, and the trust strip
+   becomes a rounded dark pill instead of a full-bleed band. CSS only - no
+   copy, no markup, no new elements. */
+.hero{margin:14px 22px 0;border-radius:28px;padding:96px 0 104px}
+.hero h1{
+  font-size:clamp(38px,5.2vw,64px)!important;font-weight:500!important;
+  line-height:1.18!important;letter-spacing:-.02em!important;max-width:19ch;
+}
+/* The reference headline is one solid navy - drop the gradient-clipped span. */
+.hero h1 .blue-grad-text{
+  background:none!important;-webkit-text-fill-color:#0A2F46!important;color:#0A2F46!important;
+}
+.hero-sub{font-size:clamp(16px,1.35vw,19px)!important;line-height:1.55;max-width:52ch}
+.hero-badge{
+  background:rgba(10,47,70,.06);border:1px solid rgba(10,47,70,.14);color:#0A2F46;
+}
+/* Orange arrow, no navy puck - the single accent in the reference. */
+.hero .btn-primary .arrow,.btn-primary .arrow{
+  background:transparent!important;color:#FF6100!important;box-shadow:none!important;
+}
+.btn-primary:hover .arrow{transform:translateX(4px)}
+/* Trust strip -> the reference's rounded translucent pill. */
+.trust{background:transparent!important;padding:34px 22px 6px}
+.trust-inner{
+  background:linear-gradient(180deg,#0D3A56,#0A2F46);
+  border-radius:100px;padding:20px 38px;gap:28px;
+  box-shadow:0 22px 50px -30px rgba(10,31,54,.7);
+}
+@media(max-width:760px){
+  .hero{margin:8px 10px 0;border-radius:20px;padding:56px 0 62px}
+  .trust{padding:22px 12px 4px}
+  .trust-inner{border-radius:26px;padding:18px 20px}
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ANAPLAN THEME - authoritative layer. Everything here is measured off
+   anaplan.com's computed styles, not approximated. Placed last so it wins.
+     surfaces  #FFFFFF  /  #F2F1EE (warm grey alt)  /  #FFF2EC (peach band)
+     ink       #0A2F46 (h1, strong)   #10293D (h2, body)
+     rule      #D6DADD 2px
+     accent    #FF6100 - ONLY button arrows and text-links, never a surface
+     type      h1 60/500 · h2 52/400 · h3 22/500 · body 16/300 · li 18/400
+   The weights are the point: their airiness comes from 300-500 where this
+   site ran 600-800. Colour alone never got there.
+   ═══════════════════════════════════════════════════════════════════════════ */
+:root{
+  --an-navy:#0A2F46; --an-ink:#10293D; --an-orange:#FF6100;
+  --an-surface:#FFFFFF; --an-alt:#F2F1EE; --an-peach:#FFF2EC; --an-rule:#D6DADD;
+}
+/* ── Surfaces: white alternating with warm grey, per the reference ── */
+body{background:var(--an-surface)}
+.section.bg-alice{background:var(--an-surface)!important}
+.section.bg-dark{background:var(--an-alt)!important;color:var(--an-ink)!important}
+
+/* ── Type scale + weights ── */
+.hero h1{color:var(--an-navy)!important;font-weight:500!important}
+h2,.sec-title{color:var(--an-ink)!important;font-weight:400!important;letter-spacing:-.015em}
+.sec-title{font-size:clamp(30px,3.9vw,52px)!important;line-height:1.16!important}
+h3{color:var(--an-ink)!important;font-weight:500!important}
+.sec-sub{color:var(--an-ink)!important;font-weight:300!important;
+  font-size:clamp(16px,1.3vw,20px)!important;line-height:1.55!important;opacity:.92}
+p,li{font-weight:300}
+.bg-dark p,.bg-dark li,.bg-dark .sec-sub,.bg-dark .desc,.bg-dark .faq-details{
+  color:var(--an-ink)!important;opacity:.88}
+.bg-dark h3,.bg-dark h4,.bg-dark .sec-title,.bg-dark .faq-ans-title{color:var(--an-ink)!important}
+.bg-dark b:not([class]),.bg-dark strong:not([class]){color:var(--an-navy)!important;font-weight:600}
+
+/* ── Buttons: pill, navy fill, ORANGE arrow; ghost = navy hairline ── */
+.btn{font-weight:400!important}
+.btn-primary{color:#fff!important}
+.btn-primary .arrow,.btn-ghost .arrow,.btn-white .arrow{
+  background:transparent!important;box-shadow:none!important;color:var(--an-orange)!important}
+.btn-ghost{border:1px solid var(--an-navy)!important;color:var(--an-navy)!important;background:transparent!important}
+.btn-white{background:#fff!important;border:1px solid var(--an-navy)!important;color:var(--an-navy)!important}
+
+/* ── Feature columns: hairline rules, not boxed cards ── */
+.bg-dark li,.bg-dark .ah-cap,.bg-dark .es-step,.bg-dark .single-faq{
+  background:transparent!important;border-color:var(--an-rule)!important}
+.bg-dark .faq-ans-divider{background:var(--an-rule)!important}
+
+/* ── Orange is an accent, never a surface ── */
+.bg-dark .es-step b,.bg-dark .ew-lbl{color:var(--an-navy)!important}
+
+/* ── Contexts the blanket ink override must not reach ────────────────────
+   Two cases: (a) small chips that carry their OWN navy fill, which still need
+   white type; (b) .capture, which is genuinely still a dark section. */
+.capture h2,.capture h3,.capture h4,.capture p,.capture li,
+.capture .sec-title,.capture .sec-sub,.capture .blue-grad-text,
+.capture b,.capture strong,
+.cta h1,.cta h2,.cta h3,.cta h4,.cta p,.cta li,
+.cta .sec-title,.cta .sec-sub,.cta .blue-grad-text,
+.cta b,.cta strong{color:#fff!important;-webkit-text-fill-color:#fff!important}
+.capture .sec-sub,.capture p{opacity:.82}
+/* These two now sit on LIGHT surfaces, so they become light chips instead. */
+.hero-badge{
+  background:rgba(10,47,70,.07)!important;border:1px solid rgba(10,47,70,.16)!important;
+  color:#0A2F46!important}
+.section.bg-alice .eyebrow,.bg-dark .eyebrow{
+  background:rgba(10,47,70,.06)!important;border:1px solid rgba(10,47,70,.18)!important;
+  color:#0A2F46!important}
+.section.bg-alice .eyebrow::before,.bg-dark .eyebrow::before{background:#FF6100!important}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ANAPLAN SCHEME v2 - authoritative, supersedes everything above.
+   Feedback: hero was right, the rest was not. The alt surface was a dirty warm
+   grey where the reference uses PURE WHITE, and the dark sections had been
+   flattened to light when the reference makes them dramatic and high-contrast
+   (their "intelligent applications" hero: deep navy, blue glow top-left, white
+   headline with an ORANGE second line, orange/indigo outline accents).
+   So: white and deep-navy alternate hard, orange carries the accent, and the
+   mesh hero is left exactly as it is.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Light sections: pure white, nothing warm ── */
+body{background:#FFFFFF!important}
+.section.bg-alice{background:#FFFFFF!important}
+.section.bg-alice .sec-title,.section.bg-alice h2{color:#10293D!important}
+.section.bg-alice h3{color:#10293D!important}
+.section.bg-alice p,.section.bg-alice li,.section.bg-alice .sec-sub{color:#10293D!important;opacity:.88}
+
+/* ── Dark sections: the reference's dramatic navy, not a flat block ── */
+.section.bg-dark{
+  background:
+    radial-gradient(78% 88% at 8% 0%,   rgba(58,80,190,.32) 0%, rgba(10,27,46,0) 56%),
+    radial-gradient(58% 68% at 94% 100%,rgba(255,97,0,.12)  0%, rgba(10,27,46,0) 62%),
+    linear-gradient(135deg,#0B1E33 0%,#0A2136 46%,#071726 100%)!important;
+  color:#fff!important;
+}
+.bg-dark .sec-title,.bg-dark h2{color:#fff!important;font-weight:400!important}
+.bg-dark h3,.bg-dark h4,.bg-dark .faq-ans-title,.bg-dark .es-step,
+.bg-dark .ew-ticker{color:#fff!important}
+.bg-dark p,.bg-dark li,.bg-dark .sec-sub,.bg-dark .desc,
+.bg-dark .faq-details,.bg-dark .ew-pillars,.bg-dark .engine-volume{
+  color:rgba(255,255,255,.78)!important;opacity:1!important;font-weight:300}
+.bg-dark b:not([class]),.bg-dark strong:not([class]){color:#fff!important;font-weight:600}
+/* accents on dark: orange + a light steel, as in the reference */
+.bg-dark .eyebrow{
+  color:#FF6100!important;background:rgba(255,97,0,.10)!important;
+  border:1px solid rgba(255,97,0,.32)!important}
+.bg-dark .eyebrow::before{background:#FF6100!important}
+.bg-dark .ew-lbl,.bg-dark .ah-tl-when,.bg-dark .profile-tag,.bg-dark .faq-serial{color:#8FBFDD!important}
+.bg-dark .es-step b{color:#FF6100!important}
+.bg-dark .es-arrow,.bg-dark .ew-arrow{color:rgba(255,97,0,.75)!important}
+/* surfaces + hairlines back to glass-on-dark */
+.bg-dark li,.bg-dark .ah-cap,.bg-dark .es-step,.bg-dark .single-faq,.bg-dark .profile{
+  background:rgba(255,255,255,.045)!important;border-color:rgba(255,255,255,.13)!important}
+.bg-dark .faq-ans-divider{background:rgba(255,255,255,.18)!important}
+.bg-dark .ah-tl-tag{color:#fff!important;background:rgba(255,255,255,.08)!important;
+  border-color:rgba(255,255,255,.16)!important}
+.bg-dark .engine-worked{border-color:rgba(255,255,255,.14)!important}
+.bg-dark .ah-pro-tag{color:#FFD79A!important;background:rgba(245,166,35,.18)!important}
+.bg-dark .profile-cta{background:#0A2F46!important;border-color:rgba(255,255,255,.28)!important}
+.bg-dark .profile-cta,.bg-dark .profile-cta *{color:#fff!important}
+/* headings the dark-section type rules had not reached */
+.bg-dark .faq-question,.bg-dark .faq-q,.bg-dark .sec-eyebrow{color:#fff!important}
+
+/* ── Buttons: flat pill, no stacked ring, small inline arrow ──────────────
+   The primary was 230x64 with a 0 0 0 2px ring and a 34px arrow PUCK, which
+   read as two shapes stacked. The reference is a flat pill, ~46px tall. */
+.btn{padding:13px 28px!important;font-size:16px!important;font-weight:400!important;
+     gap:10px!important;border-radius:100px!important}
+.btn-primary{background:#0A2F46!important;box-shadow:none!important;color:#fff!important;
+             border:1px solid #0A2F46!important}
+.btn-primary:hover{background:#0D3A56!important;box-shadow:none!important}
+.btn-ghost{background:transparent!important;border:1px solid #0A2F46!important;
+           color:#0A2F46!important;box-shadow:none!important}
+.bg-dark .btn-ghost,.capture .btn-ghost,.cta .btn-ghost{
+  border-color:rgba(255,255,255,.55)!important;color:#fff!important}
+.btn .arrow{
+  width:auto!important;height:auto!important;min-width:0!important;
+  background:none!important;border-radius:0!important;box-shadow:none!important;
+  display:inline-flex!important;align-items:center;color:#FF6100!important}
+.btn .arrow svg{width:17px!important;height:17px!important}
+.btn:hover .arrow{transform:translateX(4px)}
+
+/* ═══ ORANGE AS THE EMPHASIS ══════════════════════════════════════════════
+   Every circled headline was the same element: .blue-grad-text, a
+   gradient-clipped blue span. On navy it rendered blue-on-blue and vanished
+   ("Inside the engine", "any stock", "One dashboard", "Questions",
+   "intuition"). The reference's answer to exactly this is ORANGE - their
+   "intelligent applications" line - so the emphasis span becomes solid
+   #FF6100 and the accent gets used far more widely.
+   NOTE ON THE TWO ORANGES: #FF6100 on white is only 3.4:1, which clears AA
+   for large text but NOT for small. So small orange text on a light surface
+   uses #C74E00 (5.1:1); #FF6100 stays for headlines and anything on navy. */
+.blue-grad-text{
+  background:none!important;-webkit-background-clip:border-box!important;
+  background-clip:border-box!important;
+  -webkit-text-fill-color:#FF6100!important;color:#FF6100!important;
+  filter:none!important}
+
+/* Pricing card: pale blue on a dark card was unreadable */
+.pc-price-amt{
+  background:none!important;-webkit-background-clip:border-box!important;
+  -webkit-text-fill-color:#0A2F46!important;color:#0A2F46!important}
+.pc-pro .pc-price-amt{-webkit-text-fill-color:#fff!important;color:#fff!important}
+.pc-pro .pc-badge,.pc-badge,.ds-tag{
+  background:#C74E00!important;color:#fff!important;border-color:#C74E00!important;
+  -webkit-text-fill-color:#fff!important}
+.ds-tag *{color:#fff!important}
+
+/* Small labels that were washing out on navy */
+.faq-serial{color:#FF6100!important}
+.ah-pro-tag{background:rgba(255,97,0,.18)!important;color:#FFB37A!important}
+
+/* Profile CTAs rendered the arrow as a big white puck */
+.profile-cta .arrow,.pc-cta .arrow{
+  width:auto!important;height:auto!important;min-width:0!important;
+  background:none!important;border-radius:0!important;box-shadow:none!important;
+  color:#FF6100!important;display:inline-flex!important;align-items:center}
+.profile-cta .arrow svg,.pc-cta .arrow svg{width:16px!important;height:16px!important}
+
+/* Eyebrow chips: orange everywhere, darkened on light surfaces for AA */
+.eyebrow{color:#C74E00!important;background:rgba(255,97,0,.08)!important;
+  border:1px solid rgba(255,97,0,.28)!important}
+.eyebrow::before{background:#FF6100!important}
+.bg-dark .eyebrow,.capture .eyebrow,.cta .eyebrow{
+  color:#FF6100!important;background:rgba(255,97,0,.12)!important;
+  border-color:rgba(255,97,0,.34)!important}
+
+/* More orange, per the reference: step numbers, arrows, list bullets, rules */
+.bg-dark .es-step b,.bg-dark .ew-lbl,.bg-dark .es-arrow,.bg-dark .ew-arrow{color:#FF6100!important}
+.bg-dark li::marker{color:#FF6100}
+.section.bg-alice .card-ic,.section.bg-alice .feat-ic{color:#C74E00!important}
+
+/* ═══ EMPHASIS SPANS - final pass ═════════════════════════════════════════
+   Two problems with the previous attempt:
+   (1) there is a SECOND emphasis class, .amber-grad-text, rendering white on
+       the pale lilac mesh at 1.34:1;
+   (2) where the class sits on the <h2> itself rather than a child span,
+       ".section.bg-dark h2" (0,3,1) outranked ".blue-grad-text" (0,1,0), so
+       the heading colour won and the span stayed invisible. Hence the
+       explicit "h2.blue-grad-text" forms below at (0,4,1).
+   Colour follows the reference: ORANGE emphasis on dark sections (their
+   "intelligent applications" line), solid NAVY on light ones (their
+   "biggest brands trust Anaplan" line is all navy - no orange). */
+.section.bg-dark .blue-grad-text,.section.bg-dark .amber-grad-text,
+.section.bg-dark h1.blue-grad-text,.section.bg-dark h2.blue-grad-text,
+.section.bg-dark h3.blue-grad-text,.section.bg-dark h2.amber-grad-text,
+.section.bg-dark h1.amber-grad-text,.section.bg-dark h3.amber-grad-text,
+.capture .blue-grad-text,.capture .amber-grad-text,
+.capture h2.blue-grad-text,.capture h2.amber-grad-text,
+.cta .blue-grad-text,.cta .amber-grad-text,
+.cta h2.blue-grad-text,.cta h2.amber-grad-text{
+  background:none!important;-webkit-background-clip:border-box!important;
+  background-clip:border-box!important;
+  color:#FF6100!important;-webkit-text-fill-color:#FF6100!important;filter:none!important}
+
+.section.bg-alice .blue-grad-text,.section.bg-alice .amber-grad-text,
+.section.bg-alice h1.blue-grad-text,.section.bg-alice h2.blue-grad-text,
+.section.bg-alice h3.blue-grad-text,.section.bg-alice h2.amber-grad-text,
+.section.bg-alice h1.amber-grad-text,.section.bg-alice h3.amber-grad-text,
+.hero .blue-grad-text,.hero .amber-grad-text,
+.hero h1.blue-grad-text,.hero h1.amber-grad-text{
+  background:none!important;-webkit-background-clip:border-box!important;
+  background-clip:border-box!important;
+  color:#0A2F46!important;-webkit-text-fill-color:#0A2F46!important;filter:none!important}
+
+/* ═══ EMPHASIS - container-agnostic ═══════════════════════════════════════
+   Scoping by ancestor kept missing instances that live in sections with other
+   class names. These rules do not care where the span sits.
+   Specificity note: ".section.bg-dark h2" is (0,2,1); prefixing with
+   "html body" gives (0,2,2) and the h2 forms (0,2,3), so these win without
+   needing to know the section.
+   Colour: #C74E00 is the one orange legible on EVERY surface this page uses -
+   3.6:1 on the darkest navy, 3.9:1 on the lilac mesh, 5.1:1 on white. Dark
+   sections then upgrade to the reference's brighter #FF6100. */
+html body .section .blue-grad-text,html body .section .amber-grad-text,
+html body .section h1.blue-grad-text,html body .section h2.blue-grad-text,
+html body .section h3.blue-grad-text,html body .section h1.amber-grad-text,
+html body .section h2.amber-grad-text,html body .section h3.amber-grad-text,
+html body .capture .blue-grad-text,html body .capture .amber-grad-text,
+html body .capture h2.blue-grad-text,html body .capture h2.amber-grad-text,
+html body .cta .blue-grad-text,html body .cta .amber-grad-text,
+html body .cta h2.blue-grad-text,html body .cta h2.amber-grad-text{
+  background:none!important;-webkit-background-clip:border-box!important;
+  background-clip:border-box!important;filter:none!important;
+  color:#C74E00!important;-webkit-text-fill-color:#C74E00!important}
+
+/* On dark surfaces, the reference's full-strength orange. */
+html body .section.bg-dark .blue-grad-text,html body .section.bg-dark .amber-grad-text,
+html body .section.bg-dark h1.blue-grad-text,html body .section.bg-dark h2.blue-grad-text,
+html body .section.bg-dark h3.blue-grad-text,html body .section.bg-dark h2.amber-grad-text,
+html body .capture .blue-grad-text,html body .capture .amber-grad-text,
+html body .cta .blue-grad-text,html body .cta .amber-grad-text{
+  color:#FF6100!important;-webkit-text-fill-color:#FF6100!important}
+
+/* The mesh hero stays solid navy - the reference's light hero has no orange. */
+html body .hero .blue-grad-text,html body .hero .amber-grad-text,
+html body .hero h1.blue-grad-text,html body .hero h1.amber-grad-text{
+  background:none!important;-webkit-background-clip:border-box!important;
+  color:#0A2F46!important;-webkit-text-fill-color:#0A2F46!important}
+
+/* ═══ BLUE HEADINGS ══════════════════════════════════════════════════════
+   The indigo from the reference's hexagon outlines, used for all section
+   headings. Two tones because one cannot clear AA on both surfaces:
+     #4A5BC4 on white  -> 5.8:1
+     #8FA0F0 on navy   -> 7.3:1
+   The mesh hero's h1 is deliberately EXCLUDED - that hero was signed off.
+   Emphasis spans keep orange: their rules score (0,3,2) against these
+   (0,2,3), so they win and stay orange inside a blue heading. */
+html body .section.bg-alice h2,html body .section.bg-alice h3,
+html body .section.bg-alice h4,html body .section.bg-alice .sec-title{
+  color:#4A5BC4!important}
+html body .section.bg-dark h2,html body .section.bg-dark h3,
+html body .section.bg-dark h4,html body .section.bg-dark .sec-title,
+html body .capture h2,html body .capture h3,html body .capture .sec-title,
+html body .cta h2,html body .cta h3{
+  color:#8FA0F0!important;-webkit-text-fill-color:#8FA0F0!important}
+
+/* Card titles inside dark panels read better in white than indigo */
+html body .bg-dark .card h3,html body .bg-dark .feat h3,
+html body .bg-dark .profile h3,html body .bg-dark .faq-ans-title{
+  color:#fff!important}
+
+/* ── The two chips just flagged ──
+   "CONSERVATIVE / AGGRESSIVE" kickers were dim steel on a dark card, and the
+   "MOST POPULAR" pill was pale blue on pale blue. */
+html body .profile .profile-kicker,html body .profile .profile-label,
+html body .profile > .eyebrow,html body .profile-head span:first-child,
+html body .profile .kicker{
+  color:#8FA0F0!important;letter-spacing:.14em}
+html body .profile-badge,html body .most-popular,html body .popular,
+html body .profile .badge,html body .profile-tag{
+  background:#C74E00!important;color:#fff!important;border-color:#C74E00!important;
+  -webkit-text-fill-color:#fff!important}
+
+/* ═══ FAQ CARDS ══════════════════════════════════════════════════════════
+   .faq-shape was painting linear-gradient(135deg,#001C31,#0D3A56,#14587D) -
+   a diagonal ramp that washed the open card out to pale blue on the right,
+   clashing with the section behind it. Cards become flat glass instead, and
+   the OPEN one is distinguished by elevation + an indigo bloom + an orange
+   edge rather than by turning a different colour. */
+.faq-shape{
+  background:linear-gradient(180deg,rgba(255,255,255,.055),rgba(255,255,255,.022))!important;
+  border:1px solid rgba(255,255,255,.10)!important;
+  border-radius:24px!important;
+}
+.single-faq.active .faq-shape{
+  background:
+    radial-gradient(120% 150% at 0% 0%, rgba(143,160,240,.18), rgba(255,255,255,0) 62%),
+    linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,.04))!important;
+  border-color:rgba(143,160,240,.28)!important;
+  box-shadow:inset 3px 0 0 #FF6100, 0 22px 50px -34px rgba(0,0,0,.85)!important;
+}
+.single-faq:hover .faq-shape{background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.03))!important}
+
+/* ═══ HIGHLIGHTS ON DARK -> WHITE ════════════════════════════════════════
+   These were the circled items. All of them were rendering in colours meant
+   for a light surface and all but vanished on navy:
+     .engine-score  "86"        was #000000 (black)
+     .ew-score b    "Alpha 94"  the numeral was #10293D navy
+     .dm-alpha      "94"/"86"   #0A2F46 navy
+     .engine-svg                strokes in #3E6E92, a dim steel
+   White reads as the highlight; orange stays on the headline emphasis so the
+   two accents do not stack on top of each other. */
+html body .engine-score,html body .bg-dark .engine-score{
+  background:none!important;-webkit-background-clip:border-box!important;
+  background-clip:border-box!important;
+  color:#FFFFFF!important;-webkit-text-fill-color:#FFFFFF!important}
+html body .ew-score,html body .ew-score *,
+html body .bg-dark .ew-score,html body .bg-dark .ew-score *{
+  color:#FFFFFF!important;-webkit-text-fill-color:#FFFFFF!important;background:none!important}
+html body .dm-alpha{color:#0A2F46!important}
+html body .bg-dark .dm-alpha,html body .capture .dm-alpha,
+html body .cta .dm-alpha{color:#FFFFFF!important}
+html body .engine-score-label{color:rgba(255,255,255,.62)!important}
+
+/* Engine diagram: presentation attributes lose to CSS, so this lifts the
+   dashed net out of the background instead of leaving it a smudge. */
+html body .engine-svg path,html body .engine-svg line,
+html body .engine-svg polyline{stroke:rgba(255,255,255,.42)!important}
+html body .engine-svg circle{fill:#FFFFFF!important;stroke:none!important}
+html body .engine-svg .node-out,html body .engine-svg .node-out circle{fill:#FF6100!important}
+
+/* Eyebrow chips: neutral white-on-glass, with the orange tick kept as accent */
+html body .bg-dark .eyebrow,html body .capture .eyebrow,html body .cta .eyebrow{
+  color:#FFFFFF!important;background:rgba(255,255,255,.08)!important;
+  border:1px solid rgba(255,255,255,.24)!important}
+html body .bg-dark .eyebrow::before,html body .capture .eyebrow::before,
+html body .cta .eyebrow::before{background:#FF6100!important}
+
+/* ═══ PROFILE CARDS - layout + colour ════════════════════════════════════
+   .profile-tag does double duty: a BLOCK kicker ("Conservative") on the side
+   cards and a real PILL ("Most popular") on the middle one. Giving the class
+   a background turned the kickers into full-width orange bars. Split by
+   parent instead. Layout: equal card padding, a fixed tag row so all three
+   titles align, and margin-top:auto on the CTA so the buttons line up
+   regardless of copy length. */
+html body .profile{
+  display:flex!important;flex-direction:column;gap:12px;
+  padding:24px 22px!important;border-radius:18px!important;
+  background:rgba(255,255,255,.045)!important;
+  border:1px solid rgba(255,255,255,.12)!important}
+html body .profile.popular{
+  background:linear-gradient(180deg,rgba(143,160,240,.15),rgba(255,255,255,.05))!important;
+  border-color:rgba(143,160,240,.38)!important;
+  box-shadow:0 26px 60px -34px rgba(0,0,0,.9)!important}
+
+/* tag row: same height on every card so the titles sit on one line */
+html body .profile > .profile-tag{min-height:26px;align-items:center}
+html body .profile:not(.popular) > .profile-tag{
+  display:flex!important;background:none!important;border:0!important;padding:0!important;
+  color:#FF6100!important;font-size:11px!important;font-weight:700!important;
+  letter-spacing:.16em!important;text-transform:uppercase;border-radius:0!important}
+html body .profile.popular > .profile-tag{
+  display:inline-flex!important;align-self:flex-start;width:auto!important;
+  background:#C74E00!important;color:#fff!important;border:0!important;
+  padding:6px 14px!important;border-radius:999px!important;
+  font-size:10.5px!important;letter-spacing:.12em!important;font-weight:700!important}
+
+html body .profile h3{color:#fff!important;font-size:20px!important;
+  font-weight:600!important;margin:0!important;line-height:1.25}
+html body .profile .desc{color:rgba(255,255,255,.74)!important;font-weight:300!important;margin:0!important}
+html body .profile ul{margin:0!important}
+html body .profile li{background:rgba(255,255,255,.04)!important;
+  border-color:rgba(255,255,255,.10)!important;color:rgba(255,255,255,.82)!important}
+/* buttons align across all three cards whatever the copy length */
+html body .profile .profile-cta{margin-top:auto!important;justify-content:space-between!important}
+
+/* ═══ OPEN FAQ CARD -> WARM PEACH PANEL ══════════════════════════════════
+   The open answer becomes a light peach panel lifting out of the dark
+   section, matching the supplied swatch (peach ramp + faint grid). Because
+   the card flips from dark to light, EVERYTHING inside it has to flip with
+   it - title, body, serial, divider and the toggle glyph - or it repeats the
+   white-on-cream problem from earlier. */
+html body .single-faq.active .faq-shape{
+  background-image:
+    repeating-linear-gradient(to right, rgba(176,108,68,.11) 0 1px, transparent 1px 58px),
+    repeating-linear-gradient(to bottom, rgba(176,108,68,.11) 0 1px, transparent 1px 58px),
+    linear-gradient(160deg,#FBEDE4 0%,#F9DCCB 46%,#F5C3A6 100%)!important;
+  border:1px solid rgba(176,108,68,.30)!important;
+  box-shadow:inset 3px 0 0 #FF6100, 0 26px 60px -34px rgba(0,0,0,.85)!important;
+}
+/* type inside the open card */
+html body .single-faq.active .faq-ans-title,
+html body .single-faq.active .faq-question,
+html body .single-faq.active h3,html body .single-faq.active h4{
+  color:#0A2F46!important;-webkit-text-fill-color:#0A2F46!important}
+html body .single-faq.active .faq-details,
+html body .single-faq.active p,html body .single-faq.active li{
+  color:#10293D!important;opacity:.88}
+html body .single-faq.active .faq-serial{color:#C74E00!important}
+html body .single-faq.active .faq-ans-divider{background:rgba(10,47,70,.20)!important}
+html body .single-faq.active .faq-toggle,
+html body .single-faq.active .faq-icon,
+html body .single-faq.active .faq-q-toggle{color:#0A2F46!important}
+/* the CTA in the open card: navy pill reads better than white on peach */
+html body .single-faq.active .btn-white{
+  background:#0A2F46!important;color:#fff!important;border-color:#0A2F46!important}
+html body .single-faq.active .btn-white .arrow{color:#FF6100!important}
+
+/* ═══ .cta PANEL -> SAME TREATMENT AS THE HERO ═══════════════════════════
+   Same mesh, same navy type, same rules. It was the last flat navy slab and
+   it fought the hero it was echoing. Note the emphasis span goes NAVY here,
+   not orange: on the mesh the hero's emphasis is solid navy, and orange on
+   peach would be both off-reference and low contrast. */
+html body .cta{
+  background:
+    radial-gradient(120% 116% at 6% 96%,  #FF9E5E 0%, rgba(255,179,138,.72) 24%, rgba(252,230,216,0) 58%),
+    radial-gradient(112% 108% at 96% 88%, #A8AFE8 0%, rgba(200,190,250,.66) 30%, rgba(235,240,255,0) 64%),
+    radial-gradient(86% 72% at 46% -6%,   #FFFFFF 0%, #FCE6D8 46%, rgba(252,230,216,0) 78%),
+    linear-gradient(132deg,#FCE6D8 0%,#EBF0FF 52%,#D1C9FF 100%)!important;
+}
+html body .cta h1,html body .cta h2,html body .cta h3,html body .cta .sec-title,
+html body .cta .blue-grad-text,html body .cta .amber-grad-text,
+html body .cta h2.blue-grad-text,html body .cta h2.amber-grad-text{
+  color:#0A2F46!important;-webkit-text-fill-color:#0A2F46!important;
+  background:none!important;-webkit-background-clip:border-box!important}
+html body .cta p,html body .cta li,html body .cta .sec-sub,
+html body .cta small,html body .cta b,html body .cta strong{
+  color:#10293D!important;-webkit-text-fill-color:#10293D!important;opacity:.9}
+html body .cta .btn-ghost{border-color:#0A2F46!important;color:#0A2F46!important}
+html body .cta .btn-primary{background:#0A2F46!important;color:#fff!important}
+html body .cta .btn .arrow{color:#FF6100!important}
+
+/* ═══ WORDMARK -> the heading indigo ═════════════════════════════════════ */
+html body .brand,html body .brand-wordmark{color:#4A5BC4!important}
+html body .brand-m polyline{stroke:#4A5BC4!important}
+html body .brand-m circle{fill:#4A5BC4!important}
+
+/* ═══ PRO PRICING CARD -> the scheme's dark surface ══════════════════════
+   It was a murky navy->indigo ramp of its own. Now identical to the dark
+   sections: deep navy, indigo bloom top-left, indigo hairline, orange accent. */
+html body .pc-pro{
+  background:
+    radial-gradient(92% 74% at 0% 0%, rgba(143,160,240,.20), rgba(255,255,255,0) 58%),
+    linear-gradient(160deg,#0B1E33 0%,#0A2136 50%,#071726 100%)!important;
+  border:1px solid rgba(143,160,240,.34)!important;
+  box-shadow:0 30px 70px -40px rgba(0,0,0,.9)!important}
+html body .pc-pro .pc-badge,html body .pc-pro .pc-tag{
+  background:#C74E00!important;color:#fff!important;border-color:#C74E00!important}
+html body .pc-pro .pc-k,html body .pc-pro .pc-plan{color:#8FA0F0!important}
+html body .pc-pro li,html body .pc-pro .pc-chk{background:transparent!important;border-color:rgba(255,255,255,.10)!important}
+html body .pc-pro .pc-cta{
+  background:#0A2F46!important;border:1px solid rgba(255,255,255,.30)!important;color:#fff!important}
+html body .pc-pro .pc-cta .arrow{color:#FF6100!important}
+
+/* ═══ Fixes from the previous pass ═══════════════════════════════════════
+   1. .faq-serial at #C74E00 on navy is 3.9:1 - too dark for 11px. Full
+      strength orange on the closed (dark) cards, the darker one only on the
+      open peach card.
+   2. The wordmark went indigo everywhere, but on the dark footer that is
+      2.55:1. Indigo on light, white on dark. */
+html body .bg-dark .single-faq:not(.active) .faq-serial{color:#FF6100!important}
+html body .single-faq.active .faq-serial{color:#C74E00!important}
+html body .footer .brand,html body .footer .brand-wordmark,
+html body .bg-dark .brand-wordmark,html body .capture .brand-wordmark{color:#FFFFFF!important}
+html body .footer .brand-m polyline{stroke:#FFFFFF!important}
+html body .footer .brand-m circle{fill:#FF6100!important}
+
+/* ═══ BUTTON TRANSITIONS - restored ══════════════════════════════════════
+   The original buttons animate a --btn-fill radial that sweeps across on
+   hover. Flattening them to background:#0A2F46 killed that outright. The
+   sweep is back, now navy -> indigo #4A5BC4: on-scheme, clearly visible, and
+   white on #4A5BC4 is 4.5:1 so the label stays AA through the whole
+   animation (orange would have dropped to 3.0:1 mid-sweep). */
+html body .btn-primary,html body .pc-cta,html body .profile-cta{
+  background:radial-gradient(circle at calc(100% - 26px) 50%,
+    #4A5BC4 var(--btn-fill,0%), #0A2F46 calc(var(--btn-fill,0%) + 1%))!important;
+  transition:--btn-fill .85s cubic-bezier(.19,1,.22,1),
+             box-shadow .55s ease, color .45s, border-color .45s!important;
+}
+html body .btn-primary:hover,html body .pc-cta:hover,html body .profile-cta:hover{
+  --btn-fill:150%!important;
+  box-shadow:0 16px 34px -16px rgba(74,91,196,.60)!important}
+
+/* ghost + white buttons get a visible state change too */
+html body .btn-ghost{transition:background .35s ease,border-color .35s ease,color .35s ease!important}
+html body .btn-ghost:hover{background:rgba(74,91,196,.10)!important;border-color:#4A5BC4!important;color:#4A5BC4!important}
+html body .bg-dark .btn-ghost:hover,html body .capture .btn-ghost:hover{
+  background:rgba(255,255,255,.10)!important;border-color:#fff!important;color:#fff!important}
+html body .btn-white{transition:background .35s ease,box-shadow .45s ease!important}
+html body .btn-white:hover{box-shadow:0 14px 30px -14px rgba(10,47,70,.45)!important}
+
+/* the arrow slides with it */
+html body .btn .arrow,html body .pc-cta .arrow,html body .profile-cta .arrow{
+  transition:transform .45s cubic-bezier(.19,1,.22,1)!important}
+html body .btn:hover .arrow,html body .pc-cta:hover .arrow,
+html body .profile-cta:hover .arrow{transform:translateX(5px)!important}
+
+/* ═══ THIRD SURFACE - fixes two dark sections back to back ═══════════════
+   #events carried bg-dark directly after another bg-dark. It now uses
+   bg-alice (so every light-surface type rule already applies) plus .sec-warm
+   for the reference's warm-grey #F2F1EE, giving white / warm / dark / white. */
+html body .section.bg-alice.sec-warm{background:#F2F1EE!important}
+/* the timeline in this section was drawn for a dark surface */
+html body .sec-warm .ah-tl-tag{background:rgba(10,47,70,.07)!important;color:#0A2F46!important;
+  border-color:rgba(10,47,70,.16)!important}
+html body .sec-warm .ah-tl-when{color:#A83E00!important}   /* 5.4:1 on #F2F1EE; #C74E00 was 4.11 */
+html body .sec-warm .ah-cap,html body .sec-warm li{
+  background:rgba(10,47,70,.035)!important;border-color:rgba(10,47,70,.13)!important;
+  color:#10293D!important}
+html body .sec-warm h3,html body .sec-warm h4{color:#4A5BC4!important}
+html body .sec-warm p,html body .sec-warm .desc{color:#10293D!important;opacity:.88}
+html body .sec-warm .eyebrow{color:#C74E00!important;background:rgba(255,97,0,.08)!important;
+  border-color:rgba(255,97,0,.28)!important}
+
+/* ═══ FINAL THREE ════════════════════════════════════════════════════════
+   1. "intuition." is .cta-italic - a THIRD gradient-clipped class (after
+      .blue-grad-text and .amber-grad-text), running #8FBFDD->#14587D->#E3DAFA
+      which washes out on the peach mesh. Solid navy, like the hero emphasis.
+   2. The Free card's button was navy-on-navy and unreadable: my button-sweep
+      rule targeted every .pc-cta, but the Free one is a GHOST button. Split.
+   3. The Pro card moves off near-black to a deep INDIGO so it reads as the
+      scheme's blue rather than a black slab on a white section. */
+
+/* 1 */
+html body .cta .cta-italic,html body .cta-italic{
+  background:none!important;-webkit-background-clip:border-box!important;
+  background-clip:border-box!important;filter:none!important;
+  color:#0A2F46!important;-webkit-text-fill-color:#0A2F46!important}
+
+/* 2 - Free card CTA back to a ghost button, Pro card CTA keeps the sweep */
+html body .pc-free .pc-cta{
+  background:#FFFFFF!important;background-image:none!important;
+  border:1px solid #0A2F46!important;color:#0A2F46!important}
+html body .pc-free .pc-cta:hover{background:rgba(74,91,196,.08)!important;border-color:#4A5BC4!important}
+html body .pc-free .pc-cta .arrow{color:#FF6100!important}
+html body .pc-pro .pc-cta{
+  background:radial-gradient(circle at calc(100% - 26px) 50%,
+    #4A5BC4 var(--btn-fill,0%), #16215A calc(var(--btn-fill,0%) + 1%))!important;
+  border:1px solid rgba(255,255,255,.28)!important;color:#fff!important}
+html body .pc-pro .pc-cta:hover{--btn-fill:150%!important}
+
+/* 3 - deep indigo Pro card */
+html body .pc-pro{
+  background:
+    radial-gradient(92% 74% at 0% 0%, rgba(143,160,240,.26), rgba(255,255,255,0) 58%),
+    linear-gradient(160deg,#22306E 0%,#1B2757 55%,#141C42 100%)!important;
+  border:1px solid rgba(143,160,240,.42)!important;
+  box-shadow:0 30px 70px -38px rgba(20,28,66,.9)!important}
+html body .pc-pro .pc-k,html body .pc-pro .pc-plan{color:#B9C2F5!important}
+html body .pc-pro .pc-badge{background:#C74E00!important;color:#fff!important}
+
+/* ═══ HOVER - made obvious ═══════════════════════════════════════════════
+   navy -> #4A5BC4 was too close in value to read as a change. Two moves:
+   a brighter sweep (#5566D8, still 4.9:1 with white so the label stays AA
+   through the whole animation), and ghost buttons now INVERT to a solid fill
+   rather than tinting - the clearest state change available without breaking
+   contrast at any point in the transition. */
+html body .btn-primary,html body .profile-cta,html body .pc-pro .pc-cta{
+  background:radial-gradient(circle at calc(100% - 26px) 50%,
+    #5566D8 var(--btn-fill,0%), #0A2F46 calc(var(--btn-fill,0%) + 1%))!important;
+  transition:--btn-fill .7s cubic-bezier(.19,1,.22,1),
+             transform .3s ease, box-shadow .45s ease, color .3s ease!important}
+html body .btn-primary:hover,html body .profile-cta:hover,html body .pc-pro .pc-cta:hover{
+  --btn-fill:165%!important;transform:translateY(-2px)!important;
+  box-shadow:0 18px 38px -14px rgba(85,102,216,.65)!important}
+
+/* ghost / white buttons invert on hover */
+html body .btn-ghost,html body .pc-free .pc-cta,html body .btn-white{
+  transition:background .3s ease,border-color .3s ease,color .3s ease,
+             transform .3s ease,box-shadow .45s ease!important}
+html body .btn-ghost:hover,html body .pc-free .pc-cta:hover,html body .btn-white:hover{
+  background:#0A2F46!important;background-image:none!important;
+  border-color:#0A2F46!important;color:#FFFFFF!important;
+  transform:translateY(-2px)!important;
+  box-shadow:0 16px 34px -16px rgba(10,47,70,.55)!important}
+html body .btn-ghost:hover .arrow,html body .pc-free .pc-cta:hover .arrow,
+html body .btn-white:hover .arrow{color:#FF6100!important}
+/* on dark surfaces the ghost inverts the other way */
+html body .bg-dark .btn-ghost:hover,html body .capture .btn-ghost:hover,
+html body .cta .btn-ghost:hover{
+  background:#FFFFFF!important;border-color:#FFFFFF!important;color:#0A2F46!important}
+html body .btn:hover .arrow{transform:translateX(5px)!important}
+
+/* ═══ WORDMARK ═══════════════════════════════════════════════════════════
+   Text black on light surfaces / white on dark; the M peaks always blue; the
+   dot always orange. The M uses the lighter indigo on dark because #4A5BC4
+   drops to 2.55:1 against the footer navy - still "blue", just legible. */
+html body .brand,html body .brand-wordmark{color:#0A0E22!important}
+html body .footer .brand,html body .footer .brand-wordmark,
+html body .bg-dark .brand,html body .bg-dark .brand-wordmark,
+html body .capture .brand-wordmark{color:#FFFFFF!important}
+
+html body .brand-m polyline{stroke:#4A5BC4!important}
+html body .footer .brand-m polyline,html body .bg-dark .brand-m polyline{stroke:#8FA0F0!important}
+
+html body .brand-m circle,html body .footer .brand-m circle,
+html body .bg-dark .brand-m circle{fill:#FF6100!important}
+
+/* ═══ HOVER v3 + the stray dot ═══════════════════════════════════════════
+   THE DOT: my sweep was "#5566D8 var(--btn-fill), #16215A calc(+1%)". At rest
+   that still paints a 1%-radius circle of bright indigo at the arrow - the
+   little dot visible beside every arrow. The original two colours were close
+   enough to hide it; mine were not. Fixed by starting the first stop BELOW
+   zero so nothing is painted at rest:
+       #5566D8 calc(var(--btn-fill) - 1.2%), transparent var(--btn-fill)
+   over a solid background-color. At 0% the stops are -1.2%/0% => nothing.
+   Transition is also snappier (.55s) with an ease-out curve. */
+html body .btn-primary,html body .profile-cta,html body .pc-pro .pc-cta{
+  background-color:#0A2F46!important;
+  background-image:radial-gradient(circle at calc(100% - 26px) 50%,
+    #5566D8 calc(var(--btn-fill,0%) - 1.2%),
+    rgba(85,102,216,0) var(--btn-fill,0%))!important;
+  transition:--btn-fill .55s cubic-bezier(.22,.9,.28,1),
+             transform .28s cubic-bezier(.22,.9,.28,1),
+             box-shadow .4s ease!important;
+}
+html body .pc-pro .pc-cta{background-color:#16215A!important}
+html body .btn-primary:hover,html body .profile-cta:hover,html body .pc-pro .pc-cta:hover{
+  --btn-fill:175%!important;transform:translateY(-2px)!important;
+  box-shadow:0 18px 36px -14px rgba(85,102,216,.70)!important}
+
+/* all three profile CTAs identical - the middle one had a stray teal ring */
+html body .profile-cta{border:1px solid rgba(255,255,255,.20)!important}
+html body .profile.popular .profile-cta{border-color:rgba(143,160,240,.55)!important}
+
+/* the WELCOME OFFER pill was pale teal on indigo - use the orange chip,
+   same as MOST POPULAR, so the two badges read as one system */
+html body .pc-pro .pc-badge,html body .pc-badge,
+html body .pc-pro .pc-ribbon,html body .pc-offer{
+  background:#C74E00!important;background-image:none!important;
+  color:#fff!important;border-color:#C74E00!important;
+  -webkit-text-fill-color:#fff!important;text-shadow:none!important}
+
+html body .btn .arrow,html body .pc-cta .arrow,html body .profile-cta .arrow{
+  transition:transform .45s cubic-bezier(.22,.9,.28,1)!important}
+html body .btn:hover .arrow,html body .pc-cta:hover .arrow,
+html body .profile-cta:hover .arrow{transform:translateX(5px)!important}
+
+/* ═══ HOVER v4 - stop depending on @property ═════════════════════════════
+   ROOT CAUSE of "can't see the transition": the buttons animate --btn-fill,
+   a registered @property. Diagnostics show that variable pinned at 0% even
+   when forced with !important, so the sweep never runs - which is exactly
+   the symptom reported. @property animation is simply not reliable here.
+   Replaced with an INSET BOX-SHADOW flood: spread animates 0 -> 60px, which
+   is plain CSS supported everywhere, paints under the label so text is never
+   obscured, and needs no custom property at all. */
+html body .btn-primary,html body .profile-cta,html body .pc-pro .pc-cta{
+  background-image:none!important;background-color:#0A2F46!important;
+  box-shadow:inset 0 0 0 0 #5566D8!important;
+  transition:box-shadow .5s cubic-bezier(.22,.9,.28,1),
+             transform .28s cubic-bezier(.22,.9,.28,1),
+             border-color .3s ease!important;
+}
+html body .pc-pro .pc-cta{background-color:#16215A!important}
+html body .btn-primary:hover,html body .profile-cta:hover,html body .pc-pro .pc-cta:hover{
+  box-shadow:inset 0 0 0 60px #5566D8, 0 18px 36px -14px rgba(85,102,216,.70)!important;
+  transform:translateY(-2px)!important;
+}
+/* ghost / white: same mechanism, flooding navy */
+html body .btn-ghost,html body .pc-free .pc-cta,html body .btn-white{
+  box-shadow:inset 0 0 0 0 #0A2F46!important;
+  transition:box-shadow .5s cubic-bezier(.22,.9,.28,1),
+             transform .28s cubic-bezier(.22,.9,.28,1),color .3s ease!important}
+html body .btn-ghost:hover,html body .pc-free .pc-cta:hover,html body .btn-white:hover{
+  box-shadow:inset 0 0 0 60px #0A2F46, 0 16px 34px -16px rgba(10,47,70,.55)!important;
+  color:#FFFFFF!important;transform:translateY(-2px)!important;
+  background-color:transparent!important}
+html body .bg-dark .btn-ghost,html body .capture .btn-ghost,html body .cta .btn-ghost{
+  box-shadow:inset 0 0 0 0 #FFFFFF!important}
+html body .bg-dark .btn-ghost:hover,html body .capture .btn-ghost:hover,
+html body .cta .btn-ghost:hover{
+  box-shadow:inset 0 0 0 60px #FFFFFF!important;color:#0A2F46!important}
+
+/* ═══ ORBIT GRAPHIC - removed ═══════════════════════════════════════════
+   .orbit-wrap was a 720x610 decorative box: faint concentric rings, a centre
+   blur, and six absolutely-positioned pills. Hiding only the rings left the
+   pills still spaced on the old orbit geometry, so the dead space stayed.
+   The whole block is gone. The section keeps its heading and copy.
+   To bring it back, delete this rule - nothing was removed from the HTML. */
+html body .orbit-wrap{display:none!important}
 </style>
 
 <!-- ───────── DEEP RESEARCH (dark) — the per-stock drawer ───────── -->
@@ -1951,7 +2716,7 @@ button:focus-visible,[tabindex]:focus-visible{
 
 
 <!-- ───────── COMPANY EVENTS (dark) — per-stock catalyst timeline ───────── -->
-<section class="section bg-dark" id="events">
+<section class="section bg-alice sec-warm" id="events">
   <div class="wrap">
     <div class="sec-head center reveal">
       <span class="eyebrow">Never miss a catalyst</span>
