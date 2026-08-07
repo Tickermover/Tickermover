@@ -1533,7 +1533,7 @@ button:focus-visible,[tabindex]:focus-visible{
 </section>
 
 <!-- ───────── SERVICES / PILLARS ───────── -->
-<section class="section bg-alice" id="engine">
+<section class="section bg-alice pillars-legacy">
   <div class="wrap">
     <div class="head-row">
       <div class="sec-head reveal">
@@ -1602,7 +1602,7 @@ button:focus-visible,[tabindex]:focus-visible{
 </section>
 
 <!-- ───────── AI ENGINE (dark, neural-net viz from dev landing) ───────── -->
-<section class="section bg-dark" id="ai-engine">
+<section class="section bg-dark" id="engine">
   <div class="wrap">
     <div class="sec-head center reveal">
       <span class="eyebrow">⚡ How it works</span>
@@ -1622,12 +1622,12 @@ button:focus-visible,[tabindex]:focus-visible{
       <div class="engine-col input-side">
         <h4>↘ Inputs</h4>
         <ul class="input-list">
-          <li><span class="ic"></span>Price action &amp; momentum</li>
-          <li><span class="ic"></span>Revenue / EPS growth</li>
-          <li><span class="ic"></span>Margins &amp; balance sheet</li>
-          <li><span class="ic"></span>Analyst &amp; insider flows</li>
-          <li><span class="ic"></span>Crowd &amp; news sentiment</li>
-          <li><span class="ic"></span>Forward EPS revisions</li>
+          <li><span class="ic"></span><b>Momentum</b><em>10/65-day returns · relative volume · RS rating</em></li>
+          <li><span class="ic"></span><b>Growth</b><em>Forward EPS revisions · revenue trajectory · 3-yr CAGR</em></li>
+          <li><span class="ic"></span><b>Quality</b><em>ROIC · FCF margin · debt-to-EBITDA · earnings stability</em></li>
+          <li><span class="ic"></span><b>Valuation</b><em>EV/FCF · PEG · sector-relative multiples</em></li>
+          <li><span class="ic"></span><b>Sentiment</b><em>Analyst revisions · options flow · retail interest</em></li>
+          <li><span class="ic"></span><b>Risk</b><em>Drawdown depth · ATR · exhaustion flags · catalyst gap</em></li>
         </ul>
       </div>
       <!-- Neural-net visualization -->
@@ -2290,9 +2290,9 @@ html body .profile .profile-cta{margin-top:auto!important;justify-content:space-
    white-on-cream problem from earlier. */
 html body .single-faq.active .faq-shape{
   background-image:
-    repeating-linear-gradient(to right, rgba(176,108,68,.11) 0 1px, transparent 1px 58px),
-    repeating-linear-gradient(to bottom, rgba(176,108,68,.11) 0 1px, transparent 1px 58px),
-    linear-gradient(160deg,#FBEDE4 0%,#F9DCCB 46%,#F5C3A6 100%)!important;
+    repeating-linear-gradient(to right, rgba(176,108,68,.07) 0 1px, transparent 1px 58px),
+    repeating-linear-gradient(to bottom, rgba(176,108,68,.07) 0 1px, transparent 1px 58px),
+    linear-gradient(160deg,#FEF8F4 0%,#FDF1EA 50%,#FAE6DA 100%)!important;
   border:1px solid rgba(176,108,68,.30)!important;
   box-shadow:inset 3px 0 0 #FF6100, 0 26px 60px -34px rgba(0,0,0,.85)!important;
 }
@@ -2586,6 +2586,294 @@ html body .cta .btn-ghost:hover{
    The whole block is gone. The section keeps its heading and copy.
    To bring it back, delete this rule - nothing was removed from the HTML. */
 html body .orbit-wrap{display:none!important}
+
+/* ═══ 1. HERO BADGE - breathing room under the floating nav ══════════════
+   The nav pill ends at y=96 and the badge started at 140: only 44px, which
+   read as cramped. Hero top padding 96 -> 140 gives ~88px of clear air. */
+html body .hero{padding-top:140px!important}
+@media(max-width:760px){html body .hero{padding-top:104px!important}}
+
+/* ═══ 2. EMPHASIS ON LIGHT SECTIONS -> ORANGE ════════════════════════════
+   "Any question." and friends were solid navy. Orange on white is 3.4:1,
+   which clears AA for large text (these headings are ~50px), so the accent
+   can run on light sections too. The mesh hero stays navy - signed off. */
+html body .section .blue-grad-text,html body .section .amber-grad-text,
+html body .section h1.blue-grad-text,html body .section h2.blue-grad-text,
+html body .section h3.blue-grad-text,html body .section h1.amber-grad-text,
+html body .section h2.amber-grad-text,html body .section h3.amber-grad-text{
+  color:#FF6100!important;-webkit-text-fill-color:#FF6100!important;
+  background:none!important;-webkit-background-clip:border-box!important}
+html body .hero .blue-grad-text,html body .hero .amber-grad-text,
+html body .hero h1.blue-grad-text,html body .hero h1.amber-grad-text{
+  color:#0A2F46!important;-webkit-text-fill-color:#0A2F46!important}
+
+/* ═══ 3. SIX PILLARS - modernised to the reference's column layout ═══════
+   Was six boxed white cards (20px radius, blue-tinted border + shadow) on a
+   white section, so the boxes were doing nothing but adding noise. The
+   reference separates feature columns with 2px #D6DADD rules and no boxes. */
+html body .pillar-legend{
+  display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  gap:0!important;border-top:2px solid #D6DADD!important;margin-top:14px!important}
+html body .pl-tile{
+  background:none!important;box-shadow:none!important;border:0!important;
+  border-left:2px solid #D6DADD!important;border-radius:0!important;
+  padding:26px 28px!important;height:auto!important}
+html body .pl-tile:nth-child(3n+1){border-left:0!important;padding-left:0!important}
+html body .pl-tile:nth-child(n+4){border-top:2px solid #D6DADD!important}
+html body .pl-tile > :first-child{
+  color:#4A5BC4!important;font-weight:600!important;font-size:17px!important;
+  margin-bottom:7px!important;display:block}
+html body .pl-tile > :not(:first-child){
+  color:#10293D!important;font-weight:300!important;font-size:14px!important;
+  line-height:1.55!important;opacity:.9}
+@media(max-width:760px){
+  html body .pillar-legend{grid-template-columns:1fr!important}
+  html body .pl-tile{border-left:0!important;padding-left:0!important;
+    border-top:2px solid #D6DADD!important}
+  html body .pl-tile:first-child{border-top:0!important}
+}
+
+/* ═══ PRICING - fresh design ═════════════════════════════════════════════
+   Notes: the offer badge is .ps-ribbon (NOT .pc-badge) - that is why it kept
+   rendering teal through several attempts. Columns were 441/477px, so the two
+   cards were visibly different widths. Radius 40px read as a blob at this
+   size. Price was weight 800 against a page that runs 300-500. */
+
+/* equal columns, equal height, aligned feet */
+html body .price-duo{
+  display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:22px!important;align-items:stretch!important;max-width:940px!important;margin:0 auto!important}
+html body .price-card{
+  display:flex!important;flex-direction:column!important;
+  padding:34px 32px 30px!important;border-radius:24px!important;position:relative!important}
+html body .price-card .pc-cta{margin-top:auto!important}
+
+/* FREE - white, hairline, indigo accents */
+html body .pc-free{
+  background:#FFFFFF!important;border:1px solid #D6DADD!important;box-shadow:none!important}
+html body .pc-free .pc-name{color:#4A5BC4!important;letter-spacing:.16em!important;text-transform:uppercase}
+html body .pc-free .pc-chk{color:#4A5BC4!important;background:rgba(74,91,196,.10)!important;
+  border-radius:999px!important;width:20px;height:20px;display:inline-flex!important;
+  align-items:center;justify-content:center;flex:none}
+
+/* PRO - deep indigo, orange ribbon */
+html body .pc-pro{
+  background:radial-gradient(90% 70% at 0% 0%, rgba(143,160,240,.22), rgba(255,255,255,0) 58%),
+             linear-gradient(160deg,#22306E 0%,#1B2757 55%,#141C42 100%)!important;
+  border:1px solid rgba(143,160,240,.40)!important;
+  box-shadow:0 28px 64px -38px rgba(20,28,66,.9)!important}
+html body .pc-pro .pc-name{color:#B9C2F5!important;letter-spacing:.16em!important;text-transform:uppercase}
+html body .pc-pro .pc-chk{color:#FF6100!important;background:rgba(255,97,0,.14)!important;
+  border-radius:999px!important;width:20px;height:20px;display:inline-flex!important;
+  align-items:center;justify-content:center;flex:none}
+html body .pc-pro .pc-plus{color:#B9C2F5!important;letter-spacing:.12em!important;text-transform:uppercase}
+
+/* the offer ribbon - orange, centred on the top edge */
+html body .ps-ribbon{
+  background:#C74E00!important;background-image:none!important;
+  color:#fff!important;-webkit-text-fill-color:#fff!important;
+  border:0!important;border-radius:999px!important;
+  padding:7px 18px!important;font-size:10.5px!important;font-weight:700!important;
+  letter-spacing:.10em!important;box-shadow:0 10px 22px -12px rgba(199,78,0,.9)!important;
+  position:absolute!important;top:-15px!important;left:50%!important;
+  transform:translateX(-50%)!important;white-space:nowrap!important;z-index:2}
+
+/* price: lighter weight, in step with the rest of the page */
+html body .pc-price-amt{font-weight:500!important;font-size:52px!important;letter-spacing:-.02em!important}
+html body .pc-per{font-weight:400!important}
+html body .pc-note,html body .pc-tiny{font-weight:300!important}
+
+/* features: name reads, detail recedes */
+html body .pc-card-feats{margin:18px 0 24px!important;padding:0!important;list-style:none!important;
+  border-top:1px solid rgba(128,128,128,.18)!important;padding-top:18px!important}
+html body .pc-card-feats li{display:flex!important;gap:11px!important;align-items:flex-start!important;
+  margin-bottom:13px!important}
+html body .pc-ft{font-weight:300!important;font-size:13.5px!important;line-height:1.5!important}
+html body .pc-ft b,html body .pc-ft strong{font-weight:600!important;display:block;font-size:14.5px!important}
+html body .pc-free .pc-ft{color:#10293D!important}
+html body .pc-free .pc-ft b{color:#0A2F46!important}
+html body .pc-pro .pc-ft{color:rgba(255,255,255,.74)!important}
+html body .pc-pro .pc-ft b{color:#FFFFFF!important}
+@media(max-width:760px){
+  html body .price-duo{grid-template-columns:1fr!important;gap:30px!important}
+}
+
+/* ═══ .cta EMPHASIS -> BLUE ══════════════════════════════════════════════
+   "intuition." moves from navy to the scheme's blue. #4A5BC4 would be 2.84:1
+   against the mesh's orange corner - just under the 3.0 needed for large
+   text - so this uses #3F4FB0, which clears every stop in the mesh
+   (3.5:1 on the orange, 7.1:1 on the white) and still reads as the blue. */
+html body .cta .cta-italic,html body .cta .blue-grad-text,
+html body .cta .amber-grad-text,html body .cta h2 .cta-italic{
+  color:#3F4FB0!important;-webkit-text-fill-color:#3F4FB0!important;
+  background:none!important;-webkit-background-clip:border-box!important}
+
+/* ═══ LIGHT-SECTION EMPHASIS -> ORANGE (specificity fix) ═════════════════
+   The previous rule was "html body .section .blue-grad-text" (0,2,2) but an
+   earlier "html body .section.bg-alice .blue-grad-text" (0,3,2) outranked it,
+   so "Any question." / "links together." / "Every catalyst." stayed navy.
+   Matching that specificity here. #FF6100 is 3.4:1 on white and 3.3:1 on
+   #F2F1EE - both clear AA for these ~50px headings. */
+html body .section.bg-alice .blue-grad-text,html body .section.bg-alice .amber-grad-text,
+html body .section.bg-alice h1.blue-grad-text,html body .section.bg-alice h2.blue-grad-text,
+html body .section.bg-alice h3.blue-grad-text,html body .section.bg-alice h2.amber-grad-text,
+html body .section.bg-alice h1.amber-grad-text,html body .section.bg-alice h3.amber-grad-text,
+html body .section.sec-warm .blue-grad-text,html body .section.sec-warm .amber-grad-text,
+html body .section.sec-warm h2.amber-grad-text,html body .section.sec-warm h2.blue-grad-text{
+  color:#FF6100!important;-webkit-text-fill-color:#FF6100!important;
+  background:none!important;-webkit-background-clip:border-box!important}
+
+/* #FF6100 is 2.67:1 on the warm grey #F2F1EE - below the 3.0 needed even for
+   large text. The warm section uses the darker orange (4.4:1). */
+html body .section.sec-warm .blue-grad-text,html body .section.sec-warm .amber-grad-text,
+html body .section.sec-warm h2.amber-grad-text,html body .section.sec-warm h2.blue-grad-text,
+html body .section.sec-warm h1.amber-grad-text,html body .section.sec-warm h3.amber-grad-text{
+  color:#C74E00!important;-webkit-text-fill-color:#C74E00!important}
+
+/* ═══ PRICING - one unified split panel ══════════════════════════════════
+   Two separate floating cards can never balance: Free has six features and
+   Pro has five plus a code line, so one card always had a block of dead
+   space above its button. Making them two HALVES of a single rounded
+   container removes the problem entirely - the halves stretch to a shared
+   height by definition, and the seam does the comparing for you. */
+html body .price-duo{
+  display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:0!important;max-width:920px!important;margin:0 auto!important;
+  border:1px solid #D6DADD!important;border-radius:24px!important;overflow:hidden!important;
+  box-shadow:0 34px 80px -46px rgba(20,28,66,.42)!important;align-items:stretch!important}
+html body .price-card{
+  position:relative!important;border:0!important;border-radius:0!important;box-shadow:none!important;
+  padding:40px 34px 34px!important;display:flex!important;flex-direction:column!important;
+  height:auto!important;margin:0!important}
+html body .pc-free{background:#FFFFFF!important;border-right:1px solid #D6DADD!important}
+html body .pc-pro{
+  background:radial-gradient(85% 65% at 100% 0%, rgba(143,160,240,.24), rgba(255,255,255,0) 60%),
+             linear-gradient(160deg,#22306E 0%,#1B2757 55%,#141C42 100%)!important}
+
+/* ribbon becomes a corner tag - nothing floating over the edge */
+html body .ps-ribbon{
+  position:absolute!important;top:0!important;right:0!important;left:auto!important;bottom:auto!important;
+  transform:none!important;border-radius:0 0 0 16px!important;
+  padding:9px 18px!important;background:#C74E00!important;background-image:none!important;
+  color:#fff!important;-webkit-text-fill-color:#fff!important;box-shadow:none!important;
+  font-size:10px!important;letter-spacing:.12em!important;font-weight:700!important}
+
+/* a shared rhythm so the two halves line up row for row */
+html body .price-card .pc-name{display:block!important;margin-bottom:10px!important}
+html body .price-card .pc-price{min-height:58px!important;display:flex!important;
+  align-items:baseline!important;gap:10px!important;flex-wrap:wrap!important}
+html body .price-card .pc-tiny{min-height:20px!important;margin-top:6px!important}
+html body .pc-free .pc-card-feats{margin-top:22px!important}
+html body .price-card .pc-card-feats{flex:1 1 auto!important}
+html body .price-card .pc-cta{margin-top:22px!important;width:100%!important}
+
+/* the Free half has no code line - give it the same gap so the lists align */
+html body .pc-free .pc-price + .pc-card-feats{margin-top:48px!important}
+@media(max-width:760px){
+  html body .price-duo{grid-template-columns:1fr!important}
+  html body .pc-free{border-right:0!important;border-bottom:1px solid #D6DADD!important}
+  html body .pc-free .pc-price + .pc-card-feats{margin-top:22px!important}
+}
+
+/* ═══ WEEKLY EDITORIAL CAPTURE - removed ═════════════════════════════════
+   The .capture section (newsletter signup: "The Weekly Editorial - one big
+   idea, every Sunday") is hidden per request. Hidden rather than deleted so
+   it is one line to restore - the markup, the form and its handler are all
+   untouched. NOTE: this removes the only email-capture on the landing page. */
+html body .capture{display:none!important}
+
+/* ═══ SIX PILLARS - dropped, folded into the engine ══════════════════════
+   The two sections duplicated the pillar list AND the identical NVDA worked
+   example (92/88/91/71/96/78 -> Alpha 94) ~1700px apart. "Inside the engine"
+   survives because it carries the narrative (ingest/fuse/output, scale, what
+   you get); the per-pillar factor detail moved into its INPUTS column so
+   nothing is lost. id="engine" moved with it - three links target it. */
+html body .section.pillars-legacy{display:none!important}
+
+/* INPUTS now carry a pillar name + its factors */
+html body .input-list li{display:flex!important;flex-wrap:wrap!important;
+  align-items:baseline!important;gap:0 9px!important;padding:11px 14px!important}
+html body .input-list li b{color:#FFFFFF!important;font-weight:600!important;font-size:13.5px!important}
+html body .input-list li em{
+  flex:1 1 100%!important;font-style:normal!important;
+  color:rgba(255,255,255,.62)!important;font-weight:300!important;
+  font-size:11.5px!important;line-height:1.45!important;margin-top:3px!important}
+
+/* ═══ REFER A FRIEND ═════════════════════════════════════════════════════ */
+html body #refer .ref-grid{
+  display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:0;border-top:1px solid rgba(255,255,255,.14);margin:34px 0 0}
+html body #refer .ref-step{
+  padding:26px 28px;border-left:1px solid rgba(255,255,255,.14)}
+html body #refer .ref-step:first-child{border-left:0;padding-left:0}
+html body #refer .ref-num{
+  display:block;font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;
+  letter-spacing:.14em;color:#FF6100;margin-bottom:10px}
+html body #refer .ref-step h3{color:#fff!important;font-size:18px!important;
+  font-weight:600!important;margin:0 0 7px!important}
+html body #refer .ref-step p{color:rgba(255,255,255,.72)!important;font-weight:300!important;
+  font-size:13.5px!important;line-height:1.55!important;margin:0!important}
+
+html body #refer .ref-tiers{
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:30px}
+html body #refer .ref-tier{
+  display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.13);
+  border-radius:16px;padding:20px 22px}
+html body #refer .ref-tier-top{
+  background:linear-gradient(180deg,rgba(143,160,240,.16),rgba(255,255,255,.05));
+  border-color:rgba(143,160,240,.40)}
+html body #refer .ref-tier-n{font-size:34px;font-weight:500;color:#fff;line-height:1}
+html body #refer .ref-tier-l{font-size:12.5px;color:rgba(255,255,255,.62);font-weight:300}
+html body #refer .ref-tier-r{
+  flex:1 1 100%;margin-top:8px;font-size:14px;font-weight:600;color:#FF6100}
+html body #refer .ref-tier-top .ref-tier-r{color:#FFB37A}
+
+html body #refer .ref-cta{text-align:center;margin-top:34px}
+html body #refer .ref-fine{
+  margin:16px auto 0;max-width:620px;font-size:11.5px;line-height:1.6;
+  color:rgba(255,255,255,.52)!important;font-weight:300!important}
+@media(max-width:760px){
+  html body #refer .ref-grid,html body #refer .ref-tiers{grid-template-columns:1fr!important}
+  html body #refer .ref-step{border-left:0!important;padding-left:0!important;
+    border-top:1px solid rgba(255,255,255,.14)}
+  html body #refer .ref-step:first-child{border-top:0}
+}
+
+/* ═══ TRACK RECORD + SCANNER ═════════════════════════════════════════════ */
+html body #track-record .tr-grid{
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;
+  border-top:1px solid #D6DADD;margin-top:32px}
+html body #track-record .tr-stat{
+  padding:26px 24px;border-left:1px solid #D6DADD;display:flex;flex-direction:column}
+html body #track-record .tr-stat:nth-child(3n+1){border-left:0;padding-left:0}
+html body #track-record .tr-stat:nth-child(n+4){border-top:1px solid #D6DADD}
+html body #track-record .tr-n{font-size:40px;font-weight:500;color:#0A2F46;line-height:1;letter-spacing:-.02em}
+html body #track-record .tr-n.tr-up{color:#15803d}
+html body #track-record .tr-n.tr-dn{color:#c0392b}
+html body #track-record .tr-l{margin-top:10px;font-size:13.5px;font-weight:600;color:#4A5BC4}
+html body #track-record .tr-s{margin-top:3px;font-size:12px;font-weight:300;color:#5D6C7B}
+html body #track-record .tr-note{
+  margin:26px auto 0;max-width:660px;text-align:center;font-size:13.5px;
+  font-weight:300;color:#10293D;line-height:1.6}
+html body #track-record .tr-note b{font-weight:600;color:#0A2F46}
+html body #track-record .tr-cta{text-align:center;margin-top:22px}
+
+html body #scanner .sc-grid{
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:32px}
+html body #scanner .sc-card{
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.13);
+  border-radius:16px;padding:22px}
+html body #scanner .sc-k{display:block;font-size:15px;font-weight:600;color:#fff;margin-bottom:7px}
+html body #scanner .sc-d{display:block;font-size:13px;font-weight:300;
+  color:rgba(255,255,255,.72);line-height:1.55}
+html body #scanner .sc-cta{text-align:center;margin-top:30px}
+@media(max-width:760px){
+  html body #track-record .tr-grid{grid-template-columns:1fr}
+  html body #track-record .tr-stat{border-left:0;padding-left:0;border-top:1px solid #D6DADD}
+  html body #track-record .tr-stat:first-child{border-top:0}
+  html body #scanner .sc-grid{grid-template-columns:1fr}
+}
 </style>
 
 <!-- ───────── DEEP RESEARCH (dark) — the per-stock drawer ───────── -->
@@ -2877,6 +3165,60 @@ html body .orbit-wrap{display:none!important}
   </div>
 </section>
 
+<!-- ───────── TRACK RECORD ─────────
+     Numbers are pulled LIVE from /api/model-portfolio/history so this can
+     never drift from the ledger. The framing is deliberately honest: the hit
+     rate is under 50% (20W/21L). The edge is asymmetry - winners average ~4x
+     the size of losers - and saying so is both true and more persuasive than
+     a cherry-picked win rate. Do NOT replace these with static numbers. -->
+<section class="section bg-alice" id="track-record">
+  <div class="wrap">
+    <div class="sec-head center reveal">
+      <span class="eyebrow" style="margin-left:auto;margin-right:auto">The open ledger</span>
+      <h2 class="sec-title">Every closed call. <span class="amber-grad-text">Including the bad ones.</span></h2>
+      <p class="sec-sub">We publish the whole ledger &mdash; entry, exit, and how it did against the S&amp;P. Updated automatically, never edited.</p>
+    </div>
+
+    <div class="tr-grid reveal">
+      <div class="tr-stat"><span class="tr-n" data-tr="hit_rate">&mdash;</span><span class="tr-l">Hit rate</span><span class="tr-s" data-tr="wl">&nbsp;</span></div>
+      <div class="tr-stat"><span class="tr-n tr-up" data-tr="avg_win">&mdash;</span><span class="tr-l">Average winner</span><span class="tr-s">when a call works</span></div>
+      <div class="tr-stat"><span class="tr-n tr-dn" data-tr="avg_loss">&mdash;</span><span class="tr-l">Average loser</span><span class="tr-s">cut early, by rule</span></div>
+      <div class="tr-stat"><span class="tr-n" data-tr="avg_pct">&mdash;</span><span class="tr-l">Average trade</span><span class="tr-s">across every close</span></div>
+      <div class="tr-stat"><span class="tr-n" data-tr="beat_spy">&mdash;</span><span class="tr-l">Beat the S&amp;P</span><span class="tr-s">matched holding period</span></div>
+      <div class="tr-stat"><span class="tr-n" data-tr="total">&mdash;</span><span class="tr-l">Closed positions</span><span class="tr-s">all of them, listed</span></div>
+    </div>
+
+    <p class="tr-note reveal">We lose about as often as we win. The edge is size &mdash; winners run, losers get cut. <b>Research, not advice. Past performance isn&rsquo;t a guide to the future.</b></p>
+    <div class="tr-cta reveal">
+      <a class="btn btn-ghost" href="/app">Open the full ledger <span class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span></a>
+    </div>
+  </div>
+</section>
+
+<!-- ───────── STOCK SCANNER ───────── -->
+<section class="section bg-dark" id="scanner">
+  <div class="wrap">
+    <div class="sec-head center reveal">
+      <span class="eyebrow" style="margin-left:auto;margin-right:auto">Stock Scanner</span>
+      <h2 class="sec-title">Screen 540+ names in <span class="amber-grad-text">one click.</span></h2>
+      <p class="sec-sub">Run a scan across the whole universe on any pillar, save it, and come back to it every morning. No formula syntax, no spreadsheet.</p>
+    </div>
+
+    <div class="sc-grid reveal">
+      <div class="sc-card"><span class="sc-k">Momentum breakouts</span><span class="sc-d">RSI in the ideal zone, volume confirming, above the 65-day trend.</span></div>
+      <div class="sc-card"><span class="sc-k">Quality compounders</span><span class="sc-d">High ROIC, real free cash flow, debt under control.</span></div>
+      <div class="sc-card"><span class="sc-k">Beaten-up value</span><span class="sc-d">Cheap on EV/FCF versus sector, with the drawdown already priced in.</span></div>
+      <div class="sc-card"><span class="sc-k">Earnings momentum</span><span class="sc-d">Forward EPS revisions climbing while analysts are still catching up.</span></div>
+      <div class="sc-card"><span class="sc-k">Low-beta defensives</span><span class="sc-d">Beta under 1.0, profit-positive, defensive sector tilt.</span></div>
+      <div class="sc-card"><span class="sc-k">Build your own</span><span class="sc-d">Combine any pillar thresholds and save the scan to your account.</span></div>
+    </div>
+
+    <div class="sc-cta reveal">
+      <a class="btn btn-primary" href="/app">Run a scan <span class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span></a>
+    </div>
+  </div>
+</section>
+
 <!-- ───────── PRICING (beta → launch transparency) ───────── -->
 <section class="section bg-alice" id="pricing">
   <div class="wrap">
@@ -2935,6 +3277,63 @@ html body .orbit-wrap{display:none!important}
     </div>
   </div>
 </section>
+
+<!-- ───────── REFER A FRIEND ─────────
+     Reward is service credit, never cash, and it only unlocks after the
+     friend's FIRST PAYMENT CLEARS - so a referral costs marginal server time,
+     not margin, and tyre-kickers cost nothing. The friend's discount is
+     capped at 3 months so lifetime value is protected. -->
+<section class="section bg-dark" id="refer">
+  <div class="wrap">
+    <div class="sec-head center reveal">
+      <span class="eyebrow" style="margin-left:auto;margin-right:auto">Refer a friend</span>
+      <h2 class="sec-title">Give 50% off. <span class="amber-grad-text">Get Pro free.</span></h2>
+      <p class="sec-sub">Share your link. They get half price for three months. You get a free month of Pro the moment their first payment clears &mdash; and it stacks.</p>
+    </div>
+
+    <div class="ref-grid reveal">
+      <div class="ref-step">
+        <span class="ref-num">01</span>
+        <h3>Share your link</h3>
+        <p>Every account gets a personal link in Settings. No codes to remember.</p>
+      </div>
+      <div class="ref-step">
+        <span class="ref-num">02</span>
+        <h3>They save 50%</h3>
+        <p>Your friend pays &pound;9.99/mo for their first three months instead of &pound;19.99.</p>
+      </div>
+      <div class="ref-step">
+        <span class="ref-num">03</span>
+        <h3>You get a month</h3>
+        <p>One free month of Pro per friend, credited once their first payment clears.</p>
+      </div>
+    </div>
+
+    <div class="ref-tiers reveal">
+      <div class="ref-tier">
+        <span class="ref-tier-n">3</span>
+        <span class="ref-tier-l">friends</span>
+        <span class="ref-tier-r">3 months free</span>
+      </div>
+      <div class="ref-tier">
+        <span class="ref-tier-n">5</span>
+        <span class="ref-tier-l">friends</span>
+        <span class="ref-tier-r">6 months free</span>
+      </div>
+      <div class="ref-tier ref-tier-top">
+        <span class="ref-tier-n">10</span>
+        <span class="ref-tier-l">friends</span>
+        <span class="ref-tier-r">A full year, free</span>
+      </div>
+    </div>
+
+    <div class="ref-cta reveal">
+      <a class="btn btn-primary" href="/login?signup">Get my referral link <span class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span></a>
+      <p class="ref-fine">Credit applies to Pro and is issued once your friend&rsquo;s first payment clears. Up to 12 free months per year. Self-referrals and duplicate accounts don&rsquo;t qualify.</p>
+    </div>
+  </div>
+</section>
+
 
 <!-- ───────── CTA ───────── -->
 <section class="section" style="padding-top:28px;padding-bottom:28px" id="cta">
@@ -3200,6 +3599,25 @@ setTimeout(()=>{revealEls.forEach(e=>e.classList.add('in'));countEls.forEach(run
 })();
 
 
+</script>
+
+<script>
+/* Track record: live from the ledger, so the page can never quote a stale
+   number. Fails silently and leaves the em-dashes if the API is unreachable. */
+(function(){
+  function set(k,v){var e=document.querySelector('[data-tr="'+k+'"]'); if(e){e.textContent=v;}}
+  function pc(n){return (n>=0?'+':'')+Number(n).toFixed(1)+'%';}
+  fetch('/api/model-portfolio/history').then(function(r){return r.json();}).then(function(d){
+    var st = d && d.stats; if(!st){return;}
+    if(st.hit_rate      != null){set('hit_rate', Number(st.hit_rate).toFixed(1)+'%');}
+    if(st.wins          != null){set('wl', st.wins+' wins \u00b7 '+st.losses+' losses');}
+    if(st.avg_win       != null){set('avg_win', pc(st.avg_win));}
+    if(st.avg_loss      != null){set('avg_loss', pc(st.avg_loss));}
+    if(st.avg_pct       != null){set('avg_pct', pc(st.avg_pct));}
+    if(st.beat_spy_rate != null){set('beat_spy', Number(st.beat_spy_rate).toFixed(1)+'%');}
+    if(st.total         != null){set('total', st.total);}
+  })["catch"](function(){});
+})();
 </script>
 </body>
 </html>
