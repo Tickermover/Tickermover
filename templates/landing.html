@@ -2940,7 +2940,7 @@ html body .pc-pro .pc-foot-cell > :not(.pc-cta){
    the same idiom as the hero. Panel background is the site's own .bg-dark
    recipe verbatim, not a new colour.
    ═══════════════════════════════════════════════════════════════════════ */
-html body .pz-panel{position:relative;max-width:1000px;margin:0 auto;padding:36px 34px 34px;
+html body .pz-panel{position:relative;max-width:1000px;margin:0 auto;padding:30px 28px 28px;
   border-radius:28px;overflow:hidden;
   background:
     radial-gradient(78% 88% at 8% 0%,   rgba(58,80,190,.32) 0%, rgba(10,27,46,0) 56%),
@@ -2981,7 +2981,7 @@ html body .pz-notice[hidden]{display:none}
 /* ── cards ── */
 html body .pz-grid{position:relative;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
   gap:18px;align-items:stretch}
-html body .pz-card{display:flex;flex-direction:column;padding:28px 26px 26px;border-radius:20px;
+html body .pz-card{display:flex;flex-direction:column;padding:24px 24px 22px;border-radius:20px;
   background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.12)}
 /* featured card is lit from behind — the reference's move, in our orange */
 html body .pz-card.pz-featured{
@@ -2991,7 +2991,7 @@ html body .pz-card.pz-featured{
   border-color:rgba(255,169,110,.34);
   box-shadow:0 0 74px -14px rgba(255,97,0,.30),0 34px 70px -46px rgba(0,0,0,.9)}
 
-html body .pz-card-head{display:flex;align-items:center;gap:11px;margin-bottom:20px}
+html body .pz-card-head{display:flex;align-items:center;gap:11px;margin-bottom:16px}
 html body .pz-ico{flex:none;width:34px;height:34px;border-radius:10px;display:grid;place-items:center;
   background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);color:#8FBFDD}
 html body .pz-featured .pz-ico{background:rgba(255,97,0,.14);border-color:rgba(255,169,110,.34);color:#FF9B57}
@@ -3002,38 +3002,56 @@ html body .pz-badge{margin-left:auto;font-size:10px;font-weight:700;letter-spaci
   text-transform:uppercase;padding:5px 11px;border-radius:100px;color:#FFB37A;
   background:rgba(255,97,0,.14);border:1px solid rgba(255,169,110,.34);white-space:nowrap}
 
-html body .pz-amt{display:block;font-size:clamp(44px,4.8vw,58px);font-weight:500;
+html body .pz-amt{display:block;font-size:clamp(42px,4.4vw,54px);font-weight:500;
   letter-spacing:-.03em;line-height:1;color:#fff}
 html body .pz-sup{font-size:.34em;font-weight:400;letter-spacing:0;
   color:rgba(255,255,255,.6);margin-left:2px;vertical-align:baseline}
-html body .pz-per{display:block;margin-top:10px;font-size:12px;font-weight:400;
-  color:rgba(255,255,255,.55)}
-html body .pz-rule{height:1px;margin:20px 0 18px;background:rgba(255,255,255,.12);border:0}
-html body .pz-desc{margin:0 0 20px!important;font-size:13.5px!important;font-weight:300!important;
-  line-height:1.55!important;color:rgba(255,255,255,.72)!important;min-height:63px}
+html body .pz-rule{height:1px;margin:16px 0 14px;background:rgba(255,255,255,.12);border:0}
 
-html body .pz-cta{display:inline-flex;align-items:center;justify-content:center;gap:9px;width:100%;
-  padding:13px 22px;border-radius:100px;font-family:'Inter',sans-serif;font-size:14.5px;
-  font-weight:500;text-decoration:none;cursor:pointer;border:1px solid rgba(255,255,255,.20);
-  background:rgba(255,255,255,.08);color:#fff;
-  transition:background .4s ease,border-color .4s ease,box-shadow .5s ease,transform .4s ease}
-html body .pz-cta:hover{background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.34)}
-html body .pz-cta svg{width:15px;height:15px;transition:transform .4s cubic-bezier(.19,1,.22,1)}
-html body .pz-cta:hover svg{transform:translateX(3px)}
-/* Pro's CTA is the white pill — 17:1 on the panel. Orange stays the accent
+/* ── TEXT COLOUR: scoped by #id on purpose ───────────────────────────────
+   This panel is dark but its SECTION is .bg-alice, so the light-surface
+   rule at the top of this sheet —
+     .section.bg-alice p,.section.bg-alice li{color:#10293D!important}
+   — applies inside it, at specificity (0,3,2). A "html body .pz-desc"
+   rule is (0,1,2) and LOSES even with !important, which rendered every
+   description and feature sub-line navy-on-navy, i.e. invisible.
+   #pricing puts an id in the selector, so these win outright. Any new
+   text rule in this block needs the #pricing prefix for the same reason. */
+html body #pricing .pz-per{display:block;margin-top:9px;font-size:12px;
+  font-weight:400!important;color:rgba(255,255,255,.55)!important;opacity:1!important}
+html body #pricing .pz-desc{margin:0 0 18px!important;font-size:13.5px!important;
+  font-weight:300!important;line-height:1.55!important;
+  color:rgba(255,255,255,.74)!important;opacity:1!important;min-height:58px}
+html body #pricing .pz-notice{color:#FFB37A!important;opacity:1!important}
+html body #pricing .pz-foot{color:rgba(255,255,255,.5)!important;opacity:1!important}
+
+/* ── CTAs: the page's own call-out button, not a lookalike ───────────────
+   These carry .btn + the .arrow badge so the geometry, weight and hover
+   are literally the site's. Only the surface colours are restated here,
+   because the .btn-ghost/.btn-primary light-section overrides would put
+   navy on navy inside this panel. */
+html body #pricing .pz-cta{width:100%;justify-content:center;
+  background:rgba(255,255,255,.08)!important;border:1px solid rgba(255,255,255,.22)!important;
+  color:#fff!important;box-shadow:none!important}
+html body #pricing .pz-cta:hover{background:rgba(255,255,255,.15)!important;
+  border-color:rgba(255,255,255,.38)!important;box-shadow:none!important}
+html body #pricing .pz-cta .arrow{background:transparent!important;box-shadow:none!important;
+  color:#FF9B57!important}
+/* Pro's is the white pill — 17:1 on the panel. Orange stays the accent
    (badge, icon, glow, ticks); as a button fill under white text it is 3.4:1. */
-html body .pz-featured .pz-cta{background:#FFFFFF;border-color:#FFFFFF;color:#0B1E33;
-  box-shadow:0 16px 36px -18px rgba(0,0,0,.9)}
-html body .pz-featured .pz-cta:hover{background:#FFF2EC;border-color:#FFF2EC;transform:translateY(-1px)}
-html body .pz-featured .pz-cta svg{color:#FF6100}
+html body #pricing .pz-cta-primary{background:#FFFFFF!important;border-color:#FFFFFF!important;
+  color:#0B1E33!important;box-shadow:0 16px 36px -18px rgba(0,0,0,.9)!important}
+html body #pricing .pz-cta-primary:hover{background:#FFF2EC!important;
+  border-color:#FFF2EC!important;box-shadow:0 16px 36px -18px rgba(0,0,0,.9)!important}
+html body #pricing .pz-cta-primary .arrow{color:#FF6100!important}
 
-html body .pz-feats{flex:1 1 auto;list-style:none;margin:22px 0 0!important;padding:20px 0 0!important;
-  border-top:1px solid rgba(255,255,255,.12);display:flex;flex-direction:column;gap:11px}
-html body .pz-feats li{display:flex;gap:10px;align-items:flex-start;font-size:12.5px;
-  font-weight:300;line-height:1.5;color:rgba(255,255,255,.72);margin:0!important;background:none!important;
-  border:0!important;padding:0!important}
-html body .pz-feats b{display:block;font-size:13.5px;font-weight:500!important;color:#fff!important;
-  margin-bottom:2px}
+html body .pz-feats{flex:1 1 auto;list-style:none;margin:18px 0 0!important;padding:16px 0 0!important;
+  border-top:1px solid rgba(255,255,255,.12);display:flex;flex-direction:column;gap:10px}
+html body #pricing .pz-feats li{display:flex;gap:10px;align-items:flex-start;font-size:12.5px!important;
+  font-weight:300!important;line-height:1.5!important;color:rgba(255,255,255,.72)!important;
+  opacity:1!important;margin:0!important;background:none!important;border:0!important;padding:0!important}
+html body #pricing .pz-feats b{display:block;font-size:13.5px!important;font-weight:500!important;
+  color:#fff!important;margin-bottom:2px}
 html body .pz-tick{flex:none;width:18px;height:18px;margin-top:1px;border-radius:50%;display:grid;
   place-items:center;background:rgba(143,191,221,.16);color:#8FBFDD}
 html body .pz-featured .pz-tick{background:rgba(255,97,0,.16);color:#FF9B57}
@@ -3410,9 +3428,7 @@ html body #pricing.is-annual .pz-featured .pz-amt{color:rgba(255,255,255,.62);
           <span class="pz-per">forever &middot; no card required</span>
           <hr class="pz-rule">
           <p class="pz-desc">The whole research engine &mdash; daily scored picks, market regime and the full 545-stock universe. For anyone trading US markets.</p>
-          <a class="pz-cta" href="/login?signup">Start free
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-          </a>
+          <a class="btn pz-cta" href="/login?signup">Start free <span class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span></a>
           <ul class="pz-feats">
             <li><span class="pz-tick" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 12 10 18 20 6"/></svg></span><span><b>On the Radar</b>Daily picks scored across six pillars</span></li>
             <li><span class="pz-tick" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 12 10 18 20 6"/></svg></span><span><b>Market Analysis</b>Regime, breadth &amp; sector rotation</span></li>
@@ -3440,10 +3456,7 @@ html body #pricing.is-annual .pz-featured .pz-amt{color:rgba(255,255,255,.62);
           <p class="pz-desc">Everything in Free, plus the tracker, the private-market pipeline, dependency maps and an AI analyst grounded in live data.</p>
           <!-- next=upgrade carries the intent through sign-up: someone who clicked
                "Get Pro" should land on checkout, not on the free app. -->
-          <a class="pz-cta" href="/login?signup&amp;next=upgrade">
-            <span class="pz-mo">Get Pro</span><span class="pz-yr">Get Pro monthly</span>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-          </a>
+          <a class="btn pz-cta pz-cta-primary" href="/login?signup&amp;next=upgrade"><span class="pz-mo">Get Pro</span><span class="pz-yr">Get Pro monthly</span> <span class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span></a>
           <ul class="pz-feats">
             <li style="display:block"><span class="pz-plus">Everything in Free, plus</span></li>
             <li><span class="pz-tick" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 12 10 18 20 6"/></svg></span><span><b>Prime Tickers</b>Live tracker of every open &amp; closed pick &mdash; entry, exit, %</span></li>
