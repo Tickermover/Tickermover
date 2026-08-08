@@ -11681,7 +11681,11 @@ function v2RenderBriefingHTML(sym, d, opts){
         '<span>Our transcript provider is capped for today. Names already summarised still load instantly from cache, and the quota resets overnight.</span>' +
       '</div>';
     }
-    if (reason === 'summarizer_failed'){
+    /* 'generation_failed' is the concall path's name for the same thing the
+       brief calls 'summarizer_failed': we have the source, the model didn't
+       answer. Same message — and it is what /api/concall now returns once the
+       Alpha Vantage throttle stops short-circuiting the EDGAR fallback. */
+    if (reason === 'summarizer_failed' || reason === 'generation_failed'){
       const url = (d && d.source_url) || '';
       const lbl = v2EscHTML((d && d.source_label) || 'the filing');
       return back + '<div class="v2-brf-empty-state">' +
@@ -11692,7 +11696,7 @@ function v2RenderBriefingHTML(sym, d, opts){
         '</span>' +
       '</div>';
     }
-    if (reason === 'paused'){
+    if (reason === 'paused' || reason === 'disabled'){
       return back + '<div class="v2-brf-empty-state">' +
         '<strong>AI summaries are paused</strong>' +
         '<span>We&rsquo;ve hit today&rsquo;s AI budget, so new summaries are on hold. Cached ones still load, and generation resumes tomorrow.</span>' +
