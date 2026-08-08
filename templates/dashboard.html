@@ -844,9 +844,26 @@ table.stmt td.stmt-note-pos{color:#15803d;font-weight:800;background:rgba(21,128
 .pro-locked{position:relative}
 .pro-locked .pro-blur{filter:blur(5px);opacity:.92;pointer-events:none;user-select:none}
 .pro-locked .pro-overlay{position:absolute;inset:-2px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;text-align:center;background:linear-gradient(180deg,rgba(255,255,255,.30),rgba(255,255,255,.55));border-radius:10px}
-.pro-overlay .pro-lk{font-family:var(--font-head);font-size:14px;font-weight:700;color:#0A0A0A}
-.pro-overlay .pro-sub{font-size:11.5px;font-weight:800;letter-spacing:.02em;color:#6d28d9}
-.pro-overlay .dd-upsell{margin-top:0}
+/* One lock, not two. This overlay and the drawer-tab wall (.fchk-pro) were
+   saying the same thing in different languages - emoji lock, serif heading,
+   purple button here; SVG lock, mono eyebrow, navy pill there. Same component
+   now, so a free user meets one consistent wall wherever they hit it. */
+.pro-overlay .pro-ic{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;
+  background:rgba(255,97,0,.12);color:#C74E00}
+.pro-overlay .pro-ic svg{width:20px;height:20px}
+.pro-overlay .pro-lk{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;
+  letter-spacing:.14em;text-transform:uppercase;color:#C74E00}
+.pro-overlay .pro-sub{font-size:13.5px;font-weight:300;letter-spacing:0;color:#475569;
+  line-height:1.6;max-width:46ch}
+.pro-overlay .dd-upsell{margin-top:6px}
+/* the purple pill becomes the site button: navy, inset-flood hover */
+.dd-upsell{background:#0A2F46!important;background-image:none!important;border:1px solid #0A2F46!important;
+  border-radius:100px!important;font-weight:500!important;font-size:14px!important;
+  padding:11px 26px!important;box-shadow:inset 0 0 0 0 #5566D8!important;
+  transition:box-shadow .5s cubic-bezier(.22,.9,.28,1),transform .28s cubic-bezier(.22,.9,.28,1)!important}
+.dd-upsell:hover{box-shadow:inset 0 0 0 60px #5566D8,0 16px 32px -14px rgba(85,102,216,.65)!important;
+  transform:translateY(-2px)}
+@media(prefers-reduced-motion:reduce){ .dd-upsell:hover{transform:none} }
 /* Supply-Chain run CTA (Pro) — a contained card over the blurred map so the
    action reads as intentional, not a button stranded in empty space. */
 .dr-cta{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:20px}
@@ -14212,7 +14229,7 @@ function _ovLockTeaser(id, inner, big){
   const sec = host.closest && host.closest('.rep-sec');
   // One consistent Pro callout across every locked box (was a button on the
   // big note but a plain text link on the smaller boxes — looked inconsistent).
-  const overlay = '<div class="pro-overlay"><div class="pro-lk">🔒 Pro feature</div>'+
+  const overlay = '<div class="pro-overlay"><span class="pro-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><rect x="4.5" y="10.5" width="15" height="10" rx="2.4"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/></svg></span><div class="pro-lk">Included with Pro</div>'+
     '<button class="dd-upsell" onclick="if(window.openUpgradeModal)openUpgradeModal()">Upgrade to Pro</button></div>';
   host.innerHTML = '<div class="pro-locked"><div class="pro-blur" aria-hidden="true">'+inner+'</div>'+overlay+'</div>';
   if (sec) sec.style.display = '';
@@ -22753,6 +22770,10 @@ function scResultHTML(d){
     function row(k,items){ if(!items||!items.length)return ''; return '<div class="fchk-mrow"><span class="k">'+esc(k)+'</span><span class="v">'+items.slice(0,3).map(esc).join(' ')+'</span></div>'; }
     fetch('/api/event-intel/'+encodeURIComponent(sym),{headers:{Authorization:'Bearer '+(localStorage.getItem('ah_token')||'')}}).then(function(r){return r.json();}).then(function(d){
       d=d||{};
+      /* box, not slot - slot is declared later, inside the nested mgmt-qa
+         callback below. Using it here would ReferenceError and take the
+         whole Management tab down. */
+      if(d.reason==='pro'){ box.innerHTML=_proWall('the full earnings brief and what management covered'); return; }
       var bullets='';
       if(Array.isArray(d.sections)&&d.sections.length){
         bullets=d.sections.map(function(s){
@@ -23920,7 +23941,7 @@ function scResultHTML(d){
   // Pro-locked teaser: blurred map behind the centred Upgrade overlay.
   function _drDepsLockedTeaser(){
     return '<div class="pro-locked" style="min-height:62vh;background:var(--app-paper,#FFF2EC)">'+_drDepsSkel()
-      +'<div class="pro-overlay"><div class="pro-lk">🔒 Pro feature</div>'
+      +'<div class="pro-overlay"><span class="pro-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><rect x="4.5" y="10.5" width="15" height="10" rx="2.4"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/></svg></span><div class="pro-lk">Included with Pro</div>'
       +'<div class="pro-sub">Supply chain &amp; ripple-risk mapping</div>'
       +'<button class="dd-upsell" onclick="if(window.openUpgradeModal)openUpgradeModal()">Upgrade to Pro</button></div></div>';
   }

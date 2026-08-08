@@ -6382,7 +6382,9 @@ async def api_event_intel_status(probe: str = ""):
 
 
 @app.get("/api/event-intel/{symbol}")
-async def api_event_intel(symbol: str, refresh: int = 0):
+async def api_event_intel(symbol: str, refresh: int = 0,
+                          user: Optional[dict] = Depends(_current_user),
+                          creds: Optional[HTTPAuthorizationCredentials] = Depends(_bearer)):
     """Quartr-style structured summary of the latest earnings call.
 
     Returns: {ticker, event_title, event_date, source, key_updates[],
@@ -6390,11 +6392,23 @@ async def api_event_intel(symbol: str, refresh: int = 0):
 
     Lazy-fetches from Alpha Vantage + summarizes via Anthropic Haiku when
     cache is missing or stale (>14d). Pass ?refresh=1 to force a re-fetch
-    even when cache is fresh."""
+    even when cache is fresh.
+
+    PRO (8 Aug 2026). Same shape as thesis-audit and mgmt-qa: the refusal
+    goes through the endpoint's own unavailable path so the drawer degrades
+    into the upsell rather than erroring, and a free caller cannot trigger
+    generation.
+
+    NOTE this does NOT affect /api/event-digest, which reads the same
+    Supabase table directly and stays free — so the Company Events timeline
+    keeps showing its one-line takeaway per name. Free sees the headline;
+    the full brief is what Pro buys."""
     import event_intel as _ei_mod
     sym = symbol.upper().strip()
     if not sym or len(sym) > 8:
         raise HTTPException(status_code=400, detail="Bad ticker")
+    if not await _is_pro_user(user, creds):
+        return JSONResponse({"available": False, "reason": "pro", "ticker": sym})
     try:
         summary = await _ei_mod.get_event_summary(sym, force_refresh=bool(refresh))
     except Exception as exc:
