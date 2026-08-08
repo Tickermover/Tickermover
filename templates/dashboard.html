@@ -799,12 +799,23 @@ table.stmt td.stmt-note-pos{color:#15803d;font-weight:800;background:rgba(21,128
    alice-blue base with a white highlight top-left and a sky-blue glow
    bottom-right, so the app reads as the same product as the marketing site.
    Reused everywhere (content, stock-drawer, overlay). Keep the two in sync. */
+/* 8 Aug 2026 — this was #cdeef8 with a wash of sky/icy blues, and the
+   comment above claimed it equalled landing's --alice-blue. That stopped
+   being true at the palette change: --alice-blue is #FFF2EC warm now, so
+   the app had been drifting on a stale token and read icy-cyan against a
+   warm site. Base is warm again, and the wash is the hero/.cta peach ->
+   lilac family rather than sky blue.
+   Deliberately gentler than the marketing mesh: this surface sits behind
+   dense tables, so the corner stops are ~a third of the hero's strength.
+   It tints; it does not compete. Blue is left completely alone elsewhere
+   in this file - it is load-bearing for scores, charts and status. */
 :root{
-  --app-paper:#cdeef8;                 /* = landing's --alice-blue */
+  --app-paper:#FFF2EC;                 /* = landing's --alice-blue */
   --app-atmos:
-    radial-gradient(70% 50% at 18% 12%, rgba(255,255,255,.75) 0%, transparent 55%),
-    radial-gradient(55% 50% at 88% 88%, rgba(93,179,241,.42) 0%, transparent 60%),
-    radial-gradient(50% 40% at 50% 50%, rgba(195,225,250,.35) 0%, transparent 65%),
+    radial-gradient(70% 50% at 18% 12%, rgba(255,255,255,.80) 0%, transparent 55%),
+    radial-gradient(62% 58% at 4% 96%,  rgba(255,158,94,.20) 0%, transparent 62%),
+    radial-gradient(58% 54% at 97% 6%,  rgba(168,175,232,.20) 0%, transparent 60%),
+    radial-gradient(50% 40% at 50% 50%, rgba(252,230,216,.45) 0%, transparent 65%),
     var(--app-paper);
 }
 .ssx-overlay{position:fixed;inset:0;z-index:10000;display:none;background:var(--app-atmos);overflow-y:auto;
@@ -5761,7 +5772,7 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
    frosts a PASTEL surface, not a dark scrim. */
 #ts-scrim{position:fixed;inset:0;background:rgba(15,23,42,.45);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);opacity:0;pointer-events:none;transition:opacity .22s;z-index:600}
 #ts-scrim.open{opacity:1;pointer-events:auto}
-#ts-drawer{position:fixed;top:0;right:0;height:100vh;width:min(460px,92vw);background:var(--app-paper,#cdeef8);z-index:601;font-family:var(--font-body);
+#ts-drawer{position:fixed;top:0;right:0;height:100vh;width:min(460px,92vw);background:var(--app-paper,#FFF2EC);z-index:601;font-family:var(--font-body);
     --primary:#0040c1;--amber-2:#D4860A;--ink:#0f172a;--ink-2:#1e293b;--grey:#758696;--grey-2:#5d6c7b;--grey-3:#94a3b8;--up:#16a34a;--down:#ea384c;--hair:rgba(9,9,9,.07);
     --surf:rgba(255,255,255,.60);--surf-2:rgba(255,255,255,.46);--surf-3:rgba(255,255,255,.40);--blue-grad:linear-gradient(120deg,#2970ff 0%,#0042c5 55%,#00359e 100%);
     box-shadow:-24px 0 60px rgba(0,0,0,.24);transform:translateX(100%);transition:transform .26s cubic-bezier(.4,0,.2,1);
@@ -6757,6 +6768,13 @@ html.v2-dark body.v2 .v2-sb-logo,body.v2 .v2-sb-logo{border-bottom:1px solid rgb
 body.v2 .v2-sb-logo img{display:none}
 html.v2-dark body.v2 .v2-sb-logo .name,body.v2 .v2-sb-logo .name{font-family:'Space Grotesk',var(--font-body),sans-serif;font-weight:700;font-size:18px;letter-spacing:-.02em;color:#0a0e22;background:none;-webkit-text-fill-color:unset;display:inline-flex;align-items:baseline;flex-wrap:nowrap;white-space:nowrap}
 html.v2-dark body.v2 .v2-sb-logo .name .brand-m,body.v2 .v2-sb-logo .name .brand-m{height:1.6em;width:auto;flex:none;align-self:baseline;margin:0 .02em}
+/* The mark's inline SVG still carries #2970ff - the OLD electric blue, from
+   before the palette change - on both the M and the dot. Landing colours the
+   mark in CSS and the scheme is a blue M with an ORANGE dot; presentation
+   attributes lose to any CSS rule, so these two lines are enough. The
+   sidebar is a light surface, hence the darker indigo rather than #8FA0F0. */
+body.v2 .v2-sb-logo .name .brand-m polyline{stroke:#4A5BC4}
+body.v2 .v2-sb-logo .name .brand-m circle{fill:#FF6100}
 html.v2-dark body.v2 .v2-sb-logo .name span,body.v2 .v2-sb-logo .name span{-webkit-text-fill-color:unset;background:none;color:inherit}
 html.v2-dark body.v2 .v2-topbar,body.v2 .v2-topbar{background:#fff!important;color:#1e293b;border:1px solid rgba(9,9,9,.07)!important;border-image:none!important;border-radius:14px!important;height:auto!important;width:calc(100% - 52px)!important;max-width:1268px!important;margin:14px auto 4px!important;padding:11px 16px!important;box-shadow:0 1px 2px rgba(0,0,0,.08),0 10px 24px -14px rgba(0,0,0,.26)!important}
 html.v2-dark body.v2 .v2-topbar .v2-search,body.v2 .v2-topbar .v2-search{background:#fff;border:1px solid rgba(9,9,9,.07)}
@@ -6917,8 +6935,8 @@ html.v2-dark body.v2 #user-email{color:#0f172a!important}
 /* unify the panel frame so there's no extra light box around the content */
 html.v2-dark body.v2.ts-active .v2-app{background:transparent!important}
 /* reliable light theme on the On-the-Radar tab — body.ts-active is toggled by v2Show (no :has dependency) */
-html.v2-dark body.v2.ts-active{background:var(--app-paper,#cdeef8)!important}
-html.v2-dark body.v2.ts-active .v2-app{background:var(--app-paper,#cdeef8)!important}
+html.v2-dark body.v2.ts-active{background:var(--app-paper,#FFF2EC)!important}
+html.v2-dark body.v2.ts-active .v2-app{background:var(--app-paper,#FFF2EC)!important}
 html.v2-dark body.v2.ts-active .v2-content{background:linear-gradient(180deg,#eef6fe 0%,#e6eefb 45%,#dde8f9 100%)!important}
 html.v2-dark body.v2.ts-active .v2-scroll{background:transparent!important}
 html.v2-dark body.v2.ts-active .main{background:transparent!important;padding:0!important}   /* transparent + no padding so content aligns with the topbar and matches the preview */
@@ -6939,8 +6957,8 @@ html.v2-dark body.v2 .v2-content:has(#panel-hot.active){background:linear-gradie
    surfaces that still carried a dark-mode override, and restore dark
    text where the dark theme had forced it light.
    ════════════════════════════════════════════════════════════════ */
-html.v2-dark body.v2{background:var(--app-paper,#cdeef8)!important}
-html.v2-dark body.v2 .v2-app{background:var(--app-paper,#cdeef8)!important}
+html.v2-dark body.v2{background:var(--app-paper,#FFF2EC)!important}
+html.v2-dark body.v2 .v2-app{background:var(--app-paper,#FFF2EC)!important}
 html.v2-dark body.v2 .v2-content{background:linear-gradient(180deg,#eef6fe 0%,#e6eefb 45%,#dde8f9 100%)!important}
 html.v2-dark body.v2 .v2-scroll{background:transparent!important}
 html.v2-dark body.v2 .main{background:transparent!important}
@@ -23318,7 +23336,7 @@ function scResultHTML(d){
   }
   // Pro-locked teaser: blurred map behind the centred Upgrade overlay.
   function _drDepsLockedTeaser(){
-    return '<div class="pro-locked" style="min-height:62vh;background:var(--app-paper,#cdeef8)">'+_drDepsSkel()
+    return '<div class="pro-locked" style="min-height:62vh;background:var(--app-paper,#FFF2EC)">'+_drDepsSkel()
       +'<div class="pro-overlay"><div class="pro-lk">🔒 Pro feature</div>'
       +'<div class="pro-sub">Supply chain &amp; ripple-risk mapping</div>'
       +'<button class="dd-upsell" onclick="if(window.openUpgradeModal)openUpgradeModal()">Upgrade to Pro</button></div></div>';
@@ -23340,7 +23358,7 @@ function scResultHTML(d){
   }
   function paneSupplyChain(t){
     // Non-Pro: skip the run button entirely — show the Upgrade teaser directly.
-    if(!_drIsPro()) return '<div class="dr-deps" style="position:relative;background:var(--app-paper,#cdeef8)">'+_drDepsLockedTeaser()+'</div>';
+    if(!_drIsPro()) return '<div class="dr-deps" style="position:relative;background:var(--app-paper,#FFF2EC)">'+_drDepsLockedTeaser()+'</div>';
     // Pro: map on TAB OPEN, not here. paneSupplyChain runs while the drawer
     // builds every pane up-front, so this used to kick the mapping off on every
     // stock click — for a hidden tab the user had not asked for. Fetch + loader
@@ -23348,7 +23366,7 @@ function scResultHTML(d){
     // every other lazy tab. (The old "Unfold the mapping" click-gate is still
     // gone: the analysis runs on the free provider chain, so once you are
     // actually on the tab, making you click twice buys nothing.)
-    return '<div class="dr-deps" style="position:relative;min-height:62vh;background:var(--app-paper,#cdeef8)">'+_drDepsSkel()
+    return '<div class="dr-deps" style="position:relative;min-height:62vh;background:var(--app-paper,#FFF2EC)">'+_drDepsSkel()
       +'<div class="dr-cta"><div class="dr-cta-card">'
       +'<div class="dr-cta-ico">&#128279;</div>'
       +'<h4>Mapping the supply chain</h4>'
