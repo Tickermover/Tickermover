@@ -3,9 +3,9 @@
   <title>TickerMover</title>
   <defs>
     <linearGradient id="tmbimi" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#5DB3F1"/>
-      <stop offset="0.5" stop-color="#2970FF"/>
-      <stop offset="1" stop-color="#0040C1"/>
+      <stop offset="0" stop-color="#5566D8"/>
+      <stop offset="0.5" stop-color="#4A5BC4"/>
+      <stop offset="1" stop-color="#3F4FB0"/>
     </linearGradient>
   </defs>
   <rect x="0" y="0" width="512" height="512" fill="url(#tmbimi)"/>

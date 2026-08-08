@@ -1,9 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100" role="img" aria-label="TickerMover">
   <defs>
     <linearGradient id="tmGrad" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#5DB3F1"/>
-      <stop offset="0.5" stop-color="#2970FF"/>
-      <stop offset="1" stop-color="#0040C1"/>
+      <!-- Indigo family, matching the scheme's active nav pill and button
+           flood. Was the pre-palette electric blue #5DB3F1/#2970FF/#0040C1.
+           The arrow stays WHITE rather than taking the orange accent:
+           #FF6100 on #4A5BC4 is 1.95:1 and would turn to mud at 32px. -->
+      <stop offset="0" stop-color="#5566D8"/>
+      <stop offset="0.5" stop-color="#4A5BC4"/>
+      <stop offset="1" stop-color="#3F4FB0"/>
     </linearGradient>
   </defs>
   <rect width="100" height="100" rx="24" fill="url(#tmGrad)"/>
