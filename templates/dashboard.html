@@ -1184,12 +1184,19 @@ table.ssx-h2h tbody td.self{color:var(--ink);font-weight:600}
 .loading{text-align:center;padding:40px 20px;color:var(--muted);font-size:14px}
 /* Page loading overlay — fills the current page region (the stock sheet or the
    active panel), NOT the whole viewport, with a large brand-blue ring that fills
-   as the percent eases to ~90% and holds until the data lands. */
+   as the percent eases to ~90% and holds until the data lands.
+   The overlay itself carries NO colour of its own. It used to paint an icy
+   radial (#f6f9ff → #e7eefe) which, against the warm page background, landed as
+   a big blue slab wherever anything loaded. The veil below is neutral and only
+   exists to stop content reading through the ring — see .ldr-inline. */
 .ldr-overlay{position:absolute;inset:0;z-index:40;display:flex;align-items:center;justify-content:center;padding:24px;
-  background:radial-gradient(120% 100% at 50% 40%,#f6f9ff 0%,#e7eefe 80%);animation:ldr-fade .25s ease}
+  background:rgba(255,255,255,.88);animation:ldr-fade .25s ease}
 .ldr-overlay.ldr-out{opacity:0;transition:opacity .3s ease}
-/* Inline variant — fills just the host widget (chart card / table), not the page. */
-.ldr-overlay.ldr-inline{position:relative;inset:auto;width:100%;min-height:340px;border-radius:16px}
+/* Inline variant — fills just the host widget (chart card / table), not the page.
+   Its host is emptied before the loader goes in, so there is nothing to veil:
+   fully transparent, and the page's own background shows through. */
+.ldr-overlay.ldr-inline{position:relative;inset:auto;width:100%;min-height:340px;border-radius:16px;
+  background:transparent}
 /* Mini spinner — for a sub-component loading inside an already-rendered page
    (e.g. the tracker chart), so it doesn't stack a SECOND big ring. */
 .ldr-mini-wrap{display:flex;align-items:center;justify-content:center;gap:10px;min-height:200px;color:#94a3b8;font-size:12.5px;font-weight:600}
@@ -24151,12 +24158,35 @@ function scResultHTML(d){
     const pill=document.getElementById('v2-acct-planpill');   // fallback if account panel was opened
     return !!(pill && pill.textContent==='PRO');
   }
-  // Pro-locked teaser: blurred map behind the centred Upgrade overlay.
+  /* Pro-locked teaser. Was ONE blurred slab over the whole pane with a single
+     centred lock, which told the reader nothing about what was behind it. Now
+     it mirrors the real _ssxDepsHTML layout — the same three ribboned .rep-sec
+     cards, in the same grid — and walls each card individually, matching the
+     Fact Check tab's per-card pattern. The section titles stay legible, so the
+     upsell shows what is actually being bought. Keep the cards and their
+     accents in step with _ssxDepsHTML. */
+  function _drDepsProWall(what){
+    return '<div class="fchk-pro">'
+      +'<span class="fchk-pro-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><rect x="4.5" y="10.5" width="15" height="10" rx="2.4"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/></svg></span>'
+      +'<span class="fchk-pro-t">Included with Pro</span>'
+      +'<span class="fchk-pro-d">'+what+'</span>'
+      +'<button type="button" class="fchk-pro-b" onclick="if(window.openUpgradeModal)openUpgradeModal()">Upgrade to Pro</button>'
+    +'</div>';
+  }
   function _drDepsLockedTeaser(){
-    return '<div class="pro-locked" style="min-height:62vh;background:var(--app-paper,#FFF2EC)">'+_drDepsSkel()
-      +'<div class="pro-overlay"><span class="pro-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><rect x="4.5" y="10.5" width="15" height="10" rx="2.4"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/></svg></span><div class="pro-lk">Included with Pro</div>'
-      +'<div class="pro-sub">Supply chain &amp; ripple-risk mapping</div>'
-      +'<button class="dd-upsell" onclick="if(window.openUpgradeModal)openUpgradeModal()">Upgrade to Pro</button></div></div>';
+    const card=function(accent,icon,title,body,span){
+      return '<div class="rep-sec rep-'+accent+(span?' rep-span':'')+'"><div class="rep-rib">'
+        +'<span class="rep-ico">'+icon+'</span><span class="rep-title">'+title+'</span></div>'
+        +'<div class="rep-body">'+body+'</div></div>';
+    };
+    return '<div class="dr-deep-grid two dep-wrap">'
+      +card('red','&#128279;','Supply chain &amp; ripple risk',
+            _drDepsProWall('Read the ripple-risk take &mdash; who this company leans on, and what a shock to them would actually do to it.'))
+      +card('blue','&#128202;','Revenue exposure',
+            _drDepsProWall('See where the revenue really comes from, split by customer, segment and geography.'))
+      +card('amber','&#9889;','Key dependencies',
+            _drDepsProWall('Unlock the mapped customers, suppliers, key inputs and partners &mdash; each with the path a shock would travel.'), true)
+    +'</div>';
   }
   /* Cached AI copy generated before the server-side fence strip can still
      start with ```markdown — the free providers wrap prose in fences where
@@ -24174,7 +24204,9 @@ function scResultHTML(d){
     return t.trim();
   }
   function paneSupplyChain(t){
-    // Non-Pro: skip the run button entirely — show the Upgrade teaser directly.
+    // Non-Pro: skip the run button entirely — show the per-card Upgrade walls
+    // directly. No min-height here: the cards size themselves, so the pane no
+    // longer reserves 62vh of empty paper under the wall.
     if(!_drIsPro()) return '<div class="dr-deps" style="position:relative;background:var(--app-paper,#FFF2EC)">'+_drDepsLockedTeaser()+'</div>';
     // Pro: map on TAB OPEN, not here. paneSupplyChain runs while the drawer
     // builds every pane up-front, so this used to kick the mapping off on every
