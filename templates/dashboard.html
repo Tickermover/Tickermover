@@ -7093,11 +7093,32 @@ html.v2-dark body.v2 .v2-sidebar .v2-nav-item,body.v2 .v2-sidebar .v2-nav-item{
   color:rgba(255,255,255,.76)!important}
 html.v2-dark body.v2 .v2-sidebar .v2-nav-item:hover,body.v2 .v2-sidebar .v2-nav-item:hover{
   background:rgba(255,255,255,.07)!important;color:#FFFFFF!important}
-/* active pill moves off #2970ff (the old electric blue) to the scheme indigo */
+/* ACTIVE ROW — glass + an orange edge, not a saturated fill.
+   The indigo gradient this replaces was too loud against a rail that is
+   otherwise quiet. Orange cannot be the fill either: #FF6100 under a white
+   13.5px label is 3.4:1, under AA. So the accent moves to a 3px inset bar
+   where contrast does not apply, and the label sits on plain glass at 15:1.
+   An inset box-shadow is used rather than ::before because an earlier block
+   sets .v2-nav-item.active::before{display:none!important}. */
 html.v2-dark body.v2 .v2-sidebar .v2-nav-item.active,body.v2 .v2-sidebar .v2-nav-item.active{
-  background:linear-gradient(120deg,#5566D8 0%,#4A5BC4 55%,#3F4FB0 100%)!important;
+  background:rgba(255,255,255,.10)!important;
   color:#FFFFFF!important;
-  box-shadow:0 10px 22px -10px rgba(85,102,216,.65), inset 0 1px 0 rgba(255,255,255,.22)!important}
+  box-shadow:inset 3px 0 0 #FF6100!important}
+html.v2-dark body.v2 .v2-sidebar .v2-nav-item.active:hover,
+body.v2 .v2-sidebar .v2-nav-item.active:hover{
+  background:rgba(255,255,255,.14)!important}
+
+/* ── SPACING — rows were gap:0 inside a flex:1 nav, so everything packed to
+   the top and all the slack pooled as one void above Help & FAQ. Spreading
+   the rows spends that slack as breathing room instead of dead space. ── */
+html.v2-dark body.v2 .v2-sb-nav,body.v2 .v2-sb-nav{
+  gap:5px!important;padding-top:4px!important}
+html.v2-dark body.v2 .v2-sidebar .v2-nav-item,body.v2 .v2-sidebar .v2-nav-item{
+  padding:9px 11px!important}
+html.v2-dark body.v2 .v2-sidebar .v2-sb-section,body.v2 .v2-sidebar .v2-sb-section{
+  padding:20px 8px 7px!important}
+html.v2-dark body.v2 .v2-sidebar .v2-sb-section:first-child,
+body.v2 .v2-sidebar .v2-sb-section:first-child{padding-top:8px!important}
 
 /* ── badges ── */
 html.v2-dark body.v2 .v2-nav-tag.v2-tag-new,body.v2 .v2-nav-tag.v2-tag-new{
