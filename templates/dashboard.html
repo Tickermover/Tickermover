@@ -1886,7 +1886,11 @@ body.v2 .ticker-chip .px{color:#cbd5e1!important}
 
 .v2-app{
   display:grid;
-  grid-template-columns:212px 1fr;
+  /* 236px, not 212: the badged rows ("Pre IPO Stocks" + PRO, "Stock Scanner"
+     + NEW) leave only ~75px for the label at 212px and ellipsise. This width
+     went in with the renames originally and was lost when the icon rail was
+     reverted, which is why "Future Hero…" was truncating. */
+  grid-template-columns:236px 1fr;
   background:#F8FAFC;
   border-radius:20px;
   overflow:hidden;
@@ -7269,11 +7273,11 @@ document.addEventListener('keydown', function(e){
       <svg viewBox="0 0 24 24"><defs><linearGradient id="ahg-hunts" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FBBF24"/><stop offset="1" stop-color="#F97316"/></linearGradient></defs><path fill="url(#ahg-hunts)" d="M12 2.3l2.8 5.7 6.3.9-4.5 4.4 1.1 6.3L12 20.6l-5.6 3 1.1-6.3L3 12.9l6.3-.9z"/></svg><span>Prime Tickers</span>
     </div>
     <div class="v2-nav-item" onclick="v2Show('scans',this);scansInit()">
-      <svg viewBox="0 0 24 24"><defs><linearGradient id="ahg-scan" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#818CF8"/><stop offset="1" stop-color="#4F46E5"/></linearGradient></defs><rect x="2.5" y="2.5" width="19" height="19" rx="5.5" fill="url(#ahg-scan)"/><path d="M7 7h3M7 7v3M17 7h-3M17 7v3M7 17h3M7 17v-3M17 17h-3M17 17v-3" stroke="#fff" stroke-width="1.9" fill="none" stroke-linecap="round"/><circle cx="12" cy="12" r="2.4" fill="#fff"/></svg><span>Stock Scans</span><span class="v2-nav-tag v2-tag-new">NEW</span>
+      <svg viewBox="0 0 24 24"><defs><linearGradient id="ahg-scan" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#818CF8"/><stop offset="1" stop-color="#4F46E5"/></linearGradient></defs><rect x="2.5" y="2.5" width="19" height="19" rx="5.5" fill="url(#ahg-scan)"/><path d="M7 7h3M7 7v3M17 7h-3M17 7v3M7 17h3M7 17v-3M17 17h-3M17 17v-3" stroke="#fff" stroke-width="1.9" fill="none" stroke-linecap="round"/><circle cx="12" cy="12" r="2.4" fill="#fff"/></svg><span>Stock Scanner</span><span class="v2-nav-tag v2-tag-new">NEW</span>
     </div>
 
     <a class="v2-nav-item" href="/future-heroes" style="text-decoration:none">
-      <svg viewBox="0 0 24 24"><defs><linearGradient id="ahg-heroes" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFC75F"/><stop offset="1" stop-color="#F5A623"/></linearGradient></defs><path fill="url(#ahg-heroes)" d="M12 3.2l1.9 3.9 4.3.6-3.1 3 .7 4.3-3.8-2-3.8 2 .7-4.3-3.1-3 4.3-.6z"/><path d="M7.2 17.5h9.6M9 20.5h6" stroke="url(#ahg-heroes)" stroke-width="1.8" stroke-linecap="round"/></svg><span>Future Heroes</span><span class="v2-nav-tag v2-tag-pro">PRO</span>
+      <svg viewBox="0 0 24 24"><defs><linearGradient id="ahg-heroes" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFC75F"/><stop offset="1" stop-color="#F5A623"/></linearGradient></defs><path fill="url(#ahg-heroes)" d="M12 3.2l1.9 3.9 4.3.6-3.1 3 .7 4.3-3.8-2-3.8 2 .7-4.3-3.1-3 4.3-.6z"/><path d="M7.2 17.5h9.6M9 20.5h6" stroke="url(#ahg-heroes)" stroke-width="1.8" stroke-linecap="round"/></svg><span>Pre IPO Stocks</span><span class="v2-nav-tag v2-tag-pro">PRO</span>
     </a>
 
     <div class="v2-sb-section">Research</div>
@@ -7297,9 +7301,10 @@ document.addEventListener('keydown', function(e){
     <div class="v2-nav-item" onclick="v2Show('watch',this)">
       <svg viewBox="0 0 24 24"><defs><linearGradient id="ahg-watch" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#A78BFA"/><stop offset="1" stop-color="#7C3AED"/></linearGradient></defs><path fill="url(#ahg-watch)" d="M6.2 3.2h11.6A1.6 1.6 0 0 1 19.4 4.8v15.6c0 .9-1 1.4-1.7.8L12 16.9l-5.7 4.3c-.7.6-1.7.1-1.7-.8V4.8a1.6 1.6 0 0 1 1.6-1.6z"/></svg><span>Watchlist</span>
     </div>
-    <a class="v2-nav-item" href="/weekly" style="text-decoration:none">
-      <svg viewBox="0 0 24 24"><defs><linearGradient id="ahg-wk" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5DB3F1"/><stop offset="1" stop-color="#0040c1"/></linearGradient></defs><path fill="url(#ahg-wk)" d="M5 3.5h11l3 3v14a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-16a1 1 0 0 1 1-1z"/><path d="M7.5 9h9M7.5 12.5h9M7.5 16h6" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></svg><span>The Weekly</span>
-    </a>
+    <!-- "The Weekly" removed from the NAV ONLY (8 Aug 2026, restoring a rename
+         that was lost when the icon rail was reverted on 6 Aug). /weekly still
+         serves 200, keeps its sitemap entries and its landing-page link.
+         Retiring the page itself was never asked for and has NOT been done. -->
     </nav>
 
     <!-- Bottom-pinned auth — hosts the existing #auth-btn-wrap so all
@@ -7950,7 +7955,7 @@ document.addEventListener('keydown', function(e){
 <div id="panel-scans" class="panel">
   <div class="main">
     <div class="sc-head">
-      <h2 class="sc-title">Stock Scans</h2>
+      <h2 class="sc-title">Stock Scanner</h2>
       <p class="sc-sub">Pre-built screens over the whole universe — pick a question, get the names that answer it. Every scan states the line it uses, because the threshold is our convention, not a standard.</p>
     </div>
     <div class="sc-cats" id="scCats"></div>
