@@ -475,21 +475,46 @@ body.v2 #sectors-grid .smh-name{font-weight:800;font-size:12.5px;color:#0f172a!i
 #panel-scans .sc-sub{font-size:13.5px;font-weight:300;line-height:1.6;color:#5D6C7B;margin:0;max-width:78ch}
 
 #panel-scans .sc-cats{display:grid;grid-template-columns:repeat(auto-fill,minmax(252px,1fr));gap:12px;margin-bottom:24px}
+/* Per-category accent. All eight cards used one indigo, so the grid read as
+   eight copies of the same card and the eye had nothing to navigate by. Each
+   category now owns a hue, carried by --sc-a through the icon tile, the top
+   rule and the selected ring; --sc-a2 is the lighter end of its gradient.
+   Indigo stays the default so an unmapped category still looks deliberate. */
+#panel-scans .sc-cat{--sc-a:#4A5BC4;--sc-a2:#5566D8}
+#panel-scans .sc-cat[data-cat="result"]{--sc-a:#0E7C66;--sc-a2:#12A085}
+#panel-scans .sc-cat[data-cat="market"]{--sc-a:#14587D;--sc-a2:#1C7BAC}
+#panel-scans .sc-cat[data-cat="announcement"]{--sc-a:#C74E00;--sc-a2:#FF6100}
+#panel-scans .sc-cat[data-cat="shareholding"]{--sc-a:#6D4AA8;--sc-a2:#8B63CE}
+#panel-scans .sc-cat[data-cat="concall"]{--sc-a:#B0436A;--sc-a2:#D4587F}
+#panel-scans .sc-cat[data-cat="valuation"]{--sc-a:#A16207;--sc-a2:#CA8A04}
+#panel-scans .sc-cat[data-cat="risk"]{--sc-a:#B91C1C;--sc-a2:#DC2626}
 #panel-scans .sc-cat{position:relative;overflow:hidden;border:1px solid #E4E7EC;border-radius:16px;
   background:#fff;padding:16px 17px 14px;cursor:pointer;box-shadow:0 1px 2px rgba(10,31,54,.04);
   transition:border-color .18s,box-shadow .28s,transform .18s}
 #panel-scans .sc-cat::before{content:'';position:absolute;inset:0 0 auto 0;height:3px;
-  background:linear-gradient(90deg,#5566D8,#4A5BC4);opacity:0;transition:opacity .18s}
-#panel-scans .sc-cat:hover{border-color:#C7CEF0;transform:translateY(-2px);box-shadow:0 14px 30px -18px rgba(20,28,66,.42)}
-#panel-scans .sc-cat.on{border-color:#4A5BC4;box-shadow:0 14px 30px -18px rgba(74,91,196,.5)}
+  background:linear-gradient(90deg,var(--sc-a2),var(--sc-a));opacity:0;transition:opacity .18s}
+/* color-mix needs a plain declaration ahead of it: where it is unsupported the
+   whole declaration is dropped, and for box-shadow that would take the ring
+   with it. The fallback line is the old indigo behaviour. */
+#panel-scans .sc-cat:hover{border-color:#C7CEF0;
+  border-color:color-mix(in srgb,var(--sc-a) 38%,#E4E7EC);
+  transform:translateY(-2px);box-shadow:0 14px 30px -18px rgba(20,28,66,.42)}
+#panel-scans .sc-cat.on{border-color:var(--sc-a);
+  box-shadow:0 0 0 1px var(--sc-a),0 14px 30px -18px rgba(20,28,66,.45);
+  box-shadow:0 0 0 1px var(--sc-a),0 14px 30px -18px color-mix(in srgb,var(--sc-a) 62%,transparent)}
 #panel-scans .sc-cat.on::before{opacity:1}
 #panel-scans .sc-cat-h{display:flex;align-items:center;gap:10px;margin-bottom:9px}
 #panel-scans .sc-cat-ico{width:32px;height:32px;border-radius:10px;flex:none;display:grid;place-items:center;font-size:15px;
-  background:linear-gradient(135deg,rgba(85,102,216,.14),rgba(74,91,196,.08));border:1px solid rgba(74,91,196,.18)}
-#panel-scans .sc-cat.on .sc-cat-ico{background:linear-gradient(135deg,#5566D8,#4A5BC4);border-color:transparent}
+  background:rgba(74,91,196,.10);border:1px solid rgba(74,91,196,.20);
+  background:color-mix(in srgb,var(--sc-a) 11%,#fff);
+  border-color:color-mix(in srgb,var(--sc-a) 22%,#fff);transition:background .18s,border-color .18s}
+#panel-scans .sc-cat.on .sc-cat-ico{background:linear-gradient(135deg,var(--sc-a2),var(--sc-a));border-color:transparent}
 #panel-scans .sc-cat-n{font-size:14px;font-weight:600;letter-spacing:-.01em;color:#0A2F46}
+/* NEW is the one thing on this grid that should interrupt — the site's single
+   accent, not another indigo chip that blends into the card it sits on. */
 #panel-scans .sc-cat-tag{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:8.5px;font-weight:700;
-  letter-spacing:.1em;text-transform:uppercase;color:#4A5BC4;background:rgba(74,91,196,.12);border-radius:5px;padding:3px 6px}
+  letter-spacing:.1em;text-transform:uppercase;color:#C74E00;background:rgba(255,97,0,.13);
+  border-radius:5px;padding:3px 6px}
 #panel-scans .sc-cat-b{font-size:12.5px;font-weight:300;color:#5D6C7B;line-height:1.5;min-height:38px}
 #panel-scans .sc-cat-c{display:inline-block;margin-top:9px;font-family:'JetBrains Mono',monospace;font-size:9.5px;
   font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#5D6C7B;background:#F2F1EE;border-radius:100px;padding:4px 9px}
@@ -501,12 +526,20 @@ body.v2 #sectors-grid .smh-name{font-weight:800;font-size:12.5px;color:#0f172a!i
 #panel-scans .sc-pill:hover{border-color:#4A5BC4;color:#4A5BC4}
 #panel-scans .sc-pill.on{border-color:#4A5BC4;color:#fff;box-shadow:inset 0 0 0 60px #4A5BC4}
 
+/* One surface, not three floating things. The scan name, its blurb, its
+   thresholds and the results were four separate blocks stacked on bare paper,
+   which is what made a product page read as a debug dump. They are now one
+   bordered panel: header on top, table below, no seam between them. */
+#panel-scans .sc-panel{border:1px solid #E4E7EC;border-radius:18px;background:#fff;overflow:hidden;
+  box-shadow:0 1px 2px rgba(10,31,54,.04),0 22px 48px -34px rgba(10,31,54,.32)}
+#panel-scans .sc-panel-h{padding:18px 20px 15px;border-bottom:1px solid #EDEAE6;
+  background:linear-gradient(180deg,#FFFFFF 0%,#FCFBF9 100%)}
 #panel-scans .sc-res-h{display:flex;align-items:center;gap:11px;flex-wrap:wrap;margin:0 0 6px}
 #panel-scans .sc-res-n{font-size:19px;font-weight:600;letter-spacing:-.015em;color:#0A2F46}
 #panel-scans .sc-res-c{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.08em;
   color:#4A5BC4;background:rgba(74,91,196,.11);border-radius:100px;padding:5px 11px}
-#panel-scans .sc-res-b{font-size:13.5px;font-weight:300;color:#475569;margin:0 0 10px;line-height:1.55}
-#panel-scans .sc-crit{display:flex;flex-wrap:wrap;gap:7px;align-items:center;margin:0 0 15px}
+#panel-scans .sc-res-b{font-size:13.5px;font-weight:300;color:#475569;margin:0 0 11px;line-height:1.55;max-width:82ch}
+#panel-scans .sc-crit{display:flex;flex-wrap:wrap;gap:7px;align-items:center;margin:0}
 #panel-scans .sc-crit-k{font-family:'JetBrains Mono',monospace;font-size:9.5px;font-weight:700;letter-spacing:.12em;
   text-transform:uppercase;color:#94a3b8}
 #panel-scans .sc-crit-c{font-size:11.5px;font-weight:500;color:#0A2F46;background:#fff;border:1px solid #E4E7EC;
@@ -517,17 +550,19 @@ body.v2 #sectors-grid .smh-name{font-weight:800;font-size:12.5px;color:#0f172a!i
    SCROLLING ancestor — and this box only scrolled horizontally, so the whole
    page scrolled instead and the header went with it. Giving the box its own
    vertical scroll makes the header actually hold while 50 rows move under it. */
-#panel-scans .sc-wrap{overflow-x:auto;overflow-y:auto;max-height:min(64vh,720px);
-  border:1px solid #E4E7EC;border-radius:16px;background:#fff;
-  box-shadow:0 1px 2px rgba(10,31,54,.04),0 20px 44px -34px rgba(10,31,54,.30)}
-#panel-scans .sc-wrap::-webkit-scrollbar{width:9px;height:9px}
-#panel-scans .sc-wrap::-webkit-scrollbar-thumb{background:#DCD9D5;border-radius:5px;
-  border:2px solid #fff}
-#panel-scans .sc-wrap::-webkit-scrollbar-thumb:hover{background:#C3BFBA}
+/* The border/radius/shadow now belong to .sc-panel — the table is the panel's
+   lower half, so its own frame would draw a box inside a box. */
+#panel-scans .sc-wrap{overflow-x:auto;overflow-y:auto;max-height:min(64vh,720px);background:#fff;
+  scrollbar-width:thin;scrollbar-color:#D6D2CD #FAF8F6}
+#panel-scans .sc-wrap::-webkit-scrollbar{width:10px;height:10px}
+#panel-scans .sc-wrap::-webkit-scrollbar-track{background:#FAF8F6}
+#panel-scans .sc-wrap::-webkit-scrollbar-thumb{background:#D6D2CD;border-radius:100px;
+  border:3px solid #FAF8F6}
+#panel-scans .sc-wrap::-webkit-scrollbar-thumb:hover{background:#4A5BC4}
 #panel-scans table.sc{width:100%;border-collapse:separate;border-spacing:0;font-size:13px;min-width:820px}
 #panel-scans table.sc th{position:sticky;top:0;z-index:2;background:#FBFAF8;font-family:'JetBrains Mono',monospace;
   font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#7A8899;text-align:right;
-  padding:12px 14px;white-space:nowrap;border-bottom:1px solid #E4E7EC;cursor:pointer;user-select:none;
+  padding:13px 14px 12px;white-space:nowrap;border-bottom:1px solid #E4E7EC;cursor:pointer;user-select:none;
   transition:color .2s,background .2s}
 #panel-scans table.sc th:hover{color:#4A5BC4;background:#F6F4FF}
 #panel-scans table.sc th .sc-ar{opacity:0;margin-left:5px;transition:opacity .2s}
@@ -540,6 +575,16 @@ body.v2 #sectors-grid .smh-name{font-weight:800;font-size:12.5px;color:#0f172a!i
 #panel-scans table.sc tbody tr{cursor:pointer;transition:background .16s}
 #panel-scans table.sc tbody tr:hover{background:#FBF9FF}
 #panel-scans table.sc tbody tr:hover td:first-child{box-shadow:inset 3px 0 0 #FF6100}
+/* Say the row opens something. The ticker reads as a link and an arrow slides
+   in on hover — the old row gave no signal beyond a cursor, which is a thin
+   promise for a row that (once the handler was fixed) opens a whole drawer. */
+#panel-scans table.sc tbody tr:hover .sc-tix{color:#0A2F46;text-decoration:underline;
+  text-underline-offset:2px;text-decoration-thickness:1.5px}
+#panel-scans .sc-tix::after{content:'↗';margin-left:5px;font-size:10px;color:#FF6100;
+  opacity:0;transform:translateX(-2px);display:inline-block;
+  transition:opacity .18s,transform .18s}
+#panel-scans table.sc tbody tr:hover .sc-tix::after{opacity:1;transform:none}
+@media(prefers-reduced-motion:reduce){#panel-scans .sc-tix::after{transition:none}}
 
 #panel-scans .sc-rank{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:#B6BFC9;width:38px}
 #panel-scans .sc-id{display:flex;align-items:center;gap:10px;min-width:0}
@@ -21759,7 +21804,9 @@ function scRun(id){
   fetch('/api/scans/'+encodeURIComponent(id)).then(function(r){return r.json();}).then(function(d){
     if(!d||d.available===false){ body.innerHTML=pills+'<div class="sc-empty">That scan is unavailable.</div>'; scWirePills(body); return; }
     _scLast=d;
-    body.innerHTML=pills+scHeaderHTML(d)+scResultHTML(d);
+    /* Header and table share ONE bordered panel. Sorting still swaps only the
+       inner .sc-wrap, so the header above it never flashes. */
+    body.innerHTML=pills+'<div class="sc-panel">'+scHeaderHTML(d)+scResultHTML(d)+'</div>';
     scWirePills(body);
   }).catch(function(){ body.innerHTML=pills+'<div class="sc-empty">Could not run that scan.</div>'; scWirePills(body); });
 }
@@ -21769,20 +21816,40 @@ function scRun(id){
    globals. Same pattern as window._drRunSupplyChain above. */
 window.scansInit = scansInit;
 function scWirePills(body){
+  /* Sorting replaces only the table, then calls this again — so the pills and
+     headers that survived would collect a SECOND listener each time, and a
+     pill clicked after two sorts ran scRun three times. Bind once. */
+  function once(el){
+    if(el.getAttribute('data-wired')==='1') return false;
+    el.setAttribute('data-wired','1');
+    return true;
+  }
   [].forEach.call(body.querySelectorAll('.sc-pill'),function(b){
+    if(!once(b)) return;
     b.addEventListener('click',function(){ scRun(b.getAttribute('data-scan')); });
   });
   /* Row -> open the drawer. Re-bound on every render because sorting
-     rebuilds the tbody. */
+     rebuilds the tbody.
+     The function is tsOpenDrawer, not tsOpen — there is no tsOpen anywhere in
+     this file, so `typeof tsOpen==='function'` was ALWAYS false and every row
+     click did nothing while the CSS still promised cursor:pointer. Falls back
+     to the global openStockModal if the drawer module ever moves. */
   [].forEach.call(body.querySelectorAll('tr[data-tix]'),function(tr){
     tr.addEventListener('click',function(){
       var t=tr.getAttribute('data-tix');
-      if(t && typeof tsOpen==='function'){ try{ tsOpen(t); }catch(e){} }
+      if(!t) return;
+      var open=(typeof tsOpenDrawer==='function') ? tsOpenDrawer
+              : (window.tsOpenDrawer || window.openStockModal);
+      if(typeof open!=='function'){ console.warn('scans: no drawer opener available'); return; }
+      /* Don't swallow the failure — a silent catch is how the missing
+         function stayed invisible in the first place. */
+      try{ open(t); }catch(e){ console.warn('scans: opening '+t+' failed', e); }
     });
   });
   /* Sortable headers. Re-renders only the table, so the result header,
      blurb and criteria chips above it are left alone. */
   [].forEach.call(body.querySelectorAll('th[data-k]'),function(th){
+    if(!once(th)) return;
     th.addEventListener('click',function(){
       var k=th.getAttribute('data-k');
       if(_scSort===k){ _scDir=(_scDir==='asc'?'desc':'asc'); } else { _scSort=k; _scDir='desc'; }
@@ -21817,10 +21884,10 @@ function scFmt(v,fmt){
 /* Header, blurb and criteria live SEPARATELY from the table, so a sort can
    re-render just the table without flashing everything above it. */
 function scHeaderHTML(d){
-  return '<div class="sc-res-h"><span class="sc-res-n">'+escHTML(d.name||'')+'</span>'+
+  return '<div class="sc-panel-h"><div class="sc-res-h"><span class="sc-res-n">'+escHTML(d.name||'')+'</span>'+
          (d.matched!=null?('<span class="sc-res-c">'+d.matched+' match'+(d.matched===1?'':'es')+
            (d.shown<d.matched?(' · showing '+d.shown):'')+'</span>'):'')+'</div>'+
-         '<p class="sc-res-b">'+escHTML(d.blurb||'')+'</p>'+scCritHTML(d.note);
+         '<p class="sc-res-b">'+escHTML(d.blurb||'')+'</p>'+scCritHTML(d.note)+'</div>';
 }
 
 /* "Our lines: gross margin ≥ 40%, revenue growth ≥ 15%, positive free cash
