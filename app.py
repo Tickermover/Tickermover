@@ -6568,7 +6568,9 @@ async def api_corporate_actions():
 
 
 @app.get("/api/event-digest")
-async def api_event_digest(symbols: str = ""):
+async def api_event_digest(symbols: str = "",
+                           user: Optional[dict] = Depends(_current_user),
+                           creds: Optional[HTTPAuthorizationCredentials] = Depends(_bearer)):
     """Cache-ONLY batch read of earnings briefs, for the Company Events timeline.
 
     Returns {briefs: {SYM: {takeaway, title, date, source}}} covering only the
@@ -6581,6 +6583,11 @@ async def api_event_digest(symbols: str = ""):
     Supabase query and generates nothing.
     """
     import event_intel as _ei
+    if not await _is_pro_user(user, creds):
+        # Company Events is a Pro surface. The nav guard stops most people
+        # before here; this is the enforcement, so the timeline's takeaways
+        # cannot simply be curl'd.
+        return JSONResponse({"briefs": {}, "reason": "pro"})
     syms = [s.strip().upper() for s in (symbols or "").split(",") if s.strip()][:60]
     if not syms:
         return JSONResponse({"briefs": {}})

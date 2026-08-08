@@ -7516,8 +7516,11 @@ document.addEventListener('keydown', function(e){
     <a class="v2-nav-item" href="/theses" style="text-decoration:none">
       <svg viewBox="0 0 24 24"><defs><linearGradient id="ahg-theses" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5DB3F1"/><stop offset="1" stop-color="#0040c1"/></linearGradient></defs><g fill="none" stroke="url(#ahg-theses)" stroke-width="2" stroke-linecap="round"><circle cx="6" cy="6" r="2.4"/><circle cx="6" cy="18" r="2.4"/><circle cx="18" cy="12" r="2.4"/><path d="M8.1 6.9l7.8 4.2M8.1 17.1l7.8-4.2"/></g></svg><span>Thesis Maps</span>
     </a>
-    <div class="v2-nav-item" onclick="v2Show('events',this);eventsTab(window._evTab||'brief')">
-      <svg viewBox="0 0 24 24"><defs><linearGradient id="ahg-evt" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FB7185"/><stop offset="1" stop-color="#E11D48"/></linearGradient></defs><rect x="3" y="4.5" width="18" height="16" rx="3.6" fill="url(#ahg-evt)"/><rect x="3" y="4.5" width="18" height="5" rx="3.6" fill="#fff" fill-opacity=".28"/><circle cx="8" cy="14" r="1.5" fill="#fff"/><circle cx="13" cy="14" r="1.5" fill="#fff" fill-opacity=".75"/><circle cx="8" cy="17.6" r="1.5" fill="#fff" fill-opacity=".75"/></svg><span>Company Events</span>
+    <!-- Pro. Guard only fires once the plan is KNOWN, so a Pro user never
+         sees a modal flash while the async plan check is in flight. The real
+         gate is server-side on /api/event-digest. -->
+    <div class="v2-nav-item" onclick="(window.__PLAN&&window.__PLAN.loaded&&!window.__PLAN.pro)?openUpgradeModal():(v2Show('events',this),eventsTab(window._evTab||'brief'))">
+      <svg viewBox="0 0 24 24"><defs><linearGradient id="ahg-evt" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FB7185"/><stop offset="1" stop-color="#E11D48"/></linearGradient></defs><rect x="3" y="4.5" width="18" height="16" rx="3.6" fill="url(#ahg-evt)"/><rect x="3" y="4.5" width="18" height="5" rx="3.6" fill="#fff" fill-opacity=".28"/><circle cx="8" cy="14" r="1.5" fill="#fff"/><circle cx="13" cy="14" r="1.5" fill="#fff" fill-opacity=".75"/><circle cx="8" cy="17.6" r="1.5" fill="#fff" fill-opacity=".75"/></svg><span>Company Events</span><span class="v2-nav-tag v2-tag-pro">PRO</span>
     </div>
     <div class="v2-nav-item" onclick="if(window.tsOpenAsk)tsOpenAsk()">
       <svg viewBox="0 0 24 24"><defs><linearGradient id="ahg-ask" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#E879F9"/><stop offset="1" stop-color="#7C3AED"/></linearGradient></defs><path fill="url(#ahg-ask)" d="M11 2.5l1.7 5.6 5.6 1.7-5.6 1.7L11 17.1l-1.7-5.6L3.7 9.8l5.6-1.7z"/><path fill="url(#ahg-ask)" d="M18.3 14.2l.8 2.6 2.6.8-2.6.8-.8 2.6-.8-2.6-2.6-.8 2.6-.8z"/></svg><span>Ask AI</span><span class="v2-nav-tag v2-tag-new">NEW</span>
@@ -10911,6 +10914,11 @@ function _ceEsc(v){
   });
 }
 var _ceFilter = 'all', _ceBriefs = {}, _ceActions = null, _cePrime = null;
+/* Window in days, and which sections the reader has expanded. The page ran
+   to ~50 rows unprompted; 7 days and 5 rows a section is a screenful, with
+   everything else one click away rather than gone. */
+var _ceDays = 7, _ceOpen = {};
+var CE_PREVIEW = 5;
 
 function _ceWatch(){
   try { return JSON.parse(localStorage.getItem('v2_watchlist') || '[]')
@@ -10949,11 +10957,11 @@ function ceBuildCloud(){
   if (!all.length){ host.innerHTML = '<div class="ce-empty">No companies loaded yet — refresh in a moment.</div>'; return; }
 
   var reported = _ceScope(all.filter(function(t){
-    var d = _ceNum(t.days_since_earnings); return d !== null && d >= 0 && d <= 14;
+    var d = _ceNum(t.days_since_earnings); return d !== null && d >= 0 && d <= _ceDays;
   }), 'ticker').sort(function(a, b){ return _ceNum(a.days_since_earnings) - _ceNum(b.days_since_earnings); });
 
   var soon = _ceScope(all.filter(function(t){
-    var d = _ceNum(t.days_to_earnings); return d !== null && d >= 0 && d <= 21;
+    var d = _ceNum(t.days_to_earnings); return d !== null && d >= 0 && d <= _ceDays;
   }), 'ticker').sort(function(a, b){ return _ceNum(a.days_to_earnings) - _ceNum(b.days_to_earnings); });
 
   /* The feed is date-DESCENDING and includes ex-dates that have already
@@ -10967,35 +10975,47 @@ function ceBuildCloud(){
     [['all', 'All'], ['watch', 'Watchlist'], ['prime', 'Prime Tickers']].map(function(f){
       return '<button class="ce-f' + (f[0] === _ceFilter ? ' on' : '') + '" data-f="' + f[0] + '">' + f[1] + '</button>';
     }).join('') +
+    '<span class="ce-sep"></span>' +
+    [7, 14, 30].map(function(n){
+      return '<button class="ce-d' + (n === _ceDays ? ' on' : '') + '" data-d="' + n + '">' + n + 'd</button>';
+    }).join('') +
     '<span class="ce-asof">' + all.length + ' names tracked</span></div>';
 
-  function grp(title, count, inner){
+  /* key drives the expand toggle; total is the true count so the button can
+     say how much is hidden rather than just "more". */
+  function grp(key, title, total, inner){
+    var open = !!_ceOpen[key], hidden = total - CE_PREVIEW;
+    var more = (total > CE_PREVIEW)
+      ? '<button class="ce-more" data-k="' + key + '">' +
+          (open ? 'Show fewer' : 'Show all ' + total + ' ↓') + '</button>'
+      : '';
     return '<section class="ce-grp"><div class="ce-grp-h"><span class="ce-grp-t">' + title + '</span>' +
-      (count ? '<span class="ce-grp-c">' + count + '</span>' : '') +
-      '<span class="ce-grp-r"></span></div><div class="ce-list">' + inner + '</div></section>';
+      (total ? '<span class="ce-grp-c">' + total + '</span>' : '') +
+      '<span class="ce-grp-r"></span></div><div class="ce-list">' + inner + '</div>' + more + '</section>';
   }
+  function _ceCut(key, rows){ return _ceOpen[key] ? rows : rows.slice(0, CE_PREVIEW); }
 
   var repHTML = reported.length
-    ? reported.map(function(t){ var d = _ceNum(t.days_since_earnings);
+    ? _ceCut('rep', reported).map(function(t){ var d = _ceNum(t.days_since_earnings);
         return _ceRowHTML(t, d === 0 ? 'today' : d + 'd ago', d <= 2); }).join('')
-    : '<div class="ce-empty">Nothing reported in the last two weeks for this filter.</div>';
+    : '<div class="ce-empty">Nothing reported in the last ' + _ceDays + ' days for this filter.</div>';
 
   /* Grouped by day so the reader sees "Thursday: three names" rather than a
      flat column of countdowns. */
   var soonHTML = '';
   if (soon.length){
     var last = null;
-    soon.forEach(function(t){
+    _ceCut('soon', soon).forEach(function(t){
       var d = _ceNum(t.days_to_earnings);
       var lbl = d === 0 ? 'Today' : (d === 1 ? 'Tomorrow' : 'In ' + d + ' days');
       if (lbl !== last){ soonHTML += '<div class="ce-day">' + lbl + '</div>'; last = lbl; }
       soonHTML += _ceRowHTML(t, d === 0 ? 'today' : 'in ' + d + 'd', d <= 1);
     });
   } else {
-    soonHTML = '<div class="ce-empty">No confirmed dates in the next three weeks for this filter.</div>';
+    soonHTML = '<div class="ce-empty">No confirmed dates in the next ' + _ceDays + ' days for this filter.</div>';
   }
 
-  var actHTML = acts.length ? acts.map(function(a){
+  var actHTML = acts.length ? _ceCut('acts', acts).map(function(a){
     return '<div class="ce-row" data-tic="' + _ceEsc(a.symbol) + '">' +
       '<span class="ce-when">' + _ceEsc(String(a.date || '').slice(5)) + '</span>' + _ceLogoHTML(a.symbol) +
       '<span class="ce-id"><b>' + _ceEsc(a.symbol) + '</b><span>' + _ceEsc(a.name || '') + '</span></span>' +
@@ -11005,12 +11025,23 @@ function ceBuildCloud(){
   }).join('') : '<div class="ce-empty">No dividends or splits for this filter.</div>';
 
   host.innerHTML = filters +
-    grp('Just reported', reported.length, repHTML) +
-    grp('Reporting next', soon.length, soonHTML) +
-    grp('Dividends &amp; splits', acts.length, actHTML);
+    grp('rep',  'Just reported',        reported.length, repHTML) +
+    grp('soon', 'Reporting next',       soon.length,     soonHTML) +
+    grp('acts', 'Dividends &amp; splits', acts.length,   actHTML);
 
   host.querySelectorAll('.ce-f').forEach(function(b){
-    b.addEventListener('click', function(){ _ceFilter = b.getAttribute('data-f'); ceBuildCloud(); });
+    b.addEventListener('click', function(){ _ceFilter = b.getAttribute('data-f'); _ceOpen = {}; ceBuildCloud(); });
+  });
+  host.querySelectorAll('.ce-d').forEach(function(b){
+    b.addEventListener('click', function(){
+      _ceDays = parseInt(b.getAttribute('data-d'), 10) || 7; _ceOpen = {}; ceBuildCloud();
+    });
+  });
+  host.querySelectorAll('.ce-more').forEach(function(b){
+    b.addEventListener('click', function(e){
+      e.stopPropagation();
+      var k = b.getAttribute('data-k'); _ceOpen[k] = !_ceOpen[k]; ceBuildCloud();
+    });
   });
   host.querySelectorAll('.ce-a').forEach(function(b){
     b.addEventListener('click', function(e){
@@ -11046,7 +11077,8 @@ function _ceEnrich(reported){
     .filter(function(s){ return !(s in _ceBriefs); }).slice(0, 40);
   if (!need.length) return;
   need.forEach(function(s){ _ceBriefs[s] = null; });          /* mark asked, so we ask once */
-  fetch('/api/event-digest?symbols=' + encodeURIComponent(need.join(',')))
+  fetch('/api/event-digest?symbols=' + encodeURIComponent(need.join(',')),
+        { headers: { Authorization: 'Bearer ' + (localStorage.getItem('ah_token') || '') } })
     .then(function(r){ return r.json(); })
     .then(function(d){
       var b = (d && d.briefs) || {}, got = false;
