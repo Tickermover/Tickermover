@@ -164,29 +164,40 @@
    .ma-report (the report host on the app, the floating box on /desk).
    ========================================================================== */
 .ma-glass{
-  /* Warm "smoked sand" glass — tuned to sit on the cream page background (was a
-     cool slate that fought the warm bg). Mid-tone enough that the dark report
-     text + white inner cards still pop. */
-  background:linear-gradient(165deg, rgba(233,224,206,.82) 0%, rgba(222,210,188,.78) 100%);
-  -webkit-backdrop-filter:blur(26px) saturate(150%);
-  backdrop-filter:blur(26px) saturate(150%);
-  border:1px solid rgba(255,255,255,.45);
+  /* Warm GREY glass — the palette's #F2F1EE surface, not a tan.
+     History: cool slate (fought the warm page) -> "smoked sand"
+     rgba(233,224,206)/rgba(222,210,188), which was mid-tone enough to read as a
+     muddy beige slab under the white inner cards. This keeps the same frosted
+     character and the same separation from those cards, but drops the yellow
+     cast so the panel reads as a clean surface rather than a colour. */
+  background:linear-gradient(165deg, rgba(248,247,245,.86) 0%, rgba(240,238,233,.80) 100%);
+  -webkit-backdrop-filter:blur(26px) saturate(140%);
+  backdrop-filter:blur(26px) saturate(140%);
+  border:1px solid rgba(255,255,255,.65);
   border-radius:28px;
-  box-shadow:0 1px 2px rgba(10,47,70,.05), 0 18px 44px -26px rgba(10,47,70,.32), inset 0 1px 0 rgba(255,255,255,.6);
+  box-shadow:0 1px 2px rgba(10,47,70,.05), 0 18px 44px -26px rgba(10,47,70,.28), inset 0 1px 0 rgba(255,255,255,.75);
   padding:24px 26px 28px;
 }
-/* Inner panels become lighter glass panes (no nested backdrop-filter). */
+/* Inner panels become lighter glass panes (no nested backdrop-filter).
+   Against the old sand shell a translucent white was enough on its own; on the
+   lighter warm-grey shell it is not, so these go solid white and take a real
+   hairline border. Separation now comes from the edge and the shadow rather
+   than from the shell being several shades darker. */
 .ma-glass .ma-card,.ma-glass .ma-stat,.ma-glass .ma-tbl,.ma-glass .ma-ev,
 .ma-glass .ma-edition,.ma-glass .ma-verdict,.ma-glass .ma-note,.ma-glass .ma-watch-note,
 .ma-glass .ma-news-item,.ma-glass .ma-session,.ma-glass .ed-card{
-  background:rgba(255,255,255,.74)!important;
-  border-color:rgba(255,255,255,.6)!important;
-  box-shadow:0 2px 10px rgba(10,47,70,.08)!important;
+  background:#ffffff!important;
+  border-color:rgba(10,47,70,.09)!important;
+  box-shadow:0 2px 10px rgba(10,47,70,.07)!important;
 }
-.ma-glass .ma-hero{background:linear-gradient(135deg,rgba(255,255,255,.82),rgba(255,255,255,.66))!important;border-color:rgba(255,255,255,.6)!important}
-.ma-glass .ma-tabs{background:rgba(255,255,255,.34)!important;border-color:rgba(255,255,255,.45)!important}
-.ma-glass .ma-tab.on{background:rgba(255,255,255,.9)!important}
-.ma-glass .ma-bar-track{background:rgba(255,255,255,.45)!important}
+.ma-glass .ma-hero{background:linear-gradient(135deg,#ffffff 0%,#FBFAF8 100%)!important;border-color:rgba(10,47,70,.09)!important}
+/* A translucent-white tab strip and bar track were only visible because the
+   shell behind them was darker. On the light shell they had to invert: a soft
+   warm grey trough, with the selected tab and the filled bar as the white/
+   coloured thing on top of it. */
+.ma-glass .ma-tabs{background:rgba(10,47,70,.055)!important;border-color:rgba(10,47,70,.07)!important}
+.ma-glass .ma-tab.on{background:#ffffff!important;box-shadow:0 2px 6px rgba(10,47,70,.14)!important}
+.ma-glass .ma-bar-track{background:rgba(10,47,70,.07)!important}
 /* Readability on glass — darken the muted greys. */
 .ma-glass .ma-lead,.ma-glass .ma-note,.ma-glass .ma-watch-note,
 .ma-glass .ma-hero-text,.ma-glass .ma-verdict .kv{color:#283749!important}
