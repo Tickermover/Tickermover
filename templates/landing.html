@@ -3067,20 +3067,41 @@ html body #pricing .pz-foot{color:rgba(255,255,255,.5)!important;opacity:1!impor
    are literally the site's. Only the surface colours are restated here,
    because the .btn-ghost/.btn-primary light-section overrides would put
    navy on navy inside this panel. */
+/* Hover is the site's INSET BOX-SHADOW FLOOD (spread 0 -> 60px), not a
+   background swap — same mechanism as .btn-primary / .btn-ghost. A plain
+   colour change here read as no hover at all. Free floods to white with
+   navy label, exactly like .bg-dark .btn-ghost; Pro floods to the indigo
+   .btn-primary uses. Both lift 2px. */
 html body #pricing .pz-cta{width:100%;justify-content:center;
   background:rgba(255,255,255,.08)!important;border:1px solid rgba(255,255,255,.22)!important;
-  color:#fff!important;box-shadow:none!important}
-html body #pricing .pz-cta:hover{background:rgba(255,255,255,.15)!important;
-  border-color:rgba(255,255,255,.38)!important;box-shadow:none!important}
+  color:#fff!important;box-shadow:inset 0 0 0 0 #FFFFFF!important;
+  transition:box-shadow .5s cubic-bezier(.22,.9,.28,1),
+             transform .28s cubic-bezier(.22,.9,.28,1),
+             border-color .3s ease,color .3s ease!important}
+html body #pricing .pz-cta:hover{
+  box-shadow:inset 0 0 0 60px #FFFFFF, 0 16px 34px -16px rgba(0,0,0,.6)!important;
+  border-color:#FFFFFF!important;color:#0B1E33!important;transform:translateY(-2px)!important}
 html body #pricing .pz-cta .arrow{background:transparent!important;box-shadow:none!important;
-  color:#FF9B57!important}
+  color:#FF9B57!important;transition:color .3s ease,transform .4s cubic-bezier(.19,1,.22,1)}
+/* #FF9B57 is 1.9:1 on the flooded white — the arrow moves to the darker
+   orange, which is 4.4:1 there. */
+html body #pricing .pz-cta:hover .arrow{color:#C74E00!important}
 /* Pro's is the white pill — 17:1 on the panel. Orange stays the accent
    (badge, icon, glow, ticks); as a button fill under white text it is 3.4:1. */
 html body #pricing .pz-cta-primary{background:#FFFFFF!important;border-color:#FFFFFF!important;
-  color:#0B1E33!important;box-shadow:0 16px 36px -18px rgba(0,0,0,.9)!important}
-html body #pricing .pz-cta-primary:hover{background:#FFF2EC!important;
-  border-color:#FFF2EC!important;box-shadow:0 16px 36px -18px rgba(0,0,0,.9)!important}
+  color:#0B1E33!important;
+  box-shadow:inset 0 0 0 0 #5566D8, 0 16px 36px -18px rgba(0,0,0,.9)!important}
+html body #pricing .pz-cta-primary:hover{
+  box-shadow:inset 0 0 0 60px #5566D8, 0 18px 36px -14px rgba(85,102,216,.70)!important;
+  border-color:#5566D8!important;color:#FFFFFF!important;transform:translateY(-2px)!important}
 html body #pricing .pz-cta-primary .arrow{color:#FF6100!important}
+/* white label on #5566D8 is 4.9:1; the orange arrow would be 1.6:1, so it
+   goes white with the label. */
+html body #pricing .pz-cta-primary:hover .arrow{color:#FFFFFF!important}
+@media(prefers-reduced-motion:reduce){
+  html body #pricing .pz-cta{transition:box-shadow .5s ease,color .3s ease!important}
+  html body #pricing .pz-cta:hover{transform:none!important}
+}
 
 html body .pz-feats{flex:1 1 auto;list-style:none;margin:18px 0 0!important;padding:16px 0 0!important;
   border-top:1px solid rgba(255,255,255,.12);display:flex;flex-direction:column;gap:10px}
