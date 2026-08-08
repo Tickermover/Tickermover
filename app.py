@@ -10626,8 +10626,13 @@ def _replenish_portfolio(portfolio: dict) -> dict:
     return portfolio
 
 
+# How many open picks a free/anonymous caller sees before the Pro wall.
+PRIME_FREE_PICKS = 3
+
+
 @app.get("/api/model-portfolio")
-async def api_model_portfolio():
+async def api_model_portfolio(user: Optional[dict] = Depends(_current_user),
+                              creds: Optional[HTTPAuthorizationCredentials] = Depends(_bearer)):
     global _model_portfolio
     if not _model_portfolio or not _model_portfolio.get("picks"):
         if not _universe_data:
@@ -10717,7 +10722,31 @@ async def api_model_portfolio():
     except Exception as _re:
         logger.debug(f"recent_exits attach skipped: {_re}")
 
-    return JSONResponse(_clean(enriched))
+    out = _clean(enriched)
+
+    # ── Pro gate ─────────────────────────────────────────────────────────
+    # Prime Tickers is a Pro surface, so free and anonymous callers get a
+    # teaser: the first few open picks plus honest counts, letting the upsell
+    # say how much sits behind it.
+    #
+    # `stats` is deliberately NOT withheld. The landing page already publishes
+    # the same figures through /api/model-portfolio/history, so hiding them
+    # here would gate nothing while breaking the free dashboard's tracker
+    # strip. Only the pick list is a Pro asset.
+    #
+    # AUTH NOTE: this reads the Bearer token, so every client fetch of this
+    # endpoint MUST send the Authorization header. `credentials:'include'`
+    # sends cookies, which this app does not authenticate with — a caller that
+    # forgets the header is served the free payload however much they pay.
+    if not await _is_pro_user(user, creds):
+        picks = out.get("picks") or []
+        out["picks"]        = picks[:PRIME_FREE_PICKS]
+        out["locked"]       = True
+        out["locked_count"] = max(0, len(picks) - PRIME_FREE_PICKS)
+        out["total_picks"]  = len(picks)
+        out.pop("recent_exits", None)      # the exit ledger is Pro too
+
+    return JSONResponse(out)
 
 
 # ── Prime-tracker review endpoints (tokenised — links live only in the email) ──

@@ -7269,8 +7269,14 @@ document.addEventListener('keydown', function(e){
     <div class="v2-nav-item active" onclick="v2Show('hot',this)">
       <svg viewBox="0 0 24 24"><defs><linearGradient id="ahg-radar" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5DB3F1"/><stop offset="1" stop-color="#2970FF"/></linearGradient></defs><g fill="url(#ahg-radar)"><rect x="3" y="3" width="8" height="8" rx="2"/><rect x="13" y="3" width="8" height="5" rx="2"/><rect x="13" y="10" width="8" height="11" rx="2"/><rect x="3" y="13" width="8" height="8" rx="2"/></g></svg><span>On the Radar</span>
     </div>
-    <div class="v2-nav-item" onclick="v2Show('model',this)">
-      <svg viewBox="0 0 24 24"><defs><linearGradient id="ahg-hunts" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FBBF24"/><stop offset="1" stop-color="#F97316"/></linearGradient></defs><path fill="url(#ahg-hunts)" d="M12 2.3l2.8 5.7 6.3.9-4.5 4.4 1.1 6.3L12 20.6l-5.6 3 1.1-6.3L3 12.9l6.3-.9z"/></svg><span>Prime Tickers</span>
+    <!-- Prime Tickers is Pro. The guard only fires once the plan is KNOWN
+         (__PLAN.loaded) and not Pro — while the async plan check is still in
+         flight the row behaves normally, so a Pro user never sees an upgrade
+         modal flash on load. This is the upsell, not the enforcement: the real
+         gate is server-side in /api/model-portfolio, which serves free callers
+         PRIME_FREE_PICKS and a locked_count. -->
+    <div class="v2-nav-item" onclick="(window.__PLAN&&window.__PLAN.loaded&&!window.__PLAN.pro)?openUpgradeModal():v2Show('model',this)">
+      <svg viewBox="0 0 24 24"><defs><linearGradient id="ahg-hunts" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FBBF24"/><stop offset="1" stop-color="#F97316"/></linearGradient></defs><path fill="url(#ahg-hunts)" d="M12 2.3l2.8 5.7 6.3.9-4.5 4.4 1.1 6.3L12 20.6l-5.6 3 1.1-6.3L3 12.9l6.3-.9z"/></svg><span>Prime Tickers</span><span class="v2-nav-tag v2-tag-pro">PRO</span>
     </div>
     <div class="v2-nav-item" onclick="v2Show('scans',this);scansInit()">
       <svg viewBox="0 0 24 24"><defs><linearGradient id="ahg-scan" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#818CF8"/><stop offset="1" stop-color="#4F46E5"/></linearGradient></defs><rect x="2.5" y="2.5" width="19" height="19" rx="5.5" fill="url(#ahg-scan)"/><path d="M7 7h3M7 7v3M17 7h-3M17 7v3M7 17h3M7 17v-3M17 17h-3M17 17v-3" stroke="#fff" stroke-width="1.9" fill="none" stroke-linecap="round"/><circle cx="12" cy="12" r="2.4" fill="#fff"/></svg><span>Stock Scanner</span><span class="v2-nav-tag v2-tag-new">NEW</span>
@@ -9328,7 +9334,7 @@ async function v2LoadTrackerStrip(){
   const root = document.getElementById('v2-tracker-strip');
   if (!root) return;
   try {
-    const r = await fetch('/api/model-portfolio', { credentials: 'include' });
+    const r = await fetch('/api/model-portfolio', { credentials: 'include', headers:{Authorization:'Bearer '+(localStorage.getItem('ah_token')||'')} });
     if (!r.ok) { root.style.display = 'none'; return; }
     const data = await r.json();
     const stats = data.stats || {};
@@ -16742,7 +16748,7 @@ async function loadPrimeOverlap(force) {
   if (!force && o && (Date.now() - o.ts < 300000)) return o;
   try {
     const [mp, hist] = await Promise.all([
-      fetch('/api/model-portfolio').then(r => r.ok ? r.json() : null).catch(() => null),
+      fetch('/api/model-portfolio', {headers:{Authorization:'Bearer '+(localStorage.getItem('ah_token')||'')}}).then(r => r.ok ? r.json() : null).catch(() => null),
       fetch('/api/model-portfolio/history').then(r => r.ok ? r.json() : null).catch(() => null),
     ]);
     const held = new Set();
@@ -16911,7 +16917,7 @@ async function loadModelPortfolio() {
     // already in hand when the page renders — it paints under the SINGLE page
     // ring instead of triggering a second loader after the page is up.
     const [resp, tRes] = await Promise.all([
-      fetch('/api/model-portfolio'),
+      fetch('/api/model-portfolio', {headers:{Authorization:'Bearer '+(localStorage.getItem('ah_token')||'')}}),
       fetch('/api/tracker-chart').then(r => r.ok ? r.json() : null).catch(() => null),
     ]);
     if (!resp.ok) throw new Error('HTTP ' + resp.status);
@@ -18256,7 +18262,7 @@ async function v2ToggleAudit(btn){
   window.showLoader(panel, 'Breaking down every pick');
   try {
     const [pRes, hRes] = await Promise.all([
-      fetch('/api/model-portfolio',          { cache: 'no-store' }).then(r => r.json()),
+      fetch('/api/model-portfolio',          { cache: 'no-store', headers:{Authorization:'Bearer '+(localStorage.getItem('ah_token')||'')} }).then(r => r.json()),
       fetch('/api/model-portfolio/history',  { cache: 'no-store' }).then(r => r.json()),
     ]);
     const active = (pRes.picks  || []).map(p => ({
