@@ -628,6 +628,74 @@ body.v2 #sectors-grid .smh-name{font-weight:800;font-size:12.5px;color:#0f172a!i
 #panel-scans .sc-empty,#panel-scans .sc-load{padding:38px 12px;text-align:center;color:#7A8899;font-size:13.5px;font-weight:300}
 #panel-scans .sc-note{font-size:11.5px;font-weight:300;line-height:1.6;color:#94a3b8;margin:18px 0 0}
 @media(max-width:640px){ #panel-scans .sc-cats{grid-template-columns:1fr} #panel-scans .sc-title{font-size:23px} }
+
+/* ── Pre IPO Stocks + Thesis Maps (in-app) ────────────────────────
+   These two were the only sidebar items that navigated OUT of the SPA to a
+   standalone HTML page, which is why they felt like outbound links. The pages
+   still exist and stay public for SEO; the sidebar now renders the same data
+   in-app. Deliberately written in this app's idiom (panel-header, warm cards,
+   JetBrains Mono figures) rather than porting the marketing pages' CSS. */
+#panel-heroes .pip-stats{display:flex;flex-wrap:wrap;gap:10px;margin:0 0 22px}
+#panel-heroes .pip-stat{background:#fff;border:1px solid #E4E7EC;border-radius:13px;padding:11px 17px;
+  box-shadow:0 1px 2px rgba(10,31,54,.04)}
+#panel-heroes .pip-stat b{display:block;font-family:'JetBrains Mono',monospace;font-size:21px;font-weight:700;color:#0A2F46;line-height:1.15}
+#panel-heroes .pip-stat span{display:block;font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#94a3b8;margin-top:3px}
+#panel-heroes .pip-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(272px,1fr));gap:13px;margin:0 0 30px}
+#panel-heroes .pip-card{position:relative;background:#fff;border:1px solid #E4E7EC;border-radius:16px;padding:17px 17px 15px;
+  box-shadow:0 1px 3px rgba(10,31,54,.05);cursor:pointer;overflow:hidden;
+  transition:transform .18s,box-shadow .18s,border-color .18s}
+#panel-heroes .pip-card:hover{transform:translateY(-2px);border-color:#C7CEF0;box-shadow:0 12px 28px -16px rgba(10,31,54,.4)}
+#panel-heroes .pip-card.podium{background:linear-gradient(180deg,#FBFAF8,#fff 55%)}
+#panel-heroes .pip-rk{position:absolute;top:9px;right:14px;font-family:'JetBrains Mono',monospace;font-weight:700;
+  font-size:26px;color:rgba(74,91,196,.14)}
+#panel-heroes .pip-nm{font-size:16.5px;font-weight:600;letter-spacing:-.01em;color:#0A2F46;padding-right:42px}
+#panel-heroes .pip-val{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:25px;color:#0A2F46;margin:5px 0 2px}
+#panel-heroes .pip-rev{font-size:12.5px;font-weight:300;color:#5D6C7B;margin-bottom:9px}
+#panel-heroes .pip-rev b{font-weight:600;color:#0A2F46}
+#panel-heroes .pip-pill{display:inline-block;font-size:10.5px;font-weight:700;border-radius:7px;padding:3px 9px;margin-bottom:9px;
+  background:rgba(74,91,196,.11);color:#4A5BC4}
+#panel-heroes .pip-take{font-size:13px;font-weight:300;line-height:1.55;color:#475569;
+  border-top:1px dashed #E7E3DF;padding-top:9px;margin:0}
+#panel-heroes .pip-more{font-size:12px;font-weight:600;color:#4A5BC4;margin-top:8px}
+#panel-heroes .pip-wrap{position:relative;background:#fff;border:1px solid #E4E7EC;border-radius:16px;overflow:hidden;
+  box-shadow:0 1px 2px rgba(10,31,54,.04),0 20px 44px -34px rgba(10,31,54,.3)}
+#panel-heroes table.pip{width:100%;border-collapse:separate;border-spacing:0;font-size:13px;min-width:620px}
+#panel-heroes table.pip th{font-family:'JetBrains Mono',monospace;font-size:9.5px;font-weight:700;letter-spacing:.1em;
+  text-transform:uppercase;color:#7A8899;text-align:left;padding:12px 14px;border-bottom:1px solid #E4E7EC;background:#FBFAF8}
+#panel-heroes table.pip td{padding:11px 14px;border-bottom:1px solid #F3F1EE;white-space:nowrap}
+#panel-heroes table.pip tbody tr:last-child td{border-bottom:0}
+#panel-heroes table.pip tbody tr.go{cursor:pointer;transition:background .16s}
+#panel-heroes table.pip tbody tr.go:hover{background:#FBF9FF}
+#panel-heroes table.pip tbody tr.go:hover td:first-child{box-shadow:inset 3px 0 0 #FF6100}
+#panel-heroes .pip-t-rk{font-family:'JetBrains Mono',monospace;color:#B6BFC9;font-weight:700;width:46px}
+#panel-heroes .pip-t-nm{font-weight:600;color:#0A2F46}
+#panel-heroes .pip-t-val{font-family:'JetBrains Mono',monospace;font-weight:700;color:#0A2F46}
+#panel-heroes .pip-scroll{overflow-x:auto}
+#panel-heroes tbody.locked tr{filter:blur(5px);user-select:none;pointer-events:none}
+#panel-heroes .pip-gate{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:24px;
+  background:linear-gradient(180deg,rgba(255,255,255,.3),rgba(255,255,255,.9) 60%,rgba(255,255,255,.97))}
+#panel-heroes .pip-note{font-size:11.5px;font-weight:300;line-height:1.6;color:#94a3b8;margin:18px 0 0}
+
+/* Thesis Maps ───────────────────────────────────────── */
+#panel-theses .tm-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:15px}
+#panel-theses .tm-card{display:flex;flex-direction:column;min-height:206px;background:#fff;border:1px solid #E4E7EC;
+  border-radius:16px;padding:21px;text-decoration:none;color:inherit;box-shadow:0 1px 3px rgba(10,31,54,.05);
+  transition:transform .18s,box-shadow .18s,border-color .18s}
+#panel-theses a.tm-card:hover{transform:translateY(-2px);border-color:#C7CEF0;box-shadow:0 12px 28px -16px rgba(10,31,54,.4)}
+#panel-theses .tm-eye{display:flex;justify-content:space-between;align-items:center;font-family:'JetBrains Mono',monospace;
+  font-size:9.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#94a3b8;margin-bottom:11px}
+#panel-theses .tm-tag{border-radius:100px;padding:3px 9px;font-size:9px;font-weight:700;letter-spacing:.06em}
+#panel-theses .tm-tag.live{background:rgba(22,163,74,.12);color:#15803d}
+#panel-theses .tm-tag.soon{background:#F2F1EE;color:#94a3b8}
+#panel-theses .tm-t{font-size:20px;font-weight:600;line-height:1.15;letter-spacing:-.015em;color:#0A2F46;margin:0 0 9px}
+#panel-theses .tm-t em{font-style:normal;color:#4A5BC4}
+#panel-theses .tm-s{font-size:13px;font-weight:300;line-height:1.55;color:#5D6C7B;margin:0 0 15px;flex:1;
+  display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
+#panel-theses .tm-go{font-size:12.5px;font-weight:600;color:#4A5BC4}
+#panel-theses .tm-card.dim{opacity:.62}
+#panel-theses .tm-card.dim .tm-go{color:#94a3b8}
+#panel-theses .tm-note{font-size:11.5px;font-weight:300;line-height:1.6;color:#94a3b8;margin:22px 0 0}
+
 /* ── Sector connections — animated relationship graph ──────────────────── */
 .secg-wrap{position:relative;grid-column:1/-1;border:1px solid #e6ebf2;border-radius:14px;
   background:radial-gradient(120% 120% at 50% 0%,#fbfdff 0%,#f4f7fb 100%);overflow:hidden}
@@ -2850,6 +2918,197 @@ body.v2 .v2ov-card.sectors .v2ov-sector-cell{
 .v2-acct-ref{margin-top:10px;padding-top:11px;border-top:1px solid #eef0f3}
 .v2-acct-refline{flex:1;min-width:0;font-size:12.5px;font-weight:600;color:#0b1220}
 .v2-acct-refline b{color:#C74E00}
+
+
+/* ── Pre IPO Stocks + Thesis Maps (in-app) ────────────────────────
+   Both used to be <a href> nav items that left the SPA for a standalone page.
+   They now render in-app from the same endpoints the public pages use
+   (/api/future-heroes, /api/theses). The public pages stay for SEO. */
+var _pipData = null, _tmData = null;
+
+function _pipEsc(v){
+  return String(v == null ? '' : v).replace(/[&<>"']/g, function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+  });
+}
+function _pipVal(b){
+  var n = parseFloat(b);
+  if (isNaN(n)) return '\u2014';
+  return n >= 1000 ? '$' + (n / 1000).toFixed(2) + 'T' : '$' + Math.round(n) + 'B';
+}
+function _pipAuthHdr(){
+  var t = '';
+  try { t = (typeof _AUTH !== 'undefined' && _AUTH.token) || localStorage.getItem('ah_token') || ''; }
+  catch(e){}
+  return t ? { Authorization: 'Bearer ' + t } : {};
+}
+
+async function loadHeroes(){
+  var host = document.getElementById('pipBody');
+  if (!host) return;
+  if (_pipData){ _pipRender(_pipData); return; }          /* cached per session */
+  try {
+    var r = await fetch('/api/future-heroes', { headers: _pipAuthHdr(), cache: 'no-store' });
+    _pipData = await r.json();
+  } catch(e){
+    host.innerHTML = '<div class="sc-empty">Couldn\u2019t load the private-markets list. Try again shortly.</div>';
+    return;
+  }
+  _pipRender(_pipData);
+}
+
+function _pipRender(d){
+  var host = document.getElementById('pipBody');
+  var list = ((d && d.companies) || []).slice().sort(function(a, b){ return a.rank - b.rank; });
+  if (!list.length){
+    host.innerHTML = '<div class="sc-empty">The list is being prepared. Check back shortly.</div>';
+    return;
+  }
+  var locked = !!(d && d.locked);
+  var count  = d.total || list.length;
+  var total  = (d.combined_b != null) ? d.combined_b
+             : list.reduce(function(x, c){ return x + (c.valuation_b || 0); }, 0);
+  var ai = (d.ai_count != null) ? d.ai_count
+         : list.filter(function(c){ return c.category === 'Artificial Intelligence'; }).length;
+
+  var stats = '<div class="pip-stats">' +
+    '<div class="pip-stat"><b>' + count + '</b><span>Companies tracked</span></div>' +
+    '<div class="pip-stat"><b>' + _pipVal(total) + '</b><span>Combined value</span></div>' +
+    '<div class="pip-stat"><b>' + ai + '</b><span>AI companies</span></div>' +
+    (d.as_of ? '<div class="pip-stat"><b>' + _pipEsc(d.as_of) + '</b><span>As of</span></div>' : '') +
+    '</div>';
+
+  var top = list.filter(function(c){ return c.rank <= 10; });
+  var cards = '<div class="pip-cards">' + top.map(function(c){
+    return '<div class="pip-card' + (c.rank <= 3 ? ' podium' : '') + '" data-rank="' + c.rank + '">' +
+      '<div class="pip-rk">' + c.rank + '</div>' +
+      '<div class="pip-nm">' + _pipEsc(c.name) + '</div>' +
+      '<div class="pip-val">' + _pipVal(c.valuation_b) + '</div>' +
+      '<div class="pip-rev">Revenue <b>' + _pipEsc(c.revenue || 'n/a') + '</b></div>' +
+      (c.category ? '<span class="pip-pill">' + _pipEsc(c.category) + '</span>' : '') +
+      (c.take ? '<p class="pip-take">' + _pipEsc(c.take) + '</p>' : '') +
+      '<div class="pip-more">View profile \u2192</div>' +
+    '</div>';
+  }).join('') + '</div>';
+
+  var rest = list.filter(function(c){ return c.rank > 10; });
+  var rows = '';
+  if (locked){
+    /* The server only sends the top 10 to a free caller, so the rest are decoy
+       rows behind a blur — same treatment the public page uses. */
+    for (var r = 11; r <= count; r++){
+      rows += '<tr><td class="pip-t-rk">' + r + '</td><td class="pip-t-nm">\u25CF\u25CF\u25CF\u25CF\u25CF\u25CF\u25CF\u25CF</td>' +
+              '<td class="pip-t-val">$\u2022\u2022B</td><td>$\u2022\u2022\u2022M</td>' +
+              '<td><span class="pip-pill">\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022</span></td></tr>';
+    }
+  } else {
+    rows = rest.map(function(c){
+      return '<tr class="go" data-rank="' + c.rank + '">' +
+        '<td class="pip-t-rk">' + c.rank + '</td>' +
+        '<td class="pip-t-nm">' + _pipEsc(c.name) + '</td>' +
+        '<td class="pip-t-val">' + _pipVal(c.valuation_b) + '</td>' +
+        '<td>' + _pipEsc(c.revenue || 'n/a') + '</td>' +
+        '<td>' + (c.category ? '<span class="pip-pill">' + _pipEsc(c.category) + '</span>' : '') + '</td></tr>';
+    }).join('');
+  }
+
+  var gate = locked
+    ? '<div class="pip-gate"><div class="fchk-pro">' +
+        '<span class="fchk-pro-t">Included with Pro</span>' +
+        '<span class="fchk-pro-d">Ranks 11\u2013' + count + ' \u2014 the defense primes, robotics labs and fintech ' +
+          'giants queuing up behind the top ten.</span>' +
+        '<button type="button" class="fchk-pro-b" onclick="if(window.openUpgradeModal)openUpgradeModal()">Upgrade to Pro</button>' +
+      '</div></div>'
+    : '';
+
+  var table = rows
+    ? '<div class="pip-wrap"><div class="pip-scroll"><table class="pip"><thead><tr>' +
+        '<th>#</th><th>Company</th><th>Valuation</th><th>Revenue</th><th>Sector</th></tr></thead>' +
+        '<tbody' + (locked ? ' class="locked"' : '') + '>' + rows + '</tbody></table></div>' + gate + '</div>'
+    : '';
+
+  host.innerHTML = stats + cards + table;
+
+  host.querySelectorAll('[data-rank]').forEach(function(el){
+    el.addEventListener('click', function(){
+      var rank = parseInt(el.getAttribute('data-rank'), 10);
+      var c = list.filter(function(x){ return x.rank === rank; })[0];
+      if (c) _pipProfile(c);
+    });
+  });
+}
+
+/* Private companies have no ticker, so the stock drawer cannot show them.
+   Reuses the referral sheet's overlay chrome for a light profile card. */
+function _pipProfile(c){
+  var ov = document.getElementById('v2-ref-ov');   /* generic overlay shell */
+  if (!ov) return;
+  var body = document.getElementById('pipProfile');
+  if (!body){
+    body = document.createElement('div');
+    body.id = 'pipProfile';
+    body.className = 'v2-ref-ov';
+    body.setAttribute('onclick', 'if(event.target===this)_pipCloseProfile()');
+    document.body.appendChild(body);
+  }
+  body.innerHTML =
+    '<div class="v2-ref" style="text-align:left">' +
+      '<button class="v2-ref-x" onclick="_pipCloseProfile()" aria-label="Close">&times;</button>' +
+      '<div class="v2-ref-t" style="padding-right:30px">' + _pipEsc(c.name) + '</div>' +
+      '<div class="pip-val" style="margin:2px 0 4px">' + _pipVal(c.valuation_b) + '</div>' +
+      '<div class="pip-rev">Revenue <b>' + _pipEsc(c.revenue || 'n/a') + '</b>' +
+        (c.country ? ' \u00b7 ' + _pipEsc(c.country) : '') + '</div>' +
+      (c.category ? '<span class="pip-pill">' + _pipEsc(c.category) + '</span>' : '') +
+      (c.about ? '<p class="v2-ref-d" style="text-align:left">' + _pipEsc(c.about) + '</p>' : '') +
+      (c.take ? '<p class="pip-take">' + _pipEsc(c.take) + '</p>' : '') +
+    '</div>';
+  body.classList.add('on');
+}
+function _pipCloseProfile(){
+  var b = document.getElementById('pipProfile');
+  if (b) b.classList.remove('on');
+}
+
+async function loadTheses(){
+  var host = document.getElementById('tmBody');
+  if (!host) return;
+  if (_tmData){ _tmRender(_tmData); return; }
+  try {
+    var r = await fetch('/api/theses', { cache: 'no-store' });
+    _tmData = await r.json();
+  } catch(e){
+    host.innerHTML = '<div class="sc-empty">Couldn\u2019t load the thesis maps. Try again shortly.</div>';
+    return;
+  }
+  _tmRender(_tmData);
+}
+
+function _tmRender(d){
+  var host = document.getElementById('tmBody');
+  var list = (d && d.theses) || [];
+  if (!list.length){
+    host.innerHTML = '<div class="sc-empty">No thesis maps published yet.</div>';
+    return;
+  }
+  host.innerHTML = '<div class="tm-grid">' + list.map(function(t){
+    var live = String(t.status || '').toLowerCase() === 'live';
+    var title = _pipEsc(t.title || '');
+    /* The API marks a phrase to emphasise; highlight it rather than dropping it. */
+    if (t.accent){
+      var a = _pipEsc(t.accent);
+      title = title.replace(a, '<em>' + a + '</em>');
+    }
+    var inner =
+      '<div class="tm-eye"><span>' + _pipEsc(t.eyebrow || 'Thesis Map') + '</span>' +
+        '<span class="tm-tag ' + (live ? 'live' : 'soon') + '">' + (live ? 'Live' : 'Soon') + '</span></div>' +
+      '<h3 class="tm-t">' + title + '</h3>' +
+      '<p class="tm-s">' + _pipEsc(t.standfirst || '') + '</p>' +
+      '<div class="tm-go">' + (live ? 'Open the map \u2192' : 'In preparation') + '</div>';
+    return live
+      ? '<a class="tm-card" href="/theses/' + encodeURIComponent(t.slug) + '">' + inner + '</a>'
+      : '<div class="tm-card dim">' + inner + '</div>';
+  }).join('') + '</div>';
+}
 
 /* ── Refer a friend ─────────────────────────────────────────────────────
    The share sheet behind the sidebar item and the account-panel row. Orange
@@ -7631,9 +7890,9 @@ document.addEventListener('keydown', function(e){
       <svg viewBox="0 0 24 24"><defs><linearGradient id="ahg-scan" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#818CF8"/><stop offset="1" stop-color="#4F46E5"/></linearGradient></defs><rect x="2.5" y="2.5" width="19" height="19" rx="5.5" fill="url(#ahg-scan)"/><path d="M7 7h3M7 7v3M17 7h-3M17 7v3M7 17h3M7 17v-3M17 17h-3M17 17v-3" stroke="#fff" stroke-width="1.9" fill="none" stroke-linecap="round"/><circle cx="12" cy="12" r="2.4" fill="#fff"/></svg><span>Stock Scanner</span><span class="v2-nav-tag v2-tag-new">NEW</span>
     </div>
 
-    <a class="v2-nav-item" href="/future-heroes" style="text-decoration:none">
+    <div class="v2-nav-item" onclick="v2Show('heroes',this)">
       <svg viewBox="0 0 24 24"><defs><linearGradient id="ahg-heroes" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFC75F"/><stop offset="1" stop-color="#F5A623"/></linearGradient></defs><path fill="url(#ahg-heroes)" d="M12 3.2l1.9 3.9 4.3.6-3.1 3 .7 4.3-3.8-2-3.8 2 .7-4.3-3.1-3 4.3-.6z"/><path d="M7.2 17.5h9.6M9 20.5h6" stroke="url(#ahg-heroes)" stroke-width="1.8" stroke-linecap="round"/></svg><span>Pre IPO Stocks</span>
-    </a>
+    </div>
 
     <div class="v2-sb-section">Research</div>
     <div class="v2-nav-item" onclick="v2Show('fund',this)">
@@ -7642,9 +7901,9 @@ document.addEventListener('keydown', function(e){
     <div class="v2-nav-item" onclick="v2Show('market',this)">
       <svg viewBox="0 0 24 24"><defs><linearGradient id="ahg-mkt" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5FC24A"/><stop offset="1" stop-color="#0D9488"/></linearGradient></defs><rect x="2.5" y="2.5" width="19" height="19" rx="5.5" fill="url(#ahg-mkt)"/><path d="M6 15l3.5-4 3 2L18 7" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Market Analysis</span>
     </div>
-    <a class="v2-nav-item" href="/theses" style="text-decoration:none">
+    <div class="v2-nav-item" onclick="v2Show('theses',this)">
       <svg viewBox="0 0 24 24"><defs><linearGradient id="ahg-theses" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5DB3F1"/><stop offset="1" stop-color="#0040c1"/></linearGradient></defs><g fill="none" stroke="url(#ahg-theses)" stroke-width="2" stroke-linecap="round"><circle cx="6" cy="6" r="2.4"/><circle cx="6" cy="18" r="2.4"/><circle cx="18" cy="12" r="2.4"/><path d="M8.1 6.9l7.8 4.2M8.1 17.1l7.8-4.2"/></g></svg><span>Thesis Maps</span>
-    </a>
+    </div>
     <!-- Pro. Guard only fires once the plan is KNOWN, so a Pro user never
          sees a modal flash while the async plan check is in flight. The real
          gate is server-side on /api/event-digest. -->
@@ -8439,6 +8698,32 @@ document.addEventListener('keydown', function(e){
     <div class="sc-cats" id="scCats"></div>
     <div class="sc-body" id="scBody"><div class="sc-empty">Pick a scan to run it.</div></div>
     <p class="sc-note">Scans read the same reported figures as the rest of the dashboard and can lag or have gaps. A name appearing in a scan is a match on our stated criteria — it is not a recommendation, not advice, and not FCA-authorised. Capital at risk.</p>
+  </div>
+</div>
+
+
+<!-- PRE IPO STOCKS — was a link out to /future-heroes. Same data, in-app. -->
+<div id="panel-heroes" class="panel">
+  <div class="main">
+    <div class="sc-head">
+      <h2 class="sc-title">Pre IPO Stocks</h2>
+      <p class="sc-sub">The world's most valuable private companies, ranked by their latest funding-round and secondary-market valuations — so the day one of them files to list, you already know the story.</p>
+    </div>
+    <div id="pipBody"><div class="sc-empty">Loading the private markets…</div></div>
+    <p class="pip-note">Valuations are from the latest reported primary round or secondary-market marks and can be stale or disputed. Private companies do not report on a public timetable. Education only — not a recommendation, not advice, and not FCA-authorised. Capital at risk.</p>
+  </div>
+</div>
+
+<!-- THESIS MAPS — was a link out to /theses. The list is in-app now; each map
+     is still its own page, which is a drill-down rather than a nav item. -->
+<div id="panel-theses" class="panel">
+  <div class="main">
+    <div class="sc-head">
+      <h2 class="sc-title">Thesis Maps</h2>
+      <p class="sc-sub">Not a screener and not a chart. Each map takes one macro driver — AI capex, the power build-out, the defense budget — and traces where the money actually lands, layer by layer, company by company.</p>
+    </div>
+    <div id="tmBody"><div class="sc-empty">Loading thesis maps…</div></div>
+    <p class="tm-note">Maps are descriptive models of disclosed spending and revenue mix, not forecasts. The weightings are our judgement and are stated on each map. Not a recommendation, not advice, and not FCA-authorised. Capital at risk.</p>
   </div>
 </div>
 
@@ -17247,6 +17532,8 @@ function showTab(id, btn) {
   if (id === 'model') loadModelPortfolio();
   if (id === 'blog')  loadBlog();
   if (id === 'market') loadMarketAnalysis();
+  if (id === 'heroes') loadHeroes();
+  if (id === 'theses') loadTheses();
   if (id === 'events' && typeof eventsTab === 'function') eventsTab(_evSub || window._evTab || 'brief');
   // Revert the Sector Map to its top 6 whenever tabs change.
   if (typeof window._smResetWindow === 'function') window._smResetWindow();
