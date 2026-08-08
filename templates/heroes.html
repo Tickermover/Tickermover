@@ -10,20 +10,23 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500;1,9..144,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    :root{--blue:#14587D;--ink:#0A2F46;--muted:#475569}
+    /* Navy + warm, matching the rest of the site. Was a near-white #fcfbf9
+       with icy-blue accents — the old electric-blue scheme. Fraunces stays:
+       here the serif is the page's editorial identity, not theme. */
+    :root{--blue:#14587D;--ink:#0A2F46;--muted:#475569;--head:#4A5BC4;--accent:#C74E00}
     *{box-sizing:border-box}
-    body{margin:0;background:#fcfbf9;color:var(--ink);
+    body{margin:0;background:#FFF2EC;color:var(--ink);
       font-family:'Inter',system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased;line-height:1.6}
     a{color:var(--blue)}
-    .top{position:sticky;top:0;z-index:20;background:rgba(252,251,249,.86);backdrop-filter:saturate(180%) blur(12px);border-bottom:1px solid rgba(10,47,70,.07)}
+    .top{position:sticky;top:0;z-index:20;background:rgba(255,242,236,.86);backdrop-filter:saturate(180%) blur(12px);border-bottom:1px solid rgba(10,47,70,.07)}
     .top-in{max-width:980px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 20px}
     .brand{display:flex;align-items:center;gap:10px;text-decoration:none;font-weight:600;font-size:19px;letter-spacing:-.022em;color:#0a0a0a}
     .brand .mark{width:30px;height:30px;flex:none;background:linear-gradient(135deg,#8FBFDD 0%,#14587D 50%,#0A2F46 100%);
       -webkit-mask:url('/static/brand/tickermover-mark-mask.svg') center/contain no-repeat;mask:url('/static/brand/tickermover-mark-mask.svg') center/contain no-repeat}
     .cta{display:inline-flex;align-items:center;gap:6px;background:var(--blue);color:#fff;text-decoration:none;font-size:13px;font-weight:600;padding:8px 15px;border-radius:9px}
     .wrap{max-width:940px;margin:0 auto;padding:34px 20px 70px}
-    .eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:11.5px;font-weight:800;letter-spacing:.15em;text-transform:uppercase;color:#0A2F46;
-      background:linear-gradient(135deg,#eef4ff,#f5f9ff);border:1px solid #D9E6F2;border-radius:999px;padding:6px 14px}
+    .eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:11.5px;font-weight:800;letter-spacing:.15em;text-transform:uppercase;color:var(--head);
+      background:rgba(74,91,196,.10);border:1px solid rgba(74,91,196,.20);border-radius:999px;padding:6px 14px}
     h1.title{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:clamp(32px,6vw,52px);line-height:1.06;letter-spacing:-.018em;margin:16px 0 12px}
     h1.title em{font-style:italic;color:#0A2F46}
     .standfirst{font-size:18px;line-height:1.55;color:#334155;max-width:64ch;margin:0 0 24px}
@@ -37,8 +40,8 @@
     .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;margin:0 0 42px}
     .card{position:relative;background:#fff;border:1px solid rgba(10,47,70,.09);border-radius:16px;padding:18px 18px 16px;box-shadow:0 1px 3px rgba(10,47,70,.05);overflow:hidden;
       cursor:pointer;transition:transform .18s,box-shadow .18s,border-color .18s}
-    .card:hover{transform:translateY(-2px);box-shadow:0 10px 26px rgba(0,28,49,.10);border-color:#b9d2ff}
-    .card.podium{background:linear-gradient(180deg,#f4f8ff,#fff 55%);border-color:#D9E6F2}
+    .card:hover{transform:translateY(-2px);box-shadow:0 10px 26px rgba(0,28,49,.10);border-color:#C7CEF0}
+    .card.podium{background:linear-gradient(180deg,#FBFAF8,#fff 55%);border-color:#E4E7EC}
     .card .rk{position:absolute;top:10px;right:14px;font-family:'Fraunces',Georgia,serif;font-weight:600;font-style:italic;font-size:30px;color:rgba(20,88,125,.16)}
     .card .nm{font-size:17.5px;font-weight:700;letter-spacing:-.01em;display:flex;align-items:center;gap:8px;padding-right:40px}
     .card .val{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:29px;color:#0A2F46;margin:6px 0 2px}
@@ -55,7 +58,7 @@
     td{padding:11px 14px;border-bottom:1px solid rgba(10,47,70,.055);vertical-align:middle;white-space:nowrap}
     tr:last-child td{border-bottom:none}
     tbody tr.go{cursor:pointer}
-    tbody tr.go:hover td{background:#f4f8ff}
+    tbody tr.go:hover td{background:#FBF9FF}
     td.rk{color:#94a3b8;font-weight:600;width:44px}
     td.nm{font-weight:700;letter-spacing:-.01em}
     td.val{font-weight:700;color:#0A2F46}
@@ -64,8 +67,8 @@
     .flag{font-size:15px;margin-right:2px}
     tbody.locked tr{filter:blur(5px);user-select:none;pointer-events:none}
     .gate{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:24px;
-      background:linear-gradient(180deg,rgba(252,251,249,.25),rgba(252,251,249,.88) 60%,rgba(252,251,249,.96))}
-    .gate-card{text-align:center;max-width:420px;background:#fff;border:1px solid #D9E6F2;border-radius:18px;padding:26px 26px 24px;box-shadow:0 18px 50px rgba(0,28,49,.16)}
+      background:linear-gradient(180deg,rgba(255,242,236,.25),rgba(255,242,236,.88) 60%,rgba(255,242,236,.96))}
+    .gate-card{text-align:center;max-width:420px;background:#fff;border:1px solid #E4E7EC;border-radius:18px;padding:26px 26px 24px;box-shadow:0 18px 50px rgba(0,28,49,.16)}
     .gate-card .lock{font-size:26px}
     .gate-card h3{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:21px;margin:8px 0 6px;letter-spacing:-.01em}
     .gate-card p{font-size:13.5px;color:var(--muted);margin:0 0 16px;line-height:1.55}
@@ -77,7 +80,7 @@
     /* ── in-page company detail sheet ── */
     .ov{position:fixed;inset:0;background:rgba(10,47,70,.44);backdrop-filter:blur(3px);z-index:50;opacity:0;pointer-events:none;transition:opacity .22s}
     .ov.on{opacity:1;pointer-events:auto}
-    .sheet{position:fixed;top:0;right:0;bottom:0;width:min(480px,100%);background:#fcfbf9;z-index:51;box-shadow:-24px 0 70px rgba(0,28,49,.25);
+    .sheet{position:fixed;top:0;right:0;bottom:0;width:min(480px,100%);background:#FFF9F6;z-index:51;box-shadow:-24px 0 70px rgba(0,28,49,.25);
       transform:translateX(103%);transition:transform .26s cubic-bezier(.32,.72,.31,1);display:flex;flex-direction:column}
     .sheet.on{transform:translateX(0)}
     .sh-top{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:16px 20px 12px;border-bottom:1px solid rgba(10,47,70,.08);flex:none}
@@ -121,12 +124,27 @@
   </style>
 </head>
 <body>
+  <!-- Marketing-first markup so a cold visitor (and the crawler — this page is
+       in sitemap.xml) gets the pitch. Patched below for signed-in users, who
+       arrive from the app sidebar and were otherwise offered "Open the
+       dashboard": the thing they had just left, with no way back but the
+       browser button. That is what made an internal page feel outbound. -->
   <header class="top">
     <div class="top-in">
-      <a class="brand" href="/"><span class="mark"></span><span>TickerMover</span></a>
-      <a class="cta" href="/app">Open the dashboard →</a>
+      <a class="brand" id="navBrand" href="/"><span class="mark"></span><span>TickerMover</span></a>
+      <a class="cta" id="navCta" href="/app">Open the dashboard →</a>
     </div>
   </header>
+  <script>
+  (function(){
+    var signedIn = false;
+    try { signedIn = !!localStorage.getItem('ah_token'); } catch(e){}
+    if (!signedIn) return;
+    var brand = document.getElementById('navBrand'), cta = document.getElementById('navCta');
+    if (brand) brand.href = '/app';
+    if (cta){ cta.href = '/app'; cta.textContent = '← Back to the dashboard'; }
+  })();
+  </script>
   <main class="wrap"><div id="heroes"><div class="loading">🛰️ Scanning the private markets…</div></div></main>
 
   <div class="ov" id="sh-ov"></div>

@@ -10,25 +10,30 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-:root{--blue:#14587D;--blue-d:#0A2F46;--ink:#0A2F46;--muted:#475569;--faint:#94a3b8;--line:rgba(10,47,70,.09);--bg:#fcfbf9;
+/* Navy + warm, matching the rest of the site. This page ran on a near-white
+   #fcfbf9 with icy-blue accents — that is the OLD electric-blue scheme, and it
+   is a large part of why the page read as a different product rather than a
+   page of this one. */
+:root{--blue:#14587D;--blue-d:#0A2F46;--ink:#0A2F46;--muted:#475569;--faint:#94a3b8;--line:rgba(10,47,70,.09);--bg:#FFF2EC;
+  --head:#4A5BC4;--accent:#C74E00;--neutral:#F2F1EE;
   --serif:'Inter',Georgia,serif;--body:'Inter',system-ui,-apple-system,sans-serif;--mono:'JetBrains Mono',ui-monospace,monospace;}
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
 body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased}
 a{color:var(--blue)}
-.top{position:sticky;top:0;z-index:20;background:rgba(252,251,249,.86);backdrop-filter:saturate(180%) blur(12px);border-bottom:1px solid var(--line)}
+.top{position:sticky;top:0;z-index:20;background:rgba(255,242,236,.86);backdrop-filter:saturate(180%) blur(12px);border-bottom:1px solid var(--line)}
 .top-in{max-width:960px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 20px}
 .back{font-size:13px;font-weight:600;color:var(--muted);text-decoration:none}
 .back:hover{color:var(--ink)}
 .cta-top{display:inline-flex;align-items:center;gap:6px;background:var(--blue);color:#fff;text-decoration:none;font-size:13px;font-weight:600;padding:8px 15px;border-radius:9px}
 .wrap{max-width:960px;margin:0 auto;padding:34px 20px 70px}
-.eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:11px;font-weight:800;letter-spacing:.15em;text-transform:uppercase;color:var(--blue-d);background:linear-gradient(135deg,#eef4ff,#f5f9ff);border:1px solid #D9E6F2;border-radius:999px;padding:6px 13px}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:11px;font-weight:800;letter-spacing:.15em;text-transform:uppercase;color:var(--head);background:rgba(74,91,196,.10);border:1px solid rgba(74,91,196,.20);border-radius:999px;padding:6px 13px}
 h1{font-family:var(--serif);font-weight:600;font-size:clamp(34px,6vw,58px);line-height:1.04;letter-spacing:-.02em;margin:16px 0 14px;max-width:15ch}
 h1 em{font-style:italic;color:var(--blue-d)}
 .standfirst{max-width:64ch;color:#334155;font-size:18px;line-height:1.5;margin:0}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;margin:34px 0 0}
 .card{position:relative;background:#fff;border:1px solid var(--line);border-radius:16px;padding:22px 22px 20px;display:flex;flex-direction:column;text-decoration:none;color:inherit;box-shadow:0 1px 3px rgba(10,47,70,.05);transition:border-color .16s,transform .16s,box-shadow .16s;min-height:212px}
-a.card:hover{border-color:#b9d2ff;transform:translateY(-2px);box-shadow:0 12px 28px -14px rgba(0,28,49,.28)}
+a.card:hover{border-color:#C7CEF0;transform:translateY(-2px);box-shadow:0 12px 28px -14px rgba(0,28,49,.28)}
 .c-eyebrow{display:flex;justify-content:space-between;align-items:center;font-size:10.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin-bottom:12px}
 .tag{font-family:var(--mono);font-size:9.5px;letter-spacing:.06em;padding:3px 9px;border-radius:999px;font-weight:600}
 .tag.live{background:#e7f6ec;color:#0a7d33;border:1px solid #bfe6cb}
@@ -49,10 +54,28 @@ a.card:hover{border-color:#b9d2ff;transform:translateY(-2px);box-shadow:0 12px 2
 </style>
 </head>
 <body>
+<!-- This header assumed every visitor was a logged-out prospect. Reached from
+     the app sidebar, it offered a Pro user "Open the dashboard" — the thing
+     they had just left — and the only way back was the browser button. That is
+     what made an internal page feel like an outbound link. The signed-in state
+     is patched in below; the markup stays marketing-first so a cold visitor
+     (and the crawler, since this page is in sitemap.xml) sees the pitch. -->
 <header class="top"><div class="top-in">
-  <a class="back" href="/">← Back to TickerMover</a>
-  <a class="cta-top" href="/app">Open the dashboard →</a>
+  <a class="back" id="navBack" href="/">← Back to TickerMover</a>
+  <a class="cta-top" id="navCta" href="/app">Open the dashboard →</a>
 </div></header>
+<script>
+(function(){
+  var signedIn = false;
+  try { signedIn = !!localStorage.getItem('ah_token'); } catch(e){}
+  if (!signedIn) return;
+  var back = document.getElementById('navBack'), cta = document.getElementById('navCta');
+  if (back){ back.href = '/app'; back.textContent = '← Back to the dashboard'; }
+  /* Nothing useful to sell someone who already pays; point them at the other
+     half of this feature instead of back where they came from. */
+  if (cta){ cta.href = '/app#watchlist'; cta.textContent = 'My watchlist →'; }
+})();
+</script>
 
 <main class="wrap">
   <span class="eyebrow">◇ Thesis Maps</span>
