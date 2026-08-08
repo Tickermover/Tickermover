@@ -10863,6 +10863,16 @@ const CE_BACKDROP_MAX = 70;   // # backdrop tickers actually scattered (rest are
    /api/event-intel per row would lazily generate — an Alpha Vantage fetch
    and a model call for every uncached name on one panel load. Rows without
    a cached brief degrade to a prompt rather than an empty cell.        */
+/* escHTML lives in a DIFFERENT <script> block's IIFE (the drawer module),
+   so it is not in scope here — calling it threw ReferenceError, ceBuildCloud
+   died, and the panel sat on its static "Loading companies…" placeholder.
+   The original ceBuildCloud never used it; the dependency came in with the
+   port. Local escaper instead. */
+function _ceEsc(v){
+  return String(v == null ? '' : v).replace(/[&<>"']/g, function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+  });
+}
 var _ceFilter = 'all', _ceBriefs = {}, _ceActions = null, _cePrime = null;
 
 function _ceWatch(){
@@ -10872,7 +10882,7 @@ function _ceWatch(){
 }
 function _ceNum(v){ var n = parseInt(v, 10); return isNaN(n) ? null : n; }
 function _ceLogoHTML(sym){
-  return '<span class="ce-logo">' + escHTML(String(sym || '').slice(0, 2)) +
+  return '<span class="ce-logo">' + _ceEsc(String(sym || '').slice(0, 2)) +
     '<img src="https://assets.parqet.com/logos/symbol/' + encodeURIComponent(sym) +
     '" alt="" loading="lazy" onerror="this.remove()"></span>';
 }
@@ -10883,15 +10893,15 @@ function _ceScope(list, key){
 }
 function _ceRowHTML(t, whenTxt, fresh){
   var b = _ceBriefs[String(t.ticker).toUpperCase()];
-  return '<div class="ce-row' + (fresh ? ' fresh' : '') + '" data-tic="' + escHTML(t.ticker) + '">' +
-    '<span class="ce-when">' + escHTML(whenTxt) + '</span>' + _ceLogoHTML(t.ticker) +
-    '<span class="ce-id"><b>' + escHTML(t.ticker) + '</b><span>' + escHTML(t.name || '') + '</span></span>' +
+  return '<div class="ce-row' + (fresh ? ' fresh' : '') + '" data-tic="' + _ceEsc(t.ticker) + '">' +
+    '<span class="ce-when">' + _ceEsc(whenTxt) + '</span>' + _ceLogoHTML(t.ticker) +
+    '<span class="ce-id"><b>' + _ceEsc(t.ticker) + '</b><span>' + _ceEsc(t.name || '') + '</span></span>' +
     (b && b.takeaway
-      ? '<span class="ce-take">' + escHTML(b.takeaway) + '</span>'
+      ? '<span class="ce-take">' + _ceEsc(b.takeaway) + '</span>'
       : '<span class="ce-take none">No brief cached yet — open to build it.</span>') +
     '<span class="ce-acts">' +
-      '<button class="ce-a" data-act="brief" data-tic="' + escHTML(t.ticker) + '">Brief</button>' +
-      '<button class="ce-a" data-act="concall" data-tic="' + escHTML(t.ticker) + '">Concall</button>' +
+      '<button class="ce-a" data-act="brief" data-tic="' + _ceEsc(t.ticker) + '">Brief</button>' +
+      '<button class="ce-a" data-act="concall" data-tic="' + _ceEsc(t.ticker) + '">Concall</button>' +
     '</span></div>';
 }
 
@@ -10949,12 +10959,12 @@ function ceBuildCloud(){
   }
 
   var actHTML = acts.length ? acts.map(function(a){
-    return '<div class="ce-row" data-tic="' + escHTML(a.symbol) + '">' +
-      '<span class="ce-when">' + escHTML(String(a.date || '').slice(5)) + '</span>' + _ceLogoHTML(a.symbol) +
-      '<span class="ce-id"><b>' + escHTML(a.symbol) + '</b><span>' + escHTML(a.name || '') + '</span></span>' +
-      '<span class="ce-take">' + escHTML(a.action || '') + '</span>' +
+    return '<div class="ce-row" data-tic="' + _ceEsc(a.symbol) + '">' +
+      '<span class="ce-when">' + _ceEsc(String(a.date || '').slice(5)) + '</span>' + _ceLogoHTML(a.symbol) +
+      '<span class="ce-id"><b>' + _ceEsc(a.symbol) + '</b><span>' + _ceEsc(a.name || '') + '</span></span>' +
+      '<span class="ce-take">' + _ceEsc(a.action || '') + '</span>' +
       '<span class="ce-acts"><span class="ce-tag ' + (a.type === 'Split' ? 'split' : 'div') + '">' +
-        escHTML(a.type || '') + '</span></span></div>';
+        _ceEsc(a.type || '') + '</span></span></div>';
   }).join('') : '<div class="ce-empty">No dividends or splits for this filter.</div>';
 
   host.innerHTML = filters +
