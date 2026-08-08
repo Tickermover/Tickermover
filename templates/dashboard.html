@@ -454,46 +454,126 @@ body.v2 #sectors-grid .smh-name{font-weight:800;font-size:12.5px;color:#0f172a!i
   border:1px solid rgba(41,112,255,.18);border-radius:8px;padding:6px 12px;cursor:pointer;white-space:nowrap;transition:background .15s,border-color .15s}
 .uni-map-toggle:hover{background:rgba(41,112,255,.14);border-color:rgba(41,112,255,.32)}
 .uni-map-collapsed .sec-grid-map{display:none}
-/* ── Stock Scans ────────────────────────────────────────────────────────── */
-.sc-head{margin:2px 0 18px}
-.sc-title{font-family:var(--font-head);font-size:27px;font-weight:600;letter-spacing:-.01em;margin:0 0 7px;color:var(--ink,#0f172a)}
-.sc-sub{font-size:13.5px;line-height:1.6;color:#64748b;margin:0;max-width:78ch}
-.sc-cats{display:grid;grid-template-columns:repeat(auto-fill,minmax(268px,1fr));gap:12px;margin-bottom:22px}
-.sc-cat{border:1px solid #e6ebf2;border-radius:13px;background:#fff;padding:14px 15px;cursor:pointer;
-  transition:border-color .15s,box-shadow .15s,transform .12s}
-.sc-cat:hover{border-color:#c7d7f5;box-shadow:0 8px 22px -14px rgba(9,20,60,.4);transform:translateY(-1px)}
-.sc-cat.on{border-color:#4F46E5;box-shadow:0 0 0 1px #4F46E5}
-.sc-cat-h{display:flex;align-items:center;gap:9px}
-.sc-cat-ico{width:30px;height:30px;border-radius:9px;background:#eef1ff;display:grid;place-items:center;font-size:15px;flex:none}
-.sc-cat-n{font-size:14px;font-weight:800;color:var(--ink,#0f172a)}
-.sc-cat-tag{font-size:9px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#4F46E5;
-  background:rgba(79,70,229,.12);border-radius:4px;padding:2px 6px;margin-left:auto}
-.sc-cat-b{font-size:12.5px;color:#64748b;margin-top:6px;line-height:1.5}
-.sc-cat-c{font-size:11px;font-weight:700;color:#94a3b8;margin-top:7px}
-.sc-list{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
-.sc-pill{font-size:12.5px;font-weight:700;padding:7px 13px;border-radius:999px;border:1px solid #e2e8f0;
-  background:#fff;color:#475569;cursor:pointer;transition:background .14s,color .14s,border-color .14s}
-.sc-pill:hover{border-color:#4F46E5;color:#4F46E5}
-.sc-pill.on{background:#4F46E5;border-color:#4F46E5;color:#fff}
-.sc-res-h{display:flex;align-items:baseline;gap:11px;flex-wrap:wrap;margin:0 0 4px}
-.sc-res-n{font-size:16.5px;font-weight:800;color:var(--ink,#0f172a)}
-.sc-res-c{font-size:12px;font-weight:700;color:#4F46E5;background:rgba(79,70,229,.1);border-radius:999px;padding:3px 10px}
-.sc-res-b{font-size:13px;color:#475569;margin:0 0 3px}
-.sc-res-note{font-size:11.5px;color:#94a3b8;margin:0 0 13px}
-.sc-wrap{overflow-x:auto;border:1px solid #e6ebf2;border-radius:12px;background:#fff}
-table.sc{width:100%;border-collapse:collapse;font-size:12.5px;min-width:560px}
-table.sc th,table.sc td{padding:9px 12px;text-align:right;white-space:nowrap;border-bottom:1px solid #f1f5f9}
-table.sc th{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#94a3b8;font-weight:800;
-  background:#fbfcfe;position:sticky;top:0}
-table.sc td:first-child,table.sc th:first-child,
-table.sc td:nth-child(2),table.sc th:nth-child(2){text-align:left}
-table.sc tbody tr:hover td{background:rgba(79,70,229,.04)}
-table.sc tbody tr{cursor:pointer}
-.sc-tix{font-weight:800;color:#2970ff}
-.sc-pos{color:#15803d;font-weight:700}.sc-neg{color:#b91c1c;font-weight:700}
-.sc-empty,.sc-load{padding:34px 12px;text-align:center;color:#94a3b8;font-size:13.5px}
-.sc-note{font-size:11.5px;line-height:1.55;color:#94a3b8;margin:16px 0 0}
-@media(max-width:640px){ .sc-cats{grid-template-columns:1fr} .sc-title{font-size:22px} }
+/* ── Stock Scanner ───────────────────────────────────────────────────────
+   Premium pass, 8 Aug 2026. Scoped to #panel-scans on purpose: an id in the
+   selector wins outright, which is the lesson the pricing panel taught —
+   a class-only rule loses to any 2-class rule elsewhere in the sheet even
+   with !important.
+   What changed and why:
+   - the Company column is folded into the ticker cell with a logo. At this
+     width it was mostly padding, and a logo is what makes a row scannable.
+   - Alpha becomes a banded pill and Grade a chip, so the two judgement
+     columns stop reading as plain numbers among five other numbers.
+   - percentage columns get a micro-bar scaled to the LARGEST value on
+     screen, so magnitude is comparable down a column at a glance.
+   - the "Our lines:" note becomes chips. The thresholds are the product;
+     as grey prose they read as small print and got skipped.
+   - headers sort, and loading is a skeleton rather than a line of text.
+   ──────────────────────────────────────────────────────────────────────── */
+#panel-scans .sc-head{margin:2px 0 20px}
+#panel-scans .sc-title{font-family:var(--font-head);font-size:29px;font-weight:500;letter-spacing:-.02em;margin:0 0 7px;color:#0A2F46}
+#panel-scans .sc-sub{font-size:13.5px;font-weight:300;line-height:1.6;color:#5D6C7B;margin:0;max-width:78ch}
+
+#panel-scans .sc-cats{display:grid;grid-template-columns:repeat(auto-fill,minmax(252px,1fr));gap:12px;margin-bottom:24px}
+#panel-scans .sc-cat{position:relative;overflow:hidden;border:1px solid #E4E7EC;border-radius:16px;
+  background:#fff;padding:16px 17px 14px;cursor:pointer;box-shadow:0 1px 2px rgba(10,31,54,.04);
+  transition:border-color .18s,box-shadow .28s,transform .18s}
+#panel-scans .sc-cat::before{content:'';position:absolute;inset:0 0 auto 0;height:3px;
+  background:linear-gradient(90deg,#5566D8,#4A5BC4);opacity:0;transition:opacity .18s}
+#panel-scans .sc-cat:hover{border-color:#C7CEF0;transform:translateY(-2px);box-shadow:0 14px 30px -18px rgba(20,28,66,.42)}
+#panel-scans .sc-cat.on{border-color:#4A5BC4;box-shadow:0 14px 30px -18px rgba(74,91,196,.5)}
+#panel-scans .sc-cat.on::before{opacity:1}
+#panel-scans .sc-cat-h{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+#panel-scans .sc-cat-ico{width:32px;height:32px;border-radius:10px;flex:none;display:grid;place-items:center;font-size:15px;
+  background:linear-gradient(135deg,rgba(85,102,216,.14),rgba(74,91,196,.08));border:1px solid rgba(74,91,196,.18)}
+#panel-scans .sc-cat.on .sc-cat-ico{background:linear-gradient(135deg,#5566D8,#4A5BC4);border-color:transparent}
+#panel-scans .sc-cat-n{font-size:14px;font-weight:600;letter-spacing:-.01em;color:#0A2F46}
+#panel-scans .sc-cat-tag{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:8.5px;font-weight:700;
+  letter-spacing:.1em;text-transform:uppercase;color:#4A5BC4;background:rgba(74,91,196,.12);border-radius:5px;padding:3px 6px}
+#panel-scans .sc-cat-b{font-size:12.5px;font-weight:300;color:#5D6C7B;line-height:1.5;min-height:38px}
+#panel-scans .sc-cat-c{display:inline-block;margin-top:9px;font-family:'JetBrains Mono',monospace;font-size:9.5px;
+  font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#5D6C7B;background:#F2F1EE;border-radius:100px;padding:4px 9px}
+
+#panel-scans .sc-list{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}
+#panel-scans .sc-pill{font-family:inherit;font-size:12.5px;font-weight:500;padding:8px 15px;border-radius:100px;
+  border:1px solid #E4E7EC;background:#fff;color:#5D6C7B;cursor:pointer;box-shadow:inset 0 0 0 0 #4A5BC4;
+  transition:box-shadow .45s cubic-bezier(.22,.9,.28,1),color .3s,border-color .3s}
+#panel-scans .sc-pill:hover{border-color:#4A5BC4;color:#4A5BC4}
+#panel-scans .sc-pill.on{border-color:#4A5BC4;color:#fff;box-shadow:inset 0 0 0 60px #4A5BC4}
+
+#panel-scans .sc-res-h{display:flex;align-items:center;gap:11px;flex-wrap:wrap;margin:0 0 6px}
+#panel-scans .sc-res-n{font-size:19px;font-weight:600;letter-spacing:-.015em;color:#0A2F46}
+#panel-scans .sc-res-c{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;letter-spacing:.08em;
+  color:#4A5BC4;background:rgba(74,91,196,.11);border-radius:100px;padding:5px 11px}
+#panel-scans .sc-res-b{font-size:13.5px;font-weight:300;color:#475569;margin:0 0 10px;line-height:1.55}
+#panel-scans .sc-crit{display:flex;flex-wrap:wrap;gap:7px;align-items:center;margin:0 0 15px}
+#panel-scans .sc-crit-k{font-family:'JetBrains Mono',monospace;font-size:9.5px;font-weight:700;letter-spacing:.12em;
+  text-transform:uppercase;color:#94a3b8}
+#panel-scans .sc-crit-c{font-size:11.5px;font-weight:500;color:#0A2F46;background:#fff;border:1px solid #E4E7EC;
+  border-radius:100px;padding:4px 11px}
+#panel-scans .sc-crit-c b{font-family:'JetBrains Mono',monospace;font-weight:700;color:#4A5BC4}
+
+#panel-scans .sc-wrap{overflow-x:auto;border:1px solid #E4E7EC;border-radius:16px;background:#fff;
+  box-shadow:0 1px 2px rgba(10,31,54,.04),0 20px 44px -34px rgba(10,31,54,.30)}
+#panel-scans table.sc{width:100%;border-collapse:separate;border-spacing:0;font-size:13px;min-width:820px}
+#panel-scans table.sc th{position:sticky;top:0;z-index:2;background:#FBFAF8;font-family:'JetBrains Mono',monospace;
+  font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#7A8899;text-align:right;
+  padding:12px 14px;white-space:nowrap;border-bottom:1px solid #E4E7EC;cursor:pointer;user-select:none;
+  transition:color .2s,background .2s}
+#panel-scans table.sc th:hover{color:#4A5BC4;background:#F6F4FF}
+#panel-scans table.sc th .sc-ar{opacity:0;margin-left:5px;transition:opacity .2s}
+#panel-scans table.sc th.sorted{color:#4A5BC4}
+#panel-scans table.sc th.sorted .sc-ar{opacity:1}
+#panel-scans table.sc td{padding:11px 14px;text-align:right;white-space:nowrap;border-bottom:1px solid #F3F1EE;vertical-align:middle}
+#panel-scans table.sc tbody tr:last-child td{border-bottom:0}
+#panel-scans table.sc th:first-child,#panel-scans table.sc td:first-child,
+#panel-scans table.sc th:nth-child(2),#panel-scans table.sc td:nth-child(2){text-align:left}
+#panel-scans table.sc tbody tr{cursor:pointer;transition:background .16s}
+#panel-scans table.sc tbody tr:hover{background:#FBF9FF}
+#panel-scans table.sc tbody tr:hover td:first-child{box-shadow:inset 3px 0 0 #FF6100}
+
+#panel-scans .sc-rank{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:#B6BFC9;width:38px}
+#panel-scans .sc-id{display:flex;align-items:center;gap:10px;min-width:0}
+#panel-scans .sc-logo{width:28px;height:28px;border-radius:8px;flex:none;overflow:hidden;background:#F2F1EE;
+  border:1px solid #E4E7EC;display:grid;place-items:center;font-family:'JetBrains Mono',monospace;font-size:9px;
+  font-weight:700;color:#7A8899}
+#panel-scans .sc-logo img{width:100%;height:100%;object-fit:contain;padding:3px}
+#panel-scans .sc-id-t{display:flex;flex-direction:column;gap:1px;min-width:0}
+#panel-scans .sc-tix{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:12.5px;letter-spacing:.02em;color:#4A5BC4}
+#panel-scans .sc-nm{font-size:11.5px;font-weight:300;color:#7A8899;max-width:24ch;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+#panel-scans .sc-alpha{display:inline-flex;align-items:center;justify-content:center;min-width:42px;
+  font-family:'JetBrains Mono',monospace;font-weight:700;font-size:12.5px;padding:5px 9px;border-radius:8px}
+#panel-scans .sc-alpha.t4{color:#15803d;background:rgba(22,163,74,.12)}
+#panel-scans .sc-alpha.t3{color:#4A5BC4;background:rgba(74,91,196,.12)}
+#panel-scans .sc-alpha.t2{color:#a16207;background:rgba(245,166,35,.16)}
+#panel-scans .sc-alpha.t1{color:#7A8899;background:#F2F1EE}
+#panel-scans .sc-gr{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:7px;
+  font-family:'JetBrains Mono',monospace;font-weight:700;font-size:11.5px}
+#panel-scans .sc-gr.g-A{color:#15803d;background:rgba(22,163,74,.13)}
+#panel-scans .sc-gr.g-B{color:#4A5BC4;background:rgba(74,91,196,.13)}
+#panel-scans .sc-gr.g-C{color:#a16207;background:rgba(245,166,35,.18)}
+#panel-scans .sc-gr.g-D,#panel-scans .sc-gr.g-F{color:#b91c1c;background:rgba(220,38,38,.12)}
+
+#panel-scans .sc-mv{display:flex;flex-direction:column;align-items:flex-end;gap:5px}
+#panel-scans .sc-mv b{font-family:'JetBrains Mono',monospace;font-weight:500;font-size:12.5px;color:#10293D}
+#panel-scans .sc-bar{width:62px;height:3px;border-radius:2px;background:#EFEDEA;overflow:hidden}
+#panel-scans .sc-bar i{display:block;height:100%;border-radius:2px;background:#4A5BC4}
+#panel-scans .sc-bar.neg i{background:#b91c1c}
+#panel-scans .sc-pos{color:#15803d;font-weight:500}
+#panel-scans .sc-neg{color:#b91c1c;font-weight:500}
+
+#panel-scans .sc-skel{border:1px solid #E4E7EC;border-radius:16px;background:#fff;overflow:hidden}
+#panel-scans .sc-skel-r{display:flex;align-items:center;gap:14px;padding:14px 16px;border-bottom:1px solid #F3F1EE}
+#panel-scans .sc-skel-r:last-child{border-bottom:0}
+#panel-scans .sc-sk{background:linear-gradient(90deg,#F2F1EE 25%,#E9E7E3 37%,#F2F1EE 63%);background-size:400% 100%;
+  animation:scsh 1.3s ease infinite;border-radius:6px;height:11px}
+@keyframes scsh{0%{background-position:100% 50%}100%{background-position:0 50%}}
+@media(prefers-reduced-motion:reduce){#panel-scans .sc-sk{animation:none}}
+
+#panel-scans .sc-empty,#panel-scans .sc-load{padding:38px 12px;text-align:center;color:#7A8899;font-size:13.5px;font-weight:300}
+#panel-scans .sc-note{font-size:11.5px;font-weight:300;line-height:1.6;color:#94a3b8;margin:18px 0 0}
+@media(max-width:640px){ #panel-scans .sc-cats{grid-template-columns:1fr} #panel-scans .sc-title{font-size:23px} }
 /* ── Sector connections — animated relationship graph ──────────────────── */
 .secg-wrap{position:relative;grid-column:1/-1;border:1px solid #e6ebf2;border-radius:14px;
   background:radial-gradient(120% 120% at 50% 0%,#fbfdff 0%,#f4f7fb 100%);overflow:hidden}
@@ -21171,6 +21251,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
    Catalogue is fetched once; each scan runs server-side over data already in
    memory, so switching scans is a ~120ms call, not a screen rebuild. */
 var _scCat=null, _scActive=null, _scScan=null;
+var _scSort=null, _scDir='desc', _scLast=null;
 function scansInit(){
   var host=document.getElementById('scCats');
   if(!host || _scCat) { if(_scCat) scRenderCats(); return; }
@@ -21214,18 +21295,14 @@ function scRun(id){
   var pills='<div class="sc-list">'+c.scans.map(function(x){
     return '<button class="sc-pill'+(x.id===id?' on':'')+'" data-scan="'+escHTML(x.id)+'">'+escHTML(x.name)+'</button>';
   }).join('')+'</div>';
-  body.innerHTML=pills+'<div class="sc-load">Running the scan…</div>';
+  _scSort=null; _scDir='desc'; _scLast=null;
+  body.innerHTML=pills+scSkeleton();
   scWirePills(body);
   fetch('/api/scans/'+encodeURIComponent(id)).then(function(r){return r.json();}).then(function(d){
     if(!d||d.available===false){ body.innerHTML=pills+'<div class="sc-empty">That scan is unavailable.</div>'; scWirePills(body); return; }
-    body.innerHTML=pills+scResultHTML(d);
+    _scLast=d;
+    body.innerHTML=pills+scHeaderHTML(d)+scResultHTML(d);
     scWirePills(body);
-    [].forEach.call(body.querySelectorAll('tr[data-tix]'),function(tr){
-      tr.addEventListener('click',function(){
-        var t=tr.getAttribute('data-tix');
-        if(t && typeof tsOpen==='function'){ try{ tsOpen(t); }catch(e){} }
-      });
-    });
   }).catch(function(){ body.innerHTML=pills+'<div class="sc-empty">Could not run that scan.</div>'; scWirePills(body); });
 }
 /* This block lives inside the drawer module's IIFE (it reuses escHTML and
@@ -21236,6 +21313,24 @@ window.scansInit = scansInit;
 function scWirePills(body){
   [].forEach.call(body.querySelectorAll('.sc-pill'),function(b){
     b.addEventListener('click',function(){ scRun(b.getAttribute('data-scan')); });
+  });
+  /* Row -> open the drawer. Re-bound on every render because sorting
+     rebuilds the tbody. */
+  [].forEach.call(body.querySelectorAll('tr[data-tix]'),function(tr){
+    tr.addEventListener('click',function(){
+      var t=tr.getAttribute('data-tix');
+      if(t && typeof tsOpen==='function'){ try{ tsOpen(t); }catch(e){} }
+    });
+  });
+  /* Sortable headers. Re-renders only the table, so the result header,
+     blurb and criteria chips above it are left alone. */
+  [].forEach.call(body.querySelectorAll('th[data-k]'),function(th){
+    th.addEventListener('click',function(){
+      var k=th.getAttribute('data-k');
+      if(_scSort===k){ _scDir=(_scDir==='asc'?'desc':'asc'); } else { _scSort=k; _scDir='desc'; }
+      var wrap=body.querySelector('.sc-wrap');
+      if(wrap && _scLast){ wrap.outerHTML=scResultHTML(_scLast); scWirePills(body); }
+    });
   });
 }
 function scFmt(v,fmt){
@@ -21261,24 +21356,111 @@ function scFmt(v,fmt){
     default:       return escHTML(String(v));
   }
 }
-function scResultHTML(d){
-  var cols=d.cols||[], rows=d.rows||[];
-  if(!rows.length){
-    return '<div class="sc-res-h"><span class="sc-res-n">'+escHTML(d.name||'')+'</span></div>'+
-           '<p class="sc-res-b">'+escHTML(d.blurb||'')+'</p>'+
-           '<div class="sc-empty">Nothing matched this scan right now. That is a result too.</div>';
-  }
-  var head='<tr>'+cols.map(function(c){return '<th>'+escHTML(c.label)+'</th>';}).join('')+'</tr>';
-  var body=rows.map(function(r){
-    return '<tr data-tix="'+escHTML(r.ticker||'')+'">'+
-      cols.map(function(c){ return '<td>'+scFmt(r[c.key],c.fmt)+'</td>'; }).join('')+'</tr>';
-  }).join('');
+/* Header, blurb and criteria live SEPARATELY from the table, so a sort can
+   re-render just the table without flashing everything above it. */
+function scHeaderHTML(d){
   return '<div class="sc-res-h"><span class="sc-res-n">'+escHTML(d.name||'')+'</span>'+
-         '<span class="sc-res-c">'+d.matched+' match'+(d.matched===1?'':'es')+
-         (d.shown<d.matched?(' · showing '+d.shown):'')+'</span></div>'+
-    '<p class="sc-res-b">'+escHTML(d.blurb||'')+'</p>'+
-    (d.note?'<p class="sc-res-note">'+escHTML(d.note)+'</p>':'')+
-    '<div class="sc-wrap"><table class="sc"><thead>'+head+'</thead><tbody>'+body+'</tbody></table></div>';
+         (d.matched!=null?('<span class="sc-res-c">'+d.matched+' match'+(d.matched===1?'':'es')+
+           (d.shown<d.matched?(' · showing '+d.shown):'')+'</span>'):'')+'</div>'+
+         '<p class="sc-res-b">'+escHTML(d.blurb||'')+'</p>'+scCritHTML(d.note);
+}
+
+/* "Our lines: gross margin ≥ 40%, revenue growth ≥ 15%, positive free cash
+   flow." becomes chips with the numbers picked out. The thresholds ARE the
+   product; as grey prose they read as small print and got skipped. Falls
+   back to the plain note when the string doesn't split as expected. */
+function scCritHTML(note){
+  if(!note) return '';
+  var body=String(note).replace(/^[^:]*:\s*/,'');
+  var parts=body.split(/,\s*/).filter(function(x){ return x && x.trim(); });
+  if(parts.length<2) return '<p class="sc-res-note">'+escHTML(note)+'</p>';
+  return '<div class="sc-crit"><span class="sc-crit-k">Our lines</span>'+
+    parts.map(function(p){
+      return '<span class="sc-crit-c">'+
+        escHTML(p.replace(/\.$/,'')).replace(/(≥|≤|&gt;|&lt;|=)\s*([\d.]+%?)/g,'<b>$1 $2</b>')+
+        '</span>';
+    }).join('')+'</div>';
+}
+
+function scTier(v){ return v>=80?'t4':(v>=70?'t3':(v>=60?'t2':'t1')); }
+
+function scSkeleton(){
+  var r='', i;
+  for(i=0;i<7;i++){
+    r+='<div class="sc-skel-r"><span class="sc-sk" style="width:28px;height:28px;border-radius:8px"></span>'+
+       '<span class="sc-sk" style="width:120px"></span><span class="sc-sk" style="width:52px;margin-left:auto"></span>'+
+       '<span class="sc-sk" style="width:34px"></span><span class="sc-sk" style="width:70px"></span>'+
+       '<span class="sc-sk" style="width:70px"></span></div>';
+  }
+  return '<div class="sc-skel">'+r+'</div>';
+}
+
+/* Columns that earn a micro-bar: ratios and percentages compare down a
+   column. A ticker or a grade does not. */
+var SC_BARABLE={pct:1, pct_signed:1, x1:1, x2:1, money:1};
+
+function scResultHTML(d){
+  var cols=d.cols||[], rows=(d.rows||[]).slice();
+  if(!rows.length){
+    return '<div class="sc-empty">Nothing matched this scan right now. That is a result too.</div>';
+  }
+  if(_scSort){
+    var dir=(_scDir==='asc')?1:-1;
+    rows.sort(function(a,b){
+      var x=a[_scSort], y=b[_scSort], nx=parseFloat(x), ny=parseFloat(y);
+      if(!isNaN(nx)&&!isNaN(ny)) return (nx-ny)*dir;
+      return String(x==null?'':x).localeCompare(String(y==null?'':y))*dir;
+    });
+  }
+  /* Bar scale comes from the rows ON SCREEN, so a full bar reads as
+     "biggest here", not "biggest imaginable". */
+  var maxes={};
+  cols.forEach(function(c){
+    if(SC_BARABLE[c.fmt]){
+      maxes[c.key]=Math.max.apply(null,rows.map(function(r){
+        return Math.abs(parseFloat(r[c.key]))||0; }).concat([0]))||1;
+    }
+  });
+  var shown=cols.filter(function(c){ return c.key!=='name'; });   /* name folds into the ticker cell */
+
+  var head='<tr><th class="sc-rank">#</th>'+shown.map(function(c){
+    var on=(_scSort===c.key);
+    return '<th data-k="'+escHTML(c.key)+'"'+(on?' class="sorted"':'')+'>'+escHTML(c.label)+
+           '<span class="sc-ar">'+(on&&_scDir==='asc'?'↑':'↓')+'</span></th>';
+  }).join('')+'</tr>';
+
+  var body=rows.map(function(r,i){
+    var cells=shown.map(function(c){
+      var v=r[c.key], n;
+      if(c.fmt==='ticker'){
+        var sym=String(v||'');
+        return '<td><span class="sc-id"><span class="sc-logo">'+escHTML(sym.slice(0,2))+
+          '<img src="https://assets.parqet.com/logos/symbol/'+encodeURIComponent(sym)+
+          '" alt="" loading="lazy" onerror="this.remove()"></span>'+
+          '<span class="sc-id-t"><span class="sc-tix">'+escHTML(sym)+'</span>'+
+          '<span class="sc-nm">'+escHTML(r.name||'')+'</span></span></span></td>';
+      }
+      if(c.key==='pop_score'){
+        n=parseFloat(v);
+        return '<td><span class="sc-alpha '+scTier(n)+'">'+(isNaN(n)?'—':Math.round(n))+'</span></td>';
+      }
+      if(c.key==='grade'){
+        var g=String(v==null?'':v).trim().toUpperCase();
+        return '<td>'+(g?'<span class="sc-gr g-'+escHTML(g)+'">'+escHTML(g)+'</span>':'—')+'</td>';
+      }
+      if(SC_BARABLE[c.fmt]){
+        n=parseFloat(v);
+        if(isNaN(n)) return '<td>—</td>';
+        var w=Math.max(3,Math.min(100,Math.abs(n)/maxes[c.key]*100));
+        return '<td><span class="sc-mv"><b>'+scFmt(v,c.fmt)+'</b>'+
+          '<span class="sc-bar'+(n<0?' neg':'')+'"><i style="width:'+w.toFixed(0)+'%"></i></span></span></td>';
+      }
+      return '<td>'+scFmt(v,c.fmt)+'</td>';
+    }).join('');
+    return '<tr data-tix="'+escHTML(r.ticker||'')+'"><td class="sc-rank">'+(i+1)+'</td>'+cells+'</tr>';
+  }).join('');
+
+  return '<div class="sc-wrap"><table class="sc"><thead>'+head+'</thead><tbody>'+body+'</tbody></table></div>';
 }
 
   /* ── Technical Setup + Rebound engine (real price-action from candles) ── */
