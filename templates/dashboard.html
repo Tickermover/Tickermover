@@ -1230,18 +1230,23 @@ table.ssx-h2h tbody td.self{color:var(--ink);font-weight:600}
 /* Page loading overlay — fills the current page region (the stock sheet or the
    active panel), NOT the whole viewport, with a large brand-blue ring that fills
    as the percent eases to ~90% and holds until the data lands.
-   The overlay itself carries NO colour of its own. It used to paint an icy
-   radial (#f6f9ff → #e7eefe) which, against the warm page background, landed as
-   a big blue slab wherever anything loaded. The veil below is neutral and only
-   exists to stop content reading through the ring — see .ldr-inline. */
+   The overlay paints NO background at all, in any variant. It first used an
+   icy radial (#f6f9ff → #e7eefe), which against the warm page read as a blue
+   slab; replacing that with a white veil just made it a white slab. Either way
+   a loading state was covering the page in a colour the page does not use.
+   The page's own background now shows through everywhere. Where real content
+   sits behind the ring (the sheet variant) a backdrop blur pushes it back
+   without tinting it — no filter support just means a slightly busier
+   backdrop, never a coloured block. */
 .ldr-overlay{position:absolute;inset:0;z-index:40;display:flex;align-items:center;justify-content:center;padding:24px;
-  background:rgba(255,255,255,.88);animation:ldr-fade .25s ease}
+  background:transparent;-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);
+  animation:ldr-fade .25s ease}
 .ldr-overlay.ldr-out{opacity:0;transition:opacity .3s ease}
 /* Inline variant — fills just the host widget (chart card / table), not the page.
-   Its host is emptied before the loader goes in, so there is nothing to veil:
-   fully transparent, and the page's own background shows through. */
+   Its host is emptied before the loader goes in, so there is nothing behind it
+   to push back and no reason to pay for a blur. */
 .ldr-overlay.ldr-inline{position:relative;inset:auto;width:100%;min-height:340px;border-radius:16px;
-  background:transparent}
+  background:transparent;-webkit-backdrop-filter:none;backdrop-filter:none}
 /* Mini spinner — for a sub-component loading inside an already-rendered page
    (e.g. the tracker chart), so it doesn't stack a SECOND big ring. */
 .ldr-mini-wrap{display:flex;align-items:center;justify-content:center;gap:10px;min-height:200px;color:#94a3b8;font-size:12.5px;font-weight:600}
@@ -21946,7 +21951,12 @@ function scResultHTML(d){
         return Math.abs(parseFloat(r[c.key]))||0; }).concat([0]))||1;
     }
   });
-  var shown=cols.filter(function(c){ return c.key!=='name'; });   /* name folds into the ticker cell */
+  /* `name` folds into the ticker cell — but ONLY when there is a ticker cell.
+     The sector scans have no ticker column at all; `name` IS their identity
+     ("Technology", "Materials"). Dropping it unconditionally left those two
+     scans as anonymous rows of numbers, which is what made them look empty. */
+  var hasTicker=cols.some(function(c){ return c.fmt==='ticker'; });
+  var shown=hasTicker ? cols.filter(function(c){ return c.key!=='name'; }) : cols.slice();
 
   var head='<tr><th class="sc-rank">#</th>'+shown.map(function(c){
     var on=(_scSort===c.key);

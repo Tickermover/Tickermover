@@ -290,7 +290,10 @@ SCANS: list[dict] = [
     # ── MARKET ──────────────────────────────────────────────────────────
     # Source: the sector table from market_analysis, not universe rows.
     {
-        "id": "sector-leaders", "cat": "market", "src": "sectors",
+        # pct_raw: market_analysis emits sector moves already in percent, and a
+        # sector rarely moves more than 2% in a day — exactly the band pct()
+        # treats as a fraction and multiplies by 100.
+        "id": "sector-leaders", "cat": "market", "src": "sectors", "pct_raw": True,
         "name": "Sectors leading this week",
         "blurb": "Where money moved over the last five sessions.",
         "note": "Sorted by 5-day change. Sector moves, not single stocks.",
@@ -301,7 +304,7 @@ SCANS: list[dict] = [
                  {"key": "chg_5d", "label": "5 day", "fmt": "pct_signed"}],
     },
     {
-        "id": "sector-laggards", "cat": "market", "src": "sectors",
+        "id": "sector-laggards", "cat": "market", "src": "sectors", "pct_raw": True,
         "name": "Sectors under pressure",
         "blurb": "The other side of the rotation.",
         "note": "Sectors negative over five sessions, weakest first.",
@@ -572,14 +575,21 @@ def catalogue() -> list[dict]:
     return out
 
 
-def _cell(row: dict, col: dict):
+def _cell(row: dict, col: dict, pct_raw: bool = False):
+    """One rendered value.
+
+    `pct_raw` skips pct()'s fraction guard for datasets whose percent fields are
+    ALREADY percent. That guard multiplies anything within +/-2 by 100, which is
+    right for the universe (providers mix 0.169 and 16.9) but catastrophic for
+    sector moves: a sector rarely moves more than 2% in a day, so XLK's real
+    +0.9% rendered as +90% and XLU's -1.67% as -167%. Only the DISPLAY was
+    wrong — `where`/`sort` use num(), which is why the ordering looked sane
+    while the numbers next to it did not."""
     k = col["key"]
     if col["fmt"] in ("text", "ticker", "bool"):
         return row.get(k)
-    if col["fmt"] == "pct":
-        return pct(row, k)
-    if col["fmt"] == "pct_signed":
-        return pct(row, k)
+    if col["fmt"] in ("pct", "pct_signed"):
+        return num(row, k) if pct_raw else pct(row, k)
     return num(row, k)
 
 
@@ -619,8 +629,9 @@ def run(scan_id: str, universe: list, limit: int = 50) -> dict:
         rows.sort(key=lambda r: (num(r, field) if num(r, field) is not None else float("-inf")),
                   reverse=(direction == "desc"))
     out = []
+    pct_raw = bool(s.get("pct_raw"))
     for r in rows[:limit]:
-        cells = {c["key"]: _cell(r, c) for c in s["cols"]}
+        cells = {c["key"]: _cell(r, c, pct_raw) for c in s["cols"]}
         cells["ticker"] = str(r.get("ticker") or r.get("symbol") or "").upper()
         cells["name"] = r.get("name") or ""
         cells["sector"] = r.get("sector") or ""
