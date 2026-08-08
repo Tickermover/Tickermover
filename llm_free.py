@@ -129,7 +129,11 @@ def _key(name: str) -> str:
 _PROVIDERS = [
     ("gemini", "GEMINI_API_KEY", "GEMINI_MODEL", "gemini-2.0-flash",
      "https://generativelanguage.googleapis.com/v1beta/models", 700000),
-    ("nvidia", "NVIDIA_API_KEY", "NVIDIA_MODEL", "deepseek-ai/deepseek-v4-pro",
+    # deepseek-v4-pro hit END OF LIFE on 2026-08-07 and now returns HTTP 410
+    # "Gone" for every request. Set NVIDIA_MODEL in the environment to override
+    # without a deploy when this one is retired in turn — the 410 body names the
+    # retirement date, which is what made this diagnosable at all.
+    ("nvidia", "NVIDIA_API_KEY", "NVIDIA_MODEL", "deepseek-ai/deepseek-v3.1",
      "https://integrate.api.nvidia.com/v1/chat/completions", 45000),
     ("groq", "GROQ_API_KEY", "GROQ_MODEL", "openai/gpt-oss-120b",
      "https://api.groq.com/openai/v1/chat/completions", 11000),
