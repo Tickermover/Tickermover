@@ -1190,6 +1190,68 @@ async def _save_cache(ticker: str, summary: dict) -> bool:
 _CACHE_TTL_DAYS = 14
 
 
+async def load_cached_many(tickers: list[str]) -> dict[str, dict]:
+    """Cache-ONLY batch read: the newest cached summary per ticker, in ONE query.
+
+    Two things this deliberately is NOT:
+      - not a loop over _load_cached(), which costs one Supabase round-trip
+        per ticker;
+      - not get_event_summary(), which lazily GENERATES on a miss. The events
+        timeline asks about every name that just reported, so that version
+        would fan out an Alpha Vantage fetch plus a model call per uncached
+        row on a single panel load.
+    Names with nothing cached are simply absent from the result.
+    """
+    syms = [(t or "").upper().strip() for t in (tickers or []) if (t or "").strip()]
+    syms = list(dict.fromkeys(syms))[:60]           # de-dupe, keep order, cap
+    if not syms:
+        return {}
+    hdrs = _supabase_headers()
+    if not hdrs:
+        return {}
+    base = config.SUPABASE_URL.rstrip("/")
+    try:
+        async with httpx.AsyncClient(timeout=8) as c:
+            r = await c.get(
+                f"{base}/rest/v1/event_summaries",
+                headers=hdrs,
+                params={
+                    "ticker": "in.(" + ",".join(syms) + ")",
+                    "select": "*",
+                    "order":  "summarized_at.desc",
+                    "limit":  str(len(syms) * 3),    # room for older dupes
+                },
+            )
+            r.raise_for_status()
+            rows = r.json() or []
+    except Exception as exc:
+        _note_error("supabase", f"batch cache read: {exc}")
+        return {}
+    out: dict[str, dict] = {}
+    for row in rows:                     # newest-first, so the first one wins
+        sym = (row.get("ticker") or "").upper()
+        if sym and sym not in out:
+            out[sym] = row
+    return out
+
+
+def takeaway_of(row: dict | None) -> str:
+    """The one line worth showing beside a name in a list. Prefers the v2
+    "sections" shape, falls back to the legacy bucket fields. Returns an empty
+    string when the row carries nothing usable, so callers can skip it."""
+    if not row:
+        return ""
+    for sec in (row.get("sections") or []):
+        bullets = (sec or {}).get("bullets") or []
+        if bullets:
+            return str(bullets[0]).strip()
+    for field in ("key_updates", "outlook", "operations", "risks"):
+        vals = row.get(field) or []
+        if isinstance(vals, list) and vals:
+            return str(vals[0]).strip()
+    return ""
+
+
 def factcheck_warm(ticker: str) -> tuple[bool, bool]:
     """(mgmt_qa_warm, thesis_audit_warm) — a cheap cache peek, no network and no
     model call. The pre-warm loop uses it to skip names already cached, so a

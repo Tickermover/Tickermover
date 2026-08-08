@@ -6453,6 +6453,48 @@ async def api_corporate_actions():
                         headers={"Cache-Control": "public, max-age=1800"})
 
 
+@app.get("/api/event-digest")
+async def api_event_digest(symbols: str = ""):
+    """Cache-ONLY batch read of earnings briefs, for the Company Events timeline.
+
+    Returns {briefs: {SYM: {takeaway, title, date, source}}} covering only the
+    names that ALREADY have a usable cached summary; everything else is simply
+    absent, and the row renders without a takeaway line.
+
+    It must never call get_event_summary(): that lazily generates on a miss, so
+    a single panel load asking about ~20 recent reporters would fan out ~20
+    Alpha Vantage fetches and ~20 model calls. This reads the cache in one
+    Supabase query and generates nothing.
+    """
+    import event_intel as _ei
+    syms = [s.strip().upper() for s in (symbols or "").split(",") if s.strip()][:60]
+    if not syms:
+        return JSONResponse({"briefs": {}})
+    try:
+        rows = await _ei.load_cached_many(syms)
+    except Exception as exc:
+        logger.error(f"event-digest: {exc}", exc_info=True)
+        return JSONResponse({"briefs": {}})
+    briefs: dict[str, dict] = {}
+    for sym, row in rows.items():
+        # Same two guards the single-ticker path uses: a row saved after a
+        # failed summarization, or one built from a non-earnings 8-K, is a
+        # miss rather than something to quote in a list.
+        if not _ei._has_content(row) or not _ei._good_source(row):
+            continue
+        line = _ei.takeaway_of(row)
+        if not line:
+            continue
+        briefs[sym] = {
+            "takeaway": line[:260],
+            "title":    row.get("event_title") or "",
+            "date":     row.get("event_date") or "",
+            "source":   row.get("source") or "",
+        }
+    return JSONResponse({"briefs": briefs},
+                        headers={"Cache-Control": "private, max-age=300"})
+
+
 @app.get("/api/slides/{ticker}")
 async def api_slides(ticker: str, q: str = ""):
     """Find an earnings-presentation deck on the company's IR CDN (q4cdn) for a
