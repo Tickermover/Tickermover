@@ -7633,11 +7633,24 @@ document.addEventListener('keydown', function(e){
         radial-gradient(78% 100% at 8% 0%,   rgba(58,80,190,.42) 0%, rgba(10,27,46,0) 60%),
         radial-gradient(64% 90% at 96% 100%, rgba(255,97,0,.20)  0%, rgba(10,27,46,0) 64%),
         linear-gradient(135deg,#0B1E33 0%,#0A2136 52%,#071726 100%)}
-    #upgrade-modal .up-badge{width:46px;height:46px;flex:none;border-radius:14px;display:flex;
-      align-items:center;justify-content:center;font-size:19px;color:#fff;
-      background:linear-gradient(135deg,#5566D8,#3F4FB0);
+    /* The mark carries its own rounded tile and gradient, so the badge is
+       just a frame for it — no second background underneath. */
+    #upgrade-modal .up-badge{width:46px;height:46px;flex:none;border-radius:14px;overflow:hidden;
+      display:flex;align-items:center;justify-content:center;background:none;
       box-shadow:0 10px 24px -12px rgba(85,102,216,.9)}
-    #upgrade-modal .up-name{font-size:17px;font-weight:600;color:#fff;letter-spacing:-.015em}
+    #upgrade-modal .up-badge img{width:100%;height:100%;display:block}
+    #upgrade-modal .up-name{font-family:'Space Grotesk',var(--font-body),sans-serif;
+      font-size:19px;font-weight:700;color:#fff;letter-spacing:-.02em;
+      display:inline-flex;align-items:baseline;flex-wrap:nowrap;white-space:nowrap}
+    #upgrade-modal .up-name .brand-m{height:1.6em;width:auto;flex:none;align-self:baseline;margin:0 .02em}
+    /* On-dark variant of the mark: lighter indigo M, orange dot — the same
+       split the sidebar and footer use. */
+    #upgrade-modal .up-name .brand-m polyline{stroke:#8FA0F0}
+    #upgrade-modal .up-name .brand-m circle{fill:#FF6100}
+    #upgrade-modal .up-tier{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;
+      letter-spacing:.14em;text-transform:uppercase;color:#FFB37A;background:rgba(255,97,0,.16);
+      border:1px solid rgba(255,169,110,.36);border-radius:6px;padding:3px 7px;margin-left:9px;
+      align-self:center}
     /* The price IS the offer — it was 13px muted grey, quieter than the
        product name above it. Now the largest thing in the header after the
        name, in the accent, with the qualifier stepped down behind it. */
@@ -7684,9 +7697,15 @@ document.addEventListener('keydown', function(e){
     <div class="up-card">
       <button class="up-x" onclick="closeUpgradeModal()" aria-label="Close">✕</button>
       <div class="up-hd">
-        <div class="up-badge" aria-hidden="true">★</div>
+        <!-- The real app mark, not a ★. Sourced from the brand SVG so it can
+             never drift from the favicon/PWA icon again. -->
+        <div class="up-badge" aria-hidden="true"><img src="/static/brand/tickermover-mark.svg" alt=""></div>
         <div>
-          <div class="up-name">TickerMover Pro</div>
+          <!-- The actual wordmark, same markup as the sidebar: Space Grotesk
+               with the M as an inline mark. It was plain Inter text before,
+               so the paywall was the one place the brand name wasn't set in
+               the brand. -->
+          <div class="up-name">Ticker<svg class="brand-m" viewBox="0 0 90 105" fill="none" aria-hidden="true"><polyline points="5,100 23,42 45,66 67,26 85,100" stroke-width="9" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="67" cy="8" r="7"/></svg>over <span class="up-tier">Pro</span></div>
           <div class="up-price"><b>£19.99</b>/month · cancel anytime</div>
         </div>
       </div>
