@@ -940,6 +940,88 @@ async def _mgmt_qa_prewarm() -> None:
         await asyncio.sleep(6 * 3600)      # four passes a day
 
 
+async def _event_brief_prewarm() -> None:
+    """Background loop: keep earnings briefs warm for the names the Company
+    Events timeline actually lists.
+
+    The timeline shows one line of substance per recent reporter, read from
+    /api/event-digest — which is CACHE-ONLY by design, because generating on
+    demand from a list view would fan out a model call per uncached row. That
+    makes coverage a background job: measured at ~40% when the timeline
+    shipped, so three rows in five said "no brief cached yet".
+
+    Targets recent reporters first (that IS the top group), then portfolio
+    picks. Cache-peeks before every generate, so a steady-state pass costs a
+    handful of Supabase reads and only cold names cost real time.
+    Set BRIEF_PREWARM=0 to disable.
+    """
+    if (os.environ.get("BRIEF_PREWARM", "1") or "").strip().lower() in ("0", "false", "no", "off"):
+        logger.info("Event-brief pre-warm disabled (BRIEF_PREWARM=0)")
+        return
+    cap    = max(1, int(os.environ.get("BRIEF_PREWARM_N", "40") or 40))
+    pace_s = max(2, int(os.environ.get("BRIEF_PREWARM_SLEEP", "20") or 20))
+    await asyncio.sleep(1200)              # after the universe settles, behind mgmt-qa
+    while True:
+        try:
+            import event_intel as _ei
+            syms: list[str] = []
+
+            def _add(sym: str) -> None:
+                s = (sym or "").upper()
+                if s and s not in syms:
+                    syms.append(s)
+
+            # NB: fnum() elsewhere in this file is nested inside other
+            # functions, not module-level — using it here would NameError on
+            # every cycle and be swallowed into a log line, leaving the
+            # pre-warm silently dead. Hence a local parse.
+            def _dse(t) -> float | None:
+                try:
+                    v = t.get("days_since_earnings")
+                    return None if v in (None, "") else float(v)
+                except (TypeError, ValueError, AttributeError):
+                    return None
+
+            # Recent reporters first — they are the timeline's top group, so
+            # they are what a visitor sees before anything else.
+            recent = [t for t in (_universe_data or [])
+                      if _dse(t) is not None and 0 <= _dse(t) <= 14]
+            recent.sort(key=lambda t: _dse(t))
+            for t in recent:
+                _add(t.get("ticker") or "")
+            for p in ((_model_portfolio or {}).get("picks") or []):
+                _add(p.get("ticker") or "")
+
+            targets = syms[:cap]
+            warm = generated = failed = 0
+            for sym in targets:
+                try:
+                    row = await _ei._load_cached(sym)
+                except Exception:
+                    row = None
+                # Same guards the digest applies, so "warm" here means the
+                # timeline would actually render a line for it.
+                if row and _ei._has_content(row) and _ei._good_source(row) and not _ei._is_stale(row):
+                    warm += 1
+                    continue
+                try:
+                    got = await _ei.get_event_summary(sym)
+                    if got:
+                        generated += 1
+                    else:
+                        failed += 1
+                except Exception as exc:
+                    failed += 1
+                    logger.warning(f"event-brief pre-warm {sym}: {exc}")
+                await asyncio.sleep(pace_s)
+            if targets:
+                logger.info("📰 Event-brief pre-warm: %d/%d already warm, %d generated, %d unavailable",
+                            warm, len(targets), generated, failed)
+        except Exception as exc:
+            logger.warning(f"event-brief pre-warm cycle failed: {exc}")
+        await asyncio.sleep(6 * 3600)      # four passes a day, same as Fact Check
+
+
 async def _bottom_line_prewarm() -> None:
     """Background loop: rewrite each stock's deterministic bottom_line into
     natural Haiku prose, cached 15 days in the durable KV store. Cache-first and
@@ -1077,6 +1159,7 @@ async def lifespan(app: FastAPI):
         asyncio.create_task(_bottom_line_prewarm()), # Haiku-polish bottom_lines (cache-first, 15d)
         asyncio.create_task(_selection_prewarm()),   # keep AI conviction/thesis warm for House View
         asyncio.create_task(_mgmt_qa_prewarm()),     # Fact Check AI answers for prime + best-ideas names
+        asyncio.create_task(_event_brief_prewarm()), # earnings briefs for the Company Events timeline
         asyncio.create_task(_daily_brief_email_task()),  # free daily-brief email (acquisition channel)
     ]
     yield

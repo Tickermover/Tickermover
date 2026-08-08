@@ -421,6 +421,120 @@ SCANS: list[dict] = [
                       {"key": "momentum_1m", "label": "1-month", "fmt": "pct_signed"},
                       C_ALPHA),
     },
+
+    # ── VALUATION ───────────────────────────────────────────────────────
+    {
+        "id": "cheap-with-quality", "cat": "valuation",
+        "name": "Cheap, but good",
+        "blurb": "A modest multiple attached to a business that actually earns its keep.",
+        "note": "Our lines: forward P/E ≤ 18, ROE ≥ 15%, positive net margin.",
+        "where": lambda r: (le(num(r, "forward_pe", "pe_ratio"), 18)
+                            and gt(num(r, "forward_pe", "pe_ratio"), 0)
+                            and ge(pct(r, "roe"), 15)
+                            and gt(pct(r, "profit_margin"), 0)),
+        "sort": ("forward_pe", "asc"),
+        "cols": _cols(C_ALPHA,
+                      {"key": "forward_pe", "label": "Fwd P/E", "fmt": "x1"},
+                      {"key": "roe", "label": "ROE", "fmt": "pct"},
+                      {"key": "profit_margin", "label": "Net margin", "fmt": "pct"}),
+    },
+    {
+        "id": "cash-machines", "cat": "valuation",
+        "name": "Cash machines",
+        "blurb": "A big slice of every pound of revenue arrives as free cash.",
+        "note": "Our lines: FCF margin ≥ 15%, positive free cash flow, revenue growing.",
+        "where": lambda r: (ge(pct(r, "fcf_margin"), 15)
+                            and gt(num(r, "free_cashflow"), 0)
+                            and ge(pct(r, "revenue_growth_yoy"), 0)),
+        "sort": ("fcf_margin", "desc"),
+        "cols": _cols(C_ALPHA,
+                      {"key": "fcf_margin", "label": "FCF margin", "fmt": "pct"},
+                      {"key": "revenue_growth_yoy", "label": "Rev growth", "fmt": "pct"},
+                      {"key": "market_cap", "label": "Market cap", "fmt": "money"}),
+    },
+    {
+        "id": "peg-under-one", "cat": "valuation",
+        "name": "Growth under 1x PEG",
+        "blurb": "Earnings growing faster than the multiple you pay for them.",
+        "note": "Our lines: PEG ≤ 1.0, EPS growth ≥ 10%.",
+        "where": lambda r: (le(num(r, "peg_ratio"), 1.0) and gt(num(r, "peg_ratio"), 0)
+                            and ge(pct(r, "eps_growth_yoy"), 10)),
+        "sort": ("peg_ratio", "asc"),
+        "cols": _cols(C_ALPHA,
+                      {"key": "peg_ratio", "label": "PEG", "fmt": "x2"},
+                      {"key": "eps_growth_yoy", "label": "EPS growth", "fmt": "pct"},
+                      {"key": "forward_pe", "label": "Fwd P/E", "fmt": "x1"}),
+    },
+    {
+        "id": "operating-leverage", "cat": "valuation",
+        "name": "Operating leverage",
+        "blurb": "High gross margin converting into high operating margin — scale that pays.",
+        "note": "Our lines: gross margin ≥ 50%, operating margin ≥ 20%, revenue growth ≥ 10%.",
+        "where": lambda r: (ge(pct(r, "gross_margin"), 50)
+                            and ge(pct(r, "operating_margin"), 20)
+                            and ge(pct(r, "revenue_growth_yoy"), 10)),
+        "sort": ("operating_margin", "desc"),
+        "cols": _cols(C_ALPHA,
+                      {"key": "operating_margin", "label": "Op margin", "fmt": "pct"},
+                      {"key": "gross_margin", "label": "Gross margin", "fmt": "pct"},
+                      {"key": "revenue_growth_yoy", "label": "Rev growth", "fmt": "pct"}),
+    },
+
+    # ── RISK ────────────────────────────────────────────────────────────
+    # Deliberately unflattering screens. A research tool that only ever
+    # surfaces reasons to buy is a marketing tool.
+    {
+        "id": "stretched-multiples", "cat": "risk",
+        "name": "Priced for perfection",
+        "blurb": "A very high multiple without the growth rate that usually justifies one.",
+        "note": "Our lines: forward P/E ≥ 50, revenue growth ≤ 20%.",
+        "where": lambda r: (ge(num(r, "forward_pe", "pe_ratio"), 50)
+                            and le(pct(r, "revenue_growth_yoy"), 20)),
+        "sort": ("forward_pe", "desc"),
+        "cols": _cols(C_ALPHA,
+                      {"key": "forward_pe", "label": "Fwd P/E", "fmt": "x1"},
+                      {"key": "revenue_growth_yoy", "label": "Rev growth", "fmt": "pct"},
+                      {"key": "momentum_3m", "label": "3-month", "fmt": "pct_signed"}),
+    },
+    {
+        "id": "leverage-heavy", "cat": "risk",
+        "name": "Leverage to watch",
+        "blurb": "Meaningful debt with limited near-term liquidity behind it.",
+        "note": "Our lines: debt/equity ≥ 2.0, current ratio ≤ 1.2.",
+        "where": lambda r: (ge(num(r, "debt_to_equity"), 2.0)
+                            and le(num(r, "current_ratio"), 1.2)),
+        "sort": ("debt_to_equity", "desc"),
+        "cols": _cols(C_ALPHA,
+                      {"key": "debt_to_equity", "label": "Debt/equity", "fmt": "x2"},
+                      {"key": "current_ratio", "label": "Current ratio", "fmt": "x2"},
+                      {"key": "profit_margin", "label": "Net margin", "fmt": "pct"}),
+    },
+    {
+        "id": "overbought", "cat": "risk",
+        "name": "Overbought and extended",
+        "blurb": "Run hard and close to the 52-week high — the setup that gives back fastest.",
+        "note": "Our lines: RSI ≥ 75, within 5% of the 52-week high.",
+        "where": lambda r: (ge(num(r, "rsi_14"), 75)
+                            and ge(pct(r, "dist_52w_high"), -5)),
+        "sort": ("rsi_14", "desc"),
+        "cols": _cols(C_ALPHA,
+                      {"key": "rsi_14", "label": "RSI", "fmt": "int"},
+                      {"key": "dist_52w_high", "label": "From high", "fmt": "pct_signed"},
+                      {"key": "momentum_1m", "label": "1-month", "fmt": "pct_signed"}),
+    },
+    {
+        "id": "growth-without-profit", "cat": "risk",
+        "name": "Growth without profit",
+        "blurb": "Revenue compounding while the bottom line stays negative.",
+        "note": "Our lines: revenue growth ≥ 25%, net margin ≤ 0.",
+        "where": lambda r: (ge(pct(r, "revenue_growth_yoy"), 25)
+                            and le(pct(r, "profit_margin"), 0)),
+        "sort": ("revenue_growth_yoy", "desc"),
+        "cols": _cols(C_ALPHA,
+                      {"key": "revenue_growth_yoy", "label": "Rev growth", "fmt": "pct"},
+                      {"key": "profit_margin", "label": "Net margin", "fmt": "pct"},
+                      {"key": "free_cashflow", "label": "Free cash flow", "fmt": "money"}),
+    },
 ]
 
 
@@ -439,6 +553,12 @@ CATEGORIES = [
      "blurb": "Track shareholdings, get notified."},
     {"id": "concall", "name": "Concall Scans", "icon": "\U0001F3A7",
      "blurb": "Earnings-call notes and sentiment.", "tag": "New"},
+    # Two additions, 8 Aug 2026 — they also fill the two empty cells the
+    # six-card grid was leaving on a four-column layout.
+    {"id": "valuation", "name": "Valuation Scans", "icon": "\U0001F4B0",
+     "blurb": "What you pay for what you get.", "tag": "New"},
+    {"id": "risk", "name": "Risk Scans", "icon": "⚠️",
+     "blurb": "What could go wrong, stated plainly.", "tag": "New"},
 ]
 
 
