@@ -73,19 +73,44 @@ def _flatten(payload: dict) -> tuple[str, int, bool]:
             role = m.get("role", "user")
             parts.append(str(content) if role == "user" else f"[{role}] {content}")
     prompt = "\n\n".join(p for p in parts if p)
-    lowered = prompt[-4000:].lower()
-    wants_json = ("json" in lowered and
-                  ("return only" in lowered or "respond with" in lowered
-                   or "json object" in lowered or "output json" in lowered
-                   or '"' in lowered[-500:] and "{" in lowered))
+    # Sniff BOTH ends for the JSON instruction.
+    #
+    # This used to read prompt[-4000:] only, on the assumption that "return only
+    # JSON" sits near the end. Most prompts in this codebase are built the other
+    # way round — schema first, then tens of thousands of characters of filing or
+    # transcript appended — so the tail is raw source prose, the sniff said "no
+    # JSON", the provider answered in free text, and the caller's strict
+    # json.loads failed. Every time, for every ticker. That is exactly why the
+    # Concall summary returned generation_failed permanently while the Earnings
+    # Brief (which calls llm_free.chat_json directly) was fine.
+    #
+    # Widening the window is safe: a false positive costs nothing, because
+    # post() already falls back to chat_text when JSON mode yields nothing.
+    head = prompt[:4000].lower()
+    tail = prompt[-4000:].lower()
+
+    def _asks_json(s: str) -> bool:
+        return "json" in s and ("return only" in s or "respond with" in s
+                                or "json object" in s or "output json" in s
+                                or "only json" in s or "as json" in s)
+
+    wants_json = _asks_json(head) or _asks_json(tail) or (
+        "json" in tail and '"' in tail[-500:] and "{" in tail)
     return prompt, int(payload.get("max_tokens") or 1500), wants_json
 
 
 async def post(url: str | None = None, *, json: dict | None = None,
-               headers: dict | None = None, timeout: float = 60.0, **_kw):
-    """Drop-in for `client.post(ANTHROPIC_URL, json=..., headers=...)`."""
+               headers: dict | None = None, timeout: float = 60.0,
+               force_json: bool | None = None, **_kw):
+    """Drop-in for `client.post(ANTHROPIC_URL, json=..., headers=...)`.
+
+    `force_json` overrides the sniff. A caller that is going to parse the reply
+    with json.loads knows that for certain — it should say so rather than hope
+    a keyword survives in the last 4000 characters of a 46k-char prompt."""
     payload = json or {}
     prompt, max_tokens, wants_json = _flatten(payload)
+    if force_json is not None:
+        wants_json = bool(force_json)
     if payload.get("tools"):
         logger.info("anthropic_shim: request used tools (%s) — free providers "
                     "have no server-side tool support, answering without them",

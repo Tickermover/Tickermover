@@ -236,7 +236,12 @@ async def _claude_answer(ticker, question, context_blocks, profile_data, user_id
 
 
 async def _claude_raw(prompt: str, max_tokens: int = 2500, model: str | None = None,
-                      feature: str = "concall", ticker: str | None = None) -> str | None:
+                      feature: str = "concall", ticker: str | None = None,
+                      want_json: bool = False) -> str | None:
+    """`want_json` tells the shim to use the provider's JSON mode. Set it
+    whenever the caller parses the reply with json.loads — do not rely on the
+    shim sniffing the prompt, which cannot see an instruction buried above tens
+    of thousands of characters of appended source text."""
     if not ANTHROPIC_KEY:
         return None
     model = model or ANTHROPIC_MODEL
@@ -247,7 +252,8 @@ async def _claude_raw(prompt: str, max_tokens: int = 2500, model: str | None = N
     try:
         async with httpx.AsyncClient(timeout=60) as c:
             r = await anthropic_shim.post(
-                             json=payload, headers=headers)
+                             json=payload, headers=headers,
+                             force_json=True if want_json else None)
             if r.status_code != 200:
                 logger.warning(f"stock_rag: Anthropic HTTP {r.status_code}: {r.text[:200]}")
                 return None
@@ -395,9 +401,15 @@ async def concall_summary(ticker: str, profile_data: str = "", quarter: str | No
 
     prompt = _CONCALL_PROMPT.format(ticker=ticker, src=src, text=text[:45000],
                                     metrics=profile_data or "(none)")
-    ans = await _claude_raw(prompt, max_tokens=2600, model=CONCALL_MODEL, ticker=ticker)
+    ans = await _claude_raw(prompt, max_tokens=2600, model=CONCALL_MODEL, ticker=ticker,
+                            want_json=True)
     parsed = _parse_json_block(ans)
     if not parsed or not isinstance(parsed.get("sections"), list):
+        # Log WHAT came back. "generation_failed" on its own gave no way to tell
+        # an empty reply from prose-instead-of-JSON — which is what it was.
+        logger.warning("stock_rag: concall %s unparseable (%s): %s",
+                       ticker, "no reply" if not ans else f"{len(ans)} chars",
+                       (ans or "")[:180].replace("\n", " "))
         return {"available": False, "reason": "generation_failed"}
 
     parsed["available"] = True
