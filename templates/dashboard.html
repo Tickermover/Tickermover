@@ -513,8 +513,17 @@ body.v2 #sectors-grid .smh-name{font-weight:800;font-size:12.5px;color:#0f172a!i
   border-radius:100px;padding:4px 11px}
 #panel-scans .sc-crit-c b{font-family:'JetBrains Mono',monospace;font-weight:700;color:#4A5BC4}
 
-#panel-scans .sc-wrap{overflow-x:auto;border:1px solid #E4E7EC;border-radius:16px;background:#fff;
+/* The header is position:sticky, but sticky resolves against the nearest
+   SCROLLING ancestor — and this box only scrolled horizontally, so the whole
+   page scrolled instead and the header went with it. Giving the box its own
+   vertical scroll makes the header actually hold while 50 rows move under it. */
+#panel-scans .sc-wrap{overflow-x:auto;overflow-y:auto;max-height:min(64vh,720px);
+  border:1px solid #E4E7EC;border-radius:16px;background:#fff;
   box-shadow:0 1px 2px rgba(10,31,54,.04),0 20px 44px -34px rgba(10,31,54,.30)}
+#panel-scans .sc-wrap::-webkit-scrollbar{width:9px;height:9px}
+#panel-scans .sc-wrap::-webkit-scrollbar-thumb{background:#DCD9D5;border-radius:5px;
+  border:2px solid #fff}
+#panel-scans .sc-wrap::-webkit-scrollbar-thumb:hover{background:#C3BFBA}
 #panel-scans table.sc{width:100%;border-collapse:separate;border-spacing:0;font-size:13px;min-width:820px}
 #panel-scans table.sc th{position:sticky;top:0;z-index:2;background:#FBFAF8;font-family:'JetBrains Mono',monospace;
   font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#7A8899;text-align:right;
@@ -7607,35 +7616,63 @@ document.addEventListener('keydown', function(e){
          settings form, and reusing them put the section eyebrow on top of a
          divider and left the price competing with the title. -->
     <style>
-    #upgrade-modal .up-card{width:100%;max-width:392px;background:#fff;border-radius:18px;
-      box-shadow:0 24px 60px -20px rgba(9,12,24,.35);overflow:hidden;position:relative}
+    /* Restyled onto the site scheme, 8 Aug 2026. Was the pre-palette electric
+       blue (#2970ff → #0040c1) at weight 700/800 — the one surface still
+       selling Pro in the old brand, and now the most load-bearing one, since
+       Prime Tickers, Fact Check and Management all route here.
+       The header takes the deep-navy treatment used by the pricing panel and
+       #research, so the paywall looks like the thing it is selling. */
+    #upgrade-modal .up-card{width:100%;max-width:404px;background:#fff;border-radius:22px;
+      box-shadow:0 30px 70px -22px rgba(7,23,38,.48);overflow:hidden;position:relative}
     #upgrade-modal .up-x{position:absolute;top:14px;right:14px;width:30px;height:30px;border:none;
-      border-radius:9px;background:#f1f5f9;color:#64748b;font-size:14px;line-height:1;cursor:pointer}
-    #upgrade-modal .up-x:hover{background:#e2e8f0;color:#0f172a}
-    #upgrade-modal .up-hd{display:flex;align-items:center;gap:13px;padding:24px 24px 18px}
-    #upgrade-modal .up-badge{width:44px;height:44px;flex:none;border-radius:13px;display:flex;
+      border-radius:9px;background:rgba(255,255,255,.10);color:rgba(255,255,255,.72);font-size:13px;
+      line-height:1;cursor:pointer;transition:background .2s,color .2s;z-index:2}
+    #upgrade-modal .up-x:hover{background:rgba(255,255,255,.20);color:#fff}
+    #upgrade-modal .up-hd{display:flex;align-items:center;gap:14px;padding:26px 24px 24px;
+      background:
+        radial-gradient(78% 100% at 8% 0%,   rgba(58,80,190,.42) 0%, rgba(10,27,46,0) 60%),
+        radial-gradient(64% 90% at 96% 100%, rgba(255,97,0,.20)  0%, rgba(10,27,46,0) 64%),
+        linear-gradient(135deg,#0B1E33 0%,#0A2136 52%,#071726 100%)}
+    #upgrade-modal .up-badge{width:46px;height:46px;flex:none;border-radius:14px;display:flex;
       align-items:center;justify-content:center;font-size:19px;color:#fff;
-      background:linear-gradient(135deg,#2970ff,#0040c1)}
-    #upgrade-modal .up-name{font-size:16.5px;font-weight:800;color:#0f172a;letter-spacing:-.01em}
-    #upgrade-modal .up-price{font-size:13px;color:#64748b;margin-top:3px}
-    #upgrade-modal .up-price b{color:#0f172a;font-weight:700}
-    #upgrade-modal .up-body{padding:0 24px 4px}
-    #upgrade-modal .up-k{font-size:10.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;
-      color:#94a3b8;padding-top:16px;border-top:1px solid #eef2f7}
-    #upgrade-modal .up-list{list-style:none;margin:12px 0 0;padding:0}
-    #upgrade-modal .up-list li{position:relative;padding:0 0 10px 26px;font-size:13.5px;
-      line-height:1.5;color:#334155}
-    #upgrade-modal .up-list li:before{content:"✓";position:absolute;left:0;top:0;width:17px;height:17px;
-      border-radius:50%;background:rgba(41,112,255,.1);color:#2970ff;font-size:10px;font-weight:800;
+      background:linear-gradient(135deg,#5566D8,#3F4FB0);
+      box-shadow:0 10px 24px -12px rgba(85,102,216,.9)}
+    #upgrade-modal .up-name{font-size:17px;font-weight:600;color:#fff;letter-spacing:-.015em}
+    #upgrade-modal .up-price{font-size:13px;font-weight:300;color:rgba(255,255,255,.66);margin-top:4px}
+    #upgrade-modal .up-price b{color:#FFB37A;font-weight:600;font-family:'JetBrains Mono',monospace;
+      font-size:14px}
+    #upgrade-modal .up-body{padding:20px 24px 4px}
+    #upgrade-modal .up-k{font-family:'JetBrains Mono',monospace;font-size:9.5px;font-weight:700;
+      letter-spacing:.14em;text-transform:uppercase;color:#94a3b8;padding-top:0;border-top:0}
+    #upgrade-modal .up-list{list-style:none;margin:13px 0 0;padding:0}
+    #upgrade-modal .up-list li{position:relative;padding:0 0 11px 27px;font-size:13.5px;
+      font-weight:300;line-height:1.55;color:#10293D}
+    #upgrade-modal .up-list li:before{content:"✓";position:absolute;left:0;top:1px;width:18px;height:18px;
+      border-radius:50%;background:rgba(255,97,0,.13);color:#C74E00;font-size:10px;font-weight:700;
       display:flex;align-items:center;justify-content:center}
-    #upgrade-modal .up-ft{padding:6px 24px 22px}
-    #upgrade-modal .up-cta{width:100%;height:46px;border:none;border-radius:12px;cursor:pointer;
-      font-size:14.5px;font-weight:700;color:#fff;background:linear-gradient(135deg,#2970ff,#0040c1);
-      box-shadow:0 10px 22px -12px rgba(41,112,255,.9)}
-    #upgrade-modal .up-cta:hover:not(:disabled){filter:brightness(1.07)}
+    #upgrade-modal .up-ft{padding:8px 24px 22px}
+    /* The site's signature hover: an inset box-shadow whose spread animates
+       0 → 60px. The arrow is a ::after, NOT a child element — openUpgradeModal
+       sets btn.textContent, which would delete any span inside. */
+    #upgrade-modal .up-cta{position:relative;width:100%;height:48px;border:1px solid #0A2F46;
+      border-radius:100px;cursor:pointer;font-family:inherit;font-size:15px;font-weight:500;
+      color:#fff;background:#0A2F46;box-shadow:inset 0 0 0 0 #5566D8;
+      transition:box-shadow .5s cubic-bezier(.22,.9,.28,1),transform .28s cubic-bezier(.22,.9,.28,1),
+                 border-color .3s}
+    #upgrade-modal .up-cta::after{content:"→";position:absolute;right:20px;top:50%;
+      transform:translateY(-50%);color:#FF6100;font-size:15px;transition:transform .4s cubic-bezier(.19,1,.22,1)}
+    #upgrade-modal .up-cta:hover:not(:disabled){box-shadow:inset 0 0 0 60px #5566D8,
+      0 18px 36px -14px rgba(85,102,216,.7);border-color:#5566D8;transform:translateY(-2px)}
+    #upgrade-modal .up-cta:hover:not(:disabled)::after{transform:translateY(-50%) translateX(4px);color:#fff}
     #upgrade-modal .up-cta:disabled{opacity:.55;cursor:default;box-shadow:none}
-    #upgrade-modal .up-note{font-size:11.5px;line-height:1.5;color:#94a3b8;text-align:center;margin-top:10px}
+    #upgrade-modal .up-cta:disabled::after{display:none}
+    #upgrade-modal .up-note{font-size:11.5px;font-weight:300;line-height:1.55;color:#7A8899;
+      text-align:center;margin-top:11px}
     #upgrade-modal .up-note:empty{display:none}
+    @media(prefers-reduced-motion:reduce){
+      #upgrade-modal .up-cta{transition:box-shadow .5s ease}
+      #upgrade-modal .up-cta:hover:not(:disabled){transform:none}
+    }
     </style>
     <div class="up-card">
       <button class="up-x" onclick="closeUpgradeModal()" aria-label="Close">✕</button>
