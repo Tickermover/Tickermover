@@ -154,6 +154,15 @@ a{color:inherit;text-decoration:none}
 .left-brand .brand-wordmark{color:#fff;display:inline-flex;align-items:baseline;flex-wrap:nowrap;white-space:nowrap}
 .brand-sm .brand-wordmark{color:#0A2F46;display:inline-flex;align-items:baseline;flex-wrap:nowrap;white-space:nowrap}
 .brand-m{height:1.6em;width:auto;flex:none;align-self:baseline;margin:0 .02em}
+/* Brand mark — matching landing's rules, which colour the mark in CSS rather
+   than by the inline SVG attributes. This page had none of them, so its
+   inline #6aabff rendered untouched: a blue M with a blue dot, when the
+   scheme is a blue M with an ORANGE dot. The M takes the light indigo on
+   the dark showcase panel and the darker indigo on the light form panel,
+   because one tone cannot carry both surfaces. */
+.brand-m circle{fill:#FF6100}
+.left-brand .brand-m polyline{stroke:#8FA0F0}
+.brand-sm .brand-m polyline{stroke:#4A5BC4}
 .left-headline{
   font-family:'Inter',sans-serif;font-weight:500;font-size:24px;line-height:1.12;
   letter-spacing:-.025em;color:#fff;margin-bottom:6px;max-width:440px;
@@ -177,13 +186,19 @@ a{color:inherit;text-decoration:none}
 .left-stat .l{font-size:9.5px;color:#8FBFDD;letter-spacing:.09em;text-transform:uppercase;font-weight:700}
 
 /* ═══ RIGHT — form (LIGHT panel, landing alice-blue) ═══ */
+/* The peach -> lilac mesh, identical to the landing hero and the closing
+   .cta panel. It replaces a wash of icy blues (rgba(143,191,221,.42) and
+   rgba(195,225,250,.35)) over the warm base - two families fighting, which
+   is what made this panel read slightly grey rather than warm.
+   Navy type is ~7:1 on every stop of this mesh, so nothing here needs a
+   contrast exception. */
 .login-right{
   display:flex;align-items:center;justify-content:center;padding:36px 40px;position:relative;
   background:
-    radial-gradient(70% 50% at 18% 12%, rgba(255,255,255,.75) 0%, transparent 55%),
-    radial-gradient(55% 50% at 88% 88%, rgba(143,191,221,.42) 0%, transparent 60%),
-    radial-gradient(50% 40% at 50% 50%, rgba(195,225,250,.35) 0%, transparent 65%),
-    var(--alice-blue);
+    radial-gradient(120% 116% at 6% 96%,  #FF9E5E 0%, rgba(255,179,138,.72) 24%, rgba(252,230,216,0) 58%),
+    radial-gradient(112% 108% at 96% 88%, #A8AFE8 0%, rgba(200,190,250,.66) 30%, rgba(235,240,255,0) 64%),
+    radial-gradient(86% 72% at 46% -6%,   #FFFFFF 0%, #FCE6D8 46%, rgba(252,230,216,0) 78%),
+    linear-gradient(132deg,#FCE6D8 0%,#EBF0FF 52%,#D1C9FF 100%);
   overflow:hidden;
   color:var(--text-dark);
 }
