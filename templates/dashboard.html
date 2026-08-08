@@ -7662,8 +7662,13 @@ document.addEventListener('keydown', function(e){
        Prime Tickers, Fact Check and Management all route here.
        The header takes the deep-navy treatment used by the pricing panel and
        #research, so the paywall looks like the thing it is selling. */
+    /* The referral band took this from ~430px to ~620px, tall enough to clip
+       on a laptop. Cap it and let the card scroll rather than the offer
+       falling off the bottom of the screen. */
+    #upgrade-modal{overflow-y:auto}
     #upgrade-modal .up-card{width:100%;max-width:404px;background:#fff;border-radius:22px;
-      box-shadow:0 30px 70px -22px rgba(7,23,38,.48);overflow:hidden;position:relative}
+      box-shadow:0 30px 70px -22px rgba(7,23,38,.48);overflow:hidden auto;position:relative;
+      max-height:min(92vh,760px)}
     #upgrade-modal .up-x{position:absolute;top:14px;right:14px;width:30px;height:30px;border:none;
       border-radius:9px;background:rgba(255,255,255,.10);color:rgba(255,255,255,.72);font-size:13px;
       line-height:1;cursor:pointer;transition:background .2s,color .2s;z-index:2}
@@ -7724,6 +7729,23 @@ document.addEventListener('keydown', function(e){
     #upgrade-modal .up-note{font-size:11.5px;font-weight:400;line-height:1.55;color:#5D6C7B;
       text-align:center;margin-top:11px}
     #upgrade-modal .up-note:empty{display:none}
+    /* Referral band. Warm, recessed, visually subordinate to the CTA — the
+       second-best outcome, not a competing offer. */
+    #upgrade-modal .up-ref{background:#FFF6F0;border-top:1px solid #F0E7E0;padding:18px 24px 22px}
+    #upgrade-modal .up-ref-h{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+    #upgrade-modal .up-ref-k{font-family:'JetBrains Mono',monospace;font-size:9.5px;font-weight:700;
+      letter-spacing:.14em;text-transform:uppercase;color:#C74E00}
+    #upgrade-modal .up-ref-t{font-size:14.5px;font-weight:600;color:#0A2F46;letter-spacing:-.01em}
+    #upgrade-modal .up-ref-d{font-size:12.5px;font-weight:300;line-height:1.55;color:#5D6C7B;margin:0 0 12px}
+    #upgrade-modal .up-ref-row{display:flex;gap:8px}
+    #upgrade-modal .up-ref-in{flex:1;min-width:0;font-family:'JetBrains Mono',monospace;font-size:11.5px;
+      color:#0A2F46;background:#fff;border:1px solid #E4E7EC;border-radius:100px;padding:9px 14px;outline:none}
+    #upgrade-modal .up-ref-in::placeholder{color:#B6BFC9;font-family:'Inter',sans-serif}
+    #upgrade-modal .up-ref-b{flex:none;font-family:inherit;font-size:12.5px;font-weight:500;color:#fff;
+      background:#C74E00;border:1px solid #C74E00;border-radius:100px;padding:9px 16px;cursor:pointer;
+      transition:background .25s,border-color .25s}
+    #upgrade-modal .up-ref-b:hover{background:#A84200;border-color:#A84200}
+    #upgrade-modal .up-ref-note{font-size:11px;font-weight:400;color:#5D6C7B;margin-top:8px;min-height:14px}
     @media(prefers-reduced-motion:reduce){
       #upgrade-modal .up-cta{transition:box-shadow .5s ease}
       #upgrade-modal .up-cta:hover:not(:disabled){transform:none}
@@ -7754,6 +7776,20 @@ document.addEventListener('keydown', function(e){
         <button class="up-cta" id="upgrade-pay-btn" disabled>Upgrade to Pro</button>
         <div class="up-note" id="upgrade-error"></div>
         <div class="up-note">Have a discount code? Enter it at checkout.</div>
+      </div>
+      <!-- Referral. Deliberately BELOW the primary CTA and visually quieter:
+           it is the second-best outcome, not a competing offer. Only real
+           because the machinery now exists — codes, attribution and a
+           Stripe credit that lands when the friend's payment clears. -->
+      <div class="up-ref">
+        <div class="up-ref-h"><span class="up-ref-k">Not ready?</span>
+          <span class="up-ref-t">Give a month, get a month</span></div>
+        <p class="up-ref-d">Share your link and a friend gets their first month free. You get one back the moment their payment clears &mdash; up to 12 a year.</p>
+        <div class="up-ref-row">
+          <input class="up-ref-in" id="up-ref-url" readonly value="" placeholder="Your personal link">
+          <button type="button" class="up-ref-b" id="up-ref-btn">Get my link</button>
+        </div>
+        <div class="up-ref-note" id="up-ref-note"></div>
       </div>
     </div>
   </div>
@@ -20347,6 +20383,46 @@ async function openUpgradeModal() {
   }
 }
 
+/* Referral link in the modal. Fetched on demand rather than on open, so a
+   visitor who never looks costs nothing. After the first fetch the button
+   becomes Copy — the link is already on screen, so re-fetching is pointless. */
+(function _wireModalReferral(){
+  var btn = document.getElementById('up-ref-btn');
+  if (!btn) return;
+  var out = document.getElementById('up-ref-url');
+  var note = document.getElementById('up-ref-note');
+  btn.addEventListener('click', async function(){
+    if (out && out.value){                      // second press = copy
+      try{
+        out.select();
+        if (navigator.clipboard) await navigator.clipboard.writeText(out.value);
+        else document.execCommand('copy');
+        if (note) note.textContent = 'Copied. Send it to whoever would actually use it.';
+      }catch(e){ if (note) note.textContent = 'Select the link above and copy it.'; }
+      return;
+    }
+    btn.disabled = true; btn.textContent = 'Getting…';
+    try{
+      var r = await fetch('/api/referral', {headers:{Authorization:'Bearer '+(localStorage.getItem('ah_token')||'')}});
+      var j = await r.json();
+      if (j && j.url){
+        if (out) out.value = j.url;
+        btn.textContent = 'Copy';
+        if (note) note.textContent = j.months
+          ? (j.months + ' month' + (j.months===1?'':'s') + ' earned so far · ' + j.remaining + ' left this year')
+          : 'You earn a month the moment a friend&rsquo;s first payment clears.';
+      } else {
+        btn.textContent = 'Get my link';
+        if (note) note.textContent = 'Could not load your link — please try again.';
+      }
+    }catch(e){
+      btn.textContent = 'Get my link';
+      if (note) note.textContent = 'Network error — please try again.';
+    }
+    btn.disabled = false;
+  });
+})();
+
 async function startStripeCheckout() {
   const btn = document.getElementById('upgrade-pay-btn');
   const errEl = document.getElementById('upgrade-error');
@@ -23945,6 +24021,23 @@ function scResultHTML(d){
   /* Single source of truth for the client-side Pro gates. The session's
      _AUTH.user.plan does not know about beta or allow-listed (comped)
      accounts, so ask the server once and cache it on window. */
+  /* Referral: claim the code the visitor arrived on, once. Runs after we
+     have a token, because attribution is written against the CURRENT account.
+     The key is cleared on any definitive answer — success, self-referral,
+     already-claimed or unknown code — so it cannot retry forever. */
+  (function _claimRef(){
+    try{
+      var code=localStorage.getItem('ah_ref'), tok=localStorage.getItem('ah_token');
+      if(!code||!tok) return;
+      fetch('/api/referral/claim',{method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+tok},
+        body:JSON.stringify({code:code})})
+       .then(function(r){return r.json();})
+       .then(function(j){ if(j) try{localStorage.removeItem('ah_ref');}catch(e){} })
+       .catch(function(){});
+    }catch(e){}
+  })();
+
   window.__PLAN = window.__PLAN || {pro:false, comped:false, loaded:false};
   async function _refreshPlan(){
     try{

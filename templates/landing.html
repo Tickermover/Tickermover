@@ -32,6 +32,12 @@
 <link rel="apple-touch-icon" href="/static/icons/icon-192.png">
 <meta name="theme-color" content="#0A2F46">
 <script>document.documentElement.className+=' has-js';</script>
+<script>/* Referral capture: stash ?ref= so it survives the signup flow AND the
+   Google OAuth round-trip, exactly like ah_next does for upgrade intent.
+   Claimed once, after signup, by the app. */
+try{var _r=new URLSearchParams(location.search).get('ref');
+    if(_r) localStorage.setItem('ah_ref', String(_r).trim().toUpperCase().slice(0,12));}catch(e){}</script>
+
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

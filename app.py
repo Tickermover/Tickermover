@@ -13446,6 +13446,42 @@ async def _set_user_pro(user_id: str, *, active: bool, customer_id: str = "",
     return bool(ok)
 
 
+@app.get("/api/referral")
+async def api_referral(user: Optional[dict] = Depends(_current_user),
+                       creds: Optional[HTTPAuthorizationCredentials] = Depends(_bearer)):
+    """This user's referral code, share link and progress.
+
+    The code is DERIVED from the user id, so it is stable and needs no
+    allocation table; this call also registers the reverse lookup so a
+    claim can resolve it back."""
+    if not user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    import referrals as _ref
+    st = _ref.stats(user["user_id"])
+    st["url"] = f"{SITE_ORIGIN}/?ref={st['code']}" if st.get("code") else ""
+    return JSONResponse(st)
+
+
+class _RefClaim(BaseModel):
+    code: str = ""
+
+
+@app.post("/api/referral/claim")
+async def api_referral_claim(body: _RefClaim,
+                             user: Optional[dict] = Depends(_current_user),
+                             creds: Optional[HTTPAuthorizationCredentials] = Depends(_bearer)):
+    """Attribute the CURRENT account to a referrer. Called once, right after
+    signup, with the code the visitor arrived on.
+
+    Refuses self-referral and re-attribution — a referrer is written once, so
+    an existing account cannot be re-pointed at a friend's code later to
+    manufacture a credit."""
+    if not user:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    import referrals as _ref
+    return JSONResponse(_ref.claim(user["user_id"], body.code))
+
+
 @app.get("/api/billing/config")
 async def api_billing_config():
     """What the client needs to start checkout. Hosted Checkout → just enabled."""
@@ -13593,6 +13629,18 @@ async def api_stripe_webhook(request: Request):
                 wrote = await _set_user_pro(uid, active=True,
                                             customer_id=obj.get("customer") or "",
                                             subscription_id=obj.get("subscription") or "")
+                # Referral: a CLEARED payment is what earns the month — never
+                # signup. That is the anti-abuse design, so fake accounts earn
+                # nothing. on_first_payment is idempotent, so a redelivered
+                # webhook cannot double-credit; and a failure here must never
+                # fail the webhook, or Stripe retries a payment we did record.
+                try:
+                    import referrals as _ref
+                    _referrer = _ref.on_first_payment(uid)
+                    if _referrer:
+                        await _ref.apply_credit(stripe_client, _referrer)
+                except Exception as _rexc:
+                    logger.warning(f"referral credit skipped for {uid[:8]}…: {_rexc}")
         elif typ in ("customer.subscription.created", "customer.subscription.updated"):
             uid = uid or (obj.get("metadata") or {}).get("user_id")
             active = obj.get("status") in ("active", "trialing")
