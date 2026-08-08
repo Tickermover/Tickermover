@@ -6975,16 +6975,25 @@ async def api_overview(ticker: str, force: bool = False,
                        user: Optional[dict] = Depends(_current_user),
                        creds: Optional[HTTPAuthorizationCredentials] = Depends(_bearer)):
     """Business/risk/edge snapshot for the stock page's default Overview boxes.
-    Pro-gated. Served from a durable per-ticker cache (Supabase, survives
-    redeploys) and only regenerated when missing/stale — so repeatedly opening
-    the same stock costs nothing after the first view."""
+    Served from a durable per-ticker cache (Supabase, survives redeploys) and
+    only regenerated when missing/stale — so repeatedly opening the same stock
+    costs nothing after the first view.
+
+    FREE TO READ, PRO TO GENERATE (8 Aug 2026). This used to refuse free
+    callers outright, which made the Summary card — the first thing anyone
+    sees on a stock — a wall. Reading a cached overview costs nothing, so
+    free users now get one whenever it exists.
+
+    What they cannot do is trigger a PAID generation: an open endpoint would
+    let anyone fan out model calls across all 545 names. Free callers fall
+    through the cache tiers and stop at the generation step with a locked
+    response instead. In practice most names are already warm, so the free
+    experience is the card, not the wall."""
     import asyncio
     import research_gen
     from overview_store import store as _ovstore
     sym = ticker.upper()
-    if not await _is_pro_user(user, creds):
-        return JSONResponse({"ticker": sym, "status": "locked",
-                             "detail": "The AI overview is a Pro feature. Upgrade to unlock."})
+    _ov_pro = await _is_pro_user(user, creds)
     if not research_gen.available():
         return JSONResponse({"ticker": sym, "status": "unavailable",
                              "detail": "AI overview is not enabled (set ANTHROPIC_API_KEY)."})
@@ -7029,6 +7038,12 @@ async def api_overview(ticker: str, force: bool = False,
             out["_gen_epoch"] = _doc_gen_epoch(doc)
             cache.set(ck, out, ttl=2592000)   # L1 mirrors the 30-day durable TTL
             return JSONResponse(out)
+
+    # Past every cache tier, so the only way on is a PAID generation. Free
+    # callers stop here — they have already had a fair look at anything warm.
+    if not _ov_pro:
+        return JSONResponse({"ticker": sym, "status": "locked",
+                             "detail": "The AI overview is a Pro feature. Upgrade to unlock."})
 
     # Circuit breaker — if today's AI spend hit the cap, never start a new paid
     # generation. Serve any (even stale) cached doc, else a soft 'paused' note.

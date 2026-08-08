@@ -7254,6 +7254,26 @@ html.v2-dark body.v2.ts-active .v2-content::-webkit-scrollbar-thumb,
 html.v2-dark body.v2.ts-active .v2-scroll::-webkit-scrollbar-thumb{
   background:linear-gradient(180deg,#5566D8,#3F4FB0)!important}
 
+/* ── Pro wall on the gated drawer tabs ─────────────────────────────────── */
+.fchk-pro{display:flex;flex-direction:column;align-items:center;text-align:center;gap:9px;
+  padding:30px 24px 28px;border:1px solid #E4E7EC;border-radius:16px;background:#fff}
+.fchk-pro-ic{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;
+  background:rgba(255,97,0,.12);color:#C74E00;margin-bottom:2px}
+.fchk-pro-ic svg{width:20px;height:20px}
+.fchk-pro-t{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;
+  letter-spacing:.14em;text-transform:uppercase;color:#C74E00}
+.fchk-pro-d{font-size:13.5px;font-weight:300;line-height:1.6;color:#475569;max-width:46ch}
+.fchk-pro-b{margin-top:6px;font-family:inherit;font-size:14px;font-weight:500;color:#fff;
+  background:#0A2F46;border:1px solid #0A2F46;border-radius:100px;padding:11px 26px;cursor:pointer;
+  box-shadow:inset 0 0 0 0 #5566D8;
+  transition:box-shadow .5s cubic-bezier(.22,.9,.28,1),transform .28s cubic-bezier(.22,.9,.28,1)}
+.fchk-pro-b:hover{box-shadow:inset 0 0 0 60px #5566D8,0 16px 32px -14px rgba(85,102,216,.65);
+  transform:translateY(-2px)}
+@media(prefers-reduced-motion:reduce){
+  .fchk-pro-b{transition:box-shadow .5s ease}
+  .fchk-pro-b:hover{transform:none}
+}
+
 /* ══════════════════════════════════════════════════════════════════════════
    COMPANY EVENTS — the week, not a launcher
    Scoped to #panel-events. The old surface was a search box over a ticker
@@ -22650,6 +22670,24 @@ function scResultHTML(d){
   /* Thesis audit (Fact Check tab) — 4 areas picked for this business, 2 cited
      checks each. Its own endpoint/cache, so a slow or failed audit never holds
      up the analyst questions below it (and vice versa). */
+  /* The Pro wall for the gated tabs. /api/thesis-audit and /api/mgmt-qa
+     answer a free caller with {available:false, reason:'pro'} — the same
+     shape they already use for "no data". Without this branch both rendered
+     "Not available", which reads as broken rather than as something to buy,
+     and wasted the app's best upsell moment. `what` is a literal from the
+     call site, never user input. */
+  function _proWall(what){
+    return '<div class="fchk-pro">' +
+      '<span class="fchk-pro-ic" aria-hidden="true">' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round">' +
+        '<rect x="4.5" y="10.5" width="15" height="10" rx="2.4"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/></svg>' +
+      '</span>' +
+      '<span class="fchk-pro-t">Included with Pro</span>' +
+      '<span class="fchk-pro-d">Unlock ' + what + ' &mdash; read from the company&rsquo;s own filings, every claim cited back to its source.</span>' +
+      '<button type="button" class="fchk-pro-b" onclick="if(window.openUpgradeModal)openUpgradeModal()">Upgrade to Pro</button>' +
+    '</div>';
+  }
+
   function _fchkLoadAudit(){
     var host=document.getElementById('fchkAudit'); if(!host||host.getAttribute('data-loaded'))return;
     var sym=(_drState&&_drState.full&&_drState.full.ticker)||''; if(!sym)return;
@@ -22659,6 +22697,7 @@ function scResultHTML(d){
     fetch('/api/thesis-audit/'+encodeURIComponent(sym),{headers:{Authorization:'Bearer '+(localStorage.getItem('ah_token')||'')}}).then(function(r){return r.json();}).then(function(d){
       done=true;
       var areas=(d&&Array.isArray(d.audit))?d.audit:[];
+      if(d&&d.reason==='pro'){ host.innerHTML=_proWall('the audit and its cited checks'); return; }
       if(!areas.length){ host.innerHTML='<div class="fchk-mrow"><span class="k">Not available</span><span class="v fchk-weak">No filing-based audit for '+esc(sym)+' yet.</span></div>'; return; }
       var VC={pass:'au-pass',fail:'au-fail',mixed:'au-mixed'};
       var VL={pass:'PASS',fail:'FAIL',mixed:'MIXED'};
@@ -22693,6 +22732,7 @@ function scResultHTML(d){
     fetch('/api/mgmt-qa/'+encodeURIComponent(sym),{headers:{Authorization:'Bearer '+(localStorage.getItem('ah_token')||'')}}).then(function(r){return r.json();}).then(function(q){
       done=true;
       var cps=(q&&Array.isArray(q.checkpoints))?q.checkpoints:[];
+      if(q&&q.reason==='pro'){ host.innerHTML=_proWall('what management was asked, and answered'); return; }
       if(!cps.length){ host.innerHTML='<div class="fchk-mrow"><span class="k">Not available</span><span class="v fchk-weak">No filing-based analysis for '+esc(sym)+' yet.</span></div>'; return; }
       var VC={strength:'fq-yes',concern:'fq-no',mixed:'fq-mixed',unclear:'fq-unknown'};
       var VL={strength:'STRENGTH',concern:'CONCERN',mixed:'MIXED',unclear:'UNCLEAR'};
@@ -22741,6 +22781,7 @@ function scResultHTML(d){
     fetch('/api/mgmt-qa/'+encodeURIComponent(sym),{headers:{Authorization:'Bearer '+(localStorage.getItem('ah_token')||'')}}).then(function(r){return r.json();}).then(function(q){
       done=true;
       var ans=(q&&Array.isArray(q.answers))?q.answers:[];
+      if(q&&q.reason==='pro'){ slot.innerHTML=_proWall('the call summary'); return; }
       if(!ans.length){ slot.innerHTML='<div class="fchk-mrow"><span class="k">Not available</span><span class="v fchk-weak">No call summary for '+esc(sym)+' yet.</span></div>'; return; }
       var html=ans.map(function(x){
         var weak=!x.answered;
