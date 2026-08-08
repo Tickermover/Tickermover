@@ -1230,23 +1230,21 @@ table.ssx-h2h tbody td.self{color:var(--ink);font-weight:600}
 /* Page loading overlay — fills the current page region (the stock sheet or the
    active panel), NOT the whole viewport, with a large brand-blue ring that fills
    as the percent eases to ~90% and holds until the data lands.
-   The overlay paints NO background at all, in any variant. It first used an
-   icy radial (#f6f9ff → #e7eefe), which against the warm page read as a blue
-   slab; replacing that with a white veil just made it a white slab. Either way
-   a loading state was covering the page in a colour the page does not use.
-   The page's own background now shows through everywhere. Where real content
-   sits behind the ring (the sheet variant) a backdrop blur pushes it back
-   without tinting it — no filter support just means a slightly busier
-   backdrop, never a coloured block. */
+   The veil is the NEUTRAL WHITE, and it is the same on every variant — user's
+   call, 8 Aug 2026: "white one was actually good". History worth keeping so it
+   doesn't get re-litigated: it began as an icy radial (#f6f9ff → #e7eefe),
+   which against the warm page read as a blue slab and was the thing actually
+   worth removing. White is not a tint the page fights with, it hides whatever
+   stale content sits behind the ring, and one value across all variants means
+   loading looks identical wherever it happens. Do NOT swap this for
+   transparent-plus-backdrop-blur: that was tried and rejected. */
 .ldr-overlay{position:absolute;inset:0;z-index:40;display:flex;align-items:center;justify-content:center;padding:24px;
-  background:transparent;-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);
-  animation:ldr-fade .25s ease}
+  background:rgba(255,255,255,.88);animation:ldr-fade .25s ease}
 .ldr-overlay.ldr-out{opacity:0;transition:opacity .3s ease}
 /* Inline variant — fills just the host widget (chart card / table), not the page.
-   Its host is emptied before the loader goes in, so there is nothing behind it
-   to push back and no reason to pay for a blur. */
+   Same veil as the sheet variant; only the geometry differs. */
 .ldr-overlay.ldr-inline{position:relative;inset:auto;width:100%;min-height:340px;border-radius:16px;
-  background:transparent;-webkit-backdrop-filter:none;backdrop-filter:none}
+  background:rgba(255,255,255,.88)}
 /* Mini spinner — for a sub-component loading inside an already-rendered page
    (e.g. the tracker chart), so it doesn't stack a SECOND big ring. */
 .ldr-mini-wrap{display:flex;align-items:center;justify-content:center;gap:10px;min-height:200px;color:#94a3b8;font-size:12.5px;font-weight:600}
