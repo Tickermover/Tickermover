@@ -22256,7 +22256,7 @@ function scResultHTML(d){
     host.setAttribute('data-loaded','1');
     var esc=escHTML, done=false;
     setTimeout(function(){ if(!done) host.innerHTML='<div class="fchk-mrow"><span class="k">Still working</span><span class="v fchk-weak">Running the audit — reopen this tab in a moment.</span></div>'; }, 60000);
-    fetch('/api/thesis-audit/'+encodeURIComponent(sym)).then(function(r){return r.json();}).then(function(d){
+    fetch('/api/thesis-audit/'+encodeURIComponent(sym),{headers:{Authorization:'Bearer '+(localStorage.getItem('ah_token')||'')}}).then(function(r){return r.json();}).then(function(d){
       done=true;
       var areas=(d&&Array.isArray(d.audit))?d.audit:[];
       if(!areas.length){ host.innerHTML='<div class="fchk-mrow"><span class="k">Not available</span><span class="v fchk-weak">No filing-based audit for '+esc(sym)+' yet.</span></div>'; return; }
@@ -22290,7 +22290,7 @@ function scResultHTML(d){
     host.setAttribute('data-loaded','1');
     var esc=escHTML, done=false;
     setTimeout(function(){ if(!done) host.innerHTML='<div class="fchk-mrow"><span class="k">Still working</span><span class="v fchk-weak">Reading the filing — reopen this tab in a moment.</span></div>'; }, 60000);
-    fetch('/api/mgmt-qa/'+encodeURIComponent(sym)).then(function(r){return r.json();}).then(function(q){
+    fetch('/api/mgmt-qa/'+encodeURIComponent(sym),{headers:{Authorization:'Bearer '+(localStorage.getItem('ah_token')||'')}}).then(function(r){return r.json();}).then(function(q){
       done=true;
       var cps=(q&&Array.isArray(q.checkpoints))?q.checkpoints:[];
       if(!cps.length){ host.innerHTML='<div class="fchk-mrow"><span class="k">Not available</span><span class="v fchk-weak">No filing-based analysis for '+esc(sym)+' yet.</span></div>'; return; }
@@ -22311,7 +22311,7 @@ function scResultHTML(d){
     box.setAttribute('data-loaded','1');
     var esc=escHTML;
     function row(k,items){ if(!items||!items.length)return ''; return '<div class="fchk-mrow"><span class="k">'+esc(k)+'</span><span class="v">'+items.slice(0,3).map(esc).join(' ')+'</span></div>'; }
-    fetch('/api/event-intel/'+encodeURIComponent(sym)).then(function(r){return r.json();}).then(function(d){
+    fetch('/api/event-intel/'+encodeURIComponent(sym),{headers:{Authorization:'Bearer '+(localStorage.getItem('ah_token')||'')}}).then(function(r){return r.json();}).then(function(d){
       d=d||{};
       var bullets='';
       if(Array.isArray(d.sections)&&d.sections.length){
@@ -22338,7 +22338,7 @@ function scResultHTML(d){
     var slot=document.getElementById('fchkQA'); if(!slot)return;
     var esc=escHTML, done=false;
     setTimeout(function(){ if(!done) slot.innerHTML='<div class="fchk-mrow"><span class="k">Still reading</span><span class="v fchk-weak">Reopen this tab in a moment.</span></div>'; }, 60000);
-    fetch('/api/mgmt-qa/'+encodeURIComponent(sym)).then(function(r){return r.json();}).then(function(q){
+    fetch('/api/mgmt-qa/'+encodeURIComponent(sym),{headers:{Authorization:'Bearer '+(localStorage.getItem('ah_token')||'')}}).then(function(r){return r.json();}).then(function(q){
       done=true;
       var ans=(q&&Array.isArray(q.answers))?q.answers:[];
       if(!ans.length){ slot.innerHTML='<div class="fchk-mrow"><span class="k">Not available</span><span class="v fchk-weak">No call summary for '+esc(sym)+' yet.</span></div>'; return; }

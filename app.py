@@ -6142,14 +6142,23 @@ def _metrics_blurb(t: dict | None) -> str:
 
 
 @app.get("/api/mgmt-qa/{symbol}")
-async def api_mgmt_qa(symbol: str, refresh: int = 0):
+async def api_mgmt_qa(symbol: str, refresh: int = 0,
+                      user: Optional[dict] = Depends(_current_user),
+                      creds: Optional[HTTPAuthorizationCredentials] = Depends(_bearer)):
     """Analyst question set answered from the company's own latest filing,
     via Groq (free tier) so it keeps working without Anthropic credit.
-    Cached 14d. Always 200 — {available: false, reason} when unavailable."""
+    Cached 14d. Always 200 — {available: false, reason} when unavailable.
+
+    PRO. Gated by returning the endpoint's own unavailable shape with
+    reason="pro" rather than a 401, so the drawer's existing
+    `available === false` path renders it instead of throwing. Note this also
+    stops a free caller from triggering GENERATION, which is the real cost."""
     import event_intel as _ei_mod
     sym = symbol.upper().strip()
     if not sym or len(sym) > 8:
         raise HTTPException(status_code=400, detail="Bad ticker")
+    if not await _is_pro_user(user, creds):
+        return JSONResponse({"available": False, "reason": "pro", "ticker": sym})
     try:
         row = next((x for x in (_universe_data or [])
                     if (x.get("ticker") or "").upper() == sym), None)
@@ -6200,15 +6209,23 @@ async def api_scan_run(scan_id: str, limit: int = 50):
 
 
 @app.get("/api/thesis-audit/{symbol}")
-async def api_thesis_audit(symbol: str, refresh: int = 0):
+async def api_thesis_audit(symbol: str, refresh: int = 0,
+                           user: Optional[dict] = Depends(_current_user),
+                           creds: Optional[HTTPAuthorizationCredentials] = Depends(_bearer)):
     """Structured pass/fail thesis audit — 4 areas chosen for THIS business,
     2 cited checks each, from the company's own latest filing plus recent web
     coverage. Free provider chain, cached 14d. Always 200 —
-    {available: false, reason} when unavailable."""
+    {available: false, reason} when unavailable.
+
+    PRO. Same shape as mgmt-qa: reason="pro" through the existing unavailable
+    path, not a 401, so the drawer degrades instead of erroring — and a free
+    caller cannot trigger generation."""
     import event_intel as _ei_mod
     sym = symbol.upper().strip()
     if not sym or len(sym) > 8:
         raise HTTPException(status_code=400, detail="Bad ticker")
+    if not await _is_pro_user(user, creds):
+        return JSONResponse({"available": False, "reason": "pro", "ticker": sym})
     try:
         row = next((x for x in (_universe_data or [])
                     if (x.get("ticker") or "").upper() == sym), None)
