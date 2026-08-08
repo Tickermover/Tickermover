@@ -2847,6 +2847,45 @@ body.v2 .v2ov-card.sectors .v2ov-sector-cell{
 .v2-acct-note.err{color:#dc2626}
 .v2-acct-link{margin-top:9px;display:inline-block;background:none;border:none;padding:0;color:#2970ff;font-size:11.5px;font-weight:700;cursor:pointer}
 .v2-acct-link:hover{text-decoration:underline}
+.v2-acct-ref{margin-top:10px;padding-top:11px;border-top:1px solid #eef0f3}
+.v2-acct-refline{flex:1;min-width:0;font-size:12.5px;font-weight:600;color:#0b1220}
+.v2-acct-refline b{color:#C74E00}
+
+/* ── Refer a friend ─────────────────────────────────────────────────────
+   The share sheet behind the sidebar item and the account-panel row. Orange
+   is the site's single accent and this is the one thing in the app asking the
+   reader to act on our behalf, so it earns it. #C74E00 for text on white —
+   #FF6100 is only 3.4:1 there. */
+.v2-ref-ov{position:fixed;inset:0;z-index:9200;display:none;align-items:center;justify-content:center;
+  padding:22px;background:rgba(10,31,54,.42);backdrop-filter:blur(3px)}
+.v2-ref-ov.on{display:flex}
+.v2-ref{width:min(460px,100%);background:#fff;border-radius:20px;padding:26px 26px 22px;
+  box-shadow:0 30px 80px -30px rgba(10,31,54,.6);text-align:center;position:relative}
+.v2-ref-x{position:absolute;top:12px;right:12px;width:30px;height:30px;border:0;border-radius:50%;
+  background:#F2F1EE;color:#5D6C7B;font-size:15px;cursor:pointer;line-height:1}
+.v2-ref-x:hover{background:#E7E3DF;color:#0A2F46}
+.v2-ref-ic{width:46px;height:46px;margin:0 auto 12px;border-radius:14px;display:grid;place-items:center;
+  background:rgba(255,97,0,.12);font-size:22px}
+.v2-ref-t{font-size:19px;font-weight:600;letter-spacing:-.015em;color:#0A2F46;margin:0 0 6px}
+.v2-ref-d{font-size:13.5px;font-weight:300;line-height:1.6;color:#5D6C7B;margin:0 0 16px}
+.v2-ref-box{display:flex;gap:8px;align-items:center;background:#FBFAF8;border:1px solid #E4E7EC;
+  border-radius:12px;padding:8px 8px 8px 13px;margin-bottom:12px}
+.v2-ref-url{flex:1;min-width:0;font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#0A2F46;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left;border:0;background:none;outline:none}
+.v2-ref-copy{flex:none;font-family:inherit;font-size:12.5px;font-weight:600;color:#fff;background:#0A2F46;
+  border:0;border-radius:9px;padding:9px 16px;cursor:pointer;transition:background .2s}
+.v2-ref-copy:hover{background:#14587D}
+.v2-ref-copy.done{background:#15803d}
+.v2-ref-share{display:flex;gap:8px;justify-content:center;margin-bottom:15px;flex-wrap:wrap}
+.v2-ref-share a{font-size:12.5px;font-weight:500;color:#14587D;text-decoration:none;border:1px solid #E4E7EC;
+  border-radius:100px;padding:7px 14px;transition:border-color .2s,color .2s}
+.v2-ref-share a:hover{border-color:#14587D;color:#0A2F46}
+.v2-ref-stats{display:flex;gap:10px;justify-content:center;margin-bottom:13px}
+.v2-ref-stat{flex:1;background:#FBFAF8;border:1px solid #E4E7EC;border-radius:12px;padding:11px 8px}
+.v2-ref-stat b{display:block;font-family:'JetBrains Mono',monospace;font-size:19px;font-weight:700;color:#C74E00}
+.v2-ref-stat span{display:block;font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  color:#94a3b8;margin-top:2px}
+.v2-ref-fine{font-size:11px;line-height:1.55;color:#94a3b8;margin:0}
 .v2-acct-ft{padding:14px 22px 20px}
 .v2-acct-cookies{display:block;text-align:center;margin-top:10px;font-size:12px;color:#94a3b8;text-decoration:underline}
 .v2-acct-cookies:hover{color:#2970ff}
@@ -7620,6 +7659,15 @@ document.addEventListener('keydown', function(e){
     <div class="v2-nav-item" onclick="v2Show('watch',this)">
       <svg viewBox="0 0 24 24"><defs><linearGradient id="ahg-watch" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#A78BFA"/><stop offset="1" stop-color="#7C3AED"/></linearGradient></defs><path fill="url(#ahg-watch)" d="M6.2 3.2h11.6A1.6 1.6 0 0 1 19.4 4.8v15.6c0 .9-1 1.4-1.7.8L12 16.9l-5.7 4.3c-.7.6-1.7.1-1.7-.8V4.8a1.6 1.6 0 0 1 1.6-1.6z"/></svg><span>Watchlist</span>
     </div>
+    <!-- Refer a friend. referrals.py and /api/referral have been complete for a
+         while, but the only entry point was the landing page's CTA, which sends
+         you to /login?signup — so existing subscribers, the one group with the
+         standing to refer anybody, had nowhere to get their link. Hidden until
+         signed in (v2RefSync); the badge carries months earned, because a
+         visible counter is what drives the second share. -->
+    <div class="v2-nav-item" id="v2-nav-refer" style="display:none" onclick="v2OpenRefer()">
+      <svg viewBox="0 0 24 24"><defs><linearGradient id="ahg-ref" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFB37A"/><stop offset="1" stop-color="#FF6100"/></linearGradient></defs><path fill="url(#ahg-ref)" d="M9.2 11.4a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zm0 1.7c-3.2 0-6.4 1.6-6.4 3.8v2.7h12.8v-2.7c0-2.2-3.2-3.8-6.4-3.8z"/><path fill="url(#ahg-ref)" d="M18.6 8.4h-1.8v2h-2v1.8h2v2h1.8v-2h2v-1.8h-2z"/></svg><span>Refer a friend</span><span class="v2-nav-tag" id="v2-refer-badge" style="display:none"></span>
+    </div>
     <!-- "The Weekly" removed from the NAV ONLY (8 Aug 2026, restoring a rename
          that was lost when the icon rail was reverted on 6 Aug). /weekly still
          serves 200, keeps its sitemap entries and its landing-page link.
@@ -7719,6 +7767,14 @@ document.addEventListener('keydown', function(e){
             <button class="v2-acct-btn v2-acct-btn-pri" id="v2-acct-planbtn" onclick="acctPlanAction()">Upgrade</button>
           </div>
           <div class="v2-acct-note" id="v2-acct-plannote"></div>
+          <!-- Secondary referral entry. Deliberately NOT the primary one —
+               nobody opens account settings looking for a share link — but
+               someone reading their plan is thinking about what it costs, and
+               that is the moment a free month lands hardest. -->
+          <div class="v2-acct-row v2-acct-ref" id="v2-acct-ref" style="display:none">
+            <div class="v2-acct-refline" id="v2-acct-refline">—</div>
+            <button class="v2-acct-btn" onclick="v2OpenRefer()">Get my link</button>
+          </div>
         </div>
       </div>
 
@@ -7731,6 +7787,27 @@ document.addEventListener('keydown', function(e){
       </div>
     </div>
   </div>
+
+      <!-- Share sheet. Lives outside the account panel so the sidebar item can
+           open it directly without going through account settings. -->
+      <div class="v2-ref-ov" id="v2-ref-ov" onclick="if(event.target===this)v2CloseRefer()">
+        <div class="v2-ref" role="dialog" aria-modal="true" aria-labelledby="v2-ref-t">
+          <button class="v2-ref-x" onclick="v2CloseRefer()" aria-label="Close">&times;</button>
+          <div class="v2-ref-ic" aria-hidden="true">🎁</div>
+          <h3 class="v2-ref-t" id="v2-ref-t">Give a month, get a month</h3>
+          <p class="v2-ref-d">Send this link to someone who'd actually use TickerMover.
+             They get their first month free — and when their first payment clears,
+             so do you.</p>
+          <div class="v2-ref-stats" id="v2-ref-stats"></div>
+          <div class="v2-ref-box">
+            <input class="v2-ref-url" id="v2-ref-url" readonly value="Loading your link…"
+                   onclick="this.select()">
+            <button class="v2-ref-copy" id="v2-ref-copy" onclick="v2CopyRefer()">Copy</button>
+          </div>
+          <div class="v2-ref-share" id="v2-ref-share"></div>
+          <p class="v2-ref-fine" id="v2-ref-fine"></p>
+        </div>
+      </div>
 
   <!-- ── Upgrade modal ───────────────────────────────────────────────────
        The step between "Upgrade to Pro" and Stripe's hosted checkout. Its
@@ -18236,6 +18313,112 @@ async function v2LoadPickSparks(){
   }
 }
 
+/* ── Refer a friend ──────────────────────────────────────────────────────
+   Surfaces the referral program that referrals.py + GET /api/referral have
+   implemented all along but that had NO entry point inside the app: the only
+   CTA lived on the landing page and pointed at /login?signup, so the people
+   best placed to refer — existing subscribers — could not get their own link.
+
+   /api/referral returns {code, url, months, referred, cap, remaining} and 401s
+   for anonymous callers, so the nav item stays hidden until a token exists. */
+var _v2Ref = null;
+
+function _v2RefHdr(){
+  var t = '';
+  try { t = (typeof _AUTH !== 'undefined' && _AUTH.token) || localStorage.getItem('ah_token') || ''; }
+  catch(e){}
+  return t ? { Authorization: 'Bearer ' + t } : {};
+}
+
+/* Fetch once per session and reveal the nav item. Called after auth settles;
+   safe to call repeatedly — a second call just refreshes the badge. */
+async function v2RefSync(){
+  var item = document.getElementById('v2-nav-refer');
+  var hdr = _v2RefHdr();
+  if (!hdr.Authorization){ if (item) item.style.display = 'none'; return; }
+  try {
+    var r = await fetch('/api/referral', { headers: hdr, cache: 'no-store' });
+    if (!r.ok) return;                       /* 401 → leave it hidden */
+    _v2Ref = await r.json();
+  } catch(e){ return; }
+  if (item) item.style.display = '';
+  var badge = document.getElementById('v2-refer-badge');
+  if (badge){
+    var m = parseInt(_v2Ref && _v2Ref.months, 10) || 0;
+    /* Only badge a real number. A "0" chip reads as a dead feature. */
+    if (m > 0){ badge.textContent = m + (m === 1 ? ' MO' : ' MOS'); badge.style.display = ''; }
+    else badge.style.display = 'none';
+  }
+  var row = document.getElementById('v2-acct-ref'), line = document.getElementById('v2-acct-refline');
+  if (row && line){
+    var mm = parseInt(_v2Ref && _v2Ref.months, 10) || 0;
+    line.innerHTML = mm > 0
+      ? 'Referrals &mdash; <b>' + mm + ' free month' + (mm === 1 ? '' : 's') + '</b> earned'
+      : 'Refer a friend &mdash; you both get a free month';
+    row.style.display = '';
+  }
+}
+
+function v2OpenRefer(){
+  var ov = document.getElementById('v2-ref-ov');
+  if (!ov) return;
+  ov.classList.add('on');
+  document.addEventListener('keydown', _v2RefEsc);
+  _v2RefPaint();
+  if (!_v2Ref) v2RefSync().then(_v2RefPaint);
+}
+
+function _v2RefEsc(e){ if (e.key === 'Escape') v2CloseRefer(); }
+
+function v2CloseRefer(){
+  var ov = document.getElementById('v2-ref-ov');
+  if (ov) ov.classList.remove('on');
+  document.removeEventListener('keydown', _v2RefEsc);
+}
+
+function _v2RefPaint(){
+  var url = document.getElementById('v2-ref-url');
+  if (url) url.value = (_v2Ref && _v2Ref.url) || 'Loading your link…';
+  var stats = document.getElementById('v2-ref-stats');
+  if (stats && _v2Ref){
+    stats.innerHTML =
+      '<div class="v2-ref-stat"><b>' + (parseInt(_v2Ref.referred,10) || 0) + '</b><span>Joined</span></div>' +
+      '<div class="v2-ref-stat"><b>' + (parseInt(_v2Ref.months,10) || 0) + '</b><span>Months earned</span></div>' +
+      '<div class="v2-ref-stat"><b>' + (parseInt(_v2Ref.remaining,10) || 0) + '</b><span>Still available</span></div>';
+  }
+  var share = document.getElementById('v2-ref-share');
+  if (share && _v2Ref && _v2Ref.url){
+    var u = encodeURIComponent(_v2Ref.url);
+    var msg = encodeURIComponent("I've been using TickerMover to track the US market — here's a free month if you want to try it:");
+    share.innerHTML =
+      '<a href="https://wa.me/?text=' + msg + '%20' + u + '" target="_blank" rel="noopener">WhatsApp</a>' +
+      '<a href="https://x.com/intent/tweet?text=' + msg + '&url=' + u + '" target="_blank" rel="noopener">X</a>' +
+      '<a href="https://www.linkedin.com/sharing/share-offsite/?url=' + u + '" target="_blank" rel="noopener">LinkedIn</a>' +
+      '<a href="mailto:?subject=' + encodeURIComponent('A free month of TickerMover') +
+        '&body=' + msg + '%20' + u + '">Email</a>';
+  }
+  var fine = document.getElementById('v2-ref-fine');
+  if (fine && _v2Ref){
+    fine.textContent = 'Your free month is credited once their first payment clears. Up to ' +
+      (_v2Ref.cap || 12) + ' free months a year. Self-referrals and duplicate accounts don’t qualify.';
+  }
+}
+
+async function v2CopyRefer(){
+  var btn = document.getElementById('v2-ref-copy'), url = document.getElementById('v2-ref-url');
+  if (!btn || !url || !url.value) return;
+  var ok = false;
+  try { await navigator.clipboard.writeText(url.value); ok = true; }
+  catch(e){
+    /* clipboard API needs a secure context and permission; select-and-exec is
+       the fallback that still works in an http preview or an older browser. */
+    try { url.select(); ok = document.execCommand('copy'); } catch(_e){}
+  }
+  btn.textContent = ok ? 'Copied' : 'Press Ctrl+C';
+  btn.classList.toggle('done', ok);
+  setTimeout(function(){ btn.textContent = 'Copy'; btn.classList.remove('done'); }, 2000);
+}
+
 /* ── Account / profile panel ─────────────────────────────────────────────
    Opens from the sidebar user card. Reuses existing endpoints:
    /api/user/account (aggregate), PUT /api/user/prefs (name),
@@ -19757,11 +19940,19 @@ function _authUpdateUI(user) {
       avatar.style.setProperty('background', _avatarGradient(user.email || user.id || first), 'important');
     }
     renderWatchlistPanel();
+    /* Reveal "Refer a friend" and load the earned-months badge. Guarded so a
+       failing referral call can never break sign-in. */
+    try { if (typeof v2RefSync === 'function') v2RefSync(); } catch(e){}
   } else {
     try { window.__PLAN = {pro:false, comped:false, loaded:false};
           var _pe=document.getElementById('user-plan'); if(_pe) _pe.textContent='TickerMover Member'; } catch(e){}
     btn.style.display  = '';
     menu.style.display = 'none';
+    var _rf = document.getElementById('v2-nav-refer');
+    if (_rf) _rf.style.display = 'none';
+    var _rr = document.getElementById('v2-acct-ref');
+    if (_rr) _rr.style.display = 'none';
+    _v2Ref = null;
   }
 }
 
