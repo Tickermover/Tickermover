@@ -7029,6 +7029,116 @@ body.v2 .v2-pick-card, body.v2 .dr-deep-card{
    padding; do it everywhere so all panels resolve to the same width as the
    floating topbar (calc(100% - 52px), max 1268, centered). */
 html.v2-dark body.v2 .main, body.v2 .main{padding:0 0 30px !important;max-width:none !important}
+
+/* ════════════════════════════════════════════════════════════════════════
+   DARK RAIL + WARM CONTENT — final block, 8 Aug 2026
+   ------------------------------------------------------------------------
+   The rail takes landing's .bg-dark treatment (the #research section):
+   deep navy ground, indigo headings, white body, orange accent. Appended
+   last on purpose — the rail is rewritten by four earlier stacked blocks
+   (6758, 6811, 6876, 6916) and this is far cheaper than unpicking them.
+
+   Everything here is scoped to .v2-sidebar or .v2-content. Blue elsewhere
+   in this file is load-bearing for scores, charts and status and is not
+   touched.
+
+   .v2-content is included because it, not --app-paper, paints the large
+   wash behind the cards - the earlier token fix changed the shell but left
+   this icy #eef6fe -> #dde8f9 gradient in place, so the page barely moved.
+   ════════════════════════════════════════════════════════════════════════ */
+
+/* ── the rail ── */
+html.v2-dark body.v2 .v2-sidebar,body.v2 .v2-sidebar{
+  background:
+    radial-gradient(78% 60% at 8% 0%,    rgba(58,80,190,.34) 0%, rgba(10,27,46,0) 58%),
+    radial-gradient(64% 46% at 96% 100%, rgba(255,97,0,.13)  0%, rgba(10,27,46,0) 62%),
+    linear-gradient(165deg,#0B1E33 0%,#0A2136 52%,#071726 100%)!important;
+  border-right:1px solid rgba(255,255,255,.09)!important;
+  box-shadow:inset -1px 0 0 rgba(255,255,255,.05), 18px 0 44px -28px rgba(0,0,0,.55)!important;
+  color:rgba(255,255,255,.78)!important;
+}
+/* the blueprint dot grid was drawn in near-black — invisible on navy */
+html.v2-dark body.v2 .v2-sidebar::before,body.v2 .v2-sidebar::before{
+  background-image:
+    radial-gradient(135% 48% at 0% 0%, rgba(143,160,240,.10), transparent 56%),
+    radial-gradient(rgba(255,255,255,.06) 0.7px, transparent 0.8px)!important;
+}
+
+/* ── wordmark ── */
+html.v2-dark body.v2 .v2-sb-logo,body.v2 .v2-sb-logo{
+  border-bottom:1px solid rgba(255,255,255,.10)!important}
+html.v2-dark body.v2 .v2-sb-logo .name,body.v2 .v2-sb-logo .name{color:#FFFFFF!important}
+html.v2-dark body.v2 .v2-sb-logo .name span,body.v2 .v2-sb-logo .name span{
+  background:none!important;-webkit-text-fill-color:#FFFFFF!important;color:#FFFFFF!important}
+/* on-dark variant of the mark: lighter indigo M, dot stays orange */
+body.v2 .v2-sb-logo .name .brand-m polyline{stroke:#8FA0F0}
+html.v2-dark body.v2 .v2-sb-collapse,body.v2 .v2-sb-collapse{
+  background:rgba(255,255,255,.07)!important;border:1px solid rgba(255,255,255,.16)!important;
+  color:rgba(255,255,255,.72)!important}
+html.v2-dark body.v2 .v2-sb-collapse:hover,body.v2 .v2-sb-collapse:hover{
+  background:rgba(255,255,255,.14)!important;color:#FFFFFF!important}
+
+/* ── section labels: the indigo landing uses for headings on dark ── */
+html.v2-dark body.v2 .v2-sidebar .v2-sb-section,body.v2 .v2-sidebar .v2-sb-section{
+  color:#8FA0F0!important}
+html.v2-dark body.v2 .v2-sidebar .v2-sb-section::before,body.v2 .v2-sidebar .v2-sb-section::before{
+  background:linear-gradient(90deg,#FF6100,rgba(255,97,0,0))!important}
+
+/* ── nav rows ── */
+html.v2-dark body.v2 .v2-sidebar .v2-nav-item,body.v2 .v2-sidebar .v2-nav-item{
+  color:rgba(255,255,255,.76)!important}
+html.v2-dark body.v2 .v2-sidebar .v2-nav-item:hover,body.v2 .v2-sidebar .v2-nav-item:hover{
+  background:rgba(255,255,255,.07)!important;color:#FFFFFF!important}
+/* active pill moves off #2970ff (the old electric blue) to the scheme indigo */
+html.v2-dark body.v2 .v2-sidebar .v2-nav-item.active,body.v2 .v2-sidebar .v2-nav-item.active{
+  background:linear-gradient(120deg,#5566D8 0%,#4A5BC4 55%,#3F4FB0 100%)!important;
+  color:#FFFFFF!important;
+  box-shadow:0 10px 22px -10px rgba(85,102,216,.65), inset 0 1px 0 rgba(255,255,255,.22)!important}
+
+/* ── badges ── */
+html.v2-dark body.v2 .v2-nav-tag.v2-tag-new,body.v2 .v2-nav-tag.v2-tag-new{
+  background:rgba(143,160,240,.18)!important;color:#B9C2F5!important}
+html.v2-dark body.v2 .v2-nav-tag.v2-tag-pro,body.v2 .v2-nav-tag.v2-tag-pro{
+  background:rgba(255,97,0,.18)!important;color:#FFB37A!important}
+html.v2-dark body.v2 .v2-nav-item.active .v2-nav-tag,body.v2 .v2-nav-item.active .v2-nav-tag{
+  background:rgba(255,255,255,.24)!important;color:#FFFFFF!important}
+
+/* ── foot: help, account card ── */
+html.v2-dark body.v2 .v2-sb-help,body.v2 .v2-sb-help{color:rgba(255,255,255,.62)!important}
+html.v2-dark body.v2 .v2-sb-help:hover,body.v2 .v2-sb-help:hover{
+  background:rgba(255,255,255,.07)!important;color:#FFFFFF!important}
+html.v2-dark body.v2 .v2-sb-bottom,body.v2 .v2-sb-bottom{
+  border-top:1px solid rgba(255,255,255,.10)!important}
+html.v2-dark body.v2 .v2-sb-bottom #user-menu > div:first-child,
+body.v2 .v2-sb-bottom #user-menu > div:first-child{
+  background:rgba(255,255,255,.06)!important;border:1px solid rgba(255,255,255,.13)!important;
+  box-shadow:none!important}
+html.v2-dark body.v2 .v2-sb-bottom #user-menu > div:first-child:hover{
+  background:rgba(255,255,255,.11)!important;border-color:rgba(143,160,240,.40)!important;
+  box-shadow:none!important}
+html.v2-dark body.v2 .v2-sb-bottom #user-menu,
+html.v2-dark body.v2 .v2-sb-bottom #user-menu div{color:rgba(255,255,255,.80)!important}
+html.v2-dark body.v2 #user-email,body.v2 #user-email{color:#FFFFFF!important}
+
+/* ── content wash: warm, matching --app-paper ──
+   The :has() selector is kept in its OWN rule, as the original code did.
+   An unsupported selector invalidates the whole comma-separated list, so
+   folding it in with the others would take the warm background down with
+   it on any browser without :has(). */
+html.v2-dark body.v2 .v2-content,
+html.v2-dark body.v2.ts-active .v2-content{
+  background:
+    radial-gradient(62% 52% at 4% 100%, rgba(255,158,94,.16) 0%, transparent 62%),
+    radial-gradient(58% 48% at 98% 2%,  rgba(168,175,232,.16) 0%, transparent 60%),
+    linear-gradient(180deg,#FFF6F0 0%,#FDF3EE 45%,#F7F0FA 100%)!important}
+html.v2-dark body.v2 .v2-content:has(#panel-hot.active){
+  background:
+    radial-gradient(62% 52% at 4% 100%, rgba(255,158,94,.16) 0%, transparent 62%),
+    radial-gradient(58% 48% at 98% 2%,  rgba(168,175,232,.16) 0%, transparent 60%),
+    linear-gradient(180deg,#FFF6F0 0%,#FDF3EE 45%,#F7F0FA 100%)!important}
+html.v2-dark body.v2.ts-active .v2-content::-webkit-scrollbar-thumb,
+html.v2-dark body.v2.ts-active .v2-scroll::-webkit-scrollbar-thumb{
+  background:linear-gradient(180deg,#5566D8,#3F4FB0)!important}
 </style>
 </head>
 <body class="v2">
