@@ -347,13 +347,21 @@ async def concall_summary(ticker: str, profile_data: str = "", quarter: str | No
                 "note": "The AI summary isn't enabled yet (set ANTHROPIC_API_KEY)."}
     text = src = src_url = None
     src_tag = "sec_edgar"
+    av_throttled = False
     try:
         import event_intel as ei
         try:
             tr = await ei._fetch_av_transcript(ticker, quarter)
+            # An Alpha Vantage throttle is NOT terminal. It used to return here,
+            # which skipped the EDGAR fallback sitting fifteen lines below — a
+            # free, unlimited source that answers this same question — so every
+            # concall after the daily quota ran out showed "temporarily
+            # throttled" even though the filing was one request away. Record it
+            # and keep going; it only becomes the answer if EDGAR also has
+            # nothing.
             if isinstance(tr, dict) and tr.get("error") == "rate_limited":
-                return {"available": False, "reason": "rate_limited",
-                        "info": tr.get("info")}
+                av_throttled = True
+                tr = None
             if tr and (tr.get("text") or tr.get("transcript")):
                 if tr.get("text"):
                     text = tr["text"]
@@ -378,6 +386,11 @@ async def concall_summary(ticker: str, profile_data: str = "", quarter: str | No
     except Exception as exc:
         logger.warning(f"stock_rag: concall fetch {ticker}: {exc}")
     if not text:
+        # Only now is the throttle the real story: no transcript AND no filing.
+        # A specific-quarter request has no EDGAR path at all, so it lands here
+        # whenever the transcript provider is capped.
+        if av_throttled:
+            return {"available": False, "reason": "rate_limited"}
         return {"available": False, "reason": "no_coverage"}
 
     prompt = _CONCALL_PROMPT.format(ticker=ticker, src=src, text=text[:45000],

@@ -6423,6 +6423,15 @@ async def api_event_intel(symbol: str, refresh: int = 0,
         return JSONResponse({"ticker": sym, "available": False,
                              "reason": "rate_limited",
                              "info": summary.get("info")})
+    # EDGAR had the filing but no provider could summarise it. Distinct from
+    # "no coverage" so the UI stops blaming SEC EDGAR for an AI-side failure —
+    # and can still link the filing the reader came for.
+    if isinstance(summary, dict) and summary.get("error") == "summarizer_failed":
+        return JSONResponse({"ticker": sym, "available": False,
+                             "reason": "summarizer_failed",
+                             "source_url":   summary.get("source_url"),
+                             "source_label": summary.get("source_label"),
+                             "event_date":   summary.get("event_date")})
     summary["available"] = True
     return JSONResponse(_clean(summary))
 

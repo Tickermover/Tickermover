@@ -101,7 +101,11 @@ async def _fetch_av_transcript(ticker: str, quarter: str | None = None) -> dict 
     for q in quarters_to_try:
         # Share the 25/day Alpha Vantage pool with fundamentals + PDF fallback.
         if not av_budget.try_spend(1):
-            logger.warning(f"event_intel: AV daily budget exhausted — skipping transcript {ticker} {q}")
+            # Carry forward the reason AV gave us earlier today, so callers can
+            # still tell "throttled" from "this company has no transcript"
+            # without re-hitting a provider we know is refusing.
+            last_info = av_budget.blocked() or last_info
+            logger.warning(f"event_intel: AV unavailable — skipping transcript {ticker} {q}")
             break
         params = {
             "function": "EARNINGS_CALL_TRANSCRIPT",
@@ -119,10 +123,16 @@ async def _fetch_av_transcript(ticker: str, quarter: str | None = None) -> dict 
         except Exception as exc:
             logger.warning(f"event_intel: AV transcript {ticker} {q} failed: {exc}")
             continue
-        # Detect rate-limit message and abort the loop (no point trying more)
+        # Detect rate-limit message and abort the loop (no point trying more).
+        # Trip the shared breaker too: the cap is per-key across every process,
+        # and EARNINGS_CALL_TRANSCRIPT is premium-only, so on a free key this
+        # notice comes back for every ticker. Without the breaker each concall
+        # load burned four more calls out of the 25/day pool that fundamentals
+        # and the PDF fallback also draw on.
         if isinstance(data, dict) and data.get("Information"):
             last_info = data["Information"]
             logger.warning(f"event_intel: AV rate-limited on {ticker} {q}: {last_info[:120]}")
+            av_budget.mark_blocked(last_info)
             break
         if isinstance(data, dict) and data.get("transcript"):
             data.setdefault("quarter", q)
@@ -1381,8 +1391,24 @@ async def get_event_summary(ticker: str, force_refresh: bool = False) -> dict | 
                     source_tag = "alpha_vantage_transcript"
 
     if not summary:
-        # Nothing worked — return stale cache if we have one
-        return await _load_cached(sym)
+        # Nothing worked. A stale-but-real row beats an error screen, so serve
+        # it first — but only if it actually carries content; a row cached
+        # during an earlier failed summarization renders as an empty brief.
+        stale = await _load_cached(sym)
+        if stale and _has_content(stale):
+            return stale
+        if edgar:
+            # We DID find the filing — the SUMMARISER is what failed. Collapsing
+            # this into None made the UI say "no 8-K or 10-Q on SEC EDGAR",
+            # which is simply false: ACMR and TTWO both filed an 8-K Item 2.02
+            # the day before they showed as uncovered. Name the real failure so
+            # the reader isn't sent to check a source that was fine.
+            return {"error": "summarizer_failed", "ticker": sym,
+                    "source_url":   edgar.get("source_url"),
+                    "source_label": edgar.get("source_label"),
+                    "event_date":   edgar.get("event_date"),
+                    "last_error":   LAST_ERROR or None}
+        return None
 
     summary["source"] = source_tag or "sec_edgar"
     # Persist for next time
