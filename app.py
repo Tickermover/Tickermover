@@ -2341,6 +2341,15 @@ def _render_report_page(t: dict) -> str:
     except Exception as _fc_err:
         logger.error(f"fact_check render {sym}: {_fc_err}", exc_info=True)
         fact_check_html = ""
+    # Crowd Clock — where the share sits between ignored and crowded. Shell only;
+    # the reading loads client-side from /api/crowd-clock so this render stays
+    # network-free.
+    try:
+        import crowd_clock as _cc
+        crowd_clock_html = _cc.render_card(t)
+    except Exception as _cc_err:
+        logger.error(f"crowd_clock render {sym}: {_cc_err}", exc_info=True)
+        crowd_clock_html = ""
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -2510,6 +2519,8 @@ def _render_report_page(t: dict) -> str:
   </div>
 
   {fact_check_html}
+
+  {crowd_clock_html}
 
   <!-- Body -->
   <div class="body">
@@ -3233,6 +3244,14 @@ def _render_stock_page(t: dict) -> str:
     except Exception as _fc_err:
         logger.error(f"fact_check render {sym}: {_fc_err}", exc_info=True)
         fact_check_html = ""
+    # Crowd Clock — shell only; the reading loads client-side from
+    # /api/crowd-clock so this render stays network-free.
+    try:
+        import crowd_clock as _cc
+        crowd_clock_html = _cc.render_card(t)
+    except Exception as _cc_err:
+        logger.error(f"crowd_clock render {sym}: {_cc_err}", exc_info=True)
+        crowd_clock_html = ""
     # ── Final HTML ──
     return f"""<!DOCTYPE html>
 <html lang="en">
@@ -3414,6 +3433,8 @@ h2{{font-size:18px;margin:30px 0 12px}}
   </div>
 
   {fact_check_html}
+
+  {crowd_clock_html}
 
   {sp_nav_html}
 
@@ -13865,6 +13886,48 @@ async def tearsheet_page(ticker: str = "LITE"):
     return HTMLResponse(
         (Path(__file__).parent / "templates" / "earnings_tearsheet.html").read_text(encoding="utf-8")
     )
+
+
+# ── /api/crowd-clock/{ticker} — the Crowd Clock reading for one share ──────
+@app.get("/api/crowd-clock/{ticker}")
+async def api_crowd_clock(ticker: str):
+    """Where a share sits between ignored and crowded, from 3y of daily price
+    and volume. Returns {ticker, band, score, tone, html} or {html: null} when
+    there is not enough history. Cached 12h — the inputs are 20/200-day
+    averages, so an intraday refresh would tell nobody anything new."""
+    sym = ticker.upper().strip()
+    if not sym or len(sym) > 8:
+        raise HTTPException(status_code=400, detail="Bad ticker")
+
+    cache_key = f"crowd-clock:{sym}:v1"
+    cached = cache.get(cache_key)
+    if cached is not None:
+        return JSONResponse(cached)
+
+    def _fetch():
+        try:
+            import yfinance as yf  # type: ignore
+            import crowd_clock as cc
+            h = yf.Ticker(sym).history(period="3y", interval="1d", auto_adjust=True)
+            if h is None or h.empty or len(h) < 200:
+                return None
+            closes = [float(v) for v in h["Close"].tolist()]
+            vols = [float(v) for v in h["Volume"].tolist()]
+            r = cc.compute(closes, vols)
+            if not r:
+                return None
+            r["html"] = cc.card_body(sym, r)
+            return r
+        except Exception as exc:
+            logger.warning(f"crowd-clock {sym} failed: {exc}")
+            return None
+
+    r = await asyncio.to_thread(_fetch)
+    payload = ({"ticker": sym, "html": None} if not r else
+               {"ticker": sym, "band": r["band"], "score": r["score"],
+                "tone": r["tone"], "in_cycle": r["in_cycle"], "html": r["html"]})
+    cache.set(cache_key, payload, 60 * 60 * 12)
+    return JSONResponse(payload)
 
 
 # ── /api/price-history/{ticker} — 90-day daily closes for tear sheet chart ─
