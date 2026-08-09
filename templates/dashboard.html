@@ -2920,196 +2920,6 @@ body.v2 .v2ov-card.sectors .v2ov-sector-cell{
 .v2-acct-refline b{color:#C74E00}
 
 
-/* ── Pre IPO Stocks + Thesis Maps (in-app) ────────────────────────
-   Both used to be <a href> nav items that left the SPA for a standalone page.
-   They now render in-app from the same endpoints the public pages use
-   (/api/future-heroes, /api/theses). The public pages stay for SEO. */
-var _pipData = null, _tmData = null;
-
-function _pipEsc(v){
-  return String(v == null ? '' : v).replace(/[&<>"']/g, function(c){
-    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
-  });
-}
-function _pipVal(b){
-  var n = parseFloat(b);
-  if (isNaN(n)) return '\u2014';
-  return n >= 1000 ? '$' + (n / 1000).toFixed(2) + 'T' : '$' + Math.round(n) + 'B';
-}
-function _pipAuthHdr(){
-  var t = '';
-  try { t = (typeof _AUTH !== 'undefined' && _AUTH.token) || localStorage.getItem('ah_token') || ''; }
-  catch(e){}
-  return t ? { Authorization: 'Bearer ' + t } : {};
-}
-
-async function loadHeroes(){
-  var host = document.getElementById('pipBody');
-  if (!host) return;
-  if (_pipData){ _pipRender(_pipData); return; }          /* cached per session */
-  try {
-    var r = await fetch('/api/future-heroes', { headers: _pipAuthHdr(), cache: 'no-store' });
-    _pipData = await r.json();
-  } catch(e){
-    host.innerHTML = '<div class="sc-empty">Couldn\u2019t load the private-markets list. Try again shortly.</div>';
-    return;
-  }
-  _pipRender(_pipData);
-}
-
-function _pipRender(d){
-  var host = document.getElementById('pipBody');
-  var list = ((d && d.companies) || []).slice().sort(function(a, b){ return a.rank - b.rank; });
-  if (!list.length){
-    host.innerHTML = '<div class="sc-empty">The list is being prepared. Check back shortly.</div>';
-    return;
-  }
-  var locked = !!(d && d.locked);
-  var count  = d.total || list.length;
-  var total  = (d.combined_b != null) ? d.combined_b
-             : list.reduce(function(x, c){ return x + (c.valuation_b || 0); }, 0);
-  var ai = (d.ai_count != null) ? d.ai_count
-         : list.filter(function(c){ return c.category === 'Artificial Intelligence'; }).length;
-
-  var stats = '<div class="pip-stats">' +
-    '<div class="pip-stat"><b>' + count + '</b><span>Companies tracked</span></div>' +
-    '<div class="pip-stat"><b>' + _pipVal(total) + '</b><span>Combined value</span></div>' +
-    '<div class="pip-stat"><b>' + ai + '</b><span>AI companies</span></div>' +
-    (d.as_of ? '<div class="pip-stat"><b>' + _pipEsc(d.as_of) + '</b><span>As of</span></div>' : '') +
-    '</div>';
-
-  var top = list.filter(function(c){ return c.rank <= 10; });
-  var cards = '<div class="pip-cards">' + top.map(function(c){
-    return '<div class="pip-card' + (c.rank <= 3 ? ' podium' : '') + '" data-rank="' + c.rank + '">' +
-      '<div class="pip-rk">' + c.rank + '</div>' +
-      '<div class="pip-nm">' + _pipEsc(c.name) + '</div>' +
-      '<div class="pip-val">' + _pipVal(c.valuation_b) + '</div>' +
-      '<div class="pip-rev">Revenue <b>' + _pipEsc(c.revenue || 'n/a') + '</b></div>' +
-      (c.category ? '<span class="pip-pill">' + _pipEsc(c.category) + '</span>' : '') +
-      (c.take ? '<p class="pip-take">' + _pipEsc(c.take) + '</p>' : '') +
-      '<div class="pip-more">View profile \u2192</div>' +
-    '</div>';
-  }).join('') + '</div>';
-
-  var rest = list.filter(function(c){ return c.rank > 10; });
-  var rows = '';
-  if (locked){
-    /* The server only sends the top 10 to a free caller, so the rest are decoy
-       rows behind a blur — same treatment the public page uses. */
-    for (var r = 11; r <= count; r++){
-      rows += '<tr><td class="pip-t-rk">' + r + '</td><td class="pip-t-nm">\u25CF\u25CF\u25CF\u25CF\u25CF\u25CF\u25CF\u25CF</td>' +
-              '<td class="pip-t-val">$\u2022\u2022B</td><td>$\u2022\u2022\u2022M</td>' +
-              '<td><span class="pip-pill">\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022</span></td></tr>';
-    }
-  } else {
-    rows = rest.map(function(c){
-      return '<tr class="go" data-rank="' + c.rank + '">' +
-        '<td class="pip-t-rk">' + c.rank + '</td>' +
-        '<td class="pip-t-nm">' + _pipEsc(c.name) + '</td>' +
-        '<td class="pip-t-val">' + _pipVal(c.valuation_b) + '</td>' +
-        '<td>' + _pipEsc(c.revenue || 'n/a') + '</td>' +
-        '<td>' + (c.category ? '<span class="pip-pill">' + _pipEsc(c.category) + '</span>' : '') + '</td></tr>';
-    }).join('');
-  }
-
-  var gate = locked
-    ? '<div class="pip-gate"><div class="fchk-pro">' +
-        '<span class="fchk-pro-t">Included with Pro</span>' +
-        '<span class="fchk-pro-d">Ranks 11\u2013' + count + ' \u2014 the defense primes, robotics labs and fintech ' +
-          'giants queuing up behind the top ten.</span>' +
-        '<button type="button" class="fchk-pro-b" onclick="if(window.openUpgradeModal)openUpgradeModal()">Upgrade to Pro</button>' +
-      '</div></div>'
-    : '';
-
-  var table = rows
-    ? '<div class="pip-wrap"><div class="pip-scroll"><table class="pip"><thead><tr>' +
-        '<th>#</th><th>Company</th><th>Valuation</th><th>Revenue</th><th>Sector</th></tr></thead>' +
-        '<tbody' + (locked ? ' class="locked"' : '') + '>' + rows + '</tbody></table></div>' + gate + '</div>'
-    : '';
-
-  host.innerHTML = stats + cards + table;
-
-  host.querySelectorAll('[data-rank]').forEach(function(el){
-    el.addEventListener('click', function(){
-      var rank = parseInt(el.getAttribute('data-rank'), 10);
-      var c = list.filter(function(x){ return x.rank === rank; })[0];
-      if (c) _pipProfile(c);
-    });
-  });
-}
-
-/* Private companies have no ticker, so the stock drawer cannot show them.
-   Reuses the referral sheet's overlay chrome for a light profile card. */
-function _pipProfile(c){
-  var ov = document.getElementById('v2-ref-ov');   /* generic overlay shell */
-  if (!ov) return;
-  var body = document.getElementById('pipProfile');
-  if (!body){
-    body = document.createElement('div');
-    body.id = 'pipProfile';
-    body.className = 'v2-ref-ov';
-    body.setAttribute('onclick', 'if(event.target===this)_pipCloseProfile()');
-    document.body.appendChild(body);
-  }
-  body.innerHTML =
-    '<div class="v2-ref" style="text-align:left">' +
-      '<button class="v2-ref-x" onclick="_pipCloseProfile()" aria-label="Close">&times;</button>' +
-      '<div class="v2-ref-t" style="padding-right:30px">' + _pipEsc(c.name) + '</div>' +
-      '<div class="pip-val" style="margin:2px 0 4px">' + _pipVal(c.valuation_b) + '</div>' +
-      '<div class="pip-rev">Revenue <b>' + _pipEsc(c.revenue || 'n/a') + '</b>' +
-        (c.country ? ' \u00b7 ' + _pipEsc(c.country) : '') + '</div>' +
-      (c.category ? '<span class="pip-pill">' + _pipEsc(c.category) + '</span>' : '') +
-      (c.about ? '<p class="v2-ref-d" style="text-align:left">' + _pipEsc(c.about) + '</p>' : '') +
-      (c.take ? '<p class="pip-take">' + _pipEsc(c.take) + '</p>' : '') +
-    '</div>';
-  body.classList.add('on');
-}
-function _pipCloseProfile(){
-  var b = document.getElementById('pipProfile');
-  if (b) b.classList.remove('on');
-}
-
-async function loadTheses(){
-  var host = document.getElementById('tmBody');
-  if (!host) return;
-  if (_tmData){ _tmRender(_tmData); return; }
-  try {
-    var r = await fetch('/api/theses', { cache: 'no-store' });
-    _tmData = await r.json();
-  } catch(e){
-    host.innerHTML = '<div class="sc-empty">Couldn\u2019t load the thesis maps. Try again shortly.</div>';
-    return;
-  }
-  _tmRender(_tmData);
-}
-
-function _tmRender(d){
-  var host = document.getElementById('tmBody');
-  var list = (d && d.theses) || [];
-  if (!list.length){
-    host.innerHTML = '<div class="sc-empty">No thesis maps published yet.</div>';
-    return;
-  }
-  host.innerHTML = '<div class="tm-grid">' + list.map(function(t){
-    var live = String(t.status || '').toLowerCase() === 'live';
-    var title = _pipEsc(t.title || '');
-    /* The API marks a phrase to emphasise; highlight it rather than dropping it. */
-    if (t.accent){
-      var a = _pipEsc(t.accent);
-      title = title.replace(a, '<em>' + a + '</em>');
-    }
-    var inner =
-      '<div class="tm-eye"><span>' + _pipEsc(t.eyebrow || 'Thesis Map') + '</span>' +
-        '<span class="tm-tag ' + (live ? 'live' : 'soon') + '">' + (live ? 'Live' : 'Soon') + '</span></div>' +
-      '<h3 class="tm-t">' + title + '</h3>' +
-      '<p class="tm-s">' + _pipEsc(t.standfirst || '') + '</p>' +
-      '<div class="tm-go">' + (live ? 'Open the map \u2192' : 'In preparation') + '</div>';
-    return live
-      ? '<a class="tm-card" href="/theses/' + encodeURIComponent(t.slug) + '">' + inner + '</a>'
-      : '<div class="tm-card dim">' + inner + '</div>';
-  }).join('') + '</div>';
-}
-
 /* ── Refer a friend ─────────────────────────────────────────────────────
    The share sheet behind the sidebar item and the account-panel row. Orange
    is the site's single accent and this is the one thing in the app asking the
@@ -18598,6 +18408,196 @@ async function v2LoadPickSparks(){
     } catch(e){ el.remove(); }
     await new Promise(res => setTimeout(res, 90));
   }
+}
+
+/* ── Pre IPO Stocks + Thesis Maps (in-app) ────────────────────────
+   Both used to be <a href> nav items that left the SPA for a standalone page.
+   They now render in-app from the same endpoints the public pages use
+   (/api/future-heroes, /api/theses). The public pages stay for SEO. */
+var _pipData = null, _tmData = null;
+
+function _pipEsc(v){
+  return String(v == null ? '' : v).replace(/[&<>"']/g, function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+  });
+}
+function _pipVal(b){
+  var n = parseFloat(b);
+  if (isNaN(n)) return '\u2014';
+  return n >= 1000 ? '$' + (n / 1000).toFixed(2) + 'T' : '$' + Math.round(n) + 'B';
+}
+function _pipAuthHdr(){
+  var t = '';
+  try { t = (typeof _AUTH !== 'undefined' && _AUTH.token) || localStorage.getItem('ah_token') || ''; }
+  catch(e){}
+  return t ? { Authorization: 'Bearer ' + t } : {};
+}
+
+async function loadHeroes(){
+  var host = document.getElementById('pipBody');
+  if (!host) return;
+  if (_pipData){ _pipRender(_pipData); return; }          /* cached per session */
+  try {
+    var r = await fetch('/api/future-heroes', { headers: _pipAuthHdr(), cache: 'no-store' });
+    _pipData = await r.json();
+  } catch(e){
+    host.innerHTML = '<div class="sc-empty">Couldn\u2019t load the private-markets list. Try again shortly.</div>';
+    return;
+  }
+  _pipRender(_pipData);
+}
+
+function _pipRender(d){
+  var host = document.getElementById('pipBody');
+  var list = ((d && d.companies) || []).slice().sort(function(a, b){ return a.rank - b.rank; });
+  if (!list.length){
+    host.innerHTML = '<div class="sc-empty">The list is being prepared. Check back shortly.</div>';
+    return;
+  }
+  var locked = !!(d && d.locked);
+  var count  = d.total || list.length;
+  var total  = (d.combined_b != null) ? d.combined_b
+             : list.reduce(function(x, c){ return x + (c.valuation_b || 0); }, 0);
+  var ai = (d.ai_count != null) ? d.ai_count
+         : list.filter(function(c){ return c.category === 'Artificial Intelligence'; }).length;
+
+  var stats = '<div class="pip-stats">' +
+    '<div class="pip-stat"><b>' + count + '</b><span>Companies tracked</span></div>' +
+    '<div class="pip-stat"><b>' + _pipVal(total) + '</b><span>Combined value</span></div>' +
+    '<div class="pip-stat"><b>' + ai + '</b><span>AI companies</span></div>' +
+    (d.as_of ? '<div class="pip-stat"><b>' + _pipEsc(d.as_of) + '</b><span>As of</span></div>' : '') +
+    '</div>';
+
+  var top = list.filter(function(c){ return c.rank <= 10; });
+  var cards = '<div class="pip-cards">' + top.map(function(c){
+    return '<div class="pip-card' + (c.rank <= 3 ? ' podium' : '') + '" data-rank="' + c.rank + '">' +
+      '<div class="pip-rk">' + c.rank + '</div>' +
+      '<div class="pip-nm">' + _pipEsc(c.name) + '</div>' +
+      '<div class="pip-val">' + _pipVal(c.valuation_b) + '</div>' +
+      '<div class="pip-rev">Revenue <b>' + _pipEsc(c.revenue || 'n/a') + '</b></div>' +
+      (c.category ? '<span class="pip-pill">' + _pipEsc(c.category) + '</span>' : '') +
+      (c.take ? '<p class="pip-take">' + _pipEsc(c.take) + '</p>' : '') +
+      '<div class="pip-more">View profile \u2192</div>' +
+    '</div>';
+  }).join('') + '</div>';
+
+  var rest = list.filter(function(c){ return c.rank > 10; });
+  var rows = '';
+  if (locked){
+    /* The server only sends the top 10 to a free caller, so the rest are decoy
+       rows behind a blur — same treatment the public page uses. */
+    for (var r = 11; r <= count; r++){
+      rows += '<tr><td class="pip-t-rk">' + r + '</td><td class="pip-t-nm">\u25CF\u25CF\u25CF\u25CF\u25CF\u25CF\u25CF\u25CF</td>' +
+              '<td class="pip-t-val">$\u2022\u2022B</td><td>$\u2022\u2022\u2022M</td>' +
+              '<td><span class="pip-pill">\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022</span></td></tr>';
+    }
+  } else {
+    rows = rest.map(function(c){
+      return '<tr class="go" data-rank="' + c.rank + '">' +
+        '<td class="pip-t-rk">' + c.rank + '</td>' +
+        '<td class="pip-t-nm">' + _pipEsc(c.name) + '</td>' +
+        '<td class="pip-t-val">' + _pipVal(c.valuation_b) + '</td>' +
+        '<td>' + _pipEsc(c.revenue || 'n/a') + '</td>' +
+        '<td>' + (c.category ? '<span class="pip-pill">' + _pipEsc(c.category) + '</span>' : '') + '</td></tr>';
+    }).join('');
+  }
+
+  var gate = locked
+    ? '<div class="pip-gate"><div class="fchk-pro">' +
+        '<span class="fchk-pro-t">Included with Pro</span>' +
+        '<span class="fchk-pro-d">Ranks 11\u2013' + count + ' \u2014 the defense primes, robotics labs and fintech ' +
+          'giants queuing up behind the top ten.</span>' +
+        '<button type="button" class="fchk-pro-b" onclick="if(window.openUpgradeModal)openUpgradeModal()">Upgrade to Pro</button>' +
+      '</div></div>'
+    : '';
+
+  var table = rows
+    ? '<div class="pip-wrap"><div class="pip-scroll"><table class="pip"><thead><tr>' +
+        '<th>#</th><th>Company</th><th>Valuation</th><th>Revenue</th><th>Sector</th></tr></thead>' +
+        '<tbody' + (locked ? ' class="locked"' : '') + '>' + rows + '</tbody></table></div>' + gate + '</div>'
+    : '';
+
+  host.innerHTML = stats + cards + table;
+
+  host.querySelectorAll('[data-rank]').forEach(function(el){
+    el.addEventListener('click', function(){
+      var rank = parseInt(el.getAttribute('data-rank'), 10);
+      var c = list.filter(function(x){ return x.rank === rank; })[0];
+      if (c) _pipProfile(c);
+    });
+  });
+}
+
+/* Private companies have no ticker, so the stock drawer cannot show them.
+   Reuses the referral sheet's overlay chrome for a light profile card. */
+function _pipProfile(c){
+  var ov = document.getElementById('v2-ref-ov');   /* generic overlay shell */
+  if (!ov) return;
+  var body = document.getElementById('pipProfile');
+  if (!body){
+    body = document.createElement('div');
+    body.id = 'pipProfile';
+    body.className = 'v2-ref-ov';
+    body.setAttribute('onclick', 'if(event.target===this)_pipCloseProfile()');
+    document.body.appendChild(body);
+  }
+  body.innerHTML =
+    '<div class="v2-ref" style="text-align:left">' +
+      '<button class="v2-ref-x" onclick="_pipCloseProfile()" aria-label="Close">&times;</button>' +
+      '<div class="v2-ref-t" style="padding-right:30px">' + _pipEsc(c.name) + '</div>' +
+      '<div class="pip-val" style="margin:2px 0 4px">' + _pipVal(c.valuation_b) + '</div>' +
+      '<div class="pip-rev">Revenue <b>' + _pipEsc(c.revenue || 'n/a') + '</b>' +
+        (c.country ? ' \u00b7 ' + _pipEsc(c.country) : '') + '</div>' +
+      (c.category ? '<span class="pip-pill">' + _pipEsc(c.category) + '</span>' : '') +
+      (c.about ? '<p class="v2-ref-d" style="text-align:left">' + _pipEsc(c.about) + '</p>' : '') +
+      (c.take ? '<p class="pip-take">' + _pipEsc(c.take) + '</p>' : '') +
+    '</div>';
+  body.classList.add('on');
+}
+function _pipCloseProfile(){
+  var b = document.getElementById('pipProfile');
+  if (b) b.classList.remove('on');
+}
+
+async function loadTheses(){
+  var host = document.getElementById('tmBody');
+  if (!host) return;
+  if (_tmData){ _tmRender(_tmData); return; }
+  try {
+    var r = await fetch('/api/theses', { cache: 'no-store' });
+    _tmData = await r.json();
+  } catch(e){
+    host.innerHTML = '<div class="sc-empty">Couldn\u2019t load the thesis maps. Try again shortly.</div>';
+    return;
+  }
+  _tmRender(_tmData);
+}
+
+function _tmRender(d){
+  var host = document.getElementById('tmBody');
+  var list = (d && d.theses) || [];
+  if (!list.length){
+    host.innerHTML = '<div class="sc-empty">No thesis maps published yet.</div>';
+    return;
+  }
+  host.innerHTML = '<div class="tm-grid">' + list.map(function(t){
+    var live = String(t.status || '').toLowerCase() === 'live';
+    var title = _pipEsc(t.title || '');
+    /* The API marks a phrase to emphasise; highlight it rather than dropping it. */
+    if (t.accent){
+      var a = _pipEsc(t.accent);
+      title = title.replace(a, '<em>' + a + '</em>');
+    }
+    var inner =
+      '<div class="tm-eye"><span>' + _pipEsc(t.eyebrow || 'Thesis Map') + '</span>' +
+        '<span class="tm-tag ' + (live ? 'live' : 'soon') + '">' + (live ? 'Live' : 'Soon') + '</span></div>' +
+      '<h3 class="tm-t">' + title + '</h3>' +
+      '<p class="tm-s">' + _pipEsc(t.standfirst || '') + '</p>' +
+      '<div class="tm-go">' + (live ? 'Open the map \u2192' : 'In preparation') + '</div>';
+    return live
+      ? '<a class="tm-card" href="/theses/' + encodeURIComponent(t.slug) + '">' + inner + '</a>'
+      : '<div class="tm-card dim">' + inner + '</div>';
+  }).join('') + '</div>';
 }
 
 /* ── Refer a friend ──────────────────────────────────────────────────────
