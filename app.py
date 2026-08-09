@@ -13906,6 +13906,102 @@ async def tearsheet_page(ticker: str = "LITE"):
     )
 
 
+# ── /api/dilution-scan — the whole universe ranked by share-count growth ───
+# Share counts for ~520 names plus one EDGAR submissions call each: several
+# minutes. Background-built like the crowd-clock scan, cached a full day
+# because share counts only move on filing dates.
+_dil_scan: dict = {"status": "idle", "rows": [], "at": 0.0, "done": 0, "total": 0}
+_dil_lock = asyncio.Lock()
+_DIL_TTL = 60 * 60 * 24
+
+
+async def _build_dil_scan() -> None:
+    try:
+        import safeguards as sg
+        syms, sectors = [], {}
+        for x in (_universe_data or []):
+            s = str(x.get("ticker") or "").upper()
+            if s:
+                syms.append(s)
+                sectors[s] = x.get("sector") or "Other"
+        if not syms:
+            # The universe warms asynchronously after a restart. Without this
+            # fallback the build bails out, every poll restarts it, and the
+            # progress bar sits at 0 forever looking like a hang.
+            try:
+                import stock_universe as su
+                syms = list(su.get_universe())
+                sectors = {s: (su.get_meta(s) or {}).get("sector") or "Other" for s in syms}
+            except Exception:
+                syms = []
+        if not syms:
+            _dil_scan.update(status="idle")
+            return
+        _dil_scan.update(status="warming", done=0, total=len(syms) + 80)
+
+        def _prog(done, total):
+            _dil_scan.update(done=done)
+
+        rows = await asyncio.to_thread(sg.scan_offerings, syms, sectors, _prog)
+        # Accurate share-count change for the names at the top of the list only.
+        # The statement API is clean but costs a call per name, so it is spent
+        # where it matters rather than across the whole universe.
+        import financials_store as fs
+        top = [r for r in rows if r["offerings_24m"] >= 1][:80]
+        _dil_scan.update(total=len(syms) + len(top) or 1, done=len(syms))
+        # Concurrently, not one after another — serially this was the bulk of a
+        # six-minute build. Six at a time keeps well inside the FMP rate limit.
+        sem = asyncio.Semaphore(6)
+        counter = [len(syms)]
+
+        async def _one(r):
+            async with sem:
+                try:
+                    # income statement only — it carries the share count, and
+                    # get_financials() would fetch balance + cashflow too, i.e.
+                    # three times the calls for data this view never shows
+                    inc = await fs._fetch(coordinator, "income-statement",
+                                          r["ticker"], "quarter")
+                    sg.attach_growth(r, inc or [])
+                except Exception:
+                    pass
+                counter[0] += 1
+                _dil_scan.update(done=counter[0])
+
+        await asyncio.gather(*(_one(r) for r in top))
+        _dil_scan.update(status="ready", rows=rows, at=time.time())
+        logger.info(f"dilution scan built: {len(rows)} rows, {len(top)} with share counts")
+    except Exception as exc:
+        logger.error(f"dilution scan failed: {exc}", exc_info=True)
+        _dil_scan.update(status="idle")
+
+
+@app.get("/api/dilution-scan")
+async def api_dilution_scan():
+    """Every name in the universe by how much its share count grew, alongside
+    how many times it has priced stock off a shelf."""
+    import safeguards as sg
+    fresh = (_dil_scan["status"] == "ready"
+             and (time.time() - _dil_scan["at"]) < _DIL_TTL)
+    if fresh:
+        rows = _dil_scan["rows"]
+        return JSONResponse({
+            "status": "ready", "rows": rows,
+            "bands": [{"lo": b[0], "hi": b[1], "label": b[2], "desc": b[3], "fall": b[4]}
+                      for b in sg.DILUTION_BANDS],
+            "baseline": sg.DILUTION_BASELINE,
+            "counts": {b[2]: sum(1 for r in rows if r["label"] == b[2])
+                       for b in sg.DILUTION_BANDS},
+            "asof": int(_dil_scan["at"]),
+        })
+    async with _dil_lock:
+        if _dil_scan["status"] != "warming":
+            asyncio.create_task(_build_dil_scan())
+    total = _dil_scan.get("total") or 1
+    return JSONResponse({"status": "warming",
+                         "pct": round(100 * (_dil_scan.get("done") or 0) / total)})
+
+
 # ── /api/safeguards/{ticker} — the five disclosure checks for one share ────
 @app.get("/api/safeguards/{ticker}")
 async def api_safeguards(ticker: str):
@@ -13917,7 +14013,7 @@ async def api_safeguards(ticker: str):
     if not sym or len(sym) > 8:
         raise HTTPException(status_code=400, detail="Bad ticker")
 
-    cache_key = f"safeguards:{sym}:v1"
+    cache_key = f"safeguards:{sym}:v2"
     cached = cache.get(cache_key)
     if cached is not None:
         return JSONResponse(cached)
@@ -13939,8 +14035,18 @@ async def api_safeguards(ticker: str):
         profile = (p or [None])[0] if isinstance(p, list) else p
     except Exception:
         pass
+    # EDGAR: shelf registrations, prospectus supplements, live ATM programmes.
+    # Blocking urllib against sec.gov, so keep it off the event loop.
     try:
-        blocks["events"] = sg.dated_events(profile, blocks.get("dilution"))
+        import edgar as _ed
+        edg = await asyncio.to_thread(_ed.programmes, sym)
+        blocks["offerings"] = sg.offerings(edg)
+    except Exception as exc:
+        logger.warning(f"safeguards {sym}: edgar failed: {exc}")
+        blocks["offerings"] = None
+    try:
+        blocks["events"] = sg.dated_events(profile, blocks.get("dilution"),
+                                           blocks.get("offerings"))
     except Exception as exc:
         logger.warning(f"safeguards {sym}: events failed: {exc}")
 

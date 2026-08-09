@@ -150,8 +150,33 @@ def runway(balance_q: list, cashflow_q: list) -> dict | None:
     return out
 
 
+# ── 1b. SHELF / ATM / CONVERTIBLES — from the filings themselves ─────────────
+def offerings(edg: dict | None) -> dict | None:
+    """What the company has registered to sell, read from EDGAR.
+
+    An at-the-market programme is the point of this whole module: it lets a
+    company sell stock straight into a rally, day by day, with no announcement
+    on the day it happens. It is disclosed in a 424B5 that essentially no
+    private investor reads. This states it plainly, with the price the shares
+    were at when the programme was filed."""
+    if not edg:
+        return None
+    atm = edg.get("atm")
+    n = int(edg.get("offerings_24m") or 0)
+    if not atm and not n and not edg.get("convertible") and not edg.get("warrants"):
+        return None
+    return {
+        "atm": atm, "offerings_24m": n, "shelves_24m": int(edg.get("shelves_24m") or 0),
+        "convertible": bool(edg.get("convertible")), "warrants": bool(edg.get("warrants")),
+        "filings": (edg.get("filings") or [])[:5],
+        "last_raise": edg.get("last_raise"),
+        "flag": bool(atm) or n >= 3,
+    }
+
+
 # ── 3. DATED EVENTS ──────────────────────────────────────────────────────────
-def dated_events(profile: dict | None, dil: dict | None, today=None) -> dict:
+def dated_events(profile: dict | None, dil: dict | None, off: dict | None = None,
+                 today=None) -> dict:
     """Things with a date attached, so nothing has to be predicted. Lockup
     expiry is IPO + 180 days, the market convention. Convertible and warrant
     terms are NOT machine-readable from our data sources — they live in filing
@@ -195,8 +220,39 @@ def dated_events(profile: dict | None, dil: dict | None, today=None) -> dict:
                     f"an issuance landed. Observed in the filings, not inferred.",
             "flag": j["pct"] >= 0.10,
         })
-    items.sort(key=lambda x: x["date"], reverse=True)
-    return {"items": items[:6], "flag": any(i["flag"] for i in items)}
+    # Registration filings, read straight from EDGAR — each 424B5 is a real sale
+    # off a shelf, not an intention to sell.
+    FORM_NOTE = {
+        "424B5": "A prospectus supplement — shares priced and sold off an existing shelf.",
+        "424B3": "A prospectus supplement — shares registered for resale.",
+        "424B4": "A prospectus supplement — an offering priced.",
+        "S-3": "A shelf registration — the company registered stock it may sell later.",
+        "S-3ASR": "An automatic shelf registration — the company can sell registered "
+                  "stock at will, with no further approval.",
+        "S-1": "A registration statement — new stock registered for sale.",
+    }
+    for f in (off or {}).get("filings", [])[:4]:
+        form = (f.get("form") or "").upper()
+        base = next((v for k, v in FORM_NOTE.items() if form.startswith(k)),
+                    "A registration filing.")
+        items.append({"kind": f"Filed {form}", "date": f.get("date") or "",
+                      "days": f.get("days"), "note": base,
+                      "flag": form.startswith("424B")})
+    if (off or {}).get("convertible"):
+        items.append({"kind": "Convertible notes", "date": "in recent filings", "days": None,
+                      "note": "Convertible notes are referenced in a recent prospectus. "
+                              "Notes that convert become shares, which dilutes holders. "
+                              "The terms sit in the filing text — read the document.",
+                      "flag": False})
+    if (off or {}).get("warrants"):
+        items.append({"kind": "Warrants", "date": "in recent filings", "days": None,
+                      "note": "Warrants are referenced in a recent prospectus. Exercised "
+                              "warrants become new shares. Strike and expiry sit in the "
+                              "filing text — read the document.",
+                      "flag": False})
+    # real dates newest-first, then the undated "in recent filings" notes
+    items.sort(key=lambda x: (x["date"][:1].isdigit(), x["date"]), reverse=True)
+    return {"items": items[:8], "flag": any(i["flag"] for i in items)}
 
 
 # ── 4. INSIDER SELLING ───────────────────────────────────────────────────────
@@ -246,6 +302,90 @@ def summarise(blocks: dict) -> dict:
     flags = [k for k, v in blocks.items() if isinstance(v, dict) and v.get("flag")]
     return {"flags": flags, "n_flags": len(flags),
             "checked": [k for k, v in blocks.items() if v]}
+
+
+# ── universe-wide dilution watch ─────────────────────────────────────────────
+def scan_offerings(tickers: list[str], sectors: dict | None = None,
+                   progress=None) -> list[dict]:
+    """Rank a universe by how often each company has actually priced stock off a
+    shelf, straight from EDGAR.
+
+    This deliberately does NOT rank on a share-count percentage. The free
+    share-count feeds are too noisy to publish per name — one of them reads
+    KLAC at 1,307m shares against a true ~130m, and ON at -42% — and a wrong
+    number on a page that exists to protect people is worse than no number.
+    A 424B5 count is a filing count: no estimation, nothing to get wrong.
+    Accurate share growth is added afterwards, from the statement API, for the
+    names at the top of this list only. One SEC request per name.
+    """
+    from concurrent.futures import ThreadPoolExecutor
+    from datetime import datetime, timezone
+    import edgar as ed
+
+    sectors = sectors or {}
+    syms = sorted({(s or "").upper().strip() for s in tickers if s})
+    today = datetime.now(timezone.utc).date()
+    done = [0]
+
+    def one(sym):
+        try:
+            cik = ed.cik_for(sym)
+            if not cik:
+                return None
+            n424 = nshelf = 0
+            last = None
+            dates = []
+            for r in ed._recent(cik):
+                form = (r.get("form") or "").upper()
+                d = r.get("filingDate") or ""
+                if not d or not form.startswith(ed.RAISE_FORMS):
+                    continue
+                try:
+                    age = (today - datetime.strptime(d, "%Y-%m-%d").date()).days
+                except ValueError:
+                    continue
+                if age > 730:
+                    continue
+                if form.startswith("424B5"):
+                    n424 += 1
+                    dates.append(d)
+                if form.startswith("S-3"):
+                    nshelf += 1
+                if last is None or d > last:
+                    last = d
+            recent12 = sum(1 for d in dates
+                           if (today - datetime.strptime(d, "%Y-%m-%d").date()).days <= 365)
+            return {"ticker": sym, "sector": sectors.get(sym) or "Other",
+                    "offerings_24m": n424, "offerings_12m": recent12,
+                    "shelves_24m": nshelf, "last_raise": last,
+                    "growth": None, "label": None, "fall_rate": None,
+                    "flag": n424 >= 3}
+        except Exception:
+            return None
+        finally:
+            done[0] += 1
+            if progress and done[0] % 10 == 0:
+                try:
+                    progress(done[0], len(syms))
+                except Exception:
+                    pass
+
+    with ThreadPoolExecutor(max_workers=5) as ex:      # gentle on sec.gov
+        rows = [r for r in ex.map(one, syms) if r]
+    rows.sort(key=lambda x: (-x["offerings_24m"], -x["shelves_24m"], x["ticker"]))
+    return rows
+
+
+def attach_growth(row: dict, income_q: list) -> dict:
+    """Add an accurate share-count change to a scan row, from the statement API
+    — the same source the per-stock card uses, which is clean."""
+    d = dilution(income_q)
+    if d:
+        row.update(growth=d["growth"], label=d["label"], fall_rate=d["fall_rate"],
+                   shares_now=d["shares_now"], shares_then=d["shares_year_ago"],
+                   as_of=d["to_date"])
+        row["flag"] = row["flag"] or d["flag"]
+    return row
 
 
 # ── the card ─────────────────────────────────────────────────────────────────
@@ -312,6 +452,36 @@ def card_body(sym: str, d: dict) -> str:
              f'calendar year tested. Historical frequencies for other shares, not a forecast '
              f'for {esym}.</p>') if dil["growth"] >= 0.05 else ''))
 
+    off = d.get("offerings")
+    if off:
+        atm = off.get("atm")
+        if atm:
+            px_then = atm.get("price_at_filing")
+            size = atm.get("size")
+            headline = "Live ATM programme"
+            body = (f'On {atm["date"]} the company filed a prospectus supplement for an '
+                    f'<b>at-the-market equity programme</b>'
+                    + (f' of up to <b>${size / 1e6:,.0f}m</b>' if size else '')
+                    + (f', with the shares at <b>${px_then:,.2f}</b>' if px_then else '')
+                    + '. An ATM lets a company sell stock into the open market day by day, '
+                      'at prevailing prices, with no announcement on the day it happens. '
+                      '<b>A rising price is what makes it easy to use.</b>')
+        else:
+            headline = f'{off["offerings_24m"]} in 24 months'
+            body = ('Prospectus supplements filed — each one is stock priced and sold off a '
+                    'shelf registration, not merely an intention to sell.'
+                    if off["offerings_24m"] else
+                    'No shares priced off a shelf in the last two years.')
+        extra = (f'<p class="sfg-ev">Read from the company&rsquo;s own SEC filings: '
+                 f'{off["offerings_24m"]} prospectus supplement'
+                 f'{"" if off["offerings_24m"] == 1 else "s"} and {off["shelves_24m"]} shelf '
+                 f'registration{"" if off["shelves_24m"] == 1 else "s"} in the last 24 months'
+                 + (', with convertible notes referenced' if off["convertible"] else '')
+                 + (' and warrants referenced' if off["warrants"] else '')
+                 + '. Filing dates are listed under dated events below.</p>')
+        out.append(_row("Share offerings", headline, "warn" if off["flag"] else "ok",
+                        body, ("REGISTERED WITH THE SEC", off["flag"]), extra))
+
     rw = d.get("runway")
     if rw:
         if rw["generating"]:
@@ -349,9 +519,10 @@ def card_body(sym: str, d: dict) -> str:
             "Things with a date attached, so nothing has to be predicted.",
             ("FILED OR SCHEDULED", ev["flag"]),
             f'<ul class="sfg-list">{li}</ul>'
-            '<p class="sfg-ev">Convertible and warrant terms live in filing prose and are not '
-            'machine-readable from our sources, so they are not guessed at here. The issuance '
-            'quarters shown are observed in the reported share count.</p>'))
+            '<p class="sfg-ev">Registration filings come straight from EDGAR. Convertible and '
+            'warrant <em>terms</em> — strike, expiry, conversion price — sit in filing prose '
+            'and are not extracted here, so their presence is reported and their terms are '
+            'not guessed at. Share-count jumps are observed in the reported accounts.</p>'))
 
     ins = d.get("insiders")
     if ins:

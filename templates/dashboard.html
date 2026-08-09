@@ -473,9 +473,51 @@ body.v2 #sectors-grid .smh-name{font-weight:800;font-size:12.5px;color:#0f172a!i
      as grey prose they read as small print and got skipped.
    - headers sort, and loading is a skeleton rather than a line of text.
    ──────────────────────────────────────────────────────────────────────── */
-#panel-scans .sc-head,#panel-heroes .sc-head,#panel-theses .sc-head,#panel-clock .sc-head{margin:2px 0 20px}
-#panel-scans .sc-title,#panel-heroes .sc-title,#panel-theses .sc-title,#panel-clock .sc-title{font-family:var(--font-head);font-size:29px;font-weight:500;letter-spacing:-.02em;margin:0 0 7px;color:#0A2F46}
-#panel-scans .sc-sub,#panel-heroes .sc-sub,#panel-theses .sc-sub,#panel-clock .sc-sub{font-size:13.5px;font-weight:400;line-height:1.6;color:#5D6C7B;margin:0;max-width:78ch}
+#panel-scans .sc-head,#panel-heroes .sc-head,#panel-theses .sc-head,#panel-clock .sc-head,#panel-guard .sc-head{margin:2px 0 20px}
+#panel-scans .sc-title,#panel-heroes .sc-title,#panel-theses .sc-title,#panel-clock .sc-title,#panel-guard .sc-title{font-family:var(--font-head);font-size:29px;font-weight:500;letter-spacing:-.02em;margin:0 0 7px;color:#0A2F46}
+#panel-scans .sc-sub,#panel-heroes .sc-sub,#panel-theses .sc-sub,#panel-clock .sc-sub,#panel-guard .sc-sub{font-size:13.5px;font-weight:400;line-height:1.6;color:#5D6C7B;margin:0;max-width:78ch}
+
+/* ── Safeguards (#panel-guard) ───────────────────────────────────────────
+   Universe-wide dilution. Accent is the protective green (#0E7C66) rather
+   than the clock's orange: this view is about what a company filed, not
+   about crowd heat. */
+#panel-guard .gd-hero{border:1px solid #E4E7EC;border-radius:16px;background:#fff;padding:20px 22px;margin:0 0 18px}
+#panel-guard .gd-hero b{display:block;font-family:'JetBrains Mono',monospace;font-size:27px;font-weight:700;letter-spacing:-.02em;line-height:1;color:#C74E00}
+#panel-guard .gd-hero p{font-size:13px;line-height:1.6;color:#5D6C7B;margin:10px 0 0;max-width:90ch}
+#panel-guard .gd-hero em{font-style:normal;color:#0A2F46;font-weight:600}
+#panel-guard .gd-bands{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:10px;margin:0 0 18px}
+#panel-guard .gd-band{--g:#0E7C66;position:relative;overflow:hidden;border:1px solid #E4E7EC;border-radius:14px;background:#fff;padding:14px 15px 13px;cursor:pointer;text-align:left;font:inherit;transition:border-color .15s,box-shadow .15s}
+#panel-guard .gd-band[data-b="Heavy"],#panel-guard .gd-band[data-b="Severe"]{--g:#C74E00}
+#panel-guard .gd-band[data-b="Moderate"]{--g:#A16207}
+#panel-guard .gd-band::before{content:'';position:absolute;inset:0 0 auto 0;height:3px;background:var(--g);opacity:0;transition:opacity .15s}
+#panel-guard .gd-band:hover{border-color:#B8D8D0}
+#panel-guard .gd-band.on{border-color:var(--g);box-shadow:0 0 0 1px var(--g)}
+#panel-guard .gd-band.on::before{opacity:1}
+#panel-guard .gd-band-n{display:flex;align-items:baseline;gap:8px;margin-bottom:6px}
+#panel-guard .gd-band-n b{font-size:14px;font-weight:600;color:#0A2F46}
+#panel-guard .gd-band-n i{font-style:normal;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:var(--g);margin-left:auto}
+#panel-guard .gd-band-r{font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:700;color:#5D6C7B}
+#panel-guard .gd-wrap{border:1px solid #E4E7EC;border-radius:18px;background:#fff;overflow:hidden}
+#panel-guard .gd-wrap-h{padding:16px 20px 14px;border-bottom:1px solid #EDEAE6;background:#FBFAF8}
+#panel-guard .gd-wrap-h h3{font-size:17px;font-weight:600;letter-spacing:-.015em;color:#0A2F46;margin:0 0 5px}
+#panel-guard .gd-wrap-h p{font-size:12.5px;line-height:1.55;color:#5D6C7B;margin:0;max-width:86ch}
+#panel-guard .gd-scroll{overflow-x:auto;overflow-y:auto;max-height:min(62vh,700px)}
+#panel-guard table{width:100%;border-collapse:collapse;font-size:13px}
+#panel-guard th{position:sticky;top:0;z-index:1;background:#fff;font-family:'JetBrains Mono',monospace;font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#8A97A4;text-align:right;padding:11px 14px;border-bottom:1px solid #E4E7EC;white-space:nowrap}
+#panel-guard th:first-child,#panel-guard td:first-child{text-align:left}
+#panel-guard td{padding:10px 14px;text-align:right;border-bottom:1px solid #F1EFEC;font-family:'JetBrains Mono',monospace;font-variant-numeric:tabular-nums;color:#0A2F46;white-space:nowrap}
+#panel-guard tbody tr{cursor:pointer}
+#panel-guard tbody tr:hover td{background:#FBFAF8}
+#panel-guard .gd-tk{font-family:var(--font-body,inherit);font-weight:600}
+#panel-guard .gd-sub{font-family:var(--font-body,inherit);font-size:11px;color:#8A97A4;font-weight:400}
+#panel-guard .gd-hot{color:#C74E00;font-weight:700}
+#panel-guard .gd-warm{color:#A16207;font-weight:700}
+#panel-guard .gd-cool{color:#0E7C66}
+#panel-guard .gd-tag{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.06em;padding:2px 7px;border-radius:4px;color:#C74E00;background:rgba(199,78,0,.09)}
+#panel-guard .gd-state{padding:44px 20px;text-align:center;color:#5D6C7B;font-size:13.5px}
+#panel-guard .gd-prog{width:min(320px,70%);height:6px;border-radius:3px;background:#EDEAE6;margin:14px auto 0;overflow:hidden}
+#panel-guard .gd-prog i{display:block;height:100%;background:#0E7C66;transition:width .4s}
+#panel-guard .sc-note{font-size:12px;line-height:1.6;color:#8A97A4;margin:18px 0 0;max-width:90ch}
 
 /* ── Crowd Clock (#panel-clock) ──────────────────────────────────────────
    Three views over one payload. Band colour runs cool (#0E7C66) -> warm
@@ -7880,6 +7922,10 @@ document.addEventListener('keydown', function(e){
       <svg viewBox="0 0 24 24"><defs><linearGradient id="ahg-clock" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFB37A"/><stop offset="1" stop-color="#C74E00"/></linearGradient></defs><circle cx="12" cy="12" r="9.3" fill="url(#ahg-clock)"/><path d="M12 6.4V12l3.7 2.3" stroke="#fff" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Crowd Clock</span><span class="v2-nav-tag v2-tag-new">NEW</span>
     </div>
 
+    <div class="v2-nav-item" onclick="v2Show('guard',this);guardInit()">
+      <svg viewBox="0 0 24 24"><defs><linearGradient id="ahg-guard" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5DC0AC"/><stop offset="1" stop-color="#0E7C66"/></linearGradient></defs><path fill="url(#ahg-guard)" d="M12 2.6l7.4 2.9v5.6c0 4.5-3.1 8.6-7.4 9.9-4.3-1.3-7.4-5.4-7.4-9.9V5.5z"/><path d="M8.6 12.1l2.3 2.3 4.4-4.6" stroke="#fff" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Safeguards</span><span class="v2-nav-tag v2-tag-new">NEW</span>
+    </div>
+
     <div class="v2-nav-item" onclick="v2Show('heroes',this)">
       <svg viewBox="0 0 24 24"><defs><linearGradient id="ahg-heroes" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFC75F"/><stop offset="1" stop-color="#F5A623"/></linearGradient></defs><path fill="url(#ahg-heroes)" d="M12 3.2l1.9 3.9 4.3.6-3.1 3 .7 4.3-3.8-2-3.8 2 .7-4.3-3.1-3 4.3-.6z"/><path d="M7.2 17.5h9.6M9 20.5h6" stroke="url(#ahg-heroes)" stroke-width="1.8" stroke-linecap="round"/></svg><span>Pre IPO Stocks</span>
     </div>
@@ -8698,6 +8744,19 @@ document.addEventListener('keydown', function(e){
     <div class="sc-cats" id="scCats"></div>
     <div class="sc-body" id="scBody"><div class="sc-empty">Pick a scan to run it.</div></div>
     <p class="sc-note">Scans read the same reported figures as the rest of the dashboard and can lag or have gaps. A name appearing in a scan is a match on our stated criteria — it is not a recommendation, not advice, and not FCA-authorised. Capital at risk.</p>
+  </div>
+</div>
+
+
+<!-- SAFEGUARDS — universe-wide dilution and shelf activity. -->
+<div id="panel-guard" class="panel">
+  <div class="main">
+    <div class="sc-head">
+      <h2 class="sc-title">Safeguards</h2>
+      <p class="sc-sub">A company issuing shares is selling into whatever demand exists — and a rally is demand. Share count is filed quarterly and shelf takedowns are filed the day they price, yet almost no private investor ever sees either. This ranks every name we follow by how much its share count grew over the last year.</p>
+    </div>
+    <div id="gdBody"><div class="gd-state">Loading&hellip;</div></div>
+    <p class="sc-note" id="gdNote"></p>
   </div>
 </div>
 
@@ -25884,6 +25943,141 @@ function scResultHTML(d){
   }
 
   window.clockInit = function(){
+    if (D){ render(); return; }
+    waiting(2); load();
+  };
+})();
+</script>
+
+<!-- ══ SAFEGUARDS (#panel-guard) ══════════════════════════════════════════
+     Own IIFE, one global export (guardInit). Row clicks resolve tsOpenDrawer,
+     not tsOpen — the latter does not exist. ═════════════════════════════ -->
+<script>
+(function(){
+  var D = null, filt = 'raising', poll = null, wired = false;
+
+  function esc(s){ return String(s == null ? '' : s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function pc(v){ return (v==null||isNaN(v)) ? '—' : (v*100).toFixed(0)+'%'; }
+  function sg(v){ return (v==null||isNaN(v)) ? '—' : (v>=0?'+':'')+(v*100).toFixed(1)+'%'; }
+  function mm(v){ return (v==null||isNaN(v)) ? '' : (v/1e6).toFixed(0)+'m'; }
+  function gcls(g){ return g==null ? '' : g >= 0.10 ? 'gd-hot' : g >= 0.05 ? 'gd-warm' : 'gd-cool'; }
+
+  function openTicker(t){
+    var fn = (typeof tsOpenDrawer === 'function') ? tsOpenDrawer
+           : (window.tsOpenDrawer || window.openStockModal);
+    if (typeof fn === 'function'){ try { fn(t); return; } catch(e){} }
+    console.warn('safeguards: no drawer opener for', t);
+  }
+
+  var FILTERS = [
+    {k:'raising',  label:'Raised in 24 months', fn:function(r){ return r.offerings_24m >= 1; }},
+    {k:'frequent', label:'Three or more raises', fn:function(r){ return r.offerings_24m >= 3; }},
+    {k:'diluting', label:'Share count up 10%+', fn:function(r){ return r.growth != null && r.growth >= 0.10; }},
+    {k:'all',      label:'Every name',          fn:function(){ return true; }}
+  ];
+
+  function render(){
+    var body = document.getElementById('gdBody'), note = document.getElementById('gdNote');
+    if (!body || !D) return;
+    var rows = D.rows || [];
+    var freq = rows.filter(function(r){ return r.offerings_24m >= 3; });
+    var last12 = rows.reduce(function(a,r){ return a + (r.offerings_12m || 0); }, 0);
+
+    var hero = '<div class="gd-hero"><b>' + freq.length + ' of ' + rows.length + '</b>'
+      + '<p>companies we follow have priced stock off a shelf <em>three or more times</em> in '
+      + 'the last two years — ' + last12 + ' such filings landed in the last twelve months '
+      + 'alone. Each one is a prospectus supplement: shares actually sold, filed the day they '
+      + 'price. <em>A rising share price is what makes them easy to do</em>, and almost no '
+      + 'private investor ever sees the filing.</p></div>';
+
+    var pills = FILTERS.map(function(f){
+      var n = rows.filter(f.fn).length;
+      return '<button class="gd-band' + (filt===f.k?' on':'') + '" data-f="' + f.k + '">'
+        + '<div class="gd-band-n"><b>' + esc(f.label) + '</b><i>' + n + '</i></div></button>';
+    }).join('');
+
+    var cur = FILTERS.filter(function(f){ return f.k === filt; })[0] || FILTERS[0];
+    var sel = rows.filter(cur.fn);
+    var head = '<div class="gd-wrap-h"><h3>' + esc(cur.label) + ' · ' + sel.length + ' name'
+      + (sel.length===1?'':'s') + '</h3>'
+      + '<p>Counts come straight from EDGAR. <b>A 424B5 can register debt as well as equity</b> '
+      + '— a large investment-grade issuer filing four of them is usually selling bonds, not '
+      + 'shares. The share-count column is what separates the two: real dilution shows up there. '
+      + 'It is filled in for the most active issuers only, because it costs a statement lookup '
+      + 'per name. Open any name for its full filing picture, including whether an '
+      + 'at-the-market programme is live.</p></div>';
+
+    var tb = sel.slice(0, 400).map(function(r){
+      var sh = (r.shares_then && r.shares_now) ? mm(r.shares_then) + ' &rarr; ' + mm(r.shares_now) : '—';
+      return '<tr data-t="' + esc(r.ticker) + '">'
+        + '<td><span class="gd-tk">' + esc(r.ticker) + '</span>'
+          + '<div class="gd-sub">' + esc(r.sector || '') + '</div></td>'
+        + '<td>' + (r.offerings_24m >= 3
+            ? '<span class="gd-tag">' + r.offerings_24m + '</span>' : r.offerings_24m) + '</td>'
+        + '<td>' + (r.offerings_12m || 0) + '</td>'
+        + '<td>' + (r.shelves_24m || 0) + '</td>'
+        + '<td class="' + gcls(r.growth) + '">' + sg(r.growth) + '</td>'
+        + '<td>' + sh + '</td>'
+        + '<td>' + (r.last_raise ? esc(r.last_raise) : '—') + '</td></tr>';
+    }).join('');
+
+    body.innerHTML = hero + '<div class="gd-bands">' + pills + '</div>'
+      + '<div class="gd-wrap">' + head + '<div class="gd-scroll"><table><thead><tr>'
+      + '<th>Ticker</th><th>Raises 24m</th><th>12m</th><th>Shelves</th>'
+      + '<th>Share count 1yr</th><th>Shares</th><th>Last raise</th>'
+      + '</tr></thead><tbody>' + tb + '</tbody></table></div></div>';
+
+    if (note) note.textContent =
+      'Filing counts come from SEC EDGAR and share counts from reported accounts; both can lag '
+      + 'or contain gaps. Where a historical frequency is shown it describes a sample of other '
+      + 'shares in a similar state — it is not a forecast or a probability for any share listed '
+      + 'here. A company raising capital is doing something ordinary and often necessary; this '
+      + 'page reports that it happened, and is not a recommendation, not advice, and not '
+      + 'FCA-authorised. Past performance is not a reliable indicator of future results. '
+      + 'Capital at risk.';
+
+    body.querySelectorAll('.gd-band').forEach(function(el){
+      el.addEventListener('click', function(){ filt = el.getAttribute('data-f'); render(); });
+    });
+    if (!wired){
+      body.addEventListener('click', function(ev){
+        var tr = ev.target.closest ? ev.target.closest('tr[data-t]') : null;
+        if (tr) openTicker(tr.getAttribute('data-t'));
+      });
+      wired = true;
+    }
+  }
+
+  function waiting(pct){
+    var body = document.getElementById('gdBody');
+    if (body) body.innerHTML = '<div class="gd-wrap"><div class="gd-state">'
+      + 'Reading SEC filings for the whole universe. A few minutes the first time each day, '
+      + 'then it is cached.'
+      + '<div class="gd-prog"><i style="width:' + (pct||2) + '%"></i></div></div></div>';
+  }
+
+  function load(){
+    fetch('/api/dilution-scan')
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(d){
+        if (!d) throw new Error('no data');
+        if (d.status === 'ready'){
+          if (poll){ clearInterval(poll); poll = null; }
+          D = d; render(); return;
+        }
+        waiting(d.pct);
+        if (!poll) poll = setInterval(load, 6000);
+      })
+      .catch(function(){
+        if (poll){ clearInterval(poll); poll = null; }
+        var body = document.getElementById('gdBody');
+        if (body) body.innerHTML = '<div class="gd-wrap"><div class="gd-state">'
+          + 'Safeguards are unavailable right now. Try again shortly.</div></div>';
+      });
+  }
+
+  window.guardInit = function(){
     if (D){ render(); return; }
     waiting(2); load();
   };
