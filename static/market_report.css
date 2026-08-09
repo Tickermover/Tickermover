@@ -9,8 +9,12 @@
   font-family:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif}
 .ma-report *{box-sizing:border-box;font-family:inherit}
 .ma-report .ma-head{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:14px}
-.ma-report .ma-eyebrow{font-size:11px;font-weight:800;letter-spacing:.14em;color:#14587D}
-.ma-report .ma-title{font-size:23px;font-weight:800;color:#0A2F46;line-height:1.15}
+/* App idiom: the panel eyebrow is mono indigo caps, the title is 29px at
+   weight 500. This report was running 11px/800 blue caps over a 23px/800
+   title — the whole page shouted while the rest of the app had gone quiet,
+   which is what made it read as a different product. */
+.ma-report .ma-eyebrow{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#4A5BC4}
+.ma-report .ma-title{font-size:29px;font-weight:500;letter-spacing:-.02em;color:#0A2F46;line-height:1.15}
 .ma-report .ma-title em{font-style:normal;color:#14587D}
 .ma-report .ma-session{display:inline-flex;align-items:center;gap:8px;background:#fff;border:1px solid rgba(10,47,70,.10);border-radius:999px;padding:7px 14px;font-size:12.5px;font-weight:700;color:#334155;box-shadow:0 2px 8px rgba(0,0,0,.06)}
 .ma-report .ma-dot{width:8px;height:8px;border-radius:50%;background:#94a3b8;box-shadow:0 0 0 3px rgba(148,163,184,.18)}
@@ -23,10 +27,10 @@
 .ma-report .ma-ed-cal{font-size:14px}
 .ma-report .ma-ed-date{font-weight:700;color:#334155;font-variant-numeric:tabular-nums}
 .ma-report .ma-ed-pub{color:#94a3b8}
-.ma-report .ma-ed-tag{margin-left:auto;font-size:10.5px;font-weight:800;letter-spacing:.03em;padding:3px 10px;border-radius:999px}
+.ma-report .ma-ed-tag{margin-left:auto;font-size:10.5px;font-weight:700;letter-spacing:.03em;padding:3px 10px;border-radius:999px}
 .ma-report .ma-ed-tag.today{background:rgba(22,163,74,.12);color:#15803d}
 .ma-report .ma-ed-tag.prior{background:rgba(217,119,6,.12);color:#b45309}
-.ma-report .ma-tabs{display:flex;gap:4px;overflow-x:auto;background:#eef2f7;border:1px solid rgba(10,47,70,.06);border-radius:12px;padding:4px;margin-bottom:16px}
+.ma-report .ma-tabs{display:flex;gap:4px;overflow-x:auto;background:#F2F1EE;border:1px solid rgba(10,47,70,.06);border-radius:12px;padding:4px;margin-bottom:16px}
 .ma-report .ma-tab{flex:1 0 auto;white-space:nowrap;font-size:12.5px;font-weight:700;color:#64748b;background:none;border:0;border-radius:9px;padding:8px 14px;cursor:pointer;transition:color .12s,background .12s}
 .ma-report .ma-tab:hover{color:#0A2F46}
 .ma-report .ma-tab.on{background:#fff;color:#14587D;box-shadow:0 2px 6px rgba(0,0,0,.12)}
@@ -40,24 +44,24 @@
   .ma-report .ma-tab{flex:1 1 auto;padding:7px 10px;font-size:12.5px;text-align:center}
 }
 .ma-report .ma-loading{padding:46px 20px;text-align:center;color:#64748b;font-size:14px}
-.ma-report .ma-sec-h{font-size:12px;font-weight:800;letter-spacing:.06em;color:#94a3b8;text-transform:uppercase;margin:8px 0 11px}
+.ma-report .ma-sec-h{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:10px;font-weight:700;letter-spacing:.12em;color:#94a3b8;text-transform:uppercase;margin:10px 0 11px}
 .ma-report .ma-lead{font-size:14px;line-height:1.65;color:#334155;margin-bottom:16px}
 .ma-report .ma-lead b{color:#0A2F46}
-.ma-report .ma-ai-tag{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.03em;color:#7c3aed;background:rgba(124,58,237,.10);border:1px solid rgba(124,58,237,.22);border-radius:6px;padding:1px 7px;vertical-align:1px;margin-right:5px}
+.ma-report .ma-ai-tag{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.03em;color:#7c3aed;background:rgba(124,58,237,.10);border:1px solid rgba(124,58,237,.22);border-radius:6px;padding:1px 7px;vertical-align:1px;margin-right:5px}
 .ma-report .ma-ed-next{font-size:12.5px;color:#14587D;font-weight:700}
 /* ── Hero narrative (front page of the Brief) ─────────────────────────────── */
-.ma-report .ma-hero{position:relative;background:linear-gradient(135deg,#ffffff 0%,#f3f8ff 100%);border:1px solid rgba(10,47,70,.08);border-radius:16px;padding:20px 22px 18px 26px;margin-bottom:16px;box-shadow:0 8px 26px rgba(0,0,0,.07);overflow:hidden}
+.ma-report .ma-hero{position:relative;background:linear-gradient(135deg,#ffffff 0%,#FBFAF8 100%);border:1px solid rgba(10,47,70,.08);border-radius:16px;padding:20px 22px 18px 26px;margin-bottom:16px;box-shadow:0 8px 26px rgba(0,0,0,.07);overflow:hidden}
 .ma-report .ma-hero::before{content:'';position:absolute;left:0;top:0;bottom:0;width:5px;background:#94a3b8}
 .ma-report .ma-hero.pos::before{background:linear-gradient(180deg,#22c55e,#0e8a4f)}
 .ma-report .ma-hero.neg::before{background:linear-gradient(180deg,#ef4444,#b01818)}
 .ma-report .ma-hero.flat::before{background:linear-gradient(180deg,#f59e0b,#b45309)}
-.ma-report .ma-hero-eyebrow{font-size:10.5px;font-weight:800;letter-spacing:.16em;color:#14587D;margin-bottom:8px}
+.ma-report .ma-hero-eyebrow{font-size:10.5px;font-weight:700;letter-spacing:.16em;color:#14587D;margin-bottom:8px}
 .ma-report .ma-hero-text{font-size:16px;line-height:1.62;color:#1e293b;font-weight:400}
 .ma-report .ma-hero-text b{color:#0A2F46;font-weight:700}
 .ma-report .ma-gapchip{display:inline-flex;align-items:center;gap:9px;margin-top:15px;background:#fff;border:1px solid rgba(10,47,70,.10);border-radius:999px;padding:7px 7px 7px 14px;font-size:12.5px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
-.ma-report .ma-gapchip .g-k{font-size:9.5px;font-weight:800;letter-spacing:.08em;color:#94a3b8}
+.ma-report .ma-gapchip .g-k{font-size:9.5px;font-weight:700;letter-spacing:.08em;color:#94a3b8}
 .ma-report .ma-gapchip .g-v{font-weight:700;color:#334155}
-.ma-report .ma-gapchip .g-n{font-weight:800;padding:2px 9px;border-radius:999px;background:#f1f5f9}
+.ma-report .ma-gapchip .g-n{font-weight:700;padding:2px 9px;border-radius:999px;background:#F2F1EE}
 .ma-report .ma-gapchip.ma-pos .g-n{color:#15803d;background:rgba(22,163,74,.12)}
 .ma-report .ma-gapchip.ma-neg .g-n{color:#b91c1c;background:rgba(220,38,38,.10)}
 .ma-report .ma-gapchip.ma-flat .g-n{color:#b45309;background:rgba(217,119,6,.12)}
@@ -65,8 +69,8 @@
 .ma-report .ma-scorecard{display:grid;grid-template-columns:repeat(auto-fit,minmax(116px,1fr));gap:10px;margin-bottom:18px}
 .ma-report .ma-stat{background:#fff;border:1px solid rgba(10,47,70,.08);border-radius:13px;padding:12px 14px;box-shadow:0 2px 10px rgba(0,0,0,.04)}
 .ma-report .ma-stat .s-l{font-size:11px;font-weight:700;color:#64748b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ma-report .ma-stat .s-v{font-size:22px;font-weight:800;color:#0A2F46;font-variant-numeric:tabular-nums;margin-top:3px;line-height:1;font-family:'Inter',system-ui,sans-serif}
-.ma-report .ma-stat .s-c{font-size:12.5px;font-weight:800;margin-top:5px;font-variant-numeric:tabular-nums}
+.ma-report .ma-stat .s-v{font-size:22px;font-weight:700;color:#0A2F46;font-variant-numeric:tabular-nums;margin-top:3px;line-height:1;font-family:'Inter',system-ui,sans-serif}
+.ma-report .ma-stat .s-c{font-size:12.5px;font-weight:700;margin-top:5px;font-variant-numeric:tabular-nums}
 /* ── Key events — compact "what the market is watching" grid ─────────────── */
 .ma-report .ma-watch-note{font-size:12.5px;color:#475569;line-height:1.55;padding:11px 15px;border-radius:11px;margin:2px 0 14px}
 .ma-report .ma-events{display:grid;grid-template-columns:repeat(auto-fill,minmax(244px,1fr));gap:8px;margin-bottom:18px}
@@ -83,7 +87,7 @@
 .ma-report .ma-card{background:#fff;border:1px solid rgba(10,47,70,.08);border-radius:13px;padding:13px 14px;box-shadow:0 2px 10px rgba(0,0,0,.04)}
 .ma-report .ma-card .lbl{font-size:12.5px;font-weight:700;color:#64748b;display:flex;align-items:center;justify-content:space-between;gap:6px}
 .ma-report .ma-card .sym{font-size:10px;font-weight:700;color:#94a3b8;letter-spacing:.04em}
-.ma-report .ma-card .val{font-size:21px;font-weight:800;color:#0A2F46;margin-top:4px;font-variant-numeric:tabular-nums}
+.ma-report .ma-card .val{font-size:21px;font-weight:700;color:#0A2F46;margin-top:4px;font-variant-numeric:tabular-nums}
 .ma-report .ma-card .chg{font-size:13px;font-weight:700;margin-top:2px;font-variant-numeric:tabular-nums}
 .ma-report .ma-card .sub{font-size:11.5px;color:#64748b;margin-top:5px;line-height:1.4}
 .ma-report .ma-pos{color:#16a34a}
@@ -93,25 +97,25 @@
 .ma-report .ma-bars{display:flex;flex-direction:column;gap:7px;margin-bottom:18px}
 .ma-report .ma-bar-row{display:grid;grid-template-columns:140px 1fr 64px;align-items:center;gap:10px;font-size:12.5px}
 .ma-report .ma-bar-row .nm{font-weight:700;color:#334155;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ma-report .ma-bar-track{position:relative;height:18px;background:#f1f5f9;border-radius:6px;overflow:hidden}
+.ma-report .ma-bar-track{position:relative;height:18px;background:#F2F1EE;border-radius:6px;overflow:hidden}
 .ma-report .ma-bar-mid{position:absolute;left:50%;top:0;bottom:0;width:1px;background:rgba(10,47,70,.14)}
 .ma-report .ma-bar-fill{position:absolute;top:0;bottom:0;border-radius:6px}
 .ma-report .ma-bar-fill.pos{background:linear-gradient(90deg,rgba(22,163,74,.35),rgba(22,163,74,.7))}
 .ma-report .ma-bar-fill.neg{background:linear-gradient(90deg,rgba(220,38,38,.7),rgba(220,38,38,.35))}
-.ma-report .ma-bar-row .pct{text-align:right;font-weight:800;font-variant-numeric:tabular-nums}
+.ma-report .ma-bar-row .pct{text-align:right;font-weight:700;font-variant-numeric:tabular-nums}
 .ma-report .ma-tech{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-bottom:16px}
 .ma-report .ma-note{background:#f8fafc;border:1px solid rgba(10,47,70,.07);border-left:3px solid #14587D;border-radius:9px;padding:11px 13px;font-size:12.5px;color:#475569;line-height:1.55;margin-bottom:12px}
 /* ── Movers (stock-level) tables ─────────────────────────────────────────── */
 .ma-report .ma-two{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px}
 @media(max-width:768px){.ma-report .ma-two{grid-template-columns:1fr}}
 .ma-report .ma-tbl{width:100%;border-collapse:collapse;background:#fff;border:1px solid rgba(10,47,70,.08);border-radius:12px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.04)}
-.ma-report .ma-tbl th{font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#94a3b8;text-align:left;padding:9px 12px;border-bottom:1px solid rgba(10,47,70,.06)}
+.ma-report .ma-tbl th{font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#94a3b8;text-align:left;padding:9px 12px;border-bottom:1px solid rgba(10,47,70,.06)}
 .ma-report .ma-tbl th.r,.ma-report .ma-tbl td.r{text-align:right}
 .ma-report .ma-tbl td{padding:9px 12px;border-bottom:1px solid rgba(10,47,70,.045);font-size:12.5px;vertical-align:middle}
 .ma-report .ma-tbl tr:last-child td{border-bottom:0}
 .ma-report .ma-tbl tr.click{cursor:pointer;transition:background .1s}
-.ma-report .ma-tbl tr.click:hover{background:#f4f8ff}
-.ma-report .ma-tk{font-weight:800;color:#0A2F46}
+.ma-report .ma-tbl tr.click:hover{background:#FBF9FF}
+.ma-report .ma-tk{font-weight:700;color:#0A2F46}
 .ma-report .ma-nm{font-size:12.5px;color:#94a3b8;font-weight:600}
 .ma-report .ma-px{font-variant-numeric:tabular-nums;font-weight:700;color:#334155}
 /* Phones/tablets: the 5-column movers/score/volume tables (Name, Price, Chg,
@@ -129,13 +133,13 @@
   .ma-report .ma-tbl .ma-nm{display:block;font-size:12.5px;margin-top:1px;white-space:normal}
   .ma-report .ma-tbl td:first-child{max-width:0;width:99%}
 }
-.ma-report .ma-gd{display:inline-block;font-size:12.5px;font-weight:800;width:18px;text-align:center;border-radius:5px;padding:1px 0}
+.ma-report .ma-gd{display:inline-block;font-size:12.5px;font-weight:700;width:18px;text-align:center;border-radius:5px;padding:1px 0}
 .ma-report .ma-gd.A{background:rgba(22,163,74,.14);color:#15803d}
 .ma-report .ma-gd.B{background:rgba(20,88,125,.12);color:#1d4ed8}
 .ma-report .ma-gd.C{background:rgba(217,119,6,.14);color:#b45309}
 .ma-report .ma-gd.D,.ma-report .ma-gd.F{background:rgba(220,38,38,.10);color:#b91c1c}
-.ma-report .ma-pill{display:inline-block;font-size:10px;font-weight:800;padding:2px 7px;border-radius:5px;background:#eef2f7;color:#475569}
-.ma-report .ma-mv-h{font-size:13px;font-weight:800;color:#0A2F46;margin:2px 0 8px;display:flex;align-items:center;gap:7px}
+.ma-report .ma-pill{display:inline-block;font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px;background:#F2F1EE;color:#475569}
+.ma-report .ma-mv-h{font-size:13px;font-weight:700;color:#0A2F46;margin:2px 0 8px;display:flex;align-items:center;gap:7px}
 .ma-report .ma-mv-h .ic{font-size:14px}
 /* ── News ────────────────────────────────────────────────────────────────── */
 .ma-report .ma-news-item{background:#fff;border:1px solid rgba(10,47,70,.08);border-radius:12px;padding:13px 15px;margin-bottom:10px}
@@ -144,13 +148,13 @@
 .ma-report .ma-news-item .meta{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:8px;font-size:12.5px;color:#94a3b8;font-weight:600}
 .ma-report .ma-news-item .meta a{color:#14587D;text-decoration:none;font-weight:700}
 .ma-report .ma-news-item .meta a:hover{text-decoration:underline}
-.ma-report .ma-tag{display:inline-block;font-size:9.5px;font-weight:800;letter-spacing:.05em;padding:2px 7px;border-radius:5px;background:#eef2f7;color:#475569}
+.ma-report .ma-tag{display:inline-block;font-size:9.5px;font-weight:700;letter-spacing:.05em;padding:2px 7px;border-radius:5px;background:#F2F1EE;color:#475569}
 /* ── Verdict ─────────────────────────────────────────────────────────────── */
 .ma-report .ma-verdict{background:#fff;border:1px solid rgba(10,47,70,.08);border-radius:14px;padding:18px 20px;box-shadow:0 2px 12px rgba(0,0,0,.05)}
-.ma-report .ma-verdict .big{font-size:17px;font-weight:800;color:#0A2F46;line-height:1.4;margin-bottom:12px}
+.ma-report .ma-verdict .big{font-size:17px;font-weight:700;color:#0A2F46;line-height:1.4;margin-bottom:12px}
 .ma-report .ma-verdict .kv{font-size:13.5px;color:#334155;line-height:1.7}
 .ma-report .ma-verdict .kv b{color:#0A2F46}
-.ma-report .ma-conf{display:inline-block;margin-top:10px;font-size:12.5px;font-weight:800;padding:4px 12px;border-radius:999px}
+.ma-report .ma-conf{display:inline-block;margin-top:10px;font-size:12.5px;font-weight:700;padding:4px 12px;border-radius:999px}
 .ma-report .ma-conf.high{background:rgba(22,163,74,.12);color:#15803d}
 .ma-report .ma-conf.med{background:rgba(217,119,6,.12);color:#b45309}
 .ma-report .ma-conf.low{background:rgba(220,38,38,.10);color:#b91c1c}
