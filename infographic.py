@@ -354,7 +354,7 @@ def render_png(s: dict) -> bytes:
 
     # ── footer ────────────────────────────────────────────────────────────
     d.line([M, H - 128, W - M, H - 128], fill=HAIR, width=1)
-    d.text((M, H - 108), "tickermover.com/theses/%s" % s["slug"],
+    d.text((M, H - 108), "tickermover.com/who-benefits/%s" % s["slug"],
            font=_font(21, True), fill=INDIGO)
     stamp = (s.get("generated_at") or "")[:10]
     d.text((M, H - 74),

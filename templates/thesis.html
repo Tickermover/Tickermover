@@ -420,7 +420,7 @@ h1.title{font-size:clamp(34px,5.6vw,54px);line-height:1.03;letter-spacing:-.022e
      otherwise shown a brand chip selling them the product they already pay for,
      with a back link to a page that now redirects. -->
 <header class="top"><div class="top-in">
-  <a class="back" id="navBack" href="/theses">← All thesis maps</a>
+  <a class="back" id="navBack" href="/who-benefits">← All maps</a>
   <a class="brand" id="navBrand" href="/"><span class="mark"></span><span>TickerMover</span></a>
 </div></header>
 <script>
@@ -429,7 +429,7 @@ h1.title{font-size:clamp(34px,5.6vw,54px);line-height:1.03;letter-spacing:-.022e
   try { signedIn = !!localStorage.getItem('ah_token'); } catch(e){}
   if (!signedIn) return;
   var back = document.getElementById('navBack'), brand = document.getElementById('navBrand');
-  if (back) back.href = '/app#theses';
+  if (back) back.href = '/app#who-benefits';
   if (brand){ brand.href = '/app'; brand.textContent = '← Back to the dashboard';
               brand.className = 'back'; }
 })();
@@ -475,7 +475,7 @@ h1.title{font-size:clamp(34px,5.6vw,54px);line-height:1.03;letter-spacing:-.022e
       <div class="foot-col">
         <h5>How to read this</h5>
         <p id="how"></p>
-        <a class="cta" href="/theses">← Explore more thesis maps</a>
+        <a class="cta" href="/who-benefits">← See who benefits elsewhere</a>
       </div>
       <div class="foot-col">
         <h5>Important</h5>
@@ -796,7 +796,7 @@ h1.title{font-size:clamp(34px,5.6vw,54px);line-height:1.03;letter-spacing:-.022e
     .then(function(d){ if(!d || d.available===false || !d.layers) throw new Error("unavailable"); build(d); })
     .catch(function(){
       document.getElementById("title").textContent = "This thesis map isn't available";
-      chain.innerHTML = '<div class="loading">It may still be in preparation. <a href="/theses">Browse all thesis maps →</a></div>';
+      chain.innerHTML = '<div class="loading">It may still be in preparation. <a href="/who-benefits">Browse all thesis maps →</a></div>';
     });
 })();
 </script>

@@ -1437,7 +1437,7 @@ async def sitemap_xml():
         for _t in (_load_theses().get("theses") or []):
             if _t.get("status") == "live" and _t.get("slug"):
                 parts.append(
-                    f'  <url><loc>{SITE_ORIGIN}/theses/{_t["slug"]}</loc>'
+                    f'  <url><loc>{SITE_ORIGIN}/who-benefits/{_t["slug"]}</loc>'
                     f'<changefreq>weekly</changefreq><priority>0.75</priority><lastmod>{today}</lastmod></url>'
                 )
     except Exception:
@@ -5035,7 +5035,7 @@ async def api_admin_publish_thesis_map(user: Optional[dict] = Depends(_current_u
         "ok": True, "slug": mp["slug"], "title": mp["title"],
         "layers": len(mp["layers"]),
         "companies": sum(len(L["names"]) for L in mp["layers"]),
-        "web_grounded": mp.get("web_grounded"), "url": f"/theses/{mp['slug']}",
+        "web_grounded": mp.get("web_grounded"), "url": f"/who-benefits/{mp['slug']}",
     }))
 
 
@@ -5712,7 +5712,7 @@ fetch('/api/theses').then(function(r){{return r.json()}}).then(function(d){{
     ? '<b>'+n.driver+'</b><br><span style="color:#94a3b8">'+n.angle+'</span>'
     : 'Driver pool exhausted — add more to DRIVER_POOL in thesis_map_gen.py.';
   document.getElementById('list').innerHTML = (d.theses||[]).slice(0,14).map(function(t){{
-    return '<div style="padding:3px 0">· <a href="/theses/'+t.slug+'" target="_blank">'+t.title+'</a></div>';
+    return '<div style="padding:3px 0">· <a href="/who-benefits/'+t.slug+'" target="_blank">'+t.title+'</a></div>';
   }}).join('') || 'none';
 }});
 function run(dry){{
@@ -5797,14 +5797,30 @@ async def api_thesis_shares(slug: str):
 
 @app.get("/theses")
 async def theses_hub_page():
-    """Redirects into the app — the gallery is #panel-theses now. The INDIVIDUAL
-    maps (/theses/{slug}) keep their own page: they are the deep interactive
-    artifact and a drill-down from the list, not a nav destination."""
+    """Legacy path. The gallery is #panel-theses in the app now."""
     from fastapi.responses import RedirectResponse
-    return RedirectResponse(url="/app#theses", status_code=307)
+    return RedirectResponse(url="/app#who-benefits", status_code=307)
 
 
-@app.get("/theses/{slug}", response_class=HTMLResponse)
+@app.get("/who-benefits")
+async def who_benefits_hub_page():
+    """The gallery lives in the app; this is the public entry point."""
+    from fastapi.responses import RedirectResponse
+    return RedirectResponse(url="/app#who-benefits", status_code=307)
+
+
+@app.get("/theses/{slug}")
+async def thesis_page_legacy(slug: str):
+    """PERMANENT redirect to the canonical /who-benefits/{slug}.
+
+    These are the URLs Google has indexed and the ones in older sitemaps, so
+    this redirect is the only thing carrying that ranking across. 301, and it
+    must never be deleted."""
+    from fastapi.responses import RedirectResponse
+    return RedirectResponse(url="/who-benefits/%s" % (slug or ""), status_code=301)
+
+
+@app.get("/who-benefits/{slug}", response_class=HTMLResponse)
 async def thesis_page(slug: str):
     """One thesis map — the data-driven chain engine (fetches /api/thesis/{slug})."""
     try:

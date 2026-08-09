@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Thesis Maps — explore the market's biggest ideas | TickerMover</title>
+<title>Who benefits from AI capex, the power build-out and defence spending | TickerMover</title>
 <meta name="description" content="TickerMover chain maps — supply-chain maps showing where AI capex, the power build-out and defense spending have already landed: each layer's and each company's share of the revenue the chain captures today.">
 <link rel="icon" type="image/svg+xml" href="/static/brand/tickermover-mark.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -78,8 +78,8 @@ a.card:hover{border-color:#C7CEF0;transform:translateY(-2px);box-shadow:0 12px 2
 </script>
 
 <main class="wrap">
-  <span class="eyebrow">◇ Thesis Maps</span>
-  <h1>Explore the market's <em>biggest ideas</em>.</h1>
+  <span class="eyebrow">◇ Who Benefits</span>
+  <h1>Who actually <em>captures the spending</em>.</h1>
   <p class="standfirst">Not a screener and not a chart. Each map takes one macro driver — AI capex, the power build-out, the defense budget — and shows exactly where the money has already landed, layer by layer, company by company. Descriptive, not a forecast — so argue with the judgements.</p>
 
   <div id="grid" class="grid"><div class="loading">Loading thesis maps…</div></div>
@@ -112,7 +112,7 @@ a.card:hover{border-color:#C7CEF0;transform:translateY(-2px);box-shadow:0 12px 2
       '<p>'+esc(t.standfirst||"")+'</p>'+
       '<span class="go">'+(live?"Explore the map →":"In preparation")+'</span>';
     return live
-      ? '<a class="card" href="/theses/'+encodeURIComponent(t.slug)+'">'+inner+'</a>'
+      ? '<a class="card" href="/who-benefits/'+encodeURIComponent(t.slug)+'">'+inner+'</a>'
       : '<div class="card dim">'+inner+'</div>';
   }
   // A new map lands every Sunday, so name WHICH one. A dated promise of a
