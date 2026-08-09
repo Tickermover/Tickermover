@@ -13892,7 +13892,7 @@ async def tearsheet_page(ticker: str = "LITE"):
 # Building this pulls 3y of daily data for ~500 names, which takes about a
 # minute — far too long for a request. So the first caller kicks off a
 # background build and gets {status:"warming"}; the panel polls until ready.
-_crowd_scan: dict = {"status": "idle", "rows": [], "at": 0.0, "done": 0, "total": 0}
+_crowd_scan: dict = {"status": "idle", "data": {}, "at": 0.0, "done": 0, "total": 0}
 _crowd_scan_lock = asyncio.Lock()
 _CROWD_SCAN_TTL = 60 * 60 * 12
 
@@ -13901,12 +13901,17 @@ async def _build_crowd_scan() -> None:
     global _crowd_scan
     try:
         import crowd_clock as cc
-        syms = [str(x.get("ticker") or "").upper()
-                for x in (_universe_data or []) if x.get("ticker")]
+        syms, sectors = [], {}
+        for x in (_universe_data or []):
+            s = str(x.get("ticker") or "").upper()
+            if s:
+                syms.append(s)
+                sectors[s] = x.get("sector") or "Other"
         if not syms:
             try:
                 import stock_universe as su
                 syms = list(su.get_universe())
+                sectors = {s: (su.get_meta(s) or {}).get("sector") or "Other" for s in syms}
             except Exception:
                 syms = []
         if not syms:
@@ -13917,10 +13922,12 @@ async def _build_crowd_scan() -> None:
         def _prog(done, total):
             _crowd_scan.update(done=done, total=total)
 
-        rows = await asyncio.to_thread(cc.scan_universe, syms, _prog)
-        _crowd_scan.update(status="ready", rows=rows, at=time.time(),
+        data = await asyncio.to_thread(cc.scan_universe, syms, sectors, _prog)
+        _crowd_scan.update(status="ready", data=data, at=time.time(),
                            done=len(syms), total=len(syms))
-        logger.info(f"crowd-clock scan built: {len(rows)} rows")
+        logger.info(f"crowd-clock scan built: {len(data.get('rows') or [])} rows, "
+                    f"{len(data.get('turns') or [])} turns, "
+                    f"{len(data.get('sectors') or [])} sectors")
     except Exception as exc:
         logger.error(f"crowd-clock scan build failed: {exc}", exc_info=True)
         _crowd_scan.update(status="idle")
@@ -13933,16 +13940,26 @@ async def api_crowd_clock_scan():
     fresh = (_crowd_scan["status"] == "ready"
              and (time.time() - _crowd_scan["at"]) < _CROWD_SCAN_TTL)
     if fresh:
-        rows = _crowd_scan["rows"]
+        import crowd_clock as cc
+        d = _crowd_scan["data"]
+        rows = d.get("rows") or []
         counts: dict[str, int] = {}
         for r in rows:
-            counts[r["band"]] = counts.get(r["band"], 0) + 1
-        import crowd_clock as cc
+            if r.get("in_cycle"):
+                counts[r["band"]] = counts.get(r["band"], 0) + 1
+        # attach each turn's breadth bucket so the panel never shows a turn
+        # without the context that decides whether it means anything
+        turns = []
+        for t in (d.get("turns") or []):
+            k = cc.turn_bucket(t.get("sector_wrecked"))
+            turns.append({**t, "bucket": k, "bucket_label": cc.TURN_LABEL.get(k, ""),
+                          "bucket_rates": cc.TURN_RATES.get(k, cc.TURN_RATES["all"])})
         return JSONResponse({
             "status": "ready", "rows": rows, "counts": counts,
-            "order": cc.ORDER, "copy": cc.BAND_COPY,
+            "sectors": d.get("sectors") or [], "changes": d.get("changes") or [],
+            "turns": turns, "order": cc.ORDER, "copy": cc.BAND_COPY,
             "rates": cc.BASE_RATES, "baseline": cc.BASELINE,
-            "asof": int(_crowd_scan["at"]),
+            "turn_rates": cc.TURN_RATES, "asof": d.get("asof"),
         })
 
     async with _crowd_scan_lock:

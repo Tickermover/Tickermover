@@ -65,6 +65,43 @@ BASE_RATES = {
         "Crowded": dict(n=4190,  fall=.213, rise=.465, med6m=.085, uw12=.339),
     },
 }
+
+#: THE TURN — fell 40%+ in the last two years, back above a rising 50-day, the
+#: crowd not yet arrived (volume < 1.10x its own norm), still 20%+ below the
+#: 12-month high with under 60% of the move banked.
+#:
+#: 15,086 firings, 1,229 names, 2009-2026. Read `all` before believing anything
+#: else here: over six months it returned a median +8.6% raw but -0.3% AGAINST
+#: THE S&P, underperforming the index exactly half the time. On its own IT IS
+#: NOT AN EDGE and must never be shown as an entry.
+#:
+#: What did separate good turns from bad ones is how much of the market was
+#: already wrecked when it fired. `beat` = share that beat the index over 6m.
+#: CAVEAT to keep next to the washout numbers wherever they appear: the effect
+#: is carried by 2020-2026. In 2009-2014 the same buckets were negative. That
+#: era had two violent V-shaped recoveries; this may not survive a slow bear.
+TURN_RATES = {
+    "all":     dict(n=15086, x6m=-.003, med6m=.086, rise=.36, fall=.18, beat=.50, dip=-.134),
+    "calm":    dict(n=3228,  x6m=-.027, med6m=.039, rise=.32, fall=.22, beat=.46, lo=0.0, hi=.10),
+    "some":    dict(n=6227,  x6m=-.042, med6m=.033, rise=.28, fall=.23, beat=.43, lo=.10, hi=.20),
+    "broad":   dict(n=4544,  x6m=.049,  med6m=.158, rise=.46, fall=.11, beat=.58, lo=.20, hi=.35),
+    "washout": dict(n=1087,  x6m=.063,  med6m=.221, rise=.52, fall=.10, beat=.61, lo=.35, hi=1.01),
+}
+TURN_BUCKETS = ["calm", "some", "broad", "washout"]
+TURN_LABEL = {"calm": "a calm market", "some": "a mildly damaged market",
+              "broad": "a broadly damaged market", "washout": "a market-wide washout"}
+
+
+def turn_bucket(wrecked_share) -> str:
+    """Which breadth bucket a turn fired in — the only thing in the study that
+    separated the good turns from the bad ones."""
+    if wrecked_share is None:
+        return "all"
+    for k in TURN_BUCKETS:
+        r = TURN_RATES[k]
+        if r["lo"] <= wrecked_share < r["hi"]:
+            return k
+    return "washout"
 BASELINE = dict(fall=.111, rise=.231, med6m=.066, uw12=.318)
 
 #: Descriptive only. No instruction, no directive verb — see the FCA note in
@@ -236,54 +273,166 @@ def card_body(sym: str, r: dict) -> str:
      research, not advice and not a personal recommendation. Capital at risk.</p>"""
 
 
-def scan_universe(tickers: list[str], progress=None) -> list[dict]:
-    """Readings for a whole universe, via batched downloads. Slow (a minute or
-    so for ~500 names) — call it from a background task, never inside a request.
+def _bands_frame(score, damage):
+    """Vectorised band(), same rules as band() above."""
+    import numpy as np, pandas as pd
+    out = pd.DataFrame("Crowded", index=score.index, columns=score.columns, dtype=object)
+    prev = -1.0
+    for edge, name in BAND_EDGES:
+        out = out.mask((score >= prev) & (score < edge), name)
+        prev = edge
+    return out.mask((damage <= -0.25) & (score < 40), "Damaged").where(score.notna())
+
+
+def scan_universe(tickers: list[str], sectors: dict | None = None,
+                  progress=None) -> dict:
+    """The whole universe in one pass: a reading per name, recent band changes,
+    the turn list, and where the damage sits by sector.
+
+    Slow (about a minute for ~500 names) — call it from a background task.
     `progress(done, total)` is called after each chunk."""
-    try:
-        import yfinance as yf  # type: ignore
-    except Exception:
-        return []
+    import numpy as np, pandas as pd, yfinance as yf
+    sectors = sectors or {}
     syms = sorted({(s or "").upper().strip() for s in tickers if s})
-    rows, done, CH = [], 0, 60
+    cl_parts, vo_parts, done, CH = [], [], 0, 60
     for i in range(0, len(syms), CH):
         chunk = syms[i:i + CH]
         try:
             raw = yf.download(chunk, period="3y", interval="1d", auto_adjust=True,
                               progress=False, threads=True, group_by="column",
                               actions=False)
+            if raw is not None and not raw.empty:
+                c, v = raw["Close"], raw["Volume"]
+                if isinstance(c, pd.Series):
+                    c, v = c.to_frame(chunk[0]), v.to_frame(chunk[0])
+                cl_parts.append(c); vo_parts.append(v)
         except Exception as exc:
             logger.warning(f"crowd_clock scan chunk {i} failed: {exc}")
-            raw = None
-        if raw is not None and not raw.empty:
-            for s in chunk:
-                try:
-                    cl = raw["Close"][s] if len(chunk) > 1 else raw["Close"]
-                    vo = raw["Volume"][s] if len(chunk) > 1 else raw["Volume"]
-                    cl, vo = cl.dropna(), vo.dropna()
-                    n = min(len(cl), len(vo))
-                    if n < 200:
-                        continue
-                    r = compute([float(x) for x in cl[-n:]],
-                                [float(x) for x in vo[-n:]])
-                    if not r:
-                        continue
-                    rows.append({"ticker": s, "score": r["score"], "band": r["band"],
-                                 "tone": r["tone"], "in_cycle": r["in_cycle"],
-                                 "run": r["run"], "crowd": r["crowd"],
-                                 "stretch": r["stretch"], "damage": r["damage"],
-                                 "px": round(float(cl.iloc[-1]), 2),
-                                 "fall": r["rates"]["fall"], "rise": r["rates"]["rise"]})
-                except Exception:
-                    continue
         done += len(chunk)
         if progress:
-            try:
-                progress(done, len(syms))
-            except Exception:
-                pass
+            try: progress(done, len(syms))
+            except Exception: pass
+    if not cl_parts:
+        return {"rows": [], "sectors": [], "turns": [], "changes": []}
+
+    close = pd.concat(cl_parts, axis=1).sort_index()
+    vol = pd.concat(vo_parts, axis=1).sort_index()
+    close = close.loc[:, ~close.columns.duplicated()].astype("float64")
+    vol = vol.reindex(columns=close.columns).astype("float64")
+    close = close.dropna(axis=1, thresh=200)
+    vol = vol[close.columns]
+
+    dollar = close * vol
+    adv = dollar.rolling(200).mean()
+    crowd = dollar.rolling(20).mean() / adv
+    ma50, ma200 = close.rolling(50).mean(), close.rolling(200).mean()
+    mx, mn = close.rolling(252, min_periods=200).max(), close.rolling(252, min_periods=200).min()
+    dmg, run = close / mx - 1.0, close / mn - 1.0
+    stretch = close / ma200 - 1.0
+    sl50 = ma50 / ma50.shift(21) - 1.0
+    worst2y = dmg.rolling(504, min_periods=252).min()
+
+    def _ramp_df(x, lo, hi):
+        return ((x - lo) / (hi - lo)).clip(0, 1) * 100.0
+
+    sc = (WEIGHTS["run"] * _ramp_df(run, *RAMPS["run"])
+          + WEIGHTS["crowd"] * _ramp_df(crowd, *RAMPS["crowd"])
+          + WEIGHTS["stretch"] * _ramp_df(stretch, *RAMPS["stretch"]))
+    bands = _bands_frame(sc, dmg)
+
+    # ── the turn: fell hard, stopped falling, crowd not here yet ────────────
+    turn = ((worst2y <= -0.40) & (dmg <= -0.20) & (close > ma50) & (sl50 > 0)
+            & (crowd < 1.10) & (run < 0.60) & (adv > 3e6) & (close > 5))
+    turn = turn.fillna(False).astype(bool)
+    fired = turn & ~turn.shift(1, fill_value=False)
+
+    last = close.index[-1]
+    # ── sector breadth: share of a sector 30%+ below its own 12-month high ──
+    sec_of = {t: (sectors.get(t) or "Other").strip() or "Other" for t in close.columns}
+    wreck = (dmg <= -0.30)
+    sec_rows = []
+    groups = {}
+    for t, s in sec_of.items():
+        groups.setdefault(s, []).append(t)
+    groups["All shares"] = list(close.columns)
+    for s, cols in groups.items():
+        # a 5-name "sector" produces a headline percentage that means nothing —
+        # one stock moves it 20 points
+        if len(cols) < 15 and s != "All shares":
+            continue
+        w = wreck[cols].sum(axis=1) / dmg[cols].notna().sum(axis=1)
+        w = w.dropna()
+        if len(w) < 250:
+            continue
+        now = float(w.iloc[-1])
+        yr = w.iloc[-252:]
+        sec_rows.append({
+            "sector": s, "n": len(cols), "now": round(now, 4),
+            "median": round(float(w.median()), 4),
+            "pctile": round(float((w <= now).mean()), 3),
+            "peak1y": round(float(yr.max()), 4),
+            "peak1y_at": yr.idxmax().strftime("%Y-%m-%d"),
+            "chg21": round(now - float(w.iloc[-22]), 4) if len(w) > 22 else None,
+            # buckets are the ones the study validated (see TURN_RATES), not a
+            # percentile of this sector's own 3y window — too short to trust
+            "bucket": turn_bucket(now),
+        })
+    sec_rows.sort(key=lambda r: -r["now"])
+
+    rows, changes, turns = [], [], []
+    b_last = bands.iloc[-1]
+    for t in close.columns:
+        b = b_last.get(t)
+        if not isinstance(b, str):
+            continue
+        col = bands[t].dropna()
+        # how long has it read this band, and what did it read before?
+        held, prev = 0, None
+        for k in range(len(col) - 1, -1, -1):
+            if col.iloc[k] == b:
+                held += 1
+            else:
+                prev = col.iloc[k]; break
+        chg_at = col.index[len(col) - held] if held < len(col) else None
+        in_cycle = bool(worst2y[t].iloc[-1] <= -0.40) if not np.isnan(worst2y[t].iloc[-1]) else False
+        r = {"ticker": t, "score": round(float(sc[t].iloc[-1]), 1), "band": b,
+             "tone": BAND_TONE[b], "in_cycle": in_cycle,
+             "sector": sec_of.get(t, "Other"),
+             "run": round(float(run[t].iloc[-1]), 4),
+             "crowd": round(float(crowd[t].iloc[-1]), 3),
+             "stretch": round(float(stretch[t].iloc[-1]), 4),
+             "damage": round(float(dmg[t].iloc[-1]), 4),
+             "px": round(float(close[t].iloc[-1]), 2),
+             "held": int(held), "prev": prev,
+             "changed": chg_at.strftime("%Y-%m-%d") if chg_at is not None else None,
+             "turn": bool(turn[t].iloc[-1])}
+        rates = BASE_RATES["cycle" if in_cycle else "all"][b]
+        r["fall"], r["rise"] = rates["fall"], rates["rise"]
+        rows.append(r)
+
+        # band changes in the last 30 sessions, upgrades out of the wreck first
+        if chg_at is not None and held <= 30 and prev:
+            changes.append({**{k: r[k] for k in ("ticker", "band", "sector", "px",
+                                                 "run", "crowd", "damage", "score",
+                                                 "tone", "in_cycle")},
+                            "prev": prev, "changed": r["changed"], "held": int(held),
+                            "up": ORDER.index(b) > ORDER.index(prev)})
+        # turns fired in the last 30 sessions
+        f = fired[t].iloc[-30:]
+        if f.any():
+            d = f[f].index[-1]
+            secnow = next((x["now"] for x in sec_rows if x["sector"] == sec_of.get(t)), None)
+            turns.append({**{k: r[k] for k in ("ticker", "band", "sector", "px", "run",
+                                               "crowd", "damage", "score", "tone")},
+                          "fired": d.strftime("%Y-%m-%d"),
+                          "days": int((last - d).days),
+                          "since": round(float(close[t].iloc[-1] / close[t][d] - 1), 4),
+                          "sector_wrecked": secnow})
     rows.sort(key=lambda x: -x["score"])
-    return rows
+    changes.sort(key=lambda x: (x["changed"] or ""), reverse=True)
+    turns.sort(key=lambda x: (x["fired"] or ""), reverse=True)
+    return {"rows": rows, "sectors": sec_rows, "changes": changes, "turns": turns,
+            "asof": last.strftime("%Y-%m-%d")}
 
 
 def render_card(t: dict) -> str:

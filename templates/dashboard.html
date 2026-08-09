@@ -478,15 +478,35 @@ body.v2 #sectors-grid .smh-name{font-weight:800;font-size:12.5px;color:#0f172a!i
 #panel-scans .sc-sub,#panel-heroes .sc-sub,#panel-theses .sc-sub,#panel-clock .sc-sub{font-size:13.5px;font-weight:400;line-height:1.6;color:#5D6C7B;margin:0;max-width:78ch}
 
 /* ── Crowd Clock (#panel-clock) ──────────────────────────────────────────
-   Where every name sits between ignored and crowded. Band colour runs cool
-   (#0E7C66) -> warm (#A16207) -> hot (#C74E00); the same three tones the
-   /report card uses, so a name reads the same in both places. */
-#panel-clock .ck-lead{display:grid;grid-template-columns:1.5fr 1fr;gap:14px;margin:0 0 22px}
-#panel-clock .ck-fact{border:1px solid #E4E7EC;border-radius:16px;background:#fff;padding:18px 20px}
-#panel-clock .ck-fact b{display:block;font-family:'JetBrains Mono',monospace;font-size:27px;font-weight:700;letter-spacing:-.02em;color:#C74E00;line-height:1}
-#panel-clock .ck-fact p{font-size:13px;line-height:1.55;color:#5D6C7B;margin:9px 0 0}
-#panel-clock .ck-fact em{font-style:normal;color:#0A2F46;font-weight:600}
-#panel-clock .ck-bands{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin:0 0 22px}
+   Three views over one payload. Band colour runs cool (#0E7C66) -> warm
+   (#A16207) -> hot (#C74E00), the same three tones the /report card uses, so
+   a name reads identically in both places. */
+#panel-clock .ck-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 22px}
+#panel-clock .ck-tab{font:inherit;font-size:12.5px;font-weight:500;padding:8px 15px;border-radius:100px;
+  border:1px solid #E4E7EC;background:#fff;color:#5D6C7B;cursor:pointer;transition:all .15s}
+#panel-clock .ck-tab:hover{border-color:#C74E00;color:#C74E00}
+#panel-clock .ck-tab.on{border-color:#C74E00;color:#fff;background:#C74E00}
+#panel-clock .ck-hero{border:1px solid #E4E7EC;border-radius:16px;background:#fff;padding:20px 22px;margin:0 0 18px}
+#panel-clock .ck-hero b{display:block;font-family:'JetBrains Mono',monospace;font-size:27px;font-weight:700;letter-spacing:-.02em;line-height:1;color:#C74E00}
+#panel-clock .ck-hero p{font-size:13px;line-height:1.6;color:#5D6C7B;margin:10px 0 0;max-width:88ch}
+#panel-clock .ck-hero em{font-style:normal;color:#0A2F46;font-weight:600}
+#panel-clock .ck-secs{display:grid;gap:9px;margin:0 0 8px}
+#panel-clock .ck-sec{display:grid;grid-template-columns:minmax(130px,1.1fr) 1fr auto;gap:14px;align-items:center;
+  border:1px solid #E4E7EC;border-radius:12px;background:#fff;padding:12px 16px}
+#panel-clock .ck-sec-n{font-size:13.5px;font-weight:600;color:#0A2F46}
+#panel-clock .ck-sec-n s{display:block;text-decoration:none;font-family:'JetBrains Mono',monospace;font-size:9.5px;font-weight:700;letter-spacing:.06em;color:#8A97A4;margin-top:3px}
+#panel-clock .ck-meter{position:relative;height:9px;border-radius:5px;background:#F1EFEC;overflow:visible}
+#panel-clock .ck-meter i{display:block;height:100%;border-radius:5px;background:#8A97A4}
+#panel-clock .ck-sec[data-b="broad"] .ck-meter i{background:#A16207}
+#panel-clock .ck-sec[data-b="washout"] .ck-meter i{background:#C74E00}
+#panel-clock .ck-meter u{position:absolute;top:-4px;width:2px;height:17px;background:#0A2F46;opacity:.35}
+#panel-clock .ck-sec-v{text-align:right;font-family:'JetBrains Mono',monospace;font-variant-numeric:tabular-nums;white-space:nowrap}
+#panel-clock .ck-sec-v b{font-size:15px;font-weight:700;color:#0A2F46}
+#panel-clock .ck-sec-v s{display:block;text-decoration:none;font-size:10px;font-weight:700;color:#8A97A4;margin-top:2px}
+#panel-clock .ck-tag{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.06em;padding:2px 7px;border-radius:4px;margin-left:7px}
+#panel-clock .ck-tag-washout{color:#C74E00;background:rgba(199,78,0,.1)}
+#panel-clock .ck-tag-broad{color:#A16207;background:rgba(161,98,7,.1)}
+#panel-clock .ck-bands{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin:0 0 18px}
 #panel-clock .ck-band{--ck-a:#5D6C7B;position:relative;overflow:hidden;border:1px solid #E4E7EC;border-radius:14px;background:#fff;padding:14px 15px 13px;cursor:pointer;text-align:left;font:inherit;transition:border-color .15s,box-shadow .15s}
 #panel-clock .ck-band[data-b="Damaged"],#panel-clock .ck-band[data-b="Crowded"]{--ck-a:#C74E00}
 #panel-clock .ck-band[data-b="Busy"]{--ck-a:#A16207}
@@ -504,7 +524,9 @@ body.v2 #sectors-grid .smh-name{font-weight:800;font-size:12.5px;color:#0f172a!i
 #panel-clock .ck-wrap{border:1px solid #E4E7EC;border-radius:18px;background:#fff;overflow:hidden}
 #panel-clock .ck-wrap-h{padding:16px 20px 14px;border-bottom:1px solid #EDEAE6;background:#FBFAF8}
 #panel-clock .ck-wrap-h h3{font-size:17px;font-weight:600;letter-spacing:-.015em;color:#0A2F46;margin:0 0 5px}
-#panel-clock .ck-wrap-h p{font-size:12.5px;line-height:1.55;color:#5D6C7B;margin:0;max-width:80ch}
+#panel-clock .ck-wrap-h p{font-size:12.5px;line-height:1.55;color:#5D6C7B;margin:0;max-width:86ch}
+#panel-clock .ck-warn{margin:9px 0 0;padding:9px 12px;border-radius:9px;background:rgba(199,78,0,.06);
+  border:1px solid rgba(199,78,0,.18);font-size:12px;line-height:1.5;color:#8A4A20;max-width:86ch}
 #panel-clock .ck-scroll{overflow-x:auto;overflow-y:auto;max-height:min(62vh,700px)}
 #panel-clock table{width:100%;border-collapse:collapse;font-size:13px}
 #panel-clock th{position:sticky;top:0;z-index:1;background:#fff;font-family:'JetBrains Mono',monospace;font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#8A97A4;text-align:right;padding:11px 14px;border-bottom:1px solid #E4E7EC;white-space:nowrap}
@@ -513,18 +535,21 @@ body.v2 #sectors-grid .smh-name{font-weight:800;font-size:12.5px;color:#0f172a!i
 #panel-clock tbody tr{cursor:pointer}
 #panel-clock tbody tr:hover td{background:#FBFAF8}
 #panel-clock .ck-tk{font-family:var(--font-body,inherit);font-weight:600}
+#panel-clock .ck-sub2{font-family:var(--font-body,inherit);font-size:11px;color:#8A97A4;font-weight:400}
 #panel-clock .ck-pill{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:9.5px;font-weight:700;letter-spacing:.06em;padding:3px 8px;border-radius:100px;border:1px solid currentColor}
 #panel-clock .ck-hot{color:#C74E00}
 #panel-clock .ck-warm{color:#A16207}
 #panel-clock .ck-cool{color:#0E7C66}
+#panel-clock .ck-grey{color:#8A97A4}
+#panel-clock .ck-arrow{color:#8A97A4;padding:0 5px}
 #panel-clock .ck-bar{display:inline-block;width:52px;height:6px;border-radius:3px;background:#EDEAE6;vertical-align:middle;margin-right:9px;overflow:hidden}
 #panel-clock .ck-bar i{display:block;height:100%;background:currentColor}
-#panel-clock .ck-cyc{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.06em;color:#C74E00;background:rgba(199,78,0,.09);border-radius:4px;padding:2px 6px}
 #panel-clock .ck-state{padding:44px 20px;text-align:center;color:#5D6C7B;font-size:13.5px}
 #panel-clock .ck-prog{width:min(320px,70%);height:6px;border-radius:3px;background:#EDEAE6;margin:14px auto 0;overflow:hidden}
 #panel-clock .ck-prog i{display:block;height:100%;background:#C74E00;transition:width .4s}
 #panel-clock .sc-note{font-size:12px;line-height:1.6;color:#8A97A4;margin:18px 0 0;max-width:88ch}
-@media (max-width:760px){#panel-clock .ck-lead{grid-template-columns:1fr}}
+@media (max-width:760px){#panel-clock .ck-sec{grid-template-columns:1fr auto;gap:8px}
+  #panel-clock .ck-meter{grid-column:1/-1}}
 
 #panel-scans .sc-cats{display:grid;grid-template-columns:repeat(auto-fill,minmax(252px,1fr));gap:12px;margin-bottom:24px}
 /* Per-category accent. All eight cards used one indigo, so the grid read as
@@ -8677,29 +8702,24 @@ document.addEventListener('keydown', function(e){
 </div>
 
 
-<!-- CROWD CLOCK — where every name sits between ignored and crowded. -->
+<!-- CROWD CLOCK — where the damage is, what just turned, and who is crowded. -->
 <div id="panel-clock" class="panel">
   <div class="main">
     <div class="sc-head">
       <h2 class="sc-title">Crowd Clock</h2>
-      <p class="sc-sub">Coverage arrives late. Across 2,148 recoveries from falls of 50% or more, attention peaked a median seven months after the low — by which point 86% of the move had already happened. This reads the same two things for every name in the universe: how much of the move is already behind it, and how much of the crowd has already turned up.</p>
+      <p class="sc-sub">Coverage arrives late. Across 2,148 recoveries from falls of 50% or more, attention peaked a median seven months after the low — by which point 86% of the move had already happened. So this starts where the damage is, not where the noise is.</p>
     </div>
 
-    <div class="ck-lead">
-      <div class="ck-fact">
-        <b>+85.5%</b>
-        <p>Median gain <em>already banked</em> by the time trading volume peaks after a crash. At the low itself, a share trades on <em>0.79&times;</em> its own normal volume — nobody is watching. <span style="color:#8A97A4">2,148 recoveries, 1,075 US shares, 2009&ndash;2026.</span></p>
-      </div>
-      <div class="ck-fact">
-        <b id="ckCrowdedN">&mdash;</b>
-        <p>names in the universe are reading <em>Crowded</em> right now, after a fall of 40% or more in the last two years. <span style="color:#8A97A4">The band with the highest six-month drawdown rate in the study.</span></p>
-      </div>
+    <div class="ck-tabs" id="ckTabs">
+      <button class="ck-tab on" data-v="damage">Where the damage is</button>
+      <button class="ck-tab" data-v="turns">Just turned</button>
+      <button class="ck-tab" data-v="moves">Band changes</button>
+      <button class="ck-tab" data-v="bands">Every name</button>
     </div>
 
-    <div class="ck-bands" id="ckBands"></div>
-    <div id="ckBody"></div>
+    <div id="ckBody"><div class="ck-state">Loading…</div></div>
 
-    <p class="sc-note">The score is <b>0.40 &times; run off the 12-month low</b> + <b>0.35 &times; volume against its own 200-day average</b> + <b>0.25 &times; distance above the 200-day average price</b>, each on a published ramp — nothing fitted, nothing hidden. Percentages are what historically followed for a large sample of shares in the same band over the next six months, from 233,855 observations of 1,514 US listed shares; bands were fixed on 2009&ndash;2017 data and the rates shown are from held-out 2018&ndash;2026. They are not forecasts and not probabilities for any individual share. A high or low reading is a description of a share's price and volume behaviour — it is not a recommendation, not advice, and not FCA-authorised. Past performance is not a reliable indicator of future results. Capital at risk.</p>
+    <p class="sc-note" id="ckNote"></p>
   </div>
 </div>
 
@@ -25631,95 +25651,205 @@ function scResultHTML(d){
 <!-- ══ CROWD CLOCK (#panel-clock) ════════════════════════════════════════
      Own IIFE, one global export (clockInit) for the sidebar's inline onclick.
      Row clicks resolve tsOpenDrawer — NOT tsOpen, which does not exist and
-     silently no-ops behind a typeof guard (that trap cost us the scanner's
-     row clicks in Aug 2026). ══════════════════════════════════════════ -->
+     no-ops silently behind a typeof guard. ═══════════════════════════════ -->
 <script>
 (function(){
-  var D = null, filter = 'Crowded', poll = null, wired = false;
-
-  var TONE = {Damaged:'hot', Ignored:'cool', Quiet:'cool',
-              Noticed:'cool', Busy:'warm', Crowded:'hot'};
+  var D = null, view = 'damage', band = 'Damaged', poll = null, wired = false;
 
   function esc(s){ return String(s == null ? '' : s)
     .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-  function pc(v, d){ return (v == null || isNaN(v)) ? '—' : (v * 100).toFixed(d || 0) + '%'; }
-  function sgn(v){ return (v == null || isNaN(v)) ? '—' : (v >= 0 ? '+' : '') + (v * 100).toFixed(0) + '%'; }
-
+  function pc(v,d){ return (v==null||isNaN(v)) ? '—' : (v*100).toFixed(d||0)+'%'; }
+  function sg(v){ return (v==null||isNaN(v)) ? '—' : (v>=0?'+':'')+(v*100).toFixed(0)+'%'; }
+  function tone(b){ return ({Damaged:'hot',Crowded:'hot',Busy:'warm',
+    Quiet:'cool',Noticed:'cool',Ignored:'grey'})[b] || 'grey'; }
+  function ago(d){
+    if (!d) return '';
+    var n = Math.round((Date.now() - new Date(d+'T00:00:00Z').getTime())/86400000);
+    return n <= 0 ? 'today' : n === 1 ? 'yesterday' : n + ' days ago';
+  }
   function openTicker(t){
     var fn = (typeof tsOpenDrawer === 'function') ? tsOpenDrawer
            : (window.tsOpenDrawer || window.openStockModal);
-    if (typeof fn === 'function') { try { fn(t); return; } catch(e){} }
+    if (typeof fn === 'function'){ try { fn(t); return; } catch(e){} }
     console.warn('crowd clock: no drawer opener for', t);
   }
-
-  function bandsHTML(){
-    // Rates come from whichever base-rate table matches the band's population,
-    // so the card and this panel never quote different numbers for a band.
-    return D.order.map(function(b){
-      var n = D.counts[b] || 0;
-      var r = (D.rates.cycle && D.rates.cycle[b]) || D.rates.all[b] || {};
-      return '<button class="ck-band' + (filter === b ? ' on' : '') + '" data-b="' + esc(b) + '">'
-        + '<div class="ck-band-n"><b>' + esc(b) + '</b><i>' + n + '</i></div>'
-        + '<div class="ck-band-r"><s>' + pc(r.fall) + ' fell 30%</s> &nbsp;·&nbsp; '
-        + '<u>' + pc(r.rise) + ' rose 30%</u></div></button>';
-    }).join('');
-  }
-
-  function tableHTML(){
-    var rows = D.rows.filter(function(r){ return r.band === filter; });
-    var r0 = (D.rates.cycle && D.rates.cycle[filter]) || D.rates.all[filter] || {};
-    var head = '<div class="ck-wrap"><div class="ck-wrap-h"><h3>' + esc(filter)
-      + ' &middot; ' + rows.length + ' name' + (rows.length === 1 ? '' : 's') + '</h3>'
-      + '<p>' + esc(D.copy[filter] || '') + ' Historically, ' + pc(r0.fall)
-      + ' of readings in this band saw a fall of 30% or more over the following six months and '
-      + pc(r0.rise) + ' saw a rise of 30% or more — against ' + pc(D.baseline.fall) + ' and '
-      + pc(D.baseline.rise) + ' for all shares in any band.</p></div>';
-
-    if (!rows.length) return head + '<div class="ck-state">No names in this band today.</div></div>';
-
-    var body = rows.map(function(r){
-      var tone = TONE[r.band] || 'cool';
-      return '<tr data-t="' + esc(r.ticker) + '">'
-        + '<td><span class="ck-tk">' + esc(r.ticker) + '</span>'
-          + (r.in_cycle ? ' <span class="ck-cyc">POST-CRASH</span>' : '') + '</td>'
-        + '<td><span class="ck-' + tone + '"><span class="ck-bar"><i style="width:'
-          + Math.max(3, Math.round(r.score)) + '%"></i></span>' + Math.round(r.score) + '</span></td>'
-        + '<td><span class="ck-pill ck-' + tone + '">' + esc(r.band) + '</span></td>'
-        + '<td>' + sgn(r.run) + '</td>'
-        + '<td>' + (r.crowd == null ? '—' : r.crowd.toFixed(2) + '×') + '</td>'
-        + '<td>' + sgn(r.stretch) + '</td>'
-        + '<td>' + sgn(r.damage) + '</td>'
-        + '<td>' + (r.px == null ? '—' : '$' + r.px.toFixed(2)) + '</td></tr>';
-    }).join('');
-
-    return head + '<div class="ck-scroll"><table><thead><tr>'
-      + '<th>Ticker</th><th>Clock</th><th>Band</th><th>Off 12m low</th>'
-      + '<th>Volume vs norm</th><th>vs 200d</th><th>Off 12m high</th><th>Price</th>'
+  function tbl(head, cols, body){
+    return '<div class="ck-wrap">' + head + '<div class="ck-scroll"><table><thead><tr>'
+      + cols.map(function(c){ return '<th>'+c+'</th>'; }).join('')
       + '</tr></thead><tbody>' + body + '</tbody></table></div></div>';
   }
 
+  /* 1. WHERE THE DAMAGE IS */
+  function viewDamage(){
+    var secs = D.sectors || [];
+    var all  = secs.filter(function(s){ return s.sector === 'All shares'; })[0];
+    var pool = secs.filter(function(s){ return s.sector !== 'All shares' && s.n >= 20; });
+    var top  = pool[0] || secs.filter(function(s){ return s.sector !== 'All shares'; })[0];
+    var hero = '';
+    if (top){
+      hero = '<div class="ck-hero"><b>' + pc(top.now) + ' of ' + esc(top.sector) + '</b>'
+        + '<p>is more than 30% below its own 12-month high — against a typical '
+        + pc(top.median) + ' for that sector. It peaked at <em>' + pc(top.peak1y)
+        + '</em> on ' + esc(top.peak1y_at) + '. Across every share we follow the figure is '
+        + (all ? pc(all.now) : '—') + '. <em>This is the half of the cycle that makes the '
+        + 'news while it is happening</em> — the recovery is the half that does not.</p></div>';
+    }
+    var rows = secs.map(function(s){
+      var t = s.bucket === 'washout' ? '<span class="ck-tag ck-tag-washout">WASHOUT</span>'
+            : s.bucket === 'broad'   ? '<span class="ck-tag ck-tag-broad">BROADLY HIT</span>' : '';
+      var dir = s.chg21 == null ? '' : (s.chg21 > 0.01 ? 'deepening' : s.chg21 < -0.01 ? 'healing' : 'flat');
+      return '<div class="ck-sec" data-b="' + esc(s.bucket) + '">'
+        + '<div class="ck-sec-n">' + esc(s.sector) + t + '<s>' + s.n + ' NAMES · ' + dir + '</s></div>'
+        + '<div class="ck-meter"><i style="width:' + Math.min(100, s.now*100).toFixed(0) + '%"></i>'
+        + '<u style="left:' + Math.min(100, s.median*100).toFixed(0) + '%"></u></div>'
+        + '<div class="ck-sec-v"><b>' + pc(s.now) + '</b><s>PEAK ' + pc(s.peak1y) + '</s></div></div>';
+    }).join('');
+    return hero + '<div class="ck-secs">' + rows + '</div>'
+      + '<p style="font-size:12.5px;color:#5D6C7B;margin:12px 2px 0">Bar = share of the sector more '
+      + 'than 30% below its own 12-month high. The notch is that sector’s typical level over '
+      + 'three years.</p>';
+  }
+
+  /* 2. JUST TURNED */
+  function viewTurns(){
+    var t = D.turns || [];
+    var ta = D.turn_rates.all;
+    var head = '<div class="ck-wrap-h"><h3>Just turned · ' + t.length + ' name'
+      + (t.length===1?'':'s') + ' in the last 30 sessions</h3>'
+      + '<p>Fell 40% or more in the last two years, has climbed back above a rising 50-day average, '
+      + 'and the crowd is still absent (volume under 1.10× its own norm). A list of names that '
+      + 'have stopped falling — a starting point for research, not an entry.</p>'
+      + '<div class="ck-warn"><b>Read this before the table.</b> Across ' + ta.n.toLocaleString()
+      + ' firings since 2009 this pattern returned a median ' + pc(ta.med6m) + ' over six months but '
+      + '<b>' + pc(ta.x6m) + ' against the S&amp;P 500</b>, beating the index just ' + pc(ta.beat)
+      + ' of the time. ' + pc(ta.rise) + ' rose 30%, ' + pc(ta.fall) + ' fell 30%, and the median '
+      + 'name dipped ' + pc(ta.dip) + ' before going anywhere. <b>On its own it is not an edge.</b> '
+      + 'What separated good turns from bad was how much of the market was already wrecked — the '
+      + 'context column below. Even that is carried by 2020–2026; the same buckets were negative '
+      + 'in 2009–2014.</div></div>';
+    if (!t.length) return tbl(head, ['Ticker'], '');
+    var body = t.map(function(r){
+      var br = r.bucket_rates || {};
+      var cls = (r.bucket === 'washout' || r.bucket === 'broad') ? 'ck-cool' : 'ck-grey';
+      return '<tr data-t="' + esc(r.ticker) + '">'
+        + '<td><span class="ck-tk">' + esc(r.ticker) + '</span>'
+          + '<div class="ck-sub2">' + esc(r.sector || '') + '</div></td>'
+        + '<td>' + esc(ago(r.fired)) + '</td>'
+        + '<td>' + sg(r.since) + '</td>'
+        + '<td>' + sg(r.damage) + '</td>'
+        + '<td>' + sg(r.run) + '</td>'
+        + '<td>' + (r.crowd==null?'—':r.crowd.toFixed(2)+'×') + '</td>'
+        + '<td><span class="ck-pill ' + cls + '">' + pc(r.sector_wrecked) + ' HIT</span></td>'
+        + '<td class="' + cls + '">' + pc(br.beat) + '</td></tr>';
+    }).join('');
+    return tbl(head, ['Ticker','Turned','Since','Off 12m high','Off the low',
+                      'Volume vs norm','Sector damage','Beat index, historically'], body);
+  }
+
+  /* 3. BAND CHANGES */
+  function viewMoves(){
+    var c = (D.changes || []).filter(function(x){ return x.in_cycle; });
+    var head = '<div class="ck-wrap-h"><h3>Band changes · last 30 sessions</h3>'
+      + '<p>A reading is only news when it moves. These are post-crash names whose band changed '
+      + 'recently — a wreck starting to be noticed, or a quiet name filling up with volume. '
+      + 'A name that has read the same band for months is not telling you anything new.</p></div>';
+    if (!c.length) return tbl(head, ['Ticker'], '');
+    var body = c.map(function(r){
+      return '<tr data-t="' + esc(r.ticker) + '">'
+        + '<td><span class="ck-tk">' + esc(r.ticker) + '</span>'
+          + '<div class="ck-sub2">' + esc(r.sector || '') + '</div></td>'
+        + '<td style="text-align:left"><span class="ck-pill ck-' + tone(r.prev) + '">' + esc(r.prev)
+          + '</span><span class="ck-arrow">' + (r.up ? '→' : '←') + '</span>'
+          + '<span class="ck-pill ck-' + tone(r.band) + '">' + esc(r.band) + '</span></td>'
+        + '<td>' + esc(ago(r.changed)) + '</td>'
+        + '<td>' + sg(r.damage) + '</td>'
+        + '<td>' + sg(r.run) + '</td>'
+        + '<td>' + (r.crowd==null?'—':r.crowd.toFixed(2)+'×') + '</td>'
+        + '<td>$' + (r.px==null?'—':r.px.toFixed(2)) + '</td></tr>';
+    }).join('');
+    return tbl(head, ['Ticker','Moved','When','Off 12m high','Off the low',
+                      'Volume vs norm','Price'], body);
+  }
+
+  /* 4. EVERY NAME — post-crash only, so the categories describe one population */
+  function viewBands(){
+    var rows = (D.rows || []).filter(function(r){ return r.in_cycle; });
+    var cards = D.order.map(function(b){
+      var n = rows.filter(function(r){ return r.band === b; }).length;
+      var r = (D.rates.cycle && D.rates.cycle[b]) || {};
+      return '<button class="ck-band' + (band===b?' on':'') + '" data-b="' + esc(b) + '">'
+        + '<div class="ck-band-n"><b>' + esc(b) + '</b><i>' + n + '</i></div>'
+        + '<div class="ck-band-r"><s>' + pc(r.fall) + ' fell 30%</s> · <u>' + pc(r.rise)
+        + ' rose 30%</u></div></button>';
+    }).join('');
+    var sel = rows.filter(function(r){ return r.band === band; });
+    var r0 = (D.rates.cycle && D.rates.cycle[band]) || {};
+    var head = '<div class="ck-wrap-h"><h3>' + esc(band) + ' · ' + sel.length + ' name'
+      + (sel.length===1?'':'s') + '</h3><p>' + esc(D.copy[band]||'')
+      + ' Only shares that fell 40% or more in the last two years are listed, so the bands describe '
+      + 'one population rather than mixing wrecks with names that never fell. Historically '
+      + pc(r0.fall) + ' of readings in this band saw a 30% fall over the following six months and '
+      + pc(r0.rise) + ' saw a 30% rise — against ' + pc(D.baseline.fall) + ' and '
+      + pc(D.baseline.rise) + ' for all shares in any band.</p></div>';
+    if (!sel.length) return '<div class="ck-bands">' + cards + '</div>' + tbl(head, ['Ticker'], '');
+    var body = sel.map(function(r){
+      var tn = tone(r.band);
+      return '<tr data-t="' + esc(r.ticker) + '">'
+        + '<td><span class="ck-tk">' + esc(r.ticker) + '</span>'
+          + '<div class="ck-sub2">' + esc(r.sector||'') + '</div></td>'
+        + '<td><span class="ck-' + tn + '"><span class="ck-bar"><i style="width:'
+          + Math.max(3, Math.round(r.score)) + '%"></i></span>' + Math.round(r.score) + '</span></td>'
+        + '<td>' + (r.held==null?'—':r.held + 'd') + '</td>'
+        + '<td>' + sg(r.damage) + '</td>'
+        + '<td>' + sg(r.run) + '</td>'
+        + '<td>' + (r.crowd==null?'—':r.crowd.toFixed(2)+'×') + '</td>'
+        + '<td>' + sg(r.stretch) + '</td>'
+        + '<td>$' + (r.px==null?'—':r.px.toFixed(2)) + '</td></tr>';
+    }).join('');
+    return '<div class="ck-bands">' + cards + '</div>'
+      + tbl(head, ['Ticker','Clock','In band','Off 12m high','Off the low',
+                   'Volume vs norm','vs 200d','Price'], body);
+  }
+
+  var VIEWS = {damage:viewDamage, turns:viewTurns, moves:viewMoves, bands:viewBands};
+  var NOTES = {
+    damage: 'Sector damage is the share of a sector’s shares trading more than 30% below their '
+      + 'own 12-month high. It describes what has already happened, not what happens next.',
+    turns: 'A turn describes price and volume behaviour that has already occurred. It is not a '
+      + 'recommendation and not a personal recommendation. The historical frequencies shown are for '
+      + 'a large sample of shares in a similar state — not forecasts for any of these shares.',
+    moves: 'A band change describes a shift in a share’s recent price and volume behaviour. It '
+      + 'is information about what has happened, not a view on what will.',
+    bands: 'The score is 0.40 × run off the 12-month low + 0.35 × volume against its own '
+      + '200-day average + 0.25 × distance above the 200-day average price, each on a published '
+      + 'ramp. Percentages are what historically followed for shares in the same band over six '
+      + 'months, from 233,855 observations of 1,514 US listed shares; bands were fixed on '
+      + '2009–2017 and the rates shown are from held-out 2018–2026.'
+  };
+  var TAIL = ' Past performance is not a reliable indicator of future results. TickerMover is not '
+    + 'authorised by the Financial Conduct Authority. Capital at risk.';
+
   function render(){
-    var bands = document.getElementById('ckBands');
-    var body  = document.getElementById('ckBody');
-    if (!bands || !body || !D) return;
-    bands.innerHTML = bandsHTML();
-    body.innerHTML  = tableHTML();
+    var body = document.getElementById('ckBody'), note = document.getElementById('ckNote');
+    if (!body || !D) return;
+    body.innerHTML = (VIEWS[view] || viewDamage)();
+    if (note) note.textContent = (NOTES[view] || '') + TAIL;
 
-    var crowded = (D.counts['Crowded'] || 0);
-    var n = document.getElementById('ckCrowdedN');
-    if (n) n.textContent = crowded;
-
-    // Bands are rebuilt every render, so they re-bind cleanly; the delegated
-    // row handler on #ckBody is guarded so repeated renders don't stack it.
-    bands.querySelectorAll('.ck-band').forEach(function(el){
-      el.addEventListener('click', function(){
-        filter = el.getAttribute('data-b'); render();
-      });
+    document.querySelectorAll('#ckTabs .ck-tab').forEach(function(el){
+      el.classList.toggle('on', el.getAttribute('data-v') === view);
     });
-    if (!wired) {
+    body.querySelectorAll('.ck-band').forEach(function(el){
+      el.addEventListener('click', function(){ band = el.getAttribute('data-b'); render(); });
+    });
+    if (!wired){
       body.addEventListener('click', function(ev){
         var tr = ev.target.closest ? ev.target.closest('tr[data-t]') : null;
         if (tr) openTicker(tr.getAttribute('data-t'));
+      });
+      var tabs = document.getElementById('ckTabs');
+      if (tabs) tabs.addEventListener('click', function(ev){
+        var b = ev.target.closest ? ev.target.closest('.ck-tab') : null;
+        if (b){ view = b.getAttribute('data-v'); render(); }
       });
       wired = true;
     }
@@ -25727,11 +25857,10 @@ function scResultHTML(d){
 
   function waiting(pct){
     var body = document.getElementById('ckBody');
-    if (!body) return;
-    body.innerHTML = '<div class="ck-wrap"><div class="ck-state">'
-      + 'Reading three years of price and volume for the whole universe — about a minute the '
+    if (body) body.innerHTML = '<div class="ck-wrap"><div class="ck-state">'
+      + 'Reading three years of price and volume across the whole universe — about a minute the '
       + 'first time, then cached for the rest of the day.'
-      + '<div class="ck-prog"><i style="width:' + (pct || 2) + '%"></i></div></div></div>';
+      + '<div class="ck-prog"><i style="width:' + (pct||2) + '%"></i></div></div></div>';
   }
 
   function load(){
@@ -25739,16 +25868,15 @@ function scResultHTML(d){
       .then(function(r){ return r.ok ? r.json() : null; })
       .then(function(d){
         if (!d) throw new Error('no data');
-        if (d.status === 'ready') {
-          if (poll) { clearInterval(poll); poll = null; }
-          D = d; render();
-          return;
+        if (d.status === 'ready'){
+          if (poll){ clearInterval(poll); poll = null; }
+          D = d; render(); return;
         }
         waiting(d.pct);
         if (!poll) poll = setInterval(load, 4000);
       })
       .catch(function(){
-        if (poll) { clearInterval(poll); poll = null; }
+        if (poll){ clearInterval(poll); poll = null; }
         var body = document.getElementById('ckBody');
         if (body) body.innerHTML = '<div class="ck-wrap"><div class="ck-state">'
           + 'The clock is unavailable right now. Try again shortly.</div></div>';
@@ -25756,9 +25884,8 @@ function scResultHTML(d){
   }
 
   window.clockInit = function(){
-    if (D) { render(); return; }   // already loaded this session
-    waiting(2);
-    load();
+    if (D){ render(); return; }
+    waiting(2); load();
   };
 })();
 </script>
