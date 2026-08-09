@@ -236,6 +236,56 @@ def card_body(sym: str, r: dict) -> str:
      research, not advice and not a personal recommendation. Capital at risk.</p>"""
 
 
+def scan_universe(tickers: list[str], progress=None) -> list[dict]:
+    """Readings for a whole universe, via batched downloads. Slow (a minute or
+    so for ~500 names) — call it from a background task, never inside a request.
+    `progress(done, total)` is called after each chunk."""
+    try:
+        import yfinance as yf  # type: ignore
+    except Exception:
+        return []
+    syms = sorted({(s or "").upper().strip() for s in tickers if s})
+    rows, done, CH = [], 0, 60
+    for i in range(0, len(syms), CH):
+        chunk = syms[i:i + CH]
+        try:
+            raw = yf.download(chunk, period="3y", interval="1d", auto_adjust=True,
+                              progress=False, threads=True, group_by="column",
+                              actions=False)
+        except Exception as exc:
+            logger.warning(f"crowd_clock scan chunk {i} failed: {exc}")
+            raw = None
+        if raw is not None and not raw.empty:
+            for s in chunk:
+                try:
+                    cl = raw["Close"][s] if len(chunk) > 1 else raw["Close"]
+                    vo = raw["Volume"][s] if len(chunk) > 1 else raw["Volume"]
+                    cl, vo = cl.dropna(), vo.dropna()
+                    n = min(len(cl), len(vo))
+                    if n < 200:
+                        continue
+                    r = compute([float(x) for x in cl[-n:]],
+                                [float(x) for x in vo[-n:]])
+                    if not r:
+                        continue
+                    rows.append({"ticker": s, "score": r["score"], "band": r["band"],
+                                 "tone": r["tone"], "in_cycle": r["in_cycle"],
+                                 "run": r["run"], "crowd": r["crowd"],
+                                 "stretch": r["stretch"], "damage": r["damage"],
+                                 "px": round(float(cl.iloc[-1]), 2),
+                                 "fall": r["rates"]["fall"], "rise": r["rates"]["rise"]})
+                except Exception:
+                    continue
+        done += len(chunk)
+        if progress:
+            try:
+                progress(done, len(syms))
+            except Exception:
+                pass
+    rows.sort(key=lambda x: -x["score"])
+    return rows
+
+
 def render_card(t: dict) -> str:
     """Card shell. Numbers arrive client-side from /api/crowd-clock/{ticker} so
     the page render stays network-free."""

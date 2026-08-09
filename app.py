@@ -13888,6 +13888,71 @@ async def tearsheet_page(ticker: str = "LITE"):
     )
 
 
+# ── /api/crowd-clock-scan — the whole universe, ranked by the clock ────────
+# Building this pulls 3y of daily data for ~500 names, which takes about a
+# minute — far too long for a request. So the first caller kicks off a
+# background build and gets {status:"warming"}; the panel polls until ready.
+_crowd_scan: dict = {"status": "idle", "rows": [], "at": 0.0, "done": 0, "total": 0}
+_crowd_scan_lock = asyncio.Lock()
+_CROWD_SCAN_TTL = 60 * 60 * 12
+
+
+async def _build_crowd_scan() -> None:
+    global _crowd_scan
+    try:
+        import crowd_clock as cc
+        syms = [str(x.get("ticker") or "").upper()
+                for x in (_universe_data or []) if x.get("ticker")]
+        if not syms:
+            try:
+                import stock_universe as su
+                syms = list(su.get_universe())
+            except Exception:
+                syms = []
+        if not syms:
+            _crowd_scan.update(status="idle")
+            return
+        _crowd_scan.update(status="warming", done=0, total=len(syms))
+
+        def _prog(done, total):
+            _crowd_scan.update(done=done, total=total)
+
+        rows = await asyncio.to_thread(cc.scan_universe, syms, _prog)
+        _crowd_scan.update(status="ready", rows=rows, at=time.time(),
+                           done=len(syms), total=len(syms))
+        logger.info(f"crowd-clock scan built: {len(rows)} rows")
+    except Exception as exc:
+        logger.error(f"crowd-clock scan build failed: {exc}", exc_info=True)
+        _crowd_scan.update(status="idle")
+
+
+@app.get("/api/crowd-clock-scan")
+async def api_crowd_clock_scan():
+    """Crowd Clock reading for every name in the universe, ranked. Returns
+    {status:"ready", rows:[...], bands:{...}} or {status:"warming", pct}."""
+    fresh = (_crowd_scan["status"] == "ready"
+             and (time.time() - _crowd_scan["at"]) < _CROWD_SCAN_TTL)
+    if fresh:
+        rows = _crowd_scan["rows"]
+        counts: dict[str, int] = {}
+        for r in rows:
+            counts[r["band"]] = counts.get(r["band"], 0) + 1
+        import crowd_clock as cc
+        return JSONResponse({
+            "status": "ready", "rows": rows, "counts": counts,
+            "order": cc.ORDER, "copy": cc.BAND_COPY,
+            "rates": cc.BASE_RATES, "baseline": cc.BASELINE,
+            "asof": int(_crowd_scan["at"]),
+        })
+
+    async with _crowd_scan_lock:
+        if _crowd_scan["status"] != "warming":
+            asyncio.create_task(_build_crowd_scan())
+    total = _crowd_scan.get("total") or 1
+    return JSONResponse({"status": "warming",
+                         "pct": round(100 * (_crowd_scan.get("done") or 0) / total)})
+
+
 # ── /api/crowd-clock/{ticker} — the Crowd Clock reading for one share ──────
 @app.get("/api/crowd-clock/{ticker}")
 async def api_crowd_clock(ticker: str):
