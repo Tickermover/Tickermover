@@ -757,6 +757,31 @@ body.v2 #sectors-grid .smh-name{font-weight:800;font-size:12.5px;color:#0f172a!i
 #panel-heroes .pnl-sec .sec-brief,#panel-theses .pnl-sec .sec-brief{
   margin:0;border:0;border-radius:0}
 
+
+/* ── This week's chain map teaser (On the Radar) ───────────────────
+   Was inline styles on the old electric blue. Now the palette's indigo, and it
+   reads as a promoted artifact rather than a notification bar. */
+.wk-teaser{display:flex;align-items:center;gap:15px;margin:0 0 16px;padding:15px 18px;
+  text-decoration:none;border-radius:16px;background:#fff;border:1px solid #E4E7EC;
+  box-shadow:0 1px 2px rgba(10,31,54,.04),0 18px 40px -30px rgba(10,31,54,.35);
+  transition:transform .18s,box-shadow .18s,border-color .18s}
+.wk-teaser:hover{transform:translateY(-2px);border-color:#C7CEF0;
+  box-shadow:0 16px 34px -18px rgba(74,91,196,.45)}
+.wk-ico{flex:none;width:46px;height:46px;border-radius:13px;display:grid;place-items:center;
+  font-size:21px;background:linear-gradient(135deg,#8b5cf6,#5b21b6);
+  box-shadow:0 6px 16px -8px rgba(91,33,182,.7)}
+.wk-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.wk-eyebrow{font-family:'JetBrains Mono',monospace;font-size:9.5px;font-weight:700;
+  letter-spacing:.14em;text-transform:uppercase;color:#4A5BC4}
+.wk-new{background:rgba(255,97,0,.13);color:#C74E00;border-radius:5px;padding:2px 6px;
+  margin-left:5px;letter-spacing:.1em}
+.wk-title{font-size:16px;font-weight:600;letter-spacing:-.01em;color:#0A2F46;line-height:1.25;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wk-sub{font-size:12.5px;font-weight:400;color:#5D6C7B;line-height:1.45;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wk-go{flex:none;font-size:13px;font-weight:600;color:#4A5BC4}
+@media(max-width:640px){.wk-teaser{gap:12px;padding:13px 14px}.wk-go{display:none}}
+
 /* ── Sector connections — animated relationship graph ──────────────────── */
 .secg-wrap{position:relative;grid-column:1/-1;border:1px solid #e6ebf2;border-radius:14px;
   background:radial-gradient(120% 120% at 50% 0%,#fbfdff 0%,#f4f7fb 100%);overflow:hidden}
@@ -8200,32 +8225,42 @@ document.addEventListener('keydown', function(e){
      window.tsRender(data); legacy #v2-overview / #hot-grid kept as hidden
      stubs so any stray JS that pokes them doesn't throw. -->
 <div id="panel-hot" class="panel active">
-  <!-- Weekly editorial teaser — populated from /api/weekly-editorial on load -->
-  <a id="weekly-teaser" href="/weekly" style="display:none;text-decoration:none;margin:0 0 14px">
-    <div style="background:linear-gradient(135deg,#F2F1EE 0%,#f8fbff 100%);border:1px solid #cfe0ff;border-radius:16px;padding:16px 18px;display:flex;align-items:center;gap:16px">
-      <div style="flex:none;width:46px;height:46px;border-radius:12px;background:linear-gradient(135deg,#2970ff,#0040c1);display:flex;align-items:center;justify-content:center;font-size:22px">📝</div>
-      <div style="flex:1;min-width:0">
-        <div style="font-size:10.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#0040c1">The Weekly Editorial · <span style="color:#2970ff">NEW</span></div>
-        <div id="weekly-teaser-title" style="font-size:16px;font-weight:700;color:#0f172a;line-height:1.25;margin:3px 0 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
-        <div id="weekly-teaser-sub" style="font-size:12.5px;color:#475569;line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
-      </div>
-      <div style="flex:none;font-size:13px;font-weight:700;color:#2970ff">Read →</div>
-    </div>
+  <!-- THIS WEEK'S CHAIN MAP — the weekly artifact. WEEKLY_MODE defaults to
+       "map" and _thesis_map_publisher() ships one every Sunday >= 17:00 ET, but
+       this teaser still advertised /weekly (the magazine), so the thing being
+       published each week had no shop window. Now points at the newest LIVE map.
+       Styling uses the current palette; it was on the old electric blue
+       (#0040c1 / #2970ff / #cfe0ff). -->
+  <a id="weekly-teaser" href="/theses" class="wk-teaser" style="display:none">
+    <span class="wk-ico" aria-hidden="true">🗺️</span>
+    <span class="wk-body">
+      <span class="wk-eyebrow">This week&rsquo;s chain map <span class="wk-new">NEW</span></span>
+      <span id="weekly-teaser-title" class="wk-title"></span>
+      <span id="weekly-teaser-sub" class="wk-sub"></span>
+    </span>
+    <span class="wk-go">Explore →</span>
   </a>
   <script>
   (function(){
-    fetch('/api/weekly-editorial').then(function(r){return r.json();}).then(function(d){
-      if(!d || d.available===false || !d.title) return;
-      var el=document.getElementById('weekly-teaser'); if(!el) return;
-      document.getElementById('weekly-teaser-title').textContent=d.title;
-      document.getElementById('weekly-teaser-sub').textContent=d.standfirst||(d.subject?('This week: '+d.subject):'');
-      el.style.display='block';
-    }).catch(function(){
-      done=true;
-      slot.querySelectorAll('.fchk-load').forEach(function(el){
-        el.outerHTML='<span class="fchk-weak">Could not load the filing read.</span>';
-      });
-    });
+    /* The old catch block referenced `done` and `slot` — locals of a DIFFERENT
+       function it was copy-pasted from — so a failed fetch threw a
+       ReferenceError instead of failing quietly. A teaser is decoration: if it
+       cannot load, it stays hidden. */
+    fetch('/api/theses', { cache: 'no-store' }).then(function(r){ return r.json(); })
+      .then(function(d){
+        var list = (d && d.theses) || [];
+        var live = list.filter(function(t){
+          return String(t.status || '').toLowerCase() === 'live' && t.slug;
+        });
+        if (!live.length) return;
+        var t = live[0];                      /* the API returns newest first */
+        var el = document.getElementById('weekly-teaser');
+        if (!el) return;
+        el.href = '/theses/' + encodeURIComponent(t.slug);
+        document.getElementById('weekly-teaser-title').textContent = t.title || 'This week\u2019s chain map';
+        document.getElementById('weekly-teaser-sub').textContent = t.standfirst || '';
+        el.style.display = 'flex';
+      }).catch(function(){ /* decoration only — stay hidden */ });
   })();
   </script>
   <div id="v2-overview" style="display:none"></div>
