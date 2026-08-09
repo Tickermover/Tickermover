@@ -470,9 +470,9 @@ body.v2 #sectors-grid .smh-name{font-weight:800;font-size:12.5px;color:#0f172a!i
      as grey prose they read as small print and got skipped.
    - headers sort, and loading is a skeleton rather than a line of text.
    ──────────────────────────────────────────────────────────────────────── */
-#panel-scans .sc-head{margin:2px 0 20px}
-#panel-scans .sc-title{font-family:var(--font-head);font-size:29px;font-weight:500;letter-spacing:-.02em;margin:0 0 7px;color:#0A2F46}
-#panel-scans .sc-sub{font-size:13.5px;font-weight:300;line-height:1.6;color:#5D6C7B;margin:0;max-width:78ch}
+#panel-scans .sc-head,#panel-heroes .sc-head,#panel-theses .sc-head{margin:2px 0 20px}
+#panel-scans .sc-title,#panel-heroes .sc-title,#panel-theses .sc-title{font-family:var(--font-head);font-size:29px;font-weight:500;letter-spacing:-.02em;margin:0 0 7px;color:#0A2F46}
+#panel-scans .sc-sub,#panel-heroes .sc-sub,#panel-theses .sc-sub{font-size:13.5px;font-weight:300;line-height:1.6;color:#5D6C7B;margin:0;max-width:78ch}
 
 #panel-scans .sc-cats{display:grid;grid-template-columns:repeat(auto-fill,minmax(252px,1fr));gap:12px;margin-bottom:24px}
 /* Per-category accent. All eight cards used one indigo, so the grid read as
@@ -627,7 +627,8 @@ body.v2 #sectors-grid .smh-name{font-weight:800;font-size:12.5px;color:#0f172a!i
 
 #panel-scans .sc-empty,#panel-scans .sc-load{padding:38px 12px;text-align:center;color:#7A8899;font-size:13.5px;font-weight:300}
 #panel-scans .sc-note{font-size:11.5px;font-weight:300;line-height:1.6;color:#94a3b8;margin:18px 0 0}
-@media(max-width:640px){ #panel-scans .sc-cats{grid-template-columns:1fr} #panel-scans .sc-title{font-size:23px} }
+@media(max-width:640px){ #panel-scans .sc-cats{grid-template-columns:1fr}
+  #panel-scans .sc-title,#panel-heroes .sc-title,#panel-theses .sc-title{font-size:23px} }
 
 /* ── Pre IPO Stocks + Thesis Maps (in-app) ────────────────────────
    These two were the only sidebar items that navigated OUT of the SPA to a
@@ -695,6 +696,21 @@ body.v2 #sectors-grid .smh-name{font-weight:800;font-size:12.5px;color:#0f172a!i
 #panel-theses .tm-card.dim{opacity:.62}
 #panel-theses .tm-card.dim .tm-go{color:#94a3b8}
 #panel-theses .tm-note{font-size:11.5px;font-weight:300;line-height:1.6;color:#94a3b8;margin:22px 0 0}
+
+
+/* Section brief — the "what am I looking at" block. Both panels opened
+   straight into a wall of cards with one line of context, which is fine for a
+   reader who already knows what the section is and useless for one who doesn't.
+   Three labelled points: what it is, what the number means, how to read it. */
+#panel-heroes .sec-brief,#panel-theses .sec-brief{display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1px;margin:0 0 24px;
+  background:#E7E3DF;border:1px solid #E4E7EC;border-radius:14px;overflow:hidden}
+#panel-heroes .sec-brief > div,#panel-theses .sec-brief > div{background:#fff;padding:14px 16px}
+#panel-heroes .sec-brief b,#panel-theses .sec-brief b{display:block;
+  font-family:'JetBrains Mono',monospace;font-size:9.5px;font-weight:700;letter-spacing:.12em;
+  text-transform:uppercase;color:#4A5BC4;margin-bottom:6px}
+#panel-heroes .sec-brief span,#panel-theses .sec-brief span{display:block;font-size:12.5px;
+  font-weight:300;line-height:1.55;color:#475569}
 
 /* ── Sector connections — animated relationship graph ──────────────────── */
 .secg-wrap{position:relative;grid-column:1/-1;border:1px solid #e6ebf2;border-radius:14px;
@@ -8519,6 +8535,15 @@ document.addEventListener('keydown', function(e){
       <h2 class="sc-title">Pre IPO Stocks</h2>
       <p class="sc-sub">The world's most valuable private companies, ranked by their latest funding-round and secondary-market valuations — so the day one of them files to list, you already know the story.</p>
     </div>
+    <div class="sec-brief">
+      <div><b>What this is</b><span>A ranked watchlist of the world&rsquo;s most valuable
+        private companies &mdash; the ones most likely to arrive on a public exchange next.</span></div>
+      <div><b>What the number means</b><span>The latest primary funding round or
+        secondary-market mark. It is a negotiated price, not a traded one, so it moves in
+        steps and can sit still for months.</span></div>
+      <div><b>How to use it</b><span>Learn the business before there is a ticker to react
+        to. Tap any company for its profile, revenue and our read on it.</span></div>
+    </div>
     <div id="pipBody"><div class="sc-empty">Loading the private markets…</div></div>
     <p class="pip-note">Valuations are from the latest reported primary round or secondary-market marks and can be stale or disputed. Private companies do not report on a public timetable. Education only — not a recommendation, not advice, and not FCA-authorised. Capital at risk.</p>
   </div>
@@ -8531,6 +8556,16 @@ document.addEventListener('keydown', function(e){
     <div class="sc-head">
       <h2 class="sc-title">Thesis Maps</h2>
       <p class="sc-sub">Not a screener and not a chart. Each map takes one macro driver — AI capex, the power build-out, the defense budget — and traces where the money actually lands, layer by layer, company by company.</p>
+    </div>
+    <div class="sec-brief">
+      <div><b>What a chain map is</b><span>One macro driver &mdash; AI capex, the power
+        build-out, the defense budget &mdash; traced down the real supply chain that spends it,
+        layer by layer.</span></div>
+      <div><b>What the shares mean</b><span>Each layer&rsquo;s and each company&rsquo;s share of
+        the money that has <i>already landed</i>, weighted by how much of that business depends
+        on the spend. Descriptive, not a forecast.</span></div>
+      <div><b>How to read it</b><span>Drag the driver and watch it propagate. The judgements
+        and weightings are ours and are stated on each map &mdash; argue with them.</span></div>
     </div>
     <div id="tmBody"><div class="sc-empty">Loading thesis maps…</div></div>
     <p class="tm-note">Maps are descriptive models of disclosed spending and revenue mix, not forecasts. The weightings are our judgement and are stated on each map. Not a recommendation, not advice, and not FCA-authorised. Capital at risk.</p>
