@@ -2350,6 +2350,14 @@ def _render_report_page(t: dict) -> str:
     except Exception as _cc_err:
         logger.error(f"crowd_clock render {sym}: {_cc_err}", exc_info=True)
         crowd_clock_html = ""
+    # Safeguards — dilution, cash runway, dated events, insider filings, what a
+    # position does. Shell only; loads client-side from /api/safeguards.
+    try:
+        import safeguards as _sg
+        safeguards_html = _sg.render_card(t)
+    except Exception as _sg_err:
+        logger.error(f"safeguards render {sym}: {_sg_err}", exc_info=True)
+        safeguards_html = ""
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -2521,6 +2529,8 @@ def _render_report_page(t: dict) -> str:
   {fact_check_html}
 
   {crowd_clock_html}
+
+  {safeguards_html}
 
   <!-- Body -->
   <div class="body">
@@ -3252,6 +3262,12 @@ def _render_stock_page(t: dict) -> str:
     except Exception as _cc_err:
         logger.error(f"crowd_clock render {sym}: {_cc_err}", exc_info=True)
         crowd_clock_html = ""
+    try:
+        import safeguards as _sg
+        safeguards_html = _sg.render_card(t)
+    except Exception as _sg_err:
+        logger.error(f"safeguards render {sym}: {_sg_err}", exc_info=True)
+        safeguards_html = ""
     # ── Final HTML ──
     return f"""<!DOCTYPE html>
 <html lang="en">
@@ -3435,6 +3451,8 @@ h2{{font-size:18px;margin:30px 0 12px}}
   {fact_check_html}
 
   {crowd_clock_html}
+
+  {safeguards_html}
 
   {sp_nav_html}
 
@@ -13886,6 +13904,91 @@ async def tearsheet_page(ticker: str = "LITE"):
     return HTMLResponse(
         (Path(__file__).parent / "templates" / "earnings_tearsheet.html").read_text(encoding="utf-8")
     )
+
+
+# ── /api/safeguards/{ticker} — the five disclosure checks for one share ────
+@app.get("/api/safeguards/{ticker}")
+async def api_safeguards(ticker: str):
+    """Dilution, cash runway, dated events, insider filings and what the share's
+    own volatility does to a position. Facts from filings — only the dilution
+    figure carries a measured base rate; see safeguards.py. Cached 12h: these
+    move on filing dates, not intraday."""
+    sym = ticker.upper().strip()
+    if not sym or len(sym) > 8:
+        raise HTTPException(status_code=400, detail="Bad ticker")
+
+    cache_key = f"safeguards:{sym}:v1"
+    cached = cache.get(cache_key)
+    if cached is not None:
+        return JSONResponse(cached)
+
+    import safeguards as sg
+    blocks: dict = {}
+    try:
+        import financials_store as fs
+        fin = await fs.get_financials(coordinator, sym, period="quarter")
+        blocks["dilution"] = sg.dilution(fin.get("income") or [])
+        blocks["runway"] = sg.runway(fin.get("balance") or [],
+                                     fin.get("cashflow") or [])
+    except Exception as exc:
+        logger.warning(f"safeguards {sym}: statements failed: {exc}")
+
+    profile = None
+    try:
+        p = await coordinator._fmp_stable("profile", {"symbol": sym})
+        profile = (p or [None])[0] if isinstance(p, list) else p
+    except Exception:
+        pass
+    try:
+        blocks["events"] = sg.dated_events(profile, blocks.get("dilution"))
+    except Exception as exc:
+        logger.warning(f"safeguards {sym}: events failed: {exc}")
+
+    # price-derived inputs: the 90-day run (context for insider sales) and the
+    # share's own realised volatility (for the position-size arithmetic)
+    run90 = vol = worst = None
+    try:
+        import yfinance as yf, math as _m
+
+        def _px():
+            h = yf.Ticker(sym).history(period="1y", interval="1d", auto_adjust=True)
+            return None if h is None or h.empty else [float(x) for x in h["Close"]]
+
+        px = await asyncio.to_thread(_px)
+        if px and len(px) > 70:
+            run90 = px[-1] / px[-64] - 1
+            rets = [_m.log(px[i] / px[i - 1]) for i in range(1, len(px)) if px[i - 1] > 0]
+            if len(rets) > 30:
+                m = sum(rets) / len(rets)
+                vol = (sum((r - m) ** 2 for r in rets) / (len(rets) - 1)) ** .5 * (252 ** .5)
+            peak = px[0]
+            worst = 0.0
+            for v in px:
+                peak = max(peak, v)
+                worst = min(worst, v / peak - 1)
+    except Exception as exc:
+        logger.warning(f"safeguards {sym}: price inputs failed: {exc}")
+
+    try:
+        ins = await coordinator.get_insider_transactions(sym)
+        blocks["insiders"] = sg.insiders(ins, run90)
+    except Exception as exc:
+        logger.warning(f"safeguards {sym}: insiders failed: {exc}")
+    try:
+        blocks["position"] = sg.position(vol, worst)
+    except Exception:
+        pass
+
+    blocks = {k: v for k, v in blocks.items() if v}
+    if not blocks:
+        payload = {"ticker": sym, "html": None}
+    else:
+        blocks["summary"] = sg.summarise(blocks)
+        payload = {"ticker": sym, "n_flags": blocks["summary"]["n_flags"],
+                   "flags": blocks["summary"]["flags"],
+                   "html": sg.card_body(sym, blocks)}
+    cache.set(cache_key, payload, 60 * 60 * 12)
+    return JSONResponse(payload)
 
 
 # ── /api/crowd-clock-scan — the whole universe, ranked by the clock ────────
