@@ -214,6 +214,82 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
   .wrap{padding:24px 16px 60px}
 }
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ══ EDITORIAL REDESIGN — 9 Aug 2026 ═════════════════════════
+   This is the weekly artifact now (WEEKLY_MODE=map, one new map every Sunday),
+   and the On the Radar teaser sells it as something to READ. It was a stack of
+   five identical white cards 14px apart — no masthead, no hierarchy, nothing
+   saying which part mattered. Section accents reuse the app's .pnl-rib
+   gradients verbatim so the map and the product share one language.
+   Appended last so these win without touching the rules above. */
+
+/* ── Masthead ───────────────────────────────────────── */
+.wrap{max-width:1180px;padding:38px 28px 80px}
+.eyebrow{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:10px;font-weight:700;
+  letter-spacing:.16em;color:#4A5BC4;background:rgba(74,91,196,.10);
+  border:1px solid rgba(74,91,196,.20);border-radius:999px;padding:6px 13px}
+h1.title{font-size:clamp(34px,5.6vw,54px);line-height:1.03;letter-spacing:-.022em;
+  margin:18px 0 14px;max-width:22ch}
+.standfirst{font-size:19px;line-height:1.58;color:#3F4E5E;max-width:62ch;margin:0 0 4px;font-weight:400}
+/* A published piece says when it was published and what it is. */
+.mast-meta{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:20px 0 0;
+  padding:14px 0 0;border-top:1px solid var(--line);
+  font-family:'JetBrains Mono',ui-monospace,monospace;font-size:10px;font-weight:700;
+  letter-spacing:.12em;text-transform:uppercase;color:#94a3b8}
+.mast-meta b{color:#4A5BC4;font-weight:700}
+.mast-meta .dot{color:#CBD5E1}
+
+/* ── Sections: one accent each, matching the app's ribbons ────────── */
+.control,.money,.movers,.winners,.insights{position:relative;overflow:hidden;
+  border-radius:16px;box-shadow:0 1px 2px rgba(10,47,70,.04),0 20px 44px -34px rgba(10,47,70,.3)}
+.control::before,.money::before,.movers::before,.winners::before,.insights::before{
+  content:'';position:absolute;inset:0 0 auto 0;height:4px}
+.money::before   {background:linear-gradient(105deg,#f9b234,#db880b)}
+.movers::before  {background:linear-gradient(105deg,#3f86f7,#1e44c9)}
+.winners::before {background:linear-gradient(105deg,#5fc24a,#398f3c)}
+.insights::before{background:linear-gradient(105deg,#8b5cf6,#5b21b6)}
+.control::before {background:linear-gradient(105deg,#16c2af,#0c8a82)}
+.money,.movers,.winners,.insights{padding:20px 22px 20px}
+/* Rhythm: a clear gap BETWEEN sections, tight within. Was a flat 14px
+   everywhere, which is what made it read as one undifferentiated stack. */
+.control{margin-top:34px}
+.money{margin-top:26px}
+.movers,.winners,.insights{margin-top:22px}
+
+/* Section headings pick up the app's scale, and an icon marks the accent. */
+.money-h b,.movers-h b{font-size:19px;font-weight:600;letter-spacing:-.015em;color:#0A2F46}
+.money-h b::before,.movers-h b::before{margin-right:9px;font-size:15px;vertical-align:1px}
+.money-h b::before {content:'\1F4B0'}
+.movers-h b::before{content:'\1F4CA'}
+.money-h span,.movers-h span{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:9.5px;
+  font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#94a3b8}
+
+/* ── The money row is the anchor — make it read like one ─────────── */
+.money-stats{gap:22px}
+.money-stat .mo-v{font-size:34px;letter-spacing:-.02em;font-variant-numeric:tabular-nums;
+  font-weight:600;color:#0A2F46}
+.money-stat .mo-k{font-size:12px;font-weight:600;color:#5D6C7B;margin-top:5px;line-height:1.35}
+.money-stat .mo-bar{height:7px;border-radius:4px;background:#EFEDEA}
+.money-stat .mo-bar i{background:linear-gradient(90deg,#F9B234,#DB880B)}
+.money-note{font-size:12.5px;color:#7A8899;border-top:1px dashed #E7E3DF;padding-top:12px;margin-top:16px}
+
+/* ── The chain itself gets room to breathe ──────────────────── */
+.chain{margin-top:34px}
+
+/* ── Footer reads as endnotes, not a form ───────────────────── */
+.foot{margin-top:52px;padding-top:28px}
+.foot h5{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:10px;font-weight:700;
+  letter-spacing:.14em;text-transform:uppercase;color:#4A5BC4}
+.foot .cta{display:inline-flex;align-items:center;gap:7px;margin-top:14px;
+  background:#0A2F46;color:#fff;text-decoration:none;font-size:13.5px;font-weight:500;
+  padding:11px 20px;border-radius:100px;transition:background .2s,transform .18s}
+.foot .cta:hover{background:#14587D;transform:translateY(-1px)}
+
+@media(max-width:640px){
+  .wrap{padding:26px 16px 60px}
+  .money-stat .mo-v{font-size:28px}
+  .standfirst{font-size:17px}
+}
 </style>
 </head>
 <body>
@@ -241,6 +317,13 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
   <span class="eyebrow">◇ <span id="crumb">Chain Map</span></span>
   <h1 class="title" id="title">Loading…</h1>
   <p class="standfirst" id="standfirst"></p>
+  <div class="mast-meta" id="mast-meta">
+    <span><b>TickerMover</b> chain map</span>
+    <span class="dot">·</span>
+    <span>Published weekly</span>
+    <span class="dot">·</span>
+    <span id="mast-updated">Descriptive model, not a forecast</span>
+  </div>
 
   <div class="control" id="control" style="display:none">
     <div class="control-head">
