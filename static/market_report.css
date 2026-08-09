@@ -3,10 +3,10 @@
    public /desk report page. Scope everything under .ma-report so it is safe to
    drop into either host without leaking.
    ========================================================================== */
-/* One typeface across the whole report — Instrument Sans (the brand font,
+/* One typeface across the whole report — Inter (the site's single sans,
    loaded by both the dashboard and /desk). Keeps the type consistent. */
 .ma-report{max-width:1080px;margin:0 auto;color:#0A2F46;
-  font-family:'Instrument Sans',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif}
+  font-family:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif}
 .ma-report *{box-sizing:border-box;font-family:inherit}
 .ma-report .ma-head{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:14px}
 .ma-report .ma-eyebrow{font-size:11px;font-weight:800;letter-spacing:.14em;color:#14587D}
@@ -37,14 +37,14 @@
    the whole phone+small-tablet band is covered (not just <=560px). */
 @media(max-width:768px){
   .ma-report .ma-tabs{flex-wrap:wrap;overflow-x:visible}
-  .ma-report .ma-tab{flex:1 1 auto;padding:7px 10px;font-size:12px;text-align:center}
+  .ma-report .ma-tab{flex:1 1 auto;padding:7px 10px;font-size:12.5px;text-align:center}
 }
 .ma-report .ma-loading{padding:46px 20px;text-align:center;color:#64748b;font-size:14px}
 .ma-report .ma-sec-h{font-size:12px;font-weight:800;letter-spacing:.06em;color:#94a3b8;text-transform:uppercase;margin:8px 0 11px}
 .ma-report .ma-lead{font-size:14px;line-height:1.65;color:#334155;margin-bottom:16px}
 .ma-report .ma-lead b{color:#0A2F46}
 .ma-report .ma-ai-tag{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.03em;color:#7c3aed;background:rgba(124,58,237,.10);border:1px solid rgba(124,58,237,.22);border-radius:6px;padding:1px 7px;vertical-align:1px;margin-right:5px}
-.ma-report .ma-ed-next{font-size:11px;color:#14587D;font-weight:700}
+.ma-report .ma-ed-next{font-size:12.5px;color:#14587D;font-weight:700}
 /* ── Hero narrative (front page of the Brief) ─────────────────────────────── */
 .ma-report .ma-hero{position:relative;background:linear-gradient(135deg,#ffffff 0%,#f3f8ff 100%);border:1px solid rgba(10,47,70,.08);border-radius:16px;padding:20px 22px 18px 26px;margin-bottom:16px;box-shadow:0 8px 26px rgba(0,0,0,.07);overflow:hidden}
 .ma-report .ma-hero::before{content:'';position:absolute;left:0;top:0;bottom:0;width:5px;background:#94a3b8}
@@ -65,7 +65,7 @@
 .ma-report .ma-scorecard{display:grid;grid-template-columns:repeat(auto-fit,minmax(116px,1fr));gap:10px;margin-bottom:18px}
 .ma-report .ma-stat{background:#fff;border:1px solid rgba(10,47,70,.08);border-radius:13px;padding:12px 14px;box-shadow:0 2px 10px rgba(0,0,0,.04)}
 .ma-report .ma-stat .s-l{font-size:11px;font-weight:700;color:#64748b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ma-report .ma-stat .s-v{font-size:22px;font-weight:800;color:#0A2F46;font-variant-numeric:tabular-nums;margin-top:3px;line-height:1;font-family:'Instrument Sans',system-ui,sans-serif}
+.ma-report .ma-stat .s-v{font-size:22px;font-weight:800;color:#0A2F46;font-variant-numeric:tabular-nums;margin-top:3px;line-height:1;font-family:'Inter',system-ui,sans-serif}
 .ma-report .ma-stat .s-c{font-size:12.5px;font-weight:800;margin-top:5px;font-variant-numeric:tabular-nums}
 /* ── Key events — compact "what the market is watching" grid ─────────────── */
 .ma-report .ma-watch-note{font-size:12.5px;color:#475569;line-height:1.55;padding:11px 15px;border-radius:11px;margin:2px 0 14px}
@@ -76,12 +76,12 @@
 .ma-report .ma-ev.med  .ev-dot{background:#d97706;box-shadow:0 0 0 3px rgba(217,119,6,.13)}
 .ma-report .ma-ev .ev-body{min-width:0;flex:1}
 .ma-report .ma-ev .ev-name{font-size:12.5px;font-weight:700;color:#0A2F46;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ma-report .ma-ev .ev-flag{font-weight:400;font-size:11px}
-.ma-report .ma-ev .ev-meta{font-size:11px;color:#64748b;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ma-report .ma-ev .ev-flag{font-weight:400;font-size:12.5px}
+.ma-report .ma-ev .ev-meta{font-size:12.5px;color:#64748b;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ma-report .ma-ev .ev-meta b{color:#334155}
 .ma-report .ma-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px;margin-bottom:18px}
 .ma-report .ma-card{background:#fff;border:1px solid rgba(10,47,70,.08);border-radius:13px;padding:13px 14px;box-shadow:0 2px 10px rgba(0,0,0,.04)}
-.ma-report .ma-card .lbl{font-size:11.5px;font-weight:700;color:#64748b;display:flex;align-items:center;justify-content:space-between;gap:6px}
+.ma-report .ma-card .lbl{font-size:12.5px;font-weight:700;color:#64748b;display:flex;align-items:center;justify-content:space-between;gap:6px}
 .ma-report .ma-card .sym{font-size:10px;font-weight:700;color:#94a3b8;letter-spacing:.04em}
 .ma-report .ma-card .val{font-size:21px;font-weight:800;color:#0A2F46;margin-top:4px;font-variant-numeric:tabular-nums}
 .ma-report .ma-card .chg{font-size:13px;font-weight:700;margin-top:2px;font-variant-numeric:tabular-nums}
@@ -112,7 +112,7 @@
 .ma-report .ma-tbl tr.click{cursor:pointer;transition:background .1s}
 .ma-report .ma-tbl tr.click:hover{background:#f4f8ff}
 .ma-report .ma-tk{font-weight:800;color:#0A2F46}
-.ma-report .ma-nm{font-size:11px;color:#94a3b8;font-weight:600}
+.ma-report .ma-nm{font-size:12.5px;color:#94a3b8;font-weight:600}
 .ma-report .ma-px{font-variant-numeric:tabular-nums;font-weight:700;color:#334155}
 /* Phones/tablets: the 5-column movers/score/volume tables (Name, Price, Chg,
    Gr, Score/…) overflowed the card so the last column was cut off and couldn't
@@ -126,10 +126,10 @@
   .ma-report .ma-tbl th:nth-child(4),
   .ma-report .ma-tbl td:nth-child(4){display:none}
   .ma-report .ma-tbl th,.ma-report .ma-tbl td{padding:8px 8px}
-  .ma-report .ma-tbl .ma-nm{display:block;font-size:10.5px;margin-top:1px;white-space:normal}
+  .ma-report .ma-tbl .ma-nm{display:block;font-size:12.5px;margin-top:1px;white-space:normal}
   .ma-report .ma-tbl td:first-child{max-width:0;width:99%}
 }
-.ma-report .ma-gd{display:inline-block;font-size:10px;font-weight:800;width:18px;text-align:center;border-radius:5px;padding:1px 0}
+.ma-report .ma-gd{display:inline-block;font-size:12.5px;font-weight:800;width:18px;text-align:center;border-radius:5px;padding:1px 0}
 .ma-report .ma-gd.A{background:rgba(22,163,74,.14);color:#15803d}
 .ma-report .ma-gd.B{background:rgba(20,88,125,.12);color:#1d4ed8}
 .ma-report .ma-gd.C{background:rgba(217,119,6,.14);color:#b45309}
@@ -140,8 +140,8 @@
 /* ── News ────────────────────────────────────────────────────────────────── */
 .ma-report .ma-news-item{background:#fff;border:1px solid rgba(10,47,70,.08);border-radius:12px;padding:13px 15px;margin-bottom:10px}
 .ma-report .ma-news-item .hl{font-size:14px;font-weight:700;color:#0A2F46;line-height:1.4}
-.ma-report .ma-news-item .mt{font-size:12px;color:#64748b;margin-top:5px;line-height:1.5}
-.ma-report .ma-news-item .meta{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:8px;font-size:11px;color:#94a3b8;font-weight:600}
+.ma-report .ma-news-item .mt{font-size:12.5px;color:#64748b;margin-top:5px;line-height:1.5}
+.ma-report .ma-news-item .meta{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:8px;font-size:12.5px;color:#94a3b8;font-weight:600}
 .ma-report .ma-news-item .meta a{color:#14587D;text-decoration:none;font-weight:700}
 .ma-report .ma-news-item .meta a:hover{text-decoration:underline}
 .ma-report .ma-tag{display:inline-block;font-size:9.5px;font-weight:800;letter-spacing:.05em;padding:2px 7px;border-radius:5px;background:#eef2f7;color:#475569}
@@ -150,13 +150,13 @@
 .ma-report .ma-verdict .big{font-size:17px;font-weight:800;color:#0A2F46;line-height:1.4;margin-bottom:12px}
 .ma-report .ma-verdict .kv{font-size:13.5px;color:#334155;line-height:1.7}
 .ma-report .ma-verdict .kv b{color:#0A2F46}
-.ma-report .ma-conf{display:inline-block;margin-top:10px;font-size:12px;font-weight:800;padding:4px 12px;border-radius:999px}
+.ma-report .ma-conf{display:inline-block;margin-top:10px;font-size:12.5px;font-weight:800;padding:4px 12px;border-radius:999px}
 .ma-report .ma-conf.high{background:rgba(22,163,74,.12);color:#15803d}
 .ma-report .ma-conf.med{background:rgba(217,119,6,.12);color:#b45309}
 .ma-report .ma-conf.low{background:rgba(220,38,38,.10);color:#b91c1c}
-.ma-report .ma-foot{font-size:11px;color:#94a3b8;margin-top:18px;line-height:1.6}
+.ma-report .ma-foot{font-size:12.5px;color:#94a3b8;margin-top:18px;line-height:1.6}
 .ma-report .ma-foot a{color:#64748b}
-.ma-disc-line{max-width:1080px;margin:14px auto 0;font-size:11px;color:#94a3b8;line-height:1.55;text-align:center}
+.ma-disc-line{max-width:1080px;margin:14px auto 0;font-size:12.5px;color:#94a3b8;line-height:1.55;text-align:center}
 
 /* ==========================================================================
    .ma-glass — frosted "floating panel" treatment shared by the /desk page and
