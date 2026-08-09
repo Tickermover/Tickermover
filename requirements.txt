@@ -9,7 +9,8 @@ yfinance>=0.2.36
 pandas>=2.0.0
 PyJWT>=2.8.0
 cryptography>=41.0.0
-Pillow>=10.0.0
+Pillow>=10.1.0   # 10.1 added a SIZE argument to load_default();
+                 # without it the server has no scalable font at all
 # Server-side PDF generation for one-click tear sheet downloads.
 # reportlab = pure Python, no system deps (works on Railway nixpacks).
 reportlab>=4.0.0

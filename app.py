@@ -5517,13 +5517,22 @@ def _render_thesis_og_png(t: dict) -> bytes:
     from PIL import Image, ImageDraw, ImageFont
 
     def _font(sz, bold=False):
+        # Same bug as the infographic had: with no system TrueType on the
+        # server every lookup fails and load_default() returns a BITMAP font
+        # that ignores sz, so the whole card renders at ~10px. Fall back to
+        # Pillow's scalable default before the bitmap one.
         for p in (("arialbd.ttf" if bold else "arial.ttf"),
-                  ("DejaVuSans-Bold.ttf" if bold else "DejaVuSans.ttf")):
+                  ("DejaVuSans-Bold.ttf" if bold else "DejaVuSans.ttf"),
+                  ("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf" if bold
+                   else "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf")):
             try:
                 return ImageFont.truetype(p, sz)
             except Exception:
                 continue
-        return ImageFont.load_default()
+        try:
+            return ImageFont.load_default(size=sz)
+        except TypeError:
+            return ImageFont.load_default()
 
     W, H = 1200, 630
     BG = (10, 14, 26)

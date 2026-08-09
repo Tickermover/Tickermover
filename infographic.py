@@ -193,19 +193,52 @@ async def summarise(thesis: dict, shares: dict) -> dict:
 # ── 2. Render ─────────────────────────────────────────────────────────────
 
 def _font(sz, bold=False):
+    """A font that is actually the size we asked for.
+
+    The server has NO system TrueType fonts, so every truetype() lookup failed
+    and we fell through to ImageFont.load_default() — a BITMAP font that ignores
+    the size argument completely. Every string on the poster rendered at ~10px:
+    the 92px headline figure came out 19px wide and the image looked empty.
+
+    Order: real font files where they exist, then Pillow's own scalable default
+    (>=10.1 accepts a size and bundles Aileron), then the bitmap as a last
+    resort so this can never raise."""
     from PIL import ImageFont
-    names = (["arialbd.ttf", "DejaVuSans-Bold.ttf", "LiberationSans-Bold.ttf"]
-             if bold else ["arial.ttf", "DejaVuSans.ttf", "LiberationSans-Regular.ttf"])
+    names = (["DejaVuSans-Bold.ttf", "LiberationSans-Bold.ttf", "arialbd.ttf",
+              "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+              "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf"]
+             if bold else
+             ["DejaVuSans.ttf", "LiberationSans-Regular.ttf", "arial.ttf",
+              "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+              "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf"])
     for p in names:
         try:
             return ImageFont.truetype(p, sz)
         except Exception:
             continue
-    return ImageFont.load_default()
+    try:
+        return ImageFont.load_default(size=sz)      # Pillow >= 10.1, scalable
+    except TypeError:
+        return ImageFont.load_default()
+
+
+def _safe(t):
+    """Map characters Pillow's fallback font has no glyph for.
+
+    When no system TrueType exists the poster is drawn with Pillow's bundled
+    Aileron, which lacks the em-dash, curly quotes and the ellipsis — each of
+    those renders as a hollow box. The AI copy and our own strings both use
+    them freely, so normalise at the draw boundary rather than policing every
+    caller."""
+    return (str(t or "")
+            .replace("—", "-").replace("–", "-")
+            .replace("’", "'").replace("‘", "'")
+            .replace("“", '"').replace("”", '"')
+            .replace("…", "...").replace(" ", " "))
 
 
 def _wrap(d, text, font, width):
-    words, line, lines = str(text or "").split(), "", []
+    words, line, lines = _safe(text).split(), "", []
     for w in words:
         probe = (line + " " + w).strip()
         if d.textlength(probe, font=font) > width and line:
@@ -237,7 +270,7 @@ def render_png(s: dict) -> bytes:
     y = 58
 
     # eyebrow
-    d.text((M, y), ("TICKERMOVER  ·  " + str(s["eyebrow"])).upper(),
+    d.text((M, y), _safe("TICKERMOVER  ·  " + str(s["eyebrow"])).upper(),
            font=_font(20, True), fill=INDIGO)
     y += 42
 
@@ -249,7 +282,7 @@ def render_png(s: dict) -> bytes:
     y += 6
 
     # the map this is about
-    d.text((M, y), str(s["title"])[:70], font=_font(24), fill=INK_SOFT)
+    d.text((M, y), _safe(s["title"])[:70], font=_font(24), fill=INK_SOFT)
     y += 48
 
     # ── the one number ────────────────────────────────────────────────────
@@ -264,7 +297,7 @@ def render_png(s: dict) -> bytes:
         d.text((M + 28, y + 56), _pct(tl["share"]), font=fbig, fill=GREEN)
         num_w = d.textlength(_pct(tl["share"]), font=fbig)
         # the layer name sits beside the figure, vertically centred on it
-        nm = _wrap(d, tl["name"], _font(24), W - 2 * M - int(num_w) - 90)[:2]
+        nm = _wrap(d, _safe(tl["name"]), _font(24), W - 2 * M - int(num_w) - 90)[:2]
         ny = y + 78 + (14 if len(nm) == 1 else 0)
         for ln in nm:
             d.text((M + 54 + num_w, ny), ln, font=_font(24), fill=INK)
@@ -292,8 +325,8 @@ def render_png(s: dict) -> bytes:
         if d.textlength(label, font=f_lbl) > avail:
             while label and d.textlength(label + "…", font=f_lbl) > avail:
                 label = label[:-1]
-            label = label.rstrip(" ,(") + "…"
-        d.text((bx0, by), label, font=f_lbl, fill=INK)
+            label = label.rstrip(" ,(") + "..."
+        d.text((bx0, by), _safe(label), font=f_lbl, fill=INK)
         d.text((bx1 - pct_w, by), pct_txt, font=f_pct, fill=INK)
         ty = by + 30
         d.rounded_rectangle([bx0, ty, bx1, ty + 11], radius=6, fill=(239, 237, 234))
@@ -325,8 +358,8 @@ def render_png(s: dict) -> bytes:
            font=_font(21, True), fill=INDIGO)
     stamp = (s.get("generated_at") or "")[:10]
     d.text((M, H - 74),
-           "Descriptive model of where spending has already landed — not a forecast, "
-           "not advice.", font=_font(17), fill=FAINT)
+           "Descriptive model of where spending has already landed - "
+           "not a forecast, not advice.", font=_font(17), fill=FAINT)
     d.text((M, H - 50), "Figures computed from reported revenue · %s" % stamp,
            font=_font(17), fill=FAINT)
 
