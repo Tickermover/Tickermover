@@ -280,7 +280,7 @@
       "eyebrow": "Chain Map",
       "title": "The power build-out behind the AI boom",
       "accent": "power build-out",
-      "standfirst": "AI datacenters and electrification are colliding with a grid that took decades to build. Drag the US power-demand growth slider and watch it work back up the physical chain — from the electrons to the contractors who install the copper. Dot brightness marks estimated revenue dependence on this build-out.",
+      "standfirst": "AI datacenters and electrification are colliding with a grid that took decades to build. This map shows where the power-build dollar has already landed — each layer's and each company's share of the revenue the chain captures today, weighted by how much of that business depends on the build-out. Descriptive, not a forecast.",
       "control": {
         "label": "US electricity / power-capex growth, year over year",
         "min": -10,
@@ -489,7 +489,7 @@
       "eyebrow": "Chain Map",
       "title": "Where the defense budget flows",
       "accent": "defense budget",
-      "standfirst": "From appropriations to the primes to the sub-tier suppliers who actually build the hardware — defense spend is a chain with a long, sticky lag and famously lumpy orders. Drag the budget-growth slider and trace where an outlay increase lands, and when. Dot brightness marks estimated revenue dependence on US defense spend.",
+      "standfirst": "From appropriations to the primes to the sub-tier suppliers who actually build the hardware. This map shows where the defense dollar has already landed — each layer's and each company's share of the revenue the chain captures today, weighted by how much of that business depends on US defense spend. Descriptive, not a forecast.",
       "control": {
         "label": "US defense outlays growth, year over year",
         "min": -8,
@@ -697,7 +697,7 @@
       "eyebrow": "Chain Map",
       "title": "The reshoring factory build-out",
       "accent": "reshoring",
-      "standfirst": "Incentives to equipment to automation to the electricians — the money to rebuild US manufacturing moves down a chain with a lag, from the fab tools that arrive first to the aggregates trucked to the site. Drag the factory-capex slider and watch it propagate. Dot brightness marks estimated revenue dependence on the US build-out.",
+      "standfirst": "Incentives to equipment to automation to the electricians. This map shows where the money rebuilding US manufacturing has already landed — each layer's and each company's share of the revenue the chain captures today, weighted by how much of that business depends on the build-out. Descriptive, not a forecast.",
       "control": {
         "label": "US manufacturing-construction growth, year over year",
         "min": -15,

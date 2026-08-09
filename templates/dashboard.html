@@ -782,6 +782,22 @@ body.v2 #sectors-grid .smh-name{font-weight:800;font-size:12.5px;color:#0f172a!i
 .wk-go{flex:none;font-size:13px;font-weight:600;color:#4A5BC4}
 @media(max-width:640px){.wk-teaser{gap:12px;padding:13px 14px}.wk-go{display:none}}
 
+
+/* Thesis Maps grid: show three rows (nine cards) and scroll the rest. Ten maps
+   published and growing weekly, so the panel was running well past a screenful
+   and pushing its own footnote out of sight. Cap + scroll rather than paginate:
+   the cards are a browse surface, not a list you work through. */
+#panel-theses .tm-grid{max-height:702px;overflow-y:auto;overscroll-behavior:contain;
+  padding-right:6px;scrollbar-width:thin;scrollbar-color:#C4CBE8 #F4F2EF}
+#panel-theses .tm-grid::-webkit-scrollbar{width:10px}
+#panel-theses .tm-grid::-webkit-scrollbar-track{background:#F4F2EF;border-radius:100px}
+#panel-theses .tm-grid::-webkit-scrollbar-thumb{background:#C4CBE8;border-radius:100px;
+  border:3px solid #F4F2EF}
+#panel-theses .tm-grid::-webkit-scrollbar-thumb:hover{background:#4A5BC4}
+/* Below three columns the same nine cards are far taller, so cap by viewport
+   instead of pinning to a desktop row count. */
+@media(max-width:1100px){#panel-theses .tm-grid{max-height:min(74vh,900px)}}
+
 /* ── Sector connections — animated relationship graph ──────────────────── */
 .secg-wrap{position:relative;grid-column:1/-1;border:1px solid #e6ebf2;border-radius:14px;
   background:radial-gradient(120% 120% at 50% 0%,#fbfdff 0%,#f4f7fb 100%);overflow:hidden}
@@ -8636,7 +8652,7 @@ document.addEventListener('keydown', function(e){
   <div class="main">
     <div class="sc-head">
       <h2 class="sc-title">Thesis Maps</h2>
-      <p class="sc-sub">Not a screener and not a chart. Each map takes one macro driver — AI capex, the power build-out, the defense budget — and traces where the money actually lands, layer by layer, company by company.</p>
+      <p class="sc-sub">Not a screener and not a chart. Each map takes one macro driver — AI capex, the power build-out, the defense budget — and shows where the money has already landed, layer by layer, company by company.</p>
     </div>
     </section>
     <section class="pnl-sec pnl-teal"><div class="pnl-rib"><span class="pnl-ico" aria-hidden="true">🗺️</span><span class="pnl-t">What this section is</span></div>
@@ -8647,8 +8663,9 @@ document.addEventListener('keydown', function(e){
       <div><b>What the shares mean</b><span>Each layer&rsquo;s and each company&rsquo;s share of
         the money that has <i>already landed</i>, weighted by how much of that business depends
         on the spend. Descriptive, not a forecast.</span></div>
-      <div><b>How to read it</b><span>Drag the driver and watch it propagate. The judgements
-        and weightings are ours and are stated on each map &mdash; argue with them.</span></div>
+      <div><b>How to read it</b><span>Read down the chain: each layer&rsquo;s share of the
+        money that has already landed, and the companies capturing it. The weightings are
+        ours and are stated on each map &mdash; argue with them.</span></div>
     </div>
     <div id="tmBody"><div class="sc-empty">Loading thesis maps…</div></div>
     <p class="tm-note">Maps are descriptive models of disclosed spending and revenue mix, not forecasts. The weightings are our judgement and are stated on each map. Not a recommendation, not advice, and not FCA-authorised. Capital at risk.</p>

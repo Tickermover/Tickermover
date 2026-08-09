@@ -379,7 +379,7 @@ h1.title{font-size:clamp(34px,5.6vw,54px);line-height:1.03;letter-spacing:-.022e
 /* The layer's own colour, as a top edge — same idea as the section accents. */
 .layer::before{content:'';display:block;height:4px;background:var(--lc,#14587D)}
 
-.layer-meta{padding:17px 18px 0;margin:0}
+.layer-meta{padding:17px 18px 2px;margin:0}
 /* The spine was a vertical connector for a stacked list; in a grid it points at
    nothing. The node stays as the layer's colour marker, inline with the index. */
 .spine{display:none}
@@ -564,28 +564,16 @@ h1.title{font-size:clamp(34px,5.6vw,54px);line-height:1.03;letter-spacing:-.022e
       '<p class="sec-sub">A map of <b>where the money has already landed</b> — each layer\'s and each company\'s <b>share of the AI-datacenter revenue</b> the chain captures today. Share = a company\'s trailing revenue weighted by how much of it depends on AI capex. It is <b>descriptive, not a forecast</b>: it shows who captures the spend <b>now</b>, and makes no claim about future upside — many of these names have already run hard (see &ldquo;Who\'s gained so far&rdquo; below). Tap any company for the full read.</p>'+
       (d.as_of?'<p class="sec-asof"><span class="asof-dot"></span>Revenue is <b>live</b>; the exposure weights are our estimates <b>as of '+fmtAsOf(d.as_of)+'</b>, and a few names use a flagged revenue estimate where our universe doesn\'t cover them. Each company\'s price and read update live below.</p>':'')+
       LAYERS.map(function(L,i){
-        var nm = L.names || [];
-        var hiN = nm.filter(function(c){return c.exposure==="hi";}).length;
-        var midN = nm.filter(function(c){return c.exposure==="mid";}).length;
-        var loN = nm.filter(function(c){return c.exposure==="lo";}).length;
-        var mix = "";
-        for(var h=0;h<hiN;h++) mix+='<span class="ls-seg hi"></span>';
-        for(var m=0;m<midN;m++) mix+='<span class="ls-seg mid"></span>';
-        for(var l=0;l<loN;l++) mix+='<span class="ls-seg lo"></span>';
-        // "lead" = the highest-exposure name in the layer (its purest read)
-        var lead = (nm.filter(function(c){return c.exposure==="hi";})[0] || nm[0] || {}).t || "";
-        var sum =
-          '<div class="layer-sum">'+
-            '<div class="ls-row"><span class="ls-k">Exposure</span><span class="ls-mix">'+mix+'</span>'+
-              '<span>'+nm.length+' name'+(nm.length!==1?"s":"")+'</span></div>'+
-            (lead?'<div class="ls-row"><span class="ls-k">Purest read</span><span class="ls-lead">'+esc(lead)+'</span></div>':'')+
-          '</div>';
+        /* The "Exposure / Purest read" rows were removed: both facts are
+           already on screen. The exposure mix is in each company card's own
+           HIGH/MOD/LOW EXP bar, and the "purest read" was just the first
+           high-exposure name in a list the reader can see. It restated the
+           cards directly beneath it. */
         return '<section class="layer" style="--lc:'+esc(L.color||"var(--blue)")+'">'+
           '<div class="layer-meta"><span class="spine"></span><span class="node"></span>'+
             '<span class="layer-idx">Layer '+(i+1)+' of '+LAYERS.length+'</span>'+
             '<h3 class="layer-name">'+esc(L.name)+'</h3>'+
             '<div class="layer-when-badge '+(i===0?"first":"")+'"><span class="lw-k">Share of landed value</span><span class="lw-v" data-lshare="'+i+'">—</span><span class="lw-h">of AI-revenue already captured</span></div>'+
-            sum+
           '</div>'+
           '<div>'+
             '<div class="impact"><div class="impact-track"><div class="impact-fill" data-fill="'+i+'"></div></div>'+
