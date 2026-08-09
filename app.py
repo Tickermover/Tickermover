@@ -5602,6 +5602,65 @@ async def og_thesis_image(slug: str):
                     headers={"Cache-Control": "public, max-age=3600"})
 
 
+# AI-summarised infographic — the shareable poster for a chain map. Cached in
+# process for an hour: rendering is cheap but the AI copy is not free, and the
+# underlying shares only move when the universe re-scores.
+_THESIS_IG_CACHE: dict = {}
+
+
+@app.get("/infographic/thesis/{slug}.png")
+async def thesis_infographic_png(slug: str, refresh: int = 0):
+    """One image that summarises a chain map — NotebookLM-style.
+
+    EVERY NUMBER on it is computed here from the same maths /api/thesis-shares
+    uses (revenue x exposure weight, rolled up by layer). The model is asked
+    ONLY for words — a headline, a one-line read, three takeaways — because a
+    model that invents a statistic about a real company is worse than no
+    infographic. If the AI chain is down the poster still renders, with
+    deterministic copy derived from those same figures.
+
+    1080x1350 portrait: the shape that survives Instagram, LinkedIn and a
+    screenshot."""
+    from fastapi.responses import Response
+    import json as _json
+    slug = (slug or "").lower().strip()
+    hit = _THESIS_IG_CACHE.get(slug)
+    if hit and not refresh and (time.time() - hit[0]) < 3600:
+        return Response(content=hit[1], media_type="image/png",
+                        headers={"Cache-Control": "public, max-age=3600"})
+
+    thesis = next((t for t in (_load_theses().get("theses") or [])
+                   if (t.get("slug") or "").lower() == slug), None)
+    if not thesis:
+        thesis = next((m for m in _gen_theses
+                       if (m.get("slug") or "").lower() == slug), None)
+    if not thesis:
+        return await static_icon_fallback("og-fallback.png")
+
+    try:
+        shares = await api_thesis_shares(slug)
+        shares = _json.loads(bytes(shares.body).decode("utf-8"))
+    except Exception as exc:
+        logger.warning("infographic: shares for %s failed: %s", slug, exc)
+        return await static_icon_fallback("og-fallback.png")
+    if shares.get("available") is False:
+        return await static_icon_fallback("og-fallback.png")
+
+    try:
+        import infographic as _ig
+        summary = await _ig.summarise(thesis, shares)
+        png = _ig.render_png(summary)
+    except ImportError:
+        return await static_icon_fallback("og-fallback.png")
+    except Exception as exc:
+        logger.warning("infographic render failed for %s: %s", slug, exc)
+        return await static_icon_fallback("og-fallback.png")
+
+    _THESIS_IG_CACHE[slug] = (time.time(), png)
+    return Response(content=png, media_type="image/png",
+                    headers={"Cache-Control": "public, max-age=3600"})
+
+
 @app.get("/admin/thesis-map", response_class=HTMLResponse)
 async def admin_thesis_map_page():
     """Admin console for the weekly map: see what's published, what's next, and
