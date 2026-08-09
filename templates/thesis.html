@@ -290,6 +290,73 @@ h1.title{font-size:clamp(34px,5.6vw,54px);line-height:1.03;letter-spacing:-.022e
   .money-stat .mo-v{font-size:28px}
   .standfirst{font-size:17px}
 }
+
+/* ══ CHAIN LAYERS — redesigned 9 Aug 2026 ══════════════════════
+   The share % and the $ it represents were on OPPOSITE SIDES of the row — the
+   percentage boxed in a 210px rail, the money captioned under a bar in the next
+   column — while that rail also carried the index, the name and the summary.
+   Everything was cramped and nothing led. Now: the layer's identity and its
+   headline number sit together on the left, the bar spans the right with its
+   caption, and the companies tile in a real grid beneath. */
+.layer{grid-template-columns:minmax(230px,270px) 1fr;gap:30px;padding:26px 0 28px;
+  align-items:start;transition:background .18s;border-radius:14px}
+.layer:hover{background:rgba(255,255,255,.55)}
+.layer-meta{padding-left:28px}
+.layer-idx{font-size:9.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase}
+.layer-name{font-size:19px;font-weight:600;letter-spacing:-.015em;margin:0 0 12px;line-height:1.15}
+
+/* The headline figure stops being a boxed badge and becomes the stat it is. */
+.layer-when-badge,.layer-when-badge.first{display:block;background:none;border:0;
+  padding:0;margin:0 0 14px;line-height:1.1}
+.layer-when-badge .lw-k{display:block;font-family:'JetBrains Mono',ui-monospace,monospace;
+  font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+  color:#94a3b8;opacity:1;margin-bottom:5px}
+.layer-when-badge .lw-v{display:block;font-size:38px;font-weight:600;letter-spacing:-.025em;
+  font-variant-numeric:tabular-nums;color:#0A2F46;line-height:1}
+.layer-when-badge.first .lw-v{color:#0a7d33}
+.layer-when-badge .lw-h{display:block;font-size:11.5px;font-weight:400;color:#7A8899;
+  margin-top:5px;line-height:1.35}
+
+.layer-sum{gap:7px;margin-top:14px;padding-top:13px;border-top:1px solid #EFEDEA}
+.layer-sum .ls-k{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:9px;
+  letter-spacing:.13em;min-width:74px;color:#A9B3BF}
+.layer-sum .ls-seg{width:18px;height:6px;border-radius:3px}
+
+/* The bar is the layer's own measure — give it presence and a clear caption. */
+.impact{margin:2px 0 16px}
+.impact-track{height:20px;border-radius:100px;background:#EFEDEA}
+.impact-fill{border-radius:100px}
+.impact-cap{margin-top:9px}
+.impact-val.cap-rev{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12px;
+  font-weight:600;color:#5D6C7B}
+
+/* Honest empty state: a dashed, unfilled track rather than a sliver of green
+   pretending something landed. */
+.layer.is-empty .impact-track{background:transparent;border:1.5px dashed #DDD8D3}
+.layer.is-empty .layer-when-badge .lw-v{color:#A9B3BF}
+.layer.is-empty .impact-val.cap-rev{color:#A9B3BF;font-style:italic}
+
+/* Companies tile properly instead of flex-wrapping into ragged rows. */
+.cos{display:grid;grid-template-columns:repeat(auto-fill,minmax(176px,1fr));gap:10px}
+.co{min-width:0;padding:12px 13px 11px;border-radius:13px;gap:7px;border-color:#E4E7EC}
+.co:hover{border-color:#C7CEF0;transform:translateY(-2px);
+  box-shadow:0 10px 24px -14px rgba(10,47,70,.42)}
+.co-tk{font-size:13.5px;letter-spacing:.02em;color:#4A5BC4}
+.co-imp{font-size:13px;color:#0A2F46}
+.co-name{font-size:12px;max-width:100%;color:#7A8899}
+.exp-seg{width:17px;height:5px;border-radius:3px}
+.exp-lbl{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:8.5px;font-weight:700;
+  letter-spacing:.1em;text-transform:uppercase;color:#A9B3BF}
+
+/* The spine should read as one continuous run down the chain. */
+.spine{left:7px;width:2px;background:linear-gradient(180deg,#E4E7EC,#EFEDEA)}
+.node{width:15px;height:15px;border-width:3px}
+
+@media(max-width:820px){
+  .layer{grid-template-columns:1fr;gap:16px}
+  .layer-when-badge .lw-v{font-size:32px}
+  .cos{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+}
 </style>
 </head>
 <body>
@@ -579,10 +646,21 @@ h1.title{font-size:clamp(34px,5.6vw,54px);line-height:1.03;letter-spacing:-.022e
       (d.layers||[]).forEach(function(L,i){
         var lv = document.querySelector('[data-lshare="'+i+'"]');
         if(lv) lv.textContent = pctShare(L.share);
+        /* A layer that captures nothing is a real answer, not a rendering
+           bug. It used to get a forced 1.5% sliver of green captioned
+           "≈$0 AI-revenue captured so far", which read as broken. Mark it
+           and let the CSS show an honest empty track. */
+        var isEmpty = !(L.share > 0.0005);
+        var sect = document.querySelectorAll(".layer")[i];
+        if(sect) sect.classList.toggle("is-empty", isEmpty);
         var fill = document.querySelector('[data-fill="'+i+'"]');
-        if(fill){ fill.className="impact-fill pos"; fill.style.width = Math.max(1.5, L.share*100).toFixed(1)+"%"; }
+        if(fill){ fill.className="impact-fill pos";
+                  fill.style.width = isEmpty ? "0%" : Math.max(1.5, L.share*100).toFixed(1)+"%"; }
         var cap = document.querySelector('[data-lval="'+i+'"]');
-        if(cap){ cap.textContent = "≈"+fmtB(TOTAL*L.share)+" AI-revenue captured so far"; cap.className="impact-val cap-rev"; }
+        if(cap){ cap.textContent = isEmpty
+                   ? "No AI-revenue captured at this layer yet"
+                   : "≈"+fmtB(TOTAL*L.share)+" AI-revenue captured so far";
+                 cap.className="impact-val cap-rev"; }
       });
       // per-company share chips
       LAYERS.forEach(function(L,i){ (L.names||[]).forEach(function(c,j){
