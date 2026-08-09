@@ -1,0 +1,10754 @@
+{
+"A": {
+"indices": [
+"SPX"
+],
+"name": "Agilent Technologies",
+"sector": "Health Care"
+},
+"AA": {
+"indices": [
+"SP400"
+],
+"name": "Alcoa",
+"sector": "Materials"
+},
+"AAL": {
+"indices": [
+"SP400"
+],
+"name": "American Airlines Group",
+"sector": "Industrials"
+},
+"AAMI": {
+"indices": [
+"SP600"
+],
+"name": "Acadian Asset Management Inc.",
+"sector": "Financials"
+},
+"AAON": {
+"indices": [
+"SP400"
+],
+"name": "AAON",
+"sector": "Industrials"
+},
+"AAP": {
+"indices": [
+"SP600"
+],
+"name": "Advance Auto Parts, Inc.",
+"sector": "Consumer Discretionary"
+},
+"AAPL": {
+"indices": [
+"DJI",
+"NDX",
+"SPX"
+],
+"name": "Apple Inc.",
+"sector": "Information Technology"
+},
+"AAT": {
+"indices": [
+"SP600"
+],
+"name": "American Assets Trust",
+"sector": "Real Estate"
+},
+"ABBV": {
+"indices": [
+"SPX"
+],
+"name": "AbbVie",
+"sector": "Health Care"
+},
+"ABCB": {
+"indices": [
+"SP600"
+],
+"name": "Ameris Bancorp",
+"sector": "Financials"
+},
+"ABG": {
+"indices": [
+"SP600"
+],
+"name": "Asbury Automotive Group",
+"sector": "Consumer Discretionary"
+},
+"ABM": {
+"indices": [
+"SP600"
+],
+"name": "ABM Industries, Inc.",
+"sector": "Industrials"
+},
+"ABNB": {
+"indices": [
+"NDX",
+"SPX"
+],
+"name": "Airbnb",
+"sector": "Consumer Discretionary"
+},
+"ABR": {
+"indices": [
+"SP600"
+],
+"name": "Arbor Realty Trust",
+"sector": "Financials"
+},
+"ABT": {
+"indices": [
+"SPX"
+],
+"name": "Abbott Laboratories",
+"sector": "Health Care"
+},
+"ACA": {
+"indices": [
+"SP600"
+],
+"name": "Arcosa, Inc.",
+"sector": "Industrials"
+},
+"ACAD": {
+"indices": [
+"SP600"
+],
+"name": "Acadia Pharmaceuticals",
+"sector": "Health Care"
+},
+"ACGL": {
+"indices": [
+"SPX"
+],
+"name": "Arch Capital Group",
+"sector": "Financials"
+},
+"ACHC": {
+"indices": [
+"SP600"
+],
+"name": "Acadia Healthcare",
+"sector": "Health Care"
+},
+"ACI": {
+"indices": [
+"SP400"
+],
+"name": "Albertsons",
+"sector": "Consumer Staples"
+},
+"ACIW": {
+"indices": [
+"SP600"
+],
+"name": "ACI Worldwide",
+"sector": "Information Technology"
+},
+"ACLS": {
+"indices": [
+"SP600"
+],
+"name": "Axcelis Technologies, Inc.",
+"sector": "Information Technology"
+},
+"ACM": {
+"indices": [
+"SP400"
+],
+"name": "AECOM",
+"sector": "Industrials"
+},
+"ACMR": {
+"indices": [
+"SP600"
+],
+"name": "ACM Research, Inc.",
+"sector": "Information Technology"
+},
+"ACN": {
+"indices": [
+"SPX"
+],
+"name": "Accenture",
+"sector": "Information Technology"
+},
+"ACT": {
+"indices": [
+"SP600"
+],
+"name": "Enact Holdings, Inc.",
+"sector": "Financials"
+},
+"ADAM": {
+"indices": [
+"SP600"
+],
+"name": "Adamas Trust, Inc.",
+"sector": "Real Estate"
+},
+"ADBE": {
+"indices": [
+"NDX",
+"SPX"
+],
+"name": "Adobe Inc.",
+"sector": "Information Technology"
+},
+"ADC": {
+"indices": [
+"SP400"
+],
+"name": "Agree Realty",
+"sector": "Real Estate"
+},
+"ADEA": {
+"indices": [
+"SP600"
+],
+"name": "Adeia, Inc.",
+"sector": "Information Technology"
+},
+"ADI": {
+"indices": [
+"NDX",
+"SPX"
+],
+"name": "Analog Devices",
+"sector": "Information Technology"
+},
+"ADM": {
+"indices": [
+"SPX"
+],
+"name": "Archer Daniels Midland",
+"sector": "Consumer Staples"
+},
+"ADMA": {
+"indices": [
+"SP600"
+],
+"name": "ADMA Biologics, Inc.",
+"sector": "Health Care"
+},
+"ADNT": {
+"indices": [
+"SP600"
+],
+"name": "Adient",
+"sector": "Consumer Discretionary"
+},
+"ADP": {
+"indices": [
+"NDX",
+"SPX"
+],
+"name": "Automatic Data Processing",
+"sector": "Industrials"
+},
+"ADSK": {
+"indices": [
+"NDX",
+"SPX"
+],
+"name": "Autodesk",
+"sector": "Information Technology"
+},
+"ADT": {
+"indices": [
+"SP600"
+],
+"name": "ADT Inc.",
+"sector": "Consumer Discretionary"
+},
+"ADUS": {
+"indices": [
+"SP600"
+],
+"name": "Addus HomeCare Corp.",
+"sector": "Health Care"
+},
+"AEE": {
+"indices": [
+"SPX"
+],
+"name": "Ameren",
+"sector": "Utilities"
+},
+"AEIS": {
+"indices": [
+"SP400"
+],
+"name": "Advanced Energy",
+"sector": "Information Technology"
+},
+"AEO": {
+"indices": [
+"SP600"
+],
+"name": "American Eagle Outfitters",
+"sector": "Consumer Discretionary"
+},
+"AEP": {
+"indices": [
+"NDX",
+"SPX"
+],
+"name": "American Electric Power",
+"sector": "Utilities"
+},
+"AES": {
+"indices": [
+"SPX"
+],
+"name": "AES Corporation",
+"sector": "Utilities"
+},
+"AESI": {
+"indices": [
+"SP600"
+],
+"name": "Atlas Energy Solutions, Inc.",
+"sector": "Energy"
+},
+"AFG": {
+"indices": [
+"SP400"
+],
+"name": "American Financial Group",
+"sector": "Financials"
+},
+"AFL": {
+"indices": [
+"SPX"
+],
+"name": "Aflac",
+"sector": "Financials"
+},
+"AGCO": {
+"indices": [
+"SP400"
+],
+"name": "AGCO",
+"sector": "Industrials"
+},
+"AGNT": {
+"indices": [
+"SP600"
+],
+"name": "eXp World Holdings, Inc.",
+"sector": "Real Estate"
+},
+"AGO": {
+"indices": [
+"SP600"
+],
+"name": "Assured Guaranty Ltd.",
+"sector": "Financials"
+},
+"AGX": {
+"indices": [
+"SP600"
+],
+"name": "Argan, Inc.",
+"sector": "Industrials"
+},
+"AGYS": {
+"indices": [
+"SP600"
+],
+"name": "Agilysys, Inc.",
+"sector": "Information Technology"
+},
+"AHCO": {
+"indices": [
+"SP600"
+],
+"name": "AdaptHealth Corp.",
+"sector": "Health Care"
+},
+"AHR": {
+"indices": [
+"SP400"
+],
+"name": "American Healthcare REIT",
+"sector": "Real Estate"
+},
+"AIG": {
+"indices": [
+"SPX"
+],
+"name": "American International Group",
+"sector": "Financials"
+},
+"AIN": {
+"indices": [
+"SP600"
+],
+"name": "Albany International Corp.",
+"sector": "Industrials"
+},
+"AIR": {
+"indices": [
+"SP600"
+],
+"name": "AAR Corp.",
+"sector": "Industrials"
+},
+"AIT": {
+"indices": [
+"SP400"
+],
+"name": "Applied Industrial Technologies",
+"sector": "Industrials"
+},
+"AIZ": {
+"indices": [
+"SPX"
+],
+"name": "Assurant",
+"sector": "Financials"
+},
+"AJG": {
+"indices": [
+"SPX"
+],
+"name": "Arthur J. Gallagher & Co.",
+"sector": "Financials"
+},
+"AKAM": {
+"indices": [
+"SPX"
+],
+"name": "Akamai Technologies",
+"sector": "Information Technology"
+},
+"AKR": {
+"indices": [
+"SP600"
+],
+"name": "Acadia Realty Trust",
+"sector": "Real Estate"
+},
+"ALB": {
+"indices": [
+"SPX"
+],
+"name": "Albemarle Corporation",
+"sector": "Materials"
+},
+"ALG": {
+"indices": [
+"SP600"
+],
+"name": "Alamo Group",
+"sector": "Industrials"
+},
+"ALGM": {
+"indices": [
+"SP400"
+],
+"name": "Allegro MicroSystems",
+"sector": "Information Technology"
+},
+"ALGN": {
+"indices": [
+"SPX"
+],
+"name": "Align Technology",
+"sector": "Health Care"
+},
+"ALGT": {
+"indices": [
+"SP600"
+],
+"name": "Allegiant Travel Company",
+"sector": "Industrials"
+},
+"ALHC": {
+"indices": [
+"SP600"
+],
+"name": "Alignment Healthcare, Inc.",
+"sector": "Health Care"
+},
+"ALK": {
+"indices": [
+"SP400"
+],
+"name": "Alaska Air Group",
+"sector": "Industrials"
+},
+"ALKS": {
+"indices": [
+"SP600"
+],
+"name": "Alkermes plc",
+"sector": "Health Care"
+},
+"ALL": {
+"indices": [
+"SPX"
+],
+"name": "Allstate",
+"sector": "Financials"
+},
+"ALLE": {
+"indices": [
+"SPX"
+],
+"name": "Allegion",
+"sector": "Industrials"
+},
+"ALLY": {
+"indices": [
+"SP400"
+],
+"name": "Ally Financial",
+"sector": "Financials"
+},
+"ALRM": {
+"indices": [
+"SP600"
+],
+"name": "Alarm.Com, Inc.",
+"sector": "Financials"
+},
+"ALSN": {
+"indices": [
+"SP400"
+],
+"name": "Allison Transmission",
+"sector": "Industrials"
+},
+"ALV": {
+"indices": [
+"SP400"
+],
+"name": "Autoliv",
+"sector": "Consumer Discretionary"
+},
+"AM": {
+"indices": [
+"SP400"
+],
+"name": "Antero Midstream",
+"sector": "Energy"
+},
+"AMAT": {
+"indices": [
+"NDX",
+"SPX"
+],
+"name": "Applied Materials",
+"sector": "Information Technology"
+},
+"AMCR": {
+"indices": [
+"SPX"
+],
+"name": "Amcor",
+"sector": "Materials"
+},
+"AMD": {
+"indices": [
+"NDX",
+"SPX"
+],
+"name": "Advanced Micro Devices",
+"sector": "Information Technology"
+},
+"AME": {
+"indices": [
+"SPX"
+],
+"name": "Ametek",
+"sector": "Industrials"
+},
+"AMG": {
+"indices": [
+"SP400"
+],
+"name": "Affiliated Managers Group",
+"sector": "Financials"
+},
+"AMGN": {
+"indices": [
+"DJI",
+"NDX",
+"SPX"
+],
+"name": "Amgen",
+"sector": "Health Care"
+},
+"AMH": {
+"indices": [
+"SP400"
+],
+"name": "American Homes 4 Rent",
+"sector": "Real Estate"
+},
+"AMKR": {
+"indices": [
+"SP400"
+],
+"name": "Amkor Technology",
+"sector": "Information Technology"
+},
+"AMN": {
+"indices": [
+"SP600"
+],
+"name": "Amn Healthcare Services, Inc.",
+"sector": "Health Care"
+},
+"AMP": {
+"indices": [
+"SPX"
+],
+"name": "Ameriprise Financial",
+"sector": "Financials"
+},
+"AMPH": {
+"indices": [
+"SP600"
+],
+"name": "Amphstar Pharmaceuticals, Inc.",
+"sector": "Health Care"
+},
+"AMR": {
+"indices": [
+"SP600"
+],
+"name": "Alpha Metallurgical Resources, Inc.",
+"sector": "Materials"
+},
+"AMRX": {
+"indices": [
+"SP600"
+],
+"name": "Amneal Pharmaceuticals",
+"sector": "Health Care"
+},
+"AMSF": {
+"indices": [
+"SP600"
+],
+"name": "Amerisafe, Inc.",
+"sector": "Financials"
+},
+"AMT": {
+"indices": [
+"SPX"
+],
+"name": "American Tower",
+"sector": "Real Estate"
+},
+"AMTM": {
+"indices": [
+"SP600"
+],
+"name": "Amentum",
+"sector": "Industrials"
+},
+"AMZN": {
+"indices": [
+"DJI",
+"NDX",
+"SPX"
+],
+"name": "Amazon",
+"sector": "Consumer Discretionary"
+},
+"AN": {
+"indices": [
+"SP400"
+],
+"name": "AutoNation",
+"sector": "Consumer Discretionary"
+},
+"ANDE": {
+"indices": [
+"SP600"
+],
+"name": "The Andersons, Inc.",
+"sector": "Consumer Staples"
+},
+"ANET": {
+"indices": [
+"SPX"
+],
+"name": "Arista Networks",
+"sector": "Information Technology"
+},
+"ANF": {
+"indices": [
+"SP400"
+],
+"name": "Abercrombie & Fitch",
+"sector": "Consumer Discretionary"
+},
+"ANIP": {
+"indices": [
+"SP600"
+],
+"name": "ANI Pharmaceuticals, Inc.",
+"sector": "Health Care"
+},
+"ANSS": {
+"indices": [
+"NDX"
+],
+"name": "ANSS",
+"sector": ""
+},
+"AON": {
+"indices": [
+"SPX"
+],
+"name": "Aon plc",
+"sector": "Financials"
+},
+"AORT": {
+"indices": [
+"SP600"
+],
+"name": "Artivion",
+"sector": "Health Care"
+},
+"AOS": {
+"indices": [
+"SPX"
+],
+"name": "A. O. Smith",
+"sector": "Industrials"
+},
+"AOSL": {
+"indices": [
+"SP600"
+],
+"name": "Alpha and Omega Semiconductor, Ltd.",
+"sector": "Information Technology"
+},
+"APA": {
+"indices": [
+"SPX"
+],
+"name": "APA Corporation",
+"sector": "Energy"
+},
+"APAM": {
+"indices": [
+"SP600"
+],
+"name": "Artisan Partners Asset Management, Inc.",
+"sector": "Financials"
+},
+"APD": {
+"indices": [
+"SPX"
+],
+"name": "Air Products",
+"sector": "Materials"
+},
+"APG": {
+"indices": [
+"SP400"
+],
+"name": "APi Group",
+"sector": "Industrials"
+},
+"APH": {
+"indices": [
+"SPX"
+],
+"name": "Amphenol",
+"sector": "Information Technology"
+},
+"APLE": {
+"indices": [
+"SP600"
+],
+"name": "Apple Hospitality REIT, Inc.",
+"sector": "Real Estate"
+},
+"APO": {
+"indices": [
+"SPX"
+],
+"name": "Apollo Global Management",
+"sector": "Financials"
+},
+"APOG": {
+"indices": [
+"SP600"
+],
+"name": "Apogee Enterprises, Inc.",
+"sector": "Industrials"
+},
+"APP": {
+"indices": [
+"SPX"
+],
+"name": "AppLovin",
+"sector": "Communication Services"
+},
+"APPF": {
+"indices": [
+"SP400"
+],
+"name": "AppFolio",
+"sector": "Information Technology"
+},
+"APTV": {
+"indices": [
+"SPX"
+],
+"name": "Aptiv",
+"sector": "Consumer Discretionary"
+},
+"AR": {
+"indices": [
+"SP400"
+],
+"name": "Antero Resources",
+"sector": "Energy"
+},
+"ARCB": {
+"indices": [
+"SP600"
+],
+"name": "ArcBest Corp.",
+"sector": "Industrials"
+},
+"ARE": {
+"indices": [
+"SPX"
+],
+"name": "Alexandria Real Estate Equities",
+"sector": "Real Estate"
+},
+"ARES": {
+"indices": [
+"SPX"
+],
+"name": "Ares Management",
+"sector": "Financials"
+},
+"ARLO": {
+"indices": [
+"SP600"
+],
+"name": "Arlo Technologies",
+"sector": "Information Technology"
+},
+"ARM": {
+"indices": [
+"NDX"
+],
+"name": "ARM",
+"sector": ""
+},
+"ARMK": {
+"indices": [
+"SP400"
+],
+"name": "Aramark",
+"sector": "Consumer Discretionary"
+},
+"AROC": {
+"indices": [
+"SP600"
+],
+"name": "Archrock, Inc.",
+"sector": "Energy"
+},
+"ARR": {
+"indices": [
+"SP600"
+],
+"name": "Armour Residential REIT",
+"sector": "Real Estate"
+},
+"ARW": {
+"indices": [
+"SP400"
+],
+"name": "Arrow Electronics",
+"sector": "Information Technology"
+},
+"ARWR": {
+"indices": [
+"SP400"
+],
+"name": "Arrowhead Pharmaceuticals",
+"sector": "Health Care"
+},
+"ASB": {
+"indices": [
+"SP400"
+],
+"name": "Associated Bank",
+"sector": "Financials"
+},
+"ASH": {
+"indices": [
+"SP400"
+],
+"name": "Ashland Global",
+"sector": "Materials"
+},
+"ASML": {
+"indices": [
+"NDX"
+],
+"name": "ASML",
+"sector": ""
+},
+"ASO": {
+"indices": [
+"SP600"
+],
+"name": "Academy Sports + Outdoors",
+"sector": "Consumer Discretionary"
+},
+"ASTE": {
+"indices": [
+"SP600"
+],
+"name": "Astec Industries, Inc.",
+"sector": "Industrials"
+},
+"ASTH": {
+"indices": [
+"SP600"
+],
+"name": "Astrana Health, Inc.",
+"sector": "Health Care"
+},
+"ATEN": {
+"indices": [
+"SP600"
+],
+"name": "A10 Networks, Inc.",
+"sector": "Information Technology"
+},
+"ATI": {
+"indices": [
+"SP400"
+],
+"name": "ATI Inc.",
+"sector": "Industrials"
+},
+"ATMU": {
+"indices": [
+"SP600"
+],
+"name": "Atmus Filtration Technologies Inc.",
+"sector": "Industrials"
+},
+"ATO": {
+"indices": [
+"SPX"
+],
+"name": "Atmos Energy",
+"sector": "Utilities"
+},
+"ATR": {
+"indices": [
+"SP400"
+],
+"name": "AptarGroup",
+"sector": "Materials"
+},
+"AUB": {
+"indices": [
+"SP600"
+],
+"name": "Atlantic Union Bankshares, Corp.",
+"sector": "Financials"
+},
+"AVA": {
+"indices": [
+"SP600"
+],
+"name": "Avista Corporation",
+"sector": "Utilities"
+},
+"AVAV": {
+"indices": [
+"SP400"
+],
+"name": "AeroVironment",
+"sector": "Industrials"
+},
+"AVB": {
+"indices": [
+"SPX"
+],
+"name": "AvalonBay Communities",
+"sector": "Real Estate"
+},
+"AVGO": {
+"indices": [
+"NDX",
+"SPX"
+],
+"name": "Broadcom",
+"sector": "Information Technology"
+},
+"AVNT": {
+"indices": [
+"SP400"
+],
+"name": "Avient",
+"sector": "Materials"
+},
+"AVT": {
+"indices": [
+"SP400"
+],
+"name": "Avnet",
+"sector": "Information Technology"
+},
+"AVTR": {
+"indices": [
+"SP400"
+],
+"name": "Avantor",
+"sector": "Health Care"
+},
+"AVY": {
+"indices": [
+"SPX"
+],
+"name": "Avery Dennison",
+"sector": "Materials"
+},
+"AWI": {
+"indices": [
+"SP600"
+],
+"name": "Armstrong World Industries, Inc.",
+"sector": "Industrials"
+},
+"AWK": {
+"indices": [
+"SPX"
+],
+"name": "American Water Works",
+"sector": "Utilities"
+},
+"AWR": {
+"indices": [
+"SP600"
+],
+"name": "American States Water Company",
+"sector": "Utilities"
+},
+"AX": {
+"indices": [
+"SP600"
+],
+"name": "Axos Financial, Inc.",
+"sector": "Financials"
+},
+"AXON": {
+"indices": [
+"SPX"
+],
+"name": "Axon Enterprise",
+"sector": "Industrials"
+},
+"AXP": {
+"indices": [
+"DJI",
+"SPX"
+],
+"name": "American Express",
+"sector": "Financials"
+},
+"AXTA": {
+"indices": [
+"SP400"
+],
+"name": "Axalta",
+"sector": "Materials"
+},
+"AYI": {
+"indices": [
+"SP400"
+],
+"name": "Acuity Brands",
+"sector": "Industrials"
+},
+"AZN": {
+"indices": [
+"NDX"
+],
+"name": "AZN",
+"sector": ""
+},
+"AZO": {
+"indices": [
+"SPX"
+],
+"name": "AutoZone",
+"sector": "Consumer Discretionary"
+},
+"AZTA": {
+"indices": [
+"SP600"
+],
+"name": "Azenta, Inc.",
+"sector": "Health Care"
+},
+"AZZ": {
+"indices": [
+"SP600"
+],
+"name": "AZZ, Inc.",
+"sector": "Industrials"
+},
+"BA": {
+"indices": [
+"DJI",
+"SPX"
+],
+"name": "Boeing",
+"sector": "Industrials"
+},
+"BAC": {
+"indices": [
+"SPX"
+],
+"name": "Bank of America",
+"sector": "Financials"
+},
+"BAH": {
+"indices": [
+"SP400"
+],
+"name": "Booz Allen Hamilton",
+"sector": "Industrials"
+},
+"BALL": {
+"indices": [
+"SPX"
+],
+"name": "Ball Corporation",
+"sector": "Materials"
+},
+"BANC": {
+"indices": [
+"SP600"
+],
+"name": "Banc Of California, Inc.",
+"sector": "Financials"
+},
+"BANF": {
+"indices": [
+"SP600"
+],
+"name": "Bancfirst Corp",
+"sector": "Financials"
+},
+"BANR": {
+"indices": [
+"SP600"
+],
+"name": "Banner Corporation",
+"sector": "Financials"
+},
+"BAX": {
+"indices": [
+"SPX"
+],
+"name": "Baxter International",
+"sector": "Health Care"
+},
+"BBT": {
+"indices": [
+"SP600"
+],
+"name": "Beacon Financial Corp.",
+"sector": "Financials"
+},
+"BBWI": {
+"indices": [
+"SP400"
+],
+"name": "Bath & Body Works, Inc.",
+"sector": "Consumer Discretionary"
+},
+"BBY": {
+"indices": [
+"SPX"
+],
+"name": "Best Buy",
+"sector": "Consumer Discretionary"
+},
+"BC": {
+"indices": [
+"SP400"
+],
+"name": "Brunswick",
+"sector": "Consumer Discretionary"
+},
+"BCC": {
+"indices": [
+"SP600"
+],
+"name": "Boise Cascade",
+"sector": "Industrials"
+},
+"BCO": {
+"indices": [
+"SP400"
+],
+"name": "Brink's",
+"sector": "Industrials"
+},
+"BCPC": {
+"indices": [
+"SP600"
+],
+"name": "Balchem Corporation",
+"sector": "Materials"
+},
+"BDC": {
+"indices": [
+"SP400"
+],
+"name": "Belden Inc.",
+"sector": "Information Technology"
+},
+"BDX": {
+"indices": [
+"SPX"
+],
+"name": "Becton Dickinson",
+"sector": "Health Care"
+},
+"BEN": {
+"indices": [
+"SPX"
+],
+"name": "Franklin Resources",
+"sector": "Financials"
+},
+"BF-B": {
+"indices": [
+"SPX"
+],
+"name": "Brown\u2013Forman",
+"sector": "Consumer Staples"
+},
+"BFAM": {
+"indices": [
+"SP600"
+],
+"name": "Bright Horizons Family Solutions Inc.",
+"sector": "Consumer Discretionary"
+},
+"BFH": {
+"indices": [
+"SP600"
+],
+"name": "Bread Financial Holdings, Inc.",
+"sector": "Financials"
+},
+"BFS": {
+"indices": [
+"SP600"
+],
+"name": "Saul Centers, Inc.",
+"sector": "Real Estate"
+},
+"BG": {
+"indices": [
+"SPX"
+],
+"name": "Bunge Global",
+"sector": "Consumer Staples"
+},
+"BGC": {
+"indices": [
+"SP600"
+],
+"name": "BGC Group, Inc.",
+"sector": "Financials"
+},
+"BHE": {
+"indices": [
+"SP600"
+],
+"name": "Benchmark Electronics, Inc.",
+"sector": "Information Technology"
+},
+"BHF": {
+"indices": [
+"SP400"
+],
+"name": "Brighthouse Financial",
+"sector": "Financials"
+},
+"BIIB": {
+"indices": [
+"NDX",
+"SPX"
+],
+"name": "Biogen",
+"sector": "Health Care"
+},
+"BILL": {
+"indices": [
+"SP400"
+],
+"name": "Bill Holdings",
+"sector": "Information Technology"
+},
+"BIO": {
+"indices": [
+"SP400"
+],
+"name": "Bio-Rad Laboratories",
+"sector": "Health Care"
+},
+"BJ": {
+"indices": [
+"SP400"
+],
+"name": "BJ's Wholesale Club",
+"sector": "Consumer Staples"
+},
+"BJRI": {
+"indices": [
+"SP600"
+],
+"name": "BJ's Restaurants, Inc.",
+"sector": "Consumer Discretionary"
+},
+"BKE": {
+"indices": [
+"SP600"
+],
+"name": "The Buckle, Inc.",
+"sector": "Consumer Discretionary"
+},
+"BKH": {
+"indices": [
+"SP400"
+],
+"name": "Black Hills Corporation",
+"sector": "Utilities"
+},
+"BKNG": {
+"indices": [
+"NDX",
+"SPX"
+],
+"name": "Booking Holdings",
+"sector": "Consumer Discretionary"
+},
+"BKR": {
+"indices": [
+"NDX",
+"SPX"
+],
+"name": "Baker Hughes",
+"sector": "Energy"
+},
+"BKU": {
+"indices": [
+"SP600"
+],
+"name": "BankUnited, Inc.",
+"sector": "Financials"
+},
+"BL": {
+"indices": [
+"SP600"
+],
+"name": "BlackLine Systems, Inc.",
+"sector": "Information Technology"
+},
+"BLDR": {
+"indices": [
+"SPX"
+],
+"name": "Builders FirstSource",
+"sector": "Industrials"
+},
+"BLFS": {
+"indices": [
+"SP600"
+],
+"name": "BioLife Solutions, Inc.",
+"sector": "Health Care"
+},
+"BLK": {
+"indices": [
+"SPX"
+],
+"name": "BlackRock",
+"sector": "Financials"
+},
+"BLKB": {
+"indices": [
+"SP600"
+],
+"name": "Blackbaud",
+"sector": "Information Technology"
+},
+"BMI": {
+"indices": [
+"SP600"
+],
+"name": "Badger Meter, Inc.",
+"sector": "Information Technology"
+},
+"BMRN": {
+"indices": [
+"SP400"
+],
+"name": "BioMarin Pharmaceutical",
+"sector": "Health Care"
+},
+"BMY": {
+"indices": [
+"SPX"
+],
+"name": "Bristol Myers Squibb",
+"sector": "Health Care"
+},
+"BNL": {
+"indices": [
+"SP600"
+],
+"name": "Broadstone Net Lease, Inc.",
+"sector": "Real Estate"
+},
+"BNY": {
+"indices": [
+"SPX"
+],
+"name": "BNY Mellon",
+"sector": "Financials"
+},
+"BOH": {
+"indices": [
+"SP600"
+],
+"name": "Bank of Hawaii",
+"sector": "Financials"
+},
+"BOOT": {
+"indices": [
+"SP600"
+],
+"name": "Boot Barn Holdings, Inc.",
+"sector": "Consumer Discretionary"
+},
+"BOX": {
+"indices": [
+"SP600"
+],
+"name": "Box, Inc.",
+"sector": "Information Technology"
+},
+"BR": {
+"indices": [
+"SPX"
+],
+"name": "Broadridge Financial Solutions",
+"sector": "Industrials"
+},
+"BRC": {
+"indices": [
+"SP600"
+],
+"name": "Brady Corporation",
+"sector": "Industrials"
+},
+"BRK-B": {
+"indices": [
+"SPX"
+],
+"name": "Berkshire Hathaway",
+"sector": "Financials"
+},
+"BRKR": {
+"indices": [
+"SP400"
+],
+"name": "Bruker",
+"sector": "Health Care"
+},
+"BRO": {
+"indices": [
+"SPX"
+],
+"name": "Brown & Brown",
+"sector": "Financials"
+},
+"BROS": {
+"indices": [
+"SP400"
+],
+"name": "Dutch Bros Inc.",
+"sector": "Consumer Discretionary"
+},
+"BRX": {
+"indices": [
+"SP400"
+],
+"name": "Brixmor Property Group",
+"sector": "Real Estate"
+},
+"BSX": {
+"indices": [
+"SPX"
+],
+"name": "Boston Scientific",
+"sector": "Health Care"
+},
+"BSY": {
+"indices": [
+"SP400"
+],
+"name": "Bentley Systems",
+"sector": "Information Technology"
+},
+"BTSG": {
+"indices": [
+"SP400"
+],
+"name": "BrightSpring Health Services",
+"sector": "Health Care"
+},
+"BTU": {
+"indices": [
+"SP600"
+],
+"name": "Peabody Energy, Inc.",
+"sector": "Energy"
+},
+"BURL": {
+"indices": [
+"SP400"
+],
+"name": "Burlington Stores",
+"sector": "Consumer Discretionary"
+},
+"BWA": {
+"indices": [
+"SP400"
+],
+"name": "BorgWarner",
+"sector": "Consumer Discretionary"
+},
+"BWXT": {
+"indices": [
+"SP400"
+],
+"name": "BWX Technologies",
+"sector": "Industrials"
+},
+"BX": {
+"indices": [
+"SPX"
+],
+"name": "Blackstone Inc.",
+"sector": "Financials"
+},
+"BXMT": {
+"indices": [
+"SP600"
+],
+"name": "Blackstone Mortgage Trust, Inc.",
+"sector": "Financials"
+},
+"BXP": {
+"indices": [
+"SPX"
+],
+"name": "BXP, Inc.",
+"sector": "Real Estate"
+},
+"BYD": {
+"indices": [
+"SP400"
+],
+"name": "Boyd Gaming",
+"sector": "Consumer Discretionary"
+},
+"C": {
+"indices": [
+"SPX"
+],
+"name": "Citigroup",
+"sector": "Financials"
+},
+"CACC": {
+"indices": [
+"SP600"
+],
+"name": "Credit Acceptance",
+"sector": "Financials"
+},
+"CACI": {
+"indices": [
+"SP400"
+],
+"name": "CACI International",
+"sector": "Industrials"
+},
+"CAG": {
+"indices": [
+"SP600"
+],
+"name": "Conagra Brands",
+"sector": "Consumer Staples"
+},
+"CAH": {
+"indices": [
+"SPX"
+],
+"name": "Cardinal Health",
+"sector": "Health Care"
+},
+"CAKE": {
+"indices": [
+"SP600"
+],
+"name": "The Cheesecake Factory, Inc.",
+"sector": "Consumer Discretionary"
+},
+"CALM": {
+"indices": [
+"SP600"
+],
+"name": "Cal-Maine Foods, Inc.",
+"sector": "Consumer Staples"
+},
+"CALX": {
+"indices": [
+"SP600"
+],
+"name": "Calix",
+"sector": "Information Technology"
+},
+"CALY": {
+"indices": [
+"SP600"
+],
+"name": "Callaway Golf Company",
+"sector": "Consumer Discretionary"
+},
+"CAR": {
+"indices": [
+"SP400"
+],
+"name": "Avis Budget Group",
+"sector": "Industrials"
+},
+"CARG": {
+"indices": [
+"SP600"
+],
+"name": "CarGurus",
+"sector": "Communication Services"
+},
+"CARR": {
+"indices": [
+"SPX"
+],
+"name": "Carrier Global",
+"sector": "Industrials"
+},
+"CART": {
+"indices": [
+"SP400"
+],
+"name": "Maplebear Inc.",
+"sector": "Consumer Staples"
+},
+"CASH": {
+"indices": [
+"SP600"
+],
+"name": "Pathward Financial, Inc.",
+"sector": "Financials"
+},
+"CASY": {
+"indices": [
+"SPX"
+],
+"name": "Casey's",
+"sector": "Consumer Staples"
+},
+"CAT": {
+"indices": [
+"DJI",
+"SPX"
+],
+"name": "Caterpillar Inc.",
+"sector": "Industrials"
+},
+"CATY": {
+"indices": [
+"SP600"
+],
+"name": "Cathay General Bancorp",
+"sector": "Financials"
+},
+"CAVA": {
+"indices": [
+"SP400"
+],
+"name": "Cava Group",
+"sector": "Consumer Discretionary"
+},
+"CB": {
+"indices": [
+"SPX"
+],
+"name": "Chubb Limited",
+"sector": "Financials"
+},
+"CBOE": {
+"indices": [
+"SPX"
+],
+"name": "Cboe Global Markets",
+"sector": "Financials"
+},
+"CBRE": {
+"indices": [
+"SPX"
+],
+"name": "CBRE Group",
+"sector": "Real Estate"
+},
+"CBRL": {
+"indices": [
+"SP600"
+],
+"name": "Cracker Barrel",
+"sector": "Consumer Discretionary"
+},
+"CBSH": {
+"indices": [
+"SP400"
+],
+"name": "Commerce Bancshares",
+"sector": "Financials"
+},
+"CBT": {
+"indices": [
+"SP400"
+],
+"name": "Cabot Corp",
+"sector": "Materials"
+},
+"CBU": {
+"indices": [
+"SP600"
+],
+"name": "Community Bank System, Inc.",
+"sector": "Financials"
+},
+"CC": {
+"indices": [
+"SP600"
+],
+"name": "Chemours",
+"sector": "Materials"
+},
+"CCEP": {
+"indices": [
+"NDX"
+],
+"name": "CCEP",
+"sector": ""
+},
+"CCI": {
+"indices": [
+"SPX"
+],
+"name": "Crown Castle",
+"sector": "Real Estate"
+},
+"CCK": {
+"indices": [
+"SP400"
+],
+"name": "Crown Holdings",
+"sector": "Materials"
+},
+"CCL": {
+"indices": [
+"SPX"
+],
+"name": "Carnival Corporation",
+"sector": "Consumer Discretionary"
+},
+"CCOI": {
+"indices": [
+"SP600"
+],
+"name": "Cogent Communications Holdings, Inc.",
+"sector": "Communication Services"
+},
+"CCS": {
+"indices": [
+"SP600"
+],
+"name": "Century Communities, Inc.",
+"sector": "Consumer Discretionary"
+},
+"CDE": {
+"indices": [
+"SP400"
+],
+"name": "Coeur Mining",
+"sector": "Materials"
+},
+"CDNS": {
+"indices": [
+"NDX",
+"SPX"
+],
+"name": "Cadence Design Systems",
+"sector": "Information Technology"
+},
+"CDP": {
+"indices": [
+"SP400"
+],
+"name": "COPT Defense Properties",
+"sector": "Real Estate"
+},
+"CDW": {
+"indices": [
+"NDX",
+"SPX"
+],
+"name": "CDW Corporation",
+"sector": "Information Technology"
+},
+"CE": {
+"indices": [
+"SP600"
+],
+"name": "Celanese",
+"sector": "Materials"
+},
+"CEG": {
+"indices": [
+"NDX",
+"SPX"
+],
+"name": "Constellation Energy",
+"sector": "Utilities"
+},
+"CELH": {
+"indices": [
+"SP400"
+],
+"name": "Celsius Holdings",
+"sector": "Consumer Staples"
+},
+"CENT": {
+"indices": [
+"SP600"
+],
+"name": "Central Garden & Pet Company",
+"sector": "Consumer Staples"
+},
+"CENTA": {
+"indices": [
+"SP600"
+],
+"name": "Central Garden & Pet Company (Class A)",
+"sector": "Consumer Staples"
+},
+"CENX": {
+"indices": [
+"SP600"
+],
+"name": "Century Aluminum Company",
+"sector": "Materials"
+},
+"CERT": {
+"indices": [
+"SP600"
+],
+"name": "Certara, Inc.",
+"sector": "Health Care"
+},
+"CF": {
+"indices": [
+"SPX"
+],
+"name": "CF Industries",
+"sector": "Materials"
+},
+"CFFN": {
+"indices": [
+"SP600"
+],
+"name": "Capitol Federal Savings Bank",
+"sector": "Financials"
+},
+"CFG": {
+"indices": [
+"SPX"
+],
+"name": "Citizens Financial Group",
+"sector": "Financials"
+},
+"CFR": {
+"indices": [
+"SP400"
+],
+"name": "Frost Bank",
+"sector": "Financials"
+},
+"CG": {
+"indices": [
+"SP400"
+],
+"name": "Carlyle Group (The)",
+"sector": "Financials"
+},
+"CGNX": {
+"indices": [
+"SP400"
+],
+"name": "Cognex",
+"sector": "Information Technology"
+},
+"CHCO": {
+"indices": [
+"SP600"
+],
+"name": "City Holding Company",
+"sector": "Financials"
+},
+"CHD": {
+"indices": [
+"SPX"
+],
+"name": "Church & Dwight",
+"sector": "Consumer Staples"
+},
+"CHDN": {
+"indices": [
+"SP400"
+],
+"name": "Churchill Downs Inc.",
+"sector": "Consumer Discretionary"
+},
+"CHE": {
+"indices": [
+"SP400"
+],
+"name": "Chemed Corp.",
+"sector": "Health Care"
+},
+"CHEF": {
+"indices": [
+"SP600"
+],
+"name": "Chefs' Warehouse, Inc.",
+"sector": "Consumer Staples"
+},
+"CHH": {
+"indices": [
+"SP400"
+],
+"name": "Choice Hotels",
+"sector": "Consumer Discretionary"
+},
+"CHRD": {
+"indices": [
+"SP400"
+],
+"name": "Chord Energy",
+"sector": "Energy"
+},
+"CHRW": {
+"indices": [
+"SPX"
+],
+"name": "C.H. Robinson",
+"sector": "Industrials"
+},
+"CHTR": {
+"indices": [
+"NDX",
+"SPX"
+],
+"name": "Charter Communications",
+"sector": "Communication Services"
+},
+"CHWY": {
+"indices": [
+"SP400"
+],
+"name": "Chewy",
+"sector": "Consumer Discretionary"
+},
+"CI": {
+"indices": [
+"SPX"
+],
+"name": "Cigna",
+"sector": "Health Care"
+},
+"CIEN": {
+"indices": [
+"SPX"
+],
+"name": "Ciena",
+"sector": "Information Technology"
+},
+"CINF": {
+"indices": [
+"SPX"
+],
+"name": "Cincinnati Financial",
+"sector": "Financials"
+},
+"CL": {
+"indices": [
+"SPX"
+],
+"name": "Colgate-Palmolive",
+"sector": "Consumer Staples"
+},
+"CLF": {
+"indices": [
+"SP400"
+],
+"name": "Cleveland-Cliffs",
+"sector": "Materials"
+},
+"CLH": {
+"indices": [
+"SP400"
+],
+"name": "Clean Harbors",
+"sector": "Industrials"
+},
+"CLSK": {
+"indices": [
+"SP600"
+],
+"name": "CleanSpark, Inc.",
+"sector": "Information Technology"
+},
+"CLX": {
+"indices": [
+"SPX"
+],
+"name": "Clorox",
+"sector": "Consumer Staples"
+},
+"CMC": {
+"indices": [
+"SP400"
+],
+"name": "Commercial Metals",
+"sector": "Materials"
+},
+"CMCSA": {
+"indices": [
+"NDX",
+"SPX"
+],
+"name": "Comcast",
+"sector": "Communication Services"
+},
+"CME": {
+"indices": [
+"SPX"
+],
+"name": "CME Group",
+"sector": "Financials"
+},
+"CMG": {
+"indices": [
+"SPX"
+],
+"name": "Chipotle Mexican Grill",
+"sector": "Consumer Discretionary"
+},
+"CMI": {
+"indices": [
+"SPX"
+],
+"name": "Cummins",
+"sector": "Industrials"
+},
+"CMS": {
+"indices": [
+"SPX"
+],
+"name": "CMS Energy",
+"sector": "Utilities"
+},
+"CNC": {
+"indices": [
+"SPX"
+],
+"name": "Centene Corporation",
+"sector": "Health Care"
+},
+"CNH": {
+"indices": [
+"SP400"
+],
+"name": "CNH Industrial",
+"sector": "Industrials"
+},
+"CNK": {
+"indices": [
+"SP600"
+],
+"name": "Cinemark Holdings, Inc.",
+"sector": "Communication Services"
+},
+"CNM": {
+"indices": [
+"SP400"
+],
+"name": "Core & Main",
+"sector": "Industrials"
+},
+"CNMD": {
+"indices": [
+"SP600"
+],
+"name": "CONMED Corporation",
+"sector": "Health Care"
+},
+"CNO": {
+"indices": [
+"SP400"
+],
+"name": "CNO Financial Group",
+"sector": "Financials"
+},
+"CNP": {
+"indices": [
+"SPX"
+],
+"name": "CenterPoint Energy",
+"sector": "Utilities"
+},
+"CNR": {
+"indices": [
+"SP600"
+],
+"name": "Core Natural Resources, Inc.",
+"sector": "Energy"
+},
+"CNS": {
+"indices": [
+"SP600"
+],
+"name": "Cohen & Steers, Inc.",
+"sector": "Financials"
+},
+"CNX": {
+"indices": [
+"SP400"
+],
+"name": "CNX Resources",
+"sector": "Energy"
+},
+"CNXC": {
+"indices": [
+"SP600"
+],
+"name": "Concentrix",
+"sector": "Industrials"
+},
+"CNXN": {
+"indices": [
+"SP600"
+],
+"name": "PC Connection, Inc.",
+"sector": "Information Technology"
+},
+"COCO": {
+"indices": [
+"SP600"
+],
+"name": "The Vita Coco Company",
+"sector": "Consumer Staples"
+},
+"COF": {
+"indices": [
+"SPX"
+],
+"name": "Capital One",
+"sector": "Financials"
+},
+"COHR": {
+"indices": [
+"SPX"
+],
+"name": "Coherent Corp.",
+"sector": "Information Technology"
+},
+"COHU": {
+"indices": [
+"SP600"
+],
+"name": "Cohu, Inc.",
+"sector": "Information Technology"
+},
+"COIN": {
+"indices": [
+"SPX"
+],
+"name": "Coinbase",
+"sector": "Financials"
+},
+"COKE": {
+"indices": [
+"SP400"
+],
+"name": "Coca-Cola Consolidated",
+"sector": "Consumer Staples"
+},
+"COLB": {
+"indices": [
+"SP400"
+],
+"name": "Columbia Banking System",
+"sector": "Financials"
+},
+"COLL": {
+"indices": [
+"SP600"
+],
+"name": "Collegium Pharmaceutical, Inc.",
+"sector": "Health Care"
+},
+"COLM": {
+"indices": [
+"SP400"
+],
+"name": "Columbia Sportswear",
+"sector": "Consumer Discretionary"
+},
+"CON": {
+"indices": [
+"SP600"
+],
+"name": "Concentra Group Holdings Parent, Inc.",
+"sector": "Health Care"
+},
+"COO": {
+"indices": [
+"SPX"
+],
+"name": "Cooper Companies (The)",
+"sector": "Health Care"
+},
+"COP": {
+"indices": [
+"SPX"
+],
+"name": "ConocoPhillips",
+"sector": "Energy"
+},
+"COR": {
+"indices": [
+"SPX"
+],
+"name": "Cencora",
+"sector": "Health Care"
+},
+"CORT": {
+"indices": [
+"SP600"
+],
+"name": "Corcept Therapeutics Incorporated",
+"sector": "Health Care"
+},
+"COST": {
+"indices": [
+"NDX",
+"SPX"
+],
+"name": "Costco",
+"sector": "Consumer Staples"
+},
+"COTY": {
+"indices": [
+"SP600"
+],
+"name": "Coty",
+"sector": "Consumer Staples"
+},
+"CPAY": {
+"indices": [
+"SPX"
+],
+"name": "Corpay",
+"sector": "Financials"
+},
+"CPB": {
+"indices": [
+"SP600"
+],
+"name": "The Campbell's Company",
+"sector": "Consumer Staples"
+},
+"CPF": {
+"indices": [
+"SP600"
+],
+"name": "Central Pacific Financial Corp.",
+"sector": "Financials"
+},
+"CPK": {
+"indices": [
+"SP600"
+],
+"name": "Chesapeake Utilities Corp.",
+"sector": "Utilities"
+},
+"CPRI": {
+"indices": [
+"SP400"
+],
+"name": "Capri Holdings",
+"sector": "Consumer Discretionary"
+},
+"CPRT": {
+"indices": [
+"NDX",
+"SPX"
+],
+"name": "Copart",
+"sector": "Industrials"
+},
+"CPT": {
+"indices": [
+"SPX"
+],
+"name": "Camden Property Trust",
+"sector": "Real Estate"
+},
+"CR": {
+"indices": [
+"SP400"
+],
+"name": "Crane",
+"sector": "Industrials"
+},
+"CRBG": {
+"indices": [
+"SP400"
+],
+"name": "Corebridge Financial",
+"sector": "Financials"
+},
+"CRC": {
+"indices": [
+"SP600"
+],
+"name": "California Resources Corporation",
+"sector": "Energy"
+},
+"CRGY": {
+"indices": [
+"SP600"
+],
+"name": "Crescent Energy Company",
+"sector": "Energy"
+},
+"CRH": {
+"indices": [
+"SPX"
+],
+"name": "CRH plc",
+"sector": "Materials"
+},
+"CRI": {
+"indices": [
+"SP600"
+],
+"name": "Carter's, Inc.",
+"sector": "Consumer Discretionary"
+},
+"CRK": {
+"indices": [
+"SP600"
+],
+"name": "Comstock Resources, Inc.",
+"sector": "Energy"
+},
+"CRL": {
+"indices": [
+"SPX"
+],
+"name": "Charles River Laboratories",
+"sector": "Health Care"
+},
+"CRM": {
+"indices": [
+"DJI",
+"SPX"
+],
+"name": "Salesforce",
+"sector": "Information Technology"
+},
+"CROX": {
+"indices": [
+"SP400"
+],
+"name": "Crocs",
+"sector": "Consumer Discretionary"
+},
+"CRS": {
+"indices": [
+"SP400"
+],
+"name": "Carpenter Technology",
+"sector": "Industrials"
+},
+"CRSR": {
+"indices": [
+"SP600"
+],
+"name": "Corsair Gaming",
+"sector": "Information Technology"
+},
+"CRUS": {
+"indices": [
+"SP400"
+],
+"name": "Cirrus Logic",
+"sector": "Information Technology"
+},
+"CRVL": {
+"indices": [
+"SP600"
+],
+"name": "CorVel Corporation",
+"sector": "Health Care"
+},
+"CRWD": {
+"indices": [
+"NDX",
+"SPX"
+],
+"name": "CrowdStrike",
+"sector": "Information Technology"
+},
+"CSCO": {
+"indices": [
+"DJI",
+"NDX",
+"SPX"
+],
+"name": "Cisco",
+"sector": "Information Technology"
+},
+"CSGP": {
+"indices": [
+"NDX",
+"SPX"
+],
+"name": "CoStar Group",
+"sector": "Real Estate"
+},
+"CSL": {
+"indices": [
+"SP400"
+],
+"name": "Carlisle Companies",
+"sector": "Industrials"
+},
+"CSR": {
+"indices": [
+"SP600"
+],
+"name": "Centerspace Trust",
+"sector": "Real Estate"
+},
+"CSW": {
+"indices": [
+"SP600"
+],
+"name": "CSW Industrials, Inc.",
+"sector": "Industrials"
+},
+"CSX": {
+"indices": [
+"NDX",
+"SPX"
+],
+"name": "CSX Corporation",
+"sector": "Industrials"
+},
+"CTAS": {
+"indices": [
+"NDX",
+"SPX"
+],
+"name": "Cintas",
+"sector": "Industrials"
+},
+"CTRE": {
+"indices": [
+"SP400"
+],
+"name": "CareTrust REIT",
+"sector": "Real Estate"
+},
+"CTS": {
+"indices": [
+"SP600"
+],
+"name": "CTS Corporation",
+"sector": "Information Technology"
+},
+"CTSH": {
+"indices": [
+"NDX",
+"SPX"
+],
+"name": "Cognizant",
+"sector": "Information Technology"
+},
+"CTVA": {
+"indices": [
+"SPX"
+],
+"name": "Corteva",
+"sector": "Materials"
+},
+"CUBE": {
+"indices": [
+"SP400"
+],
+"name": "CubeSmart",
+"sector": "Real Estate"
+},
+"CUBI": {
+"indices": [
+"SP600"
+],
+"name": "Customers Bancorp, Inc.",
+"sector": "Financials"
+},
+"CURB": {
+"indices": [
+"SP600"
+],
+"name": "Curbline Properties Corp.",
+"sector": "Real Estate"
+},
+"CUZ": {
+"indices": [
+"SP400"
+],
+"name": "Cousins Properties",
+"sector": "Real Estate"
+},
+"CVBF": {
+"indices": [
+"SP600"
+],
+"name": "CVB Financial Corp.",
+"sector": "Financials"
+},
+"CVCO": {
+"indices": [
+"SP600"
+],
+"name": "Cavco Industries, Inc.",
+"sector": "Consumer Discretionary"
+},
+"CVI": {
+"indices": [
+"SP600"
+],
+"name": "CVR Energy, Inc.",
+"sector": "Energy"
+},
+"CVLT": {
+"indices": [
+"SP400"
+],
+"name": "CommVault Systems",
+"sector": "Information Technology"
+},
+"CVNA": {
+"indices": [
+"SPX"
+],
+"name": "Carvana",
+"sector": "Consumer Discretionary"
+},
+"CVS": {
+"indices": [
+"SPX"
+],
+"name": "CVS Health",
+"sector": "Health Care"
+},
+"CVSA": {
+"indices": [
+"SP600"
+],
+"name": "Covista Inc.",
+"sector": "Consumer Discretionary"
+},
+"CVX": {
+"indices": [
+"DJI",
+"SPX"
+],
+"name": "Chevron Corporation",
+"sector": "Energy"
+},
+"CW": {
+"indices": [
+"SP400"
+],
+"name": "Curtiss-Wright",
+"sector": "Industrials"
+},
+"CWEN": {
+"indices": [
+"SP600"
+],
+"name": "Clearway Energy, Inc. (Class C)",
+"sector": "Utilities"
+},
+"CWEN-A": {
+"indices": [
+"SP600"
+],
+"name": "Clearway Energy, Inc. (Class A)",
+"sector": "Utilities"
+},
+"CWK": {
+"indices": [
+"SP600"
+],
+"name": "Cushman & Wakefield plc",
+"sector": "Real Estate"
+},
+"CWST": {
+"indices": [
+"SP600"
+],
+"name": "Casella Waste Systems, Inc.",
+"sector": "Industrials"
+},
+"CWT": {
+"indices": [
+"SP600"
+],
+"name": "California Water Service Group",
+"sector": "Utilities"
+},
+"CXM": {
+"indices": [
+"SP600"
+],
+"name": "Sprinklr, Inc.",
+"sector": "Information Technology"
+},
+"CXT": {
+"indices": [
+"SP400"
+],
+"name": "Crane NXT",
+"sector": "Information Technology"
+},
+"CXW": {
+"indices": [
+"SP600"
+],
+"name": "CoreCivic",
+"sector": "Industrials"
+},
+"CYTK": {
+"indices": [
+"SP400"
+],
+"name": "Cytokinetics",
+"sector": "Health Care"
+},
+"CZR": {
+"indices": [
+"SP600"
+],
+"name": "Caesars Entertainment",
+"sector": "Consumer Discretionary"
+},
+"D": {
+"indices": [
+"SPX"
+],
+"name": "Dominion Energy",
+"sector": "Utilities"
+},
+"DAL": {
+"indices": [
+"SPX"
+],
+"name": "Delta Air Lines",
+"sector": "Industrials"
+},
+"DAN": {
+"indices": [
+"SP600"
+],
+"name": "Dana Incorporated",
+"sector": "Consumer Discretionary"
+},
+"DAR": {
+"indices": [
+"SP400"
+],
+"name": "Darling Ingredients",
+"sector": "Consumer Staples"
+},
+"DASH": {
+"indices": [
+"NDX",
+"SPX"
+],
+"name": "DoorDash",
+"sector": "Consumer Discretionary"
+},
+"DAVE": {
+"indices": [
+"SP600"
+],
+"name": "Dave, Inc.",
+"sector": "Financials"
+},
+"DBD": {
+"indices": [
+"SP600"
+],
+"name": "Diebold Nixdorf",
+"sector": "Information Technology"
+},
+"DBX": {
+"indices": [
+"SP400"
+],
+"name": "Dropbox",
+"sector": "Information Technology"
+},
+"DCH": {
+"indices": [
+"SP600"
+],
+"name": "Dauch Corporation",
+"sector": "Consumer Discretionary"
+},
+"DCI": {
+"indices": [
+"SP400"
+],
+"name": "Donaldson Company",
+"sector": "Industrials"
+},
+"DCOM": {
+"indices": [
+"SP600"
+],
+"name": "Dime Community Bancshares, Inc.",
+"sector": "Financials"
+},
+"DD": {
+"indices": [
+"SPX"
+],
+"name": "DuPont",
+"sector": "Industrials"
+},
+"DDOG": {
+"indices": [
+"NDX",
+"SPX"
+],
+"name": "Datadog",
+"sector": "Information Technology"
+},
+"DE": {
+"indices": [
+"SPX"
+],
+"name": "Deere & Company",
+"sector": "Industrials"
+},
+"DEA": {
+"indices": [
+"SP600"
+],
+"name": "Easterly Government Properties, Inc.",
+"sector": "Real Estate"
+},
+"DECK": {
+"indices": [
+"SPX"
+],
+"name": "Deckers Brands",
+"sector": "Consumer Discretionary"
+},
+"DEI": {
+"indices": [
+"SP600"
+],
+"name": "Douglas Emmett",
+"sector": "Real Estate"
+},
+"DELL": {
+"indices": [
+"SPX"
+],
+"name": "Dell Technologies",
+"sector": "Information Technology"
+},
+"DFH": {
+"indices": [
+"SP600"
+],
+"name": "Dream Finders Homes, Inc.",
+"sector": "Consumer Discretionary"
+},
+"DFIN": {
+"indices": [
+"SP600"
+],
+"name": "Donnelley Financial Solutions, Inc.",
+"sector": "Financials"
+},
+"DG": {
+"indices": [
+"SPX"
+],
+"name": "Dollar General",
+"sector": "Consumer Staples"
+},
+"DGII": {
+"indices": [
+"SP600"
+],
+"name": "Digi International Inc.",
+"sector": "Information Technology"
+},
+"DGX": {
+"indices": [
+"SPX"
+],
+"name": "Quest Diagnostics",
+"sector": "Health Care"
+},
+"DHI": {
+"indices": [
+"SPX"
+],
+"name": "D. R. Horton",
+"sector": "Consumer Discretionary"
+},
+"DHR": {
+"indices": [
+"SPX"
+],
+"name": "Danaher Corporation",
+"sector": "Health Care"
+},
+"DINO": {
+"indices": [
+"SP400"
+],
+"name": "HF Sinclair",
+"sector": "Energy"
+},
+"DIOD": {
+"indices": [
+"SP600"
+],
+"name": "Diodes Incorporated",
+"sector": "Information Technology"
+},
+"DIS": {
+"indices": [
+"DJI",
+"SPX"
+],
+"name": "Walt Disney Company (The)",
+"sector": "Communication Services"
+},
+"DKS": {
+"indices": [
+"SP400"
+],
+"name": "Dick's Sporting Goods",
+"sector": "Consumer Discretionary"
+},
+"DLB": {
+"indices": [
+"SP400"
+],
+"name": "Dolby",
+"sector": "Information Technology"
+},
+"DLR": {
+"indices": [
+"SPX"
+],
+"name": "Digital Realty",
+"sector": "Real Estate"
+},
+"DLTR": {
+"indices": [
+"NDX",
+"SPX"
+],
+"name": "Dollar Tree",
+"sector": "Consumer Staples"
+},
+"DLX": {
+"indices": [
+"SP600"
+],
+"name": "Deluxe Corporation",
+"sector": "Industrials"
+},
+"DMC": {
+"indices": [
+"SP600"
+],
+"name": "Del Monte Corporation",
+"sector": "Consumer Staples"
+},
+"DNOW": {
+"indices": [
+"SP600"
+],
+"name": "NOW Inc",
+"sector": "Industrials"
+},
+"DOC": {
+"indices": [
+"SPX"
+],
+"name": "Healthpeak Properties",
+"sector": "Real Estate"
+},
+"DOCN": {
+"indices": [
+"SP400"
+],
+"name": "DigitalOcean",
+"sector": "Information Technology"
+},
+"DOCS": {
+"indices": [
+"SP400"
+],
+"name": "Doximity",
+"sector": "Health Care"
+},
+"DOCU": {
+"indices": [
+"SP400"
+],
+"name": "Docusign",
+"sector": "Information Technology"
+},
+"DORM": {
+"indices": [
+"SP600"
+],
+"name": "Dorman Products, Inc.",
+"sector": "Consumer Discretionary"
+},
+"DOV": {
+"indices": [
+"SPX"
+],
+"name": "Dover Corporation",
+"sector": "Industrials"
+},
+"DOW": {
+"indices": [
+"SPX"
+],
+"name": "Dow Inc.",
+"sector": "Materials"
+},
+"DPZ": {
+"indices": [
+"SPX"
+],
+"name": "Domino's",
+"sector": "Consumer Discretionary"
+},
+"DRH": {
+"indices": [
+"SP600"
+],
+"name": "DiamondRock Hospitality Company",
+"sector": "Real Estate"
+},
+"DRI": {
+"indices": [
+"SPX"
+],
+"name": "Darden Restaurants",
+"sector": "Consumer Discretionary"
+},
+"DT": {
+"indices": [
+"SP400"
+],
+"name": "Dynatrace",
+"sector": "Information Technology"
+},
+"DTE": {
+"indices": [
+"SPX"
+],
+"name": "DTE Energy",
+"sector": "Utilities"
+},
+"DTM": {
+"indices": [
+"SP400"
+],
+"name": "DT Midstream",
+"sector": "Energy"
+},
+"DUK": {
+"indices": [
+"SPX"
+],
+"name": "Duke Energy",
+"sector": "Utilities"
+},
+"DUOL": {
+"indices": [
+"SP400"
+],
+"name": "Duolingo",
+"sector": "Consumer Discretionary"
+},
+"DV": {
+"indices": [
+"SP600"
+],
+"name": "DoubleVerify Holdings Inc.",
+"sector": "Communication Services"
+},
+"DVA": {
+"indices": [
+"SPX"
+],
+"name": "DaVita",
+"sector": "Health Care"
+},
+"DVN": {
+"indices": [
+"SPX"
+],
+"name": "Devon Energy",
+"sector": "Energy"
+},
+"DXC": {
+"indices": [
+"SP600"
+],
+"name": "DXC Technology",
+"sector": "Information Technology"
+},
+"DXCM": {
+"indices": [
+"NDX",
+"SPX"
+],
+"name": "Dexcom",
+"sector": "Health Care"
+},
+"DXPE": {
+"indices": [
+"SP600"
+],
+"name": "DXP Enterprises, Inc.",
+"sector": "Industrials"
+},
+"DY": {
+"indices": [
+"SP400"
+],
+"name": "Dycom Industries",
+"sector": "Industrials"
+},
+"EA": {
+"indices": [
+"NDX"
+],
+"name": "EA",
+"sector": ""
+},
+"EAT": {
+"indices": [
+"SP600"
+],
+"name": "Brinker International, Inc.",
+"sector": "Consumer Discretionary"
+},
+"EBAY": {
+"indices": [
+"SPX"
+],
+"name": "eBay Inc.",
+"sector": "Consumer Discretionary"
+},
+"EBC": {
+"indices": [
+"SP600"
+],
+"name": "Eastern Bankshares, Inc.",
+"sector": "Financials"
+},
+"ECG": {
+"indices": [
+"SP600"
+],
+"name": "Everus Construction Group, Inc.",
+"sector": "Industrials"
+},
+"ECHO": {
+"indices": [
+"SPX"
+],
+"name": "EchoStar",
+"sector": "Communication Services"
+},
+"ECL": {
+"indices": [
+"SPX"
+],
+"name": "Ecolab",
+"sector": "Materials"
+},
+"ECPG": {
+"indices": [
+"SP600"
+],
+"name": "Encore Capital Group, Inc.",
+"sector": "Financials"
+},
+"ED": {
+"indices": [
+"SPX"
+],
+"name": "Consolidated Edison",
+"sector": "Utilities"
+},
+"EEFT": {
+"indices": [
+"SP400"
+],
+"name": "Euronet Worldwide",
+"sector": "Financials"
+},
+"EFC": {
+"indices": [
+"SP600"
+],
+"name": "Ellington Financial, Inc.",
+"sector": "Financials"
+},
+"EFOR": {
+"indices": [
+"SP600"
+],
+"name": "Everforth Inc.",
+"sector": "Information Technology"
+},
+"EFX": {
+"indices": [
+"SPX"
+],
+"name": "Equifax",
+"sector": "Industrials"
+},
+"EG": {
+"indices": [
+"SPX"
+],
+"name": "Everest Group",
+"sector": "Financials"
+},
+"EGBN": {
+"indices": [
+"SP600"
+],
+"name": "Eagle Bancorp Inc",
+"sector": "Financials"
+},
+"EGP": {
+"indices": [
+"SP400"
+],
+"name": "EastGroup Properties",
+"sector": "Real Estate"
+},
+"EHC": {
+"indices": [
+"SP400"
+],
+"name": "Encompass Health",
+"sector": "Health Care"
+},
+"EIG": {
+"indices": [
+"SP600"
+],
+"name": "Employers Holdings, Inc.",
+"sector": "Financials"
+},
+"EIX": {
+"indices": [
+"SPX"
+],
+"name": "Edison International",
+"sector": "Utilities"
+},
+"EL": {
+"indices": [
+"SPX"
+],
+"name": "Est\u00e9e Lauder Companies (The)",
+"sector": "Consumer Staples"
+},
+"ELAN": {
+"indices": [
+"SP400"
+],
+"name": "Elanco",
+"sector": "Health Care"
+},
+"ELF": {
+"indices": [
+"SP400"
+],
+"name": "e.l.f. Beauty",
+"sector": "Consumer Staples"
+},
+"ELS": {
+"indices": [
+"SP400"
+],
+"name": "Equity Lifestyle Properties",
+"sector": "Real Estate"
+},
+"ELV": {
+"indices": [
+"SPX"
+],
+"name": "Elevance Health",
+"sector": "Health Care"
+},
+"EME": {
+"indices": [
+"SPX"
+],
+"name": "Emcor",
+"sector": "Industrials"
+},
+"EMN": {
+"indices": [
+"SP600"
+],
+"name": "Eastman Chemical Company",
+"sector": "Materials"
+},
+"EMR": {
+"indices": [
+"SPX"
+],
+"name": "Emerson Electric",
+"sector": "Industrials"
+},
+"ENOV": {
+"indices": [
+"SP600"
+],
+"name": "Enovis",
+"sector": "Health Care"
+},
+"ENPH": {
+"indices": [
+"SP600"
+],
+"name": "Enphase Energy",
+"sector": "Information Technology"
+},
+"ENR": {
+"indices": [
+"SP600"
+],
+"name": "Energizer",
+"sector": "Consumer Staples"
+},
+"ENS": {
+"indices": [
+"SP400"
+],
+"name": "EnerSys",
+"sector": "Industrials"
+},
+"ENSG": {
+"indices": [
+"SP400"
+],
+"name": "Ensign Group",
+"sector": "Health Care"
+},
+"ENTG": {
+"indices": [
+"SP400"
+],
+"name": "Entegris",
+"sector": "Information Technology"
+},
+"ENVA": {
+"indices": [
+"SP600"
+],
+"name": "Enova International, Inc.",
+"sector": "Financials"
+},
+"EOG": {
+"indices": [
+"SPX"
+],
+"name": "EOG Resources",
+"sector": "Energy"
+},
+"EPAC": {
+"indices": [
+"SP600"
+],
+"name": "Enerpac Tool Group",
+"sector": "Industrials"
+},
+"EPAM": {
+"indices": [
+"SP600"
+],
+"name": "EPAM Systems",
+"sector": "Information Technology"
+},
+"EPC": {
+"indices": [
+"SP600"
+],
+"name": "Edgewell Personal Care",
+"sector": "Consumer Staples"
+},
+"EPR": {
+"indices": [
+"SP400"
+],
+"name": "EPR Properties",
+"sector": "Real Estate"
+},
+"EPRT": {
+"indices": [
+"SP600"
+],
+"name": "Essential Properties Realty Trust, Inc.",
+"sector": "Real Estate"
+},
+"EQH": {
+"indices": [
+"SP400"
+],
+"name": "Equitable Holdings",
+"sector": "Financials"
+},
+"EQIX": {
+"indices": [
+"SPX"
+],
+"name": "Equinix",
+"sector": "Real Estate"
+},
+"EQR": {
+"indices": [
+"SPX"
+],
+"name": "Equity Residential",
+"sector": "Real Estate"
+},
+"EQT": {
+"indices": [
+"SPX"
+],
+"name": "EQT Corporation",
+"sector": "Energy"
+},
+"ERIE": {
+"indices": [
+"SPX"
+],
+"name": "Erie Indemnity",
+"sector": "Financials"
+},
+"ES": {
+"indices": [
+"SPX"
+],
+"name": "Eversource Energy",
+"sector": "Utilities"
+},
+"ESAB": {
+"indices": [
+"SP400"
+],
+"name": "ESAB",
+"sector": "Industrials"
+},
+"ESE": {
+"indices": [
+"SP600"
+],
+"name": "ESCO Technologies Inc.",
+"sector": "Industrials"
+},
+"ESI": {
+"indices": [
+"SP600"
+],
+"name": "Element Solutions",
+"sector": "Materials"
+},
+"ESNT": {
+"indices": [
+"SP400"
+],
+"name": "Essent Group Ltd.",
+"sector": "Financials"
+},
+"ESS": {
+"indices": [
+"SPX"
+],
+"name": "Essex Property Trust",
+"sector": "Real Estate"
+},
+"ETN": {
+"indices": [
+"SPX"
+],
+"name": "Eaton Corporation",
+"sector": "Industrials"
+},
+"ETR": {
+"indices": [
+"SPX"
+],
+"name": "Entergy",
+"sector": "Utilities"
+},
+"ETSY": {
+"indices": [
+"SP600"
+],
+"name": "Etsy",
+"sector": "Consumer Discretionary"
+},
+"EVR": {
+"indices": [
+"SP400"
+],
+"name": "Evercore",
+"sector": "Financials"
+},
+"EVRG": {
+"indices": [
+"SPX"
+],
+"name": "Evergy",
+"sector": "Utilities"
+},
+"EVTC": {
+"indices": [
+"SP600"
+],
+"name": "EVERTEC, Inc.",
+"sector": "Financials"
+},
+"EW": {
+"indices": [
+"SPX"
+],
+"name": "Edwards Lifesciences",
+"sector": "Health Care"
+},
+"EWBC": {
+"indices": [
+"SP400"
+],
+"name": "East West Bancorp",
+"sector": "Financials"
+},
+"EXC": {
+"indices": [
+"NDX",
+"SPX"
+],
+"name": "Exelon",
+"sector": "Utilities"
+},
+"EXE": {
+"indices": [
+"SPX"
+],
+"name": "Expand Energy",
+"sector": "Energy"
+},
+"EXEL": {
+"indices": [
+"SP400"
+],
+"name": "Exelixis",
+"sector": "Health Care"
+},
+"EXLS": {
+"indices": [
+"SP400"
+],
+"name": "EXL Service",
+"sector": "Industrials"
+},
+"EXP": {
+"indices": [
+"SP400"
+],
+"name": "Eagle Materials",
+"sector": "Materials"
+},
+"EXPD": {
+"indices": [
+"SPX"
+],
+"name": "Expeditors International",
+"sector": "Industrials"
+},
+"EXPE": {
+"indices": [
+"SPX"
+],
+"name": "Expedia Group",
+"sector": "Consumer Discretionary"
+},
+"EXPO": {
+"indices": [
+"SP400"
+],
+"name": "Exponent, Inc.",
+"sector": "Industrials"
+},
+"EXR": {
+"indices": [
+"SPX"
+],
+"name": "Extra Space Storage",
+"sector": "Real Estate"
+},
+"EXTR": {
+"indices": [
+"SP600"
+],
+"name": "Extreme Networks, Inc.",
+"sector": "Information Technology"
+},
+"EYE": {
+"indices": [
+"SP600"
+],
+"name": "National Vision Holdings",
+"sector": "Consumer Discretionary"
+},
+"EZPW": {
+"indices": [
+"SP600"
+],
+"name": "EZCORP, Inc.",
+"sector": "Financials"
+},
+"F": {
+"indices": [
+"SPX"
+],
+"name": "Ford Motor Company",
+"sector": "Consumer Discretionary"
+},
+"FA": {
+"indices": [
+"SP600"
+],
+"name": "First Advantage Corporation",
+"sector": "Industrials"
+},
+"FAF": {
+"indices": [
+"SP400"
+],
+"name": "First American Financial Corporation",
+"sector": "Financials"
+},
+"FANG": {
+"indices": [
+"NDX",
+"SPX"
+],
+"name": "Diamondback Energy",
+"sector": "Energy"
+},
+"FAST": {
+"indices": [
+"NDX",
+"SPX"
+],
+"name": "Fastenal",
+"sector": "Industrials"
+},
+"FBIN": {
+"indices": [
+"SP400"
+],
+"name": "Fortune Brands Innovations",
+"sector": "Industrials"
+},
+"FBK": {
+"indices": [
+"SP600"
+],
+"name": "FB Financial Corp.",
+"sector": "Financials"
+},
+"FBNC": {
+"indices": [
+"SP600"
+],
+"name": "First Bancorp (Southern Pines NC)",
+"sector": "Financials"
+},
+"FBP": {
+"indices": [
+"SP600"
+],
+"name": "First BanCorp (Puerto Rico)",
+"sector": "Financials"
+},
+"FBRT": {
+"indices": [
+"SP600"
+],
+"name": "Franklin BSP Realty Trust, Inc.",
+"sector": "Real Estate"
+},
+"FCF": {
+"indices": [
+"SP600"
+],
+"name": "First Commonwealth Financial, Corp.",
+"sector": "Financials"
+},
+"FCFS": {
+"indices": [
+"SP400"
+],
+"name": "FirstCash",
+"sector": "Financials"
+},
+"FCN": {
+"indices": [
+"SP400"
+],
+"name": "FTI Consulting",
+"sector": "Industrials"
+},
+"FCPT": {
+"indices": [
+"SP600"
+],
+"name": "Four Corners Property Trust, Inc.",
+"sector": "Real Estate"
+},
+"FCX": {
+"indices": [
+"SPX"
+],
+"name": "Freeport-McMoRan",
+"sector": "Materials"
+},
+"FDS": {
+"indices": [
+"SPX"
+],
+"name": "FactSet",
+"sector": "Financials"
+},
+"FDX": {
+"indices": [
+"SPX"
+],
+"name": "FedEx",
+"sector": "Industrials"
+},
+"FDXF": {
+"indices": [
+"SPX"
+],
+"name": "FedEx Freight",
+"sector": "Industrials"
+},
+"FE": {
+"indices": [
+"SPX"
+],
+"name": "FirstEnergy",
+"sector": "Utilities"
+},
+"FELE": {
+"indices": [
+"SP600"
+],
+"name": "Franklin Electric",
+"sector": "Industrials"
+},
+"FERG": {
+"indices": [
+"SPX"
+],
+"name": "Ferguson Enterprises",
+"sector": "Industrials"
+},
+"FFBC": {
+"indices": [
+"SP600"
+],
+"name": "First Financial Bancorp",
+"sector": "Financials"
+},
+"FFIN": {
+"indices": [
+"SP400"
+],
+"name": "First Financial Bankshares",
+"sector": "Financials"
+},
+"FFIV": {
+"indices": [
+"SPX"
+],
+"name": "F5, Inc.",
+"sector": "Information Technology"
+},
+"FG": {
+"indices": [
+"SP600"
+],
+"name": "F&G Annuities & Life, Inc.",
+"sector": "Financials"
+},
+"FHB": {
+"indices": [
+"SP600"
+],
+"name": "First Hawaiian, Inc.",
+"sector": "Financials"
+},
+"FHI": {
+"indices": [
+"SP400"
+],
+"name": "Federated Hermes",
+"sector": "Financials"
+},
+"FHN": {
+"indices": [
+"SP400"
+],
+"name": "First Horizon",
+"sector": "Financials"
+},
+"FIBK": {
+"indices": [
+"SP600"
+],
+"name": "First Interstate BancSystem, Inc.",
+"sector": "Financials"
+},
+"FICO": {
+"indices": [
+"SPX"
+],
+"name": "Fair Isaac",
+"sector": "Information Technology"
+},
+"FIS": {
+"indices": [
+"SPX"
+],
+"name": "Fidelity National Information Services",
+"sector": "Financials"
+},
+"FISV": {
+"indices": [
+"SPX"
+],
+"name": "Fiserv",
+"sector": "Financials"
+},
+"FITB": {
+"indices": [
+"SPX"
+],
+"name": "Fifth Third Bancorp",
+"sector": "Financials"
+},
+"FIVE": {
+"indices": [
+"SP400"
+],
+"name": "Five Below",
+"sector": "Consumer Discretionary"
+},
+"FIVN": {
+"indices": [
+"SP600"
+],
+"name": "Five9, Inc.",
+"sector": "Information Technology"
+},
+"FIX": {
+"indices": [
+"SPX"
+],
+"name": "Comfort Systems USA",
+"sector": "Industrials"
+},
+"FIZZ": {
+"indices": [
+"SP600"
+],
+"name": "National Beverage Corp.",
+"sector": "Consumer Staples"
+},
+"FLEX": {
+"indices": [
+"SPX"
+],
+"name": "Flex Ltd.",
+"sector": "Information Technology"
+},
+"FLG": {
+"indices": [
+"SP400"
+],
+"name": "Flagstar Bank",
+"sector": "Financials"
+},
+"FLO": {
+"indices": [
+"SP600"
+],
+"name": "Flowers Foods",
+"sector": "Consumer Staples"
+},
+"FLR": {
+"indices": [
+"SP400"
+],
+"name": "Fluor",
+"sector": "Industrials"
+},
+"FLS": {
+"indices": [
+"SP400"
+],
+"name": "Flowserve",
+"sector": "Industrials"
+},
+"FMC": {
+"indices": [
+"SP600"
+],
+"name": "FMC Corporation",
+"sector": "Materials"
+},
+"FN": {
+"indices": [
+"SP400"
+],
+"name": "Fabrinet",
+"sector": "Information Technology"
+},
+"FNB": {
+"indices": [
+"SP400"
+],
+"name": "FNB Corporation",
+"sector": "Financials"
+},
+"FND": {
+"indices": [
+"SP400"
+],
+"name": "Floor & Decor",
+"sector": "Consumer Discretionary"
+},
+"FNF": {
+"indices": [
+"SP400"
+],
+"name": "Fidelity National Financial",
+"sector": "Financials"
+},
+"FORM": {
+"indices": [
+"SP600"
+],
+"name": "FormFactor, Inc.",
+"sector": "Information Technology"
+},
+"FOUR": {
+"indices": [
+"SP400"
+],
+"name": "Shift4",
+"sector": "Financials"
+},
+"FOX": {
+"indices": [
+"SPX"
+],
+"name": "Fox Corporation (Class B)",
+"sector": "Communication Services"
+},
+"FOXA": {
+"indices": [
+"SPX"
+],
+"name": "Fox Corporation (Class A)",
+"sector": "Communication Services"
+},
+"FOXF": {
+"indices": [
+"SP600"
+],
+"name": "Fox Factory",
+"sector": "Consumer Discretionary"
+},
+"FR": {
+"indices": [
+"SP400"
+],
+"name": "First Industrial Realty Trust",
+"sector": "Real Estate"
+},
+"FRPT": {
+"indices": [
+"SP600"
+],
+"name": "Freshpet",
+"sector": "Consumer Staples"
+},
+"FRT": {
+"indices": [
+"SPX"
+],
+"name": "Federal Realty Investment Trust",
+"sector": "Real Estate"
+},
+"FSLR": {
+"indices": [
+"SPX"
+],
+"name": "First Solar",
+"sector": "Information Technology"
+},
+"FSS": {
+"indices": [
+"SP600"
+],
+"name": "Federal Signal Corporation",
+"sector": "Industrials"
+},
+"FTDR": {
+"indices": [
+"SP600"
+],
+"name": "Frontdoor, Inc.",
+"sector": "Consumer Discretionary"
+},
+"FTI": {
+"indices": [
+"SP400"
+],
+"name": "TechnipFMC",
+"sector": "Energy"
+},
+"FTNT": {
+"indices": [
+"NDX",
+"SPX"
+],
+"name": "Fortinet",
+"sector": "Information Technology"
+},
+"FTRE": {
+"indices": [
+"SP600"
+],
+"name": "Fortrea",
+"sector": "Health Care"
+},
+"FTV": {
+"indices": [
+"SPX"
+],
+"name": "Fortive",
+"sector": "Industrials"
+},
+"FUL": {
+"indices": [
+"SP600"
+],
+"name": "H.B. Fuller Company",
+"sector": "Materials"
+},
+"FULT": {
+"indices": [
+"SP600"
+],
+"name": "Fulton Financial Corporation",
+"sector": "Financials"
+},
+"FUN": {
+"indices": [
+"SP600"
+],
+"name": "Six Flags",
+"sector": "Consumer Discretionary"
+},
+"G": {
+"indices": [
+"SP400"
+],
+"name": "Genpact",
+"sector": "Industrials"
+},
+"GAP": {
+"indices": [
+"SP400"
+],
+"name": "Gap Inc.",
+"sector": "Consumer Discretionary"
+},
+"GATX": {
+"indices": [
+"SP400"
+],
+"name": "GATX",
+"sector": "Industrials"
+},
+"GBCI": {
+"indices": [
+"SP400"
+],
+"name": "Glacier Bancorp",
+"sector": "Financials"
+},
+"GBX": {
+"indices": [
+"SP600"
+],
+"name": "The Greenbrier Companies, Inc.",
+"sector": "Industrials"
+},
+"GD": {
+"indices": [
+"SPX"
+],
+"name": "General Dynamics",
+"sector": "Industrials"
+},
+"GDDY": {
+"indices": [
+"SPX"
+],
+"name": "GoDaddy",
+"sector": "Information Technology"
+},
+"GE": {
+"indices": [
+"SPX"
+],
+"name": "GE Aerospace",
+"sector": "Industrials"
+},
+"GEF": {
+"indices": [
+"SP400"
+],
+"name": "Greif, Inc.",
+"sector": "Materials"
+},
+"GEHC": {
+"indices": [
+"NDX",
+"SPX"
+],
+"name": "GE HealthCare",
+"sector": "Health Care"
+},
+"GEN": {
+"indices": [
+"SPX"
+],
+"name": "Gen Digital",
+"sector": "Information Technology"
+},
+"GEO": {
+"indices": [
+"SP600"
+],
+"name": "GEO Group, Inc.",
+"sector": "Industrials"
+},
+"GEV": {
+"indices": [
+"SPX"
+],
+"name": "GE Vernova",
+"sector": "Industrials"
+},
+"GFF": {
+"indices": [
+"SP600"
+],
+"name": "Griffon Corporation",
+"sector": "Industrials"
+},
+"GFS": {
+"indices": [
+"NDX"
+],
+"name": "GFS",
+"sector": ""
+},
+"GGG": {
+"indices": [
+"SP400"
+],
+"name": "Graco Inc.",
+"sector": "Industrials"
+},
+"GHC": {
+"indices": [
+"SP400"
+],
+"name": "Graham Holdings",
+"sector": "Consumer Discretionary"
+},
+"GIII": {
+"indices": [
+"SP600"
+],
+"name": "G-III Apparel Group, Ltd.",
+"sector": "Consumer Discretionary"
+},
+"GILD": {
+"indices": [
+"NDX",
+"SPX"
+],
+"name": "Gilead Sciences",
+"sector": "Health Care"
+},
+"GIS": {
+"indices": [
+"SPX"
+],
+"name": "General Mills",
+"sector": "Consumer Staples"
+},
+"GKOS": {
+"indices": [
+"SP600"
+],
+"name": "Glaukos Corp.",
+"sector": "Health Care"
+},
+"GL": {
+"indices": [
+"SPX"
+],
+"name": "Globe Life",
+"sector": "Financials"
+},
+"GLPI": {
+"indices": [
+"SP400"
+],
+"name": "Gaming and Leisure Properties",
+"sector": "Real Estate"
+},
+"GLW": {
+"indices": [
+"SPX"
+],
+"name": "Corning Inc.",
+"sector": "Information Technology"
+},
+"GM": {
+"indices": [
+"SPX"
+],
+"name": "General Motors",
+"sector": "Consumer Discretionary"
+},
+"GME": {
+"indices": [
+"SP400"
+],
+"name": "GameStop",
+"sector": "Consumer Discretionary"
+},
+"GMED": {
+"indices": [
+"SP400"
+],
+"name": "Globus Medical",
+"sector": "Health Care"
+},
+"GNL": {
+"indices": [
+"SP600"
+],
+"name": "Global Net Lease, Inc.",
+"sector": "Real Estate"
+},
+"GNRC": {
+"indices": [
+"SPX"
+],
+"name": "Generac",
+"sector": "Industrials"
+},
+"GNTX": {
+"indices": [
+"SP400"
+],
+"name": "Gentex",
+"sector": "Consumer Discretionary"
+},
+"GNW": {
+"indices": [
+"SP600"
+],
+"name": "Genworth Financial, Inc.",
+"sector": "Financials"
+},
+"GO": {
+"indices": [
+"SP600"
+],
+"name": "Grocery Outlet",
+"sector": "Consumer Staples"
+},
+"GOLF": {
+"indices": [
+"SP600"
+],
+"name": "Acushnet Company",
+"sector": "Consumer Discretionary"
+},
+"GOOG": {
+"indices": [
+"NDX",
+"SPX"
+],
+"name": "Alphabet Inc. (Class C)",
+"sector": "Communication Services"
+},
+"GOOGL": {
+"indices": [
+"NDX",
+"SPX"
+],
+"name": "Alphabet Inc. (Class A)",
+"sector": "Communication Services"
+},
+"GPC": {
+"indices": [
+"SPX"
+],
+"name": "Genuine Parts Company",
+"sector": "Consumer Discretionary"
+},
+"GPI": {
+"indices": [
+"SP600"
+],
+"name": "Group 1 Automotive, Inc.",
+"sector": "Consumer Discretionary"
+},
+"GPK": {
+"indices": [
+"SP400"
+],
+"name": "Graphic Packaging",
+"sector": "Materials"
+},
+"GPN": {
+"indices": [
+"SPX"
+],
+"name": "Global Payments",
+"sector": "Financials"
+},
+"GPOR": {
+"indices": [
+"SP600"
+],
+"name": "Gulfport Energy Corporation",
+"sector": "Energy"
+},
+"GRBK": {
+"indices": [
+"SP600"
+],
+"name": "Green Brick Partners, Inc.",
+"sector": "Consumer Discretionary"
+},
+"GRMN": {
+"indices": [
+"SPX"
+],
+"name": "Garmin",
+"sector": "Consumer Discretionary"
+},
+"GS": {
+"indices": [
+"DJI",
+"SPX"
+],
+"name": "Goldman Sachs",
+"sector": "Financials"
+},
+"GSHD": {
+"indices": [
+"SP600"
+],
+"name": "Goosehead Insurance, Inc.",
+"sector": "Financials"
+},
+"GT": {
+"indices": [
+"SP600"
+],
+"name": "Goodyear Tire and Rubber Company",
+"sector": "Consumer Discretionary"
+},
+"GTES": {
+"indices": [
+"SP600"
+],
+"name": "Gates Corporation",
+"sector": "Industrials"
+},
+"GTM": {
+"indices": [
+"SP600"
+],
+"name": "ZoomInfo",
+"sector": "Communication Services"
+},
+"GTY": {
+"indices": [
+"SP600"
+],
+"name": "Getty Realty Corp.",
+"sector": "Real Estate"
+},
+"GVA": {
+"indices": [
+"SP600"
+],
+"name": "Granite Construction, Inc.",
+"sector": "Industrials"
+},
+"GWRE": {
+"indices": [
+"SP400"
+],
+"name": "Guidewire Software",
+"sector": "Information Technology"
+},
+"GWW": {
+"indices": [
+"SPX"
+],
+"name": "W. W. Grainger",
+"sector": "Industrials"
+},
+"GXO": {
+"indices": [
+"SP400"
+],
+"name": "GXO Logistics",
+"sector": "Industrials"
+},
+"H": {
+"indices": [
+"SP400"
+],
+"name": "Hyatt",
+"sector": "Consumer Discretionary"
+},
+"HAE": {
+"indices": [
+"SP400"
+],
+"name": "Haemonetics",
+"sector": "Health Care"
+},
+"HAFC": {
+"indices": [
+"SP600"
+],
+"name": "Hanmi Financial Corporation",
+"sector": "Financials"
+},
+"HAL": {
+"indices": [
+"SPX"
+],
+"name": "Halliburton",
+"sector": "Energy"
+},
+"HALO": {
+"indices": [
+"SP400"
+],
+"name": "Halozyme",
+"sector": "Health Care"
+},
+"HAS": {
+"indices": [
+"SPX"
+],
+"name": "Hasbro",
+"sector": "Consumer Discretionary"
+},
+"HASI": {
+"indices": [
+"SP600"
+],
+"name": "Hannon Armstrong Sustainable Infrastructure Capital, Inc.",
+"sector": "Financials"
+},
+"HAYW": {
+"indices": [
+"SP600"
+],
+"name": "Hayward Holdings, Inc.",
+"sector": "Industrials"
+},
+"HBAN": {
+"indices": [
+"SPX"
+],
+"name": "Huntington Bancshares",
+"sector": "Financials"
+},
+"HCA": {
+"indices": [
+"SPX"
+],
+"name": "HCA Healthcare",
+"sector": "Health Care"
+},
+"HCC": {
+"indices": [
+"SP600"
+],
+"name": "Warrior Met Coal, Inc.",
+"sector": "Materials"
+},
+"HCI": {
+"indices": [
+"SP600"
+],
+"name": "HCI Group, Inc.",
+"sector": "Financials"
+},
+"HCSG": {
+"indices": [
+"SP600"
+],
+"name": "Healthcare Services Group, Inc.",
+"sector": "Industrials"
+},
+"HD": {
+"indices": [
+"DJI",
+"SPX"
+],
+"name": "Home Depot (The)",
+"sector": "Consumer Discretionary"
+},
+"HE": {
+"indices": [
+"SP600"
+],
+"name": "Hawaiian Electric Industries, Inc.",
+"sector": "Utilities"
+},
+"HFWA": {
+"indices": [
+"SP600"
+],
+"name": "Heritage Financial Corporation",
+"sector": "Financials"
+},
+"HGV": {
+"indices": [
+"SP400"
+],
+"name": "Hilton Grand Vacations",
+"sector": "Consumer Discretionary"
+},
+"HIG": {
+"indices": [
+"SPX"
+],
+"name": "Hartford (The)",
+"sector": "Financials"
+},
+"HII": {
+"indices": [
+"SPX"
+],
+"name": "Huntington Ingalls Industries",
+"sector": "Industrials"
+},
+"HIMS": {
+"indices": [
+"SP400"
+],
+"name": "Hims & Hers Health",
+"sector": "Health Care"
+},
+"HIW": {
+"indices": [
+"SP600"
+],
+"name": "Highwoods Properties",
+"sector": "Real Estate"
+},
+"HL": {
+"indices": [
+"SP400"
+],
+"name": "Hecla Mining",
+"sector": "Materials"
+},
+"HLI": {
+"indices": [
+"SP400"
+],
+"name": "Houlihan Lokey",
+"sector": "Financials"
+},
+"HLIT": {
+"indices": [
+"SP600"
+],
+"name": "Harmonic Inc.",
+"sector": "Information Technology"
+},
+"HLNE": {
+"indices": [
+"SP400"
+],
+"name": "Hamilton Lane",
+"sector": "Financials"
+},
+"HLT": {
+"indices": [
+"SPX"
+],
+"name": "Hilton Worldwide",
+"sector": "Consumer Discretionary"
+},
+"HLX": {
+"indices": [
+"SP600"
+],
+"name": "Helix Energy Solutions Group, Inc.",
+"sector": "Energy"
+},
+"HMN": {
+"indices": [
+"SP600"
+],
+"name": "Horace Mann Educators Corporation",
+"sector": "Financials"
+},
+"HNI": {
+"indices": [
+"SP600"
+],
+"name": "HNI Corporation",
+"sector": "Industrials"
+},
+"HOG": {
+"indices": [
+"SP400"
+],
+"name": "Harley-Davidson",
+"sector": "Consumer Discretionary"
+},
+"HOMB": {
+"indices": [
+"SP400"
+],
+"name": "Home BancShares",
+"sector": "Financials"
+},
+"HON": {
+"indices": [
+"DJI",
+"NDX",
+"SPX"
+],
+"name": "Honeywell Technologies",
+"sector": "Industrials"
+},
+"HONA": {
+"indices": [
+"SPX"
+],
+"name": "Honeywell Aerospace",
+"sector": "Industrials"
+},
+"HOOD": {
+"indices": [
+"SPX"
+],
+"name": "Robinhood Markets",
+"sector": "Financials"
+},
+"HOPE": {
+"indices": [
+"SP600"
+],
+"name": "Hope Bancorp, Inc.",
+"sector": "Financials"
+},
+"HP": {
+"indices": [
+"SP600"
+],
+"name": "Helmerich & Payne, Inc.",
+"sector": "Energy"
+},
+"HPE": {
+"indices": [
+"SPX"
+],
+"name": "Hewlett Packard Enterprise",
+"sector": "Information Technology"
+},
+"HPQ": {
+"indices": [
+"SPX"
+],
+"name": "HP Inc.",
+"sector": "Information Technology"
+},
+"HQY": {
+"indices": [
+"SP400"
+],
+"name": "HealthEquity",
+"sector": "Health Care"
+},
+"HR": {
+"indices": [
+"SP400"
+],
+"name": "Healthcare Realty Trust",
+"sector": "Real Estate"
+},
+"HRB": {
+"indices": [
+"SP400"
+],
+"name": "H&R Block",
+"sector": "Consumer Discretionary"
+},
+"HRL": {
+"indices": [
+"SPX"
+],
+"name": "Hormel Foods",
+"sector": "Consumer Staples"
+},
+"HRMY": {
+"indices": [
+"SP600"
+],
+"name": "Harmony Biosciences Holdings, Inc.",
+"sector": "Health Care"
+},
+"HSIC": {
+"indices": [
+"SPX"
+],
+"name": "Henry Schein",
+"sector": "Health Care"
+},
+"HST": {
+"indices": [
+"SPX"
+],
+"name": "Host Hotels & Resorts",
+"sector": "Real Estate"
+},
+"HSTM": {
+"indices": [
+"SP600"
+],
+"name": "HealthStream, Inc.",
+"sector": "Health Care"
+},
+"HSY": {
+"indices": [
+"SPX"
+],
+"name": "Hershey Company (The)",
+"sector": "Consumer Staples"
+},
+"HTH": {
+"indices": [
+"SP600"
+],
+"name": "Hilltop Holdings Inc.",
+"sector": "Financials"
+},
+"HTLD": {
+"indices": [
+"SP600"
+],
+"name": "Heartland Express, Inc.",
+"sector": "Industrials"
+},
+"HTO": {
+"indices": [
+"SP600"
+],
+"name": "H2O America",
+"sector": "Utilities"
+},
+"HTZ": {
+"indices": [
+"SP600"
+],
+"name": "Hertz",
+"sector": "Industrials"
+},
+"HUBB": {
+"indices": [
+"SPX"
+],
+"name": "Hubbell Incorporated",
+"sector": "Industrials"
+},
+"HUBG": {
+"indices": [
+"SP600"
+],
+"name": "Hub Group, Inc.",
+"sector": "Industrials"
+},
+"HUM": {
+"indices": [
+"SPX"
+],
+"name": "Humana",
+"sector": "Health Care"
+},
+"HWC": {
+"indices": [
+"SP400"
+],
+"name": "Hancock Whitney",
+"sector": "Financials"
+},
+"HWKN": {
+"indices": [
+"SP600"
+],
+"name": "Hawkins, Inc.",
+"sector": "Materials"
+},
+"HWM": {
+"indices": [
+"SPX"
+],
+"name": "Howmet Aerospace",
+"sector": "Industrials"
+},
+"HXL": {
+"indices": [
+"SP400"
+],
+"name": "Hexcel",
+"sector": "Industrials"
+},
+"HZO": {
+"indices": [
+"SP600"
+],
+"name": "MarineMax, Inc.",
+"sector": "Consumer Discretionary"
+},
+"IART": {
+"indices": [
+"SP600"
+],
+"name": "Integra Lifesciences Holdings",
+"sector": "Health Care"
+},
+"IBKR": {
+"indices": [
+"SPX"
+],
+"name": "Interactive Brokers",
+"sector": "Financials"
+},
+"IBM": {
+"indices": [
+"DJI",
+"SPX"
+],
+"name": "IBM",
+"sector": "Information Technology"
+},
+"IBOC": {
+"indices": [
+"SP400"
+],
+"name": "Intl Bancshares Corp",
+"sector": "Financials"
+},
+"IBP": {
+"indices": [
+"SP600"
+],
+"name": "Installed Building Products, Inc.",
+"sector": "Consumer Discretionary"
+},
+"ICE": {
+"indices": [
+"SPX"
+],
+"name": "Intercontinental Exchange",
+"sector": "Financials"
+},
+"ICHR": {
+"indices": [
+"SP600"
+],
+"name": "Ichor Holdings, Ltd.",
+"sector": "Information Technology"
+},
+"ICUI": {
+"indices": [
+"SP600"
+],
+"name": "ICU Medical",
+"sector": "Health Care"
+},
+"IDA": {
+"indices": [
+"SP400"
+],
+"name": "Idacorp",
+"sector": "Utilities"
+},
+"IDCC": {
+"indices": [
+"SP400"
+],
+"name": "InterDigital",
+"sector": "Information Technology"
+},
+"IDXX": {
+"indices": [
+"NDX",
+"SPX"
+],
+"name": "Idexx Laboratories",
+"sector": "Health Care"
+},
+"IESC": {
+"indices": [
+"SP400"
+],
+"name": "IES Holdings",
+"sector": "Industrials"
+},
+"IEX": {
+"indices": [
+"SPX"
+],
+"name": "IDEX Corporation",
+"sector": "Industrials"
+},
+"IFF": {
+"indices": [
+"SPX"
+],
+"name": "International Flavors & Fragrances",
+"sector": "Materials"
+},
+"IIPR": {
+"indices": [
+"SP600"
+],
+"name": "Innovative Industrial Properties, Inc.",
+"sector": "Real Estate"
+},
+"ILMN": {
+"indices": [
+"NDX",
+"SP400"
+],
+"name": "Illumina, Inc.",
+"sector": "Health Care"
+},
+"INCY": {
+"indices": [
+"SPX"
+],
+"name": "Incyte",
+"sector": "Health Care"
+},
+"INDB": {
+"indices": [
+"SP600"
+],
+"name": "Independent Bank Corp.",
+"sector": "Financials"
+},
+"INDV": {
+"indices": [
+"SP600"
+],
+"name": "Indivior",
+"sector": "Health Care"
+},
+"INGR": {
+"indices": [
+"SP400"
+],
+"name": "Ingredion",
+"sector": "Consumer Staples"
+},
+"INSP": {
+"indices": [
+"SP600"
+],
+"name": "Inspire Medical Systems, Inc.",
+"sector": "Health Care"
+},
+"INSW": {
+"indices": [
+"SP600"
+],
+"name": "International Seaways, Inc.",
+"sector": "Energy"
+},
+"INTC": {
+"indices": [
+"NDX",
+"SPX"
+],
+"name": "Intel",
+"sector": "Information Technology"
+},
+"INTU": {
+"indices": [
+"NDX",
+"SPX"
+],
+"name": "Intuit",
+"sector": "Information Technology"
+},
+"INVA": {
+"indices": [
+"SP600"
+],
+"name": "Innoviva, Inc.",
+"sector": "Health Care"
+},
+"INVH": {
+"indices": [
+"SPX"
+],
+"name": "Invitation Homes",
+"sector": "Real Estate"
+},
+"INVX": {
+"indices": [
+"SP600"
+],
+"name": "Innovex International, Inc.",
+"sector": "Energy"
+},
+"IOSP": {
+"indices": [
+"SP600"
+],
+"name": "Innospec, Inc.",
+"sector": "Materials"
+},
+"IP": {
+"indices": [
+"SPX"
+],
+"name": "International Paper",
+"sector": "Materials"
+},
+"IPAR": {
+"indices": [
+"SP600"
+],
+"name": "Inter Parfums, Inc.",
+"sector": "Consumer Staples"
+},
+"IPGP": {
+"indices": [
+"SP400"
+],
+"name": "IPG Photonics",
+"sector": "Information Technology"
+},
+"IQV": {
+"indices": [
+"SPX"
+],
+"name": "IQVIA",
+"sector": "Health Care"
+},
+"IR": {
+"indices": [
+"SPX"
+],
+"name": "Ingersoll Rand",
+"sector": "Industrials"
+},
+"IRDM": {
+"indices": [
+"SP600"
+],
+"name": "Iridium Communications",
+"sector": "Communication Services"
+},
+"IRM": {
+"indices": [
+"SPX"
+],
+"name": "Iron Mountain",
+"sector": "Real Estate"
+},
+"IRT": {
+"indices": [
+"SP400"
+],
+"name": "Independence Realty Trust",
+"sector": "Real Estate"
+},
+"ISRG": {
+"indices": [
+"NDX",
+"SPX"
+],
+"name": "Intuitive Surgical",
+"sector": "Health Care"
+},
+"IT": {
+"indices": [
+"SPX"
+],
+"name": "Gartner",
+"sector": "Information Technology"
+},
+"ITGR": {
+"indices": [
+"SP600"
+],
+"name": "Integer Holdings Corporation",
+"sector": "Health Care"
+},
+"ITRI": {
+"indices": [
+"SP600"
+],
+"name": "Itron, Inc.",
+"sector": "Information Technology"
+},
+"ITT": {
+"indices": [
+"SP400"
+],
+"name": "ITT Inc.",
+"sector": "Industrials"
+},
+"ITW": {
+"indices": [
+"SPX"
+],
+"name": "Illinois Tool Works",
+"sector": "Industrials"
+},
+"IVT": {
+"indices": [
+"SP600"
+],
+"name": "InvenTrust Properties",
+"sector": "Real Estate"
+},
+"IVZ": {
+"indices": [
+"SPX"
+],
+"name": "Invesco",
+"sector": "Financials"
+},
+"J": {
+"indices": [
+"SPX"
+],
+"name": "Jacobs Solutions",
+"sector": "Industrials"
+},
+"JAZZ": {
+"indices": [
+"SP400"
+],
+"name": "Jazz Pharmaceuticals",
+"sector": "Health Care"
+},
+"JBGS": {
+"indices": [
+"SP600"
+],
+"name": "JBG Smith",
+"sector": "Real Estate"
+},
+"JBHT": {
+"indices": [
+"SPX"
+],
+"name": "J.B. Hunt",
+"sector": "Industrials"
+},
+"JBL": {
+"indices": [
+"SPX"
+],
+"name": "Jabil",
+"sector": "Information Technology"
+},
+"JBLU": {
+"indices": [
+"SP600"
+],
+"name": "JetBlue",
+"sector": "Industrials"
+},
+"JBSS": {
+"indices": [
+"SP600"
+],
+"name": "John B. Sanfilippo & Son, Inc.",
+"sector": "Consumer Staples"
+},
+"JBTM": {
+"indices": [
+"SP600"
+],
+"name": "JBT Marel Corporation",
+"sector": "Industrials"
+},
+"JCI": {
+"indices": [
+"SPX"
+],
+"name": "Johnson Controls",
+"sector": "Industrials"
+},
+"JEF": {
+"indices": [
+"SP400"
+],
+"name": "Jefferies",
+"sector": "Financials"
+},
+"JJSF": {
+"indices": [
+"SP600"
+],
+"name": "J&J Snack Foods Corp.",
+"sector": "Consumer Staples"
+},
+"JKHY": {
+"indices": [
+"SPX"
+],
+"name": "Jack Henry & Associates",
+"sector": "Financials"
+},
+"JLL": {
+"indices": [
+"SP400"
+],
+"name": "Jones Lang LaSalle",
+"sector": "Real Estate"
+},
+"JNJ": {
+"indices": [
+"DJI",
+"SPX"
+],
+"name": "Johnson & Johnson",
+"sector": "Health Care"
+},
+"JOE": {
+"indices": [
+"SP600"
+],
+"name": "St. Joe Company",
+"sector": "Real Estate"
+},
+"JPM": {
+"indices": [
+"DJI",
+"SPX"
+],
+"name": "JPMorgan Chase",
+"sector": "Financials"
+},
+"JXN": {
+"indices": [
+"SP600"
+],
+"name": "Jackson Financial, Inc.",
+"sector": "Financials"
+},
+"KAI": {
+"indices": [
+"SP600"
+],
+"name": "Kadant Inc.",
+"sector": "Industrials"
+},
+"KALU": {
+"indices": [
+"SP600"
+],
+"name": "Kaiser Aluminum Corporation",
+"sector": "Materials"
+},
+"KBH": {
+"indices": [
+"SP400"
+],
+"name": "KB Home",
+"sector": "Consumer Discretionary"
+},
+"KBR": {
+"indices": [
+"SP400"
+],
+"name": "KBR, Inc.",
+"sector": "Industrials"
+},
+"KD": {
+"indices": [
+"SP400"
+],
+"name": "Kyndryl",
+"sector": "Information Technology"
+},
+"KDP": {
+"indices": [
+"NDX",
+"SPX"
+],
+"name": "Keurig Dr Pepper",
+"sector": "Consumer Staples"
+},
+"KEX": {
+"indices": [
+"SP400"
+],
+"name": "Kirby Corporation",
+"sector": "Industrials"
+},
+"KEY": {
+"indices": [
+"SPX"
+],
+"name": "KeyCorp",
+"sector": "Financials"
+},
+"KEYS": {
+"indices": [
+"SPX"
+],
+"name": "Keysight Technologies",
+"sector": "Information Technology"
+},
+"KFY": {
+"indices": [
+"SP600"
+],
+"name": "Korn/Ferry International",
+"sector": "Industrials"
+},
+"KGS": {
+"indices": [
+"SP600"
+],
+"name": "Kodiak Gas Services, Inc.",
+"sector": "Energy"
+},
+"KHC": {
+"indices": [
+"NDX",
+"SPX"
+],
+"name": "Kraft Heinz",
+"sector": "Consumer Staples"
+},
+"KIM": {
+"indices": [
+"SPX"
+],
+"name": "Kimco Realty",
+"sector": "Real Estate"
+},
+"KKR": {
+"indices": [
+"SPX"
+],
+"name": "KKR & Co.",
+"sector": "Financials"
+},
+"KLAC": {
+"indices": [
+"NDX",
+"SPX"
+],
+"name": "KLA Corporation",
+"sector": "Information Technology"
+},
+"KLIC": {
+"indices": [
+"SP600"
+],
+"name": "Kulicke and Soffa Industries, Inc.",
+"sector": "Information Technology"
+},
+"KMB": {
+"indices": [
+"SPX"
+],
+"name": "Kimberly-Clark",
+"sector": "Consumer Staples"
+},
+"KMI": {
+"indices": [
+"SPX"
+],
+"name": "Kinder Morgan",
+"sector": "Energy"
+},
+"KMPR": {
+"indices": [
+"SP600"
+],
+"name": "Kemper Corporation",
+"sector": "Financials"
+},
+"KMT": {
+"indices": [
+"SP600"
+],
+"name": "Kennametal",
+"sector": "Industrials"
+},
+"KMX": {
+"indices": [
+"SP600"
+],
+"name": "CarMax, Inc.",
+"sector": "Consumer Discretionary"
+},
+"KN": {
+"indices": [
+"SP600"
+],
+"name": "Knowles Corporation",
+"sector": "Information Technology"
+},
+"KNF": {
+"indices": [
+"SP400"
+],
+"name": "Knife River Corporation",
+"sector": "Materials"
+},
+"KNSL": {
+"indices": [
+"SP400"
+],
+"name": "Kinsale Capital Group",
+"sector": "Financials"
+},
+"KNTK": {
+"indices": [
+"SP600"
+],
+"name": "Kinetik Holdings, Inc.",
+"sector": "Energy"
+},
+"KNX": {
+"indices": [
+"SP400"
+],
+"name": "Knight-Swift",
+"sector": "Industrials"
+},
+"KO": {
+"indices": [
+"DJI",
+"SPX"
+],
+"name": "Coca-Cola Company (The)",
+"sector": "Consumer Staples"
+},
+"KOP": {
+"indices": [
+"SP600"
+],
+"name": "Koppers Holdings, Inc.",
+"sector": "Materials"
+},
+"KR": {
+"indices": [
+"SPX"
+],
+"name": "Kroger",
+"sector": "Consumer Staples"
+},
+"KRC": {
+"indices": [
+"SP400"
+],
+"name": "Kilroy Realty Corp",
+"sector": "Real Estate"
+},
+"KRG": {
+"indices": [
+"SP400"
+],
+"name": "Kite Realty Group Trust",
+"sector": "Real Estate"
+},
+"KRMN": {
+"indices": [
+"SP600"
+],
+"name": "Karman Holdings",
+"sector": "Industrials"
+},
+"KRYS": {
+"indices": [
+"SP400"
+],
+"name": "Krystal Biotech",
+"sector": "Health Care"
+},
+"KSS": {
+"indices": [
+"SP600"
+],
+"name": "Kohl's Corp.",
+"sector": "Consumer Discretionary"
+},
+"KTB": {
+"indices": [
+"SP600"
+],
+"name": "Kontoor Brands",
+"sector": "Consumer Discretionary"
+},
+"KTOS": {
+"indices": [
+"SP400"
+],
+"name": "Kratos Defense & Security Solutions",
+"sector": "Industrials"
+},
+"KVUE": {
+"indices": [
+"SPX"
+],
+"name": "Kenvue",
+"sector": "Consumer Staples"
+},
+"KWR": {
+"indices": [
+"SP600"
+],
+"name": "Quaker Chemical Corporation",
+"sector": "Materials"
+},
+"L": {
+"indices": [
+"SPX"
+],
+"name": "Loews Corporation",
+"sector": "Financials"
+},
+"LAD": {
+"indices": [
+"SP400"
+],
+"name": "Lithia Motors",
+"sector": "Consumer Discretionary"
+},
+"LAMR": {
+"indices": [
+"SP400"
+],
+"name": "Lamar Advertising Company",
+"sector": "Real Estate"
+},
+"LAUR": {
+"indices": [
+"SP600"
+],
+"name": "Laureate Education, Inc.",
+"sector": "Consumer Discretionary"
+},
+"LAZ": {
+"indices": [
+"SP600"
+],
+"name": "Lazard",
+"sector": "Financials"
+},
+"LBRT": {
+"indices": [
+"SP600"
+],
+"name": "Liberty Energy, Inc.",
+"sector": "Energy"
+},
+"LCII": {
+"indices": [
+"SP600"
+],
+"name": "LCI Industries",
+"sector": "Consumer Discretionary"
+},
+"LDOS": {
+"indices": [
+"SPX"
+],
+"name": "Leidos",
+"sector": "Industrials"
+},
+"LEA": {
+"indices": [
+"SP400"
+],
+"name": "Lear",
+"sector": "Consumer Discretionary"
+},
+"LECO": {
+"indices": [
+"SP400"
+],
+"name": "Lincoln Electric",
+"sector": "Industrials"
+},
+"LEG": {
+"indices": [
+"SP600"
+],
+"name": "Leggett & Platt",
+"sector": "Consumer Discretionary"
+},
+"LEN": {
+"indices": [
+"SPX"
+],
+"name": "Lennar",
+"sector": "Consumer Discretionary"
+},
+"LEU": {
+"indices": [
+"SP600"
+],
+"name": "Centrus Energy Corp.",
+"sector": "Energy"
+},
+"LFST": {
+"indices": [
+"SP600"
+],
+"name": "Lifestance Health",
+"sector": "Health Care"
+},
+"LFUS": {
+"indices": [
+"SP400"
+],
+"name": "Littelfuse",
+"sector": "Information Technology"
+},
+"LGIH": {
+"indices": [
+"SP600"
+],
+"name": "LGI Homes",
+"sector": "Consumer Discretionary"
+},
+"LGND": {
+"indices": [
+"SP600"
+],
+"name": "Ligand Pharmaceuticals, Inc.",
+"sector": "Health Care"
+},
+"LH": {
+"indices": [
+"SPX"
+],
+"name": "Labcorp",
+"sector": "Health Care"
+},
+"LHX": {
+"indices": [
+"SPX"
+],
+"name": "L3Harris",
+"sector": "Industrials"
+},
+"LIF": {
+"indices": [
+"SP600"
+],
+"name": "Life360",
+"sector": "Information Technology"
+},
+"LII": {
+"indices": [
+"SPX"
+],
+"name": "Lennox International",
+"sector": "Industrials"
+},
+"LIN": {
+"indices": [
+"SPX"
+],
+"name": "Linde plc",
+"sector": "Materials"
+},
+"LITE": {
+"indices": [
+"SPX"
+],
+"name": "Lumentum",
+"sector": "Information Technology"
+},
+"LIVN": {
+"indices": [
+"SP400"
+],
+"name": "LivaNova",
+"sector": "Health Care"
+},
+"LKFN": {
+"indices": [
+"SP600"
+],
+"name": "Lakeland Financial",
+"sector": "Financials"
+},
+"LKQ": {
+"indices": [
+"SP600"
+],
+"name": "LKQ Corporation",
+"sector": "Consumer Discretionary"
+},
+"LLY": {
+"indices": [
+"SPX"
+],
+"name": "Lilly (Eli)",
+"sector": "Health Care"
+},
+"LMAT": {
+"indices": [
+"SP600"
+],
+"name": "LeMaitre Vascular",
+"sector": "Health Care"
+},
+"LMT": {
+"indices": [
+"SPX"
+],
+"name": "Lockheed Martin",
+"sector": "Industrials"
+},
+"LNC": {
+"indices": [
+"SP600"
+],
+"name": "Lincoln Financial",
+"sector": "Financials"
+},
+"LNN": {
+"indices": [
+"SP600"
+],
+"name": "Lindsay Corporation",
+"sector": "Materials"
+},
+"LNT": {
+"indices": [
+"SPX"
+],
+"name": "Alliant Energy",
+"sector": "Utilities"
+},
+"LNTH": {
+"indices": [
+"SP400"
+],
+"name": "Lantheus Holdings",
+"sector": "Health Care"
+},
+"LOPE": {
+"indices": [
+"SP400"
+],
+"name": "Grand Canyon Education",
+"sector": "Consumer Discretionary"
+},
+"LOW": {
+"indices": [
+"SPX"
+],
+"name": "Lowe's",
+"sector": "Consumer Discretionary"
+},
+"LPG": {
+"indices": [
+"SP600"
+],
+"name": "Dorian LPG Ltd.",
+"sector": "Energy"
+},
+"LPX": {
+"indices": [
+"SP400"
+],
+"name": "Louisiana-Pacific",
+"sector": "Industrials"
+},
+"LQDA": {
+"indices": [
+"SP600"
+],
+"name": "Liquidia Corporation",
+"sector": "Health Care"
+},
+"LQDT": {
+"indices": [
+"SP600"
+],
+"name": "Liquidity Services, Inc.",
+"sector": "Industrials"
+},
+"LRCX": {
+"indices": [
+"NDX",
+"SPX"
+],
+"name": "Lam Research",
+"sector": "Information Technology"
+},
+"LRN": {
+"indices": [
+"SP600"
+],
+"name": "Stride, Inc.",
+"sector": "Consumer Discretionary"
+},
+"LSCC": {
+"indices": [
+"SP400"
+],
+"name": "Lattice Semiconductor",
+"sector": "Information Technology"
+},
+"LSTR": {
+"indices": [
+"SP400"
+],
+"name": "Landstar System",
+"sector": "Industrials"
+},
+"LTC": {
+"indices": [
+"SP600"
+],
+"name": "LTC Properties, Inc.",
+"sector": "Real Estate"
+},
+"LTH": {
+"indices": [
+"SP600"
+],
+"name": "Life Time Group Holdings, Inc.",
+"sector": "Consumer Discretionary"
+},
+"LULU": {
+"indices": [
+"NDX",
+"SPX"
+],
+"name": "Lululemon Athletica",
+"sector": "Consumer Discretionary"
+},
+"LUMN": {
+"indices": [
+"SP600"
+],
+"name": "Lumen Technologies",
+"sector": "Communication Services"
+},
+"LUV": {
+"indices": [
+"SPX"
+],
+"name": "Southwest Airlines",
+"sector": "Industrials"
+},
+"LVS": {
+"indices": [
+"SPX"
+],
+"name": "Las Vegas Sands",
+"sector": "Consumer Discretionary"
+},
+"LW": {
+"indices": [
+"SP600"
+],
+"name": "Lamb Weston",
+"sector": "Consumer Staples"
+},
+"LXP": {
+"indices": [
+"SP600"
+],
+"name": "Lexington Realty Trust",
+"sector": "Real Estate"
+},
+"LYB": {
+"indices": [
+"SPX"
+],
+"name": "LyondellBasell",
+"sector": "Materials"
+},
+"LYFT": {
+"indices": [
+"SP600"
+],
+"name": "Lyft, Inc.",
+"sector": "Industrials"
+},
+"LYV": {
+"indices": [
+"SPX"
+],
+"name": "Live Nation Entertainment",
+"sector": "Communication Services"
+},
+"LZ": {
+"indices": [
+"SP600"
+],
+"name": "LegalZoom.com, Inc.",
+"sector": "Industrials"
+},
+"LZB": {
+"indices": [
+"SP600"
+],
+"name": "La-Z-Boy, Inc.",
+"sector": "Consumer Discretionary"
+},
+"M": {
+"indices": [
+"SP400"
+],
+"name": "Macy's",
+"sector": "Consumer Discretionary"
+},
+"MA": {
+"indices": [
+"SPX"
+],
+"name": "Mastercard",
+"sector": "Financials"
+},
+"MAA": {
+"indices": [
+"SPX"
+],
+"name": "Mid-America Apartment Communities",
+"sector": "Real Estate"
+},
+"MAC": {
+"indices": [
+"SP600"
+],
+"name": "Macerich",
+"sector": "Real Estate"
+},
+"MAN": {
+"indices": [
+"SP600"
+],
+"name": "ManpowerGroup",
+"sector": "Industrials"
+},
+"MANH": {
+"indices": [
+"SP400"
+],
+"name": "Manhattan Associates",
+"sector": "Information Technology"
+},
+"MAR": {
+"indices": [
+"NDX",
+"SPX"
+],
+"name": "Marriott International",
+"sector": "Consumer Discretionary"
+},
+"MARA": {
+"indices": [
+"SP600"
+],
+"name": "MARA Holdings, Inc.",
+"sector": "Information Technology"
+},
+"MAS": {
+"indices": [
+"SPX"
+],
+"name": "Masco",
+"sector": "Industrials"
+},
+"MAT": {
+"indices": [
+"SP400"
+],
+"name": "Mattel",
+"sector": "Consumer Discretionary"
+},
+"MATW": {
+"indices": [
+"SP600"
+],
+"name": "Matthews International Corporation",
+"sector": "Consumer Discretionary"
+},
+"MATX": {
+"indices": [
+"SP600"
+],
+"name": "Matson, Inc.",
+"sector": "Industrials"
+},
+"MBC": {
+"indices": [
+"SP600"
+],
+"name": "MasterBrand, Inc.",
+"sector": "Industrials"
+},
+"MBGL": {
+"indices": [
+"SP600"
+],
+"name": "Mobility Global, Inc.",
+"sector": "Industrials"
+},
+"MBIN": {
+"indices": [
+"SP600"
+],
+"name": "Merchants Bancorp",
+"sector": "Financials"
+},
+"MC": {
+"indices": [
+"SP600"
+],
+"name": "Moelis & Company",
+"sector": "Financials"
+},
+"MCD": {
+"indices": [
+"DJI",
+"SPX"
+],
+"name": "McDonald's",
+"sector": "Consumer Discretionary"
+},
+"MCHP": {
+"indices": [
+"NDX",
+"SPX"
+],
+"name": "Microchip Technology",
+"sector": "Information Technology"
+},
+"MCK": {
+"indices": [
+"SPX"
+],
+"name": "McKesson Corporation",
+"sector": "Health Care"
+},
+"MCO": {
+"indices": [
+"SPX"
+],
+"name": "Moody's Corporation",
+"sector": "Financials"
+},
+"MCRI": {
+"indices": [
+"SP600"
+],
+"name": "Monarch Casino & Resort, Inc.",
+"sector": "Consumer Discretionary"
+},
+"MCY": {
+"indices": [
+"SP600"
+],
+"name": "Mercury General",
+"sector": "Financials"
+},
+"MD": {
+"indices": [
+"SP600"
+],
+"name": "Pediatrix Medical Group",
+"sector": "Health Care"
+},
+"MDB": {
+"indices": [
+"NDX"
+],
+"name": "MDB",
+"sector": ""
+},
+"MDLZ": {
+"indices": [
+"NDX",
+"SPX"
+],
+"name": "Mondelez International",
+"sector": "Consumer Staples"
+},
+"MDT": {
+"indices": [
+"SPX"
+],
+"name": "Medtronic",
+"sector": "Health Care"
+},
+"MDU": {
+"indices": [
+"SP600"
+],
+"name": "MDU Resources Group, Inc.",
+"sector": "Utilities"
+},
+"MEDP": {
+"indices": [
+"SP400"
+],
+"name": "Medpace",
+"sector": "Health Care"
+},
+"MELI": {
+"indices": [
+"NDX"
+],
+"name": "MELI",
+"sector": ""
+},
+"MET": {
+"indices": [
+"SPX"
+],
+"name": "MetLife",
+"sector": "Financials"
+},
+"META": {
+"indices": [
+"NDX",
+"SPX"
+],
+"name": "Meta Platforms",
+"sector": "Communication Services"
+},
+"MFP": {
+"indices": [
+"SP600"
+],
+"name": "Midera Food Processing, Inc.",
+"sector": "Industrials"
+},
+"MGEE": {
+"indices": [
+"SP600"
+],
+"name": "MGE Energy, Inc.",
+"sector": "Utilities"
+},
+"MGM": {
+"indices": [
+"SPX"
+],
+"name": "MGM Resorts",
+"sector": "Consumer Discretionary"
+},
+"MGY": {
+"indices": [
+"SP600"
+],
+"name": "Magnolia Oil & Gas, Corp.",
+"sector": "Energy"
+},
+"MHK": {
+"indices": [
+"SP600"
+],
+"name": "Mohawk Industries",
+"sector": "Consumer Discretionary"
+},
+"MHO": {
+"indices": [
+"SP600"
+],
+"name": "M/I Homes, Inc.",
+"sector": "Consumer Discretionary"
+},
+"MIDD": {
+"indices": [
+"SP400"
+],
+"name": "Middleby",
+"sector": "Industrials"
+},
+"MIR": {
+"indices": [
+"SP600"
+],
+"name": "Mirion Technologies, Inc.",
+"sector": "Information Technology"
+},
+"MKC": {
+"indices": [
+"SPX"
+],
+"name": "McCormick & Company",
+"sector": "Consumer Staples"
+},
+"MKSI": {
+"indices": [
+"SP400"
+],
+"name": "MKS Instruments",
+"sector": "Information Technology"
+},
+"MKTX": {
+"indices": [
+"SP600"
+],
+"name": "MarketAxess",
+"sector": "Financials"
+},
+"MLI": {
+"indices": [
+"SP400"
+],
+"name": "Mueller Industries",
+"sector": "Industrials"
+},
+"MLKN": {
+"indices": [
+"SP600"
+],
+"name": "MillerKnoll, Inc.",
+"sector": "Industrials"
+},
+"MLM": {
+"indices": [
+"SPX"
+],
+"name": "Martin Marietta Materials",
+"sector": "Materials"
+},
+"MMI": {
+"indices": [
+"SP600"
+],
+"name": "Marcus & Millichap, Inc.",
+"sector": "Real Estate"
+},
+"MMM": {
+"indices": [
+"DJI",
+"SPX"
+],
+"name": "3M",
+"sector": "Industrials"
+},
+"MMS": {
+"indices": [
+"SP400"
+],
+"name": "Maximus Inc.",
+"sector": "Industrials"
+},
+"MMSI": {
+"indices": [
+"SP600"
+],
+"name": "Merit Medical Systems, Inc.",
+"sector": "Health Care"
+},
+"MNST": {
+"indices": [
+"NDX",
+"SPX"
+],
+"name": "Monster Beverage",
+"sector": "Consumer Staples"
+},
+"MO": {
+"indices": [
+"SPX"
+],
+"name": "Altria",
+"sector": "Consumer Staples"
+},
+"MOG-A": {
+"indices": [
+"SP400"
+],
+"name": "Moog Inc.",
+"sector": "Industrials"
+},
+"MOH": {
+"indices": [
+"SP400"
+],
+"name": "Molina Healthcare",
+"sector": "Health Care"
+},
+"MORN": {
+"indices": [
+"SP400"
+],
+"name": "Morningstar, Inc.",
+"sector": "Financials"
+},
+"MOS": {
+"indices": [
+"SPX"
+],
+"name": "Mosaic Company (The)",
+"sector": "Materials"
+},
+"MP": {
+"indices": [
+"SP400"
+],
+"name": "MP Materials",
+"sector": "Materials"
+},
+"MPC": {
+"indices": [
+"SPX"
+],
+"name": "Marathon Petroleum",
+"sector": "Energy"
+},
+"MPT": {
+"indices": [
+"SP600"
+],
+"name": "Medical Properties Trust",
+"sector": "Real Estate"
+},
+"MPWR": {
+"indices": [
+"SPX"
+],
+"name": "Monolithic Power Systems",
+"sector": "Information Technology"
+},
+"MRCY": {
+"indices": [
+"SP600"
+],
+"name": "Mercury Systems",
+"sector": "Industrials"
+},
+"MRK": {
+"indices": [
+"DJI",
+"SPX"
+],
+"name": "Merck & Co.",
+"sector": "Health Care"
+},
+"MRNA": {
+"indices": [
+"NDX",
+"SPX"
+],
+"name": "Moderna",
+"sector": "Health Care"
+},
+"MRP": {
+"indices": [
+"SP600"
+],
+"name": "Millrose Properties, Inc.",
+"sector": "Real Estate"
+},
+"MRSH": {
+"indices": [
+"SPX"
+],
+"name": "Marsh McLennan",
+"sector": "Financials"
+},
+"MRTN": {
+"indices": [
+"SP600"
+],
+"name": "Marten Transport, Ltd.",
+"sector": "Industrials"
+},
+"MRVL": {
+"indices": [
+"NDX",
+"SPX"
+],
+"name": "Marvell Technology",
+"sector": "Information Technology"
+},
+"MS": {
+"indices": [
+"SPX"
+],
+"name": "Morgan Stanley",
+"sector": "Financials"
+},
+"MSA": {
+"indices": [
+"SP400"
+],
+"name": "MSA Safety",
+"sector": "Industrials"
+},
+"MSCI": {
+"indices": [
+"SPX"
+],
+"name": "MSCI Inc.",
+"sector": "Financials"
+},
+"MSEX": {
+"indices": [
+"SP600"
+],
+"name": "Middlesex Water Company",
+"sector": "Utilities"
+},
+"MSFT": {
+"indices": [
+"DJI",
+"NDX",
+"SPX"
+],
+"name": "Microsoft",
+"sector": "Information Technology"
+},
+"MSGS": {
+"indices": [
+"SP600"
+],
+"name": "Madison Square Garden Sports Corp.",
+"sector": "Communication Services"
+},
+"MSI": {
+"indices": [
+"SPX"
+],
+"name": "Motorola Solutions",
+"sector": "Information Technology"
+},
+"MSM": {
+"indices": [
+"SP400"
+],
+"name": "MSC Industrial Direct",
+"sector": "Industrials"
+},
+"MTB": {
+"indices": [
+"SPX"
+],
+"name": "M&T Bank",
+"sector": "Financials"
+},
+"MTCH": {
+"indices": [
+"SP600"
+],
+"name": "Match Group",
+"sector": "Communication Services"
+},
+"MTD": {
+"indices": [
+"SPX"
+],
+"name": "Mettler Toledo",
+"sector": "Health Care"
+},
+"MTDR": {
+"indices": [
+"SP400"
+],
+"name": "Matador Resources",
+"sector": "Energy"
+},
+"MTG": {
+"indices": [
+"SP400"
+],
+"name": "MGIC Investment Corporation",
+"sector": "Financials"
+},
+"MTH": {
+"indices": [
+"SP600"
+],
+"name": "Meritage Homes Corporation",
+"sector": "Consumer Discretionary"
+},
+"MTN": {
+"indices": [
+"SP400"
+],
+"name": "Vail Resorts",
+"sector": "Consumer Discretionary"
+},
+"MTRN": {
+"indices": [
+"SP600"
+],
+"name": "Materion Corp.",
+"sector": "Materials"
+},
+"MTSI": {
+"indices": [
+"SP400"
+],
+"name": "MACOM Technology Solutions",
+"sector": "Information Technology"
+},
+"MTUS": {
+"indices": [
+"SP600"
+],
+"name": "Metallus Inc",
+"sector": "Materials"
+},
+"MTX": {
+"indices": [
+"SP600"
+],
+"name": "Minerals Technologies",
+"sector": "Materials"
+},
+"MTZ": {
+"indices": [
+"SP400"
+],
+"name": "MasTec",
+"sector": "Industrials"
+},
+"MU": {
+"indices": [
+"NDX",
+"SPX"
+],
+"name": "Micron Technology",
+"sector": "Information Technology"
+},
+"MUR": {
+"indices": [
+"SP400"
+],
+"name": "Murphy Oil",
+"sector": "Energy"
+},
+"MUSA": {
+"indices": [
+"SP400"
+],
+"name": "Murphy USA",
+"sector": "Consumer Discretionary"
+},
+"MWA": {
+"indices": [
+"SP600"
+],
+"name": "Mueller Water Products",
+"sector": "Industrials"
+},
+"MXL": {
+"indices": [
+"SP600"
+],
+"name": "MaxLinear, Inc.",
+"sector": "Information Technology"
+},
+"MYRG": {
+"indices": [
+"SP600"
+],
+"name": "MYR Group, Inc.",
+"sector": "Industrials"
+},
+"MZTI": {
+"indices": [
+"SP400"
+],
+"name": "The Marzetti Company",
+"sector": "Consumer Staples"
+},
+"NABL": {
+"indices": [
+"SP600"
+],
+"name": "N-able, Inc.",
+"sector": "Information Technology"
+},
+"NATL": {
+"indices": [
+"SP600"
+],
+"name": "NCR Atleos",
+"sector": "Financials"
+},
+"NAVI": {
+"indices": [
+"SP600"
+],
+"name": "Navient",
+"sector": "Financials"
+},
+"NBHC": {
+"indices": [
+"SP600"
+],
+"name": "National Bank Holdings Corporation",
+"sector": "Financials"
+},
+"NBIX": {
+"indices": [
+"SP400"
+],
+"name": "Neurocrine Biosciences",
+"sector": "Health Care"
+},
+"NBTB": {
+"indices": [
+"SP600"
+],
+"name": "NBT Bancorp, Inc.",
+"sector": "Financials"
+},
+"NCLH": {
+"indices": [
+"SPX"
+],
+"name": "Norwegian Cruise Line Holdings",
+"sector": "Consumer Discretionary"
+},
+"NDAQ": {
+"indices": [
+"SPX"
+],
+"name": "Nasdaq, Inc.",
+"sector": "Financials"
+},
+"NDSN": {
+"indices": [
+"SPX"
+],
+"name": "Nordson Corporation",
+"sector": "Industrials"
+},
+"NE": {
+"indices": [
+"SP600"
+],
+"name": "Noble Corporation",
+"sector": "Energy"
+},
+"NEE": {
+"indices": [
+"SPX"
+],
+"name": "NextEra Energy",
+"sector": "Utilities"
+},
+"NEM": {
+"indices": [
+"SPX"
+],
+"name": "Newmont",
+"sector": "Materials"
+},
+"NEO": {
+"indices": [
+"SP600"
+],
+"name": "NeoGenomics Laboratories, Inc.",
+"sector": "Health Care"
+},
+"NEOG": {
+"indices": [
+"SP600"
+],
+"name": "Neogen",
+"sector": "Health Care"
+},
+"NEU": {
+"indices": [
+"SP400"
+],
+"name": "NewMarket Corporation",
+"sector": "Materials"
+},
+"NFG": {
+"indices": [
+"SP400"
+],
+"name": "National Fuel Gas",
+"sector": "Utilities"
+},
+"NFLX": {
+"indices": [
+"NDX",
+"SPX"
+],
+"name": "Netflix",
+"sector": "Communication Services"
+},
+"NGVT": {
+"indices": [
+"SP600"
+],
+"name": "Ingevity, Corp.",
+"sector": "Materials"
+},
+"NHC": {
+"indices": [
+"SP600"
+],
+"name": "National Healthcare, Corp.",
+"sector": "Health Care"
+},
+"NHI": {
+"indices": [
+"SP600"
+],
+"name": "National Health Investors, Inc.",
+"sector": "Real Estate"
+},
+"NI": {
+"indices": [
+"SPX"
+],
+"name": "NiSource",
+"sector": "Utilities"
+},
+"NIC": {
+"indices": [
+"SP600"
+],
+"name": "Nicolet Bankshares",
+"sector": "Financials"
+},
+"NJR": {
+"indices": [
+"SP400"
+],
+"name": "New Jersey Resources",
+"sector": "Utilities"
+},
+"NKE": {
+"indices": [
+"DJI",
+"SPX"
+],
+"name": "Nike, Inc.",
+"sector": "Consumer Discretionary"
+},
+"NLY": {
+"indices": [
+"SP400"
+],
+"name": "Annaly Capital Management",
+"sector": "Financials"
+},
+"NMIH": {
+"indices": [
+"SP600"
+],
+"name": "NMI Holdings, Inc.",
+"sector": "Financials"
+},
+"NNN": {
+"indices": [
+"SP400"
+],
+"name": "NNN Reit",
+"sector": "Real Estate"
+},
+"NOC": {
+"indices": [
+"SPX"
+],
+"name": "Northrop Grumman",
+"sector": "Industrials"
+},
+"NOG": {
+"indices": [
+"SP600"
+],
+"name": "Northern Oil and Gas, Inc.",
+"sector": "Energy"
+},
+"NOV": {
+"indices": [
+"SP400"
+],
+"name": "NOV Inc.",
+"sector": "Energy"
+},
+"NOVT": {
+"indices": [
+"SP400"
+],
+"name": "Novanta",
+"sector": "Information Technology"
+},
+"NOW": {
+"indices": [
+"SPX"
+],
+"name": "ServiceNow",
+"sector": "Information Technology"
+},
+"NPK": {
+"indices": [
+"SP600"
+],
+"name": "National Presto Industries, Inc.",
+"sector": "Industrials"
+},
+"NPO": {
+"indices": [
+"SP600"
+],
+"name": "EnPro Industries, Inc.",
+"sector": "Industrials"
+},
+"NRG": {
+"indices": [
+"SPX"
+],
+"name": "NRG Energy",
+"sector": "Utilities"
+},
+"NSC": {
+"indices": [
+"SPX"
+],
+"name": "Norfolk Southern",
+"sector": "Industrials"
+},
+"NSIT": {
+"indices": [
+"SP600"
+],
+"name": "Insight Enterprises, Inc.",
+"sector": "Industrials"
+},
+"NSP": {
+"indices": [
+"SP600"
+],
+"name": "Insperity",
+"sector": "Industrials"
+},
+"NSSC": {
+"indices": [
+"SP600"
+],
+"name": "Napco Security Technologies",
+"sector": "Information Technology"
+},
+"NTAP": {
+"indices": [
+"SPX"
+],
+"name": "NetApp",
+"sector": "Information Technology"
+},
+"NTCT": {
+"indices": [
+"SP600"
+],
+"name": "NETSCOUT Systems, Inc.",
+"sector": "Information Technology"
+},
+"NTNX": {
+"indices": [
+"SP400"
+],
+"name": "Nutanix",
+"sector": "Information Technology"
+},
+"NTRS": {
+"indices": [
+"SPX"
+],
+"name": "Northern Trust",
+"sector": "Financials"
+},
+"NTST": {
+"indices": [
+"SP600"
+],
+"name": "NETSTREIT Corp.",
+"sector": "Real Estate"
+},
+"NUE": {
+"indices": [
+"SPX"
+],
+"name": "Nucor",
+"sector": "Materials"
+},
+"NVDA": {
+"indices": [
+"DJI",
+"NDX",
+"SPX"
+],
+"name": "Nvidia",
+"sector": "Information Technology"
+},
+"NVR": {
+"indices": [
+"SPX"
+],
+"name": "NVR, Inc.",
+"sector": "Consumer Discretionary"
+},
+"NVST": {
+"indices": [
+"SP400"
+],
+"name": "Envista Holdings",
+"sector": "Health Care"
+},
+"NVT": {
+"indices": [
+"SP400"
+],
+"name": "nVent Electric plc",
+"sector": "Industrials"
+},
+"NWBI": {
+"indices": [
+"SP600"
+],
+"name": "Northwest Bancshares, Inc.",
+"sector": "Financials"
+},
+"NWE": {
+"indices": [
+"SP400"
+],
+"name": "NorthWestern Energy",
+"sector": "Utilities"
+},
+"NWL": {
+"indices": [
+"SP600"
+],
+"name": "Newell Brands",
+"sector": "Consumer Discretionary"
+},
+"NWN": {
+"indices": [
+"SP600"
+],
+"name": "NW Natural",
+"sector": "Utilities"
+},
+"NWS": {
+"indices": [
+"SPX"
+],
+"name": "News Corp (Class B)",
+"sector": "Communication Services"
+},
+"NWSA": {
+"indices": [
+"SPX"
+],
+"name": "News Corp (Class A)",
+"sector": "Communication Services"
+},
+"NX": {
+"indices": [
+"SP600"
+],
+"name": "Quanex Building Products Corporation",
+"sector": "Industrials"
+},
+"NXPI": {
+"indices": [
+"NDX",
+"SPX"
+],
+"name": "NXP Semiconductors",
+"sector": "Information Technology"
+},
+"NXRT": {
+"indices": [
+"SP600"
+],
+"name": "NexPoint Residential Trust, Inc.",
+"sector": "Real Estate"
+},
+"NXST": {
+"indices": [
+"SP400"
+],
+"name": "Nexstar Media Group",
+"sector": "Communication Services"
+},
+"NXT": {
+"indices": [
+"SP400"
+],
+"name": "Nextpower",
+"sector": "Industrials"
+},
+"NYT": {
+"indices": [
+"SP400"
+],
+"name": "New York Times Company",
+"sector": "Communication Services"
+},
+"O": {
+"indices": [
+"SPX"
+],
+"name": "Realty Income",
+"sector": "Real Estate"
+},
+"OC": {
+"indices": [
+"SP400"
+],
+"name": "Owens Corning",
+"sector": "Industrials"
+},
+"ODFL": {
+"indices": [
+"NDX",
+"SPX"
+],
+"name": "Old Dominion",
+"sector": "Industrials"
+},
+"OFG": {
+"indices": [
+"SP600"
+],
+"name": "OFG Bancorp",
+"sector": "Financials"
+},
+"OGE": {
+"indices": [
+"SP400"
+],
+"name": "OGE Energy",
+"sector": "Utilities"
+},
+"OGN": {
+"indices": [
+"SP600"
+],
+"name": "Organon & Co.",
+"sector": "Health Care"
+},
+"OGS": {
+"indices": [
+"SP400"
+],
+"name": "One Gas",
+"sector": "Utilities"
+},
+"OHI": {
+"indices": [
+"SP400"
+],
+"name": "Omega Healthcare Investors",
+"sector": "Real Estate"
+},
+"OI": {
+"indices": [
+"SP600"
+],
+"name": "O-I Glass, Inc.",
+"sector": "Materials"
+},
+"OII": {
+"indices": [
+"SP600"
+],
+"name": "Oceaneering International, Inc.",
+"sector": "Energy"
+},
+"OKE": {
+"indices": [
+"SPX"
+],
+"name": "Oneok",
+"sector": "Energy"
+},
+"OKTA": {
+"indices": [
+"SP400"
+],
+"name": "Okta, Inc.",
+"sector": "Information Technology"
+},
+"OLED": {
+"indices": [
+"SP400"
+],
+"name": "Universal Display",
+"sector": "Information Technology"
+},
+"OLLI": {
+"indices": [
+"SP400"
+],
+"name": "Ollie's Bargain Outlet",
+"sector": "Consumer Discretionary"
+},
+"OLN": {
+"indices": [
+"SP400"
+],
+"name": "Olin Corporation",
+"sector": "Materials"
+},
+"OMC": {
+"indices": [
+"SPX"
+],
+"name": "Omnicom Group",
+"sector": "Communication Services"
+},
+"OMCL": {
+"indices": [
+"SP600"
+],
+"name": "Omnicell",
+"sector": "Health Care"
+},
+"ON": {
+"indices": [
+"NDX",
+"SPX"
+],
+"name": "ON Semiconductor",
+"sector": "Information Technology"
+},
+"ONB": {
+"indices": [
+"SP400"
+],
+"name": "Old National Bank",
+"sector": "Financials"
+},
+"ONTO": {
+"indices": [
+"SP400"
+],
+"name": "Onto Innovation",
+"sector": "Information Technology"
+},
+"OPCH": {
+"indices": [
+"SP400"
+],
+"name": "Option Care Health",
+"sector": "Health Care"
+},
+"OPLN": {
+"indices": [
+"SP600"
+],
+"name": "OPENLANE, Inc.",
+"sector": "Industrials"
+},
+"ORA": {
+"indices": [
+"SP400"
+],
+"name": "Ormat Technologies",
+"sector": "Utilities"
+},
+"ORCL": {
+"indices": [
+"SPX"
+],
+"name": "Oracle Corporation",
+"sector": "Information Technology"
+},
+"ORI": {
+"indices": [
+"SP400"
+],
+"name": "Old Republic International",
+"sector": "Financials"
+},
+"ORLY": {
+"indices": [
+"NDX",
+"SPX"
+],
+"name": "O\u2019Reilly Automotive",
+"sector": "Consumer Discretionary"
+},
+"OSIS": {
+"indices": [
+"SP600"
+],
+"name": "OSI Systems, Inc.",
+"sector": "Information Technology"
+},
+"OSK": {
+"indices": [
+"SP400"
+],
+"name": "Oshkosh",
+"sector": "Industrials"
+},
+"OSW": {
+"indices": [
+"SP600"
+],
+"name": "OneSpaWorld Holdings Limited",
+"sector": "Consumer Discretionary"
+},
+"OTIS": {
+"indices": [
+"SPX"
+],
+"name": "Otis Worldwide",
+"sector": "Industrials"
+},
+"OTTR": {
+"indices": [
+"SP600"
+],
+"name": "Otter Tail Corporation",
+"sector": "Utilities"
+},
+"OUT": {
+"indices": [
+"SP600"
+],
+"name": "Outfront Media",
+"sector": "Real Estate"
+},
+"OVV": {
+"indices": [
+"SP400"
+],
+"name": "Ovintiv",
+"sector": "Energy"
+},
+"OXY": {
+"indices": [
+"SPX"
+],
+"name": "Occidental Petroleum",
+"sector": "Energy"
+},
+"OZK": {
+"indices": [
+"SP400"
+],
+"name": "Bank OZK",
+"sector": "Financials"
+},
+"P": {
+"indices": [
+"SP400"
+],
+"name": "Everpure",
+"sector": "Information Technology"
+},
+"PAG": {
+"indices": [
+"SP400"
+],
+"name": "Penske Automotive Group",
+"sector": "Consumer Discretionary"
+},
+"PAHC": {
+"indices": [
+"SP600"
+],
+"name": "Phibro Animal Health",
+"sector": "Health Care"
+},
+"PANW": {
+"indices": [
+"NDX",
+"SPX"
+],
+"name": "Palo Alto Networks",
+"sector": "Information Technology"
+},
+"PARR": {
+"indices": [
+"SP600"
+],
+"name": "Par Pacific Holdings, Inc.",
+"sector": "Energy"
+},
+"PATH": {
+"indices": [
+"SP400"
+],
+"name": "UiPath",
+"sector": "Information Technology"
+},
+"PATK": {
+"indices": [
+"SP600"
+],
+"name": "Patrick Industries, Inc.",
+"sector": "Consumer Discretionary"
+},
+"PAYC": {
+"indices": [
+"SP600"
+],
+"name": "Paycom",
+"sector": "Industrials"
+},
+"PAYO": {
+"indices": [
+"SP600"
+],
+"name": "Payoneer Global Inc.",
+"sector": "Financials"
+},
+"PAYX": {
+"indices": [
+"NDX",
+"SPX"
+],
+"name": "Paychex",
+"sector": "Industrials"
+},
+"PB": {
+"indices": [
+"SP400"
+],
+"name": "Prosperity Bancshares",
+"sector": "Financials"
+},
+"PBF": {
+"indices": [
+"SP400"
+],
+"name": "PBF Energy",
+"sector": "Energy"
+},
+"PBH": {
+"indices": [
+"SP600"
+],
+"name": "Prestige Consumer Healthcare",
+"sector": "Health Care"
+},
+"PBI": {
+"indices": [
+"SP600"
+],
+"name": "Pitney Bowes, Inc.",
+"sector": "Industrials"
+},
+"PCAR": {
+"indices": [
+"NDX",
+"SPX"
+],
+"name": "Paccar",
+"sector": "Industrials"
+},
+"PCG": {
+"indices": [
+"SPX"
+],
+"name": "PG&E Corporation",
+"sector": "Utilities"
+},
+"PCRX": {
+"indices": [
+"SP600"
+],
+"name": "Pacira BioSciences, Inc.",
+"sector": "Health Care"
+},
+"PCTY": {
+"indices": [
+"SP400"
+],
+"name": "Paylocity",
+"sector": "Industrials"
+},
+"PDD": {
+"indices": [
+"NDX"
+],
+"name": "PDD",
+"sector": ""
+},
+"PDFS": {
+"indices": [
+"SP600"
+],
+"name": "PDF Solutions, Inc.",
+"sector": "Information Technology"
+},
+"PEB": {
+"indices": [
+"SP600"
+],
+"name": "Pebblebrook Hotel Trust",
+"sector": "Real Estate"
+},
+"PECO": {
+"indices": [
+"SP600"
+],
+"name": "Phillips Edison & Company",
+"sector": "Real Estate"
+},
+"PEG": {
+"indices": [
+"SPX"
+],
+"name": "Public Service Enterprise Group",
+"sector": "Utilities"
+},
+"PEGA": {
+"indices": [
+"SP400"
+],
+"name": "Pegasystems",
+"sector": "Information Technology"
+},
+"PEN": {
+"indices": [
+"SP400"
+],
+"name": "Penumbra, Inc.",
+"sector": "Health Care"
+},
+"PENG": {
+"indices": [
+"SP600"
+],
+"name": "Penguin Solutions, Inc.",
+"sector": "Information Technology"
+},
+"PENN": {
+"indices": [
+"SP600"
+],
+"name": "Penn Entertainment",
+"sector": "Consumer Discretionary"
+},
+"PEP": {
+"indices": [
+"NDX",
+"SPX"
+],
+"name": "PepsiCo",
+"sector": "Consumer Staples"
+},
+"PFBC": {
+"indices": [
+"SP600"
+],
+"name": "Preferred Bank",
+"sector": "Financials"
+},
+"PFE": {
+"indices": [
+"SPX"
+],
+"name": "Pfizer",
+"sector": "Health Care"
+},
+"PFG": {
+"indices": [
+"SPX"
+],
+"name": "Principal Financial Group",
+"sector": "Financials"
+},
+"PFGC": {
+"indices": [
+"SP400"
+],
+"name": "Performance Food Group",
+"sector": "Consumer Staples"
+},
+"PFS": {
+"indices": [
+"SP600"
+],
+"name": "Provident Financial Services, Inc.",
+"sector": "Financials"
+},
+"PG": {
+"indices": [
+"DJI",
+"SPX"
+],
+"name": "Procter & Gamble",
+"sector": "Consumer Staples"
+},
+"PGNY": {
+"indices": [
+"SP600"
+],
+"name": "Progyny, Inc.",
+"sector": "Health Care"
+},
+"PGR": {
+"indices": [
+"SPX"
+],
+"name": "Progressive Corporation",
+"sector": "Financials"
+},
+"PH": {
+"indices": [
+"SPX"
+],
+"name": "Parker Hannifin",
+"sector": "Industrials"
+},
+"PHIN": {
+"indices": [
+"SP600"
+],
+"name": "PHINIA, Inc.",
+"sector": "Consumer Discretionary"
+},
+"PHM": {
+"indices": [
+"SPX"
+],
+"name": "PulteGroup",
+"sector": "Consumer Discretionary"
+},
+"PI": {
+"indices": [
+"SP600"
+],
+"name": "Impinj, Inc.",
+"sector": "Information Technology"
+},
+"PII": {
+"indices": [
+"SP400"
+],
+"name": "Polaris",
+"sector": "Consumer Discretionary"
+},
+"PINS": {
+"indices": [
+"SP400"
+],
+"name": "Pinterest",
+"sector": "Communication Services"
+},
+"PIPR": {
+"indices": [
+"SP600"
+],
+"name": "Piper Sandler Companies",
+"sector": "Financials"
+},
+"PJT": {
+"indices": [
+"SP600"
+],
+"name": "PJT Partners, Inc.",
+"sector": "Financials"
+},
+"PK": {
+"indices": [
+"SP400"
+],
+"name": "Park Hotels & Resorts",
+"sector": "Real Estate"
+},
+"PKG": {
+"indices": [
+"SPX"
+],
+"name": "Packaging Corporation of America",
+"sector": "Materials"
+},
+"PLAB": {
+"indices": [
+"SP600"
+],
+"name": "Photronics, Inc.",
+"sector": "Information Technology"
+},
+"PLD": {
+"indices": [
+"SPX"
+],
+"name": "Prologis",
+"sector": "Real Estate"
+},
+"PLMR": {
+"indices": [
+"SP600"
+],
+"name": "Palomar Holdings, Inc.",
+"sector": "Financials"
+},
+"PLNT": {
+"indices": [
+"SP400"
+],
+"name": "Planet Fitness",
+"sector": "Consumer Discretionary"
+},
+"PLTR": {
+"indices": [
+"SPX"
+],
+"name": "Palantir Technologies",
+"sector": "Information Technology"
+},
+"PLUS": {
+"indices": [
+"SP600"
+],
+"name": "ePlus, Inc.",
+"sector": "Information Technology"
+},
+"PLXS": {
+"indices": [
+"SP600"
+],
+"name": "Plexus Corp.",
+"sector": "Information Technology"
+},
+"PM": {
+"indices": [
+"SPX"
+],
+"name": "Philip Morris International",
+"sector": "Consumer Staples"
+},
+"PMT": {
+"indices": [
+"SP600"
+],
+"name": "PennyMac Mortgage Investment Trust",
+"sector": "Real Estate"
+},
+"PNC": {
+"indices": [
+"SPX"
+],
+"name": "PNC Financial Services",
+"sector": "Financials"
+},
+"PNFP": {
+"indices": [
+"SP400"
+],
+"name": "Pinnacle Financial Partners",
+"sector": "Financials"
+},
+"PNR": {
+"indices": [
+"SPX"
+],
+"name": "Pentair",
+"sector": "Industrials"
+},
+"PNW": {
+"indices": [
+"SPX"
+],
+"name": "Pinnacle West Capital",
+"sector": "Utilities"
+},
+"PODD": {
+"indices": [
+"SPX"
+],
+"name": "Insulet Corporation",
+"sector": "Health Care"
+},
+"POOL": {
+"indices": [
+"SP600"
+],
+"name": "Pool Corporation",
+"sector": "Consumer Discretionary"
+},
+"POR": {
+"indices": [
+"SP400"
+],
+"name": "Portland General Electric",
+"sector": "Utilities"
+},
+"POST": {
+"indices": [
+"SP400"
+],
+"name": "Post Holdings",
+"sector": "Consumer Staples"
+},
+"POWI": {
+"indices": [
+"SP600"
+],
+"name": "Power Integrations",
+"sector": "Information Technology"
+},
+"POWL": {
+"indices": [
+"SP600"
+],
+"name": "Powell Industries, Inc.",
+"sector": "Industrials"
+},
+"PPC": {
+"indices": [
+"SP400"
+],
+"name": "Pilgrim's Pride",
+"sector": "Consumer Staples"
+},
+"PPG": {
+"indices": [
+"SPX"
+],
+"name": "PPG Industries",
+"sector": "Materials"
+},
+"PPL": {
+"indices": [
+"SPX"
+],
+"name": "PPL Corporation",
+"sector": "Utilities"
+},
+"PPLI": {
+"indices": [
+"SP600"
+],
+"name": "People Inc.",
+"sector": "Communication Services"
+},
+"PR": {
+"indices": [
+"SP400"
+],
+"name": "Permian Resources",
+"sector": "Energy"
+},
+"PRDO": {
+"indices": [
+"SP600"
+],
+"name": "Perdoceo Education Corp.",
+"sector": "Consumer Discretionary"
+},
+"PRG": {
+"indices": [
+"SP600"
+],
+"name": "PROG Holdings, Inc.",
+"sector": "Financials"
+},
+"PRGO": {
+"indices": [
+"SP600"
+],
+"name": "Perrigo",
+"sector": "Health Care"
+},
+"PRGS": {
+"indices": [
+"SP600"
+],
+"name": "Progress Software Corporation",
+"sector": "Information Technology"
+},
+"PRI": {
+"indices": [
+"SP400"
+],
+"name": "Primerica",
+"sector": "Financials"
+},
+"PRIM": {
+"indices": [
+"SP600"
+],
+"name": "Primoris Services Corporation",
+"sector": "Industrials"
+},
+"PRK": {
+"indices": [
+"SP600"
+],
+"name": "Park National Corp.",
+"sector": "Financials"
+},
+"PRKS": {
+"indices": [
+"SP600"
+],
+"name": "United Parks & Resorts",
+"sector": "Consumer Discretionary"
+},
+"PRLB": {
+"indices": [
+"SP600"
+],
+"name": "Protolabs",
+"sector": "Industrials"
+},
+"PRSU": {
+"indices": [
+"SP600"
+],
+"name": "Pursuit Attractions & Hospitality, Inc.",
+"sector": "Consumer Discretionary"
+},
+"PRU": {
+"indices": [
+"SPX"
+],
+"name": "Prudential Financial",
+"sector": "Financials"
+},
+"PRVA": {
+"indices": [
+"SP600"
+],
+"name": "Privia Health Group, Inc.",
+"sector": "Health Care"
+},
+"PSA": {
+"indices": [
+"SPX"
+],
+"name": "Public Storage",
+"sector": "Real Estate"
+},
+"PSKY": {
+"indices": [
+"SPX"
+],
+"name": "Paramount Skydance Corporation",
+"sector": "Communication Services"
+},
+"PSMT": {
+"indices": [
+"SP600"
+],
+"name": "PriceSmart",
+"sector": "Consumer Staples"
+},
+"PSN": {
+"indices": [
+"SP400"
+],
+"name": "Parsons Corporation",
+"sector": "Industrials"
+},
+"PSX": {
+"indices": [
+"SPX"
+],
+"name": "Phillips 66",
+"sector": "Energy"
+},
+"PTC": {
+"indices": [
+"SPX"
+],
+"name": "PTC Inc.",
+"sector": "Information Technology"
+},
+"PTCT": {
+"indices": [
+"SP600"
+],
+"name": "PTC Therapeutics, Inc.",
+"sector": "Health Care"
+},
+"PTEN": {
+"indices": [
+"SP600"
+],
+"name": "Patterson-UTI Energy, Inc.",
+"sector": "Energy"
+},
+"PTGX": {
+"indices": [
+"SP600"
+],
+"name": "Protagonist Therapeutics, Inc.",
+"sector": "Health Care"
+},
+"PTON": {
+"indices": [
+"SP600"
+],
+"name": "Peloton Interactive, Inc.",
+"sector": "Consumer Discretionary"
+},
+"PVH": {
+"indices": [
+"SP400"
+],
+"name": "PVH Corp.",
+"sector": "Consumer Discretionary"
+},
+"PWR": {
+"indices": [
+"SPX"
+],
+"name": "Quanta Services",
+"sector": "Industrials"
+},
+"PYPL": {
+"indices": [
+"NDX",
+"SPX"
+],
+"name": "PayPal",
+"sector": "Financials"
+},
+"PZZA": {
+"indices": [
+"SP600"
+],
+"name": "Papa John's Pizza",
+"sector": "Consumer Discretionary"
+},
+"Q": {
+"indices": [
+"SPX"
+],
+"name": "Qnity Electronics",
+"sector": "Information Technology"
+},
+"QCOM": {
+"indices": [
+"NDX",
+"SPX"
+],
+"name": "Qualcomm",
+"sector": "Information Technology"
+},
+"QDEL": {
+"indices": [
+"SP600"
+],
+"name": "QuidelOrtho",
+"sector": "Health Care"
+},
+"QLYS": {
+"indices": [
+"SP400"
+],
+"name": "Qualys",
+"sector": "Information Technology"
+},
+"QNST": {
+"indices": [
+"SP600"
+],
+"name": "QuinStreet, Inc.",
+"sector": "Communication Services"
+},
+"QRVO": {
+"indices": [
+"SP600"
+],
+"name": "Qorvo",
+"sector": "Information Technology"
+},
+"QTWO": {
+"indices": [
+"SP600"
+],
+"name": "Q2 Holdings, Inc.",
+"sector": "Information Technology"
+},
+"R": {
+"indices": [
+"SP400"
+],
+"name": "Ryder",
+"sector": "Industrials"
+},
+"RAL": {
+"indices": [
+"SP600"
+],
+"name": "Ralliant Corp",
+"sector": "Information Technology"
+},
+"RAMP": {
+"indices": [
+"SP600"
+],
+"name": "LiveRamp Holdings, Inc.",
+"sector": "Information Technology"
+},
+"RBA": {
+"indices": [
+"SP400"
+],
+"name": "RB Global",
+"sector": "Industrials"
+},
+"RBC": {
+"indices": [
+"SP400"
+],
+"name": "RBC Bearings",
+"sector": "Industrials"
+},
+"RCL": {
+"indices": [
+"SPX"
+],
+"name": "Royal Caribbean Group",
+"sector": "Consumer Discretionary"
+},
+"RCUS": {
+"indices": [
+"SP600"
+],
+"name": "Arcus Biosciences, Inc.",
+"sector": "Health Care"
+},
+"RDN": {
+"indices": [
+"SP600"
+],
+"name": "Radian Group, Inc.",
+"sector": "Financials"
+},
+"RDNT": {
+"indices": [
+"SP600"
+],
+"name": "RadNet, Inc.",
+"sector": "Health Care"
+},
+"REG": {
+"indices": [
+"SPX"
+],
+"name": "Regency Centers",
+"sector": "Real Estate"
+},
+"REGN": {
+"indices": [
+"NDX",
+"SPX"
+],
+"name": "Regeneron Pharmaceuticals",
+"sector": "Health Care"
+},
+"RELY": {
+"indices": [
+"SP600"
+],
+"name": "Remitly",
+"sector": "Financials"
+},
+"RES": {
+"indices": [
+"SP600"
+],
+"name": "RPC, Inc.",
+"sector": "Energy"
+},
+"REX": {
+"indices": [
+"SP600"
+],
+"name": "REX American Resources Corporation",
+"sector": "Energy"
+},
+"REXR": {
+"indices": [
+"SP400"
+],
+"name": "Rexford Industrial Realty",
+"sector": "Real Estate"
+},
+"REYN": {
+"indices": [
+"SP600"
+],
+"name": "Reynolds Consumer Products",
+"sector": "Consumer Staples"
+},
+"REZI": {
+"indices": [
+"SP600"
+],
+"name": "Resideo Technologies, Inc.",
+"sector": "Industrials"
+},
+"RF": {
+"indices": [
+"SPX"
+],
+"name": "Regions Financial Corporation",
+"sector": "Financials"
+},
+"RGA": {
+"indices": [
+"SP400"
+],
+"name": "Reinsurance Group of America",
+"sector": "Financials"
+},
+"RGEN": {
+"indices": [
+"SP400"
+],
+"name": "Repligen",
+"sector": "Health Care"
+},
+"RGLD": {
+"indices": [
+"SP400"
+],
+"name": "Royal Gold",
+"sector": "Materials"
+},
+"RH": {
+"indices": [
+"SP400"
+],
+"name": "RH",
+"sector": "Consumer Discretionary"
+},
+"RHI": {
+"indices": [
+"SP600"
+],
+"name": "Robert Half",
+"sector": "Industrials"
+},
+"RHP": {
+"indices": [
+"SP600"
+],
+"name": "Ryman Hospitality Properties",
+"sector": "Real Estate"
+},
+"RITM": {
+"indices": [
+"SP600"
+],
+"name": "Rithm Capital",
+"sector": "Financials"
+},
+"RJF": {
+"indices": [
+"SPX"
+],
+"name": "Raymond James Financial",
+"sector": "Financials"
+},
+"RL": {
+"indices": [
+"SPX"
+],
+"name": "Ralph Lauren Corporation",
+"sector": "Consumer Discretionary"
+},
+"RLI": {
+"indices": [
+"SP400"
+],
+"name": "RLI Corp.",
+"sector": "Financials"
+},
+"RMBS": {
+"indices": [
+"SP400"
+],
+"name": "Rambus",
+"sector": "Information Technology"
+},
+"RMD": {
+"indices": [
+"SPX"
+],
+"name": "ResMed",
+"sector": "Health Care"
+},
+"RNG": {
+"indices": [
+"SP600"
+],
+"name": "RingCentral, Inc.",
+"sector": "Information Technology"
+},
+"RNR": {
+"indices": [
+"SP400"
+],
+"name": "RenaissanceRe",
+"sector": "Financials"
+},
+"RNST": {
+"indices": [
+"SP600"
+],
+"name": "Renasant Corp.",
+"sector": "Financials"
+},
+"ROAD": {
+"indices": [
+"SP600"
+],
+"name": "Construction Partners, Inc.",
+"sector": "Industrials"
+},
+"ROCK": {
+"indices": [
+"SP600"
+],
+"name": "Gibraltar Industries, Inc.",
+"sector": "Industrials"
+},
+"ROG": {
+"indices": [
+"SP600"
+],
+"name": "Rogers Corporation",
+"sector": "Information Technology"
+},
+"ROIV": {
+"indices": [
+"SP400"
+],
+"name": "Roivant Sciences",
+"sector": "Health Care"
+},
+"ROK": {
+"indices": [
+"SPX"
+],
+"name": "Rockwell Automation",
+"sector": "Industrials"
+},
+"ROKU": {
+"indices": [
+"SP400"
+],
+"name": "Roku, Inc.",
+"sector": "Communication Services"
+},
+"ROL": {
+"indices": [
+"SPX"
+],
+"name": "Rollins, Inc.",
+"sector": "Industrials"
+},
+"ROP": {
+"indices": [
+"NDX",
+"SPX"
+],
+"name": "Roper Technologies",
+"sector": "Information Technology"
+},
+"ROST": {
+"indices": [
+"NDX",
+"SPX"
+],
+"name": "Ross Stores",
+"sector": "Consumer Discretionary"
+},
+"RPM": {
+"indices": [
+"SP400"
+],
+"name": "RPM International",
+"sector": "Materials"
+},
+"RRC": {
+"indices": [
+"SP400"
+],
+"name": "Range Resources",
+"sector": "Energy"
+},
+"RRR": {
+"indices": [
+"SP600"
+],
+"name": "Red Rock Resorts, Inc.",
+"sector": "Consumer Discretionary"
+},
+"RRX": {
+"indices": [
+"SP400"
+],
+"name": "Regal Rexnord",
+"sector": "Industrials"
+},
+"RS": {
+"indices": [
+"SP400"
+],
+"name": "Reliance, Inc.",
+"sector": "Materials"
+},
+"RSG": {
+"indices": [
+"SPX"
+],
+"name": "Republic Services",
+"sector": "Industrials"
+},
+"RSI": {
+"indices": [
+"SP600"
+],
+"name": "Rush Street Interactive, Inc.",
+"sector": "Consumer Discretionary"
+},
+"RTX": {
+"indices": [
+"SPX"
+],
+"name": "RTX Corporation",
+"sector": "Industrials"
+},
+"RUN": {
+"indices": [
+"SP600"
+],
+"name": "Sunrun",
+"sector": "Industrials"
+},
+"RUSHA": {
+"indices": [
+"SP600"
+],
+"name": "Rush Enterprises",
+"sector": "Industrials"
+},
+"RVTY": {
+"indices": [
+"SPX"
+],
+"name": "Revvity",
+"sector": "Health Care"
+},
+"RXO": {
+"indices": [
+"SP600"
+],
+"name": "RXO, Inc.",
+"sector": "Industrials"
+},
+"RYAN": {
+"indices": [
+"SP400"
+],
+"name": "Ryan Specialty",
+"sector": "Financials"
+},
+"RYN": {
+"indices": [
+"SP400"
+],
+"name": "Rayonier",
+"sector": "Real Estate"
+},
+"SABR": {
+"indices": [
+"SP600"
+],
+"name": "Sabre",
+"sector": "Consumer Discretionary"
+},
+"SAFE": {
+"indices": [
+"SP600"
+],
+"name": "Safehold, Inc.",
+"sector": "Real Estate"
+},
+"SAFT": {
+"indices": [
+"SP600"
+],
+"name": "Safety Insurance Group, Inc.",
+"sector": "Financials"
+},
+"SAH": {
+"indices": [
+"SP600"
+],
+"name": "Sonic Automotive, Inc.",
+"sector": "Consumer Discretionary"
+},
+"SAIA": {
+"indices": [
+"SP400"
+],
+"name": "Saia",
+"sector": "Industrials"
+},
+"SAIC": {
+"indices": [
+"SP400"
+],
+"name": "Science Applications Intl Corp",
+"sector": "Industrials"
+},
+"SAM": {
+"indices": [
+"SP400"
+],
+"name": "Boston Beer Company",
+"sector": "Consumer Staples"
+},
+"SANM": {
+"indices": [
+"SP400"
+],
+"name": "Sanmina Corporation",
+"sector": "Information Technology"
+},
+"SARO": {
+"indices": [
+"SP400"
+],
+"name": "StandardAero",
+"sector": "Industrials"
+},
+"SBAC": {
+"indices": [
+"SPX"
+],
+"name": "SBA Communications",
+"sector": "Real Estate"
+},
+"SBCF": {
+"indices": [
+"SP600"
+],
+"name": "Seacoast Banking Corporation of Florida",
+"sector": "Financials"
+},
+"SBH": {
+"indices": [
+"SP600"
+],
+"name": "Sally Beauty Holdings, Inc.",
+"sector": "Consumer Discretionary"
+},
+"SBRA": {
+"indices": [
+"SP400"
+],
+"name": "Sabra Health Care REIT",
+"sector": "Real Estate"
+},
+"SBSI": {
+"indices": [
+"SP600"
+],
+"name": "Southside Bancshares, Inc.",
+"sector": "Financials"
+},
+"SBUX": {
+"indices": [
+"NDX",
+"SPX"
+],
+"name": "Starbucks",
+"sector": "Consumer Discretionary"
+},
+"SCHL": {
+"indices": [
+"SP600"
+],
+"name": "Scholastic Corporation",
+"sector": "Consumer Discretionary"
+},
+"SCHW": {
+"indices": [
+"SPX"
+],
+"name": "Charles Schwab Corporation",
+"sector": "Financials"
+},
+"SCI": {
+"indices": [
+"SP400"
+],
+"name": "Service Corp Intl",
+"sector": "Consumer Discretionary"
+},
+"SCL": {
+"indices": [
+"SP600"
+],
+"name": "Stepan Company",
+"sector": "Materials"
+},
+"SCSC": {
+"indices": [
+"SP600"
+],
+"name": "ScanSource, Inc.",
+"sector": "Information Technology"
+},
+"SDGR": {
+"indices": [
+"SP600"
+],
+"name": "Schr\u00f6dinger, Inc.",
+"sector": "Health Care"
+},
+"SEDG": {
+"indices": [
+"SP600"
+],
+"name": "SolarEdge",
+"sector": "Information Technology"
+},
+"SEI": {
+"indices": [
+"SP600"
+],
+"name": "Solaris Energy Infrastructure, Inc.",
+"sector": "Energy"
+},
+"SEIC": {
+"indices": [
+"SP400"
+],
+"name": "SEI Investments Company",
+"sector": "Financials"
+},
+"SEZL": {
+"indices": [
+"SP600"
+],
+"name": "Sezzle",
+"sector": "Financials"
+},
+"SF": {
+"indices": [
+"SP400"
+],
+"name": "Stifel",
+"sector": "Financials"
+},
+"SFBS": {
+"indices": [
+"SP600"
+],
+"name": "ServisFirst Bancshares, Inc.",
+"sector": "Financials"
+},
+"SFM": {
+"indices": [
+"SP400"
+],
+"name": "Sprouts Farmers Market",
+"sector": "Consumer Staples"
+},
+"SFNC": {
+"indices": [
+"SP600"
+],
+"name": "Simmons First National Corporation",
+"sector": "Financials"
+},
+"SGI": {
+"indices": [
+"SP400"
+],
+"name": "Somnigroup International",
+"sector": "Consumer Discretionary"
+},
+"SHAK": {
+"indices": [
+"SP600"
+],
+"name": "Shake Shack, Inc.",
+"sector": "Consumer Discretionary"
+},
+"SHC": {
+"indices": [
+"SP400"
+],
+"name": "Sotera Health",
+"sector": "Health Care"
+},
+"SHEN": {
+"indices": [
+"SP600"
+],
+"name": "Shenandoah Telecommunications Co",
+"sector": "Communication Services"
+},
+"SHO": {
+"indices": [
+"SP600"
+],
+"name": "Sunstone Hotel Investors, Inc.",
+"sector": "Real Estate"
+},
+"SHOO": {
+"indices": [
+"SP600"
+],
+"name": "Steven Madden, Ltd.",
+"sector": "Consumer Discretionary"
+},
+"SHW": {
+"indices": [
+"DJI",
+"SPX"
+],
+"name": "Sherwin-Williams",
+"sector": "Materials"
+},
+"SIG": {
+"indices": [
+"SP600"
+],
+"name": "Signet Jewelers",
+"sector": "Consumer Discretionary"
+},
+"SIGI": {
+"indices": [
+"SP400"
+],
+"name": "Selective Insurance Group",
+"sector": "Financials"
+},
+"SIRI": {
+"indices": [
+"NDX",
+"SP400"
+],
+"name": "SiriusXM",
+"sector": "Communication Services"
+},
+"SITM": {
+"indices": [
+"SP400"
+],
+"name": "SiTime",
+"sector": "Information Technology"
+},
+"SJM": {
+"indices": [
+"SPX"
+],
+"name": "J.M. Smucker Company (The)",
+"sector": "Consumer Staples"
+},
+"SKT": {
+"indices": [
+"SP600"
+],
+"name": "Tanger Factory Outlet Centers, Inc.",
+"sector": "Real Estate"
+},
+"SKY": {
+"indices": [
+"SP600"
+],
+"name": "Champion Homes, Inc.",
+"sector": "Consumer Discretionary"
+},
+"SKYW": {
+"indices": [
+"SP600"
+],
+"name": "SkyWest, Inc.",
+"sector": "Industrials"
+},
+"SLAB": {
+"indices": [
+"SP400"
+],
+"name": "Silicon Labs",
+"sector": "Information Technology"
+},
+"SLB": {
+"indices": [
+"SPX"
+],
+"name": "Schlumberger",
+"sector": "Energy"
+},
+"SLG": {
+"indices": [
+"SP600"
+],
+"name": "SL Green Realty",
+"sector": "Real Estate"
+},
+"SLGN": {
+"indices": [
+"SP400"
+],
+"name": "Silgan Holdings",
+"sector": "Materials"
+},
+"SLM": {
+"indices": [
+"SP400"
+],
+"name": "SLM Corp",
+"sector": "Financials"
+},
+"SLVM": {
+"indices": [
+"SP600"
+],
+"name": "Sylvamo Corp.",
+"sector": "Materials"
+},
+"SM": {
+"indices": [
+"SP600"
+],
+"name": "SM Energy Company",
+"sector": "Energy"
+},
+"SMCI": {
+"indices": [
+"NDX",
+"SPX"
+],
+"name": "Supermicro",
+"sector": "Information Technology"
+},
+"SMG": {
+"indices": [
+"SP400"
+],
+"name": "Scotts Miracle-Gro Company",
+"sector": "Materials"
+},
+"SMP": {
+"indices": [
+"SP600"
+],
+"name": "Standard Motor Products, Inc.",
+"sector": "Consumer Discretionary"
+},
+"SMPL": {
+"indices": [
+"SP600"
+],
+"name": "Simply Good Foods Company",
+"sector": "Consumer Staples"
+},
+"SMTC": {
+"indices": [
+"SP400"
+],
+"name": "Semtech",
+"sector": "Information Technology"
+},
+"SN": {
+"indices": [
+"SP400"
+],
+"name": "SharkNinja",
+"sector": "Consumer Discretionary"
+},
+"SNA": {
+"indices": [
+"SPX"
+],
+"name": "Snap-on",
+"sector": "Industrials"
+},
+"SNDK": {
+"indices": [
+"SPX"
+],
+"name": "Sandisk",
+"sector": "Information Technology"
+},
+"SNDR": {
+"indices": [
+"SP600"
+],
+"name": "Schneider National",
+"sector": "Industrials"
+},
+"SNEX": {
+"indices": [
+"SP600"
+],
+"name": "StoneX Group Inc.",
+"sector": "Financials"
+},
+"SNPS": {
+"indices": [
+"NDX",
+"SPX"
+],
+"name": "Synopsys",
+"sector": "Information Technology"
+},
+"SNX": {
+"indices": [
+"SP400"
+],
+"name": "TD Synnex",
+"sector": "Information Technology"
+},
+"SO": {
+"indices": [
+"SPX"
+],
+"name": "Southern Company",
+"sector": "Utilities"
+},
+"SOLS": {
+"indices": [
+"SP400"
+],
+"name": "Solstice Advanced Materials",
+"sector": "Materials"
+},
+"SOLV": {
+"indices": [
+"SPX"
+],
+"name": "Solventum",
+"sector": "Health Care"
+},
+"SON": {
+"indices": [
+"SP400"
+],
+"name": "Sonoco",
+"sector": "Materials"
+},
+"SONO": {
+"indices": [
+"SP600"
+],
+"name": "Sonos, Inc.",
+"sector": "Consumer Discretionary"
+},
+"SPG": {
+"indices": [
+"SPX"
+],
+"name": "Simon Property Group",
+"sector": "Real Estate"
+},
+"SPGI": {
+"indices": [
+"SPX"
+],
+"name": "S&P Global",
+"sector": "Financials"
+},
+"SPHR": {
+"indices": [
+"SP600"
+],
+"name": "Sphere Entertainment",
+"sector": "Communication Services"
+},
+"SPNT": {
+"indices": [
+"SP600"
+],
+"name": "SiriusPoint Ltd.",
+"sector": "Financials"
+},
+"SPSC": {
+"indices": [
+"SP600"
+],
+"name": "SPS Commerce, Inc.",
+"sector": "Information Technology"
+},
+"SPXC": {
+"indices": [
+"SP400"
+],
+"name": "SPX Technologies",
+"sector": "Industrials"
+},
+"SR": {
+"indices": [
+"SP400"
+],
+"name": "Spire",
+"sector": "Utilities"
+},
+"SRE": {
+"indices": [
+"SPX"
+],
+"name": "Sempra",
+"sector": "Utilities"
+},
+"SRPT": {
+"indices": [
+"SP600"
+],
+"name": "Sarepta Therapeutics",
+"sector": "Health Care"
+},
+"SSB": {
+"indices": [
+"SP400"
+],
+"name": "South State Bank",
+"sector": "Financials"
+},
+"SSD": {
+"indices": [
+"SP400"
+],
+"name": "Simpson Manufacturing",
+"sector": "Industrials"
+},
+"ST": {
+"indices": [
+"SP400"
+],
+"name": "Sensata Technologies",
+"sector": "Industrials"
+},
+"STAA": {
+"indices": [
+"SP600"
+],
+"name": "STAAR Surgical Company",
+"sector": "Health Care"
+},
+"STAG": {
+"indices": [
+"SP400"
+],
+"name": "STAG Industrial",
+"sector": "Real Estate"
+},
+"STBA": {
+"indices": [
+"SP600"
+],
+"name": "S&T Bancorp, Inc.",
+"sector": "Financials"
+},
+"STC": {
+"indices": [
+"SP600"
+],
+"name": "Stewart Information Services Corporation",
+"sector": "Financials"
+},
+"STE": {
+"indices": [
+"SPX"
+],
+"name": "Steris",
+"sector": "Health Care"
+},
+"STEP": {
+"indices": [
+"SP600"
+],
+"name": "StepStone Group",
+"sector": "Financials"
+},
+"STLD": {
+"indices": [
+"SPX"
+],
+"name": "Steel Dynamics",
+"sector": "Materials"
+},
+"STRA": {
+"indices": [
+"SP600"
+],
+"name": "Strategic Education, Inc.",
+"sector": "Consumer Discretionary"
+},
+"STRL": {
+"indices": [
+"SP400"
+],
+"name": "Sterling Infrastructure",
+"sector": "Industrials"
+},
+"STT": {
+"indices": [
+"SPX"
+],
+"name": "State Street Corporation",
+"sector": "Financials"
+},
+"STWD": {
+"indices": [
+"SP400"
+],
+"name": "Starwood Property Trust",
+"sector": "Financials"
+},
+"STX": {
+"indices": [
+"SPX"
+],
+"name": "Seagate Technology",
+"sector": "Information Technology"
+},
+"STZ": {
+"indices": [
+"SPX"
+],
+"name": "Constellation Brands",
+"sector": "Consumer Staples"
+},
+"SUPN": {
+"indices": [
+"SP600"
+],
+"name": "Supernus Pharmaceuticals, Inc.",
+"sector": "Health Care"
+},
+"SW": {
+"indices": [
+"SPX"
+],
+"name": "Smurfit Westrock",
+"sector": "Materials"
+},
+"SWK": {
+"indices": [
+"SPX"
+],
+"name": "Stanley Black & Decker",
+"sector": "Industrials"
+},
+"SWKS": {
+"indices": [
+"SPX"
+],
+"name": "Skyworks Solutions",
+"sector": "Information Technology"
+},
+"SWX": {
+"indices": [
+"SP400"
+],
+"name": "Southwest Gas Corp",
+"sector": "Utilities"
+},
+"SXI": {
+"indices": [
+"SP600"
+],
+"name": "Standex International Corporation",
+"sector": "Industrials"
+},
+"SXT": {
+"indices": [
+"SP600"
+],
+"name": "Sensient Technologies",
+"sector": "Materials"
+},
+"SYF": {
+"indices": [
+"SPX"
+],
+"name": "Synchrony Financial",
+"sector": "Financials"
+},
+"SYK": {
+"indices": [
+"SPX"
+],
+"name": "Stryker Corporation",
+"sector": "Health Care"
+},
+"SYNA": {
+"indices": [
+"SP400"
+],
+"name": "Synaptics",
+"sector": "Information Technology"
+},
+"SYY": {
+"indices": [
+"SPX"
+],
+"name": "Sysco",
+"sector": "Consumer Staples"
+},
+"T": {
+"indices": [
+"SPX"
+],
+"name": "AT&T",
+"sector": "Communication Services"
+},
+"TALO": {
+"indices": [
+"SP600"
+],
+"name": "Talos Energy, Inc.",
+"sector": "Energy"
+},
+"TAP": {
+"indices": [
+"SPX"
+],
+"name": "Molson Coors Beverage Company",
+"sector": "Consumer Staples"
+},
+"TBBK": {
+"indices": [
+"SP600"
+],
+"name": "The Bancorp, Inc.",
+"sector": "Financials"
+},
+"TCBI": {
+"indices": [
+"SP400"
+],
+"name": "Texas Capital Bancshares",
+"sector": "Financials"
+},
+"TDC": {
+"indices": [
+"SP600"
+],
+"name": "Teradata",
+"sector": "Information Technology"
+},
+"TDG": {
+"indices": [
+"SPX"
+],
+"name": "TransDigm Group",
+"sector": "Industrials"
+},
+"TDS": {
+"indices": [
+"SP600"
+],
+"name": "Telephone and Data Systems, Inc.",
+"sector": "Communication Services"
+},
+"TDW": {
+"indices": [
+"SP600"
+],
+"name": "Tidewater, Inc.",
+"sector": "Energy"
+},
+"TDY": {
+"indices": [
+"SPX"
+],
+"name": "Teledyne Technologies",
+"sector": "Information Technology"
+},
+"TEAM": {
+"indices": [
+"NDX"
+],
+"name": "TEAM",
+"sector": ""
+},
+"TECH": {
+"indices": [
+"SPX"
+],
+"name": "Bio-Techne",
+"sector": "Health Care"
+},
+"TEL": {
+"indices": [
+"SPX"
+],
+"name": "TE Connectivity",
+"sector": "Information Technology"
+},
+"TER": {
+"indices": [
+"SPX"
+],
+"name": "Teradyne",
+"sector": "Information Technology"
+},
+"TEX": {
+"indices": [
+"SP400"
+],
+"name": "Terex",
+"sector": "Industrials"
+},
+"TFC": {
+"indices": [
+"SPX"
+],
+"name": "Truist Financial",
+"sector": "Financials"
+},
+"TFIN": {
+"indices": [
+"SP600"
+],
+"name": "Triumph Bancorp, Inc.",
+"sector": "Financials"
+},
+"TFX": {
+"indices": [
+"SP600"
+],
+"name": "Teleflex",
+"sector": "Health Care"
+},
+"TGT": {
+"indices": [
+"SPX"
+],
+"name": "Target Corporation",
+"sector": "Consumer Staples"
+},
+"TGTX": {
+"indices": [
+"SP600"
+],
+"name": "TG Therapeutics, Inc.",
+"sector": "Health Care"
+},
+"THC": {
+"indices": [
+"SP400"
+],
+"name": "Tenet Health",
+"sector": "Health Care"
+},
+"THG": {
+"indices": [
+"SP400"
+],
+"name": "Hanover Insurance",
+"sector": "Financials"
+},
+"THO": {
+"indices": [
+"SP400"
+],
+"name": "Thor Industries",
+"sector": "Consumer Discretionary"
+},
+"THRM": {
+"indices": [
+"SP600"
+],
+"name": "Gentherm Incorporated",
+"sector": "Consumer Discretionary"
+},
+"TILE": {
+"indices": [
+"SP600"
+],
+"name": "Interface, Inc.",
+"sector": "Industrials"
+},
+"TJX": {
+"indices": [
+"SPX"
+],
+"name": "TJX Companies",
+"sector": "Consumer Discretionary"
+},
+"TKO": {
+"indices": [
+"SPX"
+],
+"name": "TKO Group Holdings",
+"sector": "Communication Services"
+},
+"TKR": {
+"indices": [
+"SP400"
+],
+"name": "Timken",
+"sector": "Industrials"
+},
+"TLN": {
+"indices": [
+"SP400"
+],
+"name": "Talen Energy",
+"sector": "Utilities"
+},
+"TMDX": {
+"indices": [
+"SP600"
+],
+"name": "TransMedics Group, Inc.",
+"sector": "Health Care"
+},
+"TMO": {
+"indices": [
+"SPX"
+],
+"name": "Thermo Fisher Scientific",
+"sector": "Health Care"
+},
+"TMP": {
+"indices": [
+"SP600"
+],
+"name": "Tompkins Financial Corporation",
+"sector": "Financials"
+},
+"TMUS": {
+"indices": [
+"NDX",
+"SPX"
+],
+"name": "T-Mobile US",
+"sector": "Communication Services"
+},
+"TNC": {
+"indices": [
+"SP600"
+],
+"name": "Tennant Company",
+"sector": "Industrials"
+},
+"TNDM": {
+"indices": [
+"SP600"
+],
+"name": "Tandem Diabetes Care",
+"sector": "Health Care"
+},
+"TNL": {
+"indices": [
+"SP400"
+],
+"name": "Travel + Leisure Co.",
+"sector": "Consumer Discretionary"
+},
+"TOL": {
+"indices": [
+"SP400"
+],
+"name": "Toll Brothers",
+"sector": "Consumer Discretionary"
+},
+"TOST": {
+"indices": [
+"SP400"
+],
+"name": "Toast, Inc.",
+"sector": "Financials"
+},
+"TPC": {
+"indices": [
+"SP600"
+],
+"name": "Tutor Perini Corporation",
+"sector": "Industrials"
+},
+"TPL": {
+"indices": [
+"SPX"
+],
+"name": "Texas Pacific Land Corporation",
+"sector": "Energy"
+},
+"TPR": {
+"indices": [
+"SPX"
+],
+"name": "Tapestry, Inc.",
+"sector": "Consumer Discretionary"
+},
+"TR": {
+"indices": [
+"SP600"
+],
+"name": "Tootsie Roll Industries, Inc.",
+"sector": "Consumer Staples"
+},
+"TREX": {
+"indices": [
+"SP400"
+],
+"name": "Trex",
+"sector": "Industrials"
+},
+"TRGP": {
+"indices": [
+"SPX"
+],
+"name": "Targa Resources",
+"sector": "Energy"
+},
+"TRIP": {
+"indices": [
+"SP600"
+],
+"name": "TripAdvisor",
+"sector": "Communication Services"
+},
+"TRMB": {
+"indices": [
+"SPX"
+],
+"name": "Trimble Inc.",
+"sector": "Information Technology"
+},
+"TRMK": {
+"indices": [
+"SP600"
+],
+"name": "Trustmark Corp.",
+"sector": "Financials"
+},
+"TRN": {
+"indices": [
+"SP600"
+],
+"name": "Trinity Industries, Inc.",
+"sector": "Industrials"
+},
+"TRNO": {
+"indices": [
+"SP600"
+],
+"name": "Terreno Realty Corporation",
+"sector": "Real Estate"
+},
+"TROW": {
+"indices": [
+"SPX"
+],
+"name": "T. Rowe Price",
+"sector": "Financials"
+},
+"TRST": {
+"indices": [
+"SP600"
+],
+"name": "TrustCo Bank Corp NY",
+"sector": "Financials"
+},
+"TRU": {
+"indices": [
+"SP400"
+],
+"name": "TransUnion",
+"sector": "Industrials"
+},
+"TRUP": {
+"indices": [
+"SP600"
+],
+"name": "Trupanion",
+"sector": "Financials"
+},
+"TRV": {
+"indices": [
+"DJI",
+"SPX"
+],
+"name": "Travelers Companies (The)",
+"sector": "Financials"
+},
+"TSCO": {
+"indices": [
+"SPX"
+],
+"name": "Tractor Supply",
+"sector": "Consumer Discretionary"
+},
+"TSLA": {
+"indices": [
+"NDX",
+"SPX"
+],
+"name": "Tesla, Inc.",
+"sector": "Consumer Discretionary"
+},
+"TSN": {
+"indices": [
+"SPX"
+],
+"name": "Tyson Foods",
+"sector": "Consumer Staples"
+},
+"TT": {
+"indices": [
+"SPX"
+],
+"name": "Trane Technologies",
+"sector": "Industrials"
+},
+"TTC": {
+"indices": [
+"SP400"
+],
+"name": "Toro",
+"sector": "Industrials"
+},
+"TTD": {
+"indices": [
+"NDX",
+"SPX"
+],
+"name": "Trade Desk (The)",
+"sector": "Communication Services"
+},
+"TTEK": {
+"indices": [
+"SP400"
+],
+"name": "Tetra Tech",
+"sector": "Industrials"
+},
+"TTMI": {
+"indices": [
+"SP400"
+],
+"name": "TTM Technologies",
+"sector": "Information Technology"
+},
+"TTWO": {
+"indices": [
+"NDX",
+"SPX"
+],
+"name": "Take-Two Interactive",
+"sector": "Communication Services"
+},
+"TWLO": {
+"indices": [
+"SP400"
+],
+"name": "Twilio",
+"sector": "Information Technology"
+},
+"TXN": {
+"indices": [
+"NDX",
+"SPX"
+],
+"name": "Texas Instruments",
+"sector": "Information Technology"
+},
+"TXNM": {
+"indices": [
+"SP400"
+],
+"name": "TXNM Energy",
+"sector": "Utilities"
+},
+"TXRH": {
+"indices": [
+"SP400"
+],
+"name": "Texas Roadhouse",
+"sector": "Consumer Discretionary"
+},
+"TXT": {
+"indices": [
+"SPX"
+],
+"name": "Textron",
+"sector": "Industrials"
+},
+"TYL": {
+"indices": [
+"SPX"
+],
+"name": "Tyler Technologies",
+"sector": "Information Technology"
+},
+"UA": {
+"indices": [
+"SP600"
+],
+"name": "Under Armour (Class C)",
+"sector": "Consumer Discretionary"
+},
+"UAA": {
+"indices": [
+"SP600"
+],
+"name": "Under Armour (Class A)",
+"sector": "Consumer Discretionary"
+},
+"UAL": {
+"indices": [
+"SPX"
+],
+"name": "United Airlines Holdings",
+"sector": "Industrials"
+},
+"UBER": {
+"indices": [
+"SPX"
+],
+"name": "Uber",
+"sector": "Industrials"
+},
+"UBSI": {
+"indices": [
+"SP400"
+],
+"name": "United Bankshares",
+"sector": "Financials"
+},
+"UCB": {
+"indices": [
+"SP600"
+],
+"name": "United Community Banks, Inc.",
+"sector": "Financials"
+},
+"UCTT": {
+"indices": [
+"SP600"
+],
+"name": "Ultra Clean Holdings, Inc.",
+"sector": "Information Technology"
+},
+"UDR": {
+"indices": [
+"SPX"
+],
+"name": "UDR, Inc.",
+"sector": "Real Estate"
+},
+"UE": {
+"indices": [
+"SP600"
+],
+"name": "Urban Edge Properties",
+"sector": "Real Estate"
+},
+"UFCS": {
+"indices": [
+"SP600"
+],
+"name": "United Fire Group, Inc.",
+"sector": "Financials"
+},
+"UFPI": {
+"indices": [
+"SP400"
+],
+"name": "UFP Industries",
+"sector": "Industrials"
+},
+"UFPT": {
+"indices": [
+"SP600"
+],
+"name": "UFP Technologies, Inc.",
+"sector": "Health Care"
+},
+"UGI": {
+"indices": [
+"SP400"
+],
+"name": "UGI Corp",
+"sector": "Utilities"
+},
+"UHS": {
+"indices": [
+"SPX"
+],
+"name": "Universal Health Services",
+"sector": "Health Care"
+},
+"ULS": {
+"indices": [
+"SP400"
+],
+"name": "UL Solutions",
+"sector": "Industrials"
+},
+"ULTA": {
+"indices": [
+"SPX"
+],
+"name": "Ulta Beauty",
+"sector": "Consumer Discretionary"
+},
+"UMBF": {
+"indices": [
+"SP400"
+],
+"name": "UMB Financial Corp.",
+"sector": "Financials"
+},
+"UNF": {
+"indices": [
+"SP600"
+],
+"name": "UniFirst Corporation",
+"sector": "Industrials"
+},
+"UNFI": {
+"indices": [
+"SP600"
+],
+"name": "United Natural Foods Inc",
+"sector": "Consumer Staples"
+},
+"UNH": {
+"indices": [
+"DJI",
+"SPX"
+],
+"name": "UnitedHealth Group",
+"sector": "Health Care"
+},
+"UNIT": {
+"indices": [
+"SP600"
+],
+"name": "Uniti Group",
+"sector": "Communication Services"
+},
+"UNM": {
+"indices": [
+"SP400"
+],
+"name": "Unum",
+"sector": "Financials"
+},
+"UNP": {
+"indices": [
+"SPX"
+],
+"name": "Union Pacific Corporation",
+"sector": "Industrials"
+},
+"UPBD": {
+"indices": [
+"SP600"
+],
+"name": "Upbound Group, Inc.",
+"sector": "Consumer Discretionary"
+},
+"UPS": {
+"indices": [
+"SPX"
+],
+"name": "United Parcel Service",
+"sector": "Industrials"
+},
+"UPWK": {
+"indices": [
+"SP600"
+],
+"name": "Upwork, Inc.",
+"sector": "Industrials"
+},
+"URBN": {
+"indices": [
+"SP600"
+],
+"name": "Urban Outfitters, Inc.",
+"sector": "Consumer Discretionary"
+},
+"URI": {
+"indices": [
+"SPX"
+],
+"name": "United Rentals",
+"sector": "Industrials"
+},
+"USB": {
+"indices": [
+"SPX"
+],
+"name": "U.S. Bancorp",
+"sector": "Financials"
+},
+"USFD": {
+"indices": [
+"SP400"
+],
+"name": "US Foods",
+"sector": "Consumer Staples"
+},
+"USLM": {
+"indices": [
+"SP600"
+],
+"name": "United States Lime & Minerals, Inc.",
+"sector": "Materials"
+},
+"USPH": {
+"indices": [
+"SP600"
+],
+"name": "U.S. Physical Therapy, Inc.",
+"sector": "Health Care"
+},
+"UTHR": {
+"indices": [
+"SP400"
+],
+"name": "United Therapeutics",
+"sector": "Health Care"
+},
+"UTI": {
+"indices": [
+"SP600"
+],
+"name": "Universal Technical Institute",
+"sector": "Consumer Discretionary"
+},
+"UTL": {
+"indices": [
+"SP600"
+],
+"name": "Unitil Corporation",
+"sector": "Utilities"
+},
+"UVV": {
+"indices": [
+"SP600"
+],
+"name": "Universal Corporation",
+"sector": "Consumer Staples"
+},
+"V": {
+"indices": [
+"DJI",
+"SPX"
+],
+"name": "Visa Inc.",
+"sector": "Financials"
+},
+"VAC": {
+"indices": [
+"SP600"
+],
+"name": "Marriott Vacations Worldwide",
+"sector": "Consumer Discretionary"
+},
+"VAL": {
+"indices": [
+"SP400"
+],
+"name": "Valaris",
+"sector": "Energy"
+},
+"VC": {
+"indices": [
+"SP400"
+],
+"name": "Visteon",
+"sector": "Consumer Discretionary"
+},
+"VCEL": {
+"indices": [
+"SP600"
+],
+"name": "Vericel",
+"sector": "Health Care"
+},
+"VCTR": {
+"indices": [
+"SP600"
+],
+"name": "Victory Capital Holdings, Inc.",
+"sector": "Financials"
+},
+"VCYT": {
+"indices": [
+"SP600"
+],
+"name": "Veracyte, Inc.",
+"sector": "Health Care"
+},
+"VECO": {
+"indices": [
+"SP600"
+],
+"name": "Veeco Instruments Inc.",
+"sector": "Information Technology"
+},
+"VEEV": {
+"indices": [
+"SPX"
+],
+"name": "Veeva Systems",
+"sector": "Health Care"
+},
+"VFC": {
+"indices": [
+"SP400"
+],
+"name": "VF Corporation",
+"sector": "Consumer Discretionary"
+},
+"VGNT": {
+"indices": [
+"SP600"
+],
+"name": "Versigent PLC",
+"sector": "Consumer Discretionary"
+},
+"VIAV": {
+"indices": [
+"SP400"
+],
+"name": "Viavi Solutions",
+"sector": "Information Technology"
+},
+"VICI": {
+"indices": [
+"SPX"
+],
+"name": "Vici Properties",
+"sector": "Real Estate"
+},
+"VICR": {
+"indices": [
+"SP400"
+],
+"name": "Vicor Corporation",
+"sector": "Industrials"
+},
+"VIR": {
+"indices": [
+"SP600"
+],
+"name": "Vir Biotechnology, Inc.",
+"sector": "Health Care"
+},
+"VIRT": {
+"indices": [
+"SP600"
+],
+"name": "Virtu Financial, Inc.",
+"sector": "Financials"
+},
+"VLO": {
+"indices": [
+"SPX"
+],
+"name": "Valero Energy",
+"sector": "Energy"
+},
+"VLTO": {
+"indices": [
+"SPX"
+],
+"name": "Veralto",
+"sector": "Industrials"
+},
+"VLY": {
+"indices": [
+"SP400"
+],
+"name": "Valley Bank",
+"sector": "Financials"
+},
+"VMC": {
+"indices": [
+"SPX"
+],
+"name": "Vulcan Materials Company",
+"sector": "Materials"
+},
+"VMI": {
+"indices": [
+"SP400"
+],
+"name": "Valmont Industries",
+"sector": "Industrials"
+},
+"VNO": {
+"indices": [
+"SP400"
+],
+"name": "Vornado Realty Trust",
+"sector": "Real Estate"
+},
+"VNOM": {
+"indices": [
+"SP400"
+],
+"name": "Viper Energy",
+"sector": "Energy"
+},
+"VNT": {
+"indices": [
+"SP400"
+],
+"name": "Vontier",
+"sector": "Information Technology"
+},
+"VOYA": {
+"indices": [
+"SP400"
+],
+"name": "Voya Financial",
+"sector": "Financials"
+},
+"VRRM": {
+"indices": [
+"SP600"
+],
+"name": "Verra Mobility Corporation",
+"sector": "Industrials"
+},
+"VRSK": {
+"indices": [
+"NDX",
+"SPX"
+],
+"name": "Verisk Analytics",
+"sector": "Industrials"
+},
+"VRSN": {
+"indices": [
+"SPX"
+],
+"name": "Verisign",
+"sector": "Information Technology"
+},
+"VRT": {
+"indices": [
+"SPX"
+],
+"name": "Vertiv",
+"sector": "Industrials"
+},
+"VRTS": {
+"indices": [
+"SP600"
+],
+"name": "Virtus Investment Partners, Inc.",
+"sector": "Financials"
+},
+"VRTX": {
+"indices": [
+"NDX",
+"SPX"
+],
+"name": "Vertex Pharmaceuticals",
+"sector": "Health Care"
+},
+"VSAT": {
+"indices": [
+"SP600"
+],
+"name": "Viasat, Inc.",
+"sector": "Information Technology"
+},
+"VSEC": {
+"indices": [
+"SP600"
+],
+"name": "VSE Corporation",
+"sector": "Industrials"
+},
+"VSH": {
+"indices": [
+"SP600"
+],
+"name": "Vishay Intertechnology",
+"sector": "Information Technology"
+},
+"VSNT": {
+"indices": [
+"SP600"
+],
+"name": "Versant Media Group, Inc.",
+"sector": "Communication Services"
+},
+"VST": {
+"indices": [
+"SPX"
+],
+"name": "Vistra Corp.",
+"sector": "Utilities"
+},
+"VSTS": {
+"indices": [
+"SP600"
+],
+"name": "Vestis",
+"sector": "Industrials"
+},
+"VSXY": {
+"indices": [
+"SP600"
+],
+"name": "Victoria's Secret",
+"sector": "Consumer Discretionary"
+},
+"VTOL": {
+"indices": [
+"SP600"
+],
+"name": "Bristow Group Inc.",
+"sector": "Energy"
+},
+"VTR": {
+"indices": [
+"SPX"
+],
+"name": "Ventas",
+"sector": "Real Estate"
+},
+"VTRS": {
+"indices": [
+"SPX"
+],
+"name": "Viatris",
+"sector": "Health Care"
+},
+"VVV": {
+"indices": [
+"SP400"
+],
+"name": "Valvoline",
+"sector": "Consumer Discretionary"
+},
+"VVX": {
+"indices": [
+"SP600"
+],
+"name": "V2X, Inc.",
+"sector": "Industrials"
+},
+"VYX": {
+"indices": [
+"SP600"
+],
+"name": "NCR Voyix",
+"sector": "Information Technology"
+},
+"VZ": {
+"indices": [
+"DJI",
+"SPX"
+],
+"name": "Verizon",
+"sector": "Communication Services"
+},
+"WAB": {
+"indices": [
+"SPX"
+],
+"name": "Wabtec",
+"sector": "Industrials"
+},
+"WABC": {
+"indices": [
+"SP600"
+],
+"name": "Westamerica Bank",
+"sector": "Financials"
+},
+"WAFD": {
+"indices": [
+"SP600"
+],
+"name": "WaFd, Inc.",
+"sector": "Financials"
+},
+"WAL": {
+"indices": [
+"SP400"
+],
+"name": "Western Alliance Bancorporation",
+"sector": "Financials"
+},
+"WAT": {
+"indices": [
+"SPX"
+],
+"name": "Waters Corporation",
+"sector": "Health Care"
+},
+"WAY": {
+"indices": [
+"SP600"
+],
+"name": "Waystar Holding Corp",
+"sector": "Health Care"
+},
+"WBA": {
+"indices": [
+"NDX"
+],
+"name": "WBA",
+"sector": ""
+},
+"WBD": {
+"indices": [
+"NDX",
+"SPX"
+],
+"name": "Warner Bros. Discovery",
+"sector": "Communication Services"
+},
+"WBS": {
+"indices": [
+"SP400"
+],
+"name": "Webster Bank",
+"sector": "Financials"
+},
+"WCC": {
+"indices": [
+"SP400"
+],
+"name": "WESCO International",
+"sector": "Industrials"
+},
+"WD": {
+"indices": [
+"SP600"
+],
+"name": "Walker & Dunlop, Inc.",
+"sector": "Financials"
+},
+"WDAY": {
+"indices": [
+"NDX",
+"SPX"
+],
+"name": "Workday, Inc.",
+"sector": "Information Technology"
+},
+"WDC": {
+"indices": [
+"SPX"
+],
+"name": "Western Digital",
+"sector": "Information Technology"
+},
+"WDFC": {
+"indices": [
+"SP600"
+],
+"name": "WD-40 Company",
+"sector": "Consumer Staples"
+},
+"WEC": {
+"indices": [
+"SPX"
+],
+"name": "WEC Energy Group",
+"sector": "Utilities"
+},
+"WELL": {
+"indices": [
+"SPX"
+],
+"name": "Welltower",
+"sector": "Real Estate"
+},
+"WEN": {
+"indices": [
+"SP600"
+],
+"name": "The Wendy's Company",
+"sector": "Consumer Discretionary"
+},
+"WERN": {
+"indices": [
+"SP600"
+],
+"name": "Werner Enterprises",
+"sector": "Industrials"
+},
+"WEX": {
+"indices": [
+"SP400"
+],
+"name": "WEX Inc.",
+"sector": "Financials"
+},
+"WFC": {
+"indices": [
+"SPX"
+],
+"name": "Wells Fargo",
+"sector": "Financials"
+},
+"WFRD": {
+"indices": [
+"SP400"
+],
+"name": "Weatherford International",
+"sector": "Energy"
+},
+"WGO": {
+"indices": [
+"SP600"
+],
+"name": "Winnebago Industries, Inc.",
+"sector": "Consumer Discretionary"
+},
+"WH": {
+"indices": [
+"SP400"
+],
+"name": "Wyndham Hotels & Resorts",
+"sector": "Consumer Discretionary"
+},
+"WHD": {
+"indices": [
+"SP600"
+],
+"name": "Cactus, Inc.",
+"sector": "Energy"
+},
+"WHR": {
+"indices": [
+"SP400"
+],
+"name": "Whirlpool Corporation",
+"sector": "Consumer Discretionary"
+},
+"WINA": {
+"indices": [
+"SP600"
+],
+"name": "Winmark",
+"sector": "Consumer Discretionary"
+},
+"WING": {
+"indices": [
+"SP400"
+],
+"name": "Wingstop",
+"sector": "Consumer Discretionary"
+},
+"WKC": {
+"indices": [
+"SP600"
+],
+"name": "World Kinect Corporation",
+"sector": "Energy"
+},
+"WLK": {
+"indices": [
+"SP400"
+],
+"name": "Westlake Corporation",
+"sector": "Materials"
+},
+"WLY": {
+"indices": [
+"SP600"
+],
+"name": "John Wiley & Sons",
+"sector": "Communication Services"
+},
+"WM": {
+"indices": [
+"SPX"
+],
+"name": "Waste Management",
+"sector": "Industrials"
+},
+"WMB": {
+"indices": [
+"SPX"
+],
+"name": "Williams Companies",
+"sector": "Energy"
+},
+"WMG": {
+"indices": [
+"SP400"
+],
+"name": "Warner Music Group",
+"sector": "Communication Services"
+},
+"WMS": {
+"indices": [
+"SP400"
+],
+"name": "Advanced Drainage Systems",
+"sector": "Industrials"
+},
+"WMT": {
+"indices": [
+"DJI",
+"SPX"
+],
+"name": "Walmart",
+"sector": "Consumer Staples"
+},
+"WOR": {
+"indices": [
+"SP600"
+],
+"name": "Worthington Enterprises",
+"sector": "Industrials"
+},
+"WPC": {
+"indices": [
+"SP400"
+],
+"name": "W. P. Carey",
+"sector": "Real Estate"
+},
+"WRB": {
+"indices": [
+"SPX"
+],
+"name": "W. R. Berkley Corporation",
+"sector": "Financials"
+},
+"WRBY": {
+"indices": [
+"SP600"
+],
+"name": "Warby Parker",
+"sector": "Consumer Discretionary"
+},
+"WRLD": {
+"indices": [
+"SP600"
+],
+"name": "World Acceptance Corporation",
+"sector": "Financials"
+},
+"WS": {
+"indices": [
+"SP600"
+],
+"name": "Worthington Steel",
+"sector": "Materials"
+},
+"WSBC": {
+"indices": [
+"SP600"
+],
+"name": "WesBanco",
+"sector": "Financials"
+},
+"WSC": {
+"indices": [
+"SP600"
+],
+"name": "WillScot Holdings Corp.",
+"sector": "Industrials"
+},
+"WSFS": {
+"indices": [
+"SP600"
+],
+"name": "WSFS Financial Corporation",
+"sector": "Financials"
+},
+"WSM": {
+"indices": [
+"SPX"
+],
+"name": "Williams-Sonoma, Inc.",
+"sector": "Consumer Discretionary"
+},
+"WSO": {
+"indices": [
+"SP400"
+],
+"name": "Watsco",
+"sector": "Industrials"
+},
+"WST": {
+"indices": [
+"SPX"
+],
+"name": "West Pharmaceutical Services",
+"sector": "Health Care"
+},
+"WT": {
+"indices": [
+"SP600"
+],
+"name": "WisdomTree Investments, Inc.",
+"sector": "Financials"
+},
+"WTFC": {
+"indices": [
+"SP400"
+],
+"name": "Wintrust Financial",
+"sector": "Financials"
+},
+"WTRG": {
+"indices": [
+"SP400"
+],
+"name": "Essential Utilities",
+"sector": "Utilities"
+},
+"WTS": {
+"indices": [
+"SP400"
+],
+"name": "Watts Water Technologies",
+"sector": "Industrials"
+},
+"WTW": {
+"indices": [
+"SPX"
+],
+"name": "Willis Towers Watson",
+"sector": "Financials"
+},
+"WU": {
+"indices": [
+"SP600"
+],
+"name": "Western Union",
+"sector": "Financials"
+},
+"WWD": {
+"indices": [
+"SP400"
+],
+"name": "Woodward, Inc.",
+"sector": "Industrials"
+},
+"WWW": {
+"indices": [
+"SP600"
+],
+"name": "Wolverine World Wide, Inc.",
+"sector": "Consumer Discretionary"
+},
+"WY": {
+"indices": [
+"SPX"
+],
+"name": "Weyerhaeuser",
+"sector": "Real Estate"
+},
+"WYNN": {
+"indices": [
+"SPX"
+],
+"name": "Wynn Resorts",
+"sector": "Consumer Discretionary"
+},
+"XEL": {
+"indices": [
+"NDX",
+"SPX"
+],
+"name": "Xcel Energy",
+"sector": "Utilities"
+},
+"XHR": {
+"indices": [
+"SP600"
+],
+"name": "Xenia Hotels & Resorts, Inc.",
+"sector": "Real Estate"
+},
+"XNCR": {
+"indices": [
+"SP600"
+],
+"name": "Xencor Inc",
+"sector": "Health Care"
+},
+"XOM": {
+"indices": [
+"SPX"
+],
+"name": "ExxonMobil",
+"sector": "Energy"
+},
+"XPEL": {
+"indices": [
+"SP600"
+],
+"name": "XPEL, Inc.",
+"sector": "Consumer Discretionary"
+},
+"XPO": {
+"indices": [
+"SP400"
+],
+"name": "XPO, Inc.",
+"sector": "Industrials"
+},
+"XRAY": {
+"indices": [
+"SP400"
+],
+"name": "Dentsply Sirona",
+"sector": "Health Care"
+},
+"XYL": {
+"indices": [
+"SPX"
+],
+"name": "Xylem Inc.",
+"sector": "Industrials"
+},
+"XYZ": {
+"indices": [
+"SPX"
+],
+"name": "Block, Inc.",
+"sector": "Financials"
+},
+"YELP": {
+"indices": [
+"SP600"
+],
+"name": "Yelp, Inc.",
+"sector": "Communication Services"
+},
+"YETI": {
+"indices": [
+"SP400"
+],
+"name": "Yeti Holdings",
+"sector": "Consumer Discretionary"
+},
+"YOU": {
+"indices": [
+"SP600"
+],
+"name": "Clear Secure, Inc.",
+"sector": "Information Technology"
+},
+"YUM": {
+"indices": [
+"SPX"
+],
+"name": "Yum! Brands",
+"sector": "Consumer Discretionary"
+},
+"ZBH": {
+"indices": [
+"SPX"
+],
+"name": "Zimmer Biomet",
+"sector": "Health Care"
+},
+"ZBRA": {
+"indices": [
+"SPX"
+],
+"name": "Zebra Technologies",
+"sector": "Information Technology"
+},
+"ZD": {
+"indices": [
+"SP600"
+],
+"name": "Ziff Davis",
+"sector": "Communication Services"
+},
+"ZION": {
+"indices": [
+"SP400"
+],
+"name": "Zions Bancorporation",
+"sector": "Financials"
+},
+"ZS": {
+"indices": [
+"NDX"
+],
+"name": "ZS",
+"sector": ""
+},
+"ZTS": {
+"indices": [
+"SPX"
+],
+"name": "Zoetis",
+"sector": "Health Care"
+},
+"ZWS": {
+"indices": [
+"SP600"
+],
+"name": "Zurn Elkay Water Solutions Corp.",
+"sector": "Industrials"
+}
+}

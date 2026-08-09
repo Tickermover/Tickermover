@@ -433,6 +433,47 @@ except Exception:
 INDEX_EXTRA: list[str] = sorted(_INDEX_UNIVERSE - set(HG))
 
 
+# ── Phase 3: the full listed universe ─────────────────────────────────
+# data/universe_index.json is a static snapshot of every S&P 500 / MidCap
+# 400 / SmallCap 600 / Nasdaq-100 / Dow constituent with its name, GICS
+# sector and index tags — about 1,500 names. The app only ever reads it, so
+# carrying the long tail costs nothing at runtime.
+#
+# THE $1B FLOOR: S&P index eligibility already enforces a float-adjusted
+# market-cap minimum around $1B (SmallCap 600 sits roughly $1.1bn-$7.4bn),
+# so membership IS the floor. `full_universe(min_cap=..., caps=...)` applies
+# a live numeric floor on top when the caller has market caps to hand,
+# because that figure is accurate and free once a name has been enriched.
+import json as _json
+import os as _os
+
+_FULL_META: dict[str, dict] = {}
+try:
+    with open(_os.path.join(_os.path.dirname(_os.path.abspath(__file__)),
+                            "data", "universe_index.json"), encoding="utf-8") as _fh:
+        _FULL_META = _json.load(_fh)
+except Exception:
+    _FULL_META = {}
+
+FULL: list[str] = sorted(_FULL_META)
+#: Names in the full listed universe the curated list does not already cover.
+FULL_EXTRA: list[str] = sorted(set(FULL) - set(HG))
+
+
+def indices_for(ticker: str) -> list[str]:
+    """Index tags for a ticker — SPX / SP400 / SP600 / NDX / DJI."""
+    return list((_FULL_META.get((ticker or "").upper()) or {}).get("indices") or [])
+
+
+def full_universe(min_cap: float | None = None, caps: dict | None = None) -> list[str]:
+    """The full listed universe. Pass `caps` ({ticker: market_cap}) to apply a
+    live market-cap floor; without it, index membership is the floor."""
+    if not min_cap or not caps:
+        return FULL
+    return [t for t in FULL
+            if caps.get(t) is None or float(caps.get(t) or 0) >= min_cap]
+
+
 def _placeholder_meta(ticker: str) -> dict:
     """Lightweight meta for index-extra tickers — the FMP/YF enrichment
     overwrites these on the first refresh cycle. Empty strings are used
@@ -440,15 +481,24 @@ def _placeholder_meta(ticker: str) -> dict:
     falls THROUGH to live data instead of treating placeholder em-dashes
     as truthy values (which previously left ~7% of the universe stuck on
     '—' when YF returned partial data without sector)."""
+    # The snapshot carries a real company name, GICS sector and index tags for
+    # the long tail, so these are no longer blank placeholders — but sector is
+    # still left empty when unknown so the merge chain falls through to live
+    # data rather than treating a placeholder as truthy.
+    fm = _FULL_META.get(ticker) or {}
+    idx = fm.get("indices") or []
     return {
-        "name":            ticker,              # FMP fills the real company name
-        "sector":          "",                   # empty -> falls through merge chain
+        "name":            fm.get("name") or ticker,
+        "sector":          fm.get("sector") or "",
         "sub_sector":      "",
         "subsector":       "",
         "market_cap_tier": "",
         "growth_tier":     "",
-        "thesis":          "Index constituent",  # generic so the modal has something
-        "rationale":       "Index constituent",
+        "indices":         idx,
+        "thesis":          (f"Constituent of {', '.join(idx)}." if idx
+                            else "Index constituent"),
+        "rationale":       (f"Constituent of {', '.join(idx)}." if idx
+                            else "Index constituent"),
         "exchange":        _EXCHANGE.get(ticker, "NASDAQ"),
     }
 
@@ -459,6 +509,9 @@ def get_universe(mode: str = "hg") -> list[str]:
     if mode == "fast":     return FAST
     if mode == "indices":  return sorted(_INDEX_UNIVERSE)           # only the index list
     if mode == "expanded": return HG + INDEX_EXTRA                  # curated + index extras
+    # "full" — the whole listed universe (~1,500). Curated names come first so
+    # anything that reads the head of the list still gets the enriched ones.
+    if mode == "full":     return HG + FULL_EXTRA
     return HG   # "hg" / "all" — curated universe (unchanged default)
 
 
@@ -466,6 +519,6 @@ def get_meta(ticker: str) -> dict:
     t = (ticker or "").upper()
     if t in META:
         return META[t]
-    if t in _INDEX_UNIVERSE:
+    if t in _FULL_META or t in _INDEX_UNIVERSE:
         return _placeholder_meta(t)
     return {}

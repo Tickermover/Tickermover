@@ -125,8 +125,20 @@ ALL_INDEX_TICKERS: set[str] = set(DOW_30) | set(NASDAQ_100) | set(SP500)
 
 
 def indices_for(ticker: str) -> list[str]:
-    """Return which indices a ticker belongs to."""
+    """Return which indices a ticker belongs to.
+
+    Prefers the full snapshot in data/universe_index.json, which covers all
+    ~1,500 S&P 500/400/600 + Nasdaq-100 + Dow names and therefore knows the
+    mid- and small-cap tags the hand-maintained lists below never carried.
+    Falls back to those lists when the snapshot is unavailable."""
     t = (ticker or "").upper()
+    try:
+        import stock_universe as _su
+        tags = _su.indices_for(t)
+        if tags:
+            return tags
+    except Exception:
+        pass
     out: list[str] = []
     if t in DOW_30:     out.append("DJI")
     if t in NASDAQ_100: out.append("NDX")

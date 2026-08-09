@@ -243,7 +243,7 @@ def card_body(sym: str, r: dict) -> str:
     rates, base = r["rates"], r["baseline"]
     return f"""
   <div class="cclk-head">
-    <h3 class="cclk-h">Crowd Clock</h3>
+    <h3 class="cclk-h">Hype Check</h3>
     <span class="cclk-pill">{_html.escape(r["band"])} &middot; {r["score"]:.0f} / 100</span>
   </div>
   <p class="cclk-sub">Where {_html.escape(sym)} sits between “nobody is watching” and
@@ -443,7 +443,7 @@ def render_card(t: dict) -> str:
         return ""
     return _CSS + f"""
 <div class="cclk cclk-cool" id="cclk-card" data-sym="{sym}">
-  <div class="cclk-head"><h3 class="cclk-h">Crowd Clock</h3></div>
+  <div class="cclk-head"><h3 class="cclk-h">Hype Check</h3></div>
   <p class="cclk-off" id="cclk-status">Reading {sym}&rsquo;s price and volume history&hellip;</p>
 </div>
 <script>

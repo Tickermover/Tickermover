@@ -4105,6 +4105,29 @@ async def api_universe():
         row["indices"]  = _idx_for(row.get("ticker", ""))
         row["profiles"] = _assign_profile(row)
         slim.append(row)
+    # ── the long tail ────────────────────────────────────────────────
+    # Everything in the full listed universe that the enrichment pipeline
+    # does not cover, as LIGHT rows: name, sector, index tags. This is the
+    # tiered half — carrying ~1,400 extra names costs one static file and no
+    # API calls, so the Full universe style can search and filter the whole
+    # market while the curated names keep their deep data. `light: True` lets
+    # the frontend show them differently rather than pretending they are
+    # scored.
+    try:
+        import stock_universe as _su
+        have = {(r.get("ticker") or "").upper() for r in slim}
+        for sym in _su.FULL_EXTRA:
+            if sym in have:
+                continue
+            m = _su.get_meta(sym) or {}
+            slim.append({
+                "ticker": sym, "name": m.get("name") or sym,
+                "sector": m.get("sector") or "", "exchange": m.get("exchange") or "",
+                "indices": m.get("indices") or [], "profiles": ["full"],
+                "light": True,
+            })
+    except Exception as _e:
+        logger.debug(f"full-universe tail skipped: {_e}")
     # Attach the Opus analyst-judge's one-line thesis (cached, ~nightly) to the
     # names that have one — the dashboard surfaces it as a real, specific "why
     # it's here" in place of the templated reason. Only the qualified pool is

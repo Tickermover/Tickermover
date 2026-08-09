@@ -2,7 +2,9 @@
 TickerMover — Risk profile assignment rules.
 
 Maps a ticker (with its loaded fundamentals/risk metrics) to a single
-profile membership: {"aggressive", "balanced", "conservative"}.
+profile membership: {"aggressive", "balanced", "conservative"},
+plus "full" — every tracked name, so the Full universe style shows
+the whole ~1,500-name list rather than a risk-filtered slice.
 
 Used by app.py to enrich /api/universe with a `profiles` field per ticker
 so the frontend can filter the universe without reapplying heuristics.
@@ -25,7 +27,7 @@ _DEFENSIVE_SECTORS = {
 }
 
 
-def assign_profile(t: dict) -> list[str]:
+def _assign_core(t: dict) -> list[str]:
     """Return the SINGLE primary profile this ticker fits.
 
     Beta-driven, mutually-exclusive bucketing. Categorization reflects the
@@ -105,3 +107,20 @@ def assign_profile(t: dict) -> list[str]:
 
     # ─── 3. BALANCED: everything else ───
     return ["balanced"]
+
+
+#: Every tracked name belongs to the Full universe style. It is not a risk
+#: bucket like the other three — it is the "show me everything" option, so it
+#: is appended to whatever bucket a name lands in rather than competing with it.
+FULL_PROFILE = "full"
+
+
+def assign_profile(t: dict) -> list[str]:
+    """Primary risk profile, plus membership of the Full universe."""
+    try:
+        out = list(_assign_core(t) or [])
+    except Exception:
+        out = ["balanced"]
+    if FULL_PROFILE not in out:
+        out.append(FULL_PROFILE)
+    return out

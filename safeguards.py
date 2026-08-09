@@ -554,10 +554,10 @@ def card_body(sym: str, d: dict) -> str:
             'suggested position size and not advice.</p>'))
 
     if not out:
-        return ('<div class="sfg-head"><h3 class="sfg-h">Safeguards</h3></div>'
+        return ('<div class="sfg-head"><h3 class="sfg-h">The Fine Print</h3></div>'
                 f'<p class="sfg-off">No filing data available for {esym}.</p>')
 
-    return (f'<div class="sfg-head"><h3 class="sfg-h">Safeguards</h3>'
+    return (f'<div class="sfg-head"><h3 class="sfg-h">The Fine Print</h3>'
             f'<span class="sfg-pill{" on" if n else ""}">{n} of '
             f'{len(s.get("checked") or [])} worth a look</span></div>'
             f'<p class="sfg-sub">Five things a company has already filed that rarely reach a '
@@ -580,7 +580,7 @@ def render_card(t: dict) -> str:
         return ""
     return _CSS + """
 <div class="sfg" id="sfg-card" data-sym="SYMBOL">
-  <div class="sfg-head"><h3 class="sfg-h">Safeguards</h3></div>
+  <div class="sfg-head"><h3 class="sfg-h">The Fine Print</h3></div>
   <p class="sfg-off" id="sfg-status">Reading SYMBOL&rsquo;s filings&hellip;</p>
 </div>
 <script>
