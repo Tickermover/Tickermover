@@ -18414,6 +18414,25 @@ async function v2LoadPickSparks(){
    Both used to be <a href> nav items that left the SPA for a standalone page.
    They now render in-app from the same endpoints the public pages use
    (/api/future-heroes, /api/theses). The public pages stay for SEO. */
+/* Deep links into a panel: /app#theses and /app#heroes. The standalone
+   /theses and /future-heroes pages now 307 here, and the individual map pages
+   link back with #theses, so the hash has to actually open the panel or those
+   redirects land the reader on the default tab with no explanation. */
+function _v2HashPanel(){
+  var h = '';
+  try { h = (location.hash || '').replace('#', '').toLowerCase(); } catch(e){}
+  var map = { theses: 'theses', heroes: 'heroes', 'future-heroes': 'heroes',
+              watchlist: 'watch', scans: 'scans' };
+  var panel = map[h];
+  if (!panel) return;
+  var nav = document.querySelector(".v2-nav-item[onclick*=\"'" + panel + "'\"]");
+  try { v2Show(panel, nav || null); } catch(e){}
+}
+window.addEventListener('hashchange', _v2HashPanel);
+if (document.readyState === 'loading')
+  document.addEventListener('DOMContentLoaded', _v2HashPanel);
+else _v2HashPanel();
+
 var _pipData = null, _tmData = null;
 
 function _pipEsc(v){

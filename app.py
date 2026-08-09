@@ -1433,8 +1433,6 @@ async def sitemap_xml():
         )
     parts.append(f'  <url><loc>{SITE_ORIGIN}/sectors</loc><changefreq>daily</changefreq><priority>0.85</priority><lastmod>{today}</lastmod></url>')
     parts.append(f'  <url><loc>{SITE_ORIGIN}/compare</loc><changefreq>weekly</changefreq><priority>0.8</priority><lastmod>{today}</lastmod></url>')
-    parts.append(f'  <url><loc>{SITE_ORIGIN}/future-heroes</loc><changefreq>weekly</changefreq><priority>0.8</priority><lastmod>{today}</lastmod></url>')
-    parts.append(f'  <url><loc>{SITE_ORIGIN}/theses</loc><changefreq>weekly</changefreq><priority>0.8</priority><lastmod>{today}</lastmod></url>')
     try:
         for _t in (_load_theses().get("theses") or []):
             if _t.get("status") == "live" and _t.get("slug"):
@@ -5354,13 +5352,16 @@ async def api_future_heroes(user: Optional[dict] = Depends(_current_user),
                                  "Vary": "Authorization"})
 
 
-@app.get("/future-heroes", response_class=HTMLResponse)
+@app.get("/future-heroes")
 async def future_heroes_page():
-    """Public Future Heroes page — top 10 open, ranks 11-50 unlock on free sign-up."""
-    try:
-        return HTMLResponse(content=_with_analytics(HEROES_HTML.read_text(encoding="utf-8")))
-    except FileNotFoundError:
-        return HTMLResponse(content="<h2>templates/heroes.html not found</h2>", status_code=500)
+    """Redirects into the app. This content is a PANEL now (#panel-heroes), not a
+    separate page — the user did not want a sidebar item that navigates out of
+    the SPA, and a standalone page reachable by URL is the same thing by another
+    route. 307 (temporary) rather than 301 on purpose: a permanent redirect is
+    cached hard by browsers and would be painful to undo if the page is ever
+    restored. Dropped from sitemap.xml to match."""
+    from fastapi.responses import RedirectResponse
+    return RedirectResponse(url="/app#heroes", status_code=307)
 
 
 # ── Thesis Maps — interactive editorial supply-chain explorers ───────
@@ -5726,13 +5727,13 @@ async def api_thesis_shares(slug: str):
     }), headers={"Cache-Control": "public, max-age=300, s-maxage=600"})
 
 
-@app.get("/theses", response_class=HTMLResponse)
+@app.get("/theses")
 async def theses_hub_page():
-    """Thesis Maps hub — gallery of interactive supply-chain explorers."""
-    try:
-        return HTMLResponse(content=_with_analytics(THESES_HTML.read_text(encoding="utf-8")))
-    except FileNotFoundError:
-        return HTMLResponse(content="<h2>templates/theses.html not found</h2>", status_code=500)
+    """Redirects into the app — the gallery is #panel-theses now. The INDIVIDUAL
+    maps (/theses/{slug}) keep their own page: they are the deep interactive
+    artifact and a drill-down from the list, not a nav destination."""
+    from fastapi.responses import RedirectResponse
+    return RedirectResponse(url="/app#theses", status_code=307)
 
 
 @app.get("/theses/{slug}", response_class=HTMLResponse)

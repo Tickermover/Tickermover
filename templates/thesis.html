@@ -12,7 +12,7 @@
 <style>
 :root{
   --blue:#14587D;--blue-d:#0A2F46;--ink:#0A2F46;--muted:#475569;--faint:#94a3b8;
-  --line:rgba(10,47,70,.09);--card:#ffffff;--bg:#fcfbf9;
+  --line:rgba(10,47,70,.09);--card:#ffffff;--bg:#FFF2EC;
   --pos:#0a7d33;--pos-soft:#e7f6ec;--neg:#dc2626;--neg-soft:#fdeceb;--zero:#cbd5e1;
   --e-hi:#14587D;--e-mid:#7aa8ff;--e-lo:#D9E6F2;
   /* layer identity = a single-hue blue depth ramp (sequential, not rainbow);
@@ -25,7 +25,7 @@ html,body{margin:0;padding:0}
 body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased}
 a{color:var(--blue)}
 .num{font-family:var(--mono);font-variant-numeric:tabular-nums}
-.top{position:sticky;top:0;z-index:20;background:rgba(252,251,249,.86);backdrop-filter:saturate(180%) blur(12px);border-bottom:1px solid var(--line)}
+.top{position:sticky;top:0;z-index:20;background:rgba(255,242,236,.86);backdrop-filter:saturate(180%) blur(12px);border-bottom:1px solid var(--line)}
 .top-in{max-width:1360px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 28px}
 .back{font-size:13px;font-weight:600;color:var(--muted);text-decoration:none}
 .back:hover{color:var(--ink)}
@@ -217,10 +217,25 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 </style>
 </head>
 <body>
+<!-- Marketing-first for a cold visitor and the crawler; rewritten below for
+     signed-in readers, who arrive from the in-app Thesis Maps panel and were
+     otherwise shown a brand chip selling them the product they already pay for,
+     with a back link to a page that now redirects. -->
 <header class="top"><div class="top-in">
-  <a class="back" href="/theses">← All thesis maps</a>
-  <a class="brand" href="/"><span class="mark"></span><span>TickerMover</span></a>
+  <a class="back" id="navBack" href="/theses">← All thesis maps</a>
+  <a class="brand" id="navBrand" href="/"><span class="mark"></span><span>TickerMover</span></a>
 </div></header>
+<script>
+(function(){
+  var signedIn = false;
+  try { signedIn = !!localStorage.getItem('ah_token'); } catch(e){}
+  if (!signedIn) return;
+  var back = document.getElementById('navBack'), brand = document.getElementById('navBrand');
+  if (back) back.href = '/app#theses';
+  if (brand){ brand.href = '/app'; brand.textContent = '← Back to the dashboard';
+              brand.className = 'back'; }
+})();
+</script>
 
 <main class="wrap">
   <span class="eyebrow">◇ <span id="crumb">Chain Map</span></span>
