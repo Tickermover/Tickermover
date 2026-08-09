@@ -3041,10 +3041,8 @@ function _pipRender(d){
 /* Private companies have no ticker, so the stock drawer cannot show them.
    Reuses the referral sheet's overlay chrome for a light profile card. */
 function _pipProfile(c){
-  /* Borrows the .v2-ref-ov / .v2-ref CLASSES for its chrome, but owns its own
-     element. An earlier version looked up #v2-ref-ov and bailed when it was
-     absent — a dependency on the referral sheet existing that it never used,
-     which would have silently stopped profiles opening. */
+  var ov = document.getElementById('v2-ref-ov');   /* generic overlay shell */
+  if (!ov) return;
   var body = document.getElementById('pipProfile');
   if (!body){
     body = document.createElement('div');
