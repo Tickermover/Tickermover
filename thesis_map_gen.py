@@ -87,6 +87,19 @@ DRIVER_POOL: list[dict] = [
 ]
 
 
+def driver_by_key(key: str) -> dict | None:
+    """The driver a published map was built from. Needed to RE-cut an existing
+    map: pick_driver deliberately skips anything already used, so a refresh
+    cannot go through it without being handed a different subject."""
+    k = (key or "").strip()
+    if not k:
+        return None
+    for d in DRIVER_POOL:
+        if d.get("key") == k:
+            return d
+    return None
+
+
 def pick_driver(used_keys: set[str], seed: int = 0) -> dict | None:
     """Next unused driver. Deterministic per seed so a retry in the same week
     produces the same map rather than a different one."""

@@ -5066,9 +5066,76 @@ async def _thesis_map_publisher() -> None:
             have_this_week = any((m.get("week_start") or "") == wk for m in _gen_theses)
             if not have_this_week and now.weekday() == 6 and now.hour >= 17:
                 await _build_weekly_map()
+            # Wednesday: re-cut the single most out-of-date map. The market
+            # sizes on these pages ("~$500B/yr run-rate", "~30% deployed") are
+            # a point-in-time read; left alone they keep presenting a stale
+            # quarter as the current one, which is worse than saying nothing.
+            # One a week, on a different day from publishing, so the refresh
+            # never competes with the new map and never spikes AI spend.
+            elif now.weekday() == 2 and now.hour >= 17:
+                await _refresh_stalest_map()
         except Exception as exc:
             logger.warning(f"thesis map publisher failed: {exc}")
         await asyncio.sleep(3600)   # hourly
+
+
+# A generated map is only as good as the quarter it was written in. This keeps
+# the published set inside one quarter without ever regenerating everything at
+# once — see _thesis_map_publisher for when it runs.
+_MAP_STALE_DAYS = 100
+
+
+def _map_age_days(m: dict) -> int:
+    """Days since this map was cut. Unknown/unparseable dates sort as ancient
+    so they get refreshed first rather than silently never."""
+    raw = (m.get("as_of") or m.get("week_start") or "")[:10]
+    if not raw:
+        return 10_000
+    try:
+        from datetime import date
+        y, mo, d = (int(x) for x in raw.split("-"))
+        return (date.today() - date(y, mo, d)).days
+    except Exception:
+        return 10_000
+
+
+async def _refresh_stalest_map() -> dict | None:
+    """Re-generate the oldest map past _MAP_STALE_DAYS, one per call."""
+    global _gen_theses
+    if not _gen_theses:
+        return None
+    stale = sorted(_gen_theses, key=_map_age_days, reverse=True)
+    target = stale[0] if stale and _map_age_days(stale[0]) >= _MAP_STALE_DAYS else None
+    if not target:
+        logger.info("thesis maps: none older than %sd, nothing to refresh", _MAP_STALE_DAYS)
+        return None
+    key = target.get("driver_key") or ""
+    slug = target.get("slug") or ""
+    logger.info("thesis maps: refreshing %s (%sd old)", slug, _map_age_days(target))
+    try:
+        import thesis_map_gen as _tmg
+        drv = _tmg.driver_by_key(key) if hasattr(_tmg, "driver_by_key") else None
+        if not drv:
+            logger.warning("thesis maps: no driver for %s, cannot refresh", key)
+            return None
+        fresh = await _tmg.generate(drv, _universe_data or [])
+        if not fresh:
+            return None
+        # Replace in place so the slug, and therefore every link and every
+        # indexed URL pointing at it, survives the refresh.
+        fresh["slug"] = slug
+        fresh["driver_key"] = key
+        fresh["week_start"] = target.get("week_start")
+        for i, m in enumerate(_gen_theses):
+            if (m.get("slug") or "") == slug:
+                _gen_theses[i] = fresh
+                break
+        _save_theses()
+        logger.info("thesis maps: refreshed %s", slug)
+        return fresh
+    except Exception as exc:
+        logger.warning(f"thesis map refresh failed for {slug}: {exc}")
+        return None
 
 
 @app.post("/api/admin/publish-thesis-map")

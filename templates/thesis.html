@@ -70,6 +70,22 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 .mv-fill.pos{background:linear-gradient(90deg,#34d17a,var(--pos))}
 .mv-fill.neg{background:linear-gradient(90deg,#f87171,var(--neg))}
 .mv-val{font-family:var(--mono);font-weight:700;font-size:12.5px;text-align:right}
+/* RETURN bars diverge from a centre zero; SHARE bars stay left-anchored.
+   They used to share one left-anchored component, so in a section titled
+   "which layer is winning" a -17.6% layer drew a LONGER bar than a +15.5%
+   one - length was magnitude while the heading implied direction. Now a bar
+   growing left is a loss and growing right is a gain, and the two sections
+   can no longer be mistaken for each other. */
+.mv-div .mv-track{background:linear-gradient(90deg,transparent calc(50% - .5px),#E4E7EC calc(50% - .5px),#E4E7EC calc(50% + .5px),transparent calc(50% + .5px))}
+.mv-div .mv-fill{left:auto;border-radius:3px}
+.mv-div .mv-fill.pos{left:50%;background:linear-gradient(90deg,#34d17a,var(--pos))}
+.mv-div .mv-fill.neg{right:50%;background:linear-gradient(270deg,#f87171,var(--neg))}
+/* Layer names are phrases, not tickers - give them room and never split a word. */
+.mv-div.mv-wide{grid-template-columns:190px 1fr 62px}
+.mv-div.mv-wide .mv-tk{font-family:var(--body);font-weight:600;font-size:12.5px;line-height:1.3;
+  word-break:normal;overflow-wrap:break-word}
+.mv-div.mv-wide .mv-tk small{display:block;margin:2px 0 0}
+@media(max-width:640px){.mv-div.mv-wide{grid-template-columns:120px 1fr 54px}}
 .pos-t{color:var(--pos)}.neg-t{color:var(--neg)}.zero-t{color:var(--faint)}
 
 /* follow the money — thesis market size */
@@ -257,6 +273,9 @@ h1.title{font-size:clamp(34px,5.6vw,54px);line-height:1.03;letter-spacing:-.022e
 .flow-svg svg:hover .fl-band{opacity:.62}
 .flow-svg svg .fl-band:hover{opacity:1}
 @media(max-width:640px){.flow{padding:14px 12px 8px}.flow-h b{font-size:15px}}
+.stale{margin:0 0 14px;padding:9px 13px;border-radius:10px;font-size:12.5px;line-height:1.55;
+  color:#8A5A00;background:#FDF6E7;border:1px solid #F2E2BE}
+.stale b{color:#6B4500;font-weight:700}
 .cc-line{margin:22px 0 0;font-size:12px}
 .cc-line a{color:#8A97A4;text-decoration:none;border-bottom:1px solid rgba(138,151,164,.35)}
 .cc-line a:hover{color:#3F4E5E;border-bottom-color:#3F4E5E}
@@ -638,7 +657,23 @@ h1.title{font-size:clamp(34px,5.6vw,54px);line-height:1.03;letter-spacing:-.022e
         '</section>';
       }).join("");
 
-    // "Follow the money" — curated market size + the landed-vs-still-to-deploy split
+    /* These market sizes are a point-in-time read, not a live feed. Left
+     unmarked, a figure cut two quarters ago keeps presenting itself as the
+     current one — the reader has no way to tell, and that is the failure mode
+     this whole product exists to argue against. Past a quarter the card says
+     so itself. */
+  function staleNote(d){
+    var raw = String(d.as_of || "").slice(0,10);
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(raw)) return "";
+    var age = Math.floor((Date.now() - new Date(raw + "T00:00:00Z").getTime()) / 86400000);
+    if(age < 100) return "";
+    var q = Math.max(1, Math.round(age/91));
+    return '<div class="stale">Figures dated <b>' + esc(raw) + '</b> — about ' + q +
+      ' quarter' + (q>1?'s':'') + ' old. Treat the sizes below as the state of play then, ' +
+      'not today. The chain and the companies still hold; the totals move.</div>';
+  }
+
+  // "Follow the money" — curated market size + the landed-vs-still-to-deploy split
     var mk = d.market;
     if(mk && mk.stats && mk.stats.length){
       var mEl = document.getElementById("money");
@@ -658,6 +693,7 @@ h1.title{font-size:clamp(34px,5.6vw,54px);line-height:1.03;letter-spacing:-.022e
       }
       mEl.innerHTML =
         '<div class="money-h"><b>Follow the money</b><span>the size of the prize</span></div>'+
+        staleNote(d)+
         // The deployed-so-far stat IS the landed bar underneath it — the same
         // percentage, in the same card, with its own second progress bar. Drop
         // the stat when the bar renders; the bar says more (both sides, in
@@ -692,8 +728,8 @@ h1.title{font-size:clamp(34px,5.6vw,54px);line-height:1.03;letter-spacing:-.022e
       var up = cos.filter(function(c){return (c.ret_3m||0) > 0;}).length;
       var rows = top.map(function(c,i){
         var v = c.ret_3m||0, pos = v>=0, w = Math.max(2, Math.abs(v)/maxAbs*100);
-        return '<div class="mv"><span class="mv-tk">'+esc(c.t)+'<small>'+esc(c.n)+'</small></span>'+
-          '<span class="mv-track"><span class="mv-fill '+(pos?"pos":"neg")+'" style="width:'+w.toFixed(1)+'%;background:'+barCss(i,top.length,pos)+'"></span></span>'+
+        return '<div class="mv mv-div"><span class="mv-tk">'+esc(c.t)+'<small>'+esc(c.n)+'</small></span>'+
+          '<span class="mv-track"><span class="mv-fill '+(pos?"pos":"neg")+'" style="width:'+(w/2).toFixed(1)+'%;background:'+barCss(i,top.length,pos)+'"></span></span>'+
           '<span class="mv-val '+(pos?"pos-t":"neg-t")+'">'+(pos?"+":"")+v.toFixed(1)+'%</span></div>';
       }).join("");
       // Which STAGE of the chain the market is actually paying. The company
@@ -711,11 +747,11 @@ h1.title{font-size:clamp(34px,5.6vw,54px);line-height:1.03;letter-spacing:-.022e
       if(lrows.length >= 2){
         var lmax = Math.max.apply(null, lrows.map(function(r){ return Math.abs(r.avg); }).concat([1]));
         trend = '<div class="winners-h"><b>Which layer is winning</b>'+
-                '<span>average 3-month return by chain layer</span></div>' +
+                '<span>average 3-month price return by layer · left of the line is a fall</span></div>' +
           lrows.map(function(r){
             var pos = r.avg >= 0, w = Math.max(2, Math.abs(r.avg)/lmax*100);
-            return '<div class="mv"><span class="mv-tk">'+esc(r.name)+'<small>'+r.n+' name'+(r.n>1?'s':'')+'</small></span>'+
-              '<span class="mv-track"><span class="mv-fill '+(pos?"pos":"neg")+'" style="width:'+w.toFixed(1)+
+            return '<div class="mv mv-div mv-wide"><span class="mv-tk">'+esc(r.name)+'<small>'+r.n+' name'+(r.n>1?'s':'')+'</small></span>'+
+              '<span class="mv-track"><span class="mv-fill '+(pos?"pos":"neg")+'" style="width:'+(w/2).toFixed(1)+
               '%;background:'+r.color+'"></span></span>'+
               '<span class="mv-val '+(pos?"pos-t":"neg-t")+'">'+(pos?"+":"")+r.avg.toFixed(1)+'%</span></div>';
           }).join("") + '<div style="height:20px"></div>';
