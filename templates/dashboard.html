@@ -505,6 +505,23 @@ body.v2 #sectors-grid .smh-name{font-weight:800;font-size:12.5px;color:#0f172a!i
 #panel-guard .gd-wrap-h{padding:16px 20px 14px;border-bottom:1px solid #EDEAE6;background:#FBFAF8}
 #panel-guard .gd-wrap-h h3{font-size:17px;font-weight:600;letter-spacing:-.015em;color:#0A2F46;margin:0 0 5px}
 #panel-guard .gd-wrap-h p{font-size:12.5px;line-height:1.55;color:#5D6C7B;margin:0}
+/* Column-heading help marker + the plain-English explainer above the table.
+   "Shelves" and "424B5" are filing jargon; nobody outside the industry knows
+   them, and the definitions were buried in the small print under the table. */
+#panel-guard .gd-q{display:inline-block;font-style:normal;font-family:'JetBrains Mono',monospace;
+  font-size:8px;font-weight:700;margin-left:4px;width:11px;height:11px;line-height:11px;
+  text-align:center;border-radius:100px;background:#EFEDEA;color:#8A97A4;cursor:help;
+  vertical-align:1px}
+#panel-guard th:hover .gd-q{background:#0A2F46;color:#fff}
+#panel-guard .gd-legend{font-size:12.5px;line-height:1.7;color:#5D6C7B;background:#FBFAF8;
+  border-top:1px solid #EDEAE6;padding:13px 20px}
+#panel-guard .gd-legend b{color:#0A2F46;font-weight:600}
+#panel-guard .gd-legend dl{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:9px 0 0}
+#panel-guard .gd-legend dt{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;
+  letter-spacing:.06em;text-transform:uppercase;color:#C74E00;padding-top:3px;white-space:nowrap}
+#panel-guard .gd-legend dd{margin:0}
+@media(max-width:640px){#panel-guard .gd-legend dl{grid-template-columns:1fr;gap:2px}
+  #panel-guard .gd-legend dd{margin:0 0 8px}}
 #panel-guard .gd-scroll{overflow-x:auto;overflow-y:auto;max-height:min(62vh,700px)}
 #panel-guard table{width:100%;border-collapse:collapse;font-size:13px}
 #panel-guard th{position:sticky;top:0;z-index:1;background:#fff;font-family:'JetBrains Mono',monospace;font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#8A97A4;text-align:right;padding:11px 14px;border-bottom:1px solid #E4E7EC;white-space:nowrap}
@@ -8847,7 +8864,7 @@ document.addEventListener('keydown', function(e){
   <div class="main">
     <div class="sc-head">
       <h2 class="sc-title">The Fine Print</h2>
-      <p class="sc-sub">A company issuing shares is selling into whatever demand exists — and a rally is demand. Share count is filed quarterly and shelf takedowns are filed the day they price, yet almost no private investor ever sees either. This ranks every name we follow by how much its share count grew over the last year.</p>
+      <p class="sc-sub">When a company sells new shares, your slice of it gets smaller — the business is simply divided into more pieces. Companies do this when buyers are keen, which means a good run in the price is often when it happens. It is all filed publicly and almost nobody looks. This ranks every name we follow by how much its share count actually grew over the last year.</p>
     </div>
     <!-- Dedicated ticker filter. Lives OUTSIDE #gdBody on purpose — render()
          rebuilds that node's innerHTML on every keystroke, which would blow
@@ -26257,6 +26274,49 @@ function scResultHTML(d){
     console.warn('safeguards: no drawer opener for', t);
   }
 
+  /* Plain-English for every heading. "Shelves", "424B5" and "prospectus
+     supplement" are filing-desk words — the definitions existed, but only in
+     the small print under the table, which nobody reads before the numbers. */
+  var HELP = {
+    'Ticker': 'The company, and the industry it belongs to.',
+    'Raises 24m': 'How many times in the last two years this company actually sold new '
+      + 'shares to investors. Each sale is filed with the SEC on the day it priced.',
+    '12m': 'The same count over the last twelve months only — how much of it is recent.',
+    'Shelves': 'A shelf is standing permission from the regulator to sell shares later '
+      + 'without asking again. Registering one does NOT mean any shares were sold — it '
+      + 'means the company can sell quickly whenever it chooses. This counts the ones '
+      + 'registered in the last two years.',
+    'Share count 1yr': 'How much the total number of shares grew over the last year. This is '
+      + 'the number that matters: if it grew 10%, the same company is now split into 10% more '
+      + 'pieces, so each share owns less of it. A dash means we have not looked up this '
+      + 'company’s accounts — it is not a zero.',
+    'Shares': 'The share count a year ago, and the share count now, in millions.',
+    'Last raise': 'The date this company most recently sold new shares.'
+  };
+  function th(t){
+    var h = HELP[t];
+    return '<th' + (h ? ' title="' + esc(h) + '"' : '') + '>' + t
+      + (h ? '<i class="gd-q">?</i>' : '') + '</th>';
+  }
+
+  /* Said once, under the table, in the words someone would actually use. */
+  var LEGEND = '<div class="gd-legend"><b>What this page is telling you.</b> A company can '
+    + 'create and sell brand-new shares whenever it wants to raise money. Nothing is taken '
+    + 'from you directly — but the company is now divided into more pieces, so the piece each '
+    + 'share represents gets smaller. That is <b>dilution</b>. It is ordinary and often '
+    + 'sensible; it is simply something almost nobody checks, because it happens in filings '
+    + 'rather than in the share price.'
+    + '<dl>'
+    + '<dt>Shelf</dt><dd>Permission to sell shares later, arranged in advance. A loaded gun, '
+      + 'not a shot fired — registering one sells nothing by itself.</dd>'
+    + '<dt>Raise</dt><dd>An actual sale of new shares. This is the shot. A company that raises '
+      + 'again and again is repeatedly leaning on its shareholders for cash.</dd>'
+    + '<dt>Share count</dt><dd>The honest scoreboard. Shelves and raises are activity; this is '
+      + 'the result. If it barely moved, the raises were probably debt rather than shares.</dd>'
+    + '<dt>Why now</dt><dd>Selling shares is easiest when the price is high and buyers are '
+      + 'keen — so a good run in the share price is exactly when it tends to happen.</dd>'
+    + '</dl></div>';
+
   /* Ticker/sector match for the panel's own search box. `q` is already
      upper-cased and trimmed by the input handler. */
   function match(r){
@@ -26279,11 +26339,12 @@ function scResultHTML(d){
     var last12 = rows.reduce(function(a,r){ return a + (r.offerings_12m || 0); }, 0);
 
     var hero = '<div class="gd-hero"><b>' + freq.length + ' of ' + rows.length + '</b>'
-      + '<p>companies we follow have priced stock off a shelf <em>three or more times</em> in '
-      + 'the last two years — ' + last12 + ' such filings landed in the last twelve months '
-      + 'alone. Each one is a prospectus supplement: shares actually sold, filed the day they '
-      + 'price. <em>A rising share price is what makes them easy to do</em>, and almost no '
-      + 'private investor ever sees the filing.</p></div>';
+      + '<p>companies we follow have sold new shares <em>three or more times</em> in the last '
+      + 'two years — ' + last12 + ' of those sales happened in the last twelve months alone. '
+      + 'Every one is a real sale, filed with the regulator on the day it went through, and '
+      + 'every one leaves the company split into more pieces than before. '
+      + '<em>A rising share price is exactly what makes these easy to do</em> — and almost no '
+      + 'private investor ever sees the paperwork.</p></div>';
 
     var pills = FILTERS.map(function(f){
       var n = rows.filter(f.fn).length;
@@ -26301,12 +26362,14 @@ function scResultHTML(d){
       + ' · ' + sel.length + ' name' + (sel.length===1?'':'s') + '</h3>'
       + (q ? '<p>Searching every name we follow — the buttons above do not narrow a '
            + 'search. Clear the box to go back to them.</p>' : '')
-      + '<p>Counts come straight from EDGAR. <b>A 424B5 can register debt as well as equity</b> '
-      + '— a large investment-grade issuer filing four of them is usually selling bonds, not '
-      + 'shares. The share-count column is what separates the two: real dilution shows up there. '
-      + 'It is filled in for the most active issuers only, because it costs a statement lookup '
-      + 'per name. Open any name for its full filing picture, including whether an '
-      + 'at-the-market programme is live.</p></div>';
+      + '<p>Counts come straight from the regulator’s own filings. <b>A high count on its own '
+      + 'does not prove dilution</b> — the same paperwork is used to borrow money, so a big, '
+      + 'safe company filing four times is usually issuing bonds, not shares. '
+      + '<b>The share-count column settles it:</b> if the number of shares grew, the company '
+      + 'really was carved into more pieces. We only look that figure up for the busiest '
+      + 'issuers, so a dash there means unchecked, not zero. Tap any name to see its full '
+      + 'filing history — including whether it is set up to sell shares into the market '
+      + 'day by day.</p></div>';
 
     var tb = sel.slice(0, 400).map(function(r){
       var sh = (r.shares_then && r.shares_now) ? mm(r.shares_then) + ' &rarr; ' + mm(r.shares_now) : '—';
@@ -26327,15 +26390,15 @@ function scResultHTML(d){
 
     body.innerHTML = hero + '<div class="gd-bands">' + pills + '</div>'
       + '<div class="gd-wrap">' + head + '<div class="gd-scroll"><table><thead><tr>'
-      + '<th>Ticker</th><th>Raises 24m</th><th>12m</th><th>Shelves</th>'
-      + '<th>Share count 1yr</th><th>Shares</th><th>Last raise</th>'
+      + ['Ticker','Raises 24m','12m','Shelves','Share count 1yr','Shares','Last raise']
+          .map(th).join('')
       + '</tr></thead><tbody>' + tb + '</tbody></table></div>'
       // The 400-row cap predates the search box; say so rather than let a
       // truncated list read as the complete answer.
-      + (sel.length > 400 ? '<p style="font-size:12px;color:#5D6C7B;margin:10px 2px 0">'
+      + (sel.length > 400 ? '<p style="font-size:12px;color:#5D6C7B;margin:0;padding:10px 20px">'
           + 'Showing the first 400 of ' + sel.length + ' — narrow it with the search box '
           + 'above.</p>' : '')
-      + '</div>';
+      + LEGEND + '</div>';
 
     if (note) note.textContent =
       'Filing counts come from SEC EDGAR and share counts from reported accounts; both can lag '
