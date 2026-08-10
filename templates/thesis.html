@@ -233,6 +233,22 @@ h1.title{font-size:clamp(34px,5.6vw,54px);line-height:1.03;letter-spacing:-.022e
 /* Runs to the same edge as the cards below it. Held at 62ch it broke over four
    short lines against full-width panels and read as a leftover column. */
 .standfirst{font-size:19px;line-height:1.58;color:#3F4E5E;max-width:none;margin:0 0 4px;font-weight:400}
+/* The flow diagram. */
+.flow{background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px 20px 10px;margin:0 0 18px}
+.flow-h{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin:0 0 6px}
+.flow-h b{font-size:16px;color:#0A2F46;letter-spacing:-.01em}
+.flow-h span{font-size:12.5px;color:var(--faint)}
+.flow-svg svg{display:block;width:100%;height:auto}
+.flow-svg .fl-name{font:600 13.5px/1 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;fill:#0A2F46}
+.flow-svg .fl-pct{font:700 13px/1 'JetBrains Mono',ui-monospace,monospace}
+.flow-svg .fl-sub{font:500 11px/1 'JetBrains Mono',ui-monospace,monospace;fill:#7A8899;letter-spacing:.04em}
+.flow-svg .fl-lag,.flow-svg .fl-cap{font:700 10px/1 'JetBrains Mono',ui-monospace,monospace;
+  fill:#9AA6B2;letter-spacing:.11em}
+.flow-svg .fl-foot{font:400 10.5px/1 ui-sans-serif,system-ui,sans-serif;fill:#9AA6B2}
+.flow-svg .fl-band{transition:opacity .15s}
+.flow-svg svg:hover .fl-band{opacity:.62}
+.flow-svg svg .fl-band:hover{opacity:1}
+@media(max-width:640px){.flow{padding:14px 12px 8px}.flow-h b{font-size:15px}}
 .cc-line{margin:22px 0 0;font-size:12px}
 .cc-line a{color:#8A97A4;text-decoration:none;border-bottom:1px solid rgba(138,151,164,.35)}
 .cc-line a:hover{color:#3F4E5E;border-bottom-color:#3F4E5E}
@@ -464,6 +480,17 @@ h1.title{font-size:clamp(34px,5.6vw,54px);line-height:1.03;letter-spacing:-.022e
 
   <div class="money" id="money" style="display:none"></div>
 
+  <!-- The map as a drawing. Everything below it is the same data as a list;
+       this is the one view that shows the SHAPE — one dollar entering, six
+       layers catching wildly unequal pieces of it, later and later. -->
+  <div class="flow" id="flow" style="display:none">
+    <div class="flow-h">
+      <b>How one capex dollar splits</b>
+      <span>Band height ∝ share of landed value · left to right is how late it arrives</span>
+    </div>
+    <div class="flow-svg" id="flow-svg"></div>
+  </div>
+
   <div class="movers" id="movers" style="display:none">
     <div class="movers-h"><b>Biggest share of landed value</b><span id="movers-sub"></span></div>
     <div id="movers-list"></div>
@@ -693,6 +720,85 @@ h1.title{font-size:clamp(34px,5.6vw,54px);line-height:1.03;letter-spacing:-.022e
   // Share of LANDED value — realized and descriptive. Fills the layer badges, the
   // layer/company share bars, and the leaderboard from /api/thesis-shares. No slider,
   // no forecast: every number is "who captures the spend today".
+  /* THE FLOW DIAGRAM.
+     A Sankey read left to right: one source (the capex dollar) fanning into
+     six layer bands. Band height encodes share of landed value, x-position
+     encodes lag, so the drawing says the two things the lists cannot — that
+     the split is wildly uneven, and that the small layers are also the late
+     ones. Each band still prints its exact percentage, because a floored
+     height is a readability compromise and the number is the truth. */
+  function drawFlow(d){
+    var host = document.getElementById("flow"), svgHost = document.getElementById("flow-svg");
+    if(!host || !svgHost) return;
+    var rows = (d.layers||[]).map(function(L,i){
+      var m = LAYERS[i] || {};
+      return { name:L.name||m.name||"", share:+L.share||0, lag:(m.lag==null?i:m.lag),
+               lagText:m.lagText||"", color:m.color||"var(--l"+(i+1)+")", names:(m.names||[]) };
+    }).filter(function(r){ return r.name; });
+    if(!rows.length) return;
+
+    // FLOOR is two text lines, not one: below that a band has room for its
+    // name but not for the companies in it, and a layer you cannot name the
+    // members of is the least useful row on the page.
+    var W = 1180, PADL = 116, PADR = 16, FLOOR = 54, SPARE = 250, GAP = 9;
+    // Floor + proportional. Without the floor a 1% layer is a 3px line with no
+    // room for its own name; without the proportional part the drawing would
+    // lie about a split that really is 80/20.
+    var heights = rows.map(function(r){ return FLOOR + r.share * SPARE; });
+    var H = heights.reduce(function(a,b){ return a+b; }, 0) + GAP*(rows.length-1);
+    var TOP = 54, BOT = 34, VB_H = H + TOP + BOT;
+    var srcX = PADL - 96, srcW = 26, bandX = PADL + 96, bandW = W - bandX - PADR;
+
+    function esc2(s){ return esc(s); }
+    var maxLag = Math.max.apply(null, rows.map(function(r){ return +r.lag||0; })) || 1;
+
+    var y = TOP, parts = [], ribbons = [], sy = TOP;
+    rows.forEach(function(r, i){
+      var h = heights[i];
+      // the ribbon leaves the source at the same thickness it arrives
+      var x0 = srcX + srcW, x1 = bandX, mid = (x0 + x1) / 2;
+      ribbons.push('<path d="M'+x0+' '+sy+' C'+mid+' '+sy+' '+mid+' '+y+' '+x1+' '+y
+        + ' L'+x1+' '+(y+h)+' C'+mid+' '+(y+h)+' '+mid+' '+(sy+h)+' '+x0+' '+(sy+h)+' Z"'
+        + ' fill="'+r.color+'" opacity=".17"/>');
+
+      // how late this layer is, as a share of the width it can travel
+      var lagFrac = (+r.lag||0) / maxLag;
+      var bx = bandX + lagFrac * (bandW * 0.30);
+      var bw = bandW - (bx - bandX);
+      parts.push('<g class="fl-band">'
+        + '<rect x="'+bx+'" y="'+y+'" width="'+bw+'" height="'+h+'" rx="9" fill="'+r.color+'" opacity=".13"/>'
+        + '<rect x="'+bx+'" y="'+y+'" width="4" height="'+h+'" rx="2" fill="'+r.color+'"/>'
+        + '<text class="fl-name" x="'+(bx+16)+'" y="'+(y+21)+'">'+esc2(r.name)+'</text>'
+        + '<text class="fl-pct" x="'+(bx+bw-14)+'" y="'+(y+21)+'" text-anchor="end" fill="'+r.color+'">'
+          + pctShare(r.share)+'</text>'
+        + (h >= 52
+            ? '<text class="fl-sub" x="'+(bx+16)+'" y="'+(y+38)+'">'
+              + esc2((r.names||[]).slice(0,6).map(function(c){ return c.t; }).join("  ·  "))+'</text>'
+            : '')
+        + '</g>');
+
+      // lag rail on the left
+      parts.push('<text class="fl-lag" x="'+(PADL-4)+'" y="'+(y+21)+'" text-anchor="end">'
+        + (r.lag===0 ? "now" : "+"+r.lag+"q") + '</text>');
+
+      y += h + GAP; sy += h;
+    });
+
+    var srcH = sy - TOP;
+    var svg = '<svg viewBox="0 0 '+W+' '+VB_H+'" preserveAspectRatio="xMidYMin meet" role="img"'
+      + ' aria-label="Where each capex dollar lands, by layer">'
+      + '<text class="fl-cap" x="'+srcX+'" y="'+(TOP-18)+'">THE SPEND</text>'
+      + '<text class="fl-cap" x="'+bandX+'" y="'+(TOP-18)+'">WHERE IT LANDS &rarr; LATER</text>'
+      + ribbons.join("")
+      + '<rect x="'+srcX+'" y="'+TOP+'" width="'+srcW+'" height="'+srcH+'" rx="6" fill="#0A2F46"/>'
+      + parts.join("")
+      + '<text class="fl-foot" x="'+bandX+'" y="'+(VB_H-12)+'">Bands are floored so every layer stays '
+      + 'readable — the printed percentage is the exact figure.</text>'
+      + '</svg>';
+    svgHost.innerHTML = svg;
+    host.style.display = "";
+  }
+
   function loadShares(){
     fetch("/api/thesis-shares/"+encodeURIComponent(slug)).then(function(r){return r.json();}).then(function(d){
       if(!d || d.available===false){ return; }
@@ -726,6 +832,7 @@ h1.title{font-size:clamp(34px,5.6vw,54px);line-height:1.03;letter-spacing:-.022e
         chip.textContent = (s==null? "" : pctShare(s));
         chip.className = "co-imp share-t";
       }); });
+      drawFlow(d);
       // leaderboard — biggest share of landed value (real, always positive)
       var subEl = document.getElementById("movers-sub");
       if(subEl) subEl.textContent = "by AI-attributable revenue · exposure-weighted estimate";
