@@ -7262,6 +7262,21 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 /* On the Company Events tab the logo marquee is the moving element — hide the
    price tape so two scrolling strips don't compete. */
 body.ce-active .ts-tape{display:none!important}
+/* Panels that carry their own dedicated search box (Company Events, The Fine
+   Print, Hype Check) hide the global ⌘K bar — two search fields stacked 200px
+   apart read as a mistake. ⌘K itself still works, and .v2-tb-actions is
+   margin-left:auto so the index pills stay right-aligned with the search gone. */
+body.hide-topsearch .v2-topbar .v2-search{display:none!important}
+
+/* Per-panel ticker filter (The Fine Print, Hype Check). Reuses the .v2-ev-search
+   shell from Company Events so all three panels present one search affordance. */
+.pf-search{max-width:1268px;margin:0 auto 18px;position:relative}
+.pf-search .v2-ev-search{max-width:none;margin:0}
+.pf-search .pf-clear{position:absolute;right:10px;top:50%;transform:translateY(-50%);
+  display:none;background:#F1F0EE;border:0;border-radius:100px;width:22px;height:22px;
+  cursor:pointer;color:#5D6C7B;font-size:13px;line-height:1;font-family:inherit}
+.pf-search .pf-clear:hover{background:#E4E2DF;color:#0A2F46}
+.pf-search.on .pf-clear{display:block}
 .ts-tape-track{display:flex;white-space:nowrap;animation:ts-tape 70s linear infinite;will-change:transform}
 @keyframes ts-tape{from{transform:translateX(0)}to{transform:translateX(-50%)}}
 .ts-tape:hover .ts-tape-track{animation-play-state:paused}
@@ -8785,6 +8800,17 @@ document.addEventListener('keydown', function(e){
       <h2 class="sc-title">The Fine Print</h2>
       <p class="sc-sub">A company issuing shares is selling into whatever demand exists — and a rally is demand. Share count is filed quarterly and shelf takedowns are filed the day they price, yet almost no private investor ever sees either. This ranks every name we follow by how much its share count grew over the last year.</p>
     </div>
+    <!-- Dedicated ticker filter. Lives OUTSIDE #gdBody on purpose — render()
+         rebuilds that node's innerHTML on every keystroke, which would blow
+         away focus and the caret if the input were inside it. -->
+    <div class="pf-search" id="gdSearchWrap">
+      <div class="v2-ev-search"><span class="v2-ev-si">🔎</span>
+        <input id="gdSearch" type="text" autocomplete="off" spellcheck="false"
+               placeholder="Find a stock in this table — ticker or sector, e.g. NVDA or Technology…">
+      </div>
+      <button type="button" class="pf-clear" id="gdSearchClear" aria-label="Clear filter">&times;</button>
+    </div>
+
     <div id="gdBody"><div class="gd-state">Loading&hellip;</div></div>
     <p class="sc-note" id="gdNote"></p>
   </div>
@@ -8804,6 +8830,16 @@ document.addEventListener('keydown', function(e){
       <button class="ck-tab" data-v="turns">Just turned</button>
       <button class="ck-tab" data-v="moves">Band changes</button>
       <button class="ck-tab" data-v="bands">Every name</button>
+    </div>
+
+    <!-- Dedicated ticker filter — outside #ckBody for the same reason as the
+         Fine Print one: render() replaces that node wholesale. -->
+    <div class="pf-search" id="ckSearchWrap">
+      <div class="v2-ev-search"><span class="v2-ev-si">🔎</span>
+        <input id="ckSearch" type="text" autocomplete="off" spellcheck="false"
+               placeholder="Find a stock — ticker or sector, e.g. ACLS or Technology…">
+      </div>
+      <button type="button" class="pf-clear" id="ckSearchClear" aria-label="Clear filter">&times;</button>
     </div>
 
     <div id="ckBody"><div class="ck-state">Loading…</div></div>
@@ -17665,6 +17701,10 @@ function showTab(id, btn) {
   // Events hub has its own moving logo marquee — hide the dark price tape there
   // so two scrolling strips don't compete (authoritative, post-remap).
   document.body.classList.toggle('ce-active', id === 'events');
+  // Panels with their own dedicated search box hide the global ⌘K bar so the
+  // page never shows two search fields at once. ⌘K keeps working.
+  document.body.classList.toggle('hide-topsearch',
+    id === 'events' || id === 'guard' || id === 'clock');
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   btn.classList.add('active');
@@ -25802,7 +25842,7 @@ function scResultHTML(d){
      no-ops silently behind a typeof guard. ═══════════════════════════════ -->
 <script>
 (function(){
-  var D = null, view = 'damage', band = 'Damaged', poll = null, wired = false;
+  var D = null, view = 'damage', band = 'Damaged', poll = null, wired = false, q = '';
 
   function esc(s){ return String(s == null ? '' : s)
     .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
@@ -25959,6 +25999,44 @@ function scResultHTML(d){
                    'Volume vs norm','vs 200d','Price'], body);
   }
 
+  /* 5. SEARCH — the panel's own ticker filter. It reads every name rather than
+     the current view, because three of the four views are deliberately narrow
+     (recent turns, recent band changes) and one is sectors, not names: a
+     look-up scoped to the active view would report "not found" for names we
+     hold data on. */
+  function match(r){
+    return String(r.ticker || '').toUpperCase().indexOf(q) >= 0
+        || String(r.sector || '').toUpperCase().indexOf(q) >= 0;
+  }
+  function viewSearch(){
+    var sel = (D.rows || []).filter(match);
+    var head = '<div class="ck-wrap-h"><h3>Search &ldquo;' + esc(q) + '&rdquo; · '
+      + sel.length + ' name' + (sel.length===1?'':'s') + '</h3>'
+      + '<p>Every name we hold a reading for, not just the tab above — clear the box to go '
+      + 'back to it. A name marked <b>no crash</b> did not fall 40% or more in the last two '
+      + 'years, so the band rates published elsewhere on this page were not measured on '
+      + 'shares in its position.</p></div>';
+    if (!sel.length) return tbl(head, ['Ticker'],
+      '<tr><td style="padding:22px 14px;color:#5D6C7B">No name we follow matches that.</td></tr>');
+    var body = sel.map(function(r){
+      var tn = tone(r.band);
+      return '<tr data-t="' + esc(r.ticker) + '">'
+        + '<td><span class="ck-tk">' + esc(r.ticker) + '</span>'
+          + '<div class="ck-sub2">' + esc(r.sector||'') + '</div></td>'
+        + '<td><span class="ck-pill ck-' + tn + '">' + esc(r.band) + '</span>'
+          + (r.in_cycle ? '' : '<div class="ck-sub2">no crash</div>') + '</td>'
+        + '<td><span class="ck-' + tn + '"><span class="ck-bar"><i style="width:'
+          + Math.max(3, Math.round(r.score)) + '%"></i></span>' + Math.round(r.score) + '</span></td>'
+        + '<td>' + sg(r.damage) + '</td>'
+        + '<td>' + sg(r.run) + '</td>'
+        + '<td>' + (r.crowd==null?'—':r.crowd.toFixed(2)+'×') + '</td>'
+        + '<td>' + sg(r.stretch) + '</td>'
+        + '<td>$' + (r.px==null?'—':r.px.toFixed(2)) + '</td></tr>';
+    }).join('');
+    return tbl(head, ['Ticker','Band','Clock','Off 12m high','Off the low',
+                      'Volume vs norm','vs 200d','Price'], body);
+  }
+
   var VIEWS = {damage:viewDamage, turns:viewTurns, moves:viewMoves, bands:viewBands};
   var NOTES = {
     damage: 'Sector damage is the share of a sector’s shares trading more than 30% below their '
@@ -25980,11 +26058,11 @@ function scResultHTML(d){
   function render(){
     var body = document.getElementById('ckBody'), note = document.getElementById('ckNote');
     if (!body || !D) return;
-    body.innerHTML = (VIEWS[view] || viewDamage)();
-    if (note) note.textContent = (NOTES[view] || '') + TAIL;
+    body.innerHTML = q ? viewSearch() : (VIEWS[view] || viewDamage)();
+    if (note) note.textContent = (q ? NOTES.bands : (NOTES[view] || '')) + TAIL;
 
     document.querySelectorAll('#ckTabs .ck-tab').forEach(function(el){
-      el.classList.toggle('on', el.getAttribute('data-v') === view);
+      el.classList.toggle('on', !q && el.getAttribute('data-v') === view);
     });
     body.querySelectorAll('.ck-band').forEach(function(el){
       el.addEventListener('click', function(){ band = el.getAttribute('data-b'); render(); });
@@ -25997,10 +26075,31 @@ function scResultHTML(d){
       var tabs = document.getElementById('ckTabs');
       if (tabs) tabs.addEventListener('click', function(ev){
         var b = ev.target.closest ? ev.target.closest('.ck-tab') : null;
-        if (b){ view = b.getAttribute('data-v'); render(); }
+        // Picking a view is a request to browse it, so it clears any search.
+        if (b){ view = b.getAttribute('data-v'); setQ(''); render(); }
       });
+      wireSearch();
       wired = true;
     }
+  }
+
+  /* Search box lives outside #ckBody so render() never destroys it — these
+     handlers are attached once and survive every re-render. */
+  function setQ(v){
+    q = String(v || '').trim().toUpperCase();
+    var inp = document.getElementById('ckSearch'), wrap = document.getElementById('ckSearchWrap');
+    if (inp && inp.value !== v) inp.value = v || '';
+    if (wrap) wrap.classList.toggle('on', !!q);
+  }
+  function wireSearch(){
+    var inp = document.getElementById('ckSearch'), clr = document.getElementById('ckSearchClear');
+    if (inp) inp.addEventListener('input', function(){ setQ(inp.value); render(); });
+    if (inp) inp.addEventListener('keydown', function(ev){
+      if (ev.key === 'Escape'){ setQ(''); render(); inp.blur(); }
+    });
+    if (clr) clr.addEventListener('click', function(){
+      setQ(''); render(); if (inp) inp.focus();
+    });
   }
 
   function waiting(pct){
@@ -26043,7 +26142,7 @@ function scResultHTML(d){
      not tsOpen — the latter does not exist. ═════════════════════════════ -->
 <script>
 (function(){
-  var D = null, filt = 'raising', poll = null, wired = false;
+  var D = null, filt = 'raising', poll = null, wired = false, q = '';
 
   function esc(s){ return String(s == null ? '' : s)
     .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
@@ -26057,6 +26156,13 @@ function scResultHTML(d){
            : (window.tsOpenDrawer || window.openStockModal);
     if (typeof fn === 'function'){ try { fn(t); return; } catch(e){} }
     console.warn('safeguards: no drawer opener for', t);
+  }
+
+  /* Ticker/sector match for the panel's own search box. `q` is already
+     upper-cased and trimmed by the input handler. */
+  function match(r){
+    return String(r.ticker || '').toUpperCase().indexOf(q) >= 0
+        || String(r.sector || '').toUpperCase().indexOf(q) >= 0;
   }
 
   var FILTERS = [
@@ -26087,9 +26193,15 @@ function scResultHTML(d){
     }).join('');
 
     var cur = FILTERS.filter(function(f){ return f.k === filt; })[0] || FILTERS[0];
-    var sel = rows.filter(cur.fn);
-    var head = '<div class="gd-wrap-h"><h3>' + esc(cur.label) + ' · ' + sel.length + ' name'
-      + (sel.length===1?'':'s') + '</h3>'
+    // A search deliberately ignores the active pill. Narrowing by both means
+    // looking up a ticker that sits outside the current category returns
+    // nothing, which reads as missing data rather than a filter mismatch.
+    var sel = q ? rows.filter(match) : rows.filter(cur.fn);
+    var head = '<div class="gd-wrap-h"><h3>'
+      + (q ? 'Search &ldquo;' + esc(q) + '&rdquo;' : esc(cur.label))
+      + ' · ' + sel.length + ' name' + (sel.length===1?'':'s') + '</h3>'
+      + (q ? '<p>Searching every name we follow — the buttons above do not narrow a '
+           + 'search. Clear the box to go back to them.</p>' : '')
       + '<p>Counts come straight from EDGAR. <b>A 424B5 can register debt as well as equity</b> '
       + '— a large investment-grade issuer filing four of them is usually selling bonds, not '
       + 'shares. The share-count column is what separates the two: real dilution shows up there. '
@@ -26110,12 +26222,21 @@ function scResultHTML(d){
         + '<td>' + sh + '</td>'
         + '<td>' + (r.last_raise ? esc(r.last_raise) : '—') + '</td></tr>';
     }).join('');
+    if (!tb) tb = '<tr><td colspan="7" style="padding:22px 14px;color:#5D6C7B">'
+      + (q ? 'No name we follow matches &ldquo;' + esc(q) + '&rdquo;.'
+           : 'No names in this group right now.') + '</td></tr>';
 
     body.innerHTML = hero + '<div class="gd-bands">' + pills + '</div>'
       + '<div class="gd-wrap">' + head + '<div class="gd-scroll"><table><thead><tr>'
       + '<th>Ticker</th><th>Raises 24m</th><th>12m</th><th>Shelves</th>'
       + '<th>Share count 1yr</th><th>Shares</th><th>Last raise</th>'
-      + '</tr></thead><tbody>' + tb + '</tbody></table></div></div>';
+      + '</tr></thead><tbody>' + tb + '</tbody></table></div>'
+      // The 400-row cap predates the search box; say so rather than let a
+      // truncated list read as the complete answer.
+      + (sel.length > 400 ? '<p style="font-size:12px;color:#5D6C7B;margin:10px 2px 0">'
+          + 'Showing the first 400 of ' + sel.length + ' — narrow it with the search box '
+          + 'above.</p>' : '')
+      + '</div>';
 
     if (note) note.textContent =
       'Filing counts come from SEC EDGAR and share counts from reported accounts; both can lag '
@@ -26127,15 +26248,38 @@ function scResultHTML(d){
       + 'Capital at risk.';
 
     body.querySelectorAll('.gd-band').forEach(function(el){
-      el.addEventListener('click', function(){ filt = el.getAttribute('data-f'); render(); });
+      // Picking a category is a request to browse it, so it clears any search.
+      el.addEventListener('click', function(){
+        filt = el.getAttribute('data-f'); setQ(''); render();
+      });
     });
     if (!wired){
       body.addEventListener('click', function(ev){
         var tr = ev.target.closest ? ev.target.closest('tr[data-t]') : null;
         if (tr) openTicker(tr.getAttribute('data-t'));
       });
+      wireSearch();
       wired = true;
     }
+  }
+
+  /* Search box lives outside #gdBody so render() never destroys it — these
+     handlers are attached once and survive every re-render. */
+  function setQ(v){
+    q = String(v || '').trim().toUpperCase();
+    var inp = document.getElementById('gdSearch'), wrap = document.getElementById('gdSearchWrap');
+    if (inp && inp.value !== v) inp.value = v || '';
+    if (wrap) wrap.classList.toggle('on', !!q);
+  }
+  function wireSearch(){
+    var inp = document.getElementById('gdSearch'), clr = document.getElementById('gdSearchClear');
+    if (inp) inp.addEventListener('input', function(){ setQ(inp.value); render(); });
+    if (inp) inp.addEventListener('keydown', function(ev){
+      if (ev.key === 'Escape'){ setQ(''); render(); inp.blur(); }
+    });
+    if (clr) clr.addEventListener('click', function(){
+      setQ(''); render(); if (inp) inp.focus();
+    });
   }
 
   function waiting(pct){
