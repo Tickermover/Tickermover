@@ -629,6 +629,17 @@ body.v2 #sectors-grid .smh-name{font-weight:800;font-size:12.5px;color:#0f172a!i
 #panel-clock .ck-rd-neu{color:#5D6C7B;background:rgba(93,108,123,.07)}
 #panel-clock .ck-rd-ok{color:#0E7C66;background:rgba(14,124,102,.07)}
 #panel-clock .ck-rd-c{text-align:right}
+/* Damage bar. This column is the reason people open the page, so it is the
+   one thing on the row that is drawn rather than merely printed. */
+#panel-clock .ck-dmg-c{text-align:left}
+#panel-clock .ck-dmg{display:inline-flex;align-items:center;gap:9px;min-width:118px}
+#panel-clock .ck-dmg-bar{display:inline-block;width:62px;height:7px;border-radius:100px;
+  background:#EDEAE6;overflow:hidden;flex:none}
+#panel-clock .ck-dmg-bar i{display:block;height:100%;border-radius:100px;background:currentColor}
+#panel-clock .ck-dmg b{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700}
+#panel-clock .ck-dmg-hi{color:#B4232A}
+#panel-clock .ck-dmg-mid{color:#C74E00}
+#panel-clock .ck-dmg-lo{color:#8A97A4}
 #panel-clock .ck-wrap{border:1px solid #E4E7EC;border-radius:18px;background:#fff;overflow:hidden}
 #panel-clock .ck-wrap-h{padding:16px 20px 14px;border-bottom:1px solid #EDEAE6;background:#FBFAF8}
 #panel-clock .ck-wrap-h h3{font-size:17px;font-weight:600;letter-spacing:-.015em;color:#0A2F46;margin:0 0 5px}
@@ -26031,18 +26042,26 @@ function scResultHTML(d){
     if (dmg != null && dmg >= -0.08) return {k:'neu', t:'Back at highs',
       w:'Trading within ' + Math.abs(dmg*100).toFixed(0) + '% of its 12-month high. Nothing is '
         + 'broken about this one — it is simply not a wreck.'};
-    if (crowd != null && crowd <= 0.9 && dmg != null && dmg <= -0.3) return {k:'ok', t:'Wrecked, unwatched',
+    // Thresholds are set against THIS population, not a generic one. Every name
+    // here already fell 40%+ at some point and most have recovered a long way,
+    // so a -20% drawdown is an ordinary reading rather than a rare one. At a
+    // flat -0.30 the ladder fell through to "Unremarkable" on the majority of
+    // the Ignored band — a badge that says nothing is worse than no badge.
+    if (crowd != null && crowd <= 1.0 && dmg != null && dmg <= -0.35) return {k:'ok', t:'Deep, unwatched',
       w:'Down ' + Math.abs(dmg*100).toFixed(0) + '% from its high on ' + crowd.toFixed(2) + '× normal '
-        + 'volume — damaged, and the crowd is not here yet. The earliest half of the cycle, which '
-        + 'is a place to start research, not a signal to buy.'};
+        + 'volume — badly damaged, and the crowd is not here yet. The earliest part of the cycle, '
+        + 'which is a place to start research, not a signal to buy.'};
+    if (crowd != null && crowd <= 0.95 && dmg != null && dmg <= -0.15) return {k:'ok', t:'Quietly damaged',
+      w:'Down ' + Math.abs(dmg*100).toFixed(0) + '% from its high, trading at ' + crowd.toFixed(2)
+        + '× its own normal volume — the damage is real and almost nobody is watching it.'};
     if (str != null && str >= 0.30) return {k:'warn', t:'Extended',
       w:'Trading ' + (str*100).toFixed(0) + '% above its own 200-day average price — stretched '
         + 'against its own trend.'};
-    if (dmg != null && dmg <= -0.3) return {k:'neu', t:'Still damaged',
-      w:'Down ' + Math.abs(dmg*100).toFixed(0) + '% from its 12-month high, with volume around '
-        + 'normal. The damage is real and nothing has changed about it recently.'};
-    return {k:'neu', t:'Unremarkable',
-      w:'Nothing extreme in this row — not wrecked, not crowded, not stretched.'};
+    if (dmg != null && dmg <= -0.15) return {k:'neu', t:'Damaged, watched',
+      w:'Down ' + Math.abs(dmg*100).toFixed(0) + '% from its 12-month high on roughly normal volume. '
+        + 'The damage is real, and the market is already paying it ordinary attention.'};
+    return {k:'neu', t:'Middle of the pack',
+      w:'Part-way back from its fall, on normal volume — nothing extreme in either direction.'};
   }
 
   /* Plain-English for every column whose name is jargon. Headings like CLOCK
@@ -26077,6 +26096,20 @@ function scResultHTML(d){
   /* A column is either a plain string (right-aligned, the numeric default) or
      {t, left:true} for one whose cells are left-aligned — the header has to
      follow the cells or it reads as belonging to the column beside it. */
+  /* Damage as a picture. "-24%" in a column of percentages does not stand out
+     from "+19%" beside it, and how wrecked a name is IS the question this page
+     answers. The bar fills against a 60% floor, so the deepest falls run the
+     full width and the shallow ones stay visibly short. */
+  function dmgCell(v){
+    if (v == null || isNaN(v)) return '<td class="ck-dmg-c">—</td>';
+    var pctDown = Math.abs(v) * 100;
+    var w = Math.max(4, Math.min(100, pctDown / 60 * 100));
+    var cls = pctDown >= 40 ? 'ck-dmg-hi' : pctDown >= 20 ? 'ck-dmg-mid' : 'ck-dmg-lo';
+    return '<td class="ck-dmg-c"><span class="ck-dmg ' + cls + '">'
+      + '<span class="ck-dmg-bar"><i style="width:' + w.toFixed(0) + '%"></i></span>'
+      + '<b>' + sg(v) + '</b></span></td>';
+  }
+
   function tbl(head, cols, body){
     return '<div class="ck-wrap">' + head + '<div class="ck-scroll"><table><thead><tr>'
       + cols.map(function(c){
@@ -26205,7 +26238,11 @@ function scResultHTML(d){
         + '<s>Fell another 30%<b>' + pc(r.fall) + '</b></s>'
         + '<u>Rose 30%<b>' + pc(r.rise) + '</b></u></div></button>';
     }).join('');
-    var sel = rows.filter(function(r){ return r.band === band; });
+    // Most damaged first. People come to this page to see who is wrecked;
+    // ordering by the clock score buried them under names that had already
+    // recovered.
+    var sel = rows.filter(function(r){ return r.band === band; })
+      .sort(function(a,b){ return (a.damage==null?9:a.damage) - (b.damage==null?9:b.damage); });
     var r0 = (D.rates.cycle && D.rates.cycle[band]) || {};
     var head = '<div class="ck-wrap-h"><h3>' + esc(band) + ' · ' + sel.length + ' name'
       + (sel.length===1?'':'s') + '</h3><p>' + esc(D.copy[band]||'')
@@ -26220,22 +26257,21 @@ function scResultHTML(d){
       return '<tr data-t="' + esc(r.ticker) + '">'
         + '<td><span class="ck-tk">' + esc(r.ticker) + '</span>'
           + '<div class="ck-sub2">' + esc(r.sector||'') + '</div></td>'
+        + dmgCell(r.damage)
+        + '<td>' + sg(r.run) + '</td>'
+        + '<td>' + (r.crowd==null?'—':r.crowd.toFixed(2)+'×') + '</td>'
         + '<td><span class="ck-' + tn + '"><span class="ck-bar"><i style="width:'
           + Math.max(3, Math.round(r.score)) + '%"></i></span>' + Math.round(r.score) + '</span></td>'
         + '<td>' + (r.held==null?'—':r.held + 'd') + '</td>'
-        + '<td>' + sg(r.damage) + '</td>'
-        + '<td>' + sg(r.run) + '</td>'
-        + '<td>' + (r.crowd==null?'—':r.crowd.toFixed(2)+'×') + '</td>'
         + '<td>' + sg(r.stretch) + '</td>'
-        + '<td>$' + (r.px==null?'—':r.px.toFixed(2)) + '</td>'
         + (function(){ var d = ckReading(r);
             return '<td class="ck-rd-c"><span class="ck-rd ck-rd-' + d.k + '" title="'
               + esc(d.w) + '">' + esc(d.t) + '</span></td>'; })()
         + '</tr>';
     }).join('');
     return '<div class="ck-bands">' + cards + '</div>'
-      + tbl(head + CLOCK_LEGEND, ['Ticker','Clock','In band','Off 12m high','Off the low',
-                   'Volume vs norm','vs 200d','Price','Reading'], body);
+      + tbl(head + CLOCK_LEGEND, [{t:'Ticker',left:true},{t:'Off 12m high',left:true},'Off the low',
+                   'Volume vs norm','Clock','In band','vs 200d','Reading'], body);
   }
 
   /* 5. SEARCH — the panel's own ticker filter. It reads every name rather than
@@ -26264,20 +26300,19 @@ function scResultHTML(d){
           + '<div class="ck-sub2">' + esc(r.sector||'') + '</div></td>'
         + '<td style="text-align:left"><span class="ck-pill ck-' + tn + '">' + esc(r.band) + '</span>'
           + (r.in_cycle ? '' : '<div class="ck-sub2">no crash</div>') + '</td>'
-        + '<td><span class="ck-' + tn + '"><span class="ck-bar"><i style="width:'
-          + Math.max(3, Math.round(r.score)) + '%"></i></span>' + Math.round(r.score) + '</span></td>'
-        + '<td>' + sg(r.damage) + '</td>'
+        + dmgCell(r.damage)
         + '<td>' + sg(r.run) + '</td>'
         + '<td>' + (r.crowd==null?'—':r.crowd.toFixed(2)+'×') + '</td>'
+        + '<td><span class="ck-' + tn + '"><span class="ck-bar"><i style="width:'
+          + Math.max(3, Math.round(r.score)) + '%"></i></span>' + Math.round(r.score) + '</span></td>'
         + '<td>' + sg(r.stretch) + '</td>'
-        + '<td>$' + (r.px==null?'—':r.px.toFixed(2)) + '</td>'
         + (function(){ var d = ckReading(r);
             return '<td class="ck-rd-c"><span class="ck-rd ck-rd-' + d.k + '" title="'
               + esc(d.w) + '">' + esc(d.t) + '</span></td>'; })()
         + '</tr>';
     }).join('');
-    return tbl(head + CLOCK_LEGEND, ['Ticker',{t:'Band',left:true},'Clock','Off 12m high',
-                      'Off the low','Volume vs norm','vs 200d','Price','Reading'], body);
+    return tbl(head + CLOCK_LEGEND, [{t:'Ticker',left:true},{t:'Band',left:true},{t:'Off 12m high',left:true},
+                      'Off the low','Volume vs norm','Clock','vs 200d','Reading'], body);
   }
 
   var VIEWS = {damage:viewDamage, turns:viewTurns, moves:viewMoves, bands:viewBands};
