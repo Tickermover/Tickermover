@@ -554,9 +554,12 @@ body.v2 #sectors-grid .smh-name{font-weight:800;font-size:12.5px;color:#0f172a!i
 #panel-clock .ck-tag-broad{color:#A16207;background:rgba(161,98,7,.1)}
 #panel-clock .ck-bands{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin:0 0 18px}
 #panel-clock .ck-band{--ck-a:#5D6C7B;position:relative;overflow:hidden;border:1px solid #E4E7EC;border-radius:14px;background:#fff;padding:14px 15px 13px;cursor:pointer;text-align:left;font:inherit;transition:border-color .15s,box-shadow .15s}
-#panel-clock .ck-band[data-b="Damaged"],#panel-clock .ck-band[data-b="Crowded"]{--ck-a:#C74E00}
+/* One accent per band, matching the pill colours in the Band column. */
+#panel-clock .ck-band[data-b="Damaged"]{--ck-a:#C74E00}
+#panel-clock .ck-band[data-b="Crowded"]{--ck-a:#B23A2E}
 #panel-clock .ck-band[data-b="Busy"]{--ck-a:#A16207}
-#panel-clock .ck-band[data-b="Quiet"],#panel-clock .ck-band[data-b="Noticed"]{--ck-a:#0E7C66}
+#panel-clock .ck-band[data-b="Noticed"]{--ck-a:#1F6FA8}
+#panel-clock .ck-band[data-b="Quiet"]{--ck-a:#0E7C66}
 #panel-clock .ck-band::before{content:'';position:absolute;inset:0 0 auto 0;height:3px;background:var(--ck-a);opacity:0;transition:opacity .15s}
 #panel-clock .ck-band:hover{border-color:#C7CEF0}
 #panel-clock .ck-band.on{border-color:var(--ck-a);box-shadow:0 0 0 1px var(--ck-a)}
@@ -564,9 +567,29 @@ body.v2 #sectors-grid .smh-name{font-weight:800;font-size:12.5px;color:#0f172a!i
 #panel-clock .ck-band-n{display:flex;align-items:baseline;gap:8px;margin-bottom:6px}
 #panel-clock .ck-band-n b{font-size:14px;font-weight:600;color:#0A2F46}
 #panel-clock .ck-band-n i{font-style:normal;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:var(--ck-a);margin-left:auto}
-#panel-clock .ck-band-r{font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:700;letter-spacing:.03em;color:#5D6C7B}
-#panel-clock .ck-band-r s{text-decoration:none;color:#C74E00}
-#panel-clock .ck-band-r u{text-decoration:none;color:#0E7C66}
+/* "22% fell 30% · 44% rose 30%" on one wrapping line read as four unrelated
+   numbers. One labelled row per outcome, with the frequency on the right. */
+#panel-clock .ck-band-r{font-size:11px;color:#5D6C7B}
+#panel-clock .ck-band-r em{display:block;font-style:normal;font-family:'JetBrains Mono',monospace;
+  font-size:8.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;
+  color:#9AA6B2;margin-bottom:5px;line-height:1.3}
+#panel-clock .ck-band-r s,#panel-clock .ck-band-r u{display:flex;align-items:baseline;gap:6px;
+  text-decoration:none;color:#5D6C7B;line-height:1.6}
+#panel-clock .ck-band-r s b,#panel-clock .ck-band-r u b{margin-left:auto;
+  font-family:'JetBrains Mono',monospace;font-size:11.5px;font-weight:700}
+#panel-clock .ck-band-r s b{color:#C74E00}
+#panel-clock .ck-band-r u b{color:#0E7C66}
+
+/* Column-heading help marker + the one-line Clock explainer above the table. */
+#panel-clock .ck-q{display:inline-block;font-style:normal;font-family:'JetBrains Mono',monospace;
+  font-size:8px;font-weight:700;margin-left:4px;width:11px;height:11px;line-height:11px;
+  text-align:center;border-radius:100px;background:#EFEDEA;color:#8A97A4;cursor:help;
+  vertical-align:1px}
+#panel-clock th:hover .ck-q{background:#0A2F46;color:#fff}
+#panel-clock .ck-legend{font-size:12.5px;line-height:1.65;color:#5D6C7B;background:#FBFAF8;
+  border:1px solid #EDEAE6;border-radius:12px;padding:11px 14px;margin:0 0 14px}
+#panel-clock .ck-legend b{color:#0A2F46;font-weight:600}
+#panel-clock .ck-legend .ck-q{cursor:default}
 #panel-clock .ck-wrap{border:1px solid #E4E7EC;border-radius:18px;background:#fff;overflow:hidden}
 #panel-clock .ck-wrap-h{padding:16px 20px 14px;border-bottom:1px solid #EDEAE6;background:#FBFAF8}
 #panel-clock .ck-wrap-h h3{font-size:17px;font-weight:600;letter-spacing:-.015em;color:#0A2F46;margin:0 0 5px}
@@ -583,10 +606,14 @@ body.v2 #sectors-grid .smh-name{font-weight:800;font-size:12.5px;color:#0f172a!i
 #panel-clock .ck-tk{font-family:var(--font-body,inherit);font-weight:600}
 #panel-clock .ck-sub2{font-family:var(--font-body,inherit);font-size:11px;color:#8A97A4;font-weight:400}
 #panel-clock .ck-pill{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:9.5px;font-weight:700;letter-spacing:.06em;padding:3px 8px;border-radius:100px;border:1px solid currentColor}
-#panel-clock .ck-hot{color:#C74E00}
-#panel-clock .ck-warm{color:#A16207}
-#panel-clock .ck-cool{color:#0E7C66}
-#panel-clock .ck-grey{color:#8A97A4}
+/* One colour per band — six bands sharing four classes meant Damaged and
+   Crowded (and Quiet and Noticed) were indistinguishable in the Band column. */
+#panel-clock .ck-hot{color:#C74E00}    /* Damaged */
+#panel-clock .ck-red{color:#B23A2E}    /* Crowded */
+#panel-clock .ck-warm{color:#A16207}   /* Busy    */
+#panel-clock .ck-blue{color:#1F6FA8}   /* Noticed */
+#panel-clock .ck-cool{color:#0E7C66}   /* Quiet   */
+#panel-clock .ck-grey{color:#8A97A4}   /* Ignored */
 #panel-clock .ck-arrow{color:#8A97A4;padding:0 5px}
 #panel-clock .ck-bar{display:inline-block;width:52px;height:6px;border-radius:3px;background:#EDEAE6;vertical-align:middle;margin-right:9px;overflow:hidden}
 #panel-clock .ck-bar i{display:block;height:100%;background:currentColor}
@@ -7268,6 +7295,18 @@ body.ce-active .ts-tape{display:none!important}
    margin-left:auto so the index pills stay right-aligned with the search gone. */
 body.hide-topsearch .v2-topbar .v2-search{display:none!important}
 
+/* The "you are here" label that fills the gap the search bar leaves behind. */
+.v2-tb-where{display:none;align-items:center;gap:10px;min-width:0}
+body.hide-topsearch .v2-tb-where{display:flex}
+.v2-tb-where-t{font-size:15px;font-weight:600;letter-spacing:-.01em;color:#0A2F46;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.v2-tb-where-k{display:inline-flex;align-items:center;gap:6px;cursor:pointer;
+  font-family:inherit;font-size:11px;color:#8A97A4;background:#F6F4F1;
+  border:1px solid rgba(9,9,9,.07);border-radius:8px;padding:5px 9px;line-height:1}
+.v2-tb-where-k span{font-family:'JetBrains Mono',monospace;font-weight:700;letter-spacing:.04em}
+.v2-tb-where-k:hover{color:#0A2F46;border-color:#C9CFEA;background:#F7F8FE}
+@media(max-width:900px){.v2-tb-where-k{display:none}}
+
 /* Per-panel ticker filter (The Fine Print, Hype Check). Reuses the .v2-ev-search
    shell from Company Events so all three panels present one search affordance. */
 .pf-search{max-width:1268px;margin:0 auto 18px;position:relative}
@@ -8354,6 +8393,16 @@ document.addEventListener('keydown', function(e){
         <span class="ico">🔍</span>
         <span class="v2-search-ph">Search ticker, jump to a section…</span>
         <span class="kbd">⌘K</span>
+      </div>
+
+      <!-- Takes the search bar's place on panels that hide it, so the left of
+           the topbar is not simply empty. Says where you are, and keeps ⌘K
+           reachable by mouse now that the bar itself is gone. -->
+      <div class="v2-tb-where" id="v2-tb-where">
+        <span class="v2-tb-where-t" id="v2-tb-where-t">Dashboard</span>
+        <button type="button" class="v2-tb-where-k"
+                onclick="if(typeof openCmdK==='function')openCmdK()"
+                title="Search tickers and sections">🔍 <span>⌘K</span></button>
       </div>
 
       <div class="v2-tb-actions">
@@ -17703,8 +17752,10 @@ function showTab(id, btn) {
   document.body.classList.toggle('ce-active', id === 'events');
   // Panels with their own dedicated search box hide the global ⌘K bar so the
   // page never shows two search fields at once. ⌘K keeps working.
-  document.body.classList.toggle('hide-topsearch',
-    id === 'events' || id === 'guard' || id === 'clock');
+  const WHERE = {events:'Company Events', guard:'The Fine Print', clock:'Hype Check'};
+  document.body.classList.toggle('hide-topsearch', !!WHERE[id]);
+  const whereEl = document.getElementById('v2-tb-where-t');
+  if (whereEl && WHERE[id]) whereEl.textContent = WHERE[id];
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   btn.classList.add('active');
@@ -25848,8 +25899,11 @@ function scResultHTML(d){
     .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
   function pc(v,d){ return (v==null||isNaN(v)) ? '—' : (v*100).toFixed(d||0)+'%'; }
   function sg(v){ return (v==null||isNaN(v)) ? '—' : (v>=0?'+':'')+(v*100).toFixed(0)+'%'; }
-  function tone(b){ return ({Damaged:'hot',Crowded:'hot',Busy:'warm',
-    Quiet:'cool',Noticed:'cool',Ignored:'grey'})[b] || 'grey'; }
+  // One class per band. Damaged/Crowded both returned 'hot' and Quiet/Noticed
+  // both returned 'cool', so half the Band column was two colours for six
+  // readings — a pill told you less than its label did.
+  function tone(b){ return ({Damaged:'hot',Crowded:'red',Busy:'warm',
+    Quiet:'cool',Noticed:'blue',Ignored:'grey'})[b] || 'grey'; }
   function ago(d){
     if (!d) return '';
     var n = Math.round((Date.now() - new Date(d+'T00:00:00Z').getTime())/86400000);
@@ -25861,11 +25915,55 @@ function scResultHTML(d){
     if (typeof fn === 'function'){ try { fn(t); return; } catch(e){} }
     console.warn('crowd clock: no drawer opener for', t);
   }
+  /* Plain-English for every column whose name is jargon. Headings like CLOCK
+     and VS 200D meant nothing on their own — the formula was buried in the
+     small print under the table, which is not where anyone looks. Hovering a
+     marked heading now says what the number is in ordinary words. */
+  var HELP = {
+    'Clock': 'A 0–100 reading of how far along the bounce a share looks. Near 0: still '
+      + 'close to its lows and barely traded. Near 100: most of the climb is behind it and '
+      + 'trading is heavy. It describes what has already happened, not what happens next.',
+    'Band': 'The plain-word label for that reading — Damaged, Ignored, Quiet, Noticed, Busy '
+      + 'or Crowded, running from wrecked-and-unwatched to fully-noticed.',
+    'Moved': 'The band it used to read, and the band it reads now.',
+    'In band': 'How many days it has read this same band without changing.',
+    'Off 12m high': 'How far below its highest price of the last twelve months it trades today.',
+    'Off the low': 'How far it has climbed back up from its lowest price of the last year.',
+    'Volume vs norm': 'How busy trading is against this share’s own 200-day average. 1.00× is '
+      + 'its normal day; 2.00× is twice as many shares changing hands as usual.',
+    'vs 200d': 'How far the price sits above or below its own average price of the last 200 days.',
+    'Price': 'Latest close.',
+    'When': 'When the band changed.',
+    'Turned': 'When the turn happened.',
+    'Since': 'How the price has moved since the turn.',
+    'Sector damage': 'The share of that whole sector trading more than 30% below its own '
+      + '12-month high — how wrecked the neighbourhood is.',
+    'Beat index, historically': 'How often shares in this same state went on to beat the S&P '
+      + '500 over the next six months, in past data. A frequency, not a forecast.'
+  };
+
+  /* A column is either a plain string (right-aligned, the numeric default) or
+     {t, left:true} for one whose cells are left-aligned — the header has to
+     follow the cells or it reads as belonging to the column beside it. */
   function tbl(head, cols, body){
     return '<div class="ck-wrap">' + head + '<div class="ck-scroll"><table><thead><tr>'
-      + cols.map(function(c){ return '<th>'+c+'</th>'; }).join('')
+      + cols.map(function(c){
+          var t = (c && c.t) || c, h = HELP[t];
+          return '<th' + (c && c.left ? ' style="text-align:left"' : '')
+            + (h ? ' title="' + esc(h) + '"' : '') + '>' + t
+            + (h ? '<i class="ck-q">?</i>' : '') + '</th>';
+        }).join('')
       + '</tr></thead><tbody>' + body + '</tbody></table></div></div>';
   }
+
+  /* Said once, above the table, for the views that show a Clock score — the
+     tooltip only helps someone who already suspects the column needs one. */
+  var CLOCK_LEGEND = '<div class="ck-legend"><b>Reading the Clock:</b> it runs 0 to 100 and '
+    + 'answers one question — how far along is the bounce? A <b>low</b> score means the share '
+    + 'is still near its lows with almost nobody trading it. A <b>high</b> score means most of '
+    + 'the recovery has already happened and trading is heavy. It is a description of where a '
+    + 'share stands today, not a prediction, and a high score is not a sell nor a low score a '
+    + 'buy. Hover any column heading marked <i class="ck-q">?</i> for what it measures.</div>';
 
   /* 1. WHERE THE DAMAGE IS */
   function viewDamage(){
@@ -25955,7 +26053,7 @@ function scResultHTML(d){
         + '<td>' + (r.crowd==null?'—':r.crowd.toFixed(2)+'×') + '</td>'
         + '<td>$' + (r.px==null?'—':r.px.toFixed(2)) + '</td></tr>';
     }).join('');
-    return tbl(head, ['Ticker','Moved','When','Off 12m high','Off the low',
+    return tbl(head, ['Ticker',{t:'Moved',left:true},'When','Off 12m high','Off the low',
                       'Volume vs norm','Price'], body);
   }
 
@@ -25967,8 +26065,9 @@ function scResultHTML(d){
       var r = (D.rates.cycle && D.rates.cycle[b]) || {};
       return '<button class="ck-band' + (band===b?' on':'') + '" data-b="' + esc(b) + '">'
         + '<div class="ck-band-n"><b>' + esc(b) + '</b><i>' + n + '</i></div>'
-        + '<div class="ck-band-r"><s>' + pc(r.fall) + ' fell 30%</s> · <u>' + pc(r.rise)
-        + ' rose 30%</u></div></button>';
+        + '<div class="ck-band-r"><em>Over the next 6 months, historically</em>'
+        + '<s>Fell another 30%<b>' + pc(r.fall) + '</b></s>'
+        + '<u>Rose 30%<b>' + pc(r.rise) + '</b></u></div></button>';
     }).join('');
     var sel = rows.filter(function(r){ return r.band === band; });
     var r0 = (D.rates.cycle && D.rates.cycle[band]) || {};
@@ -25995,7 +26094,7 @@ function scResultHTML(d){
         + '<td>$' + (r.px==null?'—':r.px.toFixed(2)) + '</td></tr>';
     }).join('');
     return '<div class="ck-bands">' + cards + '</div>'
-      + tbl(head, ['Ticker','Clock','In band','Off 12m high','Off the low',
+      + tbl(head + CLOCK_LEGEND, ['Ticker','Clock','In band','Off 12m high','Off the low',
                    'Volume vs norm','vs 200d','Price'], body);
   }
 
@@ -26023,7 +26122,7 @@ function scResultHTML(d){
       return '<tr data-t="' + esc(r.ticker) + '">'
         + '<td><span class="ck-tk">' + esc(r.ticker) + '</span>'
           + '<div class="ck-sub2">' + esc(r.sector||'') + '</div></td>'
-        + '<td><span class="ck-pill ck-' + tn + '">' + esc(r.band) + '</span>'
+        + '<td style="text-align:left"><span class="ck-pill ck-' + tn + '">' + esc(r.band) + '</span>'
           + (r.in_cycle ? '' : '<div class="ck-sub2">no crash</div>') + '</td>'
         + '<td><span class="ck-' + tn + '"><span class="ck-bar"><i style="width:'
           + Math.max(3, Math.round(r.score)) + '%"></i></span>' + Math.round(r.score) + '</span></td>'
@@ -26033,8 +26132,8 @@ function scResultHTML(d){
         + '<td>' + sg(r.stretch) + '</td>'
         + '<td>$' + (r.px==null?'—':r.px.toFixed(2)) + '</td></tr>';
     }).join('');
-    return tbl(head, ['Ticker','Band','Clock','Off 12m high','Off the low',
-                      'Volume vs norm','vs 200d','Price'], body);
+    return tbl(head + CLOCK_LEGEND, ['Ticker',{t:'Band',left:true},'Clock','Off 12m high',
+                      'Off the low','Volume vs norm','vs 200d','Price'], body);
   }
 
   var VIEWS = {damage:viewDamage, turns:viewTurns, moves:viewMoves, bands:viewBands};
