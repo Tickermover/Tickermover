@@ -23249,21 +23249,19 @@ function scResultHTML(d){
     return _card('Earnings summary',rows);
   }
   function _quoteCard(t){
-    const px=parseFloat(t.price),hi=parseFloat(t.high),lo=parseFloat(t.low),vw=parseFloat(t.vwap),vol=parseFloat(t.volume),vr=_fpNum(t,['volume_ratio']);
+    const hi=parseFloat(t.high),lo=parseFloat(t.low),vw=parseFloat(t.vwap),vol=parseFloat(t.volume),vr=_fpNum(t,['volume_ratio']);
     const rows=[];
-    // Volatility reads (replaces the delayed-quote bid/ask spread, which is
-    // unreliable on a 15-min feed). True options-implied vol isn't in our data
-    // feed, so these are realized/price-based: ATR daily range and beta.
-    const beta=parseFloat(t.beta), atr=parseFloat(t.atr_14);
-    const atrPct=(isFinite(atr)&&isFinite(px)&&px>0)?(atr/px*100):null;
-    if(atrPct!=null) rows.push(['Volatility · ATR (14)','$'+atr.toFixed(2)+' · '+atrPct.toFixed(1)+'% / day', atrPct<2?_badge('CALM','ok'):atrPct<4?_badge('NORMAL','neu'):_badge('HIGH','bad')]);
-    if(isFinite(beta)) rows.push(['Beta vs market',beta.toFixed(2)+'×', beta<0.8?_badge('LOW β','ok'):(beta<=1.3?_badge('MARKET','neu'):_badge('HIGH β','bad'))]);
+    // No bid/ask spread here — it is unreliable on a 15-minute delayed feed.
+    // ATR and beta deliberately live in the Volatility & risk card next door,
+    // not here. Rendering them in both meant the two cards showed the same
+    // three numbers side by side. This card is what the stock did TODAY and
+    // how easily it trades; that one is what it risks.
     if(!isNaN(lo)&&!isNaN(hi)) rows.push(['Day range','$'+lo.toFixed(2)+' – $'+hi.toFixed(2),_nb()]);
     if(!isNaN(vw)) rows.push(['VWAP','$'+vw.toFixed(2),_nb()]);
     if(!isNaN(vol)) rows.push(['Volume',_volFmt(vol),_nb()]);
     if(vr!=null) rows.push(['Vol vs 20-day',vr.toFixed(1)+'×', vr>=1.3?_badge('ACTIVE','ok'):_badge('NORMAL','neu')]);
     if(!rows.length) return '';
-    const tbl='<table><thead><tr><th>Metric</th><th>Value</th><th>Signal</th></tr></thead><tbody>'+rows.map(r=>'<tr><td>'+r[0]+'</td><td>'+r[1]+'</td><td>'+r[2]+'</td></tr>').join('')+'</tbody></table><div class="muted small" style="margin-top:8px">Volatility shown is realized (price-based): ATR is the average daily range and beta is sensitivity to the market. Options-implied volatility isn’t available from our data feed.</div>';
+    const tbl='<table><thead><tr><th>Metric</th><th>Value</th><th>Signal</th></tr></thead><tbody>'+rows.map(r=>'<tr><td>'+r[0]+'</td><td>'+r[1]+'</td><td>'+r[2]+'</td></tr>').join('')+'</tbody></table><div class="muted small" style="margin-top:8px">VWAP is the day’s average traded price, and volume against the 20-day average shows whether today is busier than usual. Volatility and beta are in the risk card. Quotes can be delayed up to 15 minutes.</div>';
     return _sec('Quote & liquidity','💧','slate',tbl);
   }
   /* Pre-market / after-hours price (from the yfinance quote on the periodic
@@ -23651,13 +23649,25 @@ function scResultHTML(d){
       _mrow('6-month', m6, _momPct, _momMv),
     ];
     const rsi=(S&&S.rsi!=null)?S.rsi:_fpNum(t,['rsi_14']); const atr=_fpNum(t,['atr_14']); const beta=_fpNum(t,['beta']);
-    const volR=(S&&S.volR!=null)?S.volR:_fpNum(t,['volume_ratio']); const sp=_fpNum(t,['short_percent_float']); const spP=sp!=null?(sp<=1?sp*100:sp):null;
+    const sp=_fpNum(t,['short_percent_float']); const spP=sp!=null?(sp<=1?sp*100:sp):null;
+    // This card owns RISK. Quote & liquidity beside it owns how the stock
+    // TRADES. They used to overlap on three of five rows — ATR, beta and the
+    // volume ratio were rendered twice from the same fields, once here and
+    // once there, so the pair read as two cards saying the same thing.
+    // Volume-vs-average is an activity fact and lives with Volume/VWAP there;
+    // ATR and beta are risk and live here, keeping the richer "% of price per
+    // day" reading that only the quote card used to show.
+    const _pxNow=_fpNum(t,['price']);
+    const atrPct=(atr!=null&&_pxNow!=null&&_pxNow>0)?(atr/_pxNow*100):null;
     const volRows=[
       _mrow('RSI (14)', rsi, v=>Math.round(v)+'', v=> (v>=40&&v<=65)?_badge('HEALTHY','ok'):v>70?_badge('OVERBOUGHT','bad'):v<30?_badge('OVERSOLD','warn'):_badge('NEUTRAL','warn')),
-      _mrow('ATR (14)', atr, v=>'$'+v.toFixed(2), ()=>_nb()),
-      _mrow('Beta', beta, v=>v.toFixed(2), v=> v>1.5?_badge('HIGH','bad'):v>=0.8?_badge('MARKET','warn'):_badge('LOW','ok')),
-      _mrow('Volume vs avg', volR, v=>v.toFixed(1)+'×', v=> v>=1.3?_badge('ACTIVE','ok'):_badge('NORMAL','neu')),
-      _mrow('Short % float', spP, v=>v.toFixed(1)+'%', v=> v<5?_badge('LOW','ok'):v<10?_badge('MODERATE','warn'):_badge('HIGH','bad')),
+      _mrow('ATR (14)', atr, v=>'$'+v.toFixed(2)+(atrPct!=null?' · '+atrPct.toFixed(1)+'%/day':''),
+        ()=> atrPct==null?_nb():atrPct<2?_badge('CALM','ok'):atrPct<4?_badge('NORMAL','neu'):_badge('HIGH','bad')),
+      _mrow('Beta', beta, v=>v.toFixed(2)+'×', v=> v>1.5?_badge('HIGH','bad'):v>=0.8?_badge('MARKET','warn'):_badge('LOW','ok')),
+      // Same field the Financials tab's Ownership card calls "Short interest".
+      // Two names for one number read as two different metrics — keep the name
+      // identical across tabs even though the context differs.
+      _mrow('Short interest', spP, v=>v.toFixed(1)+'%', v=> v<5?_badge('LOW','ok'):v<10?_badge('MODERATE','warn'):_badge('HIGH','bad')),
     ];
     // Moving averages — where price sits against its own trend.
     const px=_fpNum(t,['price']), s50=_fpNum(t,['sma_50']), s200=_fpNum(t,['sma_200']);
