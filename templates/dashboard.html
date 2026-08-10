@@ -476,6 +476,10 @@ body.v2 #sectors-grid .smh-name{font-weight:800;font-size:12.5px;color:#0f172a!i
 #panel-scans .sc-head,#panel-heroes .sc-head,#panel-theses .sc-head,#panel-clock .sc-head,#panel-guard .sc-head{margin:2px 0 20px}
 #panel-scans .sc-title,#panel-heroes .sc-title,#panel-theses .sc-title,#panel-clock .sc-title,#panel-guard .sc-title{font-family:var(--font-head);font-size:29px;font-weight:500;letter-spacing:-.02em;margin:0 0 7px;color:#0A2F46}
 #panel-scans .sc-sub,#panel-heroes .sc-sub,#panel-theses .sc-sub,#panel-clock .sc-sub,#panel-guard .sc-sub{font-size:13.5px;font-weight:400;line-height:1.6;color:#5D6C7B;margin:0;max-width:78ch}
+/* The two filings panels run full-bleed tables, so a book-width intro left a
+   dead right half beside them. No cap here — Scanner et al keep the narrow
+   one, where the content below is narrow too and the column still reads. */
+#panel-clock .sc-sub,#panel-guard .sc-sub{max-width:none}
 
 /* ── Safeguards (#panel-guard) ───────────────────────────────────────────
    Universe-wide dilution. Accent is the protective green (#0E7C66) rather
@@ -483,7 +487,7 @@ body.v2 #sectors-grid .smh-name{font-weight:800;font-size:12.5px;color:#0f172a!i
    about crowd heat. */
 #panel-guard .gd-hero{border:1px solid #E4E7EC;border-radius:16px;background:#fff;padding:20px 22px;margin:0 0 18px}
 #panel-guard .gd-hero b{display:block;font-family:'JetBrains Mono',monospace;font-size:27px;font-weight:700;letter-spacing:-.02em;line-height:1;color:#C74E00}
-#panel-guard .gd-hero p{font-size:13px;line-height:1.6;color:#5D6C7B;margin:10px 0 0;max-width:90ch}
+#panel-guard .gd-hero p{font-size:13px;line-height:1.6;color:#5D6C7B;margin:10px 0 0}
 #panel-guard .gd-hero em{font-style:normal;color:#0A2F46;font-weight:600}
 #panel-guard .gd-bands{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:10px;margin:0 0 18px}
 #panel-guard .gd-band{--g:#0E7C66;position:relative;overflow:hidden;border:1px solid #E4E7EC;border-radius:14px;background:#fff;padding:14px 15px 13px;cursor:pointer;text-align:left;font:inherit;transition:border-color .15s,box-shadow .15s}
@@ -500,7 +504,7 @@ body.v2 #sectors-grid .smh-name{font-weight:800;font-size:12.5px;color:#0f172a!i
 #panel-guard .gd-wrap{border:1px solid #E4E7EC;border-radius:18px;background:#fff;overflow:hidden}
 #panel-guard .gd-wrap-h{padding:16px 20px 14px;border-bottom:1px solid #EDEAE6;background:#FBFAF8}
 #panel-guard .gd-wrap-h h3{font-size:17px;font-weight:600;letter-spacing:-.015em;color:#0A2F46;margin:0 0 5px}
-#panel-guard .gd-wrap-h p{font-size:12.5px;line-height:1.55;color:#5D6C7B;margin:0;max-width:86ch}
+#panel-guard .gd-wrap-h p{font-size:12.5px;line-height:1.55;color:#5D6C7B;margin:0}
 #panel-guard .gd-scroll{overflow-x:auto;overflow-y:auto;max-height:min(62vh,700px)}
 #panel-guard table{width:100%;border-collapse:collapse;font-size:13px}
 #panel-guard th{position:sticky;top:0;z-index:1;background:#fff;font-family:'JetBrains Mono',monospace;font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#8A97A4;text-align:right;padding:11px 14px;border-bottom:1px solid #E4E7EC;white-space:nowrap}
@@ -517,7 +521,7 @@ body.v2 #sectors-grid .smh-name{font-weight:800;font-size:12.5px;color:#0f172a!i
 #panel-guard .gd-state{padding:44px 20px;text-align:center;color:#5D6C7B;font-size:13.5px}
 #panel-guard .gd-prog{width:min(320px,70%);height:6px;border-radius:3px;background:#EDEAE6;margin:14px auto 0;overflow:hidden}
 #panel-guard .gd-prog i{display:block;height:100%;background:#0E7C66;transition:width .4s}
-#panel-guard .sc-note{font-size:12px;line-height:1.6;color:#8A97A4;margin:18px 0 0;max-width:90ch}
+#panel-guard .sc-note{font-size:12px;line-height:1.6;color:#8A97A4;margin:18px 0 0}
 
 /* ── Crowd Clock (#panel-clock) ──────────────────────────────────────────
    Three views over one payload. Band colour runs cool (#0E7C66) -> warm
@@ -530,7 +534,7 @@ body.v2 #sectors-grid .smh-name{font-weight:800;font-size:12.5px;color:#0f172a!i
 #panel-clock .ck-tab.on{border-color:#C74E00;color:#fff;background:#C74E00}
 #panel-clock .ck-hero{border:1px solid #E4E7EC;border-radius:16px;background:#fff;padding:20px 22px;margin:0 0 18px}
 #panel-clock .ck-hero b{display:block;font-family:'JetBrains Mono',monospace;font-size:27px;font-weight:700;letter-spacing:-.02em;line-height:1;color:#C74E00}
-#panel-clock .ck-hero p{font-size:13px;line-height:1.6;color:#5D6C7B;margin:10px 0 0;max-width:88ch}
+#panel-clock .ck-hero p{font-size:13px;line-height:1.6;color:#5D6C7B;margin:10px 0 0}
 #panel-clock .ck-hero em{font-style:normal;color:#0A2F46;font-weight:600}
 #panel-clock .ck-secs{display:grid;gap:9px;margin:0 0 8px}
 #panel-clock .ck-sec{display:grid;grid-template-columns:minmax(130px,1.1fr) 1fr auto;gap:14px;align-items:center;
@@ -566,9 +570,9 @@ body.v2 #sectors-grid .smh-name{font-weight:800;font-size:12.5px;color:#0f172a!i
 #panel-clock .ck-wrap{border:1px solid #E4E7EC;border-radius:18px;background:#fff;overflow:hidden}
 #panel-clock .ck-wrap-h{padding:16px 20px 14px;border-bottom:1px solid #EDEAE6;background:#FBFAF8}
 #panel-clock .ck-wrap-h h3{font-size:17px;font-weight:600;letter-spacing:-.015em;color:#0A2F46;margin:0 0 5px}
-#panel-clock .ck-wrap-h p{font-size:12.5px;line-height:1.55;color:#5D6C7B;margin:0;max-width:86ch}
+#panel-clock .ck-wrap-h p{font-size:12.5px;line-height:1.55;color:#5D6C7B;margin:0}
 #panel-clock .ck-warn{margin:9px 0 0;padding:9px 12px;border-radius:9px;background:rgba(199,78,0,.06);
-  border:1px solid rgba(199,78,0,.18);font-size:12px;line-height:1.5;color:#8A4A20;max-width:86ch}
+  border:1px solid rgba(199,78,0,.18);font-size:12px;line-height:1.5;color:#8A4A20}
 #panel-clock .ck-scroll{overflow-x:auto;overflow-y:auto;max-height:min(62vh,700px)}
 #panel-clock table{width:100%;border-collapse:collapse;font-size:13px}
 #panel-clock th{position:sticky;top:0;z-index:1;background:#fff;font-family:'JetBrains Mono',monospace;font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#8A97A4;text-align:right;padding:11px 14px;border-bottom:1px solid #E4E7EC;white-space:nowrap}
@@ -589,7 +593,7 @@ body.v2 #sectors-grid .smh-name{font-weight:800;font-size:12.5px;color:#0f172a!i
 #panel-clock .ck-state{padding:44px 20px;text-align:center;color:#5D6C7B;font-size:13.5px}
 #panel-clock .ck-prog{width:min(320px,70%);height:6px;border-radius:3px;background:#EDEAE6;margin:14px auto 0;overflow:hidden}
 #panel-clock .ck-prog i{display:block;height:100%;background:#C74E00;transition:width .4s}
-#panel-clock .sc-note{font-size:12px;line-height:1.6;color:#8A97A4;margin:18px 0 0;max-width:88ch}
+#panel-clock .sc-note{font-size:12px;line-height:1.6;color:#8A97A4;margin:18px 0 0}
 @media (max-width:760px){#panel-clock .ck-sec{grid-template-columns:1fr auto;gap:8px}
   #panel-clock .ck-meter{grid-column:1/-1}}
 
