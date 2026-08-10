@@ -534,12 +534,7 @@ body.v2 #sectors-grid .smh-name{font-weight:800;font-size:12.5px;color:#0f172a!i
 #panel-guard .gd-rd-ok{color:#0E7C66;background:rgba(14,124,102,.07)}
 #panel-guard .gd-rd-chk{color:#8A97A4;background:rgba(138,151,164,.07)}
 #panel-guard .gd-rd-c{text-align:right}
-#panel-guard .gd-key{margin:14px 0 0;padding:13px 0 0;border-top:1px solid #EDEAE6}
-#panel-guard .gd-key-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));
-  gap:7px 20px;margin:10px 0 0}
-#panel-guard .gd-key-g span{display:flex;align-items:baseline;gap:9px;font-size:12.5px;
-  line-height:1.5;min-width:0}
-#panel-guard .gd-key-g .gd-rd{font-style:normal;flex:none;cursor:default}
+#panel-guard .gd-key{margin:13px 0 0;padding:12px 0 0;border-top:1px solid #EDEAE6;font-size:12.5px}
 #panel-guard .gd-scroll{overflow-x:auto;overflow-y:auto;max-height:min(62vh,700px)}
 #panel-guard table{width:100%;border-collapse:collapse;font-size:13px}
 #panel-guard th{position:sticky;top:0;z-index:1;background:#fff;font-family:'JetBrains Mono',monospace;font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#8A97A4;text-align:right;padding:11px 14px;border-bottom:1px solid #E4E7EC;white-space:nowrap}
@@ -625,6 +620,15 @@ body.v2 #sectors-grid .smh-name{font-weight:800;font-size:12.5px;color:#0f172a!i
   border:1px solid #EDEAE6;border-radius:12px;padding:11px 14px;margin:0 0 14px}
 #panel-clock .ck-legend b{color:#0A2F46;font-weight:600}
 #panel-clock .ck-legend .ck-q{cursor:default}
+/* The Reading badge — same idea as Dilution Check's, scoped to this panel. */
+#panel-clock .ck-rd{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:9.5px;
+  font-weight:700;letter-spacing:.05em;padding:3px 9px;border-radius:100px;white-space:nowrap;
+  border:1px solid currentColor;cursor:help}
+#panel-clock .ck-rd-bad{color:#B4232A;background:rgba(180,35,42,.07)}
+#panel-clock .ck-rd-warn{color:#A16207;background:rgba(161,98,7,.08)}
+#panel-clock .ck-rd-neu{color:#5D6C7B;background:rgba(93,108,123,.07)}
+#panel-clock .ck-rd-ok{color:#0E7C66;background:rgba(14,124,102,.07)}
+#panel-clock .ck-rd-c{text-align:right}
 #panel-clock .ck-wrap{border:1px solid #E4E7EC;border-radius:18px;background:#fff;overflow:hidden}
 #panel-clock .ck-wrap-h{padding:16px 20px 14px;border-bottom:1px solid #EDEAE6;background:#FBFAF8}
 #panel-clock .ck-wrap-h h3{font-size:17px;font-weight:600;letter-spacing:-.015em;color:#0A2F46;margin:0 0 5px}
@@ -26012,6 +26016,35 @@ function scResultHTML(d){
     if (typeof fn === 'function'){ try { fn(t); return; } catch(e){} }
     console.warn('crowd clock: no drawer opener for', t);
   }
+  /* THE READING. The band already names the state; this says what the state
+     means for someone holding the share, from THAT ROW's own numbers — not
+     the band average, or it would just be the band label again. Ordered:
+     the loudest fact about a share wins. */
+  function ckReading(r){
+    var crowd = r.crowd, dmg = r.damage, run = r.run, str = r.stretch;
+    if (crowd != null && crowd >= 1.5) return {k:'bad', t:'Crowd is here',
+      w:'Trading is ' + crowd.toFixed(2) + '× its own normal volume. The attention has already '
+        + 'arrived — which is the late half of the cycle this page exists to point out.'};
+    if (run != null && run >= 1.0) return {k:'warn', t:'Move mostly done',
+      w:'Already up ' + (run*100).toFixed(0) + '% from its low. Whatever the recovery was, most '
+        + 'of it has happened; you are not early here.'};
+    if (dmg != null && dmg >= -0.08) return {k:'neu', t:'Back at highs',
+      w:'Trading within ' + Math.abs(dmg*100).toFixed(0) + '% of its 12-month high. Nothing is '
+        + 'broken about this one — it is simply not a wreck.'};
+    if (crowd != null && crowd <= 0.9 && dmg != null && dmg <= -0.3) return {k:'ok', t:'Wrecked, unwatched',
+      w:'Down ' + Math.abs(dmg*100).toFixed(0) + '% from its high on ' + crowd.toFixed(2) + '× normal '
+        + 'volume — damaged, and the crowd is not here yet. The earliest half of the cycle, which '
+        + 'is a place to start research, not a signal to buy.'};
+    if (str != null && str >= 0.30) return {k:'warn', t:'Extended',
+      w:'Trading ' + (str*100).toFixed(0) + '% above its own 200-day average price — stretched '
+        + 'against its own trend.'};
+    if (dmg != null && dmg <= -0.3) return {k:'neu', t:'Still damaged',
+      w:'Down ' + Math.abs(dmg*100).toFixed(0) + '% from its 12-month high, with volume around '
+        + 'normal. The damage is real and nothing has changed about it recently.'};
+    return {k:'neu', t:'Unremarkable',
+      w:'Nothing extreme in this row — not wrecked, not crowded, not stretched.'};
+  }
+
   /* Plain-English for every column whose name is jargon. Headings like CLOCK
      and VS 200D meant nothing on their own — the formula was buried in the
      small print under the table, which is not where anyone looks. Hovering a
@@ -26030,6 +26063,8 @@ function scResultHTML(d){
       + 'its normal day; 2.00× is twice as many shares changing hands as usual.',
     'vs 200d': 'How far the price sits above or below its own average price of the last 200 days.',
     'Price': 'Latest close.',
+    'Reading': 'What this row means for someone holding the share, taken from its own '
+      + 'numbers — how damaged it is, how busy, how far it has already run.',
     'When': 'When the band changed.',
     'Turned': 'When the turn happened.',
     'Since': 'How the price has moved since the turn.',
@@ -26148,7 +26183,11 @@ function scResultHTML(d){
         + '<td>' + sg(r.damage) + '</td>'
         + '<td>' + sg(r.run) + '</td>'
         + '<td>' + (r.crowd==null?'—':r.crowd.toFixed(2)+'×') + '</td>'
-        + '<td>$' + (r.px==null?'—':r.px.toFixed(2)) + '</td></tr>';
+        + '<td>$' + (r.px==null?'—':r.px.toFixed(2)) + '</td>'
+        + (function(){ var d = ckReading(r);
+            return '<td class="ck-rd-c"><span class="ck-rd ck-rd-' + d.k + '" title="'
+              + esc(d.w) + '">' + esc(d.t) + '</span></td>'; })()
+        + '</tr>';
     }).join('');
     return tbl(head, ['Ticker',{t:'Moved',left:true},'When','Off 12m high','Off the low',
                       'Volume vs norm','Price'], body);
@@ -26188,11 +26227,15 @@ function scResultHTML(d){
         + '<td>' + sg(r.run) + '</td>'
         + '<td>' + (r.crowd==null?'—':r.crowd.toFixed(2)+'×') + '</td>'
         + '<td>' + sg(r.stretch) + '</td>'
-        + '<td>$' + (r.px==null?'—':r.px.toFixed(2)) + '</td></tr>';
+        + '<td>$' + (r.px==null?'—':r.px.toFixed(2)) + '</td>'
+        + (function(){ var d = ckReading(r);
+            return '<td class="ck-rd-c"><span class="ck-rd ck-rd-' + d.k + '" title="'
+              + esc(d.w) + '">' + esc(d.t) + '</span></td>'; })()
+        + '</tr>';
     }).join('');
     return '<div class="ck-bands">' + cards + '</div>'
       + tbl(head + CLOCK_LEGEND, ['Ticker','Clock','In band','Off 12m high','Off the low',
-                   'Volume vs norm','vs 200d','Price'], body);
+                   'Volume vs norm','vs 200d','Price','Reading'], body);
   }
 
   /* 5. SEARCH — the panel's own ticker filter. It reads every name rather than
@@ -26227,10 +26270,14 @@ function scResultHTML(d){
         + '<td>' + sg(r.run) + '</td>'
         + '<td>' + (r.crowd==null?'—':r.crowd.toFixed(2)+'×') + '</td>'
         + '<td>' + sg(r.stretch) + '</td>'
-        + '<td>$' + (r.px==null?'—':r.px.toFixed(2)) + '</td></tr>';
+        + '<td>$' + (r.px==null?'—':r.px.toFixed(2)) + '</td>'
+        + (function(){ var d = ckReading(r);
+            return '<td class="ck-rd-c"><span class="ck-rd ck-rd-' + d.k + '" title="'
+              + esc(d.w) + '">' + esc(d.t) + '</span></td>'; })()
+        + '</tr>';
     }).join('');
     return tbl(head + CLOCK_LEGEND, ['Ticker',{t:'Band',left:true},'Clock','Off 12m high',
-                      'Off the low','Volume vs norm','vs 200d','Price'], body);
+                      'Off the low','Volume vs norm','vs 200d','Price','Reading'], body);
   }
 
   var VIEWS = {damage:viewDamage, turns:viewTurns, moves:viewMoves, bands:viewBands};
@@ -26396,7 +26443,7 @@ function scResultHTML(d){
     if (g != null && g <= -1) return {k:'ok', t:'Buying back',
       w:'Share count FELL ' + Math.abs(g).toFixed(1) + '%. The company bought its own shares '
         + 'back, so the same holding owns slightly more of it than a year ago.'};
-    if (g != null && raises >= 3) return {k:'ok', t:'Debt, not shares',
+    if (g != null && raises >= 3) return {k:'ok', t:'Borrowing',
       w:'Filed ' + raises + ' times in two years, yet the share count barely moved — so that '
         + 'paperwork was almost certainly borrowing, not share sales. A busy count here is '
         + 'not dilution.'};
@@ -26407,7 +26454,7 @@ function scResultHTML(d){
       w:'Raised ' + raises + ' time' + (raises === 1 ? '' : 's') + ' in two years, but we have '
         + 'not looked up its share count — so we cannot yet say whether that was shares or '
         + 'borrowing. Open the name for its full filing history.'};
-    if (shelves >= 1) return {k:'neu', t:'Armed, unused',
+    if (shelves >= 1) return {k:'neu', t:'Primed',
       w:'Has standing permission to sell shares but has not used it. Something to watch after '
         + 'a strong run — not something that has happened.'};
     return {k:'ok', t:'Quiet',
@@ -26437,18 +26484,10 @@ function scResultHTML(d){
     + '<dt>Why now</dt><dd>Selling shares is easiest when the price is high and buyers are '
       + 'keen — so a good run in the share price is exactly when it tends to happen.</dd>'
     + '</dl>'
-    + '<div class="gd-key"><b>The Reading column, in one line each.</b> Hover any badge in the '
-      + 'table for the numbers behind it.'
-      + '<div class="gd-key-g">'
-      + '<span><i class="gd-rd gd-rd-bad">Real dilution</i>Share count up 10%+ in a year. Your slice is meaningfully smaller.</span>'
-      + '<span><i class="gd-rd gd-rd-warn">Diluting</i>Up 5–10%. Real, not extreme — ask what the money bought.</span>'
-      + '<span><i class="gd-rd gd-rd-neu">Mild</i>Up 2–5%. Usually staff share awards, not a raise.</span>'
-      + '<span><i class="gd-rd gd-rd-ok">Debt, not shares</i>Filed often, share count flat — it was borrowing.</span>'
-      + '<span><i class="gd-rd gd-rd-ok">Buying back</i>Share count fell. Your slice grew.</span>'
-      + '<span><i class="gd-rd gd-rd-neu">Armed, unused</i>Can sell shares at will but has not. Watch, do not worry.</span>'
-      + '<span><i class="gd-rd gd-rd-chk">Unchecked</i>It raised, but we have not looked up the share count yet.</span>'
-      + '<span><i class="gd-rd gd-rd-ok">Quiet</i>No sales and no standing permission on file.</span>'
-      + '</div></div></div>';
+    // An eight-row key restating badges that already explain themselves on
+    // hover ran longer than the glossary above it. One line does the job.
+    + '<div class="gd-key">Every row ends in a <b>Reading</b> — what its numbers mean for '
+      + 'someone who owns the stock. Hover any badge for the figures behind it.</div></div>';
 
   /* Ticker/sector match for the panel's own search box. `q` is already
      upper-cased and trimmed by the input handler. */
