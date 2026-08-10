@@ -794,6 +794,19 @@ body.v2 #sectors-grid .smh-name{font-weight:800;font-size:12.5px;color:#0f172a!i
 
 #panel-scans .sc-empty,#panel-scans .sc-load{padding:38px 12px;text-align:center;color:#7A8899;font-size:13.5px;font-weight:400}
 #panel-scans .sc-note{font-size:12.5px;font-weight:400;line-height:1.6;color:#94a3b8;margin:18px 0 0}
+/* "Goes deeper in ‹panel›" — shown on the scans that restate a whole panel. */
+#panel-scans .sc-deeper{display:flex;align-items:center;gap:9px;width:100%;margin:12px 0 0;
+  padding:9px 13px;border:1px solid #E4E7EC;border-radius:11px;background:#FBFAF8;
+  font:inherit;text-align:left;cursor:pointer;transition:border-color .15s,background .15s}
+#panel-scans .sc-deeper:hover{border-color:#C9CFEA;background:#F7F8FE}
+#panel-scans .sc-deeper-k{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;
+  letter-spacing:.09em;text-transform:uppercase;color:#9AA6B2;flex:none}
+#panel-scans .sc-deeper-n{font-size:13px;font-weight:600;color:#0A2F46;flex:none}
+#panel-scans .sc-deeper-w{font-size:12.5px;color:#5D6C7B;min-width:0;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+#panel-scans .sc-deeper-a{margin-left:auto;color:#2970ff;font-size:14px;flex:none}
+@media(max-width:640px){#panel-scans .sc-deeper{flex-wrap:wrap;gap:4px 8px}
+  #panel-scans .sc-deeper-w{white-space:normal;flex-basis:100%}}
 @media(max-width:640px){ #panel-scans .sc-cats{grid-template-columns:1fr}
   #panel-scans .sc-title,#panel-heroes .sc-title,#panel-theses .sc-title{font-size:23px} }
 
@@ -7119,7 +7132,19 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 #panel-hot .ov-row{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:stretch}
 #panel-hot .ov-row>*{min-width:0;display:flex;flex-direction:column}
 #panel-hot .ov-row>*>.ts-card{flex:1}
-#panel-hot .ov-row.sectors{grid-template-columns:1.4fr 1fr}
+/* Sector lens is one full-width card since Sector Momentum was folded into it. */
+#panel-hot .ov-row.sectors{grid-template-columns:1fr}
+#panel-hot .ov-row.sectors .ts-card-head{display:flex;align-items:flex-start;gap:12px}
+#panel-hot .sm-wins{margin-left:auto;display:inline-flex;flex:none}
+#panel-hot .sm-win{font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:700;
+  letter-spacing:.04em;padding:5px 11px;border:1px solid #E4E7EC;background:#fff;color:#5D6C7B;
+  cursor:pointer;line-height:1.4}
+#panel-hot .sm-win:first-child{border-radius:9px 0 0 9px}
+#panel-hot .sm-win:last-child{border-radius:0 9px 9px 0;margin-left:-1px}
+#panel-hot .sm-win:hover{color:#2970ff;border-color:#C9CFEA}
+#panel-hot .sm-win.on{background:#0A2F46;border-color:#0A2F46;color:#fff;position:relative;z-index:1}
+/* The hottest/weakest narrative the merged-away card carried. */
+#panel-hot .sm-standout{border-top:1px solid #EDEAE6;margin-top:10px;padding-top:4px}
 #panel-hot .ov-row.triple{grid-template-columns:repeat(3,1fr)}
 @media(max-width:1100px){#panel-hot .ov-row.triple{grid-template-columns:1fr 1fr}}
 @media(max-width:880px){#panel-hot .ov-row.sectors,
@@ -8553,7 +8578,9 @@ document.addEventListener('keydown', function(e){
     <!-- BAND 1: sector lens -->
     <div>
       <div class="sec-h"><span class="tag">Sector lens</span><h2>Where the market's rotating</h2></div>
-      <div class="ov-row sectors" style="margin-top:12px"><div id="sectorsSlot"></div><div id="sectorMomSlot"></div></div>
+      <!-- One card. Sector Momentum used to sit beside this and rank the same
+           sub-sectors over a month; it is the card's own window toggle now. -->
+      <div class="ov-row sectors" style="margin-top:12px"><div id="sectorsSlot"></div></div>
     </div>
 
     <!-- BAND 2: today's activity -->
@@ -22836,7 +22863,31 @@ function scHeaderHTML(d){
   return '<div class="sc-panel-h"><div class="sc-res-h"><span class="sc-res-n">'+escHTML(d.name||'')+'</span>'+
          (d.matched!=null?('<span class="sc-res-c">'+d.matched+' match'+(d.matched===1?'':'es')+
            (d.shown<d.matched?(' · showing '+d.shown):'')+'</span>'):'')+'</div>'+
-         '<p class="sc-res-b">'+escHTML(d.blurb||'')+'</p>'+scCritHTML(d.note)+'</div>';
+         '<p class="sc-res-b">'+escHTML(d.blurb||'')+'</p>'+scCritHTML(d.note)+scDeeperHTML(d.deeper)+'</div>';
+}
+
+/* Eleven scans answer a question a whole panel already owns in more depth —
+   "Just reported" against Company Events, the sector scans against On the
+   Radar, the breadth scans against Hype Check. Rather than delete a working
+   second door, point through it: the scan runs as before and says where the
+   fuller version lives. See DEEPER in scans.py for the mapping. */
+/* v2Show() alone does not warm Hype Check or The Fine Print — their sidebar
+   items call clockInit()/guardInit() alongside it, and a deep link that skips
+   that lands on a permanently "Loading…" panel. Company Events and On the
+   Radar are warmed by showTab() itself. */
+function v2GoPanel(id){
+  if(typeof v2Show==='function') v2Show(id,null);
+  if(id==='clock'&&typeof clockInit==='function') clockInit();
+  if(id==='guard'&&typeof guardInit==='function') guardInit();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function scDeeperHTML(dp){
+  if(!dp||!dp.panel||!dp.name) return '';
+  return '<button type="button" class="sc-deeper" onclick="v2GoPanel(\''+escHTML(dp.panel)+'\')">'+
+    '<span class="sc-deeper-k">Goes deeper in</span>'+
+    '<span class="sc-deeper-n">'+escHTML(dp.name)+'</span>'+
+    (dp.why?'<span class="sc-deeper-w">'+escHTML(dp.why)+'</span>':'')+
+    '<span class="sc-deeper-a">&rarr;</span></button>';
 }
 
 /* "Our lines: gross margin ≥ 40%, revenue growth ≥ 15%, positive free cash
@@ -25405,9 +25456,13 @@ function scResultHTML(d){
     const card=document.querySelector('#sectorsSlot .ts-card'); if(card) window._smPageTo(card,0);
   };
   /* ── sectors ── */
+  /* Sub-sector display name. Shared, because the ranked table and the standout
+     strip now live in one card and must spell a sector identically. */
+  const _SEC_ACR={Ai:'AI',Gpu:'GPU',Saas:'SaaS',Etf:'ETF',Iot:'IoT',Ev:'EV'};
+  const _secTitle=s=>String(s||'').toLowerCase().replace(/\b\w/g,c=>c.toUpperCase())
+    .replace(/\b(Ai|Gpu|Saas|Etf|Iot|Ev)\b/g,m=>_SEC_ACR[m]);
   function renderSectors(tickers){
-    const ACR={Ai:'AI',Gpu:'GPU',Saas:'SaaS',Etf:'ETF',Iot:'IoT',Ev:'EV'};
-    const titleCase=s=>s.toLowerCase().replace(/\b\w/g,c=>c.toUpperCase()).replace(/\b(Ai|Gpu|Saas|Etf|Iot|Ev)\b/g,m=>ACR[m]);
+    const titleCase=_secTitle;
     const ss=t=>parseFloat(t.smart_score??t.pop_score??0);
     const groups={};
     tickers.forEach(t=>{
@@ -25418,12 +25473,23 @@ function scResultHTML(d){
     });
     const sectors=Object.entries(groups)
       .map(([k,v])=>({name:k,score:v.n?Math.round(v.scoreSum/v.n):0,mom:v.items.length?(v.chg/v.items.length):0,count:v.items.length,
+        // 1-month average, so the Move column can answer the same question over
+        // the longer window the old Sector Momentum card used.
+        mom1m:(function(){ const ms=v.items.map(t=>parseFloat(t.momentum_1m)).filter(x=>!isNaN(x));
+          return ms.length?ms.reduce((a,b)=>a+b,0)/ms.length:null; })(),
+        items:v.items,
         tickers:v.items.map(t=>t.ticker).filter(Boolean),
         leaders:[...v.items].sort((a,b)=>ss(b)-ss(a)).slice(0,2)}))
       .filter(s=>s.count>=2)
       .sort((a,b)=>b.score-a.score);
     const slot=document.getElementById('sectorsSlot'); if(!slot) return;
     if(!sectors.length){ slot.innerHTML=''; return; }
+    // The window this card is showing. Sector Momentum used to be a SECOND card
+    // beside this one, ranking the same sub-sectors by the same kind of number
+    // over a month instead of a day — two boxes that differed only by lookback.
+    // It is a column toggle now, and the standout narrative it carried appears
+    // as the highlight strip below.
+    const win=window._smWindow||'1d';
     const heatingName=sectors[0]&&sectors[0].score>=75?sectors[0].name:null;
     const scoreColor=sc=>sc>=70?'#0040c1':sc>=55?'#2970ff':'#94a3b8';
     const heatColor=sc=>sc>=68?'#16a34a':sc>=60?'#84cc16':sc>=52?'#e0a000':'#94a3b8';
@@ -25434,7 +25500,9 @@ function scResultHTML(d){
       const tag=s.name===heatingName?'🔥':(s.score<55?'🥶':'');
       // Heat dot (or 🔥/🥶 for the standouts) replaces the old empty grey pill.
       const mark=tag?'<span class="sm-emoji">'+tag+'</span>':'<span class="sm-dot" style="background:'+heatColor(s.score)+'"></span>';
-      const momCls=s.mom>=0?'up':'dn', momStr=(s.mom>=0?'+':'')+s.mom.toFixed(1)+'%';
+      const mv=(win==='1m')?s.mom1m:s.mom;
+      const momCls=mv==null?'':(mv>=0?'up':'dn');
+      const momStr=mv==null?'—':((mv>=0?'+':'')+mv.toFixed(1)+'%');
       const lead=s.leaders[0];
       // Row opens the whole sub-sector basket (all names + breadth) in the
       // Universe panel — that's the "theme" view, distinct from Prime
@@ -25455,9 +25523,51 @@ function scResultHTML(d){
           '<span class="sm-more" onclick="var c=this.closest(\'.ts-card\');window._smPageTo(c,(+c.dataset.smPage||0)+1)">+ '+(total-PAGE)+' more sub-sectors</span>'+
         '</div>'
       : '';
-    slot.innerHTML='<div class="ts-card" data-sm-page="0"><div class="ts-card-head"><div class="ts-card-title">🗺 Sector Map</div><div class="ts-card-sub">Strongest sub-sectors right now · tap a row for the basket, the ticker for its leader</div></div>'+
-      '<div class="sm-header"><span></span><span>Sector</span><span style="text-align:right">Score</span><span style="text-align:right">Today</span><span style="text-align:right">Top</span></div>'+
+    // Move-window toggle. Replaces a whole second card.
+    const wBtn=(k,lbl)=>'<button class="sm-win'+(win===k?' on':'')+'" data-win="'+k+'">'+lbl+'</button>';
+    const moveCol=(win==='1m')?'1 month':(typeof _marketIsOpen==='function'&&!_marketIsOpen()?'Last close':'Today');
+    slot.innerHTML='<div class="ts-card" data-sm-page="0"><div class="ts-card-head">'+
+        '<div><div class="ts-card-title">🗺 Sector lens</div>'+
+        '<div class="ts-card-sub">Where the market is rotating · tap a row for the basket, the ticker for its leader</div></div>'+
+        '<div class="sm-wins">'+wBtn('1d','Today')+wBtn('1m','1 month')+'</div>'+
+      '</div>'+
+      standoutHTML()+
+      '<div class="sm-header"><span></span><span>Sector</span><span style="text-align:right">Score</span><span style="text-align:right">'+moveCol+'</span><span style="text-align:right">Top</span></div>'+
       rows+footer+'</div>';
+    slot.querySelectorAll('.sm-win').forEach(b=>b.addEventListener('click',()=>{
+      window._smWindow=b.getAttribute('data-win'); renderSectors(tickers);
+    }));
+    slot.querySelectorAll('.earn-tab').forEach(b=>b.addEventListener('click',()=>{
+      slot.querySelectorAll('.earn-tab').forEach(x=>x.classList.toggle('active',x===b));
+      slot.querySelectorAll('.earn-panel').forEach(p=>p.style.display=(p.getAttribute('data-panel')===b.getAttribute('data-tab'))?'':'none');
+    }));
+
+    /* The one thing the old Sector Momentum card did that a column cannot:
+       name the single strongest and weakest sub-sector over the month and say
+       WHY, with its leading names. Kept, as a strip above the table. */
+    function standoutHTML(){
+      const g=sectorMomGroups(tickers);
+      let best=null,worst=null;
+      Object.entries(g).forEach(([k,v])=>{ if(v.n<3)return; const avg=v.sum/v.n;
+        if(avg>=8&&(best===null||avg>best.avg)) best={name:k,avg,items:v.items};
+        if(avg<=-8&&(worst===null||avg<worst.avg)) worst={name:k,avg,items:v.items}; });
+      if(!best&&!worst) return '';
+      const body=(grp,hot)=>{
+        if(!grp) return '<div class="bn-empty">'+(hot?'No sub-sector averaging +8% over the past month.':'No sub-sector in a notable drawdown right now.')+'</div>';
+        const arr=[...grp.items].map(t=>({t,m:parseFloat(t.momentum_1m)||0})).sort((a,b)=>hot?b.m-a.m:a.m-b.m);
+        const ctx=sectorContext(grp.items,hot)||{reason:'',facts:[]};
+        return '<div class="sm-mom-head"><div class="sm-mom-name">'+escHTML(grp.name)+'</div>'+
+          '<div class="sm-mom-avg '+(hot?'up':'dn')+'">'+(grp.avg>=0?'+':'')+grp.avg.toFixed(1)+'% · 1mo</div></div>'+
+          '<div class="bn-reason">'+escHTML(ctx.reason)+' <em>Observational — not advice.</em></div>'+
+          (ctx.facts.length?'<div class="bn-facts">'+ctx.facts.map(f=>'<span class="bn-fact">'+escHTML(f)+'</span>').join('')+'</div>':'')+
+          '<div class="bn-chips">'+arr.slice(0,6).map(({t,m})=>chip(t,m)).join('')+'</div>';
+      };
+      return '<div class="sm-standout">'+
+        '<div class="earn-tabs"><button class="earn-tab active" data-tab="hot"><span class="ar-up">▲</span> Heating up</button>'+
+        '<button class="earn-tab" data-tab="dd"><span class="ar-dn">▼</span> Under pressure</button></div>'+
+        '<div class="earn-panel" data-panel="hot">'+body(best,true)+'</div>'+
+        '<div class="earn-panel" data-panel="dd" style="display:none">'+body(worst,false)+'</div></div>';
+    }
   }
 
   function renderMovers(tickers){
@@ -25524,7 +25634,11 @@ function scResultHTML(d){
   }
   function sectorMomGroups(tickers){
     const groups={};
-    tickers.forEach(t=>{ const s=(t.sub_sector||t.sector||'').trim(); if(!s)return; const m=parseFloat(t.momentum_1m); if(isNaN(m))return;
+    // Title-cased to match the table above it. These two used to be separate
+    // cards, so "ai infrastructure" here against "AI Infrastructure" there went
+    // unnoticed; inside one card the same sector was visibly spelled twice.
+    tickers.forEach(t=>{ const raw=(t.sub_sector||t.sector||'').trim(); if(!raw)return;
+      const s=_secTitle(raw); const m=parseFloat(t.momentum_1m); if(isNaN(m))return;
       if(!groups[s])groups[s]={sum:0,n:0,items:[]}; groups[s].sum+=m; groups[s].n++; groups[s].items.push(t); });
     return groups;
   }
@@ -25532,32 +25646,11 @@ function scResultHTML(d){
     return '<span class="bn-chip" onclick="event.stopPropagation();tsOpenDrawer(\''+escHTML(t.ticker)+'\')">'+logoHTML(t.ticker,'sm')+
       '<span>'+escHTML(t.ticker)+'</span><span class="pct">'+(m>=0?'+':'')+m.toFixed(1)+'%</span></span>';
   }
-  function renderSectorMomentum(tickers){
-    const groups=sectorMomGroups(tickers);
-    let best=null,worst=null;
-    Object.entries(groups).forEach(([k,v])=>{ if(v.n<3)return; const avg=v.sum/v.n;
-      if(avg>=8&&(best===null||avg>best.avg)) best={name:k,avg,items:v.items};
-      if(avg<=-8&&(worst===null||avg<worst.avg)) worst={name:k,avg,items:v.items}; });
-    const panel=(grp,hot)=>{
-      if(!grp) return '<div class="bn-empty">'+(hot?'No sub-sector averaging +8% over the past month.':'No sub-sector in a notable drawdown right now.')+'</div>';
-      const arr=[...grp.items].map(t=>({t,m:parseFloat(t.momentum_1m)||0})).sort((a,b)=>hot?b.m-a.m:a.m-b.m);
-      const ctx=sectorContext(grp.items,hot)||{reason:'',facts:[]};
-      return '<div class="sm-mom-head"><div class="sm-mom-name">'+escHTML(grp.name)+'</div>'+
-        '<div class="sm-mom-avg '+(hot?'up':'dn')+'">'+(grp.avg>=0?'+':'')+grp.avg.toFixed(1)+'% · 1mo</div></div>'+
-        '<div class="bn-reason">'+escHTML(ctx.reason)+' <em>Observational — not advice.</em></div>'+
-        (ctx.facts.length?'<div class="bn-facts">'+ctx.facts.map(f=>'<span class="bn-fact">'+escHTML(f)+'</span>').join('')+'</div>':'')+
-        '<div class="bn-chips">'+arr.slice(0,6).map(({t,m})=>chip(t,m)).join('')+'</div>';
-    };
-    const el=document.getElementById('sectorMomSlot'); if(!el) return;
-    el.innerHTML='<div class="ts-card"><div class="ts-card-head"><div class="ts-card-title">🔥 Sector Momentum</div><div class="ts-card-sub">Hottest &amp; weakest sub-sectors over the past month</div></div>'+
-      '<div class="earn-tabs"><button class="earn-tab active" data-tab="hot"><span class="ar-up">▲</span> Heating up</button><button class="earn-tab" data-tab="dd"><span class="ar-dn">▼</span> Under pressure</button></div>'+
-      '<div class="earn-panel" data-panel="hot">'+panel(best,true)+'</div>'+
-      '<div class="earn-panel" data-panel="dd" style="display:none">'+panel(worst,false)+'</div></div>';
-    el.querySelectorAll('.earn-tab').forEach(b=>b.addEventListener('click',()=>{
-      el.querySelectorAll('.earn-tab').forEach(x=>x.classList.toggle('active',x===b));
-      el.querySelectorAll('.earn-panel').forEach(p=>p.style.display=(p.getAttribute('data-panel')===b.getAttribute('data-tab'))?'':'none');
-    }));
-  }
+  /* renderSectorMomentum lived here. It ranked the same sub-sectors by the same
+     kind of number as the Sector Map beside it, over a month instead of a day —
+     one screen, two cards, one question. Merged into renderSectors: the window
+     is a column toggle, the hottest/weakest narrative is the standout strip.
+     sectorMomGroups / sectorContext / chip below are still used by it. */
 
   /* ── earnings + news ── */
   function recentEarningsRows(tickers){
@@ -25693,7 +25786,6 @@ function scResultHTML(d){
     const filtered=filterByProfile(ALL);
     renderPicks(filtered && filtered.length ? filtered : ALL, data);
     renderSectors(filtered);
-    renderSectorMomentum(filtered);
     // Biggest Movers is a market-wide stat ("Largest moves across the universe"),
     // so it must use the FULL universe — not the risk-profile subset — to match
     // the Market Analysis Movers tab (which reads the same full _universe_data).

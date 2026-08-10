@@ -565,11 +565,48 @@ CATEGORIES = [
 ]
 
 
+# ── scans that restate a dedicated panel ────────────────────────────────
+# These eleven answer a question a whole panel already owns, and own it in
+# more depth: Company Events carries the briefs, transcripts and the full
+# corporate-actions calendar; On the Radar ranks every sub-sector; Hype Check
+# measures distance from the 12-month high across the universe. The scan is a
+# legitimate second door for someone who never opens those panels, so it stays
+# — but it says where the fuller version lives instead of quietly being a
+# thinner copy. `panel` is the id v2Show() takes.
+DEEPER: dict[str, dict] = {
+    "just-reported":    {"panel": "events", "name": "Company Events",
+                         "why": "the full week of results, each with an earnings brief"},
+    "reporting-soon":   {"panel": "events", "name": "Company Events",
+                         "why": "the whole reporting calendar, not just the next fortnight"},
+    "fresh-calls":      {"panel": "events", "name": "Company Events",
+                         "why": "the actual call summaries, not just who held one"},
+    "beat-but-fell":    {"panel": "events", "name": "Company Events",
+                         "why": "what management said on the call that followed"},
+    "guidance-risk":    {"panel": "events", "name": "Company Events",
+                         "why": "the earnings brief behind each cut"},
+    "upcoming-actions": {"panel": "events", "name": "Company Events",
+                         "why": "the full corporate-actions calendar"},
+    "dividend-actions": {"panel": "events", "name": "Company Events",
+                         "why": "every dividend and split we track, by date"},
+    "split-actions":    {"panel": "events", "name": "Company Events",
+                         "why": "every corporate action we track, by date"},
+    "sector-leaders":   {"panel": "hot", "name": "On the Radar",
+                         "why": "every sub-sector ranked, over a day or a month"},
+    "sector-laggards":  {"panel": "hot", "name": "On the Radar",
+                         "why": "every sub-sector ranked, with what is under pressure and why"},
+    "near-highs":       {"panel": "clock", "name": "Hype Check",
+                         "why": "the same distance-from-high reading across the whole universe"},
+    "near-lows":        {"panel": "clock", "name": "Hype Check",
+                         "why": "where the damage is, sector by sector"},
+}
+
+
 def catalogue() -> list[dict]:
     """Categories with their scans (no rows) — powers the menu."""
     out = []
     for c in CATEGORIES:
-        items = [{"id": s["id"], "name": s["name"], "blurb": s["blurb"], "note": s.get("note", "")}
+        items = [{"id": s["id"], "name": s["name"], "blurb": s["blurb"],
+                  "note": s.get("note", ""), "deeper": DEEPER.get(s["id"])}
                  for s in SCANS if s["cat"] == c["id"]]
         out.append({**c, "scans": items, "count": len(items)})
     return out
@@ -638,4 +675,5 @@ def run(scan_id: str, universe: list, limit: int = 50) -> dict:
         out.append(cells)
     return {"available": True, "id": s["id"], "cat": s["cat"], "name": s["name"],
             "blurb": s["blurb"], "note": s.get("note", ""), "cols": s["cols"],
+            "deeper": DEEPER.get(s["id"]),
             "matched": len(rows), "shown": len(out), "rows": out}
