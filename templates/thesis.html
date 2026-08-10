@@ -230,7 +230,12 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
   border:1px solid rgba(74,91,196,.20);border-radius:999px;padding:6px 13px}
 h1.title{font-size:clamp(34px,5.6vw,54px);line-height:1.03;letter-spacing:-.022em;
   margin:18px 0 14px;max-width:22ch}
-.standfirst{font-size:19px;line-height:1.58;color:#3F4E5E;max-width:62ch;margin:0 0 4px;font-weight:400}
+/* Runs to the same edge as the cards below it. Held at 62ch it broke over four
+   short lines against full-width panels and read as a leftover column. */
+.standfirst{font-size:19px;line-height:1.58;color:#3F4E5E;max-width:none;margin:0 0 4px;font-weight:400}
+.cc-line{margin:22px 0 0;font-size:12px}
+.cc-line a{color:#8A97A4;text-decoration:none;border-bottom:1px solid rgba(138,151,164,.35)}
+.cc-line a:hover{color:#3F4E5E;border-bottom-color:#3F4E5E}
 /* A published piece says when it was published and what it is. */
 .mast-meta{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:20px 0 0;
   padding:14px 0 0;border-top:1px solid var(--line);
@@ -484,6 +489,14 @@ h1.title{font-size:clamp(34px,5.6vw,54px);line-height:1.03;letter-spacing:-.022e
       </div>
     </div>
   </footer>
+
+  <!-- Consent must stay reachable. consent.js suppresses its floating "Cookie
+       settings" pill on any page that offers a [data-cc-open] trigger, so this
+       replaces the pill rather than removing the control. It sits OUTSIDE
+       #foot, which is display:none until the map data loads — inside it, a
+       failed fetch would leave the page with no way to change consent. -->
+  <p class="cc-line"><a href="#" data-cc-open
+     onclick="event.preventDefault();if(window.tmConsent)tmConsent.openSettings()">Cookie settings</a></p>
 </main>
 
 <script>
