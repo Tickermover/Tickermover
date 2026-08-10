@@ -517,6 +517,22 @@ window.MarketReport = (function () {
   }
 
   // ── Verdict ─────────────────────────────────────────────────────────────
+  /* Where the WHY came from. Our own feeds say what the tape did; the reason
+     is the one thing no feed we hold carries, so the narrative is grounded in
+     the day's reporting. Anything sourced that way has to be checkable — an
+     unciteable claim about causation is just a guess in a confident voice. */
+  function srcLine(ai) {
+    const s = (ai && ai.sources) || [];
+    if (!s.length) return '';
+    const links = s.slice(0, 5).map(function (x, i) {
+      const host = (function () { try { return new URL(x.url).hostname.replace(/^www\./, ''); }
+                                  catch (e) { return x.url || ''; } })();
+      return `<a class="ma-src" href="${x.url}" target="_blank" rel="noopener nofollow"
+                 title="${(x.title || '').replace(/"/g, '&quot;')}">[W${i + 1}] ${host}</a>`;
+    }).join('');
+    return `<div class="ma-srcs"><span class="ma-srcs-k">Grounded in</span>${links}</div>`;
+  }
+
   function verdict(d) {
     const gap = d.gap_pct, t = d.technicals || {}, spy = find(d.indices, 'SPY'), vix = find(d.rates_fx, '^VIX');
     if (d.ai && d.ai.verdict && d.ai.verdict.headline) {
@@ -529,7 +545,10 @@ window.MarketReport = (function () {
         (v.what_changes_view ? `<div class="kv" style="margin-top:8px"><b>What would change our view:</b> ${v.what_changes_view}</div>` : '') +
         (keyLvl != null ? `<div class="kv" style="margin-top:8px"><b>Key level to watch:</b> SPY $${N(keyLvl, 2)} (20-day line).</div>` : '') +
         `<div class="ma-conf ${cfCls}">Confidence: ${v.confidence || 'Medium'}</div>` +
-        `<div class="kv" style="margin-top:12px;color:#64748b">AI-written from live data — context only, no buy or sell calls.</div>` +
+        srcLine(d.ai) +
+        `<div class="kv" style="margin-top:12px;color:#64748b">${(d.ai.sources||[]).length
+          ? 'AI-written from live data and today’s reporting — context only, no buy or sell calls.'
+          : 'AI-written from live data — context only, no buy or sell calls.'}</div>` +
       `</div>`;
     }
     // ── Deterministic fallback: a labelled read of the live signals (no AI). ──

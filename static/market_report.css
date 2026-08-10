@@ -212,3 +212,16 @@
 .ma-glass .ma-tab:not(.on){color:#465569!important}
 .ma-glass .ma-sec-h{color:#566576!important}
 @media(max-width:560px){ .ma-glass{padding:18px 14px 20px;border-radius:22px} }
+
+/* Citation strip under the AI verdict. The narrative explains WHY the tape
+   moved, and that reason comes from the open web rather than our own feeds —
+   so it has to be checkable. An unciteable claim about causation is a guess
+   in a confident voice. */
+.ma-srcs{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px;
+  padding-top:11px;border-top:1px solid #EDEAE6}
+.ma-srcs-k{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:9px;font-weight:700;
+  letter-spacing:.11em;text-transform:uppercase;color:#9AA6B2}
+.ma-src{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:10.5px;font-weight:600;
+  color:#14587D;text-decoration:none;background:#F4F7FB;border:1px solid #E1E9F2;
+  border-radius:100px;padding:3px 9px;white-space:nowrap}
+.ma-src:hover{background:#E8F0F9;border-color:#C9D9EA;color:#0A2F46}
