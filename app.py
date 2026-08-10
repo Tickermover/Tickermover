@@ -14036,7 +14036,7 @@ async def api_safeguards(ticker: str):
     if not sym or len(sym) > 8:
         raise HTTPException(status_code=400, detail="Bad ticker")
 
-    cache_key = f"safeguards:{sym}:v2"
+    cache_key = f"safeguards:{sym}:v3"
     cached = cache.get(cache_key)
     if cached is not None:
         return JSONResponse(cached)
@@ -14103,6 +14103,30 @@ async def api_safeguards(ticker: str):
         blocks["insiders"] = sg.insiders(ins, run90)
     except Exception as exc:
         logger.warning(f"safeguards {sym}: insiders failed: {exc}")
+
+    # Ownership: who holds it and whether the big positions are moving. 13F
+    # data via yfinance, >5% stake filings via EDGAR (already fetched above).
+    try:
+        def _own():
+            import yfinance as yf  # type: ignore
+            tk = yf.Ticker(sym)
+            mh = tk.major_holders
+            major = {}
+            if mh is not None and not mh.empty:
+                col = mh.columns[0]
+                major = {str(k): v for k, v in mh[col].items()}
+            ih = tk.institutional_holders
+            holders = ih.to_dict("records") if (ih is not None and not ih.empty) else []
+            for h in holders:                       # dates are Timestamps
+                if h.get("Date Reported") is not None:
+                    h["Date Reported"] = str(h["Date Reported"])[:10]
+            return major, holders
+
+        major, holders = await asyncio.to_thread(_own)
+        blocks["ownership"] = sg.ownership(major, holders,
+                                           (blocks.get("offerings") or {}).get("stakes"))
+    except Exception as exc:
+        logger.warning(f"safeguards {sym}: ownership failed: {exc}")
     try:
         blocks["position"] = sg.position(vol, worst)
     except Exception:

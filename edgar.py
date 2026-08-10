@@ -144,6 +144,42 @@ def _scan(text: str) -> dict:
     return out
 
 
+STAKE_FORMS = ("SC 13D", "SC 13G", "SCHEDULE 13D", "SCHEDULE 13G")
+
+
+def stakes(cik: str, today=None, limit: int = 6) -> list[dict]:
+    """Recent >5% stake disclosures.
+
+    A holder crossing 5% has to file within days. 13D means they intend to
+    influence the company — an activist; 13G means passive. Retail sees
+    neither until it turns up in a news story weeks later, if at all. The "/A"
+    suffix is an amendment to an existing stake, which is usually a size
+    change rather than a new holder, so it is labelled differently."""
+    from datetime import datetime, timezone
+    today = today or datetime.now(timezone.utc).date()
+    out = []
+    for r in _recent(cik):
+        form = (r.get("form") or "").upper()
+        d = r.get("filingDate") or ""
+        if not d or not form.startswith(STAKE_FORMS):
+            continue
+        try:
+            age = (today - datetime.strptime(d, "%Y-%m-%d").date()).days
+        except ValueError:
+            continue
+        if age > 365:
+            continue
+        amended = form.endswith("/A")
+        kind = "13D" if "13D" in form else "13G"
+        out.append({"form": form, "date": d, "days": age, "kind": kind,
+                    "amended": amended,
+                    "activist": kind == "13D" and not amended})
+        if len(out) >= limit * 3:
+            break
+    out.sort(key=lambda x: x["date"], reverse=True)
+    return out[:limit]
+
+
 def programmes(ticker: str, today=None) -> dict | None:
     """What this company has filed that dilutes, and whether an ATM is live.
 
@@ -180,7 +216,7 @@ def programmes(ticker: str, today=None) -> dict | None:
     raises.sort(key=lambda x: x["date"], reverse=True)
     if not raises:
         return {"cik": cik, "filings": [], "atm": None,
-                "offerings_24m": 0, "shelves_24m": 0,
+                "offerings_24m": 0, "shelves_24m": 0, "stakes": stakes(cik, today),
                 "convertible": False, "warrants": False}
 
     atm = None
@@ -200,6 +236,7 @@ def programmes(ticker: str, today=None) -> dict | None:
                    "url": _doc_url(cik, r["accession"], r["doc"])}
 
     return {"cik": cik, "filings": raises[:8], "atm": atm,
+            "stakes": stakes(cik, today),
             "offerings_24m": counts["424b5"], "shelves_24m": counts["shelf"],
             "convertible": conv, "warrants": warr,
             "last_raise": raises[0] if raises else None}

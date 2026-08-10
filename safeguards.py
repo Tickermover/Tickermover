@@ -11,6 +11,7 @@ module surfaces five of them.
     3. Dated events    lockup expiry, recent issuance quarters
     4. Insider selling what insiders filed, set against the share's own run
     5. Position size   what this share's own volatility does to a position
+    6. Ownership       who holds it, and whether they are adding or cutting
 
 EVIDENCE — read this before adding a number to any of these.
 Only (1) carries a validated base rate. 409 volatile US names, 8,352
@@ -163,12 +164,14 @@ def offerings(edg: dict | None) -> dict | None:
         return None
     atm = edg.get("atm")
     n = int(edg.get("offerings_24m") or 0)
-    if not atm and not n and not edg.get("convertible") and not edg.get("warrants"):
+    if (not atm and not n and not edg.get("convertible")
+            and not edg.get("warrants") and not edg.get("stakes")):
         return None
     return {
         "atm": atm, "offerings_24m": n, "shelves_24m": int(edg.get("shelves_24m") or 0),
         "convertible": bool(edg.get("convertible")), "warrants": bool(edg.get("warrants")),
         "filings": (edg.get("filings") or [])[:5],
+        "stakes": edg.get("stakes") or [],
         "last_raise": edg.get("last_raise"),
         "flag": bool(atm) or n >= 3,
     }
@@ -238,6 +241,17 @@ def dated_events(profile: dict | None, dil: dict | None, off: dict | None = None
         items.append({"kind": f"Filed {form}", "date": f.get("date") or "",
                       "days": f.get("days"), "note": base,
                       "flag": form.startswith("424B")})
+    for k in ((off or {}).get("stakes") or [])[:3]:
+        items.append({
+            "kind": ("Activist stake (13D)" if k.get("activist")
+                     else f'>5% holder ({k.get("kind")})'),
+            "date": k.get("date") or "", "days": k.get("days"),
+            "note": ("A holder crossing 5% filed a Schedule 13D — they intend to "
+                     "influence the company." if k.get("activist")
+                     else "A >5% holder filed" + (" an amendment to their stake."
+                                                  if k.get("amended") else " a new stake.")),
+            "flag": bool(k.get("activist")),
+        })
     if (off or {}).get("convertible"):
         items.append({"kind": "Convertible notes", "date": "in recent filings", "days": None,
                       "note": "Convertible notes are referenced in a recent prospectus. "
@@ -302,6 +316,50 @@ def summarise(blocks: dict) -> dict:
     flags = [k for k, v in blocks.items() if isinstance(v, dict) and v.get("flag")]
     return {"flags": flags, "n_flags": len(flags),
             "checked": [k for k, v in blocks.items() if v]}
+
+
+# ── 6. OWNERSHIP ─────────────────────────────────────────────────────────────
+def ownership(major: dict | None, holders: list | None,
+              stakes: list | None = None) -> dict | None:
+    """Who actually owns the company, and whether the big holders are adding or
+    cutting.
+
+    Two things here that a private investor almost never sees. First, how much
+    management owns: a board with no stake is not wrong, but it is worth
+    knowing. Second, the direction of the big positions — 13F filings are
+    public and quarterly, and a majority of the top holders cutting is a fact
+    about supply, not a prediction.
+
+    Reported as fact, with no base rate: 13F data is a quarter stale by the
+    time it is filed and there is no historical panel here to measure it
+    against. Do not attach a percentage to it."""
+    major = major or {}
+    ins = _f(major.get("insidersPercentHeld"))
+    inst = _f(major.get("institutionsPercentHeld"))
+    cnt = _f(major.get("institutionsCount"))
+    top = []
+    for h in (holders or [])[:6]:
+        if not isinstance(h, dict):
+            continue
+        top.append({"holder": str(h.get("Holder") or h.get("holder") or "")[:38],
+                    "pct": _f(h.get("pctHeld")), "change": _f(h.get("pctChange")),
+                    "date": str(h.get("Date Reported") or h.get("date") or "")[:10]})
+    if ins is None and inst is None and not top:
+        return None
+
+    chg = [t["change"] for t in top if t["change"] is not None]
+    cutting = sum(1 for c in chg if c < 0)
+    st = [x for x in (stakes or []) if isinstance(x, dict)]
+    activist = next((x for x in st if x.get("activist")), None)
+    return {
+        "insiders": ins, "institutions": inst, "count": int(cnt) if cnt else None,
+        "top": top, "cutting": cutting, "n_changed": len(chg),
+        "stakes": st[:4], "activist": activist,
+        # Flag only on things a holder would want to look at, not on a view.
+        "flag": bool((ins is not None and ins < 0.01)
+                     or (chg and cutting > len(chg) / 2)
+                     or activist),
+    }
 
 
 # ── universe-wide dilution watch ─────────────────────────────────────────────
@@ -538,6 +596,53 @@ def card_body(sym: str, d: dict) -> str:
             ("LAST 90 DAYS", ins["flag"]),
             '<p class="sfg-ev">Reported as filed. No historical frequency is attached: there '
             'is no insider panel here deep enough to measure one honestly.</p>'))
+
+    own = d.get("ownership")
+    if own:
+        bits = []
+        if own["institutions"] is not None:
+            bits.append(f'<b>{own["institutions"] * 100:.0f}%</b> held by institutions'
+                        + (f' across {own["count"]} of them' if own["count"] else ''))
+        if own["insiders"] is not None:
+            bits.append(f'insiders hold <b>{own["insiders"] * 100:.1f}%</b>')
+        lead = ' &middot; '.join(bits) if bits else 'Holdings on file.'
+
+        moves = ''
+        if own["top"]:
+            li = "".join(
+                '<li class="{c}"><time>{p}</time><span><b>{h}</b> &mdash; {m}</span></li>'.format(
+                    c="warn" if (t["change"] is not None and t["change"] < 0) else "",
+                    p=(f'{t["pct"] * 100:.1f}%' if t["pct"] is not None else "&mdash;"),
+                    h=_html.escape(t["holder"]),
+                    m=("position unchanged" if t["change"] in (None, 0) else
+                       f'{"added" if t["change"] > 0 else "cut"} '
+                       f'{abs(t["change"]) * 100:.0f}% in the quarter to {t["date"]}'))
+                for t in own["top"])
+            moves = f'<ul class="sfg-list">{li}</ul>'
+
+        note = ''
+        if own["activist"]:
+            note = (f'<p class="sfg-ev"><b>A Schedule 13D was filed on '
+                    f'{_html.escape(own["activist"]["date"])}.</b> A holder crossing 5% files '
+                    f'13D when they intend to influence the company, and 13G when they are '
+                    f'passive. Both are public within days; neither usually reaches a private '
+                    f'investor until it appears in a news story weeks later.</p>')
+        elif own["stakes"]:
+            k = own["stakes"][0]
+            note = (f'<p class="sfg-ev">Most recent &gt;5% stake filing: {_html.escape(k["form"])} '
+                    f'on {_html.escape(k["date"])}. Anyone crossing 5% of the shares must file '
+                    f'within days &mdash; these are public the moment they land.</p>')
+        note += ('<p class="sfg-ev">13F holdings are filed quarterly and are already a quarter '
+                 'old when published. Reported as filed, with no historical frequency attached '
+                 'because there is no panel here deep enough to measure one.</p>')
+
+        headline = (f'{own["cutting"]} of {own["n_changed"]} cutting'
+                    if own["n_changed"] else 'On file')
+        out.append(_row(
+            "Ownership", headline, "warn" if own["flag"] else "",
+            f'{lead}. Among the largest holders, positions moved as below in the last '
+            f'reported quarter.',
+            ("WHO OWNS IT", own["flag"]), moves + note))
 
     ps = d.get("position")
     if ps:
