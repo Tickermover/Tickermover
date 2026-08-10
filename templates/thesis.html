@@ -17,7 +17,12 @@
   --e-hi:#14587D;--e-mid:#7aa8ff;--e-lo:#E4E7EC;
   /* layer identity = a single-hue blue depth ramp (sequential, not rainbow);
      green stays reserved for tailwind so the diverging impact encoding is unambiguous */
-  --l1:#1e40af;--l2:#1e5bd6;--l3:#14587D;--l4:#4b8bf5;--l5:#6ba3f0;--l6:#8fbaea;
+  /* Six DISTINCT hues, not six tints of one. These were #1e40af #1e5bd6
+     #14587D #4b8bf5 #6ba3f0 #8fbaea — all blue, so at the low fill opacities
+     the map draws with they were indistinguishable and every layer looked the
+     same. Same accent set the app already uses for banded categories, so a
+     layer keeps one identity across the product. */
+  --l1:#4A5BC4;--l2:#0E7C66;--l3:#C74E00;--l4:#A16207;--l5:#B23A2E;--l6:#1F6FA8;
   --serif:'Inter',Georgia,serif;--body:'Inter',system-ui,-apple-system,sans-serif;--mono:'JetBrains Mono',ui-monospace,monospace;
 }
 *{box-sizing:border-box}
@@ -239,11 +244,14 @@ h1.title{font-size:clamp(34px,5.6vw,54px);line-height:1.03;letter-spacing:-.022e
 .flow-h b{font-size:16px;color:#0A2F46;letter-spacing:-.01em}
 .flow-h span{font-size:12.5px;color:var(--faint)}
 .flow-svg svg{display:block;width:100%;height:auto}
-.flow-svg .fl-name{font:600 13.5px/1 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;fill:#0A2F46}
-.flow-svg .fl-pct{font:700 13px/1 'JetBrains Mono',ui-monospace,monospace}
-.flow-svg .fl-sub{font:500 11px/1 'JetBrains Mono',ui-monospace,monospace;fill:#7A8899;letter-spacing:.04em}
-.flow-svg .fl-lag,.flow-svg .fl-cap{font:700 10px/1 'JetBrains Mono',ui-monospace,monospace;
-  fill:#9AA6B2;letter-spacing:.11em}
+/* Type carries the hierarchy: layer name in its own hue, the figure in mono at
+   display size, constituents in tracked mono beneath. Grey was the reason this
+   read flat — everything that can take the layer's colour now does. */
+.flow-svg .fl-name{font:600 15px/1 var(--body);letter-spacing:-.012em}
+.flow-svg .fl-pct{font:700 19px/1 var(--mono);letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.flow-svg .fl-sub{font:600 11.5px/1 var(--mono);letter-spacing:.13em;opacity:.72}
+.flow-svg .fl-lag{font:700 10.5px/1 var(--mono);letter-spacing:.1em}
+.flow-svg .fl-cap{font:700 10px/1 var(--mono);fill:#9AA6B2;letter-spacing:.14em}
 .flow-svg .fl-foot{font:400 10.5px/1 ui-sans-serif,system-ui,sans-serif;fill:#9AA6B2}
 .flow-svg .fl-band{transition:opacity .15s}
 .flow-svg svg:hover .fl-band{opacity:.62}
@@ -650,7 +658,13 @@ h1.title{font-size:clamp(34px,5.6vw,54px);line-height:1.03;letter-spacing:-.022e
       }
       mEl.innerHTML =
         '<div class="money-h"><b>Follow the money</b><span>the size of the prize</span></div>'+
-        '<div class="money-stats">'+ mk.stats.map(function(s){
+        // The deployed-so-far stat IS the landed bar underneath it — the same
+        // percentage, in the same card, with its own second progress bar. Drop
+        // the stat when the bar renders; the bar says more (both sides, in
+        // dollars, captioned).
+        '<div class="money-stats">'+ mk.stats.filter(function(s){
+          return !(landedHtml && s === depStat);
+        }).map(function(s){
           return '<div class="money-stat"><div class="mo-v">'+esc(s.v)+'</div><div class="mo-k">'+esc(s.k)+'</div>'+
             (s.bar!=null?'<div class="mo-bar"><i style="width:'+Math.max(3,Math.min(100,s.bar))+'%"></i></div>':'')+'</div>';
         }).join("") +'</div>'+
@@ -752,34 +766,41 @@ h1.title{font-size:clamp(34px,5.6vw,54px);line-height:1.03;letter-spacing:-.022e
     function esc2(s){ return esc(s); }
     var maxLag = Math.max.apply(null, rows.map(function(r){ return +r.lag||0; })) || 1;
 
-    var y = TOP, parts = [], ribbons = [], sy = TOP;
+    var y = TOP, parts = [], ribbons = [], defs = [], sy = TOP;
     rows.forEach(function(r, i){
       var h = heights[i];
       // the ribbon leaves the source at the same thickness it arrives
       var x0 = srcX + srcW, x1 = bandX, mid = (x0 + x1) / 2;
       ribbons.push('<path d="M'+x0+' '+sy+' C'+mid+' '+sy+' '+mid+' '+y+' '+x1+' '+y
         + ' L'+x1+' '+(y+h)+' C'+mid+' '+(y+h)+' '+mid+' '+(sy+h)+' '+x0+' '+(sy+h)+' Z"'
-        + ' fill="'+r.color+'" opacity=".17"/>');
+        + ' fill="url(#flg'+i+')"/>');
+      // Each ribbon carries its layer's colour, fading in from the source so
+      // the eye follows one hue out of the navy bar and into its band.
+      defs.push('<linearGradient id="flg'+i+'" x1="0" y1="0" x2="1" y2="0">'
+        + '<stop offset="0" stop-color="'+r.color+'" stop-opacity=".10"/>'
+        + '<stop offset="1" stop-color="'+r.color+'" stop-opacity=".42"/></linearGradient>');
+      defs.push('<linearGradient id="flb'+i+'" x1="0" y1="0" x2="1" y2="0">'
+        + '<stop offset="0" stop-color="'+r.color+'" stop-opacity=".26"/>'
+        + '<stop offset="1" stop-color="'+r.color+'" stop-opacity=".07"/></linearGradient>');
 
       // how late this layer is, as a share of the width it can travel
       var lagFrac = (+r.lag||0) / maxLag;
       var bx = bandX + lagFrac * (bandW * 0.30);
       var bw = bandW - (bx - bandX);
       parts.push('<g class="fl-band">'
-        + '<rect x="'+bx+'" y="'+y+'" width="'+bw+'" height="'+h+'" rx="9" fill="'+r.color+'" opacity=".13"/>'
-        + '<rect x="'+bx+'" y="'+y+'" width="4" height="'+h+'" rx="2" fill="'+r.color+'"/>'
-        + '<text class="fl-name" x="'+(bx+16)+'" y="'+(y+21)+'">'+esc2(r.name)+'</text>'
-        + '<text class="fl-pct" x="'+(bx+bw-14)+'" y="'+(y+21)+'" text-anchor="end" fill="'+r.color+'">'
+        + '<rect x="'+bx+'" y="'+y+'" width="'+bw+'" height="'+h+'" rx="10" fill="url(#flb'+i+')"/>'
+        + '<rect x="'+bx+'" y="'+y+'" width="5" height="'+h+'" rx="2.5" fill="'+r.color+'"/>'
+        + '<text class="fl-name" x="'+(bx+18)+'" y="'+(y+24)+'" fill="'+r.color+'">'+esc2(r.name)+'</text>'
+        + '<text class="fl-pct" x="'+(bx+bw-16)+'" y="'+(y+26)+'" text-anchor="end" fill="'+r.color+'">'
           + pctShare(r.share)+'</text>'
-        + (h >= 52
-            ? '<text class="fl-sub" x="'+(bx+16)+'" y="'+(y+38)+'">'
-              + esc2((r.names||[]).slice(0,6).map(function(c){ return c.t; }).join("  ·  "))+'</text>'
-            : '')
+        + '<text class="fl-sub" x="'+(bx+18)+'" y="'+(y+43)+'" fill="'+r.color+'">'
+          + esc2((r.names||[]).slice(0,6).map(function(c){ return c.t; }).join("   "))+'</text>'
         + '</g>');
 
-      // lag rail on the left
-      parts.push('<text class="fl-lag" x="'+(PADL-4)+'" y="'+(y+21)+'" text-anchor="end">'
-        + (r.lag===0 ? "now" : "+"+r.lag+"q") + '</text>');
+      // lag rail on the left — a dot in the layer's own colour ties the two
+      parts.push('<circle cx="'+(PADL-8)+'" cy="'+(y+20)+'" r="3.5" fill="'+r.color+'"/>'
+        + '<text class="fl-lag" x="'+(PADL-19)+'" y="'+(y+24)+'" text-anchor="end" fill="'+r.color+'">'
+        + (r.lag===0 ? "NOW" : "+"+r.lag+"Q") + '</text>');
 
       y += h + GAP; sy += h;
     });
@@ -787,6 +808,7 @@ h1.title{font-size:clamp(34px,5.6vw,54px);line-height:1.03;letter-spacing:-.022e
     var srcH = sy - TOP;
     var svg = '<svg viewBox="0 0 '+W+' '+VB_H+'" preserveAspectRatio="xMidYMin meet" role="img"'
       + ' aria-label="Where each capex dollar lands, by layer">'
+      + '<defs>' + defs.join("") + '</defs>'
       + '<text class="fl-cap" x="'+srcX+'" y="'+(TOP-18)+'">THE SPEND</text>'
       + '<text class="fl-cap" x="'+bandX+'" y="'+(TOP-18)+'">WHERE IT LANDS &rarr; LATER</text>'
       + ribbons.join("")
