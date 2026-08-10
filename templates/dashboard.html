@@ -1041,7 +1041,29 @@ table.stmt thead th{font-size:10.5px;letter-spacing:.06em;text-transform:upperca
 table.stmt th.stmt-lbl,table.stmt td.stmt-lbl{text-align:left;font-weight:600;color:var(--ink,#0f172a);
   position:sticky;left:0;background:#fff}
 table.stmt tbody tr:hover td{background:rgba(41,112,255,.04)}
-.stmt-g{font-size:12.5px;font-weight:700;margin-left:6px;padding:1px 5px;border-radius:4px}
+.stmt-g{font-size:12.5px;font-weight:700;padding:1px 5px;border-radius:4px}
+/* Y/Y column + sparkline column, mirroring how a terminal lays a statement out:
+   name, how it moved, the shape, then the periods. */
+table.stmt th.stmt-chg,table.stmt td.stmt-chg{text-align:right;white-space:nowrap;min-width:74px}
+table.stmt th.stmt-spk,table.stmt td.stmt-spk{width:64px;min-width:64px;padding-left:10px;padding-right:10px}
+.stmt-spark{display:flex;align-items:flex-end;gap:2px;height:22px}
+.stmt-spark i{flex:1;border-radius:1px;min-height:3px}
+.stmt-spark i.pos{background:#22a06b}
+.stmt-spark i.neg{background:#d1553f}
+.stmt-spark i.nil{background:rgba(10,10,10,.1);height:3px!important}
+.stmt-unit{display:block;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;
+  letter-spacing:.08em;text-transform:uppercase;color:#94a3b8;margin-top:2px}
+.stmt-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;
+  background:rgba(10,10,10,.07);border:1px solid rgba(10,10,10,.07);border-radius:12px;
+  overflow:hidden;margin:0 0 14px}
+.stmt-kpi{background:#fff;padding:13px 15px}
+.stmt-kpi em{display:block;font-style:normal;font-size:11px;color:#64748b;margin-bottom:5px}
+.stmt-kpi b{display:block;font-size:19px;font-weight:800;letter-spacing:-.02em;color:#0f172a;
+  font-variant-numeric:tabular-nums}
+.stmt-kpi s{display:block;text-decoration:none;font-size:12.5px;font-weight:700;margin-top:3px;
+  font-variant-numeric:tabular-nums}
+.stmt-kpi s.good{color:#15803d}
+.stmt-kpi s.bad{color:#b91c1c}
 /* Chips are coloured by whether the move HELPED, not by its sign — falling debt
    is green, falling cash is red. `flat` is for lines with no inherent good
    direction (tax, capex, D&A): the size of the move still matters, so it's
@@ -23929,8 +23951,52 @@ function scResultHTML(d){
     var n=parseFloat(v); if(isNaN(n)) return String(v);
     return n.toFixed(2);
   }
+  /* Oldest -> newest mini bar chart, so the shape of five periods reads at a
+     glance without parsing five numbers. Height is magnitude against the
+     largest absolute value in the row; colour is the SIGN (a negative period
+     is red) because on a sparkline the sign is the only thing a 6px bar can
+     honestly say. The polarity verdict lives on the change chip instead. */
+  function _stmtSpark(rows,key){
+    var vals=[],i;
+    for(i=rows.length-1;i>=0;i--){ var v=parseFloat(rows[i][key]); vals.push(isNaN(v)?null:v); }
+    var real=vals.filter(function(v){ return v!==null; });
+    if(real.length<2) return '<td class="stmt-spk"></td>';
+    var mx=Math.max.apply(null,real.map(function(v){ return Math.abs(v); }));
+    if(!mx) return '<td class="stmt-spk"></td>';
+    var bars=vals.map(function(v){
+      if(v===null) return '<i class="nil"></i>';
+      var h=Math.max(3,Math.round(Math.abs(v)/mx*100));
+      return '<i class="'+(v<0?'neg':'pos')+'" style="height:'+h+'%"></i>';
+    }).join('');
+    return '<td class="stmt-spk"><span class="stmt-spark">'+bars+'</span></td>';
+  }
+
+  /* Big-number strip over the income statement, the way a terminal opens with
+     the five lines everyone checks first. */
+  function _stmtKpis(rows){
+    if(!rows||rows.length<2) return '';
+    var spec=[['Total revenue','revenue','up'],['Gross profit','grossProfit','up'],
+              ['Operating income','operatingIncome','up'],
+              ['Pre-tax income','incomeBeforeTax','up'],
+              ['Net income','netIncome','up']];
+    var out=spec.map(function(sp){
+      var a=parseFloat(rows[0][sp[1]]), b=parseFloat(rows[1][sp[1]]);
+      var chip='';
+      if(!isNaN(a)&&!isNaN(b)&&b!==0){
+        var ch=(a-b)/Math.abs(b)*100;
+        var helped=(sp[2]==='up')?ch>=0:ch<0;
+        chip='<s class="'+(helped?'good':'bad')+'">'+(ch>=0?'+':'')+ch.toFixed(2)+'%</s>';
+      }
+      return '<div class="stmt-kpi"><em>'+escHTML(sp[0])+'</em><b>'+_stmtNum(rows[0][sp[1]])+'</b>'+chip+'</div>';
+    }).join('');
+    return '<div class="stmt-kpis">'+out+'</div>';
+  }
+
   function _stmtHead(rows,label){
-    return '<tr><th class="stmt-lbl">'+escHTML(label)+'</th>'+
+    var cur=(rows[0]&&rows[0].reportedCurrency)||'USD';
+    return '<tr><th class="stmt-lbl">'+escHTML(label)+
+      '<span class="stmt-unit">in '+escHTML(cur)+'</span></th>'+
+      '<th class="stmt-chg">Y/Y</th><th class="stmt-spk">Trend</th>'+
       rows.map(function(p){ return '<th>'+escHTML(String(p.date||p.calendarYear||'').slice(0,10))+'</th>'; }).join('')+'</tr>';
   }
   /* One line item across every period, with an optional growth read on the
@@ -23956,17 +24022,24 @@ function scResultHTML(d){
       }
       return '<td'+cls+'>'+f(p[key])+'</td>';
     }).join('');
-    var g='';
-    if(growth && rows.length>1){
+    /* The change is shown on EVERY line now, in its own column. It used to be
+       an opt-in chip beside the label, which left Cost of revenue, R&D, SG&A,
+       inventory, capex and the rest with no read at all — the lines where a
+       move is often the story. `growth` is kept in the signature so existing
+       call sites still parse, but it no longer gates anything. */
+    var g='<td class="stmt-chg">—</td>';
+    if(rows.length>1){
       var a=parseFloat(rows[0][key]), b=parseFloat(rows[1][key]);
       if(!isNaN(a)&&!isNaN(b)&&b!==0){
         var ch=(a-b)/Math.abs(b)*100;
         var helped = pol ? (pol==='up' ? ch>=0 : ch<0) : null;
         var kls = helped===null ? 'flat' : (helped ? 'good' : 'bad');
-        g=' <span class="stmt-g '+kls+'">'+(ch>=0?'+':'')+ch.toFixed(0)+'%</span>';
+        g='<td class="stmt-chg"><span class="stmt-g '+kls+'">'+
+          (ch>=0?'+':'')+ch.toFixed(1)+'%</span></td>';
       }
     }
-    return '<tr><td class="stmt-lbl">'+escHTML(label)+g+'</td>'+cells+'</tr>';
+    return '<tr><td class="stmt-lbl">'+escHTML(label)+'</td>'+g+
+           _stmtSpark(rows,key)+cells+'</tr>';
   }
   function _stmtTable(title,icon,accent,rows,spec){
     if(!rows||!rows.length) return '';
@@ -23991,6 +24064,7 @@ function scResultHTML(d){
     /* 5th column = the direction that helps. Left off deliberately where there
        is no good direction: more R&D or capex is neither good nor bad without
        knowing the return on it, and a bigger balance sheet is not a better one. */
+    html+=_stmtKpis(inc);
     html+=_stmtTable('Income statement','📄','green',inc,[
       ['Revenue','revenue',_stmtNum,true,'up'],
       ['Cost of revenue','costOfRevenue'],
@@ -23999,11 +24073,14 @@ function scResultHTML(d){
       ['SG&A expense','sellingGeneralAndAdministrativeExpenses'],
       ['Operating expenses','operatingExpenses'],
       ['Operating income','operatingIncome',_stmtNum,true,'up'],
+      ['EBIT','ebit',_stmtNum,true,'up'],
       ['EBITDA','ebitda',_stmtNum,true,'up'],
       ['Interest expense','interestExpense',_stmtNum,false,'dn'],
       ['Pre-tax income','incomeBeforeTax',_stmtNum,false,'up'],
       ['Income tax','incomeTaxExpense'],
       ['Net income','netIncome',_stmtNum,true,'up'],
+      ['Net income, continuing ops','netIncomeFromContinuingOperations',_stmtNum,true,'up'],
+      ['EPS (basic)','eps',_stmtPlain,true,'up'],
       ['EPS (diluted)','epsDiluted',_stmtPlain,true,'up'],
       ['Shares (diluted)','weightedAverageShsOutDil',_stmtNum,true,'dn'],
     ]);
@@ -24019,6 +24096,8 @@ function scResultHTML(d){
       ['Long-term debt','longTermDebt',_stmtNum,false,'dn'],
       ['Total debt','totalDebt',_stmtNum,true,'dn'],
       ['Total liabilities','totalLiabilities'],
+      ['Goodwill & intangibles','goodwillAndIntangibleAssets',_stmtNum,false,'dn'],
+      ['Retained earnings','retainedEarnings',_stmtNum,true,'up'],
       ['Total equity','totalStockholdersEquity',_stmtNum,true,'up'],
       ['Net debt','netDebt',_stmtNum,false,'dn'],
     ]);
@@ -24031,6 +24110,7 @@ function scResultHTML(d){
       ['Capital expenditure','capitalExpenditure'],
       ['Free cash flow','freeCashFlow',_stmtNum,true,'up'],
       ['Acquisitions','acquisitionsNet'],
+      ['Shares issued','commonStockIssuance',_stmtNum,false,'dn'],
       ['Buybacks','commonStockRepurchased'],
       ['Dividends paid','commonDividendsPaid'],
       ['Net change in cash','netChangeInCash',_stmtNum,false,'up'],
