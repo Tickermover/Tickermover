@@ -4612,7 +4612,10 @@ def _desk_edition_date(now_et) -> str:
     return d.isoformat()
 
 
-_DESK_REPORT_VERSION = 4   # bump to force a one-time rebuild when the report changes
+_DESK_REPORT_VERSION = 5   # bump to force a one-time rebuild when the report changes
+# v5: the verdict gained evidence bullets + a counter-case, and the narrative
+# is web-grounded. Without this bump the edition frozen earlier today would
+# keep being served with neither, and the change would look like it failed.
 
 
 async def _publish_desk_daily(force: bool = False) -> dict:
