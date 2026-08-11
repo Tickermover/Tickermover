@@ -14076,7 +14076,7 @@ async def api_dilution_scan():
     if fresh:
         rows = _dil_scan["rows"]
         return JSONResponse({
-            "status": "ready", "rows": rows,
+            "status": "ready", "rows": _with_names(rows),
             "bands": [{"lo": b[0], "hi": b[1], "label": b[2], "desc": b[3], "fall": b[4]}
                       for b in sg.DILUTION_BANDS],
             "baseline": sg.DILUTION_BASELINE,
@@ -14256,6 +14256,30 @@ async def _build_crowd_scan() -> None:
         _crowd_scan.update(status="idle")
 
 
+# Both universe scans carry ticker + sector but no company name: the panels
+# then showed "AAOI" over "Technology", which tells a reader nothing about what
+# the company IS. The name lives in the universe rows, so it is attached at the
+# response layer rather than threaded through either scan builder.
+def _with_names(rows: list) -> list:
+    if not rows:
+        return rows
+    names = {}
+    for x in (_universe_data or []):
+        t = str(x.get("ticker") or "").upper()
+        if t and x.get("name"):
+            names[t] = x["name"]
+    if not names:
+        return rows
+    out = []
+    for r in rows:
+        if not isinstance(r, dict):
+            out.append(r)
+            continue
+        nm = names.get(str(r.get("ticker") or "").upper())
+        out.append({**r, "name": nm} if nm and not r.get("name") else r)
+    return out
+
+
 @app.get("/api/crowd-clock-scan")
 async def api_crowd_clock_scan():
     """Crowd Clock reading for every name in the universe, ranked. Returns
@@ -14278,7 +14302,7 @@ async def api_crowd_clock_scan():
             turns.append({**t, "bucket": k, "bucket_label": cc.TURN_LABEL.get(k, ""),
                           "bucket_rates": cc.TURN_RATES.get(k, cc.TURN_RATES["all"])})
         return JSONResponse({
-            "status": "ready", "rows": rows, "counts": counts,
+            "status": "ready", "rows": _with_names(rows), "counts": counts,
             "sectors": d.get("sectors") or [], "changes": d.get("changes") or [],
             "turns": turns, "order": cc.ORDER, "copy": cc.BAND_COPY,
             "rates": cc.BASE_RATES, "baseline": cc.BASELINE,
