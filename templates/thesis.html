@@ -254,6 +254,16 @@ h1.title{font-size:clamp(34px,5.6vw,54px);line-height:1.03;letter-spacing:-.022e
 /* Runs to the same edge as the cards below it. Held at 62ch it broke over four
    short lines against full-width panels and read as a leftover column. */
 .standfirst{font-size:19px;line-height:1.58;color:#3F4E5E;max-width:none;margin:0 0 4px;font-weight:400}
+/* Hero infographic. The asset itself is already cropped and sized, so no CSS
+   trimming here — a second crop on top of a cropped file silently eats a row
+   of real labels. */
+.hero-art{margin:0 0 18px;background:#fff;border:1px solid var(--line);border-radius:16px;
+  overflow:hidden}
+.hero-art-crop{line-height:0}
+.hero-art-crop img{width:100%;height:auto;display:block}
+.hero-art figcaption{font-size:11.5px;line-height:1.5;color:var(--faint);padding:9px 16px 11px;
+  border-top:1px solid var(--line)}
+@media(max-width:640px){.hero-art figcaption{font-size:11px;padding:8px 12px 10px}}
 /* The flow diagram. */
 .flow{background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px 20px 10px;margin:0 0 18px}
 .flow-h{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin:0 0 6px}
@@ -510,6 +520,20 @@ h1.title{font-size:clamp(34px,5.6vw,54px);line-height:1.03;letter-spacing:-.022e
   <!-- The map as a drawing. Everything below it is the same data as a list;
        this is the one view that shows the SHAPE — one dollar entering, six
        layers catching wildly unequal pieces of it, later and later. -->
+  <!-- Hero infographic. One file per map, named by slug, so adding art to a
+       chain map is dropping a file in - no code change. The slot removes
+       itself when the file is absent, so a map without art is not a broken
+       image. -->
+  <figure class="hero-art" id="hero-art" style="display:none">
+    <div class="hero-art-crop">
+      <picture>
+        <source id="hero-art-webp" type="image/webp">
+        <img id="hero-art-img" alt="How hyperscaler AI capex flows through the supplier chain" loading="lazy">
+      </picture>
+    </div>
+    <figcaption id="hero-art-cap"></figcaption>
+  </figure>
+
   <div class="flow" id="flow" style="display:none">
     <div class="flow-h">
       <b>How one capex dollar splits</b>
@@ -891,6 +915,16 @@ h1.title{font-size:clamp(34px,5.6vw,54px);line-height:1.03;letter-spacing:-.022e
         chip.className = "co-imp share-t";
       }); });
       drawFlow(d);
+      // The art carries baked figures; say when they were true. Same reason the
+      // money card gained a staleness note - a drawing cannot re-cut itself.
+      (function(){
+        var cap = document.getElementById("hero-art-cap");
+        if(!cap) return;
+        var raw = String(window.__mapAsOf || "").slice(0,10);
+        cap.textContent = "Figures shown in the illustration are as at "
+          + (/^\d{4}-\d{2}-\d{2}$/.test(raw) ? raw : "the dataset date")
+          + ". The panels below are the live read - where the two differ, the panels are current.";
+      })();
       // leaderboard — biggest share of landed value (real, always positive)
       var subEl = document.getElementById("movers-sub");
       if(subEl) subEl.textContent = "by AI-attributable revenue · exposure-weighted estimate";
@@ -969,9 +1003,27 @@ h1.title{font-size:clamp(34px,5.6vw,54px);line-height:1.03;letter-spacing:-.022e
     loadLive(c.t, d);
   });
 
+  /* The hero image is a RASTER with figures baked into it, so it cannot track
+     the data the way the panels below it do. Two consequences handled here:
+     it is captioned with the dataset date so a reader can see how current the
+     drawing is, and it hides itself entirely if the file is missing rather
+     than leaving a broken-image box on a published page. */
+  (function(){
+    var fig = document.getElementById("hero-art");
+    var img = document.getElementById("hero-art-img");
+    if(!fig || !img) return;
+    img.onerror = function(){ fig.remove(); };
+    img.onload  = function(){ fig.style.display = ""; };
+    var base = "/static/chain-art/" + encodeURIComponent(slug);
+    var wsrc = document.getElementById("hero-art-webp");
+    if(wsrc) wsrc.srcset = base + ".webp";   // 213KB against a 2MB PNG
+    img.src = base + ".png";
+  })();
+
   fetch("/api/thesis-map/"+encodeURIComponent(slug)+"?v=2")
     .then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); })
-    .then(function(d){ if(!d || d.available===false || !d.layers) throw new Error("unavailable"); build(d); })
+    .then(function(d){ if(!d || d.available===false || !d.layers) throw new Error("unavailable");
+                       window.__mapAsOf = d.as_of; build(d); })
     .catch(function(){
       document.getElementById("title").textContent = "This thesis map isn't available";
       chain.innerHTML = '<div class="loading">It may still be in preparation. <a href="/who-benefits">Browse all thesis maps →</a></div>';
