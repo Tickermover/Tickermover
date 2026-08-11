@@ -26066,39 +26066,42 @@ function scResultHTML(d){
     var down  = Math.abs(dmg * 100).toFixed(0) + '%';
     var band  = r.band;
 
-    // Named as a GRID, not nine free inventions: first word is the damage
-    // (Broken / Bruised / Intact), second is the phase the band puts it in
-    // (unwatched / waking up / crowd in). A reader can then reverse the badge
-    // back into its two inputs without a key, which is the thing loose names
-    // like "Half-way back" and "Repairing, watched" made impossible — neither
-    // said which axis it was describing.
+    // Six of these were already clear and are left exactly as they were. Only
+    // three were renamed, and for one reason: they did not say WHICH axis they
+    // described. "Quietly damaged" led with attention, "Repairing, watched"
+    // led with the repair, and "Half-way back" could mean half the fall
+    // repaired OR half the attention returned. Their replacements put the
+    // damage word first and the phase word second so the axis is unambiguous.
     var M = {
       'early|deep': {k:'ok', t:'Broken, unwatched',
-        w:'Still ' + down + ' below its 12-month high, and the band (' + band + ') says the '
-          + 'crowd has not arrived. The earliest corner of the cycle — a place to start '
-          + 'research, not a signal to buy.'},
+        w:'Still ' + down + ' below its 12-month high, and the band says the crowd has not '
+          + 'arrived. The earliest corner of the cycle — a place to start research, not a '
+          + 'signal to buy.'},
+      // was "Quietly damaged" — led with attention, which the band already owns
       'early|mod': {k:'ok', t:'Bruised, unwatched',
         w:down + ' of the fall is unrepaired and attention is still low (' + band + '). Real '
           + 'damage, but not a wreck, and few people are looking at it.'},
-      'early|light': {k:'neu', t:'Intact, unwatched',
+      'early|light': {k:'neu', t:'Quiet, intact',
         w:'Only ' + down + ' below its high despite reading ' + band + '. Little damage left '
-          + 'to repair — it is quiet rather than wrecked.'},
+          + 'to repair — it is calm rather than wrecked.'},
+      // was "Repairing, watched" — "watched" restated the band, vaguely
       'mid|deep': {k:'neu', t:'Broken, waking up',
         w:'Still ' + down + ' down, but the band has moved to ' + band + ' — the recovery is '
           + 'under way and people have started to notice.'},
+      // was "Half-way back" — half of WHICH? The fall, or the attention?
       'mid|mod': {k:'neu', t:'Bruised, waking up',
         w:down + ' below its high and reading ' + band + '. Part of the fall repaired, part '
           + 'of the attention returned.'},
-      'mid|light': {k:'neu', t:'Intact, waking up',
+      'mid|light': {k:'neu', t:'Recovered, calm',
         w:'Within ' + down + ' of its high on ' + band + ' attention. The fall is essentially '
-          + 'mended and interest is picking up.'},
-      'late|deep': {k:'warn', t:'Broken, crowd in',
+          + 'mended and nothing about it is loud.'},
+      'late|deep': {k:'warn', t:'Crowd in, damage left',
         w:'Reading ' + band + ' — the volume is here — yet it is still ' + down + ' below its '
-          + 'high. Attention arrived well before the damage was repaired.'},
-      'late|mod': {k:'warn', t:'Bruised, crowd in',
+          + 'high. Attention has arrived well before the damage is repaired.'},
+      'late|mod': {k:'warn', t:'Crowd in, part repaired',
         w:'Reading ' + band + ' with ' + down + ' of the fall still outstanding. The busy half '
           + 'of the cycle, on a share that has not fully recovered.'},
-      'late|light': {k:'bad', t:'Intact, crowd in',
+      'late|light': {k:'bad', t:'Late, fully repaired',
         w:'Back within ' + down + ' of its high AND reading ' + band + '. Both the recovery '
           + 'and the attention have already happened — the latest point on this page.'}
     };
