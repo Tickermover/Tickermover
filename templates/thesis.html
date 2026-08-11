@@ -254,26 +254,6 @@ h1.title{font-size:clamp(34px,5.6vw,54px);line-height:1.03;letter-spacing:-.022e
 /* Runs to the same edge as the cards below it. Held at 62ch it broke over four
    short lines against full-width panels and read as a leftover column. */
 .standfirst{font-size:19px;line-height:1.58;color:#3F4E5E;max-width:none;margin:0 0 4px;font-weight:400}
-/* The mind map. */
-.mind{background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px 20px 12px;margin:0 0 18px}
-.mind-h{display:flex;align-items:baseline;gap:12px;margin:0 0 4px}
-.mind-h b{font-size:16px;color:#0A2F46;letter-spacing:-.01em}
-.mind-t{margin-left:auto;font:inherit;font-size:12px;color:#5D6C7B;background:#FBFAF8;
-  border:1px solid var(--line);border-radius:100px;padding:4px 12px;cursor:pointer}
-.mind-t:hover{color:#0A2F46;border-color:#C9CFEA}
-.mind-svg svg{display:block;width:100%;height:auto}
-.mind-svg .mm-name{font:600 14px/1 var(--body);fill:#0A2F46}
-.mind-svg .mm-pct{font:700 15px/1 var(--mono);letter-spacing:-.02em}
-.mind-svg .mm-chip{font:600 11px/1 var(--mono);letter-spacing:.06em}
-.mind-svg .mm-eyebrow{font:700 9.5px/1 var(--mono);letter-spacing:.14em;fill:#9AA6B2}
-.mind-svg .mm-title{font:600 24px/1 var(--body);letter-spacing:-.02em;fill:#0A2F46}
-.mind-svg .mm-stand{font:400 13.5px/1 var(--body);fill:#5D6C7B}
-.mind-svg .mm-foot{font:600 12.5px/1 var(--body);fill:#0A2F46}
-.mind-svg .mm-node{transition:opacity .15s}
-.mind-svg svg:hover .mm-node{opacity:.55}
-.mind-svg svg .mm-node:hover{opacity:1}
-.mind.is-collapsed .mind-svg{display:none}
-@media(max-width:640px){.mind{padding:14px 12px 8px}}
 /* The flow diagram. */
 .flow{background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px 20px 10px;margin:0 0 18px}
 .flow-h{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin:0 0 6px}
@@ -530,18 +510,6 @@ h1.title{font-size:clamp(34px,5.6vw,54px);line-height:1.03;letter-spacing:-.022e
   <!-- The map as a drawing. Everything below it is the same data as a list;
        this is the one view that shows the SHAPE — one dollar entering, six
        layers catching wildly unequal pieces of it, later and later. -->
-  <!-- The chain as a mind map: the story in the middle, the layers radiating
-       out. The flow diagram above answers "how does the dollar split"; this
-       answers "what IS this chain" at a glance, which is the view people
-       screenshot and share. -->
-  <div class="mind" id="mind" style="display:none">
-    <div class="mind-h">
-      <b>The chain at a glance</b>
-      <button type="button" class="mind-t" id="mind-toggle">Hide map</button>
-    </div>
-    <div class="mind-svg" id="mind-svg"></div>
-  </div>
-
   <div class="flow" id="flow" style="display:none">
     <div class="flow-h">
       <b>How one capex dollar splits</b>
@@ -802,128 +770,6 @@ h1.title{font-size:clamp(34px,5.6vw,54px);line-height:1.03;letter-spacing:-.022e
   // Share of LANDED value — realized and descriptive. Fills the layer badges, the
   // layer/company share bars, and the leaderboard from /api/thesis-shares. No slider,
   // no forecast: every number is "who captures the spend today".
-  /* THE MIND MAP.
-     Centre holds the story — title, standfirst, and an authored stack drawn
-     from the live split, so the "image" cannot drift from the data the way a
-     rendered illustration would. Six layers radiate out, three a side, each
-     carrying its share and its companies. Ordered by share so the eye meets
-     the layer that matters first, top-left. */
-  function drawMind(d){
-    var host = document.getElementById("mind"), svgHost = document.getElementById("mind-svg");
-    if(!host || !svgHost) return;
-    var rows = (d.layers||[]).map(function(L,i){
-      var m = LAYERS[i] || {};
-      return { name:L.name||m.name||"", share:+L.share||0,
-               color:m.color||("var(--l"+(i+1)+")"), names:(m.names||[]) };
-    }).filter(function(r){ return r.name; });
-    if(rows.length < 2) return;
-    rows.sort(function(a,b){ return b.share - a.share; });
-
-    var W = 1400, H = 940, CX = W/2;
-    var cw = 430, ch = 300, cx0 = CX - cw/2, cy0 = (H - ch)/2;
-    var left  = rows.filter(function(_,i){ return i % 2 === 0; });
-    var right = rows.filter(function(_,i){ return i % 2 === 1; });
-
-    var defs = [], parts = [], links = [];
-    var NODE_W = 300, PAD = 34;
-
-    function place(list, side){
-      var n = list.length, slot = H / n;
-      list.forEach(function(r, i){
-        var cyc = slot * i + slot/2;
-        var nh = 58 + Math.min(3, Math.ceil((r.names||[]).length / 3)) * 20;
-        var y = Math.max(14, Math.min(H - nh - 14, cyc - nh/2));
-        var x = side === "L" ? PAD : W - PAD - NODE_W;
-        var gid = "mg" + side + i;
-        defs.push('<linearGradient id="'+gid+'" x1="0" y1="0" x2="1" y2="0">'
-          + '<stop offset="0" stop-color="'+r.color+'" stop-opacity="'+(side==="L"?".05":".24")+'"/>'
-          + '<stop offset="1" stop-color="'+r.color+'" stop-opacity="'+(side==="L"?".24":".05")+'"/></linearGradient>');
-
-        // connector: centre edge -> node edge, thickness carries the share
-        var sx = side === "L" ? cx0 : cx0 + cw;
-        var ex = side === "L" ? x + NODE_W : x;
-        var sy = cy0 + ch/2, ey = y + nh/2;
-        var mid = (sx + ex) / 2;
-        var th = Math.max(2, Math.min(26, Math.sqrt(r.share) * 30));
-        links.push('<path d="M'+sx+' '+(sy-th/2)+' C'+mid+' '+(sy-th/2)+' '+mid+' '+(ey-th/2)+' '+ex+' '+(ey-th/2)
-          + ' L'+ex+' '+(ey+th/2)+' C'+mid+' '+(ey+th/2)+' '+mid+' '+(sy+th/2)+' '+sx+' '+(sy+th/2)+' Z"'
-          + ' fill="'+r.color+'" opacity=".22"/>');
-
-        var chips = (r.names||[]).slice(0,6).map(function(c,j){
-          return '<text class="mm-chip" x="'+(x+16+(j%3)*94)+'" y="'+(y+56+Math.floor(j/3)*20)+'" fill="'+r.color+'">'
-            + esc(c.t) + '</text>';
-        }).join("");
-
-        parts.push('<g class="mm-node">'
-          + '<rect x="'+x+'" y="'+y+'" width="'+NODE_W+'" height="'+nh+'" rx="12" fill="url(#'+gid+')"'
-            + ' stroke="'+r.color+'" stroke-opacity=".35"/>'
-          + '<rect x="'+x+'" y="'+y+'" width="4" height="'+nh+'" rx="2" fill="'+r.color+'"/>'
-          + '<text class="mm-name" x="'+(x+16)+'" y="'+(y+25)+'">'+esc(r.name)+'</text>'
-          + '<text class="mm-pct" x="'+(x+NODE_W-14)+'" y="'+(y+25)+'" text-anchor="end" fill="'+r.color+'">'
-            + pctShare(r.share)+'</text>'
-          + chips + '</g>');
-      });
-    }
-    place(left, "L"); place(right, "R");
-
-    /* THE IMAGE, authored rather than rendered: one bar per layer, width by
-       share, in the layer's own colour. It is the same figure the branches
-       carry, so the picture and the numbers can never disagree. */
-    var bx = cx0 + 26, bw = cw - 52, byy = cy0 + 186, tot = 0;
-    rows.forEach(function(r){ tot += r.share; });
-    var run = 0, stack = rows.map(function(r){
-      var w = tot > 0 ? (r.share / tot) * bw : 0;
-      var seg = '<rect x="'+(bx+run)+'" y="'+byy+'" width="'+Math.max(2,w)+'" height="22" rx="3" fill="'+r.color+'"/>';
-      run += w; return seg;
-    }).join("");
-
-    var title = (document.getElementById("title")||{}).textContent || "";
-    var stand = (document.getElementById("standfirst")||{}).textContent || "";
-    var lead  = rows[0];
-
-    parts.push('<g>'
-      + '<rect x="'+cx0+'" y="'+cy0+'" width="'+cw+'" height="'+ch+'" rx="20" fill="#fff"'
-        + ' stroke="#E4E7EC"/>'
-      + '<text class="mm-eyebrow" x="'+(cx0+26)+'" y="'+(cy0+38)+'">THE CHAIN</text>'
-      + '<text class="mm-title" x="'+(cx0+26)+'" y="'+(cy0+72)+'">'+esc(clip(title, 34))+'</text>'
-      + wrapText(stand, cx0+26, cy0+102, 46, 3, "mm-stand")
-      + '<text class="mm-eyebrow" x="'+(cx0+26)+'" y="'+(byy-14)+'">WHERE EACH DOLLAR LANDS</text>'
-      + stack
-      + '<text class="mm-foot" x="'+(cx0+26)+'" y="'+(byy+46)+'">'
-        + esc(clip(lead.name.split('(')[0], 30)) + ' takes ' + pctShare(lead.share) + ' of it</text>'
-      + '</g>');
-
-    svgHost.innerHTML = '<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="xMidYMid meet" role="img"'
-      + ' aria-label="The chain as a mind map: layers and the companies in them">'
-      + '<defs>'+defs.join("")+'</defs>' + links.join("") + parts.join("") + '</svg>';
-    host.style.display = "";
-  }
-
-  /* Cut on a SPACE, never mid-word. slice() alone produced "Where hyperscaler
-     capex actually l" as the centre title, which reads as a rendering fault
-     rather than an abbreviation. */
-  function clip(t, n){
-    t = String(t||"").trim();
-    if(t.length <= n) return t;
-    var cut = t.slice(0, n), sp = cut.lastIndexOf(" ");
-    return (sp > n * 0.5 ? cut.slice(0, sp) : cut).replace(/[\s,.;:—-]+$/, "") + "…";
-  }
-
-  /* SVG has no text wrapping. Breaks on spaces only — never mid-word. */
-  function wrapText(txt, x, y, perLine, maxLines, cls){
-    var words = String(txt||"").split(/\s+/).filter(Boolean), lines = [], cur = "";
-    for(var i=0;i<words.length;i++){
-      var next = cur ? cur + " " + words[i] : words[i];
-      if(next.length > perLine){ lines.push(cur); cur = words[i]; if(lines.length>=maxLines) break; }
-      else cur = next;
-    }
-    if(cur && lines.length < maxLines) lines.push(cur);
-    if(lines.length === maxLines && words.length) lines[maxLines-1] = lines[maxLines-1].replace(/[,.;]?$/, "…");
-    return lines.map(function(l,i){
-      return '<text class="'+cls+'" x="'+x+'" y="'+(y + i*21)+'">'+esc(l)+'</text>';
-    }).join("");
-  }
-
   /* THE FLOW DIAGRAM.
      A Sankey read left to right: one source (the capex dollar) fanning into
      six layer bands. Band height encodes share of landed value, x-position
@@ -1045,7 +891,6 @@ h1.title{font-size:clamp(34px,5.6vw,54px);line-height:1.03;letter-spacing:-.022e
         chip.className = "co-imp share-t";
       }); });
       drawFlow(d);
-      drawMind(d);
       // leaderboard — biggest share of landed value (real, always positive)
       var subEl = document.getElementById("movers-sub");
       if(subEl) subEl.textContent = "by AI-attributable revenue · exposure-weighted estimate";
@@ -1123,18 +968,6 @@ h1.title{font-size:clamp(34px,5.6vw,54px);line-height:1.03;letter-spacing:-.022e
     cos.parentElement.appendChild(d);
     loadLive(c.t, d);
   });
-
-  // Collapse without unmounting: re-rendering on every toggle would re-run the
-  // whole layout for a view the reader is trying to get out of the way.
-  (function(){
-    var b = document.getElementById("mind-toggle");
-    if(!b) return;
-    b.addEventListener("click", function(){
-      var m = document.getElementById("mind");
-      var off = m.classList.toggle("is-collapsed");
-      b.textContent = off ? "Show map" : "Hide map";
-    });
-  })();
 
   fetch("/api/thesis-map/"+encodeURIComponent(slug)+"?v=2")
     .then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); })
