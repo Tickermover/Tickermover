@@ -611,14 +611,18 @@ body.v2 #sectors-grid .smh-name{font-weight:800;font-size:12.5px;color:#0f172a!i
 #panel-clock .ck-band-r u b{color:#0E7C66}
 /* Rise-to-fall ratio. Neutral ink on purpose — this is the one number on the
    page a reader could mistake for a rating, so it gets no green. */
-#panel-clock .ck-band-x{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;
-  margin-top:9px;padding-top:8px;border-top:1px solid #EFEDEA;font-size:11px;color:#5D6C7B;
+#panel-clock .ck-band-x{display:flex;align-items:baseline;gap:6px;
+  margin-top:8px;padding-top:7px;border-top:1px solid #EFEDEA;font-size:11px;color:#5D6C7B;
   cursor:help}
 #panel-clock .ck-band-x b{margin-left:auto;font-family:'JetBrains Mono',monospace;
   font-size:12.5px;font-weight:700;color:#0A2F46}
-#panel-clock .ck-band-x i{flex-basis:100%;font-style:normal;font-family:'JetBrains Mono',monospace;
-  font-size:9.5px;font-weight:700;letter-spacing:.04em;color:#9AA6B2}
+/* Arrow only — the baseline it compares against is stated once above the row,
+   so it does not need its own line on all six cards. */
+#panel-clock .ck-band-x i{font-style:normal;font-size:9px;color:#9AA6B2;margin-left:1px}
 #panel-clock .ck-band-x i.bl{color:#B4232A}
+/* The line that replaced twelve repeated ones. */
+#panel-clock .ck-bands-cap{font-size:11.5px;color:#8A97A4;margin:0 0 9px;line-height:1.5}
+#panel-clock .ck-bands-cap b{font-weight:600;color:#5D6C7B}
 
 /* Column-heading help marker + the one-line Clock explainer above the table. */
 #panel-clock .ck-q{display:inline-block;font-style:normal;font-family:'JetBrains Mono',monospace;
@@ -26289,14 +26293,16 @@ function scResultHTML(d){
       // Deliberately NOT coloured green/red. It is a comparison, not a verdict,
       // and a green ratio on this page would read as a buy rating — the exact
       // thing the bands must never become.
+      // Only the ARROW travels on the card. "vs 2.08x all shares" and "over the
+      // next 6 months, historically" were identical on all six, so six cards
+      // carried twelve lines of the same text - said once above the row now.
       var cmp = (ra != null && _blR)
-        ? '<i class="' + (ra >= _blR ? 'ab' : 'bl') + '">' + (ra >= _blR ? '▲' : '▼')
-          + ' vs ' + _blR.toFixed(2) + '× all shares</i>'
+        ? '<i class="' + (ra >= _blR ? 'ab' : 'bl') + '">' + (ra >= _blR ? '▲' : '▼') + '</i>'
         : '';
       return '<button class="ck-band' + (band===b?' on':'') + '" data-b="' + esc(b) + '">'
         + '<div class="ck-band-n"><b>' + esc(b) + '</b><i>' + n + '</i></div>'
-        + '<div class="ck-band-r"><em>Over the next 6 months, historically</em>'
-        + '<s>Fell another 30%<b>' + pc(r.fall) + '</b></s>'
+        + '<div class="ck-band-r">'
+        + '<s>Fell 30%<b>' + pc(r.fall) + '</b></s>'
         + '<u>Rose 30%<b>' + pc(r.rise) + '</b></u></div>'
         + '<div class="ck-band-x" title="Times as many readings rose 30% as fell 30%, from this '
           + 'band. Above 1 means rises outnumbered falls. It says nothing about the SIZE of '
@@ -26304,6 +26310,10 @@ function scResultHTML(d){
           + '<span>Rose : fell</span><b>' + (ra == null ? '—' : ra.toFixed(2) + '×') + '</b>'
           + cmp + '</div></button>';
     }).join('');
+    // Said once, above the row. Every card used to repeat both of these.
+    var cap = '<div class="ck-bands-cap">What followed over the next six months, historically'
+      + (_blR ? ' · <b>rise-to-fall for all shares: ' + _blR.toFixed(2) + '×</b>'
+                + ' — ▲ beats it, ▼ trails it' : '') + '</div>';
     // Most damaged first. People come to this page to see who is wrecked;
     // ordering by the clock score buried them under names that had already
     // recovered.
@@ -26330,7 +26340,7 @@ function scResultHTML(d){
                + 'even where the rise rate on its own looks high.');
         })()
       + '</p></div>';
-    if (!sel.length) return '<div class="ck-bands">' + cards + '</div>' + tbl(head, ['Ticker'], '');
+    if (!sel.length) return cap + '<div class="ck-bands">' + cards + '</div>' + tbl(head, ['Ticker'], '');
     var body = sel.map(function(r){
       var tn = tone(r.band);
       return '<tr data-t="' + esc(r.ticker) + '">'
@@ -26348,7 +26358,7 @@ function scResultHTML(d){
               + esc(d.w) + '">' + esc(d.t) + '</span></td>'; })()
         + '</tr>';
     }).join('');
-    return '<div class="ck-bands">' + cards + '</div>'
+    return cap + '<div class="ck-bands">' + cards + '</div>'
       + tbl(head + CLOCK_LEGEND, [{t:'Ticker',left:true},{t:'Off 12m high',left:true},'Off the low',
                    'Volume vs norm','Clock','In band','vs 200d','Reading'], body);
   }
