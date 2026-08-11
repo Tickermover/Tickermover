@@ -609,6 +609,16 @@ body.v2 #sectors-grid .smh-name{font-weight:800;font-size:12.5px;color:#0f172a!i
   font-family:'JetBrains Mono',monospace;font-size:11.5px;font-weight:700}
 #panel-clock .ck-band-r s b{color:#C74E00}
 #panel-clock .ck-band-r u b{color:#0E7C66}
+/* Rise-to-fall ratio. Neutral ink on purpose — this is the one number on the
+   page a reader could mistake for a rating, so it gets no green. */
+#panel-clock .ck-band-x{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;
+  margin-top:9px;padding-top:8px;border-top:1px solid #EFEDEA;font-size:11px;color:#5D6C7B;
+  cursor:help}
+#panel-clock .ck-band-x b{margin-left:auto;font-family:'JetBrains Mono',monospace;
+  font-size:12.5px;font-weight:700;color:#0A2F46}
+#panel-clock .ck-band-x i{flex-basis:100%;font-style:normal;font-family:'JetBrains Mono',monospace;
+  font-size:9.5px;font-weight:700;letter-spacing:.04em;color:#9AA6B2}
+#panel-clock .ck-band-x i.bl{color:#B4232A}
 
 /* Column-heading help marker + the one-line Clock explainer above the table. */
 #panel-clock .ck-q{display:inline-block;font-style:normal;font-family:'JetBrains Mono',monospace;
@@ -26229,14 +26239,36 @@ function scResultHTML(d){
   /* 4. EVERY NAME — post-crash only, so the categories describe one population */
   function viewBands(){
     var rows = (D.rows || []).filter(function(r){ return r.in_cycle; });
+    // Rise-to-fall, and the same figure for all shares. Shown side by side
+    // because the two rates above invite reading the flattering one alone:
+    // Damaged has the second-highest rise rate on the page and still lands
+    // BELOW the all-shares ratio once its fall rate is counted. A reader who
+    // only sees "rose 30% — 44%" cannot know that.
+    var _ratio = function(x){
+      return (x && x.rise != null && x.fall) ? (x.rise / x.fall) : null;
+    };
+    var _blR = _ratio(D.baseline);
     var cards = D.order.map(function(b){
       var n = rows.filter(function(r){ return r.band === b; }).length;
       var r = (D.rates.cycle && D.rates.cycle[b]) || {};
+      var ra = _ratio(r);
+      // Deliberately NOT coloured green/red. It is a comparison, not a verdict,
+      // and a green ratio on this page would read as a buy rating — the exact
+      // thing the bands must never become.
+      var cmp = (ra != null && _blR)
+        ? '<i class="' + (ra >= _blR ? 'ab' : 'bl') + '">' + (ra >= _blR ? '▲' : '▼')
+          + ' vs ' + _blR.toFixed(2) + '× all shares</i>'
+        : '';
       return '<button class="ck-band' + (band===b?' on':'') + '" data-b="' + esc(b) + '">'
         + '<div class="ck-band-n"><b>' + esc(b) + '</b><i>' + n + '</i></div>'
         + '<div class="ck-band-r"><em>Over the next 6 months, historically</em>'
         + '<s>Fell another 30%<b>' + pc(r.fall) + '</b></s>'
-        + '<u>Rose 30%<b>' + pc(r.rise) + '</b></u></div></button>';
+        + '<u>Rose 30%<b>' + pc(r.rise) + '</b></u></div>'
+        + '<div class="ck-band-x" title="Times as many readings rose 30% as fell 30%, from this '
+          + 'band. Above 1 means rises outnumbered falls. It says nothing about the SIZE of '
+          + 'either move, and it is a past frequency, not a forecast.">'
+          + '<span>Rose : fell</span><b>' + (ra == null ? '—' : ra.toFixed(2) + '×') + '</b>'
+          + cmp + '</div></button>';
     }).join('');
     // Most damaged first. People come to this page to see who is wrecked;
     // ordering by the clock score buried them under names that had already
@@ -26250,7 +26282,20 @@ function scResultHTML(d){
       + 'one population rather than mixing wrecks with names that never fell. Historically '
       + pc(r0.fall) + ' of readings in this band saw a 30% fall over the following six months and '
       + pc(r0.rise) + ' saw a 30% rise — against ' + pc(D.baseline.fall) + ' and '
-      + pc(D.baseline.rise) + ' for all shares in any band.</p></div>';
+      + pc(D.baseline.rise) + ' for all shares in any band.'
+      + (function(){
+          // Say the comparison out loud. Both rates are on the page already,
+          // but a reader has to divide them to see whether this band was
+          // better or worse compensated than the market — and the answer is
+          // counter-intuitive for the band most people click first.
+          if (!(r0.rise != null && r0.fall && D.baseline.rise != null && D.baseline.fall)) return '';
+          var ra = r0.rise / r0.fall, bl = D.baseline.rise / D.baseline.fall;
+          return ' That is <b>' + ra.toFixed(2) + ' rises for every fall</b>, against '
+            + bl.toFixed(2) + ' across all shares — '
+            + (ra >= bl ? 'a wider gap than the market.' : 'a <b>narrower</b> gap than the market, '
+               + 'even where the rise rate on its own looks high.');
+        })()
+      + '</p></div>';
     if (!sel.length) return '<div class="ck-bands">' + cards + '</div>' + tbl(head, ['Ticker'], '');
     var body = sel.map(function(r){
       var tn = tone(r.band);
