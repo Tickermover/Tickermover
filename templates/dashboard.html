@@ -26037,41 +26037,66 @@ function scResultHTML(d){
     if (typeof fn === 'function'){ try { fn(t); return; } catch(e){} }
     console.warn('crowd clock: no drawer opener for', t);
   }
-  /* THE READING. The band already names the state; this says what the state
-     means for someone holding the share, from THAT ROW's own numbers — not
-     the band average, or it would just be the band label again. Ordered:
-     the loudest fact about a share wins. */
+  /* THE READING = BAND x DAMAGE.
+
+     It must never re-derive what the Band already decided. It used to: it made
+     its own attention call from `crowd` on a 0.95 cut while the band had
+     already ruled on the same fact, so RMD came out banded "Ignored" and read
+     "Damaged, watched" — two classifiers on one row disagreeing over a 0.05
+     threshold. It also let one rule (run >= 1.0) swamp everything, so a
+     Crowded name and a Noticed one both read "Move mostly done" and the
+     Reading looked blind to the Band.
+
+     The two are orthogonal, and that is the whole point. The clock score is
+     0.40 x run off the low + 0.35 x volume + 0.25 x distance above the 200-day
+     — distance BELOW the 12-month high is not in it. So the Band says how far
+     through the attention cycle a share is, and damage says how much of the
+     fall is still unrepaired. The Reading is the cell where they meet, and a
+     Crowded name still 40% down is a genuinely different animal from a Crowded
+     name back at its highs. */
+  var CK_CYCLE = {Damaged:0, Ignored:1, Quiet:2, Noticed:3, Busy:4, Crowded:5};
+
   function ckReading(r){
-    var crowd = r.crowd, dmg = r.damage, run = r.run, str = r.stretch;
-    if (crowd != null && crowd >= 1.5) return {k:'bad', t:'Crowd is here',
-      w:'Trading is ' + crowd.toFixed(2) + '× its own normal volume. The attention has already '
-        + 'arrived — which is the late half of the cycle this page exists to point out.'};
-    if (run != null && run >= 1.0) return {k:'warn', t:'Move mostly done',
-      w:'Already up ' + (run*100).toFixed(0) + '% from its low. Whatever the recovery was, most '
-        + 'of it has happened; you are not early here.'};
-    if (dmg != null && dmg >= -0.08) return {k:'neu', t:'Back at highs',
-      w:'Trading within ' + Math.abs(dmg*100).toFixed(0) + '% of its 12-month high. Nothing is '
-        + 'broken about this one — it is simply not a wreck.'};
-    // Thresholds are set against THIS population, not a generic one. Every name
-    // here already fell 40%+ at some point and most have recovered a long way,
-    // so a -20% drawdown is an ordinary reading rather than a rare one. At a
-    // flat -0.30 the ladder fell through to "Unremarkable" on the majority of
-    // the Ignored band — a badge that says nothing is worse than no badge.
-    if (crowd != null && crowd <= 1.0 && dmg != null && dmg <= -0.35) return {k:'ok', t:'Deep, unwatched',
-      w:'Down ' + Math.abs(dmg*100).toFixed(0) + '% from its high on ' + crowd.toFixed(2) + '× normal '
-        + 'volume — badly damaged, and the crowd is not here yet. The earliest part of the cycle, '
-        + 'which is a place to start research, not a signal to buy.'};
-    if (crowd != null && crowd <= 0.95 && dmg != null && dmg <= -0.15) return {k:'ok', t:'Quietly damaged',
-      w:'Down ' + Math.abs(dmg*100).toFixed(0) + '% from its high, trading at ' + crowd.toFixed(2)
-        + '× its own normal volume — the damage is real and almost nobody is watching it.'};
-    if (str != null && str >= 0.30) return {k:'warn', t:'Extended',
-      w:'Trading ' + (str*100).toFixed(0) + '% above its own 200-day average price — stretched '
-        + 'against its own trend.'};
-    if (dmg != null && dmg <= -0.15) return {k:'neu', t:'Damaged, watched',
-      w:'Down ' + Math.abs(dmg*100).toFixed(0) + '% from its 12-month high on roughly normal volume. '
-        + 'The damage is real, and the market is already paying it ordinary attention.'};
-    return {k:'neu', t:'Middle of the pack',
-      w:'Part-way back from its fall, on normal volume — nothing extreme in either direction.'};
+    var pos = CK_CYCLE[r.band];
+    var dmg = r.damage;
+    if (pos == null || dmg == null || isNaN(dmg)) return {k:'neu', t:'Not enough data',
+      w:'We do not hold both a band and a 12-month-high reading for this share.'};
+    var phase = pos <= 1 ? 'early' : pos <= 3 ? 'mid' : 'late';
+    var depth = dmg <= -0.30 ? 'deep' : dmg > -0.12 ? 'light' : 'mod';
+    var down  = Math.abs(dmg * 100).toFixed(0) + '%';
+    var band  = r.band;
+
+    var M = {
+      'early|deep': {k:'ok', t:'Broken, unwatched',
+        w:'Still ' + down + ' below its 12-month high, and the band says the crowd has not '
+          + 'arrived. The earliest corner of the cycle — a place to start research, not a '
+          + 'signal to buy.'},
+      'early|mod': {k:'ok', t:'Quietly damaged',
+        w:down + ' of the fall is unrepaired and attention is still low (' + band + '). The '
+          + 'damage is real and few people are looking at it.'},
+      'early|light': {k:'neu', t:'Quiet, intact',
+        w:'Only ' + down + ' below its high despite reading ' + band + '. Little damage left '
+          + 'to repair — it is calm rather than wrecked.'},
+      'mid|deep': {k:'neu', t:'Repairing, watched',
+        w:'Still ' + down + ' down, but the band has moved to ' + band + ' — the recovery is '
+          + 'under way and people have started to notice.'},
+      'mid|mod': {k:'neu', t:'Half-way back',
+        w:down + ' below its high and reading ' + band + '. Part of the fall repaired, part '
+          + 'of the attention returned.'},
+      'mid|light': {k:'neu', t:'Recovered, calm',
+        w:'Within ' + down + ' of its high on ' + band + ' attention. The fall is essentially '
+          + 'mended and nothing about it is loud.'},
+      'late|deep': {k:'warn', t:'Crowd in, damage left',
+        w:'Reading ' + band + ' — the volume is here — yet it is still ' + down + ' below its '
+          + 'high. Attention has arrived well before the damage is repaired.'},
+      'late|mod': {k:'warn', t:'Crowd in, part repaired',
+        w:'Reading ' + band + ' with ' + down + ' of the fall still outstanding. The busy half '
+          + 'of the cycle, on a share that has not fully recovered.'},
+      'late|light': {k:'bad', t:'Late, fully repaired',
+        w:'Back within ' + down + ' of its high AND reading ' + band + '. Both the recovery '
+          + 'and the attention have already happened — the latest point on this page.'}
+    };
+    return M[phase + '|' + depth];
   }
 
   /* Plain-English for every column whose name is jargon. Headings like CLOCK
