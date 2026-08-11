@@ -929,12 +929,23 @@ h1.title{font-size:clamp(34px,5.6vw,54px);line-height:1.03;letter-spacing:-.022e
     var fig = document.getElementById("hero-art");
     var img = document.getElementById("hero-art-img");
     if(!fig || !img) return;
-    img.onerror = function(){ fig.remove(); };
-    img.onload  = function(){ fig.style.display = ""; };
+    // ORDER MATTERS. Setting source.srcset makes <picture> re-run its selection
+    // algorithm, and if the <img> has no src yet that intermediate state fires
+    // an error event. With the handlers attached first, that phantom error tore
+    // the figure out of the DOM before the real src was even assigned — the
+    // image then loaded perfectly into a detached node. Sources first, handlers
+    // last, and a cache-hit check because a cached image can finish loading
+    // before the handlers exist.
     var base = "/static/chain-art/" + encodeURIComponent(slug);
     var wsrc = document.getElementById("hero-art-webp");
     if(wsrc) wsrc.srcset = base + ".webp";   // 213KB against a 2MB PNG
     img.src = base + ".png";
+    function show(){ fig.style.display = ""; }
+    if(img.complete && img.naturalWidth > 0){ show(); }
+    else {
+      img.onload  = show;
+      img.onerror = function(){ fig.remove(); };
+    }
   })();
 
   fetch("/api/thesis-map/"+encodeURIComponent(slug)+"?v=2")
