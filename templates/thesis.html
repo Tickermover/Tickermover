@@ -528,7 +528,11 @@ h1.title{font-size:clamp(34px,5.6vw,54px);line-height:1.03;letter-spacing:-.022e
     <div class="hero-art-crop">
       <picture>
         <source id="hero-art-webp" type="image/webp">
-        <img id="hero-art-img" alt="How hyperscaler AI capex flows through the supplier chain" loading="lazy">
+        <!-- NOT loading="lazy": this figure starts display:none and reveals on
+             load, and a lazy image inside a hidden element never intersects the
+             viewport, so it never loads, so onload never fires and the figure
+             never appears. It is also the hero — deferring it delays LCP. -->
+        <img id="hero-art-img" alt="How hyperscaler AI capex flows through the supplier chain" decoding="async">
       </picture>
     </div>
     <figcaption id="hero-art-cap"></figcaption>
