@@ -507,6 +507,24 @@ h1.title{font-size:clamp(34px,5.6vw,54px);line-height:1.03;letter-spacing:-.022e
 
   <div class="money" id="money" style="display:none"></div>
 
+  <!-- Hero infographic. One file per map, named by slug, so adding art to a
+       chain map is dropping a file in - no code change. The slot removes
+       itself when the file is absent, so a map without art is not a broken
+       image. -->
+  <figure class="hero-art" id="hero-art" style="display:none">
+    <div class="hero-art-crop">
+      <picture>
+        <source id="hero-art-webp" type="image/webp">
+        <!-- NOT loading="lazy": this figure starts display:none and reveals on
+             load, and a lazy image inside a hidden element never intersects the
+             viewport, so it never loads, so onload never fires and the figure
+             never appears. It is also the hero - deferring it delays LCP. -->
+        <img id="hero-art-img" alt="How the spending in this chain flows through its suppliers" decoding="async">
+      </picture>
+    </div>
+    <figcaption id="hero-art-cap"></figcaption>
+  </figure>
+
   <div class="movers" id="movers" style="display:none">
     <div class="movers-h"><b>Who captured it — and what the market paid</b><span id="movers-sub"></span></div>
     <div id="movers-list"></div>
