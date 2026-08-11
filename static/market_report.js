@@ -542,6 +542,11 @@ window.MarketReport = (function () {
       return `<div class="ma-verdict">` +
         `<div class="big">${aiTag()}${v.headline}</div>` +
         (v.what_it_means ? `<div class="kv">${String(v.what_it_means).replace(/\n/g, '<br>')}</div>` : '') +
+        (Array.isArray(v.evidence) && v.evidence.length
+          ? `<div class="ma-ev"><div class="ma-ev-k">The evidence</div><ul>` +
+            v.evidence.slice(0, 4).map(function (e) { return `<li>${e}</li>`; }).join('') +
+            `</ul></div>` : '') +
+        (v.counter_case ? `<div class="ma-ctr"><span class="ma-ctr-k">The other side</span> ${v.counter_case}</div>` : '') +
         (v.what_changes_view ? `<div class="kv" style="margin-top:8px"><b>What would change our view:</b> ${v.what_changes_view}</div>` : '') +
         (keyLvl != null ? `<div class="kv" style="margin-top:8px"><b>Key level to watch:</b> SPY $${N(keyLvl, 2)} (20-day line).</div>` : '') +
         `<div class="ma-conf ${cfCls}">Confidence: ${v.confidence || 'Medium'}</div>` +

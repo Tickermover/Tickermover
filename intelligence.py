@@ -898,7 +898,7 @@ class MarketAnalysis:
                     },
                     json={
                         "model":      use_model,
-                        "max_tokens": 1500,   # once/day now — room for the editorial bullets
+                        "max_tokens": 2200,   # once/day; +evidence bullets and counter-case
                         "messages":   [{"role": "user", "content": prompt}],
                     },
                 )
@@ -1166,7 +1166,21 @@ class MarketAnalysis:
             'trigger that would flip this read — a level, a catalyst, or a data '
             'print (e.g. \'A close back above the 20-day line, or a soft PCE print, '
             'would reset the tone to constructive\').",\n'
-            '    "confidence": "High | Medium | Low"\n'
+            # Depth is the WORKING, not more adjectives. Evidence forces the
+            # read to be traceable to named figures, and the counter-case puts
+            # the other side on the page instead of leaving a reader to find
+            # it. A verdict nobody can argue with is not analysis.
+            '    "evidence": ["2 to 3 bullets, each naming the SPECIFIC figure or '
+            'report driving the read and what it implies. Where a cause comes from '
+            'the web block, cite it inline as [W1]. Never a bullet without a number '
+            'or a named source."],\n'
+            '    "counter_case": "1-2 sentences putting the STRONGEST argument '
+            'against this read - what a reader who disagreed would point to, stated '
+            'fairly and with its own figure. Not hedging filler like \'markets can '
+            'always change\'; if the data genuinely points one way, say what would '
+            'have to be true for it not to.",\n'
+            '    "confidence": "High | Medium | Low - Low unless the evidence '
+            'bullets genuinely agree with one another"\n'
             "  }\n"
             "}"
         )

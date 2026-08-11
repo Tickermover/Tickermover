@@ -225,3 +225,17 @@
   color:#14587D;text-decoration:none;background:#F4F7FB;border:1px solid #E1E9F2;
   border-radius:100px;padding:3px 9px;white-space:nowrap}
 .ma-src:hover{background:#E8F0F9;border-color:#C9D9EA;color:#0A2F46}
+
+/* The working behind the verdict. "Depth" is a traceable chain of figures and
+   a fairly-stated opposing case — not a longer paragraph. The counter-case is
+   deliberately styled as a peer of the evidence, not a footnote: a verdict
+   nobody can argue with is not analysis. */
+.ma-ev{margin-top:12px;padding-top:11px;border-top:1px solid #EDEAE6}
+.ma-ev-k,.ma-ctr-k{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:9px;
+  font-weight:700;letter-spacing:.11em;text-transform:uppercase;color:#9AA6B2}
+.ma-ev ul{margin:7px 0 0;padding:0 0 0 17px}
+.ma-ev li{font-size:13px;line-height:1.6;color:#334155;margin:0 0 4px}
+.ma-ev li::marker{color:#C9CFEA}
+.ma-ctr{margin-top:11px;padding:10px 13px;border-radius:10px;background:#FBFAF8;
+  border:1px solid #EDEAE6;font-size:13px;line-height:1.6;color:#475569}
+.ma-ctr-k{display:block;margin-bottom:3px;color:#A16207}
