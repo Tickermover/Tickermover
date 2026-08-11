@@ -84,6 +84,27 @@
 </script>
 <style>
 :root{
+  /* ══ SEVERITY RAMP — one scale, used by every panel ════════════════════
+     Before this, "severity" was expressed in five different greens
+     (#0E7C66 #15803d #16a34a), four ambers and three reds depending on which
+     panel you were looking at, so the same level of concern changed colour as
+     you moved between tabs.
+
+     It encodes RISK AND LATENESS, never opportunity. Red means more risk or
+     later in a cycle; green means less. Green is NOT "buy" and red is NOT
+     "sell" — the research behind Hype Check found returns unpredictable and
+     risk predictable, so this scale only claims the half that held up.
+
+     Deliberately teal-green, NOT the #16a34a used for a price rising today.
+     Those are different claims and they were starting to share a hue: a green
+     severity chip beside a green +0.7% read as one statement when it is two.
+     Direction colours (#16a34a / #ea384c) are untouched. */
+  --sev-lo:#0E7C66;   --sev-lo-bg:rgba(14,124,102,.08);
+  --sev-mid:#A16207;  --sev-mid-bg:rgba(161,98,7,.09);
+  --sev-hi:#C74E00;   --sev-hi-bg:rgba(199,78,0,.08);
+  --sev-max:#B4232A;  --sev-max-bg:rgba(180,35,42,.08);
+  --sev-neu:#5D6C7B;  --sev-neu-bg:rgba(93,108,123,.07);   /* ordinary, not a severity */
+  --sev-na:#8A97A4;   --sev-na-bg:rgba(138,151,164,.07);   /* unknown / not looked up */
   /* ── BLACK & GOLD ELEGANCE — Black ground × Amber accents × Light cards ─
      Cards stay light/ivory because dashboards are dense tables and need
      maximum readability. Body background flips to pure black with subtle
@@ -528,11 +549,11 @@ body.v2 #sectors-grid .smh-name{font-weight:800;font-size:12.5px;color:#0f172a!i
 #panel-guard .gd-rd{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:9.5px;
   font-weight:700;letter-spacing:.05em;padding:3px 9px;border-radius:100px;white-space:nowrap;
   border:1px solid currentColor;cursor:help}
-#panel-guard .gd-rd-bad{color:#B4232A;background:rgba(180,35,42,.07)}
-#panel-guard .gd-rd-warn{color:#A16207;background:rgba(161,98,7,.08)}
-#panel-guard .gd-rd-neu{color:#5D6C7B;background:rgba(93,108,123,.07)}
-#panel-guard .gd-rd-ok{color:#0E7C66;background:rgba(14,124,102,.07)}
-#panel-guard .gd-rd-chk{color:#8A97A4;background:rgba(138,151,164,.07)}
+#panel-guard .gd-rd-bad{color:var(--sev-max);background:var(--sev-max-bg)}
+#panel-guard .gd-rd-warn{color:var(--sev-mid);background:var(--sev-mid-bg)}
+#panel-guard .gd-rd-neu{color:var(--sev-neu);background:var(--sev-neu-bg)}
+#panel-guard .gd-rd-ok{color:var(--sev-lo);background:var(--sev-lo-bg)}
+#panel-guard .gd-rd-chk{color:var(--sev-na);background:var(--sev-na-bg)}
 #panel-guard .gd-rd-c{text-align:right}
 #panel-guard .gd-key{margin:13px 0 0;padding:12px 0 0;border-top:1px solid #EDEAE6;font-size:12.5px}
 #panel-guard .gd-scroll{overflow-x:auto;overflow-y:auto;max-height:min(62vh,700px)}
@@ -544,9 +565,9 @@ body.v2 #sectors-grid .smh-name{font-weight:800;font-size:12.5px;color:#0f172a!i
 #panel-guard tbody tr:hover td{background:#FBFAF8}
 #panel-guard .gd-tk{font-family:var(--font-body,inherit);font-weight:600}
 #panel-guard .gd-sub{font-family:var(--font-body,inherit);font-size:11px;color:#8A97A4;font-weight:400}
-#panel-guard .gd-hot{color:#C74E00;font-weight:700}
-#panel-guard .gd-warm{color:#A16207;font-weight:700}
-#panel-guard .gd-cool{color:#0E7C66}
+#panel-guard .gd-hot{color:var(--sev-hi);font-weight:700}
+#panel-guard .gd-warm{color:var(--sev-mid);font-weight:700}
+#panel-guard .gd-cool{color:var(--sev-lo)}
 #panel-guard .gd-tag{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.06em;padding:2px 7px;border-radius:4px;color:#C74E00;background:rgba(199,78,0,.09)}
 #panel-guard .gd-state{padding:44px 20px;text-align:center;color:#5D6C7B;font-size:13.5px}
 #panel-guard .gd-prog{width:min(320px,70%);height:6px;border-radius:3px;background:#EDEAE6;margin:14px auto 0;overflow:hidden}
@@ -638,10 +659,10 @@ body.v2 #sectors-grid .smh-name{font-weight:800;font-size:12.5px;color:#0f172a!i
 #panel-clock .ck-rd{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:9.5px;
   font-weight:700;letter-spacing:.05em;padding:3px 9px;border-radius:100px;white-space:nowrap;
   border:1px solid currentColor;cursor:help}
-#panel-clock .ck-rd-bad{color:#B4232A;background:rgba(180,35,42,.07)}
-#panel-clock .ck-rd-warn{color:#A16207;background:rgba(161,98,7,.08)}
-#panel-clock .ck-rd-neu{color:#5D6C7B;background:rgba(93,108,123,.07)}
-#panel-clock .ck-rd-ok{color:#0E7C66;background:rgba(14,124,102,.07)}
+#panel-clock .ck-rd-bad{color:var(--sev-max);background:var(--sev-max-bg)}
+#panel-clock .ck-rd-warn{color:var(--sev-mid);background:var(--sev-mid-bg)}
+#panel-clock .ck-rd-neu{color:var(--sev-neu);background:var(--sev-neu-bg)}
+#panel-clock .ck-rd-ok{color:var(--sev-lo);background:var(--sev-lo-bg)}
 #panel-clock .ck-rd-c{text-align:right}
 /* Damage bar. This column is the reason people open the page, so it is the
    one thing on the row that is drawn rather than merely printed. */
@@ -651,9 +672,9 @@ body.v2 #sectors-grid .smh-name{font-weight:800;font-size:12.5px;color:#0f172a!i
   background:#EDEAE6;overflow:hidden;flex:none}
 #panel-clock .ck-dmg-bar i{display:block;height:100%;border-radius:100px;background:currentColor}
 #panel-clock .ck-dmg b{font-family:'JetBrains Mono',monospace;font-size:12.5px;font-weight:700}
-#panel-clock .ck-dmg-hi{color:#B4232A}
-#panel-clock .ck-dmg-mid{color:#C74E00}
-#panel-clock .ck-dmg-lo{color:#8A97A4}
+#panel-clock .ck-dmg-hi{color:var(--sev-max)}
+#panel-clock .ck-dmg-mid{color:var(--sev-hi)}
+#panel-clock .ck-dmg-lo{color:var(--sev-na)}
 #panel-clock .ck-wrap{border:1px solid #E4E7EC;border-radius:18px;background:#fff;overflow:hidden}
 #panel-clock .ck-wrap-h{padding:16px 20px 14px;border-bottom:1px solid #EDEAE6;background:#FBFAF8}
 #panel-clock .ck-wrap-h h3{font-size:17px;font-weight:600;letter-spacing:-.015em;color:#0A2F46;margin:0 0 5px}
@@ -6622,11 +6643,11 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 #ts-drawer .reb-row .reb-bar{flex:1;margin:0}
 /* signal badge colors (override the global grey catch-all) */
 #ts-drawer .badge{padding:2px 9px;border-radius:100px;font-size:10.5px;font-weight:800;letter-spacing:.02em;border:1px solid transparent;white-space:nowrap}
-#ts-drawer .badge.ok{background:rgba(22,163,74,.13);color:#15803d;border-color:rgba(22,163,74,.32)}
-#ts-drawer .badge.warn{background:rgba(245,166,35,.16);color:#b4780a;border-color:rgba(245,166,35,.38)}
-#ts-drawer .badge.bad{background:rgba(234,56,76,.12);color:#b91c1c;border-color:rgba(234,56,76,.32)}
+#ts-drawer .badge.ok{background:var(--sev-lo-bg);color:var(--sev-lo);border-color:rgba(14,124,102,.30)}
+#ts-drawer .badge.warn{background:var(--sev-mid-bg);color:var(--sev-mid);border-color:rgba(161,98,7,.32)}
+#ts-drawer .badge.bad{background:var(--sev-max-bg);color:var(--sev-max);border-color:rgba(180,35,42,.30)}
 #ts-drawer .badge.info{background:rgba(41,112,255,.12);color:#0040c1;border-color:rgba(41,112,255,.32)}
-#ts-drawer .badge.neu{background:rgba(100,116,139,.15);color:#475569;border-color:rgba(100,116,139,.3)}
+#ts-drawer .badge.neu{background:var(--sev-neu-bg);color:var(--sev-neu);border-color:rgba(93,108,123,.28)}
 #ts-drawer .badge.na{background:rgba(148,163,184,.10);color:#94a3b8;border-color:rgba(148,163,184,.24);font-weight:700}
 #ts-drawer td .na-v{color:#b6c0cd;font-weight:600}
 /* Report tables (Financial health / Valuation vs sector / etc): fit the card so
