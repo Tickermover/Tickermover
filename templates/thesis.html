@@ -264,28 +264,18 @@ h1.title{font-size:clamp(34px,5.6vw,54px);line-height:1.03;letter-spacing:-.022e
 .hero-art figcaption{font-size:11.5px;line-height:1.5;color:var(--faint);padding:9px 16px 11px;
   border-top:1px solid var(--line)}
 @media(max-width:640px){.hero-art figcaption{font-size:11px;padding:8px 12px 10px}}
-/* The flow diagram. */
-.flow{background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px 20px 10px;margin:0 0 18px}
-.flow-h{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin:0 0 6px}
-.flow-h b{font-size:16px;color:#0A2F46;letter-spacing:-.01em}
-.flow-h span{font-size:12.5px;color:var(--faint)}
-.flow-svg svg{display:block;width:100%;height:auto}
-/* Type carries the hierarchy: layer name in its own hue, the figure in mono at
-   display size, constituents in tracked mono beneath. Grey was the reason this
-   read flat — everything that can take the layer's colour now does. */
-.flow-svg .fl-name{font:600 15px/1 var(--body);letter-spacing:-.012em}
-.flow-svg .fl-pct{font:700 19px/1 var(--mono);letter-spacing:-.02em;font-variant-numeric:tabular-nums}
-.flow-svg .fl-sub{font:600 11.5px/1 var(--mono);letter-spacing:.13em;opacity:.72}
-.flow-svg .fl-lag{font:700 10.5px/1 var(--mono);letter-spacing:.1em}
-.flow-svg .fl-cap{font:700 10px/1 var(--mono);fill:#9AA6B2;letter-spacing:.14em}
-.flow-svg .fl-foot{font:400 10.5px/1 ui-sans-serif,system-ui,sans-serif;fill:#9AA6B2}
-.flow-svg .fl-band{transition:opacity .15s}
-.flow-svg svg:hover .fl-band{opacity:.62}
-.flow-svg svg .fl-band:hover{opacity:1}
-@media(max-width:640px){.flow{padding:14px 12px 8px}.flow-h b{font-size:15px}}
-.stale{margin:0 0 14px;padding:9px 13px;border-radius:10px;font-size:12.5px;line-height:1.55;
-  color:#8A5A00;background:#FDF6E7;border:1px solid #F2E2BE}
-.stale b{color:#6B4500;font-weight:700}
+.cap-head,.cap-row{display:grid;grid-template-columns:150px 1fr;align-items:center;gap:14px;padding:5px 0}
+.cap-head.has-ret,.cap-row.has-ret,.cap-row.has-ret+.cap-head{grid-template-columns:150px 1fr 92px}
+.cap-head{grid-template-columns:150px 1fr 92px;font-family:var(--mono);font-size:9px;font-weight:700;
+  letter-spacing:.11em;text-transform:uppercase;color:var(--faint);padding-bottom:7px;
+  border-bottom:1px solid var(--line);margin-bottom:4px}
+.cap-head span:last-child,.cap-row .cap-ret{text-align:right}
+.cap-share{display:flex;align-items:center;gap:10px;min-width:0}
+.cap-share .mv-track{flex:1}
+.cap-share b{font-family:var(--mono);font-size:12.5px;font-weight:700;color:var(--ink);min-width:38px;text-align:right}
+.cap-ret{font-family:var(--mono);font-size:12.5px;font-weight:700}
+.cap-ret.na{color:var(--faint)}
+@media(max-width:640px){.cap-head,.cap-row,.cap-head.has-ret,.cap-row.has-ret{grid-template-columns:96px 1fr 66px;gap:8px}}
 .cc-line{margin:22px 0 0;font-size:12px}
 .cc-line a{color:#8A97A4;text-decoration:none;border-bottom:1px solid rgba(138,151,164,.35)}
 .cc-line a:hover{color:#3F4E5E;border-bottom-color:#3F4E5E}
@@ -517,37 +507,8 @@ h1.title{font-size:clamp(34px,5.6vw,54px);line-height:1.03;letter-spacing:-.022e
 
   <div class="money" id="money" style="display:none"></div>
 
-  <!-- The map as a drawing. Everything below it is the same data as a list;
-       this is the one view that shows the SHAPE — one dollar entering, six
-       layers catching wildly unequal pieces of it, later and later. -->
-  <!-- Hero infographic. One file per map, named by slug, so adding art to a
-       chain map is dropping a file in - no code change. The slot removes
-       itself when the file is absent, so a map without art is not a broken
-       image. -->
-  <figure class="hero-art" id="hero-art" style="display:none">
-    <div class="hero-art-crop">
-      <picture>
-        <source id="hero-art-webp" type="image/webp">
-        <!-- NOT loading="lazy": this figure starts display:none and reveals on
-             load, and a lazy image inside a hidden element never intersects the
-             viewport, so it never loads, so onload never fires and the figure
-             never appears. It is also the hero — deferring it delays LCP. -->
-        <img id="hero-art-img" alt="How hyperscaler AI capex flows through the supplier chain" decoding="async">
-      </picture>
-    </div>
-    <figcaption id="hero-art-cap"></figcaption>
-  </figure>
-
-  <div class="flow" id="flow" style="display:none">
-    <div class="flow-h">
-      <b>How one capex dollar splits</b>
-      <span>Band height ∝ share of landed value · left to right is how late it arrives</span>
-    </div>
-    <div class="flow-svg" id="flow-svg"></div>
-  </div>
-
   <div class="movers" id="movers" style="display:none">
-    <div class="movers-h"><b>Biggest share of landed value</b><span id="movers-sub"></span></div>
+    <div class="movers-h"><b>Who captured it — and what the market paid</b><span id="movers-sub"></span></div>
     <div id="movers-list"></div>
   </div>
 
@@ -784,10 +745,54 @@ h1.title{font-size:clamp(34px,5.6vw,54px);line-height:1.03;letter-spacing:-.022e
               '<span class="mv-val '+(pos?"pos-t":"neg-t")+'">'+(pos?"+":"")+r.avg.toFixed(1)+'%</span></div>';
           }).join("") + '<div style="height:20px"></div>';
       }
-      el.innerHTML = trend +
-        '<div class="winners-h"><b>Who’s gained so far</b><span>'+up+' of '+cos.length+' names up · 3-month return, live</span></div>'+ rows;
-      el.style.display = "";
+      // The company-level list is gone: it and "Biggest share of landed value"
+      // were the same six-green-bars shape answering different questions, which
+      // is precisely why they read as one duplicated section. Returns now sit
+      // as a COLUMN beside the share they belong to - see mergeCaptureTable.
+      // Only the LAYER trend stays here; that is a different unit of analysis.
+      window.__ret3m = {}; window.__retUp = up; window.__retN = cos.length;
+      cos.forEach(function(c){ window.__ret3m[c.t] = c.ret_3m; });
+      mergeCaptureTable();
+      el.innerHTML = trend;
+      el.style.display = trend ? "" : "none";
     }).catch(function(){ el.style.display="none"; });
+  }
+
+  /* WHO CAPTURED IT, AND WHAT THE MARKET PAID.
+     Two lists used to sit here - share of landed value, then 3-month return -
+     six green bars each, ranked differently, so they read as the same section
+     twice. They are not the same question, and the interesting thing is the
+     GAP between them: a name can capture half the revenue and be up 12%, while
+     one capturing a fraction is up 60%. Cross-referencing two tables to see
+     that is work the page should do for the reader.
+
+     Runs from whichever half arrives first and re-runs when the other lands,
+     because share and returns come from two endpoints. */
+  function mergeCaptureTable(){
+    var listEl = document.getElementById("movers-list");
+    var rows = window.__capture;
+    if(!listEl || !rows) return;
+    var rets = window.__ret3m || null;
+    var sub = document.getElementById("movers-sub");
+    if(sub) sub.textContent = rets
+      ? "share of AI-attributable revenue vs 3-month price return"
+      : "by AI-attributable revenue · exposure-weighted estimate";
+    var maxS = window.__captureMax || 0.01;
+    listEl.innerHTML =
+      '<div class="cap-head"><span></span><span>Share of landed value</span>'
+      + (rets ? '<span>3-month return</span>' : '') + '</div>'
+      + rows.map(function(m,i){
+          var w = Math.max(2, m.share/maxS*100);
+          var rv = rets ? rets[m.t] : null;
+          var rc = rv == null ? '<span class="cap-ret na">—</span>'
+                 : '<span class="cap-ret '+(rv>=0?'pos-t':'neg-t')+'">'+(rv>=0?'+':'')+rv.toFixed(1)+'%</span>';
+          return '<div class="cap-row'+(rets?' has-ret':'')+'">'
+            + '<span class="mv-tk">'+esc(m.t)+'<small>'+esc(m.n)+(m.rev_est?' · est':'')+'</small></span>'
+            + '<span class="cap-share"><span class="mv-track"><span class="mv-fill pos" style="width:'
+              + w.toFixed(1)+'%;background:'+barCss(i,rows.length,true)+'"></span></span>'
+              + '<b>'+pctShare(m.share)+'</b></span>'
+            + (rets ? rc : '') + '</div>';
+        }).join("");
   }
 
   // Percent formatter for shares: whole number at/above 1%, one decimal below.
@@ -798,92 +803,6 @@ h1.title{font-size:clamp(34px,5.6vw,54px);line-height:1.03;letter-spacing:-.022e
   // Share of LANDED value — realized and descriptive. Fills the layer badges, the
   // layer/company share bars, and the leaderboard from /api/thesis-shares. No slider,
   // no forecast: every number is "who captures the spend today".
-  /* THE FLOW DIAGRAM.
-     A Sankey read left to right: one source (the capex dollar) fanning into
-     six layer bands. Band height encodes share of landed value, x-position
-     encodes lag, so the drawing says the two things the lists cannot — that
-     the split is wildly uneven, and that the small layers are also the late
-     ones. Each band still prints its exact percentage, because a floored
-     height is a readability compromise and the number is the truth. */
-  function drawFlow(d){
-    var host = document.getElementById("flow"), svgHost = document.getElementById("flow-svg");
-    if(!host || !svgHost) return;
-    var rows = (d.layers||[]).map(function(L,i){
-      var m = LAYERS[i] || {};
-      return { name:L.name||m.name||"", share:+L.share||0, lag:(m.lag==null?i:m.lag),
-               lagText:m.lagText||"", color:m.color||"var(--l"+(i+1)+")", names:(m.names||[]) };
-    }).filter(function(r){ return r.name; });
-    if(!rows.length) return;
-
-    // FLOOR is two text lines, not one: below that a band has room for its
-    // name but not for the companies in it, and a layer you cannot name the
-    // members of is the least useful row on the page.
-    var W = 1180, PADL = 116, PADR = 16, FLOOR = 54, SPARE = 250, GAP = 9;
-    // Floor + proportional. Without the floor a 1% layer is a 3px line with no
-    // room for its own name; without the proportional part the drawing would
-    // lie about a split that really is 80/20.
-    var heights = rows.map(function(r){ return FLOOR + r.share * SPARE; });
-    var H = heights.reduce(function(a,b){ return a+b; }, 0) + GAP*(rows.length-1);
-    var TOP = 54, BOT = 34, VB_H = H + TOP + BOT;
-    var srcX = PADL - 96, srcW = 26, bandX = PADL + 96, bandW = W - bandX - PADR;
-
-    function esc2(s){ return esc(s); }
-    var maxLag = Math.max.apply(null, rows.map(function(r){ return +r.lag||0; })) || 1;
-
-    var y = TOP, parts = [], ribbons = [], defs = [], sy = TOP;
-    rows.forEach(function(r, i){
-      var h = heights[i];
-      // the ribbon leaves the source at the same thickness it arrives
-      var x0 = srcX + srcW, x1 = bandX, mid = (x0 + x1) / 2;
-      ribbons.push('<path d="M'+x0+' '+sy+' C'+mid+' '+sy+' '+mid+' '+y+' '+x1+' '+y
-        + ' L'+x1+' '+(y+h)+' C'+mid+' '+(y+h)+' '+mid+' '+(sy+h)+' '+x0+' '+(sy+h)+' Z"'
-        + ' fill="url(#flg'+i+')"/>');
-      // Each ribbon carries its layer's colour, fading in from the source so
-      // the eye follows one hue out of the navy bar and into its band.
-      defs.push('<linearGradient id="flg'+i+'" x1="0" y1="0" x2="1" y2="0">'
-        + '<stop offset="0" stop-color="'+r.color+'" stop-opacity=".10"/>'
-        + '<stop offset="1" stop-color="'+r.color+'" stop-opacity=".42"/></linearGradient>');
-      defs.push('<linearGradient id="flb'+i+'" x1="0" y1="0" x2="1" y2="0">'
-        + '<stop offset="0" stop-color="'+r.color+'" stop-opacity=".26"/>'
-        + '<stop offset="1" stop-color="'+r.color+'" stop-opacity=".07"/></linearGradient>');
-
-      // how late this layer is, as a share of the width it can travel
-      var lagFrac = (+r.lag||0) / maxLag;
-      var bx = bandX + lagFrac * (bandW * 0.30);
-      var bw = bandW - (bx - bandX);
-      parts.push('<g class="fl-band">'
-        + '<rect x="'+bx+'" y="'+y+'" width="'+bw+'" height="'+h+'" rx="10" fill="url(#flb'+i+')"/>'
-        + '<rect x="'+bx+'" y="'+y+'" width="5" height="'+h+'" rx="2.5" fill="'+r.color+'"/>'
-        + '<text class="fl-name" x="'+(bx+18)+'" y="'+(y+24)+'" fill="'+r.color+'">'+esc2(r.name)+'</text>'
-        + '<text class="fl-pct" x="'+(bx+bw-16)+'" y="'+(y+26)+'" text-anchor="end" fill="'+r.color+'">'
-          + pctShare(r.share)+'</text>'
-        + '<text class="fl-sub" x="'+(bx+18)+'" y="'+(y+43)+'" fill="'+r.color+'">'
-          + esc2((r.names||[]).slice(0,6).map(function(c){ return c.t; }).join("   "))+'</text>'
-        + '</g>');
-
-      // lag rail on the left — a dot in the layer's own colour ties the two
-      parts.push('<circle cx="'+(PADL-8)+'" cy="'+(y+20)+'" r="3.5" fill="'+r.color+'"/>'
-        + '<text class="fl-lag" x="'+(PADL-19)+'" y="'+(y+24)+'" text-anchor="end" fill="'+r.color+'">'
-        + (r.lag===0 ? "NOW" : "+"+r.lag+"Q") + '</text>');
-
-      y += h + GAP; sy += h;
-    });
-
-    var srcH = sy - TOP;
-    var svg = '<svg viewBox="0 0 '+W+' '+VB_H+'" preserveAspectRatio="xMidYMin meet" role="img"'
-      + ' aria-label="Where each capex dollar lands, by layer">'
-      + '<defs>' + defs.join("") + '</defs>'
-      + '<text class="fl-cap" x="'+srcX+'" y="'+(TOP-18)+'">THE SPEND</text>'
-      + '<text class="fl-cap" x="'+bandX+'" y="'+(TOP-18)+'">WHERE IT LANDS &rarr; LATER</text>'
-      + ribbons.join("")
-      + '<rect x="'+srcX+'" y="'+TOP+'" width="'+srcW+'" height="'+srcH+'" rx="6" fill="#0A2F46"/>'
-      + parts.join("")
-      + '<text class="fl-foot" x="'+bandX+'" y="'+(VB_H-12)+'">Bands are floored so every layer stays '
-      + 'readable — the printed percentage is the exact figure.</text>'
-      + '</svg>';
-    svgHost.innerHTML = svg;
-    host.style.display = "";
-  }
 
   function loadShares(){
     fetch("/api/thesis-shares/"+encodeURIComponent(slug)).then(function(r){return r.json();}).then(function(d){
@@ -918,7 +837,6 @@ h1.title{font-size:clamp(34px,5.6vw,54px);line-height:1.03;letter-spacing:-.022e
         chip.textContent = (s==null? "" : pctShare(s));
         chip.className = "co-imp share-t";
       }); });
-      drawFlow(d);
       // The art carries baked figures; say when they were true. Same reason the
       // money card gained a staleness note - a drawing cannot re-cut itself.
       (function(){
@@ -934,13 +852,8 @@ h1.title{font-size:clamp(34px,5.6vw,54px);line-height:1.03;letter-spacing:-.022e
       if(subEl) subEl.textContent = "by AI-attributable revenue · exposure-weighted estimate";
       var top = (d.companies||[]).slice(0,6);
       var maxS = Math.max.apply(null, top.map(function(m){return m.share;}).concat([0.01]));
-      var listEl = document.getElementById("movers-list");
-      if(listEl) listEl.innerHTML = top.map(function(m,i){
-        var w = Math.max(2, m.share/maxS*100);
-        return '<div class="mv"><span class="mv-tk">'+esc(m.t)+'<small>'+esc(m.n)+(m.rev_est?' · est':'')+'</small></span>'+
-          '<span class="mv-track"><span class="mv-fill pos" style="width:'+w.toFixed(1)+'%;background:'+barCss(i,top.length,true)+'"></span></span>'+
-          '<span class="mv-val pos-t">'+pctShare(m.share)+'</span></div>';
-      }).join("");
+      window.__capture = top; window.__captureMax = maxS;
+      mergeCaptureTable();
       // ── insights strip: computed "what the split tells you" ──
       var cos = (d.companies||[]);
       var top3 = cos.slice(0,3).reduce(function(s,c){return s+c.share;},0);
