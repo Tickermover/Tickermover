@@ -278,28 +278,20 @@
           "after": "money",
           "accent": "#A16207",
           "dated": false,
-          "alt": "Bar showing roughly $500 billion of annual hyperscaler capex, of which about $356 billion is captured as revenue by the suppliers on this map.",
+          "alt": "Bar showing roughly $500B of annual capex, of which about $356B is captured as revenue by the suppliers on this map.",
           "cap": "Why the spend figure above and the supplier revenue below don't match. Drawn live from the same data as the panels."
         },
         {
-          "file": "ai-capex-chain-anatomy",
-          "after": "chain",
-          "accent": "#1F6FA8",
-          "dated": false,
-          "alt": "Rack diagram naming the six supplier layers — compute chips, memory, optical interconnect, signal and connectivity, switching and networking, and power and cooling — with what each does and who builds it.",
-          "cap": "What each layer physically does. Function only — the share of spend each captures is in the map above."
-        },
-        {
-          "file": "ai-capex-chain-concentration",
-          "after": "insights",
-          "accent": "#0a7d33",
-          "dated": false,
-          "alt": "Cumulative share curve showing how few companies account for most of the AI-attributable revenue in the chain.",
-          "cap": "How many names it takes to cover the chain. Owning several AI suppliers can still be one concentrated bet."
+          "file": "ai-capex-chain-landed-vs-moved",
+          "after": "beat-evidence",
+          "accent": "#C74E00",
+          "dated": true,
+          "alt": "Where the money lands is not where it moved — share of AI revenue captured by each layer against its three-month price return.",
+          "cap": "Revenue captured and price movement are different things. The smaller layers move more because the base is small, not because more money is arriving."
         },
         {
           "file": "ai-capex-chain-method",
-          "after": "winners",
+          "after": "beat-tension",
           "accent": "#4A5BC4",
           "dated": false,
           "alt": "Diagram of the share calculation — revenue times an AI exposure weight — beside a box listing four things the model cannot tell you.",
