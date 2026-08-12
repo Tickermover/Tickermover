@@ -992,15 +992,21 @@ h1.title{font-size:clamp(34px,5.6vw,54px);line-height:1.03;letter-spacing:-.022e
   }
 
   // Percent formatter for shares: whole number at/above 1%, one decimal below.
-  /* Every share here descends from a THREE-VALUE judgement — high 0.70,
-     moderate 0.35, low 0.12 — so a tenth of a percent is precision the input
-     cannot support. "0.5%" read as a measurement; it is an estimate of an
-     estimate. Whole percents above 1, and "<1%" below, which is the honest
-     resolution of the model. */
+  /* One decimal below 1%, whole percents above.
+
+     A previous pass collapsed everything under 1% to "<1%", reasoning that a
+     three-band input (0.70 / 0.35 / 0.12) cannot support tenths. That was
+     wrong in practice: TEN of the nineteen companies sit under 1%, so the
+     whole long tail — SNDK, COHR, FN, AAOI, CRDO, ALAB, CIEN, APLD, NBIS —
+     rendered as the same "<1%" chip and became indistinguishable. The
+     absolute value is an estimate, but the ORDERING between them is real
+     information, and 0.8% against 0.1% is an eightfold difference the reader
+     should see. Precision the model can't support is a caption problem, not a
+     rounding problem — the endnotes say the bands are the arguable part. */
   function pctShare(s){
     var v = (+s || 0) * 100;
-    if(v > 0 && v < 1) return "<1%";
-    return v.toFixed(0) + "%";
+    if(v <= 0) return "0%";
+    return (v >= 1 ? v.toFixed(0) : v.toFixed(1)) + "%";
   }
   // Compact USD for AI-attributable revenue dollars.
   function fmtB(n){ n=+n||0; if(n>=1e12) return "$"+(n/1e12).toFixed(1)+"T"; if(n>=1e9) return "$"+(n/1e9).toFixed(n>=1e10?0:1)+"B"; if(n>=1e6) return "$"+(n/1e6).toFixed(0)+"M"; return "$"+Math.round(n); }
