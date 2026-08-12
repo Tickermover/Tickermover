@@ -20653,54 +20653,28 @@ async function authInit() {
     _authUpdateUI(stored);
   }
 
-  // Try to refresh token first if we have a refresh token
-  // This is the primary way to keep sessions alive across browser restarts
+  // Refresh a stale/expired stored token before anything uses it — this is the
+  // primary way sessions survive browser restarts. _authDoRefresh signs out
+  // ONLY on a definitive 400 (refresh token genuinely dead); a transient
+  // failure keeps the session so a blip can't log the user out.
   if (_AUTH.refresh) {
-    try {
-      const r = await fetch('/api/auth/refresh', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ refresh_token: _AUTH.refresh }),
-      });
-      if (r.ok) {
-        const d = await r.json();
-        if (d.access_token) {
-          _AUTH.token   = d.access_token;
-          _AUTH.refresh = d.refresh_token || _AUTH.refresh;
-        }
-      } else if (r.status === 400) {
-        // Refresh token invalid/expired — sign out
-        _AUTH.clear(); _authUpdateUI(null); return;
-      }
-    } catch {}
+    await _authEnsureFresh();
+    if (!_AUTH.token) { _authUpdateUI(null); return; }
   }
 
-  // Silently fetch full profile to get email/name — never clear session on failure
+  // Silently fetch full profile to get email/name — never clear session on a
+  // transient failure. The manual 401→refresh→retry that used to live here is
+  // gone: the global interceptor now does it for every authed call, not just
+  // this one.
   try {
     const r = await fetch('/api/user/me', { headers: { Authorization: `Bearer ${_AUTH.token}` } });
     if (r.ok) {
       const d = await r.json();
       if (d && d.email) { _AUTH.user = d; _authUpdateUI(d); }
     }
-    // 401 → try refresh token path one more time then give up gracefully
-    else if (r.status === 401 && _AUTH.refresh) {
-      const r2 = await fetch('/api/auth/refresh', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ refresh_token: _AUTH.refresh }),
-      });
-      if (r2.ok) {
-        const d2 = await r2.json();
-        _AUTH.token   = d2.access_token || _AUTH.token;
-        _AUTH.refresh = d2.refresh_token || _AUTH.refresh;
-        // Retry user fetch with new token
-        const r3 = await fetch('/api/user/me', { headers: { Authorization: `Bearer ${_AUTH.token}` } });
-        if (r3.ok) { const d3 = await r3.json(); if (d3?.email) { _AUTH.user = d3; _authUpdateUI(d3); } }
-      } else {
-        _AUTH.clear(); _authUpdateUI(null); return;
-      }
-    }
-    // Any other error (500, network) → keep session, don't sign out
+    // Still 401 after the interceptor refreshed and retried → session is dead.
+    else if (r.status === 401 && !_AUTH.token) { _authUpdateUI(null); return; }
+    // Any other error (500, 503, network) → keep session, don't sign out
   } catch {}
 
   _scheduleTokenRefresh();
@@ -20803,26 +20777,128 @@ function _authUpdateUI(user) {
   }
 }
 
-function _scheduleTokenRefresh() {
-  // Refresh 5 minutes before expiry; Supabase tokens expire in 1 hour
-  clearTimeout(_authRefreshTimer);
-  _authRefreshTimer = setTimeout(async () => {
-    if (!_AUTH.refresh) return;
+/* ── Session keep-alive ───────────────────────────────────────────────────
+   The old version was a single setTimeout at 55 min that only re-armed itself
+   inside `if (r.ok)`. Three ways that lost the session:
+     1. Browsers throttle and freeze timers in background tabs, and a timer
+        does not catch up across laptop sleep — so at 55 min it often simply
+        never fired.
+     2. One failed refresh (network blip, or a Railway restart on deploy)
+        killed the chain permanently for that page session.
+     3. Nothing re-checked on the way back to the tab.
+   The token then silently expired, every authed fetch 401'd, and the whole app
+   rendered as Free until a manual reload. That is the "Pro user converts to
+   Free" report — and why it appeared to fix itself on refresh. */
+
+/* Read `exp` out of the JWT so we schedule against the real expiry instead of
+   assuming 1 hour. Payload only — the signature is the server's business. */
+function _jwtExpMs(tok){
+  try {
+    const b = String(tok).split('.')[1].replace(/-/g,'+').replace(/_/g,'/');
+    const p = JSON.parse(atob(b + '==='.slice((b.length + 3) % 4)));
+    return (p && p.exp) ? p.exp * 1000 : 0;
+  } catch(e){ return 0; }
+}
+
+const _AUTH_SKEW_MS = 5 * 60 * 1000;    // treat "expires within 5 min" as stale
+let _authRefreshInFlight = null;
+
+/* Single-flight: a burst of parallel 401s must trigger ONE refresh, not one
+   per request — Supabase rotates the refresh token, so concurrent refreshes
+   race and can invalidate each other. */
+async function _authDoRefresh(){
+  if (_authRefreshInFlight) return _authRefreshInFlight;
+  _authRefreshInFlight = (async () => {
+    if (!_AUTH.refresh) return false;
     try {
       const r = await fetch('/api/auth/refresh', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ refresh_token: _AUTH.refresh }),
       });
-      if (r.ok) {
-        const d = await r.json();
-        _AUTH.token   = d.access_token;
-        _AUTH.refresh = d.refresh_token;
-        _scheduleTokenRefresh();
+      if (r.status === 400) {          // refresh token genuinely dead → sign out
+        _AUTH.clear(); try { _authUpdateUI(null); } catch(e){} return false;
       }
-    } catch {}
-  }, 55 * 60 * 1000);   // 55 min
+      if (!r.ok) return false;         // transient → keep the session, retry later
+      const d = await r.json();
+      if (!d || !d.access_token) return false;
+      _AUTH.token   = d.access_token;
+      _AUTH.refresh = d.refresh_token || _AUTH.refresh;
+      return true;
+    } catch(e){ return false; }
+  })();
+  try { return await _authRefreshInFlight; }
+  finally { _authRefreshInFlight = null; }
 }
+
+/* Refresh only if the token is missing/stale. Cheap enough to call freely. */
+async function _authEnsureFresh(){
+  if (!_AUTH.token) return false;
+  const exp = _jwtExpMs(_AUTH.token);
+  if (exp && (exp - Date.now()) > _AUTH_SKEW_MS) return true;
+  return await _authDoRefresh();
+}
+window._authEnsureFresh = _authEnsureFresh;
+
+function _scheduleTokenRefresh() {
+  clearTimeout(_authRefreshTimer);
+  if (!_AUTH.token) return;
+  const exp = _jwtExpMs(_AUTH.token);
+  let delay = exp ? (exp - Date.now() - _AUTH_SKEW_MS) : (25 * 60 * 1000);
+  // Clamp: never in the past, and never so far out that background throttling
+  // gets a long window to swallow the timer.
+  delay = Math.max(30 * 1000, Math.min(delay, 25 * 60 * 1000));
+  _authRefreshTimer = setTimeout(async () => {
+    await _authDoRefresh();
+    _scheduleTokenRefresh();     // ALWAYS re-arm, success or not
+  }, delay);
+}
+
+/* Timers are unreliable in hidden tabs, so re-check on the way back in — this
+   is what actually saves the session after sleep. */
+document.addEventListener('visibilitychange', function(){
+  if (document.visibilityState !== 'visible' || !_AUTH.token) return;
+  _authEnsureFresh().then(function(ok){
+    _scheduleTokenRefresh();
+    if (ok && window._refreshPlan) { try { window._refreshPlan(); } catch(e){} }
+  });
+});
+window.addEventListener('online', function(){
+  if (_AUTH.token) _authEnsureFresh().then(function(){ _scheduleTokenRefresh(); });
+});
+
+/* ── Global 401 recovery ──────────────────────────────────────────────────
+   ~40 call sites build their own header inline as
+   `Authorization: 'Bearer ' + localStorage.getItem('ah_token')`, and none of
+   them handled a 401 — only authInit's /api/user/me did. So an expired token
+   made every one of them fail silently into its empty/pro-wall branch.
+   Patching one interceptor fixes them all, including future ones.
+   Deliberately narrow: same-origin /api/ only, only when the caller already
+   sent an Authorization header, and exactly one retry (the retry goes through
+   the saved raw fetch, so it cannot recurse). */
+(function _installAuth401Recovery(){
+  if (window.__authFetchPatched) return;
+  window.__authFetchPatched = true;
+  const _rawFetch = window.fetch.bind(window);
+  window.fetch = async function(input, init){
+    const r = await _rawFetch(input, init);
+    try {
+      if (r.status !== 401) return r;
+      if (typeof input !== 'string') return r;          // Request objects: leave alone
+      if (!/^\/api\//.test(input) && input.indexOf(location.origin + '/api/') !== 0) return r;
+      if (input.indexOf('/api/auth/refresh') !== -1) return r;   // never recurse
+      if (!_AUTH.token || !_AUTH.refresh) return r;
+      const hdrs = new Headers((init && init.headers) || {});
+      if (!hdrs.has('Authorization')) return r;         // 401 wasn't about our token
+      if (!await _authDoRefresh()) return r;
+      hdrs.set('Authorization', 'Bearer ' + _AUTH.token);
+      const retry = Object.assign({}, init || {});
+      retry.headers = hdrs;
+      _scheduleTokenRefresh();
+      return await _rawFetch(input, retry);
+    } catch(e){ return r; }
+  };
+})();
 
 // ── Modal ────────────────────────────────────────────────────────────────────
 
@@ -25344,10 +25420,29 @@ function scResultHTML(d){
   })();
 
   window.__PLAN = window.__PLAN || {pro:false, comped:false, loaded:false};
+  var _planTries = 0, _planTimer = null;
   async function _refreshPlan(){
+    clearTimeout(_planTimer);
     try{
       const r=await fetch('/api/user/account',{headers:_acctAuthHdr()});
-      if(!r.ok) return;
+      if(!r.ok){
+        /* FAIL CLOSED, AND RETRY. This used to `return` on any non-ok, which
+           left __PLAN.loaded === false forever — and _drIsPro then fell
+           through to the stale localStorage fallback, so the page could render
+           Pro for a Free session or Free for a Pro one. A 401/503/5xx is
+           "unknown", not "free": back off and ask again (the global fetch
+           interceptor will already have tried a token refresh once). */
+        if(r.status===401 || r.status===503 || r.status>=500){
+          _planTries++;
+          if(_planTries<=5){
+            _planTimer=setTimeout(_refreshPlan, Math.min(30000, 1000*Math.pow(2,_planTries)));
+            return;
+          }
+        }
+        window.__PLAN={pro:false, comped:false, beta:false, loaded:true, degraded:true};
+        return;
+      }
+      _planTries=0;
       const j=await r.json();
       const pro=String(j.plan||'free').toLowerCase()==='pro' &&
                 String(j.status||'active').toLowerCase()==='active';
@@ -25356,17 +25451,22 @@ function scResultHTML(d){
       if(el) el.textContent = pro ? (j.comped?'Pro · team access':(j.beta_pro?'Pro · beta':'Pro member')) : 'Free plan';
       // A tab rendered before the plan landed may be showing the upsell.
       if(pro && _drState && _drState.tab==='Supply Chain'){ try{ tsRenderDetail(); }catch(e){} }
-    }catch(e){}
+    }catch(e){
+      _planTries++;
+      if(_planTries<=5) _planTimer=setTimeout(_refreshPlan, Math.min(30000, 1000*Math.pow(2,_planTries)));
+      else window.__PLAN={pro:false, comped:false, beta:false, loaded:true, degraded:true};
+    }
   }
   window._refreshPlan = _refreshPlan;   // _authUpdateUI lives in another <script>
   function _drIsPro(){
-    if(window.__PLAN && window.__PLAN.loaded) return !!window.__PLAN.pro;
-    try{
-      const u=_AUTH && _AUTH.user;   // _AUTH is a page-level const (not on window)
-      if(u&&u.plan) return String(u.plan).toLowerCase()==='pro' && String(u.status||'active').toLowerCase()==='active';
-    }catch(e){}
-    const pill=document.getElementById('v2-acct-planpill');   // fallback if account panel was opened
-    return !!(pill && pill.textContent==='PRO');
+    /* Single source of truth: the server's answer, or nothing.
+       This used to fall back to _AUTH.user.plan (localStorage 'ah_user' —
+       stale after any plan change, and trivially editable in devtools) and
+       then to the account-panel's DOM text. Both could disagree with the
+       server in either direction, which IS the "free user sees Pro / Pro user
+       sees Free" bug. Unknown now means not-Pro; every Pro endpoint is gated
+       server-side by _is_pro_user regardless, so this only controls chrome. */
+    return !!(window.__PLAN && window.__PLAN.loaded && window.__PLAN.pro);
   }
   /* Pro-locked teaser. Was ONE blurred slab over the whole pane with a single
      centred lock, which told the reader nothing about what was behind it. Now

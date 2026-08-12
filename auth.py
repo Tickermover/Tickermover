@@ -428,17 +428,49 @@ class SupabaseClient:
     # ── Subscription ──────────────────────────────────────────────────────────
 
     async def get_subscription(self, access_token: str, user_id: str) -> dict:
-        """Get subscription record for user. Returns {plan, status, valid_until} or default free."""
+        """Get subscription record for user.
+
+        Returns {plan, status, valid_until}. On a failed LOOKUP the result also
+        carries lookup_failed=True — callers must treat that as "unknown", not
+        as "free".
+
+        WHY THE FLAG: this used to `return {'plan':'free'}` for any non-list
+        response, so an expired token (401), a Supabase 5xx, a timeout and a
+        missing table all read identically to "this user is on the free plan".
+        One transient hiccup silently demoted a paying customer, and
+        _is_pro_user then cached that False for 300s — the "Pro user randomly
+        becomes Free" bug. The free-plan keys are still filled in so any caller
+        that ignores the flag behaves exactly as it did before.
+
+        Note 200 + [] is a REAL answer, not a failure: no row means free (the
+        signup trigger normally creates one, but its absence isn't an error).
+        """
         if not self.enabled:
             return {"plan": "free", "status": "active"}
-        resp = await self._get(
-            "/rest/v1/subscriptions",
-            token=access_token,
-            params={"user_id": f"eq.{user_id}", "select": "plan,status,valid_until", "limit": "1"},
-        )
-        if isinstance(resp, list) and resp:
-            return resp[0]
-        return {"plan": "free", "status": "active"}
+        _unknown = {"plan": "free", "status": "active", "lookup_failed": True}
+        try:
+            async with httpx.AsyncClient(timeout=10) as c:
+                r = await c.get(
+                    f"{self.url}/rest/v1/subscriptions",
+                    headers=self._auth_headers(access_token),
+                    params={"user_id": f"eq.{user_id}",
+                            "select": "plan,status,valid_until", "limit": "1"},
+                )
+        except Exception as e:
+            logger.warning(f"Subscription lookup failed (network) for {user_id}: {e}")
+            return _unknown
+        if r.status_code >= 400:
+            logger.warning(f"Subscription lookup failed for {user_id}: HTTP {r.status_code}")
+            return _unknown
+        try:
+            body = r.json()
+        except Exception:
+            logger.warning(f"Subscription lookup returned non-JSON for {user_id}")
+            return _unknown
+        if isinstance(body, list):
+            return body[0] if body else {"plan": "free", "status": "active"}
+        logger.warning(f"Subscription lookup returned unexpected shape for {user_id}")
+        return _unknown
 
     async def upsert_subscription(self, access_token: str, data: dict) -> bool:
         """Create or update a subscription record.

@@ -225,17 +225,60 @@ def _beta_pro_active() -> bool:
         return False
 
 
+def _comped_email(email: Optional[str]) -> bool:
+    """True if this address is allow-listed for Pro (PRO_ALLOW_EMAILS or
+    AI_ALLOW_EMAILS).
+
+    Shared so the plan endpoints cannot drift — they did: /api/user/me omitted
+    this check while /api/user/account had it, so an allow-listed account was
+    reported plan='free', the client cached that in localStorage as ah_user,
+    and the fallback Pro gate then read Free for a comped user."""
+    em = (email or "").strip().lower()
+    return bool(em) and (em in _PRO_ALLOW or em in _AI_ALLOW)
+
+
+def _resolve_plan(email: Optional[str], sub: dict) -> dict:
+    """Single source of truth for a user's effective plan. Every endpoint that
+    reports plan state must go through this."""
+    beta   = _beta_pro_active()
+    comped = _comped_email(email)
+    paid   = is_pro(sub.get("plan", "free"), sub.get("status", "active"))
+    pro    = beta or comped or paid
+    return {
+        "pro":         pro,
+        "beta":        beta,
+        "comped":      comped and not beta,
+        # Only "unknown" if the answer actually depended on the failed lookup —
+        # beta/comped users are Pro regardless of what Supabase says.
+        "unknown":     bool(sub.get("lookup_failed")) and not (beta or comped),
+        "plan":        "pro" if pro else sub.get("plan", "free"),
+        "status":      "active" if pro else sub.get("status", "active"),
+        "valid_until": config.BETA_PRO_UNTIL if beta else sub.get("valid_until"),
+    }
+
+
+def _invalidate_pro_cache(user_id: str) -> None:
+    """Drop the memoised Pro verdict so a plan change takes effect at once.
+    Without this a customer who just paid kept hitting the paywall for up to
+    _PRO_CACHE_TTL seconds."""
+    _pro_cache.pop(user_id, None)
+
+
 async def _is_pro_user(user: Optional[dict],
                        creds: Optional[HTTPAuthorizationCredentials]) -> bool:
     """True iff the request carries an authenticated user with an active Pro
     subscription (or an allow-listed email). Free/anonymous → False.
-    During the beta window, every authenticated user counts as Pro."""
+    During the beta window, every authenticated user counts as Pro.
+
+    On a FAILED lookup we fall back to the last known verdict for this user
+    rather than answering False, and we never cache a failure. Caching a
+    failure is what turned one transient Supabase error into five minutes of
+    paywall for a paying customer."""
     if not user or not creds:
         return False
     if _beta_pro_active():
         return True
-    _em = (user.get("email") or "").lower()
-    if _em in _AI_ALLOW or _em in _PRO_ALLOW:
+    if _comped_email(user.get("email")):
         return True
     uid = user.get("user_id")
     if not uid:
@@ -246,9 +289,17 @@ async def _is_pro_user(user: Optional[dict],
         return cached[0]
     try:
         sub = await supabase.get_subscription(creds.credentials, uid)
-        pro = is_pro(sub.get("plan", "free"), sub.get("status", "active"))
-    except Exception:
-        pro = False
+    except Exception as exc:
+        logger.warning(f"Pro lookup raised for {uid}: {exc}")
+        sub = {"lookup_failed": True}
+    if sub.get("lookup_failed"):
+        # Unknown, not free. Serve the last known verdict (the cache entry is
+        # kept past its TTL precisely so it can act as last-known-good) and
+        # re-check on the next call rather than persisting a guess.
+        return cached[0] if cached else False
+    pro = is_pro(sub.get("plan", "free"), sub.get("status", "active"))
+    if len(_pro_cache) > 20000:          # crude memory backstop
+        _pro_cache.clear()
     _pro_cache[uid] = (pro, now + _PRO_CACHE_TTL)
     return pro
 
@@ -12800,18 +12851,26 @@ function togglePass(id, btn) {
 @app.get("/api/user/me")
 async def api_user_me(user: Optional[dict] = Depends(_current_user),
                       creds: Optional[HTTPAuthorizationCredentials] = Depends(_bearer)):
-    """Return the current user's profile + subscription plan."""
+    """Return the current user's profile + subscription plan.
+
+    Goes through _resolve_plan so this agrees with /api/user/account. It did
+    not before: the allow-list (comped) check was missing here, so a comped
+    account was told plan='free' and the client persisted that in ah_user."""
     if not user:
         raise HTTPException(status_code=401, detail="Not authenticated")
     sub = await supabase.get_subscription(creds.credentials, user["user_id"])
-    beta = _beta_pro_active()
+    p = _resolve_plan(user.get("email"), sub)
+    if p["unknown"]:
+        # Don't hand the client a "free" it will cache and gate on.
+        raise HTTPException(status_code=503, detail="Plan lookup unavailable")
     return JSONResponse({
-        "user_id": user["user_id"],
-        "email":   user["email"],
-        "plan":    "pro" if beta else sub.get("plan", "free"),
-        "status":  "active" if beta else sub.get("status", "active"),
-        "valid_until": config.BETA_PRO_UNTIL if beta else sub.get("valid_until"),
-        "beta_pro": beta,
+        "user_id":     user["user_id"],
+        "email":       user["email"],
+        "plan":        p["plan"],
+        "status":      p["status"],
+        "valid_until": p["valid_until"],
+        "beta_pro":    p["beta"],
+        "comped":      p["comped"],
     })
 
 
@@ -12952,22 +13011,24 @@ async def api_user_account(user: Optional[dict] = Depends(_current_user),
         raise HTTPException(status_code=401, detail="Not authenticated")
     full = await supabase.get_user_full(creds.credentials) or {}
     sub = await supabase.get_subscription(creds.credentials, user["user_id"])
-    beta = _beta_pro_active()
     # Allow-listed accounts (PRO_ALLOW_EMAILS / AI_ALLOW_EMAILS) are treated as
     # Pro by the feature gates, so the panel must say so too — otherwise it
     # reports "Free plan · Upgrade to Pro" while every Pro feature is unlocked.
-    _em = (full.get("email") or user.get("email") or "").lower()
-    comped = _em in _PRO_ALLOW or _em in _AI_ALLOW
-    pro = beta or comped or is_pro(sub.get("plan", "free"), sub.get("status", "active"))
+    p = _resolve_plan(full.get("email") or user.get("email"), sub)
+    if p["unknown"]:
+        # This response drives window.__PLAN, the client's Pro gate. Reporting a
+        # guessed "free" here is what made a Pro account render as Free; 503
+        # tells the client to retry instead of caching the guess.
+        raise HTTPException(status_code=503, detail="Plan lookup unavailable")
     return JSONResponse({
         "email":          full.get("email") or user.get("email"),
         "email_verified": bool(full.get("email_verified")),
         "name":           full.get("name", ""),
-        "plan":           "pro" if pro else sub.get("plan", "free"),
-        "status":         "active" if pro else sub.get("status", "active"),
-        "valid_until":    config.BETA_PRO_UNTIL if beta else sub.get("valid_until"),
-        "beta_pro":       beta,
-        "comped":         comped and not beta,
+        "plan":           p["plan"],
+        "status":         p["status"],
+        "valid_until":    p["valid_until"],
+        "beta_pro":       p["beta"],
+        "comped":         p["comped"],
     })
 
 
@@ -13601,6 +13662,7 @@ async def api_verify_payment(
         "razorpay_order_id":  body.razorpay_order_id,
         "valid_until":        valid_until,
     })
+    _invalidate_pro_cache(user["user_id"])   # unlock Pro now, not in 5 minutes
     logger.info(f"User {user['user_id']} upgraded to Pro (order {body.razorpay_order_id})")
     return JSONResponse({"status": "upgraded", "plan": "pro", "valid_until": valid_until})
 
@@ -13661,6 +13723,9 @@ async def _set_user_pro(user_id: str, *, active: bool, customer_id: str = "",
         "status":      "active" if active else "canceled",
         "valid_until": valid_until,
     })
+    # The memoised verdict is now stale in both directions — a new subscriber
+    # would keep hitting the paywall, a cancellation would keep Pro open.
+    _invalidate_pro_cache(user_id)
     if customer_id:
         try:
             from kv_store import store as _kv
