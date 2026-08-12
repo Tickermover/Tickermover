@@ -700,15 +700,6 @@
               "concen": "Very high — US Navy",
               "note": "The pure-play Navy shipbuilder; throughput and labour are the constraint.",
               "watch": "Navy shipbuilding backlog and labour / throughput."
-            },
-            {
-              "t": "GD",
-              "n": "General Dynamics",
-              "exposure": "mid",
-              "stage": "Mature",
-              "concen": "Moderate",
-              "note": "Electric Boat submarines — cross-listed with the primes.",
-              "watch": "Submarine (Electric Boat) build cadence."
             }
           ]
         }
