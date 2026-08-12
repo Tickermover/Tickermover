@@ -575,3 +575,54 @@ async def discover_working_models(max_try: int = 6, timeout: float = 20.0) -> li
                 break
         out.append(row)
     return out
+
+
+async def probe(name: str) -> dict:
+    """Make one tiny REAL call to a single provider and report what came back.
+
+    Exists because "no error logged" and "healthy" are indistinguishable from
+    the outside: a provider late in the order is only called when everything
+    ahead of it fails, so a newly-added key can sit unexercised for days and
+    then turn out to be wrong at the worst moment. This calls it directly,
+    bypassing order, cooldowns and the `prefer` hint.
+
+    Cheap on purpose — 32 tokens — so it is safe to run against every provider
+    on a schedule. Returns the HTTP status and a truncated body; never the key.
+    """
+    row = next((p for p in _PROVIDERS if p[0] == name), None)
+    if row is None:
+        return {"provider": name, "ok": False, "reason": "unknown provider",
+                "known": [p[0] for p in _PROVIDERS]}
+    _n, envk, menv, dflt, url, _cap = row
+    key = _key(envk)
+    if not key:
+        return {"provider": name, "ok": False, "reason": f"{envk} not set"}
+    model = _model_for(name, menv, dflt)
+    url = _url_for(name, url)
+    prompt = 'Reply with exactly this JSON and nothing else: {"ok": true}'
+    started = time.time()
+    try:
+        if name == "gemini":
+            ok, body = await _call_gemini(url, key, model, prompt, 32, 20.0)
+        else:
+            ok, body = await _call_openai_compatible(url, key, model, prompt, 32, 20.0)
+    except Exception as exc:
+        return {"provider": name, "ok": False, "model": model,
+                "url": url, "exception": f"{type(exc).__name__}: {exc}"[:200],
+                "ms": int((time.time() - started) * 1000)}
+    return {"provider": name, "ok": bool(ok), "model": model, "url": url,
+            "body": str(body)[:200], "ms": int((time.time() - started) * 1000)}
+
+
+async def probe_all() -> list[dict]:
+    """Probe every provider that has a key. Ordered worst-first so a failure is
+    the first thing you read."""
+    import asyncio
+    names = [p[0] for p in _PROVIDERS if _key(p[1])]
+    res = await asyncio.gather(*[probe(n) for n in names], return_exceptions=True)
+    out = []
+    for n, r in zip(names, res):
+        out.append(r if isinstance(r, dict)
+                   else {"provider": n, "ok": False, "exception": str(r)[:200]})
+    out.sort(key=lambda d: (d.get("ok") is True, d.get("provider")))
+    return out

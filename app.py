@@ -6628,6 +6628,19 @@ async def api_event_intel_status(probe: str = ""):
         pass
     if probe == "groq":
         out["probe_groq"] = await _ei_mod.probe_groq()
+    elif probe:
+        # ?probe=all           — one tiny real call to every configured provider
+        # ?probe=<name>        — just that one
+        # "no error logged" and "healthy" are otherwise indistinguishable: a
+        # provider at the end of the order is only reached when everything
+        # ahead of it fails, so a newly added key can sit untested for days.
+        # 32 tokens a call, so this is safe to run often.
+        try:
+            import llm_free as _lf2
+            out["probe"] = (await _lf2.probe_all() if probe == "all"
+                            else await _lf2.probe(probe))
+        except Exception as exc:
+            out["probe"] = {"ok": False, "error": f"{type(exc).__name__}: {exc}"[:200]}
     elif probe == "discover":
         try:
             import llm_free as _lf4
