@@ -490,6 +490,30 @@ h1.title{font-size:clamp(34px,5.6vw,54px);line-height:1.03;letter-spacing:-.022e
   background:none;border:0;cursor:pointer;opacity:.85;padding:4px 10px}
 .fig-lb-x:hover{opacity:1}
 @media(max-width:640px){.fig-lb{padding:10px}}
+
+/* SVG figures. The two data-driven ones (prize, concentration) read from the
+   same endpoints the panels do, so unlike a raster they can never drift out of
+   step with the numbers beside them — which is exactly how the hero ended up
+   saying memory is 8% while the endpoint says 9.1%. Headings live in real HTML
+   rather than <text> so they stay selectable, translatable and indexable. */
+.fig-svg{padding:20px 22px 6px}
+.fig-h{font-size:19px;line-height:1.25;letter-spacing:-.012em;color:var(--ink);
+  margin:0 0 5px;font-weight:700}
+.fig-sub{font-size:13.5px;line-height:1.5;color:var(--muted);margin:0 0 16px;max-width:70ch}
+.fig-svg svg{width:100%;height:auto;display:block;overflow:visible}
+.fig-svg .s-lab{font-family:var(--body);font-size:13px;fill:var(--ink)}
+.fig-svg .s-sub{font-family:var(--body);font-size:11.5px;fill:var(--muted)}
+.fig-svg .s-tick{font-family:var(--mono);font-size:11px;fill:var(--muted)}
+.fig-svg .s-num{font-family:var(--body);font-size:19px;font-weight:700;fill:var(--ink)}
+.fig-svg .s-eyebrow{font-family:var(--mono);font-size:9.5px;font-weight:700;letter-spacing:.11em;
+  fill:var(--faint)}
+.fig-svg .s-rule{stroke:var(--line);stroke-width:1}
+.fig-svg .s-lead{stroke:var(--faint);stroke-width:1;stroke-dasharray:2 3;fill:none}
+@media(max-width:640px){
+  .fig-svg{padding:16px 14px 4px}
+  .fig-h{font-size:17px}
+  .fig-sub{font-size:12.5px;margin-bottom:12px}
+}
 </style>
 </head>
 <body>
@@ -901,6 +925,11 @@ h1.title{font-size:clamp(34px,5.6vw,54px);line-height:1.03;letter-spacing:-.022e
       var top = (d.companies||[]).slice(0,6);
       var maxS = Math.max.apply(null, top.map(function(m){return m.share;}).concat([0.01]));
       window.__capture = top; window.__captureMax = maxS;
+      /* The live-data SVG figures were mounted empty before this fetch landed.
+         Fill them now, from the same payload the panels use — that shared
+         source is what stops a figure disagreeing with the table beside it. */
+      window.__sharesData = d;
+      try { refreshSvgFigures(d); } catch(e){}   // a figure must never break the map
       mergeCaptureTable();
       // ── insights strip: computed "what the split tells you" ──
       var cos = (d.companies||[]);
@@ -993,6 +1022,201 @@ h1.title{font-size:clamp(34px,5.6vw,54px);line-height:1.03;letter-spacing:-.022e
         this code can ship before the art does.
      4. Only `dated` figures get the as-of stamp. Putting a data date on a
         pure explainer implies numbers it doesn't carry. */
+  /* ── SVG figure builders ──────────────────────────────────────────────
+     Each returns the inner HTML of a .fig-svg block, or "" if it lacks the
+     data it needs (mountFigures then leaves the figure hidden and re-renders
+     when loadShares lands). Registered by the same `file` stem the raster
+     path uses, so a stem either resolves to a builder here or falls back to
+     an image — one mechanism, two sources.
+
+     Kept deliberately free of invented numbers: every figure either reads a
+     live value or states a qualitative fact that doesn't need one. */
+  function svgWrap(vb, title, body){
+    return '<svg viewBox="0 0 '+vb+'" role="img" aria-label="'+esc(title)+'">'+
+           '<title>'+esc(title)+'</title>'+body+'</svg>';
+  }
+  function fmtBn(v){
+    if(!isFinite(v) || v <= 0) return "—";
+    return v >= 1e12 ? "$" + (v/1e12).toFixed(1) + "T" : "$" + Math.round(v/1e9) + "B";
+  }
+
+  /* 1. Reconciles the two headline numbers the page shows but never connects:
+        ~$500B/yr of capex against the ~$356B/yr of supplier revenue this map
+        accounts for. The gap is named honestly rather than broken into a
+        breakdown we cannot source. Deliberately NOT the 30/70 landed split —
+        #money already owns that. */
+  function figPrize(ctx){
+    var shares = ctx.shares; if(!shares || !shares.total_ai_rev) return "";
+    var capex = 500e9;                       // market.stats run-rate, rounded
+    var got   = shares.total_ai_rev;
+    var pct   = Math.max(0, Math.min(1, got / capex));
+    var X = 40, W = 820, Y = 92, H = 54;
+    var wGot = W * pct;
+    var body =
+      '<text x="'+X+'" y="34" class="s-eyebrow">ANNUAL CAPEX, ONE YEAR</text>'+
+      '<text x="'+X+'" y="70" class="s-num">~$500B/yr spent</text>'+
+      '<rect x="'+X+'" y="'+Y+'" width="'+W+'" height="'+H+'" rx="7" fill="#EEF1F6"/>'+
+      '<rect x="'+X+'" y="'+Y+'" width="'+wGot.toFixed(1)+'" height="'+H+'" rx="7" fill="var(--l1)"/>'+
+      '<text x="'+(X+14)+'" y="'+(Y+33)+'" class="s-lab" fill="#fff" font-weight="700">'+
+        fmtBn(got)+' captured by the '+(shares.companies||[]).length+' suppliers on this map</text>'+
+      '<path class="s-lead" d="M'+(X+wGot).toFixed(1)+','+(Y+H)+' L'+(X+wGot).toFixed(1)+','+(Y+H+26)+
+        ' L'+(X+W)+','+(Y+H+26)+'"/>'+
+      /* Right-anchored: left-anchoring this at the segment boundary pushed it
+         past the viewBox edge and clipped the sentence. */
+      '<text x="'+(X+W)+'" y="'+(Y+H+42)+'" class="s-sub" text-anchor="end">'+
+        'the rest — land, construction, power, labour, and suppliers not tracked here</text>'+
+      '<line x1="'+X+'" y1="'+(Y+H+62)+'" x2="'+(X+W)+'" y2="'+(Y+H+62)+'" class="s-rule"/>'+
+      '<text x="'+X+'" y="'+(Y+H+84)+'" class="s-sub">'+
+        'Supplier revenue is trailing-twelve-month and exposure-weighted; the capex figure is a '+
+        'round estimate. Treat the gap as an order of magnitude, not a precise residual.</text>';
+    return '<h3 class="fig-h">Not all capex becomes supplier revenue</h3>'+
+      '<p class="fig-sub">This map accounts for the chip, memory, optical, network and power '+
+      'suppliers. A data centre also costs land, steel, electricity and people — so the money '+
+      'the chain captures is smaller than the money spent.</p>'+
+      svgWrap('900 300', 'Bar showing roughly $500B of annual capex, of which about '+fmtBn(got)+
+              ' is captured by the suppliers on this map', body);
+  }
+
+  /* 2. Pure explainer: what each layer physically IS. The map above says how
+        much each captures and never says what any of them do. */
+  function figAnatomy(ctx){
+    var rows = [
+      ["L1","AI compute chips","The processors that do the training","NVDA · AVGO · TSM · AMD · MRVL"],
+      ["L2","AI memory","Fast memory feeding those chips","MU · SNDK"],
+      ["L3","Optical interconnect","Laser links moving data between racks","FN · COHR · LITE · AAOI"],
+      ["L4","Signal & connectivity","Keeps signals intact over distance","CRDO · ALAB"],
+      ["L5","Switching & networking","Routes traffic between servers","ANET · CIEN"],
+      ["L6","Power, cooling & capacity","Electricity in, heat out","VRT · ETN · APLD · NBIS"]
+    ];
+    var RX = 40, RW = 132, top = 56, rh = 62, body = "";
+    body += '<text x="'+RX+'" y="34" class="s-eyebrow">ONE RACK, SIX SUPPLIER LAYERS</text>';
+    body += '<rect x="'+RX+'" y="'+top+'" width="'+RW+'" height="'+(rh*rows.length)+
+            '" rx="9" fill="none" stroke="var(--line)" stroke-width="2"/>';
+    rows.forEach(function(r,i){
+      var y = top + i*rh, c = "var(--l"+(i+1)+")";
+      body +=
+        '<rect x="'+(RX+9)+'" y="'+(y+9)+'" width="'+(RW-18)+'" height="'+(rh-18)+
+          '" rx="5" fill="'+c+'" opacity=".16"/>'+
+        '<rect x="'+(RX+9)+'" y="'+(y+9)+'" width="5" height="'+(rh-18)+'" rx="2.5" fill="'+c+'"/>'+
+        '<text x="'+(RX+24)+'" y="'+(y+rh/2+4)+'" class="s-tick" fill="'+c+'" font-weight="700">'+r[0]+'</text>'+
+        '<path class="s-lead" d="M'+(RX+RW)+','+(y+rh/2)+' L'+(RX+RW+34)+','+(y+rh/2)+'"/>'+
+        '<text x="'+(RX+RW+46)+'" y="'+(y+rh/2-4)+'" class="s-lab" font-weight="700">'+esc(r[1])+'</text>'+
+        '<text x="'+(RX+RW+46)+'" y="'+(y+rh/2+14)+'" class="s-sub">'+esc(r[2])+'</text>'+
+        '<text x="880" y="'+(y+rh/2+4)+'" class="s-tick" text-anchor="end">'+esc(r[3])+'</text>';
+    });
+    return '<h3 class="fig-h">What each layer actually is</h3>'+
+      '<p class="fig-sub">The map above ranks these by how much of the spend they capture. '+
+      'This is what they physically do, and who builds them.</p>'+
+      svgWrap('900 '+(top + rh*rows.length + 20),
+              'Rack diagram naming the six supplier layers and what each one does', body);
+  }
+
+  /* 3. Cumulative concentration — "how many names before you have the chain?"
+        A different question from #winners (which ranks the top six) and from
+        the insights strip (which states the top-3 number in words). */
+  function figConc(ctx){
+    var shares = ctx.shares; if(!shares || !(shares.companies||[]).length) return "";
+    var cos = shares.companies.slice().sort(function(a,b){ return b.share - a.share; });
+    var X = 56, Y = 40, W = 800, H = 190, n = cos.length;
+    var cum = [], run = 0;
+    cos.forEach(function(c){ run += c.share; cum.push(Math.min(1, run)); });
+    var xAt = function(i){ return X + (n<=1 ? W : W * (i/(n-1))); };
+    var yAt = function(v){ return Y + H - H*v; };
+    var body = '<text x="'+X+'" y="24" class="s-eyebrow">CUMULATIVE SHARE OF LANDED VALUE</text>';
+    [0.25,0.5,0.75,1].forEach(function(g){
+      body += '<line x1="'+X+'" y1="'+yAt(g)+'" x2="'+(X+W)+'" y2="'+yAt(g)+'" class="s-rule"/>'+
+              '<text x="'+(X-10)+'" y="'+(yAt(g)+4)+'" class="s-sub" text-anchor="end">'+(g*100)+'%</text>';
+    });
+    var area = 'M'+X+','+yAt(0), line = '';
+    cum.forEach(function(v,i){
+      area += ' L'+xAt(i).toFixed(1)+','+yAt(v).toFixed(1);
+      line += (i?' L':'M')+xAt(i).toFixed(1)+','+yAt(v).toFixed(1);
+    });
+    area += ' L'+(X+W)+','+yAt(0)+' Z';
+    body += '<path d="'+area+'" fill="var(--l1)" opacity=".12"/>'+
+            '<path d="'+line+'" fill="none" stroke="var(--l1)" stroke-width="2.5" stroke-linejoin="round"/>';
+    // Mark the readable thresholds only, so the chart stays legible.
+    [0,2,4,9].forEach(function(i){
+      if(i >= n) return;
+      var v = cum[i], x = xAt(i), y = yAt(v);
+      body += '<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="4.5" fill="var(--l1)"/>'+
+              '<text x="'+(x+9).toFixed(1)+'" y="'+(y-9).toFixed(1)+'" class="s-lab" font-weight="700">'+
+                (i+1)+' name'+(i?'s':'')+' = '+Math.round(v*100)+'%</text>';
+    });
+    body += '<line x1="'+X+'" y1="'+yAt(0)+'" x2="'+(X+W)+'" y2="'+yAt(0)+'" class="s-rule"/>'+
+            '<text x="'+X+'" y="'+(yAt(0)+20)+'" class="s-sub">'+esc(cos[0].t)+' alone</text>'+
+            '<text x="'+(X+W)+'" y="'+(yAt(0)+20)+'" class="s-sub" text-anchor="end">all '+n+' suppliers</text>';
+    return '<h3 class="fig-h">How many names is the whole chain?</h3>'+
+      '<p class="fig-sub">Companies ordered largest first, each step adding its share of '+
+      'AI-attributable revenue. The curve flattens almost immediately — which is the point.</p>'+
+      svgWrap('900 '+(Y+H+40), 'Cumulative share curve showing a small number of companies '+
+              'accounting for most of the landed value', body);
+  }
+
+  /* 4. The guard-rail. The footer prose owns the full methodology; this is the
+        second door for a reader who acts on the map without scrolling to it. */
+  function figMethod(ctx){
+    var steps = [
+      ["Company revenue","trailing twelve months, live"],
+      ["x AI exposure weight","high 70% · moderate 35% · low 12%"],
+      ["= AI-attributable revenue","that name's share of the chain total"]
+    ];
+    var limits = [
+      "Not a forecast — it shows today, not what comes next",
+      "Later in the chain is NOT un-captured upside; markets price ahead",
+      "Exposure weights are our judgement, not company disclosure",
+      "Some names use an estimated revenue figure, flagged “est”"
+    ];
+    var X = 40, bw = 258, bh = 74, gap = 22, body = "";
+    body += '<text x="'+X+'" y="26" class="s-eyebrow">HOW EACH SHARE IS CALCULATED</text>';
+    steps.forEach(function(s,i){
+      var x = X + i*(bw+gap);
+      body += '<rect x="'+x+'" y="44" width="'+bw+'" height="'+bh+'" rx="9" fill="#F5F7FA" '+
+                'stroke="var(--line)"/>'+
+              '<text x="'+(x+16)+'" y="72" class="s-lab" font-weight="700">'+esc(s[0])+'</text>'+
+              '<text x="'+(x+16)+'" y="93" class="s-sub">'+esc(s[1])+'</text>';
+      if(i < steps.length-1){
+        var ax = x + bw + gap/2;
+        body += '<path d="M'+(ax-7)+',81 L'+(ax+7)+',81 M'+(ax+2)+',76 L'+(ax+7)+',81 L'+(ax+2)+',86" '+
+                'stroke="var(--faint)" stroke-width="1.6" fill="none" stroke-linecap="round"/>';
+      }
+    });
+    body += '<rect x="'+X+'" y="150" width="820" height="132" rx="10" fill="none" '+
+              'stroke="var(--l5)" stroke-width="1.5" opacity=".55"/>'+
+            '<text x="'+(X+18)+'" y="176" class="s-eyebrow" fill="var(--l5)">WHAT IT CANNOT TELL YOU</text>';
+    limits.forEach(function(t,i){
+      var col = i % 2, row = (i - col) / 2;
+      var x = X + 18 + col*400, y = 202 + row*30;
+      body += '<circle cx="'+(x+4)+'" cy="'+(y-4)+'" r="2.8" fill="var(--l5)"/>'+
+              '<text x="'+(x+16)+'" y="'+y+'" class="s-sub">'+esc(t)+'</text>';
+    });
+    return '<h3 class="fig-h">How this is calculated — and what it cannot tell you</h3>'+
+      '<p class="fig-sub">A desk estimate, shown openly so you can argue with it. '+
+      'The exposure weights are the part most worth arguing with.</p>'+
+      svgWrap('900 300', 'Diagram of the share calculation and a box listing four limits '+
+              'of the model', body);
+  }
+
+  var FIG_SVG = {
+    "ai-capex-chain-prize":         {build: figPrize,  live: true},
+    "ai-capex-chain-anatomy":       {build: figAnatomy, live: false},
+    "ai-capex-chain-concentration": {build: figConc,   live: true},
+    "ai-capex-chain-method":        {build: figMethod, live: false}
+  };
+  var _svgFigs = [];            // {el, spec} awaiting live data
+
+  /* Re-render the data-driven figures once /api/thesis-shares lands. Called
+     from loadShares; safe to call more than once. */
+  function refreshSvgFigures(shares){
+    _svgFigs.forEach(function(rec){
+      var html = rec.spec.build({map: rec.map, shares: shares});
+      if(!html) return;
+      rec.el.querySelector(".fig-svg").innerHTML = html;
+      rec.el.style.display = "";
+    });
+  }
+  window.__refreshSvgFigures = refreshSvgFigures;
+
   function openLightbox(img){
     if(!img || !img.src) return;
     var lb = document.createElement("div");
@@ -1027,6 +1251,22 @@ h1.title{font-size:clamp(34px,5.6vw,54px);line-height:1.03;letter-spacing:-.022e
       if(f.dated && asOf){
         cap += (cap ? " " : "") + "<b>Figures in this illustration are as at " + esc(asOf) + ".</b>";
       }
+
+      /* An SVG figure draws itself from the same endpoints the panels use, so
+         there is no file to fetch and nothing to defer. `live:true` ones need
+         /api/thesis-shares, which lands after this runs — they stay hidden
+         until refreshSvgFigures fills them. No `dated` stamp is applied to
+         these: they cannot go stale, which is the whole reason for using SVG. */
+      var spec = FIG_SVG[f.file];
+      if(spec){
+        fig.innerHTML = '<div class="fig-svg"></div>' + (cap ? '<figcaption>'+cap+'</figcaption>' : '');
+        var built = spec.build({map: d, shares: window.__sharesData || null});
+        if(built){ fig.querySelector(".fig-svg").innerHTML = built; fig.style.display = ""; }
+        anchor.parentNode.insertBefore(fig, anchor.nextSibling);
+        if(spec.live) _svgFigs.push({el: fig, spec: spec, map: d});
+        return;
+      }
+
       fig.innerHTML =
         '<div class="fig-art-crop"><picture>'+
           '<source type="image/webp">'+

@@ -277,33 +277,33 @@
           "file": "ai-capex-chain-prize",
           "after": "money",
           "accent": "#A16207",
-          "dated": true,
-          "alt": "Isometric reservoir labelled $2 trillion pledged, about thirty percent filled, with an outflow pipe labelled roughly $500 billion a year.",
-          "cap": "How much of the pledged $2T has actually been spent. The supplier shares below measure only the landed portion."
+          "dated": false,
+          "alt": "Bar showing roughly $500 billion of annual hyperscaler capex, of which about $356 billion is captured as revenue by the suppliers on this map.",
+          "cap": "Why the spend figure above and the supplier revenue below don't match. Drawn live from the same data as the panels."
         },
         {
           "file": "ai-capex-chain-anatomy",
           "after": "chain",
           "accent": "#1F6FA8",
           "dated": false,
-          "alt": "Cutaway of an AI data centre rack with six labelled components: compute chips, memory, optical interconnect, signal and connectivity chips, switching and networking, and power and cooling.",
-          "cap": "What each layer physically does, and who builds it. Function only — the share of spend each captures is in the map above."
+          "alt": "Rack diagram naming the six supplier layers — compute chips, memory, optical interconnect, signal and connectivity, switching and networking, and power and cooling — with what each does and who builds it.",
+          "cap": "What each layer physically does. Function only — the share of spend each captures is in the map above."
         },
         {
           "file": "ai-capex-chain-concentration",
           "after": "winners",
           "accent": "#0a7d33",
-          "dated": true,
-          "alt": "A single full-width bar split into Nvidia about fifty percent, Broadcom fifteen percent, TSMC twelve percent and everyone else, with the remainder exploded into a long tail of smaller suppliers.",
-          "cap": "Owning several AI suppliers can still be one concentrated bet. Shares are of AI-attributable revenue, not of any index."
+          "dated": false,
+          "alt": "Cumulative share curve showing how few companies account for most of the AI-attributable revenue in the chain.",
+          "cap": "How many names it takes to cover the chain. Owning several AI suppliers can still be one concentrated bet."
         },
         {
           "file": "ai-capex-chain-method",
           "after": "insights",
           "accent": "#4A5BC4",
           "dated": false,
-          "alt": "Three-step flow — company revenue multiplied by an AI exposure weight gives AI-attributable revenue — beside a box listing four things the model cannot tell you.",
-          "cap": "How the split is calculated, and the four things it cannot tell you. Worth reading before acting on anything above."
+          "alt": "Diagram of the share calculation — revenue times an AI exposure weight — beside a box listing four things the model cannot tell you.",
+          "cap": "The full method is in the endnotes below; this is the short version, placed where it still matters."
         }
       ]
     },
