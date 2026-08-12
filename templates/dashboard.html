@@ -9041,21 +9041,18 @@ document.addEventListener('keydown', function(e){
       <h2 class="sc-title">Capex Chains</h2>
       <p class="sc-sub">Not a screener and not a chart. Each map takes one macro driver — AI capex, the power build-out, the defense budget — and shows where the money has already landed, layer by layer, company by company.</p>
     </div>
-    </section>
-    <section class="pnl-sec pnl-teal"><div class="pnl-rib"><span class="pnl-ico" aria-hidden="true">🗺️</span><span class="pnl-t">What this section is</span></div>
-    <div class="sec-brief">
-      <div><b>What a chain map is</b><span>One macro driver &mdash; AI capex, the power
-        build-out, the defense budget &mdash; traced down the real supply chain that spends it,
-        layer by layer.</span></div>
-      <div><b>What the shares mean</b><span>Each layer&rsquo;s and each company&rsquo;s share of
-        the money that has <i>already landed</i>, weighted by how much of that business depends
-        on the spend. Descriptive, not a forecast.</span></div>
-      <div><b>How to read it</b><span>Read down the chain: each layer&rsquo;s share of the
-        money that has already landed, and the companies capturing it. The weightings are
-        ours and are stated on each map &mdash; argue with them.</span></div>
-    </div>
+    <!-- The "What this section is" explainer was CUT (12 Aug 2026): three
+         columns of static prose sitting between the reader and the maps, of
+         which two said the same thing — "share of the money that has already
+         landed" — the duplication our own rule exists to catch. The sc-sub
+         above already frames the section in one line, and each map's own page
+         explains the model at the point it is needed. Also removed a stray
+         </section> that closed nothing (there was no matching open tag in this
+         panel) and left the section below unclosed. -->
+    <section class="pnl-sec pnl-teal">
     <div id="tmBody"><div class="sc-empty">Loading thesis maps…</div></div>
     <p class="tm-note">Maps are descriptive models of disclosed spending and revenue mix, not forecasts. The weightings are our judgement and are stated on each map. Not a recommendation, not advice, and not FCA-authorised. Capital at risk.</p>
+    </section>
   </div>
 </div>
 

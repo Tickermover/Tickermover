@@ -291,7 +291,7 @@
         },
         {
           "file": "ai-capex-chain-concentration",
-          "after": "winners",
+          "after": "insights",
           "accent": "#0a7d33",
           "dated": false,
           "alt": "Cumulative share curve showing how few companies account for most of the AI-attributable revenue in the chain.",
@@ -299,7 +299,7 @@
         },
         {
           "file": "ai-capex-chain-method",
-          "after": "insights",
+          "after": "winners",
           "accent": "#4A5BC4",
           "dated": false,
           "alt": "Diagram of the share calculation — revenue times an AI exposure weight — beside a box listing four things the model cannot tell you.",
