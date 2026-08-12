@@ -4620,9 +4620,23 @@ async def _build_desk_report(kind: str, edition_date) -> dict:
         if data["ai"] is None and not over:
             logger.warning(f"desk {kind}: editorial model returned no narrative — falling back to default model")
             data["ai"] = await market_analysis.ai_narrative(data, kind)
+        # Record WHY there is no narrative. A bare None is indistinguishable
+        # from "not generated yet", which is how a dead provider chain went
+        # unnoticed for a day: the card just quietly rendered its fallback.
+        if data["ai"] is None:
+            try:
+                import llm_free as _lf
+                data["ai_error"] = {
+                    "reason": "over AI budget" if over else "every provider failed",
+                    "providers": _lf.available(),
+                    "last": (_lf.LAST_ERRORS or [])[:3],
+                }
+            except Exception:
+                data["ai_error"] = {"reason": "over AI budget" if over else "unknown"}
     except Exception as exc:
         logger.warning(f"desk {kind} AI narrative failed: {exc}")
         data["ai"] = None
+        data["ai_error"] = {"reason": f"{type(exc).__name__}: {exc}"[:200]}
     # LIVE mode: the report tracks the market intraday (no frozen daily edition).
     # Label it with the live "as of" time so users see it's current, not a 4 AM snapshot.
     ses = data.get("session", {}) if isinstance(data, dict) else {}
@@ -4669,6 +4683,14 @@ _DESK_REPORT_VERSION = 5   # bump to force a one-time rebuild when the report ch
 # keep being served with neither, and the change would look like it failed.
 
 
+# How many times the publisher may rebuild a frozen edition that came back with
+# no AI narrative. At a 10-minute loop this is ~1.5h of recovery window, which
+# covers a provider rate-limit or a retired-model fix, without re-attempting all
+# day when the chain is genuinely down.
+_DESK_AI_MAX_RETRIES = 9
+_DESK_AI_RETRIES: dict = {}
+
+
 async def _publish_desk_daily(force: bool = False) -> dict:
     """ONE daily market report — generated once per trading day after the close
     (~16:15 ET) and then frozen until the next close. Uses the post-market framing
@@ -4680,6 +4702,30 @@ async def _publish_desk_daily(force: bool = False) -> dict:
     _ce = (cur.get("edition") or {}) if isinstance(cur, dict) else {}
     fresh = (cur and not force and _ce.get("date") == ed
              and _ce.get("v") == _DESK_REPORT_VERSION)
+    # A FAILED generation used to freeze exactly like a successful one. If the
+    # AI chain was down when the edition was cut, `ai` came back None and the
+    # rest of the trading day served deterministic fallback prose — even after
+    # the providers recovered minutes later.
+    #
+    # That is exactly what happened on 2026-08-12: Google had retired
+    # gemini-2.0-flash, every provider in the chain failed, the edition froze
+    # with ai=None, and the verdict card silently rendered its no-AI branch —
+    # hiding an editorial the prompt had already been asked to write (evidence
+    # bullets, counter-case, web citations). The feature looked unbuilt when it
+    # was only unfed.
+    #
+    # So an edition with no narrative is NOT fresh: let the 10-minute publisher
+    # loop try again. Bounded, because if the chain is genuinely down we should
+    # not re-attempt all day — after _DESK_AI_MAX_RETRIES the edition stands
+    # and the fallback prose is what ships.
+    if fresh and not (cur.get("ai") or {}):
+        n = _DESK_AI_RETRIES.get(ed, 0)
+        if n < _DESK_AI_MAX_RETRIES:
+            _DESK_AI_RETRIES.clear()            # only today's counter matters
+            _DESK_AI_RETRIES[ed] = n + 1
+            logger.info("desk: edition %s has no narrative — rebuild attempt %d/%d",
+                        ed, n + 1, _DESK_AI_MAX_RETRIES)
+            fresh = False
     if fresh:
         return cur                              # today's frozen edition already built
     report = await _build_desk_report("post", _et_now().date())
