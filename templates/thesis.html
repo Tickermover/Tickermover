@@ -501,6 +501,12 @@ h1.title{font-size:clamp(34px,5.6vw,54px);line-height:1.03;letter-spacing:-.022e
 
 /* BEAT 1 — the claim. A finding, in the reader's first screen, before any
    context card gets a chance to bury it. */
+/* "no data" must read as a stated absence, not as a number. Quiet, italic,
+   and visibly not part of the percentage family so the eye skips it rather
+   than trying to compare it with the shares around it. */
+.co-imp.co-nodata{font-family:var(--body);font-style:italic;font-weight:500;
+  font-size:11px;color:var(--faint);letter-spacing:0}
+
 /* 34ch left roughly half the 1180px container empty on desktop and read as an
    unfinished column. 52ch still breaks before the line gets tiring but uses
    the measure the rest of the page uses. */
@@ -1038,8 +1044,21 @@ h1.title{font-size:clamp(34px,5.6vw,54px);line-height:1.03;letter-spacing:-.022e
         var chip = document.querySelector('[data-imp="'+i+'-'+j+'"]');
         if(!chip) return;
         var s = SHARES[c.t];
-        chip.textContent = (s==null? "" : pctShare(s));
-        chip.className = "co-imp share-t";
+        /* A company our universe doesn't cover comes back with no share, and
+           this used to render an EMPTY chip — a name, an exposure bar, and a
+           blank where the number goes. That reads as a rendering fault, not as
+           missing data, which is precisely the confusion this product exists
+           to remove. An audit found 14 of 133 company chips across the ten
+           maps in this state (power-buildout had seven of fourteen). Say so
+           instead. */
+        if(s == null){
+          chip.textContent = "no data";
+          chip.className = "co-imp co-nodata";
+          chip.title = "We don't have revenue coverage for this company, so it has no share in this map's total.";
+        } else {
+          chip.textContent = pctShare(s);
+          chip.className = "co-imp share-t";
+        }
       }); });
       // The art carries baked figures; say when they were true. Same reason the
       // money card gained a staleness note - a drawing cannot re-cut itself.
