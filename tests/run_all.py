@@ -20,6 +20,7 @@ sys.path.insert(0, str(ROOT / "tests"))
 
 TEST_MODULES = [
     "test_billing",
+    "test_pro_gating",
     "test_usage_log",
     "test_scoring",
     "test_bottom_line",
