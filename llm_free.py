@@ -108,6 +108,20 @@ def _model_for(name: str, menv: str, default: str) -> str:
     return m
 
 
+def _url_for(name: str, default: str) -> str:
+    """Endpoint override from `<NAME>_URL`.
+
+    Providers move and retire endpoints on their own schedule — NVIDIA is
+    currently answering a bare "404 page not found", GitHub Models is mid
+    retirement, and OpenRouter has already renamed a slug under us. Each of
+    those needed a code change and a deploy to correct. With this, a moved
+    endpoint is a dashboard edit.
+
+    It also lets account-scoped providers work at all: Cloudflare Workers AI
+    embeds the account id in its path, so its URL cannot be a constant."""
+    return (_key(f"{name.upper()}_URL") or "").strip() or default
+
+
 def _key(name: str) -> str:
     """Read a provider key, tolerating (a) common alias names and (b) loose
     naming such as 'Gemini API Key' or 'gemini-api-key'."""
@@ -156,6 +170,28 @@ _PROVIDERS = [
     ("openrouter", "OPENROUTER_API_KEY", "OPENROUTER_MODEL",
      "meta-llama/llama-3.3-70b-instruct",
      "https://openrouter.ai/api/v1/chat/completions", 24000),
+
+    # ── Added 2026-08-13, after a day when the whole chain was down at once ──
+    # Both are OpenAI-compatible, so they need no new call path — a tuple and a
+    # key is the entire integration. Both are INERT until their key is set, so
+    # adding them cannot break the existing chain.
+    #
+    # SambaNova: permanent free tier (no card), reported ~20 req/min and 200k
+    # tokens/day per model. Small daily budget, but it is a genuinely separate
+    # quota pool from Groq and Cerebras, which is the point — the failure we
+    # keep hitting is every provider rate-limiting at once.
+    ("sambanova", "SAMBANOVA_API_KEY", "SAMBANOVA_MODEL",
+     "Meta-Llama-3.3-70B-Instruct",
+     "https://api.sambanova.ai/v1/chat/completions", 30000),
+    # Cloudflare Workers AI: ~10k free "neurons"/day. Its path embeds the
+    # account id, so the URL MUST come from CLOUDFLARE_URL — set it to
+    # https://api.cloudflare.com/client/v4/accounts/<ACCOUNT_ID>/ai/v1/chat/completions
+    # The default below is deliberately unusable so a missing account id fails
+    # loudly at the first call rather than looking configured.
+    ("cloudflare", "CLOUDFLARE_API_KEY", "CLOUDFLARE_MODEL",
+     "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
+     "https://api.cloudflare.com/client/v4/accounts/SET_CLOUDFLARE_URL/ai/v1/chat/completions",
+     20000),
 ]
 
 
@@ -361,6 +397,7 @@ async def chat_json(prompt: str, *, max_tokens: int = 1500, timeout: float = 75.
             continue
         tried += 1
         model = _model_for(name, menv, dflt)
+        url = _url_for(name, url)     # endpoint may be overridden per deploy
         try:
             if name == "gemini":
                 ok, body = await _call_gemini(url, key, model, prompt[:cap], max_tokens, timeout)
@@ -385,6 +422,7 @@ async def chat_json(prompt: str, *, max_tokens: int = 1500, timeout: float = 75.
 
 
 async def _call_text(name, url, key, model, prompt, max_tokens, timeout, cap):
+    url = _url_for(name, url)         # endpoint may be overridden per deploy
     """Same providers, but plain-text output (no JSON response_format)."""
     if name == "gemini":
         return await _call_gemini(url, key, model, prompt[:cap], max_tokens, timeout,
