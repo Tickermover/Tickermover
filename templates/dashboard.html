@@ -2699,7 +2699,9 @@ textarea:focus-visible,[tabindex]:focus-visible{
 /* Topbar search is now a click-only trigger (not a real text input)
    so accidental focus doesn't open the cmdk palette. */
 .v2-search{
-  flex:1;max-width:480px;position:relative;
+  /* Was capped at 480px, which left the middle of a 1400px topbar empty. The
+     bar now takes the space between the burger and the index pills. */
+  flex:1;max-width:none;position:relative;
   display:flex;align-items:center;
   background:#f1f5f9;border:1px solid transparent;border-radius:10px;
   padding:9px 12px 9px 38px;
@@ -7408,8 +7410,18 @@ body.ce-active .ts-tape{display:none!important}
    margin-left:auto so the index pills stay right-aligned with the search gone. */
 body.hide-topsearch .v2-topbar .v2-search{display:none!important}
 
-/* The "you are here" label that fills the gap the search bar leaves behind. */
-.v2-tb-where{display:none;align-items:center;gap:10px;min-width:0}
+/* The "you are here" label that fills the gap the search bar leaves behind.
+   It used to hug its own content, so on Company Events the topbar read as a
+   title, a tiny key chip, and then several hundred pixels of nothing before
+   the index pills. It now spans the same width the search bar would, and wears
+   the search bar's own surface — so the row looks deliberate, and the ⌘K
+   affordance sits where a search field's controls would be. Still not a second
+   text input: these panels carry their own search box, and two live inputs on
+   one screen was the thing this arrangement existed to avoid. */
+.v2-tb-where{display:none;align-items:center;gap:10px;min-width:0;
+  flex:1;background:#f1f5f9;border:1px solid transparent;border-radius:10px;
+  padding:8px 10px 8px 14px}
+.v2-tb-where .v2-tb-where-k{margin-left:auto}
 body.hide-topsearch .v2-tb-where{display:flex}
 .v2-tb-where-t{font-size:15px;font-weight:600;letter-spacing:-.01em;color:#0A2F46;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
