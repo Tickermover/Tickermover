@@ -271,7 +271,41 @@
         }
       ],
       "how": "Each company's share = its trailing revenue × an estimated 'AI-attributable' fraction (its exposure band: high / moderate / low), divided by the chain total. So it answers who actually captures the spend TODAY — not who might benefit next. Revenue is live from our scan; a few names our universe doesn't cover use a flagged revenue estimate. Exposure bands are qualitative judgements from filings and earnings calls, and they are the part most worth arguing with. This is a snapshot of realized share, not a prediction — later position in the chain does NOT imply un-captured upside; markets price expectations ahead, and many of these names have already run. The 'signal to watch' is the single leading indicator we'd track for each name.",
-      "disclaimer": "This is a factual map of supply chain relationships. It is not investment advice, not a recommendation to buy or sell any security, and nothing here accounts for your circumstances. Company classifications change; verify against primary filings before acting."
+      "disclaimer": "This is a factual map of supply chain relationships. It is not investment advice, not a recommendation to buy or sell any security, and nothing here accounts for your circumstances. Company classifications change; verify against primary filings before acting.",
+      "figures": [
+        {
+          "file": "ai-capex-chain-prize",
+          "after": "money",
+          "accent": "#A16207",
+          "dated": true,
+          "alt": "Isometric reservoir labelled $2 trillion pledged, about thirty percent filled, with an outflow pipe labelled roughly $500 billion a year.",
+          "cap": "How much of the pledged $2T has actually been spent. The supplier shares below measure only the landed portion."
+        },
+        {
+          "file": "ai-capex-chain-anatomy",
+          "after": "chain",
+          "accent": "#1F6FA8",
+          "dated": false,
+          "alt": "Cutaway of an AI data centre rack with six labelled components: compute chips, memory, optical interconnect, signal and connectivity chips, switching and networking, and power and cooling.",
+          "cap": "What each layer physically does, and who builds it. Function only — the share of spend each captures is in the map above."
+        },
+        {
+          "file": "ai-capex-chain-concentration",
+          "after": "winners",
+          "accent": "#0a7d33",
+          "dated": true,
+          "alt": "A single full-width bar split into Nvidia about fifty percent, Broadcom fifteen percent, TSMC twelve percent and everyone else, with the remainder exploded into a long tail of smaller suppliers.",
+          "cap": "Owning several AI suppliers can still be one concentrated bet. Shares are of AI-attributable revenue, not of any index."
+        },
+        {
+          "file": "ai-capex-chain-method",
+          "after": "insights",
+          "accent": "#4A5BC4",
+          "dated": false,
+          "alt": "Three-step flow — company revenue multiplied by an AI exposure weight gives AI-attributable revenue — beside a box listing four things the model cannot tell you.",
+          "cap": "How the split is calculated, and the four things it cannot tell you. Worth reading before acting on anything above."
+        }
+      ]
     },
     {
       "slug": "power-buildout",

@@ -460,6 +460,36 @@ h1.title{font-size:clamp(34px,5.6vw,54px);line-height:1.03;letter-spacing:-.022e
   .layer{display:block}
   .layer-when-badge .lw-v{font-size:30px}
 }
+
+/* ── Inline figures ──────────────────────────────────────────────────
+   Extends the single hero illustration to a SERIES, one per section, so a
+   reader gets a picture at the point the argument needs one. Same visual
+   contract as .hero-art (white card, hairline, 16px radius, caption under a
+   rule) plus a 4px accent edge, matching the section accents above, so a
+   figure reads as belonging to the section it follows.
+   ONE TEMPLATE DRIVES ALL TEN MAPS: these render only when the thesis
+   declares a `figures` array, so every other map is untouched. */
+.fig-art{margin:0 0 18px;background:#fff;border:1px solid var(--line);border-radius:16px;
+  overflow:hidden;position:relative}
+.fig-art::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;
+  background:var(--fa,var(--blue));z-index:1}
+.fig-art-crop{line-height:0;cursor:zoom-in}
+.fig-art-crop img{width:100%;height:auto;display:block}
+.fig-art figcaption{font-size:11.5px;line-height:1.5;color:var(--faint);
+  padding:9px 16px 11px 19px;border-top:1px solid var(--line)}
+.fig-art figcaption b{color:var(--muted);font-weight:600}
+@media(max-width:640px){.fig-art figcaption{font-size:11px;padding:8px 12px 10px 15px}}
+
+/* These are dense technical drawings. At phone width the callout text is
+   unreadable inline, so tapping opens the full-resolution file. */
+.fig-lb{position:fixed;inset:0;z-index:9999;background:rgba(10,47,70,.93);
+  display:flex;align-items:center;justify-content:center;padding:24px;cursor:zoom-out}
+.fig-lb img{max-width:100%;max-height:100%;width:auto;height:auto;border-radius:8px;
+  box-shadow:0 24px 70px rgba(0,0,0,.5)}
+.fig-lb-x{position:absolute;top:12px;right:18px;color:#fff;font-size:32px;line-height:1;
+  background:none;border:0;cursor:pointer;opacity:.85;padding:4px 10px}
+.fig-lb-x:hover{opacity:1}
+@media(max-width:640px){.fig-lb{padding:10px}}
 </style>
 </head>
 <body>
@@ -938,6 +968,105 @@ h1.title{font-size:clamp(34px,5.6vw,54px);line-height:1.03;letter-spacing:-.022e
     loadLive(c.t, d);
   });
 
+  /* ── Inline figures ───────────────────────────────────────────────────
+     Extends the hero mechanism from one image per map to a series, declared
+     in data/theses.json as:
+       "figures":[{file, after, alt, cap, dated, accent}]
+     `file`   stem under /static/chain-art/ (serves .webp, falls back to .png)
+     `after`  id of the section this figure follows: money|chain|winners|insights
+     `dated`  true only if the drawing has numbers baked into it (see below)
+     The endpoint's _clean() preserves unknown keys, so this needs no backend
+     change — adding art is a data edit plus two files.
+
+     Four things here are deliberate:
+
+     1. SAME LOAD ORDER AS THE HERO — sources first, handlers last, plus a
+        cache-hit check. Attaching handlers before src lets <picture>'s
+        re-selection fire a phantom error that rips the figure out of the DOM
+        (see the hero comment below; that one shipped broken to prod).
+     2. NO loading="lazy". A figure starts display:none, and a lazy image
+        inside a hidden element never enters the viewport, so it never loads,
+        so onload never fires and it never reveals. Deferral instead comes
+        from an IntersectionObserver — which for the same reason watches the
+        ANCHOR, an element that actually has a box, not the hidden figure.
+     3. A missing file removes the figure rather than leaving a broken box, so
+        this code can ship before the art does.
+     4. Only `dated` figures get the as-of stamp. Putting a data date on a
+        pure explainer implies numbers it doesn't carry. */
+  function openLightbox(img){
+    if(!img || !img.src) return;
+    var lb = document.createElement("div");
+    lb.className = "fig-lb";
+    lb.innerHTML = '<button class="fig-lb-x" aria-label="Close">&times;</button>';
+    var big = document.createElement("img");
+    big.src = img.currentSrc || img.src;
+    big.alt = img.alt || "";
+    lb.appendChild(big);
+    function close(){ lb.remove(); document.removeEventListener("keydown", onKey); }
+    function onKey(e){ if(e.key === "Escape" || e.key === "Esc") close(); }
+    lb.addEventListener("click", close);
+    document.addEventListener("keydown", onKey);
+    document.body.appendChild(lb);
+  }
+
+  function mountFigures(d){
+    var figs = (d && d.figures) || [];
+    if(!figs.length) return;                       // every other map: no-op
+    var asOf = (d.as_of && typeof fmtAsOf === "function") ? fmtAsOf(d.as_of) : "";
+    figs.forEach(function(f){
+      if(!f || !f.file || !f.after) return;
+      var anchor = document.getElementById(f.after);
+      if(!anchor || !anchor.parentNode) return;    // unknown anchor → skip quietly
+
+      var fig = document.createElement("figure");
+      fig.className = "fig-art";
+      fig.style.display = "none";
+      if(f.accent) fig.style.setProperty("--fa", f.accent);
+
+      var cap = esc(f.cap || "");
+      if(f.dated && asOf){
+        cap += (cap ? " " : "") + "<b>Figures in this illustration are as at " + esc(asOf) + ".</b>";
+      }
+      fig.innerHTML =
+        '<div class="fig-art-crop"><picture>'+
+          '<source type="image/webp">'+
+          '<img decoding="async" alt="'+esc(f.alt || "")+'">'+
+        '</picture></div>'+
+        (cap ? '<figcaption>'+cap+'</figcaption>' : '');
+
+      var img  = fig.querySelector("img");
+      var wsrc = fig.querySelector("source");
+      var base = "/static/chain-art/" + encodeURIComponent(f.file);
+      function load(){
+        if(img.getAttribute("src")) return;        // already started
+        if(wsrc) wsrc.srcset = base + ".webp";     // sources FIRST — see (1)
+        img.src = base + ".png";
+        function show(){ fig.style.display = ""; }
+        if(img.complete && img.naturalWidth > 0){ show(); }   // cache hit
+        else { img.onload = show; img.onerror = function(){ fig.remove(); }; }
+      }
+
+      anchor.parentNode.insertBefore(fig, anchor.nextSibling);
+      fig.querySelector(".fig-art-crop").addEventListener("click", function(){ openLightbox(img); });
+
+      if(window.IntersectionObserver){
+        var io = new IntersectionObserver(function(entries){
+          for(var i=0;i<entries.length;i++){
+            if(entries[i].isIntersecting){ io.disconnect(); load(); return; }
+          }
+        }, {rootMargin:"600px 0px"});
+        io.observe(anchor);                        // the anchor has a box — see (2)
+        /* Safety net. A tab that never renders — opened in the background, or an
+           embedded/headless view — computes no intersections, so the observer can
+           sit silent forever and the figure would never appear at all (verified:
+           document.visibilityState "hidden" => the callback never fires). Deferral
+           is an optimisation, not a correctness rule, so load anyway after a beat.
+           load() is idempotent, so the race with a late-firing observer is safe. */
+        setTimeout(function(){ io.disconnect(); load(); }, 4000);
+      } else { load(); }
+    });
+  }
+
   /* The hero image is a RASTER with figures baked into it, so it cannot track
      the data the way the panels below it do. Two consequences handled here:
      it is captioned with the dataset date so a reader can see how current the
@@ -969,7 +1098,10 @@ h1.title{font-size:clamp(34px,5.6vw,54px);line-height:1.03;letter-spacing:-.022e
   fetch("/api/thesis-map/"+encodeURIComponent(slug)+"?v=2")
     .then(function(r){ if(!r.ok) throw new Error(r.status); return r.json(); })
     .then(function(d){ if(!d || d.available===false || !d.layers) throw new Error("unavailable");
-                       window.__mapAsOf = d.as_of; build(d); })
+                       window.__mapAsOf = d.as_of; build(d);
+                       // After build(), so the anchor sections exist and are laid out.
+                       try { mountFigures(d); } catch(e){}   // art must never break the map
+                     })
     .catch(function(){
       document.getElementById("title").textContent = "This thesis map isn't available";
       chain.innerHTML = '<div class="loading">It may still be in preparation. <a href="/who-benefits">Browse all thesis maps →</a></div>';
