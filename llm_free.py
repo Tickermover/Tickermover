@@ -127,7 +127,9 @@ def _key(name: str) -> str:
 # free-tier answer quality to Claude. NVIDIA NIM follows (large open models,
 # free credits), then the fast small-context providers, then backstops.
 _PROVIDERS = [
-    ("gemini", "GEMINI_API_KEY", "GEMINI_MODEL", "gemini-2.0-flash",
+    # Default was gemini-2.0-flash, which Google shut down on 2026-06-01, so an
+    # install without GEMINI_MODEL set had a dead primary AND dead fallbacks.
+    ("gemini", "GEMINI_API_KEY", "GEMINI_MODEL", "gemini-3.6-flash",
      "https://generativelanguage.googleapis.com/v1beta/models", 700000),
     # deepseek-v4-pro hit END OF LIFE on 2026-08-07 and now returns HTTP 410
     # "Gone" for every request. Set NVIDIA_MODEL in the environment to override
@@ -253,7 +255,24 @@ async def _call_openai_compatible(url: str, key: str, model: str, prompt: str,
     return True, body
 
 
-_GEMINI_FALLBACKS = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-2.0-flash-lite"]
+# TWO OF THESE THREE WERE DEAD. gemini-2.0-flash and gemini-2.0-flash-lite were
+# shut down by Google on 2026-06-01, so every fallback attempt after the primary
+# was a guaranteed HTTP 404 — the chain looked like it had depth and had none.
+# That is why /api/event-intel-status kept reporting
+# "models/gemini-2.0-flash-lite is no longer available": it is the LAST entry,
+# so its error is the one that survives, masking whatever failed first.
+#
+# Now the live Gemini 3 tiers first, then 2.5 as the proven backstop.
+# NOTE 2.5-flash, 2.5-flash-lite and 2.5-pro all shut down on 2026-10-16 —
+# after that this list must be Gemini 3 only. Override without a deploy by
+# setting GEMINI_MODEL.
+_GEMINI_FALLBACKS = [
+    "gemini-3.6-flash",        # current balanced tier
+    "gemini-3.5-flash-lite",   # fastest / cheapest, good for summarisation
+    "gemini-3.1-flash-lite",
+    "gemini-2.5-flash",        # dies 2026-10-16
+    "gemini-2.5-flash-lite",   # dies 2026-10-16
+]
 
 
 async def _call_gemini(base: str, key: str, model: str, prompt: str,
