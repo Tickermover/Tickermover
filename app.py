@@ -6610,7 +6610,8 @@ async def api_financials(symbol: str, period: str = "annual", refresh: int = 0, 
 
 
 @app.get("/api/event-intel-status")
-async def api_event_intel_status(probe: str = ""):
+async def api_event_intel_status(probe: str = "", probe_model: str = "",
+                                 probe_url: str = ""):
     """Health view for the earnings-call summarizer: which providers are
     configured and why the last summarization failed. Booleans + a truncated
     error string only — no key material. Exists because a failing provider is
@@ -6638,7 +6639,7 @@ async def api_event_intel_status(probe: str = ""):
         try:
             import llm_free as _lf2
             out["probe"] = (await _lf2.probe_all() if probe == "all"
-                            else await _lf2.probe(probe))
+                            else await _lf2.probe(probe, probe_model, probe_url))
         except Exception as exc:
             out["probe"] = {"ok": False, "error": f"{type(exc).__name__}: {exc}"[:200]}
     elif probe == "discover":

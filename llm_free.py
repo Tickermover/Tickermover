@@ -151,7 +151,12 @@ _PROVIDERS = [
     # retirement date, which is what made this diagnosable at all.
     ("nvidia", "NVIDIA_API_KEY", "NVIDIA_MODEL", "deepseek-ai/deepseek-v3.1",
      "https://integrate.api.nvidia.com/v1/chat/completions", 45000),
-    ("groq", "GROQ_API_KEY", "GROQ_MODEL", "openai/gpt-oss-120b",
+    # openai/gpt-oss-120b returned HTTP 400 "Failed to validate JSON" for every
+    # request — NOT a rate limit, which is what the 429s elsewhere made it look
+    # like. Proven on 2026-08-13: the legacy event_intel probe hit
+    # llama-3.3-70b-versatile with the SAME key at the same moment and got 200,
+    # while the chain's gpt-oss-120b 400'd. The model was the fault, not Groq.
+    ("groq", "GROQ_API_KEY", "GROQ_MODEL", "llama-3.3-70b-versatile",
      "https://api.groq.com/openai/v1/chat/completions", 11000),
     ("cerebras", "CEREBRAS_API_KEY", "CEREBRAS_MODEL", "gpt-oss-120b",
      "https://api.cerebras.ai/v1/chat/completions", 20000),
@@ -160,10 +165,10 @@ _PROVIDERS = [
     ("together", "TOGETHER_API_KEY", "TOGETHER_MODEL",
      "meta-llama/Llama-3.3-70B-Instruct-Turbo-Free",
      "https://api.together.xyz/v1/chat/completions", 100000),
-    # GitHub Models is mid-retirement (returns HTTP 410 brownout) — kept last
-    # so an existing token is still tried, but it is no longer worth adding.
-    ("github", "GITHUB_MODELS_TOKEN", "GITHUB_MODEL", "openai/gpt-4o",
-     "https://models.github.ai/inference/chat/completions", 100000),
+    # GitHub Models REMOVED 2026-08-13. It has returned HTTP 410
+    # github_models_retirement_brownout on every probe for a week; the service
+    # is being retired, so every traversal paid a round trip for a guaranteed
+    # failure. Re-add by restoring this tuple if it ever comes back.
     # The ":free" suffix was retired — openrouter now 404s it with
     # "This model is unavailable for free ... use this slug instead:
     # meta-llama/llama-3.3-70b-instruct", so the backstop was dead.
@@ -184,13 +189,14 @@ _PROVIDERS = [
      "Meta-Llama-3.3-70B-Instruct",
      "https://api.sambanova.ai/v1/chat/completions", 30000),
     # Cloudflare Workers AI: ~10k free "neurons"/day. Its path embeds the
-    # account id, so the URL MUST come from CLOUDFLARE_URL — set it to
-    # https://api.cloudflare.com/client/v4/accounts/<ACCOUNT_ID>/ai/v1/chat/completions
-    # The default below is deliberately unusable so a missing account id fails
-    # loudly at the first call rather than looking configured.
+    # account id, so this cannot be a generic constant — the account id below
+    # is this deployment's own (an identifier, not a credential; it appears in
+    # every dashboard URL). CLOUDFLARE_URL overrides it for another account.
+    # The token must carry Workers AI permission: a Zone- or DNS-scoped token
+    # authenticates and then fails at inference.
     ("cloudflare", "CLOUDFLARE_API_KEY", "CLOUDFLARE_MODEL",
      "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
-     "https://api.cloudflare.com/client/v4/accounts/SET_CLOUDFLARE_URL/ai/v1/chat/completions",
+     "https://api.cloudflare.com/client/v4/accounts/71ce6b72346605b6937cca73a23fd0b9/ai/v1/chat/completions",
      20000),
 ]
 
@@ -577,7 +583,7 @@ async def discover_working_models(max_try: int = 6, timeout: float = 20.0) -> li
     return out
 
 
-async def probe(name: str) -> dict:
+async def probe(name: str, model_override: str = "", url_override: str = "") -> dict:
     """Make one tiny REAL call to a single provider and report what came back.
 
     Exists because "no error logged" and "healthy" are indistinguishable from
@@ -597,8 +603,11 @@ async def probe(name: str) -> dict:
     key = _key(envk)
     if not key:
         return {"provider": name, "ok": False, "reason": f"{envk} not set"}
-    model = _model_for(name, menv, dflt)
-    url = _url_for(name, url)
+    # Overrides let a candidate model or endpoint be tested from the URL,
+    # without an env change or a deploy. Diagnosing NVIDIA's bare 404 otherwise
+    # costs a Railway edit and a restart per guess.
+    model = model_override.strip() or _model_for(name, menv, dflt)
+    url = url_override.strip() or _url_for(name, url)
     prompt = 'Reply with exactly this JSON and nothing else: {"ok": true}'
     started = time.time()
     try:
