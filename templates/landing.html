@@ -37,6 +37,41 @@
    Claimed once, after signup, by the app. */
 try{var _r=new URLSearchParams(location.search).get('ref');
     if(_r) localStorage.setItem('ah_ref', String(_r).trim().toUpperCase().slice(0,12));}catch(e){}</script>
+<script>/* Say WHO sent them. A visitor arriving on ?ref=HLWXBVU saw an ordinary
+   marketing page — nothing acknowledged that a person they know had vouched
+   for this, which is the only thing a referral has that an ad does not. The
+   code resolves to a first name (name only; the endpoint returns nothing that
+   identifies the account) and a small bar names them.
+   Fails silent: no name, no bar, page unchanged. */
+(function(){
+  try{
+    var code = new URLSearchParams(location.search).get('ref');
+    if(!code) return;
+    fetch('/api/referral/who?code=' + encodeURIComponent(code.trim().toUpperCase().slice(0,12)))
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(j){
+        var n = j && j.name;
+        if(!n) return;
+        var bar = document.createElement('div');
+        bar.className = 'ref-hail';
+        // textContent, not innerHTML — the name is user-controlled. It is
+        // sanitised on write too, but a value rendered to strangers should
+        // never depend on one layer of defence.
+        var who = document.createElement('b'); who.textContent = n;
+        bar.appendChild(who);
+        bar.appendChild(document.createTextNode(
+          ' invited you to TickerMover — your first month is free when you join.'));
+        document.body.insertBefore(bar, document.body.firstChild);
+      }).catch(function(){});
+  }catch(e){}
+})();
+</script>
+<style>
+.ref-hail{background:#0A2F46;color:#fff;font-size:14px;line-height:1.5;
+  padding:11px 20px;text-align:center;letter-spacing:-.005em}
+.ref-hail b{color:#FFC46B;font-weight:700}
+@media(max-width:640px){.ref-hail{font-size:13px;padding:10px 14px}}
+</style>
 
 
 <link rel="preconnect" href="https://fonts.googleapis.com">

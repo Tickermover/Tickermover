@@ -19245,7 +19245,18 @@ function _v2RefPaint(){
   var share = document.getElementById('v2-ref-share');
   if (share && _v2Ref && _v2Ref.url){
     var u = encodeURIComponent(_v2Ref.url);
-    var msg = encodeURIComponent("I've been using TickerMover to track the US market — here's a free month if you want to try it:");
+    /* SIGN THE MESSAGE. It read "I've been using TickerMover…" from an unknown
+       sender, next to a bare ?ref=HLWXBVU — which looks like a tracking
+       parameter, and is the kind of link people strip or ignore. Naming the
+       sender is the difference between a referral and a spam forward, and the
+       recipient sees the same name again on the landing page, so the two ends
+       of the link agree. */
+    var _rn = '';
+    try { _rn = (_v2Ref.name || localStorage.getItem('ah_name') || '').trim().split(' ')[0]; } catch(e){}
+    var msg = encodeURIComponent(
+      (_rn ? _rn + " uses TickerMover to track the US market and thought you'd find it useful."
+           : "I've been using TickerMover to track the US market.") +
+      " Here's a free month if you want to try it:");
     share.innerHTML =
       '<a href="https://wa.me/?text=' + msg + '%20' + u + '" target="_blank" rel="noopener">WhatsApp</a>' +
       '<a href="https://x.com/intent/tweet?text=' + msg + '&url=' + u + '" target="_blank" rel="noopener">X</a>' +

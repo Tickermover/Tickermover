@@ -13808,9 +13808,34 @@ async def api_referral(user: Optional[dict] = Depends(_current_user),
     if not user:
         raise HTTPException(status_code=401, detail="Not authenticated")
     import referrals as _ref
-    st = _ref.stats(user["user_id"])
+    # Pass the display name so the code resolves to "<Name> invited you" on the
+    # landing page. A bare ?ref=HLWXBVU says nothing to the recipient and reads
+    # like a tracking parameter — the kind people delete before clicking.
+    _nm = ""
+    try:
+        md = await supabase.get_user_metadata(creds.credentials) if creds else {}
+        _nm = (md or {}).get("name") or (md or {}).get("full_name") or ""
+    except Exception:
+        pass
+    st = _ref.stats(user["user_id"], _nm)
+    st["name"] = _ref.who(st.get("code") or "").get("name", "")
     st["url"] = f"{SITE_ORIGIN}/?ref={st['code']}" if st.get("code") else ""
     return JSONResponse(st)
+
+
+@app.get("/api/referral/who")
+async def api_referral_who(request: Request, code: str = ""):
+    """Who owns a referral code — FIRST NAME ONLY, or {} if unknown.
+
+    Public by necessity: the recipient of a link has no account yet, which is
+    the whole point. Deliberately minimal — no user id, no email, nothing that
+    identifies the account beyond what the referrer already chose to tell the
+    person they sent it to. Rate-limited so it cannot be walked to enumerate
+    the user base."""
+    _rate_limit(request, "ref_who", 30, 300)
+    import referrals as _ref
+    return JSONResponse(_ref.who(code),
+                        headers={"Cache-Control": "public, max-age=600"})
 
 
 class _RefClaim(BaseModel):

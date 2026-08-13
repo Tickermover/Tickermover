@@ -69,18 +69,61 @@ def code_for(user_id: str) -> str:
     return "".join(out)
 
 
-def register_code(user_id: str) -> str:
-    """Derive the code and make it resolvable. Idempotent."""
+def register_code(user_id: str, name: str = "") -> str:
+    """Derive the code and make it resolvable. Idempotent.
+
+    `name` is the referrer's FIRST NAME ONLY, stored so a landing page can say
+    who sent the visitor. A bare ?ref=HLWXBVU tells the recipient nothing and
+    reads like a tracking parameter, which is exactly what people strip out of
+    a URL before clicking. Captured here because this is called from the
+    authenticated /api/referral, so the name is already to hand — no admin
+    lookup, and never an email address.
+
+    Kept refreshed: a user who sets a display name later should not be stuck
+    anonymous on every link they have already shared."""
     code = code_for(user_id)
     if not code:
         return ""
+    first = _first_name(name)
     try:
         kv = _kv()
-        if not (kv.get("ref_code", code) or {}).get("user_id"):
-            kv.set("ref_code", code, {"user_id": user_id, "at": time.time()})
+        cur = kv.get("ref_code", code) or {}
+        if not cur.get("user_id") or (first and cur.get("name") != first):
+            kv.set("ref_code", code, {"user_id": user_id, "name": first,
+                                      "at": cur.get("at") or time.time()})
     except Exception as exc:                    # a failed write is recoverable
         logger.warning("referral: register_code %s: %s", code, exc)
     return code
+
+
+def _first_name(name: str) -> str:
+    """First name only, letters/marks/hyphens/apostrophes, capped.
+
+    Deliberately narrow: this string is rendered to a stranger on a public
+    page from a value the user controls, so it is sanitised at the point it is
+    STORED as well as escaped when shown."""
+    raw = (name or "").strip().split()
+    if not raw:
+        return ""
+    first = "".join(ch for ch in raw[0] if ch.isalpha() or ch in "-'")[:24]
+    return first[:1].upper() + first[1:] if first else ""
+
+
+def who(code: str) -> dict:
+    """Public, minimal detail about a referral code: {name} or {}.
+
+    Name only — never the user id, never the email. Enough to say
+    "Priya invited you", nothing that identifies the account."""
+    code = (code or "").strip().upper()
+    if not code:
+        return {}
+    try:
+        row = _kv().get("ref_code", code) or {}
+    except Exception:
+        return {}
+    if not row.get("user_id"):
+        return {}
+    return {"name": _first_name(row.get("name") or "")}
 
 
 def resolve(code: str) -> str:
@@ -159,9 +202,12 @@ def on_first_payment(user_id: str) -> str:
         return ""
 
 
-def stats(user_id: str) -> dict:
-    """Everything the referral UI needs for one user."""
-    code = register_code(user_id)
+def stats(user_id: str, name: str = "") -> dict:
+    """Everything the referral UI needs for one user.
+
+    `name` flows through to register_code so the code becomes resolvable to a
+    first name — see who()."""
+    code = register_code(user_id, name)
     earned = {}
     try:
         earned = _kv().get("ref_earned", user_id) or {}
