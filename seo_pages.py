@@ -804,3 +804,109 @@ def render_compare_index(universe: list[dict], site_origin: str) -> str:
         canonical=canonical, body_html=body,
         og_image=f"{site_origin}/static/icons/icon-512.png",
     )
+
+
+def render_article(art: dict, site_origin: str) -> Optional[str]:
+    """One research article as a real HTML page.
+
+    These 14 articles existed only as JSON on /api/blog, yet sitemap.xml had
+    been advertising /article/<id> for every one of them — so Google was told
+    about 14 pages that returned 404. They are the site's only genuinely
+    unique long-form content, so the fix is to serve them, not to hide them.
+
+    DELIBERATELY OMITS the `report` block (rating, conviction, price_target).
+    These carry price targets against a price captured when the piece was
+    written; publishing a months-old target on an indexable page is both stale
+    and the sort of thing the site's own AI prompts already forbid
+    ("do NOT give price targets"). The prose and the summary are the value.
+    """
+    if not art or not art.get("id"):
+        return None
+    import html as _html
+
+    aid   = str(art.get("id"))
+    title = (art.get("title") or "").strip()
+    summ  = (art.get("summary") or "").strip()
+    body  = art.get("content") or ""          # already HTML, authored in-repo
+    tick  = (art.get("ticker") or "").upper()
+    cat   = (art.get("category") or "Research").strip()
+    date  = (art.get("date") or "").strip()
+
+    canonical = f"{site_origin}/article/{aid}"
+    desc = (summ or title)[:180]
+
+    schema = {
+        "@context": "https://schema.org",
+        "@type": "Article",
+        "headline": title[:110],
+        "description": desc,
+        "url": canonical,
+        "datePublished": date,
+        "articleSection": cat,
+        "image": f"{site_origin}/static/icons/icon-512.png",
+        "author": {"@type": "Organization", "name": "TickerMover", "url": site_origin},
+        "publisher": {
+            "@type": "Organization", "name": "TickerMover",
+            "logo": {"@type": "ImageObject", "url": f"{site_origin}/static/icons/icon-512.png"},
+        },
+    }
+    breadcrumb = {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {"@type": "ListItem", "position": 1, "name": "Home", "item": site_origin},
+            {"@type": "ListItem", "position": 2, "name": "Research", "item": f"{site_origin}/reports"},
+            {"@type": "ListItem", "position": 3, "name": title[:70], "item": canonical},
+        ],
+    }
+    schema_json = (
+        _json.dumps(schema, separators=(",", ":"))
+        + '</script>\n<script type="application/ld+json">'
+        + _json.dumps(breadcrumb, separators=(",", ":"))
+    )
+
+    tick_chip = (f'<a class="art-tick" href="{site_origin}/stocks/{_html.escape(tick)}">'
+                 f'{_html.escape(tick)}</a>') if tick else ""
+    # The date is stated plainly and up top: these are point-in-time pieces and
+    # a reader arriving from search has no other way to know how old the view is.
+    meta_line = " · ".join(x for x in (_html.escape(cat), date) if x)
+
+    body_html = f"""<div class="wrap">{brand_header()}</div>
+<article class="wrap art">
+  <p class="art-eyebrow">{meta_line}</p>
+  <h1 class="art-h1">{_html.escape(title)}</h1>
+  {f'<p class="art-sum">{_html.escape(summ)}</p>' if summ else ''}
+  {tick_chip}
+  <div class="art-body">{body}</div>
+  <p class="art-note">Published {date or 'previously'}. This is a point-in-time
+  research note and is not updated — figures and any view expressed were current
+  when written. Research opinion for information and education only: not
+  investment advice, not a personal recommendation, and not FCA-authorised.
+  Capital at risk; past performance is not a guide to future results.</p>
+  {cta_block("See this sector scored live", "/app?signup=1")}
+</article>
+<style>
+.art{{max-width:760px;padding:26px 22px 60px}}
+.art-eyebrow{{font-size:11px;letter-spacing:.12em;text-transform:uppercase;
+  color:#94a3b8;margin:0 0 10px;font-weight:700}}
+.art-h1{{font-size:clamp(27px,4.4vw,40px);line-height:1.15;letter-spacing:-.022em;
+  color:#0A2F46;margin:0 0 14px}}
+.art-sum{{font-size:17px;line-height:1.6;color:#475569;margin:0 0 18px}}
+.art-tick{{display:inline-block;font-family:ui-monospace,monospace;font-size:12px;
+  font-weight:700;color:#14587D;background:rgba(20,88,125,.08);
+  border:1px solid rgba(20,88,125,.18);border-radius:999px;
+  padding:5px 12px;text-decoration:none;margin-bottom:20px}}
+.art-body{{font-size:16px;line-height:1.75;color:#26333F}}
+.art-body p{{margin:0 0 17px}}
+.art-body h2{{font-size:22px;line-height:1.25;color:#0A2F46;margin:32px 0 12px;
+  letter-spacing:-.015em}}
+.art-body h3{{font-size:18px;color:#0A2F46;margin:26px 0 10px}}
+.art-body ul,.art-body ol{{margin:0 0 17px;padding-left:22px}}
+.art-body li{{margin:0 0 7px}}
+.art-note{{font-size:12.5px;line-height:1.6;color:#94a3b8;margin:34px 0 26px;
+  padding-top:16px;border-top:1px solid rgba(10,47,70,.09)}}
+</style>"""
+
+    return page_shell(title=f"{title} | TickerMover", desc=desc, canonical=canonical,
+                      body_html=body_html, schema_json=schema_json,
+                      og_image=f"{site_origin}/static/icons/icon-512.png")

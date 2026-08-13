@@ -3558,6 +3558,29 @@ async def learn_pillar(slug: str):
     return HTMLResponse(content=html)
 
 
+@app.get("/article/{article_id}", response_class=HTMLResponse)
+async def article_page(article_id: str):
+    """A research article as a real page.
+
+    sitemap.xml has advertised /article/<id> for all 14 entries in
+    _BLOG_ARTICLES since the sitemap was written, but no such route ever
+    existed — the content lived only behind /api/blog as JSON. Every one of
+    those URLs returned 404: 14 of the 312 pages Search Console reports as not
+    indexed, and crawl budget spent on nothing.
+
+    (_BLOG_ARTICLES is defined further down this module; the lookup happens at
+    call time, so the ordering is fine.)"""
+    aid = (article_id or "").lower().strip()
+    art = next((a for a in _BLOG_ARTICLES if (a.get("id") or "").lower() == aid), None)
+    if not art:
+        raise HTTPException(status_code=404, detail="Unknown article")
+    html = _seo.render_article(art, SITE_ORIGIN)
+    if html is None:
+        raise HTTPException(status_code=404, detail="Unknown article")
+    return HTMLResponse(content=html,
+                        headers={"Cache-Control": "public, max-age=900, s-maxage=3600"})
+
+
 @app.get("/sectors", response_class=HTMLResponse)
 async def sectors_index():
     return HTMLResponse(content=_seo.render_sector_index(_universe_data or [], SITE_ORIGIN))
