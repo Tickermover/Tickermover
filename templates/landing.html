@@ -52,25 +52,106 @@ try{var _r=new URLSearchParams(location.search).get('ref');
       .then(function(j){
         var n = j && j.name;
         if(!n) return;
-        var bar = document.createElement('div');
-        bar.className = 'ref-hail';
+        // Was a top bar; the sticky header sat over it and it scrolled away
+        // unread. An invitation from a named person is the strongest thing on
+        // this page for this visitor, so it gets a dialog.
+        // Shown ONCE per code — an invite that reappears on every visit stops
+        // reading as an invitation and starts reading as an ad.
+        var seen = '';
+        try { seen = localStorage.getItem('ah_ref_seen') || ''; } catch(e){}
+        if (seen === code) return;
+        try { localStorage.setItem('ah_ref_seen', code); } catch(e){}
+
+        var ov = document.createElement('div');
+        ov.className = 'ref-ov';
+        ov.setAttribute('role', 'dialog');
+        ov.setAttribute('aria-modal', 'true');
+        ov.setAttribute('aria-label', 'You have been invited to TickerMover');
+
+        var card = document.createElement('div');
+        card.className = 'ref-card';
+
+        var x = document.createElement('button');
+        x.className = 'ref-x'; x.type = 'button';
+        x.setAttribute('aria-label', 'Close'); x.innerHTML = '&times;';
+
+        var ic = document.createElement('div');
+        ic.className = 'ref-ic'; ic.textContent = '🎁';
+
+        var h = document.createElement('h2');
+        h.className = 'ref-h';
         // textContent, not innerHTML — the name is user-controlled. It is
         // sanitised on write too, but a value rendered to strangers should
-        // never depend on one layer of defence.
-        var who = document.createElement('b'); who.textContent = n;
-        bar.appendChild(who);
-        bar.appendChild(document.createTextNode(
-          ' invited you to TickerMover — your first month is free when you join.'));
-        document.body.insertBefore(bar, document.body.firstChild);
+        // never rest on one layer of defence.
+        var who = document.createElement('span');
+        who.className = 'ref-who'; who.textContent = n;
+        h.appendChild(who);
+        h.appendChild(document.createTextNode(' invited you to TickerMover'));
+
+        var p = document.createElement('p');
+        p.className = 'ref-p';
+        p.textContent = 'Your first month is free when you join. ' +
+          'From market noise to one clear number on 540+ US large-caps.';
+
+        var cta = document.createElement('a');
+        cta.className = 'ref-cta'; cta.href = '/login?signup';
+        cta.textContent = 'Claim your free month';
+
+        var no = document.createElement('button');
+        no.className = 'ref-no'; no.type = 'button';
+        no.textContent = 'Have a look around first';
+
+        card.appendChild(x); card.appendChild(ic); card.appendChild(h);
+        card.appendChild(p); card.appendChild(cta); card.appendChild(no);
+        ov.appendChild(card);
+        document.body.appendChild(ov);
+        requestAnimationFrame(function(){ ov.classList.add('in'); });
+
+        function close(){
+          ov.classList.remove('in');
+          setTimeout(function(){ ov.remove(); }, 180);
+          document.removeEventListener('keydown', onKey);
+        }
+        function onKey(e){ if(e.key === 'Escape' || e.key === 'Esc') close(); }
+        x.addEventListener('click', close);
+        no.addEventListener('click', close);
+        ov.addEventListener('click', function(e){ if(e.target === ov) close(); });
+        document.addEventListener('keydown', onKey);
       }).catch(function(){});
   }catch(e){}
 })();
 </script>
 <style>
-.ref-hail{background:#0A2F46;color:#fff;font-size:14px;line-height:1.5;
-  padding:11px 20px;text-align:center;letter-spacing:-.005em}
-.ref-hail b{color:#FFC46B;font-weight:700}
-@media(max-width:640px){.ref-hail{font-size:13px;padding:10px 14px}}
+/* Referral invitation dialog. Only ever rendered for a visitor arriving on a
+   valid ?ref= link, so it costs a cold visitor and a crawler nothing. */
+.ref-ov{position:fixed;inset:0;z-index:9999;background:rgba(10,47,70,.55);
+  backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;
+  padding:20px;opacity:0;transition:opacity .18s ease}
+.ref-ov.in{opacity:1}
+.ref-card{position:relative;background:#fff;border-radius:20px;max-width:430px;width:100%;
+  padding:34px 30px 26px;text-align:center;
+  box-shadow:0 24px 70px rgba(10,47,70,.28);
+  transform:translateY(10px) scale(.98);transition:transform .18s ease}
+.ref-ov.in .ref-card{transform:none}
+.ref-x{position:absolute;top:12px;right:14px;border:0;background:none;cursor:pointer;
+  font-size:26px;line-height:1;color:#94a3b8;padding:4px 8px}
+.ref-x:hover{color:#0A2F46}
+.ref-ic{font-size:40px;line-height:1;margin-bottom:12px}
+.ref-h{font-size:22px;line-height:1.28;letter-spacing:-.018em;color:#0A2F46;
+  margin:0 0 10px;font-weight:700}
+.ref-who{color:#C2410C}
+.ref-p{font-size:14.5px;line-height:1.6;color:#475569;margin:0 0 22px}
+.ref-cta{display:block;background:#0A2F46;color:#fff;text-decoration:none;
+  font-weight:600;font-size:15px;padding:13px 20px;border-radius:11px;
+  transition:background .15s}
+.ref-cta:hover{background:#14587D}
+.ref-no{display:block;width:100%;margin-top:10px;border:0;background:none;cursor:pointer;
+  font-family:inherit;font-size:13px;color:#94a3b8;padding:8px}
+.ref-no:hover{color:#475569}
+@media(max-width:640px){
+  .ref-card{padding:28px 20px 20px;border-radius:16px}
+  .ref-h{font-size:19px}
+}
 </style>
 
 
