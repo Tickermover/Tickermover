@@ -624,28 +624,128 @@ def render_sector(slug: str, universe: list[dict], site_origin: str) -> Optional
     )
 
 
+_SECTOR_INDEX_CSS = """
+.si-note{font-size:13px;color:#64748b;line-height:1.6;margin:0 0 20px;padding:12px 16px;
+  background:#F6F8FB;border-left:3px solid #FF6100;border-radius:4px}
+.si-note b{color:#0A2F46}
+.si-wrap{overflow-x:auto;border:1px solid #E2E8F0;border-radius:10px;background:#fff;margin:0 0 26px}
+table.si{border-collapse:collapse;width:100%;min-width:880px;font-variant-numeric:tabular-nums}
+table.si th{position:sticky;top:0;background:#F6F8FB;text-align:right;font-size:10.5px;
+  letter-spacing:.07em;text-transform:uppercase;color:#64748b;font-weight:700;
+  padding:11px 12px;border-bottom:1px solid #E2E8F0;white-space:nowrap}
+table.si th:first-child,table.si td:first-child{text-align:left}
+table.si td{padding:11px 12px;border-bottom:1px solid #F1F5F9;text-align:right;
+  font-size:13.5px;color:#26333F;white-space:nowrap}
+table.si tr:last-child td{border-bottom:0}
+table.si tr.si-base td{background:#FFF8F2;font-weight:700;color:#0A2F46}
+table.si a.si-nm{color:#0A2F46;font-weight:650;text-decoration:none}
+table.si a.si-nm:hover{text-decoration:underline}
+.si-n{font-size:12px;color:#94A3B8}
+.si-bar{display:inline-block;width:52px;height:6px;border-radius:99px;background:#EDF1F6;
+  vertical-align:middle;margin-right:7px;overflow:hidden}
+.si-bar i{display:block;height:100%;background:#FF6100;border-radius:99px}
+.si-led a{color:#0040c1;text-decoration:none;font-family:ui-monospace,Menlo,monospace;font-size:12px}
+.si-led a:hover{text-decoration:underline}
+.si-pos{color:#12704A;font-weight:650}
+.si-neg{color:#B32D23;font-weight:650}
+"""
+
+
+def _si_cell(v, suffix: str = "", signed: bool = False) -> str:
+    if v is None:
+        return '<span class="si-n">—</span>'
+    if signed:
+        cls = "si-pos" if v >= 0 else "si-neg"
+        return f'<span class="{cls}">{"+" if v >= 0 else ""}{v}{suffix}</span>'
+    return f"{v}{suffix}"
+
+
 def render_sector_index(universe: list[dict], site_origin: str) -> str:
-    smap = sector_slugs(universe)
-    items = sorted(smap.items(), key=lambda kv: kv[1].lower())
-    cards = "".join(
-        f'<div class="card"><a href="/sectors/{slug}"><div class="ttl">{label}</div>'
-        f'<div class="sub">View live Alpha Scores for stocks in this sector.</div></a></div>'
-        for slug, label in items
-    )
+    """Sub-sector comparison table.
+
+    Rebuilt 15 Aug 2026. This was a list of cards reading "View live Alpha
+    Scores for stocks in this sector" seventy-three times — no numbers, nothing
+    to compare, and nothing for a search engine to rank on. It is now the
+    comparison itself: every sub-sector on one screen, so the differences
+    between them are visible without opening anything.
+
+    The universe baseline is pinned as the first row on purpose. A median Alpha
+    of 59 is unreadable until you know the universe sits at 64; without the
+    comparison a reader supplies their own, and generously.
+
+    Every column is measured, not modelled: counts, medians, an interquartile
+    spread and a breadth count. No verdict, no ordering by "best to own" — it
+    sorts by size, which is a fact about coverage rather than an opinion.
+    """
+    import sector_intel as _si
+
+    secs = _si.all_sectors(universe)
+    base = _si.universe_baseline(universe)
+
+    def row(s: dict, is_base: bool = False) -> str:
+        led = " ".join(
+            f'<a href="/stocks/{l["ticker"]}">{l["ticker"]}</a>' for l in s.get("leaders", [])
+        ) if not is_base else '<span class="si-n">—</span>'
+        nm = (s["label"] if is_base
+              else f'<a class="si-nm" href="/sectors/{s["slug"]}">{s["label"]}</a>')
+        med = s["alpha_median"]
+        bar = (f'<span class="si-bar"><i style="width:{max(3, min(100, round(med)))}%"></i></span>'
+               if med is not None else "")
+        # NB: built outside the f-string. Nested same-type quotes inside an
+        # f-string expression need Python 3.12 (PEP 701) and there is no version
+        # pin in this repo — Railway picks its own interpreter, so a 3.12-only
+        # syntax here would be an ImportError that takes the whole app down.
+        tr_open = '<tr class="si-base">' if is_base else "<tr>"
+        return (
+            tr_open
+            + f"<td>{nm}</td>"
+            f'<td>{s["count"]}</td>'
+            f"<td>{bar}{_si_cell(med)}</td>"
+            f'<td>{_si_cell(s["alpha_spread"])}</td>'
+            f'<td>{_si_cell(s["breadth_strong_pct"], "%")}</td>'
+            f'<td>{_si_cell(s["momentum_3m_median"], "%", signed=True)}</td>'
+            f'<td>{_si_cell(s["pe_median"], "×")}</td>'
+            f'<td>{_si_cell(s["growth_median"], "%", signed=True)}</td>'
+            f'<td class="si-led">{led}</td></tr>'
+        )
+
+    body_rows = row(base, True) + "".join(row(s) for s in secs)
+    n_sec, n_names = len(secs), sum(s["count"] for s in secs)
+
     body = f"""
-<div class="wrap">
+<div class="wrap-wide">
   {brand_header()}
   <div class="crumbs"><a href="/">Home</a> · Sectors</div>
-  <h1>Sectors</h1>
-  <p class="lede">{len(smap)} sub-sectors covered, all scored on the same 0-100 Alpha Score. Pick one to see a live ranking.</p>
-  <div class="cards">{cards}</div>
+  <h1>Every sub-sector, side by side</h1>
+  <p class="lede">{n_sec} sub-sectors covering {n_names} scored US-listed companies, all measured the same way. The first row is the whole scored universe — read every sector against it.</p>
+  <div class="si-note">
+    <b>How to read this.</b> <b>Median Alpha</b> is the middle score in that group.
+    <b>Spread</b> is the gap between its 75th and 25th percentile — a low spread means the
+    names move together, a high one means picking within the group matters more than the
+    group itself. <b>Strong</b> is the share scoring 65+. <b>3m</b> and <b>Growth</b> are
+    medians, so one outlier cannot carry a whole sector.
+    These are quality and characteristic descriptors, not buy or sell signals.
+  </div>
+  <div class="si-wrap">
+    <table class="si">
+      <thead><tr>
+        <th>Sub-sector</th><th>Names</th><th>Median Alpha</th><th>Spread</th>
+        <th>Strong</th><th>3m</th><th>P/E</th><th>Growth</th><th>Highest scoring</th>
+      </tr></thead>
+      <tbody>{body_rows}</tbody>
+    </table>
+  </div>
+  <p style="font-size:13px;color:#64748b">Scores refresh every 5 minutes during US market hours. Grades: <strong>A</strong> Top Tier · <strong>B</strong> Quality · <strong>C</strong> Average · <strong>D</strong> Below Avg · <strong>F</strong> Weak — quality descriptors, not recommendations.</p>
+  {cta_block("Open the live dashboard")}
   {newsletter_block("sectors-index")}
   <div class="legal">TickerMover — research, not advice.</div>
-</div>"""
+</div>
+<style>{_SECTOR_INDEX_CSS}</style>"""
     canonical = f"{site_origin}/sectors"
     return page_shell(
-        title="Stock sectors — live Alpha Scores by sub-sector | TickerMover",
-        desc="Browse TickerMover's stock universe by sub-sector — AI semiconductors, cybersecurity, quantum computing, photonics, and more. Live Alpha Scores updated every 5 minutes.",
+        title="US stock sectors compared — median Alpha, spread and breadth | TickerMover",
+        desc=(f"{n_sec} sub-sectors across {n_names} US-listed stocks, compared on median Alpha "
+              "Score, score spread, breadth and 3-month momentum. Updated every 5 minutes."),
         canonical=canonical, body_html=body,
         og_image=f"{site_origin}/static/icons/icon-512.png",
     )
