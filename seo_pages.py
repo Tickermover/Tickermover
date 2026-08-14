@@ -567,6 +567,60 @@ def render_sector(slug: str, universe: list[dict], site_origin: str) -> Optional
     rows.sort(key=_score, reverse=True)
     table_html = "".join(_stock_row(t) for t in rows[:50])
     n = len(rows)
+
+    # ── Sector profile ───────────────────────────────────────────────
+    # Added 15 Aug 2026. The page opened straight into a 50-row ranking, which
+    # answers "which scores highest here" but never "what is this group like".
+    # Those are different questions, and the second is the one that tells you
+    # whether the ranking is even worth reading: a sub-sector whose names all
+    # score alike is a sector call, one with a wide spread is a stock-picking
+    # problem. Every figure is measured, and each is shown against the whole
+    # scored universe so it can be judged rather than just noted.
+    profile_html = ""
+    try:
+        import sector_intel as _si
+        prof = _si.one_sector(slug, universe)
+        base = _si.universe_baseline(universe)
+        if prof:
+            def _stat(lbl, val, base_val, suffix="", signed=False):
+                if val is None:
+                    return ""
+                v = ("+" if signed and val >= 0 else "") + str(val) + suffix
+                bv = ("" if base_val is None else
+                      ("universe " + ("+" if signed and base_val >= 0 else "")
+                       + str(base_val) + suffix))
+                return ('<div class="sp-stat"><div class="sp-k">' + lbl
+                        + '</div><div class="sp-v">' + v
+                        + '</div><div class="sp-b">' + bv + "</div></div>")
+
+            spread = prof["alpha_spread"]
+            read = ""
+            if spread is not None and base["alpha_spread"] is not None:
+                if spread <= base["alpha_spread"] * 0.7:
+                    read = ("These names score closely together — the group moves more "
+                            "as a block than as individual stories.")
+                elif spread >= base["alpha_spread"] * 1.3:
+                    read = ("Scores are widely spread here — which name you look at "
+                            "matters more than the sub-sector itself.")
+                else:
+                    read = "Scores are spread about as widely as the universe overall."
+            profile_html = (
+                '<div class="sp-grid">'
+                + _stat("Names scored", prof["count"], base["count"])
+                + _stat("Median Alpha", prof["alpha_median"], base["alpha_median"])
+                + _stat("Score spread", spread, base["alpha_spread"])
+                + _stat("Scoring 65+", prof["breadth_strong_pct"], base["breadth_strong_pct"], "%")
+                + _stat("Median 3m move", prof["momentum_3m_median"], base["momentum_3m_median"], "%", True)
+                + _stat("Median P/E", prof["pe_median"], base["pe_median"], "×")
+                + _stat("Median growth", prof["growth_median"], base["growth_median"], "%", True)
+                + _stat("Median net margin", prof["margin_median"], base["margin_median"], "%", True)
+                + "</div>"
+                + ('<p class="sp-read">' + read + " These are descriptive measures of the "
+                   "group as it stands today, not a forecast and not a recommendation.</p>"
+                   if read else "")
+            )
+    except Exception:
+        profile_html = ""      # a profile is a bonus; never break the ranking over it
     canonical = f"{site_origin}/sectors/{slug}"
     title = f"Best {label} stocks — live Alpha Scores | TickerMover"
     desc = (
@@ -606,8 +660,9 @@ def render_sector(slug: str, universe: list[dict], site_origin: str) -> Optional
 <div class="wrap-wide">
   {brand_header()}
   <div class="crumbs"><a href="/">Home</a> · <a href="/sectors">Sectors</a> · {label}</div>
-  <h1>Best {label} stocks</h1>
+  <h1>{label} stocks, ranked</h1>
   <p class="lede">Live ranking of {n} {label} stocks by TickerMover Alpha Score — a 0-100 composite of fundamentals, valuation, momentum, analyst signal, and macro regime. Click any ticker for the full breakdown.</p>
+  {profile_html}
   <table class="tbl">
     <thead><tr><th>Ticker</th><th>Grade</th><th>Score</th><th>Bottom line</th></tr></thead>
     <tbody>{table_html or '<tr><td colspan="4">No stocks scored in this sector yet — the universe is warming up.</td></tr>'}</tbody>
@@ -615,8 +670,18 @@ def render_sector(slug: str, universe: list[dict], site_origin: str) -> Optional
   <p style="font-size:13px;color:#64748b">Alpha Scores update every 5 minutes during US market hours. Grades: <strong>A</strong> Top Tier · <strong>B</strong> Quality · <strong>C</strong> Average · <strong>D</strong> Below Avg · <strong>F</strong> Weak. (Quality descriptors, not buy/sell recommendations.)</p>
   {cta_block("See the full live dashboard")}
   {newsletter_block("sector-" + slug)}
-  <div class="legal">TickerMover is a research tool, not financial advice. Always do your own research before investing.</div>
-</div>"""
+  <div class="legal">TickerMover is a research tool, not financial advice, and not FCA-authorised. Always do your own research before investing. Capital at risk.</div>
+</div>
+<style>
+.sp-grid{{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1px;
+  background:#E2E8F0;border:1px solid #E2E8F0;border-radius:10px;overflow:hidden;margin:0 0 8px}}
+.sp-stat{{background:#fff;padding:13px 15px}}
+.sp-k{{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#94A3B8;font-weight:700}}
+.sp-v{{font-size:20px;font-weight:700;color:#0A2F46;margin-top:5px;font-variant-numeric:tabular-nums}}
+.sp-b{{font-size:11px;color:#94A3B8;margin-top:2px;font-variant-numeric:tabular-nums}}
+.sp-read{{font-size:13.5px;color:#475569;line-height:1.6;margin:0 0 22px;padding:11px 15px;
+  background:#F6F8FB;border-left:3px solid #FF6100;border-radius:4px}}
+</style>"""
     return page_shell(
         title=title, desc=desc, canonical=canonical, body_html=body,
         schema_json=schema_json,
@@ -807,52 +872,114 @@ def _cmp_card(t: dict) -> str:
 """
 
 
+_CMP_CSS = """
+.h2h{overflow-x:auto;border:1px solid #E2E8F0;border-radius:10px;background:#fff;margin:0 0 24px}
+table.h2h-t{border-collapse:collapse;width:100%;min-width:640px;font-variant-numeric:tabular-nums}
+table.h2h-t th{background:#F6F8FB;font-size:11px;letter-spacing:.06em;text-transform:uppercase;
+  color:#64748b;font-weight:700;padding:12px;border-bottom:1px solid #E2E8F0}
+table.h2h-t th.sd{font-size:15px;letter-spacing:0;text-transform:none;color:#0A2F46}
+table.h2h-t td{padding:12px;border-bottom:1px solid #F1F5F9;font-size:14px;color:#26333F;
+  text-align:center;white-space:nowrap}
+table.h2h-t td.mk{text-align:left;color:#475569;font-size:13.5px;white-space:normal}
+table.h2h-t td.mk i{display:block;font-style:normal;font-size:11.5px;color:#94A3B8;margin-top:2px}
+table.h2h-t tr:last-child td{border-bottom:0}
+table.h2h-t td.hi{background:#FFF6EF;font-weight:700;color:#0A2F46}
+.h2h-tag{display:inline-block;margin-left:6px;font-size:9.5px;font-weight:800;letter-spacing:.05em;
+  color:#9A3412;background:rgba(255,97,0,.1);border-radius:4px;padding:1px 5px;vertical-align:middle}
+.h2h-ctx{font-size:13.5px;color:#475569;line-height:1.65;background:#F6F8FB;border-left:3px solid #FF6100;
+  border-radius:4px;padding:14px 16px;margin:0 0 22px}
+.h2h-ctx b{color:#0A2F46}
+.h2h-sym{font-family:ui-monospace,Menlo,monospace;font-weight:700}
+"""
+
+
 def render_comparison(a: str, b: str, universe: list[dict], site_origin: str) -> Optional[str]:
-    a, b = a.upper(), b.upper()
-    if a == b:
+    """Head-to-head on measured characteristics.
+
+    Rebuilt 15 Aug 2026. The previous version opened with a verdict — "X edges
+    out Y", "the right pick depends on which thesis you find more compelling" —
+    and then showed two loose cards you had to read across to compare anything.
+
+    Two problems with that. It declared a winner on a single composite, which
+    is a recommendation in all but name and exactly the framing removed from
+    the rest of the site this month. And the card layout meant the reader did
+    the diffing themselves, which is the entire job of a comparison page.
+
+    It is now one aligned table: every dimension on its own row, both values
+    side by side, and the larger side marked. "Higher" is stated as a fact and
+    labelled as such — a higher P/E is simply a higher P/E, and whether that is
+    good depends on what you think the growth is worth. There is no total, no
+    tally of wins, and no conclusion about which to own.
+    """
+    import sector_intel as _si
+
+    c = _si.compare(a, b, universe)
+    if not c:
         return None
-    lookup = {(t.get("ticker") or "").upper(): t for t in (universe or [])}
-    ta, tb = lookup.get(a), lookup.get(b)
-    if not ta or not tb:
-        return None
-    name_a = (ta.get("name") or a)
-    name_b = (tb.get("name") or b)
+    A, B = c["a"], c["b"]
+    a, b = A["ticker"], B["ticker"]
+    name_a, name_b = A["name"], B["name"]
     canonical = f"{site_origin}/compare/{a}-vs-{b}"
-    # Compute the verdict — which one wins on Alpha Score
-    pa = ta.get("smart_score") if ta.get("smart_score") is not None else ta.get("pop_score") or 0
-    pb = tb.get("smart_score") if tb.get("smart_score") is not None else tb.get("pop_score") or 0
-    try:
-        pa_f, pb_f = float(pa or 0), float(pb or 0)
-    except (TypeError, ValueError):
-        pa_f, pb_f = 0.0, 0.0
-    if abs(pa_f - pb_f) < 3:
-        verdict = f"{a} and {b} score within 3 points of each other on Alpha Score — effectively tied. The right pick depends on which thesis you find more compelling."
-    elif pa_f > pb_f:
-        verdict = f"{a} edges out {b} on TickerMover's composite Alpha Score ({round(pa_f)} vs {round(pb_f)}). The breakdown below shows where each stock leads."
+
+    def cell(row, side):
+        val = row["a"] if side == "a" else row["b"]
+        tk = a if side == "a" else b
+        cls = " class=\"hi\"" if row["higher"] == tk else ""
+        tag = '<span class="h2h-tag">HIGHER</span>' if row["higher"] == tk else ""
+        return "<td" + cls + ">" + val + tag + "</td>"
+
+    trs = "".join(
+        '<tr><td class="mk">' + r["label"] + "<i>" + r["note"] + "</i></td>"
+        + cell(r, "a") + cell(r, "b") + "</tr>"
+        for r in c["rows"]
+    )
+
+    # Sector context. Two names in the same sub-sector are a like-for-like
+    # comparison; two from different ones are not, and saying so up front stops
+    # the table being read as more equivalent than it is.
+    if c["same_sector"]:
+        ctx = ("Both sit in <b>" + (A["sector"] or "the same sub-sector")
+               + "</b>, so these figures are broadly like-for-like. ")
     else:
-        verdict = f"{b} edges out {a} on TickerMover's composite Alpha Score ({round(pb_f)} vs {round(pa_f)}). The breakdown below shows where each stock leads."
-    title = f"{a} vs {b} — Alpha Score, valuation, growth compared | TickerMover"
+        ctx = ("These are in different sub-sectors — <b>" + (A["sector"] or "—")
+               + "</b> and <b>" + (B["sector"] or "—")
+               + "</b> — so valuation and margin norms differ between them and the "
+                 "rows below are not strictly like-for-like. ")
+    ctx += ("They differ on <b>" + str(c["differing"]) + " of " + str(c["measured"])
+            + "</b> measured dimensions; anything within 2% is shown as level rather "
+              "than split. Nothing here totals to a winner — which differences matter "
+              "is your call, not ours.")
+
+    title = f"{a} vs {b} — growth, margins, valuation and momentum compared | TickerMover"
     desc = (
-        f"Side-by-side comparison of {a} ({name_a[:24]}) and {b} ({name_b[:24]}) — "
-        f"Alpha Score, growth, valuation, momentum and analyst upside. Updated every 5 minutes."
+        f"{a} ({name_a[:22]}) and {b} ({name_b[:22]}) compared across growth, margins, "
+        f"valuation, momentum and size. Live figures, refreshed every 5 minutes."
     )[:160]
     body = f"""
 <div class="wrap-wide">
   {brand_header()}
   <div class="crumbs"><a href="/">Home</a> · <a href="/compare">Compare</a> · {a} vs {b}</div>
   <h1><span class="sym">{a}</span> vs <span class="sym">{b}</span></h1>
-  <p class="lede">{verdict}</p>
-  <div class="cmp-grid">
-    {_cmp_card(ta)}
-    {_cmp_card(tb)}
+  <p class="lede">{name_a} and {name_b}, measured on the same ten characteristics.</p>
+  <div class="h2h-ctx">{ctx}</div>
+  <div class="h2h">
+    <table class="h2h-t">
+      <thead><tr>
+        <th style="text-align:left">Measure</th>
+        <th class="sd"><a href="/stocks/{a}" class="h2h-sym">{a}</a></th>
+        <th class="sd"><a href="/stocks/{b}" class="h2h-sym">{b}</a></th>
+      </tr></thead>
+      <tbody>{trs}</tbody>
+    </table>
   </div>
-  <h2>How Alpha scores both</h2>
-  <p>The Alpha Score blends fundamentals, valuation, momentum, analyst signal and macro regime into one 0-100 number. <a href="/learn/pop-score">Read the methodology →</a></p>
-  <p>For deeper analysis on each name, open the live dashboard: <a href="/stocks/{a}">{a} full breakdown</a> · <a href="/stocks/{b}">{b} full breakdown</a>.</p>
+  <h2>How the Alpha Score works</h2>
+  <p>It blends fundamentals, valuation, momentum, analyst signal and macro regime into one 0-100 number. It is a quality descriptor, not a buy or sell signal. <a href="/learn/pop-score">Read the methodology →</a></p>
+  <p>Full breakdowns: <a href="/stocks/{a}">{a}</a> · <a href="/stocks/{b}">{b}</a>{(' · Both in <a href="/sectors/' + A['slug'] + '">' + (A['sector'] or '') + '</a>') if c['same_sector'] and A['slug'] else ''}</p>
   {cta_block("Open the live dashboard")}
-  {newsletter_block(f"compare-{a}-{b}")}
-  <div class="legal">TickerMover is a research tool, not financial advice. Comparisons are computed from live universe data and refresh every 5 minutes during market hours.</div>
-</div>"""
+  {newsletter_block("compare-" + a + "-" + b)}
+  <div class="legal">TickerMover is a research tool, not financial advice, and not FCA-authorised. Figures are computed from live universe data and refresh every 5 minutes during market hours. Analyst upside is third-party consensus, not our forecast. Capital at risk.</div>
+</div>
+<style>{_CMP_CSS}</style>"""
     schema = {
         "@context": "https://schema.org",
         "@type": "Article",
@@ -879,28 +1006,66 @@ def render_comparison(a: str, b: str, universe: list[dict], site_origin: str) ->
 
 
 def render_compare_index(universe: list[dict], site_origin: str) -> str:
-    """The /compare hub — links to featured comparisons."""
-    lookup = {(t.get("ticker") or "").upper() for t in (universe or [])}
-    valid = [(a, b) for a, b in FEATURED_COMPARISONS if a in lookup and b in lookup]
-    cards = "".join(
-        f'<div class="card"><a href="/compare/{a}-vs-{b}"><div class="ttl">{a} vs {b}</div>'
-        f'<div class="sub">Side-by-side Alpha Score, growth, valuation and momentum.</div></a></div>'
-        for a, b in valid
-    )
+    """The /compare hub.
+
+    Rebuilt 15 Aug 2026. It was 14 cards each repeating the same sentence, so
+    the page told you nothing you did not already know from the ticker pair.
+    It now previews each matchup: both Alpha Scores, how many of the ten
+    measured dimensions actually separate the two, and whether they sit in the
+    same sub-sector — which is what decides whether the comparison is
+    like-for-like at all. Enough to choose which pair is worth opening.
+    """
+    import sector_intel as _si
+
+    rows_html = []
+    for a, b in FEATURED_COMPARISONS:
+        c = _si.compare(a, b, universe)
+        if not c:
+            continue           # ticker no longer in the universe
+        alpha = next((r for r in c["rows"] if r["key"] == "alpha"), None)
+        av = alpha["a"] if alpha else "—"
+        bv = alpha["b"] if alpha else "—"
+        same = ('<span style="color:#12704A;font-weight:650">same sub-sector</span>'
+                if c["same_sector"] else
+                '<span style="color:#94A3B8">different sub-sectors</span>')
+        rows_html.append(
+            '<tr><td><a class="si-nm" href="/compare/' + a + "-vs-" + b + '">'
+            + a + " vs " + b + "</a></td>"
+            + "<td>" + av + "</td><td>" + bv + "</td>"
+            + "<td>" + str(c["differing"]) + " of " + str(c["measured"]) + "</td>"
+            + "<td>" + same + "</td></tr>"
+        )
+    body_rows = "".join(rows_html)
+
     body = f"""
-<div class="wrap">
+<div class="wrap-wide">
   {brand_header()}
   <div class="crumbs"><a href="/">Home</a> · Compare</div>
-  <h1>Stock comparisons</h1>
-  <p class="lede">Curated head-to-head pages for the most-asked-about US stocks. Alpha Score, growth, valuation and analyst signal — all on one page. You can also build any comparison by visiting <code>/compare/&lt;TICKER1&gt;-vs-&lt;TICKER2&gt;</code>.</p>
-  <div class="cards">{cards}</div>
+  <h1>Head-to-head comparisons</h1>
+  <p class="lede">{len(rows_html)} curated matchups, each measured on the same ten characteristics. You can build any pairing by visiting <code>/compare/&lt;TICKER1&gt;-vs-&lt;TICKER2&gt;</code>.</p>
+  <div class="si-note">
+    <b>Differ on</b> counts how many of the ten measured dimensions actually separate the two —
+    anything inside 2% is treated as level. A low count means the pair are close on the numbers
+    and the choice rests on things a table cannot show. <b>Same sub-sector</b> matters because
+    valuation and margin norms differ between industries: across sub-sectors the figures are not
+    strictly like-for-like. None of these pages picks a winner.
+  </div>
+  <div class="si-wrap">
+    <table class="si">
+      <thead><tr><th>Matchup</th><th>Alpha (left)</th><th>Alpha (right)</th><th>Differ on</th><th>Comparable?</th></tr></thead>
+      <tbody>{body_rows}</tbody>
+    </table>
+  </div>
+  {cta_block("Open the live dashboard")}
   {newsletter_block("compare-index")}
-  <div class="legal">TickerMover — research, not advice.</div>
-</div>"""
+  <div class="legal">TickerMover — research, not advice, and not FCA-authorised. Capital at risk.</div>
+</div>
+<style>{_SECTOR_INDEX_CSS}</style>"""
     canonical = f"{site_origin}/compare"
     return page_shell(
-        title="Stock comparisons — NVDA vs AMD, AAPL vs MSFT, and more | TickerMover",
-        desc="Side-by-side US stock comparisons — Alpha Score, growth, valuation, analyst upside. Curated head-to-head pages updated every 5 minutes.",
+        title="US stock head-to-head comparisons — NVDA vs AMD, AAPL vs MSFT | TickerMover",
+        desc=("Curated head-to-head US stock comparisons measured on growth, margins, valuation, "
+              "momentum and size. See how far apart each pair really is. Updated every 5 minutes."),
         canonical=canonical, body_html=body,
         og_image=f"{site_origin}/static/icons/icon-512.png",
     )

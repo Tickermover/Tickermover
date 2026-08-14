@@ -191,6 +191,112 @@ def one_sector(slug: str, universe: list[dict]) -> Optional[dict]:
     return None
 
 
+# ── head-to-head ─────────────────────────────────────────────────────────
+# The dimensions a comparison page reports on. `higher_is` records which
+# direction is simply *more* of the thing — it is NOT a judgement about which
+# company is preferable. A higher P/E is a higher P/E; whether that is good
+# depends on what you think the growth is worth, which is the reader's call and
+# not ours to make. `note` is shown next to the row so the direction is never
+# silently read as a verdict.
+COMPARE_FIELDS: list[dict] = [
+    {"key": "alpha",       "label": "Alpha Score",        "keys": ("smart_score", "pop_score"),
+     "fmt": "int",  "higher_is": "more", "note": "our composite quality read"},
+    {"key": "revenue_growth_yoy", "label": "Revenue growth (YoY)", "keys": ("revenue_growth_yoy",),
+     "fmt": "pct100", "higher_is": "more", "note": "faster top-line growth"},
+    {"key": "profit_margin",     "label": "Net margin",   "keys": ("profit_margin",),
+     "fmt": "pct100", "higher_is": "more", "note": "more of each sale kept"},
+    {"key": "gross_margin",      "label": "Gross margin", "keys": ("gross_margin",),
+     "fmt": "pct100", "higher_is": "more", "note": "pricing power"},
+    {"key": "pe_ratio",   "label": "P/E",                 "keys": ("pe_ratio", "forward_pe"),
+     "fmt": "x",    "higher_is": "more", "note": "a richer multiple, not automatically worse"},
+    {"key": "momentum_1m", "label": "1-month move",       "keys": ("momentum_1m",),
+     "fmt": "pct",  "higher_is": "more", "note": "recent price direction"},
+    {"key": "momentum_3m", "label": "3-month move",       "keys": ("momentum_3m",),
+     "fmt": "pct",  "higher_is": "more", "note": "medium-term price direction"},
+    {"key": "beta",       "label": "Beta",                "keys": ("beta",),
+     "fmt": "f2",   "higher_is": "more", "note": "moves more than the market"},
+    {"key": "target_upside_pct", "label": "Analyst upside", "keys": ("target_upside_pct",),
+     "fmt": "pct",  "higher_is": "more", "note": "third-party consensus, not our view"},
+    {"key": "market_cap", "label": "Market cap",          "keys": ("market_cap",),
+     "fmt": "money", "higher_is": "more", "note": "company size"},
+]
+
+
+def _fmt(v: Optional[float], fmt: str) -> str:
+    if v is None:
+        return "—"
+    if fmt == "int":
+        return str(round(v))
+    if fmt == "pct100":
+        return f"{v * 100:+.1f}%"
+    if fmt == "pct":
+        return f"{v:+.1f}%"
+    if fmt == "x":
+        return f"{v:.1f}×" if v > 0 else "—"
+    if fmt == "f2":
+        return f"{v:.2f}"
+    if fmt == "money":
+        a = abs(v)
+        if a >= 1e12:
+            return f"${v/1e12:.2f}T"
+        if a >= 1e9:
+            return f"${v/1e9:.1f}B"
+        if a >= 1e6:
+            return f"${v/1e6:.0f}M"
+        return f"${v:,.0f}"
+    return str(v)
+
+
+def compare(a: str, b: str, universe: list[dict]) -> Optional[dict]:
+    """Field-by-field comparison of two tickers.
+
+    Reports WHERE the two differ and by how much. It deliberately does not
+    total the rows up, score the result, or name a winner: a count of "wins"
+    across unweighted, correlated metrics is a meaningless number that reads
+    exactly like a recommendation, which is the one thing this page must not
+    produce. The reader is given the differences and decides what matters.
+    """
+    a, b = (a or "").upper(), (b or "").upper()
+    if not a or not b or a == b:
+        return None
+    look = {(t.get("ticker") or "").upper(): t for t in (universe or [])}
+    ta, tb = look.get(a), look.get(b)
+    if not ta or not tb:
+        return None
+
+    rows = []
+    for f in COMPARE_FIELDS:
+        va, vb = _num(ta, *f["keys"]), _num(tb, *f["keys"])
+        lead = None
+        if va is not None and vb is not None and va != vb:
+            lead = a if va > vb else b
+            # A hair's difference is not a difference. Anything inside 2% of
+            # the larger value is reported as level, so the page does not
+            # manufacture a distinction out of rounding.
+            if abs(va - vb) <= abs(max(va, vb, key=abs)) * 0.02:
+                lead = None
+        rows.append({
+            "key": f["key"], "label": f["label"], "note": f["note"],
+            "a_raw": va, "b_raw": vb,
+            "a": _fmt(va, f["fmt"]), "b": _fmt(vb, f["fmt"]),
+            "higher": lead,
+        })
+
+    sa, sb = _bucket_of(ta), _bucket_of(tb)
+    return {
+        "a": {"ticker": a, "name": ta.get("name") or a, "grade": ta.get("grade") or "",
+              "sector": sa, "slug": slugify(sa or "")},
+        "b": {"ticker": b, "name": tb.get("name") or b, "grade": tb.get("grade") or "",
+              "sector": sb, "slug": slugify(sb or "")},
+        "same_sector": bool(sa and sb and sa == sb),
+        "rows": rows,
+        # How many measured dimensions actually separate them. Used only to
+        # tell the reader how alike the two are — never as a score.
+        "differing": sum(1 for r in rows if r["higher"]),
+        "measured": sum(1 for r in rows if r["a_raw"] is not None and r["b_raw"] is not None),
+    }
+
+
 def universe_baseline(universe: list[dict]) -> dict[str, Any]:
     """The whole scored universe as one pseudo-sector.
 
