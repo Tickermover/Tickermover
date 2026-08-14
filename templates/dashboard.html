@@ -1541,7 +1541,10 @@ table.stmt td.stmt-note-pos{color:#15803d;font-weight:800;background:rgba(21,128
 .swot-it-what{font-size:12.5px;color:var(--muted);font-weight:600;margin-top:1px}
 .swot-it-rip{font-size:12.5px;color:#b42318;margin-top:3px;padding-left:15px;position:relative;line-height:1.4}
 .swot-it-rip::before{content:'⚡';position:absolute;left:0;top:0;font-size:12.5px}
-.dep-tic{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:800;color:#64748b;background:rgba(100,116,139,.1);border:0;border-radius:6px;padding:2px 8px}
+/* Now an <a>, not a <button> — needs the anchor defaults reset, and a visible
+   focus ring it never had as an un-focusable button. */
+.dep-tic{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:800;color:#64748b;background:rgba(100,116,139,.1);border:0;border-radius:6px;padding:2px 8px;display:inline-block;text-decoration:none;white-space:nowrap}
+.dep-tic.link:focus-visible{outline:2px solid #0040c1;outline-offset:2px}
 .dep-tic.link{color:#0040c1;background:rgba(41,112,255,.1);cursor:pointer;transition:background .15s}
 .dep-tic.link:hover{background:rgba(41,112,255,.2)}
 .dep-foot{padding:2px 4px}
@@ -8023,9 +8026,17 @@ html.v2-dark body.v2.ts-active .v2-scroll::-webkit-scrollbar-thumb{
 #panel-events .ce-id{display:flex;flex-direction:column;gap:1px;min-width:0}
 #panel-events .ce-id b{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:13px;color:#4A5BC4;letter-spacing:.02em}
 #panel-events .ce-id span{font-size:12.5px;font-weight:400;color:#7A8899;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-#panel-events .ce-take{font-size:12.5px;font-weight:400;line-height:1.5;color:#475569;
-  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-#panel-events .ce-take.none{color:#B6BFC9;font-style:italic}
+/* The takeaway IS the row — it is the only part that says what actually
+   happened, and it was set two steps quieter than the ticker beside it.
+   Raised to near-body weight and darkened, with three lines instead of two so
+   a full sentence is not guillotined mid-figure. */
+#panel-events .ce-take{font-size:13.5px;font-weight:450;line-height:1.55;color:#26333F;
+  display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+/* Figures carry the meaning in these sentences, so they take the weight. This
+   is the static half of the attention system — no motion, because a row list
+   with animated numbers in every line would be unreadable. */
+#panel-events .ce-take b{font-weight:750;color:#0A2F46}
+#panel-events .ce-take.none{color:#B6BFC9;font-style:italic;font-weight:400}
 #panel-events .ce-acts{display:flex;gap:6px;justify-content:flex-end}
 #panel-events .ce-a{font-family:inherit;font-size:12.5px;font-weight:500;padding:6px 12px;border-radius:100px;
   border:1px solid #E4E7EC;background:#fff;color:#4A5BC4;cursor:pointer;white-space:nowrap;
@@ -11849,13 +11860,29 @@ function _ceScope(list, key){
   if (_ceFilter === 'prime'){ var p = _cePrime || []; return list.filter(function(t){ return p.indexOf(String(t[key]).toUpperCase()) >= 0; }); }
   return list;
 }
+/* Bold the figures in an earnings takeaway. These sentences are carried by
+   their numbers — "$9.12 billion", "25 percent", "+34% year-over-year" — and
+   as flat prose the reader has to parse the whole line to find them.
+   MUST be given already-escaped text: it inserts <b> tags, so running it
+   before _ceEsc would let the escaper neuter its own markup, and running it on
+   raw input would be an injection hole. The patterns are deliberately narrow
+   (currency, percents, spelled-out magnitudes) so ordinary words never bold. */
+function _ceFigures(escaped){
+  if (!escaped) return escaped;
+  return String(escaped)
+    // $9.12 billion / $15.84B / $17,108M
+    .replace(/(\$[\d,]+(?:\.\d+)?\s?(?:billion|million|trillion|[BMT]\b)?)/g, '<b>$1</b>')
+    // 25 percent / 12% / +34% / -5.2%
+    .replace(/((?:[+\-−]\s?)?\d+(?:\.\d+)?\s?(?:%|percent\b))/g, '<b>$1</b>');
+}
+
 function _ceRowHTML(t, whenTxt, fresh){
   var b = _ceBriefs[String(t.ticker).toUpperCase()];
   return '<div class="ce-row' + (fresh ? ' fresh' : '') + '" data-tic="' + _ceEsc(t.ticker) + '">' +
     '<span class="ce-when">' + _ceEsc(whenTxt) + '</span>' + _ceLogoHTML(t.ticker) +
     '<span class="ce-id"><b>' + _ceEsc(t.ticker) + '</b><span>' + _ceEsc(t.name || '') + '</span></span>' +
     (b && b.takeaway
-      ? '<span class="ce-take">' + _ceEsc(b.takeaway) + '</span>'
+      ? '<span class="ce-take">' + _ceFigures(_ceEsc(b.takeaway)) + '</span>'
       : '<span class="ce-take none">No brief cached yet — open to build it.</span>') +
     '<span class="ce-acts">' +
       '<button class="ce-a" data-act="brief" data-tic="' + _ceEsc(t.ticker) + '">Brief</button>' +
@@ -15659,18 +15686,33 @@ function ssxDependencies(ticker){
    ticker is missing from _allTickerData.
    Never swallow the failure — a silent catch is precisely how the previous
    dead click stayed invisible. */
-window._depOpen = function(tk){
-  if (!tk) return;
-  var fn = window.tsOpenDrawer
-        || (typeof openStockSheet === 'function' ? openStockSheet : null)
-        || window.openStockSheet
-        || window.openStockModal;
-  if (typeof fn !== 'function'){
-    console.warn('deps: no stock opener available for ' + tk);
-    return;
+window._depOpen = function(e, tk){
+  /* Progressive enhancement. The chip is a real <a href="/stocks/TK">, so the
+     ONLY job here is to upgrade the click to the in-app drawer when we can
+     prove that will work. Return true and the browser follows the link.
+
+     We check the data ourselves rather than calling the opener and hoping,
+     because every opener in this file (tsOpenDrawer, openStockModal,
+     openStockSheet) begins with a lookup and a bare `return` on a miss. They
+     report nothing, so "did it open?" is unanswerable after the fact — which
+     is exactly how this chip stayed dead through one round of fixing. */
+  if (!tk) return true;
+  var have = false;
+  try {
+    have = (typeof _allTickerData === 'object' && _allTickerData && !!_allTickerData[tk])
+        || (typeof _byTicker === 'object' && _byTicker && !!_byTicker[tk]);
+  } catch(err){ have = false; }
+  if (!have) return true;                       // let the link navigate
+  var fn = window.tsOpenDrawer || window.openStockSheet || window.openStockModal;
+  if (typeof fn !== 'function') return true;    // ditto
+  try {
+    fn(tk);
+    if (e && e.preventDefault) e.preventDefault();
+    return false;                               // handled in-app
+  } catch(err){
+    console.warn('deps: in-app open of ' + tk + ' failed, following the link', err);
+    return true;
   }
-  try { fn(tk); }
-  catch(e){ console.warn('deps: opening ' + tk + ' failed', e); }
 };
 
 function _ssxDepsHTML(ticker,d){
@@ -15691,16 +15733,28 @@ function _ssxDepsHTML(ticker,d){
     const m=SWOT[ty];
     const items=groups[ty].map(function(x){
       const tk=(x.ticker||'').toUpperCase();
-      /* Opens via _depOpen, NOT openStockModal. openStockModal begins
-         `const t=_allTickerData[ticker]; if(!t) return;` — a silent bail — and
-         then delegates to openStockSheet, i.e. the sheet this chip already
-         sits inside. So the chip rendered as a live button, showed the ↗ and
-         did nothing when clicked. Same dead-click trap as tsOpen/tsOpenDrawer
-         in the Stock Scanner: the CSS promised an action the handler never
-         delivered, and it failed silently so nobody saw it. */
-      const badge=tk?(inUni(tk)
-        ? '<button class="dep-tic link" onclick="_depOpen(\''+tk+'\')" title="Open '+tk+'">'+tk+' ↗</button>'
-        : '<span class="dep-tic" title="Not in the universe we score">'+tk+'</span>'):'';
+      /* A REAL ANCHOR, not a button with an onclick.
+         This chip has now been dead twice. First it called openStockModal,
+         which opens `const t=_allTickerData[ticker]; if(!t) return;` — a silent
+         bail — then delegated to the sheet it already sat inside. Pointing it
+         at tsOpenDrawer did not fix it, because tsOpenDrawer opens with the
+         SAME silent bail on the same two lookups. Every candidate opener in
+         this file swallows a miss and returns quietly, so any JS-only chip is
+         one stale cache away from being inert again.
+         So the chip is an <a href="/stocks/TK">, which cannot fail: with no JS
+         at all it navigates to the public page for that company. _depOpen only
+         UPGRADES the click to the in-app drawer when it can prove the data is
+         there, and otherwise lets the browser follow the link. It also gains
+         middle-click, open-in-new-tab and keyboard focus, which the button
+         never had.
+         The inUni() gate is gone with it: names we do not score (foreign lines
+         like ASML or TSM) used to render as dead grey text, when /stocks/TK
+         serves a perfectly good page for them. */
+      const badge=tk
+        ? '<a class="dep-tic link" href="/stocks/'+encodeURIComponent(tk)+'"'
+          + ' onclick="return _depOpen(event,\''+tk+'\')"'
+          + ' title="Open '+tk+'">'+tk+' ↗</a>'
+        : '';
       return '<div class="swot-item"><div class="swot-it-top"><span class="swot-it-nm">'+v2EscHTML(x.name)+'</span>'+badge+'</div>'+
         (x.what?'<div class="swot-it-what">'+v2EscHTML(x.what)+'</div>':'')+
         (x.ripple?'<div class="swot-it-rip">'+v2EscHTML(x.ripple)+'</div>':'')+'</div>';

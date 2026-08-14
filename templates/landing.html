@@ -1484,7 +1484,12 @@ button:focus-visible,[tabindex]:focus-visible{
       <a href="#dashboard">Dashboard</a>
       
       
-      <a href="/weekly">Market Movers</a>
+      <!-- "Market Movers" removed from the header nav 15 Aug 2026: the weekly
+           editorial has not published since the 27 Jul issue (generated 2 Aug),
+           so the nav was advertising a live section that had gone quiet. /weekly
+           still serves 200 with its 5 back issues and keeps its sitemap entries
+           and SEO equity - only the nav promise is withdrawn. Restore this line
+           the moment a new issue publishes. -->
     </div>
     <div class="nav-right">
       <a class="nav-signin" href="/login">Sign in</a>
@@ -1572,7 +1577,7 @@ button:focus-visible,[tabindex]:focus-visible{
       <button type="submit">Get the weekly editorial</button>
     </form>
     <div class="cap-msg" id="cap-msg"></div>
-    <div class="cap-fine">Want a preview? <a href="/weekly" style="color:#fff;font-weight:700">Read this week's edition →</a></div>
+    <div class="cap-fine">Want a preview? <a href="/weekly" style="color:#fff;font-weight:700">Read a past edition →</a></div>
   </div>
 </section>
 <script>
@@ -3531,8 +3536,12 @@ html body #pricing.is-annual .pz-featured .pz-amt{color:rgba(255,255,255,.62);
           
           
           
-          <a href="/future-heroes">Future Heroes</a>
-          <a href="/who-benefits">Capex Chains</a>
+          <!-- "Future Heroes" (/future-heroes) and "Capex Chains" (/who-benefits)
+               removed 15 Aug 2026. Both 302 to /app#heroes and /app#who-benefits,
+               and /app requires sign-in - so a PUBLIC footer link dropped a
+               signed-out visitor on a login wall with no explanation. The routes
+               and the in-app panels are untouched; only the public entry points
+               are withdrawn until they have standalone pages again. -->
           
           <a href="/learn">Learn</a>
           <a href="/sectors">Sectors</a>
