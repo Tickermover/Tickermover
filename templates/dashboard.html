@@ -3826,7 +3826,7 @@ body.v2-featured-only #fund-tbody tr.fund-row:not([data-featured]){display:none!
 .v2-mp-rule{height:1px;background:#eef1f5;margin:15px 0}
 
 /* sector sub-line under the company name (replaces the duplicate date —
-   the date now lives in the 'Why we bought it' eyebrow) */
+   the date now lives in the 'Why it made the cut' eyebrow) */
 .v2-mp-sub{font-size:11px;color:#6b7787;font-weight:600;margin-top:3px;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
@@ -3918,7 +3918,7 @@ body.v2-featured-only #fund-tbody tr.fund-row:not([data-featured]){display:none!
 /* drawer-style pillar bars: blue when strong, amber when weak */
 .v2-mp-pillar-bar{height:5px;background:#e7edf5;border-radius:99px;overflow:hidden;margin-top:6px}
 
-/* ── "Why we bought it today" — AI infographic block ──
+/* ── "Why it made the cut" — AI infographic block ──
    Echoes the drawer's soft blue verdict card (.dr-call-buy). */
 .v2-mp-why{margin-bottom:15px}
 .v2-mp-why-head{
@@ -3955,7 +3955,7 @@ body.v2-featured-only #fund-tbody tr.fund-row:not([data-featured]){display:none!
 .v2-mp-gauge-w{font-size:12.5px;font-weight:800;letter-spacing:-.01em}
 .v2-mp-spark{margin-top:12px;height:28px}
 .v2-mp-spark-svg{width:100%;height:28px;display:block}
-/* 'Why we bought it' — ribboned report section (green header bar) with three
+/* 'Why it made the cut' — ribboned report section (green header bar) with three
    tagged reasons (Macro / Quant / Catalyst). Analyst reasoning, not flagged AI. */
 .v2-mp-why3{margin-top:13px;border:1px solid #e6ecf5;border-radius:12px;overflow:hidden;
   box-shadow:0 1px 2px rgba(15,40,100,.04);
@@ -8935,6 +8935,17 @@ document.addEventListener('keydown', function(e){
     </div>
   </div>
   <div id="model-portfolio-root"><div class="loading">📊 Loading model portfolio…</div></div>
+  <!-- COMPLIANCE: every other panel (Scanner, Dilution, Private, Thesis maps)
+       carries a note; this one is the most advice-adjacent surface on the site
+       and had none. It is a record of what our own model tracked and when —
+       not a portfolio to copy, and not a list to act on. -->
+  <p style="font-size:12.5px;line-height:1.6;color:var(--muted);margin:14px 4px 0">
+    This is a record of what our model tracked and when — a research ledger published
+    so our calls can be checked, not a portfolio to copy and not a list to act on.
+    Entries and exits are logged at our own stated rules; you cannot transact here.
+    Nothing on this panel is a recommendation, is not advice, and is not FCA-authorised.
+    Past performance is not a reliable indicator of future results. Capital at risk.
+  </p>
 </div>
 
 <!-- MARKET ANALYSIS — US pre/post-market report (shared renderer) ───────── -->
@@ -14273,7 +14284,7 @@ function riskFlags(t) {
 
 /* ----------------------------------------------------------
    RENDER — HOT LIST
-   Only shows grade A (STRONG BUY), confidence >= 75%, mktcap >= $1B
+   Only shows grade A (rendered "Strong Outperform"), confidence >= 75%, mktcap >= $1B
    ---------------------------------------------------------- */
 /* ----------------------------------------------------------
    KEY CATALYST — detects the most significant trigger on a
@@ -14337,7 +14348,7 @@ function renderHotList(data) {
   }
 
   // Hidden header stats (kept so any stray JS reading them doesn't throw).
-  const flagged = tickers.filter(t => t.grade === 'A').length; // Grade A = STRONG BUY only
+  const flagged = tickers.filter(t => t.grade === 'A').length; // Grade A = "Strong Outperform" only
   const _su = document.getElementById('stat-universe'); if (_su) _su.textContent = tickers.length;
   const _sh = document.getElementById('stat-hot');      if (_sh) _sh.textContent = scoredCount;
   const _sf = document.getElementById('stat-flagged');  if (_sf) _sf.textContent = flagged;
@@ -18863,7 +18874,7 @@ function renderModelPortfolio(data) {
   }
 }
 
-/* Lazy-load the AI "Why we bought it today" sentence per pick card.
+/* Lazy-load the AI "Why it made the cut" sentence per pick card.
    Each ticker is fetched from /api/model-portfolio/why/{ticker} (durably
    cached server-side → one Haiku call per pick, ever). Sequential with a
    tiny gap so we never burst the API on first paint; the block reveals

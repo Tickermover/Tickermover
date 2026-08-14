@@ -1219,7 +1219,6 @@ class ThesisGenerator:
             "explanation":       2-3 sentences in plain English,
             "bull_case":         [3 bullet strings],
             "bear_case":         [3 bullet strings],
-            "trade_plan":        {entry, stop, target, r_multiple, position_pct},
             "regime_context":    one sentence about how regime affects this name,
             "source":            "rule-based" | "llm"
         }
@@ -1269,7 +1268,6 @@ class ThesisGenerator:
 
         headline = self._headline(t, rec, regime)
         explain  = self._explanation(t, rec, regime, velocity, conv)
-        plan     = self._trade_plan(t)
         regime_ctx = self._regime_context(t, regime)
         why = self._why_bullets(t, rec, regime, velocity, bull, bear)
 
@@ -1284,7 +1282,13 @@ class ThesisGenerator:
             "why_bullets":    why,             # NEW: 3 plain-English "why this stock?" bullets
             "bull_case":      bull,            # legacy detail (kept for power users)
             "bear_case":      bear,            # legacy detail (kept for power users)
-            "trade_plan":     plan,            # legacy detail (kept for power users)
+            # NOTE: no `trade_plan` key. A per-ticker entry/stop/target/position
+            # size is the most advice-like artefact the site could emit — it is
+            # specific to a named security and tells the reader what to do with
+            # it, which is very hard to defend as generic research under s.21
+            # FSMA. It was served over the public /api/thesis endpoint while
+            # being rendered nowhere, so it was pure exposure with no product
+            # value. Do not reintroduce it without FCA sign-off.
             "regime_context": regime_ctx,
             "source":         "rule-based",
             "generated_at":   datetime.now(tz=timezone.utc).isoformat(),
@@ -1488,32 +1492,6 @@ class ThesisGenerator:
             return "The profile is balanced — no clear quality edge either way at the moment."
         return ("The score profile flags more risk than reward here until the "
                 "fundamentals or momentum improve.")
-
-    def _trade_plan(self, t: dict) -> dict:
-        price = float(t.get("price") or 0)
-        atr   = float(t.get("atr_14") or 0)
-        if price <= 0 or atr <= 0:
-            return {
-                "entry":         None,
-                "stop":          None,
-                "target":        None,
-                "r_multiple":    None,
-                "position_pct":  None,
-                "notes":         "Price or ATR unavailable — chart-based stop required."
-            }
-        stop   = round(price - 1.5 * atr, 2)
-        target = round(price + 3.0 * atr, 2)
-        # 1% of account at risk per trade → position size as a % of price
-        risk_per_share = max(price - stop, 0.01)
-        position_pct   = round(min((1.0 / (risk_per_share / price)) , 25.0), 1)
-        return {
-            "entry":         round(price, 2),
-            "stop":          stop,
-            "target":        target,
-            "r_multiple":    2.0,    # 1.5 ATR risk → 3.0 ATR reward
-            "position_pct":  position_pct,
-            "notes":         "Stop = 1.5×ATR below entry. Target = 3.0×ATR above entry. Position sized for 1% account risk.",
-        }
 
     def _regime_context(self, t: dict, regime: dict) -> str:
         rl  = regime.get("regime_label", "Mixed")

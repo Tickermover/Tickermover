@@ -1611,13 +1611,18 @@ button:focus-visible,[tabindex]:focus-visible{
     var n=s.total||0;
     if(n<5) return;                              // too few closed picks to be meaningful
     var stat=function(v,l,pos){return '<div class="sc-stat"><b'+(pos?' class="pos"':'')+'>'+v+'</b><span>'+l+'</span></div>';};
+    // COMPLIANCE: this is a public marketing surface, so it carries NO
+    // benchmark-relative claim. "X% of our picks beat the S&P 500" and
+    // "avg return vs the S&P" are exactly the "beat the market" claim
+    // MARKETING_PLAYBOOK.md §5.2 bans, and a headline outperformance stat in
+    // a financial promotion is the most exposed thing on the site. Both
+    // numbers still exist in full, with context, in the ledger inside /app —
+    // the CTA below goes straight there. Keep this row descriptive.
     var html='';
-    if(s.beat_spy_rate!=null) html+=stat(Math.round(s.beat_spy_rate)+'%','of our picks beat the S&P 500',true);
     html+=stat(Math.round(s.hit_rate||0)+'%','closed in profit');
-    if(s.avg_alpha_spy!=null) html+=stat((s.avg_alpha_spy>=0?'+':'')+(Number(s.avg_alpha_spy)).toFixed(1)+'%','avg return vs the S&P',s.avg_alpha_spy>=0);
     html+=stat(n,'closed picks · all public');
     document.getElementById('sc-stats').innerHTML=html;
-    document.getElementById('sc-note').textContent='An illustrative research tracker, not a portfolio to copy — honest and early, a small sample measured against the S&P 500 over each pick’s own holding window. We log every entry, exit and result the moment it happens: no cherry-picking, no hindsight edits. Past performance is not a guide to future results; capital at risk.';
+    document.getElementById('sc-note').textContent='An illustrative research tracker, not a portfolio to copy — honest and early, and a small sample. We log every entry, exit and result the moment it happens: no cherry-picking, no hindsight edits. The full ledger, including how each pick fared against the S&P 500, is open inside the app. Past performance is not a reliable indicator of future results; capital at risk.';
     box.style.display='';
   }catch(e){}
 })();
