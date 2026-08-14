@@ -1681,9 +1681,42 @@ def _with_universe_count(html: str) -> str:
     return html.replace("__UNIV_N__", str(n) if n else "540+")
 
 
+_ATTENTION_CSS = (
+    "<style>/* TickerMover attention system - one way to say \"look here\", so\n"
+    "   emphasis reads the same on every page. Applied with class `tm-key` to\n"
+    "   any figure that is genuinely decision-relevant RIGHT NOW.\n"
+    "   It does not flash or pulse: continuous motion around a number is an\n"
+    "   accessibility problem (WCAG 2.3.1) and on a financial page a blinking\n"
+    "   figure reads as manufactured urgency, which is the pressure cue this\n"
+    "   product deliberately avoids. Instead: a warm ground, a left rule and a\n"
+    "   weight change, plus ONE settle animation on first paint.\n"
+    "   Use it CONDITIONALLY. Something highlighted permanently is not\n"
+    "   highlighted at all. */\n"
+    "@keyframes tmKeySettle{0%{background:rgba(255,97,0,.24)}"
+    "100%{background:rgba(255,97,0,.07)}}\n"
+    ".tm-key{background:rgba(255,97,0,.07);box-shadow:inset 3px 0 0 #FF6100;"
+    "border-radius:5px;padding:1px 7px;font-weight:700;color:#9A3412;"
+    "white-space:nowrap;animation:tmKeySettle 1.5s ease-out 1 both}\n"
+    "@media(prefers-reduced-motion:reduce){.tm-key{animation:none}}\n"
+    "</style>"
+)
+
+
+def _with_attention(html: str) -> str:
+    """Make the `tm-key` emphasis class available on every served page.
+
+    Skipped when the page already defines the keyframe itself: dashboard.html
+    ships its own copy inline, alongside the drawer-specific `is-key` rules.
+    """
+    if "tmKeySettle" in html or "</head>" not in html:
+        return html
+    return html.replace("</head>", _ATTENTION_CSS + "\n</head>", 1)
+
+
 def _with_consent(html: str) -> str:
     """Inject the cookie-consent loader (before </head>, else </body>)."""
     html = _with_universe_count(html)
+    html = _with_attention(html)
     snip = _consent_snippet()
     if not snip:
         return html
@@ -3172,6 +3205,24 @@ def _render_stock_page(t: dict) -> str:
     price_str = f"${price:.2f}" if price > 0 else "—"
     chg_str   = f"{chg_sign}{chg:.2f}%"
 
+    # Earnings proximity — emphasised ONLY inside 14 days. Every other figure
+    # on this page (score, pillars, valuation) is read differently on the eve
+    # of a report than three months out, so when the print is close it is the
+    # most decision-relevant fact here and earns `tm-key`. Beyond 14 days it is
+    # omitted rather than shown quietly: this subhead is one line, and a
+    # distant date would just be noise. Emphasis that is always on is not
+    # emphasis. See _ATTENTION_CSS.
+    earn_str = ""
+    try:
+        _dte = t.get("days_to_earnings")
+        _dte = float(_dte) if _dte is not None else None
+    except (TypeError, ValueError):
+        _dte = None
+    if _dte is not None and 0 <= _dte <= 14:
+        _d = int(round(_dte))
+        _when = "today" if _d == 0 else "tomorrow" if _d == 1 else f"in {_d} days"
+        earn_str = f' · <span class="tm-key">Reports {_when}</span>'
+
     # ── Post-earnings summary block ──────────────────────────────────
     # When earnings_just_reported is True, render a "Just Reported" card
     # above Key Metrics with EPS actual vs estimate, revenue, and beat
@@ -3512,7 +3563,7 @@ h2{{font-size:18px;margin:30px 0 12px}}
   <div class="report-card">
   <div class="crumbs">{sub or sector or "Stock Analysis"}</div>
   <h1><span class="sym">{sym}</span> Stock Analysis</h1>
-  <p class="subhead">{name} · current price <span class="mono">{price_str}</span> ({chg_str} today)</p>
+  <p class="subhead">{name} · current price <span class="mono">{price_str}</span> ({chg_str} today){earn_str}</p>
 
   <div class="verdict-box" id="overview">
     <div class="vb-gauge">{score_gauge_html}</div>
