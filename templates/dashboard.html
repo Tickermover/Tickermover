@@ -8195,6 +8195,13 @@ document.addEventListener('keydown', function(e){
       <svg viewBox="0 0 24 24"><defs><linearGradient id="ahg-scan" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#818CF8"/><stop offset="1" stop-color="#4F46E5"/></linearGradient></defs><rect x="2.5" y="2.5" width="19" height="19" rx="5.5" fill="url(#ahg-scan)"/><path d="M7 7h3M7 7v3M17 7h-3M17 7v3M7 17h3M7 17v-3M17 17h-3M17 17v-3" stroke="#fff" stroke-width="1.9" fill="none" stroke-linecap="round"/><circle cx="12" cy="12" r="2.4" fill="#fff"/></svg><span>Stock Scanner</span><span class="v2-nav-tag v2-tag-new">NEW</span>
     </div>
 
+    <!-- Sectors & Compare. Reads /api/sector-intel and /api/compare, the same
+         layer the public /sectors and /compare pages render from — so the
+         in-app view and the SEO pages cannot drift apart. -->
+    <div class="v2-nav-item" onclick="v2Show('sect',this);sectInit()">
+      <svg viewBox="0 0 24 24"><defs><linearGradient id="ahg-sect" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7DD3A8"/><stop offset="1" stop-color="#0E7C66"/></linearGradient></defs><rect x="2.6" y="12.4" width="4.6" height="9" rx="1.5" fill="url(#ahg-sect)"/><rect x="9.7" y="7.2" width="4.6" height="14.2" rx="1.5" fill="url(#ahg-sect)"/><rect x="16.8" y="2.6" width="4.6" height="18.8" rx="1.5" fill="url(#ahg-sect)"/></svg><span>Sectors &amp; Compare</span><span class="v2-nav-tag v2-tag-new">NEW</span>
+    </div>
+
     <div class="v2-nav-item" onclick="v2Show('clock',this);clockInit()">
       <svg viewBox="0 0 24 24"><defs><linearGradient id="ahg-clock" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FFB37A"/><stop offset="1" stop-color="#C74E00"/></linearGradient></defs><circle cx="12" cy="12" r="9.3" fill="url(#ahg-clock)"/><path d="M12 6.4V12l3.7 2.3" stroke="#fff" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Hype Check</span><span class="v2-nav-tag v2-tag-new">NEW</span>
     </div>
@@ -9030,6 +9037,74 @@ document.addEventListener('keydown', function(e){
   #ma-inapp-switch button .d{display:block;font-size:12.5px;font-weight:500;color:#7c93b4;margin-top:1px}
   #ma-inapp-switch button.on{background:#fff;color:#2970ff;box-shadow:0 2px 8px rgba(0,0,0,.12)}
 </style>
+<!-- SECTORS & COMPARE -->
+<style>
+#panel-sect .se-head{margin-bottom:16px}
+#panel-sect h2{font-size:22px;font-weight:700;color:#0A2F46;margin:0 0 6px}
+#panel-sect .se-sub{font-size:13.5px;color:#5D6C7B;line-height:1.6;max-width:80ch;margin:0}
+#panel-sect .se-tabs{display:inline-flex;gap:2px;background:#f1f5f9;border:1px solid rgba(0,0,0,.06);
+  border-radius:8px;padding:2px;margin:14px 0}
+#panel-sect .se-tab{padding:5px 14px;border:none;cursor:pointer;font-weight:700;font-size:11.5px;
+  font-family:inherit;background:transparent;color:#64748b;border-radius:6px}
+#panel-sect .se-tab.on{background:#0E7C66;color:#fff}
+#panel-sect .se-wrap{overflow-x:auto;border:1px solid #E2E8F0;border-radius:10px;background:#fff}
+#panel-sect table{border-collapse:collapse;width:100%;min-width:820px;font-variant-numeric:tabular-nums}
+#panel-sect th{background:#F6F8FB;text-align:right;font-size:10.5px;letter-spacing:.06em;
+  text-transform:uppercase;color:#64748b;font-weight:700;padding:10px 12px;
+  border-bottom:1px solid #E2E8F0;white-space:nowrap}
+#panel-sect th:first-child,#panel-sect td:first-child{text-align:left}
+#panel-sect td{padding:10px 12px;border-bottom:1px solid #F1F5F9;text-align:right;
+  font-size:13.5px;color:#26333F;white-space:nowrap}
+#panel-sect tbody tr{cursor:pointer}
+#panel-sect tbody tr:hover td{background:#F8FAFC}
+#panel-sect tr.se-base td{background:#FFF8F2;font-weight:700}
+#panel-sect tr.se-base{cursor:default}
+#panel-sect .se-nm{font-weight:650;color:#0A2F46}
+#panel-sect .se-bar{display:inline-block;width:46px;height:6px;border-radius:99px;background:#EDF1F6;
+  vertical-align:middle;margin-right:7px;overflow:hidden}
+#panel-sect .se-bar i{display:block;height:100%;background:#0E7C66;border-radius:99px}
+#panel-sect .se-pos{color:#12704A;font-weight:650}
+#panel-sect .se-neg{color:#B32D23;font-weight:650}
+#panel-sect .se-mut{color:#94A3B8}
+#panel-sect .se-note{font-size:13px;color:#5D6C7B;line-height:1.6;background:#F6F8FB;
+  border-left:3px solid #0E7C66;border-radius:4px;padding:12px 15px;margin:0 0 16px}
+#panel-sect .se-ai{font-size:14px;color:#26333F;line-height:1.65;background:#fff;
+  border:1px solid #E2E8F0;border-radius:8px;padding:14px 16px;margin:0 0 16px}
+#panel-sect .se-ai span.k{display:block;font-size:10px;letter-spacing:.09em;text-transform:uppercase;
+  color:#0E7C66;font-weight:800;margin-bottom:6px}
+#panel-sect .se-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(132px,1fr));gap:1px;
+  background:#E2E8F0;border:1px solid #E2E8F0;border-radius:10px;overflow:hidden;margin:0 0 16px}
+#panel-sect .se-st{background:#fff;padding:12px 14px}
+#panel-sect .se-st .k{font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:#94A3B8;font-weight:700}
+#panel-sect .se-st .v{font-size:19px;font-weight:700;color:#0A2F46;margin-top:4px}
+#panel-sect .se-st .b{font-size:10.5px;color:#94A3B8;margin-top:2px}
+#panel-sect .se-back{background:none;border:0;color:#0E7C66;font-weight:700;font-size:13px;
+  cursor:pointer;padding:0;margin-bottom:12px;font-family:inherit}
+#panel-sect .se-cmp{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:0 0 16px}
+#panel-sect .se-cmp input{padding:9px 12px;border:1px solid #CBD5E1;border-radius:8px;
+  font-family:inherit;font-size:13.5px;text-transform:uppercase;width:110px}
+#panel-sect .se-cmp button{padding:9px 18px;border:0;border-radius:8px;background:#0E7C66;
+  color:#fff;font-weight:700;font-size:13px;cursor:pointer;font-family:inherit}
+#panel-sect td.se-hi{background:#FFF6EF;font-weight:700;color:#0A2F46}
+#panel-sect .se-tag{display:inline-block;margin-left:6px;font-size:9px;font-weight:800;
+  letter-spacing:.05em;color:#9A3412;background:rgba(255,97,0,.1);border-radius:4px;padding:1px 5px}
+#panel-sect .se-legal{font-size:12px;color:#8A97A4;line-height:1.6;margin-top:16px}
+</style>
+<div id="panel-sect" class="panel">
+  <div class="main">
+    <div class="se-head">
+      <h2>Sectors &amp; Compare</h2>
+      <p class="se-sub">Every sub-sector measured the same way, and any two companies side by side. The first row is the whole scored universe — read every sector against it.</p>
+    </div>
+    <div class="se-tabs">
+      <button class="se-tab on" data-t="sectors">Sub-sectors</button>
+      <button class="se-tab" data-t="compare">Head-to-head</button>
+    </div>
+    <div id="sectBody"><div class="loading">Loading sector data…</div></div>
+    <p class="se-legal">Descriptive measures of each group as it stands today — quality and characteristic descriptors, not buy or sell signals, not advice, and not FCA-authorised. Capital at risk.</p>
+  </div>
+</div>
+
 <div id="panel-scans" class="panel">
   <div class="main">
     <div class="sc-head">
@@ -23130,6 +23205,219 @@ function scRun(id){
    the sidebar calls scansInit() from an inline onclick, which only sees
    globals. Same pattern as window._drRunSupplyChain above. */
 window.scansInit = scansInit;
+
+/* ══ SECTORS & COMPARE ═══════════════════════════════════════════════════
+   Reads /api/sector-intel and /api/compare — the SAME layer the public
+   /sectors and /compare pages render from. No arithmetic happens here: this
+   file has twice grown a second copy of a renderer that then drifted from the
+   original (two stock pages, two "Key dependencies" cards), and both times the
+   copy is where the stale figures and dead links appeared. This panel is a
+   view, nothing more. */
+var _seData = null, _seTab = 'sectors', _seLoading = false;
+
+function _seEsc(s){ return String(s == null ? '' : s)
+  .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+  .replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+
+function _seNum(v, suffix, signed){
+  if (v === null || v === undefined) return '<span class="se-mut">—</span>';
+  if (signed) return '<span class="'+(v>=0?'se-pos':'se-neg')+'">'+(v>=0?'+':'')+v+(suffix||'')+'</span>';
+  return v + (suffix||'');
+}
+
+async function sectInit(){
+  var host = document.getElementById('sectBody');
+  if (!host || _seLoading) return;
+  if (_seData) { _seRender(); return; }          // already loaded — just repaint
+  _seLoading = true;
+  try {
+    var r = await fetch('/api/sector-intel');
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    _seData = await r.json();
+    _seRender();
+  } catch(e){
+    host.innerHTML = '<div class="empty"><div class="emoji">⚠️</div><div>Could not load sector data — '
+      + _seEsc(e.message) + '</div><button class="se-back" onclick="_seData=null;sectInit()">↻ Retry</button></div>';
+  } finally { _seLoading = false; }
+}
+window.sectInit = sectInit;
+
+function _seWireTabs(){
+  [].forEach.call(document.querySelectorAll('#panel-sect .se-tab'), function(b){
+    if (b.getAttribute('data-wired') === '1') return;   // same duplicate-listener
+    b.setAttribute('data-wired','1');                   // trap as the Scanner pills
+    b.addEventListener('click', function(){
+      _seTab = b.getAttribute('data-t');
+      [].forEach.call(document.querySelectorAll('#panel-sect .se-tab'), function(x){
+        x.classList.toggle('on', x === b);
+      });
+      _seRender();
+    });
+  });
+}
+
+function _seRender(){
+  var host = document.getElementById('sectBody');
+  if (!host || !_seData) return;
+  host.innerHTML = (_seTab === 'compare') ? _seCompareHTML() : _seSectorsHTML();
+  _seWireTabs();
+  if (_seTab === 'sectors'){
+    [].forEach.call(host.querySelectorAll('tr[data-slug]'), function(tr){
+      tr.addEventListener('click', function(){ _seOpen(tr.getAttribute('data-slug')); });
+    });
+  } else {
+    var go = host.querySelector('#seCmpGo');
+    if (go) go.addEventListener('click', _seRunCompare);
+    [].forEach.call(host.querySelectorAll('#panel-sect .se-cmp input'), function(i){
+      i.addEventListener('keydown', function(e){ if (e.key === 'Enter') _seRunCompare(); });
+    });
+  }
+}
+
+function _seSectorsHTML(){
+  var b = _seData.baseline || {}, list = _seData.sectors || [];
+  var row = function(s, isBase){
+    var med = s.alpha_median;
+    var bar = (med==null) ? '' : '<span class="se-bar"><i style="width:'
+      + Math.max(3, Math.min(100, Math.round(med))) + '%"></i></span>';
+    var led = isBase ? '<span class="se-mut">—</span>'
+      : (s.leaders||[]).map(function(l){ return _seEsc(l.ticker); }).join(' ');
+    return '<tr' + (isBase ? ' class="se-base"' : ' data-slug="'+_seEsc(s.slug)+'"') + '>'
+      + '<td><span class="se-nm">' + _seEsc(s.label) + '</span></td>'
+      + '<td>' + (s.count==null?'—':s.count) + '</td>'
+      + '<td>' + bar + _seNum(med) + '</td>'
+      + '<td>' + _seNum(s.alpha_spread) + '</td>'
+      + '<td>' + _seNum(s.breadth_strong_pct, '%') + '</td>'
+      + '<td>' + _seNum(s.momentum_3m_median, '%', true) + '</td>'
+      + '<td>' + _seNum(s.pe_median, '×') + '</td>'
+      + '<td>' + _seNum(s.growth_median, '%', true) + '</td>'
+      + '<td>' + led + '</td></tr>';
+  };
+  return '<div class="se-note"><b>Spread</b> is the gap between a group\'s 75th and 25th percentile '
+    + 'score. A narrow spread means the names move together, so the sector call is most of the '
+    + 'decision; a wide one means which name you hold matters more than the theme. '
+    + '<b>Strong</b> is the share scoring 65+. Click any row for the detail.</div>'
+    + '<div class="se-wrap"><table><thead><tr>'
+    + '<th>Sub-sector</th><th>Names</th><th>Median Alpha</th><th>Spread</th><th>Strong</th>'
+    + '<th>3m</th><th>P/E</th><th>Growth</th><th>Highest scoring</th>'
+    + '</tr></thead><tbody>' + row(b, true) + list.map(function(s){ return row(s); }).join('')
+    + '</tbody></table></div>';
+}
+
+async function _seOpen(slug){
+  var host = document.getElementById('sectBody');
+  if (!host || !slug) return;
+  host.innerHTML = '<div class="loading">Loading ' + _seEsc(slug) + '…</div>';
+  try {
+    /* note=true asks for the AI read. It is served from a durable cache keyed
+       on a COARSE bucket of the sector's stats, so this is one paid call per
+       genuine change in the sector's character — not one per view. */
+    var r = await fetch('/api/sector-intel/' + encodeURIComponent(slug) + '?note=true');
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    var d = await r.json();
+    var s = d.sector || {}, base = d.baseline || {}, note = (d.note || {}).note;
+    var st = function(k, v, bv, suf, signed){
+      if (v === null || v === undefined) return '';
+      var vs = (signed && v >= 0 ? '+' : '') + v + (suf||'');
+      var bs = (bv === null || bv === undefined) ? ''
+             : 'universe ' + (signed && bv >= 0 ? '+' : '') + bv + (suf||'');
+      return '<div class="se-st"><div class="k">'+k+'</div><div class="v">'+vs+'</div>'
+           + '<div class="b">'+bs+'</div></div>';
+    };
+    var mem = (d.members||[]).map(function(m){
+      var a = (m.smart_score != null ? m.smart_score : m.pop_score);
+      return '<tr data-tix="'+_seEsc(m.ticker)+'">'
+        + '<td><span class="se-nm">'+_seEsc(m.ticker)+'</span> <span class="se-mut">'
+        + _seEsc((m.name||'').slice(0,34))+'</span></td>'
+        + '<td>'+(a==null?'—':Math.round(a))+'</td>'
+        + '<td>'+_seEsc(m.grade||'—')+'</td>'
+        + '<td>'+_seNum(m.momentum_3m==null?null:Math.round(m.momentum_3m*10)/10,'%',true)+'</td>'
+        + '<td>'+_seNum(m.pe_ratio==null?null:Math.round(m.pe_ratio*10)/10,'×')+'</td>'
+        + '</tr>';
+    }).join('');
+    host.innerHTML =
+      '<button class="se-back" onclick="_seRender()">← All sub-sectors</button>'
+      + '<h2 style="font-size:19px;margin:0 0 12px">' + _seEsc(s.label||slug) + '</h2>'
+      + '<div class="se-stats">'
+      +   st('Names scored', s.count, base.count)
+      +   st('Median Alpha', s.alpha_median, base.alpha_median)
+      +   st('Score spread', s.alpha_spread, base.alpha_spread)
+      +   st('Scoring 65+', s.breadth_strong_pct, base.breadth_strong_pct, '%')
+      +   st('Median 3m', s.momentum_3m_median, base.momentum_3m_median, '%', true)
+      +   st('Median P/E', s.pe_median, base.pe_median, '×')
+      +   st('Median growth', s.growth_median, base.growth_median, '%', true)
+      +   st('Median margin', s.margin_median, base.margin_median, '%', true)
+      + '</div>'
+      + (note ? '<div class="se-ai"><span class="k">Our read</span>' + _seEsc(note) + '</div>' : '')
+      + '<div class="se-wrap"><table><thead><tr><th>Company</th><th>Alpha</th><th>Grade</th>'
+      + '<th>3m</th><th>P/E</th></tr></thead><tbody>' + mem + '</tbody></table></div>';
+    [].forEach.call(host.querySelectorAll('tr[data-tix]'), function(tr){
+      tr.addEventListener('click', function(){
+        var t = tr.getAttribute('data-tix');
+        var fn = window.tsOpenDrawer || window.openStockSheet || window.openStockModal;
+        if (typeof fn === 'function'){ try { fn(t); } catch(e){ console.warn('sect: open '+t, e); } }
+        else { location.href = '/stocks/' + t; }   // never a dead click
+      });
+    });
+  } catch(e){
+    host.innerHTML = '<button class="se-back" onclick="_seRender()">← All sub-sectors</button>'
+      + '<div class="empty"><div class="emoji">⚠️</div><div>Could not load that sub-sector — '
+      + _seEsc(e.message) + '</div></div>';
+  }
+}
+
+function _seCompareHTML(){
+  return '<div class="se-note">Any two companies we score, measured on the same ten '
+    + 'characteristics. The larger side of each row is marked — as a fact, not a verdict. '
+    + 'A higher P/E is simply a higher P/E; whether that is good depends on what you think '
+    + 'the growth is worth. Nothing here totals to a winner.</div>'
+    + '<div class="se-cmp">'
+    + '<input id="seCmpA" placeholder="NVDA" maxlength="6">'
+    + '<span class="se-mut">vs</span>'
+    + '<input id="seCmpB" placeholder="AMD" maxlength="6">'
+    + '<button id="seCmpGo">Compare</button></div>'
+    + '<div id="seCmpOut"></div>';
+}
+
+async function _seRunCompare(){
+  var a = (document.getElementById('seCmpA')||{}).value || '';
+  var b = (document.getElementById('seCmpB')||{}).value || '';
+  var out = document.getElementById('seCmpOut');
+  if (!out) return;
+  a = a.trim().toUpperCase(); b = b.trim().toUpperCase();
+  if (!a || !b){ out.innerHTML = '<div class="se-mut">Enter two tickers.</div>'; return; }
+  out.innerHTML = '<div class="loading">Comparing ' + _seEsc(a) + ' and ' + _seEsc(b) + '…</div>';
+  try {
+    var r = await fetch('/api/compare/' + encodeURIComponent(a) + '-vs-' + encodeURIComponent(b));
+    if (r.status === 404){
+      out.innerHTML = '<div class="se-mut">We do not score one of those tickers. Try two names from the universe.</div>';
+      return;
+    }
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    var c = await r.json();
+    var cell = function(row, side){
+      var v = side === 'a' ? row.a : row.b, tk = side === 'a' ? c.a.ticker : c.b.ticker;
+      var hi = row.higher === tk;
+      return '<td' + (hi ? ' class="se-hi"' : '') + '>' + _seEsc(v)
+           + (hi ? '<span class="se-tag">HIGHER</span>' : '') + '</td>';
+    };
+    var trs = (c.rows||[]).map(function(row){
+      return '<tr><td><span class="se-nm">' + _seEsc(row.label) + '</span><br>'
+        + '<span class="se-mut" style="font-size:11.5px">' + _seEsc(row.note) + '</span></td>'
+        + cell(row,'a') + cell(row,'b') + '</tr>';
+    }).join('');
+    var ctx = c.same_sector
+      ? 'Both sit in <b>' + _seEsc(c.a.sector||'the same sub-sector') + '</b>, so these figures are broadly like-for-like.'
+      : 'Different sub-sectors — <b>' + _seEsc(c.a.sector||'—') + '</b> and <b>' + _seEsc(c.b.sector||'—')
+        + '</b> — so valuation and margin norms differ and the rows are not strictly like-for-like.';
+    out.innerHTML = '<div class="se-note">' + ctx + ' They differ on <b>' + c.differing
+      + ' of ' + c.measured + '</b> measured dimensions; anything within 2% shows as level.</div>'
+      + '<div class="se-wrap"><table><thead><tr><th>Measure</th><th>' + _seEsc(c.a.ticker)
+      + '</th><th>' + _seEsc(c.b.ticker) + '</th></tr></thead><tbody>' + trs + '</tbody></table></div>';
+  } catch(e){
+    out.innerHTML = '<div class="se-mut">Could not run that comparison — ' + _seEsc(e.message) + '</div>';
+  }
+}
 function scWirePills(body){
   /* Sorting replaces only the table, then calls this again — so the pills and
      headers that survived would collect a SECOND listener each time, and a
