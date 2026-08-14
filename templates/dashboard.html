@@ -18694,8 +18694,25 @@ function renderModelPortfolio(data) {
         ? `<span title="Conviction-weighted size — higher AI conviction earns a larger notional weight in the tracker" style="font-size:9px;font-weight:800;letter-spacing:.05em;padding:2px 6px;border-radius:5px;background:rgba(124,58,237,.10);color:#7c3aed;border:1px solid rgba(124,58,237,.22)">${String(sizeTier).toUpperCase()}</span>`
         : '';
       // ── Earnings-event flag — a binary event ahead; manage exposure around it ──
+      /* Earnings badge — now carries the attention treatment and says WHEN.
+         The server only sets event_risk inside 7 days (see the 0<=dte<=7 gate
+         in app.py), so the conditionality was already right — but the badge
+         read "📅 EARNINGS" in 9px muted amber whether the print was tomorrow
+         or a week out, and the timing was hidden in a title tooltip nobody
+         hovers. On an OPEN position a binary event this close is the most
+         decision-relevant thing on the card, so it gets `tm-key` and the
+         timing goes inline. Full sentence stays on hover.
+         Not applied to the exit-alert banner beside it: that is already a red
+         gradient with a siren and a red card border, and adding emphasis to
+         the loudest element on the panel would be noise, not emphasis. */
       const eventBadge = p.event_risk
-        ? `<span title="${String(p.event_risk).replace(/"/g,'&quot;')}" style="font-size:9px;font-weight:800;letter-spacing:.05em;padding:2px 6px;border-radius:5px;background:rgba(245,158,11,.12);color:#b45309;border:1px solid rgba(245,158,11,.28)">📅 EARNINGS</span>`
+        ? (function(){
+            const full = String(p.event_risk);
+            // "Reports in 4d — binary event, elevated risk" -> "Reports in 4d"
+            const when = full.split('—')[0].trim() || 'Earnings due';
+            return `<span class="tm-key" title="${full.replace(/"/g,'&quot;')}"
+              style="font-size:9.5px;font-weight:800;letter-spacing:.04em">📅 ${when}</span>`;
+          })()
         : '';
       // ── Opus HOLD — the exit-risk brain overrode a mechanical exit to let a
       //    winner keep running. Visible proof the AI is protecting growth. ──
