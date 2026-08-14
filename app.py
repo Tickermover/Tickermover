@@ -14515,8 +14515,14 @@ def _with_names(rows: list) -> list:
         add = {}
         if m.get("name") and not r.get("name"):
             add["name"] = m["name"]
-        if m.get("sub_sector") and not r.get("sub_sector"):
-            add["sub_sector"] = m["sub_sector"]
+        # Same fallback as scans._cell: `sub_sector` is a curated theme tag on
+        # only ~34% of the universe; `industry` is the standard classification
+        # and covers ~99%. Prefer the richer curated label, fall back to
+        # industry so the line is not blank on two names in three.
+        if not r.get("sub_sector"):
+            _sub = m.get("sub_sector") or m.get("industry")
+            if _sub and str(_sub).strip():
+                add["sub_sector"] = _sub
         if r.get("alpha") is None and m.get("pop_score") is not None:
             add["alpha"] = m["pop_score"]
         out.append({**r, **add} if add else r)

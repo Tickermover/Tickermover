@@ -109,10 +109,10 @@ def _cols(*extra):
     The sector and corporate-action scans build their `cols` inline and do not
     call this, so they are unaffected.
     """
-    return [{"key": "ticker",     "label": "Ticker",     "fmt": "ticker"},
-            {"key": "name",       "label": "Company",    "fmt": "text"},
-            {"key": "sector",     "label": "Sector",     "fmt": "text"},
-            {"key": "sub_sector", "label": "Sub-sector", "fmt": "text"}] + list(extra)
+    return [{"key": "ticker",        "label": "Ticker",     "fmt": "ticker"},
+            {"key": "name",          "label": "Company",    "fmt": "text"},
+            {"key": "sector",        "label": "Sector",     "fmt": "text"},
+            {"key": "_sub_sector",   "label": "Sub-sector", "fmt": "text"}] + list(extra)
 
 
 # ── the catalogue ───────────────────────────────────────────────────────
@@ -640,6 +640,18 @@ def _cell(row: dict, col: dict, pct_raw: bool = False):
     wrong — `where`/`sort` use num(), which is why the ordering looked sane
     while the numbers next to it did not."""
     k = col["key"]
+    # Sub-sector is sourced with a fallback because the two candidate fields
+    # have very different coverage: `sub_sector` is a CURATED theme tag
+    # ("Thermal / Cooling Management") carried by only ~34% of the universe,
+    # while `industry` is the standard classification ("Semiconductors") and is
+    # present on ~99%. Preferring the curated tag where it exists keeps the
+    # richer label, and falling back to industry stops the column being blank
+    # on two names in three -- a mostly-empty column is worse than none.
+    if k == "_sub_sector":
+        v = row.get("sub_sector")
+        if v is None or not str(v).strip():
+            v = row.get("industry")
+        return v
     if col["fmt"] in ("text", "ticker", "bool"):
         return row.get(k)
     if col["fmt"] in ("pct", "pct_signed"):
