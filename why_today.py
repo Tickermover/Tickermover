@@ -1,5 +1,5 @@
 """
-TickerMover — "Why we bought it today" narrative for Top Hunts tracker picks.
+TickerMover — "Why it made the cut" narrative for Top Hunts tracker picks.
 
 A single punchy, plain-English sentence explaining what the quantitative scan
 flagged when a stock was added to the tracker — grounded ENTIRELY in our own

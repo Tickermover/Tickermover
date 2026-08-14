@@ -28,7 +28,7 @@ from cache import SmartCache
 
 logger = logging.getLogger(__name__)
 
-_UA = os.environ.get("SEC_EDGAR_UA", "TickerMover research alphahunt@example.com")
+_UA = os.environ.get("SEC_EDGAR_UA", "TickerMover research support@tickermover.com")
 _HEADERS = {"User-Agent": _UA, "Accept-Encoding": "gzip, deflate"}
 
 # Filing lists were fetched live on EVERY view: the submissions feed plus one

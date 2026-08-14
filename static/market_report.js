@@ -145,7 +145,7 @@ window.MarketReport = (function () {
     }
     const foot = host.querySelector('[data-ma-foot]');
     if (foot) foot.innerHTML = 'Market data: ' + (d.source || 'Yahoo Finance') +
-      ' · stock data: AlphaHunt universe. 15-min delayed quotes. Pre/post-market prints are indicative.';
+      ' · stock data: TickerMover universe. 15-min delayed quotes. Pre/post-market prints are indicative.';
   }
 
   // ── tab dispatch ────────────────────────────────────────────────────────
@@ -497,7 +497,7 @@ window.MarketReport = (function () {
 
     const lead = (d.ai && d.ai.movers_note)
       ? `<div class="ma-lead">${aiTag()}${d.ai.movers_note}</div>`
-      : `<div class="ma-lead">Stock-level detail across the <b>${s.count}-name</b> AlphaHunt universe — ${post ? "the day's tape" : "what's moving"}, the engine's top picks, earnings, and momentum flags.</div>`;
+      : `<div class="ma-lead">Stock-level detail across the <b>${s.count}-name</b> TickerMover universe — ${post ? "the day's tape" : "what's moving"}, the engine's top picks, earnings, and momentum flags.</div>`;
 
     return lead +
       `<div class="ma-two">` +

@@ -6508,7 +6508,7 @@ async def api_pdf(symbol: str, debug: int = 0):
         raise HTTPException(status_code=500, detail=f"PDF render failed: {exc}")
 
     from datetime import date as _date
-    filename = f"alphahunt-tearsheet-{sym}-{_date.today().isoformat()}.pdf"
+    filename = f"tickermover-tearsheet-{sym}-{_date.today().isoformat()}.pdf"
     return Response(
         content=pdf_bytes,
         media_type="application/pdf",
@@ -7468,7 +7468,7 @@ async def api_overview(ticker: str, force: bool = False,
             _overview_inflight.pop(sym, None)
 
 
-# ── "Why we bought it today" — one AI sentence per Top Hunts pick ──────────
+# ── "Why it made the cut" — one AI sentence per Top Hunts pick ────────────
 # Grounded entirely in our own factor profile (Alpha Score, grade, 6 pillars,
 # analyst upside) so nothing is invented. Cheap Haiku tier, cached durably in
 # app_kv keyed by ticker → one paid call per pick, ever. Lazy-loaded per card
@@ -9295,7 +9295,7 @@ def _is_hot_eligible(t: dict) -> bool:
     Hot-list eligibility — HIGH CONVICTION only:
     1. Alpha Score  ≥ 70  (Grade A territory — top-tier momentum + fundamentals)
     2. Confidence ≥ 70% (enough real data to trust the score)
-    3. Grade A   ("STRONG BUY" — pop_score ≥ 68 maps to A)
+    3. Grade A   (rendered "Strong Outperform" — pop_score ≥ 68 maps to A)
     4. Market cap ≥ $500M (excludes micro-caps); Small Cap tier floor $250M
     5. NOT a Mega Cap (>$200B) — NVDA/AVGO/MSFT etc. excluded
     """

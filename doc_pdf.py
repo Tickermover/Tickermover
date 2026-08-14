@@ -15,6 +15,7 @@ SSRF guard: only SEC + a short allow-list of reputable IR CDNs are fetched.
 from __future__ import annotations
 
 import logging
+import os
 from urllib.parse import urlparse
 
 import httpx
@@ -22,7 +23,7 @@ from bs4 import BeautifulSoup
 
 logger = logging.getLogger(__name__)
 
-_UA = "TickerMover research alphahunt@example.com"
+_UA = os.environ.get("SEC_EDGAR_UA", "TickerMover research support@tickermover.com")
 _HEADERS = {"User-Agent": _UA, "Accept-Encoding": "gzip, deflate"}
 
 # SEC filings + reputable IR content CDNs that host investor decks/releases.

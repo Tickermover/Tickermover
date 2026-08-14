@@ -195,7 +195,7 @@ async def _claude_answer(ticker, question, context_blocks, profile_data, user_id
         "bullet points or a small table when it helps.\n"
         "IMPORTANT: You are NOT a financial advisor. Describe and explain; never "
         "tell the user to buy, sell, or hold.\n\n"
-        f"=== ALPHAHUNT METRICS ===\n{profile_data or '(none provided)'}\n\n"
+        f"=== TICKERMOVER METRICS ===\n{profile_data or '(none provided)'}\n\n"
         f"=== DOCUMENT CONTEXT ===\n{ctx or '(no documents retrieved)'}"
     )
     suffix = f"\n\n=== QUESTION ===\n{question}\n\nAnswer:"
