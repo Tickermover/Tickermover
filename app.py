@@ -7252,6 +7252,88 @@ async def api_why_today(ticker: str, force: bool = False,
             _why_inflight.pop(sym, None)
 
 
+# ── Sector intelligence ────────────────────────────────────────────────────
+# One shared layer behind BOTH the public /sectors + /compare pages and the
+# in-app panels. The computation lives in sector_intel.py; these endpoints only
+# serve it. Deliberately not a second implementation — this codebase has
+# already been bitten twice by a parallel renderer drifting from the original.
+#
+# The aggregate call is pure arithmetic over rows already in memory (no provider
+# call, no AI, no per-visitor cost), so it is safe to leave public. The AI
+# narrative is a separate, opt-in, durably-cached endpoint.
+
+@app.get("/api/sector-intel")
+async def api_sector_intel():
+    """All sub-sectors with >=3 scored names, plus the universe baseline."""
+    import sector_intel as _si
+    return JSONResponse(_clean({
+        "sectors":  _si.all_sectors(_universe_data or []),
+        "baseline": _si.universe_baseline(_universe_data or []),
+        "disclaimer": ("Descriptive statistics only. Not investment advice, not a "
+                       "personal recommendation, and not FCA-authorised. Capital at risk."),
+    }), headers={"Cache-Control": "public, max-age=120"})
+
+
+@app.get("/api/sector-intel/{slug}")
+async def api_sector_intel_one(slug: str, note: bool = False):
+    """One sub-sector in full. `note=true` also returns the AI read.
+
+    The narrative is served from cache and only generated on a miss, so a view
+    costs nothing once a sector's stats bucket has been seen. Generation is
+    gated on the AI budget breaker like every other paid path.
+    """
+    import sector_intel as _si
+    s = _si.one_sector((slug or "").strip().lower(), _universe_data or [])
+    if not s:
+        raise HTTPException(status_code=404, detail=f"No sub-sector '{slug}'")
+    base = _si.universe_baseline(_universe_data or [])
+    rows = s.pop("rows", [])
+    out = {
+        "sector": s,
+        "baseline": base,
+        # Trim member rows to what a table renders — the full row is several KB
+        # each and this endpoint is public.
+        "members": [
+            {k: t.get(k) for k in ("ticker", "name", "grade", "smart_score", "pop_score",
+                                   "price", "change_pct", "momentum_3m", "pe_ratio",
+                                   "revenue_growth_yoy", "profit_margin", "market_cap")}
+            for t in rows[:60]
+        ],
+        "disclaimer": ("Descriptive statistics only. Not investment advice, not a "
+                       "personal recommendation, and not FCA-authorised. Capital at risk."),
+    }
+    if note:
+        import sector_narrative as _sn
+        if _sn.available() and not _ai_over_budget():
+            out["note"] = await _sn.generate(s, base)
+        else:
+            out["note"] = {"slug": s["slug"], "note": _sn.cached_note(s),
+                           "status": "unavailable"}
+    return JSONResponse(_clean(out))
+
+
+@app.get("/api/compare/{pair}")
+async def api_compare(pair: str):
+    """Head-to-head for `<A>-vs-<B>`. Measured differences only — returns no
+    verdict and no total, by design (see sector_intel.compare)."""
+    import sector_intel as _si
+    p = (pair or "").upper().replace("_VS_", "-VS-")
+    if "-VS-" in p:
+        a, b = p.split("-VS-", 1)
+    elif "-" in p:
+        a, b = p.split("-", 1)
+    else:
+        a, b = p, ""
+    c = _si.compare(a.strip(), b.strip(), _universe_data or [])
+    if not c:
+        raise HTTPException(status_code=404,
+                            detail="Need two different tickers we score, as A-vs-B")
+    c["disclaimer"] = ("A comparison of measured characteristics. Which differences "
+                       "matter is the reader's judgement. Not investment advice, not a "
+                       "personal recommendation, and not FCA-authorised. Capital at risk.")
+    return JSONResponse(_clean(c), headers={"Cache-Control": "public, max-age=120"})
+
+
 # ── Sector relationship graph (topology only; generated once, cached) ──────
 # The Universe "Sector connections" web. Node values (α-Score, size) stay live
 # on the client; only the wiring is AI-generated, so this is a one-time Haiku

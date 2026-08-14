@@ -604,6 +604,22 @@ def render_sector(slug: str, universe: list[dict], site_origin: str) -> Optional
                             "matters more than the sub-sector itself.")
                 else:
                     read = "Scores are spread about as widely as the universe overall."
+            # AI read — CACHE PEEK ONLY. A page render must never block on a
+            # model call or pay for one: this page is public, anonymous and
+            # crawled, so generating here would bill us per visitor and per
+            # bot. The note is produced by the in-app panel hitting
+            # /api/sector-intel/{slug}?note=true, and appears here for free
+            # once it exists. Absent, the page is simply the stats, which are
+            # the substance anyway.
+            ai_html = ""
+            try:
+                import sector_narrative as _sn
+                _note = _sn.cached_note(prof)
+                if _note:
+                    ai_html = ('<p class="sp-ai"><span>Our read</span>' + _note + "</p>")
+            except Exception:
+                ai_html = ""
+
             profile_html = (
                 '<div class="sp-grid">'
                 + _stat("Names scored", prof["count"], base["count"])
@@ -615,6 +631,7 @@ def render_sector(slug: str, universe: list[dict], site_origin: str) -> Optional
                 + _stat("Median growth", prof["growth_median"], base["growth_median"], "%", True)
                 + _stat("Median net margin", prof["margin_median"], base["margin_median"], "%", True)
                 + "</div>"
+                + ai_html
                 + ('<p class="sp-read">' + read + " These are descriptive measures of the "
                    "group as it stands today, not a forecast and not a recommendation.</p>"
                    if read else "")
@@ -681,6 +698,10 @@ def render_sector(slug: str, universe: list[dict], site_origin: str) -> Optional
 .sp-b{{font-size:11px;color:#94A3B8;margin-top:2px;font-variant-numeric:tabular-nums}}
 .sp-read{{font-size:13.5px;color:#475569;line-height:1.6;margin:0 0 22px;padding:11px 15px;
   background:#F6F8FB;border-left:3px solid #FF6100;border-radius:4px}}
+.sp-ai{{font-size:14px;color:#26333F;line-height:1.65;margin:14px 0 10px;padding:14px 16px;
+  background:#fff;border:1px solid #E2E8F0;border-radius:8px}}
+.sp-ai span{{display:block;font-size:10px;letter-spacing:.09em;text-transform:uppercase;
+  color:#9A3412;font-weight:800;margin-bottom:6px}}
 </style>"""
     return page_shell(
         title=title, desc=desc, canonical=canonical, body_html=body,
