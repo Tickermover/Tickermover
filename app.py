@@ -12239,48 +12239,15 @@ async def api_featured(n: int = None):
     }))
 
 
-@app.get("/api/setups")
-async def api_setups():
-    setups = []
-    risk_dollar = config.ACCOUNT_SIZE_USD * (config.RISK_PER_TRADE_PCT / 100)
-    for t in _universe_data:
-        mc   = t.get("market_cap")
-        tier = t.get("market_cap_tier", "")
-        if tier == "Mega Cap":
-            continue   # exclude Mega Caps (NVDA, AVGO, MSFT etc.)
-        if mc is not None and mc >= MEGA_CAP_CUTOFF:
-            continue   # exclude confirmed Mega Caps >$200B
-        if mc is not None and mc < MIN_MCAP_FILTER:
-            continue   # skip sub-$500M micro-caps
-        if (t.get("pop_score", 0) < 63 or
-                t.get("confidence", 0) < config.MIN_CONFIDENCE):
-            continue
-        atr   = t.get("atr_14")
-        price = t.get("price")
-        if atr and price and atr > 0:
-            shares       = int(risk_dollar / atr)
-            position_val = round(shares * price, 2)
-            stop         = round(price - 1.5 * atr, 2)
-            target       = round(price + 3.0 * atr, 2)
-        else:
-            shares = position_val = stop = target = None
-
-        setups.append({
-            **{k: t.get(k) for k in [
-                "ticker", "price", "pop_score", "grade", "signals",
-                "rsi_14", "atr_14", "volume_ratio", "momentum_1m",
-                "days_to_earnings", "mention_velocity", "name",
-            ]},
-            "shares":       shares,
-            "risk_dollar":  round(risk_dollar, 2),
-            "position_val": position_val,
-            "stop":         stop,
-            "target":       target,
-            "rr":           3.0,
-        })
-        if len(setups) >= 20:
-            break
-    return JSONResponse({"setups": setups})
+# NOTE: the /api/setups endpoint was REMOVED on 14 Aug 2026.
+# It returned, for up to 20 named stocks, a share count to buy, the dollar risk,
+# a position value, a stop-loss and a target -- i.e. a complete trade plan per
+# security, over a PUBLIC unauthenticated endpoint, with no caller anywhere in
+# the frontend. Position sizing is the most advice-like output the site could
+# produce: it is normally a function of an individual's circumstances, and we
+# collect none. Removed alongside ThesisGenerator._trade_plan() for the same
+# reason. Do not reintroduce without FCA sign-off -- see docs/UK-legal-brief.md
+# question 8.
 
 
 # ── WebSocket: live price stream ──────────────────────────────────────────────

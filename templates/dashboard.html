@@ -9092,14 +9092,21 @@ document.addEventListener('keydown', function(e){
       <p style="font-size:13px;line-height:1.6;color:var(--muted)">Composite 0–100 score combining momentum (40%), social velocity (20%), technical signals (20%), fundamentals (10%), and market cap fit (10%). Scores above 70 indicate strong setups. Only $1B+ market cap stocks qualify.</p></div>
     <div class="card"><h3 style="color:var(--acc2);margin-bottom:8px">🎯 Grades &amp; Ratings</h3>
       <p style="font-size:13px;line-height:1.6;color:var(--muted)">A → ★★★★★ Strong Outperform · B → ★★★★ Outperform · C → ★★★ Neutral · D → ★★ Lagging · F → ★ Avoid. The Hot List shows only ★★★★★ Strong Outperform (grade A) with confidence ≥ 75%. Use All Stocks tab to browse all grades. <strong>Note:</strong> these are quality descriptors, not buy/sell recommendations — TickerMover is a research tool, not an FCA-authorised adviser.</p></div>
-    <div class="card"><h3 style="color:var(--acc2);margin-bottom:8px">⚡ Trade Setups</h3>
-      <p style="font-size:13px;line-height:1.6;color:var(--muted)">ATR-based position sizing: Entry at current price, Stop = Entry − 1.5×ATR, Target = Entry + 3.0×ATR. Shares = (Account × Risk%) ÷ ATR. Default 1% risk per trade. Adjust using the sizer widget. <strong>These are generic, illustrative risk-management calculations for education only — not a recommendation to buy, sell, or size any position, and not personal advice. Capital at risk.</strong></p></div>
+    <!-- COMPLIANCE: the "⚡ Trade Setups" card was removed 14 Aug 2026. It
+         published our position-sizing methodology (entry / 1.5xATR stop /
+         3xATR target / share count / 1% risk per trade) and pointed at a
+         "sizer widget" that does not exist in the markup -- the .sizer CSS is
+         orphaned. It documented a feature we removed and was the last place
+         the site set out a position-sizing method. Do not restore without
+         FCA sign-off. -->
     <div class="card"><h3 style="color:var(--acc2);margin-bottom:8px">🔄 Data Refresh</h3>
       <p style="font-size:13px;line-height:1.6;color:var(--muted)">Live prices update every 30s from /api/quotes/batch. Fast refresh (quotes + social) every 5 min. Slow refresh (candles, fundamentals, insider) every 60 min starting 90s after boot.</p></div>
     <div class="card"><h3 style="color:var(--acc2);margin-bottom:8px">⭐ Watchlist</h3>
       <p style="font-size:13px;line-height:1.6;color:var(--muted)">Save any ticker you want to keep an eye on. Saved on your browser via localStorage. Tap the ★ icon on any stock card to add or remove, or type a ticker directly in the Watchlist tab.</p></div>
-    <div class="card"><h3 style="color:var(--acc2);margin-bottom:8px">💼 Allocator</h3>
-      <p style="font-size:13px;line-height:1.6;color:var(--muted)">Shows share count as primary metric, position value, % of account, entry/stop/target levels, and max risk per position. Based on ATR sizing. Max 8 open positions, 6% total portfolio risk. <strong>An illustrative calculator for education only — not a recommendation or personal advice to trade. Capital at risk.</strong></p></div>
+    <!-- COMPLIANCE: the "💼 Allocator" card was removed 14 Aug 2026 for the
+         same reason as "Trade Setups" above -- it described share count,
+         position value, % of account, entry/stop/target and max risk per
+         position for a feature that is not in the app. -->
   </div>
 </div>
 
@@ -14368,7 +14375,8 @@ function _renderHotListLegacy(data) {
     .filter(t => (t.market_cap == null || t.market_cap >= MIN_MCAP)
               && sortKey(t) > 0)
     .sort((a, b) => sortKey(b) - sortKey(a));
-  const account = _account;
+  // (`const account = _account` removed 14 Aug 2026 -- its only consumer was
+  // the ATR position-sizing calc deleted above.)
 
   const tier = grade => eligible.filter(t => t.grade === grade);
   const buckets = [tier('A'), tier('B'), tier('C')];
@@ -14399,10 +14407,10 @@ function _renderHotListLegacy(data) {
     const chg     = parseFloat(t.change_pct || 0);
     const chg3m   = parseFloat(t.momentum_3m || t.momentum_30d || 0);
     const atr     = parseFloat(t.atr_14 || 0);
-    const riskD   = account * 0.01;
-    const shares  = atr > 0 ? Math.floor(riskD / atr) : null;
-    const stop    = atr > 0 ? (price - 1.5 * atr).toFixed(2) : null;
-    const target  = atr > 0 ? (price + 3.0 * atr).toFixed(2) : null;
+    // COMPLIANCE: the ATR share-count / stop / target consts that used to sit
+    // here were computed on every card render and never displayed. Dead code
+    // that produced a per-security trade plan -- removed 14 Aug 2026 with
+    // /api/setups and ThesisGenerator._trade_plan(). Do not reintroduce.
     const tgtLow  = parseFloat(t.target_low  || 0);
     const tgtMean = parseFloat(t.target_mean || t.street_target || 0);
     const tgtHigh = parseFloat(t.target_high || 0);
@@ -15961,8 +15969,8 @@ function openStockModal(ticker) {
   const beta    = parseFloat(t.beta);
   const analysts= parseInt(t.total_analysts || t.analyst_count || t.numAnalystOpinions || 0);
   const atr     = parseFloat(t.atr_14 || 0);
-  const stop    = atr > 0 ? (price - 1.5 * atr).toFixed(2) : null;
-  const target  = atr > 0 ? (price + 3.0 * atr).toFixed(2) : null;
+  // COMPLIANCE: ATR stop/target consts removed 14 Aug 2026 -- computed here on
+  // every render and never displayed. See /api/setups removal in app.py.
 
   const metric = (k, v, cls='') => `<div class="fd-metric"><span class="k">${k}</span><span class="v ${cls}">${v}</span></div>`;
 
