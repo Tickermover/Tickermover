@@ -1612,12 +1612,13 @@ button:focus-visible,[tabindex]:focus-visible{
     if(n<5) return;                              // too few closed picks to be meaningful
     var stat=function(v,l,pos){return '<div class="sc-stat"><b'+(pos?' class="pos"':'')+'>'+v+'</b><span>'+l+'</span></div>';};
     // COMPLIANCE: this is a public marketing surface, so it carries NO
-    // benchmark-relative claim. "X% of our picks beat the S&P 500" and
-    // "avg return vs the S&P" are exactly the "beat the market" claim
-    // MARKETING_PLAYBOOK.md §5.2 bans, and a headline outperformance stat in
-    // a financial promotion is the most exposed thing on the site. Both
+    // benchmark-relative claim. The two stats removed here (s.beat_spy_rate
+    // and s.avg_alpha_spy) are outperformance claims of exactly the kind
+    // MARKETING_PLAYBOOK.md §5.2 bans, and a headline outperformance figure
+    // in a financial promotion is the most exposed thing on the site. Both
     // numbers still exist in full, with context, in the ledger inside /app —
     // the CTA below goes straight there. Keep this row descriptive.
+    // (Deliberately no example wording here: comments ship in page source.)
     var html='';
     html+=stat(Math.round(s.hit_rate||0)+'%','closed in profit');
     html+=stat(n,'closed picks · all public');
