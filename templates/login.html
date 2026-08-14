@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sign in — TickerMover</title>
-<meta name="description" content="Sign in to TickerMover. 540+ stocks scored every day across six pillars.">
+<meta name="description" content="Sign in to TickerMover. __UNIV_N__ stocks scored every day across six pillars.">
 <link rel="icon" type="image/svg+xml" href="/static/brand/tickermover-mark.svg">
 <link rel="icon" type="image/png" sizes="32x32" href="/static/icons/favicon-32.png">
 <link rel="icon" type="image/png" sizes="192x192" href="/static/icons/icon-192.png">
@@ -333,10 +333,10 @@ a{color:inherit;text-decoration:none}
       <div class="left-brand">
         <span class="brand-wordmark">Ticker<svg class="brand-m" viewBox="0 0 90 105" fill="none" aria-hidden="true"><polyline points="5,100 23,42 45,66 67,26 85,100" stroke="#6aabff" stroke-width="9" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="67" cy="8" r="7" fill="#6aabff"/></svg>over</span>
       </div>
-      <div class="left-headline">540+ stocks, scored <em>every day</em>.</div>
+      <div class="left-headline">__UNIV_N__ stocks, scored <em>every day</em>.</div>
       <p class="left-sub">Alpha Score, live signals, and an audited track record — the whole tape, in one dashboard.</p>
       <div class="left-stats">
-        <div class="left-stat"><div class="n">540+</div><div class="l">US stocks</div></div>
+        <div class="left-stat"><div class="n">__UNIV_N__</div><div class="l">US stocks</div></div>
         <div class="left-stat"><div class="n">5 min</div><div class="l">refresh</div></div>
         <div class="left-stat"><div class="n">6</div><div class="l">pillars</div></div>
       </div>
@@ -458,7 +458,7 @@ function setMode(m){
   if(t1) t1.classList.toggle('on',si);
   if(t2) t2.classList.toggle('on',!si);
   var ti=$('form-title'); if(ti) ti.textContent= si?'Welcome back':'Create your account';
-  var su=$('form-sub');   if(su) su.textContent= si?'Sign in — your watchlist is waiting.':'Score 540+ US stocks every day. Free to start.';
+  var su=$('form-sub');   if(su) su.textContent= si?'Sign in — your watchlist is waiting.':'Score __UNIV_N__ US stocks every day. Free to start.';
   var sb=$('submit-label');if(sb) sb.textContent= si?'Sign in':'Create account';
   var fl=$('forgot-link');if(fl) fl.style.visibility= si?'visible':'hidden';
   var pw=$('login-password'); if(pw){ pw.setAttribute('autocomplete', si?'current-password':'new-password'); pw.placeholder= si?'Your password':'8+ chars · letters & numbers'; }

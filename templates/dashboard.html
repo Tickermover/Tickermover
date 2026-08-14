@@ -8,7 +8,7 @@
      in Bing/Google) but explicitly tell them not to index this page. -->
 <meta name="robots" content="noindex,follow">
 <title>TickerMover — Stock Intelligence Dashboard</title>
-<meta name="description" content="TickerMover — research 540+ US large-caps: Alpha Score, RS Rating, daily signals, Hot List picks and position sizing. Research, not advice.">
+<meta name="description" content="TickerMover — research __UNIV_N__ US large-caps: Alpha Score, RS Rating, daily signals, Hot List picks and position sizing. Research, not advice.">
 <!-- ── Browser chrome (favicons + status bar tint, no PWA install) ──
      PWA was removed at user's request — they didn't want "Install app"
      appearing in the browser menu, and didn't want forgot-password
@@ -618,6 +618,16 @@ body.v2 #sectors-grid .smh-name{font-weight:800;font-size:12.5px;color:#0f172a!i
 #panel-clock .ck-band-n{display:flex;align-items:baseline;gap:8px;margin-bottom:6px}
 #panel-clock .ck-band-n b{font-size:14px;font-weight:600;color:#0A2F46}
 #panel-clock .ck-band-n i{font-style:normal;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:var(--ck-a);margin-left:auto}
+/* "Still falling" card. Deliberately NOT styled as a band: the six bands are a
+   partition and this cuts across them, so it carries a warm rule and a muted
+   ground rather than the band chrome. It must never read as a seventh band. */
+#panel-clock .ck-knife{border-color:#E8C39A!important;background:#FDF8F2!important;
+  border-left:3px solid #C2410C!important}
+#panel-clock .ck-knife.on{background:#FBEFE3!important;border-color:#C2410C!important}
+#panel-clock .ck-knife .ck-band-n b{color:#7C2D12}
+#panel-clock .ck-knife .ck-band-n i{color:#C2410C}
+#panel-clock .ck-knife-d{font-size:11px;color:#9A3412;font-weight:600}
+#panel-clock .ck-knife-s{font-size:10px;color:#A98B72;margin-top:5px;font-style:italic}
 /* "22% fell 30% · 44% rose 30%" on one wrapping line read as four unrelated
    numbers. One labelled row per outcome, with the frequency on the right. */
 #panel-clock .ck-band-r{font-size:11px;color:#5D6C7B}
@@ -690,6 +700,20 @@ body.v2 #sectors-grid .smh-name{font-weight:800;font-size:12.5px;color:#0f172a!i
 #panel-clock tbody tr:hover td{background:#FBFAF8}
 #panel-clock .ck-tk{font-family:var(--font-body,inherit);font-weight:600}
 #panel-clock .ck-sub2{font-family:var(--font-body,inherit);font-size:11px;color:#8A97A4;font-weight:400}
+/* Sector · sub-sector line under the company (added 14 Aug 2026). Sits a step
+   quieter than .ck-sub2 so identity reads company first, then industry. */
+#panel-clock .ck-sub3{font-family:var(--font-body,inherit);font-size:10.5px;color:#A4AEB9;
+  font-weight:400;margin-top:1px;max-width:210px;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap}
+/* Alpha Score chip. Deliberately a DIFFERENT shape from the Clock bar beside
+   it — the two are different measures and must not read as one continued
+   scale. Banded on our own grade thresholds. */
+#panel-clock .ck-al{display:inline-block;min-width:32px;padding:2px 7px;border-radius:5px;
+  font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;
+  font-variant-numeric:tabular-nums;text-align:center}
+#panel-clock .ck-al-hi{background:#E6F4ED;color:#12704A}
+#panel-clock .ck-al-mid{background:#FFF3E0;color:#A45C00}
+#panel-clock .ck-al-lo{background:#F1F3F5;color:#69757F}
 #panel-clock .ck-pill{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:9.5px;font-weight:700;letter-spacing:.06em;padding:3px 8px;border-radius:100px;border:1px solid currentColor}
 /* One colour per band — six bands sharing four classes meant Damaged and
    Crowded (and Quiet and Noticed) were indistinguishable in the Band column. */
@@ -22046,10 +22070,10 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
       <span class="ah-left-brand-mark"><span class="ah-left-brand-glyph">T</span></span>
       <span>Ticker<span class="h">Mover</span></span>
     </div>
-    <div class="ah-left-headline">540+ stocks, scored <em>every day</em>.</div>
+    <div class="ah-left-headline">__UNIV_N__ stocks, scored <em>every day</em>.</div>
     <p class="ah-left-sub">Alpha Score, live signals, and an audited track record.</p>
     <div class="ah-left-stats">
-      <div class="ah-left-stat"><div class="n">540+</div><div class="l">US stocks</div></div>
+      <div class="ah-left-stat"><div class="n">__UNIV_N__</div><div class="l">US stocks</div></div>
       <div class="ah-left-stat"><div class="n">5 min</div><div class="l">refresh</div></div>
       <div class="ah-left-stat"><div class="n">6</div><div class="l">pillars</div></div>
     </div>
@@ -22318,7 +22342,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     <h1 class="aho-title"><span id="aho-type"></span><span class="aho-caret"></span></h1>
     <p class="aho-sub">You're in. Let's personalise your dashboard — <b>20 seconds</b>, then you're hunting alpha.</p>
     <div class="aho-perks">
-      <div class="aho-perk"><b>540+</b><span>US stocks</span></div>
+      <div class="aho-perk"><b>__UNIV_N__</b><span>US stocks</span></div>
       <div class="aho-perk"><b>6</b><span>pillars</span></div>
       <div class="aho-perk"><b>5&nbsp;min</b><span>refresh</span></div>
     </div>
@@ -26198,6 +26222,18 @@ function scResultHTML(d){
   // One class per band. Damaged/Crowded both returned 'hot' and Quiet/Noticed
   // both returned 'cool', so half the Band column was two colours for six
   // readings — a pill told you less than its label did.
+  /* "Still falling" cross-cut. Not a band — see where the card is built.
+     Down 40%+ from the 12-month high AND still within 10% of the low: the
+     share is inside the fall rather than past it. Both thresholds are our
+     convention and are stated on the card and in the view's header, because a
+     threshold nobody can see is a threshold nobody can check. */
+  var FALLING_KEY = '__falling';
+  function ckFalling(r){
+    return r && r.damage != null && r.run != null
+      && !isNaN(r.damage) && !isNaN(r.run)
+      && r.damage <= -0.40 && r.run <= 0.10;
+  }
+
   function tone(b){ return ({Damaged:'hot',Crowded:'red',Busy:'warm',
     Quiet:'cool',Noticed:'blue',Ignored:'grey'})[b] || 'grey'; }
   function ago(d){
@@ -26287,9 +26323,10 @@ function scResultHTML(d){
      small print under the table, which is not where anyone looks. Hovering a
      marked heading now says what the number is in ordinary words. */
   var HELP = {
-    'Clock': 'A 0–100 reading of how far along the bounce a share looks. Near 0: still '
+    'Recovered': 'A 0–100 reading of how far along the bounce a share looks. Near 0: still '
       + 'close to its lows and barely traded. Near 100: most of the climb is behind it and '
       + 'trading is heavy. It describes what has already happened, not what happens next.',
+    'Alpha Score': 'Our own 0–100 quality read on the business — fundamentals, valuation, momentum, growth, sentiment and risk. It is a SEPARATE measure from Recovered beside it: Recovered says how far a fall has retraced, Alpha Score says what we make of the company. A quality descriptor, not a recommendation.',
     'Band': 'The plain-word label for that reading — Damaged, Ignored, Quiet, Noticed, Busy '
       + 'or Crowded, running from wrecked-and-unwatched to fully-noticed.',
     'Moved': 'The band it used to read, and the band it reads now.',
@@ -26326,6 +26363,38 @@ function scResultHTML(d){
     return '<td class="ck-dmg-c"><span class="ck-dmg ' + cls + '">'
       + '<span class="ck-dmg-bar"><i style="width:' + w.toFixed(0) + '%"></i></span>'
       + '<b>' + sg(v) + '</b></span></td>';
+  }
+
+  /* Identity cell — ticker, company, then sector · sub-sector.
+     Added 14 Aug 2026. The four tables in this panel each built their own
+     ticker cell and between them showed the company OR the bare sector, never
+     the industry. "Technology" covers both a memory maker and a payroll SaaS,
+     which is the distinction that matters when reading a fall. One helper so
+     all four stay identical. `sub_sector` is attached server-side in
+     _with_names(); it degrades to sector alone when absent. */
+  function ckId(r){
+    var line = [r.sector, r.sub_sector].filter(function(x){
+      return x && String(x).trim();
+    });
+    /* Don't print "Technology · Technology" when the two agree. */
+    if (line.length === 2 && line[0] === line[1]) line = [line[0]];
+    var sub = line.join(' · ');
+    return '<td><span class="ck-tk">' + esc(r.ticker) + '</span>'
+      + (r.name ? '<div class="ck-sub2">' + esc(r.name) + '</div>' : '')
+      + (sub ? '<div class="ck-sub3" title="' + esc(sub) + '">' + esc(sub) + '</div>' : '')
+      + '</td>';
+  }
+
+  /* Alpha Score cell. This is the six-pillar quality composite, NOT the Clock
+     score beside it — the Clock says how far a fall has recovered, Alpha says
+     what we think of the business. They are shown together precisely because
+     they answer different questions, and the columns are labelled so that a
+     reader is never led to read one as the other. */
+  function alphaCell(v){
+    if (v == null || isNaN(v)) return '<td>—</td>';
+    var n = Math.round(v);
+    var k = n >= 70 ? 'ck-al-hi' : n >= 50 ? 'ck-al-mid' : 'ck-al-lo';
+    return '<td><span class="ck-al ' + k + '">' + n + '</span></td>';
   }
 
   function tbl(head, cols, body){
@@ -26401,8 +26470,7 @@ function scResultHTML(d){
       var br = r.bucket_rates || {};
       var cls = (r.bucket === 'washout' || r.bucket === 'broad') ? 'ck-cool' : 'ck-grey';
       return '<tr data-t="' + esc(r.ticker) + '">'
-        + '<td><span class="ck-tk">' + esc(r.ticker) + '</span>'
-          + '<div class="ck-sub2">' + esc(r.sector || '') + '</div></td>'
+        + ckId(r)
         + '<td>' + esc(ago(r.fired)) + '</td>'
         + '<td>' + sg(r.since) + '</td>'
         + '<td>' + sg(r.damage) + '</td>'
@@ -26425,8 +26493,7 @@ function scResultHTML(d){
     if (!c.length) return tbl(head, ['Ticker'], '');
     var body = c.map(function(r){
       return '<tr data-t="' + esc(r.ticker) + '">'
-        + '<td><span class="ck-tk">' + esc(r.ticker) + '</span>'
-          + '<div class="ck-sub2">' + esc(r.sector || '') + '</div></td>'
+        + ckId(r)
         + '<td style="text-align:left"><span class="ck-pill ck-' + tone(r.prev) + '">' + esc(r.prev)
           + '</span><span class="ck-arrow">' + (r.up ? '→' : '←') + '</span>'
           + '<span class="ck-pill ck-' + tone(r.band) + '">' + esc(r.band) + '</span></td>'
@@ -26480,6 +26547,25 @@ function scResultHTML(d){
           + '<span>Rose : fell</span><b>' + (ra == null ? '—' : ra.toFixed(2) + '×') + '</b>'
           + cmp + '</div></button>';
     }).join('');
+
+    /* STILL FALLING — a cross-cut, not a seventh band (added 14 Aug 2026).
+       The six bands are a partition: every name sits in exactly one. This is
+       a filter that runs ACROSS them, answering the question the bands do not:
+       which of these is still on its way down right now, rather than down hard
+       and steadying. Down 40%+ from its 12-month high AND still within 10% of
+       its low — the fall has not yet found a floor.
+       Styled apart from the band cards on purpose so it never reads as another
+       band, and worded as a description of state. It says these names are
+       still falling; it does not tell anyone what to do about that. */
+    var falling = rows.filter(ckFalling);
+    cards += '<button class="ck-band ck-knife' + (band===FALLING_KEY?' on':'')
+      + '" data-b="' + FALLING_KEY + '" title="Down 40% or more from the 12-month high and '
+      + 'still within 10% of the low — the fall has not found a floor yet. A description of '
+      + 'where these shares stand today, not a prediction and not advice.">'
+      + '<div class="ck-band-n"><b>Still falling</b><i>' + falling.length + '</i></div>'
+      + '<div class="ck-knife-d">No floor yet</div>'
+      + '<div class="ck-knife-s">Cuts across the bands</div></button>';
+
     // Said once, above the row. Every card used to repeat both of these.
     var cap = '<div class="ck-bands-cap">What followed over the next six months, historically'
       + (_blR ? ' · <b>rise-to-fall for all shares: ' + _blR.toFixed(2) + '×</b>'
@@ -26487,8 +26573,47 @@ function scResultHTML(d){
     // Most damaged first. People come to this page to see who is wrecked;
     // ordering by the clock score buried them under names that had already
     // recovered.
-    var sel = rows.filter(function(r){ return r.band === band; })
+    var isFalling = (band === FALLING_KEY);
+    var sel = rows.filter(isFalling ? ckFalling : function(r){ return r.band === band; })
       .sort(function(a,b){ return (a.damage==null?9:a.damage) - (b.damage==null?9:b.damage); });
+
+    /* The still-falling view spans several bands, so the per-band historical
+       rates below do not describe it and would be wrong to print. It gets its
+       own header and stops there — no base rates, no rise-to-fall ratio. */
+    if (isFalling){
+      var head = '<div class="ck-wrap-h"><h3>Still falling · ' + sel.length + ' name'
+        + (sel.length===1?'':'s') + '</h3><p>Down 40% or more from the 12-month high and '
+        + 'still within 10% of the low. These are the falls that have not yet steadied — '
+        + 'the drop is ongoing rather than behind them. This cuts across the bands above, '
+        + 'so the historical rates shown there do not describe this group and are not '
+        + 'repeated here. It is a description of where these shares stand today. It is not '
+        + 'a prediction, not a recommendation, and not advice — a share can keep falling or '
+        + 'turn from here, and we are not telling you which. Capital at risk.</p></div>';
+      return cap + '<div class="ck-bands">' + cards + '</div>'
+        + tbl(head + CLOCK_LEGEND, [{t:'Ticker',left:true},{t:'Band',left:true},
+              {t:'Off 12m high',left:true},'Off the low','Volume vs norm','Recovered',
+              'Alpha Score','vs 200d','Reading'],
+            sel.map(function(r){
+              var tn = tone(r.band);
+              return '<tr data-t="' + esc(r.ticker) + '">'
+                + ckId(r)
+                + '<td style="text-align:left"><span class="ck-pill ck-' + tn + '">'
+                  + esc(r.band) + '</span></td>'
+                + dmgCell(r.damage)
+                + '<td>' + sg(r.run) + '</td>'
+                + '<td>' + (r.crowd==null?'—':r.crowd.toFixed(2)+'×') + '</td>'
+                + '<td><span class="ck-' + tn + '"><span class="ck-bar"><i style="width:'
+                  + Math.max(3, Math.round(r.score)) + '%"></i></span>'
+                  + Math.round(r.score) + '</span></td>'
+                + alphaCell(r.alpha)
+                + '<td>' + sg(r.stretch) + '</td>'
+                + (function(){ var d = ckReading(r);
+                    return '<td class="ck-rd-c"><span class="ck-rd ck-rd-' + d.k + '" title="'
+                      + esc(d.w) + '">' + esc(d.t) + '</span></td>'; })()
+                + '</tr>';
+            }).join(''));
+    }
+
     var r0 = (D.rates.cycle && D.rates.cycle[band]) || {};
     var head = '<div class="ck-wrap-h"><h3>' + esc(band) + ' · ' + sel.length + ' name'
       + (sel.length===1?'':'s') + '</h3><p>' + esc(D.copy[band]||'')
@@ -26514,14 +26639,13 @@ function scResultHTML(d){
     var body = sel.map(function(r){
       var tn = tone(r.band);
       return '<tr data-t="' + esc(r.ticker) + '">'
-        + '<td><span class="ck-tk">' + esc(r.ticker) + '</span>'
-          + '<div class="ck-sub2" title="' + esc(r.sector||'') + '">'
-          + esc(r.name || r.sector || '') + '</div></td>'
+        + ckId(r)
         + dmgCell(r.damage)
         + '<td>' + sg(r.run) + '</td>'
         + '<td>' + (r.crowd==null?'—':r.crowd.toFixed(2)+'×') + '</td>'
         + '<td><span class="ck-' + tn + '"><span class="ck-bar"><i style="width:'
           + Math.max(3, Math.round(r.score)) + '%"></i></span>' + Math.round(r.score) + '</span></td>'
+        + alphaCell(r.alpha)
         + '<td>' + (r.held==null?'—':r.held + 'd') + '</td>'
         + '<td>' + sg(r.stretch) + '</td>'
         + (function(){ var d = ckReading(r);
@@ -26531,7 +26655,7 @@ function scResultHTML(d){
     }).join('');
     return cap + '<div class="ck-bands">' + cards + '</div>'
       + tbl(head + CLOCK_LEGEND, [{t:'Ticker',left:true},{t:'Off 12m high',left:true},'Off the low',
-                   'Volume vs norm','Clock','In band','vs 200d','Reading'], body);
+                   'Volume vs norm','Recovered','Alpha Score','In band','vs 200d','Reading'], body);
   }
 
   /* 5. SEARCH — the panel's own ticker filter. It reads every name rather than
@@ -26556,9 +26680,7 @@ function scResultHTML(d){
     var body = sel.map(function(r){
       var tn = tone(r.band);
       return '<tr data-t="' + esc(r.ticker) + '">'
-        + '<td><span class="ck-tk">' + esc(r.ticker) + '</span>'
-          + '<div class="ck-sub2" title="' + esc(r.sector||'') + '">'
-          + esc(r.name || r.sector || '') + '</div></td>'
+        + ckId(r)
         + '<td style="text-align:left"><span class="ck-pill ck-' + tn + '">' + esc(r.band) + '</span>'
           + (r.in_cycle ? '' : '<div class="ck-sub2">no crash</div>') + '</td>'
         + dmgCell(r.damage)
@@ -26566,6 +26688,7 @@ function scResultHTML(d){
         + '<td>' + (r.crowd==null?'—':r.crowd.toFixed(2)+'×') + '</td>'
         + '<td><span class="ck-' + tn + '"><span class="ck-bar"><i style="width:'
           + Math.max(3, Math.round(r.score)) + '%"></i></span>' + Math.round(r.score) + '</span></td>'
+        + alphaCell(r.alpha)
         + '<td>' + sg(r.stretch) + '</td>'
         + (function(){ var d = ckReading(r);
             return '<td class="ck-rd-c"><span class="ck-rd ck-rd-' + d.k + '" title="'
@@ -26573,7 +26696,7 @@ function scResultHTML(d){
         + '</tr>';
     }).join('');
     return tbl(head + CLOCK_LEGEND, [{t:'Ticker',left:true},{t:'Band',left:true},{t:'Off 12m high',left:true},
-                      'Off the low','Volume vs norm','Clock','vs 200d','Reading'], body);
+                      'Off the low','Volume vs norm','Recovered','Alpha Score','vs 200d','Reading'], body);
   }
 
   var VIEWS = {damage:viewDamage, turns:viewTurns, moves:viewMoves, bands:viewBands};

@@ -94,8 +94,25 @@ C_CHG = {"key": "change_pct", "label": "Today", "fmt": "pct_signed"}
 
 
 def _cols(*extra):
-    return [{"key": "ticker", "label": "Ticker", "fmt": "ticker"},
-            {"key": "name", "label": "Company", "fmt": "text"}] + list(extra)
+    """Shared column prefix for every STOCK scan.
+
+    `name` is dropped by the client when a ticker column exists (it folds into
+    the ticker cell), so the visible prefix is Ticker · Sector · Sub-sector,
+    then whatever the scan itself measures.
+
+    Sector/sub-sector added 14 Aug 2026: a screen returning 50 names with no
+    industry context makes it impossible to see that a "cheap but good" result
+    is really six banks and four airlines. Concentration is the first thing a
+    reader should be able to spot, and both fields are already on every
+    universe row, so this costs no extra provider call.
+
+    The sector and corporate-action scans build their `cols` inline and do not
+    call this, so they are unaffected.
+    """
+    return [{"key": "ticker",     "label": "Ticker",     "fmt": "ticker"},
+            {"key": "name",       "label": "Company",    "fmt": "text"},
+            {"key": "sector",     "label": "Sector",     "fmt": "text"},
+            {"key": "sub_sector", "label": "Sub-sector", "fmt": "text"}] + list(extra)
 
 
 # ── the catalogue ───────────────────────────────────────────────────────

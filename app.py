@@ -1657,8 +1657,33 @@ def _consent_snippet() -> str:
     return '<script src="/static/consent.js" defer></script>'
 
 
+def _with_universe_count(html: str) -> str:
+    """Substitute the __UNIV_N__ token with the live SCORED universe size.
+
+    Coverage figures used to be hard-coded across the templates as a mix of
+    "540+" and "545", which was both inconsistent and guaranteed to drift as
+    the universe changes. Every user-facing coverage claim now carries this
+    token instead, so the number on the page is the number the engine actually
+    scored, and it can never go stale.
+
+    NOTE the distinction, because the two figures are different and BOTH are
+    true: we track ~1,580 symbols, of which ~545 carry an Alpha Score. This
+    token is the SCORED count, which is what "stocks scored daily" means and
+    is the honest number for any screening/scoring claim. Copy that means the
+    full tracked set says "1,500+ names" and is deliberately not tokenised.
+    """
+    if "__UNIV_N__" not in html:
+        return html
+    try:
+        n = len(_universe_data)
+    except Exception:
+        n = 0
+    return html.replace("__UNIV_N__", str(n) if n else "540+")
+
+
 def _with_consent(html: str) -> str:
     """Inject the cookie-consent loader (before </head>, else </body>)."""
+    html = _with_universe_count(html)
     snip = _consent_snippet()
     if not snip:
         return html
@@ -14454,22 +14479,47 @@ async def _build_crowd_scan() -> None:
 # the company IS. The name lives in the universe rows, so it is attached at the
 # response layer rather than threaded through either scan builder.
 def _with_names(rows: list) -> list:
+    """Attach name, sub-sector and Alpha Score to universe-scan rows.
+
+    Extended 14 Aug 2026 beyond just `name`. The scans carry ticker + sector
+    only, so the panels showed a bare sector ("Technology") with no industry
+    detail, and no Alpha Score at all -- meaning a reader looking at the Crowd
+    Clock could not see our own quality read on the same name without opening
+    each one. Both live on the universe rows, so they are attached here at the
+    response layer rather than threaded through either scan builder, which is
+    the same reason `name` was attached here in the first place.
+
+    `alpha` is deliberately a SEPARATE field from the Clock `score`. They are
+    different measures -- the Clock score describes how far a fall has
+    recovered; the Alpha Score is the six-pillar quality composite -- and
+    labelling one as the other would put a false label on the data.
+    """
     if not rows:
         return rows
-    names = {}
+    meta = {}
     for x in (_universe_data or []):
         t = str(x.get("ticker") or "").upper()
-        if t and x.get("name"):
-            names[t] = x["name"]
-    if not names:
+        if t:
+            meta[t] = x
+    if not meta:
         return rows
     out = []
     for r in rows:
         if not isinstance(r, dict):
             out.append(r)
             continue
-        nm = names.get(str(r.get("ticker") or "").upper())
-        out.append({**r, "name": nm} if nm and not r.get("name") else r)
+        m = meta.get(str(r.get("ticker") or "").upper())
+        if not m:
+            out.append(r)
+            continue
+        add = {}
+        if m.get("name") and not r.get("name"):
+            add["name"] = m["name"]
+        if m.get("sub_sector") and not r.get("sub_sector"):
+            add["sub_sector"] = m["sub_sector"]
+        if r.get("alpha") is None and m.get("pop_score") is not None:
+            add["alpha"] = m["pop_score"]
+        out.append({**r, **add} if add else r)
     return out
 
 
