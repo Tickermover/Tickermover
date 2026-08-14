@@ -7174,6 +7174,13 @@ async def api_thesis(symbol: str):
         # Respect the AI cost breaker (daily + monthly): when tripped, serve the
         # deterministic rule-based thesis instead of paying for the LLM upgrade.
         thesis = _clean(await thesis_gen.build(target, allow_llm=not _ai_over_budget()))
+        # PUBLIC endpoint serving a house view on a named security -- carry the
+        # disclosure in the payload so raw-JSON consumers see it too.
+        thesis["disclaimer"] = (
+            "Our research opinion on this company. Not investment advice, not a "
+            "personal recommendation, and not FCA-authorised. The house view is a "
+            "quality assessment, not an instruction to buy or sell. Capital at risk."
+        )
         cache.set(cache_key, thesis, ttl=1800)
         return JSONResponse(thesis)
     except Exception as exc:
@@ -11242,6 +11249,36 @@ async def api_model_portfolio(user: Optional[dict] = Depends(_current_user),
         out["total_picks"]  = len(picks)
         out.pop("recent_exits", None)      # the exit ledger is Pro too
 
+    # ── COMPLIANCE: strip trade-plan fields from the wire (14 Aug 2026) ──
+    # These fields were serialised to EVERY caller, including anonymous ones,
+    # and are rendered NOWHERE in the app -- zero references in
+    # templates/dashboard.html. A published stop-loss level and a position
+    # weight for a named security is the most advice-like output the site can
+    # produce; it is the same thing removed from ThesisGenerator._trade_plan()
+    # and /api/setups on the same day, surviving here on a third surface.
+    # Removing them costs no product because nothing displays them.
+    #
+    # DELIBERATELY RETAINED: entry_price, size_tier, decision_point and
+    # exit_alert ARE rendered and are load-bearing for the public ledger --
+    # whether they should remain public is question 7 in docs/UK-legal-brief.md
+    # and is a decision for the December opinion, not a code change.
+    _TRADE_PLAN_FIELDS = ("hard_stop_price", "trail_floor", "trail_active",
+                          "trail_label", "weight_factor")
+    for _p in (out.get("picks") or []):
+        for _f in _TRADE_PLAN_FIELDS:
+            _p.pop(_f, None)
+    for _p in (out.get("recent_exits") or []):
+        for _f in _TRADE_PLAN_FIELDS:
+            _p.pop(_f, None)
+
+    # Machine-readable disclosure travels with the payload, so a scraper or
+    # reviewer pulling the raw JSON sees the same framing as a page visitor.
+    out["disclaimer"] = (
+        "Research and opinion only. Not investment advice, not a personal "
+        "recommendation, and not FCA-authorised. Past performance is not a "
+        "reliable indicator of future results. Capital at risk."
+    )
+
     return JSONResponse(out)
 
 
@@ -11799,7 +11836,20 @@ async def api_model_portfolio_history():
         "factor_edge":    factor_edge,
         "factor_tagged_n": len(tagged),
     }
-    return JSONResponse({"trades": trades, "stats": stats})
+    # Machine-readable disclosure rides with the payload. This endpoint is
+    # PUBLIC and unauthenticated and returns a full entry/exit P&L ledger plus
+    # benchmark-relative statistics, so anything consuming the raw JSON gets the
+    # same framing a page visitor sees.
+    return JSONResponse({
+        "trades": trades,
+        "stats":  stats,
+        "disclaimer": (
+            "A record of positions this model tracked and closed -- research and "
+            "opinion only, not a portfolio to copy. Not investment advice, not a "
+            "personal recommendation, and not FCA-authorised. Past performance is "
+            "not a reliable indicator of future results. Capital at risk."
+        ),
+    })
 
 
 @app.post("/api/admin/reprice-closed-trades")
