@@ -6794,6 +6794,11 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 #ts-drawer .edge-sig{border-left:3px solid var(--sig);background:var(--sigbg)}
 #ts-drawer .edge-sig .sig-val{display:block;white-space:normal;color:var(--sig);font-size:16.5px;line-height:1.28;font-weight:800;letter-spacing:-.01em;margin-top:2px}
 #ts-drawer .edge-sig .edge-sub{font-size:11px;color:#64748b;margin-top:3px}
+/* The reading pill — the same device the Crowd Clock table uses in its READING
+   column, so a reader who has seen one recognises the other. Outline, not
+   filled: the value above it is already carrying the tone colour, and two
+   solid blocks of the same hue in a 150px card is a shout. */
+#ts-drawer .edge-sig .sig-tag{display:inline-block;align-self:flex-start;margin-top:5px;padding:2px 8px;border-radius:999px;font-size:10.5px;font-weight:700;letter-spacing:.01em;color:var(--sig);border:1px solid var(--sig);background:#fff}
 #ts-drawer .edge-sig.t-flat {--sig:#0A2F46;--sigbg:linear-gradient(90deg,rgba(10,47,70,.05),#fff 60%)}
 #ts-drawer .edge-sig.t-calm {--sig:#15803d;--sigbg:linear-gradient(90deg,rgba(21,128,61,.055),#fff 60%)}
 #ts-drawer .edge-sig.t-watch{--sig:#B4780A;--sigbg:linear-gradient(90deg,rgba(180,120,10,.065),#fff 60%)}
@@ -15442,7 +15447,7 @@ async function _ovSignals(ticker){
   const tk=String(ticker||'').toUpperCase(); if(!tk) return;
   // tone ∈ flat | calm | watch | alert — see the .edge-sig CSS. Cards pass a
   // tone, never a colour, so the scale can only be changed in one place.
-  const set=(id,val,sub,tone)=>{
+  const set=(id,val,tag,sub,tone)=>{
     const host=document.getElementById(id); if(!host) return;
     if(!val){ host.style.display='none'; return; }
     host.style.display='';
@@ -15451,6 +15456,7 @@ async function _ovSignals(ticker){
     host.className='edge-k edge-sig t-'+(tone||'flat');
     host.innerHTML='<span class="edge-lab">'+_ovEsc(labTxt)+'</span>'+
       '<span class="edge-val sig-val">'+_ovEsc(val)+'</span>'+
+      (tag?'<span class="sig-tag">'+_ovEsc(tag)+'</span>':'')+
       (sub?'<span class="edge-sub">'+_ovEsc(sub)+'</span>':'');
   };
   let d;
@@ -15459,7 +15465,7 @@ async function _ovSignals(ticker){
     if(!r.ok) throw new Error('HTTP '+r.status);
     d=await r.json();
   }catch(e){
-    ['ovSigDilution','ovSigDamage','ovSigRole'].forEach(id=>{
+    ['ovSigDilution','ovSigDamage','ovSigCapex'].forEach(id=>{
       const h=document.getElementById(id); if(h) h.style.display='none';
     });
     return;
@@ -15476,39 +15482,89 @@ async function _ovSignals(ticker){
     // The base-rate evidence ("38% of names in this band fell 30% within six
     // months…") is the strongest sentence we own, and it is still the headline
     // of the Safeguards panel. It does not belong in a 150px card.
-    const tone=/severe|heavy/i.test(dl.label)?'alert'
-              :/moderate/i.test(dl.label)?'watch'
-              :/shrink/i.test(dl.label)?'calm':'flat';
+    const rd=_ovDilTag(dl);
     const sub=(dl.growth!=null)
       ? ('Share count '+(dl.growth>=0?'up ':'down ')+Math.abs(dl.growth*100).toFixed(1)+'% a year')
       : '';
-    set('ovSigDilution', dl.label, sub, tone);
+    set('ovSigDilution', dl.label, rd&&rd.t, sub, (rd&&rd.k)||'flat');
   } else if(dl && (dl.offerings_24m!=null || dl.shelves_24m!=null)){
     const o=dl.offerings_24m||0;
     const val = o===0 ? 'No raises in 24m' : o+' raise'+(o===1?'':'s')+' in 24m';
+    const rd=_ovDilTag(dl);
     const sub = (o>0 && dl.last_raise) ? ('Last raise '+_ovMonth(dl.last_raise)) : '';
-    set('ovSigDilution', val, sub, o===0?'calm':'watch');
-  } else set('ovSigDilution', '', '', '');
+    set('ovSigDilution', val, rd&&rd.t, sub, (rd&&rd.k)||'flat');
+  } else set('ovSigDilution', '', '', '', '');
 
-  // Drawdown — how far below its own 12-month high it trades.
+  // Hype check — the drawdown number, read through the Crowd Clock cycle.
+  /* Renamed from "Drawdown" 16 Aug 2026, and the tone flipped with it. Depth
+     alone was colouring a 60% fall red, which is a damage verdict; the question
+     this card answers is whether the crowd has arrived, so the tone now comes
+     from ckReading's own polarity — unwatched reads calm, crowded-and-late
+     reads loud. Same matrix the Crowd Clock table uses, exported from there. */
   const dm=d.damage;
   if(dm && dm.damage!=null){
     const off=Math.abs(dm.damage*100);
-    const tone=off>=40?'alert':off>=20?'watch':'calm';
-    // The Crowd Clock band word and the days-in-band are the Crowd Clock
-    // panel's job; here the reader wants one number and where it is now.
+    const K={ok:'calm',neu:'flat',warn:'watch',bad:'alert'};
+    let rd=null;
+    try{ if(typeof window.ckReading==='function') rd=window.ckReading(dm); }catch(e){}
+    const tone=(rd&&K[rd.k]) || (off>=40?'alert':off>=20?'watch':'calm');
     const sub=(dm.run!=null)?('Up '+Math.round(dm.run*100)+'% off its low'):'';
-    set('ovSigDamage', off.toFixed(0)+'% below 12m high', sub, tone);
-  } else set('ovSigDamage', '', '', '');
+    set('ovSigDamage', off.toFixed(0)+'% below 12m high', rd&&rd.t, sub, tone);
+  } else set('ovSigDamage', '', '', '', '');
 
-  // Where it earns — what it sells and who pays it. Present for EVERY stock:
-  // a mapped chain layer where one exists, otherwise the web-grounded niche,
-  // otherwise the sub-sector. Always neutral: describing a business is not a
-  // verdict on it, so this card never joins the green/red scale.
-  const rl=d.role;
-  if(rl && rl.role){
-    set('ovSigRole', rl.role, rl.buyers?('Paid by '+rl.buyers):'', 'flat');
-  } else set('ovSigRole', '', '', '');
+  // Capex exposure — how much of a theme's spend actually lands on this name.
+  /* Was "Chain position": a layer name and three qualitative chips, with no
+     figure at all and blank for the ~90% of stocks in no mapped chain. It now
+     leads with the share of landed value (the same number the chain map
+     shows), and for a stock in no theme it SAYS so rather than disappearing —
+     falling back to what the company sells, so the card is never empty. */
+  const cx=d.capex, rl=d.role;
+  if(cx && cx.share!=null){
+    const pct=cx.share*100;
+    const EXP={hi:'High exposure',mid:'Partial exposure',lo:'Side exposure'};
+    const tone=cx.exposure==='hi'?'watch':'flat';
+    const bits=[cx.layer||null,
+                (cx.rank&&cx.of)?(_ovOrd(cx.rank)+' of '+cx.of):null].filter(Boolean);
+    // "est" belongs in the pill, not as a bare asterisk on the number — a
+    // dangling * asks a question the card has no room to answer.
+    const tag=(EXP[cx.exposure]||'Exposure')+(cx.est?' (est)':'');
+    set('ovSigCapex', (pct<0.1?'<0.1':pct.toFixed(1))+'% of landed value',
+        tag, bits.join(', '), tone);
+  } else if(cx){
+    // In a theme but no attributable revenue to weigh — name the theme anyway.
+    const EXP={hi:'High exposure',mid:'Partial exposure',lo:'Side exposure'};
+    set('ovSigCapex', cx.layer||cx.theme, EXP[cx.exposure]||null,
+        'Share not measurable yet', 'flat');
+  } else {
+    // No pill here: "No major capex theme" + "Outside the chains" is the same
+    // sentence twice. The room goes to what the company DOES earn from instead.
+    set('ovSigCapex', 'No major capex theme', '',
+        (rl&&rl.role)?('Earns from '+String(rl.role).toLowerCase()):'', 'flat');
+  }
+}
+// 1 -> "1st". Rank without ordinal reads as a quantity, not a position.
+function _ovOrd(n){
+  const s=['th','st','nd','rd'], v=n%100;
+  return n+(s[(v-20)%10]||s[v]||s[0]);
+}
+/* The dilution reading — the plain-words counterpart to the Crowd Clock's
+   READING column, on the axis this card actually measures. The BAND says how
+   much the count grew; this says whether it is still happening, which is the
+   part a reader can act on and the part the band alone hides. */
+function _ovDilTag(dl){
+  const lab=String((dl&&dl.label)||'').toLowerCase();
+  const r = (dl.offerings_12m!=null) ? dl.offerings_12m
+          : (dl.offerings_24m!=null ? dl.offerings_24m : null);
+  const recent = (r==null) ? null : r>0;
+  if(/shrink/.test(lab))        return {t:'Buying back', k:'calm'};
+  if(/severe|heavy/.test(lab))  return recent===false
+    ? {t:'Diluted, quiet now', k:'watch'} : {t:'Issuing heavily', k:'alert'};
+  if(/moderate/.test(lab))      return recent===false
+    ? {t:'Was issuing', k:'watch'} : {t:'Issuing steadily', k:'watch'};
+  if(lab)                       return {t:'Count steady', k:'calm'};
+  if(recent===true)             return {t:'Raising cash', k:'watch'};
+  if(recent===false)            return {t:'No raises on file', k:'calm'};
+  return null;
 }
 // "2026-03-11" → "Mar 2026". Day precision is noise on a card like this.
 function _ovMonth(s){
@@ -24721,13 +24777,16 @@ function scResultHTML(d){
          did and then buried in separate panels, which is why nobody saw them
          next to the stock they were about to read about. Filled by
          _ovSignals() from /api/stock-signals/{ticker}.
-         "Chain position" was renamed to "Where it earns" on 16 Aug 2026: the
-         old label only made sense to someone who had already opened a thesis
-         map, and it was blank on the ~90% of stocks that sit in no mapped
-         chain. It now resolves for every scored name. */
+         Renamed 16 Aug 2026. "Drawdown" -> "Hype check", because the card is
+         read for whether the crowd has arrived, not for how deep the hole is.
+         "Chain position" -> "Capex exposure": the old label only parsed for
+         someone who had already opened a thesis map, it carried no figure, and
+         it was blank on the ~90% of stocks in no mapped chain — it now leads
+         with the share of landed value and says so plainly when there is no
+         theme. All three carry a reading pill, as the Crowd Clock table does. */
       '<div class="edge-k edge-sig t-flat" id="ovSigDilution"><span class="edge-lab">Dilution</span><span class="edge-val word edge-ai-pend">—</span><span class="edge-sub">Reading…</span></div>'+
-      '<div class="edge-k edge-sig t-flat" id="ovSigDamage"><span class="edge-lab">Drawdown</span><span class="edge-val word edge-ai-pend">—</span><span class="edge-sub">Reading…</span></div>'+
-      '<div class="edge-k edge-sig t-flat" id="ovSigRole"><span class="edge-lab">Where it earns</span><span class="edge-val word edge-ai-pend">—</span><span class="edge-sub">Reading…</span></div>'+
+      '<div class="edge-k edge-sig t-flat" id="ovSigDamage"><span class="edge-lab">Hype check</span><span class="edge-val word edge-ai-pend">—</span><span class="edge-sub">Reading…</span></div>'+
+      '<div class="edge-k edge-sig t-flat" id="ovSigCapex"><span class="edge-lab">Capex exposure</span><span class="edge-val word edge-ai-pend">—</span><span class="edge-sub">Reading…</span></div>'+
     '</div>';
     const edgeCard=_ovSecHead('The TickerMover edge',_edgeBody);   // 3 quant + 3 measured cards
     /* Fill the three measured cards after this HTML is in the document.
@@ -27178,6 +27237,11 @@ function scResultHTML(d){
     };
     return M[phase + '|' + depth];
   }
+  /* Exported so the overview's Hype check card shows the SAME reading as the
+     Crowd Clock table. Two copies of this 9-cell matrix would drift, and the
+     one thing worse than jargon is the same share reading two different ways
+     on two pages. */
+  window.ckReading = ckReading;
 
   /* Plain-English for every column whose name is jargon. Headings like CLOCK
      and VS 200D meant nothing on their own — the formula was buried in the

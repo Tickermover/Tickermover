@@ -5746,21 +5746,15 @@ document.getElementById('pub').onclick=function(){{run(0)}};
 </script></body></html>""")
 
 
-@app.get("/api/thesis-shares/{slug}")
-async def api_thesis_shares(slug: str):
-    """Share of LANDED value across a chain thesis — descriptive, not predictive.
+def _thesis_share_rows(thesis: dict) -> tuple[list, list]:
+    """Every company in one chain thesis with its AI-attributable revenue and
+    its SHARE of the chain's landed value. Returns (companies, excluded).
 
-    For each company: AI-attributable revenue = trailing revenue x its exposure-band
-    weight (share_weights in theses.json); share = that / the chain total, rolled up by
-    layer. Revenue is LIVE from the in-memory universe (revenue_ttm); the few names the
-    universe doesn't cover fall back to a flagged desk estimate (rev_ttm_est) or are
-    reported as excluded. No timing and no forecast — just who actually captures the
-    spend today, so the map can't be misread as 'money still coming downstream'."""
-    slug = (slug or "").lower().strip()
-    thesis = next((t for t in (_load_theses().get("theses") or [])
-                   if (t.get("slug") or "").lower() == slug and t.get("status") == "live"), None)
-    if not thesis:
-        return JSONResponse({"available": False, "slug": slug}, status_code=404)
+    Extracted from /api/thesis-shares so the overview's "Capex exposure" card
+    quotes the identical number the chain map shows. Two implementations of
+    this weighting would drift, and a stock page disagreeing with the map it
+    links to is worse than either number alone.
+    """
     weights = thesis.get("share_weights") or {"hi": 0.70, "mid": 0.35, "lo": 0.12}
     uni = {x.get("ticker"): x for x in _universe_data}
     comps, excluded = [], []
@@ -5797,6 +5791,26 @@ async def api_thesis_shares(slug: str):
     total = sum(x["ai_rev"] for x in comps) or 0.0
     for x in comps:
         x["share"] = (x["ai_rev"] / total) if total else 0.0
+    return comps, excluded
+
+
+@app.get("/api/thesis-shares/{slug}")
+async def api_thesis_shares(slug: str):
+    """Share of LANDED value across a chain thesis — descriptive, not predictive.
+
+    For each company: AI-attributable revenue = trailing revenue x its exposure-band
+    weight (share_weights in theses.json); share = that / the chain total, rolled up by
+    layer. Revenue is LIVE from the in-memory universe (revenue_ttm); the few names the
+    universe doesn't cover fall back to a flagged desk estimate (rev_ttm_est) or are
+    reported as excluded. No timing and no forecast — just who actually captures the
+    spend today, so the map can't be misread as 'money still coming downstream'."""
+    slug = (slug or "").lower().strip()
+    thesis = next((t for t in (_load_theses().get("theses") or [])
+                   if (t.get("slug") or "").lower() == slug and t.get("status") == "live"), None)
+    if not thesis:
+        return JSONResponse({"available": False, "slug": slug}, status_code=404)
+    comps, excluded = _thesis_share_rows(thesis)
+    weights = thesis.get("share_weights") or {"hi": 0.70, "mid": 0.35, "lo": 0.12}
     order = [L.get("id") for L in (thesis.get("layers") or [])]
     lname = {L.get("id"): L.get("name") for L in (thesis.get("layers") or [])}
     lsh: dict = {}
@@ -7420,6 +7434,67 @@ async def api_sector_warm(limit: int = 12, user: Optional[dict] = Depends(_curre
 # until an entry lands, the reader gets the deterministic sub-sector fallback.
 
 
+def _stock_capex(sym: str) -> Optional[dict]:
+    """This stock's position in a capex theme, with the money attached.
+
+    The card used to say "Optical interconnect · High capex exposure · Early ·
+    Customers: Very high" — three qualitative chips and not one figure. What a
+    reader actually wants to know is how much of the theme's spend lands HERE,
+    which the chain map already computes. So this returns the same share of
+    landed value the map shows, plus the rank that gives it scale (2.3% means
+    little; "2.3% — 6th of 41 names" means something).
+
+    None when the ticker sits in no live thesis: the caller says so plainly
+    rather than hiding the card.
+    """
+    for th in (_load_theses().get("theses") or []):
+        if th.get("status") != "live":
+            continue
+        hit = next((c for L in (th.get("layers") or [])
+                    for c in (L.get("names") or [])
+                    if (c.get("t") or "").upper() == sym), None)
+        if not hit:
+            continue
+        comps, _ = _thesis_share_rows(th)
+        ranked = sorted(comps, key=lambda x: x["share"], reverse=True)
+        row = next((x for x in ranked if (x.get("t") or "").upper() == sym), None)
+        if row is None:
+            # In the thesis but excluded from the share maths (no revenue we
+            # can attribute). Still worth naming the theme it belongs to.
+            return {"theme": th.get("title") or th.get("slug"), "slug": th.get("slug"),
+                    "layer": _strip_paren(hit_layer_name(th, sym)),
+                    "exposure": hit.get("exposure"), "share": None,
+                    "rank": None, "of": len(ranked), "est": False}
+        return {
+            "theme": th.get("title") or th.get("slug"),
+            "slug": th.get("slug"),
+            "layer": _strip_paren(row.get("layer_name") or ""),
+            "exposure": row.get("exposure"),
+            "share": row.get("share"),
+            "ai_rev": row.get("ai_rev"),
+            "rank": ranked.index(row) + 1,
+            "of": len(ranked),
+            "est": bool(row.get("rev_est")),
+        }
+    return None
+
+
+def _strip_paren(name: str) -> str:
+    """"AI compute chips (GPUs & accelerators)" -> "AI compute chips". Layer
+    names are written for the map, where there is room for the parenthetical;
+    on a 150px card it just costs a third line."""
+    import re as _re
+    return _re.sub(r"\s*\([^)]*\)", "", name or "").strip() or (name or "")
+
+
+def hit_layer_name(thesis: dict, sym: str) -> str:
+    for L in (thesis.get("layers") or []):
+        for c in (L.get("names") or []):
+            if (c.get("t") or "").upper() == sym:
+                return L.get("name") or ""
+    return ""
+
+
 def _role_chain(sym: str) -> Optional[dict]:
     """The hand-mapped value-chain layer for this ticker, if it has one.
 
@@ -7428,17 +7503,15 @@ def _role_chain(sym: str) -> Optional[dict]:
     just wraps to a third line, so it is dropped here — the map keeps the full
     name, this card takes the head of it.
     """
-    import re as _re      # app.py imports re per-function, not at module level
     for th in (_load_theses().get("theses") or []):
         if th.get("status") != "live":
             continue
         for layer in (th.get("layers") or []):
             for co in (layer.get("names") or []):
                 if (co.get("t") or "").upper() == sym:
-                    nm = _re.sub(r"\s*\([^)]*\)", "", layer.get("name") or "").strip()
                     return {"thesis": th.get("title") or th.get("slug"),
                             "slug": th.get("slug"),
-                            "layer": nm or (layer.get("name") or "")}
+                            "layer": _strip_paren(layer.get("name") or "")}
     return None
 
 
@@ -7540,17 +7613,21 @@ async def api_stock_signals(ticker: str):
     separate panels:
 
       dilution — how much the share count grew, and the band it falls in
-      damage   — how far below its own 12-month high it trades, and its
-                 Crowd Clock band
-      role     — "Where it earns": the niche it sells into and who pays it
+      damage   — "Hype check": how far below its 12-month high it trades and
+                 where the crowd is, which together give the Crowd Clock reading
+      capex    — its share of the landed value of a capex theme, or the plain
+                 statement that it is in none of them
+      role     — what it sells and who pays it; the capex card borrows this as
+                 its supporting line for names outside every theme
 
-    The first two read in-memory state, so they are free and instant. The third
+    The first three read in-memory state, so they are free and instant. `role`
     is served from cache only (see `_stock_role`) and never blocks. Each block
     degrades independently: a warming scan returns null for that block rather
     than failing the request, because two facts and a gap beat an error.
     """
     sym = (ticker or "").upper().strip()
-    out = {"ticker": sym, "dilution": None, "damage": None, "role": None}
+    out = {"ticker": sym, "dilution": None, "damage": None,
+           "capex": None, "role": None}
 
     # 1. Dilution — the validated safeguard.
     try:
@@ -7596,7 +7673,13 @@ async def api_stock_signals(ticker: str):
     except Exception as exc:
         logger.debug("stock-signals damage %s: %s", sym, exc)
 
-    # 3. Where it earns — what it sells and who pays it, for EVERY stock.
+    # 3. Capex exposure — share of a theme's landed value, or "in none of them".
+    try:
+        out["capex"] = _stock_capex(sym)
+    except Exception as exc:
+        logger.debug("stock-signals capex %s: %s", sym, exc)
+
+    # 4. What it sells — the capex card's supporting line when there is no theme.
     try:
         out["role"] = await _stock_role(sym)
     except Exception as exc:
