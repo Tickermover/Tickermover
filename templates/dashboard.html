@@ -15442,18 +15442,31 @@ async function _ovSignals(ticker){
   }
 
   // Dilution — share-count growth against the studied fall-rate baseline.
+  /* Two tiers. The share-count BAND is the strong reading but only ~80 of 520
+     names have the history to compute it; the raise ACTIVITY is present for
+     effectively all of them. Show the band where it exists, fall back to the
+     activity, and only hide when there is neither — otherwise this card would
+     be blank on 85% of stocks. */
   const dl=d.dilution;
   if(dl && dl.label){
-    const g=(dl.growth!=null)?(dl.growth*100).toFixed(1)+'% a year':'';
+    const g=(dl.growth!=null)?Math.abs(dl.growth*100).toFixed(1)+'% a year':'';
     const col=/severe|heavy/i.test(dl.label)?'#dc2626'
              :/moderate/i.test(dl.label)?'#b4780a'
              :/shrink/i.test(dl.label)?'#15803d':'#0A2F46';
-    let sub=g?('Share count '+(dl.growth>=0?'up ':'down ')+g.replace('-','')):'';
+    let sub=g?('Share count '+(dl.growth>=0?'up ':'down ')+g):'';
     if(dl.fall_rate!=null && dl.baseline!=null){
       sub+=(sub?' · ':'')+Math.round(dl.fall_rate*100)+'% of names in this band fell 30% within six months, against '
           +Math.round(dl.baseline*100)+'% for non-issuers';
     }
     set('ovSigDilution', dl.label, sub, col);
+  } else if(dl && (dl.offerings_24m!=null || dl.shelves_24m!=null)){
+    const o=dl.offerings_24m||0, sh=dl.shelves_24m||0;
+    const val = o===0 ? 'No raises in 24m'
+              : o+' raise'+(o===1?'':'s')+' in 24m';
+    let sub='Share-count history unavailable, so no growth band';
+    if(sh) sub+=' · '+sh+' shelf registration'+(sh===1?'':'s')+' filed';
+    if(dl.last_raise) sub+=' · last raise '+String(dl.last_raise).slice(0,10);
+    set('ovSigDilution', val, sub, o===0?'#15803d':'#b4780a');
   } else set('ovSigDilution', '', '', '');
 
   // Drawdown — distance below the 12-month high, with the Crowd Clock band.

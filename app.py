@@ -7381,15 +7381,23 @@ async def api_stock_signals(ticker: str):
         if _dil_scan.get("status") == "ready":
             row = next((r for r in (_dil_scan.get("rows") or [])
                         if (r.get("ticker") or "").upper() == sym), None)
-            if row and row.get("label"):
+            if row:
                 import safeguards as sg
+                # Only ~80 of ~520 names carry a share-count band: the history
+                # needed to compute growth is often missing. Gating the whole
+                # card on `label` would blank it for 85% of stocks — but the
+                # row still holds real disclosure for all of them (how many
+                # offerings, how many shelves, when they last raised). Serve
+                # both, and let the client show whichever it has.
                 out["dilution"] = {
                     "label": row.get("label"),
                     "growth": row.get("growth"),
-                    "desc": row.get("desc"),
                     "fall_rate": row.get("fall_rate"),
                     "baseline": sg.DILUTION_BASELINE,
-                    "shelf_count": row.get("shelf_count") or row.get("shelves"),
+                    "offerings_12m": row.get("offerings_12m"),
+                    "offerings_24m": row.get("offerings_24m"),
+                    "shelves_24m": row.get("shelves_24m"),
+                    "last_raise": row.get("last_raise"),
                 }
     except Exception as exc:
         logger.debug("stock-signals dilution %s: %s", sym, exc)
