@@ -8,7 +8,7 @@
 <link rel="icon" type="image/svg+xml" href="/static/brand/tickermover-mark.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,200..900;1,8..60,200..900&display=swap" rel="stylesheet">
 <style>
 /* Navy + warm, matching the rest of the site. This page ran on a near-white
    #fcfbf9 with icy-blue accents — that is the OLD electric-blue scheme, and it
@@ -16,7 +16,7 @@
    page of this one. */
 :root{--blue:#14587D;--blue-d:#0A2F46;--ink:#0A2F46;--muted:#475569;--faint:#94a3b8;--line:rgba(10,47,70,.09);--bg:#FFF2EC;
   --head:#4A5BC4;--accent:#C74E00;--neutral:#F2F1EE;
-  --serif:'Inter',Georgia,serif;--body:'Inter',system-ui,-apple-system,sans-serif;--mono:'JetBrains Mono',ui-monospace,monospace;}
+  --serif:'Source Serif 4',Georgia,serif;--body:'Source Serif 4',Georgia,'Times New Roman',serif;--mono:'Source Serif 4',Georgia,'Times New Roman',serif;}
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
 body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased}
@@ -51,6 +51,12 @@ a.card:hover{border-color:#C7CEF0;transform:translateY(-2px);box-shadow:0 12px 2
 .foot p{margin:0;max-width:76ch;color:var(--faint)}
 .loading{padding:56px 0;color:var(--faint);font-size:14px}
 @media(max-width:640px){.wrap{padding:26px 16px 60px}}
+
+/* One serif everywhere (16 Aug 2026) — Medium's reading surface, at the user's request.
+   Figures included, which is why tabular-nums is forced: Source Serif's default
+   figures are proportional, and proportional digits turn every price column and
+   statement table into a ragged edge. `tnum` keeps the serif AND the alignment. */
+html,body{font-variant-numeric:tabular-nums;font-feature-settings:'tnum' 1}
 </style>
 </head>
 <body>

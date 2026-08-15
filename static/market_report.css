@@ -6,14 +6,14 @@
 /* One typeface across the whole report — Inter (the site's single sans,
    loaded by both the dashboard and /desk). Keeps the type consistent. */
 .ma-report{max-width:1080px;margin:0 auto;color:#0A2F46;
-  font-family:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif}
+  font-family:'Source Serif 4',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif}
 .ma-report *{box-sizing:border-box;font-family:inherit}
 .ma-report .ma-head{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:14px}
 /* App idiom: the panel eyebrow is mono indigo caps, the title is 29px at
    weight 500. This report was running 11px/800 blue caps over a 23px/800
    title — the whole page shouted while the rest of the app had gone quiet,
    which is what made it read as a different product. */
-.ma-report .ma-eyebrow{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#4A5BC4}
+.ma-report .ma-eyebrow{font-family:'Source Serif 4',ui-monospace,monospace;font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#4A5BC4}
 .ma-report .ma-title{font-size:29px;font-weight:500;letter-spacing:-.02em;color:#0A2F46;line-height:1.15}
 .ma-report .ma-title em{font-style:normal;color:#14587D}
 .ma-report .ma-session{display:inline-flex;align-items:center;gap:8px;background:#fff;border:1px solid rgba(10,47,70,.10);border-radius:999px;padding:7px 14px;font-size:12.5px;font-weight:700;color:#334155;box-shadow:0 2px 8px rgba(0,0,0,.06)}
@@ -44,7 +44,7 @@
   .ma-report .ma-tab{flex:1 1 auto;padding:7px 10px;font-size:12.5px;text-align:center}
 }
 .ma-report .ma-loading{padding:46px 20px;text-align:center;color:#64748b;font-size:14px}
-.ma-report .ma-sec-h{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:10px;font-weight:700;letter-spacing:.12em;color:#94a3b8;text-transform:uppercase;margin:10px 0 11px}
+.ma-report .ma-sec-h{font-family:'Source Serif 4',ui-monospace,monospace;font-size:10px;font-weight:700;letter-spacing:.12em;color:#94a3b8;text-transform:uppercase;margin:10px 0 11px}
 .ma-report .ma-lead{font-size:14px;line-height:1.65;color:#334155;margin-bottom:16px}
 .ma-report .ma-lead b{color:#0A2F46}
 .ma-report .ma-ai-tag{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.03em;color:#7c3aed;background:rgba(124,58,237,.10);border:1px solid rgba(124,58,237,.22);border-radius:6px;padding:1px 7px;vertical-align:1px;margin-right:5px}
@@ -69,7 +69,7 @@
 .ma-report .ma-scorecard{display:grid;grid-template-columns:repeat(auto-fit,minmax(116px,1fr));gap:10px;margin-bottom:18px}
 .ma-report .ma-stat{background:#fff;border:1px solid rgba(10,47,70,.08);border-radius:13px;padding:12px 14px;box-shadow:0 2px 10px rgba(0,0,0,.04)}
 .ma-report .ma-stat .s-l{font-size:11px;font-weight:700;color:#64748b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ma-report .ma-stat .s-v{font-size:22px;font-weight:700;color:#0A2F46;font-variant-numeric:tabular-nums;margin-top:3px;line-height:1;font-family:'Inter',system-ui,sans-serif}
+.ma-report .ma-stat .s-v{font-size:22px;font-weight:700;color:#0A2F46;font-variant-numeric:tabular-nums;margin-top:3px;line-height:1;font-family:'Source Serif 4',system-ui,sans-serif}
 .ma-report .ma-stat .s-c{font-size:12.5px;font-weight:700;margin-top:5px;font-variant-numeric:tabular-nums}
 /* ── Key events — compact "what the market is watching" grid ─────────────── */
 .ma-report .ma-watch-note{font-size:12.5px;color:#475569;line-height:1.55;padding:11px 15px;border-radius:11px;margin:2px 0 14px}
@@ -219,9 +219,9 @@
    in a confident voice. */
 .ma-srcs{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:12px;
   padding-top:11px;border-top:1px solid #EDEAE6}
-.ma-srcs-k{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:9px;font-weight:700;
+.ma-srcs-k{font-family:'Source Serif 4',ui-monospace,monospace;font-size:9px;font-weight:700;
   letter-spacing:.11em;text-transform:uppercase;color:#9AA6B2}
-.ma-src{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:10.5px;font-weight:600;
+.ma-src{font-family:'Source Serif 4',ui-monospace,monospace;font-size:10.5px;font-weight:600;
   color:#14587D;text-decoration:none;background:#F4F7FB;border:1px solid #E1E9F2;
   border-radius:100px;padding:3px 9px;white-space:nowrap}
 .ma-src:hover{background:#E8F0F9;border-color:#C9D9EA;color:#0A2F46}
@@ -231,7 +231,7 @@
    deliberately styled as a peer of the evidence, not a footnote: a verdict
    nobody can argue with is not analysis. */
 .ma-ev{margin-top:12px;padding-top:11px;border-top:1px solid #EDEAE6}
-.ma-ev-k,.ma-ctr-k{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:9px;
+.ma-ev-k,.ma-ctr-k{font-family:'Source Serif 4',ui-monospace,monospace;font-size:9px;
   font-weight:700;letter-spacing:.11em;text-transform:uppercase;color:#9AA6B2}
 .ma-ev ul{margin:7px 0 0;padding:0 0 0 17px}
 .ma-ev li{font-size:13px;line-height:1.6;color:#334155;margin:0 0 4px}
@@ -239,3 +239,9 @@
 .ma-ctr{margin-top:11px;padding:10px 13px;border-radius:10px;background:#FBFAF8;
   border:1px solid #EDEAE6;font-size:13px;line-height:1.6;color:#475569}
 .ma-ctr-k{display:block;margin-bottom:3px;color:#A16207}
+
+/* One serif everywhere (16 Aug 2026) — Medium's reading surface, at the user's request.
+   Figures included, which is why tabular-nums is forced: Source Serif's default
+   figures are proportional, and proportional digits turn every price column and
+   statement table into a ragged edge. `tnum` keeps the serif AND the alignment. */
+html,body{font-variant-numeric:tabular-nums;font-feature-settings:'tnum' 1}

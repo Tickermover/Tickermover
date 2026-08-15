@@ -18,7 +18,7 @@ try{var _r=new URLSearchParams(location.search).get('ref');
     if(_r) localStorage.setItem('ah_ref', String(_r).trim().toUpperCase().slice(0,12));}catch(e){}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700;800&family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,200..900;1,8..60,200..900&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
 
 <style>
 /* ════════════════════════════════════════════════════════════════
@@ -58,7 +58,7 @@ button,input,select,textarea{font-family:inherit;font-size:inherit;line-height:i
 html,body{height:100%}
 body{
   background:var(--bg);color:var(--ink);
-  font-family:'Inter',system-ui,sans-serif;font-weight:400;
+  font-family:'Source Serif 4',Georgia,'Times New Roman',serif;font-weight:400;
   -webkit-font-smoothing:antialiased;line-height:1.5;overflow:hidden;
 }
 a{color:inherit;text-decoration:none}
@@ -100,7 +100,7 @@ a{color:inherit;text-decoration:none}
   width:27px;height:27px;border-radius:8px;flex-shrink:0;overflow:hidden;
   background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);
   display:flex;align-items:center;justify-content:center;
-  font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;color:var(--blue-sky);
+  font-family:'Source Serif 4',monospace;font-size:9px;font-weight:700;color:var(--blue-sky);
 }
 .sc-logo img{width:100%;height:100%;object-fit:contain;padding:3px}
 .sc-sym{font-weight:600;font-size:13.5px;color:#fff;letter-spacing:-.01em}
@@ -108,14 +108,14 @@ a{color:inherit;text-decoration:none}
    #14587D, so the last digit dimmed against the dark card. Kept a gradient
    because the score is the hero figure, but it now stays light throughout. */
 .sc-score{
-  font-family:'JetBrains Mono',monospace;font-weight:500;font-size:18px;line-height:1;
+  font-family:'Source Serif 4',monospace;font-weight:500;font-size:18px;line-height:1;
   background:linear-gradient(135deg,#FFFFFF 0%,#8FBFDD 100%);
   -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;
 }
 .sc-bot{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .tchip{
   display:inline-flex;align-items:center;gap:5px;padding:3px 8px;border-radius:999px;
-  font-family:'JetBrains Mono',monospace;font-size:8.5px;font-weight:700;
+  font-family:'Source Serif 4',monospace;font-size:8.5px;font-weight:700;
   letter-spacing:.10em;text-transform:uppercase;line-height:1;
 }
 .tchip::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
@@ -123,7 +123,7 @@ a{color:inherit;text-decoration:none}
 .tchip.grade-B{color:var(--blue-sky); background:rgba(143,191,221,.14);border:1px solid rgba(143,191,221,.34)}
 .tchip.grade-C{color:#fbbf66;         background:rgba(245,166,35,.14);border:1px solid rgba(245,166,35,.32)}
 .tchip.grade-D,.tchip.grade-F{color:#fca5a5;background:rgba(220,38,38,.14);border:1px solid rgba(220,38,38,.30)}
-.sc-move{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:11.5px}
+.sc-move{font-family:'Source Serif 4',monospace;font-weight:700;font-size:11.5px}
 .sc-move.up{color:#86efac} .sc-move.dn{color:#fca5a5}
 
 .login-left::before,.login-left::after{content:"";position:absolute;left:0;right:0;height:30%;z-index:2;pointer-events:none}
@@ -152,7 +152,7 @@ a{color:inherit;text-decoration:none}
 }
 .left-brand{
   display:inline-flex;align-items:center;gap:10px;
-  font-family:'Space Grotesk','Inter',sans-serif;font-weight:700;font-size:18px;letter-spacing:-.02em;
+  font-family:'Space Grotesk','Source Serif 4',sans-serif;font-weight:700;font-size:18px;letter-spacing:-.02em;
   color:#fff;margin-bottom:6px;
 }
 .left-brand-mark{width:32px;height:32px;flex:none;display:inline-flex;align-items:center}
@@ -169,7 +169,7 @@ a{color:inherit;text-decoration:none}
 .left-brand .brand-m polyline{stroke:#8FA0F0}
 .brand-sm .brand-m polyline{stroke:#4A5BC4}
 .left-headline{
-  font-family:'Inter',sans-serif;font-weight:500;font-size:24px;line-height:1.12;
+  font-family:'Source Serif 4',sans-serif;font-weight:500;font-size:24px;line-height:1.12;
   letter-spacing:-.025em;color:#fff;margin-bottom:6px;max-width:440px;
 }
 /* WAS: background:var(--blue-grad) clipped to text. That gradient runs
@@ -187,7 +187,7 @@ a{color:inherit;text-decoration:none}
 .left-stat{display:flex;align-items:baseline;gap:6px}
 /* same bug as the headline - these were clipped to the dark gradient and
    read as half-cut figures. Plain white: they are data, not decoration. */
-.left-stat .n{font-family:'JetBrains Mono',monospace;font-weight:500;font-size:15px;color:#fff}
+.left-stat .n{font-family:'Source Serif 4',monospace;font-weight:500;font-size:15px;color:#fff}
 .left-stat .l{font-size:9.5px;color:#8FBFDD;letter-spacing:.09em;text-transform:uppercase;font-weight:700}
 
 /* ═══ RIGHT — form (LIGHT panel, landing alice-blue) ═══ */
@@ -208,9 +208,9 @@ a{color:inherit;text-decoration:none}
   color:var(--text-dark);
 }
 .form-wrap{width:100%;max-width:360px}
-.brand-sm{display:none;align-items:center;gap:10px;font-family:'Space Grotesk','Inter',sans-serif;font-weight:700;font-size:20px;letter-spacing:-.02em;color:var(--text-dark);margin-bottom:22px}
+.brand-sm{display:none;align-items:center;gap:10px;font-family:'Space Grotesk','Source Serif 4',sans-serif;font-weight:700;font-size:20px;letter-spacing:-.02em;color:var(--text-dark);margin-bottom:22px}
 @media (max-width:880px){.brand-sm{display:inline-flex}}
-.form-title{font-family:'Inter',sans-serif;font-weight:400;font-size:30px;letter-spacing:-.02em;color:var(--text-dark);margin-bottom:6px;text-align:center}
+.form-title{font-family:'Source Serif 4',sans-serif;font-weight:400;font-size:30px;letter-spacing:-.02em;color:var(--text-dark);margin-bottom:6px;text-align:center}
 .form-sub{font-size:13.5px;font-weight:400;color:var(--grey-2);margin-bottom:24px;text-align:center}
 /* Sign in / Create account segmented toggle — pill, matching the billing
    toggle that now heads the landing page's pricing panel. */
@@ -229,12 +229,12 @@ a{color:inherit;text-decoration:none}
 }
 .sso:hover{border-color:var(--primary);background:#fafcff;transform:translateY(-1px);box-shadow:0 12px 28px -10px rgba(20,88,125,.30)}
 
-.divider{display:flex;align-items:center;gap:14px;margin:16px 0;color:var(--grey);font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:700;letter-spacing:.18em;text-transform:uppercase}
+.divider{display:flex;align-items:center;gap:14px;margin:16px 0;color:var(--grey);font-family:'Source Serif 4',monospace;font-size:10.5px;font-weight:700;letter-spacing:.18em;text-transform:uppercase}
 .divider::before,.divider::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,transparent,rgba(16,41,61,.10),transparent)}
 
 .field{margin-bottom:12px}
 .field-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
-.label{font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--grey-2)}
+.label{font-family:'Source Serif 4',monospace;font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--grey-2)}
 .flink{font-size:12.5px;font-weight:500;color:var(--primary);background:none;border:none;cursor:pointer;font-family:inherit}
 .flink:hover{color:var(--blue-light)}
 .inp-wrap{position:relative}
@@ -317,6 +317,12 @@ a{color:inherit;text-decoration:none}
 .legal-line a{color:var(--grey-2);text-decoration:none;font-weight:600}
 .legal-line a:hover{color:var(--primary);text-decoration:underline}
 .legal-line span{opacity:.5}
+
+/* One serif everywhere (16 Aug 2026) — Medium's reading surface, at the user's request.
+   Figures included, which is why tabular-nums is forced: Source Serif's default
+   figures are proportional, and proportional digits turn every price column and
+   statement table into a ragged edge. `tnum` keeps the serif AND the alignment. */
+html,body{font-variant-numeric:tabular-nums;font-feature-settings:'tnum' 1}
 </style>
 </head>
 <body>
