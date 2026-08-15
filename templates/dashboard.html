@@ -9117,6 +9117,27 @@ document.addEventListener('keydown', function(e){
   color:#9A3412;font-weight:800;margin:0 0 6px}
 #panel-sect .se-cs p{font-size:14px;line-height:1.7;color:#26333F;margin:0;max-width:84ch}
 #panel-sect .se-cs-src{font-size:11.5px;color:#94A3B8;margin:8px 0 0}
+/* The hard questions. Two columns so each company's anomalies stay attached to
+   the company; severity is a left rule, never a colour on the whole card —
+   these are questions, and a red card would read as a verdict. */
+#panel-sect .se-dg-lede{font-size:13px;color:#5D6C7B;line-height:1.6;margin:0 0 12px;max-width:82ch}
+#panel-sect .se-dg-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:900px){#panel-sect .se-dg-grid{grid-template-columns:1fr}}
+#panel-sect .se-dg-col{display:flex;flex-direction:column;gap:10px}
+#panel-sect .se-dg-tk{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:800;
+  letter-spacing:.04em;color:#0A2F46;padding-bottom:6px;border-bottom:2px solid #E2E8F0}
+#panel-sect .se-dg{background:#fff;border:1px solid #E2E8F0;border-radius:9px;
+  padding:13px 15px;border-left:3px solid #CBD5E1}
+#panel-sect .se-dg-high{border-left-color:#B32D23}
+#panel-sect .se-dg-medium{border-left-color:#A45C00}
+#panel-sect .se-dg-low{border-left-color:#94A3B8}
+#panel-sect .se-dg-q{font-size:14px;font-weight:700;color:#0A2F46;line-height:1.4}
+#panel-sect .se-dg-e{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#26333F;
+  background:#F6F8FB;border-radius:5px;padding:7px 9px;margin:8px 0;line-height:1.55}
+#panel-sect .se-dg-w{font-size:12.5px;color:#5D6C7B;line-height:1.65}
+#panel-sect .se-dg-r{font-size:12.5px;color:#26333F;line-height:1.6;margin-top:8px;
+  padding-top:8px;border-top:1px dashed #E2E8F0}
+#panel-sect .se-dg-r b{color:#0E7C66}
 </style>
 <div id="panel-sect" class="panel">
   <div class="main">
@@ -23394,11 +23415,45 @@ async function _seRunCompare(){
         + 'Nothing here suggests owning or avoiding either company.</p>'
       : '';
 
+    /* THE HARD QUESTIONS. These are the ones a careful analyst checks by hand
+       and a retail reader never sees — a "consensus" whose high is several
+       times its low, an operating margin above the gross margin, profit that
+       is not becoming cash. Computed, so each one is a real anomaly in this
+       company's actual numbers rather than a plausible-sounding generic
+       question a model would write.
+       Severity ranks how ANOMALOUS a reading is, never how attractive the
+       stock is, and every item ends in what would resolve it. */
+    var dg = c.diligence || {};
+    var dgBlock = '';
+    var dgCards = [c.a.ticker, c.b.ticker].map(function(tk){
+      var qs = dg[tk] || [];
+      if (!qs.length) return '';
+      return '<div class="se-dg-col"><div class="se-dg-tk">' + _seEsc(tk) + '</div>'
+        + qs.map(function(q){
+            return '<div class="se-dg se-dg-' + _seEsc(q.severity) + '">'
+              + '<div class="se-dg-q">' + _seEsc(q.title) + '</div>'
+              + '<div class="se-dg-e">' + _seEsc(q.evidence) + '</div>'
+              + '<div class="se-dg-w">' + _seEsc(q.why) + '</div>'
+              + '<div class="se-dg-r"><b>How to settle it:</b> ' + _seEsc(q.resolve) + '</div>'
+              + '</div>';
+          }).join('')
+        + '</div>';
+    }).join('');
+    if (dgCards.replace(/\s/g,'')){
+      dgBlock = '<h3 class="se-pt-h">Questions worth answering first</h3>'
+        + '<p class="se-dg-lede">Anomalies in each company\'s own reported figures — the '
+        + 'checks a careful reader makes before trusting a headline number. Severity is how '
+        + 'unusual the reading is, not how good or bad the company is.</p>'
+        + '<div class="se-dg-grid">' + dgCards + '</div>'
+        + '<p class="se-pt-f">Questions to investigate, not conclusions. None of this '
+        + 'suggests owning or avoiding either company.</p>';
+    }
+
     out.innerHTML = '<div class="se-note">' + ctx + ' They differ on <b>' + c.differing
       + ' of ' + c.measured + '</b> measured dimensions; anything within 2% shows as level.</div>'
       + '<div class="se-wrap"><table><thead><tr><th>Measure</th><th>' + _seEsc(c.a.ticker)
       + '</th><th>' + _seEsc(c.b.ticker) + '</th></tr></thead><tbody>' + trs + '</tbody></table></div>'
-      + ptBlock
+      + ptBlock + dgBlock
       + '<div id="seStudy" style="margin-top:18px"></div>';
     _seLoadStudy(c.a.ticker, c.b.ticker);
   } catch(e){

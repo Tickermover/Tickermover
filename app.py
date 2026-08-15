@@ -7424,6 +7424,21 @@ async def api_compare(pair: str):
     except Exception as exc:
         logger.debug("compare pointers: %s", exc)
         c["pointers"] = []
+
+    # The hard questions. Pure arithmetic over rows already in memory, so this
+    # is free and instant — every field diligence reads is on the slim universe
+    # row except quarterly_income, which only enriches one finding and degrades
+    # to a shorter sentence when absent.
+    try:
+        import diligence as _dg
+        by = {(t.get("ticker") or "").upper(): t for t in (_universe_data or [])}
+        c["diligence"] = {
+            tk: _dg.checks(by.get(tk) or {})
+            for tk in (c["a"]["ticker"], c["b"]["ticker"])
+        }
+    except Exception as exc:
+        logger.debug("compare diligence: %s", exc)
+        c["diligence"] = {}
     c["disclaimer"] = ("A comparison of measured characteristics. Which differences "
                        "matter is the reader's judgement. Not investment advice, not a "
                        "personal recommendation, and not FCA-authorised. Capital at risk.")
