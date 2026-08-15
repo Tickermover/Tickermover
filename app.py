@@ -1100,6 +1100,47 @@ async def _bottom_line_prewarm() -> None:
         await asyncio.sleep(3 * 3600)      # every 3h
 
 
+async def _role_prewarm() -> None:
+    """Background loop: fill the "Where it earns" card for every scored stock.
+
+    This is how the card gets built for the whole universe rather than the ~50
+    names that happen to sit in a hand-mapped chain. Cache-first and bounded:
+    a full pass is ~545 free searches and about $1 of Haiku, spread over a
+    handful of cycles, and once done every cycle is a pure cache hit for 180
+    days. The read path only ever serves what this loop has already written.
+    """
+    await asyncio.sleep(260)               # let the universe load
+    while True:
+        try:
+            import business_role
+            from kv_store import store as _kv
+            import web_search as _ws
+            if (business_role.available() and _ws.available()
+                    and _universe_data and not _ai_over_budget()):
+                made = 0
+                for t in list(_universe_data):
+                    if made >= 60 or _ai_over_budget():
+                        break
+                    sym = (t.get("ticker") or "").upper()
+                    if not sym:
+                        continue
+                    if await asyncio.to_thread(_kv.get, business_role.KV_NS, sym,
+                                               business_role.MAX_AGE_S):
+                        continue
+                    try:
+                        out = await business_role.generate(sym, t)
+                        await asyncio.to_thread(_kv.set, business_role.KV_NS, sym, out)
+                        made += 1
+                    except Exception as exc:
+                        logger.debug("role prewarm %s: %s", sym, exc)
+                    await asyncio.sleep(1.2)
+                if made:
+                    logger.info("🧭 Where-it-earns pre-warm: %d generated", made)
+        except Exception as exc:
+            logger.warning(f"role pre-warm cycle failed: {exc}")
+        await asyncio.sleep(2 * 3600)      # every 2h until the universe is covered
+
+
 async def _selection_prewarm() -> None:
     """Keep the AI analyst-judge conviction/thesis cache warm so the House View
     (/api/hot, /api/featured) and the model portfolio always have a bespoke 'why'
@@ -1209,6 +1250,7 @@ async def lifespan(app: FastAPI):
         asyncio.create_task(_data_prewarm()),        # keep all stocks' free data (stock-extra) warm
         asyncio.create_task(_bottom_line_prewarm()), # Haiku-polish bottom_lines (cache-first, 15d)
         asyncio.create_task(_selection_prewarm()),   # keep AI conviction/thesis warm for House View
+        asyncio.create_task(_role_prewarm()),        # "Where it earns" card for the whole universe
         asyncio.create_task(_mgmt_qa_prewarm()),     # Fact Check AI answers for prime + best-ideas names
         asyncio.create_task(_event_brief_prewarm()), # earnings briefs for the Company Events timeline
         asyncio.create_task(_daily_brief_email_task()),  # free daily-brief email (acquisition channel)
@@ -7354,6 +7396,107 @@ async def api_sector_warm(limit: int = 12, user: Optional[dict] = Depends(_curre
                          "already_cached": skipped, "failed": failed})
 
 
+# ── "Where it earns" — the third measured card, for every scored stock ─────
+# STRICTLY cache-only on the read path, the same rule the public /sectors pages
+# follow: /api/stock-signals is unauthenticated, so a visitor or a crawler must
+# never be able to trigger paid work by walking tickers. Filling the cache is
+# _role_prewarm's job (and /api/stock-role/warm's, for an admin in a hurry);
+# until an entry lands, the reader gets the deterministic sub-sector fallback.
+
+
+def _role_chain(sym: str) -> Optional[dict]:
+    """The hand-mapped value-chain layer for this ticker, if it has one."""
+    for th in (_load_theses().get("theses") or []):
+        if th.get("status") != "live":
+            continue
+        for layer in (th.get("layers") or []):
+            for co in (layer.get("names") or []):
+                if (co.get("t") or "").upper() == sym:
+                    return {"thesis": th.get("title") or th.get("slug"),
+                            "slug": th.get("slug"),
+                            "layer": layer.get("name")}
+    return None
+
+
+async def _stock_role(sym: str) -> Optional[dict]:
+    """{role, buyers, source, chain} for one ticker, or None if we know nothing.
+
+    Three tiers, best first. The hand-mapped chain layer wins the ROLE label
+    where it exists because a human placed it; the web-grounded card supplies
+    the buyers line either way; and the sub-sector is the floor so that the
+    card is present on all ~545 names rather than the ~50 in a mapped chain,
+    which was the whole complaint about the old "Chain position".
+    """
+    import business_role
+    from kv_store import store as _kv
+
+    target = next((t for t in (_universe_data or [])
+                   if (t.get("ticker") or "").upper() == sym), None)
+    chain = None
+    try:
+        chain = _role_chain(sym)
+    except Exception as exc:
+        logger.debug("role chain %s: %s", sym, exc)
+
+    card = None
+    try:
+        card = await asyncio.to_thread(_kv.get, business_role.KV_NS, sym,
+                                       business_role.MAX_AGE_S)
+    except Exception as exc:
+        logger.debug("role cache %s: %s", sym, exc)
+
+    base = card or business_role.fallback(target)
+    if not base and not chain:
+        return None
+    out = {
+        "role": (chain or {}).get("layer") or (base or {}).get("role"),
+        "buyers": (base or {}).get("buyers") or "",
+        "source": (base or {}).get("source") or "chain",
+        "chain": chain,
+    }
+    return out if out["role"] else None
+
+
+@app.post("/api/stock-role/warm")
+async def api_stock_role_warm(limit: int = 25, user: Optional[dict] = Depends(_current_user)):
+    """Generate the missing "Where it earns" cards, a bounded batch at a time.
+
+    Admin only, and sequential on purpose: this is the deliberate way to fill
+    the universe (one call per ticker, cached 180 days), as opposed to the
+    trickle the read path allows. Already-cached names are skipped, so running
+    it repeatedly converges instead of re-paying.
+    """
+    if not user or (user.get("email") or "").lower() not in _AI_ALLOW:
+        raise HTTPException(status_code=403, detail="Admin only.")
+    import business_role
+    from kv_store import store as _kv
+    if not business_role.available():
+        return JSONResponse({"status": "unavailable", "reason": "no API key"})
+    if _ai_over_budget():
+        return JSONResponse({"status": "skipped", "reason": "ai budget breaker tripped"})
+
+    done, skipped, failed = [], 0, []
+    for t in (_universe_data or []):
+        sym = (t.get("ticker") or "").upper()
+        if not sym:
+            continue
+        if len(done) >= max(1, min(200, int(limit or 25))):
+            break
+        if await asyncio.to_thread(_kv.get, business_role.KV_NS, sym,
+                                   business_role.MAX_AGE_S):
+            skipped += 1
+            continue
+        try:
+            out = await business_role.generate(sym, t)
+            await asyncio.to_thread(_kv.set, business_role.KV_NS, sym, out)
+            done.append(sym)
+        except Exception as exc:
+            logger.warning("business_role warm %s: %s", sym, exc)
+            failed.append(sym)
+    return JSONResponse({"status": "ok", "generated": done,
+                         "already_cached": skipped, "failed": failed})
+
+
 @app.get("/api/stock-signals/{ticker}")
 async def api_stock_signals(ticker: str):
     """Three MEASURED disclosures for one stock, for the overview cards.
@@ -7366,15 +7509,15 @@ async def api_stock_signals(ticker: str):
       dilution — how much the share count grew, and the band it falls in
       damage   — how far below its own 12-month high it trades, and its
                  Crowd Clock band
-      chain    — where it sits in a mapped value chain, with its disclosed
-                 capex exposure, cycle stage and customer concentration
+      role     — "Where it earns": the niche it sells into and who pays it
 
-    All three read in-memory state, so this is free and instant. Each degrades
-    independently: a warming scan returns null for that block rather than
-    failing the request, because two facts and a gap beat an error.
+    The first two read in-memory state, so they are free and instant. The third
+    is served from cache only (see `_stock_role`) and never blocks. Each block
+    degrades independently: a warming scan returns null for that block rather
+    than failing the request, because two facts and a gap beat an error.
     """
     sym = (ticker or "").upper().strip()
-    out = {"ticker": sym, "dilution": None, "damage": None, "chain": None}
+    out = {"ticker": sym, "dilution": None, "damage": None, "role": None}
 
     # 1. Dilution — the validated safeguard.
     try:
@@ -7420,33 +7563,11 @@ async def api_stock_signals(ticker: str):
     except Exception as exc:
         logger.debug("stock-signals damage %s: %s", sym, exc)
 
-    # 3. Chain position — from the mapped theses.
+    # 3. Where it earns — what it sells and who pays it, for EVERY stock.
     try:
-        for th in (_load_theses().get("theses") or []):
-            if th.get("status") != "live":
-                continue
-            for layer in (th.get("layers") or []):
-                for co in (layer.get("names") or []):
-                    if (co.get("t") or "").upper() != sym:
-                        continue
-                    out["chain"] = {
-                        "thesis": th.get("title") or th.get("slug"),
-                        "slug": th.get("slug"),
-                        "layer": layer.get("name"),
-                        "layer_id": layer.get("id"),
-                        "exposure": co.get("exposure"),
-                        "stage": co.get("stage"),
-                        "concentration": co.get("concen"),
-                        "note": co.get("note"),
-                        "watch": co.get("watch"),
-                    }
-                    break
-                if out["chain"]:
-                    break
-            if out["chain"]:
-                break
+        out["role"] = await _stock_role(sym)
     except Exception as exc:
-        logger.debug("stock-signals chain %s: %s", sym, exc)
+        logger.debug("stock-signals role %s: %s", sym, exc)
 
     out["disclaimer"] = ("Measured disclosures, not advice or a recommendation. "
                          "Not FCA-authorised. Capital at risk.")

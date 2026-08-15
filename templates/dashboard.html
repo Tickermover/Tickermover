@@ -6784,6 +6784,20 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 #ts-drawer .edge-val.word{font-size:15px;line-height:1.25;letter-spacing:-.01em;white-space:nowrap;display:flex;align-items:center;gap:6px}
 #ts-drawer .edge-val.word .dot{width:8px;height:8px;border-radius:50%;background:currentColor;flex:none}
 #ts-drawer .edge-sub{font-size:10px;font-weight:600;color:#64748b;line-height:1.3;margin-top:1px}
+/* The three MEASURED cards — dilution · drawdown · where it earns.
+   ONE tone scale across all three, so colour says exactly one thing: how loud
+   this reading is. Before this they carried three unrelated hues (red band,
+   amber depth, a teal that had no meaning at all and read as "good"), which is
+   what made the strip hard to scan. The descriptive card is deliberately
+   NEUTRAL — it orients the reader, it is not a verdict, and putting it on the
+   green/red ramp would silently score the company. */
+#ts-drawer .edge-sig{border-left:3px solid var(--sig);background:var(--sigbg)}
+#ts-drawer .edge-sig .sig-val{display:block;white-space:normal;color:var(--sig);font-size:16.5px;line-height:1.28;font-weight:800;letter-spacing:-.01em;margin-top:2px}
+#ts-drawer .edge-sig .edge-sub{font-size:11px;color:#64748b;margin-top:3px}
+#ts-drawer .edge-sig.t-flat {--sig:#0A2F46;--sigbg:linear-gradient(90deg,rgba(10,47,70,.05),#fff 60%)}
+#ts-drawer .edge-sig.t-calm {--sig:#15803d;--sigbg:linear-gradient(90deg,rgba(21,128,61,.055),#fff 60%)}
+#ts-drawer .edge-sig.t-watch{--sig:#B4780A;--sigbg:linear-gradient(90deg,rgba(180,120,10,.065),#fff 60%)}
+#ts-drawer .edge-sig.t-alert{--sig:#C2261C;--sigbg:linear-gradient(90deg,rgba(194,38,28,.055),#fff 60%)}
 /* AI edge cards (The Setup / Conviction / Key Risk) — roomier so the read fills
    the card instead of cramping in a narrow block with empty space below. */
 #ts-drawer .edge-ai{gap:5px;padding:14px 16px}
@@ -15412,21 +15426,31 @@ function _ovRenderEdge(edge){
      card wants it; `edge` is otherwise unused here now. */
 }
 
-/* MEASURED disclosures for the edge box: dilution, drawdown, chain position.
+/* MEASURED disclosures for the edge box: dilution, drawdown, where it earns.
    Each is a fact with its own provenance, so a reader can go and check it —
    which is the whole difference from the AI trio these replaced.
    Every block degrades on its own: a warming scan hides that card rather than
-   showing a placeholder that never resolves. */
+   showing a placeholder that never resolves.
+
+   HOUSE RULE for this strip (16 Aug 2026): ONE headline phrase and AT MOST ONE
+   short supporting clause per card. It previously ran to three stacked clauses
+   apiece — the base-rate study, the Crowd Clock band, the days-in-band, the
+   capex exposure — and readers skipped the whole block rather than parse it.
+   The long form still lives in the panel each figure comes from; this strip is
+   the glance. If a new clause feels essential here, it belongs there. */
 async function _ovSignals(ticker){
   const tk=String(ticker||'').toUpperCase(); if(!tk) return;
-  const set=(id,val,sub,color)=>{
+  // tone ∈ flat | calm | watch | alert — see the .edge-sig CSS. Cards pass a
+  // tone, never a colour, so the scale can only be changed in one place.
+  const set=(id,val,sub,tone)=>{
     const host=document.getElementById(id); if(!host) return;
     if(!val){ host.style.display='none'; return; }
     host.style.display='';
     const lab=host.querySelector('.edge-lab');
-    host.innerHTML='<span class="edge-lab">'+(lab?lab.textContent:'')+'</span>'+
-      '<span class="edge-val" style="color:'+color+';display:block;white-space:normal;'+
-        'font-size:16.5px;line-height:1.28;font-weight:800">'+_ovEsc(val)+'</span>'+
+    const labTxt=lab?lab.textContent:'';
+    host.className='edge-k edge-sig t-'+(tone||'flat');
+    host.innerHTML='<span class="edge-lab">'+_ovEsc(labTxt)+'</span>'+
+      '<span class="edge-val sig-val">'+_ovEsc(val)+'</span>'+
       (sub?'<span class="edge-sub">'+_ovEsc(sub)+'</span>':'');
   };
   let d;
@@ -15435,7 +15459,7 @@ async function _ovSignals(ticker){
     if(!r.ok) throw new Error('HTTP '+r.status);
     d=await r.json();
   }catch(e){
-    ['ovSigDilution','ovSigDamage','ovSigChain'].forEach(id=>{
+    ['ovSigDilution','ovSigDamage','ovSigRole'].forEach(id=>{
       const h=document.getElementById(id); if(h) h.style.display='none';
     });
     return;
@@ -15449,46 +15473,47 @@ async function _ovSignals(ticker){
      be blank on 85% of stocks. */
   const dl=d.dilution;
   if(dl && dl.label){
-    const g=(dl.growth!=null)?Math.abs(dl.growth*100).toFixed(1)+'% a year':'';
-    const col=/severe|heavy/i.test(dl.label)?'#dc2626'
-             :/moderate/i.test(dl.label)?'#b4780a'
-             :/shrink/i.test(dl.label)?'#15803d':'#0A2F46';
-    let sub=g?('Share count '+(dl.growth>=0?'up ':'down ')+g):'';
-    if(dl.fall_rate!=null && dl.baseline!=null){
-      sub+=(sub?' · ':'')+Math.round(dl.fall_rate*100)+'% of names in this band fell 30% within six months, against '
-          +Math.round(dl.baseline*100)+'% for non-issuers';
-    }
-    set('ovSigDilution', dl.label, sub, col);
+    // The base-rate evidence ("38% of names in this band fell 30% within six
+    // months…") is the strongest sentence we own, and it is still the headline
+    // of the Safeguards panel. It does not belong in a 150px card.
+    const tone=/severe|heavy/i.test(dl.label)?'alert'
+              :/moderate/i.test(dl.label)?'watch'
+              :/shrink/i.test(dl.label)?'calm':'flat';
+    const sub=(dl.growth!=null)
+      ? ('Share count '+(dl.growth>=0?'up ':'down ')+Math.abs(dl.growth*100).toFixed(1)+'% a year')
+      : '';
+    set('ovSigDilution', dl.label, sub, tone);
   } else if(dl && (dl.offerings_24m!=null || dl.shelves_24m!=null)){
-    const o=dl.offerings_24m||0, sh=dl.shelves_24m||0;
-    const val = o===0 ? 'No raises in 24m'
-              : o+' raise'+(o===1?'':'s')+' in 24m';
-    let sub='Share-count history unavailable, so no growth band';
-    if(sh) sub+=' · '+sh+' shelf registration'+(sh===1?'':'s')+' filed';
-    if(dl.last_raise) sub+=' · last raise '+String(dl.last_raise).slice(0,10);
-    set('ovSigDilution', val, sub, o===0?'#15803d':'#b4780a');
+    const o=dl.offerings_24m||0;
+    const val = o===0 ? 'No raises in 24m' : o+' raise'+(o===1?'':'s')+' in 24m';
+    const sub = (o>0 && dl.last_raise) ? ('Last raise '+_ovMonth(dl.last_raise)) : '';
+    set('ovSigDilution', val, sub, o===0?'calm':'watch');
   } else set('ovSigDilution', '', '', '');
 
-  // Drawdown — distance below the 12-month high, with the Crowd Clock band.
+  // Drawdown — how far below its own 12-month high it trades.
   const dm=d.damage;
   if(dm && dm.damage!=null){
     const off=Math.abs(dm.damage*100);
-    const col=off>=40?'#dc2626':off>=20?'#b4780a':'#15803d';
-    let sub=(dm.band?dm.band+' · ':'')
-      +((dm.run!=null)?('up '+Math.round(dm.run*100)+'% off its low'):'');
-    if(dm.held!=null) sub+=' · '+dm.held+'d in this band';
-    set('ovSigDamage', off.toFixed(0)+'% below 12m high', sub, col);
+    const tone=off>=40?'alert':off>=20?'watch':'calm';
+    // The Crowd Clock band word and the days-in-band are the Crowd Clock
+    // panel's job; here the reader wants one number and where it is now.
+    const sub=(dm.run!=null)?('Up '+Math.round(dm.run*100)+'% off its low'):'';
+    set('ovSigDamage', off.toFixed(0)+'% below 12m high', sub, tone);
   } else set('ovSigDamage', '', '', '');
 
-  // Chain position — where it sits in a mapped value chain.
-  const ch=d.chain;
-  if(ch && ch.layer){
-    const EXP={hi:'High capex exposure',mid:'Moderate capex exposure',lo:'Low capex exposure'};
-    const bits=[EXP[ch.exposure]||null, ch.stage||null,
-                ch.concentration?('Customers: '+ch.concentration):null]
-               .filter(Boolean);
-    set('ovSigChain', ch.layer, bits.join(' · '), '#0E7C66');
-  } else set('ovSigChain', '', '', '');
+  // Where it earns — what it sells and who pays it. Present for EVERY stock:
+  // a mapped chain layer where one exists, otherwise the web-grounded niche,
+  // otherwise the sub-sector. Always neutral: describing a business is not a
+  // verdict on it, so this card never joins the green/red scale.
+  const rl=d.role;
+  if(rl && rl.role){
+    set('ovSigRole', rl.role, rl.buyers?('Paid by '+rl.buyers):'', 'flat');
+  } else set('ovSigRole', '', '', '');
+}
+// "2026-03-11" → "Mar 2026". Day precision is noise on a card like this.
+function _ovMonth(s){
+  const m=/^(\d{4})-(\d{2})/.exec(String(s||'')); if(!m) return String(s||'').slice(0,10);
+  return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][+m[2]-1]+' '+m[1];
 }
 function _ovRenderBusiness(biz){
   const host = document.getElementById('ovBiz'); if (!host) return;
@@ -24691,14 +24716,18 @@ function scResultHTML(d){
         '<span class="edge-sub">'+((S.recoverDays!=null&&S.recoverN>=2)?'Reclaims dips in ~<b>'+S.recoverDays+'</b> sessions ('+S.recoverN+' samples, 1&nbsp;yr)':'Blends RSI, trend, support &amp; drawdown room')+'</span></div>':'')+
       /* Was three AI cards — "The Setup / Conviction / Key Risk" — opinions the
          reader had to take on trust. Replaced 15 Aug 2026 with three MEASURED
-         disclosures the reader can check: dilution, drawdown, and the mapped
-         chain position. All three are work this product already did and then
-         buried in separate panels, which is why nobody saw them next to the
-         stock they were about to read about. Filled by _ovSignals() from
-         /api/stock-signals/{ticker}. */
-      '<div class="edge-k edge-sig" id="ovSigDilution"><span class="edge-lab">Dilution</span><span class="edge-val word edge-ai-pend">—</span><span class="edge-sub">Reading…</span></div>'+
-      '<div class="edge-k edge-sig" id="ovSigDamage"><span class="edge-lab">Drawdown</span><span class="edge-val word edge-ai-pend">—</span><span class="edge-sub">Reading…</span></div>'+
-      '<div class="edge-k edge-sig" id="ovSigChain"><span class="edge-lab">Chain position</span><span class="edge-val word edge-ai-pend">—</span><span class="edge-sub">Reading…</span></div>'+
+         disclosures the reader can check: dilution, drawdown, and what the
+         company actually earns from. All three are work this product already
+         did and then buried in separate panels, which is why nobody saw them
+         next to the stock they were about to read about. Filled by
+         _ovSignals() from /api/stock-signals/{ticker}.
+         "Chain position" was renamed to "Where it earns" on 16 Aug 2026: the
+         old label only made sense to someone who had already opened a thesis
+         map, and it was blank on the ~90% of stocks that sit in no mapped
+         chain. It now resolves for every scored name. */
+      '<div class="edge-k edge-sig t-flat" id="ovSigDilution"><span class="edge-lab">Dilution</span><span class="edge-val word edge-ai-pend">—</span><span class="edge-sub">Reading…</span></div>'+
+      '<div class="edge-k edge-sig t-flat" id="ovSigDamage"><span class="edge-lab">Drawdown</span><span class="edge-val word edge-ai-pend">—</span><span class="edge-sub">Reading…</span></div>'+
+      '<div class="edge-k edge-sig t-flat" id="ovSigRole"><span class="edge-lab">Where it earns</span><span class="edge-val word edge-ai-pend">—</span><span class="edge-sub">Reading…</span></div>'+
     '</div>';
     const edgeCard=_ovSecHead('The TickerMover edge',_edgeBody);   // 3 quant + 3 measured cards
     /* Fill the three measured cards after this HTML is in the document.
