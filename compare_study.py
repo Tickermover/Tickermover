@@ -56,21 +56,36 @@ _NS = "compare_study_v1"
 # this is generous but still bounded — an unbounded prompt is how a "free" API
 # turns into a rate-limit outage.
 _PER_DOC = 24000
+_TRANSCRIPT = 14000
 
 SECTIONS = [
-    ("positioning", "How each company describes its own business"),
+    ("summary",     "A short orientation: what each company is and the single "
+                    "clearest difference between them on the supplied material"),
+    ("positioning", "How each company describes its own business and where it "
+                    "says it competes"),
     ("products",    "Product lines and technology each one discloses"),
-    ("competition", "What each says about its competitive position"),
-    ("strategy",    "Stated priorities and plans"),
-    ("risks",       "Risk factors each company discloses"),
+    ("competition", "What each says about its competitive position, and what "
+                    "the analyst coverage looks like on each (attributed)"),
+    ("strategy",    "Stated priorities and plans — what management said it is "
+                    "doing, not what you think will happen"),
+    ("recent",      "What the recent filings, call and headlines actually say "
+                    "has happened lately at each. Attribute outlets by name."),
+    ("risks",       "Risk factors each company discloses, and where their risk "
+                    "disclosures differ"),
 ]
 
 _SYSTEM = (
     "You write a factual, comparative research note on TWO listed companies for "
     "TickerMover, a UK research site.\n"
-    "You are given (a) figures we computed ourselves and (b) extracts from each "
-    "company's own SEC filings. These are your ONLY sources.\n"
+    "You are given, for each company: figures we computed ourselves, its own SEC "
+    "filing text, its latest earnings call transcript, its business description, "
+    "recent dated news headlines with outlets, and third-party analyst "
+    "consensus. These are your ONLY sources — this is the research, and there "
+    "is no other.\n"
     "ABSOLUTE RULES:\n"
+    "- Attribute by source type. A filing or transcript is the company speaking "
+    "about itself; a headline is an outlet's claim; consensus is analysts', not "
+    "ours. Never blend them into unattributed fact.\n"
     "- Use ONLY facts present in the supplied material. If a fact is not there, "
     "omit it. Never supply a figure, market share, product name, customer, date "
     "or capacity from your own knowledge — you will be wrong and it will be "
@@ -105,16 +120,85 @@ def available() -> bool:
     return bool(_KEY)
 
 
-async def _filing_text(ticker: str) -> tuple[str, str]:
-    """(label, text) of the most recent filing we can fetch. Never raises."""
+async def _corpus(ticker: str, row: Optional[dict] = None) -> tuple[list[str], str]:
+    """Everything real we hold on one company, as (source labels, text block).
+
+    This is the "research" step. It is NOT a web search — the free provider
+    chain has no server-side search (anthropic_shim drops `tools` and answers
+    from model memory), so asking the model to research would produce confident
+    invented specifics. Instead we assemble the corpus we already license and
+    fetch, and make the model work only from that:
+
+      - the company's own SEC filing text        (primary source)
+      - the latest earnings call transcript      (primary source)
+      - recent dated news headlines with outlet  (attributable, current)
+      - analyst consensus and target range       (attributed third party)
+      - the business description                 (provider profile)
+
+    For an equity comparison this is stronger than an open web crawl: every
+    item is financial-grade and every claim the model makes can be traced back
+    to a line we handed it. The template this was modelled on cited a company
+    blog and an unnamed "Silicon Analysts" for its market-share numbers; this
+    cites filings and named outlets or says nothing.
+    """
+    labels: list[str] = []
+    parts: list[str] = []
+
     try:
         import event_intel as ei
         ed = await ei._fetch_edgar_recent(ticker)
         if ed and ed.get("text"):
-            return (ed.get("source_label") or "SEC filing", ed["text"][:_PER_DOC])
+            lbl = ed.get("source_label") or "SEC filing"
+            labels.append(lbl)
+            parts.append(f"--- {ticker} · {lbl} (primary) ---\n{ed['text'][:_PER_DOC]}")
     except Exception as exc:
         logger.warning("compare_study: EDGAR %s: %s", ticker, exc)
-    return ("", "")
+
+    try:
+        import event_intel as ei
+        tr = await ei._fetch_av_transcript(ticker)
+        if tr and tr.get("text"):
+            labels.append("Earnings call transcript")
+            parts.append(f"--- {ticker} · earnings call transcript (primary) ---\n"
+                         f"{tr['text'][:_TRANSCRIPT]}")
+    except Exception as exc:
+        logger.warning("compare_study: transcript %s: %s", ticker, exc)
+
+    if row:
+        desc = (row.get("description") or "").strip()
+        if desc:
+            labels.append("Company profile")
+            parts.append(f"--- {ticker} · business description (provider profile) ---\n{desc[:3000]}")
+
+        news = [n for n in (row.get("news") or []) if isinstance(n, dict)][:12]
+        if news:
+            labels.append("Recent news")
+            lines = []
+            for n in news:
+                head = str(n.get("headline") or "").strip()
+                src = str(n.get("source") or "").strip()
+                if head:
+                    lines.append(f"- {head}" + (f" [{src}]" if src else ""))
+            if lines:
+                parts.append(f"--- {ticker} · recent headlines (attribute the outlet if you "
+                             f"cite one; headlines are claims, not established fact) ---\n"
+                             + "\n".join(lines))
+
+        an = []
+        for k, lbl in (("total_analysts", "analysts covering"),
+                       ("target_mean", "mean 12-month target"),
+                       ("target_low", "low target"),
+                       ("target_high", "high target"),
+                       ("analyst_recommendation", "consensus label")):
+            v = row.get(k)
+            if v not in (None, "", []):
+                an.append(f"- {lbl}: {v}")
+        if an:
+            labels.append("Analyst consensus")
+            parts.append(f"--- {ticker} · third-party analyst consensus (ATTRIBUTE as "
+                         f"analysts', never as our view or a forecast) ---\n" + "\n".join(an))
+
+    return labels, "\n\n".join(parts)
 
 
 def _bucket(cmp_data: dict) -> str:
@@ -160,12 +244,12 @@ async def _call(cmp_data: dict, docs: dict) -> Optional[dict]:
     want = "\n".join(f'  "{k}": "{desc}"' for k, desc in SECTIONS)
     src = []
     for tk in (a, b):
-        label, text = docs.get(tk, ("", ""))
+        _labels, text = docs.get(tk, ([], ""))
         if text:
-            src.append(f"=== {tk} — {label} (primary source) ===\n{text}")
+            src.append(f"================ SOURCES FOR {tk} ================\n{text}")
         else:
-            src.append(f"=== {tk} — no filing text available ===\n"
-                       f"(Say so where a section would need it.)")
+            src.append(f"================ SOURCES FOR {tk} ================\n"
+                       f"(none available — say so wherever a section would need them)")
     prompt = (
         _metrics_block(cmp_data) + "\n\n" + "\n\n".join(src)
         + "\n\nReturn a JSON object with exactly these keys:\n{\n" + want + "\n}\n"
@@ -217,8 +301,14 @@ async def _call(cmp_data: dict, docs: dict) -> Optional[dict]:
     return out or None
 
 
-async def generate(cmp_data: dict, force: bool = False) -> dict:
-    """Return {pair, sections, sources, status}. Durably cached per pair+bucket."""
+async def generate(cmp_data: dict, rows: Optional[dict] = None,
+                   force: bool = False) -> dict:
+    """Return {pair, sections, sources, status}. Durably cached per pair+bucket.
+
+    `rows` is {TICKER: universe_row} so the corpus can include description,
+    news and analyst consensus. Without it the study still runs on filings and
+    transcripts alone, just with less to work from.
+    """
     a, b = cmp_data["a"]["ticker"], cmp_data["b"]["ticker"]
     pair = f"{a}-vs-{b}"
     key = f"{pair}:{_bucket(cmp_data)}"
@@ -230,9 +320,10 @@ async def generate(cmp_data: dict, force: bool = False) -> dict:
     if not available():
         return {"pair": pair, "sections": None, "status": "unavailable"}
 
+    rows = rows or {}
     docs = {}
     for tk in (a, b):
-        docs[tk] = await _filing_text(tk)
+        docs[tk] = await _corpus(tk, rows.get(tk))
     if not any(t for _, t in docs.values()):
         # No primary source at all. Refuse rather than let the model write from
         # memory — an ungrounded study is the failure mode this module exists
@@ -246,7 +337,7 @@ async def generate(cmp_data: dict, force: bool = False) -> dict:
         return {"pair": pair, "sections": None, "status": "error"}
     if not sections:
         return {"pair": pair, "sections": None, "status": "unavailable"}
-    sources = [f"{tk}: {docs[tk][0]}" for tk in (a, b) if docs[tk][0]]
+    sources = [f"{tk}: {', '.join(docs[tk][0])}" for tk in (a, b) if docs[tk][0]]
     _kv.set(_NS, key, {"sections": sections, "sources": sources, "model": _MODEL})
     return {"pair": pair, "sections": sections, "sources": sources, "status": "ready"}
 

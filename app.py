@@ -7354,6 +7354,53 @@ async def api_sector_warm(limit: int = 12, user: Optional[dict] = Depends(_curre
                          "already_cached": skipped, "failed": failed})
 
 
+@app.get("/api/compare/{pair}/study")
+async def api_compare_study(pair: str, generate: bool = False,
+                            user: Optional[dict] = Depends(_current_user)):
+    """The long-form head-to-head study.
+
+    Reads from cache by default. `generate=true` is ADMIN-ONLY on purpose: this
+    endpoint accepts any ticker pair, so an anonymous caller could otherwise
+    walk the universe and turn a bounded feature into an unbounded one. The
+    study is researched over the corpus we already license — SEC filings, the
+    earnings call, dated headlines, analyst consensus — never a web crawl,
+    because the free provider chain cannot search and would answer from memory.
+    """
+    import sector_intel as _si
+    import compare_study as _cs
+    p = (pair or "").upper().replace("_VS_", "-VS-")
+    a, b = (p.split("-VS-", 1) if "-VS-" in p else
+            (p.split("-", 1) if "-" in p else (p, "")))
+    c = _si.compare(a.strip(), b.strip(), _universe_data or [])
+    if not c:
+        raise HTTPException(status_code=404, detail="Need two tickers we score, as A-vs-B")
+
+    cached = _cs.cached(c)
+    if cached and cached.get("sections") and not generate:
+        return JSONResponse(_clean({"pair": f"{c['a']['ticker']}-vs-{c['b']['ticker']}",
+                                    "sections": cached["sections"],
+                                    "sources": cached.get("sources") or [],
+                                    "status": "ready"}))
+    if not generate:
+        return JSONResponse({"pair": f"{c['a']['ticker']}-vs-{c['b']['ticker']}",
+                             "sections": None, "status": "not_generated"})
+    if not user or (user.get("email") or "").lower() not in _AI_ALLOW:
+        raise HTTPException(status_code=403, detail="Generation is admin-only.")
+    if _ai_over_budget():
+        return JSONResponse({"pair": pair, "sections": None, "status": "budget"})
+
+    by_t = {(t.get("ticker") or "").upper(): t for t in (_universe_data or [])}
+    rows = {}
+    for tk in (c["a"]["ticker"], c["b"]["ticker"]):
+        # Full row (not the slim universe copy) so description + news are present.
+        try:
+            rows[tk] = await coordinator.get_full_ticker(
+                tk, get_meta(tk), cache.get("ape:all") or {}) or by_t.get(tk)
+        except Exception:
+            rows[tk] = by_t.get(tk)
+    return JSONResponse(_clean(await _cs.generate(c, rows=rows)))
+
+
 @app.get("/api/compare/{pair}")
 async def api_compare(pair: str):
     """Head-to-head for `<A>-vs-<B>`. Measured differences only — returns no

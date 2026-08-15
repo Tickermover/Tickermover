@@ -21,6 +21,7 @@ string. No globals, no FastAPI imports, no I/O. The /app routes in
 app.py call into here.
 """
 from __future__ import annotations
+import html
 import json as _json
 import re
 from typing import Iterable, Optional
@@ -911,6 +912,14 @@ table.h2h-t td.hi{background:#FFF6EF;font-weight:700;color:#0A2F46}
   border-radius:4px;padding:14px 16px;margin:0 0 22px}
 .h2h-ctx b{color:#0A2F46}
 .h2h-sym{font-family:ui-monospace,Menlo,monospace;font-weight:700}
+.cs-lede{font-size:14px;color:#5D6C7B;line-height:1.65;max-width:78ch;margin:0 0 18px}
+.cs-wrap{display:grid;gap:1px;background:#E2E8F0;border:1px solid #E2E8F0;
+  border-radius:10px;overflow:hidden;margin:0 0 14px}
+.cs-sec{background:#fff;padding:16px 18px}
+.cs-sec h3{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#9A3412;
+  font-weight:800;margin:0 0 7px}
+.cs-sec p{font-size:14.5px;line-height:1.7;color:#26333F;margin:0;max-width:82ch}
+.cs-src{font-size:12px;color:#94A3B8;margin:0 0 24px}
 """
 
 
@@ -971,6 +980,36 @@ def render_comparison(a: str, b: str, universe: list[dict], site_origin: str) ->
               "than split. Nothing here totals to a winner — which differences matter "
               "is your call, not ours.")
 
+    # Long-form study — CACHE PEEK ONLY, never generated during a page render.
+    # This page is public and crawled; generating here would let a bot trigger
+    # research runs. Studies are produced by the admin generate endpoint.
+    study_html = ""
+    try:
+        import compare_study as _cstudy
+        _hit = _cstudy.cached(c) or {}
+        _sec = _hit.get("sections") or {}
+        if _sec:
+            _titles = dict(_cstudy.SECTIONS)
+            blocks = "".join(
+                '<div class="cs-sec"><h3>' + html.escape(str(_titles.get(k, k)).split(" — ")[0])
+                + "</h3><p>" + html.escape(v) + "</p></div>"
+                for k, v in _sec.items() if isinstance(v, str) and v.strip()
+            )
+            if blocks:
+                srcs = ", ".join(html.escape(s) for s in (_hit.get("sources") or []))
+                study_html = (
+                    '<h2>The detail</h2>'
+                    '<p class="cs-lede">Researched over each company\'s own SEC filing and '
+                    'earnings call, its recent coverage and third-party analyst consensus. '
+                    'Every claim below traces to one of those or to figures we computed — '
+                    'nothing is supplied from memory, and where the sources are silent it '
+                    'says so.</p>'
+                    '<div class="cs-wrap">' + blocks + "</div>"
+                    + ('<p class="cs-src">Sources: ' + srcs + "</p>" if srcs else "")
+                )
+    except Exception:
+        study_html = ""
+
     title = f"{a} vs {b} — growth, margins, valuation and momentum compared | TickerMover"
     desc = (
         f"{a} ({name_a[:22]}) and {b} ({name_b[:22]}) compared across growth, margins, "
@@ -993,6 +1032,7 @@ def render_comparison(a: str, b: str, universe: list[dict], site_origin: str) ->
       <tbody>{trs}</tbody>
     </table>
   </div>
+  {study_html}
   <h2>How the Alpha Score works</h2>
   <p>It blends fundamentals, valuation, momentum, analyst signal and macro regime into one 0-100 number. It is a quality descriptor, not a buy or sell signal. <a href="/learn/pop-score">Read the methodology →</a></p>
   <p>Full breakdowns: <a href="/stocks/{a}">{a}</a> · <a href="/stocks/{b}">{b}</a>{(' · Both in <a href="/sectors/' + A['slug'] + '">' + (A['sector'] or '') + '</a>') if c['same_sector'] and A['slug'] else ''}</p>
