@@ -15406,11 +15406,76 @@ function _ovRenderEdge(edge){
       '<span class="edge-val" style="color:'+color+';display:block;white-space:normal;font-size:16.5px;line-height:1.28;font-weight:800">'+_ovEsc(v)+'</span>'+
       (d?'<span class="edge-sub">'+_ovEsc(d)+'</span>':'');
   };
-  const tl=String((edge.thesis_confidence||{}).label||'').toLowerCase();
-  const tcol=/strong/.test(tl)?'#15803d':/spec/.test(tl)?'#dc2626':'#b4780a';
-  card('ovEdgeSetup','The Setup', edge.setup_read, '#2970ff');
-  card('ovEdgeThesis','Conviction', edge.thesis_confidence, tcol);
-  card('ovEdgeCatch','Key Risk', edge.the_catch, '#dc2626');
+  /* The three AI cards this used to fill (Setup / Conviction / Key Risk) were
+     replaced on 15 Aug 2026 by measured disclosures — see _ovSignals below.
+     `card` is kept because the helper is still the right shape if a future
+     card wants it; `edge` is otherwise unused here now. */
+}
+
+/* MEASURED disclosures for the edge box: dilution, drawdown, chain position.
+   Each is a fact with its own provenance, so a reader can go and check it —
+   which is the whole difference from the AI trio these replaced.
+   Every block degrades on its own: a warming scan hides that card rather than
+   showing a placeholder that never resolves. */
+async function _ovSignals(ticker){
+  const tk=String(ticker||'').toUpperCase(); if(!tk) return;
+  const set=(id,val,sub,color)=>{
+    const host=document.getElementById(id); if(!host) return;
+    if(!val){ host.style.display='none'; return; }
+    host.style.display='';
+    const lab=host.querySelector('.edge-lab');
+    host.innerHTML='<span class="edge-lab">'+(lab?lab.textContent:'')+'</span>'+
+      '<span class="edge-val" style="color:'+color+';display:block;white-space:normal;'+
+        'font-size:16.5px;line-height:1.28;font-weight:800">'+_ovEsc(val)+'</span>'+
+      (sub?'<span class="edge-sub">'+_ovEsc(sub)+'</span>':'');
+  };
+  let d;
+  try{
+    const r=await fetch('/api/stock-signals/'+encodeURIComponent(tk));
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    d=await r.json();
+  }catch(e){
+    ['ovSigDilution','ovSigDamage','ovSigChain'].forEach(id=>{
+      const h=document.getElementById(id); if(h) h.style.display='none';
+    });
+    return;
+  }
+
+  // Dilution — share-count growth against the studied fall-rate baseline.
+  const dl=d.dilution;
+  if(dl && dl.label){
+    const g=(dl.growth!=null)?(dl.growth*100).toFixed(1)+'% a year':'';
+    const col=/severe|heavy/i.test(dl.label)?'#dc2626'
+             :/moderate/i.test(dl.label)?'#b4780a'
+             :/shrink/i.test(dl.label)?'#15803d':'#0A2F46';
+    let sub=g?('Share count '+(dl.growth>=0?'up ':'down ')+g.replace('-','')):'';
+    if(dl.fall_rate!=null && dl.baseline!=null){
+      sub+=(sub?' · ':'')+Math.round(dl.fall_rate*100)+'% of names in this band fell 30% within six months, against '
+          +Math.round(dl.baseline*100)+'% for non-issuers';
+    }
+    set('ovSigDilution', dl.label, sub, col);
+  } else set('ovSigDilution', '', '', '');
+
+  // Drawdown — distance below the 12-month high, with the Crowd Clock band.
+  const dm=d.damage;
+  if(dm && dm.damage!=null){
+    const off=Math.abs(dm.damage*100);
+    const col=off>=40?'#dc2626':off>=20?'#b4780a':'#15803d';
+    let sub=(dm.band?dm.band+' · ':'')
+      +((dm.run!=null)?('up '+Math.round(dm.run*100)+'% off its low'):'');
+    if(dm.held!=null) sub+=' · '+dm.held+'d in this band';
+    set('ovSigDamage', off.toFixed(0)+'% below 12m high', sub, col);
+  } else set('ovSigDamage', '', '', '');
+
+  // Chain position — where it sits in a mapped value chain.
+  const ch=d.chain;
+  if(ch && ch.layer){
+    const EXP={hi:'High capex exposure',mid:'Moderate capex exposure',lo:'Low capex exposure'};
+    const bits=[EXP[ch.exposure]||null, ch.stage||null,
+                ch.concentration?('Customers: '+ch.concentration):null]
+               .filter(Boolean);
+    set('ovSigChain', ch.layer, bits.join(' · '), '#0E7C66');
+  } else set('ovSigChain', '', '', '');
 }
 function _ovRenderBusiness(biz){
   const host = document.getElementById('ovBiz'); if (!host) return;
@@ -24611,11 +24676,26 @@ function scResultHTML(d){
       (_hasReb?'<div class="edge-k"><span class="edge-lab">Rebound potential</span>'+
         '<span class="edge-val" style="color:'+rebColor+'">'+Math.round(S.rebound)+'<small> / 100</small></span>'+
         '<span class="edge-sub">'+((S.recoverDays!=null&&S.recoverN>=2)?'Reclaims dips in ~<b>'+S.recoverDays+'</b> sessions ('+S.recoverN+' samples, 1&nbsp;yr)':'Blends RSI, trend, support &amp; drawdown room')+'</span></div>':'')+
-      '<div class="edge-k edge-ai" id="ovEdgeSetup"><span class="edge-lab">The Setup</span><span class="edge-val word edge-ai-pend">—</span><span class="edge-sub">Reading…</span></div>'+
-      '<div class="edge-k edge-ai" id="ovEdgeThesis"><span class="edge-lab">Conviction</span><span class="edge-val word edge-ai-pend">—</span><span class="edge-sub">Reading…</span></div>'+
-      '<div class="edge-k edge-ai" id="ovEdgeCatch"><span class="edge-lab">Key Risk</span><span class="edge-val word edge-ai-pend">—</span><span class="edge-sub">Reading…</span></div>'+
+      /* Was three AI cards — "The Setup / Conviction / Key Risk" — opinions the
+         reader had to take on trust. Replaced 15 Aug 2026 with three MEASURED
+         disclosures the reader can check: dilution, drawdown, and the mapped
+         chain position. All three are work this product already did and then
+         buried in separate panels, which is why nobody saw them next to the
+         stock they were about to read about. Filled by _ovSignals() from
+         /api/stock-signals/{ticker}. */
+      '<div class="edge-k edge-sig" id="ovSigDilution"><span class="edge-lab">Dilution</span><span class="edge-val word edge-ai-pend">—</span><span class="edge-sub">Reading…</span></div>'+
+      '<div class="edge-k edge-sig" id="ovSigDamage"><span class="edge-lab">Drawdown</span><span class="edge-val word edge-ai-pend">—</span><span class="edge-sub">Reading…</span></div>'+
+      '<div class="edge-k edge-sig" id="ovSigChain"><span class="edge-lab">Chain position</span><span class="edge-val word edge-ai-pend">—</span><span class="edge-sub">Reading…</span></div>'+
     '</div>';
-    const edgeCard=_ovSecHead('The TickerMover edge',_edgeBody);   // 3 quant + 3 AI cards always present
+    const edgeCard=_ovSecHead('The TickerMover edge',_edgeBody);   // 3 quant + 3 measured cards
+    /* Fill the three measured cards after this HTML is in the document.
+       Deferred a tick because paneOverview only RETURNS markup — the nodes do
+       not exist until the caller inserts it, so querying for them now would
+       find nothing and silently hide all three. */
+    try{
+      const _sigTk=((full&&full.ticker)||(t&&t.ticker)||'').toUpperCase();
+      if(_sigTk) setTimeout(function(){ _ovSignals(_sigTk); }, 0);
+    }catch(e){}
     // Editorial research-note flow (our theme): header + 6-stat strip →
     // scorecard → numbers → price action → edge → technical setup →
     // two-sided case → valuation → catalysts → bottom-line thesis.

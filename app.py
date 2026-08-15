@@ -7354,6 +7354,97 @@ async def api_sector_warm(limit: int = 12, user: Optional[dict] = Depends(_curre
                          "already_cached": skipped, "failed": failed})
 
 
+@app.get("/api/stock-signals/{ticker}")
+async def api_stock_signals(ticker: str):
+    """Three MEASURED disclosures for one stock, for the overview cards.
+
+    Replaces the AI "Setup / Conviction / Key Risk" trio. Those were opinions
+    the reader had to take on trust; these are facts they can check, and they
+    come from work this product already does and previously buried in three
+    separate panels:
+
+      dilution — how much the share count grew, and the band it falls in
+      damage   — how far below its own 12-month high it trades, and its
+                 Crowd Clock band
+      chain    — where it sits in a mapped value chain, with its disclosed
+                 capex exposure, cycle stage and customer concentration
+
+    All three read in-memory state, so this is free and instant. Each degrades
+    independently: a warming scan returns null for that block rather than
+    failing the request, because two facts and a gap beat an error.
+    """
+    sym = (ticker or "").upper().strip()
+    out = {"ticker": sym, "dilution": None, "damage": None, "chain": None}
+
+    # 1. Dilution — the validated safeguard.
+    try:
+        if _dil_scan.get("status") == "ready":
+            row = next((r for r in (_dil_scan.get("rows") or [])
+                        if (r.get("ticker") or "").upper() == sym), None)
+            if row and row.get("label"):
+                import safeguards as sg
+                out["dilution"] = {
+                    "label": row.get("label"),
+                    "growth": row.get("growth"),
+                    "desc": row.get("desc"),
+                    "fall_rate": row.get("fall_rate"),
+                    "baseline": sg.DILUTION_BASELINE,
+                    "shelf_count": row.get("shelf_count") or row.get("shelves"),
+                }
+    except Exception as exc:
+        logger.debug("stock-signals dilution %s: %s", sym, exc)
+
+    # 2. Damage — Crowd Clock.
+    try:
+        if _crowd_scan.get("status") == "ready":
+            row = next((r for r in ((_crowd_scan.get("data") or {}).get("rows") or [])
+                        if (r.get("ticker") or "").upper() == sym), None)
+            if row:
+                out["damage"] = {
+                    "band": row.get("band"),
+                    "damage": row.get("damage"),      # fall from 12m high (negative)
+                    "run": row.get("run"),            # climb off the low
+                    "score": row.get("score"),        # 0-100 recovery position
+                    "in_cycle": row.get("in_cycle"),
+                    "held": row.get("held"),
+                    "tone": row.get("tone"),
+                }
+    except Exception as exc:
+        logger.debug("stock-signals damage %s: %s", sym, exc)
+
+    # 3. Chain position — from the mapped theses.
+    try:
+        for th in (_load_theses().get("theses") or []):
+            if th.get("status") != "live":
+                continue
+            for layer in (th.get("layers") or []):
+                for co in (layer.get("names") or []):
+                    if (co.get("t") or "").upper() != sym:
+                        continue
+                    out["chain"] = {
+                        "thesis": th.get("title") or th.get("slug"),
+                        "slug": th.get("slug"),
+                        "layer": layer.get("name"),
+                        "layer_id": layer.get("id"),
+                        "exposure": co.get("exposure"),
+                        "stage": co.get("stage"),
+                        "concentration": co.get("concen"),
+                        "note": co.get("note"),
+                        "watch": co.get("watch"),
+                    }
+                    break
+                if out["chain"]:
+                    break
+            if out["chain"]:
+                break
+    except Exception as exc:
+        logger.debug("stock-signals chain %s: %s", sym, exc)
+
+    out["disclaimer"] = ("Measured disclosures, not advice or a recommendation. "
+                         "Not FCA-authorised. Capital at risk.")
+    return JSONResponse(_clean(out), headers={"Cache-Control": "public, max-age=120"})
+
+
 @app.get("/api/resolve")
 async def api_resolve(q: str = "", limit: int = 6):
     """Resolve a ticker OR a company name to a symbol we score.
