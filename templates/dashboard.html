@@ -2615,17 +2615,35 @@ body.sb-collapsed .v2-sb-collapse svg{transform:rotate(180deg)}
 .v2-sb-section{
   font-size:10.5px;font-weight:800;color:#64748b;
   text-transform:uppercase;letter-spacing:.10em;
-  padding:14px 8px 8px;position:relative;
+  /* Tightened 15 Aug 2026. Adding Compare pushed the YOURS group — Watchlist —
+     below the fold on a laptop, so the last section was invisible unless you
+     knew to scroll a nav that does not look scrollable. 14/8 -> 11/5 across
+     three headings plus the row changes below buys back ~60px, enough to land
+     Watchlist on screen without shrinking the touch targets. */
+  padding:11px 8px 5px;position:relative;
 }
 .v2-nav-item{
   display:flex;align-items:center;gap:10px;white-space:nowrap;
-  padding:9px 10px;border-radius:10px;
-  min-height:44px;box-sizing:border-box;            /* a11y: 44px touch target */
+  padding:7px 10px;border-radius:10px;
+  /* 40px, not 44. WCAG 2.5.8 sets the minimum target at 24px and 2.5.5 the
+     enhanced one at 44; 40 with the full-width row still clears the former
+     comfortably and keeps every entry, including Watchlist, on screen without
+     a scroll that the nav gives no visual cue for. Pointer-coarse restores 44
+     below, so touch is unaffected. */
+  min-height:40px;box-sizing:border-box;
   font-size:13.5px;font-weight:600;color:#94a3b8;
   cursor:pointer;user-select:none;position:relative;
-  transition:background .15s,color .15s;margin-bottom:2px;
+  transition:background .15s,color .15s;margin-bottom:1px;
   text-decoration:none;
 }
+/* Touch devices keep the full 44px target — the compaction above is for the
+   mouse-and-laptop case where vertical space is the scarce thing, not for a
+   finger. */
+@media (pointer: coarse){
+  .v2-nav-item{min-height:44px;padding-top:9px;padding-bottom:9px}
+  .v2-sb-section{padding:14px 8px 8px}
+}
+
 /* ── Accessibility: visible keyboard focus (mouse users unaffected) ──────────
    Many interactive controls only defined :hover, so keyboard users got no focus
    indicator. This adds one ring everywhere, without touching the visual design. */
@@ -9147,50 +9165,64 @@ document.addEventListener('keydown', function(e){
 #panel-sect .se-dg-r{font-size:12.5px;color:#26333F;line-height:1.6;margin-top:8px;
   padding-top:8px;border-top:1px dashed #E2E8F0}
 #panel-sect .se-dg-r b{color:#0E7C66}
-/* Suggested matchups — a gallery of flip tiles.
-   One tile turns every six seconds. Six at once would be a slot machine, and
-   on a financial page that reads as manufactured urgency; one is noticeable on
-   a glance and ignorable while reading. Hover pauses it, and
-   prefers-reduced-motion drops the flip for a static, fully usable grid — the
-   content never depends on the motion. */
+/* Suggested matchups — a continuous carousel.
+   Replaced flip-in-place tiles: a tile that rewrites itself makes the reader
+   re-parse something they had already read, and any tile might be mid-flip
+   when they reach for it. The row moves at one steady speed instead, so
+   nothing changes under the eye — the next suggestion simply arrives.
+   Track rendered twice, translated exactly -50%, so the loop has no seam.
+   Pauses on hover and focus-within; prefers-reduced-motion stops it and leaves
+   an ordinary scroller. */
 #panel-sect .se-sg-h{font-size:11px;letter-spacing:.06em;text-transform:uppercase;
   color:#94A3B8;font-weight:700;margin:18px 0 10px}
 #panel-sect .se-sg-h span{text-transform:none;letter-spacing:0;font-weight:400;color:#B6BFC9}
-#panel-sect .se-gal{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
-@media(max-width:1050px){#panel-sect .se-gal{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:640px){#panel-sect .se-gal{grid-template-columns:1fr}}
-#panel-sect .se-gt{perspective:900px;background:none;border:0;padding:0;cursor:pointer;
+#panel-sect .se-car{overflow:hidden;position:relative;padding:4px 0 8px;
+  -webkit-mask-image:linear-gradient(90deg,transparent,#000 3%,#000 97%,transparent);
+  mask-image:linear-gradient(90deg,transparent,#000 3%,#000 97%,transparent)}
+#panel-sect .se-car-track{display:flex;gap:12px;width:max-content;
+  animation:seCarScroll 60s linear infinite}
+#panel-sect .se-car:hover .se-car-track,
+#panel-sect .se-car:focus-within .se-car-track{animation-play-state:paused}
+@keyframes seCarScroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+#panel-sect .se-gt{flex:0 0 258px;background:none;border:0;padding:0;cursor:pointer;
   font-family:inherit;text-align:left}
-#panel-sect .se-gt-inner{position:relative;transform-style:preserve-3d;
-  transition:transform .64s cubic-bezier(.4,.05,.2,1);border-radius:14px}
-#panel-sect .se-gt-inner.se-flip{transform:rotateY(180deg)}
-#panel-sect .se-gt-face{background:#fff;border:1px solid #E2E8F0;border-radius:14px;
-  padding:18px 16px 13px;backface-visibility:hidden;
-  transition:border-color .15s,box-shadow .15s}
-#panel-sect .se-gt:hover .se-gt-face{border-color:#0E7C66;
-  box-shadow:0 6px 22px rgba(14,124,102,.14)}
+#panel-sect .se-gt-face{background:#fff;border:1px solid #E4E8EE;border-radius:16px;
+  padding:20px 16px 0;overflow:hidden;
+  transition:border-color .18s,box-shadow .18s,transform .18s}
+#panel-sect .se-gt:hover .se-gt-face{border-color:#0E7C66;transform:translateY(-2px);
+  box-shadow:0 10px 26px rgba(14,124,102,.15)}
 #panel-sect .se-gt:focus-visible .se-gt-face{outline:2px solid #0E7C66;outline-offset:2px}
-#panel-sect .se-gt-row{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px}
+#panel-sect .se-gt-row{display:grid;grid-template-columns:1fr auto 1fr;align-items:start;gap:6px}
 #panel-sect .se-gt-side{text-align:center;min-width:0}
 #panel-sect .se-gl{position:relative;display:inline-flex;align-items:center;
-  justify-content:center;width:56px;height:56px;border-radius:14px;background:#F4F7FA;
-  overflow:hidden}
-#panel-sect .se-gl img{width:100%;height:100%;object-fit:contain}
-#panel-sect .se-gl b{display:none;font-family:'JetBrains Mono',monospace;font-size:17px;
+  justify-content:center;width:62px;height:62px;border-radius:16px;background:#F5F8FB;
+  border:1px solid #EDF1F6;overflow:hidden}
+#panel-sect .se-gl img{width:78%;height:78%;object-fit:contain}
+#panel-sect .se-gl b{display:none;font-family:'JetBrains Mono',monospace;font-size:18px;
   font-weight:800;color:#64748B}
 #panel-sect .se-gl.se-gl-mono b{display:block}
-#panel-sect .se-gt-tk{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:800;
-  color:#0A2F46;margin-top:8px;overflow:hidden;text-overflow:ellipsis}
-#panel-sect .se-gv{display:inline-block;margin-top:4px;font-size:11px;font-weight:700;
-  color:#0E7C66;background:#E9F5F1;border-radius:5px;padding:1px 7px;
-  font-variant-numeric:tabular-nums}
-#panel-sect .se-gt-vs{font-size:10.5px;font-weight:700;letter-spacing:.08em;
-  text-transform:uppercase;color:#B6BFC9}
-#panel-sect .se-gt-foot{margin-top:13px;padding-top:10px;border-top:1px solid #F1F5F9;
-  font-size:10.5px;color:#94A3B8;text-align:center}
+#panel-sect .se-gt-tk{font-family:'JetBrains Mono',monospace;font-size:13.5px;
+  font-weight:800;color:#0A2F46;margin-top:9px;letter-spacing:.02em;
+  overflow:hidden;text-overflow:ellipsis}
+#panel-sect .se-gv{display:inline-flex;align-items:baseline;gap:4px;margin-top:5px;
+  background:#E9F5F1;border-radius:6px;padding:2px 8px}
+#panel-sect .se-gv i{font-style:normal;font-family:'JetBrains Mono',monospace;
+  font-size:12.5px;font-weight:800;color:#0E7C66;font-variant-numeric:tabular-nums}
+#panel-sect .se-gv s{text-decoration:none;font-size:8.5px;letter-spacing:.07em;
+  text-transform:uppercase;color:#7FB3A3;font-weight:700}
+#panel-sect .se-gv-na{color:#B6BFC9;background:#F3F5F7;font-size:12px}
+#panel-sect .se-gt-vs{align-self:center;padding-top:18px}
+#panel-sect .se-gt-vs span{display:inline-flex;align-items:center;justify-content:center;
+  width:26px;height:26px;border-radius:50%;background:#F3F5F7;color:#9AA6B2;
+  font-size:9.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase}
+#panel-sect .se-gt-foot{margin:18px -16px 0;padding:9px 16px;background:#FAFBFC;
+  border-top:1px solid #F1F5F9;font-size:10.5px;color:#8A97A4;text-align:center}
+#panel-sect .se-gt-dot{display:inline-block;width:5px;height:5px;border-radius:50%;
+  background:#CBD5E1;margin-right:6px;vertical-align:middle}
+#panel-sect .se-gt-dot.on{background:#0E7C66}
 @media(prefers-reduced-motion:reduce){
-  #panel-sect .se-gt-inner{transition:none}
-  #panel-sect .se-gt-inner.se-flip{transform:none}
+  #panel-sect .se-car-track{animation:none}
+  #panel-sect .se-car{overflow-x:auto;-webkit-mask-image:none;mask-image:none}
 }
 </style>
 <div id="panel-sect" class="panel">
@@ -23410,70 +23442,70 @@ async function _seSuggestStrip(){
     var pairs = ((await r.json()) || {}).pairs || [];
     if (!pairs.length) return;
     _seGallery(host, pairs);
-  } catch(e){ /* the gallery is a convenience; never break the panel over it */ }
+  } catch(e){ /* the carousel is a convenience; never break the panel over it */ }
 }
 
-/* Suggested matchups as a GALLERY of flip tiles.
-   Six tiles are shown from the pool; every six seconds ONE flips to a matchup
-   that is not currently on screen, so the surface keeps offering something new
-   without the reader scrolling anything.
+/* Suggested matchups as a CONTINUOUS CAROUSEL of tiles.
+   Replaced the flip-in-place version: a tile that changes its own contents
+   makes the reader re-read something they had already parsed, and any tile
+   might be mid-flip when they reach for it. A carousel moves the whole row at
+   one steady speed, so nothing ever rewrites itself under the eye and the next
+   suggestion simply arrives.
 
-   Why one at a time and slowly: six tiles flipping together is a slot machine,
-   and on a financial page that reads as manufactured urgency — the same reason
-   the attention system does not blink numbers. One tile every six seconds is
-   noticeable on a glance and ignorable while reading something else.
+   The track is rendered twice and translates exactly -50%, so the loop has no
+   seam. Duration scales with the number of tiles to keep the speed constant
+   whatever the pool size — a fixed duration would sprint through a long list
+   and crawl through a short one.
 
-   Hover pauses the rotation (nothing should change under a cursor that is about
-   to click it) and prefers-reduced-motion skips the flip entirely, leaving a
-   static grid that is fully usable — the content never depends on the motion. */
-var _seGalTimer = null, _seGalPaused = false;
-
+   Hover and focus-within pause it, so a tile is never moving when it is about
+   to be clicked or tabbed to, and prefers-reduced-motion stops the animation
+   entirely and leaves an ordinary horizontal scroller. */
 function _seGalTile(p){
   var logo = function(tk){
-    var esc = _seEsc(tk);
-    return '<span class="se-gl"><img loading="lazy" alt="" '
-      + 'src="https://assets.parqet.com/logos/symbol/' + encodeURIComponent(tk) + '" '
+    return '<span class="se-gl">'
+      + '<img loading="lazy" alt="" src="https://assets.parqet.com/logos/symbol/'
+      + encodeURIComponent(tk) + '" '
       + 'onerror="this.remove();this.parentNode.classList.add(&quot;se-gl-mono&quot;)">'
-      + '<b>' + esc.slice(0, 2) + '</b></span>';
+      + '<b>' + _seEsc(tk).slice(0, 2) + '</b></span>';
   };
-  var score = function(v){
-    return (v === null || v === undefined) ? '' : '<span class="se-gv">' + v + '</span>';
+  var side = function(tk, alpha){
+    return '<div class="se-gt-side">' + logo(tk)
+      + '<div class="se-gt-tk">' + _seEsc(tk) + '</div>'
+      + ((alpha === null || alpha === undefined)
+          ? '<div class="se-gv se-gv-na">—</div>'
+          : '<div class="se-gv"><i>' + alpha + '</i><s>alpha</s></div>')
+      + '</div>';
   };
-  return ''
-    + '<div class="se-gt-face">'
-    +   '<div class="se-gt-row">'
-    +     '<div class="se-gt-side">' + logo(p.a)
-    +       '<div class="se-gt-tk">' + _seEsc(p.a) + '</div>' + score(p.a_alpha) + '</div>'
-    +     '<div class="se-gt-vs">vs</div>'
-    +     '<div class="se-gt-side">' + logo(p.b)
-    +       '<div class="se-gt-tk">' + _seEsc(p.b) + '</div>' + score(p.b_alpha) + '</div>'
-    +   '</div>'
-    +   '<div class="se-gt-foot">'
-    +     (p.same_sector ? 'same sub-sector' : 'different sub-sectors')
-    +   '</div>'
-    + '</div>';
+  return '<div class="se-gt-face">'
+    + '<div class="se-gt-row">'
+    +   side(p.a, p.a_alpha)
+    +   '<div class="se-gt-vs"><span>vs</span></div>'
+    +   side(p.b, p.b_alpha)
+    + '</div>'
+    + '<div class="se-gt-foot">'
+    +   '<span class="se-gt-dot' + (p.same_sector ? ' on' : '') + '"></span>'
+    +   (p.same_sector ? 'Same sub-sector' : 'Different sub-sectors')
+    + '</div></div>';
 }
 
 function _seGallery(host, pairs){
-  if (_seGalTimer){ clearInterval(_seGalTimer); _seGalTimer = null; }
-  var SHOWN = Math.min(6, pairs.length);
-  var live = pairs.slice(0, SHOWN);        // on screen now
-  var pool = pairs.slice(SHOWN);           // waiting their turn
+  var tiles = pairs.map(function(p){
+    return '<button class="se-gt" data-a="' + _seEsc(p.a) + '" data-b="' + _seEsc(p.b) + '"'
+      + ' title="Compare ' + _seEsc(p.a) + ' with ' + _seEsc(p.b) + '">'
+      + _seGalTile(p) + '</button>';
+  }).join('');
 
   host.innerHTML =
     '<div class="se-sg-h">Most-searched matchups <span>&middot; click any tile to load it</span></div>'
-    + '<div class="se-gal" id="seGal">'
-    + live.map(function(p, i){
-        return '<button class="se-gt" data-i="' + i + '" data-a="' + _seEsc(p.a) + '"'
-          + ' data-b="' + _seEsc(p.b) + '"><div class="se-gt-inner">'
-          + _seGalTile(p) + '</div></button>';
-      }).join('')
-    + '</div>';
+    + '<div class="se-car" id="seCar"><div class="se-car-track">' + tiles + tiles + '</div></div>';
 
-  var gal = document.getElementById('seGal');
-  if (!gal) return;
+  var car = document.getElementById('seCar');
+  if (!car) return;
+  var track = car.querySelector('.se-car-track');
+  /* Constant speed regardless of pool size: ~7s of travel per tile. */
+  if (track) track.style.animationDuration = Math.max(24, pairs.length * 7) + 's';
 
-  gal.addEventListener('click', function(ev){
+  car.addEventListener('click', function(ev){
     var t = ev.target.closest ? ev.target.closest('.se-gt') : null;
     if (!t) return;
     var A = document.getElementById('seCmpA'), B = document.getElementById('seCmpB');
@@ -23481,40 +23513,6 @@ function _seGallery(host, pairs){
     if (B) B.value = t.getAttribute('data-b');
     _seRunCompare();
   });
-  gal.addEventListener('mouseover', function(){ _seGalPaused = true; });
-  gal.addEventListener('mouseout',  function(){ _seGalPaused = false; });
-
-  if (!pool.length) return;
-  var reduce = window.matchMedia
-    && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (reduce) return;                      // static grid, still fully usable
-
-  var turn = 0;
-  _seGalTimer = setInterval(function(){
-    /* The panel can be re-rendered or navigated away from under us; bail and
-       clear rather than animating a node that is no longer in the document. */
-    if (!document.getElementById('seGal')){
-      clearInterval(_seGalTimer); _seGalTimer = null; return;
-    }
-    if (_seGalPaused || !pool.length) return;
-    var idx = turn % SHOWN; turn++;
-    var tile = gal.querySelector('.se-gt[data-i="' + idx + '"]');
-    if (!tile) return;
-    var next = pool.shift();
-    pool.push(live[idx]);                  // retired tile goes to the back
-    live[idx] = next;
-    var inner = tile.querySelector('.se-gt-inner');
-    if (!inner) return;
-    inner.classList.add('se-flip');
-    /* Swap at the halfway point, while the tile is edge-on and its face is
-       invisible. Swapping at either end shows the content changing. */
-    setTimeout(function(){
-      inner.innerHTML = _seGalTile(next);
-      tile.setAttribute('data-a', next.a);
-      tile.setAttribute('data-b', next.b);
-    }, 320);
-    setTimeout(function(){ inner.classList.remove('se-flip'); }, 660);
-  }, 6000);
 }
 
 function _seRender(){
@@ -23587,13 +23585,46 @@ async function _seLoadStudy(a, b){
   } catch(e){ /* the study is a bonus; never break the comparison over it */ }
 }
 
+/* Ticker or company name -> symbol. Server-side so the panel does not carry a
+   name index; returns the raw input uppercased if the lookup fails. */
+async function _seResolve(q){
+  var s = (q || '').trim();
+  if (!s) return '';
+  try {
+    var r = await fetch('/api/resolve?q=' + encodeURIComponent(s));
+    if (!r.ok) return s.toUpperCase();
+    var d = await r.json();
+    return (d && d.match && d.match.ticker) ? d.match.ticker : s.toUpperCase();
+  } catch(e){ return s.toUpperCase(); }
+}
+
 async function _seRunCompare(){
   var a = (document.getElementById('seCmpA')||{}).value || '';
   var b = (document.getElementById('seCmpB')||{}).value || '';
   var out = document.getElementById('seCmpOut');
   if (!out) return;
-  a = a.trim().toUpperCase(); b = b.trim().toUpperCase();
-  if (!a || !b){ out.innerHTML = '<div class="se-mut">Enter two tickers.</div>'; return; }
+  if (!a.trim() || !b.trim()){
+    out.innerHTML = '<div class="se-mut">Enter two companies — ticker or name.</div>';
+    return;
+  }
+  /* Accepts a ticker OR a company name: "nvidia" and "NVDA" both work.
+     Resolution is server-side (/api/resolve) because the name index lives with
+     the universe — shipping 545 names into this panel just to match a string
+     would be the wrong trade. _seResolve falls back to the raw input uppercased
+     on any failure, so a plain ticker still works if the lookup is down. */
+  out.innerHTML = '<div class="loading">Looking those up…</div>';
+  var _r = await Promise.all([_seResolve(a), _seResolve(b)]);
+  a = _r[0]; b = _r[1];
+  /* Write the resolved symbols back into the boxes, so "nvidia" visibly becomes
+     NVDA and the reader is never unsure which company they got. */
+  var _iA = document.getElementById('seCmpA'), _iB = document.getElementById('seCmpB');
+  if (_iA && a) _iA.value = a;
+  if (_iB && b) _iB.value = b;
+  if (a && b && a === b){
+    out.innerHTML = '<div class="se-mut">Both resolve to the same company ('
+      + _seEsc(a) + ').</div>';
+    return;
+  }
   out.innerHTML = '<div class="loading">Comparing ' + _seEsc(a) + ' and ' + _seEsc(b) + '…</div>';
   try {
     var r = await fetch('/api/compare/' + encodeURIComponent(a) + '-vs-' + encodeURIComponent(b));

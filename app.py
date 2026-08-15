@@ -7354,6 +7354,47 @@ async def api_sector_warm(limit: int = 12, user: Optional[dict] = Depends(_curre
                          "already_cached": skipped, "failed": failed})
 
 
+@app.get("/api/resolve")
+async def api_resolve(q: str = "", limit: int = 6):
+    """Resolve a ticker OR a company name to a symbol we score.
+
+    Exists so the Compare box accepts "Nvidia" as readily as "NVDA". Resolution
+    is server-side because the name index lives with the universe; doing it in
+    the client would mean shipping 545 names to every panel that wants it.
+
+    Ranked deliberately: an exact ticker wins outright, then a name that starts
+    with the query, then a name that contains it. Without that order typing
+    "MU" returns every company with "mu" somewhere in its name before the
+    ticker the user obviously meant.
+    """
+    s = (q or "").strip().lower()
+    if not s:
+        return JSONResponse({"query": q, "match": None, "options": []})
+    exact, starts, contains = None, [], []
+    for t in (_universe_data or []):
+        tk = (t.get("ticker") or "").upper()
+        nm = (t.get("name") or "")
+        if not tk:
+            continue
+        row = {"ticker": tk, "name": nm}
+        if tk.lower() == s:
+            exact = row
+            continue
+        nl = nm.lower()
+        if nl.startswith(s):
+            starts.append(row)
+        elif s in nl or tk.lower().startswith(s):
+            contains.append(row)
+    starts.sort(key=lambda r: len(r["name"]))
+    contains.sort(key=lambda r: len(r["name"]))
+    opts = ([exact] if exact else []) + starts + contains
+    return JSONResponse(_clean({
+        "query": q,
+        "match": (opts[0] if opts else None),
+        "options": opts[:max(1, min(20, int(limit or 6)))],
+    }), headers={"Cache-Control": "public, max-age=300"})
+
+
 @app.get("/api/compare-featured")
 async def api_compare_featured():
     """The curated high-search-volume matchups, for the in-app suggestion strip.
