@@ -297,6 +297,126 @@ def compare(a: str, b: str, universe: list[dict]) -> Optional[dict]:
     }
 
 
+def pointers(c: dict, baseline: Optional[dict] = None) -> list[dict]:
+    """"What to look at next" for a comparison. NOT a recommendation.
+
+    A comparison table shows the reader ten differences and leaves them to work
+    out which ones mean something. This does the obvious analytical legwork:
+    it names the widest divergence, flags figures that are unusual enough to
+    probably have a one-off behind them, and says where in the product the
+    answer lives.
+
+    Every item is a QUESTION or a PLACE TO LOOK, never a course of action. The
+    line is deliberate and worth holding: "check whether that margin includes a
+    one-off" is research, "prefer the higher-margin one" is advice. Nothing
+    here ranks the two companies or suggests owning either.
+    """
+    A, B = c["a"]["ticker"], c["b"]["ticker"]
+    rows = {r["key"]: r for r in (c.get("rows") or [])}
+    out: list[dict] = []
+
+    def both(k):
+        r = rows.get(k) or {}
+        return r.get("a_raw"), r.get("b_raw"), r
+
+    # 1. The widest relative gap — the single thing most worth understanding.
+    widest, widest_score = None, 0.0
+    for k in ("revenue_growth_yoy", "profit_margin", "gross_margin", "pe_ratio",
+              "momentum_3m", "target_upside_pct"):
+        va, vb, r = both(k)
+        if va is None or vb is None:
+            continue
+        denom = max(abs(va), abs(vb))
+        if not denom:
+            continue
+        rel = abs(va - vb) / denom
+        if rel > widest_score:
+            widest, widest_score = r, rel
+    if widest is not None and widest_score >= 0.25:
+        out.append({
+            "kind": "gap",
+            "title": f"Start with {widest['label'].lower()}",
+            "body": (f"It is the widest divergence here — {A} {widest['a']} against "
+                     f"{B} {widest['b']}. Whatever explains that gap probably explains "
+                     f"most of the difference between these two."),
+        })
+
+    # 2. Figures far above the universe median. Deliberately does NOT assert a
+    #    cause: NVDA really does sustain a 60%+ net margin, so telling a reader
+    #    "a one-off is the likeliest explanation" would be confidently wrong.
+    #    It reports the distance from normal and says where the answer lives.
+    #    Falls back to fixed thresholds only when no baseline is supplied.
+    for k, what, fallback in (("revenue_growth_yoy", "revenue growth", 1.00),
+                              ("profit_margin", "net margin", 0.45)):
+        va, vb, r = both(k)
+        med = None
+        if baseline:
+            raw = baseline.get("growth_median" if k == "revenue_growth_yoy"
+                               else "margin_median")
+            if raw is not None:
+                med = float(raw) / 100.0        # baseline medians are percentages
+        trigger = (med * 3.0) if med not in (None, 0) else fallback
+        for tk, v in ((A, va), (B, vb)):
+            if v is None or v < trigger:
+                continue
+            shown = r["a"] if tk == A else r["b"]
+            ref = (f", against a universe median of {round(med * 100, 1)}%"
+                   if med is not None else "")
+            out.append({
+                "kind": "check",
+                "title": f"Understand {tk}'s {what}",
+                "body": (f"At {shown} it is well above the rest of the market{ref}. "
+                         f"That can be structural or it can be a cycle turn, a disposal "
+                         f"or a tax item — the income statement and the latest filing "
+                         f"distinguish the two, and which it is changes how much weight "
+                         f"this row deserves."),
+            })
+
+    # 3. Cross-sector comparisons are not like-for-like and the table cannot
+    #    show that on its own.
+    if not c.get("same_sector"):
+        out.append({
+            "kind": "context",
+            "title": "These are not like-for-like",
+            "body": (f"{A} sits in {c['a'].get('sector') or 'a different sub-sector'} and "
+                     f"{B} in {c['b'].get('sector') or 'another'}. Valuation and margin "
+                     f"norms differ between industries, so the multiple and margin rows "
+                     f"are comparing against different backdrops."),
+        })
+
+    # 4. Very close overall — the table is not the deciding evidence.
+    if (c.get("differing") or 0) <= 3 and (c.get("measured") or 0) >= 6:
+        out.append({
+            "kind": "context",
+            "title": "The numbers barely separate these",
+            "body": (f"They differ on only {c['differing']} of {c['measured']} measured "
+                     f"dimensions. Whatever distinguishes them is not in this table — "
+                     f"the filings, the product lines and the customer concentration are "
+                     f"where to look."),
+        })
+
+    # 5. Beta gap — a risk characteristic, stated as one.
+    va, vb, r = both("beta")
+    if va is not None and vb is not None and abs(va - vb) >= 0.4:
+        hi = A if va > vb else B
+        out.append({
+            "kind": "context",
+            "title": "They carry different volatility",
+            "body": (f"{hi} has the higher beta ({r['a']} vs {r['b']}), so it has "
+                     f"historically moved more than the other for the same market move. "
+                     f"That is a description of past variability, not of risk overall."),
+        })
+
+    # Order and cap. A pair of high-margin, fast-growing names can trip four
+    # "understand this figure" items and push the context off the end, which
+    # would leave the reader with a list of caveats and no orientation. The gap
+    # leads, context follows, and at most two figure checks come last.
+    gap = [p for p in out if p["kind"] == "gap"]
+    ctx = [p for p in out if p["kind"] == "context"]
+    chk = [p for p in out if p["kind"] == "check"][:2]
+    return (gap + ctx + chk)[:5]
+
+
 def universe_baseline(universe: list[dict]) -> dict[str, Any]:
     """The whole scored universe as one pseudo-sector.
 

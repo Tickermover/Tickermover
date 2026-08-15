@@ -7417,6 +7417,13 @@ async def api_compare(pair: str):
     if not c:
         raise HTTPException(status_code=404,
                             detail="Need two different tickers we score, as A-vs-B")
+    # "What to look at next" — questions and places to look, never a course of
+    # action. Computed, so it costs nothing and cannot drift from the numbers.
+    try:
+        c["pointers"] = _si.pointers(c, _si.universe_baseline(_universe_data or []))
+    except Exception as exc:
+        logger.debug("compare pointers: %s", exc)
+        c["pointers"] = []
     c["disclaimer"] = ("A comparison of measured characteristics. Which differences "
                        "matter is the reader's judgement. Not investment advice, not a "
                        "personal recommendation, and not FCA-authorised. Capital at risk.")

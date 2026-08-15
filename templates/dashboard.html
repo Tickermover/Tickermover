@@ -9097,6 +9097,26 @@ document.addEventListener('keydown', function(e){
 #panel-sect .se-tag{display:inline-block;margin-left:6px;font-size:9px;font-weight:800;
   letter-spacing:.05em;color:#9A3412;background:rgba(255,97,0,.1);border-radius:4px;padding:1px 5px}
 #panel-sect .se-legal{font-size:12px;color:#8A97A4;line-height:1.6;margin-top:16px}
+/* "What to look at next" — follow-ups, not recommendations. Styled as notes
+   rather than calls to action for exactly that reason. */
+#panel-sect .se-pt-h{font-size:15px;font-weight:700;color:#0A2F46;margin:20px 0 10px}
+#panel-sect .se-pts{display:grid;gap:1px;background:#E2E8F0;border:1px solid #E2E8F0;
+  border-radius:10px;overflow:hidden}
+#panel-sect .se-pt{background:#fff;padding:13px 15px;border-left:3px solid #CBD5E1}
+#panel-sect .se-pt-gap{border-left-color:#FF6100}
+#panel-sect .se-pt-check{border-left-color:#A45C00}
+#panel-sect .se-pt-context{border-left-color:#0E7C66}
+#panel-sect .se-pt-t{font-size:13.5px;font-weight:700;color:#0A2F46;margin-bottom:3px}
+#panel-sect .se-pt-b{font-size:13px;color:#5D6C7B;line-height:1.6}
+#panel-sect .se-pt-f{font-size:11.5px;color:#94A3B8;margin:8px 0 0;font-style:italic}
+#panel-sect .se-cs-lede{font-size:13px;color:#5D6C7B;line-height:1.6;margin:0 0 12px;max-width:82ch}
+#panel-sect .se-cs-wrap{display:grid;gap:1px;background:#E2E8F0;border:1px solid #E2E8F0;
+  border-radius:10px;overflow:hidden}
+#panel-sect .se-cs{background:#fff;padding:15px 17px}
+#panel-sect .se-cs h4{font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;
+  color:#9A3412;font-weight:800;margin:0 0 6px}
+#panel-sect .se-cs p{font-size:14px;line-height:1.7;color:#26333F;margin:0;max-width:84ch}
+#panel-sect .se-cs-src{font-size:11.5px;color:#94A3B8;margin:8px 0 0}
 </style>
 <div id="panel-sect" class="panel">
   <div class="main">
@@ -23286,6 +23306,47 @@ function _seCompareHTML(){
     + '<div id="seCmpOut"></div>';
 }
 
+/* The long-form study. Read-only here: it loads a cached study if one exists
+   and otherwise says so. Generation is admin-only and lives behind
+   ?generate=true on the API — the endpoint takes any pair, so an open generate
+   would let a caller walk the universe and turn a bounded feature unbounded. */
+async function _seLoadStudy(a, b){
+  var host = document.getElementById('seStudy');
+  if (!host) return;
+  try {
+    var r = await fetch('/api/compare/' + encodeURIComponent(a) + '-vs-'
+                        + encodeURIComponent(b) + '/study');
+    if (!r.ok) return;
+    var d = await r.json();
+    var sec = d.sections;
+    if (!sec || !Object.keys(sec).length){
+      host.innerHTML = '<div class="se-mut" style="font-size:12.5px">'
+        + 'No written study for this pair yet. The table and the follow-ups above are '
+        + 'computed live; the long-form study is researched over each company\'s filings, '
+        + 'earnings call, recent coverage and analyst consensus, and is generated per pair.'
+        + '</div>';
+      return;
+    }
+    var TITLES = {summary:'In short', positioning:'How each describes itself',
+                  products:'Products and technology', competition:'Competitive position',
+                  strategy:'Stated priorities', recent:'What has happened lately',
+                  risks:'Disclosed risks'};
+    var order = ['summary','positioning','products','competition','strategy','recent','risks'];
+    var blocks = order.filter(function(k){ return sec[k]; }).map(function(k){
+      return '<div class="se-cs"><h4>' + _seEsc(TITLES[k] || k) + '</h4><p>'
+        + _seEsc(sec[k]) + '</p></div>';
+    }).join('');
+    host.innerHTML = '<h3 class="se-pt-h">The detail</h3>'
+      + '<p class="se-cs-lede">Researched over each company\'s own SEC filing and earnings '
+      + 'call, its recent coverage and third-party analyst consensus. Every claim traces to '
+      + 'one of those or to figures we computed — nothing is written from memory, and where '
+      + 'the sources are silent it says so.</p>'
+      + '<div class="se-cs-wrap">' + blocks + '</div>'
+      + ((d.sources && d.sources.length)
+          ? '<p class="se-cs-src">Sources: ' + _seEsc(d.sources.join(', ')) + '</p>' : '');
+  } catch(e){ /* the study is a bonus; never break the comparison over it */ }
+}
+
 async function _seRunCompare(){
   var a = (document.getElementById('seCmpA')||{}).value || '';
   var b = (document.getElementById('seCmpB')||{}).value || '';
@@ -23317,10 +23378,29 @@ async function _seRunCompare(){
       ? 'Both sit in <b>' + _seEsc(c.a.sector||'the same sub-sector') + '</b>, so these figures are broadly like-for-like.'
       : 'Different sub-sectors — <b>' + _seEsc(c.a.sector||'—') + '</b> and <b>' + _seEsc(c.b.sector||'—')
         + '</b> — so valuation and margin norms differ and the rows are not strictly like-for-like.';
+    /* "What to look at next" — questions and places to look, never a course of
+       action. The line matters: "check whether that margin includes a one-off"
+       is research; "prefer the higher-margin one" would be advice, and this
+       panel does not give any. Server-computed, so it cannot drift from the
+       table above it. */
+    var pts = (c.pointers || []).map(function(p){
+      return '<div class="se-pt se-pt-' + _seEsc(p.kind) + '">'
+        + '<div class="se-pt-t">' + _seEsc(p.title) + '</div>'
+        + '<div class="se-pt-b">' + _seEsc(p.body) + '</div></div>';
+    }).join('');
+    var ptBlock = pts
+      ? '<h3 class="se-pt-h">What to look at next</h3><div class="se-pts">' + pts + '</div>'
+        + '<p class="se-pt-f">These are questions to follow up, not recommendations. '
+        + 'Nothing here suggests owning or avoiding either company.</p>'
+      : '';
+
     out.innerHTML = '<div class="se-note">' + ctx + ' They differ on <b>' + c.differing
       + ' of ' + c.measured + '</b> measured dimensions; anything within 2% shows as level.</div>'
       + '<div class="se-wrap"><table><thead><tr><th>Measure</th><th>' + _seEsc(c.a.ticker)
-      + '</th><th>' + _seEsc(c.b.ticker) + '</th></tr></thead><tbody>' + trs + '</tbody></table></div>';
+      + '</th><th>' + _seEsc(c.b.ticker) + '</th></tr></thead><tbody>' + trs + '</tbody></table></div>'
+      + ptBlock
+      + '<div id="seStudy" style="margin-top:18px"></div>';
+    _seLoadStudy(c.a.ticker, c.b.ticker);
   } catch(e){
     out.innerHTML = '<div class="se-mut">Could not run that comparison — ' + _seEsc(e.message) + '</div>';
   }
