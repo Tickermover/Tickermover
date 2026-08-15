@@ -9138,6 +9138,35 @@ document.addEventListener('keydown', function(e){
 #panel-sect .se-dg-r{font-size:12.5px;color:#26333F;line-height:1.6;margin-top:8px;
   padding-top:8px;border-top:1px dashed #E2E8F0}
 #panel-sect .se-dg-r b{color:#0E7C66}
+/* Most-searched matchups strip. Continuous marquee, duplicated track, -50%
+   translate for a seamless loop. Pauses on hover AND focus-within so a chip is
+   always clickable and reachable by keyboard; disabled outright under
+   prefers-reduced-motion, where it becomes a plain horizontal scroller. */
+#panel-sect .se-sg-h{font-size:11px;letter-spacing:.06em;text-transform:uppercase;
+  color:#94A3B8;font-weight:700;margin:18px 0 8px}
+#panel-sect .se-sg-h span{text-transform:none;letter-spacing:0;font-weight:400;color:#B6BFC9}
+#panel-sect .se-sg-mask{overflow:hidden;position:relative;
+  -webkit-mask-image:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent);
+  mask-image:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent)}
+#panel-sect .se-sg-track{display:flex;gap:9px;width:max-content;
+  animation:seSgScroll 46s linear infinite}
+#panel-sect .se-sg-mask:hover .se-sg-track,
+#panel-sect .se-sg-mask:focus-within .se-sg-track{animation-play-state:paused}
+@keyframes seSgScroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+#panel-sect .se-sg{display:inline-flex;align-items:center;gap:8px;flex:0 0 auto;
+  background:#fff;border:1px solid #E2E8F0;border-radius:99px;padding:7px 14px;
+  cursor:pointer;font-family:inherit;transition:border-color .15s,box-shadow .15s}
+#panel-sect .se-sg:hover{border-color:#0E7C66;box-shadow:0 2px 10px rgba(14,124,102,.14)}
+#panel-sect .se-sg:focus-visible{outline:2px solid #0E7C66;outline-offset:2px}
+#panel-sect .se-sg-n{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;
+  color:#0A2F46;white-space:nowrap}
+#panel-sect .se-sg-a{font-size:11px;font-weight:700;color:#0E7C66;background:#E9F5F1;
+  border-radius:4px;padding:1px 5px;font-variant-numeric:tabular-nums}
+#panel-sect .se-sg-v{font-size:9.5px;color:#B6BFC9}
+@media(prefers-reduced-motion:reduce){
+  #panel-sect .se-sg-track{animation:none}
+  #panel-sect .se-sg-mask{overflow-x:auto;-webkit-mask-image:none;mask-image:none}
+}
 </style>
 <div id="panel-sect" class="panel">
   <div class="main">
@@ -23300,10 +23329,57 @@ function sectInit(){
 }
 window.sectInit = sectInit;
 
+/* Most-searched matchups, as a continuously moving strip.
+   The pairs come from /api/compare-featured, which reads the same
+   FEATURED_COMPARISONS list the public /compare hub and the sitemap use — one
+   source, so the strip cannot advertise a matchup the site does not have.
+
+   The motion is the point (a static list of chips reads as decoration and gets
+   skipped), but it follows the same rule as the rest of the attention system:
+   it pauses on hover and on focus so a chip can actually be clicked, and it
+   stops entirely under prefers-reduced-motion, where the strip simply scrolls
+   by hand. Framed as "most searched", which is a fact about traffic — not a
+   suggestion about what is worth owning. */
+async function _seSuggestStrip(){
+  var host = document.getElementById('seSuggest');
+  if (!host) return;
+  try {
+    var r = await fetch('/api/compare-featured');
+    if (!r.ok) return;
+    var pairs = ((await r.json()) || {}).pairs || [];
+    if (!pairs.length) return;
+    var chip = function(p){
+      var meta = (p.a_alpha != null && p.b_alpha != null)
+        ? '<span class="se-sg-a">' + p.a_alpha + '</span><span class="se-sg-v">v</span>'
+          + '<span class="se-sg-a">' + p.b_alpha + '</span>'
+        : '';
+      return '<button class="se-sg" data-a="' + _seEsc(p.a) + '" data-b="' + _seEsc(p.b) + '">'
+        + '<span class="se-sg-n">' + _seEsc(p.a) + ' vs ' + _seEsc(p.b) + '</span>'
+        + meta + '</button>';
+    };
+    /* The list is rendered TWICE and the animation translates exactly -50%, so
+       the second copy is under the cursor the instant the first scrolls out and
+       the loop has no visible seam. */
+    var run = pairs.map(chip).join('');
+    host.innerHTML =
+      '<div class="se-sg-h">Most-searched matchups <span>· click to load</span></div>'
+      + '<div class="se-sg-mask"><div class="se-sg-track">' + run + run + '</div></div>';
+    host.querySelectorAll('.se-sg').forEach(function(b){
+      b.addEventListener('click', function(){
+        var A = document.getElementById('seCmpA'), B = document.getElementById('seCmpB');
+        if (A) A.value = b.getAttribute('data-a');
+        if (B) B.value = b.getAttribute('data-b');
+        _seRunCompare();
+      });
+    });
+  } catch(e){ /* the strip is a convenience; never break the panel over it */ }
+}
+
 function _seRender(){
   var host = document.getElementById('sectBody');
   if (!host) return;
   host.innerHTML = _seCompareHTML();
+  _seSuggestStrip();
   var go = host.querySelector('#seCmpGo');
   if (go) go.addEventListener('click', _seRunCompare);
   /* Wired once per render of a freshly-built input, so no data-wired guard is
@@ -23324,6 +23400,7 @@ function _seCompareHTML(){
     + '<span class="se-mut">vs</span>'
     + '<input id="seCmpB" placeholder="AMD" maxlength="6">'
     + '<button id="seCmpGo">Compare</button></div>'
+    + '<div id="seSuggest"></div>'
     + '<div id="seCmpOut"></div>';
 }
 

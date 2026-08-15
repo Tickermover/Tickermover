@@ -7354,6 +7354,33 @@ async def api_sector_warm(limit: int = 12, user: Optional[dict] = Depends(_curre
                          "already_cached": skipped, "failed": failed})
 
 
+@app.get("/api/compare-featured")
+async def api_compare_featured():
+    """The curated high-search-volume matchups, for the in-app suggestion strip.
+
+    Sourced from seo_pages.FEATURED_COMPARISONS — the same list the public
+    /compare page and the sitemap use — so the strip, the hub and the SEO pages
+    cannot drift apart. Pairs whose tickers have left the universe are dropped
+    rather than shown as dead chips.
+    """
+    import seo_pages as _seo
+    import sector_intel as _si
+    by = {(t.get("ticker") or "").upper(): t for t in (_universe_data or [])}
+    out = []
+    for a, b in getattr(_seo, "FEATURED_COMPARISONS", []):
+        if a not in by or b not in by:
+            continue
+        ca, cb = _si._alpha(by[a]), _si._alpha(by[b])
+        out.append({
+            "a": a, "b": b,
+            "a_alpha": round(ca) if ca is not None else None,
+            "b_alpha": round(cb) if cb is not None else None,
+            "same_sector": (_si._bucket_of(by[a]) == _si._bucket_of(by[b])),
+        })
+    return JSONResponse(_clean({"pairs": out}),
+                        headers={"Cache-Control": "public, max-age=300"})
+
+
 @app.get("/api/compare/{pair}/study")
 async def api_compare_study(pair: str, generate: bool = False,
                             user: Optional[dict] = Depends(_current_user)):
