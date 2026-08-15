@@ -62,8 +62,13 @@ _TIMEOUT = float(os.environ.get("ROLE_TIMEOUT", "60"))
 
 # Namespace + max age shared with app.py, so the reader and the writer cannot
 # drift apart on where this lives or how long it lives for.
-KV_NS = "business_role_v1"
+# v2: v1 capped role at 28 chars and buyers at 34, which clipped honest answers
+# ("Semiconductor inspection too", "Enterprise servers and stora"). Bumping the
+# namespace discards those rather than serving them for 180 days; regenerating
+# the few hundred already written costs well under a dollar.
+KV_NS = "business_role_v2"
 MAX_AGE_S = 180 * 86400
+ROLE_MAX, BUYERS_MAX = 34, 38
 
 _SYSTEM = (
     "You describe, in a few plain words, WHAT a listed company sells and WHO "
@@ -101,10 +106,10 @@ def _user(ticker: str, t: dict, web_ctx: str) -> str:
         '  "buyers": "<who actually pays for it>"\n'
         "}\n\n"
         "Rules:\n"
-        "- role: 1-3 words, maximum 28 characters. As SPECIFIC as the truth allows — "
+        "- role: 1-4 words, maximum 30 characters. As SPECIFIC as the truth allows — "
         "\"Optical interconnect\", \"Discount groceries\", \"Contract drug manufacturing\". "
         "Never a sector name like \"Technology\" or \"Healthcare\", and never the company's own "
-        "marketing slogan.\n"
+        "marketing slogan. A complete short phrase — never one that trails off.\n"
         "- buyers: 2-5 words, maximum 34 characters, naming the customer that provides most of "
         "the revenue — \"AI data-centre builders\", \"US households\", \"Hospitals and insurers\", "
         "\"Oil majors\". Not \"customers\" or \"businesses\".\n"
@@ -162,7 +167,10 @@ def _clean_field(v: object, limit: int) -> str:
     cut = s[:limit]
     if " " in cut:
         cut = cut[:cut.rindex(" ")]
-    return cut.rstrip(" ,;/&-")
+    cut = cut.rstrip(" ,;/&-")
+    # "Refined fuels and" is a sentence that stopped, not a label. Drop a
+    # dangling conjunction so the cut reads as a name instead of a truncation.
+    return re.sub(r"\s+(and|or|&|with|for|plus)$", "", cut, flags=re.I).rstrip(" ,;/&-")
 
 
 def fallback(t: dict | None) -> dict | None:
@@ -173,7 +181,7 @@ def fallback(t: dict | None) -> dict | None:
     than "Optical interconnect", but it is a TRUE one and it is present for
     every name in the universe — which is the whole point of this card.
     """
-    sub = _clean_field((t or {}).get("sub_sector") or (t or {}).get("sector"), 28)
+    sub = _clean_field((t or {}).get("sub_sector") or (t or {}).get("sector"), ROLE_MAX)
     if not sub:
         return None
     return {"role": sub, "buyers": "", "source": "sector"}
@@ -232,8 +240,8 @@ async def generate(ticker: str, ticker_data: dict | None) -> dict:
     parsed = _extract_json("".join(parts))
     if not isinstance(parsed, dict):
         raise RuntimeError("Unparseable role response")
-    role = _clean_field(parsed.get("role"), 28)
-    buyers = _clean_field(parsed.get("buyers"), 34)
+    role = _clean_field(parsed.get("role"), ROLE_MAX)
+    buyers = _clean_field(parsed.get("buyers"), BUYERS_MAX)
     if not role:
         raise RuntimeError("Empty role")
     if _BANNED.search(role) or _BANNED.search(buyers):
