@@ -2376,8 +2376,11 @@ table.ssx-h2h tbody td.self{color:var(--ink);font-weight:600}
 /* Sector / sub-sector columns. Capped and ellipsised: some industry labels run
    to 40 characters and would otherwise set the width of the whole table. */
 .fl-sec,.fl-sub{font-size:12px;color:#64748b;max-width:150px;overflow:hidden;
-  text-overflow:ellipsis;white-space:nowrap}
+  text-overflow:ellipsis;white-space:nowrap;cursor:pointer}
 .fl-sub{color:#94a3b8}
+/* Clickable: filters the table to that group. Underline on hover only, so 545
+   rows are not covered in link decoration at rest. */
+.fl-sec:hover,.fl-sub:hover{color:#0040c1;text-decoration:underline}
 /* Numeric columns: right-aligned with tabular figures so values line up. */
 .fund-list th.num,.fund-list td.num{text-align:right;font-variant-numeric:tabular-nums}
 /* Merged Stock column — ticker (bold) over a muted, truncated company name;
@@ -9144,34 +9147,50 @@ document.addEventListener('keydown', function(e){
 #panel-sect .se-dg-r{font-size:12.5px;color:#26333F;line-height:1.6;margin-top:8px;
   padding-top:8px;border-top:1px dashed #E2E8F0}
 #panel-sect .se-dg-r b{color:#0E7C66}
-/* Most-searched matchups strip. Continuous marquee, duplicated track, -50%
-   translate for a seamless loop. Pauses on hover AND focus-within so a chip is
-   always clickable and reachable by keyboard; disabled outright under
-   prefers-reduced-motion, where it becomes a plain horizontal scroller. */
+/* Suggested matchups — a gallery of flip tiles.
+   One tile turns every six seconds. Six at once would be a slot machine, and
+   on a financial page that reads as manufactured urgency; one is noticeable on
+   a glance and ignorable while reading. Hover pauses it, and
+   prefers-reduced-motion drops the flip for a static, fully usable grid — the
+   content never depends on the motion. */
 #panel-sect .se-sg-h{font-size:11px;letter-spacing:.06em;text-transform:uppercase;
-  color:#94A3B8;font-weight:700;margin:18px 0 8px}
+  color:#94A3B8;font-weight:700;margin:18px 0 10px}
 #panel-sect .se-sg-h span{text-transform:none;letter-spacing:0;font-weight:400;color:#B6BFC9}
-#panel-sect .se-sg-mask{overflow:hidden;position:relative;
-  -webkit-mask-image:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent);
-  mask-image:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent)}
-#panel-sect .se-sg-track{display:flex;gap:9px;width:max-content;
-  animation:seSgScroll 46s linear infinite}
-#panel-sect .se-sg-mask:hover .se-sg-track,
-#panel-sect .se-sg-mask:focus-within .se-sg-track{animation-play-state:paused}
-@keyframes seSgScroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
-#panel-sect .se-sg{display:inline-flex;align-items:center;gap:8px;flex:0 0 auto;
-  background:#fff;border:1px solid #E2E8F0;border-radius:99px;padding:7px 14px;
-  cursor:pointer;font-family:inherit;transition:border-color .15s,box-shadow .15s}
-#panel-sect .se-sg:hover{border-color:#0E7C66;box-shadow:0 2px 10px rgba(14,124,102,.14)}
-#panel-sect .se-sg:focus-visible{outline:2px solid #0E7C66;outline-offset:2px}
-#panel-sect .se-sg-n{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;
-  color:#0A2F46;white-space:nowrap}
-#panel-sect .se-sg-a{font-size:11px;font-weight:700;color:#0E7C66;background:#E9F5F1;
-  border-radius:4px;padding:1px 5px;font-variant-numeric:tabular-nums}
-#panel-sect .se-sg-v{font-size:9.5px;color:#B6BFC9}
+#panel-sect .se-gal{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+@media(max-width:1050px){#panel-sect .se-gal{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:640px){#panel-sect .se-gal{grid-template-columns:1fr}}
+#panel-sect .se-gt{perspective:900px;background:none;border:0;padding:0;cursor:pointer;
+  font-family:inherit;text-align:left}
+#panel-sect .se-gt-inner{position:relative;transform-style:preserve-3d;
+  transition:transform .64s cubic-bezier(.4,.05,.2,1);border-radius:14px}
+#panel-sect .se-gt-inner.se-flip{transform:rotateY(180deg)}
+#panel-sect .se-gt-face{background:#fff;border:1px solid #E2E8F0;border-radius:14px;
+  padding:18px 16px 13px;backface-visibility:hidden;
+  transition:border-color .15s,box-shadow .15s}
+#panel-sect .se-gt:hover .se-gt-face{border-color:#0E7C66;
+  box-shadow:0 6px 22px rgba(14,124,102,.14)}
+#panel-sect .se-gt:focus-visible .se-gt-face{outline:2px solid #0E7C66;outline-offset:2px}
+#panel-sect .se-gt-row{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px}
+#panel-sect .se-gt-side{text-align:center;min-width:0}
+#panel-sect .se-gl{position:relative;display:inline-flex;align-items:center;
+  justify-content:center;width:56px;height:56px;border-radius:14px;background:#F4F7FA;
+  overflow:hidden}
+#panel-sect .se-gl img{width:100%;height:100%;object-fit:contain}
+#panel-sect .se-gl b{display:none;font-family:'JetBrains Mono',monospace;font-size:17px;
+  font-weight:800;color:#64748B}
+#panel-sect .se-gl.se-gl-mono b{display:block}
+#panel-sect .se-gt-tk{font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:800;
+  color:#0A2F46;margin-top:8px;overflow:hidden;text-overflow:ellipsis}
+#panel-sect .se-gv{display:inline-block;margin-top:4px;font-size:11px;font-weight:700;
+  color:#0E7C66;background:#E9F5F1;border-radius:5px;padding:1px 7px;
+  font-variant-numeric:tabular-nums}
+#panel-sect .se-gt-vs{font-size:10.5px;font-weight:700;letter-spacing:.08em;
+  text-transform:uppercase;color:#B6BFC9}
+#panel-sect .se-gt-foot{margin-top:13px;padding-top:10px;border-top:1px solid #F1F5F9;
+  font-size:10.5px;color:#94A3B8;text-align:center}
 @media(prefers-reduced-motion:reduce){
-  #panel-sect .se-sg-track{animation:none}
-  #panel-sect .se-sg-mask{overflow-x:auto;-webkit-mask-image:none;mask-image:none}
+  #panel-sect .se-gt-inner{transition:none}
+  #panel-sect .se-gt-inner.se-flip{transform:none}
 }
 </style>
 <div id="panel-sect" class="panel">
@@ -11261,6 +11280,39 @@ function v2ClearSectorFilter(){
   // De-highlight every sector-map card.
   document.querySelectorAll('#sectors-grid [data-sector].sm-active').forEach(c => c.classList.remove('sm-active'));
   if (typeof v2SyncUniverseTally === 'function') v2SyncUniverseTally();
+}
+
+/* Sector / Sub-sector CELL click — filters the table to that group.
+   Added 15 Aug 2026 with the two new columns: printing a sector on every row
+   and giving no way to act on it wastes the most useful thing in the cell.
+   Reuses v2SelectSector, so a cell, a map card and the dropdown all drive one
+   filter and stay in sync — and clicking the active one clears it.
+
+   Delegated from #fd-grid and reading the ROW's data-sector / data-subsector
+   rather than the cell text, which sidesteps escaping entirely: industry names
+   contain ampersands, hyphens and apostrophes ("Consumer Cyclical", "Oil & Gas
+   E&P"), and building an inline onclick out of those is how you get a broken
+   handler on exactly the rows with the most interesting names.
+
+   stopPropagation is essential — the row itself opens the stock sheet, so
+   without it every filter click would also launch a modal over the result. */
+function v2WireSectorCells(){
+  const grid = document.getElementById('fd-grid');
+  if (!grid || grid.getAttribute('data-seccells') === '1') return;
+  grid.setAttribute('data-seccells', '1');     // once; the tbody is re-rendered
+  grid.addEventListener('click', function(ev){
+    const cell = ev.target.closest ? ev.target.closest('td.fl-sec, td.fl-sub') : null;
+    if (!cell) return;
+    const row = cell.closest('tr.fund-row');
+    if (!row) return;
+    const name = cell.classList.contains('fl-sub')
+      ? (row.dataset.subsector || row.dataset.sector || '')
+      : (row.dataset.sector || '');
+    if (!name.trim()) return;
+    ev.stopPropagation();
+    ev.preventDefault();
+    if (typeof v2SelectSector === 'function') v2SelectSector(name);
+  });
 }
 
 /* Sector-map card click — toggles the filter for that sub-sector. Clicking
@@ -16807,6 +16859,9 @@ function renderFundamentals(tickers) {
     <tbody id="fund-tbody"></tbody>
   </table>`;
   const tbody = document.getElementById('fund-tbody');
+  // Delegated on #fd-grid, which survives the chunked tbody render below, so
+  // this is attached once and keeps working for rows added later.
+  if (typeof v2WireSectorCells === 'function') v2WireSectorCells();
   const tallyEl = document.getElementById('tally-fund');
   // Show which profile is filtering the list so the count makes sense.
   const _curProfile = (typeof v2CurrentProfile === 'function') ? v2CurrentProfile() : 'aggressive';
@@ -23354,31 +23409,112 @@ async function _seSuggestStrip(){
     if (!r.ok) return;
     var pairs = ((await r.json()) || {}).pairs || [];
     if (!pairs.length) return;
-    var chip = function(p){
-      var meta = (p.a_alpha != null && p.b_alpha != null)
-        ? '<span class="se-sg-a">' + p.a_alpha + '</span><span class="se-sg-v">v</span>'
-          + '<span class="se-sg-a">' + p.b_alpha + '</span>'
-        : '';
-      return '<button class="se-sg" data-a="' + _seEsc(p.a) + '" data-b="' + _seEsc(p.b) + '">'
-        + '<span class="se-sg-n">' + _seEsc(p.a) + ' vs ' + _seEsc(p.b) + '</span>'
-        + meta + '</button>';
-    };
-    /* The list is rendered TWICE and the animation translates exactly -50%, so
-       the second copy is under the cursor the instant the first scrolls out and
-       the loop has no visible seam. */
-    var run = pairs.map(chip).join('');
-    host.innerHTML =
-      '<div class="se-sg-h">Most-searched matchups <span>· click to load</span></div>'
-      + '<div class="se-sg-mask"><div class="se-sg-track">' + run + run + '</div></div>';
-    host.querySelectorAll('.se-sg').forEach(function(b){
-      b.addEventListener('click', function(){
-        var A = document.getElementById('seCmpA'), B = document.getElementById('seCmpB');
-        if (A) A.value = b.getAttribute('data-a');
-        if (B) B.value = b.getAttribute('data-b');
-        _seRunCompare();
-      });
-    });
-  } catch(e){ /* the strip is a convenience; never break the panel over it */ }
+    _seGallery(host, pairs);
+  } catch(e){ /* the gallery is a convenience; never break the panel over it */ }
+}
+
+/* Suggested matchups as a GALLERY of flip tiles.
+   Six tiles are shown from the pool; every six seconds ONE flips to a matchup
+   that is not currently on screen, so the surface keeps offering something new
+   without the reader scrolling anything.
+
+   Why one at a time and slowly: six tiles flipping together is a slot machine,
+   and on a financial page that reads as manufactured urgency — the same reason
+   the attention system does not blink numbers. One tile every six seconds is
+   noticeable on a glance and ignorable while reading something else.
+
+   Hover pauses the rotation (nothing should change under a cursor that is about
+   to click it) and prefers-reduced-motion skips the flip entirely, leaving a
+   static grid that is fully usable — the content never depends on the motion. */
+var _seGalTimer = null, _seGalPaused = false;
+
+function _seGalTile(p){
+  var logo = function(tk){
+    var esc = _seEsc(tk);
+    return '<span class="se-gl"><img loading="lazy" alt="" '
+      + 'src="https://assets.parqet.com/logos/symbol/' + encodeURIComponent(tk) + '" '
+      + 'onerror="this.remove();this.parentNode.classList.add(&quot;se-gl-mono&quot;)">'
+      + '<b>' + esc.slice(0, 2) + '</b></span>';
+  };
+  var score = function(v){
+    return (v === null || v === undefined) ? '' : '<span class="se-gv">' + v + '</span>';
+  };
+  return ''
+    + '<div class="se-gt-face">'
+    +   '<div class="se-gt-row">'
+    +     '<div class="se-gt-side">' + logo(p.a)
+    +       '<div class="se-gt-tk">' + _seEsc(p.a) + '</div>' + score(p.a_alpha) + '</div>'
+    +     '<div class="se-gt-vs">vs</div>'
+    +     '<div class="se-gt-side">' + logo(p.b)
+    +       '<div class="se-gt-tk">' + _seEsc(p.b) + '</div>' + score(p.b_alpha) + '</div>'
+    +   '</div>'
+    +   '<div class="se-gt-foot">'
+    +     (p.same_sector ? 'same sub-sector' : 'different sub-sectors')
+    +   '</div>'
+    + '</div>';
+}
+
+function _seGallery(host, pairs){
+  if (_seGalTimer){ clearInterval(_seGalTimer); _seGalTimer = null; }
+  var SHOWN = Math.min(6, pairs.length);
+  var live = pairs.slice(0, SHOWN);        // on screen now
+  var pool = pairs.slice(SHOWN);           // waiting their turn
+
+  host.innerHTML =
+    '<div class="se-sg-h">Most-searched matchups <span>&middot; click any tile to load it</span></div>'
+    + '<div class="se-gal" id="seGal">'
+    + live.map(function(p, i){
+        return '<button class="se-gt" data-i="' + i + '" data-a="' + _seEsc(p.a) + '"'
+          + ' data-b="' + _seEsc(p.b) + '"><div class="se-gt-inner">'
+          + _seGalTile(p) + '</div></button>';
+      }).join('')
+    + '</div>';
+
+  var gal = document.getElementById('seGal');
+  if (!gal) return;
+
+  gal.addEventListener('click', function(ev){
+    var t = ev.target.closest ? ev.target.closest('.se-gt') : null;
+    if (!t) return;
+    var A = document.getElementById('seCmpA'), B = document.getElementById('seCmpB');
+    if (A) A.value = t.getAttribute('data-a');
+    if (B) B.value = t.getAttribute('data-b');
+    _seRunCompare();
+  });
+  gal.addEventListener('mouseover', function(){ _seGalPaused = true; });
+  gal.addEventListener('mouseout',  function(){ _seGalPaused = false; });
+
+  if (!pool.length) return;
+  var reduce = window.matchMedia
+    && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (reduce) return;                      // static grid, still fully usable
+
+  var turn = 0;
+  _seGalTimer = setInterval(function(){
+    /* The panel can be re-rendered or navigated away from under us; bail and
+       clear rather than animating a node that is no longer in the document. */
+    if (!document.getElementById('seGal')){
+      clearInterval(_seGalTimer); _seGalTimer = null; return;
+    }
+    if (_seGalPaused || !pool.length) return;
+    var idx = turn % SHOWN; turn++;
+    var tile = gal.querySelector('.se-gt[data-i="' + idx + '"]');
+    if (!tile) return;
+    var next = pool.shift();
+    pool.push(live[idx]);                  // retired tile goes to the back
+    live[idx] = next;
+    var inner = tile.querySelector('.se-gt-inner');
+    if (!inner) return;
+    inner.classList.add('se-flip');
+    /* Swap at the halfway point, while the tile is edge-on and its face is
+       invisible. Swapping at either end shows the content changing. */
+    setTimeout(function(){
+      inner.innerHTML = _seGalTile(next);
+      tile.setAttribute('data-a', next.a);
+      tile.setAttribute('data-b', next.b);
+    }, 320);
+    setTimeout(function(){ inner.classList.remove('se-flip'); }, 660);
+  }, 6000);
 }
 
 function _seRender(){
