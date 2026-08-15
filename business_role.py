@@ -149,8 +149,20 @@ def _extract_json(text: str) -> object:
 
 
 def _clean_field(v: object, limit: int) -> str:
+    """Normalise and cap a field, cutting on a WORD boundary.
+
+    A hard slice produced "Optical Components / Photoni" live — a truncated
+    word reads as a bug, and on a two-word card there is nowhere for it to
+    hide. Cutting back to the last space (and dropping a dangling separator)
+    costs a word and looks deliberate.
+    """
     s = re.sub(r"\s+", " ", str(v or "")).strip().strip('"').rstrip(".")
-    return s[:limit]
+    if len(s) <= limit:
+        return s
+    cut = s[:limit]
+    if " " in cut:
+        cut = cut[:cut.rindex(" ")]
+    return cut.rstrip(" ,;/&-")
 
 
 def fallback(t: dict | None) -> dict | None:
@@ -161,10 +173,10 @@ def fallback(t: dict | None) -> dict | None:
     than "Optical interconnect", but it is a TRUE one and it is present for
     every name in the universe — which is the whole point of this card.
     """
-    sub = ((t or {}).get("sub_sector") or (t or {}).get("sector") or "").strip()
+    sub = _clean_field((t or {}).get("sub_sector") or (t or {}).get("sector"), 28)
     if not sub:
         return None
-    return {"role": sub[:28], "buyers": "", "source": "sector"}
+    return {"role": sub, "buyers": "", "source": "sector"}
 
 
 async def generate(ticker: str, ticker_data: dict | None) -> dict:

@@ -7445,11 +7445,17 @@ def _role_chain(sym: str) -> Optional[dict]:
 async def _stock_role(sym: str) -> Optional[dict]:
     """{role, buyers, source, chain} for one ticker, or None if we know nothing.
 
-    Three tiers, best first. The hand-mapped chain layer wins the ROLE label
-    where it exists because a human placed it; the web-grounded card supplies
-    the buyers line either way; and the sub-sector is the floor so that the
-    card is present on all ~545 names rather than the ~50 in a mapped chain,
-    which was the whole complaint about the old "Chain position".
+    Three tiers, best first:
+      1. the web-grounded niche — company-specific by construction
+      2. the hand-mapped chain layer, for names a warm has not reached yet
+      3. the sub-sector floor, which covers 1512 of 1519 candidate names
+
+    The chain layer sits SECOND, not first, even though a human wrote it. It
+    names a layer of a thesis, not a company: the map places Keysight under
+    "Vision & sensors", which is a fair description of the layer and a poor
+    description of what Keysight sells. Under the old "Chain position" label
+    that was fine; under "Where it earns" it is a claim about the company, so
+    the company-specific answer has to win where we have one.
     """
     import business_role
     from kv_store import store as _kv
@@ -7472,10 +7478,13 @@ async def _stock_role(sym: str) -> Optional[dict]:
     base = card or business_role.fallback(target)
     if not base and not chain:
         return None
+    ai_role = (base or {}).get("role") if (base or {}).get("source") == "ai" else None
+    role = ai_role or (chain or {}).get("layer") or (base or {}).get("role")
     out = {
-        "role": (chain or {}).get("layer") or (base or {}).get("role"),
+        "role": role,
         "buyers": (base or {}).get("buyers") or "",
-        "source": (base or {}).get("source") or "chain",
+        "source": ("ai" if ai_role else ("chain" if (chain or {}).get("layer")
+                                         else (base or {}).get("source"))),
         "chain": chain,
     }
     return out if out["role"] else None
