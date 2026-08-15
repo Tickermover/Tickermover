@@ -1110,16 +1110,26 @@ async def _role_prewarm() -> None:
     days. The read path only ever serves what this loop has already written.
     """
     await asyncio.sleep(260)               # let the universe load
+    BATCH = 60
     while True:
+        delay = 2 * 3600                   # idle cadence once the universe is covered
         try:
             import business_role
             from kv_store import store as _kv
             import web_search as _ws
-            if (business_role.available() and _ws.available()
-                    and _universe_data and not _ai_over_budget()):
-                made = 0
+            if not (business_role.available() and _ws.available()):
+                delay = 6 * 3600           # unconfigured — nothing will change soon
+            elif not _universe_data or _ai_over_budget():
+                # Not ready rather than not needed: the universe can still be
+                # loading at 260s, and the breaker resets at midnight UTC. A 2h
+                # sleep here is what would leave the card on the sub-sector
+                # floor for hours after a deploy.
+                delay = 300
+            else:
+                made = fails = 0
+                first_err = ""
                 for t in list(_universe_data):
-                    if made >= 60 or _ai_over_budget():
+                    if made >= BATCH or _ai_over_budget():
                         break
                     sym = (t.get("ticker") or "").upper()
                     if not sym:
@@ -1132,13 +1142,19 @@ async def _role_prewarm() -> None:
                         await asyncio.to_thread(_kv.set, business_role.KV_NS, sym, out)
                         made += 1
                     except Exception as exc:
-                        logger.debug("role prewarm %s: %s", sym, exc)
+                        fails += 1
+                        first_err = first_err or f"{sym}: {exc}"
                     await asyncio.sleep(1.2)
-                if made:
-                    logger.info("🧭 Where-it-earns pre-warm: %d generated", made)
+                if made or fails:
+                    logger.info("🧭 Where-it-earns pre-warm: %d generated, %d failed%s",
+                                made, fails, (" (" + first_err[:160] + ")") if fails else "")
+                # A full batch means more are still missing, so come back soon;
+                # a short batch means we are nearly done.
+                delay = 300 if made >= BATCH else (1800 if made else 2 * 3600)
         except Exception as exc:
             logger.warning(f"role pre-warm cycle failed: {exc}")
-        await asyncio.sleep(2 * 3600)      # every 2h until the universe is covered
+            delay = 900
+        await asyncio.sleep(delay)
 
 
 async def _selection_prewarm() -> None:
@@ -7405,16 +7421,24 @@ async def api_sector_warm(limit: int = 12, user: Optional[dict] = Depends(_curre
 
 
 def _role_chain(sym: str) -> Optional[dict]:
-    """The hand-mapped value-chain layer for this ticker, if it has one."""
+    """The hand-mapped value-chain layer for this ticker, if it has one.
+
+    Layer names are written for the thesis map, where there is room for
+    "AI compute chips (GPUs & accelerators)". On a 150px card the parenthetical
+    just wraps to a third line, so it is dropped here — the map keeps the full
+    name, this card takes the head of it.
+    """
+    import re as _re      # app.py imports re per-function, not at module level
     for th in (_load_theses().get("theses") or []):
         if th.get("status") != "live":
             continue
         for layer in (th.get("layers") or []):
             for co in (layer.get("names") or []):
                 if (co.get("t") or "").upper() == sym:
+                    nm = _re.sub(r"\s*\([^)]*\)", "", layer.get("name") or "").strip()
                     return {"thesis": th.get("title") or th.get("slug"),
                             "slug": th.get("slug"),
-                            "layer": layer.get("name")}
+                            "layer": nm or (layer.get("name") or "")}
     return None
 
 
