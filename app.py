@@ -7312,6 +7312,48 @@ async def api_sector_intel_one(slug: str, note: bool = False):
     return JSONResponse(_clean(out))
 
 
+@app.post("/api/sector-intel/warm")
+async def api_sector_warm(limit: int = 12, user: Optional[dict] = Depends(_current_user)):
+    """Generate any missing sector notes, a bounded batch at a time. Admin only.
+
+    Needed because the in-app browse view that used to populate the note cache
+    was removed on 15 Aug (it duplicated the Sectors & Stocks panel). Nothing
+    else generates: the public /sectors pages only PEEK the cache, deliberately,
+    so that an anonymous visitor or a crawler can never trigger paid work.
+
+    Bounded on purpose. `limit` caps the batch, already-cached buckets are
+    skipped, and the AI budget breaker still applies — so a full warm is ~73
+    cheap calls once per bucket change, not an open tap. Run it after a big
+    universe shift; otherwise the cache carries itself.
+    """
+    if not user or (user.get("email") or "").lower() not in _AI_ALLOW:
+        raise HTTPException(status_code=403, detail="Admin only.")
+    import sector_intel as _si
+    import sector_narrative as _sn
+    if not _sn.available():
+        return JSONResponse({"status": "unavailable", "reason": "no API key"})
+    if _ai_over_budget():
+        return JSONResponse({"status": "skipped", "reason": "ai budget breaker tripped"})
+
+    uni = _universe_data or []
+    base = _si.universe_baseline(uni)
+    done, skipped, failed = [], 0, []
+    for s in _si.all_sectors(uni):
+        if len(done) >= max(1, min(80, int(limit or 12))):
+            break
+        if _sn.cached_note(s):
+            skipped += 1
+            continue
+        try:
+            r = await _sn.generate(s, base)
+            (done if r.get("note") else failed).append(s["slug"])
+        except Exception as exc:
+            logger.warning("sector warm %s: %s", s.get("slug"), exc)
+            failed.append(s["slug"])
+    return JSONResponse({"status": "ok", "generated": done,
+                         "already_cached": skipped, "failed": failed})
+
+
 @app.get("/api/compare/{pair}")
 async def api_compare(pair: str):
     """Head-to-head for `<A>-vs-<B>`. Measured differences only — returns no

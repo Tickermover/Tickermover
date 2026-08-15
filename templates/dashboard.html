@@ -2367,6 +2367,11 @@ table.ssx-h2h tbody td.self{color:var(--ink);font-weight:600}
 .fund-list tr.fund-row:hover td{background:#FBFAF8;border-color:#e2e8f0}
 .fund-list tr.fund-row:hover .fl-tic{color:#0040c1}
 .fl-tic{font-weight:900;color:#0f172a;font-size:14px;text-shadow:none;line-height:1.1}
+/* Sector / sub-sector columns. Capped and ellipsised: some industry labels run
+   to 40 characters and would otherwise set the width of the whole table. */
+.fl-sec,.fl-sub{font-size:12px;color:#64748b;max-width:150px;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+.fl-sub{color:#94a3b8}
 /* Numeric columns: right-aligned with tabular figures so values line up. */
 .fund-list th.num,.fund-list td.num{text-align:right;font-variant-numeric:tabular-nums}
 /* Merged Stock column — ticker (bold) over a muted, truncated company name;
@@ -8195,11 +8200,14 @@ document.addEventListener('keydown', function(e){
       <svg viewBox="0 0 24 24"><defs><linearGradient id="ahg-scan" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#818CF8"/><stop offset="1" stop-color="#4F46E5"/></linearGradient></defs><rect x="2.5" y="2.5" width="19" height="19" rx="5.5" fill="url(#ahg-scan)"/><path d="M7 7h3M7 7v3M17 7h-3M17 7v3M7 17h3M7 17v-3M17 17h-3M17 17v-3" stroke="#fff" stroke-width="1.9" fill="none" stroke-linecap="round"/><circle cx="12" cy="12" r="2.4" fill="#fff"/></svg><span>Stock Scanner</span><span class="v2-nav-tag v2-tag-new">NEW</span>
     </div>
 
-    <!-- Sectors & Compare. Reads /api/sector-intel and /api/compare, the same
-         layer the public /sectors and /compare pages render from — so the
-         in-app view and the SEO pages cannot drift apart. -->
+    <!-- Compare. Head-to-head only. The sub-sector BROWSE view that used to
+         live here was removed 15 Aug 2026: "Sectors & Stocks" above already
+         does browse-by-sector (sector map + the full table, now with Sector
+         and Sub-sector columns), so two surfaces answered the same question.
+         The sub-sector comparison table still exists publicly at /sectors and
+         via /api/sector-intel. Reads /api/compare — no arithmetic here. -->
     <div class="v2-nav-item" onclick="v2Show('sect',this);sectInit()">
-      <svg viewBox="0 0 24 24"><defs><linearGradient id="ahg-sect" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7DD3A8"/><stop offset="1" stop-color="#0E7C66"/></linearGradient></defs><rect x="2.6" y="12.4" width="4.6" height="9" rx="1.5" fill="url(#ahg-sect)"/><rect x="9.7" y="7.2" width="4.6" height="14.2" rx="1.5" fill="url(#ahg-sect)"/><rect x="16.8" y="2.6" width="4.6" height="18.8" rx="1.5" fill="url(#ahg-sect)"/></svg><span>Sectors &amp; Compare</span><span class="v2-nav-tag v2-tag-new">NEW</span>
+      <svg viewBox="0 0 24 24"><defs><linearGradient id="ahg-sect" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7DD3A8"/><stop offset="1" stop-color="#0E7C66"/></linearGradient></defs><rect x="2.6" y="12.4" width="4.6" height="9" rx="1.5" fill="url(#ahg-sect)"/><rect x="9.7" y="7.2" width="4.6" height="14.2" rx="1.5" fill="url(#ahg-sect)"/><rect x="16.8" y="2.6" width="4.6" height="18.8" rx="1.5" fill="url(#ahg-sect)"/></svg><span>Compare</span><span class="v2-nav-tag v2-tag-new">NEW</span>
     </div>
 
     <div class="v2-nav-item" onclick="v2Show('clock',this);clockInit()">
@@ -8216,7 +8224,7 @@ document.addEventListener('keydown', function(e){
 
     <div class="v2-sb-section">Research</div>
     <div class="v2-nav-item" onclick="v2Show('fund',this)">
-      <svg viewBox="0 0 24 24"><defs><linearGradient id="ahg-uni" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#34D399"/><stop offset="1" stop-color="#06B6D4"/></linearGradient></defs><circle cx="12" cy="12" r="9.3" fill="url(#ahg-uni)"/><path d="M12 2.7c2.6 2.4 2.6 16.2 0 18.6M12 2.7c-2.6 2.4-2.6 16.2 0 18.6M2.9 12h18.2" stroke="#fff" stroke-opacity=".85" stroke-width="1.25" fill="none"/></svg><span>Universe</span><span class="v2-nav-tag v2-tag-universe" id="v2-nav-universe-count">545</span>
+      <svg viewBox="0 0 24 24"><defs><linearGradient id="ahg-uni" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#34D399"/><stop offset="1" stop-color="#06B6D4"/></linearGradient></defs><circle cx="12" cy="12" r="9.3" fill="url(#ahg-uni)"/><path d="M12 2.7c2.6 2.4 2.6 16.2 0 18.6M12 2.7c-2.6 2.4-2.6 16.2 0 18.6M2.9 12h18.2" stroke="#fff" stroke-opacity=".85" stroke-width="1.25" fill="none"/></svg><span>Sectors &amp; Stocks</span><span class="v2-nav-tag v2-tag-universe" id="v2-nav-universe-count">545</span>
     </div>
     <div class="v2-nav-item" onclick="v2Show('market',this)">
       <svg viewBox="0 0 24 24"><defs><linearGradient id="ahg-mkt" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#5FC24A"/><stop offset="1" stop-color="#0D9488"/></linearGradient></defs><rect x="2.5" y="2.5" width="19" height="19" rx="5.5" fill="url(#ahg-mkt)"/><path d="M6 15l3.5-4 3 2L18 7" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Market Analysis</span>
@@ -9093,12 +9101,8 @@ document.addEventListener('keydown', function(e){
 <div id="panel-sect" class="panel">
   <div class="main">
     <div class="se-head">
-      <h2>Sectors &amp; Compare</h2>
-      <p class="se-sub">Every sub-sector measured the same way, and any two companies side by side. The first row is the whole scored universe — read every sector against it.</p>
-    </div>
-    <div class="se-tabs">
-      <button class="se-tab on" data-t="sectors">Sub-sectors</button>
-      <button class="se-tab" data-t="compare">Head-to-head</button>
+      <h2>Head-to-head</h2>
+      <p class="se-sub">Any two companies we score, measured on the same ten characteristics. To browse by sector, use <b>Sectors &amp; Stocks</b>.</p>
     </div>
     <div id="sectBody"><div class="loading">Loading sector data…</div></div>
     <p class="se-legal">Descriptive measures of each group as it stands today — quality and characteristic descriptors, not buy or sell signals, not advice, and not FCA-authorised. Capital at risk.</p>
@@ -16651,7 +16655,13 @@ function renderFundamentals(tickers) {
     const mom3m  = parseFloat(t.momentum_3m || t.momentum_1m || 0);
     const revG   = parseFloat(t.revenue_growth_yoy);
     const fcfM   = parseFloat(t.fcf_margin);
-    const sub    = t.sub_sector || t.subsector || (t.meta && t.meta.subsector) || '';
+    /* `sub_sector` is a curated theme tag carried by only ~a third of the
+       universe; `industry` is the standard classification and covers ~99%.
+       Prefer the richer tag, fall back to industry — otherwise the new
+       Sub-sector column is blank on two names in three, which is worse than
+       not having it. Same precedence as scans._cell and app._with_names. */
+    const sub    = t.sub_sector || t.subsector || (t.meta && t.meta.subsector)
+                   || t.industry || (t.meta && t.meta.industry) || '';
     const sector = t.sector || '';
     const grade  = t.grade || 'F';
     const _rs    = _rsMap[t.ticker] || 0;
@@ -16686,6 +16696,8 @@ function renderFundamentals(tickers) {
          onclick="openStockModal('${t.ticker}')">
       <td><span class="fl-pop">${Math.round(pop)}</span></td>
       <td><span class="fl-stock"><span class="fl-tic">${t.ticker}</span><span class="fl-name">${v2EscHTML(t.name || '')}</span></span></td>
+      <td class="fl-sec">${v2EscHTML(sector)}</td>
+      <td class="fl-sub" title="${v2EscHTML(sub)}">${v2EscHTML(sub)}</td>
       <td class="num fd-price" id="fl-price-${t.ticker}" style="font-size:14px;font-weight:700">${fmtP(price)}</td>
       <td class="num ${pCls(chg)}">${fmtPct(chg)}</td>
       <td class="num" style="font-weight:800;color:${_rs>=80?'#16a34a':_rs>=50?'#0f172a':'#94a3b8'}">${_rs>0?_rs:'—'}</td>
@@ -16704,6 +16716,8 @@ function renderFundamentals(tickers) {
       <tr>
         <th onclick="sortFundList('pop')">Score ▾</th>
         <th>Stock</th>
+        <th>Sector</th>
+        <th title="The curated theme tag where we have one, otherwise the standard industry classification.">Sub-sector</th>
         <th class="num" onclick="sortFundList('price')">Price</th>
         <th class="num" onclick="sortFundList('chg')">${(window._ahMarketOpen && !window._ahMarketOpen()) ? 'Last close' : 'Today %'}</th>
         <th class="num" onclick="sortFundList('rs')" title="Relative Strength (1–99) — price performance vs the market. 80+ is leadership.">RS</th>
@@ -23213,157 +23227,39 @@ window.scansInit = scansInit;
    original (two stock pages, two "Key dependencies" cards), and both times the
    copy is where the stale figures and dead links appeared. This panel is a
    view, nothing more. */
-var _seData = null, _seTab = 'sectors', _seLoading = false;
+/* Compare-only. The sub-sector BROWSE view that used to sit here was removed
+   15 Aug 2026 — "Sectors & Stocks" already does browse-by-sector, so the two
+   panels answered the same question. That is the same parallel-surface mistake
+   this file has made twice before, and I made it again here; deleting the copy
+   rather than keeping it "for reference" is the lesson from the dead
+   _render_report_page. The sub-sector table lives on at /sectors and
+   /api/sector-intel. */
 
 function _seEsc(s){ return String(s == null ? '' : s)
   .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
   .replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
 
-function _seNum(v, suffix, signed){
-  if (v === null || v === undefined) return '<span class="se-mut">—</span>';
-  if (signed) return '<span class="'+(v>=0?'se-pos':'se-neg')+'">'+(v>=0?'+':'')+v+(suffix||'')+'</span>';
-  return v + (suffix||'');
-}
-
-async function sectInit(){
+function sectInit(){
   var host = document.getElementById('sectBody');
-  if (!host || _seLoading) return;
-  if (_seData) { _seRender(); return; }          // already loaded — just repaint
-  _seLoading = true;
-  try {
-    var r = await fetch('/api/sector-intel');
-    if (!r.ok) throw new Error('HTTP ' + r.status);
-    _seData = await r.json();
-    _seRender();
-  } catch(e){
-    host.innerHTML = '<div class="empty"><div class="emoji">⚠️</div><div>Could not load sector data — '
-      + _seEsc(e.message) + '</div><button class="se-back" onclick="_seData=null;sectInit()">↻ Retry</button></div>';
-  } finally { _seLoading = false; }
+  if (!host) return;
+  if (host.getAttribute('data-ready') === '1') return;   // don't wipe a result
+  host.setAttribute('data-ready','1');
+  _seRender();
 }
 window.sectInit = sectInit;
 
-function _seWireTabs(){
-  [].forEach.call(document.querySelectorAll('#panel-sect .se-tab'), function(b){
-    if (b.getAttribute('data-wired') === '1') return;   // same duplicate-listener
-    b.setAttribute('data-wired','1');                   // trap as the Scanner pills
-    b.addEventListener('click', function(){
-      _seTab = b.getAttribute('data-t');
-      [].forEach.call(document.querySelectorAll('#panel-sect .se-tab'), function(x){
-        x.classList.toggle('on', x === b);
-      });
-      _seRender();
-    });
-  });
-}
-
 function _seRender(){
   var host = document.getElementById('sectBody');
-  if (!host || !_seData) return;
-  host.innerHTML = (_seTab === 'compare') ? _seCompareHTML() : _seSectorsHTML();
-  _seWireTabs();
-  if (_seTab === 'sectors'){
-    [].forEach.call(host.querySelectorAll('tr[data-slug]'), function(tr){
-      tr.addEventListener('click', function(){ _seOpen(tr.getAttribute('data-slug')); });
-    });
-  } else {
-    var go = host.querySelector('#seCmpGo');
-    if (go) go.addEventListener('click', _seRunCompare);
-    [].forEach.call(host.querySelectorAll('#panel-sect .se-cmp input'), function(i){
-      i.addEventListener('keydown', function(e){ if (e.key === 'Enter') _seRunCompare(); });
-    });
-  }
-}
-
-function _seSectorsHTML(){
-  var b = _seData.baseline || {}, list = _seData.sectors || [];
-  var row = function(s, isBase){
-    var med = s.alpha_median;
-    var bar = (med==null) ? '' : '<span class="se-bar"><i style="width:'
-      + Math.max(3, Math.min(100, Math.round(med))) + '%"></i></span>';
-    var led = isBase ? '<span class="se-mut">—</span>'
-      : (s.leaders||[]).map(function(l){ return _seEsc(l.ticker); }).join(' ');
-    return '<tr' + (isBase ? ' class="se-base"' : ' data-slug="'+_seEsc(s.slug)+'"') + '>'
-      + '<td><span class="se-nm">' + _seEsc(s.label) + '</span></td>'
-      + '<td>' + (s.count==null?'—':s.count) + '</td>'
-      + '<td>' + bar + _seNum(med) + '</td>'
-      + '<td>' + _seNum(s.alpha_spread) + '</td>'
-      + '<td>' + _seNum(s.breadth_strong_pct, '%') + '</td>'
-      + '<td>' + _seNum(s.momentum_3m_median, '%', true) + '</td>'
-      + '<td>' + _seNum(s.pe_median, '×') + '</td>'
-      + '<td>' + _seNum(s.growth_median, '%', true) + '</td>'
-      + '<td>' + led + '</td></tr>';
-  };
-  return '<div class="se-note"><b>Spread</b> is the gap between a group\'s 75th and 25th percentile '
-    + 'score. A narrow spread means the names move together, so the sector call is most of the '
-    + 'decision; a wide one means which name you hold matters more than the theme. '
-    + '<b>Strong</b> is the share scoring 65+. Click any row for the detail.</div>'
-    + '<div class="se-wrap"><table><thead><tr>'
-    + '<th>Sub-sector</th><th>Names</th><th>Median Alpha</th><th>Spread</th><th>Strong</th>'
-    + '<th>3m</th><th>P/E</th><th>Growth</th><th>Highest scoring</th>'
-    + '</tr></thead><tbody>' + row(b, true) + list.map(function(s){ return row(s); }).join('')
-    + '</tbody></table></div>';
-}
-
-async function _seOpen(slug){
-  var host = document.getElementById('sectBody');
-  if (!host || !slug) return;
-  host.innerHTML = '<div class="loading">Loading ' + _seEsc(slug) + '…</div>';
-  try {
-    /* note=true asks for the AI read. It is served from a durable cache keyed
-       on a COARSE bucket of the sector's stats, so this is one paid call per
-       genuine change in the sector's character — not one per view. */
-    var r = await fetch('/api/sector-intel/' + encodeURIComponent(slug) + '?note=true');
-    if (!r.ok) throw new Error('HTTP ' + r.status);
-    var d = await r.json();
-    var s = d.sector || {}, base = d.baseline || {}, note = (d.note || {}).note;
-    var st = function(k, v, bv, suf, signed){
-      if (v === null || v === undefined) return '';
-      var vs = (signed && v >= 0 ? '+' : '') + v + (suf||'');
-      var bs = (bv === null || bv === undefined) ? ''
-             : 'universe ' + (signed && bv >= 0 ? '+' : '') + bv + (suf||'');
-      return '<div class="se-st"><div class="k">'+k+'</div><div class="v">'+vs+'</div>'
-           + '<div class="b">'+bs+'</div></div>';
-    };
-    var mem = (d.members||[]).map(function(m){
-      var a = (m.smart_score != null ? m.smart_score : m.pop_score);
-      return '<tr data-tix="'+_seEsc(m.ticker)+'">'
-        + '<td><span class="se-nm">'+_seEsc(m.ticker)+'</span> <span class="se-mut">'
-        + _seEsc((m.name||'').slice(0,34))+'</span></td>'
-        + '<td>'+(a==null?'—':Math.round(a))+'</td>'
-        + '<td>'+_seEsc(m.grade||'—')+'</td>'
-        + '<td>'+_seNum(m.momentum_3m==null?null:Math.round(m.momentum_3m*10)/10,'%',true)+'</td>'
-        + '<td>'+_seNum(m.pe_ratio==null?null:Math.round(m.pe_ratio*10)/10,'×')+'</td>'
-        + '</tr>';
-    }).join('');
-    host.innerHTML =
-      '<button class="se-back" onclick="_seRender()">← All sub-sectors</button>'
-      + '<h2 style="font-size:19px;margin:0 0 12px">' + _seEsc(s.label||slug) + '</h2>'
-      + '<div class="se-stats">'
-      +   st('Names scored', s.count, base.count)
-      +   st('Median Alpha', s.alpha_median, base.alpha_median)
-      +   st('Score spread', s.alpha_spread, base.alpha_spread)
-      +   st('Scoring 65+', s.breadth_strong_pct, base.breadth_strong_pct, '%')
-      +   st('Median 3m', s.momentum_3m_median, base.momentum_3m_median, '%', true)
-      +   st('Median P/E', s.pe_median, base.pe_median, '×')
-      +   st('Median growth', s.growth_median, base.growth_median, '%', true)
-      +   st('Median margin', s.margin_median, base.margin_median, '%', true)
-      + '</div>'
-      + (note ? '<div class="se-ai"><span class="k">Our read</span>' + _seEsc(note) + '</div>' : '')
-      + '<div class="se-wrap"><table><thead><tr><th>Company</th><th>Alpha</th><th>Grade</th>'
-      + '<th>3m</th><th>P/E</th></tr></thead><tbody>' + mem + '</tbody></table></div>';
-    [].forEach.call(host.querySelectorAll('tr[data-tix]'), function(tr){
-      tr.addEventListener('click', function(){
-        var t = tr.getAttribute('data-tix');
-        var fn = window.tsOpenDrawer || window.openStockSheet || window.openStockModal;
-        if (typeof fn === 'function'){ try { fn(t); } catch(e){ console.warn('sect: open '+t, e); } }
-        else { location.href = '/stocks/' + t; }   // never a dead click
-      });
-    });
-  } catch(e){
-    host.innerHTML = '<button class="se-back" onclick="_seRender()">← All sub-sectors</button>'
-      + '<div class="empty"><div class="emoji">⚠️</div><div>Could not load that sub-sector — '
-      + _seEsc(e.message) + '</div></div>';
-  }
+  if (!host) return;
+  host.innerHTML = _seCompareHTML();
+  var go = host.querySelector('#seCmpGo');
+  if (go) go.addEventListener('click', _seRunCompare);
+  /* Wired once per render of a freshly-built input, so no data-wired guard is
+     needed here — but the inputs ARE rebuilt each render, which is precisely
+     why the Scanner's pills needed one. Keep that in mind before reusing. */
+  [].forEach.call(host.querySelectorAll('#panel-sect .se-cmp input'), function(i){
+    i.addEventListener('keydown', function(e){ if (e.key === 'Enter') _seRunCompare(); });
+  });
 }
 
 function _seCompareHTML(){
