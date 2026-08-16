@@ -25,7 +25,7 @@
 <!-- Premium typography: Inter for UI, JetBrains Mono for tabular numbers -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700;800&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700;800&family=Space+Grotesk:wght@700&family=Charis+SIL:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
 <!-- Auth gate: synchronously detect signup-flow URL param BEFORE any rendering
      so the dashboard never flashes behind the auth modal on the way in from
      the landing page. The class is removed by the auth code once resolved. -->
@@ -27031,6 +27031,22 @@ function scResultHTML(d){
 #ec-root .cc-doc .cc-p{margin:8px 0}
 #ec-root .cc-doc b{color:#0f172a;font-weight:700}
 #ec-root .cc-foot{max-width:880px;font-size:12.5px;color:#94a3b8;margin-top:10px;padding:0 4px}
+
+/* ── Reading column: Charter, the way Medium does it (16 Aug 2026) ──────
+   Sans interface, serif prose. This block is the WHOLE of the serif on the
+   app: cards, tables, figures and every label stay on Inter / JetBrains Mono
+   deliberately, because a reading serif in a dense numeric column is what
+   made the all-serif attempt fail. Sizes rise with the family — the reference
+   page's legibility is as much its 17px/1.7 measure as its typeface. */
+#ts-drawer .ov-biz-intro{font-family:'Charis SIL',Charter,Georgia,serif;font-size:16.5px;line-height:1.68}
+#ts-drawer .ov-biz-body{font-family:'Charis SIL',Charter,Georgia,serif;font-size:15.5px;line-height:1.62}
+#ts-drawer .ov-biz-callout .body{font-family:'Charis SIL',Charter,Georgia,serif;font-size:15.5px;line-height:1.62}
+#ts-drawer .setup-note{font-family:'Charis SIL',Charter,Georgia,serif;font-size:15px;line-height:1.6;font-weight:400}
+#ts-drawer .ov-col li{font-family:'Charis SIL',Charter,Georgia,serif;font-size:15px;line-height:1.6}
+#ts-drawer .ov-keypoints li{font-family:'Charis SIL',Charter,Georgia,serif;font-size:15px;line-height:1.55}
+#ts-drawer .ov-tl-what{font-family:'Charis SIL',Charter,Georgia,serif;font-size:15px;line-height:1.6}
+#ts-drawer #ovNoteCat,#ts-drawer #ovNoteRisk{font-family:'Charis SIL',Charter,Georgia,serif;font-size:15.5px;line-height:1.64}
+#ts-drawer #ovNoteCat .dd-loading,#ts-drawer #ovNoteRisk .dd-loading{font-family:var(--font-body)}
 </style>
 <script>
 (function(){
