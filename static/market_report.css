@@ -3,7 +3,7 @@
    public /desk report page. Scope everything under .ma-report so it is safe to
    drop into either host without leaking.
    ========================================================================== */
-/* One typeface across the whole report — Inter (the site's single sans,
+/* One typeface across the whole report — Public Sans (the site's sans,
    loaded by both the dashboard and /desk). Keeps the type consistent. */
 .ma-report{max-width:1080px;margin:0 auto;color:#0A2F46;
   font-family:'Public Sans',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif}

@@ -22,7 +22,7 @@
 <link rel="icon" type="image/png" sizes="192x192" href="/static/icons/icon-192.png">
 <link rel="icon" type="image/png" sizes="512x512" href="/static/icons/icon-512.png">
 <link rel="apple-touch-icon" sizes="192x192" href="/static/icons/icon-192.png">
-<!-- Premium typography: Inter for UI, JetBrains Mono for tabular numbers -->
+<!-- Typography: Public Sans (UI) - Literata (prose) - JetBrains Mono (figures) -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=JetBrains+Mono:wght@500;600;700;800&family=Space+Grotesk:wght@700&family=Literata:ital,opsz,wght@0,7..72,300;0,7..72,400;0,7..72,600;1,7..72,400&display=swap" rel="stylesheet">
@@ -110,11 +110,11 @@
      maximum readability. Body background flips to pure black with subtle
      amber light-rays. Every accent collapses to the amber/gold family. */
   /* ── Type system ──────────────────────────────────────────────────────
-     Headings: Fraunces (editorial serif). Body / UI: Inter (data-product
+     Prose: Literata (reading serif). Body / UI: Public Sans (data-product
      legibility). Numbers: JetBrains Mono (tabular). One voice per role —
      change a font here and it updates everywhere via var(). */
   /* Sans headings: the app read as a different product with serif titles
-     while the marketing site used sans. Fraunces stays on the magazine
+     while the marketing site used sans. Literata stays on the magazine
      surfaces (weekly.html, heroes.html) where the serif is the voice. */
   --font-head:'Public Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
   --font-body:'Public Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
@@ -192,7 +192,7 @@ body{
     );
   color:var(--txt);
   font-family:var(--font-body);
-  font-weight:400;   /* Inter's natural body weight */
+  font-weight:400;   /* Public Sans' natural body weight */
   font-feature-settings:'cv02','cv03','cv04','cv11';   /* refined alt glyphs */
   -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
   min-height:100vh;font-size:14px;letter-spacing:-0.005em}
@@ -247,7 +247,7 @@ table,th,td{
 .main{padding:24px 32px;max-width:1800px;margin:0 auto}
 .panel{display:none}.panel.active{display:block}
 
-/* Reusable page header for in-app panels — Fraunces serif (var(--font-head))
+/* Reusable page header for in-app panels — heading voice (var(--font-head))
    with an italic gradient accent on the emphasised word. */
 .panel-header{margin:0 0 22px;display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap}
 .panel-h-title{font-family:var(--font-head);font-weight:500;font-size:30px;color:#0A0A0A;letter-spacing:-.025em;line-height:1.1}
@@ -1320,7 +1320,7 @@ table.stmt td.stmt-note-pos{color:#15803d;font-weight:800;background:rgba(21,128
 .fd-card{background:var(--surf);border:1px solid var(--bdr);border-radius:14px;padding:16px}
 .fd-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
 /* Ticker symbol — used in fund cards AND the stock detail modal head.
-   Heading treatment in Fraunces serif (var(--font-head)). */
+   Heading treatment in the heading voice (var(--font-head)). */
 .fd-tic{font-family:var(--font-head);font-size:32px;font-weight:500;color:#0A0A0A;letter-spacing:-.02em;line-height:1}
 .fd-co{font-size:12.5px;color:#374151;margin-top:3px;margin-bottom:8px}
 .fd-price{font-size:20px;font-weight:800;text-align:right}
@@ -3092,7 +3092,7 @@ body.v2 .v2ov-card.sectors .v2ov-sector-cell{
   min-height:60px;
 }
 .v2ov-card-head{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px;gap:12px;flex-wrap:wrap}
-/* Card titles — Fraunces serif heading voice, same as the landing
+/* Card titles — heading voice, same as the landing
    page section titles and /report headlines. The whole site speaks
    one language now. */
 .v2ov-title{font-family:var(--font-head);font-weight:500;font-size:20px;color:#0A0A0A;letter-spacing:-.015em;line-height:1.15}
@@ -13098,7 +13098,7 @@ function _v2ShowDLToast(sym, state, errMsg){
   if (!toast){
     toast = document.createElement('div');
     toast.id = 'v2-dl-toast';
-    toast.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:10000;padding:12px 18px;border-radius:11px;background:#0f172a;color:#fff;font-family:"Inter",sans-serif;font-size:13px;font-weight:600;letter-spacing:-.005em;box-shadow:0 18px 40px -12px rgba(0,0,0,.5),0 0 0 1px rgba(255,255,255,.06) inset;display:flex;align-items:center;gap:10px;opacity:0;transform:translateY(8px);transition:opacity .2s,transform .25s cubic-bezier(.22,.61,.36,1);';
+    toast.style.cssText = 'position:fixed;bottom:24px;right:24px;z-index:10000;padding:12px 18px;border-radius:11px;background:#0f172a;color:#fff;font-family:'Public Sans',sans-serif;font-size:13px;font-weight:600;letter-spacing:-.005em;box-shadow:0 18px 40px -12px rgba(0,0,0,.5),0 0 0 1px rgba(255,255,255,.06) inset;display:flex;align-items:center;gap:10px;opacity:0;transform:translateY(8px);transition:opacity .2s,transform .25s cubic-bezier(.22,.61,.36,1);';
     document.body.appendChild(toast);
   }
   let html = '';
@@ -22869,7 +22869,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
   .aho-close{position:absolute;top:16px;right:16px;width:32px;height:32px;border-radius:50%;border:1px solid #e6e9f0;
     background:#fff;color:#94a3b8;font-size:15px;line-height:1;cursor:pointer;display:grid;place-items:center;transition:.15s}
   .aho-close:hover{background:#f1f5f9;color:#475569}
-  .aho-brand{display:inline-flex;align-items:center;gap:9px;font-family:var(--font-head,'Fraunces',serif);font-size:18px;font-weight:600;color:#0A0A0A;margin-bottom:18px}
+  .aho-brand{display:inline-flex;align-items:center;gap:9px;font-family:var(--font-head,'Literata',serif);font-size:18px;font-weight:600;color:#0A0A0A;margin-bottom:18px}
   /* Brand mark — same blue gradient mask as the login/app, not the legacy gold. */
   .aho-brand .aho-logo{width:30px;height:30px;flex:none;display:block;
     background:linear-gradient(135deg,#5DB3F1 0%,#2970FF 50%,#0040c1 100%);
@@ -22880,7 +22880,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
   .aho-wave{font-size:50px;display:inline-block;transform-origin:70% 70%;animation:ahoPopIn .45s ease both,ahoWave 1.7s ease-in-out .5s 3}
   @keyframes ahoPopIn{from{opacity:0;transform:scale(.5)}to{opacity:1;transform:scale(1)}}
   @keyframes ahoWave{0%,100%{transform:rotate(0)}15%{transform:rotate(16deg)}30%{transform:rotate(-10deg)}45%{transform:rotate(14deg)}60%{transform:rotate(-6deg)}75%{transform:rotate(8deg)}}
-  .aho-title{font-family:var(--font-head,'Fraunces',serif);font-weight:500;font-size:30px;color:#0A0A0A;letter-spacing:-.02em;line-height:1.12;min-height:38px;margin:14px 0 6px}
+  .aho-title{font-family:var(--font-head,'Literata',serif);font-weight:500;font-size:30px;color:#0A0A0A;letter-spacing:-.02em;line-height:1.12;min-height:38px;margin:14px 0 6px}
   .aho-caret{display:inline-block;width:2px;height:.9em;background:#2970ff;margin-left:3px;vertical-align:-2px;animation:ahoCaret 1s step-end infinite}
   @keyframes ahoCaret{50%{opacity:0}}
   .aho-sub{color:#64748b;font-size:14.5px;line-height:1.5;margin:0 auto 20px;max-width:330px;opacity:0;animation:ahoUp .5s ease .5s both}
@@ -27055,7 +27055,7 @@ function scResultHTML(d){
 
 /* ── Reading column: Charter, the way Medium does it (16 Aug 2026) ──────
    Sans interface, serif prose. This block is the WHOLE of the serif on the
-   app: cards, tables, figures and every label stay on Inter / JetBrains Mono
+   app: cards, tables, figures and every label stay on Public Sans / JetBrains Mono
    deliberately, because a reading serif in a dense numeric column is what
    made the all-serif attempt fail. Sizes rise with the family — the reference
    page's legibility is as much its 17px/1.7 measure as its typeface. */
