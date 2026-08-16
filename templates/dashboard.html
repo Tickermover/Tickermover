@@ -25,7 +25,7 @@
 <!-- Premium typography: Inter for UI, JetBrains Mono for tabular numbers -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700;800&family=Space+Grotesk:wght@700&family=Charis+SIL:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=JetBrains+Mono:wght@500;600;700;800&family=Space+Grotesk:wght@700&family=Literata:ital,opsz,wght@0,7..72,300;0,7..72,400;0,7..72,600;1,7..72,400&display=swap" rel="stylesheet">
 <!-- Auth gate: synchronously detect signup-flow URL param BEFORE any rendering
      so the dashboard never flashes behind the auth modal on the way in from
      the landing page. The class is removed by the auth code once resolved. -->
@@ -116,9 +116,9 @@
   /* Sans headings: the app read as a different product with serif titles
      while the marketing site used sans. Fraunces stays on the magazine
      surfaces (weekly.html, heroes.html) where the serif is the voice. */
-  --font-head:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
-  --font-body:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
-  --font-mono:'JetBrains Mono','Inter',ui-monospace,SFMono-Regular,Menlo,monospace;
+  --font-head:'Public Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --font-body:'Public Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  --font-mono:'JetBrains Mono','Public Sans',ui-monospace,SFMono-Regular,Menlo,monospace;
   --bg:#0A0A0A;
   --surf:#ffffff;
   --surf2:#fafaf7;
@@ -208,7 +208,7 @@ table,th,td{
 
 /* Mono for raw price tickers — gives that Bloomberg terminal feel */
 .fd-price,.hot-price,.score-big{
-  font-family:'JetBrains Mono','Inter',ui-monospace,SFMono-Regular,Menlo,monospace;
+  font-family:'JetBrains Mono','Public Sans',ui-monospace,SFMono-Regular,Menlo,monospace;
   font-feature-settings:'tnum' 1,'cv02' 1,'cv11' 1;
   font-variant-numeric:tabular-nums;
   letter-spacing:-0.02em;
@@ -1185,7 +1185,7 @@ body.v2 #sectors-grid .smh-name{font-weight:800;font-size:12.5px;color:#0f172a!i
 /* ====== FULL STATEMENTS (Financials tab) ====== */
 .stmt-host{margin-top:14px}
 .stmt-tabs{display:flex;gap:6px;margin:0 0 12px}
-.stmt-tb{font:600 12.5px/1 'Inter',system-ui,sans-serif;padding:8px 14px;border-radius:999px;
+.stmt-tb{font:600 12.5px/1 'Public Sans',system-ui,sans-serif;padding:8px 14px;border-radius:999px;
   border:1px solid rgba(10,10,10,.12);background:#fff;color:#475569;cursor:pointer}
 .stmt-tb.on{background:linear-gradient(135deg,#2970ff,#0040c1);color:#fff;border-color:transparent}
 .stmt-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
@@ -2222,16 +2222,16 @@ table.ssx-h2h tbody td.self{color:var(--ink);font-weight:600}
 }
 .ticker-chip:hover{background:rgba(255,255,255,.06)}
 .ticker-sym{
-  font-family:'JetBrains Mono','Inter',monospace;
+  font-family:'JetBrains Mono','Public Sans',monospace;
   font-size:12.5px;font-weight:800;color:#e2e8f0;letter-spacing:.02em;
 }
 .ticker-px{
-  font-family:'JetBrains Mono','Inter',monospace;
+  font-family:'JetBrains Mono','Public Sans',monospace;
   font-size:12px;font-weight:600;color:#cbd5e1;
   font-feature-settings:'tnum' 1;
 }
 .ticker-chg{
-  font-family:'JetBrains Mono','Inter',monospace;
+  font-family:'JetBrains Mono','Public Sans',monospace;
   font-size:11.5px;font-weight:700;
   padding:2px 7px;border-radius:5px;
   font-feature-settings:'tnum' 1;
@@ -2259,7 +2259,7 @@ table.ssx-h2h tbody td.self{color:var(--ink);font-weight:600}
   background:#fff;border-radius:14px;
   border:1px solid #e2e8f0;
   box-shadow:0 20px 50px rgba(10,10,10,.25),0 8px 16px rgba(10,10,10,.12);
-  overflow:hidden;font-family:'Inter',-apple-system,sans-serif;
+  overflow:hidden;font-family:'Public Sans',-apple-system,sans-serif;
   animation:cmdk-pop .22s cubic-bezier(.22,.61,.36,1);
 }
 @keyframes cmdk-pop{
@@ -2306,7 +2306,7 @@ table.ssx-h2h tbody td.self{color:var(--ink);font-weight:600}
   width:30px;height:30px;border-radius:7px;
   display:flex;align-items:center;justify-content:center;
   background:#f1f5f9;font-size:13px;flex-shrink:0;
-  font-family:'JetBrains Mono','Inter',monospace;font-weight:700;color:#475569;
+  font-family:'JetBrains Mono','Public Sans',monospace;font-weight:700;color:#475569;
 }
 .cmdk-item-icon.tab{background:#F2F1EE;color:#0040c1}
 .cmdk-item-icon.action{background:#F2F1EE;color:#0040c1}
@@ -4326,7 +4326,7 @@ body.v2-featured-only #fund-tbody tr.fund-row:not([data-featured]){display:none!
 .v2-focus-cta{
   display:inline-block;align-self:flex-end;margin-top:10px;
   padding:6px 12px;border-radius:8px;
-  font-family:'JetBrains Mono','Inter',monospace;
+  font-family:'JetBrains Mono','Public Sans',monospace;
   font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
   color:#8A93A6;background:transparent;border:1px solid rgba(255,255,255,.12);
   text-decoration:none;
@@ -4994,7 +4994,7 @@ html.v2-dark .v2-mp-mini-lbl{color:#cbd5e1}
   background:#fff;color:#0f172a;
   border-radius:16px;
   box-shadow:0 32px 80px -20px rgba(10,10,10,.55), 0 0 0 1px rgba(10,10,10,.06);
-  font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+  font-family:'Public Sans',-apple-system,BlinkMacSystemFont,sans-serif;
   transition:opacity .18s ease, transform .22s cubic-bezier(.22,.61,.36,1);
   overflow:hidden;
 }
@@ -5873,7 +5873,7 @@ html.v2-dark body.v2 .v2-topbar{
 .v2ov-kpi-name{font-size:13.5px;font-weight:800;color:#0f172a;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .v2ov-kpi-tic{font-size:11px;color:#64748b;font-weight:600;letter-spacing:.04em;margin-top:1px}
 .v2ov-kpi-row{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
-.v2ov-kpi-price{font-size:22px;font-weight:800;letter-spacing:-.02em;font-family:'JetBrains Mono','Inter',monospace;color:#0f172a}
+.v2ov-kpi-price{font-size:22px;font-weight:800;letter-spacing:-.02em;font-family:'JetBrains Mono','Public Sans',monospace;color:#0f172a}
 .v2ov-kpi-chg{font-size:12.5px;font-weight:700;padding:3px 8px;border-radius:6px;white-space:nowrap}
 .v2ov-kpi-chg.up{background:rgba(212,134,10,.12);color:#15803d}
 .v2ov-kpi-chg.dn{background:rgba(220,38,38,.10);color:#dc2626}
@@ -8536,7 +8536,7 @@ document.addEventListener('keydown', function(e){
     #upgrade-modal .up-ref-row{display:flex;gap:8px}
     #upgrade-modal .up-ref-in{flex:1;min-width:0;font-family:'JetBrains Mono',monospace;font-size:11.5px;
       color:#0A2F46;background:#fff;border:1px solid #E4E7EC;border-radius:100px;padding:9px 14px;outline:none}
-    #upgrade-modal .up-ref-in::placeholder{color:#B6BFC9;font-family:'Inter',sans-serif}
+    #upgrade-modal .up-ref-in::placeholder{color:#B6BFC9;font-family:'Public Sans',sans-serif}
     #upgrade-modal .up-ref-b{flex:none;font-family:inherit;font-size:12.5px;font-weight:500;color:#fff;
       background:#C74E00;border:1px solid #C74E00;border-radius:100px;padding:9px 16px;cursor:pointer;
       transition:background .25s,border-color .25s}
@@ -8799,7 +8799,7 @@ document.addEventListener('keydown', function(e){
       <div class="panel-h-sub">Star any stock to save it here. Persists on this browser.</div>
     </div>
     <div class="panel-h-actions">
-      <input id="watch-add-input" type="text" placeholder="Add ticker (e.g., NVDA)" maxlength="6" oninput="this.value=this.value.toUpperCase()" onkeydown="if(event.key==='Enter')addToWatchFromInput()" style="padding:8px 12px;border:1px solid rgba(10,10,10,.12);border-radius:7px;font-size:13px;font-weight:700;width:170px;text-transform:uppercase;font-family:'JetBrains Mono','Inter',monospace">
+      <input id="watch-add-input" type="text" placeholder="Add ticker (e.g., NVDA)" maxlength="6" oninput="this.value=this.value.toUpperCase()" onkeydown="if(event.key==='Enter')addToWatchFromInput()" style="padding:8px 12px;border:1px solid rgba(10,10,10,.12);border-radius:7px;font-size:13px;font-weight:700;width:170px;text-transform:uppercase;font-family:'JetBrains Mono','Public Sans',monospace">
       <button class="cta-pill compact" onclick="addToWatchFromInput()">+ Add</button>
     </div>
   </div>
@@ -13864,12 +13864,12 @@ function popGauge(score, grade, label, options) {
       <circle cx="${cx}" cy="${cy}" r="7" fill="#0f172a" stroke="#fff" stroke-width="2" />
       <!-- Score number sits high inside the arch -->
       <text x="${cx}" y="${cy - 22}" text-anchor="middle"
-            font-family="'JetBrains Mono','Inter',monospace"
+            font-family="'JetBrains Mono','Public Sans',monospace"
             font-size="32" font-weight="800" fill="#0f172a"
             font-feature-settings="'tnum' 1">${Math.round(s)}</text>
       <!-- Verdict label sits BELOW the hub, in the extended viewBox area -->
       ${lbl ? `<text x="${cx}" y="${cy + 28}" text-anchor="middle"
-            font-family="'Inter',sans-serif" font-size="13"
+            font-family="'Public Sans',sans-serif" font-size="13"
             font-weight="900" letter-spacing="0.8"
             fill="${labelColor}">${lbl.toUpperCase()}</text>` : ''}
     </svg>`;
@@ -15523,13 +15523,25 @@ async function _ovSignals(ticker){
     const pct=cx.share*100;
     const EXP={hi:'High exposure',mid:'Partial exposure',lo:'Side exposure'};
     const tone=cx.exposure==='hi'?'watch':'flat';
-    const bits=[cx.layer||null,
+    /* Lead with the MONEY, not the percentage. "49.8% of landed value" left the
+       reader asking "49.8% of what?" — the base was never on the card. The
+       headline is now "$177B of $356B" and the percentage moves to the line
+       below, where it reads as a summary of the two figures above it instead
+       of a statistic with no denominator. */
+    const pctTxt=(pct<0.1?'<0.1':pct.toFixed(1))+'%';
+    const haveMoney=(cx.ai_rev!=null && cx.chain_total);
+    /* Two clauses, not three. The layer name was the third and is the least
+       useful now that the money and the rank are both present: the value line
+       says how much, the sub says how big a slice that is. */
+    const bits=[haveMoney?(pctTxt+' of the chain'):(cx.layer||null),
                 (cx.rank&&cx.of)?(_ovOrd(cx.rank)+' of '+cx.of):null].filter(Boolean);
     // "est" belongs in the pill, not as a bare asterisk on the number — a
     // dangling * asks a question the card has no room to answer.
     const tag=(EXP[cx.exposure]||'Exposure')+(cx.est?' (est)':'');
-    set('ovSigCapex', (pct<0.1?'<0.1':pct.toFixed(1))+'% of landed value',
-        tag, bits.join(', '), tone);
+    set('ovSigCapex',
+        haveMoney ? (_ovMoney(cx.ai_rev)+' of '+_ovMoney(cx.chain_total)+' landed')
+                  : (pctTxt+' of landed value'),
+        tag, bits.join(' · '), tone);
   } else if(cx){
     // In a theme but no attributable revenue to weigh — name the theme anyway.
     const EXP={hi:'High exposure',mid:'Partial exposure',lo:'Side exposure'};
@@ -15541,6 +15553,15 @@ async function _ovSignals(ticker){
     set('ovSigCapex', 'No major capex theme', '',
         (rl&&rl.role)?('Earns from '+String(rl.role).toLowerCase()):'', 'flat');
   }
+}
+// 177443702374 -> "$177B". No decimals above a billion: on this card the
+// precision is noise, and the two figures beside each other carry the meaning.
+function _ovMoney(v){
+  const n=Math.abs(Number(v)||0);
+  if(n>=1e12) return '$'+(n/1e12).toFixed(n/1e12>=10?0:1)+'T';
+  if(n>=1e9)  return '$'+Math.round(n/1e9)+'B';
+  if(n>=1e6)  return '$'+Math.round(n/1e6)+'M';
+  return '$'+Math.round(n).toLocaleString();
 }
 // 1 -> "1st". Rank without ordinal reads as a quantity, not a position.
 function _ovOrd(n){
@@ -16631,7 +16652,7 @@ function openStockModal(ticker) {
               Reverse DCF · Expectations: ${dcf.verdict}
             </div>
             <div title="The 10-year revenue CAGR the market is currently pricing into the share price. Calculated using a Gordon-growth terminal value with 10% discount rate, 3% perpetual growth, and a ${dcf.termFcfM.toFixed(0)}% terminal FCF margin assumption."
-                 style="font-size:13px;font-weight:800;color:${dcf.color};font-family:'JetBrains Mono','Inter',monospace">
+                 style="font-size:13px;font-weight:800;color:${dcf.color};font-family:'JetBrains Mono','Public Sans',monospace">
               ${dcf.impliedGrowth.toFixed(0)}% growth/yr needed
             </div>
             <div style="margin-left:auto;font-size:10px;color:${dcf.color};font-weight:700;letter-spacing:.04em">${dcf.barLabel}</div>
@@ -18171,7 +18192,7 @@ function renderReports(tickers) {
         <input id="spotlight-input" type="text" placeholder="e.g., NVDA, MU, LITE" maxlength="6"
                oninput="this.value=this.value.toUpperCase()"
                onkeydown="if(event.key==='Enter')spotlightOpen()"
-               style="padding:10px 14px;border:1px solid rgba(0,0,0,.12);border-radius:8px;font-size:14px;font-weight:700;width:180px;text-transform:uppercase;font-family:'JetBrains Mono','Inter',monospace">
+               style="padding:10px 14px;border:1px solid rgba(0,0,0,.12);border-radius:8px;font-size:14px;font-weight:700;width:180px;text-transform:uppercase;font-family:'JetBrains Mono','Public Sans',monospace">
         <button onclick="spotlightOpen()"
                 style="padding:10px 18px;background:linear-gradient(135deg,#15803d,#F5A623);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:800;cursor:pointer;box-shadow:0 4px 12px rgba(245,166,35,.3)">
           Open tear sheet →
@@ -18413,7 +18434,7 @@ function openBlogArticle(articleId) {
               .rr-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
               .rr-cell{background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:10px 12px}
               .rr-cell .lbl{font-size:10.5px;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
-              .rr-cell .val{font-size:15px;font-weight:800;color:#0a0a0a;margin-top:3px;font-family:'JetBrains Mono','Inter',monospace;font-feature-settings:'tnum' 1}
+              .rr-cell .val{font-size:15px;font-weight:800;color:#0a0a0a;margin-top:3px;font-family:'JetBrains Mono','Public Sans',monospace;font-feature-settings:'tnum' 1}
               .rr-list{list-style:none;margin:0;padding:0}
               .rr-list li{padding:9px 0;border-bottom:1px solid #f1f5f9;font-size:14px;color:#1f2937;line-height:1.55;display:flex;gap:10px}
               .rr-list li:last-child{border-bottom:none}
@@ -22874,12 +22895,12 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     background:linear-gradient(135deg,#2970ff,#0040c1);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
   .aho-perk span{display:block;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:#94a3b8;font-weight:700;margin-top:2px}
   .aho-q{display:block;text-align:left;font-weight:700;font-size:12.5px;letter-spacing:.01em;color:#0A0A0A;margin-bottom:8px;opacity:0;animation:ahoUp .5s ease .68s both}
-  .aho-input{width:100%;box-sizing:border-box;padding:14px 16px;font-size:16px;font-family:var(--font-body,'Inter',sans-serif);
+  .aho-input{width:100%;box-sizing:border-box;padding:14px 16px;font-size:16px;font-family:var(--font-body,'Public Sans',sans-serif);
     border:1px solid #d7dee8;border-radius:13px;background:#fff;color:#0A0A0A;margin-bottom:10px;outline:none;
     opacity:0;animation:ahoUp .5s ease .8s both;transition:border-color .15s,box-shadow .15s}
   .aho-input:focus{border-color:#2970ff;box-shadow:0 0 0 3px rgba(41,112,255,.16)}
   .aho-err{color:#dc2626;font-size:12.5px;font-weight:600;min-height:16px;text-align:left;margin-bottom:4px}
-  .aho-cta{width:100%;border:0;cursor:pointer;padding:15px;border-radius:13px;font-family:var(--font-body,'Inter',sans-serif);
+  .aho-cta{width:100%;border:0;cursor:pointer;padding:15px;border-radius:13px;font-family:var(--font-body,'Public Sans',sans-serif);
     font-size:15.5px;font-weight:800;color:#fff;letter-spacing:.01em;
     background:linear-gradient(135deg,#2970ff,#0040c1);box-shadow:0 10px 24px -10px rgba(0,64,193,.5);
     opacity:0;animation:ahoUp .5s ease .92s both;transition:transform .12s,box-shadow .15s}
@@ -27038,14 +27059,14 @@ function scResultHTML(d){
    deliberately, because a reading serif in a dense numeric column is what
    made the all-serif attempt fail. Sizes rise with the family — the reference
    page's legibility is as much its 17px/1.7 measure as its typeface. */
-#ts-drawer .ov-biz-intro{font-family:'Charis SIL',Charter,Georgia,serif;font-size:16.5px;line-height:1.68}
-#ts-drawer .ov-biz-body{font-family:'Charis SIL',Charter,Georgia,serif;font-size:15.5px;line-height:1.62}
-#ts-drawer .ov-biz-callout .body{font-family:'Charis SIL',Charter,Georgia,serif;font-size:15.5px;line-height:1.62}
-#ts-drawer .setup-note{font-family:'Charis SIL',Charter,Georgia,serif;font-size:15px;line-height:1.6;font-weight:400}
-#ts-drawer .ov-col li{font-family:'Charis SIL',Charter,Georgia,serif;font-size:15px;line-height:1.6}
-#ts-drawer .ov-keypoints li{font-family:'Charis SIL',Charter,Georgia,serif;font-size:15px;line-height:1.55}
-#ts-drawer .ov-tl-what{font-family:'Charis SIL',Charter,Georgia,serif;font-size:15px;line-height:1.6}
-#ts-drawer #ovNoteCat,#ts-drawer #ovNoteRisk{font-family:'Charis SIL',Charter,Georgia,serif;font-size:15.5px;line-height:1.64}
+#ts-drawer .ov-biz-intro{font-family:'Literata',Georgia,serif;font-size:16.5px;line-height:1.68}
+#ts-drawer .ov-biz-body{font-family:'Literata',Georgia,serif;font-size:15.5px;line-height:1.62}
+#ts-drawer .ov-biz-callout .body{font-family:'Literata',Georgia,serif;font-size:15.5px;line-height:1.62}
+#ts-drawer .setup-note{font-family:'Literata',Georgia,serif;font-size:15px;line-height:1.6;font-weight:400}
+#ts-drawer .ov-col li{font-family:'Literata',Georgia,serif;font-size:15px;line-height:1.6}
+#ts-drawer .ov-keypoints li{font-family:'Literata',Georgia,serif;font-size:15px;line-height:1.55}
+#ts-drawer .ov-tl-what{font-family:'Literata',Georgia,serif;font-size:15px;line-height:1.6}
+#ts-drawer #ovNoteCat,#ts-drawer #ovNoteRisk{font-family:'Literata',Georgia,serif;font-size:15.5px;line-height:1.64}
 #ts-drawer #ovNoteCat .dd-loading,#ts-drawer #ovNoteRisk .dd-loading{font-family:var(--font-body)}
 </style>
 <script>

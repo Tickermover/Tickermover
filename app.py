@@ -1100,6 +1100,41 @@ async def _bottom_line_prewarm() -> None:
         await asyncio.sleep(3 * 3600)      # every 3h
 
 
+async def _scan_prewarm() -> None:
+    """Build the dilution and Crowd Clock scans without waiting for a visitor.
+
+    Both were LAZY — built only when someone opened the Safeguards or Crowd
+    Clock panel — and both live in memory, so every redeploy wiped them. The
+    overview's Dilution and Hype check cards read that in-memory state and hide
+    when it is missing, which is why two of the three cards were invisible on a
+    fresh container and stayed that way until a user happened to open an
+    unrelated panel. Reported by the user 16 Aug 2026.
+
+    Free work: dilution reads filings, the clock reads price history. No AI, so
+    no budget gate — just once at startup and then on the same TTLs the panels
+    already use.
+    """
+    await asyncio.sleep(150)                 # let the universe load first
+    while True:
+        try:
+            if _universe_data:
+                if (_dil_scan.get("status") != "warming"
+                        and (_dil_scan.get("status") != "ready"
+                             or (time.time() - (_dil_scan.get("at") or 0)) >= _DIL_TTL)):
+                    async with _dil_lock:
+                        if _dil_scan.get("status") != "warming":
+                            asyncio.create_task(_build_dil_scan())
+                if (_crowd_scan.get("status") != "warming"
+                        and (_crowd_scan.get("status") != "ready"
+                             or (time.time() - (_crowd_scan.get("at") or 0)) >= _CROWD_SCAN_TTL)):
+                    async with _crowd_scan_lock:
+                        if _crowd_scan.get("status") != "warming":
+                            asyncio.create_task(_build_crowd_scan())
+        except Exception as exc:
+            logger.warning(f"scan pre-warm cycle failed: {exc}")
+        await asyncio.sleep(900)
+
+
 async def _role_prewarm() -> None:
     """Background loop: fill the "Where it earns" card for every scored stock.
 
@@ -1267,6 +1302,7 @@ async def lifespan(app: FastAPI):
         asyncio.create_task(_bottom_line_prewarm()), # Haiku-polish bottom_lines (cache-first, 15d)
         asyncio.create_task(_selection_prewarm()),   # keep AI conviction/thesis warm for House View
         asyncio.create_task(_role_prewarm()),        # "Where it earns" card for the whole universe
+        asyncio.create_task(_scan_prewarm()),        # dilution + Crowd Clock, so the overview cards exist
         asyncio.create_task(_mgmt_qa_prewarm()),     # Fact Check AI answers for prime + best-ideas names
         asyncio.create_task(_event_brief_prewarm()), # earnings briefs for the Company Events timeline
         asyncio.create_task(_daily_brief_email_task()),  # free daily-brief email (acquisition channel)
@@ -7472,6 +7508,10 @@ def _stock_capex(sym: str) -> Optional[dict]:
             "exposure": row.get("exposure"),
             "share": row.get("share"),
             "ai_rev": row.get("ai_rev"),
+            # The chain total, so the card can show the money rather than only
+            # a percentage. "49.8%" of an unstated base means nothing; "$177B
+            # of $356B" is the fact the reader actually wanted.
+            "chain_total": sum(x["ai_rev"] for x in ranked) or None,
             "rank": ranked.index(row) + 1,
             "of": len(ranked),
             "est": bool(row.get("rev_est")),

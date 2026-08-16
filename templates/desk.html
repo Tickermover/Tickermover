@@ -8,14 +8,14 @@
   <link rel="icon" type="image/svg+xml" href="/static/brand/tickermover-mark.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/market_report.css?v=20260811b">
   <style>
     :root{--blue:#14587D;--ink:#0A2F46;--raisin:#22202a}
     *{box-sizing:border-box}
     /* One typeface for the page — Instrument Sans (Fraunces only for accents) */
     body{margin:0;background:#fcece2;color:var(--ink);
-      font-family:'Inter',system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
+      font-family:'Public Sans',system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased}
     /* Site backdrop image (fixed, behind all content).
        Optimised derivatives of static/3.jpg — WebP with a JPEG fallback. */
     .desk-bg{position:fixed;inset:0;z-index:-1;pointer-events:none;
@@ -30,7 +30,7 @@
       border-bottom:1px solid rgba(10,47,70,.08)}
     .desk-top-in{max-width:1080px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 18px}
     .brand{display:flex;align-items:center;gap:11px;text-decoration:none;
-      font-family:'Inter',sans-serif;font-weight:600;font-size:20px;letter-spacing:-.022em}
+      font-family:'Public Sans',sans-serif;font-weight:600;font-size:20px;letter-spacing:-.022em}
     .brand .mark{width:32px;height:32px;flex:none;display:block;
       background:linear-gradient(135deg,#8FBFDD 0%,#14587D 50%,#0A2F46 100%);
       -webkit-mask:url('/static/brand/tickermover-mark-mask.svg') center/contain no-repeat;
@@ -39,22 +39,22 @@
     .brand .wm{background:linear-gradient(90deg,#10293D 0%,#10293D 42%,#1c43a3 62%,#0A2F46 100%);
       -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}
     .desk-cta{display:inline-flex;align-items:center;gap:7px;background:var(--blue);color:#fff;text-decoration:none;
-      font-family:'Inter',sans-serif;font-size:13.5px;font-weight:600;padding:9px 16px;border-radius:10px;box-shadow:0 6px 16px rgba(20,88,125,.25)}
+      font-family:'Public Sans',sans-serif;font-size:13.5px;font-weight:600;padding:9px 16px;border-radius:10px;box-shadow:0 6px 16px rgba(20,88,125,.25)}
     .desk-cta:hover{background:#1f5fe0}
     .desk-hero{max-width:1080px;margin:0 auto;padding:26px 18px 4px}
-    .desk-hero .eyebrow{font-family:'Inter',sans-serif;font-size:11px;font-weight:600;letter-spacing:.16em;color:var(--blue);text-transform:uppercase}
-    .desk-hero h1{font-family:'Inter',sans-serif;font-weight:600;font-size:28px;letter-spacing:-.02em;margin:6px 0 6px;line-height:1.12}
-    .desk-hero h1 em{font-family:'Inter',sans-serif;font-style:italic;font-weight:600;color:var(--blue)}
+    .desk-hero .eyebrow{font-family:'Public Sans',sans-serif;font-size:11px;font-weight:600;letter-spacing:.16em;color:var(--blue);text-transform:uppercase}
+    .desk-hero h1{font-family:'Public Sans',sans-serif;font-weight:600;font-size:28px;letter-spacing:-.02em;margin:6px 0 6px;line-height:1.12}
+    .desk-hero h1 em{font-family:'Public Sans',sans-serif;font-style:italic;font-weight:600;color:var(--blue)}
     .desk-hero p{font-size:14px;color:#475569;max-width:660px;line-height:1.6;margin:0;font-weight:400}
     /* Pre/Post switch */
     .desk-switch{display:inline-flex;gap:4px;background:#e9eef7;border:1px solid rgba(10,47,70,.07);border-radius:12px;padding:4px;margin:18px 0 4px}
-    .desk-switch button{font-family:'Inter',sans-serif;font-size:13.5px;font-weight:600;color:#5d6c7b;background:none;border:0;border-radius:9px;padding:9px 18px;cursor:pointer;transition:.14s}
+    .desk-switch button{font-family:'Public Sans',sans-serif;font-size:13.5px;font-weight:600;color:#5d6c7b;background:none;border:0;border-radius:9px;padding:9px 18px;cursor:pointer;transition:.14s}
     .desk-switch button .d{display:block;font-size:12.5px;font-weight:500;color:#94a3b8;margin-top:1px}
     .desk-switch button.on{background:#fff;color:var(--blue);box-shadow:0 2px 8px rgba(0,40,120,.12)}
     .desk-switch button.on .d{color:#7c93b4}
     .desk-main{padding:8px 0 0}
     .desk-foot{max-width:1080px;margin:0 auto;padding:8px 18px 50px;text-align:center}
-    .desk-foot a{color:var(--blue);text-decoration:none;font-weight:600;font-family:'Inter',sans-serif}
+    .desk-foot a{color:var(--blue);text-decoration:none;font-weight:600;font-family:'Public Sans',sans-serif}
 
     /* ── Glass floating box — geometry/inner/readability come from .ma-glass
        in market_report.css; only desk-page chrome lives here. ──────────── */

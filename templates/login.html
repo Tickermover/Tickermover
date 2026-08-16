@@ -18,7 +18,7 @@ try{var _r=new URLSearchParams(location.search).get('ref');
     if(_r) localStorage.setItem('ah_ref', String(_r).trim().toUpperCase().slice(0,12));}catch(e){}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700;800&family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;700;800&family=Public+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
 
 <style>
 /* ════════════════════════════════════════════════════════════════
@@ -58,7 +58,7 @@ button,input,select,textarea{font-family:inherit;font-size:inherit;line-height:i
 html,body{height:100%}
 body{
   background:var(--bg);color:var(--ink);
-  font-family:'Inter',system-ui,sans-serif;font-weight:400;
+  font-family:'Public Sans',system-ui,sans-serif;font-weight:400;
   -webkit-font-smoothing:antialiased;line-height:1.5;overflow:hidden;
 }
 a{color:inherit;text-decoration:none}
@@ -152,7 +152,7 @@ a{color:inherit;text-decoration:none}
 }
 .left-brand{
   display:inline-flex;align-items:center;gap:10px;
-  font-family:'Space Grotesk','Inter',sans-serif;font-weight:700;font-size:18px;letter-spacing:-.02em;
+  font-family:'Space Grotesk','Public Sans',sans-serif;font-weight:700;font-size:18px;letter-spacing:-.02em;
   color:#fff;margin-bottom:6px;
 }
 .left-brand-mark{width:32px;height:32px;flex:none;display:inline-flex;align-items:center}
@@ -169,7 +169,7 @@ a{color:inherit;text-decoration:none}
 .left-brand .brand-m polyline{stroke:#8FA0F0}
 .brand-sm .brand-m polyline{stroke:#4A5BC4}
 .left-headline{
-  font-family:'Inter',sans-serif;font-weight:500;font-size:24px;line-height:1.12;
+  font-family:'Public Sans',sans-serif;font-weight:500;font-size:24px;line-height:1.12;
   letter-spacing:-.025em;color:#fff;margin-bottom:6px;max-width:440px;
 }
 /* WAS: background:var(--blue-grad) clipped to text. That gradient runs
@@ -208,9 +208,9 @@ a{color:inherit;text-decoration:none}
   color:var(--text-dark);
 }
 .form-wrap{width:100%;max-width:360px}
-.brand-sm{display:none;align-items:center;gap:10px;font-family:'Space Grotesk','Inter',sans-serif;font-weight:700;font-size:20px;letter-spacing:-.02em;color:var(--text-dark);margin-bottom:22px}
+.brand-sm{display:none;align-items:center;gap:10px;font-family:'Space Grotesk','Public Sans',sans-serif;font-weight:700;font-size:20px;letter-spacing:-.02em;color:var(--text-dark);margin-bottom:22px}
 @media (max-width:880px){.brand-sm{display:inline-flex}}
-.form-title{font-family:'Inter',sans-serif;font-weight:400;font-size:30px;letter-spacing:-.02em;color:var(--text-dark);margin-bottom:6px;text-align:center}
+.form-title{font-family:'Public Sans',sans-serif;font-weight:400;font-size:30px;letter-spacing:-.02em;color:var(--text-dark);margin-bottom:6px;text-align:center}
 .form-sub{font-size:13.5px;font-weight:400;color:var(--grey-2);margin-bottom:24px;text-align:center}
 /* Sign in / Create account segmented toggle — pill, matching the billing
    toggle that now heads the landing page's pricing panel. */
