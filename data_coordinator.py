@@ -1659,9 +1659,20 @@ class DataCoordinator:
                             # Column names vary by yfinance version
                             actual   = _safe_float(row.get("epsActual")   or row.get("Reported EPS"))
                             estimate = _safe_float(row.get("epsEstimate") or row.get("EPS Estimate"))
-                            surp_pct = _safe_float(row.get("surprisePercent") or row.get("Surprise(%)"))
-                            if surp_pct is None and actual is not None and estimate is not None and estimate != 0:
+                            # SCALE TRAP: yfinance's `surprisePercent` is a
+                            # FRACTION (0.0365 = 3.65%) while the FMP branch
+                            # above stores a true percent. Taking it raw put two
+                            # scales in one field, and the Recent Earnings card
+                            # rendered an 8.8% beat as "+0.1%". Compute from
+                            # actual vs estimate wherever possible — that is
+                            # unambiguous — and rescale the vendor figure only
+                            # when we cannot.
+                            if actual is not None and estimate is not None and estimate != 0:
                                 surp_pct = round((actual - estimate) / abs(estimate) * 100, 2)
+                            else:
+                                raw = _safe_float(row.get("surprisePercent"))
+                                surp_pct = (round(raw * 100, 2) if raw is not None
+                                            else _safe_float(row.get("Surprise(%)")))
                             beat = (surp_pct > 0) if surp_pct is not None else None
                             eps_quarters.append({
                                 "date":         str(idx)[:10],

@@ -26785,21 +26785,52 @@ function scResultHTML(d){
   }
 
   /* ── earnings + news ── */
+  /* Recent earnings.
+     TWO BUGS lived here until 17 Aug 2026, both visible on the card at once:
+
+     1. THE DATE WAS THE WRONG KIND OF DATE. eps_quarters[].date is the fiscal
+        QUARTER END, not the day the company reported. AMAT's quarter ended
+        31 Jul and it reported on 13 Aug; four names whose quarters ended
+        30 Jun all showed "30 Jun" even though they reported through late July
+        and August. The panel therefore looked six weeks stale and read as
+        "nothing has reported lately" — when in fact everything had.
+        `last_earnings_date` (from _parse_yf_earnings) IS the report date, so
+        prefer it. It only covers ~400 of 1,583 names, so where it is missing
+        we still show the quarter end but SAY that is what it is, rather than
+        passing it off as a report date.
+
+     2. THE SURPRISE WAS ~100x TOO SMALL. yfinance's `surprisePercent` is a
+        FRACTION (0.0365) while the FMP branch stores a true percent (3.65),
+        and the renderer formatted whichever arrived as a percent — so an 8.8%
+        beat printed as "+0.1%". Recomputing from actual vs estimate, which
+        are both on the card already, is immune to which source filled the row.
+        Where they are missing we cannot know the scale, so we print nothing
+        rather than a number that might be off by two orders of magnitude. */
   function recentEarningsRows(tickers){
     const now=new Date(); now.setHours(0,0,0,0); const items=[];
+    const parse=s=>{ if(!s) return null; const d=new Date(String(s).slice(0,10)+'T00:00:00'); return isNaN(d)?null:d; };
     tickers.forEach(t=>{ const all=(t.eps_quarters||[]).filter(q=>q&&q.date); if(!all.length)return;
       const sorted=[...all].sort((a,b)=>(b.date||'').localeCompare(a.date||'')); const q=sorted[0];
-      const d=new Date(String(q.date).slice(0,10)+'T00:00:00'); if(isNaN(d)||d>now)return; items.push({t,q,d}); });
+      const qEnd=parse(q.date); if(!qEnd)return;
+      const rep=parse(t.last_earnings_date);
+      // Only trust last_earnings_date for THIS quarter — an old report date
+      // sitting in front of a newer quarter would be worse than the quarter end.
+      const exact=!!(rep && rep>=qEnd);
+      const d=exact?rep:qEnd;
+      if(d>now)return; items.push({t,q,d,exact}); });
     items.sort((a,b)=>b.d-a.d); const top5=items.slice(0,5);
     if(!top5.length) return '<div class="bn-empty">No recent earnings reports in this view.</div>';
-    return top5.map(({t,q,d})=>{
+    return top5.map(({t,q,d,exact})=>{
       const dd=String(d.getDate()).padStart(2,'0'), mm=d.toLocaleDateString('en-US',{month:'short'});
       const beat=q.beat===true, miss=q.beat===false, tag=beat?'beat':miss?'miss':'beat', tagText=beat?'BEAT':miss?'MISS':'—';
-      const surp=q.surprise_pct!=null?(q.surprise_pct>=0?'+':'')+q.surprise_pct.toFixed(1)+'%':'—', surpcls=q.surprise_pct==null?'':(q.surprise_pct>=0?'pos':'neg');
-      const actual=q.actual!=null?'$'+q.actual.toFixed(2):'—', est=q.estimate!=null?'$'+q.estimate.toFixed(2):'—';
+      const a=q.actual, e=q.estimate;
+      const pct=(a!=null&&e!=null&&e!==0)?((a-e)/Math.abs(e)*100):null;
+      const surp=pct==null?'':(pct>=0?'+':'')+pct.toFixed(1)+'%', surpcls=pct==null?'':(pct>=0?'pos':'neg');
+      const actual=a!=null?'$'+a.toFixed(2):'—', est=e!=null?'$'+e.toFixed(2):'—';
       return '<div class="tl-item" onclick="tsOpenDrawer(\''+escHTML(t.ticker)+'\')"><div class="tl-date"><strong>'+dd+'</strong>'+mm+'</div>'+logoHTML(t.ticker,'sm')+
         '<div class="tl-body"><div class="tl-r1"><span class="tl-tic">'+escHTML(t.ticker)+'</span><span class="tl-name">'+escHTML((t.name||'').slice(0,22))+'</span><span class="tl-tag '+tag+'">'+tagText+'</span></div>'+
-        '<div class="tl-r2">EPS '+actual+' vs '+est+' est · <span class="surp '+surpcls+'">'+surp.replace('-','−')+'</span></div></div></div>';
+        '<div class="tl-r2">'+(exact?'':'Quarter end · ')+'EPS '+actual+' vs '+est+' est'+
+        (surp?' · <span class="surp '+surpcls+'">'+surp.replace('-','−')+'</span>':'')+'</div></div></div>';
     }).join('');
   }
   function upcomingEarningsRows(tickers){
