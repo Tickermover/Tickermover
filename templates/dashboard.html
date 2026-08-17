@@ -957,6 +957,17 @@ body.v2 #sectors-grid .smh-name{font-weight:800;font-size:12.5px;color:#0f172a!i
 #panel-heroes .pip-note{font-size:12.5px;font-weight:400;line-height:1.6;color:#94a3b8;margin:18px 0 0}
 
 /* Thesis Maps ───────────────────────────────────────── */
+/* Chain-map coverage. The count is the point of the line: ten maps that
+   reach 105 of 545 names read as a sketch, and the reader deserves to know
+   which they are looking at. `counted` and `touching` are kept visually
+   distinct because only the first sets the published share. */
+.tm-cov-head{font-size:12.5px;line-height:1.6;color:#5D6C7B;background:#fff;
+  border:1px solid rgba(12,26,52,.08);border-radius:10px;padding:10px 13px;margin:0 0 14px}
+.tm-cov-head b{color:#0A2F46}
+.tm-cov{display:flex;align-items:baseline;gap:7px;flex-wrap:wrap;margin:10px 0 0;
+  padding-top:9px;border-top:1px solid rgba(12,26,52,.07)}
+.tm-cov-n{font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:700;color:#0A2F46}
+.tm-cov-b{font-size:10.5px;color:#94A3B8;letter-spacing:.01em}
 #panel-theses .tm-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:15px}
 #panel-theses .tm-card{display:flex;flex-direction:column;min-height:206px;background:#fff;border:1px solid #E4E7EC;
   border-radius:16px;padding:21px;text-decoration:none;color:inherit;box-shadow:0 1px 3px rgba(10,31,54,.05);
@@ -19784,6 +19795,7 @@ function _pipCloseProfile(){
   if (b) b.classList.remove('on');
 }
 
+var _tmRoster = null;
 async function loadTheses(){
   var host = document.getElementById('tmBody');
   if (!host) return;
@@ -19791,6 +19803,13 @@ async function loadTheses(){
   try {
     var r = await fetch('/api/theses', { cache: 'no-store' });
     _tmData = await r.json();
+    /* Coverage rides along: how much of the scored universe each map reaches.
+       Ten maps covering 105 of 545 names looked like ten small islands; the
+       count is what tells a reader whether a map is a sketch or a census. */
+    try {
+      var rr = await fetch('/api/chain-roster');
+      _tmRoster = await rr.json();
+    } catch(e){ _tmRoster = null; }
   } catch(e){
     host.innerHTML = '<div class="sc-empty">Couldn\u2019t load the thesis maps. Try again shortly.</div>';
     return;
@@ -19805,7 +19824,22 @@ function _tmRender(d){
     host.innerHTML = '<div class="sc-empty">No thesis maps published yet.</div>';
     return;
   }
-  host.innerHTML = '<div class="tm-grid">' + list.map(function(t){
+  var cov = {};
+  if (_tmRoster && Array.isArray(_tmRoster.chains)){
+    _tmRoster.chains.forEach(function(c){ cov[c.slug] = c; });
+  }
+  var summary = '';
+  if (_tmRoster && _tmRoster.scored){
+    /* State the uncovered share too. Most of the universe is banks, insurers,
+       retailers and property, which sit in no capital-spending chain — saying
+       so is the honest reading and stops the maps looking incomplete. */
+    summary = '<div class="tm-cov-head"><b>' + _tmRoster.placed + '</b> of ' +
+      _tmRoster.scored + ' scored companies sit in one of these chains. The other ' +
+      _tmRoster.unplaced + ' — banks, insurers, retailers, property and healthcare ' +
+      'providers — are not part of a capital-spending chain.' +
+      (_tmRoster.status === 'building' ? ' <i>Still classifying.</i>' : '') + '</div>';
+  }
+  host.innerHTML = summary + '<div class="tm-grid">' + list.map(function(t){
     var live = String(t.status || '').toLowerCase() === 'live';
     var title = _pipEsc(t.title || '');
     /* The API marks a phrase to emphasise; highlight it rather than dropping it. */
@@ -19818,6 +19852,18 @@ function _tmRender(d){
         '<span class="tm-tag ' + (live ? 'live' : 'soon') + '">' + (live ? 'Live' : 'Soon') + '</span></div>' +
       '<h3 class="tm-t">' + title + '</h3>' +
       '<p class="tm-s">' + _pipEsc(t.standfirst || '') + '</p>' +
+      (function(){
+        var c = cov[t.slug];
+        if (!c || !live) return '';
+        var total = (c.counted || 0) + (c.touching || 0);
+        /* Two populations, and the distinction is the point: `counted` names
+           set the share of landed value, `touching` names have real exposure
+           but are held out of that maths so widening coverage can never move a
+           published share. */
+        return '<div class="tm-cov"><span class="tm-cov-n">' + total + '</span> companies' +
+          '<span class="tm-cov-b">' + (c.counted || 0) + ' set the split' +
+          (c.touching ? ' · ' + c.touching + ' more exposed' : '') + '</span></div>';
+      })() +
       '<div class="tm-go">' + (live ? 'Open the map \u2192' : 'In preparation') + '</div>';
     return live
       ? '<a class="tm-card" href="/who-benefits/' + encodeURIComponent(t.slug) + '">' + inner + '</a>'

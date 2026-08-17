@@ -1135,6 +1135,62 @@ async def _scan_prewarm() -> None:
         await asyncio.sleep(900)
 
 
+async def _roster_prewarm() -> None:
+    """Classify the whole scored universe into the capex chains, once.
+
+    Only ~105 of 545 scored names were hand-placed in a chain, so nine of ten
+    stocks answered "No major capex theme" — true for a grocer, wrong for the
+    switchgear maker nobody got round to placing. This fills that in.
+
+    No web search: business_role already holds a grounded line for every scored
+    name (what it sells, who pays it) and that plus the sub-sector classifies
+    better than a fresh search would, for free. ~22 Haiku batches, a few pence,
+    then cached 60 days. Writes to KV — never into the curated layer rosters,
+    which drive the share maths and must stay small and verified.
+    """
+    await asyncio.sleep(420)                 # after the role warm has run
+    while True:
+        try:
+            import chain_roster as _cr
+            import business_role as _br
+            from kv_store import store as _kv
+            done = await asyncio.to_thread(_kv.get, _cr.KV_NS, "all", _cr.MAX_AGE_S)
+            scored = [t for t in (_universe_data or [])
+                      if (t.get("smart_score") or t.get("pop_score"))]
+            if (not done and _cr.available() and scored and not _ai_over_budget()):
+                theses = [t for t in (_load_theses().get("theses") or [])
+                          if t.get("status") == "live"]
+                rows = []
+                for t in scored:
+                    tk = (t.get("ticker") or "").upper()
+                    if not tk:
+                        continue
+                    card = await asyncio.to_thread(_kv.get, _br.KV_NS, tk, _br.MAX_AGE_S)
+                    rows.append({
+                        "ticker": tk, "name": t.get("name") or tk,
+                        "sector": t.get("sector") or "", "sub_sector": t.get("sub_sector") or "",
+                        "role": (card or {}).get("role") or "",
+                        "buyers": (card or {}).get("buyers") or "",
+                    })
+                placed: dict = {}
+                for i in range(0, len(rows), _cr.BATCH):
+                    if _ai_over_budget():
+                        break
+                    try:
+                        placed.update(await _cr.classify(rows[i:i + _cr.BATCH], theses))
+                    except Exception as exc:
+                        logger.info("chain_roster batch %d: %s", i // _cr.BATCH, exc)
+                    await asyncio.sleep(1.0)
+                if placed:
+                    await asyncio.to_thread(_kv.set, _cr.KV_NS, "all",
+                                            {"placements": placed, "scored": len(rows)})
+                    logger.info("🗺️  Chain roster: %d of %d scored names placed in a chain",
+                                len(placed), len(rows))
+        except Exception as exc:
+            logger.warning(f"chain roster prewarm failed: {exc}")
+        await asyncio.sleep(6 * 3600)
+
+
 async def _compare_biz_prewarm() -> None:
     """Fill the business comparison for the FEATURED matchups only.
 
@@ -1350,6 +1406,7 @@ async def lifespan(app: FastAPI):
         asyncio.create_task(_role_prewarm()),        # "Where it earns" card for the whole universe
         asyncio.create_task(_scan_prewarm()),        # dilution + Crowd Clock, so the overview cards exist
         asyncio.create_task(_compare_biz_prewarm()), # business comparison for the featured matchups
+        asyncio.create_task(_roster_prewarm()),      # map every scored stock to a capex chain
         asyncio.create_task(_mgmt_qa_prewarm()),     # Fact Check AI answers for prime + best-ideas names
         asyncio.create_task(_event_brief_prewarm()), # earnings briefs for the Company Events timeline
         asyncio.create_task(_daily_brief_email_task()),  # free daily-brief email (acquisition channel)
@@ -7890,6 +7947,59 @@ async def api_compare_study(pair: str, generate: bool = False,
         except Exception:
             rows[tk] = by_t.get(tk)
     return JSONResponse(_clean(await _cs.generate(c, rows=rows)))
+
+
+@app.get("/api/chain-roster")
+async def api_chain_roster():
+    """Every scored stock's capex-chain placement, plus coverage totals.
+
+    Read-only and free — the classification is built once by _roster_prewarm.
+    Two distinct populations per chain, and the difference matters:
+      counted — the curated names whose revenue forms the share-of-landed-value
+                split (data/theses.json layers[].names)
+      touches — everything else classified into that chain; real exposure, but
+                deliberately NOT folded into the share maths
+    """
+    import asyncio
+    import chain_roster as _cr
+    from kv_store import store as _kv
+    doc = await asyncio.to_thread(_kv.get, _cr.KV_NS, "all", _cr.MAX_AGE_S)
+    placements = (doc or {}).get("placements") or {}
+    theses = [t for t in (_load_theses().get("theses") or []) if t.get("status") == "live"]
+    by = {(t.get("ticker") or "").upper(): t for t in (_universe_data or [])}
+    scored = [t for t in (_universe_data or []) if (t.get("smart_score") or t.get("pop_score"))]
+
+    out = []
+    for th in theses:
+        curated = {(c.get("t") or "").upper()
+                   for L in (th.get("layers") or []) for c in (L.get("names") or [])}
+        touches = []
+        for tk, p in placements.items():
+            if p.get("chain") != th.get("slug") or tk in curated:
+                continue
+            row = by.get(tk) or {}
+            touches.append({"t": tk, "name": row.get("name") or tk,
+                            "exposure": p.get("exposure"), "why": p.get("why"),
+                            "sub_sector": row.get("sub_sector") or row.get("sector") or ""})
+        order = {"hi": 0, "mid": 1, "lo": 2}
+        touches.sort(key=lambda x: (order.get(x["exposure"], 3), x["t"]))
+        out.append({
+            "slug": th.get("slug"), "title": th.get("title"),
+            "blurb": th.get("blurb") or th.get("summary") or "",
+            "counted": len(curated), "touching": len(touches), "names": touches,
+        })
+    out.sort(key=lambda c: -(c["counted"] + c["touching"]))
+    placed = sum(1 for tk in placements if tk in {(t.get("ticker") or "").upper() for t in scored})
+    return JSONResponse(_clean({
+        "chains": out,
+        "scored": len(scored),
+        "placed": placed,
+        "unplaced": max(0, len(scored) - placed),
+        "status": "ready" if placements else "building",
+        "note": ("`counted` names set each chain's share of landed value; `touching` "
+                 "names have real exposure but are deliberately excluded from that "
+                 "split so adding coverage cannot move the measured shares."),
+    }), headers={"Cache-Control": "public, max-age=900"})
 
 
 @app.get("/api/compare-business/{pair}")
