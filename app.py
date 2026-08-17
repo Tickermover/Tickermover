@@ -1135,6 +1135,52 @@ async def _scan_prewarm() -> None:
         await asyncio.sleep(900)
 
 
+async def _compare_biz_prewarm() -> None:
+    """Fill the business comparison for the FEATURED matchups only.
+
+    Generation is otherwise gated to signed-in users, which is right for an
+    arbitrary pair — there are 545x545 of them and a crawler must never be able
+    to spend money walking them. But the 14 curated matchups are the ones on
+    the "most-searched" strip, so they are worth having ready: an empty section
+    on the pair everyone opens first teaches the reader the feature is broken.
+    Bounded and one-off — 14 pairs at ~$0.003 is small change, then cached 90
+    days and every later cycle is a pure cache hit.
+    """
+    await asyncio.sleep(320)
+    while True:
+        try:
+            import compare_business as _cb
+            import seo_pages as _seo
+            import web_search as _ws
+            from kv_store import store as _kv
+            pairs = list(getattr(_seo, "FEATURED_COMPARISONS", []) or [])
+            if (_cb.available() and _ws.available() and _universe_data
+                    and pairs and not _ai_over_budget()):
+                by = {(t.get("ticker") or "").upper(): t for t in _universe_data}
+                made = 0
+                for a, b in pairs:
+                    if made >= 6 or _ai_over_budget():
+                        break
+                    if a not in by or b not in by:
+                        continue
+                    k = _cb.key_for(a, b)
+                    if await asyncio.to_thread(_kv.get, _cb.KV_NS, k, _cb.MAX_AGE_S):
+                        continue
+                    try:
+                        out = await _cb.generate(a, b, (by[a].get("name") or ""),
+                                                 (by[b].get("name") or ""))
+                        await asyncio.to_thread(_kv.set, _cb.KV_NS, k, out)
+                        made += 1
+                    except Exception as exc:
+                        logger.info("compare_business warm %s: %s", k, exc)
+                    await asyncio.sleep(2.0)
+                if made:
+                    logger.info("⚖️  Compare-business pre-warm: %d pairs generated", made)
+        except Exception as exc:
+            logger.warning(f"compare-business pre-warm cycle failed: {exc}")
+        await asyncio.sleep(3 * 3600)
+
+
 async def _role_prewarm() -> None:
     """Background loop: fill the "Where it earns" card for every scored stock.
 
@@ -1303,6 +1349,7 @@ async def lifespan(app: FastAPI):
         asyncio.create_task(_selection_prewarm()),   # keep AI conviction/thesis warm for House View
         asyncio.create_task(_role_prewarm()),        # "Where it earns" card for the whole universe
         asyncio.create_task(_scan_prewarm()),        # dilution + Crowd Clock, so the overview cards exist
+        asyncio.create_task(_compare_biz_prewarm()), # business comparison for the featured matchups
         asyncio.create_task(_mgmt_qa_prewarm()),     # Fact Check AI answers for prime + best-ideas names
         asyncio.create_task(_event_brief_prewarm()), # earnings briefs for the Company Events timeline
         asyncio.create_task(_daily_brief_email_task()),  # free daily-brief email (acquisition channel)
@@ -7843,6 +7890,53 @@ async def api_compare_study(pair: str, generate: bool = False,
         except Exception:
             rows[tk] = by_t.get(tk)
     return JSONResponse(_clean(await _cs.generate(c, rows=rows)))
+
+
+@app.get("/api/compare-business/{pair}")
+async def api_compare_business(pair: str, gen: bool = False,
+                               user: Optional[dict] = Depends(_current_user)):
+    """The qualitative half of a head-to-head: what each company sells, where
+    its margin comes from, what protects it, how capital-hungry it is, its main
+    structural risk, and who it competes with.
+
+    NO WINNER, by design — see compare_business.py. The measured rows in
+    /api/compare already refuse to total themselves up, and this must not
+    reintroduce a verdict in prose.
+
+    WHO PAYS follows the sector-note rule exactly: everyone gets a cache PEEK,
+    but only a SIGNED-IN user can trigger generation (`gen=1`). A public,
+    crawlable comparison page must never be able to spend money.
+    """
+    import asyncio
+    import compare_business as _cb
+    from kv_store import store as _kv
+
+    p = (pair or "").upper().replace("_VS_", "-VS-")
+    a, b = (p.split("-VS-", 1) if "-VS-" in p else (p.split("-", 1) if "-" in p else (p, "")))
+    a, b = a.strip(), b.strip()
+    if not a or not b or a == b:
+        raise HTTPException(status_code=400, detail="Need two different tickers, as A-vs-B")
+
+    k = _cb.key_for(a, b)
+    doc = await asyncio.to_thread(_kv.get, _cb.KV_NS, k, _cb.MAX_AGE_S)
+    if isinstance(doc, dict) and doc.get("rows"):
+        return JSONResponse(_clean(doc), headers={"Cache-Control": "public, max-age=600"})
+
+    if not (gen and user):
+        return JSONResponse({"status": "unavailable" if not _cb.available() else "not-generated",
+                             "a": a, "b": b})
+    if not _cb.available() or _ai_over_budget():
+        return JSONResponse({"status": "unavailable", "a": a, "b": b})
+
+    by = {(t.get("ticker") or "").upper(): t for t in (_universe_data or [])}
+    try:
+        out = await _cb.generate(a, b, (by.get(a) or {}).get("name") or "",
+                                 (by.get(b) or {}).get("name") or "")
+    except Exception as exc:
+        logger.info("compare_business %s: %s", k, exc)
+        return JSONResponse({"status": "error", "a": a, "b": b, "detail": str(exc)[:160]})
+    await asyncio.to_thread(_kv.set, _cb.KV_NS, k, out)
+    return JSONResponse(_clean(out))
 
 
 @app.get("/api/compare/{pair}")

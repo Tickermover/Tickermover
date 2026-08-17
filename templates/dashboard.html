@@ -9122,6 +9122,19 @@ document.addEventListener('keydown', function(e){
   font-size:13.5px;color:#26333F;white-space:nowrap}
 #panel-sect tbody tr{cursor:pointer}
 #panel-sect tbody tr:hover td{background:#F8FAFC}
+/* "How the two businesses differ" — prose cells, so they need the opposite of
+   the numeric table's rules: left-aligned, wrapping, no tabular figures, no
+   nowrap, and a wider column for the dimension label. Same frame otherwise, so
+   it reads as a second section of one comparison rather than a bolted-on card. */
+#panel-sect .se-biz table{min-width:620px}
+#panel-sect .se-biz td{text-align:left;white-space:normal;line-height:1.5;
+  font-size:13px;vertical-align:top;width:38%}
+#panel-sect .se-biz th{text-align:left}
+#panel-sect .se-biz td.se-biz-k{width:24%;color:#0A2F46;font-weight:600;font-size:12.5px}
+#panel-sect .se-biz tbody tr{cursor:default}
+#panel-sect .se-biz tbody tr:hover td{background:transparent}
+#panel-sect .se-biz-frame{font-size:13px;line-height:1.55;color:#475569;margin:0 0 10px;max-width:78ch}
+#panel-sect .se-biz-load{font-size:12.5px;color:#94A3B8;margin:20px 0 0;display:flex;align-items:center;gap:8px}
 #panel-sect tr.se-base td{background:#FFF8F2;font-weight:700}
 #panel-sect tr.se-base{cursor:default}
 #panel-sect .se-nm{font-weight:650;color:#0A2F46}
@@ -23894,12 +23907,56 @@ async function _seRunCompare(){
       + ' of ' + c.measured + '</b> measured dimensions; anything within 2% shows as level.</div>'
       + '<div class="se-wrap"><table><thead><tr><th>Measure</th><th>' + _seEsc(c.a.ticker)
       + '</th><th>' + _seEsc(c.b.ticker) + '</th></tr></thead><tbody>' + trs + '</tbody></table></div>'
+      + '<div id="seBiz"></div>'
       + ptBlock + dgBlock
       + '<div id="seStudy" style="margin-top:18px"></div>';
+    _seLoadBiz(c.a.ticker, c.b.ticker);
     _seLoadStudy(c.a.ticker, c.b.ticker);
   } catch(e){
     out.innerHTML = '<div class="se-mut">Could not run that comparison — ' + _seEsc(e.message) + '</div>';
   }
+}
+/* "How the two businesses differ" — the qualitative half of the head-to-head.
+   The measured table says Micron runs an 80% gross margin and Western Digital
+   45%; it cannot say that this is DRAM pricing versus disciplined HDD supply
+   rather than a quality gap. These six rows say that.
+
+   NO WINNER ROW, and none is coming. The measured table deliberately refuses to
+   total itself up because a tally over correlated metrics reads as advice; a
+   verdict smuggled in as prose would be the same breach in a nicer font. The
+   generator forbids it in the prompt AND sweeps the output with a regex before
+   caching — see compare_business.py.
+
+   Cache-peek for everyone; only a signed-in user triggers generation, so a
+   crawler walking pair URLs cannot spend money. */
+async function _seLoadBiz(a, b){
+  var host = document.getElementById('seBiz'); if(!host) return;
+  host.innerHTML = '<div class="se-biz-load"><span class="dr-spin"></span> Reading how the two businesses differ…</div>';
+  var url = '/api/compare-business/' + encodeURIComponent(a) + '-vs-' + encodeURIComponent(b);
+  // Signed in == we hold a bearer token; the server resolves it and only then
+  // honours gen=1. Sending gen=1 without one is harmless — it falls through to
+  // the cache peek — but there is no point paying the round trip.
+  var tok = '';
+  try{ tok = localStorage.getItem('ah_token') || ''; }catch(e){}
+  var d = null;
+  try{
+    var r = await fetch(url + (tok ? '?gen=1' : ''),
+                        tok ? {headers:{Authorization:'Bearer '+tok}} : undefined);
+    d = await r.json();
+  }catch(e){ host.innerHTML=''; return; }
+  if(!d || !Array.isArray(d.rows) || !d.rows.length){ host.innerHTML=''; return; }
+  var head = '<div class="se-biz-h"><h3 class="se-pt-h">How the two businesses differ</h3>'
+    + (d.frame ? '<p class="se-biz-frame">' + _seEsc(d.frame) + '</p>' : '') + '</div>';
+  var rows = d.rows.map(function(row){
+    return '<tr><td class="se-biz-k">' + _seEsc(row.label) + '</td>'
+      + '<td>' + _seEsc(row.a) + '</td><td>' + _seEsc(row.b) + '</td></tr>';
+  }).join('');
+  var src = (d.sources || []).length
+    ? '<p class="se-pt-f">Compiled from ' + d.sources.length + ' public sources. ' + _seEsc(d.disclaimer || '') + '</p>'
+    : '<p class="se-pt-f">' + _seEsc(d.disclaimer || '') + '</p>';
+  host.innerHTML = head
+    + '<div class="se-wrap se-biz"><table><thead><tr><th>Dimension</th><th>' + _seEsc(a)
+    + '</th><th>' + _seEsc(b) + '</th></tr></thead><tbody>' + rows + '</tbody></table></div>' + src;
 }
 function scWirePills(body){
   /* Sorting replaces only the table, then calls this again — so the pills and
