@@ -7962,6 +7962,11 @@ async def api_compare(pair: str):
     except Exception as exc:
         logger.debug("compare pointers: %s", exc)
         c["pointers"] = []
+    # sector_intel.compare attaches the two raw universe rows for pointers() to
+    # corroborate against. They are working data, not response data — dropping
+    # them here keeps the payload from doubling for fields the panel never reads.
+    c.pop("a_row", None)
+    c.pop("b_row", None)
 
     # The hard questions. Pure arithmetic over rows already in memory, so this
     # is free and instant — every field diligence reads is on the slim universe

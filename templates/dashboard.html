@@ -9191,7 +9191,23 @@ document.addEventListener('keydown', function(e){
    the company; severity is a left rule, never a colour on the whole card —
    these are questions, and a red card would read as a verdict. */
 #panel-sect .se-dg-lede{font-size:13px;color:#5D6C7B;line-height:1.6;margin:0 0 12px;max-width:82ch}
-#panel-sect .se-dg-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+/* The grid was two TICKER columns, one per company, which is what forced the
+   same question to be printed twice. It is now a flow of question cards: a
+   shared question spans the full width and carries both companies' figures,
+   a one-sided question sits in a single column and says whose it is. */
+#panel-sect .se-dg-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start}
+#panel-sect .se-dg-both{grid-column:1 / -1}
+#panel-sect .se-dg-q{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap}
+#panel-sect .se-dg-badge{font-size:9.5px;font-weight:700;letter-spacing:.06em;
+  text-transform:uppercase;color:#64748b;background:#F1F5F9;border-radius:999px;
+  padding:2px 8px;white-space:nowrap}
+#panel-sect .se-dg-badge-one{color:#9A3412;background:#FFF3E8}
+/* Both companies' evidence, side by side under one explanation. */
+#panel-sect .se-dg-ev2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:6px 0 2px}
+#panel-sect .se-dg-ev2>div{display:flex;flex-direction:column;gap:3px}
+#panel-sect .se-dg-evtk{font-size:9.5px;font-weight:800;letter-spacing:.08em;
+  text-transform:uppercase;color:#94A3B8}
+@media(max-width:760px){#panel-sect .se-dg-ev2{grid-template-columns:1fr}}
 @media(max-width:900px){#panel-sect .se-dg-grid{grid-template-columns:1fr}}
 #panel-sect .se-dg-col{display:flex;flex-direction:column;gap:10px}
 #panel-sect .se-dg-tk{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:800;
@@ -23878,26 +23894,56 @@ async function _seRunCompare(){
        Severity ranks how ANOMALOUS a reading is, never how attractive the
        stock is, and every item ends in what would resolve it. */
     var dg = c.diligence || {};
+    /* SHARED QUESTIONS RENDER ONCE.
+       When the same check fires on both companies — and "Is there actually a
+       consensus here?" fires on almost every pair — the old two-column layout
+       printed the identical 45-word explanation and the identical "How to
+       settle it" line twice, side by side. That is half the section's height
+       carrying no incremental information, and it made a genuinely good check
+       look like padding. Shared questions now show one explanation with both
+       companies' evidence under it; questions that fire on only one side keep
+       their own card and are labelled with that ticker. */
     var dgBlock = '';
-    var dgCards = [c.a.ticker, c.b.ticker].map(function(tk){
-      var qs = dg[tk] || [];
-      if (!qs.length) return '';
-      return '<div class="se-dg-col"><div class="se-dg-tk">' + _seEsc(tk) + '</div>'
-        + qs.map(function(q){
-            return '<div class="se-dg se-dg-' + _seEsc(q.severity) + '">'
-              + '<div class="se-dg-q">' + _seEsc(q.title) + '</div>'
-              + '<div class="se-dg-e">' + _seEsc(q.evidence) + '</div>'
-              + '<div class="se-dg-w">' + _seEsc(q.why) + '</div>'
-              + '<div class="se-dg-r"><b>How to settle it:</b> ' + _seEsc(q.resolve) + '</div>'
-              + '</div>';
-          }).join('')
+    var A_ = c.a.ticker, B_ = c.b.ticker;
+    var qa = dg[A_] || [], qb = dg[B_] || [];
+    var byTitleB = {}; qb.forEach(function(q){ byTitleB[q.title] = q; });
+    var shared = [], single = [];
+    qa.forEach(function(q){
+      var m = byTitleB[q.title];
+      if (m){ shared.push({q: q, a: q, b: m}); delete byTitleB[q.title]; }
+      else { single.push({tk: A_, q: q}); }
+    });
+    qb.forEach(function(q){ if (byTitleB[q.title]) single.push({tk: B_, q: q}); });
+
+    var sevRank = {high: 0, medium: 1, med: 1, low: 2};
+    shared.sort(function(x, y){ return (sevRank[x.q.severity]||3) - (sevRank[y.q.severity]||3); });
+    single.sort(function(x, y){ return (sevRank[x.q.severity]||3) - (sevRank[y.q.severity]||3); });
+
+    var dgCards = shared.map(function(it){
+      return '<div class="se-dg se-dg-' + _seEsc(it.q.severity) + ' se-dg-both">'
+        + '<div class="se-dg-q">' + _seEsc(it.q.title)
+        + '<span class="se-dg-badge">both</span></div>'
+        + '<div class="se-dg-ev2">'
+        +   '<div><span class="se-dg-evtk">' + _seEsc(A_) + '</span>'
+        +     '<span class="se-dg-e">' + _seEsc(it.a.evidence) + '</span></div>'
+        +   '<div><span class="se-dg-evtk">' + _seEsc(B_) + '</span>'
+        +     '<span class="se-dg-e">' + _seEsc(it.b.evidence) + '</span></div>'
+        + '</div>'
+        + '<div class="se-dg-w">' + _seEsc(it.q.why) + '</div>'
+        + '<div class="se-dg-r"><b>How to settle it:</b> ' + _seEsc(it.q.resolve) + '</div>'
+        + '</div>';
+    }).join('') + single.map(function(it){
+      return '<div class="se-dg se-dg-' + _seEsc(it.q.severity) + '">'
+        + '<div class="se-dg-q">' + _seEsc(it.q.title)
+        + '<span class="se-dg-badge se-dg-badge-one">' + _seEsc(it.tk) + ' only</span></div>'
+        + '<div class="se-dg-e">' + _seEsc(it.q.evidence) + '</div>'
+        + '<div class="se-dg-w">' + _seEsc(it.q.why) + '</div>'
+        + '<div class="se-dg-r"><b>How to settle it:</b> ' + _seEsc(it.q.resolve) + '</div>'
         + '</div>';
     }).join('');
     if (dgCards.replace(/\s/g,'')){
       dgBlock = '<h3 class="se-pt-h">Questions worth answering first</h3>'
-        + '<p class="se-dg-lede">Anomalies in each company\'s own reported figures — the '
-        + 'checks a careful reader makes before trusting a headline number. Severity is how '
-        + 'unusual the reading is, not how good or bad the company is.</p>'
+        + '<p class="se-dg-lede">Anomalies in the reported figures — the checks a careful reader makes before trusting a headline number. Where a question applies to both companies it is asked once, with the figure for each. The bar on the left is how unusual the reading is, not how good or bad the company is.</p>'
         + '<div class="se-dg-grid">' + dgCards + '</div>'
         + '<p class="se-pt-f">Questions to investigate, not conclusions. None of this '
         + 'suggests owning or avoiding either company.</p>';

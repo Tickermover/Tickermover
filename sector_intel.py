@@ -294,7 +294,97 @@ def compare(a: str, b: str, universe: list[dict]) -> Optional[dict]:
         # tell the reader how alike the two are — never as a score.
         "differing": sum(1 for r in rows if r["higher"]),
         "measured": sum(1 for r in rows if r["a_raw"] is not None and r["b_raw"] is not None),
+        # The raw universe rows, for pointers() only. NOT part of the response:
+        # api_compare pops them before serialising, because shipping two full
+        # rows to the client would double the payload for data the panel does
+        # not render. Kept here so _corroborate can reach revisions, margin
+        # trend and beat history without a second lookup.
+        "a_row": ta,
+        "b_row": tb,
     }
+
+
+def _corroborate(c: dict, lead: str) -> tuple[list[str], list[str]]:
+    """Which OTHER readings move the same way as the widest gap, and which do not.
+
+    This is the analytical step the comparison used to leave to the reader.
+    Naming the widest divergence is easy and worth almost nothing on its own;
+    the useful question is whether anything else in the data agrees with it.
+
+    When several operating readings line up behind the leader, the gap has a
+    visible cause and the reader should start there. When NOTHING lines up —
+    AMD +14.7% against INTC -15.0% while Intel carries the better estimate
+    revisions and both expanded gross margin — the honest finding is that the
+    price move is not coming from the figures on this page, which is a far more
+    useful thing to be told than "whatever explains that gap probably explains
+    most of the difference".
+
+    Returns (agrees_with_lead, points_the_other_way) as finished clauses.
+    Deliberately describes only; nothing here ranks the two companies.
+    """
+    A, B = c["a"]["ticker"], c["b"]["ticker"]
+    ra, rb = c.get("a_row") or {}, c.get("b_row") or {}
+    agree: list[str] = []
+    against: list[str] = []
+    neither: list[str] = []      # true of BOTH — does not separate them
+
+    def _num(d, *keys):
+        for k in keys:
+            v = d.get(k)
+            try:
+                if v is not None:
+                    return float(v)
+            except (TypeError, ValueError):
+                continue
+        return None
+
+    def note(better: str, text: str):
+        (agree if better == lead else against).append(text)
+
+    # Estimate revisions — the cleanest read on whether the street is moving.
+    va, vb = ra.get("eps_revisions_30d") or {}, rb.get("eps_revisions_30d") or {}
+    if va.get("ups") is not None and vb.get("ups") is not None:
+        na = (va.get("ups") or 0) - (va.get("downs") or 0)
+        nb = (vb.get("ups") or 0) - (vb.get("downs") or 0)
+        if na != nb:
+            hi, lo = (A, B) if na > nb else (B, A)
+            hv, lv = (va, vb) if na > nb else (vb, va)
+            note(hi, (f"{hi} carries the better estimate revisions "
+                      f"({hv.get('ups', 0)} up, {hv.get('downs', 0)} down against "
+                      f"{lv.get('ups', 0)} up, {lv.get('downs', 0)} for {lo})"))
+
+    # Gross-margin direction — structural, and moves slowly.
+    ta, tb = ra.get("gross_margin_trend"), rb.get("gross_margin_trend")
+    if ta and tb and ta != tb:
+        hi = A if ta == "expanding" else B
+        note(hi, f"{A} gross margin is {ta} and {B}'s is {tb}")
+    elif ta and tb and ta == tb and ta != "stable":
+        neither.append(f"both are {ta} gross margin")
+
+    # Most recent quarter against expectations.
+    ba, bb = ra.get("eps_last_beat"), rb.get("eps_last_beat")
+    if ba is not None and bb is not None and ba != bb:
+        hi = A if ba else B
+        note(hi, f"{hi} beat on its last quarter and the other missed")
+    elif ba and bb:
+        neither.append("both beat on their last quarter")
+
+    # Quarterly revenue growth — the near-term operating trend.
+    qa, qb = _num(ra, "rev_growth_qyoy"), _num(rb, "rev_growth_qyoy")
+    if qa is not None and qb is not None and abs(qa - qb) >= 0.05:
+        hi = A if qa > qb else B
+        note(hi, (f"{hi} grew revenue faster last quarter "
+                  f"({round(max(qa, qb) * 100, 1)}% against {round(min(qa, qb) * 100, 1)}%)"))
+
+    # Beat streak — consistency rather than a single print.
+    sa, sb = _num(ra, "eps_beat_streak"), _num(rb, "eps_beat_streak")
+    if sa is not None and sb is not None and abs(sa - sb) >= 2:
+        hi = A if sa > sb else B
+        note(hi, f"{hi} has the longer run of beats ({int(max(sa, sb))} against {int(min(sa, sb))})")
+    elif sa is not None and sa == sb and sa >= 3:
+        neither.append(f"both have beaten {int(sa)} quarters running")
+
+    return agree, against, neither
 
 
 def pointers(c: dict, baseline: Optional[dict] = None) -> list[dict]:
@@ -333,12 +423,39 @@ def pointers(c: dict, baseline: Optional[dict] = None) -> list[dict]:
         if rel > widest_score:
             widest, widest_score = r, rel
     if widest is not None and widest_score >= 0.25:
+        # Naming the widest gap and stopping there was circular — the table
+        # already marks it, and "whatever explains that gap probably explains
+        # most of the difference" tells the reader nothing they did not know.
+        # So test it: does anything else in the data move the SAME way?
+        lead = A if (widest.get("a_raw") or 0) >= (widest.get("b_raw") or 0) else B
+        agree, against, neither = _corroborate(c, lead)
+        head = f"{A} {widest['a']} against {B} {widest['b']} — the widest gap here. "
+        if agree:
+            body = (head + f"{len(agree)} other reading"
+                    + ("s point" if len(agree) > 1 else " points")
+                    + " the same way: " + "; ".join(agree[:3]) + ".")
+            if against:
+                body += " Against it: " + "; ".join(against[:2]) + "."
+        elif against:
+            # The finding the old copy could never reach: a price gap that the
+            # operating figures do not support. Worth far more to a reader than
+            # being told the biggest difference is the biggest difference.
+            body = (head + "Nothing else here moves with it — "
+                    + "; ".join(against[:3]) + ". "
+                    + "Whatever is driving it is not in these rows.")
+        elif neither:
+            body = (head + "The operating readings do not separate them: "
+                    + "; ".join(neither[:3]) + ". "
+                    + "The gap is not coming from these rows.")
+        else:
+            body = (head + "We hold no revisions, margin-trend or beat history for "
+                    "both sides, so there is nothing here to corroborate it against.")
+        if neither and (agree or against):
+            body += " Neither is distinguished by: " + "; ".join(neither[:2]) + "."
         out.append({
             "kind": "gap",
             "title": f"Start with {widest['label'].lower()}",
-            "body": (f"It is the widest divergence here — {A} {widest['a']} against "
-                     f"{B} {widest['b']}. Whatever explains that gap probably explains "
-                     f"most of the difference between these two."),
+            "body": body,
         })
 
     # 2. Figures far above the universe median. Deliberately does NOT assert a
@@ -362,14 +479,51 @@ def pointers(c: dict, baseline: Optional[dict] = None) -> list[dict]:
             shown = r["a"] if tk == A else r["b"]
             ref = (f", against a universe median of {round(med * 100, 1)}%"
                    if med is not None else "")
+            # The old body was one fixed sentence — "structural or a cycle
+            # turn, a disposal or a tax item" — printed identically for every
+            # company, which is a definition of the problem rather than a read
+            # on it. We hold the quarterly run-rate and the gross-margin
+            # direction, and those two are exactly what separate a structural
+            # figure from a flattering one. Use them.
+            row = (c.get("a_row") if tk == A else c.get("b_row")) or {}
+            tail = (f"The income statement and the latest filing distinguish a "
+                    f"structural figure from a one-off.")
+            if k == "revenue_growth_yoy":
+                q = row.get("rev_growth_qyoy")
+                try:
+                    q = float(q) if q is not None else None
+                except (TypeError, ValueError):
+                    q = None
+                if q is not None:
+                    qp = round(q * 100, 1)
+                    if q < v * 0.6:
+                        tail = (f"The most recent quarter ran +{qp}%, well under the "
+                                f"annual figure — the twelve-month number is carrying "
+                                f"an easier comparison base than the business is "
+                                f"currently growing at.")
+                    elif q > v * 1.2:
+                        tail = (f"The most recent quarter ran +{qp}%, ahead of the "
+                                f"annual figure, so the run-rate is still climbing "
+                                f"rather than lapping a weak base.")
+                    else:
+                        tail = (f"The most recent quarter ran +{qp}%, in line with the "
+                                f"annual figure, so the rate is holding rather than "
+                                f"resting on one unusual period.")
+            else:
+                trend = row.get("gross_margin_trend")
+                if trend in ("expanding", "contracting", "stable"):
+                    tail = (f"Gross margin is {trend}, so the net figure is "
+                            + ("supported by the line above it."
+                               if trend == "expanding" else
+                               "not being helped by the line above it — check what "
+                               "below the gross line is doing the work."
+                               if trend == "contracting" else
+                               "not moving with the gross line; the difference is "
+                               "below it."))
             out.append({
                 "kind": "check",
                 "title": f"Understand {tk}'s {what}",
-                "body": (f"At {shown} it is well above the rest of the market{ref}. "
-                         f"That can be structural or it can be a cycle turn, a disposal "
-                         f"or a tax item — the income statement and the latest filing "
-                         f"distinguish the two, and which it is changes how much weight "
-                         f"this row deserves."),
+                "body": f"At {shown}{ref}. {tail}",
             })
 
     # 3. Cross-sector comparisons are not like-for-like and the table cannot
@@ -413,7 +567,11 @@ def pointers(c: dict, baseline: Optional[dict] = None) -> list[dict]:
     # leads, context follows, and at most two figure checks come last.
     gap = [p for p in out if p["kind"] == "gap"]
     ctx = [p for p in out if p["kind"] == "context"]
-    chk = [p for p in out if p["kind"] == "check"][:2]
+    # ONE figure check, not two: on a pair where both names are growing hard
+    # (MU vs WDC, NVDA vs AMD) two of these render as near-identical
+    # paragraphs, which is padding rather than analysis. Keep the more
+    # extreme one.
+    chk = [p for p in out if p["kind"] == "check"][:1]
     return (gap + ctx + chk)[:5]
 
 

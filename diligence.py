@@ -61,6 +61,17 @@ def _pct(v: Optional[float]) -> str:
     return "—" if v is None else f"{v * 100:.1f}%"
 
 
+def _money_short(v: float) -> str:
+    n = abs(v or 0)
+    if n >= 1e12:
+        return f"${n / 1e12:.1f}T"
+    if n >= 1e9:
+        return f"${round(n / 1e9)}B"
+    if n >= 1e6:
+        return f"${round(n / 1e6)}M"
+    return f"${round(n)}"
+
+
 def _q(sev, title, evidence, why, resolve) -> dict:
     return {"severity": sev, "title": title, "evidence": evidence,
             "why": why, "resolve": resolve}
@@ -199,16 +210,24 @@ def checks(t: dict) -> list[dict]:
         ))
 
     # ── 8. Insider ownership ─────────────────────────────────────────
+    # Only where it is actually anomalous. This check used to fire on any name
+    # under 0.5% and then open by admitting "low insider ownership is normal in
+    # a large company and says nothing on its own" — which is true, and is a
+    # reason not to print it. On a $840B company like AMD, 0.4% is simply what
+    # large-cap ownership looks like. Below ~$20B it is a real signal: founders
+    # and operators usually still hold something, and a near-zero reading says
+    # the alignment runs entirely through the pay plan.
     ins = _n(t, "held_pct_insiders")
-    if ins is not None and ins < 0.005:
+    mc = _n(t, "market_cap")
+    if ins is not None and ins < 0.005 and mc is not None and mc < 20e9:
         out.append(_q(
             SEV_LOW,
-            "How much do insiders own?",
-            f"Insiders hold {_pct(ins)} of the shares.",
-            "Low insider ownership is normal in a large company and says nothing on "
-            "its own. It matters as context for how management is paid: where "
-            "ownership is minimal, incentives run through the compensation plan "
-            "instead.",
+            "Who is aligned with the shares here?",
+            f"Insiders hold {_pct(ins)} of a {_money_short(mc)} company.",
+            "At this size you would normally still find founders or long-tenured "
+            "operators on the register. Near-zero insider ownership means the people "
+            "running it are aligned through the compensation plan rather than through "
+            "the shares themselves.",
             "Read the proxy statement for what the bonus actually rewards — revenue, "
             "EPS, TSR or something else. That is the behaviour you are underwriting.",
         ))
