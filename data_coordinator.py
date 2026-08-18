@@ -919,6 +919,29 @@ class DataCoordinator:
 
     # ── ALPHA VANTAGE ─────────────────────────────────────────────────
 
+    async def _sec_fallback(self, ticker: str, key: str, ttl: int | None = None) -> dict:
+        """Fundamentals from SEC XBRL — the tier below Alpha Vantage and FMP.
+
+        Added 18 Aug 2026. AV's free tier is ~25 calls/day for the whole key, so
+        the branches that used to `return {}` here were firing most of the day
+        and leaving the card blank. The SEC is free and unmetered, so this can
+        answer when the budget is gone. It fills only what a filing can know —
+        no price-derived fields — which is safe because get_full_ticker merges
+        on "first non-None wins" and cannot overwrite a live value with None.
+
+        edgar_facts uses blocking urllib, hence the thread.
+        """
+        try:
+            import edgar_facts
+            data = await asyncio.to_thread(edgar_facts.fundamentals, ticker)
+            if data:
+                logger.info(f"SEC XBRL fundamentals fallback used for {ticker}")
+                self.cache.set(key, data, ttl or config.CACHE_FUND_TTL)
+                return data
+        except Exception as exc:
+            logger.warning(f"SEC XBRL fallback failed for {ticker}: {exc}")
+        return {}
+
     async def get_fundamentals(self, ticker: str) -> dict:
         key    = f"fund:{ticker}"
         cached = self.cache.get(key)
@@ -926,9 +949,9 @@ class DataCoordinator:
             return cached
 
         if self._av_remaining() <= 0:
-            logger.warning(f"AV daily limit reached — skipping {ticker}")
+            logger.warning(f"AV daily limit reached — falling back to SEC for {ticker}")
             self.api_status["alpha_vantage"]["ok"] = False
-            return {}
+            return await self._sec_fallback(ticker, key)
 
         try:
             async with httpx.AsyncClient(timeout=15) as c:
@@ -944,10 +967,10 @@ class DataCoordinator:
                 msg = data.get("Note") or data.get("Information", "")
                 logger.warning(f"AV rate limit hit: {msg[:80]}")
                 self.api_status["alpha_vantage"]["ok"] = False
-                return {}
+                return await self._sec_fallback(ticker, key)
 
             if not data.get("Symbol"):
-                return {}
+                return await self._sec_fallback(ticker, key)
 
             import av_budget
             av_budget.spend(1)
@@ -1003,7 +1026,7 @@ class DataCoordinator:
         except Exception as e:
             self.api_status["alpha_vantage"]["errors"] += 1
             logger.warning(f"AV overview error for {ticker}: {e}")
-            return {}
+            return await self._sec_fallback(ticker, key)
 
     # ── FINANCIAL MODELING PREP (FMP) — fallback data source ─────
 
@@ -2037,6 +2060,14 @@ class DataCoordinator:
             if fmp:
                 self.cache.set(key, fmp, config.CACHE_TECH_TTL)
                 return fmp
+
+        # ── SEC XBRL: last tier, reached only when yfinance AND FMP are dry ──
+        # Free and unmetered, so it still answers on a day the paid quotas are
+        # gone. Cached under the yf: key with the technical TTL to match the
+        # lane it is standing in for.
+        sec = await self._sec_fallback(ticker, key, ttl=config.CACHE_TECH_TTL)
+        if sec:
+            return sec
         return {}
 
     # ── Full merged ticker data ────────────────────────────────────────
