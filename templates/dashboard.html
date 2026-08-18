@@ -11693,6 +11693,24 @@ function v2Show(panelId, item){
     window.scrollTo(0, 0);
   } catch (e) {}
 
+  // ── Panel initialisers ───────────────────────────────────────────────
+  // These used to live ONLY in the sidebar markup, as
+  //     onclick="v2Show('scans',this);scansInit()"
+  // which meant any other route into a panel — a deep link, a programmatic
+  // v2Show(), a future nav refactor — left it silently unwarmed. The scanner
+  // was the clearest case: it rendered "Pick a scan to run it" with nothing to
+  // pick, hitting NEITHER of its own error branches ("Could not load the scan
+  // catalogue" / "No scans configured"), so nothing on screen said anything
+  // was wrong. v2GoPanel() already patched this for two of the four panels;
+  // doing it here fixes the cause instead of that one path.
+  // Every one of these is idempotent — scansInit guards on _scCat, sectInit on
+  // data-ready, clockInit/guardInit on their loaded data — so the inline
+  // onclick calls still in the markup are harmless duplicates.
+  try {
+    var _init = {scans:'scansInit', sect:'sectInit', clock:'clockInit', guard:'guardInit'}[panelId];
+    if (_init && typeof window[_init] === 'function') window[_init]();
+  } catch (e) {}
+
   // Close the mobile drawer after navigating
   document.body.classList.remove('v2-drawer-open');
 }
@@ -24249,14 +24267,12 @@ function scHeaderHTML(d){
          '<p class="sc-res-b">'+escHTML(d.blurb||'')+'</p>'+scCritHTML(d.note)+scDeeperHTML(d.deeper)+'</div>';
 }
 
-/* v2Show() alone does not warm Hype Check or Dilution Check — their sidebar
-   items call clockInit()/guardInit() alongside it, and a deep link that skips
-   that lands on a permanently "Loading…" panel. Company Events and On the
-   Radar are warmed by showTab() itself. */
+/* v2Show() now warms the panel it opens (see its init dispatch), so this no
+   longer needs to special-case Hype Check and Dilution Check — the deep-link
+   route that used to land on a permanently "Loading…" panel is covered at the
+   source. Kept as the scroll-to-top entry point. */
 function v2GoPanel(id){
   if(typeof v2Show==='function') v2Show(id,null);
-  if(id==='clock'&&typeof clockInit==='function') clockInit();
-  if(id==='guard'&&typeof guardInit==='function') guardInit();
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
