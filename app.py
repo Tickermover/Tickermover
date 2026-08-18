@@ -7580,6 +7580,14 @@ async def api_sector_warm(limit: int = 12, user: Optional[dict] = Depends(_curre
 # until an entry lands, the reader gets the deterministic sub-sector fallback.
 
 
+def _fnum(v):
+    """float(v) or None — the universe carries numbers as strings on some rows."""
+    try:
+        return float(v) if v is not None else None
+    except (TypeError, ValueError):
+        return None
+
+
 def _kv_get_roster():
     """Blocking KV read for the chain roster, for asyncio.to_thread."""
     import chain_roster as _cr
@@ -7829,6 +7837,38 @@ async def api_stock_signals(ticker: str):
                 }
     except Exception as exc:
         logger.debug("stock-signals damage %s: %s", sym, exc)
+
+    # 2b. No Crowd Clock row? Compute the drawdown anyway.
+    # The clock is DELIBERATELY a study of damaged names — it only admits shares
+    # that fell 40%+ in two years, which is what makes its bands describe one
+    # population instead of mixing wrecks with names that never fell. So 170 of
+    # the 545 scored names are legitimately absent from it, and the Hype check
+    # card was hiding for all of them.
+    # The card's headline is "x% below its 12-month high", and that is
+    # computable for every stock from the price and the 52-week high we already
+    # hold. There is no band, so no reading pill is invented — instead the card
+    # states the reason it has none, which is itself the useful fact: this share
+    # has not fallen far enough to enter the clock's population.
+    if not out["damage"]:
+        try:
+            t = next((x for x in (_universe_data or [])
+                      if (x.get("ticker") or "").upper() == sym), None)
+            if t:
+                px = _fnum(t.get("price"))
+                hi = _fnum(t.get("high_52w") or t.get("fifty_two_week_high")
+                           or t.get("week52_high"))
+                lo = _fnum(t.get("low_52w") or t.get("fifty_two_week_low")
+                           or t.get("week52_low"))
+                if px and hi and hi > 0:
+                    out["damage"] = {
+                        "band": None,
+                        "damage": (px / hi) - 1.0,          # negative, as the scan reports it
+                        "run": ((px / lo) - 1.0) if (lo and lo > 0) else None,
+                        "score": None, "in_cycle": False, "held": None, "tone": None,
+                        "source": "52w",                     # no clock reading exists
+                    }
+        except Exception as exc:
+            logger.debug("stock-signals damage fallback %s: %s", sym, exc)
 
     # 3. Capex exposure — share of a theme's landed value, or "in none of them".
     try:

@@ -15606,9 +15606,16 @@ async function _ovSignals(ticker){
     const off=Math.abs(dm.damage*100);
     const K={ok:'calm',neu:'flat',warn:'watch',bad:'alert'};
     let rd=null;
-    try{ if(typeof window.ckReading==='function') rd=window.ckReading(dm); }catch(e){}
+    // Only names that fell 40%+ are in the Crowd Clock population, so ~170 of
+    // 545 have no band and no reading. Do NOT invent a pill for them — the
+    // absence is itself the fact, and the sub-line says so.
+    if(dm.band){
+      try{ if(typeof window.ckReading==='function') rd=window.ckReading(dm); }catch(e){}
+    }
     const tone=(rd&&K[rd.k]) || (off>=40?'alert':off>=20?'watch':'calm');
-    const sub=(dm.run!=null)?('Up '+Math.round(dm.run*100)+'% off its low'):'';
+    const sub = dm.band
+      ? ((dm.run!=null)?('Up '+Math.round(dm.run*100)+'% off its low'):'')
+      : 'Has not fallen 40% in two years';
     set('ovSigDamage', off.toFixed(0)+'% below 12m high', rd&&rd.t, sub, tone);
   } else set('ovSigDamage', '', '', '', '');
 
