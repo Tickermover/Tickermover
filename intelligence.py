@@ -1213,7 +1213,7 @@ class ThesisGenerator:
     Output schema:
         {
             "ticker":            str,
-            "recommendation":    "Strong Outperform" | "Outperform" | "Neutral" | "Lagging" | "Avoid",
+            "recommendation":    "Top Tier" | "Quality" | "Average" | "Below Avg" | "Weak",
             "conviction":        "High" | "Medium" | "Low",
             "headline":          short one-liner,
             "explanation":       2-3 sentences in plain English,
@@ -1313,8 +1313,8 @@ class ThesisGenerator:
         Always returns at most 3 lines.
         """
         out: list[str] = []
-        rec_pos = rec in ("Strong Outperform", "Outperform")
-        rec_neg = rec in ("Lagging", "Avoid")
+        rec_pos = rec in ("Top Tier", "Quality")
+        rec_neg = rec in ("Below Avg", "Weak")
 
         # 1. Top pick from bull or bear, depending on recommendation direction
         if rec_pos and bull:
@@ -1416,27 +1416,27 @@ class ThesisGenerator:
 
     def _recommendation(self, grade: str, pop: float, regime: dict, vel: Optional[float]) -> str:
         # COMPLIANCE (B6): these are TickerMover's OWN quality ratings, so they use
-        # the house research scale (Strong Outperform / Outperform / Neutral /
-        # Lagging / Avoid) — NEVER buy/sell/hold language. Buy/Sell wording is
+        # the house quality scale (Top Tier / Quality / Average / Below Avg /
+        # Weak) — NEVER buy/sell/hold language. Buy/Sell wording is
         # reserved for attributed third-party analyst ratings only. Matches the
         # grade legend shown in the UI. Not an FCA-authorised personal recommendation.
         rl = regime.get("regime_label", "Mixed")
         # Base tier from grade
         base = {
-            "A": "Strong Outperform",
-            "B": "Outperform",
-            "C": "Neutral",
-            "D": "Lagging",
-            "F": "Avoid",
-        }.get(grade, "Neutral")
+            "A": "Top Tier",
+            "B": "Quality",
+            "C": "Average",
+            "D": "Below Avg",
+            "F": "Weak",
+        }.get(grade, "Average")
 
         # Regime + velocity nudges
-        if rl == "Bearish" and base == "Strong Outperform":
-            return "Outperform"        # temper one notch in tough macro
-        if rl == "Bullish" and base == "Outperform" and (vel or 0) >= 2:
-            return "Strong Outperform" # firmer if score is also climbing
-        if rl == "Bearish" and (vel or 0) <= -3 and base in ("Outperform", "Neutral"):
-            return "Lagging"
+        if rl == "Bearish" and base == "Top Tier":
+            return "Quality"           # temper one notch in tough macro
+        if rl == "Bullish" and base == "Quality" and (vel or 0) >= 2:
+            return "Top Tier"          # firmer if score is also climbing
+        if rl == "Bearish" and (vel or 0) <= -3 and base in ("Quality", "Average"):
+            return "Below Avg"
         return base
 
     def _headline(self, t: dict, rec: str, regime: dict) -> str:
@@ -1475,7 +1475,7 @@ class ThesisGenerator:
             arrow = "rising" if vel > 0.5 else "falling" if vel < -0.5 else "steady"
             sentence_b = (
                 f"The score is {arrow} ({vel:+.1f} pts in the last 24 h), which "
-                f"{'reinforces' if (vel > 0 and rec in ('Strong Outperform','Outperform')) or (vel < 0 and rec in ('Lagging','Avoid')) else 'modestly conflicts with'} "
+                f"{'reinforces' if (vel > 0 and rec in ('Top Tier','Quality')) or (vel < 0 and rec in ('Below Avg','Weak')) else 'modestly conflicts with'} "
                 f"the {rec} rating."
             )
         else:
@@ -1485,10 +1485,10 @@ class ThesisGenerator:
         return " ".join([sentence_a, sentence_b, sentence_c]).strip()
 
     def _closer(self, t: dict, rec: str) -> str:
-        if rec in ("Strong Outperform", "Outperform"):
+        if rec in ("Top Tier", "Quality"):
             return ("Any position should respect an ATR-based risk level — the model "
                     "highlights the setup; risk control is the reader's own decision.")
-        if rec == "Neutral":
+        if rec == "Average":
             return "The profile is balanced — no clear quality edge either way at the moment."
         return ("The score profile flags more risk than reward here until the "
                 "fundamentals or momentum improve.")

@@ -10002,7 +10002,7 @@ def _is_hot_eligible(t: dict) -> bool:
     Hot-list eligibility — HIGH CONVICTION only:
     1. Alpha Score  ≥ 70  (Grade A territory — top-tier momentum + fundamentals)
     2. Confidence ≥ 70% (enough real data to trust the score)
-    3. Grade A   (rendered "Strong Outperform" — pop_score ≥ 68 maps to A)
+    3. Grade A   (rendered "Top Tier" — pop_score ≥ 68 maps to A)
     4. Market cap ≥ $500M (excludes micro-caps); Small Cap tier floor $250M
     5. NOT a Mega Cap (>$200B) — NVDA/AVGO/MSFT etc. excluded
     """
@@ -11620,7 +11620,7 @@ def _pending_below_gate(entry: dict) -> Optional[dict]:
     """If the pending pick's CURRENT Opus conviction is below the selection floor,
     return {ticker, conviction, floor}; else None. The replenish-time gate only
     screens candidates that were already scored when queued — this is the second
-    gate at APPROVE time, so an AI-flagged 'Avoid' can't be published by a stray
+    gate at APPROVE time, so an AI-flagged 'Weak' can't be published by a stray
     click (e.g. CRWV @44 vs the 45 floor). Unscored names don't block (no opinion
     yet); the floor==0 setting disables the gate entirely."""
     floor = config.AI_SELECT_MIN_CONVICTION
@@ -11765,7 +11765,7 @@ def _replenish_portfolio(portfolio: dict) -> dict:
 
     # ── AI-verified selection gate ────────────────────────────────────────
     # Opus already scored these names (conviction). Veto any it rated an explicit
-    # "Avoid" (below the floor) so a quant-qualified-but-AI-flagged name never
+    # "Weak" (below the floor) so a quant-qualified-but-AI-flagged name never
     # reaches the owner approval email. Unscored names (conviction None) pass —
     # the human approval gate still applies. Disabled when floor == 0.
     floor = config.AI_SELECT_MIN_CONVICTION

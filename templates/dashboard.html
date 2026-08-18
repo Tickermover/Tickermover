@@ -9481,7 +9481,7 @@ document.addEventListener('keydown', function(e){
     <div class="card"><h3 style="color:var(--acc2);margin-bottom:8px">📐 Alpha Score</h3>
       <p style="font-size:13px;line-height:1.6;color:var(--muted)">Composite 0–100 score combining momentum (40%), social velocity (20%), technical signals (20%), fundamentals (10%), and market cap fit (10%). Scores above 70 indicate strong setups. Only $1B+ market cap stocks qualify.</p></div>
     <div class="card"><h3 style="color:var(--acc2);margin-bottom:8px">🎯 Grades &amp; Ratings</h3>
-      <p style="font-size:13px;line-height:1.6;color:var(--muted)">A → ★★★★★ Strong Outperform · B → ★★★★ Outperform · C → ★★★ Neutral · D → ★★ Lagging · F → ★ Avoid. The Hot List shows only ★★★★★ Strong Outperform (grade A) with confidence ≥ 75%. Use All Stocks tab to browse all grades. <strong>Note:</strong> these are quality descriptors, not buy/sell recommendations — TickerMover is a research tool, not an FCA-authorised adviser.</p></div>
+      <p style="font-size:13px;line-height:1.6;color:var(--muted)">A → ★★★★★ Top Tier · B → ★★★★ Quality · C → ★★★ Average · D → ★★ Below Avg · F → ★ Weak. The Hot List shows only ★★★★★ Top Tier (grade A) with confidence ≥ 75% and market cap ≥ $1B. Use All Stocks tab to browse all grades. <strong>Note:</strong> these are quality descriptors, not buy/sell recommendations — TickerMover is a research tool, not an FCA-authorised adviser.</p></div>
     <!-- COMPLIANCE: the "⚡ Trade Setups" card was removed 14 Aug 2026. It
          published our position-sizing methodology (entry / 1.5xATR stop /
          3xATR target / share count / 1% risk per trade) and pointed at a
@@ -13785,7 +13785,7 @@ function gradeStars(g) {
 }
 function gradeToRating(g) {
   const stars = gradeStars(g);
-  const word  = {A:'Strong Outperform', B:'Outperform', C:'Neutral', D:'Lagging', F:'Avoid'}[g] || (g || 'No data');
+  const word  = {A:'Top Tier', B:'Quality', C:'Average', D:'Below Avg', F:'Weak'}[g] || (g || 'No data');
   return stars ? stars + ' ' + word : word;
 }
 function gradeClass(g) {
@@ -14730,7 +14730,7 @@ function riskFlags(t) {
 
 /* ----------------------------------------------------------
    RENDER — HOT LIST
-   Only shows grade A (rendered "Strong Outperform"), confidence >= 75%, mktcap >= $1B
+   Only shows grade A (rendered "Top Tier"), confidence >= 75%, mktcap >= $1B
    ---------------------------------------------------------- */
 /* ----------------------------------------------------------
    KEY CATALYST — detects the most significant trigger on a
@@ -14766,7 +14766,7 @@ function keyTrigger(t) {
   // (3M change is intentionally NOT used here — it's already shown as
   // "▲ X% · 3M" on the card header, no need to duplicate.)
   if (pop >= 80)
-    return { icon:'⭐', text:'Strong Outperform — consistent high score', cls:'kt-neutral' };
+    return { icon:'⭐', text:'Top Tier — consistent high score', cls:'kt-neutral' };
   if (pop >= 65)
     return { icon:'📊', text:'Quality score — within tracking range', cls:'kt-neutral' };
   return { icon:'📊', text:'No major catalyst — score reflects steady state', cls:'kt-neutral' };
@@ -14794,7 +14794,7 @@ function renderHotList(data) {
   }
 
   // Hidden header stats (kept so any stray JS reading them doesn't throw).
-  const flagged = tickers.filter(t => t.grade === 'A').length; // Grade A = "Strong Outperform" only
+  const flagged = tickers.filter(t => t.grade === 'A').length; // Grade A = "Top Tier" only
   const _su = document.getElementById('stat-universe'); if (_su) _su.textContent = tickers.length;
   const _sh = document.getElementById('stat-hot');      if (_sh) _sh.textContent = scoredCount;
   const _sf = document.getElementById('stat-flagged');  if (_sf) _sf.textContent = flagged;
@@ -18216,7 +18216,7 @@ function renderReports(tickers) {
   ).slice(0, 5);
 
   const STAR = {A:'★★★★★',B:'★★★★',C:'★★★',D:'★★',F:'★'};
-  const TIER = {A:'Strong Outperform',B:'Outperform',C:'Neutral',D:'Lagging',F:'Avoid'};
+  const TIER = {A:'Top Tier',B:'Quality',C:'Average',D:'Below Avg',F:'Weak'};
 
   // ── Section 1: Daily Top 5 ────────────────────────────────────────────
   // Each card is now a clickable link to the per-stock tear sheet.
@@ -18394,11 +18394,11 @@ function renderRichReport(a) {
   // generated blog text, not our grade system). Includes legacy buy/sell terms
   // because the report content may still use them in narrative form — that's
   // OK because it's clearly attributed to an external analyst summary.
-  const ratingColor = (r.rating || '').includes('Strong Outperform')                                  ? '#15803d'
-                    : (r.rating || '').includes('Outperform')                                        ? '#0040c1'
-                    : (r.rating || '').includes('Neutral')                                           ? '#D4860A'
-                    : (r.rating || '').includes('Lagging')                                           ? '#dc2626'
-                    : (r.rating || '').includes('Avoid')                                             ? '#991b1b'
+  const ratingColor = (r.rating || '').includes('Top Tier')                                  ? '#15803d'
+                    : (r.rating || '').includes('Quality')                                        ? '#0040c1'
+                    : (r.rating || '').includes('Average')                                           ? '#D4860A'
+                    : (r.rating || '').includes('Below Avg')                                           ? '#dc2626'
+                    : (r.rating || '').includes('Weak')                                             ? '#991b1b'
                     : '#475569';
 
   const upsidePct = (r.price_target && r.current_price)
@@ -23214,7 +23214,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     if(/reddit|wsb|wallstreetbets|social.*spike|mention.*spike|trending/i.test(c)) return {icon:'🔥',text:'Social Momentum Spike',cls:'kt-social'};
     const pop=parseFloat(t.smart_score!=null?t.smart_score:(t.pop_score||0));
     if(/strong momentum|price.*%|momentum/i.test(c)&&pop>=82) return {icon:'⚡',text:'Strong Price Momentum',cls:'kt-momentum'};
-    if(pop>=80) return {icon:'⭐',text:'Strong Outperform — consistent high score',cls:'kt-neutral'};
+    if(pop>=80) return {icon:'⭐',text:'Top Tier — consistent high score',cls:'kt-neutral'};
     if(pop>=65) return {icon:'📊',text:'Quality score — within tracking range',cls:'kt-neutral'};
     return {icon:'📊',text:'No major catalyst — score reflects steady state',cls:'kt-neutral'};
   }
@@ -23315,7 +23315,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     const g=(t.grade||'').toUpperCase(), sc=parseFloat(t.smart_score??t.pop_score??0);
     // Compact labels for the dense signals table — the big Alpha Score sits
     // right beside the pill, so the rank is already clear. Full tier names
-    // (Strong Outperform / Outperform / …) live in the roomier pills elsewhere.
+    // (Top Tier / Quality / …) live in the roomier pills elsewhere.
     // THE PILL IS NOT A LABEL FOR THE ALPHA SCORE BESIDE IT. It is usually
     // driven by ai_conviction, a different variable on a different scale, so
     // two rows can legitimately show the same Alpha with opposite pills (ONTO
@@ -23323,20 +23323,23 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     // the number, readers were taking it as that number's grade and concluding
     // the score was arbitrary. Every branch now reports the basis it actually
     // used, which the caller surfaces on hover.
+    // Rungs are the same quality ladder as the A-F grade legend (Top Tier /
+    // Quality / Average / Below Avg / Weak) so the whole site speaks one
+    // vocabulary. "Watch" stays as-is: it is a caution flag, not a rung.
     if(t.caution) return {w:'Watch', cls:'vd-watch', basis:'flagged for caution'};
     const conv=parseFloat(t.ai_conviction);
     if(!isNaN(conv)){
       const b='AI conviction '+Math.round(conv)+'/100';
-      if(conv>=80) return {w:'Strong', cls:'vd-top', basis:b};
-      if(conv>=65) return {w:'Outperform', cls:'vd-strong', basis:b};
-      return {w:'Neutral', cls:'vd-solid', basis:b};
+      if(conv>=80) return {w:'Top Tier', cls:'vd-top', basis:b};
+      if(conv>=65) return {w:'Quality', cls:'vd-strong', basis:b};
+      return {w:'Average', cls:'vd-solid', basis:b};
     }
     // No judge score for this name — fall back to grade/Alpha, and say so,
     // because this branch and the one above are two different scales.
     const b2='grade '+(g||'n/a')+', Alpha '+(isNaN(sc)?'n/a':Math.round(sc));
-    if(g==='A'||sc>=85) return {w:'Strong', cls:'vd-top', basis:b2};
-    if(g==='B'||sc>=78) return {w:'Outperform', cls:'vd-strong', basis:b2};
-    return {w:'Neutral', cls:'vd-solid', basis:b2};
+    if(g==='A'||sc>=85) return {w:'Top Tier', cls:'vd-top', basis:b2};
+    if(g==='B'||sc>=78) return {w:'Quality', cls:'vd-strong', basis:b2};
+    return {w:'Average', cls:'vd-solid', basis:b2};
   }
   function forwardChips(t){
     // The 'poised to grow' tells — our own forward fundamentals, not price targets.
@@ -23635,7 +23638,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
 
     // ── THE CALL — lead with the decision ──────────────────────────────
     const grade=(t.grade||'').toUpperCase();
-    const TIER={A:['★★★★★','Strong Outperform'],B:['★★★★','Outperform'],C:['★★★','Neutral'],D:['★★','Lagging'],F:['★','Avoid']}[grade]||['','No call yet'];
+    const TIER={A:['★★★★★','Top Tier'],B:['★★★★','Quality'],C:['★★★','Average'],D:['★★','Below Avg'],F:['★','Weak']}[grade]||['','No call yet'];
     const tone=({A:'pos',B:'buy',C:'neu',D:'neg',F:'neg'})[grade]||'neu';
     const thesis=(t.rationale?t.rationale.replace(/^💡\s*/,''):((kt&&kt.text)||''));
     const ccUp = !isNaN(up) ? '<span class="dr-cc '+(up>=0?'cc-up':'cc-dn')+'">'+(up>=0?'▲':'▼')+' '+Math.abs(up).toFixed(0)+'% upside</span>' : '';
@@ -23711,7 +23714,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
   function _card(title,rows){ const r=(rows||[]).filter(Boolean); if(!r.length) return ''; const m=_secMeta(title); return _sec(title,m[1],m[2],r.join('')); }
   function _money(v){ v=parseFloat(v); if(isNaN(v))return '—'; const a=Math.abs(v); if(a>=1e12)return '$'+(v/1e12).toFixed(2)+'T'; if(a>=1e9)return '$'+(v/1e9).toFixed(2)+'B'; if(a>=1e6)return '$'+(v/1e6).toFixed(1)+'M'; return '$'+v.toFixed(0); }
   function _stageLabel(s){ return {pre:'PRE-BREAKOUT',breakout:'BREAKOUT',extended:'EXTENDED',false:'FALSE BREAKOUT',pullback:'PULLBACK',downtrend:'DOWNTREND',base:'BASING'}[s]||(s||'').toUpperCase(); }
-  function _tierOf(g){ return ({A:['★★★★★','Strong Outperform','pos'],B:['★★★★','Outperform','buy'],C:['★★★','Neutral','neu'],D:['★★','Lagging','neg'],F:['★','Avoid','neg']})[g]||['','No call yet','neu']; }
+  function _tierOf(g){ return ({A:['★★★★★','Top Tier','pos'],B:['★★★★','Quality','buy'],C:['★★★','Average','neu'],D:['★★','Below Avg','neg'],F:['★','Weak','neg']})[g]||['','No call yet','neu']; }
   function _lvl(k,v,cls){ return '<div class="lvl"><span class="lvl-k">'+k+'</span><span class="lvl-v '+(cls||'')+'">'+v+'</span></div>'; }
 
 
