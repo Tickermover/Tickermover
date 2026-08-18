@@ -2546,7 +2546,7 @@ body.v2 .ticker-chip .px{color:#cbd5e1!important}
      + NEW) leave only ~75px for the label at 212px and ellipsise. This width
      went in with the renames originally and was lost when the icon rail was
      reverted, which is why "Future Hero…" was truncating. */
-  grid-template-columns:236px 1fr;
+  grid-template-columns:236px minmax(0,1fr);
   background:#F8FAFC;
   border-radius:20px;
   overflow:hidden;
@@ -2845,12 +2845,43 @@ body.v2-drawer-open .v2-drawer-backdrop{display:block}
   }
   body.v2 #ticker-tape{margin-bottom:8px}
   .v2-app{
-    grid-template-columns:1fr;
+    /* minmax(0,1fr), NOT 1fr. A `1fr` track carries min-width:auto, so it
+       refuses to shrink below its widest descendant — one long holding name
+       ("Micron Technology, Inc. — EPS Beat — earnings…") pushed the whole
+       column past a 390px phone. That is what was actually cutting content off
+       at the right edge; the body frame showing through was the same overflow
+       seen from the other side. Note .wl-title already had min-width:0 and an
+       ellipsis and it never fired — a child cannot shrink while an ancestor
+       track refuses to. */
+    grid-template-columns:minmax(0,1fr);
     border-radius:0;
     height:auto;
     min-height:calc(100vh - 80px);
     overflow:visible;
   }
+  /* The shrink has to propagate the whole way down, or the first descendant
+     with min-width:auto re-inflates the column. */
+  .v2-content,.v2-main,.main,.panel{min-width:0;max-width:100%}
+  /* Anything genuinely wider than a phone scrolls INSIDE its own box rather
+     than widening the page — the tables carry deliberate min-widths (620-1040px)
+     so their columns stay readable. */
+  .main table{max-width:100%}
+  .se-wrap,.tbl-wrap,.stmt-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%}
+  /* LONG TITLES WRAP INSTEAD OF RUNNING OFF THE EDGE.
+     .wl-title and friends use white-space:nowrap with an ellipsis, which only
+     works when EVERY ancestor can shrink — one min-width:auto anywhere up the
+     chain and the ellipsis never fires, the text just runs on, and on a phone
+     it disappears past the right edge mid-word ("Micron Technology, Inc. — EPS
+     Beat — earn"). Rather than depend on that whole chain holding, let the text
+     wrap here: on a 390px screen two short lines beat one truncated one, and it
+     cannot overflow however the ancestors behave.
+     overflow-wrap:anywhere (not break-all) so normal words still break at
+     spaces and only an over-long token is split. */
+  .wl-title,.wl-name,.tl-name,.sm-name,.pip-name,.ce-name{
+    white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere}
+  /* Belt and braces: no descendant may force the page wider than the phone. */
+  .main,.main *{max-width:100%}
+  .main img,.main svg{height:auto}
   /* The content gutter drops with it. Body 14+14 plus main 12+12 plus a card's
      own 14+14 was 80px of a 390px screen spent on margins before any content. */
   .main{padding:12px 10px}
