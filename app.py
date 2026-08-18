@@ -2587,9 +2587,12 @@ async def stock_page(ticker: str):
     # Look up the ticker in the universe; reject if unknown
     t = next((x for x in (_universe_data or []) if (x.get("ticker") or "").upper() == sym), None)
     if not t:
-        # Friendly "not in universe" page rather than 404 — still indexable,
-        # tells the user the ticker isn't covered yet.
-        return HTMLResponse(content=_with_analytics(_render_unknown_stock(sym)), status_code=200)
+        # Friendly "not in universe" body, but a 404 STATUS. Returning 200 for a
+        # ticker we do not cover is a soft 404: it tells crawlers and uptime
+        # monitors that /stocks/<any-garbage> is a real page, so the whole
+        # infinite URL space looks valid. The body is unchanged and still
+        # explains that the ticker is not covered yet.
+        return HTMLResponse(content=_with_analytics(_render_unknown_stock(sym)), status_code=404)
     return HTMLResponse(content=_with_analytics(_render_stock_page(t)))
 
 
@@ -5506,13 +5509,54 @@ async def weekly_page():
 # not validated (the client renders from ?week / the path). Both shapes serve the
 # same single-page app, which reads the week from the path. The server injects
 # per-issue <head> SEO (see _weekly_inject_seo) so each edition is crawlable/shareable.
+def _render_unknown_week(week_start: str) -> str:
+    """Body for a /weekly/<junk> request. Friendly, noindex, routed home."""
+    from html import escape as _esc
+    return f"""<!DOCTYPE html><html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex"><title>Issue not found | TickerMover</title>
+<style>body{{font-family:system-ui,-apple-system,sans-serif;max-width:600px;
+margin:80px auto;padding:0 24px;color:#0A2F46;text-align:center;line-height:1.6}}
+a{{color:#14587D}}</style></head><body>
+<h1 style="font-size:22px">No issue for &ldquo;{_esc(week_start[:40])}&rdquo;</h1>
+<p>That does not look like one of our weekly editions. Every issue is dated by
+its Monday, for example <code>2026-08-17</code>.</p>
+<p><a href="/weekly">Browse all issues &rarr;</a></p>
+</body></html>"""
+
+
+def _valid_week_start(week_start: str) -> bool:
+    """Is this plausibly an issue date, rather than arbitrary path junk?
+
+    Without this, /weekly/<anything> served the full 71 KB page with HTTP 200
+    and no noindex, so every string in existence minted an indexable duplicate
+    of the newsstand. The slug after the date is deliberately NOT validated —
+    it is decorative and search-readable by design — but the date itself has to
+    look like one. Range-checked rather than existence-checked so a brand-new
+    issue is never 404ed by a stale index.
+    """
+    import datetime as _dt
+    try:
+        d = _dt.date.fromisoformat((week_start or "").strip())
+    except ValueError:
+        return False
+    today = _dt.date.today()
+    return _dt.date(2020, 1, 1) <= d <= today + _dt.timedelta(days=370)
+
+
 @app.get("/weekly/{week_start}", response_class=HTMLResponse)
 async def weekly_issue_short(week_start: str):
+    if not _valid_week_start(week_start):
+        return HTMLResponse(content=_with_analytics(_render_unknown_week(week_start)),
+                            status_code=404)
     return _weekly_html_response(week_start)
 
 
 @app.get("/weekly/{week_start}/{slug}", response_class=HTMLResponse)
 async def weekly_issue(week_start: str, slug: str):
+    if not _valid_week_start(week_start):
+        return HTMLResponse(content=_with_analytics(_render_unknown_week(week_start)),
+                            status_code=404)
     return _weekly_html_response(week_start, slug)
 
 
