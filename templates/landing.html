@@ -1704,7 +1704,8 @@ button:focus-visible,[tabindex]:focus-visible{
       <span class="es-arrow">→</span>
       <span class="es-step"><b>03</b> Output</span>
     </div>
-    <div class="engine-volume reveal"><b>Today:</b> 2.4M price ticks · 540 EPS revisions · 12K analyst notes · 86K options prints — all fused in under 5 minutes.</div>
+    <!-- "Today:" implied these were live counters; they are static copy. -->
+    <div class="engine-volume reveal"><b>A typical day:</b> 2.4M price ticks · 540 EPS revisions · 12K analyst notes · 86K options prints — all fused in under 5 minutes.</div>
     <div class="engine-grid reveal">
       <!-- Inputs (sapphire side — raw data flowing in) -->
       <div class="engine-col input-side">
@@ -1788,7 +1789,13 @@ button:focus-visible,[tabindex]:focus-visible{
       <div class="dash-chrome">
         <span class="dc-dot r"></span><span class="dc-dot y"></span><span class="dc-dot g"></span>
         <div class="dc-url">app.tickermover.com / dashboard</div>
-        <div class="dc-live"><span class="dc-live-dot"></span> Live · <span data-clock>—</span> ET</div>
+        <!-- This chrome sits above a STATIC sample table (.radar-mock): the
+             tickers, Alpha scores and percentage moves below are hard-coded,
+             not fetched. It previously carried a real ticking [data-clock]
+             reading "Live · <now> ET", which invited readers to take those
+             fabricated figures for today's actual scores on named securities.
+             The clock is deliberately gone and the badge says what this is. -->
+        <div class="dc-live" style="font-variant:normal">Illustrative &mdash; sample data</div>
       </div>
       <!-- app body: sidebar + main + right rail -->
       <div class="dash-body">
@@ -1812,10 +1819,12 @@ button:focus-visible,[tabindex]:focus-visible{
           <div class="radar-mock">
             <div class="picks-card">
               <div class="pk-head">
-                <h3>🔥 Highest scores today</h3>
+                <h3>🔥 Highest scores</h3>
                 <div class="pk-meta">
                   <span class="meta-pill">High Alpha</span>
-                  <span class="meta-pill">+ a live signal</span>
+                  <!-- Was "+ a live signal" and "…scores today". Both implied
+                       these rows were current; they are hard-coded samples. -->
+                  <span class="meta-pill">Example rows</span>
                   <span class="meta-pill green">5 picks</span>
                 </div>
               </div>
