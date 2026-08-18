@@ -97,6 +97,14 @@ AI_DAILY_USD_CAP = float(_env("AI_DAILY_USD_CAP", "3") or "3")
 # redeploys. Resets on the 1st (UTC).
 AI_MONTHLY_USD_CAP = float(_env("AI_MONTHLY_USD_CAP", "50") or "50")
 
+# ── Pro gating master switch ──────────────────────────────────────────────────
+# OFF since 18 Aug 2026: pricing is not decided, so nothing is paywalled and no
+# "PRO" badge is shown. This is a SWITCH, not a removal — every gate, badge and
+# upgrade path is still in place and comes back by setting PRO_GATING=1, which
+# is why the code was not ripped out. Turn it on the day a price exists.
+PRO_GATING_ENABLED = (_env("PRO_GATING", "0") or "0").strip().lower() in ("1", "true", "yes", "on")
+
+
 # ── AI exit-verification: catastrophic capital floor ──────────────────────────
 # The Opus exit brain may override a mechanical exit (incl. the -8% stop) and HOLD
 # a position. This floor is the one thing it can NEVER override: once a position is

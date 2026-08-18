@@ -968,6 +968,11 @@ body.v2 #sectors-grid .smh-name{font-weight:800;font-size:12.5px;color:#0f172a!i
   padding-top:9px;border-top:1px solid rgba(12,26,52,.07)}
 .tm-cov-n{font-family:'JetBrains Mono',monospace;font-size:15px;font-weight:700;color:#0A2F46}
 .tm-cov-b{font-size:10.5px;color:#94A3B8;letter-spacing:.01em}
+/* PRO gating off: hide every badge and upsell surface. Display-only, so
+   nothing is deleted and re-enabling is one server flag. */
+body.no-pro .v2-nav-pro,body.no-pro [data-pro],body.no-pro .nav-pro,
+body.no-pro .pro-badge,body.no-pro .pro-chip,body.no-pro .v2-sb-pro,
+body.no-pro #upgrade-modal,body.no-pro .upgrade-cta,body.no-pro .pro-lock{display:none!important}
 #panel-theses .tm-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:15px}
 #panel-theses .tm-card{display:flex;flex-direction:column;min-height:206px;background:#fff;border:1px solid #E4E7EC;
   border-radius:16px;padding:21px;text-decoration:none;color:inherit;box-shadow:0 1px 3px rgba(10,31,54,.05);
@@ -2821,21 +2826,34 @@ body.v2-drawer-open .v2-drawer-backdrop{display:block}
 @media (max-width: 768px){
   /* Phones: body reverts to natural body scroll (sidebar is a drawer),
      padding stays wide enough that the gradient frame still reads. */
+  /* FULL-BLEED ON PHONES (18 Aug 2026).
+     This block used to set padding:14px "so the gradient frame still reads" —
+     a desktop instinct that costs 28px of a 390px screen and, worse, exposes
+     body.v2's dark frame. That frame carries a sapphire radial at 100% 100%
+     (rgba(91,134,240,.08)), which is the blue-grey strip a user reported down
+     the right-hand side of the phone layout. Desktop already went full-bleed
+     (padding:0, "was a 12px inset frame"); the phone simply never followed.
+     The rounded corners go with it — a 14px radius against a padding-less body
+     just reveals four dark notches of the same frame. */
   body.v2{
-    padding:14px;
+    padding:0;
     height:auto;
     min-height:100vh;
     display:block;
     overflow:visible;
+    overflow-x:hidden;       /* nothing should exceed the viewport; if it does, hide it rather than expose the frame */
   }
-  body.v2 #ticker-tape{margin-bottom:10px}
+  body.v2 #ticker-tape{margin-bottom:8px}
   .v2-app{
     grid-template-columns:1fr;
-    border-radius:14px;
+    border-radius:0;
     height:auto;
     min-height:calc(100vh - 80px);
     overflow:visible;
   }
+  /* The content gutter drops with it. Body 14+14 plus main 12+12 plus a card's
+     own 14+14 was 80px of a 390px screen spent on margins before any content. */
+  .main{padding:12px 10px}
   .v2-content{
     height:auto;
     overflow:visible;
@@ -26610,6 +26628,20 @@ function scResultHTML(d){
   })();
 
   window.__PLAN = window.__PLAN || {pro:false, comped:false, loaded:false};
+  /* Anonymous visitors never call /api/me, so the plan refresh below never runs
+     for them and they would keep seeing upsell chrome even with gating off.
+     /api/status is public and already unauthenticated, so read the switch from
+     there and settle the question for everyone before anything renders. */
+  (async function _proGateBoot(){
+    try{
+      const r = await fetch('/api/status', {cache:'no-store'});
+      const j = await r.json();
+      if (j && j.pro_gating === false){
+        window.__PLAN = {pro:true, comped:false, beta:false, gating:false, loaded:true};
+        document.body.classList.add('no-pro');
+      }
+    }catch(e){ /* gating stays on if we cannot tell — fail closed, not open */ }
+  })();
   var _planTries = 0, _planTimer = null;
   async function _refreshPlan(){
     clearTimeout(_planTimer);
@@ -26636,7 +26668,16 @@ function scResultHTML(d){
       const j=await r.json();
       const pro=String(j.plan||'free').toLowerCase()==='pro' &&
                 String(j.status||'active').toLowerCase()==='active';
-      window.__PLAN={pro:pro, comped:!!j.comped, beta:!!j.beta_pro, loaded:true};
+      /* PRO GATING SWITCHED OFF (18 Aug 2026, config.PRO_GATING_ENABLED).
+         No price exists yet, so nothing is paywalled. Every upsell branch in
+         this file already tests window.__PLAN.pro, so forcing it true here
+         unlocks all of them at once — and flipping the server flag back
+         restores them without touching a single call site. `gating` is kept on
+         the object so the badge CSS can follow the same switch. */
+      const _gate = (j.pro_gating !== false);
+      window.__PLAN={pro:(_gate ? pro : true), comped:!!j.comped,
+                     beta:!!j.beta_pro, gating:_gate, loaded:true};
+      document.body.classList.toggle('no-pro', !_gate);
       const el=document.getElementById('user-plan');
       if(el) el.textContent = pro ? (j.comped?'Pro · team access':(j.beta_pro?'Pro · beta':'Pro member')) : 'Free plan';
       // A tab rendered before the plan landed may be showing the upsell.

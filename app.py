@@ -274,6 +274,12 @@ async def _is_pro_user(user: Optional[dict],
     rather than answering False, and we never cache a failure. Caching a
     failure is what turned one transient Supabase error into five minutes of
     paywall for a paying customer."""
+    # Pro gating is switched OFF while there is no price (config.PRO_GATING_ENABLED).
+    # Everything is open to everyone, signed in or not — so this returns True
+    # before any of the subscription machinery runs. Flip the flag and every
+    # gate below wakes up exactly as it was.
+    if not getattr(config, "PRO_GATING_ENABLED", True):
+        return True
     if not user or not creds:
         return False
     if _beta_pro_active():
@@ -9730,6 +9736,9 @@ async def api_status():
         "cache_stats":    cache.stats,
         "last_refresh":   _last_full_refresh,
         "universe_size":  len(_universe_data),
+        # Public so ANONYMOUS visitors also know gating is off — they never
+        # fetch /api/me, so without this they would still see upsell chrome.
+        "pro_gating":     bool(getattr(config, "PRO_GATING_ENABLED", True)),
         "av_calls_today": coordinator._av_calls_today,
         "av_call_limit":  config.AV_CALLS_PER_DAY,
         "intelligence":   {
@@ -13555,6 +13564,9 @@ async def api_user_me(user: Optional[dict] = Depends(_current_user),
         "status":      p["status"],
         "valid_until": p["valid_until"],
         "beta_pro":    p["beta"],
+        # Pro gating master switch — the client mirrors it into window.__PLAN
+        # so badges, upsells and locked tabs all follow one flag.
+        "pro_gating": bool(getattr(config, "PRO_GATING_ENABLED", True)),
         "comped":      p["comped"],
     })
 
@@ -13713,6 +13725,9 @@ async def api_user_account(user: Optional[dict] = Depends(_current_user),
         "status":         p["status"],
         "valid_until":    p["valid_until"],
         "beta_pro":       p["beta"],
+        # Pro gating master switch — the client mirrors it into window.__PLAN
+        # so badges, upsells and locked tabs all follow one flag.
+        "pro_gating": bool(getattr(config, "PRO_GATING_ENABLED", True)),
         "comped":         p["comped"],
     })
 
