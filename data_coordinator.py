@@ -660,6 +660,22 @@ class DataCoordinator:
             except Exception as e:
                 logger.warning(f"yfinance news fallback failed for {ticker}: {e}")
 
+        # ── Last tier: GDELT (no key, no quota) ───────────────────────────
+        # Only reached when Finnhub AND yfinance both came back empty. Pass the
+        # company name when we have one cached — GDELT keys off the name, and a
+        # bare ticker collides badly with ordinary English words.
+        if not result:
+            try:
+                import news_gdelt
+                nm = ((self.cache.get(f"yf:{ticker}:v5") or {}).get("name")
+                      or (self.cache.get(f"fund:{ticker}") or {}).get("name") or "")
+                result = await news_gdelt.fetch(ticker, name=nm, days=days)
+                if result:
+                    logger.info(f"GDELT news fallback used for {ticker} "
+                                f"({len(result)} headlines)")
+            except Exception as e:
+                logger.warning(f"GDELT news fallback failed for {ticker}: {e}")
+
         # Cache: full TTL on hits, shorter TTL on empty so we recover fast
         ttl = config.CACHE_NEWS_TTL if result else 300
         self.cache.set(key, result, ttl)

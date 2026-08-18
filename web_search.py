@@ -29,6 +29,8 @@ from __future__ import annotations
 
 import logging
 import os
+import re
+import time
 import urllib.parse
 
 import httpx
@@ -41,16 +43,34 @@ LAST_ERROR: dict = {}
 _UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
        "(KHTML, like Gecko) Chrome/126.0 Safari/537.36")
 
+# DuckDuckGo bot-blocks datacenter IPs with HTTP 202 (observed live on Railway,
+# 18 Aug 2026). That state persists, so back off for a while instead of paying
+# a round-trip on every search. See _duckduckgo().
+_DDG_BLOCK_S = 900
+_ddg_blocked_until = 0.0
+
+
+def _norm(s: str) -> str:
+    """Collapse a key name to letters+digits joined by single underscores.
+
+    The old version mapped each non-alphanumeric character to one underscore,
+    which meant a name typed with BOTH a separator and a space missed: the
+    Tavily key was entered in Railway as `TAVILY_ API_Key`, normalising to
+    `TAVILY__API_KEY` (two underscores) and never matching `TAVILY_API_KEY`.
+    Collapsing runs makes the loose match live up to its name.
+    """
+    return "_".join(p for p in re.split(r"[^A-Za-z0-9]+", s.upper()) if p)
+
 
 def _key(*names: str) -> str:
     for n in names:
         v = (os.environ.get(n, "") or "").strip()
         if v:
             return v
-    # tolerate loose naming ("Serper API Key")
-    want = {"".join(c if c.isalnum() else "_" for c in n.upper()) for n in names}
+    # tolerate loose naming ("Serper API Key", "TAVILY_ API_Key")
+    want = {_norm(n) for n in names}
     for k, v in os.environ.items():
-        if "".join(c if c.isalnum() else "_" for c in k.upper()) in want and (v or "").strip():
+        if _norm(k) in want and (v or "").strip():
             return v.strip()
     return ""
 
@@ -166,13 +186,34 @@ async def search(query: str, count: int = 5, timeout: float = 12.0) -> list[dict
 async def _duckduckgo(q: str, count: int, timeout: float) -> list[dict]:
     """Scrape DuckDuckGo's HTML endpoint. No key, no quota, no SLA.
 
+    KNOWN LIMITATION — READ BEFORE RELYING ON THIS TIER.
+    DuckDuckGo answers **HTTP 202** to requests from datacenter IPs; that is its
+    anti-bot response, not a transient error. It works from a residential IP
+    (i.e. local dev) and is refused from Railway, so in production this tier
+    usually returns nothing. It is kept because it costs one request, needs no
+    key, and does answer from some hosts — but Tavily, not this, is the real
+    fallback once Serper and Brave are out.
+
+    Because a blocked host stays blocked, a 202/403/429 puts the tier to sleep
+    rather than spending a round-trip on every future search.
+
     This is the floor of the chain, so it must never raise and never block for
     long. A layout change upstream degrades it to [] — the same thing every
     caller already sees when the paid tiers are out of credit.
     """
+    global _ddg_blocked_until
+    if time.time() < _ddg_blocked_until:
+        return []
+
     async with httpx.AsyncClient(timeout=timeout, follow_redirects=True) as c:
         r = await c.post("https://html.duckduckgo.com/html/", data={"q": q},
                          headers={"User-Agent": _UA})
+    if r.status_code in (202, 403, 429):
+        _ddg_blocked_until = time.time() + _DDG_BLOCK_S
+        LAST_ERROR.update({"provider": "duckduckgo",
+                           "detail": f"HTTP {r.status_code} (bot-blocked; "
+                                     f"skipping {_DDG_BLOCK_S}s)"})
+        return []
     if r.status_code != 200:
         LAST_ERROR.update({"provider": "duckduckgo",
                            "detail": f"HTTP {r.status_code}"})
