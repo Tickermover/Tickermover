@@ -23299,6 +23299,18 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
   let DATA=null, ALL=[], _byTicker={};
 
   /* ── picks ── */
+  // Company names were cut with a bare .slice(0,26), which lands mid-word and
+  // leaves no ellipsis: "Credo Technology Group Holding" rendered as "Credo
+  // Technology Group Hol", which reads as corrupt data rather than a display
+  // limit. Cut on a word boundary and mark the cut.
+  function clipName(n, max){
+    n = String(n || '').trim();
+    max = max || 26;
+    if (n.length <= max) return n;
+    var cut = n.slice(0, max), sp = cut.lastIndexOf(' ');
+    if (sp > Math.floor(max * 0.5)) cut = cut.slice(0, sp);
+    return cut.replace(/[\s,.\-]+$/, '') + '…';
+  }
   function pickVerdict(t){
     const g=(t.grade||'').toUpperCase(), sc=parseFloat(t.smart_score??t.pop_score??0);
     // Compact labels for the dense signals table — the big Alpha Score sits
@@ -23494,9 +23506,15 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
       const upCell=up==null?'<span class="up-cell up-col muted">—</span>'
         :'<span class="up-cell up-col '+(up>=0?'pos':'neg')+'">'+(up>=0?'+':'−')+Math.abs(up).toFixed(0)+'%<small>to mean target</small></span>';
       return '<div class="dm-row" data-row data-tic="'+escHTML(t.ticker)+'" style="animation-delay:'+(0.08+i*0.05).toFixed(2)+'s">'+
-        '<span class="dm-tick">'+logoHTML(t.ticker)+'<span style="min-width:0">'+escHTML(t.ticker)+(g?'<span class="dm-grade '+g+'">'+g+'</span>':'')+'<br><small>'+escHTML((t.name||'').slice(0,26))+'</small></span></span>'+
+        '<span class="dm-tick">'+logoHTML(t.ticker)+'<span style="min-width:0">'+escHTML(t.ticker)+(g?'<span class="dm-grade '+g+'">'+g+'</span>':'')+'<br><small title="'+escHTML(t.name||'')+'">'+escHTML(clipName(t.name))+'</small></span></span>'+
         '<span class="alpha-cell"><span class="dm-alpha" title="Alpha Score '+pop+' out of 100">'+pop+'</span><span class="vd '+vd.cls+'" title="House view: '+escHTML(vd.w)+(vd.basis?' — based on '+escHTML(vd.basis):'')+'. Separate from the Alpha Score above.">'+vd.w+'</span></span>'+
-        '<span class="dm-cell-why"><span class="why"><span class="why-ico">'+sig.icon+'</span><span class="why-tx">'+escHTML(sig.text)+'</span></span>'+(fchips.length?'<div class="pg-chips">'+fchips.map(c=>'<span class="pg-chip">'+escHTML(c)+'</span>').join('')+'</div>':'')+(risk?'<div class="why-risk">⚠ '+escHTML(risk)+'</div>':'')+'</span>'+
+        // One mark for every row. The per-signal emoji (🚀 📅 ⚡ 💎 📈) made
+        // rule-based rows look like a different class of item from the AI-thesis
+        // rows, and the shortest, least-qualified line — a bare "49% net margins"
+        // with no counterweight — read as the most confident on the table purely
+        // because it carried no caveat. The signal type moves to the tooltip so
+        // the column reads as one system. See the one-tone-scale-per-group rule.
+        '<span class="dm-cell-why"><span class="why"><span class="why-ico" title="'+(sig.ai?'AI analyst thesis':'Rule-based signal')+'">✦</span><span class="why-tx">'+escHTML(sig.text)+'</span></span>'+(fchips.length?'<div class="pg-chips">'+fchips.map(c=>'<span class="pg-chip">'+escHTML(c)+'</span>').join('')+'</div>':'')+(risk?'<div class="why-risk">⚠ '+escHTML(risk)+'</div>':'')+'</span>'+
         upCell+
         '<span class="dm-chg today-col '+(chg>=0?'up':'dn')+'">'+fmtPct(chg)+trend+'</span>'+
         '<span class="act-col"><button class="dm-btn">View →</button></span>'+

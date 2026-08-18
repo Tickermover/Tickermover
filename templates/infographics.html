@@ -204,7 +204,8 @@
     <div style="display:flex;align-items:center;gap:12px">
       <img src="/static/brand/tickermover-mark.svg" alt="" style="width:34px;height:34px;flex-shrink:0">
       <div>
-        <div class="title">📊 Daily Top 5 <em>Infographic</em></div>
+        <!-- Was a plain div, so the page had no h1 at all. Same styling. -->
+        <h1 class="title" style="margin:0">📊 Daily Top 5 <em>Infographic</em></h1>
         <div class="sub">Auto-generated from today's highest-scoring stocks. Download as PNG, share on Twitter / Reddit / LinkedIn.</div>
       </div>
     </div>
@@ -258,7 +259,11 @@
       </div>
 
       <div class="ig-foot">
-        <div class="ig-foot-disclaimer">📊 Quality descriptors. Not buy/sell recommendations. Not financial advice.</div>
+        <!-- This line is inside the rendered PNG on purpose: the card is built to
+             be posted to Twitter/Reddit, where the site footer does not travel
+             with it, so it is the only disclosure a viewer ever sees. Past
+             performance and capital-at-risk wording added for that reason. -->
+        <div class="ig-foot-disclaimer">📊 Quality descriptors, not buy/sell recommendations. Not advice. Past performance is not a reliable indicator of future results. Capital at risk.</div>
         <div class="ig-foot-url">tickermover<em>.com</em></div>
       </div>
 

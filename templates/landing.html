@@ -1318,7 +1318,9 @@ button:focus-visible,[tabindex]:focus-visible{
 .radar-mock .dm-tick small{font-weight:500;color:var(--grey);font-size:10.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .radar-mock .lg{width:28px;height:28px;border-radius:7px;flex:none;display:grid;place-items:center;color:#fff;font-weight:700;font-size:12.5px;font-family:'Public Sans',sans-serif}
 .radar-mock .lg.nv{background:#76B900}.radar-mock .lg.ap{background:#0A2F46}.radar-mock .lg.sh{background:#7AB55C}.radar-mock .lg.pl{background:#0c1a2d}.radar-mock .lg.ms{background:#14587D}
-.radar-mock .dm-grade{font-family:'JetBrains Mono',monospace;font-size:8.5px;font-weight:800;padding:1px 5px;border-radius:5px;margin-left:5px;vertical-align:2px}
+/* Was 8.5px — the smallest text on the site and below what is comfortably
+   readable. 10.5px matches the other micro-labels here. */
+.radar-mock .dm-grade{font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:800;padding:1px 5px;border-radius:5px;margin-left:5px;vertical-align:1px}
 .radar-mock .dm-grade.A{background:rgba(22,163,74,.14);color:var(--up)}
 .radar-mock .dm-grade.B{background:rgba(20,88,125,.12);color:var(--primary)}
 .radar-mock .alpha-cell{display:flex;flex-direction:column;align-items:flex-start;gap:3px;min-width:0}
@@ -1895,6 +1897,7 @@ button:focus-visible,[tabindex]:focus-visible{
 .ah-pro-tag{position:absolute;top:18px;right:18px;font-family:'Public Sans';font-size:10px;font-weight:800;letter-spacing:.07em;color:#FFD79A;background:rgba(245,166,35,.14);border:1px solid rgba(245,166,35,.35);padding:3px 8px;border-radius:999px}
 /* Ask AI chat mock (light section) */
 .ah-chat{max-width:640px;margin:6px auto 0;display:flex;flex-direction:column;gap:14px}
+.ah-sample-note{align-self:center;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--grey);opacity:.85}
 .ah-bubble{max-width:88%;padding:14px 18px;border-radius:18px;font-size:15px;line-height:1.55}
 .ah-bubble.user{align-self:flex-end;background:var(--primary);color:#fff;border-bottom-right-radius:6px;box-shadow:0 10px 24px rgba(10,47,70,.20)}
 .ah-bubble.ai{align-self:flex-start;background:var(--white);color:var(--text-dark);border:1px solid rgba(16,41,61,.06);border-bottom-left-radius:6px;box-shadow:0 14px 34px rgba(0,28,49,.08)}
@@ -3223,7 +3226,12 @@ html body #pricing.is-annual .pz-featured .pz-amt{color:rgba(255,255,255,.62);
       <h2 class="sec-title">Ask the analyst. <span class="blue-grad-text">Any question.</span></h2>
       <p class="sec-sub">Chat with an AI analyst grounded in TickerMover's live data — not the open web. Ask why a score moved, compare two names, or stress-test your thesis in plain English.</p>
     </div>
+    <!-- Sample exchange. The pillar numbers below are written copy, not a real
+         answer the engine gave, and they attribute a reasoned view to a named
+         security in the product's own voice — so the transcript is labelled
+         rather than left to read as live output. -->
     <div class="ah-chat reveal">
+      <div class="ah-sample-note">Example conversation &mdash; illustrative figures, not a live answer.</div>
       <div class="ah-bubble user">Why is NVDA scoring 94?</div>
       <div class="ah-bubble ai"><span class="ah-ai-tag">✦ TickerMover AI</span>Momentum (<b>92</b>) and Growth (<b>91</b>) lead — datacenter-AI demand is intact and analyst revisions are still climbing. The only drag is Valuation (<b>71</b>): the price already assumes years of hyperscaler capex. Risk (78) stays healthy on a fortress balance sheet.</div>
       <div class="ah-bubble user">How does it compare to AMD?</div>
@@ -3361,7 +3369,13 @@ html body #pricing.is-annual .pz-featured .pz-amt{color:rgba(255,255,255,.62);
             <div class="faq-ans-wrap"><div class="faq-ans-content">
               <h4 class="faq-ans-title">What exactly is the Alpha Score?</h4>
               <div class="faq-ans-divider"></div>
-              <p class="faq-details">A single 0–100 number fusing six pillars — momentum, growth, quality, valuation, sentiment and risk — refreshed every trading day. Stocks scoring 75+ with four strong pillars qualify for the Hot List.</p>
+              <!-- This previously read "Stocks scoring 75+ with four strong
+                   pillars qualify for the Hot List", which is not the rule the
+                   app applies. The dashboard gates the Hot List on grade A,
+                   confidence >= 75% and market cap >= $1B — a different test
+                   entirely, and the 75 there is a confidence percentage, not an
+                   Alpha Score. Restated to match the code. -->
+              <p class="faq-details">A single 0–100 number fusing six pillars — momentum, growth, quality, valuation, sentiment and risk — refreshed every trading day. The Hot List is narrower than the score alone: a stock needs a grade A, at least 75% model confidence, and a market cap above $1B to appear on it.</p>
               <div class="faq-btn"><a class="btn btn-white" href="/login?signup">Start free <span class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span></a></div>
             </div></div>
           </div>
@@ -3522,7 +3536,10 @@ html body #pricing.is-annual .pz-featured .pz-amt{color:rgba(255,255,255,.62);
 <section class="section" style="padding-top:28px;padding-bottom:28px" id="cta">
   <div class="cta reveal">
     <div class="cta-inner">
-      <h2>The market doesn't care<br>about your <span class="cta-italic">intuition.</span></h2>
+      <!-- The space before <br> is load-bearing: without it the text content
+           reads "doesn't careabout", which is what screen readers, copy-paste
+           and search snippets get, even though the line looks correct. -->
+      <h2>The market doesn't care <br>about your <span class="cta-italic">intuition.</span></h2>
       <p>Run your trades through a disciplined, data-backed lens. Open the dashboard and see today's picks in five seconds.</p>
       <div class="cta-ctas">
         <a class="btn btn-primary" href="/login?signup">Start free <span class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span></a>

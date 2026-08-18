@@ -2514,6 +2514,19 @@ async def reports_index():
   <div class="list">{rows_html}</div>
 </div>
 
+<!-- This page listed the whole scored universe with no risk language at all —
+     the only content page on the site with none. Every sibling page carries
+     some form of this; /reports was the outlier. -->
+<footer style="max-width:900px;margin:40px auto 0;padding:20px 24px 36px;
+               border-top:1px solid rgba(16,41,61,.12);font-size:12.5px;
+               line-height:1.65;opacity:.72">
+  Alpha Scores are quantitative summaries of public information, not buy or sell
+  recommendations. TickerMover is a research tool, not an FCA-authorised adviser,
+  and nothing here is a personal recommendation. Past performance is not a
+  reliable indicator of future results. Capital at risk.
+  <a href="/disclaimer" style="color:inherit">Full disclaimer</a>.
+</footer>
+
 </body></html>""")
 
 
@@ -3637,13 +3650,20 @@ async def newsletter_unsubscribe(e: str = "", t: str = ""):
             pass
     title = "Unsubscribed" if ok else "Link invalid"
     msg = ("You're unsubscribed — no more daily briefs. You can re-subscribe any time."
-           if ok else "This unsubscribe link is invalid or expired.")
-    return HTMLResponse(f"""<!doctype html><html><head><meta charset="utf-8"><title>{title}</title></head>
+           if ok else "This unsubscribe link is invalid or expired. If you copied it "
+                      "from an email, try clicking the link directly instead.")
+    # A bad token used to answer 200, so monitoring and crawlers could not tell a
+    # failed unsubscribe from a successful one. The heading is also a real <h1>
+    # now — the page had none.
+    return HTMLResponse(f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex"><title>{title}</title></head>
 <body style="font-family:Inter,Arial,sans-serif;background:#eef4ff;margin:0">
 <div style="max-width:440px;margin:80px auto;background:#fff;border:1px solid #d6e3ff;border-radius:14px;padding:32px;text-align:center">
-<div style="font-size:19px;font-weight:800;color:#0a0e22">{title}</div>
+<h1 style="font-size:19px;font-weight:800;color:#0a0e22;margin:0 0 8px">{title}</h1>
 <p style="color:#475569;font-size:15px">{msg}</p>
-<a href="{SITE_ORIGIN}" style="color:#2970ff;font-weight:700">← Back to TickerMover</a></div></body></html>""")
+<a href="{SITE_ORIGIN}" style="color:#2970ff;font-weight:700">← Back to TickerMover</a></div></body></html>""",
+        status_code=200 if ok else 400)
 
 
 def _brief_top_picks(n: int = 5) -> list[dict]:
@@ -3981,6 +4001,30 @@ async def dashboard():
         )
 
 
+# Preview routes are unlisted but publicly reachable, and they show named
+# securities with scores. `noindex` keeps them out of search results; it is not
+# access control, and it does nothing for anyone who has the URL. Until they are
+# either gated or retired, they say plainly what they are, so a stray visitor
+# cannot mistake an unreviewed work-in-progress build for the live product.
+_PREVIEW_BANNER = (
+    '<div style="position:sticky;top:0;z-index:99999;background:#7A2E00;color:#fff;'
+    'font:600 13px/1.5 system-ui,sans-serif;padding:9px 16px;text-align:center">'
+    'Internal design preview &mdash; not the live product. Figures shown may be '
+    'sample or stale, and nothing here is advice or a recommendation. '
+    '<a href="/app" style="color:#FFD9BF">Go to the live dashboard</a>'
+    '</div>'
+)
+
+
+def _mark_preview(html: str) -> str:
+    """Inject the preview banner immediately after <body>."""
+    i = html.lower().find("<body")
+    if i == -1:
+        return _PREVIEW_BANNER + html
+    j = html.find(">", i)
+    return html if j == -1 else html[:j + 1] + _PREVIEW_BANNER + html[j + 1:]
+
+
 @app.get("/v2-preview", response_class=HTMLResponse)
 async def dashboard_v2_preview():
     """Static design mock for the proposed v2 redesign. Dummy data only,
@@ -3988,7 +4032,7 @@ async def dashboard_v2_preview():
     decide whether to commission the real port."""
     path = BASE_DIR / "templates" / "dashboard_v2_mock.html"
     try:
-        return HTMLResponse(content=path.read_text(encoding="utf-8"))
+        return HTMLResponse(content=_mark_preview(path.read_text(encoding="utf-8")))
     except FileNotFoundError:
         return HTMLResponse(content="<h2>v2 mock not found</h2>", status_code=404)
 
@@ -4045,7 +4089,7 @@ async def signals_preview():
         injection = f'\n<script>window.__AH_DATA__={payload};</script>\n'
         html = html.replace("</head>", injection + "</head>", 1)
 
-    return HTMLResponse(content=html)
+    return HTMLResponse(content=_mark_preview(html))
 
 
 # ── API Endpoints ─────────────────────────────────────────────────────
