@@ -7574,6 +7574,13 @@ async def api_sector_warm(limit: int = 12, user: Optional[dict] = Depends(_curre
 # until an entry lands, the reader gets the deterministic sub-sector fallback.
 
 
+def _kv_get_roster():
+    """Blocking KV read for the chain roster, for asyncio.to_thread."""
+    import chain_roster as _cr
+    from kv_store import store as _kv
+    return _kv.get(_cr.KV_NS, "all", _cr.MAX_AGE_S)
+
+
 def _stock_capex(sym: str) -> Optional[dict]:
     """This stock's position in a capex theme, with the money attached.
 
@@ -7822,6 +7829,32 @@ async def api_stock_signals(ticker: str):
         out["capex"] = _stock_capex(sym)
     except Exception as exc:
         logger.debug("stock-signals capex %s: %s", sym, exc)
+
+    # 3b. Not in a curated chain roster, but classified into one? Say so.
+    # Only ~105 names were hand-placed, so a switchgear maker or an AI server
+    # builder read "No major capex theme" purely because nobody had got to it.
+    # A touching name carries NO share — it is deliberately outside the
+    # share-of-landed-value maths — so the card shows the theme and the reason,
+    # never a percentage it has not earned.
+    if not out["capex"]:
+        try:
+            import chain_roster as _cr
+            doc = await asyncio.to_thread(_kv_get_roster)
+            p = ((doc or {}).get("placements") or {}).get(sym)
+            if p:
+                th = next((t for t in (_load_theses().get("theses") or [])
+                           if t.get("slug") == p.get("chain") and t.get("status") == "live"), None)
+                if th:
+                    out["capex"] = {
+                        "theme": th.get("title") or th.get("slug"),
+                        "slug": th.get("slug"),
+                        "layer": None,
+                        "exposure": p.get("exposure"),
+                        "share": None, "rank": None, "of": None,
+                        "touching": True, "why": p.get("why") or "",
+                    }
+        except Exception as exc:
+            logger.debug("stock-signals roster %s: %s", sym, exc)
 
     # 4. What it sells — the capex card's supporting line when there is no theme.
     try:

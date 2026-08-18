@@ -15594,10 +15594,19 @@ async function _ovSignals(ticker){
                   : (pctTxt+' of landed value'),
         tag, bits.join(' · '), tone);
   } else if(cx){
-    // In a theme but no attributable revenue to weigh — name the theme anyway.
     const EXP={hi:'High exposure',mid:'Partial exposure',lo:'Side exposure'};
-    set('ovSigCapex', cx.layer||cx.theme, EXP[cx.exposure]||null,
-        'Share not measurable yet', 'flat');
+    /* Classified into a chain but NOT part of its share maths. Show the theme
+       and why it belongs; never a percentage, because a touching name has not
+       earned one — the split is reserved for the curated roster. */
+    if(cx.touching){
+      set('ovSigCapex', cx.theme, EXP[cx.exposure]||null,
+          cx.why || 'Exposed to this chain, outside the measured split',
+          cx.exposure==='hi'?'watch':'flat');
+    } else {
+      // In a theme but no attributable revenue to weigh — name the theme anyway.
+      set('ovSigCapex', cx.layer||cx.theme, EXP[cx.exposure]||null,
+          'Share not measurable yet', 'flat');
+    }
   } else {
     // No pill here: "No major capex theme" + "Outside the chains" is the same
     // sentence twice. The room goes to what the company DOES earn from instead.
