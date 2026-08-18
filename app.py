@@ -7480,6 +7480,28 @@ async def api_why_today(ticker: str, force: bool = False,
 # call, no AI, no per-visitor cost), so it is safe to leave public. The AI
 # narrative is a separate, opt-in, durably-cached endpoint.
 
+@app.get("/api/macro")
+async def api_macro(force: bool = False):
+    """US macro context from FRED — rates, curve, inflation, jobs, dollar, oil.
+
+    Free and keyless (see macro.py), cached six hours because FRED publishes at
+    most daily. `force=true` bypasses the cache for a manual refresh.
+
+    The disclaimer is not boilerplate here: these are the numbers readers are
+    most tempted to trade on, and the product's stance is disclosure rather
+    than prediction, so the payload says plainly that this is context.
+    """
+    import macro as _macro
+    data = await _macro.snapshot(force=force)
+    return JSONResponse(_clean({
+        **data,
+        "disclaimer": ("Published economic statistics, shown as context only. "
+                       "Not investment advice, not a personal recommendation, "
+                       "not a market signal, and not FCA-authorised. "
+                       "Capital at risk."),
+    }), headers={"Cache-Control": "public, max-age=1800"})
+
+
 @app.get("/api/sector-intel")
 async def api_sector_intel():
     """All sub-sectors with >=3 scored names, plus the universe baseline."""
