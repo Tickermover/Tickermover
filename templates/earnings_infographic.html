@@ -419,7 +419,7 @@ function render() {
   document.getElementById('ig-takeaway-stars').innerHTML =
     '<span class="stars">' + (STAR_BY_GRADE[grade] || '') + '</span>' +
     '<span class="label">' + (TIER_BY_GRADE[grade] || '') + '</span>' +
-    '<span class="score">· Alpha Score ' + score.toFixed(0) + '</span>';
+    '<span class="score">· Quant Score ' + score.toFixed(0) + '</span>';
 
   // Caption
   const captionParts = [
@@ -431,7 +431,7 @@ function render() {
     tone !== 'none' ? `Guidance: ${tone.charAt(0).toUpperCase() + tone.slice(1)}` : '',
     `Reaction: ${rxLabel}${rxScore != null ? ' (' + (rxScore >= 0 ? '+' : '') + rxScore.toFixed(2) + ')' : ''}`,
     '',
-    `${STAR_BY_GRADE[grade] || ''} ${TIER_BY_GRADE[grade] || ''} · Alpha Score ${score.toFixed(0)}`,
+    `${STAR_BY_GRADE[grade] || ''} ${TIER_BY_GRADE[grade] || ''} · Quant Score ${score.toFixed(0)}`,
     '',
     '📊 tickermover.com · Quality descriptors only — not buy/sell advice',
     '',

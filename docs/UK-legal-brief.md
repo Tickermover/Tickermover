@@ -15,7 +15,7 @@
 
 TickerMover (**tickermover.com**) is a website offering AI-assisted research and editorial commentary on **US-listed equities**. Key features:
 
-- A quantitative **"Alpha Score"** (0–100) computed for ~200–545 US stocks, refreshed every few minutes.
+- A quantitative **"Quant Score"** (0–100) computed for ~200–545 US stocks, refreshed every few minutes.
 - A **model portfolio** ("our highest-conviction names") with entries/exits tracked over time.
 - **Verdicts** on named stocks — e.g. **"Outperform" / "Avoid" / "Watch"**, plus a **"House View"** and **"Our Call"**.
 - A weekly editorial magazine, **"Market Movers"**, with a bear/base/bull scenario table and a house view per issue.

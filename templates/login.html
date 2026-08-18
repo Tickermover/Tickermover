@@ -334,7 +334,7 @@ a{color:inherit;text-decoration:none}
         <span class="brand-wordmark">Ticker<svg class="brand-m" viewBox="0 0 90 105" fill="none" aria-hidden="true"><polyline points="5,100 23,42 45,66 67,26 85,100" stroke="#6aabff" stroke-width="9" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="67" cy="8" r="7" fill="#6aabff"/></svg>over</span>
       </div>
       <div class="left-headline">__UNIV_N__ stocks, scored <em>every day</em>.</div>
-      <p class="left-sub">Alpha Score, live signals, and an audited track record — the whole tape, in one dashboard.</p>
+      <p class="left-sub">Quant Score, live signals, and an audited track record — the whole tape, in one dashboard.</p>
       <div class="left-stats">
         <div class="left-stat"><div class="n">__UNIV_N__</div><div class="l">US stocks</div></div>
         <div class="left-stat"><div class="n">5 min</div><div class="l">refresh</div></div>
@@ -605,7 +605,7 @@ try{ setMode((/signup/i.test(location.hash)||/signup/i.test(location.search))?'s
 /* ── Live scoring wall — two columns drifting in opposite directions ── */
 (function loadWall(){
   const colA=$('col-a'), colB=$('col-b'); if(!colA||!colB) return;
-  // Alpha Score → letter grade, matching the app (no legacy gold/silver tiers).
+  // Quant Score → letter grade, matching the app (no legacy gold/silver tiers).
   const gradeOf = s => s>=68 ? 'A' : s>=60 ? 'B' : s>=50 ? 'C' : s>=40 ? 'D' : 'F';
   const card = (sym,score,grade,chg) => {
     const dir = chg>=0?'up':'dn', sign = chg>=0?'+':'';

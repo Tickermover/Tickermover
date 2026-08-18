@@ -87,7 +87,7 @@ OUTPUT — return ONLY a JSON object (no markdown fences, no prose around it):
 
 TICKER: {ticker}
 SECTOR: {sector}
-ALPHA SCORE: {score}/100 ({grade})
+QUANT SCORE: {score}/100 ({grade})
 
 KEY METRICS (values are already in display form — do not rescale):
 {metrics_block}
@@ -260,7 +260,7 @@ Return ONLY a JSON object (no markdown fences, no surrounding prose):
 
 TICKER: {ticker}
 SECTOR: {sector}
-ALPHA SCORE: {score}/100 ({grade})
+QUANT SCORE: {score}/100 ({grade})
 
 METRICS (your only allowed data source — values are already in display form):
 {metrics_block}
@@ -385,7 +385,7 @@ Return ONLY a JSON object (no markdown fences, no surrounding prose):
 
 TICKER: {ticker}
 SECTOR: {sector}
-ALPHA SCORE: {score}/100 ({grade})
+QUANT SCORE: {score}/100 ({grade})
 
 KEY METRICS (values are in display form — do not rescale):
 {metrics_block}

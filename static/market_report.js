@@ -506,7 +506,7 @@ window.MarketReport = (function () {
       `</div>` +
 
       `<div class="ma-two">` +
-        `<div><div class="ma-mv-h"><span class="ic">⭐</span> Highest Alpha Score</div>${table('Stock', 'Score', s.top_score)}</div>` +
+        `<div><div class="ma-mv-h"><span class="ic">⭐</span> Highest Quant Score</div>${table('Stock', 'Score', s.top_score)}</div>` +
         `<div><div class="ma-mv-h"><span class="ic">🗓️</span> ${earningsTitle}</div>${table('Stock', earningsHdr, earningsList, earningsCell)}</div>` +
       `</div>` +
 

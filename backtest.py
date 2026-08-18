@@ -4,7 +4,7 @@ TickerMover — Backtest Harness (Phase 1+2 of validation roadmap)
 Goal: replace simulation with evidence. This script answers:
 
   1. Information Coefficient (IC): does our score predict forward returns?
-     (Spearman rank correlation between Alpha Score at month-end T and
+     (Spearman rank correlation between Quant Score at month-end T and
       next-month return.  IC ≥ 0.05 = real edge, IC ≈ 0 = noise.)
 
   2. Live trade simulation: pick top-20 by score each month, apply our
@@ -15,7 +15,7 @@ Goal: replace simulation with evidence. This script answers:
 
 LIMITATIONS (be honest with yourself reading the results):
 
-  - Uses ONLY price-derived components of Alpha Score (momentum, RS, RSI,
+  - Uses ONLY price-derived components of Quant Score (momentum, RS, RSI,
     52w distance, volume spike, trend strength, breakout proximity).  We
     cannot historically reconstruct fundamental signals (earnings_quality,
     fcf_margin, analyst_cons, insider_bias, etc.) without point-in-time
@@ -172,7 +172,7 @@ def load_volumes(tickers: list[str], years: int) -> pd.DataFrame:
 
 
 # ══════════════════════════════════════════════════════════════════════════
-# SCORING  — reconstruct the price-only side of the Alpha Score at any date
+# SCORING  — reconstruct the price-only side of the Quant Score at any date
 # ══════════════════════════════════════════════════════════════════════════
 
 def _rsi(series: pd.Series, period: int = 14) -> float:
@@ -191,7 +191,7 @@ def _rsi(series: pd.Series, period: int = 14) -> float:
 def compute_score(prices: pd.Series, volumes: Optional[pd.Series],
                   as_of: pd.Timestamp) -> Optional[dict]:
     """
-    Compute the price-derived slice of Alpha Score for one ticker, as of date `as_of`.
+    Compute the price-derived slice of Quant Score for one ticker, as of date `as_of`.
     Returns dict with components + raw composite, or None if insufficient history.
 
     Maps roughly onto live ai_scorer weights:
@@ -329,7 +329,7 @@ def run_backtest(prices: pd.DataFrame, volumes: pd.DataFrame,
                  max_per_theme: int = 3) -> dict:
     """
     Walk forward month by month. Each month-end:
-      1. Compute Alpha Score for every ticker with sufficient history
+      1. Compute Quant Score for every ticker with sufficient history
       2. Convert raw scores → cross-sectional rel_strength → final score
       3. Pick top-N
       4. Simulate entry next trading day at open (we use close for simplicity)

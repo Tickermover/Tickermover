@@ -4,7 +4,7 @@ seo_pages.py — SEO Phase 3 page renderers for TickerMover.
 Houses the long-form HTML renderers for:
   • /learn/{slug}              — evergreen educational pillar pages
   • /learn                     — pillar index (hub-and-spoke for crawlers)
-  • /sectors/{slug}            — one page per sub-sector with live Alpha Scores
+  • /sectors/{slug}            — one page per sub-sector with live Quant Scores
   • /sectors                   — sector index
   • /compare/{a}-vs-{b}        — side-by-side ticker comparison
 
@@ -152,7 +152,7 @@ def newsletter_block(source: str) -> str:
     safe = (source or "unknown").replace('"', "")
     return f"""
 <div class="nl">
-  <h3>Get the weekly Alpha Score digest</h3>
+  <h3>Get the weekly Quant Score digest</h3>
   <p>Top-rated US stocks, conflict alerts, and Reverse-DCF reads — straight to your inbox every Sunday. Free.</p>
   <form id="nl-{safe}" autocomplete="off">
     <input type="email" name="email" placeholder="you@email.com" required>
@@ -194,7 +194,7 @@ def cta_block(label: str = "Open the live dashboard", href: str = "/app?signup=1
     return f"""
 <div class="cta">
   <h3>Real research, free during beta</h3>
-  <p>200+ US stocks. Alpha Score, conflict detection, Reverse DCF, peer comparison. We do the homework.</p>
+  <p>200+ US stocks. Quant Score, conflict detection, Reverse DCF, peer comparison. We do the homework.</p>
   <a href="{href}" class="cta-btn">{label} →</a>
 </div>
 """
@@ -253,9 +253,9 @@ def page_shell(title: str, desc: str, canonical: str, body_html: str,
 
 PILLARS: dict[str, dict] = {
     "pop-score": {
-        "title": "What is Alpha Score? TickerMover's 0-100 stock rating explained",
-        "desc": "Alpha Score is TickerMover's 0-100 composite rating that blends fundamentals, momentum, valuation, analyst signal, and macro regime into a single plain-English verdict.",
-        "h1": "What is the Alpha Score?",
+        "title": "What is Quant Score? TickerMover's 0-100 stock rating explained",
+        "desc": "Quant Score is TickerMover's 0-100 composite rating that blends fundamentals, momentum, valuation, analyst signal, and macro regime into a single plain-English verdict.",
+        "h1": "What is the Quant Score?",
         "lede": "A 0-100 composite that turns five different stock signals into one number — so you can stop juggling P/E, EPS revisions, momentum charts, and analyst ratings in your head.",
     },
     "reverse-dcf": {
@@ -292,11 +292,11 @@ def _pillar_body(slug: str, site_origin: str) -> str:
         body = f"""
 {crumbs}
 <span class="tag">Methodology</span>
-<h1>What is the Alpha Score?</h1>
+<h1>What is the Quant Score?</h1>
 <p class="lede">A 0-100 composite that turns five different stock signals into one number — so you can stop juggling P/E, EPS revisions, momentum charts, and analyst ratings in your head.</p>
 
 <h2>The five inputs</h2>
-<p>Every Alpha Score is built from five weighted components. Each one is normalized to 0-100 inside its own peer group, so a small-cap quantum stock and a mega-cap chipmaker are graded against their own kind.</p>
+<p>Every Quant Score is built from five weighted components. Each one is normalized to 0-100 inside its own peer group, so a small-cap quantum stock and a mega-cap chipmaker are graded against their own kind.</p>
 <ul>
   <li><strong>Fundamentals (30%)</strong> — revenue growth, gross margins, free cash flow trajectory, return on capital. The bones of the business.</li>
   <li><strong>Valuation (20%)</strong> — forward P/E, PEG, EV/Sales, all benchmarked to the stock's own sub-sector median. Cheap-vs-fair-vs-premium.</li>
@@ -306,7 +306,7 @@ def _pillar_body(slug: str, site_origin: str) -> str:
 </ul>
 
 <h2>How to read the number</h2>
-<blockquote>The Alpha Score isn't a buy signal. It's a "homework checklist completed" signal. It tells you the stock's quantitative story is good. The qualitative judgment — does the thesis make sense to <em>you</em>? — is still yours.</blockquote>
+<blockquote>The Quant Score isn't a buy signal. It's a "homework checklist completed" signal. It tells you the stock's quantitative story is good. The qualitative judgment — does the thesis make sense to <em>you</em>? — is still yours.</blockquote>
 <ul>
   <li><strong>80-100 — ★★★★★ Top Tier zone.</strong> All five inputs are firing. These are the names TickerMover features in the Hot List.</li>
   <li><strong>65-79 — ★★★★ Quality.</strong> Solid composite with at least one minor concern (usually valuation or momentum).</li>
@@ -315,18 +315,18 @@ def _pillar_body(slug: str, site_origin: str) -> str:
   <li><strong>0-34 — ★ Weak.</strong> Broad-based weakness across the score components.</li>
 </ul>
 
-<h2>Smart Score vs raw Alpha Score</h2>
-<p>You'll sometimes see two numbers — a raw Alpha Score and a Smart Score. The Smart Score is the same composite, but adjusted for the current market regime. In a bullish regime, the Smart Score tilts toward growth and momentum. In a bearish regime, it tilts toward quality, balance-sheet strength, and valuation discipline. The raw Alpha Score is regime-blind; the Smart Score adapts.</p>
+<h2>Smart Score vs raw Quant Score</h2>
+<p>You'll sometimes see two numbers — a raw Quant Score and a Smart Score. The Smart Score is the same composite, but adjusted for the current market regime. In a bullish regime, the Smart Score tilts toward growth and momentum. In a bearish regime, it tilts toward quality, balance-sheet strength, and valuation discipline. The raw Quant Score is regime-blind; the Smart Score adapts.</p>
 
 <h2>The conflict flag</h2>
-<p>Numbers can lie when they're averaged. A stock can earn a 78 Alpha Score because four components are strong — but if the fifth is screaming "danger" (insider selling spike, EPS estimate crash, margin collapse), TickerMover flags it with a <code>caution</code> badge and rewrites the bottom-line verdict accordingly. <a href="/learn/how-to-read-fundamentals">More on how we read each signal here.</a></p>
+<p>Numbers can lie when they're averaged. A stock can earn a 78 Quant Score because four components are strong — but if the fifth is screaming "danger" (insider selling spike, EPS estimate crash, margin collapse), TickerMover flags it with a <code>caution</code> badge and rewrites the bottom-line verdict accordingly. <a href="/learn/how-to-read-fundamentals">More on how we read each signal here.</a></p>
 
 <h2>What it doesn't capture</h2>
-<p>Alpha Score is a quantitative framework. It cannot price in: regulatory risk, executive turnover, accounting irregularities, fraud, geopolitical exposure, or anything that isn't in the public filings yet. Treat it as the starting point of your research, not the conclusion.</p>
+<p>Quant Score is a quantitative framework. It cannot price in: regulatory risk, executive turnover, accounting irregularities, fraud, geopolitical exposure, or anything that isn't in the public filings yet. Treat it as the starting point of your research, not the conclusion.</p>
 
-{cta_block("See live Alpha Scores")}
+{cta_block("See live Quant Scores")}
 {newsletter_block("learn-pop-score")}
-<div class="legal">TickerMover is a research tool, not financial advice. Alpha Score is a composite signal — always do your own research before investing.</div>
+<div class="legal">TickerMover is a research tool, not financial advice. Quant Score is a composite signal — always do your own research before investing.</div>
 """
     elif slug == "how-to-find-breakout-stocks":
         body = f"""
@@ -352,7 +352,7 @@ def _pillar_body(slug: str, site_origin: str) -> str:
 <p><strong>The fakeout</strong> — price clears the line, then snaps back below it within days, usually on weak volume. <strong>The exhaustion gap</strong> — a breakout so late and so vertical it marks the top, not the start. <strong>Chasing</strong> — buying 15% above the breakout level, where your risk is huge and your edge is gone. The discipline is to act early, on confirmation, with a level where you know you're wrong.</p>
 
 <h2>How TickerMover surfaces breakouts</h2>
-<p>Rather than scan charts by hand, TickerMover scores all 540+ US large-caps across six research pillars — momentum, quality, growth, valuation, sentiment and risk — and the <a href="/learn/pop-score">Alpha Score</a> blends them into one 0&ndash;100 number. The Breakout Picks lens then ranks for exactly the combination above: a strong score, real upside left to the target, and momentum still building, while pushing already-parabolic, above-target names down. It's a research starting point, not a recommendation.</p>
+<p>Rather than scan charts by hand, TickerMover scores all 540+ US large-caps across six research pillars — momentum, quality, growth, valuation, sentiment and risk — and the <a href="/learn/pop-score">Quant Score</a> blends them into one 0&ndash;100 number. The Breakout Picks lens then ranks for exactly the combination above: a strong score, real upside left to the target, and momentum still building, while pushing already-parabolic, above-target names down. It's a research starting point, not a recommendation.</p>
 
 {cta_block("See today's Breakout Picks")}
 {newsletter_block("learn-breakouts")}
@@ -366,7 +366,7 @@ def _pillar_body(slug: str, site_origin: str) -> str:
 <p class="lede">Most analysis looks at one stock at a time. We score the whole index at once, every day — 540+ US large-caps through the same six-pillar lens. Seeing every name together surfaces patterns you can't spot one chart at a time.</p>
 
 <h2>The method, in one paragraph</h2>
-<p>Every stock gets an <a href="/learn/pop-score">Alpha Score</a> from 0&ndash;100, built from six research pillars — momentum, quality, growth, valuation, sentiment and risk — each normalised inside the stock's own peer group. Normalising within peers matters: a mega-cap chipmaker is graded against other chipmakers, not against a utility. The result is one number per stock, all measured on the same ruler, refreshed through US market hours.</p>
+<p>Every stock gets an <a href="/learn/pop-score">Quant Score</a> from 0&ndash;100, built from six research pillars — momentum, quality, growth, valuation, sentiment and risk — each normalised inside the stock's own peer group. Normalising within peers matters: a mega-cap chipmaker is graded against other chipmakers, not against a utility. The result is one number per stock, all measured on the same ruler, refreshed through US market hours.</p>
 
 <h2>1. The distribution has fat, interesting tails</h2>
 <p>Because each pillar is normalised, the bulk of the index clusters in the middle of the range — most large-caps are, by definition, average large-caps. The story is in the tails. The top decile is where momentum, quality and growth line up at the same time; the bottom decile is where two or more pillars are breaking down together. The middle is noise; the edges are signal. <a href="/reports">See the live distribution across every scored stock &rarr;</a></p>
@@ -413,7 +413,7 @@ def _pillar_body(slug: str, site_origin: str) -> str:
 <p>A P/E of 60× is meaningless without context. 60× could be cheap for a company growing 50% per year and expensive for one growing 10%. The Reverse DCF removes the ambiguity by translating the multiple into a growth assumption you can argue with. You stop asking "is 60× expensive?" and start asking "do I believe this company can grow 30% per year for a decade?". That's a much more useful question.</p>
 
 <h2>What it doesn't capture</h2>
-<p>Reverse DCF assumes margins, tax rates, and capital intensity stay roughly constant. For companies undergoing big margin shifts (early-stage SaaS scaling to profitability, hardware companies losing pricing power), the implied growth read can be misleading. Use it together with the Alpha Score's <a href="/learn/pop-score">Fundamentals component</a>, not in isolation.</p>
+<p>Reverse DCF assumes margins, tax rates, and capital intensity stay roughly constant. For companies undergoing big margin shifts (early-stage SaaS scaling to profitability, hardware companies losing pricing power), the implied growth read can be misleading. Use it together with the Quant Score's <a href="/learn/pop-score">Fundamentals component</a>, not in isolation.</p>
 
 {cta_block("See Reverse DCF on every stock")}
 {newsletter_block("learn-reverse-dcf")}
@@ -448,7 +448,7 @@ def _pillar_body(slug: str, site_origin: str) -> str:
 <p>Numbers tell you what's true. The thesis tells you whether it'll keep being true. Before taking a position, it's worth writing down in one sentence why this company might be bigger and more profitable in five years than it is today. If that sentence won't come, the case rests on the chart, not the business.</p>
 
 <h2>How TickerMover does this for you</h2>
-<p>Every stock in our universe is run through this checklist every five minutes during market hours. The output is the <a href="/learn/pop-score">Alpha Score</a> — a single 0-100 composite that bakes in all seven signals plus a regime adjustment. You can drill into the underlying components on any stock's detail page.</p>
+<p>Every stock in our universe is run through this checklist every five minutes during market hours. The output is the <a href="/learn/pop-score">Quant Score</a> — a single 0-100 composite that bakes in all seven signals plus a regime adjustment. You can drill into the underlying components on any stock's detail page.</p>
 
 {cta_block("Open the dashboard and try it")}
 {newsletter_block("learn-fundamentals")}
@@ -512,15 +512,15 @@ def render_pillar_index(site_origin: str) -> str:
   {brand_header()}
   <div class="crumbs"><a href="/">Home</a> · Learn</div>
   <h1>Learn</h1>
-  <p class="lede">Plain-English guides to the methodology behind TickerMover — the Alpha Score, the Reverse DCF, and how to read US stock fundamentals.</p>
+  <p class="lede">Plain-English guides to the methodology behind TickerMover — the Quant Score, the Reverse DCF, and how to read US stock fundamentals.</p>
   <div class="cards">{cards}</div>
   {newsletter_block("learn-index")}
   <div class="legal">TickerMover — research, not advice.</div>
 </div>"""
     canonical = f"{site_origin}/learn"
     return page_shell(
-        title="Learn — TickerMover methodology, Alpha Score, Reverse DCF",
-        desc="Plain-English guides to TickerMover's stock-research methodology — Alpha Score, Reverse DCF, and the seven-step fundamentals checklist.",
+        title="Learn — TickerMover methodology, Quant Score, Reverse DCF",
+        desc="Plain-English guides to TickerMover's stock-research methodology — Quant Score, Reverse DCF, and the seven-step fundamentals checklist.",
         canonical=canonical, body_html=body,
         og_image=f"{site_origin}/static/icons/icon-512.png",
     )
@@ -558,7 +558,7 @@ def render_sector(slug: str, universe: list[dict], site_origin: str) -> Optional
         t for t in (universe or [])
         if slugify(t.get("sub_sector") or t.get("subsector") or t.get("sector") or "") == slug
     ]
-    # Sort by Alpha Score descending
+    # Sort by Quant Score descending
     def _score(t: dict) -> float:
         s = t.get("smart_score") if t.get("smart_score") is not None else t.get("pop_score")
         try:
@@ -624,7 +624,7 @@ def render_sector(slug: str, universe: list[dict], site_origin: str) -> Optional
             profile_html = (
                 '<div class="sp-grid">'
                 + _stat("Names scored", prof["count"], base["count"])
-                + _stat("Median Alpha", prof["alpha_median"], base["alpha_median"])
+                + _stat("Median Quant", prof["alpha_median"], base["alpha_median"])
                 + _stat("Score spread", spread, base["alpha_spread"])
                 + _stat("Scoring 65+", prof["breadth_strong_pct"], base["breadth_strong_pct"], "%")
                 + _stat("Median 3m move", prof["momentum_3m_median"], base["momentum_3m_median"], "%", True)
@@ -640,9 +640,9 @@ def render_sector(slug: str, universe: list[dict], site_origin: str) -> Optional
     except Exception:
         profile_html = ""      # a profile is a bonus; never break the ranking over it
     canonical = f"{site_origin}/sectors/{slug}"
-    title = f"Best {label} stocks — live Alpha Scores | TickerMover"
+    title = f"Best {label} stocks — live Quant Scores | TickerMover"
     desc = (
-        f"TickerMover's live ranking of {n} {label} stocks by Alpha Score. "
+        f"TickerMover's live ranking of {n} {label} stocks by Quant Score. "
         f"Plain-English verdict, grade, and bottom line for each. Updated every 5 minutes."
     )[:160]
     schema = {
@@ -679,13 +679,13 @@ def render_sector(slug: str, universe: list[dict], site_origin: str) -> Optional
   {brand_header()}
   <div class="crumbs"><a href="/">Home</a> · <a href="/sectors">Sectors</a> · {label}</div>
   <h1>{label} stocks, ranked</h1>
-  <p class="lede">Live ranking of {n} {label} stocks by TickerMover Alpha Score — a 0-100 composite of fundamentals, valuation, momentum, analyst signal, and macro regime. Click any ticker for the full breakdown.</p>
+  <p class="lede">Live ranking of {n} {label} stocks by TickerMover Quant Score — a 0-100 composite of fundamentals, valuation, momentum, analyst signal, and macro regime. Click any ticker for the full breakdown.</p>
   {profile_html}
   <table class="tbl">
     <thead><tr><th>Ticker</th><th>Grade</th><th>Score</th><th>Bottom line</th></tr></thead>
     <tbody>{table_html or '<tr><td colspan="4">No stocks scored in this sector yet — the universe is warming up.</td></tr>'}</tbody>
   </table>
-  <p style="font-size:13px;color:#64748b">Alpha Scores update every 5 minutes during US market hours. Grades: <strong>A</strong> Top Tier · <strong>B</strong> Quality · <strong>C</strong> Average · <strong>D</strong> Below Avg · <strong>F</strong> Weak. (Quality descriptors, not buy/sell recommendations.)</p>
+  <p style="font-size:13px;color:#64748b">Quant Scores update every 5 minutes during US market hours. Grades: <strong>A</strong> Top Tier · <strong>B</strong> Quality · <strong>C</strong> Average · <strong>D</strong> Below Avg · <strong>F</strong> Weak. (Quality descriptors, not buy/sell recommendations.)</p>
   {cta_block("See the full live dashboard")}
   {newsletter_block("sector-" + slug)}
   <div class="legal">TickerMover is a research tool, not financial advice, and not FCA-authorised. Always do your own research before investing. Capital at risk.</div>
@@ -806,7 +806,7 @@ def render_sector_index(universe: list[dict], site_origin: str) -> str:
   <h1>Every sub-sector, side by side</h1>
   <p class="lede">{n_sec} sub-sectors covering {n_names} scored US-listed companies, all measured the same way. The first row is the whole scored universe — read every sector against it.</p>
   <div class="si-note">
-    <b>How to read this.</b> <b>Median Alpha</b> is the middle score in that group.
+    <b>How to read this.</b> <b>Median Quant</b> is the middle score in that group.
     <b>Spread</b> is the gap between its 75th and 25th percentile — a low spread means the
     names move together, a high one means picking within the group matters more than the
     group itself. <b>Strong</b> is the share scoring 65+. <b>3m</b> and <b>Growth</b> are
@@ -816,7 +816,7 @@ def render_sector_index(universe: list[dict], site_origin: str) -> str:
   <div class="si-wrap">
     <table class="si">
       <thead><tr>
-        <th>Sub-sector</th><th>Names</th><th>Median Alpha</th><th>Spread</th>
+        <th>Sub-sector</th><th>Names</th><th>Median Quant</th><th>Spread</th>
         <th>Strong</th><th>3m</th><th>P/E</th><th>Growth</th><th>Highest scoring</th>
       </tr></thead>
       <tbody>{body_rows}</tbody>
@@ -830,9 +830,13 @@ def render_sector_index(universe: list[dict], site_origin: str) -> str:
 <style>{_SECTOR_INDEX_CSS}</style>"""
     canonical = f"{site_origin}/sectors"
     return page_shell(
-        title="US stock sectors compared — median Alpha, spread and breadth | TickerMover",
-        desc=(f"{n_sec} sub-sectors across {n_names} US-listed stocks, compared on median Alpha "
-              "Score, score spread, breadth and 3-month momentum. Updated every 5 minutes."),
+        title="US stock sectors compared — median Quant, spread and breadth | TickerMover",
+        # NB: keep "Quant Score" on one line. This string was previously split as
+        # "…median Alpha " / "Score, …", which no find-and-replace could match —
+        # it survived the rename and was only caught by rendering the page.
+        desc=(f"{n_sec} sub-sectors across {n_names} US-listed stocks, compared on "
+              "median Quant Score, score spread, breadth and 3-month momentum. "
+              "Updated every 5 minutes."),
         canonical=canonical, body_html=body,
         og_image=f"{site_origin}/static/icons/icon-512.png",
     )
@@ -882,7 +886,7 @@ def _cmp_card(t: dict) -> str:
     <div class="tk">{sym}</div>
     <div class="nm">{name}</div>
   </a>
-  <div class="cmp-row"><span class="k">Alpha Score</span><span class="v">{pop_n}/100</span></div>
+  <div class="cmp-row"><span class="k">Quant Score</span><span class="v">{pop_n}/100</span></div>
   <div class="cmp-row"><span class="k">Grade</span><span class="v">{grade} · {rating}</span></div>
   <div class="cmp-row"><span class="k">Price</span><span class="v">{price_str}</span></div>
   <div class="cmp-row"><span class="k">Rev growth (YoY)</span><span class="v">{rev_g_str}</span></div>
@@ -1033,7 +1037,7 @@ def render_comparison(a: str, b: str, universe: list[dict], site_origin: str) ->
     </table>
   </div>
   {study_html}
-  <h2>How the Alpha Score works</h2>
+  <h2>How the Quant Score works</h2>
   <p>It blends fundamentals, valuation, momentum, analyst signal and macro regime into one 0-100 number. It is a quality descriptor, not a buy or sell signal. <a href="/learn/pop-score">Read the methodology →</a></p>
   <p>Full breakdowns: <a href="/stocks/{a}">{a}</a> · <a href="/stocks/{b}">{b}</a>{(' · Both in <a href="/sectors/' + A['slug'] + '">' + (A['sector'] or '') + '</a>') if c['same_sector'] and A['slug'] else ''}</p>
   {cta_block("Open the live dashboard")}
@@ -1071,7 +1075,7 @@ def render_compare_index(universe: list[dict], site_origin: str) -> str:
 
     Rebuilt 15 Aug 2026. It was 14 cards each repeating the same sentence, so
     the page told you nothing you did not already know from the ticker pair.
-    It now previews each matchup: both Alpha Scores, how many of the ten
+    It now previews each matchup: both Quant Scores, how many of the ten
     measured dimensions actually separate the two, and whether they sit in the
     same sub-sector — which is what decides whether the comparison is
     like-for-like at all. Enough to choose which pair is worth opening.
@@ -1113,7 +1117,7 @@ def render_compare_index(universe: list[dict], site_origin: str) -> str:
   </div>
   <div class="si-wrap">
     <table class="si">
-      <thead><tr><th>Matchup</th><th>Alpha (left)</th><th>Alpha (right)</th><th>Differ on</th><th>Comparable?</th></tr></thead>
+      <thead><tr><th>Matchup</th><th>Quant (left)</th><th>Quant (right)</th><th>Differ on</th><th>Comparable?</th></tr></thead>
       <tbody>{body_rows}</tbody>
     </table>
   </div>

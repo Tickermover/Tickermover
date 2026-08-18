@@ -526,7 +526,7 @@
           </div>
           <div class="ts-hero-r">
             <div class="ts-scorenum" id="ts-score">—</div>
-            <div class="ts-scorelbl">Alpha Score</div>
+            <div class="ts-scorelbl">Quant Score</div>
             <div class="ts-stars" id="ts-stars">—</div>
             <div class="ts-tier" id="ts-tier">—</div>
           </div>
@@ -558,7 +558,7 @@
               <span>🧬 Score Breakdown</span>
               <span class="pill">Top 8</span>
             </div>
-            <div class="ts-card-sub">19-component composite · contribution to Alpha Score</div>
+            <div class="ts-card-sub">19-component composite · contribution to Quant Score</div>
             <div class="ts-card-canvas"><canvas id="chart-breakdown"></canvas></div>
           </div>
         </div>
@@ -800,7 +800,7 @@
         <!-- FOOTER -->
         <div class="ts-foot">
           <div class="ts-foot-disclaimer">
-            <strong>Educational use only.</strong> TickerMover is not an FCA-authorised adviser and does not provide buy/sell recommendations. The Alpha Score is a quantitative composite for screening; it is not investment advice. Past performance and analyst targets do not guarantee future results. Data: SEC EDGAR, Yahoo Finance, FMP. Always do your own research and consult an FCA-authorised financial adviser.
+            <strong>Educational use only.</strong> TickerMover is not an FCA-authorised adviser and does not provide buy/sell recommendations. The Quant Score is a quantitative composite for screening; it is not investment advice. Past performance and analyst targets do not guarantee future results. Data: SEC EDGAR, Yahoo Finance, FMP. Always do your own research and consult an FCA-authorised financial adviser.
           </div>
           <div class="ts-foot-url">
             tickermover.com
@@ -1301,7 +1301,7 @@ function render() {
   });
 
   // ── TAKEAWAY ──
-  const obs = stock.bottom_line || ('Alpha Score is ' + Math.round(score) + ' — ' + (TIER_BY_GRADE[grade] || '') + '. Track the score for changes; movement matters more than the absolute level.');
+  const obs = stock.bottom_line || ('Quant Score is ' + Math.round(score) + ' — ' + (TIER_BY_GRADE[grade] || '') + '. Track the score for changes; movement matters more than the absolute level.');
   document.getElementById('ts-takeaway-text').textContent = obs;
 
   // ── EVENT SUMMARY — Quartr-style structured highlights from the most
@@ -1366,8 +1366,8 @@ function render() {
   // detailed fields are absent.
   const execBits = [];
   // Grade + score positioning
-  if (score >= 80)      execBits.push('Top-tier setup with Alpha Score ' + Math.round(score) + ' (' + (TIER_BY_GRADE[grade] || '') + ' grade).');
-  else if (score >= 70) execBits.push('Quality setup at Alpha Score ' + Math.round(score) + ' (' + (TIER_BY_GRADE[grade] || '') + ').');
+  if (score >= 80)      execBits.push('Top-tier setup with Quant Score ' + Math.round(score) + ' (' + (TIER_BY_GRADE[grade] || '') + ' grade).');
+  else if (score >= 70) execBits.push('Quality setup at Quant Score ' + Math.round(score) + ' (' + (TIER_BY_GRADE[grade] || '') + ').');
   else if (score >= 60) execBits.push('Mid-tier score at ' + Math.round(score) + ' — selective entry levels matter.');
   else                  execBits.push('Below-tier score (' + Math.round(score) + '). Consider stronger candidates in the universe.');
   // Growth + earnings discipline
@@ -1411,7 +1411,7 @@ function render() {
   const captionParts = [
     stock.ticker + ' · ' + (stock.name || ''),
     '',
-    '📊 Alpha Score: ' + Math.round(score) + ' · ' + (STAR_BY_GRADE[grade] || '') + ' ' + (TIER_BY_GRADE[grade] || ''),
+    '📊 Quant Score: ' + Math.round(score) + ' · ' + (STAR_BY_GRADE[grade] || '') + ' ' + (TIER_BY_GRADE[grade] || ''),
     'Price: ' + (price != null ? '$' + price.toFixed(2) : '—') + (ch != null ? ' (' + fmtPct(ch, 2) + ')' : ''),
     revG != null ? 'Rev growth: ' + fmtPct(revG, 0) + ' YoY' : '',
     gm != null ? 'Gross margin: ' + (gm*100).toFixed(1) + '%' : '',

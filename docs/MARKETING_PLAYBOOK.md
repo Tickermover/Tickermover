@@ -51,7 +51,7 @@ Your data generates posts nobody else can write. Templates (fill from the
 dashboard each morning):
 
 1. **Score-mover post (Mon-Fri):**
-   > "$TICKER's Alpha Score jumped 71 → 84 this week. What moved: estimates
+   > "$TICKER's Quant Score jumped 71 → 84 this week. What moved: estimates
    > raised (+), broke above the 50-day (+), volume 2.1× average (+).
    > Full six-pillar breakdown: tickermover.com/stocks/TICKER"
 2. **Earnings-week post (any week):**

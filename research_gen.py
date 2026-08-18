@@ -5,7 +5,7 @@ Produces a web-grounded research brief (markdown + sources) for a single
 ticker, using the Anthropic Messages API with the server-side `web_search`
 tool so every external claim can be cited with a real URL.
 
-The ticker's OWN live data (price, Alpha Score, grade, key fundamentals) is
+The ticker's OWN live data (price, Quant Score, grade, key fundamentals) is
 passed in as ground truth so the model never invents those numbers; the web
 search is for recent catalysts / news / context only.
 
@@ -114,7 +114,7 @@ def _ground_block(t: dict) -> str:
         ("Sector", g("sector") or (t.get("meta") or {}).get("sector")),
         ("Price", g("price")),
         ("Day change %", g("change_pct")),
-        ("Alpha Score", g("smart_score") if g("smart_score") is not None else g("pop_score")),
+        ("Quant Score", g("smart_score") if g("smart_score") is not None else g("pop_score")),
         ("Grade", g("grade")),
         ("Market cap", g("market_cap")),
         ("Revenue growth YoY %", g("revenue_growth_yoy")),

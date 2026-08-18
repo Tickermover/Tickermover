@@ -1,7 +1,7 @@
 """
 TickerMover — AI analyst-judge for Top Hunts selection.
 
-Role: an ADVISORY re-ranker. The quant gate (Grade A + Alpha Score floor +
+Role: an ADVISORY re-ranker. The quant gate (Grade A + Quant Score floor +
 4-of-6 pillars + theme cap in app.py) decides which names are *eligible*. This
 module never invents a pick and never changes eligibility — it scores conviction
 ONLY among names that already passed the quant bar, so its judgment is used as a
@@ -57,7 +57,7 @@ def available() -> bool:
 _SYSTEM = """\
 You are the lead analyst for TickerMover's "Top Hunts" — a curated shortlist of US \
 growth equities. Every candidate you are shown has ALREADY passed a quantitative \
-gate (Grade A, a high composite Alpha Score, and at least four of six investment \
+gate (Grade A, a high composite Quant Score, and at least four of six investment \
 pillars). Your job is NOT to re-check eligibility — it is to adjudicate AMONG these \
 pre-qualified names so the strongest convictions rise to the top.
 

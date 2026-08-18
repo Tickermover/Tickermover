@@ -2,14 +2,14 @@
 TickerMover — Intelligence Layer (v1)
 ====================================
 
-A self-contained "second brain" for the Alpha Score engine. Adds four classes of
+A self-contained "second brain" for the Quant Score engine. Adds four classes of
 intelligence on top of the existing scoring pipeline:
 
     1. MarketRegime          — top-down macro overlay (SPY, QQQ, VIX, ^TNX)
                                produces a 0–100 regime_score, regime_label,
-                               and a 0.85–1.15 multiplier applied to Alpha Score.
+                               and a 0.85–1.15 multiplier applied to Quant Score.
 
-    2. ScoreHistory          — rolling per-ticker Alpha Score history persisted
+    2. ScoreHistory          — rolling per-ticker Quant Score history persisted
                                via the existing SmartCache. Surfaces a
                                *score_velocity* (delta over last N hours) and
                                *score_acceleration* signal — early movers light
@@ -228,12 +228,12 @@ def score_earnings_acceleration(t: dict) -> float:
 
 
 # ╔════════════════════════════════════════════════════════════════════════╗
-# ║  2. ScoreHistory — rolling per-ticker Alpha Score memory                 ║
+# ║  2. ScoreHistory — rolling per-ticker Quant Score memory                 ║
 # ╚════════════════════════════════════════════════════════════════════════╝
 
 class ScoreHistory:
     """
-    Persists a rolling window of Alpha Scores per ticker via the existing
+    Persists a rolling window of Quant Scores per ticker via the existing
     SmartCache (so it survives Railway restarts). Exposes:
 
         record(ticker, pop_score)
@@ -347,7 +347,7 @@ class MarketRegime:
     Produces:
         regime_score      0..100  (higher = friendlier to long high-beta names)
         regime_label      "Bullish" | "Mixed" | "Bearish"
-        regime_multiplier 0.85..1.15 — applied to per-ticker Alpha Score
+        regime_multiplier 0.85..1.15 — applied to per-ticker Quant Score
         components        dict of input readings for transparency
 
     Cache TTL is 30 minutes — regime doesn't whip around minute-to-minute.
@@ -1111,7 +1111,7 @@ class MarketAnalysis:
             "--- OUR PROPRIETARY ENGINE (write the editorial THROUGH this lens) ---\n"
             f"OUR REGIME MODEL ('Big Picture' market gauge): {regime_line}.\n"
             f"  Multi-timeframe trend: {regime_tf}.\n"
-            f"OUR HIGHEST ALPHA-SCORE NAMES today: {top_rated_line}\n"
+            f"OUR HIGHEST QUANT-SCORE NAMES today: {top_rated_line}\n"
             f"OUR MODEL BOOK: {book_open if book_open is not None else 'n/a'} open positions; "
             f"track record — {track_line}.\n\n"
             "You are the TickerMover markets editor writing the desk's signed daily "
@@ -1119,7 +1119,7 @@ class MarketAnalysis:
             "publish. Voice: sharp, plain-English, data-driven, with a clear point "
             "of view. THE EDGE: anchor the read in OUR regime gauge (state it as a "
             "Big-Picture market-direction call, like IBD's market pulse) and OUR "
-            "Alpha-Score lens (what today did to our top-rated names; what it means "
+            "Quant-Score lens (what today did to our top-rated names; what it means "
             "for our book, citing the track record). That house view is what makes "
             "this OURS, not a generic wrap. Every claim ties to a number above; "
             "educational context only, never a buy/sell call, never invent a figure. "
@@ -1130,7 +1130,7 @@ class MarketAnalysis:
             'straight from the regime gauge — name the label and score, cite the '
             'multi-timeframe trend, and state the stance (risk-on / cautious / '
             'defensive) with the reason. This is our IBD-style market pulse.",\n'
-            '  "house_view": "2-3 sentences through our Alpha-Score lens: how today '
+            '  "house_view": "2-3 sentences through our Quant-Score lens: how today '
             'treated our highest-rated names, and the read for our model book — '
             'reference the track record. Observational, never a trade call.",\n'
             '  "headline": "One punchy editorial headline (<= 12 words) that states '
@@ -1338,7 +1338,7 @@ class ThesisGenerator:
         # 3. Velocity / second-best bull or bear, whichever is more useful
         if vel is not None and abs(vel) >= 2:
             arrow = "climbing" if vel > 0 else "falling"
-            out.append(f"Alpha Score is {arrow} ({vel:+.1f} pts in the last 24h).")
+            out.append(f"Quant Score is {arrow} ({vel:+.1f} pts in the last 24h).")
         elif rec_pos and len(bull) > 1:
             out.append(bull[1])
         elif rec_neg and len(bear) > 1:
@@ -1378,7 +1378,7 @@ class ThesisGenerator:
             out.append(f"RSI {rsi:.0f} sits in the textbook momentum zone — not yet overheated.")
 
         if not out:
-            out.append("Alpha Score components above neutral baseline — quantitative model leans constructive.")
+            out.append("Quant Score components above neutral baseline — quantitative model leans constructive.")
         # Always cap at 4 points and de-dup
         return _dedupe(out)[:4]
 
@@ -1468,7 +1468,7 @@ class ThesisGenerator:
         smart = round(pop * rmult, 1)
 
         sentence_a = (
-            f"{tk} earns a Alpha Score of {smart:.0f} (Grade {grade}, {conv} conviction) "
+            f"{tk} earns a Quant Score of {smart:.0f} (Grade {grade}, {conv} conviction) "
             f"in the current {rg} market."
         )
         if vel is not None:
@@ -1592,7 +1592,7 @@ class ThesisGenerator:
 
         facts: list[str] = []
         facts.append(f"Name / sector: {rule_based.get('name') or t.get('ticker')} · {rule_based.get('sector', '?')}")
-        facts.append(f"Alpha Score: {round(float(t.get('pop_score') or 0))}/100 (grade {t.get('grade', '?')})")
+        facts.append(f"Quant Score: {round(float(t.get('pop_score') or 0))}/100 (grade {t.get('grade', '?')})")
         macro = f"Market regime: {regime.get('regime_label', 'Mixed')}"
         if vix is not None:
             macro += f", VIX ~{vix}"
@@ -1702,7 +1702,7 @@ def _clean_bullets(v: Any, cap: int = 6, maxlen: int = 220) -> list[str]:
 
 def apply_regime_to_universe(universe: list[dict], regime: dict) -> None:
     """
-    Mutates each ticker dict in place: adds smart_score (regime-adjusted Alpha Score)
+    Mutates each ticker dict in place: adds smart_score (regime-adjusted Quant Score)
     plus the regime fields so the dashboard can display them inline.
     """
     mult  = float(regime.get("regime_multiplier") or 1.0)

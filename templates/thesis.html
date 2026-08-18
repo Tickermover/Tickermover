@@ -1132,7 +1132,7 @@ h1.title{font-size:clamp(34px,5.6vw,54px);line-height:1.03;letter-spacing:-.022e
     var pf = function(x){ return x==null?null:((x*100>=10||x*100<=-10)?(x*100).toFixed(0):(x*100).toFixed(1))+'%'; };
     function fcell(k,v){ return (v==null||v==="")?"":'<div><div class="row-k">'+k+'</div><div class="row-v">'+v+'</div></div>'; }
     var finCells = [
-      fcell('Alpha score', F.alpha!=null?(Math.round(F.alpha)+(F.grade?' · '+esc(F.grade):'')):null),
+      fcell('Quant score', F.alpha!=null?(Math.round(F.alpha)+(F.grade?' · '+esc(F.grade):'')):null),
       fcell('Revenue growth', pf(F.rev_growth)),
       fcell('Gross margin', pf(F.gross_margin)),
       fcell('P/E', (F.pe!=null&&F.pe>0)?(+F.pe).toFixed(0)+'x':(F.pe!=null?'n/m':null)),

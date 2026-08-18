@@ -1,5 +1,5 @@
 """
-TickerMover - AI Alpha Score Engine
+TickerMover - AI Quant Score Engine
 Curated-universe aware: uses growth_tier metadata as a prior when live
 financial data is unavailable, so scores reflect quality from day one.
 Neutral baseline = 0.60 (optimistic for hand-picked high-growth stocks).
@@ -670,8 +670,8 @@ def _add_signals(t: dict, breakdown: dict, signals: list) -> None:
     ea = breakdown.get("earnings_acceleration")
     if ea is not None and ea >= 0.85:   signals.append("Revenue growth-rate accelerating QoQ")
     sv = _safe(t, "score_velocity")
-    if sv is not None and sv >= 3:    signals.append(f"Alpha Score climbing +{sv:.1f} pts in 24h")
-    elif sv is not None and sv <= -3: signals.append(f"Alpha Score falling {sv:.1f} pts in 24h")
+    if sv is not None and sv >= 3:    signals.append(f"Quant Score climbing +{sv:.1f} pts in 24h")
+    elif sv is not None and sv <= -3: signals.append(f"Quant Score falling {sv:.1f} pts in 24h")
 
 
 def score_and_rank(universe: list[dict], regime: Optional[dict] = None) -> list[dict]:

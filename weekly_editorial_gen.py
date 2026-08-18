@@ -192,7 +192,7 @@ investor-facing. Voice: sharp, plain-English, numerate, with a clear and defensi
 point of view. The reader is a serious retail investor.
 
 You will be given ONE subject for this week (a sector/theme OR a marquee company), \
-chosen from our live signals, plus a GROUND-TRUTH data block (our Alpha Scores, grades, \
+chosen from our live signals, plus a GROUND-TRUTH data block (our Quant Scores, grades, \
 prices, weekly sector moves, fundamentals, analyst context, and our own conviction / \
 track-record). Build the whole report around that subject.
 
@@ -220,11 +220,11 @@ of evidence can prove.
 - Be MECE across: the market/driver, the data and what it says, the bull case, the bear \
 case, a scenario view, and what would change our mind.
 - Include 2-4 Markdown DATA TABLES that turn numbers into a clear read (e.g. \
-Name | Alpha Score | Grade | What it means; PLUS a Bear/Base/Bull SCENARIO table listing \
+Name | Quant Score | Grade | What it means; PLUS a Bear/Base/Bull SCENARIO table listing \
 the conditions each case needs). Build tables ONLY from the GROUND-TRUTH block.
 - Be honest about the downside: name the bear case and the key risks plainly. An all-upside \
 piece reads as a pitch, not analysis — the balance is what earns trust.
-- Weave OUR house lens throughout: cite our Alpha Scores / grades / conviction and what \
+- Weave OUR house lens throughout: cite our Quant Scores / grades / conviction and what \
 our model is doing — this is what makes it OURS.
 - Close with a final `## What to watch — our positioning` section: the crisp HOUSE VIEW \
 (Outperform/Avoid basis) and 2-4 concrete signals to track next.
@@ -261,7 +261,7 @@ preamble) with EXACTLY these keys:
   "title":        "a punchy cover headline, ideally a question (<= 90 chars)",
   "standfirst":   "one-sentence standfirst that sets the stakes (<= 200 chars)",
   "cover_lines":  ["3-4 short magazine COVER TEASERS, <= 55 chars each — the feature hooks a reader sees on the cover"],
-  "cover_splash": {"ticker":"the single marquee ticker","score":<its Alpha Score 0-100>,"verdict":"Outperform|Avoid|Watch"},
+  "cover_splash": {"ticker":"the single marquee ticker","score":<its Quant Score 0-100>,"verdict":"Outperform|Avoid|Watch"},
   "stat_tiles":   [ {"value":"+3.4%","label":"short metric name","sub":"tiny context <= 32 chars","dir":"up|down|flat"} ],
   "sections": [ {"heading":"## the action-title claim, stated as a claim","must_prove":"the ONE thing this section has to establish, naming the specific ground-truth figures and/or web sources it will use","table":"describe the data table this section carries, or \"\" for none"} ],
   "charts": [ {"title":"chart title","type":"bar|donut|line|waterfall|grouped|gauge","unit":"%|score|$","note":"the INSIGHT, one line","series":["only for grouped: first series name","second series name"],"bars":[ {"label":"TICKER, item or period","value":<number>,"value2":<number, grouped only>,"hi":<true for the standout>} ]} ],
@@ -291,7 +291,7 @@ signed; the reader sees them accumulate.
   * "grouped" — two comparable series per item: put the first in "value", the second in \
 "value2", and name them in "series" (e.g. "series":["This week","Last week"]). Use for \
 before/after or us-vs-benchmark.
-  * "gauge" — a single 0-100 reading (an Alpha Score) as a dial. One entry in "bars".
+  * "gauge" — a single 0-100 reading (an Quant Score) as a dial. One entry in "bars".
 - Every chart needs an action-title `note`: the insight, never a description of the axes.
 - Charts must be defensible from ground truth. Omit one rather than invent a series.
 - Provide exactly 3 `scenarios` (Bear, Base, Bull) whose `prob` values sum to ~100%.

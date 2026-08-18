@@ -13,7 +13,7 @@ link for colour:
     infrastructure— compute / power / network / platform depended on (green)
     adjacent      — complementary or substitute peers               (slate)
 
-The node *values* (α-Score, stock count, colour, size) are NOT produced here —
+The node *values* (Quant Score, stock count, colour, size) are NOT produced here —
 they stay live, overlaid client-side from the universe data, exactly like the
 old heat map. This module only authors the (rarely-changing) wiring, so the
 result is generated ONCE with the cheapest model and cached durably.

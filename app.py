@@ -1871,7 +1871,7 @@ def _with_universe_count(html: str) -> str:
     scored, and it can never go stale.
 
     NOTE the distinction, because the two figures are different and BOTH are
-    true: we track ~1,580 symbols, of which ~545 carry an Alpha Score. This
+    true: we track ~1,580 symbols, of which ~545 carry an Quant Score. This
     token is the SCORED count, which is what "stocks scored daily" means and
     is the honest number for any screening/scoring claim. Copy that means the
     full tracked set says "1,500+ names" and is deliberately not tokenised.
@@ -1956,7 +1956,7 @@ def _build_landing_schema() -> str:
         "logo": f"{SITE_ORIGIN}/static/icons/icon-512.png",
         "image": f"{SITE_ORIGIN}/static/icons/icon-512.png",
         "slogan": "We do the homework. You make the call.",
-        "description": "TickerMover scores 540+ US-listed stocks daily across six pillars into one plain-English Alpha Score. Research and data only — not investment advice.",
+        "description": "TickerMover scores 540+ US-listed stocks daily across six pillars into one plain-English Quant Score. Research and data only — not investment advice.",
         "email": "support@tickermover.com",
         # contactPoint feeds Google's knowledge panel + AI search citations
         "contactPoint": {
@@ -1976,7 +1976,7 @@ def _build_landing_schema() -> str:
         "@context": "https://schema.org",
         "@type": "FAQPage",
         "mainEntity": [
-            _q("What exactly is the Alpha Score?",
+            _q("What exactly is the Quant Score?",
                "A single 0–100 number fusing six pillars — momentum, growth, quality, valuation, sentiment and risk — refreshed every trading day. Stocks scoring 75+ with four strong pillars qualify for the Hot List."),
             _q("Is this investment advice?",
                "No. TickerMover is a research tool. It surfaces and explains signals; every trade decision and its consequences are yours. Always do your own due diligence."),
@@ -1999,7 +1999,7 @@ def _build_landing_schema() -> str:
         "url": SITE_ORIGIN,
         "applicationCategory": "FinanceApplication",
         "operatingSystem": "Web",
-        "description": "Real-time US stock research with Alpha Score, plain-English verdicts, conflict detection, Reverse DCF, and macro-aware scoring. Free plan available.",
+        "description": "Real-time US stock research with Quant Score, plain-English verdicts, conflict detection, Reverse DCF, and macro-aware scoring. Free plan available.",
         "offers": {
             "@type": "Offer",
             "price": "0",
@@ -2179,7 +2179,7 @@ def _render_morning_brief() -> str:
         hot_sect_html = (
             f'<div class="b-sector"><div class="b-sector-tag">🔥 Heating up</div>'
             f'<div class="b-sector-name">{_html.escape(hs_name)}</div>'
-            f'<div class="b-sector-meta">Avg α-Score <strong>{hs_avg:.0f}</strong> across {hs_n} names</div></div>'
+            f'<div class="b-sector-meta">Avg Quant Score <strong>{hs_avg:.0f}</strong> across {hs_n} names</div></div>'
         )
     else:
         hot_sect_html = ""
@@ -2188,7 +2188,7 @@ def _render_morning_brief() -> str:
         cold_sect_html = (
             f'<div class="b-sector cold"><div class="b-sector-tag">📉 Cooling off</div>'
             f'<div class="b-sector-name">{_html.escape(cs_name)}</div>'
-            f'<div class="b-sector-meta">Avg α-Score <strong>{cs_avg:.0f}</strong> across {cs_n} names</div></div>'
+            f'<div class="b-sector-meta">Avg Quant Score <strong>{cs_avg:.0f}</strong> across {cs_n} names</div></div>'
         )
     else:
         cold_sect_html = ""
@@ -2196,7 +2196,7 @@ def _render_morning_brief() -> str:
     # ── Lede paragraph (templated; AI-narrated in Phase 2) ──────────
     lede = (
         f"Good morning. Across the {total_n} US stocks TickerMover covers, the average "
-        f"α-Score sits at <strong>{avg_score:.0f}</strong> today — with "
+        f"Quant Score sits at <strong>{avg_score:.0f}</strong> today — with "
         f"<strong>{a_grade}</strong> names holding A-grade status. "
     )
     if hot_sector:
@@ -2433,7 +2433,7 @@ async def reports_index():
 <html lang="en"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Reports — {total} US stocks scored & explained | TickerMover</title>
-<meta name="description" content="Every US stock in the TickerMover universe, scored across six investment pillars and explained in a long-form research report. Sorted by today's Alpha Score.">
+<meta name="description" content="Every US stock in the TickerMover universe, scored across six investment pillars and explained in a long-form research report. Sorted by today's Quant Score.">
 <meta name="theme-color" content="#fafbf7">
 <link rel="canonical" href="{SITE_ORIGIN}/reports">
 <link rel="icon" type="image/png" sizes="32x32" href="/static/icons/favicon-32.png">
@@ -2506,11 +2506,11 @@ async def reports_index():
 <div class="head">
   <div class="eyebrow">Research library</div>
   <h1>{total} stocks. <em>Every</em> one explained.</h1>
-  <p class="sub">Every name we cover gets a full research report with Alpha Score, six-pillar breakdown, verdict, and the reasoning behind it. Sorted by today's score.</p>
+  <p class="sub">Every name we cover gets a full research report with Quant Score, six-pillar breakdown, verdict, and the reasoning behind it. Sorted by today's score.</p>
 </div>
 
 <div class="list-wrap">
-  <div class="list-head"><span>Ticker</span><span>Name</span><span class="sect-h">Sector</span><span class="chg-h" style="text-align:right">Δ Day</span><span style="text-align:right">α-Score</span></div>
+  <div class="list-head"><span>Ticker</span><span>Name</span><span class="sect-h">Sector</span><span class="chg-h" style="text-align:right">Δ Day</span><span style="text-align:right">Quant Score</span></div>
   <div class="list">{rows_html}</div>
 </div>
 
@@ -2520,7 +2520,7 @@ async def reports_index():
 <footer style="max-width:900px;margin:40px auto 0;padding:20px 24px 36px;
                border-top:1px solid rgba(16,41,61,.12);font-size:12.5px;
                line-height:1.65;opacity:.72">
-  Alpha Scores are quantitative summaries of public information, not buy or sell
+  Quant Scores are quantitative summaries of public information, not buy or sell
   recommendations. TickerMover is a research tool, not an FCA-authorised adviser,
   and nothing here is a personal recommendation. Past performance is not a
   reliable indicator of future results. Capital at risk.
@@ -2569,12 +2569,12 @@ async def report_page(ticker: str):
 async def stock_page(ticker: str):
     """
     Server-rendered, SEO-optimized HTML page for a single ticker.
-    Each page targets long-tail searches like "NVDA Alpha score",
+    Each page targets long-tail searches like "NVDA Quant score",
     "NVDA stock analysis", "should I buy NVDA". Includes:
       - Unique <title> + meta description with current data
       - Schema.org FinancialProduct + Article markup (rich snippets)
       - Open Graph tags for social shares
-      - Alpha Score, verdict, valuation, news inline (visible to crawlers)
+      - Quant Score, verdict, valuation, news inline (visible to crawlers)
       - Internal links to peers (sub-sector graph for crawlers)
       - Big CTA to open the live dashboard for that ticker
     """
@@ -2867,7 +2867,7 @@ def _sp_ribbon(anchor: str, title: str, inner: str, rib: str = "rep-slate", ico:
             f'<div class="rep-body">{inner}</div></section>')
 
 def _sp_score_gauge(score, color: str) -> str:
-    """Colorful donut gauge for the Alpha Score — server-rendered SVG, no JS."""
+    """Colorful donut gauge for the Quant Score — server-rendered SVG, no JS."""
     import math
     s = max(0.0, min(100.0, float(score or 0)))
     r = 46.0
@@ -3042,7 +3042,7 @@ def _render_stock_page(t: dict) -> str:
     grade  = t.get("grade") or "—"
     rating = {"A":"★★★★★ Top Tier","B":"★★★★ Quality","C":"★★★ Average","D":"★★ Below Avg","F":"★ Weak"}.get(grade, "Under Review")
     verdict_color = {"A":"#10B981","B":"#2970FF","C":"#F59E0B","D":"#F97316","F":"#EF4444"}.get(grade, "#64748b")
-    bottom_line = t.get("bottom_line_ai") or t.get("bottom_line") or f"{name} is currently scored {round(pop)}/100 on Alpha Score."
+    bottom_line = t.get("bottom_line_ai") or t.get("bottom_line") or f"{name} is currently scored {round(pop)}/100 on Quant Score."
     chg = _f(t.get("change_pct"))
     chg_sign = "+" if chg >= 0 else ""
     rev_g = t.get("revenue_growth_yoy")
@@ -3101,7 +3101,7 @@ def _render_stock_page(t: dict) -> str:
 
     # Key metrics → ribbon card
     _km = [
-        f'<div class="metric"><div class="lbl">Alpha Score</div><div class="val">{round(pop)}/100</div></div>',
+        f'<div class="metric"><div class="lbl">Quant Score</div><div class="val">{round(pop)}/100</div></div>',
         f'<div class="metric"><div class="lbl">Grade</div><div class="val">{grade}</div></div>',
     ]
     if rev_g is not None:
@@ -3122,9 +3122,9 @@ def _render_stock_page(t: dict) -> str:
     # ── SEO meta tags — these are the part Google ranks on ──
     import datetime as _dt
     _today = _dt.date.today().isoformat()
-    title = f"{sym} Stock Analysis · Alpha Score {round(pop)} · {rating} | TickerMover"
+    title = f"{sym} Stock Analysis · Quant Score {round(pop)} · {rating} | TickerMover"
     desc  = (
-        f"{name} ({sym}) — current Alpha Score {round(pop)}/100 ({rating}). "
+        f"{name} ({sym}) — current Quant Score {round(pop)}/100 ({rating}). "
         f"{bottom_line[:140]}"
     )
 
@@ -3168,14 +3168,14 @@ def _render_stock_page(t: dict) -> str:
         },
     }
 
-    # ── FAQ — visible Q&A (targets "is X a buy" / "X alpha score" long-tail) + FAQPage schema ──
+    # ── FAQ — visible Q&A (targets "is X a buy" / "X quant score" long-tail) + FAQPage schema ──
     _faqs = [
-        (f"What is {sym}'s Alpha Score?",
-         f"{name} ({sym}) currently has a TickerMover Alpha Score of {round(pop)}/100, rated {rating}. The Alpha Score is a quantitative composite across six research pillars — momentum, quality, growth, valuation, sentiment and risk. It is research information, not investment advice."),
+        (f"What is {sym}'s Quant Score?",
+         f"{name} ({sym}) currently has a TickerMover Quant Score of {round(pop)}/100, rated {rating}. The Quant Score is a quantitative composite across six research pillars — momentum, quality, growth, valuation, sentiment and risk. It is research information, not investment advice."),
         (f"Is {name} ({sym}) a buy?",
          f"TickerMover does not give buy or sell recommendations. {sym} scores {round(pop)}/100 ({rating}) on our quantitative research model — a screening signal, not a personal recommendation. Do your own research, and consider an FCA-authorised adviser before investing."),
         (f"How often is {sym}'s score updated?",
-         f"{sym}'s Alpha Score and underlying data refresh through US market hours (about every five minutes), using public market and fundamental data."),
+         f"{sym}'s Quant Score and underlying data refresh through US market hours (about every five minutes), using public market and fundamental data."),
     ]
     faq_schema = {
         "@context": "https://schema.org",
@@ -3450,7 +3450,7 @@ h2{{font-size:18px;margin:30px 0 12px}}
   </div>
 
   <div class="legal">
-    TickerMover is a research tool, not financial advice. Alpha Score is a composite signal — always do your own research before investing.
+    TickerMover is a research tool, not financial advice. Quant Score is a composite signal — always do your own research before investing.
     <br>Last updated automatically every 5 minutes during US market hours.
     <br>Questions? <a href="mailto:support@tickermover.com" style="color:#15803d">support@tickermover.com</a>
   </div>
@@ -3477,7 +3477,7 @@ async def learn_index():
 
 @app.get("/learn/{slug}", response_class=HTMLResponse)
 async def learn_pillar(slug: str):
-    """Evergreen explainer pages — Alpha Score, Reverse DCF, fundamentals."""
+    """Evergreen explainer pages — Quant Score, Reverse DCF, fundamentals."""
     html = _seo.render_pillar(slug.lower().strip(), SITE_ORIGIN)
     if html is None:
         raise HTTPException(status_code=404, detail="Unknown learn page")
@@ -3514,7 +3514,7 @@ async def sectors_index():
 
 @app.get("/sectors/{slug}", response_class=HTMLResponse)
 async def sector_page(slug: str):
-    """One landing page per sub-sector with live Alpha Scores."""
+    """One landing page per sub-sector with live Quant Scores."""
     html = _seo.render_sector(slug.lower().strip(), _universe_data or [], SITE_ORIGIN)
     if html is None:
         raise HTTPException(status_code=404, detail="Unknown sector")
@@ -3703,7 +3703,7 @@ def _render_brief_email(unsub_url: str) -> str:
     <div style="font-size:18px;font-weight:800;color:#fff;margin-top:4px">{today}</div>
   </div>
   <div style="background:#fff;padding:20px 24px;border:1px solid #d6e3ff;border-top:none">
-    <p style="font-size:14px;color:#334155;margin:0 0 14px">Today's highest-conviction US large-caps on our model — strong Alpha Scores, the Street raising estimates, momentum building. <b>Research, not advice.</b></p>
+    <p style="font-size:14px;color:#334155;margin:0 0 14px">Today's highest-conviction US large-caps on our model — strong Quant Scores, the Street raising estimates, momentum building. <b>Research, not advice.</b></p>
     <table style="border-collapse:collapse;width:100%">{rows or '<tr><td style="padding:14px;color:#64748b">Universe is warming up — open the dashboard for the latest.</td></tr>'}</table>
     <div style="text-align:center;margin-top:20px">
       <a href="{SITE_ORIGIN}/app" style="display:inline-block;background:#2970ff;color:#fff;font-weight:800;font-size:14px;padding:12px 28px;border-radius:10px;text-decoration:none">Open the live dashboard →</a>
@@ -3815,7 +3815,7 @@ def _render_og_png(t: dict) -> bytes:
     except (TypeError, ValueError): pop_n = 0
     grade  = t.get("grade") or "—"
     rating = {"A":"★★★★★ TOP TIER","B":"★★★★ QUALITY","C":"★★★ AVERAGE","D":"★★ BELOW AVG","F":"★ WEAK"}.get(grade, "UNDER REVIEW")
-    bl = (t.get("bottom_line_ai") or t.get("bottom_line") or f"{name} scored {pop_n}/100 on Alpha Score.")[:120]
+    bl = (t.get("bottom_line_ai") or t.get("bottom_line") or f"{name} scored {pop_n}/100 on Quant Score.")[:120]
 
     W, H = 1200, 630
     score_color = (
@@ -3874,7 +3874,7 @@ def _render_og_png(t: dict) -> bytes:
     sw = bbox[2] - bbox[0]
     sh = bbox[3] - bbox[1]
     draw.text((cx - sw // 2, cy - sh // 2 - 30), s, font=f_score, fill=(255, 255, 255))
-    draw.text((cx - 60, cy + 70), "ALPHA SCORE", font=f_lbl, fill=(148, 163, 184))
+    draw.text((cx - 60, cy + 70), "QUANT SCORE", font=f_lbl, fill=(148, 163, 184))
 
     chip_w, chip_h = 240, 64
     chip_x = W - chip_w - 60
@@ -6849,7 +6849,7 @@ async def api_ask(ticker: str, request: Request,
     if t:
         sc = t.get("smart_score") if t.get("smart_score") is not None else t.get("pop_score")
         lines.append(f"Name: {t.get('name')} | Sector: {t.get('sector')} / {t.get('sub_sector')}")
-        lines.append(f"Alpha score: {sc} | Grade: {t.get('grade')} | RS context via app")
+        lines.append(f"Quant score: {sc} | Grade: {t.get('grade')} | RS context via app")
         lines.append(f"Price: {t.get('price')} | Target upside %: {t.get('target_upside_pct')}")
         lines.append(f"Rev growth YoY: {t.get('revenue_growth_yoy')} | EPS growth YoY: {t.get('eps_growth_yoy')}")
         lines.append(f"P/E: {t.get('pe_ratio') or t.get('forward_pe')} | PEG: {t.get('peg_ratio')} | Profit margin: {t.get('profit_margin')}")
@@ -7118,7 +7118,7 @@ def _ticker_metrics_block(tk: str) -> str:
         return ""
     sc = t.get("smart_score") if t.get("smart_score") is not None else t.get("pop_score")
     return (f"Name: {t.get('name')} | Sector: {t.get('sector')} / {t.get('sub_sector')}\n"
-            f"Alpha score: {sc} | Grade: {t.get('grade')}\n"
+            f"Quant score: {sc} | Grade: {t.get('grade')}\n"
             f"Price: {t.get('price')} | Target upside %: {t.get('target_upside_pct')}\n"
             f"Rev growth YoY: {t.get('revenue_growth_yoy')} | EPS growth YoY: {t.get('eps_growth_yoy')}")
 
@@ -7488,7 +7488,7 @@ async def api_overview(ticker: str, force: bool = False,
 
 
 # ── "Why it made the cut" — one AI sentence per Top Hunts pick ────────────
-# Grounded entirely in our own factor profile (Alpha Score, grade, 6 pillars,
+# Grounded entirely in our own factor profile (Quant Score, grade, 6 pillars,
 # analyst upside) so nothing is invented. Cheap Haiku tier, cached durably in
 # app_kv keyed by ticker → one paid call per pick, ever. Lazy-loaded per card
 # so it never blocks the main /api/model-portfolio payload.
@@ -8288,7 +8288,7 @@ async def api_compare(pair: str):
 
 
 # ── Sector relationship graph (topology only; generated once, cached) ──────
-# The Universe "Sector connections" web. Node values (α-Score, size) stay live
+# The Universe "Sector connections" web. Node values (Quant Score, size) stay live
 # on the client; only the wiring is AI-generated, so this is a one-time Haiku
 # cost cached durably in app_kv. Keyed by a hash of the sub-sector list, so a
 # taxonomy change auto-regenerates while a stable universe is a permanent hit.
@@ -8956,7 +8956,7 @@ _BLOG_ARTICLES = [
 <p>Revenue grew <strong>+139% year-over-year</strong> in the most recent quarter, driven by the rapid lease-up of completed data center capacity. The company carries a heavy capital expenditure load (free cash flow is deeply negative at -$720M TTM) as it builds out its next generation of campuses, but this is deliberate: APLD is in the land-grab phase of what it believes is a decade-long infrastructure cycle. Gross margins are expanding as more capacity comes online at scale.</p>
 
 <h3>Technical Setup</h3>
-<p>APLD's Alpha Score of <strong>77</strong> reflects strong price momentum (+11% day, +87% over the past month for the model portfolio entry) alongside Grade A fundamentals. RSI sits in the ideal 58–65 zone, suggesting the stock has digested its recent gains without becoming overbought. Social mention velocity is <strong>+136% vs 24 hours ago</strong>, indicating growing retail and institutional awareness.</p>
+<p>APLD's Quant Score of <strong>77</strong> reflects strong price momentum (+11% day, +87% over the past month for the model portfolio entry) alongside Grade A fundamentals. RSI sits in the ideal 58–65 zone, suggesting the stock has digested its recent gains without becoming overbought. Social mention velocity is <strong>+136% vs 24 hours ago</strong>, indicating growing retail and institutional awareness.</p>
 
 <h3>Risks</h3>
 <p>Capital intensity is the primary risk — APLD must continuously access debt and equity markets to fund construction. Any softening in AI capex spend by the hyperscalers, or a rise in data center financing costs, could materially slow the company's growth trajectory. Short interest stands at <strong>29.4%</strong>, making this a squeeze candidate in both directions.</p>
@@ -9028,7 +9028,7 @@ _BLOG_ARTICLES = [
 <p>Revenue grew <strong>+41.8% year-over-year</strong>, with management guiding for continued double-digit organic growth through 2027. Gross margins are expanding as the product mix shifts toward higher-value liquid cooling and software. The company's order backlog — a leading indicator — has grown every quarter for eight consecutive quarters. Analyst consensus price target is <strong>$296 (mean)</strong>, with high-end estimates reaching $390.</p>
 
 <h3>Technical Setup</h3>
-<p>VRT carries a Alpha Score of <strong>76</strong> with an RS Rating of 67 — showing solid but not extreme momentum. The stock is within <strong>1.3% of its 52-week high</strong>, suggesting institutional accumulation rather than speculative froth. EPS beat 4 of the last 4 quarters, with gross margins expanding confirming operating leverage is building.</p>
+<p>VRT carries a Quant Score of <strong>76</strong> with an RS Rating of 67 — showing solid but not extreme momentum. The stock is within <strong>1.3% of its 52-week high</strong>, suggesting institutional accumulation rather than speculative froth. EPS beat 4 of the last 4 quarters, with gross margins expanding confirming operating leverage is building.</p>
 
 <h3>Risks</h3>
 <p>Vertiv is not immune to supply chain constraints — long lead times on custom cooling components can delay revenue recognition. Competition from Schneider Electric and Eaton is intensifying as the market grows. Any slowdown in hyperscaler capex would disproportionately affect Vertiv's order book.</p>
@@ -9099,13 +9099,13 @@ _BLOG_ARTICLES = [
 <p>Beyond pluggable transceivers, AAOI is positioning for the next generation: co-packaged optics (CPO), which integrates optical components directly onto switch silicon. CPO reduces power consumption by up to 70% versus discrete transceivers — a critical advantage as AI clusters push power density limits. The CPO market is expected to exceed <strong>$5 billion by 2028</strong>.</p>
 
 <h3>Technical Setup</h3>
-<p>AAOI is one of the strongest momentum names in our universe, with a Alpha Score of <strong>75</strong> and RS Rating of 75. The stock has gained +18.4% in today's session on volume 2.7x the 20-day average — institutional accumulation signal confirmed. EPS has beaten estimates 4 consecutive quarters with expanding gross margins, confirming the revenue growth is translating to the bottom line.</p>
+<p>AAOI is one of the strongest momentum names in our universe, with a Quant Score of <strong>75</strong> and RS Rating of 75. The stock has gained +18.4% in today's session on volume 2.7x the 20-day average — institutional accumulation signal confirmed. EPS has beaten estimates 4 consecutive quarters with expanding gross margins, confirming the revenue growth is translating to the bottom line.</p>
 
 <h3>Risks</h3>
 <p>AAOI is a small-cap ($3.5B market cap) with concentrated customer exposure — a single hyperscaler delaying orders can materially impact quarterly results. Gross margins, while improving, remain below peer levels. Competition from Coherent, Lumentum, and II-VI is intensifying.</p>
 
 <h3>TickerMover View</h3>
-<p>AAOI earns a <strong>TOP TIER</strong> grade with 75 Alpha Score. The 800G/1.6T upgrade cycle is a multi-year tailwind with AAOI positioned as a beneficiary. Analyst mean target implies <strong>+41.7% upside</strong> from current levels.</p>"""
+<p>AAOI earns a <strong>TOP TIER</strong> grade with 75 Quant Score. The 800G/1.6T upgrade cycle is a multi-year tailwind with AAOI positioned as a beneficiary. Analyst mean target implies <strong>+41.7% upside</strong> from current levels.</p>"""
   },
   {
     "id": "mu-hbm-ai-2026",
@@ -9171,7 +9171,7 @@ _BLOG_ARTICLES = [
 <p>Revenue is recovering strongly from the memory downturn, with data center revenue now representing over 50% of total sales. The Street estimates Micron's HBM revenue will grow from near-zero in 2023 to over <strong>$8B annually by fiscal 2027</strong>. EPS beat expectations for 4 consecutive quarters, with gross margin expansion as the product mix shifts toward premium HBM. Analyst mean target: <strong>$533 (+11.9% upside)</strong>.</p>
 
 <h3>Technical Setup</h3>
-<p>MU carries a Alpha Score of <strong>76</strong> and RS Rating of 73. Today's -2.18% session is noise against a backdrop of +30.6% gains over the past month. RSI at 64 remains healthy — not overbought. Social mention velocity +231% vs 24h confirms the stock is on investors' radar.</p>
+<p>MU carries a Quant Score of <strong>76</strong> and RS Rating of 73. Today's -2.18% session is noise against a backdrop of +30.6% gains over the past month. RSI at 64 remains healthy — not overbought. Social mention velocity +231% vs 24h confirms the stock is on investors' radar.</p>
 
 <h3>Risks</h3>
 <p>Memory is a commodity industry with cyclical pricing dynamics. A slowdown in AI infrastructure investment or a resolution of HBM supply tightness could compress margins. Samsung's HBM qualification by NVIDIA would create additional competitive pressure. The stock trades at 76.9× forward earnings — expectations are high.</p>
@@ -9240,7 +9240,7 @@ _BLOG_ARTICLES = [
 <p>The US Defense Advanced Research Projects Agency's US2QC program is accelerating error correction research, with multiple teams claiming fault-tolerant qubit demonstrations in controlled environments. DARPA has funded programs targeting practical quantum advantage by 2033 — but early commercial applications are emerging much sooner. QUBT's optimization products are already deployed at several enterprise customers.</p>
 
 <h3>Technical Setup</h3>
-<p>QUBT carries a Alpha Score of <strong>72</strong> with an RS Rating of 76 — indicating it is outperforming 76% of all stocks in the TickerMover universe over the past 12 months. The stock is within 22.4% of its 52-week high after consolidating a major prior breakout. EPS beat 4 of the last 4 quarters, and gross margin is expanding as the software mix grows. Short interest at <strong>28.6%</strong> makes this a high-volatility, high-conviction setup.</p>
+<p>QUBT carries a Quant Score of <strong>72</strong> with an RS Rating of 76 — indicating it is outperforming 76% of all stocks in the TickerMover universe over the past 12 months. The stock is within 22.4% of its 52-week high after consolidating a major prior breakout. EPS beat 4 of the last 4 quarters, and gross margin is expanding as the software mix grows. Short interest at <strong>28.6%</strong> makes this a high-volatility, high-conviction setup.</p>
 
 <h3>The Risks</h3>
 <p>QUBT is a small-cap ($3.5B market cap) company in a nascent technology sector where timelines have historically slipped. Revenue is growing but from a small base, and profitability is still in the future. Any negative news about quantum hardware milestones could create significant stock volatility.</p>
@@ -9312,7 +9312,7 @@ _BLOG_ARTICLES = [
 <p>Globalstar is investing in a new generation of satellites branded "BlueBird" designed for higher-capacity, lower-latency 5G service delivery. The BlueBird constellation, combined with regulatory spectrum approvals in 48 countries, positions GSAT to become the backbone of satellite-cellular integration for partner carriers including AT&T and Verizon.</p>
 
 <h3>Technical Setup</h3>
-<p>GSAT carries a Alpha Score of <strong>72</strong> with RS Rating 81 — the highest RS in this analysis. Breaking to a new 52-week high confirms institutional accumulation. The stock has gained +35.2% over the past month. EPS beat 4 consecutive quarters. Analyst mean target of <strong>$85 (+5.6% upside)</strong> is conservative given the optionality of the Apple partnership.</p>
+<p>GSAT carries a Quant Score of <strong>72</strong> with RS Rating 81 — the highest RS in this analysis. Breaking to a new 52-week high confirms institutional accumulation. The stock has gained +35.2% over the past month. EPS beat 4 consecutive quarters. Analyst mean target of <strong>$85 (+5.6% upside)</strong> is conservative given the optionality of the Apple partnership.</p>
 
 <h3>TickerMover View</h3>
 <p>GSAT earns a <strong>TOP TIER</strong> grade. The Apple partnership provides a floor, while direct-to-device 5G represents a potential ceiling that most analysts have yet to fully model.</p>"""
@@ -9381,7 +9381,7 @@ _BLOG_ARTICLES = [
 <p>Revenue grew <strong>+87.7% over the past month</strong> from the Model Portfolio's entry price perspective, with the stock up dramatically on positive earnings revisions and hyperscaler design win announcements. Analyst mean target of <strong>$200 (high: $390)</strong> implies 101.5% upside — one of the most bullish analyst setups in our universe. EPS has beaten estimates 3 of 4 last quarters with gross margins expanding.</p>
 
 <h3>Technical Setup</h3>
-<p>CRDO is the top performer in our Model Portfolio, with Alpha Score of <strong>71</strong> and one of the strongest momentum profiles in the TickerMover universe. RSI at 64 — ideal momentum zone — suggests room to run without overextension. High-speed SerDes is a winner-take-most market, and Credo has won.</p>
+<p>CRDO is the top performer in our Model Portfolio, with Quant Score of <strong>71</strong> and one of the strongest momentum profiles in the TickerMover universe. RSI at 64 — ideal momentum zone — suggests room to run without overextension. High-speed SerDes is a winner-take-most market, and Credo has won.</p>
 
 <h3>TickerMover View</h3>
 <p>CRDO earns a <strong>TOP TIER</strong> grade. The SerDes and optical DSP market is growing at 40%+ annually driven purely by AI infrastructure demand. Credo's focused product line and hyperscaler relationships make it one of the highest-conviction plays in our universe.</p>"""
@@ -9451,7 +9451,7 @@ _BLOG_ARTICLES = [
 <p>SoundHound's Dynamic Drive-Thru platform handles voice ordering at quick-service restaurant chains, reducing labor costs and increasing order accuracy. The company has expanded to thousands of restaurant locations and is targeting the multi-billion dollar drive-through market. Enterprise customers use SoundHound's conversational AI for customer service automation.</p>
 
 <h3>Technical Setup</h3>
-<p>SOUN carries a Alpha Score of <strong>75</strong> with RS Rating 72 and an analyst mean price target of <strong>$14.63 (+78.4% upside)</strong>. Revenue growing at +59.4% YoY. Short interest at 36.1% creates significant squeeze potential. EPS beat 4 consecutive quarters.</p>
+<p>SOUN carries a Quant Score of <strong>75</strong> with RS Rating 72 and an analyst mean price target of <strong>$14.63 (+78.4% upside)</strong>. Revenue growing at +59.4% YoY. Short interest at 36.1% creates significant squeeze potential. EPS beat 4 consecutive quarters.</p>
 
 <h3>TickerMover View</h3>
 <p>SOUN earns a <strong>TOP TIER</strong> grade. The combination of automotive moat, restaurant expansion, and agentic AI tailwind makes SoundHound one of the most differentiated AI plays in the market. The stock's high short interest creates asymmetric upside on continued strong results.</p>"""
@@ -9519,7 +9519,7 @@ _BLOG_ARTICLES = [
 <p>Revenue growth of +41.8% demonstrates the AI tailwind is flowing through to the financials. EPS has beaten estimates 4 consecutive quarters. Gross margins are expanding as the premium data center product mix grows. Analyst mean target: <strong>$144.54 (+0.7% conservative estimate)</strong> — the stock has outrun near-term analyst targets, suggesting upward revisions ahead.</p>
 
 <h3>Technical Setup</h3>
-<p>NVT has a Alpha Score of <strong>75</strong> and RS Rating 67, within 1.3% of its 52-week high — a classic institutional accumulation pattern. EPS beat 4 of 4 last quarters. Gross margin expanding confirms operating leverage. No overbought RSI concern.</p>
+<p>NVT has a Quant Score of <strong>75</strong> and RS Rating 67, within 1.3% of its 52-week high — a classic institutional accumulation pattern. EPS beat 4 of 4 last quarters. Gross margin expanding confirms operating leverage. No overbought RSI concern.</p>
 
 <h3>TickerMover View</h3>
 <p>NVT earns a <strong>TOP TIER</strong> grade. nVent's combination of industrial-grade reliability, data center focus, and diverse customer base makes it one of the lower-risk ways to play the AI infrastructure buildout.</p>"""
@@ -9587,7 +9587,7 @@ _BLOG_ARTICLES = [
 <p>IonQ participates in the DARPA US2QC program, which is accelerating practical quantum computing timelines. Government funding provides both revenue and technology validation — critical for an early-stage quantum company.</p>
 
 <h3>Technical Setup</h3>
-<p>IONQ carries a Alpha Score of <strong>72</strong> with analyst mean target of <strong>$17.83 (+96.9% upside)</strong>. Within 22.4% of 52-week high after consolidation. EPS beat 4 consecutive quarters with expanding margins. Social momentum building as quantum milestones approach.</p>
+<p>IONQ carries a Quant Score of <strong>72</strong> with analyst mean target of <strong>$17.83 (+96.9% upside)</strong>. Within 22.4% of 52-week high after consolidation. EPS beat 4 consecutive quarters with expanding margins. Social momentum building as quantum milestones approach.</p>
 
 <h3>TickerMover View</h3>
 <p>IONQ earns a <strong>TOP TIER</strong> grade. The combination of technology superiority, government contracts, and cloud accessibility makes IonQ the most investable pure-play quantum computing company available to public market investors.</p>"""
@@ -9655,7 +9655,7 @@ _BLOG_ARTICLES = [
 <p>Revenue grew <strong>+67.1%</strong> from the Model Portfolio entry price perspective, reflecting both the storage cycle recovery and AI demand acceleration. The company's HDD revenue is growing at high double digits, with ASPs rising as higher-capacity drives command premium pricing. Analyst mean target of <strong>$354.96 (-12.3% from peak)</strong> — suggesting the stock has gotten ahead of near-term consensus, though long-term targets are materially higher.</p>
 
 <h3>Technical Setup</h3>
-<p>WDC has a Alpha Score of <strong>74</strong> with momentum confirming from the HDD cycle bottom. EPS beat 4 of 4 last quarters with gross margin expansion. High-density PDUs and thermal management for AI DCs driving incremental demand.</p>
+<p>WDC has a Quant Score of <strong>74</strong> with momentum confirming from the HDD cycle bottom. EPS beat 4 of 4 last quarters with gross margin expansion. High-density PDUs and thermal management for AI DCs driving incremental demand.</p>
 
 <h3>TickerMover View</h3>
 <p>WDC earns a <strong>TOP TIER</strong> grade. The intersection of AI storage demand and HDD capacity constraints creates a favorable pricing environment. Western Digital's scale and diversification make it the most accessible way to play the storage supercycle.</p>"""
@@ -9723,7 +9723,7 @@ _BLOG_ARTICLES = [
 <p>Revenue grew modestly but predictably — fiber infrastructure is a long-duration asset with stable, contracted cash flows. The stock has gained +52.2% from Model Portfolio entry, one of our best performers. Analyst mean target of <strong>$17.83 (+49.1% upside from current)</strong> reflects the market beginning to understand the AI fiber demand story. EPS beat 4 consecutive quarters.</p>
 
 <h3>Technical Setup</h3>
-<p>UNIT carries a Alpha Score of <strong>71</strong> with RS Rating 71. The stock's consistent momentum and fiber demand tailwind make it one of the more stable high-Pop names in our universe. RSI at 52 — ample room to run.</p>
+<p>UNIT carries a Quant Score of <strong>71</strong> with RS Rating 71. The stock's consistent momentum and fiber demand tailwind make it one of the more stable high-Pop names in our universe. RSI at 52 — ample room to run.</p>
 
 <h3>TickerMover View</h3>
 <p>UNIT earns a <strong>TOP TIER</strong> grade. Fiber infrastructure REITs are under-owned and under-appreciated in the AI investment narrative. Uniti's 140,000 route-mile network is a hard asset with growing strategic value.</p>"""
@@ -9792,7 +9792,7 @@ _BLOG_ARTICLES = [
 <p>Every Level 2+ autonomous vehicle requires multiple domain control units processing camera, radar, and LIDAR data simultaneously. Lattice's FPGAs serve as bridge chips and co-processors in ADAS architectures from Tesla, GM, and major Tier-1 suppliers. As ADAS adoption grows from 30% of new vehicles today to near-universal by 2030, Lattice's automotive revenue should compound at 25%+ annually.</p>
 
 <h3>Technical Setup</h3>
-<p>LSCC carries a Alpha Score of <strong>74</strong> with RS Rating 71 and revenue growing +24.2% YoY. EPS beat 4 consecutive quarters with gross margins expanding. P/E at 5779× is extreme — but reflects near-zero current earnings during an investment phase, not permanent multiple expansion. Analyst mean target: <strong>$143 (+22% upside)</strong>.</p>
+<p>LSCC carries a Quant Score of <strong>74</strong> with RS Rating 71 and revenue growing +24.2% YoY. EPS beat 4 consecutive quarters with gross margins expanding. P/E at 5779× is extreme — but reflects near-zero current earnings during an investment phase, not permanent multiple expansion. Analyst mean target: <strong>$143 (+22% upside)</strong>.</p>
 
 <h3>TickerMover View</h3>
 <p>LSCC earns a <strong>TOP TIER</strong> grade. Lattice is the dominant player in low-power FPGAs — a niche with massive secular tailwinds and limited competition. Edge AI is the next trillion-dollar opportunity after cloud AI.</p>"""
@@ -9847,7 +9847,7 @@ _BLOG_ARTICLES = [
 </ul>
 
 <h3>Portfolio Management Notes</h3>
-<p>With CRDO up 87.7% and UNIT up 52.2%, consider partial profit-taking to manage position sizing. The Model Portfolio's 30-day inception window suggests rebalancing in two weeks. Names with Alpha Scores that have declined since entry (check All Stocks tab for current scores) may be candidates for rotation.</p>
+<p>With CRDO up 87.7% and UNIT up 52.2%, consider partial profit-taking to manage position sizing. The Model Portfolio's 30-day inception window suggests rebalancing in two weeks. Names with Quant Scores that have declined since entry (check All Stocks tab for current scores) may be candidates for rotation.</p>
 
 <h3>TickerMover Macro View</h3>
 <p>The AI infrastructure supercycle remains in its early innings. Hyperscaler capex guidance for 2026 has been raised repeatedly — Microsoft, Google, Meta, and Amazon have collectively committed over <strong>$400B in AI infrastructure spending</strong> for 2025-2026. This capital flows directly to our portfolio companies. Stay the course, manage position sizes, and use pullbacks as opportunities.</p>"""
@@ -9913,7 +9913,7 @@ MEGA_CAP_CUTOFF  = 200e9   # exclude Mega Caps (NVDA, AVGO, MSFT etc.) from Hot 
 
 
 # ── 6-PILLAR FACTOR BREAKDOWN ─────────────────────────────────────────────────
-# The Alpha Score (smart_score) is a multi-factor composite, but the user
+# The Quant Score (smart_score) is a multi-factor composite, but the user
 # can't see WHICH factors are driving it. _compute_pillars returns a 0-100
 # score for each of six investment dimensions so the UI can show:
 #
@@ -10044,7 +10044,7 @@ def _pillar_pass_count(t: dict, threshold: int = 50) -> int:
 def _is_hot_eligible(t: dict) -> bool:
     """
     Hot-list eligibility — HIGH CONVICTION only:
-    1. Alpha Score  ≥ 70  (Grade A territory — top-tier momentum + fundamentals)
+    1. Quant Score  ≥ 70  (Grade A territory — top-tier momentum + fundamentals)
     2. Confidence ≥ 70% (enough real data to trust the score)
     3. Grade A   (rendered "Top Tier" — pop_score ≥ 68 maps to A)
     4. Market cap ≥ $500M (excludes micro-caps); Small Cap tier floor $250M
@@ -10126,7 +10126,7 @@ def _entry_min_score(regime: dict | None = None) -> int:
 
     A world-class long book does not admit names on the same bar in every
     tape — it demands more proof when the macro backdrop is hostile. In a
-    Bearish regime we raise the Alpha Score floor to MIN_ALPHA_BEARISH; in
+    Bearish regime we raise the Quant Score floor to MIN_ALPHA_BEARISH; in
     Bullish / Mixed regimes we use the base MIN_ALPHA_SCORE. This is the
     book-level analogue of the per-ticker regime multiplier already baked
     into smart_score — defense applied at the gate, not just the score.
@@ -10252,7 +10252,7 @@ async def _conviction_map_async(tickers: list[str]) -> dict[str, dict]:
 
 def _conv_score(ticker: str | None, cmap: dict) -> int:
     """AI conviction (0-100) for a ticker, or -1 when not yet scored. -1 sorts a
-    not-yet-scored name to the bottom of its Alpha-Score band — scored names
+    not-yet-scored name to the bottom of its Quant-Score band — scored names
     lead within the band, but eligibility is never affected."""
     j = cmap.get((ticker or "").upper())
     c = j.get("conviction") if j else None
@@ -10529,7 +10529,7 @@ def _return_velocity(t: dict) -> float:
 
 def _build_model_portfolio(existing: dict | None = None) -> dict:
     """
-    Select top 20 Grade-A stocks by Alpha Score.
+    Select top 20 Grade-A stocks by Quant Score.
 
     First-run behaviour: inception = 1 month ago, entry prices back-calculated
     from momentum_1m so the portfolio shows real 30-day performance immediately.
@@ -10563,7 +10563,7 @@ def _build_model_portfolio(existing: dict | None = None) -> dict:
     min_score = _entry_min_score()
 
     def _alpha(t: dict) -> float:
-        """The displayed Alpha Score — smart_score with pop_score fallback."""
+        """The displayed Quant Score — smart_score with pop_score fallback."""
         ss = t.get("smart_score")
         if ss is None:
             ss = t.get("pop_score") or 0
@@ -10594,7 +10594,7 @@ def _build_model_portfolio(existing: dict | None = None) -> dict:
     # ATR (they gap through it); the whole backtest loss tail was these.
     qualified = [t for t in qualified if _tradeable_volatility(t)]
     pool = qualified
-    # AI advisory re-rank: within an Alpha-Score band (rounded to the nearest
+    # AI advisory re-rank: within an Quant-Score band (rounded to the nearest
     # point) order by the analyst-judge's conviction; exact alpha + analyst
     # upside break any remaining ties. When the AI cache is cold every conviction
     # is -1, collapsing this back to the pure quant ordering (alpha, upside).
@@ -10766,7 +10766,7 @@ def _enrich_model_portfolio(portfolio: dict) -> dict:
          REJECTED — it sold the compounders; see note at the ladder.)
       3. Stretched valuation → price > 25% above analyst target AND
          (PEG > 4 OR P/E > 80) — no analyst headroom left.
-      4. Signal stop    → grade falls below B  OR  Alpha Score < 60.
+      4. Signal stop    → grade falls below B  OR  Quant Score < 60.
       5. Event-risk stop → already ≥4% underwater AND earnings ≤2 days out —
          a losing thesis into a binary event is how -20% tails happen.
          Opus-verifiable (the thesis may BE the earnings), floor still rules.
@@ -11509,7 +11509,7 @@ def _pick_checklist(t: dict) -> list[dict]:
     out.append({"label": "Grade A quality", "status": "pass" if grade == "A" else "warn", "detail": f"Grade {grade or '—'}"})
     alpha = n("smart_score") or n("pop_score") or 0
     bar = _entry_min_score()
-    out.append({"label": f"Alpha Score ≥ {bar}", "status": "pass" if alpha >= bar else "warn", "detail": f"{alpha:.0f}/100"})
+    out.append({"label": f"Quant Score ≥ {bar}", "status": "pass" if alpha >= bar else "warn", "detail": f"{alpha:.0f}/100"})
     pil = _pillar_pass_count(t)
     out.append({"label": "≥4 of 6 pillars firing", "status": "pass" if pil >= 4 else "warn", "detail": f"{pil}/6 pillars"})
     out.append({"label": "Return-velocity rank", "status": "info", "detail": f"score {_return_velocity(t):.0f}"})
@@ -11564,7 +11564,7 @@ def _marqsheet_html(pick: dict, checklist: list[dict], approve_url: str, reject_
     alpha = pick.get("pop_at_entry")
     conv = pick.get("conviction_at_entry")
     stats = [
-        ("Alpha Score", f"{alpha:.0f}/100" if isinstance(alpha, (int, float)) else "—"),
+        ("Quant Score", f"{alpha:.0f}/100" if isinstance(alpha, (int, float)) else "—"),
         ("AI conviction", f"{conv:.0f}/100" if isinstance(conv, (int, float)) else "not scored"),
         ("Price at queue", f"${entry:.2f}" if isinstance(entry, (int, float)) else "—"),
         ("1-mo momentum", fnum("momentum_1m", "%", sign=True)),
@@ -11739,7 +11739,7 @@ def _replenish_portfolio(portfolio: dict) -> dict:
 
     Rule: existing healthy picks NEVER move. We only fill slots opened by
     exit triggers. New picks pulled from the universe must meet the same
-    bar as the initial build (Grade A + regime-aware Alpha Score floor +
+    bar as the initial build (Grade A + regime-aware Quant Score floor +
     4-of-6 pillars) AND respect the per-theme cap across the WHOLE book.
     Each new pick gets today's date so the UI can flag it as NEW for a week.
 
@@ -11796,7 +11796,7 @@ def _replenish_portfolio(portfolio: dict) -> dict:
     vetoed = [t for t in score_qualified
               if _pillar_pass_count(t) >= 4 and _tradeable_volatility(t)]
     # Same AI advisory re-rank as the initial build: conviction breaks ties
-    # within an Alpha-Score band; falls back to (alpha, upside) when the cache
+    # within an Quant-Score band; falls back to (alpha, upside) when the cache
     # is cold.
     cmap = _conviction_map([t.get("ticker") for t in vetoed])
     # Same return-velocity rank as the initial build (best + quickest move).
@@ -12368,7 +12368,7 @@ function card(p){
     '<div class="hd"><div><span class="tic">'+esc(p.ticker)+'</span> <span class="nm">'+esc(p.name)+'</span><div class="sub">'+esc(p.sub_sector)+'</div></div>'+
     '<div class="px">'+(p.entry_price!=null?'$'+Number(p.entry_price).toFixed(2):'—')+'</div></div>'+
     '<div class="stats">'+
-      '<div><b>'+(p.alpha!=null?Math.round(p.alpha):'—')+'</b><span>Alpha</span></div>'+
+      '<div><b>'+(p.alpha!=null?Math.round(p.alpha):'—')+'</b><span>Quant</span></div>'+
       '<div><b>'+(p.conviction!=null?Math.round(p.conviction):'—')+'</b><span>Conviction</span></div>'+
       '<div><b>'+pct(p.momentum_3m)+'</b><span>3M mom</span></div>'+
       '<div><b>'+pct(p.rev_growth_yoy,true)+'</b><span>Rev growth</span></div>'+
@@ -12837,7 +12837,7 @@ async def api_hot(n: int = None):
 
 
 # ── Curated FEATURED set — the default browse universe ────────────────────────
-# Surfaces the top ~FEATURED_N quality names (Alpha-Score-ranked) so user
+# Surfaces the top ~FEATURED_N quality names (Quant-Score-ranked) so user
 # attention concentrates on a small, mostly-cached pool. Full 547-ticker universe
 # stays reachable via search. Strict Hot-List names lead, then the rest of the
 # featured-eligible pool by score. Rebuilt daily (cheap, in-memory) like the hot list.
@@ -12853,7 +12853,7 @@ def _run_room_rank(t: dict) -> float:
     mean target' and demoted anything trading above target or with strong momentum
     ('already ran'). That structurally BURIED our best performers — names that blew
     past stale analyst targets and kept ripping never surfaced. Analysts lag; we
-    don't defer to them. So now we lead with our Smart/Alpha Score and STACK our own
+    don't defer to them. So now we lead with our Smart/Quant Score and STACK our own
     strength signals: sustained momentum (winners keep winning), a climbing Alpha
     Score, leadership near 52-week highs, growth tier and earnings beats. Analyst
     upside is a BONUS ONLY — it can lift a name with room left, but never penalises
@@ -12884,7 +12884,7 @@ def _run_room_rank(t: dict) -> float:
         elif m1 <= -10: s -= 3
 
     # --- Our own improving-story signals ---
-    sv = _f("score_velocity")          # Alpha Score climbing = the story is getting better
+    sv = _f("score_velocity")          # Quant Score climbing = the story is getting better
     if sv is not None:
         if   sv >= 4:   s += 4
         elif sv >= 1.5: s += 2
@@ -14917,7 +14917,7 @@ async def infographics_page():
 @app.get("/infographics/earnings/{ticker}", response_class=HTMLResponse)
 async def earnings_infographic_page(ticker: str = "LITE"):
     """Per-stock A4 portrait tear sheet (1240x1754 px) — header with logo,
-    price, Alpha Score, star rating; mini 90-day price chart; Alpha Score
+    price, Quant Score, star rating; mini 90-day price chart; Quant Score
     component breakdown; quarterly Revenue/EPS bars; key metrics grid;
     sector/peer mini-table; full disclaimer footer. Downloadable as PNG
     (html2canvas) or PDF (browser print). Uses /api/universe + /api/earnings-intel
@@ -15204,11 +15204,11 @@ async def _build_crowd_scan() -> None:
 # the company IS. The name lives in the universe rows, so it is attached at the
 # response layer rather than threaded through either scan builder.
 def _with_names(rows: list) -> list:
-    """Attach name, sub-sector and Alpha Score to universe-scan rows.
+    """Attach name, sub-sector and Quant Score to universe-scan rows.
 
     Extended 14 Aug 2026 beyond just `name`. The scans carry ticker + sector
     only, so the panels showed a bare sector ("Technology") with no industry
-    detail, and no Alpha Score at all -- meaning a reader looking at the Crowd
+    detail, and no Quant Score at all -- meaning a reader looking at the Crowd
     Clock could not see our own quality read on the same name without opening
     each one. Both live on the universe rows, so they are attached here at the
     response layer rather than threaded through either scan builder, which is
@@ -15216,7 +15216,7 @@ def _with_names(rows: list) -> list:
 
     `alpha` is deliberately a SEPARATE field from the Clock `score`. They are
     different measures -- the Clock score describes how far a fall has
-    recovered; the Alpha Score is the six-pillar quality composite -- and
+    recovered; the Quant Score is the six-pillar quality composite -- and
     labelling one as the other would put a false label on the data.
     """
     if not rows:

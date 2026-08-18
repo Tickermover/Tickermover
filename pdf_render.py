@@ -6,7 +6,7 @@ deps (reportlab is pure Python; matplotlib already in the install set).
 
 Sections (A4 portrait):
     1. Header band  — TickerMover brand mark + date + quarter
-    2. Hero row     — company logo + ticker + name + sector + price + Alpha Score
+    2. Hero row     — company logo + ticker + name + sector + price + Quant Score
     3. 90-day price chart
     4. 12-card metrics grid (Market Cap / Rev Growth / Gross Margin / FCF Margin /
                               P/E / P/S / PEG / Debt-Eq / ROE / 52W / RSI / Beat Streak)
@@ -445,7 +445,7 @@ def _draw_hero(c, top_y, ticker, t, logo_bytes):
     col_a_w = 280            # ticker + name + sector
     col_b_x = MARGIN_X + 290 # price block
     col_b_w = 160
-    col_c_x = A4_W - MARGIN_X - 100  # Alpha Score on right
+    col_c_x = A4_W - MARGIN_X - 100  # Quant Score on right
     col_c_w = 100
 
     # ── Column A: logo + ticker + name + sector ─────────────────────
@@ -522,7 +522,7 @@ def _draw_hero(c, top_y, ticker, t, logo_bytes):
     c.setFont("Helvetica-Bold", 6.5)
     c.drawCentredString(cb_cx, top_y - 58, "LAST CLOSE")
 
-    # ── Column C: Alpha Score ───────────────────────────────────────
+    # ── Column C: Quant Score ───────────────────────────────────────
     score = _safe_float(t.get("smart_score") or t.get("pop_score"), 0)
     grade = (t.get("grade") or "—").upper()
     star_map = {"A": "★★★★★", "B": "★★★★", "C": "★★★", "D": "★★", "F": "★"}
@@ -533,7 +533,7 @@ def _draw_hero(c, top_y, ticker, t, logo_bytes):
     c.drawRightString(cc_rx, top_y - 32, str(int(score)))
     c.setFillColor(INK_MUTED)
     c.setFont("Helvetica-Bold", 7)
-    c.drawRightString(cc_rx, top_y - 45, "ALPHA SCORE")
+    c.drawRightString(cc_rx, top_y - 45, "QUANT SCORE")
     c.setFillColor(AMBER)
     c.setFont("Helvetica", 9)
     c.drawRightString(cc_rx, top_y - 57, star_map.get(grade, ""))
@@ -1626,7 +1626,7 @@ def _draw_peer_comparison(c, x, y, w, h, t, peers):
     c.setFillColor(INK_MUTED)
     c.setFont("Helvetica", 7)
     c.drawString(x + 10, y + h - 22,
-                  "Same sector  ·  ranked by Alpha Score")
+                  "Same sector  ·  ranked by Quant Score")
 
     if not peers:
         c.setFillColor(INK_MUTED)
@@ -1758,7 +1758,7 @@ def _draw_peer_comparison(c, x, y, w, h, t, peers):
         else:
             c.setFillColor(INK_MUTED)
             c.drawString(col_xs[5], ry + 3, "—")
-        # Alpha Score (badge)
+        # Quant Score (badge)
         score = r["score"]
         if score >= 80:    score_color = GREEN
         elif score >= 60:  score_color = BRAND_INDIGO
@@ -1909,7 +1909,7 @@ def _draw_chart_and_breakdown(c, top_y, price_history, t):
     c.setFillColor(INK_MUTED)
     c.setFont("Helvetica", 7)
     c.drawString(sb_x + 10, chart_y + chart_h - 22,
-                  "19-component composite  ·  contribution to Alpha Score")
+                  "19-component composite  ·  contribution to Quant Score")
 
     weighted = (t.get("weighted") or {}) if isinstance(t.get("weighted"), dict) else {}
     entries = sorted(
@@ -2134,8 +2134,8 @@ def _draw_metrics_grid(c, top_y, t):
 def _build_exec_bits(t, score, grade, tier_map):
     """Construct the executive summary sentences from real signals."""
     bits = []
-    if score >= 80:   bits.append(f"Top-tier setup with Alpha Score {int(score)} ({tier_map.get(grade,'')} grade).")
-    elif score >= 70: bits.append(f"Quality setup at Alpha Score {int(score)} ({tier_map.get(grade,'')}).")
+    if score >= 80:   bits.append(f"Top-tier setup with Quant Score {int(score)} ({tier_map.get(grade,'')} grade).")
+    elif score >= 70: bits.append(f"Quality setup at Quant Score {int(score)} ({tier_map.get(grade,'')}).")
     elif score >= 60: bits.append(f"Mid-tier score at {int(score)} — selective entry levels matter.")
     else:             bits.append(f"Below-tier score ({int(score)}). Stronger candidates exist in the universe.")
     revg = _safe_float(t.get("rev_growth_qyoy"))
@@ -2955,7 +2955,7 @@ def _draw_endnotes_page(c, today_str, quarter_lbl):
     disclaimer_html = (
         "<b>Educational use only.</b> TickerMover is not an FCA-authorised "
         "investment adviser and does not provide buy / sell recommendations. "
-        "The Alpha Score is a quantitative composite for screening purposes; "
+        "The Quant Score is a quantitative composite for screening purposes; "
         "it is not investment advice. Past performance does not guarantee "
         "future results. Forward-looking statements in this report reflect "
         "analyst estimates and AI-augmented synthesis of public filings — "

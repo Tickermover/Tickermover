@@ -102,7 +102,7 @@ def _facts(s: dict, base: dict) -> str:
     rows = [
         f"Sub-sector: {s.get('label')}",
         line("Companies scored", s.get("count"), base.get("count")),
-        line("Median Alpha Score (0-100)", s.get("alpha_median"), base.get("alpha_median")),
+        line("Median Quant Score (0-100)", s.get("alpha_median"), base.get("alpha_median")),
         line("Score spread, 75th minus 25th percentile", s.get("alpha_spread"), base.get("alpha_spread")),
         line("Share scoring 65 or above", s.get("breadth_strong_pct"), base.get("breadth_strong_pct"), "%"),
         line("Median 3-month price move", s.get("momentum_3m_median"), base.get("momentum_3m_median"), "%"),

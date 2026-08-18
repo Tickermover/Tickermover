@@ -251,7 +251,7 @@
 
       <div class="ig-title-row">
         <div class="ig-title">Highest-scoring US <em>growth stocks</em></div>
-        <div class="ig-subtitle">Alpha Score blends 19 signals · Updated 5-min during market hours</div>
+        <div class="ig-subtitle">Quant Score blends 19 signals · Updated 5-min during market hours</div>
       </div>
 
       <div id="ig-grid" class="ig-grid">
@@ -329,7 +329,7 @@ function renderGrid() {
         <div class="ig-stars">${stars}</div>
         <div class="ig-tier">${tier}</div>
         <div class="ig-score-num">${score.toFixed(0)}</div>
-        <div class="ig-score-lbl">Alpha Score</div>
+        <div class="ig-score-lbl">Quant Score</div>
         <div class="ig-chg ${chgCls}">${chgStr}</div>
         <div class="ig-sector">${sect}</div>
       </div>`;
@@ -339,7 +339,7 @@ function renderGrid() {
 function renderCaption() {
   const dateStr = new Date().toLocaleDateString('en-US', {month:'short', day:'numeric'});
   const tickers = _picks.map(t => '$' + t.ticker).join(' · ');
-  const text = `Top 5 US growth stocks by Alpha Score · ${dateStr}
+  const text = `Top 5 US growth stocks by Quant Score · ${dateStr}
 
 ${tickers}
 

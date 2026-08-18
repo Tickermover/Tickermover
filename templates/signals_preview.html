@@ -416,7 +416,7 @@
           </div>
           <div class="dm-table" id="picksTable">
             <div class="dm-row dm-head-row">
-              <span>Ticker</span><span>Alpha</span><span>Why it's here</span><span class="up-col">Upside</span><span class="today-col">Today</span><span class="act-col">Action</span>
+              <span>Ticker</span><span>Quant</span><span>Why it's here</span><span class="up-col">Upside</span><span class="today-col">Today</span><span class="act-col">Action</span>
             </div>
             <div class="dm-warm"><div class="emoji">⏳</div><div style="font-weight:700">Loading the universe…</div></div>
           </div>
@@ -674,7 +674,7 @@ async function boot(){
   const {data,src}=await loadData();
   startClock();
   if(!data){ tierBanner('none',null); document.getElementById('picksTable').innerHTML=
-    '<div class="dm-row dm-head-row"><span>Ticker</span><span>Alpha</span><span class="dm-pillars-h">Pillars</span><span>Today</span><span class="act-col">Action</span></div>'+
+    '<div class="dm-row dm-head-row"><span>Ticker</span><span>Quant</span><span class="dm-pillars-h">Pillars</span><span>Today</span><span class="act-col">Action</span></div>'+
     '<div class="dm-warm"><div class="emoji">🛑</div><div style="font-weight:700">No data source reachable.</div></div>'; return; }
   DATA=data; ALL=data.tickers||[];
   _byTicker={}; ALL.forEach(t=>{ if(t&&t.ticker) _byTicker[t.ticker.toUpperCase()]=t; });
@@ -698,7 +698,7 @@ function renderAll(){
   renderNews();
   document.getElementById('disclaimer').innerHTML=
     '<b>Educational research tool.</b> TickerMover is a quantitative analysis platform — not an FCA-authorised investment adviser. '+
-    'The Alpha Score, pillars, and signals on this page are descriptive observations, not personalized advice. '+
+    'The Quant Score, pillars, and signals on this page are descriptive observations, not personalized advice. '+
     'Past performance and quantitative ratings do not guarantee future results. Always do your own research.';
 }
 
@@ -792,7 +792,7 @@ function pickSignal(t){
   // 8. Insider buying
   if(insiders>=1) return {icon:'🏛',text:'Insiders bought shares in the last 90 days'};
   // 9. the model's own curated signal (already plain-English)
-  const s=(t.signals||[]).find(x=>!/alpha score|score climb|days.to|eps.in/i.test(x));
+  const s=(t.signals||[]).find(x=>!/quant score|score climb|days.to|eps.in/i.test(x));
   if(s) return {icon:'✨',text:s};
   return null;
 }
@@ -819,7 +819,7 @@ function selectHot(tickers, target){
 function renderPicks(tickers, data){
   const hot=selectHot(tickers, PICKS_SHOWN);
   const table=document.getElementById('picksTable');
-  const headRow='<div class="dm-row dm-head-row"><span>Ticker</span><span>Alpha</span><span>Why it\'s here</span><span class="up-col">Upside</span><span class="today-col">Today</span><span class="act-col">Action</span></div>';
+  const headRow='<div class="dm-row dm-head-row"><span>Ticker</span><span>Quant</span><span>Why it\'s here</span><span class="up-col">Upside</span><span class="today-col">Today</span><span class="act-col">Action</span></div>';
   document.getElementById('picksCount').textContent=hot.length+' picks';
   if(!hot.length){ table.innerHTML=headRow+'<div class="dm-warm"><div class="emoji">⏳</div><div style="font-weight:700">Warming up — fetching prices for the universe…</div></div>'; return; }
   const rows=hot.map((t,i)=>{
@@ -893,7 +893,7 @@ function openStockModal(ticker){
       '<div><div class="dr-tic">'+escHTML(t.ticker)+'</div><div class="dr-name">'+escHTML(t.name||'')+'</div></div>'+
       '<button class="dr-close" id="drClose" aria-label="Close">×</button></div>'+
       '<div class="dr-stats">'+
-        '<div class="dr-stat"><div class="k">Alpha</div><div class="v alpha">'+pop+'</div></div>'+
+        '<div class="dr-stat"><div class="k">Quant</div><div class="v alpha">'+pop+'</div></div>'+
         '<div class="dr-stat"><div class="k">Price</div><div class="v mono">'+fmtP(parseFloat(t.price||0))+'</div></div>'+
         '<div class="dr-stat"><div class="k">Today</div><div class="v mono '+(chg>=0?'up':'dn')+'">'+fmtPct(chg)+'</div></div>'+
       '</div>'+

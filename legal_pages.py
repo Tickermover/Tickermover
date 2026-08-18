@@ -295,7 +295,7 @@ by these Terms.</p>
 <ul>
   <li>A research and educational tool that scores ~200 US-listed stocks every few minutes using a quantitative model.</li>
   <li>A presentation of public information &mdash; SEC filings, exchange data, analyst targets, news headlines, social mentions, etc.</li>
-  <li>A platform-generated &ldquo;Alpha Score&rdquo; that ranks stocks on a 0&ndash;100 scale based on a composite signal we have designed.</li>
+  <li>A platform-generated &ldquo;Quant Score&rdquo; that ranks stocks on a 0&ndash;100 scale based on a composite signal we have designed.</li>
   <li>Plain-English summaries of public earnings releases, generated using third-party language models.</li>
 </ul>
 
@@ -347,7 +347,7 @@ statutory rights.</p>
 
 <h2>7. Intellectual property</h2>
 <p>All software, scoring algorithms, editorial commentary, screenshots, branding,
-logos, and the Alpha Score methodology are the intellectual property of
+logos, and the Quant Score methodology are the intellectual property of
 {_COMPANY}. We grant you a personal, non-exclusive, non-transferable licence to
 view and interact with the Service for your own research and decision-making.
 Public market data displayed within the Service remains the property of the
@@ -580,7 +580,7 @@ def render_disclaimer() -> str:
     body = f"""
 <div class="callout">
   <strong>Read this carefully.</strong> {_COMPANY} is not your financial adviser.
-  Nothing on this site &mdash; not the Alpha Score, not the verdicts, not the
+  Nothing on this site &mdash; not the Quant Score, not the verdicts, not the
   guidance summaries, not the AI commentary &mdash; is an instruction to buy,
   sell, or hold any security. You are 100% responsible for any trading or
   investment decision you make. You can lose money. Markets are risky.
@@ -611,7 +611,7 @@ adviser authorised and regulated by the FCA. {_COMPANY} cannot and does not
 provide such advice.</p>
 
 <h2>3. Our methodology has limits</h2>
-<p>The Alpha Score is a composite of multiple quantitative signals (momentum,
+<p>The Quant Score is a composite of multiple quantitative signals (momentum,
 fundamentals, valuation, social sentiment, etc.) weighted using an internal
 algorithm. By design, it cannot capture:</p>
 <ul>

@@ -8,7 +8,7 @@
      in Bing/Google) but explicitly tell them not to index this page. -->
 <meta name="robots" content="noindex,follow">
 <title>TickerMover — Stock Intelligence Dashboard</title>
-<meta name="description" content="TickerMover — research __UNIV_N__ US large-caps: Alpha Score, RS Rating, daily signals, Hot List picks and position sizing. Research, not advice.">
+<meta name="description" content="TickerMover — research __UNIV_N__ US large-caps: Quant Score, RS Rating, daily signals, Hot List picks and position sizing. Research, not advice.">
 <!-- ── Browser chrome (favicons + status bar tint, no PWA install) ──
      PWA was removed at user's request — they didn't want "Install app"
      appearing in the browser menu, and didn't want forgot-password
@@ -711,7 +711,7 @@ body.v2 #sectors-grid .smh-name{font-weight:800;font-size:12.5px;color:#0f172a!i
 #panel-clock .ck-sub3{font-family:var(--font-body,inherit);font-size:10.5px;color:#A4AEB9;
   font-weight:400;margin-top:1px;max-width:210px;overflow:hidden;text-overflow:ellipsis;
   white-space:nowrap}
-/* Alpha Score chip. Deliberately a DIFFERENT shape from the Clock bar beside
+/* Quant Score chip. Deliberately a DIFFERENT shape from the Clock bar beside
    it — the two are different measures and must not read as one continued
    scale. Banded on our own grade thresholds. */
 #panel-clock .ck-al{display:inline-block;min-width:32px;padding:2px 7px;border-radius:5px;
@@ -1265,7 +1265,7 @@ table.stmt td.stmt-note-pos{color:#15803d;font-weight:800;background:rgba(21,128
 .kt-earnings{background:rgba(220,38,38,.1);color:#b91c1c;border:1px solid rgba(220,38,38,.25);
   animation:ers-pulse 2s ease-in-out infinite}
 /* Neutral fallback — used when no major catalyst fires, so every card keeps
-   the same vertical layout and the Alpha Score lines up across the grid. */
+   the same vertical layout and the Quant Score lines up across the grid. */
 .kt-neutral{background:rgba(10,10,10,.04);color:#475569;border:1px solid rgba(10,10,10,.10)}
 
 /* ====== WATCHLIST — news & catalysts feed (news-snapshot style) ====== */
@@ -3033,7 +3033,7 @@ html.v2-dark .v2-track-cell .n{color:#f1f5f9}
 @media (max-width:900px){.v2-track-grid{grid-template-columns:repeat(2,1fr);gap:10px}}
 
 /* ── Confidence number on KPI cards — small muted text right after
-   the Alpha Score so the user knows how 'aligned' the score is */
+   the Quant Score so the user knows how 'aligned' the score is */
 .v2ov-kpi-conf{
   color:#64748b;font-weight:600;font-size:9.5px;letter-spacing:.02em;
   cursor:help;white-space:nowrap;
@@ -5152,7 +5152,7 @@ button.v2-ts-share{padding:0 12px}
 }
 .v2-ts-section-title svg{flex-shrink:0}
 
-/* Hero: ticker + name + price/perf + Alpha Score gauge */
+/* Hero: ticker + name + price/perf + Quant Score gauge */
 .v2-ts-hero{
   display:grid;grid-template-columns:1fr auto;gap:18px;align-items:center;
   background:
@@ -5995,7 +5995,7 @@ html.v2-dark body.v2 .v2-topbar{
   margin-bottom:10px;
 }
 
-/* Hero: big Alpha Score + tier/RS pills */
+/* Hero: big Quant Score + tier/RS pills */
 .v2-pick-hero{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}
 .v2-pick-score-block{flex-shrink:0}
 .v2-pick-score{
@@ -7015,7 +7015,7 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 /* Identity (ticker + company name) lives in the sticky drawer header; the
    Overview's summary ribbon-card doesn't repeat it — it shows the verdict +
    live price + the stat strip. */
-/* Top row: Alpha Score (left) + live price (right); verdict reads full-width below. */
+/* Top row: Quant Score (left) + live price (right); verdict reads full-width below. */
 #ts-drawer .ov-headtop{display:flex;align-items:stretch;gap:10px;flex-wrap:wrap;margin-bottom:9px}
 /* Summary header: sentence + key points on the left, score + price on the right */
 #ts-drawer .ov-headrow{display:flex;gap:18px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap}
@@ -7025,7 +7025,7 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 #ts-drawer .ov-keypoints li::before{content:"";position:absolute;left:3px;top:6px;width:6px;height:6px;border-radius:50%;background:#2970ff}
 #ts-drawer .ov-headboxes{display:flex;flex-direction:column;gap:8px;flex:none;min-width:180px}
 #ts-drawer .ov-headboxes>.ov-score,#ts-drawer .ov-headboxes>.ov-pricebox{width:100%;margin-left:0;text-align:left}
-/* Alpha Score + price as color-tinted pills: score tinted by strength, price by
+/* Quant Score + price as color-tinted pills: score tinted by strength, price by
    change direction. Soft fill + matching border. */
 #ts-drawer .ov-score,#ts-drawer .ov-pricebox{border:1px solid rgba(15,23,42,.06);border-radius:12px;padding:7px 13px;background:rgba(15,23,42,.03)}
 #ts-drawer .ov-score{display:flex;align-items:center;gap:11px}
@@ -8834,10 +8834,10 @@ document.addEventListener('keydown', function(e){
             <span class="meta-pill green" id="picksCount">— names</span>
           </div>
         </div>
-        <p class="pk-note">Our <b>highest-conviction names — sound businesses we judge poised to keep growing</b>: strong Alpha Scores, the Street <b>raising estimates</b>, growth accelerating and momentum still building. <span class="pk-note-fine">Our research opinion — not personal financial advice, not FCA-authorised, capital at risk. Do your own diligence.</span></p>
+        <p class="pk-note">Our <b>highest-conviction names — sound businesses we judge poised to keep growing</b>: strong Quant Scores, the Street <b>raising estimates</b>, growth accelerating and momentum still building. <span class="pk-note-fine">Our research opinion — not personal financial advice, not FCA-authorised, capital at risk. Do your own diligence.</span></p>
         <div class="dm-table" id="picksTable">
           <div class="dm-row dm-head-row">
-            <span>Ticker</span><span>Alpha</span><span>Why it's here</span><span class="up-col">Analyst upside</span><span class="today-col">Today</span><span class="act-col">View</span>
+            <span>Ticker</span><span>Quant</span><span>Why it's here</span><span class="up-col">Analyst upside</span><span class="today-col">Today</span><span class="act-col">View</span>
           </div>
           <div class="dm-warm"><div class="emoji">⏳</div><div style="font-weight:700">Loading the universe…</div></div>
         </div>
@@ -8951,7 +8951,7 @@ document.addEventListener('keydown', function(e){
         <div><div class="src-name">ApeWisdom</div><div class="src-cat">Social Sentiment · Reddit / WSB</div></div>
         <span class="src-pill on">● AUTO-ON</span>
       </div>
-      <div class="src-cov">Reddit (WSB, stocks, investing) + Twitter mention counts, rank velocity, 24h change. Single API call covers entire universe (~250 tickers). Refreshed every 5 minutes. Contributes 20% weight to Alpha Score.</div>
+      <div class="src-cov">Reddit (WSB, stocks, investing) + Twitter mention counts, rank velocity, 24h change. Single API call covers entire universe (~250 tickers). Refreshed every 5 minutes. Contributes 20% weight to Quant Score.</div>
       <a class="src-link" href="https://apewisdom.io" target="_blank">apewisdom.io ↗</a>
     </div>
     <div class="src-card auto-on">
@@ -9478,7 +9478,7 @@ document.addEventListener('keydown', function(e){
 <div id="panel-guide" class="panel">
   <div class="sec-heading">📖 How to Use TickerMover</div>
   <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px">
-    <div class="card"><h3 style="color:var(--acc2);margin-bottom:8px">📐 Alpha Score</h3>
+    <div class="card"><h3 style="color:var(--acc2);margin-bottom:8px">📐 Quant Score</h3>
       <p style="font-size:13px;line-height:1.6;color:var(--muted)">Composite 0–100 score combining momentum (40%), social velocity (20%), technical signals (20%), fundamentals (10%), and market cap fit (10%). Scores above 70 indicate strong setups. Only $1B+ market cap stocks qualify.</p></div>
     <div class="card"><h3 style="color:var(--acc2);margin-bottom:8px">🎯 Grades &amp; Ratings</h3>
       <p style="font-size:13px;line-height:1.6;color:var(--muted)">A → ★★★★★ Top Tier · B → ★★★★ Quality · C → ★★★ Average · D → ★★ Below Avg · F → ★ Weak. The Hot List shows only ★★★★★ Top Tier (grade A) with confidence ≥ 75% and market cap ≥ $1B. Use All Stocks tab to browse all grades. <strong>Note:</strong> these are quality descriptors, not buy/sell recommendations — TickerMover is a research tool, not an FCA-authorised adviser.</p></div>
@@ -10063,7 +10063,7 @@ function v2BuildTemplateThesis(t){
     '<div class="v2-qs-split">' + listBlock('What\'s working', strengths, 'pos') + listBlock('Watch-outs', risks, 'neg') + '</div>' : '';
 
   /* ── Headline + catalyst footer ──
-     Alpha Score number is deliberately omitted here — the gauge in the
+     Quant Score number is deliberately omitted here — the gauge in the
      Investment Thesis box already shows it. We only keep the Relative
      Strength + Institutional Accumulation + Valuation pills as the
      unique info. The valuation summary becomes the hover tooltip. */
@@ -10161,7 +10161,7 @@ function v2SectorMomentumSignal(tickers){
 }
 
 /* Confidence — heuristic of how 'aligned' the supporting signals
-   are. A high Alpha Score with high beat streak + non-volatile +
+   are. A high Quant Score with high beat streak + non-volatile +
    positive momentum reads as a stronger signal than a high score
    with weak/mixed supporting evidence. (Gap #4 from advisor plan.) */
 function v2Confidence(t){
@@ -10340,7 +10340,7 @@ function v2RenderKpiStrip(tickers){
              (tagline ? '<div class="v2ov-kpi-tag">' + tagline + '</div>' : '') +
              '<div class="v2ov-kpi-foot">' +
                '<div class="v2ov-kpi-score">Score <strong>' + score + '</strong>' +
-                 (() => { const c = v2Confidence(t); return c != null ? ' <span class="v2ov-kpi-conf" title="Signal alignment: how many supporting indicators agree with the Alpha Score">· conf ' + c + '%</span>' : ''; })() +
+                 (() => { const c = v2Confidence(t); return c != null ? ' <span class="v2ov-kpi-conf" title="Signal alignment: how many supporting indicators agree with the Quant Score">· conf ' + c + '%</span>' : ''; })() +
                '</div>' +
                '<div class="v2ov-kpi-stars">' + stars + '</div>' +
              '</div>' +
@@ -10734,11 +10734,11 @@ function v2RenderTopPicks(tickers){
       '</div>' +
       // Quality summary chip
       (qv && qv.headline ? '<div class="v2-pick-qual">📊 ' + v2EscHTML(qv.headline) + '</div>' : '') +
-      // Alpha Score + Tier + RS hero
+      // Quant Score + Tier + RS hero
       '<div class="v2-pick-hero">' +
         '<div class="v2-pick-score-block">' +
           '<div class="v2-pick-score">' + score + '</div>' +
-          '<div class="v2-pick-score-label">Alpha Score</div>' +
+          '<div class="v2-pick-score-label">Quant Score</div>' +
         '</div>' +
         '<div class="v2-pick-pills">' +
           (rating ? '<div class="v2-pick-tier ' + tierCls + '">★★★★★ ' + v2EscHTML(rating) + '</div>' : '') +
@@ -10773,7 +10773,7 @@ function v2RenderTopPicks(tickers){
     '<div class="v2-pick-section">' +
       '<div class="v2-pick-section-head">' +
         '<div class="v2ov-title">🔥 Breakout Picks · Top 6</div>' +
-        '<div class="v2ov-sub">Highest Alpha Score across the universe · click any card for the full tear sheet</div>' +
+        '<div class="v2ov-sub">Highest Quant Score across the universe · click any card for the full tear sheet</div>' +
       '</div>' +
       '<div class="v2-pick-grid">' + cards + '</div>' +
     '</div>';
@@ -13349,7 +13349,7 @@ function v2RenderTearsheetHTML(sym, data){
       '</div>' +
       '<div class="v2-ts-hero-r">' +
         '<div class="v2-ts-score">' + (score || '—') + '</div>' +
-        '<div class="v2-ts-score-label">Alpha Score</div>' +
+        '<div class="v2-ts-score-label">Quant Score</div>' +
       '</div>' +
     '</div>';
 
@@ -13924,7 +13924,7 @@ function compositePercentile(t) {
   return {score: Math.round(score), percentile: pct, total: scores.length};
 }
 
-/* Alpha Score gauge — semicircular dial with 5 colored zones and a needle.
+/* Quant Score gauge — semicircular dial with 5 colored zones and a needle.
    Used in the modal as the primary score visualisation: more readable than a
    bare number, instantly tells the user "where on the spectrum this stock is".
    Zones tied to the same thresholds the grading system uses:
@@ -14757,7 +14757,7 @@ function riskFlags(t) {
    ---------------------------------------------------------- */
 function keyTrigger(t) {
   // ALWAYS returns a key-trigger banner so every card has the same height
-  // and the Alpha Score stays vertically aligned across the grid. The
+  // and the Quant Score stays vertically aligned across the grid. The
   // primary catalyst (EPS Beat, Insider Buying, New High, Guidance Raised,
   // Social Spike, Strong Momentum) takes priority; if none of those fire,
   // we fall back to a neutral context line so the slot is never empty.
@@ -14858,7 +14858,7 @@ function _renderHotListLegacy(data) {
     const conf    = parseFloat(t.confidence || 0);
     const confPct = Math.round(conf * 100);
     const cc      = confClass(conf);
-    // Alpha Score = regime-adjusted score when available (one number, macro baked in)
+    // Quant Score = regime-adjusted score when available (one number, macro baked in)
     const pop     = parseFloat(t.smart_score != null ? t.smart_score : (t.pop_score || 0));
     const price   = parseFloat(t.price || 0);
     const chg     = parseFloat(t.change_pct || 0);
@@ -14955,7 +14955,7 @@ function _renderHotListLegacy(data) {
       </div>
       ${singleStatusBanner}
       <div class="score-xl">
-        <div class="score-block"><div class="score-big">${Math.round(pop)}</div><div class="score-label">Alpha Score</div></div>
+        <div class="score-block"><div class="score-big">${Math.round(pop)}</div><div class="score-label">Quant Score</div></div>
         <div class="rating-stack">
           ${ratingChip(t, rating)}
           ${(_rsMap[t.ticker]||0)>0 ? `<span class="rs-badge ${(_rsMap[t.ticker]||0)>=90?'rs-gold':(_rsMap[t.ticker]||0)>=70?'rs-green':(_rsMap[t.ticker]||0)>=50?'rs-yellow':'rs-muted'}" style="font-size:10.5px;padding:3px 8px" title="Relative Strength — how this stock is performing vs the market (0-100)">Relative Strength <span class="rs-num">${_rsMap[t.ticker]}</span></span>` : ''}
@@ -14993,7 +14993,7 @@ function renderRisk(tickers) {
   // Without this guard, the next line throws and breaks the rest of the render loop.
   if (!document.getElementById('risk-grid')) return;
   // Use smart_score (regime-adjusted) consistently across the app — same number
-  // the Hot List + modal show, so users don't see different "Alpha Scores" per tab
+  // the Hot List + modal show, so users don't see different "Quant Scores" per tab
   const _ss = t => parseFloat(t.smart_score != null ? t.smart_score : (t.pop_score || 0));
   const cards = tickers
     .filter(t => (t.market_cap == null || t.market_cap >= MIN_MCAP) && riskFlags(t).length > 0)
@@ -16111,7 +16111,7 @@ function openStockSheet(ticker){
     '<div class="ssx-body"><div class="ssx-main">'+
       '<div class="ssx-panel on" data-panel="overview">'+
         '<div class="ssx-card"><div class="ssx-chart" id="ssx-chart"></div>'+
-          '<div class="ssx-verdict"><span class="vs">'+v[0]+'</span><span class="vt"><b>'+v[1]+'</b>'+(score?' · Alpha Score '+score:'')+(grade?' · Grade '+grade:'')+'</span></div>'+
+          '<div class="ssx-verdict"><span class="vs">'+v[0]+'</span><span class="vt"><b>'+v[1]+'</b>'+(score?' · Quant Score '+score:'')+(grade?' · Grade '+grade:'')+'</span></div>'+
           (thesis?'<div class="ssx-thesis">'+thesis+'</div>':'')+'</div>'+
         '<div class="ssx-card"><div class="ssx-card-h">Key metrics</div><div class="ssx-metrics">'+(metricsHtml||'<div class="ssx-m"><div class="ssx-mk">No data</div></div>')+'</div></div>'+
       '</div>'+
@@ -16568,7 +16568,7 @@ async function ssxRenderH2H(selfT, peerT){
     row('Execution risk', cardA.execution_risk, cardB.execution_risk)+
     row('Path to profitability', cardA.path_to_profitability, cardB.path_to_profitability)+
     row('Market cap', _ssxMcapDisp(A), _ssxMcapDisp(B))+
-    row('Alpha Score', (scoreA||'—')+(gA?' · '+gA:''), (scoreB||'—')+(gB?' · '+gB:''));
+    row('Quant Score', (scoreA||'—')+(gA?' · '+gA:''), (scoreB||'—')+(gB?' · '+gB:''));
   let allSrc=[]; [ca,cb].forEach(function(c){ if(c&&c.sources&&c.sources.length) allSrc=allSrc.concat(c.sources); });
   const seen={}; const srcList=allSrc.filter(function(s){ if(!s||!s.url||seen[s.url]) return false; seen[s.url]=1; return true; });
   let srcHtml='';
@@ -16643,7 +16643,7 @@ function openStockModal(ticker) {
   const sector  = t.sector || (t.meta && t.meta.sector) || '';
   const sub     = t.sub_sector || t.subsector || (t.meta && t.meta.subsector) || '';
   const exch    = t.exchange || (t.meta && t.meta.exchange) || 'NASDAQ';
-  // Alpha Score = regime-adjusted score (one number, macro baked in)
+  // Quant Score = regime-adjusted score (one number, macro baked in)
   const pop     = parseFloat(t.smart_score != null ? t.smart_score : (t.pop_score || 0));
   const conf    = parseFloat(t.confidence || 0);
   const rating  = gradeToRating(t.grade);
@@ -17552,7 +17552,7 @@ const SECTOR_MAP_META = {
 /* renderSectors — entry point kept for all existing callers. Computes the same
    per-sub-sector live stats as the old heat map, then hands them to the
    "Sector connections" relationship graph (which overlays AI-generated wiring).
-   The α-Score / size / colour stay 100% live; only the edges are AI-authored. */
+   The Quant Score / size / colour stay 100% live; only the edges are AI-authored. */
 function renderSectors(tickers) {
   // Honour the active risk profile so the graph shows EXACTLY the sectors/stocks
   // the table shows. Some callers pass the full universe (initial load); without
@@ -17594,7 +17594,7 @@ function renderSectors(tickers) {
         sector: meta.sector || (stocks[0] && stocks[0].sector) || 'Technology',
         desc: meta.desc || (TAILWINDS[sub] || 'Emerging high-growth sub-sector with strong structural tailwinds.'),
         leaders: topT.slice(0, 6).join(', '),
-        // Top tickers (α-Score + name) for the tap-to-expand drill-down.
+        // Top tickers (Quant Score + name) for the tap-to-expand drill-down.
         top: [...stocks].sort((a, b) => _ss(b) - _ss(a)).slice(0, 12)
           .map(t => ({ t: t.ticker, s: Math.min(100, Math.round(_ss(t))), n: t.name || '' })),
       };
@@ -17612,7 +17612,7 @@ function renderSectors(tickers) {
    SECTOR CONNECTIONS — animated relationship graph (replaces heat map)
    Force-directed SVG web of sub-sectors. AI authors the directed wiring
    (source → target = "source feeds/enables target"); we overlay live
-   α-Score (node colour) + stock count (node size). Tap a node to focus
+   Quant Score (node colour) + stock count (node size). Tap a node to focus
    its chain (upstream = incoming, downstream = outgoing) AND filter the
    universe table via the existing v2SetSectorFilter contract.
    ==================================================================== */
@@ -17705,7 +17705,7 @@ function secgLegendHTML(){
     '<span class="secg-lg"><i style="background:#2970ff"></i>Components / supply</span>' +
     '<span class="secg-lg"><i style="background:#16a34a"></i>Infrastructure / platform</span>' +
     '<span class="secg-lg"><i style="background:#94a3b8"></i>Adjacent</span>' +
-    '<span class="secg-lg dir">Dots flow <b>downstream</b> · node colour = α-Score · size = # stocks</span>' +
+    '<span class="secg-lg dir">Dots flow <b>downstream</b> · node colour = Quant Score · size = # stocks</span>' +
     '<span class="secg-hint">Tap a sector to expand its stocks &amp; filter the table</span>' +
     '</div>';
 }
@@ -17884,7 +17884,7 @@ function secgBuildDOM(svg, names, edges){
     const sc = document.createElementNS(NS, 'text'); sc.setAttribute('class', 'secg-score'); sc.textContent = st.score;
     const lbl = document.createElementNS(NS, 'text'); lbl.setAttribute('class', 'secg-label');
     lbl.setAttribute('x', 0); lbl.setAttribute('y', r + 14); lbl.textContent = n;
-    // No native <title> box — the α-Score is on the node, hover highlights the
+    // No native <title> box — the Quant Score is on the node, hover highlights the
     // relations, and tapping expands the detail. Keeps the canvas uncluttered.
     g.appendChild(dot); g.appendChild(sc); g.appendChild(lbl);
     g.addEventListener('click', () => { if (_secgMoved){ _secgMoved = false; return; } secgTap(n); });
@@ -18064,7 +18064,7 @@ function secgBuildStockDOM(){
     const R = nd.r, heat = _secgHeat(nd.score);
     const g = document.createElementNS(NS, 'g');
     g.setAttribute('class', 'secg-node secg-stock on'); g.setAttribute('data-ticker', nd.ticker);
-    // White disc + α-Score-tinted ring (also the fallback if the logo 404s).
+    // White disc + Quant Score-tinted ring (also the fallback if the logo 404s).
     const bg = document.createElementNS(NS, 'circle');
     bg.setAttribute('class', 'secg-stock-bg'); bg.setAttribute('r', R); bg.setAttribute('fill', '#fff'); bg.setAttribute('stroke', heat);
     // Company logo: Parqet -> FMP -> disc+ticker, same fallback chain as the rest
@@ -18319,7 +18319,7 @@ function renderReports(tickers) {
         <span style="font-size:22px">🔍</span>
         <div>
           <div style="font-size:17px;font-weight:900;color:#0f172a">Pull a tear sheet for any stock</div>
-          <div style="font-size:12.5px;color:#475569;margin-top:2px">Type a ticker — get the full one-page report: Alpha Score breakdown, 90-day chart, last 4 quarters, key metrics. Download as PNG or PDF.</div>
+          <div style="font-size:12.5px;color:#475569;margin-top:2px">Type a ticker — get the full one-page report: Quant Score breakdown, 90-day chart, last 4 quarters, key metrics. Download as PNG or PDF.</div>
         </div>
       </div>
       <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;align-items:center">
@@ -19358,9 +19358,9 @@ function renderModelPortfolio(data) {
       // Helps users see at a glance which picks meet the gold standard.
       const tier = p.entry_tier;
       const tierBadge = (tier === 1)
-        ? `<span title="Tier 1 Premium: Alpha Score ≥80 AND ≥20% analyst upside" style="font-size:9px;font-weight:800;letter-spacing:.06em;padding:2px 6px;border-radius:5px;background:rgba(21,128,61,.12);color:#15803d;border:1px solid rgba(21,128,61,.25)">PREMIUM</span>`
+        ? `<span title="Tier 1 Premium: Quant Score ≥80 AND ≥20% analyst upside" style="font-size:9px;font-weight:800;letter-spacing:.06em;padding:2px 6px;border-radius:5px;background:rgba(21,128,61,.12);color:#15803d;border:1px solid rgba(21,128,61,.25)">PREMIUM</span>`
         : (tier === 2)
-        ? `<span title="Tier 2 Strong: Alpha Score ≥75 AND ≥15% analyst upside" style="font-size:9px;font-weight:800;letter-spacing:.06em;padding:2px 6px;border-radius:5px;background:rgba(41,112,255,.10);color:#0040c1;border:1px solid rgba(41,112,255,.25)">STRONG</span>`
+        ? `<span title="Tier 2 Strong: Quant Score ≥75 AND ≥15% analyst upside" style="font-size:9px;font-weight:800;letter-spacing:.06em;padding:2px 6px;border-radius:5px;background:rgba(41,112,255,.10);color:#0040c1;border:1px solid rgba(41,112,255,.25)">STRONG</span>`
         : (tier === 3)
         ? `<span title="Tier 3 Eligible: top Grade A pick to fill out the 20-stock portfolio" style="font-size:9px;font-weight:800;letter-spacing:.06em;padding:2px 6px;border-radius:5px;background:rgba(110,110,110,.1);color:#475569;border:1px solid rgba(110,110,110,.2)">ELIGIBLE</span>`
         : '';
@@ -19470,11 +19470,11 @@ function renderModelPortfolio(data) {
              <div class="v2-mp-perf-sub">Entry <strong>${fmtP(entryPrc)}</strong> <span class="v2-mp-arrow">→</span> Now <strong class="v2-mp-perf-now">${fmtP(curPrice)}</strong></div>
            </div>`;
 
-      // Footer metric strip — Alpha score · analyst upside · entry tier.
+      // Footer metric strip — Quant score · analyst upside · entry tier.
       // Aligned mini-metrics (label over value) instead of a scattered
       // dot-separated line; degrades gracefully when a field is missing.
       const statsHTML = (() => {
-        const items = [['Alpha score', String(Math.round(curPop)), '']];
+        const items = [['Quant score', String(Math.round(curPop)), '']];
         const up = targetUpside != null ? +targetUpside : null;
         if (up != null) {
           items.push(['Analyst upside', (up >= 0 ? '+' : '') + up.toFixed(1) + '%',
@@ -19506,7 +19506,7 @@ function renderModelPortfolio(data) {
       })();
 
 
-      // Combined analytics card: metric pairs + Alpha-score gauge +
+      // Combined analytics card: metric pairs + Quant-score gauge +
       // since-entry sparkline + AI 'why' forecast footer.
       const upPos = targetUpside != null && +targetUpside >= 0;
       const upStr = targetUpside != null ? ((upPos ? '+' : '') + (+targetUpside).toFixed(1) + '%') : '—';
@@ -19572,7 +19572,7 @@ function renderModelPortfolio(data) {
       <div style="font-size:18px;font-weight:800;color:#0f172a;margin-bottom:8px">No stocks meet the tracker bar today</div>
       <div style="font-size:13px;color:#475569;line-height:1.65;max-width:560px;margin:0 auto 18px">
         The Score Tracker only adds stocks meeting strict criteria:
-        <strong>Grade A · Alpha Score ≥ 80</strong>. The tracker stays empty rather than dilute the methodology.
+        <strong>Grade A · Quant Score ≥ 80</strong>. The tracker stays empty rather than dilute the methodology.
       </div>
       <div style="font-size:12px;color:#64748b;line-height:1.6;max-width:560px;margin:0 auto 18px">
         Tracker entries appear automatically when stocks cross the criteria. Check back after the next refresh cycle, or hit Reset to rebuild from the current universe.
@@ -19618,7 +19618,7 @@ function renderModelPortfolio(data) {
    cached server-side → one Haiku call per pick, ever). Sequential with a
    tiny gap so we never burst the API on first paint; the block reveals
    with a shimmer, then fills — or quietly removes itself if no AI text. */
-/* Semicircular Alpha-score gauge (mirrors the reference 'risk' gauge). */
+/* Semicircular Quant-score gauge (mirrors the reference 'risk' gauge). */
 function _mpGauge(score){
   const s = Math.max(0, Math.min(100, Math.round(score || 0)));
   const col  = s >= 75 ? '#15803d' : s >= 55 ? '#2970ff' : s >= 35 ? '#d4860a' : '#dc2626';
@@ -19631,7 +19631,7 @@ function _mpGauge(score){
             stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${off}"/>
       <text x="50" y="46" text-anchor="middle" class="v2-mp-gauge-n" fill="${col}">${s}</text>
     </svg>
-    <div class="v2-mp-gauge-lbl"><span class="v2-mp-gauge-k">Alpha score</span><span class="v2-mp-gauge-w" style="color:${col}">${word}</span></div>`;
+    <div class="v2-mp-gauge-lbl"><span class="v2-mp-gauge-k">Quant score</span><span class="v2-mp-gauge-w" style="color:${col}">${word}</span></div>`;
 }
 
 /* Compact since-entry sparkline (mirrors the reference projected-line chart). */
@@ -22818,7 +22818,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
       <span>Ticker<span class="h">Mover</span></span>
     </div>
     <div class="ah-left-headline">__UNIV_N__ stocks, scored <em>every day</em>.</div>
-    <p class="ah-left-sub">Alpha Score, live signals, and an audited track record.</p>
+    <p class="ah-left-sub">Quant Score, live signals, and an audited track record.</p>
     <div class="ah-left-stats">
       <div class="ah-left-stat"><div class="n">__UNIV_N__</div><div class="l">US stocks</div></div>
       <div class="ah-left-stat"><div class="n">5 min</div><div class="l">refresh</div></div>
@@ -23331,10 +23331,10 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
   }
   function pickVerdict(t){
     const g=(t.grade||'').toUpperCase(), sc=parseFloat(t.smart_score??t.pop_score??0);
-    // Compact labels for the dense signals table — the big Alpha Score sits
+    // Compact labels for the dense signals table — the big Quant Score sits
     // right beside the pill, so the rank is already clear. Full tier names
     // (Top Tier / Quality / …) live in the roomier pills elsewhere.
-    // THE PILL IS NOT A LABEL FOR THE ALPHA SCORE BESIDE IT. It is usually
+    // THE PILL IS NOT A LABEL FOR THE QUANT SCORE BESIDE IT. It is usually
     // driven by ai_conviction, a different variable on a different scale, so
     // two rows can legitimately show the same Alpha with opposite pills (ONTO
     // 77 Neutral next to NVDA 77 Strong). Because the pill sits directly under
@@ -23403,7 +23403,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     if(pm!=null&&pm>=0.40) return {icon:'💎',text:Math.round(pm*100)+'% net margins — exceptional profitability'};
     if(m1!=null&&m1>=15) return {icon:'⚡',text:'Up '+Math.round(m1)+'% in the past month'};
     if(pm!=null&&pm>=0.25) return {icon:'💎',text:Math.round(pm*100)+'% net margins — highly profitable & cash-generative'};
-    if(sv!=null&&sv>=4) return {icon:'📈',text:'Alpha Score climbing fast — the story is improving'};
+    if(sv!=null&&sv>=4) return {icon:'📈',text:'Quant Score climbing fast — the story is improving'};
     if(dist!=null&&dist>=-5) return {icon:'🚀',text:'Within '+Math.abs(dist).toFixed(1)+'% of its 52-week high'};
     if(rg!=null&&rg>=0.25) return {icon:'📈',text:'Revenue growing '+Math.round(rg*100)+'% a year'};
     if(analysts>=10&&sbp!=null&&sbp>=40) return {icon:'🏦',text:Math.round(sbp)+'% of '+analysts+' analysts rate it a top Buy'};
@@ -23411,7 +23411,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     if(m3!=null&&m3>=25) return {icon:'⚡',text:'Up '+Math.round(m3)+'% over the last three months'};
     if(/high/i.test(tier)) return {icon:'📈',text:'High-growth name — 25%+ annual revenue growth'};
     if(insiders>=1) return {icon:'🏛',text:'Insiders bought shares in the last 90 days'};
-    const s=(t.signals||[]).find(x=>!/alpha score|score climb|days.to|eps.in/i.test(x));
+    const s=(t.signals||[]).find(x=>!/quant score|score climb|days.to|eps.in/i.test(x));
     if(s) return {icon:'✨',text:s};
     return null;
   }
@@ -23431,14 +23431,14 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
   }
   try{ window._ahMarketOpen = _marketIsOpen; }catch(e){}          // shared with the Universe table header
   // Headline picks are ranked for "room to run from HERE", not just raw strength.
-  // Start from the Alpha Score (keeps the quality core), then: reward genuine
+  // Start from the Quant Score (keeps the quality core), then: reward genuine
   // upside-to-target + a near-term catalyst, and push DOWN names already trading
   // above target or that have gone parabolic — they've mostly had their move.
   // Changes the ORDER only; the eligibility/quality gate is unchanged.
   function _runRoomRank(t){
     // Best-of-the-best conviction rank — OUR own expert verdict, not analyst-gated.
     // Mirrors _run_room_rank in app.py EXACTLY (changed 2026-06-20). Lead with our
-    // Smart/Alpha Score, reward strength (momentum, climbing score, leadership near
+    // Smart/Quant Score, reward strength (momentum, climbing score, leadership near
     // highs, growth, beats); analyst upside is a bonus only (never penalises a name
     // that outran the Street); one narrow blow-off guard (parabolic AND overbought).
     let s=parseFloat(t.smart_score!=null?t.smart_score:(t.pop_score||0))||0;
@@ -23482,10 +23482,10 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     if(!isNaN(dte)&&dte>=0&&dte<=21) s+=3;   // near-term catalyst
     return s;
   }
-  const PICKS_MIN_ALPHA=70;   // headline picks must clear a 70 Alpha-Score floor
+  const PICKS_MIN_ALPHA=70;   // headline picks must clear a 70 Quant-Score floor
   function selectHot(tickers, target){
     const base=t=>parseFloat(t.smart_score!=null?t.smart_score:(t.pop_score||0));
-    // Floor on the RAW Alpha Score (not the room-to-run rank) so a big-upside
+    // Floor on the RAW Quant Score (not the room-to-run rank) so a big-upside
     // name can't sneak in below 70 just from its ranking bonus.
     const eligible=tickers.filter(t=>(t.market_cap==null||t.market_cap>=MIN_MCAP)&&base(t)>=PICKS_MIN_ALPHA).sort((a,b)=>_runRoomRank(b)-_runRoomRank(a));
     const withReason=[], without=[];
@@ -23500,10 +23500,10 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     // When the session is closed the move shown is the LAST close, not "today" —
     // label it honestly so a user looking pre-open / overnight isn't confused.
     const todayLbl=(typeof _marketIsOpen==='function' && !_marketIsOpen())?'Last close':'Today';
-    // "Alpha + view" because the cell holds two independent things: the Alpha
+    // "Quant + view" because the cell holds two independent things: the Alpha
     // Score, and a house-view pill usually driven by AI conviction. Heading it
     // "Alpha" alone made the pill read as the score's own grade.
-    const headRow='<div class="dm-row dm-head-row"><span>Ticker</span><span>Alpha + view</span><span>Why it\'s here</span><span class="up-col">To mean target</span><span class="today-col">'+todayLbl+'</span><span class="act-col">View</span></div>';
+    const headRow='<div class="dm-row dm-head-row"><span>Ticker</span><span>Quant + view</span><span>Why it\'s here</span><span class="up-col">To mean target</span><span class="today-col">'+todayLbl+'</span><span class="act-col">View</span></div>';
     const pc=document.getElementById('picksCount');
     // Universe still loading → warming-up state.
     if(!sel.length){ if(pc) pc.textContent='— picks'; table.innerHTML=headRow+'<div class="dm-warm"><div class="emoji">⏳</div><div style="font-weight:700">Warming up — fetching prices for the universe…</div></div>'; return; }
@@ -23528,7 +23528,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
         :'<span class="up-cell up-col '+(up>=0?'pos':'neg')+'">'+(up>=0?'+':'−')+Math.abs(up).toFixed(0)+'%<small>to mean target</small></span>';
       return '<div class="dm-row" data-row data-tic="'+escHTML(t.ticker)+'" style="animation-delay:'+(0.08+i*0.05).toFixed(2)+'s">'+
         '<span class="dm-tick">'+logoHTML(t.ticker)+'<span style="min-width:0">'+escHTML(t.ticker)+(g?'<span class="dm-grade '+g+'">'+g+'</span>':'')+'<br><small title="'+escHTML(t.name||'')+'">'+escHTML(clipName(t.name))+'</small></span></span>'+
-        '<span class="alpha-cell"><span class="dm-alpha" title="Alpha Score '+pop+' out of 100">'+pop+'</span><span class="vd '+vd.cls+'" title="House view: '+escHTML(vd.w)+(vd.basis?' — based on '+escHTML(vd.basis):'')+'. Separate from the Alpha Score above.">'+vd.w+'</span></span>'+
+        '<span class="alpha-cell"><span class="dm-alpha" title="Quant Score '+pop+' out of 100">'+pop+'</span><span class="vd '+vd.cls+'" title="House view: '+escHTML(vd.w)+(vd.basis?' — based on '+escHTML(vd.basis):'')+'. Separate from the Quant Score above.">'+vd.w+'</span></span>'+
         // One mark for every row. The per-signal emoji (🚀 📅 ⚡ 💎 📈) made
         // rule-based rows look like a different class of item from the AI-thesis
         // rows, and the shortest, least-qualified line — a bare "49% net margins"
@@ -24936,7 +24936,7 @@ function scResultHTML(d){
     const _provTip=_prov?'Only '+_scPct+'% of fundamentals loaded — score is provisional and will firm up as data loads.':'';
     const scoreHtml = pop>0
       ? '<div class="ov-score ov-score-'+popCls+(_prov?' ov-score-prov':'')+'"'+(_prov?' title="'+_provTip+'"':'')+'><span class="ov-score-n">'+pop+(_prov?'<span class="ov-score-ast">*</span>':'')+'</span>'+
-          '<span class="ov-score-meta"><span class="ov-score-l">Alpha Score</span>'+(g?'<span class="ov-score-g">Grade '+escHTML(g)+(_prov?' · Provisional':'')+'</span>':'')+'</span></div>'
+          '<span class="ov-score-meta"><span class="ov-score-l">Quant Score</span>'+(g?'<span class="ov-score-g">Grade '+escHTML(g)+(_prov?' · Provisional':'')+'</span>':'')+'</span></div>'
       : '';
     return _sec('Summary', '📈', 'blue',
       '<div class="ov-headrow">'+
@@ -26188,7 +26188,7 @@ function scResultHTML(d){
     /* standing: where the stock ranks on Alpha within the group */
     const ranked=list.slice().sort((a,b)=>alpha(b)-alpha(a)); const rank=ranked.findIndex(x=>x.ticker===t.ticker)+1;
     const standing= rank<=1?_badge('LEADING','ok'): rank<=Math.ceil(list.length/2)?_badge('MID-PACK','warn'):_badge('LAGGING','bad');
-    const tbl='<div class="ben-scroll"><table class="peers-tbl"><thead><tr><th>Stock</th><th>Alpha</th><th>Mkt cap</th><th>P/E</th><th>Gross mgn</th><th>Net mgn</th><th>ROE</th><th>Rev YoY</th><th>Upside</th></tr></thead><tbody>'+body+'</tbody></table></div>'+
+    const tbl='<div class="ben-scroll"><table class="peers-tbl"><thead><tr><th>Stock</th><th>Quant</th><th>Mkt cap</th><th>P/E</th><th>Gross mgn</th><th>Net mgn</th><th>ROE</th><th>Rev YoY</th><th>Upside</th></tr></thead><tbody>'+body+'</tbody></table></div>'+
       '<div class="muted small" style="margin-top:8px;display:flex;align-items:center;gap:7px">Standing vs group: '+standing+' <span>· #'+rank+' of '+list.length+' on Alpha · best value highlighted</span></div>';
     return _sec('Benchmark · '+escHTML(t.sub_sector||t.sector||''),'👥','violet',tbl);
   }
@@ -27301,7 +27301,7 @@ function scResultHTML(d){
     const dis=document.getElementById('disclaimer');
     if(dis) dis.innerHTML=
       '<b>Educational research tool.</b> TickerMover is a quantitative analysis platform — not an FCA-authorised investment adviser. '+
-      'The Alpha Score, pillars, and signals on this page are descriptive observations, not personalized advice. '+
+      'The Quant Score, pillars, and signals on this page are descriptive observations, not personalized advice. '+
       'Past performance and quantitative ratings do not guarantee future results. Always do your own research.';
   };
   // Re-run with the last-loaded snapshot (used on profile switches).
@@ -27659,7 +27659,7 @@ function scResultHTML(d){
     'Recovered': 'A 0–100 reading of how far along the bounce a share looks. Near 0: still '
       + 'close to its lows and barely traded. Near 100: most of the climb is behind it and '
       + 'trading is heavy. It describes what has already happened, not what happens next.',
-    'Alpha Score': 'Our own 0–100 quality read on the business — fundamentals, valuation, momentum, growth, sentiment and risk. It is a SEPARATE measure from Recovered beside it: Recovered says how far a fall has retraced, Alpha Score says what we make of the company. A quality descriptor, not a recommendation.',
+    'Quant Score': 'Our own 0–100 quality read on the business — fundamentals, valuation, momentum, growth, sentiment and risk. It is a SEPARATE measure from Recovered beside it: Recovered says how far a fall has retraced, Quant Score says what we make of the company. A quality descriptor, not a recommendation.',
     'Band': 'The plain-word label for that reading — Damaged, Ignored, Quiet, Noticed, Busy '
       + 'or Crowded, running from wrecked-and-unwatched to fully-noticed.',
     'Moved': 'The band it used to read, and the band it reads now.',
@@ -27718,7 +27718,7 @@ function scResultHTML(d){
       + '</td>';
   }
 
-  /* Alpha Score cell. This is the six-pillar quality composite, NOT the Clock
+  /* Quant Score cell. This is the six-pillar quality composite, NOT the Clock
      score beside it — the Clock says how far a fall has recovered, Alpha says
      what we think of the business. They are shown together precisely because
      they answer different questions, and the columns are labelled so that a
@@ -27931,7 +27931,7 @@ function scResultHTML(d){
       return cap + '<div class="ck-bands">' + cards + '</div>'
         + tbl(head + CLOCK_LEGEND, [{t:'Ticker',left:true},{t:'Band',left:true},
               {t:'Off 12m high',left:true},'Off the low','Volume vs norm','Recovered',
-              'Alpha Score','vs 200d','Reading'],
+              'Quant Score','vs 200d','Reading'],
             sel.map(function(r){
               var tn = tone(r.band);
               return '<tr data-t="' + esc(r.ticker) + '">'
@@ -27994,7 +27994,7 @@ function scResultHTML(d){
     }).join('');
     return cap + '<div class="ck-bands">' + cards + '</div>'
       + tbl(head + CLOCK_LEGEND, [{t:'Ticker',left:true},{t:'Off 12m high',left:true},'Off the low',
-                   'Volume vs norm','Recovered','Alpha Score','In band','vs 200d','Reading'], body);
+                   'Volume vs norm','Recovered','Quant Score','In band','vs 200d','Reading'], body);
   }
 
   /* 5. SEARCH — the panel's own ticker filter. It reads every name rather than
@@ -28035,7 +28035,7 @@ function scResultHTML(d){
         + '</tr>';
     }).join('');
     return tbl(head + CLOCK_LEGEND, [{t:'Ticker',left:true},{t:'Band',left:true},{t:'Off 12m high',left:true},
-                      'Off the low','Volume vs norm','Recovered','Alpha Score','vs 200d','Reading'], body);
+                      'Off the low','Volume vs norm','Recovered','Quant Score','vs 200d','Reading'], body);
   }
 
   var VIEWS = {damage:viewDamage, turns:viewTurns, moves:viewMoves, bands:viewBands};

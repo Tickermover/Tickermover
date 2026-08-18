@@ -3,7 +3,7 @@ TickerMover — "Why it made the cut" narrative for Top Hunts tracker picks.
 
 A single punchy, plain-English sentence explaining what the quantitative scan
 flagged when a stock was added to the tracker — grounded ENTIRELY in our own
-factor profile (Alpha Score, grade, the six pillars, analyst upside) so the
+factor profile (Quant Score, grade, the six pillars, analyst upside) so the
 model never invents live figures. Cached durably (app_kv) keyed by ticker, so
 each pick is generated once and reused forever (until the pick is replaced):
 ~one call per pick, ever. Uses the Sonnet tier — this is a short, cached,
@@ -62,7 +62,7 @@ _SYSTEM = (
     "three string keys:\n"
     "{\n"
     '  "macro":    "the sector / industry tailwind this name rides right now (demand cycle or spending trend).",\n'
-    '  "quant":    "the single strongest signal from OUR FACTOR PROFILE, citing the actual numbers we give (Alpha Score + the standout pillar).",\n'
+    '  "quant":    "the single strongest signal from OUR FACTOR PROFILE, citing the actual numbers we give (Quant Score + the standout pillar).",\n'
     '  "catalyst": "the most compelling company-specific driver you can VERIFY via search: a recent earnings beat, guidance raise, product / customer / order win, partnership, or analyst upgrade. Prefer a specific, recent, real event; if none is verifiable, state the strongest structural demand driver instead."\n'
     "}\n"
     "RULES:\n"
@@ -91,7 +91,7 @@ def _profile_block(t: dict) -> str:
     pillars = t.get("pillars") or {}
     lines = [
         f"Company: {name}" + (f" — {sub}" if sub else ""),
-        f"Alpha Score: {round(float(score)) if score is not None else 'n/a'} / 100"
+        f"Quant Score: {round(float(score)) if score is not None else 'n/a'} / 100"
         + (f" (Grade {grade})" if grade else ""),
     ]
     if tier:

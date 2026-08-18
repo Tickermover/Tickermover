@@ -199,7 +199,7 @@ def one_sector(slug: str, universe: list[dict]) -> Optional[dict]:
 # not ours to make. `note` is shown next to the row so the direction is never
 # silently read as a verdict.
 COMPARE_FIELDS: list[dict] = [
-    {"key": "alpha",       "label": "Alpha Score",        "keys": ("smart_score", "pop_score"),
+    {"key": "alpha",       "label": "Quant Score",        "keys": ("smart_score", "pop_score"),
      "fmt": "int",  "higher_is": "more", "note": "our composite quality read"},
     {"key": "revenue_growth_yoy", "label": "Revenue growth (YoY)", "keys": ("revenue_growth_yoy",),
      "fmt": "pct100", "higher_is": "more", "note": "faster top-line growth"},
