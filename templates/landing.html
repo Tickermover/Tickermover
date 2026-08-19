@@ -152,6 +152,15 @@ try{var _r=new URLSearchParams(location.search).get('ref');
   .ref-card{padding:28px 20px 20px;border-radius:16px}
   .ref-h{font-size:19px}
 }
+
+/* "What this is not" - deliberately plain. No accent colour, no gradient, no
+   icons: the section works by being sober, and dressing it up would undercut
+   the one place on the page that exists to lower expectations. */
+.not-grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));margin-top:26px}
+.not-card{background:#fff;border:1px solid rgba(16,41,61,.10);border-radius:14px;padding:20px 22px}
+.not-card h3{font-family:'Public Sans',sans-serif;font-size:16px;font-weight:700;color:var(--text-dark);margin-bottom:6px}
+.not-card p{font-size:14.5px;line-height:1.6;color:var(--grey)}
+.not-foot{margin-top:20px;font-size:14px;font-weight:600;color:var(--text-dark);text-align:center}
 </style>
 
 
@@ -1484,7 +1493,6 @@ button:focus-visible,[tabindex]:focus-visible{
     <a class="brand" href="#top"><span class="brand-wordmark">Ticker<svg class="brand-m" viewBox="0 0 90 105" fill="none" aria-hidden="true"><polyline points="5,100 23,42 45,66 67,26 85,100" stroke="#14587D" stroke-width="9" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="67" cy="8" r="7" fill="#14587D"/></svg>over</span></a>
     <div class="nav-links">
       <a href="#engine">Engine</a>
-      <a href="#dashboard">Dashboard</a>
       <!-- Real destinations, not just in-page anchors. A visitor deciding
            whether to trust a finance site looks for coverage, methodology and
            the legal position; before this the nav offered two jump-links and
@@ -1693,10 +1701,6 @@ button:focus-visible,[tabindex]:focus-visible{
       <div class="pl-tile"><span class="pl-name">Sentiment</span><span class="pl-detail">Analyst revisions · options flow · retail interest</span></div>
       <div class="pl-tile"><span class="pl-name">Risk</span><span class="pl-detail">Drawdown depth · ATR · exhaustion flags · catalyst gap</span></div>
     </div>
-    <div class="pillar-sample reveal">
-      <span class="pl-sample-dot"></span>
-      <span class="pl-sample-text"><b>Worked example:</b> a company scoring <b>94</b> — Momentum 92 · Quality 88 · Growth 91 · Valuation 71 · Sentiment 96 · Risk 78</span>
-    </div>
   </div>
 </section>
 
@@ -1762,7 +1766,7 @@ button:focus-visible,[tabindex]:focus-visible{
           </g>
         </svg>
         <div class="engine-score">86</div>
-        <div class="engine-score-label">Quant Score · today</div>
+        <div class="engine-score-label">Quant Score · example</div>
       </div>
       <!-- Outputs -->
       <div class="engine-col">
@@ -1770,120 +1774,16 @@ button:focus-visible,[tabindex]:focus-visible{
         <ul class="input-list">
           <li><span class="ic"></span>One headline Quant Score</li>
           <li><span class="ic"></span>Six pillar bars (explain why)</li>
-          <li><span class="ic"></span>Entry / exit reference levels</li>
-          <li><span class="ic"></span>Trail-stop &amp; target levels</li>
+          <li><span class="ic"></span>Fundamentals, filings &amp; earnings history</li>
           <li><span class="ic"></span>Peer comparison &amp; sector view</li>
-          <li><span class="ic"></span>Audit-trail of past picks</li>
+          <li><span class="ic"></span>Every input behind the score</li>
         </ul>
       </div>
-    </div>
-    <div class="engine-worked reveal">
-      <span class="ew-lbl">Worked example</span>
-      <span class="ew-ticker">SAMPLE A</span>
-      <span class="ew-pillars">Momentum 92 · Quality 88 · Growth 91 · Valuation 71 · Sentiment 96 · Risk 78</span>
-      <span class="ew-arrow">→</span>
-      <span class="ew-score">Quant 94</span>
     </div>
   </div>
 </section>
 
 <!-- ───────── INSIDE THE DASHBOARD (high-fidelity HTML/CSS mockup) ───────── -->
-<section class="section bg-alice" id="dashboard">
-  <div class="wrap">
-    <div class="sec-head center reveal">
-      <span class="eyebrow" style="margin-left:auto;margin-right:auto">See it in action</span>
-      <h2 class="sec-title">Inside the dashboard.</h2>
-      <p class="sec-sub">Every name in one place &mdash; score, the six pillars behind it, fundamentals and filings, all on one screen.</p>
-    </div>
-    <div class="dash-mock reveal">
-      <!-- browser chrome -->
-      <div class="dash-chrome">
-        <span class="dc-dot r"></span><span class="dc-dot y"></span><span class="dc-dot g"></span>
-        <div class="dc-url">app.tickermover.com / dashboard</div>
-        <!-- Sample data below is static, not fetched. No live clock here. -->
-        <div class="dc-live" style="font-variant:normal">Illustrative &mdash; sample data</div>
-      </div>
-      <!-- app body: sidebar + main + right rail -->
-      <div class="dash-body">
-        <!-- sidebar -->
-        <aside class="dash-side">
-          <div class="ds-brand"><span class="ds-name">Ticker<svg class="brand-m" viewBox="0 0 90 105" fill="none" aria-hidden="true"><polyline points="5,100 23,42 45,66 67,26 85,100" stroke="#14587D" stroke-width="9" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="67" cy="8" r="7" fill="#14587D"/></svg>over</span></div>
-          <nav class="ds-nav">
-            <div class="ds-sec">Discover</div>
-            <a class="ds-link active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg> On the Radar</a>
-            <a class="ds-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l2.5 7H22l-6 4.5 2.3 7L12 16l-6.3 4.5L8 13.5 2 9h7.5z"/></svg> Prime Tickers <span class="ds-tag pro">PRO</span></a>
-            <a class="ds-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><polyline points="6 14 10 10 13 13 21 5"/></svg> Sector Map</a>
-            <a class="ds-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M2 12h20"/><path d="M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18z"/></svg> Universe <span class="ds-tag count">__UNIV_N__</span></a>
-            <a class="ds-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 15l3-4 3 2 4-6"/></svg> Market Analysis</a>
-            <div class="ds-sec">Your Lists</div>
-            <a class="ds-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3 6.5 7 .6-5.3 4.6L18.5 21 12 17.3 5.5 21l1.8-7.3L2 9.1l7-.6z"/></svg> Watchlist</a>
-            <a class="ds-link"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16v12H7l-3 3z"/></svg> Briefings</a>
-          </nav>
-        </aside>
-        <!-- main -->
-        <main class="dash-main">
-          <div class="radar-mock">
-            <div class="picks-card">
-              <div class="pk-head">
-                <h3>🔥 Highest scores</h3>
-                <div class="pk-meta">
-                  <span class="meta-pill">High Alpha</span>
-                  <span class="meta-pill">Example rows</span>
-                  <span class="meta-pill green">5 picks</span>
-                </div>
-              </div>
-              <div class="dm-table">
-                <div class="dm-row dm-head-row">
-                  <span>Ticker</span><span>Quant</span><span class="why-col">Why it's here</span><span class="up-col">Upside</span><span class="today-col">Today</span><span class="act-col">View</span>
-                </div>
-                <div class="dm-row" data-row>
-                  <span class="dm-tick"><span class="lg ex1">AA</span><span style="min-width:0">SAMPLE A<span class="dm-grade A">A</span><br><small>Semiconductors</small></span></span>
-                  <span class="alpha-cell"><span class="dm-alpha">94</span><span class="vd vd-top">Top Tier</span></span>
-                  <span class="dm-cell-why"><span class="why"><span class="why-ico">⭐</span><span class="why-tx">Top-tier composite — AI demand intact</span></span></span>
-                  <span class="up-cell up-col pos">+12%<small>Street upside</small></span>
-                  <span class="dm-chg today-col up">+8.4%<small>▲ 34% · 3M</small></span>
-                  <span class="act-col"><button class="dm-btn">View →</button></span>
-                </div>
-                <div class="dm-row" data-row>
-                  <span class="dm-tick"><span class="lg ex2">BB</span><span style="min-width:0">SAMPLE B<span class="dm-grade A">A</span><br><small>Enterprise software</small></span></span>
-                  <span class="alpha-cell"><span class="dm-alpha">88</span><span class="vd vd-top">Top Tier</span></span>
-                  <span class="dm-cell-why"><span class="why"><span class="why-ico">🟢</span><span class="why-tx">Cloud reacceleration, margins expanding</span></span></span>
-                  <span class="up-cell up-col pos">+9%<small>Street upside</small></span>
-                  <span class="dm-chg today-col up">+2.4%<small>▲ 12% · 3M</small></span>
-                  <span class="act-col"><button class="dm-btn">View →</button></span>
-                </div>
-                <div class="dm-row" data-row>
-                  <span class="dm-tick"><span class="lg ex3">CC</span><span style="min-width:0">SAMPLE C<span class="dm-grade B">B</span><br><small>Consumer hardware</small></span></span>
-                  <span class="alpha-cell"><span class="dm-alpha">86</span><span class="vd vd-strong">Strong</span></span>
-                  <span class="dm-cell-why"><span class="why"><span class="why-ico">📈</span><span class="why-tx">Record services mix lifts quality</span></span></span>
-                  <span class="up-cell up-col pos">+8%<small>Street upside</small></span>
-                  <span class="dm-chg today-col up">+3.1%<small>▲ 11% · 3M</small></span>
-                  <span class="act-col"><button class="dm-btn">View →</button></span>
-                </div>
-                <div class="dm-row" data-row>
-                  <span class="dm-tick"><span class="lg ex4">DD</span><span style="min-width:0">SAMPLE D<span class="dm-grade A">A</span><br><small>E-commerce platform</small></span></span>
-                  <span class="alpha-cell"><span class="dm-alpha">82</span><span class="vd vd-top">Top Tier</span></span>
-                  <span class="dm-cell-why"><span class="why"><span class="why-ico">🚀</span><span class="why-tx">GMV beat, margins turning positive</span></span></span>
-                  <span class="up-cell up-col pos">+14%<small>Street upside</small></span>
-                  <span class="dm-chg today-col up">+6.0%<small>▲ 23% · 3M</small></span>
-                  <span class="act-col"><button class="dm-btn">View →</button></span>
-                </div>
-                <div class="dm-row" data-row>
-                  <span class="dm-tick"><span class="lg ex5">EE</span><span style="min-width:0">SAMPLE E<span class="dm-grade B">B</span><br><small>Data analytics</small></span></span>
-                  <span class="alpha-cell"><span class="dm-alpha">81</span><span class="vd vd-strong">Strong</span></span>
-                  <span class="dm-cell-why"><span class="why"><span class="why-ico">⚡</span><span class="why-tx">Govt + commercial bookings accelerating</span></span></span>
-                  <span class="up-cell up-col pos">+6%<small>Street upside</small></span>
-                  <span class="dm-chg today-col up">+5.1%<small>▲ 28% · 3M</small></span>
-                  <span class="act-col"><button class="dm-btn">View →</button></span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </main>
-      </div>
-    </div>
-  </div>
-</section>
 
 <!-- ═════════ NEW SECTIONS (deep research · Ask AI · sector map · events) ═════════ -->
 <style>
@@ -3241,9 +3141,9 @@ html body #pricing.is-annual .pz-featured .pz-amt{color:rgba(255,255,255,.62);
     <!-- Keep these analytical, never directive: ask what changed or how things
          compare, never whether to buy or sell. -->
     <div class="ah-chips reveal">
-      <span class="ah-chip">"What changed in MU's fundamentals this quarter?"</span>
-      <span class="ah-chip">"Summarize TSLA's last earnings"</span>
-      <span class="ah-chip">"Who are CRDO's biggest customers?"</span>
+      <span class="ah-chip">"What changed in this company's fundamentals?"</span>
+      <span class="ah-chip">"Summarise the last earnings call"</span>
+      <span class="ah-chip">"Who are its biggest customers?"</span>
       <span class="ah-chip">"How do semiconductor names compare on risk?"</span>
     </div>
   </div>
@@ -3537,6 +3437,38 @@ html body #pricing.is-annual .pz-featured .pz-amt{color:rgba(255,255,255,.62);
      To restore: git show <this commit>^:templates/landing.html -->
 
 <!-- ───────── CTA ───────── -->
+<!-- ═════════ WHAT THIS IS NOT ═════════
+     This page is the ad destination, so it is the financial promotion. The
+     limits belong ON it, at the size the claims are, not one click away in
+     /disclaimer. Keep this section above the final CTA: a reader should meet
+     it before they sign up, not after. -->
+<section class="section bg-alice" id="limits">
+  <div class="wrap">
+    <span class="eyebrow">Before you sign up</span>
+    <h2 class="sec-title">What TickerMover is <span class="blue-grad-text">not</span>.</h2>
+    <p class="sec-sub">The honest limits, in plain English. If any of these are dealbreakers, better to know now.</p>
+    <div class="not-grid">
+      <div class="not-card">
+        <h3>Not advice</h3>
+        <p>No buy, sell or hold recommendations, and nothing tailored to your circumstances. We show you the numbers and the reasoning; the decision is yours.</p>
+      </div>
+      <div class="not-card">
+        <h3>Not regulated</h3>
+        <p>TickerMover is not authorised or regulated by the Financial Conduct Authority. If you want advice on your situation, speak to an FCA-authorised adviser.</p>
+      </div>
+      <div class="not-card">
+        <h3>Not a prediction</h3>
+        <p>A score describes what the data says about a company today. It is not a forecast, and a high score does not mean the price goes up. Past performance is not a reliable indicator of future results.</p>
+      </div>
+      <div class="not-card">
+        <h3>Not a trading system</h3>
+        <p>No entry prices, no targets, no stop levels, no position sizing. If you are looking for signals to trade mechanically, this is the wrong tool.</p>
+      </div>
+    </div>
+    <p class="not-foot">Capital is at risk. You could get back less than you invest.</p>
+  </div>
+</section>
+
 <section class="section" style="padding-top:28px;padding-bottom:28px" id="cta">
   <div class="cta reveal">
     <div class="cta-inner">
