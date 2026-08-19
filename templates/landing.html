@@ -1317,7 +1317,10 @@ button:focus-visible,[tabindex]:focus-visible{
 .radar-mock .dm-tick{display:flex;align-items:center;gap:9px;font-weight:700;color:var(--text-dark);min-width:0}
 .radar-mock .dm-tick small{font-weight:500;color:var(--grey);font-size:10.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .radar-mock .lg{width:28px;height:28px;border-radius:7px;flex:none;display:grid;place-items:center;color:#fff;font-weight:700;font-size:12.5px;font-family:'Public Sans',sans-serif}
-.radar-mock .lg.nv{background:#76B900}.radar-mock .lg.ap{background:#0A2F46}.radar-mock .lg.sh{background:#7AB55C}.radar-mock .lg.pl{background:#0c1a2d}.radar-mock .lg.ms{background:#14587D}
+/* Neutral tiles. These were the real brand colours (#76B900 NVIDIA,
+   #7AB55C Shopify, #0c1a2d Palantir), which identified the companies even
+   without the tickers. */
+.radar-mock .lg.ex1{background:#5F7183}.radar-mock .lg.ex2{background:#14587D}.radar-mock .lg.ex3{background:#33485c}.radar-mock .lg.ex4{background:#4a6572}.radar-mock .lg.ex5{background:#2b3f52}
 /* Was 8.5px — the smallest text on the site and below what is comfortably
    readable. 10.5px matches the other micro-labels here. */
 .radar-mock .dm-grade{font-family:'JetBrains Mono',monospace;font-size:10.5px;font-weight:800;padding:1px 5px;border-radius:5px;margin-left:5px;vertical-align:1px}
@@ -1481,11 +1484,17 @@ button:focus-visible,[tabindex]:focus-visible{
     <a class="brand" href="#top"><span class="brand-wordmark">Ticker<svg class="brand-m" viewBox="0 0 90 105" fill="none" aria-hidden="true"><polyline points="5,100 23,42 45,66 67,26 85,100" stroke="#14587D" stroke-width="9" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="67" cy="8" r="7" fill="#14587D"/></svg>over</span></a>
     <div class="nav-links">
       <a href="#engine">Engine</a>
-      
-      
       <a href="#dashboard">Dashboard</a>
-      
-      
+      <!-- Real destinations, not just in-page anchors. A visitor deciding
+           whether to trust a finance site looks for coverage, methodology and
+           the legal position; before this the nav offered two jump-links and
+           nothing to check. Reports and Sectors are also our indexed pages, so
+           linking them from the nav helps them rank. -->
+      <a href="/reports">Reports</a>
+      <a href="/sectors">Sectors</a>
+      <a href="/learn">Methodology</a>
+      <a href="/disclaimer">Disclaimer</a>
+
       <!-- "Market Movers" removed from the header nav 15 Aug 2026: the weekly
            editorial has not published since the 27 Jul issue (generated 2 Aug),
            so the nav was advertising a live section that had gone quiet. /weekly
@@ -1686,7 +1695,7 @@ button:focus-visible,[tabindex]:focus-visible{
     </div>
     <div class="pillar-sample reveal">
       <span class="pl-sample-dot"></span>
-      <span class="pl-sample-text"><b>Live now:</b> NVDA scoring <b>94</b> — Momentum 92 · Quality 88 · Growth 91 · Valuation 71 · Sentiment 96 · Risk 78</span>
+      <span class="pl-sample-text"><b>Worked example:</b> a company scoring <b>94</b> — Momentum 92 · Quality 88 · Growth 91 · Valuation 71 · Sentiment 96 · Risk 78</span>
     </div>
   </div>
 </section>
@@ -1770,10 +1779,10 @@ button:focus-visible,[tabindex]:focus-visible{
     </div>
     <div class="engine-worked reveal">
       <span class="ew-lbl">Worked example</span>
-      <span class="ew-ticker">NVDA</span>
+      <span class="ew-ticker">SAMPLE A</span>
       <span class="ew-pillars">Momentum 92 · Quality 88 · Growth 91 · Valuation 71 · Sentiment 96 · Risk 78</span>
       <span class="ew-arrow">→</span>
-      <span class="ew-score">Alpha 94</span>
+      <span class="ew-score">Quant 94</span>
     </div>
   </div>
 </section>
@@ -1828,7 +1837,7 @@ button:focus-visible,[tabindex]:focus-visible{
                   <span>Ticker</span><span>Quant</span><span class="why-col">Why it's here</span><span class="up-col">Upside</span><span class="today-col">Today</span><span class="act-col">View</span>
                 </div>
                 <div class="dm-row" data-row>
-                  <span class="dm-tick"><span class="lg nv">NV</span><span style="min-width:0">NVDA<span class="dm-grade A">A</span><br><small>NVIDIA Corporation</small></span></span>
+                  <span class="dm-tick"><span class="lg ex1">AA</span><span style="min-width:0">SAMPLE A<span class="dm-grade A">A</span><br><small>Semiconductors</small></span></span>
                   <span class="alpha-cell"><span class="dm-alpha">94</span><span class="vd vd-top">Top Tier</span></span>
                   <span class="dm-cell-why"><span class="why"><span class="why-ico">⭐</span><span class="why-tx">Top-tier composite — AI demand intact</span></span></span>
                   <span class="up-cell up-col pos">+12%<small>Street upside</small></span>
@@ -1836,7 +1845,7 @@ button:focus-visible,[tabindex]:focus-visible{
                   <span class="act-col"><button class="dm-btn">View →</button></span>
                 </div>
                 <div class="dm-row" data-row>
-                  <span class="dm-tick"><span class="lg ms">MS</span><span style="min-width:0">MSFT<span class="dm-grade A">A</span><br><small>Microsoft Corporation</small></span></span>
+                  <span class="dm-tick"><span class="lg ex2">BB</span><span style="min-width:0">SAMPLE B<span class="dm-grade A">A</span><br><small>Enterprise software</small></span></span>
                   <span class="alpha-cell"><span class="dm-alpha">88</span><span class="vd vd-top">Top Tier</span></span>
                   <span class="dm-cell-why"><span class="why"><span class="why-ico">🟢</span><span class="why-tx">Cloud reacceleration, margins expanding</span></span></span>
                   <span class="up-cell up-col pos">+9%<small>Street upside</small></span>
@@ -1844,7 +1853,7 @@ button:focus-visible,[tabindex]:focus-visible{
                   <span class="act-col"><button class="dm-btn">View →</button></span>
                 </div>
                 <div class="dm-row" data-row>
-                  <span class="dm-tick"><span class="lg ap">AP</span><span style="min-width:0">AAPL<span class="dm-grade B">B</span><br><small>Apple Inc.</small></span></span>
+                  <span class="dm-tick"><span class="lg ex3">CC</span><span style="min-width:0">SAMPLE C<span class="dm-grade B">B</span><br><small>Consumer hardware</small></span></span>
                   <span class="alpha-cell"><span class="dm-alpha">86</span><span class="vd vd-strong">Strong</span></span>
                   <span class="dm-cell-why"><span class="why"><span class="why-ico">📈</span><span class="why-tx">Record services mix lifts quality</span></span></span>
                   <span class="up-cell up-col pos">+8%<small>Street upside</small></span>
@@ -1852,7 +1861,7 @@ button:focus-visible,[tabindex]:focus-visible{
                   <span class="act-col"><button class="dm-btn">View →</button></span>
                 </div>
                 <div class="dm-row" data-row>
-                  <span class="dm-tick"><span class="lg sh">SH</span><span style="min-width:0">SHOP<span class="dm-grade A">A</span><br><small>Shopify Inc.</small></span></span>
+                  <span class="dm-tick"><span class="lg ex4">DD</span><span style="min-width:0">SAMPLE D<span class="dm-grade A">A</span><br><small>E-commerce platform</small></span></span>
                   <span class="alpha-cell"><span class="dm-alpha">82</span><span class="vd vd-top">Top Tier</span></span>
                   <span class="dm-cell-why"><span class="why"><span class="why-ico">🚀</span><span class="why-tx">GMV beat, margins turning positive</span></span></span>
                   <span class="up-cell up-col pos">+14%<small>Street upside</small></span>
@@ -1860,7 +1869,7 @@ button:focus-visible,[tabindex]:focus-visible{
                   <span class="act-col"><button class="dm-btn">View →</button></span>
                 </div>
                 <div class="dm-row" data-row>
-                  <span class="dm-tick"><span class="lg pl">PL</span><span style="min-width:0">PLTR<span class="dm-grade B">B</span><br><small>Palantir Technologies</small></span></span>
+                  <span class="dm-tick"><span class="lg ex5">EE</span><span style="min-width:0">SAMPLE E<span class="dm-grade B">B</span><br><small>Data analytics</small></span></span>
                   <span class="alpha-cell"><span class="dm-alpha">81</span><span class="vd vd-strong">Strong</span></span>
                   <span class="dm-cell-why"><span class="why"><span class="why-ico">⚡</span><span class="why-tx">Govt + commercial bookings accelerating</span></span></span>
                   <span class="up-cell up-col pos">+6%<small>Street upside</small></span>
@@ -2306,7 +2315,7 @@ html body .profile .badge,html body .profile-tag{
    These were the circled items. All of them were rendering in colours meant
    for a light surface and all but vanished on navy:
      .engine-score  "86"        was #000000 (black)
-     .ew-score b    "Alpha 94"  the numeral was #10293D navy
+     .ew-score b    "Quant 94"  the numeral was #10293D navy
      .dm-alpha      "94"/"86"   #0A2F46 navy
      .engine-svg                strokes in #3E6E92, a dim steel
    White reads as the highlight; orange stays on the headline emphasis so the
@@ -2876,7 +2885,7 @@ html body .pc-free .pc-price + .pc-card-feats{margin-top:48px!important}
 html body .capture{display:none!important}
 
 /* ═══ SIX PILLARS - dropped, folded into the engine ══════════════════════
-   The two sections duplicated the pillar list AND the identical NVDA worked
+   The two sections duplicated the pillar list AND the identical worked
    example (92/88/91/71/96/78 -> Alpha 94) ~1700px apart. "Inside the engine"
    survives because it carries the narrative (ingest/fuse/output, scale, what
    you get); the per-pillar factor detail moved into its INPUTS column so
@@ -3225,9 +3234,9 @@ html body #pricing.is-annual .pz-featured .pz-amt{color:rgba(255,255,255,.62);
          rather than left to read as live output. -->
     <div class="ah-chat reveal">
       <div class="ah-sample-note">Example conversation &mdash; illustrative figures, not a live answer.</div>
-      <div class="ah-bubble user">Why is NVDA scoring 94?</div>
+      <div class="ah-bubble user">Why is this company scoring 94?</div>
       <div class="ah-bubble ai"><span class="ah-ai-tag">✦ TickerMover AI</span>Momentum (<b>92</b>) and Growth (<b>91</b>) lead — datacenter-AI demand is intact and analyst revisions are still climbing. The only drag is Valuation (<b>71</b>): the price already assumes years of hyperscaler capex. Risk (78) stays healthy on a fortress balance sheet.</div>
-      <div class="ah-bubble user">How does it compare to AMD?</div>
+      <div class="ah-bubble user">How does it compare to its closest peer?</div>
     </div>
     <!-- Keep these analytical, never directive: ask what changed or how things
          compare, never whether to buy or sell. -->
