@@ -3990,6 +3990,12 @@ async def dashboard():
                     row["eps_quarters"] = epsq[-4:]
                 row["indices"]  = _idx_for(row.get("ticker", ""))
                 row["profiles"] = _assign_profile(row)
+                # This payload is copied straight off _universe_data, so it
+                # bypasses the shimmed attach helpers — /api/universe came back
+                # clean while the SSR blob here still carried a pre-rename
+                # thesis ("a falling Alpha Score undercut the story").
+                if row.get("ai_thesis"):
+                    row["ai_thesis"] = _rename_shim(row["ai_thesis"])
                 _slim.append(row)
             payload = _json.dumps(_clean({
                 "tickers":      _slim,
@@ -4085,6 +4091,9 @@ async def signals_preview():
                 row["eps_quarters"] = epsq[-4:]
             row["indices"] = _idx_for(row.get("ticker", ""))
             row["profiles"] = _assign_profile(row)
+            # Same pre-rename thesis text as the /app payload above.
+            if row.get("ai_thesis"):
+                row["ai_thesis"] = _rename_shim(row["ai_thesis"])
             _slim.append(row)
         payload = _json.dumps(_clean({
             "tickers":      _slim,
