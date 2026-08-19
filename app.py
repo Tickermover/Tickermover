@@ -1976,8 +1976,13 @@ def _build_landing_schema() -> str:
         "@context": "https://schema.org",
         "@type": "FAQPage",
         "mainEntity": [
+            # KEEP IN SYNC WITH templates/landing.html — this FAQ answer exists
+            # twice, once as visible copy and once here as FAQPage structured
+            # data. The Hot List rule was corrected in the template but not
+            # here, so the wrong rule kept being published to search engines,
+            # which is the copy Google can surface as a rich result.
             _q("What exactly is the Quant Score?",
-               "A single 0–100 number fusing six pillars — momentum, growth, quality, valuation, sentiment and risk — refreshed every trading day. Stocks scoring 75+ with four strong pillars qualify for the Hot List."),
+               "A single 0–100 number fusing six pillars — momentum, growth, quality, valuation, sentiment and risk — refreshed every trading day. The Hot List is narrower than the score alone: a stock needs a grade A, at least 75% model confidence, and a market cap above $1B to appear on it."),
             _q("Is this investment advice?",
                "No. TickerMover is a research tool. It surfaces and explains signals; every trade decision and its consequences are yours. Always do your own due diligence."),
             _q("How often is the data refreshed?",
@@ -4169,7 +4174,7 @@ async def api_universe():
             for r in slim:
                 _aj = _cmap.get((r.get("ticker") or "").upper())
                 if _aj and (_aj.get("thesis") or "").strip():
-                    row_thesis = _aj["thesis"].strip()
+                    row_thesis = _rename_shim(_aj["thesis"].strip())
                     r["ai_thesis"] = row_thesis
                     if _aj.get("lean"):
                         r["ai_lean"] = _aj["lean"]
@@ -4963,7 +4968,7 @@ def _weekly_ground_truth(angle: dict) -> dict:
             "eps_growth_yoy": row.get("eps_growth_yoy"), "pe_ratio": row.get("pe_ratio"),
             "peg_ratio": row.get("peg_ratio"), "gross_margin": row.get("gross_margin"),
             "fcf_margin": row.get("fcf_margin"), "target_upside_pct": _pct_upside(row),
-            "ai_conviction": aj.get("conviction"), "ai_thesis": aj.get("thesis"),
+            "ai_conviction": aj.get("conviction"), "ai_thesis": _rename_shim(aj.get("thesis")),
             "ai_red_flags": aj.get("red_flags"),
         }
     return ground
@@ -11109,7 +11114,7 @@ def _enrich_model_portfolio(portfolio: dict) -> dict:
             # AI analyst-judge (advisory): conviction 0-100, one-line thesis,
             # red flags, and the pillar it leans on. None when not yet scored.
             "ai_conviction":  (_aj := _cmap.get((p.get("ticker") or "").upper()) or {}).get("conviction"),
-            "ai_thesis":      _aj.get("thesis"),
+            "ai_thesis":      _rename_shim(_aj.get("thesis")),
             "ai_red_flags":   _aj.get("red_flags") or [],
             "ai_lean":        _aj.get("lean"),
             # Conviction-weighted sizing (research guidance — weights the NAV):
@@ -12789,6 +12794,23 @@ async def api_model_portfolio_reset(user: Optional[dict] = Depends(_current_user
     return JSONResponse({"ok": True, "picks": len(_model_portfolio["picks"]), "date": _model_portfolio["created_at"]})
 
 
+def _rename_shim(text: str) -> str:
+    """Migration shim for AI text written before the Quant Score rename.
+
+    Theses live in a persisted conviction store, so ones generated while the
+    prompt still said "Alpha Score" keep saying it — they surface verbatim in
+    /app and in the public JSON long after the code stopped producing that
+    wording. The generator is already correct; this only rewrites stored text
+    on the way out, and becomes a no-op as the store regenerates. Safe to
+    delete once the cache has fully turned over.
+    """
+    if not text:
+        return text
+    return (text.replace("Alpha Score", "Quant Score")
+                .replace("Alpha score", "Quant score")
+                .replace("alpha score", "quant score"))
+
+
 def _attach_ai_thesis(rows: list[dict]) -> None:
     """Overlay the AI analyst-judge's thesis / conviction / lean onto these rows so
     the House View headline picks carry the same bespoke 'why' as the model
@@ -12804,7 +12826,7 @@ def _attach_ai_thesis(rows: list[dict]) -> None:
         aj = cmap.get((r.get("ticker") or "").upper())
         if not aj:
             continue
-        th = (aj.get("thesis") or "").strip()
+        th = _rename_shim((aj.get("thesis") or "").strip())
         if th:
             r["ai_thesis"] = th
         if aj.get("conviction") is not None:
