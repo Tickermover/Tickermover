@@ -6557,6 +6557,17 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 #ts-drawer .dr-ai-btn{margin-left:auto;display:inline-flex;align-items:center;gap:5px;border:1px solid rgba(124,58,237,.28);background:linear-gradient(135deg,rgba(124,58,237,.10),rgba(79,70,229,.10));color:#6d28d9;font-family:inherit;font-weight:800;font-size:12.5px;padding:7px 13px;border-radius:999px;cursor:pointer;white-space:nowrap;transition:background .14s,box-shadow .14s}
 #ts-drawer .dr-ai-btn:hover{background:linear-gradient(135deg,rgba(124,58,237,.18),rgba(79,70,229,.18));box-shadow:0 6px 16px -8px rgba(124,58,237,.5)}
 #ts-drawer .dr-ai-btn + .dr-close{margin-left:8px}
+/* Watchlist toggle. It carries the margin-left:auto that pushes the right-hand
+   button group over, so the adjacent-sibling rule below has to cancel the same
+   property on .dr-ai-btn — otherwise the Ask AI button claims the free space
+   and Watch ends up stranded against the company name. */
+#ts-drawer .dr-watch{margin-left:auto;display:inline-flex;align-items:center;gap:6px;border:1px solid var(--hair);background:var(--surf-2);color:var(--grey-2);font-family:inherit;font-weight:800;font-size:12.5px;padding:7px 13px;border-radius:999px;cursor:pointer;white-space:nowrap;transition:background .14s,color .14s,border-color .14s}
+#ts-drawer .dr-watch:hover{background:#eef2f8;color:var(--ink)}
+#ts-drawer .dr-watch .dr-watch-ico{font-size:14px;line-height:1}
+#ts-drawer .dr-watch.on{border-color:#FFC75F;background:#FFF3D9;color:#8A5A00}
+#ts-drawer .dr-watch.on:hover{background:#FFE9B0}
+#ts-drawer .dr-watch + .dr-ai-btn{margin-left:8px}
+@media(max-width:620px){#ts-drawer .dr-watch .dr-watch-tx{display:none}#ts-drawer .dr-watch{padding:7px 10px}}
 #ts-drawer .dr-close{margin-left:auto;width:32px;height:32px;border-radius:9px;border:1px solid var(--hair);background:var(--surf-2);color:var(--grey-2);font-size:18px;cursor:pointer;display:grid;place-items:center;line-height:1}
 #ts-drawer .dr-close:hover{background:#eef2f8;color:var(--ink)}
 #ts-drawer .dr-stats{display:flex;gap:9px;margin-top:16px}
@@ -23632,6 +23643,22 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
   /* ── drawer ── */
   const drawer=document.getElementById('ts-drawer'), scrim=document.getElementById('ts-scrim');
   let _selRow=null;
+  /* Flip the drawer's watchlist button in place. toggleWatch() owns the storage
+     and re-renders the Watchlist panel when it is open; this only repaints the
+     button, so the drawer never has to be closed and reopened to look right. */
+  window.tsDrToggleWatch = function(ticker){
+    if (typeof toggleWatch !== 'function') return;
+    var on = toggleWatch(ticker);
+    var b = document.getElementById('tsDrWatch');
+    if (!b) return;
+    b.classList.toggle('on', !!on);
+    b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    b.setAttribute('title', on ? 'Remove from watchlist' : 'Add to watchlist');
+    var ico = b.querySelector('.dr-watch-ico'), tx = b.querySelector('.dr-watch-tx');
+    if (ico) ico.textContent = on ? '★' : '☆';
+    if (tx)  tx.textContent  = on ? 'Watching' : 'Watch';
+  };
+
   function tsOpenDrawer(ticker){
     const _tk=(ticker||'').toUpperCase();
     let t=_byTicker[_tk];
@@ -23694,6 +23721,16 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     drawer.innerHTML=
       '<div class="dr-head"><div class="dr-top">'+logoHTML(t.ticker,'lg')+
         '<div class="dr-id"><div class="dr-tic">'+escHTML(t.ticker)+'</div><div class="dr-name">'+escHTML(t.name||'')+'</div></div>'+
+        // Watchlist toggle. The drawer is where someone decides a name is worth
+        // following, but until now the only way to add one was typing the ticker
+        // into the Watchlist panel by hand. Reflects current state on open and
+        // flips in place, so it never needs the drawer reopened to look right.
+        '<button class="dr-watch'+(isWatched(t.ticker)?' on':'')+'" id="tsDrWatch" '+
+          'onclick="tsDrToggleWatch(\''+escHTML(t.ticker)+'\')" '+
+          'aria-pressed="'+(isWatched(t.ticker)?'true':'false')+'" '+
+          'title="'+(isWatched(t.ticker)?'Remove from watchlist':'Add to watchlist')+'">'+
+          '<span class="dr-watch-ico">'+(isWatched(t.ticker)?'★':'☆')+'</span>'+
+          '<span class="dr-watch-tx">'+(isWatched(t.ticker)?'Watching':'Watch')+'</span></button>'+
         '<button class="dr-ai-btn" onclick="tsOpenAsk(\''+escHTML(t.ticker)+'\',\''+escHTML((t.name||'').replace(/\x27/g,""))+'\')">✦ Ask AI</button>'+
         '<button class="dr-close" id="tsDrClose" aria-label="Close">×</button></div></div>'+
       '<div class="dr-body">'+
