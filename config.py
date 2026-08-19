@@ -97,6 +97,27 @@ AI_DAILY_USD_CAP = float(_env("AI_DAILY_USD_CAP", "3") or "3")
 # redeploys. Resets on the 1st (UTC).
 AI_MONTHLY_USD_CAP = float(_env("AI_MONTHLY_USD_CAP", "50") or "50")
 
+# ── Advice-shaped feature switches ────────────────────────────────────────────
+# OFF by default since 20 Aug 2026. These are the features that read least like
+# research and most like a recommendation on a named security, and they are the
+# ones a financial-promotions review would land on first:
+#
+#   TRADE_PLAN_ENABLED   the Trigger / Target lines drawn on the price chart and
+#                        the ATR position sizer. A quality score describes a
+#                        company; an entry price, a target and a position size
+#                        tell someone what to do with their own money.
+#   TRACK_RECORD_PUBLIC  the model-portfolio performance strip under the picks
+#                        (hit rate, beat-the-S&P, avg winner/loser). The ledger
+#                        itself is untouched and still readable in the Model
+#                        Portfolio panel — this only stops it being used as a
+#                        marketing proof point on the main surface.
+#
+# These are SWITCHES, not deletions. Nothing is removed, so if a solicitor
+# confirms the position they come back by setting the env var to 1.
+TRADE_PLAN_ENABLED  = (_env("TRADE_PLAN_ENABLED",  "0") or "0").strip().lower() in ("1", "true", "yes", "on")
+TRACK_RECORD_PUBLIC = (_env("TRACK_RECORD_PUBLIC", "0") or "0").strip().lower() in ("1", "true", "yes", "on")
+
+
 # ── Pro gating master switch ──────────────────────────────────────────────────
 # OFF since 18 Aug 2026: pricing is not decided, so nothing is paywalled and no
 # "PRO" badge is shown. This is a SWITCH, not a removal — every gate, badge and

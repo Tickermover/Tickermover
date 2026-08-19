@@ -496,7 +496,7 @@ button:focus-visible,[tabindex]:focus-visible{
 .proj.active .pp-bar span{opacity:.85}
 .pm-pillar-labels{display:grid;grid-template-columns:repeat(6,1fr);gap:5px;margin-top:4px;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:10px;color:var(--grey);text-align:center}
 @keyframes pp-rise{from{transform:scaleY(0)}to{transform:scaleY(1)}}
-/* proj-body timestamp + trade plan */
+/* proj-body timestamp + levels */
 .proj-stamp{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--grey);margin-bottom:8px}
 .proj-trade{display:inline-flex;align-items:center;flex-wrap:wrap;gap:6px;padding:8px 14px;border-radius:var(--r-pill);background:var(--alice-blue);border:1px solid var(--azureish);font-family:'Public Sans',sans-serif;font-size:12.5px;color:var(--grey-2);margin-bottom:14px}
 .proj-trade b{color:var(--primary);font-weight:700;margin-left:3px}
@@ -1784,19 +1784,14 @@ button:focus-visible,[tabindex]:focus-visible{
     <div class="sec-head center reveal">
       <span class="eyebrow" style="margin-left:auto;margin-right:auto">See it in action</span>
       <h2 class="sec-title">Inside the dashboard.</h2>
-      <p class="sec-sub">Where every pick lives — score, six pillars, trade plan and exit rule, all on one screen.</p>
+      <p class="sec-sub">Every name in one place &mdash; score, the six pillars behind it, fundamentals and filings, all on one screen.</p>
     </div>
     <div class="dash-mock reveal">
       <!-- browser chrome -->
       <div class="dash-chrome">
         <span class="dc-dot r"></span><span class="dc-dot y"></span><span class="dc-dot g"></span>
         <div class="dc-url">app.tickermover.com / dashboard</div>
-        <!-- This chrome sits above a STATIC sample table (.radar-mock): the
-             tickers, Quant scores and percentage moves below are hard-coded,
-             not fetched. It previously carried a real ticking [data-clock]
-             reading "Live · <now> ET", which invited readers to take those
-             fabricated figures for today's actual scores on named securities.
-             The clock is deliberately gone and the badge says what this is. -->
+        <!-- Sample data below is static, not fetched. No live clock here. -->
         <div class="dc-live" style="font-variant:normal">Illustrative &mdash; sample data</div>
       </div>
       <!-- app body: sidebar + main + right rail -->
@@ -1824,8 +1819,6 @@ button:focus-visible,[tabindex]:focus-visible{
                 <h3>🔥 Highest scores</h3>
                 <div class="pk-meta">
                   <span class="meta-pill">High Alpha</span>
-                  <!-- Was "+ a live signal" and "…scores today". Both implied
-                       these rows were current; they are hard-coded samples. -->
                   <span class="meta-pill">Example rows</span>
                   <span class="meta-pill green">5 picks</span>
                 </div>
@@ -3209,7 +3202,7 @@ html body #pricing.is-annual .pz-featured .pz-amt{color:rgba(255,255,255,.62);
     </div>
     <div class="ah-grid3 stagger reveal">
       <div class="ah-cap"><div class="ah-cap-ico">📊</div><h3>Financials &amp; health</h3><p>Revenue and margin trends, free-cash-flow, balance-sheet strength — graded, not just listed.</p></div>
-      <div class="ah-cap"><div class="ah-cap-ico">📈</div><h3>Technicals &amp; setup</h3><p>Trend, relative strength, and the entry, target and stop levels the engine is watching.</p></div>
+      <div class="ah-cap"><div class="ah-cap-ico">📈</div><h3>Technicals</h3><p>Trend, relative strength and where the price sits against its moving averages and 52-week range.</p></div>
       <div class="ah-cap"><div class="ah-cap-ico">🎯</div><h3>Valuation</h3><p>Upside to street targets plus a reverse-DCF that shows what growth the price already assumes.</p></div>
       <div class="ah-cap"><span class="ah-pro-tag">PRO</span><div class="ah-cap-ico">🔗</div><h3>Supply chain &amp; ripple risk</h3><p>Who a company depends on and who depends on it — so you can trace a shock before it hits.</p></div>
       <div class="ah-cap"><div class="ah-cap-ico">⚖️</div><h3>Peers &amp; benchmark</h3><p>Head-to-head against the cohort on every pillar — see exactly where a name leads or lags.</p></div>
@@ -3236,12 +3229,8 @@ html body #pricing.is-annual .pz-featured .pz-amt{color:rgba(255,255,255,.62);
       <div class="ah-bubble ai"><span class="ah-ai-tag">✦ TickerMover AI</span>Momentum (<b>92</b>) and Growth (<b>91</b>) lead — datacenter-AI demand is intact and analyst revisions are still climbing. The only drag is Valuation (<b>71</b>): the price already assumes years of hyperscaler capex. Risk (78) stays healthy on a fortress balance sheet.</div>
       <div class="ah-bubble user">How does it compare to AMD?</div>
     </div>
-    <!-- These example prompts must stay ANALYTICAL, never directive. Two of them
-         used to read "Is the dip in MU a buy?" and "Safest semiconductor name
-         right now?" — our own marketing inviting a personal recommendation on a
-         named security, which is exactly the reading the disclaimer exists to
-         rule out. Ask what changed and how things compare; never whether to buy,
-         sell, or which one is safest. -->
+    <!-- Keep these analytical, never directive: ask what changed or how things
+         compare, never whether to buy or sell. -->
     <div class="ah-chips reveal">
       <span class="ah-chip">"What changed in MU's fundamentals this quarter?"</span>
       <span class="ah-chip">"Summarize TSLA's last earnings"</span>

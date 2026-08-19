@@ -8,7 +8,7 @@
      in Bing/Google) but explicitly tell them not to index this page. -->
 <meta name="robots" content="noindex,follow">
 <title>TickerMover — Stock Intelligence Dashboard</title>
-<meta name="description" content="TickerMover — research __UNIV_N__ US large-caps: Quant Score, RS Rating, daily signals, Hot List picks and position sizing. Research, not advice.">
+<meta name="description" content="TickerMover — research __UNIV_N__ US large-caps: Quant Score, RS Rating, fundamentals, filings and sector comparisons. Research, not advice.">
 <!-- ── Browser chrome (favicons + status bar tint, no PWA install) ──
      PWA was removed at user's request — they didn't want "Install app"
      appearing in the browser menu, and didn't want forgot-password
@@ -76,6 +76,20 @@
      previously installed the PWA would keep getting served the cached
      shell and would still see "TickerMover" as an installed app. -->
 <script>
+  // Server-side feature switches, read from window.__AH_DATA__.flags (see
+  // config.py). Defined before any dashboard code so every caller can rely on
+  // it, and defaulting to FALSE when the payload is missing so a gated feature
+  // can never appear just because data failed to load.
+  // Deliberately inside this existing <script> rather than a new one: the
+  // deploy check diffs inline-script parse failures by index, and adding a
+  // block shifts every index below it, which looks like a regression.
+  window._tmFlag = function(name){
+    try {
+      var f = window.__AH_DATA__ && window.__AH_DATA__.flags;
+      return !!(f && f[name]);
+    } catch (e) { return false; }
+  };
+
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.getRegistrations().then(regs => {
       regs.forEach(r => r.unregister().catch(() => {}));
@@ -8838,10 +8852,10 @@ document.addEventListener('keydown', function(e){
     <div>
       <div class="picks-card">
         <div class="pk-head">
-          <h3>⭐ Our Best Ideas</h3>
+          <h3>⭐ Highest scoring today</h3>
           <div class="pk-meta">
-            <span class="meta-pill">High conviction</span>
-            <span class="meta-pill">Poised to grow</span>
+            <span class="meta-pill">Top of the score range</span>
+            <span class="meta-pill">Research, not advice</span>
             <span class="meta-pill green" id="picksCount">— names</span>
           </div>
         </div>
@@ -15142,7 +15156,10 @@ function buildEarningsBadge(t) {
     tip='URGENT: ' + days + ' days to earnings \u2014 elevated event risk over short window';
   } else if (days <= 21) {
     cls='ers-soon'; icon='\uD83D\uDCC5'; label='EPS in ' + days + 'd';
-    tip='Earnings in ' + days + ' days \u2014 consider reducing position size before report';
+    // Was "consider reducing position size before report" - an instruction to the
+    // reader about their own holding, which is advice-shaped. State the fact and
+    // leave the decision where it belongs.
+    tip='Earnings in ' + days + ' days — results can move the price sharply';
   } else {
     cls='ers-coming'; icon='\uD83D\uDCC6'; label='EPS in ' + days + 'd';
     tip='Earnings in ' + days + ' days';
@@ -23517,12 +23534,12 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     const headRow='<div class="dm-row dm-head-row"><span>Ticker</span><span>Quant + view</span><span>Why it\'s here</span><span class="up-col">To mean target</span><span class="today-col">'+todayLbl+'</span><span class="act-col">View</span></div>';
     const pc=document.getElementById('picksCount');
     // Universe still loading → warming-up state.
-    if(!sel.length){ if(pc) pc.textContent='— picks'; table.innerHTML=headRow+'<div class="dm-warm"><div class="emoji">⏳</div><div style="font-weight:700">Warming up — fetching prices for the universe…</div></div>'; return; }
+    if(!sel.length){ if(pc) pc.textContent='— names'; table.innerHTML=headRow+'<div class="dm-warm"><div class="emoji">⏳</div><div style="font-weight:700">Warming up — fetching prices for the universe…</div></div>'; return; }
     // No conviction threshold — always surface the strongest names in the field
     // (selectHot already returns the top PICKS_SHOWN by Alpha). The only empty
     // state is while the universe is still loading.
     const hot=sel;
-    if(pc) pc.textContent=hot.length+' pick'+(hot.length===1?'':'s');
+    if(pc) pc.textContent=hot.length+' name'+(hot.length===1?'':'s');
     if(!hot.length){ table.innerHTML=headRow+'<div id="dm-load"></div>'; window.showLoader('#dm-load','Scanning the market for opportunities'); return; }
     const rows=hot.map((t,i)=>{
       const pop=Math.round(parseFloat(t.smart_score!=null?t.smart_score:(t.pop_score||0)));
@@ -23575,6 +23592,12 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
   window.loadPicksTrack=async function(){
     if(_picksTrackDone) return;
     const el=document.getElementById('picks-track'); if(!el) return;
+    // Behind TRACK_RECORD_PUBLIC (off by default). Publishing a hit rate and a
+    // beat-the-S&P figure beside a list of stocks is the most promotional thing
+    // on this page, and past performance carries its own COBS 4.6 obligations.
+    // The ledger is NOT hidden — every closed trade is still readable in the
+    // Model Portfolio panel; this only stops it being a marketing headline.
+    if(!_tmFlag('track_record')){ el.style.display='none'; return; }
     try{
       const r=await fetch('/api/model-portfolio/history'); if(!r.ok) return;
       const d=await r.json(); const s=(d&&d.stats)||{};
@@ -24511,8 +24534,15 @@ function scResultHTML(d){
     let lo_=Math.min.apply(null,lo.slice(s)), hi_=Math.max.apply(null,hi.slice(s));
     const PX='#2563eb';
     const levels=[];
-    if(S){ levels.push([S.trigger,'#db2777',[6,4],'Trigger']); }
-    if(opts.target) levels.push([opts.target,'rgba(124,58,237,.6)',[2,4],'Target']);
+    // Trigger / Target are the trade plan drawn onto the chart: an entry price
+    // and a price objective for a named security. That reads as a
+    // recommendation rather than research, so both are behind
+    // TRADE_PLAN_ENABLED (off by default). The chart, the moving averages and
+    // the price history are unaffected — only the two action lines go.
+    if(_tmFlag('trade_plan')){
+      if(S){ levels.push([S.trigger,'#db2777',[6,4],'Trigger']); }
+      if(opts.target) levels.push([opts.target,'rgba(124,58,237,.6)',[2,4],'Target']);
+    }
     const visR=(hi_-lo_)||1;
     levels.forEach(L=>{ const v=L[0]; if(v!=null && v>=lo_-visR*0.45 && v<=hi_+visR*0.45){ lo_=Math.min(lo_,v); hi_=Math.max(hi_,v); } });
     const pad=(hi_-lo_)*0.06||1; lo_-=pad; hi_+=pad;

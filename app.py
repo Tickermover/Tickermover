@@ -4004,6 +4004,12 @@ async def dashboard():
                 "hot_list_n":   config.HOT_LIST_N,
                 "account_size": config.ACCOUNT_SIZE_USD,
                 "regime":       market_regime.get(),
+                # Feature switches the client branches on. See config.py — these
+                # turn off the trade plan and the public track-record strip.
+                "flags": {
+                    "trade_plan":   bool(getattr(config, "TRADE_PLAN_ENABLED", False)),
+                    "track_record": bool(getattr(config, "TRACK_RECORD_PUBLIC", False)),
+                },
             }), ensure_ascii=False, separators=(",", ":"))
             injection = f'\n<script>window.__AH_DATA__={payload};</script>\n'
             html = html.replace("</head>", injection + "</head>", 1)
