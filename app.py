@@ -4014,6 +4014,17 @@ async def dashboard():
             injection = f'\n<script>window.__AH_DATA__={payload};</script>\n'
             html = html.replace("</head>", injection + "</head>", 1)
 
+        # Prime Tickers off -> hide every surface that points at it. Injected as
+        # CSS rather than string-surgery on a 1.7 MB template, and paired with
+        # the 404 on /api/model-portfolio* so the panel cannot be reached by
+        # unhiding an element in devtools either.
+        if not getattr(config, "MODEL_PORTFOLIO_ENABLED", False):
+            html = html.replace(
+                "</head>",
+                '<style>[data-feature="model"]{display:none!important}</style></head>',
+                1,
+            )
+
         return HTMLResponse(content=_with_consent(html))
     except FileNotFoundError:
         return HTMLResponse(
@@ -7521,6 +7532,13 @@ async def api_why_today(ticker: str, force: bool = False,
     """Return {ticker, why, status}. Observational (what the scan flagged),
     not advice. Served from a durable per-ticker cache; only (re)generated when
     missing, so it costs nothing after the first view."""
+    # Prime Tickers is switched off (config.MODEL_PORTFOLIO_ENABLED). A tracked
+    # list of picks with open positions and a running performance record is the
+    # hardest feature here to describe as anything but a recommendation, so the
+    # endpoint is closed rather than merely hidden in the UI — otherwise the
+    # data stays a public, scrapeable list of picks.
+    if not getattr(config, "MODEL_PORTFOLIO_ENABLED", False):
+        raise HTTPException(status_code=404, detail="Not found")
     import asyncio
     import why_today as _why
     sym = ticker.upper()
@@ -11900,6 +11918,13 @@ PRIME_FREE_PICKS = 3
 @app.get("/api/model-portfolio")
 async def api_model_portfolio(user: Optional[dict] = Depends(_current_user),
                               creds: Optional[HTTPAuthorizationCredentials] = Depends(_bearer)):
+    # Prime Tickers is switched off (config.MODEL_PORTFOLIO_ENABLED). A tracked
+    # list of picks with open positions and a running performance record is the
+    # hardest feature here to describe as anything but a recommendation, so the
+    # endpoint is closed rather than merely hidden in the UI — otherwise the
+    # data stays a public, scrapeable list of picks.
+    if not getattr(config, "MODEL_PORTFOLIO_ENABLED", False):
+        raise HTTPException(status_code=404, detail="Not found")
     global _model_portfolio
     if not _model_portfolio or not _model_portfolio.get("picks"):
         if not _universe_data:
@@ -12463,6 +12488,13 @@ async def api_model_portfolio_history():
     """Return the closed-trades log. Adds derived stats so the UI can render
     a leaderboard-style summary (hit rate, avg gain/loss, exit-reason mix,
     and benchmark-relative alpha vs SPY over each trade's own window)."""
+    # Prime Tickers is switched off (config.MODEL_PORTFOLIO_ENABLED). A tracked
+    # list of picks with open positions and a running performance record is the
+    # hardest feature here to describe as anything but a recommendation, so the
+    # endpoint is closed rather than merely hidden in the UI — otherwise the
+    # data stays a public, scrapeable list of picks.
+    if not getattr(config, "MODEL_PORTFOLIO_ENABLED", False):
+        raise HTTPException(status_code=404, detail="Not found")
     history = _load_trade_history()
     trades = history.get("trades", [])
     if not trades:
@@ -12793,6 +12825,13 @@ async def api_model_portfolio_reset(user: Optional[dict] = Depends(_current_user
     Auth (B4 fix): admin-only — a reset force-closes every open pick into the
     public closed-trades ledger, so it must never be anonymously triggerable.
     """
+    # Prime Tickers is switched off (config.MODEL_PORTFOLIO_ENABLED). A tracked
+    # list of picks with open positions and a running performance record is the
+    # hardest feature here to describe as anything but a recommendation, so the
+    # endpoint is closed rather than merely hidden in the UI — otherwise the
+    # data stays a public, scrapeable list of picks.
+    if not getattr(config, "MODEL_PORTFOLIO_ENABLED", False):
+        raise HTTPException(status_code=404, detail="Not found")
     global _model_portfolio
     if not user or (user.get("email") or "").lower() not in _AI_ALLOW:
         raise HTTPException(status_code=403, detail="Admin only.")

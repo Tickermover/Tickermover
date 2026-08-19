@@ -117,6 +117,21 @@ AI_MONTHLY_USD_CAP = float(_env("AI_MONTHLY_USD_CAP", "50") or "50")
 TRADE_PLAN_ENABLED  = (_env("TRADE_PLAN_ENABLED",  "0") or "0").strip().lower() in ("1", "true", "yes", "on")
 TRACK_RECORD_PUBLIC = (_env("TRACK_RECORD_PUBLIC", "0") or "0").strip().lower() in ("1", "true", "yes", "on")
 
+# MODEL_PORTFOLIO_ENABLED — the Prime Tickers panel and its API. OFF since
+# 20 Aug 2026, at the owner's instruction.
+#
+# This is the biggest single descope on the site. Prime Tickers publishes a
+# tracked list of top-10 picks with open and closed positions and a running
+# performance record — which is the hardest feature to describe as anything
+# other than a recommendation on named securities, and the hardest to reconcile
+# with the "generic commentary" characterisation the disclaimer relies on.
+#
+# Switched off, not deleted: the panel, its nav entry, the command-palette
+# entry and the /api/model-portfolio* endpoints all disappear, while the trade
+# ledger and every line of code stay in the repo. Setting this to 1 restores
+# the feature exactly as it was.
+MODEL_PORTFOLIO_ENABLED = (_env("MODEL_PORTFOLIO_ENABLED", "0") or "0").strip().lower() in ("1", "true", "yes", "on")
+
 
 # ── Pro gating master switch ──────────────────────────────────────────────────
 # OFF since 18 Aug 2026: pricing is not decided, so nothing is paywalled and no

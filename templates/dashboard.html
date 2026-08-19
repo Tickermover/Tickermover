@@ -8335,7 +8335,7 @@ document.addEventListener('keydown', function(e){
          modal flash on load. This is the upsell, not the enforcement: the real
          gate is server-side in /api/model-portfolio, which serves free callers
          PRIME_FREE_PICKS and a locked_count. -->
-    <div class="v2-nav-item" onclick="(window.__PLAN&&window.__PLAN.loaded&&!window.__PLAN.pro)?openUpgradeModal():v2Show('model',this)">
+    <div class="v2-nav-item" data-feature="model" onclick="(window.__PLAN&&window.__PLAN.loaded&&!window.__PLAN.pro)?openUpgradeModal():v2Show('model',this)">
       <svg viewBox="0 0 24 24"><defs><linearGradient id="ahg-hunts" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FBBF24"/><stop offset="1" stop-color="#F97316"/></linearGradient></defs><path fill="url(#ahg-hunts)" d="M12 2.3l2.8 5.7 6.3.9-4.5 4.4 1.1 6.3L12 20.6l-5.6 3 1.1-6.3L3 12.9l6.3-.9z"/></svg><span>Prime Tickers</span><span class="v2-nav-tag v2-tag-pro">PRO</span>
     </div>
     <div class="v2-nav-item" onclick="v2Show('scans',this);scansInit()">
@@ -9149,7 +9149,7 @@ document.addEventListener('keydown', function(e){
 </div>
 
 <!-- MODEL PORTFOLIO -->
-<div id="panel-model" class="panel">
+<div id="panel-model" class="panel" data-feature="model">
   <div class="panel-header">
     <div>
       <div class="panel-h-title">🎯 Prime <em>Tickers</em></div>
