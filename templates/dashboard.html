@@ -21503,11 +21503,6 @@ let _authRefreshTimer = null;
 async function authInit() {
   if (!_AUTH.token) return;
 
-  // Existing sessions already hold a token in localStorage, so the setter
-  // above never fires for them. Sync on every init so a returning reader
-  // establishes the server-visible cookie without having to sign in again.
-  _syncSessionCookie(_AUTH.token);
-
   // Show UI immediately with stored user data (instant, no wait)
   const stored = _AUTH.user;
   if (stored && (stored.email || stored.id)) {
@@ -21522,6 +21517,16 @@ async function authInit() {
     await _authEnsureFresh();
     if (!_AUTH.token) { _authUpdateUI(null); return; }
   }
+
+  // Sync the server-visible cookie only AFTER the refresh above has settled.
+  // Existing sessions hold a token in localStorage, so the _AUTH.token setter
+  // never fires for them and this is the only place they establish a cookie —
+  // but doing it BEFORE the refresh raced it: a stale token makes this POST
+  // 401, the global fetch interceptor answers a 401 by calling _authDoRefresh,
+  // and two concurrent refreshes on a single-use Supabase refresh token means
+  // one of them comes back 400, which runs _AUTH.clear() and signs the user
+  // out. Ordering it here means the token is already known-good.
+  _syncSessionCookie(_AUTH.token);
 
   // Silently fetch full profile to get email/name — never clear session on a
   // transient failure. The manual 401→refresh→retry that used to live here is
@@ -21748,6 +21753,12 @@ window.addEventListener('online', function(){
       if (typeof input !== 'string') return r;          // Request objects: leave alone
       if (!/^\/api\//.test(input) && input.indexOf(location.origin + '/api/') !== 0) return r;
       if (input.indexOf('/api/auth/refresh') !== -1) return r;   // never recurse
+      // /api/session is the cookie mirror. It is fire-and-forget and its 401
+      // means nothing to the user, but letting the interceptor answer that 401
+      // with a token refresh risks racing the refresh in authInit — and a
+      // single-use refresh token used twice returns 400, which signs the user
+      // out. Never retry it.
+      if (input.indexOf('/api/session') !== -1) return r;
       if (!_AUTH.token || !_AUTH.refresh) return r;
       const hdrs = new Headers((init && init.headers) || {});
       if (!hdrs.has('Authorization')) return r;         // 401 wasn't about our token
