@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TickerMover — research tool for US stocks</title>
+<meta name="description" content="Screen 545 US-listed companies on fundamentals, filings and sector context. A research tool, not advice.">
+<!-- noindex: this is the paid-acquisition doormat, not an SEO page. It must not
+     compete with / for the same queries, and it should only ever be reached
+     from an ad. -->
+<meta name="robots" content="noindex, follow">
+<link rel="icon" type="image/svg+xml" href="/static/brand/tickermover-mark.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;600;700;800&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0A2F46; --ink-2:#33485c; --muted:#5F7183;
+    --paper:#FBFCFD; --raise:#fff; --line:#e2e8f0;
+    --accent:#14587D; --accent-soft:#EAF2F7; --warm:#FFF3D9; --warm-line:#FFC75F;
+    --sans:'Public Sans',system-ui,-apple-system,Segoe UI,sans-serif;
+    --mono:'JetBrains Mono',ui-monospace,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--paper);color:var(--ink);font-family:var(--sans);line-height:1.6;
+       -webkit-font-smoothing:antialiased}
+  a{color:inherit}
+  .wrap{max-width:940px;margin:0 auto;padding:0 22px}
+
+  header{padding:26px 0}
+  .brand{display:flex;align-items:center;gap:9px;font-weight:800;font-size:19px;letter-spacing:-.01em}
+  .brand svg{width:22px;height:26px}
+
+  .hero{padding:44px 0 40px;border-bottom:1px solid var(--line)}
+  h1{font-size:clamp(30px,5.2vw,46px);line-height:1.1;letter-spacing:-.02em;font-weight:800;
+     text-wrap:balance;max-width:17ch}
+  .sub{font-size:18px;color:var(--ink-2);margin-top:16px;max-width:56ch}
+  .cta-row{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:26px}
+  .cta{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;
+       font-weight:700;font-size:15.5px;padding:13px 24px;border-radius:100px;text-decoration:none;
+       transition:transform .12s,box-shadow .12s}
+  .cta:hover{transform:translateY(-1px);box-shadow:0 10px 22px -10px rgba(20,88,125,.7)}
+  .cta-2{background:transparent;color:var(--accent);border:1px solid var(--line);font-weight:600}
+  .cta-note{font-size:13px;color:var(--muted)}
+
+  .strip{display:grid;gap:1px;background:var(--line);border:1px solid var(--line);
+         border-radius:4px;overflow:hidden;margin:36px 0;
+         grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+  .strip div{background:var(--raise);padding:16px 18px}
+  .strip b{display:block;font-family:var(--mono);font-size:23px;font-weight:600;letter-spacing:-.02em}
+  .strip span{display:block;font-size:12.5px;color:var(--muted);margin-top:2px}
+
+  section{padding:34px 0;border-top:1px solid var(--line)}
+  h2{font-size:24px;font-weight:800;letter-spacing:-.015em;margin-bottom:6px}
+  .lede{color:var(--ink-2);max-width:62ch}
+  .grid{display:grid;gap:22px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));margin-top:22px}
+  .card h3{font-size:15.5px;font-weight:700;margin-bottom:5px}
+  .card p{font-size:14.5px;color:var(--ink-2)}
+
+  .plain{border-left:3px solid var(--warm-line);background:var(--warm);padding:18px 22px;
+         border-radius:0 4px 4px 0;margin-top:26px}
+  .plain h3{font-size:15px;font-weight:800;margin-bottom:6px}
+  .plain p{font-size:14.5px;color:#5c4708}
+  .plain li{font-size:14.5px;color:#5c4708;margin-left:18px}
+
+  footer{border-top:1px solid var(--line);margin-top:36px;padding:24px 0 48px;
+         font-size:12.5px;color:var(--muted)}
+  footer a{color:var(--accent)}
+  .foot-links{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:10px}
+  a:focus-visible,.cta:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <svg viewBox="0 0 90 105" fill="none" aria-hidden="true">
+        <polyline points="5,100 23,42 45,66 67,26 85,100" stroke="#14587D" stroke-width="9"
+                  fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="67" cy="8" r="7" fill="#14587D"/>
+      </svg>
+      TickerMover
+    </div>
+  </header>
+
+  <!-- ─────────────────────────────────────────────────────────────────────
+       PAID-ACQUISITION LANDING PAGE.
+
+       HARD RULE: nothing on this page names a security, shows a score, a
+       price, a return, an upside figure or a chart. This is the page an ad
+       points at, so it is the financial promotion — and a promotion that
+       sells software is a very different thing from one that showcases
+       stocks. Sell the tool. Never the tickers.
+
+       If you are tempted to add "see today's top-scoring stocks" here,
+       that is exactly the line this page exists to stay behind.
+       ───────────────────────────────────────────────────────────────────── -->
+
+  <div class="hero">
+    <h1>Company research, without twelve browser tabs.</h1>
+    <p class="sub">TickerMover pulls fundamentals, filings, earnings history and sector context for
+       545 US-listed companies into one screen, and scores each one on six research pillars so you
+       can compare like for like.</p>
+    <div class="cta-row">
+      <a class="cta" href="/login?signup">Create a free account</a>
+      <a class="cta cta-2" href="/learn">How the scoring works</a>
+    </div>
+    <p class="cta-note" style="margin-top:12px">Free plan, no card required. Capital at risk.</p>
+  </div>
+
+  <div class="strip">
+    <div><b>545</b><span>US companies covered</span></div>
+    <div><b>6</b><span>research pillars</span></div>
+    <div><b>SEC</b><span>filings, read for you</span></div>
+    <div><b>£0</b><span>to start</span></div>
+  </div>
+
+  <section>
+    <h2>What it actually does</h2>
+    <p class="lede">Four jobs that otherwise mean a spreadsheet and an afternoon.</p>
+    <div class="grid">
+      <div class="card">
+        <h3>Screen the whole universe</h3>
+        <p>Filter 545 companies on margins, growth, leverage, cash generation and valuation. No
+           formula syntax, no spreadsheet.</p>
+      </div>
+      <div class="card">
+        <h3>Read the filings faster</h3>
+        <p>Earnings releases and SEC filings summarised down to what changed, with the source
+           document one click away.</p>
+      </div>
+      <div class="card">
+        <h3>Compare like for like</h3>
+        <p>Any company against its sector on the same measures, so a 40% margin means something
+           in context.</p>
+      </div>
+      <div class="card">
+        <h3>One score, six pillars</h3>
+        <p>A 0–100 composite across momentum, growth, quality, valuation, sentiment and risk, with
+           every input shown.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>What it is not</h2>
+    <div class="plain">
+      <h3>Read this before you sign up</h3>
+      <p>TickerMover is a research tool. It is not an adviser, and it does not tell you what to buy
+         or sell.</p>
+      <ul style="margin-top:8px">
+        <li>No buy, sell or hold recommendations</li>
+        <li>No personal advice, and nothing tailored to your circumstances</li>
+        <li>Not authorised or regulated by the Financial Conduct Authority</li>
+        <li>Past performance is not a reliable indicator of future results</li>
+      </ul>
+      <p style="margin-top:10px">Every decision, and its consequences, remain yours. Capital is at
+         risk. If you want advice, speak to an FCA-authorised adviser.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>Start free</h2>
+    <p class="lede">Create an account and the whole research surface is open. No card, cancel any
+       time.</p>
+    <div class="cta-row">
+      <a class="cta" href="/login?signup">Create a free account</a>
+    </div>
+  </section>
+
+  <footer>
+    <div class="foot-links">
+      <a href="/terms">Terms</a>
+      <a href="/privacy">Privacy</a>
+      <a href="/disclaimer">Disclaimer</a>
+      <a href="/learn">Methodology</a>
+    </div>
+    TickerMover provides quantitative research information on publicly listed companies. It is not
+    investment advice, not a personal recommendation, and not FCA-authorised. Past performance is
+    not a reliable indicator of future results. Capital at risk.
+  </footer>
+</div>
+
+</body>
+</html>

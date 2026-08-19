@@ -21460,30 +21460,53 @@ document.addEventListener('DOMContentLoaded', async () => {
    AUTH  —  Supabase email/password sign-in + JWT session
    ---------------------------------------------------------- */
 
+// Mirror the session into an httpOnly cookie so the SERVER can tell a signed-in
+// reader from an anonymous one. The bearer token in localStorage is invisible at
+// page-render time, which is why /app used to ship its full data payload to
+// everybody. Fire-and-forget and never throws: if this fails the dashboard just
+// takes its normal cold-start fetch path.
+function _syncSessionCookie(token){
+  try {
+    if (token) {
+      fetch('/api/session', { method:'POST', headers:{ Authorization:'Bearer ' + token } })
+        .catch(function(){});
+    } else {
+      fetch('/api/session', { method:'DELETE' }).catch(function(){});
+    }
+  } catch (e) {}
+}
+
 // Persistent session stored in localStorage — survives refreshes and reopened tabs
 const _AUTH = {
   get token()   { return localStorage.getItem('ah_token'); },
   set token(v)  {
     if (v) {
       localStorage.setItem('ah_token', v);
+      _syncSessionCookie(v);
       // Stamp a returning-visitor flag so future visits default the auth
       // modal to SIGN IN instead of sign up. Persists even after logout.
       try { localStorage.setItem('ah_seen_signin', '1'); } catch(e) {}
     } else {
       localStorage.removeItem('ah_token');
+      _syncSessionCookie(null);
     }
   },
   get refresh() { return localStorage.getItem('ah_refresh'); },
   set refresh(v){ v ? localStorage.setItem('ah_refresh', v) : localStorage.removeItem('ah_refresh'); },
   get user()    { try { return JSON.parse(localStorage.getItem('ah_user') || 'null'); } catch { return null; } },
   set user(v)   { v ? localStorage.setItem('ah_user', JSON.stringify(v)) : localStorage.removeItem('ah_user'); },
-  clear()       { ['ah_token','ah_refresh','ah_user'].forEach(k => localStorage.removeItem(k)); }
+  clear()       { ['ah_token','ah_refresh','ah_user'].forEach(k => localStorage.removeItem(k)); _syncSessionCookie(null); }
 };
 
 let _authRefreshTimer = null;
 
 async function authInit() {
   if (!_AUTH.token) return;
+
+  // Existing sessions already hold a token in localStorage, so the setter
+  // above never fires for them. Sync on every init so a returning reader
+  // establishes the server-visible cookie without having to sign in again.
+  _syncSessionCookie(_AUTH.token);
 
   // Show UI immediately with stored user data (instant, no wait)
   const stored = _AUTH.user;

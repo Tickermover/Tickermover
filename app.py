@@ -124,6 +124,31 @@ async def _current_user(
     return supabase.verify_token(creds.credentials)
 
 
+# ── Session cookie (Tier 2 gating) ───────────────────────────────────────────
+# Auth is a Supabase bearer token held in localStorage, which the server cannot
+# see at page-render time — so /app could not tell a signed-in reader from an
+# anonymous one, and shipped the full 544-ticker payload to everybody.
+#
+# This adds a SECOND, server-visible copy of the same session as an httpOnly
+# cookie. It is deliberately ADDITIVE: every existing API call keeps using the
+# bearer header, nothing about login changes, and a visitor whose cookie is
+# missing simply falls through to the client-side fetch path the dashboard
+# already has for cold starts. Worst case is a slower first paint, never a
+# broken page.
+_SESSION_COOKIE = "tm_session"
+
+
+def _session_user(request: Request) -> Optional[dict]:
+    """Verify the session cookie. None when absent or invalid."""
+    tok = request.cookies.get(_SESSION_COOKIE)
+    if not tok:
+        return None
+    try:
+        return supabase.verify_token(tok)
+    except Exception:
+        return None
+
+
 # ── AI cost gating ───────────────────────────────────────────────────────────
 # The web-grounded AI features (research Deep-Dive, peer-compare, Ask AI) are the
 # only ones that cost Anthropic credits, so they are gated to Pro subscribers.
@@ -1430,6 +1455,34 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="TickerMover", lifespan=lifespan)
+
+
+@app.post("/api/session")
+async def api_session_set(user: Optional[dict] = Depends(_current_user),
+                          creds: Optional[HTTPAuthorizationCredentials] = Depends(_bearer)):
+    """Mirror a verified bearer token into an httpOnly cookie.
+
+    The client calls this once after sign-in. We only ever store a token the
+    bearer dependency has already verified, so this cannot be used to plant an
+    arbitrary cookie.
+    """
+    if not user or not creds:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    resp = JSONResponse({"ok": True})
+    resp.set_cookie(
+        _SESSION_COOKIE, creds.credentials,
+        max_age=60 * 60 * 24 * 7, httponly=True, secure=True, samesite="lax", path="/",
+    )
+    return resp
+
+
+@app.delete("/api/session")
+async def api_session_clear():
+    """Drop the cookie on sign-out."""
+    resp = JSONResponse({"ok": True})
+    resp.delete_cookie(_SESSION_COOKIE, path="/")
+    return resp
+
 
 # ── GZip compression ────────────────────────────────────────────────
 # /api/universe and /app both return ~1.6 MB of JSON/HTML. Gzipping
@@ -3473,6 +3526,26 @@ h2{{font-size:18px;margin:30px 0 12px}}
 import seo_pages as _seo
 
 
+@app.get("/start", response_class=HTMLResponse)
+async def start_page():
+    """Paid-acquisition landing page.
+
+    Ads point here, not at /. The home page showcases named companies with
+    scores; this one sells the software and never names a security, shows a
+    score, a price, a return or a chart. The page an ad points at IS the
+    financial promotion, so keeping this one about the tool is the cheapest
+    and largest thing we can do about promotion risk.
+
+    noindex — it must not compete with / for organic queries.
+    """
+    from pathlib import Path
+    path = BASE_DIR / "templates" / "start.html"
+    try:
+        return HTMLResponse(content=_with_analytics(path.read_text(encoding="utf-8")))
+    except FileNotFoundError:
+        return HTMLResponse(content="<h2>start.html not found</h2>", status_code=404)
+
+
 @app.get("/learn", response_class=HTMLResponse)
 async def learn_index():
     """Hub page that links to every educational pillar — internal-link
@@ -3954,7 +4027,7 @@ async def desk_report_legacy():
 
 
 @app.get("/app", response_class=HTMLResponse)
-async def dashboard():
+async def dashboard(request: Request):
     """
     Main dashboard SPA — with server-side data injection.
 
@@ -3965,7 +4038,17 @@ async def dashboard():
     try:
         html = DASHBOARD_HTML.read_text(encoding="utf-8")
 
-        if _universe_data:
+        # SSR payload only for a verified session. Anonymous requests used to
+        # receive the full 544-ticker payload inline, which made every score on
+        # the site readable without an account and put the whole product into
+        # the public promotional surface.
+        #
+        # Safe to withhold: when __AH_DATA__ is absent the dashboard takes its
+        # existing cold-start path (PATH B -> fullRender()) and fetches the data
+        # itself, so a signed-in reader whose cookie has not been set yet gets a
+        # slower first paint rather than a broken page.
+        _sess = _session_user(request)
+        if _universe_data and _sess:
             # Embed current data as window.__AH_DATA__ inside <head>
             # The JS checks this and renders immediately — no /api/universe round-trip.
             # Apply the same slim-down rules as /api/universe so the inlined
