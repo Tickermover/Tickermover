@@ -37,8 +37,11 @@ advice — a UK solicitor must review before prod launch for paid users.
 """
 from __future__ import annotations
 
+import logging
 import os
 from datetime import datetime
+
+logger = logging.getLogger(__name__)
 
 # Effective date is regenerated on each cold start so users always see
 # a date that reflects the latest deploy. To pin a date, override via env.
@@ -73,11 +76,20 @@ def _business_details_html() -> str:
             rows.append(_ADDRESS)
         rows.append(f'Contact: <a href="mailto:{_CONTACT}" class="body-link">{_CONTACT}</a>')
         return "<p>" + "<br>".join(rows) + "</p>"
+    # Reader-facing wording ONLY. This block used to print the env var names to
+    # set — LEGAL_ENTITY_NAME and friends — on the LIVE public Terms page, so
+    # visitors were reading our deployment instructions inside a legal document.
+    # The reminder for us belongs in the startup log, not in the contract.
+    logger.warning(
+        "legal_pages: no registered entity configured — /terms shows a "
+        "'business details pending' notice. Set LEGAL_ENTITY_NAME, "
+        "LEGAL_COMPANY_NUMBER and LEGAL_ADDRESS before paid launch."
+    )
     return (
         '<div class="callout callout-amber"><strong>Business details pending.</strong> '
-        'The registered company name, Companies House number and contact address '
-        'must be published here before paid launch. Set <code>LEGAL_ENTITY_NAME</code>, '
-        '<code>LEGAL_COMPANY_NUMBER</code> and <code>LEGAL_ADDRESS</code>.</div>'
+        'Our registered company name, company number and contact address will be '
+        'published here. In the meantime you can reach us at '
+        f'<a href="mailto:{_CONTACT}" class="body-link">{_CONTACT}</a>.</div>'
     )
 
 
