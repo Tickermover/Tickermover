@@ -47,103 +47,17 @@ def sector_slugs(universe: list[dict]) -> dict[str, str]:
 
 # ─── Shared chrome ────────────────────────────────────────────────────
 
-_BASE_CSS = """
-*{margin:0;padding:0;box-sizing:border-box}
-button,input,select,textarea{font-family:inherit;font-size:inherit;line-height:inherit}
-html{scroll-behavior:smooth}
-body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;color:#0a0a0a;background:#fafbfc;line-height:1.65;font-size:16px;-webkit-font-smoothing:antialiased}
-a{color:#2970ff;text-decoration:none;font-weight:600}
-a:hover{text-decoration:underline}
-.mono{font-family:'JetBrains Mono',ui-monospace,monospace;font-feature-settings:'tnum' 1}
-.wrap{max-width:820px;margin:0 auto;padding:24px 24px 64px}
-.wrap-wide{max-width:1100px;margin:0 auto;padding:24px 24px 64px}
-.brand{display:inline-flex;align-items:baseline;font-size:16px;font-weight:800;color:#0a0a0a;margin-bottom:24px}
-.brand-wordmark{display:inline-flex;align-items:baseline;flex-wrap:nowrap;white-space:nowrap;color:#0a0e22}
-.brand-m{height:1.6em;width:auto;flex:none;align-self:baseline;margin:0 .02em}
-.crumbs{font-size:12.5px;color:#94a3b8;margin-bottom:8px;letter-spacing:.04em;text-transform:uppercase;font-weight:700}
-.crumbs a{color:#94a3b8;font-weight:600}
-.crumbs a:hover{color:#2970ff}
-h1{font-size:42px;font-weight:900;letter-spacing:-.03em;margin-bottom:10px;color:#0a0a0a;line-height:1.1}
-h1 .sym{font-family:'JetBrains Mono',monospace;color:#2970ff}
-.lede{font-size:19px;line-height:1.55;color:#475569;margin-bottom:32px;font-weight:500}
-h2{font-size:26px;font-weight:800;letter-spacing:-.02em;margin:48px 0 14px;color:#0a0a0a}
-h3{font-size:19px;font-weight:800;letter-spacing:-.012em;margin:28px 0 10px;color:#0a0a0a}
-p{margin-bottom:16px;color:#1e293b}
-ul,ol{margin:8px 0 20px 22px}
-li{margin-bottom:8px;color:#1e293b}
-.tag{display:inline-block;background:#EAF1FF;color:#1d4ed8;padding:4px 10px;border-radius:5px;font-size:11.5px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;margin-bottom:14px}
-blockquote{border-left:3px solid #2970ff;background:#EAF1FF;padding:14px 20px;margin:20px 0;border-radius:0 8px 8px 0;color:#0c2b6b;font-style:italic;font-size:15.5px}
-code{background:#f1f5f9;padding:2px 6px;border-radius:4px;font-family:'JetBrains Mono',monospace;font-size:14px;color:#0f172a}
-.cta{margin-top:48px;padding:30px 32px;background:linear-gradient(135deg,#0a0e22 0%,#0a2f8f 55%,#2970ff 100%);border-radius:16px;text-align:center;color:#fff}
-.cta h3{font-size:22px;font-weight:800;letter-spacing:-.02em;margin-bottom:8px;color:#fff}
-.cta p{color:rgba(255,255,255,.7);margin-bottom:18px}
-.cta-btn{display:inline-block;background:#fff;color:#0a0a0a;padding:13px 26px;border-radius:10px;font-weight:700;font-size:14.5px}
-.cta-btn:hover{background:#f1f5f9;text-decoration:none}
-.legal{margin-top:36px;font-size:12px;color:#94a3b8;text-align:center;line-height:1.6}
-/* Global compliance footer — carried on every SEO page via page_shell() */
-.site-legal{margin-top:0;padding:22px 24px 40px;font-size:12px;color:#94a3b8;text-align:center;line-height:1.6;border-top:1px solid #e2e8f0;background:#fafbfc}
-.site-legal strong{color:#64748b;font-weight:700}
-/* Newsletter footer */
-.nl{margin-top:48px;padding:28px 24px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:14px}
-.nl h3{margin:0 0 6px;font-size:18px;font-weight:800}
-.nl p{margin:0 0 14px;color:#475569;font-size:14.5px}
-.nl form{display:flex;gap:8px;flex-wrap:wrap}
-.nl input[type=email]{flex:1;min-width:220px;padding:12px 14px;border:1px solid #cbd5e1;border-radius:8px;font-size:14.5px;font-family:inherit;background:#fff}
-.nl input[type=email]:focus{outline:none;border-color:#2970ff;box-shadow:0 0 0 3px rgba(41,112,255,.15)}
-.nl button{padding:12px 22px;background:#2970ff;color:#fff;border:none;border-radius:8px;font-weight:700;font-size:14.5px;cursor:pointer;font-family:inherit}
-.nl button:hover{background:#0042c5}
-.nl .nl-msg{margin-top:10px;font-size:13.5px;font-weight:600;min-height:18px}
-.nl .nl-msg.ok{color:#15803d}
-.nl .nl-msg.err{color:#b91c1c}
-.nl-honey{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
-/* Sector / pillar / compare cards */
-.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin:18px 0 28px}
-.card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:18px 20px;transition:all .15s}
-.card:hover{border-color:#2970ff;box-shadow:0 6px 16px rgba(41,112,255,.10);text-decoration:none}
-.card a{color:inherit;text-decoration:none;display:block}
-.card .ttl{font-size:15.5px;font-weight:800;color:#0a0a0a;margin-bottom:4px}
-.card .sub{font-size:13px;color:#64748b;line-height:1.5}
-/* Stock list table */
-.tbl{width:100%;border-collapse:collapse;margin:16px 0 28px;font-size:14.5px;background:#fff;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden}
-.tbl th{background:#f8fafc;text-align:left;padding:11px 14px;font-size:11.5px;font-weight:700;color:#475569;letter-spacing:.04em;text-transform:uppercase;border-bottom:1px solid #e2e8f0}
-.tbl td{padding:11px 14px;border-bottom:1px solid #eef0f3;vertical-align:top}
-.tbl tr:last-child td{border-bottom:none}
-.tbl tr:hover{background:#f8fafc}
-.tbl .tk{font-family:'JetBrains Mono',monospace;font-weight:800;color:#2970ff}
-.tbl .pop{font-family:'JetBrains Mono',monospace;font-weight:800}
-.tbl .grade{display:inline-block;width:24px;text-align:center;padding:3px 0;border-radius:5px;font-weight:800;font-size:12.5px;color:#fff}
-.tbl .grade.A{background:#15803d}.tbl .grade.B{background:#2970ff}.tbl .grade.C{background:#D4860A}.tbl .grade.D{background:#ea7317}.tbl .grade.F{background:#dc2626}
-.tbl .vd{color:#475569;font-size:13.5px;line-height:1.5}
-@media(max-width:640px){h1{font-size:32px}.lede{font-size:17px}.tbl{font-size:13px}.tbl td,.tbl th{padding:9px 8px}}
-/* Compare layout */
-.cmp-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:18px 0 30px}
-.cmp-card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:20px}
-.cmp-card .tk{font-family:'JetBrains Mono',monospace;font-size:24px;font-weight:900;color:#2970ff}
-.cmp-card .nm{font-size:14px;color:#64748b;margin-bottom:14px}
-.cmp-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #f1f5f9;font-size:14px}
-.cmp-row:last-child{border-bottom:none}
-.cmp-row .k{color:#64748b;font-weight:600}
-.cmp-row .v{font-family:'JetBrains Mono',monospace;font-weight:800;color:#0a0a0a}
-.cmp-vs{text-align:center;font-family:'JetBrains Mono',monospace;font-weight:800;color:#94a3b8;font-size:13px;letter-spacing:.06em;margin:4px 0}
-@media(max-width:640px){.cmp-grid{grid-template-columns:1fr}}
-"""
+import theme as _theme
 
-_FONTS_LINK = (
-    '<link rel="preconnect" href="https://fonts.googleapis.com">'
-    '<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900'
-    '&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">'
-)
+_BASE_CSS = _theme.THEME_CSS
+
+_FONTS_LINK = _theme.FONTS_LINK
 
 def brand_header() -> str:
-    # Canonical TickerMover wordmark — kept byte-for-byte in sync with the
-    # landing page (.brand-wordmark): "Ticker" + blue chart-arrow "M" + "over".
-    return (
-        '<a href="/" class="brand"><span class="brand-wordmark">Ticker'
-        '<svg class="brand-m" viewBox="0 0 90 105" fill="none" aria-hidden="true">'
-        '<polyline points="5,100 23,42 45,66 67,26 85,100" stroke="#2970ff" '
-        'stroke-width="9" fill="none" stroke-linecap="round" stroke-linejoin="round"/>'
-        '<circle cx="67" cy="8" r="7" fill="#2970ff"/></svg>over</span></a>'
-    )
+    """Canonical wordmark. Lives in theme.py so the M stays navy and the dot
+    stays orange - these pages rendered a blue M with a BLUE dot until now,
+    because the old markup carried the colours inline."""
+    return _theme.wordmark()
 
 
 def newsletter_block(source: str) -> str:
@@ -160,8 +74,8 @@ def newsletter_block(source: str) -> str:
     <button type="submit">Subscribe</button>
   </form>
   <div class="nl-msg" id="nl-msg-{safe}"></div>
-  <div style="margin-top:14px;font-size:12.5px;color:#94a3b8">
-    Questions or feedback? Email <a href="mailto:support@tickermover.com" style="color:#2970ff">support@tickermover.com</a>
+  <div style="margin-top:14px;font-size:12.5px;color:#758696">
+    Questions or feedback? Email <a href="mailto:support@tickermover.com" style="color:#14587D">support@tickermover.com</a>
   </div>
 </div>
 <script>
@@ -243,8 +157,9 @@ def page_shell(title: str, desc: str, canonical: str, body_html: str,
 <style>{_BASE_CSS}</style>
 </head>
 <body>
+{_theme.nav_html()}
 {body_html}
-<footer class="site-legal"><strong>Research &amp; opinion, not advice.</strong> Not FCA-authorised. Capital at risk. TickerMover provides generic research and commentary, not a personal recommendation — always do your own research.</footer>
+{_theme.footer_html()}
 </body>
 </html>"""
 
@@ -541,7 +456,7 @@ def _stock_row(t: dict) -> str:
     grade_class = grade if grade in ("A", "B", "C", "D", "F") else ""
     return (
         f'<tr><td><a href="/stocks/{sym}" class="tk">{sym}</a><br>'
-        f'<span style="font-size:12.5px;color:#64748b">{name}</span></td>'
+        f'<span style="font-size:12.5px;color:#5d6c7b">{name}</span></td>'
         f'<td><span class="grade {grade_class}">{grade}</span></td>'
         f'<td class="pop">{pop_n}</td>'
         f'<td class="vd">{bl}</td></tr>'
@@ -685,22 +600,22 @@ def render_sector(slug: str, universe: list[dict], site_origin: str) -> Optional
     <thead><tr><th>Ticker</th><th>Grade</th><th>Score</th><th>Bottom line</th></tr></thead>
     <tbody>{table_html or '<tr><td colspan="4">No stocks scored in this sector yet — the universe is warming up.</td></tr>'}</tbody>
   </table>
-  <p style="font-size:13px;color:#64748b">Quant Scores update every 5 minutes during US market hours. Grades: <strong>A</strong> Top Tier · <strong>B</strong> Quality · <strong>C</strong> Average · <strong>D</strong> Below Avg · <strong>F</strong> Weak. (Quality descriptors, not buy/sell recommendations.)</p>
+  <p style="font-size:13px;color:#5d6c7b">Quant Scores update every 5 minutes during US market hours. Grades: <strong>A</strong> Top Tier · <strong>B</strong> Quality · <strong>C</strong> Average · <strong>D</strong> Below Avg · <strong>F</strong> Weak. (Quality descriptors, not buy/sell recommendations.)</p>
   {cta_block("See the full live dashboard")}
   {newsletter_block("sector-" + slug)}
   <div class="legal">TickerMover is a research tool, not financial advice, and not FCA-authorised. Always do your own research before investing. Capital at risk.</div>
 </div>
 <style>
 .sp-grid{{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1px;
-  background:#E2E8F0;border:1px solid #E2E8F0;border-radius:10px;overflow:hidden;margin:0 0 8px}}
+  background:#D6DADD;border:1px solid #D6DADD;border-radius:10px;overflow:hidden;margin:0 0 8px}}
 .sp-stat{{background:#fff;padding:13px 15px}}
 .sp-k{{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#94A3B8;font-weight:700}}
 .sp-v{{font-size:20px;font-weight:700;color:#0A2F46;margin-top:5px;font-variant-numeric:tabular-nums}}
 .sp-b{{font-size:11px;color:#94A3B8;margin-top:2px;font-variant-numeric:tabular-nums}}
-.sp-read{{font-size:13.5px;color:#475569;line-height:1.6;margin:0 0 22px;padding:11px 15px;
-  background:#F6F8FB;border-left:3px solid #FF6100;border-radius:4px}}
+.sp-read{{font-size:13.5px;color:#5d6c7b;line-height:1.6;margin:0 0 22px;padding:11px 15px;
+  background:#F2F1EE;border-left:3px solid #FF6100;border-radius:4px}}
 .sp-ai{{font-size:14px;color:#26333F;line-height:1.65;margin:14px 0 10px;padding:14px 16px;
-  background:#fff;border:1px solid #E2E8F0;border-radius:8px}}
+  background:#fff;border:1px solid #D6DADD;border-radius:8px}}
 .sp-ai span{{display:block;font-size:10px;letter-spacing:.09em;text-transform:uppercase;
   color:#9A3412;font-weight:800;margin-bottom:6px}}
 </style>"""
@@ -712,16 +627,16 @@ def render_sector(slug: str, universe: list[dict], site_origin: str) -> Optional
 
 
 _SECTOR_INDEX_CSS = """
-.si-note{font-size:13px;color:#64748b;line-height:1.6;margin:0 0 20px;padding:12px 16px;
-  background:#F6F8FB;border-left:3px solid #FF6100;border-radius:4px}
+.si-note{font-size:13px;color:#5d6c7b;line-height:1.6;margin:0 0 20px;padding:12px 16px;
+  background:#F2F1EE;border-left:3px solid #FF6100;border-radius:4px}
 .si-note b{color:#0A2F46}
-.si-wrap{overflow-x:auto;border:1px solid #E2E8F0;border-radius:10px;background:#fff;margin:0 0 26px}
+.si-wrap{overflow-x:auto;border:1px solid #D6DADD;border-radius:10px;background:#fff;margin:0 0 26px}
 table.si{border-collapse:collapse;width:100%;min-width:880px;font-variant-numeric:tabular-nums}
-table.si th{position:sticky;top:0;background:#F6F8FB;text-align:right;font-size:10.5px;
-  letter-spacing:.07em;text-transform:uppercase;color:#64748b;font-weight:700;
-  padding:11px 12px;border-bottom:1px solid #E2E8F0;white-space:nowrap}
+table.si th{position:sticky;top:0;background:#F2F1EE;text-align:right;font-size:10.5px;
+  letter-spacing:.07em;text-transform:uppercase;color:#5d6c7b;font-weight:700;
+  padding:11px 12px;border-bottom:1px solid #D6DADD;white-space:nowrap}
 table.si th:first-child,table.si td:first-child{text-align:left}
-table.si td{padding:11px 12px;border-bottom:1px solid #F1F5F9;text-align:right;
+table.si td{padding:11px 12px;border-bottom:1px solid #F2F1EE;text-align:right;
   font-size:13.5px;color:#26333F;white-space:nowrap}
 table.si tr:last-child td{border-bottom:0}
 table.si tr.si-base td{background:#FFF8F2;font-weight:700;color:#0A2F46}
@@ -731,7 +646,7 @@ table.si a.si-nm:hover{text-decoration:underline}
 .si-bar{display:inline-block;width:52px;height:6px;border-radius:99px;background:#EDF1F6;
   vertical-align:middle;margin-right:7px;overflow:hidden}
 .si-bar i{display:block;height:100%;background:#FF6100;border-radius:99px}
-.si-led a{color:#0040c1;text-decoration:none;font-family:ui-monospace,Menlo,monospace;font-size:12px}
+.si-led a{color:#0A2F46;text-decoration:none;font-family:ui-monospace,Menlo,monospace;font-size:12px}
 .si-led a:hover{text-decoration:underline}
 .si-pos{color:#12704A;font-weight:650}
 .si-neg{color:#B32D23;font-weight:650}
@@ -822,7 +737,7 @@ def render_sector_index(universe: list[dict], site_origin: str) -> str:
       <tbody>{body_rows}</tbody>
     </table>
   </div>
-  <p style="font-size:13px;color:#64748b">Scores refresh every 5 minutes during US market hours. Grades: <strong>A</strong> Top Tier · <strong>B</strong> Quality · <strong>C</strong> Average · <strong>D</strong> Below Avg · <strong>F</strong> Weak — quality descriptors, not recommendations.</p>
+  <p style="font-size:13px;color:#5d6c7b">Scores refresh every 5 minutes during US market hours. Grades: <strong>A</strong> Top Tier · <strong>B</strong> Quality · <strong>C</strong> Average · <strong>D</strong> Below Avg · <strong>F</strong> Weak — quality descriptors, not recommendations.</p>
   {cta_block("Open the live dashboard")}
   {newsletter_block("sectors-index")}
   <div class="legal">TickerMover — research, not advice.</div>
@@ -893,31 +808,31 @@ def _cmp_card(t: dict) -> str:
   <div class="cmp-row"><span class="k">Forward P/E</span><span class="v">{pe_str}</span></div>
   <div class="cmp-row"><span class="k">1-mo momentum</span><span class="v">{mom_str}</span></div>
   <div class="cmp-row"><span class="k">Analyst upside</span><span class="v">{upside_str}</span></div>
-  <div style="margin-top:14px;padding-top:12px;border-top:1px solid #f1f5f9;font-size:13.5px;color:#475569;line-height:1.55">{bl}</div>
+  <div style="margin-top:14px;padding-top:12px;border-top:1px solid #F2F1EE;font-size:13.5px;color:#5d6c7b;line-height:1.55">{bl}</div>
 </div>
 """
 
 
 _CMP_CSS = """
-.h2h{overflow-x:auto;border:1px solid #E2E8F0;border-radius:10px;background:#fff;margin:0 0 24px}
+.h2h{overflow-x:auto;border:1px solid #D6DADD;border-radius:10px;background:#fff;margin:0 0 24px}
 table.h2h-t{border-collapse:collapse;width:100%;min-width:640px;font-variant-numeric:tabular-nums}
-table.h2h-t th{background:#F6F8FB;font-size:11px;letter-spacing:.06em;text-transform:uppercase;
-  color:#64748b;font-weight:700;padding:12px;border-bottom:1px solid #E2E8F0}
+table.h2h-t th{background:#F2F1EE;font-size:11px;letter-spacing:.06em;text-transform:uppercase;
+  color:#5d6c7b;font-weight:700;padding:12px;border-bottom:1px solid #D6DADD}
 table.h2h-t th.sd{font-size:15px;letter-spacing:0;text-transform:none;color:#0A2F46}
-table.h2h-t td{padding:12px;border-bottom:1px solid #F1F5F9;font-size:14px;color:#26333F;
+table.h2h-t td{padding:12px;border-bottom:1px solid #F2F1EE;font-size:14px;color:#26333F;
   text-align:center;white-space:nowrap}
-table.h2h-t td.mk{text-align:left;color:#475569;font-size:13.5px;white-space:normal}
+table.h2h-t td.mk{text-align:left;color:#5d6c7b;font-size:13.5px;white-space:normal}
 table.h2h-t td.mk i{display:block;font-style:normal;font-size:11.5px;color:#94A3B8;margin-top:2px}
 table.h2h-t tr:last-child td{border-bottom:0}
 table.h2h-t td.hi{background:#FFF6EF;font-weight:700;color:#0A2F46}
 .h2h-tag{display:inline-block;margin-left:6px;font-size:9.5px;font-weight:800;letter-spacing:.05em;
   color:#9A3412;background:rgba(255,97,0,.1);border-radius:4px;padding:1px 5px;vertical-align:middle}
-.h2h-ctx{font-size:13.5px;color:#475569;line-height:1.65;background:#F6F8FB;border-left:3px solid #FF6100;
+.h2h-ctx{font-size:13.5px;color:#5d6c7b;line-height:1.65;background:#F2F1EE;border-left:3px solid #FF6100;
   border-radius:4px;padding:14px 16px;margin:0 0 22px}
 .h2h-ctx b{color:#0A2F46}
 .h2h-sym{font-family:ui-monospace,Menlo,monospace;font-weight:700}
 .cs-lede{font-size:14px;color:#5D6C7B;line-height:1.65;max-width:78ch;margin:0 0 18px}
-.cs-wrap{display:grid;gap:1px;background:#E2E8F0;border:1px solid #E2E8F0;
+.cs-wrap{display:grid;gap:1px;background:#D6DADD;border:1px solid #D6DADD;
   border-radius:10px;overflow:hidden;margin:0 0 14px}
 .cs-sec{background:#fff;padding:16px 18px}
 .cs-sec h3{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#9A3412;
@@ -1218,10 +1133,10 @@ def render_article(art: dict, site_origin: str) -> Optional[str]:
 <style>
 .art{{max-width:760px;padding:26px 22px 60px}}
 .art-eyebrow{{font-size:11px;letter-spacing:.12em;text-transform:uppercase;
-  color:#94a3b8;margin:0 0 10px;font-weight:700}}
+  color:#758696;margin:0 0 10px;font-weight:700}}
 .art-h1{{font-size:clamp(27px,4.4vw,40px);line-height:1.15;letter-spacing:-.022em;
   color:#0A2F46;margin:0 0 14px}}
-.art-sum{{font-size:17px;line-height:1.6;color:#475569;margin:0 0 18px}}
+.art-sum{{font-size:17px;line-height:1.6;color:#5d6c7b;margin:0 0 18px}}
 .art-tick{{display:inline-block;font-family:ui-monospace,monospace;font-size:12px;
   font-weight:700;color:#14587D;background:rgba(20,88,125,.08);
   border:1px solid rgba(20,88,125,.18);border-radius:999px;
@@ -1233,7 +1148,7 @@ def render_article(art: dict, site_origin: str) -> Optional[str]:
 .art-body h3{{font-size:18px;color:#0A2F46;margin:26px 0 10px}}
 .art-body ul,.art-body ol{{margin:0 0 17px;padding-left:22px}}
 .art-body li{{margin:0 0 7px}}
-.art-note{{font-size:12.5px;line-height:1.6;color:#94a3b8;margin:34px 0 26px;
+.art-note{{font-size:12.5px;line-height:1.6;color:#758696;margin:34px 0 26px;
   padding-top:16px;border-top:1px solid rgba(10,47,70,.09)}}
 </style>"""
 

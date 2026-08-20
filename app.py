@@ -2444,6 +2444,8 @@ def _render_morning_brief() -> str:
 # ═════════════════════════════════════════════════════════════════════════
 #  /reports — Reading Mode index (all covered tickers, ranked)
 # ═════════════════════════════════════════════════════════════════════════
+import theme as _theme
+
 @app.get("/reports", response_class=HTMLResponse)
 async def reports_index():
     """Light, editorial index of every covered ticker — sorted by Alpha
@@ -2490,101 +2492,70 @@ async def reports_index():
     return HTMLResponse(content=f"""<!DOCTYPE html>
 <html lang="en"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Reports — {total} US stocks scored & explained | TickerMover</title>
+<title>Reports — {total} US stocks scored &amp; explained | TickerMover</title>
 <meta name="description" content="Every US stock in the TickerMover universe, scored across six investment pillars and explained in a long-form research report. Sorted by today's Quant Score.">
-<meta name="theme-color" content="#fafbf7">
+<meta name="theme-color" content="#0A2F46">
 <link rel="canonical" href="{SITE_ORIGIN}/reports">
 <link rel="icon" type="image/png" sizes="32x32" href="/static/icons/favicon-32.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Manrope:wght@400;500;600;700;800;900&family=Fraunces:opsz,wght@9..144,500;9..144,700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-<style>
-  *{{box-sizing:border-box;margin:0;padding:0}}
-  body{{background:#fafbf7;color:#1A1A1A;font-family:'Manrope','Inter',system-ui,sans-serif;font-weight:500;-webkit-font-smoothing:antialiased}}
-  a{{text-decoration:none;color:inherit}}
-  .top{{background:#fff;border-bottom:1px solid rgba(10,10,10,.08);position:sticky;top:0;z-index:50}}
-  .top-inner{{display:flex;align-items:center;justify-content:space-between;max-width:1200px;margin:0 auto;padding:14px 28px}}
-  .brand{{display:flex;align-items:center;gap:10px;font-weight:900;font-size:17px;letter-spacing:-.02em;color:#0A0A0A}}
-  .brand-mark{{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,#fff,#f1f5f9);display:flex;align-items:center;justify-content:center;overflow:hidden;box-shadow:0 0 0 1px rgba(245,166,35,.4),0 6px 16px -6px rgba(245,166,35,.3)}}
-  .brand-mark img{{width:80%;height:80%;object-fit:contain;filter:drop-shadow(0 0 5px rgba(245,166,35,.45))}}
-  .brand .h{{background:linear-gradient(135deg,#2970FF 0%,#0040c1 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;filter:drop-shadow(0 0 6px rgba(245,166,35,.25))}}
-  .top-nav{{display:flex;gap:24px;font-size:13.5px;font-weight:600;color:#475569}}
-  .top-nav a.active{{color:#15803d}}
-  .top-cta{{padding:8px 18px;border-radius:999px;background:#0A0A0A;color:#fff;font-size:13px;font-weight:700}}
-  @media (max-width:760px){{.top-nav{{display:none}}}}
-
-  .head{{max-width:1100px;margin:0 auto;padding:56px 28px 32px}}
-  .eyebrow{{display:inline-block;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#15803d;font-weight:700;padding:5px 10px;border-radius:999px;background:rgba(245,166,35,.10);border:1px solid rgba(245,166,35,.30);margin-bottom:14px}}
-  h1{{font-family:'Fraunces',serif;font-weight:500;font-size:clamp(36px,5vw,56px);line-height:1.05;letter-spacing:-.025em;color:#0A0A0A;margin-bottom:14px}}
-  h1 em{{font-style:italic;color:#15803d}}
-  .sub{{font-size:16px;color:#475569;line-height:1.6;max-width:600px}}
-
-  .list-wrap{{max-width:1100px;margin:0 auto;padding:0 28px 60px}}
-  .list-head{{display:grid;grid-template-columns:80px 1fr 180px 90px 70px;gap:14px;padding:12px 22px;background:#fff;border:1px solid rgba(10,10,10,.08);border-radius:14px 14px 0 0;border-bottom:none;font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:#94a3b8;font-weight:700}}
-  .list{{background:#fff;border:1px solid rgba(10,10,10,.08);border-radius:0 0 14px 14px;overflow:hidden;box-shadow:0 1px 2px rgba(10,10,10,.04),0 12px 30px -22px rgba(10,10,10,.15)}}
-  .row{{display:grid;grid-template-columns:80px 1fr 180px 90px 70px;gap:14px;padding:16px 22px;border-bottom:1px solid rgba(10,10,10,.06);align-items:center;font-size:14px;transition:background .12s,transform .15s;color:inherit;text-decoration:none}}
-  .row:last-child{{border-bottom:none}}
-  .row:hover{{background:#FAFBFC;transform:translateX(4px)}}
-  .row .sym{{font-family:'JetBrains Mono',monospace;font-weight:800;color:#0A0A0A;letter-spacing:-.01em}}
-  .row .nm{{font-family:'Fraunces',serif;font-weight:500;font-size:16px;color:#0A0A0A;letter-spacing:-.01em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}}
-  .row .sect{{color:#64748b;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}}
-  .row .chg{{font-family:'JetBrains Mono',monospace;font-weight:700;text-align:right;color:#64748b}}
-  .row .chg.up{{color:#15803d}} .row .chg.dn{{color:#b91c1c}}
-  .row .sc{{font-family:'Fraunces',serif;font-weight:500;font-size:24px;text-align:right;letter-spacing:-.02em}}
-  .row .sc.hi{{color:#15803d}} .row .sc.mid{{color:#D4860A}} .row .sc.lo{{color:#64748b}}
-  .empty{{padding:36px;text-align:center;color:#94a3b8}}
-
-  @media (max-width:760px){{
-    .list-head{{grid-template-columns:70px 1fr 70px;gap:10px;font-size:9.5px}}
-    .list-head .sect-h,.list-head .chg-h{{display:none}}
-    .row{{grid-template-columns:70px 1fr 70px;gap:10px;padding:14px 16px;font-size:13px}}
-    .row .sect,.row .chg{{display:none}}
-    .row .sc{{font-size:20px}}
-  }}
+{_theme.FONTS_LINK}
+<style>{_theme.THEME_CSS}
+/* ---- reports index ---- */
+.rp-head{{max-width:var(--wrap);margin:0 auto;padding:52px 24px 30px}}
+.rp-list{{max-width:var(--wrap);margin:0 auto;padding:0 24px 64px}}
+.rp-lh,.row{{display:grid;grid-template-columns:88px 1fr 190px 96px 84px;gap:16px;align-items:center}}
+.rp-lh{{padding:12px 22px;background:var(--alt);border:1px solid var(--rule);
+  border-bottom:none;border-radius:14px 14px 0 0;font-family:var(--mono);font-size:10px;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--grey-2);font-weight:500}}
+.rp-rows{{background:var(--surface);border:1px solid var(--rule);border-radius:0 0 14px 14px;
+  overflow:hidden}}
+.row{{padding:15px 22px;border-bottom:1px solid #ECEEF0;font-size:14.5px;color:inherit;
+  transition:background var(--t-fast) var(--e-out),transform var(--t-base) var(--e-spring)}}
+.row:last-child{{border-bottom:none}}
+.row:hover{{background:#FBFAF8;transform:translateX(4px);text-decoration:none}}
+.row .sym{{font-family:var(--mono);font-weight:600;color:var(--blue-light)}}
+.row .nm{{font-weight:400;color:var(--primary);overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap}}
+.row .sect{{color:var(--grey);font-size:13px;font-weight:300;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}}
+.row .chg{{font-family:var(--mono);font-weight:500;text-align:right;color:var(--grey);
+  font-variant-numeric:tabular-nums}}
+.row .chg.up{{color:var(--up)}} .row .chg.dn{{color:var(--down)}}
+.row .sc{{font-family:var(--mono);font-weight:600;font-size:20px;text-align:right;
+  font-variant-numeric:tabular-nums}}
+.row .sc.hi{{color:var(--up)}} .row .sc.mid{{color:#b45309}} .row .sc.lo{{color:var(--grey)}}
+.rp-note{{max-width:var(--wrap);margin:0 auto;padding:0 24px 52px;font-size:12.5px;
+  line-height:1.65;color:var(--grey);font-weight:300}}
+.empty{{padding:40px;text-align:center;color:var(--grey-2)}}
+@media(max-width:760px){{
+  .rp-lh,.row{{grid-template-columns:74px 1fr 74px;gap:11px;padding:13px 15px}}
+  .rp-lh .sect-h,.rp-lh .chg-h,.row .sect,.row .chg{{display:none}}
+  .row .sc{{font-size:18px}}
+}}
 </style>
 </head>
 <body>
+{_theme.nav_html('/reports')}
 
-<div class="top">
-  <div class="top-inner">
-    <a class="brand" href="/">
-      <span class="brand-mark"><img src="/static/icons/alpha-logo-bare-64.png" alt=""></span>
-      <span class="bw">Ticker<span class="h">Mover</span></span>
-    </a>
-    <div class="top-nav">
-      <a href="/reports" class="active">Reports</a>
-      <a href="/#how">How it works</a>
-      <a href="/#pillars">Methodology</a>
-      <a href="/app">Dashboard</a>
-    </div>
-    <a class="top-cta" href="/app">Open dashboard →</a>
-  </div>
+<div class="rp-head">
+  <span class="tag">Research library</span>
+  <h1>{total} stocks. Every one explained.</h1>
+  <p class="lede">Every name we cover gets a full research report with Quant Score, six-pillar
+  breakdown, verdict, and the reasoning behind it. Sorted by today's score.</p>
 </div>
 
-<div class="head">
-  <div class="eyebrow">Research library</div>
-  <h1>{total} stocks. <em>Every</em> one explained.</h1>
-  <p class="sub">Every name we cover gets a full research report with Quant Score, six-pillar breakdown, verdict, and the reasoning behind it. Sorted by today's score.</p>
+<div class="rp-list">
+  <div class="rp-lh"><span>Ticker</span><span>Name</span><span class="sect-h">Sector</span>
+    <span class="chg-h" style="text-align:right">Day</span>
+    <span style="text-align:right">Quant Score</span></div>
+  <div class="rp-rows">{rows_html}</div>
 </div>
 
-<div class="list-wrap">
-  <div class="list-head"><span>Ticker</span><span>Name</span><span class="sect-h">Sector</span><span class="chg-h" style="text-align:right">Δ Day</span><span style="text-align:right">Quant Score</span></div>
-  <div class="list">{rows_html}</div>
-</div>
+<p class="rp-note">Quant Scores are quantitative summaries of public information, not buy or sell
+recommendations. TickerMover is a research tool, not an FCA-authorised adviser, and nothing here
+is a personal recommendation. Past performance is not a reliable indicator of future results.
+Capital at risk. <a href="/disclaimer">Full disclaimer</a>.</p>
 
-<!-- This page listed the whole scored universe with no risk language at all —
-     the only content page on the site with none. Every sibling page carries
-     some form of this; /reports was the outlier. -->
-<footer style="max-width:900px;margin:40px auto 0;padding:20px 24px 36px;
-               border-top:1px solid rgba(16,41,61,.12);font-size:12.5px;
-               line-height:1.65;opacity:.72">
-  Quant Scores are quantitative summaries of public information, not buy or sell
-  recommendations. TickerMover is a research tool, not an FCA-authorised adviser,
-  and nothing here is a personal recommendation. Past performance is not a
-  reliable indicator of future results. Capital at risk.
-  <a href="/disclaimer" style="color:inherit">Full disclaimer</a>.
-</footer>
-
+{_theme.footer_html()}
 </body></html>""")
 
 
