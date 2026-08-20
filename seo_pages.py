@@ -611,12 +611,12 @@ def render_sector(slug: str, universe: list[dict], site_origin: str) -> Optional
 .sp-grid{{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1px;
   background:#D6DADD;border:1px solid #D6DADD;border-radius:10px;overflow:hidden;margin:0 0 8px}}
 .sp-stat{{background:#fff;padding:13px 15px}}
-.sp-k{{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#94A3B8;font-weight:700}}
+.sp-k{{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#758696;font-weight:700}}
 .sp-v{{font-size:20px;font-weight:700;color:#0A2F46;margin-top:5px;font-variant-numeric:tabular-nums}}
-.sp-b{{font-size:11px;color:#94A3B8;margin-top:2px;font-variant-numeric:tabular-nums}}
+.sp-b{{font-size:11px;color:#758696;margin-top:2px;font-variant-numeric:tabular-nums}}
 .sp-read{{font-size:13.5px;color:#5d6c7b;line-height:1.6;margin:0 0 22px;padding:11px 15px;
   background:#F2F1EE;border-left:3px solid #FF6100;border-radius:4px}}
-.sp-ai{{font-size:14px;color:#26333F;line-height:1.65;margin:14px 0 10px;padding:14px 16px;
+.sp-ai{{font-size:14px;color:#10293D;line-height:1.65;margin:14px 0 10px;padding:14px 16px;
   background:#fff;border:1px solid #D6DADD;border-radius:8px}}
 .sp-ai span{{display:block;font-size:10px;letter-spacing:.09em;text-transform:uppercase;
   color:#9A3412;font-weight:800;margin-bottom:6px}}
@@ -639,16 +639,17 @@ table.si th{position:sticky;top:0;background:#F2F1EE;text-align:right;font-size:
   padding:11px 12px;border-bottom:1px solid #D6DADD;white-space:nowrap}
 table.si th:first-child,table.si td:first-child{text-align:left}
 table.si td{padding:11px 12px;border-bottom:1px solid #F2F1EE;text-align:right;
-  font-size:13.5px;color:#26333F;white-space:nowrap}
+  font-size:13.5px;color:#10293D;white-space:nowrap}
 table.si tr:last-child td{border-bottom:0}
 table.si tr.si-base td{background:#FFF8F2;font-weight:700;color:#0A2F46}
 table.si a.si-nm{color:#0A2F46;font-weight:650;text-decoration:none}
 table.si a.si-nm:hover{text-decoration:underline}
-.si-n{font-size:12px;color:#94A3B8}
-.si-bar{display:inline-block;width:52px;height:6px;border-radius:99px;background:#EDF1F6;
+.si-n{font-size:12px;color:#758696}
+.si-bar{display:inline-block;width:52px;height:6px;border-radius:99px;background:#F2F1EE;
   vertical-align:middle;margin-right:7px;overflow:hidden}
 .si-bar i{display:block;height:100%;background:#FF6100;border-radius:99px}
-.si-led a{color:#0A2F46;text-decoration:none;font-family:ui-monospace,Menlo,monospace;font-size:12px}
+table.si td.si-led{white-space:normal;min-width:116px;line-height:1.55}
+.si-led a{display:inline-block;margin-right:6px;color:#0A2F46;text-decoration:none;font-family:var(--mono),ui-monospace,Menlo,monospace;font-size:12px}
 .si-led a:hover{text-decoration:underline}
 .si-pos{color:#12704A;font-weight:650}
 .si-neg{color:#B32D23;font-weight:650}
@@ -821,10 +822,10 @@ table.h2h-t{border-collapse:collapse;width:100%;min-width:640px;font-variant-num
 table.h2h-t th{background:#F2F1EE;font-size:11px;letter-spacing:.06em;text-transform:uppercase;
   color:#5d6c7b;font-weight:700;padding:12px;border-bottom:1px solid #D6DADD}
 table.h2h-t th.sd{font-size:15px;letter-spacing:0;text-transform:none;color:#0A2F46}
-table.h2h-t td{padding:12px;border-bottom:1px solid #F2F1EE;font-size:14px;color:#26333F;
+table.h2h-t td{padding:12px;border-bottom:1px solid #F2F1EE;font-size:14px;color:#10293D;
   text-align:center;white-space:nowrap}
 table.h2h-t td.mk{text-align:left;color:#5d6c7b;font-size:13.5px;white-space:normal}
-table.h2h-t td.mk i{display:block;font-style:normal;font-size:11.5px;color:#94A3B8;margin-top:2px}
+table.h2h-t td.mk i{display:block;font-style:normal;font-size:11.5px;color:#758696;margin-top:2px}
 table.h2h-t tr:last-child td{border-bottom:0}
 table.h2h-t td.hi{background:#FFF6EF;font-weight:700;color:#0A2F46}
 .h2h-tag{display:inline-block;margin-left:6px;font-size:9.5px;font-weight:800;letter-spacing:.05em;
@@ -839,8 +840,8 @@ table.h2h-t td.hi{background:#FFF6EF;font-weight:700;color:#0A2F46}
 .cs-sec{background:#fff;padding:16px 18px}
 .cs-sec h3{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#9A3412;
   font-weight:800;margin:0 0 7px}
-.cs-sec p{font-size:14.5px;line-height:1.7;color:#26333F;margin:0;max-width:82ch}
-.cs-src{font-size:12px;color:#94A3B8;margin:0 0 24px}
+.cs-sec p{font-size:14.5px;line-height:1.7;color:#10293D;margin:0;max-width:82ch}
+.cs-src{font-size:12px;color:#758696;margin:0 0 24px}
 """
 
 
@@ -1009,7 +1010,7 @@ def render_compare_index(universe: list[dict], site_origin: str) -> str:
         bv = alpha["b"] if alpha else "—"
         same = ('<span style="color:#12704A;font-weight:650">same sub-sector</span>'
                 if c["same_sector"] else
-                '<span style="color:#94A3B8">different sub-sectors</span>')
+                '<span style="color:#758696">different sub-sectors</span>')
         rows_html.append(
             '<tr><td><a class="si-nm" href="/compare/' + a + "-vs-" + b + '">'
             + a + " vs " + b + "</a></td>"
@@ -1143,7 +1144,7 @@ def render_article(art: dict, site_origin: str) -> Optional[str]:
   font-weight:700;color:#14587D;background:rgba(20,88,125,.08);
   border:1px solid rgba(20,88,125,.18);border-radius:999px;
   padding:5px 12px;text-decoration:none;margin-bottom:20px}}
-.art-body{{font-size:16px;line-height:1.75;color:#26333F}}
+.art-body{{font-size:16px;line-height:1.75;color:#10293D}}
 .art-body p{{margin:0 0 17px}}
 .art-body h2{{font-size:22px;line-height:1.25;color:#0A2F46;margin:32px 0 12px;
   letter-spacing:-.015em}}

@@ -12,8 +12,8 @@ they were measured off the reference, and several carry meaning:
   * #16a34a / #ea384c mean up and down. Nothing else.
   * #FF6100 on white is only 3.4:1 — small orange text on a light surface must
     use #C74E00 (--accent-safe).
-  * The wordmark is #4A5BC4 on light (M and dot both), and white-M +
-    orange-dot on the dark footer. See wordmark().
+  * The wordmark's dot is ALWAYS #FF6100. Only the M changes: #4A5BC4 on
+    light, #8FA0F0 on dark. See wordmark().
 """
 
 FONTS_LINK = (
@@ -27,20 +27,25 @@ FONTS_LINK = (
 )
 
 def wordmark(dark: bool = False) -> str:
-    """Canonical wordmark, colours taken from landing.html's own rules:
-        light   html body .brand-m polyline{stroke:#4A5BC4}  circle{fill:#4A5BC4}
-        footer  html body .footer .brand-m polyline{stroke:#FFFFFF} circle{fill:#FF6100}
-    On light the dot is the SAME blue-violet as the M - it only turns orange on
-    the dark footer. Getting this wrong is what made these pages read as a
-    different brand."""
-    stroke = "#FFFFFF" if dark else "#4A5BC4"
-    dot    = "#FF6100" if dark else "#4A5BC4"
+    """Canonical wordmark. These values were MEASURED with getComputedStyle on
+    the live landing page, not read off the stylesheet - landing.html contains
+    a `.brand-m circle{fill:#4A5BC4}` rule that a later rule overrides, so
+    grepping the CSS gives the wrong answer:
+
+        surface        M (polyline)   dot (circle)   word text
+        nav / light    #4A5BC4        #FF6100        #0a0e22
+        footer / dark  #8FA0F0        #FF6100        #FFFFFF
+
+    THE DOT IS ALWAYS ORANGE, on every surface. The M is the only part that
+    changes, and on dark it is periwinkle #8FA0F0 - not white."""
+    stroke = "#8FA0F0" if dark else "#4A5BC4"
     return (
-        '<a href="/" class="tm-brand"><span class="tm-word">Ticker'
+        '<a href="/" class="tm-brand' + (' on-dark' if dark else '') + '">'
+        '<span class="tm-word">Ticker'
         '<svg class="tm-m" viewBox="0 0 90 105" fill="none" aria-hidden="true">'
         f'<polyline points="5,100 23,42 45,66 67,26 85,100" stroke="{stroke}" '
         'stroke-width="9" fill="none" stroke-linecap="round" stroke-linejoin="round"/>'
-        f'<circle cx="67" cy="8" r="7" fill="{dot}"/></svg>over</span></a>'
+        '<circle cx="67" cy="8" r="7" fill="#FF6100"/></svg>over</span></a>'
     )
 
 
@@ -131,7 +136,8 @@ a:hover{text-decoration:underline}
 .tm-nav-in{max-width:var(--wrap);margin:0 auto;padding:12px 24px;display:flex;
   align-items:center;justify-content:space-between;gap:22px}
 .tm-brand{display:inline-flex;align-items:baseline;font-size:19px;font-weight:600;
-  color:var(--primary);letter-spacing:-.01em}
+  color:#0a0e22;letter-spacing:-.01em}
+.tm-brand.on-dark{color:#fff}
 .tm-brand:hover{text-decoration:none}
 .tm-word{display:inline-flex;align-items:baseline;white-space:nowrap}
 .tm-m{height:1.6em;width:auto;flex:none;align-self:baseline;margin:0 .02em}
@@ -146,7 +152,7 @@ a:hover{text-decoration:underline}
 .tm-pill{display:inline-flex;align-items:center;gap:10px;background:var(--primary);
   color:#fff;border-radius:100px;padding:8px 8px 8px 18px;font-size:14px;font-weight:500;
   transition:background var(--t-base) var(--e-out)}
-.tm-pill:hover{text-decoration:none;background:#0D3A56;box-shadow:none}
+.tm-pill:hover{text-decoration:none}
 .tm-arw{width:26px;height:26px;border-radius:50%;background:var(--accent);display:grid;
   place-items:center;font-size:13px;transition:transform var(--t-base) var(--e-spring)}
 .tm-pill:hover .tm-arw{transform:translateX(5px)}
@@ -244,7 +250,7 @@ code{background:var(--alt);padding:2px 6px;border-radius:5px;font-family:var(--m
 .cta-btn{display:inline-flex;align-items:center;gap:10px;background:#fff;color:var(--primary);
   padding:11px 24px;border-radius:100px;font-weight:500;font-size:14.5px;
   transition:background var(--t-base) var(--e-out)}
-.cta-btn:hover{text-decoration:none;background:#F2F1EE;box-shadow:none}
+.cta-btn:hover{text-decoration:none}
 
 /* ---------- newsletter ---------- */
 .nl{margin-top:52px;padding:30px 26px;background:var(--surface);border:1px solid var(--rule);
@@ -259,7 +265,7 @@ code{background:var(--alt);padding:2px 6px;border-radius:5px;font-family:var(--m
 .nl button{padding:12px 24px;background:var(--primary);color:#fff;border:none;
   border-radius:100px;font-weight:500;font-size:14.5px;cursor:pointer;font-family:inherit;
   transition:background var(--t-base) var(--e-out)}
-.nl button:hover{background:#0D3A56}
+
 .nl .nl-msg{margin-top:10px;font-size:13.5px;font-weight:500;min-height:18px}
 .nl .nl-msg.ok{color:var(--up)} .nl .nl-msg.err{color:var(--down)}
 .nl-honey{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
@@ -270,7 +276,7 @@ code{background:var(--alt);padding:2px 6px;border-radius:5px;font-family:var(--m
 .tm-foot-in{max-width:var(--wrap);margin:0 auto;padding:52px 24px 34px}
 .tm-foot-top{display:flex;justify-content:space-between;gap:40px;flex-wrap:wrap;
   padding-bottom:30px;border-bottom:1px solid rgba(255,255,255,.12)}
-.tm-foot-brand .tm-brand{color:#fff;font-size:20px}
+.tm-foot-brand .tm-brand{font-size:20px}
 .tm-foot-brand p{color:rgba(255,255,255,.62);font-size:14.5px;margin-top:10px;font-weight:300}
 .tm-foot-cols{display:flex;gap:56px;flex-wrap:wrap}
 .tm-foot-cols h4{font-family:var(--mono);font-size:10px;letter-spacing:.14em;
@@ -293,5 +299,27 @@ code{background:var(--alt);padding:2px 6px;border-radius:5px;font-family:var(--m
 @media(prefers-reduced-motion:reduce){
   *{animation:none!important;transition:none!important}
   .card::after{display:none}
+}
+
+/* ---------- button hover: the inset orange flood ----------
+   A plain darken (#0A2F46 -> #0D3A56, or white -> #F2F1EE) is invisible on
+   these two buttons because, unlike landing's .btn, they have no arrow to move
+   - so there was no perceptible feedback at all. This is the site's own
+   "vibrant" treatment: an inset box-shadow flooding 0 -> 60px, painted UNDER
+   the label. The flood is --accent-safe (#C74E00), not #FF6100: the label goes
+   white, and white on #FF6100 is only ~3.1:1. On #C74E00 it is ~5.4:1. Deliberately NOT an @property animation - forcing --btn-fill with
+   !important pins it at 0% and the sweep never runs. */
+.tm-pill,.cta-btn,.nl button{position:relative;z-index:0;overflow:hidden}
+.tm-pill::before,.cta-btn::before,.nl button::before{content:"";position:absolute;
+  inset:0;border-radius:inherit;z-index:-1;box-shadow:inset 0 0 0 0 var(--accent-safe);
+  transition:box-shadow var(--t-slow) cubic-bezier(.22,.9,.28,1)}
+.tm-pill:hover::before,.cta-btn:hover::before,.nl button:hover::before{
+  box-shadow:inset 0 0 0 60px var(--accent-safe)}
+.tm-pill:hover,.nl button:hover{color:#fff}
+.cta-btn:hover{color:#fff}
+/* the pill's arrow is already orange - invert it so it stays visible in the flood */
+.tm-pill:hover .tm-arw{background:#fff;color:var(--accent-safe)}
+@media(prefers-reduced-motion:reduce){
+  .tm-pill::before,.cta-btn::before,.nl button::before{transition:none}
 }
 """
