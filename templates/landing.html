@@ -3165,7 +3165,19 @@ html body #pricing.is-annual .pz-featured .pz-amt{color:rgba(255,255,255,.62);
 .cc-b.b5::after{background:#14587D}.cc-b.b6::after{background:#FF6100}
 .cc-band-d{font-size:12.5px;line-height:1.55;color:rgba(16,41,61,.72);margin-top:14px}
 /* the honest-limits block — the point of the section, not a footnote */
-.cc-honest{border-left:3px solid #FF6100;padding:4px 0 4px 22px;max-width:74ch}
+.cc-honest{border-left:3px solid #FF6100;padding:4px 0 4px 22px}
+/* Was max-width:74ch, which left the right half of the container empty while
+   the stat cards above ran full width. The cap existed for a good reason -
+   15px prose across 1240px is ~165 characters a line - so the block now fills
+   the width as TWO columns instead: the finding and its punchline on the left,
+   the caveat alongside. Each column keeps a ~60ch measure. */
+@media(min-width:900px){
+  .cc-honest{display:grid;grid-template-columns:1.05fr .95fr;column-gap:44px;align-items:start}
+  .cc-honest>h3{grid-column:1;grid-row:1}
+  .cc-honest>p:not(.cc-punch):not(.cc-small){grid-column:1;grid-row:2}
+  .cc-honest>.cc-punch{grid-column:1;grid-row:3;margin-bottom:0!important}
+  .cc-honest>.cc-small{grid-column:2;grid-row:1/4;margin-top:0}
+}
 .cc-honest h3{font-size:17px;font-weight:700;margin-bottom:10px}
 .cc-honest p{font-size:15px;line-height:1.62;margin-bottom:12px}
 .cc-punch{font-size:clamp(19px,2vw,24px)!important;font-weight:600;letter-spacing:-.01em;
@@ -3237,7 +3249,7 @@ html body #pricing.is-annual .pz-featured .pz-amt{color:rgba(255,255,255,.62);
 <section class="section bg-alice" id="crowd">
   <div class="wrap">
     <div class="sec-head center reveal">
-      <span class="eyebrow">Crowd Clock</span>
+      <span class="eyebrow">Hype Check</span>
       <h2 class="sec-title">By the time it&rsquo;s obvious, <span class="blue-grad-text">it has already happened.</span></h2>
       <p class="sec-sub">A crash gets wall-to-wall coverage. The quiet part of the cycle gets none — so most private investors meet a story at its loudest, never at its earliest. The Crowd Clock measures how much attention a share is already carrying, and tells you where in that cycle you have arrived.</p>
     </div>
