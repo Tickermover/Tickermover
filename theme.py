@@ -22,30 +22,31 @@ FONTS_LINK = (
     '<link href="https://fonts.googleapis.com/css2'
     '?family=Public+Sans:wght@300;400;500;600'
     '&family=JetBrains+Mono:wght@400;500;600'
+    '&family=Space+Grotesk:wght@700'
     '&family=Literata:opsz,wght@7..72,400;7..72,500'
     '&display=swap" rel="stylesheet">'
 )
 
 def wordmark(dark: bool = False) -> str:
-    """Canonical wordmark. These values were MEASURED with getComputedStyle on
-    the live landing page, not read off the stylesheet - landing.html contains
-    a `.brand-m circle{fill:#4A5BC4}` rule that a later rule overrides, so
-    grepping the CSS gives the wrong answer:
+    """Landing's nav wordmark, copied VERBATIM - same markup, same class names,
+    same inline SVG values. The colours come from the CSS below, exactly as they
+    do on landing.
 
-        surface        M (polyline)   dot (circle)   word text
-        nav / light    #4A5BC4        #FF6100        #0a0e22
-        footer / dark  #8FA0F0        #FF6100        #FFFFFF
-
-    THE DOT IS ALWAYS ORANGE, on every surface. The M is the only part that
-    changes, and on dark it is periwinkle #8FA0F0 - not white."""
-    stroke = "#8FA0F0" if dark else "#4A5BC4"
+    Do not try to derive the colours by grepping landing.html. The winning rule
+    is a GROUPED selector split across lines:
+        html body .brand-m circle, html body .footer .brand-m circle,
+        html body .bg-dark .brand-m circle{fill:#FF6100!important}
+    A line-oriented grep misses it and reports the earlier #4A5BC4 rule instead.
+    Measured with getComputedStyle, the truth is:
+        nav / light    M #4A5BC4   dot #FF6100   word #0A0E22
+        footer / dark  M #8FA0F0   dot #FF6100   word #FFFFFF
+    """
     return (
-        '<a href="/" class="tm-brand' + (' on-dark' if dark else '') + '">'
-        '<span class="tm-word">Ticker'
-        '<svg class="tm-m" viewBox="0 0 90 105" fill="none" aria-hidden="true">'
-        f'<polyline points="5,100 23,42 45,66 67,26 85,100" stroke="{stroke}" '
+        '<a class="brand" href="/"><span class="brand-wordmark">Ticker'
+        '<svg class="brand-m" viewBox="0 0 90 105" fill="none" aria-hidden="true">'
+        '<polyline points="5,100 23,42 45,66 67,26 85,100" stroke="#14587D" '
         'stroke-width="9" fill="none" stroke-linecap="round" stroke-linejoin="round"/>'
-        '<circle cx="67" cy="8" r="7" fill="#FF6100"/></svg>over</span></a>'
+        '<circle cx="67" cy="8" r="7" fill="#14587D"/></svg>over</span></a>'
     )
 
 
@@ -135,12 +136,21 @@ a:hover{text-decoration:underline}
   backdrop-filter:saturate(150%) blur(10px);border-bottom:1px solid var(--rule)}
 .tm-nav-in{max-width:var(--wrap);margin:0 auto;padding:12px 24px;display:flex;
   align-items:center;justify-content:space-between;gap:22px}
-.tm-brand{display:inline-flex;align-items:baseline;font-size:19px;font-weight:600;
-  color:#0a0e22;letter-spacing:-.01em}
-.tm-brand.on-dark{color:#fff}
-.tm-brand:hover{text-decoration:none}
-.tm-word{display:inline-flex;align-items:baseline;white-space:nowrap}
-.tm-m{height:1.6em;width:auto;flex:none;align-self:baseline;margin:0 .02em}
+/* ---- wordmark: landing.html's rules, verbatim. .tm-foot stands in for
+   landing's .footer / .bg-dark. Order matters - the grouped rule is last. ---- */
+.brand{display:flex;align-items:center;gap:11px;
+  font-family:'Space Grotesk','Public Sans',sans-serif;font-weight:700;font-size:20px;
+  letter-spacing:-.02em;color:#0A2F46}
+.brand:hover{text-decoration:none}
+.brand-wordmark{display:inline-flex;align-items:baseline;flex-wrap:nowrap;
+  white-space:nowrap;color:#0A2F46}
+.brand-m{height:1.6em;width:auto;flex:none;align-self:baseline;margin:0 .02em}
+html body .brand,html body .brand-wordmark{color:#0A0E22!important}
+html body .tm-foot .brand,html body .tm-foot .brand-wordmark{color:#FFFFFF!important}
+html body .brand-m polyline{stroke:#4A5BC4!important}
+html body .tm-foot .brand-m polyline{stroke:#8FA0F0!important}
+html body .brand-m circle,html body .tm-foot .brand-m circle{fill:#FF6100!important}
+@media(max-width:640px){.brand{font-size:17px;gap:8px}}
 .tm-nav-links{display:flex;gap:26px;font-size:15px;font-weight:500}
 .tm-nav-links a{color:var(--ink);transition:color var(--t-fast) var(--e-out)}
 .tm-nav-links a:hover{color:var(--primary);text-decoration:none}
@@ -276,7 +286,7 @@ code{background:var(--alt);padding:2px 6px;border-radius:5px;font-family:var(--m
 .tm-foot-in{max-width:var(--wrap);margin:0 auto;padding:52px 24px 34px}
 .tm-foot-top{display:flex;justify-content:space-between;gap:40px;flex-wrap:wrap;
   padding-bottom:30px;border-bottom:1px solid rgba(255,255,255,.12)}
-.tm-foot-brand .tm-brand{font-size:20px}
+.tm-foot-brand .brand{margin-bottom:12px}
 .tm-foot-brand p{color:rgba(255,255,255,.62);font-size:14.5px;margin-top:10px;font-weight:300}
 .tm-foot-cols{display:flex;gap:56px;flex-wrap:wrap}
 .tm-foot-cols h4{font-family:var(--mono);font-size:10px;letter-spacing:.14em;
