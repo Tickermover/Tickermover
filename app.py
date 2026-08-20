@@ -2867,6 +2867,23 @@ def _sppct_frac(v, signed=False):
     if f is None: return "—"
     if abs(f) <= 2: f *= 100.0
     return f"{f:+.1f}%" if signed else f"{f:.1f}%"
+def _sppct_pct(v):
+    """For fields STORED AS PERCENTS already - dividend yield, short % of float.
+
+    These must not go through _sppct_frac. That helper multiplies by 100 when
+    abs(v) <= 2, which is meant to tolerate fractions but silently destroys any
+    genuine percent under 2 - so a 1.15% dividend yield rendered as 115.0%, on
+    the same page where the fact-check correctly said 1.15%. Dividend yields
+    between 1% and 2% are the most common band there is.
+
+    Only a value <= 1 is treated as a fraction, matching fact_check.py's rule
+    exactly so the two panels cannot disagree again."""
+    f = _spf(v)
+    if f is None: return "—"
+    if 0 < f <= 1: f *= 100.0
+    return f"{f:.2f}%"
+
+
 def _sppct_raw(v, signed=False):
     """Already-percent values (momentum, upside, surprise)."""
     f = _spf(v)
@@ -2892,7 +2909,7 @@ def _sp_ribbon(anchor: str, title: str, inner: str, rib: str = "rep-slate", ico:
     aid = f' id="{anchor}"' if anchor else ""
     return (f'<section{aid} class="rep-sec" style="border-left:4px solid {acc}">'
             f'<div class="rep-rib {rib}"><span class="rep-ico">{ico}</span>'
-            f'<span class="rep-title">{title}</span></div>'
+            f'<h2 class="rep-title">{title}</h2></div>'
             f'<div class="rep-body">{inner}</div></section>')
 
 def _sp_score_gauge(score, color: str) -> str:
@@ -2907,9 +2924,9 @@ def _sp_score_gauge(score, color: str) -> str:
         '<circle cx="60" cy="60" r="46" fill="none" stroke="#eef2f7" stroke-width="12"/>'
         f'<circle cx="60" cy="60" r="46" fill="none" stroke="{color}" stroke-width="12" '
         f'stroke-linecap="round" stroke-dasharray="{prog:.1f} {circ:.1f}" transform="rotate(-90 60 60)"/>'
-        f'<text x="60" y="58" text-anchor="middle" font-size="31" font-weight="800" fill="#0a0a0a" '
+        f'<text x="60" y="58" text-anchor="middle" font-size="31" font-weight="600" fill="#0A2F46" '
         'font-family="JetBrains Mono,monospace">' + str(round(s)) + '</text>'
-        '<text x="60" y="78" text-anchor="middle" font-size="9" font-weight="700" fill="#94a3b8" '
+        '<text x="60" y="78" text-anchor="middle" font-size="9" font-weight="700" fill="#758696" '
         'letter-spacing="1.5">ALPHA</text></svg>'
     )
 
@@ -3038,16 +3055,40 @@ def _sp_data_sections(t: dict, sym: str, price: float):
 
     # Ownership & risk
     add("ownership", "Ownership & risk", _spgrid([
-        _spmetric("Short % of float", _sppct_frac(t.get("short_percent_float"))),
-        _spmetric("Dividend yield", _sppct_frac(t.get("dividend_yield"))),
+        _spmetric("Short % of float", _sppct_pct(t.get("short_percent_float"))),
+        _spmetric("Dividend yield", _sppct_pct(t.get("dividend_yield"))),
         _spmetric("Beta", _spnum(t.get("beta"), 2)),
     ]))
 
     nav_html = ('<nav class="sp-nav">'
-                '<a href="#overview" class="sp-np" style="color:#2970FF;border-color:#2970FF66;background:#2970FF12">Overview</a>'
+                '<a href="#overview" class="sp-np" style="color:#14587D;border-color:#14587D66;background:#14587D12">Overview</a>'
                 + "".join(nav)
-                + '<a href="#more" class="sp-np" style="color:#c11d33;border-color:#c11d3366;background:#c11d3312">Pro</a></nav>') if nav else ""
+                + '<a href="#more" class="sp-np" style="color:#ea384c;border-color:#ea384c66;background:#ea384c12">Pro</a></nav>') if nav else ""
     return nav_html, "".join(secs) + _sp_pro_section(sym)
+
+
+def _sp_ssr_cached(cache_key: str) -> str:
+    """Server-render a panel that is normally fetched by JS, FROM CACHE ONLY.
+
+    /stocks/<T> exists to rank: its own docstring says the content must be
+    "visible to crawlers". But Hype Check and Dilution Check - the two panels
+    that are actually ours - were client-side fetch() only, so a crawler that
+    does not run JS indexed the commodity metric tables and none of the
+    differentiation.
+
+    Cache-only on purpose. The live builders hit yfinance and EDGAR; calling
+    them inline would put a multi-second network round trip on every page
+    render and a new failure mode on an SEO page. Both endpoints cache for 12h
+    and are prewarmed, so the warm path is the normal one - and when it is
+    cold this returns "" and the existing JS fills the panel exactly as before.
+    Progressive enhancement, no behaviour lost."""
+    try:
+        c = cache.get(cache_key)
+        if isinstance(c, dict):
+            return c.get("html") or ""
+    except Exception:
+        pass
+    return ""
 
 
 def _render_stock_page(t: dict) -> str:
@@ -3070,7 +3111,7 @@ def _render_stock_page(t: dict) -> str:
     pop    = _f(t.get("smart_score") if t.get("smart_score") is not None else t.get("pop_score"))
     grade  = t.get("grade") or "—"
     rating = {"A":"★★★★★ Top Tier","B":"★★★★ Quality","C":"★★★ Average","D":"★★ Below Avg","F":"★ Weak"}.get(grade, "Under Review")
-    verdict_color = {"A":"#10B981","B":"#2970FF","C":"#F59E0B","D":"#F97316","F":"#EF4444"}.get(grade, "#64748b")
+    verdict_color = {"A":"#10B981","B":"#14587D","C":"#F59E0B","D":"#F97316","F":"#EF4444"}.get(grade, "#5d6c7b")
     bottom_line = t.get("bottom_line_ai") or t.get("bottom_line") or f"{name} is currently scored {round(pop)}/100 on Quant Score."
     chg = _f(t.get("change_pct"))
     chg_sign = "+" if chg >= 0 else ""
@@ -3128,22 +3169,12 @@ def _render_stock_page(t: dict) -> str:
             _chips.append(f'<span class="dr-cc {_ccls}">{_clbl}</span>')
     verdict_chips_html = f'<div class="dr-call-chips">{"".join(_chips)}</div>' if _chips else ""
 
-    # Key metrics → ribbon card
-    _km = [
-        f'<div class="metric"><div class="lbl">Quant Score</div><div class="val">{round(pop)}/100</div></div>',
-        f'<div class="metric"><div class="lbl">Grade</div><div class="val">{grade}</div></div>',
-    ]
-    if rev_g is not None:
-        _km.append(f'<div class="metric"><div class="lbl">Rev Growth YoY</div><div class="val {_spcls(rev_g)}">{rev_g*100:+.1f}%</div></div>')
-    if mom is not None:
-        _km.append(f'<div class="metric"><div class="lbl">30-day Momentum</div><div class="val {_spcls(mom)}">{mom:+.1f}%</div></div>')
-    if pe and pe > 0:
-        _km.append(f'<div class="metric"><div class="lbl">Forward P/E</div><div class="val">{pe:.1f}×</div></div>')
-    if tgt and tgt > 0:
-        _km.append(f'<div class="metric"><div class="lbl">Analyst Target</div><div class="val">${tgt:.2f}</div></div>')
-    if upside is not None:
-        _km.append(f'<div class="metric"><div class="lbl">Implied Upside</div><div class="val {_spcls(upside)}">{upside:+.1f}%</div></div>')
-    key_metrics_html = _sp_ribbon("metrics", "Key metrics", f'<div class="metrics">{"".join(_km)}</div>', "rep-violet", "📋")
+    # Key metrics panel REMOVED - every one of its six fields was printed again
+    # lower down: Quant Score and Grade in the verdict box, Rev Growth in
+    # Financial health, 30-day Momentum as Technicals' 1-month return, and
+    # P/E, Analyst Target and Implied Upside in Valuation. It was the main
+    # reason the page read as metric soup.
+    key_metrics_html = ""
 
     # Latest earnings → ribbon card (post-earnings card nested + neutralized via CSS)
     latest_earnings_html = _sp_ribbon("latest-earnings", "Latest earnings", post_earnings_html, "rep-teal", "📣") if post_earnings_html else ""
@@ -3265,12 +3296,18 @@ def _render_stock_page(t: dict) -> str:
     try:
         import crowd_clock as _cc
         crowd_clock_html = _cc.render_card(t)
+        _ssr = _sp_ssr_cached(f"crowd-clock:{sym}:v1")
+        if _ssr:
+            crowd_clock_html = f'<div class="cclk-ssr">{_ssr}</div>' + crowd_clock_html
     except Exception as _cc_err:
         logger.error(f"crowd_clock render {sym}: {_cc_err}", exc_info=True)
         crowd_clock_html = ""
     try:
         import safeguards as _sg
         safeguards_html = _sg.render_card(t)
+        _ssr = _sp_ssr_cached(f"safeguards:{sym}:v3")
+        if _ssr:
+            safeguards_html = f'<div class="sfg-ssr">{_ssr}</div>' + safeguards_html
     except Exception as _sg_err:
         logger.error(f"safeguards render {sym}: {_sg_err}", exc_info=True)
         safeguards_html = ""
@@ -3303,7 +3340,7 @@ def _render_stock_page(t: dict) -> str:
 <link rel="icon" type="image/png" sizes="512x512" href="/static/icons/icon-512.png">
 <link rel="apple-touch-icon" sizes="192x192" href="/static/icons/icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,600;9..144,700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+{_theme.FONTS_LINK}
 
 <!-- Schema.org structured data — powers Google rich snippets + AI search.
      We emit two: FinancialProduct (the stock entity) + AnalysisNewsArticle
@@ -3312,101 +3349,103 @@ def _render_stock_page(t: dict) -> str:
 <script type="application/ld+json">{_json.dumps(article_schema, separators=(',',':'))}</script>
 <script type="application/ld+json">{_json.dumps(faq_schema, separators=(',',':'))}</script>
 
-<style>
-*{{margin:0;padding:0;box-sizing:border-box}}
-body{{font-family:'Instrument Sans',-apple-system,sans-serif;color:#0a0a0a;background:#f0efe8;background-image:radial-gradient(1100px 460px at 50% -120px,#eef6fe 0%,rgba(238,246,254,0) 70%);background-attachment:fixed;line-height:1.6;font-size:15.5px;-webkit-font-smoothing:antialiased}}
-a{{color:#2970FF;text-decoration:none;font-weight:600}}
-a:hover{{text-decoration:underline}}
-.mono{{font-family:'JetBrains Mono',monospace;font-feature-settings:'tnum' 1}}
-.wrap{{max-width:820px;margin:0 auto;padding:32px 20px 64px}}
-.brand{{display:inline-flex;align-items:center;gap:8px;font-size:16px;font-weight:800;color:#0a0a0a;margin-bottom:22px}}
-.brand em{{font-style:normal;background:linear-gradient(135deg,#2970FF 0%,#0040c1 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:#0040c1}}
+<style>{_theme.THEME_CSS}
+/* ---- /stocks page: the theme supplies base, type, nav and footer; what
+   follows is only this page's components. The old base rules lived here and
+   set Instrument Sans (a deleted family) on an icy #FFF2EC ground. ---- */
+.wrap{{max-width:960px;margin:0 auto;padding:34px 20px 64px}}
+/* server-rendered copy wins; the JS placeholder beneath it is hidden so the
+   panel never appears twice while the fetch is still in flight */
+.cclk-ssr ~ .cclk,.sfg-ssr ~ .sfg{{display:none}}
+h2.rep-title{{font-size:inherit;font-weight:inherit;color:inherit;margin:0;letter-spacing:inherit}}
+.brand{{display:inline-flex;align-items:center;gap:8px;font-size:16px;font-weight:800;color:#0A2F46;margin-bottom:22px}}
+.brand em{{font-style:normal;background:linear-gradient(135deg,#14587D 0%,#0A2F46 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:#0A2F46}}
 .report-card{{background:transparent;border:0;border-radius:0;padding:0;box-shadow:none}}
 @media(max-width:640px){{.report-card{{padding:24px 20px;border-radius:16px}}.wrap{{padding:20px 12px 48px}}}}
-.crumbs{{font-size:12.5px;color:#94a3b8;margin-bottom:8px;letter-spacing:.04em;text-transform:uppercase;font-weight:600}}
-h1{{font-size:38px;font-weight:900;letter-spacing:-.03em;margin-bottom:6px;color:#0a0a0a}}
-h1 .sym{{font-family:'JetBrains Mono',monospace;background:linear-gradient(135deg,#2970FF,#06B6D4);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:#2970FF}}
-.subhead{{font-size:15px;color:#475569;margin-bottom:24px}}
-.verdict-box{{display:flex;align-items:center;gap:22px;background:linear-gradient(125deg,#eef4ff 0%,#ffffff 62%);border:1px solid rgba(41,112,255,.16);border-left:5px solid {verdict_color};border-radius:18px;padding:22px 26px;margin:6px 0 18px;box-shadow:0 14px 34px -18px rgba(15,40,100,.34)}}
+.crumbs{{font-size:12.5px;color:#758696;margin-bottom:8px;letter-spacing:.04em;text-transform:uppercase;font-weight:600}}
+h1{{font-size:38px;font-weight:900;letter-spacing:-.03em;margin-bottom:6px;color:#0A2F46}}
+h1 .sym{{font-family:'JetBrains Mono',monospace;background:linear-gradient(135deg,#14587D,#06B6D4);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:#14587D}}
+.subhead{{font-size:15px;color:#5d6c7b;margin-bottom:24px}}
+.verdict-box{{display:flex;align-items:center;gap:22px;background:linear-gradient(125deg,#eef4ff 0%,#ffffff 62%);border:1px solid rgba(20,88,125,.16);border-left:5px solid {verdict_color};border-radius:18px;padding:22px 26px;margin:6px 0 18px;box-shadow:0 14px 34px -18px rgba(15,40,100,.34)}}
 .vb-gauge{{flex:0 0 auto}}
 .sp-gauge{{display:block}}
 .vb-body{{flex:1;min-width:0}}
 @media(max-width:520px){{.verdict-box{{flex-direction:column;align-items:flex-start;gap:14px}}}}
 .verdict-head{{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px}}
 .verdict-tag{{background:{verdict_color};color:#fff;padding:5px 12px;border-radius:7px;font-weight:800;font-size:13px;letter-spacing:.04em}}
-.verdict-score{{font-family:'JetBrains Mono',monospace;font-size:24px;font-weight:800;color:#0a0a0a}}
-.verdict-score .lbl{{font-size:11px;color:#94a3b8;font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin-left:6px}}
+.verdict-score{{font-family:'JetBrains Mono',monospace;font-size:24px;font-weight:800;color:#0A2F46}}
+.verdict-score .lbl{{font-size:11px;color:#758696;font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin-left:6px}}
 .verdict-text{{font-size:14.5px;line-height:1.6;color:#0f172a}}
 .metrics{{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:28px}}
 .metric{{background:linear-gradient(180deg,#ffffff,#f7f9fc);border:1px solid #eef1f5;border-radius:13px;padding:13px 15px;box-shadow:0 4px 14px -10px rgba(15,40,100,.22)}}
-.metric .lbl{{font-size:10.5px;color:#64748b;font-weight:700;letter-spacing:.05em;text-transform:uppercase;margin-bottom:3px}}
-.metric .val{{font-family:'JetBrains Mono',monospace;font-size:17px;font-weight:800;color:#0a0a0a}}
-.metric .val.pos{{color:#15803d}}
-.metric .val.neg{{color:#b91c1c}}
-h2{{font-size:21px;font-weight:800;letter-spacing:-.015em;margin:32px 0 12px;color:#0a0a0a}}
+.metric .lbl{{font-size:10.5px;color:#5d6c7b;font-weight:700;letter-spacing:.05em;text-transform:uppercase;margin-bottom:3px}}
+.metric .val{{font-family:'JetBrains Mono',monospace;font-size:17px;font-weight:800;color:#0A2F46}}
+.metric .val.pos{{color:#16a34a}}
+.metric .val.neg{{color:#ea384c}}
+h2{{font-size:21px;font-weight:800;letter-spacing:-.015em;margin:32px 0 12px;color:#0A2F46}}
 .news{{list-style:none;padding:0}}
 .news li{{padding:10px 0;border-bottom:1px solid #eef0f3;font-size:14px}}
 .news li:last-child{{border-bottom:none}}
-.news .src{{color:#94a3b8;font-size:12px;font-weight:500}}
+.news .src{{color:#758696;font-size:12px;font-weight:500}}
 .peers{{display:flex;flex-wrap:wrap;gap:8px}}
-.peer{{display:inline-block;padding:7px 12px;background:#f8fafc;border:1px solid #eef1f5;border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:13px;color:#0a0a0a;font-weight:700;transition:all .15s}}
-.peer:hover{{border-color:#2970FF;color:#2970FF;text-decoration:none}}
+.peer{{display:inline-block;padding:7px 12px;background:#FBFAF8;border:1px solid #eef1f5;border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:13px;color:#0A2F46;font-weight:700;transition:all .15s}}
+.peer:hover{{border-color:#14587D;color:#14587D;text-decoration:none}}
 .faq-q{{margin:14px 0}}
-.faq-q h3{{font-size:16px;font-weight:700;margin-bottom:4px;color:#0a0a0a}}
-.faq-q p{{font-size:14px;color:#334155;line-height:1.6}}
-.cta{{margin-top:40px;padding:28px 32px;background:linear-gradient(135deg,#0A0A0A 0%,#0a1a33 100%);border-radius:16px;text-align:center;color:#fff}}
+.faq-q h3{{font-size:16px;font-weight:700;margin-bottom:4px;color:#0A2F46}}
+.faq-q p{{font-size:14px;color:#5d6c7b;line-height:1.6}}
+.cta{{margin-top:40px;padding:28px 32px;background:radial-gradient(circle at 0% 0%,#001C31 -55%,#0A2F47 38%,#0A2F47 55%,#001C31 100%);border-radius:16px;text-align:center;color:#fff}}
 .cta h3{{font-size:22px;font-weight:800;letter-spacing:-.02em;margin-bottom:8px;color:#fff}}
 .cta p{{color:rgba(255,255,255,.7);margin-bottom:18px}}
-.cta-btn{{display:inline-block;background:#fff;color:#0a0a0a;padding:13px 26px;border-radius:10px;font-weight:700;font-size:14.5px}}
-.cta-btn:hover{{background:#f1f5f9;text-decoration:none}}
-.legal{{margin-top:32px;font-size:11.5px;color:#94a3b8;text-align:center;line-height:1.6}}
-.val.pos{{color:#15803d}}.val.neg{{color:#b91c1c}}
+.cta-btn{{display:inline-block;background:#fff;color:#0A2F46;padding:13px 26px;border-radius:10px;font-weight:700;font-size:14.5px}}
+.cta-btn:hover{{background:#F2F1EE;text-decoration:none}}
+.legal{{margin-top:32px;font-size:11.5px;color:#758696;text-align:center;line-height:1.6}}
+.val.pos{{color:#16a34a}}.val.neg{{color:#ea384c}}
 /* ── full-data sections ── */
 .sp-nav{{position:sticky;top:0;z-index:5;display:flex;gap:6px;overflow-x:auto;padding:10px 0;margin:0 0 8px;background:#fff;border-bottom:1px solid #eef0f3;-ms-overflow-style:none;scrollbar-width:none}}
-.sp-nav a{{background:#f8fafc}}
+.sp-nav a{{background:#FBFAF8}}
 .sp-nav::-webkit-scrollbar{{display:none}}
-.sp-nav a{{flex:0 0 auto;font-size:12.5px;font-weight:700;color:#475569;padding:6px 12px;border-radius:999px;background:#fff;border:1px solid #e2e8f0}}
-.sp-nav a:hover{{color:#2970FF;border-color:#2970FF;text-decoration:none}}
+.sp-nav a{{flex:0 0 auto;font-size:12.5px;font-weight:700;color:#5d6c7b;padding:6px 12px;border-radius:999px;background:#fff;border:1px solid #D6DADD}}
+.sp-nav a:hover{{color:#14587D;border-color:#14587D;text-decoration:none}}
 section{{scroll-margin-top:60px;margin-bottom:8px}}
 .sp-bars{{display:flex;flex-direction:column;gap:9px;margin-bottom:6px}}
 .sp-bar-row{{display:flex;align-items:center;gap:12px}}
-.sp-bar-row .nm{{flex:0 0 90px;font-size:13px;font-weight:600;color:#334155}}
+.sp-bar-row .nm{{flex:0 0 90px;font-size:13px;font-weight:600;color:#5d6c7b}}
 .sp-bar{{flex:1;height:9px;background:#eef2f7;border-radius:999px;overflow:hidden}}
 .sp-bar i{{display:block;height:100%;border-radius:999px;background:#D4860A}}
-.sp-bar i.pos{{background:linear-gradient(90deg,#34D399,#15803d)}}
-.sp-bar i.neg{{background:linear-gradient(90deg,#fb7185,#b91c1c)}}
-.sp-bar i.mid{{background:linear-gradient(90deg,#5DB3F1,#2970FF)}}
-.sp-bar-row .pv{{flex:0 0 30px;text-align:right;font-size:13px;font-weight:800;color:#0a0a0a}}
+.sp-bar i.pos{{background:linear-gradient(90deg,#34D399,#16a34a)}}
+.sp-bar i.neg{{background:linear-gradient(90deg,#fb7185,#ea384c)}}
+.sp-bar i.mid{{background:linear-gradient(90deg,#5DB3F1,#14587D)}}
+.sp-bar-row .pv{{flex:0 0 30px;text-align:right;font-size:13px;font-weight:800;color:#0A2F46}}
 .sp-range{{margin:4px 0 16px}}
 .sp-range-track{{position:relative;height:8px;background:linear-gradient(90deg,#fde68a,#86efac);border-radius:999px}}
-.sp-range-track i{{position:absolute;top:50%;width:14px;height:14px;border-radius:50%;background:#0a0a0a;border:2px solid #fff;transform:translate(-50%,-50%);box-shadow:0 1px 4px rgba(0,0,0,.3)}}
-.sp-range-lbls{{display:flex;justify-content:space-between;font-size:11.5px;color:#64748b;margin-top:6px}}
+.sp-range-track i{{position:absolute;top:50%;width:14px;height:14px;border-radius:50%;background:#0A2F46;border:2px solid #fff;transform:translate(-50%,-50%);box-shadow:0 1px 4px rgba(0,0,0,.3)}}
+.sp-range-lbls{{display:flex;justify-content:space-between;font-size:11.5px;color:#5d6c7b;margin-top:6px}}
 .sp-tbl{{width:100%;border-collapse:collapse;font-size:13.5px}}
-.sp-tbl th{{text-align:left;font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;color:#94a3b8;padding:6px 8px;border-bottom:1px solid #e2e8f0}}
-.sp-tbl td{{padding:9px 8px;border-bottom:1px solid #f1f5f9}}
+.sp-tbl th{{text-align:left;font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;color:#758696;padding:6px 8px;border-bottom:1px solid #D6DADD}}
+.sp-tbl td{{padding:9px 8px;border-bottom:1px solid #F2F1EE}}
 .sp-tbl .r{{text-align:right}}
-.sp-tbl .pos{{color:#15803d;font-weight:700}}.sp-tbl .neg{{color:#b91c1c;font-weight:700}}
+.sp-tbl .pos{{color:#16a34a;font-weight:700}}.sp-tbl .neg{{color:#ea384c;font-weight:700}}
 .sp-tbl .tag{{font-size:10.5px;font-weight:800;padding:2px 8px;border-radius:999px;letter-spacing:.04em}}
-.sp-tbl .tag.beat{{background:#eaf7ee;color:#15803d}}.sp-tbl .tag.miss{{background:#fdecec;color:#b91c1c}}
-.sp-note{{font-size:12.5px;color:#64748b;margin-top:8px}}
-.sp-lead{{font-size:14px;color:#475569;margin-bottom:14px}}
+.sp-tbl .tag.beat{{background:#eaf7ee;color:#16a34a}}.sp-tbl .tag.miss{{background:#fdecec;color:#ea384c}}
+.sp-note{{font-size:12.5px;color:#5d6c7b;margin-top:8px}}
+.sp-lead{{font-size:14px;color:#5d6c7b;margin-bottom:14px}}
 .pro-grid{{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-bottom:14px}}
-.pro-card{{background:#f8fafc;border:1px solid #eef1f5;border-radius:12px;padding:14px 16px;position:relative}}
-.pro-card .pc-h{{font-weight:800;font-size:14px;color:#0a0a0a;margin-bottom:4px}}
-.pro-card .pc-d{{font-size:12.5px;color:#64748b;line-height:1.5}}
-.cta-btn-pri{{background:linear-gradient(135deg,#2970FF,#0040c1);color:#fff;border-radius:10px;padding:12px 22px;font-weight:700}}
-.cta-btn-pri:hover{{filter:brightness(1.06);text-decoration:none;background:linear-gradient(135deg,#2970FF,#0040c1)}}
+.pro-card{{background:#FBFAF8;border:1px solid #eef1f5;border-radius:12px;padding:14px 16px;position:relative}}
+.pro-card .pc-h{{font-weight:800;font-size:14px;color:#0A2F46;margin-bottom:4px}}
+.pro-card .pc-d{{font-size:12.5px;color:#5d6c7b;line-height:1.5}}
+.cta-btn-pri{{background:linear-gradient(135deg,#14587D,#0A2F46);color:#fff;border-radius:10px;padding:12px 22px;font-weight:700}}
+.cta-btn-pri:hover{{filter:brightness(1.06);text-decoration:none;background:linear-gradient(135deg,#14587D,#0A2F46)}}
 /* ── drawer-style premium ribbon cards ── */
 .rep-sec{{background:#fff;border:1px solid rgba(9,9,9,.07);border-radius:16px;overflow:hidden;box-shadow:0 10px 28px -16px rgba(15,40,100,.30),0 1px 2px rgba(15,40,100,.05);margin:16px 0;scroll-margin-top:66px}}
 .rep-rib{{display:flex;align-items:center;gap:10px;padding:11px 16px}}
 .rep-ico{{width:27px;height:27px;border-radius:9px;background:rgba(255,255,255,.2);display:grid;place-items:center;font-size:14px;flex:0 0 auto}}
-.rep-title{{font-family:'Fraunces',Georgia,serif;font-weight:700;font-size:15px;letter-spacing:-.005em;color:#fff;text-shadow:0 1px 1px rgba(0,0,0,.12)}}
+.rep-title{{font-family:'Public Sans',system-ui,sans-serif;font-weight:500;font-size:15px;letter-spacing:-.005em;color:#fff;text-shadow:0 1px 1px rgba(0,0,0,.12)}}
 .rep-blue{{background:linear-gradient(105deg,#3f86f7,#1e44c9)}}
 .rep-teal{{background:linear-gradient(105deg,#16c2af,#0c8a82)}}
 .rep-green{{background:linear-gradient(105deg,#5fc24a,#398f3c)}}
 .rep-violet{{background:linear-gradient(105deg,#8b5cf6,#5b21b6)}}
 .rep-amber{{background:linear-gradient(105deg,#f9b234,#db880b)}}
-.rep-red{{background:linear-gradient(105deg,#f5576c,#c11d33)}}
+.rep-red{{background:linear-gradient(105deg,#f5576c,#ea384c)}}
 .rep-slate{{background:linear-gradient(105deg,#7c8aa0,#4a5568)}}
 .rep-body{{padding:18px}}
 .rep-body .metrics{{margin-bottom:0}}
@@ -3421,10 +3460,10 @@ h2{{font-size:18px;margin:30px 0 12px}}
 /* verdict stars + signal chips */
 .vb-stars{{font-size:17px;letter-spacing:2px;line-height:1;margin-bottom:5px}}
 .dr-call-chips{{display:flex;flex-wrap:wrap;gap:6px;margin-top:11px}}
-.dr-cc{{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:800;padding:4px 9px;border-radius:7px;letter-spacing:.03em;background:#fff;border:1px solid #e2e8f0}}
-.dr-cc.cc-up{{color:#15803d;border-color:rgba(22,163,74,.32);background:rgba(22,163,74,.07)}}
-.dr-cc.cc-blue{{color:#0040c1;border-color:rgba(41,112,255,.32);background:rgba(41,112,255,.07)}}
-.dr-cc.cc-val{{color:#b4780a;border-color:rgba(180,120,10,.32);background:rgba(245,166,35,.10)}}
+.dr-cc{{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:800;padding:4px 9px;border-radius:7px;letter-spacing:.03em;background:#fff;border:1px solid #D6DADD}}
+.dr-cc.cc-up{{color:#16a34a;border-color:rgba(22,163,74,.32);background:rgba(22,163,74,.07)}}
+.dr-cc.cc-blue{{color:#0A2F46;border-color:rgba(20,88,125,.32);background:rgba(20,88,125,.07)}}
+.dr-cc.cc-val{{color:#b4780a;border-color:rgba(180,120,10,.32);background:rgba(255,97,0,.10)}}
 /* neutralize the nested 'Latest earnings' card so it sits flush in its ribbon */
 .rep-body [data-earnings-card]{{background:transparent!important;border:0!important;box-shadow:none!important;padding:0!important;margin:0!important}}
 .rep-body [data-earnings-card] h3{{display:none}}
@@ -3432,12 +3471,8 @@ h2{{font-size:18px;margin:30px 0 12px}}
 </style>
 </head>
 <body>
+{_theme.nav_html()}
 <div class="wrap">
-
-  <a href="/" class="brand">
-    <img src="{SITE_ORIGIN}/static/icons/alpha-logo-bare-64.png" alt="" width="22" height="22" style="display:block;border-radius:6px">
-    <span class="bw">Ticker<em>Mover</em></span>
-  </a>
 
   <div class="report-card">
   <div class="crumbs">{sub or sector or "Stock Analysis"}</div>
@@ -3473,7 +3508,7 @@ h2{{font-size:18px;margin:30px 0 12px}}
   </div><!-- /report-card -->
 
   <div class="cta">
-    <h3>Get the full live dashboard</h3>
+    <h2>Get the full live dashboard</h2>
     <p>Real-time scoring, conflict detection, Reverse DCF, peer comparison and more — with TickerMover Pro.</p>
     <a href="/app?signup=1" class="cta-btn">Open dashboard for {sym} →</a>
   </div>
@@ -3481,11 +3516,11 @@ h2{{font-size:18px;margin:30px 0 12px}}
   <div class="legal">
     TickerMover is a research tool, not financial advice. Quant Score is a composite signal — always do your own research before investing.
     <br>Last updated automatically every 5 minutes during US market hours.
-    <br>Questions? <a href="mailto:support@tickermover.com" style="color:#15803d">support@tickermover.com</a>
   </div>
 
 </div>
-</body>
+{_theme.footer_html()}
+
 </html>"""
 
 
@@ -13603,7 +13638,7 @@ _RESET_PASSWORD_HTML = """<!DOCTYPE html>
 <meta name="robots" content="noindex,nofollow">
 <link rel="icon" href="/favicon.ico">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,600;9..144,700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+{_theme.FONTS_LINK}
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'Inter',-apple-system,sans-serif;color:#0a0a0a;background:#0A0A0A;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;-webkit-font-smoothing:antialiased;

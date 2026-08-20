@@ -66,7 +66,12 @@ def build_checklist(t: dict, universe) -> list[dict]:
         checks.append({"label": "Profitable", "detail": "Earnings data unavailable", "state": None})
 
     # Revenue growing
+    # The renderer and every metric panel read revenue_growth_yoy; reading only
+    # revenue_growth made this check report "Growth data unavailable" on the same
+    # page that printed +1.5% twice.
     rg = _num(t.get("revenue_growth"))
+    if rg is None:
+        rg = _num(t.get("revenue_growth_yoy"))
     if rg is not None:
         rgp = rg * 100 if abs(rg) <= 1.5 else rg
         checks.append({"label": "Revenue growing",
@@ -168,41 +173,41 @@ def render_card(t: dict, universe) -> str:
 <style>
 .fchk{{border:1px solid rgba(10,10,10,.1);border-radius:16px;padding:24px 26px;margin:36px 0;background:#fff;box-shadow:0 10px 30px -24px rgba(10,10,10,.25)}}
 .fchk-head{{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:14px}}
-.fchk-h{{font-family:'Fraunces',serif;font-size:20px;font-weight:600;color:#0A0A0A;margin:0}}
-.fchk-score{{font-family:'Manrope','Inter',sans-serif;font-size:12.5px;font-weight:700;letter-spacing:.02em;color:#15803d;background:rgba(21,128,61,.1);border:1px solid rgba(21,128,61,.28);padding:6px 12px;border-radius:999px;white-space:nowrap}}
-.fchk-biz{{font-size:14.5px;line-height:1.6;color:#334155;margin:0 0 18px}}
-.fchk-biz b{{color:#0A0A0A}}
+.fchk-h{{font-family:'Public Sans',system-ui,sans-serif;font-size:20px;font-weight:500;color:#0A2F46;margin:0}}
+.fchk-score{{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12.5px;font-weight:700;letter-spacing:.02em;color:#15803d;background:rgba(21,128,61,.1);border:1px solid rgba(21,128,61,.28);padding:6px 12px;border-radius:999px;white-space:nowrap}}
+.fchk-biz{{font-size:14.5px;line-height:1.6;color:#5d6c7b;margin:0 0 18px}}
+.fchk-biz b{{color:#0A2F46}}
 .fchk-list{{list-style:none;margin:0 0 10px;padding:0}}
 .fchk-item{{display:flex;gap:12px;align-items:flex-start;padding:9px 0;border-top:1px solid rgba(10,10,10,.06)}}
 .fchk-item:first-child{{border-top:none}}
 .fchk-box{{flex:0 0 20px;width:20px;height:20px;border-radius:6px;border:1.5px solid rgba(10,10,10,.22);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;margin-top:1px}}
 .fchk-on .fchk-box{{background:#15803d;border-color:#15803d;color:#fff}}
-.fchk-na .fchk-box{{color:#94a3b8;border-style:dashed}}
-.fchk-txt{{font-size:14px;color:#0A0A0A;display:flex;flex-direction:column;gap:2px}}
-.fchk-det{{font-size:12.5px;color:#64748b;font-weight:500}}
-.fchk-self .fchk-txt{{color:#475569;font-size:13.5px;padding-top:1px}}
-.fchk-sub{{font-family:'Manrope','Inter',sans-serif;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#94a3b8;margin:18px 0 6px}}
+.fchk-na .fchk-box{{color:#758696;border-style:dashed}}
+.fchk-txt{{font-size:14px;color:#0A2F46;display:flex;flex-direction:column;gap:2px}}
+.fchk-det{{font-size:12.5px;color:#5d6c7b;font-weight:500}}
+.fchk-self .fchk-txt{{color:#5d6c7b;font-size:13.5px;padding-top:1px}}
+.fchk-sub{{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#758696;margin:18px 0 6px}}
 .fchk-mgmt-row{{display:grid;grid-template-columns:150px 1fr;gap:14px;padding:10px 0;border-top:1px solid rgba(10,10,10,.06);font-size:13.5px}}
-.fchk-mgmt-row .k{{color:#64748b;font-weight:600}}
-.fchk-mgmt-row .v{{color:#1e293b;line-height:1.55}}
-.fchk-note{{font-size:12px;line-height:1.6;color:#94a3b8;margin:16px 0 0;border-top:1px solid rgba(10,10,10,.06);padding-top:12px}}
-.fchk-cat{{background:#f8fafc;border:1px solid rgba(10,10,10,.08);border-radius:10px;padding:12px 14px;margin-top:14px;font-size:13.5px;color:#334155}}
-.fchk-cat b{{color:#0A0A0A}}
+.fchk-mgmt-row .k{{color:#5d6c7b;font-weight:600}}
+.fchk-mgmt-row .v{{color:#10293D;line-height:1.55}}
+.fchk-note{{font-size:12px;line-height:1.6;color:#758696;margin:16px 0 0;border-top:1px solid rgba(10,10,10,.06);padding-top:12px}}
+.fchk-cat{{background:#FBFAF8;border:1px solid rgba(10,10,10,.08);border-radius:10px;padding:12px 14px;margin-top:14px;font-size:13.5px;color:#5d6c7b}}
+.fchk-cat b{{color:#0A2F46}}
 /* Thesis audit — four areas chosen for this business, two cited checks each. */
 .fca-area{{border-top:1px solid rgba(10,10,10,.07);padding:15px 0 13px}}
 .fca-area:first-child{{border-top:none}}
 .fca-head{{display:flex;justify-content:space-between;align-items:baseline;gap:12px}}
-.fca-name{{font-size:15px;font-weight:800;color:#0A0A0A;line-height:1.3}}
-.fca-v{{flex:none;font-family:'Manrope','Inter',sans-serif;font-size:10.5px;font-weight:800;letter-spacing:.08em;padding:3px 10px;border-radius:999px;border:1px solid;white-space:nowrap}}
+.fca-name{{font-size:15px;font-weight:800;color:#0A2F46;line-height:1.3}}
+.fca-v{{flex:none;font-family:'JetBrains Mono',ui-monospace,monospace;font-size:10.5px;font-weight:800;letter-spacing:.08em;padding:3px 10px;border-radius:999px;border:1px solid;white-space:nowrap}}
 .fca-pass .fca-v,.fca-pass .fca-cv{{color:#15803d;border-color:rgba(21,128,61,.35);background:rgba(21,128,61,.08)}}
 .fca-fail .fca-v,.fca-fail .fca-cv{{color:#b91c1c;border-color:rgba(185,28,28,.35);background:rgba(185,28,28,.07)}}
 .fca-mixed .fca-v,.fca-mixed .fca-cv{{color:#b45309;border-color:rgba(180,83,9,.35);background:rgba(180,83,9,.08)}}
-.fca-note{{font-size:12px;color:#94a3b8;font-weight:600;margin-top:3px}}
+.fca-note{{font-size:12px;color:#758696;font-weight:600;margin-top:3px}}
 .fca-chk{{display:flex;gap:10px;align-items:flex-start;padding:8px 0}}
-.fca-cv{{flex:none;font-family:'Manrope','Inter',sans-serif;font-size:9.5px;font-weight:800;letter-spacing:.06em;padding:2px 7px;border-radius:5px;border:1px solid;margin-top:3px}}
-.fca-ct{{font-size:14px;line-height:1.6;color:#1e293b}}
-.fca-cn{{font-weight:700;color:#0A0A0A}}
-.fca-cite{{font-size:11px;font-weight:700;color:#2970ff;text-decoration:none;vertical-align:super;margin-left:3px}}
+.fca-cv{{flex:none;font-family:'JetBrains Mono',ui-monospace,monospace;font-size:9.5px;font-weight:800;letter-spacing:.06em;padding:2px 7px;border-radius:5px;border:1px solid;margin-top:3px}}
+.fca-ct{{font-size:14px;line-height:1.6;color:#10293D}}
+.fca-cn{{font-weight:700;color:#0A2F46}}
+.fca-cite{{font-size:11px;font-weight:700;color:#14587D;text-decoration:none;vertical-align:super;margin-left:3px}}
 .fca-cite:hover{{text-decoration:underline}}
 @media(max-width:560px){{.fchk-mgmt-row{{grid-template-columns:1fr}}}}
 </style>
