@@ -11,6 +11,11 @@
 <link href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=JetBrains+Mono:wght@400;500;600;700&family=Literata:ital,opsz,wght@0,7..72,300;0,7..72,400;0,7..72,600;1,7..72,400&display=swap" rel="stylesheet">
 <style>
 :root{
+  /* ---- motion scale (single source of truth; see _motion_preview.html) ---- */
+  --t-fast:140ms; --t-base:240ms; --t-slow:420ms; --t-draw:900ms;
+  --e-out:cubic-bezier(.2,.7,.2,1);
+  --e-spring:cubic-bezier(.34,1.56,.64,1);
+
   --blue:#14587D;--blue-d:#0A2F46;--ink:#0A2F46;--muted:#475569;--faint:#94a3b8;
   --line:rgba(10,47,70,.09);--card:#ffffff;--bg:#FFF2EC;
   --pos:#0a7d33;--pos-soft:#e7f6ec;--neg:#dc2626;--neg-soft:#fdeceb;--zero:#cbd5e1;
@@ -49,7 +54,7 @@ h1.title em{font-style:italic;color:var(--blue-d)}
 .readout{font-family:var(--serif);font-size:38px;font-weight:600;color:var(--blue-d);line-height:1}
 .readout small{font-size:16px;color:var(--faint);font-weight:600;margin-left:3px}
 .presets{display:flex;gap:7px;margin:14px 0 4px;flex-wrap:wrap}
-.preset{font-size:12.5px;font-weight:700;font-family:var(--body);border:1px solid var(--line);background:#fff;color:var(--muted);border-radius:999px;padding:5px 12px;cursor:pointer;transition:all .14s}
+.preset{font-size:12.5px;font-weight:700;font-family:var(--body);border:1px solid var(--line);background:#fff;color:var(--muted);border-radius:999px;padding:5px 12px;cursor:pointer;transition:all var(--t-fast)}
 .preset:hover{border-color:#E4E7EC;color:var(--blue-d)}
 .preset.on{background:#F2F1EE;border-color:#E4E7EC;color:var(--blue-d)}
 input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:5px;background:linear-gradient(90deg,#fde2e0,#F2F1EE 50%,#dbeadf);border-radius:3px;outline:none;margin:16px 0 0}
@@ -66,7 +71,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 .mv .mv-tk{font-family:var(--mono);font-weight:700;font-size:12.5px}
 .mv .mv-tk small{color:var(--faint);font-weight:500;margin-left:5px}
 .mv-track{position:relative;height:12px}
-.mv-fill{position:absolute;top:0;bottom:0;left:0;border-radius:3px;transition:width .5s cubic-bezier(.32,.72,.31,1),background .3s;min-width:2px}
+.mv-fill{position:absolute;top:0;bottom:0;left:0;border-radius:3px;transition:width var(--t-slow) cubic-bezier(.32,.72,.31,1),background var(--t-base);min-width:2px}
 .mv-fill.pos{background:linear-gradient(90deg,#34d17a,var(--pos))}
 .mv-fill.neg{background:linear-gradient(90deg,#f87171,var(--neg))}
 .mv-val{font-family:var(--mono);font-weight:700;font-size:12.5px;text-align:right}
@@ -162,14 +167,14 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;bac
 /* per-layer impact meter (diverging) */
 .impact{margin:0 0 14px}
 .impact-track{position:relative;height:14px;background:#f1f4f8;border-radius:4px;overflow:hidden}
-.impact-fill{position:absolute;top:0;bottom:0;left:0;width:0;border-radius:4px;transition:width .55s cubic-bezier(.32,.72,.31,1)}
+.impact-fill{position:absolute;top:0;bottom:0;left:0;width:0;border-radius:4px;transition:width var(--t-slow) cubic-bezier(.32,.72,.31,1)}
 .impact-fill.pos{background:linear-gradient(90deg,#34d17a,var(--pos))}
 .impact-cap{display:flex;justify-content:space-between;align-items:baseline;margin-top:7px;gap:10px}
 .impact-val{font-family:var(--mono);font-weight:700;font-size:14px}
 .impact-val.cap-rev{font-size:12px;font-weight:600;color:var(--muted);letter-spacing:.01em}
 /* company cards */
 .cos{display:flex;flex-wrap:wrap;gap:8px}
-.co{display:flex;flex-direction:column;gap:6px;background:#fff;border:1px solid var(--line);border-radius:11px;padding:9px 11px 8px;cursor:pointer;transition:border-color .14s,transform .14s,box-shadow .14s;min-width:132px;text-align:left;font-family:var(--body)}
+.co{display:flex;flex-direction:column;gap:6px;background:#fff;border:1px solid var(--line);border-radius:11px;padding:9px 11px 8px;cursor:pointer;transition:border-color var(--t-fast),transform var(--t-fast),box-shadow var(--t-fast);min-width:132px;text-align:left;font-family:var(--body)}
 .co:hover{border-color:#E4E7EC;transform:translateY(-1px);box-shadow:0 6px 16px -10px rgba(0,28,49,.3)}
 .co[aria-expanded=true]{border-color:var(--blue);box-shadow:0 0 0 3px rgba(20,88,125,.12)}
 .co-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
@@ -330,7 +335,7 @@ h1.title{font-size:clamp(34px,5.6vw,54px);line-height:1.03;letter-spacing:-.022e
   letter-spacing:.14em;text-transform:uppercase;color:#4A5BC4}
 .foot .cta{display:inline-flex;align-items:center;gap:7px;margin-top:14px;
   background:#0A2F46;color:#fff;text-decoration:none;font-size:13.5px;font-weight:500;
-  padding:11px 20px;border-radius:100px;transition:background .2s,transform .18s}
+  padding:11px 20px;border-radius:100px;transition:background var(--t-base),transform var(--t-fast)}
 .foot .cta:hover{background:#14587D;transform:translateY(-1px)}
 
 @media(max-width:640px){
@@ -347,7 +352,7 @@ h1.title{font-size:clamp(34px,5.6vw,54px);line-height:1.03;letter-spacing:-.022e
    headline number sit together on the left, the bar spans the right with its
    caption, and the companies tile in a real grid beneath. */
 .layer{grid-template-columns:minmax(230px,270px) 1fr;gap:30px;padding:26px 0 28px;
-  align-items:start;transition:background .18s;border-radius:14px}
+  align-items:start;transition:background var(--t-fast);border-radius:14px}
 .layer:hover{background:rgba(255,255,255,.55)}
 .layer-meta{padding-left:28px}
 .layer-idx{font-size:9.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase}
@@ -421,7 +426,7 @@ h1.title{font-size:clamp(34px,5.6vw,54px);line-height:1.03;letter-spacing:-.022e
 .layer{display:block;grid-template-columns:none;gap:0;padding:0;border-bottom:0;
   background:#fff;border:1px solid #E4E7EC;border-radius:16px;overflow:hidden;
   box-shadow:0 1px 2px rgba(10,47,70,.04),0 18px 40px -32px rgba(10,47,70,.32);
-  transition:transform .18s,box-shadow .18s,border-color .18s}
+  transition:transform var(--t-fast),box-shadow var(--t-fast),border-color var(--t-fast)}
 .layer:hover{background:#fff;transform:translateY(-2px);border-color:#C7CEF0;
   box-shadow:0 16px 34px -20px rgba(10,47,70,.4)}
 /* The layer's own colour, as a top edge — same idea as the section accents. */
@@ -563,6 +568,10 @@ h1.title{font-size:clamp(34px,5.6vw,54px);line-height:1.03;letter-spacing:-.022e
   .fig-h{font-size:17px}
   .fig-sub{font-size:12.5px;margin-bottom:12px}
 }
+
+/* ============ DIRECTION B - kinetic ============================ */
+.has-js .reveal,.reveal{transition:opacity var(--t-slow) var(--e-out),
+  transform var(--t-slow) var(--e-spring)}
 </style>
 </head>
 <body>

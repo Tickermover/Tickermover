@@ -30,6 +30,11 @@ try{var _r=new URLSearchParams(location.search).get('ref');
    Everything else (layout, structure, motion, sizing) is identical.
    ════════════════════════════════════════════════════════════════ */
 :root{
+  /* ---- motion scale (single source of truth; see _motion_preview.html) ---- */
+  --t-fast:140ms; --t-base:240ms; --t-slow:420ms; --t-draw:900ms;
+  --e-out:cubic-bezier(.2,.7,.2,1);
+  --e-spring:cubic-bezier(.34,1.56,.64,1);
+
   /* ── landing page color tokens (exact match) ── */
   --primary:#0A2F46;
   --blue-light:#14587D;
@@ -215,7 +220,7 @@ a{color:inherit;text-decoration:none}
 /* Sign in / Create account segmented toggle — pill, matching the billing
    toggle that now heads the landing page's pricing panel. */
 .auth-tabs{display:flex;gap:4px;padding:4px;background:rgba(0,28,49,.06);border-radius:100px;margin-bottom:22px}
-.auth-tab{flex:1;padding:9px 12px;border:0;border-radius:100px;background:none;font-family:inherit;font-size:13.5px;font-weight:500;color:var(--grey-2);cursor:pointer;transition:background .18s,color .18s,box-shadow .18s}
+.auth-tab{flex:1;padding:9px 12px;border:0;border-radius:100px;background:none;font-family:inherit;font-size:13.5px;font-weight:500;color:var(--grey-2);cursor:pointer;transition:background var(--t-fast),color var(--t-fast),box-shadow var(--t-fast)}
 .auth-tab.on{background:#fff;color:var(--primary);box-shadow:0 3px 10px -3px rgba(0,28,49,.20)}
 .auth-tab:not(.on):hover{color:var(--text-dark)}
 
@@ -225,7 +230,7 @@ a{color:inherit;text-decoration:none}
   background:var(--white,#fff);border:1px solid rgba(16,41,61,.10);
   color:var(--text-dark);font-family:inherit;font-size:14px;font-weight:500;
   box-shadow:0 4px 12px rgba(0,28,49,.05);
-  transition:background .15s,border-color .15s,transform .15s,box-shadow .15s;
+  transition:background var(--t-fast),border-color var(--t-fast),transform var(--t-fast),box-shadow var(--t-fast);
 }
 .sso:hover{border-color:var(--primary);background:#fafcff;transform:translateY(-1px);box-shadow:0 12px 28px -10px rgba(20,88,125,.30)}
 
@@ -242,7 +247,7 @@ a{color:inherit;text-decoration:none}
   width:100%;padding:13px 16px;border-radius:11px;
   background:#fff;border:1px solid rgba(16,41,61,.12);
   color:var(--text-dark);font-family:inherit;font-size:15px;font-weight:500;
-  transition:border-color .15s,background .15s,box-shadow .15s;
+  transition:border-color var(--t-fast),background var(--t-fast),box-shadow var(--t-fast);
 }
 .inp::placeholder{color:var(--grey)}
 .inp:focus{outline:none;border-color:var(--primary);background:#fafcff;box-shadow:0 0 0 4px rgba(20,88,125,.14)}
@@ -271,19 +276,19 @@ a{color:inherit;text-decoration:none}
      which matters, because the @property version this replaced silently
      never ran. Identical to landing's .btn-primary. */
   box-shadow:inset 0 0 0 0 #5566D8;
-  transition:box-shadow .5s cubic-bezier(.22,.9,.28,1),
-             transform .28s cubic-bezier(.22,.9,.28,1),
-             border-color .3s ease;
+  transition:box-shadow var(--t-slow) var(--e-out),
+             transform var(--t-base) var(--e-out),
+             border-color var(--t-base) var(--e-out);
   display:flex;align-items:center;justify-content:center;gap:12px;position:relative;
 }
-.submit .arrow{width:30px;height:30px;border-radius:50%;background:transparent;color:#FF6100;display:grid;place-items:center;flex:none;transition:transform .45s cubic-bezier(.2,.7,.2,1)}
+.submit .arrow{width:30px;height:30px;border-radius:50%;background:transparent;color:#FF6100;display:grid;place-items:center;flex:none;transition:transform var(--t-slow) var(--e-out)}
 .submit .arrow svg{width:14px;height:14px;display:block}
 .submit:hover:not(:disabled){
   box-shadow:inset 0 0 0 60px #5566D8, 0 18px 36px -14px rgba(85,102,216,.70);
   border-color:#5566D8;transform:translateY(-2px)}
 .submit:hover:not(:disabled) .arrow{transform:translateX(3px)}
 @media(prefers-reduced-motion:reduce){
-  .submit{transition:box-shadow .5s ease}
+  .submit{transition:box-shadow var(--t-slow) var(--e-out)}
   .submit:hover:not(:disabled){transform:none}
 }
 .submit:disabled{opacity:.7;cursor:wait}
@@ -317,6 +322,10 @@ a{color:inherit;text-decoration:none}
 .legal-line a{color:var(--grey-2);text-decoration:none;font-weight:600}
 .legal-line a:hover{color:var(--primary);text-decoration:underline}
 .legal-line span{opacity:.5}
+
+/* ============ DIRECTION B - kinetic ============================ */
+.has-js .reveal,.reveal{transition:opacity var(--t-slow) var(--e-out),
+  transform var(--t-slow) var(--e-spring)}
 </style>
 </head>
 <body>

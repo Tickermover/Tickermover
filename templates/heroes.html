@@ -13,7 +13,12 @@
     /* Navy + warm, matching the rest of the site. Was a near-white #fcfbf9
        with icy-blue accents — the old electric-blue scheme. Literata stays:
        here the serif is the page's editorial identity, not theme. */
-    :root{--blue:#14587D;--ink:#0A2F46;--muted:#475569;--head:#4A5BC4;--accent:#C74E00}
+    :root{
+  /* ---- motion scale (single source of truth; see _motion_preview.html) ---- */
+  --t-fast:140ms; --t-base:240ms; --t-slow:420ms; --t-draw:900ms;
+  --e-out:cubic-bezier(.2,.7,.2,1);
+  --e-spring:cubic-bezier(.34,1.56,.64,1);
+--blue:#14587D;--ink:#0A2F46;--muted:#475569;--head:#4A5BC4;--accent:#C74E00}
     *{box-sizing:border-box}
     body{margin:0;background:#FFF2EC;color:var(--ink);
       font-family:'Public Sans',system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased;line-height:1.6}
@@ -39,7 +44,7 @@
     /* ── spotlight cards (top 10) ── */
     .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;margin:0 0 42px}
     .card{position:relative;background:#fff;border:1px solid rgba(10,47,70,.09);border-radius:16px;padding:18px 18px 16px;box-shadow:0 1px 3px rgba(10,47,70,.05);overflow:hidden;
-      cursor:pointer;transition:transform .18s,box-shadow .18s,border-color .18s}
+      cursor:pointer;transition:transform var(--t-fast),box-shadow var(--t-fast),border-color var(--t-fast)}
     .card:hover{transform:translateY(-2px);box-shadow:0 10px 26px rgba(0,28,49,.10);border-color:#C7CEF0}
     .card.podium{background:linear-gradient(180deg,#FBFAF8,#fff 55%);border-color:#E4E7EC}
     .card .rk{position:absolute;top:10px;right:14px;font-family:'Literata',Georgia,serif;font-weight:600;font-style:italic;font-size:30px;color:rgba(20,88,125,.16)}
@@ -78,10 +83,10 @@
     .disc{font-size:12.5px;color:#94a3b8;line-height:1.55;margin-top:22px;border-top:1px solid rgba(10,47,70,.08);padding-top:16px}
     .loading,.empty{text-align:center;color:#64748b;padding:80px 20px;font-size:15px}
     /* ── in-page company detail sheet ── */
-    .ov{position:fixed;inset:0;background:rgba(10,47,70,.44);backdrop-filter:blur(3px);z-index:50;opacity:0;pointer-events:none;transition:opacity .22s}
+    .ov{position:fixed;inset:0;background:rgba(10,47,70,.44);backdrop-filter:blur(3px);z-index:50;opacity:0;pointer-events:none;transition:opacity var(--t-base)}
     .ov.on{opacity:1;pointer-events:auto}
     .sheet{position:fixed;top:0;right:0;bottom:0;width:min(480px,100%);background:#FFF9F6;z-index:51;box-shadow:-24px 0 70px rgba(0,28,49,.25);
-      transform:translateX(103%);transition:transform .26s cubic-bezier(.32,.72,.31,1);display:flex;flex-direction:column}
+      transform:translateX(103%);transition:transform var(--t-base) cubic-bezier(.32,.72,.31,1);display:flex;flex-direction:column}
     .sheet.on{transform:translateX(0)}
     .sh-top{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:16px 20px 12px;border-bottom:1px solid rgba(10,47,70,.08);flex:none}
     .sh-eyebrow{font-size:10.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#0A2F46}
@@ -121,7 +126,11 @@
       .sheet{top:auto;height:88%;width:100%;border-radius:18px 18px 0 0;transform:translateY(103%)}
       .sheet.on{transform:translateY(0)}
     }
-  </style>
+  
+/* ============ DIRECTION B - kinetic ============================ */
+.has-js .reveal,.reveal{transition:opacity var(--t-slow) var(--e-out),
+  transform var(--t-slow) var(--e-spring)}
+</style>
 </head>
 <body>
   <!-- Marketing-first markup so a cold visitor (and the crawler — this page is

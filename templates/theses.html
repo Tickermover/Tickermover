@@ -14,7 +14,12 @@
    #fcfbf9 with icy-blue accents — that is the OLD electric-blue scheme, and it
    is a large part of why the page read as a different product rather than a
    page of this one. */
-:root{--blue:#14587D;--blue-d:#0A2F46;--ink:#0A2F46;--muted:#475569;--faint:#94a3b8;--line:rgba(10,47,70,.09);--bg:#FFF2EC;
+:root{
+  /* ---- motion scale (single source of truth; see _motion_preview.html) ---- */
+  --t-fast:140ms; --t-base:240ms; --t-slow:420ms; --t-draw:900ms;
+  --e-out:cubic-bezier(.2,.7,.2,1);
+  --e-spring:cubic-bezier(.34,1.56,.64,1);
+--blue:#14587D;--blue-d:#0A2F46;--ink:#0A2F46;--muted:#475569;--faint:#94a3b8;--line:rgba(10,47,70,.09);--bg:#FFF2EC;
   --head:#4A5BC4;--accent:#C74E00;--neutral:#F2F1EE;
   --serif:'Literata',Georgia,serif;--body:'Public Sans',system-ui,-apple-system,sans-serif;--mono:'JetBrains Mono',ui-monospace,monospace;}
 *{box-sizing:border-box}
@@ -32,7 +37,7 @@ h1{font-family:var(--serif);font-weight:600;font-size:clamp(34px,6vw,58px);line-
 h1 em{font-style:italic;color:var(--blue-d)}
 .standfirst{max-width:64ch;color:#334155;font-size:18px;line-height:1.5;margin:0}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;margin:34px 0 0}
-.card{position:relative;background:#fff;border:1px solid var(--line);border-radius:16px;padding:22px 22px 20px;display:flex;flex-direction:column;text-decoration:none;color:inherit;box-shadow:0 1px 3px rgba(10,47,70,.05);transition:border-color .16s,transform .16s,box-shadow .16s;min-height:212px}
+.card{position:relative;background:#fff;border:1px solid var(--line);border-radius:16px;padding:22px 22px 20px;display:flex;flex-direction:column;text-decoration:none;color:inherit;box-shadow:0 1px 3px rgba(10,47,70,.05);transition:border-color var(--t-fast),transform var(--t-fast),box-shadow var(--t-fast);min-height:212px}
 a.card:hover{border-color:#C7CEF0;transform:translateY(-2px);box-shadow:0 12px 28px -14px rgba(0,28,49,.28)}
 .c-eyebrow{display:flex;justify-content:space-between;align-items:center;font-size:10.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin-bottom:12px}
 .tag{font-family:var(--mono);font-size:9.5px;letter-spacing:.06em;padding:3px 9px;border-radius:999px;font-weight:600}
@@ -51,6 +56,10 @@ a.card:hover{border-color:#C7CEF0;transform:translateY(-2px);box-shadow:0 12px 2
 .foot p{margin:0;max-width:76ch;color:var(--faint)}
 .loading{padding:56px 0;color:var(--faint);font-size:14px}
 @media(max-width:640px){.wrap{padding:26px 16px 60px}}
+
+/* ============ DIRECTION B - kinetic ============================ */
+.has-js .reveal,.reveal{transition:opacity var(--t-slow) var(--e-out),
+  transform var(--t-slow) var(--e-spring)}
 </style>
 </head>
 <body>

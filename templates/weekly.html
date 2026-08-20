@@ -10,7 +10,12 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Literata:ital,opsz,wght@0,7..72,300;0,7..72,400;0,7..72,600;1,7..72,400&display=swap" rel="stylesheet">
   <style>
-    :root{--blue:#14587D;--ink:#0A2F46;--muted:#475569}
+    :root{
+  /* ---- motion scale (single source of truth; see _motion_preview.html) ---- */
+  --t-fast:140ms; --t-base:240ms; --t-slow:420ms; --t-draw:900ms;
+  --e-out:cubic-bezier(.2,.7,.2,1);
+  --e-spring:cubic-bezier(.34,1.56,.64,1);
+--blue:#14587D;--ink:#0A2F46;--muted:#475569}
     *{box-sizing:border-box}
     body{margin:0;background:#fcfbf9;color:var(--ink);
       font-family:'Public Sans',system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased;line-height:1.6}
@@ -34,7 +39,7 @@
     .rail-h{font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#94a3b8;margin:0 0 12px}
     .rail-toc{list-style:none;margin:0;padding:0;border-left:2px solid #e6edf7}
     .rail-toc a{display:flex;gap:9px;padding:7px 0 7px 13px;margin-left:-2px;border-left:2px solid transparent;
-      font-size:13px;line-height:1.35;color:#5d6c7b;text-decoration:none;transition:color .15s,border-color .15s}
+      font-size:13px;line-height:1.35;color:#5d6c7b;text-decoration:none;transition:color var(--t-fast),border-color var(--t-fast)}
     .rail-toc a:hover{color:var(--blue);border-left-color:#E4E7EC}
     .rail-toc a.on{color:var(--ink,#0A2F46);font-weight:700;border-left-color:var(--blue)}
     .rail-toc .n{color:#94a3b8;font-variant-numeric:tabular-nums;flex:none}
@@ -116,7 +121,7 @@
     @media(max-width:560px){ .wrap{padding:22px 17px 60px} .article{font-size:16px} }
     /* consulting-report additions: action bar, bottom-line, data tables, print */
     .actionbar{display:flex;gap:8px;margin:2px 0 20px;flex-wrap:wrap}
-    .abtn{display:inline-flex;align-items:center;gap:6px;font-family:inherit;font-size:12.5px;font-weight:600;color:#0A2F46;background:#fff;border:1px solid #E4E7EC;border-radius:9px;padding:7px 13px;cursor:pointer;transition:background .14s;text-decoration:none;white-space:nowrap}
+    .abtn{display:inline-flex;align-items:center;gap:6px;font-family:inherit;font-size:12.5px;font-weight:600;color:#0A2F46;background:#fff;border:1px solid #E4E7EC;border-radius:9px;padding:7px 13px;cursor:pointer;transition:background var(--t-fast);text-decoration:none;white-space:nowrap}
     .abtn:hover{background:#F2F1EE}
     .bottomline{background:linear-gradient(180deg,#F2F1EE,#f8fbff);border:1px solid #E4E7EC;border-radius:16px;padding:18px 20px;margin:0 0 22px}
     .bottomline .h{font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#0A2F46;margin-bottom:7px}
@@ -260,7 +265,7 @@
     /* nav */
     .bk-bar{display:flex;align-items:center;gap:12px;margin:0 0 26px}
     .bk-btn{width:38px;height:38px;flex:none;display:inline-flex;align-items:center;justify-content:center;font-size:17px;
-      color:#0A2F46;background:#fff;border:1px solid #E4E7EC;border-radius:10px;cursor:pointer;transition:background .14s}
+      color:#0A2F46;background:#fff;border:1px solid #E4E7EC;border-radius:10px;cursor:pointer;transition:background var(--t-fast)}
     .bk-btn:hover:not(:disabled){background:#F2F1EE}
     .bk-btn:disabled{opacity:.35;cursor:default}
     .bk-btn:focus-visible,.abtn:focus-visible,.cover:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
@@ -309,7 +314,7 @@
     .news-sub{font-size:16px;color:var(--muted);max-width:60ch;margin:0}
     .covers{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:26px}
     .cover{position:relative;display:block;aspect-ratio:3/4.05;border-radius:6px;overflow:hidden;color:#fff;
-      text-decoration:none;box-shadow:0 14px 34px -18px rgba(0,28,49,.55);transition:transform .18s,box-shadow .18s;isolation:isolate}
+      text-decoration:none;box-shadow:0 14px 34px -18px rgba(0,28,49,.55);transition:transform var(--t-fast),box-shadow var(--t-fast);isolation:isolate}
     .cover:hover{transform:translateY(-4px);box-shadow:0 26px 52px -20px rgba(0,28,49,.66)}
     .cov-art{position:absolute;inset:0;width:100%;height:100%;z-index:0}
     /* Photo thumbnail over the drawn base; multiply tint holds the series
@@ -368,7 +373,11 @@
       .cov-mast{font-size:21px}.cov-mast .no{font-size:12.5px}
       .cov-title{font-size:16px}.cover.featured .cov-title{font-size:18px}
     }
-  </style>
+  
+/* ============ DIRECTION B - kinetic ============================ */
+.has-js .reveal,.reveal{transition:opacity var(--t-slow) var(--e-out),
+  transform var(--t-slow) var(--e-spring)}
+</style>
 </head>
 <body>
   <header class="top">
