@@ -54,10 +54,12 @@ _BASE_CSS = _theme.THEME_CSS
 _FONTS_LINK = _theme.FONTS_LINK
 
 def brand_header() -> str:
-    """Canonical wordmark. Lives in theme.py so the M stays navy and the dot
-    stays orange - these pages rendered a blue M with a BLUE dot until now,
-    because the old markup carried the colours inline."""
-    return _theme.wordmark()
+    """Deliberately empty. The wordmark now lives in the shared nav
+    (theme.nav_html), so a body that also emitted it rendered TWO wordmarks
+    stacked - visible on /sectors, one in the nav and one above the crumbs.
+    Kept as a no-op rather than deleted: it is called from several body
+    builders and this is the one-line fix that cannot miss a call site."""
+    return ""
 
 
 def newsletter_block(source: str) -> str:

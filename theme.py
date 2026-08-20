@@ -12,7 +12,8 @@ they were measured off the reference, and several carry meaning:
   * #16a34a / #ea384c mean up and down. Nothing else.
   * #FF6100 on white is only 3.4:1 — small orange text on a light surface must
     use #C74E00 (--accent-safe).
-  * The wordmark's dot is ALWAYS orange, the M always navy.
+  * The wordmark is #4A5BC4 on light (M and dot both), and white-M +
+    orange-dot on the dark footer. See wordmark().
 """
 
 FONTS_LINK = (
@@ -25,17 +26,21 @@ FONTS_LINK = (
     '&display=swap" rel="stylesheet">'
 )
 
-# The wordmark. Colours are set here rather than left to the inline SVG
-# defaults, because a page that copies the markup without the CSS renders a
-# blue M with a blue dot - which is exactly what every SEO page did until now.
 def wordmark(dark: bool = False) -> str:
-    m = "#8FBFDD" if dark else "#0A2F46"
+    """Canonical wordmark, colours taken from landing.html's own rules:
+        light   html body .brand-m polyline{stroke:#4A5BC4}  circle{fill:#4A5BC4}
+        footer  html body .footer .brand-m polyline{stroke:#FFFFFF} circle{fill:#FF6100}
+    On light the dot is the SAME blue-violet as the M - it only turns orange on
+    the dark footer. Getting this wrong is what made these pages read as a
+    different brand."""
+    stroke = "#FFFFFF" if dark else "#4A5BC4"
+    dot    = "#FF6100" if dark else "#4A5BC4"
     return (
         '<a href="/" class="tm-brand"><span class="tm-word">Ticker'
         '<svg class="tm-m" viewBox="0 0 90 105" fill="none" aria-hidden="true">'
-        f'<polyline points="5,100 23,42 45,66 67,26 85,100" stroke="{m}" '
+        f'<polyline points="5,100 23,42 45,66 67,26 85,100" stroke="{stroke}" '
         'stroke-width="9" fill="none" stroke-linecap="round" stroke-linejoin="round"/>'
-        '<circle cx="67" cy="8" r="7" fill="#FF6100"/></svg>over</span></a>'
+        f'<circle cx="67" cy="8" r="7" fill="{dot}"/></svg>over</span></a>'
     )
 
 
@@ -129,21 +134,22 @@ a:hover{text-decoration:underline}
   color:var(--primary);letter-spacing:-.01em}
 .tm-brand:hover{text-decoration:none}
 .tm-word{display:inline-flex;align-items:baseline;white-space:nowrap}
-.tm-m{height:1.05em;width:auto;flex:none;align-self:baseline;margin:0 .02em}
-.tm-nav-links{display:flex;gap:26px;font-size:14.5px;font-weight:400}
+.tm-m{height:1.6em;width:auto;flex:none;align-self:baseline;margin:0 .02em}
+.tm-nav-links{display:flex;gap:26px;font-size:15px;font-weight:500}
 .tm-nav-links a{color:var(--ink);transition:color var(--t-fast) var(--e-out)}
-.tm-nav-links a:hover{color:var(--accent-safe);text-decoration:none}
-.tm-nav-links a.is-on{color:var(--accent-safe);font-weight:500}
+.tm-nav-links a:hover{color:var(--primary);text-decoration:none}
+.tm-nav-links a.is-on{color:var(--primary);font-weight:500}
 .tm-nav-cta{display:flex;align-items:center;gap:14px}
-.tm-ghost{font-size:14.5px;color:var(--ink);font-weight:400}
+.tm-ghost{font-size:15px;color:var(--ink);font-weight:600;
+  transition:color var(--t-fast) var(--e-out)}
+.tm-ghost:hover{color:var(--primary);text-decoration:none}
 .tm-pill{display:inline-flex;align-items:center;gap:10px;background:var(--primary);
   color:#fff;border-radius:100px;padding:8px 8px 8px 18px;font-size:14px;font-weight:500;
-  transition:transform var(--t-base) var(--e-spring),box-shadow var(--t-base) var(--e-out)}
-.tm-pill:hover{text-decoration:none;transform:translateY(-2px);
-  box-shadow:0 10px 24px -8px rgba(10,47,70,.5)}
+  transition:background var(--t-base) var(--e-out)}
+.tm-pill:hover{text-decoration:none;background:#0D3A56;box-shadow:none}
 .tm-arw{width:26px;height:26px;border-radius:50%;background:var(--accent);display:grid;
   place-items:center;font-size:13px;transition:transform var(--t-base) var(--e-spring)}
-.tm-pill:hover .tm-arw{transform:translateX(3px)}
+.tm-pill:hover .tm-arw{transform:translateX(5px)}
 @media(max-width:820px){.tm-nav-links{display:none}.tm-ghost{display:none}}
 
 /* ---------- page frame ---------- */
@@ -237,8 +243,8 @@ code{background:var(--alt);padding:2px 6px;border-radius:5px;font-family:var(--m
 .cta p{color:#CFE0EA;margin-bottom:20px;font-weight:300}
 .cta-btn{display:inline-flex;align-items:center;gap:10px;background:#fff;color:var(--primary);
   padding:11px 24px;border-radius:100px;font-weight:500;font-size:14.5px;
-  transition:transform var(--t-base) var(--e-spring),box-shadow var(--t-base) var(--e-out)}
-.cta-btn:hover{text-decoration:none;transform:translateY(-2px);box-shadow:0 12px 28px rgba(0,0,0,.3)}
+  transition:background var(--t-base) var(--e-out)}
+.cta-btn:hover{text-decoration:none;background:#F2F1EE;box-shadow:none}
 
 /* ---------- newsletter ---------- */
 .nl{margin-top:52px;padding:30px 26px;background:var(--surface);border:1px solid var(--rule);
@@ -252,8 +258,8 @@ code{background:var(--alt);padding:2px 6px;border-radius:5px;font-family:var(--m
   box-shadow:0 0 0 3px rgba(20,88,125,.15)}
 .nl button{padding:12px 24px;background:var(--primary);color:#fff;border:none;
   border-radius:100px;font-weight:500;font-size:14.5px;cursor:pointer;font-family:inherit;
-  transition:transform var(--t-base) var(--e-spring)}
-.nl button:hover{transform:translateY(-2px)}
+  transition:background var(--t-base) var(--e-out)}
+.nl button:hover{background:#0D3A56}
 .nl .nl-msg{margin-top:10px;font-size:13.5px;font-weight:500;min-height:18px}
 .nl .nl-msg.ok{color:var(--up)} .nl .nl-msg.err{color:var(--down)}
 .nl-honey{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
