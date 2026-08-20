@@ -2405,11 +2405,13 @@ html body .btn .arrow,html body .pc-cta .arrow,html body .profile-cta .arrow{
 html body .btn:hover .arrow,html body .pc-cta:hover .arrow,
 html body .profile-cta:hover .arrow{transform:translateX(5px)!important}
 
-/* ═══ THIRD SURFACE - fixes two dark sections back to back ═══════════════
-   #events carried bg-dark directly after another bg-dark. It now uses
-   bg-alice (so every light-surface type rule already applies) plus .sec-warm
-   for the reference's warm-grey #F2F1EE, giving white / warm / dark / white. */
-html body .section.bg-alice.sec-warm{background:#F2F1EE!important}
+/* ═══ .sec-warm: light-surface fixes only, no third colour ════════════
+   #events and #scanner were authored for a dark surface, so .sec-warm still
+   carries their type/fill corrections. It USED to also paint a warm-grey
+   #F2F1EE, which made a third surface: two adjacent light sections in two
+   different whites read as a seam. Flattened to #FFFFFF so the page is
+   strictly two-tone and every light run is one continuous surface. */
+html body .section.bg-alice.sec-warm{background:#FFFFFF!important}
 /* the timeline in this section was drawn for a dark surface */
 html body .sec-warm .ah-tl-tag{background:rgba(10,47,70,.07)!important;color:#0A2F46!important;
   border-color:rgba(10,47,70,.16)!important}
@@ -3101,6 +3103,153 @@ html body #pricing.is-annual .pz-featured .pz-amt{color:rgba(255,255,255,.62);
 }
 </style>
 
+<!-- ═════════ NEW SECTIONS: Crowd Clock · Safeguards · Market Movers ═════════
+     Added Aug 2026. Three shipped features that had no landing-page presence.
+     Surfaces alternate strictly: Crowd Clock is LIGHT and splits the 1,661px
+     of unbroken navy that #engine + #research used to form; Safeguards is
+     DARK and splits #map + #events; Market Movers is DARK and splits the long
+     white run that ran from #scanner to the footer.
+     COMPLIANCE: every figure below is a historical frequency drawn from the
+     two studies, never a forecast about a named share, and no copy uses
+     buy / sell / entry / exit / target / stop. See /disclaimer. -->
+<style>
+/* ── shared: a stat trio ─────────────────────────────────────────────── */
+.tm-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-bottom:34px}
+.tm-stat{padding:24px 22px;border-radius:var(--r-xl);border:1px solid rgba(10,47,70,.13);
+  background:rgba(10,47,70,.025)}
+.tm-num{display:block;font-family:'JetBrains Mono',monospace;font-size:clamp(30px,3.4vw,42px);
+  font-weight:700;line-height:1;letter-spacing:-.02em;color:#0A2F46}
+.tm-unit{display:block;font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;
+  color:#A83E00;margin:9px 0 10px}
+.tm-lbl{display:block;font-size:13.5px;line-height:1.5;color:rgba(16,41,61,.82)}
+
+/* ── Crowd Clock: the six-band scale ─────────────────────────────────── */
+.cc-band{border:1px solid rgba(10,47,70,.13);border-radius:var(--r-xl);padding:24px 24px 20px;
+  background:#fff;margin-bottom:26px}
+.cc-band-t{display:block;font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;
+  color:#14587D;margin-bottom:14px}
+.cc-scale{display:grid;grid-template-columns:repeat(6,1fr);gap:6px}
+.cc-b{position:relative;text-align:center;font-size:12.5px;font-weight:700;color:#0A2F46;
+  padding:11px 4px 10px;border-radius:10px;background:rgba(10,47,70,.05)}
+.cc-b::after{content:"";position:absolute;left:10px;right:10px;bottom:5px;height:3px;border-radius:2px}
+.cc-b.b1::after{background:#b91c1c}.cc-b.b2::after{background:#d97706}
+.cc-b.b3::after{background:#15803d}.cc-b.b4::after{background:#65a30d}
+.cc-b.b5::after{background:#14587D}.cc-b.b6::after{background:#FF6100}
+.cc-band-d{font-size:12.5px;line-height:1.55;color:rgba(16,41,61,.72);margin-top:14px}
+/* the honest-limits block — the point of the section, not a footnote */
+.cc-honest{border-left:3px solid #FF6100;padding:4px 0 4px 22px;max-width:74ch}
+.cc-honest h3{font-size:17px;font-weight:700;margin-bottom:10px}
+.cc-honest p{font-size:15px;line-height:1.62;margin-bottom:12px}
+.cc-punch{font-size:clamp(19px,2vw,24px)!important;font-weight:600;letter-spacing:-.01em;
+  color:#0A2F46!important;opacity:1!important;margin:16px 0 14px!important}
+.cc-small{font-size:13px!important;line-height:1.6;color:rgba(16,41,61,.7)!important;margin-bottom:0!important}
+
+/* ── Safeguards (dark): the dilution evidence panel ──────────────────── */
+.sg-hero{border:1px solid rgba(255,255,255,.14);border-radius:var(--r-xxl);
+  background:rgba(255,255,255,.045);padding:30px 30px 26px;margin-bottom:26px}
+.sg-hero-k{display:block;font-size:11px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;
+  color:#8FBFDD;margin-bottom:20px}
+.sg-row{display:flex;align-items:center;justify-content:center;gap:clamp(18px,4vw,52px);flex-wrap:wrap}
+.sg-big{text-align:center}
+.sg-n{display:block;font-family:'JetBrains Mono',monospace;font-size:clamp(38px,5.6vw,66px);
+  font-weight:700;line-height:1;letter-spacing:-.03em;color:#FF6100}
+.sg-big.alt .sg-n{color:rgba(255,255,255,.92)}
+.sg-c{display:block;font-size:12.5px;font-weight:600;letter-spacing:.02em;
+  color:rgba(255,255,255,.62);margin-top:11px}
+.sg-vs{font-size:13px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+  color:rgba(255,255,255,.42);align-self:center}
+.sg-hero-d{font-size:14.5px!important;line-height:1.62;max-width:70ch;margin:24px auto 0!important;
+  text-align:center}
+.sg-hero-n{font-size:12.5px!important;letter-spacing:.03em;text-align:center;
+  color:rgba(255,255,255,.5)!important;margin:12px 0 0!important}
+.sg-foot{font-size:13px!important;line-height:1.6;color:rgba(255,255,255,.55)!important;
+  max-width:76ch;margin:26px auto 0!important;text-align:center}
+
+/* ── Market Movers (dark): cover + contents ──────────────────────────── */
+.mm-wrap{display:grid;grid-template-columns:300px 1fr;gap:clamp(26px,4vw,54px);align-items:center}
+.mm-cover{position:relative;border-radius:14px;overflow:hidden;aspect-ratio:3/4;
+  background:linear-gradient(168deg,#0E3A56 0%,#0A2F46 100%);
+  border:1px solid rgba(255,255,255,.16);box-shadow:0 30px 70px -30px rgba(0,0,0,.7);
+  padding:26px 22px;display:flex;flex-direction:column}
+.mm-mast{font-size:11px;font-weight:800;letter-spacing:.22em;text-transform:uppercase;color:#FF6100}
+.mm-rule{height:1px;background:rgba(255,255,255,.22);margin:10px 0 18px}
+.mm-kicker{font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  color:#8FBFDD;margin-bottom:8px}
+.mm-head{font-size:27px;font-weight:600;line-height:1.1;letter-spacing:-.02em;color:#fff}
+.mm-lines{margin-top:auto;display:flex;flex-direction:column;gap:9px}
+.mm-line{font-size:12px;line-height:1.4;color:rgba(255,255,255,.7);padding-left:11px;
+  border-left:2px solid #FF6100}
+.mm-bars{display:flex;align-items:flex-end;gap:4px;height:42px;margin:18px 0 14px}
+.mm-bars i{flex:1;background:rgba(143,191,221,.5);border-radius:2px 2px 0 0}
+.mm-bars i.hi{background:#FF6100}
+.mm-list{display:flex;flex-direction:column;gap:14px;margin:6px 0 26px}
+.mm-item{display:flex;gap:14px;align-items:flex-start}
+.mm-ico{flex:0 0 38px;height:38px;border-radius:10px;display:grid;place-items:center;font-size:17px;
+  background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.13)}
+.mm-item b{display:block;font-size:15px;margin-bottom:3px}
+.mm-item>div span{display:block;font-size:13.5px;line-height:1.5;color:rgba(255,255,255,.62)}
+
+@media(max-width:900px){
+  .tm-stats{grid-template-columns:1fr}
+  .mm-wrap{grid-template-columns:1fr}
+  .mm-cover{max-width:280px;margin:0 auto}
+}
+@media(max-width:600px){
+  .cc-scale{grid-template-columns:repeat(3,1fr)}
+  .sg-vs{display:none}
+}
+</style>
+
+<!-- ───────── CROWD CLOCK (light) — the attention gauge ─────────
+     Sits between #engine and #research on purpose: those two were both
+     bg-dark and formed a single 1,661px navy run. Every number here comes
+     from CROWD_CLOCK_RESEARCH.md and is a historical frequency, never a
+     forecast. Do NOT reword any of this as entry/exit — the study's own
+     negative results forbid it, and the copy says so out loud. -->
+<section class="section bg-alice" id="crowd">
+  <div class="wrap">
+    <div class="sec-head center reveal">
+      <span class="eyebrow">Crowd Clock</span>
+      <h2 class="sec-title">By the time it&rsquo;s obvious, <span class="blue-grad-text">it has already happened.</span></h2>
+      <p class="sec-sub">A crash gets wall-to-wall coverage. The quiet part of the cycle gets none — so most private investors meet a story at its loudest, never at its earliest. The Crowd Clock measures how much attention a share is already carrying, and tells you where in that cycle you have arrived.</p>
+    </div>
+
+    <div class="tm-stats stagger reveal">
+      <div class="tm-stat">
+        <span class="tm-num">150</span>
+        <span class="tm-unit">trading days</span>
+        <span class="tm-lbl">Median gap between the bottom of a 50%+ fall and the moment attention peaks, across 2,148 recoveries.</span>
+      </div>
+      <div class="tm-stat">
+        <span class="tm-num">+85.5%</span>
+        <span class="tm-unit">already run</span>
+        <span class="tm-lbl">How far the median recovery had already travelled by the time that attention peak arrived.</span>
+      </div>
+      <div class="tm-stat">
+        <span class="tm-num">0.79&times;</span>
+        <span class="tm-unit">normal volume</span>
+        <span class="tm-lbl">How thin trading is at the trough itself — the quietest point of the entire cycle.</span>
+      </div>
+    </div>
+
+    <div class="cc-band reveal">
+      <span class="cc-band-t">Every covered share sits in one of six attention bands</span>
+      <div class="cc-scale">
+        <span class="cc-b b1">Damaged</span><span class="cc-b b2">Ignored</span><span class="cc-b b3">Quiet</span>
+        <span class="cc-b b4">Noticed</span><span class="cc-b b5">Busy</span><span class="cc-b b6">Crowded</span>
+      </div>
+      <p class="cc-band-d">Band thresholds were fixed on 2009&ndash;2017 data and then reported on a held-out 2018&ndash;2026 window — 1,514 US names, 233,855 stock-month observations, screened for liquidity. The bands only apply to shares already inside a drawdown cycle; outside one, crowd presence barely mattered.</p>
+    </div>
+
+    <div class="cc-honest reveal">
+      <h3>What the study actually found</h3>
+      <p>Across every decile of every price and volume feature tested, the median six-month return moved only between <b>5.7% and 8.3%</b>. Over those same deciles, the share of readings followed by a <b>30% fall</b> inside six months ranged from <b>3.8% all the way to 25.9%</b>.</p>
+      <p class="cc-punch">Direction was not predictable from price. Risk was.</p>
+      <p class="cc-small">So this ships as a crowding and risk gauge, not a trading signal. There is no entry, no exit, no target and no stop anywhere in it. &ldquo;Crowded&rdquo; is emphatically not a sell — in the study, crowded-band shares had slightly <em>better</em> median forward returns than the rest, and a naive overbought alarm would have blacklisted the decade&rsquo;s biggest winners. Every figure above is the observed frequency of past readings, not a prediction about any individual share. Capital is at risk.</p>
+    </div>
+  </div>
+</section>
+
 <!-- ───────── DEEP RESEARCH (dark) — the per-stock drawer ───────── -->
 <section class="section bg-dark" id="research">
   <div class="wrap">
@@ -3235,6 +3384,70 @@ html body #pricing.is-annual .pz-featured .pz-amt{color:rgba(255,255,255,.62);
 
 
 
+<!-- ───────── SAFEGUARDS (dark) — the disclosure gap ─────────
+     Sits between #map and #events, both of which are light. The dilution
+     figures come from the validated study in safeguards.py (409 volatile US
+     names, 8,352 observations, 2020-2025) and describe RISK only; the return
+     gradient was not significant and is deliberately not claimed. Runway,
+     dated events and insider filings ship as FACTS with no base rate — if
+     anyone ever adds percentages to those three, that is the regression. -->
+<section class="section bg-dark" id="safeguards">
+  <div class="wrap">
+    <div class="sec-head center reveal">
+      <span class="eyebrow">The disclosure gap</span>
+      <h2 class="sec-title">Institutions aren&rsquo;t better forecasters. <span class="blue-grad-text">They&rsquo;re better read.</span></h2>
+      <p class="sec-sub">A shelf registration, a 424B5 pricing, a Form 4 — all public within hours, and all read within hours by people who do this for a living. Most private investors never see any of it, and end up buying the rally a company is quietly issuing into. The asymmetry isn&rsquo;t prediction. It&rsquo;s disclosure. So TickerMover surfaces what is already knowable but unread.</p>
+    </div>
+
+    <div class="sg-hero reveal">
+      <span class="sg-hero-k">The one finding that held up in every single year tested</span>
+      <div class="sg-row">
+        <div class="sg-big"><span class="sg-n">37.3%</span><span class="sg-c">Heavy diluters</span></div>
+        <span class="sg-vs">versus</span>
+        <div class="sg-big alt"><span class="sg-n">20.6%</span><span class="sg-c">Non-issuers</span></div>
+      </div>
+      <p class="sg-hero-d">Share of readings followed by a <b>30% fall inside six months</b> — a <b>1.81&times;</b> difference. 409 volatile US names, 8,352 observations, 2020&ndash;2025, with share-count growth read a full quarter <em>after</em> the filing so the reading was genuinely available in time. The gradient was monotone in every calendar year of the study — the only thing tested across this whole project that held across regimes.</p>
+      <p class="sg-hero-n">Describes risk, not return. No return claim is made, and none is implied.</p>
+    </div>
+
+    <div class="ah-grid3 stagger reveal">
+      <div class="ah-cap">
+        <div class="ah-cap-ico">💧</div>
+        <h3>Dilution watch</h3>
+        <p>Share count today against a year ago, so a company quietly printing stock into its own rally shows up as a number rather than a surprise.</p>
+      </div>
+      <div class="ah-cap">
+        <div class="ah-cap-ico">📑</div>
+        <h3>Share offerings</h3>
+        <p>Shelf registrations and offerings filed with the SEC in the last 24 months, plus any live at-the-market programme.</p>
+      </div>
+      <div class="ah-cap">
+        <div class="ah-cap-ico">⏳</div>
+        <h3>Cash runway</h3>
+        <p>Quarters of cash left at the current burn. Shown as a fact with no historical frequency attached — five quarters of statements cannot support one.</p>
+      </div>
+      <div class="ah-cap">
+        <div class="ah-cap-ico">📅</div>
+        <h3>Dated events</h3>
+        <p>Lock-up expiries, IPO anniversaries and filing dates already on the calendar — the things that are knowable in advance and usually aren&rsquo;t.</p>
+      </div>
+      <div class="ah-cap">
+        <div class="ah-cap-ico">🖊️</div>
+        <h3>Insider filings</h3>
+        <p>Form 4 buys against sells over the recent run, straight from the filings. Reported, not interpreted.</p>
+      </div>
+      <div class="ah-cap">
+        <div class="ah-cap-ico">📐</div>
+        <h3>What a position does</h3>
+        <p>How violently this share has actually moved, and its worst 12-month fall, so you can judge the scale of an exposure for yourself.</p>
+      </div>
+    </div>
+
+    <p class="sg-foot">The evidence box hides itself below 5% share growth on purpose — quoting &ldquo;20% versus 21%&rdquo; at a company running buybacks is noise dressed up as evidence. Convertible and warrant terms live in filing prose and are not machine-readable, so the card says so rather than guessing. Capital is at risk.</p>
+  </div>
+</section>
+
+
 <!-- ───────── COMPANY EVENTS (dark) — per-stock catalyst timeline ───────── -->
 <section class="section bg-alice sec-warm" id="events">
   <div class="wrap">
@@ -3251,6 +3464,88 @@ html body #pricing.is-annual .pz-featured .pz-amt{color:rgba(255,255,255,.62);
   </div>
 </section>
 
+
+<!-- ───────── MARKET MOVERS (dark) — the weekly editorial ─────────
+     Sits after #events and before #scanner, splitting what was otherwise an
+     unbroken white run from #scanner all the way down to the footer. The
+     cover is a CSS mock, not a real issue: no headline here should read as a
+     view on a named share. Links to /weekly, which is public. -->
+<section class="section bg-dark" id="weekly">
+  <div class="wrap">
+    <div class="sec-head center reveal">
+      <span class="eyebrow">Market Movers · every week</span>
+      <h2 class="sec-title">One full research issue. <span class="blue-grad-text">Every week. Free.</span></h2>
+      <p class="sec-sub">Not a newsletter of links. A written, structured issue on one company or one sector — the argument laid out answer-first, the numbers charted, the bear case named rather than buried, and every source listed at the foot so you can go and check it yourself.</p>
+    </div>
+
+    <div class="mm-wrap reveal">
+      <div class="mm-cover" aria-hidden="true">
+        <span class="mm-mast">Market Movers</span>
+        <div class="mm-rule"></div>
+        <span class="mm-kicker">This week&rsquo;s issue</span>
+        <span class="mm-head">The capex chain, end to end</span>
+        <div class="mm-bars">
+          <i style="height:38%"></i><i style="height:56%"></i><i style="height:44%"></i>
+          <i class="hi" style="height:88%"></i><i style="height:62%"></i><i style="height:71%"></i>
+          <i style="height:49%"></i><i style="height:80%"></i>
+        </div>
+        <div class="mm-lines">
+          <span class="mm-line">Inside · where the spend actually lands</span>
+          <span class="mm-line">The data · six charts, one scorecard</span>
+          <span class="mm-line">The bear case · what breaks the argument</span>
+        </div>
+      </div>
+
+      <div>
+        <div class="mm-list">
+          <div class="mm-item">
+            <span class="mm-ico">📐</span>
+            <div><b>Answer first, then the workings</b><span>The conclusion sits in the opening paragraph. Every heading states its finding rather than naming a topic, so you can read the issue in two minutes or twenty.</span></div>
+          </div>
+          <div class="mm-item">
+            <span class="mm-ico">📊</span>
+            <div><b>Charted, not asserted</b><span>Stat tiles, bar and share-of-whole charts and a scorecard on every issue — figures you can see the shape of, not a wall of prose with numbers hidden in it.</span></div>
+          </div>
+          <div class="mm-item">
+            <span class="mm-ico">⚖️</span>
+            <div><b>Bear, base and bull — side by side</b><span>Each issue carries a scenario table with what would have to happen for each case, so the argument is falsifiable instead of one-directional.</span></div>
+          </div>
+          <div class="mm-item">
+            <span class="mm-ico">🔗</span>
+            <div><b>Sources you can open</b><span>Filings and coverage listed at the foot of every issue. Nothing asks you to take the house view on trust.</span></div>
+          </div>
+        </div>
+        <a class="btn btn-primary" href="/weekly">Read this week&rsquo;s issue <span class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span></a>
+        <p class="sg-foot" style="text-align:left;margin-top:20px!important">Editorial commentary, not advice. Nothing in an issue is a recommendation to buy, sell or hold, and no issue is tailored to your circumstances. Capital is at risk.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ───────── STOCK SCANNER ───────── -->
+<section class="section bg-alice sec-warm" id="scanner">
+  <div class="wrap">
+    <div class="sec-head center reveal">
+      <span class="eyebrow" style="margin-left:auto;margin-right:auto">Stock Scanner</span>
+      <h2 class="sec-title">Screen __UNIV_N__ names in <span class="amber-grad-text">one click.</span></h2>
+      <p class="sec-sub">Run a scan across the whole universe on any pillar, save it, and come back to it every morning. No formula syntax, no spreadsheet.</p>
+    </div>
+
+    <div class="sc-grid reveal">
+      <div class="sc-card"><span class="sc-k">Momentum breakouts</span><span class="sc-d">RSI in the ideal zone, volume confirming, above the 65-day trend.</span></div>
+      <div class="sc-card"><span class="sc-k">Quality compounders</span><span class="sc-d">High ROIC, real free cash flow, debt under control.</span></div>
+      <div class="sc-card"><span class="sc-k">Beaten-up value</span><span class="sc-d">Cheap on EV/FCF versus sector, with the drawdown already priced in.</span></div>
+      <div class="sc-card"><span class="sc-k">Earnings momentum</span><span class="sc-d">Forward EPS revisions climbing while analysts are still catching up.</span></div>
+      <div class="sc-card"><span class="sc-k">Low-beta defensives</span><span class="sc-d">Beta under 1.0, profit-positive, defensive sector tilt.</span></div>
+      <div class="sc-card"><span class="sc-k">Build your own</span><span class="sc-d">Combine any pillar thresholds and save the scan to your account.</span></div>
+    </div>
+
+    <div class="sc-cta reveal">
+      <a class="btn btn-primary" href="/app">Run a scan <span class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span></a>
+    </div>
+  </div>
+</section>
 
 <!-- ───────── FAQ (Arooth horizontal accordion) ───────── -->
 <section class="section bg-dark" id="faq">
@@ -3399,30 +3694,6 @@ html body #pricing.is-annual .pz-featured .pz-amt{color:rgba(255,255,255,.62);
           </div>
         </div>
       </div>
-    </div>
-  </div>
-</section>
-
-<!-- ───────── STOCK SCANNER ───────── -->
-<section class="section bg-alice sec-warm" id="scanner">
-  <div class="wrap">
-    <div class="sec-head center reveal">
-      <span class="eyebrow" style="margin-left:auto;margin-right:auto">Stock Scanner</span>
-      <h2 class="sec-title">Screen __UNIV_N__ names in <span class="amber-grad-text">one click.</span></h2>
-      <p class="sec-sub">Run a scan across the whole universe on any pillar, save it, and come back to it every morning. No formula syntax, no spreadsheet.</p>
-    </div>
-
-    <div class="sc-grid reveal">
-      <div class="sc-card"><span class="sc-k">Momentum breakouts</span><span class="sc-d">RSI in the ideal zone, volume confirming, above the 65-day trend.</span></div>
-      <div class="sc-card"><span class="sc-k">Quality compounders</span><span class="sc-d">High ROIC, real free cash flow, debt under control.</span></div>
-      <div class="sc-card"><span class="sc-k">Beaten-up value</span><span class="sc-d">Cheap on EV/FCF versus sector, with the drawdown already priced in.</span></div>
-      <div class="sc-card"><span class="sc-k">Earnings momentum</span><span class="sc-d">Forward EPS revisions climbing while analysts are still catching up.</span></div>
-      <div class="sc-card"><span class="sc-k">Low-beta defensives</span><span class="sc-d">Beta under 1.0, profit-positive, defensive sector tilt.</span></div>
-      <div class="sc-card"><span class="sc-k">Build your own</span><span class="sc-d">Combine any pillar thresholds and save the scan to your account.</span></div>
-    </div>
-
-    <div class="sc-cta reveal">
-      <a class="btn btn-primary" href="/app">Run a scan <span class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span></a>
     </div>
   </div>
 </section>
