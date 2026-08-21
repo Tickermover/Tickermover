@@ -644,7 +644,7 @@ def card_body(sym: str, d: dict) -> str:
             f'reported quarter.',
             ("WHO OWNS IT", own["flag"]), moves + note))
 
-    ps = d.get("position")
+    ps = None if public else d.get("position")
     if ps:
         worst = (f' In its worst stretch of the last year, $1,000 would have been down '
                  f'${ps["worst_cash"]:,.0f} at the low point.' if ps.get("worst_cash") else '')
@@ -653,7 +653,9 @@ def card_body(sym: str, d: dict) -> str:
             "warn" if ps["flag"] else "",
             f'on every $1,000 held, in a typical month. Realised volatility is '
             f'{ps["vol_annual"] * 100:.0f}% a year &mdash; <b>{ps["band"]}</b>.{worst}',
-            ("THIS SHARE&rsquo;S OWN VOLATILITY", ps["flag"]),
+            # NOTE: literal U+2019, not &rsquo; - _row() runs html.escape() on this
+            # label, so an entity here becomes &amp;rsquo; and prints raw.
+            ("THIS SHARE’S OWN VOLATILITY", ps["flag"]),
             '<p class="sfg-ev">Arithmetic on this share&rsquo;s own price history, shown so '
             'the size of a position can be judged against what it actually does. It is not a '
             'suggested position size and not advice.</p>'))
@@ -677,7 +679,9 @@ def card_body(sym: str, d: dict) -> str:
             'Capital at risk.</p>')
 
 
-def render_card(t: dict) -> str:
+def render_card(t: dict, public: bool = False) -> str:
+    """`public=True` is the /stocks SEO page: it drops the position-sizing
+    block, which is a portfolio tool and belongs to a logged-in reader."""
     """Shell only; the reading loads client-side from /api/safeguards/{ticker}
     so the page render stays network-free."""
     sym = _html.escape((t.get("ticker") or "").upper())

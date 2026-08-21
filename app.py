@@ -2956,6 +2956,44 @@ _SP_DASH_CSS = """
   font-variant-numeric:tabular-nums;line-height:1.15}
 .metric .val.up{color:var(--up)} .metric .val.dn{color:var(--down)}
 
+/* ---- panel surfaces ----
+   .fchk carries its own white card, but .cclk-card and .sfg-card never did -
+   they inherited the white background of .report-card, which the grid above
+   strips. Without this they float straight on the peach ground. */
+.report-card .cclk-card,.report-card .sfg-card{
+  background:var(--surface);border:1px solid var(--rule);border-radius:16px;
+  padding:22px 24px;box-shadow:0 10px 30px -24px rgba(10,47,70,.25)}
+.report-card .fchk{margin:0}
+
+/* ---- density: the methodology notes were shouting as loud as the findings.
+   Nothing is removed - every figure, caveat and risk line still reads - but
+   the "how this was measured" prose steps back to a quiet indented note. */
+.sfg-ev,.cclk-note{background:none!important;border:0!important;padding:0 0 0 12px!important;
+  border-left:2px solid var(--rule)!important;margin:9px 0 0!important;
+  font-size:11.5px!important;line-height:1.55!important;color:var(--grey-2)!important}
+.sfg-item{padding:14px 0!important}
+.sfg-txt{font-size:13px!important;line-height:1.55!important}
+.sfg-k,.cclk-k{font-size:9.5px!important;letter-spacing:.13em!important}
+.sfg-v{font-size:17px!important}
+.sfg-list li{font-size:12px!important}
+.cclk-copy{font-size:13px!important}
+.cclk-card .cclk-sub,.sfg-card .sfg-sub{font-size:12.5px!important;color:var(--grey)!important}
+
+/* ---- peers: logo + ticker + name ---- */
+.peers{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px}
+.peer{display:flex;align-items:center;gap:10px;padding:9px 12px;border:1px solid var(--rule);
+  border-radius:12px;background:var(--surface);text-decoration:none;
+  transition:border-color var(--t-fast) var(--e-out),box-shadow var(--t-fast) var(--e-out)}
+.peer:hover{text-decoration:none;border-color:var(--primary);
+  box-shadow:0 6px 18px -10px rgba(10,47,70,.35)}
+.peer-logo{width:26px;height:26px;border-radius:7px;object-fit:contain;flex:0 0 26px;
+  background:var(--alt)}
+.peer-t{display:flex;flex-direction:column;min-width:0}
+.peer-tk{font-family:var(--mono);font-size:12.5px;font-weight:600;color:var(--blue-light);
+  line-height:1.25}
+.peer-nm{font-size:11.5px;color:var(--grey);font-weight:300;line-height:1.3;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
 /* ---- sticky section rail ---- */
 .sp-nav{position:sticky;top:57px;z-index:5}
 """
@@ -3126,8 +3164,11 @@ def _sp_data_sections(t: dict, sym: str, price: float):
     nav_html = ('<nav class="sp-nav">'
                 '<a href="#overview" class="sp-np" style="color:#14587D;border-color:#14587D66;background:#14587D12">Overview</a>'
                 + "".join(nav)
-                + '<a href="#more" class="sp-np" style="color:#ea384c;border-color:#ea384c66;background:#ea384c12">Pro</a></nav>') if nav else ""
-    return nav_html, "".join(secs) + _sp_pro_section(sym)
+                + '</nav>') if nav else ""
+    # No Pro tier any more - the upsell panel and its nav pill are gone.
+    # _sp_pro_section() is left defined but unused rather than deleted, so
+    # nothing else that may still reference it breaks.
+    return nav_html, "".join(secs)
 
 
 def _sp_ssr_cached(cache_key: str) -> str:
@@ -3159,6 +3200,8 @@ def _render_stock_page(t: dict) -> str:
     Render the SEO-optimized HTML page for a single ticker.
     Pure server-side render — no JS required to view the content.
     """
+    import html as _html   # module-scope name does not exist; every other
+                           # builder in this file imports it locally too.
     import json as _json
     sym  = (t.get("ticker") or "").upper()
     name = t.get("name") or sym
@@ -3333,10 +3376,20 @@ def _render_stock_page(t: dict) -> str:
                  if (p.get("sub_sector") or p.get("sector") or "") == sub
                  and (p.get("ticker") or "").upper() != sym][:6]
         if peers:
-            chips = " ".join(
-                f'<a href="/stocks/{(p.get("ticker") or "").upper()}" class="peer">{(p.get("ticker") or "").upper()}</a>'
-                for p in peers
-            )
+            # Logo + ticker + company name. Bare ticker chips told a reader
+            # nothing unless they already knew the symbol. Logo host is the one
+            # already used elsewhere in this module, not a new third party; a
+            # 404 hides the image and the chip still reads.
+            def _peer_chip(p):
+                _tk = (p.get("ticker") or "").upper()
+                _nm = _html.escape((p.get("name") or _tk)[:34])
+                return (f'<a href="/stocks/{_tk}" class="peer">'
+                        f'<img class="peer-logo" src="https://assets.parqet.com/logos/symbol/{_tk}" '
+                        f'alt="" loading="lazy" width="26" height="26" '
+                        f'onerror="this.remove()">'
+                        f'<span class="peer-t"><span class="peer-tk">{_tk}</span>'
+                        f'<span class="peer-nm">{_nm}</span></span></a>')
+            chips = "".join(_peer_chip(p) for p in peers)
             _ssl = _seo.slugify(sub) if sub else ""
             _sector_link = f'<p style="margin-top:10px"><a href="/sectors/{_ssl}">View all {sub} stocks &rarr;</a></p>' if _ssl else ""
             peers_html = _sp_ribbon("peers", f"Similar stocks in {sub or 'this sub-sector'}", f'<div class="peers">{chips}</div>{_sector_link}', "rep-teal", "🔗")
@@ -3350,7 +3403,7 @@ def _render_stock_page(t: dict) -> str:
     # /api/event-intel). Never let a card error break the page.
     try:
         import fact_check as _fc
-        fact_check_html = _fc.render_card(t, _universe_data)
+        fact_check_html = _fc.render_card(t, _universe_data, public=True)
     except Exception as _fc_err:
         logger.error(f"fact_check render {sym}: {_fc_err}", exc_info=True)
         fact_check_html = ""
@@ -3367,7 +3420,7 @@ def _render_stock_page(t: dict) -> str:
         crowd_clock_html = ""
     try:
         import safeguards as _sg
-        safeguards_html = _sg.render_card(t)
+        safeguards_html = _sg.render_card(t, public=True)
         _ssr = _sp_ssr_cached(f"safeguards:{sym}:v3")
         if _ssr:
             safeguards_html = f'<div class="sfg-ssr">{_ssr}</div>' + safeguards_html
@@ -3575,8 +3628,8 @@ h2{{font-size:18px;margin:30px 0 12px}}
 
   <div class="cta">
     <h2>Get the full live dashboard</h2>
-    <p>Real-time scoring, conflict detection, Reverse DCF, peer comparison and more — with TickerMover Pro.</p>
-    <a href="/app?signup=1" class="cta-btn">Open dashboard for {sym} →</a>
+    <p>Real-time scoring, conflict detection, Reverse DCF and peer comparison — free while in beta.</p>
+    <a href="/app?signup=1" class="cta-btn">Open the dashboard for {sym} →</a>
   </div>
 
   <div class="legal">

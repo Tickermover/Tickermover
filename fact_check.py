@@ -144,7 +144,10 @@ def _key_catalyst_line(t: dict) -> str:
     return "No dated near-term catalyst on file — watch the next earnings report and analyst revisions."
 
 
-def render_card(t: dict, universe) -> str:
+def render_card(t: dict, universe, public: bool = False) -> str:
+    """`public=True` is the /stocks SEO page: it drops "Your own checks",
+    an interactive personal checklist that only means anything to a
+    logged-in reader with a portfolio."""
     sym = _html.escape((t.get("ticker") or "").upper())
     checks = build_checklist(t, universe)
     n_pass = sum(1 for c in checks if c["state"] is True)
@@ -171,6 +174,9 @@ def render_card(t: dict, universe) -> str:
         f'<li class="fchk-item fchk-self"><span class="fchk-box"></span>'
         f'<span class="fchk-txt">{_html.escape(s)}</span></li>' for s in self_items)
 
+    self_block = "" if public else (
+        '<div class="fchk-sub">Your own checks</div>'
+        f'<ul class="fchk-list">{self_html}</ul>')
     return f"""
 <style>
 .fchk{{border:1px solid rgba(10,10,10,.1);border-radius:16px;padding:24px 26px;margin:36px 0;background:#fff;box-shadow:0 10px 30px -24px rgba(10,10,10,.25)}}
@@ -220,8 +226,7 @@ def render_card(t: dict, universe) -> str:
   </div>
   <p class="fchk-biz"><b>The business.</b> {biz}</p>
   <ul class="fchk-list">{checklist_html}</ul>
-  <div class="fchk-sub">Your own checks</div>
-  <ul class="fchk-list">{self_html}</ul>
+{self_block}
   <div class="fchk-sub">The audit · what has to hold for this thesis</div>
   <div id="fchk-audit"><div class="fchk-mgmt-row"><span class="k">Working…</span><span class="v">Auditing the areas that decide this thesis.</span></div></div>
   <div class="fchk-sub">What management said · latest earnings call</div>
