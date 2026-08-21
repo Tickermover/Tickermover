@@ -2994,6 +2994,24 @@ _SP_DASH_CSS = """
 .peer-nm{font-size:11.5px;color:var(--grey);font-weight:300;line-height:1.3;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
+/* ---- charts ---- */
+#charts{grid-column:span 12}
+.ch-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:22px 30px}
+.ch-fig{margin:0;min-width:0}
+.ch-fig figcaption{margin-bottom:10px}
+.ch-fig figcaption b{display:block;font-size:14px;font-weight:500;color:var(--primary)}
+.ch-fig figcaption span{display:block;font-size:12px;color:var(--grey);font-weight:300;
+  line-height:1.45;margin-top:2px}
+svg.ch{width:100%;height:auto;overflow:visible;display:block}
+svg.ch text{font-family:var(--font)}
+svg.ch .ch-lbl{font-size:12px;fill:var(--ink);font-weight:400}
+svg.ch .ch-val{font-family:var(--mono);font-size:12px;fill:var(--primary);font-weight:600}
+svg.ch .ch-tick{font-family:var(--mono);font-size:10px;fill:var(--grey-2);font-weight:500}
+svg.ch .ch-cur{font-family:var(--mono);font-size:11px;fill:#C74E00;font-weight:600}
+svg.ch rect[fill="#14587D"],svg.ch circle{transition:opacity var(--t-fast) var(--e-out)}
+svg.ch:hover rect[fill="#14587D"]{opacity:.82}
+svg.ch rect:hover{opacity:1!important}
+
 /* ---- sticky section rail ---- */
 .sp-nav{position:sticky;top:57px;z-index:5}
 """
@@ -3259,6 +3277,16 @@ def _render_stock_page(t: dict) -> str:
     # earnings, ownership, score breakdown) + a sticky in-page nav. Mirrors
     # the in-app stock sheet; Pro AI tabs surface as upgrade CTAs.
     sp_nav_html, sp_sections_html = _sp_data_sections(t, sym, price)
+    # Charts live in sp_charts.py. Never let a plotting error break the page.
+    try:
+        import sp_charts as _spc
+        _ch_inner = _spc.build(t, price)
+        charts_html = _sp_ribbon("charts", "The picture", _ch_inner,
+                                 "rep-slate", "\U0001F4C9") if _ch_inner else ""
+    except Exception as _ch_err:
+        logger.error(f"charts {sym}: {_ch_err}", exc_info=True)
+        charts_html = ""
+
     score_gauge_html = _sp_score_gauge(pop, verdict_color)
 
     # Verdict stars + tier + signal chips (drawer-style)
@@ -3511,7 +3539,7 @@ h2{{font-size:21px;font-weight:800;letter-spacing:-.015em;margin:32px 0 12px;col
 .faq-q h3{{font-size:16px;font-weight:700;margin-bottom:4px;color:#0A2F46}}
 .faq-q p{{font-size:14px;color:#5d6c7b;line-height:1.6}}
 .cta{{margin-top:40px;padding:28px 32px;background:radial-gradient(circle at 0% 0%,#001C31 -55%,#0A2F47 38%,#0A2F47 55%,#001C31 100%);border-radius:16px;text-align:center;color:#fff}}
-.cta h3{{font-size:22px;font-weight:800;letter-spacing:-.02em;margin-bottom:8px;color:#fff}}
+.cta h2,.cta h3{{font-size:22px;font-weight:800;letter-spacing:-.02em;margin-bottom:8px;color:#fff}}
 .cta p{{color:rgba(255,255,255,.7);margin-bottom:18px}}
 .cta-btn{{display:inline-block;background:#fff;color:#0A2F46;padding:13px 26px;border-radius:10px;font-weight:700;font-size:14.5px}}
 .cta-btn:hover{{background:#F2F1EE;text-decoration:none}}
@@ -3607,6 +3635,8 @@ h2{{font-size:18px;margin:30px 0 12px}}
 <div class="wrap">
 
   <div class="report-card">
+
+  {charts_html}
 
   {fact_check_html}
 
