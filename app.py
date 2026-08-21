@@ -2876,11 +2876,13 @@ def _sppct_pct(v):
     the same page where the fact-check correctly said 1.15%. Dividend yields
     between 1% and 2% are the most common band there is.
 
-    Only a value <= 1 is treated as a fraction, matching fact_check.py's rule
-    exactly so the two panels cannot disagree again."""
+    NO magnitude guess at all. dividend_yield is stored as a percent in every
+    case measured (MA 0.61 = 0.61%, AAPL 0.34 = 0.34%, KO 2.35%, VZ 5.75%), and
+    0.61-as-percent is indistinguishable by size from 0.0061-as-fraction - so a
+    threshold cannot be made correct, only differently wrong. Scaling a field
+    is a property of the FIELD, not of one value's magnitude."""
     f = _spf(v)
     if f is None: return "—"
-    if 0 < f <= 1: f *= 100.0
     return f"{f:.2f}%"
 
 
@@ -2896,6 +2898,67 @@ def _spmetric(lbl, val, cls=""):
 def _spgrid(cards):
     cards = [c for c in cards if c]
     return f'<div class="metrics">{"".join(cards)}</div>' if cards else ""
+
+_SP_DASH_CSS = """
+/* ================= /stocks one-pager: dashboard layout =================
+   Was a single 960px column of stacked white cards - it read as a document.
+   This turns it into a briefing: a full-bleed identity band, then a 12-column
+   grid where each panel takes the width its content deserves. Plain string,
+   not inside the f-string, so CSS braces need no doubling. */
+.sp-hero{background-image:radial-gradient(circle at 0% 0%,#001C31 -55%,#0A2F47 38%,#0A2F47 55%,#001C31 100%);
+  color:#fff;padding:34px 0 0}
+.sp-hero-in{max-width:1240px;margin:0 auto;padding:0 24px;display:flex;gap:34px;
+  align-items:flex-start;justify-content:space-between;flex-wrap:wrap}
+.sp-hero .crumbs{font-family:var(--mono);font-size:10px;letter-spacing:.16em;
+  text-transform:uppercase;color:#8FBFDD;font-weight:500;margin-bottom:10px}
+.sp-hero h1{font-size:clamp(30px,3.6vw,42px);font-weight:500;letter-spacing:-.02em;
+  color:#fff;line-height:1.08;margin:0 0 8px}
+.sp-hero h1 .sym{font-family:var(--mono);font-weight:600;color:#8FBFDD}
+.sp-hero .subhead{color:#CFE0EA;font-size:15px;font-weight:300;margin:0}
+.sp-hero .subhead .mono{color:#fff}
+.sp-hs{display:flex;align-items:center;gap:18px;flex:0 0 auto}
+.sp-hs .vb-stars{font-size:15px;letter-spacing:2px}
+.sp-hs-tier{display:inline-block;font-family:var(--mono);font-size:10px;letter-spacing:.14em;
+  text-transform:uppercase;background:rgba(255,255,255,.14);color:#fff;padding:4px 11px;
+  border-radius:100px;font-weight:500;margin-top:6px}
+.sp-verdict{max-width:1240px;margin:22px auto 0;padding:0 24px 30px;color:#CFE0EA;
+  font-size:15.5px;line-height:1.6;font-weight:300}
+.sp-verdict .dr-call-chips{margin-top:12px;display:flex;gap:7px;flex-wrap:wrap}
+.sp-verdict .dr-cc{background:rgba(255,255,255,.12);color:#fff;border:0}
+
+/* ---- the grid ---- */
+.wrap{max-width:1240px}
+.report-card{display:grid;grid-template-columns:repeat(12,1fr);gap:16px;align-items:start;
+  background:none;border:0;padding:0;box-shadow:none;margin-top:26px}
+.report-card > *{grid-column:span 12;margin:0}
+.report-card > style,.report-card > script{display:none}
+/* panels that read well side by side */
+#valuation,#health{grid-column:span 6}
+#technicals,#earnings,#ownership{grid-column:span 4}
+.report-card .fchk{grid-column:span 12}
+.report-card .cclk-card,.report-card .sfg-card,
+.report-card .cclk-ssr,.report-card .sfg-ssr{grid-column:span 6}
+#scores{grid-column:span 12}
+@media(max-width:1000px){
+  #valuation,#health,#technicals,#earnings,#ownership,
+  .report-card .cclk-card,.report-card .sfg-card,
+  .report-card .cclk-ssr,.report-card .sfg-ssr{grid-column:span 12}
+}
+.rep-sec{height:100%}
+
+/* ---- metric tiles read as data, not prose ---- */
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(132px,1fr));gap:1px;
+  background:var(--rule);border:1px solid var(--rule);border-radius:12px;overflow:hidden}
+.metric{background:var(--surface);padding:13px 14px 14px;display:flex;flex-direction:column;gap:5px}
+.metric .lbl{font-family:var(--mono);font-size:9px;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--grey-2);font-weight:500;line-height:1.3}
+.metric .val{font-family:var(--mono);font-size:19px;font-weight:600;color:var(--primary);
+  font-variant-numeric:tabular-nums;line-height:1.15}
+.metric .val.up{color:var(--up)} .metric .val.dn{color:var(--down)}
+
+/* ---- sticky section rail ---- */
+.sp-nav{position:sticky;top:57px;z-index:5}
+"""
 
 _REP_ACCENT = {"rep-blue":"#2970FF","rep-teal":"#0c8a82","rep-green":"#398f3c",
                "rep-violet":"#7c3aed","rep-amber":"#db880b","rep-red":"#c11d33","rep-slate":"#4a5568"}
@@ -3354,6 +3417,7 @@ def _render_stock_page(t: dict) -> str:
    follows is only this page's components. The old base rules lived here and
    set Instrument Sans (a deleted family) on an icy #FFF2EC ground. ---- */
 .wrap{{max-width:960px;margin:0 auto;padding:34px 20px 64px}}
+{_SP_DASH_CSS}
 /* server-rendered copy wins; the JS placeholder beneath it is hidden so the
    panel never appears twice while the fetch is still in flight */
 .cclk-ssr ~ .cclk,.sfg-ssr ~ .sfg{{display:none}}
@@ -3472,22 +3536,24 @@ h2{{font-size:18px;margin:30px 0 12px}}
 </head>
 <body>
 {_theme.nav_html()}
+<header class="sp-hero" id="overview">
+  <div class="sp-hero-in">
+    <div class="sp-hero-id">
+      <div class="crumbs">{sub or sector or "Stock Analysis"}</div>
+      <h1><span class="sym">{sym}</span> Stock Analysis</h1>
+      <p class="subhead">{name} · current price <span class="mono">{price_str}</span> ({chg_str} today){earn_str}</p>
+    </div>
+    <div class="sp-hs">
+      {score_gauge_html}
+      <div>{stars_html}<div><span class="sp-hs-tier">{tier_txt}</span></div></div>
+    </div>
+  </div>
+  <div class="sp-verdict">{bottom_line}{verdict_chips_html}</div>
+</header>
+
 <div class="wrap">
 
   <div class="report-card">
-  <div class="crumbs">{sub or sector or "Stock Analysis"}</div>
-  <h1><span class="sym">{sym}</span> Stock Analysis</h1>
-  <p class="subhead">{name} · current price <span class="mono">{price_str}</span> ({chg_str} today){earn_str}</p>
-
-  <div class="verdict-box" id="overview">
-    <div class="vb-gauge">{score_gauge_html}</div>
-    <div class="vb-body">
-      {stars_html}
-      <div class="verdict-head"><span class="verdict-tag">{tier_txt}</span></div>
-      <div class="verdict-text">{bottom_line}</div>
-      {verdict_chips_html}
-    </div>
-  </div>
 
   {fact_check_html}
 

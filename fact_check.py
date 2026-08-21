@@ -96,7 +96,9 @@ def build_checklist(t: dict, universe) -> list[dict]:
     # Returns capital
     dy = _num(t.get("dividend_yield"))
     if dy is not None:
-        dyp = dy * 100 if dy <= 1 else dy
+        # Stored as a percent already - see app.py::_sppct_pct. The old
+        # "dy <= 1 -> x100" rule printed MA as 61.00% and AAPL as 34.00%.
+        dyp = dy
         if dyp > 0:
             checks.append({"label": "Returns capital to shareholders",
                            "detail": f"Dividend yield {dyp:.2f}%", "state": True})
