@@ -566,7 +566,7 @@ def card_body(sym: str, d: dict, public: bool = False) -> str:
                 'to attach a reliable historical frequency to runway itself, so none is shown '
                 '&mdash; unlike the dilution figure above, which is measured.</p>'))
 
-    ev = d.get("events")
+    ev = None if public else d.get("events")
     if ev and ev.get("items"):
         li = "".join(
             f'<li class="{"warn" if i["flag"] else ""}"><time>{_html.escape(i["date"])}</time>'

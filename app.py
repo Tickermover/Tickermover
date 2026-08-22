@@ -2913,7 +2913,12 @@ _SP_DASH_CSS = """
   text-transform:uppercase;color:#8FBFDD;font-weight:500;margin-bottom:10px}
 .sp-hero h1{font-size:clamp(30px,3.6vw,42px);font-weight:500;letter-spacing:-.02em;
   color:#fff;line-height:1.08;margin:0 0 8px}
-.sp-hero h1 .sym{font-family:var(--mono);font-weight:600;color:#8FBFDD}
+.sp-hero h1 .sym{font-family:var(--mono);font-weight:600;color:#8FA0F0}
+.sp-logo{width:40px;height:40px;border-radius:10px;object-fit:contain;
+  background:#fff;padding:4px;vertical-align:-8px;margin-right:12px;
+  box-shadow:0 2px 10px rgba(0,0,0,.25)}
+@media(max-width:640px){.sp-logo{width:32px;height:32px;vertical-align:-6px;
+  margin-right:9px}}
 .sp-hero .subhead{color:#CFE0EA;font-size:15px;font-weight:300;margin:0}
 .sp-hero .subhead .mono{color:#fff}
 .sp-hs{display:flex;align-items:center;gap:18px;flex:0 0 auto}
@@ -3152,7 +3157,7 @@ def _sp_score_gauge(score, color: str) -> str:
         f'<text x="60" y="58" text-anchor="middle" font-size="31" font-weight="600" fill="#FFFFFF" '
         'font-family="JetBrains Mono,monospace">' + str(round(s)) + '</text>'
         '<text x="60" y="78" text-anchor="middle" font-size="9" font-weight="700" fill="#758696" '
-        'letter-spacing="1.5">ALPHA</text></svg>'
+        'letter-spacing="1.5">QUANT</text></svg>'
     )
 
 def _sp_pro_section(sym: str) -> str:
@@ -3805,7 +3810,8 @@ h2{{font-size:18px;margin:30px 0 12px}}
   <div class="sp-hero-in">
     <div class="sp-hero-id">
       <div class="crumbs">{sub or sector or "Stock Analysis"}</div>
-      <h1><span class="sym">{sym}</span> Stock Analysis</h1>
+      <h1><img class="sp-logo" src="https://assets.parqet.com/logos/symbol/{sym}"
+           alt="" width="40" height="40" loading="lazy" onerror="this.remove()"><span class="sym">{sym}</span> Stock Analysis</h1>
       <p class="subhead">{name} · current price <span class="mono">{price_str}</span> ({chg_str} today){earn_str}</p>
     </div>
     <div class="sp-hs">

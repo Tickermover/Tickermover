@@ -204,11 +204,27 @@ _CSS = """
 .cclk-hot .cclk-pill{color:#C74E00;background:rgba(199,78,0,.1);border:1px solid rgba(199,78,0,.28)}
 .cclk-sub{font-size:12.5px;color:#5d6c7b;margin:0 0 18px}
 .cclk-track{display:grid;grid-template-columns:repeat(6,1fr);gap:3px;margin:0 0 8px}
-.cclk-seg{height:8px;border-radius:3px;background:rgba(10,10,10,.07)}
+.cclk-seg{height:9px;border-radius:4px;background:#EDEBE7}
 .cclk-seg.on{background:#758696}
-.cclk-cool .cclk-seg.here{background:#0E7C66}
-.cclk-warm .cclk-seg.here{background:#A16207}
-.cclk-hot .cclk-seg.here{background:#C74E00}
+/* Attention RAMP: one hue, light to dark, left to right. More attention is
+   darker - nothing more. Deliberately NOT a green-to-red traffic light:
+   "Crowded" is not a sell signal (crowded-band shares had slightly BETTER
+   median forward returns in the study), and colouring it red would state a
+   view the research explicitly refuses to make. Green and red on this site
+   mean up and down, and neither is what a band is. */
+.cclk-seg:nth-child(1){background:#DDE5EA}
+.cclk-seg:nth-child(2){background:#C4D2DB}
+.cclk-seg:nth-child(3){background:#A6BAC7}
+.cclk-seg:nth-child(4){background:#7F9AAC}
+.cclk-seg:nth-child(5){background:#54798F}
+.cclk-seg:nth-child(6){background:#2B5A73}
+/* the share's own band: the accent, plus a ring so position is not colour
+   alone for a reader who cannot separate these steps */
+.cclk-seg.here{background:#C74E00!important;box-shadow:0 0 0 2px #fff,0 0 0 4px #C74E00}
+.cclk-scale span.here{color:#C74E00;font-weight:600}
+.cclk-cool 
+.cclk-warm 
+.cclk-hot 
 .cclk-scale{display:grid;grid-template-columns:repeat(6,1fr);gap:3px;margin:0 0 18px;font-family:'JetBrains Mono',ui-monospace,monospace;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#758696}
 .cclk-scale span{text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cclk-scale span.here{color:#0A2F46}
