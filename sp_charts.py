@@ -28,6 +28,23 @@ DOWN = "#ea384c"
 MARK = "#C74E00"     # AA-safe orange: the current-price marker
 
 
+def _pretty(key):
+    """ai_scorer component keys -> reader-facing labels."""
+    NAMES = {
+        "growth_tier": "Growth", "momentum_1m": "1-month momentum",
+        "rel_strength": "Relative strength", "volume_spike": "Volume",
+        "rsi_zone": "RSI zone", "dist_52w_high": "Near 52w high",
+        "analyst_cons": "Analyst consensus", "earnings_prox": "Earnings proximity",
+        "low_short": "Low short interest", "mkt_cap_fit": "Size fit",
+        "fundamentals": "Fundamentals", "social_momentum": "Social momentum",
+        "insider_bias": "Insider bias", "earnings_quality": "Earnings quality",
+        "trend_strength": "Trend strength", "breakout_proximity": "Breakout proximity",
+        "news_sentiment": "News sentiment", "earnings_acceleration": "Earnings acceleration",
+        "score_momentum": "Score momentum",
+    }
+    return NAMES.get(key, str(key).replace("_", " ").capitalize())
+
+
 def _num(v):
     try:
         f = float(v)
@@ -139,18 +156,31 @@ def build(t, price):
     """Return the inner HTML for the charts panel, or "" when nothing plots."""
     blocks = []
 
-    rows = []
-    for lbl, key in (("Momentum", "momentum_score"), ("Quality", "quality_score"),
-                     ("Growth", "growth_score"), ("Valuation", "valuation_score"),
-                     ("Sentiment", "sentiment_score")):
-        v = _num(t.get(key))
-        if v is not None:
-            rows.append((lbl, v, "%.0f" % v))
-    if rows:
-        blocks.append(("Score profile", "Each pillar out of 100.", hbars(rows, 100.0)))
+    # What actually drove the score. ai_scorer emits `weighted` = each
+    # component's contribution in points; `breakdown` = its raw 0-1 reading.
+    # The *_score fields app.py refers to elsewhere are not produced by
+    # anything and have never existed, which is why this chart was blank.
+    weighted = t.get("weighted") if isinstance(t.get("weighted"), dict) else {}
+    breakdown = t.get("breakdown") if isinstance(t.get("breakdown"), dict) else {}
+    if weighted:
+        top = sorted(((k, _num(v) or 0.0) for k, v in weighted.items()),
+                     key=lambda kv: kv[1], reverse=True)[:7]
+        rows = []
+        for key, contrib in top:
+            raw = _num(breakdown.get(key))
+            if raw is None:
+                continue
+            rows.append((_pretty(key), raw * 100.0, "%.0f" % (raw * 100.0)))
+        if rows:
+            blocks.append(("What drove the score",
+                           "The seven components contributing most, each read out of 100.",
+                           hbars(rows, 100.0)))
 
     pr = _num(price)
-    lo, hi = _num(t.get("week_52_low")), _num(t.get("week_52_high"))
+    # Canonical names on the universe row are high_52w / low_52w; the
+    # week_52_* pair exists in data_coordinator but never reaches here.
+    lo = _num(t.get("low_52w") or t.get("week_52_low") or t.get("fifty_two_week_low"))
+    hi = _num(t.get("high_52w") or t.get("week_52_high") or t.get("fifty_two_week_high"))
     if lo and hi and pr:
         blocks.append(("52-week range", "Where the price sits across the last year.",
                        span(lo, hi, pr, None, "$%,.2f" % lo if False else "${:,.2f}".format(lo),

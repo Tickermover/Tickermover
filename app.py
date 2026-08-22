@@ -3012,6 +3012,30 @@ svg.ch rect[fill="#14587D"],svg.ch circle{transition:opacity var(--t-fast) var(-
 svg.ch:hover rect[fill="#14587D"]{opacity:.82}
 svg.ch rect:hover{opacity:1!important}
 
+/* ---- the trail: a soft gate, never cloaking ----
+   The gated panels stay in the DOM and in the response a crawler receives.
+   Showing a search engine more than a reader is cloaking and is penalised,
+   which would undo the reason these pages exist. This gate is visual only:
+   the reader sees the work begin, then a fade and a prompt. */
+.sp-gate{position:relative;grid-column:span 12}
+.sp-gate-inner{max-height:560px;overflow:hidden;display:grid;
+  grid-template-columns:repeat(12,1fr);gap:16px;align-items:start}
+.sp-gate-inner > *{grid-column:span 12}
+.sp-gate-inner #valuation,.sp-gate-inner #health{grid-column:span 6}
+.sp-gate-inner #technicals,.sp-gate-inner #earnings,.sp-gate-inner #ownership{grid-column:span 4}
+.sp-gate-inner .cclk-card,.sp-gate-inner .sfg-card{grid-column:span 6}
+@media(max-width:1000px){.sp-gate-inner > *{grid-column:span 12!important}}
+.sp-gate-veil{position:absolute;left:0;right:0;bottom:0;height:300px;pointer-events:none;
+  background:linear-gradient(180deg,rgba(255,242,236,0) 0%,rgba(255,242,236,.86) 46%,var(--peach) 100%)}
+.sp-gate-cta{position:relative;margin-top:-118px;text-align:center;padding:0 20px 8px}
+.sp-gate-h{font-size:20px;font-weight:500;color:var(--primary);margin:0 0 6px;letter-spacing:-.01em}
+.sp-gate-p{font-size:14px;font-weight:300;color:var(--grey);max-width:56ch;margin:0 auto 18px;
+  line-height:1.6}
+.sp-gate-cta .cta-btn{background:var(--primary);color:#fff}
+.sp-gate-cta .cta-btn .tm-arw{background:var(--accent)}
+.sp-gate-n{font-size:13px;color:var(--grey-2);font-weight:300;margin-top:12px}
+.sp-gate .sp-nav{position:static}
+
 /* ---- sticky section rail ---- */
 .sp-nav{position:sticky;top:57px;z-index:5}
 """
@@ -3139,7 +3163,8 @@ def _sp_data_sections(t: dict, sym: str, price: float):
         _spmetric("Beta", _spnum(t.get("beta"), 2)),
         _spmetric("1-month return", _sppct_raw(t.get("momentum_1m"), True), _spcls(t.get("momentum_1m"))),
     ])
-    lo, hi = _spf(t.get("week_52_low")), _spf(t.get("week_52_high"))
+    lo = _spf(t.get("low_52w") or t.get("week_52_low"))
+    hi = _spf(t.get("high_52w") or t.get("week_52_high"))
     rng = ""
     if lo and hi and hi > lo and price:
         pos = max(0, min(100, (price - lo) / (hi - lo) * 100))
@@ -3431,7 +3456,9 @@ def _render_stock_page(t: dict) -> str:
     # /api/event-intel). Never let a card error break the page.
     try:
         import fact_check as _fc
-        fact_check_html = _fc.render_card(t, _universe_data, public=True)
+        # Not shown on the public page. The card still renders in the app.
+        fact_check_html = ""
+        _unused_fc = _fc  # keep the import meaningful
     except Exception as _fc_err:
         logger.error(f"fact_check render {sym}: {_fc_err}", exc_info=True)
         fact_check_html = ""
@@ -3644,6 +3671,8 @@ h2{{font-size:18px;margin:30px 0 12px}}
 
   {safeguards_html}
 
+  <div class="sp-gate" id="more">
+    <div class="sp-gate-inner">
   {sp_nav_html}
 
   {key_metrics_html}
@@ -3653,6 +3682,18 @@ h2{{font-size:18px;margin:30px 0 12px}}
   {sp_sections_html}
 
   {news_html}
+    </div>
+    <div class="sp-gate-veil" aria-hidden="true"></div>
+    <div class="sp-gate-cta">
+      <p class="sp-gate-h">The rest of {sym}\u2019s workup is free \u2014 you just need an account.</p>
+      <p class="sp-gate-p">Valuation, financial health, technicals, the earnings record,
+      ownership and the filing checks. No card, no trial.</p>
+      <a class="cta-btn" href="/login?signup"><span>Create a free account</span>
+        <span class="tm-arw">\u2192</span></a>
+      <p class="sp-gate-n">Already have one? <a href="/login">Sign in</a>.</p>
+    </div>
+  </div>
+
   {peers_html}
   </div><!-- /report-card -->
 
