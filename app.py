@@ -3031,16 +3031,18 @@ svg.ch rect:hover{opacity:1!important}
    which would undo the reason these pages exist. This gate is visual only:
    the reader sees the work begin, then a fade and a prompt. */
 .sp-gate{position:relative;grid-column:span 12}
-.sp-gate-inner{max-height:560px;overflow:hidden;display:grid;
+.sp-gate-inner{max-height:760px;overflow:hidden;display:grid;
   grid-template-columns:repeat(12,1fr);gap:16px;align-items:start}
 .sp-gate-inner > *{grid-column:span 12}
 .sp-gate-inner #valuation,.sp-gate-inner #health{grid-column:span 6}
 .sp-gate-inner #technicals,.sp-gate-inner #earnings,.sp-gate-inner #ownership{grid-column:span 4}
 .sp-gate-inner .cclk-card,.sp-gate-inner .sfg-card{grid-column:span 6}
 @media(max-width:1000px){.sp-gate-inner > *{grid-column:span 12!important}}
-.sp-gate-veil{position:absolute;left:0;right:0;bottom:0;height:300px;pointer-events:none;
-  background:linear-gradient(180deg,rgba(255,242,236,0) 0%,rgba(255,242,236,.86) 46%,var(--peach) 100%)}
-.sp-gate-cta{position:relative;margin-top:-118px;text-align:center;padding:0 20px 8px}
+.sp-gate-veil{position:absolute;left:0;right:0;bottom:0;height:420px;pointer-events:none;
+  display:flex;flex-direction:column;justify-content:flex-end;align-items:center;
+  padding:0 20px 6px;
+  background:linear-gradient(180deg,rgba(255,242,236,0) 0%,rgba(255,242,236,.72) 26%,var(--peach) 52%,var(--peach) 100%)}
+.sp-gate-cta{pointer-events:auto;text-align:center;width:100%}
 .sp-gate-h{font-size:20px;font-weight:500;color:var(--primary);margin:0 0 6px;letter-spacing:-.01em}
 .sp-gate-p{font-size:14px;font-weight:300;color:var(--grey);max-width:56ch;margin:0 auto 18px;
   line-height:1.6}
@@ -3069,7 +3071,7 @@ html body .sp-cta-brand .brand-m circle{fill:#FF6100!important}
   transition:transform var(--t-base) var(--e-spring),background var(--t-base) var(--e-out)}
 .sp-gate-btn:hover .sp-gate-arw{transform:translateX(4px);background:#fff;color:var(--accent-safe)}
 .sp-gate-n{font-size:13px;color:var(--grey-2);font-weight:300;margin-top:12px}
-.sp-gate .sp-nav{position:static}
+.sp-gate .sp-nav{display:none}
 
 /* ---- sticky section rail ---- */
 .sp-nav{position:sticky;top:57px;z-index:5}
@@ -3779,13 +3781,14 @@ h2{{font-size:18px;margin:30px 0 12px}}
 
   {news_html}
     </div>
-    <div class="sp-gate-veil" aria-hidden="true"></div>
-    <div class="sp-gate-cta">
-      <p class="sp-gate-h">The rest of {sym}\u2019s workup is free \u2014 you just need an account.</p>
-      <p class="sp-gate-p">Valuation, financial health, technicals, the earnings record,
-      ownership and the filing checks. No card, no trial.</p>
-      <a class="sp-gate-btn" href="/login?signup"><span>Create a free account</span><span class="sp-gate-arw">&rarr;</span></a>
-      <p class="sp-gate-n">Already have one? <a href="/login">Sign in</a>.</p>
+    <div class="sp-gate-veil">
+      <div class="sp-gate-cta">
+        <p class="sp-gate-h">The rest of {sym}’s workup is free — you just need an account.</p>
+        <p class="sp-gate-p">Valuation, financial health, technicals, the earnings record,
+        ownership and the filing checks. No card, no trial.</p>
+        <a class="sp-gate-btn" href="/login?signup"><span>Create a free account</span><span class="sp-gate-arw">&rarr;</span></a>
+        <p class="sp-gate-n">Already have one? <a href="/login">Sign in</a>.</p>
+      </div>
     </div>
   </div>
 
