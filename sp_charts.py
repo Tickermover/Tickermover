@@ -259,12 +259,12 @@ def build(t, price, crowd=None):
     # The 52-week range and the analyst-target spread used to sit here. Both
     # are on every finance site there is; neither is a reason to read this one.
     # The attention band is ours - it comes from the 1,514-share study.
-    if isinstance(crowd, dict):
-        att = attention(crowd.get("band"), crowd.get("score"))
-        if att:
-            blocks.append(("Attention band",
-                           "Where this share sits between ignored and crowded, "
-                           "from price and volume alone.", att))
+    # The Attention band chart lived here. It was removed because the Hype
+    # Check panel a few hundred pixels below draws the SAME six-band scale and
+    # the same score - the standing rule is that every section says something
+    # the others do not. attention() is kept for a surface that does not
+    # already carry the panel.
+    _ = crowd
 
     mrows = []
     for lbl, key in (("Gross", "gross_margin"), ("Operating", "operating_margin"),

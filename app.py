@@ -2995,6 +2995,41 @@ _SP_DASH_CSS = """
 .peer-nm{font-size:11.5px;color:var(--grey);font-weight:300;line-height:1.3;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
+/* ---- two real columns ----
+   Hype Check is short and Dilution Check is long, so as sibling grid cells the
+   left one left a tall empty gap. CSS grid cannot backfill a short cell (that
+   is masonry, which is not supported), so these are explicit columns: the
+   audit stacks under Hype Check and the two sides balance. */
+.sp-two{grid-column:span 12;display:grid;grid-template-columns:1fr 1fr;gap:16px;
+  align-items:start}
+.sp-col{display:flex;flex-direction:column;gap:16px;min-width:0}
+@media(max-width:1000px){.sp-two{grid-template-columns:1fr}}
+
+/* ---- audit bullets ---- */
+.sp-audit-wait{font-size:13.5px;color:var(--grey);font-weight:300;margin:0}
+.sp-audit-area{margin:0 0 16px}
+.sp-audit-area:last-of-type{margin-bottom:0}
+.sp-audit-h{display:flex;align-items:baseline;justify-content:space-between;gap:10px;
+  margin-bottom:7px}
+.sp-audit-h b{font-size:14px;font-weight:500;color:var(--primary);line-height:1.35}
+.sp-audit-v{font-family:var(--mono);font-size:9px;letter-spacing:.13em;text-transform:uppercase;
+  font-weight:500;padding:3px 8px;border-radius:100px;flex:0 0 auto}
+.sp-audit-v.pass{background:#E7F6EC;color:#12704A}
+.sp-audit-v.fail{background:#FDE9EC;color:#B32D23}
+.sp-audit-v.mixed{background:#FDF0DC;color:#b45309}
+.sp-audit-ul{list-style:none;margin:0;padding:0}
+.sp-audit-ul li{position:relative;padding-left:16px;margin-bottom:7px;font-size:13px;
+  line-height:1.55;color:var(--ink);font-weight:300}
+.sp-audit-ul li::before{content:"";position:absolute;left:0;top:8px;width:5px;height:5px;
+  border-radius:50%;background:var(--rule)}
+.sp-audit-ul li.pass::before{background:#12704A}
+.sp-audit-ul li.fail::before{background:#B32D23}
+.sp-audit-ul li b{font-weight:500;color:var(--primary)}
+.sp-audit-ul li a{font-size:10.5px;font-family:var(--mono);color:var(--blue-light);
+  margin-left:5px;vertical-align:super;text-decoration:none}
+.sp-audit-note{font-size:11px;line-height:1.55;color:var(--grey-2);font-weight:300;
+  margin:14px 0 0;padding-left:11px;border-left:2px solid var(--rule)}
+
 /* ---- charts ---- */
 #charts{grid-column:span 12}
 .ch-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:22px 30px}
@@ -3016,7 +3051,13 @@ svg.ch:hover rect[fill="#14587D"]{opacity:.82}
 svg.ch rect:hover{opacity:1!important}
 
 /* ---- executive summary in the hero ---- */
-.sp-exec{max-width:82ch}
+/* Was capped at 82ch, which stopped it dead under the gauge and left the
+   right third of the hero empty. It now fills the band; the explanation
+   splits into two columns above 1000px so the measure stays readable
+   rather than running to ~130 characters a line. */
+.sp-exec{max-width:none}
+.sp-exec-h{max-width:64ch}
+@media(min-width:1000px){.sp-exec-p{column-count:2;column-gap:40px}}
 .sp-exec-tag{font-family:var(--mono);font-size:9.5px;letter-spacing:.15em;text-transform:uppercase;
   color:#8FBFDD;font-weight:500;margin-bottom:9px}
 .sp-exec-h{font-size:18px;font-weight:500;color:#fff;line-height:1.4;margin:0 0 8px;
@@ -3387,6 +3428,18 @@ def _render_stock_page(t: dict) -> str:
     # Full server-rendered data sections (valuation, health, technicals,
     # earnings, ownership, score breakdown) + a sticky in-page nav. Mirrors
     # the in-app stock sheet; Pro AI tabs surface as upgrade CTAs.
+    # The thesis audit used to live inside the fact-check card, which is no
+    # longer rendered here. It comes back as its own panel: area verdicts with
+    # the named checks under them as bullets, each carrying its citation.
+    audit_html = _sp_ribbon(
+        "audit", "The audit \u2014 what has to hold for this thesis",
+        '<div id="sp-audit"><p class="sp-audit-wait">Checking the areas that decide '
+        'this thesis\u2026</p></div>'
+        '<p class="sp-audit-note">AI-generated from the company\u2019s own filings and '
+        'recent coverage, and it can be incomplete or wrong. A PASS is a reading of the '
+        'cited evidence, not a verified fact and not a reason to buy. Follow each '
+        'citation to the source.</p>',
+        "rep-slate", "\u2713")
     sp_nav_html, sp_sections_html = _sp_data_sections(t, sym, price)
     try:
         exec_summary_html = _sp_exec_summary(sym)
@@ -3765,9 +3818,10 @@ h2{{font-size:18px;margin:30px 0 12px}}
 
   {fact_check_html}
 
-  {crowd_clock_html}
-
-  {safeguards_html}
+  <div class="sp-two">
+    <div class="sp-col">{crowd_clock_html}{audit_html}</div>
+    <div class="sp-col">{safeguards_html}</div>
+  </div>
 
   <div class="sp-gate" id="more">
     <div class="sp-gate-inner">
@@ -3841,6 +3895,55 @@ h2{{font-size:18px;margin:30px 0 12px}}
       var first=box.firstChild;
       if(first&&first.nodeType===3)box.removeChild(first);   /* drop the one-liner */
     }}).catch(function(){{}});
+  }}catch(e){{}}
+}})();
+</script>
+<script>
+/* Thesis audit -> bullets. Client-side because this payload is not in the
+   page cache; failure is silent and the panel simply says nothing. */
+(function(){{
+  try{{
+    var box=document.getElementById('sp-audit');
+    if(!box)return;
+    var sym=(document.body.getAttribute('data-sym')||'').trim();
+    if(!sym)return;
+    fetch('/api/thesis-audit/'+encodeURIComponent(sym)).then(function(r){{
+      return r.ok?r.json():null;
+    }}).then(function(d){{
+      var areas=(d&&d.audit)||[];
+      if(!areas.length){{ box.innerHTML=''; return; }}
+      var out=document.createDocumentFragment();
+      areas.forEach(function(a){{
+        var wrap=document.createElement('div'); wrap.className='sp-audit-area';
+        var hd=document.createElement('div'); hd.className='sp-audit-h';
+        var nm=document.createElement('b'); nm.textContent=a.area||''; hd.appendChild(nm);
+        var v=(a.verdict||'').toLowerCase();
+        if(v){{
+          var pill=document.createElement('span');
+          pill.className='sp-audit-v '+(v==='pass'?'pass':(v==='fail'?'fail':'mixed'));
+          pill.textContent=v; hd.appendChild(pill);
+        }}
+        wrap.appendChild(hd);
+        var ul=document.createElement('ul'); ul.className='sp-audit-ul';
+        (a.checks||[]).forEach(function(c){{
+          var li=document.createElement('li');
+          var cv=(c.verdict||'').toLowerCase();
+          if(cv==='pass'||cv==='fail')li.className=cv;
+          var b=document.createElement('b'); b.textContent=(c.name||'')+' ';
+          li.appendChild(b);
+          li.appendChild(document.createTextNode(c.finding||''));
+          var src=(c.sources||[])[0];
+          if(src&&src.url){{
+            var a2=document.createElement('a'); a2.href=src.url; a2.target='_blank';
+            a2.rel='nofollow noopener'; a2.textContent='source'; li.appendChild(a2);
+          }}
+          ul.appendChild(li);
+        }});
+        wrap.appendChild(ul);
+        out.appendChild(wrap);
+      }});
+      box.innerHTML=''; box.appendChild(out);
+    }}).catch(function(){{ box.innerHTML=''; }});
   }}catch(e){{}}
 }})();
 </script>
