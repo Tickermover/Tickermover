@@ -2913,7 +2913,7 @@ _SP_DASH_CSS = """
   text-transform:uppercase;color:#8FBFDD;font-weight:500;margin-bottom:10px}
 .sp-hero h1{font-size:clamp(30px,3.6vw,42px);font-weight:500;letter-spacing:-.02em;
   color:#fff;line-height:1.08;margin:0 0 8px}
-.sp-hero h1 .sym{font-family:var(--mono);font-weight:600;color:#8FA0F0}
+.sp-hero h1 .sym{font-family:var(--mono);font-weight:600;color:#FF6100}
 .sp-logo{width:40px;height:40px;border-radius:10px;object-fit:contain;
   background:#fff;padding:4px;vertical-align:-8px;margin-right:12px;
   box-shadow:0 2px 10px rgba(0,0,0,.25)}
@@ -2986,7 +2986,11 @@ _SP_DASH_CSS = """
 .cclk-card .cclk-sub,.sfg-card .sfg-sub{font-size:12.5px!important;color:var(--grey)!important}
 
 /* ---- peers: logo + ticker + name ---- */
-.peers{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px}
+/* auto-fill produced a ragged last row of different widths. Two fixed
+   columns line the cards up with each other and with the panels beside
+   them. */
+.peers{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+@media(max-width:640px){.peers{grid-template-columns:minmax(0,1fr)}}
 .peer{display:flex;align-items:center;gap:10px;padding:9px 12px;border:1px solid var(--rule);
   border-radius:12px;background:var(--surface);text-decoration:none;
   transition:border-color var(--t-fast) var(--e-out),box-shadow var(--t-fast) var(--e-out)}
@@ -3062,7 +3066,12 @@ svg.ch rect:hover{opacity:1!important}
    rather than running to ~130 characters a line. */
 .sp-exec{max-width:none}
 .sp-exec-h{max-width:64ch}
-@media(min-width:1000px){.sp-exec-p{column-count:2;column-gap:40px}}
+/* The two columns were running past the right edge of the hero: the
+   band's padding is on .sp-verdict, but the column box was sized from
+   the full width. Cap it and keep the gap inside. */
+@media(min-width:1000px){.sp-exec-p{column-count:2;column-gap:44px;
+  max-width:min(100%,112ch)}}
+.sp-exec{padding-right:4px}
 .sp-exec-tag{font-family:var(--mono);font-size:9.5px;letter-spacing:.15em;text-transform:uppercase;
   color:#8FBFDD;font-weight:500;margin-bottom:9px}
 .sp-exec-h{font-size:18px;font-weight:500;color:#fff;line-height:1.4;margin:0 0 8px;
@@ -3120,6 +3129,15 @@ html body .sp-cta-brand .brand-m circle{fill:#FF6100!important}
   display:grid;place-items:center;font-size:14px;flex:0 0 30px;
   transition:transform var(--t-base) var(--e-spring),background var(--t-base) var(--e-out)}
 .sp-gate-btn:hover .sp-gate-arw{transform:translateX(4px);background:#fff;color:var(--accent-safe)}
+.sp-gate-grid{list-style:none;margin:0 auto 26px;padding:0;max-width:900px;
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;text-align:left}
+.sp-gate-grid li{background:var(--alt);border-radius:12px;padding:14px 16px}
+.sp-gate-grid b{display:block;font-size:13.5px;font-weight:500;color:var(--primary);
+  margin-bottom:4px}
+.sp-gate-grid span{display:block;font-size:12.5px;line-height:1.5;color:var(--grey);
+  font-weight:300}
+@media(max-width:900px){.sp-gate-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){.sp-gate-grid{grid-template-columns:minmax(0,1fr)}}
 .sp-gate-n{font-size:13px;color:var(--grey-2);font-weight:300;margin:16px 0 0}
 .sp-gate .sp-nav{display:none}
 
@@ -3638,7 +3656,7 @@ def _render_stock_page(t: dict) -> str:
     try:
         import safeguards as _sg
         safeguards_html = _sg.render_card(t, public=True)
-        _ssr = _sp_ssr_cached(f"safeguards:{sym}:v4", public=True)
+        _ssr = _sp_ssr_cached(f"safeguards:{sym}:v5", public=True)
         if _ssr:
             safeguards_html = f'<div class="sfg-ssr">{_ssr}</div>' + safeguards_html
     except Exception as _sg_err:
@@ -3851,12 +3869,26 @@ h2{{font-size:18px;margin:30px 0 12px}}
   </div>
 
   <aside class="sp-gate-cta">
-    <p class="sp-gate-h">The rest of {sym}’s workup is free</p>
-    <p class="sp-gate-p">Valuation, financial health, technicals, the earnings
-    record, ownership and the filing checks — all of it, for an account.
-    No card, no trial.</p>
+    <p class="sp-gate-h">Everything else on {sym} is free \u2014 you just need an account</p>
+    <p class="sp-gate-p">The workup above is the opening page. Inside the dashboard,
+    every name opens into the full toolkit.</p>
+    <ul class="sp-gate-grid">
+      <li><b>AI Deep-Dive</b><span>A web-grounded research brief \u2014 catalysts, risks
+        and the bull and bear case, with its sources attached.</span></li>
+      <li><b>Supply chain map</b><span>Who they buy from, who they sell to, and how much
+        revenue sits behind each link.</span></li>
+      <li><b>Reverse DCF</b><span>The growth rate today\u2019s price is already assuming,
+        so you can judge whether it is believable.</span></li>
+      <li><b>Peer comparison</b><span>The closest comparables side by side on execution,
+        profitability and stage.</span></li>
+      <li><b>Scanner</b><span>Run the whole covered universe on the screens that matter
+        to you, not a fixed top-ten list.</span></li>
+      <li><b>Company events</b><span>Earnings dates, 8-K filings and investor decks,
+        summarised as they land.</span></li>
+    </ul>
     <a class="sp-gate-btn" href="/login?signup"><span>Create a free account</span><span class="sp-gate-arw">&rarr;</span></a>
-    <p class="sp-gate-n">Already have one? <a href="/login">Sign in</a>.</p>
+    <p class="sp-gate-n">Free while in beta. No card, no trial. Already have one?
+      <a href="/login">Sign in</a>.</p>
   </aside>
 
   {peers_html}
@@ -15652,7 +15684,7 @@ async def api_safeguards(ticker: str):
     if not sym or len(sym) > 8:
         raise HTTPException(status_code=400, detail="Bad ticker")
 
-    cache_key = f"safeguards:{sym}:v4"
+    cache_key = f"safeguards:{sym}:v5"
     cached = cache.get(cache_key)
     if cached is not None:
         return JSONResponse(cached)

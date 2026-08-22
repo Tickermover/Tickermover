@@ -222,9 +222,9 @@ _CSS = """
    alone for a reader who cannot separate these steps */
 .cclk-seg.here{background:#C74E00!important;box-shadow:0 0 0 2px #fff,0 0 0 4px #C74E00}
 .cclk-scale span.here{color:#C74E00;font-weight:600}
-.cclk-cool 
-.cclk-warm 
-.cclk-hot 
+.cclk-cool .cclk-seg.here{background:#0E7C66!important;box-shadow:0 0 0 2px #fff,0 0 0 4px #0E7C66}
+.cclk-warm .cclk-seg.here{background:#A16207!important;box-shadow:0 0 0 2px #fff,0 0 0 4px #A16207}
+.cclk-hot .cclk-seg.here{background:#C74E00!important;box-shadow:0 0 0 2px #fff,0 0 0 4px #C74E00}
 .cclk-scale{display:grid;grid-template-columns:repeat(6,1fr);gap:3px;margin:0 0 18px;font-family:'JetBrains Mono',ui-monospace,monospace;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#758696}
 .cclk-scale span{text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .cclk-scale span.here{color:#0A2F46}
