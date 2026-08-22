@@ -3180,7 +3180,7 @@ svg.ch rect:hover{opacity:1!important}
    and pushed the arrow onto its own line. Its own class, explicit. */
 /* wordmark centred in the sign-off card. The .tm-foot colour rules are scoped
    to the footer, so the dark treatment has to be restated here. */
-.sp-cta-brand{display:flex;justify-content:center;margin-bottom:14px}
+.sp-cta-brand{display:flex;justify-content:center;margin-bottom:10px;line-height:1}
 .sp-cta-brand .brand{font-size:22px}
 html body .sp-cta-brand .brand,html body .sp-cta-brand .brand-wordmark{color:#FFFFFF!important}
 html body .sp-cta-brand .brand-m polyline{stroke:#8FA0F0!important}
@@ -3816,7 +3816,7 @@ h2{{font-size:21px;font-weight:800;letter-spacing:-.015em;margin:32px 0 12px;col
 .faq-q h3{{font-size:16px;font-weight:700;margin-bottom:4px;color:#0A2F46}}
 .faq-q p{{font-size:14px;color:#5d6c7b;line-height:1.6}}
 .cta{{margin-top:40px;padding:28px 32px;background:radial-gradient(circle at 0% 0%,#001C31 -55%,#0A2F47 38%,#0A2F47 55%,#001C31 100%);border-radius:16px;text-align:center;color:#fff}}
-.cta h2,.cta h3{{font-size:22px;font-weight:800;letter-spacing:-.02em;margin-bottom:8px;color:#fff}}
+.cta h2,.cta h3{{font-size:22px;font-weight:800;letter-spacing:-.02em;margin:0 0 8px;color:#fff}}
 .cta p{{color:rgba(255,255,255,.7);margin-bottom:18px}}
 .cta-btn{{display:inline-block;background:#fff;color:#0A2F46;padding:13px 26px;border-radius:10px;font-weight:700;font-size:14.5px}}
 .cta-btn:hover{{background:#F2F1EE;text-decoration:none}}

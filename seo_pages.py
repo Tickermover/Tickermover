@@ -447,7 +447,11 @@ def render_pillar_index(site_origin: str) -> str:
 
 def _stock_row(t: dict, rank: int = 99) -> str:
     sym = (t.get("ticker") or "").upper()
-    name = (t.get("name") or sym)[:30]
+    # Was [:30], which severed "MongoDB, Inc. Class A Common Stock" mid-word at
+    # "Common S" with no ellipsis to show it had been cut. The cell now clips
+    # with a real ellipsis in CSS, so this only needs to stop a pathological
+    # name from bloating the HTML.
+    name = (t.get("name") or sym)[:48]
     grade = t.get("grade") or "—"
     pop = t.get("smart_score") if t.get("smart_score") is not None else t.get("pop_score")
     try:
@@ -456,16 +460,13 @@ def _stock_row(t: dict, rank: int = 99) -> str:
         pop_n = "—"
     bl = (t.get("bottom_line_ai") or t.get("bottom_line") or "")[:130]
     grade_class = grade if grade in ("A", "B", "C", "D", "F") else ""
-    if rank <= 3:
-        logo = ('<img class="sr-logo" src="https://assets.parqet.com/logos/symbol/'
-                + sym + '" alt="" loading="lazy" width="26" height="26" '
-                'onerror="this.remove()">')
-        cell = ('<td class="sr-lead"><div class="sr-id">' + logo
-                + '<div><a href="/stocks/' + sym + '" class="tk">' + sym + "</a><br>"
-                + '<span class="sr-nm">' + name + "</span></div></div></td>")
-    else:
-        cell = ('<td><a href="/stocks/' + sym + '" class="tk">' + sym + "</a><br>"
-                + '<span class="sr-nm">' + name + "</span></td>")
+    logo = ('<img class="sr-logo" src="https://assets.parqet.com/logos/symbol/'
+            + sym + '" alt="" loading="lazy" width="26" height="26" '
+            'onerror="this.remove()">')
+    cell = ('<td class="' + ("sr-lead" if rank <= 3 else "sr-row")
+            + '"><div class="sr-id">' + logo
+            + '<div><a href="/stocks/' + sym + '" class="tk">' + sym + "</a><br>"
+            + '<span class="sr-nm">' + name + "</span></div></div></td>")
     return (
         "<tr>" + cell
         + f'<td><span class="grade {grade_class}">{grade}</span></td>'
@@ -640,8 +641,10 @@ def render_sector(slug: str, universe: list[dict], site_origin: str) -> Optional
    real colour on the page and marks where the ranking starts. */
 .tbl thead th{{background:#FFF2EC;color:#0A2F46;border-bottom:2px solid #E4CFC2}}
 .tbl tbody tr:hover td{{background:#FFF6F1}}
-.sr-nm{{font-size:12.5px;color:#5d6c7b}}
-.sr-id{{display:flex;align-items:center;gap:10px}}
+.sr-nm{{font-size:12.5px;color:#5d6c7b;display:block;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}}
+.sr-id{{display:flex;align-items:center;gap:10px;min-width:0}}
+.sr-id>div{{min-width:0}}
 .sr-logo{{width:26px;height:26px;border-radius:50%;object-fit:contain;background:#fff;
   flex:0 0 26px;box-shadow:0 0 0 1px #E4E7EC}}
 .tbl td.sr-lead{{box-shadow:inset 3px 0 0 #FF6100}}
