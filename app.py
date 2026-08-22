@@ -3130,23 +3130,23 @@ svg.ch:hover rect[fill="#14587D"]{opacity:.82}
 svg.ch rect:hover{opacity:1!important}
 
 /* ---- executive summary in the hero ---- */
-/* Was capped at 82ch, which stopped it dead under the gauge and left the
-   right third of the hero empty. It now fills the band; the explanation
-   splits into two columns above 1000px so the measure stays readable
-   rather than running to ~130 characters a line. */
+/* This ran as two newspaper columns above 1000px. That kept the measure
+   readable but broke a four-line paragraph across a 44px gutter, so a
+   sentence ended mid-clause on the left and resumed on the right — the eye
+   has to travel back up the hero to finish a thought. Worth it for a long
+   article column; not worth it for four lines.
+   It is one continuous paragraph again, and the measure is held by capping
+   the width instead. Do NOT reintroduce column-count here: the reason the
+   columns went in was to stop ~130-character lines, and max-width solves
+   that without cutting the sentence in half. */
 .sp-exec{max-width:none}
 .sp-exec-h{max-width:64ch}
-/* The two columns were running past the right edge of the hero: the
-   band's padding is on .sp-verdict, but the column box was sized from
-   the full width. Cap it and keep the gap inside. */
-@media(min-width:1000px){.sp-exec-p{column-count:2;column-gap:44px;
-  max-width:min(100%,112ch)}}
 .sp-exec{padding-right:4px}
 .sp-exec-tag{font-family:var(--mono);font-size:9.5px;letter-spacing:.15em;text-transform:uppercase;
   color:#8FBFDD;font-weight:500;margin-bottom:9px}
 .sp-exec-h{font-size:18px;font-weight:500;color:#fff;line-height:1.4;margin:0 0 8px;
   letter-spacing:-.01em}
-.sp-exec-p{font-size:15px;font-weight:300;color:#CFE0EA;line-height:1.62;margin:0}
+.sp-exec-p{font-size:15px;font-weight:300;color:#CFE0EA;line-height:1.62;margin:0;max-width:82ch}
 .sp-exec-n{font-size:11.5px;font-weight:300;color:rgba(255,255,255,.5);line-height:1.55;
   margin:12px 0 0;padding-left:11px;border-left:2px solid rgba(255,255,255,.18)}
 
