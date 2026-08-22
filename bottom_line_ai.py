@@ -42,11 +42,24 @@ import anthropic_shim
 logger = logging.getLogger(__name__)
 
 _KEY = os.environ.get("ANTHROPIC_API_KEY", "").strip()
-# DROPPED 2026-06-22: the AI rewrite was the single biggest Haiku line (whole
-# universe ×545). The deterministic `bottom_line` template is always present and
-# reads fine on its own, so the polish layer is off by default. Flip
-# BOTTOM_LINE_AI_ENABLED=1 to bring it back (no other change needed).
-_ENABLED = os.environ.get("BOTTOM_LINE_AI_ENABLED", "0").strip().lower() in ("1", "true", "yes", "on")
+# ON by default since 2026-08-22, at the owner's instruction ("all the bottom
+# line AI driven"). It was dropped on 2026-06-22 as the single biggest Haiku
+# line — but that decision was taken two days AFTER the cost fix that made it
+# cheap, and the numbers were never re-measured against it.
+#
+# What the fix changed: the cache used to key on the template text, which
+# embeds live figures, so most of the universe re-billed daily. `_sig()` below
+# now keys on a coarse material signature (grade, cautions, 5-point score
+# bucket, growth tier), so a cache entry survives until something real moves.
+#
+# Measured cost at Haiku 4.5 rates ($1/$5 per MTok): ~310 input + ~50 output
+# tokens per name, so ~$0.0006 each and ~$0.31 to fill all 545 cold. Steady
+# state is the 15-day TTL plus signature churn — tens of calls a day, well
+# inside the $3 daily / $50 monthly caps in config, which gate this loop
+# anyway via _ai_over_budget().
+#
+# Set BOTTOM_LINE_AI_ENABLED=0 to switch back to the deterministic template.
+_ENABLED = os.environ.get("BOTTOM_LINE_AI_ENABLED", "1").strip().lower() in ("1", "true", "yes", "on")
 # Cheapest current tier — this is a pure rephrasing task, no reasoning needed.
 _MODEL = (
     os.environ.get("ANTHROPIC_BOTTOM_LINE_MODEL")

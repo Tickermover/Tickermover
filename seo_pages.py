@@ -445,7 +445,7 @@ def render_pillar_index(site_origin: str) -> str:
 
 # ─── Sector landing pages ─────────────────────────────────────────────
 
-def _stock_row(t: dict) -> str:
+def _stock_row(t: dict, rank: int = 99) -> str:
     sym = (t.get("ticker") or "").upper()
     name = (t.get("name") or sym)[:30]
     grade = t.get("grade") or "—"
@@ -456,12 +456,21 @@ def _stock_row(t: dict) -> str:
         pop_n = "—"
     bl = (t.get("bottom_line_ai") or t.get("bottom_line") or "")[:130]
     grade_class = grade if grade in ("A", "B", "C", "D", "F") else ""
+    if rank <= 3:
+        logo = ('<img class="sr-logo" src="https://assets.parqet.com/logos/symbol/'
+                + sym + '" alt="" loading="lazy" width="26" height="26" '
+                'onerror="this.remove()">')
+        cell = ('<td class="sr-lead"><div class="sr-id">' + logo
+                + '<div><a href="/stocks/' + sym + '" class="tk">' + sym + "</a><br>"
+                + '<span class="sr-nm">' + name + "</span></div></div></td>")
+    else:
+        cell = ('<td><a href="/stocks/' + sym + '" class="tk">' + sym + "</a><br>"
+                + '<span class="sr-nm">' + name + "</span></td>")
     return (
-        f'<tr><td><a href="/stocks/{sym}" class="tk">{sym}</a><br>'
-        f'<span style="font-size:12.5px;color:#5d6c7b">{name}</span></td>'
-        f'<td><span class="grade {grade_class}">{grade}</span></td>'
-        f'<td class="pop">{pop_n}</td>'
-        f'<td class="vd">{bl}</td></tr>'
+        "<tr>" + cell
+        + f'<td><span class="grade {grade_class}">{grade}</span></td>'
+        + f'<td class="pop">{pop_n}</td>'
+        + f'<td class="vd">{bl}</td></tr>'
     )
 
 
@@ -483,7 +492,7 @@ def render_sector(slug: str, universe: list[dict], site_origin: str) -> Optional
         except (TypeError, ValueError):
             return 0.0
     rows.sort(key=_score, reverse=True)
-    table_html = "".join(_stock_row(t) for t in rows[:50])
+    table_html = "".join(_stock_row(t, i + 1) for i, t in enumerate(rows[:50]))
     n = len(rows)
 
     # ── Sector profile ───────────────────────────────────────────────
@@ -608,18 +617,34 @@ def render_sector(slug: str, universe: list[dict], site_origin: str) -> Optional
   <div class="legal">TickerMover is a research tool, not financial advice, and not FCA-authorised. Always do your own research before investing. Capital at risk.</div>
 </div>
 <style>
+/* The profile block read as one undifferentiated grey slab: white cards on a
+   grey rule, a grey note and a white AI box. Everything had the same weight,
+   so nothing led. It now opens on the accent, and the stat grid sits on the
+   warm ground the rest of the site uses. */
 .sp-grid{{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1px;
-  background:#D6DADD;border:1px solid #D6DADD;border-radius:10px;overflow:hidden;margin:0 0 8px}}
-.sp-stat{{background:#fff;padding:13px 15px}}
+  background:#E4E7EC;border:1px solid #E4E7EC;border-top:3px solid #FF6100;
+  border-radius:10px;overflow:hidden;margin:0 0 8px}}
+.sp-stat{{background:#fff;padding:13px 15px;transition:background 140ms cubic-bezier(.2,.7,.2,1)}}
+.sp-stat:hover{{background:#FFF9F5}}
 .sp-k{{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#758696;font-weight:700}}
 .sp-v{{font-size:20px;font-weight:700;color:#0A2F46;margin-top:5px;font-variant-numeric:tabular-nums}}
 .sp-b{{font-size:11px;color:#758696;margin-top:2px;font-variant-numeric:tabular-nums}}
 .sp-read{{font-size:13.5px;color:#5d6c7b;line-height:1.6;margin:0 0 22px;padding:11px 15px;
   background:#F2F1EE;border-left:3px solid #FF6100;border-radius:4px}}
-.sp-ai{{font-size:14px;color:#10293D;line-height:1.65;margin:14px 0 10px;padding:14px 16px;
-  background:#fff;border:1px solid #D6DADD;border-radius:8px}}
+.sp-ai{{font-size:14px;color:#10293D;line-height:1.65;margin:14px 0 10px;padding:14px 16px 14px 18px;
+  background:#FFF8F4;border:1px solid #F0DDD1;border-left:3px solid #FF6100;border-radius:8px}}
 .sp-ai span{{display:block;font-size:10px;letter-spacing:.09em;text-transform:uppercase;
   color:#9A3412;font-weight:800;margin-bottom:6px}}
+
+/* Ranking table — the three highest scorers carry a logo, which is the only
+   real colour on the page and marks where the ranking starts. */
+.tbl thead th{{background:#FFF2EC;color:#0A2F46;border-bottom:2px solid #E4CFC2}}
+.tbl tbody tr:hover td{{background:#FFF6F1}}
+.sr-nm{{font-size:12.5px;color:#5d6c7b}}
+.sr-id{{display:flex;align-items:center;gap:10px}}
+.sr-logo{{width:26px;height:26px;border-radius:50%;object-fit:contain;background:#fff;
+  flex:0 0 26px;box-shadow:0 0 0 1px #E4E7EC}}
+.tbl td.sr-lead{{box-shadow:inset 3px 0 0 #FF6100}}
 </style>"""
     return page_shell(
         title=title, desc=desc, canonical=canonical, body_html=body,
@@ -633,24 +658,44 @@ _SECTOR_INDEX_CSS = """
   background:#F2F1EE;border-left:3px solid #FF6100;border-radius:4px}
 .si-note b{color:#0A2F46}
 .si-wrap{overflow-x:auto;border:1px solid #D6DADD;border-radius:10px;background:#fff;margin:0 0 26px}
-table.si{border-collapse:collapse;width:100%;min-width:880px;font-variant-numeric:tabular-nums}
-table.si th{position:sticky;top:0;background:#F2F1EE;text-align:right;font-size:10.5px;
-  letter-spacing:.07em;text-transform:uppercase;color:#5d6c7b;font-weight:700;
-  padding:11px 12px;border-bottom:1px solid #D6DADD;white-space:nowrap}
+table.si{border-collapse:collapse;width:100%;min-width:1040px;font-variant-numeric:tabular-nums}
+table.si th{position:sticky;top:0;background:#FFF2EC;text-align:right;font-size:10.5px;
+  letter-spacing:.07em;text-transform:uppercase;color:#0A2F46;font-weight:700;
+  padding:11px 12px;border-bottom:2px solid #E4CFC2;white-space:nowrap}
 table.si th:first-child,table.si td:first-child{text-align:left}
 table.si td{padding:11px 12px;border-bottom:1px solid #F2F1EE;text-align:right;
   font-size:13.5px;color:#10293D;white-space:nowrap}
+table.si tbody tr:nth-child(even) td{background:#FCFBFA}
+table.si tbody tr:hover td{background:#FFF6F1}
 table.si tr:last-child td{border-bottom:0}
+/* Baseline row is a reference, not a ranked entry — the left rule marks it as
+   the line everything else is read against. */
 table.si tr.si-base td{background:#FFF8F2;font-weight:700;color:#0A2F46}
+table.si tr.si-base:hover td{background:#FFF8F2}
+table.si tr.si-base td:first-child{box-shadow:inset 3px 0 0 #FF6100}
 table.si a.si-nm{color:#0A2F46;font-weight:650;text-decoration:none}
 table.si a.si-nm:hover{text-decoration:underline}
 .si-n{font-size:12px;color:#758696}
-.si-bar{display:inline-block;width:52px;height:6px;border-radius:99px;background:#F2F1EE;
+.si-bar{display:inline-block;width:52px;height:6px;border-radius:99px;background:#EDEBE8;
   vertical-align:middle;margin-right:7px;overflow:hidden}
-.si-bar i{display:block;height:100%;background:#FF6100;border-radius:99px}
-table.si td.si-led{white-space:normal;min-width:116px;line-height:1.55}
-.si-led a{display:inline-block;margin-right:6px;color:#0A2F46;text-decoration:none;font-family:var(--mono),ui-monospace,Menlo,monospace;font-size:12px}
-.si-led a:hover{text-decoration:underline}
+.si-bar i{display:block;height:100%;border-radius:99px;background:#AEB9C2}
+.si-b2 i{background:#758696}
+.si-b3 i{background:#14587D}
+.si-b4 i{background:#FF6100}
+
+/* Highest-scoring cell: logo + ticker chips. The logos are the only real
+   colour on the page and they make a row identifiable before it is read. */
+.si-lead{display:inline-flex;align-items:center;gap:5px;margin:2px 0 2px 6px;
+  padding:3px 8px 3px 3px;border:1px solid #E4E7EC;border-radius:99px;background:#fff;
+  text-decoration:none;vertical-align:middle;
+  transition:border-color 140ms cubic-bezier(.2,.7,.2,1),box-shadow 140ms cubic-bezier(.2,.7,.2,1)}
+.si-lead:hover{text-decoration:none;border-color:#0A2F46;
+  box-shadow:0 4px 12px -6px rgba(10,47,70,.4)}
+.si-lead img{width:20px;height:20px;border-radius:50%;object-fit:contain;
+  background:#fff;flex:0 0 20px}
+.si-lead span{font-family:var(--mono),ui-monospace,Menlo,monospace;font-size:11.5px;
+  font-weight:600;color:#0A2F46;letter-spacing:.02em}
+table.si td.si-led{white-space:normal;min-width:210px;line-height:1.5;padding:7px 12px}
 .si-pos{color:#12704A;font-weight:650}
 .si-neg{color:#B32D23;font-weight:650}
 """
@@ -687,15 +732,36 @@ def render_sector_index(universe: list[dict], site_origin: str) -> str:
     secs = _si.all_sectors(universe)
     base = _si.universe_baseline(universe)
 
+    def _leader_chip(l: dict) -> str:
+        """Logo + ticker for one of a sector's three highest-scoring names.
+
+        The logo host is the one already used by the stock and peer surfaces,
+        not a new third party. `onerror` removes the image rather than hiding
+        it, so a missing logo collapses to a plain ticker chip instead of
+        leaving a hole the width of an image that never arrives."""
+        tk = (l.get("ticker") or "").upper()
+        src = "https://assets.parqet.com/logos/symbol/" + tk
+        return (
+            '<a class="si-lead" href="/stocks/' + tk + '">'
+            '<img src="' + src + '" alt="" loading="lazy" width="20" height="20" '
+            'onerror="this.remove()">'
+            '<span>' + tk + "</span></a>"
+        )
+
     def row(s: dict, is_base: bool = False) -> str:
-        led = " ".join(
-            f'<a href="/stocks/{l["ticker"]}">{l["ticker"]}</a>' for l in s.get("leaders", [])
+        led = "".join(
+            _leader_chip(l) for l in s.get("leaders", [])
         ) if not is_base else '<span class="si-n">—</span>'
         nm = (s["label"] if is_base
               else f'<a class="si-nm" href="/sectors/{s["slug"]}">{s["label"]}</a>')
         med = s["alpha_median"]
-        bar = (f'<span class="si-bar"><i style="width:{max(3, min(100, round(med)))}%"></i></span>'
-               if med is not None else "")
+        if med is None:
+            bar = ""
+        else:
+            band = ("b4" if med >= 65 else "b3" if med >= 55 else
+                    "b2" if med >= 45 else "b1")
+            bar = ('<span class="si-bar si-' + band + '"><i style="width:'
+                   + str(max(3, min(100, round(med)))) + '%"></i></span>')
         # NB: built outside the f-string. Nested same-type quotes inside an
         # f-string expression need Python 3.12 (PEP 701) and there is no version
         # pin in this repo — Railway picks its own interpreter, so a 3.12-only
@@ -711,6 +777,7 @@ def render_sector_index(universe: list[dict], site_origin: str) -> str:
             f'<td>{_si_cell(s["momentum_3m_median"], "%", signed=True)}</td>'
             f'<td>{_si_cell(s["pe_median"], "×")}</td>'
             f'<td>{_si_cell(s["growth_median"], "%", signed=True)}</td>'
+            f'<td>{_si_cell(s["margin_median"], "%", signed=True)}</td>'
             f'<td class="si-led">{led}</td></tr>'
         )
 
@@ -724,18 +791,18 @@ def render_sector_index(universe: list[dict], site_origin: str) -> str:
   <h1>Every sub-sector, side by side</h1>
   <p class="lede">{n_sec} sub-sectors covering {n_names} scored US-listed companies, all measured the same way. The first row is the whole scored universe — read every sector against it.</p>
   <div class="si-note">
-    <b>How to read this.</b> <b>Median Quant</b> is the middle score in that group.
-    <b>Spread</b> is the gap between its 75th and 25th percentile — a low spread means the
-    names move together, a high one means picking within the group matters more than the
-    group itself. <b>Strong</b> is the share scoring 65+. <b>3m</b> and <b>Growth</b> are
-    medians, so one outlier cannot carry a whole sector.
+    <b>What the spread tells you.</b> A narrow mid-50% range means the names in that group
+    score alike and tend to move as a block. A wide one means the individual name matters
+    more than the theme. Every figure is a median or a count across the group, so no single
+    outlier can carry a sector.
     These are quality and characteristic descriptors, not buy or sell signals.
   </div>
   <div class="si-wrap">
     <table class="si">
       <thead><tr>
-        <th>Sub-sector</th><th>Names</th><th>Median Quant</th><th>Spread</th>
-        <th>Strong</th><th>3m</th><th>P/E</th><th>Growth</th><th>Highest scoring</th>
+        <th>Sub-sector</th><th>Names</th><th>Median Quant</th><th>Mid-50% range</th>
+        <th>Scoring 65+</th><th>Median 3m move</th><th>Median P/E</th>
+        <th>Median rev growth</th><th>Median net margin</th><th>Highest scoring</th>
       </tr></thead>
       <tbody>{body_rows}</tbody>
     </table>

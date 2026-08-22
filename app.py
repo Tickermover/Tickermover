@@ -1115,20 +1115,31 @@ async def _bottom_line_prewarm() -> None:
     apply_cached overlay). Steady state this loop is near-$0 — most cycles are
     all cache hits."""
     await asyncio.sleep(200)               # let the universe load + first score settle
+    _CAP = 120                             # generations per cycle
     while True:
+        backlogged = False
         try:
             if bottom_line_ai.available() and _universe_data and not _ai_over_budget():
                 stats = await bottom_line_ai.prewarm(
-                    _universe_data, throttle_s=2.0, max_gen=60,
+                    _universe_data, throttle_s=1.5, max_gen=_CAP,
                 )
+                # Hitting the cap means names were skipped, not that the book is
+                # warm. On the old fixed 3h cadence a cold cache (redeploy, or
+                # the feature being switched on) took ~27h to fill at 60/cycle,
+                # so most of the universe served the template for more than a
+                # day while the page claimed an AI read. Come back in minutes
+                # while there is a backlog, and settle to the slow cadence once
+                # a cycle finishes under the cap.
+                backlogged = stats.get("generated", 0) >= _CAP
                 if stats.get("generated"):
                     logger.info(
-                        "✍️  Bottom-line pre-warm: %d generated, %d cache hits (%s)",
-                        stats["generated"], stats["cache_hits"], stats.get("model"),
+                        "✍️  Bottom-line pre-warm: %d generated, %d cache hits%s (%s)",
+                        stats["generated"], stats["cache_hits"],
+                        " — more queued" if backlogged else "", stats.get("model"),
                     )
         except Exception as exc:
             logger.warning(f"bottom-line pre-warm cycle failed: {exc}")
-        await asyncio.sleep(3 * 3600)      # every 3h
+        await asyncio.sleep(600 if backlogged else 3 * 3600)
 
 
 async def _scan_prewarm() -> None:
@@ -1266,6 +1277,53 @@ async def _compare_biz_prewarm() -> None:
         except Exception as exc:
             logger.warning(f"compare-business pre-warm cycle failed: {exc}")
         await asyncio.sleep(3 * 3600)
+
+
+async def _sector_note_prewarm() -> None:
+    """Fill the "Our read" note on every sub-sector page.
+
+    The note was reachable only two ways: a signed-in user opening a sector in
+    the in-app panel, or an admin calling the backfill endpoint by hand. Nobody
+    did either, so every public /sectors/{slug} page rendered the slot empty —
+    the AI read the page advertises simply was not there for any visitor.
+
+    Same trade as the featured comparisons: generation stays off the render
+    path (these pages are public, anonymous and crawled, so a visitor must
+    never trigger a model call), but the notes themselves are worth having
+    ready rather than waiting on a signed-in user to happen to open each of
+    ~73 sectors. Bounded per cycle, and the cache key is the coarse bucket in
+    sector_narrative._bucket(), so ordinary drift re-hits the same entry and
+    only a real change of character pays again.
+    """
+    await asyncio.sleep(380)
+    _CAP = 12
+    while True:
+        backlogged = False
+        try:
+            import sector_intel as _si
+            import sector_narrative as _sn
+            if _sn.available() and _universe_data and not _ai_over_budget():
+                base = _si.universe_baseline(_universe_data)
+                made = 0
+                for sec in _si.all_sectors(_universe_data):
+                    if made >= _CAP or _ai_over_budget():
+                        break
+                    if _sn.cached_note(sec):
+                        continue
+                    try:
+                        r = await _sn.generate(sec, base)
+                        if r.get("note"):
+                            made += 1
+                    except Exception as exc:
+                        logger.info("sector note warm %s: %s", sec.get("slug"), exc)
+                    await asyncio.sleep(2.0)
+                backlogged = made >= _CAP
+                if made:
+                    logger.info("🧭 Sector-note pre-warm: %d generated%s",
+                                made, " — more queued" if backlogged else "")
+        except Exception as exc:
+            logger.warning(f"sector-note pre-warm cycle failed: {exc}")
+        await asyncio.sleep(900 if backlogged else 6 * 3600)
 
 
 async def _role_prewarm() -> None:
@@ -1437,6 +1495,7 @@ async def lifespan(app: FastAPI):
         asyncio.create_task(_role_prewarm()),        # "Where it earns" card for the whole universe
         asyncio.create_task(_scan_prewarm()),        # dilution + Crowd Clock, so the overview cards exist
         asyncio.create_task(_compare_biz_prewarm()), # business comparison for the featured matchups
+        asyncio.create_task(_sector_note_prewarm()), # "Our read" on every sub-sector page
         asyncio.create_task(_roster_prewarm()),      # map every scored stock to a capex chain
         asyncio.create_task(_mgmt_qa_prewarm()),     # Fact Check AI answers for prime + best-ideas names
         asyncio.create_task(_event_brief_prewarm()), # earnings briefs for the Company Events timeline
