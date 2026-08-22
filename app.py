@@ -3029,13 +3029,16 @@ _SP_DASH_CSS = """
 .metric .val.up{color:var(--up)} .metric .val.dn{color:var(--down)}
 
 /* ---- panel surfaces ----
-   .fchk carries its own white card, but .cclk-card and .sfg-card never did -
-   they inherited the white background of .report-card, which the grid above
-   strips. Without this they float straight on the peach ground. */
+   These wrappers used to supply the white card themselves. The cards now carry
+   their own chrome — .sfg-box / .cclk-box, each with a ribbon header matching
+   the .rep-rib sections above — so the wrapper must be transparent or every
+   panel renders as a card inside a card. */
 .report-card .cclk-ssr,.report-card .sfg-ssr,
 .report-card .cclk-card,.report-card .sfg-card{
-  background:var(--surface);border:1px solid var(--rule);border-radius:16px;
-  padding:22px 24px;box-shadow:0 10px 30px -24px rgba(10,47,70,.25)}
+  background:none;border:0;border-radius:0;padding:0;box-shadow:none}
+.report-card .sfg,.report-card .cclk{margin:0}
+/* Dilution Check is two boxes now; they need the same gap the grid uses. */
+.report-card .sfg-box+.sfg-box{margin-top:16px}
 .report-card .fchk{margin:0}
 
 /* ---- density: the methodology notes were shouting as loud as the findings.
@@ -3547,7 +3550,7 @@ def _render_stock_page(t: dict) -> str:
         import sp_charts as _spc
         _crowd = None
         try:
-            _cc = cache.get(f"crowd-clock:{sym}:v1")
+            _cc = cache.get(f"crowd-clock:{sym}:v2")
             if isinstance(_cc, dict):
                 _crowd = _cc
         except Exception:
@@ -3714,7 +3717,7 @@ def _render_stock_page(t: dict) -> str:
     try:
         import crowd_clock as _cc
         crowd_clock_html = _cc.render_card(t)
-        _ssr = _sp_ssr_cached(f"crowd-clock:{sym}:v1")
+        _ssr = _sp_ssr_cached(f"crowd-clock:{sym}:v2")
         if _ssr:
             crowd_clock_html = f'<div class="cclk-ssr">{_ssr}</div>' + crowd_clock_html
     except Exception as _cc_err:
@@ -3723,7 +3726,7 @@ def _render_stock_page(t: dict) -> str:
     try:
         import safeguards as _sg
         safeguards_html = _sg.render_card(t, public=True)
-        _ssr = _sp_ssr_cached(f"safeguards:{sym}:v5", public=True)
+        _ssr = _sp_ssr_cached(f"safeguards:{sym}:v6", public=True)
         if _ssr:
             safeguards_html = f'<div class="sfg-ssr">{_ssr}</div>' + safeguards_html
     except Exception as _sg_err:
@@ -15759,7 +15762,7 @@ async def api_safeguards(ticker: str):
     if not sym or len(sym) > 8:
         raise HTTPException(status_code=400, detail="Bad ticker")
 
-    cache_key = f"safeguards:{sym}:v5"
+    cache_key = f"safeguards:{sym}:v6"
     cached = cache.get(cache_key)
     if cached is not None:
         return JSONResponse(cached)
@@ -16019,7 +16022,7 @@ async def api_crowd_clock(ticker: str):
     if not sym or len(sym) > 8:
         raise HTTPException(status_code=400, detail="Bad ticker")
 
-    cache_key = f"crowd-clock:{sym}:v1"
+    cache_key = f"crowd-clock:{sym}:v2"
     cached = cache.get(cache_key)
     if cached is not None:
         return JSONResponse(cached)

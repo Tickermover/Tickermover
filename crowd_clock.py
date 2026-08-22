@@ -195,13 +195,29 @@ def compute(closes: list[float], volumes: list[float]) -> dict | None:
 # ── the card ─────────────────────────────────────────────────────────────────
 _CSS = """
 <style>
-.cclk{border:1px solid rgba(10,10,10,.1);border-radius:16px;padding:24px 26px;margin:36px 0;background:#fff;box-shadow:0 10px 30px -24px rgba(10,10,10,.25)}
-.cclk-head{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:6px}
-.cclk-h{font-family:'Public Sans',system-ui,sans-serif;font-size:20px;font-weight:500;color:#0A2F46;margin:0}
-.cclk-pill{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12.5px;font-weight:700;letter-spacing:.02em;padding:6px 12px;border-radius:999px;white-space:nowrap}
-.cclk-cool .cclk-pill{color:#0E7C66;background:rgba(14,124,102,.1);border:1px solid rgba(14,124,102,.28)}
-.cclk-warm .cclk-pill{color:#A16207;background:rgba(161,98,7,.1);border:1px solid rgba(161,98,7,.28)}
-.cclk-hot .cclk-pill{color:#C74E00;background:rgba(199,78,0,.1);border:1px solid rgba(199,78,0,.28)}
+.cclk{margin:36px 0}
+.cclk-box{border:1px solid rgba(10,10,10,.1);border-radius:16px;overflow:hidden;background:#fff;
+  box-shadow:0 10px 30px -24px rgba(10,10,10,.25)}
+/* Banner colour is FIXED, not keyed to the band. The band already has its own
+   scale in the pill, and a whole header going green when "cool" and red when
+   "crowded" would read as a traffic light — which is precisely what this card
+   must not be. */
+.cclk-head{display:flex;align-items:center;gap:10px;padding:11px 16px;position:relative;
+  background:linear-gradient(105deg,#FFB37A,#C74E00)}
+.cclk-head::after{content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(180deg,rgba(255,255,255,.22),rgba(255,255,255,0) 62%)}
+.cclk-head>*{position:relative;z-index:1}
+.cclk-ico{width:27px;height:27px;border-radius:9px;background:rgba(255,255,255,.2);
+  display:grid;place-items:center;font-size:14px;flex:0 0 auto}
+.cclk-h{font-family:'Public Sans',system-ui,sans-serif;font-size:15px;font-weight:500;
+  color:#fff;margin:0;letter-spacing:-.005em;text-shadow:0 1px 1px rgba(0,0,0,.12)}
+.cclk-bd{padding:20px 24px}
+.cclk-pill{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:11.5px;font-weight:700;
+  letter-spacing:.02em;padding:5px 11px;border-radius:999px;white-space:nowrap;margin-left:auto;
+  color:#fff;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.38)}
+.cclk-cool .cclk-pill{color:#0E7C66;background:#fff;border-color:#fff}
+.cclk-warm .cclk-pill{color:#A16207;background:#fff;border-color:#fff}
+.cclk-hot .cclk-pill{color:#C74E00;background:#fff;border-color:#fff}
 .cclk-sub{font-size:12.5px;color:#5d6c7b;margin:0 0 18px}
 .cclk-track{display:grid;grid-template-columns:repeat(6,1fr);gap:3px;margin:0 0 8px}
 .cclk-seg{height:9px;border-radius:4px;background:#EDEBE7}
@@ -258,10 +274,13 @@ def card_body(sym: str, r: dict) -> str:
                     for i, n in enumerate(ORDER))
     rates, base = r["rates"], r["baseline"]
     return f"""
+  <section class="cclk-box">
   <div class="cclk-head">
+    <span class="cclk-ico">👁</span>
     <h3 class="cclk-h">Hype Check</h3>
     <span class="cclk-pill">{_html.escape(r["band"])} &middot; {r["score"]:.0f} / 100</span>
   </div>
+  <div class="cclk-bd">
   <p class="cclk-sub">Where {_html.escape(sym)} sits between “nobody is watching” and
      “everybody is watching”, from price and volume alone.</p>
   <div class="cclk-track">{segs}</div>
@@ -286,7 +305,8 @@ def card_body(sym: str, r: dict) -> str:
      1,514 US listed shares, 2009&ndash;2026. These are historical frequencies for shares in a
      similar state &mdash; not a forecast for {_html.escape(sym)} and not a probability for it.
      Past performance is not a reliable indicator of future results. General information and
-     research, not advice and not a personal recommendation. Capital at risk.</p>"""
+     research, not advice and not a personal recommendation. Capital at risk.</p>
+  </div></section>"""
 
 
 def _bands_frame(score, damage):
@@ -459,8 +479,10 @@ def render_card(t: dict) -> str:
         return ""
     return _CSS + f"""
 <div class="cclk cclk-cool" id="cclk-card" data-sym="{sym}">
-  <div class="cclk-head"><h3 class="cclk-h">Hype Check</h3></div>
-  <p class="cclk-off" id="cclk-status">Reading {sym}&rsquo;s price and volume history&hellip;</p>
+  <section class="cclk-box"><div class="cclk-head">
+    <span class="cclk-ico">👁</span><h3 class="cclk-h">Hype Check</h3></div>
+    <div class="cclk-bd"><p class="cclk-off" id="cclk-status">Reading {sym}&rsquo;s price and volume history&hellip;</p></div>
+  </section>
 </div>
 <script>
 (function(){{

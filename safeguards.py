@@ -449,11 +449,26 @@ def attach_growth(row: dict, income_q: list) -> dict:
 # ── the card ─────────────────────────────────────────────────────────────────
 _CSS = """
 <style>
-.sfg{border:1px solid rgba(10,10,10,.1);border-radius:16px;padding:24px 26px;margin:36px 0;background:#fff;box-shadow:0 10px 30px -24px rgba(10,10,10,.25)}
-.sfg-head{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:6px}
-.sfg-h{font-family:'Public Sans',system-ui,sans-serif;font-size:20px;font-weight:500;color:#0A2F46;margin:0}
-.sfg-pill{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12.5px;font-weight:700;padding:6px 12px;border-radius:999px;white-space:nowrap;color:#0E7C66;background:rgba(14,124,102,.1);border:1px solid rgba(14,124,102,.28)}
-.sfg-pill.on{color:#C74E00;background:rgba(199,78,0,.1);border-color:rgba(199,78,0,.28)}
+.sfg{margin:36px 0}
+.sfg-box{border:1px solid rgba(10,10,10,.1);border-radius:16px;overflow:hidden;background:#fff;
+  box-shadow:0 10px 30px -24px rgba(10,10,10,.25);margin:0 0 16px}
+.sfg-box:last-of-type{margin-bottom:0}
+.sfg-head{display:flex;align-items:center;gap:10px;padding:11px 16px;position:relative;
+  background:linear-gradient(105deg,#5DC0AC,#0E7C66)}
+.sfg-head::after{content:"";position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(180deg,rgba(255,255,255,.22),rgba(255,255,255,0) 62%)}
+.sfg-head>*{position:relative;z-index:1}
+.sfg-ico{width:27px;height:27px;border-radius:9px;background:rgba(255,255,255,.2);
+  display:grid;place-items:center;font-size:14px;flex:0 0 auto}
+.sfg-h{font-family:'Public Sans',system-ui,sans-serif;font-size:15px;font-weight:500;
+  color:#fff;margin:0;letter-spacing:-.005em;text-shadow:0 1px 1px rgba(0,0,0,.12)}
+.sfg-bd{padding:20px 24px}
+.sfg-pill{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:11.5px;font-weight:700;
+  padding:5px 11px;border-radius:999px;white-space:nowrap;margin-left:auto;color:#fff;
+  background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.38)}
+/* The "worth a look" count is the one thing on the banner that carries a
+   reading, so it inverts rather than just tinting. */
+.sfg-pill.on{color:#0E7C66;background:#fff;border-color:#fff}
 .sfg-sub{font-size:12.5px;color:#5d6c7b;margin:0 0 18px;line-height:1.55}
 .sfg-item{padding:16px 0;border-top:1px solid rgba(10,10,10,.07)}
 .sfg-item:first-of-type{border-top:none;padding-top:4px}
@@ -478,6 +493,19 @@ _CSS = """
 """
 
 
+def _box(title: str, icon: str, inner: str, pill=None) -> str:
+    """One ribboned card. The banner metrics are copied from _sp_ribbon's
+    .rep-rib in app.py rather than invented, so these sit in the same family as
+    "The picture" and "The audit" instead of looking like a different product."""
+    p = ""
+    if pill:
+        txt, on = pill
+        p = f'<span class="sfg-pill{" on" if on else ""}">{_html.escape(txt)}</span>'
+    return (f'<section class="sfg-box"><div class="sfg-head">'
+            f'<span class="sfg-ico">{icon}</span><h3 class="sfg-h">{title}</h3>{p}</div>'
+            f'<div class="sfg-bd">{inner}</div></section>')
+
+
 def _row(key, value, cls, text, tag=None, extra=""):
     t = (f'<span class="sfg-tag{" warn" if tag[1] else ""}">{_html.escape(tag[0])}</span>'
          if tag else "")
@@ -488,7 +516,7 @@ def _row(key, value, cls, text, tag=None, extra=""):
 
 def card_body(sym: str, d: dict, public: bool = False) -> str:
     pct = lambda v, p=0: "&mdash;" if v is None else f"{v * 100:.{p}f}%"
-    out, s = [], d.get("summary") or {}
+    out, own_out, s = [], [], d.get("summary") or {}
     n = s.get("n_flags", 0)
     esym = _html.escape(sym)
 
@@ -587,7 +615,7 @@ def card_body(sym: str, d: dict, public: bool = False) -> str:
         run = ins.get("run_90d")
         ctx = f' The share is {run * 100:+.0f}% over the same 90 days.' if run is not None else ''
         strength = '<b> Those sales landed into a rising price.</b>' if ins["into_strength"] else ''
-        out.append(_row(
+        own_out.append(_row(
             "Insider filings", f'{ins["sells"]} sold / {ins["buys"]} bought',
             "warn" if ins["flag"] else "",
             f'Form 4 filings over the last 90 days.{ctx}{strength} Most insider selling is '
@@ -638,7 +666,7 @@ def card_body(sym: str, d: dict, public: bool = False) -> str:
 
         headline = (f'{own["cutting"]} of {own["n_changed"]} cutting'
                     if own["n_changed"] else 'On file')
-        out.append(_row(
+        own_out.append(_row(
             "Ownership", headline, "warn" if own["flag"] else "",
             f'{lead}. Among the largest holders, positions moved as below in the last '
             f'reported quarter.',
@@ -648,7 +676,7 @@ def card_body(sym: str, d: dict, public: bool = False) -> str:
     if ps:
         worst = (f' In its worst stretch of the last year, $1,000 would have been down '
                  f'${ps["worst_cash"]:,.0f} at the low point.' if ps.get("worst_cash") else '')
-        out.append(_row(
+        own_out.append(_row(
             "What a position does", f'&plusmn;${ps["typical_month"]:,.0f}',
             "warn" if ps["flag"] else "",
             f'on every $1,000 held, in a typical month. Realised volatility is '
@@ -660,16 +688,26 @@ def card_body(sym: str, d: dict, public: bool = False) -> str:
             'the size of a position can be judged against what it actually does. It is not a '
             'suggested position size and not advice.</p>'))
 
-    if not out:
-        return ('<div class="sfg-head"><h3 class="sfg-h">Dilution Check</h3></div>'
-                f'<p class="sfg-off">No filing data available for {esym}.</p>')
+    if not out and not own_out:
+        return (_box("Dilution Check", "🛡",
+                     f'<p class="sfg-off">No filing data available for {esym}.</p>'))
 
-    return (f'<div class="sfg-head"><h3 class="sfg-h">Dilution Check</h3>'
-            f'<span class="sfg-pill{" on" if n else ""}">{n} of '
-            f'{len(s.get("checked") or [])} worth a look</span></div>'
-            f'<p class="sfg-sub">Five things a company has already filed that rarely reach a '
-            f'private investor in time. Facts about {esym}, not a view on where the price '
-            f'goes.</p>' + "".join(out) +
+    box1 = _box(
+        "Dilution Check", "🛡",
+        f'<p class="sfg-sub">What the company is doing to its own share count &mdash; '
+        f'things already filed that rarely reach a private investor in time. Facts about '
+        f'{esym}, not a view on where the price goes.</p>' + "".join(out),
+        pill=(f'{n} of {len(s.get("checked") or [])} worth a look', bool(n)),
+    ) if out else ""
+
+    box2 = _box(
+        "Who owns it — insiders and institutions", "👥",
+        '<p class="sfg-sub">What the people who already hold the share are doing with it, '
+        'as filed. Insider sales are mostly routine; it is the pattern that reads, not any '
+        'single line.</p>' + "".join(own_out),
+    ) if own_out else ""
+
+    return (box1 + box2 +
             '<p class="sfg-note">General information and research, not advice and not a '
             'personal recommendation. Figures are drawn from company filings and market data '
             'and can lag or contain gaps. Where a historical frequency is shown it describes a '
@@ -689,8 +727,10 @@ def render_card(t: dict, public: bool = False) -> str:
         return ""
     return _CSS + """
 <div class="sfg" id="sfg-card" data-sym="SYMBOL" data-public="PUBFLAG">
-  <div class="sfg-head"><h3 class="sfg-h">Dilution Check</h3></div>
-  <p class="sfg-off" id="sfg-status">Reading SYMBOL&rsquo;s filings&hellip;</p>
+  <section class="sfg-box"><div class="sfg-head">
+    <span class="sfg-ico">🛡</span><h3 class="sfg-h">Dilution Check</h3></div>
+    <div class="sfg-bd"><p class="sfg-off" id="sfg-status">Reading SYMBOL&rsquo;s filings&hellip;</p></div>
+  </section>
 </div>
 <script>
 (function(){
