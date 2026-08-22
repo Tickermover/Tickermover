@@ -2555,6 +2555,42 @@ recommendations. TickerMover is a research tool, not an FCA-authorised adviser, 
 is a personal recommendation. Past performance is not a reliable indicator of future results.
 Capital at risk. <a href="/disclaimer">Full disclaimer</a>.</p>
 
+<script>
+/* Cold-cache warmer for the executive summary. Fires only when the server had
+   nothing cached, calls the endpoint that generates + caches it, and fills the
+   hero in place. Never blocks the render; failure is silent and the one-line
+   fallback simply stays. */
+(function(){{
+  try{{
+    var box=document.querySelector('.sp-verdict');
+    if(!box||box.querySelector('.sp-exec'))return;      /* already server-rendered */
+    var sym=(document.body.getAttribute('data-sym')||'').trim();
+    if(!sym)return;
+    fetch('/api/thesis/'+encodeURIComponent(sym)).then(function(r){{
+      return r.ok?r.json():null;
+    }}).then(function(d){{
+      if(!d)return;
+      var head=(d.headline||'').trim(), expl=(d.explanation||'').trim();
+      if(!head&&!expl)return;
+      var w=document.createElement('div'); w.className='sp-exec';
+      var tag=document.createElement('div'); tag.className='sp-exec-tag';
+      tag.textContent=(d.source==='llm'?'AI summary':'Model summary')
+                      +(d.conviction?(' \u00b7 '+d.conviction+' conviction'):'');
+      w.appendChild(tag);
+      if(head){{var h=document.createElement('p');h.className='sp-exec-h';h.textContent=head;w.appendChild(h);}}
+      if(expl){{var p=document.createElement('p');p.className='sp-exec-p';p.textContent=expl;w.appendChild(p);}}
+      var n=document.createElement('p'); n.className='sp-exec-n';
+      n.textContent='A quality assessment from public data, not an instruction to buy '
+                   +'or sell, and not a personal recommendation. Capital at risk.';
+      w.appendChild(n);
+      var chips=box.querySelector('.dr-call-chips');
+      box.insertBefore(w, chips||null);
+      var first=box.firstChild;
+      if(first&&first.nodeType===3)box.removeChild(first);   /* drop the one-liner */
+    }}).catch(function(){{}});
+  }}catch(e){{}}
+}})();
+</script>
 {_theme.footer_html()}
 </body></html>""")
 
@@ -3012,6 +3048,16 @@ svg.ch rect[fill="#14587D"],svg.ch circle{transition:opacity var(--t-fast) var(-
 svg.ch:hover rect[fill="#14587D"]{opacity:.82}
 svg.ch rect:hover{opacity:1!important}
 
+/* ---- executive summary in the hero ---- */
+.sp-exec{max-width:82ch}
+.sp-exec-tag{font-family:var(--mono);font-size:9.5px;letter-spacing:.15em;text-transform:uppercase;
+  color:#8FBFDD;font-weight:500;margin-bottom:9px}
+.sp-exec-h{font-size:18px;font-weight:500;color:#fff;line-height:1.4;margin:0 0 8px;
+  letter-spacing:-.01em}
+.sp-exec-p{font-size:15px;font-weight:300;color:#CFE0EA;line-height:1.62;margin:0}
+.sp-exec-n{font-size:11.5px;font-weight:300;color:rgba(255,255,255,.5);line-height:1.55;
+  margin:12px 0 0;padding-left:11px;border-left:2px solid rgba(255,255,255,.18)}
+
 /* ---- the trail: a soft gate, never cloaking ----
    The gated panels stay in the DOM and in the response a crawler receives.
    Showing a search engine more than a reader is cloaking and is penalised,
@@ -3090,6 +3136,55 @@ def _sp_pro_section(sym: str) -> str:
         f'<a href="/app?signup=1" class="cta-btn cta-btn-pri">Unlock {sym} with Pro →</a>'
     )
     return _sp_ribbon("more", "Go deeper with Pro", inner, "rep-red", "🔓")
+
+def _sp_exec_summary(sym: str) -> str:
+    """The hero's executive summary, read from the thesis cache.
+
+    WHY THIS AND NOT A NEW GENERATOR: /api/thesis/{sym} already produces a
+    per-stock summary (headline, explanation, bull_case, bear_case,
+    conviction), is already cached, already respects the AI cost breaker via
+    _ai_over_budget(), and already degrades to a deterministic rule-based
+    thesis when ANTHROPIC_API_KEY is absent. A second AI path would duplicate
+    all of that and double the spend.
+
+    WHERE THE CACHING LANDS: this reads the cache and NOTHING ELSE. It never
+    generates. A cold ticker falls back to the one-line bottom_line and the
+    script below warms the cache by calling the endpoint once, so the next
+    reader - and any crawler - gets the full summary. No AI call ever sits on
+    the page-render path, which is what makes this safe on a page built to be
+    crawled.
+
+    BULL AND BEAR ARE NOT SPLIT ACROSS THE GATE. Showing the upside case above
+    a signup wall while the downside sits behind it is exactly the asymmetry a
+    financial promotion must not have. The hero carries the balanced prose; the
+    two cases appear together, or not at all.
+    """
+    import html as _html   # not a module-scope name in this file; see _render_stock_page
+    try:
+        th = cache.get(f"thesis:{sym}")
+    except Exception:
+        th = None
+    if not isinstance(th, dict):
+        return ""
+    head = (th.get("headline") or "").strip()
+    expl = (th.get("explanation") or "").strip()
+    if not head and not expl:
+        return ""
+    conv = (th.get("conviction") or "").strip()
+    src  = (th.get("source") or "").strip()
+    tag  = ("AI summary" if src == "llm" else "Model summary")
+    bits = ['<div class="sp-exec">',
+            f'<div class="sp-exec-tag">{_html.escape(tag)}'
+            + (f' &middot; {_html.escape(conv)} conviction' if conv else "") + '</div>']
+    if head:
+        bits.append(f'<p class="sp-exec-h">{_html.escape(head)}</p>')
+    if expl:
+        bits.append(f'<p class="sp-exec-p">{_html.escape(expl)}</p>')
+    bits.append('<p class="sp-exec-n">A quality assessment from public data, not an '
+                'instruction to buy or sell, and not a personal recommendation. '
+                'Capital at risk.</p></div>')
+    return "".join(bits)
+
 
 def _sp_data_sections(t: dict, sym: str, price: float):
     """Build (nav_html, sections_html) for all public data tabs."""
@@ -3302,6 +3397,11 @@ def _render_stock_page(t: dict) -> str:
     # earnings, ownership, score breakdown) + a sticky in-page nav. Mirrors
     # the in-app stock sheet; Pro AI tabs surface as upgrade CTAs.
     sp_nav_html, sp_sections_html = _sp_data_sections(t, sym, price)
+    try:
+        exec_summary_html = _sp_exec_summary(sym)
+    except Exception:
+        exec_summary_html = ""
+
     # Charts live in sp_charts.py. Never let a plotting error break the page.
     try:
         import sp_charts as _spc
@@ -3642,7 +3742,7 @@ h2{{font-size:18px;margin:30px 0 12px}}
 @media(max-width:640px){{h1{{font-size:30px}}.rep-body{{padding:14px}}}}
 </style>
 </head>
-<body>
+<body data-sym="{sym}">
 {_theme.nav_html()}
 <header class="sp-hero" id="overview">
   <div class="sp-hero-in">
@@ -3656,7 +3756,7 @@ h2{{font-size:18px;margin:30px 0 12px}}
       <div>{stars_html}<div><span class="sp-hs-tier">{tier_txt}</span></div></div>
     </div>
   </div>
-  <div class="sp-verdict">{bottom_line}{verdict_chips_html}</div>
+  <div class="sp-verdict">{exec_summary_html or bottom_line}{verdict_chips_html}</div>
 </header>
 
 <div class="wrap">
