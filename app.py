@@ -2960,6 +2960,7 @@ _SP_DASH_CSS = """
    .fchk carries its own white card, but .cclk-card and .sfg-card never did -
    they inherited the white background of .report-card, which the grid above
    strips. Without this they float straight on the peach ground. */
+.report-card .cclk-ssr,.report-card .sfg-ssr,
 .report-card .cclk-card,.report-card .sfg-card{
   background:var(--surface);border:1px solid var(--rule);border-radius:16px;
   padding:22px 24px;box-shadow:0 10px 30px -24px rgba(10,47,70,.25)}
@@ -3041,8 +3042,30 @@ svg.ch rect:hover{opacity:1!important}
 .sp-gate-h{font-size:20px;font-weight:500;color:var(--primary);margin:0 0 6px;letter-spacing:-.01em}
 .sp-gate-p{font-size:14px;font-weight:300;color:var(--grey);max-width:56ch;margin:0 auto 18px;
   line-height:1.6}
-.sp-gate-cta .cta-btn{background:var(--primary);color:#fff}
-.sp-gate-cta .cta-btn .tm-arw{background:var(--accent)}
+/* The page defines its own .cta-btn (inline-block, 10px radius) after the
+   theme, so the gate button cannot borrow it - it turned the pill into a box
+   and pushed the arrow onto its own line. Its own class, explicit. */
+/* wordmark centred in the sign-off card. The .tm-foot colour rules are scoped
+   to the footer, so the dark treatment has to be restated here. */
+.sp-cta-brand{display:flex;justify-content:center;margin-bottom:14px}
+.sp-cta-brand .brand{font-size:22px}
+html body .sp-cta-brand .brand,html body .sp-cta-brand .brand-wordmark{color:#FFFFFF!important}
+html body .sp-cta-brand .brand-m polyline{stroke:#8FA0F0!important}
+html body .sp-cta-brand .brand-m circle{fill:#FF6100!important}
+.sp-gate-btn{display:inline-flex!important;align-items:center;gap:12px;
+  background:var(--primary);color:#fff!important;border-radius:100px!important;
+  padding:11px 11px 11px 26px;font-size:15px;font-weight:500;text-decoration:none;
+  position:relative;z-index:0;overflow:hidden;
+  box-shadow:0 12px 30px -14px rgba(10,47,70,.55)}
+.sp-gate-btn::before{content:"";position:absolute;inset:0;border-radius:inherit;z-index:-1;
+  box-shadow:inset 0 0 0 0 var(--accent-safe);
+  transition:box-shadow var(--t-slow) cubic-bezier(.22,.9,.28,1)}
+.sp-gate-btn:hover{text-decoration:none;color:#fff!important}
+.sp-gate-btn:hover::before{box-shadow:inset 0 0 0 90px var(--accent-safe)}
+.sp-gate-arw{width:30px;height:30px;border-radius:50%;background:var(--accent);
+  display:grid;place-items:center;font-size:14px;flex:0 0 30px;
+  transition:transform var(--t-base) var(--e-spring),background var(--t-base) var(--e-out)}
+.sp-gate-btn:hover .sp-gate-arw{transform:translateX(4px);background:#fff;color:var(--accent-safe)}
 .sp-gate-n{font-size:13px;color:var(--grey-2);font-weight:300;margin-top:12px}
 .sp-gate .sp-nav{position:static}
 
@@ -3077,7 +3100,7 @@ def _sp_score_gauge(score, color: str) -> str:
         '<circle cx="60" cy="60" r="46" fill="none" stroke="#eef2f7" stroke-width="12"/>'
         f'<circle cx="60" cy="60" r="46" fill="none" stroke="{color}" stroke-width="12" '
         f'stroke-linecap="round" stroke-dasharray="{prog:.1f} {circ:.1f}" transform="rotate(-90 60 60)"/>'
-        f'<text x="60" y="58" text-anchor="middle" font-size="31" font-weight="600" fill="#0A2F46" '
+        f'<text x="60" y="58" text-anchor="middle" font-size="31" font-weight="600" fill="#FFFFFF" '
         'font-family="JetBrains Mono,monospace">' + str(round(s)) + '</text>'
         '<text x="60" y="78" text-anchor="middle" font-size="9" font-weight="700" fill="#758696" '
         'letter-spacing="1.5">ALPHA</text></svg>'
@@ -3752,8 +3775,7 @@ h2{{font-size:18px;margin:30px 0 12px}}
       <p class="sp-gate-h">The rest of {sym}\u2019s workup is free \u2014 you just need an account.</p>
       <p class="sp-gate-p">Valuation, financial health, technicals, the earnings record,
       ownership and the filing checks. No card, no trial.</p>
-      <a class="cta-btn" href="/login?signup"><span>Create a free account</span>
-        <span class="tm-arw">\u2192</span></a>
+      <a class="sp-gate-btn" href="/login?signup"><span>Create a free account</span><span class="sp-gate-arw">&rarr;</span></a>
       <p class="sp-gate-n">Already have one? <a href="/login">Sign in</a>.</p>
     </div>
   </div>
@@ -3762,6 +3784,7 @@ h2{{font-size:18px;margin:30px 0 12px}}
   </div><!-- /report-card -->
 
   <div class="cta">
+    <div class="sp-cta-brand">{_theme.wordmark(dark=True)}</div>
     <h2>Get the full live dashboard</h2>
     <p>Real-time scoring, conflict detection, Reverse DCF and peer comparison — free while in beta.</p>
     <a href="/app?signup=1" class="cta-btn">Open the dashboard for {sym} →</a>

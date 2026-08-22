@@ -486,7 +486,7 @@ def _row(key, value, cls, text, tag=None, extra=""):
             f'<p class="sfg-txt">{text}</p>{extra}</div>')
 
 
-def card_body(sym: str, d: dict) -> str:
+def card_body(sym: str, d: dict, public: bool = False) -> str:
     pct = lambda v, p=0: "&mdash;" if v is None else f"{v * 100:.{p}f}%"
     out, s = [], d.get("summary") or {}
     n = s.get("n_flags", 0)
