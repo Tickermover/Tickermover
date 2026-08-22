@@ -98,7 +98,11 @@ _COMPLIANCE_RULE = (
     "cautious', 'we lean constructive'). You may report a THIRD-PARTY analyst "
     "rating only when it is clearly attributed to the firm that issued it. Do "
     "NOT guarantee returns, promise a price move, or use hype ('will soar', "
-    "'guaranteed', 'can't-miss', 'to the moon')."
+    "'guaranteed', 'can't-miss', 'to the moon'). Never state an entry price, a "
+    "price target, a stop loss, a position size or a holding period — a score "
+    "describes a company, those numbers tell someone what to do with their own "
+    "money. Never use urgency or scarcity ('act now', 'before it's too late', "
+    "'limited window'); the reader is never on a deadline."
 )
 
 

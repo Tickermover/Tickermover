@@ -19,10 +19,32 @@ research / not a personal recommendation under FSMA + the FCA Handbook).
       categories + consent), removed the false "we do not run ads / no ad
       cookies / never share with advertisers" absolutes, added Google/Meta
       as consent-gated partners. Pairs with static/consent.js banner.
-  STILL OUTSTANDING for the solicitor: confirm the FCA financial-promotions
-  position (the model portfolio / Outperform-Avoid verdicts vs the Art.20
-  media exemption) BEFORE spending on ads; verify data-processor list and
-  cross-border transfer basis; fill the trading-entity details.
+  REGULATORY POSTURE (Aug 2026). The disclaimer used to rest on a "generic
+  commentary / journalism / educational content" characterisation. The
+  journalism half of that has been REMOVED, here and on /terms. Art.20 FPO
+  carries a principal-purpose test — the publication's principal purpose must
+  not be to lead or enable people to buy or sell securities — and a ranked
+  database of scored securities does not pass it. Claiming an exemption we
+  would fail is worse than not claiming one.
+
+  What replaces it is the posture an unauthorised UK research site can
+  actually hold: a research and screening tool, and an educational resource.
+  Not a broker or dealer, not an investment adviser, not a tip sheet or
+  advisory service, no specific buy or sell recommendations, no personalised
+  recommendations. Those exact statements now appear on /terms, /disclaimer
+  and /editorial-policy. This mirrors how the closest UK comparable operates
+  unauthorised at scale.
+
+  The content rules that make that characterisation true — rather than merely
+  asserted in small print — are published at /editorial-policy, and the
+  advice-shaped features are switched off at config.MODEL_PORTFOLIO_ENABLED /
+  TRADE_PLAN_ENABLED / TRACK_RECORD_PUBLIC.
+
+  STILL OUTSTANDING for the solicitor: confirm the financial-promotions
+  position under s.21 FSMA on the content that remains (quality scores on
+  named securities, published free to the general public) BEFORE spending on
+  ads; verify data-processor list and cross-border transfer basis; fill the
+  trading-entity details.
 
   * FCA generic-research framing — TickerMover is a research/educational
     tool, NOT authorised or regulated by the FCA, and gives no personal
@@ -108,7 +130,9 @@ def _shell(title: str, slug: str, body_html: str) -> str:
     finish. Not one word of the body copy is touched here.
     """
     import theme as _theme
-    tabs = [("/terms", "Terms"), ("/privacy", "Privacy"), ("/disclaimer", "Disclaimer")]
+    tabs = [("/terms", "Terms"), ("/privacy", "Privacy"),
+            ("/disclaimer", "Disclaimer"),
+            ("/editorial-policy", "Editorial policy")]
     tab_html = "".join(
         f'<a href="{h}"{' class="is-on"' if h.strip("/") == slug else ''}>{t}</a>'
         for h, t in tabs
@@ -198,7 +222,7 @@ by these Terms.</p>
 <h3>What it is NOT</h3>
 <ul>
   <li><strong>Not personalised investment advice.</strong> We do not know your age, risk tolerance, financial situation, time horizon, or tax status. Nothing on the Service should be interpreted as a recommendation tailored to your circumstances.</li>
-  <li><strong>Not FCA-authorised; not a personal recommendation.</strong> {_COMPANY} is not authorised or regulated by the Financial Conduct Authority (FCA). The Service provides generic research / journalism / commentary on publicly-traded securities and does not give a &ldquo;personal recommendation&rdquo; within the meaning of the FCA Handbook (COBS). We do not solicit funds, manage portfolios, place orders, or hold securities on your behalf.</li>
+  <li><strong>Not FCA-authorised; not a personal recommendation.</strong> {_COMPANY} is not authorised or regulated by the Financial Conduct Authority (FCA). We are not a broker or a dealer and we are not an investment adviser. The Service is a research and screening tool providing generic research and commentary on publicly-traded securities; it is not a tip sheet or an advisory service, makes no specific buy or sell recommendations, and does not give a &ldquo;personal recommendation&rdquo; within the meaning of the FCA Handbook (COBS). We do not solicit funds, manage portfolios, place orders, or hold securities on your behalf.</li>
   <li><strong>Not a brokerage or trading platform.</strong> You cannot buy, sell, or hold securities through {_COMPANY}. To act on any insight, you must use a separate broker.</li>
   <li><strong>Not a guarantee of accuracy or future performance.</strong> Past results do not predict future outcomes. Markets carry risk. The data we display can be delayed, incomplete, or wrong &mdash; we make best-effort updates but offer no warranty.</li>
 </ul>
@@ -486,20 +510,26 @@ def render_disclaimer() -> str:
 <p>{_COMPANY} provides general research and educational content about
 publicly-traded US equities. We do not know your personal financial situation,
 risk tolerance, age, time horizon, tax situation, existing portfolio, or
-investment objectives. Nothing on the Service is tailored to you. Even when our
-output reads like a recommendation (&ldquo;STRONG BUY&rdquo;, &ldquo;Avoid&rdquo;),
-it is a quantitative summary of public information, not advice meant for
-your specific circumstances.</p>
+investment objectives. Nothing on the Service is tailored to you. Where a
+score or a summary reads like a view on a company, it is a quantitative
+summary of public information, not advice meant for your specific
+circumstances.</p>
 
 <h2>2. Not authorised by the FCA &mdash; no personal recommendation</h2>
 <p>{_COMPANY} is not authorised or regulated by the Financial Conduct
-Authority (FCA). The Service operates as generic market commentary /
-journalism / educational content on publicly available information about
-US-listed securities. Nothing on the Service is a &ldquo;personal
-recommendation&rdquo; or &ldquo;investment advice&rdquo; as defined under the
-Financial Services and Markets Act 2000 (FSMA) and the FCA Handbook (COBS) —
-it is not based on, and does not take account of, your individual
-circumstances.</p>
+Authority (FCA). We are not a broker or a dealer, and we are not an
+investment adviser. The Service is a research and screening tool, and an
+educational resource for analysing and discussing general and generic
+information about publicly-traded US equities.</p>
+
+<p>{_COMPANY} is not a tip sheet or an advisory service, and does not make
+specific buy or sell recommendations. We do not provide personalised
+recommendations, or any view as to whether a particular stock or investment
+approach is suited to the financial needs of any particular person. Nothing
+on the Service is a &ldquo;personal recommendation&rdquo; or &ldquo;investment
+advice&rdquo; as defined under the Financial Services and Markets Act 2000
+(FSMA) and the FCA Handbook (COBS) — it is not based on, and does not take
+account of, your individual circumstances.</p>
 
 <p>If you require <em>personalised</em> investment advice (advice tailored to
 your specific financial situation), you must consult an independent financial
@@ -538,11 +568,12 @@ warrant the accuracy of LLM-generated text and are not responsible for
 decisions based on it.</p>
 
 <h2>6. Past performance does not predict future results</h2>
-<p>Backtests of our scoring methodology, model-portfolio performance, and any
-historical examples are exactly that &mdash; historical. They are not a
-guarantee of future returns. A stock that has gained 80% in three months can
-fall 80% in the next three. A &ldquo;Strong Buy&rdquo; verdict can be wrong.
-Hot lists, watchlists, and the model portfolio are illustrative only.</p>
+<p>Backtests of our scoring methodology and any historical examples are
+exactly that &mdash; historical. They are not a guarantee of future returns.
+A stock that has gained 80% in three months can fall 80% in the next three.
+A high score can be wrong. Hot lists, screens and watchlists are illustrative
+only. Past performance is not a reliable indicator of future results, and is
+not a guide to future performance.</p>
 
 <h2>7. Forward-looking statements</h2>
 <p>Any AI-extracted forward guidance from company press releases is a
@@ -584,3 +615,116 @@ own.</p>
 the Service.</p>
 """
     return _shell("Disclaimer", "disclaimer", body)
+
+
+def render_editorial_policy() -> str:
+    """Published content standards.
+
+    Modelled on the content guidelines an unauthorised research site needs in
+    order to stand behind the characterisation its disclaimer relies on. The
+    disclaimer asserts that nothing here is a recommendation; this page is the
+    standing rule that makes that assertion true of the content itself, rather
+    than only of the small print. It is written to be enforceable against our
+    own output, including the AI-generated parts.
+    """
+    body = f"""
+<div class="callout">
+  <strong>Why this page exists.</strong> {_COMPANY} is not authorised by the
+  FCA, and does not give advice or make recommendations. That is not only a
+  statement in our <a href="/disclaimer" class="body-link">Disclaimer</a> —
+  it is a rule we hold our own content to. This page sets out what we will and
+  will not publish, and how to hold us to it.
+</div>
+
+<h2>1. What the Service is for</h2>
+<p>{_COMPANY} exists to help people research publicly-traded US companies
+using public information: company filings, reported financials, prices, and
+quantitative scores computed from them. It is a research and screening tool
+and an educational resource.</p>
+
+<p>We are not a broker or a dealer, and we are not an investment adviser. It
+is not a tip sheet, an advisory service, a newsletter of share tips, or a
+signal service. Its purpose is not to lead or enable anyone to buy or sell
+a particular security. If you are looking for someone to tell you what to
+buy, this is the wrong site, and we would rather say so plainly than take
+your attention under a misunderstanding.</p>
+
+<h2>2. What we will not publish</h2>
+<p>These are standing prohibitions on our own content, including content
+generated by our AI models:</p>
+<ul>
+  <li><strong>No buy, sell or hold instructions</strong> on any named
+      security, and no wording that functions as one.</li>
+  <li><strong>No entry prices, price targets, stop losses, position sizes or
+      trade plans.</strong> A score describes a company; an entry price and a
+      position size tell someone what to do with their own money.</li>
+  <li><strong>No personalised content.</strong> We do not know your
+      circumstances and will not publish anything that presumes them.</li>
+  <li><strong>No urgency or pressure devices</strong> — no countdowns, no
+      &ldquo;act now&rdquo;, no manufactured scarcity, no flashing or
+      animated prompts to trade.</li>
+  <li><strong>No performance claim as a marketing hook</strong> — no
+      &ldquo;beat the market&rdquo;, no hit rates or benchmark-relative
+      records used to sell the Service.</li>
+  <li><strong>No promise or projection of returns</strong>, and no
+      presentation of a forecast as though it were a fact.</li>
+</ul>
+
+<h2>3. Balance</h2>
+<p>Where we publish a view on a company, it carries the case against as well
+as the case for. We avoid excessive promotion or excessive criticism of any
+specific stock, company or strategy. A page that only argues one side is a
+defect, and we treat it as one.</p>
+
+<h2>4. Evidence and sourcing</h2>
+<p>Factual claims about a company should be traceable to a public source —
+an SEC filing, a company release, a reported financial statement, or market
+data from one of our named providers. Scores are computed from that data by a
+published method, described in our <a href="/learn" class="body-link">methodology</a>
+pages. Where a number is an estimate, a consensus or a third-party opinion,
+we attribute it rather than presenting it as our own finding.</p>
+
+<h2>5. AI-generated content</h2>
+<p>Much of the written commentary on the Service is produced by large language
+models working from our data. We hold that content to the same rules as
+everything else: the prohibitions in section 2 are built into the prompts
+themselves, not applied afterwards.</p>
+
+<p>AI output can still be wrong, and can be confidently wrong. It is not a
+substitute for reading the filing. Where a decision matters, verify the
+underlying source. We do not warrant the accuracy of model-generated text.</p>
+
+<h2>6. Disclosure of interests</h2>
+<ul>
+  <li>{_COMPANY}, its founders and anyone writing for it may hold positions
+      in securities covered on the Service.</li>
+  <li>We do <strong>not</strong> accept payment from companies, investor
+      relations firms, or any third party in exchange for coverage, for a
+      score, or for favourable treatment. No security appears on this site
+      because someone paid for it to.</li>
+  <li>We do <strong>not</strong> receive referral payments from brokers or
+      exchanges for users who view a stock page.</li>
+  <li>If any of the above changes, we will disclose it prominently and on the
+      page where it applies — not only here.</li>
+  <li>Any sponsored or paid content, if we ever run it, will be labelled as
+      such at the point of display.</li>
+</ul>
+
+<h2>7. Corrections</h2>
+<p>We publish a large amount of computed and generated content, and some of it
+will be wrong. If you find an error — a misstated figure, a broken
+calculation, a claim that is not supported by the filing it cites — tell us at
+<a href="mailto:{_CONTACT}" class="body-link">{_CONTACT}</a> and we will
+correct it. Corrections to substantive factual errors are made on the page
+itself rather than silently.</p>
+
+<h2>8. Holding us to this</h2>
+<p>If you believe something on the Service reads as advice, as a
+recommendation, or as pressure to trade, that is a defect in our content and
+we want to know. Write to
+<a href="mailto:{_CONTACT}" class="body-link">{_CONTACT}</a> quoting the page.
+We would rather remove a sentence than blur the line this page draws.</p>
+
+<p class="legal-sub" style="margin-top:36px">Last updated {_EFFECTIVE_DATE}.</p>
+"""
+    return _shell("Editorial policy", "editorial-policy", body)

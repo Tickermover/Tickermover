@@ -1741,6 +1741,7 @@ async def sitemap_xml():
         )
     parts.append(f'  <url><loc>{SITE_ORIGIN}/sectors</loc><changefreq>daily</changefreq><priority>0.85</priority><lastmod>{today}</lastmod></url>')
     parts.append(f'  <url><loc>{SITE_ORIGIN}/compare</loc><changefreq>weekly</changefreq><priority>0.8</priority><lastmod>{today}</lastmod></url>')
+    parts.append(f'  <url><loc>{SITE_ORIGIN}/editorial-policy</loc><changefreq>monthly</changefreq><priority>0.5</priority><lastmod>{today}</lastmod></url>')
     try:
         for _t in (_load_theses().get("theses") or []):
             if _t.get("status") == "live" and _t.get("slug"):
@@ -15541,6 +15542,14 @@ async def privacy_page():
 @app.get("/disclaimer", response_class=HTMLResponse)
 async def disclaimer_page():
     return HTMLResponse(_legal.render_disclaimer(), headers=_LEGAL_HEADERS)
+
+
+@app.get("/editorial-policy", response_class=HTMLResponse)
+async def editorial_policy_page():
+    """Published content standards. Indexable on purpose: the point of the page
+    is that anyone — a reader, a regulator, an ad platform's review team — can
+    read the rules we hold our own content to without holding an account."""
+    return HTMLResponse(_legal.render_editorial_policy(), headers=_LEGAL_HEADERS)
 
 
 @app.get("/infographics", response_class=HTMLResponse)
