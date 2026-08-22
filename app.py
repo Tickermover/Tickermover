@@ -1115,7 +1115,11 @@ async def _bottom_line_prewarm() -> None:
     apply_cached overlay). Steady state this loop is near-$0 — most cycles are
     all cache hits."""
     await asyncio.sleep(200)               # let the universe load + first score settle
-    _CAP = 120                             # generations per cycle
+    # Generations per cycle. Raised now that the cost rationale is gone: these
+    # calls go through the free chain and are billed at nothing, so the only
+    # thing to pace for is free-provider rate limiting, which the throttle
+    # below handles. 545 names fill in ~3 cycles.
+    _CAP = 200
     while True:
         backlogged = False
         try:
@@ -1291,12 +1295,15 @@ async def _sector_note_prewarm() -> None:
     path (these pages are public, anonymous and crawled, so a visitor must
     never trigger a model call), but the notes themselves are worth having
     ready rather than waiting on a signed-in user to happen to open each of
-    ~73 sectors. Bounded per cycle, and the cache key is the coarse bucket in
+    ~73 sectors. The cache key is the coarse bucket in
     sector_narrative._bucket(), so ordinary drift re-hits the same entry and
-    only a real change of character pays again.
+    only a real change of character regenerates.
+
+    Generation is free — it goes through anthropic_shim to the llm_free chain —
+    so the per-cycle bound is about free-provider rate limits, not spend.
     """
     await asyncio.sleep(380)
-    _CAP = 12
+    _CAP = 25                              # ~73 sub-sectors, so ~3 cycles
     while True:
         backlogged = False
         try:

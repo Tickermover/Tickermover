@@ -52,11 +52,20 @@ _KEY = os.environ.get("ANTHROPIC_API_KEY", "").strip()
 # now keys on a coarse material signature (grade, cautions, 5-point score
 # bucket, growth tier), so a cache entry survives until something real moves.
 #
-# Measured cost at Haiku 4.5 rates ($1/$5 per MTok): ~310 input + ~50 output
-# tokens per name, so ~$0.0006 each and ~$0.31 to fill all 545 cold. Steady
-# state is the 15-day TTL plus signature churn — tens of calls a day, well
-# inside the $3 daily / $50 monthly caps in config, which gate this loop
-# anyway via _ai_over_budget().
+# COST IS NOT THE CONSTRAINT ANY MORE, and the earlier note here was wrong.
+# `_polish()` posts through `anthropic_shim.post()`, which is answered by the
+# free provider chain in llm_free (gemini / groq / nvidia / cerebras / mistral
+# / openrouter / sambanova / cloudflare). The real Anthropic API is off unless
+# ANTHROPIC_FALLBACK=1, so these calls are billed at nothing.
+#
+# The shim also returns usage {input_tokens: 0, output_tokens: 0} and no
+# server_tool_use block, so usage_log records $0 and free work cannot push
+# _ai_over_budget() toward the $3 daily / $50 monthly caps. The breakers still
+# guard the loop; they just have nothing to count here.
+#
+# What DOES constrain it: free providers rate-limit and go down (see
+# /api/event-intel-status). The per-cycle cap and throttle below are pacing for
+# those limits, not for a bill.
 #
 # Set BOTTOM_LINE_AI_ENABLED=0 to switch back to the deterministic template.
 _ENABLED = os.environ.get("BOTTOM_LINE_AI_ENABLED", "1").strip().lower() in ("1", "true", "yes", "on")
@@ -76,6 +85,12 @@ _MEM: dict[str, tuple[str, str]] = {}
 
 
 def available() -> bool:
+    # NB: _KEY is not a billing dependency — generation goes through the free
+    # chain (see the note above). It survives as the codebase's "AI is
+    # configured" flag, matching sector_narrative / compare_business /
+    # research_gen, which all gate the same way. Prod has it set
+    # (/api/ask-status reports generation:true), so this is not what kept the
+    # bottom lines on the template — _ENABLED defaulting to 0 was.
     return bool(_KEY) and _ENABLED
 
 
