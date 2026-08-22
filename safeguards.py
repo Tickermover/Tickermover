@@ -688,7 +688,7 @@ def render_card(t: dict, public: bool = False) -> str:
     if not sym:
         return ""
     return _CSS + """
-<div class="sfg" id="sfg-card" data-sym="SYMBOL">
+<div class="sfg" id="sfg-card" data-sym="SYMBOL" data-public="PUBFLAG">
   <div class="sfg-head"><h3 class="sfg-h">Dilution Check</h3></div>
   <p class="sfg-off" id="sfg-status">Reading SYMBOL&rsquo;s filings&hellip;</p>
 </div>
@@ -696,19 +696,21 @@ def render_card(t: dict, public: bool = False) -> str:
 (function(){
   var el = document.getElementById('sfg-card');
   if (!el) return;
+  var PUBLIC = el.getAttribute('data-public') === '1';
   fetch('/api/safeguards/' + encodeURIComponent(el.getAttribute('data-sym')))
     .then(function(r){ return r.ok ? r.json() : null; })
     .then(function(d){
-      if (!d || !d.html) {
+      var _h = (PUBLIC && d && d.html_public) || (d && d.html);
+      if (!d || !_h) {
         document.getElementById('sfg-status').textContent =
           'Filing data is not available for this share.';
         return;
       }
-      el.innerHTML = d.html;
+      el.innerHTML = _h;
     })
     .catch(function(){
       document.getElementById('sfg-status').textContent =
         'Safeguards are unavailable right now.';
     });
 })();
-</script>""".replace("SYMBOL", sym)
+</script>""".replace("SYMBOL", sym).replace("PUBFLAG", "1" if public else "0")

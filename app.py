@@ -3071,22 +3071,26 @@ svg.ch rect:hover{opacity:1!important}
    Showing a search engine more than a reader is cloaking and is penalised,
    which would undo the reason these pages exist. This gate is visual only:
    the reader sees the work begin, then a fade and a prompt. */
-.sp-gate{position:relative;grid-column:span 12}
-.sp-gate-inner{max-height:760px;overflow:hidden;display:grid;
+.sp-gate{position:relative;grid-column:span 12;overflow:hidden}
+.sp-gate-inner{max-height:640px;padding-bottom:40px;overflow:hidden;display:grid;
   grid-template-columns:repeat(12,1fr);gap:16px;align-items:start}
 .sp-gate-inner > *{grid-column:span 12}
 .sp-gate-inner #valuation,.sp-gate-inner #health{grid-column:span 6}
 .sp-gate-inner #technicals,.sp-gate-inner #earnings,.sp-gate-inner #ownership{grid-column:span 4}
 .sp-gate-inner .cclk-card,.sp-gate-inner .sfg-card{grid-column:span 6}
 @media(max-width:1000px){.sp-gate-inner > *{grid-column:span 12!important}}
-.sp-gate-veil{position:absolute;left:0;right:0;bottom:0;height:420px;pointer-events:none;
-  display:flex;flex-direction:column;justify-content:flex-end;align-items:center;
-  padding:0 20px 6px;
-  background:linear-gradient(180deg,rgba(255,242,236,0) 0%,rgba(255,242,236,.72) 26%,var(--peach) 52%,var(--peach) 100%)}
-.sp-gate-cta{pointer-events:auto;text-align:center;width:100%}
-.sp-gate-h{font-size:20px;font-weight:500;color:var(--primary);margin:0 0 6px;letter-spacing:-.01em}
-.sp-gate-p{font-size:14px;font-weight:300;color:var(--grey);max-width:56ch;margin:0 auto 18px;
-  line-height:1.6}
+.sp-gate-veil{position:absolute;left:0;right:0;bottom:0;height:260px;pointer-events:none;
+  background:linear-gradient(180deg,rgba(255,242,236,0) 0%,rgba(255,242,236,.9) 58%,var(--peach) 100%)}
+/* A card in normal flow, not an overlay. The previous version floated the
+   prompt over the clipped panels, so it printed across whatever happened to
+   be underneath - ribbon headers, table rows. Nothing can collide with this. */
+.sp-gate-cta{grid-column:span 12;margin:4px 0 0;padding:38px 32px 34px;text-align:center;
+  background:var(--surface);border:1px solid var(--rule);border-radius:18px;
+  box-shadow:0 14px 40px -30px rgba(10,47,70,.4)}
+.sp-gate-h{font-size:23px;font-weight:500;color:var(--primary);margin:0 0 10px;
+  letter-spacing:-.01em;line-height:1.25}
+.sp-gate-p{font-size:14.5px;font-weight:300;color:var(--grey);max-width:52ch;
+  margin:0 auto 24px;line-height:1.65}
 /* The page defines its own .cta-btn (inline-block, 10px radius) after the
    theme, so the gate button cannot borrow it - it turned the pill into a box
    and pushed the arrow onto its own line. Its own class, explicit. */
@@ -3111,7 +3115,7 @@ html body .sp-cta-brand .brand-m circle{fill:#FF6100!important}
   display:grid;place-items:center;font-size:14px;flex:0 0 30px;
   transition:transform var(--t-base) var(--e-spring),background var(--t-base) var(--e-out)}
 .sp-gate-btn:hover .sp-gate-arw{transform:translateX(4px);background:#fff;color:var(--accent-safe)}
-.sp-gate-n{font-size:13px;color:var(--grey-2);font-weight:300;margin-top:12px}
+.sp-gate-n{font-size:13px;color:var(--grey-2);font-weight:300;margin:16px 0 0}
 .sp-gate .sp-nav{display:none}
 
 /* ---- sticky section rail ---- */
@@ -3341,7 +3345,7 @@ def _sp_data_sections(t: dict, sym: str, price: float):
     return nav_html, "".join(secs)
 
 
-def _sp_ssr_cached(cache_key: str) -> str:
+def _sp_ssr_cached(cache_key: str, public: bool = False) -> str:
     """Server-render a panel that is normally fetched by JS, FROM CACHE ONLY.
 
     /stocks/<T> exists to rank: its own docstring says the content must be
@@ -3359,6 +3363,8 @@ def _sp_ssr_cached(cache_key: str) -> str:
     try:
         c = cache.get(cache_key)
         if isinstance(c, dict):
+            if public and c.get("html_public"):
+                return c.get("html_public") or ""
             return c.get("html") or ""
     except Exception:
         pass
@@ -3627,7 +3633,7 @@ def _render_stock_page(t: dict) -> str:
     try:
         import safeguards as _sg
         safeguards_html = _sg.render_card(t, public=True)
-        _ssr = _sp_ssr_cached(f"safeguards:{sym}:v3")
+        _ssr = _sp_ssr_cached(f"safeguards:{sym}:v4", public=True)
         if _ssr:
             safeguards_html = f'<div class="sfg-ssr">{_ssr}</div>' + safeguards_html
     except Exception as _sg_err:
@@ -3835,16 +3841,17 @@ h2{{font-size:18px;margin:30px 0 12px}}
 
   {news_html}
     </div>
-    <div class="sp-gate-veil">
-      <div class="sp-gate-cta">
-        <p class="sp-gate-h">The rest of {sym}’s workup is free — you just need an account.</p>
-        <p class="sp-gate-p">Valuation, financial health, technicals, the earnings record,
-        ownership and the filing checks. No card, no trial.</p>
-        <a class="sp-gate-btn" href="/login?signup"><span>Create a free account</span><span class="sp-gate-arw">&rarr;</span></a>
-        <p class="sp-gate-n">Already have one? <a href="/login">Sign in</a>.</p>
-      </div>
-    </div>
+    <div class="sp-gate-veil" aria-hidden="true"></div>
   </div>
+
+  <aside class="sp-gate-cta">
+    <p class="sp-gate-h">The rest of {sym}’s workup is free</p>
+    <p class="sp-gate-p">Valuation, financial health, technicals, the earnings
+    record, ownership and the filing checks — all of it, for an account.
+    No card, no trial.</p>
+    <a class="sp-gate-btn" href="/login?signup"><span>Create a free account</span><span class="sp-gate-arw">&rarr;</span></a>
+    <p class="sp-gate-n">Already have one? <a href="/login">Sign in</a>.</p>
+  </aside>
 
   {peers_html}
   </div><!-- /report-card -->
@@ -15639,7 +15646,7 @@ async def api_safeguards(ticker: str):
     if not sym or len(sym) > 8:
         raise HTTPException(status_code=400, detail="Bad ticker")
 
-    cache_key = f"safeguards:{sym}:v3"
+    cache_key = f"safeguards:{sym}:v4"
     cached = cache.get(cache_key)
     if cached is not None:
         return JSONResponse(cached)
@@ -15742,7 +15749,11 @@ async def api_safeguards(ticker: str):
         blocks["summary"] = sg.summarise(blocks)
         payload = {"ticker": sym, "n_flags": blocks["summary"]["n_flags"],
                    "flags": blocks["summary"]["flags"],
-                   "html": sg.card_body(sym, blocks)}
+                   "html": sg.card_body(sym, blocks),
+                   # /stocks is public and drops the position-sizing block.
+                   # Cached alongside so the public page never has to reuse
+                   # the app rendering.
+                   "html_public": sg.card_body(sym, blocks, public=True)}
     cache.set(cache_key, payload, 60 * 60 * 12)
     return JSONResponse(payload)
 
