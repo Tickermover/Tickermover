@@ -152,7 +152,87 @@ def surprise(quarters):
     return "".join(out)
 
 
-def build(t, price):
+
+def sbars(rows, height_per=30):
+    """Bars that can go NEGATIVE, anchored to a zero line.
+
+    hbars() clamps to zero, which rendered MongoDB's -3.6% operating margin as
+    a tiny positive stub - the one reading that most needed to be legible. A
+    loss-making margin must sit on the other side of the line and wear the
+    down colour, with the sign in its label so it is never colour alone.
+    """
+    rows = [r for r in rows if _num(r[1]) is not None]
+    if not rows:
+        return ""
+    W, LBL, PADR = 470, 118, 56
+    plot = W - LBL - PADR
+    H = len(rows) * height_per + 14
+    vals = [float(r[1]) for r in rows]
+    lo, hi = min(vals + [0.0]), max(vals + [0.0])
+    span_v = (hi - lo) or 1.0
+    zero_x = LBL + plot * (0.0 - lo) / span_v
+    out = ['<svg class="ch" viewBox="0 0 %d %d" role="img" '
+           'preserveAspectRatio="xMidYMid meet">' % (W, H)]
+    out.append('<rect x="%d" y="6" width="%d" height="%d" rx="5" fill="%s"/>'
+               % (LBL, plot, len(rows) * height_per - 8, TRACK))
+    for i, (lbl, val, disp) in enumerate(rows):
+        v = float(val)
+        y = i * height_per + 6
+        x = LBL + plot * (min(v, 0.0) - lo) / span_v
+        w = max(2.0, plot * abs(v) / span_v)
+        col = DOWN if v < 0 else INK
+        out.append('<text x="0" y="%d" class="ch-lbl">%s</text>' % (y + 12, _h.escape(str(lbl))))
+        out.append('<rect x="%.1f" y="%d" width="%.1f" height="10" rx="4" fill="%s">'
+                   '<title>%s: %s</title></rect>'
+                   % (x, y + 3, w, col, _h.escape(str(lbl)), _h.escape(str(disp))))
+        out.append('<text x="%d" y="%d" class="ch-val%s">%s</text>'
+                   % (LBL + plot + 8, y + 12, " neg" if v < 0 else "", _h.escape(str(disp))))
+    out.append('<line x1="%.1f" y1="2" x2="%.1f" y2="%d" stroke="#B9C2C9" stroke-width="1"/>'
+               % (zero_x, zero_x, len(rows) * height_per + 2))
+    out.append('</svg>')
+    return "".join(out)
+
+
+BANDS = ["Damaged", "Ignored", "Quiet", "Noticed", "Busy", "Crowded"]
+
+
+def attention(band, score):
+    """Where a share sits between ignored and crowded.
+
+    This is the one measure on the page that is ours: it comes from the
+    1,514-share attention study, not from a data vendor. 52-week range and
+    analyst-target spread are on every finance site in the world; this is not.
+    """
+    sc = _num(score)
+    if sc is None or not band:
+        return ""
+    try:
+        idx = BANDS.index(str(band).strip().title())
+    except ValueError:
+        idx = -1
+    W, H, PAD, GAP = 470, 84, 10, 4
+    seg = (W - PAD * 2 - GAP * (len(BANDS) - 1)) / len(BANDS)
+    out = ['<svg class="ch" viewBox="0 0 %d %d" role="img" '
+           'preserveAspectRatio="xMidYMid meet">' % (W, H)]
+    for i, name in enumerate(BANDS):
+        x = PAD + i * (seg + GAP)
+        on = (i == idx)
+        out.append('<rect x="%.1f" y="26" width="%.1f" height="10" rx="5" fill="%s">'
+                   '<title>%s</title></rect>'
+                   % (x, seg, MARK if on else TRACK, _h.escape(name)))
+        out.append('<text x="%.1f" y="52" class="ch-tick%s" text-anchor="middle">%s</text>'
+                   % (x + seg / 2.0, " on" if on else "", _h.escape(name.upper())))
+    if idx >= 0:
+        cx = PAD + idx * (seg + GAP) + seg / 2.0
+        out.append('<text x="%.1f" y="18" class="ch-cur" text-anchor="middle">%s &middot; %d/100</text>'
+                   % (min(max(cx, 56.0), W - 56.0), _h.escape(str(band)), round(sc)))
+    out.append('<text x="%d" y="76" class="ch-tick">nobody is watching</text>' % PAD)
+    out.append('<text x="%d" y="76" class="ch-tick" text-anchor="end">everybody is</text>' % (W - PAD))
+    out.append('</svg>')
+    return "".join(out)
+
+
+def build(t, price, crowd=None):
     """Return the inner HTML for the charts panel, or "" when nothing plots."""
     blocks = []
 
@@ -176,21 +256,15 @@ def build(t, price):
                            "The seven components contributing most, each read out of 100.",
                            hbars(rows, 100.0)))
 
-    pr = _num(price)
-    # Canonical names on the universe row are high_52w / low_52w; the
-    # week_52_* pair exists in data_coordinator but never reaches here.
-    lo = _num(t.get("low_52w") or t.get("week_52_low") or t.get("fifty_two_week_low"))
-    hi = _num(t.get("high_52w") or t.get("week_52_high") or t.get("fifty_two_week_high"))
-    if lo and hi and pr:
-        blocks.append(("52-week range", "Where the price sits across the last year.",
-                       span(lo, hi, pr, None, "$%,.2f" % lo if False else "${:,.2f}".format(lo),
-                            "${:,.2f}".format(hi), "${:,.2f} now".format(pr))))
-
-    tl, th, tm = _num(t.get("target_low")), _num(t.get("target_high")), _num(t.get("target_mean"))
-    if tl and th and pr:
-        blocks.append(("Analyst target range", "The spread of published targets, against today's price.",
-                       span(tl, th, pr, tm, "${:,.2f}".format(tl), "${:,.2f}".format(th),
-                            "${:,.2f} now".format(pr))))
+    # The 52-week range and the analyst-target spread used to sit here. Both
+    # are on every finance site there is; neither is a reason to read this one.
+    # The attention band is ours - it comes from the 1,514-share study.
+    if isinstance(crowd, dict):
+        att = attention(crowd.get("band"), crowd.get("score"))
+        if att:
+            blocks.append(("Attention band",
+                           "Where this share sits between ignored and crowded, "
+                           "from price and volume alone.", att))
 
     mrows = []
     for lbl, key in (("Gross", "gross_margin"), ("Operating", "operating_margin"),
@@ -200,10 +274,10 @@ def build(t, price):
             continue
         if abs(v) <= 1.5:
             v *= 100.0
-        mrows.append((lbl, max(0.0, v), "%.1f%%" % v))
+        mrows.append((lbl, v, "%.1f%%" % v))
     if mrows:
         blocks.append(("Margin profile", "What survives each step down the income statement.",
-                       hbars(mrows, max(100.0, max(r[1] for r in mrows)))))
+                       sbars(mrows)))
 
     sv = surprise(t.get("eps_quarters"))
     if sv:

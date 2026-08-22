@@ -3008,6 +3008,8 @@ svg.ch text{font-family:var(--font)}
 svg.ch .ch-lbl{font-size:12px;fill:var(--ink);font-weight:400}
 svg.ch .ch-val{font-family:var(--mono);font-size:12px;fill:var(--primary);font-weight:600}
 svg.ch .ch-tick{font-family:var(--mono);font-size:10px;fill:var(--grey-2);font-weight:500}
+svg.ch .ch-val.neg{fill:#ea384c}
+svg.ch .ch-tick.on{fill:#C74E00;font-weight:600}
 svg.ch .ch-cur{font-family:var(--mono);font-size:11px;fill:#C74E00;font-weight:600}
 svg.ch rect[fill="#14587D"],svg.ch circle{transition:opacity var(--t-fast) var(--e-out)}
 svg.ch:hover rect[fill="#14587D"]{opacity:.82}
@@ -3392,7 +3394,14 @@ def _render_stock_page(t: dict) -> str:
     # Charts live in sp_charts.py. Never let a plotting error break the page.
     try:
         import sp_charts as _spc
-        _ch_inner = _spc.build(t, price)
+        _crowd = None
+        try:
+            _cc = cache.get(f"crowd-clock:{sym}:v1")
+            if isinstance(_cc, dict):
+                _crowd = _cc
+        except Exception:
+            _crowd = None
+        _ch_inner = _spc.build(t, price, _crowd)
         charts_html = _sp_ribbon("charts", "The picture", _ch_inner,
                                  "rep-slate", "\U0001F4C9") if _ch_inner else ""
     except Exception as _ch_err:
