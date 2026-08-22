@@ -2555,42 +2555,6 @@ recommendations. TickerMover is a research tool, not an FCA-authorised adviser, 
 is a personal recommendation. Past performance is not a reliable indicator of future results.
 Capital at risk. <a href="/disclaimer">Full disclaimer</a>.</p>
 
-<script>
-/* Cold-cache warmer for the executive summary. Fires only when the server had
-   nothing cached, calls the endpoint that generates + caches it, and fills the
-   hero in place. Never blocks the render; failure is silent and the one-line
-   fallback simply stays. */
-(function(){{
-  try{{
-    var box=document.querySelector('.sp-verdict');
-    if(!box||box.querySelector('.sp-exec'))return;      /* already server-rendered */
-    var sym=(document.body.getAttribute('data-sym')||'').trim();
-    if(!sym)return;
-    fetch('/api/thesis/'+encodeURIComponent(sym)).then(function(r){{
-      return r.ok?r.json():null;
-    }}).then(function(d){{
-      if(!d)return;
-      var head=(d.headline||'').trim(), expl=(d.explanation||'').trim();
-      if(!head&&!expl)return;
-      var w=document.createElement('div'); w.className='sp-exec';
-      var tag=document.createElement('div'); tag.className='sp-exec-tag';
-      tag.textContent=(d.source==='llm'?'AI summary':'Model summary')
-                      +(d.conviction?(' \u00b7 '+d.conviction+' conviction'):'');
-      w.appendChild(tag);
-      if(head){{var h=document.createElement('p');h.className='sp-exec-h';h.textContent=head;w.appendChild(h);}}
-      if(expl){{var p=document.createElement('p');p.className='sp-exec-p';p.textContent=expl;w.appendChild(p);}}
-      var n=document.createElement('p'); n.className='sp-exec-n';
-      n.textContent='A quality assessment from public data, not an instruction to buy '
-                   +'or sell, and not a personal recommendation. Capital at risk.';
-      w.appendChild(n);
-      var chips=box.querySelector('.dr-call-chips');
-      box.insertBefore(w, chips||null);
-      var first=box.firstChild;
-      if(first&&first.nodeType===3)box.removeChild(first);   /* drop the one-liner */
-    }}).catch(function(){{}});
-  }}catch(e){{}}
-}})();
-</script>
 {_theme.footer_html()}
 </body></html>""")
 
@@ -3809,8 +3773,44 @@ h2{{font-size:18px;margin:30px 0 12px}}
   </div>
 
 </div>
+<script>
+/* Cold-cache warmer for the executive summary. Fires only when the server had
+   nothing cached, calls the endpoint that generates + caches it, and fills the
+   hero in place. Never blocks the render; failure is silent and the one-line
+   fallback simply stays. */
+(function(){{
+  try{{
+    var box=document.querySelector('.sp-verdict');
+    if(!box||box.querySelector('.sp-exec'))return;      /* already server-rendered */
+    var sym=(document.body.getAttribute('data-sym')||'').trim();
+    if(!sym)return;
+    fetch('/api/thesis/'+encodeURIComponent(sym)).then(function(r){{
+      return r.ok?r.json():null;
+    }}).then(function(d){{
+      if(!d)return;
+      var head=(d.headline||'').trim(), expl=(d.explanation||'').trim();
+      if(!head&&!expl)return;
+      var w=document.createElement('div'); w.className='sp-exec';
+      var tag=document.createElement('div'); tag.className='sp-exec-tag';
+      tag.textContent=(d.source==='llm'?'AI summary':'Model summary')
+                      +(d.conviction?(' \u00b7 '+d.conviction+' conviction'):'');
+      w.appendChild(tag);
+      if(head){{var h=document.createElement('p');h.className='sp-exec-h';h.textContent=head;w.appendChild(h);}}
+      if(expl){{var p=document.createElement('p');p.className='sp-exec-p';p.textContent=expl;w.appendChild(p);}}
+      var n=document.createElement('p'); n.className='sp-exec-n';
+      n.textContent='A quality assessment from public data, not an instruction to buy '
+                   +'or sell, and not a personal recommendation. Capital at risk.';
+      w.appendChild(n);
+      var chips=box.querySelector('.dr-call-chips');
+      box.insertBefore(w, chips||null);
+      var first=box.firstChild;
+      if(first&&first.nodeType===3)box.removeChild(first);   /* drop the one-liner */
+    }}).catch(function(){{}});
+  }}catch(e){{}}
+}})();
+</script>
 {_theme.footer_html()}
-
+</body>
 </html>"""
 
 
