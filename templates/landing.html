@@ -318,7 +318,11 @@ button:focus-visible,[tabindex]:focus-visible{
 .brand-wordmark{display:inline-flex;align-items:baseline;flex-wrap:nowrap;white-space:nowrap;color:#0A2F46}
 .brand-m{height:1.6em;width:auto;flex:none;align-self:baseline;margin:0 .02em}
 .foot-brand .brand-wordmark{color:#fff}
-.nav-links{display:flex;gap:30px;align-items:center}
+.nav-links{display:flex;gap:clamp(12px,1.7vw,26px);align-items:center;white-space:nowrap}
+/* Seven links, a wordmark and two buttons is a lot of row. Below ~1040px the
+   legal link goes first: it is the one destination also carried in the footer
+   legal row on every page, so nothing becomes unreachable. */
+@media(max-width:1040px){.nav-links a[href="/disclaimer"]{display:none}}
 .nav-links a{font-size:15px;color:var(--raisin);font-weight:500;position:relative;font-family:'Public Sans',sans-serif}
 .nav-links a:hover{color:var(--primary)}
 .nav-right{display:flex;align-items:center;gap:14px}
@@ -1520,14 +1524,22 @@ button:focus-visible,[tabindex]:focus-visible{
   <div class="nav-inner">
     <a class="brand" href="#top"><span class="brand-wordmark">Ticker<svg class="brand-m" viewBox="0 0 90 105" fill="none" aria-hidden="true"><polyline points="5,100 23,42 45,66 67,26 85,100" stroke="#14587D" stroke-width="9" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="67" cy="8" r="7" fill="#14587D"/></svg>over</span></a>
     <div class="nav-links">
-      <a href="#engine">Engine</a>
       <!-- Real destinations, not just in-page anchors. A visitor deciding
            whether to trust a finance site looks for coverage, methodology and
            the legal position; before this the nav offered two jump-links and
-           nothing to check. Reports and Sectors are also our indexed pages, so
-           linking them from the nav helps them rank. -->
+           nothing to check. These are also our indexed pages, so linking them
+           from the nav helps them rank.
+           23 Aug 2026: matched to theme.NAV_ITEMS, the nav every other public
+           page renders. Screens and Capex Chains existed on those pages and in
+           the footer but not here, so the landing page -- the one page most
+           visitors start on -- was the only place they were invisible. The
+           "#engine" jump-link came out to make room; the section is a scroll
+           away and no other page has it. -->
+      <a href="/screens">Screens</a>
+      <a href="/who-benefits">Capex Chains</a>
       <a href="/reports">Reports</a>
       <a href="/sectors">Sectors</a>
+      <a href="/compare">Compare</a>
       <a href="/learn">Methodology</a>
       <a href="/disclaimer">Disclaimer</a>
 
@@ -3806,19 +3818,19 @@ html body #pricing.is-annual .pz-featured .pz-amt{color:rgba(255,255,255,.62);
       </div>
       <div class="foot-right">
         <nav class="foot-nav">
-          
-          
-          
-          <!-- "Future Heroes" (/future-heroes) and "Capex Chains" (/who-benefits)
-               removed 15 Aug 2026. Both 302 to /app#heroes and /app#who-benefits,
-               and /app requires sign-in - so a PUBLIC footer link dropped a
-               signed-out visitor on a login wall with no explanation. The routes
-               and the in-app panels are untouched; only the public entry points
-               are withdrawn until they have standalone pages again. -->
-          
-          <a href="/learn">Learn</a>
+          <!-- "Capex Chains" is back (23 Aug 2026). It was pulled on 15 Aug
+               because /who-benefits then 302'd into /app, which needs sign-in,
+               so a public footer link dropped a signed-out visitor on a login
+               wall. It is a real public page now -- server-rendered, eleven
+               maps, crawlable -- so the reason no longer holds. "Future Heroes"
+               stays out: /future-heroes still redirects into the app.
+               Same destinations as the header and as theme.footer_html. -->
+          <a href="/screens">Screens</a>
+          <a href="/who-benefits">Capex Chains</a>
+          <a href="/reports">Reports</a>
           <a href="/sectors">Sectors</a>
           <a href="/compare">Compare</a>
+          <a href="/learn">Methodology</a>
           
         </nav>
         <div class="foot-meta">

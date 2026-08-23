@@ -38,6 +38,10 @@ a{color:var(--blue)}
 .top{position:sticky;top:0;z-index:20;background:rgba(255,242,236,.86);backdrop-filter:saturate(180%) blur(12px);border-bottom:1px solid var(--line)}
 .top-in{max-width:1360px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 28px}
 .back{font-size:13px;font-weight:600;color:var(--muted);text-decoration:none}
+.site-nav{display:flex;align-items:center;gap:clamp(12px,1.6vw,22px);white-space:nowrap}
+.site-nav a{font-size:13.5px;font-weight:500;color:var(--muted);text-decoration:none}
+.site-nav a:hover{color:var(--ink)}
+@media(max-width:920px){.site-nav{display:none}}
 .back:hover{color:var(--ink)}
 .brand{display:flex;align-items:center;gap:9px;text-decoration:none;font-weight:600;font-size:18px;letter-spacing:-.022em;color:#0a0a0a}
 .brand .mark{width:26px;height:26px;flex:none;background:linear-gradient(135deg,#8FBFDD,#14587D 50%,#0A2F46);-webkit-mask:url('/static/brand/tickermover-mark-mask.svg') center/contain no-repeat;mask:url('/static/brand/tickermover-mark-mask.svg') center/contain no-repeat}
@@ -581,6 +585,14 @@ h1.title{font-size:clamp(34px,5.6vw,54px);line-height:1.03;letter-spacing:-.022e
      with a back link to a page that now redirects. -->
 <header class="top"><div class="top-in">
   <a class="back" id="navBack" href="/who-benefits">← All maps</a>
+  <!-- A map is an SEO landing page: most readers arrive here from search, and
+       until now the only way onward was "All maps" or the wordmark. These are
+       the same six destinations as theme.NAV_ITEMS and the site footer. -->
+  <nav class="site-nav">
+    <a href="/screens">Screens</a><a href="/who-benefits">Capex Chains</a>
+    <a href="/reports">Reports</a><a href="/sectors">Sectors</a>
+    <a href="/compare">Compare</a><a href="/learn">Methodology</a>
+  </nav>
   <a class="brand" id="navBrand" href="/"><span class="mark"></span><span>TickerMover</span></a>
 </div></header>
 <script>
@@ -596,7 +608,7 @@ h1.title{font-size:clamp(34px,5.6vw,54px);line-height:1.03;letter-spacing:-.022e
 </script>
 
 <main class="wrap">
-  <span class="eyebrow">◇ <span id="crumb">Chain Map</span></span>
+  <span class="eyebrow">◇ <span id="crumb">Capex Chain</span></span>
   <h1 class="title" id="title">Loading…</h1>
   <p class="standfirst" id="standfirst"></p>
   <div class="mast-meta" id="mast-meta">

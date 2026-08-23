@@ -50,7 +50,14 @@ def wordmark(dark: bool = False) -> str:
     )
 
 
+# The header nav and the footer's Explore column are the SAME six destinations.
+# They had drifted: the footer listed Screens and Capex Chains -- our two newest
+# public surfaces -- while the header still offered the four it shipped with, so
+# a reader who arrived on a report could only reach them by scrolling to the
+# bottom of the page. Keep these two lists in step (footer_html, "Explore").
 NAV_ITEMS = [
+    ("/screens", "Screens"),
+    ("/who-benefits", "Capex Chains"),
     ("/reports", "Reports"),
     ("/sectors", "Sectors"),
     ("/compare", "Compare"),
@@ -153,7 +160,7 @@ html body .brand-m polyline{stroke:#4A5BC4!important}
 html body .tm-foot .brand-m polyline{stroke:#8FA0F0!important}
 html body .brand-m circle,html body .tm-foot .brand-m circle{fill:#FF6100!important}
 @media(max-width:640px){.brand{font-size:17px;gap:8px}}
-.tm-nav-links{display:flex;gap:26px;font-size:15px;font-weight:500}
+.tm-nav-links{display:flex;gap:clamp(13px,1.7vw,26px);font-size:15px;font-weight:500;white-space:nowrap}
 .tm-nav-links a{color:var(--ink);transition:color var(--t-fast) var(--e-out)}
 .tm-nav-links a:hover{color:var(--primary);text-decoration:none}
 .tm-nav-links a.is-on{color:var(--primary);font-weight:500}
