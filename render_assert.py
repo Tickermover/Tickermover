@@ -264,6 +264,31 @@ def run(update_baseline, verbose, pages=None, quiet=False):
         got = pages[pg].count('class="brand"')
         rep.check(pg, "wordmark count", got == want, "found %d, want %d" % (got, want))
 
+    # --- SEO head: the part Google actually reads -----------------------
+    # /stocks ran a 225-character description, so the half carrying the finding
+    # was cut off in the result page and never seen. And three hub pages -
+    # /sectors, /reports, /learn - shipped with no structured data at all while
+    # every leaf page had it, which is backwards: the hubs are what a crawler
+    # uses to understand the shape of the site.
+    import html as _h_seo
+    for _pg, _needs_schema in (("stocks", True), ("sectors", True), ("reports", True),
+                               ("learn", True), ("compare", False)):
+        _html_pg = pages[_pg]
+        _m = re.search(r'<meta name="description" content="(.*?)"', _html_pg, re.S)
+        _d = _h_seo.unescape(_m.group(1)) if _m else ""
+        rep.check(_pg, "meta description", 50 <= len(_d) <= 160,
+                  "%d chars" % len(_d))
+        # a description cut mid-word reads as broken in the one place a
+        # searcher decides whether to click
+        rep.check(_pg, "description not cut mid-word",
+                  not _d or _d[-1] in ".!?…\"'" or _d.endswith("%"),
+                  "ends %r" % _d[-24:])
+        rep.check(_pg, "canonical", 'rel="canonical"' in _html_pg)
+        rep.check(_pg, "og:image", "og:image" in _html_pg)
+        if _needs_schema:
+            _n = _html_pg.count("application/ld+json")
+            rep.check(_pg, "structured data", _n >= 1, "%d block(s)" % _n)
+
     # --- every sector the index links to must actually render ------------
     # 54 of 73 sector pages were 404 in production. The index is built from
     # sector_intel, which groups sub_sector -> subsector -> INDUSTRY -> sector,

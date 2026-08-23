@@ -2529,7 +2529,7 @@ async def reports_index():
         reverse=True,
     )
     items_html = []
-    for t in rows_data[:300]:  # cap to keep first paint fast
+    for t in rows_data:  # every scored name; see the schema note below
         sym  = (t.get("ticker") or "").upper()
         name = _html.escape(t.get("name") or sym)
         sect = _html.escape(t.get("sector") or "—")
@@ -2558,6 +2558,38 @@ async def reports_index():
         )
     rows_html = "\n".join(items_html) or '<div class="empty">Universe not loaded yet — refresh in a moment.</div>'
     total = len(rows_data)
+
+    # Structured data. The PAGE links every scored name; the ItemList is capped
+    # at 50 because the markup is a hint about what this page is, not a second
+    # copy of it - 545 entries would add ~60KB of JSON saying the same thing.
+    import json as _json_rp
+    _reports_schema = (
+        _json_rp.dumps({
+            "@context": "https://schema.org",
+            "@type": "ItemList",
+            "name": "US stocks scored by TickerMover Quant Score",
+            "description": "Every US stock in the TickerMover universe, ranked by today's Quant Score.",
+            "url": SITE_ORIGIN + "/reports",
+            "numberOfItems": total,
+            "itemListOrder": "https://schema.org/ItemListOrderDescending",
+            "itemListElement": [
+                {"@type": "ListItem", "position": i + 1,
+                 "url": SITE_ORIGIN + "/stocks/" + (t.get("ticker") or "").upper(),
+                 "name": (t.get("name") or t.get("ticker") or "")}
+                for i, t in enumerate(rows_data[:50])
+            ],
+        }, separators=(",", ":"))
+        + '</script>' + chr(10) + '<script type="application/ld+json">'
+        + _json_rp.dumps({
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+                {"@type": "ListItem", "position": 1, "name": "Home", "item": SITE_ORIGIN},
+                {"@type": "ListItem", "position": 2, "name": "Reports",
+                 "item": SITE_ORIGIN + "/reports"},
+            ],
+        }, separators=(",", ":"))
+    )
     return HTMLResponse(content=f"""<!DOCTYPE html>
 <html lang="en"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
@@ -2565,6 +2597,13 @@ async def reports_index():
 <meta name="description" content="Every US stock in the TickerMover universe, scored across six investment pillars and explained in a long-form research report. Sorted by today's Quant Score.">
 <meta name="theme-color" content="#0A2F46">
 <link rel="canonical" href="{SITE_ORIGIN}/reports">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Reports - {total} US stocks scored and explained">
+<meta property="og:description" content="Every US stock in the TickerMover universe, scored across six investment pillars and explained.">
+<meta property="og:url" content="{SITE_ORIGIN}/reports">
+<meta property="og:image" content="{SITE_ORIGIN}/static/icons/icon-512.png">
+<meta name="twitter:card" content="summary_large_image">
+<script type="application/ld+json">{_reports_schema}</script>
 <link rel="icon" type="image/png" sizes="32x32" href="/static/icons/favicon-32.png">
 {_theme.FONTS_LINK}
 <style>{_theme.THEME_CSS}
@@ -2702,7 +2741,7 @@ def _render_unknown_stock(sym: str) -> str:
     return f"""<!DOCTYPE html><html lang="en"><head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{sym} — Not in TickerMover's universe yet | TickerMover</title>
-<meta name="description" content="{sym} isn't in our 200+ stock research universe yet. TickerMover covers high-quality US stocks with $500M+ market cap — get the Hot List free.">
+<meta name="description" content="{sym} isn't in our research universe yet. TickerMover covers high-quality US stocks with $500M+ market cap — get the Hot List free.">
 <meta name="robots" content="noindex,follow">
 <link rel="canonical" href="{SITE_ORIGIN}/stocks/{sym}">
 <style>body{{font-family:system-ui,-apple-system,sans-serif;max-width:600px;margin:80px auto;padding:0 24px;color:#0a0a0a;text-align:center}}
@@ -3597,10 +3636,22 @@ def _render_stock_page(t: dict) -> str:
     import datetime as _dt
     _today = _dt.date.today().isoformat()
     title = f"{sym} Stock Analysis · Quant Score {round(pop)} · {rating} | TickerMover"
-    desc  = (
-        f"{name} ({sym}) — current Quant Score {round(pop)}/100 ({rating}). "
-        f"{bottom_line[:140]}"
-    )
+    # Google truncates a snippet around 155 characters; this was running to
+    # ~225, so the useful half of the sentence never appeared in the result.
+    # The star glyphs go too - they read as decoration in a SERP, and they cost
+    # characters that the actual finding needs. Trimmed on a WORD boundary: a
+    # description cut mid-word is the same defect as the table cells fixed
+    # earlier, and it is the snippet a searcher judges the link by.
+    _tier = (rating or "").lstrip("★☆ ").strip()
+    _lead = f"{name} ({sym}) stock analysis: Quant Score {round(pop)}/100"
+    if _tier:
+        _lead += f", {_tier}"
+    _lead += ". "
+    _room = max(0, 155 - len(_lead))
+    _tail = (bottom_line or "")[:_room]
+    if len(bottom_line or "") > _room and " " in _tail:
+        _tail = _tail[:_tail.rfind(" ")]
+    desc = (_lead + _tail).strip()
 
     # Schema.org structured data — FinancialProduct (without aggregateRating;
     # Google's validator rejects it on FinancialProduct since stocks aren't

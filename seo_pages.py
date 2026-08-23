@@ -460,6 +460,24 @@ def render_pillar_index(site_origin: str) -> str:
     canonical = f"{site_origin}/learn"
     return page_shell(
         title="Learn — TickerMover methodology, Quant Score, Reverse DCF",
+        schema_json=_json.dumps({
+            "@context": "https://schema.org", "@type": "ItemList",
+            "name": "TickerMover methodology guides",
+            "url": canonical, "numberOfItems": len(PILLARS),
+            "itemListElement": [
+                {"@type": "ListItem", "position": i + 1,
+                 "url": f"{site_origin}/learn/{sl}", "name": sl.replace("-", " ").title()}
+                for i, sl in enumerate(PILLARS)
+            ],
+        }, separators=(",", ":")) + "</script>" + chr(10)
+        + '<script type="application/ld+json">'
+        + _json.dumps({
+            "@context": "https://schema.org", "@type": "BreadcrumbList",
+            "itemListElement": [
+                {"@type": "ListItem", "position": 1, "name": "Home", "item": site_origin},
+                {"@type": "ListItem", "position": 2, "name": "Learn", "item": canonical},
+            ],
+        }, separators=(",", ":")),
         desc="Plain-English guides to TickerMover's stock-research methodology — Quant Score, Reverse DCF, and the seven-step fundamentals checklist.",
         canonical=canonical, body_html=body,
         og_image=f"{site_origin}/static/icons/icon-512.png",
@@ -883,7 +901,30 @@ def render_sector_index(universe: list[dict], site_origin: str) -> str:
 </div>
 <style>{_SECTOR_INDEX_CSS}</style>"""
     canonical = f"{site_origin}/sectors"
+    _schema = (
+        _json.dumps({
+            "@context": "https://schema.org", "@type": "ItemList",
+            "name": "US stock sub-sectors compared",
+            "description": "Every sub-sector TickerMover scores, compared on median Quant "
+                           "Score, spread, breadth, size and growth.",
+            "url": canonical, "numberOfItems": len(secs),
+            "itemListElement": [
+                {"@type": "ListItem", "position": i + 1,
+                 "url": f"{site_origin}/sectors/{x['slug']}", "name": x["label"]}
+                for i, x in enumerate(secs[:60])
+            ],
+        }, separators=(",", ":"))
+        + "</script>" + chr(10) + '<script type="application/ld+json">'
+        + _json.dumps({
+            "@context": "https://schema.org", "@type": "BreadcrumbList",
+            "itemListElement": [
+                {"@type": "ListItem", "position": 1, "name": "Home", "item": site_origin},
+                {"@type": "ListItem", "position": 2, "name": "Sectors", "item": canonical},
+            ],
+        }, separators=(",", ":"))
+    )
     return page_shell(
+        schema_json=_schema,
         title="US stock sectors compared — median Quant, spread and breadth | TickerMover",
         # NB: keep "Quant Score" on one line. This string was previously split as
         # "…median Alpha " / "Score, …", which no find-and-replace could match —
@@ -1208,8 +1249,8 @@ def render_compare_index(universe: list[dict], site_origin: str) -> str:
     canonical = f"{site_origin}/compare"
     return page_shell(
         title="US stock head-to-head comparisons — NVDA vs AMD, AAPL vs MSFT | TickerMover",
-        desc=("Curated head-to-head US stock comparisons measured on growth, margins, valuation, "
-              "momentum and size. See how far apart each pair really is. Updated every 5 minutes."),
+        desc=("Head-to-head US stock comparisons on growth, margins, valuation, momentum "
+              "and size - see how far apart each pair really is. Updated every 5 minutes."),
         canonical=canonical, body_html=body,
         og_image=f"{site_origin}/static/icons/icon-512.png",
     )
