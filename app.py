@@ -6646,10 +6646,17 @@ def _load_theses() -> dict:
 async def api_theses():
     """List of thesis maps (metadata only — no per-company payload) for the hub."""
     d = _load_theses()
-    meta = [
-        {k: t.get(k) for k in ("slug", "status", "kind", "eyebrow", "title", "accent", "standfirst")}
-        for t in (d.get("theses") or [])
-    ]
+    import chain_art as _chain_art
+    meta = []
+    for t in (d.get("theses") or []):
+        m = {k: t.get(k) for k in ("slug", "status", "kind", "eyebrow", "title",
+                                   "accent", "standfirst")}
+        # The card thumbnail rides along rather than being rebuilt in JS: the
+        # public hub renders the same SVG from the same function, so the two
+        # surfaces cannot drift as maps are added.
+        m["art"] = _chain_art.thumb_svg(m.get("slug") or "", m.get("title") or "",
+                                        m.get("standfirst") or "", cls="tm-art")
+        meta.append(m)
     # What lands next Sunday. Comes straight from the driver pool — no model
     # call — so the hub can promise a specific idea rather than "more soon".
     nxt = None
@@ -6746,7 +6753,7 @@ def _thesis_ssr(t: dict):
             "@context": "https://schema.org", "@type": "BreadcrumbList",
             "itemListElement": [
                 {"@type": "ListItem", "position": 1, "name": "Home", "item": SITE_ORIGIN},
-                {"@type": "ListItem", "position": 2, "name": "Chain maps",
+                {"@type": "ListItem", "position": 2, "name": "Capex Chains",
                  "item": SITE_ORIGIN + "/who-benefits"},
                 {"@type": "ListItem", "position": 3, "name": title, "item": url},
             ],
@@ -6775,7 +6782,7 @@ def _thesis_ssr(t: dict):
         + layers_html
         + how_html
         + '<p class="tm-ssr-legal">' + _h.escape(disc) + "</p>"
-        + '<p class="tm-ssr-more"><a href="/who-benefits">All chain maps</a> &middot; '
+        + '<p class="tm-ssr-more"><a href="/who-benefits">All Capex Chains</a> &middot; '
           '<a href="/screens">Stock screens</a> &middot; '
           '<a href="/sectors">Sub-sectors compared</a> &middot; '
           '<a href="/learn/pop-score">How the Quant Score works</a></p>'
@@ -7177,24 +7184,35 @@ async def who_benefits_hub_page():
     import html as _h
     import re
     import json as _json
+    import chain_art as _chain_art
     live = [t for t in (_load_theses().get("theses") or []) if t.get("status") == "live"]
     cards = ""
     for t in live:
         slug = (t.get("slug") or "").lower()
         n_names = sum(len(L.get("names") or []) for L in (t.get("layers") or []))
-        sf = re.sub(r"\s+", " ", (t.get("standfirst") or "")).strip()[:190]
+        sf = re.sub(r"\s+", " ", (t.get("standfirst") or "")).strip()
+        # Break on a word, not a character. This card used to end "each layer's
+        # and each company's shar" -- a hard [:190] slice mid-word, on the most
+        # linked-to page of research on the site.
+        if len(sf) > 190:
+            sf = sf[:190].rsplit(" ", 1)[0].rstrip(" ,;:-—") + "…"
         cards += (
             '<a class="wb-card" href="/who-benefits/' + slug + '">'
+            + '<span class="wb-thumb">'
+            + _chain_art.thumb_svg(slug, t.get("title") or "", t.get("standfirst") or "")
+            + "</span>"
+            + '<div class="wb-body">'
+            # stays an h2: the card titles are this hub's heading structure
             + '<span class="wb-eyebrow">' + _h.escape(t.get("eyebrow") or "Chain map") + "</span>"
             + "<h2>" + _h.escape(t.get("title") or slug) + "</h2>"
             + "<p>" + _h.escape(sf) + "</p>"
             + ('<span class="wb-n">' + str(n_names) + " companies mapped</span>" if n_names else "")
-            + "</a>"
+            + "</div></a>"
         )
     schema = (
         _json.dumps({
             "@context": "https://schema.org", "@type": "ItemList",
-            "name": "TickerMover chain maps", "url": SITE_ORIGIN + "/who-benefits",
+            "name": "TickerMover Capex Chains", "url": SITE_ORIGIN + "/who-benefits",
             "numberOfItems": len(live),
             "itemListElement": [
                 {"@type": "ListItem", "position": i + 1,
@@ -7208,7 +7226,7 @@ async def who_benefits_hub_page():
             "@context": "https://schema.org", "@type": "BreadcrumbList",
             "itemListElement": [
                 {"@type": "ListItem", "position": 1, "name": "Home", "item": SITE_ORIGIN},
-                {"@type": "ListItem", "position": 2, "name": "Chain maps",
+                {"@type": "ListItem", "position": 2, "name": "Capex Chains",
                  "item": SITE_ORIGIN + "/who-benefits"},
             ],
         }, separators=(",", ":"))
@@ -7216,8 +7234,8 @@ async def who_benefits_hub_page():
     body = (
         '<div class="wrap-wide">'
         + _seo.brand_header()
-        + '<div class="crumbs"><a href="/">Home</a> &middot; Chain maps</div>'
-        + "<h1>Chain maps: where the money actually lands</h1>"
+        + '<div class="crumbs"><a href="/">Home</a> &middot; Capex Chains</div>'
+        + "<h1>Capex Chains: where the money actually lands</h1>"
         + '<p class="lede">' + str(len(live)) + " maps tracing a spending theme through the "
           "companies that capture it, layer by layer, with every company's share estimated "
           "from its own reported revenue. Descriptive supply-chain research, not forecasts.</p>"
@@ -7238,7 +7256,7 @@ async def who_benefits_hub_page():
         + "</div>" + _WB_HUB_CSS
     )
     return HTMLResponse(content=_seo.page_shell(
-        title="Chain maps - where spending lands, company by company | TickerMover",
+        title="Capex Chains - where spending lands, company by company | TickerMover",
         desc=("Supply-chain maps tracing AI capex, the grid rebuild, defence outlays and more "
               "through the companies that capture the spending. Free research."),
         canonical=SITE_ORIGIN + "/who-benefits", body_html=body, schema_json=schema,
@@ -7248,17 +7266,24 @@ async def who_benefits_hub_page():
 _WB_HUB_CSS = """<style>
 .wb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:16px;
   margin:0 0 34px}
-.wb-card{border:1px solid #D6DADD;border-radius:14px;padding:20px 22px;background:#fff;
-  text-decoration:none;display:block;transition:border-color 140ms cubic-bezier(.2,.7,.2,1),
+.wb-card{border:1px solid #D6DADD;border-radius:14px;background:#fff;overflow:hidden;
+  text-decoration:none;display:flex;flex-direction:column;
+  transition:border-color 140ms cubic-bezier(.2,.7,.2,1),
   box-shadow 140ms cubic-bezier(.2,.7,.2,1)}
 .wb-card:hover{text-decoration:none;border-color:#0A2F46;
   box-shadow:0 10px 26px -16px rgba(10,47,70,.5)}
+/* the thumbnail band -- generated per map by chain_art, so a map published
+   next Sunday is never the one blank card in the grid */
+.wb-thumb{display:block;border-bottom:1px solid #E8EBEE;background:#F7F9FA}
+.wb-art{display:block;width:100%;height:auto;aspect-ratio:320/116}
+.wb-body{padding:17px 22px 20px}
 .wb-eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.14em;
   text-transform:uppercase;color:#9A3412;font-weight:700}
 .wb-card h2{font-size:17px;font-weight:500;color:#0A2F46;margin:7px 0 8px}
 .wb-card p{font-size:13px;line-height:1.55;color:#5d6c7b;margin:0}
 .wb-n{display:block;margin-top:11px;font-family:var(--mono);font-size:11px;color:#758696;
   font-weight:700}
+@media(max-width:560px){.wb-art{aspect-ratio:320/86}}
 </style>"""
 
 

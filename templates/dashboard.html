@@ -994,8 +994,14 @@ body.no-pro .pro-badge,body.no-pro .pro-chip,body.no-pro .v2-sb-pro,
 body.no-pro #upgrade-modal,body.no-pro .upgrade-cta,body.no-pro .pro-lock{display:none!important}
 #panel-theses .tm-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:15px}
 #panel-theses .tm-card{display:flex;flex-direction:column;min-height:206px;background:#fff;border:1px solid #E4E7EC;
-  border-radius:16px;padding:21px;text-decoration:none;color:inherit;box-shadow:0 1px 3px rgba(10,31,54,.05);
+  border-radius:16px;padding:0;overflow:hidden;text-decoration:none;color:inherit;box-shadow:0 1px 3px rgba(10,31,54,.05);
   transition:transform var(--t-fast),box-shadow var(--t-fast),border-color var(--t-fast)}
+/* Card thumbnail. The SVG comes from /api/theses (chain_art.thumb_svg), the
+   same function the public hub renders, so the two grids cannot drift as maps
+   are added. */
+#panel-theses .tm-thumb{display:block;border-bottom:1px solid #EDEFF2;background:#F7F9FA}
+#panel-theses .tm-art{display:block;width:100%;height:auto;aspect-ratio:320/116}
+#panel-theses .tm-body{display:flex;flex-direction:column;flex:1;padding:17px 21px 20px}
 #panel-theses a.tm-card:hover{transform:translateY(-2px);border-color:#C7CEF0;box-shadow:0 12px 28px -16px rgba(10,31,54,.4)}
 #panel-theses .tm-eye{display:flex;justify-content:space-between;align-items:center;font-family:'JetBrains Mono',monospace;
   font-size:9.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#94a3b8;margin-bottom:11px}
@@ -20009,6 +20015,10 @@ function _tmRender(d){
       title = title.replace(a, '<em>' + a + '</em>');
     }
     var inner =
+      /* Art is server-generated SVG from our own chain_art module, so it goes
+         in as markup; everything downstream of it is still escaped. */
+      (t.art ? '<span class="tm-thumb">' + t.art + '</span>' : '') +
+      '<div class="tm-body">' +
       '<div class="tm-eye"><span>' + _pipEsc(t.eyebrow || 'Thesis Map') + '</span>' +
         '<span class="tm-tag ' + (live ? 'live' : 'soon') + '">' + (live ? 'Live' : 'Soon') + '</span></div>' +
       '<h3 class="tm-t">' + title + '</h3>' +
@@ -20025,7 +20035,7 @@ function _tmRender(d){
           '<span class="tm-cov-b">' + (c.counted || 0) + ' set the split' +
           (c.touching ? ' · ' + c.touching + ' more exposed' : '') + '</span></div>';
       })() +
-      '<div class="tm-go">' + (live ? 'Open the map \u2192' : 'In preparation') + '</div>';
+      '<div class="tm-go">' + (live ? 'Open the map \u2192' : 'In preparation') + '</div></div>';
     return live
       ? '<a class="tm-card" href="/who-benefits/' + encodeURIComponent(t.slug) + '">' + inner + '</a>'
       : '<div class="tm-card dim">' + inner + '</div>';
