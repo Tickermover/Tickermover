@@ -1333,6 +1333,33 @@ async def _sector_note_prewarm() -> None:
         await asyncio.sleep(900 if backlogged else 6 * 3600)
 
 
+async def _chain_photo_prewarm() -> None:
+    """Background loop: one real photograph per capex chain, cached in KV.
+
+    The card renderers only ever read the cache (chain_photo.cached), so this
+    loop is what puts a photo on a card at all -- and what puts one on the map
+    published next Sunday without anyone touching an asset. Eleven maps means
+    eleven provider calls on a cold cache and none thereafter, so the cadence is
+    slow on purpose. With no provider key configured it idles and every card
+    keeps its generated glyph."""
+    await asyncio.sleep(75)                 # let the app finish booting
+    while True:
+        delay = 6 * 3600
+        try:
+            import chain_photo
+            if not chain_photo.available():
+                delay = 24 * 3600           # unconfigured - nothing will change soon
+            else:
+                live = [t for t in (_load_theses().get("theses") or [])
+                        if t.get("status") == "live"]
+                n = await chain_photo.refresh(live)
+                if n:
+                    logger.info("chain photos: %d written", n)
+        except Exception as e:
+            logger.warning("chain photo prewarm: %s", e)
+        await asyncio.sleep(delay)
+
+
 async def _role_prewarm() -> None:
     """Background loop: fill the "Where it earns" card for every scored stock.
 
@@ -1504,6 +1531,7 @@ async def lifespan(app: FastAPI):
         asyncio.create_task(_compare_biz_prewarm()), # business comparison for the featured matchups
         asyncio.create_task(_sector_note_prewarm()), # "Our read" on every sub-sector page
         asyncio.create_task(_roster_prewarm()),      # map every scored stock to a capex chain
+        asyncio.create_task(_chain_photo_prewarm()),  # one real photo per capex chain
         asyncio.create_task(_mgmt_qa_prewarm()),     # Fact Check AI answers for prime + best-ideas names
         asyncio.create_task(_event_brief_prewarm()), # earnings briefs for the Company Events timeline
         asyncio.create_task(_daily_brief_email_task()),  # free daily-brief email (acquisition channel)
@@ -6639,7 +6667,17 @@ def _load_theses() -> dict:
     gen_slugs = {(m.get("slug") or "").lower() for m in _gen_theses}
     curated = [t for t in (base.get("theses") or [])
                if (t.get("slug") or "").lower() not in gen_slugs]
-    return {"as_of": base.get("as_of"), "theses": list(_gen_theses) + curated}
+    return {"as_of": base.get("as_of"),
+            "theses": [_eyebrow_fix(t) for t in (list(_gen_theses) + curated)]}
+
+
+def _eyebrow_fix(t: dict) -> dict:
+    """The section is called Capex Chains everywhere else. Maps generated before
+    the rename carry "Chain Map" in the KV store, which cannot be edited in the
+    repo, so the label is normalised on read rather than in the data."""
+    if (t.get("eyebrow") or "").strip().lower() in ("chain map", "thesis map"):
+        t = dict(t, eyebrow="Capex Chain")
+    return t
 
 
 @app.get("/api/theses")
@@ -6647,6 +6685,7 @@ async def api_theses():
     """List of thesis maps (metadata only — no per-company payload) for the hub."""
     d = _load_theses()
     import chain_art as _chain_art
+    import chain_photo as _chain_photo
     meta = []
     for t in (d.get("theses") or []):
         m = {k: t.get(k) for k in ("slug", "status", "kind", "eyebrow", "title",
@@ -6656,6 +6695,10 @@ async def api_theses():
         # surfaces cannot drift as maps are added.
         m["art"] = _chain_art.thumb_svg(m.get("slug") or "", m.get("title") or "",
                                         m.get("standfirst") or "", cls="tm-art")
+        ph = _chain_photo.cached(m.get("slug") or "")
+        if ph:
+            m["photo"] = {k: ph.get(k) for k in
+                          ("thumb", "url", "alt", "credit_name", "source")}
         meta.append(m)
     # What lands next Sunday. Comes straight from the driver pool — no model
     # call — so the hub can promise a specific idea rather than "more soon".
@@ -6669,7 +6712,10 @@ async def api_theses():
             nxt = {"driver": drv["driver"], "angle": drv["angle"]}
     except Exception:
         pass
-    return JSONResponse(_clean({"as_of": d.get("as_of"), "theses": meta, "next_up": nxt}),
+    return JSONResponse(_clean({"as_of": d.get("as_of"), "theses": meta, "next_up": nxt,
+                                # "off" means no UNSPLASH_ACCESS_KEY/PEXELS_API_KEY on
+                                # this deploy, which is why cards show the glyph art
+                                "photos": "on" if _chain_photo.available() else "off"}),
                         headers={"Cache-Control": "public, max-age=300, s-maxage=600"})
 
 
@@ -7185,11 +7231,13 @@ async def who_benefits_hub_page():
     import re
     import json as _json
     import chain_art as _chain_art
+    import chain_photo as _chain_photo
     live = [t for t in (_load_theses().get("theses") or []) if t.get("status") == "live"]
     cards = ""
     for t in live:
         slug = (t.get("slug") or "").lower()
         n_names = sum(len(L.get("names") or []) for L in (t.get("layers") or []))
+        photo = _chain_photo.cached(slug)
         sf = re.sub(r"\s+", " ", (t.get("standfirst") or "")).strip()
         # Break on a word, not a character. This card used to end "each layer's
         # and each company's shar" -- a hard [:190] slice mid-word, on the most
@@ -7199,11 +7247,18 @@ async def who_benefits_hub_page():
         cards += (
             '<a class="wb-card" href="/who-benefits/' + slug + '">'
             + '<span class="wb-thumb">'
-            + _chain_art.thumb_svg(slug, t.get("title") or "", t.get("standfirst") or "")
+            # a real photograph when the prewarm has fetched one; the generated
+            # glyph is the fallback, so a new map is never a blank card
+            + (('<img class="wb-photo" src="' + _h.escape(photo.get("thumb") or photo.get("url") or "")
+                + '" alt="' + _h.escape(photo.get("alt") or "") + '" loading="lazy" decoding="async">'
+                + '<span class="wb-credit">' + _h.escape(photo.get("credit_name") or "")
+                + " / " + _h.escape(photo.get("source") or "") + "</span>")
+               if photo else
+               _chain_art.thumb_svg(slug, t.get("title") or "", t.get("standfirst") or ""))
             + "</span>"
             + '<div class="wb-body">'
             # stays an h2: the card titles are this hub's heading structure
-            + '<span class="wb-eyebrow">' + _h.escape(t.get("eyebrow") or "Chain map") + "</span>"
+            + '<span class="wb-eyebrow">' + _h.escape(t.get("eyebrow") or "Capex Chain") + "</span>"
             + "<h2>" + _h.escape(t.get("title") or slug) + "</h2>"
             + "<p>" + _h.escape(sf) + "</p>"
             + ('<span class="wb-n">' + str(n_names) + " companies mapped</span>" if n_names else "")
@@ -7274,8 +7329,14 @@ _WB_HUB_CSS = """<style>
   box-shadow:0 10px 26px -16px rgba(10,47,70,.5)}
 /* the thumbnail band -- generated per map by chain_art, so a map published
    next Sunday is never the one blank card in the grid */
-.wb-thumb{display:block;border-bottom:1px solid #E8EBEE;background:#F7F9FA}
+.wb-thumb{display:block;position:relative;border-bottom:1px solid #E8EBEE;background:#F7F9FA}
 .wb-art{display:block;width:100%;height:auto;aspect-ratio:320/116}
+.wb-photo{display:block;width:100%;height:auto;aspect-ratio:320/116;object-fit:cover}
+/* the Unsplash/Pexels licence wants the photographer named; small, low-contrast
+   and out of the way, but present on every photo we did not take */
+.wb-credit{position:absolute;right:7px;bottom:6px;font-family:var(--mono);font-size:9px;
+  letter-spacing:.04em;color:#fff;background:rgba(10,31,54,.42);padding:2px 6px;
+  border-radius:100px;backdrop-filter:blur(2px)}
 .wb-body{padding:17px 22px 20px}
 .wb-eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.14em;
   text-transform:uppercase;color:#9A3412;font-weight:700}

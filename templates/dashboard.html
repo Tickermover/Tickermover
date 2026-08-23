@@ -999,8 +999,11 @@ body.no-pro #upgrade-modal,body.no-pro .upgrade-cta,body.no-pro .pro-lock{displa
 /* Card thumbnail. The SVG comes from /api/theses (chain_art.thumb_svg), the
    same function the public hub renders, so the two grids cannot drift as maps
    are added. */
-#panel-theses .tm-thumb{display:block;border-bottom:1px solid #EDEFF2;background:#F7F9FA}
+#panel-theses .tm-thumb{display:block;position:relative;border-bottom:1px solid #EDEFF2;background:#F7F9FA}
 #panel-theses .tm-art{display:block;width:100%;height:auto;aspect-ratio:320/116}
+#panel-theses .tm-photo{display:block;width:100%;height:auto;aspect-ratio:320/116;object-fit:cover}
+#panel-theses .tm-credit{position:absolute;right:7px;bottom:6px;font-family:'JetBrains Mono',monospace;
+  font-size:9px;letter-spacing:.04em;color:#fff;background:rgba(10,31,54,.42);padding:2px 6px;border-radius:100px}
 #panel-theses .tm-body{display:flex;flex-direction:column;flex:1;padding:17px 21px 20px}
 #panel-theses a.tm-card:hover{transform:translateY(-2px);border-color:#C7CEF0;box-shadow:0 12px 28px -16px rgba(10,31,54,.4)}
 #panel-theses .tm-eye{display:flex;justify-content:space-between;align-items:center;font-family:'JetBrains Mono',monospace;
@@ -20017,7 +20020,18 @@ function _tmRender(d){
     var inner =
       /* Art is server-generated SVG from our own chain_art module, so it goes
          in as markup; everything downstream of it is still escaped. */
-      (t.art ? '<span class="tm-thumb">' + t.art + '</span>' : '') +
+      (function(){
+        /* A real photo once the server has one cached; the generated glyph is
+           the fallback, so a map published this Sunday is never a blank card. */
+        var ph = t.photo;
+        if (ph && ph.thumb) {
+          return '<span class="tm-thumb"><img class="tm-photo" loading="lazy" decoding="async" src="' +
+            _pipEsc(ph.thumb) + '" alt="' + _pipEsc(ph.alt || '') + '">' +
+            '<span class="tm-credit">' + _pipEsc(ph.credit_name || '') + ' / ' +
+            _pipEsc(ph.source || '') + '</span></span>';
+        }
+        return t.art ? '<span class="tm-thumb">' + t.art + '</span>' : '';
+      })() +
       '<div class="tm-body">' +
       '<div class="tm-eye"><span>' + _pipEsc(t.eyebrow || 'Thesis Map') + '</span>' +
         '<span class="tm-tag ' + (live ? 'live' : 'soon') + '">' + (live ? 'Live' : 'Soon') + '</span></div>' +

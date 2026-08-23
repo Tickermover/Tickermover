@@ -268,7 +268,7 @@ def _validate(raw: dict, driver: dict, known: dict[str, str]) -> dict | None:
         "slug": _slug(driver["key"]),
         "status": "live",
         "kind": "chain",
-        "eyebrow": "Chain Map",
+        "eyebrow": "Capex Chain",
         "title": title,
         "accent": accent,
         "standfirst": _s(raw.get("standfirst"), 340),
