@@ -3027,6 +3027,7 @@ _SP_DASH_CSS = """
    grid where each panel takes the width its content deserves. Plain string,
    not inside the f-string, so CSS braces need no doubling. */
 .sp-hero{background-image:radial-gradient(circle at 0% 0%,#001C31 -55%,#0A2F47 38%,#0A2F47 55%,#001C31 100%);
+  padding-bottom:34px;
   color:#fff;padding:34px 0 0}
 .sp-hero-in{max-width:1240px;margin:0 auto;padding:0 24px;display:flex;gap:34px;
   align-items:flex-start;justify-content:space-between;flex-wrap:wrap}
@@ -3085,7 +3086,12 @@ _SP_DASH_CSS = """
 .sp-hs-tier{display:inline-block;font-family:var(--mono);font-size:10px;letter-spacing:.14em;
   text-transform:uppercase;background:rgba(255,255,255,.14);color:#fff;padding:4px 11px;
   border-radius:100px;font-weight:500;margin-top:6px}
-.sp-verdict{max-width:1240px;margin:22px auto 0;padding:0 24px 30px;color:#CFE0EA;
+/* The left column carries the identity AND the summary; the gauge column sits
+   beside it. `min-width:0` so a long company name shrinks rather than pushing
+   the gauge off, and a flex-basis so the two columns split sensibly before the
+   wrap kicks in. */
+.sp-hero-id{flex:1 1 560px;min-width:0}
+.sp-verdict{max-width:82ch;margin:20px 0 0;padding:0 0 4px;color:#CFE0EA;
   font-size:15.5px;line-height:1.6;font-weight:300}
 .sp-verdict .dr-call-chips{margin-top:12px;display:flex;gap:7px;flex-wrap:wrap}
 .sp-verdict .dr-cc{background:rgba(255,255,255,.12);color:#fff;border:0}
@@ -4118,6 +4124,7 @@ h2{{font-size:18px;margin:30px 0 12px}}
       <h1><img class="sp-logo" src="https://assets.parqet.com/logos/symbol/{sym}"
            alt="" width="40" height="40" loading="lazy" onerror="this.remove()"><span class="sym">{sym}</span> Stock Analysis</h1>
       <p class="subhead">{name} · current price <span class="mono">{price_str}</span> ({chg_str} today){earn_str}</p>
+      <div class="sp-verdict">{exec_summary_html or bottom_line}{verdict_chips_html}</div>
     </div>
     <div class="sp-hero-r">
       <div class="sp-hs">
@@ -4127,7 +4134,6 @@ h2{{font-size:18px;margin:30px 0 12px}}
       <div class="sp-spark" id="spSpark" hidden></div>
     </div>
   </div>
-  <div class="sp-verdict">{exec_summary_html or bottom_line}{verdict_chips_html}</div>
 </header>
 
 <div class="wrap">
