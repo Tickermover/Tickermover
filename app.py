@@ -3321,43 +3321,64 @@ def _sp_ribbon(anchor: str, title: str, inner: str, rib: str = "rep-slate", ico:
             f'<h2 class="rep-title">{title}</h2></div>'
             f'<div class="rep-body">{inner}</div></section>')
 
-def _risk_pillar(t: dict) -> Optional[float]:
-    """The dashboard's sixth pillar, computed the same way so the two surfaces
-    cannot show a different Risk for the same stock.
+def _risk_score(t: dict) -> Optional[float]:
+    """Risk as VOLATILITY AND DRAWDOWN, 0-100, where 100 is the calmest.
 
-    dashboard.html's computePillars does R = avg(breakdown.low_short,
-    breakdown.mkt_cap_fit) * 100, and this mirrors it. NOT added to
-    _compute_pillars(): that function feeds _pillar_pass_count, which gates
-    tracker eligibility on "4 of 6 pillars >= 50". Adding a key there would
-    quietly change which stocks are eligible, which is a selection change
-    wearing a display change's clothes.
+    THE ONE DEFINITION. api_universe attaches the result as `risk_score`, the
+    stock page reads it through _risk_pillar, and dashboard.html reads the same
+    field instead of deriving its own. Before this the two surfaces disagreed
+    twice over: the dashboard averaged breakdown.low_short and mkt_cap_fit —
+    short interest and company size — while captioning the result "volatility &
+    downside", and the stock page had no sixth pillar at all.
 
-    Fallback for a row without `breakdown`: the same two ideas read off the raw
-    fields — a smaller short position and a larger company both score safer.
+    Three measured components, averaged over whichever are present:
+
+      beta        how hard it moves against the market
+      52w range   (high - low) / high, the swing it actually delivered
+      drawdown    (high - price) / high, how far below its high it sits now
+
+    Deliberately NOT part of _compute_pillars(): that feeds _pillar_pass_count,
+    which gates tracker eligibility on "4 of 6 pillars >= 50", and a new key
+    there would change which stocks qualify.
+
+    Returns None when no component is available, and the card is dropped rather
+    than shown as a guess.
     """
-    b = t.get("breakdown") or {}
-    vals = [b.get(k) for k in ("low_short", "mkt_cap_fit")
-            if isinstance(b.get(k), (int, float))]
-    if vals:
-        return max(0.0, min(100.0, (sum(vals) / len(vals)) * 100.0))
+    def clamp(x):
+        return max(0.0, min(100.0, x))
+
+    def f(v):
+        try:
+            v = float(v)
+        except (TypeError, ValueError):
+            return None
+        return None if v != v else v          # NaN
 
     parts = []
-    sh = t.get("short_percent_float")
-    try:
-        if sh is not None:
-            parts.append(max(0.0, min(100.0, 100.0 - float(sh) * 5.0)))
-    except (TypeError, ValueError):
-        pass
-    mc = t.get("market_cap")
-    try:
-        if mc:
-            mc = float(mc)
-            # 1bn -> 40, 10bn -> 60, 100bn -> 80, 1tn -> 100
-            import math as _m
-            parts.append(max(0.0, min(100.0, 20.0 * (_m.log10(mc) - 8.0))))
-    except (TypeError, ValueError):
-        pass
+
+    beta = f(t.get("beta"))
+    if beta is not None and beta > 0:
+        # 0.6 -> 100, 1.0 -> 76, 1.5 -> 46, 2.0 -> 16
+        parts.append(clamp(100.0 - (beta - 0.6) * 60.0))
+
+    hi, lo, px = f(t.get("high_52w")), f(t.get("low_52w")), f(t.get("price"))
+    if hi and lo and hi > 0 and hi >= lo:
+        # width of the 12-month range: 20% -> 74, 40% -> 48, 65% -> 15
+        parts.append(clamp(100.0 - ((hi - lo) / hi) * 130.0))
+    if hi and px and hi > 0:
+        # how far below the high it sits: 0% -> 100, 20% -> 70, 40% -> 40
+        parts.append(clamp(100.0 - max(0.0, (hi - px) / hi) * 150.0))
+
     return (sum(parts) / len(parts)) if parts else None
+
+
+def _risk_pillar(t: dict) -> Optional[float]:
+    """Sixth pillar for the stock page. Prefers the attached `risk_score` so a
+    row that has already been scored cannot be re-derived differently here."""
+    v = t.get("risk_score")
+    if isinstance(v, (int, float)):
+        return float(v)
+    return _risk_score(t)
 
 
 def _sp_sparkline(sym: str) -> str:
@@ -3570,13 +3591,11 @@ def _sp_data_sections(t: dict, sym: str, price: float):
         ("Sentiment", "sentiment", "#8B5CF6", "#A78BFA",
          ("Out of favour", "Mixed views", "Positive mood", "Market favourite"),
          "analyst &amp; crowd mood"),
-        # Sixth pillar is RISK, matching the in-app deck. Its caption says what
-        # the number is actually built from; the dashboard captions the same
-        # pillar "volatility & downside" while computing it from short interest
-        # and market-cap fit, so that wording is not carried over.
+        # Sixth pillar is RISK, from _risk_score — the same field the in-app
+        # deck reads, so the two surfaces show one number.
         ("Risk",      "risk",      "#EC4899", "#F472B6",
          ("High risk", "Above-avg risk", "Moderate risk", "Low risk"),
-         "short interest &amp; company size"),
+         "volatility &amp; drawdown"),
     ):
         v = _spf(_pil.get(k))
         if v is None: continue
@@ -5083,6 +5102,11 @@ async def api_universe():
             row["eps_quarters"] = epsq[-4:]
         row["indices"]  = _idx_for(row.get("ticker", ""))
         row["profiles"] = _assign_profile(row)
+        # Risk pillar, computed once here so the dashboard and the stock page
+        # cannot drift. See _risk_score: volatility and drawdown, 100 = calmest.
+        _rs = _risk_score(row)
+        if _rs is not None:
+            row["risk_score"] = round(_rs)
         slim.append(row)
     # ── the long tail ────────────────────────────────────────────────
     # Everything in the full listed universe that the enrichment pipeline
