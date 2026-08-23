@@ -307,6 +307,43 @@ html body .cta-brand .brand-m circle{fill:#FF6100!important}
 .nl-honey{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
 
 /* ---------- footer ---------- */
+/* ── SOFT GATE ────────────────────────────────────────────────────────────
+   The /stocks pattern (.sp-gate), generalised so the reference pages can use
+   it. Deliberately a CSS CLIP, not a server-side truncation: the full markup
+   stays in the page, so a crawler sees the whole thing and there is no
+   cloaking question, and the reader gets a clear "there is more, and it is
+   free" rather than a wall. Anyone who views source can read it all -- that
+   is the trade, and it is the right one for pages whose job is to rank. */
+.tm-gate{position:relative;overflow:hidden}
+/* 620px matches the /stocks gate and shows ~8 table rows: enough that the
+   page answers its own headline before it asks for anything. */
+.tm-gate-inner{max-height:620px;overflow:hidden;padding-bottom:36px}
+.tm-gate-veil{position:absolute;left:0;right:0;bottom:0;height:230px;pointer-events:none;
+  background:linear-gradient(180deg,rgba(255,242,236,0) 0%,rgba(255,242,236,.9) 58%,var(--peach) 100%)}
+/* A card in normal flow, never an overlay -- an overlay prints across
+   whatever happens to sit underneath it. */
+.tm-gate-cta{margin:6px 0 30px;padding:32px 30px 30px;text-align:center;
+  background:var(--surface);border:1px solid var(--rule);border-radius:18px;
+  box-shadow:0 14px 40px -30px rgba(10,47,70,.4)}
+.tm-gate-h{font-size:21px;font-weight:500;color:var(--primary);margin:0 0 9px;letter-spacing:-.01em}
+.tm-gate-p{font-size:14.5px;font-weight:300;color:var(--grey);max-width:56ch;margin:0 auto 20px}
+.tm-gate-grid{list-style:none;margin:0 auto 24px;padding:0;max-width:820px;display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;text-align:left}
+.tm-gate-grid li{background:var(--alt);border-radius:12px;padding:13px 15px}
+.tm-gate-grid b{display:block;font-size:13.5px;font-weight:500;color:var(--primary);margin-bottom:3px}
+.tm-gate-grid span{font-size:12.5px;line-height:1.5;color:var(--grey);font-weight:300}
+.tm-gate-btn{display:inline-flex;align-items:center;gap:11px;background:var(--primary);
+  color:#fff!important;border-radius:100px;padding:11px 13px 11px 26px;font-size:15px;
+  font-weight:500;position:relative;z-index:0;overflow:hidden}
+.tm-gate-btn::before{content:"";position:absolute;inset:0;border-radius:inherit;z-index:-1;
+  box-shadow:inset 0 0 0 0 var(--accent-safe);transition:box-shadow var(--t-base) var(--e-out)}
+.tm-gate-btn:hover{text-decoration:none;color:#fff!important}
+.tm-gate-btn:hover::before{box-shadow:inset 0 0 0 90px var(--accent-safe)}
+.tm-gate-arw{width:29px;height:29px;border-radius:50%;background:var(--accent);display:grid;
+  place-items:center;font-size:14px;transition:transform var(--t-base) var(--e-spring)}
+.tm-gate-btn:hover .tm-gate-arw{transform:translateX(3px)}
+.tm-gate-fine{font-size:12.5px;color:var(--grey-2);margin:14px 0 0;font-weight:300}
+
 .tm-foot{background-image:radial-gradient(circle at 0% 0%,#001C31 -55%,#0A2F47 35%,#0A2F47 50%,#001C31 100%);
   color:#CFE0EA;margin-top:0}
 .tm-foot-in{max-width:var(--wrap);margin:0 auto;padding:36px 24px 24px}

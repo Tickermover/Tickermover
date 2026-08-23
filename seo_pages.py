@@ -95,6 +95,36 @@ def newsletter_block(source: str = "", title: str = "", copy: str = "",
 """
 
 
+def gate(inner_html: str, heading: str, blurb: str, points: list,
+         cta: str = "Create a free account") -> str:
+    """Clip `inner_html` behind a fade and follow it with a sign-up card.
+
+    The same treatment /stocks/{TICKER} uses (.sp-gate), which is where this
+    started: the full markup stays in the page -- this is a CSS clip, not a
+    server-side truncation -- so a crawler still sees everything and there is
+    no cloaking question to answer. What it buys is a clear "there is more,
+    and it is free" at the moment the reader is furthest into the page.
+
+    Two rules for callers: never gate the thing the page's own title promises
+    (a sector page has to show its ranking, a screen its matches), and never
+    gate methodology or legal copy -- those are the pages that earn trust.
+    """
+    lis = "".join("<li><b>" + html.escape(t) + "</b><span>" + html.escape(d) + "</span></li>"
+                  for t, d in points)
+    return (
+        '<div class="tm-gate"><div class="tm-gate-inner">' + inner_html
+        + '</div><div class="tm-gate-veil" aria-hidden="true"></div></div>'
+        '<aside class="tm-gate-cta">'
+        '<p class="tm-gate-h">' + html.escape(heading) + "</p>"
+        '<p class="tm-gate-p">' + html.escape(blurb) + "</p>"
+        '<ul class="tm-gate-grid">' + lis + "</ul>"
+        '<a class="tm-gate-btn" href="/login?signup"><span>' + html.escape(cta) + "</span>"
+        '<span class="tm-gate-arw">&rarr;</span></a>'
+        '<p class="tm-gate-fine">Free. No card. Everything on this page stays free to read.</p>'
+        "</aside>"
+    )
+
+
 def cta_block(label: str = "Open the live dashboard", href: str = "/app?signup=1",
               n: int | None = None) -> str:
     """`n` is the scored-universe count. These pages are returned raw, NOT
@@ -628,10 +658,17 @@ def render_sector(slug: str, universe: list[dict], site_origin: str) -> Optional
   <h1>{label} stocks, ranked</h1>
   <p class="lede">Live ranking of {n} {label} stocks by TickerMover Quant Score — a 0-100 composite of fundamentals, valuation, momentum, analyst signal, and macro regime. Click any ticker for the full breakdown.</p>
   {profile_html}
-  <table class="tbl">
-    <thead><tr><th>Ticker</th><th>Grade</th><th>Score</th><th>Bottom line</th></tr></thead>
-    <tbody>{table_html or '<tr><td colspan="4">No stocks scored in this sector yet — the universe is warming up.</td></tr>'}</tbody>
-  </table>
+  {gate(
+      '<table class="tbl">'
+      '<thead><tr><th>Ticker</th><th>Grade</th><th>Score</th><th>Bottom line</th></tr></thead>'
+      '<tbody>' + (table_html or '<tr><td colspan="4">No stocks scored in this sector yet — the universe is warming up.</td></tr>') + '</tbody>'
+      '</table>',
+      heading="The rest of the " + label + " ranking is free — you just need an account",
+      blurb="Every name above opens into its full workup, and the ranking is yours to "
+            "sort, filter and save once you are signed in.",
+      points=[("The whole sector", "All " + str(n) + " scored names, not the first screenful."),
+              ("Sort and filter", "Rank on any pillar — growth, value, momentum — and save the view."),
+              ("Watchlist", "Keep the names you care about and pick them up tomorrow.")])}
   <p style="font-size:13px;color:#5d6c7b">Quant Scores update every 5 minutes during US market hours. Grades: <strong>A</strong> Top Tier · <strong>B</strong> Quality · <strong>C</strong> Average · <strong>D</strong> Below Avg · <strong>F</strong> Weak. (Quality descriptors, not buy/sell recommendations.)</p>
   {cta_block("See the full live dashboard", n=len(universe or []) or None)}
   {newsletter_block("sector-" + slug)}
@@ -1117,7 +1154,14 @@ def render_comparison(a: str, b: str, universe: list[dict], site_origin: str) ->
       <tbody>{trs}</tbody>
     </table>
   </div>
-  {study_html}
+  {gate(study_html,
+        heading="The rest of the " + a + " vs " + b + " workup is free — you just need an account",
+        blurb="The table above is the measurable half. The written comparison, the peer set "
+              "and both full workups sit behind a free account.",
+        points=[("Both companies in full", "Every metric, filing and event on " + a + " and " + b + "."),
+                ("Wider peer set", "Compare either name against its real comparables, not just this pair."),
+                ("Kept current", "Re-measured as the numbers move, so the read does not go stale.")])
+    if study_html else ""}
   <h2>How the Quant Score works</h2>
   <p>It blends fundamentals, valuation, momentum, analyst signal and macro regime into one 0-100 number. It is a quality descriptor, not a buy or sell signal. <a href="/learn/pop-score">Read the methodology →</a></p>
   <p>Full breakdowns: <a href="/stocks/{a}">{a}</a> · <a href="/stocks/{b}">{b}</a>{(' · Both in <a href="/sectors/' + A['slug'] + '">' + (A['sector'] or '') + '</a>') if c['same_sector'] and A['slug'] else ''}</p>
@@ -1563,12 +1607,22 @@ def render_screen(scan_id: str, universe: list, site_origin: str):
      A screen is a filter over public data, not a recommendation &mdash; it tells you which
      companies currently meet a measurable condition, and nothing about whether any of them
      suits you.</div>
-  <div class="scr-wrap">
-    <table class="scr">
-      <thead><tr><th>Company</th>{head_cells}</tr></thead>
-      <tbody>{body_rows or empty_row}</tbody>
-    </table>
-  </div>
+  {gate(
+      '<div class="scr-wrap"><table class="scr">'
+      '<thead><tr><th>Company</th>' + head_cells + '</tr></thead>'
+      '<tbody>' + (body_rows or empty_row) + '</tbody>'
+      '</table></div>',
+      heading="The other " + str(max(matched - 8, 0)) + " names are free — you just need an account",
+      blurb="This screen re-runs every five minutes. Signed in, you can run it against your "
+            "own thresholds instead of ours, and keep the result.",
+      points=[("All " + str(matched) + " matches", "Not the first screenful — the whole list, with every column."),
+              ("Your own thresholds", "Change any condition and save the screen to re-run tomorrow."),
+              ("Every name opens", "Full workup on each company, one click from the row.")])
+   if matched > 8 else
+   '<div class="scr-wrap"><table class="scr">'
+   '<thead><tr><th>Company</th>' + head_cells + '</tr></thead>'
+   '<tbody>' + (body_rows or empty_row) + '</tbody>'
+   '</table></div>'}
   <h2>Other screens</h2>
   <div class="scr-rel">{rel_html}</div>
   <h2>How the Quant Score works</h2>
