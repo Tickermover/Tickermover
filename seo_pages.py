@@ -888,24 +888,10 @@ def render_sector_index(universe: list[dict], site_origin: str) -> str:
     outlier can carry a sector.
     These are quality and characteristic descriptors, not buy or sell signals.
   </div>
-  <div class="si-wrap">
-    <table class="si">
-      <thead><tr>
-        <th>Sub-sector</th>
-        <th>Names<i>count</i></th>
-        <th>Size<i>total mkt cap</i></th>
-        <th>Quant<i>median</i></th>
-        <th>Spread<i>mid 50%</i></th>
-        <th>Strong<i>scoring 65+</i></th>
-        <th>3m<i>median move</i></th>
-        <th>P/E<i>median</i></th>
-        <th>Growth<i>median</i></th>
-        <th>Sector growth<i>weighted by size</i></th>
-        <th>Margin<i>median net</i></th>
-      </tr></thead>
-      <tbody>{body_rows}</tbody>
-    </table>
-  </div>
+  {gate('<div class="si-wrap">\n    <table class="si">\n      <thead><tr>\n        <th>Sub-sector</th>\n        <th>Names<i>count</i></th>\n        <th>Size<i>total mkt cap</i></th>\n        <th>Quant<i>median</i></th>\n        <th>Spread<i>mid 50%</i></th>\n        <th>Strong<i>scoring 65+</i></th>\n        <th>3m<i>median move</i></th>\n        <th>P/E<i>median</i></th>\n        <th>Growth<i>median</i></th>\n        <th>Sector growth<i>weighted by size</i></th>\n        <th>Margin<i>median net</i></th>\n      </tr></thead>\n      <tbody>' + body_rows + '</tbody>\n    </table>\n  </div>',
+        heading='The whole sub-sector table is free — you just need an account',
+        blurb='Every group here opens into its own ranking, and the table is yours to sort and filter once you are signed in.',
+        points=[('Every sub-sector', 'Not the first screenful — the full table, every column.'), ('Sort on any column', 'Rank groups by size, quant, spread or momentum.'), ('Straight into the names', 'Open any group and work down its ranking.')])}
   <p style="font-size:13px;color:#5d6c7b">Scores refresh every 5 minutes during US market hours. Grades: <strong>A</strong> Top Tier · <strong>B</strong> Quality · <strong>C</strong> Average · <strong>D</strong> Below Avg · <strong>F</strong> Weak — quality descriptors, not recommendations.</p>
   {cta_block("Open the live dashboard", n=n_names or None)}
   {newsletter_block("sectors-index")}
@@ -1254,12 +1240,10 @@ def render_compare_index(universe: list[dict], site_origin: str) -> str:
     valuation and margin norms differ between industries: across sub-sectors the figures are not
     strictly like-for-like. None of these pages picks a winner.
   </div>
-  <div class="si-wrap">
-    <table class="si">
-      <thead><tr><th>Matchup</th><th>Quant (left)</th><th>Quant (right)</th><th>Differ on</th><th>Comparable?</th></tr></thead>
-      <tbody>{body_rows}</tbody>
-    </table>
-  </div>
+  {gate('<div class="si-wrap">\n    <table class="si">\n      <thead><tr><th>Matchup</th><th>Quant (left)</th><th>Quant (right)</th><th>Differ on</th><th>Comparable?</th></tr></thead>\n      <tbody>' + body_rows + '</tbody>\n    </table>\n  </div>',
+        heading='Every matchup is free — you just need an account',
+        blurb='These are the pairings we publish. Signed in, you can compare any two names we cover, not only the curated list.',
+        points=[('Any pair you like', 'Build a comparison from the whole covered universe.'), ('Both workups in full', 'Every metric and filing behind each side of the table.'), ('Kept current', 'Re-measured as the numbers move, so a saved pair stays useful.')])}
   {cta_block("Open the live dashboard")}
   {newsletter_block("compare-index")}
   <div class="legal">TickerMover — research, not advice, and not FCA-authorised. Capital at risk.</div>
@@ -1711,7 +1695,13 @@ def render_screen_index(universe: list, site_origin: str) -> str:
   <p class="lede">{n_screens} screens run over every scored US stock we cover, rebuilt every
      5 minutes. Each one is a measurable condition &mdash; a margin, a multiple, a filing, a
      price level &mdash; not a view on what to own.</p>
-  {groups_html}
+  {gate(groups_html,
+        heading="All " + str(n_screens) + " screens are free — you just need an account",
+        blurb="Every screen re-runs every five minutes. Signed in, you can run any of them "
+              "against your own thresholds and keep the result.",
+        points=[("Every screen", "Not the first few — all " + str(n_screens) + ", across quality, value, momentum and risk."),
+                ("Your own thresholds", "Change any condition and save the screen to re-run tomorrow."),
+                ("Alerts on what enters", "See what joins and drops out of a screen without checking it.")])}
   <h2>How to use a screen</h2>
   <p>A screen narrows a universe; it does not pick anything. Two companies passing the same
      filter can be completely different businesses, which is why every result links through to

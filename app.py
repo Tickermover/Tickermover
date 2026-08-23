@@ -2696,7 +2696,13 @@ async def reports_index():
   <div class="rp-lh"><span>Ticker</span><span>Name</span><span class="sect-h">Sector</span>
     <span class="chg-h" style="text-align:right">Day</span>
     <span style="text-align:right">Quant Score</span></div>
-  <div class="rp-rows">{rows_html}</div>
+  {_seo.gate('<div class="rp-rows">' + rows_html + "</div>",
+             heading="Every scored company is free — you just need an account",
+             blurb="The whole covered universe is here. Signed in, it is sortable, "
+                   "filterable and yours to keep as a watchlist.",
+             points=[("The full universe", "Every scored name, not the first screenful."),
+                     ("Sort and filter", "Rank on any pillar and save the view you use."),
+                     ("Watchlist", "Keep the names you care about and pick them up tomorrow.")])}
 </div>
 
 <p class="rp-note">Quant Scores are quantitative summaries of public information, not buy or sell
@@ -7341,7 +7347,14 @@ async def who_benefits_hub_page():
         + '<p class="lede">' + str(len(live)) + " maps tracing a spending theme through the "
           "companies that capture it, layer by layer, with every company's share estimated "
           "from its own reported revenue. Descriptive supply-chain research, not forecasts.</p>"
-        + '<div class="wb-grid">' + cards + "</div>"
+        + _seo.gate(
+            '<div class="wb-grid">' + cards + "</div>",
+            heading="Every chain map is free — you just need an account",
+            blurb=("The maps stay open to read. An account is what lets you keep what is in "
+                   "them: the companies, the split, and next week's map when it lands."),
+            points=[("All " + str(len(live)) + " maps", "The full library, not the first screenful."),
+                    ("Keep the companies", "Turn any chain into a watchlist in one click."),
+                    ("The new map each week", "A new chain published every Sunday, waiting for you.")])
         + credits
         + "<h2>How to read a chain map</h2>"
         + "<p>Each map starts from a pool of spending and follows it down the chain: who sells "
