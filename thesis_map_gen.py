@@ -84,6 +84,58 @@ DRIVER_POOL: list[dict] = [
      "angle": "Engines, parts, MRO, lessors and the airlines paying for it."},
     {"key": "fiber-buildout", "driver": "the fibre and connectivity build-out",
      "angle": "Optics, cable, construction, towers and the carriers."},
+
+    # ── Growth and emerging themes, added 23 Aug 2026 ──────────────────────
+    # The pool is the publication schedule: one entry is one week, and at 20
+    # entries the maps would have run dry inside five months. These are chosen
+    # on the same test as the rest -- can you name four distinct layers of
+    # LISTED companies that get paid from this -- which is what rules out the
+    # themes that read exciting and have no chain beneath them (fusion, most
+    # of longevity, vertical farming).
+    {"key": "humanoid-robotics", "driver": "the humanoid robot build-out",
+     "angle": "Actuators, harmonic drives, vision, edge silicon and the first buyers."},
+    {"key": "advanced-packaging", "driver": "advanced chip packaging",
+     "angle": "CoWoS and HBM stacking: OSATs, bonders, substrates, test."},
+    {"key": "behind-the-meter-power", "driver": "on-site power for data centres",
+     "angle": "Gas turbines, fuel cells, gensets, switchgear and the operators buying them."},
+    {"key": "datacenter-construction", "driver": "the physical data-centre build",
+     "angle": "Land and shell, concrete and steel, electrical contracting, commissioning."},
+    {"key": "power-semis", "driver": "silicon carbide and GaN power semiconductors",
+     "angle": "Substrates, devices, modules and the EV, grid and datacentre buyers."},
+    {"key": "hydrogen-economy", "driver": "the hydrogen build-out",
+     "angle": "Electrolysers, industrial gases, storage, pipelines and the offtakers."},
+    {"key": "carbon-capture", "driver": "carbon capture and storage",
+     "angle": "Capture kit, EPC, compression, pipelines and the emitters paying."},
+    {"key": "lng-export", "driver": "the LNG export build-out",
+     "angle": "Liquefaction trains, EPC, shipping, terminals and the producers."},
+    {"key": "copper-supply", "driver": "the copper supply crunch",
+     "angle": "Miners, smelters, wire and cable, and the grid and EV buyers."},
+    {"key": "shipbuilding-maritime", "driver": "naval shipbuilding and maritime security",
+     "angle": "Yards, propulsion, sensors, munitions and the sustainment tail."},
+    {"key": "defense-drones", "driver": "drones and counter-drone",
+     "angle": "Airframes, autonomy software, sensors, jammers and the primes integrating them."},
+    {"key": "subsea-cables", "driver": "the subsea cable build-out",
+     "angle": "Cable manufacture, laying vessels, landing stations, repeaters and the hyperscalers funding it."},
+    {"key": "quantum-computing", "driver": "quantum computing",
+     "angle": "Qubit hardware, cryogenics, control electronics, cloud access and the early buyers."},
+    {"key": "robotaxi-autonomy", "driver": "autonomy going commercial",
+     "angle": "Compute, lidar and radar, mapping, fleet operations and the OEMs."},
+    {"key": "surgical-robotics", "driver": "robotic surgery",
+     "angle": "Systems, instruments and consumables, imaging, and the hospitals buying."},
+    {"key": "early-cancer-detection", "driver": "early cancer detection",
+     "angle": "Sequencing, assays, labs, reimbursement and the pharma buyers of the data."},
+    {"key": "ai-drug-discovery", "driver": "AI in drug discovery",
+     "angle": "Compute, software, CROs and the pharma programmes actually using it."},
+    {"key": "heat-electrification", "driver": "the electrification of heat",
+     "angle": "Heat pumps, controls, distribution, installers and the utilities incentivising it."},
+    {"key": "digital-identity", "driver": "digital identity and fraud prevention",
+     "angle": "Verification, device signals, orchestration and the banks and marketplaces buying."},
+    {"key": "rail-freight", "driver": "freight rail and intermodal renewal",
+     "angle": "Locomotives, wagons, components, terminals and the railroads."},
+    {"key": "animal-health", "driver": "animal health and pet care",
+     "angle": "Pharma, diagnostics, clinics, food and the retail channel."},
+    {"key": "space-defense", "driver": "military space",
+     "angle": "Small satellites, launch, ground segment, comms and the primes."},
 ]
 
 

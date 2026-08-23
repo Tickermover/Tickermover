@@ -6131,8 +6131,21 @@ async def _thesis_map_publisher() -> None:
             now = _et_now()
             wk = _week_start(now)
             have_this_week = any((m.get("week_start") or "") == wk for m in _gen_theses)
-            if not have_this_week and now.weekday() == 6 and now.hour >= 17:
-                await _build_weekly_map()
+            # Sunday 17:00 ET is when the week's map is MEANT to land, but it
+            # was also the only chance it ever got: generation runs through the
+            # free LLM chain, and when every provider is rate-limited or has
+            # retired the model id underneath us, the hourly retries run out at
+            # midnight and the week silently ships nothing. Monday and Tuesday
+            # are catch-up days -- `have_this_week` already makes a second map
+            # impossible, so this can only ever fill a gap, never double up.
+            due = (now.weekday() == 6 and now.hour >= 17) or now.weekday() in (0, 1)
+            if not have_this_week and due:
+                built = await _build_weekly_map()
+                if not built:
+                    # loud, because a quiet failure here is a week with no
+                    # publication and nothing on the page to say why
+                    logger.warning("🧭 Weekly chain map did NOT build for week %s "
+                                   "(day=%s hour=%s) — will retry", wk, now.weekday(), now.hour)
             # Wednesday: re-cut the single most out-of-date map. The market
             # sizes on these pages ("~$500B/yr run-rate", "~30% deployed") are
             # a point-in-time read; left alone they keep presenting a stale
@@ -6702,6 +6715,12 @@ async def api_theses():
         # surfaces cannot drift as maps are added.
         m["art"] = _chain_art.thumb_svg(m.get("slug") or "", m.get("title") or "",
                                         m.get("standfirst") or "", cls="tm-art")
+        # The card used to badge every live map "LIVE", which says nothing --
+        # of course it is live, it is on the page. The date it was cut is the
+        # thing a reader actually wants. Generated maps carry generated_at;
+        # the curated ten fall back to the file's as_of.
+        m["updated"] = ((t.get("generated_at") or "")[:10]
+                        or t.get("week_start") or d.get("as_of") or "")
         ph = _chain_photo.cached(m.get("slug") or "")
         if ph:
             m["photo"] = {k: ph.get(k) for k in
@@ -7245,6 +7264,10 @@ async def who_benefits_hub_page():
         slug = (t.get("slug") or "").lower()
         n_names = sum(len(L.get("names") or []) for L in (t.get("layers") or []))
         photo = _chain_photo.cached(slug)
+        # the date the weights were cut: generated maps carry their own, the
+        # curated ten fall back to the file's as_of
+        upd = ((t.get("generated_at") or "")[:10] or t.get("week_start")
+               or (_load_theses().get("as_of") or ""))
         sf = re.sub(r"\s+", " ", (t.get("standfirst") or "")).strip()
         # Break on a word, not a character. This card used to end "each layer's
         # and each company's shar" -- a hard [:190] slice mid-word, on the most
@@ -7256,10 +7279,11 @@ async def who_benefits_hub_page():
             + '<span class="wb-thumb">'
             # a real photograph when the prewarm has fetched one; the generated
             # glyph is the fallback, so a new map is never a blank card
+            # no credit stamp over the picture -- the photographers are named
+            # once, under the grid, which is what the Unsplash API terms ask
+            # for without putting a chip on every card
             + (('<img class="wb-photo" src="' + _h.escape(photo.get("thumb") or photo.get("url") or "")
-                + '" alt="' + _h.escape(photo.get("alt") or "") + '" loading="lazy" decoding="async">'
-                + '<span class="wb-credit">' + _h.escape(photo.get("credit_name") or "")
-                + " / " + _h.escape(photo.get("source") or "") + "</span>")
+                + '" alt="' + _h.escape(photo.get("alt") or "") + '" loading="lazy" decoding="async">')
                if photo else
                _chain_art.thumb_svg(slug, t.get("title") or "", t.get("standfirst") or ""))
             + "</span>"
@@ -7268,9 +7292,25 @@ async def who_benefits_hub_page():
             + '<span class="wb-eyebrow">' + _h.escape(t.get("eyebrow") or "Capex Chain") + "</span>"
             + "<h2>" + _h.escape(t.get("title") or slug) + "</h2>"
             + "<p>" + _h.escape(sf) + "</p>"
-            + ('<span class="wb-n">' + str(n_names) + " companies mapped</span>" if n_names else "")
-            + "</div></a>"
+            + '<span class="wb-n">'
+            + (str(n_names) + " companies mapped" if n_names else "")
+            + ((" &middot; " if n_names else "") + "cut " + _h.escape(_fmt_map_date(upd))
+               if upd else "")
+            + "</span></div></a>"
         )
+    # One credit line for the whole grid rather than a chip on every photo.
+    # The Unsplash API terms want the photographer and Unsplash named with a
+    # link back; they do not ask for it stamped across the picture.
+    names, seen = [], set()
+    for t in live:
+        ph = _chain_photo.cached((t.get("slug") or "").lower()) or {}
+        nm = (ph.get("credit_name") or "").strip()
+        if nm and nm not in seen:
+            seen.add(nm)
+            names.append(_h.escape(nm))
+    credits = ('<p class="wb-credits">Photography by ' + ", ".join(names)
+               + ' on <a href="https://unsplash.com" rel="noopener">Unsplash</a>.</p>'
+               ) if names else ""
     schema = (
         _json.dumps({
             "@context": "https://schema.org", "@type": "ItemList",
@@ -7302,6 +7342,7 @@ async def who_benefits_hub_page():
           "companies that capture it, layer by layer, with every company's share estimated "
           "from its own reported revenue. Descriptive supply-chain research, not forecasts.</p>"
         + '<div class="wb-grid">' + cards + "</div>"
+        + credits
         + "<h2>How to read a chain map</h2>"
         + "<p>Each map starts from a pool of spending and follows it down the chain: who sells "
           "the picks and shovels, who assembles, who operates, who bills the end customer. A "
@@ -7331,6 +7372,22 @@ async def who_benefits_hub_page():
         og_image=SITE_ORIGIN + "/static/icons/icon-512.png"))
 
 
+def _fmt_map_date(iso: str) -> str:
+    """"2026-08-16" -> "16 Aug 2026". Empty for anything unparseable, so a bad
+    date prints nothing rather than a broken one."""
+    try:
+        from datetime import datetime as _dt
+        return _dt.strptime((iso or "")[:10], "%Y-%m-%d").strftime("%-d %b %Y")
+    except Exception:
+        try:
+            from datetime import datetime as _dt
+            # %-d is not portable to Windows; this is the same thing without it
+            d = _dt.strptime((iso or "")[:10], "%Y-%m-%d")
+            return "%d %s %d" % (d.day, d.strftime("%b"), d.year)
+        except Exception:
+            return ""
+
+
 _WB_HUB_CSS = """<style>
 .wb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:16px;
   margin:0 0 34px}
@@ -7345,11 +7402,10 @@ _WB_HUB_CSS = """<style>
 .wb-thumb{display:block;position:relative;border-bottom:1px solid #E8EBEE;background:#F7F9FA}
 .wb-art{display:block;width:100%;height:auto;aspect-ratio:320/116}
 .wb-photo{display:block;width:100%;height:auto;aspect-ratio:320/116;object-fit:cover}
-/* the Unsplash/Pexels licence wants the photographer named; small, low-contrast
-   and out of the way, but present on every photo we did not take */
-.wb-credit{position:absolute;right:7px;bottom:6px;font-family:var(--mono);font-size:9px;
-  letter-spacing:.04em;color:#fff;background:rgba(10,31,54,.42);padding:2px 6px;
-  border-radius:100px;backdrop-filter:blur(2px)}
+/* the licence wants the photographers named -- once, under the grid, rather
+   than stamped across every card */
+.wb-credits{font-size:12px;color:var(--grey-2);margin:-18px 0 34px;font-weight:300}
+.wb-credits a{color:var(--grey-2);text-decoration:underline}
 .wb-body{padding:17px 22px 20px}
 .wb-eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.14em;
   text-transform:uppercase;color:#9A3412;font-weight:700}

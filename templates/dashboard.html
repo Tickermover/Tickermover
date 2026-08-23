@@ -1002,14 +1002,16 @@ body.no-pro #upgrade-modal,body.no-pro .upgrade-cta,body.no-pro .pro-lock{displa
 #panel-theses .tm-thumb{display:block;position:relative;border-bottom:1px solid #EDEFF2;background:#F7F9FA}
 #panel-theses .tm-art{display:block;width:100%;height:auto;aspect-ratio:320/116}
 #panel-theses .tm-photo{display:block;width:100%;height:auto;aspect-ratio:320/116;object-fit:cover}
-#panel-theses .tm-credit{position:absolute;right:7px;bottom:6px;font-family:'JetBrains Mono',monospace;
-  font-size:9px;letter-spacing:.04em;color:#fff;background:rgba(10,31,54,.42);padding:2px 6px;border-radius:100px}
+#panel-theses .tm-credits{font-size:11.5px;font-weight:400;color:#94a3b8;margin:0 0 12px}
+#panel-theses .tm-credits a{color:#94a3b8;text-decoration:underline}
 #panel-theses .tm-body{display:flex;flex-direction:column;flex:1;padding:17px 21px 20px}
 #panel-theses a.tm-card:hover{transform:translateY(-2px);border-color:#C7CEF0;box-shadow:0 12px 28px -16px rgba(10,31,54,.4)}
 #panel-theses .tm-eye{display:flex;justify-content:space-between;align-items:center;font-family:'JetBrains Mono',monospace;
   font-size:9.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#94a3b8;margin-bottom:11px}
 #panel-theses .tm-tag{border-radius:100px;padding:3px 9px;font-size:9px;font-weight:700;letter-spacing:.06em}
-#panel-theses .tm-tag.live{background:rgba(22,163,74,.12);color:#15803d}
+/* The badge is a DATE now, not a status word: neutral ink, not the green
+   that means "good" everywhere else in this app. */
+#panel-theses .tm-tag.live{background:#F2F1EE;color:#5D6C7B;letter-spacing:.04em}
 #panel-theses .tm-tag.soon{background:#F2F1EE;color:#94a3b8}
 #panel-theses .tm-t{font-size:20px;font-weight:600;line-height:1.15;letter-spacing:-.015em;color:#0A2F46;margin:0 0 9px}
 #panel-theses .tm-t em{font-style:normal;color:#4A5BC4}
@@ -19990,6 +19992,31 @@ async function loadTheses(){
   _tmRender(_tmData);
 }
 
+/* "2026-08-16" -> "16 Aug 2026". Returns '' for anything unparseable so the
+   badge falls back to its old label rather than printing "Invalid Date". */
+function _tmDate(iso){
+  var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso || ''));
+  if (!m) return '';
+  var mon = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][+m[2]-1];
+  return mon ? (+m[3]) + ' ' + mon + ' ' + m[1] : '';
+}
+
+/* One credit line for the whole grid. The Unsplash API terms want the
+   photographer and Unsplash named with a link back; they do not want it
+   stamped across the picture, and the user asked for the stamps to go. */
+function _tmCredits(list){
+  var seen = {}, out = [];
+  (list || []).forEach(function(t){
+    var p = t.photo;
+    if (!p || !p.credit_name || seen[p.credit_name]) return;
+    seen[p.credit_name] = 1;
+    out.push(_pipEsc(p.credit_name));
+  });
+  if (!out.length) return '';
+  return '<p class="tm-credits">Photography by ' + out.join(', ') +
+    ' on <a href="https://unsplash.com" target="_blank" rel="noopener">Unsplash</a>.</p>';
+}
+
 function _tmRender(d){
   var host = document.getElementById('tmBody');
   var list = (d && d.theses) || [];
@@ -20012,7 +20039,7 @@ function _tmRender(d){
       'providers — are not part of a capital-spending chain.' +
       (_tmRoster.status === 'building' ? ' <i>Still classifying.</i>' : '') + '</div>';
   }
-  host.innerHTML = summary + '<div class="tm-grid">' + list.map(function(t){
+  host.innerHTML = summary + _tmCredits(list) + '<div class="tm-grid">' + list.map(function(t){
     var live = String(t.status || '').toLowerCase() === 'live';
     var title = _pipEsc(t.title || '');
     /* The API marks a phrase to emphasise; highlight it rather than dropping it. */
@@ -20028,16 +20055,23 @@ function _tmRender(d){
            the fallback, so a map published this Sunday is never a blank card. */
         var ph = t.photo;
         if (ph && ph.thumb) {
+          /* No credit chip on the picture: it sat over the photo on every
+             card and was the loudest thing in the grid. The photographers are
+             still named -- once, under the grid -- which is what the Unsplash
+             API terms ask for. See _tmCredits below. */
           return '<span class="tm-thumb"><img class="tm-photo" loading="lazy" decoding="async" src="' +
-            _pipEsc(ph.thumb) + '" alt="' + _pipEsc(ph.alt || '') + '">' +
-            '<span class="tm-credit">' + _pipEsc(ph.credit_name || '') + ' / ' +
-            _pipEsc(ph.source || '') + '</span></span>';
+            _pipEsc(ph.thumb) + '" alt="' + _pipEsc(ph.alt || '') + '"></span>';
         }
         return t.art ? '<span class="tm-thumb">' + t.art + '</span>' : '';
       })() +
       '<div class="tm-body">' +
       '<div class="tm-eye"><span>' + _pipEsc(t.eyebrow || 'Thesis Map') + '</span>' +
-        '<span class="tm-tag ' + (live ? 'live' : 'soon') + '">' + (live ? 'Live' : 'Soon') + '</span></div>' +
+        /* "LIVE" told the reader nothing -- everything on the page is live.
+           The date it was cut is the thing worth knowing about a map whose
+           weights are a point-in-time estimate. */
+        '<span class="tm-tag ' + (live ? 'live' : 'soon') + '"' +
+          (live && t.updated ? ' title="Weights last cut ' + _pipEsc(t.updated) + '"' : '') + '>' +
+          (live ? (_tmDate(t.updated) || 'Live') : 'Soon') + '</span></div>' +
       '<h3 class="tm-t">' + title + '</h3>' +
       '<p class="tm-s">' + _pipEsc(t.standfirst || '') + '</p>' +
       (function(){
