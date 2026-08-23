@@ -68,55 +68,30 @@ def brand_header() -> str:
     return ""
 
 
-def newsletter_block(source: str, title: str = "", copy: str = "",
+def newsletter_block(source: str = "", title: str = "", copy: str = "",
                     cta: str = "Subscribe") -> str:
-    """Inline newsletter capture block. `source` is recorded server-side
-    so we can attribute signups to the page they came from.
+    """The email capture is WITHDRAWN. What survives is the contact line.
 
-    `title`/`copy` let a page offer what that page is actually about. The
-    generic "weekly Quant Score digest" is a reasonable ask under an article;
-    under a head-to-head it ignores what the reader just came for."""
-    safe = (source or "unknown").replace('"', "")
-    title = title or "Get the weekly Quant Score digest"
-    copy = copy or ("Top-rated US stocks, conflict alerts, and Reverse-DCF reads "
-                    "&mdash; straight to your inbox every Sunday. Free.")
-    return f"""
-<div class="nl">
-  <h3>{title}</h3>
-  <p>{copy}</p>
-  <form id="nl-{safe}" autocomplete="off">
-    <input type="email" name="email" placeholder="you@email.com" required>
-    <input type="text" name="company" class="nl-honey" tabindex="-1" autocomplete="off">
-    <button type="submit">{cta}</button>
-  </form>
-  <div class="nl-msg" id="nl-msg-{safe}"></div>
-  <div style="margin-top:14px;font-size:12.5px;color:#758696">
-    Questions or feedback? Email <a href="mailto:support@tickermover.com" style="color:#14587D">support@tickermover.com</a>
-  </div>
+    It offered "the weekly Quant Score digest ... straight to your inbox every
+    Sunday", and no such email is sent: the weekly-editorial send is off by
+    default and the magazine has not published since 27 July, while the daily
+    brief runs only when DAILY_BRIEF_ENABLED is true. A new subscriber got one
+    welcome email and then silence. The user's call, seeing the block on a live
+    page: "we dont provide this."
+
+    Collecting an address for a mailing that is not sent is also the wrong side
+    of PECR/UK GDPR, which is why this is a withdrawal rather than a reword.
+
+    The signature keeps its arguments so the thirteen call sites and their
+    per-page copy stay valid: this is the one-line change that cannot miss one.
+    To restore, put the form back HERE and give it copy describing the mail that
+    actually goes out -- /api/newsletter/subscribe, the welcome send and the
+    unsubscribe token are all untouched and still work.
+    """
+    return """
+<div class="nl nl-quiet">
+  <p>Questions or feedback? Email <a href="mailto:support@tickermover.com">support@tickermover.com</a></p>
 </div>
-<script>
-(function(){{
-  var f = document.getElementById('nl-{safe}');
-  var m = document.getElementById('nl-msg-{safe}');
-  if (!f) return;
-  f.addEventListener('submit', async function(e){{
-    e.preventDefault();
-    var fd = new FormData(f);
-    if (fd.get('company')) {{ m.className='nl-msg ok'; m.textContent='Thanks!'; return; }}
-    m.className='nl-msg'; m.textContent='Sending…';
-    try {{
-      var r = await fetch('/api/newsletter/subscribe', {{
-        method:'POST',
-        headers:{{'Content-Type':'application/json'}},
-        body: JSON.stringify({{email: fd.get('email'), source: '{safe}'}})
-      }});
-      var j = await r.json().catch(function(){{return {{}}}});
-      if (r.ok) {{ m.className='nl-msg ok'; m.textContent=j.message||'Subscribed — check your inbox!'; f.reset(); }}
-      else {{ m.className='nl-msg err'; m.textContent=j.detail||'Something went wrong. Try again.'; }}
-    }} catch (err) {{ m.className='nl-msg err'; m.textContent='Network error. Try again.'; }}
-  }});
-}})();
-</script>
 """
 
 

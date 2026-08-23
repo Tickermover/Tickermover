@@ -298,6 +298,12 @@ html body .cta-brand .brand-m circle{fill:#FF6100!important}
 
 .nl .nl-msg{margin-top:10px;font-size:13.5px;font-weight:500;min-height:18px}
 .nl .nl-msg.ok{color:var(--up)} .nl .nl-msg.err{color:var(--down)}
+/* .nl-quiet: what is left of the newsletter card now the capture is gone -- one
+   contact line, so the page still ends on something rather than a panel around
+   a single sentence. See seo_pages.newsletter_block. */
+.nl.nl-quiet{margin-top:38px;padding:16px 20px;background:transparent;border:none;
+  border-top:1px solid var(--rule);border-radius:0}
+.nl.nl-quiet p{margin:0;font-size:13.5px;color:var(--grey-2)}
 .nl-honey{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
 
 /* ---------- footer ---------- */
