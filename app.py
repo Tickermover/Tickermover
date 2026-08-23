@@ -1811,6 +1811,7 @@ async def sitemap_xml():
     # Screens: query-shaped landing pages, high priority because they are the
     # pages most likely to match what someone actually searched for.
     parts.append(f'  <url><loc>{SITE_ORIGIN}/screens</loc><changefreq>daily</changefreq><priority>0.9</priority><lastmod>{today}</lastmod></url>')
+    parts.append(f'  <url><loc>{SITE_ORIGIN}/who-benefits</loc><changefreq>weekly</changefreq><priority>0.85</priority><lastmod>{today}</lastmod></url>')
     for _sid in getattr(_seo, "PUBLISHED_SCREENS", []):
         parts.append(
             f'  <url><loc>{SITE_ORIGIN}/screens/{_sid}</loc>'
@@ -6455,6 +6456,138 @@ async def api_theses():
                         headers={"Cache-Control": "public, max-age=300, s-maxage=600"})
 
 
+def _thesis_by_slug(slug: str) -> Optional[dict]:
+    """One thesis record, server-side. The page used to learn its own title
+    from a fetch, which meant a crawler never saw one."""
+    slug = (slug or "").lower().strip()
+    for t in (_load_theses().get("theses") or []):
+        if (t.get("slug") or "").lower() == slug:
+            return t
+    return None
+
+
+def _thesis_ssr(t: dict):
+    """(head_html, body_html) for one thesis map.
+
+    templates/thesis.html is a client-rendered app: every one of the eleven
+    maps shipped the SAME title, the SAME meta description, and an H1 reading
+    "Loading". To a crawler that is eleven duplicate pages with no content and
+    no heading, which is why none of this research ranks for anything despite
+    being the most original work on the site.
+
+    This injects the real title, description, canonical, Open Graph and schema
+    into the head, the real H1 into the body, and a server-rendered index of
+    the chain underneath the interactive map. The JS still runs and still
+    overwrites the H1 with the identical string; the difference is that the
+    HTML says something before it does.
+    """
+    import html as _h
+    import re
+    import json as _json
+    slug = (t.get("slug") or "").lower()
+    title = (t.get("title") or "Thesis map").strip()
+    standfirst = re.sub(r"\s+", " ", (t.get("standfirst") or "")).strip()
+    url = SITE_ORIGIN + "/who-benefits/" + slug
+
+    desc = (standfirst or title)[:157]
+    page_title = (title + " | TickerMover chain map")[:70]
+
+    layers_html = ""
+    for L in (t.get("layers") or []):
+        chips = ""
+        for n in (L.get("names") or []):
+            tk = (n.get("t") or "").upper()
+            if not tk:
+                continue
+            chips += ('<a class="tm-chip" href="/stocks/' + tk + '">'
+                      '<img loading="lazy" width="18" height="18" alt="" '
+                      'src="https://assets.parqet.com/logos/symbol/' + tk + '" '
+                      'onerror="this.remove()">'
+                      '<span>' + _h.escape(tk) + '</span></a>')
+        if chips:
+            layers_html += ('<div class="tm-layer"><h3>'
+                            + _h.escape(L.get("name") or "")
+                            + '</h3><div class="tm-chips">' + chips + '</div></div>')
+
+    how = re.sub(r"\s+", " ", (t.get("how") or "")).strip()
+    disc = re.sub(r"\s+", " ", (t.get("disclaimer") or "")).strip()
+
+    schema = (
+        _json.dumps({
+            "@context": "https://schema.org", "@type": "Article",
+            "headline": title[:110], "description": desc, "url": url,
+            "datePublished": t.get("as_of") or "", "dateModified": t.get("as_of") or "",
+            "author": {"@type": "Organization", "name": "TickerMover"},
+            "publisher": {"@type": "Organization", "name": "TickerMover",
+                          "logo": {"@type": "ImageObject",
+                                   "url": SITE_ORIGIN + "/static/icons/icon-512.png"}},
+            "isAccessibleForFree": True,
+        }, separators=(",", ":"))
+        + "</script>" + chr(10) + '<script type="application/ld+json">'
+        + _json.dumps({
+            "@context": "https://schema.org", "@type": "BreadcrumbList",
+            "itemListElement": [
+                {"@type": "ListItem", "position": 1, "name": "Home", "item": SITE_ORIGIN},
+                {"@type": "ListItem", "position": 2, "name": "Chain maps",
+                 "item": SITE_ORIGIN + "/who-benefits"},
+                {"@type": "ListItem", "position": 3, "name": title, "item": url},
+            ],
+        }, separators=(",", ":"))
+    )
+
+    head = (
+        "<title>" + _h.escape(page_title) + "</title>"
+        + '<meta name="description" content="' + _h.escape(desc) + '">'
+        + '<link rel="canonical" href="' + url + '">'
+        + '<meta property="og:type" content="article">'
+        + '<meta property="og:title" content="' + _h.escape(title) + '">'
+        + '<meta property="og:description" content="' + _h.escape(desc) + '">'
+        + '<meta property="og:url" content="' + url + '">'
+        + '<meta property="og:image" content="' + SITE_ORIGIN + "/og/thesis/" + slug + '.png">'
+        + '<meta name="twitter:card" content="summary_large_image">'
+        + '<script type="application/ld+json">' + schema + "</script>"
+    )
+
+    how_html = ("<h2>How this map is built</h2><p class=\"tm-ssr-how\">"
+                + _h.escape(how) + "</p>") if how else ""
+    body = (
+        '<section class="tm-ssr">'
+        "<h2>Companies in this chain</h2>"
+        '<p class="tm-ssr-lede">' + _h.escape(standfirst) + "</p>"
+        + layers_html
+        + how_html
+        + '<p class="tm-ssr-legal">' + _h.escape(disc) + "</p>"
+        + '<p class="tm-ssr-more"><a href="/who-benefits">All chain maps</a> &middot; '
+          '<a href="/screens">Stock screens</a> &middot; '
+          '<a href="/sectors">Sub-sectors compared</a> &middot; '
+          '<a href="/learn/pop-score">How the Quant Score works</a></p>'
+        "</section>"
+        + _THESIS_SSR_CSS
+    )
+    return head, body
+
+
+_THESIS_SSR_CSS = """<style>
+.tm-ssr{max-width:1100px;margin:26px auto 60px;padding:0 22px;
+  font-family:'Public Sans',system-ui,sans-serif}
+.tm-ssr h2{font-size:20px;font-weight:500;margin:30px 0 10px}
+.tm-ssr-lede{font-size:15px;line-height:1.65;opacity:.85;margin:0 0 20px;max-width:76ch}
+.tm-ssr-how{font-size:14px;line-height:1.65;opacity:.8;max-width:80ch}
+.tm-layer{margin:0 0 16px}
+.tm-layer h3{font-size:12px;letter-spacing:.1em;text-transform:uppercase;opacity:.6;
+  font-weight:700;margin:0 0 8px}
+.tm-chips{display:flex;flex-wrap:wrap;gap:7px}
+.tm-chip{display:inline-flex;align-items:center;gap:6px;padding:4px 11px 4px 4px;
+  border:1px solid rgba(128,128,128,.35);border-radius:99px;text-decoration:none;
+  font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12px}
+.tm-chip img{width:18px;height:18px;border-radius:50%;object-fit:contain;background:#fff}
+.tm-chip:hover{border-color:currentColor;text-decoration:none}
+.tm-ssr-legal{font-size:12px;line-height:1.6;opacity:.6;margin-top:22px;max-width:80ch}
+.tm-ssr-more{font-size:13.5px;margin-top:16px}
+</style>"""
+
+
+
 @app.get("/api/thesis-map/{slug}")
 async def api_thesis_map(slug: str):
     """Full dataset for one thesis map (only 'live' ones carry layer data).
@@ -6814,11 +6947,101 @@ async def theses_hub_page():
     return RedirectResponse(url="/app#who-benefits", status_code=307)
 
 
-@app.get("/who-benefits")
+@app.get("/who-benefits", response_class=HTMLResponse)
 async def who_benefits_hub_page():
-    """The gallery lives in the app; this is the public entry point."""
-    from fastapi.responses import RedirectResponse
-    return RedirectResponse(url="/app#who-benefits", status_code=307)
+    """Public hub for the chain maps.
+
+    This used to 307 into /app#who-benefits, which meant the eleven maps had no
+    crawlable path in at all: they sat in sitemap.xml with nothing linking to
+    them, and a JavaScript shell when reached. The maps are the most original
+    research on the site, so an index a crawler can walk is the whole point.
+    """
+    import html as _h
+    import re
+    import json as _json
+    live = [t for t in (_load_theses().get("theses") or []) if t.get("status") == "live"]
+    cards = ""
+    for t in live:
+        slug = (t.get("slug") or "").lower()
+        n_names = sum(len(L.get("names") or []) for L in (t.get("layers") or []))
+        sf = re.sub(r"\s+", " ", (t.get("standfirst") or "")).strip()[:190]
+        cards += (
+            '<a class="wb-card" href="/who-benefits/' + slug + '">'
+            + '<span class="wb-eyebrow">' + _h.escape(t.get("eyebrow") or "Chain map") + "</span>"
+            + "<h2>" + _h.escape(t.get("title") or slug) + "</h2>"
+            + "<p>" + _h.escape(sf) + "</p>"
+            + ('<span class="wb-n">' + str(n_names) + " companies mapped</span>" if n_names else "")
+            + "</a>"
+        )
+    schema = (
+        _json.dumps({
+            "@context": "https://schema.org", "@type": "ItemList",
+            "name": "TickerMover chain maps", "url": SITE_ORIGIN + "/who-benefits",
+            "numberOfItems": len(live),
+            "itemListElement": [
+                {"@type": "ListItem", "position": i + 1,
+                 "url": SITE_ORIGIN + "/who-benefits/" + (t.get("slug") or "").lower(),
+                 "name": t.get("title") or ""}
+                for i, t in enumerate(live)
+            ],
+        }, separators=(",", ":"))
+        + "</script>" + chr(10) + '<script type="application/ld+json">'
+        + _json.dumps({
+            "@context": "https://schema.org", "@type": "BreadcrumbList",
+            "itemListElement": [
+                {"@type": "ListItem", "position": 1, "name": "Home", "item": SITE_ORIGIN},
+                {"@type": "ListItem", "position": 2, "name": "Chain maps",
+                 "item": SITE_ORIGIN + "/who-benefits"},
+            ],
+        }, separators=(",", ":"))
+    )
+    body = (
+        '<div class="wrap-wide">'
+        + _seo.brand_header()
+        + '<div class="crumbs"><a href="/">Home</a> &middot; Chain maps</div>'
+        + "<h1>Chain maps: where the money actually lands</h1>"
+        + '<p class="lede">' + str(len(live)) + " maps tracing a spending theme through the "
+          "companies that capture it, layer by layer, with every company's share estimated "
+          "from its own reported revenue. Descriptive supply-chain research, not forecasts.</p>"
+        + '<div class="wb-grid">' + cards + "</div>"
+        + "<h2>How to read a chain map</h2>"
+        + "<p>Each map starts from a pool of spending and follows it down the chain: who sells "
+          "the picks and shovels, who assembles, who operates, who bills the end customer. A "
+          "company appearing high in a chain is not automatically the better business &mdash; "
+          "it is simply closer to the money. Every company links through to its full "
+          "breakdown, and the estimate method is published on each map.</p>"
+        + '<p>Related: <a href="/screens">stock screens</a> &middot; '
+          '<a href="/sectors">every sub-sector compared</a> &middot; '
+          '<a href="/reports">all scored stocks</a> &middot; '
+          '<a href="/editorial-policy">editorial policy</a></p>'
+        + '<div class="legal">TickerMover is a research tool, not financial advice, and not '
+          "FCA-authorised. A chain map describes commercial relationships; it is not a "
+          "recommendation to buy or sell anything. Capital at risk.</div>"
+        + "</div>" + _WB_HUB_CSS
+    )
+    return HTMLResponse(content=_seo.page_shell(
+        title="Chain maps - where spending lands, company by company | TickerMover",
+        desc=("Supply-chain maps tracing AI capex, the grid rebuild, defence outlays and more "
+              "through the companies that capture the spending. Free research."),
+        canonical=SITE_ORIGIN + "/who-benefits", body_html=body, schema_json=schema,
+        og_image=SITE_ORIGIN + "/static/icons/icon-512.png"))
+
+
+_WB_HUB_CSS = """<style>
+.wb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:16px;
+  margin:0 0 34px}
+.wb-card{border:1px solid #D6DADD;border-radius:14px;padding:20px 22px;background:#fff;
+  text-decoration:none;display:block;transition:border-color 140ms cubic-bezier(.2,.7,.2,1),
+  box-shadow 140ms cubic-bezier(.2,.7,.2,1)}
+.wb-card:hover{text-decoration:none;border-color:#0A2F46;
+  box-shadow:0 10px 26px -16px rgba(10,47,70,.5)}
+.wb-eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.14em;
+  text-transform:uppercase;color:#9A3412;font-weight:700}
+.wb-card h2{font-size:17px;font-weight:500;color:#0A2F46;margin:7px 0 8px}
+.wb-card p{font-size:13px;line-height:1.55;color:#5d6c7b;margin:0}
+.wb-n{display:block;margin-top:11px;font-family:var(--mono);font-size:11px;color:#758696;
+  font-weight:700}
+</style>"""
 
 
 @app.get("/theses/{slug}")
@@ -6834,11 +7057,34 @@ async def thesis_page_legacy(slug: str):
 
 @app.get("/who-benefits/{slug}", response_class=HTMLResponse)
 async def thesis_page(slug: str):
-    """One thesis map — the data-driven chain engine (fetches /api/thesis/{slug})."""
+    """One thesis map. Interactive for a reader, server-rendered for a crawler.
+
+    The template is a client-side app, so every map shipped an identical title,
+    an identical description and an H1 that read "Loading". _thesis_ssr fills the
+    head and appends a text index of the chain; the JS still runs on top and
+    rewrites the H1 to the same string."""
     try:
-        return HTMLResponse(content=_with_analytics(THESIS_HTML.read_text(encoding="utf-8")))
+        html = THESIS_HTML.read_text(encoding="utf-8")
     except FileNotFoundError:
         return HTMLResponse(content="<h2>templates/thesis.html not found</h2>", status_code=500)
+    t = _thesis_by_slug(slug)
+    if t and t.get("status") == "live":
+        try:
+            import html as _h2
+            import re
+            head, ssr_body = _thesis_ssr(t)
+            # replace the template generic head tags rather than duplicate them
+            html = re.sub(r"<title>.*?</title>", "", html, count=1, flags=re.S)
+            html = re.sub(r'<meta name="description" content="Interactive thesis maps[^"]*">',
+                          "", html, count=1)
+            html = html.replace("</head>", head + "</head>", 1)
+            html = re.sub(r'(<h1 class="title" id="title">).*?(</h1>)',
+                          lambda mm: mm.group(1) + _h2.escape(t.get("title") or "") + mm.group(2),
+                          html, count=1, flags=re.S)
+            html = html.replace("</body>", ssr_body + "</body>", 1)
+        except Exception as exc:
+            logger.warning("thesis SSR %s failed: %s", slug, exc)
+    return HTMLResponse(content=_with_analytics(html))
 
 
 @app.post("/api/admin/publish-weekly")
