@@ -3321,6 +3321,45 @@ def _sp_ribbon(anchor: str, title: str, inner: str, rib: str = "rep-slate", ico:
             f'<h2 class="rep-title">{title}</h2></div>'
             f'<div class="rep-body">{inner}</div></section>')
 
+def _risk_pillar(t: dict) -> Optional[float]:
+    """The dashboard's sixth pillar, computed the same way so the two surfaces
+    cannot show a different Risk for the same stock.
+
+    dashboard.html's computePillars does R = avg(breakdown.low_short,
+    breakdown.mkt_cap_fit) * 100, and this mirrors it. NOT added to
+    _compute_pillars(): that function feeds _pillar_pass_count, which gates
+    tracker eligibility on "4 of 6 pillars >= 50". Adding a key there would
+    quietly change which stocks are eligible, which is a selection change
+    wearing a display change's clothes.
+
+    Fallback for a row without `breakdown`: the same two ideas read off the raw
+    fields — a smaller short position and a larger company both score safer.
+    """
+    b = t.get("breakdown") or {}
+    vals = [b.get(k) for k in ("low_short", "mkt_cap_fit")
+            if isinstance(b.get(k), (int, float))]
+    if vals:
+        return max(0.0, min(100.0, (sum(vals) / len(vals)) * 100.0))
+
+    parts = []
+    sh = t.get("short_percent_float")
+    try:
+        if sh is not None:
+            parts.append(max(0.0, min(100.0, 100.0 - float(sh) * 5.0)))
+    except (TypeError, ValueError):
+        pass
+    mc = t.get("market_cap")
+    try:
+        if mc:
+            mc = float(mc)
+            # 1bn -> 40, 10bn -> 60, 100bn -> 80, 1tn -> 100
+            import math as _m
+            parts.append(max(0.0, min(100.0, 20.0 * (_m.log10(mc) - 8.0))))
+    except (TypeError, ValueError):
+        pass
+    return (sum(parts) / len(parts)) if parts else None
+
+
 def _sp_sparkline(sym: str) -> str:
     """Six months of closes as an inline SVG line, for the hero.
 
@@ -3508,29 +3547,46 @@ def _sp_data_sections(t: dict, sym: str, price: float):
         _pil = _compute_pillars(t) or {}
     except Exception:
         _pil = {}
+    try:
+        _pil["risk"] = _risk_pillar(t)
+    except Exception:
+        _pil["risk"] = None
+    # Four bands, thresholds and wording lifted from dashboard.html's READS so
+    # the same score reads the same on both surfaces. [<35, 35-49, 50-69, 70+]
     rows = []
-    for lbl, k, c1, c2, read_lo, read_hi, cap in (
-        ("Momentum",  "momentum",         "#14587D", "#4AA3C7",
-         "Drifting", "Trending up strong", "price trend"),
-        ("Growth",    "growth",           "#10B981", "#34D399",
-         "Slow growth", "Fast-growing", "sales &amp; profit growth"),
-        ("Quality",   "quality",          "#06B6D4", "#22D3EE",
-         "Some weak spots", "High quality", "profitability &amp; balance sheet"),
-        ("Valuation", "valuation",        "#C74E00", "#FF9A4D",
-         "Getting pricey", "Fairly priced", "is the price fair?"),
-        ("Sentiment", "sentiment",        "#8B5CF6", "#A78BFA",
-         "Mixed views", "Positive mood", "analyst &amp; crowd mood"),
-        ("Potential", "growth_potential", "#EC4899", "#F472B6",
-         "Limited headroom", "Room to run", "upside vs analyst targets"),
+    for lbl, k, c1, c2, reads, cap in (
+        ("Momentum",  "momentum",  "#14587D", "#4AA3C7",
+         ("In a downtrend", "Losing steam", "Drifting higher", "Trending up strong"),
+         "price trend"),
+        ("Growth",    "growth",    "#10B981", "#34D399",
+         ("Barely growing", "Slow growth", "Growing steadily", "Fast-growing"),
+         "sales &amp; profit growth"),
+        ("Quality",   "quality",   "#06B6D4", "#22D3EE",
+         ("Shaky books", "Some weak spots", "Solid fundamentals", "High quality"),
+         "profitability &amp; balance sheet"),
+        ("Valuation", "valuation", "#C74E00", "#FF9A4D",
+         ("Expensive", "Getting pricey", "Fairly priced", "Looks cheap"),
+         "is the price fair?"),
+        ("Sentiment", "sentiment", "#8B5CF6", "#A78BFA",
+         ("Out of favour", "Mixed views", "Positive mood", "Market favourite"),
+         "analyst &amp; crowd mood"),
+        # Sixth pillar is RISK, matching the in-app deck. Its caption says what
+        # the number is actually built from; the dashboard captions the same
+        # pillar "volatility & downside" while computing it from short interest
+        # and market-cap fit, so that wording is not carried over.
+        ("Risk",      "risk",      "#EC4899", "#F472B6",
+         ("High risk", "Above-avg risk", "Moderate risk", "Low risk"),
+         "short interest &amp; company size"),
     ):
         v = _spf(_pil.get(k))
         if v is None: continue
         w = max(0, min(100, v))
+        read = reads[3 if v >= 70 else 2 if v >= 50 else 1 if v >= 35 else 0]
         rows.append(
             f'<div class="sp-pil" style="--pc1:{c1};--pc2:{c2}">'
             f'<div class="sp-pil-l">{lbl}</div>'
             f'<div class="sp-pil-v">{v:.0f}</div>'
-            f'<div class="sp-pil-r">{read_hi if v >= 60 else read_lo}</div>'
+            f'<div class="sp-pil-r">{read}</div>'
             f'<div class="sp-pil-c">{cap}</div>'
             f'<div class="sp-pil-bar"><i style="width:{w:.0f}%"></i></div></div>'
         )
