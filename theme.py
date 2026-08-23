@@ -50,18 +50,19 @@ def wordmark(dark: bool = False) -> str:
     )
 
 
-# The header nav and the footer's Explore column are the SAME six destinations.
-# They had drifted: the footer listed Screens and Capex Chains -- our two newest
-# public surfaces -- while the header still offered the four it shipped with, so
-# a reader who arrived on a report could only reach them by scrolling to the
-# bottom of the page. Keep these two lists in step (footer_html, "Explore").
+# The header carries the five DESTINATIONS a reader browses; the footer's Explore
+# column carries those five plus Methodology, which is reference rather than
+# somewhere you go next. The header had drifted the other way -- it offered four
+# and omitted Screens and Capex Chains, our two newest public surfaces, so a
+# reader who arrived on a report could only reach them by scrolling to the
+# bottom. Every header nav on the site renders this list: keep landing.html's
+# .nav-links and thesis.html's .site-nav in step with it.
 NAV_ITEMS = [
     ("/screens", "Screens"),
     ("/who-benefits", "Capex Chains"),
     ("/reports", "Reports"),
     ("/sectors", "Sectors"),
     ("/compare", "Compare"),
-    ("/learn", "Methodology"),
 ]
 
 
@@ -95,9 +96,10 @@ def footer_html() -> str:
         '<a href="/screens">Screens</a><a href="/who-benefits">Capex Chains</a>'
         '<a href="/reports">Reports</a><a href="/sectors">Sectors</a>'
         '<a href="/compare">Compare</a><a href="/learn">Methodology</a></div>'
+        # "Start free" sat under Product: it is a call to action, not something
+        # we make. The nav's Start-free pill is on every page anyway.
         '<div><h4>Product</h4>'
-        '<a href="/app">Dashboard</a><a href="/weekly">The Weekly</a>'
-        '<a href="/login?signup">Start free</a></div>'
+        '<a href="/app">Dashboard</a><a href="/weekly">The Weekly</a></div>'
         '<div><h4>Legal</h4>'
         '<a href="/privacy">Privacy</a><a href="/terms">Terms</a>'
         '<a href="/disclaimer">Disclaimer</a>'
@@ -301,29 +303,38 @@ html body .cta-brand .brand-m circle{fill:#FF6100!important}
 /* ---------- footer ---------- */
 .tm-foot{background-image:radial-gradient(circle at 0% 0%,#001C31 -55%,#0A2F47 35%,#0A2F47 50%,#001C31 100%);
   color:#CFE0EA;margin-top:0}
-.tm-foot-in{max-width:var(--wrap);margin:0 auto;padding:52px 24px 34px}
-.tm-foot-top{display:flex;justify-content:space-between;gap:40px;flex-wrap:wrap;
-  padding-bottom:30px;border-bottom:1px solid rgba(255,255,255,.12)}
-.tm-foot-brand .brand{margin-bottom:12px}
-.tm-foot-brand p{color:rgba(255,255,255,.62);font-size:14.5px;margin-top:10px;font-weight:300}
-.tm-foot-cols{display:flex;gap:56px;flex-wrap:wrap}
+.tm-foot-in{max-width:var(--wrap);margin:0 auto;padding:36px 24px 24px}
+/* The three link columns used to be one block pushed to the right edge, which
+   left ~540px of empty band beside the brand and a 516px-tall footer. The
+   column block now takes the remaining width and spreads inside it, so the
+   space is between the columns instead of in one hole. */
+.tm-foot-top{display:grid;grid-template-columns:1.35fr 1fr 1fr 1fr;gap:28px;
+  padding-bottom:20px;border-bottom:1px solid rgba(255,255,255,.12)}
+.tm-foot-brand .brand{margin-bottom:10px}
+.tm-foot-brand p{color:rgba(255,255,255,.62);font-size:13.5px;margin-top:8px;font-weight:300;
+  max-width:32ch}
+/* display:contents so the three link columns are grid cells of .tm-foot-top
+   rather than one block: the four cells share the row evenly and the hole
+   beside the brand goes away. */
+.tm-foot-cols{display:contents}
 .tm-foot-cols h4{font-family:var(--mono);font-size:10px;letter-spacing:.14em;
-  text-transform:uppercase;color:var(--on-dark);font-weight:500;margin-bottom:12px}
-.tm-foot-cols a{display:block;color:rgba(255,255,255,.78);font-size:14.5px;font-weight:300;
-  margin-bottom:9px;transition:color var(--t-fast) var(--e-out)}
+  text-transform:uppercase;color:var(--on-dark);font-weight:500;margin-bottom:9px}
+.tm-foot-cols a{display:block;color:rgba(255,255,255,.78);font-size:13.5px;font-weight:300;
+  margin-bottom:6px;transition:color var(--t-fast) var(--e-out)}
 .tm-foot-cols a:hover{color:var(--accent);text-decoration:none}
-.tm-foot-legal{font-size:12.5px;line-height:1.62;color:rgba(255,255,255,.5);
-  padding:26px 0;border-bottom:1px solid rgba(255,255,255,.12);font-weight:300}
+.tm-foot-legal{font-size:12.5px;line-height:1.58;color:rgba(255,255,255,.5);
+  padding:18px 0;border-bottom:1px solid rgba(255,255,255,.12);font-weight:300}
 .tm-foot-legal strong{color:rgba(255,255,255,.8);font-weight:500}
 .tm-foot-base{display:flex;justify-content:space-between;gap:18px;flex-wrap:wrap;
-  padding-top:22px;font-size:13px;color:rgba(255,255,255,.5);font-weight:300}
+  padding-top:16px;font-size:13px;color:rgba(255,255,255,.5);font-weight:300}
 .tm-foot-base a{color:rgba(255,255,255,.68);font-weight:300}
 
+@media(max-width:820px){.tm-foot-top{grid-template-columns:1fr 1fr;gap:26px 24px}}
 @media(max-width:640px){
   .wrap,.wrap-wide{padding:32px 18px 56px}
   .tbl{font-size:13px}.tbl td,.tbl th{padding:10px 9px}
-  .tm-foot-cols{gap:32px}
 }
+@media(max-width:430px){.tm-foot-top{grid-template-columns:1fr}}
 @media(prefers-reduced-motion:reduce){
   *{animation:none!important;transition:none!important}
   .card::after{display:none}

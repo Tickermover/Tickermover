@@ -318,11 +318,7 @@ button:focus-visible,[tabindex]:focus-visible{
 .brand-wordmark{display:inline-flex;align-items:baseline;flex-wrap:nowrap;white-space:nowrap;color:#0A2F46}
 .brand-m{height:1.6em;width:auto;flex:none;align-self:baseline;margin:0 .02em}
 .foot-brand .brand-wordmark{color:#fff}
-.nav-links{display:flex;gap:clamp(12px,1.7vw,26px);align-items:center;white-space:nowrap}
-/* Seven links, a wordmark and two buttons is a lot of row. Below ~1040px the
-   legal link goes first: it is the one destination also carried in the footer
-   legal row on every page, so nothing becomes unreachable. */
-@media(max-width:1040px){.nav-links a[href="/disclaimer"]{display:none}}
+.nav-links{display:flex;gap:clamp(14px,1.7vw,26px);align-items:center;white-space:nowrap}
 .nav-links a{font-size:15px;color:var(--raisin);font-weight:500;position:relative;font-family:'Public Sans',sans-serif}
 .nav-links a:hover{color:var(--primary)}
 .nav-right{display:flex;align-items:center;gap:14px}
@@ -1532,16 +1528,15 @@ button:focus-visible,[tabindex]:focus-visible{
            23 Aug 2026: matched to theme.NAV_ITEMS, the nav every other public
            page renders. Screens and Capex Chains existed on those pages and in
            the footer but not here, so the landing page -- the one page most
-           visitors start on -- was the only place they were invisible. The
-           "#engine" jump-link came out to make room; the section is a scroll
-           away and no other page has it. -->
+           visitors start on -- was the only place they were invisible.
+           Methodology and Disclaimer then came out on the user's call, and the
+           "#engine" jump-link with them: five destinations, and both dropped
+           links are still in the footer (Explore, and the legal row). -->
       <a href="/screens">Screens</a>
       <a href="/who-benefits">Capex Chains</a>
       <a href="/reports">Reports</a>
       <a href="/sectors">Sectors</a>
       <a href="/compare">Compare</a>
-      <a href="/learn">Methodology</a>
-      <a href="/disclaimer">Disclaimer</a>
 
       <!-- "Market Movers" removed from the header nav 15 Aug 2026: the weekly
            editorial has not published since the 27 Jul issue (generated 2 Aug),
