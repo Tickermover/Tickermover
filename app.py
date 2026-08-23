@@ -3749,7 +3749,7 @@ def _render_stock_page(t: dict) -> str:
         'recent coverage, and it can be incomplete or wrong. A PASS is a reading of the '
         'cited evidence, not a verified fact and not a reason to buy. Follow each '
         'citation to the source.</p>',
-        "rep-green", "\u2713")
+        "rep-violet", "\u2713")
     sp_nav_html, sp_sections_html, sp_lead_html = _sp_data_sections(t, sym, price)
     try:
         exec_summary_html = _sp_exec_summary(sym)
@@ -3949,7 +3949,7 @@ def _render_stock_page(t: dict) -> str:
     try:
         import safeguards as _sg
         safeguards_html = _sg.render_card(t, public=True)
-        _ssr = _sp_ssr_cached(f"safeguards:{sym}:v6", public=True)
+        _ssr = _sp_ssr_cached(f"safeguards:{sym}:v7", public=True)
         if _ssr:
             safeguards_html = f'<div class="sfg-ssr">{_ssr}</div>' + safeguards_html
     except Exception as _sg_err:
@@ -16295,7 +16295,7 @@ async def api_safeguards(ticker: str):
     if not sym or len(sym) > 8:
         raise HTTPException(status_code=400, detail="Bad ticker")
 
-    cache_key = f"safeguards:{sym}:v6"
+    cache_key = f"safeguards:{sym}:v7"
     cached = cache.get(cache_key)
     if cached is not None:
         return JSONResponse(cached)

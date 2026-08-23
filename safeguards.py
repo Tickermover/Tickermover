@@ -455,6 +455,10 @@ _CSS = """
 .sfg-box:last-of-type{margin-bottom:0}
 .sfg-head{display:flex;align-items:center;gap:10px;padding:11px 16px;position:relative;
   background:linear-gradient(105deg,#5DC0AC,#0E7C66)}
+/* The two boxes are different subjects and should not read as one long green
+   panel: share issuance is the company acting, ownership is its holders. */
+.sfg-indigo .sfg-head{background:linear-gradient(105deg,#7C8AF0,#3B3BA8)}
+.sfg-indigo .sfg-pill.on{color:#3B3BA8}
 .sfg-head::after{content:"";position:absolute;inset:0;pointer-events:none;
   background:linear-gradient(180deg,rgba(255,255,255,.22),rgba(255,255,255,0) 62%)}
 .sfg-head>*{position:relative;z-index:1}
@@ -493,7 +497,7 @@ _CSS = """
 """
 
 
-def _box(title: str, icon: str, inner: str, pill=None) -> str:
+def _box(title: str, icon: str, inner: str, pill=None, accent: str = "") -> str:
     """One ribboned card. The banner metrics are copied from _sp_ribbon's
     .rep-rib in app.py rather than invented, so these sit in the same family as
     "The picture" and "The audit" instead of looking like a different product."""
@@ -501,7 +505,8 @@ def _box(title: str, icon: str, inner: str, pill=None) -> str:
     if pill:
         txt, on = pill
         p = f'<span class="sfg-pill{" on" if on else ""}">{_html.escape(txt)}</span>'
-    return (f'<section class="sfg-box"><div class="sfg-head">'
+    cls = "sfg-box" + (" " + accent if accent else "")
+    return (f'<section class="{cls}"><div class="sfg-head">'
             f'<span class="sfg-ico">{icon}</span><h3 class="sfg-h">{title}</h3>{p}</div>'
             f'<div class="sfg-bd">{inner}</div></section>')
 
@@ -705,6 +710,7 @@ def card_body(sym: str, d: dict, public: bool = False) -> str:
         '<p class="sfg-sub">What the people who already hold the share are doing with it, '
         'as filed. Insider sales are mostly routine; it is the pattern that reads, not any '
         'single line.</p>' + "".join(own_out),
+        accent="sfg-indigo",
     ) if own_out else ""
 
     return (box1 + box2 +
