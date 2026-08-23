@@ -9297,6 +9297,35 @@ document.addEventListener('keydown', function(e){
    the company; severity is a left rule, never a colour on the whole card —
    these are questions, and a red card would read as a verdict. */
 #panel-sect .se-dg-lede{font-size:13px;color:#5D6C7B;line-height:1.6;margin:0 0 12px;max-width:82ch}
+/* The audit, side by side. Verdict pill colours are copied from the stock
+   page's .sp-audit-v so the same reading cannot render two different ways on
+   two surfaces. Two independent columns, never aligned row by row: the four
+   areas are chosen per company, so forcing them into shared rows would invent
+   a correspondence that is not there. */
+#panel-sect .se-aud-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start}
+@media(max-width:900px){#panel-sect .se-aud-grid{grid-template-columns:1fr}}
+#panel-sect .se-aud-col{border:1px solid #E4E7EC;border-radius:12px;background:#fff;padding:16px 18px;min-width:0}
+#panel-sect .se-aud-tk{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:13px;
+  font-weight:700;color:#0A2F46;letter-spacing:.04em;margin-bottom:2px}
+#panel-sect .se-aud-asof{font-size:10.5px;color:#94A3B8;margin-bottom:12px}
+#panel-sect .se-aud-area{margin:0 0 15px}
+#panel-sect .se-aud-area:last-child{margin-bottom:0}
+#panel-sect .se-aud-h{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:7px}
+#panel-sect .se-aud-h b{font-size:13.5px;font-weight:600;color:#0A2F46;line-height:1.35}
+#panel-sect .se-aud-v{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:9px;
+  letter-spacing:.13em;text-transform:uppercase;padding:3px 8px;border-radius:99px;
+  font-weight:700;flex:0 0 auto}
+#panel-sect .se-aud-pass{background:#E7F6EC;color:#12704A}
+#panel-sect .se-aud-fail{background:#FDE9EC;color:#B32D23}
+#panel-sect .se-aud-mixed{background:#FDF0DC;color:#B45309}
+#panel-sect .se-aud-ul{list-style:none;margin:0;padding:0}
+#panel-sect .se-aud-ul li{position:relative;padding-left:15px;margin-bottom:8px;font-size:12.5px;
+  line-height:1.55;color:#5D6C7B}
+#panel-sect .se-aud-ul li::before{content:"";position:absolute;left:0;top:7px;width:5px;height:5px;
+  border-radius:50%;background:#C7CDD4}
+#panel-sect .se-aud-ul li b{color:#0A2F46;font-weight:600}
+#panel-sect .se-aud-src{font-size:10px;color:#14587D;text-decoration:underline;
+  text-underline-offset:2px;white-space:nowrap;margin-left:3px}
 /* The grid was two TICKER columns, one per company, which is what forced the
    same question to be printed twice. It is now a flow of question cards: a
    shared question spans the full width and carries both companies' figures,
@@ -24172,95 +24201,18 @@ async function _seRunCompare(){
       ? 'Both sit in <b>' + _seEsc(c.a.sector||'the same sub-sector') + '</b>, so these figures are broadly like-for-like.'
       : 'Different sub-sectors — <b>' + _seEsc(c.a.sector||'—') + '</b> and <b>' + _seEsc(c.b.sector||'—')
         + '</b> — so valuation and margin norms differ and the rows are not strictly like-for-like.';
-    /* "What to look at next" — questions and places to look, never a course of
-       action. The line matters: "check whether that margin includes a one-off"
-       is research; "prefer the higher-margin one" would be advice, and this
-       panel does not give any. Server-computed, so it cannot drift from the
-       table above it. */
-    var pts = (c.pointers || []).map(function(p){
-      return '<div class="se-pt se-pt-' + _seEsc(p.kind) + '">'
-        + '<div class="se-pt-t">' + _seEsc(p.title) + '</div>'
-        + '<div class="se-pt-b">' + _seEsc(p.body) + '</div></div>';
-    }).join('');
-    var ptBlock = pts
-      ? '<h3 class="se-pt-h">What to look at next</h3><div class="se-pts">' + pts + '</div>'
-        + '<p class="se-pt-f">These are questions to follow up, not recommendations. '
-        + 'Nothing here suggests owning or avoiding either company.</p>'
-      : '';
 
-    /* THE HARD QUESTIONS. These are the ones a careful analyst checks by hand
-       and a retail reader never sees — a "consensus" whose high is several
-       times its low, an operating margin above the gross margin, profit that
-       is not becoming cash. Computed, so each one is a real anomaly in this
-       company's actual numbers rather than a plausible-sounding generic
-       question a model would write.
-       Severity ranks how ANOMALOUS a reading is, never how attractive the
-       stock is, and every item ends in what would resolve it. */
-    var dg = c.diligence || {};
-    /* SHARED QUESTIONS RENDER ONCE.
-       When the same check fires on both companies — and "Is there actually a
-       consensus here?" fires on almost every pair — the old two-column layout
-       printed the identical 45-word explanation and the identical "How to
-       settle it" line twice, side by side. That is half the section's height
-       carrying no incremental information, and it made a genuinely good check
-       look like padding. Shared questions now show one explanation with both
-       companies' evidence under it; questions that fire on only one side keep
-       their own card and are labelled with that ticker. */
-    var dgBlock = '';
-    var A_ = c.a.ticker, B_ = c.b.ticker;
-    var qa = dg[A_] || [], qb = dg[B_] || [];
-    var byTitleB = {}; qb.forEach(function(q){ byTitleB[q.title] = q; });
-    var shared = [], single = [];
-    qa.forEach(function(q){
-      var m = byTitleB[q.title];
-      if (m){ shared.push({q: q, a: q, b: m}); delete byTitleB[q.title]; }
-      else { single.push({tk: A_, q: q}); }
-    });
-    qb.forEach(function(q){ if (byTitleB[q.title]) single.push({tk: B_, q: q}); });
-
-    var sevRank = {high: 0, medium: 1, med: 1, low: 2};
-    shared.sort(function(x, y){ return (sevRank[x.q.severity]||3) - (sevRank[y.q.severity]||3); });
-    single.sort(function(x, y){ return (sevRank[x.q.severity]||3) - (sevRank[y.q.severity]||3); });
-
-    var dgCards = shared.map(function(it){
-      return '<div class="se-dg se-dg-' + _seEsc(it.q.severity) + ' se-dg-both">'
-        + '<div class="se-dg-q">' + _seEsc(it.q.title)
-        + '<span class="se-dg-badge">both</span></div>'
-        + '<div class="se-dg-ev2">'
-        +   '<div><span class="se-dg-evtk">' + _seEsc(A_) + '</span>'
-        +     '<span class="se-dg-e">' + _seEsc(it.a.evidence) + '</span></div>'
-        +   '<div><span class="se-dg-evtk">' + _seEsc(B_) + '</span>'
-        +     '<span class="se-dg-e">' + _seEsc(it.b.evidence) + '</span></div>'
-        + '</div>'
-        + '<div class="se-dg-w">' + _seEsc(it.q.why) + '</div>'
-        + '<div class="se-dg-r"><b>How to settle it:</b> ' + _seEsc(it.q.resolve) + '</div>'
-        + '</div>';
-    }).join('') + single.map(function(it){
-      return '<div class="se-dg se-dg-' + _seEsc(it.q.severity) + '">'
-        + '<div class="se-dg-q">' + _seEsc(it.q.title)
-        + '<span class="se-dg-badge se-dg-badge-one">' + _seEsc(it.tk) + ' only</span></div>'
-        + '<div class="se-dg-e">' + _seEsc(it.q.evidence) + '</div>'
-        + '<div class="se-dg-w">' + _seEsc(it.q.why) + '</div>'
-        + '<div class="se-dg-r"><b>How to settle it:</b> ' + _seEsc(it.q.resolve) + '</div>'
-        + '</div>';
-    }).join('');
-    if (dgCards.replace(/\s/g,'')){
-      dgBlock = '<h3 class="se-pt-h">Questions worth answering first</h3>'
-        + '<p class="se-dg-lede">Anomalies in the reported figures — the checks a careful reader makes before trusting a headline number. Where a question applies to both companies it is asked once, with the figure for each. The bar on the left is how unusual the reading is, not how good or bad the company is.</p>'
-        + '<div class="se-dg-grid">' + dgCards + '</div>'
-        + '<p class="se-pt-f">Questions to investigate, not conclusions. None of this '
-        + 'suggests owning or avoiding either company.</p>';
-    }
 
     out.innerHTML = '<div class="se-note">' + ctx + ' They differ on <b>' + c.differing
       + ' of ' + c.measured + '</b> measured dimensions; anything within 2% shows as level.</div>'
       + '<div class="se-wrap"><table><thead><tr><th>Measure</th><th>' + _seEsc(c.a.ticker)
       + '</th><th>' + _seEsc(c.b.ticker) + '</th></tr></thead><tbody>' + trs + '</tbody></table></div>'
       + '<div id="seBiz"></div>'
-      + ptBlock + dgBlock
+      + '<div id="seAudit"></div>'
       + '<div id="seStudy" style="margin-top:18px"></div>';
     _seLoadBiz(c.a.ticker, c.b.ticker);
     _seLoadStudy(c.a.ticker, c.b.ticker);
+    _seLoadAudit(c.a.ticker, c.b.ticker);
   } catch(e){
     out.innerHTML = '<div class="se-mut">Could not run that comparison — ' + _seEsc(e.message) + '</div>';
   }
@@ -24278,6 +24230,74 @@ async function _seRunCompare(){
 
    Cache-peek for everyone; only a signed-in user triggers generation, so a
    crawler walking pair URLs cannot spend money. */
+/* THE AUDIT, SIDE BY SIDE. Replaces "What to look at next" and "Questions
+   worth answering first": both were computed follow-ups, and the audit says
+   more with the same screen space because every line is a cited finding from
+   the company's own filing rather than a prompt to go and check something.
+
+   The four areas are chosen per company, so the two sides do NOT align row by
+   row and are not forced to. Two independent columns, each read on its own —
+   which is also the honest shape: "supply capacity" matters for a fab and
+   means nothing for a payments network.
+
+   NO WINNER, and none is coming. A pass count would be a tally over
+   incomparable areas, which is the same breach the measured table refuses.
+   Each side is its own audit; the reader does the comparing. */
+async function _seLoadAudit(a, b){
+  var host = document.getElementById('seAudit'); if(!host) return;
+  host.innerHTML = '<div class="se-biz-load"><span class="dr-spin"></span> '
+    + 'Auditing what has to hold for each thesis…</div>';
+  var tok = '';
+  try{ tok = localStorage.getItem('ah_token') || ''; }catch(e){}
+  var opt = tok ? {headers:{Authorization:'Bearer '+tok}} : undefined;
+  function grab(sym){
+    return fetch('/api/thesis-audit/' + encodeURIComponent(sym), opt)
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .catch(function(){ return null; });
+  }
+  var res;
+  try{ res = await Promise.all([grab(a), grab(b)]); }
+  catch(e){ host.innerHTML=''; return; }
+  var da = res[0] || {}, db = res[1] || {};
+  var aa = da.audit || [], ab = db.audit || [];
+  if(!aa.length && !ab.length){ host.innerHTML=''; return; }
+
+  function col(sym, areas, d){
+    if(!areas.length){
+      return '<div class="se-aud-col"><div class="se-aud-tk">' + _seEsc(sym) + '</div>'
+        + '<p class="se-mut">No audit available for ' + _seEsc(sym) + ' yet.</p></div>';
+    }
+    var blocks = areas.map(function(ar){
+      var v = String(ar.verdict || '').toLowerCase();
+      var pill = v ? '<span class="se-aud-v se-aud-' + (v==='pass'?'pass':(v==='fail'?'fail':'mixed'))
+        + '">' + _seEsc(v) + '</span>' : '';
+      var items = (ar.checks || []).map(function(c){
+        var srcs = (c.sources || []).map(function(sc){
+          return sc && sc.url
+            ? '<a class="se-aud-src" href="' + _seEsc(sc.url) + '" target="_blank" '
+              + 'rel="noopener nofollow" title="' + _seEsc(sc.label || 'source') + '">source</a>'
+            : '';
+        }).join('');
+        return '<li><b>' + _seEsc(c.name || '') + '</b> ' + _seEsc(c.finding || '') + ' ' + srcs + '</li>';
+      }).join('');
+      return '<div class="se-aud-area"><div class="se-aud-h"><b>' + _seEsc(ar.area || '') + '</b>'
+        + pill + '</div><ul class="se-aud-ul">' + items + '</ul></div>';
+    }).join('');
+    var asof = d.event_date ? '<div class="se-aud-asof">Filing read: ' + _seEsc(d.event_date) + '</div>' : '';
+    return '<div class="se-aud-col"><div class="se-aud-tk">' + _seEsc(sym) + '</div>'
+      + asof + blocks + '</div>';
+  }
+
+  host.innerHTML = '<h3 class="se-pt-h">The audit — what has to hold for each thesis</h3>'
+    + '<p class="se-dg-lede">Four areas chosen for each business, two cited checks each, read '
+    + 'from the company\'s own latest filing and recent coverage. The areas differ between the '
+    + 'two because what has to hold differs — they are not scored against each other and there '
+    + 'is no total.</p>'
+    + '<div class="se-aud-grid">' + col(a, aa, da) + col(b, ab, db) + '</div>'
+    + '<p class="se-pt-f">AI-generated from each company\'s own filings and recent coverage, and '
+    + 'it can be incomplete or wrong. A PASS is a reading of the cited evidence, not a verified '
+    + 'fact and not a reason to buy. Follow each citation to the source.</p>';
+}
 async function _seLoadBiz(a, b){
   var host = document.getElementById('seBiz'); if(!host) return;
   host.innerHTML = '<div class="se-biz-load"><span class="dr-spin"></span> Reading how the two businesses differ…</div>';
