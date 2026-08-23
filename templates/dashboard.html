@@ -3309,6 +3309,15 @@ body.v2 .v2ov-card.sectors .v2ov-sector-cell{
 
 /* ───── Risk Profile picker (topbar) ───── */
 .v2-profile-picker{position:relative}
+/* Beta band chips. Deliberately one navy family at three weights rather than
+   green/amber/red: this describes how much a name has moved with the market,
+   not whether that is good, and green/red carry the up/down semantics
+   everywhere else. The label carries the meaning; the tone only reinforces it. */
+.v2-beta{display:inline-flex;align-items:center;border-radius:100px;padding:2px 9px;
+  font-size:10.5px;font-weight:600;letter-spacing:.02em;white-space:nowrap}
+.v2-beta-low{background:#EEF3F7;color:#4A6577}
+.v2-beta-mid{background:#E2EAF1;color:#2C4A5E}
+.v2-beta-high{background:#0A2F46;color:#E8F0F6}
 .v2-profile-btn{
   display:inline-flex;align-items:center;gap:7px;
   padding:7px 14px;border-radius:10px;
@@ -3792,12 +3801,12 @@ body.v2 .v2ov-card.sectors .v2ov-sector-cell{
    Avoids re-rendering 545 rows on every profile switch. Rows carry
    data-profiles="..." and we hide non-matching ones via this rule.
    Switching profile is just a body[data-active-profile] flip — instant. */
-body[data-active-profile="aggressive"]   .fund-row:not([data-profiles~="aggressive"])   { display:none; }
-body[data-active-profile="balanced"]     .fund-row:not([data-profiles~="balanced"])     { display:none; }
-body[data-active-profile="conservative"] .fund-row:not([data-profiles~="conservative"]) { display:none; }
-/* Full universe: every tracked name carries the "full" tag, so this hides
-   nothing — it is the "show me everything" option, not a risk bucket. */
-body[data-active-profile="full"] .fund-row:not([data-profiles~="full"]) { display:none; }
+/* REMOVED 23 Aug 2026 — one universe. Four rules used to hide rows whose
+   data-profiles did not match the reader's saved risk profile; the last of
+   them keyed on "full" and would have emptied the table the moment the
+   profile was pinned there. Risk is described per row (v2BetaBand) instead of
+   deciding which rows exist. The data-profiles attribute is left on the rows:
+   it is inert, and the backend still sends it. */
 /* Sector filter layered on top of profile filter — both must pass */
 .fund-row.sector-hide{display:none}
 /* Curated featured filter — default view shows only the ~35 featured names so
@@ -8439,8 +8448,12 @@ document.addEventListener('keydown', function(e){
         <span>Help &amp; FAQ</span>
       </a>
       <!-- Risk-profile selector (personal lens — affects every view) -->
-      <div class="v2-profile-picker v2-sb-profile" id="v2-profile-picker">
-        <button class="v2-profile-btn" onclick="v2OpenRiskQuiz()" title="Investing style &amp; risk quiz">
+      <!-- Hidden 23 Aug 2026: this switcher changed which shares the reader was
+           shown based on a risk profile they declared about themselves. See
+           v2CurrentProfile. Hidden rather than deleted so the markup is one
+           attribute away if the position ever changes. -->
+      <div class="v2-profile-picker v2-sb-profile" id="v2-profile-picker" hidden>
+        <button class="v2-profile-btn" onclick="v2OpenRiskQuiz()" title="Investing style &amp; risk quiz" hidden>
           <span id="v2-profile-emoji">🚀</span>
           <span class="v2-sb-profile-txt"><span class="v2-sb-profile-k">Investing style</span><span id="v2-profile-label">Aggressive</span></span>
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
@@ -10974,10 +10987,14 @@ const V2_PROFILES = {
   full:         { label: 'Full universe', emoji: '🌍', sub: 'Every listed name we track · S&P 500, 400, 600 + Nasdaq-100' },
 };
 
-function v2CurrentProfile(){
-  try { return localStorage.getItem('v2_profile') || 'aggressive'; }
-  catch(e){ return 'aggressive'; }
-}
+/* ONE UNIVERSE — 23 Aug 2026. This used to read a saved risk profile and
+   hand back 'conservative' | 'balanced' | 'aggressive', which then decided
+   WHICH SHARES the reader was shown. A user tells us something about
+   themselves, and we respond with a different set of specific stocks: that is
+   the shape of a suitability assessment, and we are not FCA-authorised. Risk
+   is described per name now (see v2BetaBand) instead of deciding what exists.
+   Pinned rather than deleted because ~30 call sites read it. */
+function v2CurrentProfile(){ return 'full'; }
 function v2SetProfile(p){
   const prev = v2CurrentProfile();
   try { localStorage.setItem('v2_profile', p); } catch(e){}
@@ -11149,6 +11166,12 @@ document.addEventListener('click', (e) => {
   if (picker && !picker.contains(e.target)) picker.classList.remove('open');
 });
 function v2FilterByProfile(tickers){
+  /* Pass-through: one universe. Kept as a function because it is called from
+     the radar, the universe table, the screens bar and the exposure panel. */
+  return tickers;
+}
+
+function _v2FilterByProfileLegacy(tickers){
   const p = v2CurrentProfile();
   if (!Array.isArray(tickers) || !tickers.length) return tickers;
   // Backend tags each ticker with EXACTLY ONE profile (mutually exclusive):
@@ -11184,6 +11207,30 @@ function v2FilterByProfile(tickers){
     if (!isNaN(sp) && sp >= 5) return false;
     return sc >= 65;
   });
+}
+
+/* ── BETA BAND ───────────────────────────────────────────────────────────
+   One factual label per name, replacing the risk profile. The cut points are
+   the conventional ones and they land the scored universe at roughly a third
+   each (202 / 162 / 175 of the 539 names carrying a beta).
+
+   It says what the number IS, never who it is for: "High beta", not
+   "aggressive", and never "suits you". Beta is 5y monthly against the S&P 500
+   as the data provider reports it, it is backward-looking, and it says
+   nothing about single-name risk — which is why the label is one input on a
+   row and not a gate on the list. */
+function v2BetaBand(beta){
+  const b = parseFloat(beta);
+  if (isNaN(b)) return null;
+  if (b < 0.8)  return { key:'low',  label:'Low beta',  hint:'Beta ' + b.toFixed(2) + ' — has moved less than the market' };
+  if (b <= 1.2) return { key:'mid',  label:'Mid beta',  hint:'Beta ' + b.toFixed(2) + ' — has moved roughly with the market' };
+  return          { key:'high', label:'High beta', hint:'Beta ' + b.toFixed(2) + ' — has moved more than the market' };
+}
+function v2BetaChip(beta){
+  const band = v2BetaBand(beta);
+  if (!band) return '';
+  return '<span class="v2-beta v2-beta-' + band.key + '" title="' + band.hint +
+         '">' + band.label + '</span>';
 }
 
 /* ── Watchlist (localStorage-backed) ── */
@@ -17739,11 +17786,11 @@ function _secgFullSectorList(){
 function _secgVisibleTickerSet(){
   const rows = document.querySelectorAll('#fund-tbody tr.fund-row');
   if (!rows.length) return null;
-  const prof = document.body.getAttribute('data-active-profile') || '';
+  // No profile exclusion: one universe (23 Aug 2026). The featured and scan
+  // filters below are the reader's own choices and still apply.
   const featOnly = document.body.classList.contains('v2-featured-only');
   const set = new Set();
   rows.forEach(r => {
-    if (prof && (' ' + (r.dataset.profiles || '') + ' ').indexOf(' ' + prof + ' ') < 0) return;
     if (featOnly && !r.hasAttribute('data-featured')) return;
     if (r.classList.contains('scn-hide')) return;
     set.add(r.dataset.ticker);
@@ -22199,10 +22246,12 @@ function onboardNameNext() {
   try { savePrefs({ name: name }); } catch(e){}
   // Mark onboarding done so the welcome step never reappears.
   try { localStorage.setItem('ah_onboarding_completed', '1'); } catch(e){}
-  // Hand straight to the risk step over the SAME gated backdrop — no app flash
-  // in between. The app is revealed only when the risk step finishes/skips.
+  // The risk-profile step is GONE (23 Aug 2026). It asked three questions
+  // about the reader and then changed which shares they were shown, which is
+  // the shape of a suitability assessment — and we are not FCA-authorised.
+  // Onboarding now ends here and hands straight to the app.
   var _wo = document.getElementById('ah-onboard-overlay'); if (_wo) _wo.classList.remove('open');
-  if (typeof v2OpenRiskQuiz === 'function') v2OpenRiskQuiz();
+  if (typeof _revealAppAfterOnboarding === 'function') _revealAppAfterOnboarding();
 }
 // Reveal the app after the gated onboarding flow ends (risk applied or skipped).
 function _revealAppAfterOnboarding(){
@@ -22271,11 +22320,11 @@ async function syncUserPrefs() {
       localStorage.setItem('ah_name', d.name);
       if (_AUTH.user) { _AUTH.user.name = d.name; try { _authUpdateUI(_AUTH.user); } catch(e){} }
     }
-    if (d.risk_profile) {
-      localStorage.setItem('v2_profile', d.risk_profile);
-      try { document.body.setAttribute('data-active-profile', d.risk_profile); } catch(e){}
-      try { if (typeof v2SyncProfileButton === 'function') v2SyncProfileButton(); } catch(e){}
-    }
+    // A stored risk_profile is IGNORED (23 Aug 2026, one universe). Accounts
+    // created before the change still carry one on the server; honouring it
+    // here would quietly restore the filtering the switcher no longer offers.
+    // Not deleted server-side — that is the user's data, and deleting it is a
+    // separate decision from ceasing to act on it.
     // Onboarding state is per-USER (Supabase), mirrored to localStorage. Clear
     // the stale per-browser flag when THIS user hasn't onboarded, so switching
     // accounts in the same browser still triggers the welcome + risk profile.
@@ -23704,6 +23753,10 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
       let risk=rowRisk(t);
       if(risk && /report|earnings/i.test(sig.text) && /earnings/i.test(risk)) risk=null;
       const fchips=forwardChips(t);
+      // The beta band leads the chip row: it is the one fact on the line that
+      // describes RISK rather than the case for the name, and it replaces the
+      // risk profile that used to decide whether this row appeared at all.
+      const betaChip=(typeof v2BetaChip==='function')?v2BetaChip(t.beta):'';
       const trend=(chg3m!==0&&!isNaN(chg3m))?'<small>'+(chg3m>=0?'▲':'▼')+' '+Math.abs(chg3m).toFixed(0)+'% · 3M</small>':'';
       const up=upsidePct(t);
       const upCell=up==null?'<span class="up-cell up-col muted">—</span>'
@@ -23717,7 +23770,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
         // with no counterweight — read as the most confident on the table purely
         // because it carried no caveat. The signal type moves to the tooltip so
         // the column reads as one system. See the one-tone-scale-per-group rule.
-        '<span class="dm-cell-why"><span class="why"><span class="why-ico" title="'+(sig.ai?'AI analyst thesis':'Rule-based signal')+'">✦</span><span class="why-tx">'+escHTML(sig.text)+'</span></span>'+(fchips.length?'<div class="pg-chips">'+fchips.map(c=>'<span class="pg-chip">'+escHTML(c)+'</span>').join('')+'</div>':'')+(risk?'<div class="why-risk">⚠ '+escHTML(risk)+'</div>':'')+'</span>'+
+        '<span class="dm-cell-why"><span class="why"><span class="why-ico" title="'+(sig.ai?'AI analyst thesis':'Rule-based signal')+'">✦</span><span class="why-tx">'+escHTML(sig.text)+'</span></span>'+((betaChip||fchips.length)?'<div class="pg-chips">'+betaChip+fchips.map(c=>'<span class="pg-chip">'+escHTML(c)+'</span>').join('')+'</div>':'')+(risk?'<div class="why-risk">⚠ '+escHTML(risk)+'</div>':'')+'</span>'+
         upCell+
         '<span class="dm-chg today-col '+(chg>=0?'up':'dn')+'">'+fmtPct(chg)+trend+'</span>'+
         '<span class="act-col"><button class="dm-btn">View →</button></span>'+
