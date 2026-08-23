@@ -481,7 +481,10 @@ def _stock_row(t: dict, rank: int = 99) -> str:
         pop_n = round(float(pop)) if pop is not None else "—"
     except (TypeError, ValueError):
         pop_n = "—"
-    bl = (t.get("bottom_line_ai") or t.get("bottom_line") or "")[:130]
+    # NB: module-level `html`, not `_html` — that alias is bound inside one
+    # other function only, and reading it here would NameError at request time
+    # inside a try/except, silently emptying the column.
+    bl = html.escape(t.get("bottom_line_ai") or t.get("bottom_line") or "")
     grade_class = grade if grade in ("A", "B", "C", "D", "F") else ""
     logo = ('<img class="sr-logo" src="https://assets.parqet.com/logos/symbol/'
             + sym + '" alt="" loading="lazy" width="26" height="26" '
@@ -494,7 +497,7 @@ def _stock_row(t: dict, rank: int = 99) -> str:
         "<tr>" + cell
         + f'<td><span class="grade {grade_class}">{grade}</span></td>'
         + f'<td class="pop">{pop_n}</td>'
-        + f'<td class="vd">{bl}</td></tr>'
+        + f'<td class="vd"><span>{bl}</span></td></tr>'
     )
 
 
@@ -665,6 +668,9 @@ def render_sector(slug: str, universe: list[dict], site_origin: str) -> Optional
    real colour on the page and marks where the ranking starts. */
 .tbl thead th{{background:#FFF2EC;color:#0A2F46;border-bottom:2px solid #E4CFC2}}
 .tbl tbody tr:hover td{{background:#FFF6F1}}
+.tbl td.vd{{white-space:normal;line-height:1.5}}
+.tbl td.vd>span{{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;
+  overflow:hidden}}
 .sr-nm{{font-size:12.5px;color:#5d6c7b;display:block;overflow:hidden;
   text-overflow:ellipsis;white-space:nowrap}}
 .sr-id{{display:flex;align-items:center;gap:10px;min-width:0}}
@@ -685,7 +691,7 @@ _SECTOR_INDEX_CSS = """
   background:#F2F1EE;border-left:3px solid #FF6100;border-radius:4px}
 .si-note b{color:#0A2F46}
 .si-wrap{overflow-x:auto;border:1px solid #D6DADD;border-radius:10px;background:#fff;margin:0 0 26px}
-table.si{border-collapse:collapse;width:100%;min-width:1180px;font-variant-numeric:tabular-nums}
+table.si{border-collapse:collapse;width:100%;min-width:1080px;font-variant-numeric:tabular-nums}
 /* Two-line headers. "MEDIAN REV GROWTH" and "MEDIAN NET MARGIN" were setting
    the column widths on their own, and repeating "Median" five times said the
    same thing five times. The short word carries the column; the qualifier
@@ -718,17 +724,19 @@ table.si a.si-nm:hover{text-decoration:underline}
 
 /* Highest-scoring cell: logo + ticker chips. The logos are the only real
    colour on the page and they make a row identifiable before it is read. */
-.si-lead{display:inline-flex;align-items:center;gap:5px;margin:2px 0 2px 6px;
-  padding:3px 8px 3px 3px;border:1px solid #E4E7EC;border-radius:99px;background:#fff;
+.si-lead{display:inline-flex;align-items:center;gap:4px;margin:0;
+  padding:2px 7px 2px 2px;border:1px solid #E4E7EC;border-radius:99px;background:#fff;
   text-decoration:none;vertical-align:middle;
   transition:border-color 140ms cubic-bezier(.2,.7,.2,1),box-shadow 140ms cubic-bezier(.2,.7,.2,1)}
 .si-lead:hover{text-decoration:none;border-color:#0A2F46;
   box-shadow:0 4px 12px -6px rgba(10,47,70,.4)}
-.si-lead img{width:20px;height:20px;border-radius:50%;object-fit:contain;
-  background:#fff;flex:0 0 20px}
-.si-lead span{font-family:var(--mono),ui-monospace,Menlo,monospace;font-size:11.5px;
-  font-weight:600;color:#0A2F46;letter-spacing:.02em}
-table.si td.si-led{white-space:normal;min-width:210px;line-height:1.5;padding:7px 12px}
+.si-lead img{width:17px;height:17px;border-radius:50%;object-fit:contain;
+  background:#fff;flex:0 0 17px}
+.si-lead span{font-family:var(--mono),ui-monospace,Menlo,monospace;font-size:10.5px;
+  font-weight:600;color:#5d6c7b;letter-spacing:.02em}
+.si-lead:hover span{color:#0A2F46}
+table.si td.si-sec{white-space:normal;min-width:230px;padding:10px 12px}
+.si-leads{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
 .si-pos{color:#12704A;font-weight:650}
 .si-neg{color:#B32D23;font-weight:650}
 """
@@ -814,9 +822,14 @@ def render_sector_index(universe: list[dict], site_origin: str) -> str:
         # pin in this repo — Railway picks its own interpreter, so a 3.12-only
         # syntax here would be an ImportError that takes the whole app down.
         tr_open = '<tr class="si-base">' if is_base else "<tr>"
+        # The three highest scorers used to be a column of their own on the far
+        # right, which pushed the table past the viewport and put a sector's
+        # name and its names at opposite ends of a wide row. They belong with
+        # the label they describe.
+        nm_cell = nm if is_base else (nm + '<div class="si-leads">' + led + "</div>")
         return (
             tr_open
-            + f"<td>{nm}</td>"
+            + f'<td class="si-sec">{nm_cell}</td>'
             f'<td>{s["count"]}</td>'
             f'<td>{_si_money(s.get("market_cap_total"))}</td>'
             f"<td>{bar}{_si_cell(med)}</td>"
@@ -826,8 +839,7 @@ def render_sector_index(universe: list[dict], site_origin: str) -> str:
             f'<td>{_si_cell(s["pe_median"], "×")}</td>'
             f'<td>{_si_cell(s["growth_median"], "%", signed=True)}</td>'
             f'<td>{_si_cell(s.get("growth_weighted"), "%", signed=True)}</td>'
-            f'<td>{_si_cell(s["margin_median"], "%", signed=True)}</td>'
-            f'<td class="si-led">{led}</td></tr>'
+            f'<td>{_si_cell(s["margin_median"], "%", signed=True)}</td></tr>'
         )
 
     body_rows = row(base, True) + "".join(row(s) for s in secs)
@@ -860,7 +872,6 @@ def render_sector_index(universe: list[dict], site_origin: str) -> str:
         <th>Growth<i>median</i></th>
         <th>Sector growth<i>weighted by size</i></th>
         <th>Margin<i>median net</i></th>
-        <th>Top 3<i>highest scoring</i></th>
       </tr></thead>
       <tbody>{body_rows}</tbody>
     </table>

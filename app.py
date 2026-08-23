@@ -2547,7 +2547,9 @@ async def reports_index():
         band = "hi" if sc >= 80 else "mid" if sc >= 60 else "lo"
         items_html.append(
             f'<a class="row" href="/report/{sym}">'
-            f'<span class="sym">{sym}</span>'
+            f'<span class="sym"><img class="rp-logo" loading="lazy" width="22" height="22" '
+            f'src="https://assets.parqet.com/logos/symbol/{sym}" alt="" '
+            f'onerror="this.remove()">{sym}</span>'
             f'<span class="nm">{name}</span>'
             f'<span class="sect">{sect}</span>'
             f'<span class="chg {chg_cls}">{chg_str}</span>'
@@ -2569,7 +2571,10 @@ async def reports_index():
 /* ---- reports index ---- */
 .rp-head{{max-width:var(--wrap);margin:0 auto;padding:52px 24px 30px}}
 .rp-list{{max-width:var(--wrap);margin:0 auto;padding:0 24px 64px}}
-.rp-lh,.row{{display:grid;grid-template-columns:88px 1fr 190px 96px 84px;gap:16px;align-items:center}}
+.rp-lh,.row{{display:grid;grid-template-columns:120px 1fr 190px 96px 84px;gap:16px;align-items:center}}
+.row .sym{{display:inline-flex;align-items:center;gap:8px}}
+.rp-logo{{width:22px;height:22px;border-radius:50%;object-fit:contain;background:#fff;
+  box-shadow:0 0 0 1px var(--rule);flex:0 0 22px}}
 .rp-lh{{padding:12px 22px;background:var(--alt);border:1px solid var(--rule);
   border-bottom:none;border-radius:14px 14px 0 0;font-family:var(--mono);font-size:10px;
   letter-spacing:.14em;text-transform:uppercase;color:var(--grey-2);font-weight:500}}
