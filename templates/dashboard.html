@@ -17521,13 +17521,13 @@ function _screenMatch(id, ds){
 function v2RenderScreens(){
   const wrap=document.getElementById('uni-screens'); if(!wrap) return;
   const rows=[...document.querySelectorAll('#fund-tbody tr.fund-row')];
-  const prof=(typeof v2CurrentProfile==='function')?v2CurrentProfile():'aggressive';
-  const inProfile=r=>{ const ps=(r.dataset.profiles||'').split(' ').filter(Boolean); return !ps.length||ps.includes(prof); };
-  // Strategy-screen counts are scoped to the active risk profile, so each lens'
-  // number matches what the table will actually show under that profile.
-  const count=id=> id==='all'      ? rows.filter(inProfile).length
-               : id==='featured'   ? rows.filter(r=>inProfile(r)&&r.hasAttribute('data-featured')).length
-               : rows.filter(r=>inProfile(r)&&_screenMatch(id, r.dataset)).length;
+  // One universe (23 Aug 2026): the counts are over every row. This used to
+  // scope them to the reader's risk profile, and with the profile pinned to
+  // 'full' — a value no row carries in data-profiles — every screen would
+  // have counted ZERO. The rows still carry the attribute; nothing reads it.
+  const count=id=> id==='all'      ? rows.length
+               : id==='featured'   ? rows.filter(r=>r.hasAttribute('data-featured')).length
+               : rows.filter(r=>_screenMatch(id, r.dataset)).length;
   wrap.innerHTML=_UNI_SCREENS.map(s=>
     '<button class="uni-screen'+(s.id===_uniScreen?' on':'')+'" style="--scn:'+s.scn+'" '+
       'data-screen="'+s.id+'" onclick="v2ApplyScreen(\''+s.id+'\')">'+
