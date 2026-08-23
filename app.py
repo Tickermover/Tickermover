@@ -3053,10 +3053,11 @@ _SP_DASH_CSS = """
 .sp-hs{display:flex;align-items:center;gap:18px;flex:0 0 auto}
 /* Right-hand hero column: gauge on top, six-month line under it. The hero used
    to end at the gauge and leave that whole block empty. */
-.sp-hero-r{display:flex;flex-direction:column;gap:16px;align-items:stretch;flex:0 0 auto;
-  min-width:300px}
+.sp-hero-r{display:flex;flex-direction:column;gap:12px;align-items:stretch;
+  flex:0 0 auto;min-width:264px;max-width:300px}
 .sp-spark{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);
-  border-radius:12px;padding:11px 13px 8px}
+  border-radius:10px;padding:9px 11px 6px}
+.sp-spark[hidden]{display:none}
 .sp-spark-h{display:flex;align-items:baseline;justify-content:space-between;
   font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;
   color:#8FBFDD;font-weight:500;margin-bottom:4px}
@@ -3381,71 +3382,6 @@ def _risk_pillar(t: dict) -> Optional[float]:
     return _risk_score(t)
 
 
-def _sp_sparkline(sym: str) -> str:
-    """Six months of closes as an inline SVG line, for the hero.
-
-    CACHE-ONLY, deliberately. `candles:{sym}` is filled by the data coordinator
-    on its own schedule; calling get_candles() here would put a provider round
-    trip on every page render of an SEO page, which is the exact mistake
-    _sp_ssr_cached exists to avoid. Cold cache returns "" and the hero simply
-    has no chart, the same way it behaves for a name we have never priced.
-
-    The line is coloured by direction over the window. That is a fact about the
-    price, not a view on the company, and it is the same up/down pair the rest
-    of the site uses for a move.
-    """
-    try:
-        raw = cache.get(f"candles:{sym}") or {}
-        bars = raw.get("candles") or []
-    except Exception:
-        return ""
-    closes = []
-    for b in bars[-126:]:                      # ~6 months of trading days
-        try:
-            c = float(b.get("c") or 0)
-        except (TypeError, ValueError):
-            continue
-        if c > 0:
-            closes.append(c)
-    if len(closes) < 20:                       # too thin to read as a trend
-        return ""
-
-    lo, hi = min(closes), max(closes)
-    rng = (hi - lo) or 1.0
-    W, H, PAD = 300.0, 74.0, 6.0
-    step = (W - 2 * PAD) / (len(closes) - 1)
-    pts = [
-        (PAD + i * step, PAD + (H - 2 * PAD) * (1.0 - (c - lo) / rng))
-        for i, c in enumerate(closes)
-    ]
-    line = " ".join(f"{x:.1f},{y:.1f}" for x, y in pts)
-    area = f"{PAD:.1f},{H - PAD:.1f} " + line + f" {pts[-1][0]:.1f},{H - PAD:.1f}"
-
-    up = closes[-1] >= closes[0]
-    col = "#34D399" if up else "#F87171"
-    gid = f"spk{sym.lower()}"
-    pct = (closes[-1] / closes[0] - 1.0) * 100.0 if closes[0] else 0.0
-
-    return (
-        '<div class="sp-spark">'
-        '<div class="sp-spark-h"><span>6-month price</span>'
-        f'<span class="sp-spark-d" style="color:{col}">'
-        f'{"+" if pct >= 0 else ""}{pct:.1f}%</span></div>'
-        f'<svg viewBox="0 0 {W:.0f} {H:.0f}" width="100%" height="74" '
-        'role="img" aria-label="Six month price trend" preserveAspectRatio="none">'
-        f'<defs><linearGradient id="{gid}" x1="0" y1="0" x2="0" y2="1">'
-        f'<stop offset="0" stop-color="{col}" stop-opacity=".28"/>'
-        f'<stop offset="1" stop-color="{col}" stop-opacity="0"/></linearGradient></defs>'
-        f'<polygon points="{area}" fill="url(#{gid})"/>'
-        f'<polyline points="{line}" fill="none" stroke="{col}" stroke-width="2" '
-        'stroke-linecap="round" stroke-linejoin="round"/>'
-        f'<circle cx="{pts[-1][0]:.1f}" cy="{pts[-1][1]:.1f}" r="3" fill="{col}"/>'
-        "</svg>"
-        f'<div class="sp-spark-f"><span>${lo:,.2f}</span><span>${hi:,.2f}</span></div>'
-        "</div>"
-    )
-
-
 def _sp_score_gauge(score, color: str) -> str:
     """Colorful donut gauge for the Quant Score — server-rendered SVG, no JS."""
     import math
@@ -3699,7 +3635,12 @@ def _sp_data_sections(t: dict, sym: str, price: float):
     # No Pro tier any more - the upsell panel and its nav pill are gone.
     # _sp_pro_section() is left defined but unused rather than deleted, so
     # nothing else that may still reference it breaks.
-    return nav_html, "".join(secs)
+    # The scorecard is built first in `secs`, and it is returned SEPARATELY so
+    # the caller can lead with it. It is the page's headline answer - six
+    # numbers that explain the Quant Score in the hero - and it was sitting
+    # below the audit and the two check panels, several screens down.
+    lead = secs[0] if secs else ""
+    return nav_html, "".join(secs[1:]), lead
 
 
 def _sp_ssr_cached(cache_key: str, public: bool = False) -> str:
@@ -3803,12 +3744,7 @@ def _render_stock_page(t: dict) -> str:
         'cited evidence, not a verified fact and not a reason to buy. Follow each '
         'citation to the source.</p>',
         "rep-green", "\u2713")
-    try:
-        spark_html = _sp_sparkline(sym)
-    except Exception as _spk_err:
-        logger.debug("sparkline %s: %s", sym, _spk_err)
-        spark_html = ""
-    sp_nav_html, sp_sections_html = _sp_data_sections(t, sym, price)
+    sp_nav_html, sp_sections_html, sp_lead_html = _sp_data_sections(t, sym, price)
     try:
         exec_summary_html = _sp_exec_summary(sym)
     except Exception:
@@ -4188,7 +4124,7 @@ h2{{font-size:18px;margin:30px 0 12px}}
         {score_gauge_html}
         <div>{stars_html}<div><span class="sp-hs-tier">{tier_txt}</span></div></div>
       </div>
-      {spark_html}
+      <div class="sp-spark" id="spSpark" hidden></div>
     </div>
   </div>
   <div class="sp-verdict">{exec_summary_html or bottom_line}{verdict_chips_html}</div>
@@ -4197,6 +4133,8 @@ h2{{font-size:18px;margin:30px 0 12px}}
 <div class="wrap">
 
   <div class="report-card">
+
+  {sp_lead_html}
 
   {charts_html}
 
@@ -4298,6 +4236,49 @@ h2{{font-size:18px;margin:30px 0 12px}}
 }})();
 </script>
 <script>
+/* Six-month price line under the score. Client-side on purpose: the raw bars
+   are not in any cache the renderer can reach, and fetching them server-side
+   would put a provider round trip on every render of an SEO page. Hidden until
+   it has something to draw, so a thin or missing series leaves no empty box. */
+(function(){{
+  var box=document.getElementById('spSpark'); if(!box) return;
+  var sym=document.body.getAttribute('data-sym')||'';
+  if(!sym) return;
+  fetch('/api/candles/'+encodeURIComponent(sym)+'?days=130').then(function(r){{
+    return r.ok?r.json():null;
+  }}).then(function(d){{
+    var bars=(d&&d.candles)||[]; var c=[];
+    for(var i=0;i<bars.length;i++){{
+      var v=parseFloat(bars[i].c); if(v>0) c.push(v);
+    }}
+    c=c.slice(-126);
+    if(c.length<20) return;
+    var lo=Math.min.apply(null,c), hi=Math.max.apply(null,c), rng=(hi-lo)||1;
+    var W=280,H=58,P=5, step=(W-2*P)/(c.length-1), pts=[];
+    for(var k=0;k<c.length;k++){{
+      pts.push((P+k*step).toFixed(1)+','+(P+(H-2*P)*(1-(c[k]-lo)/rng)).toFixed(1));
+    }}
+    var line=pts.join(' ');
+    var up=c[c.length-1]>=c[0], col=up?'#34D399':'#F87171';
+    var pct=c[0]?((c[c.length-1]/c[0]-1)*100):0;
+    var last=pts[pts.length-1].split(',');
+    box.innerHTML=
+      '<div class="sp-spark-h"><span>6-month price</span>'+
+      '<span class="sp-spark-d" style="color:'+col+'">'+(pct>=0?'+':'')+pct.toFixed(1)+'%</span></div>'+
+      '<svg viewBox="0 0 '+W+' '+H+'" width="100%" height="58" preserveAspectRatio="none" '+
+      'role="img" aria-label="Six month price trend">'+
+      '<defs><linearGradient id="spkg" x1="0" y1="0" x2="0" y2="1">'+
+      '<stop offset="0" stop-color="'+col+'" stop-opacity=".30"/>'+
+      '<stop offset="1" stop-color="'+col+'" stop-opacity="0"/></linearGradient></defs>'+
+      '<polygon points="'+P+','+(H-P)+' '+line+' '+last[0]+','+(H-P)+'" fill="url(#spkg)"/>'+
+      '<polyline points="'+line+'" fill="none" stroke="'+col+'" stroke-width="2" '+
+      'stroke-linecap="round" stroke-linejoin="round"/>'+
+      '<circle cx="'+last[0]+'" cy="'+last[1]+'" r="2.6" fill="'+col+'"/></svg>'+
+      '<div class="sp-spark-f"><span>$'+lo.toFixed(2)+'</span><span>$'+hi.toFixed(2)+'</span></div>';
+    box.hidden=false;
+  }}).catch(function(){{}});
+}})();
+
 /* Thesis audit -> bullets. Client-side because this payload is not in the
    page cache; failure is silent and the panel simply says nothing. */
 (function(){{
