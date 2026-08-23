@@ -37,9 +37,15 @@ def slugify(text: str) -> str:
 
 def sector_slugs(universe: list[dict]) -> dict[str, str]:
     """Map slug → original sub_sector label for the live universe."""
+    import sector_intel as _si
     out: dict[str, str] = {}
     for t in universe or []:
-        sub = t.get("sub_sector") or t.get("subsector") or t.get("sector") or ""
+        # MUST match sector_intel's grouping exactly. This used to fall back
+        # sub_sector -> subsector -> sector, skipping `industry`, while the
+        # index is built from sector_intel which prefers industry over sector.
+        # Every sector labelled from `industry` — the large majority — was
+        # therefore listed on /sectors and 404'd when clicked.
+        sub = _si.bucket_of(t) or ""
         if sub and slugify(sub) not in out:
             out[slugify(sub)] = sub
     return out
@@ -481,9 +487,10 @@ def render_sector(slug: str, universe: list[dict], site_origin: str) -> Optional
     label = smap.get(slug)
     if not label:
         return None
+    import sector_intel as _si_mod
     rows = [
         t for t in (universe or [])
-        if slugify(t.get("sub_sector") or t.get("subsector") or t.get("sector") or "") == slug
+        if slugify(_si_mod.bucket_of(t) or "") == slug
     ]
     # Sort by Quant Score descending
     def _score(t: dict) -> float:

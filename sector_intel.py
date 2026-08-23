@@ -108,6 +108,15 @@ def _group(universe: list[dict]) -> dict[str, list[dict]]:
     return out
 
 
+def bucket_of(t: dict) -> Optional[str]:
+    """Public name for _bucket_of. THE single definition of which sub-sector a
+    row belongs to — every surface that groups, links or filters by sub-sector
+    must call this and nothing else. seo_pages carried its own copy that
+    omitted `industry`, and since only ~a third of the universe has
+    `sub_sector` while `industry` covers ~all of it, most sector pages 404'd."""
+    return _bucket_of(t)
+
+
 # ── the aggregate ────────────────────────────────────────────────────────
 def summarise(label: str, rows: list[dict]) -> dict[str, Any]:
     """Descriptive stats for one sub-sector. Every value is measured, not modelled."""

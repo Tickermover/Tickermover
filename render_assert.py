@@ -259,6 +259,40 @@ def run(update_baseline, verbose, pages=None, quiet=False):
         got = pages[pg].count('class="brand"')
         rep.check(pg, "wordmark count", got == want, "found %d, want %d" % (got, want))
 
+    # --- every sector the index links to must actually render ------------
+    # 54 of 73 sector pages were 404 in production. The index is built from
+    # sector_intel, which groups sub_sector -> subsector -> INDUSTRY -> sector,
+    # while seo_pages resolved the slug with its own copy that skipped
+    # `industry`. Only ~a third of the universe carries sub_sector and ~all of
+    # it carries industry, so three quarters of the links pointed at nothing —
+    # and every one of them was in sitemap.xml. Rendering the index alone
+    # never caught it: the page was perfect, the destinations were not.
+    try:
+        import seo_pages as _S
+        _O = "https://tickermover.com"
+        _mixed = [
+            dict(FIXTURE, ticker="AA1", name="Curated One", sub_sector="AI Semiconductors"),
+            dict(FIXTURE, ticker="AA2", name="Curated Two", sub_sector="AI Semiconductors"),
+            dict(FIXTURE, ticker="AA3", name="Curated Three", sub_sector="AI Semiconductors"),
+        ]
+        # industry-only rows: the majority case, and the one that broke
+        for _t, _n in (("BB1", "Industry One"), ("BB2", "Industry Two"), ("BB3", "Industry Three")):
+            _r = dict(FIXTURE, ticker=_t, name=_n, industry="Medical Devices")
+            _r.pop("sub_sector", None)
+            _r.pop("subsector", None)
+            _mixed.append(_r)
+        _idx = _S.render_sector_index(_mixed, _O)
+        _links = re.findall(r'<a class="si-nm" href="/sectors/([^"]+)"', _idx)
+        rep.check("sectors", "index links exist", len(_links) >= 2,
+                  "%d links" % len(_links))
+        for _slug in _links:
+            _pg = _S.render_sector(_slug, _mixed, _O)
+            _rows = len(re.findall(r'class="tk"', _pg or ""))
+            rep.check("sectors", "sector link resolves", _pg is not None and _rows > 0,
+                      "/sectors/%s -> %s" % (_slug, "404" if _pg is None else "%d rows" % _rows))
+    except Exception as _exc:
+        rep.check("sectors", "sector link resolves", False, "raised %r" % (_exc,))
+
     if update_baseline:
         io.open(BASELINE, "w", encoding="utf-8").write(json.dumps(fresh, indent=1, sort_keys=True))
         print("baseline written: " + ", ".join("%s=%d" % kv for kv in sorted(fresh.items())))
@@ -272,6 +306,11 @@ def run(update_baseline, verbose, pages=None, quiet=False):
 # A harness that only ever passes is worthless. Every fault below is a bug
 # that really shipped; if one of these stops failing, the check guarding it
 # has rotted and the next occurrence will go out silently.
+# NOTE: "sector link resolves" is deliberately NOT in this list. Every fault
+# here works by mutating a rendered page's HTML, and that check does not read
+# a page — it re-renders each sector the index links to. It was proven to fire
+# the only way that matters: against the real bug, where /sectors/medical-devices
+# returned None while the index happily linked to it.
 FAULTS = [
     ("dangling CSS rule", "stocks", "no dangling sel",
      lambda h: h.replace(".cclk-scale{display:grid",
