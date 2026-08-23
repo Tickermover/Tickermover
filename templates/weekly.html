@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Market Movers — Weekly Stock Market Analysis &amp; Stocks to Watch | TickerMover</title>
-  <meta name="description" content="TickerMover's signed weekly editorial — a long-form, data-grounded deep-dive into the week's most important sector or stock, written by our desk.">
+  <title>Weekly stock-market analysis — the editorial archive | TickerMover</title>
+  <meta name="description" content="Back issues of TickerMover's signed weekly editorial — long-form, data-grounded deep-dives into the sectors and stocks moving each week. Our current weekly publication is Capex Chains.">
   <link rel="icon" type="image/svg+xml" href="/static/brand/tickermover-mark.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -25,6 +25,10 @@
     .brand{display:flex;align-items:center;gap:10px;text-decoration:none;font-weight:600;font-size:19px;letter-spacing:-.022em;color:#0a0a0a}
     .brand .mark{width:30px;height:30px;flex:none;background:linear-gradient(135deg,#8FBFDD 0%,#14587D 50%,#0A2F46 100%);
       -webkit-mask:url('/static/brand/tickermover-mark-mask.svg') center/contain no-repeat;mask:url('/static/brand/tickermover-mark-mask.svg') center/contain no-repeat}
+    .arch-note{max-width:760px;margin:16px auto 0;padding:11px 20px;font-size:13.5px;
+      line-height:1.55;color:var(--muted);background:#F2F1EE;border-radius:10px}
+    .arch-note b{color:var(--ink)}
+    .arch-note a{color:var(--blue);font-weight:600}
     .cta{display:inline-flex;align-items:center;gap:6px;background:var(--blue);color:#fff;text-decoration:none;font-size:13px;font-weight:600;padding:8px 15px;border-radius:9px}
     .wrap{max-width:720px;margin:0 auto;padding:30px 20px 70px}
     /* Reading layout — the issue page runs wider than the newsstand and gains a
@@ -386,6 +390,13 @@
       <a class="cta" href="/app">Open the dashboard →</a>
     </div>
   </header>
+  <!-- This page is an ARCHIVE and says so. The editorial has not published
+       since the 27 July issue; the weekly publication is Capex Chains, which
+       ships a new map every Sunday. Leaving the page implying a live weekly is
+       the same false promise as the newsletter block we withdrew. -->
+  <div class="arch-note"><b>Archive.</b> These are back issues of our weekly editorial.
+    Our current weekly publication is <a href="/who-benefits">Capex Chains</a> &mdash; a new
+    map of where a spending theme lands, every week.</div>
   <main class="wrap"><div id="article"><div class="loading">📰 Loading the newsstand…</div></div></main>
 
   <script>
@@ -1013,7 +1024,7 @@
       root.innerHTML=head+'<div class="covers">'+covers+'</div>';
       // The cover-photo error handler that lived here is gone with the photos
       // themselves — covers are drawn now, so there is nothing left to fail.
-      document.title='Market Movers — Weekly Stock Market Analysis | TickerMover';
+      document.title='Weekly stock-market analysis — the editorial archive | TickerMover';
     }
 
     var _wk=parseWeek();

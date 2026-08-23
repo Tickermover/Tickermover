@@ -6414,7 +6414,7 @@ def _weekly_inject_seo(html: str, week_start: str = "", slug: str = "") -> str:
                 art = None
 
         if art:
-            title = (art.get("title") or "").strip() or "The Weekly Editorial"
+            title = (art.get("title") or "").strip() or "Weekly editorial"
             desc = ((art.get("standfirst") or art.get("house_view") or "").strip()[:300]
                     or "TickerMover's signed weekly editorial.")
             aslug = (art.get("slug") or slug or "").strip()
@@ -6423,7 +6423,7 @@ def _weekly_inject_seo(html: str, week_start: str = "", slug: str = "") -> str:
             img = (cover.get("url") or "").strip() or default_img
             img_alt = (cover.get("alt") or "").strip() or title
             subject = (art.get("subject") or "").strip()
-            page_title = f"{title} — Market Movers · TickerMover"
+            page_title = f"{title} — weekly editorial archive · TickerMover"
             og_type = "article"
             ld = {
                 "@context": "https://schema.org", "@type": "Article",
@@ -6436,11 +6436,18 @@ def _weekly_inject_seo(html: str, week_start: str = "", slug: str = "") -> str:
                               "logo": {"@type": "ImageObject", "url": default_img}},
             }
         else:
-            title = "Market Movers — Weekly Stock Market Analysis & Stocks to Watch | TickerMover"
-            desc = ("Market Movers is TickerMover's signed weekly stock-market analysis — a "
-                    "long-form, data-grounded deep-dive into the sectors and stocks moving each week.")
+            # This page had THREE names -- "Market Movers" in the title, "The
+            # Weekly" in the nav, "weekly editorial" in the code -- for one
+            # publication that has not shipped since 27 July. Capex Chains is
+            # the weekly publication now, so this is the archive and says so.
+            # "Weekly stock market analysis" stays: it is the query language,
+            # and "Market Movers" was a brand with no search equity to lose.
+            title = "Weekly stock-market analysis - the editorial archive | TickerMover"
+            desc = ("Back issues of TickerMover's signed weekly editorial: long-form, "
+                    "data-grounded deep-dives into the sectors and stocks moving each week. "
+                    "Our current weekly publication is Capex Chains.")
             canon = f"{SITE_ORIGIN}/weekly"
-            img, img_alt = default_img, "Market Movers — TickerMover"
+            img, img_alt = default_img, "TickerMover editorial archive"
             page_title, og_type = title, "website"
             ld = {"@context": "https://schema.org", "@type": "CollectionPage",
                   "name": title, "description": desc, "url": canon,
@@ -7311,9 +7318,15 @@ async def who_benefits_hub_page():
         + "</div>" + _WB_HUB_CSS
     )
     return HTMLResponse(content=_seo.page_shell(
-        title="Capex Chains - where spending lands, company by company | TickerMover",
-        desc=("Supply-chain maps tracing AI capex, the grid rebuild, defence outlays and more "
-              "through the companies that capture the spending. Free research."),
+        # Brand first because that is the name we are building, but the title
+        # must still carry the words people type. The rename briefly left it as
+        # "Capex Chains - where spending lands", which contains no query term:
+        # nobody searches "capex chains", they search "hyperscaler capex",
+        # "AI capex beneficiaries" and "supply chain".
+        title="Capex Chains - AI capex, grid and defence supply-chain maps | TickerMover",
+        desc=("Supply-chain maps tracing AI capex, the grid rebuild and defence outlays "
+              "through the companies that capture the spending. Free research, a new map "
+              "every week."),
         canonical=SITE_ORIGIN + "/who-benefits", body_html=body, schema_json=schema,
         og_image=SITE_ORIGIN + "/static/icons/icon-512.png"))
 

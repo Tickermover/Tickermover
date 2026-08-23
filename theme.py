@@ -99,7 +99,7 @@ def footer_html() -> str:
         # "Start free" sat under Product: it is a call to action, not something
         # we make. The nav's Start-free pill is on every page anyway.
         '<div><h4>Product</h4>'
-        '<a href="/app">Dashboard</a><a href="/weekly">The Weekly</a></div>'
+        '<a href="/app">Dashboard</a><a href="/weekly">Editorial archive</a></div>'
         '<div><h4>Legal</h4>'
         '<a href="/privacy">Privacy</a><a href="/terms">Terms</a>'
         '<a href="/disclaimer">Disclaimer</a>'
