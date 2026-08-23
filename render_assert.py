@@ -171,6 +171,13 @@ def render_pages():
         "learn":      S.render_pillar_index(O),
         "sectors":    S.render_sector_index(U, O),
         "compare":    S.render_compare_index(U, O),
+        # Added 22 Aug. The screens cluster and the chain maps are the two
+        # newest SEO surfaces and neither was covered - which is exactly how a
+        # thesis description shipped cut mid-word at "each layer's and each".
+        "screens":    S.render_screen_index(U, O),
+        "screen":     S.render_screen("quality-compounders", U, O) or "",
+        "thesis":     asyncio.run(app.thesis_page("ai-capex-chain")).body.decode(),
+        "whobenefits": asyncio.run(app.who_benefits_hub_page()).body.decode(),
         "terms":      L.render_terms(),
         "privacy":    L.render_privacy(),
         "disclaimer": L.render_disclaimer(),
@@ -272,7 +279,8 @@ def run(update_baseline, verbose, pages=None, quiet=False):
     # uses to understand the shape of the site.
     import html as _h_seo
     for _pg, _needs_schema in (("stocks", True), ("sectors", True), ("reports", True),
-                               ("learn", True), ("compare", False)):
+                               ("learn", True), ("compare", False), ("screens", True),
+                               ("screen", True), ("thesis", True), ("whobenefits", True)):
         _html_pg = pages[_pg]
         _m = re.search(r'<meta name="description" content="(.*?)"', _html_pg, re.S)
         _d = _h_seo.unescape(_m.group(1)) if _m else ""

@@ -6489,7 +6489,15 @@ def _thesis_ssr(t: dict):
     standfirst = re.sub(r"\s+", " ", (t.get("standfirst") or "")).strip()
     url = SITE_ORIGIN + "/who-benefits/" + slug
 
-    desc = (standfirst or title)[:157]
+    # Trim on a WORD boundary. A hard slice left this ending "each layer's and
+    # each", which is the snippet a searcher judges the link by - the same
+    # defect fixed on the table cells and the stock description today.
+    _src = standfirst or title
+    if len(_src) <= 155:
+        desc = _src
+    else:
+        _cut = _src[:155]
+        desc = (_cut[:_cut.rfind(" ")] if " " in _cut else _cut).rstrip(" ,;:-—") + "…"
     page_title = (title + " | TickerMover chain map")[:70]
 
     layers_html = ""
