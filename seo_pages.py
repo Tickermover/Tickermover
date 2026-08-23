@@ -1360,3 +1360,347 @@ def render_article(art: dict, site_origin: str) -> Optional[str]:
     return page_shell(title=f"{title} | TickerMover", desc=desc, canonical=canonical,
                       body_html=body_html, schema_json=schema_json,
                       og_image=f"{site_origin}/static/icons/icon-512.png")
+
+
+# ─── Screens: the scan catalogue as public, query-targeted pages ──────
+#
+# scans.py already holds 32 working screens, built for the signed-in Stock
+# Scanner panel and reachable nowhere else. Every one of them answers a
+# question people actually type into a search box - "most shorted US stocks",
+# "stocks with insider buying", "PEG under 1" - and none of it was indexable.
+#
+# These pages are VIEWS over scans.run(). No filtering logic is copied here:
+# this codebase has grown a drifted second copy three times already (two stock
+# renderers, two dependency cards, and the sub-sector grouping that 404'd 54
+# sector pages), and the copy is always where the rot starts.
+#
+# Time-sensitive scans are deliberately not published. "Reporting in the next
+# fortnight" is a useful panel and a terrible landing page: it would rank, then
+# answer a different question every week.
+
+SCREEN_SEO: dict[str, dict] = {
+    "quality-compounders":   {"h": "Quality compounder stocks",
+                              "q": "High-margin, growing, cash-generative US stocks"},
+    "value-with-growth":     {"h": "Growth at a reasonable price (GARP) stocks",
+                              "q": "US stocks growing double digits without a premium multiple"},
+    "momentum-leaders":      {"h": "Momentum stocks",
+                              "q": "US stocks trending above both moving averages"},
+    "oversold-quality":      {"h": "Oversold but still profitable stocks",
+                              "q": "Beaten-down US stocks with a working P&amp;L"},
+    "debt-light":            {"h": "Low-debt stocks",
+                              "q": "US stocks with debt-light balance sheets"},
+    "beat-streak":           {"h": "Stocks that beat earnings every quarter",
+                              "q": "US stocks with an unbroken EPS beat streak"},
+    "estimates-rising":      {"h": "Stocks with rising earnings estimates",
+                              "q": "US stocks analysts are revising upwards"},
+    "margin-expanding":      {"h": "Stocks with expanding margins",
+                              "q": "US stocks whose gross margin is trending up"},
+    "insider-buying":        {"h": "Stocks with insider buying",
+                              "q": "US stocks where insiders bought more than they sold"},
+    "institutional-heavy":   {"h": "Stocks with high institutional ownership",
+                              "q": "US stocks where the professional money already sits"},
+    "heavily-shorted":       {"h": "Most shorted stocks",
+                              "q": "US stocks with the largest short interest"},
+    "founder-held":          {"h": "Founder-led stocks",
+                              "q": "US stocks with high insider ownership"},
+    "near-highs":            {"h": "Stocks near 52-week highs",
+                              "q": "US stocks trading close to their 12-month high"},
+    "near-lows":             {"h": "Stocks near 52-week lows",
+                              "q": "US stocks trading close to their 12-month low"},
+    "cheap-with-quality":    {"h": "Cheap stocks with quality fundamentals",
+                              "q": "Low-multiple US stocks that still earn their keep"},
+    "cash-machines":         {"h": "Highest free cash flow margin stocks",
+                              "q": "US stocks converting revenue into free cash"},
+    "peg-under-one":         {"h": "Stocks with a PEG ratio under 1",
+                              "q": "US stocks growing faster than their multiple"},
+    "operating-leverage":    {"h": "Stocks with high operating leverage",
+                              "q": "US stocks converting gross margin into operating margin"},
+    "stretched-multiples":   {"h": "Expensive stocks priced for perfection",
+                              "q": "US stocks on high multiples without the growth"},
+    "leverage-heavy":        {"h": "Stocks carrying heavy debt",
+                              "q": "US stocks with meaningful leverage to watch"},
+    "overbought":            {"h": "Overbought stocks",
+                              "q": "US stocks run hard and close to their highs"},
+    "growth-without-profit": {"h": "High-growth stocks that are not yet profitable",
+                              "q": "US stocks compounding revenue with a negative bottom line"},
+}
+
+PUBLISHED_SCREENS: list[str] = [
+    "quality-compounders", "cheap-with-quality", "value-with-growth", "peg-under-one",
+    "momentum-leaders", "near-highs", "near-lows", "oversold-quality",
+    "beat-streak", "estimates-rising", "margin-expanding", "operating-leverage",
+    "cash-machines", "debt-light", "insider-buying", "founder-held",
+    "institutional-heavy", "heavily-shorted", "stretched-multiples",
+    "leverage-heavy", "overbought", "growth-without-profit",
+]
+
+_SCREEN_GROUPS = [
+    ("Quality and value", ["quality-compounders", "cheap-with-quality",
+                           "value-with-growth", "peg-under-one", "cash-machines",
+                           "operating-leverage", "debt-light"]),
+    ("Price and momentum", ["momentum-leaders", "near-highs", "near-lows",
+                            "oversold-quality", "overbought"]),
+    ("Earnings", ["beat-streak", "estimates-rising", "margin-expanding"]),
+    ("Who owns it", ["insider-buying", "founder-held", "institutional-heavy",
+                     "heavily-shorted"]),
+    ("Risks worth seeing", ["stretched-multiples", "leverage-heavy",
+                            "growth-without-profit"]),
+]
+
+_SCREEN_CSS = """
+.scr-note{font-size:13.5px;color:#5d6c7b;line-height:1.6;margin:0 0 22px;padding:12px 16px;
+  background:#F2F1EE;border-left:3px solid #FF6100;border-radius:4px}
+.scr-note b{color:#0A2F46}
+.scr-wrap{overflow-x:auto;border:1px solid #D6DADD;border-radius:10px;background:#fff;margin:0 0 26px}
+table.scr{border-collapse:collapse;width:100%;min-width:820px;font-variant-numeric:tabular-nums}
+table.scr th{position:sticky;top:0;background:#FFF2EC;text-align:right;font-size:10.5px;
+  letter-spacing:.07em;text-transform:uppercase;color:#0A2F46;font-weight:700;
+  padding:11px 12px;border-bottom:2px solid #E4CFC2;white-space:nowrap}
+table.scr th:first-child,table.scr td:first-child{text-align:left}
+table.scr td{padding:10px 12px;border-bottom:1px solid #F2F1EE;text-align:right;
+  font-size:13.5px;color:#10293D;white-space:nowrap}
+table.scr tbody tr:nth-child(even) td{background:#FCFBFA}
+table.scr tbody tr:hover td{background:#FFF6F1}
+.scr-id{display:flex;align-items:center;gap:9px;min-width:0}
+.scr-id>div{min-width:0}
+.scr-logo{width:24px;height:24px;border-radius:50%;object-fit:contain;background:#fff;
+  box-shadow:0 0 0 1px #E4E7EC;flex:0 0 24px}
+.scr-tk{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--blue-light)}
+.scr-nm{font-size:12px;color:#5d6c7b;display:block;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;max-width:210px}
+.scr-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(268px,1fr));gap:14px;margin:0 0 30px}
+.scr-card{border:1px solid #D6DADD;border-radius:12px;padding:16px 18px;background:#fff;
+  text-decoration:none;display:block;transition:border-color 140ms cubic-bezier(.2,.7,.2,1),
+  box-shadow 140ms cubic-bezier(.2,.7,.2,1)}
+.scr-card:hover{text-decoration:none;border-color:#0A2F46;box-shadow:0 8px 22px -14px rgba(10,47,70,.45)}
+.scr-card h3{margin:0 0 5px;font-size:15.5px;font-weight:500;color:#0A2F46}
+.scr-card p{margin:0;font-size:12.5px;color:#5d6c7b;line-height:1.5}
+.scr-card .n{font-family:var(--mono);font-size:11px;color:#9A3412;font-weight:700;
+  letter-spacing:.04em;display:block;margin-top:8px}
+.scr-grp{font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:#758696;
+  font-weight:700;margin:26px 0 12px}
+.scr-rel{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 26px}
+.scr-rel a{font-size:12.5px;padding:6px 13px;border:1px solid #D6DADD;border-radius:99px;
+  background:#fff;color:#0A2F46;text-decoration:none}
+.scr-rel a:hover{border-color:#0A2F46;text-decoration:none}
+"""
+
+
+def _screen_row(r: dict, cols: list) -> str:
+    sym = (r.get("ticker") or "").upper()
+    nm = html.escape((r.get("name") or sym)[:48])
+    logo = ('<img class="scr-logo" loading="lazy" width="24" height="24" alt="" '
+            'src="https://assets.parqet.com/logos/symbol/' + sym + '" '
+            'onerror="this.remove()">')
+    first = ('<td><div class="scr-id">' + logo + '<div><a href="/stocks/' + sym
+             + '" class="scr-tk">' + sym + '</a><span class="scr-nm">' + nm
+             + "</span></div></div></td>")
+    dash = "—"
+    rest = "".join(
+        "<td>" + html.escape(str(r.get(c["key"]) if r.get(c["key"]) is not None else dash)) + "</td>"
+        for c in cols if c["key"] not in ("ticker", "name")
+    )
+    return "<tr>" + first + rest + "</tr>"
+
+
+def render_screen(scan_id: str, universe: list, site_origin: str):
+    """One screen as a public, query-targeted page."""
+    if scan_id not in SCREEN_SEO or scan_id not in PUBLISHED_SCREENS:
+        return None
+    import scans as _scans
+    res = _scans.run(scan_id, universe or [], limit=50)
+    if not res.get("available"):
+        return None
+    seo = SCREEN_SEO[scan_id]
+    all_cols = res.get("cols") or []
+    cols = [c for c in all_cols if c["key"] not in ("ticker", "name")]
+    head_cells = "".join("<th>" + html.escape(c["label"]) + "</th>" for c in cols)
+    body_rows = "".join(_screen_row(r, all_cols) for r in (res.get("rows") or []))
+    matched = res.get("matched") or 0
+
+    related = [x for x in PUBLISHED_SCREENS if x != scan_id][:8]
+    rel_html = "".join(
+        '<a href="/screens/' + x + '">' + html.escape(SCREEN_SEO[x]["h"]) + "</a>"
+        for x in related
+    )
+
+    canonical = site_origin + "/screens/" + scan_id
+    title = seo["h"] + " - " + str(matched) + " US stocks screened today | TickerMover"
+    desc = (seo["q"] + ". " + str(matched) + " US stocks currently pass this screen, ranked "
+            "by Quant Score and refreshed every 5 minutes.")[:158]
+
+    faq = {
+        "@context": "https://schema.org", "@type": "FAQPage",
+        "mainEntity": [
+            {"@type": "Question", "name": "What is the " + seo["h"].lower() + " screen?",
+             "acceptedAnswer": {"@type": "Answer", "text": res.get("blurb") or seo["q"]}},
+            {"@type": "Question", "name": "What are the criteria?",
+             "acceptedAnswer": {"@type": "Answer",
+                                "text": res.get("note") or "Measured from reported fundamentals and market data."}},
+            {"@type": "Question", "name": "Is this a list of stocks to buy?",
+             "acceptedAnswer": {"@type": "Answer",
+                                "text": "No. This is a factual screen over public data. TickerMover does not "
+                                        "make buy or sell recommendations and is not authorised by the FCA."}},
+        ],
+    }
+    schema = (
+        _json.dumps({
+            "@context": "https://schema.org", "@type": "ItemList",
+            "name": seo["h"], "description": seo["q"], "url": canonical,
+            "numberOfItems": matched,
+            "itemListElement": [
+                {"@type": "ListItem", "position": i + 1,
+                 "url": site_origin + "/stocks/" + (r.get("ticker") or "").upper(),
+                 "name": r.get("name") or r.get("ticker") or ""}
+                for i, r in enumerate((res.get("rows") or [])[:30])
+            ],
+        }, separators=(",", ":"))
+        + "</script>" + chr(10) + '<script type="application/ld+json">'
+        + _json.dumps({
+            "@context": "https://schema.org", "@type": "BreadcrumbList",
+            "itemListElement": [
+                {"@type": "ListItem", "position": 1, "name": "Home", "item": site_origin},
+                {"@type": "ListItem", "position": 2, "name": "Screens",
+                 "item": site_origin + "/screens"},
+                {"@type": "ListItem", "position": 3, "name": seo["h"], "item": canonical},
+            ],
+        }, separators=(",", ":"))
+        + "</script>" + chr(10) + '<script type="application/ld+json">'
+        + _json.dumps(faq, separators=(",", ":"))
+    )
+
+    empty_row = '<tr><td colspan="9">No names pass this screen right now.</td></tr>'
+    nl = newsletter_block(
+        "screen-" + scan_id,
+        title="Get this screen every week",
+        copy=("A screen changes as the numbers do. Get " + html.escape(seo["h"].lower())
+              + " re-run and delivered every Sunday, so you see what entered and what "
+                "dropped out."),
+        cta="Send me this screen")
+    body = f"""
+<div class="wrap-wide">
+  {brand_header()}
+  <div class="crumbs"><a href="/">Home</a> &middot; <a href="/screens">Screens</a> &middot; {html.escape(seo['h'])}</div>
+  <h1>{html.escape(seo['h'])}</h1>
+  <p class="lede">{seo['q']}. <b>{matched}</b> of our scored US universe pass this screen
+     right now, ranked by Quant Score and refreshed every 5 minutes.</p>
+  <div class="scr-note"><b>How this screen is built.</b> {html.escape(res.get('note') or '')}
+     A screen is a filter over public data, not a recommendation &mdash; it tells you which
+     companies currently meet a measurable condition, and nothing about whether any of them
+     suits you.</div>
+  <div class="scr-wrap">
+    <table class="scr">
+      <thead><tr><th>Company</th>{head_cells}</tr></thead>
+      <tbody>{body_rows or empty_row}</tbody>
+    </table>
+  </div>
+  <h2>Other screens</h2>
+  <div class="scr-rel">{rel_html}</div>
+  <h2>How the Quant Score works</h2>
+  <p>Every name above carries a 0-100 Quant Score built from fundamentals, valuation,
+     momentum, analyst signal and macro regime, normalised inside its own peer group. It is a
+     quality descriptor, not a buy or sell signal.
+     <a href="/learn/pop-score">Read the methodology &rarr;</a></p>
+  <p>Also worth reading: <a href="/sectors">every sub-sector side by side</a> &middot;
+     <a href="/reports">all scored stocks</a> &middot;
+     <a href="/learn/how-to-read-fundamentals">how to read fundamentals</a> &middot;
+     <a href="/editorial-policy">what we will and will not publish</a></p>
+  {cta_block("Open the live dashboard", n=len(universe or []) or None)}
+  {nl}
+  <div class="legal">TickerMover is a research tool, not financial advice, and not
+    FCA-authorised. A screen is a factual filter over public data and is not a recommendation
+    to buy or sell. Figures refresh every 5 minutes during market hours and can lag or contain
+    gaps. Past performance is not a reliable indicator of future results. Capital at risk.</div>
+</div>
+<style>{_SCREEN_CSS}</style>"""
+    # A screen that currently matches nothing is a real answer for a visitor
+    # ("no US stock passes this today") and thin content for a crawler. It
+    # stays reachable and stays in the sitemap - the count moves daily - but it
+    # is not offered for indexing while it is empty, because a page whose main
+    # content is one sentence is exactly what a soft-404 penalty is for.
+    return page_shell(title=title, desc=desc, canonical=canonical, body_html=body,
+                      schema_json=schema,
+                      robots=("index,follow" if matched else "noindex,follow"),
+                      og_image=site_origin + "/static/icons/icon-512.png")
+
+
+def render_screen_index(universe: list, site_origin: str) -> str:
+    """Hub for every published screen."""
+    import scans as _scans
+    counts = {}
+    for sid in PUBLISHED_SCREENS:
+        try:
+            counts[sid] = (_scans.run(sid, universe or [], limit=1) or {}).get("matched") or 0
+        except Exception:
+            counts[sid] = 0
+    by_id = {s["id"]: s for s in _scans.SCANS}
+
+    groups_html = ""
+    for gname, ids in _SCREEN_GROUPS:
+        cards = ""
+        for sid in ids:
+            if sid not in PUBLISHED_SCREENS:
+                continue
+            seo = SCREEN_SEO[sid]
+            sc = by_id.get(sid) or {}
+            cards += (
+                '<a class="scr-card" href="/screens/' + sid + '">'
+                + "<h3>" + html.escape(seo["h"]) + "</h3>"
+                + "<p>" + html.escape(sc.get("blurb") or seo["q"]) + "</p>"
+                + '<span class="n">' + str(counts.get(sid, 0)) + " stocks pass today</span></a>"
+            )
+        if cards:
+            groups_html += '<div class="scr-grp">' + html.escape(gname) + "</div>"
+            groups_html += '<div class="scr-grid">' + cards + "</div>"
+
+    canonical = site_origin + "/screens"
+    n_screens = len(PUBLISHED_SCREENS)
+    schema = (
+        _json.dumps({
+            "@context": "https://schema.org", "@type": "ItemList",
+            "name": "US stock screens", "url": canonical, "numberOfItems": n_screens,
+            "itemListElement": [
+                {"@type": "ListItem", "position": i + 1,
+                 "url": site_origin + "/screens/" + sid, "name": SCREEN_SEO[sid]["h"]}
+                for i, sid in enumerate(PUBLISHED_SCREENS)
+            ],
+        }, separators=(",", ":"))
+        + "</script>" + chr(10) + '<script type="application/ld+json">'
+        + _json.dumps({
+            "@context": "https://schema.org", "@type": "BreadcrumbList",
+            "itemListElement": [
+                {"@type": "ListItem", "position": 1, "name": "Home", "item": site_origin},
+                {"@type": "ListItem", "position": 2, "name": "Screens", "item": canonical},
+            ],
+        }, separators=(",", ":"))
+    )
+    body = f"""
+<div class="wrap-wide">
+  {brand_header()}
+  <div class="crumbs"><a href="/">Home</a> &middot; Screens</div>
+  <h1>Stock screens</h1>
+  <p class="lede">{n_screens} screens run over every scored US stock we cover, rebuilt every
+     5 minutes. Each one is a measurable condition &mdash; a margin, a multiple, a filing, a
+     price level &mdash; not a view on what to own.</p>
+  {groups_html}
+  <h2>How to use a screen</h2>
+  <p>A screen narrows a universe; it does not pick anything. Two companies passing the same
+     filter can be completely different businesses, which is why every result links through to
+     the full breakdown, and why <a href="/sectors">sub-sector context</a> is worth reading
+     alongside it. Our <a href="/learn/pop-score">Quant Score methodology</a> explains what the
+     0-100 number behind each name is measuring, and our
+     <a href="/editorial-policy">editorial policy</a> sets out what we will and will not
+     publish.</p>
+  {cta_block("Open the live dashboard", n=len(universe or []) or None)}
+  {newsletter_block("screens-index")}
+  <div class="legal">TickerMover is a research tool, not financial advice, and not
+    FCA-authorised. Screens are factual filters over public data, not recommendations.
+    Capital at risk.</div>
+</div>
+<style>{_SCREEN_CSS}</style>"""
+    return page_shell(
+        title="US stock screens - " + str(n_screens) + " live screens over every scored stock | TickerMover",
+        desc=("Free US stock screens: quality compounders, PEG under 1, insider buying, most "
+              "shorted, near 52-week highs and more. Rebuilt every 5 minutes."),
+        canonical=canonical, body_html=body, schema_json=schema,
+        og_image=site_origin + "/static/icons/icon-512.png")

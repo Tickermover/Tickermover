@@ -1808,6 +1808,15 @@ async def sitemap_xml():
     parts.append(f'  <url><loc>{SITE_ORIGIN}/sectors</loc><changefreq>daily</changefreq><priority>0.85</priority><lastmod>{today}</lastmod></url>')
     parts.append(f'  <url><loc>{SITE_ORIGIN}/compare</loc><changefreq>weekly</changefreq><priority>0.8</priority><lastmod>{today}</lastmod></url>')
     parts.append(f'  <url><loc>{SITE_ORIGIN}/editorial-policy</loc><changefreq>monthly</changefreq><priority>0.5</priority><lastmod>{today}</lastmod></url>')
+    # Screens: query-shaped landing pages, high priority because they are the
+    # pages most likely to match what someone actually searched for.
+    parts.append(f'  <url><loc>{SITE_ORIGIN}/screens</loc><changefreq>daily</changefreq><priority>0.9</priority><lastmod>{today}</lastmod></url>')
+    for _sid in getattr(_seo, "PUBLISHED_SCREENS", []):
+        parts.append(
+            f'  <url><loc>{SITE_ORIGIN}/screens/{_sid}</loc>'
+            f'<changefreq>daily</changefreq><priority>0.8</priority>'
+            f'<lastmod>{today}</lastmod></url>'
+        )
     try:
         for _t in (_load_theses().get("theses") or []):
             if _t.get("status") == "live" and _t.get("slug"):
@@ -4164,6 +4173,26 @@ async def learn_pillar(slug: str):
     html = _seo.render_pillar(slug.lower().strip(), SITE_ORIGIN)
     if html is None:
         raise HTTPException(status_code=404, detail="Unknown learn page")
+    return HTMLResponse(content=html)
+
+
+@app.get("/screens", response_class=HTMLResponse)
+async def screens_index():
+    """Public hub for the scan catalogue.
+
+    The 32 screens in scans.py were reachable only from the signed-in Stock
+    Scanner panel. Each answers a question people type into a search box, and
+    none of it was indexable - so the site's single most search-shaped asset
+    was invisible."""
+    return HTMLResponse(content=_seo.render_screen_index(_universe_data or [], SITE_ORIGIN))
+
+
+@app.get("/screens/{scan_id}", response_class=HTMLResponse)
+async def screen_page(scan_id: str):
+    html = _seo.render_screen((scan_id or "").lower().strip(),
+                              _universe_data or [], SITE_ORIGIN)
+    if html is None:
+        raise HTTPException(status_code=404, detail="Unknown screen")
     return HTMLResponse(content=html)
 
 
