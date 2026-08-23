@@ -3034,7 +3034,15 @@ _SP_DASH_CSS = """
   text-transform:uppercase;color:#8FBFDD;font-weight:500;margin-bottom:10px}
 .sp-hero h1{font-size:clamp(30px,3.6vw,42px);font-weight:500;letter-spacing:-.02em;
   color:#fff;line-height:1.08;margin:0 0 8px}
-.sp-hero h1 .sym{font-family:var(--mono);font-weight:600;color:#FF6100}
+/* The ticker reads ORANGE. It already said color:#FF6100 and rendered blue,
+   because a later `h1 .sym` rule sets -webkit-text-fill-color:transparent for a
+   blue gradient clip — and text-fill-color beats color no matter how specific
+   the losing rule is. Winning it back means setting the fill, not the colour.
+   Orange gradient rather than flat, because this sits on the dark hero and the
+   warm family is what stays legible there. */
+.sp-hero h1 .sym{font-family:var(--mono);font-weight:600;color:#FF6100;
+  background:linear-gradient(135deg,#FFB37A,#FF6100);-webkit-background-clip:text;
+  background-clip:text;-webkit-text-fill-color:transparent}
 .sp-logo{width:40px;height:40px;border-radius:10px;object-fit:contain;
   background:#fff;padding:4px;vertical-align:-8px;margin-right:12px;
   box-shadow:0 2px 10px rgba(0,0,0,.25)}
@@ -3043,6 +3051,35 @@ _SP_DASH_CSS = """
 .sp-hero .subhead{color:#CFE0EA;font-size:15px;font-weight:300;margin:0}
 .sp-hero .subhead .mono{color:#fff}
 .sp-hs{display:flex;align-items:center;gap:18px;flex:0 0 auto}
+/* Right-hand hero column: gauge on top, six-month line under it. The hero used
+   to end at the gauge and leave that whole block empty. */
+.sp-hero-r{display:flex;flex-direction:column;gap:16px;align-items:stretch;flex:0 0 auto;
+  min-width:300px}
+.sp-spark{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);
+  border-radius:12px;padding:11px 13px 8px}
+.sp-spark-h{display:flex;align-items:baseline;justify-content:space-between;
+  font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;
+  color:#8FBFDD;font-weight:500;margin-bottom:4px}
+.sp-spark-d{font-size:12px;letter-spacing:.02em;font-weight:700}
+.sp-spark svg{display:block}
+.sp-spark-f{display:flex;justify-content:space-between;font-family:var(--mono);
+  font-size:9.5px;color:rgba(255,255,255,.45);margin-top:2px}
+@media(max-width:860px){.sp-hero-r{min-width:0;width:100%}}
+
+/* The six-pillar scorecard. Card per pillar, each carrying its own colour, so
+   the row reads as six separate measures rather than one striped block. */
+.sp-pils{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:12px}
+.sp-pil{border:1px solid var(--rule);border-radius:12px;padding:13px 14px 12px;background:#fff}
+.sp-pil-l{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--grey-2);font-weight:700}
+.sp-pil-v{font-size:29px;font-weight:600;color:var(--primary);line-height:1.15;margin-top:3px;
+  font-variant-numeric:tabular-nums}
+.sp-pil-r{font-size:12.5px;font-weight:600;color:var(--pc1);margin-top:2px}
+.sp-pil-c{font-size:11.5px;color:var(--grey-2);line-height:1.4;margin-top:2px;min-height:2.8em}
+.sp-pil-bar{height:5px;border-radius:99px;background:var(--alt);overflow:hidden;margin-top:9px}
+.sp-pil-bar i{display:block;height:100%;border-radius:99px;
+  background:linear-gradient(90deg,var(--pc1),var(--pc2))}
+.sp-pil-f{font-size:11.5px;color:var(--grey-2);line-height:1.55;margin:14px 0 0}
 .sp-hs .vb-stars{font-size:15px;letter-spacing:2px}
 .sp-hs-tier{display:inline-block;font-family:var(--mono);font-size:10px;letter-spacing:.14em;
   text-transform:uppercase;background:rgba(255,255,255,.14);color:#fff;padding:4px 11px;
@@ -3269,7 +3306,7 @@ html body .sp-cta-brand .brand-m circle{fill:#FF6100!important}
 .sp-nav{position:sticky;top:57px;z-index:5}
 """
 
-_REP_ACCENT = {"rep-blue":"#2970FF","rep-teal":"#0c8a82","rep-green":"#398f3c",
+_REP_ACCENT = {"rep-blue":"#14587D","rep-teal":"#0c8a82","rep-green":"#398f3c",
                "rep-violet":"#7c3aed","rep-amber":"#db880b","rep-red":"#c11d33","rep-slate":"#4a5568"}
 
 def _sp_ribbon(anchor: str, title: str, inner: str, rib: str = "rep-slate", ico: str = "•") -> str:
@@ -3283,6 +3320,71 @@ def _sp_ribbon(anchor: str, title: str, inner: str, rib: str = "rep-slate", ico:
             f'<div class="rep-rib {rib}"><span class="rep-ico">{ico}</span>'
             f'<h2 class="rep-title">{title}</h2></div>'
             f'<div class="rep-body">{inner}</div></section>')
+
+def _sp_sparkline(sym: str) -> str:
+    """Six months of closes as an inline SVG line, for the hero.
+
+    CACHE-ONLY, deliberately. `candles:{sym}` is filled by the data coordinator
+    on its own schedule; calling get_candles() here would put a provider round
+    trip on every page render of an SEO page, which is the exact mistake
+    _sp_ssr_cached exists to avoid. Cold cache returns "" and the hero simply
+    has no chart, the same way it behaves for a name we have never priced.
+
+    The line is coloured by direction over the window. That is a fact about the
+    price, not a view on the company, and it is the same up/down pair the rest
+    of the site uses for a move.
+    """
+    try:
+        raw = cache.get(f"candles:{sym}") or {}
+        bars = raw.get("candles") or []
+    except Exception:
+        return ""
+    closes = []
+    for b in bars[-126:]:                      # ~6 months of trading days
+        try:
+            c = float(b.get("c") or 0)
+        except (TypeError, ValueError):
+            continue
+        if c > 0:
+            closes.append(c)
+    if len(closes) < 20:                       # too thin to read as a trend
+        return ""
+
+    lo, hi = min(closes), max(closes)
+    rng = (hi - lo) or 1.0
+    W, H, PAD = 300.0, 74.0, 6.0
+    step = (W - 2 * PAD) / (len(closes) - 1)
+    pts = [
+        (PAD + i * step, PAD + (H - 2 * PAD) * (1.0 - (c - lo) / rng))
+        for i, c in enumerate(closes)
+    ]
+    line = " ".join(f"{x:.1f},{y:.1f}" for x, y in pts)
+    area = f"{PAD:.1f},{H - PAD:.1f} " + line + f" {pts[-1][0]:.1f},{H - PAD:.1f}"
+
+    up = closes[-1] >= closes[0]
+    col = "#34D399" if up else "#F87171"
+    gid = f"spk{sym.lower()}"
+    pct = (closes[-1] / closes[0] - 1.0) * 100.0 if closes[0] else 0.0
+
+    return (
+        '<div class="sp-spark">'
+        '<div class="sp-spark-h"><span>6-month price</span>'
+        f'<span class="sp-spark-d" style="color:{col}">'
+        f'{"+" if pct >= 0 else ""}{pct:.1f}%</span></div>'
+        f'<svg viewBox="0 0 {W:.0f} {H:.0f}" width="100%" height="74" '
+        'role="img" aria-label="Six month price trend" preserveAspectRatio="none">'
+        f'<defs><linearGradient id="{gid}" x1="0" y1="0" x2="0" y2="1">'
+        f'<stop offset="0" stop-color="{col}" stop-opacity=".28"/>'
+        f'<stop offset="1" stop-color="{col}" stop-opacity="0"/></linearGradient></defs>'
+        f'<polygon points="{area}" fill="url(#{gid})"/>'
+        f'<polyline points="{line}" fill="none" stroke="{col}" stroke-width="2" '
+        'stroke-linecap="round" stroke-linejoin="round"/>'
+        f'<circle cx="{pts[-1][0]:.1f}" cy="{pts[-1][1]:.1f}" r="3" fill="{col}"/>'
+        "</svg>"
+        f'<div class="sp-spark-f"><span>${lo:,.2f}</span><span>${hi:,.2f}</span></div>'
+        "</div>"
+    )
+
 
 def _sp_score_gauge(score, color: str) -> str:
     """Colorful donut gauge for the Quant Score — server-rendered SVG, no JS."""
@@ -3373,11 +3475,11 @@ def _sp_data_sections(t: dict, sym: str, price: float):
     """Build (nav_html, sections_html) for all public data tabs."""
     nav, secs = [], []
     _RIB = {
-        "scores":     ("rep-blue",   "📊"),
+        "scores":     ("rep-violet",   "📊"),
         "valuation":  ("rep-amber",  "💰"),
         "health":     ("rep-green",  "🩺"),
         "technicals": ("rep-teal",   "📈"),
-        "earnings":   ("rep-violet", "🗓️"),
+        "earnings":   ("rep-red", "🗓️"),
         "ownership":  ("rep-slate",  "🏛️"),
     }
     def add(anchor, title, inner):
@@ -3388,22 +3490,55 @@ def _sp_data_sections(t: dict, sym: str, price: float):
         secs.append(_sp_ribbon(anchor, title, inner, rib, ico))
 
     # Score breakdown (six pillars) — each its own vivid colour, infographic-style
+    # THE SIX-PILLAR SCORECARD.
+    #
+    # This section read t["momentum_score"], t["growth_score"] and friends —
+    # fields that are not on a universe row. Every value came back None, `add()`
+    # skips an empty section, and the whole scorecard silently did not exist on
+    # any stock page. It reads _compute_pillars() now, which is the same Python
+    # the selector and the tracker already use, so the bars cannot disagree with
+    # the eligibility rule that is applied to the same stock.
+    #
+    # Sixth pillar is POTENTIAL, not Risk. The in-app card deck computes its own
+    # sixth from breakdown.low_short + mkt_cap_fit and calls it Risk; this one
+    # comes from _compute_pillars, which returns growth_potential. They are
+    # genuinely different measures and squaring them is a product decision, not
+    # a rendering one — so this labels honestly rather than borrowing the word.
+    try:
+        _pil = _compute_pillars(t) or {}
+    except Exception:
+        _pil = {}
     rows = []
-    for lbl, k, c1, c2 in (
-        ("Momentum",  "momentum_score",  "#2970FF", "#5DB3F1"),
-        ("Growth",    "growth_score",    "#10B981", "#34D399"),
-        ("Quality",   "quality_score",   "#06B6D4", "#22D3EE"),
-        ("Valuation", "valuation_score", "#F59E0B", "#FBBF24"),
-        ("Sentiment", "sentiment_score", "#8B5CF6", "#A78BFA"),
-        ("Potential", "potential_score", "#EC4899", "#F472B6"),
+    for lbl, k, c1, c2, read_lo, read_hi, cap in (
+        ("Momentum",  "momentum",         "#14587D", "#4AA3C7",
+         "Drifting", "Trending up strong", "price trend"),
+        ("Growth",    "growth",           "#10B981", "#34D399",
+         "Slow growth", "Fast-growing", "sales &amp; profit growth"),
+        ("Quality",   "quality",          "#06B6D4", "#22D3EE",
+         "Some weak spots", "High quality", "profitability &amp; balance sheet"),
+        ("Valuation", "valuation",        "#C74E00", "#FF9A4D",
+         "Getting pricey", "Fairly priced", "is the price fair?"),
+        ("Sentiment", "sentiment",        "#8B5CF6", "#A78BFA",
+         "Mixed views", "Positive mood", "analyst &amp; crowd mood"),
+        ("Potential", "growth_potential", "#EC4899", "#F472B6",
+         "Limited headroom", "Room to run", "upside vs analyst targets"),
     ):
-        v = _spf(t.get(k))
+        v = _spf(_pil.get(k))
         if v is None: continue
         w = max(0, min(100, v))
-        rows.append(f'<div class="sp-bar-row"><span class="nm">{lbl}</span>'
-                    f'<div class="sp-bar"><i style="width:{w:.0f}%;background:linear-gradient(90deg,{c1},{c2})"></i></div>'
-                    f'<span class="pv mono">{v:.0f}</span></div>')
-    add("scores", "Score breakdown", f'<div class="sp-bars">{"".join(rows)}</div>' if rows else "")
+        rows.append(
+            f'<div class="sp-pil" style="--pc1:{c1};--pc2:{c2}">'
+            f'<div class="sp-pil-l">{lbl}</div>'
+            f'<div class="sp-pil-v">{v:.0f}</div>'
+            f'<div class="sp-pil-r">{read_hi if v >= 60 else read_lo}</div>'
+            f'<div class="sp-pil-c">{cap}</div>'
+            f'<div class="sp-pil-bar"><i style="width:{w:.0f}%"></i></div></div>'
+        )
+    add("scores", "The six-pillar scorecard",
+        f'<div class="sp-pils">{"".join(rows)}</div>'
+        '<p class="sp-pil-f">Each pillar is scored 0-100 inside the stock\u2019s own peer '
+        'group, so a chipmaker is measured against chipmakers. These are quality '
+        'descriptors, not buy or sell signals.</p>' if rows else "")
 
     # Valuation
     tl, th = t.get("target_low"), t.get("target_high")
@@ -3592,7 +3727,12 @@ def _render_stock_page(t: dict) -> str:
         'recent coverage, and it can be incomplete or wrong. A PASS is a reading of the '
         'cited evidence, not a verified fact and not a reason to buy. Follow each '
         'citation to the source.</p>',
-        "rep-slate", "\u2713")
+        "rep-green", "\u2713")
+    try:
+        spark_html = _sp_sparkline(sym)
+    except Exception as _spk_err:
+        logger.debug("sparkline %s: %s", sym, _spk_err)
+        spark_html = ""
     sp_nav_html, sp_sections_html = _sp_data_sections(t, sym, price)
     try:
         exec_summary_html = _sp_exec_summary(sym)
@@ -3611,7 +3751,7 @@ def _render_stock_page(t: dict) -> str:
             _crowd = None
         _ch_inner = _spc.build(t, price, _crowd)
         charts_html = _sp_ribbon("charts", "The picture", _ch_inner,
-                                 "rep-slate", "\U0001F4C9") if _ch_inner else ""
+                                 "rep-blue", "\U0001F4C9") if _ch_inner else ""
     except Exception as _ch_err:
         logger.error(f"charts {sym}: {_ch_err}", exc_info=True)
         charts_html = ""
@@ -3723,7 +3863,7 @@ def _render_stock_page(t: dict) -> str:
     }
     faq_html = _sp_ribbon("faq", "Frequently asked", "".join(
         f'<div class="faq-q"><h3>{_q}</h3><p>{_a}</p></div>' for _q, _a in _faqs
-    ), "rep-green", "❓")
+    ), "rep-blue", "❓")
 
     # ── Build news list HTML ──
     news_html = ""
@@ -3761,7 +3901,7 @@ def _render_stock_page(t: dict) -> str:
             chips = "".join(_peer_chip(p) for p in peers)
             _ssl = _seo.slugify(sub) if sub else ""
             _sector_link = f'<p style="margin-top:10px"><a href="/sectors/{_ssl}">View all {sub} stocks &rarr;</a></p>' if _ssl else ""
-            peers_html = _sp_ribbon("peers", f"Similar stocks in {sub or 'this sub-sector'}", f'<div class="peers">{chips}</div>{_sector_link}', "rep-teal", "🔗")
+            peers_html = _sp_ribbon("peers", f"Similar stocks in {sub or 'this sub-sector'}", f'<div class="peers">{chips}</div>{_sector_link}', "rep-amber", "🔗")
     except Exception:
         pass
     # Always append the FAQ block (renders even when there are no peers)
@@ -3928,7 +4068,7 @@ section{{scroll-margin-top:60px;margin-bottom:8px}}
 .rep-rib{{display:flex;align-items:center;gap:10px;padding:11px 16px}}
 .rep-ico{{width:27px;height:27px;border-radius:9px;background:rgba(255,255,255,.2);display:grid;place-items:center;font-size:14px;flex:0 0 auto}}
 .rep-title{{font-family:'Public Sans',system-ui,sans-serif;font-weight:500;font-size:15px;letter-spacing:-.005em;color:#fff;text-shadow:0 1px 1px rgba(0,0,0,.12)}}
-.rep-blue{{background:linear-gradient(105deg,#3f86f7,#1e44c9)}}
+.rep-blue{{background:linear-gradient(105deg,#2E7FA8,#14587D)}}
 .rep-teal{{background:linear-gradient(105deg,#16c2af,#0c8a82)}}
 .rep-green{{background:linear-gradient(105deg,#5fc24a,#398f3c)}}
 .rep-violet{{background:linear-gradient(105deg,#8b5cf6,#5b21b6)}}
@@ -3968,9 +4108,12 @@ h2{{font-size:18px;margin:30px 0 12px}}
            alt="" width="40" height="40" loading="lazy" onerror="this.remove()"><span class="sym">{sym}</span> Stock Analysis</h1>
       <p class="subhead">{name} · current price <span class="mono">{price_str}</span> ({chg_str} today){earn_str}</p>
     </div>
-    <div class="sp-hs">
-      {score_gauge_html}
-      <div>{stars_html}<div><span class="sp-hs-tier">{tier_txt}</span></div></div>
+    <div class="sp-hero-r">
+      <div class="sp-hs">
+        {score_gauge_html}
+        <div>{stars_html}<div><span class="sp-hs-tier">{tier_txt}</span></div></div>
+      </div>
+      {spark_html}
     </div>
   </div>
   <div class="sp-verdict">{exec_summary_html or bottom_line}{verdict_chips_html}</div>
@@ -9263,33 +9406,17 @@ async def api_compare(pair: str):
     if not c:
         raise HTTPException(status_code=404,
                             detail="Need two different tickers we score, as A-vs-B")
-    # "What to look at next" — questions and places to look, never a course of
-    # action. Computed, so it costs nothing and cannot drift from the numbers.
-    try:
-        c["pointers"] = _si.pointers(c, _si.universe_baseline(_universe_data or []))
-    except Exception as exc:
-        logger.debug("compare pointers: %s", exc)
-        c["pointers"] = []
-    # sector_intel.compare attaches the two raw universe rows for pointers() to
-    # corroborate against. They are working data, not response data — dropping
-    # them here keeps the payload from doubling for fields the panel never reads.
+    # sector_intel.compare attaches the two raw universe rows as working data.
+    # They are not response data, so they go before the payload is returned.
     c.pop("a_row", None)
     c.pop("b_row", None)
-
-    # The hard questions. Pure arithmetic over rows already in memory, so this
-    # is free and instant — every field diligence reads is on the slim universe
-    # row except quarterly_income, which only enriches one finding and degrades
-    # to a shorter sentence when absent.
-    try:
-        import diligence as _dg
-        by = {(t.get("ticker") or "").upper(): t for t in (_universe_data or [])}
-        c["diligence"] = {
-            tk: _dg.checks(by.get(tk) or {})
-            for tk in (c["a"]["ticker"], c["b"]["ticker"])
-        }
-    except Exception as exc:
-        logger.debug("compare diligence: %s", exc)
-        c["diligence"] = {}
+    # NOTE: `pointers` (sector_intel.pointers) and `diligence` (diligence.checks)
+    # used to be attached here for the panel's "What to look at next" and
+    # "Questions worth answering first" sections. Both sections were replaced by
+    # the side-by-side thesis audit, so the fields had no reader left and were
+    # shipping on every public call. This codebase has been bitten before by data
+    # generated for a surface that renders nowhere, so they are removed rather
+    # than left dangling. Both functions still exist and are one line to restore.
     c["disclaimer"] = ("A comparison of measured characteristics. Which differences "
                        "matter is the reader's judgement. Not investment advice, not a "
                        "personal recommendation, and not FCA-authorised. Capital at risk.")
