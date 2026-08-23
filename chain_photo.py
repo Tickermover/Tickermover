@@ -45,9 +45,10 @@ import zlib
 
 logger = logging.getLogger(__name__)
 
-# v2: v1 shipped the lighters and the toothbrush. Bumping the namespace re-picks
-# every photo under the matching rules below rather than leaving them cached.
-NS = "chain_photo_v2"
+# Bumped on every change to the matching rules below, so the cards re-pick
+# under the new rules instead of keeping what the old ones chose: v1 shipped
+# lighters and a toothbrush, v2 a generic machine on the chip-factory map.
+NS = "chain_photo_v3"
 MAX_AGE_S = 60 * 86400          # a chain's subject does not change; re-pick rarely
 _PER_PAGE = 25
 
@@ -145,17 +146,24 @@ def available() -> bool:
         return False
 
 
-def scenes_for(slug: str = "", title: str = "", standfirst: str = "") -> tuple:
-    """(ordered queries, accept vocabulary) for one map. Slug and title decide
-    it; the standfirst is a tie-breaker only, because it is prose and will
-    happily mention "power" in a map about payments."""
+def scenes_for(slug: str = "", title: str = "", standfirst: str = "") -> list:
+    """[(query, accept vocabulary)] for one map, most specific first.
+
+    The vocabulary is paired with its OWN query rather than pooled. Pooling
+    them let the generic fallback words ("industrial", "machine") satisfy a
+    specific query: the chip-factory map accepted "person using black
+    industrial machine" while its first query was asking for a wafer fab.
+    Slug and title decide the chain; the standfirst is a tie-breaker only,
+    because it is prose and will happily mention "power" in a map about
+    payments."""
     head = (" %s %s " % (slug or "", title or "")).lower().replace("-", " ")
     tail = " %s " % (standfirst or "").lower()
     for text in (head, tail):
         for keys, scenes, vocab in _SCENES:
             if any(k.replace("-", " ") in text for k in keys):
-                return list(scenes) + _FALLBACK, vocab + " " + _FALLBACK_VOCAB
-    return list(_FALLBACK), _FALLBACK_VOCAB
+                return ([(q, vocab) for q in scenes]
+                        + [(q, _FALLBACK_VOCAB) for q in _FALLBACK])
+    return [(q, _FALLBACK_VOCAB) for q in _FALLBACK]
 
 
 def _score(alt: str, query: str, vocab: str) -> int:
@@ -245,8 +253,7 @@ async def _candidates(query: str) -> list:
 
 async def pick(slug: str, title: str = "", standfirst: str = "") -> dict | None:
     """One photograph for one map, or None when nothing matched well enough."""
-    queries, vocab = scenes_for(slug, title, standfirst)
-    for query in queries:
+    for query, vocab in scenes_for(slug, title, standfirst):
         cands = await _candidates(query)
         hit = _best(cands, query, vocab, slug)
         if hit:
