@@ -143,7 +143,7 @@ def _key(name: str) -> str:
 _PROVIDERS = [
     # Default was gemini-2.0-flash, which Google shut down on 2026-06-01, so an
     # install without GEMINI_MODEL set had a dead primary AND dead fallbacks.
-    ("gemini", "GEMINI_API_KEY", "GEMINI_MODEL", "gemini-3.6-flash",
+    ("gemini", "GEMINI_API_KEY", "GEMINI_MODEL", "gemini-3.7-flash",
      "https://generativelanguage.googleapis.com/v1beta/models", 700000),
     # deepseek-v4-pro hit END OF LIFE on 2026-08-07 and now returns HTTP 410
     # "Gone" for every request. Set NVIDIA_MODEL in the environment to override
@@ -151,12 +151,14 @@ _PROVIDERS = [
     # retirement date, which is what made this diagnosable at all.
     ("nvidia", "NVIDIA_API_KEY", "NVIDIA_MODEL", "deepseek-ai/deepseek-v3.1",
      "https://integrate.api.nvidia.com/v1/chat/completions", 45000),
-    # openai/gpt-oss-120b returned HTTP 400 "Failed to validate JSON" for every
-    # request — NOT a rate limit, which is what the 429s elsewhere made it look
-    # like. Proven on 2026-08-13: the legacy event_intel probe hit
-    # llama-3.3-70b-versatile with the SAME key at the same moment and got 200,
-    # while the chain's gpt-oss-120b 400'd. The model was the fault, not Groq.
-    ("groq", "GROQ_API_KEY", "GROQ_MODEL", "llama-3.3-70b-versatile",
+    # 2026-08-23: llama-3.3-70b-versatile is GONE — "The model
+    # `llama-3.3-70b-versatile` does not exist or you do not have access to
+    # it" on every request. Groq's production list is now gpt-oss-120b,
+    # gpt-oss-20b and the compound systems, so we are back on gpt-oss-120b.
+    # It 400'd on 2026-08-13 ("Failed to validate JSON") and that is why we
+    # left it; see _call_openai_compatible, which now sends
+    # max_completion_tokens for this family and retries once without JSON mode.
+    ("groq", "GROQ_API_KEY", "GROQ_MODEL", "openai/gpt-oss-120b",
      "https://api.groq.com/openai/v1/chat/completions", 11000),
     ("cerebras", "CEREBRAS_API_KEY", "CEREBRAS_MODEL", "gpt-oss-120b",
      "https://api.cerebras.ai/v1/chat/completions", 20000),
@@ -282,15 +284,31 @@ def parse_json(text: str) -> dict | None:
 
 async def _call_openai_compatible(url: str, key: str, model: str, prompt: str,
                                   max_tokens: int, timeout: float) -> tuple[bool, str]:
-    payload = {
-        "model": model, "max_tokens": max_tokens, "temperature": 0.1,
-        "response_format": {"type": "json_object"},
-        "messages": [{"role": "user", "content": prompt}],
-    }
+    """One OpenAI-shaped chat call, with the two dialect differences that have
+    actually cost us providers.
+
+    1. **`max_completion_tokens` vs `max_tokens`.** OpenAI's newer models --
+       and everything in the `gpt-oss` family, which is what Groq now serves --
+       reject `max_tokens` outright. That is the most likely reading of the
+       HTTP 400 "Failed to validate JSON" that took `openai/gpt-oss-120b` out
+       of the chain on 2026-08-13 and pushed us onto llama-3.3-70b-versatile,
+       which Groq has since retired. Sending the right key per family puts the
+       model that still exists back in play.
+    2. **JSON mode is not universal.** A provider that does not support
+       `response_format` 400s the whole request rather than ignoring it, so a
+       400 is retried once WITHOUT it. Callers extract JSON from the text
+       anyway, so a plain-text answer is still usable -- a slightly messier
+       response beats a dead provider.
+    """
+    token_key = "max_completion_tokens" if "gpt-oss" in (model or "") else "max_tokens"
+    base = {"model": model, token_key: max_tokens, "temperature": 0.1,
+            "messages": [{"role": "user", "content": prompt}]}
+    headers = {"Authorization": f"Bearer {key}", "Content-Type": "application/json"}
     async with httpx.AsyncClient(timeout=timeout) as c:
-        r = await c.post(url, json=payload,
-                         headers={"Authorization": f"Bearer {key}",
-                                  "Content-Type": "application/json"})
+        r = await c.post(url, json=dict(base, response_format={"type": "json_object"}),
+                         headers=headers)
+        if r.status_code == 400:
+            r = await c.post(url, json=base, headers=headers)
     if r.status_code != 200:
         return False, f"HTTP {r.status_code}: {r.text[:160]}"
     body = ((r.json().get("choices") or [{}])[0].get("message") or {}).get("content", "")
@@ -309,7 +327,8 @@ async def _call_openai_compatible(url: str, key: str, model: str, prompt: str,
 # after that this list must be Gemini 3 only. Override without a deploy by
 # setting GEMINI_MODEL.
 _GEMINI_FALLBACKS = [
-    "gemini-3.6-flash",        # current balanced tier
+    "gemini-3.7-flash",        # current tier (added 2026-08-23)
+    "gemini-3.6-flash",        # previous generation, still served
     "gemini-3.5-flash-lite",   # fastest / cheapest, good for summarisation
     "gemini-3.1-flash-lite",
     "gemini-2.5-flash",        # dies 2026-10-16
