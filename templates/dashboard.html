@@ -19807,7 +19807,10 @@ async function v2LoadPickSparks(){
 function _v2HashPanel(){
   var h = '';
   try { h = (location.hash || '').replace('#', '').toLowerCase(); } catch(e){}
-  var map = { theses: 'theses', 'who-benefits': 'theses',
+  /* Every historical spelling stays a key forever: these end up in bookmarks
+     and in redirects, and a hash that opens no panel drops the reader on the
+     default tab with no explanation. 'capex-chains' is the current name. */
+  var map = { 'capex-chains': 'theses', theses: 'theses', 'who-benefits': 'theses',
               heroes: 'heroes', 'future-heroes': 'heroes',
               watchlist: 'watch', scans: 'scans' };
   var panel = map[h];

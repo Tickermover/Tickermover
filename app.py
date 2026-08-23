@@ -7222,7 +7222,7 @@ async def api_thesis_shares(slug: str):
 async def theses_hub_page():
     """Legacy path. The gallery is #panel-theses in the app now."""
     from fastapi.responses import RedirectResponse
-    return RedirectResponse(url="/app#who-benefits", status_code=307)
+    return RedirectResponse(url="/app#capex-chains", status_code=307)
 
 
 @app.get("/who-benefits", response_class=HTMLResponse)
