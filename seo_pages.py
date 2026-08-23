@@ -68,18 +68,26 @@ def brand_header() -> str:
     return ""
 
 
-def newsletter_block(source: str) -> str:
+def newsletter_block(source: str, title: str = "", copy: str = "",
+                    cta: str = "Subscribe") -> str:
     """Inline newsletter capture block. `source` is recorded server-side
-    so we can attribute signups to the page they came from."""
+    so we can attribute signups to the page they came from.
+
+    `title`/`copy` let a page offer what that page is actually about. The
+    generic "weekly Quant Score digest" is a reasonable ask under an article;
+    under a head-to-head it ignores what the reader just came for."""
     safe = (source or "unknown").replace('"', "")
+    title = title or "Get the weekly Quant Score digest"
+    copy = copy or ("Top-rated US stocks, conflict alerts, and Reverse-DCF reads "
+                    "&mdash; straight to your inbox every Sunday. Free.")
     return f"""
 <div class="nl">
-  <h3>Get the weekly Quant Score digest</h3>
-  <p>Top-rated US stocks, conflict alerts, and Reverse-DCF reads — straight to your inbox every Sunday. Free.</p>
+  <h3>{title}</h3>
+  <p>{copy}</p>
   <form id="nl-{safe}" autocomplete="off">
     <input type="email" name="email" placeholder="you@email.com" required>
     <input type="text" name="company" class="nl-honey" tabindex="-1" autocomplete="off">
-    <button type="submit">Subscribe</button>
+    <button type="submit">{cta}</button>
   </form>
   <div class="nl-msg" id="nl-msg-{safe}"></div>
   <div style="margin-top:14px;font-size:12.5px;color:#758696">
@@ -112,11 +120,20 @@ def newsletter_block(source: str) -> str:
 """
 
 
-def cta_block(label: str = "Open the live dashboard", href: str = "/app?signup=1") -> str:
+def cta_block(label: str = "Open the live dashboard", href: str = "/app?signup=1",
+              n: int | None = None) -> str:
+    """`n` is the scored-universe count. These pages are returned raw, NOT
+    through app._with_consent, so the `__UNIV_N__` token the rest of the site
+    uses is never substituted here — which is why this box claimed "200+ US
+    stocks" while the universe had grown to 545. Callers holding the universe
+    pass the real number; the rest get copy that makes no numeric claim,
+    because a vague sentence beats a confident wrong one."""
+    count = f"{n} US stocks" if n else "Every stock we track"
     return f"""
 <div class="cta">
+  <div class="cta-brand">{_theme.wordmark(dark=True)}</div>
   <h3>Real research, free during beta</h3>
-  <p>200+ US stocks. Quant Score, conflict detection, Reverse DCF, peer comparison. We do the homework.</p>
+  <p>{count}, scored daily. Quant Score, conflict detection, Reverse DCF, peer comparison. We do the homework.</p>
   <a href="{href}" class="cta-btn">{label} →</a>
 </div>
 """
@@ -620,7 +637,7 @@ def render_sector(slug: str, universe: list[dict], site_origin: str) -> Optional
     <tbody>{table_html or '<tr><td colspan="4">No stocks scored in this sector yet — the universe is warming up.</td></tr>'}</tbody>
   </table>
   <p style="font-size:13px;color:#5d6c7b">Quant Scores update every 5 minutes during US market hours. Grades: <strong>A</strong> Top Tier · <strong>B</strong> Quality · <strong>C</strong> Average · <strong>D</strong> Below Avg · <strong>F</strong> Weak. (Quality descriptors, not buy/sell recommendations.)</p>
-  {cta_block("See the full live dashboard")}
+  {cta_block("See the full live dashboard", n=len(universe or []) or None)}
   {newsletter_block("sector-" + slug)}
   <div class="legal">TickerMover is a research tool, not financial advice, and not FCA-authorised. Always do your own research before investing. Capital at risk.</div>
 </div>
@@ -668,10 +685,16 @@ _SECTOR_INDEX_CSS = """
   background:#F2F1EE;border-left:3px solid #FF6100;border-radius:4px}
 .si-note b{color:#0A2F46}
 .si-wrap{overflow-x:auto;border:1px solid #D6DADD;border-radius:10px;background:#fff;margin:0 0 26px}
-table.si{border-collapse:collapse;width:100%;min-width:1040px;font-variant-numeric:tabular-nums}
+table.si{border-collapse:collapse;width:100%;min-width:1180px;font-variant-numeric:tabular-nums}
+/* Two-line headers. "MEDIAN REV GROWTH" and "MEDIAN NET MARGIN" were setting
+   the column widths on their own, and repeating "Median" five times said the
+   same thing five times. The short word carries the column; the qualifier
+   underneath keeps it self-describing without the width. */
 table.si th{position:sticky;top:0;background:#FFF2EC;text-align:right;font-size:10.5px;
   letter-spacing:.07em;text-transform:uppercase;color:#0A2F46;font-weight:700;
-  padding:11px 12px;border-bottom:2px solid #E4CFC2;white-space:nowrap}
+  padding:9px 12px;border-bottom:2px solid #E4CFC2;white-space:nowrap;vertical-align:bottom}
+table.si th i{display:block;font-style:normal;font-size:9px;font-weight:400;
+  letter-spacing:.04em;color:#8A7A70;margin-top:3px;text-transform:none}
 table.si th:first-child,table.si td:first-child{text-align:left}
 table.si td{padding:11px 12px;border-bottom:1px solid #F2F1EE;text-align:right;
   font-size:13.5px;color:#10293D;white-space:nowrap}
@@ -709,6 +732,20 @@ table.si td.si-led{white-space:normal;min-width:210px;line-height:1.5;padding:7p
 .si-pos{color:#12704A;font-weight:650}
 .si-neg{color:#B32D23;font-weight:650}
 """
+
+
+def _si_money(v) -> str:
+    """Market cap as $1.2T / $340B / $920M. Two significant-ish digits: the
+    column is for comparing sectors at a glance, and $1.24T vs $1.2T does not
+    change which is bigger."""
+    if not v:
+        return '<span class="si-n">&mdash;</span>'
+    v = float(v)
+    for cut, unit in ((1e12, "T"), (1e9, "B"), (1e6, "M")):
+        if v >= cut:
+            n = v / cut
+            return f"${n:.1f}{unit}" if n < 100 else f"${n:.0f}{unit}"
+    return f"${v:,.0f}"
 
 
 def _si_cell(v, suffix: str = "", signed: bool = False) -> str:
@@ -781,12 +818,14 @@ def render_sector_index(universe: list[dict], site_origin: str) -> str:
             tr_open
             + f"<td>{nm}</td>"
             f'<td>{s["count"]}</td>'
+            f'<td>{_si_money(s.get("market_cap_total"))}</td>'
             f"<td>{bar}{_si_cell(med)}</td>"
             f'<td>{_si_cell(s["alpha_spread"])}</td>'
             f'<td>{_si_cell(s["breadth_strong_pct"], "%")}</td>'
             f'<td>{_si_cell(s["momentum_3m_median"], "%", signed=True)}</td>'
             f'<td>{_si_cell(s["pe_median"], "×")}</td>'
             f'<td>{_si_cell(s["growth_median"], "%", signed=True)}</td>'
+            f'<td>{_si_cell(s.get("growth_weighted"), "%", signed=True)}</td>'
             f'<td>{_si_cell(s["margin_median"], "%", signed=True)}</td>'
             f'<td class="si-led">{led}</td></tr>'
         )
@@ -810,15 +849,24 @@ def render_sector_index(universe: list[dict], site_origin: str) -> str:
   <div class="si-wrap">
     <table class="si">
       <thead><tr>
-        <th>Sub-sector</th><th>Names</th><th>Median Quant</th><th>Mid-50% range</th>
-        <th>Scoring 65+</th><th>Median 3m move</th><th>Median P/E</th>
-        <th>Median rev growth</th><th>Median net margin</th><th>Highest scoring</th>
+        <th>Sub-sector</th>
+        <th>Names<i>count</i></th>
+        <th>Size<i>total mkt cap</i></th>
+        <th>Quant<i>median</i></th>
+        <th>Spread<i>mid 50%</i></th>
+        <th>Strong<i>scoring 65+</i></th>
+        <th>3m<i>median move</i></th>
+        <th>P/E<i>median</i></th>
+        <th>Growth<i>median</i></th>
+        <th>Sector growth<i>weighted by size</i></th>
+        <th>Margin<i>median net</i></th>
+        <th>Top 3<i>highest scoring</i></th>
       </tr></thead>
       <tbody>{body_rows}</tbody>
     </table>
   </div>
   <p style="font-size:13px;color:#5d6c7b">Scores refresh every 5 minutes during US market hours. Grades: <strong>A</strong> Top Tier · <strong>B</strong> Quality · <strong>C</strong> Average · <strong>D</strong> Below Avg · <strong>F</strong> Weak — quality descriptors, not recommendations.</p>
-  {cta_block("Open the live dashboard")}
+  {cta_block("Open the live dashboard", n=n_names or None)}
   {newsletter_block("sectors-index")}
   <div class="legal">TickerMover — research, not advice.</div>
 </div>
@@ -922,6 +970,15 @@ table.h2h-t td.hi{background:#FFF6EF;font-weight:700;color:#0A2F46}
 """
 
 
+def _h2h_logo(sym: str, size: int = 22) -> str:
+    """Company logo for the head-to-head. Same host as every other logo on the
+    site; `onerror` removes it so a missing file leaves the ticker alone rather
+    than a broken-image box in a table header."""
+    return ('<img class="h2h-logo" src="https://assets.parqet.com/logos/symbol/'
+            + sym + '" alt="" loading="lazy" width="' + str(size) + '" height="'
+            + str(size) + '" onerror="this.remove()">')
+
+
 def render_comparison(a: str, b: str, universe: list[dict], site_origin: str) -> Optional[str]:
     """Head-to-head on measured characteristics.
 
@@ -1018,15 +1075,17 @@ def render_comparison(a: str, b: str, universe: list[dict], site_origin: str) ->
 <div class="wrap-wide">
   {brand_header()}
   <div class="crumbs"><a href="/">Home</a> · <a href="/compare">Compare</a> · {a} vs {b}</div>
-  <h1><span class="sym">{a}</span> vs <span class="sym">{b}</span></h1>
+  <h1><span class="h2h-id">{_h2h_logo(a, 30)}<span class="sym">{a}</span></span>
+      <span class="h2h-vs">vs</span>
+      <span class="h2h-id">{_h2h_logo(b, 30)}<span class="sym">{b}</span></span></h1>
   <p class="lede">{name_a} and {name_b}, measured on the same ten characteristics.</p>
   <div class="h2h-ctx">{ctx}</div>
   <div class="h2h">
     <table class="h2h-t">
       <thead><tr>
         <th style="text-align:left">Measure</th>
-        <th class="sd"><a href="/stocks/{a}" class="h2h-sym">{a}</a></th>
-        <th class="sd"><a href="/stocks/{b}" class="h2h-sym">{b}</a></th>
+        <th class="sd"><a href="/stocks/{a}" class="h2h-sym">{_h2h_logo(a)}<span>{a}</span></a></th>
+        <th class="sd"><a href="/stocks/{b}" class="h2h-sym">{_h2h_logo(b)}<span>{b}</span></a></th>
       </tr></thead>
       <tbody>{trs}</tbody>
     </table>
@@ -1036,10 +1095,24 @@ def render_comparison(a: str, b: str, universe: list[dict], site_origin: str) ->
   <p>It blends fundamentals, valuation, momentum, analyst signal and macro regime into one 0-100 number. It is a quality descriptor, not a buy or sell signal. <a href="/learn/pop-score">Read the methodology →</a></p>
   <p>Full breakdowns: <a href="/stocks/{a}">{a}</a> · <a href="/stocks/{b}">{b}</a>{(' · Both in <a href="/sectors/' + A['slug'] + '">' + (A['sector'] or '') + '</a>') if c['same_sector'] and A['slug'] else ''}</p>
   {cta_block("Open the live dashboard")}
-  {newsletter_block("compare-" + a + "-" + b)}
+  {newsletter_block(
+      "compare-" + a + "-" + b,
+      title="Keep this comparison up to date",
+      copy=("A table is a snapshot. Get " + a + " vs " + b + " re-measured every week "
+            "&mdash; the same ten characteristics, so you can see which way each one "
+            "moved rather than re-reading the page. Free, and unsubscribe any time."),
+      cta="Track this pair")}
   <div class="legal">TickerMover is a research tool, not financial advice, and not FCA-authorised. Figures are computed from live universe data and refresh every 5 minutes during market hours. Analyst upside is third-party consensus, not our forecast. Capital at risk.</div>
 </div>
-<style>{_CMP_CSS}</style>"""
+<style>{_CMP_CSS}
+.h2h-id{{display:inline-flex;align-items:center;gap:9px;vertical-align:middle}}
+.h2h-vs{{margin:0 10px;color:var(--grey-2);font-weight:300}}
+h1 .h2h-logo{{width:30px;height:30px;border-radius:50%;object-fit:contain;
+  background:#fff;box-shadow:0 0 0 1px var(--rule)}}
+.h2h-logo{{width:22px;height:22px;border-radius:50%;object-fit:contain;background:#fff;
+  box-shadow:0 0 0 1px var(--rule);flex:0 0 auto}}
+a.h2h-sym{{display:inline-flex;align-items:center;gap:8px;justify-content:flex-end}}
+</style>"""
     schema = {
         "@context": "https://schema.org",
         "@type": "Article",

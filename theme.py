@@ -256,7 +256,16 @@ code{background:var(--alt);padding:2px 6px;border-radius:5px;font-family:var(--m
 /* ---------- CTA ---------- */
 .cta{margin-top:52px;padding:34px 34px;border-radius:20px;text-align:center;color:#fff;
   background-image:radial-gradient(circle at 0% 0%,#001C31 -55%,#0A2F47 38%,#0A2F47 55%,#001C31 100%)}
-.cta h3{font-size:23px;font-weight:500;letter-spacing:-.01em;margin-bottom:8px;color:#fff}
+/* The CTA is the only dark panel on these pages and it carried no brand at
+   all. The mark is coloured by CSS, never by the inline SVG, so a copied
+   wordmark renders a blue M with a blue dot unless these three rules travel
+   with it — split by surface, exactly as the footer does. */
+.cta-brand{display:flex;justify-content:center;margin-bottom:12px;line-height:1}
+.cta-brand .brand{font-size:21px}
+html body .cta-brand .brand,html body .cta-brand .brand-wordmark{color:#FFFFFF!important}
+html body .cta-brand .brand-m polyline{stroke:#8FA0F0!important}
+html body .cta-brand .brand-m circle{fill:#FF6100!important}
+.cta h3{font-size:23px;font-weight:500;letter-spacing:-.01em;margin:0 0 8px;color:#fff}
 .cta p{color:#CFE0EA;margin-bottom:20px;font-weight:300}
 .cta-btn{display:inline-flex;align-items:center;gap:10px;background:#fff;color:var(--primary);
   padding:11px 24px;border-radius:100px;font-weight:500;font-size:14.5px;

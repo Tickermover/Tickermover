@@ -254,7 +254,12 @@ def run(update_baseline, verbose, pages=None, quiet=False):
     # wordmark from BOTH the shared nav and a body builder, so /sectors showed
     # two stacked. /stocks legitimately carries three: nav, footer, and the
     # sign-off card. An exact expectation is what makes a duplicate fail.
-    for pg, want in (("stocks", 3), ("sectors", 2), ("learn", 2), ("compare", 2),
+    # sectors/compare went 2 -> 3 on 22 Aug: cta_block() now carries the
+    # wordmark inside the dark panel, as /stocks' sign-off card already did.
+    # `learn` here is the pillar INDEX, which has no cta_block, so it stays 2.
+    # These numbers are exact on purpose — that is what makes an accidental
+    # duplicate fail, so update them deliberately rather than widening them.
+    for pg, want in (("stocks", 3), ("sectors", 3), ("learn", 2), ("compare", 3),
                      ("terms", 2), ("privacy", 2), ("disclaimer", 2), ("reports", 2)):
         got = pages[pg].count('class="brand"')
         rep.check(pg, "wordmark count", got == want, "found %d, want %d" % (got, want))

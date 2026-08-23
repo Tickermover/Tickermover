@@ -130,6 +130,19 @@ def summarise(label: str, rows: list[dict]) -> dict[str, Any]:
     growth = [v for v in (_num(t, "revenue_growth_yoy") for t in rows) if v is not None]
     margin = [v for v in (_num(t, "profit_margin") for t in rows) if v is not None]
 
+    # Size, and growth weighted BY size. The count column says how many names a
+    # sector has, which is not how big it is — four mega-caps outweigh twenty
+    # small ones. And the median growth describes the typical company in the
+    # group, not the group: where the two diverge, the growth is concentrated
+    # in the names that carry the weight, which is the more useful reading.
+    caps = [(c, _num(t, "revenue_growth_yoy"))
+            for c, t in ((_num(t, "market_cap"), t) for t in rows) if c and c > 0]
+    cap_total = sum(c for c, _ in caps) or None
+    wg = [(c, g) for c, g in caps if g is not None]
+    wg_total = sum(c for c, _ in wg)
+    growth_weighted = (round(sum(c * g for c, g in wg) / wg_total * 100, 1)
+                       if wg and wg_total else None)
+
     def _top(key_fn, reverse=True):
         cand = [(key_fn(t), t) for t in rows]
         cand = [(v, t) for v, t in cand if v is not None]
@@ -164,6 +177,8 @@ def summarise(label: str, rows: list[dict]) -> dict[str, Any]:
         "pe_median": round(_median(pes), 1) if pes else None,
         "growth_median": round(_median(growth) * 100, 1) if growth else None,
         "margin_median": round(_median(margin) * 100, 1) if margin else None,
+        "market_cap_total": cap_total,
+        "growth_weighted": growth_weighted,
         "best_momentum": _top(lambda t: _num(t, "momentum_3m")),
         "worst_momentum": _top(lambda t: _num(t, "momentum_3m"), reverse=False),
         "leaders": [
