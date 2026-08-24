@@ -274,28 +274,12 @@
       "disclaimer": "This is a factual map of supply chain relationships. It is not investment advice, not a recommendation to buy or sell any security, and nothing here accounts for your circumstances. Company classifications change; verify against primary filings before acting.",
       "figures": [
         {
-          "file": "ai-capex-chain-prize",
-          "after": "money",
-          "accent": "#A16207",
-          "dated": false,
-          "alt": "Bar showing roughly $500B of annual capex, of which about $356B is captured as revenue by the suppliers on this map.",
-          "cap": "Why the spend figure above and the supplier revenue below don't match. Drawn live from the same data as the panels."
-        },
-        {
           "file": "ai-capex-chain-landed-vs-moved",
           "after": "beat-evidence",
           "accent": "#C74E00",
           "dated": true,
           "alt": "Where the money lands is not where it moved — share of AI revenue captured by each layer against its three-month price return.",
           "cap": "Revenue captured and price movement are different things. The smaller layers move more because the base is small, not because more money is arriving."
-        },
-        {
-          "file": "ai-capex-chain-method",
-          "after": "beat-tension",
-          "accent": "#4A5BC4",
-          "dated": false,
-          "alt": "Diagram of the share calculation — revenue times an AI exposure weight — beside a box listing four things the model cannot tell you.",
-          "cap": "The full method is in the endnotes below; this is the short version, placed where it still matters."
         }
       ]
     },

@@ -1412,6 +1412,12 @@ h1.title{font-size:clamp(34px,5.6vw,54px);line-height:1.03;letter-spacing:-.022e
               'of the model', body);
   }
 
+  /* figPrize and figMethod are still defined and still registered, but the map
+     data no longer asks for them: the user cut both panels from the page on
+     23 Aug 2026 ("Not all capex becomes supplier revenue" and "How this is
+     calculated"). Restoring either is one entry in data/theses.json figures.
+     The method itself did NOT disappear with the panel — it is in the endnotes
+     under "How to read this", which is where the panel pointed anyway. */
   var FIG_SVG = {
     "ai-capex-chain-prize":         {build: figPrize,  live: true},
     "ai-capex-chain-anatomy":       {build: figAnatomy, live: false},
