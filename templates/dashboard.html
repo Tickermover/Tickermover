@@ -8923,12 +8923,12 @@ document.addEventListener('keydown', function(e){
           <div class="pk-meta">
             <!-- The table is no longer a straight top-six: it is the top names
                  within each beta band, so the pill has to say that. -->
-            <span class="meta-pill" title="Beta is measured against the S&amp;P 500. Under 0.8 low, 0.8-1.2 mid, above 1.2 high.">Two per beta band</span>
+            <span class="meta-pill" title="Beta is measured against the S&amp;P 500. Under 0.8 low, 0.8-1.2 mid, above 1.2 high.">Three per beta band</span>
             <span class="meta-pill">Research, not advice</span>
             <span class="meta-pill green" id="picksCount">— names</span>
           </div>
         </div>
-        <p class="pk-note">Our <b>highest-scoring names — sound businesses we judge poised to keep growing</b>: strong Quant Scores, the Street <b>raising estimates</b>, growth accelerating and momentum still building. Shown as <b>two per beta band</b>, because ranked on score alone this table came out almost entirely high-beta — the band is a description of how a share has moved against the market, not a view on which suits you. <span class="pk-note-fine">Our research opinion — not personal financial advice, not FCA-authorised, capital at risk. Do your own diligence.</span></p>
+        <p class="pk-note">Our <b>highest-scoring names — sound businesses we judge poised to keep growing</b>: strong Quant Scores, the Street <b>raising estimates</b>, growth accelerating and momentum still building. Shown as <b>three per beta band</b>, because ranked on score alone this table came out almost entirely high-beta — the band is a description of how a share has moved against the market, not a view on which suits you. <span class="pk-note-fine">Our research opinion — not personal financial advice, not FCA-authorised, capital at risk. Do your own diligence.</span></p>
         <div class="dm-table" id="picksTable">
           <div class="dm-row dm-head-row">
             <span>Ticker</span><span>Quant</span><span>Why it's here</span><span class="up-col">Analyst upside</span><span class="today-col">Today</span><span class="act-col">View</span>
@@ -27350,9 +27350,16 @@ function scResultHTML(d){
           '<div class="ts-card-sub">No sub-sector has two or more names in this beta band right now.</div></div>'+
           '<div class="sm-bands">'+
           ['all','low','mid','high'].map(k=>'<button type="button" class="sm-band'+(window._smBand===k?' on':'')+
-            '" onclick="window._smSetBand(''+k+'')">'+(k==='all'?'All':k[0].toUpperCase()+k.slice(1)+' beta')+'</button>').join('')+
+            '" data-band="'+k+'">'+(k==='all'?'All':k[0].toUpperCase()+k.slice(1)+' beta')+'</button>').join('')+
           '</div></div>'
         : '';
+    // One delegated binding for both the live card and the empty state.
+    slot.querySelectorAll('.sm-band').forEach(function(btn){
+      btn.addEventListener('click', function(ev){
+        ev.stopPropagation();
+        window._smSetBand(btn.getAttribute('data-band'));
+      });
+    });
       return;
     }
     const heatingName=sectors[0]&&sectors[0].score>=75?sectors[0].name:null;
@@ -27386,13 +27393,22 @@ function scResultHTML(d){
           '<span class="sm-more" onclick="var c=this.closest(\'.ts-card\');window._smPageTo(c,(+c.dataset.smPage||0)+1)">+ '+(total-PAGE)+' more sub-sectors</span>'+
         '</div>'
       : '';
+    // data-band + a delegated handler: no quote nesting, so this cannot
+    // break again the way the inline onclick did.
     const bandChip=(k,l)=>'<button type="button" class="sm-band'+(window._smBand===k?' on':'')+
-      '" onclick="event.stopPropagation();window._smSetBand(''+k+'')">'+l+'</button>';
+      '" data-band="'+k+'">'+l+'</button>';
     const bandRow='<div class="sm-bands" title="Filters the names each sub-sector is measured from. Beta is against the S&amp;P 500: under 0.8 low, 0.8-1.2 mid, above 1.2 high.">'+
       bandChip('all','All')+bandChip('low','Low beta')+bandChip('mid','Mid beta')+bandChip('high','High beta')+'</div>';
     slot.innerHTML='<div class="ts-card" data-sm-page="0"><div class="ts-card-head"><div class="ts-card-title">🗺 Sector Map</div><div class="ts-card-sub">Strongest sub-sectors right now · tap a row for the basket, the ticker for its leader</div></div>'+bandRow+
       '<div class="sm-header"><span></span><span>Sector</span><span style="text-align:right">Score</span><span style="text-align:right">Today</span><span style="text-align:right">Top</span></div>'+
       rows+footer+'</div>';
+    // One delegated binding for both the live card and the empty state.
+    slot.querySelectorAll('.sm-band').forEach(function(btn){
+      btn.addEventListener('click', function(ev){
+        ev.stopPropagation();
+        window._smSetBand(btn.getAttribute('data-band'));
+      });
+    });
   }
 
   function renderMovers(tickers){
