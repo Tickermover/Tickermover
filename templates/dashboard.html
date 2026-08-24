@@ -17634,21 +17634,36 @@ function initColResizers(table) {
   });
 }
 
-/* Patch fund-list prices. Only touches VISIBLE rows (CSS profile filter
-   hides others — no point patching offscreen DOM) and skips entirely when
-   the Universe panel isn't active. Big perf win at 545 rows. */
+/* Patch fund-list prices. Skips entirely when the Universe panel isn't active.
+
+   NOTHING IN THIS LOOP MAY READ LAYOUT. It used to skip hidden rows with
+   `row.offsetParent === null` — a layout read sitting immediately after the
+   previous row's textContent write, so every row forced a full synchronous
+   layout of the entire table. Measured against the live 1,571-row universe:
+   1,571 offsetParent reads alone 8 ms, 1,571 writes alone 10 ms, the two
+   INTERLEAVED 113,000 ms. On a 30-second poll that is a permanently
+   'Page Unresponsive' tab, and the cost scaled with the universe — survivable
+   at 545 rows, fatal at 1,571. Visibility now comes from classes and
+   attributes (the same rule v2SyncUniverseTally counts by) and the pass is
+   write-only. */
 function _patchFundListPrices(qmap) {
   const fundPanel = document.getElementById('panel-fund');
   const panelVisible = fundPanel && fundPanel.classList.contains('active');
   if (panelVisible){
-    // Only iterate rows that are currently displayed
+    const featOnly = document.body.classList.contains('v2-featured-only');
     document.querySelectorAll('#fund-tbody tr.fund-row').forEach(row => {
-      if (row.offsetParent === null) return;   // hidden by CSS profile filter
+      // Hidden by a screen / sector / featured filter — no point repainting it.
+      // Pure attribute reads: nothing here queries or dirties layout.
+      if (row.classList.contains('scn-hide') || row.classList.contains('sector-hide')) return;
+      if (featOnly && !row.hasAttribute('data-featured')) return;
       const tk = row.dataset.ticker;
       if (!tk || !qmap[tk]) return;
       const q = qmap[tk];
       const el = document.getElementById('fl-price-' + tk);
-      if (el && q.price != null) el.textContent = '$' + parseFloat(q.price).toFixed(2);
+      if (el && q.price != null){
+        const px = '$' + parseFloat(q.price).toFixed(2);
+        if (el.textContent !== px) el.textContent = px;   // a quiet tick dirties nothing
+      }
       /* Selected by CLASS, not position. This was `td:nth-child(5)`, which
          silently retargets whenever a column is added — adding Sector and
          Sub-sector on 15 Aug shifted Price into slot 5, so the live updater
@@ -17664,7 +17679,8 @@ function _patchFundListPrices(qmap) {
            tick after it. Swap only the sign classes and leave the rest. */
         chgEl.classList.remove('pos', 'neg');
         chgEl.classList.add(chgV >= 0 ? 'pos' : 'neg');
-        chgEl.textContent = (chgV >= 0 ? '+' : '') + chgV.toFixed(1) + '%';
+        const txt = (chgV >= 0 ? '+' : '') + chgV.toFixed(1) + '%';
+        if (chgEl.textContent !== txt) chgEl.textContent = txt;
       }
     });
   }
