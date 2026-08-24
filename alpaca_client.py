@@ -132,6 +132,43 @@ class AlpacaClient:
 
     # ── Batch snapshot — all tickers in ONE call ──────────────────────────────
 
+    async def _snapshots_resilient(self, syms: List[str]) -> Dict[str, dict]:
+        """Snapshots for `syms`, bisecting around whatever the API refuses.
+
+        A single symbol Alpaca rejects takes the whole request down with it —
+        measured on the live universe, three 200-symbol requests returned
+        nothing at all while the rest returned everything, deterministically,
+        and ABT and ACN were among the casualties. Retrying identical requests
+        cannot help; splitting can. On failure this halves the group and tries
+        each side, down to the single symbol, which it names in the log.
+
+        Costs nothing in the normal case: the first call succeeds and there is
+        no split.
+        """
+        if not syms:
+            return {}
+        for attempt in range(2):
+            if attempt:
+                await asyncio.sleep(0.4)
+            data = await self._get(
+                "/v2/stocks/snapshots",
+                {"symbols": ",".join(syms), "feed": "iex"}
+            )
+            if data and isinstance(data, dict):
+                return data
+        if len(syms) == 1:
+            # Bisected all the way down: this is the symbol the API refuses.
+            # Log it by name — it is either delisted, renamed, or not carried,
+            # and that is worth knowing rather than silently missing.
+            logger.warning("Alpaca snapshots: no data for %s", syms[0])
+            return {}
+        mid = len(syms) // 2
+        left = await self._snapshots_resilient(syms[:mid])
+        right = await self._snapshots_resilient(syms[mid:])
+        out = dict(left)
+        out.update(right)
+        return out
+
     async def get_snapshots_batch(self, tickers: List[str]) -> Dict[str, dict]:
         """
         Fetch quotes for up to 1000 tickers in a single API call.
@@ -150,25 +187,10 @@ class AlpacaClient:
         result: Dict[str, dict] = {}
 
         for ci, chunk in enumerate(chunks):
-            data = None
-            for attempt in range(3):
-                if attempt:
-                    await asyncio.sleep(0.6 * attempt)      # 0.6s, then 1.2s
-                data = await self._get(
-                    "/v2/stocks/snapshots",
-                    {"symbols": ",".join(chunk), "feed": "iex"}
-                )
-                if data and isinstance(data, dict):
-                    break
+            data = await self._snapshots_resilient(chunk)
             if chunks and ci + 1 < len(chunks):
                 await asyncio.sleep(0.15)                   # be polite between chunks
-            if not data or not isinstance(data, dict):
-                # Loud, and it names what was lost: a silently-skipped chunk
-                # reads downstream as "these companies have no price", and they
-                # get dropped from the universe entirely.
-                logger.warning("Alpaca snapshots: chunk %d/%d (%s..%s, %d symbols) "
-                               "returned nothing after 3 attempts",
-                               ci + 1, len(chunks), chunk[0], chunk[-1], len(chunk))
+            if not data:
                 continue
 
             for sym, snap in data.items():
