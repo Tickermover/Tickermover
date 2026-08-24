@@ -17953,7 +17953,7 @@ function secgRender(){
       const io = new IntersectionObserver(en => {
         _secgVisible = !!(en[0] && en[0].isIntersecting);
         if (_secgVisible) secgKick();
-        else if (_secgRAF){ cancelAnimationFrame(_secgRAF); _secgRAF = 0; }
+        else { secgFlowStop(); if (_secgRAF){ cancelAnimationFrame(_secgRAF); _secgRAF = 0; } }
       }, { threshold: 0.01 });
       io.observe(svg);
     }
@@ -18107,18 +18107,52 @@ function _secgStep(){
     p.x = Math.max(padX, Math.min(W - padX, p.x)); p.y = Math.max(pad, Math.min(H - pad, p.y));
   });
 }
+/* Below this the movement is under a quarter of a pixel a frame — invisible,
+   and not worth a frame. */
+const SECG_SLEEP = 0.02;
 function secgTick(){
   _secgStep();
-  // Decay toward a low floor instead of zero → perpetual gentle Brownian drift
-  // (a fresh render/drag kicks it higher, then it eases back to the float).
-  _secgAlpha = Math.max(0.085, _secgAlpha * 0.985);
+  _secgAlpha *= 0.985;
   secgPaint();
   if ((_secgFrame++ % 24) === 0) secgRelabel();   // throttle the label de-clutter
-  if (_secgVisible && !document.hidden) _secgRAF = requestAnimationFrame(secgTick);
-  else _secgRAF = 0;
+  /* THE FIELD SETTLES NOW. This used to floor alpha at 0.085 so the web kept
+     "breathing" — which meant an O(N^2) force pass, a transform write on every
+     node and a full edge recompute, sixty times a second, for as long as the
+     panel was on screen. It was the single biggest idle cost in the app. A
+     drag keeps it awake; everything else (hover, resize, bloom, re-render)
+     comes back through secgKick. */
+  if (!_secgVisible || document.hidden){ _secgRAF = 0; return; }
+  if (_secgAlpha < SECG_SLEEP && !_secgDragging){
+    _secgAlpha = 0;
+    secgRelabel();                 // one clean label pass on the settled layout
+    _secgRAF = 0;
+    secgFlowKick();                // keep the dots moving, drop everything else
+    return;
+  }
+  _secgRAF = requestAnimationFrame(secgTick);
+}
+
+/* ── Dots after the layout has settled ──────────────────────────────────
+   The physics is done and the nodes are still, so this touches neither. It
+   advances each dot and writes two attributes, every third frame — about a
+   twentieth of the work the full tick was doing, and it is what keeps the
+   "dots flow downstream" legend honest once the web stops moving. */
+let _secgFlowRAF = 0, _secgFlowFrame = 0;
+function secgFlowTick(){
+  if (!_secgVisible || document.hidden || _secgAlpha > 0){ _secgFlowRAF = 0; return; }
+  if ((_secgFlowFrame++ % 3) === 0) secgPaint();
+  _secgFlowRAF = requestAnimationFrame(secgFlowTick);
+}
+function secgFlowKick(){
+  if (_secgFlowRAF || _secgReduceMotion() || document.hidden || !_secgVisible) return;
+  _secgFlowRAF = requestAnimationFrame(secgFlowTick);
+}
+function secgFlowStop(){
+  if (_secgFlowRAF){ cancelAnimationFrame(_secgFlowRAF); _secgFlowRAF = 0; }
 }
 function secgKick(){
   if (_secgReduceMotion() || document.hidden || !_secgVisible) return;
+  secgFlowStop();                  // the full tick paints the dots itself
   if (_secgAlpha < 0.45) _secgAlpha = 0.55;
   if (!_secgRAF) _secgRAF = requestAnimationFrame(secgTick);
 }
@@ -18128,14 +18162,25 @@ function secgSettle(names){            // synchronous layout for reduced-motion
   _secgAlpha = 0;
 }
 
+/* Paint skips what has not moved. Every node used to get a transform write and
+   every edge a full geometry recompute on every frame, including the ones
+   sitting perfectly still — which is most of them for most of the settle. */
+const SECG_EPS = 0.25;
 function secgPaint(){
   for (const n in _secgNodes){
     const p = _secgNodes[n]; if (!p || !p.el) continue;
+    if (p._px != null && Math.abs(p.x - p._px) < SECG_EPS && Math.abs(p.y - p._py) < SECG_EPS) continue;
+    p._px = p.x; p._py = p.y;
     p.el.setAttribute('transform', 'translate(' + p.x.toFixed(1) + ',' + p.y.toFixed(1) + ')');
   }
   const edges = _secgStockEdges.length ? _secgEdges.concat(_secgStockEdges) : _secgEdges;
   edges.forEach(e => {
     const a = _secgNodes[e.source], b = _secgNodes[e.target]; if (!a || !b || !e.el) return;
+    /* Both ends still? The path it already carries is still correct, so skip
+       the attribute WRITE — but not the maths below, because the flow dot
+       still has to travel along that unchanged curve. */
+    const still = (e._ex === a.x && e._ey === a.y && e._bx === b.x && e._by === b.y);
+    e._ex = a.x; e._ey = a.y; e._bx = b.x; e._by = b.y;
     const dx = b.x - a.x, dy = b.y - a.y, len = Math.sqrt(dx * dx + dy * dy) || 1;
     const ux = dx / len, uy = dy / len;
     const member = e.type === 'member';
@@ -18144,7 +18189,7 @@ function secgPaint(){
     const mx = (ax + bx) / 2, my = (ay + by) / 2, nx = -uy, ny = ux;
     const arc = Math.min(16, len * 0.12);                 // gentle arc; subtle for short member links
     const cx = mx + nx * arc, cy = my + ny * arc;
-    e.el.setAttribute('d', 'M' + ax.toFixed(1) + ' ' + ay.toFixed(1) + ' Q' + cx.toFixed(1) + ' ' + cy.toFixed(1) + ' ' + bx.toFixed(1) + ' ' + by.toFixed(1));
+    if (!still) e.el.setAttribute('d', 'M' + ax.toFixed(1) + ' ' + ay.toFixed(1) + ' Q' + cx.toFixed(1) + ' ' + cy.toFixed(1) + ' ' + bx.toFixed(1) + ' ' + by.toFixed(1));
     if (e.flow){                                          // slide the dot along the curve at ~constant visual speed
       e._t = (e._t + 1.1 / Math.max(60, len)) % 1;
       const t = e._t, mt = 1 - t;
