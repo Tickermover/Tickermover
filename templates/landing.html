@@ -3346,46 +3346,54 @@ html body #pricing.is-annual .pz-featured .pz-amt{color:rgba(255,255,255,.62);
 </section>
 
 <!-- ───────── PROFILES (dark, three curated universes from dev landing) ───────── -->
-<section class="section bg-dark" id="profiles">
+<!-- ───────── BETA BANDS (dark) — was "Three profiles. One dashboard." ─────────
+     Rewritten 23 Aug 2026. The old section sold three curated universes and
+     described them by the INVESTOR each was for ("for patient, long-term
+     investors", "for traders chasing fast growth"). Both halves are now wrong:
+     the profiles are gone from the product, and describing a set of shares by
+     who it suits is the suitability language we removed for exactly the FCA
+     reason set out in the app. Same slot, same DARK tone, so the page's
+     alternation is untouched — see the section-rhythm rule. -->
+<section class="section bg-dark" id="bands">
   <div class="wrap">
     <div class="sec-head center reveal">
-      <span class="eyebrow">Built for your style</span>
-      <h2 class="sec-title">Three profiles. <span class="amber-grad-text">One dashboard.</span></h2>
-      <p class="sec-sub">One click flips between three curated universes — Aggressive for the hunters, Conservative for the patient, Balanced for everyone in between.</p>
+      <span class="eyebrow">One universe</span>
+      <h2 class="sec-title">Every stock we cover. <span class="amber-grad-text">Banded by beta.</span></h2>
+      <p class="sec-sub">We used to ask what kind of investor you were and then show you a different set of shares. Now everyone sees the same universe, and every name carries how it has actually moved against the market — a description, not a recommendation.</p>
     </div>
     <div class="profiles stagger reveal">
       <div class="profile">
-        <span class="profile-tag">Conservative</span>
-        <h3>Steady compounders</h3>
-        <p class="desc">Blue-chip names with low beta, real margins, and durable demand. For patient, long-term investors.</p>
+        <span class="profile-tag">Low beta</span>
+        <h3>Moved less than the market</h3>
+        <p class="desc">Beta under 0.8. When the index moved, these moved less — historically, and that is all beta says.</p>
         <ul>
-          <li>S&amp;P 500 / Dow members only</li>
-          <li>Beta &lt; 1.0, profit-positive</li>
-          <li>Defensive sector tilt</li>
+          <li>5-year measure against the S&amp;P 500</li>
+          <li>Backward-looking, and it shifts quarter to quarter</li>
+          <li>Says nothing about single-company risk</li>
         </ul>
-        <a class="profile-cta" href="/app?profile=conservative"><span>View Conservative</span><span class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span></a>
+        <a class="profile-cta" href="/app"><span>Open the universe</span><span class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span></a>
       </div>
       <div class="profile popular">
-        <span class="profile-tag">Most popular</span>
-        <h3>Balanced</h3>
-        <p class="desc">A mix of growth and quality. The dashboard's default — for investors who want both ends of the curve.</p>
+        <span class="profile-tag">Mid beta</span>
+        <h3>Moved with the market</h3>
+        <p class="desc">Beta between 0.8 and 1.2 — the middle of the range, where most large caps sit.</p>
         <ul>
-          <li>~250 names across all sectors</li>
-          <li>Mid-beta growers + cash cows</li>
-          <li>Best Quant Score discovery</li>
+          <li>Every name scored on the same six pillars</li>
+          <li>Bands shown on the shortlist, never used to filter it</li>
+          <li>No profile, no quiz, nothing hidden from you</li>
         </ul>
-        <a class="profile-cta" href="/app?profile=balanced"><span>View Balanced</span><span class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span></a>
+        <a class="profile-cta" href="/app"><span>Open the universe</span><span class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span></a>
       </div>
       <div class="profile">
-        <span class="profile-tag">Aggressive</span>
-        <h3>Aggressive</h3>
-        <p class="desc">High beta, high momentum, high conviction. For traders chasing fast growth — with discipline.</p>
+        <span class="profile-tag">High beta</span>
+        <h3>Moved more than the market</h3>
+        <p class="desc">Beta above 1.2. Bigger swings both ways — which is a fact about volatility, not a verdict on the business.</p>
         <ul>
-          <li>Beta ≥ 1.5 or breakout setups</li>
-          <li>Loss-makers with momentum OK</li>
-          <li>Trailing-stop reference levels</li>
+          <li>Where momentum and high-growth names cluster</li>
+          <li>Ranked on score alone, a shortlist skews here</li>
+          <li>So we show the top names in every band instead</li>
         </ul>
-        <a class="profile-cta" href="/app?profile=aggressive"><span>View Aggressive</span><span class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span></a>
+        <a class="profile-cta" href="/app"><span>Open the universe</span><span class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span></a>
       </div>
     </div>
   </div>
@@ -3703,7 +3711,7 @@ html body #pricing.is-annual .pz-featured .pz-amt{color:rgba(255,255,255,.62);
             <div class="faq-ans-wrap"><div class="faq-ans-content">
               <h4 class="faq-ans-title">What does it cost?</h4>
               <div class="faq-ans-divider"></div>
-              <p class="faq-details">The Free plan is £0 forever, no card needed. Pro is £19.99/mo — and new members get a welcome 50% off their first 3 months with code <b>WELCOME50</b> (£9.99/mo, then £19.99/mo). Cancel anytime.</p>
+              <p class="faq-details">Nothing today. Every feature, Pro included, is free to signed-in users while we are in beta — no card, no trial clock. Pro is £9.99/mo afterwards and we will give notice here and by email before anything starts charging. The Free plan stays £0.</p>
               <div class="faq-btn"><a class="btn btn-white" href="/login?signup">Start free <span class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span></a></div>
             </div></div>
           </div>
@@ -3766,6 +3774,78 @@ html body #pricing.is-annual .pz-featured .pz-amt{color:rgba(255,255,255,.62);
      limits belong ON it, at the size the claims are, not one click away in
      /disclaimer. Keep this section above the final CTA: a reader should meet
      it before they sign up, not after. -->
+<!-- ───────── PRICING ─────────
+     Restored 23 Aug 2026, having been pulled on 14 Aug when the site went
+     free. It sits directly ABOVE #limits, and both are light: the two read
+     as one light beat, so re-adding a section does not break the page's
+     dark/light alternation. Note what is NOT here: the monthly/annual
+     toggle (there is no annual price in Stripe) and the WELCOME50 coupon
+     (never created). Copy that promises a discount we cannot honour is the
+     same failure as the newsletter that never sent. -->
+<section class="section bg-alice" id="pricing">
+  <div class="wrap">
+    <div class="sec-head center reveal">
+      <span class="eyebrow" style="margin-left:auto;margin-right:auto">Pricing</span>
+      <h2 class="sec-title">Everything, <span class="blue-grad-text">free during beta.</span></h2>
+      <p class="sec-sub">Every feature, including the ones marked Pro, is free to every signed-in user while we are in beta. No card, no trial clock. When that ends we will say so here and by email first &mdash; nothing starts charging quietly.</p>
+    </div>
+
+    <div class="pz-panel reveal">
+
+      <div class="pz-grid">
+
+        <!-- FREE -->
+        <article class="pz-card">
+          <div class="pz-card-head">
+            <span class="pz-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 17 9 11 13 15 21 7"/><polyline points="21 12 21 7 16 7"/></svg></span>
+            <h3 class="pz-name">Free</h3>
+          </div>
+          <span class="pz-amt">&pound;0</span>
+          <span class="pz-per">forever &middot; no card required</span>
+          <hr class="pz-rule">
+          <p class="pz-desc">The whole research engine &mdash; daily scored picks, market regime and the full 545-stock universe. For anyone trading US markets.</p>
+          <a class="btn pz-cta" href="/login?signup">Start free <span class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span></a>
+          <ul class="pz-feats">
+            <li><span class="pz-tick" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 12 10 18 20 6"/></svg></span><span><b>On the Radar</b>Daily picks scored across six pillars</span></li>
+            <li><span class="pz-tick" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 12 10 18 20 6"/></svg></span><span><b>Market Analysis</b>Regime, breadth &amp; sector rotation</span></li>
+            <li><span class="pz-tick" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 12 10 18 20 6"/></svg></span><span><b>Universe &amp; Sector Map</b>All 545 stocks, mapped by sector</span></li>
+            <li><span class="pz-tick" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 12 10 18 20 6"/></svg></span><span><b>Real-time data</b>Live scores, quotes &amp; bid/ask</span></li>
+            <li><span class="pz-tick" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 12 10 18 20 6"/></svg></span><span><b>Three risk profiles</b>Conservative &middot; Balanced &middot; Aggressive</span></li>
+            <li><span class="pz-tick" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 12 10 18 20 6"/></svg></span><span><b>Daily brief &amp; watchlist</b>Morning read plus your own list</span></li>
+          </ul>
+          <p class="pz-foot">Free forever &middot; no card needed</p>
+        </article>
+
+        <!-- PRO -->
+        <article class="pz-card pz-featured">
+          <div class="pz-card-head">
+            <span class="pz-ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 4 14 11 14 10 22 20 10 13 10 13 2"/></svg></span>
+            <h3 class="pz-name">Pro</h3>
+            <span class="pz-badge">Free in beta</span>
+          </div>
+          <span class="pz-amt">&pound;0<span class="pz-sup">/mo</span></span>
+          <span class="pz-per">free during beta &middot; &pound;9.99/mo afterwards, with notice</span>
+          <hr class="pz-rule">
+          <p class="pz-desc">Everything in Free, plus the tracker, the private-market pipeline, dependency maps and an AI analyst grounded in live data.</p>
+          <!-- next=upgrade carries the intent through sign-up: someone who clicked
+               "Get Pro" should land on checkout, not on the free app. -->
+          <a class="btn pz-cta pz-cta-primary" href="/login?signup">Get Pro free <span class="arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span></a>
+          <ul class="pz-feats">
+            <li style="display:block"><span class="pz-plus">Everything in Free, plus</span></li>
+            <li><span class="pz-tick" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 12 10 18 20 6"/></svg></span><span><b>Prime Tickers</b>Live tracker of every open &amp; closed pick &mdash; entry, exit, %</span></li>
+            <li><span class="pz-tick" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 12 10 18 20 6"/></svg></span><span><b>Pre IPO Stocks</b>Private names heading for the public market</span></li>
+            <li><span class="pz-tick" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 12 10 18 20 6"/></svg></span><span><b>Thesis Maps</b>Supply-chain dependency &amp; ripple-risk mapping</span></li>
+            <li><span class="pz-tick" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 12 10 18 20 6"/></svg></span><span><b>Ask AI analyst</b>Chat with an AI grounded in TickerMover's live data</span></li>
+            <li><span class="pz-tick" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 12 10 18 20 6"/></svg></span><span><b>Briefings</b>AI event &amp; earnings-call summaries, every ticker</span></li>
+          </ul>
+          <p class="pz-foot">Cancel anytime &middot; secure Stripe checkout</p>
+        </article>
+
+      </div>
+    </div>
+  </div>
+</section>
+
 <section class="section bg-alice" id="limits">
   <div class="wrap">
     <span class="eyebrow">Before you sign up</span>

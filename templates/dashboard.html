@@ -3313,6 +3313,17 @@ body.v2 .v2ov-card.sectors .v2ov-sector-cell{
    green/amber/red: this describes how much a name has moved with the market,
    not whether that is good, and green/red carry the up/down semantics
    everywhere else. The label carries the meaning; the tone only reinforces it. */
+/* Sector Map beta filter. Same three hues as the row chips so the two
+   surfaces read as one system; 'on' fills, the rest stay quiet. */
+.sm-bands{display:flex;gap:6px;flex-wrap:wrap;margin:2px 0 10px}
+.sm-band{border:1px solid #E4E7EC;background:#fff;border-radius:100px;padding:3px 10px;
+  font-size:10.5px;font-weight:600;color:#5D6C7B;cursor:pointer;
+  transition:background var(--t-fast) var(--e-out),border-color var(--t-fast) var(--e-out)}
+.sm-band:hover{background:#F7F9FA}
+.sm-band.on{border-color:transparent;background:#0A2F46;color:#fff}
+.sm-band.on:nth-child(2){background:#0F766E}
+.sm-band.on:nth-child(3){background:#3F4EAF}
+
 /* Band header inside the picks table: a quiet rule carrying the band chip. It
    separates three groups; it is not a heading competing with the panel title. */
 .dm-band{display:flex;align-items:center;gap:10px;padding:14px 16px 8px;
@@ -3321,8 +3332,13 @@ body.v2 .v2ov-card.sectors .v2ov-sector-cell{
 .dm-band small{font-size:11.5px;color:#94a3b8;font-weight:400}
 .v2-beta{display:inline-flex;align-items:center;border-radius:100px;padding:2px 9px;
   font-size:10.5px;font-weight:600;letter-spacing:.02em;white-space:nowrap}
-.v2-beta-low{background:#EEF3F7;color:#4A6577}
-.v2-beta-mid{background:#E2EAF1;color:#2C4A5E}
+/* Three distinguishable hues — the low and mid chips were two greys a shade
+   apart and read as the same chip. Teal / indigo / filled navy are all from
+   the panel-ribbon accents, and none of them is the green-red up/down pair or
+   the amber that means "warning" everywhere else. The label still carries the
+   meaning; colour only makes the three scannable. */
+.v2-beta-low{background:#E4F1EE;color:#0F766E}
+.v2-beta-mid{background:#EAEBFA;color:#3F4EAF}
 .v2-beta-high{background:#0A2F46;color:#E8F0F6}
 .v2-profile-btn{
   display:inline-flex;align-items:center;gap:7px;
@@ -23385,7 +23401,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
   const pCls   = v => (!v || isNaN(parseFloat(v))) ? '' : parseFloat(v) >= 0 ? 'pos' : 'neg';
   const MIN_MCAP = 0;
   const PICKS_SHOWN = 6;
-  const PICKS_PER_BAND = 2;   // 2 x low/mid/high = the same six rows
+  const PICKS_PER_BAND = 3;   // 3 x low/mid/high
 
   function valuationVerdict(t){
     const peg = parseFloat(t.peg_ratio || t.pegRatio);
@@ -23772,8 +23788,8 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     return groups.filter(g=>g.rows.length);
   }
   function renderPicks(tickers, data){
-    // Two per band, three bands — the same six rows as before, but every band
-    // on the table instead of whichever one the score happened to favour.
+    // Three per band, three bands: nine rows, every band represented
+    // instead of whichever one the score happened to favour.
     const groups=selectHotBands(tickers, PICKS_PER_BAND);
     const sel=groups.reduce((a,g)=>a.concat(g.rows), []);
     const table=document.getElementById('picksTable'); if(!table) return;
@@ -27290,7 +27306,25 @@ function scResultHTML(d){
     const card=document.querySelector('#sectorsSlot .ts-card'); if(card) window._smPageTo(card,0);
   };
   /* ── sectors ── */
+  /* Beta filter for the Sector Map. It narrows the NAMES the sub-sector
+     aggregates are computed from, so "strongest sub-sectors" answers the
+     question for the band you picked — and the leader chip is that band's
+     leader, not the sector's high-beta one. Nothing is hidden by default:
+     'all' is the state on load, and the counts on each row move with it so
+     the filter can never be mistaken for the whole picture. */
+  window._smBand = window._smBand || 'all';
+  window._smSetBand = function(b){
+    window._smBand = b;
+    try { renderSectors(window._smLastTickers || []); } catch(e){}
+  };
   function renderSectors(tickers){
+    window._smLastTickers = tickers;
+    if (window._smBand && window._smBand !== 'all' && typeof v2BetaBand === 'function'){
+      tickers = (tickers||[]).filter(t => {
+        const b = v2BetaBand(t.beta);
+        return b && b.key === window._smBand;
+      });
+    }
     const ACR={Ai:'AI',Gpu:'GPU',Saas:'SaaS',Etf:'ETF',Iot:'IoT',Ev:'EV'};
     const titleCase=s=>s.toLowerCase().replace(/\b\w/g,c=>c.toUpperCase()).replace(/\b(Ai|Gpu|Saas|Etf|Iot|Ev)\b/g,m=>ACR[m]);
     const ss=t=>parseFloat(t.smart_score??t.pop_score??0);
@@ -27308,7 +27342,19 @@ function scResultHTML(d){
       .filter(s=>s.count>=2)
       .sort((a,b)=>b.score-a.score);
     const slot=document.getElementById('sectorsSlot'); if(!slot) return;
-    if(!sectors.length){ slot.innerHTML=''; return; }
+    if(!sectors.length){
+      // Blanking the card would read as "broken" rather than "your filter is
+      // narrow", and leaves no way back to All.
+      slot.innerHTML = (window._smBand && window._smBand!=='all')
+        ? '<div class="ts-card"><div class="ts-card-head"><div class="ts-card-title">🗺 Sector Map</div>'+
+          '<div class="ts-card-sub">No sub-sector has two or more names in this beta band right now.</div></div>'+
+          '<div class="sm-bands">'+
+          ['all','low','mid','high'].map(k=>'<button type="button" class="sm-band'+(window._smBand===k?' on':'')+
+            '" onclick="window._smSetBand(''+k+'')">'+(k==='all'?'All':k[0].toUpperCase()+k.slice(1)+' beta')+'</button>').join('')+
+          '</div></div>'
+        : '';
+      return;
+    }
     const heatingName=sectors[0]&&sectors[0].score>=75?sectors[0].name:null;
     const scoreColor=sc=>sc>=70?'#0040c1':sc>=55?'#2970ff':'#94a3b8';
     const heatColor=sc=>sc>=68?'#16a34a':sc>=60?'#84cc16':sc>=52?'#e0a000':'#94a3b8';
@@ -27340,7 +27386,11 @@ function scResultHTML(d){
           '<span class="sm-more" onclick="var c=this.closest(\'.ts-card\');window._smPageTo(c,(+c.dataset.smPage||0)+1)">+ '+(total-PAGE)+' more sub-sectors</span>'+
         '</div>'
       : '';
-    slot.innerHTML='<div class="ts-card" data-sm-page="0"><div class="ts-card-head"><div class="ts-card-title">🗺 Sector Map</div><div class="ts-card-sub">Strongest sub-sectors right now · tap a row for the basket, the ticker for its leader</div></div>'+
+    const bandChip=(k,l)=>'<button type="button" class="sm-band'+(window._smBand===k?' on':'')+
+      '" onclick="event.stopPropagation();window._smSetBand(''+k+'')">'+l+'</button>';
+    const bandRow='<div class="sm-bands" title="Filters the names each sub-sector is measured from. Beta is against the S&amp;P 500: under 0.8 low, 0.8-1.2 mid, above 1.2 high.">'+
+      bandChip('all','All')+bandChip('low','Low beta')+bandChip('mid','Mid beta')+bandChip('high','High beta')+'</div>';
+    slot.innerHTML='<div class="ts-card" data-sm-page="0"><div class="ts-card-head"><div class="ts-card-title">🗺 Sector Map</div><div class="ts-card-sub">Strongest sub-sectors right now · tap a row for the basket, the ticker for its leader</div></div>'+bandRow+
       '<div class="sm-header"><span></span><span>Sector</span><span style="text-align:right">Score</span><span style="text-align:right">Today</span><span style="text-align:right">Top</span></div>'+
       rows+footer+'</div>';
   }

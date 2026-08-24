@@ -2148,7 +2148,7 @@ def _build_landing_schema() -> str:
             _q("What is the open ledger?",
                "Every closed pick — its entry, exit reason and result — is timestamped to a public record. No cherry-picking; the whole tape is auditable."),
             _q("What does it cost?",
-               "The Free plan is £0 forever, no card needed. Pro is £19.99/mo, and new members get a welcome 50% off their first 3 months with code WELCOME50 (£9.99/mo, then £19.99/mo). Cancel anytime."),
+               "Nothing today. Every feature, Pro included, is free to signed-in users while we are in beta — no card and no trial clock. Pro is £9.99/mo afterwards, with notice given before anything is charged. The Free plan stays £0."),
             _q("How is this different from TradingView, Koyfin or Bloomberg?",
                "Those are charting and data terminals — you bring the thesis. TickerMover is the opposite: it brings the thesis (one number, six pillars, a closed trade ledger), and leaves the charting to your terminal. Use both."),
             _q("Who should NOT use TickerMover?",
