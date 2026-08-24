@@ -2436,6 +2436,12 @@ table.ssx-h2h tbody td.self{color:var(--ink);font-weight:600}
 .fl-name{color:#64748b;font-size:12.5px;max-width:200px;overflow:hidden;text-overflow:ellipsis;
   white-space:nowrap;display:block;line-height:1.15}
 .fl-pop{font-size:15px;font-weight:900;color:#0040c1}
+/* Beta column: the band chip carrying the number. Tabular figures inside a
+   pill need the fixed min-width or the chips ragged-edge down the column. */
+.fund-list td.fl-beta-cell{text-align:right}
+.v2-beta.fl-beta{font-size:11.5px;padding:2px 8px;min-width:52px;justify-content:center;
+  font-variant-numeric:tabular-nums}
+.fl-beta-na{color:#94a3b8}
 /* Displayed-count chip — sits top-right above the table. */
 #tally-fund{display:inline-block;font-size:12px;font-weight:700;color:#475569;
   background:rgba(41,112,255,.08);border:1px solid rgba(41,112,255,.16);border-radius:999px;padding:3px 11px}
@@ -11252,6 +11258,12 @@ function _v2FilterByProfileLegacy(tickers){
 function v2BetaBand(beta){
   const b = parseFloat(beta);
   if (isNaN(b)) return null;
+  /* A negative beta still sits in the low band by the conventional cut points,
+     but "moved less than the market" is the wrong sentence for it — it has
+     moved the OTHER WAY. Nine names in the 1,571-name universe are negative
+     (IVT at -5.92 down to PDD at -0.01) and the band chip is now on every row
+     of the Universe table, so the tooltip has to be right for them. */
+  if (b < 0)    return { key:'low',  label:'Low beta',  hint:'Beta ' + b.toFixed(2) + ' — has moved against the market' };
   if (b < 0.8)  return { key:'low',  label:'Low beta',  hint:'Beta ' + b.toFixed(2) + ' — has moved less than the market' };
   if (b <= 1.2) return { key:'mid',  label:'Mid beta',  hint:'Beta ' + b.toFixed(2) + ' — has moved roughly with the market' };
   return          { key:'high', label:'High beta', hint:'Beta ' + b.toFixed(2) + ' — has moved more than the market' };
@@ -11261,6 +11273,16 @@ function v2BetaChip(beta){
   if (!band) return '';
   return '<span class="v2-beta v2-beta-' + band.key + '" title="' + band.hint +
          '">' + band.label + '</span>';
+}
+/* Table variant of the same tag. A 1,571-row column cannot carry "High beta"
+   three times per screenful, so the cell shows the NUMBER in the band's colour
+   and the words live in the tooltip. Same three hues as every other beta chip
+   in the app, so a reader who learned them in the drawer reads them here. */
+function v2BetaCellHTML(beta){
+  const band = v2BetaBand(beta);
+  if (!band) return '<span class="fl-beta-na">—</span>';
+  return '<span class="v2-beta v2-beta-' + band.key + ' fl-beta" title="' + band.label +
+         ' · ' + band.hint + '">' + parseFloat(beta).toFixed(2) + '</span>';
 }
 
 /* ── Watchlist (localStorage-backed) ── */
@@ -17315,6 +17337,11 @@ function renderFundamentals(tickers) {
     const tgtMean2 = parseFloat(t.target_mean || t.street_target || 0);
     const upsidePct = price > 0 && tgtMean2 > 0 ? ((tgtMean2 - price)/price*100) : null;
     const _profiles = Array.isArray(t.profiles) ? t.profiles.join(' ') : '';
+    /* Beta tag. `data-band` is the row's tag (low/mid/high) so screens, sorts
+       and any later filter read it without re-deriving the cut points; the
+       cell renders the same band chip the drawer and the Sector Map use. */
+    const _beta  = parseFloat(t.beta);
+    const _bBand = (typeof v2BetaBand === 'function') ? v2BetaBand(t.beta) : null;
     return `<tr class="fund-row"${(window._featuredSet && window._featuredSet.has(t.ticker)) ? ' data-featured' : ''}
          data-ticker="${t.ticker}"
          data-name="${(t.name || '').replace(/"/g, '')}"
@@ -17333,6 +17360,8 @@ function renderFundamentals(tickers) {
          data-dte="${_dteVal}"
          data-pe="${!isNaN(fwdPE)?fwdPE.toFixed(1):''}"
          data-upside="${upsidePct!=null?upsidePct.toFixed(1):''}"
+         data-beta="${!isNaN(_beta)?_beta.toFixed(3):''}"
+         data-band="${_bBand ? _bBand.key : ''}"
          onclick="openStockModal('${t.ticker}')">
       <td><span class="fl-pop">${Math.round(pop)}</span></td>
       <td><span class="fl-stock"><span class="fl-tic">${t.ticker}</span><span class="fl-name">${v2EscHTML(t.name || '')}</span></span></td>
@@ -17342,6 +17371,7 @@ function renderFundamentals(tickers) {
       <td class="num fl-chg ${pCls(chg)}">${fmtPct(chg)}</td>
       <td class="num" style="font-weight:800;color:${_rs>=80?'#16a34a':_rs>=50?'#0f172a':'#94a3b8'}">${_rs>0?_rs:'—'}</td>
       <td class="num ${pCls(mom3m)}" style="font-weight:700">${mom3m !== 0 ? fmtPct(mom3m) : '—'}</td>
+      <td class="num fl-beta-cell">${(typeof v2BetaCellHTML === 'function') ? v2BetaCellHTML(t.beta) : (!isNaN(_beta) ? _beta.toFixed(2) : '—')}</td>
       <td class="num ${!isNaN(revG)?pCls(revG*100):''}">${!isNaN(revG)?fmtPct2(t.revenue_growth_yoy):'—'}</td>
       <td class="num ${!isNaN(fcfM)?pCls(fcfM):''}">${!isNaN(fcfM)?fmtPct2(t.fcf_margin):'—'}</td>
       <td class="num">${fmtM(t.market_cap)}</td>
@@ -17362,6 +17392,7 @@ function renderFundamentals(tickers) {
         <th class="num" onclick="sortFundList('chg')">${(window._ahMarketOpen && !window._ahMarketOpen()) ? 'Last close' : 'Today %'}</th>
         <th class="num" onclick="sortFundList('rs')" title="Relative Strength (1–99) — price performance vs the market. 80+ is leadership.">RS</th>
         <th class="num" onclick="sortFundList('mom3m')">3M Chg</th>
+        <th class="num" onclick="sortFundList('beta')" title="Beta vs the S&P 500, 5y monthly as the data provider reports it. Under 0.8 low, 0.8–1.2 mid, above 1.2 high. Backward-looking, and it says nothing about single-name risk.">Beta</th>
         <th class="num" onclick="sortFundList('rev')">Rev Growth</th>
         <th class="num" onclick="sortFundList('fcf')" title="Free-cash-flow margin — profitable growth vs cash burn.">FCF Margin</th>
         <th class="num" onclick="sortFundList('mcap')">Mkt Cap</th>
