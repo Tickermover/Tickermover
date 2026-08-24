@@ -149,15 +149,26 @@ class AlpacaClient:
         chunks = [tickers[i:i + 200] for i in range(0, len(tickers), 200)]
         result: Dict[str, dict] = {}
 
-        for chunk in chunks:
-            data = await self._get(
-                "/v2/stocks/snapshots",
-                {"symbols": ",".join(chunk), "feed": "iex"}
-            )
+        for ci, chunk in enumerate(chunks):
+            data = None
+            for attempt in range(3):
+                if attempt:
+                    await asyncio.sleep(0.6 * attempt)      # 0.6s, then 1.2s
+                data = await self._get(
+                    "/v2/stocks/snapshots",
+                    {"symbols": ",".join(chunk), "feed": "iex"}
+                )
+                if data and isinstance(data, dict):
+                    break
+            if chunks and ci + 1 < len(chunks):
+                await asyncio.sleep(0.15)                   # be polite between chunks
             if not data or not isinstance(data, dict):
-                # Loud, because a silently-skipped chunk reads downstream as
-                # "these companies have no price" and they get dropped.
-                logger.warning("Alpaca snapshots: chunk of %d returned nothing", len(chunk))
+                # Loud, and it names what was lost: a silently-skipped chunk
+                # reads downstream as "these companies have no price", and they
+                # get dropped from the universe entirely.
+                logger.warning("Alpaca snapshots: chunk %d/%d (%s..%s, %d symbols) "
+                               "returned nothing after 3 attempts",
+                               ci + 1, len(chunks), chunk[0], chunk[-1], len(chunk))
                 continue
 
             for sym, snap in data.items():
