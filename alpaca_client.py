@@ -141,8 +141,12 @@ class AlpacaClient:
         if not tickers:
             return {}
 
-        # Alpaca allows all tickers in one call (no 250 limit like Polygon)
-        chunks = [tickers[i:i + 1000] for i in range(0, len(tickers), 1000)]
+        # 200, not 1000. A thousand comma-separated symbols is a ~6KB query
+        # string; those requests fail, _get returns None, the chunk is skipped
+        # silently, and the universe collapses to whatever the quote cache
+        # still holds. It only showed up when the universe grew past ~1,000
+        # names. Eight requests for the whole listed universe is nothing.
+        chunks = [tickers[i:i + 200] for i in range(0, len(tickers), 200)]
         result: Dict[str, dict] = {}
 
         for chunk in chunks:
@@ -151,6 +155,9 @@ class AlpacaClient:
                 {"symbols": ",".join(chunk), "feed": "iex"}
             )
             if not data or not isinstance(data, dict):
+                # Loud, because a silently-skipped chunk reads downstream as
+                # "these companies have no price" and they get dropped.
+                logger.warning("Alpaca snapshots: chunk of %d returned nothing", len(chunk))
                 continue
 
             for sym, snap in data.items():

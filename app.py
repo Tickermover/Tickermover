@@ -416,6 +416,13 @@ async def _full_refresh() -> None:
                 q      = batch_quotes.get(sym) or coordinator.cache.get(f"quote:{sym}") or {}
                 price  = q.get("price")
                 if not price:
+                    # A name we already know keeps its row and its last price.
+                    # Dropping it meant one failed quote batch could empty the
+                    # universe — which is exactly what happened when it grew
+                    # past the batch size. A stale price is visibly stale; a
+                    # missing company just looks like we stopped covering it.
+                    if sym in existing:
+                        new_universe.append(existing[sym])
                     continue
                 social = social_map.get(sym, {})
                 meta   = get_meta(sym)
