@@ -3313,6 +3313,12 @@ body.v2 .v2ov-card.sectors .v2ov-sector-cell{
    green/amber/red: this describes how much a name has moved with the market,
    not whether that is good, and green/red carry the up/down semantics
    everywhere else. The label carries the meaning; the tone only reinforces it. */
+/* The band chip appears in the drawer too — inside the Overview stat strip's
+   sub-line and in the Technicals signal column — so it has to sit on those
+   baselines without inheriting their muted colour. */
+.ov-stat .sub .v2-beta{margin-top:2px;font-size:9.5px;padding:1px 7px}
+.m-row .v2-beta,.mx-sig .v2-beta{font-size:9.5px;padding:1px 7px}
+
 /* Sector Map beta filter. Same three hues as the row chips so the two
    surfaces read as one system; 'on' fills, the rest stay quiet. */
 .sm-bands{display:flex;gap:6px;flex-wrap:wrap;margin:2px 0 10px}
@@ -25257,7 +25263,11 @@ function scResultHTML(d){
       stat('52-wk', (lo!=null&&hi!=null)?(lo.toFixed(0)+'–'+hi.toFixed(0)):'—','')+
       stat('Analyst Avg', tm!=null?fmtP(tm):'—', upside!=null?((upside>=0?'+':'')+upside.toFixed(0)+'% upside'):'', upside!=null?(upside>=0?'pos':'neg'):'')+
       stat('Rating', rating||'—', na!=null?(Math.round(na)+' analysts'):'', rating?(/Buy/.test(rating)?'pos':/Sell/.test(rating)?'neg':'amb'):'')+
-      stat('Beta', beta!=null?beta.toFixed(2):'—', beta!=null?(beta>=1.5?'high vol':beta>=0.8?'market':'low vol'):'', beta!=null&&beta>=1.5?'amb':'')+
+      // The band chip, not a private 'high vol' vocabulary: this cell used
+      // its own 1.5/0.8 cut points and called a 1.44-beta share "market"
+      // while the radar chip called it High beta.
+      stat('Beta', beta!=null?beta.toFixed(2):'—',
+        (beta!=null&&typeof v2BetaChip==='function')?v2BetaChip(beta):'', '')+
       stat('Earnings', eVal, eSub, eNear?'amb':'', eNear)+
     '</div>';
   }
@@ -25527,7 +25537,11 @@ function scResultHTML(d){
       _mrow('RSI (14)', rsi, v=>Math.round(v)+'', v=> (v>=40&&v<=65)?_badge('HEALTHY','ok'):v>70?_badge('OVERBOUGHT','bad'):v<30?_badge('OVERSOLD','warn'):_badge('NEUTRAL','warn')),
       _mrow('ATR (14)', atr, v=>'$'+v.toFixed(2)+(atrPct!=null?' · '+atrPct.toFixed(1)+'%/day':''),
         ()=> atrPct==null?_nb():atrPct<2?_badge('CALM','ok'):atrPct<4?_badge('NORMAL','neu'):_badge('HIGH','bad')),
-      _mrow('Beta', beta, v=>v.toFixed(2)+'×', v=> v>1.5?_badge('HIGH','bad'):v>=0.8?_badge('MARKET','warn'):_badge('LOW','ok')),
+      // ok/warn/bad is the green-amber-red family and it does not belong on
+      // beta: a high-beta share is not a worse share, it is a wider-moving
+      // one. Same band and same wording as everywhere else.
+      _mrow('Beta', beta, v=>v.toFixed(2)+'×',
+        v=> (typeof v2BetaChip==='function')?v2BetaChip(v):_nb()),
       // Same field the Financials tab's Ownership card calls "Short interest".
       // Two names for one number read as two different metrics — keep the name
       // identical across tabs even though the context differs.
