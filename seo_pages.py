@@ -1489,6 +1489,53 @@ table.scr tbody tr:hover td{background:#FFF6F1}
 """
 
 
+def _screen_cell(val, fmt: str) -> str:
+    """One screen cell, formatted by the column's own `fmt`.
+
+    Mirrors the switch in dashboard.html (scFmt) case for case so the public
+    page and the in-app scanner render the same number identically. Before
+    this, the page printed str(value) and IEEE-754 artefacts reached readers:
+    a 92.434% gross margin rendered as "92.43400000000001".
+    """
+    if val is None or val == "":
+        return "&mdash;"
+    if fmt in ("text", "ticker", "bool") or isinstance(val, str):
+        if fmt == "bool":
+            return "Yes" if val is True else ("No" if val is False else "&mdash;")
+        return html.escape(str(val))
+    try:
+        n = float(val)
+    except (TypeError, ValueError):
+        return html.escape(str(val))
+    if n != n:                      # NaN
+        return "&mdash;"
+    if fmt == "int":
+        return str(int(round(n)))
+    if fmt == "usd":
+        return "$%.2f" % n
+    if fmt == "x1":
+        return "%.1fx" % n
+    if fmt == "x2":
+        return "%.2fx" % n
+    if fmt == "pct":
+        return "%.1f%%" % n
+    if fmt == "signed":
+        return ("+" if n > 0 else "") + str(int(round(n)))
+    if fmt == "pct_signed":
+        return ("+" if n > 0 else "") + "%.1f%%" % n
+    if fmt == "money":
+        a = abs(n)
+        if a >= 1e12:
+            return "$%.2fT" % (n / 1e12)
+        if a >= 1e9:
+            return "$%.2fB" % (n / 1e9)
+        if a >= 1e6:
+            return "$%.1fM" % (n / 1e6)
+        return "$%.0f" % n
+    # unknown fmt: still never print a raw float's tail
+    return ("%.2f" % n).rstrip("0").rstrip(".")
+
+
 def _screen_row(r: dict, cols: list) -> str:
     sym = (r.get("ticker") or "").upper()
     nm = html.escape((r.get("name") or sym)[:48])
@@ -1498,9 +1545,8 @@ def _screen_row(r: dict, cols: list) -> str:
     first = ('<td><div class="scr-id">' + logo + '<div><a href="/stocks/' + sym
              + '" class="scr-tk">' + sym + '</a><span class="scr-nm">' + nm
              + "</span></div></div></td>")
-    dash = "—"
     rest = "".join(
-        "<td>" + html.escape(str(r.get(c["key"]) if r.get(c["key"]) is not None else dash)) + "</td>"
+        "<td>" + _screen_cell(r.get(c["key"]), c.get("fmt") or "") + "</td>"
         for c in cols if c["key"] not in ("ticker", "name")
     )
     return "<tr>" + first + rest + "</tr>"

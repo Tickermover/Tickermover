@@ -156,6 +156,18 @@ def bad_scripts(html, html5lib, esprima):
     return out
 
 
+# A float printed straight from Python: 92.43400000000001, 17.599999999999998.
+# Five decimals is well past anything we format on purpose.
+NUMBER_TAIL = re.compile(r"\d+\.\d{5,}")
+
+
+def number_tails(html, html5lib):
+    """Raw-float artefacts in rendered body text (scripts and JSON-LD excluded:
+    those legitimately carry full precision)."""
+    body = re.sub(r"<script.*?</script>", "", html, flags=re.S)
+    return NUMBER_TAIL.findall(body)[:4]
+
+
 def render_pages():
     """{name: html} for every public renderer."""
     import app, seo_pages as S, legal_pages as L
@@ -219,6 +231,10 @@ def run(update_baseline, verbose, pages=None, quiet=False):
         # --- JS ---
         bad = bad_scripts(html, html5lib, esprima)
         rep.check(name, "scripts parse", not bad, "; ".join(bad[:2]))
+
+        # A raw float reaching a reader: "92.43400000000001" gross margin.
+        tails = number_tails(html, html5lib)
+        rep.check(name, "number tails", not tails, ", ".join(tails))
 
         # --- fonts and palette ---
         hits = ["%s:%s" % (k, v) for k, v in BANNED_TEXT if v in html]
@@ -337,6 +353,16 @@ def run(update_baseline, verbose, pages=None, quiet=False):
         return 0
     if quiet:
         return rep
+    # NOT CHECKED HERE, and the reason is worth keeping: dashboard.html's
+    # inline scripts cannot be verified without a real JS engine. esprima
+    # predates optional chaining and fails on three of those blocks outright,
+    # so a NEW syntax error inside one of them does not change the failure list
+    # — that is how a broken quote shipped and left the app on "Loading the
+    # universe…". A brace/quote scanner was tried here and dropped: it flags
+    # regex literals like /[&<>"']/g as unterminated strings, and the real bug
+    # ("missing ) after argument list") was balanced anyway. The check that
+    # works is `new Function(src)` over every inline block of the SERVED page,
+    # run from a browser after deploy. Do that after touching dashboard.html.
     return rep.dump()
 
 
