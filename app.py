@@ -7228,6 +7228,12 @@ async def api_thesis_shares(slug: str):
     if not thesis:
         return JSONResponse({"available": False, "slug": slug}, status_code=404)
     comps, excluded = _thesis_share_rows(thesis)
+    # `total` used to be read straight from _thesis_share_rows' local scope. When
+    # that function was extracted the reference stayed behind, so EVERY call to
+    # this endpoint raised NameError -> HTTP 500, and the flagship map rendered
+    # with empty shares: no percentage, no bar, no "of AI-revenue captured".
+    # Recomputed from the rows the helper returns, which is the same sum it used.
+    total = sum(x.get("ai_rev") or 0.0 for x in comps) or 0.0
     weights = thesis.get("share_weights") or {"hi": 0.70, "mid": 0.35, "lo": 0.12}
     order = [L.get("id") for L in (thesis.get("layers") or [])]
     lname = {L.get("id"): L.get("name") for L in (thesis.get("layers") or [])}

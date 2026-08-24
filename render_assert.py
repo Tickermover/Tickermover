@@ -353,6 +353,22 @@ def run(update_baseline, verbose, pages=None, quiet=False):
         return 0
     if quiet:
         return rep
+    # --- the chain map's share endpoint. `total` was read from a helper's
+    # local scope after that helper was extracted, so every call raised
+    # NameError -> HTTP 500 and the flagship map rendered with empty shares,
+    # blank bars and no percentages. Nothing on the page said anything was
+    # wrong. Status only: the totals depend on the live universe, which this
+    # harness deliberately does not have.
+    try:
+        import app as _app
+        _r = asyncio.run(_app.api_thesis_shares("ai-capex-chain"))
+        _body = json.loads(_r.body.decode())
+        rep.check("thesis", "shares endpoint",
+                  _r.status_code == 200 and _body.get("available") is True,
+                  "HTTP %s" % _r.status_code)
+    except Exception as _exc:
+        rep.check("thesis", "shares endpoint", False, repr(_exc)[:80])
+
     # NOT CHECKED HERE, and the reason is worth keeping: dashboard.html's
     # inline scripts cannot be verified without a real JS engine. esprima
     # predates optional chaining and fails on three of those blocks outright,
