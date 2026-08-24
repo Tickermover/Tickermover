@@ -459,6 +459,20 @@ FULL: list[str] = sorted(_FULL_META)
 #: Names in the full listed universe the curated list does not already cover.
 FULL_EXTRA: list[str] = sorted(set(FULL) - set(HG))
 
+#: Large and mid cap only: S&P 500 + MidCap 400 + Nasdaq-100 + Dow, without
+#: SmallCap 600. Index membership is the quality bar we would otherwise have to
+#: invent — the committees already test float, liquidity and (for the S&P
+#: composite) positive earnings before admitting a name, which is a stricter
+#: and better-maintained screen than any price/market-cap floor we could hold
+#: ourselves. The 600 is left out at this tier for payload reasons, not
+#: quality ones: see MIDLARGE_EXTRA's use in get_universe.
+_MIDLARGE_IDX = {"SPX", "SP400", "NDX", "DJI"}
+MIDLARGE: list[str] = sorted(
+    t for t, m in _FULL_META.items()
+    if _MIDLARGE_IDX & set((m or {}).get("indices") or [])
+)
+MIDLARGE_EXTRA: list[str] = sorted(set(MIDLARGE) - set(HG))
+
 
 def indices_for(ticker: str) -> list[str]:
     """Index tags for a ticker — SPX / SP400 / SP600 / NDX / DJI."""
@@ -509,6 +523,9 @@ def get_universe(mode: str = "hg") -> list[str]:
     if mode == "fast":     return FAST
     if mode == "indices":  return sorted(_INDEX_UNIVERSE)           # only the index list
     if mode == "expanded": return HG + INDEX_EXTRA                  # curated + index extras
+    # "midlarge" — curated + every S&P 500 / MidCap 400 / Nasdaq-100 / Dow
+    # name. ~900. The step between "expanded" and the full 1,500.
+    if mode == "midlarge": return HG + MIDLARGE_EXTRA
     # "full" — the whole listed universe (~1,500). Curated names come first so
     # anything that reads the head of the list still gets the enriched ones.
     if mode == "full":     return HG + FULL_EXTRA

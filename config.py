@@ -230,7 +230,12 @@ AV_CALLS_PER_DAY      = 23
 # hg = ~187 curated tech/telecom universe (legacy default)
 # indices = only S&P 500 + Nasdaq-100 + Dow 30 (~540 tickers, no curated tech extras)
 # expanded = HG + index extras (~540 unique tickers — Phase 2 default)
-UNIVERSE_MODE = _env("UNIVERSE_MODE", "expanded")
+# "midlarge" (23 Aug 2026): curated + S&P 500 / MidCap 400 / Nasdaq-100 / Dow,
+# about 900 names against the 547 "expanded" scored. Index membership is the
+# quality bar — the committees test float, liquidity and positive earnings
+# before admitting a name. "full" adds SmallCap 600 for ~1,500; hold that
+# until the list payload is split, because it is ~1.4KB per scored name.
+UNIVERSE_MODE = _env("UNIVERSE_MODE", "midlarge")
 
 # ── Server ────────────────────────────────────────────────────────────────────
 # On Railway, PORT is injected automatically — don't hardcode it
