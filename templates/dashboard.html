@@ -23766,6 +23766,16 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
       const b=(typeof v2BetaBand==='function')?v2BetaBand(t.beta):null;
       buckets[b?b.key:'none'].push(t);
     });
+    /* Order each band by the score the row actually PRINTS. selectHot ranks by
+       _runRoomRank (score blended with remaining upside), which is the right
+       way to choose candidates and the wrong way to list them: it produced
+       76, 72, 75 down a column headed "Quant". A tie goes to the name that has
+       a signal to show in the why-it-is-here column. */
+    const _score=t=>parseFloat(t.smart_score!=null?t.smart_score:(t.pop_score||0))||0;
+    Object.keys(buckets).forEach(k=>{
+      buckets[k].sort((a,b)=>(_score(b)-_score(a)) ||
+        ((pickSignal(b)?1:0)-(pickSignal(a)?1:0)));
+    });
     const meta=[{key:'low',label:'Low beta',sub:'has moved less than the market'},
                 {key:'mid',label:'Mid beta',sub:'has moved roughly with the market'},
                 {key:'high',label:'High beta',sub:'has moved more than the market'}];
