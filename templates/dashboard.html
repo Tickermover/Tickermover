@@ -3313,6 +3313,12 @@ body.v2 .v2ov-card.sectors .v2ov-sector-cell{
    green/amber/red: this describes how much a name has moved with the market,
    not whether that is good, and green/red carry the up/down semantics
    everywhere else. The label carries the meaning; the tone only reinforces it. */
+/* Band header inside the picks table: a quiet rule carrying the band chip. It
+   separates three groups; it is not a heading competing with the panel title. */
+.dm-band{display:flex;align-items:center;gap:10px;padding:14px 16px 8px;
+  border-top:1px solid #EDEFF2}
+.dm-band:first-child{border-top:none;padding-top:6px}
+.dm-band small{font-size:11.5px;color:#94a3b8;font-weight:400}
 .v2-beta{display:inline-flex;align-items:center;border-radius:100px;padding:2px 9px;
   font-size:10.5px;font-weight:600;letter-spacing:.02em;white-space:nowrap}
 .v2-beta-low{background:#EEF3F7;color:#4A6577}
@@ -8899,12 +8905,14 @@ document.addEventListener('keydown', function(e){
         <div class="pk-head">
           <h3>⭐ Highest scoring today</h3>
           <div class="pk-meta">
-            <span class="meta-pill">Top of the score range</span>
+            <!-- The table is no longer a straight top-six: it is the top names
+                 within each beta band, so the pill has to say that. -->
+            <span class="meta-pill" title="Beta is measured against the S&amp;P 500. Under 0.8 low, 0.8-1.2 mid, above 1.2 high.">Two per beta band</span>
             <span class="meta-pill">Research, not advice</span>
             <span class="meta-pill green" id="picksCount">— names</span>
           </div>
         </div>
-        <p class="pk-note">Our <b>highest-conviction names — sound businesses we judge poised to keep growing</b>: strong Quant Scores, the Street <b>raising estimates</b>, growth accelerating and momentum still building. <span class="pk-note-fine">Our research opinion — not personal financial advice, not FCA-authorised, capital at risk. Do your own diligence.</span></p>
+        <p class="pk-note">Our <b>highest-scoring names — sound businesses we judge poised to keep growing</b>: strong Quant Scores, the Street <b>raising estimates</b>, growth accelerating and momentum still building. Shown as <b>two per beta band</b>, because ranked on score alone this table came out almost entirely high-beta — the band is a description of how a share has moved against the market, not a view on which suits you. <span class="pk-note-fine">Our research opinion — not personal financial advice, not FCA-authorised, capital at risk. Do your own diligence.</span></p>
         <div class="dm-table" id="picksTable">
           <div class="dm-row dm-head-row">
             <span>Ticker</span><span>Quant</span><span>Why it's here</span><span class="up-col">Analyst upside</span><span class="today-col">Today</span><span class="act-col">View</span>
@@ -23377,6 +23385,7 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
   const pCls   = v => (!v || isNaN(parseFloat(v))) ? '' : parseFloat(v) >= 0 ? 'pos' : 'neg';
   const MIN_MCAP = 0;
   const PICKS_SHOWN = 6;
+  const PICKS_PER_BAND = 2;   // 2 x low/mid/high = the same six rows
 
   function valuationVerdict(t){
     const peg = parseFloat(t.peg_ratio || t.pegRatio);
@@ -23725,8 +23734,48 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     if(hot.length<target){ const seen=new Set(hot.map(t=>t.ticker)); for(const t of without){ if(hot.length>=target)break; if(!seen.has(t.ticker))hot.push(t); } }
     return hot;
   }
+  /* THREE BANDS, NOT ONE RANKING. Ranked purely by score, this table came out
+     five-of-six high beta — the score rewards momentum and growth, and those
+     names move hardest. A reader looking for steadier businesses saw none of
+     them and had no way to ask. So the shortlist is now the top few names
+     WITHIN each beta band, which guarantees all three are represented without
+     a filter, a profile, or any claim about which band suits anyone.
+     A band that cannot fill its quota gives its slots back to the others, so
+     the table is never short. Names with no beta sit in their own group at the
+     end rather than being silently dropped. */
+  function selectHotBands(tickers, perBand){
+    const pool=selectHot(tickers, 400);
+    const buckets={low:[],mid:[],high:[],none:[]};
+    pool.forEach(t=>{
+      const b=(typeof v2BetaBand==='function')?v2BetaBand(t.beta):null;
+      buckets[b?b.key:'none'].push(t);
+    });
+    const meta=[{key:'low',label:'Low beta',sub:'has moved less than the market'},
+                {key:'mid',label:'Mid beta',sub:'has moved roughly with the market'},
+                {key:'high',label:'High beta',sub:'has moved more than the market'}];
+    const groups=meta.map(m=>({...m, rows:buckets[m.key].slice(0, perBand)}));
+    // Give unused slots back, so a thin band never shrinks the table.
+    let short=groups.reduce((n,g)=>n+(perBand-g.rows.length),0);
+    while(short>0){
+      let added=false;
+      for(const g of groups){
+        if(short<=0) break;
+        const next=buckets[g.key][g.rows.length];
+        if(next){ g.rows.push(next); short--; added=true; }
+      }
+      if(!added) break;
+    }
+    if(!groups.some(g=>g.rows.length) && buckets.none.length){
+      groups.push({key:'none',label:'Beta not available',sub:'no market-relative measure yet',
+                   rows:buckets.none.slice(0, perBand*3)});
+    }
+    return groups.filter(g=>g.rows.length);
+  }
   function renderPicks(tickers, data){
-    const sel=selectHot(tickers, PICKS_SHOWN);
+    // Two per band, three bands — the same six rows as before, but every band
+    // on the table instead of whichever one the score happened to favour.
+    const groups=selectHotBands(tickers, PICKS_PER_BAND);
+    const sel=groups.reduce((a,g)=>a.concat(g.rows), []);
     const table=document.getElementById('picksTable'); if(!table) return;
     // When the session is closed the move shown is the LAST close, not "today" —
     // label it honestly so a user looking pre-open / overnight isn't confused.
@@ -23744,7 +23793,9 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     const hot=sel;
     if(pc) pc.textContent=hot.length+' name'+(hot.length===1?'':'s');
     if(!hot.length){ table.innerHTML=headRow+'<div id="dm-load"></div>'; window.showLoader('#dm-load','Scanning the market for opportunities'); return; }
-    const rows=hot.map((t,i)=>{
+    let _bi=-1;
+    const rowHTML=(t)=>{
+      const i=++_bi;
       const pop=Math.round(parseFloat(t.smart_score!=null?t.smart_score:(t.pop_score||0)));
       const chg=parseFloat(t.change_pct||0), chg3m=parseFloat(t.momentum_3m||t.momentum_1m||0);
       const g=(t.grade||'').toUpperCase();
@@ -23775,7 +23826,11 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
         '<span class="dm-chg today-col '+(chg>=0?'up':'dn')+'">'+fmtPct(chg)+trend+'</span>'+
         '<span class="act-col"><button class="dm-btn">View →</button></span>'+
       '</div>';
-    }).join('');
+    };
+    const rows=groups.map(g=>
+      '<div class="dm-band"><span class="v2-beta v2-beta-'+g.key+'">'+escHTML(g.label)+
+      '</span><small>'+escHTML(g.sub)+'</small></div>'+g.rows.map(rowHTML).join('')
+    ).join('');
     // Concentration flag — if the shortlist piles into one theme, say so out loud.
     // A list of six AI-semis names isn't six ideas, it's one macro bet.
     let conc='';
