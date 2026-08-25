@@ -53,6 +53,24 @@ import usage_log
 
 logger = logging.getLogger(__name__)
 
+
+def _ai_error(r) -> str:
+    """Reader-facing text for a failed AI call.
+
+    Nothing Anthropic is called here — every request goes through
+    anthropic_shim to the free-provider chain — so the old
+    `f"Anthropic {status}: {body}"` was wrong on both counts: it named a
+    vendor we do not call, and because this string is rendered straight into
+    the pane it published provider names, HTTP codes and billing wording to
+    the reader. The shim's own 503 body is already written for a human; use
+    it, and fall back to one plain sentence.
+    """
+    try:
+        msg = ((r.json() or {}).get("error") or {}).get("message")
+    except Exception:
+        msg = None
+    return msg or ("AI generation is temporarily unavailable. It retries automatically.")
+
 _KEY = os.environ.get("ANTHROPIC_API_KEY", "").strip()
 # Haiku on purpose: the job is a two-field extraction from supplied snippets,
 # which is exactly what the cheap tier is good at, and the universe-wide budget
@@ -231,7 +249,8 @@ async def generate(ticker: str, ticker_data: dict | None) -> dict:
             json=body,
         )
     if r.status_code >= 400:
-        raise RuntimeError(f"Anthropic {r.status_code}: {r.text[:300]}")
+        logger.error("business_role %s: HTTP %s %s", ticker, r.status_code, r.text[:300])
+        raise RuntimeError(_ai_error(r))
     data = r.json()
     usage_log.record("business_role", _MODEL, data.get("usage") or {}, ticker=sym)
 

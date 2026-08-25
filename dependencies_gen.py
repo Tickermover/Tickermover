@@ -31,6 +31,24 @@ import anthropic_shim
 
 logger = logging.getLogger(__name__)
 
+
+def _ai_error(r) -> str:
+    """Reader-facing text for a failed AI call.
+
+    Nothing Anthropic is called here — every request goes through
+    anthropic_shim to the free-provider chain — so the old
+    `f"Anthropic {status}: {body}"` was wrong on both counts: it named a
+    vendor we do not call, and because this string is rendered straight into
+    the pane it published provider names, HTTP codes and billing wording to
+    the reader. The shim's own 503 body is already written for a human; use
+    it, and fall back to one plain sentence.
+    """
+    try:
+        msg = ((r.json() or {}).get("error") or {}).get("message")
+    except Exception:
+        msg = None
+    return msg or ("AI generation is temporarily unavailable. It retries automatically.")
+
 _KEY = os.environ.get("ANTHROPIC_API_KEY", "").strip()
 # Sonnet by default (clean structured synthesis from search results); override to
 # Haiku via ANTHROPIC_DEPS_MODEL for an even cheaper run.
@@ -174,7 +192,7 @@ async def generate_dependencies(ticker: str, ticker_data: dict | None) -> dict:
         if r.status_code >= 400:
             detail = r.text[:500]
             logger.error(f"dependencies_gen {ticker} → {r.status_code} ({_MODEL}): {detail}")
-            raise RuntimeError(f"Anthropic {r.status_code}: {detail}")
+            raise RuntimeError(_ai_error(r))
         data = r.json()
 
     _u = data.get("usage") or {}

@@ -149,7 +149,13 @@ _PROVIDERS = [
     # "Gone" for every request. Set NVIDIA_MODEL in the environment to override
     # without a deploy when this one is retired in turn — the 410 body names the
     # retirement date, which is what made this diagnosable at all.
-    ("nvidia", "NVIDIA_API_KEY", "NVIDIA_MODEL", "deepseek-ai/deepseek-v3.1",
+    #
+    # 2026-08-25: deepseek-v3.1 went the same way, but silently — a bare
+    # "404 page not found", which is what NIM returns for an id it no longer
+    # hosts. Probed against the live key: deepseek-r1 and qwen2.5-7b-instruct
+    # are also gone, meta/llama-3.1-70b-instruct answers, and
+    # nemotron-super-49b answers and reasons better, so it takes the default.
+    ("nvidia", "NVIDIA_API_KEY", "NVIDIA_MODEL", "nvidia/llama-3.3-nemotron-super-49b-v1",
      "https://integrate.api.nvidia.com/v1/chat/completions", 45000),
     # 2026-08-23: llama-3.3-70b-versatile is GONE — "The model
     # `llama-3.3-70b-versatile` does not exist or you do not have access to
@@ -332,7 +338,12 @@ _GEMINI_FALLBACKS = [
     "gemini-3.5-flash-lite",   # fastest / cheapest, good for summarisation
     "gemini-3.1-flash-lite",
     "gemini-2.5-flash",        # dies 2026-10-16
-    "gemini-2.5-flash-lite",   # dies 2026-10-16
+    # gemini-2.5-flash-lite REMOVED 2026-08-25. It answers every request with
+    # "no longer available to new users", and because it sat LAST its message
+    # was the one every caller saw — so a probe of six different Gemini ids
+    # returned the same 2.5-flash-lite error six times and made the real
+    # failures invisible. A fallback that can only ever fail is worse than no
+    # fallback: it costs a round trip and it overwrites the diagnosis.
 ]
 
 
@@ -343,17 +354,23 @@ async def _call_gemini(base: str, key: str, model: str, prompt: str,
     gemini-2.5-pro has a very small free allowance, so a single 429 there
     should not cost us the provider with the biggest context window."""
     tries = [model] + [m for m in _GEMINI_FALLBACKS if m != model]
-    last = ""
+    first = ""
     for i, m in enumerate(tries):
         ok, body = await _call_gemini_once(base, key, m, prompt, max_tokens, timeout, json_mode)
         if ok:
             if i:
                 logger.info("llm_free: gemini fell back to %s", m)
             return True, body
-        last = body
+        # REPORT THE FIRST FAILURE, not the last. The configured model's error
+        # is the one that explains the outage; the tail of the fallback list is
+        # just "the other ids we tried". Reporting `last` meant a bad
+        # GEMINI_MODEL was diagnosed as a problem with whatever happened to sit
+        # at the end of the list.
+        if not first:
+            first = f"{m}: {body}"
         if "429" not in body and "404" not in body:
             break
-    return False, last
+    return False, first
 
 
 async def _call_gemini_once(base: str, key: str, model: str, prompt: str,
@@ -400,6 +417,26 @@ def _fit_first(usable: list, prompt: str) -> list:
     return fits + sorted(short, key=lambda p: -p[5])
 
 
+def _plan(order: list, prompt: str) -> list:
+    """The full try list: healthy providers first, then the cooling ones.
+
+    Cooling providers used to be dropped outright, and only reinstated when
+    EVERY provider was cooling. So a chain with two live providers and six on a
+    six-hour billing cooldown would try those two, fail, and give up — with six
+    untried keys in hand. That is how one bad model id took the whole feature
+    down: gemini and nvidia were the only two not cooling, both were 404ing on
+    retired ids, and nothing else was ever asked. A cooldown is an optimisation
+    ("don't pay this round trip first"), never a reason to answer nothing.
+    """
+    keyed   = [p for p in order if _key(p[1])]
+    healthy = [p for p in keyed if not _cooling(p[0])]
+    cooling = [p for p in keyed if _cooling(p[0])]
+    if cooling and healthy:
+        logger.info("llm_free: %s cooling — held back as last resort",
+                    ",".join(p[0] for p in cooling))
+    return _fit_first(healthy, prompt) + _fit_first(cooling, prompt)
+
+
 async def chat_json(prompt: str, *, max_tokens: int = 1500, timeout: float = 75.0,
                     prefer: str | None = None) -> dict | None:
     """Run `prompt` through the free-provider chain; return parsed JSON.
@@ -412,10 +449,7 @@ async def chat_json(prompt: str, *, max_tokens: int = 1500, timeout: float = 75.
     if prefer:
         order.sort(key=lambda p: 0 if p[0] == prefer else 1)
     tried = 0
-    usable = [p for p in order if _key(p[1]) and not _cooling(p[0])]
-    if not usable:                      # everything cooling — try anyway
-        usable = [p for p in order if _key(p[1])]
-    usable = _fit_first(usable, prompt)
+    usable = _plan(order, prompt)
     for (name, envk, menv, dflt, url, cap) in usable:
         key = _key(envk)
         if not key:
@@ -484,10 +518,7 @@ async def chat_text(prompt: str, *, max_tokens: int = 1500, timeout: float = 75.
     if prefer:
         order.sort(key=lambda p: 0 if p[0] == prefer else 1)
     tried = 0
-    usable = [p for p in order if _key(p[1]) and not _cooling(p[0])]
-    if not usable:
-        usable = [p for p in order if _key(p[1])]
-    usable = _fit_first(usable, prompt)
+    usable = _plan(order, prompt)
     for (name, envk, menv, dflt, url, cap) in usable:
         key = _key(envk)
         if not key:

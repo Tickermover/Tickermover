@@ -47,6 +47,24 @@ import usage_log
 
 logger = logging.getLogger(__name__)
 
+
+def _ai_error(r) -> str:
+    """Reader-facing text for a failed AI call.
+
+    Nothing Anthropic is called here — every request goes through
+    anthropic_shim to the free-provider chain — so the old
+    `f"Anthropic {status}: {body}"` was wrong on both counts: it named a
+    vendor we do not call, and because this string is rendered straight into
+    the pane it published provider names, HTTP codes and billing wording to
+    the reader. The shim's own 503 body is already written for a human; use
+    it, and fall back to one plain sentence.
+    """
+    try:
+        msg = ((r.json() or {}).get("error") or {}).get("message")
+    except Exception:
+        msg = None
+    return msg or ("AI generation is temporarily unavailable. It retries automatically.")
+
 _KEY = os.environ.get("ANTHROPIC_API_KEY", "").strip()
 _MODEL = (os.environ.get("ANTHROPIC_ROSTER_MODEL") or "claude-haiku-4-5-20251001").strip()
 _TIMEOUT = float(os.environ.get("ROSTER_TIMEOUT", "120"))
@@ -133,7 +151,8 @@ async def classify(batch: list[dict], theses: list[dict]) -> dict:
                      "content-type": "application/json"},
             json=body)
     if r.status_code >= 400:
-        raise RuntimeError(f"Anthropic {r.status_code}: {r.text[:200]}")
+        logger.error("chain_roster: HTTP %s %s", r.status_code, r.text[:200])
+        raise RuntimeError(_ai_error(r))
     data = r.json()
     usage_log.record("chain_roster", _MODEL, data.get("usage") or {})
 

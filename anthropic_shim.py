@@ -152,6 +152,25 @@ async def post(url: str | None = None, *, json: dict | None = None,
         except Exception as exc:
             return ShimResponse(502, {"error": {"message": f"anthropic fallback failed: {exc}"}})
 
+    # This body is read by a human through the UI, so it says what the reader
+    # can do about it and nothing about who we called. It used to be
+    # `LAST_ERRORS[0]` verbatim — the error of whichever provider happened to
+    # fail LAST, which is not the reason the chain failed, and which put
+    # provider names, HTTP codes and billing wording ("This account never
+    # purchased credits") on the page. The per-provider detail is still in the
+    # log line below and in /api/event-intel-status, where it belongs.
     errs = getattr(__import__("llm_free"), "LAST_ERRORS", [])
-    detail = errs[0]["detail"] if errs else "no free provider configured"
-    return ShimResponse(503, {"error": {"message": f"free providers unavailable: {detail}"}})
+    seen, who = set(), []
+    for e in errs:
+        p = e.get("provider")
+        if p and p not in seen:
+            seen.add(p)
+            who.append(f"{p}: {str(e.get('detail'))[:120]}")
+    if who:
+        logger.error("anthropic_shim: whole free chain failed — %s", " | ".join(who))
+        message = ("AI generation is temporarily unavailable — every provider is "
+                   "rate-limited or out of quota right now. It retries automatically.")
+    else:
+        logger.error("anthropic_shim: no provider configured")
+        message = "AI generation is not configured on this deployment."
+    return ShimResponse(503, {"error": {"message": message, "kind": "ai_unavailable"}})
