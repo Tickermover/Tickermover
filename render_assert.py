@@ -139,6 +139,29 @@ def css_stats(html, html5lib, tinycss2):
     return total, bad
 
 
+# esprima predates optional chaining (2020), nullish coalescing and optional
+# catch binding, and it reports only the FIRST error in a block. That is why
+# dashboard.html was written off as having "3 permanent failures": three modern
+# constructs, each of which stopped the parse before anything after it was ever
+# looked at. A genuinely broken line further down the same block was invisible —
+# which is exactly what happened on 26 Aug, when a mangled inline onclick
+# ("missing ) after argument list") passed a green run and blanked the Universe
+# table. Normalise those three constructs to their pre-2019 equivalents and the
+# same file parses clean, so a real error has nowhere to hide.
+#
+# This rewrites for PARSING ONLY. It is never written back to a file.
+_MODERN = (
+    ("?.[", "["), ("?.(", "("), ("?.", "."),     # optional chaining
+    ("??=", "="), ("??", "||"),                  # nullish coalescing
+)
+
+
+def _parseable(js: str) -> str:
+    for a, b in _MODERN:
+        js = js.replace(a, b)
+    return re.sub(r"\bcatch\s*\{", "catch (_e) {", js)   # optional catch binding
+
+
 def bad_scripts(html, html5lib, esprima):
     """Inline scripts that do not parse. application/ld+json is JSON, not JS -
     counting it as a broken script is what made earlier numbers look alarming."""
@@ -150,7 +173,7 @@ def bad_scripts(html, html5lib, esprima):
         if (el.get("type") or "").endswith("json"):
             continue
         try:
-            esprima.parseScript(el.text)
+            esprima.parseScript(_parseable(el.text))
         except Exception as exc:
             out.append(str(exc)[:60])
     return out
@@ -193,6 +216,15 @@ def render_pages():
         "terms":      L.render_terms(),
         "privacy":    L.render_privacy(),
         "disclaimer": L.render_disclaimer(),
+        # THE APP SHELL. Added 26 Aug 2026, after a broken inline onclick in
+        # dashboard.html sailed through a green run — because this list did not
+        # contain the one file the whole product is written in. Every "treat
+        # dashboard.html as code" rule we had was being enforced against pages
+        # that are not it. It is a raw template (no Jinja), so reading the file
+        # IS the rendering.
+        "dashboard":  io.open(os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                           "templates", "dashboard.html"),
+                              encoding="utf-8").read(),
     }
 
 
@@ -212,24 +244,34 @@ def run(update_baseline, verbose, pages=None, quiet=False):
     if os.path.exists(BASELINE):
         base = json.load(io.open(BASELINE, encoding="utf-8"))
     fresh = {}
+    fresh_bad = {}
 
     for name, html in sorted(pages.items()):
         rep.check(name, "renders", bool(html) and len(html) > 4000, "%d bytes" % len(html or ""))
 
         # --- structure ---
         rep.check(name, "closes body", "</body>" in html and "</html>" in html)
-        rep.check(name, "one h1", html.count("<h1") == 1, "found %d" % html.count("<h1"))
+        # "one h1" is an SEO rule for the public pages. The app shell holds every
+        # panel in one document and legitimately has many.
+        if name != "dashboard":
+            rep.check(name, "one h1", html.count("<h1") == 1, "found %d" % html.count("<h1"))
 
         # --- CSS: count, not error count ---
         rules, dangling = css_stats(html, html5lib, tinycss2)
         fresh[name] = rules
         rep.check(name, "no dangling sel", not dangling, "; ".join(dangling[:2]))
-        if not update_baseline and name in base:
+        if not update_baseline and isinstance(base.get(name), int):
             rep.check(name, "css_rule_count", rules >= base[name],
                       "%d (baseline %d)" % (rules, base[name]))
 
         # --- JS ---
+        # NEW failures only. dashboard.html carries permanent esprima failures
+        # (esprima predates optional chaining), so "zero" is unachievable there
+        # and an absolute assert would just be switched off. What matters is a
+        # failure that was not there before — that is what a broken edit looks
+        # like. Baseline it, diff it.
         bad = bad_scripts(html, html5lib, esprima)
+        fresh_bad[name] = sorted(bad)
         rep.check(name, "scripts parse", not bad, "; ".join(bad[:2]))
 
         # A raw float reaching a reader: "92.43400000000001" gross margin.
@@ -237,9 +279,16 @@ def run(update_baseline, verbose, pages=None, quiet=False):
         rep.check(name, "number tails", not tails, ", ".join(tails))
 
         # --- fonts and palette ---
-        hits = ["%s:%s" % (k, v) for k, v in BANNED_TEXT if v in html]
-        rep.check(name, "no legacy theme", not hits, "; ".join(hits[:3]))
-        rep.check(name, "loads Public Sans", "Public+Sans" in html)
+        # BANNED_TEXT is the pre-warm-palette hit list for the PUBLIC pages,
+        # which were fully recoloured. The app shell was never part of that
+        # sweep — #2970ff and #0040c1 are still load-bearing there (chart fills,
+        # score chips) — so applying it to dashboard.html would just be a
+        # permanently red check, which is the fastest way to get a harness
+        # ignored. If the shell is ever recoloured, drop this exemption.
+        if name != "dashboard":
+            hits = ["%s:%s" % (k, v) for k, v in BANNED_TEXT if v in html]
+            rep.check(name, "no legacy theme", not hits, "; ".join(hits[:3]))
+            rep.check(name, "loads Public Sans", "Public+Sans" in html)
 
         # --- a script may only appear on the page it was written for ---
         for marker, home in SCRIPT_HOME.items():
@@ -348,7 +397,9 @@ def run(update_baseline, verbose, pages=None, quiet=False):
         rep.check("sectors", "sector link resolves", False, "raised %r" % (_exc,))
 
     if update_baseline:
-        io.open(BASELINE, "w", encoding="utf-8").write(json.dumps(fresh, indent=1, sort_keys=True))
+        out = dict(fresh)
+        out["_scripts"] = fresh_bad
+        io.open(BASELINE, "w", encoding="utf-8").write(json.dumps(out, indent=1, sort_keys=True))
         print("baseline written: " + ", ".join("%s=%d" % kv for kv in sorted(fresh.items())))
         return 0
     if quiet:

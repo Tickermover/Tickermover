@@ -1,5 +1,21 @@
 {
+ "_scripts": {
+  "compare": [],
+  "dashboard": [],
+  "disclaimer": [],
+  "learn": [],
+  "privacy": [],
+  "reports": [],
+  "screen": [],
+  "screens": [],
+  "sectors": [],
+  "stocks": [],
+  "terms": [],
+  "thesis": [],
+  "whobenefits": []
+ },
  "compare": 171,
+ "dashboard": 4066,
  "disclaimer": 155,
  "learn": 140,
  "privacy": 155,
@@ -9,6 +25,6 @@
  "sectors": 171,
  "stocks": 462,
  "terms": 155,
- "thesis": 337,
+ "thesis": 339,
  "whobenefits": 153
 }

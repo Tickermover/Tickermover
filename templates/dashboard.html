@@ -3869,6 +3869,23 @@ body.v2-featured-only #fund-tbody tr.fund-row:not([data-featured]){display:none!
   border-radius:999px;padding:1px 8px}
 .uni-screen .scn-dsc{font-size:12.5px;color:#4A5563;line-height:1.3;font-weight:600}
 .fund-row.scn-hide{display:none!important}
+.fund-row.beta-hide{display:none!important}
+/* Beta band bar — deliberately quieter than the lens cards above it: it is a
+   modifier on the current view, not a view of its own. */
+.uni-bands{display:flex;align-items:center;gap:7px;flex-wrap:wrap;
+  max-width:1268px;margin:-4px auto 14px;padding:0 2px}
+.uni-bands .ub-lbl{font-size:12px;font-weight:700;color:#4A5563;margin-right:2px}
+.uni-band{flex:0 0 auto;font:inherit;font-size:12px;font-weight:700;cursor:pointer;
+  border:1.5px solid rgba(10,10,10,.10);background:#fff;color:#4A5563;
+  border-radius:999px;padding:5px 12px;display:inline-flex;align-items:center;gap:7px;
+  transition:border-color var(--t-fast),background var(--t-fast),color var(--t-fast)}
+.uni-band:hover{background:#FBFAF8}
+.uni-band .ub-ct{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:800;opacity:.75}
+.uni-band.on{border-color:transparent;background:#0A2F46;color:#fff}
+.uni-band.on.ub-low{background:#0F766E}
+.uni-band.on.ub-mid{background:#3F4EAF}
+.uni-band.on.ub-high{background:#0A2F46}
+@media(max-width:560px){.uni-bands .ub-lbl{width:100%;margin-bottom:2px}}
 /* Slim toolbar — dropdowns removed (Smart Screens drive filtering); just the tally. */
 .fd-toolbar-slim{background:transparent!important;border:0!important;padding:0 2px!important;
   margin-bottom:10px!important;min-height:0!important;justify-content:flex-end!important;gap:0!important}
@@ -9013,6 +9030,13 @@ document.addEventListener('keydown', function(e){
   <!-- ── SMART SCREENS — one-click investing lenses (filled by v2RenderScreens) ── -->
   <div class="uni-screens" id="uni-screens"></div>
 
+  <!-- Beta band filter. A SECOND axis, not another lens: the screens above ask
+       "what kind of business", this asks "how has the share moved against the
+       market". They compose (AND), and the counts move with the active lens so
+       the bar can never imply names the lens has already removed. Same three
+       hues as every other beta chip in the app. -->
+  <div class="uni-bands" id="uni-bands"></div>
+
   <!-- Filter dropdowns removed — the Smart Screens (lenses) + sector heat chips
        above now drive all filtering, and each screen auto-sorts. The controls are
        kept as HIDDEN inputs so filterFund()/sortFund()/v2SelectSector() and the
@@ -11775,7 +11799,8 @@ function v2SyncUniverseTally(){
     const sectorOk = !r.classList.contains('sector-hide');
     const featOk   = !featOnly || r.hasAttribute('data-featured');
     const scnOk    = !r.classList.contains('scn-hide');
-    if (profOk && sectorOk && featOk && scnOk) visible += 1;
+    const betaOk   = !r.classList.contains('beta-hide');
+    if (profOk && sectorOk && featOk && scnOk && betaOk) visible += 1;
   });
   // When no sector/featured filter is active and the backend exposed
   // profile_counts, prefer THAT number so this tally agrees with the picker
@@ -11783,7 +11808,8 @@ function v2SyncUniverseTally(){
   // profile_counts no longer applies — use the DOM-counted value.
   const counts = (window.__AH_DATA__ && window.__AH_DATA__.profile_counts) || null;
   const scnActive = (typeof _uniScreen !== 'undefined') && _uniScreen !== 'all' && _uniScreen !== 'featured';
-  if (!sector && !featOnly && !scnActive && counts && counts[prof] != null) visible = counts[prof];
+  const bandActive = (typeof _uniBand !== 'undefined') && _uniBand !== 'all';
+  if (!sector && !featOnly && !scnActive && !bandActive && counts && counts[prof] != null) visible = counts[prof];
   const profLbl = prof === 'aggressive' ? 'aggressive view'
                 : prof === 'balanced'   ? 'balanced view'
                 : prof === 'conservative' ? 'conservative view' : prof;
@@ -17476,6 +17502,7 @@ function renderFundamentals(tickers) {
       tallyEl.textContent = `${idx} / ${cards.length} stocks${_profLabel} (rendering…)`;
       window._fundChunkRaf = requestAnimationFrame(_renderChunk);
     } else {
+      try { if (typeof v2RenderBands === 'function') v2RenderBands(); } catch(e){}
       if (typeof v2SyncUniverseTally === 'function') v2SyncUniverseTally();
       else tallyEl.textContent = `${cards.length} stocks shown`;
       window._fundChunkRaf = null;
@@ -17538,6 +17565,7 @@ async function loadFeaturedSet(){
     _applyFeaturedTags();                         // tag rows (powers the Featured chip/count) — but DON'T auto-narrow
     _featuredLoaded = true;
     if (typeof v2RenderScreens === 'function') v2RenderScreens();   // Smart Screens bar ("All" selected by default)
+    if (typeof v2RenderBands === 'function') v2RenderBands();       // beta band counts move with it
     if (typeof v2SyncUniverseTally === 'function') v2SyncUniverseTally();
     if (typeof _secgRefreshSoon === 'function') _secgRefreshSoon();  // sync the connections map to the Featured lens
   } catch(e) {
@@ -17591,15 +17619,28 @@ function _toggleFeaturedOnly(){
    .scn-hide class so it composes (AND) with the profile + sector filters.
    'featured' reuses the curated featured-only filter; 'all' clears everything.
    ---------------------------------------------------------- */
+/* Each lens says what it actually filters on. Two were wrong on 25 Aug:
+   "Everything in your profile" outlived the risk profiles (there is one
+   universe now), and Breakouts said "top Alpha" — a word this product dropped,
+   and one that never named a column on the page anyway. `ttl` is the hover
+   tooltip: the exact rule, so a reader can check the label against the row. */
 const _UNI_SCREENS = [
-  {id:'all',       ic:'🌐', nm:'All',           dsc:'Everything in your profile', scn:'#64748b', sort:'pop'},
-  {id:'featured',  ic:'⭐', nm:'Featured',      dsc:'The curated shortlist',  scn:'#e0a000', sort:'pop'},
-  {id:'momentum',  ic:'🔥', nm:'Momentum',      dsc:'Strong & rising',        scn:'#ef4444', sort:'pop'},
-  {id:'quality',   ic:'💎', nm:'Quality',       dsc:'Grade A + real margins', scn:'#0ea5e9', sort:'pop'},
-  {id:'breakouts', ic:'🚀', nm:'Breakouts',     dsc:'Top RS + top Alpha',     scn:'#8b5cf6', sort:'pop'},
-  {id:'early',     ic:'🌱', nm:'Early movers',  dsc:'Headroom + rising, not yet extended', scn:'#0d9488', sort:'upside'},
-  {id:'value',     ic:'💰', nm:'Value + Growth',dsc:'Sane P/E, still growing',scn:'#16a34a', sort:'rev'},
-  {id:'earnings',  ic:'📅', nm:'Earnings soon', dsc:'Reports in ≤2 weeks',    scn:'#0040c1', sort:'pop'},
+  {id:'all',       ic:'🌐', nm:'All',           dsc:'Every stock we score',   scn:'#64748b', sort:'pop',
+   ttl:'The whole scored universe — no lens applied.'},
+  {id:'featured',  ic:'⭐', nm:'Featured',      dsc:'Our 35 names of the day', scn:'#e0a000', sort:'pop',
+   ttl:'Rebuilt every morning: Grade A or B, Quant Score 60+, enough data behind the score to trust it, no mega caps, ranked by room to run. It is where we concentrate our research — not a buy list.'},
+  {id:'momentum',  ic:'🔥', nm:'Momentum',      dsc:'Strong & rising',        scn:'#ef4444', sort:'pop',
+   ttl:'RS 80 or better and up more than 5% over three months.'},
+  {id:'quality',   ic:'💎', nm:'Quality',       dsc:'Grade A + real margins', scn:'#0ea5e9', sort:'pop',
+   ttl:'Grade A, revenue growing 15%+, and free-cash-flow margin above 5%.'},
+  {id:'breakouts', ic:'🚀', nm:'Breakouts',     dsc:'Top-15% strength, score 70+', scn:'#8b5cf6', sort:'pop',
+   ttl:'RS 85 or better — the top 15% of the market for price strength — with a Quant Score of 70+.'},
+  {id:'early',     ic:'🌱', nm:'Early movers',  dsc:'Headroom + rising, not yet extended', scn:'#0d9488', sort:'upside',
+   ttl:'Grade A or B, 12%+ to the analyst target, RS between 55 and 88, revenue growing 8%+, and not already parabolic.'},
+  {id:'value',     ic:'💰', nm:'Value + Growth',dsc:'Sane P/E, still growing',scn:'#16a34a', sort:'rev',
+   ttl:'P/E of 25 or less, revenue growing 10%+, Grade A or B.'},
+  {id:'earnings',  ic:'📅', nm:'Earnings soon', dsc:'Reports in ≤2 weeks',    scn:'#0040c1', sort:'pop',
+   ttl:'The next scheduled report is within 14 days.'},
 ];
 let _uniScreen = 'all';   // 'All' leads the bar and is selected by default — no lens pre-applied
 
@@ -17667,11 +17708,66 @@ function v2RenderScreens(){
   const count=id=>tally[id]||0;
   wrap.innerHTML=_UNI_SCREENS.map(s=>
     '<button class="uni-screen'+(s.id===_uniScreen?' on':'')+'" style="--scn:'+s.scn+'" '+
+      'title="'+v2EscHTML(s.ttl||s.dsc)+'" '+
       'data-screen="'+s.id+'" onclick="v2ApplyScreen(\''+s.id+'\')">'+
       '<span class="scn-top"><span class="scn-ic">'+s.ic+'</span><span class="scn-nm">'+s.nm+'</span>'+
         '<span class="scn-ct">'+count(s.id)+'</span></span>'+
       '<span class="scn-dsc">'+s.dsc+'</span></button>'
   ).join('');
+}
+
+/* ── BETA BAND FILTER — the second axis over the Universe table ──────────
+   The lens chips above ask what kind of business; this asks how the share has
+   moved against the market. Reads `data-band`, which every row already carries
+   from v2BetaBand, so the label here and the chip in the Beta column can never
+   disagree. Composes with the lens through its own class, exactly as
+   .scn-hide / .sector-hide do. */
+const _UNI_BANDS = [
+  {k:'all',  nm:'All betas', cls:'',        ttl:'Every name, whatever its beta.'},
+  {k:'low',  nm:'Low',       cls:'ub-low',  ttl:'Beta under 0.8 — has moved less than the market. Names below zero moved against it.'},
+  {k:'mid',  nm:'Mid',       cls:'ub-mid',  ttl:'Beta 0.8 to 1.2 — has moved roughly with the market.'},
+  {k:'high', nm:'High',      cls:'ub-high', ttl:'Beta above 1.2 — has moved more than the market.'},
+];
+let _uniBand = 'all';
+
+/* Rows the CURRENT lens leaves visible, ignoring the band filter — the pool
+   the band counts are taken from. Counting the whole table instead would
+   promise names the lens has already removed. */
+function _uniLensRows(){
+  const featOnly = document.body.classList.contains('v2-featured-only');
+  return [...document.querySelectorAll('#fund-tbody tr.fund-row')].filter(r =>
+    !r.classList.contains('scn-hide') && !r.classList.contains('sector-hide') &&
+    (!featOnly || r.hasAttribute('data-featured')));
+}
+
+function v2RenderBands(){
+  const wrap = document.getElementById('uni-bands'); if (!wrap) return;
+  const rows = _uniLensRows();
+  const n = {all: rows.length, low: 0, mid: 0, high: 0};
+  rows.forEach(r => { const b = r.dataset.band; if (b && n[b] !== undefined) n[b]++; });
+  wrap.innerHTML = '<span class="ub-lbl">Beta</span>' + _UNI_BANDS.map(b =>
+    '<button type="button" class="uni-band ' + b.cls + (b.k === _uniBand ? ' on' : '') + '" ' +
+      'title="' + v2EscHTML(b.ttl) + '" data-band="' + b.k + '" ' +
+      '>' + b.nm +
+      '<span class="ub-ct">' + n[b.k] + '</span></button>').join('');
+  wrap.onclick = function(e){
+    const btn = e.target.closest('.uni-band');
+    if (btn) v2ApplyBetaBand(btn.dataset.band);
+  };
+}
+
+function v2ApplyBetaBand(k){
+  _uniBand = (k || 'all');
+  document.querySelectorAll('#uni-bands .uni-band')
+          .forEach(b => b.classList.toggle('on', b.dataset.band === _uniBand));
+  /* Write-only pass, no layout reads in the loop — same rule as
+     _patchFundListPrices. A name with no beta (22 of 1,571) is hidden by any
+     specific band: we cannot claim it belongs to one. */
+  document.querySelectorAll('#fund-tbody tr.fund-row').forEach(r => {
+    r.classList.toggle('beta-hide', _uniBand !== 'all' && r.dataset.band !== _uniBand);
+  });
+  if (typeof v2SyncUniverseTally === 'function') v2SyncUniverseTally();
+  if (typeof _secgRefreshSoon === 'function') _secgRefreshSoon();
 }
 
 function v2ApplyScreen(id){
@@ -17704,6 +17800,10 @@ function v2ApplyScreen(id){
   const sortEl=document.getElementById('fd-sort');
   if(sortEl) sortEl.value=def.sort;
   if(_fundSortKey!==def.sort && typeof sortFund==='function') sortFund();
+  // The lens changed the pool, so the band counts have to follow it — and the
+  // band itself is re-applied, because a lens switch must not quietly widen it.
+  if(typeof v2ApplyBetaBand==='function') v2ApplyBetaBand(_uniBand);
+  if(typeof v2RenderBands==='function') v2RenderBands();
   if(typeof v2SyncUniverseTally==='function') v2SyncUniverseTally();
   // The connections map has to follow the lens, but it rebuilds the SVG and
   // measures it — a forced layout — and none of that is what the reader is
@@ -17979,6 +18079,7 @@ function _secgVisibleTickerSet(){
   rows.forEach(r => {
     if (featOnly && !r.hasAttribute('data-featured')) return;
     if (r.classList.contains('scn-hide')) return;
+    if (r.classList.contains('beta-hide')) return;   // the beta band is a filter like any other
     set.add(r.dataset.ticker);
   });
   return set;
