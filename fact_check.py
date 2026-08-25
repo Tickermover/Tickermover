@@ -182,24 +182,24 @@ def render_card(t: dict, universe, public: bool = False) -> str:
 .fchk{{border:1px solid rgba(10,10,10,.1);border-radius:16px;padding:24px 26px;margin:36px 0;background:#fff;box-shadow:0 10px 30px -24px rgba(10,10,10,.25)}}
 .fchk-head{{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:14px}}
 .fchk-h{{font-family:'Public Sans',system-ui,sans-serif;font-size:20px;font-weight:500;color:#0A2F46;margin:0}}
-.fchk-score{{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12.5px;font-weight:700;letter-spacing:.02em;color:#15803d;background:rgba(21,128,61,.1);border:1px solid rgba(21,128,61,.28);padding:6px 12px;border-radius:999px;white-space:nowrap}}
-.fchk-biz{{font-size:14.5px;line-height:1.6;color:#5d6c7b;margin:0 0 18px}}
+.fchk-score{{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12.5px;font-weight:700;letter-spacing:.02em;color:#116B35;background:rgba(21,128,61,.1);border:1px solid rgba(21,128,61,.28);padding:6px 12px;border-radius:999px;white-space:nowrap}}
+.fchk-biz{{font-size:14.5px;line-height:1.6;color:#4A5563;margin:0 0 18px}}
 .fchk-biz b{{color:#0A2F46}}
 .fchk-list{{list-style:none;margin:0 0 10px;padding:0}}
 .fchk-item{{display:flex;gap:12px;align-items:flex-start;padding:9px 0;border-top:1px solid rgba(10,10,10,.06)}}
 .fchk-item:first-child{{border-top:none}}
 .fchk-box{{flex:0 0 20px;width:20px;height:20px;border-radius:6px;border:1.5px solid rgba(10,10,10,.22);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;margin-top:1px}}
 .fchk-on .fchk-box{{background:#15803d;border-color:#15803d;color:#fff}}
-.fchk-na .fchk-box{{color:#758696;border-style:dashed}}
+.fchk-na .fchk-box{{color:#5B6673;border-style:dashed}}
 .fchk-txt{{font-size:14px;color:#0A2F46;display:flex;flex-direction:column;gap:2px}}
-.fchk-det{{font-size:12.5px;color:#5d6c7b;font-weight:500}}
-.fchk-self .fchk-txt{{color:#5d6c7b;font-size:13.5px;padding-top:1px}}
-.fchk-sub{{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#758696;margin:18px 0 6px}}
+.fchk-det{{font-size:12.5px;color:#4A5563;font-weight:500}}
+.fchk-self .fchk-txt{{color:#4A5563;font-size:13.5px;padding-top:1px}}
+.fchk-sub{{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#5B6673;margin:18px 0 6px}}
 .fchk-mgmt-row{{display:grid;grid-template-columns:150px 1fr;gap:14px;padding:10px 0;border-top:1px solid rgba(10,10,10,.06);font-size:13.5px}}
-.fchk-mgmt-row .k{{color:#5d6c7b;font-weight:600}}
+.fchk-mgmt-row .k{{color:#4A5563;font-weight:600}}
 .fchk-mgmt-row .v{{color:#10293D;line-height:1.55}}
-.fchk-note{{font-size:12px;line-height:1.6;color:#758696;margin:16px 0 0;border-top:1px solid rgba(10,10,10,.06);padding-top:12px}}
-.fchk-cat{{background:#FBFAF8;border:1px solid rgba(10,10,10,.08);border-radius:10px;padding:12px 14px;margin-top:14px;font-size:13.5px;color:#5d6c7b}}
+.fchk-note{{font-size:12px;line-height:1.6;color:#5B6673;margin:16px 0 0;border-top:1px solid rgba(10,10,10,.06);padding-top:12px}}
+.fchk-cat{{background:#FBFAF8;border:1px solid rgba(10,10,10,.08);border-radius:10px;padding:12px 14px;margin-top:14px;font-size:13.5px;color:#4A5563}}
 .fchk-cat b{{color:#0A2F46}}
 /* Thesis audit — four areas chosen for this business, two cited checks each. */
 .fca-area{{border-top:1px solid rgba(10,10,10,.07);padding:15px 0 13px}}
@@ -207,10 +207,10 @@ def render_card(t: dict, universe, public: bool = False) -> str:
 .fca-head{{display:flex;justify-content:space-between;align-items:baseline;gap:12px}}
 .fca-name{{font-size:15px;font-weight:800;color:#0A2F46;line-height:1.3}}
 .fca-v{{flex:none;font-family:'JetBrains Mono',ui-monospace,monospace;font-size:10.5px;font-weight:800;letter-spacing:.08em;padding:3px 10px;border-radius:999px;border:1px solid;white-space:nowrap}}
-.fca-pass .fca-v,.fca-pass .fca-cv{{color:#15803d;border-color:rgba(21,128,61,.35);background:rgba(21,128,61,.08)}}
+.fca-pass .fca-v,.fca-pass .fca-cv{{color:#116B35;border-color:rgba(21,128,61,.35);background:rgba(21,128,61,.08)}}
 .fca-fail .fca-v,.fca-fail .fca-cv{{color:#b91c1c;border-color:rgba(185,28,28,.35);background:rgba(185,28,28,.07)}}
 .fca-mixed .fca-v,.fca-mixed .fca-cv{{color:#b45309;border-color:rgba(180,83,9,.35);background:rgba(180,83,9,.08)}}
-.fca-note{{font-size:12px;color:#758696;font-weight:600;margin-top:3px}}
+.fca-note{{font-size:12px;color:#5B6673;font-weight:600;margin-top:3px}}
 .fca-chk{{display:flex;gap:10px;align-items:flex-start;padding:8px 0}}
 .fca-cv{{flex:none;font-family:'JetBrains Mono',ui-monospace,monospace;font-size:9.5px;font-weight:800;letter-spacing:.06em;padding:2px 7px;border-radius:5px;border:1px solid;margin-top:3px}}
 .fca-ct{{font-size:14px;line-height:1.6;color:#10293D}}

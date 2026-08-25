@@ -473,25 +473,25 @@ _CSS = """
 /* The "worth a look" count is the one thing on the banner that carries a
    reading, so it inverts rather than just tinting. */
 .sfg-pill.on{color:#0E7C66;background:#fff;border-color:#fff}
-.sfg-sub{font-size:12.5px;color:#5d6c7b;margin:0 0 18px;line-height:1.55}
+.sfg-sub{font-size:12.5px;color:#4A5563;margin:0 0 18px;line-height:1.55}
 .sfg-item{padding:16px 0;border-top:1px solid rgba(10,10,10,.07)}
 .sfg-item:first-of-type{border-top:none;padding-top:4px}
 .sfg-top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:7px}
-.sfg-k{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:11px;font-weight:700;letter-spacing:.11em;text-transform:uppercase;color:#758696}
+.sfg-k{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:11px;font-weight:700;letter-spacing:.11em;text-transform:uppercase;color:#5B6673}
 .sfg-v{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:20px;font-weight:800;color:#0A2F46;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
-.sfg-v.warn{color:#C74E00}
+.sfg-v.warn{color:#A83F00}
 .sfg-v.ok{color:#0E7C66}
-.sfg-tag{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:9.5px;font-weight:700;letter-spacing:.06em;padding:3px 8px;border-radius:5px;color:#8A97A4;background:rgba(10,10,10,.05)}
-.sfg-tag.warn{color:#C74E00;background:rgba(199,78,0,.09)}
-.sfg-txt{font-size:13.5px;line-height:1.6;color:#5d6c7b;margin:0}
+.sfg-tag{margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:9.5px;font-weight:700;letter-spacing:.06em;padding:3px 8px;border-radius:5px;color:#5B6673;background:rgba(10,10,10,.05)}
+.sfg-tag.warn{color:#A83F00;background:rgba(199,78,0,.09)}
+.sfg-txt{font-size:13.5px;line-height:1.6;color:#4A5563;margin:0}
 .sfg-txt b{color:#0A2F46}
-.sfg-ev{font-size:12px;line-height:1.55;color:#5d6c7b;margin:8px 0 0;padding:9px 12px;border-radius:8px;background:#FBFAF8;border:1px solid rgba(10,10,10,.06)}
+.sfg-ev{font-size:12px;line-height:1.55;color:#4A5563;margin:8px 0 0;padding:9px 12px;border-radius:8px;background:#FBFAF8;border:1px solid rgba(10,10,10,.06)}
 .sfg-list{list-style:none;margin:9px 0 0;padding:0;display:grid;gap:6px}
-.sfg-list li{display:grid;grid-template-columns:96px 1fr;gap:10px;font-size:12.5px;color:#5d6c7b;align-items:baseline}
+.sfg-list li{display:grid;grid-template-columns:96px 1fr;gap:10px;font-size:12.5px;color:#4A5563;align-items:baseline}
 .sfg-list time{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:#0A2F46}
-.sfg-list li.warn time{color:#C74E00}
-.sfg-note{font-size:11.5px;line-height:1.55;color:#758696;margin:18px 0 0;padding-top:14px;border-top:1px solid rgba(10,10,10,.07)}
-.sfg-off{font-size:13.5px;color:#758696;margin:0}
+.sfg-list li.warn time{color:#A83F00}
+.sfg-note{font-size:11.5px;line-height:1.55;color:#5B6673;margin:18px 0 0;padding-top:14px;border-top:1px solid rgba(10,10,10,.07)}
+.sfg-off{font-size:13.5px;color:#5B6673;margin:0}
 @media (max-width:520px){.sfg-list li{grid-template-columns:1fr}}
 </style>
 """

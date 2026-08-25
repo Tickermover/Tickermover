@@ -1637,12 +1637,12 @@ _404_HTML = """<!DOCTYPE html>
         background:linear-gradient(135deg,#38bdf8,#818cf8);-webkit-background-clip:text;
         background-clip:text;color:transparent;margin-bottom:8px}
   h1{font-size:20px;margin:0 0 10px}
-  p{font-size:14px;color:#94a3b8;line-height:1.6;margin:0 0 24px}
+  p{font-size:14px;color:#5B6673;line-height:1.6;margin:0 0 24px}
   a.btn{display:inline-block;padding:11px 22px;border-radius:10px;font-weight:700;
         font-size:14px;text-decoration:none;color:#fff;
         background:linear-gradient(135deg,#0ea5e9,#6366f1)}
   a.alt{display:inline-block;margin-left:12px;padding:11px 4px;font-size:14px;
-        color:#94a3b8;text-decoration:none}
+        color:#5B6673;text-decoration:none}
 </style></head><body><div class="card">
   <div class="code">404</div>
   <h1>This page doesn't exist</h1>
@@ -2402,25 +2402,25 @@ def _render_morning_brief() -> str:
   .brand-mark img{{width:80%;height:80%;object-fit:contain;filter:drop-shadow(0 0 5px rgba(245,166,35,.45))}}
   .brand .h{{background:linear-gradient(135deg,#2970FF 0%,#0040c1 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent}}
   .top-nav{{display:flex;gap:24px;font-family:'Manrope','Inter',sans-serif;font-size:13.5px;font-weight:600;color:#475569}}
-  .top-nav a.active{{color:#15803d}}
+  .top-nav a.active{{color:#116B35}}
   .top-cta{{padding:8px 18px;border-radius:999px;background:#0A0A0A;color:#fff;font-family:'Manrope','Inter',sans-serif;font-size:13px;font-weight:700}}
   @media (max-width:760px){{.top-nav{{display:none}}}}
 
   /* ── Article shell ── */
   .brief{{max-width:760px;margin:0 auto;padding:56px 28px 80px}}
-  .masthead{{display:flex;align-items:center;gap:10px;font-family:'Manrope','Inter',sans-serif;font-size:11px;font-weight:700;letter-spacing:.18em;color:#15803d;text-transform:uppercase;margin-bottom:14px}}
+  .masthead{{display:flex;align-items:center;gap:10px;font-family:'Manrope','Inter',sans-serif;font-size:11px;font-weight:700;letter-spacing:.18em;color:#116B35;text-transform:uppercase;margin-bottom:14px}}
   .masthead::before{{content:"";width:24px;height:2px;background:linear-gradient(90deg,#F5A623,#FFC75F);border-radius:2px}}
   h1.brief-title{{font-family:'Fraunces',serif;font-weight:500;font-size:clamp(36px,5vw,58px);line-height:1.05;letter-spacing:-.025em;color:#0A0A0A;margin-bottom:14px}}
-  h1.brief-title em{{font-style:italic;color:#15803d}}
-  .brief-date{{font-family:'Manrope','Inter',sans-serif;font-size:13.5px;color:#64748b;margin-bottom:8px;font-weight:500}}
-  .brief-meta{{font-family:'Manrope','Inter',sans-serif;font-size:12.5px;color:#94a3b8;display:flex;gap:14px;flex-wrap:wrap;margin-bottom:36px}}
+  h1.brief-title em{{font-style:italic;color:#116B35}}
+  .brief-date{{font-family:'Manrope','Inter',sans-serif;font-size:13.5px;color:#4A5563;margin-bottom:8px;font-weight:500}}
+  .brief-meta{{font-family:'Manrope','Inter',sans-serif;font-size:12.5px;color:#5B6673;display:flex;gap:14px;flex-wrap:wrap;margin-bottom:36px}}
   .brief-meta span{{display:inline-flex;align-items:center;gap:6px}}
 
   .lede{{font-family:'Source Serif 4',serif;font-size:22px;line-height:1.55;color:#0A0A0A;font-weight:500;margin-bottom:48px}}
-  .lede strong{{color:#15803d;font-weight:700}}
+  .lede strong{{color:#116B35;font-weight:700}}
 
   h2{{font-family:'Fraunces',serif;font-weight:500;font-size:30px;letter-spacing:-.02em;color:#0A0A0A;margin:48px 0 18px;line-height:1.15}}
-  h2 em{{font-style:italic;color:#15803d}}
+  h2 em{{font-style:italic;color:#116B35}}
 
   /* ── Top 3 pick cards ── */
   .b-picks{{display:flex;flex-direction:column;gap:10px;margin-bottom:24px}}
@@ -2437,11 +2437,11 @@ def _render_morning_brief() -> str:
   .b-pick-body{{min-width:0;font-family:'Manrope','Inter',sans-serif}}
   .b-pick-row{{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:4px}}
   .b-pick-sym{{font-family:'JetBrains Mono',monospace;font-weight:800;font-size:16px;color:#0A0A0A;letter-spacing:-.01em}}
-  .b-pick-score{{font-family:'Fraunces',serif;font-weight:500;font-size:28px;color:#15803d;line-height:1;letter-spacing:-.02em}}
+  .b-pick-score{{font-family:'Fraunces',serif;font-weight:500;font-size:28px;color:#116B35;line-height:1;letter-spacing:-.02em}}
   .b-pick-name{{font-size:13.5px;color:#475569;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}}
-  .b-pick-meta{{font-family:'Manrope','Inter',sans-serif;font-size:12px;color:#94a3b8;margin-top:6px;display:flex;gap:12px;font-feature-settings:'tnum' 1}}
-  .b-pick-arrow{{font-family:'Manrope','Inter',sans-serif;font-size:22px;color:#94a3b8;transition:transform .15s,color .15s}}
-  .b-pick:hover .b-pick-arrow{{color:#15803d;transform:translateX(4px)}}
+  .b-pick-meta{{font-family:'Manrope','Inter',sans-serif;font-size:12px;color:#5B6673;margin-top:6px;display:flex;gap:12px;font-feature-settings:'tnum' 1}}
+  .b-pick-arrow{{font-family:'Manrope','Inter',sans-serif;font-size:22px;color:#5B6673;transition:transform .15s,color .15s}}
+  .b-pick:hover .b-pick-arrow{{color:#116B35;transform:translateX(4px)}}
 
   /* ── Two-column row (movers / sectors) ── */
   .b-row{{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:24px}}
@@ -2468,7 +2468,7 @@ def _render_morning_brief() -> str:
   .b-sector-meta{{font-size:13px;color:#475569}}
   .b-sector-meta strong{{color:#0A0A0A;font-weight:700;font-family:'JetBrains Mono',monospace;font-feature-settings:'tnum' 1}}
 
-  .empty{{padding:20px 4px;color:#94a3b8;font-size:13px;font-family:'Manrope','Inter',sans-serif;font-style:italic;text-align:center}}
+  .empty{{padding:20px 4px;color:#5B6673;font-size:13px;font-family:'Manrope','Inter',sans-serif;font-style:italic;text-align:center}}
 
   /* ── Mode swap CTA ── */
   .swap{{background:#0A0A0A;color:#fff;border-radius:16px;padding:24px 28px;margin:48px 0 24px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}}
@@ -2476,8 +2476,8 @@ def _render_morning_brief() -> str:
   .swap .lbl strong{{color:#FFE9B0;display:block;font-family:'Fraunces',serif;font-weight:500;font-size:18px;margin-bottom:4px;letter-spacing:-.01em;font-style:italic}}
   .swap .btn{{padding:11px 22px;border-radius:999px;background:linear-gradient(135deg,#FFE9B0,#FFC75F,#F5A623);color:#0A0A0A;font-family:'Manrope','Inter',sans-serif;font-weight:800;font-size:13.5px;text-decoration:none;box-shadow:0 8px 22px -8px rgba(245,166,35,.5)}}
 
-  footer{{padding:60px 28px 40px;color:#94a3b8;font-family:'Manrope','Inter',sans-serif;font-size:12.5px;text-align:center;border-top:1px solid rgba(10,10,10,.08);margin-top:60px}}
-  footer a{{color:#15803d;font-weight:700}}
+  footer{{padding:60px 28px 40px;color:#5B6673;font-family:'Manrope','Inter',sans-serif;font-size:12.5px;text-align:center;border-top:1px solid rgba(10,10,10,.08);margin-top:60px}}
+  footer a{{color:#116B35;font-weight:700}}
 </style>
 </head>
 <body>
@@ -2796,7 +2796,7 @@ def _render_unknown_stock(sym: str) -> str:
 <meta name="robots" content="noindex,follow">
 <link rel="canonical" href="{SITE_ORIGIN}/stocks/{sym}">
 <style>body{{font-family:system-ui,-apple-system,sans-serif;max-width:600px;margin:80px auto;padding:0 24px;color:#0a0a0a;text-align:center}}
-a{{color:#15803d;font-weight:600;text-decoration:none}}</style>
+a{{color:#116B35;font-weight:600;text-decoration:none}}</style>
 </head><body>
 <h1>{sym}</h1>
 <p>This ticker isn't in TickerMover's universe yet. We focus on ~200 hand-curated US stocks with $500M+ market cap.</p>
@@ -2835,7 +2835,7 @@ def _render_post_earnings_card(t: dict, name: str, sym: str) -> str:
     # ── EPS row ──
     if eps_actual is not None and eps_estimate is not None:
         beat_tag = (
-            '<span style="background:#FFF3D9;color:#15803d;font-weight:700;'
+            '<span style="background:#FFF3D9;color:#116B35;font-weight:700;'
             'padding:3px 10px;border-radius:999px;font-size:11px;letter-spacing:.04em">BEAT</span>'
             if beat else
             '<span style="background:#fee2e2;color:#b91c1c;font-weight:700;'
@@ -2848,10 +2848,10 @@ def _render_post_earnings_card(t: dict, name: str, sym: str) -> str:
         eps_row = (
             f'<div style="display:flex;justify-content:space-between;align-items:center;'
             f'padding:10px 0;border-bottom:1px solid #f1f5f9">'
-            f'<div style="font-size:13px;color:#64748b;font-weight:600">EPS</div>'
+            f'<div style="font-size:13px;color:#4A5563;font-weight:600">EPS</div>'
             f'<div style="font-size:14px;color:#0f172a">'
             f'<span class="mono" style="font-weight:700">${eps_actual:.2f}</span> '
-            f'<span style="color:#94a3b8">vs <span class="mono">${eps_estimate:.2f}</span> est</span>'
+            f'<span style="color:#5B6673">vs <span class="mono">${eps_estimate:.2f}</span> est</span>'
             f'{surp_str} {beat_tag}'
             f'</div></div>'
         )
@@ -2877,7 +2877,7 @@ def _render_post_earnings_card(t: dict, name: str, sym: str) -> str:
         rev_row = (
             f'<div style="display:flex;justify-content:space-between;align-items:center;'
             f'padding:10px 0;border-bottom:1px solid #f1f5f9">'
-            f'<div style="font-size:13px;color:#64748b;font-weight:600">Revenue</div>'
+            f'<div style="font-size:13px;color:#4A5563;font-weight:600">Revenue</div>'
             f'<div style="font-size:14px;color:#0f172a">'
             f'<span class="mono" style="font-weight:700">{rev_str}</span>{rev_growth_str}'
             f'</div></div>'
@@ -2891,7 +2891,7 @@ def _render_post_earnings_card(t: dict, name: str, sym: str) -> str:
         rx_row = (
             f'<div style="display:flex;justify-content:space-between;align-items:center;'
             f'padding:10px 0;border-bottom:1px solid #f1f5f9">'
-            f'<div style="font-size:13px;color:#64748b;font-weight:600">Stock reaction (1M)</div>'
+            f'<div style="font-size:13px;color:#4A5563;font-weight:600">Stock reaction (1M)</div>'
             f'<div style="font-size:14px;color:{rx_color};font-weight:700" class="mono">'
             f'{reaction_pct:+.1f}%</div></div>'
         )
@@ -2903,7 +2903,7 @@ def _render_post_earnings_card(t: dict, name: str, sym: str) -> str:
         streak_row = (
             f'<div style="display:flex;justify-content:space-between;align-items:center;'
             f'padding:10px 0">'
-            f'<div style="font-size:13px;color:#64748b;font-weight:600">Beat streak</div>'
+            f'<div style="font-size:13px;color:#4A5563;font-weight:600">Beat streak</div>'
             f'<div style="font-size:14px;color:#0f172a;font-weight:700">'
             f'{beat_streak} of last 4 quarters</div></div>'
         )
@@ -2971,7 +2971,7 @@ def _render_post_earnings_card(t: dict, name: str, sym: str) -> str:
             gSlot.innerHTML =
               '<div style="margin-top:14px;padding-top:14px;border-top:1px dashed #cbd5e1">' +
                 '<div style="display:flex;justify-content:space-between;align-items:center">' +
-                  '<div style="font-size:11px;color:#64748b;font-weight:700;letter-spacing:.06em;text-transform:uppercase">GUIDANCE</div>' +
+                  '<div style="font-size:11px;color:#4A5563;font-weight:700;letter-spacing:.06em;text-transform:uppercase">GUIDANCE</div>' +
                   '<div style="font-size:11px;color:' + toneColor + ';font-weight:800">' + toneArrow + ' ' + g.tone.toUpperCase() + '</div>' +
                 '</div>' + rev + eps + sum +
               '</div>';
@@ -2997,7 +2997,7 @@ def _render_post_earnings_card(t: dict, name: str, sym: str) -> str:
             sSlot.innerHTML =
               '<div style="margin-top:14px;padding-top:14px;border-top:1px dashed #cbd5e1">' +
                 '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">' +
-                  '<div style="font-size:11px;color:#64748b;font-weight:700;letter-spacing:.06em;text-transform:uppercase">EARNINGS REACTION</div>' +
+                  '<div style="font-size:11px;color:#4A5563;font-weight:700;letter-spacing:.06em;text-transform:uppercase">EARNINGS REACTION</div>' +
                   '<div style="font-size:12px;color:' + lblColor + ';font-weight:800">' + rx.label.toUpperCase() + ' (' + (rx.score >= 0 ? '+' : '') + rx.score + ')</div>' +
                 '</div>' + compHTML +
               '</div>';
@@ -4048,10 +4048,10 @@ h2.rep-title{{font-size:inherit;font-weight:inherit;color:inherit;margin:0;lette
 .brand em{{font-style:normal;background:linear-gradient(135deg,#14587D 0%,#0A2F46 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:#0A2F46}}
 .report-card{{background:transparent;border:0;border-radius:0;padding:0;box-shadow:none}}
 @media(max-width:640px){{.report-card{{padding:24px 20px;border-radius:16px}}.wrap{{padding:20px 12px 48px}}}}
-.crumbs{{font-size:12.5px;color:#758696;margin-bottom:8px;letter-spacing:.04em;text-transform:uppercase;font-weight:600}}
+.crumbs{{font-size:12.5px;color:#5B6673;margin-bottom:8px;letter-spacing:.04em;text-transform:uppercase;font-weight:600}}
 h1{{font-size:38px;font-weight:900;letter-spacing:-.03em;margin-bottom:6px;color:#0A2F46}}
 h1 .sym{{font-family:'JetBrains Mono',monospace;background:linear-gradient(135deg,#14587D,#06B6D4);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:#14587D}}
-.subhead{{font-size:15px;color:#5d6c7b;margin-bottom:24px}}
+.subhead{{font-size:15px;color:#4A5563;margin-bottom:24px}}
 .verdict-box{{display:flex;align-items:center;gap:22px;background:linear-gradient(125deg,#eef4ff 0%,#ffffff 62%);border:1px solid rgba(20,88,125,.16);border-left:5px solid {verdict_color};border-radius:18px;padding:22px 26px;margin:6px 0 18px;box-shadow:0 14px 34px -18px rgba(15,40,100,.34)}}
 .vb-gauge{{flex:0 0 auto}}
 .sp-gauge{{display:block}}
@@ -4060,42 +4060,42 @@ h1 .sym{{font-family:'JetBrains Mono',monospace;background:linear-gradient(135de
 .verdict-head{{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px}}
 .verdict-tag{{background:{verdict_color};color:#fff;padding:5px 12px;border-radius:7px;font-weight:800;font-size:13px;letter-spacing:.04em}}
 .verdict-score{{font-family:'JetBrains Mono',monospace;font-size:24px;font-weight:800;color:#0A2F46}}
-.verdict-score .lbl{{font-size:11px;color:#758696;font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin-left:6px}}
+.verdict-score .lbl{{font-size:11px;color:#5B6673;font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin-left:6px}}
 .verdict-text{{font-size:14.5px;line-height:1.6;color:#0f172a}}
 .metrics{{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:28px}}
 .metric{{background:linear-gradient(180deg,#ffffff,#f7f9fc);border:1px solid #eef1f5;border-radius:13px;padding:13px 15px;box-shadow:0 4px 14px -10px rgba(15,40,100,.22)}}
-.metric .lbl{{font-size:10.5px;color:#5d6c7b;font-weight:700;letter-spacing:.05em;text-transform:uppercase;margin-bottom:3px}}
+.metric .lbl{{font-size:10.5px;color:#4A5563;font-weight:700;letter-spacing:.05em;text-transform:uppercase;margin-bottom:3px}}
 .metric .val{{font-family:'JetBrains Mono',monospace;font-size:17px;font-weight:800;color:#0A2F46}}
-.metric .val.pos{{color:#16a34a}}
-.metric .val.neg{{color:#ea384c}}
+.metric .val.pos{{color:#116B35}}
+.metric .val.neg{{color:#C8283C}}
 h2{{font-size:21px;font-weight:800;letter-spacing:-.015em;margin:32px 0 12px;color:#0A2F46}}
 .news{{list-style:none;padding:0}}
 .news li{{padding:10px 0;border-bottom:1px solid #eef0f3;font-size:14px}}
 .news li:last-child{{border-bottom:none}}
-.news .src{{color:#758696;font-size:12px;font-weight:500}}
+.news .src{{color:#5B6673;font-size:12px;font-weight:500}}
 .peers{{display:flex;flex-wrap:wrap;gap:8px}}
 .peer{{display:inline-block;padding:7px 12px;background:#FBFAF8;border:1px solid #eef1f5;border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:13px;color:#0A2F46;font-weight:700;transition:all .15s}}
 .peer:hover{{border-color:#14587D;color:#14587D;text-decoration:none}}
 .faq-q{{margin:14px 0}}
 .faq-q h3{{font-size:16px;font-weight:700;margin-bottom:4px;color:#0A2F46}}
-.faq-q p{{font-size:14px;color:#5d6c7b;line-height:1.6}}
+.faq-q p{{font-size:14px;color:#4A5563;line-height:1.6}}
 .cta{{margin-top:40px;padding:28px 32px;background:radial-gradient(circle at 0% 0%,#001C31 -55%,#0A2F47 38%,#0A2F47 55%,#001C31 100%);border-radius:16px;text-align:center;color:#fff}}
 .cta h2,.cta h3{{font-size:22px;font-weight:800;letter-spacing:-.02em;margin:0 0 8px;color:#fff}}
 .cta p{{color:rgba(255,255,255,.7);margin-bottom:18px}}
 .cta-btn{{display:inline-block;background:#fff;color:#0A2F46;padding:13px 26px;border-radius:10px;font-weight:700;font-size:14.5px}}
 .cta-btn:hover{{background:#F2F1EE;text-decoration:none}}
-.legal{{margin-top:32px;font-size:11.5px;color:#758696;text-align:center;line-height:1.6}}
-.val.pos{{color:#16a34a}}.val.neg{{color:#ea384c}}
+.legal{{margin-top:32px;font-size:11.5px;color:#5B6673;text-align:center;line-height:1.6}}
+.val.pos{{color:#116B35}}.val.neg{{color:#C8283C}}
 /* ── full-data sections ── */
 .sp-nav{{position:sticky;top:0;z-index:5;display:flex;gap:6px;overflow-x:auto;padding:10px 0;margin:0 0 8px;background:#fff;border-bottom:1px solid #eef0f3;-ms-overflow-style:none;scrollbar-width:none}}
 .sp-nav a{{background:#FBFAF8}}
 .sp-nav::-webkit-scrollbar{{display:none}}
-.sp-nav a{{flex:0 0 auto;font-size:12.5px;font-weight:700;color:#5d6c7b;padding:6px 12px;border-radius:999px;background:#fff;border:1px solid #D6DADD}}
+.sp-nav a{{flex:0 0 auto;font-size:12.5px;font-weight:700;color:#4A5563;padding:6px 12px;border-radius:999px;background:#fff;border:1px solid #D6DADD}}
 .sp-nav a:hover{{color:#14587D;border-color:#14587D;text-decoration:none}}
 section{{scroll-margin-top:60px;margin-bottom:8px}}
 .sp-bars{{display:flex;flex-direction:column;gap:9px;margin-bottom:6px}}
 .sp-bar-row{{display:flex;align-items:center;gap:12px}}
-.sp-bar-row .nm{{flex:0 0 90px;font-size:13px;font-weight:600;color:#5d6c7b}}
+.sp-bar-row .nm{{flex:0 0 90px;font-size:13px;font-weight:600;color:#4A5563}}
 .sp-bar{{flex:1;height:9px;background:#eef2f7;border-radius:999px;overflow:hidden}}
 .sp-bar i{{display:block;height:100%;border-radius:999px;background:#D4860A}}
 .sp-bar i.pos{{background:linear-gradient(90deg,#34D399,#16a34a)}}
@@ -4105,20 +4105,20 @@ section{{scroll-margin-top:60px;margin-bottom:8px}}
 .sp-range{{margin:4px 0 16px}}
 .sp-range-track{{position:relative;height:8px;background:linear-gradient(90deg,#fde68a,#86efac);border-radius:999px}}
 .sp-range-track i{{position:absolute;top:50%;width:14px;height:14px;border-radius:50%;background:#0A2F46;border:2px solid #fff;transform:translate(-50%,-50%);box-shadow:0 1px 4px rgba(0,0,0,.3)}}
-.sp-range-lbls{{display:flex;justify-content:space-between;font-size:11.5px;color:#5d6c7b;margin-top:6px}}
+.sp-range-lbls{{display:flex;justify-content:space-between;font-size:11.5px;color:#4A5563;margin-top:6px}}
 .sp-tbl{{width:100%;border-collapse:collapse;font-size:13.5px}}
-.sp-tbl th{{text-align:left;font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;color:#758696;padding:6px 8px;border-bottom:1px solid #D6DADD}}
+.sp-tbl th{{text-align:left;font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;color:#5B6673;padding:6px 8px;border-bottom:1px solid #D6DADD}}
 .sp-tbl td{{padding:9px 8px;border-bottom:1px solid #F2F1EE}}
 .sp-tbl .r{{text-align:right}}
-.sp-tbl .pos{{color:#16a34a;font-weight:700}}.sp-tbl .neg{{color:#ea384c;font-weight:700}}
+.sp-tbl .pos{{color:#116B35;font-weight:700}}.sp-tbl .neg{{color:#C8283C;font-weight:700}}
 .sp-tbl .tag{{font-size:10.5px;font-weight:800;padding:2px 8px;border-radius:999px;letter-spacing:.04em}}
-.sp-tbl .tag.beat{{background:#eaf7ee;color:#16a34a}}.sp-tbl .tag.miss{{background:#fdecec;color:#ea384c}}
-.sp-note{{font-size:12.5px;color:#5d6c7b;margin-top:8px}}
-.sp-lead{{font-size:14px;color:#5d6c7b;margin-bottom:14px}}
+.sp-tbl .tag.beat{{background:#eaf7ee;color:#116B35}}.sp-tbl .tag.miss{{background:#fdecec;color:#C8283C}}
+.sp-note{{font-size:12.5px;color:#4A5563;margin-top:8px}}
+.sp-lead{{font-size:14px;color:#4A5563;margin-bottom:14px}}
 .pro-grid{{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-bottom:14px}}
 .pro-card{{background:#FBFAF8;border:1px solid #eef1f5;border-radius:12px;padding:14px 16px;position:relative}}
 .pro-card .pc-h{{font-weight:800;font-size:14px;color:#0A2F46;margin-bottom:4px}}
-.pro-card .pc-d{{font-size:12.5px;color:#5d6c7b;line-height:1.5}}
+.pro-card .pc-d{{font-size:12.5px;color:#4A5563;line-height:1.5}}
 .cta-btn-pri{{background:linear-gradient(135deg,#14587D,#0A2F46);color:#fff;border-radius:10px;padding:12px 22px;font-weight:700}}
 .cta-btn-pri:hover{{filter:brightness(1.06);text-decoration:none;background:linear-gradient(135deg,#14587D,#0A2F46)}}
 /* ── drawer-style premium ribbon cards ── */
@@ -4147,7 +4147,7 @@ h2{{font-size:18px;margin:30px 0 12px}}
 .vb-stars{{font-size:17px;letter-spacing:2px;line-height:1;margin-bottom:5px}}
 .dr-call-chips{{display:flex;flex-wrap:wrap;gap:6px;margin-top:11px}}
 .dr-cc{{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:800;padding:4px 9px;border-radius:7px;letter-spacing:.03em;background:#fff;border:1px solid #D6DADD}}
-.dr-cc.cc-up{{color:#16a34a;border-color:rgba(22,163,74,.32);background:rgba(22,163,74,.07)}}
+.dr-cc.cc-up{{color:#116B35;border-color:rgba(22,163,74,.32);background:rgba(22,163,74,.07)}}
 .dr-cc.cc-blue{{color:#0A2F46;border-color:rgba(20,88,125,.32);background:rgba(20,88,125,.07)}}
 .dr-cc.cc-val{{color:#b4780a;border-color:rgba(180,120,10,.32);background:rgba(255,97,0,.10)}}
 /* neutralize the nested 'Latest earnings' card so it sits flush in its ribbon */
@@ -4624,7 +4624,7 @@ async def newsletter_unsubscribe(e: str = "", t: str = ""):
 <div style="max-width:440px;margin:80px auto;background:#fff;border:1px solid #d6e3ff;border-radius:14px;padding:32px;text-align:center">
 <h1 style="font-size:19px;font-weight:800;color:#0a0e22;margin:0 0 8px">{title}</h1>
 <p style="color:#475569;font-size:15px">{msg}</p>
-<a href="{SITE_ORIGIN}" style="color:#2970ff;font-weight:700">← Back to TickerMover</a></div></body></html>""",
+<a href="{SITE_ORIGIN}" style="color:#2064E8;font-weight:700">← Back to TickerMover</a></div></body></html>""",
         status_code=200 if ok else 400)
 
 
@@ -4648,12 +4648,12 @@ def _render_brief_email(unsub_url: str) -> str:
         bl = (t.get("bottom_line_ai") or t.get("bottom_line") or "")[:130]
         rows += (
             '<tr><td style="padding:13px 14px;border-bottom:1px solid #eef0f3;vertical-align:top">'
-            f'<div style="font-family:monospace;font-weight:800;color:#2970ff;font-size:15px">{sym} '
-            f'<span style="font-weight:600;color:#64748b;font-size:12px">{name}</span></div>'
+            f'<div style="font-family:monospace;font-weight:800;color:#2064E8;font-size:15px">{sym} '
+            f'<span style="font-weight:600;color:#4A5563;font-size:12px">{name}</span></div>'
             f'<div style="font-size:13px;color:#475569;margin-top:3px;line-height:1.5">{bl}</div></td>'
             '<td style="padding:13px 14px;border-bottom:1px solid #eef0f3;text-align:right;white-space:nowrap">'
             f'<div style="font-family:monospace;font-size:21px;font-weight:800;color:#0a0e22">{sc}</div>'
-            f'<div style="font-size:11px;color:#94a3b8">Grade {grade}</div></td></tr>'
+            f'<div style="font-size:11px;color:#5B6673">Grade {grade}</div></td></tr>'
         )
     return f"""<!DOCTYPE html><html><body style="margin:0;background:#eef4ff;font-family:Inter,Arial,sans-serif">
 <div style="max-width:600px;margin:0 auto;padding:24px">
@@ -4663,14 +4663,14 @@ def _render_brief_email(unsub_url: str) -> str:
   </div>
   <div style="background:#fff;padding:20px 24px;border:1px solid #d6e3ff;border-top:none">
     <p style="font-size:14px;color:#334155;margin:0 0 14px">Today's highest-conviction US large-caps on our model — strong Quant Scores, the Street raising estimates, momentum building. <b>Research, not advice.</b></p>
-    <table style="border-collapse:collapse;width:100%">{rows or '<tr><td style="padding:14px;color:#64748b">Universe is warming up — open the dashboard for the latest.</td></tr>'}</table>
+    <table style="border-collapse:collapse;width:100%">{rows or '<tr><td style="padding:14px;color:#4A5563">Universe is warming up — open the dashboard for the latest.</td></tr>'}</table>
     <div style="text-align:center;margin-top:20px">
       <a href="{SITE_ORIGIN}/app" style="display:inline-block;background:#2970ff;color:#fff;font-weight:800;font-size:14px;padding:12px 28px;border-radius:10px;text-decoration:none">Open the live dashboard →</a>
     </div>
   </div>
-  <div style="font-size:11px;color:#94a3b8;text-align:center;padding:16px 24px;line-height:1.7">
+  <div style="font-size:11px;color:#5B6673;text-align:center;padding:16px 24px;line-height:1.7">
     Research and information only — not investment advice, not FCA-authorised. Capital at risk; past scores aren't a guide to future results.<br>
-    <a href="{unsub_url}" style="color:#94a3b8;text-decoration:underline">Unsubscribe</a> &nbsp;·&nbsp; tickermover.com
+    <a href="{unsub_url}" style="color:#5B6673;text-decoration:underline">Unsubscribe</a> &nbsp;·&nbsp; tickermover.com
   </div>
 </div></body></html>"""
 
@@ -4726,13 +4726,13 @@ def _render_weekly_email(article: dict, unsub_url: str) -> str:
     url   = f"{SITE_ORIGIN}/weekly"
     return (
         f'<div style="font-family:-apple-system,Segoe UI,Arial,sans-serif;max-width:560px;margin:0 auto;color:#0f172a">'
-        f'<div style="font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#2970ff">TickerMover · Weekly editorial</div>'
+        f'<div style="font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#2064E8">TickerMover · Weekly editorial</div>'
         f'<h1 style="font-size:23px;line-height:1.2;margin:8px 0 6px">{title}</h1>'
         f'<p style="font-size:15px;line-height:1.55;color:#475569;margin:0 0 16px">{stand}</p>'
         + (f'<div style="border-left:3px solid #2970ff;background:#f1f6ff;padding:12px 14px;border-radius:8px;font-size:14px;line-height:1.55;margin:0 0 18px"><b>Our house view:</b> {hv}</div>' if hv else '')
         + f'<a href="{url}" style="display:inline-block;background:#2970ff;color:#fff;text-decoration:none;font-weight:700;font-size:14px;padding:11px 22px;border-radius:10px">Read the full editorial →</a>'
-        f'<p style="font-size:11px;color:#94a3b8;margin:22px 0 0;line-height:1.5">Education and market awareness only — not investment advice. '
-        f'<a href="{unsub_url}" style="color:#94a3b8">Unsubscribe</a>.</p></div>'
+        f'<p style="font-size:11px;color:#5B6673;margin:22px 0 0;line-height:1.5">Education and market awareness only — not investment advice. '
+        f'<a href="{unsub_url}" style="color:#5B6673">Unsubscribe</a>.</p></div>'
     )
 
 
@@ -7121,9 +7121,9 @@ async def admin_thesis_map_page():
 <style>
 body{{margin:0;background:#0b0f1a;color:#e2e8f0;font:15px/1.6 system-ui,sans-serif;padding:40px 24px}}
 .wrap{{max-width:820px;margin:0 auto}} h1{{font-size:22px;margin:0 0 4px}}
-.sub{{color:#94a3b8;font-size:13.5px;margin-bottom:22px}}
+.sub{{color:#5B6673;font-size:13.5px;margin-bottom:22px}}
 .card{{background:#121826;border:1px solid #1e293b;border-radius:14px;padding:18px 20px;margin-bottom:14px}}
-.k{{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:#64748b;margin-bottom:8px}}
+.k{{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:#4A5563;margin-bottom:8px}}
 button{{background:linear-gradient(135deg,#2970ff,#0040c1);color:#fff;border:0;border-radius:10px;
   padding:11px 18px;font-size:14px;font-weight:700;cursor:pointer;margin-right:9px}}
 button.ghost{{background:#1e293b}} button:disabled{{opacity:.5;cursor:default}}
@@ -7150,7 +7150,7 @@ if(!TOKEN) document.getElementById('note').textContent =
 fetch('/api/theses').then(function(r){{return r.json()}}).then(function(d){{
   var n = d.next_up;
   document.getElementById('next').innerHTML = n
-    ? '<b>'+n.driver+'</b><br><span style="color:#94a3b8">'+n.angle+'</span>'
+    ? '<b>'+n.driver+'</b><br><span style="color:#5B6673">'+n.angle+'</span>'
     : 'Driver pool exhausted — add more to DRIVER_POOL in thesis_map_gen.py.';
   document.getElementById('list').innerHTML = (d.theses||[]).slice(0,14).map(function(t){{
     return '<div style="padding:3px 0">· <a href="/who-benefits/'+t.slug+'" target="_blank">'+t.title+'</a></div>';
@@ -7436,8 +7436,8 @@ _WB_HUB_CSS = """<style>
 .wb-eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.14em;
   text-transform:uppercase;color:#9A3412;font-weight:700}
 .wb-card h2{font-size:17px;font-weight:500;color:#0A2F46;margin:7px 0 8px}
-.wb-card p{font-size:13px;line-height:1.55;color:#5d6c7b;margin:0}
-.wb-n{display:block;margin-top:11px;font-family:var(--mono);font-size:11px;color:#758696;
+.wb-card p{font-size:13px;line-height:1.55;color:#4A5563;margin:0}
+.wb-n{display:block;margin-top:11px;font-family:var(--mono);font-size:11px;color:#5B6673;
   font-weight:700}
 @media(max-width:560px){.wb-art{aspect-ratio:320/86}}
 </style>"""
@@ -8101,8 +8101,26 @@ async def api_event_intel_status(probe: str = "", probe_model: str = "",
                              "last_error": _ws.LAST_ERROR or None}
     except Exception:
         pass
+    # ORDER MATTERS: the named modes have to be tested BEFORE the catch-all.
+    # `elif probe:` used to sit above them, so ?probe=models and
+    # ?probe=discover were unreachable — they fell into probe(name=...) and
+    # came back "unknown provider". Model ids rot here on a scale of weeks, and
+    # those two branches are the tools for finding a live one, so losing them
+    # is how a dead default sits undiagnosed. Verified reachable after this.
     if probe == "groq":
         out["probe_groq"] = await _ei_mod.probe_groq()
+    elif probe == "discover":
+        try:
+            import llm_free as _lf4
+            out["discover"] = await _lf4.discover_working_models()
+        except Exception as exc:
+            out["discover"] = {"error": str(exc)[:200]}
+    elif probe == "models":
+        try:
+            import llm_free as _lf3
+            out["models"] = await _lf3.list_models()
+        except Exception as exc:
+            out["models"] = {"error": str(exc)[:200]}
     elif probe:
         # ?probe=all           — one tiny real call to every configured provider
         # ?probe=<name>        — just that one
@@ -8116,18 +8134,6 @@ async def api_event_intel_status(probe: str = "", probe_model: str = "",
                             else await _lf2.probe(probe, probe_model, probe_url))
         except Exception as exc:
             out["probe"] = {"ok": False, "error": f"{type(exc).__name__}: {exc}"[:200]}
-    elif probe == "discover":
-        try:
-            import llm_free as _lf4
-            out["discover"] = await _lf4.discover_working_models()
-        except Exception as exc:
-            out["discover"] = {"error": str(exc)[:200]}
-    elif probe == "models":
-        try:
-            import llm_free as _lf3
-            out["models"] = await _lf3.list_models()
-        except Exception as exc:
-            out["models"] = {"error": str(exc)[:200]}
     elif probe == "all":
         try:
             import llm_free as _lf2
@@ -8473,13 +8479,13 @@ body{{margin:0;background:#f5f6f8;color:#0f172a;font-family:-apple-system,BlinkM
 .wrap{{max-width:820px;margin:0 auto;padding:28px 20px 80px}}
 .eyebrow{{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#0040c1}}
 h1{{font-size:24px;margin:4px 0 2px}}
-.sub{{color:#64748b;font-size:13px;margin:0 0 22px}}
+.sub{{color:#4A5563;font-size:13px;margin:0 0 22px}}
 .turn{{background:#fff;border:1px solid #e4e7eb;border-radius:12px;padding:14px 16px;margin:0 0 12px}}
 .sp{{font-weight:800;font-size:13.5px;color:#0040c1;margin-bottom:5px}}
-.sp .ttl{{font-weight:600;color:#64748b}}
+.sp .ttl{{font-weight:600;color:#4A5563}}
 .turn p{{margin:0;color:#1f2937;font-size:14px}}
 .note{{background:#fff;border:1px dashed #cbd5e1;border-radius:12px;padding:18px;color:#475569;font-size:14px}}
-.foot{{margin-top:24px;font-size:12px;color:#94a3b8}}
+.foot{{margin-top:24px;font-size:12px;color:#5B6673}}
 </style></head><body><div class="wrap">
 <div class="eyebrow">Earnings call transcript</div>
 <h1>{_esc(tk)}{(' · ' + _esc(qlabel)) if qlabel else ''}</h1>
@@ -9769,8 +9775,12 @@ async def api_dependencies(ticker: str, force: bool = False,
         return JSONResponse({"ticker": sym, "status": "locked",
                              "detail": "Dependency mapping is a Pro feature. Upgrade to unlock."})
     if not dependencies_gen.available():
+        # Was "Not enabled (set ANTHROPIC_API_KEY)" — shown to a paying reader,
+        # naming a vendor key this deployment does not spend against. The
+        # generation runs on the free provider chain; the key survives only as
+        # the "AI is configured" flag.
         return JSONResponse({"ticker": sym, "status": "unavailable",
-                             "detail": "Not enabled (set ANTHROPIC_API_KEY)."})
+                             "detail": "Dependency mapping is not enabled on this deployment."})
 
     ck = "deps:" + sym
     if not force:
@@ -12958,7 +12968,7 @@ def _marqsheet_html(pick: dict, checklist: list[dict], approve_url: str, reject_
         ("Analyst upside", fnum("target_upside_pct", "%", sign=True)),
     ]
     stat_rows = "".join(
-        f'<td style="padding:8px 12px;border:1px solid #e2e8f0"><div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:.04em">{k}</div>'
+        f'<td style="padding:8px 12px;border:1px solid #e2e8f0"><div style="font-size:11px;color:#4A5563;text-transform:uppercase;letter-spacing:.04em">{k}</div>'
         f'<div style="font-size:16px;font-weight:800;color:#0a0e22;font-family:monospace">{v}</div></td>'
         + ("</tr><tr>" if (i % 2 == 1) else "")
         for i, (k, v) in enumerate(stats)
@@ -12967,7 +12977,7 @@ def _marqsheet_html(pick: dict, checklist: list[dict], approve_url: str, reject_
     chk_rows = "".join(
         f'<tr><td style="padding:7px 10px;font-size:14px;width:26px">{icon.get(c["status"], "•")}</td>'
         f'<td style="padding:7px 10px;font-size:14px;font-weight:600;color:#0a0e22">{c["label"]}</td>'
-        f'<td style="padding:7px 10px;font-size:13px;color:#64748b;text-align:right;font-family:monospace">{c["detail"]}</td></tr>'
+        f'<td style="padding:7px 10px;font-size:13px;color:#4A5563;text-align:right;font-family:monospace">{c["detail"]}</td></tr>'
         for c in checklist
     )
     return f"""<!DOCTYPE html><html><body style="margin:0;background:#eef4ff;font-family:Inter,Arial,sans-serif">
@@ -12986,9 +12996,9 @@ def _marqsheet_html(pick: dict, checklist: list[dict], approve_url: str, reject_
       <td style="padding-right:6px;width:50%"><a href="{approve_url}" style="display:block;text-align:center;background:#2970ff;color:#fff;font-weight:800;font-size:15px;padding:14px;border-radius:10px;text-decoration:none">✓ Approve &amp; publish</a></td>
       <td style="padding-left:6px;width:50%"><a href="{reject_url}" style="display:block;text-align:center;background:#f1f5f9;color:#475569;font-weight:800;font-size:15px;padding:14px;border-radius:10px;text-decoration:none;border:1px solid #cbd5e1">✕ Reject</a></td>
     </tr></table>
-    <p style="font-size:12px;color:#94a3b8;margin:16px 0 0;text-align:center"><a href="{view_url}" style="color:#2970ff">Open the full sheet in your browser</a> · It will NOT appear in the public tracker until you approve.</p>
+    <p style="font-size:12px;color:#5B6673;margin:16px 0 0;text-align:center"><a href="{view_url}" style="color:#2064E8">Open the full sheet in your browser</a> · It will NOT appear in the public tracker until you approve.</p>
   </div>
-  <div style="font-size:11px;color:#94a3b8;text-align:center;padding:14px">TickerMover internal · research opinion, not advice</div>
+  <div style="font-size:11px;color:#5B6673;text-align:center;padding:14px">TickerMover internal · research opinion, not advice</div>
 </div></body></html>"""
 
 
@@ -13627,32 +13637,32 @@ _ADMIN_AISPEND_HTML = """<!DOCTYPE html><html lang="en"><head>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:Inter,-apple-system,Arial,sans-serif;background:#eef4ff;color:#0a0e22;padding:24px}
 .wrap{max-width:820px;margin:0 auto}
-h1{font-size:24px;font-weight:900;margin-bottom:4px}h1 b{color:#2970ff}
-.lead{font-size:13px;color:#64748b;margin-bottom:18px}
+h1{font-size:24px;font-weight:900;margin-bottom:4px}h1 b{color:#2064E8}
+.lead{font-size:13px;color:#4A5563;margin-bottom:18px}
 .kpis{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:16px}
 .kpi{flex:1;min-width:150px;background:#fff;border:1px solid #d6e3ff;border-radius:13px;padding:13px 16px}
 .kpi b{font-size:23px;font-weight:900;font-family:'JetBrains Mono',monospace;display:block;line-height:1.15}
-.kpi span{font-size:10.5px;color:#94a3b8;text-transform:uppercase;letter-spacing:.05em;font-weight:700}
+.kpi span{font-size:10.5px;color:#5B6673;text-transform:uppercase;letter-spacing:.05em;font-weight:700}
 .kpi.warn{border-color:#fca5a5;background:#fff5f5}.kpi.warn b{color:#b91c1c}
 .card{background:#fff;border:1px solid #d6e3ff;border-radius:14px;padding:18px 20px;margin-bottom:16px}
 .card h2{font-size:14px;font-weight:800;margin-bottom:12px;display:flex;justify-content:space-between}
-.card h2 span{color:#94a3b8;font-weight:600;font-size:12px}
+.card h2 span{color:#5B6673;font-weight:600;font-size:12px}
 table{width:100%;border-collapse:collapse}
 td{padding:7px 6px;border-bottom:1px solid #f1f5f9;font-size:13px;vertical-align:middle}
 tr:last-child td{border-bottom:0}
 td.f{font-weight:700}td.c{font-family:monospace;font-weight:800;white-space:nowrap;text-align:right}
-td.p{font-family:monospace;color:#64748b;text-align:right;white-space:nowrap;width:52px}
-td.n{color:#94a3b8;text-align:right;white-space:nowrap;width:64px;font-size:12px}
+td.p{font-family:monospace;color:#4A5563;text-align:right;white-space:nowrap;width:52px}
+td.n{color:#5B6673;text-align:right;white-space:nowrap;width:64px;font-size:12px}
 td.b{width:38%}
 .bar{background:#eef2f7;border-radius:5px;height:9px;overflow:hidden}
 .bar i{display:block;height:100%;border-radius:5px}
-.muted{color:#94a3b8;font-size:13px;padding:6px 0}
+.muted{color:#5B6673;font-size:13px;padding:6px 0}
 .note{background:#fffdf5;border:1px solid #f5e6b8;border-radius:12px;padding:14px 16px;font-size:12.5px;color:#7c6a2e;line-height:1.6;margin-bottom:16px}
 .note b{color:#5a4d1e}
 .empty{background:#fff;border:1px solid #d6e3ff;border-radius:14px;padding:40px 24px;text-align:center;color:#475569}
 .empty .et{font-size:18px;font-weight:800;color:#0a0e22;margin-bottom:8px}
-.lk{display:inline-block;margin-top:12px;color:#2970ff;font-weight:700}
-.reload{float:right;font-size:12px;color:#2970ff;cursor:pointer;font-weight:700}
+.lk{display:inline-block;margin-top:12px;color:#2064E8;font-weight:700}
+.reload{float:right;font-size:12px;color:#2064E8;cursor:pointer;font-weight:700}
 </style></head><body><div class="wrap">
 <h1>AI <b>spend</b> · admin <span class="reload" onclick="load()">↻ reload</span></h1>
 <div class="lead">Your APP's own recorded spend, split by FEATURE (the Console only has by-model). Not Claude Code.</div>
@@ -13717,31 +13727,31 @@ _ADMIN_PRIME_HTML = """<!DOCTYPE html><html lang="en"><head>
 body{font-family:Inter,-apple-system,Arial,sans-serif;background:#eef4ff;color:#0a0e22;padding:24px}
 .wrap{max-width:760px;margin:0 auto}
 h1{font-size:24px;font-weight:900;margin-bottom:4px}
-h1 b{color:#2970ff}
-.lead{font-size:13px;color:#64748b;margin-bottom:20px}
+h1 b{color:#2064E8}
+.lead{font-size:13px;color:#4A5563;margin-bottom:20px}
 .card{background:#fff;border:1px solid #d6e3ff;border-radius:14px;padding:18px 20px;margin-bottom:16px}
 .hd{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
 .tic{font-size:20px;font-weight:900;font-family:'JetBrains Mono',monospace;color:#0a0e22}
 .nm{font-size:14px;color:#475569;font-weight:600}
-.sub{font-size:12px;color:#94a3b8;margin-top:2px}
+.sub{font-size:12px;color:#5B6673;margin-top:2px}
 .px{font-size:18px;font-weight:800;font-family:monospace;color:#0a0e22;white-space:nowrap}
 .stats{display:flex;flex-wrap:wrap;gap:18px;margin:14px 0}
 .stats>div{display:flex;flex-direction:column}
 .stats b{font-size:16px;font-weight:800;font-family:monospace}
-.stats span{font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:.04em;margin-top:2px}
+.stats span{font-size:10px;color:#5B6673;text-transform:uppercase;letter-spacing:.04em;margin-top:2px}
 .chks{border-top:1px solid #eef0f3;padding-top:10px;margin-bottom:14px}
 .chk{display:flex;gap:8px;align-items:center;padding:4px 0;font-size:13px}
 .chk .cl{flex:1;font-weight:600}
-.chk .cd{color:#64748b;font-family:monospace;font-size:12px}
+.chk .cd{color:#4A5563;font-family:monospace;font-size:12px}
 .acts{display:flex;gap:10px}
 .acts button{flex:1;padding:12px;border-radius:10px;font-weight:800;font-size:14px;cursor:pointer;border:none}
 .ap{background:#2970ff;color:#fff}.ap:hover{background:#0042c5}
 .rj{background:#f1f5f9;color:#475569;border:1px solid #cbd5e1!important}.rj:hover{background:#e2e8f0}
 .acts button:disabled{opacity:.5;cursor:default}
-.done{text-align:center;font-weight:800;color:#15803d;padding:8px}
+.done{text-align:center;font-weight:800;color:#116B35;padding:8px}
 .empty{background:#fff;border:1px solid #d6e3ff;border-radius:14px;padding:40px 24px;text-align:center;color:#475569}
 .empty .et{font-size:18px;font-weight:800;color:#0a0e22;margin-bottom:8px}
-.lk{display:inline-block;margin-top:12px;color:#2970ff;font-weight:700}
+.lk{display:inline-block;margin-top:12px;color:#2064E8;font-weight:700}
 </style></head><body><div class="wrap">
 <h1>Prime <b>review</b> · admin</h1>
 <div class="lead">Candidates the engine selected but held for your sign-off. Approve to publish to the Prime Tracker, or reject to discard.</div>
@@ -14727,7 +14737,7 @@ async def auth_callback():
         border:3px solid rgba(255,255,255,.14);border-top-color:#2970ff;
         animation:spin 1s linear infinite}
   @keyframes spin{to{transform:rotate(360deg)}}
-  .msg{font-size:14px;color:#94a3b8;letter-spacing:.02em}
+  .msg{font-size:14px;color:#5B6673;letter-spacing:.02em}
 </style>
 </head><body>
 <div class="ring"></div>
@@ -14906,12 +14916,12 @@ body{font-family:'Inter',-apple-system,sans-serif;color:#0a0a0a;background:#0A0A
 .brand{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:800;color:#0a0a0a;margin-bottom:28px;justify-content:center}
 .brand em{font-style:normal;background:linear-gradient(135deg,#2970FF,#0040c1);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:#0040c1}
 h1{font-size:24px;font-weight:800;letter-spacing:-.02em;margin-bottom:6px;text-align:center}
-.sub{color:#64748b;font-size:14.5px;text-align:center;margin-bottom:28px;line-height:1.5}
+.sub{color:#4A5563;font-size:14.5px;text-align:center;margin-bottom:28px;line-height:1.5}
 label{display:block;font-size:12.5px;font-weight:700;color:#475569;letter-spacing:.04em;text-transform:uppercase;margin-bottom:6px;margin-top:14px}
 .input-wrap{position:relative}
 input[type=password],input[type=text]{width:100%;padding:13px 44px 13px 14px;border:1.5px solid #e2e8f0;border-radius:10px;font-size:15px;font-family:inherit;background:#fff;transition:border-color .15s,box-shadow .15s}
 input[type=password]:focus,input[type=text]:focus{outline:none;border-color:#2970FF;box-shadow:0 0 0 3px rgba(41,112,255,.14)}
-.toggle{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:#94a3b8;font-size:12px;font-weight:600;cursor:pointer;padding:6px 8px;border-radius:6px}
+.toggle{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:#5B6673;font-size:12px;font-weight:600;cursor:pointer;padding:6px 8px;border-radius:6px}
 .toggle:hover{color:#0a0a0a;background:#f1f5f9}
 .strength{display:flex;gap:4px;margin-top:8px;height:4px}
 .strength span{flex:1;background:#e2e8f0;border-radius:2px;transition:background .2s}
@@ -14919,8 +14929,8 @@ input[type=password]:focus,input[type=text]:focus{outline:none;border-color:#297
 .strength.s2 span:nth-child(-n+2){background:#F5A623}
 .strength.s3 span:nth-child(-n+3){background:#F5A623}
 .strength.s4 span{background:#15803d}
-.strength-label{font-size:11.5px;color:#64748b;font-weight:600;margin-top:6px;letter-spacing:.02em;height:14px}
-.strength-label.s1{color:#dc2626}.strength-label.s2{color:#D4860A}.strength-label.s3{color:#9E6308}.strength-label.s4{color:#15803d}
+.strength-label{font-size:11.5px;color:#4A5563;font-weight:600;margin-top:6px;letter-spacing:.02em;height:14px}
+.strength-label.s1{color:#dc2626}.strength-label.s2{color:#8A5307}.strength-label.s3{color:#9E6308}.strength-label.s4{color:#116B35}
 button.submit{width:100%;margin-top:24px;padding:14px;background:linear-gradient(135deg,#2970FF 0%,#0040c1 100%);color:#fff;border:none;border-radius:10px;font-weight:700;font-size:15px;cursor:pointer;font-family:inherit;transition:filter .15s,box-shadow .15s;box-shadow:0 10px 24px rgba(41,112,255,.35)}
 button.submit:hover{filter:brightness(1.06)}
 button.submit:disabled{opacity:.6;cursor:not-allowed}
@@ -14928,10 +14938,10 @@ button.submit:disabled{opacity:.6;cursor:not-allowed}
 .msg.show{display:block}
 .msg.err{background:#fef2f2;color:#991b1b;border:1px solid #fecaca}
 .msg.ok{background:#FFF8E5;color:#14532d;border:1px solid #FFE9B0}
-.tips{margin-top:18px;font-size:12px;color:#64748b;line-height:1.6;background:#f8fafc;border-radius:9px;padding:12px 14px}
+.tips{margin-top:18px;font-size:12px;color:#4A5563;line-height:1.6;background:#f8fafc;border-radius:9px;padding:12px 14px}
 .tips strong{color:#0a0a0a;font-weight:700}
-.foot{margin-top:24px;font-size:13px;color:#64748b;text-align:center}
-.foot a{color:#2970FF;font-weight:600;text-decoration:none}
+.foot{margin-top:24px;font-size:13px;color:#4A5563;text-align:center}
+.foot a{color:#2064E8;font-weight:600;text-decoration:none}
 .foot a:hover{text-decoration:underline}
 .success-icon{width:64px;height:64px;background:#15803d;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:32px;margin:0 auto 16px;font-weight:700}
 .no-token{display:none}
@@ -14990,7 +15000,7 @@ button.submit:disabled{opacity:.6;cursor:not-allowed}
   <!-- Shown after successful reset -->
   <div class="no-token" id="success-view" style="text-align:center">
     <div class="success-icon">✓</div>
-    <h1 style="color:#15803d">Password updated</h1>
+    <h1 style="color:#116B35">Password updated</h1>
     <p class="sub">Your new password is set. Redirecting you to the dashboard…</p>
   </div>
   </div>

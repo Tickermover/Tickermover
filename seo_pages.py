@@ -669,7 +669,7 @@ def render_sector(slug: str, universe: list[dict], site_origin: str) -> Optional
       points=[("The whole sector", "All " + str(n) + " scored names, not the first screenful."),
               ("Sort and filter", "Rank on any pillar — growth, value, momentum — and save the view."),
               ("Watchlist", "Keep the names you care about and pick them up tomorrow.")])}
-  <p style="font-size:13px;color:#5d6c7b">Quant Scores update every 5 minutes during US market hours. Grades: <strong>A</strong> Top Tier · <strong>B</strong> Quality · <strong>C</strong> Average · <strong>D</strong> Below Avg · <strong>F</strong> Weak. (Quality descriptors, not buy/sell recommendations.)</p>
+  <p style="font-size:13px;color:#4A5563">Quant Scores update every 5 minutes during US market hours. Grades: <strong>A</strong> Top Tier · <strong>B</strong> Quality · <strong>C</strong> Average · <strong>D</strong> Below Avg · <strong>F</strong> Weak. (Quality descriptors, not buy/sell recommendations.)</p>
   {cta_block("See the full live dashboard", n=len(universe or []) or None)}
   {newsletter_block("sector-" + slug)}
   <div class="legal">TickerMover is a research tool, not financial advice, and not FCA-authorised. Always do your own research before investing. Capital at risk.</div>
@@ -684,10 +684,10 @@ def render_sector(slug: str, universe: list[dict], site_origin: str) -> Optional
   border-radius:10px;overflow:hidden;margin:0 0 8px}}
 .sp-stat{{background:#fff;padding:13px 15px;transition:background 140ms cubic-bezier(.2,.7,.2,1)}}
 .sp-stat:hover{{background:#FFF9F5}}
-.sp-k{{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#758696;font-weight:700}}
+.sp-k{{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#5B6673;font-weight:700}}
 .sp-v{{font-size:20px;font-weight:700;color:#0A2F46;margin-top:5px;font-variant-numeric:tabular-nums}}
-.sp-b{{font-size:11px;color:#758696;margin-top:2px;font-variant-numeric:tabular-nums}}
-.sp-read{{font-size:13.5px;color:#5d6c7b;line-height:1.6;margin:0 0 22px;padding:11px 15px;
+.sp-b{{font-size:11px;color:#5B6673;margin-top:2px;font-variant-numeric:tabular-nums}}
+.sp-read{{font-size:13.5px;color:#4A5563;line-height:1.6;margin:0 0 22px;padding:11px 15px;
   background:#F2F1EE;border-left:3px solid #FF6100;border-radius:4px}}
 .sp-ai{{font-size:14px;color:#10293D;line-height:1.65;margin:14px 0 10px;padding:14px 16px 14px 18px;
   background:#FFF8F4;border:1px solid #F0DDD1;border-left:3px solid #FF6100;border-radius:8px}}
@@ -701,7 +701,7 @@ def render_sector(slug: str, universe: list[dict], site_origin: str) -> Optional
 .tbl td.vd{{white-space:normal;line-height:1.5}}
 .tbl td.vd>span{{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;
   overflow:hidden}}
-.sr-nm{{font-size:12.5px;color:#5d6c7b;display:block;overflow:hidden;
+.sr-nm{{font-size:12.5px;color:#4A5563;display:block;overflow:hidden;
   text-overflow:ellipsis;white-space:nowrap}}
 .sr-id{{display:flex;align-items:center;gap:10px;min-width:0}}
 .sr-id>div{{min-width:0}}
@@ -717,7 +717,7 @@ def render_sector(slug: str, universe: list[dict], site_origin: str) -> Optional
 
 
 _SECTOR_INDEX_CSS = """
-.si-note{font-size:13px;color:#5d6c7b;line-height:1.6;margin:0 0 20px;padding:12px 16px;
+.si-note{font-size:13px;color:#4A5563;line-height:1.6;margin:0 0 20px;padding:12px 16px;
   background:#F2F1EE;border-left:3px solid #FF6100;border-radius:4px}
 .si-note b{color:#0A2F46}
 .si-wrap{overflow-x:auto;border:1px solid #D6DADD;border-radius:10px;background:#fff;margin:0 0 26px}
@@ -744,7 +744,7 @@ table.si tr.si-base:hover td{background:#FFF8F2}
 table.si tr.si-base td:first-child{box-shadow:inset 3px 0 0 #FF6100}
 table.si a.si-nm{color:#0A2F46;font-weight:650;text-decoration:none}
 table.si a.si-nm:hover{text-decoration:underline}
-.si-n{font-size:12px;color:#758696}
+.si-n{font-size:12px;color:#5B6673}
 .si-bar{display:inline-block;width:52px;height:6px;border-radius:99px;background:#EDEBE8;
   vertical-align:middle;margin-right:7px;overflow:hidden}
 .si-bar i{display:block;height:100%;border-radius:99px;background:#AEB9C2}
@@ -763,7 +763,7 @@ table.si a.si-nm:hover{text-decoration:underline}
 .si-lead img{width:17px;height:17px;border-radius:50%;object-fit:contain;
   background:#fff;flex:0 0 17px}
 .si-lead span{font-family:var(--mono),ui-monospace,Menlo,monospace;font-size:10.5px;
-  font-weight:600;color:#5d6c7b;letter-spacing:.02em}
+  font-weight:600;color:#4A5563;letter-spacing:.02em}
 .si-lead:hover span{color:#0A2F46}
 table.si td.si-sec{white-space:normal;min-width:230px;padding:10px 12px}
 .si-leads{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
@@ -892,7 +892,7 @@ def render_sector_index(universe: list[dict], site_origin: str) -> str:
         heading='The whole sub-sector table is free — you just need an account',
         blurb='Every group here opens into its own ranking, and the table is yours to sort and filter once you are signed in.',
         points=[('Every sub-sector', 'Not the first screenful — the full table, every column.'), ('Sort on any column', 'Rank groups by size, quant, spread or momentum.'), ('Straight into the names', 'Open any group and work down its ranking.')])}
-  <p style="font-size:13px;color:#5d6c7b">Scores refresh every 5 minutes during US market hours. Grades: <strong>A</strong> Top Tier · <strong>B</strong> Quality · <strong>C</strong> Average · <strong>D</strong> Below Avg · <strong>F</strong> Weak — quality descriptors, not recommendations.</p>
+  <p style="font-size:13px;color:#4A5563">Scores refresh every 5 minutes during US market hours. Grades: <strong>A</strong> Top Tier · <strong>B</strong> Quality · <strong>C</strong> Average · <strong>D</strong> Below Avg · <strong>F</strong> Weak — quality descriptors, not recommendations.</p>
   {cta_block("Open the live dashboard", n=n_names or None)}
   {newsletter_block("sectors-index")}
   <div class="legal">TickerMover — research, not advice.</div>
@@ -986,7 +986,7 @@ def _cmp_card(t: dict) -> str:
   <div class="cmp-row"><span class="k">Forward P/E</span><span class="v">{pe_str}</span></div>
   <div class="cmp-row"><span class="k">1-mo momentum</span><span class="v">{mom_str}</span></div>
   <div class="cmp-row"><span class="k">Analyst upside</span><span class="v">{upside_str}</span></div>
-  <div style="margin-top:14px;padding-top:12px;border-top:1px solid #F2F1EE;font-size:13.5px;color:#5d6c7b;line-height:1.55">{bl}</div>
+  <div style="margin-top:14px;padding-top:12px;border-top:1px solid #F2F1EE;font-size:13.5px;color:#4A5563;line-height:1.55">{bl}</div>
 </div>
 """
 
@@ -995,28 +995,28 @@ _CMP_CSS = """
 .h2h{overflow-x:auto;border:1px solid #D6DADD;border-radius:10px;background:#fff;margin:0 0 24px}
 table.h2h-t{border-collapse:collapse;width:100%;min-width:640px;font-variant-numeric:tabular-nums}
 table.h2h-t th{background:#F2F1EE;font-size:11px;letter-spacing:.06em;text-transform:uppercase;
-  color:#5d6c7b;font-weight:700;padding:12px;border-bottom:1px solid #D6DADD}
+  color:#4A5563;font-weight:700;padding:12px;border-bottom:1px solid #D6DADD}
 table.h2h-t th.sd{font-size:15px;letter-spacing:0;text-transform:none;color:#0A2F46}
 table.h2h-t td{padding:12px;border-bottom:1px solid #F2F1EE;font-size:14px;color:#10293D;
   text-align:center;white-space:nowrap}
-table.h2h-t td.mk{text-align:left;color:#5d6c7b;font-size:13.5px;white-space:normal}
-table.h2h-t td.mk i{display:block;font-style:normal;font-size:11.5px;color:#758696;margin-top:2px}
+table.h2h-t td.mk{text-align:left;color:#4A5563;font-size:13.5px;white-space:normal}
+table.h2h-t td.mk i{display:block;font-style:normal;font-size:11.5px;color:#5B6673;margin-top:2px}
 table.h2h-t tr:last-child td{border-bottom:0}
 table.h2h-t td.hi{background:#FFF6EF;font-weight:700;color:#0A2F46}
 .h2h-tag{display:inline-block;margin-left:6px;font-size:9.5px;font-weight:800;letter-spacing:.05em;
   color:#9A3412;background:rgba(255,97,0,.1);border-radius:4px;padding:1px 5px;vertical-align:middle}
-.h2h-ctx{font-size:13.5px;color:#5d6c7b;line-height:1.65;background:#F2F1EE;border-left:3px solid #FF6100;
+.h2h-ctx{font-size:13.5px;color:#4A5563;line-height:1.65;background:#F2F1EE;border-left:3px solid #FF6100;
   border-radius:4px;padding:14px 16px;margin:0 0 22px}
 .h2h-ctx b{color:#0A2F46}
 .h2h-sym{font-family:ui-monospace,Menlo,monospace;font-weight:700}
-.cs-lede{font-size:14px;color:#5D6C7B;line-height:1.65;max-width:78ch;margin:0 0 18px}
+.cs-lede{font-size:14px;color:#4A5563;line-height:1.65;max-width:78ch;margin:0 0 18px}
 .cs-wrap{display:grid;gap:1px;background:#D6DADD;border:1px solid #D6DADD;
   border-radius:10px;overflow:hidden;margin:0 0 14px}
 .cs-sec{background:#fff;padding:16px 18px}
 .cs-sec h3{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#9A3412;
   font-weight:800;margin:0 0 7px}
 .cs-sec p{font-size:14.5px;line-height:1.7;color:#10293D;margin:0;max-width:82ch}
-.cs-src{font-size:12px;color:#758696;margin:0 0 24px}
+.cs-src{font-size:12px;color:#5B6673;margin:0 0 24px}
 """
 
 
@@ -1217,7 +1217,7 @@ def render_compare_index(universe: list[dict], site_origin: str) -> str:
         bv = alpha["b"] if alpha else "—"
         same = ('<span style="color:#12704A;font-weight:650">same sub-sector</span>'
                 if c["same_sector"] else
-                '<span style="color:#758696">different sub-sectors</span>')
+                '<span style="color:#5B6673">different sub-sectors</span>')
         rows_html.append(
             '<tr><td><a class="si-nm" href="/compare/' + a + "-vs-" + b + '">'
             + a + " vs " + b + "</a></td>"
@@ -1341,10 +1341,10 @@ def render_article(art: dict, site_origin: str) -> Optional[str]:
 <style>
 .art{{max-width:760px;padding:26px 22px 60px}}
 .art-eyebrow{{font-size:11px;letter-spacing:.12em;text-transform:uppercase;
-  color:#758696;margin:0 0 10px;font-weight:700}}
+  color:#5B6673;margin:0 0 10px;font-weight:700}}
 .art-h1{{font-size:clamp(27px,4.4vw,40px);line-height:1.15;letter-spacing:-.022em;
   color:#0A2F46;margin:0 0 14px}}
-.art-sum{{font-size:17px;line-height:1.6;color:#5d6c7b;margin:0 0 18px}}
+.art-sum{{font-size:17px;line-height:1.6;color:#4A5563;margin:0 0 18px}}
 .art-tick{{display:inline-block;font-family:ui-monospace,monospace;font-size:12px;
   font-weight:700;color:#14587D;background:rgba(20,88,125,.08);
   border:1px solid rgba(20,88,125,.18);border-radius:999px;
@@ -1356,7 +1356,7 @@ def render_article(art: dict, site_origin: str) -> Optional[str]:
 .art-body h3{{font-size:18px;color:#0A2F46;margin:26px 0 10px}}
 .art-body ul,.art-body ol{{margin:0 0 17px;padding-left:22px}}
 .art-body li{{margin:0 0 7px}}
-.art-note{{font-size:12.5px;line-height:1.6;color:#758696;margin:34px 0 26px;
+.art-note{{font-size:12.5px;line-height:1.6;color:#5B6673;margin:34px 0 26px;
   padding-top:16px;border-top:1px solid rgba(10,47,70,.09)}}
 </style>"""
 
@@ -1451,7 +1451,7 @@ _SCREEN_GROUPS = [
 ]
 
 _SCREEN_CSS = """
-.scr-note{font-size:13.5px;color:#5d6c7b;line-height:1.6;margin:0 0 22px;padding:12px 16px;
+.scr-note{font-size:13.5px;color:#4A5563;line-height:1.6;margin:0 0 22px;padding:12px 16px;
   background:#F2F1EE;border-left:3px solid #FF6100;border-radius:4px}
 .scr-note b{color:#0A2F46}
 .scr-wrap{overflow-x:auto;border:1px solid #D6DADD;border-radius:10px;background:#fff;margin:0 0 26px}
@@ -1469,7 +1469,7 @@ table.scr tbody tr:hover td{background:#FFF6F1}
 .scr-logo{width:24px;height:24px;border-radius:50%;object-fit:contain;background:#fff;
   box-shadow:0 0 0 1px #E4E7EC;flex:0 0 24px}
 .scr-tk{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--blue-light)}
-.scr-nm{font-size:12px;color:#5d6c7b;display:block;overflow:hidden;text-overflow:ellipsis;
+.scr-nm{font-size:12px;color:#4A5563;display:block;overflow:hidden;text-overflow:ellipsis;
   white-space:nowrap;max-width:210px}
 .scr-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(268px,1fr));gap:14px;margin:0 0 30px}
 .scr-card{border:1px solid #D6DADD;border-radius:12px;padding:16px 18px;background:#fff;
@@ -1477,10 +1477,10 @@ table.scr tbody tr:hover td{background:#FFF6F1}
   box-shadow 140ms cubic-bezier(.2,.7,.2,1)}
 .scr-card:hover{text-decoration:none;border-color:#0A2F46;box-shadow:0 8px 22px -14px rgba(10,47,70,.45)}
 .scr-card h3{margin:0 0 5px;font-size:15.5px;font-weight:500;color:#0A2F46}
-.scr-card p{margin:0;font-size:12.5px;color:#5d6c7b;line-height:1.5}
+.scr-card p{margin:0;font-size:12.5px;color:#4A5563;line-height:1.5}
 .scr-card .n{font-family:var(--mono);font-size:11px;color:#9A3412;font-weight:700;
   letter-spacing:.04em;display:block;margin-top:8px}
-.scr-grp{font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:#758696;
+.scr-grp{font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:#5B6673;
   font-weight:700;margin:26px 0 12px}
 .scr-rel{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 26px}
 .scr-rel a{font-size:12.5px;padding:6px 13px;border:1px solid #D6DADD;border-radius:99px;
