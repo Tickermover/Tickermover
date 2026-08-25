@@ -350,7 +350,7 @@ async def concall_summary(ticker: str, profile_data: str = "", quarter: str | No
                 "note": "AI summaries are paused for now — please check back later."}
     if not ANTHROPIC_KEY:
         return {"available": False, "reason": "disabled",
-                "note": "The AI summary isn't enabled yet (set ANTHROPIC_API_KEY)."}
+                "note": "The AI summary isn't enabled on this deployment yet."}
     text = src = src_url = None
     src_tag = "sec_edgar"
     av_throttled = False

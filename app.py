@@ -14,7 +14,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any, Optional
 
-from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect, Depends
+from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect, Depends, Body
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.staticfiles import StaticFiles
@@ -895,27 +895,170 @@ def _ai_over_budget() -> bool:
     return _ai_over_monthly_budget()
 
 
+# ── What "On the Radar" can put in front of a reader ─────────────────────
+# The card decks are built CLIENT-SIDE in renderPicks/selectHot, and their
+# eligibility rule is just "Quant Score >= 70" (MIN_MCAP is 0). `_is_hot_eligible`
+# is a DIFFERENT, much narrower rule — it adds Grade A, a confidence floor, a
+# $500M cap floor and a mega-cap exclusion — so prewarming from it left most of
+# what a reader can actually click on the page cold. This is the client's rule,
+# evaluated server-side, so the two surfaces agree on what needs to be warm.
+RADAR_SCORE_FLOOR = 70.0
+
+# Names the On the Radar page has actually put on screen, newest first. The
+# page reports its own list (POST /api/radar-seen) because the decks are
+# assembled in the browser and no server-side re-derivation stays in step —
+# see the comment on _reportRadarNames in dashboard.html.
+_RADAR_SEEN: "OrderedDict[str, float]" = __import__("collections").OrderedDict()
+_RADAR_SEEN_MAX = 400
+
+
+def _radar_note_seen(syms) -> int:
+    """Record tickers the radar page displayed. Only names in our own universe
+    are accepted, so this cannot be used to point the prewarm at arbitrary
+    input, and the store is bounded — the prewarm's own cap and pacing bound
+    the work regardless."""
+    known = {(t.get("ticker") or "").upper() for t in (_universe_data or [])}
+    added = 0
+    for raw in (syms or [])[:200]:
+        sym = str(raw or "").upper().strip()
+        if not sym or sym not in known:
+            continue
+        if sym in _RADAR_SEEN:
+            _RADAR_SEEN.move_to_end(sym)
+        else:
+            added += 1
+        _RADAR_SEEN[sym] = time.time()
+    while len(_RADAR_SEEN) > _RADAR_SEEN_MAX:
+        _RADAR_SEEN.popitem(last=False)
+    return added
+
+
+
+def _radar_symbols(cap: int = 400) -> list[str]:
+    """Tickers On the Radar can surface, best-first, deduped.
+
+    Order is the order a reader meets them: the model-portfolio picks, then the
+    curated featured set, then everything clearing the score floor ranked by the
+    same run-room rank the cards use. A prewarm that runs out of budget should
+    run out at the bottom of this list, not the middle of it.
+    """
+    out: list[str] = []
+    seen: set[str] = set()
+
+    def _add(sym) -> None:
+        s = str(sym or "").upper().strip()
+        if s and s not in seen:
+            seen.add(s)
+            out.append(s)
+
+    for p in ((_model_portfolio or {}).get("picks") or []):
+        _add(p.get("ticker"))
+    try:
+        for t in (_ensure_featured() or []):
+            _add(t if isinstance(t, str) else t.get("ticker"))
+    except Exception:
+        pass
+    # What the page said it showed, most recent first. These come BEFORE the
+    # score ranking because they are observed rather than inferred.
+    for sym in reversed(list(_RADAR_SEEN.keys())):
+        _add(sym)
+
+    def _score(t: dict) -> float:
+        v = t.get("smart_score")
+        if v is None:
+            v = t.get("pop_score")
+        try:
+            return float(v or 0)
+        except (TypeError, ValueError):
+            return 0.0
+
+    pool = [t for t in (_universe_data or []) if _score(t) >= RADAR_SCORE_FLOOR]
+    try:
+        pool.sort(key=_run_room_rank, reverse=True)
+    except Exception:
+        pool.sort(key=_score, reverse=True)
+    for t in pool:
+        _add(t.get("ticker"))
+    return out[:cap]
+
+
 async def _overview_prewarm() -> None:
-    """Background loop: keep the curated ~35 Overviews warm. Runs ~every 6h; most
-    cycles do nothing because the 30-day cache is still fresh."""
+    """Background loop: keep the Overviews warm for everything On the Radar can
+    show, not just the curated ~35. Runs ~every 6h; most cycles do nothing
+    because the 30-day cache is still fresh, and a warm ticker costs one cache
+    peek with no sleep — so a steady-state pass is seconds."""
     import research_gen
+    cap   = max(1, int(os.environ.get("OVERVIEW_PREWARM_N", "150") or 150))
     await asyncio.sleep(150)               # let the universe + featured set load first
     while True:
         try:
             if research_gen.available() and _universe_data and not _ai_over_budget():
+                targets = _radar_symbols(cap)
                 warmed = 0
-                for t in _ensure_featured():
-                    sym = t.get("ticker")
-                    if not sym:
-                        continue
+                for sym in targets:
                     if await _prewarm_one_overview(sym):
                         warmed += 1
                         await asyncio.sleep(3)   # gentle pacing — no burst
-                if warmed:
-                    logger.info(f"🔥 Overview pre-warm: refreshed {warmed} curated overviews")
+                # Say what was left out. A silent cap reads as "everything is
+                # covered" when it is not.
+                total = len(_radar_symbols(10_000))
+                if warmed or total > len(targets):
+                    logger.info("🔥 Overview pre-warm: %d generated of %d radar names"
+                                "%s", warmed, len(targets),
+                                f" ({total - len(targets)} beyond the cap, raise OVERVIEW_PREWARM_N)"
+                                if total > len(targets) else "")
         except Exception as exc:
             logger.warning(f"overview pre-warm cycle failed: {exc}")
         await asyncio.sleep(6 * 3600)      # every 6h
+
+
+async def _deps_prewarm() -> None:
+    """Background loop: keep the Supply Chain map warm for the On-the-Radar set.
+
+    This surface had NO prewarm at all — it was generate-on-open only, so every
+    reader who opened the tab on a cold ticker waited for a web-grounded model
+    call, and when the free chain was down they got an error instead of a map.
+    The doc is cached 30 days in the KV store (same TTL the route reads with),
+    so steady state is a cache peek per ticker.
+    """
+    if (os.environ.get("DEPS_PREWARM", "1") or "").strip().lower() in ("0", "false", "no", "off"):
+        logger.info("Supply Chain pre-warm disabled (DEPS_PREWARM=0)")
+        return
+    cap    = max(1, int(os.environ.get("DEPS_PREWARM_N", "120") or 120))
+    pace_s = max(2, int(os.environ.get("DEPS_PREWARM_SLEEP", "12") or 12))
+    await asyncio.sleep(1200)              # last in the queue — the cheap warms go first
+    while True:
+        try:
+            import dependencies_gen
+            from kv_store import store as _kv
+            if dependencies_gen.available() and _universe_data and not _ai_over_budget():
+                targets = _radar_symbols(cap)
+                warm = generated = failed = 0
+                for sym in targets:
+                    doc = await asyncio.to_thread(_kv.get, "dependencies", sym, 30 * 86400)
+                    if isinstance(doc, dict) and (doc.get("dependencies") or doc.get("exposure")):
+                        warm += 1
+                        continue           # cache peek only — no sleep, or a pass idles for hours
+                    target = next((t for t in _universe_data if t.get("ticker") == sym), None)
+                    try:
+                        out = await dependencies_gen.generate_dependencies(sym, target)
+                        out.setdefault("status", "ready")
+                        await asyncio.to_thread(_kv.set, "dependencies", sym, out)
+                        cache.set("deps:" + sym, out, ttl=30 * 86400)
+                        generated += 1
+                    except Exception as exc:
+                        failed += 1
+                        logger.warning("supply-chain pre-warm %s: %s", sym, exc)
+                    await asyncio.sleep(pace_s)   # the free chain is rate-limited, not billed
+                total = len(_radar_symbols(10_000))
+                if targets:
+                    logger.info("🔗 Supply Chain pre-warm: %d/%d warm, %d generated, %d failed%s",
+                                warm, len(targets), generated, failed,
+                                f", {total - len(targets)} beyond the cap (raise DEPS_PREWARM_N)"
+                                if total > len(targets) else "")
+        except Exception as exc:
+            logger.warning(f"supply-chain pre-warm cycle failed: {exc}")
+        await asyncio.sleep(6 * 3600)      # four passes a day
 
 
 async def _data_prewarm() -> None:
@@ -980,18 +1123,13 @@ async def _mgmt_qa_prewarm() -> None:
                 if s and s not in syms:
                     syms.append(s)
 
-            # Order matters — the budget goes to what users actually open first:
-            # portfolio picks, then the featured names on the landing surfaces,
-            # then the rest of the best-ideas list.
-            for p in ((_model_portfolio or {}).get("picks") or []):
-                _add(p.get("ticker") or "")
-            try:
-                for s in (_ensure_featured() or []):
-                    _add(s if isinstance(s, str) else (s.get("ticker") or ""))
-            except Exception:
-                pass
-            for t in (_brief_top_picks(40) or []):
-                _add(t.get("ticker") or "")
+            # ONE definition of "what a reader can open from On the Radar",
+            # shared with the Overview and Supply Chain prewarms. This used to
+            # end at _brief_top_picks(40), which filters on _is_hot_eligible —
+            # a stricter rule than the cards use — so names sitting on the page
+            # were never queued.
+            for _s in _radar_symbols(cap):
+                _add(_s)
 
             by_t = {(x.get("ticker") or "").upper(): x for x in (_universe_data or [])}
             targets = syms[:cap]
@@ -1529,7 +1667,7 @@ async def lifespan(app: FastAPI):
         asyncio.create_task(_desk_publisher()),     # freeze pre/post editions
         asyncio.create_task(_weekly_publisher()),   # legacy weekly editorial (WEEKLY_MODE=article|both)
         asyncio.create_task(_thesis_map_publisher()),  # a new chain map every Sunday eve ET
-        asyncio.create_task(_overview_prewarm()),   # keep curated Overviews warm
+        asyncio.create_task(_overview_prewarm()),   # Overviews for the On-the-Radar set
         asyncio.create_task(_data_prewarm()),        # keep all stocks' free data (stock-extra) warm
         asyncio.create_task(_bottom_line_prewarm()), # Haiku-polish bottom_lines (cache-first, 15d)
         asyncio.create_task(_selection_prewarm()),   # keep AI conviction/thesis warm for House View
@@ -1539,8 +1677,9 @@ async def lifespan(app: FastAPI):
         asyncio.create_task(_sector_note_prewarm()), # "Our read" on every sub-sector page
         asyncio.create_task(_roster_prewarm()),      # map every scored stock to a capex chain
         asyncio.create_task(_chain_photo_prewarm()),  # one real photo per capex chain
-        asyncio.create_task(_mgmt_qa_prewarm()),     # Fact Check AI answers for prime + best-ideas names
+        asyncio.create_task(_mgmt_qa_prewarm()),     # Fact Check answers for the On-the-Radar set
         asyncio.create_task(_event_brief_prewarm()), # earnings briefs for the Company Events timeline
+        asyncio.create_task(_deps_prewarm()),        # Supply Chain maps for the On-the-Radar set
         asyncio.create_task(_daily_brief_email_task()),  # free daily-brief email (acquisition channel)
     ]
     yield
@@ -1930,6 +2069,20 @@ async def sitemap_xml():
 
     parts.append('</urlset>')
     return HTMLResponse(content='\n'.join(parts), media_type="application/xml")
+
+
+@app.post("/api/radar-seen")
+async def api_radar_seen(payload: dict = Body(default={})):
+    """The dashboard reporting which names On the Radar rendered, so the
+    prewarm warms exactly those. Unauthenticated on purpose — it is a hint
+    about our own universe, filtered against it, bounded, and it triggers no
+    work of its own."""
+    try:
+        added = _radar_note_seen((payload or {}).get("tickers") or [])
+    except Exception as exc:
+        logger.warning("radar-seen: %s", exc)
+        return JSONResponse({"ok": False})
+    return JSONResponse({"ok": True, "known": len(_RADAR_SEEN), "new": added})
 
 
 @app.get("/api/ticker-strip")
@@ -8738,7 +8891,7 @@ async def api_research(ticker: str, force: bool = False,
         if doc:
             return JSONResponse(_payload(doc, stale=True))
         return JSONResponse({"ticker": sym, "status": "unavailable",
-                             "detail": "AI Deep-Dive is not enabled (set ANTHROPIC_API_KEY)."})
+                             "detail": "AI Deep-Dive is not enabled on this deployment."})
 
     # Kick off a single background generation per ticker.
     if sym not in _research_generating:
@@ -8795,7 +8948,7 @@ async def api_overview(ticker: str, force: bool = False,
     _ov_pro = await _is_pro_user(user, creds)
     if not research_gen.available():
         return JSONResponse({"ticker": sym, "status": "unavailable",
-                             "detail": "AI overview is not enabled (set ANTHROPIC_API_KEY)."})
+                             "detail": "AI overview is not enabled on this deployment."})
     # Forced (paid) regen is admin-only; everyone else relies on normal staleness
     # (30-day TTL + post-earnings trigger). Prevents ?force=true budget abuse.
     force = bool(force) and bool(user) and (user.get("email") or "").lower() in _AI_ALLOW
@@ -9871,7 +10024,7 @@ async def api_compare_card(ticker: str, force: bool = False,
         if doc:
             return JSONResponse(_payload(doc, stale=True))
         return JSONResponse({"ticker": sym, "status": "unavailable",
-                             "detail": "AI comparison is not enabled (set ANTHROPIC_API_KEY)."})
+                             "detail": "AI comparison is not enabled on this deployment."})
 
     if sym not in _compare_generating:
         _compare_generating.add(sym)

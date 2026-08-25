@@ -27917,7 +27917,48 @@ function scResultHTML(d){
       '<b>Educational research tool.</b> TickerMover is a quantitative analysis platform — not an FCA-authorised investment adviser. '+
       'The Quant Score, pillars, and signals on this page are descriptive observations, not personalized advice. '+
       'Past performance and quantitative ratings do not guarantee future results. Always do your own research.';
+    _reportRadarNames();
   };
+
+  /* TELL THE SERVER WHAT THIS PAGE ACTUALLY SHOWED.
+
+     The prewarm needs to know which names a reader can click from On the
+     Radar, and that set is decided HERE, in the browser, by six different
+     decks (picks, movers, earnings soon, trending, sector leaders, timeline).
+     Re-deriving those rules server-side is how the old prewarm drifted: it
+     used _is_hot_eligible, a stricter rule than the cards use, and against a
+     live payload 37 of the 74 names on the page scored below its floor — AN
+     sits at rank 1,380 of 1,571 because it is a mover, not a pick. No
+     score-ranked cap can cover that. So the page reports its own list and the
+     server prewarms exactly it, which cannot drift by construction.
+
+     Once per load, fire-and-forget, and only names that came from the payload
+     (so this is a hint about our own universe, never arbitrary input). */
+  var _radarSent = false;
+  function _reportRadarNames(){
+    if (_radarSent) return;
+    try {
+      var panel = document.getElementById('panel-hot');
+      if (!panel) return;
+      var seen = {}, out = [];
+      var w = document.createTreeWalker(panel, NodeFilter.SHOW_TEXT, null), n;
+      while ((n = w.nextNode())){
+        var t = (n.nodeValue || '').trim().toUpperCase();
+        if (t && t.length <= 6 && _byTicker[t] && !seen[t]){ seen[t] = 1; out.push(t); }
+      }
+      panel.querySelectorAll('[data-ticker]').forEach(function(el){
+        var t = (el.getAttribute('data-ticker') || '').toUpperCase();
+        if (t && _byTicker[t] && !seen[t]){ seen[t] = 1; out.push(t); }
+      });
+      if (!out.length) return;
+      _radarSent = true;
+      fetch('/api/radar-seen', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({tickers: out.slice(0, 120)}),
+      }).catch(function(){ _radarSent = false; });   // let the next render retry
+    } catch(e){}
+  }
+
   // Re-run with the last-loaded snapshot (used on profile switches).
   window.tsRerender = function(){ if(DATA) window.tsRender(DATA); };
   // Live patch for the Sector Map "Today" column: recompute each sector's
