@@ -17494,7 +17494,7 @@ async function loadFeaturedSet(){
     _featuredLoaded = true;
     if (typeof v2RenderScreens === 'function') v2RenderScreens();   // Smart Screens bar ("All" selected by default)
     if (typeof v2SyncUniverseTally === 'function') v2SyncUniverseTally();
-    if (typeof _secgRefresh === 'function') _secgRefresh();          // sync the connections map to the Featured lens
+    if (typeof _secgRefreshSoon === 'function') _secgRefreshSoon();  // sync the connections map to the Featured lens
   } catch(e) {
     // If the featured set can't load, don't trap the user on an empty table.
     console.warn('[PD] featured set load failed:', e.message);
@@ -17537,7 +17537,7 @@ function _toggleFeaturedOnly(){
   document.body.classList.toggle('v2-featured-only');
   _updateFeaturedToggleLabel();
   if (typeof v2SyncUniverseTally === 'function') v2SyncUniverseTally();
-  if (typeof _secgRefresh === 'function') _secgRefresh();
+  if (typeof _secgRefreshSoon === 'function') _secgRefreshSoon();
 }
 
 /* ----------------------------------------------------------
@@ -17558,11 +17558,32 @@ const _UNI_SCREENS = [
 ];
 let _uniScreen = 'all';   // 'All' leads the bar and is selected by default — no lens pre-applied
 
+/* Parsed screen inputs, cached per ROW. Every screen predicate re-parsed nine
+   data-* attributes, and at 1,571 rows the screen bar alone re-parsed ~113,000
+   of them on every render (8 screens x 1,571 x 9). Keyed by the element in a
+   WeakMap, so a re-rendered table gets fresh entries for free — the old rows
+   are gone and take their cache with them. */
+const _scnCache = new WeakMap();
+function _scnVals(row){
+  let v = _scnCache.get(row);
+  if (v) return v;
+  const ds = row.dataset;
+  v = { pop:parseFloat(ds.pop)||0, rs:parseFloat(ds.rs)||0, m3:parseFloat(ds.mom3m),
+        rev:parseFloat(ds.rev), fcf:parseFloat(ds.fcf), pe:parseFloat(ds.pe),
+        dte:parseInt(ds.dte), g:(ds.grade||'').toUpperCase(), up:parseFloat(ds.upside) };
+  _scnCache.set(row, v);
+  return v;
+}
+function _screenMatchRow(id, row){ return _screenMatchVals(id, _scnVals(row)); }
 function _screenMatch(id, ds){
-  const pop=parseFloat(ds.pop)||0, rs=parseFloat(ds.rs)||0, m3=parseFloat(ds.mom3m);
-  const rev=parseFloat(ds.rev), fcf=parseFloat(ds.fcf), pe=parseFloat(ds.pe), dte=parseInt(ds.dte);
-  const g=(ds.grade||'').toUpperCase();
-  const up=parseFloat(ds.upside);
+  return _screenMatchVals(id, {
+    pop:parseFloat(ds.pop)||0, rs:parseFloat(ds.rs)||0, m3:parseFloat(ds.mom3m),
+    rev:parseFloat(ds.rev), fcf:parseFloat(ds.fcf), pe:parseFloat(ds.pe),
+    dte:parseInt(ds.dte), g:(ds.grade||'').toUpperCase(), up:parseFloat(ds.upside),
+  });
+}
+function _screenMatchVals(id, v){
+  const pop=v.pop, rs=v.rs, m3=v.m3, rev=v.rev, fcf=v.fcf, pe=v.pe, dte=v.dte, g=v.g, up=v.up;
   switch(id){
     case 'momentum':  return rs>=80 && !isNaN(m3) && m3>5;
     case 'quality':   return g==='A' && !isNaN(rev) && rev>=15 && !isNaN(fcf) && fcf>=5;
@@ -17586,9 +17607,19 @@ function v2RenderScreens(){
   // scope them to the reader's risk profile, and with the profile pinned to
   // 'full' — a value no row carries in data-profiles — every screen would
   // have counted ZERO. The rows still carry the attribute; nothing reads it.
-  const count=id=> id==='all'      ? rows.length
-               : id==='featured'   ? rows.filter(r=>r.hasAttribute('data-featured')).length
-               : rows.filter(r=>_screenMatch(id, r.dataset)).length;
+  /* ONE pass over the rows for ALL eight counts, not one pass per screen.
+     `rows.filter(...)` per screen walked 1,571 rows eight times over. */
+  const tally={}; _UNI_SCREENS.forEach(s=>{ tally[s.id]=0; });
+  rows.forEach(r=>{
+    const v=_scnVals(r);
+    tally.all++;
+    if (r.hasAttribute('data-featured')) tally.featured++;
+    _UNI_SCREENS.forEach(s=>{
+      if (s.id==='all'||s.id==='featured') return;
+      if (_screenMatchVals(s.id, v)) tally[s.id]++;
+    });
+  });
+  const count=id=>tally[id]||0;
   wrap.innerHTML=_UNI_SCREENS.map(s=>
     '<button class="uni-screen'+(s.id===_uniScreen?' on':'')+'" style="--scn:'+s.scn+'" '+
       'data-screen="'+s.id+'" onclick="v2ApplyScreen(\''+s.id+'\')">'+
@@ -17606,20 +17637,48 @@ function v2ApplyScreen(id){
   // inline display filterFund() left behind so the CSS layers govern again.
   ['fd-rs','fd-grade'].forEach(x=>{const el=document.getElementById(x); if(el) el.value='';});
   const rows=document.querySelectorAll('#fund-tbody tr.fund-row');
-  rows.forEach(r=>{ r.style.display=''; });
+  // Only sweep inline display when filterFund actually set some. Writing
+  // `style.display` on 1,571 untouched rows invalidates every one of them for
+  // nothing — and this ran on every chip click.
+  if (window._fundInlineFiltered){
+    rows.forEach(r=>{ r.style.display=''; });
+    window._fundInlineFiltered = false;
+  }
   if(id==='featured'){
     document.body.classList.add('v2-featured-only');
     rows.forEach(r=>r.classList.remove('scn-hide'));
   }else{
     document.body.classList.remove('v2-featured-only');
-    rows.forEach(r=>r.classList.toggle('scn-hide', id!=='all' && !_screenMatch(id, r.dataset)));
+    rows.forEach(r=>r.classList.toggle('scn-hide', id!=='all' && !_screenMatchRow(id, r)));
   }
+  // Re-sort only when the order actually changes. Several screens sort by
+  // 'pop', so switching between them was paying a full 1,571-row re-append for
+  // an order that was already correct. _fundSortKey is what the DOM is really
+  // sorted by — a header click sorts without touching the hidden input, so
+  // comparing against the input would have gone stale.
   const sortEl=document.getElementById('fd-sort');
-  if(sortEl){ sortEl.value=def.sort; if(typeof sortFund==='function') sortFund(); }
+  if(sortEl) sortEl.value=def.sort;
+  if(_fundSortKey!==def.sort && typeof sortFund==='function') sortFund();
   if(typeof v2SyncUniverseTally==='function') v2SyncUniverseTally();
-  if(typeof _secgRefresh==='function') _secgRefresh();   // keep the connections map in sync with the lens
+  // The connections map has to follow the lens, but it rebuilds the SVG and
+  // measures it — a forced layout — and none of that is what the reader is
+  // looking at in the instant they click a chip. Off the click path, and
+  // coalesced so a fast run along the chip bar rebuilds it once.
+  _secgRefreshSoon();
 }
 
+/* Coalesced, off the interaction path. Repeated calls in one burst collapse
+   into a single rebuild after the browser has painted the click. */
+let _secgRefreshPending = 0;
+function _secgRefreshSoon(){
+  if (typeof _secgRefresh !== 'function') return;
+  if (_secgRefreshPending) return;
+  const _idle = window.requestIdleCallback || (cb => setTimeout(cb, 16));
+  _secgRefreshPending = 1;
+  _idle(() => { _secgRefreshPending = 0; try { _secgRefresh(); } catch(e){} }, {timeout: 500});
+}
+
+let _fundSortKey = 'pop';   // the key the tbody is ACTUALLY ordered by
 function sortFundList(key) {
   const tbody = document.getElementById('fund-tbody');
   if (!tbody) return;
@@ -17629,7 +17688,12 @@ function sortFundList(key) {
     const vb = parseFloat(b.dataset[key]) || -999;
     return vb - va;
   });
-  rows.forEach(r => tbody.appendChild(r));
+  // One fragment, one insertion. Appending 1,571 rows one at a time makes the
+  // browser re-check the tbody on every move.
+  const frag = document.createDocumentFragment();
+  rows.forEach(r => frag.appendChild(r));
+  tbody.appendChild(frag);
+  _fundSortKey = key;
 }
 
 /* ----------------------------------------------------------
@@ -21185,6 +21249,9 @@ function filterFund() {
     c.style.display = ok ? '' : 'none';
     if (ok) n++;
   });
+  // Tells v2ApplyScreen there is inline display to clear. Without the flag it
+  // swept all 1,571 rows on every chip click on the off-chance.
+  window._fundInlineFiltered = true;
   const tally = document.getElementById('tally-fund');
   if (tally) tally.textContent = n + ' stocks';
 }
