@@ -2401,12 +2401,36 @@ table.ssx-h2h tbody td.self{color:var(--ink);font-weight:600}
 .fund-list-wrap{overflow-x:auto;border-radius:16px;background:rgba(255,255,255,.55);
   backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.7);
   box-shadow:0 8px 32px rgba(0,0,0,.12),0 2px 8px rgba(0,0,0,.08);padding:6px}
+/* Cap the universe table at 50 rows and scroll INSIDE it. With 1,500+ names the
+   page otherwise ran on for ~86,000px, so the scrollbar was useless and nothing
+   below the table was reachable. Under 50 rows (Featured = 35, most sector
+   filters) the box shrinks to fit and no scrollbar appears at all.
+   The vh term is a second ceiling, not a second opinion: 50 rows is ~2,800px,
+   which would scroll the sticky header off screen on a laptop and put us back
+   where we started. min() takes whichever cap bites first. */
+#fd-grid{
+  --fl-row-h:55px;      /* 10+10 cell padding + ~30 content + 5px row gap */
+  --fl-head-h:38px;
+  --fl-max-rows:50;
+  max-height:min(calc(var(--fl-row-h) * var(--fl-max-rows) + var(--fl-head-h)),78vh);
+  overflow-y:auto;
+  overscroll-behavior-y:contain;   /* don't hand the page the scroll at the ends */
+  scrollbar-width:thin;
+}
 /* min-width forces the table wider than its container so the wrapper's
    overflow-x:auto actually produces a horizontal scrollbar on desktop. */
 .fund-list{width:100%;min-width:1040px;border-collapse:collapse;font-size:13px}
-.fund-list th{background:rgba(255,255,255,.9);padding:10px 12px;text-align:left;font-weight:700;color:#374151;
+/* Sticky header, now that the wrapper scrolls vertically. Three details matter:
+   - the old rule declared `position:sticky` and then `position:relative`, so it
+     was never sticky at all; relative was only there to anchor .col-resizer,
+     and sticky anchors an absolute child just as well.
+   - the background must be OPAQUE. rgba(255,255,255,.9) let rows show through
+     as they scrolled under it.
+   - border-bottom does not paint on a sticky cell in a border-collapse table,
+     so the header rule is drawn as an inset shadow instead. */
+.fund-list th{background:#ffffff;padding:10px 12px;text-align:left;font-weight:700;color:#374151;
   font-size:11px;text-transform:uppercase;letter-spacing:.5px;cursor:pointer;white-space:nowrap;
-  border-bottom:2px solid #e2e8f0;position:sticky;top:0;position:relative;user-select:none}
+  box-shadow:inset 0 -2px 0 #e2e8f0;position:sticky;top:0;z-index:3;user-select:none}
 .fund-list th:hover{color:#0040c1}
 /* Card-style rows — no left-edge brand stripe (was visible lime green) */
 .fund-list td{padding:10px 12px;background:#ffffff;vertical-align:middle;white-space:nowrap;
@@ -12008,6 +12032,7 @@ function v2SelectSector(name){
     return;
   }
   v2SetSectorFilter(name);
+  fdScrollTop();
   const toolbar = document.querySelector('#panel-fund .fd-toolbar');
   if (toolbar) toolbar.scrollIntoView({ behavior:'smooth', block:'start' });
 }
@@ -18197,6 +18222,7 @@ function v2ApplyScreen(id){
   // looking at in the instant they click a chip. Off the click path, and
   // coalesced so a fast run along the chip bar rebuilds it once.
   _secgRefreshSoon();
+  fdScrollTop();
 }
 
 /* Coalesced, off the interaction path. Repeated calls in one burst collapse
@@ -18208,6 +18234,14 @@ function _secgRefreshSoon(){
   const _idle = window.requestIdleCallback || (cb => setTimeout(cb, 16));
   _secgRefreshPending = 1;
   _idle(() => { _secgRefreshPending = 0; try { _secgRefresh(); } catch(e){} }, {timeout: 500});
+}
+
+/* The table is a 50-row scroll box now, so any operation that changes WHICH
+   rows are in it has to return the reader to the first one. Without this a
+   chip click leaves you parked 30 rows into a list you just replaced. */
+function fdScrollTop(){
+  const w = document.getElementById('fd-grid');
+  if (w) w.scrollTop = 0;
 }
 
 let _fundSortKey = 'pop';   // the key the tbody is ACTUALLY ordered by
@@ -18226,6 +18260,7 @@ function sortFundList(key) {
   rows.forEach(r => frag.appendChild(r));
   tbody.appendChild(frag);
   _fundSortKey = key;
+  fdScrollTop();
 }
 
 /* ----------------------------------------------------------
