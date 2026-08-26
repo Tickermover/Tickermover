@@ -3342,6 +3342,22 @@ body.v2 .v2ov-card.sectors .v2ov-sector-cell{
   border-top:1px solid #EDEFF2}
 .dm-band:first-child{border-top:none;padding-top:6px}
 .dm-band small{font-size:11.5px;color:#5B6673;font-weight:400}
+.dm-band .dm-band-n{font-weight:700;color:#4A5563}
+/* The band chip is a button now. It keeps the .v2-beta colours so the three
+   bands still read as one system with the row chips, and only gains the
+   affordances: a pointer, a hover lift, and an arrow that slides on hover. */
+.dm-band-go{font:inherit;border:0;cursor:pointer;gap:5px;
+  transition:transform var(--t-fast) var(--e-out),box-shadow var(--t-fast) var(--e-out)}
+.dm-band-go:hover{transform:translateY(-1px);box-shadow:0 4px 10px -4px rgba(10,10,10,.35)}
+.dm-band-go:focus-visible{outline:2px solid #2064E8;outline-offset:2px}
+.dm-band-arr{font-style:normal;font-size:10px;opacity:.65;
+  transition:transform var(--t-fast) var(--e-out),opacity var(--t-fast) var(--e-out)}
+.dm-band-go:hover .dm-band-arr{opacity:1;transform:translateX(2px)}
+@media(prefers-reduced-motion:reduce){
+  .dm-band-go,.dm-band-arr{transition:none}
+  .dm-band-go:hover{transform:none}
+  .dm-band-go:hover .dm-band-arr{transform:none}
+}
 .v2-beta{display:inline-flex;align-items:center;border-radius:100px;padding:2px 9px;
   font-size:10.5px;font-weight:600;letter-spacing:.02em;white-space:nowrap}
 /* Three distinguishable hues — the low and mid chips were two greys a shade
@@ -17776,6 +17792,26 @@ function v2RenderBands(){
   };
 }
 
+/* Jump from a beta band header on On the Radar to the whole band in the
+   Sectors Map. Clears the lens on the way: the reader clicked "Low beta", so
+   they asked for every low-beta name, not the low-beta slice of whatever screen
+   happened to be selected. Also clears any sector filter for the same reason.
+   Exposed on window because the caller lives in another script block. */
+window.v2GoBetaBand = function(key){
+  if (!key) return;
+  try { v2Show('fund'); } catch(e){}
+  try { if (typeof v2ClearSectorFilter === 'function') v2ClearSectorFilter(); } catch(e){}
+  try { if (typeof v2ApplyScreen === 'function') v2ApplyScreen('all'); } catch(e){}
+  try { v2ApplyBetaBand(key); } catch(e){}
+  /* Land on the table, not the top of the panel — the map above it is tall
+     enough that the filtered rows would otherwise be off-screen, which reads
+     as "the click did nothing". */
+  try {
+    var el = document.getElementById('uni-bands') || document.getElementById('fd-grid');
+    if (el && el.scrollIntoView) el.scrollIntoView({behavior:'smooth', block:'start'});
+  } catch(e){}
+};
+
 function v2ApplyBetaBand(k){
   _uniBand = (k || 'all');
   document.querySelectorAll('#uni-bands .uni-band')
@@ -24184,9 +24220,24 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
         '<span class="act-col"><button class="dm-btn">View →</button></span>'+
       '</div>';
     };
+    /* The band header is a way IN, not a caption. This table shows three names
+       per band; the reader who reads "Low beta — has moved less than the market"
+       and wants the rest had no route to them except finding the Sectors Map,
+       scrolling to the table and setting the same filter by hand. The chip now
+       carries the universe-wide count and opens exactly that view. */
+    const _bandN = {low:0, mid:0, high:0};
+    (ALL||[]).forEach(function(t){
+      var b = (typeof v2BetaBand==='function') ? v2BetaBand(t.beta) : null;
+      if (b && _bandN[b.key] !== undefined) _bandN[b.key]++;
+    });
     const rows=groups.map(g=>
-      '<div class="dm-band"><span class="v2-beta v2-beta-'+g.key+'">'+escHTML(g.label)+
-      '</span><small>'+escHTML(g.sub)+'</small></div>'+g.rows.map(rowHTML).join('')
+      '<div class="dm-band">'+
+        '<button type="button" class="v2-beta v2-beta-'+g.key+' dm-band-go" data-band="'+g.key+'" '+
+          'title="Open all '+_bandN[g.key]+' '+escHTML(g.label.toLowerCase())+' names in the Sectors Map">'+
+          escHTML(g.label)+'<i class="dm-band-arr">→</i></button>'+
+        '<small>'+escHTML(g.sub)+
+          (_bandN[g.key] ? ' · <b class="dm-band-n">'+_bandN[g.key]+' in the universe</b>' : '')+
+        '</small></div>'+g.rows.map(rowHTML).join('')
     ).join('');
     // Concentration flag — if the shortlist piles into one theme, say so out loud.
     // A list of six AI-semis names isn't six ideas, it's one macro bet.
@@ -24201,6 +24252,15 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
       }
     }catch(e){}
     table.innerHTML=conc+headRow+rows;
+    /* Assigned, not addEventListener: renderPicks runs on every refresh and a
+       stacked listener would fire the jump once per render. Same trap the
+       Scanner's pills hit. */
+    table.onclick=function(ev){
+      var b=ev.target.closest && ev.target.closest('.dm-band-go');
+      if(!b) return;
+      ev.preventDefault(); ev.stopPropagation();
+      if(typeof window.v2GoBetaBand==='function') window.v2GoBetaBand(b.getAttribute('data-band'));
+    };
     if(window.loadPicksTrack) window.loadPicksTrack();
   }
 
