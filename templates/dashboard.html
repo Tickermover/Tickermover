@@ -3910,11 +3910,20 @@ body.v2-featured-only #fund-tbody tr.fund-row:not([data-featured]){display:none!
 .fund-row.idx-hide{display:none!important}
 /* Index column. Chips are the same three families as the drawer's Summary
    strip so the two surfaces read as one system; they are clickable here, which
-   the pointer and the hover ring say. */
-.fund-list td.fl-idx{white-space:nowrap}
+   the pointer and the hover ring say.
+
+   STACKED, ONE PER LINE. Side by side, a name in three indices (NVDA: S&P 500,
+   Nasdaq-100, Dow 30) ran three chips wide while every neighbouring row ran
+   one, so that row pushed into the Price column and the table stopped lining
+   up. Stacking costs height on the ~119 rows that hold more than one
+   membership and keeps the column a fixed narrow width for all 1,571 — and,
+   unlike showing only the largest index, every chip stays clickable as a
+   filter. Tight line-height and a 2px gap keep a three-chip row to ~54px. */
+.fund-list td.fl-idx{white-space:normal;width:104px;min-width:104px}
+.fund-list .fl-idx-stack{display:flex;flex-direction:column;align-items:flex-start;gap:2px}
 .fund-list .idx-chip{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.01em;
-  padding:2px 7px;border-radius:100px;background:#EAEEF6;color:#2B3A50;cursor:pointer;
-  margin:1px 3px 1px 0;transition:box-shadow var(--t-fast),transform var(--t-fast)}
+  line-height:1.25;padding:2px 7px;border-radius:100px;background:#EAEEF6;color:#2B3A50;
+  cursor:pointer;transition:box-shadow var(--t-fast),transform var(--t-fast)}
 .fund-list .idx-chip.idx-spx{background:#E4EDFB;color:#1B4C9B}
 .fund-list .idx-chip.idx-ndx{background:#EAEBFA;color:#3F4EAF}
 .fund-list .idx-chip.idx-dji{background:#0A2F46;color:#E8F0F6}
@@ -17738,7 +17747,7 @@ function renderFundamentals(tickers) {
       <td><span class="fl-stock"><span class="fl-tic">${t.ticker}</span><span class="fl-name">${v2EscHTML(t.name || '')}</span></span></td>
       <td class="fl-sec">${v2EscHTML(sector)}</td>
       <td class="fl-sub" title="${v2EscHTML(sub)}">${v2EscHTML(sub)}</td>
-      <td class="fl-idx">${_idx.length ? _idx.map(k => `<span class="idx-chip idx-${k.toLowerCase()}" data-idx="${k}" title="${v2EscHTML(V2_INDEX_META[k].nm + ' — held by every fund that tracks it: ' + v2IndexFundsAll(k) + '. Click to show only these.')}">${v2EscHTML(V2_INDEX_META[k].short)}</span>`).join('') : '<span class="fl-idx-na" title="Not in any major index we follow.">—</span>'}</td>
+      <td class="fl-idx"><div class="fl-idx-stack">${_idx.length ? _idx.map(k => `<span class="idx-chip idx-${k.toLowerCase()}" data-idx="${k}" title="${v2EscHTML(V2_INDEX_META[k].nm + ' — held by every fund that tracks it: ' + v2IndexFundsAll(k) + '. Click to show only these.')}">${v2EscHTML(V2_INDEX_META[k].short)}</span>`).join('') : '<span class="fl-idx-na" title="Not in any major index we follow.">—</span>'}</div></td>
       <td class="num fd-price" id="fl-price-${t.ticker}" style="font-size:14px;font-weight:700">${fmtP(price)}</td>
       <td class="num fl-chg ${pCls(chg)}">${fmtPct(chg)}</td>
       <td class="num" style="font-weight:800;color:${_rs>=80?'#116B35':_rs>=50?'#0f172a':'#5B6673'}">${_rs>0?_rs:'—'}</td>
