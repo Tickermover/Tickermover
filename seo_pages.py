@@ -940,12 +940,30 @@ def render_sector_index(universe: list[dict], site_origin: str) -> str:
 # Curated high-traffic head-to-head comparisons added to the sitemap.
 # These are the queries with real search volume; users can hit any
 # /compare/{A}-vs-{B} URL but only these show up in sitemap.xml.
+# Expanded 26 Aug 2026 from 14 to 32, against what people actually search
+# rather than what we find interesting. The pattern in the research is blunt:
+# semiconductors and AI dominate every comparison tool's traffic, the mega-caps
+# are compared against each other in every combination, and the rest clusters
+# into a handful of duopolies people genuinely have to choose between (Visa /
+# Mastercard, Costco / Walmart, CrowdStrike / Palo Alto).
+#
+# Ordered so that ALTERNATE entries stay varied: the in-app strip splits this
+# list down the middle into two rows, so a category-sorted list would put every
+# chip pair in one row and every consumer pair in the other.
+#
+# TSM, RIVN, NVO, SHOP and BABA are deliberately absent — checked against the
+# live universe, we do not score them, and /api/compare-featured would drop the
+# pair anyway. Better to not promise the matchup than to have it vanish.
 FEATURED_COMPARISONS: list[tuple[str, str]] = [
-    ("NVDA", "AMD"), ("AAPL", "MSFT"), ("GOOGL", "META"),
-    ("PLTR", "AI"),  ("IONQ", "RGTI"), ("AMD", "INTC"),
-    ("CRWD", "PANW"), ("TSLA", "NVDA"), ("MU", "WDC"),
-    ("AVGO", "MRVL"), ("SMCI", "DELL"), ("COHR", "LITE"),
-    ("ASML", "AMAT"), ("CRWV", "APLD"),
+    # the single most-compared pair on every tool that publishes numbers
+    ("NVDA", "AMD"),   ("AAPL", "MSFT"),  ("IONQ", "RGTI"),  ("V", "MA"),
+    ("AMD", "INTC"),   ("GOOGL", "META"), ("CRWD", "PANW"),  ("AMZN", "WMT"),
+    ("NVDA", "PLTR"),  ("MSFT", "GOOGL"), ("SNOW", "MDB"),   ("COST", "WMT"),
+    ("NVDA", "AVGO"),  ("AAPL", "GOOGL"), ("PLTR", "AI"),    ("TSLA", "F"),
+    ("MU", "WDC"),     ("AMZN", "MSFT"),  ("CRWD", "ZS"),    ("PYPL", "HOOD"),
+    ("AVGO", "MRVL"),  ("AAPL", "AMZN"),  ("PLTR", "SNOW"),  ("DIS", "NFLX"),
+    ("ASML", "AMAT"),  ("TSLA", "NVDA"),  ("QUBT", "IONQ"),  ("UBER", "ABNB"),
+    ("SMCI", "DELL"),  ("AAPL", "NVDA"),  ("COHR", "LITE"),  ("CRWV", "APLD"),
 ]
 
 

@@ -53,6 +53,28 @@ logger = logging.getLogger(__name__)
 BASE_DIR       = Path(__file__).parent
 DASHBOARD_HTML = BASE_DIR / "templates" / "dashboard.html"
 LANDING_HTML   = BASE_DIR / "templates" / "landing.html"
+
+_UNI_COUNT_PAT = r'(<span class="uni-count" data-uni-fallback="([^"]*)"[^>]*>)([^<]*)(</span>)'
+
+
+def _inject_universe_count(html: str) -> str:
+    """Fill every <span class="uni-count"> with the LIVE universe size.
+
+    The landing page carried "545" in two sentences long after the universe
+    passed 1,500 — a number typed into prose rots the moment the thing it
+    counts changes. The count now comes from _universe_data at request time,
+    and if the universe has not loaded yet each span falls back to its own
+    count-free wording rather than shipping a stale figure.
+    """
+    import re          # this block sits above the import list; keep it local
+    n = len(_universe_data or [])
+
+    def _sub(m):
+        open_tag, fallback, _old, close = m.groups()
+        return open_tag + (f"{n:,} stocks" if n else fallback) + close
+
+    return re.sub(_UNI_COUNT_PAT, _sub, html)
+
 LOGIN_HTML     = BASE_DIR / "templates" / "login.html"
 DESK_HTML      = BASE_DIR / "templates" / "desk.html"
 WEEKLY_HTML    = BASE_DIR / "templates" / "weekly.html"
@@ -2119,7 +2141,7 @@ async def landing():
     with Schema.org JSON-LD prepended for SEO.
     """
     try:
-        html = LANDING_HTML.read_text(encoding="utf-8")
+        html = _inject_universe_count(LANDING_HTML.read_text(encoding="utf-8"))
         schema = _build_landing_schema()
         # Safety-net: if Supabase drops redirect_to and lands a password
         # recovery (or signup/magic) link on the home page, forward it to

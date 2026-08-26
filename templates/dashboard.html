@@ -9219,7 +9219,7 @@ document.addEventListener('keydown', function(e){
     <div class="v2-brf-head">
       <div class="v2-brf-eyebrow">Company Events</div>
       <div class="v2-brf-title">The week in your universe</div>
-      <div class="v2-brf-sub">Who <b>just reported</b> and what they said, who <b>reports next</b>, and the dividends and splits in between. Filter to your <b>Watchlist</b> or <b>Prime Tickers</b>, or search any of the 545 names. Tap a row to open its <b>Earnings Brief</b> — then switch to <b>Concall</b> or <b>Corporate Actions</b> right there.</div>
+      <div class="v2-brf-sub">Who <b>just reported</b> and what they said, who <b>reports next</b>, and the dividends and splits in between. Filter to your <b>Watchlist</b> or <b>Prime Tickers</b>, or search any name we score (<span id="ce-uni-n">the full universe</span>). Tap a row to open its <b>Earnings Brief</b> — then switch to <b>Concall</b> or <b>Corporate Actions</b> right there.</div>
     </div>
 
     <div class="ce-search-wrap">
@@ -9462,6 +9462,12 @@ document.addEventListener('keydown', function(e){
 #panel-sect .se-car:hover .se-car-track,
 #panel-sect .se-car:focus-within .se-car-track{animation-play-state:paused}
 @keyframes seCarScroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+/* The second row runs the other way. Starting at -50% (not 0) means the
+   track is already scrolled when it appears, so the row does not begin
+   with a gap on the left while it fills. */
+@keyframes seCarScrollRev{from{transform:translateX(-50%)}to{transform:translateX(0)}}
+#panel-sect .se-car-rev .se-car-track{animation-name:seCarScrollRev}
+#panel-sect .se-car + .se-car{margin-top:2px}
 #panel-sect .se-gt{flex:0 0 258px;background:none;border:0;padding:0;cursor:pointer;
   font-family:inherit;text-align:left}
 #panel-sect .se-gt-face{background:#fff;border:1px solid #E4E8EE;border-radius:16px;
@@ -9499,7 +9505,12 @@ document.addEventListener('keydown', function(e){
   background:#CBD5E1;margin-right:6px;vertical-align:middle}
 #panel-sect .se-gt-dot.on{background:#0E7C66}
 @media(prefers-reduced-motion:reduce){
-  #panel-sect .se-car-track{animation:none}
+  /* The reversed row needs naming explicitly: `.se-car-rev .se-car-track` sets
+     animation-name and is MORE specific than the shorthand below, so the
+     shorthand's implicit `animation-name:none` would have lost and row two
+     would have kept moving for exactly the readers who asked it not to. */
+  #panel-sect .se-car-track,
+  #panel-sect .se-car-rev .se-car-track{animation:none}
   #panel-sect .se-car{overflow-x:auto;-webkit-mask-image:none;mask-image:none}
 }
 </style>
@@ -12541,7 +12552,16 @@ function ceBuildCloud(){
     '<span class="ce-dw">' + [7, 14, 30].map(function(n){
       return '<button class="ce-d' + (n === _ceDays ? ' on' : '') + '" data-d="' + n + '">' + n + 'd</button>';
     }).join('') + '</span>' +
-    '<span class="ce-asof">' + all.length + ' names tracked</span></div>';
+    '<span class="ce-asof" title="Every name in the scored universe. Other panels show smaller totals because they need more history than a score does — the Dilution Check needs share counts, the Crowd Clock needs a 12-month price range.">'
+      + all.length + ' names scored</span></div>';
+  /* The intro sentence quoted a hardcoded 545 for months after the universe
+     passed 1,500. Any number in prose rots; this one now comes from the same
+     array the panel counts, and the static fallback carries no number at all so
+     a failed render degrades to true-but-vague instead of confidently wrong. */
+  try {
+    var _uniN = document.getElementById('ce-uni-n');
+    if (_uniN && all.length) _uniN.textContent = all.length.toLocaleString() + ' names';
+  } catch(e){}
 
   /* Every row is rendered; the .ce-list box scrolls. `key` drives a height
      toggle (.tall) rather than a slice, so the rows below the fold are a flick
@@ -24535,12 +24555,12 @@ function _seGalTile(p){
       + 'onerror="this.remove();this.parentNode.classList.add(&quot;se-gl-mono&quot;)">'
       + '<b>' + _seEsc(tk).slice(0, 2) + '</b></span>';
   };
-  var side = function(tk, alpha){
+  var side = function(tk, score){
     return '<div class="se-gt-side">' + logo(tk)
       + '<div class="se-gt-tk">' + _seEsc(tk) + '</div>'
-      + ((alpha === null || alpha === undefined)
+      + ((score === null || score === undefined)
           ? '<div class="se-gv se-gv-na">—</div>'
-          : '<div class="se-gv"><i>' + alpha + '</i><s>alpha</s></div>')
+          : '<div class="se-gv"><i>' + score + '</i><s>score</s></div>')
       + '</div>';
   };
   return '<div class="se-gt-face">'
@@ -24556,22 +24576,41 @@ function _seGalTile(p){
 }
 
 function _seGallery(host, pairs){
-  var tiles = pairs.map(function(p){
+  var tile = function(p){
     return '<button class="se-gt" data-a="' + _seEsc(p.a) + '" data-b="' + _seEsc(p.b) + '"'
       + ' title="Compare ' + _seEsc(p.a) + ' with ' + _seEsc(p.b) + '">'
       + _seGalTile(p) + '</button>';
-  }).join('');
+  };
+
+  /* TWO ROWS, TRAVELLING OPPOSITE WAYS. One row of 32 tiles takes four minutes
+     to come round, so most of the pool is never on screen; two rows halve that
+     and show twice as much at rest. Opposing directions are not decoration —
+     with both rows moving the same way the eye locks onto the drift and reads
+     it as one block sliding past. Against each other, neither row can be
+     tracked, so the reader stops following the motion and looks at the tiles.
+     Split odd/even rather than first-half/second-half so each row carries the
+     same mix of categories. */
+  var top = [], bottom = [];
+  pairs.forEach(function(p, i){ (i % 2 ? bottom : top).push(p); });
+  var row = function(list, cls, id){
+    var t = list.map(tile).join('');
+    return '<div class="se-car ' + cls + '" id="' + id + '">'
+         +   '<div class="se-car-track">' + t + t + '</div></div>';
+  };
 
   host.innerHTML =
     '<div class="se-sg-h">Most-searched matchups <span>&middot; click any tile to load it</span></div>'
-    + '<div class="se-car" id="seCar"><div class="se-car-track">' + tiles + tiles + '</div></div>';
+    + row(top, '', 'seCar') + row(bottom, 'se-car-rev', 'seCar2');
 
-  var car = document.getElementById('seCar');
-  if (!car) return;
-  var track = car.querySelector('.se-car-track');
-  /* Constant speed regardless of pool size: ~7s of travel per tile. */
-  if (track) track.style.animationDuration = Math.max(24, pairs.length * 7) + 's';
+  /* Constant speed whatever the pool size: ~7s of travel per tile. Each row
+     is timed on its OWN length, so the two never fall into step. */
+  [['seCar', top], ['seCar2', bottom]].forEach(function(pair){
+    var el = document.getElementById(pair[0]);
+    var tr = el && el.querySelector('.se-car-track');
+    if (tr) tr.style.animationDuration = Math.max(24, pair[1].length * 7) + 's';
+  });
 
+  var car = host;
   car.addEventListener('click', function(ev){
     var t = ev.target.closest ? ev.target.closest('.se-gt') : null;
     if (!t) return;
@@ -28532,7 +28571,8 @@ function scResultHTML(d){
       return '<div class="ck-sec" data-b="' + esc(s.bucket) + '"'
         + ' data-sector="' + esc(s.sector) + '"'
         + ' title="Show the ' + s.n + ' ' + esc(s.sector) + ' names">'
-        + '<div class="ck-sec-n">' + esc(s.sector) + t + '<s>' + s.n + ' NAMES · ' + dir + '</s></div>'
+        + '<div class="ck-sec-n">' + esc(s.sector) + t + '<s title="Names in this group with a full 12-month price range — the reading needs one. The scored universe is larger.">'
+          + s.n + ' NAMES · ' + dir + '</s></div>'
         + '<div class="ck-meter"><i style="width:' + Math.min(100, s.now*100).toFixed(0) + '%"></i>'
         + '<u style="left:' + Math.min(100, s.median*100).toFixed(0) + '%"></u></div>'
         + '<div class="ck-sec-v"><b>' + pc(s.now) + '</b><s>PEAK ' + pc(s.peak1y) + '</s></div></div>';
@@ -29043,7 +29083,7 @@ function scResultHTML(d){
     var last12 = rows.reduce(function(a,r){ return a + (r.offerings_12m || 0); }, 0);
 
     var hero = '<div class="gd-hero"><b>' + freq.length + ' of ' + rows.length + '</b>'
-      + '<p>companies we follow have sold new shares <em>three or more times</em> in the last '
+      + '<p>companies we hold a share count for have sold new shares <em>three or more times</em> in the last '
       + 'two years — ' + last12 + ' of those sales happened in the last twelve months alone. '
       + 'Every one is a real sale, filed with the regulator on the day it went through, and '
       + 'every one leaves the company split into more pieces than before. '
