@@ -3343,16 +3343,37 @@ body.v2 .v2ov-card.sectors .v2ov-sector-cell{
 .dm-band:first-child{border-top:none;padding-top:6px}
 .dm-band small{font-size:11.5px;color:#5B6673;font-weight:400}
 .dm-band .dm-band-n{font-weight:700;color:#4A5563}
-/* The band chip is a button now. It keeps the .v2-beta colours so the three
-   bands still read as one system with the row chips, and only gains the
-   affordances: a pointer, a hover lift, and an arrow that slides on hover. */
-.dm-band-go{font:inherit;border:0;cursor:pointer;gap:5px;
-  transition:transform var(--t-fast) var(--e-out),box-shadow var(--t-fast) var(--e-out)}
-.dm-band-go:hover{transform:translateY(-1px);box-shadow:0 4px 10px -4px rgba(10,10,10,.35)}
+/* IDENTITY AND AFFORDANCE ARE SEPARATE THINGS HERE.
+
+   The first version made the band chip itself the button, which was invisible:
+   a .v2-beta chip is the SAME object that sits, unclickable, on every row below
+   it, so nothing on screen said this one did anything. Hover-only cues do not
+   help — you have to already suspect it is a button to discover it, and on
+   touch there is no hover at all.
+
+   So the chip keeps being the chip (identity, shared with the rows), and the
+   button is a pill AROUND it carrying a verb: "See all 533 →". Text is the
+   strongest affordance there is; a bordered surface and a link-blue label carry
+   the rest. The count moved off the description line and into the label, where
+   it says what the click will give you rather than repeating a fact. */
+.dm-band-go{display:inline-flex;align-items:center;gap:8px;font:inherit;cursor:pointer;
+  padding:4px 11px 4px 5px;border:1.5px solid #DCE3EC;border-radius:999px;background:#fff;
+  box-shadow:0 1px 2px rgba(10,10,10,.05);
+  transition:border-color var(--t-fast) var(--e-out),background var(--t-fast) var(--e-out),
+             box-shadow var(--t-fast) var(--e-out),transform var(--t-fast) var(--e-out)}
+.dm-band-go .dm-band-cta{display:inline-flex;align-items:center;gap:5px;
+  font-size:11.5px;font-weight:700;color:#2064E8;white-space:nowrap}
+.dm-band-go:hover{border-color:#2064E8;background:#F4F8FF;transform:translateY(-1px);
+  box-shadow:0 6px 14px -6px rgba(32,100,232,.5)}
+.dm-band-go:active{transform:translateY(0);box-shadow:0 1px 2px rgba(10,10,10,.08)}
 .dm-band-go:focus-visible{outline:2px solid #2064E8;outline-offset:2px}
-.dm-band-arr{font-style:normal;font-size:10px;opacity:.65;
-  transition:transform var(--t-fast) var(--e-out),opacity var(--t-fast) var(--e-out)}
-.dm-band-go:hover .dm-band-arr{opacity:1;transform:translateX(2px)}
+.dm-band-arr{font-style:normal;font-size:11px;font-weight:800;
+  transition:transform var(--t-fast) var(--e-out)}
+.dm-band-go:hover .dm-band-arr{transform:translateX(3px)}
+@media(max-width:560px){
+  .dm-band{flex-wrap:wrap;gap:6px}
+  .dm-band small{width:100%}
+}
 @media(prefers-reduced-motion:reduce){
   .dm-band-go,.dm-band-arr{transition:none}
   .dm-band-go:hover{transform:none}
@@ -24232,12 +24253,14 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
     });
     const rows=groups.map(g=>
       '<div class="dm-band">'+
-        '<button type="button" class="v2-beta v2-beta-'+g.key+' dm-band-go" data-band="'+g.key+'" '+
+        '<button type="button" class="dm-band-go" data-band="'+g.key+'" '+
           'title="Open all '+_bandN[g.key]+' '+escHTML(g.label.toLowerCase())+' names in the Sectors Map">'+
-          escHTML(g.label)+'<i class="dm-band-arr">→</i></button>'+
-        '<small>'+escHTML(g.sub)+
-          (_bandN[g.key] ? ' · <b class="dm-band-n">'+_bandN[g.key]+' in the universe</b>' : '')+
-        '</small></div>'+g.rows.map(rowHTML).join('')
+          '<span class="v2-beta v2-beta-'+g.key+'">'+escHTML(g.label)+'</span>'+
+          '<span class="dm-band-cta">'+(_bandN[g.key]?('See all '+_bandN[g.key]):'See all')+
+            '<i class="dm-band-arr">→</i></span>'+
+        '</button>'+
+        '<small>'+escHTML(g.sub)+'</small>'+
+      '</div>'+g.rows.map(rowHTML).join('')
     ).join('');
     // Concentration flag — if the shortlist piles into one theme, say so out loud.
     // A list of six AI-semis names isn't six ideas, it's one macro bet.
