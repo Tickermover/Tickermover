@@ -7311,7 +7311,21 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
    mono-16px value type; the fund tickers sit in the sub-line where every other
    cell keeps its qualifier. Spans two columns when a name is in more than one
    index, which is the only case where the chips would otherwise wrap. */
-#ts-drawer .ov-stat.is-idx .v.idx-v{display:flex;flex-wrap:wrap;gap:4px;font-size:0;margin-top:5px}
+/* Chip and fund on one line each: a two-column list, not a paragraph. The chip
+   column is fixed so the fund names start on a common left edge and the block
+   reads as a table of pairs. */
+#ts-drawer .ov-stat.is-idx .idx-rows{display:flex;flex-direction:column;gap:4px;margin-top:6px}
+#ts-drawer .ov-stat.is-idx .idx-row{display:grid;grid-template-columns:82px 1fr;
+  align-items:center;gap:9px}
+#ts-drawer .ov-stat.is-idx .idx-fund{font-family:var(--font-body,inherit);font-size:10.5px;
+  line-height:1.3;color:#4A5563;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#ts-drawer .ov-stat.is-idx .idx-chip{justify-content:center;width:100%}
+@media(max-width:640px){
+  /* Too narrow for two columns — stack, and let the fund wrap under its chip. */
+  #ts-drawer .ov-stat.is-idx .idx-row{grid-template-columns:1fr;gap:1px}
+  #ts-drawer .ov-stat.is-idx .idx-chip{width:auto;justify-content:flex-start}
+  #ts-drawer .ov-stat.is-idx .idx-fund{white-space:normal}
+}
 #ts-drawer .ov-stat.is-idx .idx-chip{display:inline-flex;align-items:center;
   font-family:var(--font-body,inherit);font-size:10.5px;font-weight:700;letter-spacing:.01em;
   padding:2px 8px;border-radius:100px;background:#EAEEF6;color:#2B3A50;white-space:nowrap}
@@ -26001,17 +26015,24 @@ function scResultHTML(d){
       ? v2IndexList(full).concat(v2IndexList(t)).filter(function(v,i,a){return a.indexOf(v)===i;})
       : [];
     /* Handed to the header rather than rendered here — see _ovHeader. */
+    /* ONE ROW PER INDEX, chip beside its own fund. As a chip row over a single
+       run-on line ("Held by Vanguard S&P 500 ETF (VOO), Invesco QQQ Trust
+       (QQQ), SPDR Dow Jones Industrial Average ETF (DIA)") the reader had to
+       infer which fund belonged to which index from the ORDER of two separate
+       lines. Paired, the mapping is the layout. */
     const idxCell = _idx.length
       ? '<div class="ov-stat is-idx"><div class="k">Index</div>'
-        + '<div class="v idx-v">' + _idx.map(function(k){
-            return '<span class="idx-chip idx-'+k.toLowerCase()+'" title="'
-              + escHTML(V2_INDEX_META[k].nm + ' — held by every fund that tracks it: '
-                        + v2IndexFundsAll(k))
-              + '">' + escHTML(V2_INDEX_META[k].short) + '</span>'; }).join('')
-        + '</div><div class="sub idx-funds" title="'
-          + escHTML('Every fund that tracks these indices holds this share. Also: '
-              + _idx.map(function(k){ return V2_INDEX_META[k].etf; }).join(' · '))
-          + '">Held by ' + escHTML(v2IndexFunds(_idx).join(', ')) + '</div></div>'
+        + '<div class="idx-rows">' + _idx.map(function(k){
+            var m = V2_INDEX_META[k], f = m.funds[0];
+            return '<div class="idx-row" title="'
+              + escHTML(m.nm + ' — held by every fund that tracks it: ' + v2IndexFundsAll(k))
+              + '"><span class="idx-chip idx-'+k.toLowerCase()+'">'+escHTML(m.short)+'</span>'
+              + '<span class="idx-fund">'+escHTML(f.nm+' ('+f.tk+')')+'</span></div>';
+          }).join('')
+        + '</div></div>'   /* no footer line: it repeated what each row's own
+                              tooltip says, and its 18px was the difference
+                              between this column matching the bullet list
+                              beside it and overhanging it */
       : '<div class="ov-stat is-idx"><div class="k">Index</div><div class="v idx-none">Not tracked</div>'
         + '<div class="sub">no major index we follow</div></div>';
     _ovLastIdxCell = idxCell;      // consumed by _ovHeader, which renders the same
