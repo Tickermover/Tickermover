@@ -271,6 +271,20 @@ def _fmt(v: Optional[float], fmt: str) -> str:
     return str(v)
 
 
+# Index codes a row belongs to, biggest tent first. Mirrors v2INDEX_ORDER in
+# dashboard.html — the drawer, the Universe table and the comparison all show
+# the same chips, so they have to agree on which ones and in what order.
+_INDEX_ORDER = ("SPX", "NDX", "DJI", "SP400", "SP600")
+
+
+def index_codes(t: dict) -> list[str]:
+    raw = (t or {}).get("indices") or []
+    if isinstance(raw, str):
+        raw = [raw]
+    seen = {str(x).upper().strip() for x in raw if x}
+    return [k for k in _INDEX_ORDER if k in seen]
+
+
 def compare(a: str, b: str, universe: list[dict]) -> Optional[dict]:
     """Field-by-field comparison of two tickers.
 
@@ -308,10 +322,14 @@ def compare(a: str, b: str, universe: list[dict]) -> Optional[dict]:
 
     sa, sb = _bucket_of(ta), _bucket_of(tb)
     return {
+        # `indices` rides along so the comparison can say whether the passive
+        # market already owns one side and not the other — often the most
+        # material difference between a mid-cap and its mega-cap rival, and one
+        # no measured row on this table captures.
         "a": {"ticker": a, "name": ta.get("name") or a, "grade": ta.get("grade") or "",
-              "sector": sa, "slug": slugify(sa or "")},
+              "sector": sa, "slug": slugify(sa or ""), "indices": index_codes(ta)},
         "b": {"ticker": b, "name": tb.get("name") or b, "grade": tb.get("grade") or "",
-              "sector": sb, "slug": slugify(sb or "")},
+              "sector": sb, "slug": slugify(sb or ""), "indices": index_codes(tb)},
         "same_sector": bool(sa and sb and sa == sb),
         "rows": rows,
         # How many measured dimensions actually separate them. Used only to

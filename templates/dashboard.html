@@ -9585,6 +9585,16 @@ document.addEventListener('keydown', function(e){
 @keyframes seCarScrollRev{from{transform:translateX(-50%)}to{transform:translateX(0)}}
 #panel-sect .se-car-rev .se-car-track{animation-name:seCarScrollRev}
 #panel-sect .se-car + .se-car{margin-top:2px}
+/* Compare-panel chips: same three families as the drawer and the Universe
+   table, sized down for a table head and a tile. */
+#panel-sect .idx-chip{display:inline-block;font-size:9.5px;font-weight:700;letter-spacing:.01em;
+  padding:1px 7px;border-radius:100px;background:#EAEEF6;color:#2B3A50;margin:0 3px 2px 0}
+#panel-sect .idx-chip.idx-spx{background:#E4EDFB;color:#1B4C9B}
+#panel-sect .idx-chip.idx-ndx{background:#EAEBFA;color:#3F4EAF}
+#panel-sect .idx-chip.idx-dji{background:#0A2F46;color:#E8F0F6}
+#panel-sect .idx-chip.idx-none-chip{background:#F1F3F5;color:#5B6673;font-weight:600}
+#panel-sect .se-idx{display:block;margin-top:4px;font-weight:400;white-space:normal}
+#panel-sect .se-gt-idx{margin-top:5px;min-height:15px;line-height:1}
 #panel-sect .se-gt{flex:0 0 258px;background:none;border:0;padding:0;cursor:pointer;
   font-family:inherit;text-align:left}
 #panel-sect .se-gt-face{background:#fff;border:1px solid #E4E8EE;border-radius:16px;
@@ -11542,6 +11552,22 @@ function v2GradeConsensus(grades){
          : mean <= 3.5 ? 'Hold' : mean <= 4.5 ? 'Sell' : 'Strong Sell',
     mean: mean, n: firms.length, firms: firms.sort(),
   };
+}
+
+/* Compact chips for a list of index codes. Used on the Compare panel, where
+   the point is the CONTRAST — one side in the S&P 500 and the other in nothing
+   is often the most material difference between two companies, and no measured
+   row on that table captures it. */
+function v2IndexChips(codes, cls){
+  var list = (codes || []).filter(function(k){ return V2_INDEX_META[k]; });
+  if (!list.length) return '<span class="idx-chip idx-none-chip" title="Not in any '
+    + 'major index we follow.">No index</span>';
+  return list.map(function(k){
+    return '<span class="idx-chip idx-' + k.toLowerCase() + (cls ? ' ' + cls : '') + '" title="'
+      + v2EscHTML(V2_INDEX_META[k].nm + ' — held by every fund that tracks it: '
+                  + v2IndexFundsAll(k)) + '">'
+      + v2EscHTML(V2_INDEX_META[k].short) + '</span>';
+  }).join('');
 }
 
 function v2IndexFundsAll(k){
@@ -24929,9 +24955,11 @@ function _seGalTile(p){
       + 'onerror="this.remove();this.parentNode.classList.add(&quot;se-gl-mono&quot;)">'
       + '<b>' + _seEsc(tk).slice(0, 2) + '</b></span>';
   };
-  var side = function(tk, score){
+  var side = function(tk, score, codes){
     return '<div class="se-gt-side">' + logo(tk)
       + '<div class="se-gt-tk">' + _seEsc(tk) + '</div>'
+      + '<div class="se-gt-idx">'
+        + ((typeof v2IndexChips==='function') ? v2IndexChips(codes) : '') + '</div>'
       + ((score === null || score === undefined)
           ? '<div class="se-gv se-gv-na">—</div>'
           : '<div class="se-gv"><i>' + score + '</i><s>score</s></div>')
@@ -24939,9 +24967,9 @@ function _seGalTile(p){
   };
   return '<div class="se-gt-face">'
     + '<div class="se-gt-row">'
-    +   side(p.a, p.a_alpha)
+    +   side(p.a, p.a_alpha, p.a_indices)
     +   '<div class="se-gt-vs"><span>vs</span></div>'
-    +   side(p.b, p.b_alpha)
+    +   side(p.b, p.b_alpha, p.b_indices)
     + '</div>'
     + '<div class="se-gt-foot">'
     +   '<span class="se-gt-dot' + (p.same_sector ? ' on' : '') + '"></span>'
@@ -25133,8 +25161,12 @@ async function _seRunCompare(){
 
     out.innerHTML = '<div class="se-note">' + ctx + ' They differ on <b>' + c.differing
       + ' of ' + c.measured + '</b> measured dimensions; anything within 2% shows as level.</div>'
-      + '<div class="se-wrap"><table><thead><tr><th>Measure</th><th>' + _seEsc(c.a.ticker)
-      + '</th><th>' + _seEsc(c.b.ticker) + '</th></tr></thead><tbody>' + trs + '</tbody></table></div>'
+      + '<div class="se-wrap"><table><thead><tr><th>Measure</th>'
+      + '<th>' + _seEsc(c.a.ticker) + '<span class="se-idx">'
+        + (typeof v2IndexChips==='function' ? v2IndexChips(c.a.indices) : '') + '</span></th>'
+      + '<th>' + _seEsc(c.b.ticker) + '<span class="se-idx">'
+        + (typeof v2IndexChips==='function' ? v2IndexChips(c.b.indices) : '') + '</span></th>'
+      + '</tr></thead><tbody>' + trs + '</tbody></table></div>'
       + '<div id="seBiz"></div>'
       + '<div id="seAudit"></div>'
       + '<div id="seStudy" style="margin-top:18px"></div>';

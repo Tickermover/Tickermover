@@ -9666,6 +9666,10 @@ async def api_compare_featured():
             "a": a, "b": b,
             "a_alpha": round(ca) if ca is not None else None,
             "b_alpha": round(cb) if cb is not None else None,
+            # Same codes the comparison itself returns, so a tile and the table
+            # it loads cannot show a different index for the same company.
+            "a_indices": _si.index_codes(by[a]),
+            "b_indices": _si.index_codes(by[b]),
             "same_sector": (_si._bucket_of(by[a]) == _si._bucket_of(by[b])),
         })
     return JSONResponse(_clean({"pairs": out}),
