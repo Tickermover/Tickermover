@@ -3921,6 +3921,16 @@ body.v2-featured-only #fund-tbody tr.fund-row:not([data-featured]){display:none!
 .fund-list .idx-chip:hover{box-shadow:0 0 0 2px rgba(32,100,232,.35);transform:translateY(-1px)}
 .fund-list .idx-chip.on{box-shadow:0 0 0 2px #2064E8}
 .fund-list .fl-idx-na{color:#5B6673}
+/* Rating: a word, so it gets the body face rather than the numeric column
+   treatment. Toned, not coloured-in — a consensus is an opinion we are
+   reporting, not a measurement of the company. */
+.fund-list td.fl-rat{white-space:nowrap}
+.fund-list .rat-chip{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;
+  border-radius:100px;background:#EEF1F6;color:#3B4757}
+.fund-list .rat-chip.rat-pos{background:#E3F2E9;color:#116B35}
+.fund-list .rat-chip.rat-neg{background:#FBE7EA;color:#B21E33}
+.fund-list .rat-chip.rat-amb{background:#F6EFE6;color:#8A5307}
+.fund-list .rat-na{color:#5B6673}
 .uni-idx-pill{font:inherit;font-size:12px;font-weight:700;cursor:pointer;display:inline-flex;
   align-items:center;gap:7px;margin-left:6px;padding:5px 11px;border-radius:999px;
   border:1.5px solid #2064E8;background:#F4F8FF;color:#1B4C9B}
@@ -7240,7 +7250,7 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 #ts-drawer .ov-verdict{margin-top:18px;font-family:var(--font-head);font-weight:500;font-size:clamp(17px,2.4vw,21px);line-height:1.42;color:#1e293b;max-width:760px}
 #ts-drawer .ov-verdict b{color:#0040c1;font-weight:600}
 /* 6-stat strip */
-#ts-drawer .ov-strip{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;background:var(--hair);border:1px solid var(--hair);border-radius:13px;overflow:hidden;margin-top:11px}
+#ts-drawer .ov-strip{display:grid;grid-template-columns:repeat(6,1fr);gap:1px;background:var(--hair);border:1px solid var(--hair);border-radius:13px;overflow:hidden;margin-top:11px}
 /* With the sub-sector cell present the strip runs 9 tracks, not 8: that cell
    spans two so a name like "Semiconductor Test Equipment" has room. Gated on a
    modifier class rather than hardcoded, because the cell is dropped entirely
@@ -7310,12 +7320,14 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 #ts-drawer .ov-stat.is-idx .idx-dji{background:#0A2F46;color:#E8F0F6}
 #ts-drawer .ov-stat.is-idx .v.idx-none{font-family:var(--font-body,inherit);font-size:12.5px;
   font-weight:600;color:#5B6673}
-/* Fund names are a sentence, not a code: body face, wrapping, and the cell
-   spans two columns so "Held by Vanguard S&P 500 ETF (VOO), Invesco QQQ Trust
-   (QQQ), SPDR Dow Jones Industrial Average ETF (DIA)" has somewhere to go. */
-#ts-drawer .ov-stat.is-idx{grid-column:span 2}
-#ts-drawer .ov-stat.is-idx .sub.idx-funds{font-family:var(--font-body,inherit);font-size:11px;
-  line-height:1.45;color:#4A5563;white-space:normal;margin-top:5px}
+/* The index block now lives in the right-hand column under the price, so it is
+   a card in its own right rather than a strip cell: its own border, and the
+   fund names wrap inside a narrow column instead of needing two grid tracks. */
+#ts-drawer .ov-idxbox .ov-stat.is-idx{grid-column:auto;background:#fff;
+  border:1px solid var(--hair);border-radius:11px;padding:9px 12px 10px}
+#ts-drawer .ov-stat.is-idx .sub.idx-funds{font-family:var(--font-body,inherit);font-size:10.5px;
+  line-height:1.4;color:#4A5563;white-space:normal;margin-top:5px}
+#ts-drawer .ov-idxbox{width:100%}
 /* numbered section divider */
 /* Each editorial section = heading + its content as ONE block, so the heading
    hugs its content instead of floating midway on the pane's flex gap. */
@@ -11471,6 +11483,31 @@ const V2_GRADE_SCORE = {
   'underweight':4, 'underperform':4, 'sector underperform':4, 'reduce':4, 'negative':4,
   'sell':5, 'strong sell':5,
 };
+
+/* The published consensus for a row, or null. Shared by the Universe table and
+   the drawer strip so the two cannot disagree about the same company.
+
+   NOTE the asymmetry, and it is deliberate: the drawer can fall back to
+   `grades` (recent broker calls) because it fetches one ticker's enrichment;
+   the table cannot, because that would be 1,571 requests. So the column shows
+   what is PUBLISHED, and says where to find the rest. */
+const V2_RLBL = {strong_buy:'Strong Buy', buy:'Buy', outperform:'Buy', hold:'Hold',
+                 neutral:'Hold', underperform:'Sell', sell:'Sell', strong_sell:'Strong Sell'};
+const V2_RRANK = {'Strong Buy':5, 'Buy':4, 'Hold':3, 'Sell':2, 'Strong Sell':1};
+
+function v2RowRating(t){
+  var rk = String((t && t.analyst_recommendation) || '').toLowerCase();
+  var rm = parseFloat(t && t.recommendation_mean);
+  var label = null;
+  if (rk && rk !== 'none' && V2_RLBL[rk]) label = V2_RLBL[rk];
+  else if (!isNaN(rm) && rm > 0)
+    label = rm <= 1.5 ? 'Strong Buy' : rm <= 2.5 ? 'Buy' : rm <= 3.5 ? 'Hold'
+          : rm <= 4.5 ? 'Sell' : 'Strong Sell';
+  if (!label) return null;
+  var n = parseInt(t && (t.total_analysts || t.analyst_count));
+  return {label: label, rank: V2_RRANK[label] || 0, n: isNaN(n) ? null : n,
+          tone: /Buy/.test(label) ? 'pos' : /Sell/.test(label) ? 'neg' : 'amb'};
+}
 
 function v2GradeConsensus(grades){
   if (!Array.isArray(grades) || !grades.length) return null;
@@ -17633,6 +17670,7 @@ function renderFundamentals(tickers) {
        row and its drawer can never disagree. Short labels here because the
        column is narrow; the funds live in the title, as they do there. */
     const _idx = (typeof v2IndexList === 'function') ? v2IndexList(t) : [];
+    const _rat = (typeof v2RowRating === 'function') ? v2RowRating(t) : null;
     return `<tr class="fund-row"${(window._featuredSet && window._featuredSet.has(t.ticker)) ? ' data-featured' : ''}
          data-ticker="${t.ticker}"
          data-name="${(t.name || '').replace(/"/g, '')}"
@@ -17654,6 +17692,7 @@ function renderFundamentals(tickers) {
          data-beta="${!isNaN(_beta)?_beta.toFixed(3):''}"
          data-band="${_bBand ? _bBand.key : ''}"
          data-index="${_idx.join(' ')}"
+         data-rating="${_rat ? _rat.rank : ''}"
          onclick="openStockModal('${t.ticker}')">
       <td><span class="fl-pop">${Math.round(pop)}</span></td>
       <td><span class="fl-stock"><span class="fl-tic">${t.ticker}</span><span class="fl-name">${v2EscHTML(t.name || '')}</span></span></td>
@@ -17668,6 +17707,9 @@ function renderFundamentals(tickers) {
       <td class="num ${!isNaN(revG)?pCls(revG*100):''}">${!isNaN(revG)?fmtPct2(t.revenue_growth_yoy):'—'}</td>
       <td class="num ${!isNaN(fcfM)?pCls(fcfM):''}">${!isNaN(fcfM)?fmtPct2(t.fcf_margin):'—'}</td>
       <td class="num">${fmtM(t.market_cap)}</td>
+      <td class="fl-rat">${_rat
+        ? `<span class="rat-chip rat-${_rat.tone}" title="${v2EscHTML('Analyst consensus: ' + _rat.label + (_rat.n ? ' — ' + _rat.n + ' analysts' : ''))}">${v2EscHTML(_rat.label)}</span>`
+        : `<span class="rat-na" title="No consensus rating is published for this company. Open it to see the most recent calls from named brokers.">—</span>`}</td>
       <td class="num ${upsidePct!=null?pCls(upsidePct):''}">${upsidePct!=null?fmtPct(upsidePct):'—'}</td>
     </tr>`;
   }
@@ -17690,6 +17732,7 @@ function renderFundamentals(tickers) {
         <th class="num" onclick="sortFundList('rev')">Rev Growth</th>
         <th class="num" onclick="sortFundList('fcf')" title="Free-cash-flow margin — profitable growth vs cash burn.">FCF Margin</th>
         <th class="num" onclick="sortFundList('mcap')">Mkt Cap</th>
+        <th onclick="sortFundList('rating')" title="The analyst consensus our data provider publishes. 913 of the names carry one; where none is published this shows a dash — open the stock and the Summary derives a reading from recent named-broker calls instead. Sorts best-first.">Rating</th>
         <th class="num" onclick="sortFundList('upside')">Upside</th>
       </tr>
     </thead>
@@ -25889,16 +25932,11 @@ function scResultHTML(d){
        the enrichment, so reading only `full` made a name with a published
        Strong Buy fall through to the broker-call fallback — and then say, in
        its own tooltip, that no consensus is published. Wrong twice over. */
-    const rm=_fpNum(full,['recommendation_mean']) ?? _fpNum(t,['recommendation_mean']);
-    const rk=String(full.analyst_recommendation||t.analyst_recommendation||'').toLowerCase();
-    const RLBL={strong_buy:'Strong Buy',buy:'Buy',outperform:'Buy',hold:'Hold',neutral:'Hold',underperform:'Sell',sell:'Sell',strong_sell:'Strong Sell'};
-    let rating=null;
-    /* The feed sends the literal string "none" for 200 names. It is a stated
-       absence, not a rating, and RLBL has no entry for it — but say so here,
-       because "none" reaching a label lookup is exactly the kind of thing a
-       future edit adds a mapping for by accident. */
-    if (rk && rk !== 'none' && RLBL[rk]) rating=RLBL[rk];   // the label alone is enough
-    else if(rm!=null&&rm>0) rating=(rm<=1.5?'Strong Buy':rm<=2.5?'Buy':rm<=3.5?'Hold':rm<=4.5?'Sell':'Strong Sell');
+    /* ONE derivation, shared with the Universe table's Rating column — the two
+       surfaces describe the same company and must not disagree about it. Both
+       payloads are tried because they carry different subsets. */
+    const _pub = (typeof v2RowRating==='function') ? (v2RowRating(full) || v2RowRating(t)) : null;
+    let rating = _pub ? _pub.label : null;
     const na=_fpNum(full,['total_analysts','analyst_count','num_analysts'])
             ?? _fpNum(t,['total_analysts','analyst_count','num_analysts']);
     const _cons = rating ? null : (typeof v2GradeConsensus==='function' ? v2GradeConsensus(full.grades) : null);
@@ -25962,6 +26000,7 @@ function scResultHTML(d){
     const _idx = (typeof v2IndexList==='function')
       ? v2IndexList(full).concat(v2IndexList(t)).filter(function(v,i,a){return a.indexOf(v)===i;})
       : [];
+    /* Handed to the header rather than rendered here — see _ovHeader. */
     const idxCell = _idx.length
       ? '<div class="ov-stat is-idx"><div class="k">Index</div>'
         + '<div class="v idx-v">' + _idx.map(function(k){
@@ -25975,6 +26014,8 @@ function scResultHTML(d){
           + '">Held by ' + escHTML(v2IndexFunds(_idx).join(', ')) + '</div></div>'
       : '<div class="ov-stat is-idx"><div class="k">Index</div><div class="v idx-none">Not tracked</div>'
         + '<div class="sub">no major index we follow</div></div>';
+    _ovLastIdxCell = idxCell;      // consumed by _ovHeader, which renders the same
+                                  // markup in the right-hand column
     return '<div class="ov-strip'+(catCell?' has-cat':'')+'">'+
       catCell+
       stat('Mkt Cap', mc!=null?_money(mc):'—', mc!=null?(mc>=1e10?'large-cap':mc>=2e9?'mid-cap':'small-cap'):'')+
@@ -25996,9 +26037,14 @@ function scResultHTML(d){
       stat('Beta', beta!=null?beta.toFixed(2):'—',
         (beta!=null&&typeof v2BetaChip==='function')?v2BetaChip(beta):'', '')+
       stat('Earnings', eVal, eSub, eNear?'amb':'', eNear)+
-      idxCell+
     '</div>';
   }
+  /* Set by _ovStripHTML on its way out. The strip is built first (the header
+     interpolates it), so by the time the header assembles its own column the
+     value is there. A parameter would be cleaner, but _ovStripHTML has three
+     callers and this keeps their signatures alone. */
+  let _ovLastIdxCell = '';
+
   function _ovHeader(t,full,S){
     const price=parseFloat(full.price||0), chg=parseFloat(full.change_pct||0);
     const tk=(full.ticker||t.ticker||'').toUpperCase();
@@ -26031,6 +26077,13 @@ function scResultHTML(d){
         '<div class="ov-headboxes">'+
           scoreHtml+
           '<div class="ov-pricebox '+(chg>=0?'pb-up':'pb-dn')+'"><div class="ov-price">'+fmtP(price)+'</div><div class="ov-chg '+(chg>=0?'up':'dn')+'">'+(chg>=0?'▲ ':'▼ ')+fmtPct(chg)+'</div></div>'+
+          /* INDEX SITS HERE, NOT IN THE STRIP. Seven stats in a seven-column
+             grid is one clean row; Index needed two tracks for the fund names,
+             which pushed it onto a second row and left six empty cells beside
+             it. In this column it fills space that was already blank — the
+             right-hand boxes are shorter than the bullet list to their left —
+             and the fund names get a narrow column they can wrap in. */
+          (_ovLastIdxCell ? '<div class="ov-idxbox">'+_ovLastIdxCell+'</div>' : '')+
         '</div>'+
       '</div>'+
       strip, true);
