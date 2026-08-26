@@ -7262,6 +7262,21 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 #ts-drawer .ov-stat .v{font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:800;color:#0A0A0A;margin-top:4px;line-height:1}
 #ts-drawer .ov-stat .v.pos{color:var(--up)} #ts-drawer .ov-stat .v.neg{color:var(--down)} #ts-drawer .ov-stat .v.amb{color:#b4780a}
 #ts-drawer .ov-stat .sub{font-size:10.5px;color:var(--grey-2);margin-top:3px}
+/* Index cell. The value is chips, not a number, so it opts out of the strip's
+   mono-16px value type; the fund tickers sit in the sub-line where every other
+   cell keeps its qualifier. Spans two columns when a name is in more than one
+   index, which is the only case where the chips would otherwise wrap. */
+#ts-drawer .ov-stat.is-idx .v.idx-v{display:flex;flex-wrap:wrap;gap:4px;font-size:0;margin-top:5px}
+#ts-drawer .ov-stat.is-idx .idx-chip{display:inline-flex;align-items:center;
+  font-family:var(--font-body,inherit);font-size:10.5px;font-weight:700;letter-spacing:.01em;
+  padding:2px 8px;border-radius:100px;background:#EAEEF6;color:#2B3A50;white-space:nowrap}
+#ts-drawer .ov-stat.is-idx .idx-spx{background:#E4EDFB;color:#1B4C9B}
+#ts-drawer .ov-stat.is-idx .idx-ndx{background:#EAEBFA;color:#3F4EAF}
+#ts-drawer .ov-stat.is-idx .idx-dji{background:#0A2F46;color:#E8F0F6}
+#ts-drawer .ov-stat.is-idx .v.idx-none{font-family:var(--font-body,inherit);font-size:12.5px;
+  font-weight:600;color:#5B6673}
+#ts-drawer .ov-stat.is-idx .sub{font-family:'JetBrains Mono',monospace;font-size:9.5px;
+  letter-spacing:.02em}
 /* numbered section divider */
 /* Each editorial section = heading + its content as ONE block, so the heading
    hugs its content instead of floating midway on the pane's flex gap. */
@@ -11359,6 +11374,38 @@ function _v2FilterByProfileLegacy(tickers){
    as the data provider reports it, it is backward-looking, and it says
    nothing about single-name risk — which is why the label is one input on a
    row and not a gate on the list. */
+/* ── INDEX MEMBERSHIP ────────────────────────────────────────────────────
+   The universe already carries an `indices` list for 1,521 of 1,571 names —
+   SPX / SP400 / SP600 / NDX / DJI — and it was never shown anywhere. It is the
+   single most useful piece of context a private investor can have about a name
+   they do not recognise: whether the whole passive market already owns it.
+
+   The funds named below are stated as FACT, not inference. A full-replication
+   index fund holds every constituent of its index by construction, so "in the
+   S&P 500" and "held by VOO" are the same statement. Only funds that track the
+   index EXACTLY are listed — Vanguard's mid- and small-cap S&P funds are IVOO
+   and VIOO; VO and VB track CRSP indices instead and are deliberately absent,
+   because naming them here would be a guess dressed as a fact. */
+const V2_INDEX_META = {
+  SPX:   {nm:'S&P 500',        short:'S&P 500',  etf:'VOO · SPY · IVV'},
+  NDX:   {nm:'Nasdaq-100',     short:'Nasdaq-100', etf:'QQQ · QQQM'},
+  DJI:   {nm:'Dow Jones 30',   short:'Dow 30',   etf:'DIA'},
+  SP400: {nm:'S&P MidCap 400', short:'S&P 400',  etf:'IVOO · IJH'},
+  SP600: {nm:'S&P SmallCap 600', short:'S&P 600', etf:'VIOO · IJR'},
+};
+/* Biggest tent first, so a Dow name reads "S&P 500 · Dow 30" rather than
+   whatever order the data happened to arrive in. */
+const V2_INDEX_ORDER = ['SPX', 'NDX', 'DJI', 'SP400', 'SP600'];
+
+function v2IndexList(t){
+  var raw = (t && (t.indices || t.index_membership)) || [];
+  if (typeof raw === 'string') raw = [raw];
+  if (!Array.isArray(raw)) return [];
+  var seen = {};
+  raw.forEach(function(x){ var k = String(x || '').toUpperCase().trim(); if (V2_INDEX_META[k]) seen[k] = 1; });
+  return V2_INDEX_ORDER.filter(function(k){ return seen[k]; });
+}
+
 function v2BetaBand(beta){
   const b = parseFloat(beta);
   if (isNaN(b)) return null;
@@ -25683,6 +25730,30 @@ function scResultHTML(d){
     const eSub = (d2e!=null&&d2e>=0&&edTxt) ? edTxt
                : (d2e!=null&&d2e<0 ? 'last report' : '');
     const eNear = (d2e!=null && d2e>=0 && d2e<=14);
+    /* Index membership. Shown as "in an index" rather than "—" when we hold no
+       list for the name: absence of a record is not evidence it is in nothing,
+       and 50 of the 1,571 have no list at all. The funds are named because for
+       a full-replication tracker, membership IS ownership. */
+    const _idx = (typeof v2IndexList==='function')
+      ? v2IndexList(full).concat(v2IndexList(t)).filter(function(v,i,a){return a.indexOf(v)===i;})
+      : [];
+    const idxCell = _idx.length
+      ? '<div class="ov-stat is-idx"><div class="k">Index</div>'
+        + '<div class="v idx-v">' + _idx.map(function(k){
+            return '<span class="idx-chip idx-'+k.toLowerCase()+'" title="'
+              + escHTML(V2_INDEX_META[k].nm + ' — every fund tracking it holds this share: '
+                        + V2_INDEX_META[k].etf)
+              + '">' + escHTML(V2_INDEX_META[k].short) + '</span>'; }).join('')
+        + '</div><div class="sub">' + escHTML(
+            /* ONE fund per index, not the first three funds overall. Slicing the
+               flattened list gave a Dow name "VOO · SPY · IVV" — three S&P
+               trackers and no mention of the Nasdaq-100 or the Dow it is also
+               in. One per tent says something different about each. */
+            _idx.map(function(k){ return V2_INDEX_META[k].etf.split(' · ')[0]; })
+                .slice(0, 3).join(' · ')
+          ) + '</div></div>'
+      : '<div class="ov-stat is-idx"><div class="k">Index</div><div class="v idx-none">Not tracked</div>'
+        + '<div class="sub">no major index we follow</div></div>';
     return '<div class="ov-strip'+(catCell?' has-cat':'')+'">'+
       catCell+
       stat('Mkt Cap', mc!=null?_money(mc):'—', mc!=null?(mc>=1e10?'large-cap':mc>=2e9?'mid-cap':'small-cap'):'')+
@@ -25696,6 +25767,7 @@ function scResultHTML(d){
       stat('Beta', beta!=null?beta.toFixed(2):'—',
         (beta!=null&&typeof v2BetaChip==='function')?v2BetaChip(beta):'', '')+
       stat('Earnings', eVal, eSub, eNear?'amb':'', eNear)+
+      idxCell+
     '</div>';
   }
   function _ovHeader(t,full,S){
