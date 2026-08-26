@@ -6720,7 +6720,14 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 #ts-drawer .dr-head{padding:15px 22px 12px;border-bottom:1px solid rgba(12,26,52,.08);position:sticky;top:0;background:rgba(255,255,255,.97);-webkit-backdrop-filter:blur(18px) saturate(150%);backdrop-filter:blur(18px) saturate(150%);z-index:20;box-shadow:0 6px 16px -14px rgba(0,0,0,.16)}
 #ts-drawer .dr-top{display:flex;align-items:center;gap:12px}
 #ts-drawer .dr-tic{font-weight:700;font-size:21px;letter-spacing:-.01em}
-#ts-drawer .dr-name{font-size:12.5px;color:var(--grey)}
+#ts-drawer .dr-name{font-size:12.5px;color:var(--grey);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+/* Sub-sector chip beside the company name. Quiet — it is context for the name,
+   not a competing label — and it truncates rather than pushing the Watch and
+   Ask AI buttons off a narrow drawer. */
+#ts-drawer .dr-cat{display:inline-block;max-width:230px;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap;font-size:11px;font-weight:700;letter-spacing:.01em;
+  padding:2px 9px;border-radius:100px;background:#EEF1F6;color:#3B4757}
+@media(max-width:560px){#ts-drawer .dr-cat{max-width:130px}}
 #ts-drawer .dr-ai-btn{margin-left:auto;display:inline-flex;align-items:center;gap:5px;border:1px solid rgba(124,58,237,.28);background:linear-gradient(135deg,rgba(124,58,237,.10),rgba(79,70,229,.10));color:#6d28d9;font-family:inherit;font-weight:800;font-size:12.5px;padding:7px 13px;border-radius:999px;cursor:pointer;white-space:nowrap;transition:background var(--t-fast),box-shadow var(--t-fast)}
 #ts-drawer .dr-ai-btn:hover{background:linear-gradient(135deg,rgba(124,58,237,.18),rgba(79,70,229,.18));box-shadow:0 6px 16px -8px rgba(124,58,237,.5)}
 #ts-drawer .dr-ai-btn + .dr-close{margin-left:8px}
@@ -24578,7 +24585,22 @@ body.v2 .ah-right,body.v2 .ah-wrap{scrollbar-width:none}
 
     drawer.innerHTML=
       '<div class="dr-head"><div class="dr-top">'+logoHTML(t.ticker,'lg')+
-        '<div class="dr-id"><div class="dr-tic">'+escHTML(t.ticker)+'</div><div class="dr-name">'+escHTML(t.name||'')+'</div></div>'+
+        '<div class="dr-id"><div class="dr-tic">'+escHTML(t.ticker)+'</div>'+
+          '<div class="dr-name">'+escHTML(t.name||'')+
+            (function(){
+              /* Sub-sector belongs up here with the name, not in the stat strip
+                 below. It is IDENTITY — the answer to "what is this company" —
+                 and every other cell in that strip is a MEASUREMENT. Sitting
+                 among them it read as one more number-ish field; beside the
+                 name it does the job it is for, which is telling you how to
+                 read everything underneath. */
+              var s=(t.sub_sector||t.subsector||t.sector||'').trim();
+              var sec=(t.sector||'').trim();
+              if(!s) return '';
+              return '<span class="dr-cat"'+((sec&&sec.toLowerCase()!==s.toLowerCase())
+                ? ' title="'+escHTML(sec)+'"' : '')+'>'+escHTML(s)+'</span>';
+            })()+
+          '</div></div>'+
         // Watchlist toggle. The drawer is where someone decides a name is worth
         // following, but until now the only way to add one was typing the ticker
         // into the Watchlist panel by hand. Reflects current state on open and
@@ -25789,10 +25811,11 @@ function scResultHTML(d){
     const _sec=(full.sector||t.sector||'').trim();
     const catVal=_sub||_sec;
     const catSub=(_sub&&_sec&&_sec.toLowerCase()!==_sub.toLowerCase())?_sec:'';
-    const catCell=catVal
-      ? '<div class="ov-stat is-cat"><div class="k">Sub-sector</div><div class="v">'+escHTML(catVal)+'</div>'
-        +(catSub?'<div class="sub">'+escHTML(catSub)+'</div>':'')+'</div>'
-      : '';
+    /* Empty since 26 Aug: the sub-sector moved up to the drawer header, beside
+       the company name. Kept as a variable rather than surgically removed from
+       the return below, so the .has-cat grid rule and every caller still line
+       up — and so this comment sits where the next person will look for it. */
+    const catCell='';
     /* Earnings — the one date on this strip that changes how every other
        number on it should be read. A P/E and a price target mean something
        different the day before a print than three months out, and the strip
@@ -25843,7 +25866,11 @@ function scResultHTML(d){
     return '<div class="ov-strip'+(catCell?' has-cat':'')+'">'+
       catCell+
       stat('Mkt Cap', mc!=null?_money(mc):'—', mc!=null?(mc>=1e10?'large-cap':mc>=2e9?'mid-cap':'small-cap'):'')+
-      stat('P/E', pe!=null?pe.toFixed(0)+'×':'n/a', pe==null?'loss-making':'', pe==null?'neg':'')+
+      /* P/E removed 26 Aug at the user's request. It is one multiple out of
+         several and it has a whole tab: Valuation shows it beside P/S, EV/EBITDA
+         and PEG, where a reader can see which of them actually applies. A single
+         "33×" on the summary invited exactly the comparison the Valuation tab
+         exists to make properly. */
       stat('52-wk', (lo!=null&&hi!=null)?(lo.toFixed(0)+'–'+hi.toFixed(0)):'—','')+
       stat('Analyst Avg', tm!=null?fmtP(tm):'—', upside!=null?((upside>=0?'+':'')+upside.toFixed(0)+'% upside'):'', upside!=null?(upside>=0?'pos':'neg'):'')+
       stat('Rating', rating||'—', na!=null?(Math.round(na)+' analysts'):'', rating?(/Buy/.test(rating)?'pos':/Sell/.test(rating)?'neg':'amb'):'')+
