@@ -6984,10 +6984,10 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 #ts-drawer .rep-teal .rep-rib{background:linear-gradient(105deg,#16c2af,#0c8a82)}
 #ts-drawer .rep-green .rep-rib{background:linear-gradient(105deg,#2F8A3C,#1C6B2E)}
 #ts-drawer .rep-violet .rep-rib{background:linear-gradient(105deg,#8b5cf6,#5b21b6)}
-#ts-drawer .rep-amber .rep-rib{background:linear-gradient(105deg,#9A6208,#6E4206)}
+#ts-drawer .rep-amber .rep-rib{background:linear-gradient(105deg,#E8720C,#A03A05)}
 #ts-drawer .rep-red .rep-rib{background:linear-gradient(105deg,#f5576c,#c11d33)}
 #ts-drawer .rep-slate .rep-rib{background:linear-gradient(105deg,#7c8aa0,#4a5568)}
-#ts-drawer .rep-blue{border-color:rgba(41,112,255,.18)} #ts-drawer .rep-teal{border-color:rgba(20,184,166,.18)} #ts-drawer .rep-green{border-color:rgba(91,185,71,.2)} #ts-drawer .rep-violet{border-color:rgba(139,92,246,.18)} #ts-drawer .rep-amber{border-color:rgba(212,134,10,.2)} #ts-drawer .rep-red{border-color:rgba(193,29,51,.18)}
+#ts-drawer .rep-blue{border-color:rgba(41,112,255,.18)} #ts-drawer .rep-teal{border-color:rgba(20,184,166,.18)} #ts-drawer .rep-green{border-color:rgba(91,185,71,.2)} #ts-drawer .rep-violet{border-color:rgba(139,92,246,.18)} #ts-drawer .rep-amber{border-color:rgba(232,114,12,.22)} #ts-drawer .rep-red{border-color:rgba(193,29,51,.18)}
 #ts-drawer .reb-row{display:flex;align-items:center;gap:14px}
 #ts-drawer .reb-row .reb-bar{flex:1;margin:0}
 /* signal badge colors (override the global grey catch-all) */
@@ -7370,8 +7370,16 @@ html.v2-dark .v2ov-chart-legend{color:#94a3b8}
 /* The index block now lives in the right-hand column under the price, so it is
    a card in its own right rather than a strip cell: its own border, and the
    fund names wrap inside a narrow column instead of needing two grid tracks. */
-#ts-drawer .ov-idxbox .ov-stat.is-idx{grid-column:auto;background:#fff;
-  border:1px solid var(--hair);border-radius:11px;padding:9px 12px 10px}
+/* Its own colour, so the three right-hand boxes read as three facts rather
+   than two pills and a leftover. Score is tinted by strength (blue/green/amber)
+   and price by direction (green/red) — both of those are JUDGEMENTS. Index
+   membership is not, so it takes the site's warm neutral instead of a fourth
+   verdict colour: distinct from its siblings, and it never implies good or bad.
+   The S&P/Nasdaq chips inside keep their own blues and sit clearly on it. */
+#ts-drawer .ov-idxbox .ov-stat.is-idx{grid-column:auto;
+  background:linear-gradient(135deg,#FFF6F0,#FFEDE1);
+  border:1px solid rgba(255,97,0,.24);border-radius:11px;padding:9px 12px 10px}
+#ts-drawer .ov-idxbox .ov-stat.is-idx .k{color:#9A4B07}
 #ts-drawer .ov-stat.is-idx .sub.idx-funds{font-family:var(--font-body,inherit);font-size:10.5px;
   line-height:1.4;color:#4A5563;white-space:normal;margin-top:5px}
 #ts-drawer .ov-idxbox{width:100%}
