@@ -3907,6 +3907,30 @@ body.v2-featured-only #fund-tbody tr.fund-row:not([data-featured]){display:none!
 .uni-screen .scn-dsc{font-size:12.5px;color:#4A5563;line-height:1.3;font-weight:600}
 .fund-row.scn-hide{display:none!important}
 .fund-row.beta-hide{display:none!important}
+.fund-row.idx-hide{display:none!important}
+/* Index column. Chips are the same three families as the drawer's Summary
+   strip so the two surfaces read as one system; they are clickable here, which
+   the pointer and the hover ring say. */
+.fund-list td.fl-idx{white-space:nowrap}
+.fund-list .idx-chip{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.01em;
+  padding:2px 7px;border-radius:100px;background:#EAEEF6;color:#2B3A50;cursor:pointer;
+  margin:1px 3px 1px 0;transition:box-shadow var(--t-fast),transform var(--t-fast)}
+.fund-list .idx-chip.idx-spx{background:#E4EDFB;color:#1B4C9B}
+.fund-list .idx-chip.idx-ndx{background:#EAEBFA;color:#3F4EAF}
+.fund-list .idx-chip.idx-dji{background:#0A2F46;color:#E8F0F6}
+.fund-list .idx-chip:hover{box-shadow:0 0 0 2px rgba(32,100,232,.35);transform:translateY(-1px)}
+.fund-list .idx-chip.on{box-shadow:0 0 0 2px #2064E8}
+.fund-list .fl-idx-na{color:#5B6673}
+.uni-idx-pill{font:inherit;font-size:12px;font-weight:700;cursor:pointer;display:inline-flex;
+  align-items:center;gap:7px;margin-left:6px;padding:5px 11px;border-radius:999px;
+  border:1.5px solid #2064E8;background:#F4F8FF;color:#1B4C9B}
+.uni-idx-pill i{font-style:normal;font-weight:800;opacity:.7}
+.uni-idx-pill:hover{background:#E4EDFB}
+.uni-idx-pill:hover i{opacity:1}
+@media(prefers-reduced-motion:reduce){
+  .fund-list .idx-chip{transition:none}
+  .fund-list .idx-chip:hover{transform:none}
+}
 /* Beta band bar — deliberately quieter than the lens cards above it: it is a
    modifier on the current view, not a view of its own. */
 .uni-bands{display:flex;align-items:center;gap:7px;flex-wrap:wrap;
@@ -11895,7 +11919,8 @@ function v2SyncUniverseTally(){
     const featOk   = !featOnly || r.hasAttribute('data-featured');
     const scnOk    = !r.classList.contains('scn-hide');
     const betaOk   = !r.classList.contains('beta-hide');
-    if (profOk && sectorOk && featOk && scnOk && betaOk) visible += 1;
+    const idxOk    = !r.classList.contains('idx-hide');
+    if (profOk && sectorOk && featOk && scnOk && betaOk && idxOk) visible += 1;
   });
   // When no sector/featured filter is active and the backend exposed
   // profile_counts, prefer THAT number so this tally agrees with the picker
@@ -11904,7 +11929,8 @@ function v2SyncUniverseTally(){
   const counts = (window.__AH_DATA__ && window.__AH_DATA__.profile_counts) || null;
   const scnActive = (typeof _uniScreen !== 'undefined') && _uniScreen !== 'all' && _uniScreen !== 'featured';
   const bandActive = (typeof _uniBand !== 'undefined') && _uniBand !== 'all';
-  if (!sector && !featOnly && !scnActive && !bandActive && counts && counts[prof] != null) visible = counts[prof];
+  const idxActive  = (typeof _uniIndex !== 'undefined') && !!_uniIndex;
+  if (!sector && !featOnly && !scnActive && !bandActive && !idxActive && counts && counts[prof] != null) visible = counts[prof];
   const profLbl = prof === 'aggressive' ? 'aggressive view'
                 : prof === 'balanced'   ? 'balanced view'
                 : prof === 'conservative' ? 'conservative view' : prof;
@@ -17517,6 +17543,10 @@ function renderFundamentals(tickers) {
        cell renders the same band chip the drawer and the Sector Map use. */
     const _beta  = parseFloat(t.beta);
     const _bBand = (typeof v2BetaBand === 'function') ? v2BetaBand(t.beta) : null;
+    /* Index membership — the same list the drawer's Summary strip reads, so a
+       row and its drawer can never disagree. Short labels here because the
+       column is narrow; the funds live in the title, as they do there. */
+    const _idx = (typeof v2IndexList === 'function') ? v2IndexList(t) : [];
     return `<tr class="fund-row"${(window._featuredSet && window._featuredSet.has(t.ticker)) ? ' data-featured' : ''}
          data-ticker="${t.ticker}"
          data-name="${(t.name || '').replace(/"/g, '')}"
@@ -17537,11 +17567,13 @@ function renderFundamentals(tickers) {
          data-upside="${upsidePct!=null?upsidePct.toFixed(1):''}"
          data-beta="${!isNaN(_beta)?_beta.toFixed(3):''}"
          data-band="${_bBand ? _bBand.key : ''}"
+         data-index="${_idx.join(' ')}"
          onclick="openStockModal('${t.ticker}')">
       <td><span class="fl-pop">${Math.round(pop)}</span></td>
       <td><span class="fl-stock"><span class="fl-tic">${t.ticker}</span><span class="fl-name">${v2EscHTML(t.name || '')}</span></span></td>
       <td class="fl-sec">${v2EscHTML(sector)}</td>
       <td class="fl-sub" title="${v2EscHTML(sub)}">${v2EscHTML(sub)}</td>
+      <td class="fl-idx">${_idx.length ? _idx.map(k => `<span class="idx-chip idx-${k.toLowerCase()}" data-idx="${k}" title="${v2EscHTML(V2_INDEX_META[k].nm + ' — every fund tracking it holds this share: ' + V2_INDEX_META[k].etf + '. Click to show only these.')}">${v2EscHTML(V2_INDEX_META[k].short)}</span>`).join('') : '<span class="fl-idx-na" title="Not in any major index we follow.">—</span>'}</td>
       <td class="num fd-price" id="fl-price-${t.ticker}" style="font-size:14px;font-weight:700">${fmtP(price)}</td>
       <td class="num fl-chg ${pCls(chg)}">${fmtPct(chg)}</td>
       <td class="num" style="font-weight:800;color:${_rs>=80?'#116B35':_rs>=50?'#0f172a':'#5B6673'}">${_rs>0?_rs:'—'}</td>
@@ -17563,6 +17595,7 @@ function renderFundamentals(tickers) {
         <th>Stock</th>
         <th>Sector</th>
         <th title="The curated theme tag where we have one, otherwise the standard industry classification.">Sub-sector</th>
+        <th title="Index membership. A fund that tracks an index holds every share in it, so this is also who already owns the company: S&P 500 = VOO/SPY/IVV, Nasdaq-100 = QQQ, Dow 30 = DIA, S&P 400 = IVOO/IJH, S&P 600 = VIOO/IJR. Click a chip to show only that index.">Index</th>
         <th class="num" onclick="sortFundList('price')">Price</th>
         <th class="num" onclick="sortFundList('chg')">${(window._ahMarketOpen && !window._ahMarketOpen()) ? 'Last close' : 'Today %'}</th>
         <th class="num" onclick="sortFundList('rs')" title="Relative Strength (1–99) — price performance vs the market. 80+ is leadership.">RS</th>
@@ -17580,6 +17613,7 @@ function renderFundamentals(tickers) {
   // Delegated on #fd-grid, which survives the chunked tbody render below, so
   // this is attached once and keeps working for rows added later.
   if (typeof v2WireSectorCells === 'function') v2WireSectorCells();
+  if (typeof v2WireIndexCells === 'function') v2WireIndexCells();
   const tallyEl = document.getElementById('tally-fund');
   // Show which profile is filtering the list so the count makes sense.
   const _curProfile = (typeof v2CurrentProfile === 'function') ? v2CurrentProfile() : 'aggressive';
@@ -17841,6 +17875,7 @@ function _uniLensRows(){
   const featOnly = document.body.classList.contains('v2-featured-only');
   return [...document.querySelectorAll('#fund-tbody tr.fund-row')].filter(r =>
     !r.classList.contains('scn-hide') && !r.classList.contains('sector-hide') &&
+    !r.classList.contains('idx-hide') &&
     (!featOnly || r.hasAttribute('data-featured')));
 }
 
@@ -17849,12 +17884,20 @@ function v2RenderBands(){
   const rows = _uniLensRows();
   const n = {all: rows.length, low: 0, mid: 0, high: 0};
   rows.forEach(r => { const b = r.dataset.band; if (b && n[b] !== undefined) n[b]++; });
+  /* An active index filter is set from a chip buried in the table, so it must
+     announce itself somewhere fixed — otherwise a reader who scrolled past the
+     chip they clicked sees a short table and no reason for it. */
+  var idxPill = (typeof _uniIndex !== 'undefined' && _uniIndex && V2_INDEX_META[_uniIndex])
+    ? '<button type="button" class="uni-idx-pill" title="Clear the index filter">'
+      + 'Index: ' + v2EscHTML(V2_INDEX_META[_uniIndex].short) + '<i>×</i></button>'
+    : '';
   wrap.innerHTML = '<span class="ub-lbl">Beta</span>' + _UNI_BANDS.map(b =>
     '<button type="button" class="uni-band ' + b.cls + (b.k === _uniBand ? ' on' : '') + '" ' +
       'title="' + v2EscHTML(b.ttl) + '" data-band="' + b.k + '" ' +
       '>' + b.nm +
-      '<span class="ub-ct">' + n[b.k] + '</span></button>').join('');
+      '<span class="ub-ct">' + n[b.k] + '</span></button>').join('') + idxPill;
   wrap.onclick = function(e){
+    if (e.target.closest('.uni-idx-pill')) { v2ApplyIndexFilter(_uniIndex); return; }
     const btn = e.target.closest('.uni-band');
     if (btn) v2ApplyBetaBand(btn.dataset.band);
   };
@@ -17879,6 +17922,48 @@ window.v2GoBetaBand = function(key){
     if (el && el.scrollIntoView) el.scrollIntoView({behavior:'smooth', block:'start'});
   } catch(e){}
 };
+
+/* Index filter — a THIRD axis, same shape as the beta band.
+
+   Driven by clicking a chip in the Index column rather than by its own bar:
+   the chips are already there on every row, and the sector/sub-sector cells in
+   this table have worked as click-to-filter for months, so this is the pattern
+   a reader has already met. Clicking the active index again clears it, which is
+   how v2SelectSector behaves too. The state shows up as a removable pill in the
+   beta bar so it can never be on without being visible. */
+let _uniIndex = '';
+
+function v2ApplyIndexFilter(code){
+  var k = String(code || '').toUpperCase();
+  if (!V2_INDEX_META[k]) k = '';
+  _uniIndex = (k && k === _uniIndex) ? '' : k;    // clicking the live one clears it
+  document.querySelectorAll('#fund-tbody tr.fund-row').forEach(function(r){
+    r.classList.toggle('idx-hide',
+      !!_uniIndex && (' ' + (r.dataset.index || '') + ' ').indexOf(' ' + _uniIndex + ' ') < 0);
+  });
+  document.querySelectorAll('#fund-tbody tr.fund-row .idx-chip').forEach(function(c){
+    c.classList.toggle('on', !!_uniIndex && c.dataset.idx === _uniIndex);
+  });
+  if (typeof v2RenderBands === 'function') v2RenderBands();
+  if (typeof v2SyncUniverseTally === 'function') v2SyncUniverseTally();
+  if (typeof _secgRefreshSoon === 'function') _secgRefreshSoon();
+}
+window.v2ApplyIndexFilter = v2ApplyIndexFilter;
+
+/* Delegated on #fd-grid, which survives the chunked tbody render — the same
+   place and the same reason as v2WireSectorCells. Guarded so repeated renders
+   cannot stack it. */
+function v2WireIndexCells(){
+  var grid = document.getElementById('fd-grid');
+  if (!grid || grid.getAttribute('data-idxcells') === '1') return;
+  grid.setAttribute('data-idxcells', '1');
+  grid.addEventListener('click', function(ev){
+    var chip = ev.target.closest ? ev.target.closest('.idx-chip[data-idx]') : null;
+    if (!chip) return;
+    ev.stopPropagation(); ev.preventDefault();
+    v2ApplyIndexFilter(chip.dataset.idx);
+  });
+}
 
 function v2ApplyBetaBand(k){
   _uniBand = (k || 'all');
@@ -18204,6 +18289,7 @@ function _secgVisibleTickerSet(){
     if (featOnly && !r.hasAttribute('data-featured')) return;
     if (r.classList.contains('scn-hide')) return;
     if (r.classList.contains('beta-hide')) return;   // the beta band is a filter like any other
+    if (r.classList.contains('idx-hide')) return;    // and so is the index
     set.add(r.dataset.ticker);
   });
   return set;
