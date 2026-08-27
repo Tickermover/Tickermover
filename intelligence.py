@@ -335,6 +335,68 @@ class ScoreHistory:
 # ║  3. MarketRegime — macro overlay                                       ║
 # ╚════════════════════════════════════════════════════════════════════════╝
 
+# -- previous regular-session close ---------------------------------------
+
+def _prev_regular_closes(syms: list) -> dict:
+    """Official previous *regular-session* close per symbol, from daily bars.
+
+    Do NOT use yfinance's ``fast_info['previous_close']`` for this. It is
+    derived from one week of HOURLY bars WITH pre/post included, then takes
+    the last bar of the prior calendar day - i.e. the previous day's final
+    EXTENDED-hours print, not the 16:00 close. Most nights the two sit within
+    a few basis points and the bug is invisible; on a night with a real
+    after-hours move (a mega-cap earnings beat, say) they diverge by whole
+    percent, and every %-change measured against it silently understates the
+    day by exactly that gap. 27 Aug 2026: XLK closed 182.84 but printed
+    186.20 after hours, so the dashboard showed Technology +1.29% on a
+    +3.16% day, and Nasdaq +0.19% on a +1.37% day.
+
+    Daily bars are left UNadjusted on purpose - they are compared against
+    fast_info's raw last price, so a dividend-adjusted close would
+    reintroduce a (smaller) version of the same skew.
+    """
+    out: dict = {}
+    if not _YF_AVAILABLE or not syms:
+        return out
+    try:
+        df = yf.download(list(syms), period="7d", interval="1d",
+                         auto_adjust=False, group_by="ticker",
+                         threads=True, progress=False)
+    except Exception as exc:
+        logger.debug(f"prev-close download failed: {exc}")
+        return out
+    if df is None or getattr(df, "empty", True):
+        return out
+
+    try:
+        from zoneinfo import ZoneInfo
+        today = datetime.now(ZoneInfo("America/New_York")).date()
+    except Exception:
+        today = datetime.now(timezone.utc).date()
+
+    levels = getattr(df.columns, "levels", None)
+    for sym in syms:
+        try:
+            sub = df[sym] if (levels is not None and sym in levels[0]) else df
+            rows = []
+            for idx, val in zip(sub.index, sub["Close"].tolist()):
+                v = float(val)
+                if v != v:                    # NaN - no bar that day
+                    continue
+                rows.append((idx.date() if hasattr(idx, "date") else idx, v))
+            if not rows:
+                continue
+            # Today's own bar is still forming - it is not a *previous* close.
+            # Pre-market (no bar for today yet) correctly keeps the last row.
+            if rows[-1][0] == today:
+                rows = rows[:-1]
+            if rows:
+                out[sym] = rows[-1][1]
+        except Exception:
+            continue
+    return out
+
+
 class MarketRegime:
     """
     Detects the prevailing market regime from a small basket of macro tickers.
@@ -477,14 +539,21 @@ class MarketRegime:
         fast_info — the SAME source the Pre-Market Report uses. This picks up
         pre-/post-market prices, which daily history bars do not. Used to
         overlay the *displayed* pill values so they match the report.
-        Blocking — call via asyncio.to_thread."""
+        Blocking — call via asyncio.to_thread.
+
+        The last price comes from fast_info; the previous close does NOT — see
+        _prev_regular_closes for why fast_info's is the prior EXTENDED-hours
+        print rather than the official close. fast_info stays the fallback so a
+        failed daily-bar download degrades to the old (approximate) number
+        instead of blanking the pills."""
         out: dict = {}
         from concurrent.futures import ThreadPoolExecutor
+        prevs = _prev_regular_closes(list(syms))
         def q(sym):
             try:
                 fi = yf.Ticker(sym).fast_info
                 last = self._fi_val(fi, "last_price", "lastPrice")
-                prev = self._fi_val(fi, "previous_close", "previousClose")
+                prev = prevs.get(sym) or self._fi_val(fi, "previous_close", "previousClose")
                 pct  = round((last / prev - 1) * 100, 2) if (last and prev) else None
                 return sym, (round(last, 2) if last is not None else None), pct
             except Exception as exc:
@@ -726,12 +795,19 @@ class MarketAnalysis:
                 return float(v)
         return None
 
-    def _quote(self, sym: str) -> dict:
-        """last / previous_close / % change for one symbol via fast_info."""
+    def _quote(self, sym: str, prev_override: Optional[float] = None) -> dict:
+        """last / previous_close / % change for one symbol via fast_info.
+
+        prev_override carries the real previous regular-session close from
+        _prev_regular_closes; fast_info's own previous_close is only the
+        fallback, because it is the prior day's last EXTENDED-hours print (see
+        that helper's docstring)."""
         try:
             fi = yf.Ticker(sym).fast_info
             last = self._fi_val(fi, "last_price", "lastPrice")
-            prev = self._fi_val(fi, "previous_close", "previousClose")
+            prev = prev_override
+            if prev is None:
+                prev = self._fi_val(fi, "previous_close", "previousClose")
             if last is None or prev is None or prev == 0:
                 return {"last": last, "prev": prev, "chg_abs": None, "chg_pct": None}
             return {
@@ -746,9 +822,13 @@ class MarketAnalysis:
 
     def _quotes(self, syms: list[str]) -> dict:
         from concurrent.futures import ThreadPoolExecutor
+        # One batched daily-bar read for the whole basket, then one fast_info
+        # call per symbol for the live price.
+        prevs = _prev_regular_closes(syms)
         out: dict = {}
         with ThreadPoolExecutor(max_workers=10) as ex:
-            for sym, res in zip(syms, ex.map(self._quote, syms)):
+            for sym, res in zip(syms, ex.map(self._quote, syms,
+                                             [prevs.get(s) for s in syms])):
                 out[sym] = res
         return out
 
@@ -796,11 +876,11 @@ class MarketAnalysis:
     def _sectors(self) -> list:
         """1d + 5d % change for the 11 SPDR sector ETFs.
 
-        The 1-day move comes from fast_info (the same reliable path the index
-        cards use) so every sector shows; the 5-day move is a best-effort
-        batch history read layered on top.
+        The 1-day move takes the same path the index cards use (live price vs
+        the previous regular close) so every sector shows; the 5-day move is a
+        best-effort batch history read layered on top.
         """
-        quotes = self._quotes(list(self.SECTORS))   # reliable 1d via fast_info
+        quotes = self._quotes(list(self.SECTORS))   # live price vs prev close
         five: dict = {}
         try:
             df = yf.download(list(self.SECTORS), period="1mo", interval="1d",
