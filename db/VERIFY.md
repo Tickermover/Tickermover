@@ -46,10 +46,10 @@ environment**:
 
 | Environment | Variable               | Value              |
 |---|---|---|
-| Production (`alphahunt.in`)   | `SUPABASE_SERVICE_KEY` | the `eyJ...` key |
-| Production                    | `ALPHAHUNT_ENV`        | `prod`           |
+| Production (`tickermover.com`)   | `SUPABASE_SERVICE_KEY` | the `eyJ...` key |
+| Production                    | `TICKERMOVER_ENV`        | `prod`           |
 | Dev (Railway preview)         | `SUPABASE_SERVICE_KEY` | the same key     |
-| Dev                           | `ALPHAHUNT_ENV`        | `dev`            |
+| Dev                           | `TICKERMOVER_ENV`        | `dev`            |
 
 (They share one Supabase project but use different `env_id` rows so prod
 and dev portfolios don't collide.)

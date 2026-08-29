@@ -40,7 +40,10 @@ logger = logging.getLogger(__name__)
 
 
 def _detect_env_id() -> int:
-    override = (os.environ.get("ALPHAHUNT_ENV") or "").lower().strip()
+    # TICKERMOVER_ENV is the current name; ALPHAHUNT_ENV is the pre-rebrand
+    # fallback, kept only so the retired Railway project still resolves.
+    override = (os.environ.get("TICKERMOVER_ENV")
+                or os.environ.get("ALPHAHUNT_ENV") or "").lower().strip()
     if override in ("prod", "production"):
         return 1
     if override in ("dev", "development", "staging"):

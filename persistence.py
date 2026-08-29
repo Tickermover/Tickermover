@@ -21,8 +21,9 @@ write with an ``env_id``::
     1 = prod   (tickermover.com)
     2 = dev    (web-production-17a78.up.railway.app + local)
 
-The env is auto-detected from the ``RAILWAY_ENVIRONMENT`` env var if present,
-falling back to the explicit ``ALPHAHUNT_ENV`` override (``prod`` / ``dev``).
+The env comes from the explicit ``TICKERMOVER_ENV`` override (``prod`` / ``dev``),
+then the pre-rebrand ``ALPHAHUNT_ENV``, then ``RAILWAY_ENVIRONMENT``. With none
+set it resolves to dev.
 """
 from __future__ import annotations
 
@@ -42,7 +43,10 @@ logger = logging.getLogger(__name__)
 # ── Env detection ──────────────────────────────────────────────────────────
 def _detect_env_id() -> int:
     """Return 1 for prod, 2 for dev. Both share one Supabase project."""
-    override = (os.environ.get("ALPHAHUNT_ENV") or "").lower().strip()
+    # TICKERMOVER_ENV is the current name; ALPHAHUNT_ENV is the pre-rebrand
+    # fallback, kept only so the retired Railway project still resolves.
+    override = (os.environ.get("TICKERMOVER_ENV")
+                or os.environ.get("ALPHAHUNT_ENV") or "").lower().strip()
     if override in ("prod", "production"):
         return 1
     if override in ("dev", "development", "staging"):

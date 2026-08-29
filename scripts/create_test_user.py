@@ -56,7 +56,7 @@ def _req(method: str, url: str, key: str, body=None, prefer: str | None = None):
 def main() -> None:
     ap = argparse.ArgumentParser(description="Create a pre-confirmed Pro test user in Supabase.")
     ap.add_argument("--email", default=os.environ.get("TEST_USER_EMAIL", "tester@example.com"))
-    ap.add_argument("--password", default=os.environ.get("TEST_USER_PASSWORD", "AlphaHuntPro!234"))
+    ap.add_argument("--password", default=os.environ.get("TEST_USER_PASSWORD", "ChangeMe!234"))
     ap.add_argument("--url", default=os.environ.get("SUPABASE_URL", ""))
     ap.add_argument("--key", default=os.environ.get("SUPABASE_SERVICE_KEY", ""))
     a = ap.parse_args()

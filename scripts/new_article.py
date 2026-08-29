@@ -1,5 +1,5 @@
 """
-new_article.py  ─  Scaffold a new Zacks-style research article for AlphaHunt.
+new_article.py  ─  Scaffold a new Zacks-style research article for TickerMover.
 
 Usage:
     python scripts/new_article.py
@@ -61,7 +61,7 @@ def py_quote(s: str) -> str:
 
 def main() -> None:
     today = datetime.date.today().isoformat()
-    print(f"\n─── New AlphaHunt research article ─── ({today})\n")
+    print(f"\n─── New TickerMover research article ─── ({today})\n")
 
     ticker   = ask("Ticker (e.g. NVDA)").upper()
     if not ticker:

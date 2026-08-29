@@ -10,7 +10,7 @@ whole `KEY=VALUE` block at once.
 ## 1. Environment — SET THIS FIRST
 
 ```
-ALPHAHUNT_ENV=prod
+TICKERMOVER_ENV=prod
 ```
 
 Without it the app falls through to **dev** and writes production data into the
