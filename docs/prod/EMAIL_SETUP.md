@@ -8,14 +8,18 @@ End-to-end setup for proper business email at `@tickermover.com`. Total cost: **
 
 | Address | Used for | Lands where | Sends as |
 |---|---|---|---|
-| `support@tickermover.com` | All user-facing contact: support queries, partnership, press, contact links | <OWNER_MAILBOX> | Gmail (send-as) |
+| `support@tickermover.com` | All user-facing contact: support queries, partnership, press, contact links | Own mailbox | Resend SMTP |
 | `noreply@tickermover.com` | App transactional: password reset, signup, newsletter | (sender only) | Resend API |
 
-`support@tickermover.com` is the single public-facing address for the business. It is a routed
-address, not a mailbox — inbound mail forwards to the owner's private mailbox (`<OWNER_MAILBOX>`
-below), and outbound is sent *as* `support@` via Resend SMTP. Replace `<OWNER_MAILBOX>` with the
-owner's real inbox before following these steps; it must be a DIFFERENT address from
-`support@tickermover.com`, or Cloudflare will refuse the route as a loop.
+`support@tickermover.com` is the single public-facing address for the business and is a REAL
+mailbox — it receives directly, so no forwarding is required and Parts 2a/2b below are optional.
+
+A personal recovery address exists as the account fallback. It is deliberately NOT recorded here:
+this repository is public, and an address committed to it is world-readable forever, including in
+git history. Keep it in a password manager alongside the account credentials.
+
+Everything the business does — provider sign-ups, domain registration, billing — should use
+`support@tickermover.com`, not the personal address.
 
 ---
 
@@ -63,7 +67,7 @@ Cloudflare will email you when nameservers are active. Usually 1-4 hours, max 24
 
 ---
 
-## Part 2 — Set up Cloudflare Email Routing (10 min)
+## Part 2 *(optional — only if support@ is a routed address rather than a real mailbox)* — Set up Cloudflare Email Routing (10 min)
 
 Once DNS is on Cloudflare:
 
@@ -76,7 +80,7 @@ Once DNS is on Cloudflare:
    - `MX @ → route2.mx.cloudflare.net` (priority 2)
    - `MX @ → route3.mx.cloudflare.net` (priority 3)
    - `TXT @ → v=spf1 include:_spf.mx.cloudflare.net ~all`
-4. **Verify your destination address**: enter `<OWNER_MAILBOX>`. Cloudflare sends a verification email — click the link in it.
+4. **Verify your destination address**: enter the personal recovery mailbox (see note above). Cloudflare sends a verification email — click the link in it.
 
 ### 2b. Add the routing rules
 
@@ -84,9 +88,9 @@ In **Email Routing → Routes**, click **Create address**:
 
 | Custom address | Action | Destination |
 |---|---|---|
-| `support@tickermover.com` | Send to email | `<OWNER_MAILBOX>` |
+| `support@tickermover.com` | Send to email | *(personal recovery mailbox)* |
 
-Then enable the **Catch-all address** at the bottom and set it to also forward to `<OWNER_MAILBOX>`. The catch-all means anything sent to any other `@tickermover.com` address (info@, hello@, contact@, etc.) still reaches you — you don't have to create them explicitly.
+Then enable the **Catch-all address** at the bottom and set it to also forward to the same recovery mailbox. The catch-all means anything sent to any other `@tickermover.com` address (info@, hello@, contact@, etc.) still reaches you — you don't have to create them explicitly.
 
 **Test it**: from any other email, send a message to `support@tickermover.com`. It should land in your Gmail within 30 seconds with a Cloudflare envelope header.
 
@@ -98,7 +102,7 @@ This gives you SMTP credentials so Gmail can actually send AS `@tickermover.com`
 
 ### 3a. Sign up
 
-1. [resend.com](https://resend.com) → sign up with `<OWNER_MAILBOX>`
+1. [resend.com](https://resend.com) → sign up with `support@tickermover.com`
 2. **Domains → Add Domain → `tickermover.com`**
 3. Resend shows you 3 records. **Important**: ignore Resend's MX record — Cloudflare's MX is already there, and you don't want to overwrite it (Cloudflare handles inbound, Resend only handles outbound). Add ONLY:
 
@@ -135,7 +139,7 @@ This is the magic step that makes outbound emails appear FROM `support@tickermov
 
 For `support@tickermover.com`:
 
-1. In Gmail (`<OWNER_MAILBOX>`) → ⚙ Settings → **See all settings → Accounts and Import** tab
+1. In the recovery Gmail → ⚙ Settings → **See all settings → Accounts and Import** tab
 2. Find **Send mail as** → click **Add another email address**
 3. A popup opens:
    - **Name**: TickerMover (recipient sees this)
