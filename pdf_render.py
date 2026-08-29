@@ -211,21 +211,15 @@ _STATIC_DIR = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)),
 _BRAND_MARK_PATH   = _os.path.join(_STATIC_DIR, "alpha-logo-bare-512.png")
 _BRAND_LOCKUP_PATH = _os.path.join(_STATIC_DIR, "alpha-logo-512.png")
 
-# Legacy fallback to the older /brand folder so an incomplete deploy
-# (one folder pushed but not the other) still renders a logo.
-_LEGACY_BRAND_DIR  = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "brand")
-_LEGACY_MARK_PATH   = _os.path.join(_LEGACY_BRAND_DIR, "alphahunt-mark-transparent-512.png")
-_LEGACY_LOCKUP_PATH = _os.path.join(_LEGACY_BRAND_DIR, "alphahunt-lockup-light-1200x300.png")
-
 _BRAND_MARK_IMG   = None
 _BRAND_LOCKUP_IMG = None
 try:
-    for path in (_BRAND_MARK_PATH, _LEGACY_MARK_PATH):
+    for path in (_BRAND_MARK_PATH,):
         if _os.path.exists(path):
             _BRAND_MARK_IMG = ImageReader(path)
             logger.info(f"pdf_render: brand mark loaded from {path}")
             break
-    for path in (_BRAND_LOCKUP_PATH, _LEGACY_LOCKUP_PATH):
+    for path in (_BRAND_LOCKUP_PATH,):
         if _os.path.exists(path):
             _BRAND_LOCKUP_IMG = ImageReader(path)
             logger.info(f"pdf_render: brand lockup loaded from {path}")
@@ -236,9 +230,9 @@ except Exception as _exc:
 
 def _draw_brand_mark(c: canvas.Canvas, x: float, y: float, size: float = 28,
                       use_gradient: bool = True):
-    """The TickerMover α-mark — uses the real brand PNG when available
-    (brand/alphahunt-mark-transparent-512.png), falls back to a
-    synthesised gradient α tile only if the asset is missing. The
+    """The TickerMover mark — uses the real brand PNG when available
+    (static/icons/alpha-logo-bare-512.png), falls back to a
+    synthesised gradient tile only if the asset is missing. The
     use_gradient flag is retained for back-compat but ignored when the
     real asset is present (the brand PNG is already correctly styled)."""
     if _BRAND_MARK_IMG is not None:
