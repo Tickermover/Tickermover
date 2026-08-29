@@ -22,7 +22,7 @@ from pydantic import BaseModel
 
 import config
 from auth import SupabaseClient
-from billing import RazorpayClient, StripeClient, is_pro, PRO_AMOUNT_INR
+from billing import StripeClient, is_pro
 from email_sender import send_welcome_email, send_password_changed_email, send_prime_review_email
 import secrets as _secrets
 from data_coordinator import DataCoordinator
@@ -115,11 +115,6 @@ supabase    = SupabaseClient(
     anon_key   = config.SUPABASE_ANON_KEY,
     jwt_secret = config.SUPABASE_JWT_SECRET,
 )
-razorpay    = RazorpayClient(
-    key_id         = config.RAZORPAY_KEY_ID,
-    key_secret     = config.RAZORPAY_KEY_SECRET,
-    webhook_secret = config.RAZORPAY_WEBHOOK_SECRET,
-)
 # Stripe — primary gateway for the UK/global launch.
 stripe_client = StripeClient(
     secret_key     = config.STRIPE_SECRET_KEY,
@@ -127,8 +122,6 @@ stripe_client = StripeClient(
     price_id       = config.STRIPE_PRICE_ID,
 )
 
-# Cached Razorpay plan_id (fetched once at startup)
-_razorpay_plan_id: Optional[str] = None
 
 # ── Auth helpers ───────────────────────────────────────────────────────
 _bearer = HTTPBearer(auto_error=False)
@@ -16019,149 +16012,6 @@ async def api_watchlist_remove(ticker: str,
     if isinstance(res, dict) and res.get("error"):
         raise HTTPException(status_code=400, detail=res["error"])
     return JSONResponse({"status": "removed", "ticker": sym, "count": len(clean)})
-
-
-# ── Payment / billing endpoints ───────────────────────────────────────────────
-
-class _SubscribeBody(BaseModel):
-    email: str   # user email for Razorpay customer notes
-
-class _VerifyPaymentBody(BaseModel):
-    razorpay_payment_id: str
-    razorpay_order_id:   str
-    razorpay_signature:  str
-
-
-@app.get("/api/payment/plan")
-async def api_payment_plan():
-    """Return Razorpay key_id + plan details for frontend checkout."""
-    return JSONResponse({
-        "key_id":     config.RAZORPAY_KEY_ID,
-        "plan_id":    config.RAZORPAY_PLAN_ID,
-        "amount":     49900,   # ₹499 in paise
-        "currency":   "INR",
-        "plan_name":  "TickerMover Pro",
-        "interval":   "monthly",
-        "enabled":    razorpay.enabled,
-    })
-
-
-@app.post("/api/payment/create-order")
-async def api_create_order(request: Request, user: Optional[dict] = Depends(_current_user)):
-    """Create a Razorpay order for Pro checkout. Paid plans are billed in INR and
-    offered to users in India only; global users stay on the free plan."""
-    if not user:
-        raise HTTPException(status_code=401, detail="Not authenticated")
-    # Best-effort geo gate that FAILS OPEN — only blocks when a country is clearly
-    # detected AND is not India, so an Indian user is never wrongly blocked when
-    # geo is unknown. The reliable backstop is disabling International Payments in
-    # the Razorpay dashboard (limits payment to Indian instruments regardless).
-    geo = (request.headers.get("CF-IPCountry")
-           or request.headers.get("X-Vercel-IP-Country")
-           or request.headers.get("X-AppEngine-Country") or "").upper()
-    if geo and geo not in ("IN", "XX", "T1"):   # XX / T1 = CF unknown / Tor → allow
-        raise HTTPException(status_code=403, detail=(
-            "Paid plans are currently available to users in India only. "
-            "You can keep using TickerMover on the free plan."))
-    result = await razorpay.create_order(receipt=f"user_{user['user_id'][:8]}")
-    if result.get("error"):
-        raise HTTPException(status_code=400, detail=result["error"])
-    return JSONResponse({
-        "order_id": result["id"],
-        "amount":   result["amount"],
-        "currency": result["currency"],
-        "key_id":   config.RAZORPAY_KEY_ID,
-    })
-
-
-@app.post("/api/payment/verify")
-async def api_verify_payment(
-    body: _VerifyPaymentBody,
-    user: Optional[dict]          = Depends(_current_user),
-    creds: Optional[HTTPAuthorizationCredentials] = Depends(_bearer),
-):
-    """
-    Verify payment signature after Razorpay checkout success.
-    On success: upgrades user to Pro in Supabase.
-    """
-    if not user:
-        raise HTTPException(status_code=401, detail="Not authenticated")
-
-    import hmac as _hmac, hashlib as _hl
-    msg = f"{body.razorpay_order_id}|{body.razorpay_payment_id}".encode()
-    expected = _hmac.new(config.RAZORPAY_KEY_SECRET.encode(), msg, _hl.sha256).hexdigest()
-    if not _hmac.compare_digest(expected, body.razorpay_signature):
-        raise HTTPException(status_code=400, detail="Payment signature invalid")
-
-    # SECURITY (B3): a valid signature only proves the order/payment pair wasn't
-    # tampered — it does NOT prove the right amount was paid, nor that THIS order
-    # belongs to THIS user. Fetch the order server-side and assert paid amount,
-    # currency, status, and receipt-binding before granting Pro. Without this, a
-    # user could pay ₹1 (or replay another user's order) and get Pro.
-    order = await razorpay.fetch_order(body.razorpay_order_id)
-    if not order or order.get("error"):
-        raise HTTPException(status_code=400, detail="Could not verify order with Razorpay")
-    paid = int(order.get("amount_paid") or 0)
-    amt  = int(order.get("amount") or 0)
-    if order.get("status") != "paid" or paid < PRO_AMOUNT_INR or amt < PRO_AMOUNT_INR:
-        raise HTTPException(status_code=400, detail="Payment amount/status does not match the Pro plan")
-    if (order.get("currency") or "").upper() != "INR":
-        raise HTTPException(status_code=400, detail="Unexpected payment currency")
-    expected_receipt = f"user_{user['user_id'][:8]}"
-    if (order.get("receipt") or "") != expected_receipt:
-        # The order was not created for this account → reject (cross-order replay).
-        logger.warning(f"Payment verify receipt mismatch: order={body.razorpay_order_id} "
-                       f"receipt={order.get('receipt')!r} expected={expected_receipt!r}")
-        raise HTTPException(status_code=400, detail="Order does not belong to this account")
-
-    import datetime
-    valid_until = (datetime.datetime.utcnow() + datetime.timedelta(days=32)).isoformat() + "Z"
-    await supabase.upsert_subscription(creds.credentials, {
-        "user_id":            user["user_id"],
-        "plan":               "pro",
-        "status":             "active",
-        "razorpay_order_id":  body.razorpay_order_id,
-        "valid_until":        valid_until,
-    })
-    _invalidate_pro_cache(user["user_id"])   # unlock Pro now, not in 5 minutes
-    logger.info(f"User {user['user_id']} upgraded to Pro (order {body.razorpay_order_id})")
-    return JSONResponse({"status": "upgraded", "plan": "pro", "valid_until": valid_until})
-
-
-@app.post("/api/payment/webhook")
-async def api_payment_webhook(request: Request):
-    """Razorpay webhook handler."""
-    raw   = await request.body()
-    sig   = request.headers.get("X-Razorpay-Signature", "")
-    if not razorpay.verify_webhook(raw, sig):
-        raise HTTPException(status_code=400, detail="Invalid webhook signature")
-
-    event = razorpay.parse_webhook(raw)
-    evt   = event.get("event", "")
-    payload = event.get("payload", {})
-
-    if evt == "payment.captured":
-        pay = payload.get("payment", {}).get("entity", {})
-        notes = pay.get("notes", {})
-        email = notes.get("email", "")
-        logger.info(f"Webhook: payment.captured for {email}")
-
-    elif evt in ("subscription.charged", "subscription.activated"):
-        sub = payload.get("subscription", {}).get("entity", {})
-        sub_id = sub.get("id")
-        notes  = sub.get("notes", {})
-        email  = notes.get("email", "")
-        logger.info(f"Webhook: {evt} sub_id={sub_id} email={email}")
-
-    elif evt in ("subscription.cancelled", "subscription.completed"):
-        sub    = payload.get("subscription", {}).get("entity", {})
-        sub_id = sub.get("id")
-        logger.info(f"Webhook: {evt} sub_id={sub_id} - marking inactive")
-
-    else:
-        logger.debug(f"Webhook: unhandled event {evt}")
-
-    return JSONResponse({"received": True})
 
 
 # ═══════════════════════════════════════════════════════════════════════════

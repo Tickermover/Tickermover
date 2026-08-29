@@ -11,7 +11,7 @@ You're using the **Railway-generated URL** for dev, not a custom subdomain:
 
 This skips the Cloudflare CNAME step entirely. Trade-offs:
 - No Cloudflare WAF / bot protection in front of dev (fine for personal testing — public dev URLs typically don't need it)
-- The Railway URL is stable as long as the dev Railway project exists. If you ever delete-and-recreate the dev service, you'll get a new URL and have to update Razorpay webhook + Supabase Site URL.
+- The Railway URL is stable as long as the dev Railway project exists. If you ever delete-and-recreate the dev service, you'll get a new URL and have to update the Stripe webhook + Supabase Site URL.
 
 ## What's already done
 
@@ -85,30 +85,6 @@ Critical — magic-link / password-reset emails won't work otherwise.
 
 ---
 
-### Step 3 — Razorpay test mode (Part 5) — ~10 min
-
-Until this is done, any signup that hits the Pro upgrade flow on dev will fail.
-
-1. https://dashboard.razorpay.com → top-right toggle: **Live → Test Mode**
-2. **Settings → API Keys → Generate Test Key** → copy `Key ID` and `Key Secret`
-3. **Subscriptions → Plans → Create plan** (test mode):
-   - Same name + price as your live Pro plan
-   - Copy the new `plan_id` (starts with `plan_`)
-4. **Settings → Webhooks → Add Webhook** (in test mode):
-   - URL: `https://web-production-17a78.up.railway.app/api/payment/webhook`
-   - Active events: `payment.captured`, `subscription.charged`, `subscription.activated`, `subscription.cancelled`, `subscription.completed`
-   - Generate secret → copy it
-5. **In dev Railway → Variables**, paste these four:
-   ```
-   RAZORPAY_KEY_ID=<test key id>
-   RAZORPAY_KEY_SECRET=<test secret>
-   RAZORPAY_PLAN_ID=<test plan id>
-   RAZORPAY_WEBHOOK_SECRET=<test webhook secret>
-   ```
-6. Railway redeploys (~60s). Test on https://web-production-17a78.up.railway.app/app → upgrade → use test card `4111 1111 1111 1111` (success) or `5104 0600 0000 0008` (failure). No real charges.
-
----
-
 ### Step 4 — Resend dev API key (Part 6) — ~3 min
 
 Likely already partly done if you set up dev SMTP in Part 2d. Verify:
@@ -148,7 +124,7 @@ Run the full workflow once end-to-end:
 5. **Smoke test prod**
    - Sign up flow works
    - Existing prod user can still log in
-   - Pro upgrade flow works (live Razorpay)
+   - Pro upgrade flow works (live Stripe)
    - Password reset email arrives
 
 6. **Roll back drill** (optional, do it once when prod is calm)
@@ -180,10 +156,9 @@ The only way to update `main` becomes the `promote-to-prod.bat` script.
 | `SUPABASE_ANON_KEY` | prod anon | dev anon |
 | `SUPABASE_JWT_SECRET` | prod jwt | dev jwt |
 | `SITE_ORIGIN` | `https://alphahunt.in` | `https://web-production-17a78.up.railway.app` |
-| `RAZORPAY_KEY_ID` | live `rzp_live_...` | test `rzp_test_...` |
-| `RAZORPAY_KEY_SECRET` | live secret | test secret |
-| `RAZORPAY_PLAN_ID` | live plan | test plan |
-| `RAZORPAY_WEBHOOK_SECRET` | live webhook | test webhook |
+| `STRIPE_SECRET_KEY` | live `sk_live_...` | test `sk_test_...` |
+| `STRIPE_PRICE_ID` | live price | test price |
+| `STRIPE_WEBHOOK_SECRET` | live webhook | test webhook |
 | `RESEND_API_KEY` | prod Resend key | dev Resend key |
 | `FINNHUB_KEY` | same | same |
 | `FMP_API_KEY` | same | same |

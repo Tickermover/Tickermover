@@ -68,12 +68,6 @@ SUPABASE_JWT_SECRET = _env("SUPABASE_JWT_SECRET", "")
 # warning if not set, but then writes will fail any non-open RLS table.
 SUPABASE_SERVICE_KEY = _env("SUPABASE_SERVICE_KEY", "")
 
-# ── Razorpay — payments ───────────────────────────────────────────────────────
-RAZORPAY_KEY_ID       = _env("RAZORPAY_KEY_ID",       "")
-RAZORPAY_KEY_SECRET   = _env("RAZORPAY_KEY_SECRET",   "")
-RAZORPAY_WEBHOOK_SECRET = _env("RAZORPAY_WEBHOOK_SECRET", "")
-RAZORPAY_PLAN_ID      = _env("RAZORPAY_PLAN_ID",      "")   # set after first create_plan call
-
 # Stripe — primary gateway for the UK/global launch (hosted Checkout + webhooks).
 STRIPE_SECRET_KEY      = _env("STRIPE_SECRET_KEY",      "")   # sk_live_… / sk_test_…
 STRIPE_PUBLISHABLE_KEY = _env("STRIPE_PUBLISHABLE_KEY", "")   # pk_live_… (not needed for hosted Checkout)

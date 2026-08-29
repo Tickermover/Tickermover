@@ -12,7 +12,7 @@ import hmac
 import time
 
 import billing
-from billing import RazorpayClient, StripeClient, is_pro
+from billing import StripeClient, is_pro
 
 
 # ── Pro gating ────────────────────────────────────────────────────────────────
@@ -58,27 +58,3 @@ def test_stripe_stale_timestamp_rejected():
     c = StripeClient("sk_test", secret, "price_x")
     stale = _stripe_sig(secret, payload, t=int(time.time()) - 600)  # 10 min old
     assert c.verify_webhook(payload, stale) is None
-
-
-# ── Razorpay webhook verification ─────────────────────────────────────────────
-def test_razorpay_valid_signature_true():
-    secret, body = "rzp_secret", b'{"event":"payment.captured"}'
-    sig = hmac.new(secret.encode(), body, hashlib.sha256).hexdigest()
-    c = RazorpayClient("key", "ks", secret)
-    assert c.verify_webhook(body, sig) is True
-
-
-def test_razorpay_bad_signature_false():
-    c = RazorpayClient("key", "ks", "rzp_secret")
-    assert c.verify_webhook(b'{"event":"x"}', "bad") is False
-
-
-def test_razorpay_no_secret_fails_closed():
-    # B2: missing secret + no dev opt-in -> reject (False), not allow.
-    assert billing._ALLOW_UNSIGNED_WEBHOOKS is False
-    c = RazorpayClient("key", "ks", "")
-    assert c.verify_webhook(b'{"event":"x"}', "anything") is False
-
-
-def test_pro_amount_is_positive():
-    assert billing.PRO_AMOUNT_INR > 0

@@ -22,19 +22,18 @@ SUPABASE_ANON_KEY=<PASTE_DEV_SUPABASE_ANON_KEY>
 SUPABASE_JWT_SECRET=<PASTE_DEV_JWT_SECRET_FROM_API_SETTINGS>
 
 
-# ─── Razorpay (TEST mode keys — NOT live) ───────────────────────
-# Get from: Razorpay dashboard → toggle to TEST MODE → Settings → API Keys
-# Webhook secret: Razorpay → Settings → Webhooks → Add webhook for test mode
-#   URL: https://dev.alphahunt.in/api/payment/webhook
-#   Events: payment.captured, subscription.charged, subscription.activated,
-#           subscription.cancelled, subscription.completed
-# Plan ID: Razorpay (test mode) → Subscriptions → Plans → Create plan
+# ─── Stripe (TEST mode keys — NOT live) ───────────────────────
+# Get from: Stripe dashboard → Test mode toggle → Developers → API keys
+# Webhook: Stripe → Developers → Webhooks → Add endpoint (test mode)
+#   URL: https://<dev-host>/api/billing/stripe/webhook
+#   Events: checkout.session.completed, customer.subscription.updated,
+#           customer.subscription.deleted
+# Price: Stripe → Product catalogue → Pro → copy the recurring price_… id
 
-RAZORPAY_KEY_ID=<PASTE_TEST_KEY_ID>
-RAZORPAY_KEY_SECRET=<PASTE_TEST_KEY_SECRET>
-RAZORPAY_PLAN_ID=<PASTE_TEST_PLAN_ID>
-RAZORPAY_WEBHOOK_SECRET=<PASTE_TEST_WEBHOOK_SECRET>
-
+STRIPE_SECRET_KEY=<PASTE_TEST_SECRET_KEY>
+STRIPE_PUBLISHABLE_KEY=<PASTE_TEST_PUBLISHABLE_KEY>
+STRIPE_PRICE_ID=<PASTE_TEST_PRICE_ID>
+STRIPE_WEBHOOK_SECRET=<PASTE_TEST_WEBHOOK_SECRET>
 
 # ─── Data providers (SAME as prod — read-only APIs, share keys) ──
 # Copy these values exactly as they are in prod Railway.

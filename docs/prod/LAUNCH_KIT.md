@@ -199,7 +199,7 @@ the **"I Made This"** group with a story-style write-up.
 >
 > **What it does:** scores 200+ US stocks on a 0-100 composite (fundamentals + valuation + momentum + analyst signal + macro regime), with a plain-English verdict above the score. Refreshes every 5 minutes. Conflict detection — when signals disagree, we flag it and rewrite the verdict honestly. Reverse DCF on every stock. Free during beta.
 >
-> **Stack:** FastAPI backend, vanilla-JS frontend (no framework), yfinance + Finnhub + Alpaca for data, Supabase for auth, Razorpay for the eventual paid tier. ~3K LOC backend.
+> **Stack:** FastAPI backend, vanilla-JS frontend (no framework), yfinance + Finnhub + Alpaca for data, Supabase for auth, Stripe for the eventual paid tier. ~3K LOC backend.
 >
 > **What I'd love feedback on:**
 > - Which verdict feels off when you check a stock you know well

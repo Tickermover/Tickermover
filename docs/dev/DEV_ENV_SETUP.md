@@ -11,7 +11,6 @@ Full-isolation setup. Dev environment is a complete mirror of production with it
 | Railway project | "AlphaHunt" (existing) | "AlphaHunt Dev" (new) |
 | Supabase project | existing prod project | new dev project |
 | Auto-deploys from | `main` branch | `dev` branch |
-| Razorpay mode | Live keys | Test keys |
 | Resend domain | `alphahunt.in` (production sender) | Same domain, separate API key |
 
 **Workflow once setup:**
@@ -30,7 +29,6 @@ Full-isolation setup. Dev environment is a complete mirror of production with it
 | Railway dev project | ~$5/mo (covered by Railway's free $5 credit until you scale) |
 | Supabase dev project | $0 (free tier: 500MB DB, 50,000 monthly active users — plenty for testing) |
 | Cloudflare subdomain | $0 |
-| Razorpay test mode | $0 |
 | Resend additional API key | $0 (still under 3,000/mo free tier) |
 | **Total extra** | **~$5/mo** |
 
@@ -87,7 +85,7 @@ Now you have two branches on GitHub:
    **Even easier**: Database → Migrations → if you've been using Supabase migrations, just re-apply them in dev. If not, manually recreate tables in dev SQL Editor.
 
 2. The tables you definitely need in dev (from looking at your auth.py and app.py):
-   - `subscriptions` — for Razorpay subscription tracking
+   - `subscriptions` — for Stripe subscription tracking
    - `watchlists` — for user watchlists
    - Whatever else your app reads/writes
 
@@ -176,9 +174,9 @@ The fastest way:
 | `SUPABASE_ANON_KEY` | dev anon key |
 | `SUPABASE_JWT_SECRET` | dev JWT secret |
 | `SITE_ORIGIN` | `https://dev.alphahunt.in` |
-| `RAZORPAY_KEY_ID` | Razorpay TEST mode key (see Part 5) |
-| `RAZORPAY_KEY_SECRET` | Razorpay TEST mode secret |
-| `RAZORPAY_WEBHOOK_SECRET` | Razorpay TEST webhook secret |
+| `STRIPE_SECRET_KEY` | Stripe TEST mode secret (`sk_test_…`) |
+| `STRIPE_PRICE_ID` | Stripe TEST recurring price (`price_…`) |
+| `STRIPE_WEBHOOK_SECRET` | Stripe TEST webhook secret (`whsec_…`) |
 | `RESEND_API_KEY` (if you have one) | the `supabase-dev` key from Part 2d |
 
 Variables to KEEP SAME (data providers — read-only, cheap, no point splitting):
@@ -212,27 +210,6 @@ The very first deploy might not auto-trigger:
    git push origin dev
    ```
 3. Watch the deploy logs in Railway — should be green within 60-90 sec
-
----
-
-## Part 5 — Razorpay: enable test mode (5 min)
-
-Razorpay has a built-in test mode with separate keys — no payments are real, you can simulate the whole flow.
-
-1. Login to [dashboard.razorpay.com](https://dashboard.razorpay.com)
-2. Top-right toggle: switch from **Live Mode** to **Test Mode**
-3. Settings → API Keys → **Generate Test Key**
-4. Copy `Key ID` and `Key Secret`
-5. Settings → Webhooks → **Add Webhook** for test mode:
-   - URL: `https://dev.alphahunt.in/api/payment/webhook`
-   - Active events: `payment.captured`, `subscription.charged`, `subscription.activated`, `subscription.cancelled`, `subscription.completed`
-   - Generate secret → copy it
-6. Add all three to dev Railway env vars (Part 4c)
-
-Razorpay test mode provides test card numbers for payment simulation:
-- Success: `4111 1111 1111 1111`
-- Failure: `5104 0600 0000 0008`
-- (Full list at [razorpay.com/docs/payments/payments/test-card-details](https://razorpay.com/docs/payments/payments/test-card-details))
 
 ---
 
@@ -315,7 +292,7 @@ Within 60-90 sec, Railway prod auto-deploys to `alphahunt.in`. Real users see yo
 
 ### "I want to test a payment flow without real money"
 
-Already covered: dev environment uses Razorpay test mode. Use `4111 1111 1111 1111` as test card. No real charge, full success flow.
+Already covered: dev environment uses Stripe test mode. Use `4242 4242 4242 4242` as test card. No real charge, full success flow.
 
 ### "I broke prod and need to roll back NOW"
 
@@ -347,7 +324,7 @@ Once a week (manually):
 - [ ] `alphahunt.in` still loads the dashboard (production unaffected)
 - [ ] Sign up with a test email on `dev.alphahunt.in` — confirm user appears in dev Supabase, NOT prod Supabase
 - [ ] Trigger forgot-password on dev — email arrives, link goes to `dev.alphahunt.in/reset-password`
-- [ ] Try a checkout on dev — uses Razorpay test mode, no real charge
+- [ ] Try a checkout on dev — uses Stripe test mode, no real charge
 - [ ] Sign up on prod (your own email) — confirm user appears in prod Supabase, NOT dev
 - [ ] Roll back test: deploy a tiny change to prod, then redeploy the previous version — confirm rollback works in <60 sec
 
@@ -363,7 +340,6 @@ If all 10 are green, you have a real Dev/Prod separation.
 | Supabase dev project + schema replication | 30-45 min (depending on schema complexity) |
 | Cloudflare DNS subdomain | 5 min active + 10 min wait |
 | Railway dev project + env vars | 30 min |
-| Razorpay test mode + webhook | 10 min |
 | Resend dev API key | 5 min |
 | First deploy + verification | 15 min |
 | **Total** | **~2 hours active work, half a day wall-clock** |
