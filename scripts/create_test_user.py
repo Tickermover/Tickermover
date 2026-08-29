@@ -16,7 +16,7 @@ Pro subscription is re-applied.
 Usage (PowerShell):
     $env:SUPABASE_URL="https://xxxx.supabase.co"
     $env:SUPABASE_SERVICE_KEY="<service-role key>"
-    python scripts/create_test_user.py --email tester@alphahunt.dev --password "AlphaHuntPro!234"
+    python scripts/create_test_user.py --email tester@example.com --password "ChangeMe!234"
 
 NOTE: needs the SERVICE-ROLE key (admin), not the anon key. Nothing is committed
 about the account — credentials are only printed to your terminal.
@@ -55,7 +55,7 @@ def _req(method: str, url: str, key: str, body=None, prefer: str | None = None):
 
 def main() -> None:
     ap = argparse.ArgumentParser(description="Create a pre-confirmed Pro test user in Supabase.")
-    ap.add_argument("--email", default=os.environ.get("TEST_USER_EMAIL", "tester@alphahunt.dev"))
+    ap.add_argument("--email", default=os.environ.get("TEST_USER_EMAIL", "tester@example.com"))
     ap.add_argument("--password", default=os.environ.get("TEST_USER_PASSWORD", "AlphaHuntPro!234"))
     ap.add_argument("--url", default=os.environ.get("SUPABASE_URL", ""))
     ap.add_argument("--key", default=os.environ.get("SUPABASE_SERVICE_KEY", ""))

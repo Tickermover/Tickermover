@@ -13058,7 +13058,7 @@ async def _ai_scan_holds_bg(force: bool = False) -> None:
 _PRIME_REVIEW_EMAIL = (
     os.environ.get("PRIME_REVIEW_EMAIL", "").strip()
     or (sorted(_AI_ALLOW)[0] if _AI_ALLOW else "")
-    or "digitalquery.ai@gmail.com"
+    or "support@tickermover.com"
 )
 
 

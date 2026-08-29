@@ -36,7 +36,7 @@ except ImportError:
 # Use a project-specific UA so they can contact us if we misbehave.
 _SEC_UA = os.environ.get(
     "SEC_USER_AGENT",
-    "TickerMover research-tool admin@tickermover.com"
+    "TickerMover research-tool support@tickermover.com"
 )
 _SEC_TIMEOUT = 12.0
 _SEC_BASE    = "https://www.sec.gov"
