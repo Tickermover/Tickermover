@@ -36,9 +36,9 @@ if "%GH_TOKEN%"=="" (
 )
 
 REM ── 2. Make sure remote uses token via env (no token in .git/config) ──
-git remote set-url origin https://digitalqueryai:%GH_TOKEN%@github.com/digitalqueryai/USAstockdashboard-.git
+git remote set-url origin https://Tickermover:%GH_TOKEN%@github.com/Tickermover/Tickermover.git
 REM ── Save tokenless URL for cleanup at the end ─────────────────────
-set "CLEAN_URL=https://github.com/digitalqueryai/USAstockdashboard-.git"
+set "CLEAN_URL=https://github.com/Tickermover/Tickermover.git"
 
 REM ── 3. Branch check — refuse direct pushes to main ────────────────
 for /f "delims=" %%B in ('git rev-parse --abbrev-ref HEAD') do set "BRANCH=%%B"

@@ -139,7 +139,7 @@ Run the full workflow once end-to-end:
 
 Stops accidental direct pushes to `main`:
 
-1. https://github.com/digitalqueryai/USAstockdashboard- → Settings → Branches → **Add branch protection rule**
+1. https://github.com/Tickermover/Tickermover → Settings → Branches → **Add branch protection rule**
 2. Branch name pattern: `main`
 3. Tick **Require a pull request before merging**
 4. Save

@@ -29,8 +29,8 @@ if "%GH_TOKEN%"=="" (
     popd & exit /b 1
 )
 
-git remote set-url origin https://digitalqueryai:%GH_TOKEN%@github.com/digitalqueryai/USAstockdashboard-.git
-set "CLEAN_URL=https://github.com/digitalqueryai/USAstockdashboard-.git"
+git remote set-url origin https://Tickermover:%GH_TOKEN%@github.com/Tickermover/Tickermover.git
+set "CLEAN_URL=https://github.com/Tickermover/Tickermover.git"
 
 REM ── 1. Must be on dev ─────────────────────────────────────────────
 for /f "delims=" %%B in ('git rev-parse --abbrev-ref HEAD') do set "BRANCH=%%B"

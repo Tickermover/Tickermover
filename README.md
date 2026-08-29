@@ -33,8 +33,8 @@ TickerMover is a real-time US stock intelligence platform that aggregates 14 dat
 
 ```bash
 # 1. Clone
-git clone https://github.com/digitalqueryai/USAstockdashboard-.git
-cd USAstockdashboard-
+git clone https://github.com/Tickermover/Tickermover.git
+cd Tickermover
 
 # 2. Copy env template
 cp .env.example .env

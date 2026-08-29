@@ -41,8 +41,8 @@ if exist ".git\index.lock" (
 )
 
 REM ── 3. Set remote with token (kept only for the duration of this run) ──
-git remote set-url origin https://digitalqueryai:%GH_TOKEN%@github.com/digitalqueryai/USAstockdashboard-.git
-set "CLEAN_URL=https://github.com/digitalqueryai/USAstockdashboard-.git"
+git remote set-url origin https://Tickermover:%GH_TOKEN%@github.com/Tickermover/Tickermover.git
+set "CLEAN_URL=https://github.com/Tickermover/Tickermover.git"
 
 REM ── 4. Make sure we're on dev (auto-switch if not) ────────────────
 for /f "delims=" %%B in ('git rev-parse --abbrev-ref HEAD') do set "BRANCH=%%B"
