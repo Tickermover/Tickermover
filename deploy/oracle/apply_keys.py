@@ -40,6 +40,51 @@ def read_text(p: pathlib.Path) -> str:
         return re.sub(r"<[^>]+>", "", xml)          # strip all other tags
     return p.read_text(encoding="utf-8", errors="replace")
 
+# Humans write "<value> - provider", not "VAR=value". Map the label they
+# actually use (including common misspellings) to the variable name.
+LABEL_MAP = {
+    "alpaca": "ALPACA_KEY_ID",
+    "secret key alpaca": "ALPACA_SECRET_KEY", "alpaca secret": "ALPACA_SECRET_KEY",
+    "finhub": "FINNHUB_KEY", "finnhub": "FINNHUB_KEY",
+    "google": "GEMINI_API_KEY", "gemini": "GEMINI_API_KEY",
+    "mistral": "MISTRAL_API_KEY",
+    "together": "TOGETHER_API_KEY", "togetherai": "TOGETHER_API_KEY",
+    "openrouter": "OPENROUTER_API_KEY",
+    "cerebas": "CEREBRAS_API_KEY", "cerebras": "CEREBRAS_API_KEY",
+    "groq": "GROQ_API_KEY", "nvidia": "NVIDIA_API_KEY", "nim": "NVIDIA_API_KEY",
+    "sambanova": "SAMBANOVA_API_KEY", "github": "GITHUB_MODELS_KEY",
+    "alpha vantage": "ALPHA_VANTAGE_KEY", "alphavantage": "ALPHA_VANTAGE_KEY",
+    "fmp": "FMP_API_KEY", "serper": "SERPER_API_KEY", "tavily": "TAVILY_API_KEY",
+    "brave": "BRAVE_API_KEY", "resend": "RESEND_API_KEY",
+    "unsplash": "UNSPLASH_ACCESS_KEY", "pexels": "PEXELS_API_KEY",
+    "voyage": "VOYAGE_API_KEY", "apewisdom": "APEWISDOM_KEY",
+    "sec": "SEC_API_KEY", "supabase url": "SUPABASE_URL",
+    "supabase anon": "SUPABASE_ANON_KEY", "supabase jwt": "SUPABASE_JWT_SECRET",
+    "supabase service": "SUPABASE_SERVICE_KEY",
+}
+
+def parse_labelled(text: str) -> dict:
+    """Second pass for '<value> - <label>' lines.
+
+    Splits on the LAST ' - ' rather than the first, because keys routinely
+    contain dashes (sk-or-v1-..., csk-...) and splitting on the first one
+    mangles the value.
+    """
+    out = {}
+    for raw in text.splitlines():
+        line = raw.strip()
+        if not line or "=" in line.split(" ")[0]:
+            continue
+        m = re.match(r"^(\S+)\s+[-–]\s*(.+)$", line)
+        if not m:
+            continue
+        val, label = m.group(1).strip(), m.group(2).strip().lower()
+        var = LABEL_MAP.get(label)
+        if var and val and not val.startswith("<"):
+            out[var] = val
+    return out
+
+
 def parse(text: str) -> tuple[dict, list]:
     found, unknown = {}, []
     # Word turns straight quotes into curly ones; strip both.
@@ -65,7 +110,11 @@ def main() -> int:
     if not p.exists():
         print(f"no such file: {p}"); return 1
 
-    keys, unknown = parse(read_text(p))
+    text = read_text(p)
+    keys, unknown = parse(text)
+    # Fall back to the '<value> - label' shape people actually write.
+    for k, v in parse_labelled(text).items():
+        keys.setdefault(k, v)
     if not keys:
         print("No KEY=VALUE pairs recognised. Expected lines like:")
         print("  GEMINI_API_KEY=AIza...")
