@@ -131,8 +131,19 @@ async def get_financials(coordinator, ticker: str, period: str = "annual",
             return hit
 
     out: dict = {"ticker": sym, "period": per}
-    for key, endpoint in _ENDPOINTS.items():
-        out[key] = await _fetch(coordinator, endpoint, sym, per)
+    # CONCURRENTLY. These six endpoints are independent, but they ran in a
+    # sequential `for` loop, so their latencies ADDED: a cold /api/financials
+    # took 61s on LITE and the pane sat on "Loading statements..." forever
+    # because the browser gave up first. The endpoints share a rate limiter, so
+    # this does not spend FMP quota any faster — it just stops waiting serially.
+    import asyncio as _aio
+    keys = list(_ENDPOINTS)
+    results = await _aio.gather(
+        *(_fetch(coordinator, _ENDPOINTS[k], sym, per) for k in keys),
+        return_exceptions=True,
+    )
+    for k, r in zip(keys, results):
+        out[k] = r if isinstance(r, list) else []
 
     # ── Fallback tier: Eulerpool ────────────────────────────────────────────
     # ADD, never replace: FMP stays the primary and this only fills arrays it

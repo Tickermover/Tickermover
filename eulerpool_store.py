@@ -243,9 +243,14 @@ async def get_statements(ticker: str) -> dict:
     if not sym or not _KEY:
         return {}
 
-    inc_raw = await _get(f"incomestatement/{sym}")
-    bal_raw = await _get(f"balancesheet/{sym}")
-    cf_raw = await _get(f"cashflowstatement/{sym}")
+    # Concurrently — three independent endpoints. Serially these added ~3x to a
+    # cold financials call that was already slow enough for the pane to give up.
+    import asyncio as _aio
+    inc_raw, bal_raw, cf_raw = await _aio.gather(
+        _get(f"incomestatement/{sym}"),
+        _get(f"balancesheet/{sym}"),
+        _get(f"cashflowstatement/{sym}"),
+    )
 
     income, inc_est = _translate(inc_raw, _INCOME_MAP)
     balance, _ = _translate(bal_raw, _BALANCE_MAP)
