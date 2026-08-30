@@ -32,7 +32,16 @@ from datetime import datetime, timezone
 logger = logging.getLogger(__name__)
 
 _TTL_S = 24 * 3600
-_LIMIT = 8          # periods per statement (8 quarters ≈ 2y, 8 years for annual)
+# Periods per statement. MUST NOT EXCEED 5 — the FMP plan rejects anything
+# higher with HTTP 402 "The values for 'limit' must be between 0 and 5 based on
+# your current subscription". That 402 hits income, balance, cashflow, ratios
+# AND key-metrics, so an over-large value here does not degrade the Financials
+# tab, it empties it for every ticker in the universe. It also emptied the
+# dilution scan's share-count column ("Unchecked" on all 80 enriched names) via
+# the same endpoint, and retry traffic from the 402s burned the daily quota
+# into 429s. Omitting the parameter does not help — the plan caps the response
+# at 5 rows either way, so 5 is the ceiling, not a preference.
+_LIMIT = 5          # periods per statement (5 quarters, or 5 years for annual)
 
 # endpoint -> key in the payload
 _ENDPOINTS = {

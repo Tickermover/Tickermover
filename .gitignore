@@ -54,3 +54,11 @@ data/.write_test
 *credential*
 api-keys*
 *.env.local
+# Screenshots of credential dashboards. Every rule above is extension-anchored
+# to text files, so none of them matched `cloudflare API.png` — it sat
+# untracked but perfectly committable in a PUBLIC repo. A token is just as live
+# in a PNG as in a .txt.
+*api*.png
+*API*.png
+*token*.png
+*key*.png
