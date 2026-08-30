@@ -85,13 +85,14 @@ _MEM: dict[str, tuple[str, str]] = {}
 
 
 def available() -> bool:
-    # NB: _KEY is not a billing dependency — generation goes through the free
-    # chain (see the note above). It survives as the codebase's "AI is
-    # configured" flag, matching sector_narrative / compare_business /
-    # research_gen, which all gate the same way. Prod has it set
-    # (/api/ask-status reports generation:true), so this is not what kept the
-    # bottom lines on the template — _ENABLED defaulting to 0 was.
-    return bool(_KEY) and _ENABLED
+    # The note that stood here said "Prod has it set (/api/ask-status reports
+    # generation:true)". That went stale: on 2026-08-30 the live endpoint
+    # reported generation:FALSE — ANTHROPIC_API_KEY is present-but-empty — so
+    # `bool(_KEY)` was False and this gate was shut, alongside every other
+    # module that copied the same idiom. Generation itself was fine the whole
+    # time; it runs on the free chain through anthropic_shim, which never reads
+    # this key. Ask the shim what can actually answer instead.
+    return anthropic_shim.generation_available() and _ENABLED
 
 
 def _hash(text: str) -> str:

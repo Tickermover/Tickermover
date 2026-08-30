@@ -53,7 +53,16 @@ _SCAN_MAX = int(os.environ.get("VERIFIER_SCAN_MAX", "20"))
 
 
 def available() -> bool:
-    return bool(_KEY)
+    """Whether a generation request can actually be answered.
+
+    Was `bool(_KEY)` — an ANTHROPIC_API_KEY read at import time. Nothing here
+    calls Anthropic: the request goes through anthropic_shim.post(), which
+    ignores the headers it is passed and routes to the free provider chain. So
+    that key was never what answered, and its absence never meant nothing could.
+    On this deployment it was present-but-empty, which switched this feature off
+    while five healthy free providers sat idle behind it.
+    """
+    return anthropic_shim.generation_available()
 
 
 # ── Shared: compact, model-readable snapshot of a position = ground truth ─────

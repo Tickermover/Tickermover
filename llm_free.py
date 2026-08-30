@@ -206,6 +206,27 @@ _PROVIDERS = [
      "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
      "https://api.cloudflare.com/client/v4/accounts/71ce6b72346605b6937cca73a23fd0b9/ai/v1/chat/completions",
      20000),
+    # ── Added 2026-08-30 ──────────────────────────────────────────────────
+    # Z.ai GLM-4.7-Flash: the only Chinese model with a PERMANENT free tier
+    # (free on input, cached input and output) — DeepSeek, Qwen and Kimi are
+    # sign-up credit or time-boxed trials, not free, which is the usual
+    # misconception. OpenAI-compatible, so a tuple and a key is the whole
+    # integration.
+    #
+    # DELIBERATELY LAST. It is the SLOWEST provider here by a wide margin —
+    # independently measured at ~26s for a 200-token generation, against
+    # sub-second for Cerebras and Groq. The chain tries providers in order, so
+    # last place means it is only reached when every faster provider has failed,
+    # which is exactly the role it should play: a free backstop that keeps the
+    # cached/batch surfaces (dependency maps, concall summaries, compare
+    # studies) generating on a day when the rest of the chain is rate-limited.
+    # Do NOT move it up the order — an interactive Ask AI answer routed here
+    # reads as a hang, not an answer.
+    #
+    # Its 200K-token window makes it the second-largest context after Gemini;
+    # the char cap below is deliberately conservative against that.
+    ("zai", "ZAI_API_KEY", "ZAI_MODEL", "glm-4.7-flash",
+     "https://api.z.ai/api/paas/v4/chat/completions", 400000),
 ]
 
 

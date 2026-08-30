@@ -49,16 +49,34 @@ _OVERLAP = 200
 _MAX_CHUNKS = 160                    # safety cap on embeddings per ticker
 
 
+def _gen_ok() -> bool:
+    """Whether a generation request can actually be answered.
+
+    ANTHROPIC_KEY is NOT the answer to that. Every call below goes through
+    anthropic_shim.post(), which ignores the headers it is handed and routes to
+    the free provider chain, so this module's four `if not ANTHROPIC_KEY` gates
+    were testing something the request path never consults. On this deployment
+    the variable was present-but-empty, so /api/ask-status reported
+    generation:false and the Concall pane rendered "AI summaries are paused"
+    while five healthy free providers sat idle.
+    """
+    try:
+        import anthropic_shim
+        return anthropic_shim.generation_available()
+    except Exception:
+        return False
+
+
 def is_enabled() -> bool:
-    """True only when both providers are configured."""
-    return bool(VOYAGE_KEY and ANTHROPIC_KEY)
+    """True when generation can run AND embeddings are configured."""
+    return bool(VOYAGE_KEY) and _gen_ok()
 
 
 def status() -> dict:
     return {
         "enabled": is_enabled(),
         "embeddings": bool(VOYAGE_KEY),
-        "generation": bool(ANTHROPIC_KEY),
+        "generation": _gen_ok(),
     }
 
 
@@ -170,7 +188,7 @@ async def _retrieve(ticker: str, question: str, k: int = _TOP_K) -> list[str]:
 
 
 async def _claude_answer(ticker, question, context_blocks, profile_data, user_id=None) -> str | None:
-    if not ANTHROPIC_KEY:
+    if not _gen_ok():
         return None
     ctx = "\n\n".join(context_blocks[:8])[:60000]
     # Prompt-caching split: everything that's stable for a given ticker (the
@@ -242,7 +260,7 @@ async def _claude_raw(prompt: str, max_tokens: int = 2500, model: str | None = N
     whenever the caller parses the reply with json.loads — do not rely on the
     shim sniffing the prompt, which cannot see an instruction buried above tens
     of thousands of characters of appended source text."""
-    if not ANTHROPIC_KEY:
+    if not _gen_ok():
         return None
     model = model or ANTHROPIC_MODEL
     payload = {"model": model, "max_tokens": max_tokens,
@@ -348,7 +366,7 @@ async def concall_summary(ticker: str, profile_data: str = "", quarter: str | No
     if not allow_generate:
         return {"available": False, "reason": "paused",
                 "note": "AI summaries are paused for now — please check back later."}
-    if not ANTHROPIC_KEY:
+    if not _gen_ok():
         return {"available": False, "reason": "disabled",
                 "note": "The AI summary isn't enabled on this deployment yet."}
     text = src = src_url = None
@@ -433,10 +451,10 @@ async def ask(ticker: str, question: str, profile_data: str = "", user_id=None) 
     # Anthropic is the only hard requirement. Voyage embeddings just add document
     # retrieval (RAG); without them the assistant still answers from our metrics
     # plus Claude's own knowledge rather than being switched off entirely.
-    if not ANTHROPIC_KEY:
+    if not _gen_ok():
         return {"ok": False, "sources": [],
-                "answer": "The AI assistant isn't enabled yet. Set ANTHROPIC_API_KEY "
-                          "to turn it on (add VOYAGE_API_KEY for filing-grounded RAG)."}
+                "answer": "The AI assistant is temporarily unavailable. "
+                          "It comes back on its own — please try again shortly."}
     blocks = await _retrieve(ticker, question) if VOYAGE_KEY else []
     answer = await _claude_answer(ticker, question, blocks, profile_data, user_id=user_id)
     if not answer:

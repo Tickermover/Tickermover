@@ -14,7 +14,7 @@ Accepts messy input — blank lines, prose between entries, "KEY: value",
 smart quotes from Word, and wrapping quotes are all handled.
 """
 from __future__ import annotations
-import argparse, pathlib, re, subprocess, sys, zipfile
+import argparse, pathlib, re, shlex, subprocess, sys, zipfile
 
 HOST = "ubuntu@79.72.67.33"
 KEYFILE = str(pathlib.Path.home() / ".ssh" / "tickermover.key")
@@ -30,6 +30,16 @@ ALLOWED = {
     "ALPHA_VANTAGE_KEY","FMP_API_KEY","SEC_API_KEY","APEWISDOM_KEY",
     "SERPER_API_KEY","TAVILY_API_KEY","BRAVE_API_KEY","RESEND_API_KEY",
     "UNSPLASH_ACCESS_KEY","PEXELS_API_KEY","VOYAGE_API_KEY",
+    # CLOUDFLARE_API_KEY has been read by llm_free for weeks but was missing
+    # from this set, so the one loader that can reach the server could not set
+    # it — the provider was permanently inert with no way to say so.
+    "CLOUDFLARE_API_KEY",
+    # Z.ai GLM-4.7-Flash — the permanently-free backstop at the end of the chain.
+    "ZAI_API_KEY",
+    # Eulerpool — free-tier fundamentals, the intended fallback for the ~45% of
+    # symbols the FMP plan refuses outright ("this value set for 'symbol' is
+    # not available under your current subscription").
+    "EULERPOOL_API_KEY",
 }
 
 def read_text(p: pathlib.Path) -> str:
@@ -66,16 +76,37 @@ LABEL_MAP = {
     "anon": "SUPABASE_ANON_KEY", "anon key": "SUPABASE_ANON_KEY",
     "service": "SUPABASE_SERVICE_KEY", "service key": "SUPABASE_SERVICE_KEY",
     "service role": "SUPABASE_SERVICE_KEY", "jwt": "SUPABASE_JWT_SECRET",
+    "cloudflare": "CLOUDFLARE_API_KEY", "workers ai": "CLOUDFLARE_API_KEY",
+    "glm": "ZAI_API_KEY", "zai": "ZAI_API_KEY", "z.ai": "ZAI_API_KEY",
+    "zhipu": "ZAI_API_KEY",
+    "eulerpool": "EULERPOOL_API_KEY", "euler": "EULERPOOL_API_KEY",
 }
 
-def parse_labelled(text: str) -> dict:
+# People label a key by pasting the dashboard URL they got it from, which is
+# never going to match a LABEL_MAP entry. Recognise the provider inside the URL
+# rather than dropping the line: an Eulerpool key labelled
+# "https://eulerpool.com/developers/dashboard" was silently discarded by the
+# exact-match lookup, and a silently-discarded key looks identical to one that
+# was loaded fine — which is the worst possible failure for this tool.
+URL_HINTS = [
+    ("eulerpool", "EULERPOOL_API_KEY"), ("z.ai", "ZAI_API_KEY"),
+    ("bigmodel", "ZAI_API_KEY"), ("cloudflare", "CLOUDFLARE_API_KEY"),
+    ("openrouter", "OPENROUTER_API_KEY"), ("cerebras", "CEREBRAS_API_KEY"),
+    ("groq", "GROQ_API_KEY"), ("mistral", "MISTRAL_API_KEY"),
+    ("together", "TOGETHER_API_KEY"), ("tavily", "TAVILY_API_KEY"),
+    ("serper", "SERPER_API_KEY"), ("brave", "BRAVE_API_KEY"),
+    ("resend", "RESEND_API_KEY"), ("finnhub", "FINNHUB_KEY"),
+    ("financialmodelingprep", "FMP_API_KEY"), ("alphavantage", "ALPHA_VANTAGE_KEY"),
+]
+
+def parse_labelled(text: str) -> tuple[dict, list]:
     """Second pass for '<value> - <label>' lines.
 
     Splits on the LAST ' - ' rather than the first, because keys routinely
     contain dashes (sk-or-v1-..., csk-...) and splitting on the first one
     mangles the value.
     """
-    out = {}
+    out, unknown = {}, []
     for raw in text.splitlines():
         line = raw.strip()
         if not line or "=" in line.split(" ")[0]:
@@ -93,10 +124,22 @@ def parse_labelled(text: str) -> dict:
         # "project", or nothing that matches at all).
         if var is None and re.match(r"https?://[A-Za-z0-9-]+\.supabase\.(co|in)/?$", val):
             var = "SUPABASE_URL"
+        # Label is a dashboard URL — read the provider out of it.
+        if var is None:
+            for hint, name in URL_HINTS:
+                if hint in label:
+                    var = name
+                    break
         if (var and val and not val.startswith("<")
                 and not val.upper().startswith("REPLACE_THIS")):
             out[var] = val
-    return out
+        elif var is None and val and not val.startswith("<"):
+            # NOT silently dropped any more. This is the path that swallowed a
+            # real Eulerpool key: the label was a dashboard URL, no branch above
+            # matched, and the line vanished with no warning — indistinguishable
+            # from a successful load.
+            unknown.append(label[:60])
+    return out, unknown
 
 
 def parse(text: str) -> tuple[dict, list]:
@@ -129,8 +172,10 @@ def main() -> int:
     text = read_text(p)
     keys, unknown = parse(text)
     # Fall back to the '<value> - label' shape people actually write.
-    for k, v in parse_labelled(text).items():
+    labelled, unmapped = parse_labelled(text)
+    for k, v in labelled.items():
         keys.setdefault(k, v)
+    unknown.extend(unmapped)
     if not keys:
         print("No KEY=VALUE pairs recognised. Expected lines like:")
         print("  GEMINI_API_KEY=AIza...")
@@ -164,14 +209,39 @@ def main() -> int:
         # would silently corrupt the file.
         return v.replace(chr(92), chr(92)*2).replace("|", chr(92)+"|").replace("&", chr(92)+"&")
 
-    prog = "".join(
-        "s|^{}=.*|{}={}|".format(k, k, esc(v.strip())) + chr(10)
-        for k, v in sorted(keys.items())
+    # UPSERT, not replace. `sed -i "s|^KEY=.*|...|"` only rewrites a line that
+    # ALREADY EXISTS, so a brand-new variable — ZAI_API_KEY, EULERPOOL_API_KEY,
+    # CLOUDFLARE_API_KEY — matched nothing, changed nothing, and still reported
+    # success. The remote helper below rewrites the line when present and
+    # appends it when absent.
+    #
+    # Values still travel on STDIN and never on the command line, so they stay
+    # out of `ps`, the shell history and this script's own output. Only the
+    # helper source is an argument, and it contains no secret.
+    remote = (
+        "import os,sys\n"
+        "p=" + repr(ENVPATH) + "\n"
+        "want={}\n"
+        "for ln in sys.stdin.read().splitlines():\n"
+        "    if not ln.strip(): continue\n"
+        "    k,_,v=ln.partition('=')\n"
+        "    want[k]=v\n"
+        "lines=open(p).read().splitlines()\n"
+        "seen=set()\n"
+        "for i,ln in enumerate(lines):\n"
+        "    k=ln.split('=',1)[0].strip()\n"
+        "    if k in want:\n"
+        "        lines[i]=k+'='+want[k]; seen.add(k)\n"
+        "for k,v in sorted(want.items()):\n"
+        "    if k not in seen: lines.append(k+'='+v)\n"
+        "open(p,'w').write(chr(10).join(lines)+chr(10))\n"
+        "print('APPLIED added=%d updated=%d' % (len(want)-len(seen), len(seen)))\n"
+        "print(sum(1 for l in lines if l.rstrip().endswith('=')))\n"
     )
+    prog = "".join(f"{k}={v.strip()}" + chr(10) for k, v in sorted(keys.items()))
     cmd = ["ssh", "-i", KEYFILE, "-o", "StrictHostKeyChecking=no", HOST,
            f"sudo cp {ENVPATH} {ENVPATH}.bak && "
-           f"sudo sed -i -f /dev/stdin {ENVPATH} && "
-           f"echo APPLIED && sudo grep -c '=$' {ENVPATH}"]
+           f"sudo python3 -c {shlex.quote(remote)}"]
     r = subprocess.run(cmd, input=prog, text=True, capture_output=True)
     out = (r.stdout + r.stderr).strip()
     if "APPLIED" not in out:

@@ -13514,10 +13514,23 @@ function v2RenderBriefingHTML(sym, d, opts){
         '</span>' +
       '</div>';
     }
-    if (reason === 'paused' || reason === 'disabled'){
+    /* 'paused' and 'disabled' are DIFFERENT states and used to share this one
+       message. 'paused' is the cost breaker (allow_generate=false — a real
+       budget stop that clears tomorrow). 'disabled' meant no generation was
+       configured at all, and telling that reader "we've hit today's AI budget"
+       sent them away waiting for a tomorrow that would never fix it. That is
+       exactly what the Concall pane was showing on 2026-08-30, when the true
+       cause was an empty ANTHROPIC_API_KEY gating a chain that was healthy. */
+    if (reason === 'paused'){
       return back + '<div class="v2-brf-empty-state">' +
         '<strong>AI summaries are paused</strong>' +
         '<span>We&rsquo;ve hit today&rsquo;s AI budget, so new summaries are on hold. Cached ones still load, and generation resumes tomorrow.</span>' +
+      '</div>';
+    }
+    if (reason === 'disabled'){
+      return back + '<div class="v2-brf-empty-state">' +
+        '<strong>AI summaries aren&rsquo;t available right now</strong>' +
+        '<span>Summarising is temporarily switched off for this deployment. Cached summaries still load, and this restores itself once generation is back.</span>' +
       '</div>';
     }
     return back + '<div class="v2-brf-empty-state">' +

@@ -99,6 +99,35 @@ def _flatten(payload: dict) -> tuple[str, int, bool]:
     return prompt, int(payload.get("max_tokens") or 1500), wants_json
 
 
+def generation_available() -> bool:
+    """Can ANY provider actually answer a generation request right now?
+
+    THE ONE CORRECT ANSWER TO "is AI enabled", and the reason this exists:
+    every generator module used to answer that question with
+    `bool(os.environ["ANTHROPIC_API_KEY"])`, read at import time. That check was
+    wrong in both directions and had been for as long as the shim existed —
+    `post()` below ignores the `headers` it is handed, flattens the payload and
+    routes to llm_free, so the Anthropic key is not what answers the request and
+    its absence does not mean nothing can.
+
+    The cost of the old gate was not a degraded feature, it was a dark one:
+    ANTHROPIC_API_KEY was present-but-EMPTY on the deployment, so Supply Chain
+    reported "not enabled on this deployment", Compare reported "no written
+    study for this pair yet" and Concall reported "we've hit today's AI budget"
+    — to a paying Pro reader, with five healthy free providers idle behind them.
+
+    Gate on this instead. It mirrors post()'s real routing: the free chain, or
+    the Anthropic fallback if it has been deliberately switched on.
+    """
+    try:
+        import llm_free
+        if llm_free.available():
+            return True
+    except Exception:
+        pass
+    return bool(_ALLOW_ANTHROPIC and os.environ.get("ANTHROPIC_API_KEY", "").strip())
+
+
 async def post(url: str | None = None, *, json: dict | None = None,
                headers: dict | None = None, timeout: float = 60.0,
                force_json: bool | None = None, **_kw):
