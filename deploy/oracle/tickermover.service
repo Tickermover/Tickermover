@@ -30,7 +30,10 @@ NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict
 ProtectHome=true
-ReadWritePaths=/opt/tickermover/output /opt/tickermover/data /opt/tickermover/.backtest_cache
+# The "-" prefix makes each path optional: output/ and .backtest_cache/ are
+# gitignored, so they do not exist on a fresh clone, and without the dash
+# ProtectSystem=strict refuses to start with 226/NAMESPACE.
+ReadWritePaths=-/opt/tickermover/output -/opt/tickermover/data -/opt/tickermover/.backtest_cache
 ProtectKernelTunables=true
 ProtectControlGroups=true
 RestrictSUIDSGID=true

@@ -30,6 +30,9 @@ if [ ! -d "$APP_DIR/.git" ]; then
   sudo -u "$APP_USER" git -C "$APP_DIR" checkout -q -f -B main FETCH_HEAD
 fi
 
+echo "── runtime dirs (gitignored, so absent on a fresh clone) ───"
+sudo -u "$APP_USER" mkdir -p "$APP_DIR/output" "$APP_DIR/data" "$APP_DIR/.backtest_cache"
+
 echo "── virtualenv ──────────────────────────────────────────────"
 sudo -u "$APP_USER" python3 -m venv "$APP_DIR/.venv"
 sudo -u "$APP_USER" "$APP_DIR/.venv/bin/pip" install --upgrade pip wheel
