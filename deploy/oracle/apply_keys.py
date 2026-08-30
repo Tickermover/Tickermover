@@ -80,7 +80,8 @@ def parse_labelled(text: str) -> dict:
             continue
         val, label = m.group(1).strip(), m.group(2).strip().lower()
         var = LABEL_MAP.get(label)
-        if var and val and not val.startswith("<"):
+        if (var and val and not val.startswith("<")
+                and not val.upper().startswith("REPLACE_THIS")):
             out[var] = val
     return out
 
@@ -94,7 +95,9 @@ def parse(text: str) -> tuple[dict, list]:
         if not m:
             continue
         name, val = m.group(1), m.group(2).strip().strip('"').strip("'").strip()
-        if not val or val.startswith("<"):        # placeholder, not a value
+        # skip both "<paste here>" and the REPLACE_THIS_ scaffolding,
+        # so a half-finished file cannot push literal placeholder text.
+        if not val or val.startswith("<") or val.upper().startswith("REPLACE_THIS"):
             continue
         if name in ALLOWED:
             found[name] = val
