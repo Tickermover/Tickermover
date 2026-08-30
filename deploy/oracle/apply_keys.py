@@ -122,6 +122,14 @@ def parse_labelled(text: str) -> tuple[dict, list]:
         if not m:
             continue
         val, label = m.group(1).strip(), m.group(2).strip().lower()
+        # The separator dash is only optional-with-space in the pattern above,
+        # so a line written "<value>- provider" (no space BEFORE the dash) makes
+        # \S+ swallow the dash into the value. That shipped a Cloudflare token
+        # one character too long, which Cloudflare rejected as "Invalid API
+        # Token" — a corrupted key is indistinguishable from a revoked one, and
+        # it cost a full debugging round. No provider issues a key ending in a
+        # dash (they are base64/alphanumeric), so stripping is safe.
+        val = val.rstrip("-–").strip()
         var = LABEL_MAP.get(label)
         # EXACT match first (above), then again with a trailing "api"/"key"
         # stripped. People write "voyage key", "groq api key", "cloudflare api"
