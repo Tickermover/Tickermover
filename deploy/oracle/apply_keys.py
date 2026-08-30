@@ -75,11 +75,19 @@ def parse_labelled(text: str) -> dict:
         line = raw.strip()
         if not line or "=" in line.split(" ")[0]:
             continue
-        m = re.match(r"^(\S+)\s+[-–]\s*(.+)$", line)
+        # The dash is optional: people write both "<key> - groq" and
+        # "<key> groq". A wrong split is harmless because the label still
+        # has to hit LABEL_MAP to be used.
+        m = re.match(r"^(\S+)\s+[-–]?\s*(.+)$", line)
         if not m:
             continue
         val, label = m.group(1).strip(), m.group(2).strip().lower()
         var = LABEL_MAP.get(label)
+        # A Supabase project URL is unmistakable from its shape, so recognise
+        # it regardless of how the line was labelled ("supabase", "url",
+        # "project", or nothing that matches at all).
+        if var is None and re.match(r"https?://[A-Za-z0-9-]+\.supabase\.(co|in)/?$", val):
+            var = "SUPABASE_URL"
         if (var and val and not val.startswith("<")
                 and not val.upper().startswith("REPLACE_THIS")):
             out[var] = val
