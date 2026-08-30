@@ -58,7 +58,7 @@ FMP_CALLS_PER_DAY = int(_env("FMP_CALLS_PER_DAY", "200000"))   # backstop only �
 FINNHUB_KEY = _env("FINNHUB_KEY", "")
 
 # ── Alpha Vantage — fundamentals fallback ────────────────────────────────────
-ALPHA_VANTAGE_KEY = _env("ALPHA_VANTAGE_KEY", "JCP11I7DK8F60G3O")
+ALPHA_VANTAGE_KEY = _env("ALPHA_VANTAGE_KEY", "")
 
 # ── SEC-API — insider transactions ───────────────────────────────────────────
 SEC_API_KEY = _env("SEC_API_KEY", "")
