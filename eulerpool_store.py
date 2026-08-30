@@ -399,6 +399,42 @@ def apply_cached(rows: list) -> int:
     return n
 
 
+async def share_growth(ticker: str) -> float | None:
+    """Year-over-year change in diluted share count, as a FRACTION, or None.
+
+    The dilution scan's own enrichment goes through FMP's quarterly income
+    statement, which is both plan-gated per symbol and the first thing to hit
+    the daily quota — a scan that logged "80 with share counts" earlier in the
+    day came back with ZERO once the quota was spent, and every row then reads
+    "Unchecked". Eulerpool carries `shares` on each income row, is not
+    symbol-gated, and answers when FMP will not.
+
+    Fraction, not percent: safeguards.reading() multiplies by 100 itself.
+    """
+    sym = (ticker or "").upper().strip()
+    if not sym or not _KEY:
+        return None
+    rows = await _get(f"incomestatement/{sym}")
+    filed = []
+    for r in rows:
+        if not isinstance(r, dict) or _is_estimate(r.get("period")):
+            continue
+        s = r.get("shares")
+        try:
+            s = float(s)
+        except (TypeError, ValueError):
+            continue
+        if s > 0:
+            filed.append((str(r.get("period")), s))
+    if len(filed) < 2:
+        return None
+    filed.sort(key=lambda x: x[0])          # oldest first
+    prior, now = filed[-2][1], filed[-1][1]
+    if not prior:
+        return None
+    return (now - prior) / prior
+
+
 def missing_fields(row: dict) -> bool:
     """True when this row has a gap Eulerpool could fill."""
     return isinstance(row, dict) and any(row.get(k) is None for k in FILLS[:3])

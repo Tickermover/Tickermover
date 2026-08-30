@@ -16242,6 +16242,23 @@ async def _build_dil_scan() -> None:
                     sg.attach_growth(r, inc or [])
                 except Exception:
                     pass
+                # FALLBACK. FMP's quarterly income is both plan-gated per symbol
+                # and the first endpoint to exhaust the daily quota, and the
+                # failure is swallowed above — so a scan that logged "80 with
+                # share counts" earlier in the day rebuilt later with ZERO, and
+                # every row then reads "Unchecked", which looks like missing
+                # data rather than a spent quota. Eulerpool carries `shares` per
+                # income row and is not symbol-gated.
+                if r.get("growth") is None:
+                    try:
+                        import eulerpool_store as _ep
+                        if _ep.available():
+                            g = await _ep.share_growth(r["ticker"])
+                            if g is not None:
+                                r["growth"] = g
+                                r["label"], r["fall_rate"] = sg.band_for(g)
+                    except Exception:
+                        pass
                 counter[0] += 1
                 _dil_scan.update(done=counter[0])
 

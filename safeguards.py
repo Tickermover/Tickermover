@@ -434,6 +434,21 @@ def scan_offerings(tickers: list[str], sectors: dict | None = None,
     return rows
 
 
+def band_for(growth: float) -> tuple:
+    """(label, fall_rate) for a share-count change — the same table dilution()
+    uses.
+
+    Exists so a caller that obtained `growth` from somewhere other than an FMP
+    quarterly statement (the Eulerpool fallback in the dilution scan) lands in
+    exactly the same band as the primary path, instead of re-deriving the
+    thresholds beside it and drifting.
+    """
+    for lo, hi, lab, _txt, r in DILUTION_BANDS:
+        if lo <= growth < hi:
+            return lab, r
+    return DILUTION_BANDS[-1][2], DILUTION_BANDS[-1][4]
+
+
 def attach_growth(row: dict, income_q: list) -> dict:
     """Add an accurate share-count change to a scan row, from the statement API
     — the same source the per-stock card uses, which is clean."""
