@@ -133,7 +133,40 @@ async def get_financials(coordinator, ticker: str, period: str = "annual",
     out: dict = {"ticker": sym, "period": per}
     for key, endpoint in _ENDPOINTS.items():
         out[key] = await _fetch(coordinator, endpoint, sym, per)
-    out["available"] = any(out.get(k) for k in _ENDPOINTS)
+
+    # ── Fallback tier: Eulerpool ────────────────────────────────────────────
+    # ADD, never replace: FMP stays the primary and this only fills arrays it
+    # left empty. The case it exists for is the per-symbol 402 — "this value
+    # set for 'symbol' is not available under your current subscription" —
+    # which no parameter change can get past and which silently emptied the
+    # Financials tab for roughly 45% of the universe (DXCM, SNOW, CRWD, NET,
+    # DDOG, ANET, SMCI, VRT, CEG in a 20-name sample).
+    #
+    # Annual only, deliberately: Eulerpool has no quarterly balance/cash-flow
+    # to match its quarterly income, and a toggle showing one populated
+    # statement beside two blank ones reads worse than the honest empty state.
+    if per == "annual" and not all(out.get(k) for k in ("income", "balance", "cashflow")):
+        try:
+            import eulerpool_store as _ep
+            if _ep.available():
+                alt = await _ep.get_statements(sym)
+                filled = [k for k in ("income", "balance", "cashflow", "estimates")
+                          if not out.get(k) and alt.get(k)]
+                for k in filled:
+                    out[k] = alt[k]
+                if filled:
+                    out["fallback_source"] = "eulerpool"
+                    out["fallback_filled"] = filled
+                    logger.info("financials %s: eulerpool filled %s", sym, filled)
+        except Exception as exc:
+            logger.warning("financials %s: eulerpool fallback failed: %s", sym, exc)
+
+    # `available` deliberately keys off the STATEMENTS, not any array. It used
+    # to be `any(out[k] for k in _ENDPOINTS)`, so a ticker with nothing but
+    # analyst estimates reported available:true and rendered an empty shell
+    # instead of saying the statements were missing — which is how AAPL showed
+    # available:true with income:[] while the FMP limit bug was live.
+    out["available"] = any(out.get(k) for k in ("income", "balance", "cashflow"))
     out["fetched_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds")
 
     if cache and out["available"]:
