@@ -143,7 +143,20 @@ def _key(name: str) -> str:
 _PROVIDERS = [
     # Default was gemini-2.0-flash, which Google shut down on 2026-06-01, so an
     # install without GEMINI_MODEL set had a dead primary AND dead fallbacks.
-    ("gemini", "GEMINI_API_KEY", "GEMINI_MODEL", "gemini-3.7-flash",
+    #
+    # 2026-08-30: gemini-3.7-flash was NOT dead — it had gone SLOW, which is
+    # worse, because nothing reports it. Measured 16.9s / 20.4s / 20.2s on a
+    # 32-token probe, timing out about half the time. This is the FIRST hop and
+    # the one the shim prefers for prompts over 20k chars, so every generation
+    # in the app paid that before falling through — a latency fault presenting
+    # as flakiness.
+    #
+    # Same key, same probe, same minute: 3.6-flash 1.1s / 0.9s / 5.6s / 6.4s
+    # (4/4), 2.5-flash 5.9s, 3.7-flash-lite 6.2s. So it is the MODEL, not the
+    # key, the quota or the network. Newest is not fastest — probe latency, not
+    # just liveness, when a default looks unhealthy. GEMINI_MODEL overrides
+    # without a deploy.
+    ("gemini", "GEMINI_API_KEY", "GEMINI_MODEL", "gemini-3.6-flash",
      "https://generativelanguage.googleapis.com/v1beta/models", 700000),
     # deepseek-v4-pro hit END OF LIFE on 2026-08-07 and now returns HTTP 410
     # "Gone" for every request. Set NVIDIA_MODEL in the environment to override
