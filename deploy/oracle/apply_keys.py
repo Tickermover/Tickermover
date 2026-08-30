@@ -61,6 +61,11 @@ LABEL_MAP = {
     "sec": "SEC_API_KEY", "supabase url": "SUPABASE_URL",
     "supabase anon": "SUPABASE_ANON_KEY", "supabase jwt": "SUPABASE_JWT_SECRET",
     "supabase service": "SUPABASE_SERVICE_KEY",
+    # Bare forms: in a Supabase context "anon" and "service" are unambiguous,
+    # and that is how the dashboard labels them.
+    "anon": "SUPABASE_ANON_KEY", "anon key": "SUPABASE_ANON_KEY",
+    "service": "SUPABASE_SERVICE_KEY", "service key": "SUPABASE_SERVICE_KEY",
+    "service role": "SUPABASE_SERVICE_KEY", "jwt": "SUPABASE_JWT_SECRET",
 }
 
 def parse_labelled(text: str) -> dict:
