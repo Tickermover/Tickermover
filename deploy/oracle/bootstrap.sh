@@ -20,8 +20,14 @@ echo "── service user + checkout ──────────────�
 sudo useradd --system --create-home --home-dir "$APP_DIR" --shell /usr/sbin/nologin "$APP_USER" 2>/dev/null || true
 sudo mkdir -p "$APP_DIR"
 sudo chown -R "$APP_USER:$APP_USER" "$APP_DIR"
+# NOTE: useradd --create-home populates $APP_DIR with /etc/skel (.bashrc etc),
+# so `git clone` into it fails with "already exists and is not empty".
+# init + fetch + checkout works into a non-empty directory.
 if [ ! -d "$APP_DIR/.git" ]; then
-  sudo -u "$APP_USER" git clone --branch main "$REPO" "$APP_DIR"
+  sudo -u "$APP_USER" git -C "$APP_DIR" init -q
+  sudo -u "$APP_USER" git -C "$APP_DIR" remote add origin "$REPO"
+  sudo -u "$APP_USER" git -C "$APP_DIR" fetch -q --depth 1 origin main
+  sudo -u "$APP_USER" git -C "$APP_DIR" checkout -q -f -B main FETCH_HEAD
 fi
 
 echo "── virtualenv ──────────────────────────────────────────────"
