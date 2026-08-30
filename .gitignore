@@ -43,3 +43,14 @@ data/.write_test
 
 # Claude Code local (machine-specific) settings — never commit
 .claude/settings.local.json
+
+# Credential files that get pasted into the working tree by accident.
+# This repo is PUBLIC: a stray `git add -A` would publish them instantly,
+# and git history cannot be un-published. Belt and braces on top of
+# keeping secrets in /etc/tickermover.env on the server.
+*keys*.txt
+*keys*.docx
+*secret*
+*credential*
+api-keys*
+*.env.local
