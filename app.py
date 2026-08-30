@@ -16178,6 +16178,18 @@ async def _build_dil_scan() -> None:
         await asyncio.gather(*(_one(r) for r in top))
         _dil_scan.update(status="ready", rows=rows, at=time.time())
         logger.info(f"dilution scan built: {len(rows)} rows, {len(top)} with share counts")
+        # PERSIST. This scan is ~6 minutes of SEC EDGAR work for 1,556 names and
+        # it lived only in `_dil_scan`, an in-process dict — so every restart
+        # threw it away and rebuilt from zero. During that window the page's
+        # headline column reads "Unchecked" on every row, which looks like
+        # missing data rather than a warming cache, and on a day with several
+        # deploys it is what a visitor sees most of the time.
+        try:
+            from kv_store import store as _kv
+            await asyncio.to_thread(_kv.set, "dilution_scan", "rows",
+                                    {"rows": rows, "at": _dil_scan["at"]})
+        except Exception as exc:
+            logger.warning(f"dilution scan: persist failed: {exc}")
     except Exception as exc:
         logger.error(f"dilution scan failed: {exc}", exc_info=True)
         _dil_scan.update(status="idle")
@@ -16188,6 +16200,20 @@ async def api_dilution_scan():
     """Every name in the universe by how much its share count grew, alongside
     how many times it has priced stock off a shelf."""
     import safeguards as sg
+    # Rehydrate from the durable store before deciding to rebuild. Without this
+    # the 6-minute EDGAR sweep re-ran on every restart even though a perfectly
+    # good result from minutes earlier was sitting in the KV.
+    if _dil_scan["status"] != "ready":
+        try:
+            from kv_store import store as _kv
+            doc = await asyncio.to_thread(_kv.get, "dilution_scan", "rows", _DIL_TTL)
+            if isinstance(doc, dict) and doc.get("rows"):
+                _dil_scan.update(status="ready", rows=doc["rows"],
+                                 at=float(doc.get("at") or time.time()))
+                logger.info("dilution scan: rehydrated %d rows from durable store",
+                            len(doc["rows"]))
+        except Exception as exc:
+            logger.warning(f"dilution scan: rehydrate failed: {exc}")
     fresh = (_dil_scan["status"] == "ready"
              and (time.time() - _dil_scan["at"]) < _DIL_TTL)
     if fresh:
