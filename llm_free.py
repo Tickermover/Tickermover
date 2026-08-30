@@ -224,9 +224,15 @@ _PROVIDERS = [
     # every dashboard URL). CLOUDFLARE_URL overrides it for another account.
     # The token must carry Workers AI permission: a Zone- or DNS-scoped token
     # authenticates and then fails at inference.
+    # 2026-08-30: the account id here was 71ce6b72346605b6937cca73a23fd0b9 and
+    # did NOT belong to this deployment — it is the OLD digitalquery account.
+    # The live one is Support@tickermover.com, 723e492ef3976c78efddb973af30d854
+    # (visible in the dashboard URL). Wrong id + valid token = authenticates,
+    # then fails at inference: the same symptom as a bad key, a different
+    # cause, and nothing in the response says which.
     ("cloudflare", "CLOUDFLARE_API_KEY", "CLOUDFLARE_MODEL",
      "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
-     "https://api.cloudflare.com/client/v4/accounts/71ce6b72346605b6937cca73a23fd0b9/ai/v1/chat/completions",
+     "https://api.cloudflare.com/client/v4/accounts/723e492ef3976c78efddb973af30d854/ai/v1/chat/completions",
      20000),
     # ── Added 2026-08-30 ──────────────────────────────────────────────────
     # Z.ai GLM-4.7-Flash: the only Chinese model with a PERMANENT free tier
