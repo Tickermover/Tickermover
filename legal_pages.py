@@ -5,7 +5,13 @@ Three plain-English legal documents. The business is relocating to the UK,
 so the REGULATORY DISCLAIMER has been converted to FCA framing (generic
 research / not a personal recommendation under FSMA + the FCA Handbook).
 
-⚠️  DRAFT — STILL NEEDS A UK SOLICITOR SIGN-OFF BEFORE PAID LAUNCH / ADS.
+⚠️  DRAFT — NOT REVIEWED BY A SOLICITOR.
+   Scope narrowed 30 Aug 2026: TickerMover is run as a free, non-commercial
+   project. No payments, no subscription, no advertising, no sponsored
+   coverage. That removes the paid-launch and financial-promotion pressure
+   these pages were originally drafted against, but it does NOT make them
+   solicitor-approved. Reinstate a legal review before charging for
+   anything, running ads, or taking money from covered companies.
   UK conversion pass (Aug 2026) done in-house:
     * Terms §13 governing law: India/arbitration -> law & courts of England
       and Wales.
@@ -51,11 +57,12 @@ research / not a personal recommendation under FSMA + the FCA Handbook).
     recommendation to any specific user.
   * Data-feed providers (Polygon, FMP, Alpha Vantage, Finnhub, Alpaca,
     yfinance, SEC EDGAR) in the data-flow disclosure.
-  * Limitation of liability sized for a low-cost SaaS (cap = 12 months
-    of fees paid).
+  * Limitation of liability: flat £50 cap, since the Service is free and
+    there are no fees to measure against.
 
-Drafted in-house; reviewed by no lawyer yet. Do NOT rely on this as legal
-advice — a UK solicitor must review before prod launch for paid users.
+Drafted in-house; reviewed by no lawyer. Do NOT rely on this as legal advice.
+It is written for a free, non-commercial site; charging, advertising or taking
+payment from covered companies would all require a solicitor to look first.
 """
 from __future__ import annotations
 
@@ -78,9 +85,11 @@ _CONTACT = os.environ.get("LEGAL_CONTACT_EMAIL", "support@tickermover.com")
 # India and must be rewritten by a UK solicitor. This default reflects the
 # INTENDED UK posture only.
 _JURIS   = os.environ.get("LEGAL_JURISDICTION", "England and Wales")
-# UK e-commerce / consumer law requires you to identify the trading entity.
-# These MUST be set before paid launch / running ads — fill in the registered
-# company name, its Companies House number, and a geographic contact address.
+# UK e-commerce / consumer law requires a TRADING ENTITY to identify itself.
+# TickerMover is not trading — it is a free non-commercial project — so these
+# are deliberately unset and _business_details_html() prints a non-commercial
+# statement instead. Set them only if it ever becomes a business, at which
+# point the Companies Act Part 41 disclosure duty starts to apply.
 _ENTITY     = os.environ.get("LEGAL_ENTITY_NAME", "")     # e.g. "TickerMover Ltd"
 _COMPANY_NO = os.environ.get("LEGAL_COMPANY_NUMBER", "")  # Companies House number
 _ADDRESS    = os.environ.get("LEGAL_ADDRESS", "")         # registered/trading address
@@ -102,15 +111,18 @@ def _business_details_html() -> str:
     # set — LEGAL_ENTITY_NAME and friends — on the LIVE public Terms page, so
     # visitors were reading our deployment instructions inside a legal document.
     # The reminder for us belongs in the startup log, not in the contract.
-    logger.warning(
-        "legal_pages: no registered entity configured — /terms shows a "
-        "'business details pending' notice. Set LEGAL_ENTITY_NAME, "
-        "LEGAL_COMPANY_NUMBER and LEGAL_ADDRESS before paid launch."
-    )
+    # No entity is configured and none is expected: TickerMover is run as a
+    # non-commercial personal project, not a trading business. The Companies
+    # Act Part 41 disclosure duty applies to businesses trading under a name,
+    # so it does not bite here. Setting LEGAL_ENTITY_NAME would switch this
+    # back to the trading-entity block above.
     return (
-        '<div class="callout callout-amber"><strong>Business details pending.</strong> '
-        'Our registered company name, company number and contact address will be '
-        'published here. In the meantime you can reach us at '
+        '<div class="callout"><strong>Who runs this.</strong> TickerMover is a '
+        'free, non-commercial research project run by an individual. It is not a '
+        'registered company and not a business: there is no subscription, no paid '
+        'tier, no advertising and no sponsored coverage. Nothing on the site is '
+        'sold, and we take no payment from anyone &mdash; readers or the companies '
+        'covered. You can reach us at '
         f'<a href="mailto:{_CONTACT}" class="body-link">{_CONTACT}</a>.</div>'
     )
 
@@ -236,8 +248,8 @@ the information you provide is accurate and that you understand the
 <h2>4. Your account</h2>
 <ul>
   <li>You are responsible for maintaining the security of your login credentials. Notify us at <a href="mailto:{_CONTACT}">{_CONTACT}</a> if you suspect unauthorised access.</li>
-  <li>You may not create multiple accounts to evade rate limits, abuse free-tier features, or circumvent paid subscriptions.</li>
-  <li>We may suspend or terminate accounts that violate these Terms, abuse the Service, or engage in fraudulent payment activity.</li>
+  <li>You may not create multiple accounts to evade rate limits or abuse the Service.</li>
+  <li>We may suspend or terminate accounts that violate these Terms or abuse the Service.</li>
 </ul>
 
 <h2>5. Acceptable use</h2>
@@ -250,20 +262,17 @@ the information you provide is accurate and that you understand the
   <li>Use bots, headless browsers, or automation to interact with the Service in ways that mimic human use, beyond ordinary RSS / API access we explicitly enable.</li>
 </ul>
 
-<h2>6. Free and paid plans</h2>
-<p>The Service offers a free tier with reasonable usage limits and may, from time
-to time, offer a paid &ldquo;Pro&rdquo; tier with enhanced features. Pricing for paid
-features is displayed before purchase and processed by our payment processor.
-Refunds for paid plans are governed by the Refund Policy linked from
-the checkout page; in the absence of a separate Refund Policy, paid subscriptions
-are non-refundable except where required by applicable consumer law.</p>
-<p>If you are a consumer in the UK, you have a statutory right under the Consumer
-Contracts (Information, Cancellation and Additional Charges) Regulations 2013 to
-cancel within 14 days of purchase. Because the Service is digital content
-supplied immediately, by starting to use a paid feature within that period you
-acknowledge that you consent to immediate supply and lose the 14-day right to
-cancel, to the extent permitted by law. This does not affect your other
-statutory rights.</p>
+<h2>6. The Service is free</h2>
+<p>Every feature is free to every user. There is no paid tier, no subscription,
+no trial that converts to a charge, and no payment method is collected. We do not
+take payment from readers, and we do not take payment from the companies we write
+about &mdash; there is no sponsored or promoted coverage.</p>
+<p>Some features are labelled &ldquo;Pro&rdquo; in the interface. That labelling is
+left over from an earlier plan and is inactive: those features are available to
+everyone. If that ever changes we will say so here and by email before it takes
+effect, and nothing will begin charging without you actively agreeing to it.</p>
+<p>Because nothing is sold, the consumer cancellation rules that apply to paid
+digital content do not arise. Your statutory rights are unaffected.</p>
 
 <h2>7. Intellectual property</h2>
 <p>All software, scoring algorithms, editorial commentary, screenshots, branding,
@@ -292,8 +301,8 @@ complete.</p>
 <h2>10. Limitation of liability</h2>
 <p>To the maximum extent permitted by applicable law, {_COMPANY}'s aggregate
 liability arising out of or related to your use of the Service shall not exceed
-the amount you have paid us in the twelve (12) months preceding the claim, or
-&pound;50 if you are on the free tier. Under no circumstances will we be liable
+&pound;50. The Service is provided free of charge and you pay us nothing, so
+there is no larger sum to measure a claim against. Under no circumstances will we be liable
 for indirect, incidental, consequential, special, or punitive damages, including
 lost profits, lost trading opportunities, or losses arising from investment
 decisions you make. Nothing in these Terms limits or excludes our liability for
@@ -318,7 +327,7 @@ or third-party right.</p>
 
 <h2>12. Modifications to the Service or Terms</h2>
 <p>We may modify the Service, pricing, or these Terms from time to time. For
-material changes (e.g. price increases on active subscriptions, expanded data
+material changes (e.g. expanded data
 collection, changes to the limitation of liability), we will email registered
 users with at least 14 days' notice. Continued use after such notice constitutes
 acceptance.</p>
@@ -350,7 +359,7 @@ def render_privacy() -> str:
     body = f"""
 <div class="callout callout-green">
   <strong>TL;DR.</strong> We collect the minimum needed to run the Service:
-  your email + auth credentials, your watchlist, payment metadata, and standard
+  your email + auth credentials, your watchlist, and standard
   server logs. We do not sell your data. We use essential cookies to run the
   site, and &mdash; only with your consent &mdash; analytics and advertising
   cookies, which you can accept, reject or change at any time via
@@ -369,7 +378,6 @@ this Privacy Policy or requests to exercise your rights should be directed to
   <li><strong>Email address</strong> &mdash; for account creation, password reset, and product updates.</li>
   <li><strong>Authentication credentials</strong> &mdash; password (hashed and salted by Supabase, never visible to us in plain text), or third-party OAuth tokens if you sign in via Google etc.</li>
   <li><strong>Watchlist</strong> &mdash; the tickers you save.</li>
-  <li><strong>Subscription metadata</strong> &mdash; if you upgrade to a paid plan: subscription ID, plan, status (active/cancelled). Card details are handled directly by our payment processor; we never see or store full card numbers.</li>
   <li><strong>Optional profile fields</strong> &mdash; name, trading experience, primary goal &mdash; collected during onboarding to tailor what we show you. You can leave these blank.</li>
   <li><strong>Support correspondence</strong> &mdash; emails you send to us for assistance.</li>
 </ul>
@@ -413,7 +421,6 @@ your browser settings.</p>
 <tr><td>Email + password</td><td>Authenticate you; recover lost access</td><td>Necessary for the contract you have with us</td></tr>
 <tr><td>Watchlist</td><td>Show you stocks you care about</td><td>Necessary for the contract</td></tr>
 <tr><td>Server logs</td><td>Detect abuse, fix bugs, plan capacity</td><td>Legitimate interest</td></tr>
-<tr><td>Payment metadata</td><td>Process subscriptions; comply with tax</td><td>Legal obligation + contract</td></tr>
 <tr><td>Product update emails</td><td>Tell you about new features</td><td>Your consent (opt out anytime)</td></tr>
 </tbody></table>
 

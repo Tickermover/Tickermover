@@ -96,10 +96,6 @@ TAVILY_API_KEY=<...>
 VOYAGE_API_KEY=<...>
 UNSPLASH_ACCESS_KEY=<...>
 PEXELS_API_KEY=<...>
-STRIPE_SECRET_KEY=<...>
-STRIPE_PUBLISHABLE_KEY=<...>
-STRIPE_PRICE_ID=<...>
-STRIPE_WEBHOOK_SECRET=<...>
 ```
 
 ### One value to CARRY OVER unchanged
@@ -113,9 +109,6 @@ already shared.
 
 ### Leave unset
 
-`STRIPE_AUTOMATIC_TAX` — enabling it while Stripe Tax is inactive makes every
-checkout fail. Only set it once VAT-registered.
-
 `ALLOW_UNSIGNED_WEBHOOKS` — dev only. Never in production.
 
 ---
@@ -128,7 +121,6 @@ checkout fail. Only set it once VAT-registered.
 3. Check `/terms` no longer says "business details pending".
 4. Confirm the boot log does NOT warn about Supabase falling back to local JSON.
 5. Point `tickermover.com` DNS at the new service, last.
-6. Stripe webhook endpoint → `https://tickermover.com/api/billing/stripe/webhook`
 
 Poll until the service is **stable**, not until the first success — the restart
 window looks broken before it settles.

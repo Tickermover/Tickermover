@@ -68,11 +68,6 @@ SUPABASE_JWT_SECRET = _env("SUPABASE_JWT_SECRET", "")
 # warning if not set, but then writes will fail any non-open RLS table.
 SUPABASE_SERVICE_KEY = _env("SUPABASE_SERVICE_KEY", "")
 
-# Stripe — primary gateway for the UK/global launch (hosted Checkout + webhooks).
-STRIPE_SECRET_KEY      = _env("STRIPE_SECRET_KEY",      "")   # sk_live_… / sk_test_…
-STRIPE_PUBLISHABLE_KEY = _env("STRIPE_PUBLISHABLE_KEY", "")   # pk_live_… (not needed for hosted Checkout)
-STRIPE_PRICE_ID        = _env("STRIPE_PRICE_ID",        "")   # price_… of the recurring Pro plan
-STRIPE_WEBHOOK_SECRET  = _env("STRIPE_WEBHOOK_SECRET",  "")   # whsec_… from the webhook endpoint
 
 # ── AI spend circuit breaker ──────────────────────────────────────────────────
 # Hard daily (UTC) ceiling on AI cost. Once today's recorded spend crosses this,
