@@ -168,7 +168,18 @@ _PROVIDERS = [
     # hosts. Probed against the live key: deepseek-r1 and qwen2.5-7b-instruct
     # are also gone, meta/llama-3.1-70b-instruct answers, and
     # nemotron-super-49b answers and reasons better, so it takes the default.
-    ("nvidia", "NVIDIA_API_KEY", "NVIDIA_MODEL", "nvidia/llama-3.3-nemotron-super-49b-v1",
+    #
+    # 2026-08-31: nemotron-super-49b is gone too — HTTP 410 "Gone". The built-in
+    # discover list was ALSO entirely dead (410/404 on every candidate), so it
+    # could not self-heal. Fixed by listing the account's real catalogue:
+    #   GET https://integrate.api.nvidia.com/v1/models   -> 83 ids
+    # then probing the plausible ones, because **being listed is not being
+    # served**: llama-3.1-nemotron-70b-instruct 404s and deepseek-v4-pro-0813
+    # hangs past 20s, despite both appearing in that catalogue. Measured:
+    #   nemotron-3.5-lightning-30b-a3b   502ms  <- default
+    #   nemotron-3-super-120b-a12b      2040ms
+    # Use that /v1/models call, not the discover candidates, next time this rots.
+    ("nvidia", "NVIDIA_API_KEY", "NVIDIA_MODEL", "nvidia/nemotron-3.5-lightning-30b-a3b",
      "https://integrate.api.nvidia.com/v1/chat/completions", 45000),
     # 2026-08-23: llama-3.3-70b-versatile is GONE — "The model
     # `llama-3.3-70b-versatile` does not exist or you do not have access to
