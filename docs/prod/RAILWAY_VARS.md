@@ -98,14 +98,13 @@ UNSPLASH_ACCESS_KEY=<...>
 PEXELS_API_KEY=<...>
 ```
 
-### One value to CARRY OVER unchanged
+### Nothing needs carrying over
 
-```
-REFERRAL_SALT=<copy from the old Railway project>
-```
-
-It derives existing users' referral codes. A new salt invalidates every code
-already shared.
+`REFERRAL_SALT` used to be listed here as must-copy. It is not: it was never
+actually set in Railway (the code fell back to SUPABASE_SERVICE_KEY, then to a
+literal), and the referral system was removed entirely in dd1f743 along with
+the rest of the commercial layer. No value from the old deployment is
+irreplaceable.
 
 ### Leave unset
 
