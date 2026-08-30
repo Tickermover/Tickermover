@@ -168,7 +168,16 @@ _PROVIDERS = [
      "https://api.groq.com/openai/v1/chat/completions", 11000),
     ("cerebras", "CEREBRAS_API_KEY", "CEREBRAS_MODEL", "gpt-oss-120b",
      "https://api.cerebras.ai/v1/chat/completions", 20000),
-    ("mistral", "MISTRAL_API_KEY", "MISTRAL_MODEL", "mistral-large-latest",
+    # 2026-08-30: mistral-large-latest is TIER-GATED, not dead — the key
+    # authenticates and the model then 403s with "This model is not available
+    # in your subscription tier" (code 1910). That is a different failure from
+    # the retirements above and needs a different fix: change the model, not
+    # the key. Probed against the live key, all of mistral-small-latest,
+    # open-mistral-nemo, ministral-8b-latest and mistral-medium-latest answer.
+    # Small is the documented free-tier model, so it takes the default —
+    # medium works on a 32-token probe but is likelier to meet a tier ceiling
+    # on a real prompt. Override with MISTRAL_MODEL without a deploy.
+    ("mistral", "MISTRAL_API_KEY", "MISTRAL_MODEL", "mistral-small-latest",
      "https://api.mistral.ai/v1/chat/completions", 100000),
     ("together", "TOGETHER_API_KEY", "TOGETHER_MODEL",
      "meta-llama/Llama-3.3-70B-Instruct-Turbo-Free",
