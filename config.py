@@ -28,8 +28,17 @@ def _env(key: str, default: str = "") -> str:
 # ── Alpaca Markets — FREE primary price + candle source ──────────────────────
 # Free real-time IEX data + unlimited REST calls — no credit card needed.
 # Setup (2 min): https://alpaca.markets → Sign Up → Paper Trading → API Keys
-ALPACA_KEY_ID     = _env("ALPACA_KEY_ID",     "PKYUH2YPV5RF5XBMLZZQL3FWMK")
-ALPACA_SECRET_KEY = _env("ALPACA_SECRET_KEY", "8xJW7SsL9QibHkvPY34RVpi2n5zkPz2K4mPxMtXsdifk")
+# ─────────────────────────────────────────────────────────────────────────────
+# NO CREDENTIAL MAY HAVE A HARDCODED DEFAULT.
+# Until 30 Aug 2026 six live keys sat here as fallbacks — Alpaca (including the
+# broker secret), FMP, Finnhub, sec-api and ApeWisdom. This repository is
+# PUBLIC, so they were readable by anyone and are now burnt; they have been
+# blanked and must be rotated at the provider.
+# A missing key must degrade the feature, never fall back to a shared secret.
+# ─────────────────────────────────────────────────────────────────────────────
+
+ALPACA_KEY_ID     = _env("ALPACA_KEY_ID",     "")
+ALPACA_SECRET_KEY = _env("ALPACA_SECRET_KEY", "")
 
 # ── Polygon.io — optional paid upgrade ($29/mo Starter) ───────────────────────
 # Leave blank to use Alpaca (free) instead. Only upgrade when you have revenue.
@@ -41,21 +50,21 @@ POLYGON_PLAN    = _env("POLYGON_PLAN",    "free")  # "free" | "starter" | "realt
 # Free tier was 250/day — too small for a 540-name universe (couldn't cover it
 # once/day). Starter is rate-limited per-minute instead, so we throttle on
 # FMP_CALLS_PER_MIN and keep FMP_CALLS_PER_DAY only as a high runaway backstop.
-FMP_API_KEY       = _env("FMP_API_KEY",       "DMv41skS17GzmwsBb0GZRaG1jgk6MXLY")
+FMP_API_KEY       = _env("FMP_API_KEY",       "")
 FMP_CALLS_PER_MIN = int(_env("FMP_CALLS_PER_MIN", "280"))      # Starter = 300/min; 280 leaves headroom
 FMP_CALLS_PER_DAY = int(_env("FMP_CALLS_PER_DAY", "200000"))   # backstop only — Starter has no daily cap
 
 # ── Finnhub — news + recommendations (supplemental) ──────────────────────────
-FINNHUB_KEY = _env("FINNHUB_KEY", "d7hrsapr01qu8vfmdcugd7hrsapr01qu8vfmdcv0")
+FINNHUB_KEY = _env("FINNHUB_KEY", "")
 
 # ── Alpha Vantage — fundamentals fallback ────────────────────────────────────
 ALPHA_VANTAGE_KEY = _env("ALPHA_VANTAGE_KEY", "JCP11I7DK8F60G3O")
 
 # ── SEC-API — insider transactions ───────────────────────────────────────────
-SEC_API_KEY = _env("SEC_API_KEY", "f1b1df92b9c91864d033b82bd933851dc718912bb58d14298938749fcfb1ac20")
+SEC_API_KEY = _env("SEC_API_KEY", "")
 
 # ── ApeWisdom — social sentiment ─────────────────────────────────────────────
-APEWISDOM_KEY = _env("APEWISDOM_KEY", "KNHvbGE_mK4k79IWd6yTvba3fjYz1Gmv")
+APEWISDOM_KEY = _env("APEWISDOM_KEY", "")
 
 # ── Supabase — auth + database (needed for SaaS launch) ──────────────────────
 SUPABASE_URL      = _env("SUPABASE_URL",      "")
@@ -144,7 +153,7 @@ AI_OVERRIDE_FLOOR_PCT = float(_env("AI_OVERRIDE_FLOOR_PCT", "-15") or "-15")
 # GDPR/PECR. Uses Plausible's new per-site script: the ID below is the
 # tickermover.com site created by the owner 2026-07-05. Override with the
 # PLAUSIBLE_SCRIPT_ID env var; set it to "off" to disable analytics entirely.
-PLAUSIBLE_SCRIPT_ID = _env("PLAUSIBLE_SCRIPT_ID", "pa-1hJ6BJn9EK-7p7O9xNWjJ")
+PLAUSIBLE_SCRIPT_ID = _env("PLAUSIBLE_SCRIPT_ID", "off")
 
 # ── Tracker entry: volatility risk gate ───────────────────────────────────────
 # Backtest evidence (2026-07): the catastrophic loss tail (QMCO -58%, QUBT -37%,

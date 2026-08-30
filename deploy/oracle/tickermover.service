@@ -1,0 +1,43 @@
+[Unit]
+Description=TickerMover (FastAPI/uvicorn)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=exec
+User=tickermover
+Group=tickermover
+WorkingDirectory=/opt/tickermover
+
+# Secrets live here, mode 0600, root-owned, outside the git checkout.
+EnvironmentFile=/etc/tickermover.env
+
+# PORT is fixed at 8000; Caddy is the only thing that talks to it, and it
+# binds loopback so the app is never reachable except through TLS.
+Environment=PORT=8000
+ExecStart=/opt/tickermover/.venv/bin/uvicorn app:app \
+    --host 127.0.0.1 --port 8000 \
+    --proxy-headers --forwarded-allow-ips='*'
+
+# The 22 background loops mean a crash must not take the site down silently.
+Restart=always
+RestartSec=5
+# Boot pulls the universe and warms caches; give it room before the watchdog.
+TimeoutStartSec=300
+
+# Hardening. The app only ever writes to output/ and data/ inside its own dir.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/tickermover/output /opt/tickermover/data /opt/tickermover/.backtest_cache
+ProtectKernelTunables=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=tickermover
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,30 @@
+# TickerMover — automatic Let's Encrypt TLS, no certbot, no cron.
+# Caddy obtains and renews the certificate on its own.
+
+tickermover.com, www.tickermover.com {
+	encode zstd gzip
+
+	# The app canonicalises to the bare apex itself (app.py SITE_ORIGIN), so
+	# www is proxied rather than redirected here — one source of truth.
+	reverse_proxy 127.0.0.1:8000 {
+		header_up X-Forwarded-Proto {scheme}
+		header_up X-Forwarded-For {remote_host}
+		# Boot warms caches and can be slow; don't cut off a legitimate response.
+		transport http {
+			read_timeout 120s
+		}
+	}
+
+	log {
+		output file /var/log/caddy/tickermover.log {
+			roll_size 10MiB
+			roll_keep 3
+		}
+	}
+}
+
+# Before DNS is pointed, reach the instance by IP over plain HTTP to smoke-test.
+# Delete this block once the domain resolves.
+:80 {
+	reverse_proxy 127.0.0.1:8000
+}
