@@ -62,6 +62,10 @@ LABEL_MAP = {
     "openrouter": "OPENROUTER_API_KEY",
     "cerebas": "CEREBRAS_API_KEY", "cerebras": "CEREBRAS_API_KEY",
     "groq": "GROQ_API_KEY", "nvidia": "NVIDIA_API_KEY", "nim": "NVIDIA_API_KEY",
+    # Misspellings seen in the real file, same reason "cerebas" and "finhub"
+    # are here: the label is typed by hand and a typo silently drops the key.
+    "nvdia": "NVIDIA_API_KEY", "nvidea": "NVIDIA_API_KEY",
+    "nvidia nim": "NVIDIA_API_KEY", "cerebras cloud": "CEREBRAS_API_KEY",
     "sambanova": "SAMBANOVA_API_KEY", "github": "GITHUB_MODELS_KEY",
     "alpha vantage": "ALPHA_VANTAGE_KEY", "alphavantage": "ALPHA_VANTAGE_KEY",
     "fmp": "FMP_API_KEY", "serper": "SERPER_API_KEY", "tavily": "TAVILY_API_KEY",
@@ -119,6 +123,19 @@ def parse_labelled(text: str) -> tuple[dict, list]:
             continue
         val, label = m.group(1).strip(), m.group(2).strip().lower()
         var = LABEL_MAP.get(label)
+        # EXACT match first (above), then again with a trailing "api"/"key"
+        # stripped. People write "voyage key", "groq api key", "cloudflare api"
+        # as readily as the bare provider name, and an exact-match table cannot
+        # enumerate every combination — "voyage key" was dropped on the floor
+        # while "voyage" would have worked. Order matters: the exact pass has to
+        # win, because "anon key", "service key" and "secret key alpaca" are
+        # meaningful entries whose trailing word is NOT noise.
+        if var is None:
+            trimmed = re.sub(r"\s*\b(api|key|token)\b\s*$", "", label).strip()
+            while trimmed != label and var is None:
+                var = LABEL_MAP.get(trimmed)
+                label_next = re.sub(r"\s*\b(api|key|token)\b\s*$", "", trimmed).strip()
+                label, trimmed = trimmed, label_next
         # A Supabase project URL is unmistakable from its shape, so recognise
         # it regardless of how the line was labelled ("supabase", "url",
         # "project", or nothing that matches at all).

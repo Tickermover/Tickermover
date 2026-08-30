@@ -100,11 +100,29 @@ async def _voyage_embed(texts: list[str]):
     except Exception:
         logger.warning("stock_rag: numpy not available")
         return None
+    # Batch by CHARACTER BUDGET, not by count. Voyage accepts 96 inputs per
+    # request, but an account with no payment method on file is capped at 3 RPM
+    # and 10K TOKENS per minute — and 96 chunks of ~1200 chars is ~29K tokens,
+    # so the very FIRST request 429'd every time. The count limit was never the
+    # binding one. ~24K chars ≈ 6K tokens sits inside that ceiling;
+    # VOYAGE_BATCH_CHARS raises it once billing is enabled.
+    budget = int(os.environ.get("VOYAGE_BATCH_CHARS", "24000"))
+    batches: list[list[str]] = []
+    cur: list[str] = []
+    cur_chars = 0
+    for t in texts:
+        if cur and cur_chars + len(t) > budget:
+            batches.append(cur)
+            cur, cur_chars = [], 0
+        cur.append(t)
+        cur_chars += len(t)
+    if cur:
+        batches.append(cur)
+
     vecs: list[list[float]] = []
     try:
         async with httpx.AsyncClient(timeout=40) as c:
-            for b in range(0, len(texts), 96):     # Voyage accepts batches
-                batch = texts[b:b + 96]
+            for n, batch in enumerate(batches):
                 r = await c.post(
                     "https://api.voyageai.com/v1/embeddings",
                     headers={"Authorization": "Bearer " + VOYAGE_KEY,
@@ -112,12 +130,24 @@ async def _voyage_embed(texts: list[str]):
                     json={"model": VOYAGE_MODEL, "input": batch},
                 )
                 if r.status_code != 200:
-                    logger.warning(f"stock_rag: Voyage HTTP {r.status_code}: {r.text[:200]}")
-                    return None
+                    # KEEP WHAT WE HAVE. This used to `return None`, so a 429 on
+                    # ANY batch discarded every embedding already paid for and
+                    # the answer fell back to metrics-only with no filing
+                    # grounding — indistinguishable from having no key at all.
+                    # A PARTIAL index still retrieves: top-k over the newest
+                    # chunks beats top-k over nothing, and on a rate-limited
+                    # free tier partial is the normal outcome, not a failure.
+                    # _build_index trims `chunks` to match.
+                    logger.warning("stock_rag: Voyage HTTP %s on batch %d/%d "
+                                   "(keeping %d embedded): %s",
+                                   r.status_code, n + 1, len(batches),
+                                   len(vecs), r.text[:150])
+                    break
                 vecs.extend(d["embedding"] for d in r.json().get("data", []))
     except Exception as exc:
         logger.warning(f"stock_rag: Voyage failed: {exc}")
-        return None
+        if not vecs:
+            return None
     if not vecs:
         return None
     return np.array(vecs, dtype=np.float32)
@@ -156,8 +186,15 @@ async def _build_index(ticker: str):
     if not chunks:
         return None
     vecs = await _voyage_embed(chunks)
-    if vecs is None:
+    if vecs is None or not len(vecs):
         return None
+    # A rate-limited free tier returns FEWER vectors than chunks. chunks[i] must
+    # stay paired with vecs[i] or retrieval quotes the wrong passage back at the
+    # reader — a silent correctness bug, not a missing-data one.
+    if len(vecs) < len(chunks):
+        logger.info("stock_rag %s: partial index, %d/%d chunks embedded",
+                    ticker.upper(), len(vecs), len(chunks))
+        chunks = chunks[:len(vecs)]
     idx = {"ts": time.time(), "chunks": chunks, "vecs": vecs}
     _INDEX[ticker.upper()] = idx
     return idx
