@@ -147,13 +147,17 @@ def _scale(v):
         return None
 
 
-async def _get(path: str) -> list:
+async def _get(path: str, root: bool = False) -> list:
+    """GET one endpoint. `root=True` addresses /api/1/<path> directly, for the
+    non-equity families (earning-calls/…, market/…) that do not sit under the
+    equity base."""
     import httpx
     if not _KEY:
         return []
+    base = _BASE.rsplit("/", 1)[0] if root else _BASE
     try:
         async with httpx.AsyncClient(timeout=_TIMEOUT) as c:
-            r = await c.get(f"{_BASE}/{path}", params={"token": _KEY})
+            r = await c.get(f"{base}/{path}", params={"token": _KEY})
         LAST_STATUS[path.split("/")[0]] = r.status_code
         if r.status_code != 200:
             LAST_STATUS[path.split("/")[0] + ":body"] = r.text[:140]
@@ -235,6 +239,169 @@ def _as_estimates(rows: list) -> list:
         if len(row) > 2:
             out.append(row)
     return out
+
+
+async def last_earnings_ms(ticker: str) -> int | None:
+    """Epoch-millis of the most recent earnings CALL, or None.
+
+    This is the REPORT date, which is the whole point: the `date` on an
+    eps_quarters row is the QUARTER END, months earlier, and refreshing off that
+    would either fire before the numbers exist or never fire at all. One cheap
+    call, used as the staleness trigger so the expensive fetches only run when
+    something has actually been reported.
+    """
+    rows = await _get(f"earning-calls/list/{(ticker or '').upper()}", root=True)
+    best = None
+    for r in rows:
+        if not isinstance(r, dict):
+            continue
+        ts = r.get("datePublished")
+        try:
+            ts = int(ts)
+        except (TypeError, ValueError):
+            continue
+        if best is None or ts > best:
+            best = ts
+    return best
+
+
+async def enrich(ticker: str) -> dict:
+    """Universe fields FMP's plan refuses, from Eulerpool. {} when unavailable.
+
+    ONLY the fields validated against known values are returned. Deliberately
+    absent, having been checked and rejected:
+      * beta — risk-metrics reports NVDA 0.16 and AAPL 0.43. NVIDIA's beta is
+        ~2 and the detail page shows LITE at 1.51 against Eulerpool's 1.09.
+        Wrong numbers are worse than blank ones on a risk field.
+      * pe / ps — `valuation.pe` returns 0 for AAPL and NVDA, 0.02 for INTC.
+      * target_upside_pct — no price-target endpoint; the estimates endpoint
+        carries EPS and revenue, not analyst price targets.
+
+    SCALES DIFFER WITHIN THE SAME PAYLOAD, which is exactly how a percent bug
+    gets shipped: `grossMargin` is 46.91 (PERCENT) while `roe` is -0.0023 and
+    `revenueGrowth3Y` -0.16 (FRACTIONS). The universe stores margins as
+    fractions, so the percents are divided by 100 here and nowhere else.
+    """
+    sym = (ticker or "").upper().strip()
+    if not sym or not _KEY:
+        return {}
+    import asyncio as _aio
+    prof, met = await _aio.gather(_get(f"profile/{sym}"), _get(f"metrics/{sym}"))
+    p = (prof[-1] if isinstance(prof, list) and prof else {}) or {}
+    m = (met[-1] if isinstance(met, list) and met else {}) or {}
+    if not isinstance(p, dict) or not isinstance(m, dict):
+        return {}
+    prof_ability = m.get("profitability") or {}
+
+    def _num(v):
+        try:
+            f = float(v)
+        except (TypeError, ValueError):
+            return None
+        return f if f == f else None          # drop NaN
+
+    out: dict = {}
+    mcap = _num(p.get("mcap"))
+    if mcap:                                   # reported in MILLIONS
+        out["market_cap"] = mcap * 1_000_000
+    shares = _num(p.get("shares"))
+    if shares:
+        out["shares_outstanding"] = shares * 1_000_000
+    for src, dst in (("grossMargin", "gross_margin"), ("netMargin", "profit_margin"),
+                     ("operatingMargin", "operating_margin")):
+        v = _num(prof_ability.get(src))
+        if v is not None:
+            out[dst] = v / 100.0               # percent -> fraction
+    return out
+
+
+_ENRICH_NS = "eulerpool_enrich"
+_ENRICH_TTL = int(os.environ.get("EULERPOOL_ENRICH_TTL_DAYS", "30")) * 86400
+# In-process overlay so the 5-minute scoring loop can re-apply these for free.
+# Nothing here does I/O — the network work happens only in the prewarm loop.
+_ENRICH_MEM: dict[str, dict] = {}
+# Fields this module is allowed to fill. It only ever fills a BLANK — a value
+# the universe already computed always wins, so two sources can never disagree
+# on screen and a Eulerpool outage cannot blank a populated row.
+FILLS = ("market_cap", "gross_margin", "profit_margin",
+         "operating_margin", "shares_outstanding")
+
+
+async def enrich_cached(ticker: str, force: bool = False) -> dict:
+    """Enrichment for one ticker, cached 30 days, refreshed on a new earnings call.
+
+    NETWORK. Call this from the background sweep, never from a request path.
+
+    Two triggers, both needed. The 30-day TTL alone would leave a stale market
+    cap and margins for weeks after results; an earnings check alone would never
+    pick up a restatement or a fixed field. On a cache hit only the cheap
+    earning-calls lookup runs, so a quarter with no results costs one call.
+    """
+    import asyncio as _aio
+    import time as _t
+    sym = (ticker or "").upper().strip()
+    if not sym or not _KEY:
+        return {}
+    try:
+        from kv_store import store as _kv
+    except Exception:
+        return await enrich(sym)
+
+    doc = None
+    if not force:
+        try:
+            doc = await _aio.to_thread(_kv.get, _ENRICH_NS, sym, _ENRICH_TTL)
+        except Exception:
+            doc = None
+
+    if isinstance(doc, dict) and doc.get("fields"):
+        seen = doc.get("earnings_ms") or 0
+        latest = await last_earnings_ms(sym)
+        if latest is None or latest <= seen:
+            _ENRICH_MEM[sym] = doc["fields"]
+            return doc["fields"]
+        logger.info("eulerpool enrich %s: new earnings call, refreshing", sym)
+
+    fields = await enrich(sym)
+    if not fields:
+        # Keep serving the previous copy rather than blanking the row.
+        prev = (doc or {}).get("fields") or {}
+        if prev:
+            _ENRICH_MEM[sym] = prev
+        return prev
+
+    try:
+        await _aio.to_thread(_kv.set, _ENRICH_NS, sym, {
+            "fields": fields,
+            "earnings_ms": await last_earnings_ms(sym),
+            "at": int(_t.time()),
+        })
+    except Exception as exc:
+        logger.warning("eulerpool enrich %s: cache write failed: %s", sym, exc)
+    _ENRICH_MEM[sym] = fields
+    return fields
+
+
+def apply_cached(rows: list) -> int:
+    """Overlay whatever enrichment is already in memory. NO I/O — safe to call
+    from the scoring loop on every cycle. Returns how many blanks were filled."""
+    n = 0
+    for r in rows or []:
+        if not isinstance(r, dict):
+            continue
+        got = _ENRICH_MEM.get(str(r.get("ticker") or "").upper())
+        if not got:
+            continue
+        for k in FILLS:
+            if r.get(k) is None and got.get(k) is not None:
+                r[k] = got[k]
+                n += 1
+    return n
+
+
+def missing_fields(row: dict) -> bool:
+    """True when this row has a gap Eulerpool could fill."""
+    return isinstance(row, dict) and any(row.get(k) is None for k in FILLS[:3])
 
 
 async def get_statements(ticker: str) -> dict:

@@ -33,6 +33,21 @@ import ai_verifier
 from selection_store import store as _selstore
 from stock_universe import get_universe, get_meta
 import anthropic_shim
+
+
+def _eulerpool_apply(rows) -> None:
+    """Re-apply the Eulerpool field overlay after a universe rebuild.
+
+    A rebuild replaces the row dicts wholesale, so without re-applying, every
+    market cap and margin the sweep filled disappears on the next scoring cycle
+    and Compare goes back to "—". Pure in-memory, no I/O, and never raises: the
+    overlay is an enhancement and a failure here must not take scoring down.
+    """
+    try:
+        import eulerpool_store as _ep
+        _ep.apply_cached(rows)
+    except Exception:
+        pass
 from intelligence import (
     MarketRegime,
     MarketAnalysis,
@@ -477,6 +492,7 @@ async def _full_refresh() -> None:
             _universe_data = score_and_rank(new_universe, regime=regime_now)
             # 2b) Overlay any cached Haiku-polished bottom_lines (pure memory, no I/O)
             bottom_line_ai.apply_cached(_universe_data)
+            _eulerpool_apply(_universe_data)
             # 3) Persist this round's pop_scores so velocity is computable
             #    on the next refresh (only writes if ≥5 min since last point).
             score_history.record_batch(_universe_data)
@@ -532,6 +548,7 @@ async def _yf_concurrent_load() -> None:
                 _universe_data[:], regime=market_regime.get()
             )
             bottom_line_ai.apply_cached(_universe_data)
+            _eulerpool_apply(_universe_data)
             score_history.record_batch(_universe_data)
     cache.save_disk()
     logger.info(f"YF concurrent load done in {time.time()-t0:.1f}s — {len(_universe_data)} tickers scored")
@@ -630,6 +647,7 @@ async def _tech_refresh() -> None:
                     _universe_data[:], regime=market_regime.get()
                 )
                 bottom_line_ai.apply_cached(_universe_data)
+                _eulerpool_apply(_universe_data)
                 score_history.record_batch(_universe_data)
                 cache.save_disk()
             logger.info(
@@ -1258,6 +1276,57 @@ async def _event_brief_prewarm() -> None:
         await asyncio.sleep(6 * 3600)      # four passes a day, same as Fact Check
 
 
+async def _eulerpool_enrich_prewarm() -> None:
+    """Fill the universe fields the FMP plan refuses, from Eulerpool.
+
+    THE GAP: ~22-29% of the 1,572 rows have no market cap or margins, because
+    the plan answers "this value set for 'symbol' is not available" per symbol.
+    Measured coverage before this: beta 78%, market_cap 79%, profit_margin 78%,
+    pe_ratio 72%, target_upside 71% — against momentum 99% and smart_score 100%.
+    The price-derived fields are fine; the fundamentals are the hole, and it is
+    what put "—" in the Compare table for INTC.
+
+    CADENCE: once a day. Only rows with an actual gap are touched (~350, not
+    1,572), and a cache hit costs ONE earning-calls lookup. That is roughly
+    10k calls/month against a 100k free tier; sweeping the whole universe
+    four times a day would have exceeded it.
+
+    Refresh is earnings-driven, not just time-driven — see
+    eulerpool_store.enrich_cached. Values are cached 30 days AND re-pulled as
+    soon as a new earnings call is published, so a market cap or margin is never
+    a quarter out of date.
+    """
+    await asyncio.sleep(300)               # let the universe load first
+    while True:
+        filled = checked = 0
+        try:
+            import eulerpool_store as _ep
+            if _ep.available() and _universe_data:
+                todo = [r for r in _universe_data if _ep.missing_fields(r)]
+                # Gentle: this is a free tier and the sweep is not urgent.
+                sem = asyncio.Semaphore(4)
+
+                async def _one(row):
+                    nonlocal filled, checked
+                    async with sem:
+                        try:
+                            got = await _ep.enrich_cached(str(row.get("ticker") or ""))
+                            checked += 1
+                            if got:
+                                filled += 1
+                        except Exception:
+                            pass
+
+                await asyncio.gather(*(_one(r) for r in todo))
+                _ep.apply_cached(_universe_data)
+                if checked:
+                    logger.info("🧩 Eulerpool enrich: %d rows checked, %d filled "
+                                "(of %d with gaps)", checked, filled, len(todo))
+        except Exception as exc:
+            logger.warning(f"eulerpool enrich sweep failed: {exc}")
+        await asyncio.sleep(24 * 3600)
+
+
 async def _bottom_line_prewarm() -> None:
     """Background loop: rewrite each stock's deterministic bottom_line into
     natural Haiku prose, cached 15 days in the durable KV store. Cache-first and
@@ -1679,6 +1748,7 @@ async def lifespan(app: FastAPI):
         asyncio.create_task(_overview_prewarm()),   # Overviews for the On-the-Radar set
         asyncio.create_task(_data_prewarm()),        # keep all stocks' free data (stock-extra) warm
         asyncio.create_task(_bottom_line_prewarm()), # Haiku-polish bottom_lines (cache-first, 15d)
+        asyncio.create_task(_eulerpool_enrich_prewarm()), # fill market cap/margins FMP's plan refuses
         asyncio.create_task(_selection_prewarm()),   # keep AI conviction/thesis warm for House View
         asyncio.create_task(_role_prewarm()),        # "Where it earns" card for the whole universe
         asyncio.create_task(_scan_prewarm()),        # dilution + Crowd Clock, so the overview cards exist
