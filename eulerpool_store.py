@@ -84,15 +84,24 @@ _BALANCE_MAP = {
     "goodwill": "goodwill",
     "intangiblesAssets": "intangibleAssets",
     "longTermInvestments": "longTermInvestments",
-    "otherLongTermAssets": "otherNonCurrentAssets",
-    "assets": "totalAssets",
+    # NOT `assets` and NOT `allAssets`. Both are subtotals and naming either
+    # one totalAssets is wrong in a way the page renders without complaint:
+    # for DXCM FY2025 `assets` is 242.2 and `allAssets` 2985.6, against equity
+    # of 2630.6 — a balance sheet claiming less in assets than in equity.
+    # `capital` is the real total, and the accounting identity proves it:
+    # equity 2630.6 + liabilities 3391.8 = capital 6022.4 exactly.
+    # _translate re-checks that identity per row rather than trusting this.
+    "capital": "totalAssets",
+    "assets": "otherNonCurrentAssets",
     "accountsPayable": "accountPayables",
     "accruedLiability": "otherCurrentLiabilities",
     "shortTermDebt": "shortTermDebt",
     "currentLiabilities": "totalCurrentLiabilities",
     "longTermDebt": "longTermDebt",
+    "fixedLiabilities": "totalNonCurrentLiabilities",
     "otherLiabilities": "otherNonCurrentLiabilities",
     "liabilities": "totalLiabilities",
+    "intangibles": "intangibleAssets",
     "commonStock": "commonStock",
     "additionalPaidInCapital": "additionalPaidInCapital",
     "retainedEarnings": "retainedEarnings",
@@ -182,6 +191,22 @@ def _translate(rows: list, fmap: dict) -> tuple[list, list]:
         if r.get("shares") is not None:
             out["weightedAverageShsOutDil"] = _scale(r.get("shares"))
             out["weightedAverageShsOut"] = _scale(r.get("shares"))
+        # Balance-sheet guard. A vendor's field NAMES are a guess about meaning;
+        # the accounting identity is not. `assets` looked like the total and was
+        # a subtotal, which renders as a plausible number rather than an error,
+        # so check A = L + E per row and repair from the identity when the
+        # mapped total contradicts it.
+        eq, li = out.get("totalStockholdersEquity"), out.get("totalLiabilities")
+        ta = out.get("totalAssets")
+        if eq is not None and li is not None:
+            implied = eq + li
+            if ta is None or (implied and abs(ta - implied) / abs(implied) > 0.02):
+                if ta is not None:
+                    logger.warning("eulerpool %s %s: totalAssets %.0f contradicts "
+                                   "equity+liabilities %.0f — using the identity",
+                                   out.get("symbol"), out.get("date"), ta, implied)
+                out["totalAssets"] = implied
+
         (est if _is_estimate(period) else filed).append(out)
     filed.reverse()
     est.reverse()
