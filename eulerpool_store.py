@@ -312,6 +312,21 @@ async def enrich(ticker: str) -> dict:
         v = _num(prof_ability.get(src))
         if v is not None:
             out[dst] = v / 100.0               # percent -> fraction
+
+    # THE REPORT DATE. `last_earnings_date` is null across most of the universe,
+    # and the "Recent earnings" panel falls back to the QUARTER END when it is —
+    # which is why that panel showed NVDA at 31 Jul on 31 Aug, a month stale,
+    # the day after NVDA actually reported. The panel is honest about it (it
+    # prints "Quarter end ·"), but a feed headed "What's happening now" listing
+    # month-old dates reads as broken data.
+    ms = await last_earnings_ms(sym)
+    if ms:
+        import datetime as _dt
+        try:
+            out["last_earnings_date"] = _dt.datetime.fromtimestamp(
+                ms / 1000, _dt.timezone.utc).strftime("%Y-%m-%d")
+        except (OverflowError, OSError, ValueError):
+            pass
     return out
 
 
@@ -324,7 +339,7 @@ _ENRICH_MEM: dict[str, dict] = {}
 # the universe already computed always wins, so two sources can never disagree
 # on screen and a Eulerpool outage cannot blank a populated row.
 FILLS = ("market_cap", "gross_margin", "profit_margin",
-         "operating_margin", "shares_outstanding")
+         "operating_margin", "shares_outstanding", "last_earnings_date")
 
 
 async def enrich_cached(ticker: str, force: bool = False) -> dict:
@@ -436,8 +451,16 @@ async def share_growth(ticker: str) -> float | None:
 
 
 def missing_fields(row: dict) -> bool:
-    """True when this row has a gap Eulerpool could fill."""
-    return isinstance(row, dict) and any(row.get(k) is None for k in FILLS[:3])
+    """True when this row has a gap Eulerpool could fill.
+
+    `last_earnings_date` is included deliberately: it is null on most of the
+    universe, and a row can have a perfectly good market cap while still
+    dating its last results to the quarter end.
+    """
+    if not isinstance(row, dict):
+        return False
+    return (any(row.get(k) is None for k in FILLS[:3])
+            or row.get("last_earnings_date") is None)
 
 
 async def get_statements(ticker: str) -> dict:
