@@ -417,6 +417,9 @@ async def build_narrative(ticker: str, t: dict, event_row: dict | None) -> dict 
     try:
         from kv_store import store as _kv
         durable = _kv.get("pdf_narrative", sym, max_age_s=_CACHE_TTL)
+        import earnings_gate
+        if isinstance(durable, dict) and await earnings_gate.is_stale(sym, durable):
+            durable = None          # reported since this was written
         if durable:
             _CACHE[sym] = (now, durable)
             return durable
@@ -507,6 +510,8 @@ async def build_narrative(ticker: str, t: dict, event_row: dict | None) -> dict 
         _CACHE.pop(oldest_key, None)
     try:
         from kv_store import store as _kv
+        import earnings_gate
+        await earnings_gate.stamp(out, sym)
         _kv.set("pdf_narrative", sym, out)   # persist so the next deploy reuses it
     except Exception:
         pass

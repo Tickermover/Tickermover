@@ -1063,13 +1063,18 @@ async def _deps_prewarm() -> None:
                 warm = generated = failed = 0
                 for sym in targets:
                     doc = await asyncio.to_thread(_kv.get, "dependencies", sym, 30 * 86400)
-                    if isinstance(doc, dict) and (doc.get("dependencies") or doc.get("exposure")):
+                    import earnings_gate
+                    if (isinstance(doc, dict)
+                            and (doc.get("dependencies") or doc.get("exposure"))
+                            and not await earnings_gate.is_stale(sym, doc)):
                         warm += 1
                         continue           # cache peek only — no sleep, or a pass idles for hours
                     target = next((t for t in _universe_data if t.get("ticker") == sym), None)
                     try:
                         out = await dependencies_gen.generate_dependencies(sym, target)
                         out.setdefault("status", "ready")
+                        import earnings_gate
+                        await earnings_gate.stamp(out, sym)
                         await asyncio.to_thread(_kv.set, "dependencies", sym, out)
                         cache.set("deps:" + sym, out, ttl=30 * 86400)
                         generated += 1
@@ -10025,8 +10030,13 @@ async def api_dependencies(ticker: str, force: bool = False,
             return JSONResponse(cached)
         doc = await asyncio.to_thread(_kv.get, "dependencies", sym, 30 * 86400)
         if isinstance(doc, dict) and (doc.get("dependencies") or doc.get("exposure")):
-            cache.set(ck, doc, ttl=30 * 86400)
-            return JSONResponse(doc)
+            # A dependency map written before results is served for up to a
+            # MONTH after the numbers that would change it went public.
+            import earnings_gate
+            if not await earnings_gate.is_stale(sym, doc):
+                cache.set(ck, doc, ttl=30 * 86400)
+                return JSONResponse(doc)
+            logger.info("dependencies %s: reported since generation, regenerating", sym)
 
     task = _deps_inflight.get(sym)
     if task is None or task.done():
@@ -10034,6 +10044,8 @@ async def api_dependencies(ticker: str, force: bool = False,
             target = next((t for t in _universe_data if t.get("ticker") == sym), None)
             out = await dependencies_gen.generate_dependencies(sym, target)
             out.setdefault("status", "ready")
+            import earnings_gate
+            await earnings_gate.stamp(out, sym)
             await asyncio.to_thread(_kv.set, "dependencies", sym, out)
             cache.set(ck, out, ttl=30 * 86400)
             return out

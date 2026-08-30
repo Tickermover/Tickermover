@@ -152,8 +152,12 @@ def _user(ticker: str, name: str, sector: str, template: str) -> str:
 
 
 async def _polish(ticker: str, template: str, t: dict) -> Optional[str]:
-    """One Haiku call. Returns rewritten prose, or None on any failure."""
-    if not _KEY:
+    """One generation call. Returns rewritten prose, or None on any failure."""
+    # THIRD copy of the dead key check, and the last line of defence — the
+    # request below goes through anthropic_shim to the free chain and never
+    # reads this key, so an empty ANTHROPIC_API_KEY was silently returning None
+    # for every stock in the universe.
+    if not anthropic_shim.generation_available():
         return None
     name = (t.get("name") or ticker)
     sector = (t.get("sub_sector") or t.get("subsector") or t.get("sector") or "")
@@ -245,12 +249,20 @@ async def prewarm(universe: list[dict], throttle_s: float = 2.0,
             t["bottom_line_ai"] = cached["prose"]
             hits += 1
             continue
-        if not _KEY:
+        # Was `if not _KEY: continue` — the same dead ANTHROPIC_API_KEY check
+        # that available() carried, but INSIDE the loop, so fixing available()
+        # alone was not enough: the sweep ran, missed the cache on every ticker
+        # and skipped the generation silently. Every stock kept serving the
+        # deterministic template while the loop reported itself healthy.
+        if not anthropic_shim.generation_available():
             continue
         if max_gen is not None and gen >= max_gen:
             continue
         prose = await _polish(sym, tpl, t)
         if prose:
+            # `h` is a signature of the drivers, so new results change it and
+            # this regenerates on its own — an earnings stamp would be
+            # redundant here, unlike the caches keyed only by ticker.
             kv_store.store.set(_NS, sym, {"h": h, "prose": prose, "model": _MODEL})
             _MEM[sym] = (h, prose)
             t["bottom_line_ai"] = prose

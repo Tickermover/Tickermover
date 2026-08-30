@@ -301,8 +301,10 @@ async def get_operating_kpis(ticker: str, force: bool = False) -> dict:
             from kv_store import store as _kv
             durable = _kv.get("operating_kpis", sym, max_age_s=_CACHE_TTL)
             if durable is not None:
-                _cache.set(ck, durable, _CACHE_TTL)
-                return durable
+                import earnings_gate
+                if not await earnings_gate.is_stale(sym, durable):
+                    _cache.set(ck, durable, _CACHE_TTL)
+                    return durable
         except Exception:
             pass
 
@@ -338,6 +340,8 @@ async def get_operating_kpis(ticker: str, force: bool = False) -> dict:
     # Persist to the durable KV too so a redeploy never re-pays the extraction.
     try:
         from kv_store import store as _kv
+        import earnings_gate
+        await earnings_gate.stamp(res, sym)
         _kv.set("operating_kpis", sym, res)
     except Exception:
         pass

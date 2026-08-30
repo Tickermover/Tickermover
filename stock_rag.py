@@ -394,8 +394,13 @@ async def concall_summary(ticker: str, profile_data: str = "", quarter: str | No
         from kv_store import store as _kv
         durable = _kv.get(_CONCALL_NS, _kv_key, max_age_s=30 * 24 * 3600)
         if isinstance(durable, dict):
-            _CONCALL_CACHE[ck] = durable
-            return durable
+            # A summary of LAST quarter's call, cached 30 days, would keep
+            # being served after THIS quarter's call has happened.
+            import earnings_gate
+            if not await earnings_gate.is_stale(ticker, durable):
+                _CONCALL_CACHE[ck] = durable
+                return durable
+            logger.info("concall %s: reported since generation, regenerating", ticker)
     except Exception:
         pass
     # Cost breaker: when over budget the caller passes allow_generate=False, so a
@@ -474,6 +479,8 @@ async def concall_summary(ticker: str, profile_data: str = "", quarter: str | No
     _CONCALL_CACHE[ck] = parsed
     try:
         from kv_store import store as _kv
+        import earnings_gate
+        await earnings_gate.stamp(parsed, ticker)
         _kv.set(_CONCALL_NS, _kv_key, parsed)   # persist so the next deploy reuses it
     except Exception:
         pass
