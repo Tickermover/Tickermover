@@ -991,6 +991,10 @@ body.v2 #sectors-grid .smh-name{font-weight:800;font-size:12.5px;color:#0f172a!i
    nothing is deleted and re-enabling is one server flag. */
 body.no-pro .v2-nav-pro,body.no-pro [data-pro],body.no-pro .nav-pro,
 body.no-pro .pro-badge,body.no-pro .pro-chip,body.no-pro .v2-sb-pro,
+/* .v2-tag-pro is the class the Company Events nav badge ACTUALLY uses, and it
+   was missing from this list — so a PRO pill rendered in the sidebar with
+   gating switched off, on a site whose Terms say there is no paid tier. */
+body.no-pro .v2-tag-pro,body.no-pro .v2-nav-tag.v2-tag-pro,
 body.no-pro #upgrade-modal,body.no-pro .upgrade-cta,body.no-pro .pro-lock{display:none!important}
 #panel-theses .tm-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:15px}
 #panel-theses .tm-card{display:flex;flex-direction:column;min-height:206px;background:#fff;border:1px solid #E4E7EC;
@@ -8960,7 +8964,7 @@ document.addEventListener('keydown', function(e){
       <div class="v2-fb-chips" id="v2-fb-chips">
         <button type="button" onclick="fbTopic(this,'Picks & ideas')">Picks &amp; ideas</button>
         <button type="button" onclick="fbTopic(this,'Speed')">Speed</button>
-        <button type="button" onclick="fbTopic(this,'Pricing')">Pricing</button>
+        <button type="button" onclick="fbTopic(this,'Missing features')">Missing features</button>
         <button type="button" onclick="fbTopic(this,'Missing a feature')">Missing a feature</button>
         <button type="button" onclick="fbTopic(this,'Found a bug')">Found a bug</button>
       </div>
@@ -9115,7 +9119,7 @@ document.addEventListener('keydown', function(e){
             <span class="meta-pill green" id="picksCount">— names</span>
           </div>
         </div>
-        <p class="pk-note">Our <b>highest-scoring names — sound businesses we judge poised to keep growing</b>: strong Quant Scores, the Street <b>raising estimates</b>, growth accelerating and momentum still building. Shown as <b>three per beta band</b>, because ranked on score alone this table came out almost entirely high-beta — the band is a description of how a share has moved against the market, not a view on which suits you. <span class="pk-note-fine">Our research opinion — not personal financial advice, not FCA-authorised, capital at risk. Do your own diligence.</span></p>
+        <p class="pk-note">Our <b>highest-scoring names — sound businesses whose recent numbers are still improving</b>: strong Quant Scores, the Street <b>raising estimates</b>, growth accelerating and momentum still building. Shown as <b>three per beta band</b>, because ranked on score alone this table came out almost entirely high-beta — the band is a description of how a share has moved against the market, not a view on which suits you. <span class="pk-note-fine">Our research opinion — not personal financial advice, not FCA-authorised, capital at risk. Do your own diligence.</span></p>
         <div class="dm-table" id="picksTable">
           <div class="dm-row dm-head-row">
             <span>Ticker</span><span>Quant</span><span>Why it's here</span><span class="up-col">Analyst upside</span><span class="today-col">Today</span><span class="act-col">View</span>
@@ -21067,7 +21071,8 @@ function _acctRenderPlan(j){
     } else if (j.comped){
       // Allow-listed internal account: full Pro access with no subscription,
       // so avoid offering a billing portal that has nothing to manage.
-      if (line) line.textContent = 'TickerMover Pro · team access';
+      // No tier vocabulary while there is no paid tier to belong to.
+      if (line) line.textContent = 'TickerMover · all features on';
       if (btn){ btn.textContent = 'All features on'; btn.classList.remove('v2-acct-btn-pri'); btn.disabled = true; }
       return;
     } else {
@@ -21184,7 +21189,7 @@ let _fbTimer = null, _fbRating = null, _fbTopic = '', _fbActiveMs = 0, _fbLastAc
 const _FB_PLACEHOLDERS = {
   'Picks & ideas':    'Are the picks useful? What would make them more actionable?',
   'Speed':            'Where does the app feel slow or laggy?',
-  'Pricing':          'What would make TickerMover Pro worth it for you?',
+  'Missing features': 'What would you want TickerMover to do that it does not do yet?',
   'Missing a feature':"What's the one feature you wish we had?",
   'Found a bug':      'What broke, and on which screen?'
 };
@@ -28051,7 +28056,10 @@ function scResultHTML(d){
                      beta:!!j.beta_pro, gating:_gate, loaded:true};
       document.body.classList.toggle('no-pro', !_gate);
       const el=document.getElementById('user-plan');
-      if(el) el.textContent = pro ? (j.comped?'Pro · team access':(j.beta_pro?'Pro · beta':'Pro member')) : 'Free plan';
+      // Every account has everything, so the label states access, not rank.
+      // 'Free plan' implied a paid one alongside it; 'Pro member' implied a
+      // purchase. Neither exists.
+      if(el) el.textContent = 'All features on';
       // A tab rendered before the plan landed may be showing the upsell.
       if(pro && _drState && _drState.tab==='Supply Chain'){ try{ tsRenderDetail(); }catch(e){} }
     }catch(e){

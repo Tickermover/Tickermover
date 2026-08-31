@@ -326,7 +326,7 @@ information you republished from the Service, or (d) your violation of any law
 or third-party right.</p>
 
 <h2>12. Modifications to the Service or Terms</h2>
-<p>We may modify the Service, pricing, or these Terms from time to time. For
+<p>We may modify the Service or these Terms from time to time. For
 material changes (e.g. expanded data
 collection, changes to the limitation of liability), we will email registered
 users with at least 14 days' notice. Continued use after such notice constitutes
@@ -432,7 +432,6 @@ only for the agreed purpose:</p>
   <li><strong>Supabase</strong> (database + auth) &mdash; stores your email, password hash, watchlist. Servers in Asia/Singapore.</li>
   <li><strong>Railway</strong> (hosting) &mdash; runs our application servers; sees IP addresses in logs.</li>
   <li><strong>Cloudflare</strong> (CDN + WAF) &mdash; sees IP and request metadata; provides DDoS protection.</li>
-  <li><strong>Stripe</strong> (payments) &mdash; receives payment info directly from you when you upgrade. Card details go directly to Stripe; we never see or store them. Stripe is a PCI-DSS Level 1 certified processor.</li>
   <li><strong>Resend</strong> (email delivery) &mdash; delivers transactional emails; sees your email and the message body.</li>
   <li><strong>Groq</strong> &mdash; processes text from public press releases through their language model. We do <em>not</em> send your personal data to Groq, only public earnings text.</li>
   <li><strong>Anthropic / OpenAI</strong> (optional, for editorial features) &mdash; same as above; only public market commentary, never your personal data.</li>
@@ -448,7 +447,7 @@ any time via <a href="#" data-cc-open class="body-link">Cookie settings</a>,
 and it will stop.</p>
 
 <h2>5. Cross-border transfers</h2>
-<p>Some of our processors (Cloudflare, Stripe, Resend, Groq, Anthropic) operate
+<p>Some of our processors (Cloudflare, Resend, Groq, Anthropic) operate
 servers outside the UK. Where this happens, transfers are made under standard
 contractual clauses or equivalent safeguards as required by UK GDPR and the
 Data Protection Act 2018.</p>
@@ -466,7 +465,7 @@ Data Protection Act 2018.</p>
 <ul>
   <li><strong>Access</strong> &mdash; request a copy of the data we hold about you.</li>
   <li><strong>Correction</strong> &mdash; ask us to fix inaccurate data.</li>
-  <li><strong>Erasure</strong> &mdash; delete your account and associated personal data (subject to retention obligations above for billing records).</li>
+  <li><strong>Erasure</strong> &mdash; delete your account and the personal data associated with it.</li>
   <li><strong>Withdraw consent</strong> &mdash; opt out of product update emails anytime via the unsubscribe link.</li>
   <li><strong>Complaint</strong> &mdash; if you are unhappy with how we handle your data you may lodge a complaint with the ICO (ico.org.uk).</li>
 </ul>
