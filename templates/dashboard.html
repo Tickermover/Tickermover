@@ -8747,7 +8747,7 @@ document.addEventListener('keydown', function(e){
           <div class="v2-acct-k">Plan &amp; subscription</div>
           <div class="v2-acct-row">
             <div class="v2-acct-planline" id="v2-acct-planline">—</div>
-            <button class="v2-acct-btn v2-acct-btn-pri" id="v2-acct-planbtn" onclick="acctPlanAction()">Upgrade</button>
+            <button class="v2-acct-btn" id="v2-acct-planbtn" onclick="acctPlanAction()" disabled>All features on</button>
           </div>
           <div class="v2-acct-note" id="v2-acct-plannote"></div>
           <!-- Secondary referral entry. Deliberately NOT the primary one —
@@ -8964,7 +8964,7 @@ document.addEventListener('keydown', function(e){
       <div class="v2-fb-chips" id="v2-fb-chips">
         <button type="button" onclick="fbTopic(this,'Picks & ideas')">Picks &amp; ideas</button>
         <button type="button" onclick="fbTopic(this,'Speed')">Speed</button>
-        <button type="button" onclick="fbTopic(this,'Missing features')">Missing features</button>
+        <button type="button" onclick="fbTopic(this,'Data accuracy')">Data accuracy</button>
         <button type="button" onclick="fbTopic(this,'Missing a feature')">Missing a feature</button>
         <button type="button" onclick="fbTopic(this,'Found a bug')">Found a bug</button>
       </div>
@@ -21078,7 +21078,7 @@ function _acctRenderPlan(j){
     } else {
       try { if (j.valid_until) sub = ' · renews ' + new Date(j.valid_until).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); } catch(e){}
     }
-    if (line) line.textContent = 'TickerMover Pro' + sub;
+    if (line) line.textContent = 'TickerMover' + sub;
     if (btn){ btn.textContent = j.beta_pro ? 'Beta access' : 'Manage'; btn.classList.remove('v2-acct-btn-pri'); }
   } else {
     if (line) line.textContent = 'Free plan';
@@ -21189,7 +21189,7 @@ let _fbTimer = null, _fbRating = null, _fbTopic = '', _fbActiveMs = 0, _fbLastAc
 const _FB_PLACEHOLDERS = {
   'Picks & ideas':    'Are the picks useful? What would make them more actionable?',
   'Speed':            'Where does the app feel slow or laggy?',
-  'Missing features': 'What would you want TickerMover to do that it does not do yet?',
+  'Data accuracy':    'Did a number or a label look wrong? Tell us which one and where.',
   'Missing a feature':"What's the one feature you wish we had?",
   'Found a bug':      'What broke, and on which screen?'
 };
