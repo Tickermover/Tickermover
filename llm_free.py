@@ -348,6 +348,31 @@ def parse_json(text: str) -> dict | None:
         return None
 
 
+def _auth_headers(key: str) -> dict:
+    """Authorization headers for an OpenAI-shaped call.
+
+    Bearer for everything — except a Cloudflare GLOBAL API KEY, which is not a
+    Bearer token and fails as one. Cloudflare now issues those with a `cfk_`
+    prefix and the same 52-char shape as its scoped API tokens, so the two are
+    indistinguishable by eye; the only tell is the error. A global key sent as
+    Bearer returns `9109 Invalid access token` from /accounts and
+    `10000 Authentication error` from Workers AI, which reads exactly like a
+    revoked token and cost two pointless key rolls to rule out. It authenticates
+    with the legacy X-Auth-Email / X-Auth-Key pair instead.
+
+    A SCOPED TOKEN IS STILL THE RIGHT CREDENTIAL — a global key carries full
+    account access (DNS, billing, everything) to do text inference. Set
+    CLOUDFLARE_API_KEY to a proper Account API Token and this returns to Bearer
+    automatically, with no other change.
+    """
+    if key.startswith("cfk_"):
+        email = (os.environ.get("CLOUDFLARE_EMAIL") or "").strip()
+        if email:
+            return {"X-Auth-Email": email, "X-Auth-Key": key,
+                    "Content-Type": "application/json"}
+    return {"Authorization": f"Bearer {key}", "Content-Type": "application/json"}
+
+
 async def _call_openai_compatible(url: str, key: str, model: str, prompt: str,
                                   max_tokens: int, timeout: float) -> tuple[bool, str]:
     """One OpenAI-shaped chat call, with the two dialect differences that have
@@ -369,7 +394,7 @@ async def _call_openai_compatible(url: str, key: str, model: str, prompt: str,
     token_key = "max_completion_tokens" if "gpt-oss" in (model or "") else "max_tokens"
     base = {"model": model, token_key: max_tokens, "temperature": 0.1,
             "messages": [{"role": "user", "content": prompt}]}
-    headers = {"Authorization": f"Bearer {key}", "Content-Type": "application/json"}
+    headers = _auth_headers(key)
     async with httpx.AsyncClient(timeout=timeout) as c:
         r = await c.post(url, json=dict(base, response_format={"type": "json_object"}),
                          headers=headers)
@@ -561,9 +586,7 @@ async def _call_text(name, url, key, model, prompt, max_tokens, timeout, cap):
     payload = {"model": model, "max_tokens": max_tokens, "temperature": 0.3,
                "messages": [{"role": "user", "content": prompt[:cap]}]}
     async with httpx.AsyncClient(timeout=timeout) as c:
-        r = await c.post(url, json=payload,
-                         headers={"Authorization": f"Bearer {key}",
-                                  "Content-Type": "application/json"})
+        r = await c.post(url, json=payload, headers=_auth_headers(key))
     if r.status_code != 200:
         return False, f"HTTP {r.status_code}: {r.text[:160]}"
     body = ((r.json().get("choices") or [{}])[0].get("message") or {}).get("content", "")
@@ -640,8 +663,7 @@ async def list_models(timeout: float = 15.0) -> list[dict]:
         row = {"provider": name, "endpoint": base + "/models"}
         try:
             async with httpx.AsyncClient(timeout=timeout) as c:
-                r = await c.get(base + "/models",
-                                headers={"Authorization": f"Bearer {key}"})
+                r = await c.get(base + "/models", headers=_auth_headers(key))
             if r.status_code != 200:
                 row["error"] = f"HTTP {r.status_code}: {r.text[:120]}"
             else:

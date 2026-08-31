@@ -34,6 +34,9 @@ ALLOWED = {
     # from this set, so the one loader that can reach the server could not set
     # it — the provider was permanently inert with no way to say so.
     "CLOUDFLARE_API_KEY",
+    # Required ONLY when CLOUDFLARE_API_KEY is a global key (cfk_ prefix),
+    # which authenticates as X-Auth-Email + X-Auth-Key, not as a Bearer token.
+    "CLOUDFLARE_EMAIL",
     # Z.ai GLM-4.7-Flash — the permanently-free backstop at the end of the chain.
     "ZAI_API_KEY",
     # Eulerpool — free-tier fundamentals, the intended fallback for the ~45% of
@@ -81,6 +84,7 @@ LABEL_MAP = {
     "service": "SUPABASE_SERVICE_KEY", "service key": "SUPABASE_SERVICE_KEY",
     "service role": "SUPABASE_SERVICE_KEY", "jwt": "SUPABASE_JWT_SECRET",
     "cloudflare": "CLOUDFLARE_API_KEY", "workers ai": "CLOUDFLARE_API_KEY",
+    "cloudflare email": "CLOUDFLARE_EMAIL",
     "glm": "ZAI_API_KEY", "zai": "ZAI_API_KEY", "z.ai": "ZAI_API_KEY",
     "zhipu": "ZAI_API_KEY",
     "eulerpool": "EULERPOOL_API_KEY", "euler": "EULERPOOL_API_KEY",
