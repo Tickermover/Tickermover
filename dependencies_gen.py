@@ -93,12 +93,23 @@ def _system() -> str:
     )
 
 
-def _user(ticker: str, t: dict) -> str:
+def _queries(ticker: str, t: dict) -> list[str]:
+    """Searches that ground a dependency map. TWO, not one: who a company buys
+    FROM and who it sells TO are different questions that rarely share a page."""
+    name = t.get("name") or ticker
+    return [
+        f"{name} ({ticker}) key suppliers and supply chain partners",
+        f"{name} ({ticker}) largest customers and end markets revenue breakdown",
+    ]
+
+
+def _user(ticker: str, t: dict, web_ctx: str = "") -> str:
     name = t.get("name") or ticker
     sector = t.get("sub_sector") or t.get("sector") or ""
     return (
         f"Company: {name} ({ticker}){(' — ' + sector) if sector else ''}.\n\n"
-        "Research and return its dependency / ripple-risk map as JSON with this exact shape:\n"
+        + (f"Web context — use ONLY this as evidence:\n{web_ctx}\n\n" if web_ctx else "")
+        + "Research and return its dependency / ripple-risk map as JSON with this exact shape:\n"
         "{\n"
         '  "exposure": [{"name": "<end-market or segment>", "pct": <number>}],\n'
         '  "dependencies": [{"name": "<company>", "ticker": "<US ticker or empty>", '
@@ -175,7 +186,33 @@ async def generate_dependencies(ticker: str, ticker_data: dict | None) -> dict:
     ticker = ticker.upper()
     t = ticker_data or {"ticker": ticker}
     if not available():
-        raise RuntimeError("ANTHROPIC_API_KEY not configured")
+        raise RuntimeError("AI generation is not configured")
+
+    # PRE-SEARCH, because the server-side tool below never runs. The request
+    # declares Anthropic's `web_search_20250305` tool, but anthropic_shim routes
+    # to the free chain, which has no server-side tools — it logs "answering
+    # without them" and drops it. The consequence was not just weaker grounding:
+    # the source extractor reads `web_search_tool_result` blocks, which then
+    # never exist, so every dependency map shipped with `sources: []` — an
+    # AI-written supply chain presented with no evidence behind it.
+    # Grounding it here with web_search.py fixes both halves at once.
+    web_ctx, pre_sources = "", []
+    try:
+        import web_search
+        if web_search.available():
+            hits: list = []
+            for q in _queries(ticker, t):
+                hits += await web_search.search(q, count=6)
+            web_ctx = web_search.as_context(hits, limit=10)
+            seen_u = set()
+            for h in hits[:10]:
+                u = h.get("url")
+                if u and u not in seen_u:
+                    seen_u.add(u)
+                    pre_sources.append({"n": len(pre_sources) + 1,
+                                        "title": (h.get("title") or u)[:90], "url": u})
+    except Exception as exc:
+        logger.warning("dependencies_gen %s: pre-search failed: %s", ticker, exc)
 
     body = {
         "model": _MODEL,
@@ -186,7 +223,7 @@ async def generate_dependencies(ticker: str, ticker_data: dict | None) -> dict:
         "tools": [
             {"type": "web_search_20250305", "name": "web_search", "max_uses": 2}
         ],
-        "messages": [{"role": "user", "content": _user(ticker, t)}],
+        "messages": [{"role": "user", "content": _user(ticker, t, web_ctx)}],
     }
 
     async with httpx.AsyncClient(timeout=_TIMEOUT) as c:
@@ -233,5 +270,9 @@ async def generate_dependencies(ticker: str, ticker_data: dict | None) -> dict:
     out = _coerce(parsed)
     if not out["exposure"] and not out["dependencies"]:
         raise RuntimeError("Empty dependency response")
-    out.update({"ticker": ticker, "sources": sources, "model": _MODEL, "status": "ready"})
+    # `sources` comes from web_search_tool_result blocks, which only exist on a
+    # real Anthropic call. On the free chain it is always empty, so fall back to
+    # the pre-search hits rather than publishing an unsourced map.
+    out.update({"ticker": ticker, "sources": sources or pre_sources,
+                "model": _MODEL, "status": "ready"})
     return out
