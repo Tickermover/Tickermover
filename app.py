@@ -5365,6 +5365,22 @@ async def api_universe():
         if isinstance(epsq, list) and len(epsq) > 4:
             # eps_quarters is oldest-first on the backend; keep the last 4.
             row["eps_quarters"] = epsq[-4:]
+        # Serve the AI-written line AS `bottom_line`. The prewarm loop writes
+        # its prose to `bottom_line_ai`, and NOTHING in dashboard.html reads
+        # that key — every consumer there reads `bottom_line`. So the polished
+        # sentence was generated, cached for 15 days, overlaid onto the row on
+        # every re-score, shipped over the wire, and then never rendered: the
+        # drawer Summary and the screener's "why it's here" both kept showing
+        # the deterministic template while the pre-warm logged "1248 cache
+        # hits" and looked entirely healthy.
+        #
+        # The SSR pages (/stocks, /report, /api/featured) already resolve it as
+        # `bottom_line_ai or bottom_line`; doing the same here makes the SPA
+        # agree with them instead of being the one surface that misses it.
+        # `bottom_line_ai` is left on the row so a client can still tell which
+        # of the two it received.
+        if row.get("bottom_line_ai"):
+            row["bottom_line"] = row["bottom_line_ai"]
         row["indices"]  = _idx_for(row.get("ticker", ""))
         row["profiles"] = _assign_profile(row)
         # Risk pillar, computed once here so the dashboard and the stock page
