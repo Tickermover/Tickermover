@@ -163,7 +163,11 @@ async def _polish(ticker: str, template: str, t: dict) -> Optional[str]:
     sector = (t.get("sub_sector") or t.get("subsector") or t.get("sector") or "")
     body = {
         "model": _MODEL,
-        "max_tokens": 160,
+        # 160 was tight enough that free providers were being cut mid-sentence;
+        # the >320-char guard below still bounds the output, so a larger ceiling
+        # costs nothing on a chain billed at nothing and removes the truncation
+        # at its source rather than only rejecting it afterwards.
+        "max_tokens": 320,
         "system": [
             {"type": "text", "text": _system(),
              "cache_control": {"type": "ephemeral"}}
@@ -197,6 +201,16 @@ async def _polish(ticker: str, template: str, t: dict) -> Optional[str]:
     prose = "".join(parts).strip().strip('"').strip()
     # Guard: if the model returns something empty or absurdly long, drop it.
     if not prose or len(prose) > 320:
+        return None
+    # REJECT A TRUNCATED GENERATION. The length guards above pass anything short,
+    # so free providers that stop mid-sentence shipped straight to the page:
+    # "NVIDIA Corporation presents a strong profile" and "Darling Ingredients
+    # demonstrates" both rendered on the live Summary panel. A sentence that
+    # stops dead is worse than the deterministic template it replaced, because
+    # the template at least finishes. Returning None falls back to it.
+    if len(prose) < 60 or prose[-1] not in ".!?":
+        logger.info("bottom_line_ai %s: dropped truncated output (%d chars, ends %r)",
+                    ticker, len(prose), prose[-24:])
         return None
     return prose
 
