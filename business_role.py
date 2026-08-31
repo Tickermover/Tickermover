@@ -222,18 +222,34 @@ async def generate(ticker: str, ticker_data: dict | None) -> dict:
         raise RuntimeError("ANTHROPIC_API_KEY not configured")
 
     import web_search
-    if not web_search.available():
-        # Grounding is not optional for this card. Ungrounded, the model will
-        # cheerfully name a plausible niche for a ticker it has confused with
-        # another, and a confidently wrong two-word label is worse than the
-        # sub-sector the caller already has.
-        raise RuntimeError("web search not configured")
     hits: list = []
-    for q in queries(sym, ticker_data or {}):
-        hits += await web_search.search(q, count=8)
+    if web_search.available():
+        for q in queries(sym, ticker_data or {}):
+            hits += await web_search.search(q, count=8)
     web_ctx = web_search.as_context(hits, limit=8)
+
     if not web_ctx:
-        raise RuntimeError("no web context")
+        # FALL BACK TO THE COMPANY'S OWN BUSINESS DESCRIPTION.
+        # This used to raise, and on 31 Aug it failed all 925 names in a single
+        # pass: the only configured search tier is DuckDuckGo (Serper, Brave and
+        # Tavily are all unset) and DDG answers scraped requests with HTTP 202 —
+        # bot-blocked. The card was dark universe-wide.
+        #
+        # Grounding is still NOT optional. Ungrounded, the model names a
+        # plausible niche for a ticker it has confused with another, and a
+        # confidently wrong two-word label is worse than the sub-sector the
+        # caller already has. But web search is not the only grounding there is:
+        # every row carries a ~500-char profile description, and for "what it
+        # sells and who pays for it" that is arguably BETTER than SERP snippets
+        # — it is the company's own filed description of its business rather
+        # than a scrape, it costs nothing, and it cannot be rate-limited.
+        desc = ((ticker_data or {}).get("description") or "").strip()
+        if len(desc) < 80:
+            raise RuntimeError("no web context and no usable description")
+        web_ctx = "Company profile (filed business description):\n" + desc[:1200]
+        logger.info("business_role %s: web search empty, grounding on the filed "
+                    "description instead", sym)
+
     sources, seen = [], set()
     for h in hits[:8]:
         u = h.get("url")
